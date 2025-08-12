@@ -72,7 +72,7 @@ WeaponData
 	"low_ammo_sound_name_1"							"Vinson_LowAmmo_Shot1"
 
 	// Ammo
-	"ammo_clip_size"   								"20"
+	"ammo_clip_size"   								"19"
 
 	dof_zoom_focusArea_horizontal					0.04
 	dof_zoom_focusArea_top							0.060
@@ -88,12 +88,12 @@ WeaponData
 
     "uses_ammo_pool"								"1"
 
-    "damage_near_value"   							"18"
-    "damage_far_value"								"18"
-    "damage_very_far_value"							"18"
-    "damage_near_value_titanarmor"					"18"
-    "damage_far_value_titanarmor" 					"18"
-    "damage_very_far_value_titanarmor" 				"18"
+    "damage_near_value"   							"19"
+    "damage_far_value"								"19"
+    "damage_very_far_value"							"19"
+    "damage_near_value_titanarmor"					"19"
+    "damage_far_value_titanarmor" 					"19"
+    "damage_very_far_value_titanarmor" 				"19"
 
     "damage_rodeo" 									"100"
 
@@ -126,7 +126,7 @@ WeaponData
 	"viewmodel_offset_ads"							"0 0.04 0"
 
 	"dof_zoom_nearDepthStart"						"1.25"
-	"dof_zoom_nearDepthEnd"							"7.9"
+	"dof_zoom_nearDepthEnd"							"6.000000"
 	"dof_nearDepthStart"							"0.0"
 	"dof_nearDepthEnd"								"0.0"
 
@@ -216,6 +216,17 @@ WeaponData
 	"bodygroup1_name"	"sight_rear_on"
 	"bodygroup1_set"	"1"
 
+
+	"headshot_distance"	"11828"
+	"damage_headshot_scale"	"1.300000"
+	"damage_leg_scale"	"0.750000"
+	"damage_shield_scale"	"1"
+	"critical_hit"	"1"
+	"critical_hit_damage_scale"	"1.500000"
+	"titanarmor_critical_hit_required"	"1"
+	"damage_near_distance"	"1000"
+	"damage_far_distance"	"2500"
+	"damage_very_far_distance"	"5000"
 	Mods
 	{
 		gold
@@ -267,6 +278,13 @@ WeaponData
 			"low_ammo_sound_name_6"                    "Vinson_LowAmmo_Shot6"
 		}
 
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
                       
         hopup_highcal_rounds
         {
@@ -285,19 +303,19 @@ WeaponData
 
 		highcal_mag_l1
 		{
-			"ammo_clip_size" 				"25"
+			"ammo_clip_size" 				"23"
 		}
 		highcal_mag_l2
 		{
-			"ammo_clip_size" 				"28"
+			"ammo_clip_size" 				"27"
 		}
 		highcal_mag_l3
 		{
-			"ammo_clip_size" 				"30"
+			"ammo_clip_size" 				"29"
 		}
         highcal_mag_l4
         {
-			"ammo_clip_size"   			  	"30"
+			"ammo_clip_size"   			  	"29"
         }
 
                

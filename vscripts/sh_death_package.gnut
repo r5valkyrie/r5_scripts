@@ -4,6 +4,7 @@ untyped
 
 global function Death_Package_Init
 global function PrintDamageFlags
+global function PrintAllDamageFlags
 global function GetDescStringForDamageFlags
 
 #if SERVER
@@ -56,7 +57,16 @@ global enum eThreatIndicatorID
 	GRENADE_INDICATOR_FRAG_MODEL,
 	GRENADE_INDICATOR_SONAR_MODEL,
 	GRENADE_INDICATOR_BOMB,
+	GRENADE_INDICATOR_EMP_MODEL,
 	GRENADE_INDICATOR_GENERIC
+}
+
+global enum eThreatIndicatorVisibility
+{
+	INDICATOR_SHOW_TO_ALL,
+	INDICATOR_SHOW_TO_ENEMIES,
+	INDICATOR_SHOW_TO_SELF,
+	INDICATOR_SHOW_TO_SELF_AND_ENEMIES,
 }
 
 global const WAYPOINTTYPE_THREAT_INDICATOR = "threat_indicator"
@@ -154,7 +164,7 @@ void function Death_Package_Init()
 		PrecacheModel( GRENADE_INDICATOR_TICK_MODEL )
 		PrecacheModel( GRENADE_INDICATOR_BOMB )
 		PrecacheModel( GRENADE_INDICATOR_GENERIC )
-		// PrecacheModel( GRENADE_INDICATOR_EMP_MODEL )
+		PrecacheModel( GRENADE_INDICATOR_EMP_MODEL )
 		PrecacheModel( GRENADE_INDICATOR_STALKER_MODEL )
 
 		PrecacheModel( DAMAGEARROW_MODEL )
@@ -334,7 +344,7 @@ void function HandleDeathPackage( entity ent, var damageInfo )
 		return	// handled in SuperSpectreDeath
 	}
 
-	if ( ((dpFlags & DF_HEADSHOT) || ent.e.forceHeadshotDeath) && IsHumanSized( ent ) && !ent.IsHologram() )
+	if ( (dpFlags & DF_HEADSHOT) && IsHumanSized( ent ) && !ent.IsHologram() && Gamemode() != eGamemodes.fs_aimtrainer )
 		TryHeadshotDeathFX( ent )
 
 	if ( dpFlags & DF_INSTANT )
@@ -608,6 +618,12 @@ const table<int, string> damageFlagsToNames =
 	//[DF_DOOM_PROTECTED		] = "DF_DOOM_PROTECTED",
 	[DF_DOOM_FATALITY		] = "DF_DOOM_FATALITY",
 	[DF_NO_HITBEEP			] = "DF_NO_HITBEEP"
+}
+
+void function PrintAllDamageFlags()
+{
+	foreach( k, v in damageFlagsToNames )
+		printf( "Damage Flag: %s = %d", v, k )
 }
 
 void function PrintDamageFlags( int flags )

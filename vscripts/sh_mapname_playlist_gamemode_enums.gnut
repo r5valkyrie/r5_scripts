@@ -1,20 +1,44 @@
+//Todo: Make custom playlists synced
+
 //script init:
 global function PlayLists_Mapnames_Gamemodes_Init
 
-//public:
 global function MapName
 global function Playlist
 global function Gamemode
 
-//utility:
 global function AllMapsArray
 global function AllGamemodesArray
 global function AllPlaylistsArray
-global function shGlobalErrorCheck
+
+global function PrintMaps
+global function PrintGamemodes
+global function PrintRegisteredPlaylists
+
+// Enhanced dynamic enum registration system
+global function RegisterExternalPlaylist
+global function RegisterExternalGamemodeEnum
+global function IsExternalPlaylist
+global function IsExternalGamemodeEnum
+global function GetExternalPlaylistId
+global function GetExternalGamemodeId
+global function RefreshEnumArrays
+
+// Helper functions for external entry conditionals
+global function PlaylistIs
+global function GamemodeIs
+global function IsCurrentPlaylistExternal
+global function IsCurrentGamemodeExternal
+
+#if SERVER 
+	global function GetPlaylistMaps //client has a copy already
+#endif
 
 //mode functions:
-global function g_is1v1GameType
+global function g_bIs1v1GameType
 global function g_bSinglePlayerChampion
+
+//Todo deprecate this strategy of calling functions to return bools, make SH_globals global and index directly.
 global function Flowstate_PassivesAllowedForMode
 global function Flowstate_IsTrackerSupportedMode
 global function Flowstate_PlayerDoesRespawn
@@ -31,43 +55,38 @@ global function Flowstate_ModeDisablesRagdolls
 
 global enum eMaps
 {
-	mp_rr_arena_composite, //0
-	mp_rr_aqueduct, //1
-	mp_rr_canyonlands_staging, //2
-	mp_rr_canyonlands_64k_x_64k, //3
+	mp_rr_box, //0
+	mp_rr_canyonlands_staging, //1
+	mp_rr_canyonlands_64k_x_64k, //2
+	mp_rr_canyonlands_64k_x_64k_ps4, //3
 	mp_rr_canyonlands_mu1, //4
 	mp_rr_canyonlands_mu1_night, //5
-	mp_rr_desertlands_64k_x_64k, //6
-	mp_rr_desertlands_64k_x_64k_nx, //7
-	mp_rr_desertlands_64k_x_64k_tt, //8
-	mp_rr_party_crasher, //9
-	mp_rr_arena_skygarden, //10
-	mp_rr_ashs_redemption, //11
-	mp_rr_aqueduct_night, //12
-	mp_rr_party_crasher_new, //13
-	mp_rr_arena_empty, //14
-	mp_flowstate, //15
-	mp_rr_olympus_mu1, //16
-	mp_rr_thepit, //17
-	mp_rr_construct_night, //18
-	mp_lobby, //19
-	mp_rr_habitat, //20
+	mp_rr_canyonlands_mu2, //6
+	mp_rr_canyonlands_mu2_tt, //7
+	mp_rr_canyonlands_mu2_mv, //8
+	mp_rr_canyonlands_mu2_ufo, //9
+	mp_rr_desertlands_64k_x_64k, //10
+	mp_rr_desertlands_64k_x_64k_nx, //11
+	mp_rr_desertlands_64k_x_64k_tt, //12
+	mp_rr_desertlands_64k_x_64k_mv, //13
+	mp_rr_desertlands_holiday, //14
+	mp_rr_desertlands_mu1, //15
+	mp_rr_desertlands_mu1_tt, //16
+	mp_rr_desertlands_mu2, //17
+	mp_rr_desertlands_mu3, //17
+	mp_rr_olympus, //18
+	mp_rr_olympus_mu2, //18
+	mp_rr_olympus_tt, //19
+	mp_rr_party_crasher, //20
 	mp_rr_arena_phase_runner, //21
-	mp_rr_construct, //22
-
-	mp_rr_desertlands_holiday, //23
-	mp_rr_desertlands_mu1, //24
-	mp_rr_desertlands_mu1_tt, //25
-	mp_rr_desertlands_mu2, //26
-	mp_rr_desertlands_night, //27
-	mp_rr_canyonlands_mu2, //28
-	mp_rr_canyonlands_mu2_tt, //29
-	mp_rr_canyonlands_mu2_mv, //30
-	mp_rr_canyonlands_mu2_ufo, //31
-	mp_rr_desertlands_mu3, //32
-	mp_rr_olympus, //33
-	mp_rr_olympus_tt, //34
-	mp_rr_canyonlands_mu3, //34
+	mp_rr_arena_composite, //22
+	mp_rr_arena_skygarden, //23
+	mp_rr_aqueduct, //24
+	mp_rr_arena_empty, //25
+	mp_rr_salham, //26
+	mp_lobby, //27
+	mp_rr_olympus_mu1,
+	mp_rr_eden,
 	
 	
 	_MAP_COUNT //LAST
@@ -80,13 +99,13 @@ global enum ePlaylists
 	fs_tdm, //2
 	fs_prophunt, //3
 	fs_duckhunt, //4
-	fs_survival_solos, //5
-	fs_survival_duos, //6
-	fs_survival_trios, //7
+	survival_solos, //5
+	survival_duos, //6
+	survival_trios, //7
 	fs_surf, //8
 	fs_movementgym, //9
 	fs_infected, //10
-	fs_survival, //11
+	survival, //11
 	survival_dev, //12
 	custom_ctf, //13
 	fs_lgduels_1v1, //14
@@ -124,7 +143,11 @@ global enum ePlaylists
 	fs_realistic_ttv, //45
 	fs_1v1_coaching, //46
 	fs_haloMod_survival, //47
-	fs_strafeitmovementmappractice //48
+	fs_strafeitmovementmappractice, //48
+	fs_spieslegends, //49,
+	fs_knockbackknockout, //50
+	fs_onlyup, //51
+	fs_nextbots, //52
 	
 	_PLAYLISTS_COUNT //LAST
 }
@@ -146,6 +169,7 @@ global enum eGamemodes
 	map_editor_deprecated, //12
 	fs_apexkart, //13
 	WINTEREXPRESS, //14	
+	fs_spieslegends, //15
 	
 	_GAMEMODES_COUNT //LAST
 }
@@ -160,20 +184,34 @@ struct
 	int currentPlaylist = -1
 	int currentGamemode = -1
 	
-	bool errorCheck = false
-	
+	// Enhanced dynamic registration system
+	table<string, int> externalPlaylists = {}  // playlist_name -> dynamic_id
+	table<string, int> externalGamemodes = {}  // gamemode_name -> dynamic_id
+	int nextPlaylistId = 1000  // Start dynamic playlist IDs at 1000
+	int nextGamemodeId = 1000  // Start dynamic gamemode IDs at 1000 (sync with sh_gamemodes.gnut)
+	array<string> registeredExternalPlaylists = []
+	array<string> registeredExternalGamemodes = []
+
 } SH_globals
 
+// Global enum tables for easy conditional access (populated at runtime)
+global table<string, int> EXTERNAL_PLAYLISTS = {}  // External playlist name -> ID
+global table<string, int> EXTERNAL_GAMEMODES = {}  // External gamemode name -> ID
+global table<string, int> ALL_PLAYLISTS = {}       // All playlists (static + external)
+global table<string, int> ALL_GAMEMODES = {}       // All gamemodes (static + external)
+
 //this is the global location for defining a mode that is 1v1 based
-const array<int> playlist1v1Types = [
-	
+const array<int> playlist1v1Types = 
+[
 	ePlaylists.fs_1v1,
 	ePlaylists.fs_lgduels_1v1,
 	ePlaylists.fs_vamp_1v1,
-	ePlaylists.fs_1v1_coaching
+	ePlaylists.fs_1v1_coaching,
+	ePlaylists.fs_scenarios
 ]
 
-const array<int> gamemode1v1Types = [
+const array<int> gamemode1v1Types = 
+[
 
 ]
 
@@ -185,19 +223,20 @@ const PRINT_GAMEMODE_DEBUGS = true
 void function __EnumsToArrays_Init()
 {
 	foreach( string strname, int num in eMaps )
-	{
 		SH_globals.mapNames.append( strname.tolower() )
-	}
 	
 	foreach( string strname, int num in ePlaylists )
-	{
 		SH_globals.playlists.append( strname.tolower() )
-	}
 	
 	foreach( string strname, int num in eGamemodes )
-	{
 		SH_globals.gamemodes.append( strname.tolower() )
-	}
+	
+	// Add external entries to arrays
+	foreach( string playlistName in SH_globals.registeredExternalPlaylists )
+		SH_globals.playlists.append( playlistName.tolower() )
+	
+	foreach( string gamemodeName in SH_globals.registeredExternalGamemodes )
+		SH_globals.gamemodes.append( gamemodeName.tolower() )
 }
 
 void function __ClearEnumArrays()
@@ -215,20 +254,9 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 	
 	__EnumsToArrays_Init()
 	
-	int playlistsArrayCount = SH_globals.playlists.len() - 1
-	int playlistsEnumsCount = ePlaylists._PLAYLISTS_COUNT
-	
-	int mapnamesArrayCount = SH_globals.mapNames.len() - 1
-	int mapnamesEnumsCount = eMaps._MAP_COUNT
-	
-	int gamemodesArrayCount = SH_globals.gamemodes.len() - 1
-	int gamemodesEnumsCount = eGamemodes._GAMEMODES_COUNT
-	
-	//deprecated from old
-	// mAssert( playlistsArrayCount == playlistsEnumsCount, format( "Playlists not properly configured in enum/array structs: sh_mapname_playlist_gamemode_enums.nut - Array: %d ;Enum: %d ", playlistsArrayCount, playlistsEnumsCount ) )
-	// mAssert( mapnamesArrayCount == mapnamesEnumsCount, format( "Maps not properly configured in enum/array structs: sh_mapname_playlist_gamemode_enums.nut - Array: %d ;Enum: %d ", mapnamesArrayCount, mapnamesEnumsCount ) )
-	// mAssert( gamemodesArrayCount == gamemodesEnumsCount, format( "Gamemodes not properly configured in enum/array structs: sh_mapname_playlist_gamemode_enums.nut - Array: %d ;Enum: %d ", gamemodesArrayCount, gamemodesEnumsCount ) )
-	
+	// Initialize global enum tables
+	__UpdateGlobalEnumTables()
+		
 	#if SERVER || CLIENT
 		string level = GetMapName()
 	#elseif UI 
@@ -240,7 +268,7 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 	#endif
 	
 		SH_globals.currentMap = getMapEnumFromName( level )
-		mAssert( SH_globals.currentMap != -1, format( "Current map \"%s\" is not registered in sh_mapname_playlist_gamemode_enums.nut", level ) )
+		mAssert( SH_globals.currentMap != -1, format( "Current map \"%s\" is not registered in %s", level, FILE_NAME() ) )
 		
 		#if UI 
 			if( level != "" )
@@ -257,7 +285,7 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 			}
 			
 			SH_globals.currentPlaylist = getPlaylistEnumFromName( currentPlaylistName )
-			mAssert( SH_globals.currentPlaylist != -1, format( "Current playlist \"%s\" is not registered in sh_mapname_playlist_gamemode_enums.nut", currentPlaylistName ) )
+			mAssert( SH_globals.currentPlaylist != -1, format( "Current playlist \"%s\" is not registered in %s", currentPlaylistName, FILE_NAME() ) )
 		
 		#if UI 
 			}
@@ -280,20 +308,29 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 		SH_globals.currentGamemode = currentGamemodeEnum
 		mAssert( SH_globals.currentGamemode != -1, format( "Current gamemode \"%s\" is not registered in sh_mapname_playlist_gamemode_enums.nut", curentGamemodeName ) )
 	
-	AllModeConditionals_Init()
 	
-	SH_globals.errorCheck = true
+	#if SERVER //prevents errors of gamemodes not loading
+		if( MapName() != eMaps.mp_lobby && Playlist() != ePlaylists.dev_default && Playlist() != ePlaylists.survival_dev && !Dev_CommandLineHasParm( "-scriptdev" ) )
+		{
+			array< string > validMaps = GetPlaylistMaps( GetCurrentPlaylistName() )
+			mAssert( validMaps.contains( GetMapName() ), "Map \"%s\" is not enabled for \"%s\" in platform/playlists_r5_patch.txt. Launch with \"-scriptdev\" to ignore this assert.", GetMapName(), GetCurrentPlaylistName() )
+		}
+	#endif
+	
+	AllModeConditionals_Init()
 }
 
 int function getMapEnumFromName( string mapString ) 
 {
 	string mapStringLower = mapString.tolower()
 	
-	for ( int i = 0; i < eMaps._MAP_COUNT; i++ ) 
+	// Ensure array is initialized before accessing
+	if ( SH_globals.mapNames.len() >= eMaps._MAP_COUNT )
 	{
-		if ( SH_globals.mapNames[i].tolower() == mapStringLower ) 
+		for ( int i = 0; i < eMaps._MAP_COUNT; i++ ) 
 		{
-			return i;
+			if ( SH_globals.mapNames[i].tolower() == mapStringLower ) 
+				return i
 		}
 	}
 	
@@ -304,26 +341,40 @@ int function getPlaylistEnumFromName( string playlistString )
 {
 	string playlistStringLower = playlistString.tolower()
 	
-	for ( int i = 0; i < ePlaylists._PLAYLISTS_COUNT; i++ ) 
+	// Check static playlists first (ensure array is initialized)
+	if ( SH_globals.playlists.len() >= ePlaylists._PLAYLISTS_COUNT )
 	{
-		if ( SH_globals.playlists[i].tolower() == playlistStringLower ) 
+		for ( int i = 0; i < ePlaylists._PLAYLISTS_COUNT; i++ ) 
 		{
-			return i;
+			if ( SH_globals.playlists[i].tolower() == playlistStringLower ) 
+				return i
 		}
 	}
+	
+	// Check external playlists
+	if ( playlistStringLower in SH_globals.externalPlaylists )
+		return SH_globals.externalPlaylists[playlistStringLower]
 	
 	return -1
 }
 
 int function getGamemodeEnumFromName( string gamemodeString ) 
 {
-	for ( int i = 0; i < eGamemodes._GAMEMODES_COUNT; i++ ) 
+	string gamemodeStringLower = gamemodeString.tolower()
+	
+	// Check static gamemodes first (ensure array is initialized)
+	if ( SH_globals.gamemodes.len() >= eGamemodes._GAMEMODES_COUNT )
 	{
-		if ( SH_globals.gamemodes[i] == gamemodeString ) 
+		for ( int i = 0; i < eGamemodes._GAMEMODES_COUNT; i++ ) 
 		{
-			return i;
+			if ( SH_globals.gamemodes[i] == gamemodeString ) 
+				return i
 		}
 	}
+	
+	// Check external gamemodes
+	if ( gamemodeStringLower in SH_globals.externalGamemodes )
+		return SH_globals.externalGamemodes[gamemodeStringLower]
 	
 	return -1
 }
@@ -332,6 +383,7 @@ int function getGamemodeEnumFromName( string gamemodeString )
 // 		global script functions			//
 //////////////////////////////////////////
 
+//Todo: Change these to eMap(), ePlaylist(), eGamemode()
 int function MapName()
 {
 	return SH_globals.currentMap
@@ -365,21 +417,63 @@ array<string> function AllPlaylistsArray()
 {
 	return SH_globals.playlists
 }
-	
-bool function shGlobalErrorCheck()
+
+void function PrintMaps()
 {
-	return SH_globals.errorCheck
+	_printstringarray( SH_globals.mapNames, "All registered maps" )
 }
+
+void function PrintGamemodes() //should hook registered modes system
+{
+	_printstringarray( SH_globals.gamemodes, "All registered gamemodes" )
+}
+
+void function PrintRegisteredPlaylists() //can iterate playlist file as well with PrintPlaylists()
+{
+	_printstringarray( SH_globals.playlists, "All registered playlists" )
+}
+
+void function _printstringarray( array<string> arr, string title = "???" )
+{
+	string prnt = format( "\n\n------ %s ------\n\n", title )
+	
+	foreach( item in arr )
+		prnt += format( "	\"%s\", \n", item )
+	
+	printl( prnt )
+}
+
+#if SERVER 
+	array<string> function GetPlaylistMaps( string playlistName )
+	{
+		array<string> mapsArray
+
+		int numModes = GetPlaylistGamemodesCount( playlistName )
+		for ( int modeIndex = 0; modeIndex < numModes; modeIndex++ )
+		{
+			int numMaps = GetPlaylistGamemodeByIndexMapsCount( playlistName, modeIndex )
+			for ( int mapIndex = 0; mapIndex < numMaps; mapIndex++ )
+			{
+				string mapName = GetPlaylistGamemodeByIndexMapByIndex( playlistName, modeIndex, mapIndex )
+				if ( mapsArray.contains( mapName ) )
+					continue
+
+				mapsArray.append( mapName )
+			}
+		}
+
+		return mapsArray
+	}
+#endif 
 
 //////////////////////////////////////////
 //	gamemode conditional INIT functions	//
 //////////////////////////////////////////
 
-bool function g_is1v1GameType() //this function should be called to set a local script bool for conditionals, not directly used as conditional
+bool function g_bIs1v1GameType() //this function should be called to set a local script bool for conditionals, not directly used as conditional
 {
 	return ( playlist1v1Types.contains( Playlist() ) || gamemode1v1Types.contains( Gamemode() ) )
 }
-
  
 //add init functions here
 void function AllModeConditionals_Init()
@@ -430,9 +524,9 @@ void function PassivesAllowed_Init()
 		ePlaylists.dev_default,
 		ePlaylists.survival_dev,
 		ePlaylists.winterexpress,
-		ePlaylists.fs_survival_solos,
-		ePlaylists.fs_survival_duos,
-		ePlaylists.fs_survival
+		ePlaylists.survival_solos,
+		ePlaylists.survival_duos,
+		ePlaylists.survival
 	]
 
 	bool result = ( allowedPassiveGamemodes.contains( Gamemode() ) && allowedPassivePlaylists.contains( Playlist() ) )
@@ -466,19 +560,19 @@ void function TrackerSupportedMode_Init()
 		ePlaylists.fs_dm,
 		ePlaylists.fs_tdm,
 		ePlaylists.fs_vamp_1v1,
-		ePlaylists.fs_lgduels_1v1,
+		//ePlaylists.fs_lgduels_1v1,
 		ePlaylists.fs_scenarios,
-		ePlaylists.fs_survival,
+		ePlaylists.survival,
 		ePlaylists.SURVIVAL,
 		ePlaylists.fs_haloMod,
 		ePlaylists.fs_haloMod_oddball,
 		ePlaylists.fs_haloMod_ctf,
-		ePlaylists.fs_survival_solos,
+		ePlaylists.survival_solos,
 		ePlaylists.fs_dm_fast_instagib,
 		ePlaylists.fs_snd,
 		ePlaylists.fs_realistic_ttv
-		//ePlaylists.fs_survival_duos,
-		//ePlaylists.fs_survival_trios,
+		//ePlaylists.survival_duos,
+		//ePlaylists.survival_trios,
 	]
 
 	array<int> supportedTrackerGamemodes = 
@@ -526,6 +620,7 @@ void function MapHasTrain_Init()
 		eMaps.mp_rr_desertlands_64k_x_64k,
 		eMaps.mp_rr_desertlands_64k_x_64k_nx,
 		eMaps.mp_rr_desertlands_64k_x_64k_tt,
+		eMaps.mp_rr_desertlands_64k_x_64k_mv,
 		eMaps.mp_rr_desertlands_holiday,
 		eMaps.mp_rr_desertlands_mu1,
 		eMaps.mp_rr_desertlands_mu1_tt
@@ -634,4 +729,220 @@ bool function Flowstate_ModeDisablesRagdolls()
 bool function Flowstate_Is4DMode()
 {
 	return modeSettings.is4DMode
+}
+
+//////////////////////////////////////////
+//  Enhanced dynamic enum registration  //
+//////////////////////////////////////////
+
+void function RegisterExternalPlaylist( string playlistName, string modSource )
+{
+	string playlistLower = playlistName.tolower()
+	
+	// Check if the playlist already exists and skip registration if it does
+	if ( playlistLower in SH_globals.externalPlaylists )
+	{
+		printw( "[ENUM] Warning: External playlist " + playlistName + " already exists, skipping registration" )
+		return
+	}
+	
+	if ( getPlaylistEnumFromName( playlistName ) != -1 )
+	{
+		printw( "[ENUM] Error: Playlist " + playlistName + " conflicts with existing static playlist" )
+		return
+	}
+	
+	if ( modSource == "" )
+	{
+		printw( "[ENUM] Error: Mod source cannot be empty for playlist " + playlistName )
+		return
+	}
+	
+	// Generate a dynamic ID for this external playlist
+	int dynamicId = SH_globals.nextPlaylistId
+	SH_globals.nextPlaylistId++
+	
+	// Register the external playlist
+	SH_globals.externalPlaylists[playlistLower] <- dynamicId
+	SH_globals.registeredExternalPlaylists.append( playlistName )
+	
+	// Refresh enum arrays to include new playlist
+	RefreshEnumArrays()
+	
+	printt( "[ENUM] Registered external playlist: " + playlistName + " from mod: " + modSource + " with ID: " + dynamicId )
+}
+
+void function RegisterExternalGamemodeEnum( string gamemodeName, string modSource, int gamemodeId = -1 )
+{
+	string gamemodeLower = gamemodeName.tolower()
+	
+	// Check if the gamemode already exists and skip registration if it does
+	if ( gamemodeLower in SH_globals.externalGamemodes )
+	{
+		printw( "[ENUM] Warning: External gamemode " + gamemodeName + " already exists in enum system, skipping registration" )
+		return
+	}
+	
+	if ( getGamemodeEnumFromName( gamemodeName ) != -1 )
+	{
+		printw( "[ENUM] Error: Gamemode " + gamemodeName + " conflicts with existing static gamemode" )
+		return
+	}
+	
+	if ( modSource == "" )
+	{
+		printw( "[ENUM] Error: Mod source cannot be empty for gamemode " + gamemodeName )
+		return
+	}
+	
+	int dynamicId
+	if ( gamemodeId != -1 )
+	{
+		// Use provided ID (for sync with sh_gamemodes.gnut system)
+		dynamicId = gamemodeId
+	}
+	else
+	{
+		// Generate a dynamic ID for this external gamemode
+		dynamicId = SH_globals.nextGamemodeId
+		SH_globals.nextGamemodeId++
+	}
+	
+	// Register the external gamemode
+	SH_globals.externalGamemodes[gamemodeLower] <- dynamicId
+	SH_globals.registeredExternalGamemodes.append( gamemodeName )
+	
+	// Refresh enum arrays to include new gamemode
+	RefreshEnumArrays()
+	
+	printt( "[ENUM] Registered external gamemode: " + gamemodeName + " from mod: " + modSource + " with ID: " + dynamicId )
+}
+
+bool function IsExternalPlaylist( string playlistName )
+{
+	string playlistLower = playlistName.tolower()
+	return ( playlistLower in SH_globals.externalPlaylists )
+}
+
+bool function IsExternalGamemodeEnum( string gamemodeName )
+{
+	string gamemodeLower = gamemodeName.tolower()
+	return ( gamemodeLower in SH_globals.externalGamemodes )
+}
+
+int function GetExternalPlaylistId( string playlistName )
+{
+	string playlistLower = playlistName.tolower()
+	if ( !(playlistLower in SH_globals.externalPlaylists) )
+	{
+		printw( "[ENUM] Error: External playlist " + playlistName + " not found" )
+		return -1
+	}
+	return SH_globals.externalPlaylists[playlistLower]
+}
+
+int function GetExternalGamemodeId( string gamemodeName )
+{
+	string gamemodeLower = gamemodeName.tolower()
+	if ( !(gamemodeLower in SH_globals.externalGamemodes) )
+	{
+		printw( "[ENUM] Error: External gamemode " + gamemodeName + " not found" )
+		return -1
+	}
+	return SH_globals.externalGamemodes[gamemodeLower]
+}
+
+void function RefreshEnumArrays()
+{
+	// Clear existing arrays (but keep static entries)
+	SH_globals.playlists.clear()
+	SH_globals.gamemodes.clear()
+	
+	// Rebuild arrays with both static and external entries
+	__EnumsToArrays_Init()
+	
+	// Update global enum tables
+	__UpdateGlobalEnumTables()
+}
+
+void function __UpdateGlobalEnumTables()
+{
+	// Clear global tables
+	EXTERNAL_PLAYLISTS.clear()
+	EXTERNAL_GAMEMODES.clear()
+	ALL_PLAYLISTS.clear()
+	ALL_GAMEMODES.clear()
+	
+	// Populate static playlist entries
+	foreach( string playlistName, int playlistId in ePlaylists )
+	{
+		if( playlistId >= 0 && playlistId < ePlaylists._PLAYLISTS_COUNT )
+			ALL_PLAYLISTS[playlistName.tolower()] <- playlistId
+	}
+	
+	// Populate static gamemode entries  
+	foreach( string gamemodeName, int gamemodeId in eGamemodes )
+	{
+		if( gamemodeId >= 0 && gamemodeId < eGamemodes._GAMEMODES_COUNT )
+			ALL_GAMEMODES[gamemodeName.tolower()] <- gamemodeId
+	}
+	
+	// Populate external playlist entries
+	foreach( string playlistName, int playlistId in SH_globals.externalPlaylists )
+	{
+		EXTERNAL_PLAYLISTS[playlistName] <- playlistId
+		ALL_PLAYLISTS[playlistName] <- playlistId
+	}
+	
+	// Populate external gamemode entries
+	foreach( string gamemodeName, int gamemodeId in SH_globals.externalGamemodes )
+	{
+		EXTERNAL_GAMEMODES[gamemodeName] <- gamemodeId
+		ALL_GAMEMODES[gamemodeName] <- gamemodeId
+	}
+}
+
+//////////////////////////////////////////
+//     Conditional Helper Functions     //
+//////////////////////////////////////////
+
+bool function PlaylistIs( string playlistName )
+{
+	string playlistLower = playlistName.tolower()
+	
+	// Check if playlist exists in unified table
+	if( !(playlistLower in ALL_PLAYLISTS) )
+		return false
+		
+	// Compare current playlist ID with expected ID
+	return Playlist() == ALL_PLAYLISTS[playlistLower]
+}
+
+bool function GamemodeIs( string gamemodeName )
+{
+	string gamemodeLower = gamemodeName.tolower()
+	
+	// Check if gamemode exists in unified table
+	if( !(gamemodeLower in ALL_GAMEMODES) )
+		return false
+		
+	// Compare current gamemode ID with expected ID
+	return Gamemode() == ALL_GAMEMODES[gamemodeLower]
+}
+
+bool function IsCurrentPlaylistExternal()
+{
+	string currentPlaylistName = GetCurrentPlaylistName()
+	return IsExternalPlaylist( currentPlaylistName )
+}
+
+bool function IsCurrentGamemodeExternal()
+{
+	#if SERVER || CLIENT
+		string currentGamemodeName = GameRules_GetGameMode()
+	#elseif UI
+		string currentGamemodeName = GetConVarString( "mp_gamemode" )
+	#endif
+	
+	return IsExternalGamemodeEnum( currentGamemodeName )
 }

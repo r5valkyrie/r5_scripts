@@ -63,48 +63,54 @@ void function AirdropSpawnThink()
 {
     int curStage = SURVIVAL_GetCurrentDeathFieldStage()
     int prevStage = curStage
+
     while (true)
     {
         curStage = SURVIVAL_GetCurrentDeathFieldStage()
-        if(curStage > prevStage)
+        if( curStage <= prevStage )
         {
-            printt("Advanced Stage! ", curStage)
-            prevStage = curStage
-            printt("Total Data: ", calculatedAirdropData.len())
-            foreach(data in calculatedAirdropData)
-            {
-                if(data.dropCircle == curStage)
-                {
-                    printt("Matched a stage!")
-                    
-                    //Wait for ring to start shrinking
-                    while(!SURVIVAL_GetDeathFieldShrinking())
-                        WaitFrame()
-                        
-                    //Got data for this stage so let's start to spawn the airdrops
-                    int numAirdropsInData = data.dropCount
-                    
-                    //Must wait for preWait to expire before running spawns
-                    wait data.preWait
-                    
-                    //Play the announcement
-                    AddSurvivalCommentaryEvent(eSurvivalEventType.CARE_PACKAGE_DROPPING)
-                    
-                    for(int i = 0; i < numAirdropsInData; i++)
-                    {
-                        printt("Spawned an airdrop! (", i, ") This dropcircle is ", data.dropCircle, " and there are ", numAirdropsInData, " this round.")
-                        entity fx = StartParticleEffectInWorld_ReturnEntity(GetParticleSystemIndex( DROPPOD_SPAWN_FX ), data.originArray[i], data.anglesArray[i])
+            WaitFrame()
+            continue
+        }
 
-                        thread AirdropItems( data.originArray[i], data.anglesArray[i], data.contents[i], fx, "droppod_loot_drop", null, 0, "" )
-                        if(numAirdropsInData > 1)
-                        {
-                            //If we have more than one pod spawning, wait between spawning the airdrops.
-                            wait RandomFloatRange( data.minDelayBetweenPods,  data.maxDelayBetweenPods )
-                        }
-                    }
+        printt("Advanced Stage! ", curStage)
+        prevStage = curStage
+        printt( "Total Data: ", calculatedAirdropData.len() )
+
+        foreach( data in calculatedAirdropData )
+        {
+            if( data.dropCircle != curStage )
+                continue
+
+            printt("Matched a stage!")
+                
+            // Wait for ring to start shrinking
+            while( !SURVIVAL_GetDeathFieldShrinking() )
+                WaitFrame()
+
+            // Got data for this stage so let's start to spawn the airdrops
+            int numAirdropsInData = data.dropCount
+ 
+            // Must wait for preWait to expire before running spawns
+            wait data.preWait
+
+            // Play the announcement
+            AddSurvivalCommentaryEvent( eSurvivalEventType.CARE_PACKAGE_DROPPING )
+
+            for( int i = 0; i < numAirdropsInData; i++ )
+            {
+                printt( "Spawned an airdrop! (", i, ") This dropcircle is ", data.dropCircle, " and there are ", numAirdropsInData, " this round." )
+                entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( DROPPOD_SPAWN_FX ), data.originArray[ i ], data.anglesArray[ i ] )
+
+                thread AirdropItems( data.originArray[i], data.anglesArray[i], data.contents[i], fx, "droppod_loot_drop", null, 0, "" )
+                if( numAirdropsInData > 1 )
+                {
+                    // If we have more than one pod spawning, wait between spawning the airdrops.
+                    wait RandomFloatRange( data.minDelayBetweenPods,  data.maxDelayBetweenPods )
                 }
             }
         }
+
         WaitFrame()
     }
 }
@@ -130,17 +136,20 @@ void function OnAirdropCreated( entity dropPod )
 
 void function OnAirdropUse( entity dropPod, entity player, int useInputFlags )
 {
+    if ( !dropPod.DoesShareRealms( player ) )
+		return
+    
 	if ( useInputFlags & USE_INPUT_DEFAULT )
 	{
 		#if SERVER
-
+        PIN_Interact( player, "care_package", dropPod.GetOrigin() )
 		#endif
 	}
     
     dropPod.Signal( "OpenDroppod" )
 }
 
-void function AirdropUseThink( entity ent, entity playerUser )
+void function AirdropUseThink( entity dropPod, entity playerUser )
 {
 	ExtendedUseSettings settings
 	#if CLIENT
@@ -154,20 +163,20 @@ void function AirdropUseThink( entity ent, entity playerUser )
 
 	#endif
 
-	settings.duration = ent.GetTargetName() == CARE_PACKAGE_TARGETNAME ? CARE_PACKAGE_OPEN_TIME : CARE_PACKAGE_LIFELINE_OPEN_TIME
+	settings.duration = dropPod.GetTargetName() == CARE_PACKAGE_TARGETNAME ? CARE_PACKAGE_OPEN_TIME : CARE_PACKAGE_LIFELINE_OPEN_TIME
 	settings.requireMatchingUseEnt = true
 
-	ent.EndSignal( "OnDestroy" )
+	dropPod.EndSignal( "OnDestroy" )
 
-	waitthread ExtendedUse( ent, playerUser, settings )
+	waitthread ExtendedUse( dropPod, playerUser, settings )
 }
 
-void function SignalOpenAirdrop( entity ent, entity player, ExtendedUseSettings settings )
+void function SignalOpenAirdrop( entity dropPod, entity player, ExtendedUseSettings settings )
 {
-	ent.Signal( "OpenDroppod" )
+	dropPod.Signal( "OpenDroppod" )
 
 #if SERVER
-
+    PIN_Interact( player, "care_package", dropPod.GetOrigin() )
 #endif
 }
 
@@ -194,17 +203,16 @@ void function AirdropForRound( vector position, vector angles, int round, entity
 
     AirdropData data = calculatedAirdropData[ round ]
 
-    //Got data for this stage so let's start to spawn the airdrops
+    // Got data for this stage so let's start to spawn the airdrops
     int numAirdropsInData = data.dropCount
     
-    //Play the announcement
-    AddSurvivalCommentaryEvent(eSurvivalEventType.CARE_PACKAGE_DROPPING)
+    // Play the announcement
+    AddSurvivalCommentaryEvent( eSurvivalEventType.CARE_PACKAGE_DROPPING )
     
-    for(int i = 0; i < numAirdropsInData; i++)
+    for( int i = 0; i < numAirdropsInData; i++ )
     {
-        entity fx = StartParticleEffectInWorld_ReturnEntity(GetParticleSystemIndex( DROPPOD_SPAWN_FX ), position, angles)
-
-        thread AirdropItems( position, angles, data.contents[i], fx, "droppod_loot_drop", null, 0, "" )
+        entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( DROPPOD_SPAWN_FX ), position, angles )
+        thread AirdropItems( position, angles, data.contents[ i ], fx, "droppod_loot_drop", null, 0, "" )
     }
 }
 #endif

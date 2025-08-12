@@ -1,0 +1,83 @@
+"mod"
+{
+	"name" "SDK core mod"
+	"id" "SDK.Core"
+	"description" "The SDK's core mod for R5Reloaded."
+	"version" "1.0"
+	"author" "Kawe Mazidjatari"
+
+	"LocalizationFiles"
+	{
+	}
+
+	"PakLoadOnPlaylists"
+	{
+	}
+
+	"ConVars"
+	{
+		// Message of the day ( MOTD ).
+		"motd_enable"
+		{
+			"helpText" "Controls whether to show the server message of the day dialog on join."
+			"flags" 		"ARCHIVE|RELEASE"
+
+			"Values"
+			{
+				"default"	"1"
+				"min" 		"0"
+				"max"		"1"
+			}
+		}
+		"motd_once_per_server"
+		{
+			"helpText" "Controls whether to show the server message of the day only once per server."
+			"flags" 		"ARCHIVE|RELEASE"
+
+			"Values"
+			{
+				"default"	"1"
+				"min" 		"0"
+				"max"		"1"
+			}
+		}
+
+		// Server browser.
+		"serverbrowser_hideEmptyServers"
+		{
+			"helpText" "Hide empty servers in the server browser."
+			"flags" 		"RELEASE"
+
+			"Values"
+			{
+				"default"	"0"
+				"min" 		"0"
+				"max"		"1"
+			}
+		}
+		"serverbrowser_mapFilter"
+		{
+			"helpText" "Filter servers by map in the server browser."
+			"flags" 		"RELEASE"
+
+			"Values"
+			{
+				"default"	"0"
+				"min" 		"0"
+				"max"		"1"
+			}
+		}
+		"serverbrowser_gameModeFilter"
+		{
+			"helpText" "Filter servers by game mode in the server browser."
+			"flags" 		"RELEASE"
+
+			"Values"
+			{
+				"default"	"0"
+				"min" 		"0"
+				"max"		"1"
+			}
+		}
+	}
+}

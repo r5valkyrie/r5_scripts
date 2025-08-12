@@ -23,9 +23,6 @@ global struct OlympusRiftParams
 	float triggerBoxSize = RIFT_TRIGGER_BOX_SIZE
 }
 
-const string LIFELINETT_PLAYLIST_ENABLE_MEDKIT_SPAWNS = "lifeline_tt_medkit_spawns"
-const string LIFELINETT_LOOT_KEYWORD = "lifeline_tt_loot"
-
 struct
 {
 	table< entity, int > riftHandles
@@ -36,45 +33,75 @@ void function Olympus_MapInit_Common()
 {
 	printf( "%s()", FUNC_NAME() )
 
+	SetVictorySequencePlatformModel( $"mdl/levels_terrain/mp_rr_olympus/floating_victory_platform_01.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
+
+	if ( MapName() == eMaps.mp_rr_olympus_tt || MapName() == eMaps.mp_rr_olympus_mu1 ){
+		PathTT_Init()}
+
 	#if CLIENT
 		Freefall_SetPlaneHeight( 12500 )
 		Freefall_SetDisplaySeaHeightForLevel( -11500 )
+		SetVictorySequenceLocation(<15002.5635, 16763.1055, 2355.54785>, <0, 15.1553955, 0> )
+		//SetVictorySequenceEffectPackage( <15002.5635, 16763.1055, 2355.54785>, <0, 105.155, 0>, OLYMPUS_VICTORY_EFFECT )
 	#endif
 
 	#if SERVER
-		InitVehicleARBarriers()
 
 		if ( GetCurrentPlaylistVarBool( "olympus_rift_enabled", true ) )
 		{
 			AddSpawnCallback( "info_target", Rift_Init )
 		}
+		
+		if ( MapName() == eMaps.mp_rr_olympus_tt || MapName() == eMaps.mp_rr_olympus_mu1 )
+		{
+			InitLootRollers()
+		}
 
-		thread KillPlayersUnderMap_Thread( MAP_KILL_VOLUME_OFFSET_OLYMPUS ) //-28320       
+		//thread KillPlayersUnderMap_Thread( MAP_KILL_VOLUME_OFFSET_OLYMPUS ) //-28320
 
-		// if ( GetCurrentPlaylistVarInt( "deathfield_end_on_script_locations", 0 ) == 1 )
-			AddCircleOverrideLocations()
+		/////////////////////////////////////////////////////////////REMOVE THESE ONCE FIXED/////////////////////////////////////////////////////////////////////////
+
+		AddSpawnCallbackEditorClass( "player_vehicle", "hover_vehicle", EditorSpawnCallbackRemoveEnts )
+		//AddSpawnCallbackEditorClass( "prop_dynamic", "script_loot_marvin", EditorSpawnCallbackRemoveEnts )
+		AddSpawnCallbackEditorClass( "prop_dynamic", "audio_log_console_03", EditorSpawnCallbackRemoveEnts )
+		AddSpawnCallbackEditorClass( "prop_dynamic", "audio_log_console_tunnel", EditorSpawnCallbackRemoveEnts )
+		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_crafting_harvester", EditorSpawnCallbackRemoveEnts )
+		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_crafting_workbench_cluster", EditorSpawnCallbackRemoveEnts )//TODO: REMOVE THESE!!!
+		AddSpawnCallbackEditorClass( "func_brush", "func_brush_control_wall", EditorSpawnCallbackRemoveEnts )
+		InitVehicleARBarriers()
 	#endif
 
-	#if SERVER && DEVELOPER
+	#if SERVER
 		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 	#endif
 
 	#if CLIENT
-		//SetMinimapBackgroundTileImage( $"overviews/mp_rr_olympus_bg" )
+		SetMinimapBackgroundTileImage( $"overviews/mp_rr_canyonlands_bg" )
 	#endif
 }
 
-#if SERVER && DEVELOPER
+#if SERVER
 void function EntitiesDidLoad()
 {
+	#if SERVER && DEVELOPER
+		//test_runmapchecks()
+	#endif
 
-       
+	// JFS: Create phase runner pings
+}
+
+void function EditorSpawnCallbackRemoveEnts( entity ent )
+{
+	if( !IsValid( ent ) )
+		return
+
+	ent.Destroy()//TODO: Remove this function once we get tridents -LorryLeKral
 }
 #endif
 
 
-#if SERVER
 
+#if SERVER
 void function InitVehicleARBarriers()
 {
 	AddSpawnCallback( "func_brush", void function ( entity brush )
@@ -84,6 +111,7 @@ void function InitVehicleARBarriers()
 			return
 
 		brush.NotSolid()
+		brush.Destroy()//TODO: Recover this function once we get tridents -LorryLeKral
 	} )
 }
 
@@ -102,6 +130,9 @@ void function Rift_Init( entity ent )
 	trigger.SetLeaveCallback( OnEntityLeaveRiftTrigger )
 	trigger.kv.triggerFilterPlayer = "all"
 	trigger.kv.triggerFilterPhaseShift = "any"
+
+	//DebugDrawCylinder( trigger.GetOrigin() , < -90, 0, 0 >, file.riftParams.innerRadius, -trigger.GetAboveHeight(), 255, 90, 0, true, 9999.9 )
+	//DebugDrawCylinder( trigger.GetOrigin() , < -90, 0, 0 >, file.riftParams.outerRadius, -trigger.GetBelowHeight(), 0, 255, 0, true, 9999.9 )
 
 	DispatchSpawn( trigger )
 
@@ -134,14 +165,15 @@ void function OnEntityLeaveRiftTrigger( entity trigger, entity ent )
 
 void function GravityAirControl( entity player )
 {
-	// file.riftHandles[player] <- StatusEffect_AddEndless(player, eStatusEffect.in_olympus_rift, 1.0)
+	//StatusEffect_AddEndless(player, eStatusEffect.in_olympus_rift, 1.0)
+	player.SetOrigin( <20000,0,-100>)
 	player.kv.airSpeed = 500
 	player.kv.airAcceleration = 10000
 }
 
 void function DisableGravityAirControl( entity player )
 {
-	// StatusEffect_Stop(player, file.riftHandles[player] )
+	// StatusEffect_Stop(player, eStatusEffect.in_olympus_rift)
 	player.kv.airSpeed = player.GetPlayerSettingFloat( "airSpeed" )
 	player.kv.airAcceleration = player.GetPlayerSettingFloat( "airAcceleration" )
 }
@@ -150,32 +182,4 @@ void function Olympus_SetRiftParams( OlympusRiftParams params )
 {
 	file.riftParams = params
 }            
-
-void function AddCircleOverrideLocations()
-{
-	SURVIVAL_AddOverrideCircleLocation( <-18165, 30989, -6171>, 0, true )    // Docks
-	SURVIVAL_AddOverrideCircleLocation( <-14786, 22705, -6672>, 0, true )    // Docks - Pathfinder
-	SURVIVAL_AddOverrideCircleLocation( <-27500, 23265, -6504>, 0, true )    // Carrier
-	SURVIVAL_AddOverrideCircleLocation( <-34216, 14719, -5528>, 0, true )    // Oasis
-	SURVIVAL_AddOverrideCircleLocation( <-24134, 12428, -5760>, 0, true )    // East of Oasis
-	SURVIVAL_AddOverrideCircleLocation( <-22569, 153, -5568>, 0, true )    // Estates
-	SURVIVAL_AddOverrideCircleLocation( <-34150, -523, -4344>, 0, true )    // Marina-ish
-	SURVIVAL_AddOverrideCircleLocation( <-33188, -16372, -3496>, 0, true )    // Hydroponics
-	SURVIVAL_AddOverrideCircleLocation( <-25588, -10407, -4455>, 0, true )	// NE of Hydroponics
-	SURVIVAL_AddOverrideCircleLocation( <-2946, -24898, -4464>, 0, true )    // Bonsai Plaza
-	SURVIVAL_AddOverrideCircleLocation( <-13309, -20101, -4383>, 0, true )    // Houses NW of Bonsai
-	SURVIVAL_AddOverrideCircleLocation( <563, -14158, -6061>, 0, true )    // Solar Array
-	SURVIVAL_AddOverrideCircleLocation( <22762, -16177, -4998>, 0, true )    // Orbital Cannon
-	SURVIVAL_AddOverrideCircleLocation( <11516, -18020, -5684>, 0, true )		// NW of Cannon
-	SURVIVAL_AddOverrideCircleLocation( <17913, -2511, -5112>, 0, true )    // Grow Towers
-	SURVIVAL_AddOverrideCircleLocation( <16907, 8456, -3624>, 0, true )    // Gardens
-	SURVIVAL_AddOverrideCircleLocation( <9012, 18621, -5865>, 0, true )    // Rift (outer)
-	SURVIVAL_AddOverrideCircleLocation( <650, 8502, -5000>, 0, true )    // Energy Depot
-	SURVIVAL_AddOverrideCircleLocation( <5237, -4233, -4301>, 0, true )    // Near Phase Runner
-	SURVIVAL_AddOverrideCircleLocation( <-3920, -3602, -6122>, 0, true )    // Hammond Labs
-	SURVIVAL_AddOverrideCircleLocation( <-14139, -4043, -5552>, 0, true )    // Between Labs and Estates
-	SURVIVAL_AddOverrideCircleLocation( <-13504, 11612, -6558>, 0, true )    // Turbine
-	SURVIVAL_AddOverrideCircleLocation( <-4818, 27611, -6108>, 0, true )    // Power Grid (outer)
-	SURVIVAL_AddOverrideCircleLocation( <-4969, 18418, -5892>, 0, true )    // Power Grid (inner)
-}
 #endif

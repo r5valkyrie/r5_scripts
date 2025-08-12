@@ -25,6 +25,7 @@ global function printt_spamLog
 global function printl_spamLog
 global function printt_spam
 global function SpamWarning
+global function printt_verticle
 
 global function LevelVarInit
 
@@ -69,7 +70,19 @@ void function printt( ... )
 
 	local msg = vargv[0]
 	for ( int i = 1; i < vargc; i++ )
-		msg = (msg + " " + vargv[i])
+		msg = ( msg + " " + vargv[i] )
+
+	printl( msg )
+}
+
+void function printt_verticle( ... )
+{
+	if ( vargc <= 0 )
+		return
+
+	local msg = "\n" + vargv[0]
+	for ( int i = 1; i < vargc; i++ )
+		msg = ( msg + "\n" + vargv[i] )
 
 	printl( msg )
 }
@@ -81,7 +94,7 @@ void function printw( ... )
 
 	local msg = vargv[0]
 	for ( int i = 1; i < vargc; i++ )
-		msg = (msg + " " + vargv[i])
+		msg = ( msg + " " + vargv[i] )
 
 	Warning( string( msg ) )
 }

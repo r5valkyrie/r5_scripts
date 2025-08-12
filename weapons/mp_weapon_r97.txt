@@ -80,7 +80,7 @@ WeaponData
                                               
                                   
      
-	"ammo_clip_size"   								"17"
+	"ammo_clip_size"   								"18"
 
     "ammo_stockpile_max"					        "36"
     "ammo_default_total"					        "0"
@@ -92,12 +92,12 @@ WeaponData
     "low_ammo_fraction" 					        "0.3"
 
     // Damage - When Used by Players
-    "damage_near_value"   							"11"
-    "damage_far_value"								"11"
-    "damage_very_far_value"							"11"
-    "damage_near_value_titanarmor"					"11"
-    "damage_far_value_titanarmor" 					"11"
-    "damage_very_far_value_titanarmor" 				"11"
+    "damage_near_value"   							"13"
+    "damage_far_value"								"13"
+    "damage_very_far_value"							"13"
+    "damage_near_value_titanarmor"					"13"
+    "damage_far_value_titanarmor" 					"13"
+    "damage_very_far_value_titanarmor" 				"13"
     "damage_rodeo" 									"110"
 
 
@@ -159,10 +159,10 @@ WeaponData
     "viewmodel_jolt_roll"                            "0 2.5 0.0"
     "viewmodel_jolt_side"                            "0 0.0525 0"
 
-	"viewkick_pitch_base" 							"1.3"
+	"viewkick_pitch_base" 							"1.150000"
 	"viewkick_pitch_random"   						"1"
 
-	"viewkick_pitch_softScale"						"4.5" //4.0
+	"viewkick_pitch_softScale"						"4.250000"
     "viewkick_pitch_hardScale"						"0.4"
 
 	"viewkick_yaw_base"   							"1.0"
@@ -220,15 +220,19 @@ WeaponData
 	"viewmodel_ads_rui_bottomleft_attachment"	"RUI_BL_CROSSHAIR_R99"
 	"viewmodel_ads_centerpoint_attachment"      "ADS_CENTER_SIGHT_R99"
 
+
+	"damage_shield_scale"	"1"
+	"damage_headshot_scale"	"1.250000"
+	"damage_leg_scale"	"0.800000"
+	"critical_hit"	"1"
+	"critical_hit_damage_scale"	"2"
+	"titanarmor_critical_hit_required"	"1"
+	"damage_near_distance"	"900"
+	"damage_far_distance"	"1500"
+	"damage_very_far_distance"	"3500"
+	"headshot_distance"	"1500"
 	Mods
-	{
-		funny_selector
-		{
-			"projectile_ricochet_max_count"					"9999"
-			"bolt_bounce_frac" 								"1"
-			"projectile_damages_owner"						"1"
-		}
-		
+	{	
         gold
         {
         }
@@ -347,19 +351,19 @@ WeaponData
 
 		bullets_mag_l1
 		{
-            "ammo_clip_size"   							"20" //21
+            "ammo_clip_size"   							"21"
 		}
 		bullets_mag_l2
 		{
-            "ammo_clip_size"   							"23" //24
+            "ammo_clip_size"   							"24"
 		}
 		bullets_mag_l3
 		{
-            "ammo_clip_size"   							"26" //27
+            "ammo_clip_size"   							"27"
 		}
         bullets_mag_l4
         {
-            "ammo_clip_size"   							"26" //27
+            "ammo_clip_size"   							"27"
         }
 
 		legendary1
@@ -368,7 +372,15 @@ WeaponData
 			"playermodel" 									"mdl/weapons/r97/w_r97_legendary_01.rmdl"
 		}
 
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 
 	"ui1_enable"		"1"

@@ -1,13 +1,3 @@
-// Made by @CafeFPS
-
-// Featuring:
-// Entities Clean Up
-// Pathfinder Town Takeover boxing ring set up
-// Pathfinder Town Takeover screens set up
-// Warp Tunnels
-// Bridge Vault Set Up
-// Ship Weapon Racks
-
 global function CodeCallback_MapInit
 
 #if DEVELOPER
@@ -26,13 +16,6 @@ struct {
 
 void function CodeCallback_MapInit()
 {
-	printt( "----------------------------" )
-	printt( "Welcome to Olympus" )
-	printt( "-- Map Assets, models, textures and more: LorryLeKral (Lorry)" )
-	printt( "-- Model Conversion and Engine Improvements: AmosModz" )
-	printt( "-- Map Scripts: CafeFPS, LorryLeKral" )
-	printt( "----------------------------" )
-
 	SetVictorySequencePlatformModel( $"mdl/levels_terrain/mp_rr_olympus/floating_victory_platform_01.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
 
 	Olympus_MapInit_Common()
@@ -41,14 +24,12 @@ void function CodeCallback_MapInit()
 	SURVIVAL_SetMapCenter( <-6900, 2940, 0> )
 	// SURVIVAL_SetMapDelta( 50000 )
 
-
-	PathTT_Init()
-	if (MapName() == eMaps.mp_rr_olympus_mu1 )
-		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_olympus_mu1.rpak" )
-	else if (MapName() == eMaps.mp_rr_olympus_tt )
+	if (MapName() == eMaps.mp_rr_olympus_tt )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_olympus_tt.rpak" )
-	else
+	else if (MapName() == eMaps.mp_rr_olympus )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_olympus.rpak" )
+	else if (MapName() == eMaps.mp_rr_olympus_mu1 )
+		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_olympus_mu1.rpak" )
 	
 	//Clean up unused ents
 	AddCallback_EntitiesDidLoad( Olympus_OnEntitiesDidLoad )
@@ -57,7 +38,7 @@ void function CodeCallback_MapInit()
 	// AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_crafting_harvester", CleanupEnt )
 	// AddSpawnCallbackEditorClass( "player_vehicle", "hover_vehicle", CleanupEnt )
 	// AddSpawnCallbackEditorClass( "prop_script", "control_vehicle_summon_platform", CleanupEnt )
-	// AddSpawnCallbackEditorClass( "func_brush", "func_brush_arenas_start_zone", CleanupEnt )
+	AddSpawnCallbackEditorClass( "func_brush", "func_brush_arenas_start_zone", CleanupEnt )
 	
 	// AddSpawnCallback( "info_spawnpoint_human", InitSpawnpoint )
 	// AddSpawnCallback( "info_spawnpoint_human_start", InitSpawnpoint )
@@ -68,19 +49,16 @@ void function CodeCallback_MapInit()
 	// AddSpawnCallback( "script_ref", InitScriptRef )
 	// AddSpawnCallback( "info_target", InitInfoTarget )
 	
-	// AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_warp_gate", Flowstate_InitWarpGateTrigger )
+	AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_warp_gate", InitWarpGateTrigger )
 }
 
 void function Olympus_OnEntitiesDidLoad() 
 {
-	// //Remove trident walls
-	// array<entity> tridentWalls = GetEntArrayByScriptName( "vehicle_fence_01" )
-	// foreach( ent in tridentWalls )
-		// ent.Destroy()
-
 	//Adjust props
 	array<entity> props
 	entity first = Entities_FindByClassname( null, "prop_dynamic" )
+
+	SpawnWeaponsonRacks()
 
 	while( IsValid( first ) )
 	{
@@ -95,32 +73,15 @@ void function Olympus_OnEntitiesDidLoad()
 			file.adScreenEnt = ent
 			printt( "Saved AD screen ent" )
 		}
-		else if( ent.GetScriptName() == "path_tt_jumbo_screen_ko" )
+		if( ent.GetScriptName() == "path_tt_jumbo_screen_ko" )
 		{
 			file.koScreenEnt = ent
 			printt( "Saved KO screen ent" )
-		} else if( ent.GetScriptName() == "ship_vault_corpse" )
-		{
-			file.vaultKeys.append( ent )
 		}
-
-		if( ent.GetTargetName() == "vehicle_platform" )
-		{
-			// printt( "Removed vehicle platform" )
-			ent.Destroy()
-		}
-		
 		if( ent.GetModelName() == $"mdl/industrial/gun_rack_arm_down.rmdl" )
 		{
 			file.racks.append( ent )
 		}
-	}
-
-	if( Gamemode() == eGamemodes.SURVIVAL )
-	{
-		SpawnWeaponsonRacks()
-		if (MapName() == eMaps.mp_rr_olympus_mu1 )
-			SetupKeyForShipVault()
 	}
 
 	PrecacheModel( $"mdl/fx/oly_sphere_edges.rmdl" )		
@@ -160,15 +121,8 @@ void function SpawnWeaponsonRacks()
 void function SetupKeyForShipVault()
 {
 	entity chosenKey = file.vaultKeys.getrandom()
-	foreach( key in file.vaultKeys )
-	{
-		if( key == chosenKey )
-			continue
-		
-		key.Destroy()
-	}
 	
-	SpawnGenericLoot( "data_knife", chosenKey.GetOrigin(), chosenKey.GetAngles(), 1 )
+	SpawnGenericLoot( "ship_keycard", chosenKey.GetOrigin(), chosenKey.GetAngles(), 1 )
 	printt( "Spawned key for Ship Bridge Vault at ", chosenKey.GetOrigin() )
 	chosenKey.Destroy()
 }
@@ -208,7 +162,7 @@ void function InitSpawnpoint( entity spawn )
 
 void function InitInfoTarget( entity infotarget )
 {
-	if( GetEditorClass( infotarget ) == "info_warp_gate_path_node" ) // || GetEditorClass( infotarget ) == "warp_node_rift_exit" || GetEditorClass( infotarget ) == "oly_pr_warn_fx_ref"  )
+	if( GetEditorClass( infotarget ) == "info_warp_gate_path_node" || GetEditorClass( infotarget ) == "warp_node_rift_exit" || GetEditorClass( infotarget ) == "oly_pr_warn_fx_ref"  )
 	{
 		//screen_flash_on_node && cinematic_path_node
 	
@@ -290,25 +244,25 @@ void function CleanupEnt( entity ent )
 // ██ ███ ██ ██   ██ ██   ██ ██             ██    ██    ██ ██  ██ ██ ██  ██ ██ ██      ██           ██ 
  // ███ ███  ██   ██ ██   ██ ██             ██     ██████  ██   ████ ██   ████ ███████ ███████ ███████
 
-void function Flowstate_InitWarpGateTrigger( entity ent )
+void function InitWarpGateTrigger( entity ent )
 {
 	if( Gamemode() != eGamemodes.SURVIVAL )
 		return
 
-	Flowstate_WarpTunnel_SetupEnterTrigger( ent )
+	WarpTunnel_SetupEnterTrigger( ent )
 
 	ent.e.warpEntrancePath.clear()
 
 	//should_teleport_to_first_node
 	//warp_travel_speed
 
-	ent.e.warpEntrancePath = Flowstate_GenerateWarpBasePathForTrigger( ent )
+	ent.e.warpEntrancePath = GenerateWarpBasePathForTrigger( ent )
 	array<vector> portalNodes
 	foreach( node in ent.e.warpEntrancePath )
 	{
 		portalNodes.append( node.GetOrigin() )
 	}
-	ent.e.warpEntranceSmoothedPath = Flowstate_GenerateSmoothPathForBasePath( portalNodes )
+	ent.e.warpEntranceSmoothedPath = GenerateSmoothPathForBasePath( portalNodes )
 
 	printt( "Warp Path created for Trigger:", ent, ent.e.warpEntrancePath.len(), "- Smooth path len:", ent.e.warpEntranceSmoothedPath.len() )
 }
@@ -317,34 +271,29 @@ void function InitWarpNode( entity infotarget )
 {
 	file.nodes.append( infotarget )
 	
-	// #if DEVELOPER
-	// if( infotarget.GetLinkEntArray().len() == 2 )
-	// {
-		// DebugDrawSphere( infotarget.GetOrigin(), 80, 255, 0, 255, true, 999.0 ) //morado
-
-			// DebugDrawLine( infotarget.GetOrigin(), infotarget.GetLinkEntArray()[0].GetOrigin(), 255, 0, 255, true, 999 )
-			// DebugDrawLine( infotarget.GetOrigin(), infotarget.GetLinkEntArray()[1].GetOrigin(), 0, 255, 0, true, 999 )
-
-	// }
-	// else if( infotarget.GetLinkEntArray().len() == 1 )
-	// {
-		// DebugDrawSphere( infotarget.GetOrigin(), 80, 0, 0, 255, true, 999.0 ) //azul
-		// foreach( link in infotarget.GetLinkEntArray() )
-		// {
-			
-			// DebugDrawLine( infotarget.GetOrigin(), link.GetOrigin(), 0, 0, 255, true, 999 )
-		// }
-	// } else if( infotarget.GetLinkEntArray().len() == 0 )
-	// {
-		// DebugDrawSphere( infotarget.GetOrigin(), 80, 0, 255, 0, true, 999.0 ) //green
-		// foreach( link in infotarget.GetLinkEntArray() )
-		// {
-			
-			// DebugDrawLine( infotarget.GetOrigin(), link.GetOrigin(), 0, 255, 0, true, 999 )
-		// }
-	// }
-	// #endif
-
+	#if DEVELOPER
+	if( infotarget.GetLinkEntArray().len() == 2 )
+	{
+		DebugDrawSphere( infotarget.GetOrigin(), 80, 255, 0, 255, true, 999.0 ) //purple
+		DebugDrawLine( infotarget.GetOrigin(), infotarget.GetLinkEntArray()[0].GetOrigin(), 255, 0, 255, true, 999 )
+		DebugDrawLine( infotarget.GetOrigin(), infotarget.GetLinkEntArray()[1].GetOrigin(), 0, 255, 0, true, 999 )
+	}
+	else if( infotarget.GetLinkEntArray().len() == 1 )
+	{
+		DebugDrawSphere( infotarget.GetOrigin(), 80, 0, 0, 255, true, 999.0 ) //blue
+		foreach( link in infotarget.GetLinkEntArray() )
+		{
+			DebugDrawLine( infotarget.GetOrigin(), link.GetOrigin(), 0, 0, 255, true, 999 )
+		}
+	} else if( infotarget.GetLinkEntArray().len() == 0 )
+	{
+		DebugDrawSphere( infotarget.GetOrigin(), 80, 0, 255, 0, true, 999.0 ) //green
+		foreach( link in infotarget.GetLinkEntArray() )
+		{
+			DebugDrawLine( infotarget.GetOrigin(), link.GetOrigin(), 0, 255, 0, true, 999 )
+		}
+	}
+	#endif
 }
 
 #if DEVELOPER
@@ -355,10 +304,10 @@ void function DEV_StartNodesLinksShow()
 		if( node.GetLinkEntArray().len() != 2 )
 			continue
 
-		DebugDrawSphere( node.GetOrigin(), 80, 255, 0, 255, true, 3.0 ) //morado
+		DebugDrawSphere( node.GetOrigin(), 80, 255, 0, 255, true, 3.0 ) //purple
 		
-		printt( "morado:", node.GetLinkEntArray()[0], node.GetLinkEntArray()[0].GetOrigin() )
-		printt( "verde:", node.GetLinkEntArray()[1], node.GetLinkEntArray()[1].GetOrigin() )
+		printt( "purple:", node.GetLinkEntArray()[0], node.GetLinkEntArray()[0].GetOrigin() )
+		printt( "green:", node.GetLinkEntArray()[1], node.GetLinkEntArray()[1].GetOrigin() )
 		DebugDrawLine( node.GetOrigin(), node.GetLinkEntArray()[0].GetOrigin(), 255, 0, 255, true, 3.0 )
 		DebugDrawLine( node.GetOrigin(), node.GetLinkEntArray()[1].GetOrigin(), 0, 255, 0, true, 3.0 )
 
@@ -367,12 +316,12 @@ void function DEV_StartNodesLinksShow()
 }
 #endif
 
-array<entity> function Flowstate_GenerateWarpBasePathForTrigger( entity ent )
+array<entity> function GenerateWarpBasePathForTrigger( entity ent )
 {
 	array<entity> nodes
 	array<entity> linkedEnts = ent.GetLinkEntArray()
 	
-	foreach ( entity link in linkedEnts ) //Obtener el nodo verde
+	foreach ( entity link in linkedEnts )
 	{
 		if( GetEditorClass( link ) != "info_warp_gate_path_node" )
 			continue
@@ -459,7 +408,7 @@ array<entity> function Flowstate_GenerateWarpBasePathForTrigger( entity ent )
 	return nodes
 }
 
-array<vector> function Flowstate_GenerateSmoothPathForBasePath( array<vector> path ) 
+array<vector> function GenerateSmoothPathForBasePath( array<vector> path ) 
 {
 	printt( "generating smooth points for path with len", path.len() )
 	if( path.len() == 0 )
@@ -481,14 +430,13 @@ array<vector> function Flowstate_GenerateSmoothPathForBasePath( array<vector> pa
         for (int j = 0; j < numPoints; j++)
         {
             float t = float( j ) / float( numPoints )
-            smoothPath.append( Flowstate_CatmullRom( points[i], points[i+1], points[i+2], points[i+3], t) )
+            smoothPath.append( CatmullRom( points[i], points[i+1], points[i+2], points[i+3], t) )
         }
     }
     return smoothPath
 }
 
-//Catmull-Rom algo to smooth the path.
-vector function Flowstate_CatmullRom( vector p0, vector p1, vector p2, vector p3, float t)
+vector function CatmullRom( vector p0, vector p1, vector p2, vector p3, float t)
 {
     vector v0 = p1
     vector v1 = 0.5 * (p2 - p0)
@@ -498,7 +446,7 @@ vector function Flowstate_CatmullRom( vector p0, vector p1, vector p2, vector p3
     return v0 + v1 * t + v2 * t * t + v3 * t * t * t;
 }
 
-void function Flowstate_WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes, entity trigger )
+void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes, entity trigger )
 {
 	if( entNodes.len() == 0 )
 		return
@@ -597,7 +545,7 @@ void function Flowstate_WarpTunnel_MoveEntAlongPath( entity player, array<entity
 
 	ViewConeZeroInstant( player )
 
-	vector anglesToUse = Flowstate_GetNextAngleToLookAt(1, 1, portalNodes)
+	vector anglesToUse = GetNextAngleToLookAt(1, 1, portalNodes)
 
 	player.SetAbsOrigin( portalNodes[0] )
 	player.SetAbsAngles( anglesToUse + <0, -180, 0> )
@@ -637,36 +585,36 @@ void function Flowstate_WarpTunnel_MoveEntAlongPath( entity player, array<entity
 	//Phase Shift Player
 	PhaseShift( player, 0.0, 999, eShiftStyle.Gate )
 	
-	// int actualmovements
-
-	// foreach( int i, node in portalNodes )
-	// {
-		// if( i == 0 || i == 4 && typeOfTunnel == 1 )
-		// {
-			// continue
-		// }
-
-		// if( i == 3 && typeOfTunnel == 1 )
-		// {
-			// continue
-		// }
-
-		// if( node == portalNodes[portalNodes.len()-2] )
-		// {
-			// continue
-		// }
-
-		// if( i == portalNodes.len()-1 )
-		// {
-			// break
-		// }
-
-		// actualmovements++
-	// }
+	int actualmovements
 
 	foreach( int i, node in portalNodes )
 	{
-		anglesToUse = Flowstate_GetNextAngleToLookAt(i, 1, portalNodes)
+		if( i == 0 || i == 4 && typeOfTunnel == 1 )
+		{
+			continue
+		}
+
+		if( i == 3 && typeOfTunnel == 1 )
+		{
+			continue
+		}
+
+		if( node == portalNodes[portalNodes.len()-2] )
+		{
+			continue
+		}
+
+		if( i == portalNodes.len()-1 )
+		{
+			break
+		}
+
+		actualmovements++
+	}
+
+	foreach( int i, node in portalNodes )
+	{
+		anglesToUse = GetNextAngleToLookAt(i, 1, portalNodes)
 
 		elapsedTime = Time() - startTime
 
@@ -710,14 +658,14 @@ void function Flowstate_WarpTunnel_MoveEntAlongPath( entity player, array<entity
 
 		distanceToNextNode = Distance( mover.GetOrigin(), node )
 		
-		// distanceToFinalNode = 0
-		// for( int j = i ; j < portalNodes.len()-2; j++)
-		// {
-			// // if( i == 3 && typeOfTunnel == 1 )
-				// // continue
+		float distanceToFinalNode = 0
+		for( int j = i ; j < portalNodes.len()-2; j++)
+		{
+			if( i == 3 && typeOfTunnel == 1 )
+				continue
 
-			// distanceToFinalNode += Distance( portalNodes[j - 1], portalNodes[j] )
-		// }
+			distanceToFinalNode += Distance( portalNodes[j - 1], portalNodes[j] )
+		}
 
 		phaseTime = distanceToNextNode / travelSpeed // :)
 	
@@ -734,7 +682,7 @@ void function Flowstate_WarpTunnel_MoveEntAlongPath( entity player, array<entity
 	#endif
 }
 
-vector function Flowstate_GetNextAngleToLookAt( int currentIndex, int step, array< vector > pathNodeDataArray )
+vector function GetNextAngleToLookAt( int currentIndex, int step, array< vector > pathNodeDataArray )
 {
 	int lookAhead = 2
 	int total = 1
@@ -760,13 +708,13 @@ vector function Flowstate_GetNextAngleToLookAt( int currentIndex, int step, arra
 	return VectorToAngles( nextPosition - startPosition )
 }
 
-void function Flowstate_WarpTunnel_SetupEnterTrigger( entity trigger )
+void function WarpTunnel_SetupEnterTrigger( entity trigger )
 {
-	trigger.ConnectOutput( "OnStartTouch", Flowstate_WarpTunnel_OnStartTouch )
-	trigger.ConnectOutput( "OnEndTouch", FS_WarpTunnel_OnEndTouch )
+	trigger.ConnectOutput( "OnStartTouch", WarpTunnel_OnStartTouch )
+	trigger.ConnectOutput( "OnEndTouch", WarpTunnel_OnEndTouch )
 }
 
-void function Flowstate_WarpTunnel_OnStartTouch( entity trigger, entity player, entity caller, var value )
+void function WarpTunnel_OnStartTouch( entity trigger, entity player, entity caller, var value )
 {
 	if( player.IsPhaseShifted() || player.e.isInPhaseTunnel )
 		return
@@ -775,11 +723,13 @@ void function Flowstate_WarpTunnel_OnStartTouch( entity trigger, entity player, 
 		printt( "player should travel now", player )
 	#endif
 
-	thread Flowstate_WarpTunnel_MoveEntAlongPath( player, trigger.e.warpEntrancePath, trigger )
+	thread WarpTunnel_MoveEntAlongPath( player, trigger.e.warpEntrancePath, trigger )
 }
 
-void function FS_WarpTunnel_OnEndTouch( entity trigger, entity player, entity caller, var value )
+void function WarpTunnel_OnEndTouch( entity trigger, entity player, entity caller, var value )
 {
-	// printt( "-out of warp trigger", player )
+	#if DEVELOPER
+		printt( "-out of warp trigger", player )
+	#endif
 }
 

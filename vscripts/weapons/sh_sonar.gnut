@@ -394,14 +394,14 @@ void function DecrementScanDiamondsPerTeam( int team, entity ent )
 const float AR_EFFECT_SIZE 		= 192.0 // coresponds with the size of the sphere model used for the AR effect
 const float AR_EFFECT_SIZE_CONE = 80.0
 
-void function ServerCallback_SonarPulseFromPosition( float x, float y,float z, float range, float speedScale = 1.0, bool hasDamageAmp = false )
+void function ServerCallback_SonarPulseFromPosition( vector vec, float range, float speedScale, bool hasDamageAmp )
 {
 	entity player = GetLocalViewPlayer()
-	thread SonarPulse( player, SONAR_PULSE_SPACE + (SONAR_PULSE_SPEED * speedScale), <x,y,z>, range, hasDamageAmp )
+	thread SonarPulse( player, SONAR_PULSE_SPACE + ( SONAR_PULSE_SPEED * speedScale ), < vec.x, vec.y, vec.z >, range, hasDamageAmp )
 
 	//If the player has the tracking vision passive register this sonar pulse with the tracking vision logic.
 	if ( player.HasPassive( ePassives.PAS_TRACKING_VISION ) )
-		TrackingVision_CreateSonarPulseArea( <x,y,z>, range, <0,0,0>, 360 )
+		TrackingVision_CreateSonarPulseArea( < vec.x, vec.y, vec.z >, range, <0,0,0>, 360 )
 }
 
 void function ServerCallback_SonarPulseConeFromPosition( vector pulseConeOrigin, float pulseConeRange, vector pulseConeDir, float pulseConeFOV, int team, float speedScale, bool hasDamageAmp, bool showTrail )

@@ -8,6 +8,10 @@ behavior_dummy_empty
 behavior_spider
 behavior_infected
 behavior_marvin
+behavior_mp_auto_titan
+behavior_mp_auto_titan_enhanced
+behavior_mp_auto_titan_guard
+behavior_mp_auto_titan_enhanced_guard
 behavior_prowler
 behavior_drone
 behavior_soldier
@@ -18,3 +22,6 @@ behavior_spectre
 behavior_pilot_elite
 behavior_turret_sentry
 behavior_nextbot
+behavior_titan
+behavior_titan_buddy
+//behavior_super_spectre

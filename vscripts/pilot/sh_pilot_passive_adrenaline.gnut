@@ -1,5 +1,3 @@
-//Server made by @CafeFPS
-
 global function ShPassiveAdrenaline_Init
 
 #if CLIENT
@@ -40,17 +38,11 @@ void function PassiveAdrenaline_OnPassiveChanged( entity player, int passive, bo
 {
 	if ( didHave && IsValid(player.p.vortexTriggerDoubleTime) )
 	{
-		#if DEVELOPER
-			printt("[Passive Adrenaline - Reimplemented by @CafeFPS] - stopped for player ", player)
-		#endif
 		player.p.vortexTriggerDoubleTime.Destroy()
 	}
 
 	if ( nowHas )
 	{
-		#if DEVELOPER
-			printt("[Passive Adrenaline - Reimplemented by @CafeFPS] - started for player ", player)
-		#endif
 		thread Flowstate_GrantAdrenaline( player )
 	}
 }

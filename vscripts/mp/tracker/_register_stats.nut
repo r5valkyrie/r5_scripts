@@ -1,11 +1,19 @@
-//untyped																			
+untyped																			
 globalize_all_functions
 #if TRACKER && HAS_TRACKER_DLL																	//~mkos
 
-const bool STORE_STAT = true 
+const bool STORE_STAT = true //this constant is not a toggle.
 
-struct {
+struct StatResetData
+{
+	string uid
+	string statKey
+	var savedValue
+}
 
+struct 
+{
+	array< StatResetData > shouldResetData
 	bool RegisterCoreStats 	= true
 	bool bStatsIs1v1Type 	= false
 
@@ -13,17 +21,70 @@ struct {
 
 void function SetRegisterCoreStats( bool b )
 {
-	file.RegisterCoreStats = b
+	file.RegisterCoreStats = b	
 }
 
-void function Tracker_Init()
+void function Tracker_Internal_Init()
 {
-	file.bStatsIs1v1Type = g_is1v1GameType()
+	file.bStatsIs1v1Type = g_bIs1v1GameType()
 	
 	bool bRegisterCoreStats = !GetCurrentPlaylistVarBool( "disable_core_stats", false )
 	SetRegisterCoreStats( bRegisterCoreStats )
 	
 	Stats__InternalInit()
+}
+
+void function Tracker_SetShouldResetStatOnShip( string uid, string statKey, var origValue, bool bShouldReset = true )
+{
+	if( bShouldReset )
+	{
+		StatResetData statData
+		
+		statData.uid		= uid
+		statData.statKey 	= statKey
+		statData.savedValue = origValue
+		
+		file.shouldResetData.append( statData )
+	}
+	else 
+	{
+		int maxIter = file.shouldResetData.len() - 1
+		if( maxIter == 0 )
+			return
+			
+		for( int i = maxIter; i >= 0; i-- )
+		{
+			if( file.shouldResetData[ i ].uid == uid && file.shouldResetData[ i ].statKey == statKey )
+				file.shouldResetData.remove( i )
+		}
+	}
+}
+
+void function Tracker_RunStatResets()
+{
+	foreach( int idx, StatResetData statData in file.shouldResetData )
+		Stats__RawSetStat( statData.uid, statData.statKey, statData.savedValue )
+}
+
+void function Tracker_ResyncAllForPlayer( entity playerToSync )
+{
+	foreach( player in GetPlayerArray() )
+		Remote_CallFunction_NonReplay( player, "Tracker_ResyncAllForPlayer", playerToSync )
+}
+
+void function Tracker_ResyncStatForPlayer( entity playerToSync, string statKey )
+{
+	int statKeyLen = statKey.len()
+	mAssert( statKeyLen <= 9, "Cannot transmit statkey len > 9 chars for resync" )//for now (uses a single remote call this way)
+	
+	foreach( player in GetPlayerArray() )
+	{
+		array transmit = [ this, player, "Tracker_ResyncStatForPlayer", playerToSync.GetEncodedEHandle() ]	
+		for( int i = 0; i < statKeyLen; i++ )
+			transmit.append( statKey[ i ] )
+	
+		Remote_CallFunction_NonReplay.acall( transmit )
+	}
 }
 
 //////////////////////////////////////////////////
@@ -53,7 +114,7 @@ void function Script_RegisterAllStats()
 	
 	// null can be used as substitutes if specific in/out is not needed.
 	// Stats don't need an in function to be fetched from server cache with the getter functions:
-	// GetPlayerStat%TYPE%( playerUID, "statname" )  %TYPE% = [Int,Bool,Float,String]
+	// GetPlayerStat%TYPE%( playerUID, "statname" )  %TYPE% = [ Int, Bool, Float, String, Array, ArrayInt, ArrayBool, ArrayFloat, ArrayString ]
 
 	// They can also, all be fetched at once, when stats for a player loads.
 	// see: AddCallback_PlayerDataFullyLoaded below.
@@ -82,18 +143,17 @@ void function Script_RegisterAllStats()
 	// {
 			// Purpose:
 			
-			// if using any stat value that will be garbage cleaned on disconnect etc
-			// ( player net int, player struct var, structs cleared on round end, etc )
-			
-			// WARNING:	Do not set the same var in an inbound stat func, that the outbound stat func returns. 
-			// This will result in player stat data aggregation inflation on next disconnect. 		
-			
-			// If RegisterStat is passed with fourth parameter of true, 
+			// If Tracker_RegisterStat is passed with fourth parameter of true, ( STORE_STAT )
 			// a local copy is maintained of accumulated stats for the round, regardless of disconnects/rejoins.  
 			// This means you can use getters based on player entity 
 			
+			// Should be used: if using any stat value that will be garbage cleaned on disconnect etc
+			// ( player net int, player struct var, etc )
 			
-			// For base stats, the gamemode will have a record associated automatically by uid 
+			// WARNING:	Do not set the same var in an inbound stat func, that the outbound stat func returns. 
+			// This will result in player stat data aggregation inflation on next disconnect. 		
+				
+			// For base stats, the player will have a record associated automatically by uid 
 			// Tracker_ReturnKills
 			// Tracker_ReturnDeaths
 			// Tracker_ReturnDamage    etc... 
@@ -119,10 +179,23 @@ void function Script_RegisterAllStats()
 		Tracker_RegisterStat( "previous_champion", null, Tracker_ReturnChampion )
 		Tracker_RegisterStat( "previous_kills", null, Tracker_ReturnKills )
 		Tracker_RegisterStat( "previous_damage", null, Tracker_ReturnDamage )
-		//Tracker_RegisterStat( "previous_survival_time", null,  )
+		//Tracker_RegisterStat( "previous_survival_time", null,  )	
 		
 		AddCallback_PlayerDataFullyLoaded( Callback_CoreStatInit )
 	}
+	
+	Tracker_RegisterStat( "unlocked_badges" )
+	Tracker_RegisterStat( "badge_1", null, Tracker_Badge1 )
+	Tracker_RegisterStat( "badge_2", null, Tracker_Badge2 )
+	Tracker_RegisterStat( "badge_3", null, Tracker_Badge3 )
+	AddCallback_PlayerDataFullyLoaded( Callback_CheckBadges )
+	
+	#if DEVELOPER 
+		//Tracker_RegisterStat( "test_array", null, TrackerStats_TestStringArray )
+		//Tracker_RegisterStat( "test_bool_array", null, TrackerStats_TestBoolArray )
+		//Tracker_RegisterStat( "test_int_array", null, TrackerStats_TestIntArray, STORE_STAT )
+		//Tracker_RegisterStat( "test_float_array", null, TrackerStats_TestFloatArray )
+	#endif 
 	
 	//Reporting
 	if( Flowstate_EnableReporting() )
@@ -151,14 +224,14 @@ void function Script_RegisterAllStats()
 			Tracker_RegisterStat( "shots_fired", null, Tracker_ReturnShots )
 			Tracker_RegisterStat( "instagib_deaths", null, Tracker_ReturnDeaths )
 			Tracker_RegisterStat( "instagib_railjumptimes", null, TrackerStats_FSDMRailjumps, STORE_STAT )
-			Tracker_RegisterStat( "instagib_gamesplayed", null, TrackerStats_FSDMGamesPlayed )
+			Tracker_RegisterStat( "instagib_gamesplayed", null, TrackerStats_GamesCompleted )
 			Tracker_RegisterStat( "instagib_wins", null, TrackerStats_FSDMWins )	
 		break
 
 		case ePlaylists.fs_haloMod:
 			Tracker_RegisterStat( "halo_dm_kills", null, Tracker_ReturnKills )
 			Tracker_RegisterStat( "halo_dm_deaths", null, Tracker_ReturnDeaths )
-			Tracker_RegisterStat( "halo_dm_gamesplayed", null, TrackerStats_FSDMGamesPlayed )
+			Tracker_RegisterStat( "halo_dm_gamesplayed", null, TrackerStats_GamesCompleted )
 			Tracker_RegisterStat( "halo_dm_wins", null, TrackerStats_FSDMWins )
 		break
 		
@@ -166,14 +239,14 @@ void function Script_RegisterAllStats()
 			Tracker_RegisterStat( "halo_oddball_kills", null, Tracker_ReturnKills )
 			Tracker_RegisterStat( "halo_oddball_deaths", null, Tracker_ReturnDeaths )
 			Tracker_RegisterStat( "halo_oddball_heldtime", null, TrackerStats_OddballHeldTime, STORE_STAT )
-			Tracker_RegisterStat( "halo_oddball_gamesplayed", null, TrackerStats_FSDMGamesPlayed )
+			Tracker_RegisterStat( "halo_oddball_gamesplayed", null, TrackerStats_GamesCompleted )
 		break
 
 		case ePlaylists.fs_haloMod_ctf:
 
 			Tracker_RegisterStat( "halo_ctf_flags_captured", null, TrackerStats_CtfFlagsCaptured, STORE_STAT )
 			Tracker_RegisterStat( "halo_ctf_flags_returned", null, TrackerStats_CtfFlagsReturned, STORE_STAT )
-			Tracker_RegisterStat( "halo_ctf_gamesplayed", null, TrackerStats_FSDMGamesPlayed )
+			Tracker_RegisterStat( "halo_ctf_gamesplayed", null, TrackerStats_GamesCompleted )
 			Tracker_RegisterStat( "halo_ctf_wins", null, TrackerStats_CtfWins, STORE_STAT )
 		break 
 		
@@ -231,7 +304,7 @@ void function Callback_HandleScenariosStats( entity player )
 	foreach( string statKey, var statValue in Stats__GetPlayerStatsTable( uid ) ) //Todo: register by script name group ( set in backend )
 	{
 		#if DEVELOPER
-			printw( "found statKey =", statKey, "statValue =", statValue )
+			//printw( "found statKey =", statKey, "statValue =", statValue )
 		#endif 
 		
 		if( statKey.find( strSlice ) != -1 )
@@ -251,8 +324,17 @@ var function TrackerStats_FSDMRailjumps( string uid )
 	return player.p.railjumptimes 
 }
 
-var function TrackerStats_FSDMGamesPlayed( string uid ) //for leaderboard visuals?
+//Tracker already has a gamemode play count, which is different from this stat.
+var function TrackerStats_GamesCompleted( string uid ) //Todo: Handle accumulation from rejoins
 {
+	entity player = GetPlayerEntityByUID( uid ) 
+	if( !IsValid( player ) )
+		return 0 //check to make sure player is still in server at round end
+	
+	int roundTime = fsGlobal.EndlessFFAorTDM ? 600 : FlowState_RoundTime()
+	if( ( Time() - player.p.connectTime ) < ( roundTime / 2 )  )
+		return 0 // if player did not play 1/2 of the round, or atleast 5 minutes for endless, dont credit a play count.
+		
 	return 1
 }
 
@@ -289,6 +371,41 @@ var function TrackerStats_CtfWins( string uid )
 	return ent.p.wonctf ? 1 : 0
 }
 
+var function Tracker_Badge1( string uid )
+{
+	return GetPlayerStatInt( uid, "badge_1" )
+}
+
+var function Tracker_Badge2( string uid )
+{
+	return GetPlayerStatInt( uid, "badge_2" )
+}
+
+var function Tracker_Badge3( string uid )
+{
+	return GetPlayerStatInt( uid, "badge_3" )
+}
+
+// var function TrackerStats_TestStringArray( string uid )
+// {
+	// return ["test", "test2", "test3"]
+// }
+
+// var function TrackerStats_TestBoolArray( string uid )
+// {
+	// return [ true, false, false, true ]
+// }
+
+// var function TrackerStats_TestFloatArray( string uid )
+// {
+	// return [ 1.0, 3.5188494 ]
+// }
+
+// var function TrackerStats_TestIntArray( string uid )
+// {
+	// return MakeVarArrayInt( GetPlayerEntityByUID( uid ).p.testarray ) // must be plain 'array' or made untyped.
+// }
+
 var function TrackerStats_GetPortalPlacements( string uid )
 {
 	entity ent = GetPlayerEntityByUID( uid )
@@ -301,7 +418,6 @@ var function TrackerStats_GetPortalKidnaps( string uid )
 	return ent.p.portalKidnaps
 }
 
-
 var function TrackerStats_CringeReports( string uid )
 {
 	entity ent = GetPlayerEntityByUID( uid )		
@@ -312,6 +428,41 @@ var function TrackerStats_WasReportedCringe( string uid )
 {
 	entity ent = GetPlayerEntityByUID( uid )
 	return ent.p.cringedCount
+}
+
+void function Callback_CheckBadges( entity player )
+{
+	string uid = player.p.UID
+	
+	int badge_1 = GetPlayerStatInt( uid, "badge_1" )
+	if( !Tracker_IsValidBadge( badge_1, uid ) )
+	{
+		Tracker_SetShouldResetStatOnShip( uid, "badge_1", badge_1 ) 
+		/* 
+			we do this, becase the main stat table is what is synced to clients, however 
+			Tracker_IsValidBadge can return false for dev badges or unlocked badges 
+			if the player isn't dev or doesn't own a badge, however for servers
+			that allow all badges, we must reset this invalid back to the player's 
+			chosen badge so that it reflects their choice which may be valid on those 
+			allowed servers. 		
+		*/
+		
+		SetPlayerStatInt( uid, "badge_1", 0 )
+	}
+		
+	int badge_2 = GetPlayerStatInt( uid, "badge_2" )
+	if( !Tracker_IsValidBadge( badge_2, uid ) )
+	{
+		Tracker_SetShouldResetStatOnShip( uid, "badge_2", badge_2 )
+		SetPlayerStatInt( uid, "badge_2", 0 )
+	}
+		
+	int badge_3 = GetPlayerStatInt( uid, "badge_3" )
+	if( !Tracker_IsValidBadge( badge_3, uid ) )
+	{
+		Tracker_SetShouldResetStatOnShip( uid, "badge_3", badge_3 )
+		SetPlayerStatInt( uid, "badge_3", 0 )
+	}
 }
 
 
@@ -345,7 +496,7 @@ void function Script_RegisterAllPlayerDataCallbacks()
 	
 	Chat_RegisterPlayerData()
 	
-	if( file.bStatsIs1v1Type )
+	if( file.bStatsIs1v1Type && Playlist() != ePlaylists.fs_scenarios ) //todo clean up intertwinedness.. 
 		Gamemode1v1_PlayerDataCallbacks()
 		
 	switch( Playlist() )
@@ -357,11 +508,11 @@ void function Script_RegisterAllPlayerDataCallbacks()
 		default:
 			break
 	}
-		
-	//func
 	
 	if( Flowstate_EnableReporting() )
 		AddCallback_PlayerData( "cringe_report_data" )
+		
+	//func
 }
 
 ///////////////////////////// QUERIES ////////////////////////////////////////////
@@ -396,18 +547,18 @@ void function Script_RegisterAllQueries()
 void function Script_RegisterAllShipFunctions()
 {
 	if( Flowstate_EnableReporting() )
-		tracker.RegisterShipFunction( OnStatsShipped_Cringe, true )
+		tracker.RegisterShipFunction( OnStatsShipping_Cringe, true )
 		
 	//more
 }
 
 
-/////////////////////////////////
-/// ON STATS SHIPPED FUNCTIONS //
-/////////////////////////////////
+///////////////////////////////////
+/// ON STATS SHIPPING FUNCTIONS ///
+///////////////////////////////////
 
 
-void function OnStatsShipped_Cringe( string uid )
+void function OnStatsShipping_Cringe( string uid ) //todo deprecate
 {
 	entity ent = GetPlayerEntityByUID( uid )
 	
@@ -434,5 +585,10 @@ void function OnStatsShipped_Cringe( string uid )
 }
 
 
+#else //!TRACKER && !HAS_TRACKER_DLL
 
-#endif //TRACKER && HAS_TRACKER_DLL
+	//non tracker declarations
+	void function Tracker_SetShouldResetStatOnShip( string uid, string statKey, var origValue, bool bShouldReset = true ){}
+	void function Tracker_ResyncAllForPlayer( entity player ){}
+	void function Tracker_ResyncStatForPlayer( entity playerToSync, string statKey ){}
+#endif

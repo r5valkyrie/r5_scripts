@@ -15,10 +15,7 @@ void function ClientCodeCallback_MapInit()
 	//ShPrecacheBreachAndClearAssets()
 	//ShPrecacheTreasureExtractionAssets()
 
-	if (MapName() == eMaps.mp_rr_desertlands_mu3 )
-		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu3.rpak" )
-	else
-		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu2.rpak" )
+	MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu2.rpak" )
 
 	AddCreateCallback( "trigger_cylinder_heavy", Geyser_OnJumpPadCreated )
 

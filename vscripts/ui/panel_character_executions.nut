@@ -79,8 +79,6 @@ void function CharacterExecutionsPanel_Update( var panel )
 		LoadoutEntry entry   = Loadout_CharacterExecution( character )
 		file.characterExecutionList = GetLoadoutItemsSortedForMenu( entry, CharacterExecution_GetSortOrdinal )
 
-		file.characterExecutionList = [file.characterExecutionList[0]]
-
 		Hud_InitGridButtons( file.listPanel, file.characterExecutionList.len() )
 		foreach ( int flavIdx, ItemFlavor flav in file.characterExecutionList )
 		{

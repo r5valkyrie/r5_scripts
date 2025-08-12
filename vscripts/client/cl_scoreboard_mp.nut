@@ -187,6 +187,11 @@ void function InitScoreboardMP()
 	file.titleCustom = HudElement( "FS_DMScoreboard_Title" )
 	file.hintCustom = HudElement( "FS_DMScoreboard_Hint" )
 	
+	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 )
+	{
+		Hud_SetText( file.hintCustom, "%toggle_map% Close")
+	}
+	
 	string title = "SCOREBOARD"
 
 	Hud_SetText( file.titleCustom, title)
@@ -462,7 +467,7 @@ void function ShowScoreboardMP()
 		Assert( clGlobal.isScoreboardShown )
 
 		//if( IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod_ctf" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod_oddball" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_1v1" && GetCurrentPlaylistName() == "fs_lgduels_1v1" )
-		if( IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod_ctf || IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod || IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod_oddball || IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_1v1 && Playlist() == ePlaylists.fs_lgduels_1v1 )
+		if( IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod_ctf || IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod || IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod_oddball || Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 )
 		{
 			Hud_SetVisible( file.hintCustom, true )
 		}

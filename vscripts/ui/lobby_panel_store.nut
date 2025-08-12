@@ -866,7 +866,7 @@ void function CharacterButton_OnGetFocus( var button )
 
 	RuiSetString( s_characters.characterSelectInfoRui, "priceText", priceText )
 
-	RunClientScript( "UIToClient_PreviewCharacterSkin", ItemFlavor_GetNetworkIndex_DEPRECATED( characterSkin ), ItemFlavor_GetNetworkIndex_DEPRECATED( character ) )
+	RunClientScript( "UIToClient_PreviewCharacterSkin", ItemFlavor_GetGUID( characterSkin ), ItemFlavor_GetGUID( character ) )
 }
 
 

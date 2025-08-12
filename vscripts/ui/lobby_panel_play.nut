@@ -6,6 +6,9 @@ global function ClientToUI_PartyMemberJoinedOrLeft
 global function GetModeSelectButton
 global function GetLobbyChatBox
 
+global function R5RPlay_SetSelectedPlaylist
+global function R5RPlay_SetSelectedServer
+
 global function Lobby_GetPlaylists
 global function Lobby_GetSelectedPlaylist
 global function Lobby_IsPlaylistAvailable
@@ -77,6 +80,32 @@ const table< int, string > playlistStateMap = {
 
 const string PLAYLIST_TRAINING = "survival_training"
 
+global enum JoinType
+{
+    ServerJoin = 0,
+    QuickPlay = 1,
+    None = 2
+}
+
+global struct ServerListing
+{
+	int	svServerID
+	string svServerName
+	string svMapName
+	string svPlaylist
+	string svDescription
+	int svMaxPlayers
+	int svCurrentPlayers
+}
+
+struct
+{
+    int quickPlayType = JoinType.None
+    string TopServerSelectedName = ""
+    int TopServerSelectedID = -1
+    string TopServerMapName = ""
+} quickplay
+
 struct
 {
 	var panel
@@ -139,6 +168,19 @@ struct
 	float currentMaxMatchmakingDelayEndTime = -1
 
 	string lastPlaylistDisplayed
+
+	ServerListing &m_vSelectedServer
+	array<ServerListing> m_vServerList
+	array<ServerListing> m_vFilteredServerList
+
+	bool searching = false
+	bool foundserver = false
+	bool noservers = false
+	bool searchCancelled = false
+	bool firststart = false
+
+	string g_selectedPlaylist = ""
+	string g_selectedMap = ""
 } file
 
 void function InitPlayPanel( var panel )
@@ -161,9 +203,12 @@ void function InitPlayPanel( var panel )
 	Hud_AddEventHandler( file.gamemodeSelectV2Button, UIE_CLICK, GameModeSelectV2Button_OnActivate )
 	Hud_AddEventHandler( file.gamemodeSelectV2Button, UIE_GET_FOCUS, GameModeSelectV2Button_OnGetFocus )
 	Hud_AddEventHandler( file.gamemodeSelectV2Button, UIE_LOSE_FOCUS, GameModeSelectV2Button_OnLoseFocus )
-	Hud_SetVisible( file.gamemodeSelectV2Button, false )
+
+	Hud_SetVisible( file.modeButton, false )
+	Hud_SetVisible( file.gamemodeSelectV2Button, true )
 
 	file.readyButton = Hud_GetChild( panel, "ReadyButton" )
+	HudElem_SetRuiArg(file.readyButton, "buttonText", Localize("#READY"))
 	Hud_AddEventHandler( file.readyButton, UIE_CLICK, ReadyButton_OnActivate )
 
 	file.inviteFriendsButton0 = Hud_GetChild( panel, "InviteFriendsButton0" )
@@ -197,8 +242,8 @@ void function InitPlayPanel( var panel )
 	Hud_AddEventHandler( file.friendButton1, UIE_CLICKRIGHT, FriendButton_OnRightClick )
 
 	file.allChallengesButton = Hud_GetChild( panel, "AllChallengesButton" )
-	//Hud_SetVisible( file.allChallengesButton, true )
-	//Hud_SetEnabled( file.allChallengesButton, true )
+	Hud_SetVisible( file.allChallengesButton, false )
+	Hud_SetEnabled( file.allChallengesButton, false )
 	HudElem_SetRuiArg( file.allChallengesButton, "buttonText", Localize( "#CHALLENGES_LOBBY_BUTTON" ) )
 	Hud_AddEventHandler( file.allChallengesButton, UIE_CLICK, AllChallengesButton_OnActivate )
 
@@ -330,6 +375,11 @@ void function PlayPanel_OnShow( var panel )
 {
 	//UI_SetPresentationType( ePresentationType.PLAY )
 
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "playerName", GetPlayerName() )
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "accountLevel", GetAccountDisplayLevel( 100 ) )
+	RuiSetImage( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "accountBadge", $"rui/hud/custom_badges/r5r_badge" )
+	RuiSetFloat( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "accountXPFrac", 1.0 )
+
 	if ( IsFullyConnected() )
 	{
 		AccessibilityHint( eAccessibilityHint.LOBBY_CHAT )
@@ -348,7 +398,7 @@ void function PlayPanel_OnShow( var panel )
 	AddCallbackAndCallNow_OnGRXInventoryStateChanged( UpdateFriendButtons )
 	AddCallbackAndCallNow_RemoteMatchInfoUpdated( OnRemoteMatchInfoUpdated )
 
-	ClientCommand( "ViewingMainLobbyPage" )
+	//ClientCommand( "ViewingMainLobbyPage" )
 
 	MiniPromo_Start()
 
@@ -368,6 +418,12 @@ void function PlayPanel_OnShow( var panel )
 
 	thread TryRunDialogFlowThread()
 	thread Lobby_ShowBattlePassPopup()
+
+	if(!file.firststart)
+	{
+		R5RPlay_SetSelectedPlaylist("mp_rr_canyonlands_64k_x_64k", GetUIMapAsset("mp_rr_canyonlands_64k_x_64k", true), "survival_dev", "FreeRoam - " + GetUIMapName("mp_rr_canyonlands_64k_x_64k"))
+		file.firststart = true
+	}
 }
 
 
@@ -383,8 +439,8 @@ void function UpdateLobbyButtons()
 		return
 
 	UpdateFillButton()
-	UpdateReadyButton()
-	UpdateModeButton()
+	//UpdateReadyButton()
+	//UpdateModeButton()
 	UpdateFriendButtons()
 	UpdateLastPlayedButtons()
 	UpdatePlaylistBadges()
@@ -536,8 +592,19 @@ void function Lobby_SetSelectedPlaylist( string playlistName )
 	UpdateLobbyButtons()
 	Lobby_UpdateLoadscreenFromPlaylist()
 
-	if ( playlistName.len() > 0 )
-		SetMatchmakingPlaylist( playlistName )
+	// note(kawe): commented because the mod system in the r5sdk is aware of
+	//             the playlist the party is currently targetting to make
+	//             make sure the mod system also works correctly when trying
+	//             to preload level and the necessary mods for the given party
+	//             playlist. However since the r5reloaded networking infra
+	//             currently isn't build around parties, this has been disabled
+	//             to avoid inteference (mod level preloading favors party
+	//             target playlist over currently active one, just like how the
+	//             engine does this for level paks). If we ever finish the
+	//             party system, the SDK will be ready for precaching mods on
+	//             parties as well!
+	//if ( playlistName.len() > 0 )
+	//	SetMatchmakingPlaylist( playlistName )
 }
 
 
@@ -653,6 +720,14 @@ void function KeepMicIconUpdated( PartyMember info, var rui )
 
 void function UpdateFriendButtons()
 {
+	Hud_SetVisible( file.inviteFriendsButton0, false )
+	Hud_SetVisible( file.inviteFriendsButton1, false )
+
+	Hud_SetVisible( file.friendButton0, false )
+	Hud_SetVisible( file.friendButton1, false )
+
+	return
+
 	Signal( uiGlobal.signalDummy, "UpdateFriendButtons" )
 
 	Hud_SetVisible( file.inviteFriendsButton0, !file.personInLeftSpot )
@@ -1276,7 +1351,7 @@ void function ModeButton_OnActivate( var button )
 	if ( Hud_IsLocked( button ) || !CanActivateModeButton() )
 		return
 
-	ClientCommand( "ViewedModes" )
+	//ClientCommand( "ViewedModes" )
 
 	AdvanceMenu( GetMenu( "ModeSelectDialog" ) )
 }
@@ -1290,9 +1365,9 @@ void function GameModeSelectV2Button_OnActivate( var button )
 	Hud_SetVisible( file.gamemodeSelectV2Button, false )
 	Hud_SetVisible( file.readyButton, false )
 
-	ClientCommand( "ViewedModes" )
+	//ClientCommand( "ViewedModes" )
 
-	AdvanceMenu( GetMenu( "GamemodeSelectV2Dialog" ) )
+	AdvanceMenu( GetMenu( "GamemodeSelectV4Dialog" ) )
 }
 
 
@@ -1340,74 +1415,29 @@ void function ReadyShortcut_OnActivate( var panel )
 
 void function ReadyButton_OnActivate( var button )
 {
-	if ( Hud_IsLocked( file.readyButton ) || !CanActivateReadyButton() )
-		return
-
-	bool isReady                   = GetConVarBool( "party_readyToSearch" )
-	bool requireConsensusForSearch = GetConVarBool( "party_requireConsensusForSearch" )
-
-	if ( AreWeMatchmaking() || isReady )
-	{
-		CancelMatchmaking()
-		ClientCommand( "CancelMatchSearch" )
-		EmitUISound( SOUND_STOP_MATCHMAKING_1P )
+	if(file.searching) {
+		file.searchCancelled = true
+		file.searching = false
+		return;
 	}
-	else
+
+	file.searching = true
+	EmitUISound( "UI_Menu_ReadyUp_1P" )
+	RuiSetBool(Hud_GetRui(Hud_GetChild(file.panel, "SelfButton")), "isReady", true)
+
+	GamemodeButtonSetSearching(true)
+
+	switch( quickplay.quickPlayType )
 	{
-		if ( !IsGameFullyInstalled() || HasNonFullyInstalledAssetsLoaded() )
-		{
-			ConfirmDialogData data
-			data.headerText = "#TEXTURE_STREAM_HEADER"
-			data.messageText = Localize( "#TEXTURE_STREAM_MESSAGE", floor( GetGameFullyInstalledProgress() * 100 ) )
-			data.yesText = ["#TEXTURE_STREAM_PLAY", "#TEXTURE_STREAM_PLAY_PC"]
-			data.noText = ["#TEXTURE_STREAM_WAIT", "#TEXTURE_STREAM_WAIT_PC"]
-			if ( GetGameFullyInstalledProgress() >= 1 && HasNonFullyInstalledAssetsLoaded() )
-			{
-				// hd textured fully loaded, requires disconnect to use
-				data.headerText = "#TEXTURE_STREAM_REBOOT_HEADER"
-				data.messageText = "#TEXTURE_STREAM_REBOOT_MESSAGE"
-				data.yesText = ["#TEXTURE_STREAM_REBOOT", "#TEXTURE_STREAM_REBOOT_PC"]
-				data.noText = ["#TEXTURE_STREAM_PLAY_ON_NO", "#TEXTURE_STREAM_PLAY_PC"]
-			}
-
-			data.resultCallback = void function ( int result ) : ()
-			{
-				if ( GetGameFullyInstalledProgress() >= 1 && HasNonFullyInstalledAssetsLoaded() )
-				{
-					// hd textured fully loaded, should we return to the main menu?
-					if ( result == eDialogResult.YES )
-					{
-						// hd textured fully loaded, return to the main menu
-						ClientCommand( "disconnect" )
-						return
-					}
-				}
-				else if ( result != eDialogResult.YES )
-				{
-					// still downloading HD textures, elected to wait.
-					return
-
-				}
-
-				// play without HD textures
-				ReadyButtonActivate()
-			}
-
-			if ( !IsDialog( GetActiveMenu() ) )
-				OpenConfirmDialogFromData( data )
-			return
-		}
-
-		bool isLeader = IsPartyLeader()
-
-		if ( isLeader && ShouldShowLowPopDialog( file.selectedPlaylist ) )
-		{
-			OpenLowPopDialog( ReadyButtonActivateForDataCenter )
-		}
-		else
-		{
-			ReadyButtonActivate()
-		}
+		case JoinType.ServerJoin:
+			thread JoinMatch( button, "Connecting" )
+			break;
+		case JoinType.QuickPlay:
+			thread JoinMatch( button, "Creating" )
+			break;
+		default:
+			printt("ReadyButton: Unimplemented join type")
+			break;
 	}
 }
 
@@ -1617,10 +1647,10 @@ void function OpenLootBoxButton_OnActivate( var button )
 
 void function UpdatePlayPanelGRXDependantElements()
 {
-	if ( GRX_IsInventoryReady() )
-		UpdateLobbyChallengeMenu()
+	//if ( GRX_IsInventoryReady() )
+	UpdateLobbyChallengeMenu()
 
-	UpdateMiniPromoPinning()
+	//UpdateMiniPromoPinning()
 }
 
 
@@ -1663,7 +1693,7 @@ void function UpdateLootBoxButton( var button, array<ItemFlavor> specificPackFla
 	vector themeCol     = <1, 1, 1>
 	vector countTextCol = SrgbToLinear( <255, 78, 29> * 1.0 / 255.0 )
 
-	if ( GRX_IsInventoryReady() )
+	//if ( GRX_IsInventoryReady() )
 	{
 		if ( specificPackFlavs.len() > 0 )
 		{
@@ -1711,7 +1741,7 @@ void function UpdateLootBoxButton( var button, array<ItemFlavor> specificPackFla
 			countTextCol = SrgbToLinear( expect vector(customCountTextCol) )
 	}
 
-	HudElem_SetRuiArg( button, "bigText", string( lootBoxCount ) )
+	HudElem_SetRuiArg( button, "bigText", "∞" )
 	HudElem_SetRuiArg( button, "buttonText", buttonText )
 	HudElem_SetRuiArg( button, "descText", descText )
 	HudElem_SetRuiArg( button, "descTextRarity", nextRarity )
@@ -1915,7 +1945,6 @@ void function Lobby_UpdatePlayPanelPlaylists()
 	if ( IsPartyLeader() && GetPartySize() == 1 && !IsExemptFromTraining() && !IsTrainingCompleted() )
 	{
 		Lobby_SetSelectedPlaylist( PLAYLIST_TRAINING )
-		SetMatchmakingPlaylist( PLAYLIST_TRAINING ) //
 	}
 	else if ( !file.playlists.contains( file.selectedPlaylist ) || (file.selectedPlaylist == PLAYLIST_TRAINING) )
 	{
@@ -2472,4 +2501,97 @@ void function Lobby_MovePopupMessage( int tabIndex )
 	}
 
 	Hud_SetX( button, offset )
+}
+
+void function SetGamemodeButtonRUI(string modeNameText, string modeDescText, bool alwaysShowDesc, asset modeImage)
+{
+	RuiSetString( Hud_GetRui( file.gamemodeSelectV2Button ), "modeNameText", modeNameText )
+	RuiSetString( Hud_GetRui( file.gamemodeSelectV2Button ), "modeDescText", modeDescText )
+	RuiSetBool( Hud_GetRui( file.gamemodeSelectV2Button ), "alwaysShowDesc", alwaysShowDesc )
+	RuiSetImage( Hud_GetRui( file.gamemodeSelectV2Button ), "modeImage", modeImage )
+}
+
+void function R5RPlay_SetSelectedPlaylist(string map, asset mapImage, string playlist, string title)
+{
+	quickplay.quickPlayType = JoinType.QuickPlay
+
+	file.g_selectedMap = map
+	file.g_selectedPlaylist = playlist
+
+	SetGamemodeButtonRUI(title, "Not Ready", true, mapImage)
+}
+
+void function R5RPlay_SetSelectedServer(ServerListing server)
+{
+	quickplay.quickPlayType = JoinType.ServerJoin
+
+	file.m_vSelectedServer = server
+	string servername = server.svServerName
+
+	if(server.svServerName.len() > 30)
+		servername = server.svServerName.slice(0, 30) + "..."
+
+	SetGamemodeButtonRUI(servername, "Not Ready", true, GetUIMapAsset(server.svMapName ))
+}
+
+void function GamemodeButtonSetSearching(bool searching)
+{
+	HudElem_SetRuiArg( file.gamemodeSelectV2Button, "isReady", searching )	
+	RuiSetBool( Hud_GetRui(file.gamemodeSelectV2Button), "statusVisible", searching )
+	RuiSetBool( Hud_GetRui(file.gamemodeSelectV2Button), "statusHasText", searching )
+}
+
+void function SetSearchingText(string text)
+{
+	RuiSetString( Hud_GetRui(file.gamemodeSelectV2Button), "statusText", text )
+	RuiSetString( Hud_GetRui(file.gamemodeSelectV2Button), "waitingText", text )
+}
+
+void function JoinMatch( var button, string v )
+{
+	HudElem_SetRuiArg(button, "buttonText", Localize("#CANCEL"))
+
+	for (int i = 0; i < 6; i++)
+	{
+		if(file.searchCancelled)
+			break;
+		
+		SetSearchingText( GetProgressText( v, i ) )
+		wait 0.5
+	}
+
+	if (!file.searchCancelled)
+	{
+		EmitUISound("UI_Menu_Apex_Launch")
+		switch(quickplay.quickPlayType)
+		{
+			#if LISTEN_SERVER
+			case JoinType.QuickPlay:
+				SetSearchingText("Starting Match")
+				wait 2
+				CreateServer(GetUIMapName(file.g_selectedMap), "", file.g_selectedMap, file.g_selectedPlaylist, eServerVisibility.OFFLINE)
+				break;
+			#endif // LISTEN_SERVER
+			case JoinType.ServerJoin:
+				SetSearchingText("Joining Match")
+				wait 2
+				ConnectToListedServer(file.m_vSelectedServer.svServerID)
+				break;
+		}
+	}
+
+	if(file.searchCancelled)
+		EmitUISound("UI_Menu_Deny")
+	
+	file.searchCancelled = false
+	file.searching = false;
+	RuiSetBool(Hud_GetRui(Hud_GetChild(file.panel, "SelfButton")), "isReady", false)
+	HudElem_SetRuiArg(button, "buttonText", Localize("#READY"))
+	SetSearchingText("")
+	GamemodeButtonSetSearching(false)
+}
+
+string function GetProgressText(string v, int n = 0)
+{
+	return v + RepeatString( ".", (n % 3) + 1 )
 }

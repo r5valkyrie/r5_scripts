@@ -1,0 +1,35 @@
+#base "mp_weapon_melee_survival.txt"
+
+WeaponData
+{
+	// General
+	"printname"   									"MELEE_SKIN_KRALS_KARAMBIT_NAME"
+	"shortprintname"								"MELEE_SKIN_KRALS_KARAMBIT_NAME"
+	"description" 									"MELEE_SKIN_KRALS_KARAMBIT_NAME"
+	"longdesc"										"MELEE_SKIN_KRALS_KARAMBIT_NAME"
+
+	"weapon_type_flags"								"WPT_MELEE"
+	
+    // UI/HUD
+	"menu_icon"										"rui/menu/dpad_comms/emoji/fist"
+	"hud_icon"										"rui/menu/dpad_comms/emoji/fist"
+
+	// Models
+	"viewmodel"   								"mdl/Weapons/krals_karambit/ptpov_krals_karambit.rmdl"
+	"playermodel" 								"mdl/Weapons/krals_karambit/w_krals_karambit.rmdl"
+
+	"is_heirloom"									"1"
+	
+	"dof_nearDepthStart"							"0.5"
+	"dof_nearDepthEnd"							    "6.4"
+
+	// Behavior
+	"deployfirst_time"								"1.8"
+
+	// Animation
+	"activitymodifier3P"							"kunai"
+
+
+    "OnWeaponActivate"								"OnWeaponActivate_weapon_melee_primary"
+    "OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_melee_primary"
+}

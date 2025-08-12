@@ -1,7 +1,7 @@
 //=========================================================
 //	root_asset_lists.gnut
 //=========================================================
-
+global function ShLoadWeaponAssetsInit
 //////////////////////
 //////////////////////
 //// Global Types ////
@@ -9,17 +9,22 @@
 //////////////////////
 global const array<asset> CHARACTER_ASSETS =
 [
-	$"settings/itemflav/character/bangalore.rpak",  //
-	$"settings/itemflav/character/bloodhound.rpak", //
-	$"settings/itemflav/character/caustic.rpak",    //
-	$"settings/itemflav/character/gibraltar.rpak",  //
-	$"settings/itemflav/character/lifeline.rpak",   //
-	$"settings/itemflav/character/mirage.rpak",     //
-	$"settings/itemflav/character/octane.rpak",     //
-	$"settings/itemflav/character/pathfinder.rpak", //
-	$"settings/itemflav/character/wraith.rpak",     //
-	$"settings/itemflav/character/wattson.rpak",    //
-	$"settings/itemflav/character/crypto.rpak",     //
+	$"settings/itemflav/character/bangalore.rpak",
+	$"settings/itemflav/character/bloodhound.rpak",
+	$"settings/itemflav/character/caustic.rpak",
+	$"settings/itemflav/character/gibraltar.rpak",
+	$"settings/itemflav/character/lifeline.rpak",
+	$"settings/itemflav/character/mirage.rpak",
+	$"settings/itemflav/character/octane.rpak",
+	$"settings/itemflav/character/pathfinder.rpak",
+	$"settings/itemflav/character/wraith.rpak",
+	$"settings/itemflav/character/wattson.rpak",
+	$"settings/itemflav/character/crypto.rpak",
+	$"settings/itemflav/character/revenant.rpak",
+	$"settings/itemflav/character/loba.rpak",
+	$"settings/itemflav/character/dummie.rpak",
+	$"settings/itemflav/character/random.rpak",
+	$"settings/itemflav/character/rampart.rpak",
 ]
 
 global const array<asset> CAL_EVENT_ASSET_LIST =
@@ -29,8 +34,7 @@ global const array<asset> CAL_EVENT_ASSET_LIST =
 	$"settings/itemflav/calevent/season03.rpak",
 	$"settings/itemflav/calevent/rankedperiod01.rpak",
 	$"settings/itemflav/calevent/rankedperiod02.rpak",
-
-	$"settings/itemflav/calevent/s03e01.rpak",
+	
 ]
 
 global const array<asset> LOADSCREEN_ASSET_LIST =
@@ -61,6 +65,14 @@ global const array<asset> LOADSCREEN_ASSET_LIST =
 	$"settings/itemflav/loadscreen/s03bp_09.rpak",
 	$"settings/itemflav/loadscreen/s03bp_10.rpak",
 	$"settings/itemflav/loadscreen/s03bp_11.rpak",
+	////////////////SDK LOADSCREENS///////////////
+	$"settings/itemflav/loadscreen/custom_sdk_1.rpak",
+	$"settings/itemflav/loadscreen/custom_sdk_2.rpak",
+	$"settings/itemflav/loadscreen/custom_sdk_3.rpak",
+	$"settings/itemflav/loadscreen/custom_sdk_4.rpak",
+	$"settings/itemflav/loadscreen/custom_sdk_5.rpak",
+	$"settings/itemflav/loadscreen/custom_sdk_6.rpak",
+	$"settings/itemflav/loadscreen/custom_sdk_7.rpak",
 ]
 
 global const array<asset> MUSIC_PACK_ASSET_LIST =
@@ -80,6 +92,11 @@ global const array<asset> MUSIC_PACK_ASSET_LIST =
 	$"settings/itemflav/musicpack/wraith.rpak",
 	$"settings/itemflav/musicpack/s03bp_crypto.rpak",
 	$"settings/itemflav/musicpack/s03bp_gibraltar.rpak",
+	$"settings/itemflav/musicpack/s03e02.rpak",//PORTED
+	$"settings/itemflav/musicpack/s04bp_revenant.rpak",//PORTED
+	$"settings/itemflav/musicpack/s04bp_assimilation.rpak",//PORTED
+	$"settings/itemflav/musicpack/s04e02.rpak",//PORTED
+	$"settings/itemflav/musicpack/s04e01.rpak",//PORTED
 ]
 
 
@@ -92,19 +109,25 @@ global const array<asset> SKYDIVE_TRAIL_ASSET_LIST = [
 
 
 global const array<asset> ENTITLEMENT_ASSETS = [
-	$"settings/itemflav/entitlement/BLOODHOUND_SKU_PACK.rpak",
-	$"settings/itemflav/entitlement/LIFELINE_SKU_PACK.rpak",
-	$"settings/itemflav/entitlement/MELTDOWN_PACK_BUNDLE.rpak",
-	$"settings/itemflav/entitlement/twitch_bangalore_skin1.rpak",
-	$"settings/itemflav/entitlement/twitch_caustic_skin1.rpak",
-	$"settings/itemflav/entitlement/twitch_launch_promo.rpak",
-	$"settings/itemflav/entitlement/twitch_mirage_skin1.rpak",
-	$"settings/itemflav/entitlement/twitch_octane_skin1.rpak",
-	$"settings/itemflav/entitlement/twitch_wattson_skin1.rpak",
+	//$"settings/itemflav/entitlement/BLOODHOUND_SKU_PACK.rpak",
+	//$"settings/itemflav/entitlement/LIFELINE_SKU_PACK.rpak",
+	//$"settings/itemflav/entitlement/MELTDOWN_PACK_BUNDLE.rpak",
+	//$"settings/itemflav/entitlement/twitch_bangalore_skin1.rpak",
+	//$"settings/itemflav/entitlement/twitch_caustic_skin1.rpak",
+	//$"settings/itemflav/entitlement/twitch_launch_promo.rpak",
+	//$"settings/itemflav/entitlement/twitch_mirage_skin1.rpak",
+	//$"settings/itemflav/entitlement/twitch_octane_skin1.rpak",
+	//$"settings/itemflav/entitlement/twitch_wattson_skin1.rpak",
 ]
 
 
-global const array<asset> WEAPON_ASSETS =
+global const array<asset> SHARED_BANNERFRAMES_ASSET_LIST = [
+	$""
+	//$"settings/itemflav/gcard_frame_template_rare_01.rpak", //(mk): removed missing rpak until available in assets repo.
+]
+
+
+global array<asset> WEAPON_ASSETS =
 [
 	$"settings/itemflav/loot/main_weapon/alternator.rpak",
 	$"settings/itemflav/loot/main_weapon/autopistol.rpak",
@@ -128,4 +151,22 @@ global const array<asset> WEAPON_ASSETS =
 	$"settings/itemflav/loot/main_weapon/energy_ar.rpak",
 	$"settings/itemflav/loot/main_weapon/lstar.rpak",
 	$"settings/itemflav/loot/main_weapon/chargerifle.rpak",
+	$"settings/itemflav/loot/main_weapon/sentinel.rpak",
+	$"settings/itemflav/loot/main_weapon/volt_smg.rpak",
 ]
+
+void function ShLoadWeaponAssetsInit()
+{
+    WEAPON_ASSETS.clear()
+
+    var dataTable = GetDataTable( $"datatable/weapon_itemflavor_sdk.rpak" )
+    int numRows = GetDatatableRowCount( dataTable )
+    int weaponColumn = GetDataTableColumnByName( dataTable, "weaponflavor" )
+
+    for ( int i = 0; i < numRows; i++ )
+    {
+        string assetPathString = GetDataTableString( dataTable, i, weaponColumn )
+        asset assetPath = GetAssetFromString( assetPathString )
+        WEAPON_ASSETS.append( assetPath )
+    }
+}

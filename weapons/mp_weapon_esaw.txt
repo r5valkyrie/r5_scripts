@@ -152,12 +152,12 @@ WeaponData
     "ammo_clip_size"   								"36"    // Damage - When Used by Players
 	"damage_type" 									"bullet"
 
-    "damage_near_value"   							"15"        //"17"
-    "damage_far_value"								"15"        //"17"
-    "damage_very_far_value"							"15"        //"17"
-    "damage_near_value_titanarmor"					"15"        //"17"
-    "damage_far_value_titanarmor" 					"15"        //"17"
-    "damage_very_far_value_titanarmor" 				"15"        //"17"
+    "damage_near_value"   							"16"
+    "damage_far_value"								"16"
+    "damage_very_far_value"							"16"
+    "damage_near_value_titanarmor"					"16"
+    "damage_far_value_titanarmor" 					"16"
+    "damage_very_far_value_titanarmor" 				"16"
     "damage_rodeo" 									"200"
 
     "damage_near_distance"							"1500"
@@ -166,7 +166,7 @@ WeaponData
 
     "red_crosshair_range" 							"0"
 
-    "damage_headshot_scale"							"1.50"
+    "damage_headshot_scale"							"1.250000"
 	"damage_leg_scale"                              "0.85"
 
 	"critical_hit"									"1"
@@ -206,7 +206,7 @@ WeaponData
 	// Behavior
 	"fire_rate"   									"5"
 	"fire_rate_max"									"15"
-	"fire_rate_max_time_speedup"					"1.75"
+	"fire_rate_max_time_speedup"					"1.500000"
 	"fire_rate_max_time_cooldown"					"0"
 
 	"zoom_time_in"                                  "0.34"
@@ -278,7 +278,7 @@ WeaponData
     "viewkick_roll_softScale" 						"0.8"
     "viewkick_roll_hardScale" 						"0.3"
 
-	"viewkick_hipfire_weaponFraction" 				"0.65"
+	"viewkick_hipfire_weaponFraction" 				"0.200000"
 	"viewkick_hipfire_weaponFraction_vmScale" 		"1.0"
 	"viewkick_ads_weaponFraction" 					"0.0"
 	"viewkick_ads_weaponFraction_vmScale" 			"1.0"
@@ -490,13 +490,13 @@ WeaponData
 
 		energy_mag_l3
 		{
-			"ammo_clip_size"   					"48"
+			"ammo_clip_size"   					"52"
 		}
 
-        	energy_mag_l4
-        	{
-            		"ammo_clip_size"   		        	"48"
-        	}      
+        energy_mag_l4
+        {
+        	"ammo_clip_size"   		        	"52"
+        }      
 
 		"barrel_stabilizer_l4_flash_hider"
 		{
@@ -533,7 +533,15 @@ WeaponData
         {
             "ui2_enable"			"0"
         }
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 
 	"ui1_enable"		"1"
@@ -568,7 +576,7 @@ WeaponData
 
 		Crosshair_1
 		{
-			"ui"						"ui/crosshair_plus"
+			"ui"						"ui/crosshair_lstar"
 			"base_spread"				"0.0"
 			Args
 			{

@@ -44,6 +44,9 @@ void function InitPromoData()
 	{
 		string name = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "name" ) ).tolower()
 		asset image = GetDataTableAsset( dataTable, i, GetDataTableColumnByName( dataTable, "image" ) )
+
+		//printf(image)
+
 		if ( name != "" )
 			file.imageMap[name] <- image
 	}
@@ -95,8 +98,11 @@ string function GetPromoDataLayout()
 }
 
 
-asset function GetPromoImage( string identifier )
+asset function GetPromoImage( string identifier, bool custom = false )
 {
+	if(custom)
+		return GetAssetFromString(identifier)
+
 	identifier = identifier.tolower()
 
 	asset image

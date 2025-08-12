@@ -12,6 +12,7 @@ struct
 {
 	var					panel
 	var					videoPanel
+	var 				LODButton
 	table<var, string>	buttonTitles
 	table<var, string>	buttonDescriptions
 	var					detailsPanel
@@ -19,15 +20,16 @@ struct
 	array<ConVarData>	conVarDataList
 
 	array<var>			noApplyConfirmationRequired
+	string 				r_lod_switch_scale
 	
 } file
 
 void function InitVideoPanelForCode( var panel )
 {
 	#if PC_PROG
-		asset resFile = $"resource/ui/menus/panels/video.res"
+		asset resFile = $"scripts/resource/ui/menus/panels/video.res"
 	#elseif CONSOLE_PROG
-		asset resFile = $"resource/ui/menus/panels/video_console.res"
+		asset resFile = $"scripts/resource/ui/menus/panels/video_console.res"
 	#endif
 	file.videoPanel = CreateVideoOptionsPanel( panel, "ContentPanel", resFile )
 	Hud_SetPos( file.videoPanel, 0, 0 )
@@ -83,6 +85,10 @@ void function InitVideoPanel( var panel )
 
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchTextureDetail" ), "#TEXTURE_QUALITY", "#ADVANCED_VIDEO_MENU_TEXTURE_DETAIL_DESC", $"rui/menu/settings/settings_video" )
 		AddButtonEventHandler( Hud_GetChild( file.videoPanel, "SwchTextureDetail" ), UIE_CHANGE, TextureStreamBudget_Changed )
+
+		file.LODButton = Hud_GetChild( file.videoPanel, "SwchLODQuality" )//VideoOptions_Apply native function does not include lod, FIX ME FIX ME FIX ME!
+		SetupSettingsButton( file.LODButton, "#LOD_QUALITY", "#ADVANCED_VIDEO_MENU_LOD_QUALITY_DESC", $"rui/menu/settings/settings_video" )
+		AddButtonEventHandler( file.LODButton, UIE_CHANGE, LODQuality_Changed )
 
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchAdaptiveSupersample" ), "#ADAPTIVE_SUPERSAMPLE", "#ADAPTIVE_SUPERSAMPLE_DESC", $"rui/menu/settings/settings_video" )
 
@@ -418,6 +424,11 @@ void function SprintViewShake_Changed( var button )
 void function TextureStreamBudget_Changed( var button )
 {
 	VideoOptions_TextureStreamBudgetChanged( file.videoPanel )
+}
+
+void function LODQuality_Changed( var button )
+{
+	//VideoOptions_TextureStreamBudgetChanged( file.videoPanel )
 }
 
 void function FooterButton_Focused( var button )

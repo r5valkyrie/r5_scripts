@@ -1,14 +1,13 @@
 Selector Common
 
 	SelectSchedule_FallToGround
-
+    SelectSchedule_DisplaceFromDangerousArea
 	SelectSchedule_SyncedMeleeAttack
-	SelectSchedule_MeleeAttack
-	SelectSchedule_ChaseEnemy
-
+	SelectSchedule_PressToInitiateSyncedMeleeAttack
 	SelectSchedule_LayeredBehavior
 
 Selector_End
+
 
 
 Selector Idle
@@ -18,15 +17,19 @@ Selector Idle
 Selector_End
 
 
+
 Selector Alert
 
-	SelectSchedule_CombatFace
+	SelectSchedule_Alert
 
 Selector_End
 
 
+
 Selector Combat
 
-	SelectSchedule_CombatFace
+    SelectSchedule_MeleeAttack
+	SelectSchedule_ChaseEnemy
+	SelectSchedule_MeleeAttackWait
 
 Selector_End

@@ -44,30 +44,6 @@ global const vector COLOR_WHITE			= <255, 255, 255>
 
 globalize_all_functions
 
-void function DebugDrawCapsule( vector origin, vector angles, float radius, float height, int r, int g, int b, bool throughGeo, float time )
-{
-	int numSides = 4
-	float deg = 360.0 / float( numSides )
-	array<vector> points
-	vector up = AnglesToUp( angles )
-
-	for ( int i = 0; i < numSides; i++ )
-	{
-		vector angles2 = AnglesCompose( angles, <0, deg * i, 0> )
-		vector forward = AnglesToForward( angles2 )
-		points.append( origin + ( forward * radius ) )
-	}
-
-	for ( int i = 0; i < numSides; i++ )
-	{
-		vector start = points[i]
-		vector end = i == 0 ? points[numSides - 1] : points[i - 1]
-		DebugDrawLine( start, start + (up * height), r, g, b, throughGeo, time )
-	}
-	DebugDrawHemiSphere( origin + (up * height), angles, radius, r, g, b, throughGeo, time )
-	DebugDrawHemiSphere( origin, AnglesCompose(angles, <180, 180, 0>), radius, r, g, b, throughGeo, time )
-}
-
 void function DebugDrawCylinder( vector origin, vector angles, float radius, float height, int r, int g, int b, bool throughGeo, float time )
 {
 	int numSides = 16

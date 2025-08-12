@@ -48,7 +48,7 @@ void function AiDrone_Init()
 	PrecacheParticleSystem( FX_DRONE_SHIELD_WALL_HUMAN )
 	PrecacheParticleSystem( FX_DRONE_SHIELD_ROPE_GLOW )
 
-	PrecacheModel( $"mdl/robots/drone_air_attack/drone_air_attack_rockets.rmdl" ) // TODO: Does this exist in r5? // it does now -kral
+	PrecacheModel( $"mdl/robots/drone_air_attack/drone_air_attack_rockets.rmdl" )
 	PrecacheModel( $"mdl/robots/drone_air_attack/drone_air_attack_plasma.rmdl" )
 
 	PrecacheMaterial( $"cable/cable_selfillum.vmt" )

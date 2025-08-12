@@ -16,8 +16,6 @@ WeaponData
 	"minimap_reveal_distance"						"32000"
 	"fast_swap_to"									"0"
 	"leveled_pickup"								"1"
-	
-	"ammo_pool_type"								"explosive"
 
 	"OnWeaponActivate"								"OnWeaponActivate_weapon_rocket_launcher"
 	"OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_rocket_launcher"
@@ -377,7 +375,7 @@ WeaponData
 	"smart_ammo_new_target_delay"					"0.1"
 	"smart_ammo_draw_acquisition_lines"				"0"
 	"smart_ammo_hud_lock_style"						"pilot_pistol"
-	"smart_ammo_hud_type" 							"smart_pistol"
+	"smart_ammo_hud_type" 							"rocket_launcher"
 	
 	//"smart_ammo_target_confirmed_sound"				"Weapon_Archer_Seeking"
 	//"smart_ammo_target_confirming_sound"			"Weapon_Archer_Seeking"
@@ -386,7 +384,7 @@ WeaponData
 	"smart_ammo_looping_sound_acquiring"			"Weapon_Archer_Seeking"
 	"smart_ammo_looping_sound_locked"				"Weapon_Archer_LockOn"
 	
-	"smart_ammo_lock_type"							"small"
+	"smart_ammo_lock_type"							"any"
 	"smart_ammo_alert_npc_fraction"					"1.1" 	// unaware since lock on fraction will not go above 1
 	"smart_ammo_allow_hip_fire_lock"				"0"
 	"smart_ammo_lock_effect_3p"						""
@@ -405,6 +403,9 @@ WeaponData
 
 	Mods
 	{
+		crate
+		{
+		}
 		extended_ammo
 		{
 			"ammo_clip_size"   							"++2"

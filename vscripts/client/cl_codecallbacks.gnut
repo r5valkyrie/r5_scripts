@@ -231,7 +231,6 @@ void function ClientCodeCallback_OnPlayerConsumableInventoryChanged( entity play
 	}
 }
 
-
 void function AddCallback_OnPlayerConsumableInventoryChanged( void functionref( entity ) callbackFunc )
 {
 	clGlobal.consumableInventoryChangedCallbacks.append( callbackFunc )
@@ -239,32 +238,12 @@ void function AddCallback_OnPlayerConsumableInventoryChanged( void functionref( 
 
 void function Promo_SetVersion( int version )
 {
-	int promo_version_accepted
-
-	try{
-		promo_version_accepted = GetConVarInt( "promo_version_accepted" )
-	}catch(e420)
-	{
-		printt( "Promo version cvar not present in your current r5sdk install!" )
-		return
-	}
-
 	SetConVarInt( "promo_version_accepted", version )
 }
 
 void function NvidiaReflex_SetValues()
 {
-	int settingsReflex
-
-	try{
-		settingsReflex = GetConVarInt( "settings_reflex" )
-	}catch(e420)
-	{
-		printt( "Nvidia Reflex cvars not present in your current r5sdk install!" )
-		return
-	}
-
-	switch( settingsReflex )
+	switch( GetConVarInt( "settings_reflex" ) )
 	{
 	  case 0: //Off
 		SetConVarInt( "gfx_nvnUseLowLatency", 0 )
@@ -283,17 +262,8 @@ void function NvidiaReflex_SetValues()
 
 void function NvidiaReflex_SetSettingsValue()
 {
-	bool lowLatency
-	bool lowLatencyBoost
-
-	try{
-		lowLatency = GetConVarBool( "gfx_nvnUseLowLatency" )
-		lowLatencyBoost = GetConVarBool( "gfx_nvnUseLowLatencyBoost" )
-	}catch(e420)
-	{
-		printt( "Nvidia Reflex cvars not present in your current r5sdk install!" )
-		return
-	}
+	bool lowLatency = GetConVarBool( "gfx_nvnUseLowLatency" )
+	bool lowLatencyBoost = GetConVarBool( "gfx_nvnUseLowLatencyBoost" )
 
 	if( !lowLatency && !lowLatencyBoost )
 	{
@@ -309,17 +279,7 @@ void function NvidiaReflex_SetSettingsValue()
 
 void function AmdAntiLag_SetValues()
 {
-	int settingsAntiLag
-
-	try{
-		settingsAntiLag = GetConVarInt( "settings_antilag" )
-	}catch(e420)
-	{
-		printt( "AMD Anti-Lag cvars not present in your current r5sdk install!" )
-		return
-	}
-
-	switch( settingsAntiLag )
+	switch( GetConVarInt( "settings_antilag" ) )
 	{
 	  case 0: //Off
 		SetConVarInt( "gfx_ffxUseLowLatency", 0 )
@@ -332,15 +292,5 @@ void function AmdAntiLag_SetValues()
 
 void function AmdAntiLag_SetSettingsValue()
 {
-	bool lowLatency
-
-	try{
-		lowLatency = GetConVarBool( "gfx_ffxUseLowLatency" )
-	}catch(e420)
-	{
-		printt( "Nvidia Reflex cvars not present in your current r5sdk install!" )
-		return
-	}
-
-	SetConVarInt( "settings_antilag", lowLatency ? 1 : 0 )
+	SetConVarInt( "settings_antilag", GetConVarBool( "gfx_ffxUseLowLatency" ) ? 1 : 0 )
 }

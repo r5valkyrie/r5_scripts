@@ -1,0 +1,67 @@
+global function CLPilotPassiveDash_Init
+
+struct
+{
+	var dashMeterRui = null
+} file
+
+void function CLPilotPassiveDash_Init()
+{
+	RegisterSignal( "DestroyPilotDashMeter" )
+
+	//AddCreatePilotCockpitCallback( OnCreatePilotCockpit )
+	AddCallback_PlayerClassChanged( OnCreatePilotCockpit )
+}
+
+void function OnCreatePilotCockpit( entity player )
+{
+	thread PilotPassiveDash_OnPlayerClassChanged( player )
+}
+
+void function CreatePilotDashMeter( entity player )
+{
+	if ( file.dashMeterRui != null || IsWatchingReplay() )
+		return
+
+	file.dashMeterRui = CreateCockpitRui( $"ui/pilot_dash_meter.rpak" )
+	RuiTrackFloat( file.dashMeterRui, "dashFrac", player, RUI_TRACK_PLAYER_SUIT_POWER )
+	RuiSetResolution( file.dashMeterRui, 2560.0 , 1440.0 )
+
+	player.EndSignal( "OnDeath" )
+	//cockpit.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ()
+		{
+			RuiDestroyIfAlive( file.dashMeterRui )
+			file.dashMeterRui = null
+		}
+	)
+
+	WaitForever()
+}
+
+void function PilotPassiveDash_OnPlayerClassChanged( entity player )
+{
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	wait 4 //wait for GivePlayerDashAbility function to be loaded first
+
+	//show dash bar if player is a pilot with dash passive.
+	if ( IsPilot( player ) && isDashEnabled() )//ePassives.PAS_DASH
+	{
+		thread CreatePilotDashMeter( player )
+
+		int numDashPips = int( floor( 100 / GetLocalViewPlayer().GetPlayerSettingFloat( "dodgePowerDrain" ) ) )
+		RuiSetInt( file.dashMeterRui, "numDashSegments", numDashPips )
+	}
+	else
+	{
+		//Do not show dash bar.
+		//RuiSetInt( file.dashMeterRui, "numDashSegments", 0 )
+		player.Signal( "DestroyPilotDashMeter" )
+	}
+}
+
+

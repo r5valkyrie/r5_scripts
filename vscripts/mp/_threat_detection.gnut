@@ -1,5 +1,3 @@
-//Made by @CafeFPS
-
 global function ThreatDetection_Init
 global function ThreatDetection_StartForPlayer
 global function ThreatDetection_StopForPlayer

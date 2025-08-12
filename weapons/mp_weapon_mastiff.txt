@@ -56,7 +56,7 @@ WeaponData
 	"vortex_absorb_sound"							"Vortex_Shield_AbsorbBulletSmall"
 	"vortex_absorb_sound_1P_VS_3P"					"Vortex_Shield_AbsorbBulletSmall_1P_VS_3P"
 
-    "projectiles_per_shot"                          "8"
+    "projectiles_per_shot"                          "6"
 
 	"projectile_adjust_to_gun_barrel"				"1"
 
@@ -67,9 +67,9 @@ WeaponData
 	"projectile_flight_sound"                       "weapon_mastiff_projectile_crackle"
 
                        
-	"blast_pattern"									"mastiff_2"
-	"blast_pattern_default_scale"        			"1.1"
-    "blast_pattern_ads_scale"                       "0.6" //0.55 // for players, scales pattern when ADS
+	"blast_pattern"									"mastiff_3"
+	"blast_pattern_default_scale"        			"1.400000"
+    "blast_pattern_ads_scale"                       "0.800000"
 	"blast_pattern_zero_distance"        			"512.0"
 	"blast_pattern_npc_scale"            			"0.75"  // scales on top of the default
 
@@ -96,7 +96,7 @@ WeaponData
 	// Ammo
                        
     "ammo_clip_size"                                "5"
-    "ammo_default_total"                            "0"
+    "ammo_default_total"                            "60"
     "ammo_pool_type"                                "shotgun"
     "uses_ammo_pool"                                "1"
      
@@ -117,12 +117,12 @@ WeaponData
     "damage_near_distance"							"450"
     "damage_far_distance" 							"850"
                        
-    "damage_near_value"   							"11"
-    "damage_far_value"								"11"
-    "damage_near_value_titanarmor"					"11"
-    "damage_far_value_titanarmor" 					"11"
+    "damage_near_value"   							"16"
+    "damage_far_value"								"16"
+    "damage_near_value_titanarmor"					"16"
+    "damage_far_value_titanarmor" 					"16"
 
-    "damage_headshot_scale"							"1.25"
+    "damage_headshot_scale"							"1.000000"
      
                                   
                                
@@ -192,8 +192,8 @@ WeaponData
 	"reloadsegmentempty_time_end"					"0.55"
 
 	"deployfirst_time"								"1.25"
-	"deploy_time" 									"0.45"
-	"holster_time"									"0.4"
+	"deploy_time" 									"0.500000"
+	"holster_time"									"0.600000"
 	"lower_time"  									"0.25"
 	"raise_time"  									"0.3"
 
@@ -284,6 +284,13 @@ WeaponData
 	// 4d variable. means nothing outside of it.
 	"4d_fire_in_both_dimensions"			"1"
 
+
+	"headshot_distance"	"1500"
+	"damage_leg_scale"	"1.000000"
+	"damage_shield_scale"	"1"
+	"critical_hit"	"1"
+	"critical_hit_damage_scale"	"1"
+	"titanarmor_critical_hit_required"	"1"
 	Mods
 	{
         gold
@@ -376,7 +383,15 @@ WeaponData
 			"blast_pattern_zero_distance"	"*1.5" // makes it much tighter.
 			"is_burn_mod"					"1"
 		}
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 		// UI
 	"ui1_enable"		"1"

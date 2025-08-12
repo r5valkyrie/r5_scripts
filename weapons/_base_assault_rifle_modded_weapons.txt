@@ -1,5 +1,3 @@
-//Made by @CafeFPS
-
 #base "_base_character_mods.txt"
 
 WeaponData

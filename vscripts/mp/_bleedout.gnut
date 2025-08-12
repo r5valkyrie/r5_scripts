@@ -719,6 +719,12 @@ bool function ReviveThread_ShouldReviveTargetHaveCameraControl( entity reviver, 
 
 void function ReviveThread_Reviver( entity reviver, entity target, string reviveAnim, bool endReviveInCrouch )
 {
+	if ( IsPlayerShadowZombie( reviver ) )
+		reviveAnim = "shadow_revive_summon_healthy"
+
+	if ( Bleedout_IsPlayerSelfReviving( target ) )
+		reviveAnim = format( "mp_pt_%s%s", GetGlobalSettingsString( target.GetPlayerSettings(), "bodyModelRigWeight" ), ("_self_revive_stand") )
+
 	reviver.EndSignal( "OnAnimationInterrupted" )
 	reviver.EndSignal( "OnDeath" )
 	reviver.EndSignal( "ScriptAnimStop" )
@@ -961,15 +967,6 @@ string function GetReviveAnimation_Victim( entity reviver, entity victim, bool e
 	bool canVRFastRevive 			= GetCurrentPlaylistVarBool( "heatshield_allow_fast_revive", VOID_RING_CAN_FAST_REVIVE)
 
 
-	// if self heal
-	if ( Bleedout_IsPlayerSelfReviving( victim ) && Bleedout_CanSelfResFromUpgrade( reviver ) && reviver.p.numSelfRevivesUsed == 0 )
-	{
-		if ( endCrouched )
-			return "Pilot_doomed_revive_crouch_injured"
-		else
-			return "Pilot_doomed_revive_injured"
-	}
-
 	if ( Bleedout_IsPlayerSelfReviving( victim ) )
 	{
 		ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( victim, Loadout_CharacterClass() )
@@ -979,20 +976,24 @@ string function GetReviveAnimation_Victim( entity reviver, entity victim, bool e
 		setFile              = victim.GetPlayerSettings()
 		string rigWeight = GetGlobalSettingsString( setFile, "bodyModelRigWeight" )
 
-		// if ( (StatusEffect_GetSeverity( reviver, eStatusEffect.ring_immunity ) > 0.0) && heatShieldSelfReviveTime < REVIVE_PASSIVE_SELF_REVIVE && canVRFastRevive )
-		// {
-			// return format( "mp_pt_%s%s", rigWeight, (endCrouched ? "_self_revive_crouch_fast" : "_self_revive_stand_fast") ) //todo: for Devan "Let me know how much buffer we have here." Animation is 9.67seconds.  Right now it works at 9 seconds but it has an extra 20 frames if we need.
-		// }
 		return format( "mp_pt_%s%s", rigWeight, (endCrouched ? "_self_revive_crouch" : "_self_revive_stand") )
 	}
-
-	else if ( PlayerHasPassive( reviver, ePassives.PAS_BATTERY_POWERED ) && !Flowstate_IsHaloMode() )
+	else if ( IsPlayerShadowZombie( reviver ) )
+	{
+		return "shadow_revive_summon_injured"
+	}else if ( PlayerHasPassive( reviver, ePassives.PAS_MEDIC ) )
+	{
+		if ( endCrouched )
+			return "Pilot_doomed_revive_crouch_drone_injured"
+		else
+			return "Pilot_doomed_revive_drone_injured"
+	}else if ( PlayerHasPassive( reviver, ePassives.PAS_BATTERY_POWERED ) )
 	{
 		if ( endCrouched )
 			return "Pilot_doomed_revive_crouch_shock_injured"
 		else
 			return "Pilot_doomed_revive_shock_injured"
-	}else if ( GibraltarIsInDome( reviver ) && GetCurrentPlaylistVarInt( "gibraltar_fast_revive", 1 ) == 1 && !Flowstate_IsHaloMode() )
+	}else if ( GibraltarIsInDome( reviver ) && GetCurrentPlaylistVarInt( "gibraltar_fast_revive", 1 ) == 1 )
 	{
 		if ( endCrouched )
 			return "Pilot_doomed_revive_crouch_slap_injured"
@@ -1290,11 +1291,6 @@ float function Bleedout_DetermineFirstAidTime( entity target, entity reviver )
 			hasSelfRevive = true
 
 		firstAidTime = hasSelfRevive ? REVIVE_PASSIVE_SELF_REVIVE : firstAidTime
-
-		if ( Bleedout_CanSelfResFromUpgrade( reviver ) && reviver.p.numSelfRevivesUsed == 0  )
-		{
-			return DEFAULT_FIRSTAID_TIME
-		}
 	}
 
 	// If defined, an override time is used
@@ -1303,6 +1299,9 @@ float function Bleedout_DetermineFirstAidTime( entity target, entity reviver )
 	// if self reviving, allow self revive time override
 	if ( isPlayerSelfReviving )
 		firstAidTime = GetCurrentPlaylistVarFloat( "self_revive_time_override", firstAidTime )
+
+	if ( PlayerHasPassive( reviver, ePassives.PAS_MEDIC ) )
+		firstAidTime = target.GetSequenceDuration( "Pilot_doomed_revive_drone_injured" )
 
 	return firstAidTime
 }
@@ -1517,9 +1516,9 @@ void function SetBodyGroupVisibilityForDragRevive( entity useTarget, bool visibl
 				// bodyGroup = "Shield"
 				// break
 
-			// case "character_rampart":
-				// bodyGroup = "turret"
-				// break
+			case "character_rampart":
+				bodyGroup = "turret"
+				break
 
 			// case "character_valkyrie":
 				// bodyGroup = "jetpack"

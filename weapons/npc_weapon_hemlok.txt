@@ -148,7 +148,7 @@ WeaponData
 	"deployfirst_time"								"1.25"
 	"deploy_time" 									"0.9"
 
-	"ammo_clip_size"   								"18"
+	"ammo_clip_size"   								"36"
 
 	"ammo_min_to_fire"								"1"
 	"ammo_clip_random_loss_on_npc_drop_chunksize"	"3"
@@ -158,24 +158,24 @@ WeaponData
 	"ammo_no_remove_from_stockpile"					"1"
 
 	// Damage - When Used by NPCs
-	"npc_damage_near_value"   						"10"
-	"npc_damage_far_value"							"10"
-	"npc_damage_near_value_titanarmor"				"10"
-	"npc_damage_far_value_titanarmor" 				"10"
+	"npc_damage_near_value"   						"20"
+	"npc_damage_far_value"							"20"
+	"npc_damage_near_value_titanarmor"				"20"
+	"npc_damage_far_value_titanarmor" 				"20"
 	"npc_damage_near_distance"						"1500"
 	"npc_damage_far_distance" 						"2500"
 
 
 	// NPC
-	"proficiency_poor_spreadscale"					"5.0"
-	"proficiency_average_spreadscale" 				"3.5"
-	"proficiency_good_spreadscale"					"3.0"
-	"proficiency_very_good_spreadscale"   			"2.5"
-	"proficiency_perfect_spreadscale"   			"1.75"
+	"proficiency_poor_spreadscale"					"0"
+	"proficiency_average_spreadscale" 				"0"
+	"proficiency_good_spreadscale"					"0"
+	"proficiency_very_good_spreadscale"   			"0"
+	"proficiency_perfect_spreadscale"   			"0"
 
-	"proficiency_poor_additional_rest"				"0.2"
-	"proficiency_average_additional_rest"			"0.2"
-	"proficiency_good_additional_rest"				"0.2"
+	"proficiency_poor_additional_rest"				"0"
+	"proficiency_average_additional_rest"			"0"
+	"proficiency_good_additional_rest"				"0"
 
 	"npc_min_engage_range"							"0"
 	"npc_min_engage_range_heavy_armor"				"500"
@@ -184,18 +184,18 @@ WeaponData
 	"npc_max_range"                                 "2000"
 
 	//shot geometry
-	"npc_burst_radius_min_precision"                "45.0"
-	"npc_burst_radius_max_precision"                "12.0"
+	"npc_burst_radius_min_precision"                "15"
+	"npc_burst_radius_max_precision"                "5"
 
-	"npc_spread_cone_min_precision"                 "1.25"
-	"npc_spread_cone_max_precision"                 "0.5"
+	"npc_spread_cone_min_precision"                 "1"
+	"npc_spread_cone_max_precision"                 "1"
 
-	"npc_burst_radius_distribution_bias_min_precision"  "-1"
-	"npc_burst_radius_distribution_bias_max_precision"  "0.75"
+	"npc_burst_radius_distribution_bias_min_precision"  "2"
+	"npc_burst_radius_distribution_bias_max_precision"  "2"
 
 	"npc_lead_projectiles"                          "1"
-	"npc_lead_projectiles_fraction_min_precision"   "0.2"
-	"npc_lead_projectiles_fraction_max_precision"   "0.75"
+	"npc_lead_projectiles_fraction_min_precision"   "1"
+	"npc_lead_projectiles_fraction_max_precision"   "1"
 
 	//shot cadence
 	"npc_min_burst_min_precision"   				"3"
@@ -209,13 +209,13 @@ WeaponData
 	"npc_max_rest_time_between_bursts_max_precision" "1.25"
 
 	// Behavior
-	"fire_rate"   									"15.5"
-	"burst_fire_count"								"3"
-	"burst_fire_delay"								"0.15"
+	"fire_rate"   									"36"
+	"burst_fire_count"								"6"
+	"burst_fire_delay"								"0.100000"
 
-	"reload_time" 									"2.4"
+	"reload_time" 									"1.200000"
 	"reload_time_late1"								"1.54"
-	"reloadempty_time"								"2.85"
+	"reloadempty_time"								"1.300000"
 	"reloadempty_time_late1"						"2.0"
 	"reloadempty_time_late2"						"1.06"
 

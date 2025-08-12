@@ -1,4 +1,4 @@
-resource/ui/menus/panels/tabs_settings.res
+scripts/resource/ui/menus/panels/tabs_settings.res
 {
     Anchor
     {

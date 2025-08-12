@@ -4,7 +4,6 @@ global function Staging_Area_Init
 global function RemoveStagingAreaEntsForRealm
 global function GetPlayerStagingSquadRealm
 global function CreateWeaponRacksForRealm
-global function CreateGunRangeTargetsForRealm
 
 void function Staging_Area_Init()
 {
@@ -29,9 +28,4 @@ void function CreateWeaponRacksForRealm( int realm )
 	{
     	rack.SetModel( $"mdl/industrial/gun_rack_arm_down.rmdl" )
 	}
-}
-
-void function CreateGunRangeTargetsForRealm( int player )
-{
-    
 }

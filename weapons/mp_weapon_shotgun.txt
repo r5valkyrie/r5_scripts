@@ -103,14 +103,14 @@ WeaponData
 	"blast_pattern_npc_scale"            			"1.0"  // scales on top of the default scale
 
 	// Damage - When Used by Players
-	"damage_near_value"   							"7"
-	"damage_far_value"								"7"
-	"damage_near_value_titanarmor"					"7"
-	"damage_far_value_titanarmor" 					"7"
+	"damage_near_value"   							"6"
+	"damage_far_value"								"6"
+	"damage_near_value_titanarmor"					"6"
+	"damage_far_value_titanarmor" 					"6"
 	"damage_rodeo" 									"550"
 	"damage_near_distance"							"250"
 	"damage_far_distance" 							"850"
-	"damage_headshot_scale"							"1.25"
+	"damage_headshot_scale"							"1.000000"
 
 	// Damage - When Used by NPCs
 	"npc_damage_near_value"   						"25"
@@ -121,16 +121,16 @@ WeaponData
 	// Spread
 
 	// NOTE for projectile shotguns, set this to the size of the spread pattern at the intended engagement range
-	"spread_stand_hip"								"1.3"
-	"spread_stand_hip_run"							"1.3"
-	"spread_stand_hip_sprint"                       "1.3"
-	"spread_crouch_hip"   							"1.3"
-	"spread_air_hip"  								"1.3"
-	"spread_stand_ads"								"1.3"
-	"spread_crouch_ads"   							"1.3"
-	"spread_air_ads"  								"1.3"
-	"spread_wallrunning"  							"1.3"
-	"spread_wallhanging"  							"1.3"
+	"spread_stand_hip"								"1.200000"
+	"spread_stand_hip_run"							"1.200000"
+	"spread_stand_hip_sprint"                       "1.200000"
+	"spread_crouch_hip"   							"1.200000"
+	"spread_air_hip"  								"1.200000"
+	"spread_stand_ads"								"1.200000"
+	"spread_crouch_ads"   							"1.200000"
+	"spread_air_ads"  								"1.200000"
+	"spread_wallrunning"  							"1.200000"
+	"spread_wallhanging"  							"1.200000"
 
 	"spread_decay_rate"   							"500"
 	"spread_decay_delay"  							"0"
@@ -168,7 +168,7 @@ WeaponData
 	"dof_nearDepthEnd"								"0.0"
 
 	// Behavior
-	"fire_rate"   									"2.4"
+	"fire_rate"   									"3.100000"
 	"reload_time" 									"2.75"
 	"reload_time_late1"								"1.45"
 	"reload_time_late2"								"0.25"
@@ -184,13 +184,13 @@ WeaponData
 	// View Kick
 	"viewkick_spring" 								"shotgun"
 
-	"viewkick_pitch_base" 							"-1.2"
-	"viewkick_pitch_random"   						"0.75"
+	"viewkick_pitch_base" 							"-0.800000"
+	"viewkick_pitch_random"   						"0.500000"
 	"viewkick_pitch_softScale"						"0.3"
 	"viewkick_pitch_hardScale"						"1"
 
-	"viewkick_yaw_base"   							"-0.65"
-	"viewkick_yaw_random" 							"0.38"
+	"viewkick_yaw_base"   							"-0.500000"
+	"viewkick_yaw_random" 							"0.300000"
 	"viewkick_yaw_softScale"  						"0.38"
 	"viewkick_yaw_hardScale"  						"1.2"
 
@@ -244,6 +244,12 @@ WeaponData
     "burn_tick_rate"                "0.8"           //how often we do a damage tick = (tick_rate / burn_time)
     "sound_burn_damage_tick_1p" 	"flesh_thermiteburn_3p_vs_1p"
 
+
+	"headshot_distance"	"1500"
+	"damage_leg_scale"	"1.000000"
+	"critical_hit"	"1"
+	"critical_hit_damage_scale"	"1"
+	"titanarmor_critical_hit_required"	"1"
 	Mods
 	{
         gold
@@ -395,7 +401,15 @@ WeaponData
 			"damage_far_value"								"8"
 		 }
       
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 	"ui1_enable"		"1"
 	UiData1

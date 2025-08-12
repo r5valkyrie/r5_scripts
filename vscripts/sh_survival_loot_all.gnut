@@ -13,6 +13,7 @@ global function SURVIVAL_Loot_GetLootTypeFromString
 global function SURVIVAL_Loot_GetAttachmentType_Enum
 global function SURVIVAL_Loot_GetByTier
 global function SURVIVAL_Loot_GetSortedStringArrayFromSupportedAttachmentsString
+global function SURVIVAL_Loot_RegFromDataTable
 global function FS_HaloSurvival_GetRandomItemFromPool
 
 global function SURVIVAL_Loot_IsUniqueAmmoWeapon
@@ -20,6 +21,11 @@ global function GetCustomHopupArray
 global function IsNewLootEnabled
 global function IsEnabledForGroundLoot
 global function GetLockedSetFromName
+
+#if CLIENT || UI
+global function AddCallback_EditLootDesc
+global function RemoveCallback_EditLootDesc
+#endif
 
 #if CLIENT
 global function GetRarityColor
@@ -35,9 +41,21 @@ global function GetFXRarityColorForUnlockable
 global function IsCustomAttachment
 global function IsCustomWeapon
 
+//Mod registration functions
+global function RegisterModWeapon
+global function RegisterModHopup
+global function RegisterModGrenade
+global function RegisterModConsumable
+
+//Ground loot control functions
+global function AddItemToGroundLootExclusion
+global function IsModItemExcludedFromGroundLoot
+
 #if CLIENT || SERVER
 global function SURVIVAL_Loot_IsAmmoSpawningDisabled
 #endif
+
+global function AddCallback_OnLootDatatablesLoaded
 
 global enum eLootTier
 {
@@ -49,20 +67,6 @@ global enum eLootTier
 	HEIRLOOM
 
 	_count
-}
-
-global struct CustomHopupData
-{
-	string className,
-	string displayName,
-	string desc,
-	int tier,
-	asset icon,
-	asset model = $"mdl/weapons_r5/loot/_master/w_loot_wep_mods_chip.rmdl",
-	string attachmentSlot = "hopup",
-	float lowWeight = 5.0,
-	float medWeight = 10.0,
-	float highWeight = 25.0
 }
 
 global struct LootData
@@ -116,6 +120,47 @@ global struct LootData
 	bool functionref( entity, entity, int ) extraCanUseFunction = null
 }
 
+global struct CustomHopupData
+{
+	string className,
+	string displayName,
+	string desc,
+	int tier,
+	asset icon,
+	asset model = $"mdl/weapons_r5/loot/_master/w_loot_wep_mods_chip.rmdl",
+	string attachmentSlot = "hopup",
+	float lowWeight = 5.0,
+	float medWeight = 10.0,
+	float highWeight = 25.0
+}
+
+global struct CustomGrenadeData
+{
+	string className,
+	int countPerDrop,
+	int stackSize,
+	int tier,
+	float chance,
+	float carePackageChance
+}
+
+global struct CustomWeaponData
+{
+	string className,
+	int tier,
+	array<string> baseMods,
+	array<string> supportedAttachments,
+	string pickupSound1p,
+	string pickupSound3p,
+	string weaponType,
+	float lowWeaponChance,
+	float medWeaponChance,
+	float highWeaponChance,
+	string hudIcon,
+	string name,
+	bool isCP
+}
+
 global enum eWeaponLockedSet
 {
 	INVALID,
@@ -158,8 +203,10 @@ global enum eLootType
 	HELMET
 	BLANK
 	DATAKNIFE
+	SHIPKEYCARD
 	RESOURCE
 	GADGET
+	MARVIN_ARM
 
 	_count
 }
@@ -204,6 +251,11 @@ struct
 		array< OverrideDeathBoxRUI_NetworkOptimizedStruct >              handcraftedProfilesMasterList //
 	#endif
 
+	#if CLIENT || UI
+	array<string functionref( string, entity , string)> editLootDescCallbacks
+	#endif
+	array<void functionref( )> lootDatatablesLoadedCallbacks
+	
 	#if(UI)
 		bool                                                      overrideDeathBoxRUI_Initialized = false
 		table<string, OverrideDeathBoxRUI_NetworkOptimizedStruct> overrideDeathBoxRUIProfilesTable
@@ -211,18 +263,15 @@ struct
 	#endif
 	
 	bool ENABLE_DEFINED_SETS
+	array<string> modItemsExcludedFromGroundLoot
+	
+	array<CustomWeaponData> CustomModWeapons
+	array<CustomHopupData> CustomModHopups
+	array<CustomGrenadeData> CustomModGrenades
+	array<CustomGrenadeData> CustomModConsumables
 } file
 
 
-struct CustomGrenadeData
-{
-	string className,
-	int countPerDrop,
-	int stackSize,
-	int tier,
-	float chance,
-	float carePackageChance
-}
 
 array<string> attachmentSortOrder = ["barrel", "mag", "sight", "grip", "hopup", "hopupMulti_a", "hopupMulti_b"]
 
@@ -276,21 +325,19 @@ void function SURVIVAL_Loot_All_InitShared()
 	file.disabledRefs.clear()
 	file.disabledRefs = split( GetCurrentPlaylistVarString( "survival_disabled_loot", " " ), " " )
 
-	if( Playlist() == ePlaylists.fs_haloMod_survival ) 
+	if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
 	{
-		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/flowstate_all_new_halomod_survival_groundloot.rpak" ) )
-	} else
+		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/survival_loot_sdk_firingrange.rpak" ) )
+	} 
+	else
 	{
-		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/flowstate_all_new.rpak" ) )
 		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/survival_loot_sdk.rpak" ) )
 		
-		if( GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) )
-			SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/flowstate_all_new_halomod.rpak" ) )
+		foreach ( callbackFunc in file.lootDatatablesLoadedCallbacks ) //To load loot datatables from mods
+			callbackFunc()
 		
-		if( Gamemode() == eGamemodes.fs_snd )
-			SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/flowstate_all_new_snd.rpak" ) )
-		
-		RegisterCustomWeapons()
+		RegisterCustomWeapons() //JANU's Framework - Load custom items from playlist.
+		RegisterCustomModItems() //Items added from Mods. Similar to JANU's but from Mod Init scripts.
 	}
 
 	#if(UI)
@@ -304,6 +351,10 @@ void function SURVIVAL_Loot_All_InitShared()
 
 bool function IsEnabledForGroundLoot( string ref )
 {
+	//Check mod exclusions first
+	if(IsModItemExcludedFromGroundLoot(ref))
+		return false
+	
 	if( Playlist() == ePlaylists.fs_haloMod_survival )
 	{
 		switch( ref )
@@ -346,53 +397,23 @@ bool function IsNewLootEnabled( string ref )
 		//disabled until proper porting and fix
 		case "mp_weapon_grenade_gravity":
 		
-		// case "mp_weapon_sentinel":
-		// case "incapshield_pickup_lv0":
-		case "mp_weapon_bow":
-		case "mp_weapon_3030":
-		case "mp_weapon_nemesis":
-		case "arrows":
-		case "mp_weapon_dragon_lmg":
+		case "mp_weapon_flamethrower":
+			if( !IsFlowstateActive() )
+				return false
+			else 
+				return true
+		break
 		case "armor_pickup_lv0_evolving":
 		case "armor_pickup_lv1_evolving":
 		case "armor_pickup_lv2_evolving":
 		case "armor_pickup_lv3_evolving":
 		case "armor_pickup_lv5_evolving":
-		case "mp_weapon_throwingknife":
-		// case "mp_weapon_raygun":
-		// if( Gamemode() == eGamemodes.fs_infected && ref == "mp_weapon_raygun" )
-			// return true
-		case "mp_titanweapon_flightcore_rockets":
-		// case "laser_sight_l1":
-		// case "laser_sight_l2": 
-		// case "laser_sight_l3":
-		// case "bullets_mag_l4":
-		// case "highcal_mag_l4":
-		// case "energy_mag_l4":
-		// case "sniper_mag_l4":
-		// case "shotgun_bolt_l4":
-		//case "hopup_selectfire":
-		case "hopup_double_tap":
-		case "mp_ability_void_ring":
-		case "mp_ability_mobile_respawn_beacon":
-		case "mp_ability_redeploy_balloon":
 		case "hopup_smart_reload":
 		case "hopup_dual_loader":
-		//case "backpack_pickup_lv4_revive_boost":
 		
 		return false
 	}
-	
-	if( GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) ) 
-	{
-		switch( ref )
-		{
-			case "mp_weapon_thermite_grenade":
-			case "mp_weapon_grenade_emp":
-			case "mp_weapon_frag_grenade":
-			return false
-		}
-	}
+
 	return true
 }
 
@@ -431,7 +452,10 @@ int function GetLockedSetFromName( string ref )
 
 void function SURVIVAL_Loot_RegFromDataTable(var dt)
 {
-	var attachmentTable = GetDataTable( $"datatable/flowstate_weapon_mods.rpak" )
+	var attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk.rpak" )
+	if( Playlist() == ePlaylists.survival_firingrange ) 
+		attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk_firing_range.rpak" )
+	
 	int numRows = GetDatatableRowCount( dt )
 	for ( int i = 0; i < numRows; i++ )
 	{
@@ -623,25 +647,9 @@ void function SURVIVAL_Loot_RegFromDataTable(var dt)
 	#endif
 }
 
-struct CustomWeaponData
-{
-	string className,
-	int tier,
-	array<string> baseMods,
-	array<string> supportedAttachments,
-	string pickupSound1p,
-	string pickupSound3p,
-	string weaponType,
-	float lowWeaponChance,
-	float medWeaponChance,
-	float highWeaponChance,
-	string hudIcon,
-	string name,
-	bool isCP
-}
 
 void function RegisterCustomWeapons()
-{	
+{
 	array<string> customWeaponClassNames = split(GetCurrentPlaylistVarString("custom_weapon_list", ""), " ")
 	
 	#if DEVELOPER //(mk): added for confirmation, added hudIcon, added name, added registering damagedef	
@@ -850,6 +858,169 @@ void function RegisterCustomConsumable(CustomGrenadeData grenadeData)
 	AddCustomItemToLootPool( data.ref, "ordnance", grenadeData.chance)
 	AddCustomItemToLootPool( data.ref, "ordnance_drops", grenadeData.carePackageChance)
 	#endif
+}
+
+void function RegisterCustomModItems()
+{
+	foreach( weapon in file.CustomModWeapons )
+		RegisterWeapon( weapon )
+		
+	foreach( hopup in file.CustomModHopups )
+		CreateCustomHopup( hopup )
+	
+	foreach( grenade in file.CustomModGrenades )
+		RegisterCustomGrenade( grenade )
+	
+	foreach( consumable in file.CustomModConsumables )
+		RegisterCustomConsumable( consumable )	
+}
+
+//Mod registration utility functions for mods to use without playlist dependencies
+void function RegisterModWeapon(CustomWeaponData weaponData, bool enableGroundLoot = true)
+{
+	//Validate required fields
+	if(weaponData.className == "")
+	{
+		#if DEVELOPER
+			printw("[MOD WEAPON] Error: Weapon className cannot be empty")
+		#endif
+		return
+	}
+	
+	//Set default values for optional fields
+	if(weaponData.name == "")
+		weaponData.name = "Custom Weapon"
+	if(weaponData.hudIcon == "")
+		weaponData.hudIcon = "$\"\""
+	if(weaponData.weaponType == "")
+		weaponData.weaponType = "assault"
+	if(weaponData.pickupSound1p == "")
+		weaponData.pickupSound1p = "survival_loot_pickup_weapon_rspn101"
+	if(weaponData.pickupSound3p == "")
+		weaponData.pickupSound3p = "survival_loot_pickup_3p_weapon_rspn101"
+	if(weaponData.tier == 0)
+		weaponData.tier = eLootTier.COMMON
+	if(weaponData.supportedAttachments.len() == 0)
+		weaponData.supportedAttachments = ["barrel", "mag", "sight", "grip"]
+	
+	#if DEVELOPER
+		printt("[MOD WEAPON] Registering weapon:", weaponData.className, "- Name:", weaponData.name, "- Ground Loot:", enableGroundLoot)
+	#endif
+	
+	//Handle ground loot exclusion
+	if(!enableGroundLoot)
+		AddItemToGroundLootExclusion(weaponData.className)
+	
+	file.CustomModWeapons.append( weaponData )
+}
+
+void function RegisterModHopup(CustomHopupData hopupData, bool enableGroundLoot = true)
+{
+	//Validate required fields
+	if(hopupData.className == "")
+	{
+		#if DEVELOPER
+			printw("[MOD HOPUP] Error: Hopup className cannot be empty")
+		#endif
+		return
+	}
+	
+	//Set default values for optional fields
+	if(hopupData.displayName == "")
+		hopupData.displayName = "Custom Hopup"
+	if(hopupData.desc == "")
+		hopupData.desc = "Custom hop-up description"
+	if(hopupData.tier == 0)
+		hopupData.tier = eLootTier.COMMON
+	if(hopupData.attachmentSlot == "")
+		hopupData.attachmentSlot = "hopup"
+	
+	#if DEVELOPER
+		printt("[MOD HOPUP] Registering hopup:", hopupData.className, "- Name:", hopupData.displayName, "- Ground Loot:", enableGroundLoot)
+	#endif
+	
+	//Handle ground loot exclusion
+	if(!enableGroundLoot)
+		AddItemToGroundLootExclusion(hopupData.className)
+	
+	file.CustomModHopups.append( hopupData )
+}
+
+void function RegisterModGrenade(CustomGrenadeData grenadeData, bool enableGroundLoot = true)
+{
+	//Validate required fields
+	if(grenadeData.className == "")
+	{
+		#if DEVELOPER
+			printw("[MOD GRENADE] Error: Grenade className cannot be empty")
+		#endif
+		return
+	}
+	
+	//Set default values for optional fields
+	if(grenadeData.tier == 0)
+		grenadeData.tier = eLootTier.COMMON
+	if(grenadeData.countPerDrop == 0)
+		grenadeData.countPerDrop = 1
+	if(grenadeData.stackSize == 0)
+		grenadeData.stackSize = 2
+	
+	#if DEVELOPER
+		printt("[MOD GRENADE] Registering grenade:", grenadeData.className, "- Ground Loot:", enableGroundLoot)
+	#endif
+	
+	//Handle ground loot exclusion
+	if(!enableGroundLoot)
+		AddItemToGroundLootExclusion(grenadeData.className)
+	
+	file.CustomModGrenades.append( grenadeData )
+}
+
+void function RegisterModConsumable(CustomGrenadeData consumableData, bool enableGroundLoot = true)
+{
+	//Validate required fields
+	if(consumableData.className == "")
+	{
+		#if DEVELOPER
+			printw("[MOD CONSUMABLE] Error: Consumable className cannot be empty")
+		#endif
+		return
+	}
+	
+	//Set default values for optional fields
+	if(consumableData.tier == 0)
+		consumableData.tier = eLootTier.COMMON
+	if(consumableData.countPerDrop == 0)
+		consumableData.countPerDrop = 1
+	if(consumableData.stackSize == 0)
+		consumableData.stackSize = 2
+	
+	#if DEVELOPER
+		printt("[MOD CONSUMABLE] Registering consumable:", consumableData.className, "- Ground Loot:", enableGroundLoot)
+	#endif
+	
+	//Handle ground loot exclusion
+	if(!enableGroundLoot)
+		AddItemToGroundLootExclusion(consumableData.className)
+	
+	file.CustomModConsumables.append( consumableData )
+}
+
+//Ground loot control functions
+void function AddItemToGroundLootExclusion(string itemRef)
+{
+	if(!file.modItemsExcludedFromGroundLoot.contains(itemRef))
+	{
+		file.modItemsExcludedFromGroundLoot.append(itemRef)
+		#if DEVELOPER
+			printt("[GROUND LOOT] Excluded item from ground loot:", itemRef)
+		#endif
+	}
+}
+
+bool function IsModItemExcludedFromGroundLoot(string itemRef)
+{
+	return file.modItemsExcludedFromGroundLoot.contains(itemRef)
 }
 
 #if CLIENT
@@ -1133,39 +1304,23 @@ int function SURVIVAL_Loot_GetLootTypeFromString( string lootTypeString )
 		case "helmet":
 			return eLootType.HELMET
 
-#if SERVER
-
-
-
-#endif
-
 		case "data_knife":
 			return eLootType.DATAKNIFE
-
+			
+		case "ship_keycard":
+			return eLootType.SHIPKEYCARD
 
 		case "blank":
 			return eLootType.BLANK
 
 		case "resource":
 			return eLootType.RESOURCE
-
-#if SERVER
-
-
-
-#endif
-
-#if SERVER
-
-
-
-#endif
-
-#if SERVER
-
-
-
-#endif
+			
+		case "gadget":
+			return eLootType.GADGET
+			
+		case "marvin_arm":
+			return eLootType.MARVIN_ARM
 
 		default:
 			//
@@ -1503,6 +1658,30 @@ void function SURVIVAL_UI_OnLevelInit()
 
 	thread SURVIVAL_UI_GatherFriendInfo()
 }
+#endif
+
+void function AddCallback_OnLootDatatablesLoaded( void functionref() callback )
+{
+	Assert( !file.lootDatatablesLoadedCallbacks.contains( callback ), "Tried to add a callback that was already added" )
+
+	if( file.lootDatatablesLoadedCallbacks.contains( callback ) )
+		return
+	
+	file.lootDatatablesLoadedCallbacks.append( callback )
+}
+
+#if CLIENT || UI
+void function AddCallback_EditLootDesc( string functionref( string, entity, string ) callback )
+{
+	Assert( !file.editLootDescCallbacks.contains( callback ), "Tried to add a callback that was already added" )
+	file.editLootDescCallbacks.append( callback )
+}
+void function RemoveCallback_EditLootDesc( string functionref( string, entity, string ) callback )
+{
+	Assert( file.editLootDescCallbacks.contains( callback ), "Tried to remove a callback that was not added" )
+	file.editLootDescCallbacks.fastremovebyvalue( callback )
+}
+
 #endif
 
 

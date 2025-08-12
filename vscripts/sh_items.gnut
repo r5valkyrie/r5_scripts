@@ -1,6 +1,8 @@
 global function ShItems_LevelInit_Begin
 global function ShItems_LevelInit_Finish
 
+global function GetBaseItemFlavorsFromArray
+
 global function AddCallback_RegisterRootItemFlavors
 global function AddCallback_OnItemFlavorRegistered
 global function AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered
@@ -291,6 +293,14 @@ struct
 	table<string, bool functionref(entity player)> unlockFuncs
 } file
 
+//global const array< string > HIDDEN_CHARACTER_REFS = [ "character_dummie", "character_random", "SAID01897196488", "SAID00996325304" ]
+
+global const string GUID_SAMPLE_STRING = "SAID00000000123"
+const string GUID_FORMAT_STRING = "SAID%011d"
+const string GUID_PREFIX = "SAID"
+
+const string PLAYLIST_AVAILABILITY_META_DATA_KEY = "playlist_availability"
+
 /////////////////////////
 /////////////////////////
 //// Initialiszation ////
@@ -303,7 +313,7 @@ void function ShItems_LevelInit_Begin()
 
 	#if DEVELOPER
 		#if SERVER
-			AddClientCommandCallback( "itemflavors_dump", ClientCommand_itemflavors_dump )
+			AddClientCommandCallback( "itemflavors_dump", ClientCommand_itemflavors_dump ) // dev
 		#endif
 	#endif
 
@@ -342,11 +352,15 @@ void function ShItems_LevelInit_Finish()
 
 		if ( ItemFlavor_GetAsset( flavor ) == $"" )
 			continue
-
-		foreach( ItemFlavor tag in RegisterReferencedItemFlavorsFromArray( flavor, "tags", "flavor" ) )
+		if ( ItemFlavor_GetType( flavor ) == eItemType.music_pack )
+			continue
+		else
 		{
-			flavor._____INTERNAL_tagMap[tag] <- true
-			fileLevel.tagFlavorListMap[tag].append( flavor )
+			foreach( ItemFlavor tag in RegisterReferencedItemFlavorsFromArray( flavor, "tags", "flavor" ) )
+			{
+				flavor._____INTERNAL_tagMap[tag] <- true
+				fileLevel.tagFlavorListMap[tag].append( flavor )
+			}
 		}
 	}
 
@@ -356,7 +370,7 @@ void function ShItems_LevelInit_Finish()
 		cb()
 
 	#if SERVER || CLIENT
-		Remote_RegisterClientFunction( "ServerToClient_ItemFlavorConsistencyCheckFailed", "bool", "int", INT_MIN, INT_MAX )
+		// ScriptRemote_RegisterClientFunction( "ServerToClient_ItemFlavorConsistencyCheckFailed", "bool", "int", INT_MIN, INT_MAX ) //(cafe) Not used - 6-5-2025
 	#endif
 	#if ASSERTING
 		DoItemFlavorCrossVMCheck()
@@ -436,6 +450,11 @@ const table<asset, asset> sourceTagToIcon = {
 	[ $"settings/itemflav/tag/source_s03e01.rpak" ] = $"rui/events/s03e01/item_source_icon",
 	[ $"settings/itemflav/tag/source_s03e01a.rpak" ] = $"rui/events/s03e01a/item_source_icon",
 	[ $"settings/itemflav/tag/source_s03e02.rpak" ] = $"rui/events/s03e02/item_source_icon",
+	[ $"settings/itemflav/tag/source_s03e03.rpak" ] = $"rui/events/s03e02/item_source_icon",
+	[ $"settings/itemflav/tag/source_s04e01.rpak" ] = $"rui/events/s04e01/item_source_icon",
+	[ $"settings/itemflav/tag/source_s04e02.rpak" ] = $"rui/events/s04e02/item_source_icon",
+	[ $"settings/itemflav/tag/source_battlepass_season04.rpak" ] = $"rui/events/s04bp/item_source_icon",
+	[ $"settings/itemflav/tag/source_r5reloaded_custom.rpak" ] = $"rui/custom/sdk/item_source_icon",
 	//
 	[ $"settings/itemflav/tag/source_retail01.rpak" ] = $"rui/menu/buttons/source_retail01",
 	[ $"settings/itemflav/tag/source_retail02.rpak" ] = $"rui/menu/buttons/source_retail02",
@@ -446,6 +465,22 @@ void function RegisterTags()
 {
 	foreach ( sourceTag, icon in sourceTagToIcon )
 		RegisterItemFlavorFromSettingsAsset( sourceTag )
+}
+
+array<asset> function GetBaseItemFlavorsFromArray( string arrayFieldName )
+{
+	var parentBlock = GetSettingsBlockForAsset( $"settings/base_itemflavors.rpak" )
+	var arrField    = GetSettingsBlockArray( parentBlock, arrayFieldName )
+	array<asset> validAssets
+
+	foreach ( var entryBlock in IterateSettingsArray( arrField ) )
+	{
+		asset entryAsset = GetSettingsBlockAsset( entryBlock, "flavor" )
+		if ( entryAsset != $"" )
+			validAssets.append( entryAsset )
+	}
+
+	return validAssets
 }
 
 
@@ -964,6 +999,9 @@ string function ItemQuality_GetQualityName( int quality )
 {
 	switch ( quality )
 	{
+		case 6:
+			return "#QUALITY_FANMADE"
+			
 		case 4:
 			return "#LOOT_TIER5"
 
@@ -1122,6 +1160,7 @@ array<ItemFlavor> function RegisterReferencedItemFlavorsFromArray( ItemFlavor pa
 }
 
 
+
 table<ItemFlavor, bool> function MakeItemFlavorSet( array<ItemFlavor> list, table<ItemFlavor, int> sortOrdinalMap = {} )
 {
 	table<ItemFlavor, bool> out
@@ -1202,8 +1241,11 @@ ItemFlavor ornull function RegisterItemFlavorFromSettingsAsset( asset settingsAs
 	if ( flavor._____INTERNAL_playlistOpinion == eItemFlavorPlaylistOpinion.DISABLED )
 	{
 		fileLevel.DEV_areAnyItemflavorsDisabledByPlaylist = true
-		Warning( "Item flavor disabled by dev-only playlist vars: " + humanReadableRef )
-		Warning( "!!WARNING!! Item flavor disabled by playlist, this is dev-only and should not remain: " + humanReadableRef )
+		
+		#if DEVELOPER //will fill logs for normal players
+			Warning( "Item flavor disabled by dev-only playlist vars: " + humanReadableRef )
+			Warning( "!!WARNING!! Item flavor disabled by playlist, this is dev-only and should not remain: " + humanReadableRef )
+		#endif
 
 		#if DEBUG_ITEM_FLAVOR_REGISTRATION
 			printt( "DEBUG_ITEM_FLAVOR_REGISTRATION", FUNC_NAME(), settingsAsset, "Disabled by playlist!" )

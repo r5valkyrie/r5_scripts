@@ -4,8 +4,8 @@ global function TitanTransfer_Init
 
 global function PilotBecomesTitan
 global function TitanBecomesPilot
-//global function CreateAutoTitanForPlayer_ForTitanBecomesPilot
-//global function CreateAutoTitanForPlayer_FromTitanLoadout
+global function CreateAutoTitanForPlayer_ForTitanBecomesPilot
+global function CreateAutoTitanForPlayer_FromTitanLoadout
 global function CopyWeapons
 global function StorePilotWeapons
 global function RetrievePilotWeapons
@@ -67,11 +67,11 @@ void function OnClassChangeBecomeTitan( entity player, entity titan ) //Stuff he
 
 function CopyWeapons( entity fromEnt, entity toEnt )
 {
-	entity activeWeapon = fromEnt.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	entity activeWeapon = fromEnt.GetActiveWeapon( eActiveInventorySlot.altHand )
 	if ( IsValid( activeWeapon ) )
 	{
-		// if ( activeWeapon.IsWeaponOffhand() )
-		// 	fromEnt.ClearOffhand()
+		if ( activeWeapon.IsWeaponOffhand() )
+			fromEnt.ClearOffhand( eActiveInventorySlot.altHand )
 	}
 
 	array<entity> weapons = fromEnt.GetMainWeapons()
@@ -118,7 +118,7 @@ array<StoredWeapon> function StoreWeapons( entity player )
 		sw.name = weapon.GetWeaponClassName()
 		sw.weaponType = eStoredWeaponType.main
 		sw.activeWeapon = ( weapon == activeWeapon )
-		sw.inventoryIndex = weapon.GetInventoryIndex()
+		sw.inventoryIndex = i
 		sw.mods = weapon.GetMods()
 		sw.modBitfield = weapon.GetModBitField()
 		sw.ammoCount = weapon.GetWeaponPrimaryAmmoCount( weapon.GetActiveAmmoSource() )
@@ -217,49 +217,49 @@ function TransferHealth( srcEnt, destEnt )
 	//destEnt.SetHealthPerSegment( srcEnt.GetHealthPerSegment() )
 }
 
-// entity function CreateAutoTitanForPlayer_FromTitanLoadout( entity player, TitanLoadoutDef loadout, vector origin, vector angles )
-// {
-// 	int team = player.GetTeam()
+entity function CreateAutoTitanForPlayer_FromTitanLoadout( entity player, vector origin, vector angles )
+{
+	int team = player.GetTeam()
 
-// 	player.titansBuilt++
-// 	ResetTitanBuildTime( player )
+	player.titansBuilt++
+	ResetTitanBuildTime( player )
 
-// 	entity npcTitan = CreateNPCTitan( loadout.setFile, team, origin, angles, loadout.setFileMods )
-// 	SetTitanSpawnOptionsFromLoadout( npcTitan, loadout )
-// 	SetSpawnOption_OwnerPlayer( npcTitan, player )
+	entity npcTitan = CreateNPCTitan( "", team, origin, angles )
+	//SetTitanSpawnOptionsFromLoadout( npcTitan, loadout )
+	SetSpawnOption_OwnerPlayer( npcTitan, player )
 
-// 	if ( IsSingleplayer() )
-// 	{
-// 		npcTitan.EnableNPCFlag( NPC_IGNORE_FRIENDLY_SOUND )
-// 	}
-// 	#if MP
-// 		string titanRef = GetTitanCharacterNameFromSetFile( loadout.setFile )
-// 		npcTitan.SetTargetInfoIcon( GetTitanCoreIcon( titanRef ) )
-// 	#endif
+	//if ( IsSingleplayer() )
+	{
+		npcTitan.EnableNPCFlag( NPC_IGNORE_FRIENDLY_SOUND )
+	}
+	#if MP
+		//string titanRef = GetTitanCharacterNameFromSetFile( loadout.setFile )
+		//npcTitan.SetTargetInfoIcon( GetTitanCoreIcon( titanRef ) )
+	#endif
 
-// 	return npcTitan
-// }
+	return npcTitan
+}
 
-// entity function CreateAutoTitanForPlayer_ForTitanBecomesPilot( entity player, bool hidden = false )
-// {
-// 	vector origin = player.GetOrigin()
-// 	vector angles = player.GetAngles()
-// 	TitanLoadoutDef loadout = GetTitanLoadoutFromPlayerInventory( player )
+entity function CreateAutoTitanForPlayer_ForTitanBecomesPilot( entity player, bool hidden = false )
+{
+	vector origin = player.GetOrigin()
+	vector angles = player.GetAngles()
+	//TitanLoadoutDef loadout = GetTitanLoadoutFromPlayerInventory( player )
 
-// 	int team = player.GetTeam()
-// 	entity npcTitan = CreateNPCTitan( loadout.setFile, team, origin, angles, loadout.setFileMods )
-// 	npcTitan.s.spawnWithoutSoul <- true
-// 	SetTitanSpawnOptionsFromLoadout( npcTitan, loadout )
-// 	SetSpawnOption_OwnerPlayer( npcTitan, player )
-// 	npcTitan.SetSkin( player.GetSkin() )
-// 	npcTitan.SetCamo( player.GetCamo() )
-// 	npcTitan.SetDecal( player.GetDecal() )
+	int team = player.GetTeam()
+	entity npcTitan = CreateNPCTitan( "", team, origin, angles, [] )
+	npcTitan.s.spawnWithoutSoul <- true
+	//SetTitanSpawnOptionsFromLoadout( npcTitan, loadout )
+	SetSpawnOption_OwnerPlayer( npcTitan, player )
+	npcTitan.SetSkin( player.GetSkin() )
+	npcTitan.SetCamo( player.GetCamo() )
+	npcTitan.SetDecal( player.GetDecal() )
 
-// 	if ( IsSingleplayer() )
-// 		npcTitan.EnableNPCFlag( NPC_IGNORE_FRIENDLY_SOUND )
+	if ( IsSingleplayer() )
+		npcTitan.EnableNPCFlag( NPC_IGNORE_FRIENDLY_SOUND )
 
-// 	return npcTitan
-// }
+	return npcTitan
+}
 
 void function SetTitanSpawnOptionsFromLoadout( entity titan, TitanLoadoutDef loadout )
 {
@@ -324,275 +324,276 @@ void function ForceTitanSustainedDischargeEnd( entity player )
 
 function TitanBecomesPilot( entity player, entity titan )
 {
-	// Assert( IsAlive( player ), player + ": Player is not alive" )
-	// Assert( player.IsTitan(), player + " is not a titan" )
+	Assert( IsAlive( player ), player + ": Player is not alive" )
+	Assert( player.IsTitan(), player + " is not a titan" )
 
-	// Assert( IsAlive( titan ), titan + " is not alive." )
-	// Assert( titan.IsTitan(), titan + " is not alive." )
+	Assert( IsAlive( titan ), titan + " is not alive." )
+	Assert( titan.IsTitan(), titan + " is not alive." )
 
-	// asset model = player.GetModelName()
-	// int skin = player.GetSkin()
-	// int camo = player.GetCamo()
-	// int decal = player.GetDecal()
-	// titan.SetModel( model )
-	// titan.SetSkin( skin )
-	// titan.SetCamo( camo )
-	// titan.SetDecal( decal )
-	// titan.SetPoseParametersSameAs( player )
-	// titan.SequenceTransitionFromEntity( player )
+	asset model = player.GetModelName()
+	int skin = player.GetSkin()
+	int camo = player.GetCamo()
+	int decal = player.GetDecal()
+	titan.SetModel( model )
+	titan.SetSkin( skin )
+	titan.SetCamo( camo )
+	titan.SetDecal( decal )
+	titan.SetPoseParametersSameAs( player )
+	titan.SequenceTransitionFromEntity( player )
 
-	// ForceTitanSustainedDischargeEnd( player )
+	ForceTitanSustainedDischargeEnd( player )
 
-	// TransferHealth( player, titan )
+	TransferHealth( player, titan )
 	//Transfer children before player becomes pilot model
-	// player.TransferChildrenTo( titan )
-	// player.TransferTethersToEntity( titan )
-	// entity soul = player.GetTitanSoul()
-	// SetSoulOwner( soul, titan )
-	// Assert( player.GetTitanSoul() == null )
+	player.TransferChildrenTo( titan )
+	player.TransferTethersToEntity( titan )
+	entity soul = player.GetTitanSoul()
+	SetSoulOwner( soul, titan )
+	Assert( player.GetTitanSoul() == null )
 
 	// this must happen before changing the players settings
-	//TransferDamageStates( player, titan )
+	TransferDamageStates( player, titan )
 
 	// cant have a titan passive when you're not a titan
-	//akeAllTitanPassives( player )
+	TakeAllPassives( player )
 
-	// player.SetPlayerSettingsWithMods( player.s.storedPlayerSettings, player.s.storedPlayerSettingsMods )
-	// player.SetPlayerSettingPosMods( PLAYERPOSE_STANDING, player.s.storedPlayerStandMods )
-	// player.SetPlayerSettingPosMods( PLAYERPOSE_CROUCHING, player.s.storedPlayerCrouchMods )
-	// player.SetSkin( player.s.storedPlayerSkinIndex )
-	// player.SetCamo( player.s.storedPlayerCamoIndex )
+	//player.SetPlayerSettingsWithMods( player.s.storedPlayerSettings, player.s.storedPlayerSettingsMods )
+	//player.SetPlayerSettingPosMods( PLAYERPOSE_STANDING, player.s.storedPlayerStandMods )
+	//player.SetPlayerSettingPosMods( PLAYERPOSE_CROUCHING, player.s.storedPlayerCrouchMods )
+	player.SetSkin( player.s.storedPlayerSkinIndex )
+	player.SetCamo( player.s.storedPlayerCamoIndex )
 
-	// delete player.s.storedPlayerSettings
-	// delete player.s.storedPlayerSettingsMods
-	// delete player.s.storedPlayerStandMods
-	// delete player.s.storedPlayerCrouchMods
-	// delete player.s.storedPlayerSkinIndex
-	// delete player.s.storedPlayerCamoIndex
+	delete player.s.storedPlayerSettings
+	delete player.s.storedPlayerSettingsMods
+	delete player.s.storedPlayerStandMods
+	delete player.s.storedPlayerCrouchMods
+	delete player.s.storedPlayerSkinIndex
+	delete player.s.storedPlayerCamoIndex
 
-	// TakeAllWeapons( titan )
-	// CopyWeapons( player, titan )
+	TakeAllWeapons( titan )
+	CopyWeapons( player, titan )
 
-	// player.SetTitle( "" )
+	player.SetTitle( "" )
 
-	// RetrievePilotWeapons( player )
+	RetrievePilotWeapons( player )
 
-	// if ( Riff_AmmoLimit() != eAmmoLimit.Default )
-	// {
-	// 	switch ( Riff_AmmoLimit() )
-	// 	{
-	// 		case eAmmoLimit.Limited:
-	// 			local weapons = player.GetMainWeapons()
-	// 			foreach ( weapon in weapons )
-	// 			{
-	// 				local clipAmmo = player.GetWeaponAmmoMaxLoaded( weapon )
+	/*if ( Riff_AmmoLimit() != eAmmoLimit.Default )
+	{
+		switch ( Riff_AmmoLimit() )
+		{
+			case eAmmoLimit.Limited:
+				local weapons = player.GetMainWeapons()
+				foreach ( weapon in weapons )
+				{
+					local clipAmmo = player.GetWeaponAmmoMaxLoaded( weapon )
 
-	// 				if ( clipAmmo > 0 )
-	// 					weapon.SetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE, clipAmmo * 2 )
-	// 			}
+					if ( clipAmmo > 0 )
+						weapon.SetWeaponPrimaryAmmoCount( clipAmmo * 2 )
+				}
 
-	// 			local offhand = player.GetOffhandWeapon( 0 )
-	// 			if ( offhand )
-	// 			{
-	// 				local ammoLoaded = player.GetWeaponAmmoMaxLoaded( offhand )
-	// 				offhand.SetWeaponPrimaryClipCount( max( 1, ammoLoaded - 2 ) )
-	// 			}
-	// 			break
-	// 	}
-	// }
+				local offhand = player.GetOffhandWeapon( 0 )
+				if ( offhand )
+				{
+					local ammoLoaded = player.GetWeaponAmmoMaxLoaded( offhand )
+					offhand.SetWeaponPrimaryClipCount( max( 1, ammoLoaded - 2 ) )
+				}
+				break
+		}
+	}*/
 
 	// Added via AddCallback_OnTitanBecomesPilot
-	// foreach ( callbackFunc in svGlobal.onTitanBecomesPilotCallbacks )
-	// {
-	// 	callbackFunc( player, titan )
-	// }
+	foreach ( callbackFunc in svGlobal.onTitanBecomesPilotCallbacks )
+	{
+		callbackFunc( player, titan )
+	}
 
 	// Ensure rodeo doesn't happen straight away, if a nearby Titan runs by
-	//Rodeo_SetCooldown( player )
+	//Rodeo_SetCooldown( player )//missing native function
 
-	// if ( player.cloakedForever )
-	// {
-	// 	// infinite cloak active
-	// 	EnableCloakForever( player )
-	// }
-	// if ( player.stimmedForever )
-	// {
-	// 	StimPlayer( player, USE_TIME_INFINITE )
-	// }
+	if ( player.cloakedForever )
+	{
+		// infinite cloak active
+		EnableCloakForever( player )
+	}
+	if ( player.stimmedForever )
+	{
+		StimPlayer( player, USE_TIME_INFINITE )
+	}
 
-	//soul.Signal( "PlayerDisembarkedTitan", { player = player } )
+	soul.Signal( "PlayerDisembarkedTitan", { player = player } )
 
 	// no longer owned
-	// if ( soul.capturable )
-	// {
-	// 	soul.ClearBossPlayer()
-	// 	titan.ClearBossPlayer()
-	// 	titan.SetUsableByGroup( "friendlies pilot" )
-	// 	titan.DisableBehavior( "Follow" )
-	// 	player.SetPetTitan( null )
-	// 	if ( !player.s.savedTitanBuildTimer )
-	// 		ResetTitanBuildTime( player )
-	// 	else
-	// 		player.SetNextTitanRespawnAvailable( player.s.savedTitanBuildTimer )
-	// 	return
-	// }
+	if ( soul.capturable )
+	{
+		soul.ClearBossPlayer()
+		titan.ClearBossPlayer()
+		titan.SetUsableByGroup( "friendlies pilot" )
+		titan.DisableBehavior( "Follow" )
+		player.SetPetTitan( null )
+		if ( !player.s.savedTitanBuildTimer )
+			ResetTitanBuildTime( player )
+		else
+			player.SetNextTitanRespawnAvailable( player.s.savedTitanBuildTimer )
+		return
+	}
 	return titan
 }
 
 function PilotBecomesTitan( entity player, entity titan, bool fullCopy = true )
 {
-	// player.SetPetTitan( null )
+	player.SetPetTitan( null )
 
-	// // puts the weapons into a table
-	// StorePilotWeapons( player )
+	// puts the weapons into a table
+	StorePilotWeapons( player )
 
-	// #if HAS_TITAN_WEAPON_SWAPPING
-	// {
-	// 	foreach ( weapon in titan.GetMainWeapons() )
-	// 	{
-	// 		// the pilot's weapons will recent entirely in sp if this doesn't match
-	// 		player.p.lastPrimaryWeaponEnt = weapon
-	// 		break
-	// 	}
-	// }
-	// #endif
+	/*#if HAS_TITAN_WEAPON_SWAPPING
+	{
+		foreach ( weapon in titan.GetMainWeapons() )
+		{
+			// the pilot's weapons will recent entirely in sp if this doesn't match
+			player.p.lastPrimaryWeaponEnt = weapon
+			break
+		}
+	}
+	#endif*/
 
-	// if ( fullCopy )
-	// {
-	// 	CopyWeapons( titan, player )
-	// }
+	if ( fullCopy )
+	{
+		CopyWeapons( titan, player )
+	}
 
-	// //Should only be the first time a player embarks into a Titan that Titan's life.
-	// //Check with differ if there is a better way than .e.var on the soul.
-	// //TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
-	// //PROTO_DisplayTitanLoadouts( player, titan, loadout )
+	//Should only be the first time a player embarks into a Titan that Titan's life.
+	//Check with differ if there is a better way than .e.var on the soul.
+	//TitanLoadoutDef loadout = GetTitanLoadoutForPlayer( player )
+	//PROTO_DisplayTitanLoadouts( player, titan, loadout )
 
-	// entity soul = titan.GetTitanSoul()
-	// soul.soul.lastOwner = player
+	entity soul = titan.GetTitanSoul()
+	soul.soul.lastOwner = player
 
-	// player.s.storedPlayerSettings <- player.GetPlayerSettings()
-	// player.s.storedPlayerSettingsMods <- player.GetPlayerSettingsMods()
-	// player.s.storedPlayerStandMods <- player.GetPlayerModsForPos( PLAYERPOSE_STANDING )
-	// player.s.storedPlayerCrouchMods <- player.GetPlayerModsForPos( PLAYERPOSE_CROUCHING )
-	// player.s.storedPlayerSkinIndex <- player.GetSkin()
-	// player.s.storedPlayerCamoIndex <- player.GetCamo()
-	// printt( player.GetSkin(), player.GetCamo() )
+	player.s.storedPlayerSettings <- player.GetPlayerSettings()
+	player.s.storedPlayerSettingsMods <- player.GetPlayerSettingsMods()
+	//player.s.storedPlayerStandMods <- player.GetPlayerModsForPos( PLAYERPOSE_STANDING )
+	//player.s.storedPlayerCrouchMods <- player.GetPlayerModsForPos( PLAYERPOSE_CROUCHING )
+	player.s.storedPlayerSkinIndex <- player.GetSkin()
+	player.s.storedPlayerCamoIndex <- player.GetCamo()
+	printt( player.GetSkin(), player.GetCamo() )
 
-	// string settings = GetSoulPlayerSettings( soul )
-	// var titanTint = Dev_GetAISettingByKeyField_Global( settings, "titan_tint" )
+	string settings = GetSoulPlayerSettings( soul )
+	var titanTint = "BT-7274"//Dev_GetAISettingByKeyField_Global( settings, "titan_tint" )
 
-	// if ( titanTint != null )
-	// {
-	// 	expect string( titanTint )
-	// 	Highlight_SetEnemyHighlight( player, titanTint )
-	// }
-	// else
-	// {
-	// 	Highlight_ClearEnemyHighlight( player )
-	// }
+	if ( titanTint != null )
+	{
+		expect string( titanTint )
+		//Highlight_SetEnemyHighlight( player, titanTint )
+	}
+	else
+	{
+		Highlight_ClearEnemyHighlight( player )
+	}
 
-	// if ( !player.GetParent() )
-	// {
-	// 	player.SetOrigin( titan.GetOrigin() )
-	// 	player.SetAngles( titan.GetAngles() )
-	// 	player.SetVelocity( Vector( 0,0,0 ) )
-	// }
+	if ( !player.GetParent() )
+	{
+		player.SetOrigin( titan.GetOrigin() )
+		player.SetAngles( titan.GetAngles() )
+		player.SetVelocity( Vector( 0,0,0 ) )
+	}
 
-	// if ( soul.capturable )
-	// {
-	// 	printt( player.GetPetTitan(), player.GetNextTitanRespawnAvailable() )
-	// 	if ( IsValid( player.GetPetTitan() ) || player.s.replacementDropInProgress )
-	// 		player.s.savedTitanBuildTimer <- null
-	// 	else
-	// 		player.s.savedTitanBuildTimer <- player.GetNextTitanRespawnAvailable()
+	if ( soul.capturable )
+	{
+		printt( player.GetPetTitan(), player.GetNextTitanRespawnAvailable() )
+		if ( IsValid( player.GetPetTitan() ) || player.s.replacementDropInProgress )
+			player.s.savedTitanBuildTimer <- null
+		else
+			player.s.savedTitanBuildTimer <- player.GetNextTitanRespawnAvailable()
 
-	// 	if ( GameRules_GetGameMode() == "ctt" )
-	// 	{
-	// 		titan.Minimap_AlwaysShow( 0, null )
-	// 		player.Minimap_AlwaysShow( TEAM_IMC, null )
-	// 		player.Minimap_AlwaysShow( TEAM_MILITIA, null )
-	// 		player.SetHudInfoVisibilityTestAlwaysPasses( true )
-	// 	}
-	// }
+		if ( GameRules_GetGameMode() == "ctt" )
+		{
+			titan.Minimap_AlwaysShow( 0, null )
+			player.Minimap_AlwaysShow( TEAM_IMC, null )
+			player.Minimap_AlwaysShow( TEAM_MILITIA, null )
+			player.SetHudInfoVisibilityTestAlwaysPasses( true )
+		}
+	}
 
-	// SetSoulOwner( soul, player )
+	SetSoulOwner( soul, player )
 
-	// if ( soul.GetBossPlayer() != player )
-	// 	SoulBecomesOwnedByPlayer( soul, player )
+	if ( soul.GetBossPlayer() != player )
+		SoulBecomesOwnedByPlayer( soul, player )
 
-	// foreach ( int passive, _ in level.titanPassives )
-	// {
-	// 	if ( SoulHasPassive( soul, passive ) )
-	// 	{
-	// 		GiveTitanPassiveLifeLong( player, passive )
-	// 	}
-	// }
+	/*foreach ( int passive, _ in level.titanPassives )
+	{
+		if ( SoulHasPassive( soul, passive ) )
+		{
+			//GiveTitanPassiveLifeLong( player, passive )
+		}
+	}*/
 
-	// asset model = titan.GetModelName()
-	// int skin = titan.GetSkin()
-	// int camo = titan.GetCamo()
-	// int decal = titan.GetDecal()
-	// TitanSettings titanSettings = titan.ai.titanSettings
-	// array<string> mods = titanSettings.titanSetFileMods
+	asset model = titan.GetModelName()
+	int skin = titan.GetSkin()
+	int camo = titan.GetCamo()
+	int decal = titan.GetDecal()
+	TitanSettings titanSettings = titan.ai.titanSettings
+	array<string> mods = titanSettings.titanSetFileMods
 
-	// player.SetPlayerSettingsFromDataTable( { playerSetFile = titanSettings.titanSetFile, playerSetFileMods = mods } )
-	// var title = GetGlobalSettingsString( settings, "printname" )
+	//player.SetPlayerSettingsFromDataTable( { playerSetFile = titanSettings.titanSetFile, playerSetFileMods = mods } )
+	var title = "BT-7274"//DGetPlayerSettingsFieldForClassName( settings, "printname" )
 
-	// if ( title != null )
-	// {
-	// 	player.SetTitle( expect string( title ) )
-	// }
+	if ( title != null )
+	{
+		player.SetTitle( expect string( title ) )
+	}
 
-	// if ( IsAlive( player ) )
-	// 	TransferHealth( titan, player )
+	if ( IsAlive( player ) )
+		TransferHealth( titan, player )
 
-	// player.SetModel( model )
-	// player.SetSkin( skin )
-	// player.SetCamo( camo )
-	// player.SetDecal( decal )
-	// player.SetPoseParametersSameAs( titan )
-	// player.SequenceTransitionFromEntity( titan )
+	player.SetModel( model )
+	player.SetSkin( skin )
+	player.SetCamo( camo )
+	player.SetDecal( decal )
+	player.SetPoseParametersSameAs( titan )
+	player.SequenceTransitionFromEntity( titan )
 
-	// // no cloak titan
-	// player.SetCloakDuration( 0, 0, 0 )
+	// no cloak titan
+	player.SetCloakDuration( 0, 0, 0 )
 
-	// // this must happen after changing the players settings
-	// TransferDamageStates( titan, player )
+	// this must happen after changing the players settings
+	TransferDamageStates( titan, player )
 
-	// titan.TransferTethersToEntity( player )
+	titan.TransferTethersToEntity( player )
 
-	// //We parent the player to the titan in the process of embarking
-	// //Must clear parent when transfering children to avoid parenting the player to himself
-	// if ( player.GetParent() == titan )
-	// 	player.ClearParent()
-	// //Transfer children after player has become titan model.
-	// titan.TransferChildrenTo( player )
+	//We parent the player to the titan in the process of embarking
+	//Must clear parent when transfering children to avoid parenting the player to himself
+	if ( player.GetParent() == titan )
+		player.ClearParent()
+	//Transfer children after player has become titan model.
+	titan.TransferChildrenTo( player )
 
-	// player.SetOrigin( titan.GetOrigin() )
-	// player.SetAngles( titan.GetAngles() )
-	// player.SetVelocity( Vector( 0,0,0 ) )
+	player.SetOrigin( titan.GetOrigin() )
+	player.SetAngles( titan.GetAngles() )
+	player.SetVelocity( Vector( 0,0,0 ) )
 
-	// soul.e.embarkCount++
-	// soul.Signal( "PlayerEmbarkedTitan", { player = player } )
-	// player.Signal( "PlayerEmbarkedTitan", { titan = titan } )
-	// titan.Signal( "TitanStopsThinking" )
+	soul.e.embarkCount++
+	soul.Signal( "PlayerEmbarkedTitan", { player = player } )
+	player.Signal( "PlayerEmbarkedTitan", { titan = titan } )
+	titan.Signal( "TitanStopsThinking" )
 
-	// // Added via AddCallback_OnPilotBecomesTitan
-	// foreach ( callbackFunc in svGlobal.onPilotBecomesTitanCallbacks )
-	// {
-	// 	callbackFunc( player, titan )
-	// }
+	// Added via AddCallback_OnPilotBecomesTitan
+	foreach ( callbackFunc in svGlobal.onPilotBecomesTitanCallbacks )
+	{
+		callbackFunc( player, titan )
+	}
 
-	// #if DEVELOPER
-	// 	thread Dev_CheckTitanIsDeletedAtEndOfPilotBecomesTitan( titan )
-	// #endif
+	#if DEV
+		//thread Dev_CheckTitanIsDeletedAtEndOfPilotBecomesTitan( titan )
+	#endif
 }
 
 void function SetTitanSettings( TitanSettings titanSettings, string titanSetFile, array<string> mods = [] )
 {
-	// Assert( titanSettings.titanSetFile == "", "Tried to set titan settings to " + titanSetFile + ", but its already set to " + titanSettings.titanSetFile )
-	// titanSettings.titanSetFile = titanSetFile
-	// titanSettings.titanSetFileMods = mods
+	Assert( titanSettings.titanSetFile == "", "Tried to set titan settings to " + titanSetFile + ", but its already set to " + titanSettings.titanSetFile )
+	titanSettings.titanSetFile = CastStringToAsset( titanSetFile )
+	titanSettings.titanSetFileMods = mods
+	printt(titanSetFile)
 }
 
 void function Dev_CheckTitanIsDeletedAtEndOfPilotBecomesTitan( entity titan )

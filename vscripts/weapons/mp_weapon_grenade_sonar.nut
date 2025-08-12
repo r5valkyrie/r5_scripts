@@ -1,7 +1,3 @@
-#if SERVER
-untyped
-#endif
-
 global function SonarGrenade_Init
 
 #if CLIENT
@@ -9,22 +5,26 @@ global function ClSonarGrenade_Init
 #endif
 
 #if SERVER
-global function SonarStartGrenade
-global function SonarEndGrenadeGrenade
-global function IncrementSonarPerTeamGrenade
-global function DecrementSonarPerTeamGrenade
-global function OnSonarTriggerLeaveInternalGrenade
 global function AddSonarStartGrenadeCallback
 #endif
 
 global function OnProjectileCollision_weapon_grenade_sonar
 global function OnProjectileIgnite_weapon_grenade_sonar
 
+global float SONAR_GRENADE_RADIUS 			= 1250.0 //(mk): max in ServerCallback_SonarPulseFromPosition set to 3000.0 with 8 bits.
+global float SONAR_GRENADE_PULSE_DURATION 	= 4.5 //(cafe): total max time is grenade_ignition_time
+
 const asset FLASHEFFECT    = $"wpn_grenade_sonar_impact"
 
 void function SonarGrenade_Init()
 {
 	PrecacheParticleSystem( $"wpn_grenade_sonar_impact" )
+	
+	if( Gamemode() == eGamemodes.fs_spieslegends )
+	{
+		SONAR_GRENADE_RADIUS = 500
+		SONAR_GRENADE_PULSE_DURATION = 2.0
+	}
 }
 
 #if CLIENT
@@ -44,21 +44,36 @@ void function ClSonarGrenade_Init()
 void function OnProjectileCollision_weapon_grenade_sonar( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
 {
 	#if SERVER
-	projectile.proj.onlyAllowSmartPistolDamage = false
+	
+	if( !IsValid( projectile ) )
+		return
+	
+	table collisionParams =
+	{
+		pos = pos,
+		normal = normal,
+		hitEnt = hitEnt,
+		hitbox = hitbox
+	}
+	
+	projectile.SetScriptName( "grenadeSonarProjectile" )
+	AddToTrackedEnts_Level( projectile )
 
-	#endif
+	bool result = PlantStickyEntity( projectile, collisionParams )
+	projectile.SetAngles(projectile.GetAngles() + <90,0,0>)
+
 	if ( IsHumanSized( hitEnt ) )//Don't stick on Pilots/Grunts/Spectres. Causes pulse blade to fall into ground
 		return
 
-	bool didStick = PlantStickyGrenade( projectile, pos, normal, hitEnt, hitbox, 4.0, false )
-
-	if ( !didStick )
+	if ( !result )
 		return
 
 	if ( projectile.GrenadeHasIgnited() )
 		return
 
 	projectile.GrenadeIgnite()
+	#endif
+	
 }
 
 
@@ -102,8 +117,6 @@ void function SonarGrenadeThink( entity projectile )
 	SetTeam( trigger, team )
 	trigger.SetOwner( projectile.GetOwner() )
 
-	IncrementSonarPerTeamGrenade( team )
-
 	entity owner = projectile.GetThrower()
 	if ( IsValid( owner ) && owner.IsPlayer() )
 	{
@@ -124,7 +137,6 @@ void function SonarGrenadeThink( entity projectile )
 	OnThreadEnd(
 		function() : ( projectile, trigger, team )
 		{
-			DecrementSonarPerTeamGrenade( team )
 			trigger.Destroy()
 			if ( IsValid( projectile ) )
 				projectile.Destroy()
@@ -146,7 +158,9 @@ void function SonarGrenadeThink( entity projectile )
 		EmitSoundOnEntity( projectile, "Pilot_PulseBlade_Activated_3P" )
 	}
 
-	while ( IsValid( projectile ) )
+	float endTime = Time() + SONAR_GRENADE_PULSE_DURATION
+	
+	while ( IsValid( projectile ) && Time() < endTime )
 	{
 		pulseOrigin = projectile.GetOrigin()
 		trigger.SetOrigin( pulseOrigin )
@@ -154,11 +168,9 @@ void function SonarGrenadeThink( entity projectile )
 		array<entity> players = GetPlayerArrayOfTeam( team )
 
 		foreach ( player in players )
-		{
-			Remote_CallFunction_Replay( player, "ServerCallback_SonarPulseFromPosition", pulseOrigin.x, pulseOrigin.y, pulseOrigin.z, SONAR_GRENADE_RADIUS )
-		}
+			Remote_CallFunction_Replay( player, "ServerCallback_SonarPulseFromPosition", pulseOrigin, SONAR_GRENADE_RADIUS, 1.0, false )//Audit 2-22-2025 (mk): switched to typed.
 
-		wait 1.3333
+		wait 1.0
 		if ( IsValid( projectile ) )
 		{
 			if ( IsValid( weaponOwner ) && weaponOwner.IsPlayer() )
@@ -181,9 +193,18 @@ void function OnSonarTriggerEnter( entity trigger, entity ent )
 
 	if ( ent.e.sonarTriggers.contains( trigger ) )
 		return
+		
+	if ( trigger.e.sonarConeDetections == 0 )
+	{
+		// play targer acquisition "start" sound here
+		EmitSoundOnEntityOnlyToPlayer( trigger.GetOwner(), trigger.GetOwner(), "SonarScan_AcquireTarget_1p" )
+	}
 
+	if ( IsHostileSonarTarget( trigger.GetOwner(), ent ) && ent.GetTeam() != TEAM_TICK ) //Hardcoded check, we don't want ticks to show up as hostile but we do want them to be highlighted
+		trigger.GetOwner().e.sonarConeDetections++
+	
 	ent.e.sonarTriggers.append( trigger )
-	SonarStartGrenade( ent, trigger.GetOrigin(), trigger.GetTeam(), trigger.GetOwner() )
+	SonarStart( ent, trigger.GetOrigin(), trigger.GetTeam(), trigger.GetOwner() )
 }
 
 void function OnSonarTriggerLeave( entity trigger, entity ent )
@@ -192,109 +213,10 @@ void function OnSonarTriggerLeave( entity trigger, entity ent )
 	if ( !IsEnemyTeam( triggerTeam, ent.GetTeam() ) )
 		return
 
-	OnSonarTriggerLeaveInternalGrenade( trigger, ent )
-}
-
-void function OnSonarTriggerLeaveInternalGrenade( entity trigger, entity ent )
-{
-	if ( !ent.e.sonarTriggers.contains( trigger ) )
-		return
-
-	ent.e.sonarTriggers.fastremovebyvalue( trigger )
-	SonarEndGrenadeGrenade( ent, trigger.GetTeam() )
-}
-
-void function SonarStartGrenade( entity ent, vector position, int sonarTeam, entity sonarOwner )
-{
-
-	if ( !("inSonarTriggerCount" in ent.s) )
-		ent.s.inSonarTriggerCount <- 0
-
-	ent.s.inSonarTriggerCount++
-
-	bool isVisible = true//!ent.IsPlayer() || ( ent.IsTitan() || !PlayerHasPassive( ent, ePassives.PAS_OFF_THE_GRID ) )
-
-	if ( !(ent in file.entitySonarHandles) )
-		file.entitySonarHandles[ent] <- []
-
-	ent.HighlightEnableForTeam( sonarTeam )
-
-	if ( ent.s.inSonarTriggerCount == 1 )
+	if ( ent.e.sonarTriggers.contains( trigger ) )
 	{
-
-		//Run callbacks for sonar pulse start
-		foreach ( callback in file.SonarStartGrenadeCallbacks )
-		{
-			callback( ent, position, sonarTeam, sonarOwner )
-		}
-
-		if ( isVisible )
-		{
-			if ( !ent.IsPlayer() )
-			{
-				if ( StatusEffect_GetSeverity( ent, eStatusEffect.damage_received_multiplier ) > 0 )
-					Highlight_SetSonarHighlightWithParam0( ent, "enemy_sonar", <1,0,0> )
-				else
-					Highlight_SetSonarHighlightWithParam1( ent, "enemy_sonar", position )
-			}
-			else
-			{
-				ent.SetCloakFlicker( 0.5, -1 )
-			}
-
-			Highlight_SetSonarHighlightOrigin( ent, position )
-		}
-
-		if ( isVisible )
-		{
-			int statusEffectHandle = StatusEffect_AddEndless( ent, eStatusEffect.sonar_detected, 1.0 )
-			Assert( !file.entitySonarHandles[ent].contains( statusEffectHandle ) )
-			file.entitySonarHandles[ent].append( statusEffectHandle )
-		}
-	}
-}
-
-void function SonarEndGrenadeGrenade( entity ent, int team )
-{
-	if ( !IsValid( ent ) )
-		return
-
-	ent.s.inSonarTriggerCount--
-
-	if ( (ent.s.inSonarTriggerCount < file.teamSonarCount[team]) || (ent.s.inSonarTriggerCount <= 0) || (file.teamSonarCount[team] <= 0) )
-		ent.HighlightDisableForTeam( team )
-
-	if ( ent.s.inSonarTriggerCount < 1 )
-	{
-		Assert ( ent in file.entitySonarHandles )
-		if ( file.entitySonarHandles[ent].len() )
-		{
-			int statusEffectHandle = file.entitySonarHandles[ent][0]
-			StatusEffect_Stop( ent, statusEffectHandle )
-			file.entitySonarHandles[ent].fastremovebyvalue( statusEffectHandle )
-		}
-		ent.HighlightSetTeamBitField( 0 )
-
-		if ( ent.IsPlayer() )
-			ent.SetCloakFlicker( 0, 0 )
-	}
-}
-
-void function IncrementSonarPerTeamGrenade( int team )
-{
-	if ( !(team in file.teamSonarCount) )
-		file.teamSonarCount[team] <- 0
-	file.teamSonarCount[team]++
-}
-
-void function DecrementSonarPerTeamGrenade( int team )
-{
-	if ( team in file.teamSonarCount )
-	{
-		file.teamSonarCount[team]--
-
-		if ( file.teamSonarCount[team] <= 0 )
-			file.teamSonarCount[team] = 0
+		SonarEnd( ent, triggerTeam, trigger.GetOwner() )
+		ent.e.sonarTriggers.fastremovebyvalue( trigger )
 	}
 }
 #endif

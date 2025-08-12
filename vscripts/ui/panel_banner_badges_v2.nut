@@ -96,7 +96,7 @@ void function CardBadgesPanel_Update( var panel )
 			string badgeHint                          = GladiatorCardBadge_IsCharacterBadge( flav ) ? Localize( "#CHARACTER_BADGE", Localize( ItemFlavor_GetLongName( character ) ) ) : "#ACCOUNT_BADGE"
 			if ( tierDataList.len() > 1 )
 			{
-				int currTierIdx = GetPlayerBadgeDataInteger( LocalClientEHI(), flav, badgeIndex, character )
+				int currTierIdx = tierDataList.len() - 1//GetPlayerBadgeDataInteger( LocalClientEHI(), flav, badgeIndex, character )
 
 				string goalStr = ""
 				foreach ( int tierIdx, GladCardBadgeTierData tierData in tierDataList )

@@ -386,7 +386,6 @@ string function GetLootString_CompatibleMag_ByTier( string weaponRef, int tier )
 				case ( SHOTGUN_AMMO ):
 				case ( HIGHCAL_AMMO ):
 				case ( SNIPER_AMMO ):
-				case ( EXPLOSIVE_AMMO ):
 					foreach( string s in candidates )
 					{
 						if( s.find( weaponData.ammoType ) >= 0 )
@@ -436,15 +435,6 @@ string function GetLootString_CompatibleStock_ByTier( string weaponRef, int tier
 						}
 					}
 					break
-				case ( EXPLOSIVE_AMMO ):
-					foreach( string s in candidates )
-					{
-						if( s.find( EXPLOSIVE_AMMO ) >= 0 )
-						{
-							return s
-						}
-					}
-					break
 				default:
 					foreach( string s in candidates )
 					{
@@ -487,15 +477,6 @@ string function GetLootString_CompatibleScope_ByTier( string weaponRef, int tier
 					foreach( string s in candidates )
 					{
 						if( s.find( SNIPER_AMMO ) >= 0 )
-						{
-							return s
-						}
-					}
-					break
-				case ( EXPLOSIVE_AMMO ):
-					foreach( string s in candidates )
-					{
-						if( s.find( EXPLOSIVE_AMMO ) >= 0 )
 						{
 							return s
 						}

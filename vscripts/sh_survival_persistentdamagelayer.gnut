@@ -20,7 +20,7 @@ struct {
 
 void function Sh_PersistentDamageLayer_Init()
 {
-	Remote_RegisterClientFunction( "HandlePersistentDamageLayerThresholdNotification", "int", -1, 126 )
+	ScriptRemote_RegisterClientFunction( "HandlePersistentDamageLayerThresholdNotification", "int", -1, 126 )
 
 	if (!GetCurrentPlaylistVarBool( "persistentdamagelayer_enabled", false ))
 		return

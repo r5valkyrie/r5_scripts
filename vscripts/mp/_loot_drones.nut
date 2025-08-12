@@ -1,5 +1,3 @@
-// Updated by @CafeFPS
-
 global function InitLootDrones
 global function InitLootDronePaths
 global function SpawnLootDrones

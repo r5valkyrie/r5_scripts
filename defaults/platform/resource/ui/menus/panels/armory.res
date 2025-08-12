@@ -122,6 +122,25 @@
         pin_corner_to_sibling	TOP_LEFT
         pin_to_sibling_corner	TOP_RIGHT
     }
+	WeaponCategoryButton6
+    {
+        ControlName				RuiButton
+        InheritProperties		WeaponCategoryButton
+        classname               WeaponCategoryButtonClass
+        scriptID				5
+        xpos                    -121
+        cursorVelocityModifier  0.7
+        ruiArgs
+        {
+            isNameAtTop         1
+        }
+
+        navLeft                 WeaponCategoryButton5
+
+        pin_to_sibling			WeaponCategoryButton5
+        pin_corner_to_sibling	TOP_LEFT
+        pin_to_sibling_corner	TOP_RIGHT
+    }
     MiscCustomizeButton
     {
         ControlName				RuiButton

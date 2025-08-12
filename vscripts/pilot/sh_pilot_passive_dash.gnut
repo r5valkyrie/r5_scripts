@@ -1,0 +1,177 @@
+global function Dash_Init
+global function isDashEnabled
+
+#if SERVER
+	global function GivePlayerDashAbility	
+#endif 
+
+#if CLIENT
+global function ServerCallback_Ash_OnPlayerDash
+global function ServerCallback_Ash_OnPlayerLanded
+#endif
+
+const asset FX_DASH_HUD = $"P_sprint_FP"//$"P_core_DMG_boost_screen"//$"P_ash_player_boost_screen"
+const string KILL_DASH_FX_SIGNAL = "ash_dash_fx"
+
+struct 
+{
+	bool dodge_dash_enabled
+	
+	#if SERVER
+		bool InfiniteDash
+		bool SuperDash
+		bool djumpwrun
+	#endif
+} settings
+
+void function Dash_Init()
+{
+	settings.dodge_dash_enabled = GetCurrentPlaylistVarBool( "dodge_dash_enabled", false )
+	
+	PrecacheParticleSystem( FX_DASH_HUD )
+	RegisterSignal( KILL_DASH_FX_SIGNAL )
+	
+	#if SERVER
+		settings.InfiniteDash 		= GetCurrentPlaylistVarBool( "infinite_dash_enabled", false )
+		settings.SuperDash 			= GetCurrentPlaylistVarBool( "super_dash_enabled", false )
+		settings.djumpwrun 			= GetCurrentPlaylistVarBool( "djumpnwrun_dash_enabled", false )
+	
+		if( isDashEnabled() )
+			AddCallback_PlayerClassChanged( OnPlayerClassChanged )
+		
+	#endif
+}
+
+
+bool function isDashEnabled()
+{
+	if( settings.dodge_dash_enabled )
+		return true
+	
+	return false
+}
+
+#if SERVER
+const table< string, string > DASH =
+{
+	[ "dodge" ]     				= "true",
+	[ "dodgePowerDrain" ]         	= "50.0",
+	[ "dodgeHeight" ]               = "30.0",
+	[ "dodgeHeightMax" ]            = "30.0",
+	[ "dodgeVerticalHeight" ]       = "220.0",
+	[ "dodgeKeepSpeedFrac" ]        = "0.20"
+}
+
+const table< string, string > SUPER_DASH =
+{
+	[ "dodgeHeight" ]               = "120.0",
+	[ "dodgeHeightMax" ]            = "120.0",
+	[ "dodgeVerticalHeight" ]       = "880.0",
+	[ "dodgeKeepSpeedFrac" ]        = "0.60"
+}
+
+void function GivePlayerDashAbility( entity player, bool EnableDash = true, table< string, string > DashTable = DASH )
+{
+	if( !EnableDash )
+	{
+		player.SetClassVar( "dodge", "false" )
+		return
+	}
+	
+	foreach( string setting, string dodgeValues in DASH )
+		player.SetClassVar( setting, dodgeValues )
+	
+	if( settings.SuperDash )
+		foreach( string setting, string dodgeValues in SUPER_DASH )
+			player.SetClassVar( setting, dodgeValues )
+	
+	if( settings.InfiniteDash )
+		player.SetClassVar( "dodgePowerDrain", "0.0" )
+
+	if( settings.djumpwrun )
+		GivePlayerSettingsMods( player, [ "enable_wallrun", "enable_doublejump" ] )
+	
+	if ( !HasPlayerMovementEventCallback( player, ePlayerMovementEvents.DODGE, OnPlayerDash ) )
+	{
+		AddPlayerMovementEventCallback( player, ePlayerMovementEvents.DODGE, OnPlayerDash )
+	}
+
+	if ( !HasPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerLanded ) )
+	{
+		AddPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerLanded )
+	}
+}
+
+// Triggers when the player has respawned as a different character
+void function OnPlayerClassChanged( entity player )
+{
+	if ( !IsValid( player ) || player.IsBot() )
+		return
+	
+	thread GivePlayerDashAbility( player )
+}
+
+void function OnPlayerDash( entity player )
+{
+	// printw( "ASH DASH, OnPlayerDash" )
+	
+	Remote_CallFunction_ByRef( player, "ServerCallback_Ash_OnPlayerDash" )
+}
+
+void function OnPlayerLanded( entity player )
+{
+	// printw( "ASH DASH, OnPlayerLanded" )
+
+	Remote_CallFunction_ByRef( player, "ServerCallback_Ash_OnPlayerLanded" )
+}
+#endif
+
+#if CLIENT
+void function ServerCallback_Ash_OnPlayerDash()
+{
+	entity player = GetLocalViewPlayer()
+	
+	if( isDashEnabled() )
+	{
+		thread DashScreenFx_Thread( player )
+	}
+}
+
+void function ServerCallback_Ash_OnPlayerLanded()
+{
+	entity player = GetLocalViewPlayer()
+	
+	if( isDashEnabled() )
+	{
+		if ( IsValid( player ) )
+		{
+			if ( player == GetLocalViewPlayer() )
+			{
+				Signal( player, KILL_DASH_FX_SIGNAL )
+			}
+		}
+	}
+}
+
+void function DashScreenFx_Thread( entity player )
+{
+	Signal( player, KILL_DASH_FX_SIGNAL )
+
+	EndSignal( player, "OnDeath", "OnDestroy", KILL_DASH_FX_SIGNAL )
+	
+	int fxHandle = StartParticleEffectOnEntityWithPos( player, GetParticleSystemIndex( FX_DASH_HUD ), FX_PATTACH_ABSORIGIN_FOLLOW, -1, player.EyePosition(), <0,0,0> )
+	EffectSetIsWithCockpit( fxHandle, true )
+
+	OnThreadEnd(
+		function(): ( player, fxHandle )
+		{
+			if ( EffectDoesExist( fxHandle ) )
+			{
+				EffectStop( fxHandle, false, true )
+			}
+		}
+	)
+	
+	wait 1
+}
+#endif

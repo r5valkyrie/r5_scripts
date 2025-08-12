@@ -75,7 +75,7 @@ global const int GAMEPAD_CUSTOM_BUTTONS_COUNT = 15
 
 global const array<string> CUSTOM_BIND_ALIASES_PILOT =
 [
-	//					 					Default:
+	//					 			Default:
 	"jump",							// "+jump"				bind "A_BUTTON"		"+ability 0"
 	"toggle_duck",					// "+toggle_duck"		bind "B_BUTTON"		"+ability 1"
 	"useandreload",					// "+useandreload"		bind "X_BUTTON"		"+ability 2"

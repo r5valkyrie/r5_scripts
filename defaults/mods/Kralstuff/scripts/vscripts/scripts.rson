@@ -1,0 +1,5 @@
+When: "SERVER || CLIENT || UI"
+Scripts:
+[
+	sh_kralstuff.gnut
+]

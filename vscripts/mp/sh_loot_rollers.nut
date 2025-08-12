@@ -4,9 +4,13 @@
 
 global function ShLootRollers_Init
 global function IsLootRoller
+global function LootRollerSpawned
 
 #if SERVER
 global function Flowstate_ReturnDroneLootForCurrentTier
+global function Flowstate_StartRollerLootLoop
+global function Flowstate_BuildLootForDrone
+global function Pathtt_StartRollerLootLoop
 #endif
 
 #if CLIENT
@@ -56,6 +60,9 @@ struct
 ////////////////////////
 void function ShLootRollers_Init()
 {
+	if( Gamemode() == eGamemodes.fs_aimtrainer )
+		return
+
 	#if SERVER
 	AddSpawnCallback( "prop_physics", LootRollerSpawned )
 	AddSpawnCallback( "prop_dynamic", LootRollerSpawned )
@@ -111,7 +118,7 @@ const int BLUE_LOOT_TO_SPAWN = 2
 const int PURPLE_LOOT_TO_SPAWN = 1
 const int YELLOW_LOOT_TO_SPAWN = 1
 
-void function Flowstate_BuildLootForDrone( entity roller )
+void function Flowstate_BuildLootForDrone( entity roller, bool isMirageRoller = false )
 {
 	file.allLootRollers[ roller ] <- {}
 	int lootToSpawn
@@ -151,10 +158,8 @@ void function Flowstate_BuildLootForDrone( entity roller )
 }
 
 #if SERVER
-void function Flowstate_StartRollerLootLoop( entity roller )
+void function Flowstate_StartRollerLootLoop( entity roller, int tier = 2, int max_tier = 4, bool isMirageRoller = false )
 {
-	int tier = 2
-	int max_tier = 4
 	float timeToWait
 	
 	while ( IsValid( roller ) && IsValid( roller.GetParent() ) )
@@ -185,10 +190,36 @@ void function Flowstate_StartRollerLootLoop( entity roller )
 		else if( tier == 3 )
 			tier = 2
 	}
+	
+	if( isMirageRoller )
+	{
+		roller.e.currentTier = tier
+		foreach( player in GetPlayerArray() )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_SetLootRollerLootTierFX", roller.GetEncodedEHandle(), tier, roller.e.hasVaultKey )
+	}
+}
+
+void function Pathtt_StartRollerLootLoop( entity roller, int tier = 3, int max_tier = 5 )
+{
+	roller.e.currentTier = RandomIntRange( tier, max_tier )
+	roller.e.hasVaultKey = false
+	foreach( player in GetPlayerArray() )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SetLootRollerLootTierFX", roller.GetEncodedEHandle(), roller.e.currentTier, roller.e.hasVaultKey )
 }
 
 array< string > function Flowstate_ReturnDroneLootForCurrentTier( entity roller )
 {
+	#if DEVELOPER
+		printt("A loot roller destroyed, loot tier:" + roller.e.currentTier)
+	#endif
+	if ( MapName() == eMaps.mp_rr_olympus_tt )
+	{
+		if ( roller.e.currentTier == 3 )
+			return SURVIVAL_GetMultipleWeightedItemsFromGroup( "flyer_deathbox_all_purple", 5 )
+		
+		if ( roller.e.currentTier == 4 )
+			return SURVIVAL_GetMultipleWeightedItemsFromGroup( "flyer_deathbox_all_gold", 4 )
+	}
 	array< string > accumulatedLoot
 	
 	for(int j = 1; j < roller.e.currentTier + 1; j++)
@@ -254,6 +285,9 @@ void function ServerCallback_SetLootRollerLootTierFX( int rollerHandle, int tier
 	entity roller = GetEntityFromEncodedEHandle( rollerHandle )
 
 	if ( !IsValid( roller ) )
+		return
+		
+	if( Gamemode() == eGamemodes.fs_aimtrainer )
 		return
 
 	vector tierColor = GetFXRarityColorForTier( tier )

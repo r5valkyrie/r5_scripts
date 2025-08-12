@@ -303,7 +303,7 @@ void function ShowPanel( var panel )
 
 	if ( IsMenuVisible( panel ) )
 		return
-	CloseAllAttachmentsBoxes()
+	
 	ShowPanelInternal( panel )
 }
 
@@ -726,10 +726,18 @@ TabData ornull function Tab_GetActiveNestedTabData( var menu )
 
 		if ( Tab_IsRootLevel( tabData ) )
 			continue
-
-		if ( !uiGlobal.panelData[ parentPanel ].isActive )
+		
+		if( parentPanel in uiGlobal.panelData)
+		{
+			if ( !uiGlobal.panelData[ parentPanel ].isActive )
+				continue
+		}
+		else
+		{
 			continue
+		}
 
+		
 		return tabData
 	}
 

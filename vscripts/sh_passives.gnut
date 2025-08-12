@@ -69,6 +69,7 @@ global enum ePassives
 	PAS_OCTANE,
 	PAS_CRYPTO,
 	PAS_GUARDIAN_ANGEL,
+	PAS_DEATHSTALKER,
 	PAS_BATTERY_POWERED,
 	PAS_WATTSON_CIRCLE_REFUND,
 	PAS_DOWN_HEALTH,
@@ -86,7 +87,14 @@ global enum ePassives
 	PAS_SYRINGE_BONUS,
 	PAS_FORTIFIED,
 	PAS_LOWPROFILE,
-	PAS_PILOT_BLOOD
+	PAS_PILOT_BLOOD,
+	PAS_DUMMIE,
+	PAS_LOBA_EYE_FOR_QUALITY,
+	PAS_ORDNANCE_HIGHLIGHT,
+	PAS_HEALING_ITEM_HIGHLIGHT,
+	PAS_ULTACCEL_HIGHLIGHT,
+	PAS_OPTIC_HIGHLIGHT,
+	PAS_GUNNER,
 	//new
 	PAS_BONUS_SMALL_HEAL,
 	PAS_EXTRA_MED_INV,
@@ -188,6 +196,10 @@ void function PassivesShared_Init()
 		AddCallback_OnPassiveChanged( ePassives.PAS_PATHFINDER, Pathfinder_PassiveToggle )
 		AddCallback_OnPassiveChanged( ePassives.PAS_TRACKING_VISION, Bloodhound_PassiveToggle )
 		AddCallback_OnPassiveChanged( ePassives.PAS_BATTERY_POWERED, Wattson_PassiveToggle )
+		AddCallback_OnPassiveChanged( ePassives.PAS_DEATHSTALKER, Revenant_PassiveToggle )
+		AddCallback_OnPassiveChanged( ePassives.PAS_DUMMIE, Dummie_PassiveToggle )
+		AddCallback_OnPassiveChanged( ePassives.PAS_LOBA_EYE_FOR_QUALITY, Loba_PassiveToggle )
+		AddCallback_OnPassiveChanged( ePassives.PAS_GUNNER, Loba_PassiveToggle )
 		
 		RegisterSignal( "PassiveMirage_StartRes" )
 		Bleedout_AddCallback_OnPlayerStartGiveFirstAid( Passives_OnPlayerStartRes )		
@@ -602,26 +614,36 @@ void function Slipstream_Passive(entity player, int passive, bool didHave, bool 
 	}
 }
 
+void function Revenant_PassiveToggle(  entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( !IsAlive( player ) )
+		return
+}
+
+void function Loba_PassiveToggle(  entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( !IsAlive( player ) )
+		return
+}
+
+void function Dummie_PassiveToggle(  entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( !IsAlive( player ) )
+		return
+}
+
 void function Wattson_PassiveToggle(  entity player, int passive, bool didHave, bool nowHas )
 {
 	if ( !IsAlive( player ) )
 		return
 
 	if ( didHave )
-	{
-		// #if DEVELOPER
-			// printt("[Passive Spark Of Genius - Reimplemented by @CafeFPS] - stopped for player ", player)
-		// #endif
-			
+	{	
 		Signal( player, "EndSparkOfGeniusThread" )
 	}
 
 	if ( nowHas )
 	{
-		// #if DEVELOPER
-			// printt("[Passive Spark Of Genius - Reimplemented by @CafeFPS] - started for player ", player)
-		// #endif
-		
 		thread SparkOfGenius_Passive_Body( player )
 	}
 }
@@ -665,17 +687,11 @@ void function PilotBlood_Passive( entity player, int passive, bool didHave, bool
 
 	if ( didHave )
 	{
-		#if DEVELOPER
-			printt("[Passive Pilot Healing - Reimplemented by @CafeFPS] - stopped for player ", player)
-		#endif
 		Signal( player, "EndPilotBloodThread" )
 	}
 
 	if ( nowHas )
 	{
-		#if DEVELOPER
-			printt("[Passive Pilot Healing - Reimplemented by @CafeFPS] - started for player ", player)
-		#endif
 		thread PilotBlood_Passive_Body( player )
 	}
 }
@@ -764,17 +780,11 @@ void function PassiveToggleFortified( entity player, int passive, bool didHave, 
 
 	if ( didHave )
 	{
-		#if DEVELOPER
-			printt("[Passive Fortified - Reimplemented by @CafeFPS] - stopped for player ", player)
-		#endif
 		RemoveEntityCallback_OnDamaged( player, OnFortifiedPlayerDamaged )
 	}
 
 	if ( nowHas )
 	{
-		#if DEVELOPER
-			printt("[Passive Fortified - Reimplemented by @CafeFPS] - started for player ", player)
-		#endif
 		AddEntityCallback_OnDamaged( player, OnFortifiedPlayerDamaged )
 	}
 }
@@ -823,17 +833,11 @@ void function Bloodhound_PassiveToggle( entity player, int passive, bool didHave
 
 	if ( didHave )
 	{
-		#if DEVELOPER
-			printt("[Passive Tracking Vision - Reimplemented by @CafeFPS] - stopped for player ", player)
-		#endif
 		StatusEffect_StopAllOfType( player, eStatusEffect.tracking_vision)
 	}
 
 	if ( nowHas )
 	{
-		#if DEVELOPER
-			printt("[Passive Tracking Vision - Reimplemented by @CafeFPS] - started for player ", player)
-		#endif
 		StatusEffect_AddEndless( player, eStatusEffect.tracking_vision, 1 )
 	}
 }

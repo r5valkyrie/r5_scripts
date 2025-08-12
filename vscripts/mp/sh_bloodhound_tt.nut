@@ -5,10 +5,12 @@ global function ClientCallback_BloodTT_StoryPropDialogueAborted
 global function GetBloodhoundTTAssetsToPrecache
 #endif
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function Bloodhound_TT_SpawnProwlers
 global function Bloodhound_TT_KillProwlers
 global function Bloodhound_TT_TestSpotlight
+global function Bloodhound_TT_TpPlayerToDebugArea
+
 global function TestBlackMarketBloodTTAlarm
 #endif
 
@@ -48,7 +50,7 @@ const string REWARD_DOOR_SOUND = "Loba_Ultimate_Staff_VaultAlarm"
 
 const int PROWLER_TEAM = 104
 const string PROWLER_MDL = "mdl/Creatures/prowler/prowler_apex.rmdl"
-const string SPOTLIGHT_MDL = $"mdl/fx/prowler_hatch_tt_beam.rmdl"
+const string FXMODEL = $"mdl/weapons_r5/at_charge_rifle/w_at_charge_rifle_miningtool_holo.rmdl"
 const string SPOTLIGHT_FX = "P_prowler_hatch_light"
 
 const string SPOTLIGHT_ACTIVATE_SFX = "Desertlands_Emit_Bloodhound_TT_Spotlight"
@@ -242,19 +244,17 @@ void function ClBloodhound_TT_Init()
 
 	RegisterSignal( SIGNAL_STORY_PROP_DIALOGUE_ABORTED )
 
-//	AddCallback_OnAbortDialogue( OnAbortDialogue )
+	AddCallback_OnAbortDialogue( OnAbortDialogue )
 
 	AddCreateCallback( "prop_dynamic", OnCreate_PropDynamic )
 	AddDestroyCallback( "prop_dynamic", OnDestroy_PropDynamic )
-
-	//PrecacheScriptString( HATCH_MDL_SCRIPTNAME )
 }
 #endif
 
 void function Bloodhound_TT_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( "SCB_BloodTT_SetCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
-	Remote_RegisterUntypedFunction_deprecated( "ClientCallback_BloodTT_StoryPropDialogueAborted" )
+	ScriptRemote_RegisterClientFunction( "SCB_BloodTT_SetCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
+	//Remote_RegisterUntypedFunction_deprecated( "ClientCallback_BloodTT_StoryPropDialogueAborted" ) //Audit 2-22-2025 never called
 }
 
 #if SERVER
@@ -266,7 +266,7 @@ void function Bloodhound_TT_Init()
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
 	AddSpawnCallback( "prop_dynamic", ArenaDoorSpawned )
-	PrecacheModel( SPOTLIGHT_MDL )
+	PrecacheModel( FXMODEL )
 
 	AddSpawnCallback_ScriptName( STORY_PROP_HUNT_SCRIPTNAME, SpawnStoryProps_Server )
 	AddSpawnCallback_ScriptName( STORY_PROP_SPIRITUAL_SCRIPTNAME, SpawnStoryProps_Server )
@@ -281,6 +281,18 @@ void function Bloodhound_TT_Init()
 	//AddCallback_OnClientConnectionRestored( Blood_TT_OnClientConnected )
 
 	//PrecacheScriptString( HATCH_MDL_SCRIPTNAME )
+	thread CreateClientSideFakeFxProps()
+}
+
+
+void function CreateClientSideFakeFxProps()
+{
+	wait 2
+	entity defenderholo = CreatePropDynamic( $"mdl/weapons_r5/at_charge_rifle/w_at_charge_rifle_miningtool_holo.rmdl", <-24867, 24666, -2826>, <0,55,0>, 0, -1 )
+	entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( $"P_BT_eye_proj_holo" ), <-24867, 24666, -2868>, <270,55,0> )
+
+	defenderholo.kv.rendercolor = "4 163 154"
+	fx.kv.rendercolor = "4 163 154"
 }
 #endif // SERVER
 
@@ -341,8 +353,8 @@ void function EntitiesDidLoad()
 	if ( !IsBloodhoundTTEnabled() )
 		return
 
-	//RegisterCSVDialogue( BLOOD_TT_CSV_DIALOGUE )
-	//RegisterCSVDialogue( BLOOD_TT_ANNOUNCER_CSV_DIALOGUE )
+	RegisterCSVDialogue( BLOOD_TT_CSV_DIALOGUE )
+	RegisterCSVDialogue( BLOOD_TT_ANNOUNCER_CSV_DIALOGUE )
 
 #if SERVER
 	//PrecacheScriptString( STORY_PROP_TECH_SCRIPTNAME )
@@ -1305,7 +1317,7 @@ void function SpawnProwlerAndAnimate( int hatchIdx, int prowlerSkinIdx )
 	//spawn prowler
 	entity prowler = CreateNPCFromAISettings( "npc_prowler", PROWLER_TEAM, data.ref.GetOrigin(), data.ref.GetAngles() )
 	DispatchSpawn( prowler )
-	//prowler.ai.npcType = eNPC.PROWLER
+	prowler.ai.npcType = eNPC.PROWLER
 
 	prowler.SetSkin( prowlerSkinIdx )
 	prowler.SetNPCFlag( NPC_NO_MOVING_PLATFORM_DEATH, true )
@@ -1538,7 +1550,7 @@ void function TryPlayFirstTimeEntranceDialogueForBloodhoundPlayer( entity player
 		return
 	#endif
 
-	//PlayBattleChatterLineToSpeakerAndTeam( player, "diag_mp_bloodhound_bc_btrJoinAnnounce_1p" )
+	PlayBattleChatterLineToSpeakerAndTeam( player, "diag_mp_bloodhound_bc_btrJoinAnnounce_1p" )
 	//EmitSoundOnEntity( player, "diag_mp_bloodhound_bc_btrJoinAnnounce_3p" )
 	file.bloodhoundPlayersThatHaveEnteredArena.append( player )
 }
@@ -1880,7 +1892,7 @@ bool function IsPlayerBloodhound( entity player )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 
 	if ( characterRef != "character_bloodhound" )
-		return true
+		return false
 
 	return true
 }
@@ -2201,7 +2213,7 @@ void function MakeBlackMarketPlayerHighPriorityThreatToNPCs( entity player )
 #endif
 
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function TestBlackMarketBloodTTAlarm()
 {
 	thread BloodTTBlackMarketAlarmSequence()
@@ -2226,7 +2238,7 @@ void function TestBlackMarketBloodTTAlarm()
 // =================================================================================================================================
 
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function Bloodhound_TT_SpawnProwlers( int numProwlers )
 {
 	for ( int idx = 0; idx < numProwlers; idx++ )
@@ -2248,6 +2260,14 @@ void function OnProwlerKilled_Dev( entity prowler, var DamageInfo )
 	file.aliveProwlers.fastremovebyvalue( prowler )
 }
 
+void function Bloodhound_TT_TpPlayerToDebugArea()
+{
+	entity player = gp()[0]
+	player.SetVelocity( <0, 0, 0> )
+	player.SetPhysics( MOVETYPE_NOCLIP )
+	player.SetOrigin( <-24656.4883, 24307.1172, -2703.13452> )
+	player.SetAngles( <27, 30, 0> )
+}
 
 void function Bloodhound_TT_KillProwlers()
 {
@@ -2275,12 +2295,17 @@ void function Bloodhound_TT_TestSpotlight_Thread( int lightIdx, float duration =
 
 	thread LightShow_TurnOffSpotlight( lightIdx )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 #if SERVER || CLIENT
 bool function IsBloodhoundTTEnabled()
 {
-	return true
+	if ( GetCurrentPlaylistVarBool( "bloodhound_tt_enabled", true ) )
+	{
+		return true
+	}
+
+	return false
 }
 
 bool function BloodHountTT_IsSmarLootEnabled()
@@ -2297,7 +2322,7 @@ bool function BloodHountTT_UseLootPositionOverrideHack()
 {
 	bool usePositionHack
 
-	usePositionHack = GetCurrentPlaylistVarBool( "blood_tt_loot_override_hack", true )
+	usePositionHack = GetCurrentPlaylistVarBool( "blood_tt_loot_override_hack", false )
 
 	return usePositionHack
 }

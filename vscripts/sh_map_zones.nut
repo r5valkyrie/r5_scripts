@@ -110,7 +110,7 @@ void function MapZones_SharedInit()
 const string FUNCNAME_OnPlayerEntersZone = "SCB_OnPlayerEntersMapZone"
 void function MapZones_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( FUNCNAME_OnPlayerEntersZone, "int", 0, 128, "int", 0, 4 )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_OnPlayerEntersZone, "int", 0, 128, "int", 0, 4 )
 }
 
 void function MapZones_RegisterDataTable( asset dataTableAsset )
@@ -205,7 +205,7 @@ void function EntitiesDidLoad()
 #if DEVELOPER
 	thread DebugFrameThread()
 #endif // DEVELOPER
-	if( isScenariosMode() )
+	if( Safe_isScenariosMode() )
 	{
 		SURVIVAL_PlaceGroundItems()
 		return
@@ -289,6 +289,9 @@ void function HotZone_MinimapThink()
 
 void function GenerateZoneTiers()
 {
+	if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
+		return
+	
 	array<LootZone> lootZones = GetAllLootZones()
     LootZone hotZone = GetLootHotZone()
     

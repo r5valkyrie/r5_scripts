@@ -1,4 +1,4 @@
-untyped //todo: remove after SetCanUseZipline move to code
+untyped //todo(mk): remove after SetCanUseZipline move to code
 
 global function CodeCallbacksShared_Init
 
@@ -7,6 +7,7 @@ global function CodeCallback_AnimationInterrupted
 global function CodeCallback_CanUseEntity
 global function ClearCallback_CanUseEntityCallback
 global function SetCallback_CanUseEntityCallback
+global function SetCallback_CanUseEntityCallback_Retail
 global function CodeCallback_CanUseZipline
 global function CodeCallback_PlayerClassChanged
 global function CodeCallback_OnUseEntity
@@ -173,6 +174,11 @@ void function SetCallback_CanUseEntityCallback( entity ent, bool functionref( en
 	ent.e.canUseEntityCallback = callbackFunc
 }
 
+void function SetCallback_CanUseEntityCallback_Retail( entity ent, bool functionref( entity, entity, int ) callbackFunc )
+{
+	Assert( ent.e.canUseEntityCallbackNew == null )
+	ent.e.canUseEntityCallbackNew = callbackFunc
+}
 
 bool function CodeCallback_CanUseEntity( entity player, entity ent )
 {
@@ -198,9 +204,28 @@ bool function CodeCallback_CanUseEntity( entity player, entity ent )
 			return false
 	}
 
-	if ( ent.IsNPC() && !IsAlive( ent ) )
+	if ( player.IsTitan() )
 	{
-		return false
+		return !ent.IsTitan()
+	}
+
+	if ( ent.IsTitan() )
+	{
+		return PlayerCanEmbarkTitan( player, ent )
+	}
+
+	if ( ent.IsNPC() )
+	{
+		// player titan can't use NPCs
+		if ( !player.IsTitan() )
+		{
+			// not titan NPCs are not usable
+			//if ( !( ent.IsTitan() || IsTurret( ent ) ) )
+			//	return false
+
+			if ( !IsAlive( ent ) )
+				return false
+		}
 	}
 
 	if ( ent.e.canUseEntityCallback != null )
@@ -360,7 +385,7 @@ void function CodeCallback_PlayerClassChanged( entity player, bool actualSetting
 	#if CLIENT
 		player.classChanged = true
 		// Force titan to cast shadows in first person
-		//player.ForceShadowVisible( newClass == "titan" )
+		player.ForceShadowVisible( newClass == "titan" )
 
 		UpdatePlayerStatusCounts()
 		//MapConVar_Init()
@@ -376,11 +401,11 @@ void function CodeCallback_PlayerClassChanged( entity player, bool actualSetting
 		InitDamageStates( player )
 	#endif
 
-	//if ( IsClient() && !player.IsTitan() )
-	//	HideRodeoAlert()
+	// if ( IsClient() && !player.IsTitan() )
+		// HideRodeoAlert()
 
-	//if ( IsPilot( player ) )
-	//	thread PilotHardLandingThink( player )
+	// if ( IsPilot( player ) )
+		// thread PilotHardLandingThink( player )
 
 	#if SERVER
 		player.Signal( "OnChangedPlayerClass" )
@@ -537,7 +562,7 @@ void function CheckForAccelerants( entity player )
 	else if ( ammoNow >= ammoMax )
 	{
 		#if DEVELOPER
-			printt("Flowstate DEBUG - Ultimate is ready we can't use accelerants.")
+			//printt("Flowstate DEBUG - Ultimate is ready we can't use accelerants.")
 		#endif
 	}
 }

@@ -1,3 +1,4 @@
+untyped //Required for string to functionref convertion to work
 
 global function GameModes_Init
 
@@ -59,6 +60,24 @@ global function GameMode_SetEvacEnabled
 
 global function GameMode_GetLoadoutSelectTime
 
+global function GameMode_VerifyModes
+
+// External gamemodes ( registered from mods )
+global function RegisterExternalGamemode
+global function RegisterGamemodeTemplate
+global function CreateGamemodeFromTemplate
+global function RegisterGamemodeServerInit
+global function RegisterGamemodeClientInit
+global function RegisterGamemodeSharedInit
+global function RegisterGamemodeSpawnFunc
+global function RegisterGamemodeScoreFunc
+global function GetRegisteredGamemodes
+global function IsExternalGamemode
+global function GetGamemodeModSource
+
+// Direct gamemode registration
+global function RegisterGamemode
+
 global struct GamemodeSettings
 {
 	string name = ""
@@ -89,6 +108,29 @@ global struct GamemodeSettings
 	array<int> scoreboardColumnScoreTypes
 	array<int> scoreboardColumnNumDigits
 	void functionref(entity) customIntroAnnouncementFunc
+	
+	// Enhanced registration system properties
+	string modSource = "core"
+	bool dynamicallyRegistered = false
+	int dynamicId = -1
+	string templateBase = ""
+}
+
+// Gamemode template for reusable configurations
+global struct GamemodeTemplate
+{
+	string templateName = ""
+	GamemodeSettings &baseSettings
+	array<string> requiredMods = []
+	string description = ""
+}
+
+// Scoreboard column definition
+global struct ScoreboardColumn
+{
+	string title = ""
+	int scoreType = 0
+	int numDigits = 2
 }
 
 
@@ -138,6 +180,13 @@ const table<string, int> gameModesStringToIdMap = {
 struct
 {
 	table<string, GamemodeSettings> gameModeDefs
+	
+	// Enhanced registration system
+	int nextAvailableId = 1000  // Start external IDs at 1000
+	table<string, int> externalGamemodeIds
+	table<string, string> modOwnership
+	table<string, GamemodeTemplate> gamemodeTemplates
+	array<string> registeredExternalGamemodes = []
 } file
 
 void function GameModes_Init()
@@ -151,20 +200,7 @@ void function GameModes_Init()
 	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
 	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
 	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-
-	gameMode = TEAM_DEATHMATCH
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "#PL_pilot_hunter" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-
+	
 	gameMode = SURVIVAL
 	GameMode_Create( gameMode )
 	GameMode_SetName( gameMode, "#GAMEMODE_SURVIVAL" )
@@ -188,39 +224,6 @@ void function GameModes_Init()
 	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_PILOT_KILLS", PGS_PILOT_KILLS, 2 )
 	GameMode_SetColor( gameMode, [147, 204, 57, 255] )
 	#endif
-
-	
-	gameMode = fs_dm
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "fs_dm" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-	
-	#if !UI
-	if( Playlist() == ePlaylists.fs_lgduels_1v1 )
-		GameMode_AddScoreboardColumnData( gameMode, "Accuracy", PGS_DEATHS, 3 )
-	else if( Playlist() == ePlaylists.fs_scenarios )
-		GameMode_AddScoreboardColumnData( gameMode, "Wins", PGS_DEATHS, 2 )
-	else
-		GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
-	#endif
-
-	#if !UI
-		if( Playlist() == ePlaylists.fs_dm_oddball || Playlist() == ePlaylists.fs_haloMod_oddball )
-			GameMode_AddScoreboardColumnData( gameMode, "Oddball Score", PGS_ASSISTS, 5 )
-		else if( Playlist() == ePlaylists.fs_scenarios )
-			GameMode_AddScoreboardColumnData( gameMode, "Score", PGS_ASSISTS, 3 )
-		else
-			GameMode_AddScoreboardColumnData( gameMode, "Damage", PGS_ASSISTS, 5 )
-		
-		GameMode_AddScoreboardColumnData( gameMode, "Latency", PGS_ASSISTS, 3 )
-	#endif
-
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
 	
 	gameMode = CUSTOM_CTF
 	GameMode_Create( gameMode )
@@ -238,89 +241,6 @@ void function GameModes_Init()
 		GameMode_AddScoreboardColumnData( gameMode, "Latency", PGS_ASSISTS, 3 )
 	#endif
 	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-
-	gameMode = fs_aimtrainer
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "fs_aimtrainer" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
-	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-
-	gameMode = fs_prophunt
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "fs_prophunt" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
-	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-
-	gameMode = fs_duckhunt
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "fs_duckhunt" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
-	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-
-	gameMode = fs_infected
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "fs_infected" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
-	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-
-	gameMode = fs_snd
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "fs_snd" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "Planted", PGS_DEATHS, 2 )
-	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-
-	#if !UI
-		GameMode_AddScoreboardColumnData( gameMode, "Defused", PGS_ASSISTS, 2 )
-		GameMode_AddScoreboardColumnData( gameMode, "Latency", PGS_ASSISTS, 2 )
-	#endif
-
-	gameMode = fs_apexkart
-	GameMode_Create( gameMode )
-	GameMode_SetName( gameMode, "fs_apexkart" )
-	GameMode_SetGameModeAnnouncement( gameMode, "phunt_modeDesc" )
-	GameMode_SetDesc( gameMode, "#PL_pilot_hunter_hint" )
-	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
-	GameMode_SetDefaultScoreLimits( gameMode, 50, 0 )
-	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
-	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
-	GameMode_AddScoreboardColumnData( gameMode, "Planted", PGS_DEATHS, 2 )
-	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
-	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
 	
 	gameMode = WINTEREXPRESS
 	GameMode_Create( gameMode )
@@ -334,11 +254,7 @@ void function GameModes_Init()
 	GameMode_AddScoreboardColumnData( gameMode, "Planted", PGS_DEATHS, 2 )
 	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
 	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
-	// #if !UI
-		// GameMode_AddScoreboardColumnData( gameMode, "Defused", PGS_ASSISTS, 2 )
-		// GameMode_AddScoreboardColumnData( gameMode, "Latency", PGS_ASSISTS, 2 )
-	// #endif
-
+	
 	#if DEVSCRIPTS
 	DevGameModes_Init()
 	#endif
@@ -346,9 +262,6 @@ void function GameModes_Init()
 	#if SERVER || CLIENT
 	GameModes_Init_SV_CL()
 	#endif
-
-	////
-	GameMode_VerifyModes()
 }
 
 // TODO: scoreboards
@@ -698,15 +611,26 @@ void function GameMode_VerifyModes()
 	{
 		int gameModeId = GameMode_GetGameModeId( gameModeName )
 		bool foundGameModeIdString = false
-		foreach ( idString, gameModeEnumId in eGameModes )
+		
+		// For external gamemodes, skip enum verification since they use dynamic IDs
+		if ( gameModeData.dynamicallyRegistered )
 		{
-			if ( gameModeEnumId != gameModeId )
-				continue
-
 			foundGameModeIdString = true
-			break
+			printt( "[GAMEMODE] Verified external gamemode: " + gameModeName + " (ID: " + gameModeId + ", Mod: " + gameModeData.modSource + ")" )
 		}
-		Assert( foundGameModeIdString, "GAMEMODE not defined properly in eGameModes!" )
+		else
+		{
+			// Verify core gamemodes against enum
+			foreach ( idString, gameModeEnumId in eGameModes )
+			{
+				if ( gameModeEnumId != gameModeId )
+					continue
+
+				foundGameModeIdString = true
+				break
+			}
+			Assert( foundGameModeIdString, "GAMEMODE " + gameModeName + " not defined properly in eGameModes!" )
+		}
 
 		GAMETYPE_TEXT[gameModeName] <- gameModeData.name_localized
 		GAMETYPE_DESC[gameModeName] <- gameModeData.desc_localized
@@ -720,10 +644,15 @@ void function GameMode_VerifyModes()
 
 int function GameMode_GetGameModeId( string gameModeName )
 {
+	// Check core gamemodes first
 	if ( gameModeName in gameModesStringToIdMap )
 		return gameModesStringToIdMap[gameModeName]
+	
+	// Check external gamemodes
+	if ( gameModeName in file.externalGamemodeIds )
+		return file.externalGamemodeIds[gameModeName]
 
-	Assert( false, "GAMEMODE " + gameModeName + " not defined in gameModesStringToIdMap" )
+	Assert( false, "GAMEMODE " + gameModeName + " not defined in gameModesStringToIdMap or external gamemodes" )
 
 	return 0
 }
@@ -737,3 +666,272 @@ float function GameMode_GetLoadoutSelectTime()
 {
 	return GetCurrentPlaylistVarFloat( "pick_loadout_time", 5.0 )
 }
+
+// Enhanced gamemode registration system implementation
+void function RegisterExternalGamemode( string gameModeName, string modSource )
+{
+	// Check if the gamemode already exists and skip registration if it does
+	if ( gameModeName in file.gameModeDefs )
+	{
+		printw( "[GAMEMODE] Warning: Gamemode " + gameModeName + " already exists, skipping registration" )
+		return
+	}
+	
+	if ( modSource == "" )
+	{
+		printw( "[GAMEMODE] Error: Mod source cannot be empty for gamemode " + gameModeName )
+		return
+	}
+	
+	// Generate a dynamic ID for this external gamemode
+	int dynamicId = file.nextAvailableId
+	file.nextAvailableId++
+	
+	// Create the gamemode with enhanced properties
+	GameMode_Create( gameModeName )
+	file.gameModeDefs[gameModeName].modSource = modSource
+	file.gameModeDefs[gameModeName].dynamicallyRegistered = true
+	file.gameModeDefs[gameModeName].dynamicId = dynamicId
+	
+	// Track the external gamemode
+	file.externalGamemodeIds[gameModeName] <- dynamicId
+	file.modOwnership[gameModeName] <- modSource
+	file.registeredExternalGamemodes.append( gameModeName )
+	
+	// Register with enum system for Gamemode() function support
+	RegisterExternalGamemodeEnum( gameModeName, modSource, dynamicId )
+	
+	printt( "[GAMEMODE] Registered external gamemode: " + gameModeName + " from mod: " + modSource + " with ID: " + dynamicId )
+}
+
+void function RegisterGamemodeTemplate( string templateName, GamemodeSettings baseSettings, array<string> requiredMods = [], string description = "" )
+{
+	if ( templateName in file.gamemodeTemplates )
+	{
+		printw( "[GAMEMODE] Warning: Template " + templateName + " already exists, skipping registration" )
+		return
+	}
+	
+	GamemodeTemplate template
+	template.templateName = templateName
+	template.baseSettings = baseSettings
+	template.requiredMods = requiredMods
+	template.description = description
+	
+	file.gamemodeTemplates[templateName] <- template
+	
+	printt( "[GAMEMODE] Registered template: " + templateName )
+}
+
+void function CreateGamemodeFromTemplate( string gameModeName, string templateName, string modSource )
+{
+	if ( !(templateName in file.gamemodeTemplates) )
+	{
+		printw( "[GAMEMODE] Error: Template " + templateName + " does not exist" )
+		return
+	}
+	
+	if ( gameModeName in file.gameModeDefs )
+	{
+		printw( "[GAMEMODE] Warning: Gamemode " + gameModeName + " already exists, skipping creation from template" )
+		return
+	}
+	
+	GamemodeTemplate template = file.gamemodeTemplates[templateName]
+	
+	// Check if required mods are available (basic check - could be enhanced)
+	foreach ( requiredMod in template.requiredMods )
+	{
+		// This is a basic check - in a real implementation you'd check loaded mods
+		printt( "[GAMEMODE] Warning: Template requires mod: " + requiredMod )
+	}
+	
+	// Register the external gamemode first
+	RegisterExternalGamemode( gameModeName, modSource )
+	
+	// Copy template settings
+	GamemodeSettings templateSettings = template.baseSettings
+	templateSettings.modSource = modSource
+	templateSettings.dynamicallyRegistered = true
+	templateSettings.templateBase = templateName
+	
+	// Apply the template to the gamemode
+	file.gameModeDefs[gameModeName] = templateSettings
+	
+	printt( "[GAMEMODE] Created gamemode " + gameModeName + " from template " + templateName )
+}
+
+void function RegisterGamemodeServerInit( string gameModeName, void functionref() initFunc )
+{
+	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
+	file.gameModeDefs[gameModeName].serverInits.append( initFunc )
+}
+
+void function RegisterGamemodeClientInit( string gameModeName, void functionref() initFunc )
+{
+	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
+	file.gameModeDefs[gameModeName].clientInits.append( initFunc )
+}
+
+void function RegisterGamemodeSharedInit( string gameModeName, void functionref() initFunc )
+{
+	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
+	file.gameModeDefs[gameModeName].sharedInits.append( initFunc )
+}
+
+void function RegisterGamemodeSpawnFunc( string gameModeName, void functionref( int, array<entity>, int, entity ) spawnFunc, bool isPilotSpawn = true )
+{
+	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
+	
+	if ( isPilotSpawn )
+		file.gameModeDefs[gameModeName].pilotSpawnpointRatingFunc = spawnFunc
+	else
+		file.gameModeDefs[gameModeName].titanSpawnpointRatingFunc = spawnFunc
+}
+
+void function RegisterGamemodeScoreFunc( string gameModeName, IntFromEntityCompare scoreFunc )
+{
+	Assert( gameModeName in file.gameModeDefs, "Gamemode " + gameModeName + " does not exist" )
+	file.gameModeDefs[gameModeName].scoreCompareFunc = scoreFunc
+}
+
+array<string> function GetRegisteredGamemodes()
+{
+	array<string> allGamemodes = []
+	foreach ( gameModeName, gameModeData in file.gameModeDefs )
+	{
+		allGamemodes.append( gameModeName )
+	}
+	return allGamemodes
+}
+
+bool function IsExternalGamemode( string gameModeName )
+{
+	if ( !(gameModeName in file.gameModeDefs) )
+		return false
+		
+	return file.gameModeDefs[gameModeName].dynamicallyRegistered
+}
+
+string function GetGamemodeModSource( string gameModeName )
+{
+	if ( !(gameModeName in file.gameModeDefs) )
+	{
+		printw( "[GAMEMODE] Error: Gamemode " + gameModeName + " does not exist" )
+		return ""
+	}
+	return file.gameModeDefs[gameModeName].modSource
+}
+
+void function RegisterGamemode( string gamemodeName, string modName, string displayName, string description, bool useCustomScoreboardColumns = false, string sharedInitFuncName = "",string serverInitFuncName = "", string clientInitFuncName = "")
+{
+	if ( gamemodeName == "" )
+	{
+		printw( "[GAMEMODE] Error: Gamemode name cannot be empty" )
+		return
+	}
+	if ( modName == "" )
+	{
+		printw( "[GAMEMODE] Error: Mod name cannot be empty" )
+		return
+	}
+	if ( displayName == "" )
+	{
+		printw( "[GAMEMODE] Error: Display name cannot be empty" )
+		return
+	}
+	if ( description == "" )
+	{
+		printw( "[GAMEMODE] Error: Description cannot be empty" )
+		return
+	}
+	
+	// Register
+	RegisterExternalGamemode( gamemodeName, modName )
+	RegisterExternalPlaylist( gamemodeName, modName )
+	
+	// Configure basic gamemode properties
+	GameMode_SetName( gamemodeName, displayName )
+	GameMode_SetDesc( gamemodeName, description )
+	// GameMode_SetIcon( gamemodeName, $"ui/menu/playlist/tdm" ) // Not used currently by any script
+	GameMode_SetColor( gamemodeName, [255, 128, 0, 255] ) // Orange color
+	GameMode_SetDefaultScoreLimits( gamemodeName, 25, 0 )
+	GameMode_SetDefaultTimeLimits( gamemodeName, 10, 0.0 )
+	GameMode_SetEvacEnabled( gamemodeName, false )
+	
+	if( !useCustomScoreboardColumns )
+	{
+		GameMode_AddScoreboardColumnData( gamemodeName, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
+		GameMode_AddScoreboardColumnData( gamemodeName, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
+	}
+	
+	#if !UI
+	GameMode_SetScoreCompareFunc( gamemodeName, CompareKills )
+	#endif
+	
+	// Register initialization functions
+	// Always register the required shared survival init
+	#if SERVER || CLIENT
+	RegisterGamemodeSharedInit( gamemodeName, GamemodeSurvivalShared_Init )
+	
+	if( sharedInitFuncName != "" )
+		RegisterGamemodeSharedInitByName( gamemodeName, sharedInitFuncName )
+	#endif
+	
+	#if SERVER
+	if( serverInitFuncName != "" )
+		RegisterGamemodeServerInitByName( gamemodeName, serverInitFuncName )
+	#endif
+	
+	#if CLIENT
+	if( clientInitFuncName != "" )
+		RegisterGamemodeClientInitByName( gamemodeName, clientInitFuncName )
+	#endif
+	
+	printw( "[" + modName + "] Custom gamemode registered successfully: " + gamemodeName + " (" + displayName + ")" )
+}
+
+////////////////////////////////////////
+// String-Based Function Registration //
+////////////////////////////////////////
+// Cool string to functionref convertion
+
+void function RegisterGamemodeServerInitByName( string gameModeName, string functionName )
+{
+	void functionref() wrapperFunc = void function() : (functionName) {
+		try {
+			compilestring(functionName + "()", "RegisterGamemode")()
+		} catch( error ) {
+			printw( "[GAMEMODE] Warning: Could not execute server function '" + functionName + "': " + error )
+		}
+	}
+	
+	RegisterGamemodeServerInit( gameModeName, wrapperFunc )
+}
+
+void function RegisterGamemodeClientInitByName( string gameModeName, string functionName )
+{
+	void functionref() wrapperFunc = void function() : (functionName) {
+		try {
+			compilestring(functionName + "()", "RegisterGamemode")()
+		} catch( error ) {
+			printw( "[GAMEMODE] Warning: Could not execute client function '" + functionName + "': " + error )
+		}
+	}
+	
+	RegisterGamemodeClientInit( gameModeName, wrapperFunc )
+}
+
+void function RegisterGamemodeSharedInitByName( string gameModeName, string functionName )
+{
+	void functionref() wrapperFunc = void function() : (functionName) {
+		try {
+			compilestring(functionName + "()", "RegisterGamemode")()
+		} catch( error ) {
+			printw( "[GAMEMODE] Warning: Could not execute shared function '" + functionName + "': " + error )
+		}
+	}
+	
+	RegisterGamemodeSharedInit( gameModeName, wrapperFunc )
+}
+

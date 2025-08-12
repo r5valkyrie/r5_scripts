@@ -28,6 +28,7 @@ WeaponData
 	// Models
 	"projectilemodel" 								"mdl/weapons/bullets/projectile_rocket_launcher_sram.rmdl"
 	"viewmodel"   									"mdl/weapons/titan_raptor_rocket_pod/atpov_titan_raptor_rocket_pod_core.rmdl"
+	"playermodel"   									"mdl/weapons/bullets/projectile_rocket_launcher_sram.rmdl"
 	"projectile_adjust_to_gun_barrel"				"1"
 	"alt_fire_anim_count"							"1"
 
@@ -325,7 +326,9 @@ WeaponData
 
 	Mods
 	{
-
+		crate
+		{
+		}
 	}
 
 	active_crosshair_count				"1"

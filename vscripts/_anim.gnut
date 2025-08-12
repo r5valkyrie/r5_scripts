@@ -8,6 +8,7 @@ global function HasAnim
 global function SetAnim
 global function PlayAnimTeleport
 global function GetAnimStartInfo
+global function PlaySoundsForBodyType
 
 global function PlayFPSAnim
 global function PlayFPSAnimShowProxy
@@ -30,14 +31,82 @@ global function RunToAndPlayAnimAndWait
 global function RunToAndPlayAnimGravity
 global function RunToAndPlayAnimGravityForced
 
-function Anim_Init()
+global function PhaseEmbarkPhaseStart
+global function PhaseEmbarkPhaseStop
+
+const bool SCRIPT_ANIM_EVENT_DEBUG = false
+
+const HUMAN_BLOOD_FX = $"impact_flesh"
+const MECHANICAL_BLOOD_FX = $"P_impact_metal_spectre"
+const HUMAN_STAB_FX = $"P_stab_impact_flesh"
+const MECHANICAL_STAB_FX = $"P_stab_impact_robot"
+
+global const STEAL_PISTOL_MODEL = $"mdl/weapons/p2011/w_p2011.rmdl"
+global const WINGMAN_MODEL = $"mdl/weapons/b3wing/w_b3wing.rmdl"
+global const AWALL_MODEL = $"mdl/weapons/sentry_shield/sentry_shield_proj.rmdl"
+global const AWALL_WALL = $"mdl/fx/pilot_shield_wall.rmdl"
+global const PULSE_BLADE_MODEL = $"mdl/weapons/b3wing/w_b3wing.rmdl"//$"mdl/weapons/kunai/w_kunai.rmdl" - TODO: Port the correct model later -Kral
+
+void function Anim_Init()
 {
 	RegisterSignal( "NewViewAnim" )
 	RegisterSignal( "NewFirstPersonSequence" )
 	RegisterSignal( "ScriptAnimStop" )
 	RegisterSignal( "AnimEventKill" )
 	RegisterSignal( "OnChangedPlayerClass" )
+	
+	PrecacheParticleSystem( HUMAN_BLOOD_FX )
+	PrecacheParticleSystem( MECHANICAL_BLOOD_FX )
+	PrecacheParticleSystem( HUMAN_STAB_FX )
+	PrecacheParticleSystem( MECHANICAL_STAB_FX )
+	
+	PrecacheModel( STEAL_PISTOL_MODEL )
+	PrecacheModel( WINGMAN_MODEL )
+	PrecacheModel( AWALL_MODEL )
+	PrecacheModel( AWALL_WALL )
+	PrecacheModel( PULSE_BLADE_MODEL )
+	
+	RegisterSignal( "DeleteAWall" ) //ForAWallExecution
+	RegisterSignal( "PlayNextSound" ) //ForAwallExecution, generally could be used when we have long chains of sounds that need to be played that are different for robopilots versus non-robopilots
 
+	AddGlobalAnimEvent( "spawn_awall", GlobalAnimEvent_spawn_awall )
+	AddGlobalAnimEvent( "front_shot_high", AnimEvent_front_shot_high )
+	AddGlobalAnimEvent( "awall_victim_sound_event", AnimEvent_awall_victim_start_sfx )
+	AddGlobalAnimEvent( "shield_sound_event", AnimEvent_awall_victim_shield_sfx )
+	AddGlobalAnimEvent( "impact_01_sound_event", AnimEvent_awall_victim_impact01_sfx )
+	AddGlobalAnimEvent( "impact_02_sound_event", AnimEvent_awall_victim_impact02_sfx )
+	AddGlobalAnimEvent( "impact_03_sound_event", AnimEvent_awall_victim_impact03_sfx )
+	AddGlobalAnimEvent( "bodyfall_sound_event", AnimEvent_awall_victim_bodyfall_sfx )
+	
+	AddGlobalAnimEvent( "turnoff_execution_dof", GlobalAnimEvent_turnoff_executionDOF )
+	AddGlobalAnimEvent( "headstab_death", GlobalAnimEvent_headstab_death )
+	AddGlobalAnimEvent( "mark_for_death", GlobalAnimEvent_MarkForDeath )
+	
+	AddGlobalAnimEvent( "attach_knife", GlobalAnimEvent_attach_knife )
+	AddGlobalAnimEvent( "detach_knife", GlobalAnimEvent_detach_knife )
+	AddGlobalAnimEvent( "attach_p2011", GlobalAnimEvent_attach_p2011 )
+	AddGlobalAnimEvent( "detach_p2011", GlobalAnimEvent_detach_pistol )
+	AddGlobalAnimEvent( "attach_pistol", GlobalAnimEvent_attach_pistol )
+	AddGlobalAnimEvent( "detach_pistol", GlobalAnimEvent_detach_pistol )
+	AddGlobalAnimEvent( "attach_wingman", GlobalAnimEvent_attach_wingman )
+	AddGlobalAnimEvent( "detach_wingman", GlobalAnimEvent_detach_pistol )
+	
+	AddGlobalAnimEvent( "cloak_on", AnimEvent_Cloak_On )
+	AddGlobalAnimEvent( "cloak_off", AnimEvent_Cloak_Off )
+	AddGlobalAnimEvent( "spawn_decoy1", AnimEvent_spawn_decoy1 )
+	AddGlobalAnimEvent( "spawn_decoy2", AnimEvent_spawn_decoy2 )
+	AddGlobalAnimEvent( "spawn_decoy3", AnimEvent_spawn_decoy3 )
+	AddGlobalAnimEvent( "headshot_death", AnimEvent_headshot_death )
+	AddGlobalAnimEvent( "holopilot_headshot_sfx", AnimEvent_holopilot_headshot_sfx )
+	
+	AddGlobalAnimEvent( "grapple_stab", GrappleStabSound )
+	AddGlobalAnimEvent( "grapple_bodyfall", GrappleBodyfallSound )
+	
+	AddGlobalAnimEvent( "attach_pulseBlade", AnimEvent_attach_pulseBlade )
+	AddGlobalAnimEvent( "detach_pulseBlade", AnimEvent_detach_pulseBlade )
+	AddGlobalAnimEvent( "mri_effect", AnimEvent_mriPulseEvent )
+	AddGlobalAnimEvent( "play_sonar_execution_sounds", AnimEvent_play_sonar_execution_sounds )
+	
 	AddGlobalAnimEvent( "enable_weapon", GlobalAnimEvent_EnableWeapon )
 	AddGlobalAnimEvent( "disable_weapon", GlobalAnimEvent_DisableWeapon	)
 	AddGlobalAnimEvent( "clear_parent", GlobalAnimEvent_ClearParent )
@@ -59,7 +128,25 @@ function Anim_Init()
 	AddGlobalAnimEvent( "EnableAimAssist", GlobalAnimEvent_EnableAimAssist )
 	AddGlobalAnimEvent( "DisableAimAssist", GlobalAnimEvent_DisableAimAssist )
 	AddGlobalAnimEvent( "give_ammo", GlobalAnimEvent_GiveAmmo )
+	AddGlobalAnimEvent( "bodyfall_human", GlobalAnimEvent_BodyFallHuman )
+	AddGlobalAnimEvent( "bodyfall_human_small", GlobalAnimEvent_BodyFallHuman_Small )
+	AddGlobalAnimEvent( "bodyfall_headplant", GlobalAnimEvent_headplant )
+	AddGlobalAnimEvent( "footstep_human_small_L", GlobalAnimEvent_footstep_human_small_L )
+	AddGlobalAnimEvent( "footstep_human_small_R", GlobalAnimEvent_footstep_human_small_R )
+	AddGlobalAnimEvent( "prowler_bodyfall", GlobalAnimEvent_BodyFallProwler )
+	AddGlobalAnimEvent( "prowler_landing", GlobalAnimEvent_BodyFallProwler )
+	AddGlobalAnimEvent( "prowler_landing", GlobalAnimEvent_PutProwlerInSafeSpot ) //(cafe) Fixes bh tt prowlers from falling through the map
+	AddGlobalAnimEvent( "setWeaponSkin00", GlobalAnimEvent_SetWeaponSkin00 )
+	AddGlobalAnimEvent( "setWeaponSkin01", GlobalAnimEvent_SetWeaponSkin01 )
+	AddGlobalAnimEvent( "phase_shift_start", PhaseEmbarkPhaseStart )
+	AddGlobalAnimEvent( "phase_shift_stop", PhaseEmbarkPhaseStop )
+	AddGlobalAnimEvent( "phase_gib", PhaseGib )
+	AddGlobalAnimEvent( "phase_shift_explode", PhaseShiftExplodeSound )
+	AddGlobalAnimEvent( "portal_execution_hide", PortalExecutionHide )
+	AddGlobalAnimEvent( "jump_pad_drop", GlobalAnimEvent_Jump_Pad_Drop )
 
+	AddGlobalAnimEventTokenize( "spawn_fake_weapon", GlobalAnimEvent_SpawnFakeWeapon )
+	AddGlobalAnimEventTokenize( "set_body_group", GlobalAnimEvent_SetBodyGroup )
 	#if SP
 	PrecacheWeapon( "mp_titanweapon_salvo_rockets" ) // used by bt_pod_fire_left/bt_pod_fire_right anim events. Only BT has these anim events.
 	AddGlobalAnimEvent( "bt_pod_fire_left", GlobalAnimEvent_BT_Pod_Left )
@@ -302,6 +389,144 @@ void function GlobalAnimEvent_GiveAmmo( entity guy )
 	}
 }
 
+void function GlobalAnimEvent_BodyFallHuman( entity guy )
+{
+	if ( IsValid( guy ) )
+	{
+		int attachID = guy.LookupAttachment( "CHESTFOCUS" )
+		vector origin = guy.GetAttachmentOrigin( attachID )
+		PlayImpactFXTable( origin, guy, "pilot_bodyslam", SF_ENVEXPLOSION_NO_DAMAGEOWNER )
+
+		#if SCRIPT_ANIM_EVENT_DEBUG
+			printt( "AnimEvent: GlobalAnimEvent_BodyFallHuman")
+		#endif
+
+	}
+}
+
+void function GlobalAnimEvent_BodyFallHuman_Small( entity guy )
+{
+	if ( IsValid( guy ) )
+	{
+		int attachID = guy.LookupAttachment( "CHESTFOCUS" )
+		vector origin = guy.GetAttachmentOrigin( attachID )
+		PlayImpactFXTable( origin, guy, "pilot_bodyslam_small", SF_ENVEXPLOSION_NO_DAMAGEOWNER )
+
+		#if SCRIPT_ANIM_EVENT_DEBUG
+			printt( "AnimEvent: GlobalAnimEvent_BodyFallHuman_Small")
+		#endif
+	}
+}
+
+
+void function GlobalAnimEvent_headplant( entity guy )
+{
+	if ( IsValid( guy ) )
+	{
+		int attachID = guy.LookupAttachment( "ORIGIN" )
+		vector origin = guy.GetAttachmentOrigin( attachID )
+		PlayImpactFXTable( origin, guy, "pilot_footstep_emote", SF_ENVEXPLOSION_NO_DAMAGEOWNER )
+
+		#if SCRIPT_ANIM_EVENT_DEBUG
+			printt( "AnimEvent: GlobalAnimEvent_headplant")
+		#endif
+	}
+}
+
+void function GlobalAnimEvent_footstep_human_small_L( entity guy )
+{
+	if ( IsValid( guy ) )
+	{
+		int attachID = guy.LookupAttachment( "foot_L_sole" )
+		vector origin = guy.GetAttachmentOrigin( attachID )
+		PlayImpactFXTable( origin, guy, "pilot_footstep_emote", SF_ENVEXPLOSION_NO_DAMAGEOWNER )
+
+		#if SCRIPT_ANIM_EVENT_DEBUG
+			printt( "AnimEvent: GlobalAnimEvent_FootstepHuman_Small_L")
+		#endif
+	}
+}
+
+void function GlobalAnimEvent_footstep_human_small_R( entity guy )
+{
+	if ( IsValid( guy ) )
+	{
+		int attachID = guy.LookupAttachment( "foot_R_sole" )
+		vector origin = guy.GetAttachmentOrigin( attachID )
+		PlayImpactFXTable( origin, guy, "pilot_footstep_emote", SF_ENVEXPLOSION_NO_DAMAGEOWNER )
+
+		#if SCRIPT_ANIM_EVENT_DEBUG
+			printt( "AnimEvent: GlobalAnimEvent_FootstepHuman_Small_R")
+		#endif
+	}
+}
+
+void function GlobalAnimEvent_Jump_Pad_Drop( entity guy )
+{
+	if ( IsValid( guy ) )
+	{
+		int attachID = guy.LookupAttachment( "CHESTFOCUS" )
+		vector origin = guy.GetAttachmentOrigin( attachID )
+		PlayImpactFXTable( origin, guy, "jump_pad_bounce_no_sound", SF_ENVEXPLOSION_NO_DAMAGEOWNER )
+
+		#if SCRIPT_ANIM_EVENT_DEBUG
+			printt( "AnimEvent: GlobalAnimEvent_Jump_Pad_Drop")
+		#endif
+
+	}
+}
+
+void function GlobalAnimEvent_BodyFallProwler( entity guy )
+{
+	if ( IsValid( guy ) )
+	{
+		int attachID = guy.LookupAttachment( "ORIGIN" )
+		vector origin = guy.GetAttachmentOrigin( attachID )
+		PlayImpactFXTable( origin, guy, "prowler_bodyfall", SF_ENVEXPLOSION_NO_DAMAGEOWNER )
+
+		#if SCRIPT_ANIM_EVENT_DEBUG
+			printt( "AnimEvent: GlobalAnimEvent_BodyFallProwler")
+		#endif
+
+	}
+}
+
+void function GlobalAnimEvent_PutProwlerInSafeSpot( entity guy )
+{
+	if ( IsValid( guy ) && guy.GetCurrentSequenceName() == "animseq/creatures/prowler/ai_prowler_core/pr_bloodhoundTT_hatch_spawn.rseq" )
+	{
+		guy.Anim_Stop()
+		PutEntityInSafeSpot( guy, null, null, guy.GetOrigin() + <0,0,128>, guy.GetOrigin() )
+		
+		#if SCRIPT_ANIM_EVENT_DEBUG
+			printt( "AnimEvent: GlobalAnimEvent_PutProwlerInSafeSpot")
+		#endif
+	}
+}
+
+void function GlobalAnimEvent_SetBodyGroup( entity model, array<string> tokens )
+{
+	// ex: "set_body_group:l_hand_usb:0"	// the 0 at the end designates the stat index, 0 in this case meens not show, but in some cases it might mean show.
+	Assert( tokens.len() == 3 )
+	string bodyGroup = tokens[1]
+	int value = int( tokens[2] )
+
+	int bodyGroupIndex = model.FindBodygroup( bodyGroup )
+	if ( bodyGroupIndex != -1 )
+		model.SetBodygroupModelByIndex( bodyGroupIndex, value )
+}
+
+void function GlobalAnimEvent_SetWeaponSkin00( entity weapon )
+{
+	printt( weapon + "Weapon Skin set to 0")
+	weapon.SetWeaponSkin( 0 )
+}
+
+void function GlobalAnimEvent_SetWeaponSkin01( entity weapon )
+{
+	printt( weapon + "Weapon Skin set to 1")
+	weapon.SetWeaponSkin( 1 )
+}
 
 function GetAnim( guy, animation )
 {
@@ -916,6 +1141,84 @@ function PlayAnim( guy, animation_name, reference = null, optionalTag = null, bl
 	}
 }
 
+const string KNIFE_TARGETNAME = "AnimEvent_attach_knife"
+void function GlobalAnimEvent_attach_knife( entity ent )
+{
+	entity knife = CreatePropDynamic( DATA_KNIFE_MODEL )
+	knife.kv.targetname = KNIFE_TARGETNAME
+	knife.SetParent( ent, "KNIFE", false, 0.0 )
+
+	OnThreadEnd(
+	function() : ( knife )
+		{
+			if ( IsValid( knife ) )
+			{
+				knife.Destroy()
+			}
+
+		}
+	)
+
+	WaittillAnimDone( ent )
+}
+
+void function GlobalAnimEvent_detach_knife( entity ent )
+{
+	var childEnt =  ent.FirstMoveChild()
+
+	while ( childEnt != null )
+	{
+		if ( childEnt.kv.targetname == KNIFE_TARGETNAME )
+		{
+			childEnt.Destroy()
+			return
+		}
+
+		childEnt = expect entity ( childEnt.NextMovePeer() )
+	}
+}
+
+void function GlobalAnimEvent_MarkForDeath( entity target )
+{
+	/*if ( target.IsNPC() )
+	{
+		//printt("Killing marked for death npc " + target )
+		//Just kill off NPC now, otherwise it will play pain animations on death
+		CodeCallback_OnMeleeKilled( target )
+		return
+	}
+
+	//printt("marking player " + target + " for death")
+	target.e.markedForExecutionDeath = true //This will kill off the player even if the execution animation is interruped from this point forward
+
+	target.EndSignal( "OnDeath" )
+
+	OnThreadEnd(
+	function() : ( target )
+		{
+			target.e.markedForExecutionDeath = false
+		}
+	)
+
+	WaitForever()*/
+
+}
+
+void function GlobalAnimEvent_headstab_death( entity ent )
+{
+	#if SERVER
+	int tagIdx = ent.LookupAttachment( "HEADSHOT" )
+
+	//if ( TryHeadshotDeathFX( ent ) )
+		//return
+
+	if ( ent.IsMechanical() )
+		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( MECHANICAL_STAB_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
+	else
+		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( HUMAN_STAB_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
+	#endif
+}
+
 // play the anim
 function PlayAnimNoWait( guy, animation_name, reference = null, optionalTag = null, blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME, initialTime = -1.0)
 {
@@ -935,6 +1238,457 @@ function PlayAnimNoWait( guy, animation_name, reference = null, optionalTag = nu
 		__PlayAnim( guy, animation_name, reference, optionalTag, blendTime )
 		if ( initialTime > 0.0 )
 			guy.Anim_SetInitialTime( initialTime )
+	}
+}
+
+const string PISTOL_TARGETNAME = "AnimEvent_attach_pistol"
+void function GlobalAnimEvent_attach_p2011( entity ent )
+{
+	AnimEvent_attach_pistol_common( ent, STEAL_PISTOL_MODEL, "w_p2011_mp_execution_gun_steal", StealP2011MuzzleFlash )
+}
+
+void function AnimEvent_attach_pistol_common( entity ent, asset pistolModel, string animation, void functionref( entity ) muzzleFlashCallback = null )
+{
+	ent.EndSignal( "OnDeath" )
+	entity pistol = CreatePropDynamic( pistolModel )
+
+	OnThreadEnd(
+	function() : ( pistol )
+		{
+			if ( IsValid( pistol ) )
+				pistol.Destroy()
+		}
+	)
+	pistol.kv.targetname = PISTOL_TARGETNAME
+	pistol.SetParent( ent, "KNIFE", false, 0.0 )
+
+	if ( muzzleFlashCallback != null )
+		AddAnimEvent( pistol, "muzzle_flash", muzzleFlashCallback )
+
+	float duration = pistol.GetSequenceDuration( animation )
+	pistol.Anim_Play( animation )
+
+	wait ( duration - 0.15 )
+}
+
+void function StealP2011MuzzleFlash( entity pistol )
+{
+	string attachName
+	asset effectName
+	{
+		attachName = "muzzle_flash"
+		effectName = $"wpn_muzzleflash_pistol"
+	}
+
+	int muzzleTagIdx = pistol.LookupAttachment( attachName )
+
+	StartParticleEffectOnEntity( pistol, GetParticleSystemIndex( effectName ), FX_PATTACH_POINT_FOLLOW, muzzleTagIdx )
+
+	EmitSoundOnEntity( pistol, "Pilot_Gunshot_Execution_StealToUnload_3P" ) // sound above cannot play because it's an asset instead of a string
+}
+
+void function GlobalAnimEvent_detach_pistol( entity ent )
+{
+	entity childEnt = ent.FirstMoveChild()
+
+	while ( childEnt != null )
+	{
+		if ( childEnt.kv.targetname == PISTOL_TARGETNAME )
+		{
+			childEnt.Destroy()
+			return
+		}
+
+		childEnt = childEnt.NextMovePeer()
+	}
+}
+
+void function GlobalAnimEvent_attach_pistol( entity ent )
+{
+	AnimEvent_attach_pistol_common( ent, WINGMAN_MODEL, "wingman_execution_awall_anim", HoloPilot_Execution_MuzzleFlash )
+}
+
+void function GlobalAnimEvent_turnoff_executionDOF( entity ent )
+{
+	if ( ent.IsPlayer() )
+		RemoveCinematicFlag( ent, CE_FLAG_EXECUTION ) //This flag is added in PlayerTriesSyncedMelee(). Cloak interacts badly with DOF (adding this flag turns DOF effect on), so for cloak execution only we remove the DOF.
+}
+
+void function GlobalAnimEvent_spawn_awall( entity attacker )
+{
+	entity awall = CreatePropDynamic( AWALL_MODEL )
+	attacker.EndSignal( "OnDeath" )
+
+
+	OnThreadEnd(
+	function() : ( awall )
+		{
+			awall.Destroy()
+
+		}
+	)
+
+	AddAnimEvent( awall, "create_awall", AnimEvent_CreateAwall )
+
+	awall.SetParent( attacker, "ref", false, 0.0 )
+	thread PlayAnim( awall, "awall_execution", attacker, "ref", 0.0 )
+	WaittillAnimDone( attacker )
+}
+
+void function AnimEvent_CreateAwall( entity awall_base )
+{
+	vector reverseAngles = AnglesCompose( awall_base.GetAngles(), <0,180,0> )
+	entity ampedWall = CreatePropDynamic( $"mdl/fx/pilot_shield_wall.rmdl", awall_base.GetOrigin(), reverseAngles, SOLID_VPHYSICS )
+	ampedWall.kv.contents = (CONTENTS_WINDOW)
+	ampedWall.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS
+	ampedWall.SetPassThroughFlags( PTF_ADDS_MODS | PTF_NO_DMG_ON_PASS_THROUGH )
+	ampedWall.SetBlocksRadiusDamage( true )
+	ampedWall.SetTakeDamageType( DAMAGE_NO ) //Can't kill this AWall!
+	ampedWall.SetDamageNotifications( true )
+	ampedWall.SetMaxHealth( 1000 )
+	ampedWall.SetHealth( 1000 )
+	awall_base.EndSignal( "OnDestroy" )
+	awall_base.EndSignal( "DeleteAWall" ) //Signaled from the animation
+	ampedWall.Hide()
+
+	OnThreadEnd(
+	function() : ( ampedWall )
+		{
+			if ( IsValid( ampedWall ) )
+				ampedWall.Destroy()
+		}
+	)
+
+	SetTeam( ampedWall, TEAM_BOTH )
+
+	ampedWall.SetPassThroughThickness( 0 )
+	ampedWall.SetPassThroughDirection( -0.55 )
+	float timeoutFailSafe = 5.0
+	StatusEffect_AddTimed( ampedWall, eStatusEffect.pass_through_amps_weapon, 1.0, timeoutFailSafe, 0.0 )
+
+	wait timeoutFailSafe
+
+}
+
+void function AnimEvent_awall_victim_start_sfx( entity victim )
+{
+	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot" )
+
+	if ( victim.IsMechanical() )
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot" )
+	else
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Pilot" )
+}
+
+void function AnimEvent_awall_victim_shield_sfx( entity victim )
+{
+	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Shield" )
+
+	if ( victim.IsMechanical() )
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Shield" )
+	else
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Shield" )
+}
+
+void function AnimEvent_awall_victim_impact01_sfx( entity victim )
+{
+	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_01" )
+
+	if ( victim.IsMechanical() )
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_01" )
+	else
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Pilot_Impact_01" )
+}
+
+void function AnimEvent_awall_victim_impact02_sfx( entity victim )
+{
+	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_02" )
+
+	if ( victim.IsMechanical() )
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_02" )
+	else
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Pilot_Impact_02" )
+}
+
+void function AnimEvent_awall_victim_impact03_sfx( entity victim )
+{
+	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_03" )
+
+	if ( victim.IsMechanical() )
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_03" )
+	else
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Pilot_Impact_03" )
+}
+
+void function AnimEvent_awall_victim_bodyfall_sfx( entity victim )
+{
+	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Bodyfall" )
+
+	if ( victim.IsMechanical() )
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Bodyfall" )
+	else
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Bodyfall" )
+}
+
+void function AnimEvent_front_shot_high( entity ent )
+{
+	int tagIdx = ent.LookupAttachment( "CHESTFOCUS" )
+	if ( ent.IsMechanical() )
+		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( MECHANICAL_BLOOD_FX), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
+	else
+		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( HUMAN_BLOOD_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
+}
+
+void function HoloPilot_Execution_MuzzleFlash( entity pistol ) //Only real difference between this and p2011 version is the sound effect
+{
+	string attachName = "muzzle_flash"
+	asset effectName = $"wpn_muzzleflash_pistol"
+
+	int muzzleTagIdx = pistol.LookupAttachment( attachName )
+
+	StartParticleEffectOnEntity( pistol, GetParticleSystemIndex( effectName ), FX_PATTACH_POINT_FOLLOW, muzzleTagIdx )
+
+	EmitSoundOnEntity( pistol, "weapon_wingman_fire_3p" ) // sound above cannot play because it's an asset instead of a string
+}
+
+void function AnimEvent_Cloak_On( entity ent )
+{
+	EnableCloak( ent, 1.5, 0.35 ) //Make sure duration is longer than animation seqeunce length
+}
+
+void function AnimEvent_Cloak_Off( entity ent )
+{
+	DisableCloak( ent, 0.35 )
+}
+
+void function GrappleStabSound( entity ent )
+{
+	PlaySoundsForBodyType( ent, "Pilot_Mvmt_Execution_Grapple_Robot_Pt2_Stab", "Pilot_Mvmt_Execution_Grapple_Pt2_Stab" )
+}
+
+void function GrappleBodyfallSound( entity ent )
+{
+	PlaySoundsForBodyType( ent, "Pilot_Mvmt_Execution_Grapple_Robot_Pt3_Throwdown", "Pilot_Mvmt_Execution_Grapple_Pt3_Throwdown" )
+}
+
+void function GlobalAnimEvent_attach_wingman( entity ent )
+{
+	AnimEvent_attach_pistol_common( ent, WINGMAN_MODEL, "wingman_execution_holo_anim", HoloPilot_Execution_MuzzleFlash )
+}
+
+void function AnimEvent_spawn_decoy1( entity ent )
+{
+	entity decoy = ent.CreateAnimatedPlayerDecoy( "pt_mp_execution_attacker_hologram_01" )
+	SetupDecoy_Common( ent, decoy )
+	HoloPilot_Execution_DecoySetup( decoy )
+	thread HoloPilot_Execution_MonitorLifeTime( ent, decoy )
+
+}
+
+void function AnimEvent_spawn_decoy2( entity ent )
+{
+	entity decoy = ent.CreateAnimatedPlayerDecoy( "pt_mp_execution_attacker_hologram_02" )
+	SetupDecoy_Common( ent, decoy )
+	HoloPilot_Execution_DecoySetup( decoy )
+	thread HoloPilot_Execution_MonitorLifeTime( ent, decoy )
+}
+
+void function AnimEvent_spawn_decoy3( entity ent )
+{
+	entity decoy = ent.CreateAnimatedPlayerDecoy( "pt_mp_execution_attacker_hologram_03" )
+	SetupDecoy_Common( ent, decoy )
+	HoloPilot_Execution_DecoySetup( decoy )
+	thread HoloPilot_Execution_MonitorLifeTime( ent, decoy )
+}
+
+void function HoloPilot_Execution_DecoySetup( entity decoy )
+{
+	/*decoy.SetMaxHealth( 50 )
+	decoy.SetHealth( 50 )*/
+	SetObjectCanBeMeleed( decoy, false )
+	decoy.SetNameVisibleToOwner( false )
+	decoy.SetNameVisibleToFriendly( false )
+	decoy.SetNameVisibleToEnemy( false )
+	decoy.SetTimeout( DECOY_DURATION )
+	decoy.NotSolid()
+	AddAnimEvent( decoy, "decoy_dissolve", HoloPilot_Execution_DissolveDecoy ) //Doesn't seem to work for decoy entities?
+}
+
+void function AnimEvent_holopilot_headshot_sfx( entity victim )
+{
+	if ( victim.IsMechanical() )
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Holopilot_Pt7_HeadshotAndroid" )
+	else
+		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Holopilot_Pt7_HeadshotHuman" )
+}
+
+void function HoloPilot_Execution_MonitorLifeTime( entity attacker, entity decoy )
+{
+	attacker.EndSignal( "OnDeath" )
+	attacker.EndSignal( "OnDestroy" )
+	decoy.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+	function() : ( decoy )
+		{
+			if( IsValid( decoy ) )
+				decoy.Decoy_Dissolve()
+
+		}
+	)
+
+	wait 0.1 //0.1s chosen because it looks fine
+
+}
+
+void function HoloPilot_Execution_DissolveDecoy( entity decoy )
+{
+	//PrintFunc()
+	if( IsValid( decoy ) )
+		decoy.Decoy_Dissolve()
+}
+
+void function AnimEvent_headshot_death( entity ent )
+{
+	#if SERVER
+	int tagIdx = ent.LookupAttachment( "HEADSHOT" )
+
+	if ( TryHeadshotDeathFX( ent ) )
+		return
+
+	if ( ent.IsMechanical() )
+		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( MECHANICAL_BLOOD_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
+	else
+		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( HUMAN_BLOOD_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
+	#endif
+}
+
+void function PhaseShiftExplodeSound( entity ent )
+{
+	PlaySoundsForBodyType( ent, "Pilot_Mvmt_Execution_Phaseshift_Pt4_Explo_Robo_3P", "Pilot_Mvmt_Execution_Phaseshift_Pt4_Explo_3P" )
+}
+
+void function PhaseGib( entity target )
+{
+	if ( !IsAlive( target ) )
+		return
+
+	target.ClearInvulnerable()
+
+	entity attacker
+	if ( IsValid( target.e.syncedMeleeAttacker ) )
+	{
+		attacker = target.e.syncedMeleeAttacker
+	}
+	else if ( IsValid( target.e.lastSyncedMeleeAttacker ) )
+	{
+		attacker = target.e.lastSyncedMeleeAttacker
+	}
+	else
+	{
+		attacker = null
+	}
+	target.Gib( target.GetOrigin() )
+	//int damageAmount = target.GetMaxHealth() + 1
+	//target.TakeDamage( damageAmount , attacker, attacker, { forceKill = true, damageType = DMG_MELEE_EXECUTION, damageSourceId = eDamageSourceId.human_execution, scriptType = DF_NO_INDICATOR | DF_GIB } )
+}
+
+void function AnimEvent_attach_pulseBlade( entity ent ) //Copy of the function that attaches the data knife. Easier to do this than to pass in a model to load instead because of the animeevent limitation
+{
+	entity knife = CreatePropDynamic( PULSE_BLADE_MODEL )
+	knife.kv.targetname = KNIFE_TARGETNAME
+	knife.SetParent( ent, "KNIFE", false, 0.0 )
+
+	OnThreadEnd(
+	function() : ( knife )
+		{
+			if ( IsValid( knife ) )
+			{
+				knife.Destroy()
+			}
+
+		}
+	)
+
+	WaittillAnimDone( ent )
+}
+
+void function AnimEvent_detach_pulseBlade( entity ent ) //Literally a copy of the function that detaches the dataknife. Could just call the same function really, but I prefer having a pair of functions that are differently named for consistency
+{
+	var childEnt =  ent.FirstMoveChild()
+
+	while ( childEnt != null )
+	{
+		if ( childEnt.kv.targetname == KNIFE_TARGETNAME )
+		{
+			childEnt.Destroy()
+			return
+		}
+
+		childEnt = expect entity ( childEnt.NextMovePeer() )
+	}
+}
+
+void function AnimEvent_play_sonar_execution_sounds( entity ent )
+{
+	entity attacker = ent.e.syncedMeleeAttacker
+
+	if ( !IsValid( attacker ) )
+		return
+
+	if ( ent.IsMechanical() )
+	{
+		EmitSoundOnEntity( attacker, "Pilot_Mvmt_Execution_Pulse_Robopilot" )
+	}
+	else
+	{
+		EmitSoundOnEntity( attacker, "Pilot_Mvmt_Execution_Pulse_Pilot" )
+	}
+}
+
+void function AnimEvent_mriPulseEvent( entity ent )
+{
+	entity syncedMeleeAttacker = ent.e.syncedMeleeAttacker
+
+	Assert( IsValid( syncedMeleeAttacker ) )
+
+	int meleeAttackerTeam = syncedMeleeAttacker.GetTeam()
+
+	int headShotAttachmentIndex
+	float startTime = Time()
+
+	Highlight_ClearEnemyHighlight( ent )
+	headShotAttachmentIndex = ent.LookupAttachment( "HEADSHOT" )
+	//Highlight_SetEnemyHighlightWithParam1( ent, "enemy_sonar_execution", ent.GetAttachmentOrigin( headShotAttachmentIndex ) )
+	Highlight_SetEnemyHighlightWithParams( ent, "enemy_sonar_execution", <startTime, Time(), 0>, ent.GetAttachmentOrigin( headShotAttachmentIndex ) )
+
+	ent.EndSignal( "OnDestroy" )
+
+	float lifeTimeOfEffect = Time() + 2.0
+
+	while( Time() < lifeTimeOfEffect )
+	{
+		/*
+		2 things here:
+		1. keep setting origin to make the effect look like it's coming from where the head is, as opposed to where the head was, even during the falling down part of the animation
+		2. Set time as the parameter manually because it looks like i.time in the highlight is not the same as Time(). It's server tick rate so not as smooth though :/
+		*/
+
+		Highlight_SetSonarExecutionHighlightOrigin( ent, ent.GetAttachmentOrigin( headShotAttachmentIndex ), <startTime, Time(), Time() - startTime> )
+		WaitFrame()
+	}
+}
+
+
+void function PlaySoundsForBodyType( entity ent, string roboSound, string humanSound )
+{
+	if ( ent.IsMechanical() )
+	{
+		EmitSoundOnEntity( ent, roboSound )
+	}
+	else
+	{
+		EmitSoundOnEntity( ent, humanSound )
 	}
 }
 
@@ -1097,12 +1851,12 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 		SetPlayerAnimViewEntity( player, firstPersonProxy )
 		firstPersonProxy.SetNextThinkNow()
 		SetForceDrawWhileParented( firstPersonProxy, true )
-		if( isScenariosMode() )
+		if( Safe_isScenariosMode() )
 			firstPersonProxy.Anim_SetPlaybackRate( 2.0 )
 	}
 	else if ( sequence.thirdPersonCameraAttachments.len() > 0 )
 	{
-		if ( player.IsPlayer() )
+		if ( player.IsPlayer() ) //&& Gamemode() != eGamemodes.fs_spieslegends )
 		{
 			entity fpProxy = player.GetFirstPersonProxy() //Shouldn't ever need to show the first person proxy when doing thirdPersonCameraAttachments; hide it explicitly here to stop it from showing up when chaining animations
 			if ( IsValid( fpProxy )  )
@@ -1423,4 +2177,114 @@ function ClampPlayerViewCone( player )
 {
 	player.EndSignal( "OnDeath" )
 	player.PlayerCone_SetLerpTime( 0.0 )
+}
+
+void function PhaseEmbarkPhaseStart( entity player )
+{
+	player.MakeInvisible()
+	PlayPhaseShiftDisappearFX( player )
+	EmitSoundOnEntity( player, "pilot_phaseembark_activate_3p" )
+	thread PhaseEmbarkPhaseCleanup( player )
+}
+
+void function PhaseEmbarkPhaseCleanup( entity player )
+{
+	EndSignal( player, "OnDeath" )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( IsValid( player ) )
+			{
+				player.MakeVisible()
+			}
+		}
+	)
+
+	WaitSignal( player, "PhaseEmbarkPhaseStop" )
+}
+
+void function PhaseEmbarkPhaseStop( entity player )
+{
+	Signal( player, "PhaseEmbarkPhaseStop" )
+	PlayPhaseShiftDisappearFX( player )
+	EmitSoundOnEntity( player, "pilot_phaseembark_end_3p" )
+}
+
+void function PortalExecutionHide( entity player )
+{
+	player.Hide()
+	player.NotSolid()
+
+	if ( player.IsPlayer() )
+		AddPlayerCallback_OnSpawned( player, PortalExecutionShow )
+}
+
+void function PortalExecutionShow( entity player )
+{
+	player.Show()
+	player.Solid()
+	RemovePlayerCallback_OnSpawned( player, PortalExecutionShow )
+}
+
+void function GlobalAnimEvent_SpawnFakeWeapon( entity player, array<string> tokens )
+{
+	string backupWeaponName = ""
+	if ( tokens.len() > 1 )
+		backupWeaponName = tokens[1]
+
+	thread GlobalAnimEvent_SpawnFakeWeapon_Internal( player, backupWeaponName )
+}
+
+void function GlobalAnimEvent_SpawnFakeWeapon_Internal( entity player, string backupWeaponName )
+{
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "ScriptAnimStop" )
+
+	entity weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+
+	if ( !IsValid( weapon ) )
+		weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+
+	string weaponName
+	if ( !IsValid( weapon ) )
+	{
+		if ( backupWeaponName != "" )
+		{
+			weaponName = backupWeaponName
+		}
+		else
+		{
+			return
+		}
+	}
+	else
+	{
+		weaponName = weapon.GetWeaponClassName()
+	}
+
+	var playermodel = GetWeaponInfoFileKeyFieldAsset_Global( weaponName, "playermodel" )
+	expect asset( playermodel )
+
+	string attach = "PROPGUN"
+	int attachId = player.LookupAttachment( attach )
+	entity fakeWeapon = CreatePropDynamic( playermodel, player.GetAttachmentOrigin( attachId ), player.GetAttachmentAngles( attachId ) )
+
+	if ( IsValid( weapon ) )
+	{
+		fakeWeapon.SetSkin( weapon.GetSkin() )
+	}
+
+	fakeWeapon.SetParent( player, attach, false )
+
+	OnThreadEnd(
+		function() : ( fakeWeapon )
+		{
+			if ( IsValid( fakeWeapon ) )
+				fakeWeapon.Destroy()
+		}
+	)
+
+	while ( player.Anim_IsActive() )
+		WaitFrame()
 }

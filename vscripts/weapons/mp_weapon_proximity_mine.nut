@@ -8,7 +8,7 @@ global function OnProjectileCollision_weapon_proximity_mine
 global function ShowProxMineTriggeredIcon
 #endif
 
-const MAX_PROXIMITY_MINES_IN_WORLD = 4  // if more than this are thrown, the oldest one gets cleaned up
+const MAX_PROXIMITY_MINES_IN_WORLD = 2  // if more than this are thrown, the oldest one gets cleaned up
 const PROXIMITY_MINE_THROW_POWER = 620
 const ATTACH_SFX = "Weapon_ProximityMine_Land"
 const WARNING_SFX = "Weapon_ProximityMine_ArmedBeep"
@@ -17,6 +17,10 @@ struct {
 	int iconCount = 0
 	int totalIcons = 10
 	var[10] icons
+	
+	#if SERVER
+	array<entity> allTraps
+	#endif
 } file
 void function MpWeaponProximityMine_Init()
 {
@@ -71,10 +75,16 @@ var function OnWeaponTossReleaseAnimEvent_weapon_proximity_mine( entity weapon, 
 
 	if ( proximityMine == null )
 		return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
-
+	
 	Grenade_Init( proximityMine, weapon )
+	proximityMine.SetScriptName( "proximityMine" )
+	
 	PlayerUsedOffhand( player, weapon )
 	#if SERVER
+		proximityMine.SetOwner( player )
+		file.allTraps.append( proximityMine )
+		CleanUpOldestTrap( player )
+		AddToTrackedEnts_Level( proximityMine )
 		EmitSoundOnEntityExceptToPlayer( player, player, "weapon_proximitymine_throw" )
 		ProximityCharge_PostFired_Init( proximityMine, player )
 		thread ProximityMineThink( proximityMine, player )
@@ -83,6 +93,34 @@ var function OnWeaponTossReleaseAnimEvent_weapon_proximity_mine( entity weapon, 
 	#endif
 	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
 }
+
+#if SERVER
+void function CleanUpOldestTrap(entity player)
+{
+	array<entity> playerTraps
+
+	foreach(trap in file.allTraps)
+	{
+		if( !IsValid(trap) ) 
+			continue
+
+		if( trap.GetOwner() == player )
+		{
+			playerTraps.append( trap )
+		}
+	}
+
+	if( playerTraps.len() > MAX_PROXIMITY_MINES_IN_WORLD )
+	{
+		entity trapToDestroy = playerTraps[ 0 ]
+
+		if( !IsValid( trapToDestroy ) )
+			return
+	
+		trapToDestroy.Destroy()
+	}
+}
+#endif
 
 vector function GetProximityMineThrowStartPos( entity player, vector baseStartPos )
 {

@@ -1,14 +1,107 @@
-//By @CafeFPS
-
 global function ChargePylons_Init
 global function SetButtonNoBusyDelayed
 
+#if SERVER
+global function SetChargePylonToExclusiveRealm
+global function DuplicateChargePylonToExclusiveRealm
+global function DestroyChargePylon
+global function GetAllChargePylons
+
+	#if DEVELOPER
+		global function ChargePylons_ResetAll
+		global function GetPylonDataFromTrigger
+	#endif // DEVELOPER
+
+#endif // SERVER
+
 global const asset CHARGE_PYLON_PING_MODEL = $"mdl/test/davis_test/charge_pylong_ping_proxy.rmdl"
 
+#if SERVER
+// Charge pylon general
+const float 	CHARGE_INTERVAL 						= 0.2
+global const float 	CHARGE_PYLON_RAISE_TIME 			= 210.0
+
+const float CHARGE_PYLON_EXIT_EMPTY_STATE_DELAY 		= 1.5
+
+// FX
+const asset FX_CHARGE_PYLON_CHARGE_FROM_EMPTY 		= $"warning_light_orange_blink"
+const asset FX_CHARGE_PYLON_GIVE_CHARGE_BOTTOM 		= $"P_reg_pyl_center_bot"
+const asset FX_CHARGE_PYLON_GIVE_CHARGE_TOP 		= $"P_reg_pyl_center_top"
+const asset FX_CHARGE_PYLON_PRE_FIRE 				= $"P_reg_pyl_center_chrg"
+const asset FX_CHARGE_PYLON_VERT_POLE				= $"P_reg_pyl_pole_vert_chrg"
+const asset FX_CHARGE_PYLON_ROD_ACTIVE_ELEC			= $"P_reg_pyl_pole_chrg"
+
+const vector CHARGE_PYLON_VERT_POLE_FX_OFFSET = < 4, 0, -240 >
+
+const string CHARGE_PYLON_AMB_ACTIVE 		= "canyonlands_emit_repulsortower_destroyed_sparks"
+
+// 1P
+const string SFX_CHARGE_PYLON_INTERACT_START 	= "Canyonlands_Scr_Pilon_Initiate"
+const string SFX_CHARGE_PYLON_SEQ_ABORT			= "Canyonlands_Scr_Pilon_Energy_Abort"
+// 3P
+const string SFX_CHARGE_PYLON_INTERACT_START_3P 	= "Canyonlands_Scr_Pilon_Initiate_3P"
+const string SFX_CHARGE_PYLON_ELEC_ARCS_START_3P 	= "Canyonlands_Scr_Pilon_Energy_Start_3P"
+const string SFX_CHARGE_PYLON_ELEC_ARCS_LOOP_3P 	= "Canyonlands_Scr_Pilon_Energy_LP_3P"
+const string SFX_CHARGE_PYLON_SEQ_COMPLETE_3P 		= "Canyonlands_Scr_Pilon_Energy_End_3P"
+const string SFX_CHARGE_PYLON_SEQ_ABORT_3P			= "Canyonlands_Scr_Pilon_Energy_Abort_3P"
+const string SFX_CHARGE_PYLON_FULL_3P				= "Canyonlands_Scr_Pilon_Energy_Full"
+const string SFX_CHARGE_PYLON_RISE_3P				= "Canyonlands_Scr_Pilon_Energy_Rise"
+
+const string SIGNAL_CHARGE_PYLONUSE_FAIL_PIN					= "SignalCPUseFail"
+const string SIGNAL_CHARGE_PYLONUSE_SUCCESS_PIN					= "SignalCPUseSuccess"
+const float CHARGE_PYLON_FAIL_PIN_DEBOUNCE = 0.5
+const string CHARGE_PYLON_MOVER_SCRIPTNAME = "charge_pylon_mover"
+
+enum eChargePylonStates
+{
+	INVALID,
+	CHARGING,
+	CHARGED,
+	CHANNELING,
+	GIVING_CHARGE,
+	EMPTY,
+
+	_count
+}
+
+global struct ChargePylonData
+{
+	entity          trigger
+	entity          mover
+	entity			button
+	entity 			batteryProp		// handling parenting in script since it wasn't working in LevelEd for some reason...
+	entity			pingProp
+	vector          fullPosition
+	vector          emptyPosition
+	array< entity > playersInTrigger
+
+	int             newState = eChargePylonStates.CHARGED
+	int             curState = eChargePylonStates.INVALID
+	int             prevState = eChargePylonStates.INVALID
+	float           stateChangeTime
+	bool			stateChanged		// Manually mark if state changed. Catch cases where input's being slammed faster than script updates. Make sure no changes slip through cracks.
+
+	int				realm = -1
+	int				interRealmId		// Since a charge pylon may be dupe'd across different realms, this ID tracks all instances of the same charge pylon across realms
+
+	array< Point > giveChargeFXTargets
+	array< vector > rechargeFXTargets
+	array< entity > fxEntsForCleanup
+	array< entity > fxEntsForCleanup_Charging
+	table< string, array<vector> > audioForCleanup
+	table<string, array<entity> > ambientGenerics
+}
+
+#endif
 struct
 {
 	#if SERVER
-	array<entity> allTriggers
+	array< ChargePylonData > allChargePylons
+	table<entity, int> playersInChargeTriggers
+	table<entity, float> panelToLastUseFailPINTime
+	//table<int, array< ChargePylonData > > allChargePylonsInRealm
+
+	float chargePylonRaiseTime = CHARGE_PYLON_RAISE_TIME
 	#endif
 
 	float chargePylonUseTime = 5.0
@@ -18,20 +111,292 @@ void function ChargePylons_Init()
 {
 	if ( GetCurrentPlaylistVarBool( "charge_pylons_enabled", true ) )
 	{
+
 		#if CLIENT
 			AddCreateCallback( "prop_dynamic", ChargePylon_Cl_SetButtonUsable )
 		#endif
 
 		#if SERVER
-			AddSpawnCallback( "prop_dynamic", ChargePylon_SetButtonUsable )
-			AddSpawnCallback( "trigger_multiple", ChargePylonTrigger_SetUp )
+			PrecacheModel( CHARGE_PYLON_PING_MODEL )
+			AddSpawnCallback_ScriptName( "charge_pylon_button", ChargePylon_SetButtonUsable )
+			AddSpawnCallback_ScriptName( "capacitor_charge_field", InitChargePylon )
+
+
+			RegisterSignal( SIGNAL_CHARGE_PYLONUSE_FAIL_PIN )
+			RegisterSignal( SIGNAL_CHARGE_PYLONUSE_SUCCESS_PIN )
+			PrecacheParticleSystem( FX_CHARGE_PYLON_CHARGE_FROM_EMPTY )
+			PrecacheParticleSystem( FX_CHARGE_PYLON_GIVE_CHARGE_BOTTOM )
+			PrecacheParticleSystem( FX_CHARGE_PYLON_GIVE_CHARGE_TOP )
+			PrecacheParticleSystem( FX_CHARGE_PYLON_PRE_FIRE )
+			PrecacheParticleSystem( FX_CHARGE_PYLON_ROD_ACTIVE_ELEC )
+			PrecacheParticleSystem( FX_CHARGE_PYLON_VERT_POLE )
+
+			file.chargePylonRaiseTime = GetCurrentPlaylistVarFloat( "charge_pylons_raise_time_override", CHARGE_PYLON_RAISE_TIME )
 		#endif
 
 		file.chargePylonUseTime = GetCurrentPlaylistVarFloat( "charge_pylons_use_time_override", 5.0 )
 	}
 }
 
+#if SERVER
+void function InitChargePylon( entity trig )
+{
+	FlagWait( "EntitiesDidLoad" )
+	thread InitChargePylon_Thread( trig )
+}
+
+void function InitChargePylon_Thread( entity trig )
+{
+	ChargePylonData newPylonData
+
+	newPylonData.trigger = trig
+	trig.SetEnterCallback( OnEntityEnterChargeTrigger )
+	trig.SetLeaveCallback( OnEntityLeaveChargeTrigger )
+
+	array< entity > linkedTrigEnts = trig.GetLinkEntArray()
+	foreach( linkedEnt in linkedTrigEnts )
+	{
+		if ( TryGetEditorClass_ElseGetEntityClass( linkedEnt ) == "script_mover" )
+		{
+			newPylonData.mover = linkedEnt
+		}
+		else if ( TryGetEditorClass_ElseGetEntityClass( linkedEnt ) == "prop_dynamic" )
+		{
+			if ( linkedEnt.GetScriptName() == "charge_pylon_battery_geo" )
+			{
+				newPylonData.batteryProp = linkedEnt
+				newPylonData.pingProp = CreateChargePylonPingProp( linkedEnt.GetOrigin(), linkedEnt.GetAngles() )
+			}
+			else
+			{
+				newPylonData.button = linkedEnt
+				file.panelToLastUseFailPINTime[ linkedEnt ] <- 0.0
+			}
+		}
+		else
+		{
+			if ( linkedEnt.GetScriptName() == "full_pos_target" )
+			{
+				newPylonData.fullPosition = linkedEnt.GetOrigin()
+			}
+			else if ( linkedEnt.GetScriptName() == "empty_pos_target" )
+			{
+				newPylonData.emptyPosition = linkedEnt.GetOrigin()
+			}
+			else if ( linkedEnt.GetScriptName() == "give_charge_fx_target" )
+			{
+				Point pointData
+				pointData.origin = linkedEnt.GetOrigin()
+				pointData.angles = linkedEnt.GetAngles()
+				newPylonData.giveChargeFXTargets.append( pointData )
+
+
+				entity soundEntity = CreateEntity( "ambient_generic" )
+				soundEntity.SetOrigin( pointData.origin )
+				soundEntity.SetSoundName( CHARGE_PYLON_AMB_ACTIVE )
+				soundEntity.SetEnabled( false )
+				if ( CHARGE_PYLON_AMB_ACTIVE in newPylonData.ambientGenerics )
+					newPylonData.ambientGenerics[ CHARGE_PYLON_AMB_ACTIVE ].append( soundEntity )
+				else
+					newPylonData.ambientGenerics[ CHARGE_PYLON_AMB_ACTIVE ] <- [ soundEntity ]
+			}
+			else if ( linkedEnt.GetScriptName() == "recharge_fx_target" )
+			{
+				newPylonData.rechargeFXTargets.append( linkedEnt.GetOrigin() )
+			}
+
+			linkedEnt.Destroy()
+		}
+	}
+
+	// Lame hacks
+	if ( IsValid( newPylonData.batteryProp ) )
+	{
+		newPylonData.batteryProp.SetParent( newPylonData.mover )
+	}
+	else
+	{
+		Assert( false, "Pylon battery not setup correctly. The battery needs the script name \"charge_pylon_battery_geo\"" )
+		//DebugDrawSphere( trig.GetOrigin(), 128, COLOR_RED, true, 100.0 )
+	}
+
+	file.allChargePylons.append( newPylonData )
+
+	thread ChargePylonThink_StartDelayed( newPylonData )
+}
+
+entity function CreateChargePylonPingProp( vector origin, vector angles )
+{
+	entity pingProp = CreateEntity( "prop_dynamic" )
+	pingProp.SetModel( CHARGE_PYLON_PING_MODEL )
+	pingProp.SetOrigin( origin )
+	pingProp.SetAngles( angles )
+
+	pingProp.kv.SpawnAsPhysicsMover = false
+	pingProp.SetValueForModelKey( CHARGE_PYLON_PING_MODEL )
+	pingProp.kv.solid = SOLID_VPHYSICS
+	pingProp.kv.DisableBoneFollowers = 1
+	pingProp.kv.fadedist = 100000
+	pingProp.kv.collide_bullet = 0
+	pingProp.kv.contents = CONTENTS_BLOCK_PING
+	pingProp.Code_SetTeam( TEAM_NPC_HOSTILE_TO_ALL )
+
+	DispatchSpawn( pingProp )
+	pingProp.Highlight_Enable()
+	pingProp.Hide()
+
+	return pingProp
+}
+
+const float CHARGE_PYLON_TRIGGER_RADIUS = 384
+const float CHARGE_PYLON_TRIGGER_HEIGHT = 320
+const asset CHARGE_PYLON_BUTTON_MODEL = $"mdl/props/global_access_panel_button/global_access_panel_button_console.rmdl"
+const asset CHARGE_PYLON_BATTERY_MODEL = $"mdl/props/charge_pylon/charge_pylon_01_cells.rmdl"
+ChargePylonData function DuplicateChargePylonToExclusiveRealm( ChargePylonData pylonDataToDupe, int realm )
+{
+	ChargePylonData newPylonData
+
+	// Trigger
+	entity newTrig    = CreateEntity( "trigger_cylinder" )
+	entity trigToDupe = pylonDataToDupe.trigger
+	newTrig.SetOrigin( trigToDupe.GetCenter() )
+	newTrig.SetRadius( CHARGE_PYLON_TRIGGER_RADIUS )
+	newTrig.SetAboveHeight( CHARGE_PYLON_TRIGGER_HEIGHT * 0.5 )
+	newTrig.SetBelowHeight( CHARGE_PYLON_TRIGGER_HEIGHT * 0.5 )
+	newTrig.SetPhaseShiftCanTouch( true )
+	newTrig.kv.triggerFilterPlayer = "all"
+	newTrig.kv.triggerFilterNpc = "none"
+	newTrig.kv.triggerFilterNonCharacter = 0
+	newTrig.kv.triggerFilterTeamOther = 1
+	newTrig.kv.triggerFilterUseNew = 1
+	DispatchSpawn( newTrig )
+
+	newTrig.SetEnterCallback( OnEntityEnterChargeTrigger )
+	newTrig.SetLeaveCallback( OnEntityLeaveChargeTrigger )
+
+	newPylonData.trigger = newTrig
+
+	// Button
+	entity buttonToDupe = pylonDataToDupe.button
+	entity newButton = CreatePropDynamic( CHARGE_PYLON_BUTTON_MODEL, buttonToDupe.GetOrigin(), buttonToDupe.GetAngles(), SOLID_VPHYSICS, -1 )
+	newButton.SetScriptName( buttonToDupe.GetScriptName() )
+	newPylonData.button = newButton
+	DispatchSpawn( newButton )
+	file.panelToLastUseFailPINTime[ newButton ] <- 0.0
+
+	newPylonData.interRealmId = pylonDataToDupe.interRealmId
+
+	// Mover
+	newPylonData.fullPosition = pylonDataToDupe.fullPosition
+	newPylonData.emptyPosition = pylonDataToDupe.emptyPosition
+
+	entity moverToDupe = pylonDataToDupe.mover
+	entity newMover = CreateScriptMover_NEW( CHARGE_PYLON_MOVER_SCRIPTNAME, moverToDupe.GetOrigin(), moverToDupe.GetAngles() )
+	newMover.SetOrigin( newPylonData.fullPosition )
+	newPylonData.mover = newMover
+
+	// Battery prop
+	entity batteryToDupe = pylonDataToDupe.batteryProp
+	entity newBatteryProp = CreatePropDynamic( CHARGE_PYLON_BATTERY_MODEL, batteryToDupe.GetOrigin(), batteryToDupe.GetAngles(), 0, 30000 )
+	newPylonData.batteryProp = newBatteryProp
+	newBatteryProp.SetParent( newMover )
+
+	// Ping prop
+	newPylonData.pingProp = CreateChargePylonPingProp( pylonDataToDupe.pingProp.GetOrigin(), pylonDataToDupe.pingProp.GetAngles() )
+
+	// FX and audio ents / positions
+	foreach( Point giveChargeFXTarget in pylonDataToDupe.giveChargeFXTargets )
+	{
+		newPylonData.giveChargeFXTargets.append( giveChargeFXTarget )
+
+		entity soundEntity = CreateEntity( "ambient_generic" )
+		soundEntity.SetOrigin( giveChargeFXTarget.origin )
+		soundEntity.SetSoundName( CHARGE_PYLON_AMB_ACTIVE )
+		soundEntity.SetEnabled( false )
+		if ( CHARGE_PYLON_AMB_ACTIVE in newPylonData.ambientGenerics )
+			newPylonData.ambientGenerics[ CHARGE_PYLON_AMB_ACTIVE ].append( soundEntity )
+		else
+			newPylonData.ambientGenerics[ CHARGE_PYLON_AMB_ACTIVE ] <- [ soundEntity ]
+	}
+
+	foreach( vector rechargeFXTarget in pylonDataToDupe.rechargeFXTargets )
+		newPylonData.rechargeFXTargets.append( rechargeFXTarget )
+
+	// Register / realm
+	file.allChargePylons.append( newPylonData )
+	SetChargePylonToExclusiveRealm( newPylonData, realm )
+	thread ChargePylonThink_StartDelayed( newPylonData )
+
+	return newPylonData
+}
+
+void function SetChargePylonToExclusiveRealm( ChargePylonData pylonData, int newRealm )
+{
+	/*pylonData.trigger.RemoveFromAllRealms()
+	pylonData.mover.RemoveFromAllRealms()
+	pylonData.button.RemoveFromAllRealms()
+	pylonData.batteryProp.RemoveFromAllRealms()
+	pylonData.pingProp.RemoveFromAllRealms()
+
+	SetRealms( pylonData.trigger, [ newRealm ] )
+	SetRealms( pylonData.mover, [ newRealm ] )
+	SetRealms( pylonData.button, [ newRealm ] )
+	SetRealms( pylonData.batteryProp, [ newRealm ] )
+	SetRealms( pylonData.pingProp, [ newRealm ] )
+
+	foreach( string amgGenericName, array<entity> ambGenerics in pylonData.ambientGenerics )
+		foreach( entity ambGeneric in ambGenerics )
+		{
+			ambGeneric.RemoveFromAllRealms()
+			SetRealms( ambGeneric, [ newRealm ] )
+		}
+
+	pylonData.realm = newRealm*/
+
+}
+
+void function DestroyChargePylon( ChargePylonData pylonData )
+{
+	delete file.panelToLastUseFailPINTime[ pylonData.button ]
+
+	pylonData.trigger.Destroy()
+	pylonData.mover.Destroy()
+	pylonData.button.Destroy()
+	pylonData.batteryProp.Destroy()
+	pylonData.pingProp.Destroy()
+
+	array<string> ambientGenericNames
+	foreach( string ambGenericName, array<entity> ambGenerics in pylonData.ambientGenerics )
+	{
+		DestroyEntities( ambGenerics )
+		ambGenerics.clear()
+
+		ambientGenericNames.append( ambGenericName )
+	}
+
+	foreach( string name in ambientGenericNames )
+		delete pylonData.ambientGenerics[ name ]
+
+	ChargePylon_ClearCurrentFX( pylonData )
+	ChargePylon_ClearCurrentFX_Charging( pylonData )
+
+	pylonData.giveChargeFXTargets.clear()
+	pylonData.rechargeFXTargets.clear()
+	pylonData.playersInTrigger.clear()
+
+	array< string > soundNames
+	foreach( string soundName, array<vector> soundOrgs in pylonData.audioForCleanup )
+		soundNames.append( soundName )
+
+	foreach( string name in soundNames )
+		ChargePylon_ClearAudioByName( pylonData, name )
+
+	file.allChargePylons.fastremovebyvalue( pylonData )
+}
+#endif
+
 #if CLIENT
+
 void function ChargePylon_Cl_SetButtonUsable( entity prop )
 {
 	if ( prop.GetScriptName() == "charge_pylon_button" )
@@ -41,32 +406,37 @@ void function ChargePylon_Cl_SetButtonUsable( entity prop )
 }
 #endif
 
-const int CHARGEPYLON_MAX_VIEW_ANGLE_TO_AXIS = 60
 void function ChargePylon_SetButtonUsable( entity button )
 {
 	#if SERVER
-		if ( button.GetScriptName() != "charge_pylon_button" )
+		ChargePylon_SetCodeUsableState( button )
+	#endif //SERVER
+	AddCallback_OnUseEntity_ClientServer( button, ChargePylon_OnUse )
+
+	SetCallback_CanUseEntityCallback_Retail( button, ChargePylon_CanUse )
+
+	//#if CLIENT
+	//	AddCallback_OnUseEntity_ClientServer( button, ChargePylon_OnUse )
+	//#endif //CLIENT
+}
+
+#if SERVER
+void function ChargePylon_SetCodeUsableState( entity button )
+{
+	if( !IsValid( button ) )
 		return
 
-	button.SetSkin(0) // green
-	button.kv.solid = 0 //fixes crash
 	button.SetUsable()
 	button.SetUsableByGroup( "pilot" )
-	button.AddUsableValue( CHARGEPYLON_MAX_VIEW_ANGLE_TO_AXIS )
-	button.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
-	#endif // SERVER
-
-	AddCallback_OnUseEntity( button, ChargePylon_OnUse )
-	SetCallback_CanUseEntityCallback( button, ChargePylon_CanUse )
-
-	#if CLIENT
-	AddEntityCallback_GetUseEntOverrideText( button, ChargePylon_TextOverride )
-	#endif // CLIENT
+	button.SetUsePrompts( "#HOLD_TO_USE_GENERIC", "#HOLD_TO_USE_GENERIC" )
+	button.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BLOCK_CONTINUOUS_USE )
+	button.SetSkin( 0 )
 }
+#endif
 
 void function ChargePylon_OnUse( entity panel, entity user, int useInputFlags )
 {
-	if ( !(useInputFlags & USE_INPUT_LONG) )
+	if ( !IsBitFlagSet( useInputFlags, USE_INPUT_LONG ) )
 		return
 
 	ExtendedUseSettings settings
@@ -80,25 +450,64 @@ void function ChargePylon_OnUse( entity panel, entity user, int useInputFlags )
 		settings.displayRuiFunc = DisplayRUIForChargePylonExtdUse
 		settings.displayRui = $"ui/health_use_progress.rpak"
 		settings.icon = $"rui/hud/gametype_icons/survival/data_knife"
-		settings.hint = "Activating Charge Tower"
-	#endif
-		
+		settings.hint = "#HINT_CHARGE_PYLON_ACTIVATING"
+
+		//HidePlayerHint( "#HINT_VAULT_USE" )
+	#endif //CLIENT
+
 	#if SERVER
-		settings.holsterWeapon = true
-		settings.movementDisable = true
+		settings.successFunc = ChargePylon_UseSuccess
+		settings.failureFunc = ChargePylon_UseFailure
+		settings.startFunc = ChargePylon_StartUse
 		settings.exclusiveUse = true
-		settings.successFunc = ChargePylonUseSuccess
-	#endif // SERVER
+		settings.setUsableOnSuccess = false
+		settings.movementDisable = true
+		settings.holsterWeapon = true
+		settings.holsterViewModelOnly = true
+		thread ChargePylon_MonitorExtendedUseForPIN( panel, user )
+	#endif //SERVER
 
 	thread ExtendedUse( panel, user, settings )
 }
 
-#if CLIENT
-string function ChargePylon_TextOverride( entity panel )
+#if SERVER
+void function ChargePylon_MonitorExtendedUseForPIN( entity panel, entity player )
 {
-	return "Hold %use% to use"
+	// PIN event setup
+	float startTime = Time()
+	table signalData = WaitSignal( player, SIGNAL_CHARGE_PYLONUSE_SUCCESS_PIN, SIGNAL_CHARGE_PYLONUSE_FAIL_PIN )
+
+	switch( signalData.signal )
+	{
+		case SIGNAL_CHARGE_PYLONUSE_SUCCESS_PIN:
+			PIN_Interact( player, "succeed_charge_pylon", panel.GetOrigin() )
+			break
+		case SIGNAL_CHARGE_PYLONUSE_FAIL_PIN:
+			// Limit how often fail pins are sent, since they can be spammed
+			float timeSinceLastFailPIN = Time() - file.panelToLastUseFailPINTime[ panel ]
+			if ( timeSinceLastFailPIN > CHARGE_PYLON_FAIL_PIN_DEBOUNCE )
+			{
+				PIN_Interact( player, "fail_charge_pylon", panel.GetOrigin() )
+				file.panelToLastUseFailPINTime[ panel ] = Time()
+			}
+			break
+	}
 }
 
+ChargePylonData function GetChargePylonFromPanel( entity panel )
+{
+	foreach( ChargePylonData pylonData in file.allChargePylons )
+	{
+		if ( pylonData.button == panel )
+			return pylonData
+	}
+
+	unreachable
+}
+
+#endif
+
+#if CLIENT
 void function DisplayRUIForChargePylonExtdUse( entity ent, entity player, var rui, ExtendedUseSettings settings )
 {
 	DisplayRuiForLootVaultPanel_Internal( rui, settings.icon, Time(), Time() + settings.duration, settings.hint )
@@ -115,7 +524,60 @@ void function DisplayRuiForLootVaultPanel_Internal( var rui, asset icon, float s
 }
 #endif
 
-bool function ChargePylon_CanUse( entity user, entity button )
+#if SERVER
+void function ChargePylon_StartUse( entity panel, entity player, ExtendedUseSettings settings )
+{
+	ChargePylonData pylonData = GetPylonDataFromButton( panel )
+	ChargePylon_SetState( pylonData, eChargePylonStates.CHANNELING )
+
+	EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, pylonData.batteryProp.GetCenter(), player, SFX_CHARGE_PYLON_INTERACT_START )
+	EmitSoundAtPositionExceptToPlayer( TEAM_UNASSIGNED, pylonData.batteryProp.GetCenter(), player, SFX_CHARGE_PYLON_INTERACT_START_3P )
+}
+
+
+void function ChargePylon_UseSuccess( entity panel, entity player, ExtendedUseSettings settings )
+{
+	                  
+	//Wattson_TT_ChargePylon( panel )
+       
+
+	ChargePylonData pylonData = GetPylonDataFromButton( panel )
+	ChargePylon_SetState( pylonData, eChargePylonStates.GIVING_CHARGE )
+
+	ChargePylon_ClearCurrentFX( pylonData )
+
+	ChargePylon_ClearAudioByName( pylonData, SFX_CHARGE_PYLON_ELEC_ARCS_LOOP_3P )
+	ChargePylon_ClearAudioByName( pylonData, SFX_CHARGE_PYLON_ELEC_ARCS_START_3P )
+
+	panel.SetSkin( 1 )
+	panel.UnsetUsable()
+
+	                  
+	//if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	{
+		//FR_Nessie_OnUseChargeTower( player )
+	}
+       
+
+	Signal( player, SIGNAL_CHARGE_PYLONUSE_SUCCESS_PIN )
+}
+
+void function ChargePylon_UseFailure( entity panel, entity player, ExtendedUseSettings settings )
+{
+	ChargePylonData pylonData = GetPylonDataFromButton( panel )
+	ChargePylon_SetState( pylonData, eChargePylonStates.CHARGED )
+
+	EmitSoundAtPositionOnlyToPlayer( TEAM_UNASSIGNED, pylonData.batteryProp.GetCenter(), player, SFX_CHARGE_PYLON_SEQ_ABORT )
+	EmitSoundAtPositionExceptToPlayer( TEAM_UNASSIGNED, pylonData.batteryProp.GetCenter(), player, SFX_CHARGE_PYLON_SEQ_ABORT_3P )
+
+	ChargePylon_ClearAudioByName( pylonData, SFX_CHARGE_PYLON_ELEC_ARCS_LOOP_3P )
+	ChargePylon_ClearAudioByName( pylonData, SFX_CHARGE_PYLON_ELEC_ARCS_START_3P )
+
+	Signal( player, SIGNAL_CHARGE_PYLONUSE_FAIL_PIN )
+}
+#endif
+
+bool function ChargePylon_CanUse( entity user, entity button, int useFlags )
 {
 	if ( Bleedout_IsBleedingOut( user ) )
 		return false
@@ -127,8 +589,10 @@ bool function ChargePylon_CanUse( entity user, entity button )
 
 	if ( IsValid( activeWeapon ) )
 	{
+		//Grabbing the off hand allows interaction attribute for check to allow unique Legends to interact with Charge Tower while using OffHand weapons (Ult/Tac abilities)
 		var offhandAllowsPickups = activeWeapon.GetWeaponInfoFileKeyField("offhand_allow_player_interact")
-		
+
+		//If the weapon does not allow off hand interactions: Prevent pylon usage
 		if ( activeWeapon.IsWeaponOffhand() && !offhandAllowsPickups)
 			return false
 	}
@@ -140,107 +604,407 @@ bool function ChargePylon_CanUse( entity user, entity button )
 }
 
 #if SERVER
-void function ChargePylonTrigger_SetUp( entity trigger )
+void function ChargePylonThink_StartDelayed( ChargePylonData pylonData )
 {
-	if( !IsValid( trigger ) || trigger.GetScriptName() != "capacitor_charge_field" )
+	WaitFrame()
+
+	if ( !IsValid( pylonData.mover ) )
 		return
 
-	file.allTriggers.append( trigger )
+	thread ChargePylonThink_Thread( pylonData )
 }
 
-entity function ChargePylon_GetTriggerForButton( entity button ) 
+void function ChargePylonThink_Thread( ChargePylonData pylonData )
 {
-	foreach( trigger in file.allTriggers )
-		foreach( link in trigger.GetLinkEntArray() )
-			if( link == button )
-				return trigger
+	// Picking a random ent, ensure this is interrupted if the ent is destroyed (like when deleting from a realm)
+	EndSignal( pylonData.batteryProp, "OnDestroy" )
+	WaitEndFrame()
 
-	return null
-}
+	float chargeStateStartTime = 0.0
+	bool chargingHasStarted
 
-entity function ChargePylon_GetPropForTrigger( entity trigger ) 
-{
-	foreach( link in trigger.GetLinkEntArray() )
-		if( link.GetScriptName()  == "charge_pylon_battery_geo" )
-			return link
-
-	return null
-}
-
-entity function ChargePylon_GetMoverForTrigger( entity trigger ) 
-{
-	foreach( link in trigger.GetLinkEntArray() )
-		if( link.GetClassName() == "script_mover" )
-			return link
-
-	return null
-}
-
-entity function ChargePylon_GetEmptyPosTargetForTrigger( entity trigger )
-{
-	foreach( link in trigger.GetLinkEntArray() )
-		if( link.GetScriptName() == "empty_pos_target" )
-			return link
-
-	return null
-}
-
-entity function ChargePylon_GetFullPosTargetForTrigger( entity trigger )
-{
-	foreach( link in trigger.GetLinkEntArray() )
-		if( link.GetScriptName() == "full_pos_target" )
-			return link
-
-	return null
-}
-
-void function ChargePylonUseSuccess( entity button, entity player, ExtendedUseSettings settings )
-{
-	button.SetSkin(1)
-
-	entity trigger = ChargePylon_GetTriggerForButton( button )
-
-	foreach( sPlayer in trigger.GetTouchingEntities() )
-		if( trigger.IsTouching( sPlayer ) ) //redudant?
+	while ( true )
+	{
+		pylonData.prevState = pylonData.curState
+		if ( pylonData.newState != pylonData.curState )
 		{
-			ChargePylon_RechargePlayerOffhand( player )
-			
-			#if DEVELOPER
-				printt(player.GetPlayerName(), "is touching trigger: ", trigger, " - should reload ultimate")
-			#endif
+
+			pylonData.curState = pylonData.newState
+
+			pylonData.mover.NonPhysicsStop()
+			pylonData.stateChangeTime = Time()
+			pylonData.stateChanged = true
 		}
 
-	thread ChargePylon_StartPropMovement_Thread( trigger )
+		switch( pylonData.curState )
+		{
+			case eChargePylonStates.CHARGING:
+				if ( pylonData.stateChanged )
+				{
+					pylonData.mover.NonPhysicsMoveTo( pylonData.fullPosition, file.chargePylonRaiseTime, 0.0, 0 )
+					ChargePylon_StartRechargeFromEmptyFX( pylonData )
+					EmitSoundAtPosition( TEAM_UNASSIGNED, pylonData.fullPosition, SFX_CHARGE_PYLON_RISE_3P, pylonData.batteryProp )
+					ChargePylon_AddSoundToCleanup( pylonData, SFX_CHARGE_PYLON_RISE_3P, pylonData.fullPosition )
+				}
+
+				if ( Time() - pylonData.stateChangeTime > file.chargePylonRaiseTime )
+				{
+					ChargePylon_SetState( pylonData, eChargePylonStates.CHARGED )
+					ChargePylon_ClearCurrentFX( pylonData )
+				}
+
+				break
+
+			// Waits in this state for the button to be used
+			case eChargePylonStates.CHARGED:
+				if ( pylonData.stateChanged )
+				{
+					ChargePylon_OnEnterChargedState( pylonData )
+				}
+
+				break
+
+			// While the button is in extended use, let other squads know what's happening
+			case eChargePylonStates.CHANNELING:
+				if ( pylonData.stateChanged &&  pylonData.prevState == eChargePylonStates.CHARGED )
+				{
+					ChargePylon_OnEnterChannelingState( pylonData )
+				}
+
+				break
+
+			case eChargePylonStates.GIVING_CHARGE:
+
+				const float PYLON_FALL_TIME = 0.2
+				if ( pylonData.stateChanged && pylonData.prevState == eChargePylonStates.CHANNELING )
+				{
+					//ChargePylon_ClearCurrentFX( pylonData )
+					ChargePylon_GiveChargeInstantFX_Top( pylonData )
+					pylonData.mover.NonPhysicsMoveTo( pylonData.emptyPosition, PYLON_FALL_TIME, PYLON_FALL_TIME, 0 )
+				}
+
+				if ( Time() - pylonData.stateChangeTime > PYLON_FALL_TIME )
+				{
+					ChargePylon_SetState( pylonData, eChargePylonStates.EMPTY )
+					ChargePylon_BatteryPropFallCompleteFX( pylonData )
+					ChargePylon_ClearCurrentFX( pylonData )
+					ChargePylon_ClearCurrentFX_Charging( pylonData )
+					ChargePylon_GiveChargeInstantFX_Bottom( pylonData )
+					ChargePylon_GiveChargeToPlayersInstant( pylonData )
+				}
+
+				break
+
+			case eChargePylonStates.EMPTY:
+				if ( pylonData.stateChanged )
+				{
+					pylonData.mover.SetOrigin( pylonData.emptyPosition )
+				}
+
+				if ( ChargePylon_HasEnoughTimePassedToLeaveEmptyState( pylonData ) )
+					ChargePylon_SetState( pylonData, eChargePylonStates.CHARGING )
+
+				break
+		}
+
+		pylonData.stateChanged = false
+		wait CHARGE_INTERVAL
+	}
 }
 
-void function ChargePylon_StartPropMovement_Thread( entity trigger )
+void function ChargePylon_SetState( ChargePylonData pylonData, int newState )
 {
-	vector emptyPos = ChargePylon_GetEmptyPosTargetForTrigger( trigger ).GetOrigin()
-	vector fullPos = ChargePylon_GetFullPosTargetForTrigger( trigger ).GetOrigin()
-
-	entity prop = ChargePylon_GetPropForTrigger( trigger )
-	entity mover = ChargePylon_GetMoverForTrigger( trigger )
-
-	prop.SetParent( mover )
-	mover.NonPhysicsMoveTo( emptyPos, 0.5, 0.5, 0.0  )
-	wait 0.5
-	mover.NonPhysicsMoveTo( fullPos, 20, 0.0, 0.0  )
-	// printt( "Debug Movement: ", emptyPos, fullPos, prop, mover )
-	
+	pylonData.newState = newState
+	pylonData.stateChanged = true
 }
 
-void function ChargePylon_RechargePlayerOffhand( entity player )
+string function Debug_GetNameForPylonEnumEntry( int enumVal )
 {
-	if(IsValid(player.GetOffhandWeapon( OFFHAND_INVENTORY )))
-		player.GetOffhandWeapon( OFFHAND_INVENTORY ).SetWeaponPrimaryClipCount( player.GetOffhandWeapon( OFFHAND_INVENTORY ).GetWeaponPrimaryClipCountMax() )
-	// if(IsValid(player.GetOffhandWeapon( OFFHAND_LEFT ))){
-		// player.GetOffhandWeapon( OFFHAND_LEFT ).SetWeaponPrimaryClipCount( player.GetOffhandWeapon( OFFHAND_LEFT ).GetWeaponPrimaryClipCountMax() )
-		
-		// //Fix for grapple not recharging after grappling server created props
-		// player.SetSuitGrapplePower(100)
-	// }
+	switch( enumVal )
+	{
+		case eChargePylonStates.CHARGING:
+			return "CHARGING"
+
+		case eChargePylonStates.EMPTY:
+			return "EMPTY"
+
+		case eChargePylonStates.GIVING_CHARGE:
+			return "GIVING_CHARGE"
+
+		case eChargePylonStates.CHARGED:
+			return "CHARGED"
+
+		case eChargePylonStates.CHANNELING:
+			return "CHANNELING"
+	}
+
+	unreachable
 }
 
+bool function ChargePylon_HasEnoughTimePassedToLeaveEmptyState( ChargePylonData pylonData )
+{
+	return ( Time() - pylonData.stateChangeTime ) > CHARGE_PYLON_EXIT_EMPTY_STATE_DELAY
+}
+
+void function ChargePylon_GiveChargeToPlayersInstant( ChargePylonData pylonData )
+{
+	foreach( entity player in pylonData.playersInTrigger )
+	{
+		entity ultWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+		if ( !IsValid( ultWeapon  )  ) // Special case for training - we take away your ult ability until you reach a certain point
+			continue
+
+		//Adding check to see if the weapon allows off hand interaction, which in the case of some weapon-based Legend Ults would normally make the weapon !Ready
+		if ( !ultWeapon.IsReadyToFire() && !ultWeapon.GetWeaponInfoFileKeyField( "offhand_allow_player_interact"))
+			continue
+
+		int ammoNow = ultWeapon.GetWeaponPrimaryClipCount()
+		int ammoMax = ultWeapon.GetWeaponPrimaryClipCountMax()
+		if ( ammoNow >= ammoMax )
+			continue
+
+		//Removing a pre-existing check which would prevent HMG from being reloaderd. No reason that the HMG Ult should not get reloaded to full when a charge pylon activates.
+		//if( ultWeapon.HasMod( MOBILE_HMG_ACTIVE_MOD ) )
+		//	continue
+
+		ultWeapon.SetWeaponPrimaryClipCountNoRegenReset( ammoMax )
+		Ultimates_OnPlayerUltIsReady( player, ultWeapon )
+		StatusEffect_AddTimed( player, eStatusEffect.emp, 0.3, 0.3, 0.3 )
+		Remote_CallFunction_Replay( player, "ServerToClient_DoUltAccelScreenFx" )
+	}
+}
+
+float function ChargePylon_GetTimeToChargeLevelAtRate( float curCharge, float endCharge, float rateOfChange )
+{
+	float chargeDelta = endCharge - curCharge
+	float timeToEnd = chargeDelta / rateOfChange
+
+	// Make sure the rate of change will get us to the target. If they're not same sign, means they're in opposite directions
+	float isPossible = chargeDelta * rateOfChange
+	Assert( isPossible >= 0, "Warning!! Time to charge level is invalid! Rate is heading in opposite direction of target!" )
+
+	return timeToEnd
+}
+
+void function ChargePylon_ClearCurrentFX( ChargePylonData pylonData )
+{
+	DestroyEntities( pylonData.fxEntsForCleanup )
+	pylonData.fxEntsForCleanup.clear()
+}
+
+void function ChargePylon_ClearCurrentFX_Charging( ChargePylonData pylonData )
+{
+	DestroyEntities( pylonData.fxEntsForCleanup_Charging )
+	pylonData.fxEntsForCleanup_Charging.clear()
+}
+
+void function ChargePylon_AddSoundToCleanup( ChargePylonData pylonData, string soundName, vector soundOrg )
+{
+	if ( soundName in pylonData.audioForCleanup )
+		pylonData.audioForCleanup[ soundName ].append( soundOrg )
+	else
+		pylonData.audioForCleanup[ soundName ] <- [ soundOrg ]
+}
+
+void function ChargePylon_ClearAudioByName( ChargePylonData pylonData, string soundName )
+{
+	// Safety against this getting called too early from failure func
+	if ( !( soundName in pylonData.audioForCleanup ) )
+		return
+
+	foreach( vector soundOrg in pylonData.audioForCleanup[ soundName ] )
+		StopSoundAtPosition( soundOrg, soundName )
+
+	delete pylonData.audioForCleanup[ soundName ]
+}
+
+void function ChargePylon_StartRechargeFromEmptyFX( ChargePylonData pylonData )
+{
+	int fxId_blinkLight     = GetParticleSystemIndex( FX_CHARGE_PYLON_CHARGE_FROM_EMPTY )
+
+	foreach( vector org in pylonData.rechargeFXTargets )
+	{
+		entity fx_blinkLight = StartParticleEffectInWorld_ReturnEntity( fxId_blinkLight, org, < 0, 0, 0 > )
+		//SetRealms( fx_blinkLight, pylonData.batteryProp.GetRealms() )
+		pylonData.fxEntsForCleanup.append( fx_blinkLight )
+	}
+}
+
+void function ChargePylon_OnEnterChargedState( ChargePylonData pylonData )
+{
+	pylonData.mover.SetOrigin( pylonData.fullPosition )
+	ChargePylon_ClearCurrentFX( pylonData )
+	ChargePylon_ClearCurrentFX_Charging( pylonData )
+
+	ChargePylon_ClearAudioByName( pylonData, SFX_CHARGE_PYLON_RISE_3P )
+
+	EmitSoundAtPosition( TEAM_UNASSIGNED, pylonData.fullPosition, SFX_CHARGE_PYLON_FULL_3P, pylonData.batteryProp )
+	ChargePylon_AddSoundToCleanup( pylonData, SFX_CHARGE_PYLON_FULL_3P, pylonData.fullPosition )
+
+	if ( IsValid( pylonData.button ) )
+		ChargePylon_SetCodeUsableState( pylonData.button )
+	//else
+	//	DebugDrawSphere( pylonData.fullPosition, 128, COLOR_RED, true, 100.0 )
+}
+
+void function ChargePylon_OnEnterChannelingState( ChargePylonData pylonData )
+{
+	int fxId_rodElec = GetParticleSystemIndex( FX_CHARGE_PYLON_ROD_ACTIVE_ELEC )
+	int fxId_rodElecPassive = GetParticleSystemIndex( FX_CHARGE_PYLON_VERT_POLE )
+	int fxId_preFire = GetParticleSystemIndex( FX_CHARGE_PYLON_PRE_FIRE )
+
+	EmitSoundAtPosition( TEAM_UNASSIGNED, pylonData.fullPosition, SFX_CHARGE_PYLON_ELEC_ARCS_LOOP_3P, pylonData.batteryProp )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, pylonData.fullPosition, SFX_CHARGE_PYLON_ELEC_ARCS_START_3P, pylonData.batteryProp )
+	ChargePylon_AddSoundToCleanup( pylonData, SFX_CHARGE_PYLON_ELEC_ARCS_LOOP_3P, pylonData.fullPosition )
+	ChargePylon_AddSoundToCleanup( pylonData, SFX_CHARGE_PYLON_ELEC_ARCS_START_3P, pylonData.fullPosition )
+
+	ChargePylon_ClearAudioByName( pylonData, SFX_CHARGE_PYLON_FULL_3P )
+
+	entity fx_preFire = StartParticleEffectInWorld_ReturnEntity( fxId_preFire, pylonData.batteryProp.GetCenter(), pylonData.batteryProp.GetAngles() )
+	//SetRealms( fx_preFire, pylonData.batteryProp.GetRealms() )
+	pylonData.fxEntsForCleanup.append( fx_preFire )
+
+
+	foreach( Point pointData in pylonData.giveChargeFXTargets )
+	{
+		entity fx_rodElec = StartParticleEffectInWorld_ReturnEntity( fxId_rodElec, pointData.origin - < 0, 0, 20 >, AnglesCompose( pointData.angles, <-90, 0, 0> ) )
+		//SetRealms( fx_rodElec, pylonData.batteryProp.GetRealms() )
+		pylonData.fxEntsForCleanup.append( fx_rodElec )
+
+		vector offsetOrg = LocalPosToWorldPos_NoEnt( CHARGE_PYLON_VERT_POLE_FX_OFFSET, pointData.origin, pointData.angles )
+		entity fx_rodElecPassive = StartParticleEffectInWorld_ReturnEntity( fxId_rodElecPassive, offsetOrg, < 0, 0, 0 > )
+		//SetRealms( fx_rodElecPassive, pylonData.batteryProp.GetRealms() )
+		pylonData.fxEntsForCleanup_Charging.append( fx_rodElecPassive )
+	}
+}
+
+void function ChargePylon_GiveChargeInstantFX_Top( ChargePylonData pylonData )
+{
+	int fxId_lightGlow = GetParticleSystemIndex( FX_CHARGE_PYLON_GIVE_CHARGE_TOP )
+	entity fx_lightGlow = StartParticleEffectInWorld_ReturnEntity( fxId_lightGlow, pylonData.batteryProp.GetCenter(), pylonData.batteryProp.GetAngles() )
+	//SetRealms( fx_lightGlow, pylonData.batteryProp.GetRealms() )
+	pylonData.fxEntsForCleanup.append( fx_lightGlow )
+	EmitSoundAtPosition( TEAM_UNASSIGNED, pylonData.fullPosition, SFX_CHARGE_PYLON_SEQ_COMPLETE_3P, pylonData.batteryProp )
+}
+
+void function ChargePylon_GiveChargeInstantFX_Bottom( ChargePylonData pylonData )
+{
+	int fxId_lightGlow2 = GetParticleSystemIndex( FX_CHARGE_PYLON_GIVE_CHARGE_BOTTOM )
+	entity fx_lightGlow2 = StartParticleEffectInWorld_ReturnEntity( fxId_lightGlow2, pylonData.batteryProp.GetCenter(), pylonData.batteryProp.GetAngles() )
+	//SetRealms( fx_lightGlow2, pylonData.batteryProp.GetRealms() )
+	pylonData.fxEntsForCleanup.append( fx_lightGlow2 )
+}
+
+void function ChargePylon_BatteryPropFallCompleteFX( ChargePylonData pylonData )
+{
+	entity shake = CreateShake( pylonData.fullPosition, 8, 100, 0.75, 2048 )
+	//SetRealms( shake, pylonData.batteryProp.GetRealms() )
+	shake.kv.spawnflags = 4 // SF_SHAKE_INAIR
+}
+
+ChargePylonData function GetPylonDataFromTrigger( entity trigger )
+{
+	foreach( ChargePylonData data in file.allChargePylons )
+	{
+		if ( data.trigger == trigger )
+			return data
+	}
+
+	Assert( false, "Warning!! Searching for charge pylon trigger with no corresponding data!!" )
+	unreachable
+}
+
+ChargePylonData function GetPylonDataFromButton( entity button )
+{
+	foreach( ChargePylonData data in file.allChargePylons )
+	{
+		if ( data.button == button )
+			return data
+
+	}
+
+	Assert( false, "Warning!! Searching for charge pylon button with no corresponding data!!" )
+	unreachable
+}
+
+void function OnEntityEnterChargeTrigger( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) || !ent.IsPlayer() )
+		return
+
+	if ( ent in file.playersInChargeTriggers )
+	{
+		file.playersInChargeTriggers[ ent ]++
+	}
+	else
+	{
+		file.playersInChargeTriggers[ ent ] <- 1
+	}
+
+	// Player just entered charge trigger
+	if ( file.playersInChargeTriggers[ ent ] == 1 )
+	{
+		ChargePylonData data = GetPylonDataFromTrigger( trigger )
+		data.playersInTrigger.append( ent )
+	}
+}
+
+void function OnEntityLeaveChargeTrigger( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) || !ent.IsPlayer() )
+		return
+
+	if ( !( ent in file.playersInChargeTriggers ) )
+	{
+		Warning( "Warning!!! Player leaving charge trigger, but they were never added!", ent.GetEntIndex() )
+	}
+
+	file.playersInChargeTriggers[ ent ]--
+
+	ChargePylonData data = GetPylonDataFromTrigger( trigger )
+	if ( data.playersInTrigger.contains( ent ) )
+		data.playersInTrigger.fastremovebyvalue( ent )
+	else
+		Assert( false,  "Attempted to remove player from charge trigger that wasn't stored in array!" )
+}
+
+bool function PlayerCanAcceptShieldHealing( entity player )
+{
+	entity ultimateAbility = player.GetOffhandWeapon( OFFHAND_INVENTORY )
+	int curUltAmmo = ultimateAbility.GetWeaponPrimaryClipCount()
+	int maxUltAmmo = ultimateAbility.GetWeaponPrimaryClipCountMax()
+	return ( curUltAmmo < maxUltAmmo ) && !Bleedout_IsBleedingOut( player )
+	//return player.GetShieldHealth() != player.GetShieldHealthMax() && !Bleedout_IsBleedingOut( player )
+}
+#endif
+
+#if SERVER
+	array< ChargePylonData > function GetAllChargePylons()
+	{
+		return file.allChargePylons
+	}
+#endif
+
+#if DEVELOPER && SERVER
+void function ChargePylons_ResetAll()
+{
+	foreach( ChargePylonData pylonData in file.allChargePylons )
+	{
+		ChargePylon_ClearCurrentFX( pylonData )
+		ChargePylon_ClearCurrentFX_Charging( pylonData )
+
+		array<string> soundNames
+		foreach( string audioName, array<vector> soundPositions in pylonData.audioForCleanup )
+		{
+			soundNames.append( audioName )
+		}
+
+		foreach( string soundName in soundNames)
+			ChargePylon_ClearAudioByName( pylonData, soundName )
+
+		ChargePylon_SetState( pylonData, eChargePylonStates.CHARGED )
+	}
+}
 #endif
 
 void function SetButtonNoBusyDelayed( entity button, entity player)

@@ -227,12 +227,12 @@ string function GetDefaultAISetting( entity npc )
 
 	if ( npc.IsTitan() && npc.ai.titanSettings.titanSetFile != "" )
 	{
-		// from titan player set file
+	/*	// from titan player set file
 		string settingsKey = GetAISettingsStringForMode()
 
 		var aiSettings = Dev_GetAISettingByKeyField_Global( npc.ai.titanSettings.titanSetFile, settingsKey )
 		if ( aiSettings != null )
-			return expect string( aiSettings )
+			return expect string( aiSettings )*/
 	}
 
 	return npc.GetClassName()

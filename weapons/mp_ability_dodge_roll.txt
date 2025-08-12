@@ -1,0 +1,116 @@
+#base "_base_ability_tactical.txt"
+
+WeaponData
+{
+	// General
+	"printname"   									"Dodge Roll"
+	"shortprintname"   								"Dodge Roll"
+	"description" 									"Dodge Roll"
+	"longdesc"										"Dodge Roll"
+
+	"menu_icon"										"rui/pilot_loadout/suit/light"
+	"hud_icon" 										"rui/hud/tactical_icons/pilot_tactical_3dash"
+
+	"weapon_type_flags"								"WPT_TACTICAL"
+	"weaponClass" 									"human"
+	"weaponType"									"tactical"
+	"fire_mode"   									"offhand"
+	"offhand_cancelled_by_melee"					"1"
+	"offhand_active_slot"                           "altHand"
+	"offhand_default_inventory_slot"				"1"
+	"offhand_keep_primary_in_hand"					"1"
+	"offhand_holster_primary"						"0"
+    "hide_holstered_sidearm_when_active"			"0"
+
+	"play_offhand_charging_anim"  					"0"
+	"play_offhand_start_end_anim"					"0"
+
+	"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_ability_dodge_roll"
+	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_ability_dodge_roll"
+	
+	// Models
+	"viewmodel"   									"mdl/weapons/empty_handed/ptpov_mirage_holopilot.rmdl"
+	"playermodel" 									"mdl/weapons/empty_handed/w_empty_handed_mirage.rmdl"
+	
+	// "viewmodel"                                     "mdl/weapons/empty_handed/ptpov_wraith_phasewalk.rmdl"
+	// "playermodel"									"mdl/weapons/empty_handed/w_empty_handed_human.rmdl"
+
+	// Menu Stats
+	"stat_damage" 									"90"
+	"stat_range"  									"100"
+	"stat_accuracy"   								"50"
+	"stat_rof"										"40"
+
+	"sound_dryfire"   								"titan_dryfire"
+
+	// Effects
+	"impact_effect_table" 							"exp_rocket_dumbfire"
+	"projectile_trail_effect_0" 					"Rocket_Smoke_SMALL_Titan_2"
+	"projectile_trail_attachment" 					"exhaust"
+	"vortex_absorb_effect"							"wpn_vortex_projectile_rocket_FP"
+	"vortex_absorb_effect_third_person"				"wpn_vortex_projectile_rocket"
+	"vortex_absorb_sound"							"Vortex_Shield_AbsorbRocket"
+	"vortex_absorb_sound_1p_vs_3p"					"Vortex_Shield_AbsorbRocket_1P_VS_3P"
+	"sound_weapon_ready"							"survival_ui_tactical_ready"
+	"projectile_adjust_to_gun_barrel"				"0"
+
+	"player_hands_attachment"						"L_FOREARM"
+	//"player_hands_effect"							"P_ps_gauntlet_loop_l"
+
+	"damage_type" 									"burn"
+	"explosion_inner_radius"  						"50"
+	"explosionradius" 								"120"
+	"impulse_force"   								"1"
+	"bone_merge_world_model"						"1"
+
+
+	"ammo_suck_behavior"							"offhand_weapons"
+
+	"sound_weapon_ready"							"survival_ui_tactical_ready"
+	"ammo_clip_size"   								"300"
+    "ammo_default_total"							"300"
+    "ammo_display"									"count"
+    "ammo_min_to_fire"								"30"
+    "ammo_per_shot"									"30"
+    "ammo_stockpile_max"							"300"
+	"regen_ammo_refill_rate"						"30"
+    "regen_ammo_refill_start_delay"					"0.0"
+    "low_ammo_fraction" 							"0.0"
+
+	// Behavior
+	"fire_rate"   									"2.0"
+	"zoom_time_in"									"0.01"
+	"zoom_time_out"   								"0.01"
+	"zoom_fov"										"50"
+	"reload_time" 									"0"
+	"holster_time"									"0.5"
+	"deploy_time" 									"0.1"  //want to be driven by animation
+	"lower_time"  									"0"
+	"raise_time"  									"0"
+	"vortex_refire_behavior"  						"rocket"
+	"allow_empty_fire"								"0"
+	"reload_enabled"  								"0"
+	"allow_empty_click"   							"1"
+	"empty_reload_only"   							"0"
+	"trigger_snipercam"   							"1"
+	"allow_headshots" 								"0"
+
+	// Regen Ammo
+	"regen_ammo_refill_start_delay"					"0.0"
+
+	// Damage
+	"damage_type" 									"none"
+	"explosion_damage_heavy_armor"					"0"
+	"damage_near_distance"							"0"
+	"damage_far_distance" 							"0"
+	"damage_near_value"   							"0"
+	"damage_far_value"								"0"
+	
+	//Regen Ammo
+	"regen_ammo_refill_rate"						"0.0"
+	"regen_ammo_refill_start_delay"					"0.0"
+
+	Mods
+	{
+	}
+}

@@ -609,7 +609,9 @@ void function Chroma_LootPickupEffects( LootData lootData )
 		case eLootType.BACKPACK:
 		case eLootType.BLANK:
 		case eLootType.RESOURCE:
+		case eLootType.MARVIN_ARM:
 		case eLootType.DATAKNIFE:
+		case eLootType.SHIPKEYCARD:
 
 			effect = CHROMAWAVE_VERTICALONE
 			Assert( lootData.tier <= MAX_LOOT_TIER )

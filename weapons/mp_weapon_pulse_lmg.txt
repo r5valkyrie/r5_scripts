@@ -10,8 +10,6 @@ WeaponData
 	"menu_icon"										"r2_ui/menus/loadout_icons/primary_weapon/primary_coldwar"
 	"hud_icon"										"r2_ui/menus/loadout_icons/primary_weapon/primary_coldwar"
 
-	"ammo_pool_type"								"explosive"
-
 	"weaponClass" 									"human"
 	"body_type"										"stalker"
 	"pickup_hold_prompt"  							"Hold [USE] [WEAPONNAME]"
@@ -470,6 +468,9 @@ WeaponData
 
 	Mods
 	{
+		crate
+		{
+		}
 		slammer
 		{
 		}

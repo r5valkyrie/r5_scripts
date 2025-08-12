@@ -29,6 +29,8 @@ global function PlayBattleChatterLineToSpeakerAndTeam
 global function PlayBattleChatterLineToSpeakerWithDebounceTime
 global function PlayBattleChatterLineToSpeakerAndTeamWithDebounceTime
 
+global function SetCanDoDamageCallout
+
 global function PlayBattleChatterLineToPlayer
 
 global const DELAY_COMMENTARY = 2
@@ -48,6 +50,32 @@ struct
 	bool championWasEliminated
 	
 } file
+
+struct PlayerCommentaryData
+{
+	bool              canDoDamageCallout = true
+	bool              canHearScatteredCallout = true
+	table<int, float> engagedEnemyTeamTimestamps = {}
+	table<int, float> attackedByEnemyTeamTimestamps = {}
+	float             lastCalledReloadTime = 0.0
+	float             timeLastCalledEnemyKill = 0.0
+	float             timeLastCalledEnemyDamaged = 0.0
+	float             teamLastCalledOutThreatTime = 0.0
+	array<string>	  havePlayedChatterWeapons = []
+}
+
+table<entity, PlayerCommentaryData> playerCommentaryMap
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+//
+//	�������+�������+��������+��+   ��+������+     �������+��������+��+   ��+�������+�������+
+//	��+----+��+----++--��+--+���   �����+--��+    ��+----++--��+--+���   �����+----+��+----+
+//	�������+�����+     ���   ���   ���������++    �������+   ���   ���   ��������+  �����+
+//	+----�����+--+     ���   ���   �����+---+     +----���   ���   ���   �����+--+  ��+--+
+//	���������������+   ���   +������++���         ��������   ���   +������++���     ���
+//	+------++------+   +-+    +-----+ +-+         +------+   +-+    +-----+ +-+     +-+
+//
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 void function SurvivalCommentary_Init()
 {
@@ -550,6 +578,24 @@ void function SurvivalCommentary_HostAnnounce( int commentaryBucket, float delay
 		thread PlayDialogueForPlayer( PickCommentaryLineFromBucket( commentaryBucket ), player, null, delay, eDialogueFlags.SURVIVAL_HOST_ALL_SPEAKERS, responseName, TryFindSpeakingPlayerOnTeam( player.GetTeam() ) )
 	}
 }
+
+void function SetCanDoDamageCallout( entity player, bool canDo )
+{
+	if ( ! ( player in playerCommentaryMap ) )
+		return
+	playerCommentaryMap[player].canDoDamageCallout = canDo
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+//
+//	������+ ��+      �����+ ��+   ��+
+//	��+--��+���     ��+--��++��+ ��++
+//	������++���     �������� +����++
+//	��+---+ ���     ��+--���  +��++
+//	���     �������+���  ���   ���
+//	+-+     +------++-+  +-+   +-+
+//
+///////////////////////////////////////////////////////////////////////////////////
 
 void function PlayCommentaryLine_Internal( string dialogueRef, array<entity> players, string dialogueResponseRef )
 {

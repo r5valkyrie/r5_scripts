@@ -10,14 +10,12 @@ void function ClientCommands_Init()
 {
 	AddClientCommandCallback( "noclip", ClientCommand_noclip )
 	AddClientCommandCallback( "infinite_ammo", ClientCommand_infinite_ammo )
+	AddClientCommandCallback( "finite_ammo", ClientCommand_finite_ammo )
 	AddClientCommandCallback( "ToggleThirdPerson", ClientCommand_ToggleThirdPerson )
 	AddClientCommandCallback( "ToggleHUD", ClientCommand_ToggleHUD )
-
+	AddClientCommandCallback( "ShadowForm", ClientCommand_ShadowForm )
 	AddClientCommandCallback( "recharge", ClientCommand_recharge )
-
-	#if DEVELOPER
-	//AddClientCommandCallback( "script", ClientCommand_script )
-	#endif
+	AddClientCommandCallback( "demigod", ClientCommand_demigod )
 }
 
 bool function ClientCommand_noclip( entity player, array<string> args )
@@ -35,6 +33,38 @@ bool function ClientCommand_noclip( entity player, array<string> args )
 		player.SetPhysics( MOVETYPE_WALK )
 	else
 		player.SetPhysics( MOVETYPE_NOCLIP )
+			
+	return true
+}
+
+bool function ClientCommand_demigod( entity player, array<string> args )
+{
+	if ( GetConVarInt( "sv_cheats" ) != 1 )
+		return true
+	
+	if ( IsDemigod(player) )
+		DisableDemigod(player)
+	else
+		EnableDemigod(player)
+			
+	return true
+}
+
+bool function ClientCommand_ShadowForm( entity player, array<string> args )
+{
+	if ( GetConVarInt( "sv_cheats" ) != 1 )
+		return true
+	
+	if ( IsValid( player.GetParent() ) )
+		return false
+				
+	if ( player.IsPhaseShifted() )
+		return false
+
+	if ( !IsPlayerShadowZombie( player ) )
+		DEV_GiveShadowZombieAbilities( player )
+	else
+		RemoveShadowZombieAbilities(player)
 			
 	return true
 }
@@ -82,18 +112,37 @@ bool function ClientCommand_ToggleHUD( entity player, array<string> args )
 // Gives a gun infinite reloads
 bool function ClientCommand_infinite_ammo( entity player, array<string> args )
 {
-
 	if( !IsValid( player ) )
 		return false
 
 	if ( GetConVarInt( "sv_cheats" ) != 1 )
 		return false
 
-	foreach(entity weapon in GetEntArrayByClass_Expensive("weaponx")) {
-		if(weapon.HasMod( "survival_finite_ammo" )) {
+	foreach( entity weapon in GetEntArrayByClass_Expensive("weaponx") ) 
+	{
+		if( weapon.HasMod( "survival_finite_ammo" ) )
 			weapon.RemoveMod( "survival_finite_ammo" )
-		}
+		else
+			weapon.AddMod( "survival_infinite_ammo" )
 	}
+	
+	return true
+}
+
+bool function ClientCommand_finite_ammo( entity player, array<string> args )
+{
+	if( !IsValid( player ) )
+		return false
+
+	if ( GetConVarInt( "sv_cheats" ) != 1 )
+		return false
+		
+	foreach( entity weapon in GetEntArrayByClass_Expensive("weaponx") ) 
+	{
+		if( !weapon.HasMod( "survival_finite_ammo" ) )
+			weapon.AddMod( "survival_finite_ammo" )
+	}
+	
 	return true
 }
 
@@ -117,38 +166,3 @@ bool function ClientCommand_recharge( entity player, array<string> args )
 	
 	return true
 }
-
-#if DEVELOPER
-bool function ClientCommand_script( entity player, array<string> args )
-{
-	if( !IsValid( player ) )
-		return true
-	
-	if( GetConVarInt( "sv_cheats" ) != 1 )
-		return true
-
-	string func = ""
-
-	for ( int i = 0; i < args.len(); i++ )
-	{
-		func = (func + args[i])
-
-		if(args[i] == "'" || ((i+1) < args.len() && args[i+1] == "'")) {
-			// don't add spaces inside strings
-		} else {
-			func = (func + " ")
-		}
-	}
-	func = StringReplace( func, "'", "\"" )
-
-	try {
-		compilestring( "return "+func+"" )()
-	}
-	catch( error ) {
-		print("[ SCRIPT CMD ERROR ]:\n")
-		print("entity: " + player + "\n")
-		print("error:  " + error + "\n\n")
-	}
-	return true
-}
-#endif

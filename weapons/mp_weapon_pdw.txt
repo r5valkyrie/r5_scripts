@@ -73,12 +73,12 @@ WeaponData
 	"low_ammo_sound_name_1"							"car_LowAmmo_Shot1"
 
 	"damage_type" 									"bullet"
-	"damage_near_value"   							"15"
-    "damage_far_value"								"15"
-    "damage_very_far_value"							"15"
-    "damage_near_value_titanarmor"					"15"
-    "damage_far_value_titanarmor" 					"15"
-    "damage_very_far_value_titanarmor" 				"15"
+	"damage_near_value"   							"16"
+    "damage_far_value"								"16"
+    "damage_very_far_value"							"16"
+    "damage_near_value_titanarmor"					"16"
+    "damage_far_value_titanarmor" 					"16"
+    "damage_very_far_value_titanarmor" 				"16"
     "damage_rodeo" 									"110"
 
    	"ammo_clip_size"   								"20"
@@ -86,18 +86,6 @@ WeaponData
     "ammo_stockpile_max"							"36"
     "ammo_no_remove_from_stockpile"					"1"
     "uses_ammo_pool"								"1"                  
-                                
-                                          
-                                                                                                                   
-                                                 
-                                     
-     
-	//"ammo_clip_size"   								"35"
-    //"ammo_default_total"							"210"
-    //"ammo_stockpile_max"							"210"
-    //"ammo_no_remove_from_stockpile"					"0"
-    //"uses_ammo_pool"								"0"
-    "ammo_pool_type"								"highcal"
       
 
     "ammo_min_to_fire"								"1"
@@ -141,7 +129,7 @@ WeaponData
 	// Behavior
 	"fire_rate"   									"21"
 	"burst_fire_count"								"5"
-	"burst_fire_delay"								"0.28"
+	"burst_fire_delay"								"0.260000"
 
 	"reload_time" 									"2.0"
 	"reload_time_late1"								"1.67"
@@ -159,8 +147,8 @@ WeaponData
     "viewkick_spring_hot"                           "pdw_burst_vkp_hot"
 
     "viewkick_spring_heatpershot"					"1.0"
-    "viewkick_spring_cooldown_holdtime"             "0.16"
-    "viewkick_spring_cooldown_fadetime"             "0.12"
+    "viewkick_spring_cooldown_holdtime"             "0.080000"
+    "viewkick_spring_cooldown_fadetime"             "0.050000"
 
     "viewmodel_spring_jolt"                          "pdw_burst_viewmodel_jolt"
     "viewmodel_jolt_scale"                           "1.0"
@@ -176,7 +164,7 @@ WeaponData
 	"viewkick_yaw_base"   							"1.0"
 	"viewkick_yaw_random" 							"1.0"
 	"viewkick_yaw_random_innerexclude"              "0.05"
-	"viewkick_yaw_softScale"  						"5.4"
+	"viewkick_yaw_softScale"  						"4.200000"
 	"viewkick_yaw_hardScale"  						"0.4"
 
 	"viewkick_roll_base"  							"0.9"
@@ -240,26 +228,74 @@ WeaponData
 	"viewmodel_ads_rui_bottomleft_attachment"	"RUI_BL_CROSSHAIR_PDW"
 	"viewmodel_ads_centerpoint_attachment"      "ADS_CENTER_SIGHT_PDW"
 
+
+	"damage_shield_scale"	"1"
+	"damage_headshot_scale"	"1.250000"
+	"damage_leg_scale"	"0.800000"
+	"critical_hit"	"1"
+	"critical_hit_damage_scale"	"2"
+	"titanarmor_critical_hit_required"	"1"
+	"damage_near_distance"	"900"
+	"damage_far_distance"	"1500"
+	"damage_very_far_distance"	"3500"
+	"headshot_distance"	"1500"
 	Mods
 	{
-		barrel_synchronizer
+		"laser_sight_l1"
 		{
-			"ammo_clip_size"   								"10"
-			
-			"damage_near_value"   							"30"
-			"damage_far_value"								"30"
-			"damage_very_far_value"							"30"
-			"damage_near_value_titanarmor"					"30"
-			"damage_far_value_titanarmor" 					"30"
-			"damage_very_far_value_titanarmor" 				"30"
-			
-			"fire_rate"   									"8"
-			
-			"fire_sound_1_player_1p"						"weapon_prowler_singleshot_1p"
-			"fire_sound_1_player_3p"						"weapon_prowler_singleshot_3p"
-			
-			"tracer_effect"   								"P_wpn_tracer_pulse"
-			"impact_effect_table" 							"pulse_bullet"
+			"spread_stand_hip" "*0.80"
+			"spread_stand_hip_run" "*0.80"
+			"spread_stand_hip_sprint" "*0.80"
+			"spread_crouch_hip" "*0.80"
+			"spread_air_hip" "*0.80"
+			"spread_moving_increase_rate" "*0.85"
+			"spread_moving_decay_rate" "*1.15"
+			"spread_decay_rate" "*1.20"
+			"spread_decay_delay" "*0.80"
+			"spread_max_kick_stand_hip" "*0.80"
+			"spread_max_kick_crouch_hip" "*0.80"
+			"spread_max_kick_air_hip" "*0.80"
+			"spread_kick_on_fire_stand_hip" "*0.80"
+			"spread_kick_on_fire_crouch_hip" "*0.80"
+			"spread_kick_on_fire_air_hip" "*0.80"
+
+		}
+		"laser_sight_l2"
+		{
+			"spread_stand_hip" "*0.70"
+			"spread_stand_hip_run" "*0.70"
+			"spread_stand_hip_sprint" "*0.70"
+			"spread_crouch_hip" "*0.70"
+			"spread_air_hip" "*0.70"
+			"spread_moving_increase_rate" "*0.80"
+			"spread_moving_decay_rate" "*1.20"
+			"spread_decay_rate" "*1.30"
+			"spread_decay_delay" "*0.70"
+			"spread_max_kick_stand_hip" "*0.70"
+			"spread_max_kick_crouch_hip" "*0.70"
+			"spread_max_kick_air_hip" "*0.70"
+			"spread_kick_on_fire_stand_hip" "*0.70"
+			"spread_kick_on_fire_crouch_hip" "*0.70"
+			"spread_kick_on_fire_air_hip" "*0.70"
+
+		}
+		"laser_sight_l3"
+		{
+			"spread_stand_hip" "*0.60"
+			"spread_stand_hip_run" "*0.60"
+			"spread_stand_hip_sprint" "*0.60"
+			"spread_crouch_hip" "*0.60"
+			"spread_air_hip" "*0.60"
+			"spread_moving_increase_rate" "*0.75"
+			"spread_moving_decay_rate" "*1.25"
+			"spread_decay_rate" "*1.40"
+			"spread_decay_delay" "*0.60"
+			"spread_max_kick_stand_hip" "*0.60"
+			"spread_max_kick_crouch_hip" "*0.60"
+			"spread_max_kick_air_hip" "*0.60"
+			"spread_kick_on_fire_stand_hip" "*0.60"
+			"spread_kick_on_fire_crouch_hip" "*0.60"
+			"spread_kick_on_fire_air_hip" "*0.60"
 		}
 		
         hopup_selectfire
@@ -405,7 +441,15 @@ WeaponData
                                                                                           
          
       
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 	"ui1_enable"		"1"
 	"ui1_draw_cloaked"	"1"
 	UiData1

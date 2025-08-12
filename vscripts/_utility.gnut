@@ -19,6 +19,8 @@ global const C_PLAYFX_LOOP		= 2
 global const MUTEALLFADEIN 		= 2
 global const GAMEMODE_SP 		= "solo"
 
+global const string SIGNAL_TELEPORTED = "Teleported"
+
 global struct ZipLine
 {
 	entity start
@@ -54,6 +56,8 @@ struct
 	table< entity, ItemFlavor >    playerChargeValidation
 
 	bool isSkyboxView = false
+	
+	bool ignoreKillPlayersUnderMap = false
 } file
 
 enum eChargeStorageType
@@ -78,7 +82,8 @@ void function Utility_Init()
 	RegisterSignal( "PetTitanUpdated" )
 	RegisterSignal( "WaitDeadTimeOut" )
 	RegisterSignal( "InventoryChanged" )
-
+	RegisterSignal( SIGNAL_TELEPORTED )
+	
 	//AddClientCommandCallback( "OnDevnetBugScreenshot", ClientCommand_OnDevnetBugScreenshot )
 	#if DEVELOPER
 		FlagInit( "AimAssistSwitchTest_Enabled" )
@@ -195,10 +200,10 @@ void function PrintPlaylists()
 
 entity function CreateEntity( string name )
 {
-//	if ( name == "npc_titan" )
-//	{
-//		DumpStack(3)
-//	}
+	if ( name == "npc_titan" )
+	{
+		DumpStack(3)
+	}
 //	if ( name == "info_particle_system" )
 //	{
 //		printl( " " )
@@ -1081,20 +1086,97 @@ enum eAttach
 	ThirdPersonView
 }
 
-
 void function LoadDiamond()
 {
-    printl( "----------------------------" )
-    printl( " " )
-    printl( "____ _    ____ _ _ _ ____ ___ ____ ___ ____")
-    printl( "|___ |    |  | | | | [__   |  |__|  |  |___")
-    printl( "|    |___ |__| |_|_| ___]  |  |  |  |  |___")
-    printl( " " )
-    printl( "Flowstate Scripts " + FLOWSTATE_VERSION + " - Maintained by @CafeFPS, @ttvmkos and collaborators." )
-    printl( "r5sdk v2.5 developed by @AmosModz and collaborators." )
-    printl( " " )
-    printl( "----------------------------" )
-    printl( " " )
+	printl( " " )
+	printl( "----------------------------" )
+	printl( " " )
+
+	// Draw a diamond of a random size and phase (of the moon) so it is easy to separate sections of logs.
+	int random_spread = RandomIntRange( 4, 7 )
+	float random_fullness = RandomFloat( 2.0 )
+	bool functionref( int, int ) compare_func
+	string msg
+
+	if ( RandomFloat( 1.0 ) > 0.5 )
+	{
+		compare_func = bool function( int a, int b )
+		{
+			return a <= b
+		}
+	}
+	else
+	{
+		compare_func = bool function( int a, int b )
+		{
+			return a >= b
+		}
+	}
+
+	for ( int i = 0; i <= random_spread - 2; i++ )
+	{
+		msg = ""
+
+		for ( int p = 0; p <= random_spread - i; p++ )
+		{
+			msg = msg + " "
+		}
+
+		for ( int p = 0; p <= i * 2; p++ )
+		{
+			if ( p == i * 2 || p == 0 )
+			{
+				msg = msg + "*"
+			}
+			else
+			{
+				int an_int = int( i * random_fullness )
+
+				if ( compare_func( p, an_int ) )
+					msg = msg + "*"
+				else
+					msg = msg + " "
+			}
+		}
+
+			printl( msg )
+		}
+
+		for ( int i = random_spread - 1; i >= 0; i-- )
+		{
+			msg = ""
+
+			for ( int p = 0; p <= random_spread - i; p++ )
+			{
+				msg = msg + " "
+			}
+
+
+			for ( int p = 0; p <= i * 2; p++ )
+			{
+				if ( p == i * 2 || p == 0 )
+				{
+					msg = msg + "*"
+				}
+				else
+				{
+					if ( compare_func( p, int( i * random_fullness ) ) )
+					{
+						msg = msg + "*"
+					}
+					else
+					{
+						msg = msg + " "
+					}
+				}
+			}
+
+			printl( msg )
+		}
+
+	printl( " " )
+	printl( "----------------------------" )
+	printl( " " )
 }
 
 // this will clear all dropped weapons in the map
@@ -1483,6 +1565,21 @@ entity function CreatePhysExplosion( vector org, float radius, int magnitude = 1
 	return env_physexplosion
 }
 
+entity function CreateThreatIndicator( vector origin, int threadIndicatorID = eThreatIndicatorID.GRENADE_INDICATOR_GENERIC, float radius = 128.0, vector visualOffset = <0,0,0>, int threatIndicatorVisibilityType = eThreatIndicatorVisibility.INDICATOR_SHOW_TO_ALL , entity owner = null )
+{
+	entity wp = CreateWaypoint_Custom( WAYPOINTTYPE_THREAT_INDICATOR )
+	wp.SetOrigin( origin )
+	wp.SetWaypointInt( 0, threadIndicatorID )
+	wp.SetWaypointFloat( 0, radius )
+	wp.SetWaypointVector( 0, visualOffset )
+	wp.SetWaypointEntity( 0, owner )
+	wp.SetWaypointInt( 2, threatIndicatorVisibilityType )
+	if ( IsValid( owner ) )
+		wp.SetWaypointInt( 1, owner.GetTeam() )
+
+	return wp
+}
+
 //-----------------------------------------------------------
 // CreatePropDynamic( model ) - create a generic prop_dynamic with default properties
 //------------------------------------------------------------
@@ -1622,6 +1719,25 @@ entity function CreatePropScript_NoDispatchSpawn( asset model, vector ornull ori
 	return prop_script
 }
 
+bool function TeleportPlayerNoInterp( entity player, vector pos, vector angles = <0,0,0> )
+{
+    if ( !IsValid( player ) || !player.IsPlayer() )
+        return false
+
+    bool success = PutPlayerInSafeSpot( player, null, null, pos, pos )
+
+    // if ( success )
+    // {
+        player.SetVelocity( <0, 0, 0> )
+        player.SetAbsOrigin( pos )
+        player.SetAngles( angles )
+        player.SnapEyeAngles( angles )
+        player.SnapFeetToEyes()
+    // }
+
+    return success
+}
+
 //-----------------------------------------------------------
 // CreatePropPhysics( model ) - create a generic prop_physics with default properties
 //------------------------------------------------------------
@@ -1642,6 +1758,136 @@ entity function CreatePropPhysics( asset model, vector origin, vector angles, in
 	DispatchSpawn( prop_physics )
 
 	return prop_physics
+}
+
+//-----------------------------------------------------------
+// CreateTriggerCylinder( origin, radius, height ) - create a server only trigger_cylinder that can be triggerd by players only
+//------------------------------------------------------------
+entity function CreateTriggerCylinder( vector origin, int radius, int aboveHeight, int belowHeight )
+{
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )
+	trigger.SetCylinderRadius( radius )
+	trigger.SetAboveHeight( aboveHeight )
+	trigger.SetBelowHeight( belowHeight )
+	trigger.kv.triggerFilterNpc = "none"
+	trigger.kv.triggerFilterPlayer = "all"
+	trigger.kv.triggerFilterNonCharacter = 0
+	trigger.SetOrigin( origin )
+	DispatchSpawn( trigger )
+
+	return trigger
+}
+
+//-----------------------------------------------------------
+// CreateTriggerCylinderNetworked( origin, radius, height ) - create a networked trigger_cylinder. Works like a normal trigger.
+//------------------------------------------------------------
+entity function CreateTriggerCylinderNetworked( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
+{
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_cylinder_networked" )
+	trigger.SetCylinderRadius( radius )
+	trigger.SetAboveHeight( aboveHeight )
+	trigger.SetBelowHeight( belowHeight )
+	trigger.kv.triggerFilterNpc = "none"
+	trigger.kv.triggerFilterPlayer = "all"
+	trigger.kv.triggerFilterNonCharacter = 0
+	trigger.SetOrigin( origin )
+	trigger.SetAngles( angles )
+	DispatchSpawn( trigger )
+
+	return trigger
+}
+
+//-----------------------------------------------------------
+// CreateTriggerCylinderNetworked_OutOfBounds( origin, radius, height ) - create a networked cylinder that works as an out of bounds volume.
+//------------------------------------------------------------
+entity function CreateTriggerCylinderNetworked_OutOfBounds( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
+{
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_out_of_bounds" )
+	trigger.SetPhaseShiftCanTouch( true )
+	trigger.SetCylinderRadius( radius )
+	trigger.SetAboveHeight( aboveHeight )
+	trigger.SetBelowHeight( belowHeight )
+	trigger.kv.triggerFilterNpc = "none"
+	trigger.kv.triggerFilterPlayer = "all"
+	trigger.kv.triggerFilterNonCharacter = 0
+	trigger.SetOrigin( origin )
+	trigger.SetAngles( angles )
+	DispatchSpawn( trigger )
+
+	return trigger
+}
+
+//-----------------------------------------------------------
+// CreateTriggerCylinderNetworked_OutOfBounds( origin, radius, height ) - create a networked cylinder that works as an out of bounds volume.
+//------------------------------------------------------------
+entity function CreateTriggerCylinderNetworked_NoObjectPlacement( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
+{
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_no_op" )
+	trigger.SetCylinderRadius( radius )
+	trigger.SetAboveHeight( aboveHeight )
+	trigger.SetBelowHeight( belowHeight )
+	trigger.kv.triggerFilterNpc = "none"
+	trigger.kv.triggerFilterPlayer = "all"
+	trigger.kv.triggerFilterNonCharacter = 0
+	trigger.SetOrigin( origin )
+	trigger.SetAngles( angles )
+	DispatchSpawn( trigger )
+
+	return trigger
+}
+
+//-----------------------------------------------------------
+// CreateTriggerCylinderNetworked_OutOfBounds( origin, radius, height ) - create a networked cylinder that works as an out of bounds volume.
+//------------------------------------------------------------
+entity function CreateTriggerCylinderNetworked_NoObjectPlacementSpecial( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
+{
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_no_ops" )
+	trigger.SetCylinderRadius( radius )
+	trigger.SetAboveHeight( aboveHeight )
+	trigger.SetBelowHeight( belowHeight )
+	trigger.kv.triggerFilterNpc = "none"
+	trigger.kv.triggerFilterPlayer = "all"
+	trigger.kv.triggerFilterNonCharacter = 0
+	trigger.SetOrigin( origin )
+	trigger.SetAngles( angles )
+	DispatchSpawn( trigger )
+
+	return trigger
+}
+
+entity function CreateTriggerCylinderNetworked_NoRadiusNoObjectPlacementSpecial( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
+{
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_no_ops" )
+	trigger.SetRadius( radius )
+	trigger.SetAboveHeight( aboveHeight )
+	trigger.SetBelowHeight( belowHeight )
+	trigger.kv.triggerFilterNpc = "none"
+	trigger.kv.triggerFilterPlayer = "all"
+	trigger.kv.triggerFilterNonCharacter = 0
+	trigger.SetOrigin( origin )
+	trigger.SetAngles( angles )
+	DispatchSpawn( trigger )
+
+	return trigger
+}
+
+//-----------------------------------------------------------
+// CreateTriggerCylinderNetworked_OutOfBounds( origin, radius, height ) - create a networked cylinder blocks both object placement and object placement special
+//------------------------------------------------------------
+entity function CreateTriggerCylinderNetworked_BlockAllObjectPlacement( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
+{
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_block_all_op" )
+	trigger.SetCylinderRadius( radius )
+	trigger.SetAboveHeight( aboveHeight )
+	trigger.SetBelowHeight( belowHeight )
+	trigger.kv.triggerFilterNpc = "none"
+	trigger.kv.triggerFilterPlayer = "all"
+	trigger.kv.triggerFilterNonCharacter = 0
+	trigger.SetOrigin( origin )
+	trigger.SetAngles( angles )
+	DispatchSpawn( trigger )
+
+	return trigger
 }
 
 // Spawn loot on an entity and return an array of the loot that got spawned
@@ -3200,6 +3446,184 @@ bool function ShouldResetRoundBasedTeamScore()
 {
 	return IsRoundBased() && svGlobal.roundBasedTeamScore_RoundReset
 }
+
+/*TitanLoadoutDef function GetTitanLoadoutForPlayer( entity player )
+{
+	return GetTitanLoadoutForCurrentMap()
+}
+
+TitanLoadoutDef function GetTitanLoadoutForCurrentMap()
+{
+	string mapName = GetMapName()
+
+	TitanLoadoutDef result
+	result = GetAllowedTitanLoadouts().getrandom()
+	//result.setFile = "titan_buddy"
+
+	TitanLevelLoadoutDefaults levelDef = GetTitanLevelLoadoutDefaultsForMapname( mapName )
+	Assert( GetTitanLoadoutForPrimary( levelDef.primaryWeaponName ) != null, "Level loadout tried to specify '" + levelDef.primaryWeaponName + "' for BT, but that weapon is not in titan_properties.csv" )
+
+	int bitIndex = GetTitanLoadoutIndex( levelDef.primaryWeaponName )
+
+	// fall back to xo16 if not unlocked yet
+	if ( !IsBTLoadoutUnlocked( bitIndex ) )
+		levelDef.primaryWeaponName = "mp_titanweapon_xo16_shorty"
+
+	result = expect TitanLoadoutDef( GetTitanLoadoutForPrimary( levelDef.primaryWeaponName ) )
+	//result.setFile = levelDef.setFile
+	result.name = mapName
+	result.titanExecution = levelDef.titanExecution
+
+	PopulateTitanLoadoutFromLevelTrans( result )
+	return result
+}
+
+array<TitanLoadoutDef> function GetAllowedTitanLoadouts()
+{
+	array<TitanLoadoutDef> loadouts
+
+	var dataTable = GetDataTable( $"datatable/titan_properties.rpak" )
+
+	int numRows = GetDatatableRowCount( dataTable )
+
+	string searchString = GetAllowedTitanAISettingsSearchString()
+	int column = GetDataTableColumnByName( dataTable, searchString )
+
+	for ( int r = 0; r < numRows; r++ )
+	{
+		if ( !GetDataTableBool( dataTable, r, column ) )
+			continue
+
+		loadouts.append( GetTitanLoadoutForRow( dataTable, r ) )
+	}
+
+	return loadouts
+}
+
+struct TitanLevelLoadoutDefaults
+{
+	string setFile = "titan_buddy"
+	string primaryWeaponName
+	array<string> unlockedWeaponNames
+	string titanExecution
+}
+
+TitanLevelLoadoutDefaults function GetTitanLevelLoadoutDefaultsForMapname( string mapName )
+{
+	TitanLevelLoadoutDefaults result
+
+	// All loadouts:
+	result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty", "mp_titanweapon_sticky_40mm", "mp_titanweapon_meteor", "mp_titanweapon_leadwall", "mp_titanweapon_rocketeer_rocketstream", "mp_titanweapon_particle_accelerator", "mp_titanweapon_sniper", "mp_titanweapon_predator_cannon" ]
+
+	switch ( mapName )
+	{
+		case "sp_training":
+		case "sp_crashsite": // Wilds
+		case "sp_wilds_anim_test":
+			result.primaryWeaponName		= "mp_titanweapon_xo16_shorty"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty" ]
+			break
+
+		case "sp_sewers1": // Reclamation
+			result.primaryWeaponName		= "mp_titanweapon_xo16_shorty"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty" ]
+			result.titanExecution           = "execution_bt_kickshoot"
+			break
+
+		case "sp_boomtown_start":
+			result.primaryWeaponName		= "mp_titanweapon_sticky_40mm"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty", "mp_titanweapon_sticky_40mm", ]
+			break
+
+		case "sp_boomtown":
+			result.primaryWeaponName		= "mp_titanweapon_sticky_40mm"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty", "mp_titanweapon_sticky_40mm", "mp_titanweapon_meteor", "mp_titanweapon_rocketeer_rocketstream" ]
+			break
+
+		case "sp_boomtown_end":
+			result.primaryWeaponName		= "mp_titanweapon_sticky_40mm"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty", "mp_titanweapon_sticky_40mm", "mp_titanweapon_meteor", "mp_titanweapon_rocketeer_rocketstream" ]
+			result.titanExecution           = "execution_bt_pilotrip"
+			break
+
+		case "sp_hub_timeshift":
+		case "sp_timeshift_spoke02":
+			result.primaryWeaponName		= "mp_titanweapon_sticky_40mm"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty", "mp_titanweapon_sticky_40mm", "mp_titanweapon_meteor", "mp_titanweapon_rocketeer_rocketstream" ]
+			break
+
+		case "sp_beacon":
+		case "sp_beacon_spoke0":
+		case "sp_beacon_spoke2":
+			result.primaryWeaponName		= "mp_titanweapon_particle_accelerator"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty", "mp_titanweapon_sticky_40mm", "mp_titanweapon_meteor", "mp_titanweapon_rocketeer_rocketstream", "mp_titanweapon_particle_accelerator" ]
+			result.titanExecution           = "execution_bt_flip"
+			break
+
+		case "sp_tday":
+			result.primaryWeaponName 		= "mp_titanweapon_xo16_shorty"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty", "mp_titanweapon_sticky_40mm", "mp_titanweapon_meteor", "mp_titanweapon_leadwall", "mp_titanweapon_rocketeer_rocketstream", "mp_titanweapon_particle_accelerator" ]
+			break
+
+		case "sp_s2s":
+			result.primaryWeaponName 		= "mp_titanweapon_sticky_40mm"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty", "mp_titanweapon_sticky_40mm", "mp_titanweapon_meteor", "mp_titanweapon_leadwall", "mp_titanweapon_rocketeer_rocketstream", "mp_titanweapon_particle_accelerator", "mp_titanweapon_sniper" ]
+			break
+
+		case "sp_skyway_v1":
+			result.setFile 					= "titan_buddy_spare"
+			result.primaryWeaponName		= "mp_titanweapon_predator_cannon"
+			result.unlockedWeaponNames		= ["mp_titanweapon_xo16_shorty", "mp_titanweapon_sticky_40mm", "mp_titanweapon_meteor", "mp_titanweapon_leadwall", "mp_titanweapon_rocketeer_rocketstream", "mp_titanweapon_particle_accelerator", "mp_titanweapon_sniper", "mp_titanweapon_predator_cannon" ]
+			result.titanExecution           = "execution_bt_kickshoot"
+			break
+
+		default:
+			result.primaryWeaponName		= "mp_titanweapon_rocketeer_rocketstream"
+			result.titanExecution           = "execution_bt_flip"
+			// All loadouts unlocked.
+	}
+
+	return result
+}
+
+int function GetTitanLoadoutIndex( string weaponName )
+{
+	Assert( weaponName in file.titanWeaponToIndex, weaponName + " is not a legal titan weapon loadout" )
+	return file.titanWeaponToIndex[ weaponName ]
+}
+
+TitanLoadoutDef ornull function GetTitanLoadoutForPrimary( string findPrimary )
+{
+	return GetTitanLoadoutForColumn( "primary", findPrimary )
+}
+
+void function PopulateTitanLoadoutFromLevelTrans( TitanLoadoutDef titanLoadout )
+{
+	LevelTransitionStruct ornull trans = GetLevelTransitionStruct()
+
+	if ( trans == null )
+		return
+
+	expect LevelTransitionStruct( trans )
+
+	if ( trans.titan_mainWeapon >= 0 )
+	{
+		string primary = SPWeapons_GetWeaponFromID( trans.titan_mainWeapon )
+		TitanLoadoutDef ornull newLoadout = GetTitanLoadoutForPrimary( primary )
+
+		if ( newLoadout == null )
+			return
+
+		expect TitanLoadoutDef( newLoadout )
+		titanLoadout.primary = newLoadout.primary
+		titanLoadout.ordnance = newLoadout.ordnance
+		titanLoadout.special = newLoadout.special
+		titanLoadout.antirodeo = newLoadout.antirodeo
+		titanLoadout.coreAbility = newLoadout.coreAbility
+		titanLoadout.melee = newLoadout.melee
+	}
+}*/
+
 array<entity> function CreateZipline( vector startPos, vector endPos, bool disableResting = false, float detatchDistanceOverride = -1, bool skin = false )
 {
 	vector delta     = startPos - endPos
@@ -3911,6 +4335,14 @@ void function HolsterAndDisableWeapons( entity player )
 }
 
 
+void function HolsterAndDisableWeapons_Raw( entity player )
+//(mk): This ignores the stack system for multiple conditions, performing the action immediately.
+{
+	player.HolsterWeapon()
+	player.Server_TurnOffhandWeaponsDisabledOn()
+}
+
+
 void function HolsterViewModelAndDisableWeapons( entity player, bool show3pTossWeapons = false )
 //Note that this skips the first person holster animation, and it appears to 3p observers you still have a gun out
 //However, toss weapons will be holstered on hand. Usually, we do not want to show toss weapons to 3p observers
@@ -3943,6 +4375,12 @@ void function DeployAndEnableWeapons( entity player )
 	}
 }
 
+void function DeployAndEnableWeapons_Raw( entity player )
+//(mk): This ignores the stack system for multiple conditions, performing the action immediately.
+{
+	player.DeployWeapon()
+	player.Server_TurnOffhandWeaponsDisabledOff()
+}
 
 void function DeployAndEnableWeaponsWithSlowDeploy( entity player, float time )
 {
@@ -4142,7 +4580,11 @@ void function TeleportPlayerToEnt( entity player, entity org )
 
 float function ShieldModifyDamage( entity ent, var damageInfo )
 {
-	entity victim = ent
+	entity victim
+	if ( ent.IsTitan() )
+		victim = ent.GetTitanSoul()
+	else
+		victim = ent
 
 	int shieldHealth = victim.GetShieldHealth()
 
@@ -4602,6 +5044,11 @@ void function KillPlayersUnderMap_Thread( float kill_depth )
 
 	while ( true )
 	{
+		wait 1.0
+		
+		if( file.ignoreKillPlayersUnderMap )
+			continue
+		
 		array<entity> players = GetPlayerArray_AliveConnected()
 		foreach ( entity player in players )
 		{
@@ -4622,15 +5069,18 @@ void function KillPlayersUnderMap_Thread( float kill_depth )
 				}
 			}
 		}
-		wait 1.0
 	}
 }
 
-bool function ShouldKillPlayersUnderMap ()
+bool function ShouldKillPlayersUnderMap()
 {
-	return GetCurrentPlaylistVarBool("kill_players_under_map",true)
+	return GetCurrentPlaylistVarBool("kill_players_under_map",true) // || file.ignoreKillPlayersUnderMap
 }
 
+void function SetIgnoreKillPlayersUnderMap( bool set = false )
+{
+	file.ignoreKillPlayersUnderMap = set
+}
 //////////////////////////////////////////////////////////
 void function TurretChangeTeam( entity turret, int team )
 {
@@ -4842,6 +5292,18 @@ array<entity> function GetParentLinkedEntsByEditorClass( entity ent, string edit
 	return returnEnts
 }
 
+
+void function PilotAbilitySelectMenu_SetEnabled( bool isEnabled )
+{
+	int currState = GetGlobalNetInt( "PilotAbilitySelectMenu_Enabled" )
+	if ( isEnabled )
+		currState++
+	else
+		currState--
+
+	SetGlobalNetInt( "PilotAbilitySelectMenu_Enabled", currState )
+}
+
 void function DisableMantle( entity player )
 {
 	player.DisableMantle()
@@ -4860,9 +5322,21 @@ void function DelayedDestroy( entity mover, float lifetime )
 		mover.Destroy()
 }
 
-void function SwapToLastEquippedPrimary( entity player )
+bool function SwapToLastEquippedPrimary( entity player )
 {
-	player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, SURVIVAL_GetLastActiveWeapon( player ).GetClassName() )
+	entity weapon = SURVIVAL_GetLastActiveWeapon( player )
+	
+	if( !IsValid( weapon ) )
+		return false
+	
+	string weaponString = weapon.GetClassName()
+	
+	if( weaponString == "" )
+		return false
+		
+	player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponString )
+		
+	return true
 }
 
 entity function CreateTraceBlockerVolume( vector fxOrigin, float radius, bool b0, int contents, int team, string scriptname )
@@ -4880,6 +5354,31 @@ entity function CreateTraceBlockerVolume( vector fxOrigin, float radius, bool b0
 	SetTeam( traceBlockerVol, team )
 
 	return traceBlockerVol
+}
+
+entity function CreateTraceBlockerVolume_CustomBox( vector origin, vector angles, vector mins, vector maxes, int contents, int team, string scriptName, entity ownerEnt = null )
+{
+	entity tbl = CreateEntity( "trace_volume" )
+	//tbl.kv.targetname = UniqueString( "smokescreen_traceblocker_vol" )
+	//tbl.kv.origin = origin
+	//tbl.kv.angles = angles
+	tbl.SetOrigin( origin )
+	tbl.SetAngles( angles )
+	tbl.kv.contents = contents    // CONTENTS_BLOCKLOS
+	DispatchSpawn( tbl )
+
+	tbl.SetBox( mins, maxes )
+
+	SetTeam( tbl, team )
+	tbl.SetScriptName( scriptName )
+
+	if ( IsValid( ownerEnt ) )
+	{
+		tbl.RemoveFromAllRealms()
+		tbl.AddToOtherEntitysRealms( ownerEnt )
+	}
+
+	return tbl
 }
 
 void function SetOutOfBoundsTimeLimit( float maxtime )
@@ -4946,9 +5445,11 @@ bool function IsSingleplayer()
 
 void function LockWeaponsAndMelee( entity player )
 {
-	printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
-	printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
-
+	#if DEVELOPER
+		// printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
+		// printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
+	#endif 
+	
 	if ( player.p.weaponsAndMeleeLockedCount == 0 )
 	{
 		player.LockWeaponChange()
@@ -4957,11 +5458,31 @@ void function LockWeaponsAndMelee( entity player )
 	player.p.weaponsAndMeleeLockedCount++
 }
 
+void function UnlockWeaponsAndMelee_Retail( entity player, string debug_source )
+{
+	#if DEVELOPER
+		// printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
+		// printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
+	#endif 
+	//player.p.weaponsAndMeleeLockedSources[ debug_source ] -= 1
+	//Assert( player.p.weaponsAndMeleeLockedSources[ debug_source ] >= 0, debug_source + " is calling UnlockWeaponsAndMelee too many times" )
+
+	player.p.weaponsAndMeleeLockedCount--
+	Assert( player.p.weaponsAndMeleeLockedCount >= 0, "< 0 can cause bugs" )
+	if ( player.p.weaponsAndMeleeLockedCount == 0 )
+	{
+		player.UnlockWeaponChange()
+		player.EnableWeaponTypes( WPT_MELEE )
+	}
+}
+
 void function UnlockWeaponsAndMelee( entity player )
 {
-	printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
-	printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
-
+	#if DEVELOPER
+		// printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
+		// printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
+	#endif 
+	
 	player.p.weaponsAndMeleeLockedCount--
 	Assert( player.p.weaponsAndMeleeLockedCount >= 0, "< 0 can cause bugs" )
 	if ( player.p.weaponsAndMeleeLockedCount == 0 )
@@ -4972,7 +5493,7 @@ void function UnlockWeaponsAndMelee( entity player )
 }
 
 //Home made version of player.DisableWeaponTypes( WPT_MELEE ) code function that is used in s21
-//By Cafe
+
 void function DisableMeleeWeapons( entity player )
 {
 	player.SetMeleeDisabled()
@@ -4993,6 +5514,47 @@ void function EnableMeleeWeapons( entity player )
 
 	if( IsValid( player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 ) ) )
 		player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 ).AllowUse( true )
+}
+
+int function GiveHealthAndShieldToPlayer( entity player, int amountPossible )
+{
+	if ( !IsAlive( player ) )
+		return 0
+
+	int remain = amountPossible
+	int gave   = 0
+
+	// Health:
+	if ( remain > 0 )
+	{
+		int stockOld  = player.GetHealth()
+		int stockMax  = player.GetMaxHealth()
+		int stockNeed = (stockMax - stockOld)
+		if ( stockNeed > 0 )
+		{
+			int toGive = minint( remain, stockNeed )
+			player.SetHealth( stockOld + toGive )
+			remain -= toGive
+			gave += toGive
+		}
+	}
+
+	// Shield:
+	if ( remain > 0 )
+	{
+		int stockOld  = player.GetShieldHealth()
+		int stockMax  = player.GetShieldHealthMax()
+		int stockNeed = (stockMax - stockOld)
+		if ( stockNeed > 0 )
+		{
+			int toGive = minint( remain, stockNeed )
+			player.SetShieldHealth( stockOld + toGive )
+			remain -= toGive
+			gave += toGive
+		}
+	}
+
+	return gave
 }
 
 void function DisableAllWeaponsExceptHandsOrIncap( entity player )
@@ -5227,6 +5789,117 @@ entity function CreatePropDoor( asset model, vector pos, vector ang )
 	return CreatePropDynamic_NoDispatchSpawn( model, pos, ang )
 }
 
+void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
+{
+	if ( IsValid( door ) )
+	{
+		int doorType = GetDoorType( door )
+
+		//Large sliding doors are classified as "PLAIN".  For those we want to move the pushed entity out of the way.
+		//Any other door type should be a swing door, in which case we won't bother moving and just let us ignore the crush kill as part of setting up SetDoOnBeingCrushedEntityCallback() and AddCallback_OnEntityBeingCrushed()
+		switch ( GetDoorType( door ) )
+		{
+			case eDoorType.PLAIN:
+				#if DEV
+				if ( AvoidCrushedByPlainDoorDebug )
+				{
+					DebugDrawMark( door.GetOrigin(), 15, COLOR_RED, true, 15.0 )
+					DebugDrawArrow( door.GetOrigin(), (door.GetOrigin() + (door.GetForwardVector() * 30)), 10, COLOR_BLUE, true, 15.0 )
+				}
+				#endif
+
+				vector doorToPushed = Normalize( pushed.GetOrigin() - door.GetOrigin() )
+				float doorToPushedDotDoorForward = DotProduct( door.GetForwardVector(), doorToPushed )
+
+				#if DEV
+				if ( AvoidCrushedByPlainDoorDebug )
+				{
+					printt( FUNC_NAME() + " entToDoorToForwardDot: " + doorToPushedDotDoorForward )
+				}
+				#endif
+
+				vector pushDir = ( doorToPushedDotDoorForward > 0.0 ) ? door.GetForwardVector() : -door.GetForwardVector()
+
+				//ensure its square or else the trace will fail.  Seer ult has a non square mins/maxs, tech art could maybe fix?
+				vector mins = pushed.GetBoundingMins()
+				vector maxs = pushed.GetBoundingMaxs()
+
+				float maxMinsXY = min( mins.x, mins.y )
+				float maxMaxsXY = max( maxs.x, maxs.y )
+
+				//half the bounding box since we're trying to get out of a tight position.
+				mins = <maxMinsXY, maxMinsXY, mins.z> * 0.5
+				maxs = <maxMaxsXY, maxMaxsXY, mins.z> * 0.5
+
+				float fabsZ = fabs( mins.z ) + fabs( maxs.z )
+				vector zOffSet = <0.0, 0.0, fabsZ>
+
+				vector startPos = pushed.GetOrigin()
+				vector targetPos = startPos + ( pushDir * maxMaxsXY )
+				array<entity> ignoreList = [pushed, door]
+
+				TraceResults trace = TraceHull( startPos, targetPos, mins, maxs, ignoreList, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
+
+				#if DEV
+				if ( AvoidCrushedByPlainDoorDebug )
+					DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
+				#endif
+
+				int traceAttempts = 0
+
+				while ( ( trace.startSolid || trace.allSolid )  && traceAttempts <= 5 )
+				{
+					startPos = targetPos
+					targetPos = startPos + ( pushDir * maxMaxsXY )
+
+					#if DEV
+					if ( AvoidCrushedByPlainDoorDebug )
+						DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
+					#endif
+
+					//check for ground so that our hullTrace doesn't just keep getting caught on the ground as we move along pushDir.
+					trace = TraceHull( startPos + zOffSet, targetPos, mins, maxs, ignoreList, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
+
+					#if DEV
+						if ( AvoidCrushedByPlainDoorDebug )
+						{
+							DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
+							DebugDrawBoxSimple( startPos + zOffSet, mins, maxs, COLOR_LIGHT_BLUE, 25, 15.0 )
+							DebugDrawBoxSimple( targetPos, mins, maxs, COLOR_BLUE, 25, 15.0 )
+						}
+					#endif
+
+					if ( !trace.startSolid && !trace.allSolid )
+					{
+						startPos.z = trace.endPos.z
+						targetPos.z = trace.endPos.z
+
+						#if DEV
+						if ( AvoidCrushedByPlainDoorDebug )
+							DebugDrawMark( trace.endPos, 10, COLOR_GREEN, true, 15.0 )
+						#endif
+					}
+
+					trace = TraceHull( startPos, targetPos, mins, maxs, ignoreList, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
+					traceAttempts++
+				}
+
+				if ( !trace.startSolid && !trace.allSolid )
+					pushed.SetOrigin( trace.endPos )
+
+				break
+			case eDoorType.UNKNOWN:
+			case eDoorType.MODEL:
+			case eDoorType.MOVER:
+			case eDoorType.SLIDING:
+			case eDoorType.BLOCKABLE:
+			case eDoorType.CODE:
+			default:
+				break
+		}
+	}
+}
+
 void function summonplayers()
 {
 	entity player0 = GetPlayerArray()[0]
@@ -5325,9 +5998,10 @@ void function Invis_Button(vector pos, vector ang, bool up, vector destination, 
         if (!IsValid(ent) || !ent.IsPlayer())
             return
 
-        if (ent.p.isTimerActive) {
-			LocalMsg(ent, token, "", type, duration, "Can't use it while timer is running", "", "", false)
-          return
+        if (ent.p.isTimerActive) 
+		{
+			LocalMsg( ent, token, "", type, duration, "Can't use it while timer is running" ) //make this string a token
+			return
         }
 
         ent.SetOrigin(destination)
@@ -5335,7 +6009,7 @@ void function Invis_Button(vector pos, vector ang, bool up, vector destination, 
         ent.SetVelocity(<0, 0, 0>)
 
         if (message.len() || submessage.len())
-			LocalMsg(ent, token, "", type, duration, message, submessage, "", false)
+			LocalMsg(ent, token, "", type, duration, message, submessage, "" )
     })
 
 	if ( addToArray )
@@ -5400,11 +6074,11 @@ void function CleanUpPermanentsParentedToDynamicEnt( entity dynamicEnt )
 #endif 
 
 #if SERVER //ty cafe for remotefunc impl
-	void function CreateClientLight( entity player, LocPair loc, int color = 0, float brightness = 255, exponent = 0.5 )
-	{
-		if( IsValid( player ) )
-			Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnClientSideDynamicLight", loc.origin, loc.angles, color, brightness, exponent )
-	}
+	// void function CreateClientLight( entity player, LocPair loc, int color = 0, float brightness = 255, exponent = 0.5 )
+	// {
+		// if( IsValid( player ) )
+			// Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnClientSideDynamicLight", loc.origin, loc.angles, color, brightness, exponent )
+	// }
 #endif
 
 float function GetWeaponReloadTime( entity weapon, int currentClipCount )
@@ -5427,6 +6101,23 @@ float function GetWeaponReloadTime( entity weapon, int currentClipCount )
 	}
 
 	unreachable
+}
+
+void function RegisterDynamicEntCleanupItem_Area_Scriptname( string scriptname, void functionref(entity) func = null )
+{
+	file.dynamicEntCleanupFuncs_Area_Scriptname[ scriptname ] <- func
+}
+
+void function PreparePlayerForPositionReset( entity player )
+{
+	player.Signal( "ScriptAnimStop" )
+	player.Signal( "OnContinousUseStopped" )
+
+	if ( player.IsPhaseShiftedOrPending() )
+		player.PhaseShiftCancel()
+
+	foreach ( func in file.onPlayerPositionResetFuncs )
+		func( player )
 }
 
 void function CreateDoorMoverModel( asset door, pos, angle, physics)
@@ -5607,6 +6298,44 @@ void function ForceAutoSprintOff( entity player )
 	}
 }
 
+entity function FindScriptNameInChildren ( entity ent, string scriptName )
+{
+	if (!IsValid(ent))
+		return null
+	else if ( ent.GetScriptName() == scriptName )
+		return ent
+
+	array<entity> children = GetChildren( ent )
+	for ( int i = 0; i < children.len(); i++ )
+	{
+		entity result = FindScriptNameInChildren( children[i], scriptName )
+		if ( result != null )
+		{
+			return result
+		}
+	}
+	return null
+}
+
+entity function FindTargetNameInChildren ( entity ent, string targetName )
+{
+	if (!IsValid(ent))
+		return null
+	else if ( ent.GetTargetName() == targetName )
+		return ent
+
+	array<entity> children = GetChildren( ent )
+	for ( int i = 0; i < children.len(); i++ )
+	{
+		entity result = FindTargetNameInChildren( children[i], targetName )
+		if ( result != null )
+		{
+			return result
+		}
+	}
+	return null
+}
+
 void function ChargeTactical_ForceEnd( entity player )
 {
 	entity tactical = player.GetOffhandWeapon( OFFHAND_LEFT )
@@ -5638,4 +6367,197 @@ void function ChargeTactical_ForceEnd( entity player )
 void function SetStatsReadyFlag( entity player, bool value )
 {
 	player.SetPlayerNetBool( "stats_loaded", value )
+}
+
+// void function GiveP2020AkimboTest()
+// {
+	// try 
+	// {
+		// entity player = p(0)
+		
+		// player.TakeNormalWeaponByIndex( WEAPON_INVENTORY_SLOT_DUALPRIMARY_0 )
+		// player.TakeNormalWeaponByIndex( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+
+		// entity main = player.GiveWeapon( "mp_weapon_p20akimbo", WEAPON_INVENTORY_SLOT_PRIMARY_0, ["optic_cq_hcog_classic", "bullets_mag_l3", "laser_sight_l3"] )
+		// entity second = player.GiveWeapon( "mp_weapon_p20akimbo", WEAPON_INVENTORY_SLOT_DUALPRIMARY_0, ["optic_cq_hcog_classic", "bullets_mag_l3", "laser_sight_l3"] )
+		
+		// player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+		
+		// SetupInfiniteAmmoForWeapon( player, main )
+		// SetupInfiniteAmmoForWeapon( player, second )
+		
+		// foreach( string ammo in ["bullet"] )
+		// {
+			// entity loot = SpawnGenericLoot( ammo, player.GetOrigin(), player.GetAngles(), 200 )
+
+			// if( !Survival_PickupItem( loot, player ) )
+				// loot.Destroy()
+		// }
+	// }
+	// catch( e )
+	// {
+		// sqerror( string( e ) )
+	// }
+// }
+
+void function DEV_ToggleInfiniteAmmo( bool toggle = true )
+{
+	if( !GetConVarInt( "sv_cheats" ) )
+	{
+		printl( "ToggleInfiniteAmmo was called but sv_cheats is disabled. Try setting in console:  sv_cheats 1" )
+		return
+	}
+		
+	foreach( player in GetConnectedPlayers() )
+		DEV_ToggleInfiniteAmmo_Internal( player, player.GetMainWeapons(), toggle, true )
+	
+	if( toggle )
+		Loot_AddCallback_OnGiveMainWeapon( AutoGiveInfinite ) //Todo(mk): use AddCallback_OnPlayerWeaponActivated after code callback added.
+	else
+		Loot_RemoveCallback_OnGiveMainWeapon( AutoGiveInfinite ) //use RemoveCallback_OnPlayerWeaponActivated
+}
+
+void function DEV_ToggleInfiniteAmmo_Internal( entity player, array<entity> weapons, bool toggle, bool bMsg = false )
+{
+	foreach( weapon in weapons )
+	{
+		if( toggle )
+		{
+			if( weapon.HasMod( "survival_finite_ammo" ) )
+				weapon.RemoveMod( "survival_finite_ammo" )
+			
+			if( !weapon.HasMod( "infinite_ammo" ) )
+				weapon.AddMod( "infinite_ammo" )
+				
+			if( weapon.UsesClipsForAmmo() )
+				weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
+			else
+			{
+				player.AmmoPool_SetCapacity( 65535 )
+				player.AmmoPool_SetCount( weapon.GetWeaponAmmoPoolType(), 65535 )
+			}
+		}
+		else 
+		{			
+			if( weapon.HasMod( "infinite_ammo" ) )
+				weapon.RemoveMod( "infinite_ammo" )
+				
+			if( !weapon.HasMod( "survival_finite_ammo" ) )
+				weapon.AddMod( "survival_finite_ammo" )
+			
+			SetupPlayerReserveAmmo( player, weapon )
+		}
+	}
+	
+	if( bMsg )
+		Message( player, format( "Infinite ammo %s", toggle ? "Enabled" : "Disabled" ) )
+}
+
+void function AutoGiveInfinite( entity player, entity pickup, entity weapon )
+{
+	DEV_ToggleInfiniteAmmo_Internal( player, [ weapon ], true, false )
+}
+
+#if DEVELOPER 
+	entity function GetPrimary()
+	{
+		return p(0).GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+	}
+	
+	entity function GetAkimbo()
+	{
+		return p(0).GetNormalWeapon( WEAPON_INVENTORY_SLOT_DUALPRIMARY_0 )
+	}
+#endif
+
+void function UnloadPak( string pak )
+{
+	__ServerCommand( format( "pak_requestunload %s", pak ) )
+}
+
+void function LoadPak( string pak )
+{
+	__ServerCommand( format( "pak_requestload %s", pak ) )
+}
+
+void function SetupPlayerReserveAmmo( entity player, entity weapon )
+{
+	int ammoType = weapon.GetWeaponAmmoPoolType()
+	player.AmmoPool_SetCount( ammoType, 0 ) //(mk):always reset
+	
+	string ammoRef = AmmoType_GetRefFromIndex( ammoType )
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( ammoRef )
+
+	int amount = GetCurrentPlaylistVarInt( "give_weapon_stack_count_amount", 0 ) * FS_GetWeaponsThatUseThisAmmo( player, ammoRef ).len() //Revisit this
+	//(Cafe)todo remove the remaining ammo if player does not have two guns of the same ammo anymore
+	
+	//Clean up ammo. Cafe
+	foreach ( ammo, type in eAmmoPoolType )
+	{
+		if( !SURVIVAL_Loot_IsRefValid( ammo ) )
+			continue
+		
+		if( !IsAmmoInUse( player, ammo ) )
+		{
+			int count = SURVIVAL_CountItemsInInventory( player, ammo )
+			SURVIVAL_RemoveFromPlayerInventory( player, ammo, count )
+			player.AmmoPool_SetCount( type, 0 )
+		}
+	}
+
+	int amountToGive = amount * data.inventorySlotCount
+	int amountToAdd = SURVIVAL_AddToPlayerInventory( player, ammoRef, amountToGive, false ) //(mk): don't actually add it here.
+	int ammoInInventory = SURVIVAL_CountItemsInInventory( player, ammoRef )	
+	int maxClipSize = weapon.UsesClipsForAmmo() ? weapon.GetWeaponSettingInt( eWeaponVar.ammo_clip_size ) : weapon.GetWeaponPrimaryAmmoCountMax( weapon.GetActiveAmmoSource() )
+	
+	player.AmmoPool_SetCount( ammoType, ammoInInventory + amountToAdd ) //(mk): add here.
+	
+	#if DEVELOPER
+		//printw( "added", amountToAdd, "for ref", ammoRef, "to player", string( player ) )
+	#endif
+}
+
+void function SetupInfiniteAmmoForWeapon( entity player, entity weapon )
+{
+	if( !IsValid( weapon ) )
+		return
+		
+	if( !InfiniteAmmoEnabled() )
+	{
+		if( GetCurrentPlaylistVarInt( "give_weapon_stack_count_amount", 0 ) != 0 )
+		{
+			player.AmmoPool_SetCapacity( SURVIVAL_MAX_AMMO_PICKUPS )
+
+			SetupPlayerReserveAmmo( player, weapon )
+			player.ClearFirstDeployForAllWeapons()
+			player.DeployWeapon()
+
+			if( weapon.UsesClipsForAmmo() )
+				weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )	
+		}
+		
+		return
+	}
+	
+	if( weapon.UsesClipsForAmmo() )
+	{
+		int maxClipSize = weapon.UsesClipsForAmmo() ? weapon.GetWeaponSettingInt( eWeaponVar.ammo_clip_size ) : weapon.GetWeaponPrimaryAmmoCountMax( weapon.GetActiveAmmoSource() )
+		int ammoType = weapon.GetWeaponAmmoPoolType()
+		string ammoRef = AmmoType_GetRefFromIndex( ammoType )
+		int currentAmmo = weapon.GetWeaponPrimaryClipCount()
+		int maxAmmo = weapon.GetWeaponSettingInt( eWeaponVar.ammo_clip_size )
+		int requiredAmmo = maxAmmo - currentAmmo
+		int ammoInInventory = SURVIVAL_CountItemsInInventory( player, ammoRef )
+		
+		player.AmmoPool_SetCapacity( 65535 )
+		player.AmmoPool_SetCount( ammoType, ammoInInventory + requiredAmmo + maxClipSize )
+
+		weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
+	}
+	else
+	{
+		int ammoType = weapon.GetWeaponAmmoPoolType()
+		player.AmmoPool_SetCapacity( 65535 )
+		player.AmmoPool_SetCount( ammoType, 65535 )
+	}
 }

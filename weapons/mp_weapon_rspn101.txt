@@ -77,7 +77,7 @@ WeaponData
 	"fx_muzzle_flash_world"							""
 	"fx_muzzle_flash_attach"						"muzzle_flash"
 	
-     "ammo_clip_size"   								"18"
+     "ammo_clip_size"   								"21"
     "ammo_min_to_fire"								"1"
     "ammo_default_total"							"0"
     "ammo_stockpile_max"							"44"
@@ -87,12 +87,12 @@ WeaponData
     "uses_ammo_pool"								"1"
 	// Damage - When Used by Players
                       
-    "damage_near_value"   							"13"
-    "damage_far_value"								"13"
-    "damage_very_far_value"							"13"
-    "damage_near_value_titanarmor"					"13"
-    "damage_far_value_titanarmor" 					"13"
-    "damage_very_far_value_titanarmor" 				"13"
+    "damage_near_value"   							"14"
+    "damage_far_value"								"14"
+    "damage_very_far_value"							"14"
+    "damage_near_value_titanarmor"					"14"
+    "damage_far_value_titanarmor" 					"14"
+    "damage_very_far_value_titanarmor" 				"14"
     "damage_rodeo" 									"100"
 
 	"damage_leg_scale"                              "0.75"
@@ -236,16 +236,21 @@ WeaponData
     "spread_air_hip"  								"8.4" //"7.0"
     "spread_moving_decay_rate" 						"30"
 
+
+	"headshot_distance"	"11828"
+	"damage_headshot_scale"	"1.300000"
+	"damage_shield_scale"	"1"
+	"critical_hit"	"1"
+	"critical_hit_damage_scale"	"1.500000"
+	"titanarmor_critical_hit_required"	"1"
+	"damage_near_distance"	"1000"
+	"damage_far_distance"	"2500"
+	"damage_very_far_distance"	"5000"
 	Mods
 	{
 	    gold
 	    {
 	    }
-
-		shock_rounds
-		{
-			
-		}
 		
 		survival_finite_ammo
         {
@@ -257,16 +262,6 @@ WeaponData
 
 	   		"uses_ammo_pool"								"1"
         }
-
-		incendiary_rounds
-		{
-			"damage_near_value"   							"13"
-			"damage_far_value"								"13"
-			"damage_very_far_value"							"13"
-			"damage_near_value_titanarmor"					"13"
-			"damage_far_value_titanarmor" 					"13"
-			"damage_very_far_value_titanarmor" 				"13"
-		}
 
         // single shot
 		altfire
@@ -333,21 +328,29 @@ WeaponData
 
 		bullets_mag_l1
 		{
-			"ammo_clip_size" 					"20"
+			"ammo_clip_size" 					"23"
 		}
 		bullets_mag_l2
 		{
-			"ammo_clip_size" 					"25"
+			"ammo_clip_size" 					"28"
 		}
 		bullets_mag_l3
 		{
-			"ammo_clip_size" 					"28"
+			"ammo_clip_size" 					"31"
 		}
         bullets_mag_l4
         {
-            "ammo_clip_size"   					"28"
+            "ammo_clip_size"   					"31"
         }
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 
 	"ui1_enable"		"1"

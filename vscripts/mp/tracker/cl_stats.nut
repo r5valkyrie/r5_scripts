@@ -1,8 +1,11 @@
-global function Tracker_ClientStats_Init													//mkos
+untyped																											//mkos
+global function Tracker_ClientStats_Init
 
 global function Tracker_SetPlayerStatBool
 global function Tracker_SetPlayerStatInt
 global function Tracker_SetPlayerStatFloat
+global function Tracker_ResyncAllForPlayer
+global function Tracker_ResyncStatForPlayer
 
 global function Tracker_StatRequestFailed
 global function Tracker_PreloadStatArray
@@ -16,6 +19,12 @@ typedef EntityStatStruct table < entity, table < string, var > >
 const bool DEBUG_CL_STATS = false
 const float MAX_FETCH_TIMEOUT = 5.0
 
+struct StatKeyData
+{
+	bool 	_bkeyInProcess
+	string	_currentKey
+}
+
 struct StatData
 {
 	entity player
@@ -25,10 +34,11 @@ struct StatData
 struct
 {
 	EntityStatStruct playerStatTables
-	array<StatData> statDataStack
+	array<StatData> statDataQueue
 	table< entity, table<string, bool> > lockTable
-	array< string > preloadStats
 	table infoSignal
+	
+	table< entity, StatKeyData > _currentStatKey
 	
 } file 
 
@@ -38,7 +48,7 @@ struct
 // Use the entity of the player to lookup and the statname. 
 
 // If you call Tracker_FetchStat on a stat not preloaded, it will return null and 
-// preload the stat for you in the background via the stat stack thread. 
+// preload the stat for you in the background via the stat queue thread. 
 // Use Tracker_StatExists( player, "statname" ) to check 
 
 // You can preload all of the stats you want from other connected players 
@@ -80,13 +90,24 @@ void function Tracker_SetPlayerStatFloat( entity player, float value )
 
 void function ClientStats_Think()
 {
+	FlagWait( "EntitiesDidLoad" )
+	if( !GetServerVar("tracker_enabled") )
+	{
+		#if DEVELOPER 
+			printl( "Connected server is not running tracker. ending ClientStats_Think()" )
+		#endif
+		
+		return
+	}
+
 	for( ; ; )
 	{
-		WaitSignal( file.infoSignal, "PreloadStat" )	
-
-		while( StatStackHasItems() )
+		if( !StatQueueHasItems() )
+			WaitSignal( file.infoSignal, "PreloadStat" )
+			
+		while( StatQueueHasItems() )
 		{
-			StatData statData 	= __PopStatStack()
+			StatData statData 	= __DequeueStatQueue()
 			
 			entity lookupPlayer = statData.player
 			string stat 		= statData.statname
@@ -114,38 +135,44 @@ void function ClientStats_Think()
 	}
 }
 
-bool function StatStackHasItems()
+bool function StatQueueHasItems()
 {
-	return ( file.statDataStack.len() > 0 )
+	return ( file.statDataQueue.len() > 0 )
 }
 
-void function __StatStackRemoveDuplicates()
+void function __StatQueueRemoveDuplicates()
 {
-	array<StatData> returnStack = []
+	array<StatData> returnQueue = []
 	table<string, bool> keyMap = {}
 	
-	foreach( StatData data in file.statDataStack )
+	foreach( StatData data in file.statDataQueue )
 	{	
-		string key = ( string( data.player ) + data.statname )
+		if( !IsValid( data.player ) )
+			continue
+	
+		string key = format( "%s%s", data.player.GetPlatformUID(), data.statname )
 		
 		if( !( key in keyMap ) )
 		{
 			keyMap[ key ] <- true 
-			returnStack.append( data )
+			returnQueue.append( data )
 		}
 	}
 	
-	file.statDataStack = returnStack
+	file.statDataQueue = returnQueue
 }
 
 var function Tracker_FetchStat( entity player, string stat )
 {
+	if( !IsValid( player ) )
+		return null 
+		
 	ValidatePlayerStatTable( player )
 	
 	if( !( stat in file.playerStatTables[ player ] ) )
 	{
 		#if DEVELOPER && DEBUG_CL_STATS
-			printw( "Stat", stat, " was not fetched and is being preloaded now." )
+			Warning( "Stat \"%s\" was not fetched for \"%s\" and is being preloaded now.", stat, string( player ) )
 		#endif 
 		
 		Tracker_PreloadStat( player, stat )
@@ -160,7 +187,7 @@ var function Tracker_FetchStat( entity player, string stat )
 
 void function Tracker_PreloadStat( entity player, string stat )
 {
-	__AddToStatStack( player, stat )
+	__AddToStatQueue( player, stat )
 	Signal( file.infoSignal, "PreloadStat" )
 }
 
@@ -168,33 +195,44 @@ void function Tracker_PreloadStatArray( array<entity> players, array<string> sta
 {
 	foreach( player in players )
 	{
+		if( !IsValid( player ) )
+			continue 
+			
 		foreach( statname in stats )
-			__AddToStatStack( player, statname )
+			__AddToStatQueue( player, statname )
 	}
 		
 	Signal( file.infoSignal, "PreloadStat" )
 }
 
-void function __AddToStatStack( entity player, string stat )
-{
+void function __AddToStatQueue( entity player, string stat )
+{	
+	string checkName = player.GetPlayerName()
+	if( checkName.slice( 0, 1 ).find( "[" ) != -1 || checkName == "Unknown" ) //msgbot hack
+		return
+		
+	#if DEVELOPER && DEBUG_CL_STATS
+		printf( "Adding stat \"%s\" to statqueue for \"%s\"", stat, string( player ) )
+	#endif
+	
 	StatData data
 	
 	data.player = player 
 	data.statname = stat 
 	
-	file.statDataStack.append( data )
+	file.statDataQueue.append( data )
 }
 
-StatData function __PopStatStack()
+StatData function __DequeueStatQueue()
 {
-	__StatStackRemoveDuplicates()
-	return file.statDataStack.pop()
+	__StatQueueRemoveDuplicates()
+	return file.statDataQueue.remove( 0 )
 }
 
 bool function IsLocked( entity player, string stat )
 {
 	CheckPlayerForLock( player )
-	return ( stat in file.lockTable[ player ] )
+	return ( stat in file.lockTable[ player ] && file.lockTable[ player ][ stat ] == true )
 }
 
 void function LockStat( entity player, string stat )
@@ -208,7 +246,7 @@ void function UnlockStat( entity player, string stat )
 	CheckPlayerForLock( player )
 	
 	if( stat in file.lockTable[ player ] )
-		delete file.lockTable[ player ][ stat ]
+		file.lockTable[ player ][ stat ] = false
 }
 
 void function CheckPlayerForLock( entity player )
@@ -224,7 +262,7 @@ var function __FetchPlayerStatInThread( entity player, string stat )
 	{
 		#if DEVELOPER && DEBUG_CL_STATS
 			printw( "Waiting for player stats to load for lookup: \"" + stat + "\" Player:", player )
-		#endif 
+		#endif
 		
 		WaitFrames( 5 )
 		
@@ -242,7 +280,7 @@ var function __FetchPlayerStatInThread( entity player, string stat )
 	
 	if( !( stat in file.playerStatTables[ player ] ) )
 	{
-		__RequestPlayerStat( player, stat )
+		waitthread __RequestPlayerStat( player, stat )
 		WaitFrame()
 	}
 	
@@ -265,6 +303,14 @@ bool function PlayerStatTableExists( entity player )
 
 void function __RequestPlayerStat( entity player, string stat )
 {
+	OnThreadEnd
+	(
+		void function() : ( player, stat )
+		{
+			UnlockStat( player, stat )
+		}
+	)
+
 	player.EndSignal( "OnDestroy" )
 	//EndSignal( file.infoSignal, "RequestStatFailed" )
 	
@@ -275,27 +321,24 @@ void function __RequestPlayerStat( entity player, string stat )
 		return 
 		
 	if( IsLocked( player, stat ) )
-	{
-		printw( "stat \"" + stat + "\" is locked." )
 		return
-	}
 	
 	LockStat( player, stat )
-	localPlayer.ClientCommand( "requestStat " + string( player.GetEncodedEHandle() ) + " " + stat )
+	
+	localPlayer.ClientCommand( format( "requestStat %s %s", string( player.GetEncodedEHandle() ), stat ) )
 	table statData = WaitSignal( file.infoSignal, "StatDataReceived", "RequestStatFailed" )
 	
 	if( expect string( statData.signal ) == "RequestStatFailed" )
-		SetStat( player, stat, null )
+		__SetStatValue( player, stat, null )
 	else
-		SetStat( player, stat, statData.value )
+		__SetStatValue( player, stat, statData.value )
 		
 	#if DEVELOPER && DEBUG_CL_STATS
-		printw( "Stat set for player: ", player, stat, "=", GetStatValue( player, stat ) )
+		printw( "Stat set for player: ", player, stat, "=", __GetStatValue( player, stat ) )
 	#endif
-	UnlockStat( player, stat )
 }
 
-void function SetStat( entity player, string stat, var value )
+void function __SetStatValue( entity player, string stat, var value )
 {
 	if( stat in file.playerStatTables[ player ] )
 		file.playerStatTables[ player ][ stat ] = value
@@ -303,7 +346,7 @@ void function SetStat( entity player, string stat, var value )
 		file.playerStatTables[ player ][ stat ] <- value
 }
 
-var function GetStatValue( entity player, string stat )
+var function __GetStatValue( entity player, string stat )
 {
 	if( stat in file.playerStatTables[ player ] )
 		return file.playerStatTables[ player ][ stat ]
@@ -328,4 +371,68 @@ bool function Tracker_StatExists( entity player, string statname )
 		return false 
 	
 	return ( statname in file.playerStatTables[ player ] )
+}
+
+void function Tracker_ResyncAllForPlayer( entity remotePlayer ) //this is more expensive. if only updating one key, call "Tracker_ResyncStatForPlayer" on server instead
+{
+	if( PlayerStatTableExists( remotePlayer ) )
+	{
+		array<string> resyncKeys
+		
+		foreach( string statKey, var statValue in file.playerStatTables[ remotePlayer ]  )
+			resyncKeys.append( statKey )
+		
+		file.playerStatTables[ remotePlayer ] = {}
+		
+		foreach( int idx, string key in resyncKeys )
+			__AddToStatQueue( remotePlayer, key )
+			
+		Signal( file.infoSignal, "PreloadStat" )
+	}
+}
+
+void function Tracker_ResyncStatForPlayer( int remotePlayerEHandle, ... )
+{
+	entity remotePlayer = GetEntityFromEncodedEHandle( remotePlayerEHandle )
+	if( !IsValid( remotePlayer ) )
+		return
+	
+	__CheckCurrentStatKey( remotePlayer )
+	
+	if( file._currentStatKey[ remotePlayer ]._bkeyInProcess )
+		return
+	
+	file._currentStatKey[ remotePlayer ]._bkeyInProcess = true
+			
+	int charCount = expect int( vargc )
+	array chars = [ this, RepeatString( "%c", charCount ) ]
+	
+	for( int i = 0; i < vargc; i++ )
+		chars.append( vargv[ i ] )
+		
+	file._currentStatKey[ remotePlayer ]._currentKey = expect string( format.acall( chars ) )
+	
+	string currentKey = file._currentStatKey[ remotePlayer ]._currentKey
+	
+	if( currentKey in file.playerStatTables[ remotePlayer ] )
+	{
+		delete file.playerStatTables[ remotePlayer ][ currentKey ]
+		Tracker_PreloadStat( remotePlayer, currentKey )
+	}
+	
+	file._currentStatKey[ remotePlayer ]._currentKey 	= ""
+	file._currentStatKey[ remotePlayer ]._bkeyInProcess = false
+}
+
+void function __CheckCurrentStatKey( entity remotePlayer )
+{
+	if( !( remotePlayer in file._currentStatKey ) )
+	{
+		StatKeyData data 
+		
+		data._currentKey 	= ""
+		data._bkeyInProcess = false
+		
+		file._currentStatKey[ remotePlayer ] <- data
+	}
 }

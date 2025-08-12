@@ -12,7 +12,7 @@ global function CreateEditorProp
 global table _ClientCommandCallbacks = {}
 global entity _cc = null
 global entity _sc = null
-
+global int ATTACHMENTID_INVALID = -1
 
 
 // dumpsite for other files
@@ -42,6 +42,7 @@ global struct spawnCallbackEditorClassFuncArray
 }
 
 global typedef pilotEliminationDialogueCallbackType void functionref( int, array<entity>, int, array<entity> )
+global typedef OnPlayerWeaponActivatedTypeCallback void functionref( entity, entity, entity )
 
 //ThreatEventCallbackData needs to be registered before svGlobal
 global struct ThreatEventCallbackData
@@ -63,13 +64,14 @@ global struct SvGlobals
 	table<string, array<bool functionref( entity player, entity healthpack)> > onTouchHealthKitCallbacks
 	array<void functionref( entity )> onClientConnectedCallbacks
 	array<void functionref( entity )> onClientReloadConnectedCallbacks
-	array<void functionref(entity)> onPlayerRespawnedCallbacks
+	array<void functionref( entity )> onPlayerRespawnedCallbacks
 	array<void functionref( entity player, entity npc_titan )> onPilotBecomesTitanCallbacks
 	array<void functionref( entity player, entity npc_titan )> onTitanBecomesPilotCallbacks
 	array<void functionref( entity, entity, entity) > soulTransferFuncs
 	array<void functionref( entity titanSoul )> soulSettingsChangeFuncs
 	array<void functionref( entity titanSoul )> soulInitFuncs
 	table<string, array<void functionref( entity, var )> > damageByCallbacks
+	array< OnPlayerWeaponActivatedTypeCallback > onPlayerWeaponActivatedCallbacks
 
 	bool functionref( entity ) gameModeAbandonPenaltyApplies
 
@@ -114,7 +116,7 @@ global struct SvGlobals
 	table<string, array<void functionref( entity ent )> >onEntityChangedTeamCallbacks
 
 	table<string, bool functionref( entity player, array<string>args )> clientCommandCallbacks
-	table<string, array< void functionref( entity player, array<string>args ) > > clientCommandCallbacksNew
+	table<string, array< void functionref( entity player, array<string>args ) > > clientCommandCallbacksVoid
 	array<void functionref()>[ eGameState._count_ ] gameStateEnterCallbacks
 
 	bool allowPointsOverLimit = false
@@ -186,43 +188,43 @@ global struct SvGlobals
 
 global SvGlobals svGlobal
 
-struct{
-	//!FIXME ADD POINTS TO KC
-	vector auto_tp = <5486, 9155, -627>
-
-    table<entity, int> cp_table = {}
-
-	int current_cp = 0
-	array<vector> cps_pos = [<6893, 1086, -1385>, <4839, 1146, -1193>, <3389, 1982, -937>, <3389, 3681, -617>, <3394, 6570, -1257>, <4606, 9088, -745>, <5881, 8712, 4822>]
-	array<vector> cps_ang = [<-89,-178,-0>, <-0,-178,-0>, <-0, 89, -0>, <3, 51, -0>, <0, 90, -0>, <3, -0, -0>, <21, -46, -0>]	
-}file
-
 void function CodeCallback_MapSpawn() // original script entry point
 {	
-	ShWeapons_LevelInit()
 	//seterrorhandler(void function() {})
-	//ScriptCompilerTest()
+	ScriptCompilerTest()
 	LoadDiamond()
-	ReMap_Init()
-	LootTicks_Init()
+	
+	PrecacheSDKEntities()
+	PrecacheSDKWeapons()
 
-	RegisterSignal( "CleanupFXAndSoundsForDecoy" )
-	RegisterSignal( "MirageSpotted" )
-	RegisterSignal( "forever" )
+	RegisterSignal( "OnChangedPlayerClass_ActuallyChanged" )
 	RegisterSignal( "UpdatePlayerStatusCounts" )
-	RegisterSignal( "BleedOut_OnReviveStart" )
-	RegisterSignal( "PlayerPlaneStatusChanged" )
-	RegisterSignal( "CancelTryRelinquishSquadLeaderOrBreakFromSquad" )
-	RegisterSignal( "GameStateChanged" )
-	RegisterSignal( "CleanupOutsideCircle" )
+	RegisterSignal( "_disconnectedInternal" )
+	RegisterSignal( "OnChangedPlayerClass" )
+	RegisterSignal( "OnDisconnecting" )
+	RegisterSignal( "TeamChange" )
+	RegisterSignal( "LeftClass" )
+	RegisterSignal( "waitOver" )
+	RegisterSignal( "forever" )
+	RegisterSignal( "HitSky" )
+
+	PrecacheModel( $"mdl/dev/editor_ref.rmdl" )
+	PrecacheModel( $"mdl/dev/empty_model.rmdl" )
+	PrecacheModel( $"mdl/error.rmdl" ) // model used when no model is provided
+
+	#if DEVELOPER
+		ModelViewer_Init()
+	#endif // DEVELOPER
 
 	_cc = CreateEntity( "point_clientcommand" )
 	_sc = CreateEntity( "point_servercommand" )
 	PrecacheEntity( "env_entity_dissolver" )
 
-	FlagInit("EntitiesDidLoad")
+	FlagInit( "EntitiesDidLoad" )
 	FlagInit( "ShowExplosionRadius" )  // temp HACK
-
+	FlagInit( "DeathCircleActive", false ) //(cafe) moved here because Sh_ArenaDeathField_Init is not called in all gamemodes but this flag may
+	FlagInit( "DeathCircleSetup", false ) //(cafe) moved here because Sh_ArenaDeathField_Init is not called in all gamemodes but this flag may
+	
 	svGlobal.levelEnt = GetEnt( "worldspawn" )
 
 	LevelVarInit()
@@ -230,389 +232,98 @@ void function CodeCallback_MapSpawn() // original script entry point
 	svGlobal.worldspawn = GetEnt( "worldspawn" )
 	svGlobal.worldspawn.kv.startdark = true
 
-	PrecacheModel( $"mdl/dev/editor_ref.rmdl" )
-	PrecacheModel( $"mdl/dev/empty_model.rmdl" )
-	PrecacheModel( $"mdl/error.rmdl" ) // model used when no model is provided
-
-	PrecacheModel( $"mdl/Humans/class/medium/combat_dummie_medium.rmdl" )
-	PrecacheModel($"mdl/fx/ar_survival_radius_1x100.rmdl")
-	//Charms - todo: find a better way
-
-	PrecacheModel( $"mdl/props/charm/charm_fireball.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_yeti.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_crow.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_rank_gold.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_rank_diamond.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_rank_predator.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_nessy.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_lifeline_drone.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_rank_platinum.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_pumpkin.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_gas_canister.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_jester.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_nessy_ghost.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_clown.rmdl" )
-	PrecacheModel( $"mdl/props/charm/charm_witch.rmdl" )
-
-	//PrecacheParticleSystem( $"train_far_beam_far_blink" ) //why are we precaching a worlds edge asset here? - LorryLeKral
-	
-	//Lobby Models
-
-	PrecacheModel( $"mdl/robots/drone_frag/drone_frag.rmdl" )
-	PrecacheModel( $"mdl/vehicle/droppod_fireteam/droppod_fireteam.rmdl" )
-	PrecacheModel( $"mdl/vehicle/droppod_loot/droppod_loot_LL_holo.rmdl" )
-	PrecacheModel( $"mdl/robots/marvin/marvin_gladcard.rmdl" )
-	PrecacheModel( $"mdl/menu/xp_badge.rmdl" )
-	PrecacheModel( $"mdl/menu/coin.rmdl" )
-	PrecacheModel( $"mdl/currency/crafting/currency_crafting_epic.rmdl" )
-	PrecacheModel( $"mdl/weapons_r5/loot/_master/w_loot_wep_ammo_sniper.rmdl" )
-	PrecacheModel( $"mdl/robots/marvin/marvin.rmdl" )
-	PrecacheModel( $"mdl/weapons/sentry_turret/sentry_turret.rmdl" )
-	
-	//////////////////////
-	//CUSTOM - By @CafeFPS
-	
-	PrecacheWeapon( $"mp_ability_emote_projector" )
-	PrecacheWeapon( $"mp_weapon_vctblue_primary" )
-	PrecacheWeapon( $"melee_vctblue" )
-	PrecacheWeapon( $"mp_weapon_flamethrower" )
-	PrecacheWeapon( $"mp_ability_phase_chamber" )
-	PrecacheWeapon( $"mp_weapon_ringflare" )
-	PrecacheWeapon( $"mp_weapon_melee_halo" )
-	PrecacheWeapon( $"melee_pilot_emptyhanded_halo" )
-	
-	// baton
-	// PrecacheWeapon( $"melee_lifeline_baton" )
-	// PrecacheWeapon( $"mp_weapon_lifeline_baton_primary" )
-	// gloves
-	// PrecacheWeapon( $"mp_weapon_gloves_primary" )
-	// PrecacheWeapon( $"melee_gloves" )
-	// karambit
-	PrecacheWeapon( $"mp_weapon_karambit_primary" )
-	PrecacheWeapon( $"melee_karambit" )
-
-	// PrecacheWeapon( $"mp_ability_tank" )
-	// PrecacheWeapon( $"mp_weapon_rhapsody_ultimate" )
-	// PrecacheWeapon( $"mp_ability_rhapsody_tactical" )
-	// PrecacheModel( $"mdl/humans/class/light/pilot_light_support_rework.rmdl" )
-	// PrecacheModel( $"mdl/Weapons/arms/pov_pilot_light_support_rework.rmdl" )
-
-	switch( GameRules_GetGameMode() )
-	{
-		case CUSTOM_CTF:
-			PrecacheWeapon( $"melee_flagpole" )
-			PrecacheWeapon( $"mp_weapon_flagpole_primary" )
-			break
-		case fs_prophunt:
-			PrecacheWeapon( $"mp_weapon_flashbang_fakeultimate" )
-			PrecacheWeapon( $"mp_weapon_changeprops_fakeultimate" )
-			break
-		case "flowstate_pkknockback":
-			PrecacheWeapon( $"mp_ability_selfpushback" )
-			break
-		case fs_dm:
-			break
-		case fs_aimtrainer:
-			break
-		default:		
-			break
-	}
-	
-	//PrecacheModel( $"mdl/Humans/pilots/w_blisk.rmdl" )
-	//PrecacheModel( $"mdl/Humans/pilots/pov_blisk.rmdl" )
-	PrecacheModel( $"mdl/Humans/pilots/w_phantom.rmdl" )
-	PrecacheModel( $"mdl/Humans/pilots/ptpov_phantom.rmdl" )
-	PrecacheModel( $"mdl/Humans/pilots/w_amogino.rmdl" )
-	//PrecacheModel( $"mdl/Humans/pilots/ptpov_amogino.rmdl" )
-	PrecacheModel( $"mdl/Humans/pilots/w_rhapsody.rmdl" )
-	PrecacheModel( $"mdl/Humans/pilots/ptpov_rhapsody.rmdl" )
-	//PrecacheModel( $"mdl/Humans/pilots/w_ash_legacy.rmdl" )
-	//PrecacheModel( $"mdl/Humans/pilots/pov_ash_legacy.rmdl" )
-	//PrecacheModel( $"mdl/Humans/pilots/w_jackcooper.rmdl" )
-	//PrecacheModel( $"mdl/Humans/pilots/ptpov_jackcooper.rmdl" )
-
-	PrecacheWeapon( $"mp_weapon_turret" )
-	PrecacheWeapon( $"melee_titan_sword" )
-	PrecacheWeapon( $"mp_weapon_titan_sword" )
-	PrecacheWeapon( $"npc_weapon_turret_volt" )
-
-	if( GetCurrentPlaylistVarBool( "enable_oddball_gamemode", false ) )
-	{
-		PrecacheWeapon( $"mp_weapon_oddball_primary" )
-		PrecacheWeapon( $"melee_oddball" )
-	}
-
-	if( GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) )
-	{
-		PrecacheParticleSystem( $"P_snow_atmo_512" )
-		PrecacheWeapon( $"mp_ability_grapple_master_chief" )
-		PrecacheWeapon( $"mp_weapon_bubble_bunker_master_chief" )
-	
-		//TODO create a single model with different skins. Cafe
-		PrecacheModel( $"mdl/Humans/pilots/w_master_chief.rmdl" )
-		PrecacheModel( $"mdl/Humans/pilots/ptpov_master_chief.rmdl" )
-
-		PrecacheModel( $"mdl/Humans/pilots/w_master_chief.rmdl" )
-		PrecacheModel( $"mdl/Humans/pilots/ptpov_master_chief.rmdl" )
-		
-		PrecacheModel( $"mdl/Humans/pilots/w_master_chief_blue.rmdl" )
-		PrecacheModel( $"mdl/Humans/pilots/ptpov_master_chief_blue.rmdl" )
-		
-		PrecacheModel( $"mdl/Humans/pilots/w_master_chief_pink.rmdl" )
-		PrecacheModel( $"mdl/Humans/pilots/ptpov_master_chief_pink.rmdl" )
-		
-		PrecacheModel( $"mdl/Humans/pilots/w_master_chief_orange.rmdl" )
-		PrecacheModel( $"mdl/Humans/pilots/ptpov_master_chief_orange.rmdl" )
-		
-		PrecacheModel( $"mdl/Humans/pilots/w_master_chief_red.rmdl" )
-		PrecacheModel( $"mdl/Humans/pilots/ptpov_master_chief_red.rmdl" )
-		
-		PrecacheModel( $"mdl/Humans/pilots/w_master_chief_purple.rmdl" )
-		PrecacheModel( $"mdl/Humans/pilots/ptpov_master_chief_purple.rmdl" )
-		
-		PrecacheModel( $"mdl/Humans/pilots/w_master_chief_yellow.rmdl" )
-		PrecacheModel( $"mdl/Humans/pilots/ptpov_master_chief_yellow.rmdl" )
-
-		PrecacheModel( $"mdl/Humans/pilots/w_master_chief_white.rmdl" )
-		PrecacheModel( $"mdl/Humans/pilots/ptpov_master_chief_white.rmdl" )
-		
-		PrecacheModel( $"mdl/flowstate_custom/w_haloelite.rmdl" )
-		PrecacheModel( $"mdl/flowstate_custom/ptpov_haloelite.rmdl" )
-	}
-	
-	PrecacheWeapon( $"mp_ability_phase_rewind" )
-	PrecacheWeapon( $"mp_ability_space_elevator_tac" )
-	PrecacheModel( $"mdl/Weapons/lightsaber/w_lightsaber.rmdl" )
-	PrecacheModel( $"mdl/Weapons/lightsaber/ptpov_lightsaber.rmdl" )
-	PrecacheModel( $"mdl/Humans/pilots/ballistic_base_w.rmdl" )
-	PrecacheModel( $"mdl/Humans/pilots/ballistic_base_v.rmdl" )
-
-	PrecacheModel( $"mdl/flowstate_custom/w_marvin.rmdl" )
-	//PrecacheModel( $"mdl/flowstate_custom/evac_tower_balloon.rmdl" )
-	//PrecacheModel( $"mdl/flowstate_custom/evac_tower_weight.rmdl" )
-	PrecacheModel( $"mdl/flowstate_custom/w_pete_mri.rmdl" )
-	PrecacheModel( $"mdl/flowstate_custom/ptpov_pete_mri.rmdl" )
-
-	PrecacheModel( $"mdl/techart/mshop/characters/legends/catalyst/catalyst_base_w.rmdl" )
-	PrecacheModel( $"mdl/techart/mshop/characters/legends/catalyst/catalyst_base_v.rmdl" )
-	PrecacheModel( $"mdl/Humans/class/medium/pilot_medium_valkyrie.rmdl" )
-	PrecacheModel( $"mdl/Weapons/arms/pov_pilot_medium_valkyrie.rmdl" )
-	PrecacheModel( $"mdl/Humans/class/medium/pilot_medium_nova_01.rmdl" )
-	PrecacheModel( $"mdl/Weapons/arms/pov_pilot_medium_nova_base_01.rmdl" )
-	PrecacheModel( $"mdl/techart/mshop/characters/legends/ash/ash_base_v.rmdl" )
-	PrecacheModel( $"mdl/techart/mshop/characters/legends/ash/ash_base_w.rmdl" )
-	
-	//S0 Dev Protos
-	// PrecacheModel( $"mdl/flowstate_custom/pilot_medium_stim_dev.rmdl" )
-	// PrecacheWeapon( $"mp_weapon_concussive_breach" )
-	// PrecacheWeapon( $"mp_weapon_grenade_flashbang" )
-	// PrecacheWeapon( $"mp_weapon_shotgun_kick" )
-	// PrecacheWeapon( $"mp_ability_haunt" )
-	// PrecacheWeapon( $"mp_ability_dodge_roll" )
-	// PrecacheWeapon( $"mp_ability_maelstrom_javelin" )
-	// PrecacheWeapon( $"mp_ability_sonic_shout" )
-	// PrecacheWeapon( $"mp_ability_riot_shield" )
-	// PrecacheWeapon( $"mp_ability_spotter_sight" )
-	// PrecacheWeapon( $"mp_ability_loot_compass" )
-	// PrecacheWeapon( $"mp_weapon_cover_wall" )
-	// PrecacheWeapon( $"mp_ability_ground_slam" )
-	// PrecacheWeapon( $"mp_ability_split_timeline" )
-	// PrecacheWeapon( $"mp_weapon_debris_trap" )
-	// PrecacheWeapon( $"mp_weapon_grenade_barrier" )
-	
-	//END CUSTOM BY @CafeFPS
-	////////////////////////
-	
-	PrecacheWeapon( $"mp_weapon_melee_survival" )
-	PrecacheWeapon( $"mp_turretweapon_blaster" )
-	PrecacheWeapon( $"mp_weapon_mdlspawner" )
-	PrecacheWeapon( $"mp_weapon_alternator_smg" )
-	PrecacheWeapon( $"mp_weapon_bubble_bunker" )
-	PrecacheWeapon( $"mp_weapon_dmr" )
-	PrecacheWeapon( $"mp_weapon_doubletake" )
-	PrecacheWeapon( $"mp_weapon_energy_shotgun" )
-	PrecacheWeapon( $"mp_weapon_lmg" )
-	PrecacheWeapon( $"mp_weapon_lstar" )
-	PrecacheWeapon( $"mp_weapon_mastiff" )
-	PrecacheWeapon( $"mp_weapon_shotgun" )
-	PrecacheWeapon( $"mp_weapon_shotgun_pistol" )
-	PrecacheWeapon( $"mp_weapon_sniper" )
-	PrecacheWeapon( $"mp_weapon_r97" )
-	PrecacheWeapon( $"mp_ability_holopilot" )
-	PrecacheWeapon( $"mp_ability_black_market" )
-	PrecacheWeapon( $"mp_ability_translocation" )
-	PrecacheWeapon( $"mp_weapon_hemlok" )
-	PrecacheWeapon( $"mp_weapon_autopistol" )
-	PrecacheWeapon( $"mp_weapon_wingman" )
-	PrecacheWeapon( $"mp_weapon_thermite_grenade" )
-	PrecacheWeapon( $"mp_weapon_deployable_medic" )
-	PrecacheWeapon( $"mp_ability_grapple" )
-	PrecacheWeapon( $"mp_weapon_vinson" )
-	PrecacheWeapon( $"mp_weapon_pdw" )
-	PrecacheWeapon( $"mp_ability_phase_walk" )
-	PrecacheWeapon( $"mp_ability_3dash" )
-	PrecacheWeapon( $"mp_weapon_phase_tunnel" )
-	PrecacheWeapon( $"mp_weapon_zipline" )
-	PrecacheWeapon( $"mp_ability_area_sonar_scan" )
-	PrecacheWeapon( $"mp_ability_consumable" )
-	PrecacheWeapon( $"mp_weapon_g2" )
-	PrecacheWeapon( $"mp_weapon_grenade_bangalore" )
-	PrecacheWeapon( $"mp_weapon_incap_shield" )
-	PrecacheWeapon( $"mp_ability_care_package" )
-	PrecacheWeapon( $"mp_ability_hunt_mode" )
-	PrecacheWeapon( $"mp_weapon_dirty_bomb" )
-	PrecacheWeapon( $"mp_weapon_energy_ar" )
-	PrecacheWeapon( $"mp_weapon_esaw" )
-	PrecacheWeapon( $"mp_weapon_semipistol" )
-	PrecacheWeapon( $"mp_weapon_frag_grenade" )
-	PrecacheWeapon( $"mp_weapon_rspn101" )
-	PrecacheWeapon( $"mp_weapon_defender" )
-	PrecacheWeapon( $"mp_weapon_jump_pad" )
-	PrecacheWeapon( $"mp_weapon_grenade_creeping_bombardment" )
-	PrecacheWeapon( $"mp_weapon_grenade_defensive_bombardment" )
-	PrecacheWeapon( $"mp_weapon_grenade_sonar" )
-	PrecacheWeapon( $"mp_weapon_grenade_electric_smoke" )
-	PrecacheWeapon( $"mp_weapon_deployable_cover" )
-	PrecacheWeapon( $"mp_weapon_throwingknife" )
-	PrecacheWeapon( $"melee_data_knife" )
-	PrecacheWeapon( $"melee_bolo_sword" )
-	PrecacheWeapon( $"mp_weapon_bolo_sword_primary" )
-	PrecacheWeapon( $"melee_shadowsquad_hands" )
-	PrecacheWeapon( $"mp_weapon_shadow_squad_hands_primary" )	
-	PrecacheWeapon( $"mp_weapon_volt_smg" )
-	PrecacheWeapon( $"npc_weapon_energy_shotgun" )
-	PrecacheWeapon( $"npc_weapon_hemlok" )
-	PrecacheWeapon( $"npc_weapon_lstar" )
-	//PrecacheWeapon( $"mp_weapon_3030" )	
-	
-	// TITANFALL ASSET PRECACHE SECTION - LorryLeKral
-	PrecacheWeapon( $"mp_weapon_epg" )
-	PrecacheWeapon( $"mp_weapon_rocket_launcher" )
-	PrecacheWeapon( $"mp_weapon_softball" )
-	PrecacheWeapon( $"mp_weapon_smr" )
-	PrecacheWeapon( $"mp_weapon_car" )
-	PrecacheWeapon( $"mp_weapon_car_r2" )
-	PrecacheWeapon( $"mp_weapon_mgl" )
-	PrecacheWeapon( $"mp_weapon_pulse_lmg" )
-	PrecacheWeapon( $"mp_weapon_smart_pistol" )
-	PrecacheWeapon( $"mp_weapon_arc_launcher" )
-	PrecacheWeapon( $"mp_weapon_proximity_mine" )
-	PrecacheWeapon( $"sp_weapon_arc_tool" )
-	PrecacheWeapon( $"mp_weapon_wingman_n" )
-	PrecacheWeapon( $"mp_weapon_rspn101_og" )
-	
-	PrecacheWeapon( $"mp_weapon_droneplasma" )//remove these from here later!!! -kral
-	PrecacheWeapon( $"mp_weapon_dronerocket" )
-
-	PrecacheWeapon( $"mp_ability_cloak" )
-	PrecacheWeapon( $"mp_weapon_melee_boxing_ring" )
-	PrecacheWeapon( $"melee_boxing_ring" )
-	PrecacheWeapon( $"mp_ability_silence" )
-	PrecacheWeapon( $"mp_ability_revenant_death_totem" )
-
-	PrecacheModel( $"mdl/Humans/class/medium/pilot_medium_loba.rmdl" )
-	PrecacheModel( $"mdl/Weapons/arms/pov_pilot_medium_loba.rmdl" )
-	PrecacheModel( $"mdl/fx/loba_staff_holo_stand.rmdl" )
-
-	PrecacheModel( $"mdl/dev/empty_model_revenant.rmdl" )
-	PrecacheModel( $"mdl/humans/class/heavy/pilot_heavy_revenant.rmdl" )
-	PrecacheModel( $"mdl/props/revenant_totem/revenant_totem.rmdl" )
-	PrecacheModel( $"mdl/Weapons/arms/pov_pilot_heavy_revenant.rmdl" )
-	PrecacheModel( $"mdl/Weapons/empty_handed/ptpov_revenant_totem.rmdl" )
-	PrecacheModel( $"mdl/Weapons/revenant_grenade/ptpov_revenant_grenade.rmdl" )
-	PrecacheModel( $"mdl/weapons_r5/misc_revenant_grenade/projectile_revenant_grenade.rmdl" )
-
-	PrecacheModel( $"mdl/Weapons/loba_rings/ptpov_loba_rings.rmdl" )
-	PrecacheModel( $"mdl/Weapons/loba_rings/w_loba_rings.rmdl" )
-	PrecacheModel( $"mdl/Weapons/p2011/ptpov_p2011_loba.rmdl" )
-	PrecacheModel( $"mdl/Weapons/p2011/w_p2011_loba.rmdl" )
-	PrecacheModel( $"mdl/Weapons/loba_loot_stick/w_loba_loot_stick.rmdl" )
-	PrecacheModel( $"mdl/Weapons/loba_loot_stick/ptpov_loba_loot_stick.rmdl" )
-	PrecacheModel( $"mdl/props/loba_mirror/loba_mirror.rmdl" )
-	PrecacheModel( $"mdl/props/loba_loot_stick/loba_loot_stick.rmdl" )
-	PrecacheModel( $"mdl/Weapons/p2011/w_p2011_loba_prop_version.rmdl" )
-	
-	//PrecacheModel( $"mdl/robots/spectre/imc_spectre.rmdl" )
-	//PrecacheModel( $"mdl/robots/stalker/robot_stalker.rmdl" )
-	//PrecacheModel( $"mdl/Humans/grunts/imc_grunt_lmg_corpse.rmdl" )
-	PrecacheModel( $"mdl/creatures/prowler/prowler_apex.rmdl" )
-	//PrecacheModel( $"mdl/creatures/spider/spider.rmdl" )
-	
-	PrecacheWeapon( $"mp_weapon_satchel" )
-
 	SV_CL_Shared_Init()
 	ClientCommands_Init()
 	
-	//Server only init for custom stuff
-	switch( GetCurrentPlaylistName() )
-	{
-		case "fs_fallingforever":
-		InitFallingForever()
-		break
-		
-		case "fs_doormovementpractice":
-		door_map_init()
-		break
-		
-		case "fs_grapplemovementpractice":
-		grapplemap_init()
-		break
-		
-		case "fs_mantlejumppractice":
-		mantlejumpmap_init()
-		break
-
-		case "fs_firstmovementmappractice":
-		Firstmap_init()
-		break
-
-		case "fs_gymmovementmappractice":
-		Gymmovementmap_init()
-		break
-
-		case "fs_ithurtsmovementmappractice":
-		ithurtsmap_init()
-		break
-
-		case "fs_strafeitmovementmappractice":
-		strafeitmap_init()
-		break
-
-		
-		case "fs_lgduels_1v1":
-			
-			PrecacheModel( $"mdl/thunderdome/thunderdome_cage_wall_256x256_01.rmdl" )
-			PrecacheModel( $"mdl/imc_base/generator_IMC_01.rmdl" )
-			PrecacheModel( $"mdl/containers/underbelly_cargo_container_128_red_02.rmdl" )
-			PrecacheModel( $"mdl/containers/underbelly_cargo_container_128_blue_02.rmdl" )
-			
-		
-		case "fs_1v1":
-		
-		if( !InvalidModesForTrackScoreBoard.contains( GameRules_GetGameMode() ) ) //prevent mapchange crash
-			thread FS_TrackPlayersPositionInScoreboard()
-		break
-
-		case "fs_rankupmapmovementpractice":
-		rankupmap_init()
-		break
-	}
-	
 	thread FS_RestartServerAfterSomeTimeWithoutPlayers()
 	
-	FS_ResetMapLightning()
+	FS_ResetMapLighting()
 }
 
-const array<string> InvalidModesForTrackScoreBoard = //const values
-[
-	SURVIVAL,
-	MENUFALL,
-	CUSTOM_CTF,
-	TEAM_DEATHMATCH,
-	fs_prophunt,
-	fs_duckhunt,
-	fs_infected	,
-]
+void function PrecacheSDKWeapons()
+{
+	PrecacheWeapon( $"mp_weapon_droneplasma" )//remove these from here later!!! -kral
+	PrecacheWeapon( $"mp_weapon_dronerocket" )
+
+	PrecacheWeapon( $"mp_weapon_melee_boxing_ring" )
+	PrecacheWeapon( $"melee_boxing_ring" ) // Olympus ring
+	
+	PrecacheWeapon( $"npc_weapon_lstar" )
+	PrecacheWeapon( $"npc_weapon_hemlok" )
+	PrecacheWeapon( $"npc_weapon_energy_shotgun" )
+	PrecacheWeapon( $"mp_weapon_spectre_spawner" )
+
+	PrecacheWeapon( $"mp_weapon_mounted_turret_weapon" )
+	PrecacheWeapon( $"mp_weapon_mounted_turret_placeable" )
+	
+	//S0 Dev Protos
+	PrecacheWeapon( $"mp_weapon_cover_wall_proto" )
+	PrecacheWeapon( $"mp_weapon_debris_trap" )
+	PrecacheWeapon( $"mp_weapon_shotgun_kick" )
+	PrecacheWeapon( $"mp_weapon_grenade_flashbang" )
+	PrecacheWeapon( $"mp_weapon_grenade_barrier" )
+	PrecacheWeapon( $"mp_weapon_concussive_breach" )
+	PrecacheWeapon( $"mp_ability_spotter_sight" )
+	PrecacheWeapon( $"mp_ability_split_timeline" )
+	PrecacheWeapon( $"mp_ability_sonic_shout" )
+	PrecacheWeapon( $"mp_ability_riot_shield" )
+	PrecacheWeapon( $"mp_ability_maelstrom_javelin" )
+	PrecacheWeapon( $"mp_ability_loot_compass" )
+	PrecacheWeapon( $"mp_ability_haunt" )
+	PrecacheWeapon( $"mp_ability_ground_slam" )
+	PrecacheWeapon( $"mp_ability_dodge_roll" )
+	//Custom Heirlooms
+	PrecacheWeapon( $"melee_macks_knife" )
+	PrecacheWeapon( $"mp_weapon_macks_knife_primary" )
+
+	//Titanfall Weapons
+	//PrecacheModel( $"mdl/weapons/arms/buddypov.rmdl" )
+	//PrecacheModel( $"mdl/weapons/arms/pov_titan_medium_cockpit.rmdl" )
+	//PrecacheModel( $"mdl/titans/medium/titan_medium_rodeo_battery.rmdl" )
+	//PrecacheWeapon( $"mp_titancore_flight_core" )
+	//PrecacheWeapon( $"mp_titancore_laser_cannon" )
+	PrecacheWeapon( $"mp_titanweapon_flightcore_rockets" ) // Not a loot
+}
+
+void function PrecacheSDKEntities()
+{
+	///////////////////////npcs///////////////////////
+	PrecacheModel( $"mdl/Humans/grunts/imc_grunt_lmg_corpse.rmdl" )
+	PrecacheModel( $"mdl/creatures/prowler/prowler_apex.rmdl" )
+	PrecacheModel( $"mdl/creatures/spider/spider.rmdl" )
+	PrecacheModel( $"mdl/robots/marvin/marvin.rmdl" )
+	PrecacheModel( $"mdl/weapons/sentry_turret/sentry_turret.rmdl" )
+	PrecacheModel( $"mdl/Humans/class/medium/combat_dummie_medium.rmdl" )
+	
+	///////////////////////misc///////////////////////
+	PrecacheModel( $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl")
+	PrecacheModel( $"mdl/communication/terminal_usable_imc_01.rmdl" )
+	//PrecacheModel( $"mdl/titans/buddy/titan_buddy.rmdl" )
+
+	//////////////////////NPC CACHE/////////////////////
+	//PrecacheModel( $"mdl/robots/super_spectre/super_spectre_v1.rmdl")
+
+	////////////////////DELETE THESE PARTICLES WHEN WE GET EFCT!!!!/////////////////////
+
+	PrecacheParticleSystem( $"P_crypto_map_arm_glow" )
+	PrecacheParticleSystem( $"P_crypto_map_center_glow" )
+	PrecacheParticleSystem( $"P_cryp_sat_act_world" )
+	PrecacheParticleSystem( $"P_crypto_map_arm_nrg" )
+	PrecacheParticleSystem( $"P_loba_staff_holo_loop" )
+	PrecacheParticleSystem( $"P_lob_menu_gun_ring" )
+	PrecacheParticleSystem( $"P_loba_staff_menu_dlight" )
+	PrecacheParticleSystem( $"P_lob_menu_gun_grab" )
+	PrecacheParticleSystem( $"P_loba_staff_holo_end_menu" )
+	PrecacheParticleSystem( $"P_lob_menu_hand_glow" )
+	PrecacheParticleSystem( $"P_lob_menu_staff_grab" )
+	PrecacheParticleSystem( $"P_warp_brac_loop_gear" )
+	PrecacheParticleSystem( $"P_warp_brac_loop_gear_3" )
+	PrecacheParticleSystem( $"P_warp_brac_loop_gear_2" )
+	PrecacheParticleSystem( $"P_warp_brac_toss_arm" )
+	PrecacheParticleSystem( $"P_warp_brac_ring_hld" )
+	PrecacheParticleSystem( $"P_mrb_destruction" )
+	PrecacheParticleSystem( $"P_skydive_smoke_shdw" )
+}
 
 void function FS_RestartServerAfterSomeTimeWithoutPlayers()
 {
@@ -643,30 +354,6 @@ void function FS_RestartServerAfterSomeTimeWithoutPlayers()
 		wait 1
 	}
 }
-void function FS_TrackPlayersPositionInScoreboard()
-{
-	array<entity> players
-
-	while( true )
-	{
-		players = GetPlayerArray()
-		players.sort( CompareKills )
-
-		int i = 1
-		foreach( sPlayer in players )
-		{
-			if( !IsValid( sPlayer ) )
-				continue
-			
-			if( i != sPlayer.GetPlayerNetInt( "FSDM_1v1_PositionInScoreboard" ) )
-				sPlayer.SetPlayerNetInt( "FSDM_1v1_PositionInScoreboard", i )
-
-			i++
-		}
-		
-		wait 1
-	}
-}
 
 var function CodeCallback_ClientCommand( entity player, array<string> args )
 {
@@ -688,16 +375,14 @@ var function CodeCallback_ClientCommand( entity player, array<string> args )
 	string commandString = args.remove( 0 )
 	bool bFound = false
 
-	if( commandString in svGlobal.clientCommandCallbacksNew )
+	if( commandString in svGlobal.clientCommandCallbacksVoid )
 	{
 		#if DEVELOPER 
 			printt( "CodeCallback_ClientCommandNew", commandString )
 		#endif
 		
-		foreach ( callbackFunc in svGlobal.clientCommandCallbacksNew[ commandString ] )
-		{
+		foreach ( callbackFunc in svGlobal.clientCommandCallbacksVoid[ commandString ] )
 			callbackFunc( player, args )
-		}
 		
 		bFound = true
 	}
@@ -723,7 +408,7 @@ entity ornull function CreateEditorProp(asset a, vector pos, vector ang, bool ma
 {
 	if(a == $"mdl/humans/class/medium/combat_dummie_medium.rmdl")
 	{
-		thread CreateMovementMapDummieFromMapLoad(pos,ang)
+		thread Safe_CreateMovementMapDummieFromMapLoad(pos,ang)
 		return null
 	}
 	
@@ -735,8 +420,8 @@ entity ornull function CreateEditorProp(asset a, vector pos, vector ang, bool ma
 	if(mantle) e.AllowMantle()
 	e.SetScriptName("editor_placed_prop")
 
-	if(GetCurrentPlaylistVarBool( "flowstateSURF", true ))
-		_OnPropDynamicSpawnedSURF(e)
+	// if(GetCurrentPlaylistVarBool( "flowstateSURF", true ))
+		// _OnPropDynamicSpawnedSURF(e)
 	
 	
 	return e

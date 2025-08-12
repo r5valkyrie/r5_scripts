@@ -15,7 +15,6 @@ global const MARVIN_TYPE_FIREFIGHTER  = 3
 
 function MarvinFaces_Init()
 {
-
 	RegisterSignal( "StopThinking" )
 
 	AddSpawnCallback( "npc_marvin", MarvinSpawnCallback )
@@ -113,10 +112,10 @@ void function MarvinFaceThink( entity marvin )
 
 function MarvinWounded( marvin )
 {
-	marvin.EndSignal( "OnDeath" )
+	/*marvin.EndSignal( "OnDeath" )
 	MarvinSetFace( marvin, "sad" )
 	wait 2.3
-	waitthread MarvinThinksAwhile( marvin, RandomFloatRange( 2, 4 ) )
+	waitthread MarvinThinksAwhile( marvin, RandomFloatRange( 2, 4 ) )*/
 }
 
 void function EntSignals( entity ent, string signal )

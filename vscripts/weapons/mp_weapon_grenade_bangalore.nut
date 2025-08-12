@@ -3,6 +3,7 @@ global function MpWeaponGrenadeBangalore_Init
 global function OnWeaponActivate_weapon_grenade_bangalore
 global function OnProjectileCollision_weapon_grenade_bangalore
 global function OnProjectileIgnite_weapon_grenade_bangalore
+global function OnProjectileIgnite_weapon_grenade_bangalore_single
 global function OnWeaponTossReleaseAnimEvent_weapon_grenade_bangalore
 
 #if CLIENT
@@ -200,6 +201,80 @@ void function OnProjectileIgnite_weapon_grenade_bangalore( entity projectile )
 #endif //SERVER
 }
 
+void function OnProjectileIgnite_weapon_grenade_bangalore_single( entity projectile )
+{
+	#if SERVER
+		const THROW_ANGLE = 65
+
+		entity owner = projectile.GetOwner()
+		if ( !IsValid( owner ) )
+			return
+
+		if ( projectile.IsMarkedForDeletion() )
+			return
+
+		if ( !projectile.proj.isPlanted )
+		{
+			projectile.SetVelocity( <0, 0, 0> )
+			projectile.StopPhysics()
+		}
+
+	entity inflictorHelper = CreateDamageInflictorHelper( 1.0 )
+	inflictorHelper.RemoveFromAllRealms()
+	inflictorHelper.AddToOtherEntitysRealms( projectile )
+
+	vector origin = projectile.GetOrigin()
+	vector normal = projectile.proj.savedSurfaceNormal
+
+	//Clamp Velocity Angles to the surface normal.
+	vector projectileForward = AnglesToForward( projectile.proj.savedAngles )
+	//DebugDrawLine( origin, origin + ( projectileForward * 128.0 ), 0, 255, 255, true, 2 )
+
+	vector projectileRight = AnglesToRight( projectile.proj.savedAngles )
+	//DebugDrawLine( origin, origin + ( projectileRight * 128.0 ), 255, 255, 0, true, 2 )
+
+	vector projectileForwardOnSurf = CrossProduct( projectileRight, normal )
+	if ( LengthSqr( projectileForwardOnSurf ) < 0.1 * 0.1 ) // Projectile right may be very similar to surface normal
+	{
+		// use projectile up instead (because it WILL be very different if projectile right is similar)
+		vector projectileUp = AnglesToUp( projectile.proj.savedAngles )
+		projectileForwardOnSurf = CrossProduct( projectileUp, normal )
+		Assert( LengthSqr( projectileForwardOnSurf ) > 0.1 * 0.1 )
+	}
+	projectileForwardOnSurf = Normalize( projectileForwardOnSurf )
+	//DebugDrawLine( origin, origin + ( projectileForwardOnSurf * 128.0 ), 0, 128, 128, true, 2 )
+
+	vector projectileRightOnSurf = CrossProduct( projectileForwardOnSurf, normal )
+	Assert( IsNormalized( projectileRightOnSurf )  ) // Because the two args are normalized and perpendicular, this should return a normalized value
+	//DebugDrawLine( origin, origin + ( projectileRightOnSurf * 128.0 ), 128, 128, 0, true, 2 )
+
+	vector normalAngles = VectorToAngles( normal )
+
+	array<vector> throwAnglesArray = [ normalAngles ] //, RotateAnglesAboutAxis( normalAngles, projectileForwardOnSurf, THROW_ANGLE ), RotateAnglesAboutAxis( normalAngles, projectileForwardOnSurf, -THROW_ANGLE ) ]
+	//array<vector> colorArray = [ <255,0,0>, <0,255,0>, <0,0,255> ]
+	foreach( index, throwAngles in throwAnglesArray )
+	{
+		vector throwVector = AnglesToForward( throwAngles )
+		//DebugDrawArrow( origin, origin + throwVector * 128, 16, int( colorArray[index].x ), int( colorArray[index].y ), int( colorArray[index].z ), true, 5.0 )
+
+		entity smokeGrenade = Bangalore_CreateSmokeGrenade( origin, normal )
+		smokeGrenade.RemoveFromAllRealms()
+		smokeGrenade.AddToOtherEntitysRealms( projectile )
+		AddToTrackedEnts_Level( smokeGrenade )
+		
+		float throwSpeed = 530
+		if ( index == 0 )
+			throwSpeed = 256
+
+		smokeGrenade.SetVelocity( throwVector * throwSpeed )
+
+		thread Bangalore_DetonateSmokeGrenade( smokeGrenade, owner, inflictorHelper )
+	}
+
+	projectile.Destroy()
+
+#endif //SERVER
+}
 
 #if SERVER
 entity function Bangalore_CreateSmokeGrenade( vector origin, vector normal )
@@ -350,7 +425,7 @@ void function CreateSmokeTrigger( SmokescreenStruct smokescreen, entity smokeGre
 	trigger.SearchForNewTouchingEntity()  // set this to catch an entity in the trigger right away
 
 	#if DEVELOPER
-	DrawAngledBox( origin, smokeGrenade.GetAngles(), <-20, -20, -16>, <200, 280, 150>, 255, 0, 0, true, 15 )
+	//DrawAngledBox( origin, smokeGrenade.GetAngles(), <-20, -20, -16>, <200, 280, 150>, 255, 0, 0, true, 15 )
 	#endif
 
 	EndSignal( trigger, "OnDestroy" )
@@ -577,11 +652,10 @@ void function BangaloreSmokescreenEffectEnabled( entity ent, int statusEffect, b
 
 	thread UpdatePlayerScreenColorCorrection( viewPlayer, statusEffect, file.colorCorrectionGas )
 
-	//Cafe was here. This is chad part of my implementation
 	if ( BangSmokeHighlightsEnabled() )
 	{
 		thread Cafe_SmokesHighlights( ent )
-	}	//CLIENT
+	}
 
 	if ( !viewPlayer.IsTitan() )
 	{

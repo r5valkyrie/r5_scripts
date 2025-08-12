@@ -1,216 +1,1579 @@
-//Made by @CafeFPS and Archtux
-//draft script, move everything to one function, clean up useless shit. CafeFPS
+// very far from retail accurate but kinda usable hover vehicle :D
+// some vars still need tweaking but i need feedback to fix them, this shit will never be 1:1 retail but can be very close
+// By CafeFPS
 
-untyped
+// changelog
+//-camera based rotation
+//-strafing with right/left tilt
+//-improved damping for hoverheight
+//-brake hotkey
+//-horn hotkey
+//-Speedometer
+//-Olympus placed tridents spawn
+//-Trident sounds (some of them)
+//-airAcceleration
+//-retail acceleration
+//-implement climb forces for proper retail behavior (idk)
+//-let it push in 3d space
+//-extreme tweaking
+//-resting/settling
+
+//todo
+//player ejection if trident fall off the map
+//dome, turret, drone and barrels placement
+//trident anims
+//player anims
+//if strafing to the right, player should exit on the right and viceversa
+//add ondamage callback that transmit damage to parented players
+//add on player bleedout and player killed callbacks to kick the player from hover vehicle
+//add VehicleCanUseEntityCallback
+//change all vars to consts (they are not rn due to debugging)
+//camera should follow car angles in non camera based rotation
+
+//fix boost visuals to use original players fov
+//prob rework boost stuff
+//make it check for prop dynamics ground
+//fix trident can climb walls lol
+//fix front tilt with climbing forces( vehicles should follow terrain angles )
+//fix persistent speed when getting out and in ?
 
 global function ShHoverVehicle_Init
+
 #if SERVER
-global function SpawnTridentTest
+global function DEV_TpToTestArea1
 #endif
 
 #if CLIENT
 global function SetupThirdPersonForVehicle
 global function TridentBoost_Visuals
-global function GetPlayerCrosshairOriginRaw
 #endif
 
-const asset MIL_TANK = $"mdl/vehicles_r5/land/mil_tank_paladin_mkv/veh_land_mil_tank_paladin_mkv.rmdl"
-const asset CREEPING_BOMBARDMENT_WEAPON_SMOKESCREEN_FX = $"P_smokescreen_FD"
-const asset CREEPING_BOMBARDMENT_SMOKE_FX = $"P_bBomb_smoke"
+global function HoverVehicle_PlayerIsDriving
 
-const asset TANK_BULLET_SMALL =	$"mdl/weapons/bullets/projectile_20mm.rmdl"
-const asset TANK_BULLET_LARGE =	$"mdl/weapons/bullets/projectile_40mm.rmdl"
-const asset TANK_SMOKE_FX = $"P_dog_w_fire_trail_1"
-const asset TANK_FIRE_FX = $"P_muz_turretplasma_mega"
-const LERP_IN_FLOAT = 0.5
-const TRIDENT_HOVER_HEIGHT = 60
-const WARTHOG_HOVER_HEIGHT = 5
+// Base Physics Constants (Retail Values)
+float gravity = 850
+float goalSpeed = 1000.0 // top speed of the vehicle (hover_vehicle_speed)
+float maxEngineForce = 750.0 // how quickly the vehicle can accelerate (hover_vehicle_acceleration) retail value is 750.0
+float maxUpwardForce = 1500//2000.0
+float extraBrakingForce = 550.0 // extra force available for braking (hover_vehicle_deceleration)
+float powerBrakingForce = 1000.0 // power breaking force (hover_vehicle_deceleration_powerbreaking) // to use with break hotkey?
+float airAcceleration = 250.0 // air acceleration force (hover_vehicle_air_acceleration)
+float maxClimbHeight = 70.0//105.0 //128.0 // max height the vehicle will try to climb, why
+float lookaheadTime = 0.22
+float idleHoverHeight = 44//30// 30//22//44.0//44.0 //44.0
+float pusherAnnoyForce = 900.0//900.0 //900.0 //debug this
+float pusherSize = 2.0//2.0 //20.0 //2.0
+
+// Vehicle Dimensions
+float vehicleLength = 285.0//285.0//285.0 // og140 recommended285
+float vehicleWidth = 80//105.0 //og32 recommended145
+float vehicleHeight = 80//105.0 //og32 recommended105
+
+float hullHeightOffset = 52.5//40.0 //og6.0 recommended52.5
+float hullForwardOffset = 30.0//40.0 //0.0 // Forward/backward hull position offset (positive = forward)
+
+//Pushers
+int pushersRowCount = 5
+int pushersColCount = 2
+
+//Feelers
+bool USE_DISTRIBUTED_FEELERS = true // Set to false for original offset-based feeler positioning
+int feelersRowMaxCount = 12//6//12
+int feelersColCount = 2
+float feelerStartHeightMultiplier = 1.0 // Multiplier of vehicleHeight for feeler start height
+float feelerEndDepthMultiplier = 2.0//2.0 // Multiplier of vehicleHeight for feeler trace depth
+
+// Collision Response Constants
+float collisionBounceFactor = 0.5// 0.6 // Controls horizontal velocity bounce (0.0 = no bounce, 1.0 = full reflection)
+float collisionVerticalDamping = 0.1//0.2 // Controls vertical velocity bounce (lower = less jumping)
+float collisionAngularDamping = 0.1//0.8 // Controls rotational bounce after collision
+
+// Rotation Control Mode
+bool USE_CAMERA_BASED_ROTATION = true // Set to true for camera-based yaw, false for A&D keys
+float goalYawVelocity = 180.0 //90.0 // degrees per second the player can turn
+float maxYawForce = 1400.0 // how responsive is the turning
+
+// Debug Control
+bool ENABLE_HOVER_DEBUG_PRINTS = false // Set to true to see [HOVER DEBUG] console messages
+
+// Lateral Movement Constants (for camera mode)
+float maxLateralSpeed = 1000.0 //840.0 // 420.0 // Max side-to-side speed (half of forward speed)
+float maxLateralForce = 800.0//800.0 // Force for side movement
+float maxLateralTilt = 3.0 // Max tilt angle for strafe (degrees)
+float maxFrontTilt = 3.0 //11.0 //5.0 // Max tilt angle for forward/backward movement (degrees)
+
+float maxBoostSpeed = 2000.0 // Max speed when boosting (hover_vehicle_boost_speed_max)
+float minBoostSpeed = 1200.0 // Min speed when boosting (hover_vehicle_boost_speed_min)
+float BOOST_LOCKOUT_TIME = 25.0 // boost cooldown (hover_vehicle_boost_cooldown)
+float POST_BOOST_WINDOW = 5.0 // 5-second post-boost window
+
+float HORN_LOCKOUT_TIME = 4.0
+float TIME_HOVER_VEHICLE_IS_USABLE_AGAIN = 2.0
+
+float maxClimbAngle = 75.0 // The steepest angle (in degrees) the vehicle will attempt to climb with assist force.
+float climbAssistForce = 2000.0// 450.0 // How much extra force to apply when climbing
+
+// Terrain Response (Optional)
+bool USE_AGGRESSIVE_TERRAIN_RESPONSE = true // Set to true to make pitch/roll follow terrain slope more aggressively
+float AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER_PITCH = 1.5 // Multiplier for terrain gradient influence (e.g., 1.5 makes it 50% more aggressive)
+float AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER_ROLL = 1.1 // Multiplier for terrain gradient influence (e.g., 1.5 makes it 50% more aggressive)
+
+// Magic Constants (previously hardcoded values)
+	float BELOW_TARGET_HEIGHT_CORRECTION_MULTIPLIER = 2.5// 2.5 //2.3 // Multiplier for upward force when vehicle is below its target height
+	float UPWARD_FORCE_DAMPING_FACTOR = 0.9 // Damping factor when upward force is negative
+	
+	float LATERAL_FORCE_AMPLIFIER = 1.1 // Amplifies computed lateral force for better responsiveness
+	float LATERAL_FORCE_UPWARD_INTERFERENCE_FACTOR = 0.0 //0.9 // How much upward force reduces available lateral force, if 0.0 then we can use retail value accel (750.0) was this removed from retail trident?
+	float YAW_RESPONSE_MULTIPLIER = 5.0 // Controls yaw (turning) responsiveness
+	float PITCH_RESPONSE_MULTIPLIER = 100.0 // Controls pitch (nose up/down) responsiveness
+	float ROLL_RESPONSE_MULTIPLIER = 80.0 // Controls roll (left/right tilt) responsiveness
+
+// Speedometer
+bool SPEEDOMETER_KMH = true // If false it will show mph instead
+float SPEEDOMETER_REFRESH_RATE = 0.05
+
+// Model asset
+asset HOVER_VEHICLE_MODEL = $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl"
+bool ENABLE_TRIDENT_ANIMS = false
+string HOVER_VEHICLE_SCRIPTNAME = "flowstate_trident" 
+
+// Debug Draws
+bool PUSHERS_ENABLE_DEBUG_DRAWS = false
+bool FEELERS_ENABLE_DEBUG_DRAWS = false//false
+bool ENABLE_OTHERS_DEBUG_DRAWS = false
+
+struct {
+	#if CLIENT
+	var activeQuickHint2
+	#endif
+} file
 
 void function ShHoverVehicle_Init()
 {
+	if ( !HoverVehiclesAreEnabled() )
+		return
+	
 	#if SERVER
-		PrecacheModel($"mdl/vehicles_r5/land/msc_suv_partum/veh_land_msc_suv_partum_static.rmdl")
-		// PrecacheModel($"mdl/flowstate_custom/warthog.rmdl")
-		// PrecacheModel($"mdl/flowstate_custom/mongoose.rmdl")
-		// PrecacheModel($"mdl/flowstate_custom/banshee.rmdl")
-		PrecacheModel(TANK_BULLET_SMALL)
-		PrecacheModel(TANK_BULLET_LARGE)
-		PrecacheParticleSystem(TANK_FIRE_FX)
-		PrecacheParticleSystem(TANK_SMOKE_FX)
+		PrecacheModel(HOVER_VEHICLE_MODEL)
 		
-		AddClientCommandCallback( "spawntridentatcrosshair", CC_SpawnTrident )
-		//halo vehicles
-		AddClientCommandCallback( "spawnwarthogatcrosshair", CC_SpawnWarthog )
-		AddClientCommandCallback( "spawnmongooseatcrosshair", CC_SpawnMongoose )
-		AddClientCommandCallback( "spawnBansheeatcrosshair", CC_SpawnBanshee )
+		#if DEVELOPER
+		AddClientCommandCallback( "spawntrident", CC_SpawnTrident )
+		AddClientCommandCallback( "hv_set", CC_HoverVehicleSetVar )
+		#endif
 		
 		RegisterSignal("NewTridentAnim")
 		RegisterSignal("StopDriving")
+		RegisterSignal("PlayerStoppedDriving")
+		
+		AddSpawnCallbackEditorClass( "player_vehicle", "hover_vehicle", EditorSpawnCallbackForPlacedHoverVehicle )
+		AddCallback_CanStartCustomWeaponActivity( ACT_VM_WEAPON_INSPECT, CanDriverInspect )
+		
+		// BleedoutState_AddCallback_OnPlayerBleedoutStateChanged( OnPlayerBleedoutStateChanged )
+		// AddCallback_OnPlayerKilled( Vehicle_KickPlayer_OnPlayerKilled )
+	#endif // SERVER
+	
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+	ScriptRegisterNetworkedVariable( "Flowstate_HoverVehicle_IsPlayerDriving", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "Flowstate_HoverVehicle_LastSpeed", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1.0 )
+	
+	#if CLIENT
+		RegisterSignal("StopSpeedometer")
+		RegisterSignal("DestroyHoverVehicleHint")
+		RegisterNetworkedVariableChangeCallback_bool( "Flowstate_HoverVehicle_IsPlayerDriving", OnPlayerDrivingBoolChanged )
+	#endif // CLIENT
+	
+	#if DEVELOPER
+		BOOST_LOCKOUT_TIME = 3.0
+		HORN_LOCKOUT_TIME = 0.25
+	#endif
+	
+	InitVehicleHorn()
+}
+
+void function InitVehicleHorn()
+{
+	#if SERVER
+	AddClientCommandCallback( "hover_vehicle_horn", ClientCommand_VehicleHorn )
+	#endif // SERVER
+
+	#if CLIENT
+	RegisterConCommandTriggeredCallback( "+scriptCommand5", OnPressHornButton )
+	#endif // CLIENT
+}
+
+bool function HoverVehicle_PlayerIsDriving( entity player )
+{
+	if( !IsValid( player ) )
+		return false
+	
+	return player.GetPlayerNetBool( "Flowstate_HoverVehicle_IsPlayerDriving" )
+	
+	// if( IsValid( player.GetParent() ) )
+	// {
+		// return player.GetParent().GetScriptName()  == HOVER_VEHICLE_SCRIPTNAME
+	// }
+	
+	return false
+}
+
+bool function HoverVehiclesAreEnabled()
+{
+	return GetCurrentPlaylistVarBool( "hover_vehicles_enabled", true )
+}
+
+void function EntitiesDidLoad()
+{
+	if ( !HoverVehiclesAreEnabled() ) //|| !HoverVehiclesAreEnabledOnMap() )
+	{
+		HoverVehicle_Shutdown()
+	}
+}
+
+void function HoverVehicle_Shutdown()
+{
+	array<entity> arWalls = GetAllARWalls()
+	foreach( wall in arWalls )
+		wall.Destroy()
+}
+
+array<entity> function GetAllARWalls()
+{
+	return GetEntArrayByScriptName( "vehicle_fence_01" )//GetEntArrayByClassAndTargetname( "func_brush", "vehicle_fence_01" )
+}
+
+entity function GetValidParentOrGrandparentHoverVehicle( entity player )
+{
+	entity parentEnt = player.GetParent()
+	if ( parentEnt.GetScriptName()  == HOVER_VEHICLE_SCRIPTNAME )
+		return parentEnt
+
+	if ( IsValid( parentEnt ) ) //&& parentEnt.IsTurretEnt() )
+	{
+		entity grandEnt = parentEnt.GetParent()
+		if ( grandEnt.GetScriptName()  == HOVER_VEHICLE_SCRIPTNAME )
+			return grandEnt
+	}
+
+	return null
+}
+
+#if CLIENT
+void function OnPressHornButton( entity player )
+{
+	if ( !IsValid( player ) || !IsAlive( player ) )
+		return
+	if ( (player != GetLocalViewPlayer()) || (player != GetLocalClientPlayer()) )
+		return
+
+	if ( IsControllerModeActive() )
+	{
+		if ( TryPingBlockingFunction( player, "quickchat" ) )
+			return
+	}
+
+	if ( !HoverVehicle_PlayerIsDriving( player ) )
+		return
+		
+	player.ClientCommand( "hover_vehicle_horn" )
+}
+
+void function OnPlayerDrivingBoolChanged( entity player, bool old, bool new, bool actuallyChanged )
+{
+	// printw( "OnPlayerDrivingBoolChanged" )
+	if( player != GetLocalClientPlayer() )
+		return
+	
+	if ( new == true )
+	{
+		SetupThirdPersonForVehicle( true )
+		HoverVehicle_DisplayHints( 0 )
+		HoverVehicle_Speedometer_toggle( true )
+	} else
+	{
+		SetupThirdPersonForVehicle( false )
+		HoverVehicle_Speedometer_toggle( false )
+		
+		player.Signal( "DestroyHoverVehicleHint" )
+	}
+}
+
+void function HoverVehicle_DisplayHints( int state )
+{
+	thread function () : (state)
+	{
+		entity player = GetLocalClientPlayer()
+
+		if ( !IsValid( player ) )
+			return
+		
+		string text
+		
+		switch( state )
+		{
+			default:
+			text = "%jump% Exit Hover Vehicle\n%speed% Boost\n%scriptCommand5% Horn\n%attack% Brake"
+			break
+		}
+		
+		player.EndSignal( "OnDestroy" )
+		player.Signal( "DestroyHoverVehicleHint" )
+		player.EndSignal( "DestroyHoverVehicleHint" )
+		
+		HoverVehicle_PermaHint( text )
+		
+		OnThreadEnd(
+			function() : (text)
+			{
+				if(file.activeQuickHint2 != null)
+				{
+					RuiDestroyIfAlive( file.activeQuickHint2 )
+					file.activeQuickHint2 = null
+				}
+			}
+		)
+
+		WaitForever()
+	}()
+}
+
+void function HoverVehicle_PermaHint( string hintText )
+{
+	if(file.activeQuickHint2 != null)
+	{
+		RuiDestroyIfAlive( file.activeQuickHint2 )
+		file.activeQuickHint2 = null
+	}
+
+	file.activeQuickHint2 = CreateFullscreenRui( $"ui/wraith_comms_hint.rpak" )
+
+	RuiSetGameTime( file.activeQuickHint2, "startTime", Time() )
+	RuiSetGameTime( file.activeQuickHint2, "endTime", 9999999 )
+	RuiSetBool( file.activeQuickHint2, "commsMenuOpen", false )
+	RuiSetString( file.activeQuickHint2, "msg", hintText )
+}
+#endif // CLIENT
+
+#if SERVER
+void function EditorSpawnCallbackForPlacedHoverVehicle( entity vehicle )
+{
+	//allow playlists to keep vehicles enabled but ignore all leveled placed ones
+	if ( !HoverVehiclesAreEnabled() || !GetCurrentPlaylistVarBool( "should_spawn_placed_vehicles", true ) )
+	{
+		foreach( ent in vehicle.GetLinkEntArray() )
+		{
+			if ( ent.GetTargetName() == "vehicle_platform" )
+			{
+				ent.Destroy()
+				break
+			}
+		}
+
+		vehicle.Destroy()
+		return
+	}
+	
+	vehicle = SpawnTridentAtOrigin( vehicle.GetOrigin() + <0,0,-100>, vehicle.GetAngles() )
+}
+
+bool function CanDriverInspect( entity player, int activity )
+{
+	if( HoverVehicle_PlayerIsDriving( player ) )
+		return false
+	
+	return true
+}
+
+//HORN
+bool function ClientCommand_VehicleHorn( entity player, array<string> args )
+{
+	if ( !IsValid( player ) || !IsAlive( player ) )
+		return false
+	
+	ClientCommand_VehicleHorn_( player )
+	return true
+}
+
+table<entity, float> s_mapPlayersToHornTimes
+void function ClientCommand_VehicleHorn_( entity player  )
+{
+	if ( !IsAlive( player ) )
+		return
+	entity vehicle = player.GetParent() // GetHoverVehicleDrivenByPlayer( player )
+	if ( !IsValid( vehicle ) || vehicle.GetScriptName() != HOVER_VEHICLE_SCRIPTNAME )
+		return
+
+	// Manage lockout time:
+	{
+		if ( !(player in s_mapPlayersToHornTimes) )
+			s_mapPlayersToHornTimes[player] <- 0.0
+		float timeSinceHorn = (Time() - s_mapPlayersToHornTimes[player])
+		if ( timeSinceHorn < HORN_LOCKOUT_TIME )
+			return
+
+		s_mapPlayersToHornTimes[player] = Time()
+	}
+
+	#if DEVELOPER
+	printf( "%s() - Horn pressed: '%s', '%s'", FUNC_NAME(), string( player ), string( vehicle ) )
+	#endif
+	
+	// Horn sound:
+	EmitSoundOnEntity( vehicle, "HoverVehicle_Horn_Default" )
+}
+
+void function HoverVehicleThink(entity player, entity vehicle)
+{
+	EndSignal( vehicle, "StopDriving")
+	
+	// Read sim struct
+	VehicleSim sim = vehicle.e.simState
+	
+	// FIX: Synchronize simulation state with actual vehicle position
+	// This prevents position/velocity artifacts when re-entering the vehicle
+	vector currentVehiclePos = vehicle.GetOrigin()
+	vector currentVehicleAng = vehicle.GetAngles()
+	
+	#if DEVELOPER
+	float positionDiff = Distance(sim.pos, currentVehiclePos)
+	if (positionDiff > 5.0) // Log if there's significant position desync
+	{
+		printw("[HOVER FIX] Position desync detected: sim.pos=%s, vehicle.pos=%s, diff=%.2f", 
+			sim.pos.tostring(), currentVehiclePos.tostring(), positionDiff)
+	}
+	#endif
+	
+	// Always sync position and angles with the actual vehicle entity
+	sim.pos = currentVehiclePos
+	sim.ang = currentVehicleAng
+	
+	// Reset dynamic state for fresh driving session
+	sim.isEngineStarted = false
+	bool isSettlingDown = false
+	sim.time = 0.0
+	sim.startGametime = Time()
+	sim.vel = <0,0,0>
+	sim.angVel = <0,0,0>
+	
+	OnThreadEnd( function() : ( vehicle, sim, isSettlingDown ) {
+		if ( IsValid( vehicle ) )
+		{
+			if(IsValid(vehicle.e.driverDummy))
+				vehicle.e.driverDummy.Destroy()
+			
+			vehicle.e.driver = null
+			vehicle.e.isBraking = false
+			
+			if ( !sim.isEngineStarted )
+			{
+				StopSoundOnEntity( vehicle, "HoverVehicle_Engine_Loop_3P" )
+				StopSoundOnEntity( vehicle, "HoverVehicle_Engine_Loop_1P" )
+				StopSoundOnEntity( vehicle, "HoverVehicle_Engine_Idle_Loop" )
+			}
+			
+			// vehicle.SetAngularVelocity( 0,0,0 )
+			// vehicle.SetVelocity( <0,0,0> )
+			// if ( !sim.isResting )
+			// {
+				// vehicle.StopPhysics()
+			// }
+			
+			vehicle.ClearBossPlayer()
+			
+			thread function() : ( vehicle )
+			{
+				EndSignal( vehicle, "OnDestroy" )
+				
+				wait TIME_HOVER_VEHICLE_IS_USABLE_AGAIN
+				
+				vehicle.SetUsable()
+				vehicle.SetUsableByGroup("pilot")
+				vehicle.SetUsePrompts("%use% Drive Hover Vehicle", "%use% Drive Hover Vehicle")
+				vehicle.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES  )
+			}()
+		}
+	})
+
+	// Debug rotation mode
+	#if DEVELOPER
+	if (ENABLE_HOVER_DEBUG_PRINTS) {
+		if (USE_CAMERA_BASED_ROTATION)
+			printt("[HOVER DEBUG] Rotation mode: CAMERA-BASED (vehicle follows camera direction)")
+		else
+			printt("[HOVER DEBUG] Rotation mode: A&D KEYS (traditional left/right controls)")
+	}
+	#endif
+
+	vector pusherMins = <-pusherSize / 2.0, -pusherSize / 2.0, -pusherSize>
+	vector pusherMaxs = <pusherSize / 2.0, pusherSize / 2.0, 0.0>
+
+	thread FS_JetWashFX( vehicle )
+
+	while(true)
+	{
+		WaitFrame()
+		
+		if( !IsValid(vehicle) || !IsValid(player) && !isSettlingDown ) 
+			break
+
+		if ( IsValid(player) && player.IsInputCommandHeld(IN_JUMP) )
+		{
+			#if DEVELOPER
+			printw("[HOVER STATE] Player Exit initiated. Beginning SETTLING DOWN phase.")
+			#endif
+			
+			Signal( vehicle, "PlayerStoppedDriving" )
+			
+			isSettlingDown = true
+			entity exitingPlayer = player
+			player = null
+			GetPlayerOutVehicle( exitingPlayer, vehicle )
+		}
+		
+		float dt = 0.022 // Fixed timestep for stable physics
+		float goalSimTime = (Time() - sim.startGametime)
+		
+		if ( goalSimTime - sim.time > 50.0 * dt )
+		{
+			sim.time = goalSimTime - 40.0 * dt // If server lags, don't make it worse
+		}
+
+		bool didStep = false
+		while( sim.time <= goalSimTime )
+		{
+			didStep = true
+			sim.time += dt
+			
+			// Engine management
+			if ( !sim.isEngineStarted && !isSettlingDown )
+			{
+				#if DEVELOPER
+				printw("[HOVER STATE] Engine STARTING")
+				#endif
+				sim.isEngineStarted = true
+				sim.isResting = false
+				sim.engineStartTime = sim.time
+				EmitSoundOnEntity( vehicle, "HoverVehicle_Engine_Start" )
+				EmitSoundOnEntity( vehicle, "HoverVehicle_Engine_Idle_Loop" )
+
+				EmitSoundOnEntityOnlyToPlayer( vehicle, player, "HoverVehicle_Engine_Loop_1P" )
+				EmitSoundOnEntityExceptToPlayer( vehicle, player, "HoverVehicle_Engine_Loop_3P" )
+				
+				thread HandleTridentAnims(vehicle, 2)
+			} else if ( sim.isEngineStarted && isSettlingDown )
+			{
+				#if DEVELOPER
+				printw("[HOVER STATE] Engine SHUTTING DOWN.")
+				#endif
+				// Engine is shutting down
+				sim.isEngineStarted = false
+				StopSoundOnEntity( vehicle, "HoverVehicle_Engine_Start" )
+				EmitSoundOnEntity( vehicle, "HoverVehicle_Engine_Stop" )
+			}
+
+			// if ( sim.isResting )
+			// {
+				// if ( isSettlingDown )
+					// break
+				
+				// continue
+			// }
+
+			// Collision state management
+			if ( sim.didCollide )
+			{
+				if ( !sim.wasColliding )
+				{
+					EmitSoundOnEntity( vehicle, "HoverVehicle_Impact_Light" )
+				}
+				sim.wasColliding = true
+			}
+			else
+			{
+				sim.wasColliding = false
+			}
+
+			vector posPrev = sim.pos
+			vector angPrev = sim.ang
+
+			// External forces (gravity, friction)
+			vector externalAccel = < 0, 0, -gravity >
+			vector externalAngAccel = < 0, 0, 0 >
+			
+			externalAccel -= 0.04 * sim.vel // friction
+			externalAngAccel -= 0.04 * sim.angVel // angular friction
+			
+			#if DEVELOPER
+			if (ENABLE_HOVER_DEBUG_PRINTS)
+			{
+				vector vel2d = <sim.vel.x, sim.vel.y, 0.0>
+				printt(format("[HOVER DEBUG] Pos: %.1f,%.1f,%.1f Vel: %.1f,%.1f,%.1f Speed2D: %.1f", sim.pos.x, sim.pos.y, sim.pos.z, sim.vel.x, sim.vel.y, sim.vel.z, vel2d.Length()))
+			}
+			#endif
+
+			// Input processing
+			vector naiveGoalAccel = <0, 0, 0>
+			bool haveGoal = false
+			vector inputGoalVel = <0, 0, 0>
+			vector inputLateralGoalVel = <0, 0, 0> // For A&D lateral movement in camera mode
+			float lateralInputAmount = 0.0 // Store lateral input for tilt calculation
+			float inputYawGoalVel = 0.0
+
+			if ( IsValid(player) && !isSettlingDown )
+			{
+				haveGoal = true
+				vector inputGoalVelDir = AnglesToForward( sim.ang )
+
+				// Retail Speed Calculation System
+				vector currentHorizontalVel = <sim.vel.x, sim.vel.y, 0.0>
+				float currentSpeed2D = currentHorizontalVel.Length()
+				
+				// Get retail-style target speed based on current state
+				float targetMaxSpeed = GetTargetSpeedForCurrentState(vehicle, currentSpeed2D)
+				float speedRatio = GetSpeedRatio(vehicle, currentSpeed2D)
+				float timeInBoostCooldown = GetTimeInBoostCooldown(vehicle)
+				
+				float inputGoalVelMag = targetMaxSpeed * player.GetInputAxisForward()
+				
+				if ( inputGoalVelMag < 0.0 )
+				{
+					inputGoalVelMag = -inputGoalVelMag
+					inputGoalVelDir = -inputGoalVelDir
+				}
+				inputGoalVel = inputGoalVelDir * inputGoalVelMag
+
+				vector requiredVelChangeToReachInputGoalVel = inputGoalVel - sim.vel
+				vector requiredDirToReachInputGoalDir = Normalize( requiredVelChangeToReachInputGoalVel )
+
+				float force = GraphCapped( Length( requiredVelChangeToReachInputGoalVel ), 0.05, 10.0, 0.0, maxEngineForce )
+				naiveGoalAccel = force * requiredDirToReachInputGoalDir
+
+				if (USE_CAMERA_BASED_ROTATION)
+				{
+					// Camera-based rotation: vehicle yaw follows camera direction
+					vector cameraInfluence = CalculateCameraInfluence(player.CameraAngles(), sim.ang)
+					inputYawGoalVel = cameraInfluence.y // Already in degrees per second
+					
+					// A&D keys for lateral movement in camera mode
+					lateralInputAmount = player.GetInputAxisRight()
+					vector lateralDirection = AnglesToRight( sim.ang ) // Vehicle's right vector
+					inputLateralGoalVel = lateralDirection * lateralInputAmount * maxLateralSpeed
+					
+					if( signum( lateralInputAmount ) == 1 )
+						thread HandleTridentAnims(vehicle, 14)
+					else if( signum( lateralInputAmount ) == -1 )
+						thread HandleTridentAnims(vehicle, 13)
+					
+					#if DEVELOPER
+					if (ENABLE_HOVER_DEBUG_PRINTS)
+						printt(format("[HOVER DEBUG] Camera mode - Yaw: %.1f Lateral: %.1f", inputYawGoalVel, lateralInputAmount))
+					#endif
+				}
+				else
+				{
+					// Traditional A&D key rotation
+					inputYawGoalVel = goalYawVelocity * -player.GetInputAxisRight()
+					inputLateralGoalVel = <0, 0, 0> // No lateral movement in traditional mode
+					#if DEVELOPER
+					if (ENABLE_HOVER_DEBUG_PRINTS && player.GetInputAxisRight() != 0.0)
+						printt(format("[HOVER DEBUG] A&D key rotation: input=%.2f inputYawGoalVel=%.1f", player.GetInputAxisRight(), inputYawGoalVel))
+					#endif
+				}
+			}else
+			{
+				haveGoal = false // No input if player is gone or we are settling
+			}
+
+			// Multi-Pusher Ground Detection System
+			array<entity> ignoreEnts = [vehicle, player]
+			ArrayRemoveInvalid(ignoreEnts)
+			
+			// Use horizontal velocity only (like retail)
+			vector lateralVel = <sim.vel.x, sim.vel.y, 0.0>
+			float speed2d = lateralVel.Length() // Current horizontal speed like retail
+			float hoverHeight = GraphCapped( speed2d, 0.0, goalSpeed, idleHoverHeight, 0.8 * idleHoverHeight )
+
+			float maxTotalGroundPusherForce = maxUpwardForce
+			float groundPusherForce = 0.0
+			
+			#if DEVELOPER
+			if (ENABLE_HOVER_DEBUG_PRINTS)
+				printt(format("[HOVER DEBUG] Hover height: %.1f, Speed2D: %.1f", hoverHeight, speed2d))
+			#endif
+
+			array<vector> pusherRowsMaxHeights
+			array<vector> pusherColsMaxHeights
+
+			// Multi-pusher suspension system
+			float groundPusherZeroDist = hoverHeight * 4.0
+			float groundPusherFullDist = hoverHeight * 0.4
+			
+			pusherRowsMaxHeights.resize( pushersRowCount, <0, sim.pos.z - groundPusherZeroDist, 0> )
+			pusherColsMaxHeights.resize( pushersColCount, <0, sim.pos.z - groundPusherZeroDist, 0> )
+			int pusherCount = pushersRowCount * pushersColCount
+
+			for ( int pusherRow = 0; pusherRow < pushersRowCount; pusherRow++ )
+			{
+				float pusherRowFrac = float( pusherRow ) / float( pushersRowCount - 1 )
+
+				for ( int pusherCol = 0; pusherCol < pushersColCount ; pusherCol++ )
+				{
+					float pusherColFrac = float( pusherCol ) / float( pushersColCount - 1 )
+
+					vector pusherLocalPos = <
+						1.08 * Graph( pusherRowFrac, 0.0, 1.0, -vehicleLength / 2.0, vehicleLength / 2.0 ) + hullForwardOffset,
+						1.05 * Graph( pusherCol, 0.0, 1.0, -vehicleWidth / 2.0, vehicleWidth / 2.0 ),
+						-vehicleHeight / 2.0 + hullHeightOffset
+					>
+					vector startLocalPos = pusherLocalPos + < 0.0, 0.0, vehicleHeight>
+					vector endLocalPos = pusherLocalPos + < 0.0, 0.0, -groundPusherZeroDist>
+
+					vector pusherWorldPos = sim.pos + RotateVector( pusherLocalPos, sim.ang )
+					vector startWorldPos = sim.pos + RotateVector( startLocalPos, sim.ang )
+					vector endWorldPos = sim.pos + RotateVector( endLocalPos, sim.ang )
+
+					TraceResults pusherTrace = TraceHull( startWorldPos, endWorldPos, pusherMins, pusherMaxs, ignoreEnts, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE )
+
+					vector hitPos = pusherTrace.endPos
+					pusherRowsMaxHeights[pusherRow] = <pusherLocalPos.x, max( pusherRowsMaxHeights[pusherRow].y, hitPos.z ), 0>
+					pusherColsMaxHeights[pusherCol] = <pusherLocalPos.y, max( pusherColsMaxHeights[pusherCol].y, hitPos.z ), 0>
+
+					hitPos.z = min( hitPos.z, pusherWorldPos.z )
+
+					float dist = Distance( pusherWorldPos, hitPos )
+					float powerFrac = GraphCapped( dist, groundPusherZeroDist, groundPusherFullDist, 0.0, 1.0 )
+					if ( dist + sim.vel.y * lookaheadTime < 0.0 )
+						powerFrac = 2.0
+					powerFrac *= DotProduct( pusherTrace.surfaceNormal, <0, 0, 1> )
+					groundPusherForce += powerFrac * maxTotalGroundPusherForce / float( pusherCount )
+					
+					#if DEVELOPER
+					if( PUSHERS_ENABLE_DEBUG_DRAWS )
+					{
+						// Show pusher hull size as wireframe box at start position
+						DrawAngledBox( startWorldPos, AnglesCompose( sim.ang, < 0, 0, 0 > ), pusherMins, pusherMaxs, 100, 255, 100, false, 0.1 )
+						
+						// Green sphere at pusher center position
+						DebugDrawSphere( pusherWorldPos, 2.0, 0, 255, 0, false, 0.1 )
+						
+						if ( pusherTrace.fraction < 1.0 )
+							DebugDrawLine( startWorldPos, hitPos, 255, 0, 0, false, 0.1 ) // Red line to hit point
+						else
+							DebugDrawLine( startWorldPos, endWorldPos, 0, 0, 255, false, 0.1 ) // Blue line if no hit
+						
+						// Show force strength with sphere color intensity
+						int forceColor = int(powerFrac * 255)
+						DebugDrawSphere( hitPos, 1.5, forceColor, forceColor, 0, false, 0.1 ) // Yellow-red sphere at ground hit
+					}
+					
+					if(ENABLE_HOVER_DEBUG_PRINTS && pusherRow == 0 && pusherCol == 0) // Debug first pusher only
+						printt(format("[HOVER DEBUG] Pusher[0,0]: size=%.1f dist=%.1f powerFrac=%.2f force=%.1f", pusherSize, dist, powerFrac, powerFrac * maxTotalGroundPusherForce / float( pusherCount )))
+					#endif
+
+					vector annoyForce = pusherTrace.surfaceNormal * powerFrac * pusherAnnoyForce / float( pusherCount )
+					annoyForce.z = 0
+					externalAccel += annoyForce
+				}
+			}
+
+			if ( sim.didCollide )
+			{
+				groundPusherForce = maxTotalGroundPusherForce
+			}
+
+			// Air Acceleration Implementation - Apply reduced acceleration when airborne
+			if ( haveGoal )
+			{
+				// Determine effective max force based on ground contact
+				float groundContactRatio = GraphCapped(groundPusherForce, 0.0, maxTotalGroundPusherForce * 0.3, 0.0, 1.0)
+				float effectiveMaxForce = airAcceleration + (maxEngineForce - airAcceleration) * groundContactRatio
+				
+				// Recalculate naiveGoalAccel with air acceleration consideration
+				vector requiredVelChangeToReachInputGoalVel = inputGoalVel - sim.vel
+				vector requiredDirToReachInputGoalDir = Normalize( requiredVelChangeToReachInputGoalVel )
+				float force = GraphCapped( Length( requiredVelChangeToReachInputGoalVel ), 0.05, 10.0, 0.0, effectiveMaxForce )
+				naiveGoalAccel = force * requiredDirToReachInputGoalDir
+				
+				#if DEVELOPER
+				if (ENABLE_HOVER_DEBUG_PRINTS)
+					printt(format("[AIR ACCELERATION] groundForce=%.1f contactRatio=%.2f effectiveForce=%.1f (air=%.1f ground=%.1f)", 
+						groundPusherForce, groundContactRatio, effectiveMaxForce, airAcceleration, maxEngineForce))
+				#endif
+			}
+
+			// Terrain Prediction System - Advanced Lookahead Feelers with Dynamic Velocity Adaptation
+			
+			// Dynamic lookahead time based on vertical velocity (longer lookahead for fast falls)
+			float verticalSpeed = -sim.vel.z // Positive when falling down
+			float dynamicLookaheadTime = lookaheadTime //+ GraphCapped(verticalSpeed, 0.0, 1500.0, 0.0, 0.4) // Up to 0.4s extra for fast falls
+			
+			// Dynamic feeler depth based on vertical velocity (deeper feelers for fast falls)
+			float dynamicFeelerDepthMultiplier = feelerEndDepthMultiplier //+ GraphCapped(verticalSpeed, 0.0, 1500.0, 0.0, 5.0) // Up to 5x extra depth
+			
+			vector estimatedAccel = externalAccel + naiveGoalAccel
+			vector estimatedVel = sim.vel + estimatedAccel * dynamicLookaheadTime
+			vector estimatedPos = sim.pos + (estimatedVel + 0.5 * estimatedAccel * dynamicLookaheadTime) * dynamicLookaheadTime
+			vector estimatedAng = sim.ang + (sim.angVel + 0.5 * externalAngAccel * dynamicLookaheadTime) * dynamicLookaheadTime
+			estimatedAng.x = 0
+			estimatedAng.z = 0
+			
+			float highestZ = -999999.0
+			float raisedZ = estimatedPos.z - hoverHeight
+			vector climbSurfaceNormal = <0,0,1>
+			
+			#if DEVELOPER
+			if ( ENABLE_HOVER_DEBUG_PRINTS && verticalSpeed > 50.0)
+				printt(format("[FALL DEBUG] vertSpeed=%.1f lookahead=%.2f→%.2f depth=%.1fx→%.1fx", 
+					verticalSpeed, lookaheadTime, dynamicLookaheadTime, feelerEndDepthMultiplier, dynamicFeelerDepthMultiplier))
+			#endif
+
+			// Advanced terrain prediction with multiple feelers
+			// Feelers now use vehicle-relative positioning (like pushers) for proper forward detection even when static
+			for ( int feelerRow = 0; feelerRow < feelersRowMaxCount; feelerRow++ )
+			{
+				// Toggle between distributed and original feeler positioning methods
+				float feelerRowPosition
+				if ( USE_DISTRIBUTED_FEELERS )
+				{
+					// Current method: distributed across vehicle length like pushers
+					float feelerRowFrac = float( feelerRow ) / float( feelersRowMaxCount - 1 )
+					feelerRowPosition = 1.08 * Graph( feelerRowFrac, 0.0, 1.0, -vehicleLength / 2.0, vehicleLength / 2.0 ) + hullForwardOffset
+				}
+				else
+				{
+					// Original method: simple offset from center
+					feelerRowPosition = (feelerRow - 2) * vehicleLength * 0.4
+					
+					// Early exit condition from original (optional optimization)
+					if ( feelerRowPosition > Distance( sim.pos, estimatedPos ) )
+						break
+				}
+
+				for ( int feelerCol = 0; feelerCol < feelersColCount ; feelerCol++ )
+				{
+					float feelerColFrac = float( feelerCol ) / float( feelersColCount - 1 )
+
+					vector feelerLocalPos = <
+						feelerRowPosition, // Position determined by toggle above
+						Graph( feelerCol, 0.0, 1.0, -vehicleWidth / 2.0, vehicleWidth / 2.0 ),
+						-vehicleHeight / 2.0 + hullHeightOffset
+					>
+					vector startLocalPos = feelerLocalPos + < 0.0, 0.0, vehicleHeight * feelerStartHeightMultiplier >
+					vector endLocalPos = feelerLocalPos + < 0.0, 0.0, -vehicleHeight * dynamicFeelerDepthMultiplier>
+
+					vector raisedPos = estimatedPos
+					raisedPos.z = raisedZ + hoverHeight
+
+					vector feelerWorldPos = raisedPos + RotateVector( feelerLocalPos, estimatedAng )
+					vector startWorldPos = raisedPos + RotateVector( startLocalPos, estimatedAng )
+					vector endWorldPos = raisedPos + RotateVector( endLocalPos, estimatedAng )
+
+					TraceResults feelerTrace = TraceLine( startWorldPos, endWorldPos, ignoreEnts, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE ) //this has to be changed to another trace mask if we want to handle prop dynamics
+
+					vector hitPos = feelerTrace.endPos
+
+					#if DEVELOPER
+					if( FEELERS_ENABLE_DEBUG_DRAWS )
+					{
+						// Terrain feeler debug visualization with position-based coloring
+						// Different colors for front vs rear feelers to show distribution
+						int debugColorIntensity = feelerRow < feelersRowMaxCount / 2 ? 255 : 120 // Bright for front, dim for rear
+						DebugDrawSphere( feelerWorldPos, 1.0, 0, debugColorIntensity, 255, false, 0.1 )
+						
+						if ( feelerTrace.fraction < 1.0 && !feelerTrace.startSolid )
+						{
+							// Green line from start to ground hit point
+							DebugDrawLine( startWorldPos, hitPos, 245, 66, 224, false, 0.1 )
+							// Orange sphere at ground detection point
+							DebugDrawSphere( hitPos, 1.5, 255, 165, 0, false, 0.1 )
+						}
+						else
+						{
+							// Red line when no ground detected within range
+							DebugDrawLine( startWorldPos, endWorldPos, 255, 50, 50, false, 0.1 )
+						}
+					}
+					#endif
+
+					if ( !feelerTrace.startSolid )
+					{
+						if ( hitPos.z > highestZ ) // <--- MODIFY THIS CHECK
+						{
+							highestZ = hitPos.z;
+							climbSurfaceNormal = feelerTrace.surfaceNormal; // <--- STORE THE NORMAL
+						}
+						raisedZ = highestZ
+					}
+				}
+			}
+
+			highestZ = min( highestZ, estimatedPos.z + maxClimbHeight * GraphCapped( Length( sim.vel ), 0, goalSpeed, 0.3, 1.0 ) )
+
+			vector goalPos = estimatedPos
+			goalPos.z = highestZ + hoverHeight
+
+			#if DEVELOPER
+			if( ENABLE_OTHERS_DEBUG_DRAWS )
+			{
+				// Terrain prediction system overview visualization
+				// Purple line showing predicted vehicle path
+				DebugDrawLine( sim.pos, estimatedPos, 200, 0, 255, false, 0.1 )
+				
+				// Large cyan sphere at highest detected ground point
+				if (highestZ > -999999.0)
+				{
+					DebugDrawSphere( <estimatedPos.x, estimatedPos.y, highestZ>, 3.0, 0, 255, 255, false, 0.1 )
+					// DebugDrawText( <estimatedPos.x, estimatedPos.y, highestZ + 15>, "HIGHEST", false, 0.1 )
+				}
+				
+				// Large purple sphere at calculated goal hover position
+				DebugDrawSphere( goalPos, 4.0, 255, 0, 255, false, 0.1 )
+				DebugDrawText( goalPos + <0, 0, 10>, "GOAL", false, 0.1 )
+				
+				// White line from current to goal position
+				DebugDrawLine( sim.pos + <0, 0, 10>, goalPos, 255, 255, 255, false, 0.1 )
+				
+				// Show lookahead distance and climb limits
+				vector climbLimitPos = estimatedPos
+				climbLimitPos.z = estimatedPos.z + maxClimbHeight * GraphCapped( Length( sim.vel ), 0, goalSpeed, 0.3, 1.0 )
+				DebugDrawSphere( climbLimitPos, 2.0, 255, 255, 0, false, 0.1 )
+				// DebugDrawText( climbLimitPos + <0, 0, 5>, "CLIMB LIMIT", false, 0.1 )
+			}
+			#endif
+			
+			// Advanced Force-Based Movement and Surface Angle Adaptation
+			vector internalAccel = < 0, 0, 0 >
+			vector internalAngAccel = < 0, 0, 0 >
+
+			if ( sim.isEngineStarted )
+			{
+				float goalHeightChange = (goalPos.z - sim.pos.z) - sim.vel.z * dt * 5.0
+
+				if ( goalHeightChange > 0.0 )
+					goalHeightChange *= BELOW_TARGET_HEIGHT_CORRECTION_MULTIPLIER
+				else
+					goalHeightChange *= 0.3
+
+				float upwardForce = -externalAccel.z + goalHeightChange * (groundPusherForce + externalAccel.z)
+				upwardForce = Clamp( upwardForce, -groundPusherForce, groundPusherForce )
+
+				if ( upwardForce < 0.0 )
+					upwardForce = UPWARD_FORCE_DAMPING_FACTOR * -externalAccel.z
+
+
+				
+				
+				vector vehicleUpVector = AnglesToUp( sim.ang )
+				// internalAccel += upwardForce * <0, 0, 1> // original
+				internalAccel += upwardForce * vehicleUpVector // cafe
+				
+				float dotWithUp = DotProduct( climbSurfaceNormal, <0,0,1> )
+				float slopeAngle = acos( dotWithUp ) * (180 / PI) // Angle in degrees
+				// new cafe
+				{
+					float verticalClimbDifference = goalPos.z - sim.pos.z
+					
+					if ( verticalClimbDifference > 10.0 && speed2d > 50.0 && slopeAngle <= maxClimbAngle )
+					{
+						// 1. Calculate the MAX force available based on our current speed
+						float maxForceFromSpeed = GraphCapped( speed2d, 50.0, maxBoostSpeed, 0.0, climbAssistForce )
+
+						// 2. Calculate the force NEEDED based on the height of the obstacle
+						float forceNeededForClimb = GraphCapped( verticalClimbDifference, 10.0, maxClimbHeight, 0.0, climbAssistForce )
+
+						// 3. Use the SMALLER of the two values for a smooth, responsive force
+						float finalClimbForce = min( maxForceFromSpeed, forceNeededForClimb )
+
+						// Apply the final calculated force in the vehicle's "up" direction
+						internalAccel += vehicleUpVector * finalClimbForce
+						
+						#if DEVELOPER
+						if (ENABLE_HOVER_DEBUG_PRINTS)
+							printt(format("[CLIMB DEBUG] Angle %.1f. Speed: %.1f. Final Force: %.1f", slopeAngle, speed2d, finalClimbForce))
+						#endif
+					}
+				}
+
+				#if DEVELOPER
+				if (ENABLE_HOVER_DEBUG_PRINTS)
+					printt(format("[HOVER DEBUG] Height control: goalHeightChange=%.1f groundPusherForce=%.1f upwardForce=%.1f", goalHeightChange, groundPusherForce, upwardForce))
+				#endif
+
+				if ( haveGoal )
+				{
+					vector lateralGoalVel = inputGoalVel
+					// lateralGoalVel.z = 0 // (cafe) Let the engine push in 3D!
+
+					lateralVel = sim.vel
+					// lateralVel.z = 0 // (cafe) Let the engine push in 3D!
+
+					vector requiredVelChangeToReachLateralGoalVel = lateralGoalVel - lateralVel
+					vector requiredDirToReachInputGoalDir = Normalize( requiredVelChangeToReachLateralGoalVel )
+
+					float computedMaxLateralForce = maxEngineForce + GraphCapped( DotProduct( requiredDirToReachInputGoalDir, -sim.vel ), 0.7, 0.9, 0.0, extraBrakingForce )
+					computedMaxLateralForce -= upwardForce * LATERAL_FORCE_UPWARD_INTERFERENCE_FACTOR
+					// Removed upward force interference: computedMaxLateralForce -= upwardForce * LATERAL_FORCE_UPWARD_INTERFERENCE_FACTOR
+
+					float lateralForce = Length( requiredVelChangeToReachLateralGoalVel )
+					lateralForce *= LATERAL_FORCE_AMPLIFIER
+					lateralForce = Clamp( lateralForce, 0.0, computedMaxLateralForce )
+					internalAccel += lateralForce * requiredDirToReachInputGoalDir
+					
+					// Retail Speed Range Deceleration System
+					vector currentHorizontalVel = <sim.vel.x, sim.vel.y, 0.0>
+					float currentSpeed2D = currentHorizontalVel.Length()
+					float timeInBoostCooldown = GetTimeInBoostCooldown(vehicle)
+					
+					if (!vehicle.e.isBoosting && currentSpeed2D > goalSpeed)
+					{
+						vector decelerationDir = -Normalize(currentHorizontalVel)
+						float decelerationForce = 0.0
+						
+						float maxDisplaySpeed = goalSpeed - 50.0 // 950.0
+						float maxDisplaySpeedBoosted = goalSpeed + (minBoostSpeed * 0.7) // 1840.0
+						
+						if (currentSpeed2D >= maxDisplaySpeedBoosted) // 1840+: Above boost range
+						{
+							// Strong deceleration from extreme speeds
+							float overspeedAmount = currentSpeed2D - maxDisplaySpeedBoosted
+							decelerationForce = extraBrakingForce * 1.5 + (overspeedAmount * 2.0)
+							decelerationForce = Clamp(decelerationForce, extraBrakingForce, extraBrakingForce * 3.0)
+						}
+						else if (currentSpeed2D >= goalSpeed) // 1000-1840: Boost range
+						{
+							// Different behavior based on post-boost window
+							if (timeInBoostCooldown < POST_BOOST_WINDOW)
+							{
+								// Gentle deceleration during 5-second post-boost window
+								float overspeedAmount = currentSpeed2D - goalSpeed
+								decelerationForce = overspeedAmount * 0.4 // Very gentle
+								decelerationForce = Clamp(decelerationForce, 0.0, extraBrakingForce * 0.5)
+							}
+							else
+							{
+								// Normal deceleration after post-boost window
+								float overspeedAmount = currentSpeed2D - goalSpeed
+								decelerationForce = overspeedAmount * 0.8
+								decelerationForce = Clamp(decelerationForce, 0.0, extraBrakingForce)
+							}
+						}
+						else if (currentSpeed2D >= maxDisplaySpeed) // 950-1000: Transition range
+						{
+							// Light deceleration in transition range
+							float overspeedAmount = currentSpeed2D - goalSpeed
+							decelerationForce = overspeedAmount * 0.3
+							decelerationForce = Clamp(decelerationForce, 0.0, extraBrakingForce * 0.4)
+						}
+						
+						internalAccel += decelerationForce * decelerationDir
+					}
+					
+					// Power Braking System
+					if (vehicle.e.isBraking && currentSpeed2D > 5.0)
+					{
+						// vector currentHorizontalVel = <sim.vel.x, sim.vel.y, 0.0>
+						vector brakingDir = -Normalize(currentHorizontalVel)
+						
+						// Apply power braking force (much stronger than normal deceleration)
+						float brakingForce = powerBrakingForce
+						internalAccel += brakingForce * brakingDir
+						
+						thread HandleTridentAnims(vehicle, 3)
+						
+						#if DEVELOPER
+						if (ENABLE_HOVER_DEBUG_PRINTS)
+							printt(format("[HOVER DEBUG] Power braking: speed=%.1f force=%.1f", currentSpeed2D, brakingForce))
+						#endif
+					}
+					
+					// Add lateral movement force (A&D in camera mode)
+					if (USE_CAMERA_BASED_ROTATION && Length( inputLateralGoalVel ) > 0.0)
+					{
+						vector currentLateralVel = sim.vel
+						currentLateralVel.z = 0 // Remove vertical component
+						
+						vector requiredLateralVelChange = inputLateralGoalVel - currentLateralVel
+						vector lateralDir = Normalize( requiredLateralVelChange )
+						
+						float lateralForceNeeded = Length( requiredLateralVelChange )
+						lateralForceNeeded *= 1.0 // Lateral responsiveness multiplier
+						lateralForceNeeded = Clamp( lateralForceNeeded, 0.0, maxLateralForce )
+						
+						internalAccel += lateralForceNeeded * lateralDir
+						
+						#if DEVELOPER
+						if (ENABLE_HOVER_DEBUG_PRINTS)
+							printt(format("[HOVER DEBUG] Lateral strafe: force=%.1f dir=%.1f,%.1f,%.1f", lateralForceNeeded, lateralDir.x, lateralDir.y, lateralDir.z))
+						#endif
+					}
+					
+					#if DEVELOPER
+					if (ENABLE_HOVER_DEBUG_PRINTS)
+						printt(format("[HOVER DEBUG] Lateral control: force=%.1f maxForce=%.1f goalVel=%.1f,%.1f,%.1f", lateralForce, computedMaxLateralForce, lateralGoalVel.x, lateralGoalVel.y, lateralGoalVel.z))
+					#endif
+
+					// Yaw control
+					float yawGoalVel = inputYawGoalVel
+					float requiredYawVelChange = yawGoalVel - sim.angVel.y
+					requiredYawVelChange *= YAW_RESPONSE_MULTIPLIER
+
+					bool isYawBraking = (signum( requiredYawVelChange ) != sim.angVel.y)
+					float computedMaxYawForce = maxYawForce * (1.0 + (isYawBraking ? 0.3 : 0.0))
+					float yawForce = Clamp( requiredYawVelChange, -computedMaxYawForce, computedMaxYawForce )
+					internalAngAccel += <0, yawForce, 0>
+				}
+			}
+
+			// Surface Angle Adaptation using Least Squares Gradient
+			float rawLengthGradient = CalcLeastSquaresGradient( pusherRowsMaxHeights )
+			float rawWidthGradient = CalcLeastSquaresGradient( pusherColsMaxHeights )
+			
+			float lengthGradient = Clamp( 0.7 * atan( -rawLengthGradient ), -45, 45 )
+			float widthGradient = Clamp( 0.5 * atan( rawWidthGradient ), -45, 45 )
+			
+			if (USE_AGGRESSIVE_TERRAIN_RESPONSE)
+			{
+				lengthGradient *= AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER_PITCH
+				widthGradient *= AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER_ROLL
+			}
+			
+			#if DEVELOPER
+			if (ENABLE_HOVER_DEBUG_PRINTS)
+				printt(format("[HOVER DEBUG] Surface adaptation: lengthGrad=%.2f widthGrad=%.2f", lengthGradient, widthGradient))
+			#endif
+			
+			// Pitch control (front/back tilt)
+			float goalDeg = RAD_TO_DEG * lengthGradient
+			float extraTilt = GraphCapped( Length( internalAccel ), 50.0, maxEngineForce - gravity, 0.0, 11.0 ) //original
+			// float extraTilt = GraphCapped( Length( internalAccel ), 50.0, maxEngineForce + gravity, 0.0, maxFrontTilt ) // Fixed: was subtracting gravity (negative range)
+			extraTilt *= DotProduct( Normalize( internalAccel ), AnglesToForward( sim.ang ) )
+			goalDeg += extraTilt
+
+			float requiredDegVelChange = (goalDeg - sim.ang.x) - sim.angVel.x * dt * 8.0
+			requiredDegVelChange *= PITCH_RESPONSE_MULTIPLIER
+
+			bool isDegBraking = (signum( requiredDegVelChange ) != sim.angVel.x)
+			float computedMaxDegForce = 1000.0 * (1.0 + (isDegBraking ? 0.2 : 0.0))
+			float pitchForce = Clamp( requiredDegVelChange, -computedMaxDegForce, computedMaxDegForce )
+			internalAngAccel += <pitchForce, 0.0, 0.0>
+
+			// Roll control (left/right tilt)
+			goalDeg = RAD_TO_DEG * widthGradient
+
+			extraTilt = GraphCapped( Length( internalAccel ), 50.0, maxEngineForce - gravity, 0.0, 7.0 )
+			extraTilt *= DotProduct( Normalize( internalAccel ), AnglesToRight( sim.ang ) )
+			goalDeg += extraTilt
+			
+			// Add lateral strafe tilt (camera mode only)
+			if (USE_CAMERA_BASED_ROTATION && fabs( lateralInputAmount ) > 0.01)
+			{
+				float strafeTilt = lateralInputAmount * maxLateralTilt // Direct input to tilt mapping
+				
+				if( signum(lateralInputAmount) == 1 )
+				{
+					thread HandleTridentAnims(vehicle, 12)
+				} else if( signum(lateralInputAmount) == -1 )
+				{
+					thread HandleTridentAnims(vehicle, 11)
+				}
+				
+				goalDeg += strafeTilt
+				
+				#if DEVELOPER
+				if (ENABLE_HOVER_DEBUG_PRINTS)
+					printt(format("[HOVER DEBUG] Strafe tilt: input=%.2f tilt=%.1f totalGoal=%.1f", lateralInputAmount, strafeTilt, goalDeg))
+				#endif
+			}
+
+			// Calculate required change AFTER all goalDeg modifications
+			requiredDegVelChange = (goalDeg - sim.ang.z) - sim.angVel.z * dt * 8.0
+			requiredDegVelChange *= ROLL_RESPONSE_MULTIPLIER
+
+			isDegBraking = (signum( requiredDegVelChange ) != sim.angVel.x)
+			computedMaxDegForce = 1000.0 * (1.0 + (isDegBraking ? 0.2 : 0.0))
+			float rollForce = Clamp( requiredDegVelChange, -computedMaxDegForce, computedMaxDegForce )
+			internalAngAccel += <0.0, 0.0, rollForce>
+
+			// Advanced Physics Integration
+			vector accel = externalAccel + internalAccel
+			sim.pos += (sim.vel + 0.5 * accel * dt) * dt
+			sim.vel += accel * dt
+
+			vector angAccel = externalAngAccel + internalAngAccel
+			sim.ang += (sim.angVel + 0.5 * angAccel * dt) * dt
+			sim.angVel += angAccel * dt
+			
+			#if DEVELOPER
+			if (ENABLE_HOVER_DEBUG_PRINTS)
+				printt(format("[HOVER DEBUG] Physics integration: totalAccel=%.1f,%.1f,%.1f angAccel=%.1f,%.1f,%.1f", accel.x, accel.y, accel.z, angAccel.x, angAccel.y, angAccel.z))
+			
+			if( ENABLE_OTHERS_DEBUG_DRAWS )
+			{
+				// Goal position for height control (purple sphere)
+				DebugDrawSphere( goalPos, 6.0, 255, 0, 255, false, 0.1 )
+				
+				// Estimated future position (cyan sphere)
+				DebugDrawSphere( estimatedPos, 4.0, 0, 255, 255, false, 0.1 )
+			}
+			#endif
+
+			// Advanced Collision Detection and Response
+			vector maxs = < vehicleHeight / 2.0, vehicleWidth / 2.0, vehicleLength / 2.0 >
+			vector mins = -maxs
+			vector hullUpDir = AnglesToForward( sim.ang )
+			vector hullOffset = <0, 0, hullHeightOffset>
+			TraceResults collTrace = TraceHull( posPrev + hullOffset, sim.pos + hullOffset, mins, maxs, ignoreEnts, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE, hullUpDir )
+
+			if ( collTrace.fraction < 0.99 || collTrace.startSolid )
+			{
+				#if DEVELOPER
+				if (ENABLE_HOVER_DEBUG_PRINTS)
+					printw(format("[HOVER DEBUG] Collision detected: fraction=%.3f startSolid=%s", collTrace.fraction, collTrace.startSolid.tostring()))
+				#endif
+				vector hitNormal = collTrace.surfaceNormal
+				if ( Length( hitNormal ) < 1.0 )
+					hitNormal = -Normalize( sim.vel )
+
+				sim.pos += 1.0 * hitNormal
+
+				if ( sim.isEngineStarted )
+				{
+					vector velReflected = VectorReflectionAcrossNormal( sim.vel, hitNormal )
+					sim.vel = < collisionBounceFactor * velReflected.x, collisionBounceFactor * velReflected.y, collisionVerticalDamping * velReflected.z >
+					sim.angVel = collisionAngularDamping * -sim.angVel
+				}
+				else
+				{
+					#if DEVELOPER
+					printw("[HOVER STATE] Vehicle has come to REST due to collision with engine off.")
+					#endif
+					
+					sim.isResting = true
+				}
+
+				if ( collTrace.startSolid || collTrace.fraction < 0.02 )
+				{
+					if ( Length( collTrace.surfaceNormal ) > 0.0 )
+						sim.pos += 3.0 * collTrace.surfaceNormal
+					// else
+						// PutEntityInSafeSpot( vehicle, null, null, posPrev, sim.pos ) //todo(cafe): remove the need of this
+
+					sim.ang = angPrev
+				}
+				else
+				{
+					sim.pos = LerpVector( posPrev, sim.pos, collTrace.fraction - 0.1 )
+					sim.ang = angPrev
+				}
+
+				if ( !sim.didCollide )
+				{
+					sim.didCollide = true
+				}
+			}
+			else
+			{
+				sim.didCollide = false
+			}
+
+			if ( isSettlingDown && !sim.isResting )
+			{
+				// Grounded check (using groundPusherForce)
+				bool isGrounded = groundPusherForce > 1.0;
+				if ( isGrounded && sim.vel.Length() < 5.0 && sim.angVel.Length() < 5.0 )
+				{
+					#if DEVELOPER
+					printw("[HOVER STATE] Vehicle has come to REST on its own.")
+					#endif
+					
+					sim.isResting = true
+				}
+			}
+		}
+
+		if ( sim.isResting && isSettlingDown )
+		{
+			vehicle.e.simState = sim
+
+			#if DEVELOPER
+				printw("[HOVER STATE] Vehicle is RESTING and SETTLING. Finalizing state.")
+			#endif
+
+			break // Exit the main while(true) loop
+		}
+		
+		// Apply physics simulation results to vehicle
+		if ( didStep )
+		{
+			if( !sim.isResting )
+			{
+				vehicle.NonPhysicsMoveTo( sim.pos, dt * 4.0, 0.0, 0.0 )
+				vehicle.NonPhysicsRotateTo( AnglesCompose( sim.ang, < 0, 0, 0 > ), dt * 4.0, 0.0, 0.0 )
+			}
+
+			#if DEVELOPER
+			// Vehicle hull bounding box  
+			if( ENABLE_OTHERS_DEBUG_DRAWS )
+				DrawAngledBox( sim.pos + < 0, 0, hullHeightOffset >, AnglesCompose( sim.ang, < 0, 0, 0 > ), <-vehicleLength/2.0, -vehicleWidth/2.0, -vehicleHeight/2.0>, <vehicleLength/2.0, vehicleWidth/2.0, vehicleHeight/2.0>, 245, 227, 66, false, 0.1 )
+			#endif
+			
+			// Send speed data to client for speedometer
+			if( IsValid( player ) && Time() > player.p.lastTimeHovercraftSpeedSentToClient + 0.1 )
+			{
+				vector vel2d = <sim.vel.x, sim.vel.y, 0.0>
+				player.SetPlayerNetTime( "Flowstate_HoverVehicle_LastSpeed", vel2d.Length() )
+				player.p.lastTimeHovercraftSpeedSentToClient = Time()
+			}
+		}
+	}
+}
+
+void function FS_JetWashFX(entity vehicle)
+{
+	EndSignal( vehicle, "StopDriving")
+	EndSignal( vehicle, "PlayerStoppedDriving") 
+	
+	while(IsValid(vehicle))
+	{
+		vector start = vehicle.GetOrigin() + vehicle.GetVelocity() * 0.25
+		vector end = start - < 0, 0, 300 >
+		TraceResults downTraceResult = TraceLine( start, end, [vehicle], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+		if ( downTraceResult.fraction < 1.0 )
+		{
+			PlayImpactFXTable( downTraceResult.endPos, vehicle, "dropship_dust" )
+		}
+		
+		wait 0.25
+	}
+}
+
+// Camera-based rotation function that returns desired yaw velocity in degrees per second
+vector function CalculateCameraInfluence(vector cameraAngles, vector vehicleAngles)
+{
+    vector influence = <0, 0, 0>
+
+    // Calculate the difference between the camera and vehicle angles
+    vector angleDiff = cameraAngles - vehicleAngles
+    
+    // Normalize the yaw difference to -180 to 180 range
+    float yawDiff = angleDiff.y
+    while (yawDiff > 180) yawDiff -= 360
+    while (yawDiff < -180) yawDiff += 360
+
+    // Calculate desired yaw velocity based on angle difference
+    // Use a proportional controller: larger difference = faster turning
+    float maxAngleDiff = 45.0 // Maximum angle difference for full turn speed
+    float normalizedDiff = Clamp(yawDiff / maxAngleDiff, -1.0, 1.0)
+    
+    // Return the desired yaw velocity in degrees per second
+    influence.y = normalizedDiff * goalYawVelocity
+
+    return influence
+}
+
+// Retail Speed Calculation System
+float function GetTimeInBoostCooldown(entity vehicle)
+{
+	if (!IsValid(vehicle))
+		return 999.0 // No recent boost
+		
+	float timeSinceBoost = Time() - vehicle.e.lastBoostTime
+	return BOOST_LOCKOUT_TIME - timeSinceBoost
+}
+
+float function GetSpeedRatio(entity vehicle, float speed2d)
+{
+	float timeInBoostCooldown = GetTimeInBoostCooldown(vehicle)
+	
+	// Normal speed ratio (0-950 range)
+	float maxDisplaySpeed = goalSpeed - 50.0 // 950.0
+	float speedRatio = GraphCapped(speed2d, 5.0, maxDisplaySpeed, 0.0, 1.0)
+	
+	// Post-boost window: special speed handling for 5 seconds
+	if ((timeInBoostCooldown < POST_BOOST_WINDOW) && (speedRatio > 0.999))
+	{
+		// Extended speed ratio for boost range (1000-1840)
+		float minDisplaySpeedBoosted = goalSpeed // 1000.0
+		float maxDisplaySpeedBoosted = goalSpeed + (minBoostSpeed * 0.7) // 1840.0
+		speedRatio = 1.0 + GraphCapped(speed2d, minDisplaySpeedBoosted, maxDisplaySpeedBoosted, 0.0, 1.0)
+	}
+	
+	return speedRatio
+}
+
+float function GetTargetSpeedForCurrentState(entity vehicle, float speed2d)
+{
+	float timeInBoostCooldown = GetTimeInBoostCooldown(vehicle)
+	
+	// During active boost: can reach max boost speed
+	if (vehicle.e.isBoosting)
+		return maxBoostSpeed // 2000
+	
+	// Post-boost window (5 seconds): different behavior based on current speed
+	if (timeInBoostCooldown < POST_BOOST_WINDOW)
+	{
+		float maxDisplaySpeedBoosted = goalSpeed + (minBoostSpeed * 0.7) // 1840.0
+		
+		if (speed2d >= maxDisplaySpeedBoosted) // 1840+: Strong deceleration
+			return goalSpeed
+		else if (speed2d >= goalSpeed) // 1000-1840: Gentle deceleration
+			return goalSpeed * 0.9 // Slight reduction
+		else // Below 1000: Normal operation
+			return goalSpeed
+	}
+	
+	// Normal operation: standard speed limits
+	if (speed2d > goalSpeed)
+		return goalSpeed // Decelerate to normal speed
+	else
+		return goalSpeed // Normal acceleration
+		
+	unreachable
+}
+
+// Retail-style boost time tracking functions
+float function HoverVehicle_BoostTimeUntilAvailable(entity vehicle)
+{
+	if (!IsValid(vehicle))
+		return 0.0
+	
+	float timeRemaining = vehicle.e.boostEndTime - Time()
+	return max(0.0, timeRemaining)
+}
+
+bool function HoverVehicle_CanBoost(entity vehicle)
+{
+	if (!IsValid(vehicle))
+		return false
+		
+	return HoverVehicle_BoostTimeUntilAvailable(vehicle) <= 0.0
+}
+
+void function ActualVehicleBoost(entity vehicle, entity player)
+{
+	if( !IsValid(vehicle) ) 
+		return
+	
+	// Initialize boost timing (retail-style)
+	vehicle.e.isBoosting = true
+	vehicle.e.boostEndTime = Time() + BOOST_LOCKOUT_TIME
+	vehicle.e.lastBoostTime = Time() // Track for post-boost window calculations
+	
+	EndSignal( vehicle, "StopDriving" )
+	EndSignal( vehicle, "OnDestroy" )
+
+	OnThreadEnd( function() : ( vehicle ) {
+		if ( IsValid( vehicle ) )
+		{
+			vehicle.e.isBoosting = false
+			
+			#if DEVELOPER
+			// printw("BOOST ENDED")
+			#endif
+		}
+	})
+	
+	Remote_CallFunction_ByRef( player, "TridentBoost_Visuals" )
+	EmitSoundOnEntity( vehicle, "HoverVehicle_Boost" )
+	
+	delaythread( RandomFloatRange( 0.1, 0.15 ) ) PlayBattleChatterLineToSpeakerAndTeam( player, "bc_skydive" )
+	
+	// Retail-style boost: short active period (1.5s), then speed tier deceleration  
+	wait 1.5 // Active boost acceleration period
+	vehicle.e.isBoosting = false
+	
+	// Vehicle maintains speed through speed tier system:
+	// - 1200+: Strong deceleration (boost range)
+	// - 1000-1200: Gentle deceleration (transition range)
+	// - <1000: Normal operation
+	
+	#if DEVELOPER
+	// printw("BOOST ACTIVE PERIOD ENDED - entering speed tier deceleration")
+	#endif
+	
+	// Continue waiting for full cooldown period
+	float remainingCooldown = BOOST_LOCKOUT_TIME - 1.5
+	wait remainingCooldown
+	
+	#if DEVELOPER
+	// printw("BOOST COOLDOWN COMPLETE - can boost again")
 	#endif
 }
 
-#if SERVER
 bool function CC_SpawnTrident( entity player, array<string> args )
 {
-	thread SpawnTridentTest(player)
+    vector origin = GetPlayerCrosshairOrigin( player )
+	origin.z -= 25
+
+	thread SpawnTridentAtOrigin( origin, <0,0,0> )
 	return true	
 }
 
-bool function CC_SpawnWarthog( entity player, array<string> args )
+entity function SpawnTridentAtOrigin( vector origin, vector angles = < 0, 0, 0 > )
 {
-	thread SpawnWarthogTest(player)
-	return true	
-}
+	entity vehicle = CreateEntity( "script_mover" )
+	vehicle.SetScriptName( HOVER_VEHICLE_SCRIPTNAME )
+	vehicle.SetValueForModelKey( HOVER_VEHICLE_MODEL )
+	vehicle.SetOrigin( origin + < 0, 0, 5> )
+	vehicle.kv.SpawnAsPhysicsMover = 0
+	vehicle.kv.solid = 6
+	vehicle.SetAngles( angles )
+	DispatchSpawn( vehicle )
+	
+	vehicle.SetUsable()
+	vehicle.SetUsableByGroup("pilot")
+	vehicle.SetUsePrompts("%use% Drive Hover Vehicle", "%use% Drive Hover Vehicle")
+	vehicle.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
+	AddCallback_OnUseEntity(vehicle, OnUseCar)
+	
+	vehicle.kv.fadedist = -1.0
+	
+	vehicle.DisableHibernation()
+	vehicle.SetAimAssistAllowed( true )
+	vehicle.SetOwner( null )
+	vehicle.SetTouchTriggers( true )
+	SetVisibleEntitiesInConeQueriableEnabled( vehicle, true )
+	vehicle.EnableAttackableByAI( AI_PRIORITY_NO_THREAT, 0, AI_AP_FLAG_NONE )
+	
+	vehicle.SetForceVisibleInPhaseShift( true )
 
-bool function CC_SpawnMongoose( entity player, array<string> args )
-{
-	thread SpawnMongooseTest(player)
-	return true	
-}
+	vehicle.SetMaxHealth( 500 )
+	vehicle.SetHealth( 500 )
+	vehicle.SetTakeDamageType( DAMAGE_YES )
+	vehicle.SetBlocksRadiusDamage( false )
+	vehicle.SetCanBeMeleed( true )
+	vehicle.SetDamageNotifications( false )
+	vehicle.SetDeathNotifications( false )
+	
+	SetTeam( vehicle, TEAM_UNASSIGNED )
+	
+	// AddEntityCallback_OnDamaged( vehicle, HoverVehicleOnDamaged )
+	// AddEntityCallback_OnKilled( vehicle, OnVehicleKilled )	
+	
+	// Initialize boost system
+	vehicle.e.isBoosting = false
+	vehicle.e.lastBoostTime = 0.0 // No recent boost on spawn
+	
+	// Initialize braking system
+	vehicle.e.isBraking = false
 
-void function SpawnTridentTest(entity player)
-{
-    vector origin = GetPlayerCrosshairOrigin( player )
-	origin.z -= 25
-	vector angles = Vector(0,0,0)
-
-	entity physics = CreateEntity( "prop_physics" )
-	physics.SetValueForModelKey( $"mdl/vehicles_r5/land/msc_suv_partum/veh_land_msc_suv_partum_static.rmdl" )
-	physics.kv.rendercolor = "255 255 255"
-	physics.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS
-	physics.kv.spawnflags = 4
-	physics.kv.fadedist = -1
-	physics.kv.physdamagescale = 0.1
-	physics.kv.inertiaScale = 1.0
-	physics.kv.renderamt = 255
-	physics.kv.rendercolor = "255 255 255"
-	physics.kv.solid = SOLID_VPHYSICS
-	physics.SetOrigin( origin )
-	physics.SetAngles( angles )
-	DispatchSpawn( physics )
-
-	physics.PhysicsSetDamping(0,0)
-	physics.PhysicsSetFriction(0)
-	physics.StopPhysics()
+	VehicleSim newSim
+	newSim.startGametime = 0.0
+	newSim.time = 0.0
+	newSim.pos = origin
+	newSim.vel = <0,0,0>
+	newSim.ang = angles
+	newSim.angVel = <0,0,0>
+	newSim.isEngineStarted = false // Engine is OFF by default
+	newSim.engineStartTime = 0.0
+	newSim.didCollide = false
+	newSim.wasColliding = false
+	newSim.isResting = true // The vehicle starts at rest
 	
-	physics.SetModel($"mdl/vehicles_r5/land/msc_suv_partum/veh_land_msc_suv_partum_static.rmdl")
-	physics.SetValueForModelKey( $"mdl/vehicles_r5/land/msc_suv_partum/veh_land_msc_suv_partum_static.rmdl" )
-	physics.Hide()
+	vehicle.e.simState = newSim
 	
-	entity trident = CreateEntity( "prop_dynamic" )
-    trident.SetValueForModelKey( $"mdl/vehicles_r5/land/msc_suv_partum/veh_land_msc_suv_partum_static.rmdl" )
-	trident.kv.fadedist = 10000
-	trident.kv.renderamt = 255
-    trident.SetOrigin(physics.GetOrigin())
-    trident.SetAngles(Vector(0,90,90))
-	DispatchSpawn( trident )
-	trident.SetParent(physics)
+	thread HandleTridentAnims(vehicle, 8)
 	
-	trident.e.physicsCar = physics
-	
-	trident.SetUsable()
-	trident.SetUsableByGroup("pilot")
-	trident.SetUsePrompts("%use% Drive Trident", "%use% Drive Trident")
-	trident.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	AddCallback_OnUseEntity(trident, OnUseCar)	
-}
-
-void function SpawnWarthogTest(entity player)
-{
-    vector origin = GetPlayerCrosshairOrigin( player )
-	origin.z -= 25
-	vector angles = Vector(0,0,0)
-
-	entity physics = CreateEntity( "prop_physics" )
-	physics.SetValueForModelKey( $"mdl/flowstate_custom/warthog.rmdl" )
-	physics.kv.rendercolor = "255 255 255"
-	physics.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS
-	physics.kv.spawnflags = 4
-	physics.kv.fadedist = -1
-	physics.kv.physdamagescale = 10.0
-	physics.kv.inertiaScale = 10.0
-	physics.kv.renderamt = 255
-	physics.kv.rendercolor = "255 255 255"
-	physics.kv.solid = SOLID_VPHYSICS
-	physics.SetOrigin( origin )
-	physics.SetAngles( angles )
-	DispatchSpawn( physics )
-
-	physics.PhysicsSetDamping(5,5)
-	physics.PhysicsSetFriction(10)
-	physics.kv.gravity = 2.5
-	//physics.StopPhysics()
-	
-	// physics.SetModel($"mdl/flowstate_custom/warthog.rmdl")
-	// physics.SetValueForModelKey( $"mdl/flowstate_custom/warthog.rmdl" )
-	//physics.Hide()
-	
-	entity trident = physics
-	// CreateEntity( "prop_dynamic" )
-    // trident.SetValueForModelKey( $"mdl/flowstate_custom/warthog.rmdl")
-	// trident.kv.fadedist = 10000
-	// trident.kv.renderamt = 255
-    // trident.SetOrigin(physics.GetOrigin())
-    // trident.SetAngles(Vector(0,0,0))
-	// DispatchSpawn( trident )
-	// trident.SetParent(physics)
-	
-	trident.e.physicsCar = physics
-	
-	trident.SetUsable()
-	trident.SetUsableByGroup("pilot")
-	trident.SetUsePrompts("%use% Drive Warthog", "%use% Drive Warthog")
-	trident.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	AddCallback_OnUseEntity(trident, OnUseWarthog)	
-}
-
-void function SpawnMongooseTest(entity player)
-{
-    vector origin = GetPlayerCrosshairOrigin( player )
-	origin.z -= 25
-	vector angles = Vector(0,0,0)
-
-	entity physics = CreateEntity( "prop_physics" )
-	physics.SetValueForModelKey( $"mdl/flowstate_custom/mongoose.rmdl" )
-	physics.kv.rendercolor = "255 255 255"
-	physics.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS
-	physics.kv.spawnflags = 4
-	physics.kv.fadedist = -1
-	physics.kv.physdamagescale = 10.0
-	physics.kv.inertiaScale = 10.0
-	physics.kv.renderamt = 255
-	physics.kv.rendercolor = "255 255 255"
-	physics.kv.solid = SOLID_VPHYSICS
-	physics.SetOrigin( origin )
-	physics.SetAngles( angles )
-	DispatchSpawn( physics )
-
-	physics.PhysicsSetDamping(5,5)
-	physics.PhysicsSetFriction(10)
-	physics.kv.gravity = 2.5
-	//physics.StopPhysics()
-	
-	// physics.SetModel($"mdl/flowstate_custom/warthog.rmdl")
-	// physics.SetValueForModelKey( $"mdl/flowstate_custom/warthog.rmdl" )
-	//physics.Hide()
-	
-	entity trident = physics
-	// CreateEntity( "prop_dynamic" )
-    // trident.SetValueForModelKey( $"mdl/flowstate_custom/warthog.rmdl")
-	// trident.kv.fadedist = 10000
-	// trident.kv.renderamt = 255
-    // trident.SetOrigin(physics.GetOrigin())
-    // trident.SetAngles(Vector(0,0,0))
-	// DispatchSpawn( trident )
-	// trident.SetParent(physics)
-	
-	trident.e.physicsCar = physics
-	
-	trident.SetUsable()
-	trident.SetUsableByGroup("pilot")
-	trident.SetUsePrompts("%use% Drive Mongoose", "%use% Drive Mongoose")
-	trident.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	AddCallback_OnUseEntity(trident, OnUseMongoose)	
+	return vehicle
 }
 
 void function OnUseCar(entity trident, entity user, int input)
@@ -218,1162 +1581,178 @@ void function OnUseCar(entity trident, entity user, int input)
 	if(IsValid(trident.e.driver))
 		return
 
-	thread GetPlayerInVehicle(user, trident.e.physicsCar, trident)
+	thread GetPlayerInVehicle(user, trident)
 
 }
 
-void function OnUseWarthog(entity trident, entity user, int input)
+void function GetPlayerInVehicle( entity player, entity trident )
 {
-	if(IsValid(trident.e.driver))
+	if( IsValid(trident.e.driver) )
 		return
-
-	thread GetPlayerInWarthog(user, trident.e.physicsCar, trident)
-
-}
-
-void function OnUseMongoose(entity trident, entity user, int input)
-{
-	if(IsValid(trident.e.driver))
-		return
-
-	thread GetPlayerInMongoose(user, trident.e.physicsCar, trident)
-
-}
-
-void function GetPlayerInVehicle( entity player, entity vehicle, entity trident )
-{
-	if(IsValid(trident.e.driver))
-		return
-
+	
+	trident.e.physicsCar = trident
 	trident.e.driver = player
-	vehicle.SetPhysics(MOVETYPE_VPHYSICS) 
-	RemoveCallback_OnUseEntity(trident, OnUseCar)
+	
 	trident.RemoveUsableValue(USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
 	trident.UnsetUsable()
 	
-	vector forward = vehicle.GetForwardVector()
+	player.ForceStand()
+	HolsterAndDisableWeapons( player )
+
+	vector forward = trident.GetForwardVector()
 
 	vector tempOffset = <0 , 0, 20>
 	vector offset = RotateVector(tempOffset, VectorToAngles(forward))
-	player.SetOrigin(vehicle.GetOrigin() + offset)
-	player.Hide()
-
-	entity dummy = CreateEntity( "prop_dynamic" )
-    dummy.SetValueForModelKey( player.GetModelName() )
-    dummy.SetOrigin(vehicle.GetOrigin())
-    dummy.SetAngles(vehicle.GetAngles())
-	DispatchSpawn( dummy )
-	dummy.SetParent( trident ) //, "driver" )
-	//dummy.SetParent( trident, "driver" )
-	// thread HandleTridentAnims(trident, 8)
-	vehicle.e.driverDummy = dummy
-	thread HandlePlayerAnims(dummy, RandomInt(3))
+	player.SetOrigin(trident.GetOrigin() + offset)
 	
-	player.SetAngles(vehicle.GetAngles())
-	player.SetParent(vehicle)
+	thread HandleTridentAnims(trident, 9)
+	// player.Hide()
 
-	thread DriveVehicle(player, vehicle, trident)
-	thread HandleAngularVelocity(player, vehicle, trident)
-	thread HoverVehicle(player, vehicle, trident)
+	// entity dummy = CreateEntity( "prop_dynamic" )
+    // dummy.SetValueForModelKey( player.GetModelName() )
+    // dummy.SetOrigin(vehicle.GetOrigin())
+    // dummy.SetAngles(vehicle.GetAngles())
+	// DispatchSpawn( dummy )
+	// dummy.SetParent( trident )
+	
+	// vehicle.e.driverDummy = dummy
+	// thread HandlePlayerAnims(dummy, RandomInt(3))
+	
+	player.SetAngles(trident.GetAngles())
+	player.SetParent(trident)
+ 
+	thread HoverVehicleThink(player, trident)
 	
 	trident.SetOwner(player)
 
-	player.SetThirdPersonShoulderModeOn() 	
+	player.SetThirdPersonShoulderModeOn()
+ 	
+	player.SetPlayerNetBool( "Flowstate_HoverVehicle_IsPlayerDriving", true )
 	
-	Remote_CallFunction_NonReplay( player, "SetupThirdPersonForVehicle", true)
-	
-	wait 2.0
-	
-	if(!IsValid(trident)) return
-	
-	trident.SetUsable()
-	trident.SetUsableByGroup("pilot")
-	trident.SetUsePrompts("%use% Exit Trident \n %speed% Boost", "%use% Exit Trident \n %speed% Boost")
-	trident.AddUsableValue( USABLE_BY_OWNER )
-	AddCallback_OnUseEntity(trident, OnUnuseCar)
+	// AddButtonPressedPlayerInputCallback( player, IN_JUMP, GetOutVehicle )
+	AddButtonPressedPlayerInputCallback( player, IN_SPEED, VehicleBoost )
+	AddButtonPressedPlayerInputCallback( player, IN_ATTACK, VehicleBreak )
+	AddButtonReleasedPlayerInputCallback( player, IN_ATTACK, VehicleBreakRelease )
 }
 
-void function GetPlayerInMongoose( entity player, entity vehicle, entity trident )
+void function VehicleBreak( entity player )
 {
-	vector vUp = vehicle.GetUpVector()
-	vector up = <0,0,1>
+	entity vehicle = player.GetParent()
+	
+	if( !IsValid( vehicle ) )
+		return
+	
+	if( vehicle.e.driver != player )
+		return
+	
+	// Set braking state for physics simulation to use
+	vehicle.e.isBraking = true
+	
+	// Visual and audio feedback
+	EmitSoundOnEntity( vehicle, "HoverVehicle_AirBrakes" )
+	
+	#if DEVELOPER
+	if (ENABLE_HOVER_DEBUG_PRINTS)
+		printt("[HOVER DEBUG] Power braking activated")
+	#endif
+}
 
-	// angle 
-	float ang = acos( (up.x * vUp.x + up.y * vUp.y + up.z * vUp.z) /  (sqrt( up.x * up.x + up.y * up.y + up.z * up.z) * sqrt( vUp.x * vUp.x + vUp.y * vUp.y + vUp.z * vUp.z)))
+void function VehicleBreakRelease( entity player )
+{
+	entity vehicle = player.GetParent()
+	
+	if( !IsValid( vehicle ) )
+		return
+	
+	if( vehicle.e.driver != player )
+		return
+	
+	// Release braking state
+	vehicle.e.isBraking = false
+	
+	#if DEVELOPER
+	if (ENABLE_HOVER_DEBUG_PRINTS)
+		printt("[HOVER DEBUG] Power braking released")
+	#endif
+}
 
-	print(ang)
-
-	if (ang > (3.14 / 2))
+void function VehicleBoost( entity player )
+{
+	entity vehicle = player.GetParent()
+	
+	if( !IsValid( vehicle ) )
+		return
+	
+	if( vehicle.e.driver != player )
+		return
+	
+	// Use retail-style boost timing system
+	float timeUntilBoost = HoverVehicle_BoostTimeUntilAvailable(vehicle)
+	bool canBoost = HoverVehicle_CanBoost(vehicle)
+	
+	#if DEVELOPER
+	// printw(format("BOOST REQUEST: canBoost=%s timeLeft=%.1f boostEndTime=%.1f currentTime=%.1f", 
+		// canBoost.tostring(), timeUntilBoost, vehicle.e.boostEndTime, Time()))
+	#endif
+	
+	if(canBoost)
 	{
-		print("resetting pos")
-		ResetPos(vehicle, false)
+		thread ActualVehicleBoost(vehicle, player)
+	} else {
+		EmitSoundOnEntity( vehicle, "HoverVehicle_Boost_NotReady" )
+		
+		#if DEVELOPER
+		// printw("Boost not ready - " + timeUntilBoost.tostring() + "s remaining")
+		#endif
 	}
-	
-	if(IsValid(trident.e.driver))
-		return
-
-	trident.e.driver = player
-	vehicle.SetPhysics(MOVETYPE_VPHYSICS) 
-	RemoveCallback_OnUseEntity(trident, OnUseMongoose)
-	trident.RemoveUsableValue(USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	trident.UnsetUsable()
-	
-	vector forward = vehicle.GetForwardVector()
-
-	vector tempOffset = <0 , 0, 20>
-	vector offset = RotateVector(tempOffset, VectorToAngles(forward))
-	player.SetOrigin(vehicle.GetOrigin() + offset)
-	player.Hide()
-
-	entity dummy = CreateEntity( "prop_dynamic" )
-    dummy.SetValueForModelKey( player.GetModelName() )
-    dummy.SetOrigin(vehicle.GetOrigin())
-    dummy.SetAngles(vehicle.GetAngles())
-	DispatchSpawn( dummy )
-	dummy.SetParent(trident)//, "ORIGIN")
-	//thread HandleTridentAnims(trident, 8)
-	vehicle.e.driverDummy = dummy
-	thread HandlePlayerAnims(dummy, RandomInt(3))
-	
-	player.SetAngles(vehicle.GetAngles())
-	player.SetParent(vehicle)
-
-	thread DriveMongoose(player, vehicle, trident)
-	thread HandleAngularVelocity(player, vehicle, trident)
-	
-	thread HandleWarthogGravity(player, vehicle, trident)
-	
-	trident.SetOwner(player)
-	
-	player.SetThirdPersonShoulderModeOn() 	
-	
-	Remote_CallFunction_NonReplay( player, "SetupThirdPersonForVehicle", true)
-	
-	wait 2.0
-	
-	if(!IsValid(trident)) return
-	
-	trident.SetUsable()
-	trident.SetUsableByGroup("pilot")
-	trident.SetUsePrompts("%use% Exit Mongoose \n %speed% Boost", "%use% Exit Mongoose \n %speed% Boost")
-	trident.AddUsableValue( USABLE_BY_OWNER )
-	AddCallback_OnUseEntity(trident, OnUnuseMongoose)
 }
 
-void function GetPlayerInWarthog( entity player, entity vehicle, entity trident )
+void function GetOutVehicle(entity player)
 {
-	vector vUp = vehicle.GetUpVector()
-	vector up = <0,0,1>
-
-	// angle 
-	float ang = acos( (up.x * vUp.x + up.y * vUp.y + up.z * vUp.z) /  (sqrt( up.x * up.x + up.y * up.y + up.z * up.z) * sqrt( vUp.x * vUp.x + vUp.y * vUp.y + vUp.z * vUp.z)))
-
-	print(ang)
-
-	if (ang > (3.14 / 2))
-	{
-		print("resetting pos")
-		ResetPos(vehicle, false)
-	}
+	// entity vehicle = player.GetParent()
 	
-	if(IsValid(trident.e.driver))
-		return
-
-	trident.e.driver = player
-	vehicle.SetPhysics(MOVETYPE_VPHYSICS) 
-	RemoveCallback_OnUseEntity(trident, OnUseWarthog)
-	trident.RemoveUsableValue(USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	trident.UnsetUsable()
+	// if( !IsValid( vehicle ) )
+		// return
 	
-	vector forward = vehicle.GetForwardVector()
-
-	vector tempOffset = <0 , 0, 20>
-	vector offset = RotateVector(tempOffset, VectorToAngles(forward))
-	player.SetOrigin(vehicle.GetOrigin() + offset)
-	player.Hide()
-
-	entity dummy = CreateEntity( "prop_dynamic" )
-    dummy.SetValueForModelKey( player.GetModelName() )
-    dummy.SetOrigin(vehicle.GetOrigin())
-    dummy.SetAngles(vehicle.GetAngles())
-	DispatchSpawn( dummy )
-	dummy.SetParent(trident)//, "ORIGIN")
-	//thread HandleTridentAnims(trident, 8)
-	vehicle.e.driverDummy = dummy
-	thread HandlePlayerAnims(dummy, RandomInt(3))
+	// if( vehicle.e.driver != player )
+		// return
 	
-	player.SetAngles(vehicle.GetAngles())
-	player.SetParent(vehicle)
-
-	thread DriveWarthog(player, vehicle, trident)
-	thread HandleAngularVelocity(player, vehicle, trident)
-	
-	thread HandleWarthogGravity(player, vehicle, trident)
-	
-	trident.SetOwner(player)
-	
-	player.SetThirdPersonShoulderModeOn() 	
-	
-	Remote_CallFunction_NonReplay( player, "SetupThirdPersonForVehicle", true)
-	
-	wait 2.0
-	
-	if(!IsValid(trident)) return
-	
-	trident.SetUsable()
-	trident.SetUsableByGroup("pilot")
-	trident.SetUsePrompts("%use% Exit Warthog \n %speed% Boost", "%use% Exit Warthog \n %speed% Boost")
-	trident.AddUsableValue( USABLE_BY_OWNER )
-	AddCallback_OnUseEntity(trident, OnUnuseWarthog)
+	// thread GetPlayerOutVehicle(player, vehicle)
 }
 
-void function OnUnuseCar(entity trident, entity user, int input)
+void function GetPlayerOutVehicle( entity player, entity vehicle )
 {
-	thread GetPlayerOutVehicle(user, trident.e.physicsCar, trident)
-}
-
-void function OnUnuseWarthog(entity trident, entity user, int input)
-{
-	thread GetPlayerOutOfWarthog(user, trident.e.physicsCar, trident)
-}
-
-void function OnUnuseMongoose(entity trident, entity user, int input)
-{
-	thread GetPlayerOutOfMongoose(user, trident.e.physicsCar, trident)
-}
-
-void function GetPlayerOutVehicle( entity player, entity vehicle, entity trident )
-{
+	// RemoveButtonPressedPlayerInputCallback( player, IN_JUMP, GetOutVehicle )
+	RemoveButtonPressedPlayerInputCallback( player, IN_SPEED, VehicleBoost )
+	RemoveButtonPressedPlayerInputCallback( player, IN_ATTACK, VehicleBreak )
+	RemoveButtonReleasedPlayerInputCallback( player, IN_ATTACK, VehicleBreakRelease )
+	
 	// leaving car
 	vector side = vehicle.GetRightVector()
 	player.SetOrigin(vehicle.GetOrigin() + < 0, 0, 100>  - side * 75)
 	player.SetThirdPersonShoulderModeOff() 	
 	player.Show()
 	player.ClearParent()
-	Signal(vehicle, "StopDriving")
-	RemoveCallback_OnUseEntity(trident, OnUnuseCar)
-	// thread HandleTridentAnims(trident, 7)
-	trident.e.driver = null
-	Remote_CallFunction_NonReplay( player, "SetupThirdPersonForVehicle", false)
-	wait 2.0
+
+	DeployAndEnableWeapons( player )
+	player.UnforceStand()
 	
-	if(!IsValid(trident)) return
-	AddCallback_OnUseEntity(trident, OnUseCar)
+	// Signal(vehicle, "StopDriving")
+	
+	// RemoveCallback_OnUseEntity(vehicle, OnUnuseCar)
+	thread HandleTridentAnims(vehicle, 7)
+	
+	player.SetPlayerNetBool( "Flowstate_HoverVehicle_IsPlayerDriving", false )
 }
-
-void function GetPlayerOutOfWarthog( entity player, entity vehicle, entity trident )
-{
-	// leaving car
-	vector side = vehicle.GetRightVector()
-	player.SetOrigin(vehicle.GetOrigin() + < 0, 0, 100>  - side * 75)
-	player.SetThirdPersonShoulderModeOff() 	
-	player.Show()
-	player.ClearParent()
-	Signal(vehicle, "StopDriving")
-	RemoveCallback_OnUseEntity(trident, OnUnuseWarthog)
-	//thread HandleTridentAnims(trident, 7)
-	trident.e.driver = null
-	Remote_CallFunction_NonReplay( player, "SetupThirdPersonForVehicle", false)
-	wait 2.0
-	
-	if(!IsValid(trident)) return
-	AddCallback_OnUseEntity(trident, OnUseWarthog)
-}
-
-void function GetPlayerOutOfMongoose( entity player, entity vehicle, entity trident )
-{
-	// leaving car
-	vector side = vehicle.GetRightVector()
-	player.SetOrigin(vehicle.GetOrigin() + < 0, 0, 100>  - side * 75)
-	player.SetThirdPersonShoulderModeOff() 	
-	player.Show()
-	player.ClearParent()
-	Signal(vehicle, "StopDriving")
-	RemoveCallback_OnUseEntity(trident, OnUnuseMongoose)
-	//thread HandleTridentAnims(trident, 7)
-	trident.e.driver = null
-	Remote_CallFunction_NonReplay( player, "SetupThirdPersonForVehicle", false)
-	wait 2.0
-	
-	if(!IsValid(trident)) return
-	AddCallback_OnUseEntity(trident, OnUseMongoose)
-}
-
-void function DriveWarthog(entity player, entity vehicle, entity trident)
-{
-	EndSignal( vehicle, "StopDriving")
-	
-	OnThreadEnd( function() : ( vehicle, trident) {
-		if ( IsValid( vehicle ) )
-		{
-			if(IsValid(vehicle.e.driverDummy))
-				vehicle.e.driverDummy.Destroy()
-			
-			//todo: check ground before nulling movement
-			vehicle.SetAngularVelocity( 0,0,0 )
-			vehicle.SetVelocity( <0,0,0> )
-			//vehicle.StopPhysics()
-		}
-		
-		if ( IsValid( trident ) )
-		{
-			trident.ClearBossPlayer()
-
-			trident.SetUsable()
-			trident.SetUsableByGroup("pilot")
-			trident.SetUsePrompts("%use% Drive Warthog", "%use% Drive Warthog")
-			trident.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES  )
-		}
-	})
-	
-	vector old_velocity = < 0, 0, 0>
-	bool forwardInertia = true
-	bool airborne = false
-	bool hovering = false
-	float absolute_old_velocity = 0
-	
-	float dt = 0.01666667 // old behavior
-	vector normalDir
-	vector dir
-	vector pos
-	vector maxs
-	vector mins
-	TraceResults result
-	float dist
-	float forward  = 0
-	float backward = 0
-	vector forwardSpeed
-	vector newvel
-	
-	while(true)
-	{
-		if( !IsValid(player) || !IsValid(vehicle) ) break
-		
-		normalDir = -Normalize(vehicle.GetUpVector())
-		dir = vehicle.GetForwardVector()
-		vehicle.e.isInAirborne = false
-		
-		pos = vehicle.GetOrigin()
-
-		result = TraceHull( pos, pos +  150 * normalDir, GetBoundsMin( HULL_HUMAN ), GetBoundsMax( HULL_HUMAN ), [vehicle], TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_PLAYER )
-		//DebugDrawAxis( pos, -normalDir, 1, 150)
-		
-		vehicle.e.hoverTrace = result
-		vector normal = result.surfaceNormal
-		dist = Length(result.endPos - pos)
-		
-		if (dist > 30)
-		{
-			printt("airborne")
-			vehicle.e.isInAirborne = true
-	
-		} else 
-		{
-			vehicle.e.isInAirborne = false
-		}
-
-		// RESET
-		// if ( player.IsInputCommandHeld( IN_SPEED ) ) 
-		// {
-
-			// ResetPos( vehicle, true )
-		// }
-		
-		// BOOST
-		if(player.IsInputCommandHeld( IN_SPEED ))
-		{
-			if(vehicle.e.canBoost){
-				thread Boost(vehicle, player)
-			}
-		}
-
-		forward  = 0
-		backward = 0
-		
-		forwardInertia = true	
-		// AxisForward
-		switch(player.GetInputAxisForward())
-		{
-			case 1:
-				// if(player.p.lastForwardInput != player.GetInputAxisForward())
-					// thread HandleTridentAnims(trident, 1)
-				// trident.Anim_Stop()
-				forward = 900
-				
-				if (Length(old_velocity) > forward)
-				{
-					forward = Length(old_velocity) * 0.9
-					if (forward < 900)
-						forward = 900
-				}
-
-				if ( Length(old_velocity) < forward)
-				{
-					forward = Length(old_velocity) + 50
-				}
-
-				if (vehicle.e.isBoosting){
-					forward = 1800
-				} 
-
-		
-			break
-			
-			case -1:
-				// if(player.p.lastForwardInput != player.GetInputAxisForward())
-					// thread HandleTridentAnims(trident, 3)
-				// trident.Anim_Stop()
-				backward = -300
-
-				if (forwardInertia)
-				{
-					// speed damping instead of going backward
-					forward = Length(old_velocity) - 100
-					if ( forward < 0){
-						forward = 0
-						forwardInertia = false
-					}
-				} else {
-					if ( -Length(old_velocity) > backward)
-					{
-						backward = -Length(old_velocity) - 50
-						forwardInertia = false
-					}
-				}
-				// forwardInertia = false			
-			break
-		}
-
-		vector gravity = < 0 , 0, -100>
-		forwardSpeed = dir * (forward + backward)
-		vehicle.e.forwardSpeed = forwardSpeed
-		
-		// inertia
-		if(forward == 0 && backward == 0)
-        {
-        	if (forwardInertia)
-        		forwardSpeed = old_velocity * 0.9
-        	else 
-        		forwardSpeed = old_velocity * 0.6
-        }
-
-        if(airborne) {
-        	forwardSpeed = old_velocity * 0.99
-        }
-
-		old_velocity = forwardSpeed
-		
-		if (Length(forwardSpeed) < 5)
-		{
-			gravity = <0,0,0>
-		}
-		
-		if (airborne){ //move this to new function handlewarthoggravity
-			gravity = < 0, 0, -500 * dt>
-			old_velocity = vehicle.GetVelocity()
-		}
-		
-		if(!airborne)
-		{
-			vehicle.SetVelocity(forwardSpeed + gravity)
-		} else {
-			old_velocity = vehicle.GetVelocity()
-		}
-
-		player.p.lastRightInput = player.GetInputAxisRight()
-		player.p.lastForwardInput = player.GetInputAxisForward()
-		
-		WaitFrame()
-	}
-}
-
-void function DriveMongoose(entity player, entity vehicle, entity trident)
-{
-	EndSignal( vehicle, "StopDriving")
-	
-	OnThreadEnd( function() : ( vehicle, trident) {
-		if ( IsValid( vehicle ) )
-		{
-			if(IsValid(vehicle.e.driverDummy))
-				vehicle.e.driverDummy.Destroy()
-			
-			//todo: check ground before nulling movement
-			vehicle.SetAngularVelocity( 0,0,0 )
-			vehicle.SetVelocity( <0,0,0> )
-			//vehicle.StopPhysics()
-		}
-		
-		if ( IsValid( trident ) )
-		{
-			trident.ClearBossPlayer()
-
-			trident.SetUsable()
-			trident.SetUsableByGroup("pilot")
-			trident.SetUsePrompts("%use% Drive Mongoose", "%use% Drive Mongoose")
-			trident.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES  )
-		}
-	})
-	
-	vector old_velocity = < 0, 0, 0>
-	bool forwardInertia = true
-	bool airborne = false
-	bool hovering = false
-	float absolute_old_velocity = 0
-	
-	float dt = 0.01666667 // old behavior
-	vector normalDir
-	vector dir
-	vector pos
-	vector maxs
-	vector mins
-	TraceResults result
-	float dist
-	float forward  = 0
-	float backward = 0
-	vector forwardSpeed
-	vector newvel
-	
-	while(true)
-	{
-		if( !IsValid(player) || !IsValid(vehicle) ) break
-		
-		normalDir = -Normalize(vehicle.GetUpVector())
-		dir = vehicle.GetForwardVector()
-		vehicle.e.isInAirborne = false
-		
-		pos = vehicle.GetOrigin()
-
-		result = TraceHull( pos, pos +  150 * normalDir, GetBoundsMin( HULL_HUMAN ), GetBoundsMax( HULL_HUMAN ), [vehicle], TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_PLAYER )
-		//DebugDrawAxis( pos, -normalDir, 1, 150)
-		
-		vehicle.e.hoverTrace = result
-		vector normal = result.surfaceNormal
-		dist = Length(result.endPos - pos)
-		
-		if (dist > 30)
-		{
-			printt("airborne")
-			vehicle.e.isInAirborne = true
-	
-		} else 
-		{
-			vehicle.e.isInAirborne = false
-		}
-
-		// RESET
-		// if ( player.IsInputCommandHeld( IN_SPEED ) ) 
-		// {
-
-			// ResetPos( vehicle, true )
-		// }
-		
-		// BOOST
-		if(player.IsInputCommandHeld( IN_SPEED ))
-		{
-			if(vehicle.e.canBoost){
-				thread Boost(vehicle, player)
-			}
-		}
-
-		forward  = 0
-		backward = 0
-		
-		forwardInertia = true	
-		// AxisForward
-		switch(player.GetInputAxisForward())
-		{
-			case 1:
-				// if(player.p.lastForwardInput != player.GetInputAxisForward())
-					// thread HandleTridentAnims(trident, 1)
-				// trident.Anim_Stop()
-				forward = 900
-				
-				if (Length(old_velocity) > forward)
-				{
-					forward = Length(old_velocity) * 0.9
-					if (forward < 900)
-						forward = 900
-				}
-
-				if ( Length(old_velocity) < forward)
-				{
-					forward = Length(old_velocity) + 50
-				}
-
-				if (vehicle.e.isBoosting){
-					forward = 1800
-				} 
-
-		
-			break
-			
-			case -1:
-				// if(player.p.lastForwardInput != player.GetInputAxisForward())
-					// thread HandleTridentAnims(trident, 3)
-				// trident.Anim_Stop()
-				backward = -300
-
-				if (forwardInertia)
-				{
-					// speed damping instead of going backward
-					forward = Length(old_velocity) - 100
-					if ( forward < 0){
-						forward = 0
-						forwardInertia = false
-					}
-				} else {
-					if ( -Length(old_velocity) > backward)
-					{
-						backward = -Length(old_velocity) - 50
-						forwardInertia = false
-					}
-				}
-				// forwardInertia = false			
-			break
-		}
-
-		vector gravity = < 0 , 0, -100>
-		forwardSpeed = dir * (forward + backward)
-		vehicle.e.forwardSpeed = forwardSpeed
-		
-		// inertia
-		if(forward == 0 && backward == 0)
-        {
-        	if (forwardInertia)
-        		forwardSpeed = old_velocity * 0.9
-        	else 
-        		forwardSpeed = old_velocity * 0.6
-        }
-
-        if(airborne) {
-        	forwardSpeed = old_velocity * 0.99
-        }
-
-		old_velocity = forwardSpeed
-		
-		if (Length(forwardSpeed) < 5)
-		{
-			gravity = <0,0,0>
-		}
-		
-		if (airborne){ //move this to new function handlewarthoggravity
-			gravity = < 0, 0, -500 * dt>
-			old_velocity = vehicle.GetVelocity()
-		}
-		
-		if(!airborne)
-		{
-			vehicle.SetVelocity(forwardSpeed + gravity)
-		} else {
-			old_velocity = vehicle.GetVelocity()
-		}
-
-		player.p.lastRightInput = player.GetInputAxisRight()
-		player.p.lastForwardInput = player.GetInputAxisForward()
-		
-		WaitFrame()
-	}
-}
-
-void function DriveVehicle(entity player, entity vehicle, entity trident)
-{
-	EndSignal( vehicle, "StopDriving")
-	
-	// // entity light = CreateEntity("prop_dynamic")
-	// // light.kv.solid = 0
-	// // light.SetValueForModelKey($"mdl/lamps/security_light_01_on.rmdl")
-		// light.kv.rendercolor = "0 229 255"
-	// // light.SetOrigin(trident.GetOrigin())
-	// // light.SetAngles(trident.GetAngles())
-	// // DispatchSpawn(light)
-	// // light.SetParent(trident, "EXHAUST_REAR_L")
-	// // light.SetModelScale(0.1)
-	// entity exhaustFx = StartParticleEffectOnEntity_ReturnEntity( trident, GetParticleSystemIndex( $"P_ts_plasma_proj_MD" ), FX_PATTACH_ABSORIGIN_FOLLOW, trident.LookupAttachment( "EXHAUST_REAR_L" ) )
-	// entity exhaustFx1 = StartParticleEffectOnEntity_ReturnEntity( trident, GetParticleSystemIndex( $"P_ts_plasma_proj_MD" ), FX_PATTACH_ABSORIGIN_FOLLOW, trident.LookupAttachment( "EXHAUST_REAR" ) )
-	// entity exhaustFx2 = StartParticleEffectOnEntity_ReturnEntity( trident, GetParticleSystemIndex( $"P_ts_plasma_proj_MD" ), FX_PATTACH_ABSORIGIN_FOLLOW, trident.LookupAttachment( "EXHAUST_FRONT_L" ) )
-	// entity exhaustFx3 = StartParticleEffectOnEntity_ReturnEntity( trident, GetParticleSystemIndex( $"P_ts_plasma_proj_MD" ), FX_PATTACH_ABSORIGIN_FOLLOW, trident.LookupAttachment( "EXHAUST_REAR_R" ) )
-	// entity exhaustFx4 = StartParticleEffectOnEntity_ReturnEntity( trident, GetParticleSystemIndex( $"P_ts_plasma_proj_MD" ), FX_PATTACH_ABSORIGIN_FOLLOW, trident.LookupAttachment( "EXHAUST_FRONT_R" ) )
-	// entity exhaustFx5 = StartParticleEffectOnEntity_ReturnEntity( trident, GetParticleSystemIndex( $"P_ts_plasma_proj_MD" ), FX_PATTACH_ABSORIGIN_FOLLOW, trident.LookupAttachment( "EXHAUST_FRONT" ) )
-	// entity exhaustFx6 = StartParticleEffectOnEntity_ReturnEntity( trident, GetParticleSystemIndex( $"P_ts_plasma_proj_MD" ), FX_PATTACH_ABSORIGIN_FOLLOW, trident.LookupAttachment( "FX_AIRBRAKE_L" ) )
-	// entity exhaustFx7 = StartParticleEffectOnEntity_ReturnEntity( trident, GetParticleSystemIndex( $"P_ts_plasma_proj_MD" ), FX_PATTACH_ABSORIGIN_FOLLOW, trident.LookupAttachment( "FX_AIRBRAKE_R" ) )
-	// entity exhaustFx8 = StartParticleEffectOnEntity_ReturnEntity( trident, GetParticleSystemIndex( $"P_ts_plasma_proj_MD" ), FX_PATTACH_ABSORIGIN_FOLLOW, trident.LookupAttachment( "FX_BRAKE" ) )	
-	
-	
-	OnThreadEnd( function() : ( vehicle, trident) {
-		if ( IsValid( vehicle ) )
-		{
-			if(IsValid(vehicle.e.driverDummy))
-				vehicle.e.driverDummy.Destroy()
-			
-			//todo: check ground before nulling movement
-			vehicle.SetAngularVelocity( 0,0,0 )
-			vehicle.SetVelocity( <0,0,0> )
-			vehicle.StopPhysics()
-		}
-		
-		if ( IsValid( trident ) )
-		{
-			trident.ClearBossPlayer()
-
-			trident.SetUsable()
-			trident.SetUsableByGroup("pilot")
-			trident.SetUsePrompts("%use% Drive Trident", "%use% Drive Trident")
-			trident.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES  )
-		}
-	})
-	
-	vector old_velocity = < 0, 0, 0>
-	bool forwardInertia = true
-	bool airborne = false
-	bool hovering = false
-	float absolute_old_velocity = 0
-
-	vector normalDir
-	vector dir
-	vector pos
-	vector maxs
-	vector mins
-	TraceResults result
-	float dist
-	float forward  = 0
-	float backward = 0
-	vector forwardSpeed
-	vector newvel
-	
-	while(true)
-	{
-		if( !IsValid(player) || !IsValid(vehicle) ) break
-		
-		normalDir = -Normalize(vehicle.GetUpVector())
-		dir = vehicle.GetForwardVector()
-		vehicle.e.isInAirborne = false
-		
-		pos = vehicle.GetOrigin()
-
-		result = TraceHull( pos, pos +  150 * normalDir, GetBoundsMin( HULL_HUMAN ), GetBoundsMax( HULL_HUMAN ), [vehicle], TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_PLAYER )
-		//DebugDrawAxis( pos, -normalDir, 1, 150)
-		
-		vehicle.e.hoverTrace = result
-		vector normal = result.surfaceNormal
-		dist = Length(result.endPos - pos)
-		
-		if (dist > 100)
-		{
-			printt("airborne")
-			vehicle.e.isInAirborne = true
-	
-		} else 
-		{
-			vehicle.e.isInAirborne = false
-		}
-
-		// RESET
-		// if ( player.IsInputCommandHeld( IN_SPEED ) ) 
-		// {
-
-			// ResetPos( vehicle, true )
-		// }
-		
-		// BOOST
-		if(player.IsInputCommandHeld( IN_SPEED ))
-		{
-			if(vehicle.e.canBoost){
-				thread Boost(vehicle, player)
-			}
-		}
-
-		forward  = 0
-		backward = 0
-
-		// AxisForward
-		switch(player.GetInputAxisForward())
-		{
-			case 1:
-				// if(player.p.lastForwardInput != player.GetInputAxisForward())
-					// thread HandleTridentAnims(trident, 1)
-				trident.Anim_Stop()
-				forward = 800
-				
-				if (Length(old_velocity) > forward)
-				{
-					forward = Length(old_velocity) * 0.9
-					if (forward < 800)
-						forward = 800
-				}
-
-				if ( Length(old_velocity) < forward)
-				{
-					forward = Length(old_velocity) + 50
-				}
-
-				if (vehicle.e.isBoosting){
-					forward = 1800
-				} 
-
-				forwardInertia = true			
-			break
-			
-			case -1:
-				// if(player.p.lastForwardInput != player.GetInputAxisForward())
-					// thread HandleTridentAnims(trident, 3)
-				trident.Anim_Stop()
-				backward = -300
-
-				if (forwardInertia)
-				{
-					// speed damping instead of going backward
-					forward = Length(old_velocity) - 100
-					if ( forward < 0){
-						forward = 0
-						forwardInertia = false
-					}
-				} else {
-					if ( -Length(old_velocity) > backward)
-					{
-						backward = -Length(old_velocity) - 50
-						forwardInertia = false
-					}
-				}
-				forwardInertia = false			
-			break
-		}
-		
-		forwardSpeed = dir * (forward + backward)
-		vehicle.e.forwardSpeed = forwardSpeed
-		
-		// inertia
-		if(forward == 0 && backward == 0)
-        {
-        	if (forwardInertia)
-        		forwardSpeed = old_velocity * 0.8
-        	else 
-        		forwardSpeed = old_velocity * 0.5
-        }
-
-        if(airborne) {
-        	forwardSpeed = old_velocity * 0.99
-        }
-
-		old_velocity = forwardSpeed
-
-		if(!airborne)
-		{
-			vehicle.SetVelocity(forwardSpeed)
-		} else {
-			old_velocity = vehicle.GetVelocity()
-		}
-
-		//Trident strafe
-		if( player.GetInputAxisRight() != 0 && player.GetInputAxisForward() == 0 && !airborne && Length(forwardSpeed) < 100)
-		{
-			vehicle.SetVelocity(vehicle.GetVelocity()+AnglesToRight(vehicle.GetAngles())*signum(player.GetInputAxisRight())*150)
-			trident.Anim_Stop()
-			switch(player.GetInputAxisRight() )
-			{
-				case 1:
-				// if(player.p.lastRightInput != player.GetInputAxisRight())
-					// thread HandleTridentAnims(trident, 12)
-				break
-				case -1:
-				// if(player.p.lastRightInput != player.GetInputAxisRight())
-					// thread HandleTridentAnims(trident, 11)
-				break
-			}
-		}
-
-		player.p.lastRightInput = player.GetInputAxisRight()
-		player.p.lastForwardInput = player.GetInputAxisForward()
-		
-		WaitFrame()
-	}
-}
-
-void function HandleAngularVelocity(entity player, entity vehicle, entity trident)
-{
-	EndSignal( vehicle, "StopDriving")
-
-	OnThreadEnd( function() : ( vehicle, trident) {
-		if ( IsValid( vehicle ) )
-		{
-			vehicle.SetAngularVelocity( 0,0,0 )
-		}
-
-	})
-	
-	vector old_velocity = < 0, 0, 0>
-	bool forwardInertia = true
-	vector normalDir
-	vector dir
-	float forward  = 0
-	float backward = 0
-	vector forwardSpeed
-	
-	while(true)
-	{
-		if( !IsValid(player) || !IsValid(vehicle) ) break
-		
-		forwardSpeed = vehicle.e.forwardSpeed
-		
-		vector rotAng = < 0, 50, 0 >
-
-		if(vehicle.e.isInAirborne){
-			rotAng = < 0, 35, 0>
-		}
-		
-		//AxisRight
-		vector angVelocity = < 0, 0, 0>
-		
-		if(player.GetInputAxisRight() != 0 && Length(forwardSpeed) >= 100)
-			angVelocity = -signum(player.GetInputAxisRight()) * rotAng
-		
-		if(backward == 0 && Length(forwardSpeed) >= 100 || backward == 0 && Length(forwardSpeed) >= 100 ) 
-        {
-        	angVelocity.y += 200 * -AnglesToRight( vehicle.GetAngles() - player.CameraAngles() ).x //holy fuck. Colombia
-        }
-		
-		if(vehicle.e.isInAirborne)
-		{
-			angVelocity += < signum(player.GetInputAxisForward()) * 20, angVelocity.y, signum(player.GetInputAxisRight())*20 > 
-		}
-		
-		if(backward < 0)
-			angVelocity = -angVelocity
-
-		vehicle.SetAngularVelocity( angVelocity.x, angVelocity.y , angVelocity.z ) //magnific
-		
-		WaitFrame()
-	}	
-}
-
-void function HandleWarthogGravity(entity player, entity vehicle, entity trident)
-{
-	EndSignal( vehicle, "StopDriving")
-	vector pos
-	vector maxs
-	vector mins
-	TraceResults result
-	float dist
-	vector vel
-	
-	float startTime = Time()
-	float timePassed
-	float height
-	vector normal
-	bool resetTime = false
-	float dt = 0.01666667 // old behavior
-	vector velocity
-	float strength
-	
-	while(true)
-	{
-		if( !IsValid(player) || !IsValid(vehicle) ) break
-		
-		if(vehicle.e.isInAirborne) 
-		{
-			WaitFrame()
-			continue
-		}
-		
-		pos = vehicle.GetOrigin()
-		result = vehicle.e.hoverTrace		
-		dist = Length(result.endPos - pos)
-		velocity = vehicle.GetVelocity()
-		
-		height = GraphCapped( Time(), LERP_IN_FLOAT, 1, GraphCapped( timePassed, 0, 2, 150, WARTHOG_HOVER_HEIGHT ), WARTHOG_HOVER_HEIGHT )
-		normal = result.surfaceNormal
-		
-		if(player.GetInputAxisForward() == 0 && player.GetInputAxisRight() == 0)
-			resetTime = true
-		
-		timePassed = Time() - startTime
-		
-		if (dist <= WARTHOG_HOVER_HEIGHT && player.GetInputAxisForward() != 0 || dist <= WARTHOG_HOVER_HEIGHT && player.GetInputAxisRight() != 0)
-		{
-			if(resetTime)
-			{
-				startTime = Time()
-				resetTime = false
-			}
-			height = GraphCapped( timePassed, LERP_IN_FLOAT, 2, dist, WARTHOG_HOVER_HEIGHT )
-			// strength = GraphCapped( timePassed, 0.0, 1, dist, WARTHOG_HOVER_HEIGHT )
-			
-			printt("DIST: " + dist + " " + " | HeightValue: " + height + " | Strenght value " + strength)
-	
-			//float distFromCover = Distance( testPos, result.endPos )
-			
-	
-			velocity += Normalize(normal) * height
-			
-		}
-		else if (dist <= WARTHOG_HOVER_HEIGHT && player.GetInputAxisForward() != 0 || dist <= WARTHOG_HOVER_HEIGHT && player.GetInputAxisRight() != 0)
-		{
-			if(resetTime)
-			{
-				startTime = Time()
-				resetTime = false
-			}
-			height = GraphCapped( timePassed, LERP_IN_FLOAT, 2, dist, WARTHOG_HOVER_HEIGHT )
-			// strength = GraphCapped( timePassed, 0.0, 1, dist, WARTHOG_HOVER_HEIGHT )
-			
-			printt("DIST: " + dist + " " + " | HeightValue: " + height + " | Strenght value " + strength)
-	
-			//float distFromCover = Distance( testPos, result.endPos )
-			
-	
-			velocity += Normalize(normal) * height
-		}		
-		
-		if(dist <= WARTHOG_HOVER_HEIGHT && player.GetInputAxisForward() != 0 || dist <= WARTHOG_HOVER_HEIGHT && player.GetInputAxisRight() != 0)
-		{
-			if(resetTime)
-			{
-				startTime = Time()
-				resetTime = false
-			}
-			height = GraphCapped( timePassed, LERP_IN_FLOAT, 2, 100-dist, WARTHOG_HOVER_HEIGHT )
-			
-			//printt("DIST: " + dist + " " + " | HeightValue: " + height)
-			
-			velocity += Normalize(normal) * height
-		}
-		
-		if(dist > WARTHOG_HOVER_HEIGHT && player.GetInputAxisForward() != 0 && !vehicle.e.isInAirborne || dist > WARTHOG_HOVER_HEIGHT && player.GetInputAxisRight() != 0 && !vehicle.e.isInAirborne)
-		{
-			velocity -= Normalize(normal)
-		}
-		
-		vehicle.SetVelocity( velocity )
-		
-		WaitFrame()
-	}
-}
-
-void function HoverVehicle(entity player, entity vehicle, entity trident)
-{
-	EndSignal( vehicle, "StopDriving")
-	vector pos
-	vector maxs
-	vector mins
-	TraceResults result
-	float dist
-	vector vel
-	
-	float startTime = Time()
-	float timePassed
-	float height
-	vector normal
-	bool resetTime = false
-	float dt = 0.01666667 // old behavior
-	vector velocity
-	float strength
-	
-	while(true)
-	{
-		if( !IsValid(player) || !IsValid(vehicle) ) break
-		
-		if(vehicle.e.isInAirborne) 
-		{
-			WaitFrame()
-			continue
-		}
-		
-		pos = vehicle.GetOrigin()
-		result = vehicle.e.hoverTrace		
-		dist = Length(result.endPos - pos)
-		velocity = vehicle.GetVelocity()
-		
-		// height = GraphCapped( Time(), LERP_IN_FLOAT, 1, GraphCapped( timePassed, 0, 2, 150, TRIDENT_HOVER_HEIGHT ), TRIDENT_HOVER_HEIGHT )
-		normal = result.surfaceNormal
-		
-		if(player.GetInputAxisForward() == 0 && player.GetInputAxisRight() == 0)
-			resetTime = true
-		
-		timePassed = Time() - startTime
-		
-		if (dist <= TRIDENT_HOVER_HEIGHT && player.GetInputAxisForward() != 0 || dist <= TRIDENT_HOVER_HEIGHT && player.GetInputAxisRight() != 0)
-		{
-			if(resetTime)
-			{
-				startTime = Time()
-				resetTime = false
-			}
-			height = GraphCapped( timePassed, LERP_IN_FLOAT, 2, dist, TRIDENT_HOVER_HEIGHT )
-			// strength = GraphCapped( timePassed, 0.0, 1, dist, TRIDENT_HOVER_HEIGHT )
-			
-			printt("DIST: " + dist + " " + " | HeightValue: " + height + " | Strenght value " + strength)
-	
-			//float distFromCover = Distance( testPos, result.endPos )
-			
-	
-			velocity += Normalize(normal) * height
-			
-		}
-		// else if (dist <= TRIDENT_HOVER_HEIGHT && player.GetInputAxisForward() != 0 || dist <= TRIDENT_HOVER_HEIGHT && player.GetInputAxisRight() != 0)
-		// {
-			// if(resetTime)
-			// {
-				// startTime = Time()
-				// resetTime = false
-			// }
-			// height = GraphCapped( timePassed, LERP_IN_FLOAT, 2, dist, TRIDENT_HOVER_HEIGHT )
-			// // strength = GraphCapped( timePassed, 0.0, 1, dist, TRIDENT_HOVER_HEIGHT )
-			
-			// printt("DIST: " + dist + " " + " | HeightValue: " + height + " | Strenght value " + strength)
-	
-			// //float distFromCover = Distance( testPos, result.endPos )
-			
-	
-			// velocity += Normalize(normal) * height
-		// }		
-		// else (dist <= TRIDENT_HOVER_HEIGHT && player.GetInputAxisForward() != 0 || dist <= TRIDENT_HOVER_HEIGHT && player.GetInputAxisRight() != 0)
-		// {
-			// if(resetTime)
-			// {
-				// startTime = Time()
-				// resetTime = false
-			// }
-			// height = GraphCapped( timePassed, LERP_IN_FLOAT, 2, 100-dist, TRIDENT_HOVER_HEIGHT )
-			// printt("DIST: " + dist + " " + " | HeightValue: " + height)
-			// velocity += Normalize(normal) * height
-		// }
-		
-		if(dist > TRIDENT_HOVER_HEIGHT && player.GetInputAxisForward() != 0 && !vehicle.e.isInAirborne || dist > TRIDENT_HOVER_HEIGHT && player.GetInputAxisRight() != 0 && !vehicle.e.isInAirborne)
-		{
-			velocity -= Normalize(normal)
-		}
-		
-		vehicle.SetVelocity( velocity )
-		
-		WaitFrame()
-	}
-}
-
-// float function GetHoverStrength( entity ent, vector testPos, vector cylinderBottom, vector cylinderTop, vector fanDirection )
-// {
-	// vector pointAlongFan = GetClosestPointOnLineSegment( cylinderBottom, cylinderTop, testPos )
-	// vector vecFromFanCenter = testPos - pointAlongFan
-	// vector traceEnd = cylinderBottom + vecFromFanCenter
-
-	// // Trace from the entity towards the fan along the fan axis to see if we are getting blocked
-	// TraceResults result = TraceLine( testPos, traceEnd, ent, TRACE_MASK_NPCSOLID, TRACE_COLLISION_GROUP_NONE )
-
-	// float distFromCover = Distance( testPos, result.endPos )
-	// float strength = GraphCapped( distFromCover, 256, 1024, 0.0, 1.0 )
-	// if ( result.fraction == 1.0 )
-		// strength = 1.0
-
-		// printt( "strength:", strength )
-		// printt( "fraction:", result.fraction )
-		// printt( "dist from fan:", Distance( testPos, cylinderBottom ) )
-		// printt( "distFromCover:", distFromCover )
-
-	// Assert( strength >= 0.0 && strength <= 1.0 )
-	// return strength
-// }
 
 void function HandleTridentAnims(entity trident, int index)
 {
-
+	if( trident.GetModelName() != $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl" )
+		return
+	
+	if( !ENABLE_TRIDENT_ANIMS )
+		return
+	
 	string animtoplay
 	
 	switch(index)
@@ -1439,7 +1818,7 @@ void function HandleTridentAnims(entity trident, int index)
 		
 	Signal( trident, "NewTridentAnim" )
 	EndSignal( trident, "NewTridentAnim" )
-	EndSignal( trident, "StopDriving")
+	// EndSignal( trident, "StopDriving")
 	
 	OnThreadEnd( function() : ( trident ) {
 		if ( IsValid( trident ) )
@@ -1511,585 +1890,33 @@ void function HandlePlayerAnims(entity dummyPlayer, int index)
 		WaitFrame()
 }
 
-void function Boost(entity vehicle, entity player)
-{
-	if(!IsValid(vehicle)) return
-	vehicle.e.canBoost = false
-	vehicle.e.isBoosting = true
-	Remote_CallFunction_ByRef( player, "TridentBoost_Visuals" )
-	
-	//Remote_CallFunction_NonReplay( player, "TridentBoost_Visuals" )
-	wait 1.5
-	if(!IsValid(vehicle)) return
-	vehicle.e.isBoosting = false
-	wait 8.0
-	if(!IsValid(vehicle)) return
-	vehicle.e.canBoost = true
-}
 
-void function ResetPos(entity vehicle, bool timer)
-{	
-	if (vehicle.e.canReset)
+float function CalcLeastSquaresGradient( array<vector> list )
+{
+	float sumX        = 0.0
+	float sumXSquared = 0.0
+	float sumXYMul    = 0.0
+	float sumY        = 0.0
+	float sumYSquared = 0.0
+
+	for ( int i = 0; i < list.len(); i++ )
 	{
-		if (timer)
-		{
-			vehicle.e.canReset = false
-			thread ResetTimer(vehicle)
-        }
-        vehicle.SetOrigin(vehicle.GetOrigin() + <0,0,200>)
-        vector tempAng = vehicle.GetAngles()
-        tempAng.x = 0
-        tempAng.z = 0
-        vehicle.SetAngles(tempAng)
+		vector p = list[i]
+		sumX += p.x
+		sumXSquared += pow( p.x, 2.0 )
+		sumXYMul += p.x * p.y
+		sumY += p.y
+		sumYSquared += pow( p.y, 2.0 )
 	}
-}
 
-void function ResetTimer(entity vehicle)
-{
-	wait 3.0
-	
-	if(!IsValid(vehicle)) return
-	
-	vehicle.e.canReset = true
-}
-
-// ██████╗░██╗░░░░░░█████╗░███╗░░██╗███████╗
-// ██╔══██╗██║░░░░░██╔══██╗████╗░██║██╔════╝
-// ██████╔╝██║░░░░░███████║██╔██╗██║█████╗░░
-// ██╔═══╝░██║░░░░░██╔══██║██║╚████║██╔══╝░░
-// ██║░░░░░███████╗██║░░██║██║░╚███║███████╗
-// ╚═╝░░░░░╚══════╝╚═╝░░╚═╝╚═╝░░╚══╝╚══════╝
-
-bool function CC_SpawnBanshee( entity player, array<string> args )
-{
-	thread SpawnBansheeTest(player)
-	return true	
-}
-
-void function SpawnBansheeTest(entity player)
-{
-    vector origin = GetPlayerCrosshairOrigin( player )
-	origin.z -= 25
-	vector angles = Vector(0,0,0)
-
-	entity physics = CreateEntity( "prop_physics" )
-	physics.SetValueForModelKey( $"mdl/vehicles_r5/land/msc_suv_partum/veh_land_msc_suv_partum_static.rmdl" )
-	physics.kv.rendercolor = "255 255 255"
-	physics.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS
-	physics.kv.spawnflags = 4
-	physics.kv.fadedist = -1
-	physics.kv.physdamagescale = 10.0
-	physics.kv.inertiaScale = 10.0
-	physics.kv.renderamt = 255
-	physics.kv.rendercolor = "255 255 255"
-	physics.kv.solid = SOLID_VPHYSICS
-	physics.SetOrigin( origin )
-	physics.SetAngles( angles )
-	DispatchSpawn( physics )
-
-	// physics.PhysicsSetDamping(5,5)
-	// physics.PhysicsSetFriction(10)
-	physics.kv.gravity = 2.5
-	physics.Hide()
-	
-	entity trident = CreateEntity( "prop_dynamic" )
-    trident.SetValueForModelKey( $"mdl/vehicles_r5/land/msc_suv_partum/veh_land_msc_suv_partum_static.rmdl" )
-	trident.kv.fadedist = 10000
-	trident.kv.renderamt = 255
-    trident.SetOrigin(physics.GetOrigin())
-    trident.SetAngles(physics.GetAngles())
-	DispatchSpawn( trident )
-	trident.SetParent(physics)
-	
-	trident.e.physicsCar = physics
-	
-	trident.SetUsable()
-	trident.SetUsableByGroup("pilot")
-	trident.SetUsePrompts("%use% Drive Banshee", "%use% Drive Banshee")
-	trident.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	AddCallback_OnUseEntity(trident, OnUseBanshee)	
-}
-
-void function OnUseBanshee(entity trident, entity user, int input)
-{
-	if(IsValid(trident.e.driver))
-		return
-
-	thread GetPlayerInBanshee(user, trident.e.physicsCar, trident)
-
-}
-
-void function GetPlayerInBanshee( entity player, entity vehicle, entity trident )
-{
-	vector vUp = vehicle.GetUpVector()
-	vector up = <0,0,1>
-
-	// angle 
-	float ang = acos( (up.x * vUp.x + up.y * vUp.y + up.z * vUp.z) /  (sqrt( up.x * up.x + up.y * up.y + up.z * up.z) * sqrt( vUp.x * vUp.x + vUp.y * vUp.y + vUp.z * vUp.z)))
-
-	print(ang)
-
-	if (ang > (3.14 / 2))
+	float d = list.len() * sumXSquared - pow( sumX, 2.0 )
+	if ( fabs( d ) < 0.0001 )
 	{
-		print("resetting pos")
-		ResetPos(vehicle, false)
+		return 0.0
 	}
-	
-	if(IsValid(trident.e.driver))
-		return
 
-	trident.e.driver = player
-	vehicle.SetPhysics(MOVETYPE_VPHYSICS) 
-	RemoveCallback_OnUseEntity(trident, OnUseBanshee)
-	trident.RemoveUsableValue(USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	trident.UnsetUsable()
-	
-	vector forward = vehicle.GetForwardVector()
-
-	vector tempOffset = <0 , 0, 20>
-	vector offset = RotateVector(tempOffset, VectorToAngles(forward))
-	player.SetOrigin(vehicle.GetOrigin() + offset)
-	player.SetAngles(offset)
-	player.Hide()
-
-	entity dummy = CreateEntity( "prop_dynamic" )
-    dummy.SetValueForModelKey( player.GetModelName() )
-    dummy.SetOrigin(vehicle.GetOrigin())
-    dummy.SetAngles(vehicle.GetAngles())
-	DispatchSpawn( dummy )
-	dummy.SetParent(trident)//, "ORIGIN")
-	dummy.Hide()
-	//thread HandleTridentAnims(trident, 8)
-	vehicle.e.driverDummy = dummy
-	thread HandlePlayerAnims(dummy, RandomInt(3))
-	
-	player.SetAngles(vehicle.GetAngles())
-	player.SetParent(vehicle)
-
-	thread DriveBanshee(player, vehicle, trident)
-	thread HandleAngularVelocityBanshee(player, vehicle, trident)
-	// thread HandleWarthogGravity(player, vehicle, trident)
-	
-	trident.SetOwner(player)
-	
-	player.SetThirdPersonShoulderModeOn() 	
-	
-	Remote_CallFunction_NonReplay( player, "SetupThirdPersonForVehicle", true)
-	
-	wait 2.0
-	
-	if(!IsValid(trident)) return
-	
-	trident.SetUsable()
-	trident.SetUsableByGroup("pilot")
-	trident.SetUsePrompts("%use% Exit Banshee \n %speed% Boost\n %duck% Shoot", "%use% Exit Banshee \n %speed% Boost\n %duck% Shoot")
-	trident.AddUsableValue( USABLE_BY_OWNER )
-	AddCallback_OnUseEntity(trident, OnUnuseBanshee)
+	return (list.len() * sumXYMul - sumX * sumY) / d
 }
-
-void function OnUnuseBanshee(entity trident, entity user, int input)
-{
-	thread GetPlayerOutOfBanshee(user, trident.e.physicsCar, trident)
-}
-
-void function GetPlayerOutOfBanshee( entity player, entity vehicle, entity trident )
-{
-	// leaving car
-	vector side = vehicle.GetRightVector()
-	player.SetOrigin(vehicle.GetOrigin() + < 0, 0, 100>  - side * 75)
-	player.SetThirdPersonShoulderModeOff() 	
-	player.Show()
-	player.ClearParent()
-	Signal(vehicle, "StopDriving")
-	RemoveCallback_OnUseEntity(trident, OnUnuseBanshee)
-	//thread HandleTridentAnims(trident, 7)
-	trident.e.driver = null
-	Remote_CallFunction_NonReplay( player, "SetupThirdPersonForVehicle", false)
-	wait 2.0
-	
-	if(!IsValid(trident)) return
-	AddCallback_OnUseEntity(trident, OnUseBanshee)
-}
-
-void function DriveBanshee(entity player, entity vehicle, entity trident)
-{
-	EndSignal( vehicle, "StopDriving")
-	
-	OnThreadEnd( function() : ( vehicle, trident) {
-		if ( IsValid( vehicle ) )
-		{
-			if(IsValid(vehicle.e.driverDummy))
-				vehicle.e.driverDummy.Destroy()
-			
-			//todo: check ground before nulling movement
-			// vehicle.SetAngularVelocity( 0,0,0 )
-			// vehicle.SetVelocity( <0,0,0> )
-			
-			//vehicle.StopPhysics()
-		}
-		
-		if ( IsValid( trident ) )
-		{
-			trident.ClearBossPlayer()
-
-			trident.SetUsable()
-			trident.SetUsableByGroup("pilot")
-			trident.SetUsePrompts("%use% Drive Banshee", "%use% Drive Banshee")
-			trident.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES  )
-		}
-	})
-	
-	vector old_velocity = < 0, 0, 0>
-	bool forwardInertia = true
-	bool airborne = false
-	bool hovering = false
-	float absolute_old_velocity = 0
-	
-	float dt = 0.01666667 // old behavior
-	vector normalDir
-	vector dir
-	vector pos
-	vector maxs
-	vector mins
-	TraceResults result
-	float dist
-	float forward  = 0
-	float backward = 0
-	vector forwardSpeed
-	vector newvel
-	
-	while(true)
-	{
-		if( !IsValid(player) || !IsValid(vehicle) ) break
-		
-		normalDir = -Normalize(vehicle.GetUpVector())
-		dir = vehicle.GetForwardVector()
-		vehicle.e.isInAirborne = false
-		
-		pos = vehicle.GetOrigin()
-
-		result = TraceHull( pos, pos +  150 * normalDir, GetBoundsMin( HULL_HUMAN ), GetBoundsMax( HULL_HUMAN ), [vehicle], TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_PLAYER )
-		//DebugDrawAxis( pos, -normalDir, 1, 150)
-		
-		vehicle.e.hoverTrace = result
-		vector normal = result.surfaceNormal
-		dist = Length(result.endPos - pos)
-		
-		if (dist > 30)
-		{
-			printt("airborne")
-			vehicle.e.isInAirborne = true
-	
-		} else 
-		{
-			vehicle.e.isInAirborne = false
-		}
-
-		// RESET
-		if ( player.IsInputCommandHeld( IN_DUCK ) ) 
-		{
-			thread tankFire(player, vehicle)
-		}
-		
-		// BOOST
-		if(player.IsInputCommandHeld( IN_SPEED ))
-		{
-			if(vehicle.e.canBoost){
-				thread Boost(vehicle, player)
-			}
-		}
-
-		forward  = 0
-		backward = 0
-		
-		forwardInertia = true	
-		// AxisForward
-		
-		switch(player.GetInputAxisForward())
-		{
-			case 1:
-				// if(player.p.lastForwardInput != player.GetInputAxisForward())
-					// thread HandleTridentAnims(trident, 1)
-				// trident.Anim_Stop()
-				forward = 1000
-				
-				if (Length(old_velocity) > forward)
-				{
-					forward = Length(old_velocity) * 0.9
-					if (forward < 1000)
-						forward = 1000
-				}
-
-				if ( Length(old_velocity) < forward)
-				{
-					forward = Length(old_velocity) + 50
-				}
-
-				if (vehicle.e.isBoosting){
-					forward = 1600
-				} 
-
-		
-			break
-			
-			case -1:
-				// if(player.p.lastForwardInput != player.GetInputAxisForward())
-					// thread HandleTridentAnims(trident, 3)
-				// trident.Anim_Stop()
-
-				backward = -800
-
-				if (forwardInertia)
-				{
-					// speed damping instead of going backward
-					forward = Length(old_velocity) - 100
-					if ( forward < 0){
-						forward = 0
-						forwardInertia = false
-					}
-				} else {
-					if ( -Length(old_velocity) > backward)
-					{
-						backward = -Length(old_velocity) - 50
-						forwardInertia = false
-					}
-				}
-				forwardInertia = false			
-			break
-		}
-
-		vector gravity = < 0 , 0, -100>
-		forwardSpeed = dir * (forward + backward)
-		vehicle.e.forwardSpeed = forwardSpeed
-		
-		// inertia
-		if(forward == 0 && backward == 0)
-        {
-        	if (forwardInertia)
-        		forwardSpeed = old_velocity * 0.9
-        	else 
-        		forwardSpeed = old_velocity * 0.6
-        }
-
-        if(airborne) {
-        	forwardSpeed = old_velocity * 0.99
-        }
-
-		old_velocity = forwardSpeed
-		
-		if (Length(forwardSpeed) < 5)
-		{
-			gravity = <0,0,0>
-		}
-		
-		if (airborne){ //move this to new function handlewarthoggravity
-			// gravity = < 0, 0, -500 * dt>
-			old_velocity = vehicle.GetVelocity()
-		}
-		
-		
-		if(!airborne)
-		{
-			vehicle.SetVelocity(forwardSpeed + gravity)
-		} else {
-			old_velocity = vehicle.GetVelocity()
-		}
-
-		player.p.lastRightInput = player.GetInputAxisRight()
-		player.p.lastForwardInput = player.GetInputAxisForward()
-		
-		WaitFrame()
-	}
-}
-
-
-void function HandleAngularVelocityBanshee(entity player, entity vehicle, entity trident)
-{
-	EndSignal( vehicle, "StopDriving")
-
-	OnThreadEnd( function() : ( vehicle, trident) {
-		if ( IsValid( vehicle ) )
-		{
-			// vehicle.SetAngularVelocity( 0,0,0 )
-		}
-
-	})
-	
-	vector old_velocity = < 0, 0, 0>
-	bool forwardInertia = true
-	vector normalDir
-	vector dir
-	float forward  = 0
-	float backward = 0
-	vector forwardSpeed
-	
-	while(true)
-	{
-		if( !IsValid(player) || !IsValid(vehicle) ) break
-		
-		forwardSpeed = vehicle.e.forwardSpeed
-		
-		vector rotAng = < 0, 0, 50 >
-
-		// if(vehicle.e.isInAirborne){
-			// rotAng = < 0, 35, 0>
-		// }
-		
-		//AxisRight
-		vector angVelocity = < 0, 0, 0>
-		
-		if(player.GetInputAxisRight() != 0 && Length(forwardSpeed) >= 100)
-		{
-			angVelocity = signum(player.GetInputAxisRight()) * rotAng
-		}
-
-		// if(player.GetInputAxisForward() == -1 )
-		// {
-			// rotAng = < 0, 50, 0 >
-			// angVelocity = signum(player.GetInputAxisForward()) * rotAng
-		// }
-		
-		
-		if(backward == 0 && Length(forwardSpeed) >= 100 || backward == 0 && Length(forwardSpeed) >= 100 ) 
-        {
-        	angVelocity.y += 200 * -AnglesToRight( vehicle.GetAngles() - player.CameraAngles() ).x //holy fuck. Colombia
-			angVelocity.x += 200 * AnglesToForward( vehicle.GetAngles() - player.CameraAngles() ).z //holy fuck. Colombia
-        }
-		
-		// if(vehicle.e.isInAirborne)
-		// {
-			// angVelocity += < signum(player.GetInputAxisForward()) * 20, angVelocity.y, signum(player.GetInputAxisRight())*20 > 
-		// }
-		
-		if(backward < 0)
-			angVelocity = -angVelocity
-
-		vehicle.SetAngularVelocity( angVelocity.x, angVelocity.y , angVelocity.z ) //magnific
-		
-		WaitFrame()
-	}	
-}
-
-void function tankFire(entity player, entity tank)
-{
-	//1 create bullet
-	vector ang = tank.GetAngles()
-	vector pos = tank.GetOrigin()
-
-	vector offset1 = <220, 23, 105>
-	vector offset2 = <220, -23, 105>
-
-	vector bulletPos1 = pos + RotateVector( offset1, ang )
-	vector bulletPos2 = pos + RotateVector( offset2, ang )
-
-	entity bullet1 = CreateBullet(bulletPos1, ang)
-	entity bullet2 = CreateBullet(bulletPos2, ang)
-	
-	WaitFrame()
-
-	float speed = 6000
-
-	vector dir = tank.GetForwardVector()
-
-	vector targetOffset = dir * speed
-
-	vector target1 = bullet1.GetOrigin() + targetOffset
-	vector target2 = bullet2.GetOrigin() + targetOffset
-
-
-
-	TraceResults result1 = TraceLine(bulletPos1, target1, [tank], TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_PLAYER)
-	TraceResults result2 = TraceLine(bulletPos2, target1, [tank], TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_PLAYER)
-
-
-	vector collisionPos1 = result1.endPos
-	vector collisionPos2 = result2.endPos
-
-
-
-	float travelTime = 0.1
-	// float travelTime = Length(tempEndPos - bullet1.GetOrigin) / 30000
-
-
-	// bullet1.NonPhysicsMoveTo( bullet1.GetOrigin() + target, travelTime, 0, 0 )
-	// bullet2.NonPhysicsMoveTo( bullet2.GetOrigin() + target, travelTime, 0, 0 )
-
-
-
-	bullet1.NonPhysicsMoveTo( collisionPos1, travelTime, 0, 0 )
-	bullet2.NonPhysicsMoveTo( collisionPos2, travelTime, 0, 0 )
-
-
-
-
-	entity tank_fire = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( TANK_FIRE_FX ), bulletPos1  + (dir * 30 ), <90,90,0>)
-	entity tank_fire2 = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( TANK_FIRE_FX ), bulletPos2 + (dir * 30 ), <90,90,0>)
-
-
-	EmitSoundAtPosition(TEAM_UNASSIGNED, bulletPos1, "weapon_smartpistol_firesuppressed_3p") // 1 sound is enough
-
-	// vector recoilAngle = VectorToAngles(tank.GetForwardVector() * -30)
-	// print(recoilAngle)
-
-
-	// 3 explosion
-	wait travelTime
-
-	vector finalTarget1 = collisionPos1 - <0,0,105>
-	vector finalTarget2 = collisionPos2 - <0,0,105>
-
-	if (collisionPos1 != (target1))
-		finalTarget1 = collisionPos1
-
-	if (collisionPos2 != (target2))
-		finalTarget2 = collisionPos2
-
-	// Explosion_DamageDefSimple( damagedef_tank_bombardment_detcord_explosion, collisionPos1, player, player, collisionPos1 )
-	// Explosion_DamageDefSimple( damagedef_tank_bombardment_detcord_explosion, collisionPos2, player, player, collisionPos2 )
-
-	Explosion_DamageDefSimple( damagedef_tank_bombardment_detcord_explosion, collisionPos1, player, player, collisionPos1 )
-	Explosion_DamageDefSimple( damagedef_tank_bombardment_detcord_explosion, collisionPos1, player, player, collisionPos1 - dir * 50)
-
-	Explosion_DamageDefSimple( damagedef_tank_bombardment_detcord_explosion, collisionPos2, player, player, collisionPos2 )
-	Explosion_DamageDefSimple( damagedef_tank_bombardment_detcord_explosion, collisionPos2, player, player, collisionPos2 - dir * 50)
-
-	wait 0.3
-
-	tank_fire.Destroy()
-	tank_fire2.Destroy()
-
-	wait 0.5
-	bullet1.Destroy()
-	bullet2.Destroy()
-}
-
-
-
-entity function CreateBullet(vector pos, vector ang)
-{
-	entity root = CreateScriptMover( pos, ang )
-
-	entity bullet = CreateEntity( "script_mover" )
-	bullet.SetValueForModelKey( TANK_BULLET_SMALL )
-	bullet.kv.solid = 6
-	bullet.kv.inertiaScale = 1.0
-	bullet.kv.SpawnAsPhysicsMover = 0
-	bullet.kv.fadedist = 10000
-	bullet.kv.renderamt = 255
-	bullet.kv.rendercolor = "255 255 255"
-
-	bullet.SetOrigin( pos )
-	bullet.SetAngles( ang )
-
-	DispatchSpawn( bullet )
-	bullet.SetModel( TANK_BULLET_SMALL )
-
-	bullet.SetParent(root)
-
-	return root
-}
-
-
 #endif
 
 #if CLIENT
@@ -2097,9 +1924,9 @@ void function SetupThirdPersonForVehicle(bool enable)
 {
 	if(enable)
 	{
-		SetConVarFloat( "c_thirdpersonshoulderheight", 85 )
+		SetConVarFloat( "c_thirdpersonshoulderheight", 30 )
 		SetConVarFloat( "c_thirdpersonshoulderoffset", 0.0 )
-		SetConVarFloat( "c_thirdpersonshoulderaimdist", 215.0 )
+		SetConVarFloat( "c_thirdpersonshoulderaimdist", 150.0 )
 	}
 	else
 	{
@@ -2145,17 +1972,452 @@ void function TridentBoost_Visuals()
 	}()
 }
 
-vector function GetPlayerCrosshairOriginRaw( entity player )
+//SPEEDOMETER
+
+// Retail display speed conversion function
+float function GetDisplaySpeed( float speed )
 {
-	vector angles = player.EyeAngles()
-	vector forward = AnglesToForward( angles )
-	vector origin = player.EyePosition()
+	return speed * 0.0568182 * 2.0
+}
 
-	vector start = origin
-	vector end = origin + forward * 50000
-	TraceResults result = TraceLine( start, end )
-	vector crosshairOrigin = result.endPos
+void function HoverVehicle_Speedometer_toggle( bool visible )
+{
+	if(visible == true)
+	{
+		thread HoverVehicle_Speedometer_Enable()
+	}
+	else
+	{
+		HoverVehicle_Speedometer_destroy()
+	}
+}
 
-	return crosshairOrigin
+void function HoverVehicle_Speedometer_Enable()
+{
+	entity player = GetLocalClientPlayer()
+	
+	EndSignal(player, "StopSpeedometer")
+	
+	Hud_SetVisible(HudElement( "MG_Speedometer_Icon" ), true)
+	Hud_SetVisible(HudElement( "MG_Speedometer_kmh" ), true)
+	Hud_SetVisible(HudElement( "MG_Speedometer_mph" ), true)
+
+	switch ( SPEEDOMETER_KMH ) 
+	{
+		case true:
+			while(true)
+			{
+				wait SPEEDOMETER_REFRESH_RATE
+				
+				entity playerr = GetLocalClientPlayer()
+				if( !playerr.IsObserver())
+				{
+					if (IsValid(playerr))
+					{
+						//Speedometer	
+						float playerVel
+						vector playerVelV = playerr.GetVelocity()
+						
+						playerVel = playerr.GetPlayerNetTime( "Flowstate_HoverVehicle_LastSpeed" )
+						
+						float playerVelNormal = playerVel * (0.06858) //KM/H
+						
+						int playerVelNormalInt = playerVelNormal.tointeger()
+						
+						//Display Speed
+						Hud_SetText( HudElement( "MG_Speedometer_kmh" ), playerVelNormalInt.tostring() + " km/h")
+					}
+				} else if( playerr.IsObserver())
+				{
+					if (IsValid(playerr))
+					{
+						entity spectarget = playerr.GetObserverTarget()
+						if (IsValid(spectarget))
+						{
+							//Speedometer	
+							float playerVel
+							vector playerVelV = spectarget.GetVelocity()
+							
+							playerVel = playerr.GetPlayerNetTime( "Flowstate_HoverVehicle_LastSpeed" )
+							
+							// Use retail display speed conversion
+							float playerVelNormal = GetDisplaySpeed(playerVel) * 1.609344 // Convert to KM/H from retail display speed
+							
+							int playerVelNormalInt = playerVelNormal.tointeger()
+							
+							//Display Speed
+							Hud_SetText( HudElement( "MG_Speedometer_kmh" ), playerVelNormalInt.tostring() + " km/h")
+						}
+					}
+				}
+			}
+		break
+		case false:
+			while(true)
+			{
+				wait SPEEDOMETER_REFRESH_RATE
+				
+				entity playerr = GetLocalClientPlayer()
+				if( !playerr.IsObserver())
+				{
+					if (IsValid(playerr))
+					{
+						//Speedometer	
+						float playerVel
+						vector playerVelV = playerr.GetVelocity()
+						
+						playerVel = playerr.GetPlayerNetTime( "Flowstate_HoverVehicle_LastSpeed" )
+						
+						float playerVelNormal = playerVel * (0.06858) //KM/H
+						float playerVelBigMac = playerVelNormal * (0.621371) //MPH
+						
+						int playerVelNormalInt = playerVelNormal.tointeger()
+						int playerVelBigMacInt = playerVelBigMac.tointeger()
+						
+						//Display Speed
+						Hud_SetText( HudElement( "MG_Speedometer_kmh" ), playerVelBigMacInt.tostring() + " mph")
+					}
+				} else if( playerr.IsObserver())
+				{
+					if (IsValid(playerr))
+					{
+						entity spectarget = playerr.GetObserverTarget()
+						if (IsValid(spectarget))
+						{
+							//Speedometer	
+							float playerVel
+							vector playerVelV = spectarget.GetVelocity()
+							
+							playerVel = playerr.GetPlayerNetTime( "Flowstate_HoverVehicle_LastSpeed" )
+							
+							// Use retail display speed conversion
+							float playerVelNormal = GetDisplaySpeed(playerVel) * 1.609344 // Convert to KM/H from retail display speed
+							float playerVelBigMac = playerVelNormal * (0.621371) //MPH
+							
+							int playerVelNormalInt = playerVelNormal.tointeger()
+							int playerVelBigMacInt = playerVelBigMac.tointeger()
+							
+							//Display Speed
+							Hud_SetText( HudElement( "MG_Speedometer_kmh" ), playerVelBigMacInt.tostring() + " mph")
+						}
+					}
+				}
+			}
+		break
+	}	
+}
+
+void function HoverVehicle_Speedometer_destroy(){
+	entity player = GetLocalClientPlayer()
+	player.Signal("StopSpeedometer")
+	
+	Hud_SetVisible(HudElement( "MG_Speedometer_Icon" ), false)
+	Hud_SetVisible(HudElement( "MG_Speedometer_kmh" ), false)
+	Hud_SetVisible(HudElement( "MG_Speedometer_mph" ), false)
+}
+#endif
+
+#if SERVER
+
+// Debug function to change hover vehicle variables in real time
+// Usage: hv_set <variable_name> <value>
+// Example: hv_set maxEngineForce 1000
+bool function CC_HoverVehicleSetVar( entity player, array<string> args )
+{
+	if ( args.len() != 2 )
+	{
+		printw( player, "Usage: hv_set <variable_name> <value>" )
+		return true
+	}
+	
+	string varName = args[0]
+	string valueStr = args[1]
+	float value = valueStr.tofloat()
+	
+	// Base Physics Constants
+	switch ( varName )
+	{
+		case "gravity":
+			gravity = value
+			printw( player, "Set gravity = " + value )
+			break
+		case "goalSpeed":
+			goalSpeed = value
+			printw( player, "Set goalSpeed = " + value )
+			break
+		case "maxEngineForce":
+			maxEngineForce = value
+			printw( player, "Set maxEngineForce = " + value )
+			break
+		case "maxUpwardForce":
+			maxUpwardForce = value
+			printw( player, "Set maxUpwardForce = " + value )
+			break
+		case "extraBrakingForce":
+			extraBrakingForce = value
+			printw( player, "Set extraBrakingForce = " + value )
+			break
+		case "powerBrakingForce":
+			powerBrakingForce = value
+			printw( player, "Set powerBrakingForce = " + value )
+			break
+		case "airAcceleration":
+			airAcceleration = value
+			printw( player, "Set airAcceleration = " + value )
+			break
+		case "maxClimbHeight":
+			maxClimbHeight = value
+			printw( player, "Set maxClimbHeight = " + value )
+			break
+		case "lookaheadTime":
+			lookaheadTime = value
+			printw( player, "Set lookaheadTime = " + value )
+			break
+		case "idleHoverHeight":
+			idleHoverHeight = value
+			printw( player, "Set idleHoverHeight = " + value )
+			break
+		case "pusherAnnoyForce":
+			pusherAnnoyForce = value
+			printw( player, "Set pusherAnnoyForce = " + value )
+			break
+		case "pusherSize":
+			pusherSize = value
+			printw( player, "Set pusherSize = " + value )
+			break
+		
+		// Collision Response Constants
+		case "collisionBounceFactor":
+			collisionBounceFactor = value
+			printw( player, "Set collisionBounceFactor = " + value )
+			break
+		case "collisionVerticalDamping":
+			collisionVerticalDamping = value
+			printw( player, "Set collisionVerticalDamping = " + value )
+			break
+		case "collisionAngularDamping":
+			collisionAngularDamping = value
+			printw( player, "Set collisionAngularDamping = " + value )
+			break
+		
+		// Vehicle Dimensions
+		case "vehicleLength":
+			vehicleLength = value
+			printw( player, "Set vehicleLength = " + value )
+			break
+		case "vehicleWidth":
+			vehicleWidth = value
+			printw( player, "Set vehicleWidth = " + value )
+			break
+		case "vehicleHeight":
+			vehicleHeight = value
+			printw( player, "Set vehicleHeight = " + value )
+			break
+		case "hullHeightOffset":
+			hullHeightOffset = value
+			printw( player, "Set hullHeightOffset = " + value )
+			break
+		case "hullForwardOffset":
+			hullForwardOffset = value
+			printw( player, "Set hullForwardOffset = " + value )
+			break
+		
+		// Terrain Prediction Constants
+		case "feelerStartHeightMultiplier":
+			feelerStartHeightMultiplier = value
+			printw( player, "Set feelerStartHeightMultiplier = " + value )
+			break
+		case "feelerEndDepthMultiplier":
+			feelerEndDepthMultiplier = value
+			printw( player, "Set feelerEndDepthMultiplier = " + value )
+			break
+		
+		// Rotation Control
+		case "goalYawVelocity":
+			goalYawVelocity = value
+			printw( player, "Set goalYawVelocity = " + value )
+			break
+		case "maxYawForce":
+			maxYawForce = value
+			printw( player, "Set maxYawForce = " + value )
+			break
+		
+		// Lateral Movement Constants
+		case "maxLateralSpeed":
+			maxLateralSpeed = value
+			printw( player, "Set maxLateralSpeed = " + value )
+			break
+		case "maxLateralForce":
+			maxLateralForce = value
+			printw( player, "Set maxLateralForce = " + value )
+			break
+		case "maxLateralTilt":
+			maxLateralTilt = value
+			printw( player, "Set maxLateralTilt = " + value )
+			break
+		case "maxFrontTilt":
+			maxFrontTilt = value
+			printw( player, "Set maxFrontTilt = " + value )
+			break
+
+		// Classic damping
+		case "BELOW_TARGET_HEIGHT_CORRECTION_MULTIPLIER":
+			BELOW_TARGET_HEIGHT_CORRECTION_MULTIPLIER = value
+			printw( player, "Set BELOW_TARGET_HEIGHT_CORRECTION_MULTIPLIER = " + value )
+			break
+			
+		// Boost System
+		case "maxBoostSpeed":
+			maxBoostSpeed = value
+			printw( player, "Set maxBoostSpeed = " + value )
+			break
+		case "minBoostSpeed":
+			minBoostSpeed = value
+			printw( player, "Set minBoostSpeed = " + value )
+			break
+		case "BOOST_LOCKOUT_TIME":
+			BOOST_LOCKOUT_TIME = value
+			printw( player, "Set BOOST_LOCKOUT_TIME = " + value )
+			break
+		case "POST_BOOST_WINDOW":
+			POST_BOOST_WINDOW = value
+			printw( player, "Set POST_BOOST_WINDOW = " + value )
+			break
+		
+		// Aggressive Terrain Response
+		case "USE_AGGRESSIVE_TERRAIN_RESPONSE":
+			USE_AGGRESSIVE_TERRAIN_RESPONSE = (value > 0.5)
+			printw( player, "Set USE_AGGRESSIVE_TERRAIN_RESPONSE = " + USE_AGGRESSIVE_TERRAIN_RESPONSE.tostring() )
+			break
+		case "AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER_PITCH":
+			AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER_PITCH = value
+			printw( player, "Set AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER = " + value )
+			break
+		case "AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER_ROLL":
+			AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER_ROLL = value
+			printw( player, "Set AGGRESSIVE_TERRAIN_RESPONSE_MULTIPLIER = " + value )
+			break
+			
+		// Magic Constants (Physics Tuning)
+		case "UPWARD_FORCE_DAMPING_FACTOR":
+			UPWARD_FORCE_DAMPING_FACTOR = value
+			printw( player, "Set UPWARD_FORCE_DAMPING_FACTOR = " + value )
+			break
+		case "LATERAL_FORCE_AMPLIFIER":
+			LATERAL_FORCE_AMPLIFIER = value
+			printw( player, "Set LATERAL_FORCE_AMPLIFIER = " + value )
+			break
+		case "LATERAL_FORCE_UPWARD_INTERFERENCE_FACTOR":
+			LATERAL_FORCE_UPWARD_INTERFERENCE_FACTOR = value
+			printw( player, "Set LATERAL_FORCE_UPWARD_INTERFERENCE_FACTOR = " + value )
+			break
+		case "YAW_RESPONSE_MULTIPLIER":
+			YAW_RESPONSE_MULTIPLIER = value
+			printw( player, "Set YAW_RESPONSE_MULTIPLIER = " + value )
+			break
+		case "PITCH_RESPONSE_MULTIPLIER":
+			PITCH_RESPONSE_MULTIPLIER = value
+			printw( player, "Set PITCH_RESPONSE_MULTIPLIER = " + value )
+			break
+		case "ROLL_RESPONSE_MULTIPLIER":
+			ROLL_RESPONSE_MULTIPLIER = value
+			printw( player, "Set ROLL_RESPONSE_MULTIPLIER = " + value )
+			break
+		
+		// Special boolean case for debug prints
+		case "ENABLE_HOVER_DEBUG_PRINTS":
+			if ( value > 0.5 )
+			{
+				ENABLE_HOVER_DEBUG_PRINTS = true
+				printw( player, "Set ENABLE_HOVER_DEBUG_PRINTS = true" )
+			}
+			else
+			{
+				ENABLE_HOVER_DEBUG_PRINTS = false
+				printw( player, "Set ENABLE_HOVER_DEBUG_PRINTS = false" )
+			}
+			break
+		
+		// Special boolean case for rotation mode
+		case "USE_CAMERA_BASED_ROTATION":
+			if ( value > 0.5 )
+			{
+				USE_CAMERA_BASED_ROTATION = true
+				printw( player, "Set USE_CAMERA_BASED_ROTATION = true" )
+			}
+			else
+			{
+				USE_CAMERA_BASED_ROTATION = false
+				printw( player, "Set USE_CAMERA_BASED_ROTATION = false" )
+			}
+			break
+		
+		case "feelersRowMaxCount":
+			feelersRowMaxCount = value.tointeger()
+		break
+		
+		case "feelersColCount":
+			feelersColCount = value.tointeger()
+		break
+		// Special boolean case for feeler positioning method
+		case "USE_DISTRIBUTED_FEELERS":
+			if ( value > 0.5 )
+			{
+				USE_DISTRIBUTED_FEELERS = true
+				printw( player, "Set USE_DISTRIBUTED_FEELERS = true (distributed across vehicle length)" )
+			}
+			else
+			{
+				USE_DISTRIBUTED_FEELERS = false
+				printw( player, "Set USE_DISTRIBUTED_FEELERS = false (original offset method)" )
+			}
+			break
+		
+		
+		case "PUSHERS_ENABLE_DEBUG_DRAWS":
+			if( value == 1 )
+				PUSHERS_ENABLE_DEBUG_DRAWS = true
+			else
+				PUSHERS_ENABLE_DEBUG_DRAWS = false
+			break
+
+		case "FEELERS_ENABLE_DEBUG_DRAWS":
+			if( value == 1 )
+				FEELERS_ENABLE_DEBUG_DRAWS = true
+			else
+				FEELERS_ENABLE_DEBUG_DRAWS = false
+			break
+
+		case "ENABLE_OTHERS_DEBUG_DRAWS":
+			if( value == 1 )
+				ENABLE_OTHERS_DEBUG_DRAWS = true
+			else
+				ENABLE_OTHERS_DEBUG_DRAWS = false
+			break
+		
+		case "climbAssistForce":
+			climbAssistForce = value
+			break
+
+		default:
+			printw( player, "Unknown variable: " + varName )
+			printw( player, "Available vars: gravity, goalSpeed, maxEngineForce, maxUpwardForce, etc." )
+			break
+	}
+	
+	return true
+}
+
+void function DEV_TpToTestArea1( int i )
+{
+	entity player = gp()[0]
+	
+	vector origin
+	if( i == 0 )
+		player.SetOrigin( <22348.1895, -9818.97852, -5591.80225> ) //cliff
+	else if( i == 1 )
+		player.SetOrigin( <8981.44727, 27836.498, -5047.1792> ) //climb angle
+
+
 }
 #endif

@@ -1,5 +1,3 @@
-//Updated by @CafeFPS
-
 global function OnWeaponPrimaryAttack_holopilot
 global function OnWeaponChargeLevelIncreased_holopilot
 global function OnWeaponActivate_holopilot
@@ -22,8 +20,9 @@ global function CodeCallback_PlayerDecoyRemove
 global function CodeCallback_PlayerDecoyStateChange
 global function CreateHoloPilotDecoys
 global function SetupDecoy_Common
-
+global function HoloPilot_OnDecoyDamaged
 global function GetDecoyActiveCountForPlayer
+global function GetThreatPriorityForHolopilot
 #endif // SERVER
 
 global const string DECOY_SCRIPTNAME = "controllable_decoy"
@@ -280,7 +279,6 @@ void function CreateDecoysHint( entity decoy, string msg, float endTime )
 
 #if SERVER
 bool function ClientCommand_ToggleDecoys( entity player, array<string> args )
-//By @CafeFPS (CafeFPS)//
 {
 	if ( !IsAlive( player ) )
 		return true
@@ -381,6 +379,15 @@ void function CleanUpPassiveDecoyIfExecuted( entity decoy, entity player )
 	)
 
 	wait ULTIMATE_DECOY_DURATION
+}
+
+
+int function GetThreatPriorityForHolopilot( entity player )
+{
+	const int EXTRA_PRIORITY = 0
+
+	int setting = (IsValid( player ) ? player.GetPlayerSettingInt( "aiEnemy_priority" ) : 10)
+	return (setting + EXTRA_PRIORITY)
 }
 
 entity function Flowstate_CreateDecoy( vector endPosition, asset settingsName, asset modelName, entity player, ItemFlavor skin, float duration, int type = 0, bool isUltimate = false )
@@ -494,6 +501,62 @@ void function HoloPiliot_OnDecoyDamaged( entity decoy, entity owner, var damageI
 	decoy.e.attachedEnts.append( attacker )
 
 	PingForDecoyTriggered( owner, attacker )
+}
+
+void function HoloPilot_OnDecoyDamaged( entity decoy, entity owner, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() || !IsEnemyTeam( owner.GetTeam(), attacker.GetTeam() ) )
+		return
+
+	if ( decoy.e.attachedEnts.contains( attacker ) )
+		return
+
+	if ( DamageInfo_GetDamage( damageInfo ) <= 0 )
+	{
+		if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_weapon_arc_bolt ) // TODO: Script bleed, maybe this should be a damage flag?
+		{
+			entity inflictor = DamageInfo_GetInflictor( damageInfo )
+			if ( IsValid( inflictor ) )
+				return
+		}
+		else
+		{
+			return
+		}
+	}
+
+	StatsHook_HoloPiliot_OnDecoyDamaged( decoy, owner, attacker, damageInfo )
+
+	decoy.e.attachedEnts.append( attacker )
+
+	vector damagePos = DamageInfo_GetDamagePosition( damageInfo )
+
+	                     
+		if ( GetCurrentPlaylistVarBool( "mirage_rework_enabled", true ) )
+		{
+			int damageType = DamageInfo_GetDamageType( damageInfo )
+			if ( damageType == DMG_BULLET || damageType == DMG_MELEE_ATTACK )
+				PingForDecoyTriggered( owner, attacker )
+		}
+		else
+                            
+		{
+			PingForDecoyTriggered( owner, attacker )
+		}
+
+	                    
+		if( IsValid( owner ) && owner.HasPassive( ePassives.PAS_TAC_UPGRADE_TWO ) )
+		{
+			entity tacticalWeapon = owner.GetOffhandWeapon( OFFHAND_TACTICAL )
+			if ( IsValid( tacticalWeapon ) )
+			{
+				int maxTacAmmo 		= tacticalWeapon.GetWeaponPrimaryClipCountMax()
+				tacticalWeapon.SetWeaponPrimaryClipCountNoRegenReset( maxTacAmmo )
+			}
+		}
+       
 }
 
 entity function PingForDecoyTriggered( entity playerOwner, entity targetEnt )
@@ -688,7 +751,7 @@ void function MonitorDecoyActiveForPlayer( entity decoy, entity player )
 				Assert( player in file.playerToDecoysActiveTable )
 				--file.playerToDecoysActiveTable[ player ]
 				
-				if( Flowstate_IsFS1v1() && IsValid( decoy ) || isScenariosMode() && IsValid( decoy ) )
+				if( Flowstate_IsFS1v1() && IsValid( decoy ) || Safe_isScenariosMode() && IsValid( decoy ) )
 				{
 					decoy.Destroy() //could use fancy cleanup function as well for cleaner effect
 				}

@@ -42,7 +42,12 @@ WeaponData
 			"spread_kick_on_fire_crouch_hip" 		"*0.40"
 			"spread_kick_on_fire_air_hip" 			"*0.40"
 		}
-
+		
+		spieslegends_nozoom
+		{
+			"zoom_effects"									"0"
+		}
+		
 		//master chief faster movement while on ads
 		unsc_super_soldier
 		{

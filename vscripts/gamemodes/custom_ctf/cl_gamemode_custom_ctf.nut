@@ -1,9 +1,3 @@
-// Credits
-// AyeZee#6969 -- ctf gamemode and ui
-// CafeFPS -- Server/client/ui Rework and multiple code fixes
-// sal#3261 -- base custom_tdm mode to work off
-// everyone else -- advice
-
 global function Cl_CustomCTF_Init
 
 //Server Callbacks
@@ -243,11 +237,11 @@ void function Cl_OnResolutionChanged()
 	if( GetGlobalNetInt( "FSDM_GameState" ) != 0 )
 	{
 		ShowScoreRUI( false )
-		Flowstate_ShowRoundEndTimeUI( -1 )
+		// Flowstate_ShowRoundEndTimeUI( -1 )
 		return
 	}
 	
-	Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
+	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
 	ShowScoreRUI( true )
 }
 
@@ -262,7 +256,7 @@ void function FSCTF_GameStateChanged( entity player, int old, int new, bool actu
 	} else if( new == 1 )
 	{
 		ShowScoreRUI( false )
-		Flowstate_ShowRoundEndTimeUI( -1 )
+		// Flowstate_ShowRoundEndTimeUI( -1 )
 	}
 }
 
@@ -344,19 +338,19 @@ void function Flowstate_CTFRoundEndTimeChanged( entity player, float old, float 
 	if ( !actuallyChanged  )
 		return
 
-	thread Flowstate_ShowRoundEndTimeUI( new )
+	// thread Flowstate_ShowRoundEndTimeUI( new )
 }
 
 void function CTFNotifyRingTimer()
 {
-	if( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) < Time() || GetGlobalNetInt( "FSDM_GameState" ) != eTDMState.IN_PROGRESS || GetGlobalNetTime( "flowstate_DMRoundEndTime" ) == -1 )
-	{
-		ShowScoreRUI( false )
-		Flowstate_ShowRoundEndTimeUI( -1 )
-		return
-	}
+	// if( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) < Time() || GetGlobalNetInt( "FSDM_GameState" ) != eTDMState.IN_PROGRESS || GetGlobalNetTime( "flowstate_DMRoundEndTime" ) == -1 )
+	// {
+		// ShowScoreRUI( false )
+		// // Flowstate_ShowRoundEndTimeUI( -1 )
+		// return
+	// }
 
-	Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
+	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
 	ShowScoreRUI( true )
 }
 
@@ -1522,7 +1516,6 @@ void function FSIntro_StartIntroScreen()
 		}
 
 		i++
-		//cool human like camera shake by cafefps - idk what i did
 		waitthread function() : ( cameraMover, model, camera_end_pos, camera, camera_focus_pos )
 		{
 			EndSignal( camera, "OnDestroy" )

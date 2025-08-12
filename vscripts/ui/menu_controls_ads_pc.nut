@@ -126,14 +126,14 @@ void function LoadPrecision()
 
 void function SetupTextField( string convarName, string textField )
 {
-	if( empty( convarName ) || empty( textField ) )
-		mAssert( false, "Missing entry in " + FUNC_NAME() + "() called in " + FUNC_NAME(2) + "()" )	
+	if( convarName == "" || textField == "" )
+		mAssert( 0, "Missing entry in %s()", FUNC_NAME() )	
 	
 	if( !( textField in file.textEntryFields ) )
 		file.textEntryFields[ textField ] <- {}
 		
 	if( convarName in file.textEntryFields[ textField ] )
-		mAssert( false, "file.textEntryFields already contains \"" + convarName + "\"" )
+		mAssert( 0, "file.textEntryFields already contains \"%s\"", convarName )
 		
 	file.textEntryFields[ textField ][ convarName ] <- Hud_GetChild( file.contentPanel, textField )
 }

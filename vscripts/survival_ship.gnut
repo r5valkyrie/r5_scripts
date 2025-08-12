@@ -213,10 +213,10 @@ void function ClearPlayerPlaneViewMode( entity player )
 
 	// if( Playlist() == ePlaylists.fs_haloMod_survival )
 	// {
-		// GiveLoadoutRelatedWeapons_HaloMod( player ) //Cafe was here
+		// GiveLoadoutRelatedWeapons_HaloMod( player )
 	// } else if( !IsDevGamemode() )
 	// {
-		// GiveLoadoutRelatedWeapons( player ) //Cafe was here
+		// GiveLoadoutRelatedWeapons( player )
 	// }
 }
 
@@ -314,7 +314,7 @@ void function JumpFromPlane( entity player, bool forcedOut = false )
 	foreach ( jumpingPlayer in jumpingPlayers )
 	{
 		thread PlayerSkyDive( jumpingPlayer, driverViewVector, jumpingPlayers, player )
-		GiveBasicSurvivalItems( jumpingPlayer ) //Cafe was here	
+		GiveBasicSurvivalItems( jumpingPlayer )
 	}
 }
 
@@ -327,7 +327,7 @@ void function GiveBasicSurvivalItems( entity player )
 {
 	if( !IsValid( player ) || Playlist() == ePlaylists.fs_scenarios )
 		return
-	
+
 	//add white shield, white knockdown shield, white helmet, two syringes and two cells
 	Inventory_SetPlayerEquipment( player, "armor_pickup_lv1", "armor")
 	Inventory_SetPlayerEquipment( player, "helmet_pickup_lv1", "helmet")
@@ -344,20 +344,16 @@ void function GiveBasicSurvivalItems( entity player )
 
 	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
 	
-	if( ItemFlavor_GetHumanReadableRef( playerCharacter ) != "character_gibraltar" )
-	{
-		player.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
-		player.GiveOffhandWeapon( "mp_ability_emote_projector", OFFHAND_EQUIPMENT )
-	}
 	// todo: find why it's not playing fx on cockpit
 	// BroadcastItemPickup( player, "armor_pickup_lv1", eLootAction.EQUIP )
 
 	if( Playlist() == ePlaylists.fs_haloMod_survival )
 	{
-		GiveLoadoutRelatedWeapons_HaloMod( player ) //Cafe was here
-	} else
+		GiveLoadoutRelatedWeapons_HaloMod( player )
+	} 
+	else
 	{
-		GiveLoadoutRelatedWeapons( player ) //Cafe was here
+		GiveLoadoutRelatedWeapons( player )
 	}
 	
 	if( player.p.respawnPodLanded )
@@ -366,7 +362,8 @@ void function GiveBasicSurvivalItems( entity player )
 	if( Playlist() == ePlaylists.fs_ltm_mortalevoshields )
 	{
 		Message(player, "MORTAL EVOSHIELDS", "Kill enemies to evolve your shields infinitely.", 8) // todo move this to localization. Cafe
-	} else if( Playlist() == ePlaylists.fs_haloMod_survival && GetCurrentPlaylistVarBool( "is_hiswattson_event", false ) )
+	} 
+	else if( Playlist() == ePlaylists.fs_haloMod_survival && GetCurrentPlaylistVarBool( "is_hiswattson_event", false ) )
 	{
 		Remote_CallFunction_ByRef( player, "HaloBrIntroSequence" )
 	}

@@ -64,8 +64,8 @@ void function MiniPromo_Start()
 
 	UpdatePromoData()
 
-	if ( !IsPromoDataProtocolValid() )
-		return
+	//if ( !IsPromoDataProtocolValid() )
+	//	return
 
 	file.allPages = InitPages()
 
@@ -105,9 +105,6 @@ void function MiniPromo_Stop()
 
 void function OnGRXStateChanged()
 {
-	if ( !GRX_IsInventoryReady() || !GRX_AreOffersReady() )
-		return
-
 	UpdateValidityOfPages( file.allPages )
 
 	int validPageCount = GetValidPageCount()
@@ -156,25 +153,21 @@ void function MiniPromo_Reset()
 
 void function UpdateValidityOfPages( array<MiniPromoPageData> pages )
 {
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-
 	foreach ( page in pages )
 	{
 		switch ( page.linkType )
 		{
 			case "openpack":
-				page.isValid = GRX_IsInventoryReady() && GRX_GetTotalPackCount() > 0
+				page.isValid = true
+				break
+
+			case "custom":
+				page.isValid = true
 				break
 
 			case "battlepass":
 			case "storecharacter":
-				page.isValid = !GRX_IsItemOwnedByPlayer( GetItemFlavorByHumanReadableRef( page.linkData[0] ) )
+				page.isValid = true
 				break
 
 			case "storeskin":
@@ -198,7 +191,7 @@ void function UpdateValidityOfPages( array<MiniPromoPageData> pages )
 				break
 
 			case "url":
-				page.isValid = true //
+				page.isValid = true
 				break
 		}
 	}
@@ -238,20 +231,20 @@ int function GetActivePageIndexForRui()
 	return index
 }
 
+//<m|ASSET STRING|TEXT 1|TEXT 2|Link Type>
+//Link type can be custom, openpack, or url:linkhere
+//there is also battlepass, storecharacter, storeskin, and themedstoreskin but we wont really use these
+//promos will display in the order you place them here
+array<string> miniPromosData = [
+	"<m|rui/menu/maps/mp_rr_olympus_big_icon|Welcome to|R5Reloaded|custom>",
+	"<m|rui/menu/maps/mp_rr_canyonlands_mu2_tt_big_icon|Join the Discord|Click me to join|url:https://discord.com/invite/jqMkUdXrBr>",
+	"<m|m_openpack|OPEN PACK||openpack>"
+]
 
 array<MiniPromoPageData> function InitPages()
 {
-	string content = "<m|m_openpack|OPEN PACK||openpack>"
-	content += GetPromoDataLayout()
-	//
-	//
-	//
-	//
-	//
-	//
-	//
+	string content = miniPromosData.join("")
 
-	//
 	array< array<string> > matches = RegexpFindAll( content, "<m\\|([^>\\|]*)\\|([^>\\|]*)\\|([^>\\|]*)\\|([^>\\|]+)>" )
 	if ( matches.len() > MINIPROMO_MAX_PAGES )
 	{
@@ -263,16 +256,8 @@ array<MiniPromoPageData> function InitPages()
 
 	foreach ( idx, vals in matches )
 	{
-		//
-		//
-		//
-
-		//
-		//
 		MiniPromoPageData newPage
 		newPage.imageName = vals[1]
-		if( !GetConVarBool( "assetdownloads_enabled" ) || idx == 0 )
-			newPage.image = GetPromoImage( newPage.imageName )
 		newPage.text1 = vals[2]
 		newPage.text2 = vals[3]
 
@@ -292,9 +277,7 @@ array<MiniPromoPageData> function InitPages()
 			}
 		}
 
-		//
-		//
-		//
+		newPage.image = GetPromoImage( newPage.imageName, newPage.linkType != "openpack"  )
 
 		if ( IsLinkFormatValid( newPage.linkType, newPage.linkData ) )
 		{
@@ -319,6 +302,8 @@ bool function IsLinkFormatValid( string linkType, array<string> linkData )
 		return true
 	else if ( linkType == "url" && linkData.len() == 1 ) //
 		return true
+	else if ( linkType == "custom" )
+		return true
 
 	return false
 }
@@ -326,7 +311,6 @@ bool function IsLinkFormatValid( string linkType, array<string> linkData )
 
 void function AutoAdvancePages()
 {
-	//
 	Signal( uiGlobal.signalDummy, "EndAutoAdvancePages" )
 	EndSignal( uiGlobal.signalDummy, "EndAutoAdvancePages" )
 
@@ -354,30 +338,22 @@ void function ChangePage( bool direction )
 	for ( int i = 1; i < numPages; i++ )
 	{
 		int candidatePageIndex          = direction == MINIPROMO_NAV_RIGHT ? (file.activePageIndex + i) % numPages : (file.activePageIndex - i + numPages) % numPages
-		//
+
 		MiniPromoPageData candidatePage = file.allPages[candidatePageIndex]
 		if ( IsPageValidToShow( candidatePage ) )
 		{
 			nextPageIndex = candidatePageIndex
 			break
 		}
-		//
-		//
-		//
-		//
 	}
 
 	if ( nextPageIndex != file.activePageIndex )
 		SetPage( nextPageIndex )
-	//
-	//
 }
 
 
 void function SetPage( int pageIndex, bool instant = false )
 {
-	//
-
 	var rui = Hud_GetRui( file.button )
 
 	float time = instant ? Time() - 10 : Time()
@@ -387,39 +363,48 @@ void function SetPage( int pageIndex, bool instant = false )
 	file.activePageIndex = pageIndex
 
 	MiniPromoPageData lastPage = file.allPages[lastActivePage]
-	if( GetConVarBool( "assetdownloads_enabled" ) && lastActivePage > 0 )
-		RuiSetImage( rui, "lastImageAsset", GetDownloadedImageAsset( GetMiniPromoRpakName(), lastPage.imageName, ePakType.DL_MINI_PROMO ) )
+
+	RuiSetImage( rui, "lastImageAsset", lastPage.image )
+
+	if(lastPage.linkType == "openpack")
+	{
+		RuiSetBool( rui, "lastFormat", true )
+		RuiSetString( rui, "lastText1", "APEX PACK SIMULATOR" )
+		RuiSetString( rui, "lastText2", "OPEN PACKS" )
+	}
 	else
-		RuiSetImage( rui, "lastImageAsset", lastPage.image )
-	RuiSetBool( rui, "lastFormat", lastPage.format )
-	RuiSetString( rui, "lastText1", lastPage.text1 )
-	RuiSetString( rui, "lastText2", lastPage.text2 )
+	{
+		RuiSetBool( rui, "lastFormat", lastPage.format )
+		RuiSetString( rui, "lastText1", lastPage.text1 )
+		RuiSetString( rui, "lastText2", lastPage.text2 )
+	}
 
 	MiniPromoPageData page = file.allPages[file.activePageIndex]
-	if( GetConVarBool( "assetdownloads_enabled" ) && file.activePageIndex > 0 )
-		RuiSetImage( rui, "imageAsset", GetDownloadedImageAsset( GetMiniPromoRpakName(), page.imageName, ePakType.DL_MINI_PROMO, file.button ) )
+
+	RuiSetImage( rui, "imageAsset", page.image )
+
+	if(page.linkType == "openpack")
+	{
+		RuiSetBool( rui, "format", true )
+		RuiSetString( rui, "text1", "APEX PACK SIMULATOR" )
+		RuiSetString( rui, "text2", "OPEN PACKS" )
+	}
 	else
-		RuiSetImage( rui, "imageAsset", page.image )
-	RuiSetBool( rui, "format", page.format )
-	RuiSetString( rui, "text1", page.text1 )
-	RuiSetString( rui, "text2", page.text2 )
+	{
+		RuiSetBool( rui, "format", page.format )
+		RuiSetString( rui, "text1", page.text1 )
+		RuiSetString( rui, "text2", page.text2 )
+	}
 
 	RuiSetInt( rui, "activePageIndex", GetActivePageIndexForRui() )
 
-	int ownedPacks = GRX_IsInventoryReady() ? GRX_GetTotalPackCount() : 0
+	int ownedPacks = GRX_GetTotalPackCount()
 	if ( ownedPacks > 0 )
 	{
-		RuiSetInt( rui, "ownedPacks", ownedPacks )
+		RuiSetInt( rui, "ownedPacks", 999 )
 
 		ItemFlavor ornull pack = GetNextLootBox()
 		expect ItemFlavor( pack )
-		//
-		//
-		//
-		//
-		//
-		//
-		//
 
 		asset packIcon            = GRXPack_GetOpenButtonIcon( pack )
 		int packRarity            = ItemFlavor_GetQuality( pack )
@@ -446,16 +431,13 @@ void function SetPage( int pageIndex, bool instant = false )
 }
 
 
-//
 void function MiniPromoButton_OnActivate( var button )
 {
-	//
-
 	MiniPromoPageData page = file.allPages[file.activePageIndex]
 
 	if ( page.linkType == "openpack" )
 	{
-		if ( GRX_IsInventoryReady() && GRX_GetTotalPackCount() > 0 )
+		if ( GRX_GetTotalPackCount() > 0 )
 		{
 			EmitUISound( "UI_Menu_OpenLootBox" )
 			OnLobbyOpenLootBoxMenu_ButtonPress()
@@ -502,8 +484,6 @@ void function MiniPromoButton_OnActivate( var button )
 		EmitUISound( "UI_Menu_Accept" )
 		LaunchExternalWebBrowser( page.linkData[0], WEBBROWSER_FLAG_NONE )
 	}
-
-	//
 }
 
 
@@ -535,7 +515,6 @@ void function MiniPromoButton_OnLoseFocus( var button )
 void function OnStickMoved( ... )
 {
 	float stickDeflection = expect float( vargv[1] )
-	//
 
 	int stickState = eStickState.NEUTRAL
 	if ( stickDeflection > 0.25 )
@@ -547,13 +526,11 @@ void function OnStickMoved( ... )
 	{
 		if ( stickState == eStickState.RIGHT )
 		{
-			//
 			ChangePage( MINIPROMO_NAV_RIGHT )
 			thread AutoAdvancePages()
 		}
 		else if ( stickState == eStickState.LEFT )
 		{
-			//
 			ChangePage( MINIPROMO_NAV_LEFT )
 			thread AutoAdvancePages()
 		}

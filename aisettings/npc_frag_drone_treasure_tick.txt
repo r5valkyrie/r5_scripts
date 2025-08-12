@@ -56,7 +56,7 @@ npc_frag_drone_treasure_tick
 	aimassist_adspull_headshotAttachmentName	""
 	aimassist_adspull_headshotRadius			0.0
 
-	meleeable						0
+	meleeable						1
 
 	MinStartMoveDist				100
 	MaxArrivalDist					150

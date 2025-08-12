@@ -51,7 +51,7 @@ WeaponData
 
 	"damage_type" 									"bullet"
 
-	"ammo_clip_size"   								"14"
+	"ammo_clip_size"   								"8"
 
 	"projectile_launch_speed"						"18500"
 
@@ -63,21 +63,13 @@ WeaponData
     "uses_ammo_pool"								"1"
     "low_ammo_fraction" 							"0.3"
 
-	// Damage - When Used by Players
-               
-                                   
-                                
-                                    
-                                         
-                                         
-                                             
-      
-		"damage_near_value"   							"18"
-	    "damage_far_value"								"18"
-	    "damage_very_far_value"							"18"
-	    "damage_near_value_titanarmor"					"18"
-	    "damage_far_value_titanarmor" 					"18"
-	    "damage_very_far_value_titanarmor" 				"18"
+	// Damage - When Used by Players   
+	"damage_near_value"   							"24"
+	"damage_far_value"								"24"
+	"damage_very_far_value"							"24"
+	"damage_near_value_titanarmor"					"24"
+	"damage_far_value_titanarmor" 					"24"
+	"damage_very_far_value_titanarmor" 				"24"
        
 
 
@@ -85,7 +77,7 @@ WeaponData
 	
 	"fx_muzzle_flash_view"							""
 	"fx_muzzle_flash_world"							""
-	"fx_muzzle_flash_attach"						""
+	"fx_muzzle_flash_attach"						"muzzle_flash"
 	
 	// Damage - When Used by NPCs
 	"npc_damage_near_value"   						"13"
@@ -192,46 +184,22 @@ WeaponData
 	"airburst_pattern_scale"                "10.0"
 	"blast_pattern_default_scale"           "10.0"
 
+
+	"damage_shield_scale"	"1"
+	"damage_headshot_scale"	"1.250000"
+	"damage_leg_scale"	"0.900000"
+	"critical_hit"	"1"
+	"critical_hit_damage_scale"	"2"
+	"titanarmor_critical_hit_required"	"1"
+	"damage_near_distance"	"700"
+	"damage_far_distance"	"1200"
+	"damage_very_far_distance"	"1700"
+	"headshot_distance"	"1500"
 	Mods
 	{
-		blood_harvest
-		{
-		}
-		
         gold
         {
         }
-
-		fullauto_rounds
-		{
-			"fire_sound_2_player_1p"						"Weapon_p2011_FireSuppressed_1P"
-			"fire_sound_2_player_3p"						"Weapon_p2011_FireSuppressed_3P"
-			"fire_sound_2_npc"							"Weapon_p2011_FireSuppressed_3P"
-			
-			"fire_rate"                                "8"
-			"is_semi_auto"				                "0"
-			"viewkick_pitch_base"                        "-2.0"
-		}
-		
-		silencer //HACK JFS: Doesn't get applied on amped weapons. See bug 170460
-		{
-			"silenced"							"1"
-			"fire_sound_2_player_1p"						"Weapon_p2011_FireSuppressed_1P"
-			"fire_sound_2_player_3p"						"Weapon_p2011_FireSuppressed_3P"
-			"fire_sound_2_npc"							"Weapon_p2011_FireSuppressed_3P"
-			"damage_near_value"   				"--2"
-			"damage_far_value"					"--2"
-	   	 	"damage_very_far_value"				"--2"
-			"bodygroup27_set"					"1"
-
-			//"rumble"  						"4"
-			"tracer_effect"   					"P_wpn_tracer_pistol"
-			"minimap_reveal_distance"			"1"
-
-			"fx_muzzle_flash_view"				"wpn_muzzleflash_pistol_sup_FP"
-			"fx_muzzle_flash_world"				"wpn_muzzleflash_pistol_sup"
-			"fx_muzzle_flash_attach"			"muzzle_flash_suppressor_sq"
-		}
 
         hopup_unshielded_dmg
         {
@@ -276,52 +244,35 @@ WeaponData
             "dof_zoom_nearDepthEnd"                 "10.0"
 		}
 
-		bullets_mag_l1
+		"bullets_mag_l1"
 		{
-			"ammo_clip_size"   							"16"
-		}
-		bullets_mag_l2
-		{
-			"ammo_clip_size"   							"18"
-		}
-		bullets_mag_l3
-		{
-			//Extended Ammo
-			"ammo_clip_size"   							"21"
-		}
-        bullets_mag_l4
-        {
-                          
-                                              
-                 
-                "ammo_clip_size"   							"21"
-                  
-        }
-
-		legendary1
-		{
-			"viewmodel"   									"mdl/weapons/p2011/ptpov_p2011_legendary_01.rmdl"
-			"playermodel" 									"mdl/weapons/p2011/w_p2011_legendary_01.rmdl"
-
-			// Temporarily disabled so we can equip the optics without error spam
-			//"dof_zoom_nearDepthStart"						"0"
-			//"dof_zoom_nearDepthEnd"							"0"
-
-			"bodygroup3_set"	"1"
+			"ammo_clip_size" "++1"
 		}
 
-		legendary2
+		"bullets_mag_l2"
 		{
-			"viewmodel"   									"mdl/weapons/p2011/ptpov_p2011_legendary_02.rmdl"
-			"playermodel" 									"mdl/weapons/p2011/w_p2011_legendary_02.rmdl"
+			"ammo_clip_size" "++2"
 
-			// Temporarily disabled so we can equip the optics without error spam
-			//"dof_zoom_nearDepthStart"						"0"
-			//"dof_zoom_nearDepthEnd"							"0"
-
-			"bodygroup3_set"	"1"
 		}
-	}
+
+		"bullets_mag_l3"
+		{
+			"ammo_clip_size" "++3"
+		}
+
+		"bullets_mag_l4"
+		{
+			"ammo_clip_size" "++3"
+		}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 	"ui1_enable"		"1"
 	"ui1_draw_cloaked"	"1"

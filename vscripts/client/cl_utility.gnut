@@ -38,12 +38,23 @@ global struct RUIWorldCoordinates // this isn't specific to RUI, it generally re
 	vector down
 }
 
+struct LampData
+{
+	int id
+	float radius
+	entity lamp
+	bool isInterpolating = false
+	float targetRadius = 0.0
+	float startRadius = 0.0
+	float interpolationStartTime = 0.0
+}
+
 struct
 {
 	table<int,array<var> > textPanels
 	table<int,array<var> > textPanelTopo
 	int showButtonHintsInt = 1
-	array< entity > clientLightsFromServer
+	array< LampData > clientLightsFromServer
 	
 } file
 
@@ -819,13 +830,13 @@ void function Dev_PrintClientMessage( float duration )
 	Announcement_SetPurge( announcement, true )
 	// Announcement_SetSoundAlias( announcement, "" )
 
-	if( Gamemode() == eGamemodes.fs_dm || Gamemode() == eGamemodes.fs_prophunt || Gamemode() == eGamemodes.fs_duckhunt || Gamemode() == eGamemodes.fs_snd )
+	if( Gamemode() == eGamemodes.fs_dm || Gamemode() == eGamemodes.fs_prophunt || Gamemode() == eGamemodes.fs_duckhunt || Gamemode() == eGamemodes.fs_snd || Gamemode() == eGamemodes.fs_spieslegends )
 	{
 		Announcement_SetStyle(announcement, ANNOUNCEMENT_STYLE_CIRCLE_WARNING)
 		Announcement_SetTitleColor( announcement, Vector(0,0,0) )
 	}
 	
-	if( Playlist() == ePlaylists.fs_haloMod_survival || Playlist() == ePlaylists.fs_movementgym || Playlist() == ePlaylists.fs_scenarios || Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_survival_solos || Playlist() == ePlaylists.fs_ltm_mortalevoshields || Playlist() == ePlaylists.fs_dm_fast_instagib || Playlist() == ePlaylists.fs_lgduels_1v1 || Gamemode() == eGamemodes.fs_snd )
+	if( Playlist() == ePlaylists.fs_haloMod_survival || Playlist() == ePlaylists.fs_movementgym || Playlist() == ePlaylists.fs_scenarios || Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.survival_solos || Playlist() == ePlaylists.fs_ltm_mortalevoshields || Playlist() == ePlaylists.fs_dm_fast_instagib || Playlist() == ePlaylists.fs_lgduels_1v1 || Gamemode() == eGamemodes.fs_snd )
 	{
 		Announcement_SetStyle(announcement, ANNOUNCEMENT_STYLE_SWEEP)
 		Announcement_SetTitleColor( announcement, Vector(0,0,1) )
@@ -1540,6 +1551,8 @@ void function DEV_ToggleStaticPropRuiVisibilityDebug()
 void function ClientCodeCallback_OnEnumStaticPropRui( StaticPropRui propRui )
 {
 	bool shouldCreateDefaultStaticRui = true
+	if( MapName() == eMaps.mp_rr_olympus || MapName() == eMaps.mp_rr_olympus_tt || MapName() == eMaps.mp_rr_olympus_mu1 )
+		shouldCreateDefaultStaticRui = false//Olympus has some models that calls rui assets we don't have, currently porting rui assets not possible so it's better to just disable it. - Kral
 	foreach( bool functionref(StaticPropRui) callbackFunc in s_callbacksOnEnumStaticPropRui )
 	{
 		bool didCallbackBlockDefault = callbackFunc( propRui )
@@ -1738,9 +1751,6 @@ bool function ShouldShowButtonHints()
 // Set post processing vars which cannot be set through level entity files.
 void function MapConVar_Init()
 {
-	if( GetMapName() == "mp_flowstate" )
-		return
-
 	if( Playlist() == ePlaylists.fs_haloMod_survival )
 	{
 		switch( GetMapName() )
@@ -1766,9 +1776,26 @@ void function MapConVar_Init()
 	
 	switch( GetMapName() )
 	{
-		case "mp_rr_aqueduct_night":
+		case "mp_rr_arena_empty":
+			// if( Gamemode() == eGamemodes.fs_spieslegends )
+			// {
+				// SetConVarFloat( "mat_autoexposure_force_value", 0 )
+				// SetConVarFloat( "mat_bloom_max_lighting_value", 2.0 )
+				
+				// SetConVarFloat( "mat_autoexposure_max", 0.3 )
+				// SetConVarFloat( "mat_autoexposure_max_multiplier", 0.4 )
+				// SetConVarFloat( "mat_autoexposure_min", 0.2 )
+				// SetConVarFloat( "mat_autoexposure_min_multiplier", 1.0 )
+
+				// SetConVarFloat( "mat_sky_scale", 1.0 )
+				// SetConVarString( "mat_sky_color", "1.0 1.0 1.0 1.0" )
+				// SetConVarFloat( "mat_sun_scale", 1.0 )
+				// SetConVarString( "mat_sun_color", "1.0 1.5 2.0 1.0" )
+			// }
+		break
+		
+		//case "mp_rr_aqueduct_night":
 		case "mp_rr_desertlands_64k_x_64k_nx":
-		// case "mp_rr_olympus_mu1":
 			SetConVarFloat( "mat_autoexposure_max", 1.0 )
 			SetConVarFloat( "mat_autoexposure_max_multiplier", 0.4 )
 			SetConVarFloat( "mat_autoexposure_min", 0.1 )
@@ -1778,10 +1805,6 @@ void function MapConVar_Init()
 			SetConVarString( "mat_sky_color", "1.0 1.0 1.0 1.0" )
 			SetConVarFloat( "mat_sun_scale", 1.0 )
 			SetConVarString( "mat_sun_color", "1.0 1.5 2.0 1.0" )
-			break
-		case "mp_rr_desertlands_64k_x_64k_tt":
-			SetConVarFloat( "mat_sky_scale", 0.8 )
-			SetConVarString( "mat_sun_color", "2.0 1.2 0.5 1.0" )
 			break
 		default:
 			SetConVarToDefault( "mat_autoexposure_max" )
@@ -1802,64 +1825,45 @@ void function DynamicLight_Init()
 	vector angle = < 0, 0, 0 >
 	switch( GetMapName() )
 	{
-		case "mp_flowstate":
-			 float brightness_green = 350.0
-			 entity dlight_chill_0 = CreateClientSideDynamicLight( <39952.1602, -10605.457, -20576.3398> , <0, -178.180634, 0>, DLIGHT_LIGHTGREEN, brightness_green ).SetLightExponent( 2.0 )
-			 entity dlight_chill_1 = CreateClientSideDynamicLight( <40224.6211, -10612.4463, -20585.0781> , <0, 8.98998165, 0>, DLIGHT_LIGHTGREEN, brightness_green ).SetLightExponent( 2.0 )
-			 entity dlight_chill_2 = CreateClientSideDynamicLight( <40418.0508, -10611.7568, -20574.6074> , <0, 29.7462425, 0>, DLIGHT_LIGHTGREEN, brightness_green ).SetLightExponent( 2.0 )
-			
-			float brightness_azul_small = 150.0
-			vector blueLight = <46, 167, 255>
-			//azul small radius
-			entity dlight_chill_3 = CreateClientSideDynamicLight( <39521.0273, -10413.7168, -20400.0469> , <0, -2.23336363, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_4 = CreateClientSideDynamicLight( <39809.0859, -9327.00781, -20316.1172> , <0, -101.817078, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_5 = CreateClientSideDynamicLight( <40102.4531, -9316.64941, -20316.1172> , <0, -87.9790955, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_6 = CreateClientSideDynamicLight( <40386.0391, -9306.64063, -20316.1172> , <0, -87.9790955, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_7 = CreateClientSideDynamicLight( <40376.5664, -10773.5771, -20383.9512> , <0, 87.5749893, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_8 = CreateClientSideDynamicLight( <40092.7656, -10760.8076, -20383.9512> , <0, 87.4247742, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_9 = CreateClientSideDynamicLight( <39828.0391, -10750.7217, -20400.0313> , <0, 90.5107117, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_10 = CreateClientSideDynamicLight( <40058.9219, -10244.667, -20514.1582> , <0, 179.48056, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_11 = CreateClientSideDynamicLight( <39713.1797, -10246.3711, -20505.6387> , <0, -0.597286582, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_12 = CreateClientSideDynamicLight( <40047.4727, -9758.14453, -20518.3379> , <0, -176.21315, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_13 = CreateClientSideDynamicLight( <39723.625, -9751.27344, -20516.1953> , <0, -2.26641369, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_14 = CreateClientSideDynamicLight( <40676.7266, -10752.2803, -20390.9883> , <0, 88.5335999, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_15 = CreateClientSideDynamicLight( <41093.0313, -10348.0889, -20583.5645> , <0, -1.20828676, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_16 = CreateClientSideDynamicLight( <41083.457, -9655.99023, -20551.1504> , <0, -8.37922668, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_17 = CreateClientSideDynamicLight( <40156.0039, -10238.6133, -20506.9805> , <0, 5.27609587, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_18 = CreateClientSideDynamicLight( <40169.2305, -9756.56934, -20494.7676> , <0, 4.71007633, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_20 = CreateClientSideDynamicLight( <41201.5469, -9711.53223, -20059.9844> , <0, -69.4191284, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_21 = CreateClientSideDynamicLight( <41201.7109, -10284.1152, -20056.2441> , <0, -98.0492554, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_22 = CreateClientSideDynamicLight( <40853.957, -9742.55664, -19989.7949> , <0, -92.0691376, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
-			entity dlight_chill_23 = CreateClientSideDynamicLight( <40830.332, -10228.2969, -20013.873> , <0, -75.6139603, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+		case "mp_rr_arena_empty":
+			if( Flowstate_IsHaloMode() )
+			{
+				 float brightness_green = 350.0
+				 entity dlight_chill_0 = CreateClientSideDynamicLight( <39952.1602, -10605.457, -20576.3398> , <0, -178.180634, 0>, DLIGHT_LIGHTGREEN, brightness_green ).SetLightExponent( 2.0 )
+				 entity dlight_chill_1 = CreateClientSideDynamicLight( <40224.6211, -10612.4463, -20585.0781> , <0, 8.98998165, 0>, DLIGHT_LIGHTGREEN, brightness_green ).SetLightExponent( 2.0 )
+				 entity dlight_chill_2 = CreateClientSideDynamicLight( <40418.0508, -10611.7568, -20574.6074> , <0, 29.7462425, 0>, DLIGHT_LIGHTGREEN, brightness_green ).SetLightExponent( 2.0 )
+				
+				float brightness_azul_small = 150.0
+				vector blueLight = <46, 167, 255>
+				//azul small radius
+				entity dlight_chill_3 = CreateClientSideDynamicLight( <39521.0273, -10413.7168, -20400.0469> , <0, -2.23336363, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_4 = CreateClientSideDynamicLight( <39809.0859, -9327.00781, -20316.1172> , <0, -101.817078, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_5 = CreateClientSideDynamicLight( <40102.4531, -9316.64941, -20316.1172> , <0, -87.9790955, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_6 = CreateClientSideDynamicLight( <40386.0391, -9306.64063, -20316.1172> , <0, -87.9790955, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_7 = CreateClientSideDynamicLight( <40376.5664, -10773.5771, -20383.9512> , <0, 87.5749893, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_8 = CreateClientSideDynamicLight( <40092.7656, -10760.8076, -20383.9512> , <0, 87.4247742, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_9 = CreateClientSideDynamicLight( <39828.0391, -10750.7217, -20400.0313> , <0, 90.5107117, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_10 = CreateClientSideDynamicLight( <40058.9219, -10244.667, -20514.1582> , <0, 179.48056, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_11 = CreateClientSideDynamicLight( <39713.1797, -10246.3711, -20505.6387> , <0, -0.597286582, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_12 = CreateClientSideDynamicLight( <40047.4727, -9758.14453, -20518.3379> , <0, -176.21315, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_13 = CreateClientSideDynamicLight( <39723.625, -9751.27344, -20516.1953> , <0, -2.26641369, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_14 = CreateClientSideDynamicLight( <40676.7266, -10752.2803, -20390.9883> , <0, 88.5335999, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_15 = CreateClientSideDynamicLight( <41093.0313, -10348.0889, -20583.5645> , <0, -1.20828676, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_16 = CreateClientSideDynamicLight( <41083.457, -9655.99023, -20551.1504> , <0, -8.37922668, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_17 = CreateClientSideDynamicLight( <40156.0039, -10238.6133, -20506.9805> , <0, 5.27609587, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_18 = CreateClientSideDynamicLight( <40169.2305, -9756.56934, -20494.7676> , <0, 4.71007633, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_20 = CreateClientSideDynamicLight( <41201.5469, -9711.53223, -20059.9844> , <0, -69.4191284, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_21 = CreateClientSideDynamicLight( <41201.7109, -10284.1152, -20056.2441> , <0, -98.0492554, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_22 = CreateClientSideDynamicLight( <40853.957, -9742.55664, -19989.7949> , <0, -92.0691376, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
+				entity dlight_chill_23 = CreateClientSideDynamicLight( <40830.332, -10228.2969, -20013.873> , <0, -75.6139603, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small ).SetLightExponent( 1.8 )
 
-			//azul grande
-			entity dlight_chill_19 = CreateClientSideDynamicLight( <40553.6523, -9467.47852, -20317.1914> , <0, -98.6362991, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small*2 ).SetLightExponent( 1.8 )
+				//azul grande
+				entity dlight_chill_19 = CreateClientSideDynamicLight( <40553.6523, -9467.47852, -20317.1914> , <0, -98.6362991, 0>, SrgbToLinear( blueLight / 255.0 ), brightness_azul_small*2 ).SetLightExponent( 1.8 )
 
-			 // float brightness_ash = 500.0
-			 // entity dlight_ash_0 = CreateClientSideDynamicLight(<39845.0977, -10023.2188, -20164.0566>, angle, DLIGHT_RICH_BROWN, 1000 )
-			 // dlight_ash_0.SetLightExponent( 0.5 )
-			break
-		case "mp_rr_ashs_redemption":
-			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// ASH'S REDEMPTION
-			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			 float brightness_ash = 500.0
-			 entity dlight_ash_0 = CreateClientSideDynamicLight( <-19876, 3616, -26740>, angle, DLIGHT_RICH_BROWN, 1000 )
-			 dlight_ash_0.SetLightExponent( 0.5 )
-			 entity dlight_ash_1 = CreateClientSideDynamicLight( <-20903, 3768, -26740>, angle, DLIGHT_RICH_BROWN, 1000 )
-			 dlight_ash_1.SetLightExponent( 0.5 )
-			 entity dlight_ash_2 = CreateClientSideDynamicLight( <-19271, 6402, -27025>, angle, DLIGHT_RICH_BROWN, brightness_ash )
-			 dlight_ash_2.SetLightExponent( 0.5 )
-			 entity dlight_ash_3 = CreateClientSideDynamicLight( <-22710, 7344, -26585>, angle, DLIGHT_RICH_BROWN, brightness_ash )
-			 dlight_ash_3.SetLightExponent( 0.5 )
-			 entity dlight_ash_4 = CreateClientSideDynamicLight( <-22611, 6364, -26774>, angle, DLIGHT_RICH_BROWN, brightness_ash )
-			 dlight_ash_4.SetLightExponent( 0.5 )
-			 entity dlight_ash_5 = CreateClientSideDynamicLight( <-22611, 5638, -26774>, angle, DLIGHT_RICH_BROWN, brightness_ash )
-			 dlight_ash_5.SetLightExponent( 0.5 )
-			 entity dlight_ash_6 = CreateClientSideDynamicLight( <-22611, 4964, -26774>, angle, DLIGHT_RICH_BROWN, brightness_ash )
-			 dlight_ash_6.SetLightExponent( 0.5 )
-			 entity dlight_ash_7 = CreateClientSideDynamicLight( <-21695, 7478, -26784>, angle, DLIGHT_RICH_BROWN, brightness_ash )
-			 dlight_ash_7.SetLightExponent( 0.5 )
+				 // float brightness_ash = 500.0
+				 // entity dlight_ash_0 = CreateClientSideDynamicLight(<39845.0977, -10023.2188, -20164.0566>, angle, DLIGHT_RICH_BROWN, 1000 )
+				 // dlight_ash_0.SetLightExponent( 0.5 )
+			}
 			break
 		case "mp_rr_desertlands_64k_x_64k_nx":
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1955,8 +1959,10 @@ void function DynamicLight_Init()
 	}
 }
 
-void function ServerCallback_SpawnClientSideDynamicLight( vector pos, vector ang, int color, float brightness, float exponent )
+void function ServerCallback_SpawnOrModifyClientSideDynamicLight( vector pos, vector ang, int color, float radius, float exponent, int id )
 {
+	// printw( "ServerCallback_SpawnOrModifyClientSideDynamicLight", color )
+	
 	vector vColor
 
 	switch( color )
@@ -2002,17 +2008,212 @@ void function ServerCallback_SpawnClientSideDynamicLight( vector pos, vector ang
 		break		
 	}
 
-	entity light = CreateClientSideDynamicLight( pos, ang, vColor, brightness )
-	light.SetLightExponent( exponent )
-	file.clientLightsFromServer.append( light )
+    bool foundExisting = false
+	entity light
+	int foundIndex = -1
+    foreach(index, LampData lamp in file.clientLightsFromServer)
+    {
+        if(lamp.id == id && IsValid( lamp.lamp ) )
+        {
+			foundExisting = true
+			foundIndex = index
+			light = lamp.lamp
+			light.SetLightExponent( exponent )
+			
+			// Check if radius is different and we're not already interpolating
+			if ( fabs( lamp.radius - radius ) > 0.01 && !lamp.isInterpolating )
+			{
+				// Trigger smooth interpolation for radius change
+				InterpolateLightRadius( index, radius )
+			}
+			else if ( lamp.isInterpolating )
+			{
+				// If already interpolating, update the target radius
+				lamp.targetRadius = radius
+				file.clientLightsFromServer[index] = lamp
+			}
+			else
+			{
+				// No significant radius change, update directly
+				lamp.radius = radius
+				lamp.lamp.SetLightRadius( radius )
+				file.clientLightsFromServer[index] = lamp
+			}
+		}
+		
+	}
+	
+	if( !foundExisting )
+	{
+		DeleteSpawnedClientSideDynamicLightsWithId( id ) //avoid duplications, just in case
+		light = CreateClientSideDynamicLight( pos, ang, vColor, radius )
+		light.SetLightExponent( exponent )
+		
+		LampData lamp
+		lamp.lamp = light
+		lamp.radius = radius
+		lamp.id = id
+		lamp.isInterpolating = false
+		lamp.targetRadius = radius
+		lamp.startRadius = radius
+		lamp.interpolationStartTime = 0.0
+		
+		file.clientLightsFromServer.append( lamp )
+		
+		// #if DEVELOPER
+		// if( IsValid( light ) )
+			// printw( "Spawned light on client", file.clientLightsFromServer.len(), light.GetOrigin() )
+		// #endif
+	} else if( IsValid( light ) )
+	{
+		// #if DEVELOPER
+		// printw( "Modified existing light on client", file.clientLightsFromServer.len(), light.GetOrigin() )
+		// #endif
+	}
+}
+
+void function DeleteSpawnedClientSideDynamicLightsWithId( int id )
+{
+	if( file.clientLightsFromServer.len() == 0 )
+		return
+	
+	for ( int i = file.clientLightsFromServer.len() - 1; i >= 0; i-- )
+	{
+		LampData lamp = file.clientLightsFromServer[i]
+		
+		if( !IsValid( lamp.lamp ) )
+		{
+			file.clientLightsFromServer.remove( i )
+			continue
+		}
+		
+		if( lamp.id != id )
+			continue
+		
+		if( IsValid( lamp.lamp ) )
+		{
+			lamp.lamp.Destroy()
+		}
+		
+		file.clientLightsFromServer.remove( i )
+	}
+}
+
+void function DebugSpawnedLightEntities()
+{
+	foreach( int i, LampData lamp in file.clientLightsFromServer )
+		printw( i+1, lamp.lamp, lamp.lamp.GetOrigin() )
+}
+
+void function InterpolateLightRadius( int lampIndex, float newRadius, float duration = 0.4 )
+{
+	// Validate parameters
+	if ( lampIndex < 0 || lampIndex >= file.clientLightsFromServer.len() )
+		return
+		
+	LampData lamp = file.clientLightsFromServer[lampIndex]
+	
+	if ( !IsValid( lamp.lamp ) )
+		return
+		
+	// If already interpolating, just update the target
+	if ( lamp.isInterpolating )
+	{
+		lamp.targetRadius = newRadius
+		file.clientLightsFromServer[lampIndex] = lamp
+		return
+	}
+	
+	// Set up interpolation state
+	lamp.isInterpolating = true
+	lamp.startRadius = lamp.radius
+	lamp.targetRadius = newRadius
+	lamp.interpolationStartTime = Time()
+	file.clientLightsFromServer[lampIndex] = lamp
+	
+	// Start interpolation thread
+	thread InterpolateLightRadiusThread( lampIndex, duration )
+}
+
+void function InterpolateLightRadiusThread( int lampIndex, float duration )
+{
+	// Validate lamp index
+	if ( lampIndex < 0 || lampIndex >= file.clientLightsFromServer.len() )
+		return
+		
+	LampData lamp = file.clientLightsFromServer[lampIndex]
+	
+	if ( !IsValid( lamp.lamp ) )
+	{
+		// Clean up interpolation state if light was destroyed
+		lamp.isInterpolating = false
+		file.clientLightsFromServer[lampIndex] = lamp
+		return
+	}
+	
+	float startTime = Time()
+	float startRadius = lamp.startRadius
+	float targetRadius = lamp.targetRadius
+	
+	while ( Time() - startTime < duration )
+	{
+		// Check if lamp still exists
+		if ( lampIndex >= file.clientLightsFromServer.len() )
+			return
+			
+		lamp = file.clientLightsFromServer[lampIndex]
+		
+		if ( !IsValid( lamp.lamp ) )
+		{
+			lamp.isInterpolating = false
+			file.clientLightsFromServer[lampIndex] = lamp
+			return
+		}
+		
+		// Check if target radius changed during interpolation
+		if ( targetRadius != lamp.targetRadius )
+		{
+			// Update interpolation with new target
+			targetRadius = lamp.targetRadius
+			startRadius = lamp.radius
+			startTime = Time()
+		}
+		
+		// Calculate interpolation progress
+		float progress = (Time() - startTime) / duration
+		progress = min( progress, 1.0 )
+		
+		// Use GraphCapped for smooth interpolation
+		float currentRadius = GraphCapped( progress, 0.0, 1.0, startRadius, targetRadius )
+		
+		// Update light radius
+		lamp.radius = currentRadius
+		lamp.lamp.SetLightRadius( currentRadius )
+		file.clientLightsFromServer[lampIndex] = lamp
+		
+		WaitFrame()
+	}
+	
+	// Ensure we end exactly at target radius
+	if ( lampIndex < file.clientLightsFromServer.len() )
+	{
+		lamp = file.clientLightsFromServer[lampIndex]
+		if ( IsValid( lamp.lamp ) )
+		{
+			lamp.radius = targetRadius
+			lamp.lamp.SetLightRadius( targetRadius )
+			lamp.isInterpolating = false
+			file.clientLightsFromServer[lampIndex] = lamp
+		}
+	}
 }
 
 
 void function ServerCallback_DeleteSpawnedClientSideDynamicLights()
 {
-	foreach( ent in file.clientLightsFromServer )
-		if( IsValid( ent ) )
-			ent.Destroy()
+	foreach( lamp in file.clientLightsFromServer )
+		if( IsValid( lamp.lamp ) )
+			lamp.lamp.Destroy()
 		
 	file.clientLightsFromServer.clear()
 }

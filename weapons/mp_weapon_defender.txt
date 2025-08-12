@@ -26,7 +26,8 @@ WeaponData
 	"OnWeaponReload"								"OnWeaponReload_weapon_defender_railgun"
 	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_defender_railgun"
     "OnWeaponChargeBegin"					       	"OnWeaponChargeBegin_weapon_defender_railgun"
-
+	"OnProjectileCollision"                         "OnProjectileCollision_Generic"
+	
 	// Menu
 	"stat_damage" 									"88"
 	"stat_range"  									"96"
@@ -65,8 +66,8 @@ WeaponData
 	"critical_hit"									"1"
 
 
-	"projectile_launch_speed"						"33501"
-	"projectile_gravity_scale"						"1.4"
+	"projectile_launch_speed"						"33999"
+	"projectile_gravity_scale"						"1.150000"
     "projectile_drag_coefficient" 			        "0.00001" //0.00001 makes it show up in debug
 
 	// Ammo
@@ -76,7 +77,7 @@ WeaponData
     "ammo_default_total"							"0"
     "ammo_stockpile_max"							"4"
     "ammo_no_remove_from_stockpile"					"0"
-	"ammo_clip_size"   								"4"
+	"ammo_clip_size"   								"6"
 	"ammo_min_to_fire"								"1"
 	"ammo_per_shot"                                 "1"
 	"low_ammo_fraction" 							"0.34"
@@ -137,7 +138,7 @@ WeaponData
 	"spread_crouch_ads"   							"0.0"
 	"spread_air_ads"  								"3.75"
 
-    "bolt_hitsize_grow1_time"				        "0.118" //100m
+    "bolt_hitsize_grow1_time"				        "0.060000"
     "bolt_hitsize_grow1_size"				        "1.9"
     "bolt_hitsize_grow2_time"				        "0.235" //200m
     "bolt_hitsize_grow2_size"				        "2.75"
@@ -148,12 +149,12 @@ WeaponData
     "damage_near_value"   							"75"
     "damage_far_value"								"110"
     "damage_very_far_value"							"110"
-    "damage_near_value_titanarmor"					"70"
+    "damage_near_value_titanarmor"					"75"
     "damage_far_value_titanarmor" 					"110"
     "damage_very_far_value_titanarmor" 				"110"
 	"damage_near_distance"							"1970" // 50m
-	"damage_far_distance"						    "11820"  // 300m
-	"damage_very_far_distance"						"11828"  // 300m
+	"damage_far_distance"						    "7874"
+	"damage_very_far_distance"						"7874"
 	//"sustained_laser_damage_scale"				"0.2" // Used for the damage scale of singe
 
 	//"damage_headshot_scale"                         "1.75"
@@ -223,10 +224,10 @@ WeaponData
 	// View Kick
 	"viewkick_spring" 								"titan_arc"
 
-	"viewkick_pitch_base" 							"-2.45"
-	"viewkick_pitch_random"   						"1.5"
+	"viewkick_pitch_base" 							"-2.000000"
+	"viewkick_pitch_random"   						"0.500000"
 	"viewkick_pitch_softScale"						"0.3"
-	"viewkick_pitch_hardScale"						"2.75"
+	"viewkick_pitch_hardScale"						"2.000000"
 
 	"viewkick_yaw_base"   							"0"
 	"viewkick_yaw_random" 							"0.5"
@@ -250,29 +251,74 @@ WeaponData
 	"viewmodel_ads_rui_bottomleft_attachment"	"RUI_BL_CROSSHAIR_CHARGERIFLE"
 	"viewmodel_ads_centerpoint_attachment"      "ADS_CENTER_SIGHT_CHARGERIFLE"
 
+
+	"damage_headshot_scale"	"1.800000"
+	"damage_near_distance"	"1970"
+	"damage_far_distance"	"7874"
+	"damage_very_far_distance"	"7874"
+	"titanarmor_critical_hit_required"	"1"
+	"headshot_distance"	"29528"
+	"damage_leg_scale"	"0.900000"
+	"damage_shield_scale"	"1"
+	"critical_hit_damage_scale"	"2"
 	Mods
 	{
+		funny_selector
+		{
+			"projectile_ricochet_max_count"					"9999"
+			"bolt_bounce_frac" 								"1"
+			"projectile_damages_owner"						"1"
+		}
+
+		hopup_selectfire
+		{
+			// This mod is only used to indicate that the hop-up is active
+			// When player changes fire modes, we activate "altfire_selectfire"
+		}
+
+        "altfire_selectfire"
+        {
+            "damage_near_value" "*0.75"
+            "damage_far_value" "*0.75"
+            "damage_very_far_value" "*0.75"
+            "damage_near_value_titanarmor" "*0.75"
+            "damage_far_value_titanarmor" "*0.75"
+            "damage_very_far_value_titanarmor" "*0.75"
+            "charge_time" "0.300000"
+            "viewkick_pitch_hardScale" "1.100000"
+            "viewkick_pitch_random" "0.200000"
+            "is_semi_auto" "0"
+        }
+		
         gold
         {
         }
 
 		sniper_mag_l1
         {
-            "ammo_clip_size"							"5"
+            "ammo_clip_size"							"7"
         }
         sniper_mag_l2
         {
-            "ammo_clip_size"   							"6"
+            "ammo_clip_size"   							"8"
         }
         sniper_mag_l3
         {
-            "ammo_clip_size"   							"8"
+            "ammo_clip_size"   							"9"
         }
         sniper_mag_l4
         {
-            "ammo_clip_size"   		        			"8"
+            "ammo_clip_size"   		        			"9"
         }
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 	"ui1_enable"		"1"
 	"ui1_draw_cloaked"	"1"

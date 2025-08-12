@@ -1,8 +1,7 @@
 global function ClientMusic_SharedInit
 global function ClientMusic_RegisterNetworking
 //
-global function ClientMusic_DisableForClient
-global function ClientMusic_EnableForClient
+global function ClientMusic_ToggleForClient
 global function ClientMusic_PlayCustomTrackOnClient
 global function ClientMusic_StopCustomTrackOnClient
 
@@ -426,34 +425,35 @@ string function GetClientMusicStatusLine()
 #endif // #if DEVELOPER
 #endif // CLIENT
 
-const string FUNCNAME_CLIENTMUSICDISABLE = "ClientMusic_DisableForClient"
-const string FUNCNAME_CLIENTMUSICENABLE = "ClientMusic_EnableForClient"
+
 const string FUNCNAME_PLAYCUSTOMTRACKONCLIENT = "ClientMusic_PlayCustomTrackOnClient"
 const string FUNCNAME_STOPCUSTOMTRACKONCLIENT = "ClientMusic_StopCustomTrackOnClient"
 void function ClientMusic_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( FUNCNAME_CLIENTMUSICDISABLE, "entity" )
-	Remote_RegisterClientFunction( FUNCNAME_CLIENTMUSICENABLE, "entity" )
-	Remote_RegisterClientFunction( FUNCNAME_PLAYCUSTOMTRACKONCLIENT, "entity", "int", -1, eMusicTrack._count )
-	Remote_RegisterClientFunction( FUNCNAME_STOPCUSTOMTRACKONCLIENT, "entity" )
+	ScriptRemote_RegisterClientFunction( "ClientMusic_ToggleForClient", "entity", "bool" )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_PLAYCUSTOMTRACKONCLIENT, "entity", "int", -1, eMusicTrack._count )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_STOPCUSTOMTRACKONCLIENT, "entity" )
 }
 
-void function ClientMusic_DisableForClient( entity player )
+//(mk): if this system was intended to be called from native it will need restored prior to 2/22/2025
+void function ClientMusic_ToggleForClient( entity player, bool toggle )
 {
-#if SERVER
-	Remote_CallFunction_NonReplay( player, FUNCNAME_CLIENTMUSICDISABLE, player )
-#else
-	s_musicSystemIsDisabled = true
-#endif
-}
-
-void function ClientMusic_EnableForClient( entity player )
-{
-#if SERVER
-	Remote_CallFunction_NonReplay( player, FUNCNAME_CLIENTMUSICENABLE, player )
-#else
-	s_musicSystemIsDisabled = false
-#endif
+	if( !toggle )
+	{
+		#if SERVER
+			Remote_CallFunction_NonReplay( player, "ClientMusic_ToggleForClient", player, false )
+		#else
+			s_musicSystemIsDisabled = true
+		#endif
+	}
+	else
+	{
+		#if SERVER
+			Remote_CallFunction_NonReplay( player, "ClientMusic_ToggleForClient", player, true )
+		#else
+			s_musicSystemIsDisabled = false
+		#endif
+	}
 }
 
 void function ClientMusic_PlayCustomTrackOnClient( entity player, int musicTrack )

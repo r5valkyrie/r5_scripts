@@ -11,11 +11,12 @@ WeaponData
 
 	"weaponClass" 									"human"
 	"fire_mode"   									"offhand"
-	"offhand_toss"									"1"
+	"is_toss_weapon"								"1"
 	"minimap_reveal_distance"						"32000"
 	"leveled_pickup"								"1"
 	"dev_menu_type"									"offhand" // fire_mode isn't readable from script
 	"offhand_default_inventory_slot"				"1"
+	"activitymodifier"								"ordnance"
 
 
 	"OnWeaponTossReleaseAnimEvent"					"Grenade_OnWeaponTossReleaseAnimEvent"
@@ -27,9 +28,9 @@ WeaponData
 	// Menu Stats
 
 	// Models
-	"viewmodel"										"mdl/weapons/shuriken/ptpov_shuriken_held.rmdl"
-	"playermodel"									"mdl/weapons/shuriken/w_shuriken.rmdl"
-	"projectilemodel"								"mdl/weapons/shuriken/w_shuriken.rmdl"
+	"viewmodel"										"mdl/weapons/kunai/ptpov_kunai.rmdl"
+	"playermodel"									"mdl/weapons/kunai/w_kunai.rmdl"
+	"projectilemodel"								"mdl/weapons/kunai/w_kunai_projectile.rmdl"
 
 	"sound_weapon_ready"							"HUD_kit_meter_replenished_1P"
 
@@ -38,9 +39,9 @@ WeaponData
 	// Effects
 	"bounce_effect_table"							"pulse_blade"
 	"impact_effect_table" 							"pulse_blade"
-	"projectile_trail_effect_0" 					"P_wpn_grenade_frag_trail"
-	"vortex_absorb_effect"							"wpn_vortex_projectile_frag_FP"
-	"vortex_absorb_effect_third_person"				"wpn_vortex_projectile_frag"
+	"projectile_trail_effect_0" 					"wpn_grenade_sonar"
+	"vortex_absorb_effect"							"wpn_vortex_projectile_kunai_FP"
+	"vortex_absorb_effect_third_person"				"wpn_vortex_projectile_kunai"
 	"vortex_absorb_sound"							"Vortex_Shield_AbsorbBulletLarge"
 	"vortex_absorb_sound_1p_vs_3p"					"Vortex_Shield_AbsorbBulletLarge_1P_VS_3P"
 	"projectile_adjust_to_gun_barrel"				"1"

@@ -727,7 +727,7 @@ void function UpdateButtonElements( ListPanelData data, bool forceRefresh = fals
 		{
 			Warning("_list_panel data.availableElements was 0 and we catched a crash")
 			
-			continue
+			return
 		}
 		ListElementData buttonData = GetElementDataForItemIndex( data, itemIndex )
 

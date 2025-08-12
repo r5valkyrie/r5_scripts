@@ -1,5 +1,3 @@
-//Reimplemented by @CafeFPS
-
 global function GetAllTrackingPlayers
 global function HeatMapStat
 global function TrackingVision_CreatePOI

@@ -134,10 +134,7 @@ void function Desertlands_MapInit_Common()
 {
 	printt( "Desertlands_MapInit_Common" )
 
-	if (MapName() == eMaps.mp_rr_desertlands_mu3 )
-		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu3.rpak" )
-	else
-		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu2.rpak" )
+	MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu2.rpak" )
 
 	FlagInit( "PlayConveyerStartFX", true )
 	FlagInit( "PlayConveyerEndFX", true )
@@ -145,6 +142,7 @@ void function Desertlands_MapInit_Common()
 	SetVictorySequencePlatformModel( $"mdl/rocks/desertlands_victory_platform.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
 
 	#if SERVER
+		//thread KillPlayersUnderMap_Thread( -6376 ) //-28320
 		PrecacheModel( SILO_PANEL_MDL )
 		PrecacheModel( HARVESTER_BEAM_MDL )		
 
@@ -836,7 +834,7 @@ void function BurnPlayerOverTime( entity trigger, entity player )
 	Assert( IsValid( player ) )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
-	
+	player.EndSignal( "DeathTotem_PreRecallPlayer" )
 	for ( int i = 0; i < 8; ++i )
 	{
 		if( !player.p.isPlayerUpdrafting )
@@ -864,7 +862,6 @@ void function PlayerEnterUpdraftTrigger( entity trigger, entity player )
 	thread Player_EnterUpdraft( trigger, player, file.updraftSettings.minShakeActivationHeight + entZ, entZ - file.updraftSettings.maxShakeActivationHeight, max( -5750.0, entZ - file.updraftSettings.maxShakeActivationHeight ), file.updraftSettings.liftSpeed, file.updraftSettings.liftAcceleration, file.updraftSettings.liftExitDuration )
 }
 
-//Made by @CafeFPS
 void function Player_EnterUpdraft( entity trigger, entity player, float minHeight, float maxHeight, float activationHeight, float liftSpeed, float liftAcceleration, float liftExitDuration )
 {
 	EndSignal( player, "OnDestroy" )
@@ -984,7 +981,6 @@ vector function ClampVelocity(vector velocity, float maxSpeed)
 
 #if SERVER
 void function RespawnItem(entity item, string ref, int amount = 1, int wait_time=6)
-//By @CafeFPS CafeFPS. Tomado del firing range.
 
 {
 	vector pos = item.GetOrigin()
@@ -999,14 +995,12 @@ void function RespawnItem(entity item, string ref, int amount = 1, int wait_time
 
 #if SERVER
 void function FillLootTable()
-//By @CafeFPS CafeFPS. Adaptado del firing range.
 {
 	file.ordnance.extend(SURVIVAL_Loot_GetByType( eLootType.ORDNANCE ))
 	file.weapons.extend(SURVIVAL_Loot_GetByType( eLootType.MAINWEAPON ))
 }
 
 void function SpawnGrenades(vector pos, vector ang, int wait_time = 6, array which_nades = ["thermite", "frag", "arc"], int num_rows = 1)
-//By michae\l/#1125 & @CafeFPS
 {
     vector posfixed = pos
 	int i;

@@ -13,6 +13,12 @@ global struct LocPair
     vector angles = <0, 0, 0>
 }
 
+global struct WeaponRedirectParams
+{
+entity projectile
+vector projectilePos
+}
+
 global struct EchoTestStruct
 {
 	int test1
@@ -21,6 +27,21 @@ global struct EchoTestStruct
 	float test4
 	vector test5
 	int[5] test6
+}
+
+global struct VehicleSim
+{
+	float  startGametime
+	float  time
+	vector pos
+	vector vel
+	vector ang
+	vector angVel
+	bool   isEngineStarted = false
+	float  engineStartTime
+	bool   didCollide
+	bool   wasColliding
+	bool   isResting
 }
 
 global struct TraceResults

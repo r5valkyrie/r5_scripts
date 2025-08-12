@@ -3,6 +3,9 @@ global function CodeCallback_PingOnDown
 global function CodeCallback_PingOnUp
 #if CLIENT
 global function IsPingEnabledForPlayer
+global function MapPing_Modify_DistanceCheck_Enabled
+global function MapPing_DistanceCheck_GetModifier
+global function MapPing_DistanceCheck_GetDistanceRange
 #endif
 
 #if CLIENT
@@ -67,6 +70,40 @@ global function PingFlavor_GetDrawHeightLine
 #if CLIENT
 global function PingFlavor_GetColor
 #endif
+
+
+global enum pingWheelRevision
+{
+	ORIGINAL,
+	UPDATED_REVISION_1,
+	UPDATED_REVISION_2,
+	UPDATED_REVISION_3,
+	UPDATED_REVISION_4,
+	UPDATED_REVISION_5
+}
+
+global enum pingWheelIndex
+{
+	INVALID = -1,
+	//
+
+	DEFAULT, //0
+	BLEEDING_OUT, // 1
+
+	//
+	PING_MAIN_1, // 2
+	PING_MAIN_2, // 3
+	PING_SKYDIVE, // 4
+
+	//
+	PING_MAP, // 5
+
+	             
+	PING_TRANSPORT_PORAL,
+       
+
+	_count
+}
 
 global enum ePingType
 {
@@ -154,6 +191,10 @@ global enum ePingType
 		LOOT_VAULT_HAS_KEY_SQUAD,
 		LOOT_VAULT_HAS_KEY_SELF,
 		LOOT_VAULT_REVEAL,
+		SHIP_VAULT,
+		SHIP_VAULT_REVEAL,
+		SHIP_VAULT_HAS_KEY_SELF,
+		SHIP_VAULT_HAS_KEY_SQUAD,
 		LOOT_DRONE,
 		LOOT_ROLLER,
 		TRAIN,
@@ -163,6 +204,8 @@ global enum ePingType
 		SHADOWFALL_LEGEND_DEATH,
 		SHADOWFALL_SHADOW_DEATH,
 		SHADOWFALL_NEMESIS,
+		STORY_MARVIN,
+		LOOT_MARVIN,
 
 		EDITOR_MODE,
 		
@@ -170,6 +213,14 @@ global enum ePingType
 	SPEEDZONE,
 	RAPIDFIREZONE,
 	SND_BOMB,
+	
+	SPIESLEGENDS_STATION_A,
+	SPIESLEGENDS_STATION_B,
+	SPIESLEGENDS_STATION_C,
+
+	SPIESLEGENDS_STATION_A_ATTACK,
+	SPIESLEGENDS_STATION_B_ATTACK,
+	SPIESLEGENDS_STATION_C_ATTACK,
 	
 	_count
 }
@@ -313,6 +364,13 @@ string function Ping_GetSoundForLocationPing( int pingType, bool isOurs, bool is
 		case ePingType.SHADOWFALL_NEMESIS:
 		case ePingType.SND_BOMB:
 		
+		case ePingType.SPIESLEGENDS_STATION_A:
+		case ePingType.SPIESLEGENDS_STATION_B:
+		case ePingType.SPIESLEGENDS_STATION_C:
+		
+		case ePingType.SPIESLEGENDS_STATION_A_ATTACK:
+		case ePingType.SPIESLEGENDS_STATION_B_ATTACK:
+		case ePingType.SPIESLEGENDS_STATION_C_ATTACK:		
 			return ""
 	}
 
@@ -364,10 +422,10 @@ void function ShPing_Init()
 		AddCallback_OnPlayerMatchStateChanged( OnPlayerMatchStateChanged )
 		AddCallback_OnClientConnected( OnPlayerConnected )
 
-		AddClientCommandCallbackNew( CMDNAME_PING_MAP_WAYPOINT, ClientCommand_PingMapWaypoint )
-		AddClientCommandCallbackNew( CMDNAME_PING_NEW_LOOT, ClientCommand_PingNewLoot )
-		AddClientCommandCallbackNew( CMDNAME_PING_REPLY, ClientCommand_PingReply )
-		AddClientCommandCallbackNew( CMDNAME_CANCEL_PING_BY_TICKETID, ClientCommand_CancelPingByTicketID )
+		AddClientCommandCallbackVoid( CMDNAME_PING_MAP_WAYPOINT, ClientCommand_PingMapWaypoint )
+		AddClientCommandCallbackVoid( CMDNAME_PING_NEW_LOOT, ClientCommand_PingNewLoot )
+		AddClientCommandCallbackVoid( CMDNAME_PING_REPLY, ClientCommand_PingReply )
+		AddClientCommandCallbackVoid( CMDNAME_CANCEL_PING_BY_TICKETID, ClientCommand_CancelPingByTicketID )
 	#endif
 
 	#if CLIENT
@@ -469,7 +527,7 @@ void function CodeCallback_PingCommandExecuteQueued( entity player, int pingType
 
 	if( Playlist() == ePlaylists.fs_scenarios ) //TODO: set state for allowed ping in gamemode logic
 	{
-		if( !FS_Scenarios_PlayerCanPing( player ) )
+		if( !Safe_FS_Scenarios_PlayerCanPing( player ) )
 			return
 	}
 
@@ -945,8 +1003,6 @@ bool function PingIsAllowed( entity player )
 		return false
 	if ( GetGameState() == eGameState.PickLoadout )
 		return false
-	if ( GetGameState() == eGameState.WaitingForPlayers && !GetCurrentPlaylistVarBool( "survival_staging_area_enabled", false ) )
-		return false
 	if ( player.GetPlayerNetBool( "pingEnabled" ) == false )
 		return false
 
@@ -1188,6 +1244,14 @@ array<int> function GetReplyOptionsForWaypoint( entity player, entity wp )
 				//DoClickAsOwner( player, wp )
 				switch ( pingType )
 				{
+					case ePingType.SPIESLEGENDS_STATION_A:
+					case ePingType.SPIESLEGENDS_STATION_B:
+					case ePingType.SPIESLEGENDS_STATION_C:
+
+					case ePingType.SPIESLEGENDS_STATION_A_ATTACK:
+					case ePingType.SPIESLEGENDS_STATION_B_ATTACK:
+					case ePingType.SPIESLEGENDS_STATION_C_ATTACK:
+					
 					case ePingType.SHADOWFALL_LEGEND_DEATH:
 					case ePingType.SHADOWFALL_SHADOW_DEATH:
 					case ePingType.SHADOWFALL_NEMESIS:
@@ -1217,6 +1281,14 @@ array<int> function GetReplyOptionsForWaypoint( entity player, entity wp )
 			{
 				switch ( pingType )
 				{
+					case ePingType.SPIESLEGENDS_STATION_A:
+					case ePingType.SPIESLEGENDS_STATION_B:
+					case ePingType.SPIESLEGENDS_STATION_C:
+
+					case ePingType.SPIESLEGENDS_STATION_A_ATTACK:
+					case ePingType.SPIESLEGENDS_STATION_B_ATTACK:
+					case ePingType.SPIESLEGENDS_STATION_C_ATTACK:
+					
 					case ePingType.SHADOWFALL_LEGEND_DEATH:
 					case ePingType.SHADOWFALL_SHADOW_DEATH:
 					case ePingType.SND_BOMB:
@@ -1257,6 +1329,7 @@ array<int> function GetReplyOptionsForWaypoint( entity player, entity wp )
 					case ePingType.I_LOOTING:
 					case ePingType.I_DEFENDING:
 					case ePingType.I_ATTACKING:
+					case ePingType.LOOT_MARVIN:
 						if ( wp.wp.haveConfirmed )
 							results.append( ePingReply.BLANK )
 						results.append( ePingReply.JOIN )
@@ -1761,7 +1834,27 @@ entity function GetFlyerForHitEnt( entity hitEnt )
 }
 #endif //
 
+#if CLIENT || SERVER
+bool function MapPing_SnapToGround_Enabled()
+{
+	return GetCurrentPlaylistVarBool( "mapping_snatoground_enabled", true )
+}
 
+bool function MapPing_Modify_DistanceCheck_Enabled()
+{
+	return GetCurrentPlaylistVarBool( "mapping_distance_check_modifier_enabled", true )
+}
+
+float function MapPing_DistanceCheck_GetModifier()
+{
+	return GetCurrentPlaylistVarFloat( "mapping_distance_check_modifier", 0.5 )
+}
+
+float function MapPing_DistanceCheck_GetDistanceRange()
+{
+	return GetCurrentPlaylistVarFloat( "mapping_distance_check_range", 2000.0 )
+}
+#endif
 
 entity function GetLootDroneForHitEnt( entity hitEnt )
 {
@@ -1795,10 +1888,8 @@ entity function GetVaultPanelEntityForHitEnt( entity hitEnt )
 	if ( IsVaultPanel( hitEnt ) )
 		return hitEnt
 
-	if ( HACK_IsVaultDoor( hitEnt ) )
-	{
+	if ( IsVaultDoor( hitEnt ) )
 		return GetVaultPanelFromDoor( hitEnt )
-	}
 
 	return null
 }
@@ -1900,6 +1991,11 @@ PingCommandParams function GetPingParamsForHitEnt( entity hitEnt, entity player,
 	}
 
 	int playerTeam = player.GetTeam()
+	int hitEntTeam = processedHitEnt.GetTeam()
+	bool hitEntIsEnemy = IsEnemyTeam( playerTeam, hitEntTeam )
+	bool hitEntIsPlayer = processedHitEnt.IsPlayer()
+	bool hitEntIsNPC = processedHitEnt.IsNPC()
+	string hitEntScriptName = processedHitEnt.GetScriptName()
 
 	//if ( ms > ePlayerMatchState.STAGING_AREA )
 	{
@@ -1917,6 +2013,17 @@ PingCommandParams function GetPingParamsForHitEnt( entity hitEnt, entity player,
 		{
 			result.hitEnt = processedHitEnt
 			result.pingType = ePingType.ENEMY_SPECIFIC
+			return result
+		}
+		
+		if ( hitEntIsNPC && ( hitEntScriptName == LOOT_MARVIN_SCRIPTNAME ) || hitEntScriptName == STORY_MARVIN_SCRIPTNAME )
+		{
+			result.hitEnt = processedHitEnt
+			if ( hitEntScriptName == STORY_MARVIN_SCRIPTNAME )
+				result.pingType = ePingType.STORY_MARVIN
+			else
+				result.pingType = ePingType.LOOT_MARVIN
+
 			return result
 		}
 	}
@@ -1938,7 +2045,7 @@ PingCommandParams function GetPingParamsForHitEnt( entity hitEnt, entity player,
 		if ( IsValid( doorEnt ) )
 		{
 		
-				if ( HACK_IsVaultDoor( doorEnt ) )
+				if ( IsVaultDoor( doorEnt ) )
 				{
 					entity vaultPanel = GetVaultPanelFromDoor( doorEnt )
 
@@ -2281,8 +2388,11 @@ int function GetEnemyPingCommsAction( int pingType, entity pingedEnt )
 			case "npc_boss_guts":
 			case "npc_training_dummy":
 			case "npc_dummie_combat":
-			case "npc_marvin":
 				return eCommsAction.PING_ENEMY_SPOTTED_GENERAL
+				
+			case "npc_marvin":
+			case "npc_marvin_olympus":
+				return eCommsAction.PING_NPC_MARVIN_LOOT
 
 				// Infantry:
 
@@ -2605,11 +2715,21 @@ int function GetCommsActionForPing( entity pingingPlayer, int pingType, entity p
 
 		case ePingType.LOOT_ROLLER:
 			return eCommsAction.PING_LOOT_ROLLER
+		
 		case ePingType.LOOT_VAULT:
 			return eCommsAction.PING_LOOT_VAULT
 
-		case ePingType.LOOT_VAULT_HAS_KEY_SQUAD:
-			return eCommsAction.PING_LOOT_VAULT_HAS_KEY_SQUAD
+		case ePingType.SHIP_VAULT:
+			return eCommsAction.PING_SHIP_VAULT
+			
+		case ePingType.SHIP_VAULT_HAS_KEY_SELF:
+			return eCommsAction.PING_SHIP_VAULT_HAS_KEY_SELF
+			
+		case ePingType.SHIP_VAULT_HAS_KEY_SQUAD:
+			return eCommsAction.PING_SHIP_VAULT_HAS_KEY_SQUAD
+			
+		case ePingType.SHIP_VAULT_REVEAL:
+			return eCommsAction.PING_SHIP_VAULT_REVEAL
 
 		case ePingType.LOOT_VAULT_HAS_KEY_SELF:
 			return eCommsAction.PING_LOOT_VAULT_HAS_KEY_SELF
@@ -2665,6 +2785,11 @@ int function GetCommsActionForPing( entity pingingPlayer, int pingType, entity p
 
 		case ePingType.ABILITY_DRONEMEDIC:
 			return eCommsAction.SPAWN_DRONEMEDIC
+			
+		case ePingType.STORY_MARVIN:
+			return eCommsAction.PING_NPC_MARVIN_STORY
+		case ePingType.LOOT_MARVIN:
+			return eCommsAction.PING_NPC_MARVIN_LOOT
 
 		case ePingType.BOOSTZONE:
 		case ePingType.SPEEDZONE:
@@ -2676,6 +2801,14 @@ int function GetCommsActionForPing( entity pingingPlayer, int pingType, entity p
 		case ePingType.RESPAWN_CARD:
 		case ePingType.RESPAWN_BANNER:
 		case ePingType.SND_BOMB:
+
+		case ePingType.SPIESLEGENDS_STATION_A:
+		case ePingType.SPIESLEGENDS_STATION_B:
+		case ePingType.SPIESLEGENDS_STATION_C:
+
+		case ePingType.SPIESLEGENDS_STATION_A_ATTACK:
+		case ePingType.SPIESLEGENDS_STATION_B_ATTACK:
+		case ePingType.SPIESLEGENDS_STATION_C_ATTACK:
 			return eCommsAction.BLANK
 
 		case ePingType.BLOODHOUND_POI_TRAVELER:
@@ -2761,6 +2894,7 @@ asset function Ping_IconForPing_Hud( entity player, int pingType, entity pingedE
 			return IsValid( ally ) ? ally.GetPlayerSettingAsset( "unitframe_icon" ) : $""
 		}
 
+		//case ePingType.RESPAWN_MOBILE:
 		case ePingType.RESPAWN_STATION:
 			return RESPAWN_BEACON_ICON
 
@@ -3283,7 +3417,7 @@ void function ClientCommand_PingNewLoot( entity player, array<string> args )
 		return
 	}
 
-	if( !CanPlayerPingDebounce( player, ePingType.LOOT ) ) //Cafe was here
+	if( !CanPlayerPingDebounce( player, ePingType.LOOT ) )
 		return
 
 	#if DEVELOPER

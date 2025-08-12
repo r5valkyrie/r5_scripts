@@ -1,0 +1,848 @@
+//(mk): Stuff to help track down and organize net registration.													//mkos
+untyped
+
+global function ScriptRegisterNetworkedVariable 					//wrapper for RegisterNetworkedVariable
+global function ScriptRemote_RegisterClientFunction 				//wrapper for Remote_RegisterClientFunction
+global function ScriptRemote_RegisterUIFunction 					//wrapper for Remote_RegisterUIFunction
+global function ScriptRemote_RegisterUntypedFunction_deprecated 	//wrapper for Remote_RegisterUntypedFunction_deprecated
+
+global function DebugRemoteFunctionsInit
+
+#if DEBUG_REMOTE_FUNCS
+	global function PrintNetworkFunctions
+	global function TestNetworkedVarLimit
+#endif
+
+const bool VERBOSE_NET_PRINTS		= false //this will print functions/vars in the order they are called.
+
+#if DEBUG_REMOTE_FUNCS
+	const int MAX_ENTRIES			= 256  //must stay in sync with native
+	const int MAX_BUFFER			= 2048 //must stay in sync with native
+	
+	int s_prntOffset 				= 60 // this will get dynamically adjusted for pretty print if needed.
+	
+	struct VarTypeInfo
+	{
+		int count
+		array< string > associatedVars
+	}
+	
+	struct CategoryInfo
+	{
+		int count
+		int rangeVarCount
+		int timeVarCount
+		table< string, VarTypeInfo > varInfo	
+	}
+	
+	struct FuncInfo 
+	{
+		string funcname 
+		string file
+		string category
+		int bufferConsumption		
+	}
+	
+	struct RemoteFuncInfo
+	{
+		int count
+		int totalBuffer	
+		array< string > clientFuncs 
+		array< string > uiFuncs 
+		array< string > deprecatedFuncs
+		table< string, FuncInfo > functionInfoTbl
+	}
+#endif
+
+struct 
+{
+	#if DEBUG_REMOTE_FUNCS
+		table< string, CategoryInfo > categoryCatalog
+		RemoteFuncInfo allFuncInfo
+		bool haltRegistration		
+	#endif
+	
+} file 
+
+void function DebugRemoteFunctionsInit()
+{
+	#if DEBUG_REMOTE_FUNCS	
+		Warning( "DEBUG_REMOTE_FUNCS is enabled in \"sh_consts.gnut\"" )
+		
+		#if VERBOSE_NET_PRINTS
+			Warning( "VERBOSE_NET_PRINTS is enabled in \"%s\"", FILE_NAME() )
+		#endif
+	#endif
+}
+
+#if DEBUG_REMOTE_FUNCS
+	//all of the below must stay in sync with native
+	string function IntToNetVarCat( int value )
+	{
+		switch( value )
+		{
+			case 0:
+				return "SNDC_GLOBAL"
+			case 1:
+				return "SNDC_PLAYER_GLOBAL"
+			case 2:
+				return "SNDC_PLAYER_EXCLUSIVE"
+			case 3:
+				return "SNDC_TITAN_SOUL"
+			case 4:
+				return "SNDC_DEATH_BOX"
+			default:
+				return "UNKNOWN"
+		}
+		
+		unreachable
+	}
+
+	string function IntToNetVarType( int value )
+	{
+		switch( value )
+		{
+			case 0:
+				return "SNVT_BOOL"
+			case 1:
+				return "SNVT_INT"
+			case 2:
+				return "SNVT_UNSIGNED_INT"
+			case 3:
+				return "SNVT_BIG_INT"
+			case 4:
+				return "SNVT_FLOAT_RANGE"
+			case 5:
+				return "SNVT_FLOAT_RANGE_OVER_TIME"			
+			case 6:
+				return "SNVT_TIME"
+			case 7:
+				return "SNVT_ENTITY"
+				
+			default:
+				return "UNKNOWN"
+		}
+		
+		unreachable
+	}
+
+	int function GetMaxAllowedForVarType( string category, string varType )
+	{
+		switch( category )
+		{
+			case "SNDC_GLOBAL": //0
+				switch( varType )
+				{
+					case "SNVT_BOOL": 			//0
+						return 8
+					case "SNVT_INT": 			//1
+						return 32
+					case "SNVT_UNSIGNED_INT": 	//2
+						return 32
+					case "SNVT_BIG_INT": 		//3
+						return 8
+					case "SNVT_FLOAT_RANGE": 	//4
+						return 32
+					case "SNVT_FLOAT_RANGE_OVER_TIME": //5
+						return 24
+					case "SNVT_TIME":  			//6
+						return 24
+					case "SNVT_ENTITY":  		//7
+						return 16
+						
+					default: 
+						return 120
+				}
+			break
+			
+			case "SNDC_PLAYER_GLOBAL": //1
+				switch( varType )
+				{
+					case "SNVT_BOOL": 			//0
+						return 8
+					case "SNVT_INT": 			//1
+						return 32
+					case "SNVT_UNSIGNED_INT": 	//2
+						return 32
+					case "SNVT_BIG_INT": 		//3
+						return 12
+					case "SNVT_FLOAT_RANGE": 			//4
+						return 32
+					case "SNVT_FLOAT_RANGE_OVER_TIME": //5
+						return 8
+					case "SNVT_TIME":  			//6
+						return 8
+					case "SNVT_ENTITY":			//7
+						return 4
+						
+					default:
+						return 120
+				}
+			break
+			
+			case "SNDC_PLAYER_EXCLUSIVE": //2
+				switch( varType )
+				{
+					case "SNVT_BOOL": 			//0
+						return 16
+					case "SNVT_INT": 			//1
+						return 32
+					case "SNVT_UNSIGNED_INT": 	//2
+						return 32
+					case "SNVT_BIG_INT": 		//3
+						return 8
+					case "SNVT_FLOAT_RANGE": 	//4
+						return 32
+					case "SNVT_FLOAT_RANGE_OVER_TIME": //5
+						return 8
+					case "SNVT_TIME": 			//6
+						return 8
+					case "SNVT_ENTITY": 		//7
+						return 8
+					
+					default: 
+						return 120
+				}
+			break
+			
+			case "SNDC_TITAN_SOUL": //3
+				switch( varType )
+				{
+					case "SNVT_BOOL": 			//0
+						return 8
+					case "SNVT_INT": 			//1
+						return 16
+					case "SNVT_UNSIGNED_INT": 	//2
+						return 16
+					case "SNVT_BIG_INT": 		//3
+						return 2
+					case "SNVT_FLOAT_RANGE": 	//4
+						return 16
+					case "SNVT_FLOAT_RANGE_OVER_TIME": //5 //broken, for SNDC_TITAN_SOUL, floatrange over time is coupled with regular float ranges. BUG
+						return 16
+					case "SNVT_TIME": 			//6
+						return 8
+					case "SNVT_ENTITY": 		//7
+						return 4
+						
+					default: 
+						return 120
+				}
+			break
+			
+			case "SNDC_DEATH_BOX": //4
+				switch( varType )
+				{
+					case "SNVT_BOOL": 			//0
+						return 2
+					case "SNVT_INT": 			//1
+						return 16
+					case "SNVT_UNSIGNED_INT": 	//2
+						return 16
+					case "SNVT_BIG_INT": 		//3
+						return 1
+					case "SNVT_FLOAT_RANGE": 	//4
+						return 16
+					case "SNVT_FLOAT_RANGE_OVER_TIME": //5
+						return 1
+					case "SNVT_TIME": 			//6
+						return 1
+					case "SNVT_ENTITY": 		//7
+						return 1
+						
+					default: 
+						return 120
+				}
+			break
+				
+			case "UNKNOWN":
+			default:
+				return 120
+		}
+		
+		unreachable
+	}
+	
+	int function GetBufferConsumption( string varType ) //thank you to O_Robotic and wanderer for confirming this internally.
+	{
+		switch( varType )
+		{
+			//(1 byte identifier)
+			case "bool":
+			case "entity":
+				return 1
+				
+			//(1 byte identifier + 8 bytes for min/max range)
+			case "int": 
+				return 9
+				
+			//(1 byte identifier + 12 bytes for min/max/precision)
+			case "float":
+			case "vector":
+				return 13
+				
+			default:
+				return 0
+		}
+		
+		unreachable
+	}
+	
+	int function AddBufferConsumption( array<var> vargs )
+	{
+		int vargLen = vargs.len()
+		
+		int consumption	= 0
+		for( int i = 0; i < vargLen; i++ )
+		{
+			if( typeof( vargs[ i ] ) != "string" )
+				continue
+				
+			consumption += GetBufferConsumption( expect string( vargs[ i ] ) )
+		}
+		
+		return consumption
+	}
+	
+	const array<string> RANGE_SNVT =
+	[
+		"SNVT_INT",
+		"SNVT_UNSIGNED_INT",
+		"SNVT_FLOAT_RANGE"
+	]
+	
+	bool function IsRangeType( string varType )
+	{
+		return RANGE_SNVT.contains( varType )
+	}
+	
+	const array<string> TIME_SNVT =
+	[
+		"SNVT_FLOAT_RANGE_OVER_TIME",
+		"SNVT_TIME"
+	]
+	
+	bool function IsTimeType( string varType )
+	{
+		return TIME_SNVT.contains( varType )
+	}
+#endif
+
+const int REQUIRED_VARS_OFFSET = 3
+void function ScriptRegisterNetworkedVariable( ... )
+{
+	int iterOffset = 0	
+	if( typeof vargv[ 0 ] == "array" )
+	{
+		if( !IsValidToRun( vargv[ 0 ] ) )
+		{
+			#if VERBOSE_NET_PRINTS
+				printf( "var \"%s\" is not valid to register for current playlist", expect string( vargv[ 1 ] ) )
+			#endif
+			
+			return
+		}
+		else
+			iterOffset = 1
+	}
+
+	#if DEBUG_REMOTE_FUNCS
+		if( file.haltRegistration )
+			return 
+			
+		string varName 	= expect string( vargv[ iterOffset ] )
+		string category = IntToNetVarCat( expect int( vargv[ iterOffset + 1 ] ) )
+		string varType 	= IntToNetVarType( expect int( vargv[ iterOffset + 2 ] ) )
+		
+		#if VERBOSE_NET_PRINTS
+			int varNameLen = varName.len()	
+			if( varNameLen > s_prntOffset )
+				s_prntOffset = varNameLen + 5
+			
+			int spacing = s_prntOffset - varNameLen - 2
+			string debugMsg = format( "\"%s\";%sparams: ( %s, %s", varName, TableIndent3( spacing ), category, varType )
+			
+			for( int i = REQUIRED_VARS_OFFSET + iterOffset; i < vargc; i++ )
+				debugMsg += format( ", %s", string( vargv[ i ] ) )
+			
+			debugMsg = format( "%s )", debugMsg )
+			
+			printw( "Registering networked variable:      ", debugMsg )
+		#endif
+
+		if( !( category in file.categoryCatalog ) )
+		{
+			CategoryInfo newCatInfo
+			newCatInfo.count++
+			file.categoryCatalog[ category ] <- newCatInfo
+		}
+	
+		file.categoryCatalog[ category ].count++
+		
+		bool isRangeType = IsRangeType( varType )
+		if( isRangeType )
+			file.categoryCatalog[ category ].rangeVarCount++
+			
+		bool isTimeType = IsTimeType( varType )
+		if( isTimeType )
+			file.categoryCatalog[ category ].timeVarCount++
+			
+		if( !( varType in file.categoryCatalog[ category ].varInfo ) )
+		{
+			VarTypeInfo newVarInfo
+			file.categoryCatalog[ category ].varInfo[ varType ] <- newVarInfo
+		}
+
+		file.categoryCatalog[ category ].varInfo[ varType ].count++
+		file.categoryCatalog[ category ].varInfo[ varType ].associatedVars.append( varName )
+
+		int maxAllowed 		= GetMaxAllowedForVarType( category, varType )
+		
+		bool maxVarRange 	= ( isRangeType && file.categoryCatalog[ category ].rangeVarCount > maxAllowed )
+		bool maxVarTime		= ( isTimeType && file.categoryCatalog[ category ].timeVarCount > maxAllowed )
+		
+		if( file.categoryCatalog[ category ].varInfo[ varType ].count > maxAllowed || maxVarRange || maxVarTime )
+		{
+			file.haltRegistration = true
+		
+			string varMaxStr
+			if( maxVarRange || maxVarTime )
+			{
+				varMaxStr = maxVarRange ? " \"range\" type variables (ints/floats) of " : " time or range-over-time type of "
+				array<string> iterArray = maxVarRange ? RANGE_SNVT : TIME_SNVT
+				
+				string debugPrint = "\n\n"
+				for( int k = 0; k < iterArray.len(); k++ )
+				{
+					string SNVT_type = iterArray[ k ]
+					if( !( SNVT_type in file.categoryCatalog[ category ].varInfo ) )
+						continue
+						
+					Warning( "Printing variables registered under category \"%s\" for varType \"%s\"", category, SNVT_type )								
+					foreach( int idx, string varDataName in file.categoryCatalog[ category ].varInfo[ SNVT_type ].associatedVars )
+						debugPrint += format( "	\"%d\" =%s= \"%s\", \n", idx, SNVT_type, varDataName )	
+				}
+				
+				Warning( debugPrint )
+			}
+			else 
+			{
+				Warning( "Printing variables registered under category \"%s\" for varType \"%s\"", category, varType )							
+				
+				string debugPrint = "\n\n"		
+				foreach( int idx, string varDataName in file.categoryCatalog[ category ].varInfo[ varType ].associatedVars )
+					debugPrint += format( "	\"%d\" = \"%s\", \n", idx, varDataName )
+
+				Warning( debugPrint )
+			}
+						
+			string debugCoreMsg = format( "Tried to register networked variable \"%s\" of type \"%s\" in category \"%s\". Maximum allowed %s(%d) reached.", varName, varType, category, varMaxStr, maxAllowed )
+			Warning( debugCoreMsg )
+			
+			mAssert( 0, debugCoreMsg )
+			return
+		}
+	#endif
+	
+	array params = [ this ]
+	for ( int j = iterOffset; j < vargc; j++ )
+		params.append( vargv[ j ] )
+
+	RegisterNetworkedVariable.acall( params )
+}
+
+void function ScriptRemote_RegisterClientFunction( ... )
+{	
+	int iterOffset = 0	
+	if( typeof vargv[ 0 ] == "array" )
+	{
+		if( !IsValidToRun( vargv[ 0 ] ) )
+		{
+			#if VERBOSE_NET_PRINTS
+				printf( "func \"%s\" is not valid to register for current playlist", expect string( vargv[ 1 ] ) )
+			#endif
+			
+			return
+		}
+		else
+			iterOffset = 1
+	}
+	
+	int paramCount = expect int( vargc )
+		
+	#if DEBUG_REMOTE_FUNCS
+		if( file.haltRegistration )
+			return
+			
+		array<var> vargz
+		for( int i = iterOffset; i < paramCount; i++ )
+			vargz.append( vargv[ i ] )
+			
+		int funcBufferConsumption = AddBufferConsumption( vargz )		
+		string funcName = expect string( vargv[ iterOffset ] )
+		
+		SetFuncInfo( funcName, FILE_NAME( 1 ), "client", funcBufferConsumption )
+		
+		#if VERBOSE_NET_PRINTS
+			int spacing = s_prntOffset - funcName.len()
+			Warning( "Registering Remote Client Func:       %s;%sparams: ( %s ) ", funcName, TableIndent3( spacing ), GetRemoteFuncParamsAsString( vargz ) )
+		#endif
+		
+		if( IsOverUsage( funcName, funcBufferConsumption ) )
+			return
+			
+	#endif
+	
+	array params = [ this ]
+	for ( int j = iterOffset; j < paramCount; j++ )
+		params.append( vargv[ j ] )
+	
+#if DEBUG_REMOTE_FUNCS	
+	try 
+	{
+#endif
+		Remote_RegisterClientFunction.acall( params )
+
+#if DEBUG_REMOTE_FUNCS
+	}
+	catch( e )
+	{
+		file.haltRegistration = true 
+		PrintAll_Client_UI_Functions( funcName, expect string( e ) )
+		
+		return
+	}
+	
+	file.allFuncInfo.count++
+	file.allFuncInfo.totalBuffer += funcBufferConsumption
+	file.allFuncInfo.clientFuncs.append( funcName )
+#endif
+}
+
+
+void function ScriptRemote_RegisterUIFunction( ... )
+{
+	int iterOffset = 0	
+	if( typeof vargv[ 0 ] == "array" )
+	{
+		if( !IsValidToRun( vargv[ 0 ] ) )
+		{
+			#if VERBOSE_NET_PRINTS
+				printf( "func \"%s\" is not valid to register for current playlist", expect string( vargv[ 1 ] ) )
+			#endif
+			
+			return
+		}
+		else
+			iterOffset = 1
+	}
+	
+	int paramCount = expect int( vargc )
+	
+	#if DEBUG_REMOTE_FUNCS
+		if( file.haltRegistration )
+			return
+			
+		array<var> vargz
+		for( int i = iterOffset; i < paramCount; i++ )
+			vargz.append( vargv[ i ] )
+			
+		int funcBufferConsumption = AddBufferConsumption( vargz )			
+		string funcName = expect string( vargv[ iterOffset ] )
+		
+		SetFuncInfo( funcName, FILE_NAME( 1 ), "ui", funcBufferConsumption )
+			
+		#if VERBOSE_NET_PRINTS
+			int spacing = s_prntOffset - funcName.len()
+			Warning( "Registering Remote UI Function:       %s;%sparams: ( %s ) ", funcName, TableIndent3( spacing ), GetRemoteFuncParamsAsString( vargz ) )
+		#endif
+		
+		if( IsOverUsage( funcName, funcBufferConsumption ) )
+			return
+	#endif
+	
+	array params = [ this ]
+	for ( int j = iterOffset; j < paramCount; j++ )
+		params.append( vargv[ j ] )
+	
+#if DEBUG_REMOTE_FUNCS	
+	try 
+	{
+#endif
+		Remote_RegisterUIFunction.acall( params )
+
+#if DEBUG_REMOTE_FUNCS
+	}
+	catch( e )
+	{
+		file.haltRegistration = true 
+		PrintAll_Client_UI_Functions( funcName, expect string( e ) )
+		
+		return
+	}
+	
+	file.allFuncInfo.count++
+	file.allFuncInfo.totalBuffer += funcBufferConsumption
+	file.allFuncInfo.uiFuncs.append( funcName )
+#endif
+}
+
+void function ScriptRemote_RegisterUntypedFunction_deprecated( ... )
+{
+	int iterOffset = 0	
+	if( typeof vargv[ 0 ] == "array" )
+	{
+		if( !IsValidToRun( vargv[ 0 ] ) )
+		{
+			#if VERBOSE_NET_PRINTS
+				printf( "func \"%s\" is not valid to register for current playlist", expect string( vargv[ 1 ] ) )
+			#endif
+			
+			return
+		}
+		else
+			iterOffset = 1
+	}
+	
+	int paramCount = expect int( vargc )
+	
+	#if DEBUG_REMOTE_FUNCS
+		if( file.haltRegistration )
+			return
+			
+		string funcName = expect string( vargv[ iterOffset ] )
+		SetFuncInfo( funcName, FILE_NAME( 1 ), "untyped", 0 )
+			
+		#if VERBOSE_NET_PRINTS
+			Warning( "Registering Remote UntypedFunc:       %s", funcName )
+		#endif
+		
+		if( IsOverUsage( funcName, 0 ) )
+			return
+	#endif
+	
+	array params = [ this ]
+	for ( int j = iterOffset; j < paramCount; j++ )
+		params.append( vargv[ j ] )
+	
+#if DEBUG_REMOTE_FUNCS
+	try 
+	{
+#endif
+		Remote_RegisterUntypedFunction_deprecated.acall( params )
+
+#if DEBUG_REMOTE_FUNCS
+	}
+	catch( e )
+	{
+		file.haltRegistration = true
+		PrintAll_Client_UI_Functions( funcName, expect string( e ) )
+		
+		return
+	}
+	
+	file.allFuncInfo.count++ // untyped deprecated only counts toward entries, not buffer consumption.
+	file.allFuncInfo.deprecatedFuncs.append( funcName )
+#endif
+}
+
+#if DEBUG_REMOTE_FUNCS && VERBOSE_NET_PRINTS
+	const int ASCII_ZERO = 48
+	const int ASCII_DOT	 = 46
+	string function GetRemoteFuncParamsAsString( var vArgArr )
+	{
+		int paramCount 	= expect array( vArgArr ).len()
+		int maxComma = paramCount - 2
+		string vargs
+		
+		for( int i = 1; i < paramCount; i++ )
+		{
+			string comma = i > maxComma ? "" : ", "
+			string type = typeof( vArgArr[ i ] )
+			switch( type )
+			{
+				case "string":
+					vargs += format( "\"%s\"%s", expect string( vArgArr[ i ] ), comma )
+					break
+				case "bool":
+				case "entity":
+					break
+					
+				case "int":
+					vargs += format( "%d%s", expect int( vArgArr[ i ] ), comma )
+					break 
+					
+				case "float":
+					string formattedFloat = format( "%.7f", expect float( vArgArr[ i ] ) ) //retain decimal precision form without scientific notation %g
+					int sliceIdx = formattedFloat.len() - 1
+					
+					while ( sliceIdx >= 0 && formattedFloat[ sliceIdx ] == ASCII_ZERO ) //checling for "0" would fail here, as indexing a string returns the char. Iterate backwards to perform one slice.
+						sliceIdx--
+					
+					if ( sliceIdx >= 0 && formattedFloat[ sliceIdx ] == ASCII_DOT )
+						sliceIdx++ //keep a "0" for display purposes.
+					
+					vargs += format( "%s%s", formattedFloat.slice( 0, sliceIdx + 1 ), comma )
+					break
+					
+				case "vector":
+					vargs += format( "%s%s", VectorToString( expect vector( vArgArr[ i ] ) ), comma )
+					break
+			}
+		}
+		
+		return vargs
+	}
+#endif
+
+#if DEBUG_REMOTE_FUNCS
+	void function SetFuncInfo( string funcName, string fileName, string category, int consumption )
+	{
+		if( funcName in file.allFuncInfo.functionInfoTbl )
+		{
+			file.haltRegistration = true
+			
+			if( file.allFuncInfo.functionInfoTbl[ funcName ].category == category )
+			{
+				string error = format( "Error: Tried to register remote function \"%s\" more than once.", funcName )
+				
+				Warning( error )	//ensure error reports if script halts before mAssert.
+				mAssert( 0, error ) //ensure script halts if not already crashed due to unregistered
+				
+				return
+			}
+			
+			mAssert( 0, "Two functions from different categories are of the same name. Debugger flaw" ) //extreme foresight
+			return
+		}
+		
+		FuncInfo fnInfo
+		
+		fnInfo.funcname 			= funcName 
+		fnInfo.file 				= fileName
+		fnInfo.category 			= category 
+		fnInfo.bufferConsumption	= consumption
+		
+		if( funcName.len() > s_prntOffset )
+			s_prntOffset = funcName.len() + 5
+		
+		file.allFuncInfo.functionInfoTbl[ funcName ] <- fnInfo
+	}
+
+	int function GetFuncBufferConsumption( string funcName )
+	{
+		return file.allFuncInfo.functionInfoTbl[ funcName ].bufferConsumption
+	}
+
+	string function GetFuncRegisteredFilename( string funcName )
+	{
+		return file.allFuncInfo.functionInfoTbl[ funcName ].file
+	}
+	
+	bool function IsOverUsage( string funcName, int funcBufferConsumption )
+	{
+		bool entryExceeded 	= file.allFuncInfo.count > MAX_ENTRIES
+		bool bufferExceeded = file.allFuncInfo.totalBuffer + funcBufferConsumption > MAX_BUFFER
+		
+		if( entryExceeded || bufferExceeded )
+		{
+			string noRoom = "Out of room to register more functions"
+			string msg = entryExceeded ? "( max entries )" : "( buffer at limit )"
+			
+			file.haltRegistration = true
+			PrintAll_Client_UI_Functions( funcName, format( "%s %s", noRoom, msg  ) )
+			
+			return true
+		}
+		
+		return false
+	}
+	
+	void function PrintFunctions( array<string> funcArray )
+	{
+		foreach( int idx, string funcName in funcArray )
+		{
+			int spacing 	= s_prntOffset - ( idx.tostring().len() + funcName.len() )
+			int consumption = GetFuncBufferConsumption( funcName )
+			int spacing2 	= 10 - ( consumption.tostring().len() + 1 ) // ") FILE:"
+			string filename = GetFuncRegisteredFilename( funcName )
+			
+			printf( "    %d = \"%s\"%s::Consumption(%d)%s FILE: \"%s\"", idx, funcName, TableIndent3( spacing ), consumption, TableIndent3( spacing2 ), filename )
+		}
+	}
+	
+	void function PrintAll_Client_UI_Functions( string funcFailedName = "", string crashMsg = "" )
+	{
+		Warning( "=== Printing all remote client functions ===" )
+		PrintFunctions( file.allFuncInfo.clientFuncs )
+			
+		Warning( "=== Printing all remote UI functions ===" )
+		PrintFunctions( file.allFuncInfo.uiFuncs )
+
+		Warning( "=== Printing all remote untyped functions ===" )
+		PrintFunctions( file.allFuncInfo.deprecatedFuncs )
+		
+		if( funcFailedName != "" )
+		{
+			string errorMsg = format( "An error occurred registering function: \"%s\" :: Consumption( %d )", funcFailedName, GetFuncBufferConsumption( funcFailedName ) )	
+			
+			Warning( errorMsg )
+			if( crashMsg != "" )
+				Warning( "Error: " + crashMsg )
+			
+			Warning( "Entries of ( %d/%d ) consumed.", file.allFuncInfo.count, MAX_ENTRIES )
+			Warning( "Buffer of ( %d/%d ) consumed.", file.allFuncInfo.totalBuffer, MAX_BUFFER, "\n\n" )
+			
+			DumpStack()
+			mAssert( 0, errorMsg )
+		}
+	}
+
+	void function TestNetworkedVarLimit()
+	{
+		const int TEST_CATEGORY = 0
+		const int TEST_VARTYPE  = 1
+		const bool TEST_NATIVE = false
+
+		int i = 0
+		while( i < 120 )
+		{
+			string varName = format( "TestVar_%d_%d_%d", TEST_CATEGORY, TEST_VARTYPE, i )
+			
+			#if TEST_NATIVE
+				if( TEST_VARTYPE == 7 )
+					RegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE )
+				else if( TEST_VARTYPE == 0 )
+					RegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE, false )
+				else if( TEST_VARTYPE == 4 || TEST_VARTYPE == 5 )
+					RegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE, 0.0, 0.0, 1.0 )
+				else
+					RegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE, 0 )
+			#else
+				if( TEST_VARTYPE == 7 )
+					ScriptRegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE )
+				else if( TEST_VARTYPE == 0 )
+					ScriptRegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE, false )
+				else if( TEST_VARTYPE == 4 || TEST_VARTYPE == 5 )
+					ScriptRegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE, 0.0, 0.0, 1.0 )
+				else
+					ScriptRegisterNetworkedVariable( varName, TEST_CATEGORY, TEST_VARTYPE, 0 )
+			#endif
+				
+			i++
+		}
+	}
+	
+	void function PrintNetworkFunctions()
+	{
+		PrintAll_Client_UI_Functions()
+	}
+#endif
+
+bool function IsValidToRun( var playlists )
+{
+	if( expect array( playlists ).contains( Playlist() ) )
+		return true 
+		
+	return false
+}

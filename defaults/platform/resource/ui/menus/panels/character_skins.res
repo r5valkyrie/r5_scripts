@@ -27,6 +27,21 @@
         rui                     "ui/character_items_header.rpak"
     }
 
+    SkinBlurb
+    {
+        ControlName             RuiPanel
+        xpos                    0
+        ypos                    -50
+        zpos                    0
+        wide                    390
+        tall                    180
+        rui                     "ui/generic_popup_button.rpak"
+        visible                 0
+
+        pin_to_sibling			PanelFrame
+        pin_corner_to_sibling	TOP_RIGHT
+        pin_to_sibling_corner	TOP_RIGHT
+    }
     CharacterSkinList
     {
         ControlName				GridButtonListPanel

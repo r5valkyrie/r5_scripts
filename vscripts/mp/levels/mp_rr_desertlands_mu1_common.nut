@@ -1,6 +1,4 @@
 global function Desertlands_MapInit_Common
-global function CodeCallback_PlayerEnterUpdraftTrigger
-global function CodeCallback_PlayerLeaveUpdraftTrigger
 global function CodeCallback_PreMapInit
 
 const string HARVESTER_BEAM_MDL = $"mdl/fx/harvester_beam_mu1.rmdl"
@@ -37,6 +35,17 @@ const int NUM_LOOT_DRONES_TO_SPAWN = 12
 const int NUM_LOOT_DRONES_WITH_VAULT_KEYS = 4
 #endif
 
+global struct UpdraftTriggerSettings
+{
+	//needs script_server_fps 20 so it feels like retail native implementation, otherwise reduce maxShakeActivationHeight to 375 and liftExitDuration to 1.5
+	
+	float minShakeActivationHeight = 500.0               // At what z-position to start shaking the player's view
+	float maxShakeActivationHeight = 380 //400.0               // At what z-position will the player's view be shaking at the maximum
+	float liftSpeed                = 300.0                   	// Maximum upward speed
+	float liftAcceleration         = 100.0                 		// How fast to accelerate to the maximum upward speed
+	float liftExitDuration         = 1.5 //2.5                   		// After clearing the updraft trigger, how many extra seconds to continue lifting for
+}
+
 struct
 {
 	#if SERVER
@@ -45,6 +54,9 @@ struct
 	array<LootData> items
 	array<LootData> ordnance
 	#endif
+	UpdraftTriggerSettings&      updraftSettings = { ... }
+	
+	array<string> jumpJetAttachments = [ "vent_left", "vent_right" ]
 
 } file
 
@@ -55,7 +67,7 @@ void function CodeCallback_PreMapInit()
 
 void function Desertlands_MapInit_Common()
 {
-	//printt( "Desertlands_MapInit_Common" )
+	printt( "Desertlands_MapInit_Common" )
 
 	if (MapName() == eMaps.mp_rr_desertlands_mu1_tt )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu1_tt.rpak" )
@@ -68,6 +80,7 @@ void function Desertlands_MapInit_Common()
 	SetVictorySequencePlatformModel( $"mdl/rocks/desertlands_victory_platform.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
 
 	#if SERVER
+		//thread KillPlayersUnderMap_Thread( -6376 ) //-28320
 		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 		SURVIVAL_SetPlaneHeight( 15250 )
 		SURVIVAL_SetAirburstHeight( 2500 )
@@ -213,8 +226,8 @@ void function ConveyorRotatorMoverThink( entity mover )
 void function Desertlands_MU1_UpdraftInit_Common( entity player )
 {
 	//ApplyUpdraftModUntilTouchingGround( player )
-	thread PlayerSkydiveFromCurrentPosition( player )
-	thread BurnPlayerOverTime( player )
+	//thread PlayerSkydiveFromCurrentPosition( player )
+	//thread BurnPlayerOverTime( player )
 }
 
 void function Desertlands_MU1_EntitiesLoaded_Common()
@@ -398,24 +411,12 @@ void function Updrafts_Init()
 	array<entity> triggers = GetEntArrayByScriptName( UPDRAFT_TRIGGER_SCRIPT_NAME )
 	foreach ( entity trigger in triggers )
 	{
-		/*if ( trigger.GetClassName() != "trigger_updraft" )
-		{
-			entity newTrigger = CreateEntity( "trigger_updraft" )
-			newTrigger.SetOrigin( trigger.GetOrigin() )
-			newTrigger.SetAngles( trigger.GetAngles() )
-			newTrigger.SetModel( trigger.GetModelName() )
-			newTrigger.SetScriptName( UPDRAFT_TRIGGER_SCRIPT_NAME )
-			newTrigger.kv.triggerFilterTeamBeast = 1
-			newTrigger.kv.triggerFilterTeamNeutral = 1
-			newTrigger.kv.triggerFilterTeamOther = 1
-			newTrigger.kv.triggerFilterUseNew = 1
-			DispatchSpawn( newTrigger )
-			trigger.Destroy()
-		}*/
+		
+		trigger.SetEnterCallback( PlayerEnterUpdraftTrigger )
 	}
 }
 
-void function BurnPlayerOverTime( entity player )
+void function BurnPlayerOverTime( entity trigger, entity player )
 {
 	Assert( IsValid( player ) )
 	player.EndSignal( "OnDestroy" )
@@ -423,8 +424,8 @@ void function BurnPlayerOverTime( entity player )
 	player.EndSignal( "DeathTotem_PreRecallPlayer" )
 	for ( int i = 0; i < 8; ++i )
 	{
-		//if ( !player.Player_IsInsideUpdraftTrigger() )
-		//	break
+		if( !player.p.isPlayerUpdrafting )
+			break
 
 		if ( !player.IsPhaseShifted() )
 		{
@@ -434,18 +435,105 @@ void function BurnPlayerOverTime( entity player )
 		wait 0.5
 	}
 }
-#endif
-
-void function CodeCallback_PlayerEnterUpdraftTrigger( entity trigger, entity player )
+void function PlayerEnterUpdraftTrigger( entity trigger, entity player )
 {
+	if( !IsValid( player ) )
+		return
+	
+	if ( !player.IsPlayer() )
+		return
+
 	float entZ = player.GetOrigin().z
-	//OnEnterUpdraftTrigger( trigger, player, max( -5750.0, entZ - 400.0 ) )
+
+	thread Player_EnterUpdraft( trigger, player, file.updraftSettings.minShakeActivationHeight + entZ, entZ - file.updraftSettings.maxShakeActivationHeight, max( -5750.0, entZ - file.updraftSettings.maxShakeActivationHeight ), file.updraftSettings.liftSpeed, file.updraftSettings.liftAcceleration, file.updraftSettings.liftExitDuration )
 }
 
-void function CodeCallback_PlayerLeaveUpdraftTrigger( entity trigger, entity player )
+void function Player_EnterUpdraft( entity trigger, entity player, float minHeight, float maxHeight, float activationHeight, float liftSpeed, float liftAcceleration, float liftExitDuration )
 {
-	//OnLeaveUpdraftTrigger( trigger, player )
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnDeath" )
+	
+	array<entity> fxs
+	
+	OnThreadEnd(
+		function() : ( player, fxs )
+		{
+			if( IsValid( player ) )
+			{
+				player.p.isPlayerUpdrafting = false
+				player.kv.airSpeed = player.GetPlayerSettingFloat( "airSpeed" )
+				player.kv.airAcceleration = player.GetPlayerSettingFloat( "airAcceleration" )
+				player.SetThirdPersonShoulderModeOff()
+				
+				player.Anim_Stop()
+				StopSoundOnEntity( player, "Survival_InGameFlight_Travel_1P" )
+				StopSoundOnEntity( player, "Survival_InGameFlight_Travel_3P" )
+				
+				DeployAndEnableWeapons( player )
+			}
+			
+			foreach( entity ent in fxs )
+			{
+				if( IsValid( ent ) )
+				{
+					EffectStop( ent )
+					ent.Destroy()
+				}
+			}
+		} )
+
+	while ( player.GetOrigin().z > activationHeight )
+		WaitFrame()
+
+	player.p.isPlayerUpdrafting = true
+
+	HolsterAndDisableWeapons( player )
+	
+	thread PlayerSkydiveLandingFromCurrentPosition(player)
+	//player.Player_BeginFreefallAnticipate()
+	
+	thread BurnPlayerOverTime( trigger, player )
+	
+	float velocity
+
+	while ( trigger.IsTouching( player ) )
+	{
+		velocity += liftAcceleration
+		
+		vector playerCurrentVel = < player.GetVelocity().x, player.GetVelocity().y, velocity >
+
+		player.SetVelocity( ClampVelocity( playerCurrentVel, liftSpeed ) )
+
+		WaitFrame()
+	}
+
+	// Player is out of trigger, use liftExitDuration
+	float starttime = Time()
+	float endTime = starttime + liftExitDuration
+	
+	while ( Time() < endTime )
+	{
+		velocity += liftAcceleration
+		
+		vector playerCurrentVel = < player.GetVelocity().x, player.GetVelocity().y, velocity >
+
+		player.SetVelocity( ClampVelocity( playerCurrentVel, liftSpeed ) )
+
+		WaitFrame()
+	}
 }
+
+vector function ClampVelocity(vector velocity, float maxSpeed) 
+{
+    float speed = velocity.Length()
+
+    if (speed > maxSpeed) 
+	{
+        velocity = velocity * (maxSpeed / speed)
+    }
+    return velocity
+}
+#endif
 
 #if SERVER
 void function AddTrainToMinimap( entity mover )
@@ -494,7 +582,6 @@ void function FullmapPackage_Train( entity ent, var rui )
 
 #if SERVER
 void function RespawnItem(entity item, string ref, int amount = 1, int wait_time=6)
-//By @CafeFPS CafeFPS. Tomado del firing range.
 
 {
 	vector pos = item.GetOrigin()
@@ -509,7 +596,6 @@ void function RespawnItem(entity item, string ref, int amount = 1, int wait_time
 
 #if SERVER
 void function FillLootTable()
-//By @CafeFPS CafeFPS. Adaptado del firing range.
 {
 	file.ordnance.extend(SURVIVAL_Loot_GetByType( eLootType.ORDNANCE ))
 	file.weapons.extend(SURVIVAL_Loot_GetByType( eLootType.MAINWEAPON ))
@@ -518,7 +604,6 @@ void function FillLootTable()
 
 #if SERVER
 void function SpawnGrenades(vector pos, vector ang, int wait_time = 6, array which_nades = ["thermite", "frag", "arc"], int num_rows = 1)
-//By michae\l/#1125 & @CafeFPS
 {
     vector posfixed = pos
 	int i;

@@ -108,7 +108,7 @@ void function Sh_Squads_Init()
 
 void function Squads_RegisterNetworking()
 {
-	// Remote_RegisterClientFunction( SERVERCALLBACK_SQUAD_SET_IS_NESSIE, "int", -1, INT_MAX )
+	// ScriptRemote_RegisterClientFunction( SERVERCALLBACK_SQUAD_SET_IS_NESSIE, "int", -1, INT_MAX )
 }
 
 #if SERVER

@@ -1,6 +1,7 @@
 When: "SERVER"
 Scripts:
 [
+	sh_conveyor.nut
 ]
 
 When: "CLIENT"

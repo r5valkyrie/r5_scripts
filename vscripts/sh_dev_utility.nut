@@ -29,12 +29,102 @@ void function ShDevUtility_Init()
 	#if SERVER
 		AddClientCommandCallback( "respawn", ClientCommand_Respawn )
 		AddClientCommandCallback( "set_respawn_override", ClientCommand_SetRespawnOverride )
+		AddClientCommandCallback( "giveheirloom", ClientCommand_GiveHeirloom )
 	#endif
 
 	#if CLIENT
 		RegisterSignal( "DEV_PreviewScreenRUI" )
 		RegisterSignal( "DEV_PreviewWorldRUI" )
 	#endif
+}
+#endif
+
+#if SERVER
+const string defaultkraldesc = "Made by @LorryLeKral."
+const string defaultmackdesc = "Made by @MackTheBoatMan."
+const string defaultcafedesc = "Made by @CafeFPS."
+const array< array<string> > CustomHeirlooms =
+[
+	//-1 resets back the default melee
+    [ "mp_weapon_bolo_sword_primary", "melee_bolo_sword", defaultkraldesc ], // 0
+    [ "mp_weapon_macks_knife_primary", "melee_macks_knife", defaultmackdesc ], // 1
+	[ "mp_weapon_mc_sword_primary", "melee_mc_sword", defaultkraldesc ], // 2
+	[ "mp_weapon_mjolnir_primary", "melee_mjolnir", defaultkraldesc ], // 3
+	[ "mp_weapon_karambit_primary", "melee_karambit", defaultkraldesc ], // 4
+	[ "mp_weapon_vctblue_primary", "melee_vctblue", defaultcafedesc ] // 5
+]
+
+bool function ClientCommand_GiveHeirloom( entity commandPlayer, array<string> argList )
+{
+	if ( !GetConVarInt( "sv_cheats" ) || !IsValid( commandPlayer ))
+		return true
+
+	if ( argList.len() == 0 )
+	{
+		Dev_PrintMessage( commandPlayer, "Invalid usage of giveheirloom", "Please pass an heirloom index example : 'giveheirloom 0-4'" )
+		return false
+	}
+
+	int selected = int(argList[0])
+
+    if(selected == -1)
+	{
+		commandPlayer.TakeOffhandWeapon( OFFHAND_MELEE )
+		commandPlayer.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+
+		commandPlayer.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+		commandPlayer.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE )
+		commandPlayer.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2)
+
+		Dev_PrintMessage( commandPlayer, "Reset Melee", "" )
+		return true
+	}
+	
+    if(selected == -2)
+	{
+		commandPlayer.TakeOffhandWeapon( OFFHAND_MELEE )
+		commandPlayer.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+
+		commandPlayer.GiveWeapon( "mp_weapon_melee_titan", WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+		commandPlayer.GiveOffhandWeapon( "melee_titan_punch", OFFHAND_MELEE )
+		commandPlayer.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2)
+
+		return true
+	}
+
+    if(selected >= CustomHeirlooms.len())
+	{
+		Dev_PrintMessage( commandPlayer, "Invalid usage of giveheirloom", "Invalid Heirloom Index : " + string(selected) + "| Maximum Index : " + string(CustomHeirlooms.len() - 1) )
+		return false
+	}
+
+    array<string> SelectedData = CustomHeirlooms[selected]
+	string primaryclass = SelectedData[0]
+    string meleeclass = SelectedData[1]
+
+	if( WeaponIsPrecached( primaryclass ) && WeaponIsPrecached( meleeclass ) )
+	{
+		commandPlayer.TakeOffhandWeapon( OFFHAND_MELEE )
+		commandPlayer.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+
+		commandPlayer.GiveWeapon( primaryclass, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+		commandPlayer.GiveOffhandWeapon( meleeclass, OFFHAND_MELEE )
+
+		commandPlayer.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2)
+
+		if(SelectedData.len() >= 3)
+		{
+			string Description = SelectedData[2]
+			Dev_PrintMessage( commandPlayer, "ENJOY YOUR FREE HEIRLOOM!", Description, 4, "LootVault_Access" )
+		}
+
+		return true
+	} else
+	{
+		Dev_PrintMessage( commandPlayer, "error", "Make sure both melee and primary are precached", 4, "LootVault_Access" )
+	}
+
+    return false
 }
 #endif
 
@@ -78,6 +168,11 @@ void function SetupHeirloom( int heirloomIndex )
 		case 5:
 		player.GiveWeapon( "mp_weapon_gloves_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
 		player.GiveOffhandWeapon( "melee_gloves", OFFHAND_MELEE, [] )
+		break
+		
+		case 6:
+		player.GiveWeapon( "mp_weapon_macks_knife_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
+		player.GiveOffhandWeapon( "melee_macks_knife", OFFHAND_MELEE, [] )
 		break
 	}
 

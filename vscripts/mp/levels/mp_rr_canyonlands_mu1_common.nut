@@ -153,6 +153,7 @@ void function Canyonlands_MU1_CommonMapInit()
 
 void function MU1_EntitiesDidLoad()
 {
+	PrecacheModel( $"mdl/props/tree_green_forest_01_kingscanyon/tree_green_forest_01_kingscanyon.rmdl" )
 	//Hack to prevent crash when leviathans don't exist (for MU1_NIGHT)
 	array<entity> leviathan1 = GetEntArrayByScriptName("leviathan_zone_6")
 	array<entity> leviathan2 = GetEntArrayByScriptName("leviathan_zone_9")

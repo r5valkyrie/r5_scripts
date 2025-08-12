@@ -146,6 +146,8 @@ global function UpdateActiveMenuThink
 global function DialogFlow
 global function TryDialogFlowPersistenceQuery
 
+global function AddUICallback_OnInitMenus
+
 #if DURANGO_PROG
 global function OpenXboxPartyApp
 global function OpenXboxHelp
@@ -161,6 +163,7 @@ global function CloseAllMenusExcept
 
 struct
 {
+	array<void functionref()>                   OnInitMenusCallbacks
 	array<void functionref()>                   partyUpdatedCallbacks
 	array<void functionref()>                   partymemberAddedCallbacks
 	array<void functionref()>                   partymemberRemovedCallbacks
@@ -196,12 +199,7 @@ void function UICodeCallback_CloseAllMenus()
 
 string function GetCurrentLobbyMenu()
 {
-	string menuName = "R5RLobbyMenu"
-
-	if(IsLobby())
-		menuName = GetPlaylistVarBool("menufall", "r5reloaded_lobby", true) ? "R5RLobbyMenu" : "LobbyMenu"
-
-	return menuName
+	return "LobbyMenu"
 }
 
 // Bringing up the console will cause this, and it probably shouldn't
@@ -210,11 +208,7 @@ void function UICodeCallback_ActivateMenus()
 	if ( IsConnected() )
 		return
 
-	//Old MainMenu
-	//var mainMenu = GetMenu( "MainMenu" )
-
-	//New R5RMainMenu
-	var mainMenu = GetMenu( "R5RMainMenu" )
+	var mainMenu = GetMenu( "MainMenu" )
 
 	// printt( "UICodeCallback_ActivateMenus:", GetActiveMenu() && Hud_GetHudName( GetActiveMenu() ) != "" )
 	if ( uiGlobal.menuStack.len() == 0 )
@@ -487,13 +481,11 @@ void function UICodeCallback_LevelLoadingFinished( bool error )
 	TEMP_CircularReferenceCleanup()
 }
 
-
 void function UICodeCallback_LevelInit( string levelname )
 {	
 	if ( GetCurrentPlaylistVarBool( "random_loadscreen", false ) )
 	{	
-		if ( RandomFloat( 1.0 ) >= 0.90 ) // 10% chance to load a custom loadscreen
-			SetCustomLoadScreen( $"loadscreens/custom/loadscreen_r5r_community_01" )
+		//SetCustomLoadScreen( $"loadscreens/custom/loadscreen_r5r_community_01" )
 	}
 }
 
@@ -569,7 +561,8 @@ void function UICodeCallback_FullyConnected( string levelname )
 	ShEHI_LevelInit_End()
 
 	//InitItems()
-
+	ModSystem_RunCallbacks()//MOD SYSTEM CALLBACK
+	
 	SURVIVAL_Loot_All_InitShared()
 	//ShWeaponXP_Init()
 	//ShFactionXP_Init()
@@ -638,16 +631,6 @@ void function UICodeCallback_FullyConnected( string levelname )
 		uiGlobal.matchPinData = {}
 
 	file.TEMP_circularReferenceCleanupEnabled = GetCurrentPlaylistVarBool( "circular_reference_cleanup_enabled", true )
-	
-	thread function () : ()
-	{
-		wait 1 //!FIXME Cafe
-		if( CanRunClientScript() )
-		{
-			RunClientScript( "FS_RegisterAdmin" )
-			ClearRecordings()
-		}
-	}()
 }
 
 
@@ -681,7 +664,7 @@ void function UICodeCallback_LevelShutdown()
 
 	TEMP_CircularReferenceCleanup()
 	
-	#if TRACKER && HAS_TRACKER_DLL
+	#if TRACKER && HAS_TRACKER_DLL //(mk): what was I doing here..
 	//TODO: state !ready waitframe 
 	//while( SQ_GetLogstate() )
 	#endif
@@ -1398,7 +1381,7 @@ bool function ShouldShowPremiumCurrencyDialog()
 		return false
 
 	int premiumBalance  = GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
-	int lastSeenBalance = GetPersistentVarAsInt( "lastSeenPremiumCurrency" )
+	int lastSeenBalance = 0//GetPersistentVarAsInt( "lastSeenPremiumCurrency" )
 	if ( premiumBalance == lastSeenBalance )
 		return false
 
@@ -1409,7 +1392,7 @@ bool function ShouldShowPremiumCurrencyDialog()
 void function ShowPremiumCurrencyDialog( bool dialogFlow )
 {
 	int premiumBalance  = GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
-	int lastSeenBalance = GetPersistentVarAsInt( "lastSeenPremiumCurrency" )
+	int lastSeenBalance = 0//GetPersistentVarAsInt( "lastSeenPremiumCurrency" )
 	Assert( premiumBalance > lastSeenBalance )
 	Assert( GRX_IsInventoryReady() )
 
@@ -1591,7 +1574,7 @@ void function UILevelLoadCallback()
 		var titletext = Hud_GetChild( weaponselector, "TitleWeaponSelector" )
 		Hud_SetColor( titletext, 252, 198, 3, 255 )
 	}
-	else if( g_is1v1GameType() )
+	else if( g_bIs1v1GameType() )
 	{	
 		var weaponselector = GetMenu("FRChallengesSettingsWpnSelector")
 		
@@ -1631,110 +1614,59 @@ void function InitMenus()
 {
 	InitGlobalMenuVars()
 
-	var mainMenu = AddMenu( "MainMenu", $"resource/ui/menus/main.menu", InitMainMenu, "#MAIN" )
-	AddPanel( mainMenu, "EstablishUserPanel", InitEstablishUserPanel )
-	AddPanel( mainMenu, "MainMenuPanel", InitMainMenuPanel )
+	var mainMenu = AddMenu( "MainMenu", $"scripts/resource/ui/menus/main.menu", InitR5RMainMenu, "#MAIN" )
+	AddPanel( mainMenu, "MainMenuPanel", InitR5RMainMenuPanel )
 
-	AddMenu( "PlayVideoMenu", $"resource/ui/menus/play_video.menu", InitPlayVideoMenu )
-	AddMenu( "EliteIntroMenu", $"resource/ui/menus/elite_intro.menu", InitEliteIntroMenu )
+	AddMenu( "PlayVideoMenu", $"scripts/resource/ui/menus/play_video.menu", InitPlayVideoMenu )
+	AddMenu( "EliteIntroMenu", $"scripts/resource/ui/menus/elite_intro.menu", InitEliteIntroMenu )
 
-	//R5Reloaded UI
-	var r5rmainMenu = AddMenu( "R5RMainMenu", $"scripts/resource/ui/menus/CustomLobby/main.res", InitR5RMainMenu, "#MAIN" )
-	AddPanel( r5rmainMenu, "R5RMainMenuPanel", InitR5RMainMenuPanel )
+	AddMenu( "R5RNews", $"scripts/resource/ui/menus/news.menu", InitR5RNews )
 
-	var r5rlobbymenu = AddMenu( "R5RLobbyMenu", $"scripts/resource/ui/menus/CustomLobby/lobbymenu.res", InitR5RLobbyMenu )
-	AddPanel( r5rlobbymenu, "HomePanel", InitHomePanel )
-	AddPanel( r5rlobbymenu, "R5RNamePanel", InitR5RNamePanel )
-	AddPanel( r5rlobbymenu, "R5RDescPanel", InitR5RDescPanel )
+	var gamemodeselectv4 = AddMenu( "GamemodeSelectV4Dialog", $"scripts/resource/ui/menus/dialogs/gamemode_select_v4.res", InitGamemodeSelectDialogV4 )
+	AddPanel( gamemodeselectv4, "MapSelectPanel", InitFreeRoamMapPanel )
 
-	var privatematchmenu = AddPanel( r5rlobbymenu, "CreatePanel", InitCreatePanel )
-	AddPanel( privatematchmenu, "R5RPlaylistPanel", InitR5RPlaylistPanel )
-	AddPanel( privatematchmenu, "R5RMapPanel", InitR5RMapPanel )
-	AddPanel( privatematchmenu, "R5RVisPanel", InitR5RVisPanel )
-
-	AddPanel( r5rlobbymenu, "ServerBrowserPanel", InitServerBrowserPanel )
-	AddPanel( r5rlobbymenu, "LegendsPanel", InitR5RLegendsPanel )
-	AddPanel( r5rlobbymenu, "LoadoutPanel", InitLoadoutPanel )
-	AddPanel( r5rlobbymenu, "R5RConnectingPanel", InitR5RConnectingPanel )
-
-	AddMenu( "R5RNews", $"scripts/resource/ui/menus/CustomLobby/news.res", InitR5RNews )
-	AddMenu( "R5RGamemodeSelectV2Dialog", $"scripts/resource/ui/menus/CustomLobby/gamemode_select.res", InitR5RGamemodeSelectDialog )
-
-
-	//Settings
-	AddMenu( "FRLGDuelsSettings", $"scripts/resource/ui/menus/FRChallenges/flowstate_lgduels_settings.menu", InitLGDuelsSettings )
-	// AddMenu( "ValkSimulatorSettings", $"scripts/resource/ui/menus/FRChallenges/flowstate_valksimulator_settings.menu", InitValkSimulatorSettings )
+	foreach ( callbackFunc in file.OnInitMenusCallbacks )
+		callbackFunc()
 
 	//CTF UI
 	var controlmenu = AddMenu( "CTFRespawnMenu", $"scripts/resource/ui/menus/CTF/ctfrespawnmenu.menu", InitCTFRespawnMenu )
 	var ctfvotemenu = AddMenu( "CTFVoteMenu", $"scripts/resource/ui/menus/CTF/ctfvotemenu.menu", InitCTFVoteMenu )
 
-	//Flowstate Aim Trainer
-	//Main Menu
-	AddMenu( "FRChallengesMainMenu", $"scripts/resource/ui/menus/FRChallenges/mainmenu_main.menu", InitFRChallengesMainMenu )
-	
-	//Settings
-	AddMenu( "FRChallengesSettings", $"scripts/resource/ui/menus/FRChallenges/mainmenu_settings.menu", InitFRChallengesSettings )
-	
-	//History
-	AddMenu( "FRChallengesHistory", $"scripts/resource/ui/menus/FRChallenges/mainmenu_history.menu", InitChallengesHistory )
-	
-	//Weapon Selector
-	var weaponselector = AddMenu( "FRChallengesSettingsWpnSelector", $"scripts/resource/ui/menus/FRChallenges/mainmenu_settings_weaponselector.menu", InitFRChallengesSettingsWpnSelector )
-	AddPanel( weaponselector, "BuyMenu1", InitArenasBuyPanel1 )
-	AddPanel( weaponselector, "BuyMenu2", InitArenasBuyPanel2 )
-	AddPanel( weaponselector, "BuyMenu3", InitArenasBuyPanel3 )
-	AddPanel( weaponselector, "BuyMenu4", InitArenasBuyPanel4 )
-	AddPanel( weaponselector, "BuyMenu5", InitArenasBuyPanel5 )
-	
-	//results
-	AddMenu( "FRChallengesMenu", $"scripts/resource/ui/menus/FRChallenges/challenges_results.menu", InitFRChallengesResultsMenu ) //results
-	
 	//Custom KillReplayHud
 	var killreplayhud = AddMenu( "KillReplayHud", $"scripts/resource/ui/menus/KillReplay/replayhud.menu", InitKillReplayHud )
 
-	//Custom msgs to chat box
-	AddMenu( "FS_ServerMsgs_To_ChatBox", $"scripts/resource/ui/menus/FlowstateDM/flowstate_msgs_to_chatbox.menu", InitServerMSGSToChatBox )
-
-	//FLOWSTATE DM
-	//Statistics
-	AddMenu( "StatisticsUI", $"scripts/resource/ui/menus/FlowstateDM/flowstate_statistics.menu", InitStatisticsUI )
-	AddMenu( "FSDMVoteMenu", $"scripts/resource/ui/menus/FlowstateDM/flowstate_menu_vote.menu", Init_FSDM_VoteMenu )
-	
-	AddMenu( "FSVoteTeamMenu", $"scripts/resource/ui/menus/FlowstateDM/flowstate_menu_voteteam.menu", Init_FS_VoteTeamMenu )//Halo mod and others probably
-
-	AddMenu( "FSProphuntScoreboardMenu", $"scripts/resource/ui/menus/FlowstateDM/flowstate_prophunt_scoreboard.menu", Init_FSDM_ProphuntScoreboardMenu )
-
 	//Custom Weapon Mods Menu
 	var weaponmodsmenu = AddMenu( "WeaponMods", $"scripts/resource/ui/menus/weaponmods.menu", InitWeaponModsMenu )
-
 	
-	//FLOWSTATE MOVEMENT GYM
-	//Settings
-	AddMenu( "MGSettingsMenu", $"scripts/resource/ui/menus/MovementGym/movementgym_settings.menu", InitMGSettings )
-
-	//FLOWSTATE SND
-	//Buy Menu
-	AddMenu( "FSSND_BuyMenu", $"scripts/resource/ui/menus/FlowstateSND/flowstate_snd_buy_menu.menu", Init_FSSND_BuyMenu )
-	
-	var lobbyMenu = AddMenu( "LobbyMenu", $"resource/ui/menus/lobby.menu", InitLobbyMenu )
+	var lobbyMenu = AddMenu( "LobbyMenu", $"scripts/resource/ui/menus/lobby.menu", InitLobbyMenu )
 	AddPanel( lobbyMenu, "PlayPanel", InitPlayPanel )
 	AddPanel( lobbyMenu, "CharactersPanel", InitCharactersPanel )
 	AddPanel( lobbyMenu, "ArmoryPanel", InitArmoryPanel )
-	AddPanel( lobbyMenu, "PassPanelV2", InitPassPanel )
+	AddPanel( lobbyMenu, "ServerBrowserPanel", InitServerBrowserPanel )
 
-	var storePanel = AddPanel( lobbyMenu, "StorePanel", InitStorePanel )
-	AddPanel( storePanel, "LootPanel", InitLootPanel )
-	AddPanel( storePanel, "CollectionEventPanel", CollectionEventPanel_Init )
-	AddPanel( storePanel, "ThemedShopPanel", ThemedShopPanel_Init )
-	AddPanel( storePanel, "ECPanel", InitOffersPanel )
-	AddPanel( storePanel, "CharacterPanel", InitStoreCharactersPanel )
-	AddPanel( storePanel, "VCPanel", InitStoreVCPanel )
+	var privatematchmenu = AddPanel( lobbyMenu, "CreatePanel", InitCreatePanel )
+	AddPanel( privatematchmenu, "R5RPlaylistPanel", InitR5RPlaylistPanel )
+	AddPanel( privatematchmenu, "R5RMapPanel", InitR5RMapPanel )
+	AddPanel( privatematchmenu, "R5RVisPanel", InitR5RVisPanel )
+	AddPanel( privatematchmenu, "R5RNamePanel", InitR5RNamePanel )
+	AddPanel( privatematchmenu, "R5RDescPanel", InitR5RDescPanel )
 
-	var systemMenu = AddMenu( "SystemMenu", $"resource/ui/menus/system.menu", InitSystemMenu )
+	AddPanel( lobbyMenu, "CreditsPanel", InitCreditPanel )
+
+	//AddPanel( lobbyMenu, "PassPanelV2", InitPassPanel )
+
+	//var storePanel = AddPanel( lobbyMenu, "StorePanel", InitStorePanel )
+	//AddPanel( storePanel, "LootPanel", InitLootPanel )
+	//AddPanel( storePanel, "CollectionEventPanel", CollectionEventPanel_Init )
+	//AddPanel( storePanel, "ThemedShopPanel", ThemedShopPanel_Init )
+	//AddPanel( storePanel, "ECPanel", InitOffersPanel )
+	//AddPanel( storePanel, "CharacterPanel", InitStoreCharactersPanel )
+	//AddPanel( storePanel, "VCPanel", InitStoreVCPanel )
+
+	var systemMenu = AddMenu( "SystemMenu", $"scripts/resource/ui/menus/system.menu", InitSystemMenu )
 	AddPanel( systemMenu, "SystemPanel", InitSystemPanelMain )
 
-	var miscMenu      = AddMenu( "MiscMenu", $"resource/ui/menus/misc.menu", InitMiscMenu )
+	var miscMenu      = AddMenu( "MiscMenu", $"scripts/resource/ui/menus/misc.menu", InitMiscMenu )
 	var settingsPanel = AddPanel( miscMenu, "SettingsPanel", InitSettingsPanel )
 
 	#if PC_PROG
@@ -1748,7 +1680,7 @@ void function InitMenus()
 	AddPanel( settingsPanel, "SoundPanel", InitSoundPanel )
 	AddPanel( settingsPanel, "HudOptionsPanel", InitHudOptionsPanel )
 
-	var customizeCharacterMenu = AddMenu( "CustomizeCharacterMenu", $"scripts/resource/ui/menus/CustomLobby/customize_character.menu", InitCustomizeCharacterMenu )
+	var customizeCharacterMenu = AddMenu( "CustomizeCharacterMenu", $"scripts/resource/ui/menus/customize_character.menu", InitCustomizeCharacterMenu )
 	AddPanel( customizeCharacterMenu, "CharacterSkinsPanel", InitCharacterSkinsPanel )
 
 	var cardPanel = AddPanel( customizeCharacterMenu, "CharacterCardsPanelV2", InitCharacterCardsPanel )
@@ -1766,117 +1698,112 @@ void function InitMenus()
 	AddPanel( customizeCharacterMenu, "CharacterExecutionsPanel", InitCharacterExecutionsPanel )
 
 	//shared with 1v1 weapon select
-	var customizeWeaponMenu = AddMenu( "CustomizeWeaponMenu", $"scripts/resource/ui/menus/CustomLobby/customize_weapon.menu", InitCustomizeWeaponMenu )
+	var customizeWeaponMenu = AddMenu( "CustomizeWeaponMenu", $"scripts/resource/ui/menus/customize_weapon.menu", InitCustomizeWeaponMenu )
 	AddPanel( customizeWeaponMenu, "WeaponSkinsPanel0", InitWeaponSkinsPanel )
 	AddPanel( customizeWeaponMenu, "WeaponSkinsPanel1", InitWeaponSkinsPanel )
 	AddPanel( customizeWeaponMenu, "WeaponSkinsPanel2", InitWeaponSkinsPanel )
 	AddPanel( customizeWeaponMenu, "WeaponSkinsPanel3", InitWeaponSkinsPanel )
 	AddPanel( customizeWeaponMenu, "WeaponSkinsPanel4", InitWeaponSkinsPanel )
+	AddPanel( customizeWeaponMenu, "WeaponSkinsPanel5", InitWeaponSkinsPanel )
 
-	var miscCustomizeMenu = AddMenu( "MiscCustomizeMenu", $"scripts/resource/ui/menus/CustomLobby/misc_customize.menu", InitMiscCustomizeMenu )
+	var miscCustomizeMenu = AddMenu( "MiscCustomizeMenu", $"scripts/resource/ui/menus/misc_customize.menu", InitMiscCustomizeMenu )
 	AddPanel( miscCustomizeMenu, "LoadscreenPanel", InitLoadscreenPanel )
 	AddPanel( miscCustomizeMenu, "MusicPackPanel", InitMusicPackPanel )
 	AddPanel( miscCustomizeMenu, "SkydiveTrailPanel", InitSkydiveTrailPanel )
 
-	AddMenu( "PassPurchasePremiumMenu", $"resource/ui/menus/passpurchasepremium.menu", InitDummyMenu )
-	AddMenu( "PassPurchaseLevelMenu", $"resource/ui/menus/passpurchaselevel.menu", InitDummyMenu )
+	AddMenu( "PassPurchasePremiumMenu", $"scripts/resource/ui/menus/passpurchasepremium.menu", InitDummyMenu )
+	AddMenu( "PassPurchaseLevelMenu", $"scripts/resource/ui/menus/passpurchaselevel.menu", InitDummyMenu )
 
-	AddMenu( "CharacterSelectMenuNew", $"resource/ui/menus/character_select_new.menu", UI_InitCharacterSelectNewMenu )
+	AddMenu( "CharacterSelectMenuNew", $"scripts/resource/ui/menus/character_select_new.menu", UI_InitCharacterSelectNewMenu )
 
-	var deathScreenMenu = AddMenu( "DeathScreenMenu", $"resource/ui/menus/death_screen.menu", InitDeathScreenMenu )
+	var deathScreenMenu = AddMenu( "DeathScreenMenu", $"scripts/resource/ui/menus/death_screen.menu", InitDeathScreenMenu )
 	AddPanel( deathScreenMenu, "DeathScreenRecap", InitDeathScreenRecapPanel )
 	AddPanel( deathScreenMenu, "DeathScreenSpectate", InitDeathScreenSpectatePanel )
 	AddPanel( deathScreenMenu, "DeathScreenSquadSummary", InitDeathScreenSquadSummaryPanel )
 
-	AddMenu( "PostGameRankedMenu", $"resource/ui/menus/post_game_ranked.menu", InitPostGameRankedMenu )
-	AddMenu( "RankedInfoMenu", $"resource/ui/menus/ranked_info.menu", InitRankedInfoMenu )
-	AddMenu( "AboutGameModeMenu", $"resource/ui/menus/about_game_mode.menu", InitAboutGameModeMenu )
+	AddMenu( "PostGameRankedMenu", $"scripts/resource/ui/menus/post_game_ranked.menu", InitPostGameRankedMenu )
+	AddMenu( "RankedInfoMenu", $"scripts/resource/ui/menus/ranked_info.menu", InitRankedInfoMenu )
+	AddMenu( "AboutGameModeMenu", $"scripts/resource/ui/menus/about_game_mode.menu", InitAboutGameModeMenu )
 
-	var inventoryMenu = AddMenu( "SurvivalInventoryMenu", $"resource/ui/menus/survival_inventory.menu", InitSurvivalInventoryMenu )
+	var inventoryMenu = AddMenu( "SurvivalInventoryMenu", $"scripts/resource/ui/menus/survival_inventory.menu", InitSurvivalInventoryMenu )
 	AddPanel( inventoryMenu, "SurvivalQuickInventoryPanel", InitSurvivalQuickInventoryPanel )
 	AddPanel( inventoryMenu, "SquadPanel", InitSquadPanelInventory )
 	AddPanel( inventoryMenu, "CharacterDetailsPanel", InitLegendPanelInventory )
 
-	AddMenu( "SurvivalGroundListMenu", $"resource/ui/menus/survival_ground_list.menu", InitGroundListMenu )
-	AddMenu( "SurvivalQuickSwapMenu", $"resource/ui/menus/survival_quick_swap.menu", InitQuickSwapMenu )
+	AddMenu( "SurvivalGroundListMenu", $"scripts/resource/ui/menus/survival_ground_list.menu", InitGroundListMenu )
+	AddMenu( "SurvivalQuickSwapMenu", $"scripts/resource/ui/menus/survival_quick_swap.menu", InitQuickSwapMenu )
 
-	AddMenu( "GammaMenu", $"resource/ui/menus/gamma.menu", InitGammaMenu, "#BRIGHTNESS" )
+	AddMenu( "GammaMenu", $"scripts/resource/ui/menus/gamma.menu", InitGammaMenu, "#BRIGHTNESS" )
 
-	AddMenu( "Notifications", $"resource/ui/menus/notifications.menu", InitNotificationsMenu )
+	AddMenu( "Notifications", $"scripts/resource/ui/menus/notifications.menu", InitNotificationsMenu )
 
-	AddMenu( "InGameMPMenu", $"resource/ui/menus/ingame_mp.menu", InitInGameMPMenu )
+	AddMenu( "InGameMPMenu", $"scripts/resource/ui/menus/ingame_mp.menu", InitInGameMPMenu )
 
-	AddMenu( "PostGameMenu", $"resource/ui/menus/postgame.menu", InitPostGameMenu )
+	AddMenu( "PostGameMenu", $"scripts/resource/ui/menus/postgame.menu", InitPostGameMenu )
 
-	AddMenu( "Dialog", $"resource/ui/menus/dialog.menu", InitDialogMenu )
-	AddMenu( "PromoDialog", $"resource/ui/menus/dialogs/promo.menu", InitPromoDialog )
-	AddMenu( "LowPopDialog", $"resource/ui/menus/dialogs/low_pop.menu", InitLowPopDialog )
-	AddMenu( "SlotSelectDialog", $"resource/ui/menus/dialogs/select_slot.menu", InitSelectSlotDialog )
-	AddMenu( "CharacterSkillsDialog", $"resource/ui/menus/dialogs/character_skills.menu", InitCharacterSkillsDialog )
-	AddMenu( "ConfirmDialog", $"resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmDialog )
-	AddMenu( "OKDialog", $"resource/ui/menus/dialogs/ok_dialog.menu", InitOKDialog )
-	AddMenu( "ConfirmExitToDesktopDialog", $"resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmExitToDesktopDialog )
-	AddMenu( "ConfirmLeaveMatchDialog", $"resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmLeaveMatchDialog )
-	AddMenu( "ConfirmRestDialog", $"resource/ui/menus/dialogs/confirm_rest.menu", InitConfirmRestDialog )
-	AddMenu( "ConfirmKeepVideoChangesDialog", $"resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmKeepVideoChangesDialog )
-	AddMenu( "ConfirmPurchaseDialog", $"resource/ui/menus/dialogs/confirm_purchase.menu", InitConfirmPurchaseDialog )
-	AddMenu( "ConfirmGrxErrorDialog", $"resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmGrxErrorDialog )
-	AddMenu( "ConnectingDialog", $"resource/ui/menus/dialog_connecting.menu", InitConnectingDialog )
-	AddMenu( "DataCenterDialog", $"resource/ui/menus/dialog_datacenter.menu", InitDataCenterDialogMenu )
-	AddMenu( "EULADialog", $"resource/ui/menus/dialog_eula.menu", InitEULADialog )
-	AddMenu( "ModeSelectDialog", $"resource/ui/menus/dialog_mode_select.menu", InitModeSelectDialog )
-	AddMenu( "GamemodeSelectV2Dialog", $"resource/ui/menus/dialog_gamemode_select_v2.menu", InitGamemodeSelectV2Dialog )
-	AddMenu( "ErrorDialog", $"resource/ui/menus/dialogs/ok_dialog.menu", InitErrorDialog )
-	AddMenu( "AccessibilityDialog", $"resource/ui/menus/dialogs/accessibility_dialog.menu", InitAccessibilityDialog )
-	AddMenu( "ReportPlayerDialog", $"resource/ui/menus/dialog_report_player.menu", InitReportPlayerDialog )
-	AddMenu( "ReportPlayerReasonPopup", $"resource/ui/menus/dialog_report_player_reason.menu", InitReportReasonPopup )
-	AddMenu( "ProcessingDialog", $"resource/ui/menus/dialog_processing.menu", InitProcessingDialog )
+	AddMenu( "Dialog", $"scripts/resource/ui/menus/dialog.menu", InitDialogMenu )
+	AddMenu( "PromoDialog", $"scripts/resource/ui/menus/dialogs/promo.menu", InitPromoDialog )
+	AddMenu( "LowPopDialog", $"scripts/resource/ui/menus/dialogs/low_pop.menu", InitLowPopDialog )
+	AddMenu( "SlotSelectDialog", $"scripts/resource/ui/menus/dialogs/select_slot.menu", InitSelectSlotDialog )
+	AddMenu( "CharacterSkillsDialog", $"scripts/resource/ui/menus/dialogs/character_skills.menu", InitCharacterSkillsDialog )
+	AddMenu( "ConfirmDialog", $"scripts/resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmDialog )
+	AddMenu( "OKDialog", $"scripts/resource/ui/menus/dialogs/ok_dialog.menu", InitOKDialog )
+	AddMenu( "ConfirmExitToDesktopDialog", $"scripts/resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmExitToDesktopDialog )
+	AddMenu( "ConfirmLeaveMatchDialog", $"scripts/resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmLeaveMatchDialog )
+	AddMenu( "ConfirmRestDialog", $"scripts/resource/ui/menus/dialogs/confirm_rest.menu", InitConfirmRestDialog )
+	AddMenu( "ConfirmKeepVideoChangesDialog", $"scripts/resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmKeepVideoChangesDialog )
+	AddMenu( "ConfirmPurchaseDialog", $"scripts/resource/ui/menus/dialogs/confirm_purchase.menu", InitConfirmPurchaseDialog )
+	AddMenu( "ConfirmGrxErrorDialog", $"scripts/resource/ui/menus/dialogs/confirm_dialog.menu", InitConfirmGrxErrorDialog )
+	AddMenu( "ConnectingDialog", $"scripts/resource/ui/menus/dialog_connecting.menu", InitConnectingDialog )
+	AddMenu( "DataCenterDialog", $"scripts/resource/ui/menus/dialog_datacenter.menu", InitDataCenterDialogMenu )
+	AddMenu( "EULADialog", $"scripts/resource/ui/menus/dialog_eula.menu", InitEULADialog )
+	AddMenu( "ModeSelectDialog", $"scripts/resource/ui/menus/dialog_mode_select.menu", InitModeSelectDialog )
+	AddMenu( "GamemodeSelectV2Dialog", $"scripts/resource/ui/menus/dialog_gamemode_select_v2.menu", InitGamemodeSelectV2Dialog )
+	AddMenu( "ErrorDialog", $"scripts/resource/ui/menus/dialogs/ok_dialog.menu", InitErrorDialog )
+	AddMenu( "AccessibilityDialog", $"scripts/resource/ui/menus/dialogs/accessibility_dialog.menu", InitAccessibilityDialog )
+	AddMenu( "ReportPlayerDialog", $"scripts/resource/ui/menus/dialog_report_player.menu", InitReportPlayerDialog )
+	AddMenu( "ReportPlayerReasonPopup", $"scripts/resource/ui/menus/dialog_report_player_reason.menu", InitReportReasonPopup )
+	AddMenu( "ProcessingDialog", $"scripts/resource/ui/menus/dialog_processing.menu", InitProcessingDialog )
 
-	AddMenu( "PassXPPurchaseDialog", $"resource/ui/menus/dialogs/pass_dialog.menu", InitPassXPPurchaseDialog )
-	AddMenu( "PassPurchaseMenu", $"resource/ui/menus/pass_purchase.menu", InitPassPurchaseMenu )
-	AddMenu( "RewardCeremonyMenu", $"resource/ui/menus/reward_ceremony.menu", InitRewardCeremonyMenu )
-	AddMenu( "LoadscreenPreviewMenu", $"resource/ui/menus/loadscreen_preview.menu", InitLoadscreenPreviewMenu )
+	AddMenu( "PassXPPurchaseDialog", $"scripts/resource/ui/menus/dialogs/pass_dialog.menu", InitPassXPPurchaseDialog )
+	AddMenu( "PassPurchaseMenu", $"scripts/resource/ui/menus/pass_purchase.menu", InitPassPurchaseMenu )
+	AddMenu( "RewardCeremonyMenu", $"scripts/resource/ui/menus/reward_ceremony.menu", InitRewardCeremonyMenu )
+	AddMenu( "LoadscreenPreviewMenu", $"scripts/resource/ui/menus/loadscreen_preview.menu", InitLoadscreenPreviewMenu )
 
-	AddMenu( "PostGameBattlePassMenu", $"resource/ui/menus/post_game_battlepass.menu", InitPostGameBattlePassMenu )
-	AddMenu( "BattlePassAboutPage1", $"resource/ui/menus/dialogs/battle_pass_about_1.menu", InitAboutBattlePass1Dialog )
-	AddMenu( "CollectionEventAboutPage", $"resource/ui/menus/dialogs/collection_event_about.menu", CollectionEventAboutPage_Init )
+	AddMenu( "PostGameBattlePassMenu", $"scripts/resource/ui/menus/post_game_battlepass.menu", InitPostGameBattlePassMenu )
+	AddMenu( "BattlePassAboutPage1", $"scripts/resource/ui/menus/dialogs/battle_pass_about_1.menu", InitAboutBattlePass1Dialog )
+	AddMenu( "CollectionEventAboutPage", $"scripts/resource/ui/menus/dialogs/collection_event_about.menu", CollectionEventAboutPage_Init )
 
-	var controlsAdvancedLookMenu = AddMenu( "ControlsAdvancedLookMenu", $"resource/ui/menus/controls_advanced_look.menu", InitControlsAdvancedLookMenu, "#CONTROLS_ADVANCED_LOOK" )
+	var controlsAdvancedLookMenu = AddMenu( "ControlsAdvancedLookMenu", $"scripts/resource/ui/menus/controls_advanced_look.menu", InitControlsAdvancedLookMenu, "#CONTROLS_ADVANCED_LOOK" )
 	AddPanel( controlsAdvancedLookMenu, "AdvancedLookControlsPanel", InitAdvancedLookControlsPanel )
-	AddMenu( "GamepadLayoutMenu", $"resource/ui/menus/gamepadlayout.menu", InitGamepadLayoutMenu )
+	AddMenu( "GamepadLayoutMenu", $"scripts/resource/ui/menus/gamepadlayout.menu", InitGamepadLayoutMenu )
 
 	#if PC_PROG
-		var controlsADSPC = AddMenu( "ControlsAdvancedLookMenuPC", $"resource/ui/menus/controls_ads_pc.menu", InitADSControlsMenuPC, "#CONTROLS_ADVANCED_LOOK" )
+		var controlsADSPC = AddMenu( "ControlsAdvancedLookMenuPC", $"scripts/resource/ui/menus/controls_ads_pc.menu", InitADSControlsMenuPC, "#CONTROLS_ADVANCED_LOOK" )
 		AddPanel( controlsADSPC, "ADSControlsPanel", InitADSControlsPanelPC )
 	#endif
 
-	var controlsADSConsole = AddMenu( "ControlsAdvancedLookMenuConsole", $"resource/ui/menus/controls_ads_console.menu", InitADSControlsMenuConsole, "#CONTROLS_ADVANCED_LOOK" )
+	var controlsADSConsole = AddMenu( "ControlsAdvancedLookMenuConsole", $"scripts/resource/ui/menus/controls_ads_console.menu", InitADSControlsMenuConsole, "#CONTROLS_ADVANCED_LOOK" )
 	AddPanel( controlsADSConsole, "ADSControlsPanel", InitADSControlsPanelConsole )
 
-	var controlsADSAdvancedConsole = AddMenu( "ControlsAdsAdvancedLookMenuConsole", $"resource/ui/menus/controls_ads_advanced_console.menu", InitADSAdvancedControlsMenuConsole, "#CONTROLS_ADVANCED_LOOK" )
+	var controlsADSAdvancedConsole = AddMenu( "ControlsAdsAdvancedLookMenuConsole", $"scripts/resource/ui/menus/controls_ads_advanced_console.menu", InitADSAdvancedControlsMenuConsole, "#CONTROLS_ADVANCED_LOOK" )
 	AddPanel( controlsADSAdvancedConsole, "ADSAdvancedControlsPanel", InitADSAdvancedControlsPanelConsole )
 
-	AddMenu( "LootBoxOpen", $"resource/ui/menus/loot_box.menu", InitLootBoxMenu )
-	AddMenu( "InviteFriendsMenu", $"resource/ui/menus/invite_friends.menu", InitInviteFriendsMenu )
-	AddMenu( "SocialMenu", $"resource/ui/menus/social.menu", InitSocialMenu )
-	AddMenu( "AllChallengesMenu", $"resource/ui/menus/lobby_all_challenges.menu", InitAllChallengesMenu )
+	AddMenu( "LootBoxOpen", $"scripts/resource/ui/menus/loot_box.menu", InitLootBoxMenu )
+	AddMenu( "InviteFriendsMenu", $"scripts/resource/ui/menus/invite_friends.menu", InitInviteFriendsMenu )
+	AddMenu( "SocialMenu", $"scripts/resource/ui/menus/social.menu", InitSocialMenu )
+	AddMenu( "AllChallengesMenu", $"scripts/resource/ui/menus/lobby_all_challenges.menu", InitAllChallengesMenu )
 
-	var inspectMenu = AddMenu( "InspectMenu", $"resource/ui/menus/inspect.menu", InitInspectMenu )
+	var inspectMenu = AddMenu( "InspectMenu", $"scripts/resource/ui/menus/inspect.menu", InitInspectMenu )
 
 	AddPanel( inspectMenu, "StatsSummaryPanel", InitStatsSummaryPanel )
 
-	AddMenu( "StatsSeasonSelectPopUp", $"resource/ui/menus/dialog_player_stats_season_select.menu", InitSeasonSelectPopUp )
+	AddMenu( "StatsSeasonSelectPopUp", $"scripts/resource/ui/menus/dialog_player_stats_season_select.menu", InitSeasonSelectPopUp )
 
-	AddMenu( "DevMenu", $"resource/ui/menus/dev.menu", InitDevMenu, "Dev" )
+	AddMenu( "DevMenu", $"scripts/resource/ui/menus/dev.menu", InitDevMenu, "Dev" )
 	
-	AddMenu( "SERVER_MOTD", $"platform/scripts/resource/ui/menus/dialogs/server_motd.menu", Init_Server_MOTD, "Server MOTD" )
-
-	AddMenu( "ScenariosStandingsMenu", $"platform/scripts/resource/ui/menus/FlowstateScenarios/fs_scenarios.menu", InitScenariosMenu, "Match Standings" )
+	AddMenu( "SERVER_MOTD", $"scripts/resource/ui/menus/dialogs/server_motd.menu", Init_Server_MOTD, "Server MOTD" )
 	
-	//Coaching menu
-	var coachingMenu = AddMenu( "1v1CoachingModeMenu", $"platform/scripts/resource/ui/menus/FS_1v1_Coaching/fs_1v1_coaching.menu", InitCoachingMenu, "1v1 Coaching" )
-	AddPanel( coachingMenu, "CoachingRecordingsList", Init_CoachingRecordingsList )
-
 	InitTabs()
 	InitSurveys()
 	ShMenuModels_UIInit()
@@ -1922,7 +1849,7 @@ void function InitMenus()
 	}
 
 	InitFooterOptions()
-	InitMatchmakingOverlay()
+	//InitMatchmakingOverlay()
 	InitPromoData()
 
 	RegisterTabNavigationInput()
@@ -2812,6 +2739,15 @@ bool function IsDialogOnlyActiveMenu()
 	return false
 }
 
+void function AddUICallback_OnInitMenus( void functionref() callbackFunc )
+{
+	Assert( !file.OnInitMenusCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnPartyUpdated" )
+	
+	if( file.OnInitMenusCallbacks.contains( callbackFunc ) )
+		return
+	
+	file.OnInitMenusCallbacks.append( callbackFunc )
+}
 
 void function AddCallback_OnPartyUpdated( void functionref() callbackFunc )
 {

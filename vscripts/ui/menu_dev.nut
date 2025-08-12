@@ -13,6 +13,19 @@ global function DEV_ExecBoundDevMenuCommand
 global function DEV_InitCodeDevMenu
 global function UpdateCheatsState
 global function AddLevelDevCommand
+global function ChangeToThisMenu
+global function UpdateDevMenuButtons
+global function OnDevButton_Activate
+global function OnDevButton_GetFocus
+global function OnDevButton_LoseFocus
+global function BackOnePage_Activate
+global function RepeatLastCommand_Activate
+global function BindCommandToGamepad_Activate
+global function ClearCodeDevMenu
+global function PushPageHistory
+
+global function AddUICallback_OnDevMenuLoaded
+global function GetCheatsState
 
 const string DEV_MENU_NAME = "[LEVEL]"
 
@@ -58,10 +71,20 @@ struct
 	bool                      initializingCodeDevMenu = false
 	string                    codeDevMenuPrefix = DEV_MENU_NAME + "/"
 	table<string, DevCommand> codeDevMenuCommands
+	
+	array<void functionref()>                   OnDevMenuLoaded
 
 	array<DevCommand> levelSpecificCommands = []
 	bool cheatsState
 } file
+
+void function AddUICallback_OnDevMenuLoaded( void functionref() callback ) //(cafe) New callback to add dev menu entries from mods
+{
+	if(file.OnDevMenuLoaded.contains(callback))
+		return
+	
+	file.OnDevMenuLoaded.append( callback )
+}
 
 function Dummy_Untyped( param )
 {
@@ -269,7 +292,7 @@ void function ChangeToThisMenu_WithOpParm( void functionref( var ) menuFuncWithO
 }
 
 const array<int> allowedWeaponChangeModes = [
-	
+
 	ePlaylists.fs_dm,
 	ePlaylists.fs_1v1,
 	ePlaylists.fs_lgduels_1v1,
@@ -280,6 +303,9 @@ void function SetupDefaultDevCommandsMP()
 {
 	//Player is fully connected at this point, a check was made before
 	RunClientScript("DEV_SendCheatsStateToUI")
+
+	foreach ( callback in file.OnDevMenuLoaded )
+		callback()
 	
 	if( allowedWeaponChangeModes.contains( Playlist() ) )
 	{
@@ -289,50 +315,58 @@ void function SetupDefaultDevCommandsMP()
 		SetupDevCommand( "FSDM: Reset Saved Weapons", "resetguns" )
 	}
 
-	if(GetCheatsState()){
-
+	if( GetCheatsState() )
+	{
 		SetupDevMenu( "Equip Legend Abilities", SetDevMenu_Abilities )
-		SetupDevMenu( "Equip Weapons", SetDevMenu_Weapons )
-		SetupDevMenu( "Equip Titanfall Weapons", SetDevMenu_R2Weapons )
-		SetupDevMenu( "Equip Throwables", SetDevMenu_Throwables )
+		//SetupDevMenu( "Equip Custom Abilities", SetDevMenu_CustomAbilities )
+		SetupDevMenu( "Equip Apex Weapons", SetDevMenu_Weapons )
+		//if( Playlist() != ePlaylists.survival_firingrange )
+			//SetupDevMenu( "Equip Titanfall Weapons", SetDevMenu_R2Weapons )
 
-		SetupDevMenu( "Custom: Weapons (All)", SetDevMenu_SurvivalLoot, "weapon_custom" )
-		SetupDevMenu( "Custom: Attachments", SetDevMenu_SurvivalLoot, "attachment_custom" )
-		SetupDevMenu( "Custom: Player Models", SetDevMenu_CustomPRModel )
-		
 		if ( IsSurvivalMenuEnabled() )
 		{
-			SetupDevMenu( "Change Character", SetDevMenu_SurvivalCharacter )
-			SetupDevMenu( "Survival", SetDevMenu_Survival )
+			SetupDevCommand( "", "give blank" )
+			SetupDevMenu( "Change Character Class", SetDevMenu_SurvivalCharacter )
+			SetupDevMenu( "Survival: Dev Tools", SetDevMenu_Survival )
 			SetupDevMenu( "Survival: Weapons", SetDevMenu_SurvivalLoot, "main_weapon" )
 			SetupDevMenu( "Survival: Attachments", SetDevMenu_SurvivalLoot, "attachment" )
-			SetupDevMenu( "Survival: Helmets", SetDevMenu_SurvivalLoot, "helmet" )
-			SetupDevMenu( "Survival: Armors", SetDevMenu_SurvivalLoot, "armor" )
-			SetupDevMenu( "Survival: Backpacks", SetDevMenu_SurvivalLoot, "backpack" )
-			SetupDevMenu( "Survival: Incap Shields", SetDevMenu_SurvivalLoot, "incapshield" )
-			string itemsString = "ordnance ammo health custom_pickup data_knife"
+			string GearsString = "helmet armor backpack incapshield"
+			SetupDevMenu( "Survival: Gears", SetDevMenu_SurvivalLoot, GearsString )
+			string itemsString = "ordnance ammo health custom_pickup data_knife ship_keycard marvin_arm"
 			SetupDevMenu( "Survival: Consumables", SetDevMenu_SurvivalLoot, itemsString )
+			SetupDevCommand( "", "give blank" )
 		}
 
-		SetupDevMenu( "Respawn Player(s)", SetDevMenu_RespawnPlayers )
+		if( GetCurrentPlaylistVarBool( "custom_loot", true ) )
+		{
+			SetupDevMenu( "Custom: Weapons (All)", SetDevMenu_SurvivalLoot, "weapon_custom" )
+			SetupDevMenu( "Custom: Attachments", SetDevMenu_SurvivalLoot, "attachment_custom" )
+			SetupDevCommand( "", "give blank" )
+		}
+		SetupDevMenu( "Equip Custom Loadouts", SetDevMenu_CustomCosmetics )
+		SetupDevMenu( "Equip Custom Heirlooms", SetDevMenu_CustomHeirlooms )
+		SetupDevCommand( "", "give blank" )
+		SetupDevMenu( "Respawn Players", SetDevMenu_RespawnPlayers )
 		SetupDevCommand( "Recharge Abilities", "recharge" )
-		
+		SetupDevCommand( "Start Skydive", "script thread SkydiveTest()" )
+		SetupDevCommand( "", "give blank" )
+
 		SetupDevMenu( "Spawn NPC at Crosshair [Friendly]", SetDevMenu_AISpawnFriendly )
 		SetupDevMenu( "Spawn NPC at Crosshair [Enemy]", SetDevMenu_AISpawnEnemy )
-		
+
+		SetupDevCommand( "", "give blank" )
+
 		SetupDevCommand( "Toggle NoClip", "noclip" )
-		SetupDevCommand( "Toggle Skybox View", "script thread ToggleSkyboxView()" )
-		SetupDevCommand( "Toggle HUD", "ToggleHUD" )
-		SetupDevCommand( "Start Skydive", "script thread SkydiveTest()" )
-		SetupDevCommand( "Spawn Deathbox", "SpawnDeathboxAtCrosshair" )
-
-		SetupDevCommand( "Summon Players to player 0", "script summonplayers()" )
-
-		SetupDevCommand( "Enable God Mode", "script EnableDemigod( gp()[0] )" )
-		SetupDevCommand( "Disable God Mode", "script DisableDemigod( gp()[0] )" )
+		SetupDevCommand( "Toggle Infinite Ammo", "infinite_ammo" )
+		SetupDevCommand( "Toggle HUD", "ToggleHUD" )		
+		SetupDevCommand( "Toggle God Mode", "demigod" )
 		SetupDevCommand( "Toggle Third Person Mode", "ToggleThirdPerson" )
 
-		SetupDevMenu( "Prototypes", SetDevMenu_Prototypes )
+		SetupDevCommand( "", "give blank" )
+
+		SetupDevCommand( "===============DEV ONLY===============", "give blank" )
+		SetupDevMenu( "Prototypes & Misc", SetDevMenu_Prototypes )
+		SetupDevCommand( "=========================================", "give blank" )
 	}
 	else
 	{
@@ -360,15 +394,17 @@ void function SetupLevelDevCommands()
 			break
 	}
 }
-
 void function SetDevMenu_Abilities( var _ )
 {
 	thread ChangeToThisMenu( SetupAbilities )
 }
-
+void function SetDevMenu_CustomAbilities( var _ )
+{
+	thread ChangeToThisMenu( SetupCustomAbilities )
+}
 void function SetDevMenu_Weapons( var _ )
 {
-	thread ChangeToThisMenu( SetupWeapons )
+	thread ChangeToThisMenu( SetupRetailWeapons )
 }
 void function SetDevMenu_R2Weapons( var _ )
 {
@@ -564,10 +600,22 @@ void function SetupAlterLoadout_SlotScreen( LoadoutEntry entry )
 
 	array<ItemFlavor> flavors = clone DEV_GetValidItemFlavorsForLoadoutSlotForDev( LocalClientEHI(), entry )
 	flavors.sort( int function( ItemFlavor a, ItemFlavor b ) {
-		if ( Localize( ItemFlavor_GetLongName( a ) ) < Localize( ItemFlavor_GetLongName( b ) ) )
+		string textA = Localize( ItemFlavor_GetLongName( a ) )
+		string textB = Localize( ItemFlavor_GetLongName( b ) )
+
+		//
+		if ( textA.slice( 0, 1 ) == "[" && textB.slice( 0, 1 ) != "[" )
 			return -1
-		if ( Localize( ItemFlavor_GetLongName( a ) ) > Localize( ItemFlavor_GetLongName( b ) ) )
+
+		if ( textA.slice( 0, 1 ) != "[" && textB.slice( 0, 1 ) == "[" )
 			return 1
+
+		if ( textA < textB )
+			return -1
+
+		if ( textA > textB )
+			return 1
+
 		return 0
 	} )
 
@@ -671,6 +719,10 @@ void function SetDevMenu_RespawnPlayers( var _ )
 	ChangeToThisMenu( SetupRespawnPlayersDevMenu )
 }
 
+void function SetDevMenu_CustomHeirlooms( var _ )
+{
+	ChangeToThisMenu( SetupHeirloomsDevMenu )
+}
 
 void function SetupRespawnPlayersDevMenu()
 {
@@ -683,6 +735,20 @@ void function SetupRespawnPlayersDevMenu()
 	SetupDevCommand( "Respawn dead bots", "respawn deadbots" )
 	SetupDevCommand( "Respawn my teammates", "respawn allies" )
 	SetupDevCommand( "Respawn my enemies", "respawn enemies" )
+}
+
+void function SetupHeirloomsDevMenu()
+{
+	SetupDevCommand( "Default Melee", "giveheirloom -1" )
+	if ( IsKralStuffActive() )
+	{
+		SetupDevCommand( "Bolo Sword", "giveheirloom 0" )
+		SetupDevCommand( "Diamond Sword", "giveheirloom 2" )
+		SetupDevCommand( "Mjolnir", "giveheirloom 3" )
+		SetupDevCommand( "Le Karambit", "giveheirloom 4" )
+	}
+	
+	SetupDevCommand( "Dragonfly Knife", "giveheirloom 1" )
 }
 
 void function SetupTDMPrimaryWeapons()
@@ -811,11 +877,46 @@ void function SetDevMenu_Prototypes( var _ )
 
 void function SetupPrototypesDevMenu()
 {
-	SetupDevCommand( "Toggle Akimbo With Current Weapon", "script DEV_ToggleAkimboWeapon(gp()[0])" )
-	SetupDevCommand( "Toggle Akimbo With Holstered Weapon", "script DEV_ToggleAkimboWeaponAlt(gp()[0])" )
-	// SetupDevCommand( "Change to Shadow Squad", "script Dev_ShadowFormEnable( GP() )" )
+	SetupDevCommand( "Toggle Akimbo Weapon", "script DEV_ToggleAkimboWeapon(gp()[0])" )
+	//SetupDevCommand( "Toggle Akimbo With Holstered Weapon", "script DEV_ToggleAkimboWeaponAlt(gp()[0])" )
+	SetupDevCommand( "Cubemap Viewer", "give weapon_cubemap" )
+	SetupDevCommand( "Toggle Shadow Form", "ShadowForm" )
+	SetupDevCommand( "Teleport to Skybox Camera", "script thread ToggleSkyboxView()" )
+	SetupDevCommand( "Spawn Deathbox With Random Loots", "script DEV_SpawnDeathBoxWithRandomLoot(gp()[0])" )
+	SetupDevMenu( "Loot Marvin Debug (Olympus Only)", SetDevMenu_LootMarvin )
+	SetupDevMenu( "Vault System Debug", SetDevMenu_VaultDebug )
+	SetupDevCommand( "Summon Players to player 0", "script summonplayers()" )
+	//SetupDevMenu( "Incap Shield Debugging", SetDevMenu_SurvivalIncapShieldBots )
 }
 
+void function SetDevMenu_LootMarvin( var _ )
+{
+	thread ChangeToThisMenu( SetDevMenu_LootMarvinPanel )
+}
+
+void function SetDevMenu_LootMarvinPanel()
+{
+	SetupDevCommand( "Debug Draw Marvin Locations", "script SeeMarvinSpawnLocations()" )
+	SetupDevCommand( "Teleport to Random Marvin", "script TeleportToRandomMarvinLocations()" )
+	SetupDevCommand( "Ping Nearest Marvin", "script AttemptPingNearestValidMarvinForPlayer(gp()[0])" )
+	SetupDevCommand( "Create Loot Marvin At Crosshair", "script CreateMarvin_Loot()" )
+	SetupDevCommand( "Create Loot Marvin With Detachable Arm At Crosshair", "script CreateMarvin_Loot( true )" )
+	SetupDevCommand( "Create Story Marvin At Crosshair", "script CreateMarvin_Story()" )
+}
+
+void function SetDevMenu_VaultDebug( var _ )
+{
+	thread ChangeToThisMenu( SetDevMenu_VaultDebugPanel )
+}
+
+void function SetDevMenu_VaultDebugPanel()
+{
+	SetupDevCommand( "Debug Draw Vault Loot", "script DEV_ShowVaults()" )
+	SetupDevCommand( "Debug Draw Vault Keys", "script DEV_ShowVaultKeys()" )
+	SetupDevCommand( "Teleport to Available Vault Key", "script DEV_TPToVaultKeys()" )
+	SetupDevCommand( "Equip Every Vault Key", "script DEV_GiveVaultKeys(gp()[0])" )
+	SetupDevCommand( "Debug Draw Vault Panel Infos", "script DEV_ShowVaultPanelInfos()" )
+}
 
 void function RunCodeDevCommandByAlias( string alias )
 {
@@ -939,11 +1040,11 @@ void function RunDevCommand( DevCommand cmd, bool isARepeat )
 		if ( IsLobby() )
 		{
 			CloseAllMenus()
-			AdvanceMenu( GetMenu( "R5RLobbyMenu" ) )
+			AdvanceMenu( GetMenu( "LobbyMenu" ) )
 		}
 		else
 		{
-			CloseAllMenus()
+			//CloseAllMenus() // Temporarily disable dev menu closing itself - todo: revert this later, -lorrylekral
 		}
 	}
 	else
@@ -1094,15 +1195,15 @@ void function SetupChangeSurvivalCharacterClass()
 void function SetupChangeCharacterModel()
 {
 	#if UI
-		SetupDevCommand( "TF2 Ash (by @LorryLeKral)", "Flowstate_AssignCustomCharacterFromMenu 6")
-		SetupDevCommand( "TF2 Blisk (by @LorryLeKral)", "Flowstate_AssignCustomCharacterFromMenu 1")
-		SetupDevCommand( "TF2 Jack Cooper (by @LorryLeKral)", "Flowstate_AssignCustomCharacterFromMenu 8")
-		SetupDevCommand( "Ballistic (by @CafeFPS)", "Flowstate_AssignCustomCharacterFromMenu 12")
-		SetupDevCommand( "Fade (by @CafeFPS)", "Flowstate_AssignCustomCharacterFromMenu 2")
-		SetupDevCommand( "Rhapsody (by @CafeFPS)", "Flowstate_AssignCustomCharacterFromMenu 5")
-		SetupDevCommand( "Crewmate [3p only] (by bobblet)", "Flowstate_AssignCustomCharacterFromMenu 3")
-		SetupDevCommand( "MRVN [3p only] (by @CafeFPS)", "Flowstate_AssignCustomCharacterFromMenu 13")
-		SetupDevCommand( "Pete (by @CafeFPS)", "Flowstate_AssignCustomCharacterFromMenu 16" )
+		SetupDevCommand( "TF2 Ash", "Flowstate_AssignCustomCharacterFromMenu 6")
+		SetupDevCommand( "TF2 Blisk", "Flowstate_AssignCustomCharacterFromMenu 1")
+		SetupDevCommand( "TF2 Jack Cooper", "Flowstate_AssignCustomCharacterFromMenu 8")
+		SetupDevCommand( "Ballistic", "Flowstate_AssignCustomCharacterFromMenu 12")
+		SetupDevCommand( "Fade", "Flowstate_AssignCustomCharacterFromMenu 2")
+		SetupDevCommand( "Rhapsody", "Flowstate_AssignCustomCharacterFromMenu 5")
+		SetupDevCommand( "Crewmate [3p only]", "Flowstate_AssignCustomCharacterFromMenu 3")
+		SetupDevCommand( "MRVN [3p only]", "Flowstate_AssignCustomCharacterFromMenu 13")
+		SetupDevCommand( "Pete", "Flowstate_AssignCustomCharacterFromMenu 16" )
 	#endif
 }
 
@@ -1136,7 +1237,6 @@ void function SetupWeapons()
 	SetupDevCommand( "Rifle: Havoc", "give mp_weapon_energy_ar" )
 	SetupDevCommand( "Rifle: Hemlok", "give mp_weapon_hemlok" )
 	SetupDevCommand( "Rifle: R-301", "give mp_weapon_rspn101" )
-	
 
 	// SMGs
 	SetupDevCommand( "SMG: Alternator", "give mp_weapon_alternator_smg" )
@@ -1167,45 +1267,239 @@ void function SetupWeapons()
 	SetupDevCommand( "Pistol: RE-45", "give mp_weapon_autopistol" )
 	SetupDevCommand( "Pistol: Wingman", "give mp_weapon_wingman" )
 
-	// Dev
-	SetupDevCommand( "Dev: Dev Cubemap ", "give weapon_cubemap" )
-	
 	// Custom
-	SetupDevCommand( "-> Custom weapons, created by @CafeFPS", "give mp" )
-	SetupDevCommand( "Custom: Flame Thrower (Model by @LorryLeKral)", "give mp_weapon_flamethrower" )
-	SetupDevCommand( "Custom: Raygun ", "give mp_weapon_raygun" )
-	SetupDevCommand( "Custom: Flowstate Sword", "playerRequestsSword")
+	//SetupDevCommand( "Custom: Flame Thrower", "give mp_weapon_flamethrower" )
+	//SetupDevCommand( "Custom: Raygun ", "give mp_weapon_raygun" )
+	//SetupDevCommand( "Custom: Flowstate Sword", "playerRequestsSword")
+	#endif
+}
+
+void function SetupRetailWeapons()
+{
+	#if UI
+	// Marksman
+	SetupDevCommand( "Marksman Rifle: G7 Scout", "give mp_weapon_g2" )
+	SetupDevCommand( "Marksman: Triple Take", "give mp_weapon_doubletake" )
+	SetupDevCommand( "Marksman: 30-30 Repeater", "give mp_weapon_3030" )
+	SetupDevCommand( "", "give blank" )
+
+	// LMGs
+	SetupDevCommand( "Light Machine Gun: Devotion", "give mp_weapon_esaw" )
+	SetupDevCommand( "Light Machine Gun: L-Star", "give mp_weapon_lstar" )
+	SetupDevCommand( "Light Machine Gun: Spitfire", "give mp_weapon_lmg" )
+	SetupDevCommand( "", "give blank" )
+
+	// Snipers
+	SetupDevCommand( "Sniper: Charge Rifle", "give mp_weapon_defender" )
+	SetupDevCommand( "Sniper: Longbow", "give mp_weapon_dmr" )
+	SetupDevCommand( "Sniper: Sentinel", "give mp_weapon_sentinel" )
+	SetupDevCommand( "", "give blank" )
+
+	// Pistols
+	SetupDevCommand( "Pistol: P2020", "give mp_weapon_semipistol" )
+	SetupDevCommand( "Pistol: RE-45", "give mp_weapon_autopistol" )
+	SetupDevCommand( "Pistol: Wingman", "give mp_weapon_wingman" )
+	SetupDevCommand( "", "give blank" )
+
+	// SMGs
+	SetupDevCommand( "Submachine Gun: Alternator", "give mp_weapon_alternator_smg" )
+	SetupDevCommand( "Submachine Gun: Prowler", "give mp_weapon_pdw" )
+	SetupDevCommand( "Submachine Gun: R-99", "give mp_weapon_r97" )
+	SetupDevCommand( "Submachine Gun: Volt SMG", "give mp_weapon_volt_smg" )
+
+	// Rifles
+	SetupDevCommand( "Assault Rifle: Flatline", "give mp_weapon_vinson" )
+	SetupDevCommand( "Assault Rifle: Hemlok", "give mp_weapon_hemlok" )
+	SetupDevCommand( "Assault Rifle: R-301", "give mp_weapon_rspn101" )
+	SetupDevCommand( "Assault Rifle:  Havoc AR", "give mp_weapon_energy_ar" )
+	SetupDevCommand( "", "give blank" )
+
+	// Shotguns
+	SetupDevCommand( "Shotgun: EVA-8 Auto", "give mp_weapon_shotgun" )
+	SetupDevCommand( "Shotgun: Mastiff", "give mp_weapon_mastiff" )
+	SetupDevCommand( "Shotgun: Mozambique", "give mp_weapon_shotgun_pistol" )
+	SetupDevCommand( "", "give blank" )
+	SetupDevCommand( "", "give blank" )
+
+
+	//Drop Weapons
+	SetupDevCommand( "Crate: Triple Take", "give mp_weapon_doubletake_crate crate optic_ranged_aog_variable" )
+	SetupDevCommand( "Crate: Peacekeeper", "give mp_weapon_energy_shotgun_crate crate optic_cq_hcog_classic shotgun_bolt_l4" )
+	SetupDevCommand( "Crate: Kraber", "give mp_weapon_sniper" )
+	//SetupDevCommand( "Crate: Bocek Bow", "give mp_weapon_bow" )
 	#endif
 }
 
 void function SetupTitanfallWeapons()
 {
 	#if UI
-	// Titanfall guns, ported by @LorryLeKral with the help from @AmosModz
-	SetupDevCommand( "Titanfall weapons, ported by LorryLeKral with the help from @AmosModz", "give mp" )
-	SetupDevCommand( "Please credit us properly if you are going to create content using them!", "give mp" )
-	SetupDevCommand( "Titanfall 2: EPG", "give mp_weapon_epg" )
-	SetupDevCommand( "Titanfall 2: Sidewinder", "give mp_weapon_smr" )
-	SetupDevCommand( "Titanfall 2: Archer", "give mp_weapon_rocket_launcher" )
-	SetupDevCommand( "Titanfall 2: Softball", "give mp_weapon_softball" )
-	SetupDevCommand( "Titanfall 2: Car", "give mp_weapon_car_r2" )
-	SetupDevCommand( "Titanfall 2: MGL", "give mp_weapon_mgl" )
-	SetupDevCommand( "Titanfall 2: ColdWar", "give mp_weapon_pulse_lmg" )
-	SetupDevCommand( "Titanfall 2: Thunderbolt", "give mp_weapon_arc_launcher" )
-	SetupDevCommand( "Titanfall 2: Smart Pistol", "give mp_weapon_smart_pistol" )
-	SetupDevCommand( "Titanfall 2: Arc Tool", "give sp_weapon_arc_tool" )
-	SetupDevCommand( "Titanfall 2: Wingman Elite", "give mp_weapon_wingman_n" )
-	SetupDevCommand( "Titanfall 2: R101 Assault Rifle", "give mp_weapon_rspn101_og iron_sights" )
-	SetupDevCommand( "Titanfall 2: Proximity Mine", "give mp_weapon_proximity_mine" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: EPG", "give mp_weapon_epg" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: Sidewinder", "give mp_weapon_smr" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: Archer", "give mp_weapon_rocket_launcher" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: Softball", "give mp_weapon_softball" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: Car", "give mp_weapon_car_r2" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: MGL", "give mp_weapon_mgl" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: ColdWar", "give mp_weapon_pulse_lmg" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: Thunderbolt", "give mp_weapon_arc_launcher" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: Smart Pistol", "give mp_weapon_smart_pistol" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: Arc Tool", "give sp_weapon_arc_tool" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: Wingman Elite", "give mp_weapon_wingman_n" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: R101 Assault Rifle", "give mp_weapon_rspn101_og iron_sights" )
+	SetupDevCommand( "Titanfall 2 Pilot Weapon: Proximity Mine", "give mp_weapon_proximity_mine" )
 	SetupDevCommand( " ", "give mp" )
+	SetupDevCommand( " ", "give mp" )
+
+	SetupDevMenu( "Titanfall 2 Titan Weapon: Predator Cannon", SetDevMenu_PredCannon )
+	SetupDevMenu( "Titanfall 2 Titan Weapon: Splitter Rifle", SetDevMenu_SplitRifle )
+	SetupDevMenu( "Titanfall 2 Titan Weapon: Quad Rocket", SetDevMenu_QuadRocket )
+	SetupDevMenu( "Titanfall 2 Titan Weapon: Leadwall", SetDevMenu_LeadWall )
+	SetupDevMenu( "Titanfall 2 Titan Weapon: T-203 Thermite Launcher", SetDevMenu_Thermite )
+	SetupDevMenu( "Titanfall 2 Titan Weapon: Plasma Railgun", SetDevMenu_TSniper )
+	SetupDevMenu( "Titanfall 2 Titan Weapon: XO-16", SetDevMenu_XO )
 	SetupDevCommand( " ", "give mp" )
 
 	// Dev
 	SetupDevCommand( "Dev: Softball Apex Version", "give mp_weapon_softball apex_model" )
 	SetupDevCommand( "Dev: Flight Core", "give mp_titanweapon_flightcore_rockets")
 	SetupDevCommand( "Dev: Satchel", "give mp_weapon_satchel")
+	SetupDevCommand( "Dev: Disable Titan POV Hands", "script ResetCharacterSkin(gp()[0])")
 	#endif
 }
+
+void function SetDevMenu_PredCannon( var _ )
+{
+	thread ChangeToThisMenu( SetDevMenu_PredCannonPanel )
+}
+
+void function SetDevMenu_SplitRifle( var _ )
+{
+	thread ChangeToThisMenu( SetDevMenu_SplitRiflePanel )
+}
+
+void function SetDevMenu_QuadRocket( var _ )
+{
+	thread ChangeToThisMenu( SetDevMenu_QuadRocketPanel )
+}
+
+void function SetDevMenu_LeadWall( var _ )
+{
+	thread ChangeToThisMenu( SetDevMenu_LeadWallPanel )
+}
+
+void function SetDevMenu_Thermite( var _ )
+{
+	thread ChangeToThisMenu( SetDevMenu_ThermitePanel )
+}
+
+void function SetDevMenu_TSniper( var _ )
+{
+	thread ChangeToThisMenu( SetDevMenu_TSniperPanel )
+}
+
+void function SetDevMenu_XO( var _ )
+{
+	thread ChangeToThisMenu( SetDevMenu_XOPanel )
+}
+
+void function SetDevMenu_SplitRiflePanel()
+{
+	#if UI
+	SetupDevCommand( "Equip Splitter Rifle", "give mp_titanweapon_particle_accelerator; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( " ", "give mp" )
+	SetupDevCommand( "Weapon Mod: Particle Accelerator", "give mp_titanweapon_particle_accelerator proto_particle_accelerator; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Upgraded Particle Accelerator", "give mp_titanweapon_particle_accelerator fd_upgraded_proto_particle_accelerator; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Balance", "give mp_titanweapon_particle_accelerator fd_balance; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	#endif
+}
+
+void function SetDevMenu_PredCannonPanel()
+{
+	#if UI
+	SetupDevCommand( "Equip Predator Cannon", "give mp_titanweapon_predator_cannon; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( " ", "give mp" )
+	SetupDevCommand( "Weapon Mod: Long Range Ammo", "give mp_titanweapon_predator_cannon LongRangeAmmo; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Smart Core", "give mp_titanweapon_predator_cannon Smart_Core; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Close Range Power Shot", "give mp_titanweapon_predator_cannon CloseRangePowerShot; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Siege Mode", "give mp_titanweapon_predator_cannon SiegeMode; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Long Range Power Shot", "give mp_titanweapon_predator_cannon LongRangePowerShot; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Piercing Shots", "give mp_titanweapon_predator_cannon fd_piercing_shots; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	#endif
+}
+
+void function SetDevMenu_QuadRocketPanel()
+{
+	#if UI
+	SetupDevCommand( "Equip Quad Rocket", "give mp_titanweapon_rocketeer_rocketstream; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( " ", "give mp" )
+	SetupDevCommand( "Weapon Mod: Rocket Core Rocket Stream", "give mp_titanweapon_rocketeer_rocketstream RocketCore_RocketStream; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Mortar Titan", "give mp_titanweapon_rocketeer_rocketstream coop_mortar_titan; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Burn Mod", "give mp_titanweapon_rocketeer_rocketstream burn_mod_titan_rocket_launcher; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Singleplayer s2s Settings", "give mp_titanweapon_rocketeer_rocketstream sp_s2s_settings; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Singleplayer s2s Settings NPC", "give mp_titanweapon_rocketeer_rocketstream sp_s2s_settings_npc; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	#endif
+}
+
+void function SetDevMenu_LeadWallPanel()
+{
+	#if UI
+	SetupDevCommand( "Equip Leadwall", "give mp_titanweapon_leadwall; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( " ", "give mp" )
+	SetupDevCommand( "Weapon Mod: Insta Load", "give mp_titanweapon_leadwall instaload; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Burn Mod", "give mp_titanweapon_leadwall burn_mod_titan_leadwall; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Ronin Weapon", "give mp_titanweapon_leadwall pas_ronin_weapon; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	#endif
+}
+
+void function SetDevMenu_ThermitePanel()
+{
+	#if UI
+	SetupDevCommand( "Equip T-203 Thermite Launcher", "give mp_titanweapon_meteor; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( " ", "give mp" )
+	SetupDevCommand( "Weapon Mod: Scorch Weapon", "give mp_titanweapon_meteor pas_scorch_weapon; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: WPN Upgrade 1", "give mp_titanweapon_meteor fd_wpn_upgrade_1; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: WPN Upgrade 2", "give mp_titanweapon_meteor fd_wpn_upgrade_2; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	#endif
+}
+
+void function SetDevMenu_TSniperPanel()
+{
+	#if UI
+	SetupDevCommand( "Equip Plasma Railgun", "give mp_titanweapon_sniper; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( " ", "give mp" )
+	SetupDevCommand( "Weapon Mod: Fast Reload", "give mp_titanweapon_sniper fast_reload; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Extended Ammo", "give mp_titanweapon_sniper extended_ammo; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Power Shot", "give mp_titanweapon_sniper power_shot; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Quick Shot", "give mp_titanweapon_sniper quick_shot; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Instant Shot", "give mp_titanweapon_sniper instant_shot; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Burn mod", "give mp_titanweapon_sniper burn_mod_titan_sniper; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Northstar Optics", "give mp_titanweapon_sniper pas_northstar_optics; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Upgrade Charge", "give mp_titanweapon_sniper fd_upgrade_charge; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Upgrade Critical", "give mp_titanweapon_sniper fd_upgrade_crit; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	#endif
+}
+
+void function SetDevMenu_XOPanel()
+{
+	#if UI
+	SetupDevCommand( "Equip XO-16", "give mp_titanweapon_xo16_shorty; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( " ", "give mp" )
+	SetupDevCommand( "Weapon Mod: Accelerator", "give mp_titanweapon_xo16_shorty accelerator; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Electric Rounds", "give mp_titanweapon_xo16_shorty electric_rounds; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Fast Reload", "give mp_titanweapon_xo16_shorty fast_reload; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Extended Ammo", "give mp_titanweapon_xo16_shorty extended_ammo; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Burst", "give mp_titanweapon_xo16_shorty burst; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Fire Rate Max Zoom", "give mp_titanweapon_xo16_shorty fire_rate_max_zoom; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod: Burn Mod", "give mp_titanweapon_xo16_shorty burn_mod_titan_xo16; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod (Vanguard): Arc Rounds", "give mp_titanweapon_xo16_vanguard arc_rounds; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod (Vanguard): Arc Rounds With Battle Rifle", "give mp_titanweapon_xo16_vanguard arc_rounds_with_battle_rifle; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod (Vanguard): Battle Rifle", "give mp_titanweapon_xo16_vanguard battle_rifle; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod (Vanguard): Rapid Reload", "give mp_titanweapon_xo16_vanguard rapid_reload; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod (Vanguard): Vanguard Weapon 1", "give mp_titanweapon_xo16_vanguard fd_vanguard_weapon_1; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod (Vanguard): Vanguard Weapon 2", "give mp_titanweapon_xo16_vanguard fd_vanguard_weapon_2; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	SetupDevCommand( "Weapon Mod (Vanguard): Balance", "give mp_titanweapon_xo16_vanguard fd_balance; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	#endif
+}
+
 
 void function SetupThrowables()
 {
@@ -1214,7 +1508,7 @@ void function SetupThrowables()
 	SetupDevCommand( "Grenade: Arc Star", "give mp_weapon_grenade_emp" )
 	SetupDevCommand( "Grenade: Frag", "give mp_weapon_frag_grenade" )
 	SetupDevCommand( "Grenade: Thermite", "give mp_weapon_thermite_grenade" )
-	
+
 	// Custom Grenades
 	if( GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) )
 	{
@@ -1230,16 +1524,17 @@ void function SetupSurvival()
 		SetupDevCommand( "Toggle Training Completed", "script GP().SetPersistentVar( \"trainingCompleted\", (GP().GetPersistentVarAsInt( \"trainingCompleted\" ) == 0 ? 1 : 0) )" )
 		SetupDevCommand( "Enable Survival Dev Mode", "playlist survival_dev" )
 		SetupDevCommand( "Disable Match Ending", "mp_enablematchending 0" )
+		SetupDevCommand( "Enable Match Ending", "mp_enablematchending 1" )
 		SetupDevCommand( "Drop Care Package R1", "script thread AirdropForRound( gp()[0].GetOrigin(), gp()[0].GetAngles(), 0, null )" )
 		SetupDevCommand( "Drop Care Package R2", "script thread AirdropForRound( gp()[0].GetOrigin(), gp()[0].GetAngles(), 1, null )" )
 		SetupDevCommand( "Drop Care Package R3", "script thread AirdropForRound( gp()[0].GetOrigin(), gp()[0].GetAngles(), 2, null )" )
 		SetupDevCommand( "Force Circle Movement", "script thread FlagWait( \"DeathCircleActive\" );script svGlobal.levelEnt.Signal( \"DeathField_ShrinkNow\" );script FlagClear( \"DeathFieldPaused\" )" )
 		SetupDevCommand( "Pause Circle Movement", "script FlagSet( \"DeathFieldPaused\" )" )
 		SetupDevCommand( "Unpause Circle Movement", "script FlagClear( \"DeathFieldPaused\" )" )
-		SetupDevCommand( "Gladiator Intro Sequence", "script thread DEV_StartGladiatorIntroSequence()" )
+		//SetupDevCommand( "Gladiator Intro Sequence", "script thread DEV_StartGladiatorIntroSequence()" )
 		SetupDevCommand( "Bleedout Debug Mode", "script FlagSet( \"BleedoutDebug\" )" )
 		SetupDevCommand( "Disable Loot Drops on Death", "script FlagSet( \"DisableLootDrops\" )" )
-		SetupDevCommand( "Drop My Death Box", "script thread SURVIVAL_Death_DropLoot_Internal( gp(), null, 100 )" )
+		SetupDevCommand( "Drop My Death Box", "script thread SURVIVAL_Death_DropLoot_Internal( gp()[0], null, 100, true )" )
 	#endif
 }
 
@@ -1268,7 +1563,6 @@ void function SetupAbilities()
 	SetupDevCommand( "Lifeline Ultimate", "give mp_ability_care_package" )
 	SetupDevCommand( "Mirage Tactical", "give mp_ability_holopilot" )
 	SetupDevCommand( "Mirage Ultimate", "give mp_ability_mirage_ultimate" )
-	SetupDevCommand( " ", "give dontgiveanything" ) // blank line so Octance is in the same column
 	SetupDevCommand( "Octane Tactical", "give mp_ability_heal" )
 	SetupDevCommand( "Octane Ultimate", "give mp_weapon_jump_pad" )
 	SetupDevCommand( "Pathfinder Tactical", "give mp_ability_grapple" )
@@ -1277,22 +1571,54 @@ void function SetupAbilities()
 	SetupDevCommand( "Wattson Ultimate", "give mp_weapon_trophy_defense_system"  )
 	SetupDevCommand( "Wraith Tactical", "give mp_ability_phase_walk" )
 	SetupDevCommand( "Wraith Ultimate", "give mp_weapon_phase_tunnel" )
-	
+	SetupDevCommand( "Revenant Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Revenant Ultimate", "give mp_ability_revenant_death_totem" )
+	#endif
+}
+
+
+void function SetupCustomAbilities()
+{
+	#if UI
 	SetupDevCommand( "Tf2: Pulse Blade", "give mp_weapon_grenade_sonar" )
 	SetupDevCommand( "Tf2: Amped Wall", "give mp_weapon_deployable_cover" )
 	SetupDevCommand( "Tf2: Electric Smoke", "give mp_weapon_grenade_electric_smoke" )
-	
+
 	SetupDevCommand( "Dev: 3Dash", "give mp_ability_3dash" )
 	SetupDevCommand( "Dev: Cloak", "give mp_ability_cloak" )
-	
-	//SetupDevCommand( "Gravity Star", "give mp_weapon_grenade_gravity" )
-	
-	SetupDevCommand( "-> Custom abilities, created by @CafeFPS", "give mp" )
-	SetupDevCommand( "Custom: Gravity Lift", "give mp_ability_space_elevator_tac" )
-	SetupDevCommand( "Custom: Phase Rewind", "give mp_ability_phase_rewind" )
-	SetupDevCommand( "Custom: Suppressor Turret ( ft. @Julefox )", "give mp_weapon_turret")
-	SetupDevCommand( "Custom: Phase Chamber", "give mp_ability_phase_chamber")
-	SetupDevCommand( "Custom: Ring Flare", "give mp_weapon_ringflare")
+
+	//Husaria
+	SetupDevCommand( "Dev: Concussive Breach", "give mp_weapon_concussive_breach" )
+	SetupDevCommand( "Dev: Flashbang Grenade", "give mp_weapon_grenade_flashbang" )
+	// + passive Shotgun Kick (PAS_SHOTGUN_KICK)
+
+	//Jericho
+	SetupDevCommand( "Dev: Riot Shield", "give mp_ability_riot_shield" )
+	SetupDevCommand( "Dev: Malestrom Javelin", "give mp_ability_maelstrom_javelin" )
+
+	//Prophet
+	SetupDevCommand( "Dev: Spotter Sight", "give mp_ability_spotter_sight" )
+
+	//Nomad
+	SetupDevCommand( "Dev: Loot Compass", "give mp_ability_loot_compass" )
+
+	//Forge
+	SetupDevCommand( "Dev: Ground Slam", "give mp_ability_ground_slam" )
+
+	//Skunner
+	SetupDevCommand( "Dev: Debris Trap", "give mp_weapon_debris_trap" )
+	SetupDevCommand( "Dev: Grenade Barrier", "give mp_weapon_grenade_barrier" )
+	// + passive light step (PAS_LIGHT_STEP)
+
+	SetupDevCommand( "Dev: Cover Wall", "give mp_weapon_cover_wall_proto" )
+
+	SetupDevCommand( "Dev: Split Timeline", "give mp_ability_split_timeline" )
+	SetupDevCommand( "Dev: Sonic Shout", "give mp_ability_sonic_shout" )
+
+	SetupDevCommand( "Dev: Haunt", "give mp_ability_haunt" )
+	SetupDevCommand( "Dev: Dodge Roll", "give mp_ability_dodge_roll" )
+
+	// SetupDevCommand( "Tf2: Gravity Star", "give mp_weapon_grenade_gravity" ) //(cafe) it needs to be added to the datatable, but this means a new grenade, we should probably find a different approach for this weapon, probably make it offhand like an ultimate
 	#endif
 }
 
@@ -1311,12 +1637,12 @@ void function SetupFriendlyNPC()
 {
 	#if UI
 	//Friendly NPCs
-	SetupDevCommand( "Friendly NPC: Stalker", "script DEV_SpawnStalkerAtCrosshair(gp()[0].GetTeam())" )
-	SetupDevCommand( "Friendly NPC: Spectre", "script DEV_SpawnSpectreAtCrosshair(gp()[0].GetTeam())" )
+	//SetupDevCommand( "Friendly NPC: Stalker", "script DEV_SpawnStalkerAtCrosshair(gp()[0].GetTeam())" )
+	SetupDevCommand( "Friendly NPC: Gunship", "script DEV_SpawnGunshipAtCrosshair(gp()[0].GetTeam())" )
 	SetupDevCommand( "Friendly NPC: Dummie",  "script DEV_SpawnDummyAtCrosshair(gp()[0].GetTeam())" )
 	SetupDevCommand( "Friendly NPC: Plasma Drone", "script DEV_SpawnPlasmaDroneAtCrosshair(gp()[0].GetTeam())" )
 	SetupDevCommand( "Friendly NPC: Rocket Drone", "script DEV_SpawnRocketDroneAtCrosshair(gp()[0].GetTeam())" )
-	SetupDevCommand( "Friendly NPC: Legend", "script DEV_SpawnLegendAtCrosshair(gp()[0].GetTeam())" )
+	SetupDevCommand( "Friendly NPC: Loot Tick", "script SpawnLootTickAtCrosshair()" )
 	SetupDevCommand( "Friendly NPC: Prowler", "script DEV_SpawnProwlerAtCrosshair(gp()[0].GetTeam())" )
 	SetupDevCommand( "Friendly NPC: Marvin", "script DEV_SpawnMarvinAtCrosshair(gp()[0].GetTeam())" )
 	//SetupDevCommand( "Friendly NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair(gp()[0].GetTeam())" )
@@ -1330,15 +1656,15 @@ void function SetupEnemyNPC()
 {
 	#if UI
 	//Enemy NPCs
-	SetupDevCommand( "Enemy NPC: Stalker", "script DEV_SpawnStalkerAtCrosshair()" )
-	SetupDevCommand( "Enemy NPC: Spectre", "script DEV_SpawnSpectreAtCrosshair()" )
+	//SetupDevCommand( "Enemy NPC: Stalker", "script DEV_SpawnStalkerAtCrosshair()" )
+	SetupDevCommand( "Enemy NPC: Gunship", "script DEV_SpawnGunshipAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Dummie", "script DEV_SpawnDummyAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Plasma Drone", "script DEV_SpawnPlasmaDroneAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Rocket Drone", "script DEV_SpawnRocketDroneAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Legend", "script DEV_SpawnLegendAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Prowler", "script DEV_SpawnProwlerAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Marvin", "script DEV_SpawnMarvinAtCrosshair()" )
-	//SetupDevCommand( "Enemy NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair()" )//Come back to this NPC later, we have animations and models but they are unstable -kral
+	//SetupDevCommand( "Enemy NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair()" )//Come back to this NPC later, we have animations and models but they are unstable -lorrylekral
 	SetupDevCommand( "Enemy NPC: Spider", "script DEV_SpawnSpiderAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Infected", "script DEV_SpawnInfectedSoldierAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Tick", "script DEV_SpawnExplosiveTickAtCrosshair()" )
@@ -1351,4 +1677,265 @@ void function SetupEditor()
 	SetupDevCommand( "Start Editing", "give mp_weapon_editor" )
 	SetupDevCommand( "Zipline", "give mp_weapon_zipline" )
 	#endif
+}
+
+const array<string> CUSTOM_COSMETICS_FILTER_LIST = [
+	"None",
+	"Empty"
+]
+
+const bool CUSTOM_COSMETICS_FILTERING_ENABLED = true
+
+void function SetDevMenu_CustomCosmetics( var _ )
+{
+	thread ChangeToThisMenu( SetupCustomCosmetics )
+}
+
+
+void function SetupCustomCosmetics()
+{
+	array<string> categories = []
+	foreach( LoadoutEntry entry in GetAllLoadoutSlots() )
+	{
+		if ( !categories.contains( entry.DEV_category ) )
+			categories.append( entry.DEV_category )
+	}
+	categories.sort()
+	foreach( string category in categories )
+	{
+		// Only show categories that have available items after filtering
+		if ( CategoryHasAvailableItems( category ) )
+		{
+			SetupDevMenu( category, void function( var unused ) : ( category ) {
+				thread ChangeToThisMenu( void function() : ( category ) {
+					SetupCustomCosmetics_CategoryScreen( category )
+				} )
+			} )
+		}
+	}
+}
+
+
+void function SetupCustomCosmetics_CategoryScreen( string category )
+{
+	array<LoadoutEntry> entries = clone GetAllLoadoutSlots()
+	entries.sort( int function( LoadoutEntry a, LoadoutEntry b ) {
+		if ( a.DEV_name < b.DEV_name )
+			return -1
+		if ( a.DEV_name > b.DEV_name )
+			return 1
+		return 0
+	} )
+
+	array<string> charactersUsed = []
+
+	foreach( LoadoutEntry entry in  entries)
+	{
+		if ( entry.DEV_category != category )
+			continue
+
+		string prefix = "character_"
+
+		if ( entry.DEV_name.find( prefix ) == 0 )
+		{
+			string character = GetCharacterNameFromDEV_name( entry.DEV_name )
+
+			if ( !charactersUsed.contains( character ) )
+			{
+				charactersUsed.append( character )
+
+				// Check if character has available items after filtering
+				if ( CharacterHasAvailableItems( category, character ) )
+				{
+					SetupDevMenu( character, void function( var unused ) : ( category, character ) {
+						thread ChangeToThisMenu( void function() : ( category, character ) {
+							SetupCustomCosmetics_CategoryScreenForCharacter( category, character )
+						} )
+					} )
+				}
+			}
+		}
+		else
+		{
+			SetupDevMenu( entry.DEV_name, void function( var unused ) : ( entry ) {
+				thread ChangeToThisMenu( void function() : ( entry ) {
+					SetupCustomCosmetics_SlotScreen( entry )
+				} )
+			} )
+		}
+	}
+}
+
+void function SetupCustomCosmetics_CategoryScreenForCharacter( string category, string character )
+{
+	array<LoadoutEntry> entries = clone GetAllLoadoutSlots()
+	entries.sort( int function( LoadoutEntry a, LoadoutEntry b ) {
+		if ( a.DEV_name < b.DEV_name )
+			return -1
+		if ( a.DEV_name > b.DEV_name )
+			return 1
+		return 0
+	} )
+
+	array< LoadoutEntry > entriesToUse
+
+	foreach( LoadoutEntry entry in entries )
+	{
+		if ( entry.DEV_category != category )
+			continue
+
+		string entryCharacter = GetCharacterNameFromDEV_name( entry.DEV_name )
+
+		if ( entryCharacter != character )
+			continue
+
+		entriesToUse.append( entry )
+	}
+
+
+	if ( entriesToUse.len() > 1 )
+	{
+		foreach ( LoadoutEntry entry in entriesToUse )
+		{
+			SetupDevMenu( entry.DEV_name, void function( var unused ) : ( entry ) {
+				thread ChangeToThisMenu( void function() : ( entry ) {
+					SetupCustomCosmetics_SlotScreen( entry )
+				} )
+			} )
+		}
+	}
+	else if ( entriesToUse.len() == 1 )
+	{
+		LoadoutEntry entry = entriesToUse[ 0 ]
+		SetupCustomCosmetics_SlotScreen( entry )
+	}
+}
+
+bool function ShouldFilterCustomCosmeticItem( ItemFlavor item )
+{
+	if ( !CUSTOM_COSMETICS_FILTERING_ENABLED )
+		return false
+
+	string itemName = Localize( ItemFlavor_GetLongName( item ) )
+
+	foreach ( string filteredName in CUSTOM_COSMETICS_FILTER_LIST )
+	{
+		if ( itemName == filteredName )
+			return true
+	}
+
+	return false
+}
+
+bool function CharacterHasAvailableItems( string category, string character )
+{
+	if ( !CUSTOM_COSMETICS_FILTERING_ENABLED )
+		return true  // If filtering is disabled, always show characters
+
+	array<LoadoutEntry> entries = clone GetAllLoadoutSlots()
+
+	foreach( LoadoutEntry entry in entries )
+	{
+		if ( entry.DEV_category != category )
+			continue
+
+		string entryCharacter = GetCharacterNameFromDEV_name( entry.DEV_name )
+
+		if ( entryCharacter != character )
+			continue
+
+		// Get items for this entry and check if any remain after filtering
+		array<ItemFlavor> flavors = DEV_GetValidCustomItemFlavorsForLoadoutSlot( LocalClientEHI(), entry )
+
+		foreach( ItemFlavor item in flavors )
+		{
+			if ( !ShouldFilterCustomCosmeticItem( item ) )
+				return true  // Found at least one non-filtered item
+		}
+	}
+
+	return false  // No items available after filtering
+}
+
+// Helper function to check if a category has any available items after filtering
+bool function CategoryHasAvailableItems( string category )
+{
+	if ( !CUSTOM_COSMETICS_FILTERING_ENABLED )
+		return true  // If filtering is disabled, always show categories
+
+	array<LoadoutEntry> entries = clone GetAllLoadoutSlots()
+
+	foreach( LoadoutEntry entry in entries )
+	{
+		if ( entry.DEV_category != category )
+			continue
+
+		// Check if this entry has any available items
+		string prefix = "character_"
+
+		if ( entry.DEV_name.find( prefix ) == 0 )
+		{
+			// Character-specific entry - check if character has available items
+			string character = GetCharacterNameFromDEV_name( entry.DEV_name )
+			if ( CharacterHasAvailableItems( category, character ) )
+				return true
+		}
+		else
+		{
+			// Non-character entry - check items directly
+			array<ItemFlavor> flavors = DEV_GetValidCustomItemFlavorsForLoadoutSlot( LocalClientEHI(), entry )
+
+			foreach( ItemFlavor item in flavors )
+			{
+				if ( !ShouldFilterCustomCosmeticItem( item ) )
+					return true  // Found at least one non-filtered item
+			}
+		}
+	}
+
+	return false  // No items available after filtering in this category
+}
+
+void function SetupCustomCosmetics_SlotScreen( LoadoutEntry entry )
+{
+	array<ItemFlavor> flavors = clone DEV_GetValidCustomItemFlavorsForLoadoutSlot( LocalClientEHI(), entry )
+
+	// Apply filtering if enabled
+	if ( CUSTOM_COSMETICS_FILTERING_ENABLED )
+	{
+		for ( int i = flavors.len() - 1; i >= 0; i-- )
+		{
+			if ( ShouldFilterCustomCosmeticItem( flavors[i] ) )
+			{
+				flavors.remove( i )
+			}
+		}
+	}
+
+	flavors.sort( int function( ItemFlavor a, ItemFlavor b ) {
+		string textA = Localize( ItemFlavor_GetLongName( a ) )
+		string textB = Localize( ItemFlavor_GetLongName( b ) )
+
+		//
+		if ( textA.slice( 0, 1 ) == "[" && textB.slice( 0, 1 ) != "[" )
+			return -1
+
+		if ( textA.slice( 0, 1 ) != "[" && textB.slice( 0, 1 ) == "[" )
+			return 1
+
+		if ( textA < textB )
+			return -1
+
+		if ( textA > textB )
+			return 1
+
+		return 0
+	} )
+
+	foreach( ItemFlavor flav in flavors )
+	{
+		SetupDevFunc( Localize( ItemFlavor_GetLongName( flav ) ), void function( var unused ) : ( entry, flav ) {
+			DEV_RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), entry, flav )
+		} )
+	}
 }

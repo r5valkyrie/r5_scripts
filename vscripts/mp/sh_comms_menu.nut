@@ -21,6 +21,8 @@ global function CommsMenu_HasValidSelection
 global function CommsMenu_ExecuteSelection
 global function CommsMenu_GetCurrentCommsMenu
 global function SetRuiOptionsForChatPage
+
+global function AddCallback_OnBuildMenuOptions
 #endif
 
 #if CLIENT
@@ -45,6 +47,22 @@ global enum eCommsMenuStyle
 
 	_count
 }
+
+global enum eOptionType
+{
+	DO_NOTHING,
+
+	COMMSACTION,
+	NEW_PING,
+	PING_REPLY,
+
+	QUIP,
+	SKYDIVE_EMOTE,
+	HEALTHITEM_USE,
+	ORDNANCE_EQUIP,
+	HOLOSPRAY
+}
+
 Assert( eCommsMenuStyle._assertion_marker == 6 )    //
 
 global enum eChatPage
@@ -75,6 +93,22 @@ global enum eChatPage
 	_count
 }
 
+global struct CommsMenuOptionData
+{
+	int optionType
+
+	int chatPage
+	int commsAction
+
+	int pingType
+
+	int pingReply
+
+	int healType
+	ItemFlavor ornull emote
+	asset Asset
+}
+
 const string WHEEL_SOUND_ON_OPEN = "UI_MapPing_Menu_Open_1P"
 const string WHEEL_SOUND_ON_CLOSE = "menu_back"
 const string WHEEL_SOUND_ON_FOCUS = "menu_focus"
@@ -95,6 +129,8 @@ struct
 		int commsMenuStyle    // eCommsMenuStyle
 
 		array< void functionref(bool menuOpen) > onCommsMenuStateChangedCallbacks
+		
+		array<void functionref(array<CommsMenuOptionData> results, int quipsInWheel)> OnBuildMenuOptions
 	#endif // CLIENT
 } file
 
@@ -107,8 +143,8 @@ const string CHAT_MENU_BIND_COMMAND = "+scriptCommand1"
 void function ShCommsMenu_Init()
 {
 	#if SERVER
-		AddClientCommandCallbackNew( "SetSelectedHealthPickupType", ClientCommand_SetSelectedHealthPickupType )
-		AddClientCommandCallbackNew( "ClientCommand_Quip", ClientCommand_Quip )
+		AddClientCommandCallbackVoid( "SetSelectedHealthPickupType", ClientCommand_SetSelectedHealthPickupType )
+		AddClientCommandCallbackVoid( "ClientCommand_Quip", ClientCommand_Quip )
 	#endif // SERVER
 
 	#if CLIENT
@@ -362,37 +398,6 @@ bool function CommsMenu_ExecuteSelection( int wheelInputType )
 	return didAnything
 }
 
-enum eOptionType
-{
-	DO_NOTHING,
-
-	COMMSACTION,
-	NEW_PING,
-	PING_REPLY,
-
-	QUIP,
-	SKYDIVE_EMOTE,
-	HEALTHITEM_USE,
-	ORDNANCE_EQUIP,
-	HOLOSPRAY
-}
-
-struct CommsMenuOptionData
-{
-	int optionType
-
-	int chatPage
-	int commsAction
-
-	int pingType
-
-	int pingReply
-
-	int healType
-	ItemFlavor ornull emote
-	asset Asset
-}
-
 CommsMenuOptionData function MakeOption_NoOp()
 {
 	CommsMenuOptionData op
@@ -458,15 +463,12 @@ CommsMenuOptionData function MakeOption_Ping( int pingType )
 	return op
 }
 
-CommsMenuOptionData function MakeOption_HoloSpray( int index, asset Asset)
+void function AddCallback_OnBuildMenuOptions( void functionref( array<CommsMenuOptionData>, int ) callback )
 {
-	CommsMenuOptionData op
-	op.optionType = eOptionType.HOLOSPRAY
-	op.emote = null
-	op.healType = index
-	op.Asset = Asset
+	if(file.OnBuildMenuOptions.contains(callback))
+		return
 	
-	return op
+	file.OnBuildMenuOptions.append( callback )
 }
 
 array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
@@ -505,14 +507,8 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 				}
 			}
 
-			//Holo sprays
-			foreach(id, emotes in GetEmotesTable())
-			{
-				if(quipsInWheel == MAX_QUIPS_EQUIPPED) break
-				
-				results.append( MakeOption_HoloSpray( id+1, emotes[0] ) ) //+1 cuz "Nice" quip, FIX ME
-				quipsInWheel++
-			}
+			foreach ( callback in file.OnBuildMenuOptions )
+				callback( results, quipsInWheel )
 
 			if ( quipsInWheel == 0 && emptyQuip != null )
 			{
@@ -581,7 +577,7 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 			if ( GetCurrentPlaylistVarBool( "auto_heal_option", false ) )
 				results.append( MakeOption_UseHealItem( WHEEL_HEAL_AUTO ) )
 			{
-				if(player.GetTeam() == Sh_GetAttackerTeam() && Gamemode() == eGamemodes.fs_snd )
+				if(player.GetTeam() == Safe_GetAttackerTeam() && Gamemode() == eGamemodes.fs_snd )
 					results.append( MakeOption_UseHealItem( eHealthPickupType.SND_BOMB ) )
 				
 				results.append( MakeOption_UseHealItem( eHealthPickupType.COMBO_FULL ) )
@@ -1778,6 +1774,12 @@ bool function CommsMenu_CanUseMenu( entity player )
 	
 	if( StatusEffect_GetSeverity( player, eStatusEffect.camera_view) > 0 )
 		return false
+	
+	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_vamp_1v1 || Playlist() == ePlaylists.fs_1v1_headshots_only || Playlist() == ePlaylists.fs_lgduels_1v1 )
+	{
+		if( player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.WAITING || player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.RESTING )
+			return false
+	}
 	
 	return true
 }

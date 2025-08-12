@@ -30,11 +30,11 @@ struct
 
 void function PlayerMatchState_RegisterNetworking()
 {
-	RegisterNetworkedVariable( NV_PLAYERMATCHSTATE, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, ePlayerMatchState.NORMAL )
+	ScriptRegisterNetworkedVariable( NV_PLAYERMATCHSTATE, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, ePlayerMatchState.NORMAL )
 
-#if CLIENT
-	RegisterNetworkedVariableChangeCallback_int( NV_PLAYERMATCHSTATE, OnPlayerMatchStateChanged )
-#endif // CLIENT
+	#if CLIENT
+		RegisterNetworkedVariableChangeCallback_int( NV_PLAYERMATCHSTATE, OnPlayerMatchStateChanged )
+	#endif // CLIENT
 }
 
 void function AddCallback_OnPlayerMatchStateChanged( void functionref( entity, int, int ) func )

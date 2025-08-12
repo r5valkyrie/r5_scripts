@@ -140,6 +140,23 @@ resource/ui/menus/lobby.menu
 			pin_corner_to_sibling	TOP
 			pin_to_sibling_corner	BOTTOM
 	    }
+		
+		CreditsPanel
+	    {
+		    ControlName				CNestedPanel
+		    classname				"TabPanelClass"
+		    xpos					0
+		    ypos					0
+			wide					1824
+			tall					954
+		    visible					0
+		    tabPosition             1
+		    controlSettingsFile		"resource/ui/menus/panels/credits.res"
+
+			pin_to_sibling			TabsCommon
+			pin_corner_to_sibling	TOP
+			pin_to_sibling_corner	BOTTOM
+	    }
 
 	    ArmoryPanel
 	    {

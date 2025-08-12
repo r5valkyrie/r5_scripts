@@ -1,5 +1,3 @@
-//S21 script implementation by CafeFPS - September 2024
-
 global function BleedoutShared_Init
 global function Bleedout_GetBleedoutTime
 global function Bleedout_GetFirstAidTime
@@ -159,7 +157,7 @@ void function BleedoutShared_Init()
 
 	if ( Bleedout_GetIsInfiniteSelfResEnabled() )
 	{
-		Remote_RegisterClientFunction( "Bleedout_ServerCallback_DisplaySelfResDelayHintForPlayer", "float", 0.0, Bleedout_GetMaxInfiniteSelfResDelay(), 32 )
+		ScriptRemote_RegisterClientFunction( "Bleedout_ServerCallback_DisplaySelfResDelayHintForPlayer", "float", 0.0, Bleedout_GetMaxInfiniteSelfResDelay(), 32 )
 		#if SERVER
 			BleedoutState_AddCallback_OnPlayerBleedoutStateChanged( OnBleedoutStateChanged_RunSelfRes )
 			AddCallback_OnPlayerRespawned( OnPlayerRespawned_ResetSelfResDelay )

@@ -1,5 +1,3 @@
-//Updated by @CafeFPS based on S21 scripts
-
 global function MpAbilityPhaseWalk_Init
 
 global function OnWeaponActivate_ability_phase_walk

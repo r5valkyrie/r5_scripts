@@ -105,7 +105,7 @@ string[XP_TYPE._NUM_TYPES] xpDisplayNames = ["Unhandled", ...]
 
 bool function DEV_ShouldIgnorePersistence_Local()
 {
-	return true
+	return false
 }
 
 void function ShXP_Init()
@@ -114,29 +114,30 @@ void function ShXP_Init()
 		PrecacheParticleSystem( PLAYER_LEVELUP_FX )
 	#endif
 	// ACCOUNT XP DATA
-	// var accountXPDataTable = GetDataTable( $"datatable/progression_account.rpak" )
-	// int numRows            = GetDatatableRowCount( accountXPDataTable )
-	// file.totalXPToCompleteLevel.resize( numRows )
-	// int cumulativeXP = 0
-	// for ( int levelIndex = 0; levelIndex < numRows; levelIndex++ )
-	// {
-	// 	int xpToCompleteLevel = GetDataTableInt( accountXPDataTable, levelIndex, GetDataTableColumnByName( accountXPDataTable, "xpPerLevel" ) )
+	var accountXPDataTable = GetDataTable( $"datatable/progression_account.rpak" )
+	int numRows            = GetDatatableRowCount( accountXPDataTable )
+	file.totalXPToCompleteLevel.resize( numRows )
+	int cumulativeXP = 0
+	for ( int levelIndex = 0; levelIndex < numRows; levelIndex++ )
+	{
+		int xpToCompleteLevel = GetDataTableInt( accountXPDataTable, levelIndex, GetDataTableColumnByName( accountXPDataTable, "xpPerLevel" ) )
 
-	// 	SetXPForLevel( levelIndex + 1, cumulativeXP )
-	// 	//printt( "SetXPForLevel( levelIndex, cumulativeXP )", levelIndex, cumulativeXP )
+		SetXPForLevel( levelIndex + 1, cumulativeXP )
+		//printt( "SetXPForLevel( levelIndex, cumulativeXP )", levelIndex, cumulativeXP )
 
-	// 	cumulativeXP += xpToCompleteLevel
-	// 	file.totalXPToCompleteLevel[levelIndex] = cumulativeXP
-	// 	file.xpForBonusLevels = xpToCompleteLevel
-	// }
+		cumulativeXP += xpToCompleteLevel
+		file.totalXPToCompleteLevel[levelIndex] = cumulativeXP
+		file.xpForBonusLevels = xpToCompleteLevel
+	}
 
 	#if SERVER
 		AddCallback_GameStateEnter( eGameState.Playing, XP_GameStartedPlaying )
 		AddCallback_UpgradePlayerPersistentData( UpgradePlayerXPPersistentData )
 		AddCallback_OnUpdatingPlayerStryderCharDataArray( OnUpdatingPlayerStryderCharDataArray )
 	#endif
-
+	#if !UI
 	InitXPData()
+	#endif
 }
 
 
@@ -208,7 +209,7 @@ void function XP_GameStartedPlaying()
 	foreach( entity player in GetPlayerArray() )
 	{
 		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
-		//player.SetPersistentVar( "characterForXP", ItemFlavor_GetGUIDString( character ) ) // TODO: FIX (needs persistent data)
+		player.SetPersistentVar( "characterForXP", ItemFlavor_GetGUIDString( character ) )
 	}
 }
 #endif
@@ -468,53 +469,6 @@ void function OnUpdatingPlayerStryderCharDataArray( entity player )
 
 void function InitXPData()
 {
-
-	/*
-	var accountXPDataTable = GetDataTable( $"datatable/progression_account.rpak" )
-	int numRows      = GetDatatableRowCount( accountXPDataTable )
-	int col_levelIndex = GetDataTableColumnByName( accountXPDataTable, "levelIndex" )
-	int col_xpPerLevel = GetDataTableColumnByName( accountXPDataTable, "xpPerLevel" )
-	int prevLvlIdx   = -1
-	int cumulativeXP = 0
-	for ( int rowIndex = 0; rowIndex < numRows; rowIndex++ )
-	{
-
-		int lvlIdx = GetDataTableInt( accountXPDataTable, rowIndex, col_levelIndex )
-
-		if ( lvlIdx > prevLvlIdx )
-		{
-			int xpToCompleteLevel = GetDataTableInt( accountXPDataTable, rowIndex, col_xpPerLevel )
-			SetXPForLevel( lvlIdx + 1, cumulativeXP )
-			cumulativeXP += xpToCompleteLevel
-			file.totalXPToCompleteLevel.append( cumulativeXP )
-			file.xpForBonusLevels = xpToCompleteLevel
-
-			prevLvlIdx = lvlIdx
-		}
-	}
-
-	//
-	var oldAccountXPDataTable = GetDataTable( $"datatable/progression_account_v1.rpak" )
-	int oldNumRows            = GetDatatableRowCount( oldAccountXPDataTable )
-	int col_oldLevelIndex     = GetDataTableColumnByName( oldAccountXPDataTable, "levelIndex" )
-	int col_oldXpPerLevel     = GetDataTableColumnByName( oldAccountXPDataTable, "xpPerLevel" )
-	int oldPrevLvlIdx         = -1
-	int oldCumulativeXP       = 0
-	for ( int oldRowIdx = 0; oldRowIdx < oldNumRows; oldRowIdx++ )
-	{
-		int oldLvlIdx = GetDataTableInt( oldAccountXPDataTable, oldRowIdx, col_oldLevelIndex )
-
-		if ( oldLvlIdx > oldPrevLvlIdx )
-		{
-			int oldXpToCompleteLevel = GetDataTableInt( oldAccountXPDataTable, oldRowIdx, col_oldXpPerLevel )
-			oldCumulativeXP += oldXpToCompleteLevel
-			file.oldTotalXPToCompleteLevel.append( oldCumulativeXP )
-			file.oldXPForBonusLevels = oldXpToCompleteLevel
-
-			oldPrevLvlIdx = oldLvlIdx
-		}
-	}*/
-
 	InitXpEventTypeData( XP_TYPE.SURVIVAL_DURATION, "xp_survival_duration", "#EOG_XP_SURVIVED" )
 	XpEventTypeData_SetCountDisplay( XP_TYPE.SURVIVAL_DURATION, eNumericDisplayType.TIME_SECONDS_SHORT )
 	XpEventTypeData_SetDisplayEmpty( XP_TYPE.SURVIVAL_DURATION, true )
@@ -578,10 +532,10 @@ void function UpdateXPEvents()
 
 void function InitXpEventTypeData( int xpType, string playlistVar, string displayString )
 {
-	// file.xpEventTypeData[xpType]._playlistVarName = playlistVar // AMOS TEMP REMOVE
-	// file.xpEventTypeData[xpType].displayString = displayString
-	// file.xpEventTypeData[xpType].xpAmount = GetCurrentPlaylistVarFloat( playlistVar + "_amount", 0 )
-	// file.xpEventTypeData[xpType].xpFrac = GetCurrentPlaylistVarFloat( playlistVar + "_frac", 1.0 )
+	file.xpEventTypeData[xpType]._playlistVarName = playlistVar
+	file.xpEventTypeData[xpType].displayString = displayString
+	file.xpEventTypeData[xpType].xpAmount = GetCurrentPlaylistVarFloat( playlistVar + "_amount", 0 )
+	file.xpEventTypeData[xpType].xpFrac = GetCurrentPlaylistVarFloat( playlistVar + "_frac", 1.0 )
 
 	Assert( file.xpEventTypeData[xpType].xpAmount > -1 )
 }

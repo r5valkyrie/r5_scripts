@@ -1,11 +1,3 @@
-// Made by @CafeFPS
-
-// Featuring:
-// Entities Clean Up
-// Bunker Hatches
-// Charge Pylons
-// Warp Tunnel
-
 global function CodeCallback_MapInit
 
 const asset BUNKER_MODEL_SCALE_DOWN = $"mdl/props/bunker_hatch/bunker_hatch_scale_down.rmdl"
@@ -19,23 +11,25 @@ struct {
 
 void function CodeCallback_MapInit()
 {
-	printt( "----------------------------" )
-	printt( "Welcome to Kings Canyon Map Update 2 (Season 5)" )
-	printt( "-- All Map Assets, Models, Textures, Materials and More Ported by @LorryLeKral" )
-	printt( "-- Tools, Repak and RSX: Rexx & AmosModz" )
-	printt( "-- Map Scripts: CafeFPS and LorryLeKral" )
-	printt( "----------------------------" )
-
 	SetVictorySequencePlatformModel( $"mdl/rocks/victory_platform.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
 	SURVIVAL_SetPlaneHeight( 24000 )
 	SURVIVAL_SetAirburstHeight( 8000 )
 	SURVIVAL_SetMapCenter( <0, 0, 0> )
     SURVIVAL_SetMapDelta( 4900 )
-	
-	if (MapName() == eMaps.mp_rr_canyonlands_mu2_tt )
-		thread InitCryptoMap()
 
-	MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2.rpak" )
+	if (MapName() == eMaps.mp_rr_canyonlands_mu2_mv )
+		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2_mv.rpak" )
+	else if (MapName() == eMaps.mp_rr_canyonlands_mu2_tt )
+	{
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01.rmdl")
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02.rmdl")
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03.rmdl")
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04.rmdl")
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05.rmdl")
+		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2_tt.rpak" )
+	}
+	else
+		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2.rpak" )
 	
 	//Clean up unused ents
 	AddCallback_EntitiesDidLoad( KCMU2_OnEntitiesDidLoad )
@@ -43,6 +37,7 @@ void function CodeCallback_MapInit()
 	AddSpawnCallback( "info_spawnpoint_human", CleanupEnt )
 	Canyonlands_MapInit_Common()
 }
+
 
 void function CleanupEnt( entity ent )
 {
@@ -117,6 +112,9 @@ void function KCMU2_OnEntitiesDidLoad()
 	foreach( prop in props )
 		InitPropDynamic( prop )
 
+	if (MapName() == eMaps.mp_rr_canyonlands_mu2_tt )
+		thread CryptoTT_Init()
+
 	SetupBunkersDoors()
 }
 
@@ -139,9 +137,9 @@ bool function ShouldDestroyPropDynamic( string model )
 	switch( model )
 	{
 		case "mdl/props/proxy_r5/pvp_currency_container.rmdl":
-		case "mdl/props/crafting_siphon/crafting_siphon.rmdl":
-		case "mdl/props/crafting_replicator/crafting_replicator.rmdl":
-		case "mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl":
+		//case "mdl/props/crafting_siphon/crafting_siphon.rmdl":
+		//case "mdl/props/crafting_replicator/crafting_replicator.rmdl":
+		//case "mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl":
 		return true
 	}
 	
@@ -219,12 +217,45 @@ void function BunkerDoor_OnOpen( entity button, entity user, int input )
 	button.UnsetUsable()
 
 	entity door = BunkerDoor_GetDoorForButton( button )
+
+	bool doorHasSpecialZiplineStart = false
+	entity specialZipStartInfoTarget
+
+	foreach( link in door.GetLinkEntArray() )
+	{
+		if( link.GetScriptName() == "hatch_special_zipline_start_target" )
+		{
+			doorHasSpecialZiplineStart = true
+			specialZipStartInfoTarget = link
+		}
+	}
+
+	vector forward = AnglesToForward( door.GetAngles() )
+	vector right   = AnglesToRight( door.GetAngles() )
+	vector up      = AnglesToUp( door.GetAngles() )
 	
-	thread function() : ( door, button )
+	// Define start offset relative to the door
+	float startForwardOffset = -25
+	float startRightOffset   = -60
+	float startUpOffset      = 365
+	
+	vector startOffset = (forward * startForwardOffset) + (right * startRightOffset) + (up * startUpOffset)
+	vector worldStart = door.GetOrigin() + startOffset
+	
+	// Define end offset relative to the door
+	float endForwardOffset = -25
+	float endRightOffset   = -60
+	float endUpOffset      = -700
+	
+	vector endOffset = (forward * endForwardOffset) + (right * endRightOffset) + (up * endUpOffset)
+	vector worldEnd = door.GetOrigin() + endOffset
+	
+	thread function() : ( door, button, worldStart, worldEnd )
 	{
 		door.Anim_PlayOnly( "bunker_hatch_open" )
 		wait door.GetSequenceDuration( "bunker_hatch_open" )
 		door.Anim_PlayOnly( "bunker_hatch_open_idle" )
+		BunkerDoor_CreateZipline( worldStart, worldEnd, true )
 	}()
 }
 
@@ -276,6 +307,7 @@ void function BunkerDoor_CreateZipline( vector startPos, vector endPos, bool mov
 		zip_end.SetOrigin( startPos - <0,0,1> )
 		mover = CreateScriptMover( zip_start.GetOrigin(), zip_start.GetAngles())
 		zip_end.SetParent(mover)
+		EmitSoundOnEntity( zip_start, "Canyonlands_Scr_Bunker_Hatch_Zipline_Drop" )
 	} else
 	{
 		zip_end.SetOrigin( endPos )

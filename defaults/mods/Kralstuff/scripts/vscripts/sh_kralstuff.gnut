@@ -1,0 +1,36 @@
+#if UI
+global function UICodeCallback_kralstuff_ModInit
+#endif
+#if SERVER
+global function CodeCallback_kralstuff_ModInit
+#endif
+#if CLIENT
+global function ClientCodeCallback_kralstuff_ModInit
+#endif
+
+#if UI
+void function UICodeCallback_kralstuff_ModInit()
+{
+    uiGlobal.kralsmods = true
+}
+#endif
+
+#if SERVER
+void function CodeCallback_kralstuff_ModInit()
+{
+	PrecacheWeapon( $"mp_weapon_mc_sword_primary" )
+	PrecacheWeapon( $"melee_mc_sword" )
+	PrecacheWeapon( $"melee_bolo_sword" )
+	PrecacheWeapon( $"mp_weapon_bolo_sword_primary" )
+    PrecacheWeapon( $"mp_weapon_mjolnir_primary" )
+	PrecacheWeapon( $"melee_mjolnir" )
+	PrecacheWeapon( $"mp_weapon_karambit_primary" )
+	PrecacheWeapon( $"melee_karambit" )
+}
+#endif
+
+#if CLIENT
+void function ClientCodeCallback_kralstuff_ModInit()
+{
+}
+#endif

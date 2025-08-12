@@ -148,7 +148,7 @@ WeaponData
     "ammo_display"                                  "count"
     "ammo_min_to_fire"                              "90"
     "ammo_per_shot"                                 "90"
-    "ammo_stockpile_max"                            "0"
+    "ammo_stockpile_max"                            "90"
     "regen_ammo_refill_start_delay"                 "0.0"
     "ammo_no_remove_from_stockpile"                 "0"
     "regen_ammo_refill_rate"                        "1"

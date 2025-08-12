@@ -94,7 +94,7 @@ WeaponData
 	"explosion_inner_radius"  						"72"
 	"explosionradius" 								"350"
 
-	"projectile_killreplay_enabled"					"1"
+	"projectile_killreplay_enabled"					"0"
 
 	"damage_shield_scale"                           "1"
 
@@ -103,7 +103,7 @@ WeaponData
 		"fire_mode"   									"automatic"
 		"is_semi_auto"									"1"
 		"ammo_display"									"bar"
-		"ammo_stockpile_max"							"200"
+		"ammo_stockpile_max"							"0"
 		"ammo_clip_size"   								"200"
 		"ammo_default_total"							"200"
 		"ammo_per_shot"									"200"

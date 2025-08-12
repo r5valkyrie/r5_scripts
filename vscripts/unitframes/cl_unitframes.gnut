@@ -11,8 +11,15 @@ global function UnitFrame_SetConsumableIconForPlayer
 global function AddCallback_OnTeamUnitFrameCreated
 global function AddCallback_OnTeamUnitFrameDestroyed
 
+global function SetUnitFrameCustomIcon
+global function SetUnitFrameCustomTreatment
+global function SetUnitFrameCustomColor
+global function SetUnitFrameShadowFormState
+global function ClearUnitFrameCustomColor
+
 global function SetUnitFrameDataFromOwner
 global function UpdateRUITest
+global function AddCallback_OnTeammateUnitframeInit
 
 #if DEVELOPER
 global function PrintUnitFrames
@@ -31,7 +38,13 @@ struct
 	table<entity, UnitFrameDef>       teamUnitFrames
 	array< void functionref(int) >    Callbacks_OnTeamUnitFrameCreated
 	array< void functionref(int) >    Callbacks_OnTeamUnitFrameDestroyed
+	array<void functionref( entity, var )> callbacks_onTeammateUnitframeInit
+	
 	table<entity, string> characterRefTable
+
+	table<entity, asset>  customPlayerInfoTreatment
+	table<entity, vector> customCharacterColor
+	table<entity, asset>  customCharacterIcon
 } file
 
 void function ClUnitFrames_Init()
@@ -48,6 +61,16 @@ void function ClUnitFrames_Init()
 		CL_RecruitModeUnitFrames_Init()
 }
 
+void function AddCallback_OnTeammateUnitframeInit( void functionref(entity, var) func )
+{
+	Assert( file.callbacks_onTeammateUnitframeInit.contains( func ) == false, "Callback (" + string( func ) + ") already registered for OnMapEditorPropSpawned" )
+	
+	if( file.callbacks_onTeammateUnitframeInit.contains( func ) )
+		return
+	
+	file.callbacks_onTeammateUnitframeInit.append( func )
+}
+
 
 void function OnPlayerCreated( entity player )
 {
@@ -57,9 +80,9 @@ void function OnPlayerCreated( entity player )
 
 void function OnPlayerTeamChanged( entity player, int oldTeam, int newTeam )
 {
-	#if DEVELOPER
-		printt( "[+] Team changed for player " + player.GetPlayerName() + " Old: " + oldTeam + " - New: " + newTeam )
-	#endif
+	// #if DEVELOPER
+		// printt( "[+] Team changed for player " + player.GetPlayerName() + " Old: " + oldTeam + " - New: " + newTeam )
+	// #endif
 
 	if ( PlayerShouldHaveUnitFrame( player ) )
 	{
@@ -70,7 +93,7 @@ void function OnPlayerTeamChanged( entity player, int oldTeam, int newTeam )
 		DestroyTeamUnitFrame( player )
 	}
 	
-	if( newTeam == GetLocalViewPlayer().GetTeam() || player == GetLocalViewPlayer() ) //Cafe was here
+	if( newTeam == GetLocalViewPlayer().GetTeam() || player == GetLocalViewPlayer() )
 		RefreshUnitframesForPlayer( GetLocalViewPlayer() )
 }
 
@@ -294,6 +317,12 @@ void function SetUnitFrameDataFromOwner( var rui, entity ent, bool forceUpdate =
 	RuiTrackGameTime( rui, "lastFireTime", ent, RUI_TRACK_LAST_FIRED_TIME )
 	RuiSetBool( rui, "isLocalPlayer", (ent == GetLocalViewPlayer()) )
 	RuiSetImage( rui, "icon", classIcon )
+
+	foreach ( callbackFunc in file.callbacks_onTeammateUnitframeInit )
+	{
+		callbackFunc( ent, rui )
+	}
+	
 	RuiTrackFloat( rui, "reviveEndTime", ent, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 	RuiTrackInt( rui, "reviveType", ent, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "reviveType" ) )
 	RuiTrackFloat( rui, "bleedoutEndTime", ent, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
@@ -565,4 +594,107 @@ void function AddCallback_OnTeamUnitFrameDestroyed( void functionref(int) callba
 {
 	Assert( !file.Callbacks_OnTeamUnitFrameDestroyed.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnTeamUnitFrameDestroyed" )
 	file.Callbacks_OnTeamUnitFrameDestroyed.append( callbackFunc )
+}
+
+
+void function SetUnitFrameCustomIcon( entity player, asset icon )
+{
+	foreach ( unitframePlayer, unitFrame in file.teamUnitFrames )
+	{
+		if ( player == unitframePlayer )
+		{
+			if ( !(player in file.customCharacterIcon) )
+				file.customCharacterIcon[player] <- icon
+			file.customCharacterIcon[player] = icon
+			RuiSetImage( unitFrame.rui, "icon", icon )
+		}
+	}
+}
+
+
+void function SetUnitFrameCustomTreatment( entity player, asset treatment )
+{
+	foreach ( unitframePlayer, unitFrame in file.teamUnitFrames )
+	{
+		if ( player == unitframePlayer )
+		{
+			if ( !(player in file.customPlayerInfoTreatment) )
+				file.customPlayerInfoTreatment[player] <- treatment
+			file.customPlayerInfoTreatment[player] = treatment
+			RuiSetImage( unitFrame.rui, "customTreatment", treatment )
+		}
+	}
+}
+
+
+void function SetUnitFrameShadowFormState( entity player, bool state )
+{
+	foreach ( unitframePlayer, unitFrame in file.teamUnitFrames )
+	{
+		if ( player == unitframePlayer )
+		{
+			RuiSetBool( unitFrame.rui, "useShadowFormFrame", state )
+		}
+	}
+}
+
+
+void function SetUnitFrameCustomColor( entity player, vector color )
+{
+	foreach ( unitframePlayer, unitFrame in file.teamUnitFrames )
+	{
+		if ( player == unitframePlayer )
+		{
+			if ( !(player in file.customCharacterColor) )
+				file.customCharacterColor[player] <- color
+			file.customCharacterColor[player] = color
+			RuiSetColorAlpha( unitFrame.rui, "customCharacterColor", SrgbToLinear( color / 255.0 ), 1.0 )
+			RuiSetBool( unitFrame.rui, "useCustomCharacterColor", true )
+		}
+	}
+}
+
+
+void function ClearUnitFrameCustomColor( entity player )
+{
+	foreach ( unitframePlayer, unitFrame in file.teamUnitFrames )
+	{
+		if ( player == unitframePlayer )
+		{
+			if ( player in file.customCharacterColor )
+				delete file.customCharacterColor[player]
+			RuiSetBool( unitFrame.rui, "useCustomCharacterColor", false )
+		}
+	}
+}
+
+
+void function OverwriteWithCustomUnitFrameInfo( entity player, var rui )
+{
+	if ( player in file.customCharacterIcon )
+		RuiSetImage( rui, "playerIcon", file.customCharacterIcon[player] )
+
+	if ( player in file.customPlayerInfoTreatment )
+	{
+		RuiSetImage( rui, "customTreatment", file.customPlayerInfoTreatment[player] )
+	}
+
+	if ( player in file.customCharacterColor )
+	{
+		RuiSetColorAlpha( rui, "customCharacterColor", SrgbToLinear( GetUnitFrameColor( player ) / 255.0 ), 1.0 )
+		RuiSetBool( rui, "useCustomCharacterColor", true )
+	}
+	else
+	{
+		RuiSetBool( rui, "useCustomCharacterColor", false )
+	}
+}
+
+
+vector function GetUnitFrameColor( entity player )
+{
+	if ( player in file.customCharacterColor )
+		return file.customCharacterColor[player]
+
+	return GetKeyColor( COLORID_MEMBER_COLOR0, player.GetTeamMemberIndex() )
 }

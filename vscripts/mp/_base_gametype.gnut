@@ -95,27 +95,40 @@ function BaseGametype_Init()
 
 	BaseGametype_Init_MPSP()
 	
+	if(GetCurrentPlaylistVarBool("enable_global_chat", true))
+	{
+		SetConVarBool("sv_overrideTeamChatRestriction", true)
+		SetConVarBool("sv_forceChatToTeamOnly", false)
+	}
+	else
+	{
+		SetConVarBool("sv_overrideTeamChatRestriction", false)
+		SetConVarBool("sv_forceChatToTeamOnly", true)
+	}
 	//AddCallback_OnTitanBecomesPilot( OnTitanBecomesPilot_OutOfBoundsCheck ) //disabled for r5r
 }
 
 void function BaseGametypeEntitiesDidLoad()
 {
-	Flowstate_CheckForMapTriggers()
+	Flowstate_CheckForMapTriggersRemoval()
 
 	TriggerHurtSetup()
 	OutOfBoundsSetup()
 }
 
-void function Flowstate_CheckForMapTriggers()
+void function Flowstate_CheckForMapTriggersRemoval( bool isForced = false )
 {
 	file.allTriggers.extend( GetEntArrayByClass_Expensive( "trigger_out_of_bounds" ) )
 	file.allTriggers.extend( GetEntArrayByClass_Expensive( "trigger_hurt" ) )
 	file.allTriggers.extend( GetEntArrayByClass_Expensive( "trigger_slip" ) )
 	file.allTriggers.extend( GetEntArrayByClass_Expensive( "trigger_no_zipline" ) )
+	file.allTriggers.extend( GetEntArrayByClass_Expensive( "trigger_no_grapple" ) )
+	file.allTriggers.extend( GetEntArrayByClass_Expensive( "trigger_multiple" ) )
+	file.allTriggers.extend( GetEntArrayByClass_Expensive( "trigger_cylinder_heavy" ) )
 	file.allTriggers.extend( GetEntArrayByScriptName( "WallTrigger_Killzone" ) )
 	file.allTriggers.extend( GetEntArrayByScriptName( "WallTrigger_oob_timer" ) )
 
-	if( Flowstate_DisableAllMapTriggers() || MapName() == eMaps.mp_rr_arena_skygarden && Gamemode() == eGamemodes.fs_dm )
+	if( Flowstate_DisableAllMapTriggers() || isForced )
 	{
 		int i = 0
 		foreach( trigger in file.allTriggers )
@@ -128,6 +141,8 @@ void function Flowstate_CheckForMapTriggers()
 		file.allTriggers.clear()
 			
 		printt( "[FS All Triggers Disabled] Removed", i, "map triggers" )
+		
+		SetIgnoreKillPlayersUnderMap( true )
 	}
 }
 
@@ -182,8 +197,6 @@ void function CodeCallback_OnPrecache()
 	{
 		SetGameState( eGameState.WaitingForPlayers )
 	}
-
-	level.ui.disableDev = IsMatchmakingServer()
 }
 
 function AddFlinch( entity attackedEnt, damageInfo )
@@ -240,15 +253,15 @@ bool function IsProtectedFromFriendlyFire_MP( entity attacker, entity ent, var d
 
 	if ( attacker.GetTeam() == ent.GetTeam() && !IsTeamRabid( attacker.GetTeam() ) )
 		return true
-
-	//if ( ent.GetOwner() != attacker && ent.GetBossPlayer() != attacker )
-	//	return true
+		
+	// if ( ent.GetOwner() != attacker && ent.GetBossPlayer() != attacker ) //todo(cafe): investigate why this makes titans won't get damaged
+		// return true
 
 	if ( ent.e.noOwnerFriendlyFire == true )
 		return true
 
-	if ( ent.IsNPC() && ent.ai.preventOwnerDamage )
-		return true
+	// if ( ent.IsNPC() && ent.ai.preventOwnerDamage ) //todo(cafe): investigate why this makes titans won't get damaged
+		// return true
 
 	return false
 }
@@ -319,10 +332,11 @@ bool function DamageIgnoresFriendlyFire( damageInfo )
 	{
 		case eDamageSourceId.damagedef_creeping_bombardment_detcord_explosion:
 		case eDamageSourceId.damagedef_defensive_bombardment:
+		case eDamageSourceId.switchback_trap:
+		case eDamageSourceId.suicideSpectreAoE:
+		case eDamageSourceId.mp_titanweapon_stun_laser: // for energy transfer functionality. Preventing FF damage in the callback.
+		case eDamageSourceId.mp_titanability_smoke: // For FD Vanguard Shield Upgrades. Preventing FF damage in the callback.
 			return true
-		// case eDamageSourceId.suicideSpectreAoE:
-		// case eDamageSourceId.mp_titanweapon_stun_laser: // for energy transfer functionality. Preventing FF damage in the callback.
-		// case eDamageSourceId.mp_titanability_smoke: // For FD Vanguard Shield Upgrades. Preventing FF damage in the callback.
 		default:
 			return false
 	}
@@ -358,6 +372,22 @@ bool function ScriptCallback_ShouldEntTakeDamage( entity ent, damageInfo )
 
 	// if ( !ShouldEntTakeDamage_SPMP( ent, damageInfo ) )
 	// 	return false
+
+	if ( ent.IsTitan() )
+	{
+		const int BULLET_VORTEX_FLAGS = (DF_VORTEX_REFIRE | DF_BULLET)
+		if ( ((damageType & BULLET_VORTEX_FLAGS) == BULLET_VORTEX_FLAGS) && (ent == attacker) )
+			return false	// don't let vortex-refiring titan hit themselves with bullet or bullet splash damage
+
+		if ( IsTitanWithinBubbleShield( ent ) && TitanHasBubbleShieldWeapon( ent ) && !(damageType & DF_DOOMED_HEALTH_LOSS) )
+			return false
+	}
+
+	if ( IsTitanCrushDamage( damageInfo ) )
+	{
+		if ( attacker.IsPhaseShifted() )
+			return false
+	}
 
 	if ( (inflictor != null) )
 	{
@@ -547,14 +577,33 @@ function HandleLocationBasedDamage( entity ent, var damageInfo )
 	}
 	else  
 	*/
-	if ( isValidHeadShot )
+	if ( ent.IsTitan() )
 	{
-		damageMult_location = GetHeadshotDamageMultiplierFromDamageInfo( damageInfo )
+		damageMult_location = GetCriticalScaler( ent, damageInfo )
 	}
-	else if ( IsLegDamage( ent, damageInfo ) )
+	else if ( IsSuperSpectre( ent ) )
 	{
-		if ( ShouldTakeLegDamage( ent ) )
-			damageMult_location = GetLegDamageMultiplierFromDamageInfo( damageInfo )
+		if ( isValidHeadShot )
+		{
+			damageMult_location = GetHeadshotDamageMultiplierFromDamageInfo( damageInfo )
+		}
+		else if ( IsLegDamage( ent, damageInfo ) )
+		{
+			if ( ShouldTakeLegDamage( ent ) )
+				damageMult_location = GetLegDamageMultiplierFromDamageInfo( damageInfo )
+		}
+	}
+	else
+	{
+		if ( isValidHeadShot )
+		{
+			damageMult_location = GetHeadshotDamageMultiplierFromDamageInfo( damageInfo )
+		}
+		else if ( IsLegDamage( ent, damageInfo ) )
+		{
+			if ( ShouldTakeLegDamage( ent ) )
+				damageMult_location = GetLegDamageMultiplierFromDamageInfo( damageInfo )
+		}
 	}
 
 	// modify damage value based on where we hit
@@ -632,10 +681,15 @@ function PlayerDamageFeedback( entity ent, damageInfo, int shieldDamage = 0 )
 
 bool function ShouldDoKillFeedback( entity ent )
 {
-	if ( !ent.IsPlayer() )
-		return true
+	if ( Gamemode() == eGamemodes.fs_aimtrainer )
+		return false
+	
 	if ( ent.IsShadowForm() )// && !IsInForgedShadows( ent ) )
 		return false
+	
+	if ( !ent.IsPlayer() )
+		return true
+	
 	return true
 }
 void function UpdateLastDamageTime( entity ent )
@@ -1218,62 +1272,62 @@ bool function ShouldStartSpawn( entity player )
 
 void function PlayerSpawnsIntoPetTitan( entity player )
 {
-	// player.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDestroy" )
 
-	// entity titan = player.GetPetTitan()
+	entity titan = player.GetPetTitan()
 
-	// vector origin = titan.GetOrigin() + Vector( 0, 0, 600 )
-	// vector angles = titan.GetAngles()
+	vector origin = titan.GetOrigin() + Vector( 0, 0, 600 )
+	vector angles = titan.GetAngles()
 
-	// entity camera = CreateTitanDropCamera( origin, Vector(90,angles.y,0) )
-	// player.SetViewEntity( camera, false )
+	entity camera = CreateTitanDropCamera( origin, Vector(90,angles.y,0) )
+	player.SetViewEntity( camera, false )
 
-	// player.isSpawning = true // set this to prevent .isSpawning checks from returning false
+	player.isSpawning = true // set this to prevent .isSpawning checks from returning false
+	
+	angles.x = 70
 
-	// angles.x = 70
+	player.SetOrigin( origin )
+	player.SnapEyeAngles( angles )
+	player.SetVelocity( Vector( 0.0, 0.0, 0.0 ) )
 
-	// player.SetOrigin( origin )
-	// player.SnapEyeAngles( angles )
-	// player.SetVelocity( Vector( 0.0, 0.0, 0.0 ) )
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if ( IsValid( player ) )
+			{
+				player.ClearViewEntity()
+				player.ClearSpawnPoint()
+				player.isSpawning = null
+			}
+		}
+	)
 
-	// OnThreadEnd(
-	// 	function() : ( player )
-	// 	{
-	// 		if ( IsValid( player ) )
-	// 		{
-	// 			player.ClearViewEntity()
-	// 			player.ClearSpawnPoint()
-	// 			player.isSpawning = null
-	// 		}
-	// 	}
-	// )
+	wait 0.2
 
-	// wait 0.2
+	local criteria = {
+		embark = "above_close",
+		titanCanStandRequired = true
+	}
 
-	// local criteria = {
-	// 	embark = "above_close",
-	// 	titanCanStandRequired = true
-	// }
+	local embarkAction
+	//embarkAction = FindEmbarkActionForCriteria( criteria )
+	if ( embarkAction == null )
+		embarkAction = GetRandomEmbarkAction()
 
-	// local embarkAction
-	// embarkAction = FindEmbarkActionForCriteria( criteria )
-	// if ( embarkAction == null )
-	// 	embarkAction = GetRandomEmbarkAction()
+	if ( IsValid( camera ) )
+	{
+		// camera can be invalid for a moment when server shuts down
+		// camera.FireNow( "Disable", "!activator", null, player )
+		camera.Destroy()
+	}
 
-	// if ( IsValid( camera ) )
-	// {
-	// 	// camera can be invalid for a moment when server shuts down
-	// 	// camera.FireNow( "Disable", "!activator", null, player )
-	// 	camera.Destroy()
-	// }
+	DoRespawnPlayer( player, null )
 
-	// DoRespawnPlayer( player, null )
-
-	// if ( PlayerCanSpawnIntoTitan( player ) )
-	// {
-	// 	table action = expect table( GenerateEmbarkActionTable( player, titan, embarkAction ) )
-	// 	PlayerEmbarksTitan( player, titan, action )
-	// }
+	//if ( PlayerCanSpawnIntoTitan( player ) )
+	{
+		table action = expect table( GenerateEmbarkActionTable( player, titan, embarkAction ) )
+		PlayerEmbarksTitan( player, titan, action )
+	}
 }
 
 entity function CreateTitanDropCamera( origin, angles )
@@ -1426,7 +1480,7 @@ void function OnNPCKilled_SP( entity npc, var damageInfo )
 
 void function CodeCallback_OnEntityDestroyed( entity ent )
 {
-	foreach ( callbackFunc in ent.e.onEntityDestroyedCallbacks ) //Cafe was here
+	foreach ( callbackFunc in ent.e.onEntityDestroyedCallbacks )
 	{
 		callbackFunc( ent )
 	}
@@ -1593,6 +1647,7 @@ bool function IsValidNPCTarget( entity ent )
 		case "npc_stalker":
 		case "npc_super_spectre":
 		case "npc_prowler":
+		case "npc_spider":
 		case "npc_drone":
 		case "npc_titan":
 		case "npc_turret_sentry":
@@ -1861,7 +1916,7 @@ void function EntityOutOfBounds( entity trigger, entity ent, entity caller, var 
 	if(GetGameState() != eGameState.Playing)
 		return
 	
-	if( !IsValid( ent ) || !ent.IsPlayer() || ent.Player_IsFreefalling() )
+	if( !IsValid( ent ) || !ent.IsPlayer() )
 		return
 	
 	//printt( "ENTITY", ent, "IS OUT OF BOUNDS ON TRIGGER", trigger )
@@ -1899,7 +1954,7 @@ void function EntityOutOfBounds( entity trigger, entity ent, entity caller, var 
 
 		dataStruct.timeLeftBeforeDyingFromOutOfBounds = deadTime
 
-		if ( MapName() == eMaps.mp_rr_aqueduct || MapName() == eMaps.mp_rr_aqueduct_night || MapName() == eMaps.mp_rr_arena_skygarden )
+		if ( MapName() == eMaps.mp_rr_aqueduct || MapName() == eMaps.mp_rr_party_crasher || MapName() == eMaps.mp_rr_arena_phase_runner  )
 		{
 			ent.SetOutOfBoundsDeadTime( Time() + 5 )
 		}

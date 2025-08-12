@@ -1,9 +1,3 @@
-// Credits
-// AyeZee#6969 -- ctf gamemode and ui
-// CafeFPS -- Server/client/ui Rework and multiple code fixes
-// sal#3261 -- base custom_tdm mode to work off
-// everyone else -- advice
-
 global function Sh_CustomCTF_Init
 global function NewCTFLocationSettings
 global function NewCTFLocPair
@@ -192,7 +186,7 @@ void function Sh_CustomCTF_Init()
 	// Map locations, flag spawns, team spawns, deathcam, victory pos, and undermap Z
 	switch( MapName() )
 	{
-		case eMaps.mp_flowstate:
+		case eMaps.mp_rr_arena_empty:
 
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
@@ -286,7 +280,7 @@ void function Sh_CustomCTF_Init()
 			break
 
 		case eMaps.mp_rr_aqueduct:
-		case eMaps.mp_rr_aqueduct_night:
+		//case eMaps.mp_rr_aqueduct_night:
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
 					"Overflow",
@@ -341,37 +335,6 @@ void function Sh_CustomCTF_Init()
 					NewCTFLocPair(<0, 6208, 3162>, <40,-90,0>), // deathcam angle and height
 					NewCTFLocPair(<0, 512,184>, <0, 90, 0>), // Victory Pos
 					-175 // Undermap Z
-				)
-			)
-			break
-
-		case eMaps.mp_rr_ashs_redemption:
-			Shared_RegisterLocationCTF(
-				NewCTFLocationSettings(
-					"Ash's Redemption",
-					[ // ringspots
-						NewCTFLocPair(<-22104, 6009, -26929>, <0, 0, 0>),
-						NewCTFLocPair(<-21372, 3709, -26955>, <-5, 55, 0>),
-						NewCTFLocPair(<-19356, 6397, -26861>, <-4, -166, 0>),
-						NewCTFLocPair(<-20713, 7409, -26742>, <-4, -114, 0>)
-					],
-					<-20127, 7319, -27038>, // imc flag spawn
-					<-21784, 4144, -27039>, // mil flag spawn
-					[ // imc spawns
-						NewCTFLocPair(<-19363, 6818, -27054>, <0, -130, 0>),
-						NewCTFLocPair(<-19544, 7284, -26833>, <0, -117, 0>),
-						NewCTFLocPair(<-19199, 6382, -27059>, <0, -116, 0>),
-						NewCTFLocPair(<-20866, 6935, -27006>, <0, 173, 0>)
-					],
-					[ // mil spawns
-						NewCTFLocPair(<-22452, 4873, -26918>, <0, 93, 0>),
-						NewCTFLocPair(<-21644, 3908, -27033>, <0, 89, 0>),
-						NewCTFLocPair(<-22439, 5075, -26994>, <0, 73, 0>),
-						NewCTFLocPair(<-22024, 4408, -26938>, <0, -35, 0>)
-					],
-					NewCTFLocPair(<0,0,3000>, <90,4,0>), // deathcam angle and height
-					NewCTFLocPair(<-20904, 5797, -26745>, <0, -75, 0>), // Victory Pos
-					-27272 // Undermap Z
 				)
 			)
 			break
@@ -603,7 +566,8 @@ void function Sh_CustomCTF_Init()
 			)
 
 			break
-		case eMaps.mp_rr_olympus_mu1:
+		case eMaps.mp_rr_olympus:
+		case eMaps.mp_rr_olympus_tt:
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
 					"Gardens",

@@ -2,6 +2,7 @@ global function InitEULADialog
 global function OpenEULADialog
 global function IsEULAAccepted
 global function IsLobbyAndEULAAccepted
+global function UICodeCallback_OnEULARequestCompleted
 
 struct
 {
@@ -13,7 +14,10 @@ struct
 	int eulaVersion
 	bool reviewing
 
+	bool fetchingEula = false
+
 	string eulaContents
+	string eulaLanguage
 } file
 
 
@@ -44,7 +48,20 @@ void function InitEULADialog( var newMenuArg )
 // since this executes an http request in native, this must be threaded
 void function FetchEULA_Threaded()
 {
-	file.eulaContents = GetEULAContents()
+	RequestEULAContents()
+}
+
+void function UICodeCallback_OnEULARequestCompleted(bool success, string errorMsg, string language, string eulaData)
+{
+	if(!success)
+	{
+		printf("Failed getting eula: %s", errorMsg)
+		file.eulaContents = "Failed getting eula: " + errorMsg
+		return
+	}
+
+	file.eulaContents = eulaData
+	file.eulaLanguage = language
 }
 
 bool function IsReviewing()
@@ -55,7 +72,7 @@ bool function IsReviewing()
 
 bool function IsEUVersion()
 {
-	return true//ShouldUserSeeEULAForEU()
+	return true //ShouldUserSeeEULAForEU()
 }
 
 

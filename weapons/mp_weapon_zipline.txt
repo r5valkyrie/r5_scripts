@@ -16,7 +16,7 @@ WeaponData
 	"offhand_cancelled_by_melee"					"1"
 	"is_toss_weapon"								"1"
 	"play_fire_weapon_sound_on_toss"				"1"
-	"offhand_default_inventory_slot"				"1"
+	"offhand_default_inventory_slot"				"4"
 	"offhand_hold_enabled"							"0"
 	"offhand_interupts_weapon_anims"				"1"
 	"offhand_raise_is_interrupt_resumable"			"1"

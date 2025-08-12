@@ -12,6 +12,7 @@ classes
 	import npc_spider.txt
 	import npc_soldier_infected.txt
 	import npc_marvin.txt
+	import npc_marvin_olympus.txt
 	import npc_prowler.txt
 	import npc_soldier.txt
 	import npc_gunship.txt
@@ -45,4 +46,6 @@ classes
 	import npc_supressorturret.txt
 	
 	import npc_nextbot.txt
+	import npc_titan.txt
+	import npc_titan_buddy.txt
 }

@@ -1,0 +1,18 @@
+#base "mp_weapon_melee_survival.txt"
+
+WeaponData
+{
+	// General
+	"printname"   									"MELEE_SKIN_MACKS_KNIFE_NAME"
+	"shortprintname"								"MELEE_SKIN_MACKS_KNIFE_NAME"
+	"description" 									"MELEE_SKIN_MACKS_KNIFE_NAME"
+	"longdesc"										"MELEE_SKIN_MACKS_KNIFE_NAME"
+
+    // UI/HUD
+	"menu_icon"										"rui/menu/dpad_comms/emoji/fist"
+	"hud_icon"										"rui/menu/dpad_comms/emoji/fist"
+
+	// Models
+	"viewmodel"   									"mdl/Weapons/octane_knife/ptpov_macks_knife.rmdl"
+	"playermodel" 									"mdl/Weapons/octane_knife/w_macks_knife.rmdl"
+}

@@ -247,7 +247,7 @@ struct
 #if CLIENT
 void function DesertlandsTrainAnnouncer_Init()
 {
-	RegisterCSVDialogue( $"datatable/dialogue/train_dialogue.rpak" )
+	//RegisterCSVDialogue( $"datatable/dialogue/train_dialogue.rpak" )
 	AddCallback_EntitiesDidLoad( InitTrainClientEnts )
 	AddCallback_FullUpdate( TrainOnFullUpdate )
 }
@@ -275,7 +275,7 @@ void function DesertlandsTrain_PreMapInit()
 
 void function DesertlandsTrain_OnNetworkRegistration()
 {
-	Remote_RegisterClientFunction( "SCB_DLandsTrain_SetCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
+	ScriptRemote_RegisterClientFunction( "SCB_DLandsTrain_SetCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
 }
 
 #if CLIENT
@@ -330,7 +330,7 @@ void function TrainOnFullUpdate()
 #if SERVER
 void function DesertlandsTrain_Precaches()
 {
-	RegisterCSVDialogue( $"datatable/dialogue/train_dialogue.rpak" )
+	//RegisterCSVDialogue( $"datatable/dialogue/train_dialogue.rpak" )
 
 	PrecacheParticleSystem( FX_TRAIN_MAIN_SPOTLIGHT )
 	PrecacheParticleSystem( FX_TRAIN_SPOTLIGHT_BLINK )
@@ -527,7 +527,7 @@ void function SetupTracks()
 			}
 			else if ( scriptName == TRACK_BIN_MOVER_NAME )
 			{
-				if ( GetCurrentPlaylistVarBool( "ignore_station_loot_bins", false ) || GetMapName() == "mp_rr_desertlands_holiday" )
+				if ( GetCurrentPlaylistVarBool( "ignore_station_loot_bins", false ) )
 					continue
 
 				stationLootBinData data
@@ -1265,7 +1265,7 @@ array<entity> function GetTrainPath()
 	Assert( nodes.len() > 1, "Train needs at least two nodes to travel between." )
 
 	#if DEVELOPER
-		// if ( file.devShowTrainPath )
+		if ( file.devShowTrainPath )
 			DrawTrainPath( nodes )
 	#endif
 
@@ -1559,7 +1559,7 @@ void function DesertlandsTrain_DisableSpotlight()
 
 void function DesertlandsTrain_ShowPath()
 {
-	file.devShowTrainPath = true
+	file.devShowTrainPath = false
 }
 #endif // SERVER && DEVELOPER
 

@@ -10,19 +10,19 @@ global function SmartAmmo_Init
 global function SmartAmmo_FireWeapon
 
 /********************************/
-/*	 Global Utility Functions	*/
-/*	Call these from any script	*/
+/*   Global Utility Functions   */
+/*  Call these from any script  */
 /********************************/
 
 // Behavior Option Functions
 global function SmartAmmo_SetAllowUnlockedFiring
-global function SmartAmmo_SetAimAttachment				// Set a custom attachment name for target lockon
-global function SmartAmmo_SetMissileSpeed					// Set the speed the missile will travel when it is first created
-global function SmartAmmo_SetMissileSpeedLimit		// Sets the max speed for the missile. After being created it will accelerate up to this speed
-global function SmartAmmo_SetMissileHomingSpeed		// Set the turning 'homing' rate of the missile
+global function SmartAmmo_SetAimAttachment          // Set a custom attachment name for target lockon
+global function SmartAmmo_SetMissileSpeed           // Set the speed the missile will travel when it is first created
+global function SmartAmmo_SetMissileSpeedLimit      // Sets the max speed for the missile. After being created it will accelerate up to this speed
+global function SmartAmmo_SetMissileHomingSpeed     // Set the turning 'homing' rate of the missile
 global function SmartAmmo_SetMissileShouldDropKick
-global function SmartAmmo_SetUnlockAfterBurst			// Makes the targets get cleared after the burst fire is complete. Default is false
-global function SmartAmmo_SetMissileAimAtCursor				// Makes missiles fly towards where the crosshair is aimed, instead of parallel to the crosshair direction. Default is false.
+global function SmartAmmo_SetUnlockAfterBurst       // Makes the targets get cleared after the burst fire is complete. Default is false
+global function SmartAmmo_SetMissileAimAtCursor     // Makes missiles fly towards where the crosshair is aimed, instead of parallel to the crosshair direction. Default is false.
 global function SmartAmmo_SetWarningIndicatorDelay
 global function SmartAmmo_SetDisplayKeybinding
 global function SmartAmmo_SetExpandContract
@@ -64,8 +64,8 @@ global const SMART_AMMO_DEFAULT_AIM_ATTACHMENT = "CHESTFOCUS"
 global const SMART_AMMO_AI_AIM_ATTACHMENT = "HEADSHOT"
 global const SMART_AMMO_GRENADE_AIM_ATTACHMENT = "LIGHT" //Satchels have LIGHT others grenades default to worldspace.
 global const TARGET_SET_FRACTION = 0.0001 //This target.fraction is set so the target is not seen as new.
-global const HOMING_SFX_LOOP	= "Weapon_Sidwinder_Projectile"
-global const SMART_AMMO_PLAYER_MAX_LOCKS			= 3
+global const HOMING_SFX_LOOP = "Weapon_Sidwinder_Projectile"
+global const SMART_AMMO_PLAYER_MAX_LOCKS = 3
 
 typedef FireWeaponCallback int functionref( entity, WeaponPrimaryAttackParams, int, int, bool, entity )
 FireWeaponCallback function GetFireWeaponCallbackForWeaponType( int wt )
@@ -276,7 +276,6 @@ int function SmartAmmo_FireWeapon_Bullet( entity weapon, WeaponPrimaryAttackPara
 	return 1
 }
 int function SmartAmmo_FireNeedler( entity weapon, WeaponPrimaryAttackParams attackParams, int damageType, int explosionDamageType )
-//By ColombiaFPS
 {
 	if ( !IsValid( weapon ) )
 		return 0

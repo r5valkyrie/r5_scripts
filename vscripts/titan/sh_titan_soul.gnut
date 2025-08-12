@@ -53,9 +53,6 @@ void function SpawnTitanSoul( entity soul )
 // TODO: Should return bool, but errors if set to
 function IsSoul( entity ent )
 {
-	if ( ent == null )
-		return false
-
 	#if CLIENT
 		return ent instanceof C_TitanSoul
 	#else
@@ -84,7 +81,7 @@ void function InitSoul( entity soul, entity titan )
 {
 	Assert( titan.IsNPC() )
 
-	asset settings = GetNPCTitanSettingFile( titan )
+	asset settings = $"settings/player/mp/titan_survival_buddy.rpak"//GetNPCTitanSettingFile( titan )
 	soul.SetPlayerSettingsName( settings )
 
 	soul.hijackProgress = 0
@@ -95,8 +92,8 @@ void function InitSoul( entity soul, entity titan )
 	SetTeam( soul, titan.GetTeam() )
 
 	float titanShieldHealth = GetTitanSoulShieldHealth( soul )
-	soul.SetShieldHealth( titanShieldHealth )
 	soul.SetShieldHealthMax( titanShieldHealth )
+	soul.SetShieldHealth( titanShieldHealth )
 
 	soul.lastAttackInfo = {
 		attacker = titan,
@@ -249,6 +246,11 @@ void function TitanTaken( entity player, entity titan )
 void function SoulBecomesOwnedByPlayer( entity soul, entity player )
 {
 	soul.SetBossPlayer( player )
+
+	// fix "TITAN READY" message appearing because there's a one frame lag between the player ejecting and the soul dying and reseting the titan respawn timer
+	// SetTitanRespawnTimer( player, 999999 )
+	// doesn't seem to be happening anymore, so I'm commenting this out -Carlos
+	// TODO: DELETE IF UNNEEDED
 
 	player.Signal( "OnPlayerHasTitanInWorld" )
 }

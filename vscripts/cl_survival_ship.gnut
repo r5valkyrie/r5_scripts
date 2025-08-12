@@ -101,11 +101,14 @@ void function __PlayerPlaneStatusChanged( entity statusChangePlayer )
 
 	bool playerInPlane = player.GetPlayerNetBool( "playerInPlane" )
 
-	if( isLocalPlayer )
-	printt( "PLAYER PLANE STATUS CHANGED", playerInPlane )
-
 	if ( isLocalPlayer )
+	{
+		#if DEVELOPER
+			printt( "PLAYER PLANE STATUS CHANGED", playerInPlane )
+		#endif
+			
 		Signal( player, "PlayerPlaneStatusChanged" )
+	}
 
 	if ( playerInPlane )
 	{

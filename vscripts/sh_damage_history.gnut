@@ -26,11 +26,12 @@ global function  TypeMatch
 global function SendDeathRecapDataToPlayer
 #endif
 
-const DEATH_RECAP_DAMAGE_HISTORY_TIME = 30    // how many seconds back in time we'll look for damage
-const DEATH_REACP_GROUP_MAX_TIME = 1.0        // max time for a grouping of damage events
-const DEATH_REACP_GROUP_MAX_HITS = 9          // max number of hits per group
-const INVALID_EHANDLE = -1
-const DEBUG_DAMAGE_HISTORY = false
+const int DEATH_RECAP_DAMAGE_HISTORY_TIME = 30    // how many seconds back in time we'll look for damage
+const float DEATH_REACP_GROUP_MAX_TIME = 1.0        // max time for a grouping of damage events
+const int DEATH_REACP_GROUP_MAX_HITS = 9          // max number of hits per group
+const int INVALID_EHANDLE = -1
+const bool DEBUG_DAMAGE_HISTORY = false
+const int MAX_DAMAGE_BLOCKS_SEND = 10 //(mk): max for numSentBlock is set to 15 in ServerCallback_SendDeathRecapData 
 
 global enum eDamageHistorySet
 {
@@ -597,18 +598,18 @@ void function SendDeathRecapDataToPlayer( entity player )
 	damageBlocks.extend( dealtDamageBlocks )
 	damageBlocks.sort( SortByBlockTime )
 
-	#if DEVELOPER
-		float gatheredTimeFrame = -1
-		if ( damageBlocks.len() > 0 )
-			gatheredTimeFrame = damageBlocks[0].blockTime - damageBlocks[ minint( 9, damageBlocks.len() - 1 ) ].blockTime
-		printf( "DR:\t Gathered Damage Blocks: Entries %d, Time Frame %.2f", damageBlocks.len(), gatheredTimeFrame )
-		printt( "DR:\t\tTime\tID\t\tType\tHits\tShield\tHealth\tDamage\tAttacker/Victim" )
-	#endif
+	// #if DEVELOPER
+		// float gatheredTimeFrame = -1
+		// if ( damageBlocks.len() > 0 )
+			// gatheredTimeFrame = damageBlocks[0].blockTime - damageBlocks[ minint( 9, damageBlocks.len() - 1 ) ].blockTime
+		// printf( "DR:\t Gathered Damage Blocks: Entries %d, Time Frame %.2f", damageBlocks.len(), gatheredTimeFrame )
+		// printt( "DR:\t\tTime\tID\t\tType\tHits\tShield\tHealth\tDamage\tAttacker/Victim" )
+	// #endif
 
 	int numSentBlock = damageBlocks.len()
 	// we can only handle 10 damage blocks
-	if( numSentBlock > 10 )
-		numSentBlock = 10
+	if( numSentBlock > MAX_DAMAGE_BLOCKS_SEND )
+		numSentBlock = MAX_DAMAGE_BLOCKS_SEND
 
 	// sending the most recent damage first. Once we hit 10 or the end of the array, we stop.
 	foreach( index, block in damageBlocks )
@@ -616,9 +617,26 @@ void function SendDeathRecapDataToPlayer( entity player )
 		if ( index >= numSentBlock )
 			break
 		
-		//Cafe was here
-		Remote_CallFunction_NonReplay( player, "ServerCallback_SendDeathRecapData", block.attackerEHandle, block.victimEHandle, block.damageSourceID, block.damageType, block.totalDamage, block.hitCount, block.headShotBits, block.healthFrac, block.shieldFrac, block.blockTime, index, numSentBlock )
+		Remote_CallFunction_NonReplay
+		( 
+			player, 
+			"ServerCallback_SendDeathRecapData", 
+			block.attackerEHandle, 
+			block.victimEHandle, 
+			block.damageSourceID, 
+			block.damageType, 
+			block.totalDamage, 
+			block.hitCount, 
+			block.headShotBits, 
+			block.healthFrac, 
+			block.shieldFrac, 
+			block.blockTime, 
+			index, 
+			numSentBlock 
+		)
 
+		//(mk): Retail native function, R5R does not have. 
+		
 		// stack a block to the client
 		// player.PushDeathRecapBlock(
 			// block.attackerEHandle,
@@ -634,11 +652,11 @@ void function SendDeathRecapDataToPlayer( entity player )
 			// index,
 			// numSentBlock)
 
-		#if DEVELOPER
-			string v = string( GetEntityFromEncodedEHandle( block.victimEHandle ) )
-			string a = string( GetEntityFromEncodedEHandle( block.attackerEHandle ) )
-			printf( "DR:\t\t%.2f\t%d\t%8d\t%d\t\t%.2f\t%.2f\t%d\t\t%s\t%s", block.blockTime, block.damageSourceID, block.damageType, block.hitCount, block.shieldFrac, block.healthFrac, block.totalDamage, a, v )
-		#endif
+		// #if DEVELOPER
+			// string v = string( GetEntityFromEncodedEHandle( block.victimEHandle ) )
+			// string a = string( GetEntityFromEncodedEHandle( block.attackerEHandle ) )
+			// printf( "DR:\t\t%.2f\t%d\t%8d\t%d\t\t%.2f\t%.2f\t%d\t\t%s\t%s", block.blockTime, block.damageSourceID, block.damageType, block.hitCount, block.shieldFrac, block.healthFrac, block.totalDamage, a, v )
+		// #endif
 	}
 
 	Assert( damageBlocks.len() > 0 )
@@ -652,16 +670,15 @@ void function SendDeathRecapDataToPlayer( entity player )
 
 	// player.FlushDeathRecapBlocks( killerEHandle )
 	
-	//Cafe was here
-	Remote_CallFunction_NonReplay( player, "ServerCallback_DeathRecapDataUpdated", true, killerEHandle)
+	Remote_CallFunction_NonReplay( player, "ServerCallback_DeathRecapDataUpdated", true, killerEHandle )
 
 	// TEMP DUMP OF DAMAGE HISTORY (TAKEN AND DEALT)
-	#if DEVELOPER
-		printt( "DR:\t\t------- Taken Damage -------" )
-		DumpDamageHistory( player.e.recentDamageHistory )
-		printt( "DR:\t\t------- Dealt Damage -------" )
-		DumpDamageHistory( player.e.recentDealtDamageHistory )
-	#endif
+	// #if DEVELOPER
+		// printt( "DR:\t\t------- Taken Damage -------" )
+		// DumpDamageHistory( player.e.recentDamageHistory )
+		// printt( "DR:\t\t------- Dealt Damage -------" )
+		// DumpDamageHistory( player.e.recentDealtDamageHistory )
+	// #endif
 }
 
 #if DEVELOPER
@@ -816,7 +833,7 @@ array<DeathRecapDamageData> function GatherDealtDamageEvents( array<DamageHistor
 			damageBlockArray[ damageBlockIndex ].healthFrac = 0
 			damageBlockArray[ damageBlockIndex ].shieldFrac = 0
 			damageBlockArray[ damageBlockIndex ].blockTime = damageTime    // time of latest entry in the block
-			damageBlockArray[ damageBlockIndex ].index = damageBlockIndex + (dealt ? 10 : 0)    // make dealt damage happens before taken damage if on the same timestamp
+			damageBlockArray[ damageBlockIndex ].index = damageBlockIndex + ( dealt ? 10 : 0 )    // make dealt damage happens before taken damage if on the same timestamp
 
 			blockEntryTime = damageTime
 			headShotBitIndex = 0
@@ -955,7 +972,7 @@ void function TryFakeDamageHistory( entity player )
 
 	foreach( index, block in damageBlocks )
 	{
-		if ( index >= 10 )
+		if ( index >= MAX_DAMAGE_BLOCKS_SEND )
 			break // we can only handle 10 damage blocks
 
 		string v = string( GetEntityFromEncodedEHandle( block.victimEHandle ) )

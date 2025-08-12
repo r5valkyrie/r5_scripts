@@ -1,6 +1,3 @@
-// Reimplemented by @CafeFPS (@CafeFPS)
-// everyone else -- advice
-
 #base "_base_ability_tactical.txt"
 
 WeaponData
@@ -194,7 +191,7 @@ WeaponData
     "ammo_min_to_fire"								"30"
     "ammo_per_shot"									"30"
     "ammo_stockpile_max"							"30"
-	"regen_ammo_refill_rate"						"2"
+	"regen_ammo_refill_rate"						"7.500000"
     "regen_ammo_refill_start_delay"					"0.0"
     "low_ammo_fraction" 							"0.0"
 

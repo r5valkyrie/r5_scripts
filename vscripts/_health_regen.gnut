@@ -238,10 +238,10 @@ int function PilotShieldModifyDamage( entity player, var damageInfo )
 	}
 
 	#if DEVELOPER
-		printt( "shieldDamageFrac:", shieldDamageFrac )
-		printt( "shieldDamage:", shieldDamage )
-		printt( "remainingShieldHealth:", remainingShieldHealth )
-		printt( "normalDamage:", normalDamage )
+		// printt( "shieldDamageFrac:", shieldDamageFrac )
+		// printt( "shieldDamage:", shieldDamage )
+		// printt( "remainingShieldHealth:", remainingShieldHealth )
+		// printt( "normalDamage:", normalDamage )
 	#endif
 
 	Assert( normalDamage + shieldDamage >= baseDamage )

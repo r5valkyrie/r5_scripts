@@ -2,16 +2,18 @@ global function PainDeathSounds_Init
 global function PlayDeathSounds
 global function PlayPainSounds
 global function TogglePainDeathDebug
+global function PlayAnyPainSound
+global function PlayAnyDeathSound
 
 struct PainOrDeathSound
 {
 	bool functionref( entity, entity, bool, int, int ) isSoundTypeFunc
-	string alias_1p_victim_only
-	string alias_3p_except_victim
-	string alias_3p_attacker_only
-	string alias_3p_except_attacker
-	bool blocksPriority
-	int priority
+	string                                             alias_1p_victim_only
+	string                                             alias_3p_except_victim
+	string                                             alias_3p_attacker_only
+	string                                             alias_3p_except_attacker
+	bool                                               blocksPriority
+	int                                                priority
 }
 
 struct
@@ -29,6 +31,7 @@ enum eBodyTypes
 	NPC_GRUNT
 	NPC_MARVIN
 	NPC_PROWLER
+	NPC_SPIDER
 	NPC_SPECIALIST
 	NPC_SPECTRE
 	NPC_STALKER
@@ -37,21 +40,25 @@ enum eBodyTypes
 	PLAYER_ANDROID_MALE
 	PLAYER_HUMAN_FEMALE
 	PLAYER_HUMAN_MALE
-	TITAN
-
+	CLASS_BANGALORE
 	CLASS_BANSHEE
 	CLASS_BLOODHOUND
+	CLASS_CAUSTIC
 	CLASS_GIBRALTER
 	CLASS_LIFELINE
-	CLASS_PATHFINDER
 	CLASS_MIRAGE
-	CLASS_BANGALORE
-	CLASS_CAUSTIC
 	CLASS_OCTANE
+	CLASS_PATHFINDER
 	CLASS_WATTSON
 	CLASS_CRYPTO
-
-	total
+	CLASS_REVENANT
+	CLASS_LOBA
+	CLASS_RAMPART
+	CLASS_DUMMIE
+	CLASS_TITAN
+	CLASS_PILOT
+	TITAN
+	COUNT
 }
 
 int function GetBodyTypeIndexFromVictim( entity victim )
@@ -65,69 +72,7 @@ int function GetBodyTypeIndexFromVictim( entity victim )
 
 	if ( victim.IsPlayer() )
 	{
-		if ( victim.IsMechanical() )
-		{
-			if ( IsPlayerFemale( victim ) )
-				return eBodyTypes.PLAYER_ANDROID_FEMALE
-
-			return eBodyTypes.PLAYER_ANDROID_MALE
-		}
-		else
-		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_CharacterClass() )
-			//string charRef = ItemFlavor_GetHumanReadableRef( character )
-			
-			//Disable ragdolls. todo make a playlist var for this. Cafe
-			if( Flowstate_ModeDisablesRagdolls() )
-			{
-				return eBodyTypes.NPC_SPECTRE 
-			}
-
-			int charID = ItemFlavor_GetGUID( character )
-			
-			//switch( charRef )
-			switch( charID ) //(mk): changed to guid compare
-			{
-				//case "character_wraith":
-				case 827049897:
-					return eBodyTypes.CLASS_BANSHEE // is this even the right class?
-				//case "character_bangalore":
-				case 725342087:
-					return eBodyTypes.CLASS_BANGALORE
-				//case "character_bloodhound":
-				case 898565421:
-					return eBodyTypes.CLASS_BLOODHOUND
-				//case "character_caustic":
-				case 1111853120:
-					return eBodyTypes.CLASS_CAUSTIC
-				//case "character_crypto":
-				case 80232848:
-					return eBodyTypes.CLASS_CRYPTO
-				//case "character_gibraltar":
-				case 182221730:
-					return eBodyTypes.CLASS_GIBRALTER
-				//case "character_lifeline":
-				case 1409694078:
-					return eBodyTypes.CLASS_LIFELINE
-				//case "character_mirage":
-				case 2045656322:
-					return eBodyTypes.CLASS_MIRAGE
-				//case "character_octane":
-				case 843405508:
-					return eBodyTypes.CLASS_OCTANE
-				//case "character_pathfinder":
-				case 1464849662:
-					return eBodyTypes.CLASS_PATHFINDER
-				//case "character_wattson":
-				case 187386164:
-					return eBodyTypes.CLASS_WATTSON
-			}
-
-			if ( IsPlayerFemale( victim ) )
-				return eBodyTypes.PLAYER_HUMAN_FEMALE
-
-			return eBodyTypes.PLAYER_HUMAN_MALE
-		}
+		return eBodyTypes[ victim.GetPlayerSettingString( "painDeathSoundType" ) ]
 	}
 
 	if ( IsSpecialist( victim ) )
@@ -154,51 +99,42 @@ int function GetBodyTypeIndexFromVictim( entity victim )
 	return -1
 }
 
+
 void function PainDeathSounds_Init()
 {
-	file.painSounds.resize( eBodyTypes.total )
-	file.deathSounds.resize( eBodyTypes.total )
+	file.painSounds.resize( eBodyTypes.COUNT )
+	file.deathSounds.resize( eBodyTypes.COUNT )
 
 	var dataTable = GetDataTable( $"datatable/pain_death_sounds.rpak" )
-	int numRows = GetDatatableRowCount( dataTable )
+	int numRows   = GetDatatableRowCount( dataTable )
 
-	int eventColumn	 			= GetDataTableColumnByName( dataTable, "event" )
-	int blocksPriorityColumn	= GetDataTableColumnByName( dataTable, "blocksNextPriority" )
-	int methodColumn	 		= GetDataTableColumnByName( dataTable, "method" )
-	int priorityColumn	 		= GetDataTableColumnByName( dataTable, "priority" )
-	int bodyTypeColumn	 		= GetDataTableColumnByName( dataTable, "bodyType" )
-	int alias_1p_victim_only_column = GetDataTableColumnByName( dataTable, "alias_1p_victim_only" )
-	int alias_3p_except_victim_column = GetDataTableColumnByName( dataTable, "alias_3p_except_victim" )
-	int alias_3p_attacker_only_column = GetDataTableColumnByName( dataTable, "alias_3p_attacker_only" )
+	int featureFlagColumn               = GetDataTableColumnByName( dataTable, "featureFlag" )
+	int eventColumn                     = GetDataTableColumnByName( dataTable, "event" )
+	int blocksPriorityColumn            = GetDataTableColumnByName( dataTable, "blocksNextPriority" )
+	int methodColumn                    = GetDataTableColumnByName( dataTable, "method" )
+	int priorityColumn                  = GetDataTableColumnByName( dataTable, "priority" )
+	int bodyTypeColumn                  = GetDataTableColumnByName( dataTable, "bodyType" )
+	int alias_1p_victim_only_column     = GetDataTableColumnByName( dataTable, "alias_1p_victim_only" )
+	int alias_3p_except_victim_column   = GetDataTableColumnByName( dataTable, "alias_3p_except_victim" )
+	int alias_3p_attacker_only_column   = GetDataTableColumnByName( dataTable, "alias_3p_attacker_only" )
 	int alias_3p_except_attacker_column = GetDataTableColumnByName( dataTable, "alias_3p_except_attacker" )
-	// int visibleColumn			= GetDataTableColumnByName( dataTable, "spmp" )
-
- 	// table<string,bool> visibleMask
-	// visibleMask[ "spmp" ] <- true
-	// if ( IsMultiplayer() )
-	// 	visibleMask[ "mp" ] <- true
-	// else if ( IsSingleplayer() )
-	// 	visibleMask[ "sp" ] <- true
 
 	for ( int i = 0; i < numRows; i++ )
 	{
-		// string visible = GetDataTableString( dataTable, i, visibleColumn )
-		// if ( !( visible in visibleMask ) )
-		// 	continue
+		string event          = GetDataTableString( dataTable, i, eventColumn )
 
-		int priority			 		= GetDataTableInt( dataTable, i, priorityColumn )
-		bool blocksPriority		 		= GetDataTableBool( dataTable, i, blocksPriorityColumn )
-		string event	 				= GetDataTableString( dataTable, i, eventColumn )
-		string method	 				= GetDataTableString( dataTable, i, methodColumn )
-		string bodyTypeName				= GetDataTableString( dataTable, i, bodyTypeColumn )
-		string alias_1p_victim_only 	= GetDataTableString( dataTable, i, alias_1p_victim_only_column )
-		string alias_3p_except_victim 	= GetDataTableString( dataTable, i, alias_3p_except_victim_column )
-		string alias_3p_attacker_only 	= GetDataTableString( dataTable, i, alias_3p_attacker_only_column )
+		int priority                    = GetDataTableInt( dataTable, i, priorityColumn )
+		bool blocksPriority             = GetDataTableBool( dataTable, i, blocksPriorityColumn )
+		string method                   = GetDataTableString( dataTable, i, methodColumn )
+		string bodyTypeName             = GetDataTableString( dataTable, i, bodyTypeColumn )
+		string alias_1p_victim_only     = GetDataTableString( dataTable, i, alias_1p_victim_only_column )
+		string alias_3p_except_victim   = GetDataTableString( dataTable, i, alias_3p_except_victim_column )
+		string alias_3p_attacker_only   = GetDataTableString( dataTable, i, alias_3p_attacker_only_column )
 		string alias_3p_except_attacker = GetDataTableString( dataTable, i, alias_3p_except_attacker_column )
-		int bodyType = eBodyTypes[ bodyTypeName ]
+		int bodyType                    = eBodyTypes[ bodyTypeName ]
 
 		PainOrDeathSound painOrDeathSound
-		painOrDeathSound.isSoundTypeFunc 	= GetSoundTypeFuncFromName( method )
+		painOrDeathSound.isSoundTypeFunc = GetSoundTypeFuncFromName( method )
 		painOrDeathSound.alias_1p_victim_only = alias_1p_victim_only
 		painOrDeathSound.alias_3p_except_victim = alias_3p_except_victim
 		painOrDeathSound.alias_3p_attacker_only = alias_3p_attacker_only
@@ -207,8 +143,8 @@ void function PainDeathSounds_Init()
 		painOrDeathSound.priority = priority
 
 		#if DEVELOPER
-		if ( priority < 100 || priority > 500 )
-			Warning( "PainDeathSound event priority must be between 100 and 500. See " + event + " " + method )
+			if ( priority < 100 || priority > 500 )
+				Warning( "PainDeathSound event priority must be between 100 and 500. See " + event + " " + method )
 		#endif
 
 		switch ( event )
@@ -227,12 +163,13 @@ void function PainDeathSounds_Init()
 		}
 	}
 
-	for ( int i = 0; i < eBodyTypes.total; i++ )
+	for ( int i = 0; i < eBodyTypes.COUNT; i++ )
 	{
 		file.painSounds[ i ].sort( PainOrDeathSort )
 		file.deathSounds[ i ].sort( PainOrDeathSort )
 	}
 }
+
 
 int function PainOrDeathSort( PainOrDeathSound a, PainOrDeathSound b )
 {
@@ -278,9 +215,6 @@ bool functionref( entity, entity, bool, int, int ) function GetSoundTypeFuncFrom
 		case "SE_HEADSHOT_TITAN":
 			return SE_HEADSHOT_TITAN
 
-		case "SE_NECK_SNAP":
-			return SE_NECK_SNAP
-
 		case "SE_THERMITE_GRENADE":
 			return SE_THERMITE_GRENADE
 
@@ -295,8 +229,11 @@ bool functionref( entity, entity, bool, int, int ) function GetSoundTypeFuncFrom
 
 		case "SE_TITAN_STEP":
 			return SE_TITAN_STEP
+
+		case "SE_EXECUTION":
+			return SE_EXECUTION
 	}
-	return SE_ANY
+
 	unreachable
 }
 
@@ -305,41 +242,48 @@ bool function SE_ANY( entity victim, entity attacker, bool isValidHeadshot, int 
 	if( Playlist() == ePlaylists.fs_lgduels_1v1 || Flowstate_IsHaloMode() )
 		return false
 
-	if(damageSourceID == eDamageSourceId.deathField) // Ring shouldn't play pain sounds
+	if ( damageSourceID == eDamageSourceId.outOfBounds || damageSourceID == eDamageSourceId.deathField )
 		return false
 	
 	return true
 }
+
 
 bool function SE_GIB( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return bool( damageTypes & DF_GIB )
 }
 
+
 bool function SE_BULLET( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return bool( damageTypes & DF_BULLET )
 }
+
 
 bool function SE_DISSOLVE( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return bool( damageTypes & DF_DISSOLVE )
 }
 
+
 bool function SE_ELECTRICAL( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return bool( damageTypes & DF_ELECTRICAL )
 }
+
 
 bool function SE_EXPLOSION( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return bool( damageTypes & DF_EXPLOSION )
 }
 
+
 bool function SE_FALL( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return damageSourceID == eDamageSourceId.fall
 }
+
 
 bool function SE_HEADSHOT_BULLET( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
@@ -349,6 +293,7 @@ bool function SE_HEADSHOT_BULLET( entity victim, entity attacker, bool isValidHe
 	return bool( damageTypes & DF_BULLET )
 }
 
+
 bool function SE_HEADSHOT_SHOTGUN( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	if ( !isValidHeadshot )
@@ -356,6 +301,7 @@ bool function SE_HEADSHOT_SHOTGUN( entity victim, entity attacker, bool isValidH
 
 	return bool( damageTypes & DF_SHOTGUN )
 }
+
 
 bool function SE_HEADSHOT_TITAN( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
@@ -365,15 +311,18 @@ bool function SE_HEADSHOT_TITAN( entity victim, entity attacker, bool isValidHea
 	return isValidHeadshot
 }
 
-bool function SE_NECK_SNAP( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
+
+bool function SE_EXECUTION( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return damageSourceID == eDamageSourceId.human_execution
 }
+
 
 bool function SE_THERMITE_GRENADE( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return damageSourceID == eDamageSourceId.mp_weapon_thermite_grenade
 }
+
 
 bool function SE_PROWLER( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
@@ -383,21 +332,24 @@ bool function SE_PROWLER( entity victim, entity attacker, bool isValidHeadshot, 
 	return IsProwler( attacker )
 }
 
+
 bool function SE_SMOKE( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return damageSourceID == eDamageSourceId.mp_weapon_grenade_electric_smoke
 }
 
+
 bool function SE_CORROSIVE_GAS( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
-	return damageSourceID == eDamageSourceId.damagedef_gas_exposure	// no clue if it's the right one
+	return  (damageSourceID == eDamageSourceId.damagedef_grenade_gas) || (damageSourceID == eDamageSourceId.damagedef_gas_exposure)
 }
+
 
 bool function SE_TITAN_STEP( entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	return false
-	// return bool( damageTypes & DF_TITAN_STEP )
 }
+
 
 void function PlayPainSounds( entity victim, var damageInfo )
 {
@@ -406,6 +358,7 @@ void function PlayPainSounds( entity victim, var damageInfo )
 		PlayPainOrDeathSounds( file.painSounds[ bodyType ], victim, damageInfo )
 }
 
+
 void function PlayDeathSounds( entity victim, var damageInfo )
 {
 	int bodyType = GetBodyTypeIndexFromVictim( victim )
@@ -413,17 +366,51 @@ void function PlayDeathSounds( entity victim, var damageInfo )
 		PlayPainOrDeathSounds( file.deathSounds[ bodyType ], victim, damageInfo )
 }
 
+
+void function PlayAnyPainOrDeathSound( entity victim, bool isDeathSound )
+{
+	int bodyType = GetBodyTypeIndexFromVictim( victim )
+	if ( bodyType < 0 )
+		return
+
+	entity attacker                     = victim
+	bool isValidHeadshot                = false
+	int damageTypes                     = 0
+	int damageSourceID                  = eDamageSourceId.burn
+	array<PainOrDeathSound> soundEvents = (isDeathSound ? file.deathSounds[bodyType] : file.painSounds[bodyType])
+	PlayPainOrDeathSoundsInternal( soundEvents, victim, attacker, isValidHeadshot, damageTypes, damageSourceID )
+}
+
+
+void function PlayAnyPainSound( entity victim )
+{
+	PlayAnyPainOrDeathSound( victim, false )
+}
+
+
+void function PlayAnyDeathSound( entity victim )
+{
+	PlayAnyPainOrDeathSound( victim, true )
+}
+
+
 void function PlayPainOrDeathSounds( array<PainOrDeathSound> soundEvents, entity victim, var damageInfo )
+{
+	entity attacker      = DamageInfo_GetAttacker( damageInfo )
+	bool isValidHeadshot = IsValidHeadShot( damageInfo, victim )
+	int damageTypes      = DamageInfo_GetCustomDamageType( damageInfo )
+	int damageSourceID   = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+
+	PlayPainOrDeathSoundsInternal( soundEvents, victim, attacker, isValidHeadshot, damageTypes, damageSourceID )
+}
+
+
+void function PlayPainOrDeathSoundsInternal( array<PainOrDeathSound> soundEvents, entity victim, entity attacker, bool isValidHeadshot, int damageTypes, int damageSourceID )
 {
 	array<string> alias_1p_victim_only
 	array<string> alias_3p_except_victim
 	array<string> alias_3p_attacker_only
 	array<string> alias_3p_except_attacker
-
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	bool isValidHeadshot = IsValidHeadShot( damageInfo, victim )
-	int damageTypes = DamageInfo_GetCustomDamageType( damageInfo )
-	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 
 	int lastPriority = 0
 	bool blockingPriority
@@ -457,7 +444,10 @@ void function PlayPainOrDeathSounds( array<PainOrDeathSound> soundEvents, entity
 
 	foreach ( sound in alias_3p_except_victim )
 	{
-		EmitSoundOnEntity( victim, sound )
+		if ( victim.IsPlayer() )
+			EmitSoundOnEntityExceptToPlayer( victim, victim, sound )
+		else
+			EmitSoundOnEntity( victim, sound )
 	}
 
 	if ( victim.IsPlayer() )
@@ -489,43 +479,44 @@ void function PlayPainOrDeathSounds( array<PainOrDeathSound> soundEvents, entity
 	}
 
 	#if DEVELOPER
-	if ( !file.painDeathDebug )
-		return
+		if ( !file.painDeathDebug )
+			return
 
-	foreach ( sound in alias_3p_except_victim )
-	{
-		printt( "PAIN_DEATH_DEBUG: EmitSoundOnEntity - " + sound )
-	}
-
-	if ( victim.IsPlayer() )
-	{
-		foreach ( sound in alias_1p_victim_only )
-		{
-			printt( "PAIN_DEATH_DEBUG: EmitSoundOnEntityOnlyToPlayer - " + sound )
-		}
-	}
-
-	if ( attacker.IsPlayer() )
-	{
-		foreach ( sound in alias_3p_except_attacker )
-		{
-			printt( "PAIN_DEATH_DEBUG: EmitSoundOnEntityExceptToPlayer - " + sound )
-		}
-
-		foreach ( sound in alias_3p_attacker_only )
-		{
-			printt( "PAIN_DEATH_DEBUG: EmitSoundOnEntityOnlyToPlayer - " + sound )
-		}
-	}
-	else
-	{
-		foreach ( sound in alias_3p_except_attacker )
+		foreach ( sound in alias_3p_except_victim )
 		{
 			printt( "PAIN_DEATH_DEBUG: EmitSoundOnEntity - " + sound )
 		}
-	}
+
+		if ( victim.IsPlayer() )
+		{
+			foreach ( sound in alias_1p_victim_only )
+			{
+				printt( "PAIN_DEATH_DEBUG: EmitSoundOnEntityOnlyToPlayer - " + sound )
+			}
+		}
+
+		if ( attacker.IsPlayer() )
+		{
+			foreach ( sound in alias_3p_except_attacker )
+			{
+				printt( "PAIN_DEATH_DEBUG: EmitSoundOnEntityExceptToPlayer - " + sound )
+			}
+
+			foreach ( sound in alias_3p_attacker_only )
+			{
+				printt( "PAIN_DEATH_DEBUG: EmitSoundOnEntityOnlyToPlayer - " + sound )
+			}
+		}
+		else
+		{
+			foreach ( sound in alias_3p_except_attacker )
+			{
+				printt( "PAIN_DEATH_DEBUG: EmitSoundOnEntity - " + sound )
+			}
+		}
 	#endif
 }
+
 
 void function TogglePainDeathDebug()
 {

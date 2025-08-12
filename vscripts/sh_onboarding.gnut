@@ -65,10 +65,6 @@ global function SV_CL_Onboarding_Init
 	#endif
 #endif
 
-#if ENTITYVAR_DEPRECATED
-	global function ModifiedMovement_RegisterNetworking
-#endif
-
 global function PreGame_GetWaitingForPlayersHasBlackScreen
 global function PreGame_GetWaitingForPlayersSpawningEnabled
 global function PreGame_GetWaitingForPlayersDelayMin
@@ -93,7 +89,739 @@ global function CharSelect_GetOutroTransitionDuration
 
 global function Survival_GetCharacterSelectDuration
 global function Survival_CharacterSelectEnabled
+//So ideally, don't change this if you don't want prediction to be fucked. Open a PR on Flowstate repo if you have feedback for these vars <3 Cafe
+global const table TRUE_TF2_SETTINGS = 
+{
+	//["acceleration"] = 10.0,
+	["airacceleration"] = 500.0,
+	//["airspeed"] = 60,
+	["antiMultiJumpHeightFrac"] = 1.0,
+	["automantle"] = 1.0,
+	["automantle_enable"] = 1.0,
+	["doublejump"] = 1.0,
+	["gravityscale"] = 0.75,
+	["impactSpeed"] = 380.0,
+	["jumpheight"] = 60.0,
+	["landslowdownduration"] = 0.0,
+	["leech_range"] = 64.0,
+	["skip_speed_reduce"] = 0.0,
+	["Slidejumpheight"] = 90.0,
+	["slideRequiredStartSpeed"] = 200.0,
+	["slideSpeedBoostCap"] = 9999999.0,
+	["slidedecel"] = 50.0,
+	["slidevelocitydecay"] = 0.7,
+	["stepheight"] = 18.0,
+	["superjumpHorzSpeed"] = 180.0,
+	["superjumpMaxHeight"] = 60.0,
+	["superjumpMinHeight"] = 60.0,
+	["wallrun"] = 1.0,
+	["wallrunAccelerateHorizontal"] = 1400.0,
+	["wallrunAccelerateVertical"] = 360.0,
+	["wallrunJumpInputDirSpeed"] = 75.0,
+	["wallrunJumpOutwardSpeed"] = 205.0,
+	["wallrunJumpUpSpeed"] = 230.0,
+	["wallrunMaxSpeedHorizontal"] = 340.0,
+	["wallrunMaxSpeedVertical"] = 225.0,
+	["wallrun_timeLimit"] = 1.75,
+	["ziplineSpeed"] = 600.0,
+	["skip_speed_retain"] = 99999.0,
+	["slide_boost_cooldown"] = 2.0,
+	["speed"] = 162.5,
+	["sprintspeed"] = 243.0,
+	["grapple_shootVel"] = 3000.0,
+	["grapple_speedRampMax_human"] = 800.0,
+	["wallrun_maxViewTilt"] = 15.0,
+	["sprintViewOffset"] = -6.0,
+	["sprintStartDelay"] = 0.2,
+	["sprintStartDuration"] = 0.8,
+	["sprintStartFastDuration"] = 0.2,
+	["sprintEndDuration"] = 0.15,
+	["sprinttiltMaxRoll"] = 2.0,
+	["grapple_windowCheckDist"] = 150.0,
+	["grapple_detachLengthMin"] = 33.0,
+	["grapple_detachLengthMax"] = 50.0,
+	["grapple_detachAwaySpeed"] = 500.0,
+	["grapple_gravityFracMin"] = 0.25,
+	["grapple_gravityFracMax"] = 0.7,
+	["grapple_detachVerticalBoost"] = 200.0,
+	["grapple_detachVerticalMaxSpeed"] = 200.0,
+	["grapple_detachSpeedLoss"] = 300.0,
+	["grapple_detachSpeedLossMin"] = 430.0,
+	["grapple_detachLowSpeedThreshold"] = 250.0,
+	["grapple_detachLowSpeedTime"] = 1.5,
+	["grapple_detachLowSpeedWallTime"] = 1.2,
+	["grapple_detachLowSpeedGroundTime"] = 0.7,
+	["grapple_impactVerticalBoost"] = 300.0,
+	["grapple_impactVerticalMaxSpeed"] = 300.0,
+	["grapple_power_regen_delay"] = 3.0,
+	["grapple_power_regen_rate"] = 3.0,
+	["grapple_airSpeedMax"] = 420.0,
+	["grapple_airAccel"] = 650.0,
+	["wallrun_allowed_wall_dist"] = 13.0,
+	["wallrun_allowed_wall_dist_wallhang"] = 18.0,
+	["wallrun_gravityRampUpTime"] = 0.7,
+	["wallrun_sameWallHeight"] = 0.0,
+	["wallrun_upWallBoost"] = 250.0,
+	["wallrun_hangTimeLimit"] = 25.0,
+	["zipline_use_range"] = 120.0
+}
 
+global const table TRUE_TF2_SETTINGS_HIGH_AIRACCEL = 
+{
+	//["acceleration"] = 10.0,
+	["airacceleration"] = 9000.0, //increase air accel
+	//["airspeed"] = 60.0,
+	["antiMultiJumpHeightFrac"] = 1.0,
+	["automantle"] = 0.0, //disable auto mantle
+	["automantle_enable"] = 0.0,
+	["doublejump"] = 1.0,
+	["gravityscale"] = 0.75,
+	["impactSpeed"] = 380.0,
+	["jumpheight"] = 60.0,
+	["landslowdownduration"] = 0.0,
+	["leech_range"] = 64.0,
+	["skip_speed_reduce"] = 0.0,
+	["Slidejumpheight"] = 90.0,
+	["slideRequiredStartSpeed"] = 200.0,
+	["slideSpeedBoostCap"] = 9999999.0,
+	["slidedecel"] = 50.0,
+	["slidevelocitydecay"] = 0.7,
+	["stepheight"] = 18.0,
+	["superjumpHorzSpeed"] = 180.0,
+	["superjumpMaxHeight"] = 60.0,
+	["superjumpMinHeight"] = 60.0,
+	["wallrun"] = 1.0,
+	["wallrunAccelerateHorizontal"] = 1400.0,
+	["wallrunAccelerateVertical"] = 360.0,
+	["wallrunJumpInputDirSpeed"] = 75.0,
+	["wallrunJumpOutwardSpeed"] = 205.0,
+	["wallrunJumpUpSpeed"] = 230.0,
+	["wallrunMaxSpeedHorizontal"] = 340.0,
+	["wallrunMaxSpeedVertical"] = 225.0,
+	["wallrun_timeLimit"] = 1.75,
+	["ziplineSpeed"] = 600.0,
+	["skip_speed_retain"] = 99999.0,
+	["slide_boost_cooldown"] = 2.0,
+	["speed"] = 162.5,
+	["sprintspeed"] = 243.0,
+	["grapple_shootVel"] = 3000.0,
+	["grapple_speedRampMax_human"] = 800.0,
+	["wallrun_maxViewTilt"] = 15.0,
+	["sprintViewOffset"] = -6.0,
+	["sprintStartDelay"] = 0.2,
+	["sprintStartDuration"] = 0.8,
+	["sprintStartFastDuration"] = 0.2,
+	["sprintEndDuration"] = 0.15,
+	["sprinttiltMaxRoll"] = 2.0,
+	["grapple_windowCheckDist"] = 150.0,
+	["grapple_detachLengthMin"] = 33.0,
+	["grapple_detachLengthMax"] = 50.0,
+	["grapple_detachAwaySpeed"] = 500.0,
+	["grapple_gravityFracMin"] = 0.25,
+	["grapple_gravityFracMax"] = 0.7,
+	["grapple_detachVerticalBoost"] = 200.0,
+	["grapple_detachVerticalMaxSpeed"] = 200.0,
+	["grapple_detachSpeedLoss"] = 300.0,
+	["grapple_detachSpeedLossMin"] = 430.0,
+	["grapple_detachLowSpeedThreshold"] = 250.0,
+	["grapple_detachLowSpeedTime"] = 1.5,
+	["grapple_detachLowSpeedWallTime"] = 1.2,
+	["grapple_detachLowSpeedGroundTime"] = 0.7,
+	["grapple_impactVerticalBoost"] = 300.0,
+	["grapple_impactVerticalMaxSpeed"] = 300.0,
+	["grapple_power_regen_delay"] = 3.0,
+	["grapple_power_regen_rate"] = 3.0,
+	["grapple_airSpeedMax"] = 420.0,
+	["grapple_airAccel"] = 650.0,
+	["wallrun_allowed_wall_dist"] = 13.0,
+	["wallrun_allowed_wall_dist_wallhang"] = 18.0,
+	["wallrun_gravityRampUpTime"] = 0.7,
+	["wallrun_sameWallHeight"] = 0.0,
+	["wallrun_upWallBoost"] = 250.0,
+	["wallrun_hangTimeLimit"] = 25.0,
+	["zipline_use_range"] = 120.0,
+	["grapple_accel_human"] = 1800.0, //buff grapple
+	["grapple_decel_human"] = 200.0, //buff grapple
+	["grapple_speedRampMin_human"] = 400.0, //buff grapple
+	["grapple_speedRampTime_human"] = 1.0 //buff grapple
+}
+
+global const table TRUE_TF2_SETTINGS_LOW_GRAV = 
+{
+	//["acceleration"] = 10,
+	["airacceleration"] = 500.0,
+	//["airspeed"] = 60.0,
+	["antiMultiJumpHeightFrac"] = 1.0,
+	["automantle"] = 1.0,
+	["automantle_enable"] = 1.0,
+	["doublejump"] = 1.0,
+	["gravityscale"] = 0.4,
+	["impactSpeed"] = 380.0,
+	["jumpheight"] = 60.0,
+	["landslowdownduration"] = 0.0,
+	["leech_range"] = 64.0,
+	["skip_speed_reduce"] = 0.0,
+	["Slidejumpheight"] = 90.0,
+	["slideRequiredStartSpeed"] = 200.0,
+	["slideSpeedBoostCap"] = 9999999.0,
+	["slidedecel"] = 50.0,
+	["slidevelocitydecay"] = 0.7,
+	["stepheight"] = 18.0,
+	["superjumpHorzSpeed"] = 180.0,
+	["superjumpMaxHeight"] = 60.0,
+	["superjumpMinHeight"] = 60.0,
+	["wallrun"] = 1.0,
+	["wallrunAccelerateHorizontal"] = 1400.0,
+	["wallrunAccelerateVertical"] = 360.0,
+	["wallrunJumpInputDirSpeed"] = 75.0,
+	["wallrunJumpOutwardSpeed"] = 205.0,
+	["wallrunJumpUpSpeed"] = 230.0,
+	["wallrunMaxSpeedHorizontal"] = 340.0,
+	["wallrunMaxSpeedVertical"] = 225.0,
+	["wallrun_timeLimit"] = 1.75,
+	["ziplineSpeed"] = 600.0,
+	["skip_speed_retain"] = 99999.0,
+	["slide_boost_cooldown"] = 2.0,
+	["speed"] = 162.5,
+	["sprintspeed"] = 243.0,
+	["grapple_shootVel"] = 3000.0,
+	["grapple_speedRampMax_human"] = 800.0,
+	["wallrun_maxViewTilt"] = 15.0,
+	["sprintViewOffset"] = -6.0,
+	["sprintStartDelay"] = 0.2,
+	["sprintStartDuration"] = 0.8,
+	["sprintStartFastDuration"] = 0.2,
+	["sprintEndDuration"] = 0.15,
+	["sprinttiltMaxRoll"] = 2.0,
+	["grapple_windowCheckDist"] = 150.0,
+	["grapple_detachLengthMin"] = 33.0,
+	["grapple_detachLengthMax"] = 50.0,
+	["grapple_detachAwaySpeed"] = 500.0,
+	["grapple_gravityFracMin"] = 0.25,
+	["grapple_gravityFracMax"] = 0.7,
+	["grapple_detachVerticalBoost"] = 200.0,
+	["grapple_detachVerticalMaxSpeed"] = 200.0,
+	["grapple_detachSpeedLoss"] = 300.0,
+	["grapple_detachSpeedLossMin"] = 430.0,
+	["grapple_detachLowSpeedThreshold"] = 250.0,
+	["grapple_detachLowSpeedTime"] = 1.5,
+	["grapple_detachLowSpeedWallTime"] = 1.2,
+	["grapple_detachLowSpeedGroundTime"] = 0.7,
+	["grapple_impactVerticalBoost"] = 300.0,
+	["grapple_impactVerticalMaxSpeed"] = 300.0,
+	["grapple_power_regen_delay"] = 3.0,
+	["grapple_power_regen_rate"] = 3.0,
+	["grapple_airSpeedMax"] = 420.0,
+	["grapple_airAccel"] = 650.0,
+	["wallrun_allowed_wall_dist"] = 13.0,
+	["wallrun_allowed_wall_dist_wallhang"] = 18.0,
+	["wallrun_gravityRampUpTime"] = 0.7,
+	["wallrun_sameWallHeight"] = 0.0,
+	["wallrun_upWallBoost"] = 250.0,
+	["wallrun_hangTimeLimit"] = 25.0,
+	["zipline_use_range"] = 120.0
+}
+
+global const table CSGO_MOVEMENT = 
+{
+	["acceleration"] = 550.0,
+	["airacceleration"] = 225.0,
+	["airspeed"] = 30.0,
+	["antiMultiJumpHeightFrac"] = 1.0,
+	["automantle"] = 0.0,
+	["automantle_enable"] = 0.0,
+	["climbEnabled"] = 0.0,
+	["climbheight"] = 0.1,
+	["gravityscale"] = 1.25,
+	["jumpheight"] = 55.0,
+	["player_slideBoostEnabled"] = 0.0,
+	["skip_speed_reduce"] = 0.0,
+	["skip_time"] = 0.0,
+	["slideRequiredStartSpeed"] = 9999999.0,
+	["slideRequiredStartSpeedAir"] = 9999999.0,
+	["slideSpeedBoost"] = 0.0,
+	["slideSpeedBoostCap"] = 0.0,
+	["slideVelocityDecay"] = 0.0,
+	["superjumpMinHeight"] = 0.0,
+	["wallrun"] = 0.0
+}
+
+global const table CSGO_MOVEMENT_HIGH_AIRACCEL = 
+{
+	["acceleration"] = 550.0,
+	["airacceleration"] = 9000.0,
+	["airspeed"] = 30.0,
+	["antiMultiJumpHeightFrac"] = 1.0,
+	["automantle"] = 0.0,
+	["automantle_enable"] = 0.0,
+	["climbEnabled"] = 0.0,
+	["climbheight"] = 0.1,
+	["gravityscale"] = 1.25,
+	["jumpheight"] = 55.0,
+	["player_slideBoostEnabled"] = 0.0,
+	["skip_speed_reduce"] = 0.0,
+	["skip_time"] = 0.0,
+	["slideRequiredStartSpeed"] = 9999999.0,
+	["slideRequiredStartSpeedAir"] = 9999999.0,
+	["slideSpeedBoost"] = 0.0,
+	["slideSpeedBoostCap"] = 0.0,
+	["slideVelocityDecay"] = 0.0,
+	["superjumpMinHeight"] = 0.0,
+	["wallrun"] = 0.0
+}
+
+global const table SURF_SETTINGS = 
+{
+	["airacceleration"] = 6000.0,
+	["acceleration"] = 550.0,
+	["landslowdownduration"] = 0.0,
+	["airspeed"] = 60.0
+}
+
+global const table HL1_MOVEMENT = 
+{
+	["acceleration"] = 550.0,
+	["airacceleration"] = 1200.0,
+	["airspeed"] = 30.0,
+	["antiMultiJumpHeightFrac"] = 1.0,
+	["automantle"] = 0.0,
+	["automantle_enable"] = 0.0,
+	["climbEnabled"] = 0.0,
+	["climbheight"] = 0.1,
+	["gravityscale"] = 1.25,
+	["jumpheight"] = 55.0,
+	["player_slideBoostEnabled"] = 0.0,
+	["skip_speed_reduce"] = 0.0,
+	["slideRequiredStartSpeed"] = 9999999.0,
+	["slideRequiredStartSpeedAir"] = 9999999.0,
+	["slideSpeedBoost"] = 0.0,
+	["slideSpeedBoostCap"] = 0.0,
+	["slideVelocityDecay"] = 0.0,
+	["superjumpMinHeight"] = 0.0,
+	["wallrun"] = 0.0
+}
+
+global const table HALO_MOVEMENT_NEW = 
+{
+	["antiMultiJumpHeightFrac"] = 1.0,
+	
+	["automantle"] = 0.0,
+	["automantle_enable"] = 0.0,
+	["climbEnabled"] = 0.0,
+	["climbheight"] = 0.0,
+	
+	["gravityscale"] = 0.7,
+	["jumpheight"] = 75.0,
+	["landslowdownduration"] = 0.0,
+	
+	["player_slideBoostEnabled"] = 1.0,
+	["slideRequiredStartSpeed"] = 200.0,
+	["slideRequiredStartSpeedAir"] = 9999999.0,
+	["slideSpeedBoost"] = 300.0,
+	["slideSpeedBoostCap"] = 350.0,
+
+	["wallrun"] = 0.0
+}
+
+global const table HALO_MOVEMENT = 
+{
+	["acceleration"] = 550.0,
+	["airStrafeAcceleration"] = 0.0,
+	["airStrafeEnabled"] = 0.0,
+	["airStrafeTaperFinish"] = 0.01,
+	["airStrafeTaperStart"] = 0.01,
+	["airacceleration"] = 0.0,
+	["airspeed"] = 0.0,
+	["speed"] = 185.0,
+	["antiMultiJumpHeightFrac"] = 1.0,
+	["automantle"] = 0.0,
+	["automantle_enable"] = 0.0,
+	["climbEnabled"] = 0.0,
+	["climbheight"] = 0.0,
+	["glideEnabled"] = 0.0,
+	["glideRedirectJumpHeightFinishOffset"] = 0.0,
+	["glideRedirectJumpHeightStartOffset"] = 0.0,
+	["glideRedirectSideways"] = 0.0,
+	["glideStrafe"] = 0.0,
+	["glideStrafeTaperFinish"] = 0.0,
+	["glideStrafeTaperStart"] = 0.0,
+	["gravityscale"] = 0.7,
+	["jumpheight"] = 65.0,
+	["landslowdownduration"] = 0.0,
+	["player_slideBoostEnabled"] = 0.0,
+	["skip_speed_reduce"] = 0.0,
+	["skip_time"] = 0.0,
+	["slideRequiredStartSpeed"] = 9999999.0,
+	["slideRequiredStartSpeedAir"] = 9999999.0,
+	["slideSpeedBoost"] = 0.0,
+	["slideSpeedBoostCap"] = 0.0,
+	["slideVelocityDecay"] = 0.0,
+	["superjumpCanUseAfterWallrun"] = 0.0,
+	["superjumpMinHeight"] = 0.0,
+	["wallrun"] = 0.0
+}
+
+global const table SUPERGLIDE_BOOST_SETTINGS = 
+{
+	["airacceleration"] = 1000.0,
+	["player_slideBoostEnabled"] = 1.0,
+	["player_slideBoostCooldown"] = 0.01,
+	["slideRequiredStartSpeedAir"] = 0.01,
+	["slideRequiredStartSpeed"]= 0.01,
+	["slideSpeedBoostCap"] = 2500.0,
+	["slideSpeedBoost"] = 2500.0
+}
+
+global const table INSTAGIB_PLAYER_SETTINGS = 
+{
+	["acceleration"] = 550.0,
+	["airacceleration"] = 1000.0,
+	["airspeed"] = 150.0,
+	["automantle_enable"] = 1.0,
+	["doublejump"] = 0.0,
+	["gravityscale"] = 0.85,
+	["impactSpeed"] = 380.0,
+	["jumpheight"] = 120.0,
+	["landslowdownduration"] = 0.0,
+	["leech_range"] = 64.0,
+	["slidedecel"] = 50.0,
+	["slidevelocitydecay"] = 0.7,
+	["stepheight"] = 18.0,
+	["superjumpHorzSpeed"] = 180.0,
+	["superjumpMaxHeight"] = 60.0,
+	["superjumpMinHeight"] = 60.0,
+	["wallrun"] = 0.0,
+	["wallrunAccelerateHorizontal"] = 1500.0,
+	["wallrunAccelerateVertical"] = 360.0,
+	["wallrunJumpInputDirSpeed"] = 80.0,
+	["wallrunJumpOutwardSpeed"] = 205.0,
+	["wallrunJumpUpSpeed"] = 230.0,
+	["wallrunMaxSpeedHorizontal"] = 420.0,
+	["wallrunMaxSpeedVertical"] = 225.0,
+	["wallrun_timeLimit"] = 1.75,
+	["ziplineSpeed"] = 600.0,
+	["skip_time"] = 0.0,
+	["antiMultiJumpHeightFrac"] = 1.0
+}
+
+global const table HAVEFUN_PLAYER_SETTINGS = 
+{
+	["airacceleration"] = 3000.0,
+	["airspeed"] = 1000.0,
+	["automantle_enable"] = 1.0,
+	["doublejump"] = 0.0,
+	["gravityscale"] = 0.35,
+	["impactSpeed"] = 380.0,
+	["jumpheight"] = 1000.0,
+	["landslowdownduration"] = 0.0,
+	["leech_range"] = 64.0,
+	["stepheight"] = 18.0,
+	["ziplineSpeed"] = 600.0,
+	["wallrun"] = 0.0,
+	["slidedecel"] = 50.0,
+	["slidevelocitydecay"] = 0.7,
+	["sprintspeed"] = 1000.0,
+	["speed"] = 800.0,
+	["superjumpMinHeight"] = 60.0,
+	["superjumpMaxHeight"] = 60.0,
+	["superjumpHorzSpeed"] = 180.0,
+	["wallrun_timeLimit"] = 1.75,
+	["wallrunJumpOutwardSpeed"] = 205.0,
+	["wallrunJumpUpSpeed"] = 230.0,
+	["wallrunJumpInputDirSpeed"] = 80.0,
+	["wallrunMaxSpeedVertical"] = 225.0,
+	["wallrunMaxSpeedHorizontal"] = 420.0,
+	["wallrunAccelerateVertical"] = 360.0,
+	["wallrunAccelerateHorizontal"] = 1500.0
+}
+
+global const table SPIES_SETTINGS = 
+{
+	// ["assetName"] = "settings/player/mp/pilot_survival_firesupport.rpak",
+	// ["armsModel"] = $"mdl/Weapons/arms/pov_pilot_medium_bangalore.rmdl",
+	// ["cockpitModel"] = $"mdl/weapons/arms/human_pov_cockpit.rmdl",
+	// ["hatchModel"] = $"",
+	// ["camera_lcd"] = $"",
+	["printName"] = "",
+	["voice"] = "",//"player_M1",
+	["readymessage"] = "",
+	["raceOrSex"] = "",//"race_human_male",
+	["hud_follow_icon"] = "",
+	["fx_hover_enemy"] = "",//"P_enemy_jet_hover_HLD",
+	["sharedEnergyRegenSound"] = "",
+	["footstep_type"] = "",//"bangalore",
+	["rumbleOnWallrunTimeout"] = "",//"rumble_pilotOnWallrunTimeout",
+	["rumbleOnZiplineDetach"] = "",//"rumble_pilotOnZiplineDetach",
+	["landingImpactTable"] = "",//"pilot_landing",
+	["footstepImpactTable"] = "",//"pilot_foostep",
+	["slideEffectTable"] = "",//"pilot_slide",
+	["generalClass"] = "2",
+	["viewmodelfov"] = "70",
+	["stepHeight"] = "22",
+	["physicsMass"] = "100",
+	["physicsSoftBelowMass"] = "100",
+	["physicsPushSpeedLimit"] = "50",
+	["airDrag"] = "0",
+	["health"] = "100",
+	["healthShield"] = "0",
+	["healthPerSegment"] = "1500",
+	["armorType"] = "0",
+	["pitchMaxDown"] = "89",
+	["slipSpeed"] = "150",
+	["localGravityBlendDistanceMin"] = "100",
+	["localGravityBlendDistanceMax"] = "200",
+	["titan_regen_delay"] = "8",
+	["jumpHeight"] = "56",
+	["antiMultiJumpTimeMin"] = "0.15",
+	["landSlowdownTimePower"] = "2",
+	["viewkickFallDistMax"] = "70",
+	["boostDuration"] = "0.5",
+	["boostHorizontalDragDelay"] = "-1",
+	["boostAutoJetpackMeterThreshold"] = "0.1",
+	["boostRepeatedBoostMeterCost"] = "0",
+	["jetpackJumpsToActivate"] = "2",
+	["jetpackHeightToActivate"] = "-1",
+	["jetpackHeightToActivateDelay"] = "0",
+	["jetpackTightnessUp"] = "0.5",
+	["jetpackTightnessForwardBack"] = "1",
+	["jetpackStrafeTaperFinish"] = "300",
+	["glideTightnessUp"] = "0",
+	["glideStrafe"] = "600",
+	["glideStrafeTaperStart"] = "150",
+	["glideRedirectJumpHeightStartOffset"] = "200",
+	["airStrafeAcceleration"] = "0",
+	["hoverTightnessVertical"] = "0.02",
+	["hoverSafety"] = "0.25",
+	["fx_jetwash_frequency"] = "0.1",
+	["climbFinalJumpUpHeight"] = "28",
+	["climbAccel"] = "500",
+	["wallrun_hangTimeLimit"] = "4",
+	["wallrunAllowedWallDistanceWallHang"] = "18",
+	["wallrunDecelerateVertical"] = "300",
+	["wallrunAccelerateHorizontal"] = "200",
+	["wallrunDecelerateHorizontal"] = "500",
+	["wallrunJumpInputDirSpeed"] = "75",
+	["wallrunSameWallHeight"] = "0",
+	["wallrun_viewpunch_onStart_randomPitch"] = "0.5",
+	["wallrun_viewpunch_onStart_randomYaw"] = "0.5",
+	["wallrun_viewpunch_onTimeout_randomYaw"] = "0.5",
+	["wallrun_viewpunch_onTimeout_randomRoll"] = "0.5",
+	["dodgeDuration"] = "0",
+	["dodgeHeight"] = "25",
+	["dodgeHeightMax"] = "25",
+	["slideDecel"] = "100",
+	["slideRequiredStartSpeed"] = "200",
+	["slideStopSpeed"] = "125",
+	["slideFOVLerpInTime"] = "0.25",
+	["grapple_detachOnGrappleDebounceTime"] = "0.5",
+	["grapple_autoAimAngle"] = "10",
+	["grapple_rollStrength"] = "1",
+	["grapple_rollViewAngleMax"] = "65",
+	["grapple_rollDistanceMin"] = "0",
+	["grapple_detachHorizontalMaxSpeed"] = "600",
+	["grapple_detachGravitySpeed"] = "200",
+	["grapple_detachLengthMax"] = "50",
+	["grapple_gravityFracMin"] = "0.25",
+	["grapple_detachSpeedLossMin"] = "460",
+	["grapple_detachLowSpeedThreshold"] = "250",
+	["grapple_detachLowSpeedSwingThreshold"] = "1000",
+	["grapple_detachLowSpeedGroundTime"] = "0.7",
+	["grapple_detachLowSpeedMeleeTime"] = "1",
+	["grapple_impactVerticalMaxSpeed"] = "300",
+	["grapple_speedRampMin"] = "50",
+	["grapple_swingingSpeedRampMax"] = "800",
+	["grapple_accel"] = "1500",
+	["grapple_power_regen_rate"] = "10",
+	["grapple_airAccel"] = "650",
+	["skydive_deceleration_min"] = "100",
+	["skydive_yaw_smooth_time_min"] = "0.2",
+	["skydive_anticipate_acceleration_min"] = "45",
+	["skydive_anticipate_deceleration_min"] = "150",
+	["skydive_anticipate_forward_acceleration"] = "500",
+	["skydive_strafe_angle"] = "35",
+	["skydive_strafe_acceleration_min"] = "7.5",
+	["skydive_forward_pose_parameter_smooth_time"] = "0.6",
+	["skydive_side_pose_parameter_smooth_time"] = "0.3",
+	["skydive_slipAcceleration"] = "1000",
+	["sharedEnergyRegenDelay"] = "0",
+	["deathcamMinHeight"] = "30",
+	["deathcamLookdownTime"] = "2",
+	["deathcamLookdownPitch"] = "52",
+	["chasecamMaxPitchUp"] = "-45",
+	["useZiplineCooldown"] = "0.4",
+	["ziplineAcceleration"] = "400",
+	["ziplineJumpOnAcceleration"] = "1000",
+	["ziplineJumpOffDampScale"] = "1",
+	["ziplineRollMax"] = "25",
+	["rodeoViewdriftPitchScaleMin"] = "0.5",
+	["rodeoViewdriftYawSpeedMin"] = "0.5",
+	["aimAngleBackwardEnd"] = "-120",
+	["cockpitSwayMinAnglePitch"] = "-0.5",
+	["cockpitSwayMinAngleRoll"] = "-0.5",
+	["cockpitSwayMaxAnglePitch"] = "0.5",
+	["cockpitSwayTurnAngleFactor"] = "-0.6",
+	["cockpit_spring_originDamping"] = "9",
+	["cockpit_spring_rollConstant"] = "65",
+	["damageImpulseScale"] = "1",
+	["damageImpulseSpeedBoostLimit"] = "1000",
+	["titan_footstep_damage"] = "5000",
+	["titan_footstep_damage_interval"] = "1",
+	["titan_footstep_damage_dist_interval"] = "150",
+	["aimassist_bounds_override"] = "-1",
+	["aimassist_adspull_centerRadius"] = "11",
+	["aimassist_adspull_headshotRadius"] = "13",
+	["gibSpeed"] = "400",
+	["landingNoiseDuration"] = "0", //1
+	["hardLandingNoiseRadius"] = "0", //50
+	["magneticRange"] = "0",
+	["aiEnemy_priority"] = "10",
+	["camera_lcdStartupTime"] = "0",
+	["canJumpWhileCrouched"] = "0",
+	["doFaceAnim"] = "1",
+	["localGravityBlendWhileWallrunning"] = "1",
+	["jump"] = "1",
+	["automantle"] = "1",
+	["mantlePitchLeveling"] = "0",
+	["jetpackScriptToActivate"] = "0",
+	["jetpackToggleOn"] = "0",
+	["jetpackToggleOff"] = "1",
+	["jetpackZeroVerticalVelocityOnActivation"] = "1",
+	["jetpackAfterburnerIsSticky"] = "1",
+	["fx_jetwash_enabled"] = "1",
+	["climbEnabled"] = "1",
+	["player_wallrunOneHanded"] = "1",
+	["player_slideBoostEnabled"] = "1",
+	["grapple_touchGroundOnDetach"] = "0",
+	["grapple_swingSticky"] = "1",
+	["sharedEnergyAllowOveruse"] = "0",
+	["context_action_can_use"] = "1",
+	["stealthSounds"] = "1", //0,
+	//NEW
+	["landingNoiseRadius"] = "0",
+	["jumpNoiseDuration"] = "0",
+	["jumpNoiseRadius"] = "0",
+	["landSlowdownDuration"] = "0"
+}
+
+global const table NO_AUDIO_SETTINGS = 
+{
+	//All Sounds
+	["sound_boost_body_1p"] = "",
+	["sound_boost_body_3p"] = "",
+	["sound_boost_finish_1p"] = "",
+	["sound_boost_finish_3p"] = "",
+	["sound_boost_meter_depleted_1p"] = "",
+	["sound_boost_meter_depleted_3p"] = "",
+	["sound_boost_meter_fail_1p"] = "",
+	["sound_boost_meter_fail_3p"] = "",
+	["sound_boost_meter_recharged_1p"] = "",
+	["sound_boost_meter_recharged_3p"] = "",
+	["sound_boost_short_1p"] = "",
+	["sound_boost_short_3p"] = "",
+	["sound_boost_start_1p"] = "",
+	["sound_boost_start_3p"] = "",
+	["sound_climb_body_1p"] = "",
+	["sound_climb_body_3p"] = "",
+	["sound_climb_finish_1p"] = "",
+	["sound_climb_finish_3p"] = "",
+	["sound_climb_start_1p"] = "",
+	["sound_climb_start_3p"] = "",
+	["sound_crouchToStand_1p"] = "",
+	["sound_crouchToStand_3p"] = "",
+	["sound_dodge_1p"] = "",
+	["sound_dodge_3p"] = "",
+	["sound_dodgeFail"] = "",
+	["sound_freefall_body_1p"] = "",
+	["sound_freefall_body_3p"] = "",
+	["sound_freefall_finish_1p"] = "",
+	["sound_freefall_finish_3p"] = "",
+	["sound_freefall_start_1p"] = "",
+	["sound_freefall_start_3p"] = "",
+	["sound_glide_body_1p"] = "",
+	["sound_glide_body_3p"] = "",
+	["sound_glide_finish_1p"] = "",
+	["sound_glide_finish_3p"] = "",
+	["sound_glide_start_1p"] = "",
+	["sound_glide_start_3p"] = "",
+	["sound_grapple_fire_1p"] = "",
+	["sound_grapple_fire_3p"] = "",
+	["sound_grapple_reel_in_target_1p"] = "",
+	["sound_grapple_reel_in_target_3p"] = "",
+	["sound_grapple_reset_1p"] = "",
+	["sound_grapple_reset_3p"] = "",
+	["sound_grapple_retract_1p"] = "",
+	["sound_grapple_retract_3p"] = "",
+	["sound_grapple_swing_1p"] = "",
+	["sound_grapple_swing_3p"] = "",
+	["sound_grapple_traverse_1p"] = "",
+	["sound_grapple_traverse_3p"] = "",
+	["sound_groundImpact"] = "",
+	["sound_hover_body_1p"] = "",
+	["sound_hover_body_3p"] = "",
+	["sound_hover_finish_1p"] = "",
+	["sound_hover_finish_3p"] = "",
+	["sound_hover_start_1p"] = "",
+	["sound_hover_start_3p"] = "",
+	["sound_jetpack_afterburner_body_1p"] = "",
+	["sound_jetpack_afterburner_body_3p"] = "",
+	["sound_jetpack_afterburner_finish_1p"] = "",
+	["sound_jetpack_afterburner_finish_3p"] = "",
+	["sound_jetpack_afterburner_start_1p"] = "",
+	["sound_jetpack_afterburner_start_3p"] = "",
+	["sound_jetpack_body_1p"] = "",
+	["sound_jetpack_body_3p"] = "",
+	["sound_jetpack_finish_1p"] = "",
+	["sound_jetpack_finish_3p"] = "",
+	["sound_jetpack_start_1p"] = "",
+	["sound_jetpack_start_3p"] = "",
+	["sound_jetwash_body_1p"] = "",
+	["sound_jetwash_body_3p"] = "",
+	["sound_jetwash_finish_1p"] = "",
+	["sound_jetwash_finish_3p"] = "",
+	["sound_jetwash_start_1p"] = "",
+	["sound_jetwash_start_3p"] = "",
+	["sound_jumpjet_jet_body_1p"] = "",
+	["sound_jumpjet_jet_body_3p"] = "",
+	["sound_jumpjet_jet_finish_1p"] = "",
+	["sound_jumpjet_jet_finish_3p"] = "",
+	["sound_jumpjet_jet_start_1p"] = "",
+	["sound_jumpjet_jet_start_3p"] = "",
+	["sound_jumpjet_jump_body_1p"] = "",
+	["sound_jumpjet_jump_body_3p"] = "",
+	["sound_jumpjet_jump_finish_1p"] = "",
+	["sound_jumpjet_jump_finish_3p"] = "",
+	["sound_jumpjet_jump_start_1p"] = "",
+	["sound_jumpjet_jump_start_3p"] = "",
+	["sound_jumpjet_slide_start_1p"] = "",
+	["sound_jumpjet_slide_start_3p"] = "",
+	["sound_jumpjet_wallrun_body_1p"] = "",
+	["sound_jumpjet_wallrun_body_3p"] = "",
+	["sound_jumpjet_wallrun_finish_1p"] = "",
+	["sound_jumpjet_wallrun_finish_3p"] = "",
+	["sound_jumpjet_wallrun_start_1p"] = "",
+	["sound_jumpjet_wallrun_start_3p"] = "",
+	["sound_pain_layer1_end"] = "",
+	["sound_pain_layer1_loop"] = "",
+	["sound_pain_layer2_loop"] = "",
+	["sound_pain_layer2_start"] = "",
+	["sound_pain_layer3_end"] = "",
+	["sound_pain_layer3_loop"] = "",
+	["sound_slide_prefix"] = "",
+	["sound_standToCrouch_1p"] = "",
+	["sound_standToCrouch_3p"] = "",
+	["sound_superJump"] = "",
+	["sound_superJumpFail"] = "",
+	["sound_wallHangComplete_1p"] = "",
+	["sound_wallHangComplete_3p"] = "",
+	["sound_wallHangFall"] = "",
+	["sound_wallHangSlip"] = "",
+	["sound_wallHangStart"] = "",
+	["sound_wallrunFall_1p"] = "",
+	["sound_wallrunFall_3p"] = "",
+	["sound_wallrunImpact_1p"] = "",
+	["sound_wallrunImpact_3p"] = "",
+	["sound_wallrunSlip"] = ""
+}
 global enum eMovementType
 {
 	DISABLED = 0,
@@ -215,7 +943,7 @@ void function Sequence_WaitingForPlayers()
 			
 			if( Gamemode() != eGamemodes.CUSTOM_CTF )
 			{
-				ScreenCoverTransition_Player(player, Time() + 2)
+				ScreenCoverTransition_Player( player, Time() + CharSelect_GetIntroTransitionDuration() )
 			} 
 			else
 			{
@@ -224,9 +952,9 @@ void function Sequence_WaitingForPlayers()
 		}
 	}
 	
-	#if TRACKER
+	#if TRACKER //todo(mk): add OnWaitingForPlayersEnd callbacks
 		if( bLog() && !Tracker_IsBatchStatsLoaded() && Flowstate_IsTrackerSupportedMode() )
-			waitthread WaitSignalOrTimeout( svGlobal.levelEnt, Tracker_GetMaxWaitForBatchLoad(), "BatchFetchComplete" )
+			waitthread WaitSignalOrTimeout( tracker.signalEnt, Tracker_GetMaxWaitForBatchLoad(), "BatchFetchComplete" )
 	
 		WaitFrame()
 	#endif
@@ -247,7 +975,7 @@ void function Sequence_WaitingForPlayers()
 
 void function Sequence_PickLoadout()
 {
-	if ( Playlist() == ePlaylists.fs_scenarios || !Survival_CharacterSelectEnabled() || Gamemode() != eGamemodes.SURVIVAL || Playlist() == ePlaylists.fs_haloMod_survival || Gamemode() == eGamemodes.fs_snd ) 
+	if ( Playlist() == ePlaylists.fs_scenarios || !Survival_CharacterSelectEnabled() || Gamemode() != eGamemodes.SURVIVAL || Playlist() == ePlaylists.fs_haloMod_survival || Gamemode() == eGamemodes.fs_snd || Gamemode() == eGamemodes.fs_spieslegends ) 
 	{
 		foreach ( player in GetPlayerArray() )
 		{
@@ -409,7 +1137,7 @@ void function Sequence_Prematch()
 	if ( CharSelect_ChampionSquadIntroEnabled() )
 		wait CharSelect_GetOutroChampionPresentDuration()
 
-	if( Gamemode() == eGamemodes.fs_snd )
+	if( Gamemode() == eGamemodes.fs_snd || Gamemode() == eGamemodes.fs_spieslegends )
 		return
 	
 	// The gamemode handles everything past this point
@@ -518,7 +1246,7 @@ void function GiveLoadoutRelatedWeapons( entity player )
 	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( tactical ), OFFHAND_TACTICAL, [] )
 	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultimate ), OFFHAND_ULTIMATE, [] )
 
-	if( !is1v1EnabledAndAllowed() || isScenariosMode() ) // Todo: unweave gamemode logic ()
+	if( !Safe_is1v1EnabledAndAllowed() || Safe_isScenariosMode() ) // Todo: unweave gamemode logic ()
 	{
 		player.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
 		player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE, [] )
@@ -576,9 +1304,6 @@ bool script_bRespawnInitComplete = false
 
 void function RespawnBehavior_Init()
 {
-	script_bHighlight = ( Gamemode() == eGamemodes.SURVIVAL || Gamemode() == eGamemodes.fs_snd || Playlist() == ePlaylists.fs_scenarios )
-	script_bGiveskins = GetCurrentPlaylistVarBool( "flowstate_giveskins_characters", false )
-	
 	table<string, string> possibleMods = {
 		survival_jumpkit_enabled = "enable_doublejump",
 		survival_wallrun_enabled = "enable_wallrun"
@@ -587,14 +1312,30 @@ void function RespawnBehavior_Init()
 	foreach ( playlistVar, modName in possibleMods )
 		if ( GetCurrentPlaylistVarBool( playlistVar, false ) || GetCurrentPlaylistVarInt( "flowstate_modified_movement", 0 ) == 1 )
 			enabledMods.append( modName )
-		
+	
+	// Enables zero g
+	if( GetCurrentPlaylistVarBool( "enable_zero_g", false ) )
+		enabledMods.append( "zero_g" )
+
+	// Enables ads hover
+	if( GetCurrentPlaylistVarBool( "enable_ads_hover", false ) )
+		enabledMods.append( "pas_ads_hover" )
+	
+	// Disable slides
+	if( GetCurrentPlaylistVarBool( "disable_slide", false ) )
+		enabledMods.append( "disable_slide" )
+	
+	// Removes teammates names
+	if( GetCurrentPlaylistVarBool( "disable_targetinfo", false ) )
+		enabledMods.append( "disable_targetinfo" )
+	
 	script_bRespawnInitComplete = true
 }
 
 void function DecideRespawnPlayer( entity player, bool giveLoadoutWeapons = true )
 {
 	#if DEVELOPER
-		Warning( "DecideRespawnPlayer: " + string( player ) )
+		// Warning( "DecideRespawnPlayer: " + string( player ) )
 		// DumpStack()
 		mAssert( script_bRespawnInitComplete, "RespawnBehavior_Init() --- wasn't ready in DecideRespawnPlayer()" )
 	#endif
@@ -664,7 +1405,7 @@ void function DecideRespawnPlayer( entity player, bool giveLoadoutWeapons = true
 		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
 	}
 	
-	Flowstate_ApplyModifiedMovementToPlayer( player )
+	Flowstate_ApplyModifiedMovementToPlayer( player ) //(mk)todo: check, shouldn't need to reapply every spawn.
 
 	if( Playlist() == ePlaylists.fs_scenarios )
 		return
@@ -675,10 +1416,10 @@ void function DecideRespawnPlayer( entity player, bool giveLoadoutWeapons = true
 		CharacterSkin_Apply( player, characterSkinsA[characterSkinsA.len()-RandomIntRangeInclusive(1,4)])
 	}
 
-	if( player.p.assignedCustomModel != -1 )
+	//if( player.p.assignedCustomModel != -1 )//Custom models cause engine issues, disabling for now til models are updated. - Kral
 	{
-		Flowstate_SetAssignedCustomModelToPlayer( player, player.p.assignedCustomModel )
-	}	
+		//Flowstate_SetAssignedCustomModelToPlayer( player, player.p.assignedCustomModel )
+	}
 	//(mk): commented, already signaled in code callback after DoRespawnPlayer fires
 	
 	// if( Gamemode() != eGamemodes.SURVIVAL && Gamemode() != eGamemodes.WINTEREXPRESS )
@@ -756,9 +1497,9 @@ bool function RespawnTitanPilot( entity player )
 	
 	Flowstate_ApplyModifiedMovementToPlayer( player )
 
-	if( player.p.assignedCustomModel != -1 )
+	//if( player.p.assignedCustomModel != -1 )//Custom models cause engine issues, disabling for now til models are updated. - Kral
 	{
-		Flowstate_SetAssignedCustomModelToPlayer( player, player.p.assignedCustomModel )
+		//Flowstate_SetAssignedCustomModelToPlayer( player, player.p.assignedCustomModel )
 	}
 	
 	if( Playlist() == ePlaylists.fs_haloMod_survival )
@@ -766,7 +1507,7 @@ bool function RespawnTitanPilot( entity player )
 		CharacterSelect_AssignCharacter( player, GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00898565421" ) ) )
 		player.SetPlayerNetBool( "hasLockedInCharacter", true )
 		
-		HaloMod_HandlePlayerModel( player )
+		// HaloMod_HandlePlayerModel( player )
 	}
 	
 	return true
@@ -845,16 +1586,16 @@ void function Flowstate_SetAssignedCustomModelToPlayer( entity player, int index
 
 void function SetSkydiveEmotesForAllCharacters( entity player ) // You need to unlock the loadout for this to work
 {
-	// array< array< string > > emoteArrays = [ [ "skydive_emote_bangalore_backflip" ], [ "skydive_emote_bloodhound_backflip" ], [ "skydive_emote_caustic_backflip" ], [ "skydive_emote_gibraltar_backflip" , 
-								// "skydive_emote_gibraltar_surf" ], [ "skydive_emote_lifeline_backflip", "skydive_emote_lifeline_windmill" ], [ "skydive_emote_mirage_backflip", 
-								// "skydive_emote_mirage_rodeo" ], [ "skydive_emote_octane_backflip" ], [ "skydive_emote_pathfinder_backflip", "skydive_emote_pathfinder_birdattack" ], 
-								// [ "skydive_emote_wattson_backflip", "skydive_emote_wattson_explorer" ], [ "skydive_emote_wraith_backflip" ] ]
+	/*array< array< string > > emoteArrays = [ [ "skydive_emote_bangalore_backflip" ], [ "skydive_emote_bloodhound_backflip" ], [ "skydive_emote_caustic_backflip" ], [ "skydive_emote_gibraltar_backflip" , 
+								"skydive_emote_gibraltar_surf" ], [ "skydive_emote_lifeline_backflip", "skydive_emote_lifeline_windmill" ], [ "skydive_emote_mirage_backflip", 
+								"skydive_emote_mirage_rodeo" ], [ "skydive_emote_octane_backflip" ], [ "skydive_emote_pathfinder_backflip", "skydive_emote_pathfinder_birdattack" ], 
+								[ "skydive_emote_wattson_backflip", "skydive_emote_wattson_explorer" ], [ "skydive_emote_wraith_backflip" ], [ "skydive_emote_revenant_backflip", "skydive_emote_revenant_snake" ] ]
 
-	// foreach( emoteArray in emoteArrays )
-	// {
-		// for( int i = 0; i < emoteArray.len(); i++ )
-			// ClientCommand( player, "loadouts_devset skydive_emote_" + i + " " + emoteArray[ i ] )
-	// }
+	foreach( emoteArray in emoteArrays )
+	{
+		for( int i = 0; i < emoteArray.len(); i++ )
+			ClientCommand( player, "loadouts_devset skydive_emote_" + i + " " + emoteArray[ i ] )
+	}*/
 }
 #endif
 
@@ -896,7 +1637,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	if ( !IsValid( victim ) || !IsValid( attacker ) )
 		return
 	
-	if( is1v1EnabledAndAllowed() )
+	if( Safe_is1v1EnabledAndAllowed() || Gamemode() == eGamemodes.fs_spieslegends )
 	{
 		int sourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 		
@@ -907,22 +1648,21 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	UpdatePlayerCounts()
 		
 	if ( attacker.IsPlayer() && victim.IsPlayer() && attacker != victim )
-	{
-		attacker.SetPlayerNetInt( "kills", attacker.GetPlayerNetInt( "kills" ) + 1 )
-	}
-
+		__IncrementPlayerNetInt( attacker, "kills" )
+		
 	if( Gamemode() == eGamemodes.SURVIVAL )
 		Remote_CallFunction_NonReplay( victim, "ServerCallback_YouDied", attacker, GetHealthFrac( victim ), DamageInfo_GetDamageSourceIdentifier( damageInfo ), DamageInfo_GetDamage( damageInfo ) )
 
 	victim.SetPlayerGameStat( PGS_DEATHS, victim.GetPlayerGameStat( PGS_DEATHS ) + 1 )
 	if( Gamemode() != eGamemodes.CUSTOM_CTF && Gamemode() != eGamemodes.fs_snd )
-		victim.SetPlayerNetInt( "deaths", victim.GetPlayerNetInt( "deaths" ) + 1 )
-	
+		__IncrementPlayerNetInt( victim, "deaths" )
+
+	victim.ClearParent()	
 	victim.FreezeControlsOnServer()
 	
 	victim.SetPredictionEnabled( false )
 	
-	if( Gamemode() == eGamemodes.fs_snd || Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival ) //todo: init single bool conditional
+	if( Gamemode() == eGamemodes.fs_spieslegends || Gamemode() == eGamemodes.fs_snd || Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival ) //todo: init single bool conditional
 		return
 	
 	victim.StartObserverMode( OBS_MODE_DEATHCAM )
@@ -941,7 +1681,7 @@ void function ResetZiplineUseCountOnMantle( entity player )
 	//printt("Mantling, zipline use count reset.")
 	
 	player.p.ziplineUsages = 0
-	Remote_CallFunction_NonReplay( player, "ServerCallback_NessyMessage", 40 )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_NessyMessage", 40 ) //why
 }
 
 void function OnClientDisconnected( entity player )
@@ -953,7 +1693,7 @@ void function OnClientDisconnected( entity player )
 void function OnClientConnectionStarted( entity player )
 {
 	PlayerStopSpectating( player )
-	FS_GiveInitialTeamToPlayer( player )
+	GiveInitialTeamToPlayer( player )
 	
 	if( IsPlayerEliminated( player ) && GetGameState() == eGameState.WaitingForPlayers )
 	{
@@ -976,11 +1716,17 @@ void function OnClientConnected( entity player )
 	// Min players logic end
 	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.MANTLE, ResetZiplineUseCountOnMantle )
 	UpdatePlayerCounts()
+	
+	GiveInitialTeamToPlayer(player)
 
 	if( GetCurrentPlaylistVarBool( "flowstate_give_random_custom_models_toall", false ) )
 		player.p.assignedCustomModel = RandomIntRangeInclusive(1,10)
 	else
 		player.p.assignedCustomModel = -1
+	
+	
+	if( Safe_is1v1EnabledAndAllowed() )
+		player.p.playerCamo = RandomIntRangeInclusive( 1, 10 )
 	
 	bool replaceOrigin = false
 	if( IsDevGamemode() || GetCurrentPlaylistVarBool( "is_practice_map", false ) || Playlist() == ePlaylists.fs_movementrecorder )
@@ -1004,7 +1750,8 @@ void function OnClientConnected( entity player )
 		player.p.respawnPodLanded = true
 		
 		DecideRespawnPlayer( player )
-	} else if( Gamemode() == eGamemodes.SURVIVAL && ( !IsDevGamemode() && !GetCurrentPlaylistVarBool( "is_practice_map", false ) && Playlist() != ePlaylists.fs_movementrecorder ) )
+	} 
+	else if( Gamemode() == eGamemodes.SURVIVAL && ( !IsDevGamemode() && !GetCurrentPlaylistVarBool( "is_practice_map", false ) && Playlist() != ePlaylists.fs_movementrecorder ) )
 	{
 		replaceOrigin = true
 		
@@ -1039,7 +1786,7 @@ void function OnClientConnected( entity player )
 					groundPlayer = teammate
 			}
 
-			if ( !putInPlane && !IsValid( skydiveFollowPlayer ) ) //Cafe was here
+			if ( !putInPlane && !IsValid( skydiveFollowPlayer ) )
 			{
 				//If team is on the ground already, means that player has connected too late, which shouldn't be allowed to respawn in the game.
 				//Let's put the player to spectate.
@@ -1056,12 +1803,14 @@ void function OnClientConnected( entity player )
 
 				thread ObserverThread( player )
 				Remote_CallFunction_ByRef( player, "ServerCallback_ShowDeathScreen" )
-			} else
+			} 
+			else
 			{
 				DecideRespawnPlayer_Retail( player )
 				GiveBasicSurvivalItems( player ) //If player is put in skydive mode and attached to its team mid-flight, we need to give them basic survival items here otherwise it will spawn without melee and basic items. Cafe
 			}
-		} else
+		} 
+		else
 		{
 			DecideRespawnPlayer_Retail( player )
 		}
@@ -1071,23 +1820,37 @@ void function OnClientConnected( entity player )
 	{
 		switch( MapName() )
 		{
+			case eMaps.mp_rr_eden:
+				player.SetOrigin( <-0.76, -0.35, -0.06> )
+				player.SetAngles( <-1.20, 17.66, 0> )
+			break
+
+			case eMaps.mp_rr_olympus:
+			case eMaps.mp_rr_olympus_tt:
+				player.SetOrigin( <-29181.76, -794.35, -4312.06> )
+				player.SetAngles( <-1.20, 17.66, 0> )
+			break
 			case eMaps.mp_rr_olympus_mu1:
-				player.SetOrigin( <833.014587, -19103.7949, -4947.88916> )
-				player.SetAngles( <0, -5.91907549, 0> )
+				player.SetOrigin( <373.503815, -20330.4629, -4138.41504> )
+				player.SetAngles( <0, 68.0721817, 0> )
 			break
 			case eMaps.mp_rr_canyonlands_64k_x_64k:
 			case eMaps.mp_rr_canyonlands_mu1:
 			case eMaps.mp_rr_canyonlands_mu2:
+			case eMaps.mp_rr_canyonlands_mu2_tt:
 			case eMaps.mp_rr_canyonlands_mu1_night:				
 				player.SetOrigin( <-3557.94165, 9962.51074, 3600> )
 				player.SetAngles( <0, 65.3776093, 0> )
 			break
 			
+			case eMaps.mp_rr_desertlands_holiday:
 			case eMaps.mp_rr_desertlands_64k_x_64k:
 			case eMaps.mp_rr_desertlands_64k_x_64k_nx:
+			case eMaps.mp_rr_desertlands_64k_x_64k_mv:
 			case eMaps.mp_rr_desertlands_64k_x_64k_tt:
 			case eMaps.mp_rr_desertlands_mu1:
-			case eMaps.mp_rr_desertlands_holiday:
+			case eMaps.mp_rr_desertlands_mu1_tt:
+			case eMaps.mp_rr_desertlands_mu2:
 				player.SetOrigin( <4838.49658, 13516.8604, -4025.90625> )
 				player.SetAngles( <0, -136.298843, 0> )
 			break
@@ -1106,24 +1869,30 @@ void function OnClientConnected( entity player )
 	thread Flowstate_CheckForLv4MagazinesAndRefillAmmo( player )
 }
 
-void function FS_GiveInitialTeamToPlayer( entity player )
+void function GiveInitialTeamToPlayer( entity player )
 {
 	if( IsPlayerEliminated( player ) )
 	{
 		EliminatedPlayerData data = GetPlayerEliminatedData( player )
-		SetTeam( player, data.team ) //Give saved team. Cafe
+		SetTeam( player, data.team ) // Assign the player to their pre-death team.
 		
 		#if DEVELOPER
-		printw( "TEAMING - Player was eliminated, assigning old team", data.team )
+			printw( "TEAMING - Player was eliminated, assigning old team", data.team )
 		#endif
+
 		return
 	}
 	
 	int maxTeamSize = GetCurrentPlaylistVarInt( "max_team_size", 1 )
-	int numTeams = GetCurrentPlaylistVarInt( "max_players", 0 ) / GetCurrentPlaylistVarInt( "max_team_size", 1 )
+	maxTeamSize = maxTeamSize > 0 ? maxTeamSize : 1
+
+	int maxPlayers = GetCurrentPlaylistVarInt( "max_players", 1 )
+	maxPlayers = maxPlayers > 0 ? maxPlayers : 1
+
+	int numTeams = maxPlayers / maxTeamSize
 	
 	#if DEVELOPER
-	printw( "TEAMING - Team Size:", maxTeamSize, " - Num Teams: ", numTeams )
+		printw( "TEAMING - Team Size:", maxTeamSize, " - Num Teams: ", numTeams )
 	#endif
 	
 	for( int i = TEAM_IMC; i <= TEAM_IMC + numTeams; i++ )
@@ -1144,9 +1913,13 @@ void function OnCharacterClassChanged( EHI playerEHI, ItemFlavor flavor )
 		return
 
 	entity player = FromEHI( playerEHI )
-	if ( IsAlive( player ) ) {	
+	if ( IsAlive( player ) ) 
+	{	
 		CharacterSelect_AssignCharacter( player, flavor, false )
-		DecideRespawnPlayer( player )
+		if( Gamemode() == eGamemodes.SURVIVAL )
+			DecideRespawnPlayer( player, true )
+		else
+			DecideRespawnPlayer( player, false ) //(mk): Giving loadout related weapons here interferes with every custom gamemode in the codebase. Set to false. If your mode needs loadoutrelated weapons apply them.
 	}
 }
 
@@ -1175,74 +1948,99 @@ array<int> function GetTeamsForPlayersFlowstate( array<entity> playersToUse )
 
 void function UpdatePlayerCounts()
 {
-
-	//string currGameMode = GameRules_GetGameMode()
-	
 	int currGameMode = Gamemode()
 	
 	switch(currGameMode)
 	{
 		case eGamemodes.WINTEREXPRESS:
-		array<entity> playersAlive = GetPlayerArray_ConnectedNotSpectatorTeam()
-		SetGlobalNetInt( "livingPlayerCount", playersAlive.len() )
-		SetGlobalNetInt( "squadsRemainingCount", playersAlive.len() )		
-		break
-
-		case eGamemodes.fs_infected:
-		SetGlobalNetInt( "livingPlayerCount", GetPlayerArrayOfTeam_Alive(TEAM_IMC).len() )
-		SetGlobalNetInt( "livingShadowPlayerCount", GetPlayerArrayOfTeam_Alive(TEAM_MILITIA).len() )
-		SetGlobalNetInt( "squadsRemainingCount", 2 )
-		break
-		
-		case eGamemodes.fs_dm:
-		if( Playlist() == ePlaylists.fs_scenarios )
 		{
-			foreach( player in GetPlayerArray() )
-				Remote_CallFunction_NonReplay( player, "FS_Scenarios_ForceUpdatePlayerCount", player )
-		} else
+			array<entity> playersAlive = GetPlayerArray_ConnectedNotSpectatorTeam()
+			SetGlobalNetInt( "livingPlayerCount", playersAlive.len() )
+			SetGlobalNetInt( "squadsRemainingCount", playersAlive.len() )		
+			break
+		}
+		case eGamemodes.fs_infected:
+		{
+			SetGlobalNetInt( "livingPlayerCount", GetPlayerArrayOfTeam_Alive(TEAM_IMC).len() )
+			SetGlobalNetInt( "livingShadowPlayerCount", GetPlayerArrayOfTeam_Alive(TEAM_MILITIA).len() )
+			SetGlobalNetInt( "squadsRemainingCount", 2 )
+
+			break
+		}
+		case eGamemodes.fs_dm:
+		{
+			if( Playlist() == ePlaylists.fs_scenarios )
+			{
+				foreach( player in GetPlayerArray() )
+				{
+					Remote_CallFunction_NonReplay( player, "FS_Scenarios_ForceUpdatePlayerCount", player )
+				}
+			}
+			else
+			{
+				array<entity> connectedPlayers = GetPlayerArray_ConnectedNotSpectatorTeam()
+				SetGlobalNetInt( "livingPlayerCount", connectedPlayers.len() )
+				SetGlobalNetInt( "squadsRemainingCount", connectedPlayers.len() )
+			}
+			break
+		}
+		case eGamemodes.CUSTOM_CTF:
 		{
 			array<entity> connectedPlayers = GetPlayerArray_ConnectedNotSpectatorTeam()
 			SetGlobalNetInt( "livingPlayerCount", connectedPlayers.len() )
-			SetGlobalNetInt( "squadsRemainingCount", connectedPlayers.len() )
+			SetGlobalNetInt( "squadsRemainingCount", connectedPlayers.len() )		
+			break
 		}
+		case eGamemodes.fs_prophunt:
+		
+		array<entity> propsAlive = GetPlayerArrayOfTeam_Alive( TEAM_MILITIA )
+		SetGlobalNetInt( "livingPlayerCount", propsAlive.len() )
+		SetGlobalNetInt( "squadsRemainingCount", propsAlive.len() )		
 		break
 
-		case eGamemodes.CUSTOM_CTF:
-		array<entity> connectedPlayers = GetPlayerArray_ConnectedNotSpectatorTeam()
-		SetGlobalNetInt( "livingPlayerCount", connectedPlayers.len() )
-		SetGlobalNetInt( "squadsRemainingCount", connectedPlayers.len() )		
-		break
-		
 		case eGamemodes.fs_prophunt:
 		array<entity> propsAlive = GetPlayerArrayOfTeam_Alive( TEAM_MILITIA )
 		SetGlobalNetInt( "livingPlayerCount", propsAlive.len() )
 		SetGlobalNetInt( "squadsRemainingCount", propsAlive.len() )		
 		break
 
+		case eGamemodes.fs_spieslegends:
+		array<entity> connectedPlayers = GetPlayerArray()
+		SetGlobalNetInt( "livingPlayerCount", connectedPlayers.len() )
+		SetGlobalNetInt( "squadsRemainingCount", connectedPlayers.len() )		
+		break
+		
 		case eGamemodes.flowstate_pkknockback:
-		array<entity> playersAlive = GetPlayerArray_Alive()
-		SetGlobalNetInt( "livingPlayerCount", playersAlive.len() )
-		SetGlobalNetInt( "squadsRemainingCount", playersAlive.len() )		
-		break
-		
+		{
+			array<entity> playersAlive = GetPlayerArray_Alive()
+			SetGlobalNetInt( "livingPlayerCount", playersAlive.len() )
+			SetGlobalNetInt( "squadsRemainingCount", playersAlive.len() )		
+			break
+		}
 		case eGamemodes.fs_duckhunt:
-		array<entity> ducksAlive = GetPlayerArrayOfTeam_Alive( TEAM_MILITIA )
-		SetGlobalNetInt( "livingPlayerCount", ducksAlive.len() )
-		SetGlobalNetInt( "squadsRemainingCount", ducksAlive.len() )		
-		break
-		
+		{
+			array<entity> ducksAlive = GetPlayerArrayOfTeam_Alive( TEAM_MILITIA )
+			SetGlobalNetInt( "livingPlayerCount", ducksAlive.len() )
+			SetGlobalNetInt( "squadsRemainingCount", ducksAlive.len() )		
+			break
+		}
 		case eGamemodes.fs_snd:
-		foreach( player in GetPlayerArray() )
-			Remote_CallFunction_ByRef( player, "SND_ForceUpdatePlayerCount" )
-			//Remote_CallFunction_NonReplay( player, "SND_ForceUpdatePlayerCount")
-		break
-		
-		default:
-		SetGlobalNetInt( "livingPlayerCount", GetPlayerArray_AliveConnected().len() )
-		SetGlobalNetInt( "squadsRemainingCount", GetNumTeamsRemaining() )		
-		break
-	}
+		{
+			foreach( player in GetPlayerArray() )
+			{
+				Remote_CallFunction_ByRef( player, "SND_ForceUpdatePlayerCount" )
+				//Remote_CallFunction_NonReplay( player, "SND_ForceUpdatePlayerCount")
+			}
 
+			break
+		}
+		default:
+		{
+			SetGlobalNetInt( "livingPlayerCount", GetPlayerArray_AliveConnected().len() )
+			SetGlobalNetInt( "squadsRemainingCount", GetNumTeamsRemaining() )		
+			break
+		}
+	}
 }
 #endif
 
@@ -1336,12 +2134,8 @@ void function SetPlayerSettings( entity player, table settings )
 {
 	foreach( k,v in settings )
 	{
-		#if ENTITYVAR_DEPRECATED
-			SetEntityVar( player, k, v )
-		#else
-			//Thanks amos for this implementation <3. Cafe
-			player.SetClassVar( expect string( k ), expect float( v ).tostring() )
-		#endif
+		//Thanks amos for this implementation <3. Cafe
+		player.SetClassVar( expect string( k ), expect float( v ).tostring() )
 	}
 }
 
@@ -1356,17 +2150,17 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 	switch( file.flowstate_modified_movement )
 	{
 		case eMovementType.TRUE_TF2_SETTINGS: //1
-		
+		{
 			player.SetMoveSpeedScale( 0.87 )		
 			SetPlayerSettings( player, TRUE_TF2_SETTINGS )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to Titanfall 2 " + player )
 			#endif
-		break
-		
+			break
+		}
 		case eMovementType.TRUE_TF2_SETTINGS_HIGH_AIRACCEL: //2
-		
+		{
 			player.SetMoveSpeedScale( 0.87 )
 			player.DisableMantle()
 			SetPlayerSettings( player, TRUE_TF2_SETTINGS_HIGH_AIRACCEL )
@@ -1374,20 +2168,20 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			#if DEVELOPER
 				printw( "Player movement changed to Titanfall 2 High Air Accel " + player )
 			#endif
-		break
-		
+			break
+		}
 		case eMovementType.TRUE_TF2_SETTINGS_LOW_GRAV: //3
-		
+		{
 			player.SetMoveSpeedScale( 0.87 )	
 			SetPlayerSettings( player, TRUE_TF2_SETTINGS_LOW_GRAV )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to Titanfall 2 Low Gravity " + player )
 			#endif
-		break
-		
+			break
+		}
 		case eMovementType.CSGO_MOVEMENT: //4
-		
+		{
 			StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.1 )
 			player.SetMoveSpeedScale( 1.38854974986041364747 )
 			player.DisableMantle()
@@ -1397,10 +2191,10 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			#if DEVELOPER
 				printw( "Player movement changed to CSGO " + player )
 			#endif
-		break
-		
+			break
+		}
 		case eMovementType.CSGO_MOVEMENT_HIGH_AIRACCEL: //5
-		
+		{
 			StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.1 )
 			player.SetMoveSpeedScale( 1.38854974986041364747 )
 			player.DisableMantle()
@@ -1410,19 +2204,19 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			#if DEVELOPER
 				printw( "Player movement changed to CSGO High Air Accel " + player )
 			#endif
-		break
-		
+			break
+		}
 		case eMovementType.SURF_SETTINGS: //6
-		
+		{
 			SetPlayerSettings( player, SURF_SETTINGS )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to (Apex) Surf " + player )
 			#endif
-		break
-
+			break
+		}
 		case eMovementType.HL1_MOVEMENT: //7
-				
+		{	
 			StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.1 )
 			player.SetMoveSpeedScale( 1.77840093365762835808 )
 			player.DisableMantle()	
@@ -1431,10 +2225,10 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			#if DEVELOPER
 				printw( "Player movement changed to Half-Life 1 " + player )
 			#endif
-		break
-
+			break
+		}
 		case eMovementType.HALO_MOVEMENT: //8
-			
+		{
 			StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.1 )
 			player.SetMoveSpeedScale( 1.1 )
 			player.DisableMantle()
@@ -1443,39 +2237,38 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			#if DEVELOPER
 				printw( "Player movement changed to Halo " + player )
 			#endif
-		break
-		
+			break
+		}
 		case eMovementType.SUPERGLIDE_BOOST_SETTINGS: //9
-		
+		{
 			SetPlayerSettings( player, SUPERGLIDE_BOOST_SETTINGS )
 			
 			#if DEVELOPER
 				printw( "Superglide modified for all players " + player )
 			#endif
-		break
-		
+			break
+		}
 		case eMovementType.INSTAGIB_PLAYER_SETTINGS: //10
-		
+		{
 			SetPlayerSettings( player, INSTAGIB_PLAYER_SETTINGS )
 			//Disable players collision
 			player.kv.contents = CONTENTS_BULLETCLIP | CONTENTS_MONSTERCLIP | CONTENTS_HITBOX | CONTENTS_BLOCKLOS | CONTENTS_PHYSICSCLIP; //CONTENTS_PLAYERCLIP
 			#if DEVELOPER
 				printw( "Player movement changed to Insta-Gib " + player )
 			#endif
-		break
-		
+			break
+		}
 		case eMovementType.HAVEFUN_PLAYER_SETTINGS: //11
-		
+		{
 			SetPlayerSettings( player, HAVEFUN_PLAYER_SETTINGS )
 			
 			#if DEVELOPER
 				printt( "Player movement changed to Have Fun Settings " + player )
 			#endif
-		break
-	
-
+			break
+		}
 		case eMovementType.HALO_MOVEMENT_NEW: //HALO BETTER
-
+		{
 			SetPlayerSettings( player, HALO_MOVEMENT_NEW )
 			player.SetMoveSpeedScale( 1.1 )
 			player.DisableMantle()
@@ -1483,129 +2276,11 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			#if DEVELOPER
 				printw( "Player movement changed to Halo New " + player )
 			#endif
-		break
-		
+			break
+		}
 	}
 }
 #endif
-
-#if ENTITYVAR_DEPRECATED
-	void function ModifiedMovement_RegisterNetworking() 
-	{
-		array<string> entityClassVars = 
-		[
-			"airacceleration",
-			"landslowdownduration",
-			"gravityscale",
-			"jumpheight",
-			"Slidejumpheight",
-			"slideRequiredStartSpeed",
-			"stepheight",
-			"ziplineSpeed",
-			"wallrun",
-			"doublejump",
-			"superjumpMinHeight",
-			"superjumpMaxHeight",
-			"superjumpHorzSpeed",
-			"wallrun_timeLimit",
-			"wallrunJumpOutwardSpeed",
-			"wallrunJumpUpSpeed",
-			"wallrunJumpInputDirSpeed",
-			"wallrunMaxSpeedVertical",
-			"wallrunMaxSpeedHorizontal",
-			"wallrunAccelerateVertical",
-			"wallrunAccelerateHorizontal",
-			"leech_range",
-			"impactSpeed",
-			"slidedecel",
-			"automantle_enable",
-			"slidevelocitydecay",
-			"skip_speed_reduce",
-			"slideSpeedBoostCap",
-			"antiMultiJumpHeightFrac",
-			"airspeed",
-			"acceleration",
-			"player_slideBoostEnabled",
-			"slideRequiredStartSpeedAir",
-			"slideSpeedBoost",
-			"slideVelocityDecay",
-			"climbheight",
-			"skip_time",
-			"climbEnabled",
-			"automantle",
-			"airStrafeAcceleration",
-			"airStrafeEnabled",
-			"airStrafeTaperStart",
-			"airStrafeTaperFinish",
-			"glideStrafeTaperStart",
-			"glideStrafeTaperFinish",
-			"glideStrafe",
-			"glideRedirectSideways",
-			"glideRedirectJumpHeightStartOffset",
-			"glideRedirectJumpHeightFinishOffset",
-			"superjumpCanUseAfterWallrun",
-			"glideEnabled",
-			"player_slideBoostCooldown",
-			"sprintspeed",
-			"speed",
-			"automantle_forwarddist",
-			"grapple_accel_human",
-			"grapple_airAccel",
-			"grapple_airSpeedMax",
-			"grapple_decel_human",
-			"grapple_detachAwaySpeed",
-			"grapple_detachLengthMax",
-			"grapple_detachLengthMin",
-			"grapple_detachLowSpeedGroundTime",
-			"grapple_detachLowSpeedThreshold",
-			"grapple_detachLowSpeedTime",
-			"grapple_detachLowSpeedWallTime",
-			"grapple_detachSpeedLoss",
-			"grapple_detachSpeedLossMin",
-			"grapple_detachVerticalBoost",
-			"grapple_detachVerticalMaxSpeed",
-			"grapple_gravityFracMax",
-			"grapple_gravityFracMin",
-			"grapple_impactVerticalBoost",
-			"grapple_impactVerticalMaxSpeed",
-			"grapple_power_regen_delay",
-			"grapple_power_regen_rate",
-			"grapple_shootVel",
-			"grapple_speedRampMax_human",
-			"grapple_speedRampMin_human",
-			"grapple_speedRampTime_human",
-			"grapple_windowCheckDist",
-			"melee_cone_trace_angle",
-			"melee_cone_trace_range",
-			"skip_speed_retain",
-			"slide_boost_cooldown",
-			"sprintEndDuration",
-			"sprintStartDelay",
-			"sprintStartDuration",
-			"sprintStartFastDuration",
-			"sprintViewOffset",
-			"sprinttiltMaxRoll",
-			"wallrun_allowed_wall_dist",
-			"wallrun_allowed_wall_dist_wallhang",
-			"wallrun_gravityRampUpTime",
-			"wallrun_hangTimeLimit",
-			"wallrun_maxViewTilt",
-			"wallrun_sameWallHeight",
-			"wallrun_upWallBoost",
-			"zipline_use_range",
-		]
-
-		foreach( varKey in entityClassVars )
-		{
-			RegisterEntityVar_Entity( "player", varKey, 0 )
-			
-			#if CLIENT
-				RegisterEntityVarChangeCallback( "player", varKey, OnVarChangedCallback_PlayerMovement )
-			#endif
-		}
-	}
-#endif
-
 
 #if SERVER
 	table<int,table> movementLookupTable = {}

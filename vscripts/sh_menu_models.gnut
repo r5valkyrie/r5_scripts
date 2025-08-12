@@ -1,13 +1,16 @@
-//Updated for s3
+//Updated for s4
 
 #if CLIENT
 const float CARD_TAG_SCALE = 0.0 // update to match same const in hud_defs.rui
+const string STORE_BACKGROUND_ENT_NAME = "store_inspect_bg_target"
+const asset STORE_BACKGROUND_SMOKE_MODEL = $"mdl/levels_terrain/mp_lobby/mp_lobby_bundle_store_smoke.rmdl"
+const asset STORE_BACKGROUND_GEO_MODEL = $"mdl/levels_terrain/mp_lobby/mp_lobby_bundle_store_bg.rmdl"
 
 const float DEFAULT_FOV = 70.0
 const float DEFAULT_DOF_NEAR_START = 7.5
 const float DEFAULT_DOF_NEAR_END = 7.7
-const float DEFAULT_DOF_FAR_START = 200.0
-const float DEFAULT_DOF_FAR_END = 300.0
+const float DEFAULT_DOF_FAR_START = 2000.0
+const float DEFAULT_DOF_FAR_END = 2000.0
 const float TRANSITION_DURATION = 0.25
 
 const float DEFAULT_MAX_TURN_SPEED = 270.0
@@ -25,13 +28,6 @@ const vector PLAYER_INFO_OFFSET = <0, 0, 74>
 const vector WEAPON_BASE_ANGLES = <0, 180, 0>
 const float[2] WEAPON_BASE_ROTATION_DELTA = [-35.2458, -14.5691]
 
-const asset S05T_BG_MDL = $"mdl/Humans/class/medium/pilot_medium_loba.rmdl"
-const string S05T_BG_REF_TARGET_SCRIPTNAME = "behind_banner_ref"
-const string S05T_BG_MOVER_SCRIPTNAME = "behind_banner_mover"
-const string S05T_BG_MDL_SCRIPTNAME = "se05t_bg_mdl"
-const string S05T_LIGHT_SCRIPTNAME = "light_play_button_banner_area"
-const string S05T_CANCEL_SIGNAL = "CancelS05TAnimation"
-
 global struct MenuCharacterDef
 {
 	ItemFlavor ornull characterSkin = null
@@ -42,11 +38,13 @@ global struct MenuModelData
 {
 	entity      poseEnt
 	entity      model
+	entity      subModel
 	entity      mover
 	vector      baseOrigin
 	vector      baseAngles
 	float[2]    baseRotationDelta = [0, 0]
 	float[2]    rotationDelta
+	float[2]	rotationVel
 	float       maxTurnSpeed = DEFAULT_MAX_TURN_SPEED
 	string      bodyAnim
 
@@ -87,6 +85,7 @@ enum eCameraTargetNames
 	default_camera_target,
 	play_camera_target,
 	close_character_camera_target,
+	//club_landing_camera_target,//TODO: Active this when we get season 7 lobby - LorryLeKral
 	customize_character_camera_target,
 	customize_weapon_camera_target,
 	battlepass_camera_target,
@@ -151,6 +150,7 @@ struct
 		entity customizeWeaponCameraTarget
 		entity battlepassCameraTarget
 
+		entity								currentCameraTarget
 		table<int, entity>                  cameraTargets
 		table< int, table<string, vector> > cameraStartOriginsAngles
 		entity                              cameraMover
@@ -166,10 +166,15 @@ struct
 		float    mouseWheelLastValue = 0.0
 		bool     mouseWheelPauseInput = false
 
+		entity storeBackgroundModelGeo
+		entity storeBackgroundModelSmoke
+		int    storeBackgroundFXHandle = -1
+
 		MenuModelData playCharacter
 		MenuModelData customizeCharacter
 		MenuModelData customizeWeapon
 		MenuModelData customizeModel
+		MenuModelData storeInspectModelData
 
 		int currentModelIndex = 0
 		int maxIndex = 0
@@ -194,6 +199,10 @@ struct
 		bool                                     presentationTypeInitialized = false
 		PresentationDef[ePresentationType.COUNT] presentationData
 
+		NestedGladiatorCardHandle& bannerHandle
+		var                        topo
+		var                        rui
+
 		table< string, array<LightDef> >  lightingConfigs
 
 		table signalDummy
@@ -207,6 +216,7 @@ struct
 			bool   DEV_previewSelfAsParty = false
 			string DEV_characterOffsetCharacter = ""
 			vector DEV_characterOffset = <0, 0, 0>
+			bool   DEV_dofEnabled = true
 		#endif // DEVELOPER
 		int transitionTest = 3
 	#endif // CLIENT
@@ -222,6 +232,7 @@ struct
         customize_weapon_camera_target = <7168, 0, 56>
         customize_character_camera_target = <5120.02002, 0, 56.2999992>
 	    play_camera_target = <0,0,0>
+		//club_landing_camera_target = <0,0,0>
 	    close_character_camera_target = <0,0,0>
 	    battlepass_camera_target = <0,0,0> 
 	    battlepass_3_camera_target = <0,0,0>
@@ -231,6 +242,7 @@ struct
         default_camera_target = <1.5, 90, -9>
         customize_weapon_camera_target = <0, 90, 0>
         customize_character_camera_target = <0, 90, 0>
+		//club_landing_camera_target = <0, 90, 0>
         play_camera_target = <0,0,0>
 	    close_character_camera_target = <0,0,0>
 	    battlepass_camera_target = <0,0,0> 
@@ -293,11 +305,12 @@ global function DEV_TweakCharacterOffset
 #endif // DEVELOPER
 
 global function UIToClient_PROTO_UpdateClientWithLocalClientUID
+const STICK_ROTATE_SPEED = 2.0   
 
 #endif // CLIENT
 
 #if UI
-const MOUSE_ROTATE_MULTIPLIER = 25.0
+const MOUSE_ROTATE_SPEED = 1.0
 
 global function ShMenuModels_UIInit
 
@@ -332,8 +345,6 @@ void function ShMenuModels_UIInit()
 #if CLIENT
 void function ClMenuModels_Init()
 {
-	thread StoryEvents_OnMenuPlayPanelEnter()
-
 	PrecacheParticleSystem( CHARACTER_BASE_EFFECT )
 	PrecacheParticleSystem( SHADOW_TRAIL_FX )
 	PrecacheParticleSystem( SHADOW_EYE_FX )
@@ -378,11 +389,15 @@ bool function MenuMapEntitiesExist()
 		"close_character_camera_target",
 
 		"customize_character_camera_target",
+
+		//"club_landing_camera_target",
 		"customize_character_ref",
 		"customize_character_skin_ref",
 
 		"customize_weapon_camera_target",
 		"customize_weapon_ref",
+
+		"store_inspect_ref",
 	]
 
 	foreach ( name in entNames )
@@ -416,40 +431,13 @@ void function ApplyEventPositioning()
 		ent.SetOrigin( ent.GetOrigin() + <0, 5120, 0> )
 }
 
-void function StoryEvents_OnMenuPlayPanelEnter()
-{
-	wait 4
-	entity mover
-
-	array<entity> movers = GetEntArrayByScriptName( S05T_BG_MOVER_SCRIPTNAME )
-	if ( movers.len() < 1 )
-	{
-		entity refTarget = GetEntByScriptName( S05T_BG_REF_TARGET_SCRIPTNAME )
-		mover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", refTarget.GetOrigin(), refTarget.GetAngles() )
-		mover.SetScriptName( S05T_BG_MOVER_SCRIPTNAME )
-	}
-	else
-	{
-		mover = movers[0]
-	}
-
-	entity tweakLight = GetEntByScriptName( S05T_LIGHT_SCRIPTNAME )
-	tweakLight.SetTweakLightUpdateShadowsEveryFrame( true )
-
-	entity model = CreatePropDynamic( S05T_BG_MDL, mover.GetOrigin(), mover.GetAngles() )
-	model.MakeSafeForUIScriptHack()
-	model.SetScriptName( S05T_BG_MDL_SCRIPTNAME )
-
-	thread PlayAnim( model, "loba_teaser_lobby_scene", mover, null, 0.0 )
-}
-
 void function InitTeammatePosition( string scriptName, string idle )
 {
-        entity ent = GetEntByScriptName( scriptName )
+	entity ent = GetEntByScriptName( scriptName )
 
-        file.teammateRefEnts.append( ent )
-        file.teammateRefEntsUsedMap[ent] <- false
-        file.teammateRefEntIdleAnimMap[ent] <- idle
+	file.teammateRefEnts.append( ent )
+	file.teammateRefEntsUsedMap[ent] <- false
+	file.teammateRefEntIdleAnimMap[ent] <- idle
 }
 
 void function EnableModelTurn()
@@ -475,50 +463,78 @@ void function TurntableUpdateEntityAngles( MenuModelData modelData )
 	ModelData_GetMover( modelData ).SetAngles( newAng )
 }
 
+float function StepTowardsZero(float vel, float amount)
+{
+	if (vel > 0.0)
+		return vel > amount ? (vel - amount) : 0.0
+	else if (vel < 0.0)
+		return vel < amount ? (vel + amount) : 0.0
+
+	return 0.0
+}
+
 bool function TurntableUpdateAnglesFromInput( MenuModelData modelData, float maxYawDegrees, float maxPitchDegrees, bool useCurrentMoverAnglesAsDelta = false )
 {
+
 	float[2] currentRotationDelta = ModelData_GetRotationDelta( modelData )
 	float[2] rotationDelta
 	float maxTurnSpeed            = ModelData_GetMaxTurnSpeed( modelData )
 
-	if ( !file.modelTurnEnabled && !GetDpadNavigationActive() )
-		return false
-
-	if ( IsControllerModeActive() )
+	if ( file.modelTurnEnabled || GetDpadNavigationActive() )
 	{
-		float stickXRaw         = clamp( InputGetAxis( ANALOG_RIGHT_X ), -1.0, 1.0 )
-		float stickXRemappedAbs = (fabs( stickXRaw ) < STICK_DEADZONE) ? 0.0 : ((fabs( stickXRaw ) - STICK_DEADZONE) / (1.0 - STICK_DEADZONE))
-		float stickX            = EaseIn( stickXRemappedAbs ) * (stickXRaw < 0.0 ? -1.0 : 1.0)
+		if ( IsControllerModeActive() )
+		{
+			float stickXRaw         = clamp( InputGetAxis( ANALOG_RIGHT_X ), -1.0, 1.0 )
+			float stickXRemappedAbs = (fabs( stickXRaw ) < STICK_DEADZONE) ? 0.0 : ((fabs( stickXRaw ) - STICK_DEADZONE) / (1.0 - STICK_DEADZONE))
+			float stickX            = EaseIn( stickXRemappedAbs ) * (stickXRaw < 0.0 ? -1.0 : 1.0)
+			modelData.rotationVel[0] += stickX * maxTurnSpeed * FrameTime() * STICK_ROTATE_SPEED
+			
+			float stickYRaw         = clamp( InputGetAxis( ANALOG_RIGHT_Y ), -1.0, 1.0 )
+			float stickYRemappedAbs = (fabs( stickYRaw ) < STICK_DEADZONE) ? 0.0 : ((fabs( stickYRaw ) - STICK_DEADZONE) / (1.0 - STICK_DEADZONE))
+			float stickY            = EaseIn( stickYRemappedAbs ) * (stickYRaw < 0.0 ? -1.0 : 1.0)
+			modelData.rotationVel[1] -= stickY * maxTurnSpeed * FrameTime() * STICK_ROTATE_SPEED
+		}
+		else
+		{
+			modelData.rotationVel[0] += file.mouseRotateDelta[0]
+			file.mouseRotateDelta[0] = 0                                                   
 
-		rotationDelta[0] = ((currentRotationDelta[0] + stickX * maxTurnSpeed * FrameTime()) % 360.0)
-
-		float stickYRaw         = clamp( InputGetAxis( ANALOG_RIGHT_Y ), -1.0, 1.0 )
-		float stickYRemappedAbs = (fabs( stickYRaw ) < STICK_DEADZONE) ? 0.0 : ((fabs( stickYRaw ) - STICK_DEADZONE) / (1.0 - STICK_DEADZONE))
-		float stickY            = EaseIn( stickYRemappedAbs ) * (stickYRaw < 0.0 ? -1.0 : 1.0)
-
-		rotationDelta[1] = ((currentRotationDelta[1] - stickY * maxTurnSpeed * FrameTime()) % 360.0)
+			modelData.rotationVel[1] -= file.mouseRotateDelta[1]
+			file.mouseRotateDelta[1] = 0                                                  
+		}
 	}
-	else
-	{
-		rotationDelta[0] = ((currentRotationDelta[0] + file.mouseRotateDelta[0] * FrameTime()) % 360.0)
-		file.mouseRotateDelta[0] = 0 // clear because otherwise it would keep spinning
 
-		rotationDelta[1] = ((currentRotationDelta[1] - file.mouseRotateDelta[1] * FrameTime()) % 360.0)
-		file.mouseRotateDelta[1] = 0 // clear because otherwise it would keep spinning
-	}
+	rotationDelta[0] = currentRotationDelta[0] + (modelData.rotationVel[0] * FrameTime()) % 360.0
+	rotationDelta[1] = currentRotationDelta[1] + (modelData.rotationVel[1] * FrameTime()) % 360.0
+
+	float velDecay = 180 * FrameTime()
+	float dampX = max(fabs(modelData.rotationVel[0]) / 60.0, 0.1)
+	float dampY = max(fabs(modelData.rotationVel[1]) / 60.0, 0.1)
+	modelData.rotationVel[0] = clamp(StepTowardsZero(modelData.rotationVel[0], velDecay * dampX), -maxTurnSpeed, maxTurnSpeed)
+	modelData.rotationVel[1] = clamp(StepTowardsZero(modelData.rotationVel[1], velDecay * dampY), -maxTurnSpeed, maxTurnSpeed)
 
 	if ( maxYawDegrees < 360.0 )
 	{
 		float minRotationDelta = 0 - (maxYawDegrees / 2)
 		float maxRotationDelta = maxYawDegrees / 2
-		rotationDelta[0] = clamp( rotationDelta[0], minRotationDelta, maxRotationDelta )
+
+		if (rotationDelta[0] < minRotationDelta || rotationDelta[0] > maxRotationDelta)
+		{
+			rotationDelta[0] = clamp( rotationDelta[0], minRotationDelta, maxRotationDelta )
+			modelData.rotationVel[0] = 0.0
+		}
 	}
 
 	if ( maxPitchDegrees < 360.0 )
 	{
 		float minRotationDelta = 0 - (maxPitchDegrees / 2)
 		float maxRotationDelta = maxPitchDegrees / 2
-		rotationDelta[1] = clamp( rotationDelta[1], minRotationDelta, maxRotationDelta )
+
+		if (rotationDelta[1] < minRotationDelta || rotationDelta[1] > maxRotationDelta)
+		{
+			rotationDelta[1] = clamp( rotationDelta[1], minRotationDelta, maxRotationDelta )
+			modelData.rotationVel[1] = 0.0
+		}
 	}
 
 	if ( currentRotationDelta[0] == rotationDelta[0] && currentRotationDelta[1] == rotationDelta[1] )
@@ -643,8 +659,8 @@ void function InitPresentationData()
 		pd.fov = 15.5
 		pd.dofNearStart = DEFAULT_DOF_NEAR_START
 		pd.dofNearEnd = DEFAULT_DOF_NEAR_END
-		pd.dofFarStart = DEFAULT_DOF_FAR_START
-		pd.dofFarEnd = DEFAULT_DOF_FAR_END
+		pd.dofFarStart = 1500
+		pd.dofFarEnd = 9500
 		pd.csmTexelScale1 = 0.22
 		pd.csmTexelScale2 = 0.55
 		pd.csmStartDistance = 70.0
@@ -662,8 +678,8 @@ void function InitPresentationData()
 		pd.fov = 50
 		pd.dofNearStart = DEFAULT_DOF_NEAR_START
 		pd.dofNearEnd = DEFAULT_DOF_NEAR_END
-		pd.dofFarStart = DEFAULT_DOF_FAR_START
-		pd.dofFarEnd = DEFAULT_DOF_FAR_END
+		pd.dofFarStart = 200.0
+		pd.dofFarEnd = 300.0
 		pd.csmTexelScale1 = 0.22
 		pd.csmTexelScale2 = 0.55
 		pd.csmStartDistance = 70.0
@@ -681,8 +697,8 @@ void function InitPresentationData()
 		pd.fov = 50
 		pd.dofNearStart = DEFAULT_DOF_NEAR_START
 		pd.dofNearEnd = DEFAULT_DOF_NEAR_END
-		pd.dofFarStart = DEFAULT_DOF_FAR_START
-		pd.dofFarEnd = DEFAULT_DOF_FAR_END
+		pd.dofFarStart = 200.0
+		pd.dofFarEnd = 300.0
 		pd.csmTexelScale1 = 0.22
 		pd.csmTexelScale2 = 0.55
 		pd.csmStartDistance = 70.0
@@ -701,8 +717,8 @@ void function InitPresentationData()
 		pd.fov = 50
 		pd.dofNearStart = DEFAULT_DOF_NEAR_START
 		pd.dofNearEnd = DEFAULT_DOF_NEAR_END
-		pd.dofFarStart = DEFAULT_DOF_FAR_START
-		pd.dofFarEnd = DEFAULT_DOF_FAR_END
+		pd.dofFarStart = 200.0
+		pd.dofFarEnd = 300.0
 		pd.csmTexelScale1 = 0.22
 		pd.csmTexelScale2 = 0.55
 		pd.csmStartDistance = 70.0
@@ -737,10 +753,10 @@ void function InitPresentationData()
 		pd.maxYawDegrees = 0
 		pd.maxPitchDegrees = 0
 		pd.fov = 50
-		pd.dofNearStart = DEFAULT_DOF_NEAR_START
-		pd.dofNearEnd = DEFAULT_DOF_NEAR_END
-		pd.dofFarStart = DEFAULT_DOF_FAR_START
-		pd.dofFarEnd = DEFAULT_DOF_FAR_END
+		pd.dofNearStart = 3.5
+		pd.dofNearEnd = 5.0
+		pd.dofFarStart = 20.0
+		pd.dofFarEnd = 30.0
 		pd.csmTexelScale1 = 1.0
 		pd.csmTexelScale2 = 1.0
 		pd.csmStartDistance = 0.0
@@ -757,8 +773,8 @@ void function InitPresentationData()
 		pd.fov = 50
 		pd.dofNearStart = DEFAULT_DOF_NEAR_START
 		pd.dofNearEnd = DEFAULT_DOF_NEAR_END
-		pd.dofFarStart = DEFAULT_DOF_FAR_START
-		pd.dofFarEnd = DEFAULT_DOF_FAR_END
+		pd.dofFarStart = 200.0
+		pd.dofFarEnd = 300.0
 		pd.csmTexelScale1 = 1.0
 		pd.csmTexelScale2 = 1.0
 		pd.csmStartDistance = 0.0
@@ -775,10 +791,10 @@ void function InitPresentationData()
 		pd.maxYawDegrees = 90
 		pd.maxPitchDegrees = 60
 		pd.fov = 50
-		pd.dofNearStart = 1.0
-		pd.dofNearEnd = 10.0
-		pd.dofFarStart = 6.0
-		pd.dofFarEnd = 75.0
+		pd.dofNearStart = 3.5
+		pd.dofNearEnd = 5.0
+		pd.dofFarStart = 20.0
+		pd.dofFarEnd = 30.0
 		pd.csmTexelScale1 = 1.0
 		pd.csmTexelScale2 = 1.0
 		pd.csmStartDistance = 0.0
@@ -797,8 +813,8 @@ void function InitPresentationData()
 		pd.fov = DEFAULT_FOV
 		pd.dofNearStart = DEFAULT_DOF_NEAR_START
 		pd.dofNearEnd = DEFAULT_DOF_NEAR_END
-		pd.dofFarStart = 2300.0
-		pd.dofFarEnd = 3000.0
+		pd.dofFarStart = DEFAULT_DOF_FAR_START
+		pd.dofFarEnd = DEFAULT_DOF_FAR_END
 		pd.csmTexelScale1 = 1.0
 		pd.csmTexelScale2 = 1.0
 		pd.csmStartDistance = 0.0
@@ -881,6 +897,42 @@ void function InitPresentationData()
 		pd.cameraTargetName = eCameraTargetNames.collection_event_camera_target
 	}
 
+	{
+		PresentationDef pd = file.presentationData[ePresentationType.SERVER_BROWSER]
+		pd.modelData = null
+		pd.useCharacterOffsets = false
+		pd.maxYawDegrees = 0
+		pd.maxPitchDegrees = 0
+		pd.fov = 15.5
+		pd.dofNearStart = 3.5
+		pd.dofNearEnd = 5.0
+		pd.dofFarStart = 20.0
+		pd.dofFarEnd = 30.0
+		pd.csmTexelScale1 = 0.22
+		pd.csmTexelScale2 = 0.55
+		pd.csmStartDistance = 70.0
+		pd.lights = []
+		pd.cameraTargetName = eCameraTargetNames.collection_event_camera_target
+	}
+
+	{
+		PresentationDef pd = file.presentationData[ePresentationType.CREDITS]
+		pd.modelData = null
+		pd.useCharacterOffsets = false
+		pd.maxYawDegrees = 90
+		pd.maxPitchDegrees = 60
+		pd.fov = 50
+		pd.dofNearStart = 3.5
+		pd.dofNearEnd = 5.0
+		pd.dofFarStart = 20.0
+		pd.dofFarEnd = 30.0
+		pd.csmTexelScale1 = 1.0
+		pd.csmTexelScale2 = 1.0
+		pd.csmStartDistance = 0.0
+		pd.lights = []
+		pd.cameraTargetName = eCameraTargetNames.customize_weapon_camera_target
+	}
+
     {
         PresentationDef pd = file.presentationData[ePresentationType.MODEL]
         pd.modelData = file.customizeModel
@@ -900,15 +952,37 @@ void function InitPresentationData()
 		pd.endFunc = EndPresentation_MODEL
         pd.cameraTargetName = eCameraTargetNames.customize_weapon_camera_target
     }
+
+	{
+		PresentationDef pd = file.presentationData[ePresentationType.STORE_INSPECT]
+		pd.modelData = file.storeInspectModelData
+		pd.useCharacterOffsets = false
+		pd.maxYawDegrees = 360
+		pd.maxPitchDegrees = 0
+		pd.fov = 15.5
+		pd.dofNearStart = DEFAULT_DOF_NEAR_START
+		pd.dofNearEnd = DEFAULT_DOF_NEAR_END
+		pd.dofFarStart = DEFAULT_DOF_FAR_START
+		pd.dofFarEnd = DEFAULT_DOF_FAR_END
+		pd.csmTexelScale1 = 0.22
+		pd.csmTexelScale2 = 0.55
+		pd.csmStartDistance = 70.0
+		pd.lights = []
+		pd.startFunc = StartPresentation_STORE_INSPECT
+		pd.endFunc = EndPresentation_STORE_INSPECT
+		pd.cameraTargetName = eCameraTargetNames.collection_event_camera_target
+	}
 }
 
 void function StartPresentation_PLAY()
 {
-	ModelData_SetAnim( file.playCharacter, "ACT_MP_MENU_LOBBY_CENTER_IDLE" )
-	UpdateMenuCharacterModel( GetLocalClientPlayer(), -1 )
+	if ( file.presentationData[file.previousPresentationType].startFunc != StartPresentation_PLAY )
+	{
+		ModelData_SetAnim( file.playCharacter, "ACT_MP_MENU_LOBBY_CENTER_IDLE" )
+		UpdateMenuCharacterModel( GetLocalClientPlayer(), -1 )
 
-	//thread DrawSelfInfo()
-	thread TrackPartyMembersAndDisplayModelsThread()
+		thread TrackPartyMembersAndDisplayModelsThread()
+	}
 
 	AddCallback_OnPartyUpdated( UpdateMenuWithPartyMembers )
 }
@@ -1070,11 +1144,27 @@ void function EndPresentation_BATTLE_PASS()
 	BattlePassLightsOff()
 }
 
+void function StartPresentation_STORE_INSPECT()
+{
+	file.storeBackgroundModelGeo.Show()
+	file.storeBackgroundModelSmoke.Show()
+}
+
+void function EndPresentation_STORE_INSPECT()
+{
+	file.storeBackgroundModelGeo.Hide()
+	file.storeBackgroundModelSmoke.Hide()
+
+	ClearStoreInspectItem()
+	CameraZoomThreadEnd()
+}
+
 void function EnableLobbyMenuCameraZoom()
 {
 	const float ZOOM_DISTANCE_CHARACTER_SKIN = 72.0
 	const float ZOOM_DISTANCE_WEAPON_SKIN = 24.0
 	const float ZOOM_DISTANCE_MODEL = 2000.0
+	const float ZOOM_DISTANCE_WEAPON_CHARM = 100.0
 
 	EndSignal( level, "EndCameraZoom" )
 
@@ -1118,6 +1208,36 @@ void function EnableLobbyMenuCameraZoom()
         maxZoomDistance = ZOOM_DISTANCE_MODEL
         cameraTargetIndex = eCameraTargetNames.customize_weapon_camera_target
     }
+	else if ( file.desiredPresentationType == ePresentationType.STORE_INSPECT )
+	{
+		entity model        = ModelData_GetModel( file.storeInspectModelData )
+		ItemFlavor itemFlav = ModelData_GetSkinFlavor( file.storeInspectModelData )
+		int itemType        = ItemFlavor_GetType( itemFlav )
+		switch ( itemType )
+		{
+			case eItemType.character_skin:
+				ItemFlavor characterFlavor = CharacterSkin_GetCharacterFlavor( itemFlav )
+				focalPoint = model.GetAttachmentOrigin( model.LookupAttachment( "HEADFOCUS" ) )
+				maxZoomDistance = ZOOM_DISTANCE_CHARACTER_SKIN
+				break
+
+			case eItemType.weapon_skin:
+				ItemFlavor weaponFlavor = WeaponSkin_GetWeaponFlavor( itemFlav )
+				ItemFlavor categoryFlavor = WeaponItemFlavor_GetCategory( weaponFlavor )
+				focalPoint = model.GetAttachmentOrigin( model.LookupAttachment( "MENU_ROTATE" ) )
+				maxZoomDistance = ZOOM_DISTANCE_WEAPON_SKIN
+				break
+
+			case eItemType.weapon_charm:
+				focalPoint = GetCharmForWeaponEntity( model ).GetWorldSpaceCenter()
+				maxZoomDistance = ZOOM_DISTANCE_WEAPON_CHARM
+				break
+
+			default: //
+			return
+		}
+		cameraTargetIndex = eCameraTargetNames.store_inspect_camera_target
+	}
 
 	//
 
@@ -1150,6 +1270,7 @@ void function EnableLobbyMenuCameraZoom()
 
 void function InitMenuEntities()
 {
+	printf( "InitMenuEntitiesDebug: InitMenuEntities() START" )
 	#if DEVELOPER
 		if ( BuildingCubeMaps() )
 			return
@@ -1187,9 +1308,11 @@ void function InitMenuEntities()
 	if ( IsDemoSpectator( GetLocalClientPlayer() ) )
 		return //
 
-
-    entity localPlayer = GetLocalClientPlayer()
-    localPlayer.SetMenuCameraEntityWithAudio( clGlobal.menuCamera ) //
+	if ( IsLobby() )
+	{
+		entity localPlayer = GetLocalClientPlayer()
+		localPlayer.SetMenuCameraEntityWithAudio( clGlobal.menuCamera ) //
+	}
 
 	entity refEnt
 	entity model
@@ -1217,14 +1340,23 @@ void function InitMenuEntities()
 	CharacterSkin_Apply( model, characterSkin )
 	model.SetAlive( true )
 
-	ModelData_SetBaseOrigin( file.customizeWeapon, <7176, 45, 53> )
-	ModelData_SetBaseAngles( file.customizeWeapon, <0, 0, 90> )
+	refEnt = GetEntByScriptName( "customize_weapon_ref" )
+	ModelData_SetBaseOrigin( file.customizeWeapon, refEnt.GetOrigin() )
+	ModelData_SetBaseAngles( file.customizeWeapon, WEAPON_BASE_ANGLES )
 	ModelData_SetBaseRotationDelta( file.customizeWeapon, WEAPON_BASE_ROTATION_DELTA )
 	model = CreateMenuModel( file.customizeWeapon, $"mdl/dev/empty_model.rmdl" )
+	model.kv.rendercolor = "0 0 0 255" //
 	ModelData_CreateMover( file.customizeWeapon )
 	ItemFlavor weapon     = GetAllWeaponItemFlavors()[0]
 	ItemFlavor weaponSkin = LoadoutSlot_GetItemFlavor( localPlayerEHI, Loadout_WeaponSkin( weapon ) )
 	WeaponCosmetics_Apply( model, weaponSkin, null )
+
+	refEnt = GetEntByScriptName( "store_inspect_ref" )
+	ModelData_SetBaseOrigin( file.storeInspectModelData, refEnt.GetOrigin() )
+	ModelData_SetBaseAngles( file.storeInspectModelData, refEnt.GetAngles() )
+	ModelData_SetBaseRotationDelta( file.storeInspectModelData, baseRotationDelta )
+	model = CreateMenuModel( file.storeInspectModelData, $"mdl/dev/empty_model.rmdl" )
+	ModelData_CreateMover( file.storeInspectModelData )
 
 	vector x = <7176, 345, 53>
 	switch( MapName() ) 
@@ -1248,6 +1380,7 @@ void function InitMenuEntities()
 	InitLightingConfigs()
 
 	file.initializedMenuModels = true
+	printf( "InitMenuEntitiesDebug: InitMenuEntities() END" )
 }
 
 entity function CreateMenuModel( MenuModelData modelData, asset modelAsset )
@@ -1299,7 +1432,7 @@ void function UpdateMenuCharacterModelInternal( int overrideCharacterFlavorNetwo
 	if ( overrideCharacterFlavorNetworkIndex == -1 )
 		character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterClass() )
 	else
-		character = GetItemFlavorByNetworkIndex_DEPRECATED( overrideCharacterFlavorNetworkIndex )
+		character = GetItemFlavorByGUID( overrideCharacterFlavorNetworkIndex )
 	LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterSkin( character ) )
 
 	clGlobal.currentMenuPilotModels.characterSkin = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterSkin( character ) )
@@ -1323,9 +1456,9 @@ void function UpdateMenuCharacterModelInternal( int overrideCharacterFlavorNetwo
 	UpdateCharacterModelDisplay( file.customizeCharacter, doTransitionFX )
 }
 
-void function UIToClient_PreviewCharacterSkin( int index, int overrideCharacterFlavorNetworkIndex )
+void function UIToClient_PreviewCharacterSkin( int guid, int overrideCharacterFlavorNetworkIndex )
 {
-	clGlobal.previewMenuPilotModels.characterSkin = GetItemFlavorByNetworkIndex_DEPRECATED( index )
+	clGlobal.previewMenuPilotModels.characterSkin = GetItemFlavorByGUID( guid )
 
 	if ( clGlobal.previewMenuPilotModels.characterSkin != null )
 		ModelData_SetSkinFlavor( file.customizeCharacter, expect ItemFlavor( clGlobal.previewMenuPilotModels.characterSkin ) )
@@ -1809,11 +1942,11 @@ void function UIToClient_PreviewWeaponSkin( int skinFlavorIndex, int charmFlavor
 	if ( !file.initializedMenuModels ) //
 		return
 
-	ItemFlavor weaponSkin   = GetItemFlavorByNetworkIndex_DEPRECATED( skinFlavorIndex )
+	ItemFlavor weaponSkin   = GetItemFlavorByGUID( skinFlavorIndex )
 	ItemFlavor weaponFlavor = WeaponSkin_GetWeaponFlavor( weaponSkin )
 	ModelData_SetSkinFlavor( file.customizeWeapon, weaponSkin )
 
-	ItemFlavor charmFlavor = GetItemFlavorByNetworkIndex_DEPRECATED( charmFlavorIndex )
+	ItemFlavor charmFlavor = GetItemFlavorByGUID( charmFlavorIndex )
 
 	entity weaponModel = ModelData_GetModel( file.customizeWeapon )
 	entity weaponMover = ModelData_GetMover( file.customizeWeapon )
@@ -1821,13 +1954,18 @@ void function UIToClient_PreviewWeaponSkin( int skinFlavorIndex, int charmFlavor
 	//
 	WeaponCosmetics_Apply( weaponModel, weaponSkin, charmFlavor )
 
-	//
-	if ( WeaponSkin_DoesReactToKills( weaponSkin ) )
-		ApplyReactiveSkinBodyGroup( weaponSkin, weaponFlavor, weaponModel )
+	bool isReactive = WeaponSkin_DoesReactToKills( weaponSkin )
 
+	if ( isReactive )
+		MenuWeaponModel_ApplyReactiveSkinBodyGroup( weaponSkin, weaponFlavor, weaponModel )
 	else
 		ShowDefaultBodygroupsOnFakeWeapon( weaponModel, WeaponItemFlavor_GetClassname( weaponFlavor ) )
 
+	MenuWeaponModel_ClearReactiveEffects( weaponModel )
+	if ( isReactive )
+	{
+		MenuWeaponModel_StartReactiveEffects( weaponModel, weaponSkin )
+	}
 	weaponModel.Anim_SetPaused( true )
 
 	//
@@ -1882,6 +2020,41 @@ void function UIToClient_PreviewWeaponSkin( int skinFlavorIndex, int charmFlavor
 		thread TransitionTest( charmModel, charmColor / 255.0, true, false )
 	}
 }
+
+
+void function ClearStoreInspectItem()
+{
+	CameraZoomThreadEnd()
+
+	if ( IsValid( file.storeInspectModelData.model ) )
+	{
+		foreach ( entity ent in GetEntityAndAllChildren( file.storeInspectModelData.model ) )
+		{
+			if ( IsValid( ent ) )
+				ent.Destroy()
+		}
+	}
+
+	entity mover = ModelData_GetMover( file.storeInspectModelData )
+	if( IsValid( mover ) )
+	{
+		mover.SetOrigin( ModelData_GetBaseOrigin( file.storeInspectModelData ) )
+		mover.SetAngles( ModelData_GetBaseAngles( file.storeInspectModelData ) )
+	}
+
+	//
+	CleanupNestedGladiatorCard( file.bannerHandle )
+
+	if ( file.rui != null )
+		RuiDestroyIfAlive( file.rui )
+
+	if ( file.topo != null )
+	{
+		RuiTopology_Destroy( file.topo )
+		file.topo = null
+	}
+}
+
 
 void function SetWeaponSkinLocalOffset( entity weaponModel, bool useCharmAttachment )
 {
@@ -2106,14 +2279,28 @@ void function LerpWeaponSkinScale( entity weaponModel, ItemFlavor charmFlavor, f
 }
 
 
+
+MenuModelData ornull function GetActiveModelData()
+{
+	return file.activeModelData
+}
+
 void function ModelData_SetModel( MenuModelData modelData, entity model )
 {
 	modelData.model = model
+}
+void function ModelData_SetSubModel( MenuModelData modelData, entity model )
+{
+	modelData.subModel = model
 }
 
 entity function ModelData_GetModel( MenuModelData modelData )
 {
 	return modelData.model
+}
+entity function ModelData_GetSubModel( MenuModelData modelData )
+{
+	return modelData.subModel
 }
 
 entity function ModelData_CreateMover( MenuModelData modelData )
@@ -2123,8 +2310,11 @@ entity function ModelData_CreateMover( MenuModelData modelData )
 	vector origin = modelData.model.GetOrigin()
 	vector angles = modelData.model.GetAngles()
 	entity mover  = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
+	mover.MakeSafeForUIScriptHack()
 	mover.Hide()
 
+	if ( IsValid( modelData.subModel ) )
+		modelData.subModel.SetParent( mover )
 	modelData.model.SetParent( mover )
 	modelData.mover = mover
 
@@ -2192,6 +2382,12 @@ void function ModelData_SetRotationDelta( MenuModelData modelData, float[2] rota
 	modelData.rotationDelta[0] = rotationDelta[0]
 	modelData.rotationDelta[1] = rotationDelta[1]
 	TurntableUpdateEntityAngles( modelData )
+}
+
+void function ModelData_SetRotationVelocity( MenuModelData modelData, float[2] rotationVelocity )
+{
+	modelData.rotationVel[0] = rotationVelocity[0]
+	modelData.rotationVel[1] = rotationVelocity[1]
 }
 
 float function ModelData_GetMaxTurnSpeed( MenuModelData modelData )
@@ -2350,25 +2546,23 @@ void function SetMenuCamera( entity player, int presentationType, bool interpola
 	//EASING_BACK_INOUT
 
 	// TEMP: Disabled DOF until background is more final. It was causing visual artifacts with gladiator cards.
-	//float dofNearStart 	= file.presentationData[ presentationType ].dofNearStart
-	//float dofNearEnd 	= file.presentationData[ presentationType ].dofNearEnd
-	//float dofFarStart 	= file.presentationData[ presentationType ].dofFarStart
-	//float dofFarEnd 	= file.presentationData[ presentationType ].dofFarEnd
 
 	if ( interpolate )
-	{
-		//printt( "Interpolating menu camera to:", GetEnumString( "ePresentationType", presentationType ) )
-		//DoF_LerpNearDepth( dofNearStart, dofNearEnd, TRANSITION_DURATION )
-		//DoF_LerpFarDepth( dofFarStart, dofFarEnd, TRANSITION_DURATION )
-	}
+		printt( "Interpolating menu camera to:", GetEnumString( "ePresentationType", presentationType ) )
 	else
-	{
-		//printt( "Snapping menu camera to:", GetEnumString( "ePresentationType", presentationType ) )
-		//DoF_SetNearDepth( dofNearStart, dofNearEnd )
-		//DoF_SetFarDepth( dofFarStart, dofFarEnd )
-	}
+		printt( "Snapping menu camera to:", GetEnumString( "ePresentationType", presentationType ) )
 
-	//DoFSetDilateInfocus( true ) // We want to reduce DoF aliasing around bright edges in the menus.
+	// We want to reduce DoF aliasing around bright edges in the menus.
+#if DEVELOPER
+	if ( file.DEV_dofEnabled )
+	{
+		float nearStart = file.presentationData[ presentationType ].dofNearStart
+		float nearEnd   = file.presentationData[ presentationType ].dofNearEnd
+		float farStart  = file.presentationData[ presentationType ].dofFarStart
+		float farEnd    = file.presentationData[ presentationType ].dofFarEnd
+		ApplyDOF( nearStart, nearEnd, farStart, farEnd, interpolate )
+	}
+#endif //DEVELOPER
 
 	#if CONSOLE_PROG
 		const float texelNorm = 2.0
@@ -2386,6 +2580,24 @@ void function SetMenuCamera( entity player, int presentationType, bool interpola
 	SetMapSetting_CsmStartDistance( csmStartDistance )
 }
 
+#if DEVELOPER
+void function ApplyDOF( float nearStart, float nearEnd, float farStart, float farEnd, bool interpolate = false )
+{
+	if ( interpolate )
+	{
+		DoF_LerpNearDepth( nearStart, nearEnd, TRANSITION_DURATION )
+		DoF_LerpFarDepth( farStart, farEnd, TRANSITION_DURATION )
+	}
+	else
+	{
+		DoF_SetNearDepth( nearStart, nearEnd )
+		DoF_SetFarDepth( farStart, farEnd )
+	}
+
+	DoFSetDilateInfocus( file.DEV_dofEnabled ) //
+}
+#endif //DEVELOPER
+
 void function ModelRotationThread()
 {
 	for ( ; ; )
@@ -2402,33 +2614,17 @@ void function ModelRotationThread()
 		float maxYawDegrees   = file.presentationData[ file.currentPresentationType ].maxYawDegrees
 		float maxPitchDegrees = file.presentationData[ file.currentPresentationType ].maxPitchDegrees
 
-		TurntableUpdateAnglesFromInput( modelData, maxYawDegrees, maxPitchDegrees )
-	}
-}
+		float[2] currentRotationDelta = ModelData_GetRotationDelta( modelData )
+		bool didTurn                  = TurntableUpdateAnglesFromInput( modelData, maxYawDegrees, maxPitchDegrees )
 
-void function ModelListRotationThread() {
-	while(true) {
-		wait 1
-		if (file.activeModelData == null)
-			continue
-		
-		MenuModelData modelData = expect MenuModelData( file.activeModelData )
-		if ( ModelData_GetMover( modelData ) == null )
-			continue
-
-		if (file.currentPresentationType != ePresentationType.MODEL)
-			continue
-
-		if (file.currentModelRoot == "")
-			continue
-
-		if (file.currentModelIndex >= file.maxIndex) {
-			file.currentModelIndex = 0
-		} else {
-			file.currentModelIndex++
+		if ( didTurn )
+		{
+			//if ( file.desiredPresentationType == ePresentationType.STORE_INSPECT )
+			{
+				file.storeInspectModelData.mover.NonPhysicsStop()
+				currentRotationDelta = ModelData_GetRotationDelta( modelData )
+			}
 		}
-
-		UIToClient_PreviewModel(file.currentModelRoot, true)
 	}
 }
 
@@ -2438,6 +2634,8 @@ void function ModelData_ResetRotation( MenuModelData modelData )
 	if ( mover == null )
 		return
 
+	float[2] rotationVel = [0, 0]
+	ModelData_SetRotationVelocity( modelData, rotationVel )
 	ModelData_SetRotationDelta( modelData, ModelData_GetBaseRotationDelta( modelData ) )
 	TurntableUpdateEntityAngles( modelData )
 }
@@ -2465,7 +2663,8 @@ void function CameraZoomThread( CameraZoomData zoomData )
 {
 	EndSignal( level, "EndCameraZoom" )
 
-	AddCallbacks()
+	AddCallback_OnMouseWheelDown( UpdateMenuMouseWheelDown )
+	AddCallback_OnMouseWheelUp( UpdateMenuMouseWheelUp )
 
 	OnThreadEnd(
 		function () : ( zoomData )
@@ -2532,6 +2731,12 @@ void function TransitionTest( entity model, vector color, bool doTransitionFX, b
 {
 	//
 
+	while( true )
+	{
+		if ( !IsValid( model ) )
+			return
+		WaitFrame()
+	}
 	if ( file.transitionTest == 5 )
 		MenuModelHighlightBloom( model, color, 100 )
 
@@ -2550,10 +2755,10 @@ void function TransitionTest( entity model, vector color, bool doTransitionFX, b
 		float fillIntensityScalar    = 10
 		float outlineIntensityScalar = 300
 		float fadeInTime             = 0.01
-		float fadeOutTime            = (doTransitionFX ? 0.5 : 0.5)
 		float lifeTime               = 0.1
 		float ditherDelay            = 0.15
 		float ditherDuration         = 0.2
+		float fadeOutTime            = 0.5
 		if ( doTransitionFX )
 			PROTO_HighlightTest( model, color, fillIntensityScalar, outlineIntensityScalar, fadeInTime, fadeOutTime, lifeTime, ditherDelay, ditherDuration, ignoreChildren )
 	}
@@ -2613,6 +2818,26 @@ void function DEV_TweakCharacterOffset( string character, vector offset )
 {
 	file.DEV_characterOffsetCharacter = character
 	file.DEV_characterOffset = offset
+}
+
+void function DEV_ToggleDOF()
+{
+	file.DEV_dofEnabled = !file.DEV_dofEnabled
+
+	float nearStart = 0
+	float nearEnd   = 0
+	float farStart  = 0
+	float farEnd    = 0
+
+	if ( file.DEV_dofEnabled )
+	{
+		nearStart = file.presentationData[ file.currentPresentationType ].dofNearStart
+		nearEnd = file.presentationData[ file.currentPresentationType ].dofNearEnd
+		farStart = file.presentationData[ file.currentPresentationType ].dofFarStart
+		farEnd = file.presentationData[ file.currentPresentationType ].dofFarEnd
+	}
+
+	ApplyDOF( nearStart, nearEnd, farStart, farEnd )
 }
 #endif // DEVELOPER
 #endif // CLIENT
@@ -2693,18 +2918,12 @@ void function RunMouseMovementCallbacks( var capturePanelOrMenu, int deltaX, int
 
 void function UICodeCallback_MouseMovementCapture( var capturePanel, int deltaX, int deltaY )
 {
-	// run callbacks for the capturePanel
-    RunMouseMovementCallbacks( capturePanel, deltaX, deltaY )
+	float screenScaleXModifier = 1920.0 / GetScreenSize().width                             
+	float mouseXRotateDelta    = deltaX * screenScaleXModifier * MOUSE_ROTATE_SPEED
+	                                                                                                                     
 
-	// get the current menu and run callbacks, this preserves backwards compatibility
-    RunMouseMovementCallbacks( GetActiveMenu(), deltaX, deltaY )
-
-	float screenScaleXModifier = 1920.0 / GetScreenSize().width // 1920 is base screen width
-	float mouseXRotateDelta    = deltaX * screenScaleXModifier * MOUSE_ROTATE_MULTIPLIER
-	//printt( "deltaX:", deltaX, "screenScaleXModifier:", screenScaleXModifier, "mouseXRotateDelta:", mouseXRotateDelta )
-
-	float screenScaleYModifier = 1080.0 / GetScreenSize().height // 1920 is base screen width
-	float mouseYRotationDelta  = deltaY * screenScaleYModifier * MOUSE_ROTATE_MULTIPLIER
+	float screenScaleYModifier = 1080.0 / GetScreenSize().height                             
+	float mouseYRotationDelta  = deltaY * screenScaleYModifier * MOUSE_ROTATE_SPEED
 
 	RunMenuClientFunction( "UpdateMouseRotateDelta", mouseXRotateDelta, mouseYRotationDelta )
 }
@@ -2873,7 +3092,7 @@ void function InitLightingConfigs()
 		data.origin = <2867.89, -134.069, 170.419>
 		data.angles = <22.5474, 42.2214, -44.3234>
 		data.color = <1.00, 1.00, 1.00>
-		data.brightness = 7.0
+		data.brightness = 5.5
 		data.distance = 400.0
 		data.innerCone = 5.0
 		data.outerCone = 12.0
@@ -2889,7 +3108,7 @@ void function InitLightingConfigs()
 		data.origin = <3206.24, -92.319, 78.169>
 		data.angles = <2.4512, 123.1417, 23.9838>
 		data.color = <1.00, 0.85, 0.74>
-		data.brightness = 0.40
+		data.brightness = 0.17
 		data.distance = 300.0
 		data.innerCone = 10.0
 		data.outerCone = 40.0
@@ -2940,7 +3159,7 @@ void function InitLightingConfigs()
 		data.origin = <2867.89, -134.069, 170.419>
 		data.angles = <22.5474, 42.2214, -44.3234>
 		data.color = <1.00, 1.00, 1.00>
-		data.brightness = 10.0
+		data.brightness = 13.0
 		data.distance = 400.0
 		data.innerCone = 5.0
 		data.outerCone = 12.0
@@ -3199,4 +3418,11 @@ void function RemoveCallback_OnMouseWheelUp( void functionref() cb )
 	Assert( file.mouseWheelUpCallbacks.contains( cb ) )
 	file.mouseWheelUpCallbacks.removebyvalue( cb )
 }
-#endif //
+#endif //CLIENT || UI
+
+#if CLIENT
+entity function Menu_GetCameraTarget()
+{
+	return file.currentCameraTarget
+}
+#endif//CLIENT

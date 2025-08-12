@@ -61,7 +61,7 @@ WeaponData
 	"projectile_adjust_to_gun_barrel"				"0"
 	"projectile_adjust_to_hand"						"1"
 
-	"show_grenade_indicator"						"0"
+	"show_grenade_indicator"						"1"
 	"grenade_disc_throw"							"1"
 
 	//Grenade Arc
@@ -102,9 +102,9 @@ WeaponData
 	"explosion_shake_duration"						"0.1"
 	"damage_flags"									"DF_RAGDOLL | DF_EXPLOSION"
 
-	"ammo_clip_size"   								"180"
-	"ammo_min_to_fire"								"180"
-	"ammo_per_shot"									"180"
+	"ammo_clip_size"   								"210"
+	"ammo_min_to_fire"								"210"
+	"ammo_per_shot"									"210"
       
 
     "ammo_default_total"							"0"
@@ -129,7 +129,7 @@ WeaponData
 
 	// Behavior
 	"cooldown_type"									"ammo_instant"
-	"max_cook_time"									"99999.99"
+	"max_cook_time"									"99999.992188"
 	"grenade_fuse_time"								"0"
     "start_fuse_on_launch"                          "0"
 	"grenade_ignition_time"                         "8.0"

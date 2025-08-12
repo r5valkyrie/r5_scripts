@@ -59,6 +59,8 @@
 	revenge_view_visuals_enemy
 	mirage_ultimate_cancel_hint
 
+	crypto_tt_scanned_visual
+
 	laser_mesh
 	destroyed_by_emp
 	titan_damage_amp
@@ -92,7 +94,14 @@
 	crypto_camera_is_recalling
 	crypto_camera_is_emp
 	crypto_emp_warning
-
+	death_totem_visual_effect
+	death_totem_recall
+	silenced
+	silenced_rev_visuals
+	interrupted
+	disable_wall_run
+	disable_double_jump
+	disable_automantle_hang
 	script_helper
 	pass_through_amps_weapon
 	simple_timer
@@ -117,5 +126,7 @@
 	trophy_tactical_charge
 	trophy_shield_repair
 	bubble_bunker
+	sonar_round_embedded
+	healing_denied
 /////////////////////////////
 //}

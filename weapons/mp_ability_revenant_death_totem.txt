@@ -11,7 +11,7 @@ WeaponData
 	"menu_icon"										"rui/pilot_loadout/ordnance/electric_smoke_menu"
 	"hud_icon"										"rui/hud/ultimate_icons/ultimate_revenant"
 
-	"offhand_default_inventory_slot"				"1"
+	"offhand_default_inventory_slot"				"4"
 	"minimap_reveal_distance"						"32000"
 	"fast_swap_to"									"1"
 	"offhand_switch_force_draw"						"0"
@@ -22,10 +22,11 @@ WeaponData
 
 	"fire_mode"   									"offhand"
 
-	//"OnWeaponActivate"								"OnWeaponActivate_ability_revenant_death_totem"
-	//"OnWeaponDeactivate"							"OnWeaponDeactivate_ability_revenant_death_totem"
+	"OnWeaponPrimaryAttack" 						"OnWeaponPrimaryAttack_ability_revenant_death_totem"
+	"OnWeaponActivate"								"OnWeaponActivate_ability_revenant_death_totem"
+	"OnWeaponDeactivate"							"OnWeaponDeactivate_ability_revenant_death_totem"
 	"OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
-	//"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_ability_revenant_death_totem"
+	"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_ability_revenant_death_totem"
 
 	// Models
 	"viewmodel"   									"mdl/weapons/empty_handed/ptpov_revenant_totem.rmdl"
@@ -55,10 +56,10 @@ WeaponData
 
 
 	// Behavior
-	"fire_rate"   									"1.42"  // = 1 divided by authored_anim_length (time)
+	"fire_rate"   									"0.570000"
 	"fire_duration"									"0.0"
 	//"fire_anim_rate"  							"1"
-	"deploy_time" 								    "1.0"
+	"deploy_time" 								    "0.030000"
 	//"raise_time" 									"0.05"
 	//"lower_time"  								"0.15"
 	"allow_empty_fire"								"0"
@@ -72,6 +73,11 @@ WeaponData
 	"aimassist_disable_hipfire"						"1"
 	"aimassist_disable_ads"							"1"
 	"cooldown_type"									"ammo_instant"
+	
+	//Can set as playlist vars if to be used in multiple modes
+	"revenant_totem_has_distance_limit"				"1"
+	"revenant_totem_buff_use_ending_fx"				"1"
+	"revenant_totem_buff_duration"					"25.0"
 
 
 	// Spread

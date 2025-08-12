@@ -263,6 +263,16 @@ WeaponData
 	// Rumble
 	"fire_rumble"									"rumble_antititan"
 
+
+	"titanarmor_critical_hit_required"	"1"
+	"headshot_distance"	"29528"
+	"damage_headshot_scale"	"1.800000"
+	"damage_leg_scale"	"0.900000"
+	"damage_shield_scale"	"1"
+	"critical_hit_damage_scale"	"2"
+	"damage_near_distance"	"7500"
+	"damage_far_distance"	"10000"
+	"damage_very_far_distance"	"12000"
 	Mods
 	{
         survival_finite_ammo
@@ -287,7 +297,15 @@ WeaponData
             "charge_effect_attachment"						"muzzle_flash_scoped"
             "charge_effect2_attachment"						"muzzle_flash_scoped"
         }
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 	"ui1_enable"		"1"
 	"ui1_draw_cloaked"	"1"

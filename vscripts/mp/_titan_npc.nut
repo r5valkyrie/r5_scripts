@@ -52,10 +52,10 @@ function TitanNPC_Init()
 
 	AddSoulDeathCallback( AutoTitanDestroyedCheck )
 
-	// #if R1_VGUI_MINIMAP
-	// Minimap_PrecacheMaterial( $"vgui/HUD/threathud_titan_friendlyself" )
-	// Minimap_PrecacheMaterial( $"vgui/HUD/threathud_titan_friendlyself_guard" )
-	// #endif
+	#if R1_VGUI_MINIMAP
+	Minimap_PrecacheMaterial( $"vgui/HUD/threathud_titan_friendlyself" )
+	Minimap_PrecacheMaterial( $"vgui/HUD/threathud_titan_friendlyself_guard" )
+	#endif
 
 	if ( IsSingleplayer() )
 	{
@@ -67,43 +67,43 @@ function TitanNPC_Init()
 
 void function AutoTitanDestroyedCheck( entity soul, var damageInfo )
 {
-	// entity titan = soul.GetTitan()
-	// if ( !IsValid( titan ) )
-	// 	return
+	entity titan = soul.GetTitan()
+	if ( !IsValid( titan ) )
+		return
 
-	// entity player = soul.GetBossPlayer()
-	// if ( !IsValid( player ) )
-	// 	return
+	entity player = soul.GetBossPlayer()
+	if ( !IsValid( player ) )
+		return
 
-	// SetActiveTitanLoadoutIndex( player, -1 )
+	//SetActiveTitanLoadoutIndex( player, -1 )
 
-	// if ( player.GetPetTitan() == titan )
-	// 	player.SetPetTitan( null )
+	if ( player.GetPetTitan() == titan )
+		player.SetPetTitan( null )
 
-	// if ( soul.IsEjecting() )
-	// 	return
+	if ( soul.IsEjecting() )
+		return
 
-	// // has another titan?
-	// if ( GetPlayerTitanInMap( player ) )
-	// 	return
+	// has another titan?
+	if ( GetPlayerTitanInMap( player ) )
+		return
 
-	// switch ( Riff_TitanAvailability() )
-	// {
-	// 	case eTitanAvailability.Default:
-	// 		break
+	/*switch ( Riff_TitanAvailability() )
+	{
+		case eTitanAvailability.Default:
+			break
 
-	// 	default:
-	// 		if ( !Riff_IsTitanAvailable( player ) )
-	// 			return
-	// }
+		default:
+			if ( !Riff_IsTitanAvailable( player ) )
+				return
+	}*/
 
-	// if ( GAMETYPE == SST )
-	// 	return
+	/*if ( GAMETYPE == SST )
+		return*/
 
-	// if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.round_end )
-	// 	return
+	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.round_end )
+		return
 
-	// thread PlayConversationToPlayer( "AutoTitanDestroyed", player )
+	thread PlayConversationToPlayer( "AutoTitanDestroyed", player )
 }
 
 
@@ -111,43 +111,43 @@ void function AutoTitanDestroyedCheck( entity soul, var damageInfo )
 //////////////////////////////////////////////////////////
 function SetupNPC_TitanTitle( npcTitan, player )
 {
-// 	npcTitan.SetBossPlayer( player )
+	npcTitan.SetBossPlayer( player )
 
-// 	#if R1_VGUI_MINIMAP
-// 	switch ( player.GetPetTitanMode() )
-// 	{
-// 		case eNPCTitanMode.FOLLOW:
-// 			npcTitan.Minimap_SetBossPlayerMaterial( $"vgui/HUD/threathud_titan_friendlyself" )
-// 			break;
+	#if R1_VGUI_MINIMAP
+	switch ( player.GetPetTitanMode() )
+	{
+		case eNPCTitanMode.FOLLOW:
+			npcTitan.Minimap_SetBossPlayerMaterial( $"vgui/HUD/threathud_titan_friendlyself" )
+			break;
 
-// 		//case eNPCTitanMode.ROAM:
-// 		//	break;
+		//case eNPCTitanMode.ROAM:
+		//	break;
 
-// 		case eNPCTitanMode.STAY:
-// 			npcTitan.Minimap_SetBossPlayerMaterial( $"vgui/HUD/threathud_titan_friendlyself_guard" )
-// 			break;
-// 	}
-// 	#endif
+		case eNPCTitanMode.STAY:
+			npcTitan.Minimap_SetBossPlayerMaterial( $"vgui/HUD/threathud_titan_friendlyself_guard" )
+			break;
+	}
+	#endif
 }
 
 //////////////////////////////////////////////////////////
 void function NPCTitanNextMode( entity npcTitan, entity player )
 {
-	// entity soul = npcTitan.GetTitanSoul()
-	// if ( !SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) && PROTO_AutoTitansDisabled() )
-	// 	return
+	entity soul = npcTitan.GetTitanSoul()
+	/*if ( !SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) && PROTO_AutoTitansDisabled() )
+		return*/
 
-	// NPCTitanDisableCurrentMode( npcTitan, player )
+	NPCTitanDisableCurrentMode( npcTitan, player )
 
-	// local mode = player.GetPetTitanMode() + 1
-	// if ( mode == eNPCTitanMode.MODE_COUNT )
-	// 	mode = eNPCTitanMode.FOLLOW
+	local mode = player.GetPetTitanMode() + 1
+	if ( mode == eNPCTitanMode.MODE_COUNT )
+		mode = eNPCTitanMode.FOLLOW
 
-	// player.SetPetTitanMode( mode )
-	// npcTitan.Signal( "ChangedTitanMode" )
+	player.SetPetTitanMode( mode )
+	npcTitan.Signal( "ChangedTitanMode" )
 
-	// SetupNPC_TitanTitle( npcTitan, player )
-	// NPCTitanEnableCurrentMode( npcTitan, player )
+	SetupNPC_TitanTitle( npcTitan, player )
+	NPCTitanEnableCurrentMode( npcTitan, player )
 }
 
 //////////////////////////////////////////////////////////
@@ -160,21 +160,21 @@ function NPCTitanSetBehaviorForMode( entity npcTitan, entity player )
 	switch ( player.GetPetTitanMode() )
 	{
 		case eNPCTitanMode.FOLLOW:
-			if ( soul && SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) )
+			/*if ( soul && SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) )
 				npcTitan.SetBehaviorSelector( "behavior_mp_auto_titan_enhanced" )
-			else
+			else*/
 				npcTitan.SetBehaviorSelector( "behavior_mp_auto_titan" )
-			break;
+			//break;
 
 		//case eNPCTitanMode.ROAM:
 		//	break;
 
 		case eNPCTitanMode.STAY:
-			if ( soul && SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) )
+			/*if ( soul && SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) )
 				npcTitan.SetBehaviorSelector( "behavior_mp_auto_titan_enhanced_guard" )
-			else
+			else*/
 				npcTitan.SetBehaviorSelector( "behavior_mp_auto_titan_guard" )
-			break;
+			//break;
 	}
 }
 
@@ -269,40 +269,38 @@ void function AutoTitanChangedEnemy( entity titan )
 
 function AutoTitanShouldSpeak( entity titan, entity owner, aliasSuffix )
 {
-	// if ( IsForcedDialogueOnly( owner ) )
-	// 	return false
+	if ( IsForcedDialogueOnly( owner ) )
+		return false
 
-	// if ( "disableAutoTitanConversation" in titan.s )
-	// {
-	// 	return false
-	// }
-	// //Shut Auto Titans up when game isn't active anymore
-	// if ( GetGameState() >= eGameState.Postmatch )
-	// {
-	// 	return false
-	// }
+	if ( "disableAutoTitanConversation" in titan.s )
+	{
+		return false
+	}
+	//Shut Auto Titans up when game isn't active anymore
+	if ( GetGameState() >= eGameState.Postmatch )
+	{
+		return false
+	}
 
-	// entity owner
+	if ( titan.IsPlayer() )
+	{
+		owner = titan
+	}
+	else
+	{
+		owner = GetPetTitanOwner( titan )
+		if ( !IsValid( owner ) )
+			return
+	}
 
-	// if ( titan.IsPlayer() )
-	// {
-	// 	owner = titan
-	// }
-	// else
-	// {
-	// 	owner = GetPetTitanOwner( titan )
-	// 	if ( !IsValid( owner ) )
-	// 		return
-	// }
+	//if ( owner.s.autoTitanLastEngageCallout == aliasSuffix )
+	{
+		// just did this line, so significant time has to pass before we will use it again
+		//return Time() > owner.s.autoTitanLastEngageCalloutTime + 28
+	}
 
-	// if ( owner.s.autoTitanLastEngageCallout == aliasSuffix )
-	// {
-	// 	// just did this line, so significant time has to pass before we will use it again
-	// 	return Time() > owner.s.autoTitanLastEngageCalloutTime + 28
-	// }
-
-	// // this is a new line, so just make sure we haven't spoken too recently
-	// return Time() > owner.s.autoTitanLastEngageCalloutTime + 7
+	// this is a new line, so just make sure we haven't spoken too recently
+	return Time()
 }
 
 void function PlayAutoTitanConversation( entity titan, string aliasSuffix )
@@ -320,8 +318,8 @@ void function PlayAutoTitanConversation( entity titan, string aliasSuffix )
 			return
 	}
 
-	// if ( !AutoTitanShouldSpeak( titan, owner, aliasSuffix ) ) //Only use the suffix since that's the distinguishing part of the alias, i.e. "engage_titans"
-	// 	return
+	if ( !AutoTitanShouldSpeak( titan, owner, aliasSuffix ) ) //Only use the suffix since that's the distinguishing part of the alias, i.e. "engage_titans"
+		return
 
 	owner.s.autoTitanLastEngageCalloutTime = Time()
 	owner.s.autoTitanLastEngageCallout = aliasSuffix //Only use the suffix since that's the distinguishing part of the alias, i.e. "engage_titans"
@@ -357,90 +355,90 @@ void function FreeAutoTitan( entity npcTitan )
 
 
 //////////////////////////////////////////////////////////
-function SetupAutoTitan( entity npcTitan, entity player )
+void function SetupAutoTitan( entity npcTitan, entity player )
 {
-	// #if SP
-	// npcTitan.SetUsePrompts( "#HOLD_TO_EMBARK_SP", "#PRESS_TO_EMBARK_SP" )
-	// #endif
+	//#if SP
+	npcTitan.SetUsePrompts( "#HOLD_TO_EMBARK_SP", "#PRESS_TO_EMBARK_SP" )
+	//#endif
 
-	// #if MP
-	// npcTitan.SetUsePrompts( "#HOLD_TO_EMBARK", "#PRESS_TO_EMBARK" )
-	// #endif
+	#if MP
+	//npcTitan.SetUsePrompts( "#HOLD_TO_EMBARK", "#PRESS_TO_EMBARK" )
+	#endif
 
-	// npcTitan.SetUsableByGroup( "owner pilot" )
+	npcTitan.SetUsableByGroup( "owner pilot" )
 
-	// NPCTitanFollowPilotInit( npcTitan, player )
+	NPCTitanFollowPilotInit( npcTitan, player )
 
-	// NPCTitanGuardModeInit( npcTitan )
+	NPCTitanGuardModeInit( npcTitan )
 
-	// npcTitan.SetEnemyChangeCallback( AutoTitanChangedEnemy )
+	npcTitan.SetEnemyChangeCallback( AutoTitanChangedEnemy )
 
-	// NPCTitanEnableCurrentMode( npcTitan, player )
+	NPCTitanEnableCurrentMode( npcTitan, player )
 
-	// npcTitan.DisableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE )
-	// npcTitan.EnableNPCFlag( NPC_NEW_ENEMY_FROM_SOUND )
-	// UpdateEnemyMemoryFromTeammates( npcTitan )
+	npcTitan.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_NEW_ENEMY_FROM_SOUND )
+	//npcTitan.EnableNPCFlag( NPC_NEW_ENEMY_FROM_SOUND )
+	UpdateEnemyMemoryFromTeammates( npcTitan )
 
-	// SetPlayerPetTitan( player, npcTitan )
+	SetPlayerPetTitan( player, npcTitan )
 
-	// SetupNPC_TitanTitle( npcTitan, player )
+	SetupNPC_TitanTitle( npcTitan, player )
 
-	// ShowName( npcTitan )
+	ShowName( npcTitan )
 
-	// SPMP_UpdateNPCProficiency( npcTitan )
+	//SPMP_UpdateNPCProficiency( npcTitan )
 }
 
-function SetPlayerPetTitan( entity player, entity npcTitan )
+void function SetPlayerPetTitan( entity player, entity npcTitan )
 {
-	// if ( npcTitan == player.GetPetTitan() )
-	// 	return
+	if ( npcTitan == player.GetPetTitan() )
+		return
 
-	// entity previousOwner = GetPetTitanOwner( npcTitan )
-	// if ( IsValid( previousOwner ) )
-	// {
-	// 	previousOwner.SetPetTitan( null )
-	// }
+	entity previousOwner = GetPetTitanOwner( npcTitan )
+	if ( IsValid( previousOwner ) )
+	{
+		previousOwner.SetPetTitan( null )
+	}
 
-	// if ( IsAlive( player.GetPetTitan() ) )
-	// {
-	// 	Assert( !player.s.replacementDropInProgress, "Tried to give us a titan when we were executing a Titanfall" )
-	// 	// kill old pet titan
-	// 	player.GetPetTitan().Die( null, null, { scriptType = DF_INSTANT, damageSourceId = damagedef_suicide } )
-	// }
+	if ( IsAlive( player.GetPetTitan() ) )
+	{
+		Assert( !player.s.replacementDropInProgress, "Tried to give us a titan when we were executing a Titanfall" )
+		// kill old pet titan
+		player.GetPetTitan().Die( null, null, { scriptType = DF_INSTANT, damageSourceId = damagedef_suicide } )
+	}
 
-	// // HACK: not really a hack, but this could be optimized to only render always for a given client
-	// npcTitan.EnableRenderAlways()
-	// player.SetPetTitan( npcTitan )
-	// #if HAS_TITAN_EARNING
-	// 	ClearTitanAvailable( player )
-	// #endif
-	// SetTeam( npcTitan, player.GetTeam() )
-	// entity soul = npcTitan.GetTitanSoul()
-	// if ( soul == null )
-	// 	soul = player.GetTitanSoul()
+	// HACK: not really a hack, but this could be optimized to only render always for a given client
+	npcTitan.EnableRenderAlways()
+	player.SetPetTitan( npcTitan )
+	#if HAS_TITAN_EARNING
+		ClearTitanAvailable( player )
+	#endif
+	SetTeam( npcTitan, player.GetTeam() )
+	entity soul = npcTitan.GetTitanSoul()
+	if ( soul == null )
+		soul = player.GetTitanSoul()
 
-	// string settings = GetSoulPlayerSettings( soul )
-	// var maintainTitle = Dev_GetAISettingByKeyField_Global( settings, "keep_title_on_autotitan" )
-	// if ( maintainTitle != null && maintainTitle == 1 )
-	// {
-	// 	string title = GetGlobalSettingsString( settings, "printname" )
-	// 	npcTitan.SetTitle( title )
-	// }
-	// else if ( SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) )
-	// {
-	// 	npcTitan.SetTitle( "#NPC_AUTO_TITAN_ENHANCED" )
-	// }
-	// else
-	// {
-	// 	npcTitan.SetTitle( "#NPC_AUTO_TITAN" )
-	// }
+	string settings = GetSoulPlayerSettings( soul )
+	var maintainTitle = "BT-7274"//Dev_GetPlayerSettingByKeyField_Global( settings, "keep_title_on_autotitan" )
+	if ( maintainTitle != null && maintainTitle == 1 )
+	{
+		string title = "BT-7274"//expect string( GetPlayerSettingsFieldForClassName( settings, "printname" ) )
+		npcTitan.SetTitle( title )
+	}
+	/*else if ( SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) )
+	{
+		npcTitan.SetTitle( "#NPC_AUTO_TITAN_ENHANCED" )
+	}
+	else*/
+	{
+		npcTitan.SetTitle( "#NPC_AUTO_TITAN" )
+	}
 
-	// npcTitan.DisableHibernation()
+	npcTitan.DisableHibernation()
 }
 
 
 //////////////////////////////////////////////////////////
-function NPCTitanFollowPilotInit( npcTitan, player )
+void function NPCTitanFollowPilotInit( npcTitan, player )
 {
 	int followBehavior = GetDefaultNPCFollowBehavior( npcTitan )
 	npcTitan.InitFollowBehavior( player, followBehavior )
@@ -463,7 +461,7 @@ function NPCTitanFollowPilotInit( npcTitan, player )
 }
 
 //////////////////////////////////////////////////////////
-function NPCTitanGuardModeInit( npcTitan )
+void function NPCTitanGuardModeInit( npcTitan )
 {
 #if DEVELOPER // Bug 110047
 	Assert( IsValid( npcTitan ) )
@@ -486,7 +484,7 @@ function NPCTitanGuardModeInit( npcTitan )
 }
 
 //////////////////////////////////////////////////////////
-function NPCTitanInitModeOnPlayerRespawn( player )
+void function NPCTitanInitModeOnPlayerRespawn( player )
 {
 	if ( IsValid( player.GetPetTitan() ) )
 	{
@@ -506,7 +504,7 @@ function NPCTitanInitModeOnPlayerRespawn( player )
 }
 
 //////////////////////////////////////////////////////////
-function CodeCallback_PlayerRequestClimbInNPCTitan( npcTitan, player )
+void function CodeCallback_PlayerRequestClimbInNPCTitan( npcTitan, player )
 {
 }
 
@@ -521,33 +519,33 @@ entity function CreateNPCTitanFromSettings( string settings, int team, vector or
 	return npc
 }
 
-function CreateTitanModelAndSkinSetup( entity npc )
+void function CreateTitanModelAndSkinSetup( entity npc )
 {
-	// asset currentModel = npc.GetModelName()
+	asset currentModel = npc.GetModelName()
 
-	// if ( IsSingleplayer() )
-	// {
-	// 	switch ( currentModel )
-	// 	{
-	// 		case $"":
-	// 		case $"models/titans/buddy/titan_buddy.mdl":
-	// 		case $"models/titans/light/sp_titan_light_locust.mdl":
-	// 		case $"models/titans/light/sp_titan_light_raptor.mdl":
-	// 		case $"models/titans/heavy/sp_titan_heavy_deadbolt.mdl":
-	// 		case $"models/titans/heavy/sp_titan_heavy_ogre.mdl":
-	// 		case $"models/titans/medium/sp_titan_medium_ajax.mdl":
-	// 		case $"models/titans/medium/sp_titan_medium_wraith.mdl":
-	// 			break
+	if ( IsSingleplayer() )
+	{
+		switch ( currentModel )
+		{
+			case $"":
+			case $"mdl/titans/buddy/titan_buddy.rmdl":
+			case $"mdl/titans/light/sp_titan_light_locust.rmdl":
+			case $"mdl/titans/light/sp_titan_light_raptor.rmdl":
+			case $"mdl/titans/heavy/sp_titan_heavy_deadbolt.rmdl":
+			case $"mdl/titans/heavy/sp_titan_heavy_ogre.rmdl":
+			case $"mdl/titans/medium/sp_titan_medium_ajax.rmdl":
+			case $"mdl/titans/medium/sp_titan_medium_wraith.rmdl":
+				break
 
-	// 		default:
-	// 			Warning( "NPC titan at " + npc.GetOrigin() + " had non-sp titan model " + currentModel )
-	// 			break
-	// 	}
-	// }
+			default:
+				printt( "NPC titan at " + npc.GetOrigin() + " had non-sp titan model " + currentModel )
+				break
+		}
+	}
 
-	// string settings = npc.ai.titanSettings.titanSetFile
-	// asset model = GetPlayerSettingsAssetForClassName( settings, "bodymodel" )
-	// npc.SetValueForModelKey( model )
+	string settings = npc.ai.titanSettings.titanSetFile
+	asset model = $"mdl/titans/buddy/titan_buddy.rmdl"//GetPlayerSettingsAssetForClassName( settings, "bodymodel" )
+	npc.SetValueForModelKey( model )
 }
 
 // NEW TITAN STUFF BROUGHT OVER FROM TOWER DEFENSE R1
@@ -559,13 +557,13 @@ function CreateTitanModelAndSkinSetup( entity npc )
 
 void function ResetTitanBuildTime( entity player )
 {
-	// if ( player.IsTitan() )
-	// {
-	// 	player.SetTitanBuildTime( GetCoreBuildTime( player ) )
-	// 	return
-	// }
+	if ( player.IsTitan() )
+	{
+		player.SetTitanBuildTime( GetCoreBuildTime( player ) )
+		return
+	}
 
-	// player.SetTitanBuildTime( GetTitanBuildTime( player ) )
+	player.SetTitanBuildTime( 0 )
 }
 
 
@@ -573,67 +571,67 @@ void function ResetTitanBuildTime( entity player )
 
 void function SpawnTitanBattery( entity batteryRef )
 {
-	// vector origin = batteryRef.GetOrigin()
-	// entity battery = CreateTitanBattery( origin )
-	// batteryRef.Destroy()
+	vector origin = batteryRef.GetOrigin()
+	entity battery = CreateTitanBattery( origin )
+	batteryRef.Destroy()
 }
 
 void function SpawnTitanBatteryOnDeath( entity titan, var damageInfo )
 {
-	// if ( !titan.ai.shouldDropBattery || titan.GetTeam() == TEAM_MILITIA )
+	if ( !titan.ai.shouldDropBattery || titan.GetTeam() == TEAM_MILITIA )
+		return
+	// if ( RandomFloatRange( 0, 100 ) < 50 )
 	// 	return
-	// // if ( RandomFloatRange( 0, 100 ) < 50 )
-	// // 	return
-	// int attachID = titan.LookupAttachment( "CHESTFOCUS" )
-	// vector origin = titan.GetAttachmentOrigin( attachID )
+	int attachID = titan.LookupAttachment( "CHESTFOCUS" )
+	vector origin = titan.GetAttachmentOrigin( attachID )
 
-	// int numBatt = 0
+	int numBatt = 0
 
-	// if ( titan.IsTitan() && titan.ai.bossTitanType == TITAN_MERC )
-	// {
-	// 	numBatt = BATTERY_DROP_BOSS
-	// }
-	// else
-	// {
-	// 	if ( Flag( "PlayerDidSpawn" ) )
-	// 	{
-	// 		entity player = GetPlayerArray()[0]
-	// 		entity playerTitan = GetTitanFromPlayer( player )
+	if ( titan.IsTitan() && titan.ai.bossTitanType == TITAN_MERC )
+	{
+		numBatt = BATTERY_DROP_BOSS
+	}
+	else
+	{
+		if ( Flag( "PlayerDidSpawn" ) )
+		{
+			entity player = GetPlayerArray()[0]
+			entity playerTitan = GetTitanFromPlayer( player )
 
-	// 		if ( IsValid( playerTitan ) &&
-	// 				(
-	// 					GetDoomedState( playerTitan ) ||
-	// 			 		RandomDropBatteryBasedOnHealth( playerTitan )
-	// 			 	)
-	// 			)
-	// 		{
-	// 			numBatt = 1
-	// 		}
-	// 	}
-	// }
+			if ( IsValid( playerTitan ) &&
+					(
+						GetDoomedState( playerTitan ) ||
+				 		RandomDropBatteryBasedOnHealth( playerTitan )
+				 	)
+				)
+			{
+				numBatt = 1
+			}
+		}
+	}
 
-	// for ( int i=0; i<numBatt; i++ )
-	// {
-	// 	vector vec = RandomVec( 150 )
-	// 	if ( numBatt == 1 )
-	// 		vec = < 0,0,0 >
-	// 	entity battery = CreateTitanBattery( origin )
-	// 	battery.SetVelocity( < vec.x, vec.y, 400 > )
-	// }
+	for ( int i=0; i<numBatt; i++ )
+	{
+		vector vec = RandomVec( 150 )
+		if ( numBatt == 1 )
+			vec = < 0,0,0 >
+		entity battery = CreateTitanBattery( origin )
+		battery.SetVelocity( < vec.x, vec.y, 400 > )
+	}
 }
 
-// entity function CreateTitanBattery( vector origin )
-// {
-// 	//entity battery = Rodeo_CreateBatteryPack()
-// 	//battery.SetOrigin( origin )
-// 	//Highlight_SetNeutralHighlight( battery, "power_up" )
-// 	// if ( IsValid( battery ) )
-// 	// {
-// 	// 	PickupGlow glow = CreatePickupGlow( battery, 0, 255, 0 )
-// 	// 	glow.glowFX.SetParent( battery, "", true, 0 )
-// 	// }
-// 	return battery
-// }
+entity function CreateTitanBattery( vector origin )
+{
+	entity battery = null//Rodeo_CreateBatteryPack()
+	battery.SetOrigin( origin )
+	//Highlight_SetNeutralHighlight( battery, "power_up" )
+	// if ( IsValid( battery ) )
+	// {
+	// 	PickupGlow glow = CreatePickupGlow( battery, 0, 255, 0 )
+	// 	glow.glowFX.SetParent( battery, "", true, 0 )
+	// }
+	return battery
+}
 
 void function SetWeaponCooldowns( entity player, array<entity> weapons, float cooldown )
 {

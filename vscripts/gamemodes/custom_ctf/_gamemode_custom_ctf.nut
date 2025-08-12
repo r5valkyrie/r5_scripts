@@ -1,11 +1,3 @@
-// Credits
-// AyeZee#6969 -- ctf gamemode and ui
-// CafeFPS -- Server/client/ui Rework and multiple code fixes
-// Rexx and IcePixelx -- Help with code improvments
-// sal#3261 -- base custom_tdm mode to work off
-// mkos -- added healing
-// everyone else -- advice
-
 global function _CustomCTF_Init
 global function _CTFRegisterLocation
 global function _CTFRegisterCTFClass
@@ -120,12 +112,12 @@ void function _CustomCTF_Init()
 	RegisterSignal( "EndScriptedPropsThread" )
 	RegisterSignal( "FlagPhysicsEnd" )
 	
-	BannerAssets_Init()
+	// BannerAssets_Init()
 	
 	AddCallback_OnClientConnected( void function(entity player) { thread _OnPlayerConnected(player) } )
 	AddCallback_OnClientDisconnected( void function(entity player) { thread _OnPlayerDisconnected(player) } )
 	AddCallback_OnPlayerKilled(void function(entity victim, entity attacker, var damageInfo) {thread _OnPlayerDied(victim, attacker, damageInfo)})
-    AddCallback_EntitiesDidLoad( DM__OnEntitiesDidLoad )
+    // AddCallback_EntitiesDidLoad( DM__OnEntitiesDidLoad )
 	AddSpawnCallback( "prop_survival", DissolveItem )
 	#if DEVELOPER
 	AddClientCommandCallback("next_round", ClientCommand_NextRound)
@@ -133,20 +125,37 @@ void function _CustomCTF_Init()
 	// Used for telling the server the player wants to drop the flag
 	AddClientCommandCallback("DropFlag", ClientCommand_DropFlag)
 
-	if( Flowstate_IsHaloMode() )
-	{
-		AddClientCommandCallback("VoteTeam_AskForTeam", ClientCommand_AskForTeam)
-		PrecacheCyberdyne()
-		PrecacheLockout()
-		PrecacheChill()
-	} else
-	{
+	// if( Flowstate_IsHaloMode() )
+	// {
+		// AddClientCommandCallback("VoteTeam_AskForTeam", ClientCommand_AskForTeam)
+		// PrecacheCyberdyne()
+		// PrecacheLockout()
+		// PrecacheChill()
+	// } else
+	// {
 		AddClientCommandCallback("VoteForMap", ClientCommand_VoteForMap)
 		// Used for setting players class
 		AddClientCommandCallback("SetPlayerClass", ClientCommand_SetPlayerClass)
-	}
+	// }
 
 	thread RUNCTF()
+}
+
+void function DissolveItem( entity prop )
+{
+	thread
+	(
+		void function( entity prop )
+		{
+			EndSignal( prop, "OnDestroy" )
+			
+			WaitFrame()
+			entity par = prop.GetParent()
+
+			if( IsValid( par ) && par.GetClassName() == "prop_physics" )
+				prop.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 200 )
+		}
+	)( prop )
 }
 
 // Register location settings from sh_ file
@@ -260,12 +269,12 @@ void function DestroyPlayerProps()
 	}
 	file.playerSpawnedProps.clear()
 
-	foreach(prop in GetServerPropsInDmFile())
-	{
-		if(IsValid(prop))
-			prop.Destroy()
-	}
-	GetServerPropsInDmFile().clear()
+	// foreach(prop in GetServerPropsInDmFile())
+	// {
+		// if(IsValid(prop))
+			// prop.Destroy()
+	// }
+	// GetServerPropsInDmFile().clear()
 }
 
 void function RUNCTF()
@@ -334,22 +343,22 @@ void function VotingPhase()
 		// }()
 	}
 
-	if( file.playerSpawnedProps.len() > 0 || GetServerPropsInDmFile().len() > 0 )
+	if( file.playerSpawnedProps.len() > 0 ) //|| GetServerPropsInDmFile().len() > 0 )
 	{
 		DestroyPlayerProps()
 		if( Flowstate_IsHaloMode()  )
 			wait 1
 	}
 
-	switch(file.selectedLocation.name)
-	{	
-		case "Narrows":
-		thread SpawnChill()
-		break
-		case "The Pit":
-		thread SpawnCyberdyne()
-		break
-	}
+	// switch(file.selectedLocation.name)
+	// {	
+		// case "Narrows":
+		// thread SpawnChill()
+		// break
+		// case "The Pit":
+		// thread SpawnCyberdyne()
+		// break
+	// }
 
 	if( file.selectedLocation.name == "Lockout" )
 	{
@@ -444,7 +453,7 @@ void function VotingPhase()
 void function StartRound()
 {
 	// create the ring based on location
-	if( MapName() != eMaps.mp_flowstate )
+	if( MapName() != eMaps.mp_rr_arena_empty )
 		file.ringBoundary = CreateRingBoundary(file.selectedLocation)
 
 	CTF.roundstarttime = Time()
@@ -605,7 +614,7 @@ void function StartRound()
 	}
 	
 	//Stats
-	Tracker_SetStartLog()
+	// Tracker_SetStartLog()
 	
 	wait 1.5
 	// set
@@ -616,7 +625,7 @@ void function StartRound()
 	{	
 		RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT | CE_FLAG_HIDE_PERMANENT_HUD )
 		thread GiveBackWeapons(player)
-		thread Flowstate_GrantSpawnImmunity(player, 2.5)
+		// thread Flowstate_GrantSpawnImmunity(player, 2.5)
 		
 		if( IsValid( player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 ) ) )
 			player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_1 )
@@ -624,7 +633,7 @@ void function StartRound()
 		if( !IsValid( player ) || !IsAlive( player ) )
 			return
 		
-		if( MapName() == eMaps.mp_flowstate )
+		if( MapName() == eMaps.mp_rr_arena_empty )
 			//Remote_CallFunction_NonReplay(player, "Minimap_DisableDraw_Internal")
 			Remote_CallFunction_ByRef( player, "Minimap_DisableDraw_Internal" )
 		else
@@ -973,25 +982,26 @@ void function StartRound()
 	file.ctfState = eCTFState.WINNER_DECIDED
 	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
 	
-	#if TRACKER
+	#if TRACKER //todo: Add roundend callbacks
 		if( winners.len() )
-			Tracker_SetShouldShip( true )		
+			Tracker_SetShouldShip( true )	
+
+		Tracker_RoundEnd( file.currentRound )
 	#endif
 		
-	PIN_RoundEnd( file.currentRound )
 	file.currentRound++
 	
-	if( Flowstate_IsHaloMode() && 
-		Flowstate_CycleHaloPlaylists() &&
-		file.maxRounds > -1 && 
-		file.currentRound >= file.maxRounds 
-	)
-	{
-		waitthread g__InternalCheckReload()
-		Halo_GotoNextPlaylist()
-	}
-	else 
-		waitthread g__InternalCheckReload()
+	// if( Flowstate_IsHaloMode() && 
+		// Flowstate_CycleHaloPlaylists() &&
+		// file.maxRounds > -1 && 
+		// file.currentRound >= file.maxRounds 
+	// )
+	// {
+		// waitthread g__InternalCheckReload()
+		// Halo_GotoNextPlaylist()
+	// }
+	// else 
+		// waitthread g__InternalCheckReload()
 }
 
 void function Common_ClearPlayerData( entity player )
@@ -1497,26 +1507,26 @@ void function GiveBackWeapons(entity player)
 	
 	TakeAllWeapons(player)
 
-	if( Flowstate_IsHaloMode() )
-	{
-		GiveRandomPrimaryWeaponHalo(player)
-		GiveRandomSecondaryWeaponHalo(player)
-	} else 
-	{
+	// if( Flowstate_IsHaloMode() )
+	// {
+		// GiveRandomPrimaryWeaponHalo(player)
+		// GiveRandomSecondaryWeaponHalo(player)
+	// } else 
+	// {
 		entity primary = player.GiveWeapon(file.ctfclasses[player.p.CTFClassID].primary, WEAPON_INVENTORY_SLOT_PRIMARY_0, file.ctfclasses[player.p.CTFClassID].primaryattachments)
 		SetupInfiniteAmmoForWeapon( player, primary )
 
 		entity secondary = player.GiveWeapon(file.ctfclasses[player.p.CTFClassID].secondary, WEAPON_INVENTORY_SLOT_PRIMARY_1, file.ctfclasses[player.p.CTFClassID].secondaryattachments)
 		SetupInfiniteAmmoForWeapon( player, secondary )
-	}
+	// }
 
-	if( Flowstate_IsHaloMode() )
-	{
-		player.GiveOffhandWeapon( "mp_ability_grapple_master_chief", OFFHAND_TACTICAL )
-		player.GiveOffhandWeapon( "mp_weapon_bubble_bunker_master_chief", OFFHAND_ULTIMATE )
-	}
-	else
-	{
+	// if( Flowstate_IsHaloMode() )
+	// {
+		// player.GiveOffhandWeapon( "mp_ability_grapple_master_chief", OFFHAND_TACTICAL )
+		// player.GiveOffhandWeapon( "mp_weapon_bubble_bunker_master_chief", OFFHAND_ULTIMATE )
+	// }
+	// else
+	// {
 		if( !USE_LEGEND_ABILITYS )
 		{
 			player.GiveOffhandWeapon( file.ctfclasses[player.p.CTFClassID].tactical, OFFHAND_TACTICAL )
@@ -1530,7 +1540,7 @@ void function GiveBackWeapons(entity player)
 			player.GiveOffhandWeapon(CharacterAbility_GetWeaponClassname(tacticalAbility), OFFHAND_TACTICAL, [] )
 			player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultiamteAbility ), OFFHAND_ULTIMATE, [] )
 		}
-	}
+	// }
 
 	player.TakeOffhandWeapon(OFFHAND_MELEE)
 	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
@@ -1574,7 +1584,7 @@ void function _OnPlayerConnected(entity player)
 
 	player.p.CTFClassID = SavedPlayerClass
 
-	thread Flowstate_InitAFKThreadForPlayer(player)
+	// thread Flowstate_InitAFKThreadForPlayer(player)
 	
 	switch ( GetGameState() )
 	{
@@ -1786,11 +1796,11 @@ void function PlayerThrowFlag(entity victim, int team, CTFPoint teamflagpoint)
 	
 	//printt( teamflagpoint.pole.GetOrigin().z, GetZLimitForCurrentLocationName() )
 
-	if( MapName() == eMaps.mp_flowstate && flag.GetOrigin().z <= GetZLimitForCurrentLocationName() || MapName() == eMaps.mp_flowstate && flag.GetOrigin().z >= -19500 )
-	{
-		ResetFlagForTeam( team )
-		return
-	}
+	// if( MapName() == eMaps.mp_rr_arena_empty && flag.GetOrigin().z <= GetZLimitForCurrentLocationName() || MapName() == eMaps.mp_rr_arena_empty && flag.GetOrigin().z >= -19500 )
+	// {
+		// ResetFlagForTeam( team )
+		// return
+	// }
 
 	// Create the recapture trigger
 	teamflagpoint.returntrigger = CreateEntity( "trigger_cylinder" )
@@ -1832,7 +1842,7 @@ void function TrackFlagDropTimeoutAndWorldBounds( int team, CTFPoint teamflagpoi
 			break
 		}
 
-		if( MapName() == eMaps.mp_flowstate && teamflagpoint.pole.GetOrigin().z <= CTF_GetZLimitForCurrentLocationName() || MapName() == eMaps.mp_flowstate && teamflagpoint.pole.GetOrigin().z >= -19500 )
+		if( MapName() == eMaps.mp_rr_arena_empty && teamflagpoint.pole.GetOrigin().z <= CTF_GetZLimitForCurrentLocationName() || MapName() == eMaps.mp_rr_arena_empty && teamflagpoint.pole.GetOrigin().z >= -19500 )
 		{
 			Signal( teamflagpoint.pole, "FlagPhysicsEnd" )
 			ResetFlagForTeam( team )
@@ -1926,8 +1936,8 @@ void function _OnPlayerDied(entity victim, entity attacker, var damageInfo)
 		void functionref() attackerHandleFunc = void function() : (victim, attacker, damageInfo)  {
 			if(IsValid(attacker) && attacker.IsPlayer() && IsAlive(attacker) && attacker != victim)
 			{
-				if( Flowstate_IsHaloMode() )
-					HisWattsons_HaloModFFA_KillStreakAnnounce( attacker )
+				// if( Flowstate_IsHaloMode() )
+					// HisWattsons_HaloModFFA_KillStreakAnnounce( attacker )
 
 				Remote_CallFunction_NonReplay(attacker, "ServerCallback_CTF_UpdatePlayerStats", eCTFStats.Kills)
 				attacker.SetPlayerNetInt( "kills", attacker.GetPlayerNetInt( "kills" ) + 1 )
@@ -1967,7 +1977,7 @@ void function _HandleRespawn(entity player, bool forceGive = false)
 
 	if( Flowstate_IsHaloMode() && !player.GetPlayerNetBool( "hasLockedInCharacter" ) )
 	{
-		CharSelect(player)
+		// CharSelect(player)
 		player.SetPlayerNetBool( "hasLockedInCharacter", true )
 	}
 
@@ -1980,7 +1990,7 @@ void function _HandleRespawn(entity player, bool forceGive = false)
 			SURVIVAL_AddToPlayerInventory(player, item)
 
 	Remote_CallFunction_NonReplay( player, "ServerCallback_RefreshInventoryAndWeaponInfo" )
-	thread Flowstate_GrantSpawnImmunity(player, 2.5)
+	// thread Flowstate_GrantSpawnImmunity(player, 2.5)
 
 	player.SetActiveWeaponBySlot(eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0)
 	Survival_SetInventoryEnabled( player, false )
@@ -2082,7 +2092,7 @@ void function MonitorBubbleBoundary(entity bubbleShield, vector bubbleCenter, fl
 			if(!IsValid(player)) continue
 			if(Distance(player.GetOrigin(), bubbleCenter) > bubbleRadius)
 			{
-				Remote_CallFunction_Replay( player, "ServerCallback_PlayerTookDamage", 0, 0, 0, 0, DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, eDamageSourceId.deathField, null )
+				Remote_CallFunction_Replay( player, "ServerCallback_PlayerTookDamage", 0, <0, 0, 0>, DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, eDamageSourceId.deathField, 0 )
 				player.TakeDamage( int( Deathmatch_GetOOBDamagePercent() / 100 * float( player.GetMaxHealth() ) ), null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.deathField } )
 			}
 		}

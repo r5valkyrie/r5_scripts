@@ -246,10 +246,10 @@ function CommonNPCOnSpawned( entity npc )
 			break
 
 		case "npc_marvin":
-			asset model = npc.GetModelName()
-			npc.EnableNPCFlag( NPC_DISABLE_SENSING )	// don't do traces to look for enemies or players
-			thread MarvinFace( npc )
-			thread MarvinJobThink( npc )
+			//asset model = npc.GetModelName()
+			//npc.EnableNPCFlag( NPC_DISABLE_SENSING )	// don't do traces to look for enemies or players
+			//thread MarvinFace( npc )
+			//thread MarvinJobThink( npc )
 			break
 
 		case "npc_pilot_elite":

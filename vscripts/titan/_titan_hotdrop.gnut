@@ -64,7 +64,7 @@ void function TitanHotDrop( entity titan, string animation, vector origin, vecto
 			printt( "Post impact,anim is done" )
 			if ( IsValid( titan ) )
 			{
-				delete titan.s.hotDropPlayer
+				//delete titan.s.hotDropPlayer
 				titan.e.isHotDropping = false
 				titan.Signal( "TitanHotDropComplete" )
 				if ( !IsFFAGame() )
@@ -88,7 +88,7 @@ void function TitanHotDrop( entity titan, string animation, vector origin, vecto
 		}
 	)
 
-	titan.s.hotDropPlayer <- player
+	//titan.s.hotDropPlayer <- player
 	titan.e.isHotDropping = true
 
 	origin += Vector(0,0,8 ) // work around for currently busted animation
@@ -218,7 +218,12 @@ void function PlayersTitanHotdrops( entity titan, vector origin, vector angles, 
 {
 	titan.EndSignal( "OnDeath" )
 	titan.s.disableAutoTitanConversation <- true // refactor: Should be created on spawn, and always exist -mackey
-
+	titan.e.isHotDropping = true
+	//EmitSoundOnEntity( player, "diag_ap_aiNotify_droppingTitan" )
+	//entity glowFX = PlayFXWithControlPoint( $"P_ar_titan_droppoint", origin, cpoint, -1, null, null, C_PLAYFX_LOOP )
+	int markerIndex = GetParticleSystemIndex( $"P_ar_titan_droppoint" )
+	entity markerFx = StartParticleEffectInWorld_ReturnEntity( markerIndex, origin, angles )
+	EffectSetControlPointVector( markerFx, 1, <220,220,220> )
 	OnThreadEnd(
 		function() : ( titan, player )
 		{
@@ -228,7 +233,7 @@ void function PlayersTitanHotdrops( entity titan, vector origin, vector angles, 
 			// removed so that model highlight always works for you autotitan
 //			titan.DisableRenderAlways()
 
-			delete titan.s.hotDropPlayer
+			//delete titan.s.hotDropPlayer
 			titan.e.isHotDropping = false
 			titan.Signal( "TitanHotDropComplete" )
 			DeleteAnimEvent( titan, "titan_impact" )
@@ -238,7 +243,7 @@ void function PlayersTitanHotdrops( entity titan, vector origin, vector angles, 
 	)
 
 	HideName( titan )
-	titan.s.hotDropPlayer <- player
+	//titan.s.hotDropPlayer <- player
 	titan.e.isHotDropping = true
 	titan.UnsetUsable() //Stop titan embark before it lands
 	AddAnimEvent( titan, "titan_impact", OnTitanHotdropImpact )
@@ -278,13 +283,13 @@ void function PlayersTitanHotdrops( entity titan, vector origin, vector angles, 
 
 	titan.SetInvulnerable() //Make Titan invulnerable until bubble shield is up. Cleared in OnTitanHotdropImpact
 
-	if ( SoulHasPassive( titan.GetTitanSoul(), ePassives.PAS_BUBBLESHIELD ) )
+	//if ( SoulHasPassive( titan.GetTitanSoul(), ePassives.PAS_BUBBLESHIELD ) )
 	{
 		delaythread( impactTime ) CreateBubbleShield( titan, origin, angles )
 	}
-	else if ( SoulHasPassive( titan.GetTitanSoul(), ePassives.PAS_WARPFALL ) )
+	//else if ( SoulHasPassive( titan.GetTitanSoul(), ePassives.PAS_WARPFALL ) )
 	{
-		angles = AnglesCompose( angles, Vector( 0.0, 180.0, 0.0) )
+		//angles = AnglesCompose( angles, Vector( 0.0, 180.0, 0.0) )
 	}
 
 	//DrawArrow( origin, angles, 10, 150 )
@@ -300,31 +305,36 @@ void function PlayersTitanHotdrops( entity titan, vector origin, vector angles, 
 	SetStanceKneel( titan.GetTitanSoul() )
 
 	waitthread PlayAnimTeleport( titan, animation, origin, angles )
-
+	markerFx.Destroy()
+	
 	TitanCanStand( titan )
 	if ( !titan.GetCanStand() )
 	{
 		titan.SetOrigin( origin )
 		titan.SetAngles( angles )
 	}
-
+	//return
 	titan.ClearInvulnerable() //Make Titan vulnerable again once he's landed
 
 	if ( !Flag( "DisableTitanKneelingEmbark" ) )
 	{
-		if ( IsValid( GetEmbarkPlayer( titan ) ) )
+		/*if ( IsValid( GetEmbarkPlayer( titan ) ) )
 		{
 			titan.SetTouchTriggers( true ) //Hack, potential fix for triggers bug. See bug 212751
 			//A player is trying to get in before the hotdrop animation has finished
 			//Wait until the embark animation has finished
 			WaittillAnimDone( titan )
 			return
-		}
+		}*/
 
 		titan.s.standQueued = false // SetStanceKneel should set this
 		SetStanceKneel( titan.GetTitanSoul() )
 		thread PlayAnim( titan, "at_MP_embark_idle_blended" )
 	}
+	
+	SetStanceStand( titan.GetTitanSoul() )
+	titan.GiveWeapon("mp_titanweapon_meteor", WEAPON_INVENTORY_SLOT_ANY)
+	waitthread PlayAnimGravity( titan, "at_hotdrop_quickstand" )
 }
 
 float function GetHotDropImpactTime( entity titan, string animation )

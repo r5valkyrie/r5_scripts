@@ -1,0 +1,21 @@
+Selector Common
+
+	// SelectSchedule_Flinch
+	// SelectSchedule_ReactSurprised
+	// SelectSchedule_ReactJumpedOver
+Selector_End
+
+
+Selector Idle
+	SelectSchedule_Idle
+Selector_End
+
+
+Selector Alert
+	SelectSchedule_Alert
+Selector_End
+
+
+Selector Combat
+	SelectSchedule_ChaseEnemy
+Selector_End

@@ -54,7 +54,7 @@ void function EntitiesDidLoad()
 {
 	//Generate a list of valid zipline dropship drop off points.
 	#if MP
-		BuildZiplineDropshipSpawnPoints()
+		//BuildZiplineDropshipSpawnPoints()//TODO: FIX DOGFIGHTS - Kral
 	#endif //MP
 }
 

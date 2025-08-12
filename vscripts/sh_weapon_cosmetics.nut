@@ -128,6 +128,10 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_skin_for_" + ItemFlavor_GetGUIDString( weaponFlavor ) )
 		entry.DEV_category = "weapon_skins"
+		#if DEVELOPER
+			entry.pdefSectionKey = "weapon " + ItemFlavor_GetGUIDString( weaponFlavor )
+			//entry.DEV_name       = DEV_ItemFlavor_GetCleanedAssetPath( weaponFlavor ) + " Skin"
+		#endif
 		entry.DEV_name = ItemFlavor_GetHumanReadableRef( weaponFlavor ) + " Skin"
 		entry.defaultItemFlavor = skinList[0]
 		entry.validItemFlavorList = skinList
@@ -159,7 +163,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 		fileLevel.loadoutWeaponSkinSlotMap[weaponFlavor] <- entry
 	}
 
-	//
+	// charms
 	{
 		array<ItemFlavor> charmList = RegisterReferencedItemFlavorsFromArray( weaponFlavor, "charms", "flavor", "featureFlag" )
 		fileLevel.weaponCharmSetMap[weaponFlavor] <- MakeItemFlavorSet( charmList, fileLevel.cosmeticFlavorSortOrdinalMap )
@@ -186,7 +190,28 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 			ItemFlavor ornull flavorCurrentWeaponEquippedTo = GetWeaponThatCharmIsCurrentlyEquippedToForPlayer( playerEHI, flavor )
 			return (flavorCurrentWeaponEquippedTo == null || flavorCurrentWeaponEquippedTo == weaponFlavor)
 		}
+
+		#if SERVER && DEVELOPER
+			charmEntry.isCurrentlyRelevant = bool function( EHI playerEHI ) : ( weaponFlavor ) {
+				entity player          = FromEHI( playerEHI )
+				string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
+
+				if ( IsValid( player.p.DEV_lastDroppedSurvivalWeaponProp ) && player.p.DEV_lastDroppedSurvivalWeaponProp.GetWeaponName() == weaponClassName )
+					return true
+
+				foreach( entity weapon in player.GetAllActiveWeapons() )
+				{
+					if ( weapon.GetWeaponClassName() == weaponClassName )
+						return true
+				}
+				return false
+			}
+		#endif
+
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( charmEntry, void function( EHI playerEHI, ItemFlavor charm ) : ( weaponFlavor, charmEntry ) {
+			#if SERVER
+				UpdatePlayerWeaponCosmetics( FromEHI( playerEHI ), weaponFlavor, charm )
+			#endif
 		} )
 
 		fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor] <- charmEntry
@@ -195,11 +220,11 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 
 void function SetupWeaponCharm( ItemFlavor charm )
 {
-	asset charmMdoel = WeaponCharm_GetCharmModel( charm )
+	asset charmModel = WeaponCharm_GetCharmModel( charm )
 
-	#if(CLIENT)
-		if ( charmMdoel != $"" )
-			PrecacheModel( charmMdoel )
+	#if SERVER || CLIENT
+		if ( charmModel != "" )
+			PrecacheModel( charmModel )
 	#endif
 }
 
@@ -237,7 +262,6 @@ void function SetupWeaponSkin( ItemFlavor skin )
 		{
 			int skinLegendaryIndex = weaponLegendaryIndexMap.len()
 			
-			//Cafe was here
 			#if !UI
 				// printt( skinLegendaryIndex, "to weapon:", ItemFlavor_GetHumanReadableRef( weaponFlavor ), "Added to worldModel", worldModel)
 				if ( !( ItemFlavor_GetHumanReadableRef( weaponFlavor ) in fileLevel.legendaryWeaponSkinsMap_FS ) )
@@ -254,6 +278,7 @@ void function SetupWeaponSkin( ItemFlavor skin )
 
 		fileLevel.weaponSkinLegendaryIndexMap[skin] <- weaponLegendaryIndexMap[worldModel]
 
+		// fx precaching for react to kills feature
 		if ( WeaponSkin_DoesReactToKills( skin ) )
 		{
 			for ( int levelIdx = 0; levelIdx < WeaponSkin_GetReactToKillsLevelCount( skin ); levelIdx++ )
@@ -443,7 +468,7 @@ void function WeaponSkin_Apply( entity ent, ItemFlavor skin )
 #endif // SERVER || CLIENT
 
 #if SERVER
-void function UpdatePlayerWeaponCosmetics( entity player, ItemFlavor weaponFlavor, ItemFlavor skin )
+void function UpdatePlayerWeaponCosmetics( entity player, ItemFlavor weaponFlavor, ItemFlavor cosmetic )
 {
 	#if DEVELOPER
 		string weaponClassName = WeaponItemFlavor_GetClassname( weaponFlavor )
@@ -451,15 +476,27 @@ void function UpdatePlayerWeaponCosmetics( entity player, ItemFlavor weaponFlavo
 		foreach( entity weapon in player.GetMainWeapons() )
 		{
 			if ( weapon.GetWeaponClassName() == weaponClassName )
-				WeaponSkin_Apply( weapon, skin )
+			{
+				if ( ItemFlavor_GetType( cosmetic ) == eItemType.weapon_skin )
+					WeaponCosmetics_Apply( weapon, cosmetic, null )
+
+				if ( ItemFlavor_GetType( cosmetic ) == eItemType.weapon_charm )
+					WeaponCosmetics_Apply( weapon, null, cosmetic )
+			}
 		}
 
 		if ( IsValid( player.p.DEV_lastDroppedSurvivalWeaponProp ) && player.p.DEV_lastDroppedSurvivalWeaponProp.GetWeaponName() == weaponClassName )
-			WeaponSkin_Apply( player.p.DEV_lastDroppedSurvivalWeaponProp, skin )
+		{
+			if ( ItemFlavor_GetType( cosmetic ) == eItemType.weapon_skin )
+				WeaponCosmetics_Apply( player.p.DEV_lastDroppedSurvivalWeaponProp, cosmetic, null )
+
+			if ( ItemFlavor_GetType( cosmetic ) == eItemType.weapon_charm )
+				WeaponCosmetics_Apply( player.p.DEV_lastDroppedSurvivalWeaponProp, null, cosmetic )
+		}
 	#endif
 
 	foreach( callbackFunc in file.callbacks_UpdatePlayerWeaponCosmetics )
-		callbackFunc( player, weaponFlavor, skin )
+		callbackFunc( player, weaponFlavor, cosmetic )
 }
 
 void function AddCallback_UpdatePlayerWeaponCosmetics( void functionref(entity, ItemFlavor, ItemFlavor) callbackFunc )
@@ -717,7 +754,7 @@ void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
 		camoIndex = 0
 	}
 
-	if ( camoIndex >= 3 ) //CAMO_SKIN_COUNT 
+	if ( camoIndex >= 210 ) //CAMO_SKIN_COUNT 
 	{
 		Assert ( false, "Tried to set camoIndex of " + string(camoIndex) + " but the maximum index is " + string(CAMO_SKIN_COUNT) )
 		camoIndex = 0

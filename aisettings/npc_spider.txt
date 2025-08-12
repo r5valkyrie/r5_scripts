@@ -20,7 +20,7 @@ npc_spider
 	creature						1
 	meleeable						1
 
-	health							30
+	health							18
 
 	DefaultModelName				"mdl/creatures/spider/spider.rmdl"
 	DefaultModelName_IMC			"mdl/creatures/spider/spider.rmdl"
@@ -40,7 +40,7 @@ npc_spider
 
 	meleeChargeInterval				0			// "0" allows back to back melee attacks
 	meleeChargeRange				170
-	meleeChargeRequiresStrictFacing	1
+	meleeChargeRequiresStrictFacing	0
 	meleeChargeDamageMin			8
 	meleeChargeDamageMax			8
 	meleeChargeDamageMinHeavyArmor	8
@@ -54,6 +54,8 @@ npc_spider
 	meleeChargeEnemyArmorType		any
 
 	meleeImpactEffectTable			"melee_prowler"
+
+	canTargetPlayerVehicle          1
 
 	chaseStopDist					100			// meleeRange/meleeChargeRange should be greater than chaseStopDist
 	chaseStopDistHeavyArmor			200

@@ -5,74 +5,34 @@ untyped
 //////////////////////////////////////////
 global function mAssert
 
-#if CLIENT
-	global function ErrorClientPlayer
-#endif
-
-void function mAssert( var condition, string errorMsg = "error" )
+void function mAssert( var condition, string errorMsg = "error", ... )
 {
 	if ( !condition )
 	{	
-		#if UI
-			Warning( errorMsg )
-			RunClientScript( "ErrorClientPlayer", errorMsg )
-		#endif
+		array vars = [ this, errorMsg ] 
+		for( int i = 0; i < vargc; i++ )
+			vars.append( vargv[ i ] )
 		
-		#if CLIENT
-			ErrorClientPlayer( errorMsg )
-		#endif
-		
-		#if SERVER
-			string appenderr = "\n\n" + DBG_INFO( 3 )
-			appenderr += "\n" + DBG_INFO( 4 )
-			
-			ErrorServer( errorMsg + appenderr )
+		errorMsg = expect string ( format.acall( vars ) )	
+		string appenderr = format( "\n\n%s\n%s", DBG_INFO( 3 ), DBG_INFO( 4 ) )
+
+		PrintLocals( 3 )
+
+		#if UI || CLIENT
+			ScriptError( errorMsg + appenderr )
+		#elseif SERVER
+			ErrorServer( errorMsg + appenderr ) //This allows running servers to send mAssert errors to all clients.
 		#endif
 	}
 }
-
-#if CLIENT
-void function ErrorClientPlayer( string errorMsg )
-{
-	entity player = GetLocalClientPlayer()
-	thread WaitValidPlayerThenError( player, errorMsg )
-}
-
-void function WaitValidPlayerThenError( entity player, string errorMsg )
-{
-	if( !IsValid( player ) )
-	{
-		RunUIScript( "OpenErrorDialog", errorMsg )
-		return
-	}
-		
-	player.ClientCommand( "disconnect " + errorMsg )
-	waitthread WaitSignalOrTimeout( player, 2, "OnDisconnected" )	
-	RunUIScript( "OpenErrorDialog", errorMsg )
-}
-#endif
 
 #if SERVER
-void function ErrorServer( string errorMsg )
-{
-	thread WaitValidStateThenClose( errorMsg )
-}
-
-void function WaitValidStateThenClose( string errorMsg )
-{
-	if( shGlobalErrorCheck() )
-		wait 1 //Todo(mk): Needs proper timing
-	
-	if ( GetPlayerArray().len() > 0 )
+	void function ErrorServer( string errorMsg )
 	{
 		foreach( player in GetPlayerArray() )
-		{
 			KickPlayerById( player.GetPlatformUID(), errorMsg )
-		}
+		
+		ScriptError( errorMsg )
 	}
-	
-	ScriptError( errorMsg, DBG_INFO() )
-	//throw errorMsg
-}
 #endif 
 ///

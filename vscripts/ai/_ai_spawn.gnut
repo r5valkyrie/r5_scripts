@@ -23,8 +23,8 @@ global function CreateNPCTitan
 global function CreateOgre
 global function CreateProwler
 global function CreateDummy
-global function CreateLegend_ai
 global function CreateSpider
+global function CreateBT
 global function CreateInfected
 global function CreateRocketDrone
 global function CreateRocketDroneGrunt
@@ -32,6 +32,7 @@ global function CreateShieldDrone
 global function CreateShieldDroneGrunt
 global function CreateSoldier
 global function CreateSpectre
+global function CreateSupSpectre
 global function CreateStalker
 global function CreateStryder
 global function CreateSuperSpectre
@@ -39,13 +40,12 @@ global function CreateWorkerDrone
 global function CreateZombieStalker
 global function CreateZombieStalkerMossy
 global function StopAssaultMoveTarget
-global function CreateLegend_ai_aimtrainer
 
-global const HACK_CAP_BACK1 = $"models/sandtrap/sandtrap_wall_bracket.mdl"
-global const HACK_CAP_BACK2 = $"models/pipes/pipe_modular_grey_bracket_cap.mdl"
-global const HACK_CAP_BACK3 = $"models/lamps/office_lights_hanging_wire.mdl"
-global const HACK_DRONE_BACK1 = $"models/Weapons/ammoboxes/backpack_single.mdl"
-global const HACK_DRONE_BACK2 = $"models/barriers/fence_wire_holder_double.mdl"
+global const HACK_CAP_BACK1 = $"mdl/sandtrap/sandtrap_wall_bracket.rmdl"
+global const HACK_CAP_BACK2 = $"mdl/pipes/pipe_modular_grey_bracket_cap.rmdl"
+global const HACK_CAP_BACK3 = $"mdl/lamps/office_lights_hanging_wire.rmdl"
+global const HACK_DRONE_BACK1 = $"mdl/Weapons/ammoboxes/backpack_single.rmdl"
+global const HACK_DRONE_BACK2 = $"mdl/barriers/fence_wire_holder_double.rmdl"
 global const DEFAULT_TETHER_RADIUS = 1500
 global const DEFAULT_COVER_BEHAVIOR_CYLINDER_HEIGHT = 512
 
@@ -56,41 +56,20 @@ struct
 
 void function AiSpawn_Init()
 {
-	// PrecacheModel( HACK_CAP_BACK1 )
-	// PrecacheModel( HACK_CAP_BACK2 )
-	// PrecacheModel( HACK_CAP_BACK3 )
-	// PrecacheModel( HACK_DRONE_BACK1 )
-	// PrecacheModel( HACK_DRONE_BACK2 )
-	// PrecacheModel( TEAM_IMC_GRUNT_MODEL )
-	// PrecacheModel( TEAM_IMC_GRUNT_MODEL_LMG )
-	// PrecacheModel( TEAM_IMC_GRUNT_MODEL_RIFLE )
-	// PrecacheModel( TEAM_IMC_GRUNT_MODEL_ROCKET )
-	// PrecacheModel( TEAM_IMC_GRUNT_MODEL_SHOTGUN )
-	// PrecacheModel( TEAM_IMC_GRUNT_MODEL_SMG )
+	PrecacheModel( HACK_CAP_BACK1 )
+	PrecacheModel( HACK_CAP_BACK2 )
+	PrecacheModel( HACK_CAP_BACK3 )
+	PrecacheModel( HACK_DRONE_BACK1 )
+	PrecacheModel( HACK_DRONE_BACK2 )
 
-	// PrecacheModel( TEAM_MIL_GRUNT_MODEL )
-	// PrecacheModel( TEAM_MIL_GRUNT_MODEL_LMG )
-	// PrecacheModel( TEAM_MIL_GRUNT_MODEL_RIFLE )
-	// PrecacheModel( TEAM_MIL_GRUNT_MODEL_ROCKET )
-	// PrecacheModel( TEAM_MIL_GRUNT_MODEL_SHOTGUN )
-	// PrecacheModel( TEAM_MIL_GRUNT_MODEL_SMG )
+	file.moveTargetClasses = [ "info_move_target", "info_move_animation" ]
+	foreach ( movetargetClass in file.moveTargetClasses )
+	{
+		AddSpawnCallbackEditorClass( "info_target", movetargetClass, InitInfoMoveTargetFlags )
+	}
 
-	// file.moveTargetClasses = [ "info_move_target", "info_move_animation" ]
-	// foreach ( movetargetClass in file.moveTargetClasses )
-	// {
-	// 	AddSpawnCallbackEditorClass( "info_target", movetargetClass, InitInfoMoveTargetFlags )
-	// }
-
-	// RegisterSignal( "StopAssaultMoveTarget" )
-	// RegisterSignal( "OnFinishedAssaultChain" )
-
-	// AiSpawnContent_Init()
-	// #if DEVELOPER
-	// // just to insure that ai settings are being setup properly.
-	// InitNpcSettingsFileNamesForDevMenu()
-	// SetupSpawnAIButtons( TEAM_MILITIA )
-	// AddCallback_EntitiesDidLoad( AiSpawn_EntitiesDidLoad )
-	// #endif
+	RegisterSignal( "StopAssaultMoveTarget" )
+	RegisterSignal( "OnFinishedAssaultChain" )
 }
 
 void function AiSpawn_EntitiesDidLoad()
@@ -104,9 +83,9 @@ void function AiSpawn_EntitiesDidLoad()
 		{
 			switch ( spawnerKeyValues.model.tolower() )
 			{
-				case "models/titans/atlas/atlas_titan.mdl":
-				case "models/titans/ogre/ogre_titan.mdl":
-				case "models/titans/stryder/stryder_titan.mdl":
+				case "mdl/titans/atlas/atlas_titan.rmdl":
+				case "mdl/titans/ogre/ogre_titan.rmdl":
+				case "mdl/titans/stryder/stryder_titan.rmdl":
 					Warning( "Titan has deprecated model at " + spawnerKeyValues.origin )
 					break
 			}
@@ -117,9 +96,9 @@ void function AiSpawn_EntitiesDidLoad()
 	{
 		switch ( model.GetModelName() )
 		{
-			case $"models/titans/atlas/atlas_titan.mdl":
-			case $"models/titans/ogre/ogre_titan.mdl":
-			case $"models/titans/stryder/stryder_titan.mdl":
+			case $"mdl/titans/atlas/atlas_titan.rmdl":
+			case $"mdl/titans/ogre/ogre_titan.rmdl":
+			case $"mdl/titans/stryder/stryder_titan.rmdl":
 				Warning( "Prop has deprecated model at " + model.GetOrigin() )
 				break
 		}
@@ -239,7 +218,7 @@ entity function CreateNPCTitan( string settings, int team, vector origin, vector
 	npc.kv.origin = origin
 	npc.kv.angles = Vector( 0, angles.y, 0 )
 	npc.kv.teamnumber = team
-	SetTitanSettings( npc.ai.titanSettings, settings, settingsMods )
+	//SetTitanSettings( npc.ai.titanSettings, settings, settingsMods )//TODO: FIX LOADOUTS -kral
 	return npc
 }
 
@@ -247,6 +226,13 @@ entity function CreateSpectre( int team, vector origin, vector angles )
 {
 	entity npc = CreateNPC( "npc_spectre", team, origin, angles )
 	SetSpawnOption_AISettings( npc, "npc_spectre" )
+	return npc
+}
+
+entity function CreateSupSpectre( int team, vector origin, vector angles )
+{
+	entity npc = CreateNPC( "npc_super_spectre", team, origin, angles )
+	SetSpawnOption_AISettings( npc, "npc_super_spectre" )
 	return npc
 }
 
@@ -288,6 +274,16 @@ entity function CreateSoldier( int team, vector origin, vector angles )
 	return CreateNPC( "npc_soldier", team, origin, angles )
 }
 
+entity function CreateNPC( string baseClass, int team, vector origin, vector angles )
+{
+	entity npc = CreateEntity( baseClass )
+	SetTeam( npc, team )
+	npc.kv.origin = origin
+	npc.kv.angles = angles
+
+	return npc
+}
+
 entity function CreateProwler( int team, vector origin, vector angles )
 {
 	return CreateNPC( "npc_prowler", team, origin, angles )
@@ -300,35 +296,22 @@ entity function CreateDummy( int team, vector origin, vector angles )
 	return npc
 }
 
-entity function CreateLegend_ai( int team, vector origin, vector angles, bool trainingdummie = false )
-{
-	array<string> aiSettings = ["npc_dummie_ballistic", "npc_dummie_valk", "npc_dummie_horizon", "npc_dummie_loba", "npc_dummie_catalyst" ] //"npc_dummie_rampart", 
-	
-	entity npc = CreateNPC( "npc_dummie", team, origin, angles )
-	SetSpawnOption_AISettings( npc, aiSettings.getrandom() )
-	return npc
-}
-
-entity function CreateLegend_ai_aimtrainer( int team, vector origin, vector angles, bool trainingdummie = false )
-{
-	array<string> aiSettings = ["npc_dummie_ballistic", "npc_dummie_valk", "npc_dummie_loba", "npc_dummie_catalyst", "npc_dummie_combat" ]
-	
-	entity npc = CreateNPC( "npc_dummie", team, origin, angles )
-	SetSpawnOption_AISettings( npc, aiSettings.getrandom() )
-	return npc
-}
-
 entity function CreateSpider( int team, vector origin, vector angles )
 {
-    entity npc = CreateNPC( "npc_spider", team, origin, angles )
-    SetSpawnOption_AISettings( npc, "npc_spider" )
-	return npc
+    return CreateNPC( "npc_spider", team, origin, angles )
 }
 
 entity function CreateInfected( int team, vector origin, vector angles )
 {
     entity npc = CreateNPC( "npc_soldier", team, origin, angles )
     SetSpawnOption_AISettings( npc, "npc_soldier_infected" )
+	return npc
+}
+
+entity function CreateBT( int team, vector origin, vector angles )
+{
+    entity npc = CreateNPC( "npc_titan", team, origin, angles )
+    SetSpawnOption_AISettings( npc, "npc_titan_buddy" )
 	return npc
 }
 
@@ -412,16 +395,6 @@ entity function CreateMarvin( int team, vector origin, vector angles )
 	return CreateNPC( "npc_marvin", team, origin, angles )
 }
 
-entity function CreateNPC( baseClass, team, origin, angles )
-{
-	entity npc = CreateEntity( expect string( baseClass ) )
-	npc.kv.teamnumber = team
-	npc.kv.origin = origin
-	npc.kv.angles = angles
-
-	return npc
-}
-
 entity function CreateNPCFromAISettings( string aiSettings, int team, vector origin, vector angles )
 {
 	string baseClass = expect string( Dev_GetAISettingByKeyField_Global( aiSettings, "BaseClass" ) )
@@ -451,7 +424,7 @@ entity function GetTargetOrLink( entity npc )
 		return GetEnt( target )
 
 	array<entity> links = npc.GetLinkEntArray()
-	if ( links.len() )
+	if ( links.len() > 0 )
 		return links.getrandom()
 
 	return null
@@ -533,17 +506,22 @@ function AssaultMoveTarget( entity npc, entity ent )
 		if ( ent.HasKey( "script_goal_height" ) )
 			height = float( ent.kv.script_goal_height )
 
-		npc.AssaultPointClamped( origin )
-		npc.AssaultSetGoalRadius( radius )
-		npc.AssaultSetGoalHeight( height )
+		bool skipRunto = ent.HasKey( "skip_runto" ) && int( ent.kv.skip_runto ) == 1
 
-		if ( ent.HasKey( "face_angles" ) && ent.kv.face_angles == "1" )
-			npc.AssaultSetAngles( angles, true )
-
-		if ( ent.HasKey( "script_fight_radius" ) )
+		if ( !skipRunto )
 		{
-			float fightRadius = float( ent.kv.script_fight_radius )
-			npc.AssaultSetFightRadius( fightRadius )
+			npc.AssaultPointClamped( origin )
+			npc.AssaultSetGoalRadius( radius )
+			npc.AssaultSetGoalHeight( height )
+
+			if ( ent.HasKey( "face_angles" ) && ent.kv.face_angles == "1" )
+				npc.AssaultSetAngles( angles, true )
+
+			if ( ent.HasKey( "script_fight_radius" ) )
+			{
+				float fightRadius = float( ent.kv.script_fight_radius )
+				npc.AssaultSetFightRadius( fightRadius )
+			}
 		}
 
 		if ( npc.IsLinkedToEnt( ent ) && ent.HasKey( "unlink" ) && ent.kv.unlink == "1" )
@@ -568,7 +546,6 @@ function AssaultMoveTarget( entity npc, entity ent )
 
 		table results
 
-		bool skipRunto = ent.HasKey( "skip_runto" ) && int( ent.kv.skip_runto ) == 1
 		if ( !skipRunto )
 		{
 			// If pathing fails we retry waiting for the other signals for 3 seconds.

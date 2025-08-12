@@ -868,8 +868,8 @@ Schedule
 
 		Tasks
 			TASK_SET_PATH_CLUSTER_EXCLUDE	1
-			TASK_GET_PATH_TO_ENEMY			1
-			TASK_RUN_PATH					1
+			TASK_GET_PATH_TO_ENEMY			0
+			TASK_RUN_PATH					0
 			TASK_SCRIPTED_DIALOGUE			9		// script enum eCodeDialogueID.CHASE_ENEMY
 			TASK_WAIT_FOR_MOVEMENT_CHASE	0
 			TASK_FACE_ENEMY					3
@@ -1214,6 +1214,7 @@ Schedule
 			TASK_PLAY_SEQUENCE				ACTIVITY:ACT_DISENGAGE
 
 		Interrupts
+
 End_Schedule
 
 
@@ -1234,6 +1235,7 @@ Schedule
 		Interrupts
 			COND_NEW_ENEMY
 			COND_ENEMY_DEAD
+
 End_Schedule
 
 
@@ -1251,7 +1253,6 @@ Schedule
 			TASK_WAIT_FOR_MOVEMENT			0
 
 		Interrupts
-			COND_ANY_MELEE_ATTACK
 
 End_Schedule
 
@@ -1269,7 +1270,6 @@ Schedule
 			TASK_WAIT_FOR_MOVEMENT			0
 
 		Interrupts
-			COND_ANY_MELEE_ATTACK
 
 End_Schedule
 

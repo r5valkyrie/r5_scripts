@@ -20,6 +20,7 @@ global struct LootTypeData
 
 	#if SERVER
 		entity functionref(string, vector, int) specialCaseSpawnFunction
+		entity functionref(string, vector) specialCaseSpawnFunctionRetail
 	#endif
 
 	LootActionStruct functionref( entity player, LootRef lootRef ) groundActionFunc
@@ -122,8 +123,18 @@ void function SURVIVAL_LootTypes_InitShared()
 	lt = RegisterLootType( eLootType.DATAKNIFE )
 	lt.equipmentSlot = ""
 	lt.groundActionFunc = GroundAction_ForBackpackItem
-	lt.groundUseLongActionFunc = GroundLongAction_ForBackpackItem
 	lt.groundAltActionFunc = GroundAltAction_None
+	#if SERVER
+		lt.specialCaseSpawnFunctionRetail = SpawnVaultKey
+	#endif
+	
+	lt = RegisterLootType( eLootType.SHIPKEYCARD )
+	lt.equipmentSlot = ""
+	lt.groundActionFunc = GroundAction_ForBackpackItem
+	lt.groundAltActionFunc = GroundAltAction_None
+	#if SERVER
+		lt.specialCaseSpawnFunctionRetail = SpawnVaultKey
+	#endif
 
 	lt = RegisterLootType( eLootType.CUSTOMPICKUP )
 	lt.equipmentSlot = ""
@@ -131,7 +142,12 @@ void function SURVIVAL_LootTypes_InitShared()
 	lt.groundUseLongActionFunc = GroundLongAction_ForBackpackItem
 	lt.groundAltActionFunc = GroundAltAction_None
 	lt.backpackAction = eLootAction.USE
-
+	
+	lt = RegisterLootType( eLootType.MARVIN_ARM )
+	lt.equipmentSlot = ""
+	lt.groundActionFunc = GroundAction_ForCustomItem
+	lt.groundAltActionFunc = GroundAltAction_None
+	lt.backpackAction = eLootAction.NONE
 
 	lt = RegisterLootType( eLootType.RESOURCE )
 	lt.equipmentSlot = ""
@@ -139,6 +155,12 @@ void function SURVIVAL_LootTypes_InitShared()
 	lt.backpackAction = eLootAction.NONE
 	lt.groundActionFunc = GroundAction_ForResource
 	lt.groundAltActionFunc = GroundAltAction_None
+	
+	lt = RegisterLootType( eLootType.GADGET )
+	lt.equipmentSlot = ""
+	lt.equipmentAction = eLootAction.EQUIP
+	lt.groundActionFunc = GroundAction_ForEquipment
+	lt.groundAltActionFunc = GroundAltAction_ForEquipment
 	
 	lt = RegisterLootType( eLootType.GADGET )
 	lt.equipmentSlot = "gadgetslot"

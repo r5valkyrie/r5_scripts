@@ -89,6 +89,7 @@ global const ArcCannonTargetClassnames = {
 	[ "npc_dropship" ] 			= true,
 	[ "npc_marvin" ] 			= true,
 	[ "npc_prowler" ]			= true,
+	[ "npc_spider" ]			= true,
 	[ "npc_soldier" ] 			= true,
 	[ "npc_soldier_heavy" ] 	= true,
 	[ "npc_soldier_shield" ]	= true,

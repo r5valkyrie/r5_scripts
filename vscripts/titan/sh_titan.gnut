@@ -141,7 +141,7 @@ function CodeCallback_PlayerInTitanCockpit( titan, player )
 		TitanTaken( player, titan )
 		titan.GetTitanSoul().soul.lastOwner = player
 
-		Remote_CallFunction_Replay( player, "ServerCallback_TitanCockpitBoot" )
+		Remote_CallFunction_ByRef( player, "ServerCallback_TitanCockpitBoot" )
 		player.CockpitStartBoot()
 
 		Signal( svGlobal.levelEnt, "TitanEntered", { player = player } )

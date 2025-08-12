@@ -25,7 +25,7 @@ global const MARKET_ENT_MARKED_NAME = "mfd_marked"
 global const MARKET_ENT_PENDING_MARKED_NAME = "mfd_pending_marked"
 
 
-void function RegisterNetworkMarkers()
+void function RegisterNetworkMarkers() //(mk): As of 2-22-2025, current max for ServerCallback_UpdateMarker is set to 30.
 {
 	RegisterMarker( MARKER_TOWERDEFENSEGENERATOR )
 

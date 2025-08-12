@@ -27,21 +27,20 @@ ImpactTable
 		"N" "P_impact_slime_large" //Slime
 		"O" "impact_dirt_large"			//Foliage
 		"P" "P_impact_metal_spectre_LG"		//metal_spectre
-
-		"R" "impact_concrete_large"	//metalpanel, grenade, canister
+		"Q" "P_impact_snow" //Snow
+		"R" "P_impact_snow" //Ice
 		"S" "P_impact_water_LG"						//water, slime
 		"T" "impact_concrete_large"	//tile
 		"U" "impact_glass"					//glass_breakble
-
 		"V" "impact_metal_large"		//Metal Vent
 		"W" "impact_wood_large"			//Wood, Wood_lowdensity, Wood_Box, Wood_Crate, Wood_Plank, Wood_Solid, Wood_Furniture, Wood_Panel watermelon
-
+		"X" "P_impact_xo_shield_cp" //xo_shield
 		"Y" "impact_glass"					//glass, brokenglass, glassbottle, pottery
 	    "Z" "impact_sand_LG"						//Sand
 
 		"0" "impact_dirt_large"
-		"1" "impact_concrete_large"
-		"2" "impact_dirt_large"
+		"1" "P_impact_lava_nodecal" //lava_flow
+		"2" "P_impact_lava" //lava_rock_hot
 		"3" "impact_concrete_large"
 		"4" "impact_concrete_large"
 		"5" "impact_concrete_large"
@@ -52,14 +51,21 @@ ImpactTable
 
 		"splash" "P_impact_water_LG" //brush water
 		"slime_splash" "P_impact_water_LG"
+		"airburst" "P_impact_exp_smll_air"  //No Surface
 		"shieldhit" "P_armor_impact"
+		"holohit" "P_holohit_impact"
 		"critical_hit" "impact_metal_titan"
+
+		"headshot_flesh" "P_impact_flesh_LG"
+		//"headshot_mechanical" "P_armor_impact"
+
+		"pass_through"	"P_rampart_impact_amp"
 	}
 
-	FX //Far sparks
+	FX //Impacts Far
 	{
 		"C" "P_impact_gen_far" //Concrete, rock, porcelain, boulder, gravel, asphalt, brick, concrete_block, plaster
-		"D" "P_impact_gen_far" //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup
+		"D" "P_impact_gen_far" //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup, lava_rock
 		"E" "P_impact_gen_far" // metal_titan
 
 		//"F" "P_impact_gen_far" //flesh
@@ -73,8 +79,8 @@ ImpactTable
 		"N" "P_impact_gen_far" //Slime
 		"O" "P_impact_gen_far"  //Foliage
 		"P" "P_impact_gen_far" //metal_spectre
-
-		"R" "P_impact_gen_far" //metalpanel, grenade, canister
+		"Q" "P_impact_gen_far" //Snow
+		"R" "P_impact_gen_far" //Ice
 		"S" "P_impact_water" //water
 		"T" "P_impact_gen_far" //tile
 		"U" "P_impact_gen_far" // glass_breakable
@@ -86,13 +92,36 @@ ImpactTable
 		"Y" "P_impact_gen_far" //glass, brokenglass, glassbottle, pottery
 		"Z" "P_impact_gen_far"  //sand
 
+//		"0" "openslot"
+		"1" "P_impact_gen_far" //lava_flow
+		"2" "P_impact_gen_far" //lava_rock_hot
+//		"3" "openslot"
+//		"4" "openslot"
+//		"5" "openslot"
+//		"6" "openslot"
+//		"7" "openslot"
+//		"8" "openslot"
+//		"9" "openslot"
+
+		"splash" "none" //brush water
+		"slime_splash" "none"
+		"airburst" "none"  //No Surface
+		"shieldhit" "P_impact_gen_far"
+		"holohit" "P_impact_gen_far"
+		"critical_hit" "P_impact_gen_far"
+
+		"headshot_flesh" "P_impact_flesh"
+		"headshot_mechanical" "P_impact_gen_far"
+
+		"pass_through"	"P_impact_gen_far"
 	}
 
 	FX_victim
 	{
 		"F" "impact_flesh_victim"
+		"X" "P_impact_xo_shield_victim_CP"
 		"shieldhit" "impact_metal_large"
-
+		"holohit" "impact_metal"
 	}
 
 

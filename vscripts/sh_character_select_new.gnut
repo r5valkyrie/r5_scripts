@@ -59,6 +59,7 @@ global function AddCallback_CharacterSelectMenu_OnCharacterFocused
 global function AddCallback_CharacterSelectMenu_OnCharacterLocked
 
 global function CharacterSelect_SetMenuState
+global function IsShowingChampionPresentation
 
 const string CAMERA_ENT_NAME = "target_char_sel_camera_new"
 const string CHARACTER_ENT_NAME = "target_char_sel_pilot_new"
@@ -181,6 +182,7 @@ struct FileLevelStruct
 		int championSquad2EHI = -1
 
 		bool isUpdatePlayerModelRunning = false
+		bool isShowingChampionPresentation = false
 	#endif
 }
 FileLevelStruct& fileLevel
@@ -382,7 +384,7 @@ void function _OpenCharacterSelectNewMenu_AimTrainer( var menu )
 	UpdateMenuElementHandles_AimTrainer( menu )
 
 	// thread FlashScreenWhite()
-	// thread DoIntroAimTrainer()
+	// thread ScreenCoverTransition( Time() + CharSelect_GetIntroTransitionDuration() )
 	
 	fileLevel.localClientLockstepIndex = GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepPlayerIndex" )
 
@@ -419,11 +421,6 @@ void function _OpenCharacterSelectNewMenu_AimTrainer( var menu )
 			}
 		}
 	}
-}
-
-void function DoIntroAimTrainer()
-{
-	wait ScreenCoverTransition( Time() + 1 )	
 }
 
 void function AddCallback_OnCharacterSelectMenuOpened( void functionref() callbackFunc )
@@ -853,8 +850,15 @@ void function DoAnimatedChampionSquadCardsPresentation()
 //
 // End
 
-void function DoChampionSquadCardsPresentation()
+bool function IsShowingChampionPresentation()
 {
+	return fileLevel.isShowingChampionPresentation
+}
+
+void function DoChampionSquadCardsPresentation( bool bActivatedFromMenu = false )
+{
+	fileLevel.isShowingChampionPresentation = true
+	
 	#if DEVELOPER
 		printt( "CHARACTER SELECT: DoChampionSquadCardsPresentation" )
 	#endif
@@ -867,7 +871,8 @@ void function DoChampionSquadCardsPresentation()
 	float blackDuration         = max( GetSoundDuration( voLine ) * 0.5, 2.0 )
 
 	// Announcer VO
-	EmitSoundOnEntity( GetLocalClientPlayer(), voLine )
+	if( !bActivatedFromMenu )
+		EmitSoundOnEntity( GetLocalClientPlayer(), voLine )
 
 	{
 		int championEHI       = GetGlobalNetInt( "championEEH" )
@@ -881,13 +886,16 @@ void function DoChampionSquadCardsPresentation()
 			Chroma_SetBaseLayer( CHROMALOOP_SMOKE, CHROMATRANS_BLEND, {[0.0] = <0, 0, 0>, [1.0] = <.5, .5, .5>}, 2.0 ) //
 	}
 
-	// Fade to black and change the scene to black smoke
-	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Disappear" )
-	ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeToBlackDuration, blackDuration, FFADE_OUT | FFADE_PURGE )
-	wait fadeToBlackDuration
-	SetCharacterSelectSceneForChampionSquad()
-	wait blackDuration
-	ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeFromBlackDuration, 0.0, FFADE_IN | FFADE_PURGE )
+	if( !bActivatedFromMenu )
+	{
+		// Fade to black and change the scene to black smoke
+		EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Disappear" )
+		ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeToBlackDuration, blackDuration, FFADE_OUT | FFADE_PURGE )
+		wait fadeToBlackDuration
+		SetCharacterSelectSceneForChampionSquad()
+		wait blackDuration
+		ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeFromBlackDuration, 0.0, FFADE_IN | FFADE_PURGE )
+	}
 
 	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Appear" )
 
@@ -905,7 +913,8 @@ void function DoChampionSquadCardsPresentation()
 		stopShowingCardAt = GetGlobalNetTime( "championDisplayEndTime" )
 	else stopShowingCardAt = GetGlobalNetTime( "pickLoadoutGamestateEndTime" )
 		
-		
+	if( bActivatedFromMenu )
+		stopShowingCardAt = Time() + 6.5
 
 	RuiSetString( rui, "topHeader", topHeader )
 	RuiSetGameTime( rui, "transitionInAt", Time() )
@@ -969,24 +978,27 @@ void function DoChampionSquadCardsPresentation()
 			EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Disappear" )
 
 			Chroma_EndCharacterSelect()
+			
+			fileLevel.isShowingChampionPresentation = false
 		}
 	)
 
-	if ( ShouldPlayIntroQuip() )
-	{
+	if ( ShouldPlayIntroQuip() && !bActivatedFromMenu )
 		thread PlayIntroQuipThread( GetLocalClientPlayer(), championEHI )
-	}
 
 	wait 1.5
 
-	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_BannerChampion" )
-	
-	
+	if( !bActivatedFromMenu )
+		EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_BannerChampion" )
+		
 	string timeToWait = Gamemode() == eGamemodes.fs_dm ? "championDisplayEndTime" : "pickLoadoutGamestateEndTime"
 	{
 		while( Time() < GetGlobalNetTime( timeToWait ) )
 			WaitFrame()
 	}
+	
+	if( bActivatedFromMenu )
+		wait 5
 }
 
 bool function ShouldPlayIntroQuip()
@@ -1444,6 +1456,11 @@ LocPair function FS_ReturnRandomCameraPosForMap()
 		case eMaps.mp_rr_desertlands_holiday:
 		case eMaps.mp_rr_desertlands_64k_x_64k:
 		case eMaps.mp_rr_desertlands_64k_x_64k_nx:
+		case eMaps.mp_rr_desertlands_64k_x_64k_mv:
+		case eMaps.mp_rr_desertlands_64k_x_64k_tt:
+		case eMaps.mp_rr_desertlands_mu1:
+		case eMaps.mp_rr_desertlands_mu1_tt:
+		case eMaps.mp_rr_desertlands_mu2:
 		locs.append( NewCameraPair( <-24658.5098, -20805.4355, -4072.05835>, <0, -61.8279648, 0> ) )
 		locs.append( NewCameraPair( <-13089.8877, 29345.084, -3618.15674>, <0, -50.455925, 0> ) )
 		locs.append( NewCameraPair( <-26440.9238, 8800.14844, -2643.43994>, <0, 138.625336, 0> ) )
@@ -1452,6 +1469,7 @@ LocPair function FS_ReturnRandomCameraPosForMap()
 		break
 		
 		case eMaps.mp_rr_canyonlands_mu2:
+		case eMaps.mp_rr_canyonlands_mu2_tt:
 		case eMaps.mp_rr_canyonlands_mu1:
 		case eMaps.mp_rr_canyonlands_mu1_night:
 		case eMaps.mp_rr_canyonlands_64k_x_64k:
@@ -1529,7 +1547,7 @@ void function CreateCharacterSelectClientEnts()
 			Chroma_BeginCharacterSelect()
 			vector r5reloadedOrigin
 			
-			if ( MapName() == eMaps.mp_rr_desertlands_64k_x_64k || MapName() == eMaps.mp_rr_desertlands_64k_x_64k_nx  || MapName() == eMaps.mp_rr_olympus_mu1 || MapName() == eMaps.mp_rr_desertlands_holiday )
+			if ( MapName() == eMaps.mp_rr_desertlands_64k_x_64k || MapName() == eMaps.mp_rr_desertlands_64k_x_64k_nx  || MapName() == eMaps.mp_rr_desertlands_holiday )
 			{
 			r5reloadedOrigin = fileLevel.camera.GetOrigin() + fileLevel.camera.GetForwardVector() * 120 + fileLevel.camera.GetRightVector() * 40
 			}
@@ -1912,7 +1930,6 @@ void function DoBrowseModeCharacterSelectEffects()
 
 void function OnLoadoutButton_Activate_AimTrainer( var button )
 {
-	printt( "cafe was here")
 	int buttonIndex      = fileLevel.characterButtons.find( button )
 	ItemFlavor character = fileLevel.buttonIndexCharacterMap[ buttonIndex ]
 
@@ -2863,9 +2880,6 @@ void function SetChromaCharacter( ItemFlavor character )
 }
 
 void function UpdatePlayerModel( ItemFlavor character )
-///////////////////////////////////////////////////////
-//By @CafeFPS (CafeFPS)//
-///////////////////////////////////////////////////////
 {
 	if (FS_ShouldShowCustomCharacterSelect())
 	{
@@ -2991,21 +3005,23 @@ void function UpdatePlayerModel( ItemFlavor character )
 	}
 }
 
-array<ItemFlavor> function GetAllGoodAnimsFromGladcardStancesForCharacter(ItemFlavor character)
-///////////////////////////////////////////////////////
-//By @CafeFPS (CafeFPS)//
-/////////////////////////////////////////////////////// 
+array<ItemFlavor> function GetAllGoodAnimsFromGladcardStancesForCharacter( ItemFlavor character )
 //Don't try this at home
 {
 	array<ItemFlavor> actualGoodAnimsForThisCharacter
 	
-	switch(ItemFlavor_GetHumanReadableRef( character )){
+	switch( ItemFlavor_GetHumanReadableRef( character ) )
+	{
 			case "character_pathfinder":
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00267302733" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00543164026" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01261908739" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00913866781" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01749100240" ) ) )
+		return actualGoodAnimsForThisCharacter
+		
+			case "character_dummie":
+		actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/bangalore/common_01.rpak" ) )
 		return actualGoodAnimsForThisCharacter
 		
 			case "character_bangalore":
@@ -3021,7 +3037,7 @@ array<ItemFlavor> function GetAllGoodAnimsFromGladcardStancesForCharacter(ItemFl
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01817535639" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00921909335" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01299384641" ) ) )
-		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00924111436" ) ) )
+		// actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00924111436" ) ) )
 		return actualGoodAnimsForThisCharacter
 		
 			case "character_caustic":
@@ -3048,7 +3064,7 @@ array<ItemFlavor> function GetAllGoodAnimsFromGladcardStancesForCharacter(ItemFl
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00545796048" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00036505096" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01386679009" ) ) )
-		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01657023826" ) ) )
+		// actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01657023826" ) ) )
 		return actualGoodAnimsForThisCharacter
 
 			case "character_mirage":
@@ -3073,47 +3089,72 @@ array<ItemFlavor> function GetAllGoodAnimsFromGladcardStancesForCharacter(ItemFl
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01527711638" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01474484292" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01587991597" ) ) )
-		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID02088801000" ) ) )
+		// actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID02088801000" ) ) )
 		return actualGoodAnimsForThisCharacter
 
 			case "character_wattson":
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01198897745" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01638491567" ) ) )
 		if( MapName() != eMaps.mp_rr_canyonlands_mu2 && MapName() != eMaps.mp_rr_canyonlands_mu1 && MapName() != eMaps.mp_rr_canyonlands_mu1_night && MapName() != eMaps.mp_rr_canyonlands_64k_x_64k ) 
-		{actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01313080345" ) ) )}
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01313080345" ) ) )
+		
 		return actualGoodAnimsForThisCharacter
 		
 			case "character_crypto":
 		if( MapName() != eMaps.mp_rr_canyonlands_mu2 && MapName() != eMaps.mp_rr_canyonlands_mu1 && MapName() != eMaps.mp_rr_canyonlands_mu1_night && MapName() != eMaps.mp_rr_canyonlands_64k_x_64k ) 
-		{actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00269538572" ) ) )}
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00269538572" ) ) )
+		
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00814728196" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01157264561" ) ) )
 		actualGoodAnimsForThisCharacter.append( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID01574566414" ) ) )
 		return actualGoodAnimsForThisCharacter
+		
+			case "character_revenant":
+		if( MapName() != eMaps.mp_rr_canyonlands_mu2 && MapName() != eMaps.mp_rr_canyonlands_mu1 && MapName() != eMaps.mp_rr_canyonlands_mu1_night && MapName() != eMaps.mp_rr_canyonlands_64k_x_64k ) 
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/revenant/epic_01.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/revenant/epic_02.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/revenant/epic_03.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/revenant/epic_04.rpak" ) )
+		return actualGoodAnimsForThisCharacter
+		
+			case "character_loba":
+		if( MapName() != eMaps.mp_rr_canyonlands_mu2 && MapName() != eMaps.mp_rr_canyonlands_mu1 && MapName() != eMaps.mp_rr_canyonlands_mu1_night && MapName() != eMaps.mp_rr_canyonlands_64k_x_64k ) 
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/loba/s05e01_epic_01.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/loba/epic_01.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/loba/epic_02.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/loba/epic_03.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/loba/epic_04.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/loba/epic_05.rpak" ) )
+		return actualGoodAnimsForThisCharacter
+		
+			case "character_rampart":
+		if( MapName() != eMaps.mp_rr_canyonlands_mu2 && MapName() != eMaps.mp_rr_canyonlands_mu1 && MapName() != eMaps.mp_rr_canyonlands_mu1_night && MapName() != eMaps.mp_rr_canyonlands_64k_x_64k ) 
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/rampart/epic_01.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/rampart/epic_02.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/rampart/epic_03.rpak" ) )
+			actualGoodAnimsForThisCharacter.append( GetItemFlavorByAsset( $"settings/itemflav/gcard_stance/rampart/epic_05.rpak" ) )
+		return actualGoodAnimsForThisCharacter
 	}
+	
 	return actualGoodAnimsForThisCharacter
 }
 
 void function UpdatePlayerAnim( ItemFlavor character, int currentMenuState )
-///////////////////////////////////////////////////////
-//By @CafeFPS (CafeFPS)//
-/////////////////////////////////////////////////////// 
 {
-	if (FS_ShouldShowCustomCharacterSelect())
+	if ( FS_ShouldShowCustomCharacterSelect() )
 	{
-	
 		if ( !fileLevel.menuEntsExist )
 			return
 
 		entity player = GetLocalClientPlayer()
 		
-		int ThisRoundAnim = RandomIntRangeInclusive(0,GetAllGoodAnimsFromGladcardStancesForCharacter(character).len()-1)
-		array<ItemFlavor> animsforthischaracter = GetAllGoodAnimsFromGladcardStancesForCharacter(character)		
+		int ThisRoundAnim = RandomIntRangeInclusive( 0, GetAllGoodAnimsFromGladcardStancesForCharacter( character ).len() - 1 )
+		array<ItemFlavor> animsforthischaracter = GetAllGoodAnimsFromGladcardStancesForCharacter( character )		
 		Signal( fileLevel.signalDummy, "UpdatingAnim" )
 		EndSignal( fileLevel.signalDummy, "UpdatingAnim" )
 		EndSignal( fileLevel.signalDummy, "CharacterSelectClosing" )
 
-		if ( MapName() == eMaps.mp_rr_desertlands_64k_x_64k || MapName() == eMaps.mp_rr_desertlands_64k_x_64k_nx || MapName() == eMaps.mp_rr_olympus_mu1 || MapName() == eMaps.mp_rr_desertlands_holiday )
+		if ( MapName() == eMaps.mp_rr_desertlands_64k_x_64k || MapName() == eMaps.mp_rr_desertlands_64k_x_64k_nx || MapName() == eMaps.mp_rr_desertlands_holiday )
 				{
 					fileLevel.characterModel.SetLocalOrigin( <-70, 0, 0> )
 				}
@@ -3138,7 +3179,7 @@ void function UpdatePlayerAnim( ItemFlavor character, int currentMenuState )
 			fileLevel.camera.SetParent( fileLevel.characterModel, "VDU", false )
 			fileLevel.camera.SetLocalOrigin(fileLevel.characterModel.GetLocalOrigin() + <60, -10, 10>)
 		}
-		else if( MapName() == eMaps.mp_rr_canyonlands_mu1 || MapName() == eMaps.mp_rr_canyonlands_mu1_night || MapName() == eMaps.mp_rr_canyonlands_64k_x_64k || MapName() == eMaps.mp_rr_canyonlands_staging || MapName() == eMaps.mp_rr_olympus_mu1 )
+		else if( MapName() == eMaps.mp_rr_canyonlands_mu1 || MapName() == eMaps.mp_rr_canyonlands_mu1_night || MapName() == eMaps.mp_rr_canyonlands_64k_x_64k || MapName() == eMaps.mp_rr_canyonlands_staging )
 		{
 			if( MapName() == eMaps.mp_rr_canyonlands_staging )
 				fileLevel.backgroundModelGeo = CreateClientSidePropDynamic( fileLevel.characterModel.GetLocalOrigin() - <0, 0, 5>, fileLevel.characterModel.GetAngles(), BACKGROUND_GEO_MODEL_KC )
@@ -3175,8 +3216,8 @@ void function UpdatePlayerAnim( ItemFlavor character, int currentMenuState )
 				fileLevel.backgroundRuiTopo = null
 			}
 
-			var nameRuiTopo = CreateRUITopology_Worldspace( fileLevel.camera.GetOrigin() + (fileLevel.camera.GetForwardVector() * 200) + (fileLevel.camera.GetRightVector() * 15) + (fileLevel.camera.GetUpVector() * 15 ), fileLevel.camera.GetAngles(), RUI_NAME_PLATE_WIDTH, RUI_NAME_PLATE_HEIGHT )
-			fileLevel.backgroundRui = RuiCreate( $"ui/character_select_name_plate_new.rpak", nameRuiTopo, RUI_DRAW_WORLD, 0 )
+			fileLevel.backgroundRuiTopo = CreateRUITopology_Worldspace( fileLevel.camera.GetOrigin() + (fileLevel.camera.GetForwardVector() * 200) + (fileLevel.camera.GetRightVector() * 15) + (fileLevel.camera.GetUpVector() * 15 ), fileLevel.camera.GetAngles(), RUI_NAME_PLATE_WIDTH, RUI_NAME_PLATE_HEIGHT )
+			fileLevel.backgroundRui = RuiCreate( $"ui/character_select_name_plate_new.rpak", fileLevel.backgroundRuiTopo, RUI_DRAW_WORLD, 0 )
 			
 			RuiSetString( fileLevel.backgroundRui, "nameString", Localize( ItemFlavor_GetLongName( character ) ) )
 			RuiSetString( fileLevel.backgroundRui, "footnoteString", Localize( CharacterClass_GetCharacterSelectSubtitle( character ) ) )
@@ -3207,15 +3248,16 @@ void function UpdatePlayerAnim( ItemFlavor character, int currentMenuState )
 				fileLevel.backgroundRuiTopo = null
 			}
 
-			var nameRuiTopo = CreateRUITopology_Worldspace( fileLevel.camera.GetOrigin() + (fileLevel.camera.GetForwardVector() * 200) + (fileLevel.camera.GetRightVector() * 10) + (fileLevel.camera.GetUpVector() * 15 ), fileLevel.camera.GetAngles(), RUI_NAME_PLATE_WIDTH, RUI_NAME_PLATE_HEIGHT )
-			fileLevel.backgroundRui = RuiCreate( $"ui/character_select_name_plate_new.rpak", nameRuiTopo, RUI_DRAW_WORLD, 0 )
+			fileLevel.backgroundRuiTopo = CreateRUITopology_Worldspace( fileLevel.camera.GetOrigin() + (fileLevel.camera.GetForwardVector() * 200) + (fileLevel.camera.GetRightVector() * 10) + (fileLevel.camera.GetUpVector() * 15 ), fileLevel.camera.GetAngles(), RUI_NAME_PLATE_WIDTH, RUI_NAME_PLATE_HEIGHT )
+			fileLevel.backgroundRui = RuiCreate( $"ui/character_select_name_plate_new.rpak", fileLevel.backgroundRuiTopo, RUI_DRAW_WORLD, 0 )
 			
 			RuiSetString( fileLevel.backgroundRui, "nameString", Localize( ItemFlavor_GetLongName( character ) ) )
 			RuiSetString( fileLevel.backgroundRui, "footnoteString", Localize( CharacterClass_GetCharacterSelectSubtitle( character ) ) )
 			RuiSetFloat( fileLevel.backgroundRui, "startTime", Time() )
 		}
-	} else {
-	
+	} 
+	else 
+	{
 		if ( !fileLevel.menuEntsExist )
 			return
 
@@ -3225,13 +3267,19 @@ void function UpdatePlayerAnim( ItemFlavor character, int currentMenuState )
 
 		if ( currentMenuState == eNewCharacterSelectMenuState.PICKING )
 		{
-			printt( "| PICKING ANIM", fileLevel.characterModel.GetModelName() )
+			#if DEVELOPER
+				printt( "| PICKING ANIM", fileLevel.characterModel.GetModelName() )
+			#endif 
+			
 			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_MAIN_INTRO", fileLevel.characterNode )
 			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_MAIN_IDLE", fileLevel.characterNode )
 		}
 		else if ( currentMenuState == eNewCharacterSelectMenuState.LOCKED )
 		{
-			printt( "| LOCKED ANIM", string(fileLevel.characterModel.GetModelName()) )
+			#if DEVELOPER
+				printt( "| LOCKED ANIM", string(fileLevel.characterModel.GetModelName()) )
+			#endif
+			
 			Chroma_AddOverlay( CHROMALOOP_SMOKE, CHROMAWAVE_FLASH, {[0.0] = <1, 1, 1>}, 2.0 )
 			thread PlayCharacterReadyUpLine( character )
 			fileLevel.lockSequenceAnimTime = Time()
@@ -3260,7 +3308,7 @@ void function PlayCharacterReadyUpLine( ItemFlavor character )
 void function DebugMenuThink()
 {
 	EndSignal( fileLevel.signalDummy, "CharacterSelectClosing" )
-	while( true )
+	for( ; ; )
 	{
 		string desiredCharacter = "null"
 		if ( fileLevel.desiredCharacterOrNull != null )

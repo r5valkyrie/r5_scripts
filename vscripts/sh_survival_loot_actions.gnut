@@ -7,6 +7,7 @@ global function SURVIVAL_ApplyLootAction
 global function PickupMainWeapon
 global function SwapMainWeapon
 global function AttachToWeapon
+global function PickupBackpackItem
 
 global enum eLootAction
 {
@@ -190,6 +191,9 @@ bool function TryPickupItem( int action, entity pickup, entity player, int picku
 			break
 		case eLootType.DATAKNIFE:
 			pickedUp = DataKnifePickUp_Use( pickup, player, pickupFlags )
+			break
+		case eLootType.SHIPKEYCARD:
+			pickedUp = KeyCardPickUp_Use( pickup, player, pickupFlags )
 			break
 		case eLootType.RESOURCE:
 			pickedUp = PickupResource( pickup, player, pickupFlags, deathBox, desiredCount )
@@ -476,25 +480,39 @@ bool function DataKnifePickUp_Use( entity pickup, entity player, int pickupFlags
 	if ( SURVIVAL_AddToPlayerInventory( player, data.ref, 1 ) > 0 )
 	{
 		#if CLIENT
-		if( player == GetLocalViewPlayer() && MapName() == eMaps.mp_rr_olympus_mu1 )
-			AddPlayerHint( 5.0, 0.25, $"", "#PING_LOOT_BRIDGE_REVEAL" )
-		else if( player == GetLocalViewPlayer() )
+		if( player == GetLocalViewPlayer() )
 			AddPlayerHint( 5.0, 0.25, $"", "#PING_LOOT_VAULT_REVEAL" )
 		#endif
 		#if SERVER
 		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_vaultKeyGot" )
 		
-		foreach( mate in GetPlayerArrayOfTeam( player.GetTeam() ) )
-		{
-			foreach( minimapObj in VaultPanel_GetAllMinimapObjs() )
-			SetMinimapObjectVisibleToPlayer( mate, minimapObj, false )
-		}
+		ShowDataVaultsToTeam( player.GetTeam())
+		#endif
+		return true
+	}
+	else
+	{
+		return false
+	}
 
-		foreach( mate in GetPlayerArrayOfTeam( player.GetTeam() ) )
-		{
-			foreach( minimapObj in VaultPanel_GetBestMinimapObjs() )
-			SetMinimapObjectVisibleToPlayer( mate, minimapObj, true )
-		}
+	unreachable
+}
+
+bool function KeyCardPickUp_Use( entity pickup, entity player, int pickupFlags = 0, entity deathBox = null )
+{
+	LootData data = SURVIVAL_Loot_GetLootDataByIndex( pickup.GetSurvivalInt() )
+
+	if ( SURVIVAL_AddToPlayerInventory( player, data.ref, 1 ) > 0 )
+	{
+		#if CLIENT
+		if( player == GetLocalViewPlayer() )
+			AddPlayerHint( 5.0, 0.25, $"", "Bridge location added to map." )
+		#endif
+		#if SERVER
+		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_keyCardGot" )
+		
+		ShowDataVaultsToTeam( player.GetTeam())
+
 		#endif
 		return true
 	}
@@ -546,7 +564,7 @@ bool function PickupMainWeapon( entity pickup, entity player, int pickupFlags = 
 {
 	#if SERVER || CLIENT
 	LootData data = SURVIVAL_Loot_GetLootDataByIndex( pickup.GetSurvivalInt() )
-
+	if (IsFlowstateActive()){
 	if( data.ref == "mp_weapon_titan_sword" ) //quick patch this should go more deep into the checks. Cafe
 	{
 		#if SERVER
@@ -554,7 +572,7 @@ bool function PickupMainWeapon( entity pickup, entity player, int pickupFlags = 
 		#endif
 		return true
 	}
-	#endif
+	#endif}
 	
 	array<entity> primaryWeapons = SURVIVAL_GetPrimaryWeapons( player )
 

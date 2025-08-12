@@ -20,8 +20,7 @@
         ControlName             RuiButton
         InheritProperties       SwitchButton
         style                   DialogListButton
-        navUp                   SldMasterVolume
-        navDown                 SwchPushToTalk
+        navUp                   SwchSpeakerConfig
         ConVar                  "miles_language"
         list
         {
@@ -29,12 +28,12 @@
             "#GAMEUI_LANGUAGE_ENGLISH"  "english"
         }
 
-        pin_to_sibling          SldMasterVolume
+        pin_to_sibling          SwchSpeakerConfig
         pin_corner_to_sibling   TOP_LEFT
         pin_to_sibling_corner   BOTTOM_LEFT
 
-        visible                 0 //[$ENGLISH || $PORTUGUESE || $TCHINESE]
-        //visible                 1 [!$ENGLISH && !$PORTUGUESE && !$TCHINESE]
+        //visible                 0 //[$ENGLISH || $PORTUGUESE || $TCHINESE]
+        visible                 1 [!$ENGLISH && !$PORTUGUESE && !$TCHINESE]
 
         childGroupAlways        ChoiceButtonAlways
     }

@@ -47,9 +47,9 @@ global function AddCallback_OnPlayerInventoryChanged
 // r5 stuff
 global function AddCallback_OnWeaponAttack
 
-global function AddClientCommandCallbackNew
-global function RemoveClientCommandCallbackNewFunc
-global function ClientCommandCallbackNewExists
+global function AddClientCommandCallbackVoid
+global function RemoveClientCommandCallbackVoid
+global function ClientCommandCallbackVoidExists
 global function RemoveClientCommandCallback
 
 global function AddCallback_OnPreClientDisconnected
@@ -64,6 +64,10 @@ global function RemoveEntityCallback_OnPlayerRespawned
 global function AddEntityCallback_OnPlayerRespawned_FireOnce
 global function RemoveEntityCallback_OnPlayerRespawned_FireOnce
 
+global function CodeCallback_OnPlayerWeaponActivated //todo
+global function AddCallback_OnPlayerWeaponActivated
+global function RemoveCallback_OnPlayerWeaponActivated
+
 // Register functions are called when an entity spawns.
 global function RegisterForDamageDeathCallbacks
 global function CodeCallback_OnInventoryChanged
@@ -76,6 +80,8 @@ global function AddEntityCallback_OnPostDamaged
 global function RemoveEntityCallback_OnPostDamaged
 global function AddEntityCallback_OnKilled
 global function RemoveEntityCallback_OnKilled
+global function AddEntityCallback_OnShadowHealthExhausted
+global function RemoveEntityCallback_OnShadowHealthExhausted
 global function AddEntityCallback_OnPostShieldDamage
 global function RemoveEntityCallback_OnPostShieldDamage
 
@@ -85,6 +91,8 @@ global function RemoveTitanCallback_OnHealthSegmentLost
 // Player movement callbacks
 global function AddPlayerMovementEventCallback
 global function RemovePlayerMovementEventCallback
+global function HasPlayerMovementEventCallback
+
 global function CodeCallback_OnPlayerJump
 global function CodeCallback_OnPlayerDoubleJump
 global function CodeCallback_OnPlayerDodge
@@ -98,15 +106,17 @@ global function CodeCallback_OnPlayerEndWallhang
 
 global function CodeCallback_GetBestObserverTarget
 global function CodeCallback_OnWeaponAttack
-
+global function CodeCallback_OnServerAnimEvent
 global function CodeCallback_OnNavMeshHotSwapBegin
 global function CodeCallback_OnNavMeshHotSwapEnd
 
 global function SetDefaultObserverBehavior
 global function AddCallback_OnPlayerUsedOffhandWeapon
 
-const bool PRINT_MOVEMENT = false
+global function AddPlayerCallback_OnSpawned
+global function RemovePlayerCallback_OnSpawned
 
+const bool PRINT_MOVEMENT = false
 #document("CodeCallback_OnClientConnectionCompleted", "Called when player finishes connecting to the server")
 
 void function AddEntityCallback_OnPlayerRespawned( entity player, void functionref( entity ) callbackFunc )
@@ -180,14 +190,13 @@ struct
 
 struct 
 {
-	bool flowstate_spectator_team_only
+	
 } settings
 
 
 void function CodeCallbacksCommon_Init()
 {
 	RegisterSignal( "OnPostDeathLogicEnd" )
-	settings.flowstate_spectator_team_only = GetCurrentPlaylistVarBool( "flowstate_spectator_team_only", false )
 }
 
 entity function CodeCallback_GetBestObserverTarget( entity observer, bool reverse )
@@ -254,8 +263,8 @@ void function CodeCallback_DamageEntity( entity ent, var damageInfo )
 		printt( "CodeCallback_DamageEntity() top:", DamageInfo_GetDamage( damageInfo ) )
 	#endif
 
-	// if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == damagedef_titan_step )
-		// HandleFootstepDamage( ent, damageInfo )
+	if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == damagedef_titan_step )
+		HandleFootstepDamage( ent, damageInfo )
 
 	RunClassDamageCallbacks( ent, damageInfo )
 	#if VERBOSE_DAMAGE_PRINTOUTS
@@ -422,7 +431,7 @@ void function SendEntityKilledEvent( entity ent, var damageInfo )
 
 	foreach ( player in players )
 	{
-		if( isScenariosMode() && ent.IsPlayer() && !ent.DoesShareRealms( player ) )
+		if( Safe_isScenariosMode() && ent.IsPlayer() && !ent.DoesShareRealms( player ) )
 			continue
 
 		Remote_CallFunction_NonReplay( player, "ServerCallback_OnEntityKilled", attacker, ent, scriptDamageType, damageSourceId )
@@ -729,35 +738,35 @@ void function AddCallback_OnWeaponAttack( void functionref( entity, entity, stri
 	svGlobal.onWeaponAttackCallbacks.append( callbackFunc )
 }
 
-void function AddClientCommandCallbackNew( string commandString, void functionref( entity player, array<string> args ) callbackFunc )
+void function AddClientCommandCallbackVoid( string commandString, void functionref( entity player, array<string> args ) callbackFunc )
 {
 	//(mk): modified to support multiple functions for a single command
-	//Warning("AddClientCommandCallbackNew: " + commandString )
+	//Warning("AddClientCommandCallbackVoid: " + commandString )
 	
-	if( commandString in svGlobal.clientCommandCallbacksNew )
+	if( commandString in svGlobal.clientCommandCallbacksVoid )
 	{
-		mAssert( !(svGlobal.clientCommandCallbacksNew[ commandString ].contains( callbackFunc )), "Already added " + string( callbackFunc ) + "()" + " with " + FUNC_NAME() + "()" )
-		svGlobal.clientCommandCallbacksNew[ commandString ].append( callbackFunc )
+		mAssert( !(svGlobal.clientCommandCallbacksVoid[ commandString ].contains( callbackFunc )), "Already added " + string( callbackFunc ) + "()" + " with " + FUNC_NAME() + "()" )
+		svGlobal.clientCommandCallbacksVoid[ commandString ].append( callbackFunc )
 	}
 	else 
 	{
-		svGlobal.clientCommandCallbacksNew[ commandString ] <- [ callbackFunc ]
+		svGlobal.clientCommandCallbacksVoid[ commandString ] <- [ callbackFunc ]
 	}
 }
 
-bool function ClientCommandCallbackNewExists( string commandString )
+bool function ClientCommandCallbackVoidExists( string commandString )
 {
-	return ( commandString in svGlobal.clientCommandCallbacksNew )
+	return ( commandString in svGlobal.clientCommandCallbacksVoid )
 }
 
 void function RemoveClientCommandCallback( string commandString, bool newOnly = false )
 {
 	bool found = false
 	
-	if ( commandString in svGlobal.clientCommandCallbacksNew )
+	if ( commandString in svGlobal.clientCommandCallbacksVoid )
 	{
 		found = true
-		delete svGlobal.clientCommandCallbacksNew[ commandString ]
+		delete svGlobal.clientCommandCallbacksVoid[ commandString ]
 	}
 	
 	if( !newOnly && commandString in svGlobal.clientCommandCallbacks )
@@ -768,27 +777,27 @@ void function RemoveClientCommandCallback( string commandString, bool newOnly = 
 	
 	if( !found )
 	{
-		string callbackStruct = newOnly ? "clientCommandCallbacksNew" : "any clientcommand callbacks";
+		string callbackStruct = newOnly ? "clientCommandCallbacksVoid" : "any clientcommand callbacks";
 		printf( "Tried to remove client command with [ %s() ] but command [ %s ] does not exist in %s", FUNC_NAME(), commandString, callbackStruct )
 	}
 }
 
-void function RemoveClientCommandCallbackNewFunc( string commandString ,void functionref( entity player, array<string> args ) callbackFunc )
+void function RemoveClientCommandCallbackVoid( string commandString ,void functionref( entity player, array<string> args ) callbackFunc )
 {
-	if( commandString in svGlobal.clientCommandCallbacksNew )
+	if( commandString in svGlobal.clientCommandCallbacksVoid )
 	{
-		if ( svGlobal.clientCommandCallbacksNew[ commandString ].contains(callbackFunc) )
+		if ( svGlobal.clientCommandCallbacksVoid[ commandString ].contains(callbackFunc) )
 		{
-			svGlobal.clientCommandCallbacksNew[ commandString ].removebyvalue(callbackFunc)
+			svGlobal.clientCommandCallbacksVoid[ commandString ].removebyvalue(callbackFunc)
 		}
 		else 
 		{
-			printf( "Tried to remove a callbackFunc with [ %s() ] but callbackFunc [ %s() ] does not exist for command [ %s ] in clientCommandCallbacksNew", FUNC_NAME(), string( callbackFunc ), commandString )
+			printf( "Tried to remove a callbackFunc with [ %s() ] but callbackFunc [ %s() ] does not exist for command [ %s ] in clientCommandCallbacksVoid", FUNC_NAME(), string( callbackFunc ), commandString )
 		}
 	}
 	else 
 	{
-		printf( "Tried to remove callbackFunc [ %s() ] with [ %s() ] but command [ %s ] does not exist in clientCommandCallbacksNew", string( callbackFunc ), FUNC_NAME(), commandString )
+		printf( "Tried to remove callbackFunc [ %s() ] with [ %s() ] but command [ %s ] does not exist in clientCommandCallbacksVoid", string( callbackFunc ), FUNC_NAME(), commandString )
 	}
 }
 
@@ -865,7 +874,7 @@ void function AddEntityCallback_OnDamaged( entity ent, void functionref( entity 
 		return
 	
 	#if DEVELOPER
-		mAssert( !ent.e.entDamageCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " to entity" )
+		mAssert( !ent.e.entDamageCallbacks.contains( callbackFunc ), "Already added func \"%s\" to entity", string( callbackFunc ) )
 	#endif
 
 	ent.SetDamageNotifications( true )
@@ -937,6 +946,26 @@ void function RemoveEntityCallback_OnKilled( entity ent, void functionref( entit
 
 	if ( ent.e.entKilledCallbacks.len() == 0 )
 		ent.SetDeathNotifications( false )
+}
+
+void function AddEntityCallback_OnShadowHealthExhausted( entity player, bool functionref( entity ) callbackFunc )
+{
+	#if DEVELOPER
+	foreach ( func in player.e.entOnShadowHealthExhaustedCallbacks )
+	{
+		Assert( func != callbackFunc , "Already added " + string( callbackFunc ) + " to entity" )
+	}
+	#endif
+
+	player.e.entOnShadowHealthExhaustedCallbacks.append( callbackFunc )
+}
+
+void function RemoveEntityCallback_OnShadowHealthExhausted( entity player, bool functionref( entity ) callbackFunc )
+{
+	int index = player.e.entOnShadowHealthExhaustedCallbacks.find( callbackFunc )
+
+	Assert( index != -1, "Requested OnShadowHealthExhausted " + string( callbackFunc ) + " to be removed not found! " )
+	player.e.entOnShadowHealthExhaustedCallbacks.fastremove( index )
 }
 
 void function AddEntityCallback_OnPostShieldDamage( entity ent, void functionref( entity, var, float ) callbackFunc )
@@ -1076,7 +1105,18 @@ void function RemovePlayerMovementEventCallback( entity player, int playerMoveme
 
 }
 
-
+bool function HasPlayerMovementEventCallback( entity player, int playerMovementEvent, void functionref( entity player ) callbackFunc )
+{
+	table<int, array<void functionref( entity )> > callbackTable = player.p.playerMovementEventCallbacks
+	if ( playerMovementEvent in callbackTable )
+	{
+		if ( callbackTable[ playerMovementEvent ].contains( callbackFunc ) )
+		{
+			return true
+		}
+	}
+	return false
+}
 
 void function CodeCallback_OnPlayerJump( entity player )
 {
@@ -1226,6 +1266,90 @@ void function AddCallback_OnPlayerInventoryChanged( void functionref( entity ) c
 	file.playerInventoryChangedCallbacks.append( callbackFunc )
 }
 
+// called by code when an animation does { event AE_SV_VSCRIPT_CALLBACK FrameNumber "some string" }
+// and by a script function OnFootstep, apparently.
+void function CodeCallback_OnServerAnimEvent( entity ent, string eventName )
+{
+	PerfStart( PerfIndexServer.CB_OnServerAnimEvent )
+	if ( HasAnimEvent( ent, eventName ) )
+		thread RunAnimEventCallbacks( ent, eventName )
+
+	// couldn't find this eventName on the ent or the global anim events,
+	// so try breaking it down. If we didn't find it, it means
+	// script needs to handle the event, even if it is just to
+	// do nothing with it
+
+	array<string> tokens = split( eventName, ":" )
+	string tokenName = tokens[0]
+
+	if ( HasAnimEventTokenized( ent, tokenName ) )
+		thread RunAnimEventTokenizedCallbacks( ent, tokenName, tokens )
+
+	if ( tokenName in svGlobal.globalAnimEventTokenizeCallbacks )
+	{
+		thread svGlobal.globalAnimEventTokenizeCallbacks[ tokenName ]( ent, tokens )
+		PerfEnd( PerfIndexServer.CB_OnServerAnimEvent )
+		return
+	}
+
+	if ( tokenName in svGlobal.globalAnimEventCallbacks )
+	{
+		thread svGlobal.globalAnimEventCallbacks[ tokenName ]( ent )
+		PerfEnd( PerfIndexServer.CB_OnServerAnimEvent )
+		return
+	}
+
+	switch ( tokenName )
+	{
+		case "worldsound":
+			GlobalAnimEventWithStringParameter_WorldSound( ent, tokens[1] )
+			break
+
+		case "signal":
+			SendSignalFromTokens( ent, tokens )
+			break
+
+		case "flagset":
+			GlobalAnimEventWithStringParameter_FlagSet( ent, tokens[1] )
+			break
+
+		case "cloak_start":
+			GlobalAnimEventWithStringParameter_CloakStart( ent, tokens[1] )
+			break
+
+		case "dialogue":
+			PlayDialogueForAnimEvent( ent, tokens[1] )
+			break
+
+		case "rampart_turret_spin_up":
+		case "rampart_turret_button_press":
+			OnAnimEvent_weapon_mounted_turret_weapon( ent, tokenName )
+			break
+		case "rampart_turret_mobile_spin_up":
+		case "rampart_turret_mobile_button_press":
+			OnAnimEvent_weapon_mobile_hmg( ent, tokenName )
+			break
+		                   
+		case "loot_marvin_dispense_loot":
+			LootMarvin_OnDispenseLootAnimEvent( ent )
+			break
+
+		case "spawn_prop_in_world":
+			//Emote_AnimEvent_SpawnModelInWorld( ent, tokens[1], tokens[2] )
+			break
+
+		case "spawn_spray_in_world":
+			//Emote_AnimEvent_SpawnSprayInWorld( ent, tokens[1], tokens[2], tokens[3] )
+			break
+
+		case "ammo_swap_reload_complete":
+			//OnAnimEvent_weapon_car_ammo_swap_complete(ent)
+			break
+	}
+
+	PerfEnd( PerfIndexServer.CB_OnServerAnimEvent )
+}
+
 void function AddCallback_OnPlayerUsedOffhandWeapon( void functionref( entity player, entity offhandWeapon ) callbackFunc )
 {
 	Assert( !svGlobal.onPlayerUsedOffhandCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnPlayerUsedOffhandWeapon" )
@@ -1236,4 +1360,31 @@ void function AddCallback_OnClientReloadConnected( void functionref( entity play
 {
 	Assert( !svGlobal.onClientReloadConnectedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnClientReloadConnected" )
 	svGlobal.onClientReloadConnectedCallbacks.append( callbackFunc )
+}
+
+void function AddPlayerCallback_OnSpawned( entity player, void functionref(entity) func )
+{
+	player.p.playerSpawnedCallbacks.append( func )
+}
+
+void function RemovePlayerCallback_OnSpawned( entity player, void functionref(entity) func )
+{
+	player.p.playerSpawnedCallbacks.fastremovebyvalue( func )
+}
+
+void function CodeCallback_OnPlayerWeaponActivated( entity player, entity newWeapon, entity oldWeapon )
+{
+	foreach ( int idx, OnPlayerWeaponActivatedTypeCallback callback in svGlobal.onPlayerWeaponActivatedCallbacks )
+		callback( player, newWeapon, oldWeapon )
+}
+
+void function AddCallback_OnPlayerWeaponActivated( OnPlayerWeaponActivatedTypeCallback callback )
+{
+	mAssert( !svGlobal.onPlayerWeaponActivatedCallbacks.contains( callback ), "Already added callback \"%s\" with %s()", string( callback ), FUNC_NAME() )
+	svGlobal.onPlayerWeaponActivatedCallbacks.append( callback )
+}
+
+void function RemoveCallback_OnPlayerWeaponActivated( OnPlayerWeaponActivatedTypeCallback callback )
+{
+	svGlobal.onPlayerWeaponActivatedCallbacks.removebyvalue( callback )
 }

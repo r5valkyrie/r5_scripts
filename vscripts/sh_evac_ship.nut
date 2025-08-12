@@ -51,10 +51,10 @@ global const string EVAC_DROPSHIP_TARGETNAME = "evac_dropship"
 #endif //SERVER
 
 global const int	EVAC_SHIP_PASSENGERS_MAX = 1
-const float DEFAULT_TIME_UNTIL_SHIP_ARRIVES = 60
-const float DEFAULT_TIME_UNTIL_SHIP_DEPARTS = 30
-const float DEFAULT_EVAC_RADIUS = 256
-const float EVAC_SHIP_Z_OFFSET = 128
+global const float DEFAULT_TIME_UNTIL_SHIP_ARRIVES = 60
+global const float DEFAULT_TIME_UNTIL_SHIP_DEPARTS = 30
+global const float DEFAULT_EVAC_RADIUS = 256
+global const float EVAC_SHIP_Z_OFFSET = 128
 
 #if CLIENT
 const float EVACSHIP_ANNOUNCEMENT_DURATION = 5.0
@@ -113,7 +113,7 @@ void function Sh_EvacShip_Init()
 
 void function EvacShip_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( "EvacShip_ServerCallback_DisplayShipFullHint" )
+	ScriptRemote_RegisterClientFunction( "EvacShip_ServerCallback_DisplayShipFullHint" )
 }
 
 
@@ -544,7 +544,7 @@ void function PlayerBoardsEvacShip( entity player, EvacShipData evacShipData )
 		player.SetInvulnerable()
 	
 		
-	Message_New( player, "The danger is behind you... for now. You made it out alive.", 10 )
+	// Message_New( player, "The danger is behind you... for now. You made it out alive.", 10 )
 	
 	
 	//fixme Cafe

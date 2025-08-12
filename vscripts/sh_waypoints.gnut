@@ -25,6 +25,8 @@ global function TogglePlayerWaypointMute
 global function AddLocationPingToMinimapNoClamp
 global function AddLocationPingToFullmap
 global function ShouldWaypointRuiBeVisible
+global function SetCommsWaypointSoundsEnabled
+global function GetCommsWaypointSoundsEnabled
 #endif //
 global function Waypoint_IsPOI
 global function GetPingedEntForLocWaypoint
@@ -131,6 +133,8 @@ global const asset WAYPOINT_ICON_TARGET = $"rui/hud/common/objective_marker"
 global const asset WAYPOINT_ICON_BATTERY_NEEDED = $"rui/menu/dpad_comms/emoji/battery_need"
 global const asset WAYPOINT_ICON_WAYPOINT = $"rui/hud/common/map_waypoint"
 
+global float BOOSTZONE_ALIVE_TIME = 15.0
+
 #if CLIENT
 //global const asset SQUAD_PING_FX = $"P_ar_ping_ground_CP"
 //global const asset SQUAD_PING_FAR_FX = $"P_ar_ping_ground_far_CP"
@@ -178,8 +182,8 @@ const string FUNCNAME_TRIGGERTARGETHIGHLIGHTSFORPING = "Waypoint_TriggerTargetHi
 const string FUNCNAME_NETNOTIFY = "Waypoint_NetNotify"
 void function Waypoints_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( FUNCNAME_TRIGGERTARGETHIGHLIGHTSFORPING, "entity" )
-	Remote_RegisterClientFunction( FUNCNAME_NETNOTIFY, "entity", "int", 0, eWaypointNotifyType._count )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_TRIGGERTARGETHIGHLIGHTSFORPING, "entity" )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_NETNOTIFY, "entity", "int", 0, eWaypointNotifyType._count )
 }
 
 
@@ -441,9 +445,6 @@ bool function ShouldHighlightForPing( entity wp, entity pingedEnt )
 		case ePingType.ABILITY_DOMESHIELD:
 		return true
 	}
-
-	if( MapName() == eMaps.mp_rr_construct )
-		return false
 	
 	return true
 }
@@ -575,14 +576,17 @@ bool function Waypoint_IsPOI( entity wp )
 	return wp.GetWaypointType() == eWaypoint.BASIC_POI
 }
 
-//(mk): this is convulted as fuck ( need to just write two Waypoint_FindPingByTicketID(), for client/server respectively )
 entity function Waypoint_FindPingByTicketID( entity owner, int ticketID )
 {
-#if SERVER
-	foreach ( entity wp in owner.p.pings.locations )
-#else
-	foreach ( entity wp in s_activeLocationPings )
-#endif
+	#if SERVER
+	array<entity> locationPings = owner.p.pings.locations
+	array<entity> lootPings = owner.p.pings.loots
+	#else
+	array<entity> locationPings = s_activeLocationPings
+	array<entity> lootPings = s_activeLootPings
+	#endif
+
+	foreach ( entity wp in locationPings )
 	{
 		if ( !IsValid( wp ) )
 			continue
@@ -592,11 +596,7 @@ entity function Waypoint_FindPingByTicketID( entity owner, int ticketID )
 			return wp
 	}
 
-#if SERVER
-	foreach ( entity wp in owner.p.pings.loots )
-#else
-	foreach ( entity wp in s_activeLootPings )
-#endif
+	foreach ( entity wp in lootPings )
 	{
 		if ( owner != wp.GetOwner() )
 			continue
@@ -1527,7 +1527,17 @@ void function InstanceLocationPing_Thread( entity wp )
 
 		RuiSetBool( rui, "drawHeightLine", PingFlavor_GetDrawHeightLine( pingFlavor ) )
 		
-		if(pingType == ePingType.SHADOWFALL_LEGEND_DEATH || pingType == ePingType.SHADOWFALL_SHADOW_DEATH || pingType == ePingType.SHADOWFALL_NEMESIS || pingType == ePingType.SND_BOMB)
+		if(pingType == ePingType.SHADOWFALL_LEGEND_DEATH || 
+			pingType == ePingType.SHADOWFALL_SHADOW_DEATH || 
+			pingType == ePingType.SHADOWFALL_NEMESIS || 
+			pingType == ePingType.SND_BOMB  ||
+			pingType == ePingType.SPIESLEGENDS_STATION_A  ||
+			pingType == ePingType.SPIESLEGENDS_STATION_B  ||
+			pingType == ePingType.SPIESLEGENDS_STATION_C ||
+			pingType == ePingType.SPIESLEGENDS_STATION_A_ATTACK  ||
+			pingType == ePingType.SPIESLEGENDS_STATION_B_ATTACK  ||
+			pingType == ePingType.SPIESLEGENDS_STATION_C_ATTACK 
+		)
 		{
 			RuiSetImage( rui, "innerIcon", PingFlavor_GetOuterIcon( pingFlavor ) )
 			RuiSetImage( rui, "innerShadowIcon", PingFlavor_GetOuterShadowIcon( pingFlavor ) )
@@ -1554,6 +1564,20 @@ void function InstanceLocationPing_Thread( entity wp )
 			RuiSetString( rui, "shortPromptText", "" )
 		}
 		
+		if( pingType == ePingType.SPIESLEGENDS_STATION_A )
+		{
+			RuiSetString( rui, "promptText", "Station A" )
+			RuiSetString( rui, "shortPromptText", "" )
+		} else if( pingType == ePingType.SPIESLEGENDS_STATION_B )
+		{
+			RuiSetString( rui, "promptText", "Station B" )
+			RuiSetString( rui, "shortPromptText", "" )
+		} else if( pingType == ePingType.SPIESLEGENDS_STATION_C )
+		{
+			RuiSetString( rui, "promptText", "Station C" )
+			RuiSetString( rui, "shortPromptText", "" )
+		}
+		
 		iconColor = SrgbToLinear( PingFlavor_GetColor( pingFlavor, owner.GetTeamMemberIndex() ) )
 		RuiSetFloat3( rui, "iconColor", iconColor )
 	}
@@ -1571,6 +1595,76 @@ void function InstanceLocationPing_Thread( entity wp )
 			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
 			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/bombicon" )
 			RuiSetFloat3( rui, "iconColor", iconColor )
+		}
+	
+		if( pingType == ePingType.SPIESLEGENDS_STATION_A )
+		{
+			RuiSetString( rui, "promptText", "Station A" )
+			RuiSetString( rui, "shortPromptText", "" )
+
+			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
+			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/A_Defend" )
+			RuiSetFloat3( rui, "iconColor", iconColor )
+
+			RuiSetFloat( rui, "iconSize", 50.0 )
+			RuiSetFloat( rui, "iconSizePinned", 50.0 )
+		} else if( pingType == ePingType.SPIESLEGENDS_STATION_B )
+		{
+			RuiSetString( rui, "promptText", "Station B" )
+			RuiSetString( rui, "shortPromptText", "" )
+
+			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
+			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/B_Defend" )
+			RuiSetFloat3( rui, "iconColor", iconColor )
+
+			RuiSetFloat( rui, "iconSize", 50.0 )
+			RuiSetFloat( rui, "iconSizePinned", 50.0 )
+		} else if( pingType == ePingType.SPIESLEGENDS_STATION_C )
+		{
+			RuiSetString( rui, "promptText", "Station C" )
+			RuiSetString( rui, "shortPromptText", "Test" )
+
+			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
+			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/C_Defend" )
+			RuiSetFloat3( rui, "iconColor", iconColor )
+
+			RuiSetFloat( rui, "iconSize", 50.0 )
+			RuiSetFloat( rui, "iconSizePinned", 50.0 )
+		}
+
+		if( pingType == ePingType.SPIESLEGENDS_STATION_A_ATTACK )
+		{
+			RuiSetString( rui, "promptText", "Station A" )
+			RuiSetString( rui, "shortPromptText", "" )
+
+			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
+			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/A_Attack" )
+			RuiSetFloat3( rui, "iconColor", iconColor )
+
+			RuiSetFloat( rui, "iconSize", 50.0 )
+			RuiSetFloat( rui, "iconSizePinned", 50.0 )
+		} else if( pingType == ePingType.SPIESLEGENDS_STATION_B_ATTACK )
+		{
+			RuiSetString( rui, "promptText", "Station B" )
+			RuiSetString( rui, "shortPromptText", "" )
+
+			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
+			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/B_Attack" )
+			RuiSetFloat3( rui, "iconColor", iconColor )
+
+			RuiSetFloat( rui, "iconSize", 50.0 )
+			RuiSetFloat( rui, "iconSizePinned", 50.0 )
+		} else if( pingType == ePingType.SPIESLEGENDS_STATION_C_ATTACK )
+		{
+			RuiSetString( rui, "promptText", "Station C" )
+			RuiSetString( rui, "shortPromptText", "Test" )
+
+			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
+			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/C_Attack" )
+			RuiSetFloat3( rui, "iconColor", iconColor )
+
+			RuiSetFloat( rui, "iconSize", 50.0 )
+			RuiSetFloat( rui, "iconSizePinned", 50.0 )
 		}
 	}
 
@@ -1772,6 +1866,16 @@ void function InstanceLocationPing_Thread( entity wp )
 		RuiSetString( rui, "pingPrompt", "" )
 		RuiSetString( rui, "pingPromptForOwner", "" )
 	}
+}
+
+void function SetCommsWaypointSoundsEnabled( bool value )
+{
+	file.commsWaypointSoundsEnabled = value
+}
+
+bool function GetCommsWaypointSoundsEnabled()
+{
+	return file.commsWaypointSoundsEnabled
 }
 
 void function InstanceLootPing( entity wp )
@@ -2309,6 +2413,10 @@ float function GetDefaultTimeoutForPingType( entity player, int pingType )
 			return BOOSTZONE_ALIVE_TIME
 		case ePingType.SND_BOMB:
 			return 3
+			
+		case ePingType.STORY_MARVIN:
+		case ePingType.LOOT_MARVIN:
+			return 30.0
 	}
 	
 	if(IsValid(player))

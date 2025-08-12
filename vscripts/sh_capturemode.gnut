@@ -177,6 +177,15 @@ table<string, table<string, array<string> > > function CM_GetAnimTable()
 														 	"octane_gladcard_animated_stimhead",
 															"octane_gladcard_animated_jumpspin",
 															"octane_gladcard_animated_consequences"]
+	anims[ "character_revenant" ] <- {}
+	anims[ "character_revenant" ][ "lobby" ] 		<- [ 	"revenant_menu_lobby_center_idle",
+															"revenant_menu_lobby_center_sprint" ]
+	anims[ "character_revenant" ][ "other" ] 		<- [ 	"revenant_menu_ready_up",
+														 	"revenant_gladcard_animated_assassin",
+														 	"revenant_gladcard_animated_beatdown",
+															"revenant_gladcard_animated_cube",
+															"revenant_gladcard_animated_observation",
+															"revenant_gladcard_animated_play" ]
 	return anims
 }
 #if CLIENT

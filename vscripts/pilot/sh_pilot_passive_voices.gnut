@@ -1,5 +1,3 @@
-//Reimplemented by @CafeFPS
-
 global function Sh_PassiveVoices_Init
 
 #if CLIENT
@@ -169,20 +167,12 @@ void function PassiveVoices_OnPassiveChanged( entity player, int passive, bool d
 {
 	if ( didHave )
 	{
-		#if DEVELOPER
-		printt("[Passive Voices - Reimplemented by @CafeFPS] - stopped for player ", player)
-		#endif
-		
 		player.Signal( "passive_voices_stop_plane_wait" )
 		ThreatDetection_StopForPlayer( player )
 	}
 
 	if ( nowHas )
 	{
-		#if DEVELOPER
-		printt("[Passive Voices - Reimplemented by @CafeFPS] - started for player", player)
-		#endif
-		
 		thread PassiveVoices_WaitForPlaneJump( player )
 	}
 }

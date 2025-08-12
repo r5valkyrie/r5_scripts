@@ -8,6 +8,8 @@ global function AreaSonarScan_OnSonarTriggerEnterForHostileEnts
 global function AreaSonarScan_OnSonarTriggerEnter
 global function AreaSonarScan_OnSonarTriggerLeave
 global function AreaSonarScan_PropScriptUpdate
+
+global function IsHostileSonarTarget
 #endif
 
 const asset FLASHEFFECT    = $"P_sonar_bloodhound"

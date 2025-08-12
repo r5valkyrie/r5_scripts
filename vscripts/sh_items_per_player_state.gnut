@@ -92,7 +92,7 @@ void function ShItemPerPlayerState_LevelInit()
 	#endif
 
 	#if SERVER || CLIENT
-		Remote_RegisterClientFunction( "ServerToClient_OnItemFlavorBecameNew", "int", -INT_MAX, INT_MAX, "bool" )
+		// ScriptRemote_RegisterClientFunction( "ServerToClient_OnItemFlavorBecameNew", "int", -INT_MAX, INT_MAX, "bool" ) //(cafe) Not used - 6-5-2025
 	#endif
 }
 
@@ -151,11 +151,11 @@ void function Newness_MarkItemFlavorsAsNewForPlayer( entity player, array<ItemFl
 		player.SetPersistentVar( "newItemFlavorSparseList[" + sparseListSlotIndex + "]", guidToStore )
 	}
 
-	foreach( ItemFlavor newFlavor in newFlavorList )
-	{
-		SettingsAssetGUID guid = ItemFlavor_GetGUID( newFlavor )
-		Remote_CallFunction_NonReplay( player, "ServerToClient_OnItemFlavorBecameNew", guid )
-	}
+	// foreach( ItemFlavor newFlavor in newFlavorList )
+	// {
+		// SettingsAssetGUID guid = ItemFlavor_GetGUID( newFlavor )
+		// Remote_CallFunction_NonReplay( player, "ServerToClient_OnItemFlavorBecameNew", guid )
+	// }
 }
 #endif
 

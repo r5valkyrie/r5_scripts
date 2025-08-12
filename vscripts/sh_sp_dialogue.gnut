@@ -4,6 +4,7 @@
 
 #if CLIENT
 const bool DEBUG_QUEUE_PRINTS = false
+global function PlayClientDialogue_Internal
 
 global table<string, bool> FORBIDDEN_DIALOGUE_EVENT_NAMES = {
 		// only use this in case of emergencies!
@@ -62,6 +63,7 @@ global function RegisterEnvironmentSpeaker
 global function DeregisterEnvironmentSpeaker
 global function CustomSpeakers1ListInit
 global function RegisterCustomDialogueQueueSpeakerEntities
+global function AddCallback_OnAbortDialogue
 #endif //CLIENT
 
 
@@ -227,8 +229,13 @@ struct
 	array<string> validVoices
 
 	#if DEVELOPER
-		array<string> validPerspectives = ["", "solo", "radio"] // blank perspective means 1p and 3p, solo means additional to-self perspective on top of 1p and 3p
-	#endif // DEVELOPERELOPER
+		// blank perspective means 1p and 3p
+		// solo means additional to-self perspective on top of 1p and 3p
+		// solo_flav means that only some legends have a "solo" perspective, specified in the .csv
+		// radio means forced radio processing
+		array<string> validPerspectives = ["", "solo", "solo_flav", "radio"]
+	#endif // DEVELOPER
+	array<string> registeredDataTableNames
 
 	#if CLIENT
 		var                                devTextDialogueRUI
@@ -236,6 +243,11 @@ struct
 		array<EnvironmentSpeaker>          environmentSpeakers
 		array<entity>                      customSpeakers1
 		table<string, CachedCharacterData> voiceToCachedCharDataMap
+		array<void functionref( string abortedDialogueLine )> abortDialogueCallbacks
+
+		float                                                 dialogueChangeTime = -1
+		array<void functionref()>                             dialoguePopupCreatedCallbacks
+		array<void functionref()>                             dialoguePopupDestroyedCallbacks
 		bool blockAnnouncer = false
 		array< EnvironmentSpeaker >[ NUM_TOTAL_DIALOGUE_QUEUES ]		  allSpeakersList
 	#endif //CLIENT
@@ -308,12 +320,12 @@ const string FUNCNAME_AbortCurrentDialogue = "SCB_AbortCurrentDialogue"
 
 void function Dialog_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEntity, "int", -1, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
-	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueAtPosition, "int", -1, INT_MAX, "int", INT_MIN, INT_MAX, "vector", -MAX_WORLD_COORD, MAX_WORLD_COORD, 32 )
-	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEnvironmentSpeakers, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, INT_MAX, "entity", "int", -1, NUM_TOTAL_DIALOGUE_QUEUES )
-	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEnvironmentSpeakersNoResponse, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, INT_MAX, "int", -1, NUM_TOTAL_DIALOGUE_QUEUES )
-	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueOnCustomSpeakers, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, NUM_CUSTOM_QUEUES )
-	//Remote_RegisterClientFunction( FUNCNAME_AbortCurrentDialogue ) //(mk): moved to byRef
+	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEntity, "int", -1, INT_MAX, "int", INT_MIN, INT_MAX, "entity" )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueAtPosition, "int", -1, INT_MAX, "int", INT_MIN, INT_MAX, "vector", -MAX_WORLD_COORD, MAX_WORLD_COORD, 32 )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEnvironmentSpeakers, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, INT_MAX, "entity", "int", -1, NUM_TOTAL_DIALOGUE_QUEUES )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEnvironmentSpeakersNoResponse, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, INT_MAX, "int", -1, NUM_TOTAL_DIALOGUE_QUEUES )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueOnCustomSpeakers, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, NUM_CUSTOM_QUEUES )
+	//ScriptRemote_RegisterClientFunction( FUNCNAME_AbortCurrentDialogue ) //(mk): moved to byRef
 }
 
 
@@ -414,6 +426,25 @@ void function CustomSpeakers1ListInit( array<entity> customSpeakers1 )
 // }
 // #endif
 
+#if CLIENT
+void function AddCallback_OnAbortDialogue( void functionref( string abortedDialogueLine ) cb )
+{
+	Assert( !file.abortDialogueCallbacks.contains( cb ) )
+	file.abortDialogueCallbacks.append( cb )
+}
+
+void function AddCallback_OnDialoguePopupCreated( void functionref() cb )
+{
+	Assert( !file.dialoguePopupCreatedCallbacks.contains( cb ) )
+	file.dialoguePopupCreatedCallbacks.append( cb )
+}
+
+void function AddCallback_OnDialoguePopupDestroyed( void functionref() cb )
+{
+	Assert( !file.dialoguePopupDestroyedCallbacks.contains( cb ) )
+	file.dialoguePopupDestroyedCallbacks.append( cb )
+}
+#endif
 
 // #if(CLIENT)
 // void function DeregisterEnvironmentSpeaker( EnvironmentSpeaker speaker )
@@ -425,8 +456,10 @@ void function CustomSpeakers1ListInit( array<entity> customSpeakers1 )
 
 void function RegisterCSVDialogue( asset dt )
 {
-	//
+	// Register Scripted Dialogue for this level
 	var dataTable = GetDataTable( dt )
+
+	file.registeredDataTableNames.append( string( dt ) )
 
 	int columnName                = GetDataTableColumnByName( dataTable, "name" )
 	int columnAlias               = GetDataTableColumnByName( dataTable, "alias" )
@@ -730,7 +763,7 @@ void function PlayDialogue_Internal( int aliasID, int dialogueFlags, entity play
 		if ( milesAlias.find( "%perspective%" ) >= 0 )
 			milesAlias = StringReplace( milesAlias, "%perspective%", "3p" )
 
-		Remote_CallFunction_NonReplay( player, FUNCNAME_PlayDialogueOnEntity, aliasID, dialogueFlags, speaker.GetEncodedEHandle() ) //EvaluateSoundSelector( milesAlias )
+		Remote_CallFunction_NonReplay( player, FUNCNAME_PlayDialogueOnEntity, aliasID, dialogueFlags, speaker ) //EvaluateSoundSelector( milesAlias )
 	}
 	else
 	{
@@ -1227,9 +1260,9 @@ void function SuspendMainDialogueQueueForDurationOfSound( entity player, var sou
 }
 
 
-void function SCB_PlayDialogueOnEntity( int aliasID, int dialogueFlags, int speakerEHandle )
+void function SCB_PlayDialogueOnEntity( int aliasID, int dialogueFlags, entity speaker )
 {
-	entity speaker = GetEntityFromEncodedEHandle( speakerEHandle )
+	//entity speaker = GetEntityFromEncodedEHandle( speakerEHandle )
 	thread PlayClientDialogueOnEntity( aliasID, dialogueFlags, speaker )
 }
 
@@ -1453,7 +1486,7 @@ void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array
 
 	QueueData queueData = file.allQueues[ QUEUE_MAIN ]
 
-	if ( ( dialogueFlags & eDialogueFlags.USE_CUSTOM_QUEUE ) )
+	if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.USE_CUSTOM_QUEUE ) )
 		queueData = file.allQueues[ customQueueIdx ]
 
 	QueueItem queueItem = QueueAndWait( data.priority, queueData, dialogueFlags, speakerEHandle, milesAlias )
@@ -1880,7 +1913,7 @@ int function GetNextAliasIdForName( string dialogueName )
 
 #if CLIENT
 // You need to know the queue as the client. Request a queue on server, send that info to your client.
-//void function RegisterCustomDialogueQueueSpeakerEntities( int queueIdx, array<entity> customSpeakers )
+//void function ( int queueIdx, array<entity> customSpeakers )
 void function RegisterCustomDialogueQueueSpeakerEntities( int queueIdx, array<entity> customSpeakers )
 {
 	Assert( queueIdx < NUM_CUSTOM_QUEUES, "Tried to register entities for custom speaker with invalid queueIdx!" )

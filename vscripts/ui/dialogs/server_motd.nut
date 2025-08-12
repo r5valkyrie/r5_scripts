@@ -58,13 +58,12 @@ void function ServerMOTD_OnOpen()
 
 	var frameElem = Hud_GetChild( file.menu, "DialogFrame" )
 	RuiSetImage( Hud_GetRui( frameElem ), "basicImage", $"rui/menu/common/dialog_gradient" )
-
-	int agreementHeight = 375
-	Hud_SetHeight( file.ServerMessage, ContentScaledYAsInt( agreementHeight ) )
+		
+	int motdHeight = 375
+	Hud_SetHeight( file.ServerMessage, ContentScaledYAsInt( motdHeight ) )
 
 	int footerPanelWidth = 200 //: 422
 	Hud_SetWidth( file.footersPanel, ContentScaledXAsInt( footerPanelWidth ) )
-
 	Hud_SetText( file.ServerMessage, file.serverMotdText )
 }
 

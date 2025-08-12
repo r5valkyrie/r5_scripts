@@ -31,7 +31,7 @@
 
 	// Behavior - Firing
 	//
-	"fire_rate"                                "4.2"
+	"fire_rate"                                "4.100000"
 	"impulse_force"                            "750"
 	"is_semi_auto"				                "1"
 
@@ -63,12 +63,12 @@
                                                    
                                                   
      
-	"damage_near_value"                        "33"
-	"damage_far_value"                         "33"
-	"damage_very_far_value"                    "33"
-	"damage_near_value_titanarmor"             "33"
-	"damage_far_value_titanarmor"              "33"
-	"damage_very_far_value_titanarmor"         "33"
+	"damage_near_value"                        "36"
+	"damage_far_value"                         "36"
+	"damage_very_far_value"                    "36"
+	"damage_near_value_titanarmor"             "36"
+	"damage_far_value_titanarmor"              "36"
+	"damage_very_far_value_titanarmor"         "36"
       
 
     "damage_leg_scale"                         "0.75"
@@ -261,6 +261,13 @@
 	"clip_bodygroup_show_for_milestone_2"      "1"
 	"clip_bodygroup_show_for_milestone_3"      "1"
 
+
+	"headshot_distance"	"17716"
+	"damage_headshot_scale"	"1.600000"
+	"damage_shield_scale"	"1"
+	"damage_near_distance"	"1000"
+	"damage_far_distance"	"2500"
+	"damage_very_far_distance"	"5000"
 	"Mods"
 	{
 	    gold
@@ -276,13 +283,6 @@
 			"ammo_no_remove_from_stockpile"  "0"
 			"uses_ammo_pool"                 "1"
 			"low_ammo_fraction"              "0.3"
-		}
-
-		fullauto_rounds
-		{
-			"fire_rate"                                "5"
-			"is_semi_auto"				                "0"
-			"viewkick_pitch_base"                        "2.0"
 		}
 		
 		hopup_double_tap
@@ -517,17 +517,15 @@
             "reloadempty_time_late4"			"*0.9"
             "reloadempty_time_late5"			"*0.9"
         }
-		
-		// Used to disable the default ammo counter, and enable the reactive ammo counter for the reactive skin
-		// This is called from the Bakery Reactive setting "Weapon Mods to Add" for each reactive skin.
-		"g7_reactive_ammo_counter_mod" {
-			// Disable the default ammo counter
-			"ui2_enable"						"0"
-			
-			// Enable the reactive ammo counter
-			"ui3_enable"						"1"
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
 		}
-	}
+}
 
 	// RUI
 	"ui1_enable"                               "1"

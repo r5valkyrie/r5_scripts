@@ -408,12 +408,12 @@ void function DeathScreen_RespawnStatusChanged( entity player, int old, int new,
 	if ( player != clientPlayer )
 		return
 
-	if ( new == eRespawnStatus.WAITING_FOR_DROPPOD && IsViewingDeathScreen() )
-	{
-		RunUIScript( "UI_CloseDeathScreenMenu" )
-		DeathScreenCreateNonMenuBlackBars()
-		return
-	}
+	// if ( new == eRespawnStatus.WAITING_FOR_DROPPOD && IsViewingDeathScreen() )
+	// {
+		// RunUIScript( "UI_CloseDeathScreenMenu" )
+		// DeathScreenCreateNonMenuBlackBars()
+		// return
+	// }
 
 	if ( new == eRespawnStatus.SQUAD_ELIMINATED && IsViewingSpectateTab() )
 	{
@@ -1953,6 +1953,12 @@ asset function GetGladCardReplacementImageForDamageSourceID( int damageSourceID 
 
 		case eDamageSourceId.fall:
 			return $"rui/death_recap/icon_deathrecap_specialcase_fall"
+			
+		case eDamageSourceId.prowler_melee:
+			return $"rui/death_recap/icon_deathrecap_specialcase_prowler"
+			
+		case eDamageSourceId.spider_melee:
+			return $"rui/death_recap/icon_deathrecap_specialcase_spider_melee"
 
 		case eDamageSourceId.damagedef_crush:
 		case eDamageSourceId.crushed:
@@ -2002,9 +2008,9 @@ void function ServerCallback_SendDeathRecapData( int attackerEHandle, int victim
 
 	file.deathRecapDamageBlocks.append( damageBlock )
 	
-	#if DEVELOPER
-		printt( "Got damage block on client from server", numSentBlock, "- DAMAGE", totalDamage, "- ATTACKER", attackerEHandle )
-	#endif
+	// #if DEVELOPER
+		// printt( "Got damage block on client from server", numSentBlock, "- DAMAGE", totalDamage, "- ATTACKER", attackerEHandle )
+	// #endif
 }
 
 void function ServerCallback_DeathRecapDataUpdated( bool gotKnockedDown, EncodedEHandle killerEHandle )

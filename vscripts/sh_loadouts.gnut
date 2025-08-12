@@ -57,12 +57,15 @@ global function GetAllLoadoutSlots
 global function IsLoadoutSlotActive
 
 global function DEV_GetValidItemFlavorsForLoadoutSlotForDev
+global function DEV_GetValidCustomItemFlavorsForLoadoutSlot
 
 //////////////////////
 //////////////////////
 
 #if SERVER
+global function ValidateAndFixAllLoadoutSlots
 global function ShLoadouts_PlayerGRXInventoryIsCleanFirstTime
+global function RefreshLoadoutSlot
 #endif
 
 #if CLIENT
@@ -241,7 +244,7 @@ void function ShLoadouts_LevelInit_Begin()
 void function ShLoadouts_LevelInit_Finish()
 {
 	#if SERVER || CLIENT
-		Remote_RegisterClientFunction( "ServerToClient_LoadoutSlotDidChange", "int", 0, INT_MAX, "int", 0, fileLevel.loadoutSlotEntries.len() )
+		ScriptRemote_RegisterClientFunction( "ServerToClient_LoadoutSlotDidChange", "int", 0, INT_MAX, "int", 0, fileLevel.loadoutSlotEntries.len() )
 	#endif
 
 	foreach( LoadoutEntry entry in fileLevel.loadoutSlotEntries )
@@ -315,7 +318,7 @@ void function ShLoadouts_LevelInit_Finish()
 				fileLevel.networkVars[fullNetworkVarName] <- nvInfo
 				#if SERVER || CLIENT
 					nvInfo.type = desiredNetworkVarType
-					RegisterNetworkedVariable(
+					ScriptRegisterNetworkedVariable(
 						nvInfo.fullNetworkVarName, SNDC_PLAYER_GLOBAL,
 						nvInfo.type, SLOT_CONTENTS_SENTINEL_NOTREADY
 					)
@@ -885,6 +888,22 @@ array<ItemFlavor> function DEV_GetValidItemFlavorsForLoadoutSlotForDev( EHI play
 	return entry._____INTERNAL_DEV_validItemFlavorsForDev
 }
 
+array<ItemFlavor> function DEV_GetValidCustomItemFlavorsForLoadoutSlot( EHI playerEHI, LoadoutEntry entry )
+{
+	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
+
+	Assert( fileLevel.isInitialized )
+	
+	array<ItemFlavor> items = clone entry._____INTERNAL_DEV_validItemFlavorsForDev
+	
+	for ( int i = items.len() - 1; i >= 0; i-- )
+	{
+		if ( ItemFlavor_HasQuality( items[i] ) && ItemFlavor_GetQuality( items[i] ) != eQuality.FANMADE )
+			items.remove( i )
+	}
+	
+	return items
+}
 
 string function DEV_DescribeLoadoutSlot( LoadoutEntry entry, int slotContentsIndex, bool doId = true )
 {
@@ -922,6 +941,9 @@ bool function IsItemFlavorUnlockedForLoadoutSlot( EHI playerEHI, LoadoutEntry en
 	#endif
 
 	Assert( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
+
+	if(ItemFlavor_GetType( itemFlavor ) == eItemType.gladiator_card_badge)
+		return true
 
 	if ( !ItemFlavor_IsAvailableInPlaylist( itemFlavor ) )
 		return false
@@ -1501,6 +1523,23 @@ void function ClientToUI_RefreshLoadoutSlot( EHI playerEHI, int entryIndex, int 
 	RefreshLoadoutSlotInternal( playerEHI, entry, null )
 }
 
+const array<int> shouldShowTypes = 
+[
+	eItemType.character_skin,
+	eItemType.weapon_skin,
+	eItemType.weapon_charm,
+	eItemType.character_execution,
+	eItemType.gladiator_card_stance,
+	eItemType.gladiator_card_frame,
+	eItemType.gladiator_card_intro_quip,
+	eItemType.gladiator_card_kill_quip,
+	eItemType.gladiator_card_stat_tracker,
+	eItemType.gladiator_card_badge,
+	eItemType.music_pack,
+	eItemType.loadscreen,
+	eItemType.skydive_emote,
+	eItemType.skydive_trail
+]
 
 array<ItemFlavor> function TEMP_FilterItemsForGRX( EHI playerEHI, array<ItemFlavor> items )
 {
@@ -1510,10 +1549,20 @@ array<ItemFlavor> function TEMP_FilterItemsForGRX( EHI playerEHI, array<ItemFlav
 	{
 		if ( ItemFlavor_GetGRXMode( itemFlavor ) == eItemFlavorGRXMode.REGULAR || ItemFlavor_GetGRXMode( itemFlavor ) == eItemFlavorGRXMode.OWNERSHIP_TARGET )
 		{
-			if ( !GRX_AreOffersReady() )
-				continue
+			//if ( !GRX_AreOffersReady() )
+				//continue
 
 			bool shouldShow = false
+
+			foreach(int type in shouldShowTypes)
+			{
+				if(ItemFlavor_GetType( itemFlavor ) == type)
+				{
+					shouldShow = true
+					break
+				}
+			}
+
 			if ( GRX_IsItemCraftable( itemFlavor ) )
 				shouldShow = true
 
@@ -1566,8 +1615,8 @@ array<ItemFlavor> function GetLoadoutItemsSortedForMenu( LoadoutEntry entry, int
 		equippedItem = LoadoutSlot_GetItemFlavor( playerEHI, entry )
 
 	items.sort( int function( ItemFlavor a, ItemFlavor b ) : ( playerEHI, equippedItem, sortOrdinalFunc ) {
-		//bool aIsOwned = GRX_IsItemOwnedByPlayer( a, null, true )
-		//bool bIsOwned = GRX_IsItemOwnedByPlayer( b, null, true )
+		//bool aIsOwned = GRX_IsItemOwnedByPlayer( a, null )
+		//bool bIsOwned = GRX_IsItemOwnedByPlayer( b, null )
 		//if ( aIsOwned && !bIsOwned )
 		//	return -1
 		//else if ( bIsOwned && !aIsOwned )
@@ -1827,6 +1876,10 @@ bool function ValidateAndFixLoadoutSlot( EHI playerEHI, LoadoutEntry entry, bool
 
 	if ( shouldReset )
 	{
+		array<ItemFlavor> exceptions = []
+		//if ( entry == Loadout_CharacterClass() )
+			//exceptions  = [ GetItemFlavorByAsset( CHARACTER_RANDOM ), GetItemFlavorByAsset( CHARACTER_DUMMIE ) ]
+
 		if ( entry.type == eLoadoutEntryType.ITEM_FLAVOR )
 		{
 			ItemFlavor itemFlavor
@@ -1908,7 +1961,7 @@ bool function ClientCommand_loadouts_set( entity player, array<string> args )
 	// 1: [loadout slot entry index]
 	// 2: [slot contents index]
 
-	if ( !IsValid( player ) || !CheckRate( player ) || Gamemode() == eGamemodes.WINTEREXPRESS && !player.GetPlayerNetBool( "WinterExpress_IsPlayerAllowedLegendChange" ) ) 
+	if ( !IsValid( player ) || Gamemode() == eGamemodes.WINTEREXPRESS && !player.GetPlayerNetBool( "WinterExpress_IsPlayerAllowedLegendChange" ) ) 
 		return false
 
 	EHI playerEHI = ToEHI( player )
@@ -1952,7 +2005,7 @@ bool function ClientCommand_loadouts_set( entity player, array<string> args )
 		return true
 	}
 	
-	if( ItemFlavor_GetType( itemFlavor ) == eItemType.character && Gamemode() == eGamemodes.WINTEREXPRESS && IsValid( GetPlayerWithLockedCharacter( itemFlavor, GetPlayerArrayOfTeam( player.GetTeam() ) ) ) ) //Cafe was here
+	if( ItemFlavor_GetType( itemFlavor ) == eItemType.character && Gamemode() == eGamemodes.WINTEREXPRESS && IsValid( GetPlayerWithLockedCharacter( itemFlavor, GetPlayerArrayOfTeam( player.GetTeam() ) ) ) )
 	{
 		//A player already has that character.
 		return true

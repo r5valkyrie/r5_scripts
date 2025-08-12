@@ -9,6 +9,11 @@ global function WeaponReactiveKillEffects_ClearAllFX
 // TODO: Recover server function
 #endif
 
+#if CLIENT
+global function MenuWeaponModel_ApplyReactiveSkinBodyGroup
+global function MenuWeaponModel_StartReactiveEffects
+global function MenuWeaponModel_ClearReactiveEffects
+#endif //CLIENT
 const bool WEAPON_REACTIVE_EFFECTS_PRINTS = true
 
 global enum eReactiveEffectUpdateType
@@ -36,6 +41,7 @@ struct WeaponReactiveKillActiveFXGroup
 struct
 {
 	array<WeaponReactiveKillActiveFXGroup> activeReactiveKillFX
+	table<entity, array<int> > activeMenuWeaponReactiveEffects
 } file
 
 
@@ -288,6 +294,49 @@ void function WeaponReactiveKillEffects_PlayPersistentFX( entity weapon, ItemFla
 	}
 }
 
+void function MenuWeaponModel_ApplyReactiveSkinBodyGroup( ItemFlavor weaponSkinFlavor, ItemFlavor weaponFlavor, entity weaponModel )
+{
+	var skinBlock           = ItemFlavor_GetSettingsBlock( weaponSkinFlavor )
+	var reactsToKillsLevels = GetSettingsBlockArray( skinBlock, "featureReactsToKillsLevels" )
+	int numLevels           = GetSettingsArraySize( reactsToKillsLevels )
+	int highestIdx          = numLevels - 1
+
+	//
+	WeaponReactiveKillsData bodyGroupData
+	bool foundBodyGroup = false
+
+	for ( int idx = highestIdx; idx >= 0; idx-- )
+	{
+		if ( !foundBodyGroup )
+		{
+			bodyGroupData = WeaponSkin_GetReactToKillsDataForLevel( weaponSkinFlavor, idx )
+
+			if ( bodyGroupData.bodygroupSubmodelIdxMap.len() > 0 )
+				foundBodyGroup = true
+		}
+
+		if ( foundBodyGroup )
+			break
+	}
+
+	//
+	if ( foundBodyGroup )
+	{
+		foreach ( string bodygroup, int submodelIdx in bodyGroupData.bodygroupSubmodelIdxMap )
+		{
+			int bodygroupIdx = weaponModel.FindBodygroup( bodygroup )
+			if ( bodygroupIdx < 0 )
+				break
+
+			weaponModel.SetBodygroupModelByIndex( bodygroupIdx, submodelIdx )
+		}
+	}
+	else
+	{
+		ShowDefaultBodygroupsOnFakeWeapon( weaponModel, WeaponItemFlavor_GetClassname( weaponFlavor ) )
+	}
+}
+
 void function WeaponReactiveKillEffects_AddActiveFXGroup( ItemFlavor weaponSkin, int reactiveKillLevel, asset fx1p, asset fx3p, bool isPersistent = false )
 {
 	WeaponReactiveKillActiveFXGroup fxGroup
@@ -299,6 +348,41 @@ void function WeaponReactiveKillEffects_AddActiveFXGroup( ItemFlavor weaponSkin,
 
 	file.activeReactiveKillFX.append( fxGroup )
 }
+
+#if CLIENT
+void function MenuWeaponModel_StartReactiveEffects( entity weaponModel, ItemFlavor weaponSkin )
+{
+	int reactiveKillLevel = WeaponSkin_GetReactToKillsLevelCount( weaponSkin ) - 1 //
+	WeaponReactiveKillsData rtked = WeaponSkin_GetReactToKillsDataForLevel( weaponSkin, reactiveKillLevel )
+
+	foreach ( int persistentFXIdx, string attachmentName in rtked.persistentFXAttachmentList )
+	{
+		asset fx = rtked.persistentFX3PList[persistentFXIdx] //
+
+		if ( fx != "" )
+		{
+			int fxHandle = StartParticleEffectOnEntity( weaponModel, GetParticleSystemIndex( fx ), FX_PATTACH_POINT_FOLLOW, weaponModel.LookupAttachment( attachmentName ) )
+			if ( weaponModel in file.activeMenuWeaponReactiveEffects )
+				file.activeMenuWeaponReactiveEffects[weaponModel].append( fxHandle )
+			else
+				file.activeMenuWeaponReactiveEffects[weaponModel] <- [ fxHandle ]
+		}
+	}
+}
+
+void function MenuWeaponModel_ClearReactiveEffects( entity weaponModel )
+{
+	if ( weaponModel in file.activeMenuWeaponReactiveEffects )
+	{
+		foreach ( fxHandle in file.activeMenuWeaponReactiveEffects[weaponModel] )
+		{
+			EffectStop( fxHandle, false, true )
+		}
+
+		delete file.activeMenuWeaponReactiveEffects[weaponModel]
+	}
+}
+#endif
 
 void function WeaponReactiveKillEffects_ClearPersistentFX( entity weapon )
 {

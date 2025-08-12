@@ -16,8 +16,6 @@ WeaponData
 	"fast_swap_to"									"0"
 	"leveled_pickup"								"1"
 
-	"ammo_pool_type"								"explosive"
-
 	"sound_pickup"									"wpn_pickup_ATWeapon_1P"
 
 	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_arc_launcher"
@@ -45,7 +43,6 @@ WeaponData
 	"viewmodel"   									"mdl/weapons/arc_launcher/ptpov_arc_launcher.rmdl"
 	"playermodel" 									"mdl/weapons/arc_launcher/w_arc_launcher.rmdl"
 	"projectilemodel" 								"mdl/dev/empty_model.rmdl"
-	"holstermodel"									"mdl/weapons/arc_launcher/ptpov_arc_launcher.rmdl"
 	"holster_type"									"anti_titan"
 
 	"activitymodifier"								"rocket"
@@ -327,6 +324,9 @@ WeaponData
 
 	Mods
 	{
+		crate
+		{
+		}
 		extended_ammo
 		{
 			"ammo_stockpile_max"						"9"

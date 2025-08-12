@@ -1,3 +1,5 @@
+untyped
+
 global function InitSystemMenu
 global function InitSystemPanelMain
 global function InitSystemPanel
@@ -8,9 +10,13 @@ global function OpenSystemMenu
 global function UI_Callback_MOTD
 global function SetMotdText
 global function OpenMOTD
-
+global function OpenChampionCard
 
 global function ShouldDisplayOptInOptions
+global function OpenWeaponSelector
+
+global string PlayerKillsForChallengesUI = ""
+global string PlayerCurrentWeapon = ""
 
 struct ButtonData
 {
@@ -55,7 +61,10 @@ struct
 	table<var, ButtonData > OpenRecordingsMenu
 	table<var, ButtonData > OpenMOTD
 	table<var, ButtonData > OpenScenariosStandings
-
+	table<var, ButtonData > OpenChampionCard
+	table<var, ButtonData > CoachingStartAgain
+	table<var, ButtonData > CoachingStop
+	
 	InputDef& qaFooter
 	
 	bool SETHUNTERALLOWED
@@ -95,15 +104,17 @@ void function InitSystemPanelMain( var panel )
 		file.qaFooter = AddPanelFooterOption( panel, LEFT, BUTTON_X, true, "#X_BUTTON_QA", "QA", ToggleOptIn, ShouldDisplayOptInOptions )
 
 	#if CONSOLE_PROG
-		AddPanelFooterOption( panel, RIGHT, BUTTON_BACK, false, "#BUTTON_RETURN_TO_MAIN", "", ReturnToMain_OnActivate )
+		AddPanelFooterOption( panel, RIGHT, BUTTON_STICK_RIGHT, true, "#BUTTON_VIEW_CINEMATIC", "", ViewCinematic, IsLobby )
+		AddPanelFooterOption( panel, RIGHT, BUTTON_BACK, true, "#BUTTON_RETURN_TO_MAIN", "", ReturnToMain_OnActivate, IsLobby )
 	#endif
-	AddPanelFooterOption( panel, RIGHT, BUTTON_STICK_RIGHT, true, "#BUTTON_VIEW_CINEMATIC", "#VIEW_CINEMATIC", ViewCinematic, IsLobby )
+	AddPanelFooterOption( panel, RIGHT, KEY_V, true, "", "#VIEW_CINEMATIC", ViewCinematic, IsLobby )
+	AddPanelFooterOption( panel, RIGHT, KEY_R, true, "", "#BUTTON_RETURN_TO_MAIN", ReturnToMain_OnActivate, IsLobby )
 }
 
 void function ViewCinematic( var button )
 {
 	CloseActiveMenu()
-	thread PlayVideoMenu( false, "intro", "Apex_Opening_Movie", eVideoSkipRule.INSTANT )
+	thread PlayVideoMenu( false, "intro", "", eVideoSkipRule.INSTANT )
 }
 
 void function TryChangeCharacters()
@@ -144,7 +155,7 @@ void function OpenWeaponSelector()
 
 void function OpenRecordingsMenu()
 {
-	UI_Open1v1CoachingMenu()
+	SafeCallFunction( "UI_Open1v1CoachingMenu", [], "Recordings menu not available - Flowstate mod not loaded", "[MENU_SYSTEM]" )
 }
 
 void function InitSystemPanel( var panel )
@@ -193,7 +204,10 @@ void function InitSystemPanel( var panel )
 	file.OpenRecordingsMenu[ panel ] <- clone data
 	file.OpenMOTD[ panel ] <- clone data
 	file.OpenScenariosStandings[ panel ] <- clone data
-
+	file.OpenChampionCard[ panel ] <- clone data
+	file.CoachingStartAgain[ panel ] <- clone data
+	file.CoachingStop[ panel ] <- clone data
+	
 	file.ExitChallengeButtonData[ panel ].label = "#FS_FINISH_CHALLENGE"
 	file.ExitChallengeButtonData[ panel ].activateFunc = SignalExitChallenge
 
@@ -227,7 +241,7 @@ void function InitSystemPanel( var panel )
 	file.friendlyFireButtonData[ panel ].label = "#BUTTON_FRIENDLY_FIRE_TOGGLE"
 	file.friendlyFireButtonData[ panel ].activateFunc = ToggleFriendlyFire
 	
-	file.thirdPersonButtonData[ panel ].label = "#FS_TOGGLE_THIRD_PERSON"
+	file.thirdPersonButtonData[ panel ].label = "Toggle Third Person"
 	file.thirdPersonButtonData[ panel ].activateFunc = ToggleThirdPerson
 
 	file.endmatchButtonData[ panel ].label = "#FS_END_GAME_LOBBY"
@@ -272,14 +286,23 @@ void function InitSystemPanel( var panel )
 	file.OpenWeaponsMenu[ panel ].label = "#FS_WEAPONS_MENU"
 	file.OpenWeaponsMenu[ panel ].activateFunc = OpenWeaponSelector
 
-	file.OpenRecordingsMenu[ panel ].label = "1v1 RECORDINGS MENU"
+	file.OpenRecordingsMenu[ panel ].label = "RECORDINGS LIST"
 	file.OpenRecordingsMenu[ panel ].activateFunc = OpenRecordingsMenu
 	
 	file.OpenMOTD[ panel ].label = "#FS_SERVER_MOTD"
 	file.OpenMOTD[ panel ].activateFunc = OpenMOTD	
 	
 	file.OpenScenariosStandings[ panel ].label = "#FS_SCENARIOS_STANDINGS"
-	file.OpenScenariosStandings[ panel ].activateFunc = UI_OpenScenariosStandingsMenu	
+	file.OpenScenariosStandings[ panel ].activateFunc = OpenScenariosStandings_System	
+	
+	file.OpenChampionCard[ panel ].label = "#FS_OPEN_CHAMPION"
+	file.OpenChampionCard[ panel ].activateFunc = OpenChampionCard	
+
+	file.CoachingStartAgain[ panel ].label = "REPEAT RECORDING"
+	file.CoachingStartAgain[ panel ].activateFunc = OpenCoachingStartAgain	
+
+	file.CoachingStop[ panel ].label = "STOP RECORDING"
+	file.CoachingStop[ panel ].activateFunc = OpenCoachingStop
 	
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, SystemPanelShow )
 }
@@ -314,8 +337,6 @@ void function UpdateSystemPanel( var panel )
 	int buttonIndex = 0
 	if ( IsConnected() && !IsLobby() )
 	{
-		RunClientScript( "FS_RegisterAdmin" )
-		
 		UISize screenSize = GetScreenSize()
 		SetCursorPosition( <1920.0 * 0.5, 1080.0 * 0.5, 0> )
 
@@ -326,11 +347,17 @@ void function UpdateSystemPanel( var panel )
 
 		if( uiGlobal.is1v1GameType && Playlist() != ePlaylists.fs_1v1_coaching ) //initialized after level load
 		{
-			SetButtonData( panel, buttonIndex++, file.Toggle1v1ScoreboardFocus[ panel ] )
+			// SetButtonData( panel, buttonIndex++, file.Toggle1v1ScoreboardFocus[ panel ] )
 			SetButtonData( panel, buttonIndex++, file.ToggleRest[ panel ] )
 			SetButtonData( panel, buttonIndex++, file.OpenWeaponsMenu[ panel ] )
 		} else if( Playlist() == ePlaylists.fs_1v1_coaching )
 		{
+			if( GetGlobalNetBool( "FS_Coaching_IsPlayingRecording" ) && uiGlobal.bIsServerAdmin )
+			{
+				SetButtonData( panel, buttonIndex++, file.CoachingStartAgain[ panel ] )
+				SetButtonData( panel, buttonIndex++, file.CoachingStop[ panel ] )
+			}
+			
 			SetButtonData( panel, buttonIndex++, file.OpenRecordingsMenu[ panel ] )
 			SetButtonData( panel, buttonIndex++, file.OpenWeaponsMenu[ panel ] )
 		}
@@ -342,6 +369,9 @@ void function UpdateSystemPanel( var panel )
 		{
 			SetButtonData( panel, buttonIndex++, file.ToggleRest[ panel ] )
 		}
+		
+		// if( Flowstate_IsTrackerSupportedMode() ) // (cafe) it should check for tracker enabled as well, disabled for now
+			// SetButtonData( panel, buttonIndex++, file.OpenChampionCard[ panel ] )
 
 		if( Playlist() == ePlaylists.fs_lgduels_1v1 || Playlist() == ePlaylists.fs_dm_fast_instagib )		
 			SetButtonData( panel, buttonIndex++, file.OpenLGDuelsSettingsData[ panel ] )
@@ -349,7 +379,7 @@ void function UpdateSystemPanel( var panel )
 		if ( IsFiringRangeGameMode() && !uiGlobal.isAimTrainer )
 		{
 			SetButtonData( panel, buttonIndex++, file.changeCharacterButtonData[ panel ] ) // !FIXME
-			//SetButtonData( panel, buttonIndex++, file.thirdPersonButtonData[ panel ] )
+			SetButtonData( panel, buttonIndex++, file.thirdPersonButtonData[ panel ] )
 		
 			if ( (GetTeamSize( GetTeam() ) > 1) && FiringRangeHasFriendlyFire() )
 				SetButtonData( panel, buttonIndex++, file.friendlyFireButtonData[ panel ] )
@@ -562,7 +592,7 @@ void function OpenSettingsMenu()
 void function HostEndMatch()
 {
 	#if LISTEN_SERVER
-	CreateServer( GetPlayerName() + " Lobby", "", "mp_lobby", "menufall", eServerVisibility.OFFLINE )
+	CreateServer( GetPlayerName() + " Lobby", "", "mp_lobby", "dev_default", eServerVisibility.OFFLINE )
 	#endif // LISTEN_SERVER
 }
 
@@ -583,12 +613,17 @@ void function Toggle1v1Scoreboard_System()
 
 void function OpenLGDuelsSettings_System()
 {
-	OpenLGDuelsSettings()
+	SafeCallFunction( "OpenLGDuelsSettings", [], "LG Duels settings not available - Flowstate mod not loaded", "[MENU_SYSTEM]" )
 }
 
 void function OpenValkSimulatorSettings_System()
 {
-	OpenValkSimulatorSettings()
+	SafeCallFunction( "OpenValkSimulatorSettings", [], "Valkyrie Simulator settings not available - Flowstate mod not loaded", "[MENU_SYSTEM]" )
+}
+
+void function OpenScenariosStandings_System()
+{
+	SafeCallFunction( "UI_OpenScenariosStandingsMenu", [], "Scenarios standings not available - Flowstate mod not loaded", "[MENU_SYSTEM]" )
 }
 
 void function OpenLockCurrent1v1Enemy_System()
@@ -626,7 +661,17 @@ void function AdminDestroyDummys_MovementRecorder()
 	ClientCommand( "DestroyDummys Admin" )
 }
 
-#if CONSOLE_PROG
+void function OpenCoachingStartAgain()
+{
+	ClientCommand( "coaching_startagain" )
+}
+
+void function OpenCoachingStop()
+{
+	ClientCommand( "coaching_stop" )
+}
+	
+
 void function ReturnToMain_OnActivate( var button )
 {
 	ConfirmDialogData data
@@ -644,8 +689,6 @@ void function OnReturnToMainMenu( int result )
 	if ( result == eDialogResult.YES )
 		ClientCommand( "disconnect" )
 }
-#endif
-
 
 void function ToggleOptIn( var button )
 {
@@ -674,30 +717,28 @@ void function UI_Callback_MOTD()
 
 void function SetMotdText( string text )
 {
-	file.motdText = text
+	file.motdText = text + file.motdText
 	
 	// auto-opening motd disabled as per amos request
 
-	if( !GetConVarInt( "show_motd_on_server_first_join" ) )
+	if( !GetConVarInt( "motd_enable" ) )
 		return
 
-	// note(amos): GetServerID() cannot be used on the client
-	// it is a server only function that was accidentally
-	// registered for client too. Calling this here returns
-	// the server ID of your own listen server, so it will
-	// only show the message once during the duration of the
-	// process. in the future we need to work on the ability
-	// to send the server id to the client. commented, and
-	// directly calling OpenMOTD() for now.
-	OpenMOTD()
-
-	// string server = GetServerID()
+	if ( GetConVarBool( "motd_once_per_server" ) )
+	{
+		string server = GetServerID()
 	
-	// if( !( server in file.seenMotdForServer ) )
-	// {
-	// 	OpenMOTD()
-	// 	file.seenMotdForServer[ server ] <- true
-	// }
+		if( !( server in file.seenMotdForServer ) )
+		{
+			OpenMOTD()
+			file.seenMotdForServer[ server ] <- true
+		}
+	}
+	else
+	{
+		// Just open it.
+		OpenMOTD()
+	}
 }
 
 void function OpenMOTD()
@@ -712,22 +753,25 @@ void function OpenMOTD()
 	}
 	
 	string motd = ""
-	string motdLocalized = Localize( "#FS_PLAYLIST_MOTD" )
-	string motdLocaliziedContinue = Localize( "#FS_PLAYLIST_MOTD_CONTINUE" )
+	string motdLocalized = Localize( "#MOTD_TEXT" )
 	
-	if( motdLocalized != "" && motdLocalized != "#FS_PLAYLIST_MOTD" )
+	if( motdLocalized != "" && motdLocalized != "#MOTD_TEXT" )
 	{
 		motd = motdLocalized
+		string motdLocaliziedExtended = Localize( "#MOTD_TEXT_EXTENDED" )
 		
-		if( motdLocaliziedContinue != "" && motdLocaliziedContinue != "#FS_PLAYLIST_MOTD_CONTINUE" )
-		{
-			motd = motd + motdLocaliziedContinue	
-		}
+		if( motdLocaliziedExtended != "" && motdLocaliziedExtended != "#MOTD_TEXT" )
+			motd = motd + motdLocaliziedExtended	
 		
 		file.motdText = motd //save for repeat opens
 	}
 	
 	OpenServerMOTD( motd )
+}
+
+void function OpenChampionCard()
+{
+	SafeCallFunction( "SelfShowChampion", [], "Champion card not available - Flowstate mod not loaded", "[MENU_SYSTEM]" )
 }
 
 void function UpdateOptInFooter()
@@ -748,7 +792,7 @@ void function UpdateOptInFooter()
 
 bool function ShouldShowDevMenu()
 {
-	if(IsLobby())
+	if( IsLobby() )
 		return false
 	
 	return true

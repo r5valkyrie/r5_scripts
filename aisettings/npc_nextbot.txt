@@ -8,8 +8,8 @@ npc_nextbot
 	//title							DUMMIE
 	useSequenceBounds				1
 
-	aiEnemy_usePriorityDist			5000
-	aiEnemy_immediateThreatDist		20000
+	aiEnemy_usePriorityDist			20000
+	aiEnemy_immediateThreatDist		50000
 
 	AimAngularSpeed					100
 

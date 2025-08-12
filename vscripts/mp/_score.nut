@@ -223,7 +223,7 @@ void function PostScoreEventUpdateStats( entity attacker, entity victim ) //This
 
 void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damageInfo, bool downed = false)
 {
-	if( is1v1EnabledAndAllowed() )
+	if( Safe_is1v1EnabledAndAllowed() )
 	{
 		int sourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 		
@@ -231,7 +231,7 @@ void function ScoreEvent_PlayerKilled( entity victim, entity attacker, var damag
 			return
 	}
 	
-	if( isScenariosMode() || Gamemode() == eGamemodes.fs_snd )
+	if( Safe_isScenariosMode() || Gamemode() == eGamemodes.fs_snd )
 		return
 
 	if ( downed && GetGameState() >= eGameState.Playing)

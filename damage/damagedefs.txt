@@ -425,7 +425,18 @@ DamageDefs
        	"damage_flags"				"DF_RAGDOLL | DF_EXPLOSION | DF_KNOCK_BACK"
        	"impact_effect_table"		"exp_creeping_barrage_detonation"
     }
+	damagedef_ability_silence
+	{
+		"damage" 					"10"
+		"damage_heavy_armor"		"0"
+		"inner_radius"				"150"
+ 		"radius"					"150"
+		"impulse_force"				"0"
+		"explosion_flags"			""
 
+		"obituary"					"#DEATH_SILENCE"
+		"damage_flags"				""//"DF_NO_SELF_DAMAGE" disabled temporarily to playtest it
+	}
     damagedef_defensive_bombardment
     {
        	"damage" 					"40"
@@ -437,7 +448,7 @@ DamageDefs
 
        	"obituary"					"#WPN_DEFENSIVE_BOMBARDMENT"
        	"damage_flags"				"DF_RAGDOLL | DF_EXPLOSION | DF_KNOCK_BACK"
-       	//"impact_effect_table"		"exp_artillery_plasma"
+       	"impact_effect_table"		"exp_artillery_plasma"
     }
     damagedef_loot_drone_explosion
     {

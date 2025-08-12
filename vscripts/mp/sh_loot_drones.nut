@@ -207,7 +207,10 @@ void function SetLootDroneTrailFX( LootDroneClientData droneData )
 
 void function ServerCallback_SetLootDroneTrailFXType( entity droneEnt, int trailType )
 {
-	printf( "LootDroneClientDebug: ServerCallback_SetLootDroneTrailFXType" )
+	#if DEVELOPER
+		printl( "LootDroneClientDebug: ServerCallback_SetLootDroneTrailFXType" )
+	#endif
+	
 	if ( !IsValidLootDrone( droneEnt ) )
 		return
 

@@ -64,21 +64,21 @@ npc_prowler
 	aimassist_adspull_headshotAttachmentName	"HEADSHOT"
 	aimassist_adspull_headshotRadius			13.0
 
-	MeleeDamageMin					30
-	MeleeDamageMax					30
+	MeleeDamageMin					15
+	MeleeDamageMax					20
 	MeleeDamageMinHeavyArmor		60
 	MeleeDamageMaxHeavyArmor		80
 	MeleeDamageRadius				75
 	MeleeDamageRadiusUpwardBias		20
-	MeleeRange						80
+	MeleeRange						85
 	MeleeInterval					0	// Allow constant melee attacks
-	MeleeChargeDamageMin			30
-	MeleeChargeDamageMax			30
+	MeleeChargeDamageMin			20
+	MeleeChargeDamageMax			20
 	MeleeChargeDamageMinHeavyArmor	80
 	MeleeChargeDamageMaxHeavyArmor	100
 	MeleeChargeDamageRadius			60
+	MeleeChargeRange				240
 	MeleeChargeInterval				3
-	MeleeChargeAnticipateRange		1	// Anticipate melee range based on animation and enemy movement (instead of constant MeleeChargeRange 240)
 
 	MeleeEnemyArmorType				any
 	MeleeChargeOnlyPlayers			1
@@ -86,7 +86,6 @@ npc_prowler
 	MeleeDamageForce				20000
 	MeleeRangeMaxVerticalOffset		100
 
-	longJumpMaxDist					200
 	meleeImpactEffectTable	"melee_prowler"
 	syncedMeleeEngageDist	40
 	meleeable				1
@@ -111,12 +110,10 @@ npc_prowler
 	circleStrafeDist		420
 	enemyAimAtMeWidth		100
 
-	navNearbyReachableMins	"-100 -100 -250"	// Extend the search mins far below the enemy because Prowlers can use SCHED_MELEE_ATTACK_JUMP_UP
-	navNearbyReachableMaxs	"100 100 90"		// 100 is a good 2D range for their normal melee attack
-
-	chaseStopDist							90	// One of the melee ranges, either MeleeRange or MeleeChargeRange, should be greater than chaseStopDist
+	chaseStopDist							100	//meleeRange should be greater than chaseStopDist
 	chaseStopDistHeavyArmor					200
-	chaseTryRunningDodgeWhenAimedAtMinDist	600	//Should be > MeleeChargeRange so that chargeMelee prioritize over dodging
+	chaseStopVerticalDist					300
+	chaseTryRunningDodgeWhenAimedAtMinDist	400	//Should be > MeleeChargeRange so that chargeMelee prioritize over dodging
 
 	dodgePeriod 			4	// Don't dodge more than maxDodgePerPeriod within this time
 	maxDodgePerPeriod		2	// Don't dodge more than this many times in dodgePeriod
@@ -125,23 +122,15 @@ npc_prowler
 
 	showFriendlyIcon		1
 
-	allowCrouchAnims		0
 	allowFlee				1
 	allowSignals			1
 	allowPatrol				1
 	allowInvestigate		0
 
-	canOpenDoors			0
-	becomeDebrisOnDeath		1
-
-	tauntInterval			20
-
 	patrolRangeMin			600
 	patrolRangeMax			800
 
-	moveDeflectionLookAheadTime	1
-	reactChanceDefault			100
-	reactBulletChanceDefault	90
-
-	seeThroughSemiTranslucentThickness	200
+	moveDeflectionLookAheadTime			1
+	reactChanceDefault					100
+	reactBulletChanceDefault			90
 }

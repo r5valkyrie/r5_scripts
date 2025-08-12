@@ -90,7 +90,7 @@ void function InitHudOptionsPanel( var panel )
 		file.conVarDataList.append( CreateSettingsConVarData( "hudchat_play_text_to_speech", eConVarType.INT ) )
 	#endif
 	
-	file.conVarDataList.append( CreateSettingsConVarData( "show_motd_on_server_first_join", eConVarType.INT ) )
+	file.conVarDataList.append( CreateSettingsConVarData( "motd_enable", eConVarType.INT ) )
 }
 
 void function OpenConfirmRestoreHUDDefaultsDialog( var button )
@@ -143,7 +143,7 @@ void function RestoreHUDDefaults()
 		SetConVarToDefault( "hudchat_visibility" )
 	#endif //PC_PROG
 	
-	SetConVarToDefault( "show_motd_on_server_first_join" )
+	SetConVarToDefault( "motd_enable" )
 
 	SaveSettingsConVars( file.conVarDataList )
 

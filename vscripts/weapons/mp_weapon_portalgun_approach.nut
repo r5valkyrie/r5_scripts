@@ -260,14 +260,12 @@ void function FirstToSecondPortalMoveThread( entity trigger, entity ent )
 }
 
 void function SecondToFirstPortalMoveThread( entity trigger, entity ent )
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
 {
 	if(ent.e.isplayercomingfromportal1) return //ignoring ent this frame
 	SecondToFirstPortalMove(trigger, ent)
 }
 
 void function FirstToSecondPortalMove( entity trigger, entity ent )
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
 {
 	if(trigger.GetTargetName() != "portal1") return
 	if(!IsValid(file.weapon.w.portal2root)) return
@@ -337,7 +335,6 @@ void function FirstToSecondPortalMove( entity trigger, entity ent )
 	bool isActuallyCeil = false
 	float velocity1Lenght = velocity1.Length()
 		
-	//Implemented by Colombia
 	//Source: https://github.com/VSES/SourceEngine2007/blob/master/se2007/game/server/portal/prop_portal.cpp
 	//Minimum floor exit velocity if both portals are on the floor or the player is coming out of the floor
 	if( forwardPortal2.z > 0.90 ) //floor
@@ -472,7 +469,6 @@ void function SecondToFirstPortalMove( entity trigger, entity ent )
 	bool isfloororceilPortal = false
 	bool isActuallyCeil = false
 	
-	//Implemented by Colombia
 	//Source: https://github.com/VSES/SourceEngine2007/blob/master/se2007/game/server/portal/prop_portal.cpp
 	//Minimum floor exit velocity if both portals are on the floor or the player is coming out of the floor
 	if( forwardPortal1.z > 0.90 )

@@ -18,7 +18,6 @@ void function OnWeaponDeactivate_Fanatic( entity weapon )
 }
 
 bool function ChangeDamage_Fanatic( entity weapon )
-//By Colombia
 {
     if( !IsValid( weapon ) || weapon.GetWeaponClassName() != "mp_weapon_plasmapistol" )
     	return false

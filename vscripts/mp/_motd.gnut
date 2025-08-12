@@ -1,0 +1,25 @@
+global function MOTD_Init
+
+void function FireRemoteMotd( entity player )
+{	
+	thread
+	(
+		void function() : ( player )
+		{
+			if ( !player.p.isConnected )
+				waitthread WaitSignalOrTimeout( player, 20, "OnConnected", "OnDestroy", "OnDisconnected" )
+			
+			if ( IsValid( player ) && player.p.isConnected )
+				Remote_CallFunction_UI( player, "UI_Callback_MOTD" )
+		}
+	)()
+}
+
+void function MOTD_Init()
+{
+    if ( GetCurrentPlaylistVarBool( "enable_motd", false ) )
+    {
+        printl("AddCallback_OnClientConnected( FireRemoteMotd )")
+        AddCallback_OnClientConnected( FireRemoteMotd )
+    }
+}

@@ -1615,17 +1615,20 @@ void function SetupSurvivalLoot( var categories )
 {
 	string cats              = expect string( categories )
 	array<string> stringCats = split( cats, " " )
-
-	if (stringCats.contains("attachment_custom"))
+	
+	if( GetCurrentPlaylistVarBool( "custom_loot", true ) )
 	{
-		SetupCustomLoot( "attachment", true )
-		return	
-	}
+		if (stringCats.contains("attachment_custom"))
+		{
+			SetupCustomLoot( "attachment", true )
+			return	
+		}
 
-	if (stringCats.contains("weapon_custom"))
-	{
-		SetupCustomLoot( "main_weapon", false )
-		return	
+		if (stringCats.contains("weapon_custom"))
+		{
+			SetupCustomLoot( "main_weapon", false )
+			return	
+		}
 	}
 	
 	// turn menu strings into real category enums
@@ -1673,8 +1676,9 @@ void function SetupCustomLoot( var categories, bool isAttachment = false)
 		if ( !catTypes.contains( data.lootType ) )
 			continue
 		
+		if (IsFlowstateActive()){
 		if( ref == "mp_weapon_titan_sword" )
-			continue
+			continue}
 		
 		if (data.lootType == eLootType.ATTACHMENT && !IsCustomAttachment(data)) continue
 		if (data.lootType == eLootType.MAINWEAPON && !IsCustomWeapon(data)) continue

@@ -197,7 +197,7 @@ Scheme
 		TextEntry.CursorColor				OffWhite
 		TextEntry.DisabledTextColor			Disabled
 		TextEntry.DisabledBgColor			Blank
-		TextEntry.FocusedBgColor			"64 64 64 150"
+		TextEntry.FocusedBgColor			"64 64 64 255"
 		TextEntry.SelectedTextColor			Black
 		TextEntry.SelectedBgColor			"0 0 0 255"
 		TextEntry.OutOfFocusSelectedBgColor	LightBlue
@@ -2864,7 +2864,7 @@ Scheme
 			wide					%100
 			tall					1028
 		    visible					0
-		    controlSettingsFile		"resource/ui/menus/panels/settings.res"
+		    controlSettingsFile		"scripts/resource/ui/menus/panels/settings.res"
 		    clip                    1
             tabPosition				1
         }
@@ -3968,6 +3968,27 @@ Scheme
             pin_corner_to_sibling	TOP_LEFT
             pin_to_sibling_corner	TOP_LEFT
 		}
+		
+		LobbyCreditButton
+		{
+            classname               CreditButtonClass
+			wide					194
+			tall					126
+			visible					0
+			enabled					1
+            rui						"ui/lobby_character_button.rpak"
+			labelText				""
+			style					RuiButton
+			polyShape               "0.375 0.0 1.0 0.0 0.625 1.0 0.0 1.0"
+			rightClickEvents		1
+			middleClickEvents       1
+			sound_focus             "UI_Menu_Focus"
+			sound_accept			""
+            cursorVelocityModifier  0.7
+
+            pin_corner_to_sibling	TOP_LEFT
+            pin_to_sibling_corner	TOP_LEFT
+		}
 
 		MatchCharacterButton
 		{
@@ -4021,8 +4042,10 @@ Scheme
 
 		WeaponCategoryButton
 		{
-            wide					572
-            tall					275
+            wide					457
+			wide_nx_handheld		550 		[$NX || $NX_UI_PC]
+            tall					220
+            tall_nx_handheld		264	 		[$NX || $NX_UI_PC]
 			visible					1
 			enabled					1
             rui						"ui/weapon_category_button.rpak"
@@ -4169,7 +4192,7 @@ Scheme
 			wide					f0
 			tall					36
 			visible					1
-			controlSettingsFile		"resource/ui/menus/panels/footer_buttons.res"
+			controlSettingsFile		"scripts/resource/ui/menus/panels/footer_buttons.res"
 		}
 
         DialogFooterButtons
@@ -4179,7 +4202,7 @@ Scheme
             wide					f0
             tall					60
             visible					1
-            controlSettingsFile		"resource/ui/menus/panels/dialog_footer_buttons.res"
+            controlSettingsFile		"scripts/resource/ui/menus/panels/dialog_footer_buttons.res"
         }
 
         PromoFooterButtons
@@ -4189,7 +4212,7 @@ Scheme
             wide					f0
             tall					60
             visible					1
-            controlSettingsFile		"resource/ui/menus/panels/promo_footer_buttons.res"
+            controlSettingsFile		"scripts/resource/ui/menus/panels/promo_footer_buttons.res"
         }
 
         DialogFooterButtonsR2
@@ -4199,7 +4222,7 @@ Scheme
             wide					f0
             tall					56
             visible					1
-            controlSettingsFile		"resource/ui/menus/panels/dialog_footer_buttons_r2.res"
+            controlSettingsFile		"scripts/resource/ui/menus/panels/dialog_footer_buttons_r2.res"
         }
 
 		R2_ContentDescriptionTitle
@@ -4368,7 +4391,7 @@ Scheme
 			wide					450
 			tall					67
 			visible					0
-			controlSettingsFile		"resource/UI/menus/button_locked_tooltip.res"
+			controlSettingsFile		"scripts/resource/ui/menus/button_locked_tooltip.res"
 		}
 
 		LobbyFriendlyBackground

@@ -176,7 +176,7 @@ void function ShWarpGates_Init()
         
 	#endif // SERVER
 
-	Remote_RegisterClientFunction( "ServerCallback_StartWarpGateExitSequence", "float", 0.0, 100.0, 8 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_StartWarpGateExitSequence", "float", 0.0, 100.0, 8 )
 
 	RegisterSignal( "WarpGates_PlayerExitPortal" )
 }
@@ -255,9 +255,9 @@ void function InitWarpGateData( entity warpTrig )
 			#if DEVELOPER
 				if( file.devPrintsOn )
 				{
-					printt( format( " ************************************** trigger_warp_gate: %s \n", string( warpTrig ))  )
-					printt( format( " - trigger_warp_gate Origin    : %s \n", string( warpTrig.GetOrigin())))
-					printt( format( " - trigger_warp_gate Children count    : %s \n", string( warpTrig.GetLinkEntArray().len())))
+					printt( format( "****************** trigger_warp_gate: %s", string( warpTrig ))  )
+					printt( format( " - trigger_warp_gate Origin    : %s", string( warpTrig.GetOrigin())))
+					printt( format( " - trigger_warp_gate Children count    : %s", string( warpTrig.GetLinkEntArray().len())))
 				}
 			#endif
 
@@ -275,10 +275,10 @@ void function InitWarpGateData( entity warpTrig )
 					if( file.devPrintsOn )
 					{
 						vector childWorldOrigin = <0,0,0>//CalcLocalToWorldOrigin_Entity( linkedEnt, linkedEnt.GetOrigin() )
-						printt( format( "    --- trigger_warp_gate child: %s: \n ", string( linkedEnt ))  )
-						printt( format( "       - trigger_warp_gate child GetScriptName(): %s\n", linkedEnt.GetScriptName()))
-						printt( format( "       - trigger_warp_gate child Origin()		       : %s\n", string( linkedEnt.GetOrigin() )))
-						printt( format( "       - trigger_warp_gate child World Origin()       : %s\n", string( childWorldOrigin )))
+						printt( format( "    --- trigger_warp_gate child: %s:", string( linkedEnt ))  )
+						printt( format( "       - trigger_warp_gate child GetScriptName(): %s", linkedEnt.GetScriptName()))
+						printt( format( "       - trigger_warp_gate child Origin()		       : %s", string( linkedEnt.GetOrigin() )))
+						printt( format( "       - trigger_warp_gate child World Origin()       : %s", string( childWorldOrigin )))
 					}
 				#endif
 

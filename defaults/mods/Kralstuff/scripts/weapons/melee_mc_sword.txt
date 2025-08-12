@@ -1,0 +1,24 @@
+#base "melee_pilot_emptyhanded.txt"
+
+WeaponData
+{
+
+	// General
+	"printname"   								"Melee"
+	"shortprintname"							"Melee"
+	"description" 								"Description needed"
+	"longdesc"									"Description needed"
+
+	"menu_icon"									"rui/hud/common/melee_icon"
+	"hud_icon"									"rui/hud/common/melee_icon"
+
+	"weapon_type_flags"							"WPT_MELEE"
+	
+	// Models
+	"viewmodel"   								"mdl/Weapons/minecraft_sword/ptpov_minecraft_sword.rmdl"
+	"playermodel" 								"mdl/Weapons/minecraft_sword/w_minecraft_sword.rmdl"
+
+    // FX
+	"impact_effect_table" 						"melee_mir_statue"
+}
+

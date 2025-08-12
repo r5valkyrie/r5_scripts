@@ -134,18 +134,11 @@ void function LoadCommsActionsFromDatatable()
 
 void function RegisterCustomComs()
 {
-	// ammo
-	RegisterCustomCom( eCommsAction.PING_AMMO_SNIPER, "ping_foundAmmoSniper")
-	RegisterCustomCom( eCommsAction.INVENTORY_NEED_AMMO_SNIPER, "ping_needAmmoSniper")
-	
-	RegisterCustomCom( eCommsAction.PING_AMMO_EXPLOSIVE, "ping_foundAmmoExp")
-	RegisterCustomCom( eCommsAction.INVENTORY_NEED_AMMO_EXPLOSIVE, "ping_needAmmoExp")
+	// Ammo
 
-	// weapons
-	RegisterCustomCom( eCommsAction.PING_WEAPON_VOLT, "ping_foundVoltSmg")
+	// Weapons
 	RegisterCustomCom( eCommsAction.PING_WEAPON_THUNDERBOLT, "ping_foundLauncher")
 	RegisterCustomCom( eCommsAction.PING_WEAPON_SMARTPISTOL, "ping_foundPistol")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_CAR, "ping_foundCarSmg")
 	RegisterCustomCom( eCommsAction.PING_WEAPON_EPG, "ping_foundEPG")
 	RegisterCustomCom( eCommsAction.PING_WEAPON_SMR, "ping_foundLauncher")
 	RegisterCustomCom( eCommsAction.PING_WEAPON_WINGMAN_N, "ping_foundWingman")
@@ -154,49 +147,24 @@ void function RegisterCustomComs()
 	RegisterCustomCom( eCommsAction.PING_WEAPON_ARC_TOOL, "ping_foundWeapon")
 	RegisterCustomCom( eCommsAction.PING_WEAPON_MGL, "ping_foundGrenadeLauncher")
 	RegisterCustomCom( eCommsAction.PING_WEAPON_COLDWAR, "ping_foundColdWar")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_SENTINEL, "ping_foundSentinel")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_3030, "ping_found3030")
+	RegisterCustomCom( eCommsAction.PING_WEAPON_DRAGON, "ping_foundRampage")
 	RegisterCustomCom( eCommsAction.PING_WEAPON_R201, "ping_foundR301")
+	RegisterCustomCom( eCommsAction.PING_WEAPON_PREDATOR, "ping_foundWeapExp")
 
-    // npcs
+    // NPC's
 	asset icon = $"rui/hud/ping/icon_ping_enemy"
 	asset iconasset = $"settings/itemflav/ping/ping_enemy.rpak"
 	string chattext = "#PING_ENEMY_SPOTTED_GENERAL"
 	string shorttext = "#PROMPT_PING_ENEMY_SPOTTED_GENERAL_SHORT"
 	string menutext = "#PROMPT_PING_ENEMY_SPOTTED_GENERAL"
 
-	// creatures
-	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_SPIDER, "ping_spotSpider", icon, iconasset, chattext, shorttext, menutext)
-	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_INFECTED, "ping_spotInfected", icon, iconasset, chattext, shorttext, menutext)
-	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_PROWLER, "ping_spotProwler", icon, iconasset, chattext, shorttext, menutext)
-	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_GOLIATH, "ping_spotGoliath", icon, iconasset, chattext, shorttext, menutext)
-
-	// robots
 	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_DRONE, "ping_spotDrone", icon, iconasset, chattext, shorttext, menutext )
 	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_TITAN, "ping_spotTitan", icon, iconasset, chattext, shorttext, menutext )
 	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_REAPER, "ping_spotReaper", icon, iconasset, chattext, shorttext, menutext )
 	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_SPECTRE, "ping_spotSpectre", icon, iconasset, chattext, shorttext, menutext )
 	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_TICK, "ping_spotTick", icon, iconasset, chattext, shorttext, menutext )
 	
-	// Flowstate
-	RegisterCustomCom( eCommsAction.INVENTORY_NEED_ATTACHMENT_MAG_SNIPER, "ping_needAmmoMagSniper" )
-	RegisterCustomCom( eCommsAction.INVENTORY_NEED_ATTACHMENT_LASERSIGHT_SMG, "ping_needLaserSight" )
-	RegisterCustomCom( eCommsAction.INVENTORY_NEED_ATTACHMENT_LASERSIGHT_PISTOL, "ping_needLaserSight" )
-	RegisterCustomCom( eCommsAction.INVENTORY_NEED_ATTACHMENT_SIGHT_MARKSMAN, "ping_needOpticMarksman" )
-	RegisterCustomCom( eCommsAction.INVENTORY_NEED_ATTACHMENT_BARREL_MARKSMAN, "ping_needModBarrel" )
-	RegisterCustomCom( eCommsAction.INVENTORY_NEED_ATTACHMENT_GRIP_MARKSMAN, "ping_needStockSniper" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_MAG_SNIPER_1, "ping_foundAmmoMagSniper" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_MAG_SNIPER_2, "ping_foundAmmoMagSniper" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_MAG_SNIPER_3, "ping_foundAmmoMagSniper" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_MAG_SNIPER_4, "ping_foundAmmoMagSniper" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_LASER_SIGHT_1, "ping_foundLaserSight" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_LASER_SIGHT_2, "ping_foundLaserSight" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_LASER_SIGHT_3, "ping_foundLaserSight" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_LASER_SIGHT_4, "ping_foundLaserSight" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_SHOTGUN_BOLT_4, "ping_foundShotgunBolt" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_MAG_ENERGY_4, "ping_foundAmmoMagEnergy" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_MAG_HIGHCAL_4, "ping_foundAmmoMagHeavy" )
-	RegisterCustomCom( eCommsAction.PING_ATTACHMENT_MAG_BULLET_4, "ping_foundAmmoMagLight" )
+	// Attachment
 	RegisterCustomCom( eCommsAction.PING_EQUIPMENT_ARMOR_5, "") 
 	RegisterCustomCom( eCommsAction.PING_EQUIPMENT_ARMOR_6, "") 
 	RegisterCustomCom( eCommsAction.PING_EQUIPMENT_ARMOR_7, "")
@@ -426,7 +394,7 @@ string function GetSubjectLootTierForCommsAction( entity subjectEnt )
 
 	if ( !IsValid( subjectEnt ) || subjectEnt.GetNetworkedClassName() != "prop_survival" )
 	{
-		if ( HACK_IsVaultDoor( subjectEnt ) || IsVaultPanel( subjectEnt ) )
+		if ( IsVaultDoor( subjectEnt ) || IsVaultPanel( subjectEnt ) )
 		{
 			entity playerWithKey = VaultPanel_GetTeammateWithKey( GetLocalClientPlayer().GetTeam() )
 			string playerWithKeyName

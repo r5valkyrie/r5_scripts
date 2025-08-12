@@ -28,7 +28,7 @@ void function FS_ForceAdjustSunFlareParticleOnClient( int map )
 	switch( map )
 	{
 		case 0:
-			FS_ResetMapLightning()
+			FS_ResetMapLighting()
 
 			SetConVarFloat( "mat_autoexposure_max", 1.0 )
 			SetConVarFloat( "mat_autoexposure_max_multiplier", 0.3 )
@@ -41,14 +41,14 @@ void function FS_ForceAdjustSunFlareParticleOnClient( int map )
 			SetConVarString( "mat_sun_color", "1.0 1.5 2.0 1.0" )
 		break
 		case 1:
-			FS_ResetMapLightning()
+			FS_ResetMapLighting()
 
 			SetConVarFloat( "mat_sky_scale", 1.5 )
 			SetConVarFloat( "mat_sun_scale", 1.5 )
 		break
 		
 		case 2:
-			FS_ResetMapLightning()
+			FS_ResetMapLighting()
 
 			SetConVarFloat( "mat_envmap_scale", 0.12 )
 
@@ -89,7 +89,7 @@ void function FS_ForceAdjustSunFlareParticleOnClient( int map )
 	}
 }
 
-void function FS_ResetMapLightning()
+void function FS_ResetMapLighting()
 {
 	SetConVarToDefault( "mat_sun_color" )
 	SetConVarToDefault( "mat_sun_scale" )

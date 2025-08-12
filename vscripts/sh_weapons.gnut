@@ -56,6 +56,8 @@ void function ShWeapons_LevelInit()
 {
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
+	
+	ShLoadWeaponAssetsInit()
 
 	#if SERVER && DEVELOPER
 		AddCallback_GeneratePDef( GenerateWeaponsPDef )

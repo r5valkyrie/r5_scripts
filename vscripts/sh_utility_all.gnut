@@ -13,6 +13,24 @@ global array<asset> LEGAL_PLAYER_TITAN_SETTINGS
 
 //
 global const PST_TIME_ZONE_OFFSET = -7
+
+global enum e1v1State
+{
+	INVALID = -1,
+	CHARSELECT,
+	PREMATCH,
+	MATCH_START,
+	WAITING,
+	SEQUENCE,
+	MATCHING,
+	RESTING,
+	RECAP,
+	SPECTATING,
+	
+	//coaching mode
+	WATCHING_FIGHT_REPLAY
+}
+
 global enum eDaysOfWeek
 {
 	SUNDAY,
@@ -49,6 +67,7 @@ global struct DisplayTime
 	int hours
 	int minutes
 	int seconds
+	int milliseconds
 }
 
 global struct AABB
@@ -304,17 +323,20 @@ void function PrintTable( tbl, int indent = 0, int maxDepth = 4 )
 
 string function TableIndent( int indent )
 {
-	return ("                                            ").slice( 0, indent )
+	string str = "                                            "
+	return str.slice( 0, minint( maxint( 0, indent ), str.len() ) )
 }
 
 string function TableIndent2( int indent )
 {
-	return ("...............................................................................................................................").slice( 0, indent )
+	string str = "..............................................................................................................................."
+	return str.slice( 0, minint( maxint( 0, indent ), str.len() ) )
 }
 
 string function TableIndent3( int indent )
 {
-	return ("                                                                                                                               ").slice( 0, indent )
+	string str = "                                                                                                                               "
+	return str.slice( 0, minint( maxint( 0, indent ), str.len() ) )
 }
 
 string function RepeatString( string str, int times )
@@ -433,6 +455,74 @@ vector function FindAnyPerpendicularVector( vector v )
 	return RotateVector( <0, 0, 1> * Length( v ), VectorToAngles( Normalize( v ) ) )
 }
 
+
+float function GetArcLengthDeg( float startDeg, float endDeg )
+{
+	if ( endDeg < startDeg )
+		endDeg += 360
+
+	return fabs( startDeg - endDeg )
+}
+
+bool function CirclesAreIntersecting( vector org1, float rad1, vector org2, float rad2 )
+{
+	float distBetweenCircles = Distance( org1, org2 )
+	float epsilon = 1
+
+	// New circle inside projection radius
+	if ( distBetweenCircles < fabs( rad1 - rad2 ) + epsilon )
+		return false
+	else if ( distBetweenCircles < fabs( rad2 - rad1 ) + epsilon )
+		return false
+
+	// Circles are literally the same
+	else if ( distBetweenCircles == 0 && rad2 == rad1 )
+		return false
+
+	// Circles aren't touching
+	else if ( distBetweenCircles > ( rad1 + rad2 + epsilon ) )
+		return false
+
+	return true
+}
+
+bool function IsCircleAEncompassingCircleB( vector org1, float rad1, vector org2, float rad2 )
+{
+	float epsilon
+	float distBetweenCircles = Distance( org1, org2 )
+	if ( ( distBetweenCircles < fabs( rad1 - rad2 ) + epsilon ) && ( rad1 > rad2 ) )
+		return true
+
+	return false
+}
+array<vector> function GetCircleToCircleIntersectionPoints( vector org1, float rad1, vector org2, float rad2, vector up = < 0, 0, 1 >, bool debugDraw = false )
+{
+	float distBetweenCircles        = Distance( org1, org2 )
+	float distOrg1ToIntersectCenter = ( ( rad1 * rad1 ) - ( rad2 * rad2 ) + ( distBetweenCircles * distBetweenCircles ) ) / ( 2.0 * distBetweenCircles )
+
+	vector intersectDir    = Normalize( org2 - org1 )
+	vector intersectCenter = intersectDir * distOrg1ToIntersectCenter
+
+	float intersectHeight = sqrt( ( rad1 * rad1 ) - ( distOrg1ToIntersectCenter * distOrg1ToIntersectCenter ) )
+	vector heightDir      = CrossProduct( up, intersectDir )
+
+	array<vector> intersectionPoints = [ intersectCenter + ( heightDir * intersectHeight ), intersectCenter - ( heightDir * intersectHeight ) ]
+
+	if ( debugDraw )
+	{
+		#if SERVER || CLIENT
+		// Circle origins
+		//DebugDrawLine( org1, org1 + < 0, 0, 32 >, COLOR_RED, true, 1.0 )
+		//DebugDrawLine( org2, org2 + < 0, 0, 32 >, COLOR_GREEN, true, 1.0 )
+
+		// Lines to intersection points
+		//DebugDrawLine( org2, intersectionPoints[ 0 ] + org1, COLOR_WHITE, true, 1.0 )
+		//DebugDrawLine( org2, intersectionPoints[ 1 ] + org1, COLOR_BLACK, true, 1.0 )
+		#endif
+	}
+
+	return intersectionPoints
+}
 
 bool function IsLobbyMapName( string levelname )
 {
@@ -1009,7 +1099,7 @@ void function WaitFrame()
 
 string function VectorToString( vector vec )
 {
-	return "< " + vec.x + "," + vec.y + "," + vec.z + " >"
+	return "< " + vec.x + ", " + vec.y + ", " + vec.z + " >"
 }
 
 vector function FlattenNormalizeVec( vector v )
@@ -1163,29 +1253,47 @@ string function GetAISettingsStringForMode()
 	return "aiSettingsFile"
 }
 
+const array<string> liveDisabledRefs = [ "vanguard_skin_01", "vanguard_skin_02", "vanguard_skin_03", "vanguard_skin_07", "vanguard_skin_08" ]
+const array<string> disabledRefs = [ "mp_ability_pathchooser" ]
+
+bool function IsDisabledRef( string ref )
+{
+	if ( liveDisabledRefs.contains( ref ) )
+		return true
+
+    #if DEVELOPER
+        return false
+    #endif
+
+    return ( disabledRefs.contains( ref ) )
+}
+
 array<asset> function GetAllowedPlayerTitanSettings() //Based off AllowedTItanAISettings, which is based off the titan_properties table
 {
-	//string searchString = "mp_npcUseAllowed"
-	//
-	//array<asset> list = []
-	//var dataTable = GetDataTable( TITAN_PROPERTIES_DATATABLE )
-	//int numRows = GetDatatableRowCount( dataTable )
-	//
-	//for ( int r=0; r<numRows; r++ )
-	//{
-	//	bool allowed = GetDataTableBool( dataTable, r, GetDataTableColumnByName( dataTable, searchString ) )
-	//	if ( allowed )
-	//	{
-	//		string titanRef = GetDataTableString( dataTable, r, GetDataTableColumnByName( dataTable, "titanRef" ) )
-	//
-	//		if ( IsDisabledRef( titanRef ) )
-	//			continue
-	//
-	//		list.append( GetDataTableAsset( dataTable, r, GetDataTableColumnByName( dataTable, "setFile" ) ) )
-	//	}
-	//}
-	//
-	//return list
+	#if !UI
+	return []//TODO: FIX THIS
+	string searchString = "mp_npcUseAllowed"
+	
+	array<asset> list = []
+	var dataTable = GetDataTable( $"datatable/titan_properties.rpak" )//Ported from titanfall2
+	int numRows = GetDatatableRowCount( dataTable )
+	
+	for ( int r=0; r<numRows; r++ )
+	{
+		bool allowed = GetDataTableBool( dataTable, r, GetDataTableColumnByName( dataTable, searchString ) )
+		if ( allowed )
+		{
+			string titanRef = GetDataTableString( dataTable, r, GetDataTableColumnByName( dataTable, "titanRef" ) )
+	
+			if ( IsDisabledRef( titanRef ) )
+				continue
+	
+			list.append( GetDataTableAsset( dataTable, r, GetDataTableColumnByName( dataTable, "setFile" ) ) )
+		}
+	}
+	
+	return list
+	#endif
 	return []
 }
 
@@ -1252,7 +1360,7 @@ array<string> function GetAllNPCSettings()
 	//aiSettings.append( "npc_stalker" )
 	//aiSettings.append( "npc_stalker_zombie" )
 	//aiSettings.append( "npc_stalker_zombie_mossy" )
-	//aiSettings.append( "npc_super_spectre" )
+	aiSettings.append( "npc_super_spectre" )
 	//aiSettings.append( "npc_titan_sarah" )
 	//aiSettings.append( "npc_titan_vanguard" )
 	//
@@ -1966,6 +2074,13 @@ int function Shuffle_GetCount( ShuffleData sd )
 //////
 
 #if SERVER || CLIENT
+void function DestroyEntities( array<entity> ents )
+{
+	foreach ( entity ent in ents )
+		if ( IsValid( ent ) )
+			ent.Destroy()
+}
+
 vector function LocalPosToWorldPos( vector pos, entity ent )
 {
 	return ent.GetOrigin() + RotateVector( pos, ent.GetAngles() )
@@ -2036,12 +2151,25 @@ bool function IsSurvivalTraining()
 
 bool function IsFiringRangeGameMode()
 {
-	return ( GetCurrentPlaylistVarBool( "survival_firingrange", false ) ) // && Playlist() != ePlaylists.survival_firingrange ) //????
+	return Playlist() == ePlaylists.survival_firingrange
 }
 
 bool function FiringRangeHasFriendlyFire()
 {
 	return GetCurrentPlaylistVarBool( "firingrange_has_friendlyfire", true )
+}
+
+string function GetTitanCharacterNameFromSetFile( string setFile )
+{
+	var result = "BT-7274"//Dev_GetPlayerSettingByKeyField_Global( setFile, "titanCharacterName" )
+	if ( result == null )
+	{
+		//CodeWarning( "Warning, no field titanCharacterName found for set file: " + setFile + ", returning default of ion" )
+		return "ion"
+	}
+
+	expect string( result )
+	return result
 }
 
 float function LerpFloat( float startValue, float endValue, float time )
@@ -2124,6 +2252,13 @@ bool function IsAccessibilitySpeechToChat()
 }
 #endif
 
+#if SERVER || CLIENT
+void function CopyRealmsFromTo( entity source, entity target )
+{
+	target.RemoveFromAllRealms()
+	target.AddToOtherEntitysRealms( source )
+}
+#endif
 
 #if CLIENT || UI
 bool function IsAccessibilityChatToSpeech()
@@ -2370,6 +2505,29 @@ DisplayTime function SecondsToDHMS( int seconds )
 	return dt
 }
 
+DisplayTime function SecondsToDHMSM(float total_seconds)
+{
+    DisplayTime dt;
+
+    // Extract days
+    dt.days = (total_seconds / SECONDS_PER_DAY).tointeger() // Convert to integer
+    total_seconds = total_seconds % SECONDS_PER_DAY
+
+    // Extract hours
+    dt.hours = (total_seconds / SECONDS_PER_HOUR).tointeger() // Convert to integer
+    total_seconds = total_seconds % SECONDS_PER_HOUR
+
+    // Extract minutes
+    dt.minutes = (total_seconds / SECONDS_PER_MINUTE).tointeger() // Convert to integer
+    total_seconds = total_seconds % SECONDS_PER_MINUTE
+
+    // Extract seconds and milliseconds
+    dt.seconds = total_seconds.tointeger(); // Extract whole seconds
+    dt.milliseconds = ((total_seconds - dt.seconds) * 1000).tointeger() // Extract milliseconds
+
+    return dt
+}
+
 int function GetDayOfWeek( int unixTime )
 {
 	return int( (floor(unixTime / SECONDS_PER_DAY) + 4) % 7 )
@@ -2526,6 +2684,280 @@ entity function AssertLocalOrServerValidPlayer( entity player )
 	return player
 }
 
+bool function IsFlowstateActive()
+{
+	return HAS_FLOWSTATE_MOD
+}
+
+bool function SafeCallFunction( string functionName, array<string> paramStrings = [], string fallbackMessage = "", string errorPrefix = "[SAFE_CALL]" )
+{
+	try 
+	{
+		string callString = functionName + "("
+		for ( int i = 0; i < paramStrings.len(); i++ )
+		{
+			if ( i > 0 )
+				callString += ", "
+			callString += paramStrings[i]
+		}
+		callString += ")"
+		
+		compilestring( callString )()
+		return true
+	}
+	catch ( exception )
+	{
+		if ( fallbackMessage != "" )
+			printw( errorPrefix + " " + fallbackMessage )
+		else
+			printw( errorPrefix + " Function '" + functionName + "' not available (mod not loaded or function doesn't exist)" )
+		return false
+	}
+}
+
+// Convenience functions for common parameter patterns
+bool function SafeCallFunction1( string functionName, string param1, string fallbackMessage = "", string errorPrefix = "[SAFE_CALL]" )
+{
+	return SafeCallFunction( functionName, [param1], fallbackMessage, errorPrefix )
+}
+
+bool function SafeCallFunction2( string functionName, string param1, string param2, string fallbackMessage = "", string errorPrefix = "[SAFE_CALL]" )
+{
+	return SafeCallFunction( functionName, [param1, param2], fallbackMessage, errorPrefix )
+}
+
+bool function SafeCallFunction3( string functionName, string param1, string param2, string param3, string fallbackMessage = "", string errorPrefix = "[SAFE_CALL]" )
+{
+	return SafeCallFunction( functionName, [param1, param2, param3], fallbackMessage, errorPrefix )
+}
+
+// SafeCallFunction variants with return values
+int function SafeCallFunctionInt( string functionName, int defaultValue, array<string> paramStrings = [], string errorPrefix = "[SAFE_CALL]" )
+{
+	try 
+	{
+		string callString = functionName + "("
+		for ( int i = 0; i < paramStrings.len(); i++ )
+		{
+			if ( i > 0 )
+				callString += ", "
+			callString += paramStrings[i]
+		}
+		callString += ")"
+		
+		// Execute and capture return value
+		return expect int( compilestring( "return " + callString )() )
+	}
+	catch ( exception )
+	{
+		printt( errorPrefix + " Function '" + functionName + "' not available, using default value: " + defaultValue )
+		return defaultValue
+	}
+}
+
+string function SafeCallFunctionString( string functionName, string defaultValue, array<string> paramStrings = [], string errorPrefix = "[SAFE_CALL]" )
+{
+	try 
+	{
+		string callString = functionName + "("
+		for ( int i = 0; i < paramStrings.len(); i++ )
+		{
+			if ( i > 0 )
+				callString += ", "
+			callString += paramStrings[i]
+		}
+		callString += ")"
+		
+		return expect string( compilestring( "return " + callString )() )
+	}
+	catch ( exception )
+	{
+		printt( errorPrefix + " Function '" + functionName + "' not available, using default value: " + defaultValue )
+		return defaultValue
+	}
+}
+
+bool function SafeCallFunctionBool( string functionName, bool defaultValue, array<string> paramStrings = [], string errorPrefix = "[SAFE_CALL]" )
+{
+	try 
+	{
+		string callString = functionName + "("
+		for ( int i = 0; i < paramStrings.len(); i++ )
+		{
+			if ( i > 0 )
+				callString += ", "
+			callString += paramStrings[i]
+		}
+		callString += ")"
+		
+		return expect bool( compilestring( "return " + callString )() )
+	}
+	catch ( exception )
+	{
+		printt( errorPrefix + " Function '" + functionName + "' not available, using default value: " + defaultValue )
+		return defaultValue
+	}
+}
+
+float function SafeCallFunctionFloat( string functionName, float defaultValue, array<string> paramStrings = [], string errorPrefix = "[SAFE_CALL]" )
+{
+	try 
+	{
+		string callString = functionName + "("
+		for ( int i = 0; i < paramStrings.len(); i++ )
+		{
+			if ( i > 0 )
+				callString += ", "
+			callString += paramStrings[i]
+		}
+		callString += ")"
+		
+		return expect float( compilestring( "return " + callString )() )
+	}
+	catch ( exception )
+	{
+		printt( errorPrefix + " Function '" + functionName + "' not available, using default value: " + defaultValue )
+		return defaultValue
+	}
+}
+
+entity function SafeCallFunctionEntity( string functionName, entity defaultValue = null, array<string> paramStrings = [], string errorPrefix = "[SAFE_CALL]" )
+{
+	try 
+	{
+		string callString = functionName + "("
+		for ( int i = 0; i < paramStrings.len(); i++ )
+		{
+			if ( i > 0 )
+				callString += ", "
+			callString += paramStrings[i]
+		}
+		callString += ")"
+		
+		return expect entity( compilestring( "return " + callString )() )
+	}
+	catch ( exception )
+	{
+		printt( errorPrefix + " Function '" + functionName + "' not available, using default entity" )
+		return defaultValue
+	}
+}
+
+#if SERVER || CLIENT
+// Safe wrappers for Flowstate team functions
+int function Safe_GetAttackerTeam()
+{
+	// Default to IMC team (typically team 2) when Flowstate mod not available
+	return ModCallbacks_CallIntCallback( "GetAttackerTeam", TEAM_IMC )
+}
+
+int function Safe_GetDefenderTeam()
+{
+	// Default to Militia team (typically team 3) when Flowstate mod not available  
+	return ModCallbacks_CallIntCallback( "GetDefenderTeam", TEAM_MILITIA )
+}
+
+// Safe wrapper for Flowstate ball carrier function
+entity function Safe_GetBallCarrier()
+{
+	// Return null entity when Flowstate mod not available
+	// This ensures comparisons like "Safe_GetBallCarrier() == player" will be false
+	return ModCallbacks_CallEntityCallback( "GetBallCarrier", null )
+}
+
+// Safe wrapper for Flowstate movement map dummy creation (threaded function)
+void function Safe_CreateMovementMapDummieFromMapLoad( vector pos, vector ang )
+{
+	// Create parameter array using the new parameter system
+	array<CallbackParam> params = ModCallbacks_CreateParams()
+	ModCallbacks_AddVectorParam( params, pos )
+	ModCallbacks_AddVectorParam( params, ang )
+	
+	ModCallbacks_CallVoidCallbackWithParams( "CreateMovementMapDummieFromMapLoad", params )
+}
+
+// Safe wrapper for Flowstate scenarios mode check
+bool function Safe_isScenariosMode()
+{
+	// Default to false when Flowstate mod not available
+	// This ensures scenarios mode features are disabled when mod not present
+	return ModCallbacks_CallBoolCallback("isScenariosMode", false)
+}
+
+bool function Safe_is1v1EnabledAndAllowed()
+{
+	return ModCallbacks_CallBoolCallback("is1v1EnabledAndAllowed", false)
+}
+
+void function Safe_StartUpdatingArmorSwapLastTime()
+{
+	ModCallbacks_CallVoidCallback( "StartUpdatingArmorSwapLastTime" )
+}
+
+// Safe wrapper for Flowstate scenarios big door data saving
+void function Safe_FS_Scenarios_SaveBigDoorData( entity door )
+{
+	// Create parameter array using the new parameter system
+	array<CallbackParam> params = ModCallbacks_CreateParams()
+	ModCallbacks_AddEntityParam( params, door )
+	
+	ModCallbacks_CallVoidCallbackWithParams( "FS_Scenarios_SaveBigDoorData", params )
+}
+
+// Safe wrapper for Flowstate scenarios loot dropping
+void function Safe_DropLoot_RefScenarios( entity player )
+{
+	// Create parameter array using the new parameter system
+	array<CallbackParam> params = ModCallbacks_CreateParams()
+	ModCallbacks_AddEntityParam( params, player )
+	
+	ModCallbacks_CallVoidCallbackWithParams( "DropLoot_RefScenarios", params )
+}
+
+// Safe wrapper for Flowstate scenarios tracked entities
+void function Safe_AddToTrackedEnts_RefScenarios( entity player, entity ent )
+{
+	// Create parameter array using the new parameter system
+	array<CallbackParam> params = ModCallbacks_CreateParams()
+	ModCallbacks_AddEntityParam( params, player )
+	ModCallbacks_AddEntityParam( params, ent )
+	
+	ModCallbacks_CallVoidCallbackWithParams( "AddToTrackedEnts_RefScenarios", params )
+}
+
+// Safe wrapper for Flowstate spies victim backwards check
+bool function Safe_FS_Spies_IsVictimBackwardsToAttacker( entity attacker, entity victim, vector position )
+{
+	// Create parameter array using the new parameter system
+	array<CallbackParam> params = ModCallbacks_CreateParams()
+	ModCallbacks_AddEntityParam( params, attacker )
+	ModCallbacks_AddEntityParam( params, victim )
+	ModCallbacks_AddVectorParam( params, position )
+	
+	// Default to false when Flowstate mod not available (disables special spies mechanics)
+	return ModCallbacks_CallBoolCallbackWithParams( "FS_Spies_IsVictimBackwardsToAttacker", params, false )
+}
+
+// Safe wrapper for Flowstate scenarios player ping check
+bool function Safe_FS_Scenarios_PlayerCanPing( entity player )
+{
+	// Create parameter array using the new parameter system
+	array<CallbackParam> params = ModCallbacks_CreateParams()
+	ModCallbacks_AddEntityParam( params, player )
+	
+	// Default to true when Flowstate mod not available (allows normal pinging)
+	return ModCallbacks_CallBoolCallbackWithParams( "FS_Scenarios_PlayerCanPing", params, true )
+}
+
+void function Safe_FS_Scenarios_SaveLootbinData( entity player )
+{
+	// Create parameter array using the new parameter system
+	array<CallbackParam> params = ModCallbacks_CreateParams()
+	ModCallbacks_AddEntityParam( params, player )
+	
+	ModCallbacks_CallVoidCallbackWithParams( "FS_Scenarios_SaveLootbinData", params )
+}
+#endif
 
 bool function IsEverythingUnlocked()
 {
@@ -2654,7 +3086,7 @@ FXHandle function CleanupFXHandle( FXHandle fxHandle, bool doRemoveAllParticlesN
 		return -1
 	#endif
 }
-#endif
+#endif // SERVER || CLIENT
 
 //more mkos func
 const string E = ""
@@ -2663,23 +3095,22 @@ bool function empty( string a )
 	return a == E
 }
 
-#if DEVELOPER 
-	void function DEV_SetBreakPoint()
+#if SERVER || CLIENT	
+	vector function RoundVectorInLocalSpace( vector vec, float interval, vector parentPos, vector parentAng )
 	{
-		if( GetConVarInt( "sv_cheats" ) != 1 )
-			return 
-			
-		#if SERVER 
-			ServerCommand( "server_single_frame" )
-		#elseif CLIENT 
-			entity player = GetLocalClientPlayer()
-			if( !IsValid( player ) )
-				throw "cannot set breakpoint from invalid player"
-				
-			player.ClientCommand( "server_single_frame" )
-		#endif
+		vec = WorldPosToLocalPos_NoEnt( vec, parentPos, parentAng )
+		vec = RotateVector( vec, AnglesInverse( parentAng ) )
+		vec = <floor( vec.x / interval ) * interval, floor( vec.y / interval ) * interval, floor( vec.z / interval ) * interval >
+		vec = RotateVector( vec, parentAng )
+		vec = LocalPosToWorldPos_NoEnt( vec, parentPos, parentAng )
+		return vec
 	}
-#endif
+
+	bool function VectorInWorldBounds( vector vec )
+	{
+		return fabs( vec.x ) <= MAX_WORLD_COORD_BUFFER && fabs( vec.y ) <= MAX_WORLD_COORD_BUFFER && fabs( vec.z ) <= MAX_WORLD_COORD_BUFFER
+	}
+#endif //SERVER || CLIENT
 
 //////////////////////////////////////////////////
 //												//
@@ -2695,16 +3126,14 @@ bool function empty( string a )
 // CALLING FUNCTION responsible for error catch //
 //////////////////////////////////////////////////
 
-array<string> function StringToArray( string str, int arrayStringMaxLength = 128 ) 
+array<string> function StringToArray( string str, int arrayStringMaxLength = 128, bool forceCommaFormat = false ) 
 {		
-	string t_str = strip( str )
-	int length_check
-	
+	string t_str = strip( str )	
     if ( t_str == "" )
         throw "Cannot convert empty string to array in " + FUNC_NAME( 1 ) + "()"
 	
 	bool convertBySpaceOrComma = ( t_str.find( " " ) != -1 ) && ( t_str.find( "," ) == -1 ) ? true : false
-	string splitStr = convertBySpaceOrComma ? " " : ","
+	string splitStr = convertBySpaceOrComma && !forceCommaFormat ? " " : ","
 	
     array<string> arr = split( str, splitStr )
 	array<string> valid = []
@@ -2716,7 +3145,8 @@ array<string> function StringToArray( string str, int arrayStringMaxLength = 128
 	}
 	*/
 	
-	int item_index = 0
+	int length_check
+	int item_index
     foreach ( item in arr ) 
 	{	
 		item_index++
@@ -2724,18 +3154,44 @@ array<string> function StringToArray( string str, int arrayStringMaxLength = 128
 		item = strip( item )
 		length_check = item.len()
 	
-        if ( item == "" ) 
-            Warning( "Empty item in the list for item # " + ( item_index ) + " removed. " )			
+        if ( item == "" )
+            printw( "Empty item in the list for item #", item_index, "removed." )			
 		else if ( length_check >= arrayStringMaxLength )
-			Warning( "item # " + ( item_index ) + " is too long and was removed. Length: " + length_check + " ; Max: " + arrayStringMaxLength + " chars" )	
+			printw( "item #", item_index, "is too long and was removed. Length:", length_check, "; Max:", arrayStringMaxLength, "chars" )	
 		else	
 			valid.append( item )		
     }
 	
 	if ( !valid.len() ) 
-        throw "Array empty after conversion";
+        throw "Array empty after conversion"
 
     return valid
+}
+
+void function StringToArrayAppend( string str, array<string> refArray, int arrayStringMaxLength = 128 ) 
+{		
+	string t_str = strip( str )	
+    if ( t_str == "" )
+        throw "Cannot convert empty string to array in " + FUNC_NAME( 1 ) + "()"
+	
+    array<string> arr = split( str, "," )
+	
+	int length_check
+	int item_index
+    foreach ( item in arr ) 
+	{
+		item_index++
+		
+		item = strip( item )
+		length_check = item.len()
+	
+        if ( item == "" )
+            printw( "Empty item in the list for item #", item_index, "removed." )			
+		else if ( length_check >= arrayStringMaxLength )
+			printw( "item #", item_index, "is too long and was removed. Length:", length_check, "; Max:", arrayStringMaxLength, "chars" )	
+		else	
+			refArray.append( item )		
+    }
 }
 
 string function truncate( string str, int limit ) 
@@ -2749,7 +3205,491 @@ string function truncate( string str, int limit )
 bool function IsSpectator( entity player )
 {
 	if ( !IsValid( player ) )
-	return false
+		return false
 
 	return player.GetTeam() == TEAM_SPECTATOR
+}
+
+float function WrapAngle360( float angle )
+{
+    return ( ( angle % 360.0 ) + 360.0 ) % 360.0
+}
+
+table< string, int > function IntStringTableFlip( table< int, string > stringTbl )
+{
+	table< string, int > flipped
+	
+	foreach( int k, string v in stringTbl )
+		flipped[ v ] <- k
+	
+	return flipped
+}
+
+string function PrintLocals( int stackIdx = 2, bool bReturn = false ) 
+{
+	var stackInfos = getstackinfos( stackIdx )
+	
+	string prnt = "\n=== FUNCTION IN SCOPE ===\n"
+	
+	if( stackInfos == null )
+	{
+		prnt += "null"
+		
+		if( !bReturn )
+		{
+			Warning( prnt )
+			return ""
+		}
+		else 
+			return prnt
+	}
+	
+	prnt += format( "Function: %s\n", stackInfos.func )
+	prnt += format( "File: %s\n", stackInfos.src )
+	prnt += format( "Line: %d\n", stackInfos.line )
+	prnt += format( "=== LOCALS IN SCOPE ===\n" )
+
+	if( stackInfos.locals.len() <= 1 )
+	{
+		prnt += format( "empty\n" )
+	}
+	else
+	{
+		foreach ( name, value in stackInfos.locals )
+			prnt += format( "  [%s] (%s): %s\n", name, type( value ), string( value ) )
+	}
+
+	prnt += "========================"
+	
+	if( bReturn )
+		return prnt	
+	else 
+		Warning( prnt )
+		
+	return ""
+}
+
+void function DEV_SetBreakPoint( bool bPrintLocals = true )
+{
+	if( GetConVarInt( "sv_cheats" ) != 1 )
+		return 
+	
+	if( bPrintLocals )
+		PrintLocals( 3 )
+
+	#if SERVER
+		__ServerCommand( "server_single_frame" )
+	#elseif CLIENT 
+		entity player = GetLocalClientPlayer()
+		if( !IsValid( player ) )
+			throw "cannot set breakpoint from invalid player"
+			
+		player.ClientCommand( "server_single_frame" )
+	#elseif UI
+		if( CanRunClientScript() )
+			RunClientScript( "DEV_SetBreakPoint", bPrintLocals )
+	#endif
+}
+
+vector function GetCenterOfCircle( array<LocPair> spawns )
+{
+	vector total
+
+	foreach ( spawnLocation in spawns )
+	{
+		total += spawnLocation.origin
+	}
+
+	total.x /= float( spawns.len() )
+	total.y /= float( spawns.len() )
+	total.z /= float( spawns.len() )
+
+	return total
+}
+
+#if SERVER
+entity function CreateCustomLight( vector origin, vector angles, string lightcolor, float scale )
+{
+	entity env_sprite = CreateEntity( "env_sprite" )
+	env_sprite.SetScriptName( UniqueString( "molotov_sprite" ) )
+	env_sprite.kv.rendermode = 5
+	env_sprite.kv.origin = origin
+	env_sprite.kv.angles = angles
+	env_sprite.kv.fadedist = -1
+	env_sprite.kv.rendercolor = lightcolor
+	env_sprite.kv.renderamt = 255
+	env_sprite.kv.framerate = "10.0"
+	env_sprite.SetValueForModelKey( $"sprites/glow_05.vmt" )
+	env_sprite.kv.scale = string( scale )
+	env_sprite.kv.spawnflags = 1
+	env_sprite.kv.GlowProxySize = 15.0
+	env_sprite.kv.HDRColorScale = 15.0
+	DispatchSpawn( env_sprite )
+	EntFireByHandle( env_sprite, "ShowSprite", "", 0, null, null )
+
+	// surf.playerSpawnedProps.append(env_sprite)
+
+	return env_sprite
+}
+
+
+void function FS_ResetMapLighting()
+{
+	SetConVarToDefault( "mat_sun_color" )
+	SetConVarToDefault( "mat_sun_scale" )
+	SetConVarToDefault( "mat_sky_color" )
+	SetConVarToDefault( "mat_sky_scale" )
+	SetConVarToDefault( "mat_autoexposure_min_multiplier" )
+	SetConVarToDefault( "mat_autoexposure_min" )
+	SetConVarToDefault( "mat_autoexposure_max_multiplier" )
+	SetConVarToDefault( "mat_autoexposure_max" )
+	SetConVarToDefault( "mat_bloom_max_lighting_value" )
+	// SetConVarToDefault( "jump_graceperiod" )
+	SetConVarToDefault( "mat_envmap_scale" )
+}
+
+void function Message( entity player, string text, string subText = "", float duration = 7.0, string sound = "" )
+{
+	if( !IsValid( player ) ) 
+		return
+		
+	if( !player.IsPlayer() ) 
+		return
+		
+	if ( !player.p.isConnected ) 
+		return
+	
+	LocalMsg( player, "#FS_NULL", "#FS_NULL", eMsgUI.DEFAULT, duration, text, subText, sound )
+	
+	// if ( ( text.len() + subText.len() ) >= 599 ) 
+		// return
+
+	// string sendMessage
+	// for ( int textType = 0 ; textType < 2 ; textType++ )
+	// {
+		// sendMessage = textType == 0 ? text : subText
+
+		// for ( int i = 0; i < sendMessage.len(); i++ )
+		// {
+			// Remote_CallFunction_NonReplay( player, "Dev_BuildClientMessage", textType, sendMessage[i] )
+		// }
+	// }
+	// Remote_CallFunction_NonReplay( player, "Dev_PrintClientMessage", duration )
+
+	// if ( sound != "" )
+		// thread EmitSoundOnEntityOnlyToPlayer( player, player, sound )
+}
+
+bool function IsStringNumber( string str ) 
+{
+	if ( str.len() == 0 )
+		return false
+	
+    int start = ( str[0] == '-' && str.len() > 1 ) ? 1 : 0    
+	bool dot = false
+	
+	for ( int i = start; i < str.len(); i++ ) 
+	{
+		if (str[i] == '.')
+		{
+			if( dot )
+				return false
+			else 
+				dot = true
+		} 
+		else if ( str[i] < '0' || str[i] > '9' )
+			return false
+    }
+	
+    return true
+}
+
+bool function IsStringNumber2( string str )
+{
+	return DoesMatchRegexp( str, "^-?(\\d+\\.\\d+|\\d+)$" ) 
+}
+
+array<float> s_unitTestArr1
+void function RegExpUnitTest( string str )
+{
+	mAssert( IsThreadTop(), "Thread this function" )
+	
+	int iter = 0	
+	bool test
+	
+	TimerStart()
+	while( iter < 100000 )
+	{
+		test = IsStringNumber2( str )
+		iter++
+	}
+	
+	float finish = TimerEnd()
+	s_unitTestArr1.append( finish )
+	
+	printt( "Unit test1; regexp; 100000 iterations: ms:", finish, ";Criteria:", str )
+	
+	if( s_unitTestArr1.len() > 5 )
+	{
+		float total
+		foreach( float entry in s_unitTestArr1 )
+		{
+			printt( "entry =", entry )
+			total += entry
+		}
+			
+		float avg = total / 6
+		printt( "Unit test 1 avg = ms", avg )
+		
+		s_unitTestArr1.clear()
+	}
+}
+
+
+array<float> s_unitTestArr2
+void function RegExpUnitTest2( string str )
+{
+	mAssert( IsThreadTop(), "Thread this function" )
+	
+	int iter = 0	
+	bool test
+	
+	TimerStart()
+	while( iter < 100000 )
+	{
+		test = IsStringNumber( str )
+		iter++
+	}
+	
+	float finish = TimerEnd()
+	s_unitTestArr2.append( finish )
+	
+	printt( "Unit test1; custom; 100000 iterations: ms:", finish, ";Criteria:", str )
+	
+	if( s_unitTestArr2.len() > 5 )
+	{
+		float total
+		foreach( float entry in s_unitTestArr2 )
+		{
+			printt( "entry =", entry )
+			total += entry
+		}
+			
+		float avg = total / 6
+		printt( "Unit test 2 avg ms =", avg )
+		
+		s_unitTestArr2.clear()
+	}
+}
+
+array<float> s_unitTestArr3
+void function StringUnitTest( string str )
+{
+	mAssert( IsThreadTop(), "Thread this function" )
+	
+	int iter = 0	
+	bool test
+	
+	TimerStart()
+	while( iter < 100000 )
+	{
+		test = IsSafeString( str )
+		iter++
+	}
+	
+	float finish = TimerEnd()
+	s_unitTestArr3.append( finish )
+	
+	printt( "Unit test3; regexp IsSafeString; 100000 iterations: ms:", finish, ";Criteria:", str )
+	
+	if( s_unitTestArr3.len() > 5 )
+	{
+		float total
+		foreach( float entry in s_unitTestArr3 )
+		{
+			printt( "entry =", entry )
+			total += entry
+		}
+			
+		float avg = total / 6
+		printt( "Unit test 3 avg ms =", avg )
+		
+		s_unitTestArr3.clear()
+	}
+}
+
+int function stringcmp( string a, string b ) 
+{
+    if ( a.len() != b.len() )
+		return a.len() < b.len() ? -1 : 1
+	
+    for ( int i = 0; i < a.len(); ++i ) 
+	{
+		if ( a[i] != b[i] )
+			return a[i] < b[i] ? -1 : 1
+	}
+
+    return 0
+}
+
+bool function IsStringNumeric( string str, int ornull min = null, int ornull max = null )
+{
+	string minStr = min == null ? "-2147483647" : expect int ( min ).tostring()
+	string maxStr = max == null ? "2147483647" : expect int ( max ).tostring()
+	
+	if ( !IsStringNumber( str ) ) 
+        return false
+    
+    if ( str[0] == '-' )
+	{
+        if ( stringcmp( str.slice( 1 ), minStr.slice( 1 ) ) > 0 ) 
+            return false
+    }
+	else 
+	{
+        if ( stringcmp( str, maxStr ) > 0 ) 
+            return false
+    }
+
+    //sqprint( format( "%s", str ) )
+    return true
+}
+
+
+bool function IsFloat( string str, float min = INT_MAX, float limit = INT_MIN )  //cleanup
+{
+	if ( str.len() == 0 ) 
+		return false
+	
+	for ( int i = 0; i < str.len(); i++ ) 
+	{
+		var c = str[i]
+		if ( !( ( c >= '0' && c <= '9' ) || ( c == '.' && i != 0 ) || ( c == '-' && i == 0 ) ) ) 
+			return false
+	}
+	
+	float num = 0.0
+	try { num = str.tofloat() } catch ( outofrange ){ return false }	
+	return ( num >= min && num <= limit )
+}
+
+string function LineBreak( string str, int interval = 80 )
+{
+	string output = ""
+	
+	for ( int i = 0; i < str.len(); ) 
+	{
+		int end = i + interval
+		
+		if ( end >= str.len() ) 
+		{
+			output += str.slice( i ) + "\n"
+			break
+		}
+		
+		bool located_space = false
+		
+		for ( int j = end; j > i; --j ) 
+		{
+			if ( str.slice( j-1, j ) == " " ) 
+			{
+				end = j
+				located_space = true
+				break
+			}
+		}
+		
+		if ( !located_space ) 
+			end = i + interval
+
+		output += str.slice( i, end ) + "\n"
+		i = end
+	}
+	
+	return output
+}
+
+bool function IsStringBool( string str )
+{
+	switch( str )
+	{
+		case "0":
+		case "1":
+		case "true":
+		case "false":		
+			return true 
+		
+		default:
+			return false 
+	}
+	
+	unreachable
+}
+
+bool function StringToBool( string str )
+{
+	mAssert( IsStringBool( str ), "Tried to convert \"%s\" to bool", str )
+	
+	switch( str )
+	{
+		case "0":
+		case "false":
+			return false 
+			
+		case "1":
+		case "true":
+			return true 
+	}
+	
+	unreachable
+}
+
+entity function GetPlayerEntityByName( string name ) //deprecate use universal lookup for both name/uid
+{	
+	entity p	
+	name = name.tolower()
+	
+	foreach ( player in GetPlayerArray() )
+	{
+		if ( player.GetPlayerName().tolower() == name )	
+			return player
+	}
+	
+	return p
+}
+
+//Defaults: space and:  A-Z  a-z  0-9  _    [  ]  (  )  :  ;  -  *  &  ^  %  $  #  @  ! + = ? . |
+bool function IsSafeString( string str, int strlen = -1, string pattern = "" ) 
+{
+	if( empty( str ) )
+		return true
+		
+	if( strlen != -1 && str.len() > strlen )
+		return false
+	
+	if( pattern == "" )
+		pattern = "^[A-Za-z0-9_ \\[\\]\\(\\):;\\-*&^%$#@!+=?.|]*$"
+	
+	return ( RegexpFindAll( str, pattern ).len() != 0 )
+}
+#endif //SERVER
+
+function MakeFunctionRefFromString( string funcName )
+{
+	if( funcName == "" )
+		mAssert( 0, "funcName cannot be empty" )
+		
+	local funcRef = null
+	string wrapperCode = format( "%s()", funcName )
+	
+	try
+	{
+		funcRef = compilestring( wrapperCode, "RemoteFunctionByRef" )	
+	}
+	catch( e )
+	{
+		mAssert( 0, "Function \"%s\" does not exist in this context. Make sure it is global for the relevant VM", funcName )
+	}
+	
+    return funcRef
 }

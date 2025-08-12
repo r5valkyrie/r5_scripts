@@ -227,7 +227,7 @@ bool function IsEntInGas( entity ent )
 
 bool function IsGasCausingDamage( entity ent )
 {
-	return ent.e.gasLastDamageTime != -1.0
+	return Time() < ent.e.gasLastDamageTime + GAS_CLOUD_DMG_TICK_RATE // + GAS_CLOUD_EXPOSURE_DBOUNCE //(mk): debounce not used, but if ever does, needs to be added here
 }
 
 void function GasCloud_HandleGasExposure( entity target, var damageInfo )
@@ -589,7 +589,7 @@ void function GasCloud_RampDamageBasedOnExposureTime( entity target, var damageI
 		EmitSoundOnEntityExceptToPlayer( target, target, "flesh_causticgas_damage_3p" )
 		EmitSoundOnEntityOnlyToPlayer( target, target, "flesh_causticgas_damage_1p" )
 		
-		#if TRACKER
+		#if TRACKER //todo: add gas damage callback registry
 			__TrackerStatsHook_Damage( target, damageInfo )
 		#endif
 	}
@@ -661,7 +661,7 @@ void function GasCloud_RampDamageBasedOnExposureTime_Copy( entity target, var da
 		EmitSoundOnEntityExceptToPlayer( target, target, "flesh_causticgas_damage_3p" )
 		EmitSoundOnEntityOnlyToPlayer( target, target, "flesh_causticgas_damage_1p" )
 		
-		#if TRACKER
+		#if TRACKER //todo: add gas damage callback registry
 			__TrackerStatsHook_Damage( target, damageInfo )
 		#endif
 	}
@@ -988,7 +988,7 @@ void function CreateGasExposureRadius( SmokescreenStruct smokescreen )
 
 								smokeFXs[i][1].RemoveFromAllRealms()
 								smokeFXs[i][1].AddToOtherEntitysRealms( smokescreen.inflictor )								
-								#if DEVELOPER
+								#if GAS_CLOUD_DEBUG_DRAW
 								DrawAngledBox( (offsetCenter + FX_GAS_SMOKE_OFFSET), Vector( 0,0,0 ), <-20, -20, -16>, <35, 35, 100>, 255, 0, 0, true, 15 )
 								#endif
 								if ( smokescreen.smokeSource != null )
@@ -1038,7 +1038,7 @@ void function CreateGasExposureRadius( SmokescreenStruct smokescreen )
 							smokeFXs[i][1] = CreateTraceBlockerVolume( (offsetCenter + FX_GAS_SMOKE_OFFSET), (radius * 0.45), true, CONTENTS_BLOCK_PING | CONTENTS_NOGRAPPLE| CONTENTS_BLOCKLOS, smokescreen.traceBlockerTeam, smokescreen.traceBlockerScriptName )
 							smokeFXs[i][1].SetBox( <-20, -20, -16>, <35, 35, 100> )
 							
-							#if DEVELOPER
+							#if GAS_CLOUD_DEBUG_DRAW
 							DrawAngledBox( (offsetCenter + FX_GAS_SMOKE_OFFSET), Vector( 0,0,0 ), <-20, -20, -16>, <35, 35, 100>, 255, 0, 0, true, 15 )
 							#endif
 

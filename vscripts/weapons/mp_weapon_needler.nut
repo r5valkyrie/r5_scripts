@@ -1,5 +1,3 @@
-//Made by @CafeFPS
-
 untyped
 
 global function MpWeaponNeedler_Init

@@ -6,13 +6,16 @@ global function CodeCallback_PlayerFreefallAnticipateBegin
 global function CodeCallback_PlayerFreefallAnticipateEnd
 global function GetSkyDiveTrailPackageForPlayerWithOverrides
 
+
 #if SERVER
 	global function isFreefallEnabled
 #endif
 
-#if(CLIENT)
+#if CLIENT
 global function Freefall_SetDisplaySeaHeightForLevel
 global function Freefall_SetPlaneHeight
+global function CleanupFriendlyEnemySkydiveTrailFXForPlayer
+global function StartFriendlyEnemySkydiveTrailFXForPlayer
 #endif //
 
 #if(false)
@@ -23,35 +26,35 @@ const asset PLAYER_WIND_FX 	= $"P_wind_cruising"
 global const string JUMPTOWER_PING_NAME = "jump_tower"
 
 const array<vector> skydiveSmokeColors = [
-	<110, 49, 1>,               
-	<10, 88, 106>,          
-	<6, 131, 149>,           
-	                           
-	<27, 71, 105>,          
-	<31, 84, 205>,          
-	                          
-	<68, 42, 96>,          
-	<110, 44, 111>,            
-	                           
-	<173, 45, 119>,            
-	                         
-	<176, 28, 81>,          
-	                          
-	<195, 0, 11>,          
-	<197, 67, 32>,       
-	<120, 30, 19>,            
-	<159, 59, 13>,           
-	<119, 75, 0>,           
-	<204, 121, 19>,            
-	<150, 125, 0>,           
-	                         
-	<133, 147, 10>,           
-	<73, 88, 3>,           
-	<112, 151, 67>,           
-	<57, 137, 52>,           
-	<47, 90, 26>,           
-	                          
-	<0, 116, 88>           
+	<110, 49, 1>, // Dark Orange
+	<10, 88, 106>, // Blue 2
+	<6, 131, 149>, //  Blue 1
+	//<24, 102, 162>, // Blue 3
+	<27, 71, 105>, // Blue 4
+	<31, 84, 205>, // Blue 5
+	//<68, 62, 150>, // Blue 6
+	<68, 42, 96>, // Blue 7
+	<110, 44, 111>, // Purple 1
+	//<96, 23, 78>, // Purple 2
+	<173, 45, 119>, // Purple 3
+	//<145, 0, 44>, // Pink 1
+	<176, 28, 81>, // Pink 2
+	//<210, 36, 89>, // Pink 3
+	<195, 0, 11>, // Pink 4
+	<197, 67, 32>, // Red
+	<120, 30, 19>, // Orange 1
+	<159, 59, 13>, // Brown 1
+	<119, 75, 0>, // Brown 2
+	<204, 121, 19>, // Orange 2
+	<150, 125, 0>, // Green 1
+	//<90, 80, 0>, // Green 2
+	<133, 147, 10>, // Green 3
+	<73, 88, 3>, // Green 4
+	<112, 151, 67>, // Green 5
+	<57, 137, 52>, // Green 6
+	<47, 90, 26>, // Green 7
+	//<3, 113, 34>, // Green 8
+	<0, 116, 88> // Green 9
 ]
 global function GetSkydiveSmokeColorForTeam
 
@@ -232,6 +235,8 @@ void function SurvivalFreefall_Init()
 		PrecacheParticleSystem( JUMPJET_ENEMY_SKYDIVE )
 		PrecacheParticleSystem( JUMPJET_LAND_FX )
 		PrecacheParticleSystem( $"P_skydive_jumpjet_team_rank_AP" )
+		PrecacheParticleSystem( $"P_skydive_jumpjet_team_rank" )
+
 		PrecacheModel( CLOUD_MODEL )
 		PrecacheImpactEffectTable( "human_land_jetwash" )
 
@@ -247,8 +252,8 @@ void function SurvivalFreefall_Init()
 		AddCallback_OnClientDisconnected( OnPlayerDisconnected )
 		AddClientCommandCallback( "StopFreefallFollowMode", ClientCommand_StopFreefallFollowMode )
 
-		// AddClientCommandCallback( "SkydiveEmote", ClientCommand_SkydiveEmote )
-		// AddClientCommandCallback( "SkydiveEmoteNext", ClientCommand_SkydiveEmoteNext )
+		AddClientCommandCallback( "SkydiveEmote", ClientCommand_SkydiveEmote )
+		AddClientCommandCallback( "SkydiveEmoteNext", ClientCommand_SkydiveEmoteNext )
 		file.skydiveSmokeColors.randomize()
 		file.freefall_enabled = true
 	
@@ -615,7 +620,7 @@ void function PlayerSkyDive( entity player, vector driverViewVector, array<entit
 	PlayerSkydiveThirdPersonEnable( player )
 
 	//player.NotSolid()
-	//player.ForceStand()
+	player.ForceStand()
 
 	// Jump Jet FX (Last entire jump duration)
 	vector smokeColor = GetSkydiveSmokeColorForTeam( player.GetTeam() )
@@ -1378,7 +1383,7 @@ void function DisableSkydiveThirdPerson( entity player )
 
 	player.ClearTrackEntitySettings()
 	player.Solid()
-	// player.UnforceStand()
+	player.UnforceStand()
 
 	vector velocity = player.GetVelocity()
 
@@ -2204,7 +2209,7 @@ void function UpdatePlayerSkydiveTrailFriendlyEnemyFX( entity player )
 	if ( !IsValid( player ) )
 		return
 
-	CleanupFriendlyEnemySkydiveTrailFXForPlayer( player )
+	CleanupFriendlyEnemySkydiveTrailFXForPlayer( player, "" )
 
 	if ( !player.Player_IsFreefalling()  )
 		return
@@ -2212,10 +2217,10 @@ void function UpdatePlayerSkydiveTrailFriendlyEnemyFX( entity player )
 	if ( player.Player_IsFreefallAnticipating() )
 		return
 
-	thread StartFriendlyEnemySkydiveTrailFXForPlayer( player )
+	thread StartFriendlyEnemySkydiveTrailFXForPlayer( player, "" )
 }
 
-void function StartFriendlyEnemySkydiveTrailFXForPlayer( entity skyDivingPlayer )
+void function StartFriendlyEnemySkydiveTrailFXForPlayer( entity skyDivingPlayer, string parameter   )
 {
 	EHI skyDivingPlayerEHI = ToEHI( skyDivingPlayer  )
 	if ( !( skyDivingPlayerEHI in file.EHIToFriendlyJumpJetFXHandlesTable  )  )
@@ -2272,7 +2277,7 @@ void function StartFriendlyEnemySkydiveTrailFXForPlayer( entity skyDivingPlayer 
 	}
 }
 
-void function CleanupFriendlyEnemySkydiveTrailFXForPlayer( entity skyDivingPlayer )
+void function CleanupFriendlyEnemySkydiveTrailFXForPlayer( entity skyDivingPlayer, string parameter )
 {
 	EHI skyDivingPlayerEHI = ToEHI( skyDivingPlayer  )
 

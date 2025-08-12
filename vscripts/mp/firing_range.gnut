@@ -1,20 +1,27 @@
 global function FiringRangeGameMode_Init
 
-global const float FIRINGRANGE_DISSOLVE_TIME = 5.0
+global const float FIRINGRANGE_DISSOLVE_TIME = 1.0 // ITEM NEEDS TO BE DISSOLVE BEFORE SurvivalLoot_OnPhysicsDisabled ON PROP ENTITY
 global const float FIRINGRANGE_RACK_RESPAWN_TIME = 0.5
 global const float FIRINGRANGE_RACK_OFFSET = 32
 
 global const int FIRINGRANGE_ATTACHMENTS_MAX_COLUMNS = 6
-global const int FIRINGRANGE_ITEMS_MAX_COLUMNS = 2
+global const int FIRINGRANGE_ITEMS_MAX_COLUMNS = 6
 global const int FIRINGRANGE_ORDNANCE_MAX_COLUMNS = 2
 global const int FIRINGRANGE_AMMO_ROWS = 2
 
+global const string FIRING_RANGE_TARGET_FLIP_SCRIPTNAME = "fr_target_flip"
+global const string FIRING_RANGE_TARGET_FOLD_SCRIPTNAME = "fr_target_fold"
+
+const asset TARGET_FOLDING_MODEL = $"mdl/barriers/shooting_range_target_01.rmdl"
 global const asset FIRINGRANGE_FLICK_TARGET_ASSET = $"mdl/fx/plasma_sphere_01.rmdl"
 global const asset FIRINGRANGE_FLICK_TARGET_PARTICLE_HIT = $"P_crypto_drone_explosion"
 global const string FIRINGRANGE_FLICK_TARGET_SOUND = "Player.Hitbeep_headshot.Human_3P_vs_1P"
 
+const asset TARGET_SPINNING_BASE = $"mdl/barriers/shooting_range_target_02_stand.rmdl"
+const asset TARGET_SPINNING_MODEL = $"mdl/barriers/shooting_range_target_02.rmdl"
 global const asset FIRINGRANGE_BLUE_TARGET_ASSET = $"mdl/barriers/shooting_range_target_02.rmdl"
 global const asset FIRINGRANGE_BLUE_STAND_ASSET = $"mdl/barriers/shooting_range_target_02_stand.rmdl"
+global const string TARGET_MOVER_SCRIPTNAME = "target_mover"
 
 global const asset FIRINGRANGE_ITEM_RESPAWN_PARTICLE = $"P_impact_shieldbreaker_sparks"
 
@@ -32,8 +39,11 @@ global const asset FIRINGRANGE_QUARRY_BLOCK_ASSET = $"mdl/rocks/thunderdome_quar
 #if SERVER
 // To be used outside if needed
 global int firingrange_infinite_ammo = 0
+global function FiringRangeProps
+global function CreateFRButton
 
 bool toggledFriendlyFire = false
+global function CreateGunRangeTargetsForRealm
 #endif
 
 #if CLIENT
@@ -45,6 +55,68 @@ struct RackGroup
 	entity point = null
 	string ammoType = ""
 	array<entity> racks = []
+}
+
+struct sMovingTarget
+{
+	entity targetBase
+	entity slideTarget
+	bool headedTowardEnd
+	vector start
+	vector end
+	string soundfx = ""
+}
+
+table< int,  array< sMovingTarget > > fr_MovingTargets
+global table < int, int > frIntSettings_Defaults
+
+global enum eGunRangeTargetTypes
+{
+	SPINNING,
+	FOLDING,
+}
+
+global enum eFRSettingType
+{
+	// ----- Personal FR Bool Settings.
+	// To add new Personal Settings, add to the end of this section.
+	SHOWRUI,				// Show the Settings RUI Overlay?
+	SHOWDYNSTATS,			// Show Dynamic Stats?
+	SHOWDYNTIMER,			// Show Dynamic Stats Timer?
+	LEGENDUPGRADES_RESET,	// Reset Legend Upgrades.
+	INFINITEMAGS,			// Infinite Reloads: ON/OFF
+	SHOWHITMARKS,			// Hit Markers: ON/OFF
+	SHOW3RDPERSON,			// 3rd-Person Mode: ON/OFF
+	                    
+		LEGENDUPGRADESENABLED,
+                           
+
+	// ----- Shared FR bool Settings.
+	// To add new Shared Settings, add to the end of this section.
+	FRIENDLYFIRE,			// Friendly Fire: ON/OFF
+	FRDUMMIEHELMETMATCHSHIELDS,	// Dummie Helmets Match Shield Levels.
+	                   
+	DYNAMICDUMMIESON,	// Dynamic Dummies Enabled/Disabled
+	DUMMIEHIGHLIGHTSON,	// Whether or not to highlight dummies.
+       
+	//	// ----- Shared Int Settings.
+	// To add new Shared Int Setting:
+	//		- add to the end of this section
+	//		- register a new NetVar and PVar.
+	//		- follow the function patterns established by targetspeed and frdummieshieldlvl.
+	//			- UCB_SV_FRSetting_<SettingName>_Change(): called from UI.
+	//			- FRSetting_<SettingName>_Set_OnPlayer(): called from above to set the data.
+	//			- SCB_Broadcast_FRSettings_<SettingName>_Change(): Remote called from above to notify players of change.
+	TARGETSPEED,			// TARGET SPEED: < number >
+	FRDUMMIESHIELDLVL,		// FIRING RANGE DUMMIE SHIELD LEVEL: < number >
+	FRDUMMIESPEED,
+	FRDUMMIEMOVEMENT,
+	FRDUMMIESTANCE,
+                   
+	FRDUMMIESHOOTING,
+	FRDUMMIESPAWNDISTS,
+      
+	COUNT_
 }
 
 struct {
@@ -75,53 +147,47 @@ struct {
 
 void function FiringRangeGameMode_Init()
 {
+	if ( !IsFiringRangeGameMode() )
+		return
+
 	PrecacheModel( FIRINGRANGE_BLUE_STAND_ASSET )
 	PrecacheModel( FIRINGRANGE_FLICK_TARGET_ASSET )
+	PrecacheModel( TARGET_FOLDING_MODEL )
+	PrecacheModel( TARGET_SPINNING_MODEL )
 	PrecacheParticleSystem( FIRINGRANGE_FLICK_TARGET_PARTICLE_HIT )
-	PrecacheParticleSystem( FIRINGRANGE_ITEM_RESPAWN_PARTICLE )
+
+	RegisterSignal( "GunRangeTargetDamaged" )
+	RegisterSignal( "SlideTargetSpeedReset" )
+	RegisterSignal( "SlideTargetThinkStart" )
+	RegisterSignal( "SlideTargetWaitForReset" )
+
+	#if SERVER
+	AddSpawnCallback( "prop_survival", OnPropSurvivalSpawned )
+	#endif
 	
 	if( Playlist() != ePlaylists.survival_firingrange )
 		return
-	
-	if ( !IsFiringRangeGameMode() || GetCurrentPlaylistVarBool( "firingrange_aimtrainerbycolombia", false ))
-		return
 
-	Remote_RegisterClientFunction( "SCB_BroadcastFriendlyFireChange", "entity" )
+	//PrecacheParticleSystem( FIRINGRANGE_ITEM_RESPAWN_PARTICLE )
+
+	ScriptRemote_RegisterClientFunction( "SCB_BroadcastFriendlyFireChange", "entity" )
 
 	#if SERVER
 		AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
 		AddCallback_OnClientConnected( WaitForPlayerSpawn )
 		AddCallback_OnPlayerKilled( OnPlayerKilled )
-		AddCallback_OnWeaponAttack( OnWeaponAttack )
-		AddSpawnCallback( "prop_survival", OnPropSurvivalSpawned )
+		//AddCallback_OnWeaponAttack( OnWeaponAttack )
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnTeammateLoadoutSelectionChanged, false )
 		AddClientCommandCallback( "firingrange_toggle_friendlyfire", ClientCommand_ToggleFriendlyFire )
 
 		firingrange_infinite_ammo = GetCurrentPlaylistVarBool( "survival_infinite_ammo", false ) ? 1 : 2
 	#endif
-
-	#if(false)
-
-
-
-
-
-
-
-
-//
-
-
-	#endif //
-
-	#if(CLIENT)
-		//
-
+	#if CLIENT
 		IntroDisplayThread()
-	#endif //
+	#endif //CLIENT
 }
 
-#if(CLIENT)
+#if CLIENT
 void function SCB_BroadcastFriendlyFireChange( entity playerThatChanged )
 {
 	entity localPlayer = GetLocalClientPlayer()
@@ -137,13 +203,42 @@ void function SCB_BroadcastFriendlyFireChange( entity playerThatChanged )
 void function OnEntitiesDidLoad()
 {
 	#if SERVER
-
-	// Init
 	array<entity> lootbins = GetEntArrayByScriptName("staging_loot_bin")
-	array<entity> movers = GetEntArrayByScriptName("script_mover_lightweight")
-
 	foreach(entity lootbin in lootbins)
 		lootbin.Destroy()
+
+	thread FiringRangeProps()
+
+	//array< entity > dummypts = GetEntArrayByScriptName( "spawnnpoint_frdummy" )
+	//foreach( dummypt in dummypts)
+	SpawnDummy(<31541,-7964,-29200>, <0,179,0>)
+	SpawnDummy(<31541,-6705,-29200>, <0,179,0>)
+	SpawnDummy(<31541,-5885,-29200>, <0,179,0>)
+
+	// Doors
+	//SpawnDoors_Init()
+
+	// Map Props
+	//SpawnMapProps()
+
+	// Targets
+	//SpawnTrainingTarget(file.flickTraining_pos, file.flickTraining_ang, OnTrainingTargetDamagedReposition)
+	//thread MoveTrainingTargetAround(
+		//SpawnTrainingTarget(file.trackingTraining_pos, file.flickTraining_ang, OnTrainingTargetDamagedNothing))
+
+		CreateGunRangeTargetsForRealm()
+	//SpawnTargets()
+	// - - - -
+	#endif
+}
+
+#if SERVER
+void function FiringRangeProps()
+{
+	// Init
+	CreateLegendaryRack()//Create 6th weapon rack to support sniper ammo
+	CreateBowRack()//Create 7th weapon rack to support arrows
+	array<entity> movers = GetEntArrayByScriptName("script_mover_lightweight")
 
 	foreach(entity e in GetEntArrayByScriptName("weapon_racks"))
 	{
@@ -151,41 +246,42 @@ void function OnEntitiesDidLoad()
 		file.rackSpawns.append(r)
 	}
 
-	// Items
 	FillWeaponTable() // load first to know where the rest goes
 	FillAttachmentTable() // requires weapons to be loaded
 	FillEquipmentTable() // armor + helmet + bp + shield
 	FillOrdnanceTable() // nades
 	FillItemTable() // health + batts + the rest
-
+	
 	CreateRackGroups()
-	SpawnAttachments()
-	SpawnEquipments()
-	SpawnOrdnance()
-	SpawnItems()
+	if ( !IsSurvivalTraining() )
+	{
+		SpawnEquipments()
+		SpawnOrdnance()
+		SpawnItems()
+		SpawnAttachments()
+	}
 	SpawnAmmo()
-
-	SpawnDummy(<31541,-7964,-29165>, <0,179,0>)
-	SpawnDummy(<31541,-6705,-29165>, <0,179,0>)
-	SpawnDummy(<31541,-5885,-29165>, <0,179,0>)
-
-	// Doors
-	SpawnDoors_Init()
-
-	// Map Props
-	SpawnMapProps()
-
-	// Targets
-	SpawnTrainingTarget(file.flickTraining_pos, file.flickTraining_ang, OnTrainingTargetDamagedReposition)
-	thread MoveTrainingTargetAround(
-		SpawnTrainingTarget(file.trackingTraining_pos, file.flickTraining_ang, OnTrainingTargetDamagedNothing))
-
-	SpawnTargets()
-	// - - - -
-	#endif
+}
+entity function CreateLegendaryRack()
+{
+	entity Rack_Index_Six = CreateEntity( "info_target" )
+	Rack_Index_Six.SetOrigin( <30655, -6680, -29164> )
+	Rack_Index_Six.SetAngles( <0,0,0> )
+	Rack_Index_Six.SetScriptName( "weapon_racks" )
+	DispatchSpawn( Rack_Index_Six )
+	return Rack_Index_Six
 }
 
-#if SERVER
+entity function CreateBowRack()
+{
+	entity Rack_Index_Seven = CreateEntity( "info_target" )
+	Rack_Index_Seven.SetOrigin( <30655, -5283, -29164> )
+	Rack_Index_Seven.SetAngles( <0,0,0> )
+	Rack_Index_Seven.SetScriptName( "weapon_racks" )
+	DispatchSpawn( Rack_Index_Seven )
+	return Rack_Index_Seven
+}
+
 bool function ClientCommand_ToggleFriendlyFire( entity player, array<string> args )
 {
 	toggledFriendlyFire = !toggledFriendlyFire
@@ -204,8 +300,8 @@ void function SpawnDummy(vector origin, vector angles)
     dummy.SetOrigin( origin )
     dummy.SetAngles( angles )
 	DispatchSpawn( dummy )
-	dummy.SetShieldHealthMax( 125 )
-	dummy.SetShieldHealth( 125 )
+	dummy.SetShieldHealthMax( 100 )
+	dummy.SetShieldHealth( 100 )
 	dummy.SetMaxHealth( 100 )
 	dummy.SetHealth( 100 )
 	dummy.SetTakeDamageType( DAMAGE_YES )
@@ -213,8 +309,9 @@ void function SpawnDummy(vector origin, vector angles)
 	dummy.SetDeathNotifications( true )
 	dummy.SetValidHealthBarTarget( true )
 	SetObjectCanBeMeleed( dummy, true )
-	dummy.SetSkin(RandomInt(6))
+	dummy.SetSkin(1)
 	dummy.DisableHibernation()
+	dummy.GiveWeapon("mp_weapon_rspn101", WEAPON_INVENTORY_SLOT_ANY)
     SetTeam(dummy, 99)
 
 	thread OnDummyKilled(dummy)
@@ -226,8 +323,8 @@ void function OnDummyKilled(entity dummy)
 	vector pos = dummy.GetOrigin()
 	vector angles = dummy.GetAngles()
 	dummy.WaitSignal( "OnDeath" )
-	wait 1
-	StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), pos, angles )
+	wait 2
+	//StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), pos, angles )
 	thread SpawnDummy( pos, angles)
 }
 
@@ -238,6 +335,7 @@ void function OnDummyKilled(entity dummy)
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
+	victim.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_DELIVERY )
 	WaitForPlayerSpawn(victim)
 }
 
@@ -249,32 +347,26 @@ void function WaitForPlayerSpawn( entity player )
 void function WaitForPlayerSpawn_Thread(entity player)
 {
 	while(IsValid(player) && !IsAlive(player))
-		wait 0.5
-
-	OnPlayerRespawned(player)
+		wait 1
+	player.SetOrigin(<26539, -5637, -27479>)
+	player.SetAngles(<0, 0, 0>)
+	SetPlayerInventory( player, [] )
+	thread OnPlayerRespawned(player)
 }
 
 void function OnPlayerRespawned(entity player)
 {
 	array<entity> weapons = player.GetMainWeapons()
-	foreach(entity weapon in weapons)
-	{
-		if(GetSlotForWeapon(player, weapon) == WEAPON_INVENTORY_SLOT_PRIMARY_0 ||
-		GetSlotForWeapon(player, weapon) == WEAPON_INVENTORY_SLOT_PRIMARY_1)
-			return
-	}
 
-	entity primary = player.GiveWeapon("mp_weapon_vinson", WEAPON_INVENTORY_SLOT_PRIMARY_0, ["highcal_mag_l3", "optic_cq_hcog_classic", "stock_tactical_l3"])
-	entity secondary = player.GiveWeapon("mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_1, ["bullets_mag_l3","optic_cq_threat"])
-	player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, "mp_weapon_vinson" )
+	entity primary = player.GiveWeapon("mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_1, [])
+	//entity secondary = player.GiveWeapon("mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_1, ["bullets_mag_l3","optic_cq_threat"])
+	player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, "mp_weapon_semipistol" )
+	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 
-	FixWeapon(primary)
-	FixWeapon(secondary)
-
-	foreach(string ammo in ["highcal","bullet"])
+	foreach(string ammo in ["bullet"])
 	{
 		entity loot = SpawnGenericLoot( ammo, player.GetOrigin(), player.GetAngles(),
-			60-SURVIVAL_CountItemsInInventory( player, ammo ) )
+			20-SURVIVAL_CountItemsInInventory( player, ammo ) )
 
 		if(!Survival_PickupItem(loot, player))
 			loot.Destroy()
@@ -322,6 +414,9 @@ void function FillAttachmentTable()
 {
 	foreach ( string ammoType, array<LootData> weapons in file.weaponsPerAmmoType )
 	{
+		if ( ammoType == "arrows" )
+			continue
+			
 		if ( ammoType.len() == 0 )
 			continue
 
@@ -371,8 +466,8 @@ void function FillItemTable()
 {
 	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.HEALTH ))
 	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.RESOURCE ))
-	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.DATAKNIFE ))
-	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.CUSTOMPICKUP ))
+	//file.items.extend(SURVIVAL_Loot_GetByType( eLootType.SURVIVAL ))
+	//file.items.extend(SURVIVAL_Loot_GetByType( eLootType.CUSTOMPICKUP ))
 	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.JUMPKIT ))
 }
 
@@ -397,12 +492,18 @@ void function ExtendLootDataArrayIfMissing(array<LootData> from, array<LootData>
 // Spawn nades at the left of the racks
 void function SpawnOrdnance()
 {
-	const float cornerOffset = 32.0
+	const float cornerOffset = 40.0
 	const float itemOffsetX = 16.0
 	const float itemOffsetY = 16.0
 	const float itemOffsetZ = 4.0
 	foreach(RackGroup rackGroup in file.rackSpawns)
 	{
+		if( rackGroup.ammoType == "" )
+			continue
+			
+		if ( rackGroup.ammoType == "arrows" )
+			continue
+
 		entity rack = rackGroup.point
 		vector rght = rack.GetRightVector()
 		vector fwd = rack.GetForwardVector()
@@ -439,7 +540,7 @@ void function SpawnOrdnance()
 void function SpawnAmmo()
 {
 	const float cornerOffset = -4
-	const float itemOffsetX = 12.0
+	const float itemOffsetX = 20.0
 	const float itemOffsetY = 20.0
 
 	foreach(RackGroup rackGroup in file.rackSpawns)
@@ -462,7 +563,7 @@ void function SpawnAmmo()
 			{
 				vector pos = firstPos + rght*itemOffsetX*i + fwd*itemOffsetY*j
 
-				entity loot = SpawnGenericLoot(rackGroup.ammoType, pos, <0,0,0>, ammoStack)
+				entity loot = SpawnGenericLoot(rackGroup.ammoType, pos, <0,90,0>, ammoStack)
 				thread OnPickupGenericThread(loot, rackGroup.ammoType, ammoStack)
 			}
 		}
@@ -473,11 +574,17 @@ void function SpawnAmmo()
 void function SpawnItems()
 {
 	const float otherSideOffset = 512.0
-	const float cornerOffset = 128.0 - 12.0
+	const float cornerOffset = 0.0
 	const float itemOffsetX = 32.0
 	const float itemOffsetY = 24.0
 	foreach(RackGroup rackGroup in file.rackSpawns)
 	{
+		if( rackGroup.ammoType == "" )
+			continue
+		
+		if ( rackGroup.ammoType == "arrows" )
+			continue
+
 		entity rack = rackGroup.point
 		vector rght = rack.GetRightVector()
 		vector fwd = rack.GetForwardVector()
@@ -514,6 +621,12 @@ void function SpawnEquipments()
 	const float itemOffsetY = 24.0
 	foreach(RackGroup rackGroup in file.rackSpawns)
 	{
+		if( rackGroup.ammoType == "" )
+			continue
+			
+		if ( rackGroup.ammoType == "arrows" )
+			continue
+		
 		entity rack = rackGroup.point
 		vector rght = rack.GetRightVector()
 		vector fwd = rack.GetForwardVector()
@@ -546,7 +659,10 @@ void function SpawnAttachments()
 	{
 		foreach(string ammoType2, array<string> refs in file.attachmentsPerAmmoType)
 		{
-			if( ammoType != ammoType2 || ammoType == "sniper" )
+			if( ammoType != ammoType2 || ammoType == "" )
+				continue
+				
+			if ( ammoType == "arrows" )
 				continue
 
 			entity r = file.rackSpawns[ammoIndex].point
@@ -610,7 +726,7 @@ void function OnPickupFromRackThread(entity item, string ref)
 	wait FIRINGRANGE_RACK_RESPAWN_TIME
 
 	entity newWeapon = SpawnWeaponOnRack(rack, ref)
-	StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), newWeapon.GetOrigin(), newWeapon.GetAngles() )
+	//StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), newWeapon.GetOrigin(), newWeapon.GetAngles() )
 	thread OnPickupFromRackThread(newWeapon, ref)
 }
 
@@ -623,7 +739,7 @@ void function OnPickupGenericThread(entity item, string ref, int amount = 1)
 
 	wait FIRINGRANGE_RACK_RESPAWN_TIME
 
-	StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), pos, angles )
+	//StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), pos, angles )
 	thread OnPickupGenericThread(SpawnGenericLoot(ref, pos, angles, amount), ref, amount)
 }
 
@@ -632,6 +748,7 @@ void function OnPropSurvivalSpawned(entity prop)
 {
 	thread OnPropSurvivalSpawned_Thread(prop)
 }
+
 void function OnPropSurvivalSpawned_Thread(entity prop)
 {
 	wait FIRINGRANGE_DISSOLVE_TIME
@@ -724,7 +841,7 @@ void function ResetTrainingTarget(entity ent)
 	EndSignal( ent, "OnActivate" )
 	wait 4
 	ent.SetOrigin(ent.GetParent().GetOrigin())
-	StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), ent.GetOrigin(), <0,0,0> )
+	//StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), ent.GetOrigin(), <0,0,0> )
 }
 
 entity function SpawnTrainingTarget(vector pos, vector ang, void functionref( entity, var ) onDamaged )
@@ -807,63 +924,434 @@ void function SpawnTargets()
 	}
 	SpawnTarget(<35819.4961, -6457.02588, -26410.3125>, <0,180,0> )
 	SpawnTarget(<31240.9922, -10316.9521, -27762.9805>, <0,90,0> )
+	
+}
+
+void function CreateGunRangeTargetsForRealm( bool autoReset = true, bool doBling = false )
+{
+	                         
+	foreach ( ent in GetEntArrayByScriptName( "shooting_range_rotating_target" ) )
+	{
+			{
+				thread CreateGunRangeTarget( ent, eGunRangeTargetTypes.SPINNING, autoReset, doBling )
+			}
+
+		if ( doBling )
+			WaitFrame()
+	}
+
+	foreach ( ent in GetEntArrayByScriptName( "shooting_range_folding_target" ) )
+	{
+		thread CreateGunRangeTarget( ent, eGunRangeTargetTypes.FOLDING, autoReset, doBling )
+		if ( doBling )
+			WaitFrame()
+	}
+}
+
+entity function CreateGunRangeTarget( entity ent, int type, bool autoReset, bool doBling )
+{
+	entity targetMover
+	entity targetGeo
+	vector anglesReady  = < 0, 0, 0 >
+	vector anglesShot   = < 0, 0, 0 >
+	float rotateDuration = 0.0
+	float resetDuration = autoReset ? 3.0 : -1.0
+	{
+		vector origin = ent.GetOrigin()
+
+		entity slideTarget = ent.GetLinkEnt()
+
+		if ( type == eGunRangeTargetTypes.FOLDING )
+		{
+			//printt( "| Creating Gun Range Target (Folding) Realm:", realm )
+
+			targetMover = CreateScriptMover_NEW( TARGET_MOVER_SCRIPTNAME, origin, ent.GetAngles() )
+
+			origin = OffsetPointRelativeToVector( origin, < 26, 2, 0 >, ent.GetForwardVector() )
+			targetGeo = CreatePropDynamic( TARGET_FOLDING_MODEL, origin, ent.GetAngles(), SOLID_OBB, 50000 )
+			targetGeo.SetScriptName( FIRING_RANGE_TARGET_FOLD_SCRIPTNAME )
+
+			entity collision = CreatePropDynamic( TARGET_FOLDING_MODEL, origin, ent.GetAngles(), SOLID_VPHYSICS, 50000 )
+			collision.kv.collisionGroup = TRACE_COLLISION_GROUP_PLAYER
+
+			//DispatchSpawn( collision )
+
+			collision.SetParent( targetGeo )
+			collision.Hide()
+
+			anglesReady = targetMover.GetAngles()
+			anglesShot = AnglesCompose( anglesReady, < -85, 0, 0 > )
+			rotateDuration = 0.1
+
+		}
+		else if ( type == eGunRangeTargetTypes.SPINNING )
+		{
+			//printt( "| Creating Gun Range Target (Spinning) Realm:", realm )
+
+			entity targetBase
+				{
+					targetBase = CreateScriptMoverModel( TARGET_SPINNING_BASE, origin, ent.GetAngles(), SOLID_VPHYSICS, 50000 )
+				}
+
+			//AddStagingCleanupEnt( targetBase )
+
+			origin = OffsetPointRelativeToVector( origin, < 0, 0, 128 >, ent.GetForwardVector() )
+
+			targetMover = CreateScriptMover_NEW( TARGET_MOVER_SCRIPTNAME, origin, ent.GetAngles() )
+			targetMover.NonPhysicsSetRotateModeLocal( true )
+
+				{
+					targetGeo = CreatePropDynamic( TARGET_SPINNING_MODEL, origin, ent.GetAngles(), SOLID_OBB, 50000 )
+				}	
+
+			targetGeo.SetScriptName( FIRING_RANGE_TARGET_FLIP_SCRIPTNAME )
+
+			entity collision
+
+				{
+					collision = CreatePropDynamic( TARGET_SPINNING_MODEL, origin, ent.GetAngles(), SOLID_VPHYSICS, 50000 )
+				}			
+
+			collision.kv.collisionGroup = TRACE_COLLISION_GROUP_PLAYER
+
+			collision.SetParent( targetGeo )
+			collision.Hide()
+	
+			anglesReady = targetMover.GetLocalAngles()
+			anglesShot = AnglesCompose( targetMover.GetLocalAngles(), < 180, 0, 0 > )
+			rotateDuration = 0.0
+
+			if ( IsValid( slideTarget ) )
+			{
+				targetMover.SetParent( targetBase, "", true )
+
+				// Save slideTarget to do Instant Speed Change upon speed change via a signal.
+				sMovingTarget newMovingTarget = MovingTarget_Register( targetBase, slideTarget )
+				thread MovingGunRangeTargetThink( newMovingTarget )
+			}
+			else // Not sliding target, so we don't need scripted base.
+			{
+				//targetBase.Destroy()
+			}
+		}
+
+		Assert( IsValid( targetGeo ) )
+		Assert( IsValid( targetMover ) )
+
+		if ( doBling )
+		{
+			Highlight_SetNeutralHighlight( targetGeo, "staging_gun_range_target_appear" )
+		}
+
+		targetGeo.SetParent( targetMover, "", true )
+		targetMover.SetPusher( true )
+
+		AddEntityCallback_OnPostDamaged( targetGeo, StagingAreaEntity_OnDamaged )
+
+		thread GunRangeTargetThink( targetGeo, targetMover, type, anglesReady, anglesShot, rotateDuration, resetDuration )
+	}
+	return targetGeo
+}
+
+sMovingTarget function MovingTarget_Register( entity targetBase, entity slideTarget )
+{
+	sMovingTarget newTarget
+	newTarget.targetBase = targetBase
+	newTarget.slideTarget = slideTarget
+	newTarget.headedTowardEnd = true
+	newTarget.start = targetBase.GetOrigin()
+	newTarget.end = slideTarget.GetOrigin()
+
+	return newTarget
+}
+
+void function StagingAreaEntity_OnDamaged( entity ent, var damageInfo )
+{
+	if ( !IsValid( ent ) )
+		return
+
+	if ( DamageInfo_GetDamage( damageInfo ) <= 0 )
+		return
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	int hitGroup = DamageInfo_GetHitGroup( damageInfo )
+	table data
+	data["attacker"] <- attacker
+	data["hitgroup"] <- hitGroup
+
+	ent.Signal( "GunRangeTargetDamaged", data )
+
+	HandleLocationBasedDamage( ent, damageInfo )
+
+	if ( attacker.IsPlayer() )
+	{
+		attacker.NotifyDidDamage(
+			ent, DamageInfo_GetHitBox( damageInfo ),
+			DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ),
+			DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ),
+			DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ),
+			DamageInfo_GetDistFromAttackOrigin( damageInfo )
+		)
+	}
+}
+
+void function GunRangeTargetThink( entity targetGeo, entity targetMover, int type, vector anglesReady, vector anglesShot, float rotateDuration, float resetDuration )
+{
+	int TargetHealth = 100 // 10000
+	targetGeo.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+	targetGeo.SetDamageNotifications( true )
+	targetGeo.SetMaxHealth( 10000 )
+	targetGeo.SetHealth( 10000 )
+
+	EndSignal( targetGeo, "OnDestroy" )
+	EndSignal( targetMover, "OnDestroy" )
+
+	bool hasSkinnedTargets = false//Has_SkinnedTargets()
+
+	vector readyPos =  targetMover.GetOrigin()
+	vector anglesShotFromBack = AnglesCompose( anglesReady, < 85, 0, 0 > ) // fall the other way.
+
+	while( true )
+	{
+		WaitFrame()
+		table data = WaitSignal( targetGeo, "GunRangeTargetDamaged" )
+		entity attacker = expect entity( data.attacker )
+
+		if ( IsValid( attacker ) && attacker.IsPlayer() )
+		{
+			EmitSoundOnEntityExceptToPlayer( targetGeo, attacker, "Canyonlands_Scr_RangeTarget_Hit_3P" )
+		}
+		else
+		{
+			EmitSoundOnEntity( targetGeo, "Canyonlands_Scr_RangeTarget_Hit_3P" )
+		}
+
+		targetGeo.e.isDisabled = true
+		if ( rotateDuration > 0 )
+		{
+			vector collapsePos = targetMover.GetOrigin()
+			vector anglesShotToUse = anglesShot
+			if( IsValid( attacker ) )
+			{
+			 	vector ToAttacker = attacker.GetOrigin() - targetMover.GetOrigin()
+				ToAttacker.z = 0
+				if( DotProduct( ToAttacker, targetMover.GetForwardVector() ) < 0 )
+				{
+					// Slighter angle collapse and upward displacement if shot from behind to prevent clipping.
+					anglesShotToUse = anglesShotFromBack
+					collapsePos = collapsePos + < 0, 0, 11 > // Shift up slightly so target doesn't clip.
+				}
+			}
+			targetMover.NonPhysicsRotateTo( anglesShotToUse, rotateDuration, 0.0, 0.0 )
+			targetMover.NonPhysicsMoveTo( collapsePos, rotateDuration, 0.0, 0.0 )
+			wait rotateDuration
+		}
+		else
+		{
+                      
+				//if( hasSkinnedTargets )
+					//thread Target_Do_HitSkin_Thread( targetGeo, data  )
+				//else
+					targetMover.SetLocalAngles( anglesShot )
+        
+                                            
+               
+                            
+		}
+
+		if(( type == eGunRangeTargetTypes.SPINNING ))
+		{
+			EmitSoundOnEntity( targetGeo, "Canyonlands_Scr_RangeTarget_Spin" )
+		}
+
+		if ( resetDuration < 0 )
+			return
+
+                     
+			//if( !Has_SkinnedTargets() )
+				wait resetDuration
+       
+                     
+        
+
+		if(( type == eGunRangeTargetTypes.SPINNING ))
+		{
+			EmitSoundOnEntity( targetGeo, "Canyonlands_Scr_RangeTarget_Spin" )
+		}
+
+		if ( rotateDuration > 0 )
+		{
+			targetMover.NonPhysicsRotateTo( anglesReady, rotateDuration, 0.0, 0.0 )
+			targetMover.NonPhysicsMoveTo( readyPos, rotateDuration, 0.0, 0.0 )
+			wait rotateDuration
+		}
+		else
+		{
+			{
+				targetMover.SetLocalAngles( anglesReady )
+				WaitFrame()
+			}
+		}
+
+		targetGeo.e.isDisabled = false
+	}
 }
 
 
+void function MovingGunRangeTargetThink( sMovingTarget movingTarget )
+{
+	if( !IsValid( movingTarget ) )
+		return
+
+	if( !IsValid( movingTarget.targetBase ) )
+		return
+
+	if( !IsValid( movingTarget.slideTarget ) )
+		return
+
+	OnThreadEnd(
+		function() : ( movingTarget )
+		{
+			// Space intentionally left in case there is cleanup needed later.
+		}
+	)
+
+	Signal( movingTarget.targetBase, "SlideTargetWaitForReset" )
+	EndSignal( movingTarget.targetBase, "SlideTargetWaitForReset", "OnDestroy" )
+	EndSignal( movingTarget.slideTarget, "OnDestroy" )
+
+	thread MovingGunRangeTargetMove( movingTarget, true )
+	
+	while( true )
+	{
+		WaitSignal( movingTarget.targetBase, "SlideTargetSpeedReset" )
+		WaitFrame()
+		thread MovingGunRangeTargetMove( movingTarget, false )
+	}
+}
+
+bool function HasPlaylistVarVariableSpeedTargets()
+{
+	return( GetCurrentPlaylistVarBool( "has_variable_speed_targets", true ))
+}
+
+void function MovingGunRangeTargetMove( sMovingTarget movingTarget, bool initStartPos = true )
+{
+	if( !IsValid( movingTarget ) )
+		return
+
+	if( !IsValid( movingTarget.targetBase ) )
+		return
+
+	if( !IsValid( movingTarget.slideTarget ) )
+		return
+
+	Signal( movingTarget.targetBase, "SlideTargetThinkStart" )
+	EndSignal( movingTarget.targetBase, "SlideTargetThinkStart", "OnDestroy" )
+	EndSignal( movingTarget.slideTarget, "OnDestroy" )
+
+	// Grab the info from the struct.
+	vector start = movingTarget.start
+	vector end = movingTarget.end
+
+	float moveDuration
+	float accelDecel = moveDuration * 0.25
+
+	WaitFrame()
+
+	// Randomly flip the starting direction for variety
+	if( initStartPos )
+	{
+		if( CoinFlip() )
+		{
+			movingTarget.headedTowardEnd = false
+			movingTarget.targetBase.SetOrigin( end )
+		}
+
+		// Wait random time so all targets aren't in sync
+		wait RandomFloat( 1.5 )
+	}
+
+                          
+		//If we're in training, this value isn't in the map, but is needed down the road
+		if ( !(eFRSettingType.TARGETSPEED in frIntSettings_Defaults) )
+		{
+			frIntSettings_Defaults	[ eFRSettingType.TARGETSPEED ] 		<- 2
+		}
+
+		// Actual speeds desired, in units/sec.,
+		table< int, float > targetSpeedsActual
+		targetSpeedsActual[ 0 ] <- 80
+		targetSpeedsActual[ 1 ] <- 80
+		targetSpeedsActual[ 2 ] <- 200
+		targetSpeedsActual[ 3 ] <- 300
+		targetSpeedsActual[ 4 ] <- 600
+
+		// TODO: Stop Previous sound and do new appropriate sound
+		/*
+		FiringRangeMu1_Emit_TargetConveyor_CrouchWalk
+		FiringRangeMu1_Emit_TargetConveyor_Run
+		FiringRangeMu1_Emit_TargetConveyor_Walk
+		FiringRangeMu1_Emit_TargetConveyor_Zipline
+		*/
+		table< int, string > targetSpeedSounds
+		targetSpeedSounds[ 0 ] <- "FiringRangeMu1_Emit_TargetConveyor_CrouchWalk"
+		targetSpeedSounds[ 1 ] <- "FiringRangeMu1_Emit_TargetConveyor_CrouchWalk"
+		targetSpeedSounds[ 2 ] <- "FiringRangeMu1_Emit_TargetConveyor_Walk"
+		targetSpeedSounds[ 3 ] <- "FiringRangeMu1_Emit_TargetConveyor_Run"
+		targetSpeedSounds[ 4 ] <- "FiringRangeMu1_Emit_TargetConveyor_Zipline"
+
+		float distance
+		vector destination
+
+		while( true )
+		{
+			int targetSpeedNDX = 1//FRSetting_TargetSpeed_Get( realm )
+			destination = movingTarget.headedTowardEnd ? end : start
+			distance = Distance2D( movingTarget.targetBase.GetOrigin(), destination )
+			if( distance > 0 )
+			{
+				// UPDATE SOUND BEING PLAYED.
+				if( movingTarget.soundfx != targetSpeedSounds[ targetSpeedNDX ] )
+				{
+					if( movingTarget.soundfx != "" )
+					{
+						StopSoundOnEntity( movingTarget.targetBase, movingTarget.soundfx )
+					}
+					movingTarget.soundfx = targetSpeedSounds[ targetSpeedNDX ]
+					EmitSoundOnEntity( movingTarget.targetBase, movingTarget.soundfx )
+				}
+
+				moveDuration = distance / targetSpeedsActual[ targetSpeedNDX ]
+				movingTarget.targetBase.NonPhysicsMoveTo( destination, moveDuration , accelDecel, accelDecel )
+				wait moveDuration
+			}
+			movingTarget.headedTowardEnd = !movingTarget.headedTowardEnd
+		}    
+}
 
 // ==================================================
 //					MAP PROPS
 // ==================================================
 
+entity function CreateFRButton(vector pos, vector ang, string prompt)
+{
+	entity button = CreateEntity("prop_dynamic")
+	button.kv.solid = 6
+	button.SetValueForModelKey($"mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl")
+	button.SetOrigin(pos)
+	button.SetAngles(ang)
+	DispatchSpawn(button)
+	button.SetUsable()
+	button.SetUsableByGroup("pilot")
+	button.SetUsePrompts(prompt, prompt)
+	return button
+}
+
 void function SpawnMapProps()
 {
-	// TELEPORTERS
-	{
-		entity upper = CreateFRButton(<31016.6934, -8667.74414, -29239.7441>, <0,180,0>, "%&use% GO TO UPPER LEVEL")
-		AddCallback_OnUseEntity( upper, void function(entity panel, entity user, int input)
-		{
-			EmitSoundOnEntityOnlyToPlayer( user, user, FIRINGRANGE_BUTTON_SOUND )
-			TeleportFRPlayer(user,<30437.8281, -9880.22852, -25972.6387>,<0,0,0>)
-		})
-
-		// Racks
-		{
-			/* LIGHT */ SpawnBigTrainingTarget(<29857, -8157, -28837>, <180,0,0>, void function(entity panel, var damageInfo)
-			{
-				printl(DamageInfo_GetCustomDamageType( damageInfo ))
-				TeleportFRPlayer(DamageInfo_GetAttacker(damageInfo), <30806.7363, -8105.33838, -29163.9688>, <0,0,0>)
-			})
-			/* HEAVY */ SpawnBigTrainingTarget(<29769, -7342, -28760+26>, <180,0,0>, void function(entity panel, var damageInfo)
-			{
-				TeleportFRPlayer(DamageInfo_GetAttacker(damageInfo), <30774.2598, -7389.46436, -29163.9688>, <0,0,0>)
-			})
-			/* ENERGY */ SpawnBigTrainingTarget(<29782, -6683, -28758>, <180,0,0>, void function(entity panel, var damageInfo)
-			{
-				TeleportFRPlayer(DamageInfo_GetAttacker(damageInfo), <30760.7676, -6696.86914, -29163.9688>, <0,0,0>)
-			})
-			/* GOLD */ SpawnBigTrainingTarget(<29755, -5972, -28715>, <180,0,0>, void function(entity panel, var damageInfo)
-			{
-				TeleportFRPlayer(DamageInfo_GetAttacker(damageInfo), <30767.2305, -5988.11426, -29163.9688>, <0,0,0>)
-			})
-			/* SHOTGUN */ SpawnBigTrainingTarget(<29840, -5230, -28758>, <180,0,0>, void function(entity panel, var damageInfo)
-			{
-				TeleportFRPlayer(DamageInfo_GetAttacker(damageInfo), <30777.9258, -5282.96387, -29163.9688>, <0,0,0>)
-			})
-		}
-	}
-
 	// BUTTONS
 	{
-		entity charger = CreateFRButton(<30575.1016, -4631.76025, -29112.3125>, <0,0,0>, "%&use% CHARGE ABILITIES")
-		AddCallback_OnUseEntity( charger, void function(entity panel, entity user, int input)
-		{
-			EmitSoundOnEntityOnlyToPlayer( user, user, FIRINGRANGE_BUTTON_SOUND )
-			user.GetOffhandWeapon( OFFHAND_INVENTORY )
-				.SetWeaponPrimaryClipCount( user.GetOffhandWeapon( OFFHAND_INVENTORY ).GetWeaponPrimaryClipCountMax() )
-			user.GetOffhandWeapon( OFFHAND_LEFT )
-				.SetWeaponPrimaryClipCount( user.GetOffhandWeapon( OFFHAND_LEFT ).GetWeaponPrimaryClipCountMax() )
-		})
-
 		entity third = CreateFRButton(<35757.1289, -7238.68506, -28342.2422>, <0,270,0>, "%&use% TOGGLE THIRDPERSON")
 		AddCallback_OnUseEntity( third, void function(entity panel, entity user, int input)
 		{
@@ -930,87 +1418,6 @@ void function SpawnMapProps()
 			string prompt = "%&use% Speed: ("+(file.trackingTraining_speedRand ? "RAND" : string(file.trackingTraining_speed))+")"
 			panel.SetUsePrompts(prompt,prompt)
 		})
-	}
-
-	// UPPER LEVEL PLATFORM
-	{
-		int len = 7
-		vector corner = <30795, -10429,-25988>
-		vector o = <240,240,0>
-
-		// Floor
-		for(int i = 0; i<len; i++)for(int j = 0; j<3; j++)
-			CreateFRProp( FIRINGRANGE_256x256_ASSET, corner+o+<i*256,j*256,0>, <0,0,0>)
-
-		// Side Walls
-		for(int i = 0; i<len; i++)for(int j = 0; j<2; j++)
-			CreateFRProp( FIRINGRANGE_256x128_ASSET, corner+o+<i*256,-128,8+j*128>, <0,0,0>, true)
-
-		// Small Walls
-		for(int i = 0; i<4; i++){
-		CreateFRProp( FIRINGRANGE_256x128_ASSET, corner+<1024+i*16,640,16>, <0,90,0>, true, 1000)
-		CreateFRProp( FIRINGRANGE_256x128_ASSET, corner+<512+i*16,640,-32>, <0,90,0>, true, 1000)}
-
-
-	}
-
-	// UPPER DOORS
-	{
-		// Walls
-		entity dbdoorWall =
-		CreateFRProp( FIRINGRANGE_128x128_ASSET, file.doorDouble_pos + <-128,-8,64>, <90,90,0>, true)
-		CreateFRProp( FIRINGRANGE_128x128_ASSET, dbdoorWall.GetOrigin()+<256,0,0>, <90,90,0>, true)
-		dbdoorWall =
-		CreateFRProp( FIRINGRANGE_128x128_ASSET, file.doorSingle_pos + <-124,8,64>, <90,270,0>, true)
-		CreateFRProp( FIRINGRANGE_128x128_ASSET, dbdoorWall.GetOrigin()+<192,0,0>, <90,270,0>, true)
-	}
-
-	// // FIRING RANGE CONNECTORS
-	// {
-		// foreach(entity e in GetEntArrayByScriptName("weapon_racks"))
-		// {
-			// vector pos = e.GetOrigin()
-			// vector rght = e.GetRightVector()
-			// vector fwd = e.GetForwardVector()
-			// vector up = e.GetUpVector()
-			// CreateFRProp( FIRINGRANGE_GRATE_ASSET, pos+rght*-208+fwd*-96+up*-3, <0,0,0>)
-		// }
-	// }
-
-	// DUCT TAPE WALLS
-	{
-		/*BACK FAR AWAY*/
-		{
-			float yO = 200
-			float zO = 90
-			for(int i = 0; i<2; i++)for(int j = 0; j<2; j++)
-				CreateFRProp( FIRINGRANGE_QUARRY_BLOCK_ASSET, <32970, -7875+yO*i, -28780+zO*j>, <0,90,0>, true, 8000)
-			for(int i = 0; i<2; i++)for(int j = 0; j<2; j++)
-				CreateFRProp( FIRINGRANGE_QUARRY_BLOCK_ASSET, <32970, -6891+yO*i, -28780+zO*j>, <0,90,0>, true, 8000)
-			for(int i = 0; i<2; i++)for(int j = 0; j<2; j++)
-				CreateFRProp( FIRINGRANGE_QUARRY_BLOCK_ASSET, <32970, -5812+yO*i, -28780+zO*j>, <0,90,0>, true, 8000)
-			for(int i = 0; i<2; i++)for(int j = 0; j<2; j++)
-				CreateFRProp( FIRINGRANGE_QUARRY_BLOCK_ASSET, <32970, -4695+yO*i, -28780+zO*j>, <0,90,0>, true, 8000)
-		}
-
-		{
-			float zO = 90
-			/*SMALL LEFT LEFT*/
-			for(int i = 0; i<2; i++)
-			CreateFRProp( FIRINGRANGE_QUARRY_BLOCK_ASSET, <32133.1016, -6134.82861, -29087.6406+i*zO>, <0,270-180*i,180*i>, true, 8000)
-
-			/*SMALL LEFT*/
-			for(int i = 0; i<2; i++)
-			CreateFRProp( FIRINGRANGE_QUARRY_BLOCK_ASSET, <32114.5176, -6698.77979, -29095.6406+i*zO>, <0,90+180*i,180*i>, true, 8000)
-
-			/*SMALL MID*/
-			for(int i = 0; i<2; i++)
-			CreateFRProp( FIRINGRANGE_QUARRY_BLOCK_ASSET, <32114.5176, -7255.03467, -29087.6406+i*zO>, <180,270-180*i,180*i>, true, 8000)
-
-			/*SMALL RIGHT*/
-			for(int i = 0; i<2; i++)
-			CreateFRProp( FIRINGRANGE_QUARRY_BLOCK_ASSET, <32197.1016, -7878.10596, -29087.6406+i*zO>, <0,270-180*i,180*i>, true, 8000)
-		}
 	}
 }
 
@@ -1114,7 +1521,7 @@ void function OnWeaponAttack( entity player, entity weapon, string weaponName, i
 
 void function FixWeapon(entity weapon)
 {
-	try
+	/*try
 	{
 		switch(firingrange_infinite_ammo)
 		{
@@ -1128,7 +1535,7 @@ void function FixWeapon(entity weapon)
 				break
 		}
 	}
-	catch(error){}
+	catch(error){}*/
 }
 #endif
 

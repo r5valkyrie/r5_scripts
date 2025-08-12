@@ -58,8 +58,8 @@ WeaponData
 	"fx_muzzle_flash_attach"						"muzzle_flash"
 
 	// NOTE: specifies muzzle flash for the second barrel
-	"fx_muzzle_flash2_view"							""
-	"fx_muzzle_flash2_world"						""
+	"fx_muzzle_flash2_view"							"P_wpn_muzzleflash_alternator_FP"
+	"fx_muzzle_flash2_world"						"P_wpn_muzzleflash_alternator"
 	"fx_muzzle_flash2_attach"						"muzzle_flash_1"
 
 
@@ -98,7 +98,7 @@ WeaponData
 	"fire_rate"   									"10"
 
 	// Ammo
-	"ammo_clip_size"   								"19"
+	"ammo_clip_size"   								"20"
     "ammo_default_total"							"0"
     "ammo_stockpile_max"							"24"
     "ammo_no_remove_from_stockpile"					"0"
@@ -111,12 +111,12 @@ WeaponData
 	"low_ammo_fraction" 							"0.3"
 
     // Damage - When Used by Players
-    "damage_near_value"   							"16"
-    "damage_far_value"								"16"
-    "damage_very_far_value"							"16"
-    "damage_near_value_titanarmor"					"16"
-    "damage_far_value_titanarmor" 					"16"
-    "damage_very_far_value_titanarmor" 				"16"
+    "damage_near_value"   							"18"
+    "damage_far_value"								"18"
+    "damage_very_far_value"							"18"
+    "damage_near_value_titanarmor"					"18"
+    "damage_far_value_titanarmor" 					"18"
+    "damage_very_far_value_titanarmor" 				"18"
     "damage_rodeo" 									"90"
 
 	"damage_unshielded_scale"              			"1.0"
@@ -241,6 +241,17 @@ WeaponData
 	"viewmodel_ads_rui_bottomleft_attachment"	"RUI_BL_CROSSHAIR_ALTERNATOR"
 	"viewmodel_ads_centerpoint_attachment"      "ADS_CENTER_SIGHT_ALTERNATOR"
 
+
+	"damage_shield_scale"	"1"
+	"damage_headshot_scale"	"1.250000"
+	"damage_leg_scale"	"0.800000"
+	"critical_hit"	"1"
+	"critical_hit_damage_scale"	"2"
+	"titanarmor_critical_hit_required"	"1"
+	"damage_near_distance"	"900"
+	"damage_far_distance"	"1500"
+	"damage_very_far_distance"	"3500"
+	"headshot_distance"	"1500"
 	Mods
 	{
 		barrel_synchronizer
@@ -331,20 +342,20 @@ WeaponData
 
 		bullets_mag_l1
 		{
-			"ammo_clip_size"   						"22"
+			"ammo_clip_size"   						"24"
 		}
 		bullets_mag_l2
 		{
-			"ammo_clip_size"   						"25"
+			"ammo_clip_size"   						"27"
 		}
 		bullets_mag_l3
 		{
 			//Extended Ammo
-			"ammo_clip_size"   						"27"
+			"ammo_clip_size"   						"29"
 		}
         bullets_mag_l4
         {
-            "ammo_clip_size"   						"27"
+            "ammo_clip_size"   						"29"
         }
 
 		// // NOTE: override barrel FX for both Alternator barrels
@@ -391,6 +402,77 @@ WeaponData
 			// "fx_muzzle_flash_world"							""
 			// "fx_muzzle_flash_attach"						""
 		// }
+		"laser_sight_l1"
+		{
+			//"targeting_laser_enabled" "1"
+			//"custom_laser_sight_color_enabled" "1"
+			"spread_stand_hip" "*0.90"
+			"spread_stand_hip_run" "*0.90"
+			"spread_stand_hip_sprint" "*0.90"
+			"spread_crouch_hip" "*0.90"
+			"spread_air_hip" "*0.90"
+			"spread_moving_increase_rate" "*0.90"
+			"spread_moving_decay_rate" "*1.10"
+			"spread_decay_rate" "*1.10"
+			"spread_decay_delay" "*0.90"
+			"spread_max_kick_stand_hip" "*0.90"
+			"spread_max_kick_crouch_hip" "*0.90"
+			"spread_max_kick_air_hip" "*0.90"
+			"spread_kick_on_fire_stand_hip" "*0.90"
+			"spread_kick_on_fire_crouch_hip" "*0.90"
+			"spread_kick_on_fire_air_hip" "*0.90"
+			"bodygroup32_set" "1"
+		}
+		"laser_sight_l2"
+		{
+			//"targeting_laser_enabled" "1"
+			//"custom_laser_sight_color_enabled" "1"
+			"spread_stand_hip" "*0.80"
+			"spread_stand_hip_run" "*0.80"
+			"spread_stand_hip_sprint" "*0.80"
+			"spread_crouch_hip" "*0.80"
+			"spread_air_hip" "*0.80"
+			"spread_moving_increase_rate" "*0.85"
+			"spread_moving_decay_rate" "*1.15"
+			"spread_decay_rate" "*1.20"
+			"spread_decay_delay" "*0.80"
+			"spread_max_kick_stand_hip" "*0.80"
+			"spread_max_kick_crouch_hip" "*0.80"
+			"spread_max_kick_air_hip" "*0.80"
+			"spread_kick_on_fire_stand_hip" "*0.80"
+			"spread_kick_on_fire_crouch_hip" "*0.80"
+			"spread_kick_on_fire_air_hip" "*0.80"
+			"bodygroup32_set" "1"
+		}
+		"laser_sight_l3"
+		{
+			//"targeting_laser_enabled" "1"
+			//"custom_laser_sight_color_enabled" "1"
+			"spread_stand_hip" "*0.70"
+			"spread_stand_hip_run" "*0.70"
+			"spread_stand_hip_sprint" "*0.70"
+			"spread_crouch_hip" "*0.70"
+			"spread_air_hip" "*0.70"
+			"spread_moving_increase_rate" "*0.80"
+			"spread_moving_decay_rate" "*1.20"
+			"spread_decay_rate" "*1.30"
+			"spread_decay_delay" "*0.70"
+			"spread_max_kick_stand_hip" "*0.70"
+			"spread_max_kick_crouch_hip" "*0.70"
+			"spread_max_kick_air_hip" "*0.70"
+			"spread_kick_on_fire_stand_hip" "*0.70"
+			"spread_kick_on_fire_crouch_hip" "*0.70"
+			"spread_kick_on_fire_air_hip" "*0.70"
+			"bodygroup32_set" "1"
+		}
+		
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
 	}
 
 	"ui1_enable"		"1"

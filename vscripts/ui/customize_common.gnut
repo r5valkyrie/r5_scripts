@@ -700,17 +700,28 @@ void function UpdateCustomizeItemButton( CustomizeButtonContext cbc, bool justAd
 	if ( ItemFlavor_GetGRXMode( cbc.itemFlavor ) == GRX_ITEMFLAVORMODE_NONE )
 	{
 		foreach ( loadoutEntry in cbc.loadoutEntries )
-			isOwned = isOwned || IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), loadoutEntry, cbc.itemFlavor, false )
+		{
+			if(ItemFlavor_GetType(cbc.itemFlavor) == eItemType.character_skin)
+			{
+				int itemQuality = ItemFlavor_GetQuality(cbc.itemFlavor)
+				if(itemQuality == eQuality.COMMON || itemQuality == eQuality.FANMADE)
+					isOwned = true
+			}
+			else if(ItemFlavor_GetType(cbc.itemFlavor) == eItemType.gladiator_card_badge || ItemFlavor_GetType( cbc.itemFlavor ) == eItemType.character_execution)
+				isOwned = true
+			else
+				isOwned = isOwned || IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), loadoutEntry, cbc.itemFlavor, false )
+		}
 	}
 	else // GRX item
 	{
-		if ( !GRX_AreOffersReady() || !GRX_IsInventoryReady() )
-		{
-			// GRX is loading
-			Hud_SetEnabled( cbc.button, false )
-			RuiSetBool( rui, "isLoading", true )
-			return // don't update until loading is done
-		}
+		//if ( !GRX_AreOffersReady() || !GRX_IsInventoryReady() )
+		//{
+		//	// GRX is loading
+		//	Hud_SetEnabled( cbc.button, false )
+		//	RuiSetBool( rui, "isLoading", true )
+		//	return // don't update until loading is done
+		//}
 
 		// GRX has loaded
 		Hud_SetEnabled( cbc.button, true )
@@ -859,7 +870,7 @@ void function UpdateActionButton()
 	bool isParentItemOwned = IsParentItemOwned( cbc )
 	bool isOwned           = GRX_IsItemOwnedByPlayer_AllowOutOfDateData( item )
 	bool isEquipped        = IsItemInCBCEquipped( cbc )
-	bool isVisible         = !isParentItemOwned || !isOwned || (isOwned && !isEquipped)
+	bool isVisible         = false//!isParentItemOwned || !isOwned || (isOwned && !isEquipped)
 
 	Hud_SetVisible( fileLevel.actionButton, isVisible )
 

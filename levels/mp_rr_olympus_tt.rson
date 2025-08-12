@@ -6,7 +6,7 @@ Scripts:
 When: "CLIENT"
 Scripts:
 [
-	mp/levels/cl_mp_rr_olympus_mu1.nut
+	mp/levels/cl_mp_rr_olympus.nut
 ]
 
 When: "SERVER || CLIENT"

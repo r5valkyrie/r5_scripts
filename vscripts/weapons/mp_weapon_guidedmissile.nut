@@ -1,5 +1,3 @@
-//By Colombia. Based on Halo Infinite Cindershot and Titanfall2 scripts.
-
 untyped
 
 global function MpWeaponGuidedMissile_Init

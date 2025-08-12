@@ -1,4 +1,4 @@
-"resource/ui/menus/panels/video.res"
+"scripts/resource/ui/menus/panels/video.res"
 {
 	PanelFrame
 	{

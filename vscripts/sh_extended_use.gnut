@@ -8,6 +8,7 @@ global function ExtendedUseTextOverride
 global struct ExtendedUseSettings
 {
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) successFunc
+	void functionref( entity ent, entity player, ExtendedUseSettings settings ) failureFunc
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) startFunc
 	void functionref( entity ent, entity player, ExtendedUseSettings settings ) endFunc
 	string loopSound
@@ -25,8 +26,10 @@ global struct ExtendedUseSettings
 	#endif
 	#if SERVER
 		bool holsterWeapon
+		bool holsterViewModelOnly = false // if this is true, weapon will still be visible on 3p, or it will be invisible
 		bool movementDisable
 		bool exclusiveUse
+		bool setUsableOnSuccess = true
 	#endif
 	int useInputFlag = IN_USE_LONG
 }
@@ -138,10 +141,18 @@ void function ExtendedUse( entity ent, entity player, ExtendedUseSettings settin
 				{
 					if ( IsValid( ent ) )
 					{
+						if ( e["success"] && !settings.setUsableOnSuccess )
+							return
 						ent.SetUsable()
 						ent.SetUsableByGroup( "pilot" )
 						ent.AddUsableValue( oldUsableValue )
 					}
+				}
+
+				if ( !e["success"] )
+				{
+					if ( settings.failureFunc != null )
+						thread settings.failureFunc( ent, player, settings )
 				}
 			#endif
 		}

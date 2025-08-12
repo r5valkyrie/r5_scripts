@@ -1,7 +1,7 @@
 global function InitSoundPanel
 global function RestoreSoundDefaults
 global function SoundPanel_GetConVarData
-
+global function DiscardAudioSettingsDialog
 global function InitProcessingDialog
 
 struct
@@ -92,8 +92,58 @@ void function InitSoundPanel( var panel )
 	#if PC_PROG
 		file.conVarDataList.append( CreateSettingsConVarData( "hudchat_play_text_to_speech", eConVarType.INT ) )
 	#endif
+	AddPanelFooterOption( panel, LEFT, BUTTON_Y, true, "#Y_BUTTON_APPLY", "#APPLY", ApplySoundSettingsButton_Activate, AreSoundSettingsChanged )
 }
 
+
+bool function AreSoundSettingsChanged()
+{
+	#if DEVELOPER 
+		printt( "uiGlobal.SoundSettingsChanged:", uiGlobal.SoundSettingsChanged )
+	#endif
+		
+	return uiGlobal.SoundSettingsChanged
+}
+
+void function ApplySoundSettingsButton_Activate( var button )
+{
+	#if DEVELOPER
+		print( "Sound Settings Changed\nRestarting Miles\n" )
+	#endif
+	uiGlobal.SoundSettingsChanged = false
+	thread RebootMiles()
+	UpdateFooterOptions()
+}
+
+void function DiscardAudioSettingsDialog( var panel, int desiredTabIndex = -1 )
+{
+	ConfirmDialogData dialogData
+	dialogData.headerText = "#APPLY_CHANGES_AUDIO"
+	dialogData.messageText = "#APPLY_CHANGES_AUDIO_DESC"
+	dialogData.yesText = ["#A_BUTTON_DISCARD", "#DISCARD"]
+
+	dialogData.resultCallback = void function ( int result ) : ( panel, desiredTabIndex )
+	{
+		if ( result == eDialogResult.YES )
+		{
+			thread (void function() : ( panel, desiredTabIndex )
+			{
+				uiGlobal.SoundSettingsChanged = false
+				if ( desiredTabIndex <= 0 )
+				{
+					if ( GetActiveMenu() == GetMenu( "MiscMenu" ) )
+
+					return
+				}
+
+				TabData tabData = GetTabDataForPanel( panel )
+				ActivateTab( tabData, desiredTabIndex )
+			})()
+		}
+	}
+
+	OpenConfirmDialogFromData( dialogData )
+}
 
 void function OnSoundPanel_Show( var panel )
 {
@@ -120,8 +170,8 @@ void function OnSoundPanel_Hide( var panel )
 
 void function OnAudioLanguageControlChanged( var button )
 {
-	if ( IsAudioLanguageChanged() )
-		thread RebootMiles()
+	uiGlobal.SoundSettingsChanged = true
+	UpdateFooterOptions()
 }
 
 
@@ -162,6 +212,7 @@ void function RebootMiles()
 	CloseActiveMenu()
 
 	UIMusicUpdate()
+	EmitUISound( "UI_Menu_Top5_Equip_Badge" )
 }
 
 
@@ -247,14 +298,13 @@ void function RestoreSoundDefaults()
 	SetConVarToDefault( "closecaption" )
 	if ( IsAudioLanguageChangeAllowed() )
 		SetConVarToDefault( "miles_language" )
-	#if PC_PROG
+		SetConVarToDefault( "miles_channels" )
 		SetConVarToDefault( "TalkIsStream" )
 		SetConVarToDefault( "hudchat_play_text_to_speech" )
 		SetConVarToDefault( "sound_volume_voice" )
 		SetConVarToDefault( "miles_occlusion" )
 		SetConVarToDefault( "sound_without_focus" )
 		SetConVarToDefault( "speex_quiet_threshold" )
-	#endif
 
 	SaveSettingsConVars( file.conVarDataList )
 	SavePlayerSettings()
@@ -267,7 +317,7 @@ void function RestoreSoundDefaults()
 
 bool function IsAudioLanguageChangeAllowed()
 {
-	return Hud_IsVisible( file.audioLanguageButton ) && IsLobby()
+	return Hud_IsVisible( file.audioLanguageButton )
 }
 
 void function InitProcessingDialog( var menu )

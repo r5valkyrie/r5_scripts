@@ -177,7 +177,7 @@ void function AttemptLaunch()
 			CloseActiveMenu( true )
 
 		SetIntroViewedVersion( CURRENT_INTRO_VIDEO_VERSION )
-		PlayVideoMenu( true, "intro", "Apex_Opening_Movie", eVideoSkipRule.HOLD, PrelaunchValidateAndLaunch )
+		PlayVideoMenu( true, "intro", "", eVideoSkipRule.HOLD, PrelaunchValidateAndLaunch )
 		return
 	}
 

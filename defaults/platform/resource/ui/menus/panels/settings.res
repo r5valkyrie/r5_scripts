@@ -200,7 +200,7 @@
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
             //tall                    952 [$WINDOWS]
-            tall                    882 [$WINDOWS]
+            tall                    940 [$WINDOWS]
             tabPosition             1
 
             controlSettingsFile		"resource/ui/menus/panels/audio.res" [$WINDOWS]

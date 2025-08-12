@@ -19,7 +19,7 @@ table< string, array<LootDistro> > LootDistribution //groupRef : array of EntryR
 
 void function SURVIVAL_LootDistribution_InitShared()
 {
-    var dt = GetDataTable( $"datatable/flowstate_all_new_groups.rpak" )
+    var dt = GetDataTable( $"datatable/survival_loot_sdk_distribution.rpak" )
     int numRows = GetDatatableRowCount( dt )
     string currentGroupRef
     array<LootDistro> distributions
@@ -194,7 +194,51 @@ string function SURVIVAL_GetWeightedItemFromGroup(string groupRef)
 			break
 		}
 	}
+	
+	//Check if item is enabled for ground loot (applies to all playlists)
+	if( theRef != "" && !IsEnabledForGroundLoot( theRef ) )
+	{
+		//Try to find a valid replacement of the same type
+		string replacementRef = FindValidReplacementItem( theRef, groupDistro )
+		theRef = replacementRef != "" ? replacementRef : "blank"
+	}
+	
     return theRef
+}
+
+string function FindValidReplacementItem( string excludedItem, array<LootDistro> groupDistro )
+{
+	if( !SURVIVAL_Loot_IsRefValid( excludedItem ) )
+		return ""
+	
+	LootData excludedData = SURVIVAL_Loot_GetLootDataByRef( excludedItem )
+	int targetLootType = excludedData.lootType
+	int targetTier = excludedData.tier
+	
+	//First try to find items of same type and tier
+	foreach( LootDistro distro in groupDistro )
+	{
+		if( SURVIVAL_Loot_IsRefValid( distro.ref ) && IsEnabledForGroundLoot( distro.ref ) )
+		{
+			LootData data = SURVIVAL_Loot_GetLootDataByRef( distro.ref )
+			if( data.lootType == targetLootType && data.tier == targetTier )
+				return distro.ref
+		}
+	}
+	
+	//If no exact match, try same type with any tier
+	foreach( LootDistro distro in groupDistro )
+	{
+		if( SURVIVAL_Loot_IsRefValid( distro.ref ) && IsEnabledForGroundLoot( distro.ref ) )
+		{
+			LootData data = SURVIVAL_Loot_GetLootDataByRef( distro.ref )
+			if( data.lootType == targetLootType )
+				return distro.ref
+		}
+	}
+	
+	//If no same type found, return empty (will become "blank")
+	return ""
 }
 
 array<string> function SURVIVAL_GetMultipleWeightedItemsFromGroup( string lootGroup, int numLootItems )

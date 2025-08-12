@@ -143,13 +143,13 @@ WeaponData
 
 	MP_BASE
 	{
-		"ammo_clip_size"   								"150"
-		"ammo_default_total"							"150"
+		"ammo_clip_size"   								"17"
+		"ammo_default_total"							"17"
 		"ammo_display"									"count"
-		"ammo_min_to_fire"								"150"
-		"ammo_per_shot"									"150"
+		"ammo_min_to_fire"								"17"
+		"ammo_per_shot"									"17"
 		"ammo_stockpile_max"							"150"
-		"regen_ammo_refill_rate"						"5"
+		"regen_ammo_refill_rate"						"1"
 		"regen_ammo_refill_start_delay"					"0.0"
 
 		"enable_highlight_networking_on_creation"		"<KEEP_DEFAULT>"

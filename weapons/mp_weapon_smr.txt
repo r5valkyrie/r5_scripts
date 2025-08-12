@@ -9,8 +9,6 @@ WeaponData
 
 	"menu_icon"										"r2_ui/menus/loadout_icons/anti_titan/at_sidewinder"
 	"hud_icon"										"r2_ui/menus/loadout_icons/anti_titan/at_sidewinder"
-	
-	"ammo_pool_type"								"explosive"
 
 	"weaponClass" 									"human"
 	"pickup_hold_prompt"  							"Hold [USE] [WEAPONNAME]"
@@ -382,6 +380,9 @@ WeaponData
 
 	Mods
 	{
+		crate
+		{
+		}
         gold
         {
         }
@@ -417,7 +418,15 @@ WeaponData
 
 
 		}
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 	"ui1_enable"		"1"
 	UiData1

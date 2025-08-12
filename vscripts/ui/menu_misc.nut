@@ -65,6 +65,12 @@ void function OnMiscMenu_NavigateBack()
 		DiscardVideoSettingsDialog( null, -1 )
 		return
 	}
+	
+	if ( uiGlobal.SoundSettingsChanged )
+	{
+		DiscardAudioSettingsDialog( null, -1 )
+		return
+	}
 
 	CloseActiveMenu()
 

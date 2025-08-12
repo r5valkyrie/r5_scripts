@@ -66,6 +66,7 @@ global function ShEHI_LevelInit_End
 global function ShEHI_OnClientConnectionCompleted
 #endif
 #if CLIENT
+global function ShouldPlayerNameBeAnonymized
 global function ShEHI_OnPlayerCreated
 global function ShEHI_OnPlayerChangedTeam
 global function ShEHI_OnPlayerDisconnected
@@ -73,6 +74,7 @@ global function UIToClient_UIVMIsShuttingDown
 global function UIToClient_UIVMJustStarted
 global function GetPlayerName
 global function GetKillerName
+global function GetDisplayablePlayerNameFromEHI
 global function GetPlayerRankScoreFromEHI
 global function GetPlayerLadderPosFromEHI
 #endif
@@ -111,7 +113,32 @@ FileStruct_LifetimeLevel fileLevel
 FileStruct_LifetimeLevel& fileLevel
 #endif
 
+struct {
+	array < int > allAlliances
+	array < int > allAllianceTeams
 
+	table< int, int > teamToAllianceTable
+	table< int, array< int > > allianceToTeamsTable
+	array<void functionref( int, int )> callbacks_AllianceProximity_OnTeamPutIntoAlliance
+
+	#if SERVER || CLIENT
+		table< EHI, int > playerEHIToOriginalTeamTable // Match the player EHI to their team before we do a team change at the end of the match
+		bool isMinimapDisabled
+		array < int > priorityPingTypes
+	#endif // SERVER || CLIENT
+
+	#if SERVER
+		bool hasFinalizedTeamReassignments = false
+		table < int, int > allianceToReassignedTeamTable // teams from alliances get re-assigned to a single team at the end of the match, this keeps track of which team each alliance got assigned to
+		table < int, array< int > > originalTeamIDToCurrentTeamMemberIndexesTable // store the current indexes of all the team members that were on the same team before the end of match team change
+	#endif // SERVER
+
+	#if DEV && SERVER
+		array < int > teamsSetToAllianceThroughDevCommand_Dev // teams that have been put on an alliance through a dev command
+		array < int > alliancesThatHaveBeenPopulatedWithTeams // A list of alliances that have at some point ended up with any team assigned to it ( for debugging purposes )
+	#endif // DEV && SERVER
+
+} file
 
 /////////////////////////
 /////////////////////////
@@ -787,6 +814,62 @@ string function GetKillerName( EHI playerEHI )
 
 
 #if CLIENT
+string function GetDisplayablePlayerNameFromEHI( EHI playerEHI )
+{
+	string playerTag = ""
+	                  
+		playerTag = EHI_GetName( playerEHI )
+       
+              
+                                           
+       
+	
+	string playerName = EHI_GetName( playerEHI )
+	bool isSetToObsfuscatedName = ( ShouldPlayerNameBeAnonymized( playerEHI ) || !DisplayObituaryName() )
+	bool isPlayerEHISameAsLocalClientEHI = playerEHI == LocalClientEHI()
+
+	int playerTeam = EHI_GetTeam( playerEHI )
+	int localPlayerTeam = EHI_GetTeam( LocalClientEHI() )
+	if ( AllianceProximity_IsUsingAlliances() )
+	{
+		// At the end of the match in Alliance modes we assign all players from the same alliance on to the same team.
+		// That conflicts with the regular anonymous logic which checks if player being checked is on the same team as the Client Player.
+		// For Alliances we store the players team before the team switch so these checks give us the expected results.
+		playerTeam = AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI( playerEHI )
+		localPlayerTeam = AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI( LocalClientEHI() )
+	}
+
+	if ( isSetToObsfuscatedName && !isPlayerEHISameAsLocalClientEHI && !IsFriendlyTeam( playerTeam, localPlayerTeam ) )
+	{
+	#if DEVELOPER
+		printt( "GetPlayerNameFromEHI DisplayObituaryName[" + DisplayObituaryName() + "] ------- " + playerName)
+		printt( "GetPlayerNameFromEHI ShouldPlayerNameBeAnonymized( playerEHI )[" + ShouldPlayerNameBeAnonymized( playerEHI ) + "]")
+		printt( "GetPlayerNameFromEHI isSetToObsfuscatedName[" + isSetToObsfuscatedName + "]")
+		printt( "GetPlayerNameFromEHI isPlayerEHISameAsLocalClientEHI[" + isPlayerEHISameAsLocalClientEHI + "]")
+		printt( "GetPlayerNameFromEHI EHI_GetTeam[" + EHI_GetTeam( playerEHI )  + "]")
+		printt( "GetPlayerNameFromEHI EHI_GetTeam( LocalClientEHI() )[" + EHI_GetTeam( LocalClientEHI() )  + "]")
+	#endif
+
+		return GetObsfuscatedName( playerEHI )
+	}
+
+	return ( playerTag == "" )? playerName : playerTag + " " + playerName
+}
+
+// Is this gamemode using alliances
+// Alliances are a team of players made up of multiple squads ( squads are referred to as teams in our script )
+bool function AllianceProximity_IsUsingAlliances()
+{
+	return AllianceProximity_GetMaxNumAlliances() > 0 && !IsLobby()
+}
+
+// How many alliances are there in this gamemode
+int function AllianceProximity_GetMaxNumAlliances()
+{
+	return GetCurrentPlaylistVarInt( "max_alliances", 0 )
+}
+
+
 string function GetPlayerName( EHI playerEHI )
 {
 	string playerName = EHI_GetName( playerEHI )
@@ -795,13 +878,50 @@ string function GetPlayerName( EHI playerEHI )
 
 	return playerName
 }
+
+bool function ShouldPrivateMatchBeAnonymized()
+{
+	if ( IsPrivateMatchLobby() )
+		return false
+
+	return GetConVarBool( "sv_tournament_anonymous_mode" )
+}
 #endif
+
+bool function IsPrivateMatchLobby()
+{
+	return false
+}
+
+#if SERVER || CLIENT
+// Return the player's team prior to end of match team switch if it is available otherwise return their current team number
+int function AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI( EHI playerEHI )
+{
+	#if DEVELOPER
+		Assert(  EHIHasValidScriptStruct( playerEHI ), "ALLIANCE PROXIMITY: Attempted to run " + FUNC_NAME() + " on an Invalid playerEHI" )
+	#endif // DEV
+
+	int team = EHI_GetTeam( playerEHI )
+
+	if ( playerEHI in file.playerEHIToOriginalTeamTable )
+	{
+		team = file.playerEHIToOriginalTeamTable[ playerEHI ]
+	}
+
+	return team
+}
+#endif // SERVER || CLIENT
 
 
 #if CLIENT
 void function EHI_GameStatePlaying()
 {
 	fileLevel.obfuscatedNameMap.clear()
+}
+
+bool function ShouldPlayerNameBeAnonymized( EHI playerEHI )
+{
+	return false
 }
 #endif
 

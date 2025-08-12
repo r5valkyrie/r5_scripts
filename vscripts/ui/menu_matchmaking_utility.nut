@@ -33,7 +33,7 @@ void function LoadLobbyAfterLeave()
 	wait 1
 
 	// Create the lobby server
-	CreateServer("Lobby VM", "", "mp_lobby", "menufall", eServerVisibility.OFFLINE)
+	CreateServer("Lobby VM", "", "mp_lobby", "dev_default", eServerVisibility.OFFLINE)
 	#else
 
 	// !TODO: attempt to connect to a lobby dedi from here???

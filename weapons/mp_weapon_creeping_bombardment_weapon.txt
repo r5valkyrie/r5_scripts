@@ -28,6 +28,10 @@ WeaponData
 	SP_BASE
 	{
 		"enable_highlight_networking_on_creation"		"1"
+
+	"critical_hit"	"0"
+	"damage_near_distance"	"0"
+	"damage_far_distance"	"0"
 	}
 
 	MP_BASE

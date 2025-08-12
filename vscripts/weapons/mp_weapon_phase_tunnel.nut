@@ -1,5 +1,3 @@
-//Updated by @CafeFPS based on S21 scripts
-
 global function MpWeaponPhaseTunnel_Init
 global function OnWeaponActivate_weapon_phase_tunnel
 global function OnWeaponDeactivate_weapon_phase_tunnel
@@ -853,9 +851,8 @@ bool function Realistic_InAllowedZone( vector origin )
 	//printw( "checking allowed zone:", VectorToString( origin ) )
 	float dist2d = Distance2D( origin, MYSTIC_MAGICAL_ELEVATOR_SHAFT_ORIGIN )
 	
-	#if DEVELOPER 
+	if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 		DebugDrawCircle( MYSTIC_MAGICAL_ELEVATOR_SHAFT_ORIGIN, <0,0,0>, MAX_ELEVATOR_SUCKING_BEHAVIOR_RADIUS, 255, 0, 0, true, 10.0, 32 )
-	#endif
 	
 	if( dist2d > MAX_ELEVATOR_SUCKING_BEHAVIOR_RADIUS )
 		return true
@@ -878,7 +875,7 @@ void function PhaseTunnel_WaitForPhaseTunnelExpiration( entity player, PhaseTunn
 		player.EndSignal( "CleanUpPlayerAbilities" )
 		player.EndSignal( "PhaseTunnel_DestroyPlacement" )
 
-		if( Flowstate_IsRealisticMode() )
+		if( Playlist() == ePlaylists.fs_realistic_ttv )
 		{
 			if( !Realistic_InAllowedZone( endPos ) )
 				thread RemovePortalDelayed( player, tunnelData )
@@ -1186,9 +1183,8 @@ void function OnPhaseTunnelTriggerEnter_Internal( entity trigger, entity ent )
 	float dist2d = Distance2D( portalData.startOrigin, ent.GetOrigin() ) //(mk): portalData.startOrigin --- this is really the "END" of the user placed portal
 	bool bEnteredFromEnd = dist2d <= MAX_PORTAL_ENTER_DETECTION_RADIUS	//maybe adjust proxim	
 	
-	#if DEVELOPER
+	if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 		DebugDrawCircle( portalData.startOrigin, portalData.endAngles, MAX_PORTAL_ENTER_DETECTION_RADIUS, 255, 0, 0, true, 10, 32 )
-	#endif
 	
 	ent.e.portalDirection = bEnteredFromEnd ? eDirection.ENDTOSTART : eDirection.STARTTOEND	
 

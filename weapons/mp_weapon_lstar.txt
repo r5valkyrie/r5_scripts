@@ -25,9 +25,10 @@ WeaponData
 
 	"cooldown_type"									"chargeFrac"
     "cooldown_time"	                                "0.16" // actually, "blowoff animation time"
-    "charge_time"                                   "2.4"  // while holding trigger, time until weapon overheats
-    "charge_cooldown_time"                          "3.63"  // controls length of overheat anim (along with delay)
-    "charge_cooldown_delay"                         "0.08"
+    "charge_time"                                   "2.200000"
+    "charge_cooldown_time"                          "3.630000"
+    "charge_cooldown_delay"                         "0.06"
+
 	"charge_overheats_when_full"                    "1"
 	"charge_weapon_fires_while_charging"            "1"
 	"charge_remain_full_when_fired"                 "1"
@@ -125,12 +126,12 @@ WeaponData
 	//"net_optimize"		                            "1"
 
 	"bolt_hitsize"									"0.0"
-    "bolt_hitsize_grow1_time"						"0.03"
+    "bolt_hitsize_grow1_time"						"0.065000"
 	"bolt_hitsize_grow1_size"						"0.1"
-	"bolt_hitsize_grow2_time"						"0.065"
-	"bolt_hitsize_grow2_size"						"0.2"
+	"bolt_hitsize_grow2_time"						"0.125000"
+	"bolt_hitsize_grow2_size"						"0.100000"
 	"bolt_hitsize_growfinal_lerptime"				"0.14"
-	"bolt_hitsize_growfinal_size"					"0.5"
+	"bolt_hitsize_growfinal_size"					"0.100000"
 
 	"bolt_gravity_enabled"							"1"
 
@@ -148,204 +149,247 @@ WeaponData
 	"npc_lead_projectiles"							"1"
 
     // Hipfire Spread
-	"spread_stand_hip" "4.500000"
-	"spread_stand_hip_run" "5.200000"
-	"spread_stand_hip_sprint" "6.000000"
-	"spread_crouch_hip" "4.250000"
-	"spread_air_hip" "7.000000"
-	"spread_min_kick" "-4.000000"
-	"spread_kick_on_fire_stand_hip" "-0.307000"
-	"spread_kick_on_fire_crouch_hip" "-0.307000"
-	"spread_kick_on_fire_air_hip" "-0.100000"
-	"spread_update_hipfire_in_ads" "1"
-	"spread_decay_rate" "5"
-	"spread_decay_delay" "0.500000"
-	"spread_max_kick_stand_hip" "1.500000"
-	"spread_max_kick_crouch_hip" "2.750000"
-	"spread_max_kick_air_hip" "4.000000"
-	"spread_stand_ads" "0.000000"
-	"spread_crouch_ads" "0.000000"
-	"spread_air_ads" "6.000000"
-	"spread_kick_on_fire_stand_ads" "0.000000"
-	"spread_kick_on_fire_crouch_ads" "0.000000"
-	"spread_kick_on_fire_air_ads" "0.000000"
-	"spread_max_kick_stand_ads" "0.000000"
-	"spread_max_kick_crouch_ads" "0.000000"
-	"spread_max_kick_air_ads" "0.000000"
-	"viewmodel_shake_forward" "1.000000"
-	"viewmodel_shake_up" "0.075000"
-	"viewmodel_shake_right" "0.000000"
-	"bob_cycle_time" "0.400000"
-	"bob_vert_dist" "0.190000"
-	"bob_horz_dist" "0.100000"
-	"bob_max_speed" "150"
-	"bob_pitch" "0.750000"
-	"bob_yaw" "-1.700000"
-	"bob_roll" "1.200000"
-	"bob_cycle_time_zoomed" "0.400000"
-	"bob_vert_dist_zoomed" "0.010000"
-	"bob_horz_dist_zoomed" "0.010000"
-	"bob_max_speed_zoomed" "150"
-	"fire_rumble" "rumble_lstar"
-	"r_trig_custom_str" "6"
-	"sway_rotate_attach" "SWAY_ROTATE"
-	"sway_min_x" "-0.500000"
-	"sway_min_y" "-0.500000"
-	"sway_min_z" "-0.600000"
-	"sway_max_x" "0.500000"
-	"sway_max_y" "0.500000"
-	"sway_max_z" "0.600000"
-	"sway_min_pitch" "18446744073709551613"
-	"sway_min_yaw" "-2.500000"
-	"sway_min_roll" "18446744073709551612"
-	"sway_max_pitch" "3"
-	"sway_max_yaw" "2.500000"
-	"sway_max_roll" "4"
-	"sway_translate_gain" "2.500000"
-	"sway_rotate_gain" "7"
-	"sway_move_forward_translate_x" "-0.100000"
-	"sway_move_forward_translate_z" "-0.500000"
-	"sway_move_back_translate_x" "0.200000"
-	"sway_move_back_translate_z" "-0.200000"
-	"sway_move_left_translate_y" "18446744073709551615"
-	"sway_move_left_translate_z" "-0.500000"
-	"sway_move_left_rotate_roll" "18446744073709551612"
-	"sway_move_right_translate_y" "1"
-	"sway_move_right_translate_z" "-0.500000"
-	"sway_move_right_rotate_roll" "4"
-	"sway_move_up_translate_z" "18446744073709551615"
-	"sway_move_down_translate_z" "1"
-	"sway_turn_left_rotate_yaw" "-2.500000"
-	"sway_turn_right_rotate_yaw" "2.500000"
-	"sway_turn_left_translate_y" "0.500000"
-	"sway_turn_right_translate_y" "-0.500000"
-	"sway_turn_up_translate_z" "0.200000"
-	"sway_turn_down_translate_z" "-0.200000"
-	"sway_turn_up_translate_x" "0.100000"
-	"sway_turn_down_translate_x" "-0.100000"
-	"sway_turn_left_rotate_roll" "4"
-	"sway_turn_right_rotate_roll" "18446744073709551612"
-	"sway_turn_up_rotate_pitch" "3"
-	"sway_turn_down_rotate_pitch" "18446744073709551613"
-	"sway_turn_up_rotate_roll" "-0.800000"
-	"sway_turn_down_rotate_roll" "0.800000"
-	"sway_rotate_attach_zoomed" "SWAY_ROTATE_ZOOMED"
-	"sway_rotate_attach_blend_time_zoomed" "0.200000"
-	"sway_rotate_gain_zoomed" "5"
-	"sway_min_yaw_zoomed" "-0.030000"
-	"sway_max_yaw_zoomed" "0.030000"
-	"sway_turn_left_rotate_yaw_zoomed" "-0.085000"
-	"sway_turn_right_rotate_yaw_zoomed" "0.085000"
-	"sway_min_roll_zoomed" "18446744073709551615"
-	"sway_max_roll_zoomed" "1"
-	"sway_turn_left_rotate_roll_zoomed" "18446744073709551615"
-	"sway_turn_right_rotate_roll_zoomed" "1"
-	"sway_move_right_rotate_roll_zoomed" "0.200000"
-	"sway_move_left_rotate_roll_zoomed" "-0.200000"
-	"sway_min_pitch_zoomed" "-0.015000"
-	"sway_max_pitch_zoomed" "0.015000"
-	"sway_turn_up_rotate_pitch_zoomed" "0.070000"
-	"sway_turn_down_rotate_pitch_zoomed" "-0.070000"
-	"sprintcycle_time" "0"
-	"viewkick_pattern" "lstar_4"
-	"viewkick_spring" "lstar_vkp"
-	"viewkick_spring_hot" "lstar_vkp_hot"
-	"viewkick_spring_heatpershot" "1.000000"
-	"viewkick_spring_cooldown_holdtime" "0.110000"
-	"viewkick_spring_cooldown_fadetime" "0.050000"
-	"viewmodel_spring_jolt" "autofire_viewmodel_jolt"
-	"viewmodel_jolt_scale" "1.000000"
-	"viewmodel_jolt_backwardPerShot" "-0.500000"
-	"viewmodel_jolt_roll" "0 3.4 0.0"
-	"viewmodel_jolt_side" "0 0.038 0"
-	"viewkick_pitch_base" "1.000000"
-	"viewkick_pitch_random" "1.000000"
-	"viewkick_pitch_softScale" "2.600000"
-	"viewkick_pitch_hardScale" "0.400000"
-	"viewkick_yaw_base" "1.000000"
-	"viewkick_yaw_random" "1.000000"
-	"viewkick_yaw_softScale" "2.100000"
-	"viewkick_yaw_hardScale" "0.300000"
-	"viewkick_roll_base" "-1.600000"
-	"viewkick_roll_randomMin" "-0.350000"
-	"viewkick_roll_randomMax" "0.350000"
-	"viewkick_roll_softScale" "0.800000"
-	"viewkick_roll_hardScale" "0.300000"
-	"viewkick_hipfire_weaponFraction" "0.200000"
-	"viewkick_hipfire_weaponFraction_vmScale" "0.800000"
-	"viewkick_ads_weaponFraction" "0.100000"
-	"viewkick_ads_weaponFraction_vmScale" "0.900000"
-	"viewkick_scale_firstshot_hipfire" "1.000000"
-	"viewkick_scale_min_hipfire" "1.000000"
-	"viewkick_scale_max_hipfire" "1.500000"
-	"viewkick_scale_firstshot_ads" "1.000000"
-	"viewkick_scale_min_ads" "1.000000"
-	"viewkick_scale_max_ads" "1.000000"
-	"viewkick_scale_valuePerShot" "1"
-	"viewkick_scale_pitch_valueLerpStart" "0"
-	"viewkick_scale_yaw_valueLerpStart" "5"
-	"viewkick_scale_pitch_valueLerpEnd" "0"
-	"viewkick_scale_yaw_valueLerpEnd" "5"
-	"viewkick_scale_valueDecayDelay" "0.550000"
-	"viewkick_scale_valueDecayRate" "160"
-	"viewkick_perm_pitch_base" "0"
-	"viewkick_perm_pitch_random" "0"
-	"viewkick_perm_yaw_base" "0"
-	"viewkick_perm_yaw_random" "0"
-	"viewkick_air_scale_ads" "2"
-	"viewkick_duck_scale" "1.000000"
-	"cooldown_viewkick_pitch_base" "0.850000"
-	"cooldown_viewkick_pitch_random" "0.150000"
-	"cooldown_viewkick_pitch_random_innerexclude" "0.000000"
-	"cooldown_viewkick_yaw_base" "0.250000"
-	"cooldown_viewkick_yaw_random" "0.500000"
-	"cooldown_viewkick_yaw_random_innerexclude" "0.000000"
-	"cooldown_viewkick_softScale" "0.400000"
-	"cooldown_viewkick_hardScale" "0.600000"
-	"cooldown_viewkick_adsScale" "0.550000"
-	"viewdrift_ads_delay" "0.800000"
-	"viewdrift_ads_delay_debounce_time" "0.400000"
-	"viewdrift_ads_speed_pitch" "0.600000"
-	"viewdrift_ads_speed_yaw" "0.600000"
-	"viewdrift_ads_stand_scale_pitch" "0.600000"
-	"viewdrift_ads_stand_scale_yaw" "0.500000"
-	"viewdrift_ads_crouch_scale_pitch" "0.500000"
-	"viewdrift_ads_crouch_scale_yaw" "0.400000"
-	"viewdrift_ads_air_scale_pitch" "0.800000"
-	"viewdrift_ads_air_scale_yaw" "0.900000"
+   "spread_stand_hip"								"2.500000"
+    "spread_stand_hip_run"							"3.000000"
+    "spread_stand_hip_sprint"                       "4.000000"
+    "spread_crouch_hip"   							"2.250000"
+    "spread_air_hip"  								"5.000000"
+
+    "spread_kick_on_fire_stand_hip"   				"0.2"
+    "spread_kick_on_fire_crouch_hip"  				"0.2"
+    "spread_kick_on_fire_air_hip" 					"0.2"
+
+    "spread_max_kick_stand_hip"   					"1.5"
+    "spread_max_kick_crouch_hip"  					"2.75"
+    "spread_max_kick_air_hip" 						"4.0"
+
+	"spread_stand_ads"  							"0.0"
+	"spread_crouch_ads"  							"0.0"
+	"spread_air_ads"								"6.0"
+
+	"spread_kick_on_fire_stand_ads"   				"0.0"
+	"spread_kick_on_fire_crouch_ads"  				"0.0"
+	"spread_kick_on_fire_air_ads" 					"0.0"
+
+	"spread_max_kick_stand_ads"   					"0.0"
+	"spread_max_kick_crouch_ads"  					"0.0"
+	"spread_max_kick_air_ads" 						"0.0"
+
+	"spread_decay_rate"   							"10"
+	"spread_decay_delay"  							".3"
+
+	//
+	"viewmodel_shake_forward"						"1.0"
+	"viewmodel_shake_up"							"0.075"
+	"viewmodel_shake_right"							"0.0"
+
+
+	// Bob
+	"bob_cycle_time"  								"0.4"
+	"bob_vert_dist"   								"0.19"
+	"bob_horz_dist"   								"0.1"
+	"bob_max_speed"   								"150"
+	"bob_pitch"   									"0.75"
+	"bob_yaw" 										"-1.7"
+	"bob_roll"										"1.2"
+
+	// Bob_Zoomed
+	"bob_cycle_time_zoomed"  						"0.4"
+	"bob_vert_dist_zoomed"   						"0.01"
+	"bob_horz_dist_zoomed"   						"0.01"
+	"bob_max_speed_zoomed"   						"150"
+	//"bob_pitch_zoomed"   							"0.002"
+	//"bob_yaw_zoomed" 								"-.002"
+	//"bob_roll_zoomed"								".002"
+
+	// Rumble
+	"fire_rumble"									"rumble_lstar"
+
+	// Sway
+	"sway_rotate_attach"  							"SWAY_ROTATE"
+	"sway_min_x"  									"-0.5"
+	"sway_min_y"  									"-0.5"
+	"sway_min_z"  									"-0.6"
+	"sway_max_x"  									"0.5"
+	"sway_max_y"  									"0.5"
+	"sway_max_z"  									"0.6"
+	"sway_min_pitch"  								"-3"
+	"sway_min_yaw"									"-2.5"
+	"sway_min_roll"   								"-4"
+	"sway_max_pitch"  								"3"
+	"sway_max_yaw"									"2.5"
+	"sway_max_roll"   								"4"
+	"sway_translate_gain" 							"2.5"
+	"sway_rotate_gain"								"7"
+	"sway_move_forward_translate_x"   				"-0.1"
+	"sway_move_forward_translate_z"   				"-0.5"
+	"sway_move_back_translate_x"  					"0.2"
+	"sway_move_back_translate_z"  					"-0.2"
+	"sway_move_left_translate_y"  					"-1"
+	"sway_move_left_translate_z"  					"-0.5"
+	"sway_move_left_rotate_roll"  					"-4"
+	"sway_move_right_translate_y" 					"1"
+	"sway_move_right_translate_z" 					"-0.5"
+	"sway_move_right_rotate_roll" 					"4"
+	"sway_move_up_translate_z"						"-1"
+	"sway_move_down_translate_z"  					"1"
+	"sway_turn_left_rotate_yaw"   					"-2.5"
+	"sway_turn_right_rotate_yaw"  					"2.5"
+
+	"sway_turn_left_translate_y"  					".5"
+	"sway_turn_right_translate_y"  					"-.5"
+	"sway_turn_up_translate_z"  					".2"
+	"sway_turn_down_translate_z"  					"-.2"
+	"sway_turn_up_translate_x"  					".1"
+	"sway_turn_down_translate_x"  					"-.1"
+
+	"sway_turn_left_rotate_roll"   					"4"
+	"sway_turn_right_rotate_roll"  					"-4"
+	"sway_turn_up_rotate_pitch"   					"3"
+	"sway_turn_down_rotate_pitch" 					"-3"
+	"sway_turn_up_rotate_roll"   					"-0.8"
+	"sway_turn_down_rotate_roll" 					"0.8"
+
+	// Zoomed Sway
+	"sway_rotate_attach_zoomed"						"SWAY_ROTATE_ZOOMED"
+	"sway_rotate_attach_blend_time_zoomed"			"0.2"
+	"sway_rotate_gain_zoomed"						"5"
+
+	"sway_min_yaw_zoomed"							"-0.030000"
+	"sway_max_yaw_zoomed"							"0.030000"
+	"sway_turn_left_rotate_yaw_zoomed"				"-0.085"
+	"sway_turn_right_rotate_yaw_zoomed"				"0.085"
+
+	"sway_min_roll_zoomed"   						"-1"
+	"sway_max_roll_zoomed"   						"1"
+	"sway_turn_left_rotate_roll_zoomed"   			"-1"
+	"sway_turn_right_rotate_roll_zoomed"  			"1"
+
+	"sway_move_right_rotate_roll_zoomed" 			"0.2"
+	"sway_move_left_rotate_roll_zoomed"  			"-0.2"
+
+	"sway_min_pitch_zoomed"  						"-0.015000"
+	"sway_max_pitch_zoomed"  						"0.015000"
+	"sway_turn_up_rotate_pitch_zoomed"				"0.07"
+	"sway_turn_down_rotate_pitch_zoomed"			"-0.07"
+
+	//setting to "0" so it's tunable in Bakery
+	"sprintcycle_time"								"0"
+
+    // Viewkick
+	"viewkick_pattern"                              "lstar_4"
+
+    "viewkick_spring" 								"lstar_vkp"
+    "viewkick_spring_hot"                           "lstar_vkp_hot"
+
+    "viewkick_spring_heatpershot"                   "1.0"
+    "viewkick_spring_cooldown_holdtime"             "0.110000"
+    "viewkick_spring_cooldown_fadetime"             "0.05"
+
+    "viewmodel_spring_jolt"                          "autofire_viewmodel_jolt"
+    "viewmodel_jolt_scale"                           "1.0"
+    "viewmodel_jolt_backwardPerShot"                 "-0.5"
+    "viewmodel_jolt_roll"                            "0 3.4 0.0"
+    "viewmodel_jolt_side"                            "0 0.038 0"
+
+	"viewkick_pitch_base" 							"1.200000"
+	"viewkick_pitch_random"   						"1.0"
+	"viewkick_pitch_softScale"						"2.800000"
+	"viewkick_pitch_hardScale"						"0.4"
+
+	"viewkick_yaw_base"   							"1.100000"
+	"viewkick_yaw_random" 							"1.0"
+	"viewkick_yaw_random_innerexclude"				"0.05"
+	"viewkick_yaw_softScale"  						"2.300000"
+	"viewkick_yaw_hardScale"  						"0.3"
+
+	"viewkick_roll_base"  							"-1.6"
+    "viewkick_roll_randomMin" 						"-0.35"
+    "viewkick_roll_randomMax" 						"0.35"
+    "viewkick_roll_softScale" 						"0.8"
+    "viewkick_roll_hardScale" 						"0.3"
+
+	"viewkick_hipfire_weaponFraction" 				"0.2"
+	"viewkick_hipfire_weaponFraction_vmScale" 		"0.8"
+	"viewkick_ads_weaponFraction" 					"0.1"
+	"viewkick_ads_weaponFraction_vmScale" 			"0.9"
+
+	"viewkick_scale_firstshot_hipfire"			    "1.0"
+	"viewkick_scale_min_hipfire"  					"1.0"
+	"viewkick_scale_max_hipfire"  					"1.5"
+	"viewkick_scale_firstshot_ads"				    "1.0"
+	"viewkick_scale_min_ads"  						"1.0"
+	"viewkick_scale_max_ads"  						"1.0"
+	"viewkick_scale_valuePerShot" 					"1"
+	"viewkick_scale_pitch_valueLerpStart"   		"0"
+	"viewkick_scale_yaw_valueLerpStart"   			"5"
+	"viewkick_scale_pitch_valueLerpEnd" 			"0"
+	"viewkick_scale_yaw_valueLerpEnd" 				"5"
+	"viewkick_scale_valueDecayDelay"  				"0.550000"
+    "viewkick_scale_valueDecayRate"   				"160"
+
+	"viewkick_perm_pitch_base" 						"0"
+	"viewkick_perm_pitch_random"   					"0"
+	"viewkick_perm_yaw_base"   						"0"
+	"viewkick_perm_yaw_random" 						"0"
+
+    "viewkick_air_scale_ads"						"2"
+	"viewkick_duck_scale"							"1.0"
+
+	"cooldown_viewkick_pitch_base"				    "0.85"
+	"cooldown_viewkick_pitch_random"				"0.15"
+	"cooldown_viewkick_pitch_random_innerexclude"	"0.0"
+	"cooldown_viewkick_yaw_base"					"0.25"
+	"cooldown_viewkick_yaw_random"				    "0.5"
+	"cooldown_viewkick_yaw_random_innerexclude"	    "0.0"
+	"cooldown_viewkick_softScale"					"0.4"
+	"cooldown_viewkick_hardScale"					"0.6"
+	"cooldown_viewkick_adsScale"					"0.55"
+
+	// Viewdrift - ADS
+	"viewdrift_ads_delay"                      "0.8"
+	"viewdrift_ads_delay_debounce_time"        "0.4"
+
+	"viewdrift_ads_speed_pitch"   				"0.6"
+	"viewdrift_ads_speed_yaw" 					"0.6"
+
+	"viewdrift_ads_stand_scale_pitch" 			"0.6"
+	"viewdrift_ads_stand_scale_yaw"   			"0.5"
+	"viewdrift_ads_crouch_scale_pitch"  		"0.5"
+	"viewdrift_ads_crouch_scale_yaw"			"0.4"
+	"viewdrift_ads_air_scale_pitch"   			"0.8"
+	"viewdrift_ads_air_scale_yaw" 				"0.9"
 	
 	// Ammo
     "ammo_suck_behavior"							"primary_weapons"
     "chance_for_bonus_last_shot_in_clip"			"0"
     "critical_hit"									"1"
 
-	"ammo_clip_size" "18"
+	"ammo_clip_size" "0"
 	"ammo_no_remove_from_stockpile" "1"
 	"uses_ammo_pool" "1"
-	"low_ammo_fraction" "0.005000"
-	"ammo_stockpile_max" "80"
-	"ammo_default_total" "120"
+	"ammo_stockpile_max" "0"
+	"ammo_default_total" "0"
 	
 	"ammo_min_to_fire"								"1"
 	"ammo_per_shot"		    						"1"
-
-    "reload_alt_anim"								"0"
+	"reload_enabled"  							"0"
 
     "aimassist_adspull_weaponclass"					"none"
 
-    "damage_near_value"   							"18"
-    "damage_far_value"								"18"
-    "damage_very_far_value"							"18"
-    "damage_near_value_titanarmor"					"18"
-    "damage_far_value_titanarmor" 					"18"
-    "damage_very_far_value_titanarmor" 				"18"
+    "damage_near_value"   							"19"
+    "damage_far_value"								"19"
+    "damage_very_far_value"							"19"
+    "damage_near_value_titanarmor"					"19"
+    "damage_far_value_titanarmor" 					"19"
+    "damage_very_far_value_titanarmor" 				"19"
 
     "damage_rodeo" 									"100"
     "explosion_damage"								"30"
     "damage_near_distance"							"1500"
     "damage_far_distance" 							"2500"
     "damage_very_far_distance"						"5000"
-    "damage_headshot_scale"							"1.50"
+    "damage_headshot_scale"							"1.250000"
     "damage_leg_scale"	    						"0.85"
     "critical_hit_damage_scale"						"1.5"
 
@@ -391,8 +435,8 @@ WeaponData
 	"zoom_time_in"                                  "0.34"
 	"zoom_time_out"                                 "0.3"
 	"zoom_fov"										"55"
-	"reload_time" 									"3.26"
-	"reloadempty_time"								"3.26"
+	"reload_time" 									"3.260000"
+	"reloadempty_time"								"3.260000"
 	//"reloadempty_time_late1"						"4.7"
 	//"reloadempty_time_late2"						"3.5"
 	//"reloadempty_time_late3"						"2.5"
@@ -453,11 +497,8 @@ WeaponData
 
 		"stock_tactical_l1"
 		{
-			// "charge_overheat_cooldown_time" "*0.967"
-			// "charge_overheat_cooldown_time_late1" "*0.967"
-			// "charge_overheat_cooldown_time_late2" "*0.967"
-			// "charge_overheat_cooldown_time_late3" "*0.967"
-			// "charge_overheat_cooldown_delay" "*0.967"
+			"charge_cooldown_time" "*0.967"
+			"charge_cooldown_delay" "*0.967"
 			"cooldown_time" "*0.967"
 			"zoom_time_in" "*0.85"
 			"zoom_time_out" "*0.85"
@@ -491,11 +532,8 @@ WeaponData
 
 		"stock_tactical_l2"
 		{
-			// "charge_overheat_cooldown_time" "*0.933"
-			// "charge_overheat_cooldown_time_late1" "*0.933"
-			// "charge_overheat_cooldown_time_late2" "*0.933"
-			// "charge_overheat_cooldown_time_late3" "*0.933"
-			// "charge_overheat_cooldown_delay" "*0.933"
+			"charge_cooldown_time" "*0.933"
+			"charge_cooldown_delay" "*0.933"
 			"cooldown_time" "*0.933"
 			"zoom_time_in" "*0.8"
 			"zoom_time_out" "*0.8"
@@ -529,11 +567,8 @@ WeaponData
 
 		"stock_tactical_l3"
 		{
-			// "charge_overheat_cooldown_time" "*0.9"
-			// "charge_overheat_cooldown_time_late1" "*0.9"
-			// "charge_overheat_cooldown_time_late2" "*0.9"
-			// "charge_overheat_cooldown_time_late3" "*0.9"
-			// "charge_overheat_cooldown_delay" "*0.9"
+			"charge_cooldown_time" "*0.9"
+			"charge_cooldown_delay" "*0.9"
 			"cooldown_time" "*0.9"
 			"zoom_time_in" "*0.75"
 			"zoom_time_out" "*0.75"
@@ -684,7 +719,15 @@ WeaponData
 			"is_burn_mod"					"1"
 			"cooldown_type"									"ammo_timed"
 		}
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 	// THIS IS A BUNCH OF DIRTY HACKS! We can't put actual primitive values for ui args, so we have to link it to some value.
     //  I'm using eWeaponVar.ammo_per_shot = 1 to set the showChargeFrac "bool" and to avoid divide by 0 issues with clipSize
@@ -794,18 +837,16 @@ WeaponData
 		"mesh"							"models/weapons/attachments/lstar_rui_lower"
 		Args
 		{
-			clipAmmo			weapon_ammo
-			clipSize			weapon_clipSize
-			lifetimeShots		weapon_lifetime_shots
-			ammoFrac			weapon_ammofrac
-			chargeFrac          player_chargeFrac
-
-			isFiring			weapon_is_firing
-			isCooling			weapon_is_inCooldown
-			isReloading			weapon_is_reloading
-			isAmped				weapon_is_amped
-
-			lastDryFireTime		weapon_latest_dryfire_time
+			"clipAmmo" "weapon_ammoClipCount"
+			"clipSize" "weapon_clipSize"
+			"lifetimeShots" "weapon_lifetime_shots"
+			"ammoFrac" "weapon_ammofrac"
+			"chargeFrac" "player_chargeFrac"
+			"isFiring" "weapon_is_firing"
+			"isCooling" "weapon_is_inCooldown"
+			"isReloading" "weapon_is_reloading"
+			"isAmped" "weapon_is_amped"
+			"lastDryFireTime" "weapon_latest_dryfire_time"
 		}
 	}
 
@@ -831,6 +872,9 @@ WeaponData
 		Args
 		{
 			lastDryFireTime			weapon_latest_dryfire_time
+			vis					player_zoomfrac
+			ammo				weapon_ammo
+			clipSize			weapon_clipSize
 		}
 	}
 

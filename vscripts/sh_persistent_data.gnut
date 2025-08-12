@@ -112,7 +112,7 @@ void function ShPersistentData_LevelInit_Begin()
 	#endif
 
 	#if SERVER || CLIENT
-		Remote_RegisterClientFunction( "ServerToClient_OnPersistentDataReady" )
+		ScriptRemote_RegisterClientFunction( "ServerToClient_OnPersistentDataReady" )
 	#endif
 }
 

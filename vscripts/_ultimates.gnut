@@ -4,6 +4,7 @@ global function Ultimates_RegisterNetworking
 global function Ultimates_Init
 global function Ultimates_OnPlayerDealtDamage
 global function Ultimates_OnPlayerRespawned
+global function Ultimates_OnPlayerUltIsReady
 #endif // SERVER
 
 #if CLIENT
@@ -14,7 +15,7 @@ global function SCB_OnUltimateReady
 const string FUNCNAME_OnUltimateReady = "SCB_OnUltimateReady"
 void function Ultimates_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( FUNCNAME_OnUltimateReady )
+	ScriptRemote_RegisterClientFunction( FUNCNAME_OnUltimateReady )
 }
 
 
@@ -149,6 +150,76 @@ void function UltimateCharge_OnPlayerRespawned( entity player )
 
 #endif // #if SERVER
 
+#if SERVER
+table<entity, float> s_playerToUltReadyTimesMap
+void function Ultimates_OnPlayerUltIsReady( entity player, entity weapon )
+{
+	if ( !IsValid( player ) )
+		return
+	if ( !(player in s_playerToUltReadyTimesMap) )
+		s_playerToUltReadyTimesMap[player] <- 0.0
+
+	float timeNow = Time()
+	if ( (Time() - s_playerToUltReadyTimesMap[player]) < 1.0 )
+	{
+		Warning( "%s() - Dropping new ult notify for player '%s', since the last notify was so recent.", FUNC_NAME(), string( player ) )
+		return
+	}
+
+	PIN_PlayerAbilityReady( weapon.GetWeaponOwner(), ABILITY_TYPE.ULTIMATE )
+	Remote_CallFunction_NonReplay( player, FUNCNAME_OnUltimateReady )
+	s_playerToUltReadyTimesMap[player] = timeNow
+
+	                    
+		/*if( player.HasPassive( ePassives.PAS_FREE_GRENADE_ON_ULT_CHARGE ) )
+		{
+			array<string> potentialDrops = [
+				"mp_weapon_thermite_grenade",
+				"mp_weapon_frag_grenade",
+				"mp_weapon_grenade_emp",
+			]
+
+			string itemRef = potentialDrops[RandomIntRange(0, potentialDrops.len())]
+			LootData data = SURVIVAL_Loot_GetLootDataByRef( itemRef )
+
+			vector launchDir = < 0, 0, 1 >
+			vector launchPos = player.EyePosition() + player.GetForwardVector() * 100
+			SURVIVAL_ThrowLootFromPoint( launchPos, launchDir , itemRef, data.countPerDrop )
+			EmitSoundAtPosition( TEAM_UNASSIGNED, launchPos, "Loba_Ultimate_BlackMarket_WarpIn" )
+			thread WarpBeamFXThread( launchPos, launchPos )
+		}*/
+       
+}
+
+                    
+void function WarpBeamFXThread( vector startPos, vector endPos )
+{
+	entity controlPoint = CreateEntity( "info_placement_helper" )
+	SetTargetName( controlPoint, UniqueString( "translocation_endPos" ) )
+	controlPoint.SetOrigin( endPos )
+	DispatchSpawn( controlPoint )
+
+	entity beamFX = CreateEntity( "info_particle_system" )
+	const asset BLACK_MARKET_WARP_BEAM_FX = $"P_item_warp_travel"
+	beamFX.SetValueForEffectNameKey( BLACK_MARKET_WARP_BEAM_FX )
+	beamFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+	beamFX.kv.cpoint1 = controlPoint.GetTargetName()
+	beamFX.kv.start_active = 1
+	beamFX.SetOrigin( startPos )
+	DispatchSpawn( beamFX )
+
+	OnThreadEnd( function () : ( beamFX, controlPoint ) {
+		if ( IsValid( beamFX ) )
+			beamFX.Destroy()
+
+		if ( IsValid( controlPoint ) )
+			controlPoint.Destroy()
+	} )
+
+	wait 2.0
+}
+      
+#endif // #if SERVER
 
 #if CLIENT
 void function SCB_OnUltimateReady()

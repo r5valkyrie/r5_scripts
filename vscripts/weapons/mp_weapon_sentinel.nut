@@ -1,5 +1,3 @@
-//Made by @CafeFPS
-
 global function MpWeaponSentinel_Init
 global function OnWeaponPrimaryAttack_weapon_sentinel
 global function OnWeaponActivate_weapon_sentinel

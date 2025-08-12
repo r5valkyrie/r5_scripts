@@ -738,13 +738,13 @@ void function DumpConstTable( table constTable )
 
 	#if CLIENT
 		constFileName = "scripts/codeconsts_CLIENT.txt"
-		DevTextBufferWrite( "\n// [CLIENT] generated file: do not modify\n\n" )
+		DevTextBufferWrite( "\n// [CLIENT] generated file\n\n" )
 	#elseif SERVER
 		constFileName = "scripts/codeconsts_SERVER.txt"
-		DevTextBufferWrite( "\n// [SERVER] generated file: do not modify\n\n" )
+		DevTextBufferWrite( "\n// [SERVER] generated file\n\n" )
 	#elseif UI
 		constFileName = "scripts/codeconsts_UI.txt"
-		DevTextBufferWrite( "\n// [UI] generated file: do not modify\n\n" )
+		DevTextBufferWrite( "\n// [UI] generated file\n\n" )
 	#endif
 
 	array< ConstTableEntry > constTableEntries

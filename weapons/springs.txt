@@ -189,6 +189,39 @@ WeaponSprings
 		"ADS_roll_damping"				"25.0"
 	}
 
+	"autopistol_fusion_vkp"
+	{
+		"hipfire_pitch_springConstant" "40.000000"
+		"hipfire_pitch_damping" "20.000000"
+		"hipfire_yaw_springConstant" "45.000000"
+		"hipfire_yaw_damping" "20.000000"
+		"hipfire_roll_springConstant" "20000.000000"
+		"hipfire_roll_damping" "22.000000"
+		"ADS_pitch_springConstant" "115.000000"
+		"ADS_pitch_damping" "20.000000"
+		"ADS_yaw_springConstant" "95.000000"
+		"ADS_yaw_damping" "15.000000"
+		"ADS_roll_springConstant" "20000.000000"
+		"ADS_roll_damping" "20.000000"
+
+	}
+
+	"autopistol_fusion_vkp_hot"
+	{
+		"hipfire_pitch_springConstant" "60.000000"
+		"hipfire_pitch_damping" "20.000000"
+		"hipfire_yaw_springConstant" "45.000000"
+		"hipfire_yaw_damping" "20.000000"
+		"hipfire_roll_springConstant" "20000.000000"
+		"hipfire_roll_damping" "22.000000"
+		"ADS_pitch_springConstant" "20.000000"
+		"ADS_pitch_damping" "60.000000"
+		"ADS_yaw_springConstant" "15.000000"
+		"ADS_yaw_damping" "40.000000"
+		"ADS_roll_springConstant" "20000"
+		"ADS_roll_damping" "20.000000"
+	}
+
 	dmr
 	{
 		"hipfire_pitch_springConstant"	"90.0"

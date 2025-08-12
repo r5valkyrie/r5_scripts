@@ -1,5 +1,5 @@
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
+
+
 
 global function OnWeaponActivate_heatwave
 global function OnWeaponDeactivate_heatwave
@@ -10,7 +10,7 @@ global function MpWeaponHeatwave_Init
 const HEATWAVE_PATTERN = 6
 
 void function MpWeaponHeatwave_Init()
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
+
 {
 #if CLIENT
 // RegisterConCommandTriggeredCallback( "+zoom", ActivateAltfire )
@@ -38,26 +38,26 @@ struct {
 } file
 
 void function OnWeaponActivate_heatwave( entity weapon )
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
+
 {
 	//do something here? fxs?
 }
 
 void function OnWeaponDeactivate_heatwave( entity weapon )
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
+
 {
 	//do something here? fxs?
 }
 
 var function OnWeaponPrimaryAttack_heatwave( entity weapon, WeaponPrimaryAttackParams attackParams )
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
+
 {	
 	//EmitSoundOnEntity( weapon, "explo_spectre" )
 	return FireHeatwave( attackParams, true, weapon )
 }
 
 void function OnProjectileCollision_heatwave( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
+
 {
 	#if SERVER
 		int bounceCount = projectile.GetProjectileWeaponSettingInt( eWeaponVar.projectile_ricochet_max_count )
@@ -103,7 +103,7 @@ int function FireHeatwave( WeaponPrimaryAttackParams attackParams, bool playerFi
 			vector rightVec
 			
 			if(IsModActive( weapon, "altfire" ))
-			//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
+			
 			{
 				upVec = baseUpVec * file.boltOffsetsVertical[index][0] * spreadFrac
 				rightVec = baseRightVec * file.boltOffsetsVertical[index][1] * spreadFrac	
@@ -143,7 +143,7 @@ int function FireHeatwave( WeaponPrimaryAttackParams attackParams, bool playerFi
 
 #if CLIENT
 void function ActivateAltfire(entity player)
-//By Retículo Endoplasmático#5955 (CaféDeColombiaFPS)
+
 {
 	player.ClientCommand("+scriptCommand3")
 	player.ClientCommand("-scriptCommand3")

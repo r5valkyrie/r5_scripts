@@ -861,7 +861,7 @@ void function CreateSkyFall( entity ent, float radius = 80, bool debugdraw = fal
 #if SERVER
     const array <string> m_VanillaWeapons = [
         "mp_weapon_energy_ar", "mp_weapon_rspn101", "mp_weapon_hemlok", "mp_weapon_vinson", "mp_weapon_rspn101_og", // AR
-        "mp_weapon_r97", "mp_weapon_alternator_smg", "mp_weapon_pdw" , "mp_weapon_volt_smg", "mp_weapon_car", // SMG
+        "mp_weapon_r97", "mp_weapon_alternator_smg", "mp_weapon_pdw" , "mp_weapon_volt_smg", // SMG
         "mp_weapon_esaw", "mp_weapon_lstar", "mp_weapon_lmg" , // "mp_weapon_mobile_hmg", // LMG
         "mp_weapon_sniper", "mp_weapon_g2", "mp_weapon_defender", "mp_weapon_dmr", "mp_weapon_doubletake", "mp_weapon_sentinel", // SNIPER
         "mp_weapon_3030", "mp_weapon_bow", // MARKSMAN

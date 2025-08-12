@@ -1,6 +1,23 @@
 // ========= Pilot Launcher (LAW/SRAM) screen =========
 vgui_pilot_launcher.res
 {
+	// todo(amos): this has been added and all text entries are pinned
+	// to this to work around an engine crash. Text does not render for
+	// some reason (the strings are correctly formatted in the engine!).
+	// Need to investigate why it doesn't render (perhaps this scheme
+	// file needs to be reworked to accomodate the changes between r2
+	// and r5 ???).
+	VGUI_PilotLauncher_Screen
+	{
+		ControlName		ImagePanel
+		wide			%100
+		tall			%100
+		visible			1
+		scaleImage		1
+		fillColor		"0 0 0 0"
+		drawColor		"0 0 0 0"
+	}
+
 	VGUI_PilotLauncher_TargetName
 	{
 		ControlName			Label
@@ -14,6 +31,9 @@ vgui_pilot_launcher.res
 		font				Default_55_Responsive
 		textAlignment		west
 		zpos				9
+
+		// See comment at `VGUI_PilotLauncher_Screen`.
+		pin_to_sibling			VGUI_PilotLauncher_Screen
 	}
 
 	VGUI_PilotLauncher_Range
@@ -29,6 +49,9 @@ vgui_pilot_launcher.res
 		font				Default_55_Responsive
 		textAlignment		west
 		zpos				9
+
+		// See comment at `VGUI_PilotLauncher_Screen`.
+		pin_to_sibling			VGUI_PilotLauncher_Screen
 	}
 
 	VGUI_PilotLauncher_LockStatus
@@ -44,6 +67,9 @@ vgui_pilot_launcher.res
 		font				Default_69_Responsive
 		textAlignment		center
 		zpos				9
+
+		// See comment at `VGUI_PilotLauncher_Screen`.
+		pin_to_sibling			VGUI_PilotLauncher_Screen
 	}
 
 	VGUI_PilotLauncher_Ammo_Label
@@ -59,6 +85,9 @@ vgui_pilot_launcher.res
 		font				Default_69_Responsive
 		textAlignment		center
 		zpos				9
+
+		// See comment at `VGUI_PilotLauncher_Screen`.
+		pin_to_sibling			VGUI_PilotLauncher_Screen
 	}
 
 	VGUI_PilotLauncher_AmmoIcon0

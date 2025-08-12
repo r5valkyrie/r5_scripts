@@ -1,5 +1,3 @@
-// Ported by @CafeFPS
-
 global function MpAbilityCryptoDrone_Init
 
 global function OnWeaponTossReleaseAnimEvent_ability_crypto_drone
@@ -214,7 +212,7 @@ void function MpAbilityCryptoDrone_Init()
 		RegisterSignal( "ExitCameraView" )
 		RegisterSignal( "FinishDroneRecall" )
 		//AddDamageCallback( "player", OnPlayerTookDamage ) //(mk): commented, added when entering drone view
-		AddClientCommandCallbackNew( "ShouldExitDrone", ClientCommand_ShouldExitDrone )
+		AddClientCommandCallbackVoid( "ShouldExitDrone", ClientCommand_ShouldExitDrone )
 		file.neurolinkRegisteredPropScriptsArrayID = CreateScriptManagedEntArray()
 		file.empDamageArrayID = CreateScriptManagedEntArray()
 		file.empDestroyArrayID = CreateScriptManagedEntArray()
@@ -251,7 +249,7 @@ void function MpAbilityCryptoDrone_Init()
 	#endif
 
 	if ( AutoReloadWhileInCryptoDroneCameraView() )
-		Remote_RegisterClientFunction( "ServerToClient_CryptoDroneAutoReloadDone", "entity" )
+		ScriptRemote_RegisterClientFunction( "ServerToClient_CryptoDroneAutoReloadDone", "entity" )
 
 	//testing different method for confirming immediate camera access
 	RegisterSignal( "Crypto_Immediate_Camera_Access_Confirmed" )
@@ -819,7 +817,7 @@ void function CryptoDrone_CameraImpact_Thread( entity projectile, DeployableColl
 		entity cameraVehicle
 		foreach( child in children )
 		{
-			if( child.GetClassName() == "player_vehicle" && child.GetScriptName() == CRYPTO_DRONE_SCRIPTNAME ) //Cafe was here
+			if( child.GetClassName() == "player_vehicle" && child.GetScriptName() == CRYPTO_DRONE_SCRIPTNAME )
 			{
 				cameraVehicle = child
 				break
@@ -1340,7 +1338,7 @@ bool function ShouldCryptoDroneBeCrushed( entity pusher, entity pushed )
 
 		if ( IsValid( doorEnt ) )
 		{
-			// AvoidBeingPutInsideDoorFromCrush( doorEnt, pushed )
+			AvoidBeingPutInsideDoorFromCrush( doorEnt, pushed )
 			return false
 		}
 	}
@@ -2781,7 +2779,7 @@ void function NeurolinkThink( entity camera, bool attachFx = true )
 
 		array<entity> nearbyEntities = []
 
-		//Cafe was here. Retail implementation uses VehicleGetPlayersInViewArray and VehicleGetNpcsInViewArray code functs that we don't have in s3.
+		//Retail implementation uses VehicleGetPlayersInViewArray and VehicleGetNpcsInViewArray code functs that we don't have in s3.
 		//I suppose that function check for LOS and by min dot, so let's do that.
 		float minDot = deg_cos( NEUROLINK_VIEW_MINDOT_BUFFED )
 
@@ -3452,7 +3450,7 @@ float function GetNeurolinkRange( entity player )
 
 bool function DroneCanOpenDoor( entity drone, entity door )
 {
-	if ( HACK_IsVaultDoor( door ) )
+	if ( IsVaultDoor( door ) )
 		return false
 
 	// if( IsReinforced( door ) && !IsFriendlyTeam( drone.GetTeam(), door.GetTeam() ) )

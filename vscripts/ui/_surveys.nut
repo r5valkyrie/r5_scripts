@@ -22,7 +22,7 @@ void function InitSurveys()
 float lastSurveyDisplayTime = 0.0
 bool function TryOpenSurvey( int surveyType )
 {
-	if ( !GetConVarBool( "pin_opt_in" ) || !MeetsAgeRequirements() )
+	/*if ( !GetConVarBool( "pin_opt_in" ) || !MeetsAgeRequirements() )
 		return false
 
 	float sampleRate = GetSurveySampleRateByType( surveyType )
@@ -39,9 +39,9 @@ bool function TryOpenSurvey( int surveyType )
 
 	surveyList.randomize()
 
-	OpenSurveyByRef( surveyList[0], sampleRate )
+	OpenSurveyByRef( surveyList[0], sampleRate )*/
 
-	return true
+	return false
 }
 
 

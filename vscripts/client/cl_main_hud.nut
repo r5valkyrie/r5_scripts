@@ -21,6 +21,10 @@ global function ShowChat
 
 global function IsWatchingReplay
 
+//Chat 
+global function mute
+global function isMuted
+
 global const MAX_ACTIVE_TRAPS_DISPLAYED = 5
 global const VGUI_CLOSED                = 0
 global const VGUI_CLOSING               = 1
@@ -58,6 +62,7 @@ struct
 	
 	bool hideChat = false
 	
+	bool muted = false	
 } file
 
 void function ClMainHud_Init()
@@ -121,6 +126,8 @@ void function MainHud_AddClient( entity player )
 	player.cv.burnCardAnnouncementQueue <- []
 
 	clGlobal.empScreenEffect = Hud.HudElement( "EMPScreenFX" )
+
+	thread ClientHudInit( player )
 }
 
 void function CockpitHudInit( entity cockpit )
@@ -696,6 +703,26 @@ void function DrawAttentionToTestMap( var elem )
 	}
 }
 
+
+void function ClientHudInit( entity player )
+{
+	Assert( player == GetLocalClientPlayer() )
+
+	#if DEVELOPER
+		HudElement( "Dev_Info1" ).Hide()
+		HudElement( "Dev_Info2" ).Hide()
+		HudElement( "Dev_Info3" ).Hide()
+			{
+				if ( IsTestMap() )
+				{
+					var elem = HudElement( "Dev_Info3" )
+					Hud_SetText( elem, "Map is in development! Progress: [###########___________] 59%" )
+					Hud_Show( elem )
+				}
+			}
+	#endif //DEVELOPER
+}
+
 void function CinematicEventUpdateDoF( entity player )
 {
 	if ( player != GetLocalClientPlayer() )
@@ -992,3 +1019,12 @@ bool function IsWatchingReplay()
 	return false
 }
 
+void function mute( bool set )
+{
+	file.muted = set
+}
+
+bool function isMuted()
+{
+	return file.muted
+}

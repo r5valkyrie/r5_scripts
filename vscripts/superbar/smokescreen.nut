@@ -129,7 +129,11 @@ void function Smokescreen( SmokescreenStruct smokescreen, entity player )
 		EmitSoundAtPosition( TEAM_ANY, fxInfo.center, smokescreen.deploySound3p )
 	}
 
-	array<entity> fxEntities = SmokescreenFX( smokescreen, fxInfo )
+	array<entity> fxEntities
+	
+	if( Gamemode() != eGamemodes.fs_spieslegends || Gamemode() == eGamemodes.fs_spieslegends && player.GetTeam() == gCurrentSpyTeam ) //(cafe) Hide electric grenade smoke for mercs, but don't hide it for spies which have smoke single
+		fxEntities = SmokescreenFX( smokescreen, fxInfo )
+	
 	if ( smokescreen.isElectric )
 		thread SmokescreenAffectsEntitiesInArea( smokescreen, fxInfo, player )
 	//thread CreateSmokeSightTrigger( fxInfo.center, smokescreen.ownerTeam, smokescreen.lifetime ) // disabling for now, this should use the calculated radius if reenabled
@@ -211,7 +215,27 @@ void function SmokescreenAffectsEntitiesInArea( SmokescreenStruct smokescreen, S
 	DispatchSpawn( aiDangerTarget )
 	aiDangerTarget.SetOrigin( fxInfo.center )
 	SetTeam( aiDangerTarget, smokescreen.ownerTeam )
-
+	aiDangerTarget.SetScriptName( "smokeScreenInfoTarget" )
+	AddToTrackedEnts_Level( aiDangerTarget )
+	aiDangerTarget.EndSignal( "OnDestroy" )
+	
+	//(cafe) new fx logic
+	thread function () : (fxInfo, aiDangerTarget, smokescreen, owner)
+	{
+		float endtime = Time() + smokescreen.lifetime
+		aiDangerTarget.EndSignal( "OnDestroy" )
+		
+		while( Time() <= endtime )
+		{
+			entity effect = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( $"P_impact_exp_emp_med_default" ), fxInfo.center+<0,0,32>, <0,0,0> )
+	
+			effect.SetOwner( owner )
+			AddToUltimateRealm( owner, effect )
+			
+			wait 0.5
+		}
+	}()
+	
 	float dangerousAreaRadius = smokescreen.damageOuterRadius
 	if ( smokescreen.dangerousAreaRadius != -1.0 )
 		dangerousAreaRadius = smokescreen.dangerousAreaRadius
@@ -236,7 +260,8 @@ void function SmokescreenAffectsEntitiesInArea( SmokescreenStruct smokescreen, S
 			DebugDrawCircle( fxInfo.center, <0,0,0>, smokescreen.damageOuterRadius, 255, 0, 0, true, tickRate )
 		}
 #endif
-
+	// printw( "damaging", DEV_GetEnumStringSafe( "eDamageSourceId", smokescreen.damageSource ) )
+	
 		RadiusDamage(
 			fxInfo.center,															// center
 			smokescreen.attacker,													// attacker
@@ -292,6 +317,8 @@ array<entity> function SmokescreenFX( SmokescreenStruct smokescreen, Smokescreen
 		int fxID = GetParticleSystemIndex( smokescreen.smokescreenFX )
 		vector angles = smokescreen.fxUseWeaponOrProjectileAngles ? smokescreen.weaponOrProjectile.GetAngles() : <0.0, 0.0, 0.0>
 		entity fxEnt = StartParticleEffectInWorld_ReturnEntity( fxID, position, angles )
+		AddToTrackedEnts_Level( fxEnt )
+		
 		entity ownerEnt = smokescreen.attacker
 		if ( ownerEnt != null )
 		{
@@ -313,11 +340,13 @@ array<entity> function SmokescreenFX( SmokescreenStruct smokescreen, Smokescreen
 
 void function DestroySmokescreen( SmokescreenStruct smokescreen, float lifetime, SmokescreenFXStruct fxInfo, entity traceBlocker, array<entity> fxEntities, entity player )
 {
+	// printw( "DestroySmokescreen" )
 	player.EndSignal( "CleanUpPlayerAbilities" )
 	EndThreadOn_PlayerChangedClass( smokescreen.attacker )
 	
 	OnThreadEnd( function() : ( fxEntities, fxInfo, traceBlocker, smokescreen )
 		{
+			// printw("smoke end" )
 			smokescreen.lifetime = 0
 			
 			if ( IsValid( traceBlocker ) )

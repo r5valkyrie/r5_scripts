@@ -2,7 +2,7 @@ untyped
 
 global function ControlPanel_Init
 
-global function InitControlPanelUseFuncTable
+global function OnPanelSpawn
 global function AddControlPanelUseFuncTable
 global function SetControlPanelPrompts
 global function SetPanelUsableToEnemies
@@ -13,19 +13,14 @@ global function GetPanelUseEnts
 global function PlayIncomingFX
 global function SetControlPanelUseFunc
 global function ClearControlPanelUseFuncs
-
-// r5 stuff
-global function OnPanelSpawn
+global function GetPanelHackingAnims
 global function UseCustomPanelHackingAnims
+global function ClearCustomPanelHackingAnims
+global function SetPanelMinimapObject
+global function GetPanelMinimapObject
 global function ControlPanel_SetPlayerFinishesUsingFunc
+global function ControlPanel_SetPlayerStartUsingFunc
 global function SetControlPanelUsePrompts
-
-const INCOMING_SPAWN_FX = $"P_ar_titan_droppoint"
-
-struct
-{
-	array<entity> controlPanels
-} file
 
 global struct HackPanelAnims
 {
@@ -40,89 +35,55 @@ global struct HackPanelAnims
 	string panelAnimation3pStart
 	string panelAnimation3pIdle
 	string panelAnimation3pEnd
+
+	float parentBlendTime = -1.0
 }
 
-//=========================================================
-// Control Panels
-//
-//=========================================================
+const INCOMING_SPAWN_FX = $"P_ar_titan_droppoint"
 
-//////////////////////////////////////////////////////////////////////
-function ControlPanel_Init()
+struct
+{
+	array<entity>                 controlPanels
+	table<entity, HackPanelAnims> panelAnimOverrides
+	table<entity, array<string> > panelUsePrompts
+} file
+
+
+void function ControlPanel_Init()
 {
 	PrecacheParticleSystem( INCOMING_SPAWN_FX )
 
-	//AddSpawnCallback( "prop_control_panel", OnPanelSpawn )//We don't want old IMC Panel from titanfall
+	AddSpawnCallback( "prop_control_panel", OnPanelSpawn )
 
+	RegisterSignal( "Interrupted" ) //from sh_silence
 	RegisterSignal( "PanelReprogrammed" )
+	RegisterSignal( "PanelReprogramFinished" )
 	RegisterSignal( "PanelReprogram_Success" )
-	RegisterSignal( "OnContinousUseStopped" )
 }
 
-//////////////////////////////////////////////////////////
-function GameModeRemovePanel( ent )
-{
-	local keepUndefined
-	string gameMode = GameRules_GetGameMode()
 
-	switch ( gameMode )
-	{
-		// if we are in this game mode, then don't keep undefined panels
-		default:
-			keepUndefined = true
-			gameMode = TEAM_DEATHMATCH
-			break
-	}
-
-	local gamemodeKey = "gamemode_" + gameMode
-
-	if ( ent.HasKey( gamemodeKey ) && ent.kv[gamemodeKey] == "1" )
-	{
-		// the key exists and it's true so keep it
-		return
-	}
-
-	if ( !ent.HasKey( gamemodeKey ) && keepUndefined )
-	{
-		// the key doesn't exist but keepUndefined is true so still keep it
-		return
-	}
-
-	ent.Destroy()
-}
-
-//////////////////////////////////////////////////////////////////////
 void function OnPanelSpawn( entity panel )
 {
-	Assert( panel.GetModelName() == $"mdl/props/pathfinder_beacon_radar/pathfinder_beacon_radar_animated.rmdl" )
-
+	Assert( ControlPanel_IsValidModel( panel ), "Unsupported model \"" + panel.GetModelName() + "\" being used on " + panel.GetClassName() + " at " + panel.GetOrigin() )
+	
+	// #if DEVELOPER
+	// printw( "PANEL CREATED", panel, "AT", panel.GetOrigin(), "WITH MODEL", panel.GetModelName() )
+	// #endif
+	
 	thread OnPanelSpawn_Internal( panel )
 }
 
-//////////////////////////////////////////////////////////////////////
-void function UseCustomPanelHackingAnims( entity beacon, HackPanelAnims anim )
+bool function ControlPanel_UseScriptDrivenSFX( entity panel )
 {
-
+	return true //( GetCurrentPlaylistVarBool("control_panel_use_script_driven_SFX", false ) )
 }
 
-void function ControlPanel_SetPlayerFinishesUsingFunc( entity beacon, void functionref( entity p0, entity p1, bool b0 ) ent = null )
-{
-
-}
-
-void function SetControlPanelUsePrompts( entity beacon, string holdPrompt, string pressPrompt )
-{
-
-}
-
-//////////////////////////////////////////////////////////////////////
 void function OnPanelSpawn_Internal( entity panel )
 {
-	entity dummy
 	panel.EndSignal( "OnDestroy" )
-	GameModeRemovePanel( panel )
+	// GameModeRemove( panel )
 
-	panel.s.useFuncArray <- []
+	panel.e.useFuncArray = []
 
 	Assert( IsValid( panel ), "Invalid panel " + panel )
 	panel.EndSignal( "OnDestroy" )
@@ -131,29 +92,26 @@ void function OnPanelSpawn_Internal( entity panel )
 
 	thread PanelUpdateUsability( panel )
 
-	bool useFunction = ControlPanel_CanUseFunction ( dummy, panel )
+	SetCallback_CanUseEntityCallback( panel, ControlPanel_CanUseFunction )
 
 	panel.s.leechTimeNormal <- 3.0
 	panel.s.leechTimeFast <- 1.1
 
-	panel.kv.forceVisibleInPhaseShift = true
+	panel.SetForceVisibleInPhaseShift( true )
 
-	panel.s.onPlayerFinishesUsing_func <- null
 	panel.s.hackedOnce <- false
 	//Used in Frontier Mode for knowing if NPCs are hacking the panel.
 	panel.s.hackingEntity <- null
+	panel.s.minimapObject <- null
 
-	panel.s.remoteTurret <- null
-	panel.s.remoteTurretStartFunc <- null
-
-	#if HAS_PANEL_HIGHLIGHT
-		int contextId = 0
-		panel.Highlight_SetFunctions( contextId, 0, true, HIGHLIGHT_OUTLINE_INTERACT_BUTTON, 1, 0, false )
-		panel.Highlight_SetParam( contextId, 0, HIGHLIGHT_COLOR_INTERACT )
-		panel.Highlight_SetCurrentContext( contextId )
-		panel.Highlight_ShowInside( 0.0 )
-		panel.Highlight_ShowOutline( 0.0 )
-	#endif
+	if ( FS_ShouldPanelHaveHighlight( panel ) )
+	{
+		Highlight_SetNeutralHighlight( panel, "sp_interact_object" )
+		Highlight_SetFriendlyHighlight( panel, "sp_interact_object" )
+		
+		if( Gamemode() == eGamemodes.fs_spieslegends )
+			Highlight_SetEnemyHighlight( panel, "sp_interact_object" )
+	}
 
 	string flag
 	if ( panel.HasKey( "scr_flag_set" ) )
@@ -189,13 +147,12 @@ void function OnPanelSpawn_Internal( entity panel )
 	if ( panel.HasKey( "scr_flagRequired" ) && panel.GetValueForKey( "scr_flagRequired" ) != "" )
 		requiredFlag = panel.GetValueForKey( "scr_flagRequired" )
 
-	for ( ;; )
+	for ( ; ; )
 	{
-		var player = panel.WaitSignal( "OnPlayerUse" ).player
+		entity player = expect entity( panel.WaitSignal( "OnPlayerUse", "OnPlayerUseLong" ).player )
 		Assert( player.IsPlayer() )
-		expect entity( player )
 
-		if ( !IsAlive( player ) || player.IsTitan()  )
+		if ( !IsAlive( player ) || player.IsTitan() )
 			continue
 
 		// Panel might be disabled with a flag, so don't allow a hack. We don't disable usability though, because we want use prompts still, with custom hint text
@@ -206,10 +163,8 @@ void function OnPanelSpawn_Internal( entity panel )
 		if ( IsAlive( panel.GetBossPlayer() ) )
 			continue
 
-		if ( !panel.useFunction( player, panel ) )
+		if ( panel.e.canUseEntityCallback != null && !panel.e.canUseEntityCallback( player, panel ) )
 		{
-			//play buzzer sound
-			//EmitSoundOnEntity( panel, "Operator.Ability_offline" )
 			wait 1
 			continue
 		}
@@ -222,11 +177,863 @@ void function OnPanelSpawn_Internal( entity panel )
 
 	// control panel no longer usable
 	panel.UnsetUsable()
-	panel.SetUsePrompts( "", "" )
-	#if HAS_PANEL_HIGHLIGHT
-	panel.Highlight_HideInside( 1.0 )
-	panel.Highlight_HideOutline( 1.0 )
-	#endif
+	panel.SetUsePrompts( "#EMPTY_STRING", "#EMPTY_STRING" )
+	if ( FS_ShouldPanelHaveHighlight( panel ) )
+	{
+		panel.Highlight_HideInside( 1.0 )
+		panel.Highlight_HideOutline( 1.0 )
+	}
+}
+
+
+bool function DataKnife_IsPlayerPressingUse( entity player )
+{
+	return player.IsInputCommandHeld( IN_USE ) || player.IsInputCommandHeld( IN_USE_LONG )
+}
+
+
+void function SetPanelMinimapObject( entity panel, entity minimapObject )
+{
+	panel.s.minimapObject = minimapObject
+}
+
+
+entity function GetPanelMinimapObject( entity panel )
+{
+	return expect entity( panel.s.minimapObject )
+}
+
+
+void function PanelUpdateUsability( entity panel )
+{
+	panel.EndSignal( "OnDestroy" )
+
+	array<string> usePrompts = GetControlPanelUsePrompt( panel )
+
+	//Default, set it usable by everyone
+	panel.SetUsableByGroup( "pilot" )
+	panel.SetUsePrompts( usePrompts[0], usePrompts[1] )
+
+	if ( !panel.HasKey( "scr_flagRequired" ) )
+		return
+
+	string flag = panel.GetValueForKey( "scr_flagRequired" )
+
+	if ( flag == "" )
+		return
+
+	FlagInit( flag )
+
+	string disabledUsePrompt = ""
+	if ( panel.HasKey( "disabledHintString" ) )
+		disabledUsePrompt = panel.GetValueForKey( "disabledHintString" )
+
+	while ( true )
+	{
+		panel.SetUsePrompts( disabledUsePrompt, disabledUsePrompt )
+		FlagWait( flag )
+		usePrompts = GetControlPanelUsePrompt( panel )
+		panel.SetUsePrompts( usePrompts[0], usePrompts[1] )
+		FlagWaitClear( flag )
+	}
+}
+
+
+void function SetControlPanelUsePrompts( entity panel, string holdPromt, string pressPromt )
+{
+	if ( !(panel in file.panelUsePrompts) )
+		file.panelUsePrompts[panel] <- []
+	file.panelUsePrompts[panel] = [ holdPromt, pressPromt ]
+
+	panel.SetUsePrompts( holdPromt, pressPromt )
+}
+
+
+array<string> function GetControlPanelUsePrompt( entity panel )
+{
+	if ( panel in file.panelUsePrompts )
+		return    file.panelUsePrompts[panel]
+
+	return [ "#DEFAULT_HACK_HOLD_PROMPT", "#DEFAULT_HACK_PRESS_PROMPT" ]
+}
+
+
+void function PlayIncomingFX( vector origin, int teamNum )
+{
+	wait 1.50
+
+	vector colorVec = <0, 255, 0>
+	entity cpoint   = CreateEntity( "info_placement_helper" )
+	SetTargetName( cpoint, UniqueString( "pickup_controlpoint" ) )
+	DispatchSpawn( cpoint )
+	cpoint.SetOrigin( colorVec )
+	entity glowFX = PlayFXWithControlPoint( INCOMING_SPAWN_FX, origin, cpoint, -1, null, null, C_PLAYFX_LOOP )
+
+	EmitSoundAtPosition( teamNum, origin, "Titan_1P_Warpfall_Start", cpoint )
+
+	OnThreadEnd(
+		function() : ( glowFX, cpoint )
+		{
+			if ( IsValid( glowFX ) )
+				glowFX.Destroy()
+			if ( IsValid( cpoint ) )
+				cpoint.Destroy()
+		}
+	)
+
+	wait 1.25
+}
+
+
+void function PlayerUsesControlPanel( entity player, entity panel, string flag, bool toggleFlag, string hackFlag )
+{
+	table result
+	if ( IsPlayerInCryptoDroneCameraView( player ) )
+	{
+		result = {}
+		if ( SurveyBeacon_IsSurveyBeacon( panel ) && !SurveyBeacon_CanActivate( player, panel ) )
+		{
+			result.success <- false
+		}
+		else
+		{
+			result.success <- true
+			StatusEffect_AddTimed( player, eStatusEffect.crypto_beacon_scan, 1.0, 3.0, 0.0 )
+		}
+	}
+	else
+	{
+		thread PlayerProgramsControlPanel( panel, player, hackFlag )
+		result = panel.WaitSignal( "PanelReprogrammed" )
+	}
+
+	if ( result.success )
+	{
+		array<entity> players = GetPlayerArray()
+		foreach ( remotePlayer in players )
+		{
+			Remote_CallFunction_Replay( remotePlayer, "ServerCallback_ControlPanelRefresh", IsValid( panel ) ? panel.GetEncodedEHandle() : null )
+		}
+
+		RunPanelUseFunctions( panel, player )
+		panel.Signal( "PanelReprogram_Success" )
+		if ( flag != "" )
+		{
+			if ( toggleFlag && Flag( flag ) )
+				FlagClear( flag )
+			else
+			{
+				FlagSet( flag )
+			}
+		}
+
+		panel.s.hackedOnce = true
+	}
+	else
+	{
+		//play buzzer sound
+		//EmitSoundOnEntity( panel, "Operator.Ability_offline" )
+		WaitFrame()    // arbitrary delay so that you can't restart the leech instantly after failing
+		if ( hackFlag != "" )
+			FlagClear( hackFlag )
+	}
+}
+
+
+void function RunPanelUseFunctions( entity panel, entity player )
+{
+	if ( panel.e.useFuncArray.len() <= 0 )
+		return
+
+	foreach ( useFuncData in clone panel.e.useFuncArray )
+		useFuncData.useFunc( panel, player, useFuncData.useEnt )
+}
+
+
+void function SetControlPanelUseFunc( entity panel, void functionref( entity, entity, entity ) func, entity ent = null )
+{
+	UseFuncData data
+	data.useFunc = func
+	data.useEnt = ent
+	AddControlPanelUseFuncTable( panel, data )
+}
+
+
+void function ClearControlPanelUseFuncs( entity panel )
+{
+	panel.e.useFuncArray.clear()
+}
+
+void function ControlPanel_SetPlayerFinishesUsingFunc( entity panel, void functionref(entity, entity, bool) func )
+{
+	panel.e.onPlayerFinishesUsing_func = func
+}
+
+void function ControlPanel_SetPlayerStartUsingFunc( entity panel, void functionref(entity, entity) func )
+{
+	panel.e.onPlayerStartUsing_func = func
+}
+
+void function PlayerProgramsControlPanel( entity panel, entity player, string hackFlag )
+{
+	Assert( IsAlive( player ) )
+
+	// need to wait here so that the panel script can start waiting for the PanelReprogrammed signal.
+	WaitFrame()
+
+	if ( !IsValid( player ) || !IsValid( panel ) )
+		return
+	
+	if ( SurveyBeacon_IsSurveyBeacon( panel ) )
+		thread SetPathfinder_HandUSB( player, true )
+	
+	if ( SurveyBeacon_IsSurveyBeacon( panel ) && !SurveyBeacon_CanActivate( player, panel ) )
+	{
+		panel.Signal( "PanelReprogrammed", { success = false, player = player } )
+		return
+	}
+
+	if ( player.GetParent() != null )
+	{
+		panel.Signal( "PanelReprogrammed", { success = false, player = player } )
+		return
+	}
+
+	if ( !IsAlive( player ) )
+		return
+
+	if ( panel.e.onPlayerStartUsing_func != null )
+		thread panel.e.onPlayerStartUsing_func( panel, player )
+	
+	if ( FS_ShouldPanelHaveHighlight( panel ) )
+	{
+		panel.Highlight_HideInside( 1.0 )
+		panel.Highlight_HideOutline( 1.0 )
+	}
+
+	table e
+	e.success <- false
+	e.knives <- []
+
+	e.panelUsableValueToRestore <- panel.GetUsableValue()
+	e.startOrigin <- player.GetOrigin()
+	panel.SetBossPlayer( player )
+	panel.SetUsableValue( USABLE_BY_OWNER )
+
+	e.setIntruder <- false
+
+	e.finishedPanelOpen <- false
+	e.animViewLerpoutTime <- 0.3
+	e.doRequireUseButtonHeld <- true
+
+	player.ForceStand()
+	HolsterAndDisableWeapons( player ) //Do here instead of after doRequireUseButtonHeld check since DisableOffhandWeapons() is counter based, i.e. a call to DisableOffhandWeapons() must be matched with a call to EnableOffhandWeapons()
+
+	HackPanelAnims animData = GetPanelHackingAnims( panel )
+
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "ScriptAnimStop" )
+	player.EndSignal( "Interrupted" )
+
+	OnThreadEnd
+	(
+		function() : ( e, player, panel )
+		{
+			if ( e.setIntruder )
+				level.nv.panelIntruder = null
+
+			if ( IsValid( player ) )
+			{
+				player.ClearAnimNearZ()
+				player.ClearParent()
+
+				if ( IsValid( panel ) && SurveyBeacon_IsSurveyBeacon( panel ) )
+					thread SetPathfinder_HandUSB( player )
+				
+				// stop any running first person sequences
+				player.Anim_Stop()
+
+				// done with first person anims
+				ClearPlayerAnimViewEntity( player, expect float( e.animViewLerpoutTime ) )
+				DeployAndEnableWeapons( player )
+				
+				player.UnforceStand()
+
+				if ( player.ContextAction_IsLeeching() )
+					player.Event_LeechEnd()
+
+				bool success = PutEntityInSafeSpot( player, null, null, e.startOrigin, player.GetOrigin() )
+			}
+
+			if ( IsValid( panel ) )
+			{
+				// stop any running first person sequences
+				panel.Anim_Stop()
+				panel.Anim_Play( "ref" ) // close the hatch
+
+				// reset default usability
+				panel.ClearBossPlayer()
+				panel.SetUsableValue( e.panelUsableValueToRestore )
+
+				if ( !e.success )
+				{
+					if ( FS_ShouldPanelHaveHighlight( panel ) )
+					{
+						panel.Highlight_ShowInside( 1.0 )
+						panel.Highlight_ShowOutline( 1.0 )
+					}
+
+					panel.Signal( "PanelReprogrammed", { success = e.success, player = player } )
+					entity turret// = GetMegaTurretLinkedToPanel( panel ) //CHIN: Control panels shouldn't need to know about turrets
+					if ( IsValid( turret ) && IsTurret( turret ) )
+					{
+						string usableValue// = MegaTurretUsabilityFunc( turret, panel )
+						panel.SetUsableByGroup( usableValue )
+						//SetUsePromptForPanel( panel, turret )
+					}
+					else
+					{
+						// Turret got destoyed while hacking.
+						// Usability state has been set by ReleaseTurret( ... ) in ai_turret.nut
+						// Changing it to the previous usable value would put us in a bad state.
+
+						// we should change how this works for R2
+						//
+						// HACK remove s.scriptedPanel when these are refactored
+						if ( "scriptedPanel" in panel.s )
+							panel.SetUsableValue( e.panelUsableValueToRestore )
+					}
+				}
+
+				bool success = expect bool( e.success )
+
+				if ( panel.e.onPlayerFinishesUsing_func != null )
+					thread panel.e.onPlayerFinishesUsing_func( panel, player, success )
+
+				panel.Signal( "PanelReprogramFinished", { success = e.success, player = player } )
+			}
+
+			foreach ( knife in e.knives )
+			{
+				if ( IsValid( knife ) )
+					knife.Destroy()
+			}
+		}
+	)
+
+	entity viewmodel = player.GetFirstPersonProxy()
+
+	if( ControlPanel_UseScriptDrivenSFX( panel ) )
+	{
+		if ( !HasAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt1_3p" ) )
+			AddAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt1_3p", PlaySound_DataKnife_Hack_Console_Pt1_3p )
+
+		if ( !HasAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt2_3p" ) )
+			AddAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt2_3p", PlaySound_DataKnife_Hack_Console_Pt2_3p )
+
+		if ( !HasAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt3_3p" ) )
+			AddAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt3_3p", PlaySound_DataKnife_Hack_Console_Pt3_3p )
+
+		if ( !HasAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt4_3p" ) )
+			AddAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt4_3p", PlaySound_DataKnife_Hack_Console_Pt4_3p )
+
+		if ( !HasAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt5_3p" ) )
+			AddAnimEvent( viewmodel, "PlaySound_DataKnife_Hack_Console_Pt5_3p", PlaySound_DataKnife_Hack_Console_Pt5_3p )
+	}
+
+	if ( e.doRequireUseButtonHeld && !DataKnife_IsPlayerPressingUse( player ) )
+		return    // it's possible to get here and no longer be holding the use button. If that is the case lets not continue.
+
+	if ( player.ContextAction_IsActive() )
+		return
+
+	if ( player.IsPhaseShifted() )
+		return
+
+	if ( player.Player_IsFreefalling() )
+		return
+
+	if ( !player.Anim_HasSequence( animData.playerAnimation3pStart ) )
+		return
+
+	player.SetAnimNearZ( 1 )
+
+	player.Event_LeechStart()
+
+	float leechTime = expect float( panel.s.leechTimeNormal )
+
+	float totalTime = leechTime + player.GetSequenceDuration( animData.playerAnimation3pStart )
+
+	if ( panel.HasKey( "requireHoldUse" ) && panel.GetValueForKey( "requireHoldUse" ) == "0" )
+		e.doRequireUseButtonHeld = false
+
+	thread ControlPanel_TrackContinuousUse( player, totalTime, expect bool( e.doRequireUseButtonHeld ) )
+
+	waitthread ControlPanelFlipAnimation( panel, player, animData, e )
+
+	if ( !IsValid( player ) )
+		return
+
+	if ( e.doRequireUseButtonHeld && !DataKnife_IsPlayerPressingUse( player ) )
+		return    // we might have returned from the flip anim because we released the use button.
+
+	if ( hackFlag != "" )
+		FlagSet( hackFlag )
+
+	e.finishedPanelOpen = true
+
+	if( ControlPanel_UseScriptDrivenSFX( panel ) )
+	{
+		Remote_CallFunction_Replay( player, "ServerCallback_DataKnifeStartLeech", leechTime )
+	}
+
+	waitthread WaitForEndLeechOrStoppedUse( player, leechTime, e, panel, animData )
+
+	if ( !IsValid( player ) || !IsValid( panel ) )
+		return
+
+	if( !ControlPanel_UseScriptDrivenSFX( panel ) )
+	{
+		if( !e.success )
+		{
+			if( SurveyBeacon_IsSurveyBeacon( panel ))
+			{
+				// Remote_CallFunction_Replay( player, "StopEffects_SurveyBeacon_Laser", player, panel )
+			}
+		}
+	}
+
+	if( ControlPanel_UseScriptDrivenSFX( panel ) )
+	{
+		if ( e.success )
+		{
+			if ( !SurveyBeacon_IsSurveyBeacon( panel ) ) //TODO: Update to not use string compare.
+				DataKnifeSuccessSounds( player )
+		}
+		else
+		{
+			if ( !SurveyBeacon_IsSurveyBeacon( panel ) ) //TODO: Update to not use string compare.
+				DataKnifeCanceledSounds( player )
+
+			Remote_CallFunction_Replay( player, "ServerCallback_DataKnifeCancelLeech" )
+		}
+	}
+
+	waitthread ControlPanelFlipExitAnimation( player, panel, animData, e )
+}
+
+
+void function SurveyBeaconSuccessSounds( entity player )
+{
+	EmitDifferentSoundsOnEntityForPlayerAndWorld( "Pathfinder_SurveyBeacon_SuccessPulse", "Pathfinder_SurveyBeacon_SuccessPulse", player, player )
+}
+
+
+void function SurveyBeaconCanceledSounds( entity player )
+{
+	EmitDifferentSoundsOnEntityForPlayerAndWorld( "pathfinder_antenna_hack_interrupt", "pathfinder_antenna_hack_interrupt_3p", player, player )
+}
+
+
+void function WaitForEndLeechOrStoppedUse( entity player, float leechTime, table e, entity panel, HackPanelAnims animData )
+{
+	player.EndSignal( "OnContinousUseStopped" )
+
+	player.e.Callback_PlayParentedAnim = ControlPanelFlipAnimation_IdleDoneCallback
+	player.e.entAnim1p = animData.playerAnimation1pEnd
+	player.e.entAnim3p = animData.playerAnimation3pEnd
+
+	wait leechTime
+	e.success = true
+	panel.Signal( "PanelReprogrammed", { success = e.success, player = player } )
+
+	OnThreadEnd( void function() : ( player ) {
+		#if SERVER
+			if ( !IsValid( player ) )
+				return
+			if ( player.e.Callback_PlayParentedAnim != null )
+			{
+				player.e.Callback_PlayParentedAnim = null
+				player.e.entAnim1p = ""
+				player.e.entAnim3p = ""
+			}
+		#endif
+	} )
+}
+
+void function ControlPanelFlipAnimation_IdleDoneCallback( entity ent )
+{
+	if( IsValid( ent.GetParent()) )
+	{
+		// Check added in relation to R5DEV-570757, preventative fix with log info added for further debugging.
+		if ( ent.LookupAttachment( "ref" ) == 0 || ent.GetParent().LookupAttachment( "ref" ) == 0 )
+		{
+			// Set a bunch of variables so Jira hopefully shows the info
+			int entAttachment = ent.LookupAttachment( "ref" )
+			int entParentAttachment = ent.GetParent().LookupAttachment( "ref" )
+			string entName = expect string ( ent.GetNetworkedClassName() )
+			entity parentEnt = ent.GetParent()
+			string entParentName = expect string ( parentEnt.GetNetworkedClassName() )
+			string parentEntScript = parentEnt.GetScriptName()
+
+			// Added so it crashes in dev and we can get the log info, but it won't crash live
+			Assert( false, "Couldn't find the attachment " + entAttachment + " for " + entName + " or parent attachment " + entParentAttachment + " " + parentEntScript )
+			return
+		}
+
+		PlayParentedFirstAndThirdPersonAnimation( ent, ent.GetParent(), "ref", ent.e.entAnim1p, ent.e.entAnim3p ) //, false )
+	}
+}
+
+void function ControlPanelFlipAnimation( entity panel, entity player, HackPanelAnims animData, table e )
+{
+	player.EndSignal( "OnContinousUseStopped" )
+
+	FirstPersonSequenceStruct playerSequence
+	playerSequence.attachment = "ref"
+	playerSequence.thirdPersonAnim = animData.playerAnimation3pStart 
+	playerSequence.thirdPersonAnimIdle = animData.playerAnimation3pIdle 
+	playerSequence.firstPersonAnim = animData.playerAnimation1pStart 
+	playerSequence.firstPersonAnimIdle = animData.playerAnimation1pIdle 
+	if ( IntroPreviewOn() )
+		playerSequence.viewConeFunction = ControlPanelFlipViewCone
+
+	FirstPersonSequenceStruct panelSequence
+	panelSequence.thirdPersonAnim = animData.panelAnimation3pStart 
+	panelSequence.thirdPersonAnimIdle = animData.panelAnimation3pIdle 
+
+	player.e.Callback_PlayParentedAnim = ControlPanelFlipAnimation_IdleDoneCallback
+	player.e.entAnim1p = animData.playerAnimation1pIdle
+	player.e.entAnim3p = animData.playerAnimation3pIdle
+
+	OnThreadEnd( void function() : ( player ) {
+		#if SERVER
+			if ( !IsValid( player ) )
+				return
+			if ( player.e.Callback_PlayParentedAnim != null )
+			{
+				player.e.Callback_PlayParentedAnim = null
+				player.e.entAnim1p = ""
+				player.e.entAnim3p = ""
+			}
+		#endif
+	} )
+
+	panelSequence.setStartTime = player.Anim_GetStartTime()
+	
+	asset model = DATA_KNIFE_MODEL
+
+	entity knife = CreatePropDynamic( model )
+	SetTargetName( knife, "dataKnife" )
+	knife.SetParent( player, "PROPGUN", false, 0.0 )
+	e.knives.append( knife )
+
+	thread PanelFirstPersonSequence( panelSequence, panel, player )
+	waitthread FirstPersonSequence( playerSequence, player, panel )
+}
+
+
+void function ControlPanelFlipViewCone( entity player )
+{
+	player.PlayerCone_FromAnim()
+	player.PlayerCone_SetMinYaw( -80 )
+	player.PlayerCone_SetMaxYaw( 80 )
+	player.PlayerCone_SetMinPitch( -80 )
+	player.PlayerCone_SetMaxPitch( 10 )
+}
+
+
+void function PanelFirstPersonSequence( FirstPersonSequenceStruct panelSequence, entity panel, entity player )
+{
+	player.EndSignal( "OnDeath" )
+	panel.EndSignal( "OnDestroy" )
+
+	waitthread FirstPersonSequence( panelSequence, panel )
+}
+
+
+void function ControlPanelFlipExitAnimation( entity player, entity panel, HackPanelAnims animData, table e )
+{
+	FirstPersonSequenceStruct panelSequence
+	panelSequence.blendTime = 0.0
+	panelSequence.thirdPersonAnim = animData.panelAnimation3pEnd
+
+	thread FirstPersonSequence( panelSequence, panel )
+	PlayParentedFirstAndThirdPersonAnimation( player, panel, "ref", animData.playerAnimation1pEnd, animData.playerAnimation3pEnd ) //, false )
+	WaittillAnimDone( player )
+}
+
+
+void function ControlPanel_TrackContinuousUse( entity player, float leechTime, bool doRequireUseButtonHeld )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "ScriptAnimStop" )
+	player.EndSignal( "Interrupted" )
+
+	table result
+	result.success <- false
+
+	OnThreadEnd
+	(
+		function() : ( player, result )
+		{
+			if ( IsValid(player ) && !result.success )
+			{
+				player.Signal( "OnContinousUseStopped" )
+			}
+		}
+	)
+
+	float startTime = Time()
+	while ( Time() < startTime + leechTime && (!doRequireUseButtonHeld || DataKnife_IsPlayerPressingUse( player )) && !player.IsPhaseShifted() )
+		WaitFrame()
+
+	if ( !IsValid( player ) )
+		return
+
+	if ( !doRequireUseButtonHeld || DataKnife_IsPlayerPressingUse( player ) )
+		result.success = true
+}
+
+
+void function AddControlPanelUseFuncTable( entity panel, UseFuncData data )
+{
+	// a table that contains
+	//1. a function to be called when the control panel is used
+	//2. an entity that the function refers to, e.g. the turret to be created
+	panel.e.useFuncArray.append( data )
+}
+
+
+void function SetControlPanelPrompts( entity ent, func )
+{
+	ent.s.prompts <- func( ent )
+}
+
+
+void function SetPanelUsableToEnemies( entity panel )
+{
+	if ( panel.GetTeam() == TEAM_IMC || panel.GetTeam() == TEAM_MILITIA )
+	{
+		panel.SetUsableByGroup( "enemies pilot" )
+		return
+	}
+
+	//Not on either player team, just set usable to everyone
+	panel.SetUsableByGroup( "pilot" )
+}
+
+
+void function PanelFlipsToPlayerTeamAndUsableByEnemies( entity panel, entity player )
+{
+	SetTeam( panel, player.GetTeam() )
+	SetPanelUsableToEnemies( panel )
+}
+
+
+array<entity> function GetPanelUseEnts( entity panel )
+{
+	array<entity> useEntsArray
+	foreach ( useFuncData in panel.e.useFuncArray )
+	{
+		if ( useFuncData.useEnt )
+			useEntsArray.append( useFuncData.useEnt )
+	}
+
+	return useEntsArray
+}
+
+
+array<entity> function GetAllControlPanels()
+{
+	//Defensively remove control panels that are invalid.
+	//This is because we can have control panels in levels for some game modes
+	//but not in others, e.g. refuel mode vs tdm
+
+	ArrayRemoveInvalid( file.controlPanels )
+	return file.controlPanels
+}
+
+
+void function CaptureAllAvailableControlPanels( entity player )
+{
+	array<entity> panels = GetAllControlPanels()
+	foreach ( panel in panels )
+	{
+		printt( "panel team " + panel.GetTeam() )
+		RunPanelUseFunctions( panel, player )
+	}
+}
+
+
+void function PlaySound_DataKnife_Hack_Console_Pt1_3p( entity playerFirstPersonProxy )
+{
+	entity player = playerFirstPersonProxy.GetOwner()
+	if ( !IsValid( player ) )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, "DataKnife_Hack_Console_Pt1_3p" )
+}
+
+
+void function PlaySound_DataKnife_Hack_Console_Pt2_3p( entity playerFirstPersonProxy )
+{
+	entity player = playerFirstPersonProxy.GetOwner()
+	if ( !IsValid( player ) )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, "DataKnife_Hack_Console_Pt2_3p" )
+}
+
+
+void function PlaySound_DataKnife_Hack_Console_Pt3_3p( entity playerFirstPersonProxy )
+{
+	entity player = playerFirstPersonProxy.GetOwner()
+	if ( !IsValid( player ) )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, "DataKnife_Hack_Console_Pt3_3p" )
+}
+
+
+void function PlaySound_DataKnife_Hack_Console_Pt4_3p( entity playerFirstPersonProxy )
+{
+	entity player = playerFirstPersonProxy.GetOwner()
+	if ( !IsValid( player ) )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, "DataKnife_Hack_Console_Pt4_3p" )
+}
+
+
+void function PlaySound_DataKnife_Hack_Console_Pt5_3p( entity playerFirstPersonProxy )
+{
+	entity player = playerFirstPersonProxy.GetOwner()
+	if ( !IsValid( player ) )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, "DataKnife_Hack_Console_Pt5_3p" )
+}
+
+
+HackPanelAnims function GetPanelHackingAnims( entity panel )
+{
+	Assert( IsValid( panel ) )
+
+	// Scripter overrode the anims for this panel
+	if ( panel in file.panelAnimOverrides )
+		return file.panelAnimOverrides[ panel ]
+
+	// Use defaults for model
+	HackPanelAnims anims
+	switch( string( panel.GetModelName() ) )
+	{
+		case "mdl/communication/terminal_usable_imc_01.rmdl":
+		case "mdl/communication/terminal_usable_imc_02.rmdl":
+			anims.playerAnimation1pStart = "ptpov_data_knife_console_leech_start"
+			anims.playerAnimation1pIdle = "ptpov_data_knife_console_leech_idle"
+			anims.playerAnimation1pEnd = "ptpov_data_knife_console_leech_end"
+
+			anims.playerAnimation3pStart = "pt_data_knife_console_leech_start"
+			anims.playerAnimation3pIdle = "pt_data_knife_console_leech_idle"
+			anims.playerAnimation3pEnd = "pt_data_knife_console_leech_end"
+
+			anims.panelAnimation3pStart = "tm_data_knife_console_leech_start"
+			anims.panelAnimation3pIdle = "tm_data_knife_console_leech_idle"
+			anims.panelAnimation3pEnd = "tm_data_knife_console_leech_end"
+			break
+
+		case "mdl/props/terminal_usable_wall_01_animated/terminal_usable_wall_01_animated.rmdl":
+			anims.playerAnimation1pStart = "ptpov_pegasus_wallhack_start"
+			anims.playerAnimation1pIdle = "ptpov_pegasus_wallhack_idle"
+			anims.playerAnimation1pEnd = "ptpov_pegasus_wallhack_end"
+
+			anims.playerAnimation3pStart = "pt_pegasus_wallhack_start"
+			anims.playerAnimation3pIdle = "pt_pegasus_wallhack_idle"
+			anims.playerAnimation3pEnd = "pt_pegasus_wallhack_end"
+
+			anims.panelAnimation3pStart = "tm_pegasus_wallhack_start"
+			anims.panelAnimation3pIdle = "tm_pegasus_wallhack_idle"
+			anims.panelAnimation3pEnd = "tm_pegasus_wallhack_end"
+			break
+
+		case "mdl/props/terminal_usable_cpit_01_animated/terminal_usable_cpit_01_animated.rmdl":
+			anims.playerAnimation1pStart = "ptpov_pegasus_consolehack_start"
+			anims.playerAnimation1pIdle = "ptpov_pegasus_consolehack_idle"
+			anims.playerAnimation1pEnd = "ptpov_pegasus_consolehack_end"
+
+			anims.playerAnimation3pStart = "pt_pegasus_consolehack_start"
+			anims.playerAnimation3pIdle = "pt_pegasus_consolehack_idle"
+			anims.playerAnimation3pEnd = "pt_pegasus_consolehack_end"
+
+			anims.panelAnimation3pStart = "tm_pegasus_consolehack_start"
+			anims.panelAnimation3pIdle = "tm_pegasus_consolehack_idle"
+			anims.panelAnimation3pEnd = "tm_pegasus_consolehack_end"
+			break
+
+		case "mdl/props/specter_shack_control/specter_shack_control.rmdl":
+			anims.playerAnimation1pStart = "ptpov_spectreshack_console_hack"
+			anims.playerAnimation1pIdle = ""
+			anims.playerAnimation1pEnd = ""
+
+			anims.playerAnimation3pStart = "spectreshack_console_hacking"
+			anims.playerAnimation3pIdle = ""
+			anims.playerAnimation3pEnd = ""
+
+			anims.panelAnimation3pStart = ""
+			anims.panelAnimation3pIdle = ""
+			anims.panelAnimation3pEnd = ""
+			break
+
+		default:
+			Assert( false )
+	}
+
+	return anims
+}
+
+// Use from level script to reset back to default hacking
+void function UseCustomPanelHackingAnims( entity panel, HackPanelAnims anims )
+{
+	Assert( IsValid( panel ), "Called UseCustomPanelHackingAnims() with invalid control panel" )
+
+	//Make sure the table includes all the required anims
+	string assertMessage = "Need to define all 9 custom hacking animations for UseCustomPanelHackingAnims()"
+
+	Assert( anims.playerAnimation1pStart != "", assertMessage )
+	Assert( anims.playerAnimation1pIdle != "", assertMessage )
+	Assert( anims.playerAnimation1pEnd != "", assertMessage )
+
+	Assert( anims.playerAnimation3pStart != "", assertMessage )
+	Assert( anims.playerAnimation3pIdle != "", assertMessage )
+	Assert( anims.playerAnimation3pEnd != "", assertMessage )
+
+	Assert( anims.panelAnimation3pStart != "", assertMessage )
+	Assert( anims.panelAnimation3pIdle != "", assertMessage )
+	Assert( anims.panelAnimation3pEnd != "", assertMessage )
+
+	if ( !(panel in file.panelAnimOverrides) )
+		file.panelAnimOverrides[ panel ] <- anims
+	else
+		file.panelAnimOverrides[ panel ] = anims
+}
+
+// Use from level script to reset back to default hacking
+void function ClearCustomPanelHackingAnims( entity panel )
+{
+	Assert( panel in file.panelAnimOverrides, "Called ClearCustomPanelHackingAnims on control panel" + panel + " at " + panel.GetOrigin() + " that wasn't using a custom anim set via UseCustomPanelHackingAnims()" )
+	delete file.panelAnimOverrides[ panel ]
+}
+
+bool function SurveyBeacon_IsSurveyBeacon( entity beacon )
+{
+	return beacon.GetScriptName() == SURVEY_BACON_SCRIPTNAME
+}
+
+bool function SurveyBeacon_CanActivate( entity player, entity beacon )
+{
+	//stub
+	return true
 }
 
 void function SetPathfinder_HandUSB( entity player, bool showUSB = false )
@@ -259,528 +1066,7 @@ void function SetPathfinder_HandUSB( entity player, bool showUSB = false )
 	}
 }
 
-void function PanelUpdateUsability( entity panel )
+bool function FS_ShouldPanelHaveHighlight( entity panel )
 {
-	panel.EndSignal( "OnDestroy" )
-
-	//Default, set it usable by everyone
-	panel.SetUsableByGroup( "pilot" )
-	panel.SetUsePrompts( "#SURVEY_BEACON_HOLD_PROMPT", "#SURVEY_BEACON_PRESS_PROMPT" )
-	if ( !panel.HasKey( "scr_flagRequired" ) )
-		return
-
-	string flag = panel.GetValueForKey( "scr_flagRequired" )
-
-	if ( flag == "" )
-		return
-
-	FlagInit( flag )
-
-	string disabledUsePrompt = ""
-	if ( panel.HasKey( "disabledHintString" ) )
-		disabledUsePrompt = panel.GetValueForKey( "disabledHintString" )
-
-	while(true)
-	{
-		panel.SetUsePrompts( disabledUsePrompt, disabledUsePrompt )
-		FlagWait( flag )
-		panel.SetUsePrompts( "#DEFAULT_HACK_HOLD_PROMPT", "#DEFAULT_HACK_PRESS_PROMPT" )
-		FlagWaitClear( flag )
-	}
-}
-
-void function PlayIncomingFX( vector origin, int teamNum )
-{
-	wait 1.50
-	EmitSoundAtPosition( teamNum, origin, "Titan_1P_Warpfall_Start" )
-
-	local colorVec = Vector( 0, 255, 0 )
-	entity cpoint = CreateEntity( "info_placement_helper" )
-	SetTargetName( cpoint, UniqueString( "pickup_controlpoint" ) )
-	DispatchSpawn( cpoint )
-	cpoint.SetOrigin( colorVec )
-	entity glowFX = PlayFXWithControlPoint( INCOMING_SPAWN_FX, origin, cpoint, -1, null, null, C_PLAYFX_LOOP )
-
-	OnThreadEnd(
-		function() : ( glowFX, cpoint )
-		{
-			if ( IsValid( glowFX ) )
-				glowFX.Destroy()
-			if ( IsValid( cpoint ) )
-				cpoint.Destroy()
-		}
-	)
-
-	wait 1.25
-}
-
-void function PlayerUsesControlPanel( entity player, entity panel, string flag, bool toggleFlag, string hackFlag )
-{
-	thread PlayerProgramsControlPanel( panel, player, hackFlag )
-
-	local result = panel.WaitSignal( "PanelReprogrammed" )
-
-	if ( result.success )
-	{
-		local panelEHandle = IsValid( panel ) ? panel.GetEncodedEHandle() : null
-		array<entity> players = GetPlayerArray()
-		// foreach( player in players )
-		// {
-		// 	Remote_CallFunction_Replay( player, "ServerCallback_ControlPanelRefresh", panelEHandle )
-		// }
-
-		RunPanelUseFunctions( panel, player )
-		panel.Signal( "PanelReprogram_Success" )
-		if ( flag != "" )
-		{
-			if ( toggleFlag && Flag( flag ) )
-				FlagClear( flag )
-			else
-			{
-				FlagSet( flag )
-			}
-		}
-
-		panel.s.hackedOnce = true
-	}
-	else
-	{
-		//play buzzer sound
-		//EmitSoundOnEntity( panel, "Operator.Ability_offline" )
-		WaitFrame()	// arbitrary delay so that you can't restart the leech instantly after failing
-		if ( hackFlag != "" )
-			FlagClear( hackFlag )
-	}
-}
-
-function RunPanelUseFunctions( panel, player )
-{
-	if ( panel.s.useFuncArray.len() <= 0 )
-		return
-
-	foreach ( useFuncTable in clone panel.s.useFuncArray )
-	{
-		//if ( useFuncTable.useEnt == null )
-		//	useFuncTable.useFunc( panel, player )
-		//else
-		//	useFuncTable.useFunc( panel, player, useFuncTable.useEnt )
-	}
-}
-
-function SetControlPanelUseFunc( panel, void functionref( entity p0, entity p1, entity p2 ) ent = null )
-{
-	local Table = InitControlPanelUseFuncTable()
-	AddControlPanelUseFuncTable( panel, Table )
-}
-
-function ClearControlPanelUseFuncs( panel )
-{
-	panel.s.useFuncArray.clear()
-}
-
-//////////////////////////////////////////////////////////////////////
-void function PlayerProgramsControlPanel( entity panel, entity player, string hackFlag )
-{
-	Assert( IsAlive( player ) )
-
-	// need to wait here so that the panel script can start waiting for the PanelReprogrammed signal.
-	WaitFrame()
-	
-	if( !IsValid( player ) || !IsAlive( player ) )
-		return
-	
-	thread SetPathfinder_HandUSB( player, true )
-
-	local action =
-	{
-		playerAnimation1pStart = "ptpov_pathfinder_antenna_hack_start"
-		playerAnimation1pIdle = "ptpov_pathfinder_antenna_hack_mid"
-		playerAnimation1pEnd = "ptpov_pathfinder_antenna_hack_end"
-
-		playerAnimation3pStart = "mp_pt_pathfinder_antenna_hack_start"
-		playerAnimation3pIdle = "mp_pt_pathfinder_antenna_hack_mid"
-		playerAnimation3pEnd = "mp_pt_pathfinder_antenna_hack_end"
-
-		panelAnimation3pStart = "antenna_pathfinder_antenna_hack_start"
-		panelAnimation3pIdle = "antenna_pathfinder_antenna_hack_mid"
-		panelAnimation3pEnd = "antenna_pathfinder_antenna_hack_end"
-
-		direction = Vector( -1, 0, 0 )
-	}
-
-	#if HAS_PANEL_HIGHLIGHT
-	panel.Highlight_HideInside( 1.0 )
-	panel.Highlight_HideOutline( 1.0 )
-	#endif
-
-	local e = {}
-	e.success <- false
-	e.knives <- []
-
-	e.panelUsableValueToRestore <- panel.GetUsableValue()
-	e.startOrigin <- player.GetOrigin()
-	panel.SetBossPlayer( player )
-	panel.SetUsableValue( USABLE_BY_OWNER )
-
-	e.setIntruder <- false
-
-	e.finishedPanelOpen <- false
-	e.animViewLerpoutTime <- 0.3
-	e.doRequireUseButtonHeld <- true
-
-	player.ForceStand()
-	HolsterAndDisableWeapons( player ) //Do here instead of after doRequireUseButtonHeld check since DisableOffhandWeapons() is counter based, i.e. a call to DisableOffhandWeapons() must be matched with a call to EnableOffhandWeapons()
-
-	//
-	if ( panel.s.remoteTurret )
-	{
-		action.playerAnimation1pStart = "ptpov_data_knife_console_leech_remoteturret_start"
-		action.playerAnimation3pStart = "pt_data_knife_console_leech_remoteturret_start"
-		action.panelAnimation3pStart = "tm_data_knife_console_leech_remoteturret_start"
-
-		e.animViewLerpoutTime = 0.0
-		e.doRequireUseButtonHeld = false
-
-		panel.SetUsePrompts( "", "" )
-	}
-
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "ScriptAnimStop" )
-
-	OnThreadEnd
-	(
-		function() : ( e, player, panel )
-		{
-			if ( e.setIntruder )
-				level.nv.panelIntruder = null
-
-			if ( IsValid( player ) )
-			{
-				player.ClearAnimNearZ()
-				player.ClearParent()
-				thread SetPathfinder_HandUSB( player )
-
-				// stop any running first person sequences
-				player.Anim_Stop()
-
-				if ( IsAlive( player ) )
-					PutEntityInSafeSpot( player, panel, null, expect vector( e.startOrigin ), player.GetOrigin() )
-
-				// done with first person anims
-				ClearPlayerAnimViewEntity( player, expect float( e.animViewLerpoutTime ) )
-				DeployAndEnableWeapons( player )
-				player.UnforceStand()
-
-				if ( player.ContextAction_IsLeeching() )
-					player.Event_LeechEnd()
-			}
-
-			if ( IsValid( panel ) )
-			{
-				// stop any running first person sequences
-				panel.Anim_Stop()
-				panel.Anim_Play( "ref" ) // close the hatch
-
-				// reset default usability
-				if ( !panel.s.remoteTurret || !e.finishedPanelOpen )
-				{
-					panel.ClearBossPlayer()
-					panel.SetUsableValue( e.panelUsableValueToRestore )
-				}
-
-				if ( !e.success )
-				{
-					#if HAS_PANEL_HIGHLIGHT
-					panel.Highlight_ShowInside( 1.0 )
-					panel.Highlight_ShowOutline( 1.0 )
-					#endif
-
-					panel.Signal( "PanelReprogrammed", { success = e.success } )
-					//#if MP
-					//local turret = GetMegaTurretLinkedToPanel( panel ) //CHIN: Control panels shouldn't need to know about turrets
-					// if ( IsValid( turret ) && IsTurret( turret ) )
-					// {
-					// 	local usableValue = MegaTurretUsabilityFunc( turret, panel )
-					// 	panel.SetUsableByGroup( usableValue )
-					// 	SetUsePromptForPanel( panel, turret )
-					// }
-					//else
-					{
-						// Turret got destoyed while hacking.
-						// Usability state has been set by ReleaseTurret( ... ) in ai_turret.nut
-						// Changing it to the previous usable value would put us in a bad state.
-
-
-						// we should change how this works for R2
-						//
-						// HACK remove s.scriptedPanel when these are refactored
-						if ( "scriptedPanel" in panel.s )
-							panel.SetUsableValue( e.panelUsableValueToRestore )
-					}
-					//#endif
-
-					#if SP
-					if ( "scriptedPanel" in panel.s )
-						panel.SetUsableValue( e.panelUsableValueToRestore )
-					#endif
-				}
-
-				if ( panel.s.remoteTurret && e.finishedPanelOpen )
-					thread panel.s.remoteTurretStartFunc( panel, player, e.panelUsableValueToRestore )
-
-				if ( panel.s.onPlayerFinishesUsing_func )
-					thread panel.s.onPlayerFinishesUsing_func( panel, player, e.success )
-			}
-
-			foreach ( knife in e.knives )
-			{
-				if ( IsValid( knife ) )
-					knife.Destroy()
-			}
-		}
-	)
-
-	if ( e.doRequireUseButtonHeld && !player.UseButtonPressed() )
-		return	// it's possible to get here and no longer be holding the use button. If that is the case lets not continue.
-
-	if ( player.ContextAction_IsActive() )
-		return
-
-	if ( player.IsPhaseShifted() )
-		return
-
-	player.SetAnimNearZ( 1 )
-
-	player.Event_LeechStart()
-
-	local leechTime = panel.s.leechTimeNormal
-
-	local totalTime = leechTime + player.GetSequenceDuration( action.playerAnimation3pStart )
-
-	thread TrackContinuousUse( player, totalTime, e.doRequireUseButtonHeld )
-
-	waitthread ControlPanelFlipAnimation( panel, player, action, e )
-
-	if ( e.doRequireUseButtonHeld && !player.UseButtonPressed() )
-		return	// we might have returned from the flip anim because we released the use button.
-
-	if ( hackFlag != "" )
-		FlagSet( hackFlag )
-
-	e.finishedPanelOpen = true
-	if ( panel.s.remoteTurret )
-	{
-		// Called on thread end above.
-		return
-	}
-
-	Remote_CallFunction_Replay( player, "ServerCallback_DataKnifeStartLeech", leechTime )
-
-	waitthread WaitForEndLeechOrStoppedUse( player, leechTime, e, panel )
-
-	if ( e.success )
-	{
-		thread PathfinderBeaconSuccessSounds( player )
-		Pathfinder_SurveySuccess( panel, player )
-		thread SetPathfinder_HandUSB( player )
-	}
-	else
-	{
-		Remote_CallFunction_Replay( player, "ServerCallback_DataKnifeCancelLeech" )
-	}
-
-	waitthread ControlPanelFlipExitAnimation( player, panel, action, e )
-}
-
-function WaitForEndLeechOrStoppedUse( player, leechTime, e, panel )
-{
-	player.EndSignal( "OnContinousUseStopped" )
-	wait leechTime
-	e.success = true
-	panel.Signal( "PanelReprogrammed", { success = e.success } )
-}
-
-
-//////////////////////////////////////////////////////////////////////
-function ControlPanelFlipAnimation( entity panel, entity player, action, e )
-{
-//	OnThreadEnd
-//	(
-//		function() : ( panel )
-//		{
-//			if ( IsValid( panel ) )
-//				DeleteAnimEvent( panel, "knife_popout" )
-//		}
-//	)
-	player.EndSignal( "OnContinousUseStopped" )
-
-	FirstPersonSequenceStruct playerSequence
-	playerSequence.attachment = "ref"
-	playerSequence.thirdPersonAnim = expect string ( action.playerAnimation3pStart )
-	playerSequence.thirdPersonAnimIdle = expect string ( action.playerAnimation3pIdle )
-	playerSequence.firstPersonAnim = expect string ( action.playerAnimation1pStart )
-	playerSequence.firstPersonAnimIdle = expect string ( action.playerAnimation1pIdle )
-	if ( IntroPreviewOn() )
-		playerSequence.viewConeFunction = ControlPanelFlipViewCone
-
-	FirstPersonSequenceStruct panelSequence
-	panelSequence.thirdPersonAnim = expect string ( action.panelAnimation3pStart )
-	panelSequence.thirdPersonAnimIdle = expect string ( action.panelAnimation3pIdle )
-
-
-	asset model = DATA_KNIFE_MODEL
-
-	entity knife = CreatePropDynamic( model )
-	SetTargetName( knife, "dataKnife" )
-	knife.SetParent( player, "PROPGUN", false, 0.0 )
-	e.knives.append( knife )
-
-	thread PanelFirstPersonSequence( panelSequence, panel, player )
-	waitthread FirstPersonSequence( playerSequence, player, panel )
-}
-
-
-void function ControlPanelFlipViewCone( entity player )
-{
-	player.PlayerCone_FromAnim()
-	player.PlayerCone_SetMinYaw( -80 )
-	player.PlayerCone_SetMaxYaw( 80 )
-	player.PlayerCone_SetMinPitch( -80 )
-	player.PlayerCone_SetMaxPitch( 10 )
-}
-
-
-//////////////////////////////////////////////////////////////////////
-function PanelFirstPersonSequence( FirstPersonSequenceStruct panelSequence, entity panel, entity player )
-{
-	player.EndSignal( "OnDeath" )
-	panel.EndSignal( "OnDestroy" )
-
-	waitthread FirstPersonSequence( panelSequence, panel )
-}
-
-
-//////////////////////////////////////////////////////////////////////
-function ControlPanelFlipExitAnimation( entity player, entity panel, action, e )
-{
-	FirstPersonSequenceStruct playerSequence
-	playerSequence.blendTime = 0.0
-	playerSequence.attachment = "ref"
-	playerSequence.teleport = true
-
-	FirstPersonSequenceStruct panelSequence
-	panelSequence.blendTime = 0.0
-
-	playerSequence.thirdPersonAnim = expect string ( action.playerAnimation3pEnd )
-	playerSequence.firstPersonAnim = expect string ( action.playerAnimation1pEnd )
-	panelSequence.thirdPersonAnim = expect string ( action.panelAnimation3pEnd )
-
-	thread FirstPersonSequence( panelSequence, panel )
-	waitthread FirstPersonSequence( playerSequence, player, panel )
-}
-
-
-//////////////////////////////////////////////////////////////////////
-function TrackContinuousUse( player, leechTime, doRequireUseButtonHeld )
-{
-	player.EndSignal( "OnDeath" )
-	player.EndSignal( "ScriptAnimStop" )
-
-	local result = {}
-	result.success <- false
-
-	OnThreadEnd
-	(
-		function() : ( player, result )
-		{
-			if ( !result.success )
-			{
-				player.Signal( "OnContinousUseStopped" )
-			}
-		}
-	)
-
-	float startTime = Time()
-	while ( Time() < startTime + leechTime && (!doRequireUseButtonHeld || player.UseButtonPressed()) && !player.IsPhaseShifted() )
-		WaitFrame()
-
-	if ( !doRequireUseButtonHeld || player.UseButtonPressed() )
-		result.success = true
-}
-
-function InitControlPanelUseFuncTable()
-{
-	local Table = {}
-	Table.useEnt <- null
-	Table.useFunc <- null
-	return Table
-}
-
-function AddControlPanelUseFuncTable( panel, Table )
-{
-	// a table that contains
-	//1. a function to be called when the control panel is used
-	//2. an entity that the function refers to, e.g. the turret to be created
-	panel.s.useFuncArray.append( Table )
-}
-
-function SetControlPanelPrompts( ent, func )
-{
-	ent.s.prompts <- func( ent )
-}
-
-function SetPanelUsableToEnemies( panel )
-{
-	if ( panel.GetTeam() == TEAM_IMC || panel.GetTeam() == TEAM_MILITIA  )
-	{
-		panel.SetUsableByGroup( "enemies pilot" )
-		return
-	}
-
-	//Not on either player team, just set usable to everyone
-	panel.SetUsableByGroup( "pilot" )
-}
-
-function PanelFlipsToPlayerTeamAndUsableByEnemies( panel, entity player )
-{
-	expect entity( panel )
-
-	SetTeam( panel, player.GetTeam() )
-	SetPanelUsableToEnemies( panel )
-}
-
-function GetPanelUseEnts( panel )
-{
-	local useEntsArray = []
-	foreach( useFuncTable in panel.s.useFuncArray )
-	{
-		if ( useFuncTable.useEnt )
-			useEntsArray.append( useFuncTable.useEnt )
-	}
-
-	return useEntsArray
-
-}
-
-array<entity> function GetAllControlPanels()
-{
-	//Defensively remove control panels that are invalid.
-	//This is because we can have control panels in levels for some game modes
-	//but not in others, e.g. refuel mode vs tdm
-
-	ArrayRemoveInvalid( file.controlPanels )
-	return file.controlPanels
-}
-
-function CaptureAllAvailableControlPanels( player )
-{
-	array<entity> panels = GetAllControlPanels()
-	foreach ( panel in panels )
-	{
-		#if DEVELOPER
-			printt( "panel team " + panel.GetTeam() )
-		#endif 
-		
-		RunPanelUseFunctions( panel, player )
-	}
+	return IsPVEMode() || Gamemode() == eGamemodes.fs_spieslegends && panel.GetTeam() == gCurrentSpyTeam
 }

@@ -103,13 +103,13 @@ void function SetupUserInfoPanels()
 
 void function UpdateActiveUserInfoPanels()
 {
-	bool isReady = GRX_IsInventoryReady() && GRX_AreOffersReady()
+	bool isReady = true //GRX_IsInventoryReady() && GRX_AreOffersReady()
 	int premiumBalance, creditsBalance, craftingBalance
 	if ( isReady )
 	{
-		premiumBalance = GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
-		creditsBalance = GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CREDITS] )
-		craftingBalance = GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] )
+		premiumBalance = 0 //GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
+		creditsBalance = 0 //GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CREDITS] )
+		craftingBalance = 0 //GRXCurrency_GetPlayerBalance( GetUIPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] )
 	}
 
 	foreach( var elem, bool unused in fileLevel.activeUserInfoPanelSet )

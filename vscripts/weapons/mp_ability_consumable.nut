@@ -1,3 +1,5 @@
+untyped //required for CPlayer class functions
+
 global function WeaponDrivenConsumablesEnabled
 
 global function OnWeaponAttemptOffhandSwitch_Consumable
@@ -31,6 +33,8 @@ global function Consumable_IsCurrentSelectedConsumableTypeUseful
 
 global function Consumable_SetClientTypeOnly
 global function AddModAndFireWeapon_Thread
+global function Consumable_DoHealScreenFx
+global function ServerToClient_DoUltAccelScreenFx
 #endif // CLIENT
 
 #if SERVER
@@ -43,6 +47,9 @@ global function GetConsumableInfoFromRef
 global function Consumable_IsValidModCommand
 global function Consumable_IsHealthItem
 global function Consumable_IsShieldItem
+global const int SCORE_BOMBPLANTED_REWARD = 500
+global const int SCORE_BOMBCARRIERKILLED_BONUS = 100
+global const int SCORE_BOMBCARRIERKILLED = 100
 
 global enum eConsumableType
 {
@@ -114,6 +121,7 @@ enum eUseConsumableResult
 	DENY_NO_KITS,
 	DENY_NO_SHIELDS,
 	DENY_FULL,
+	DENY_DEATH_TOTEM,
 	COUNT,
 }
 
@@ -167,6 +175,7 @@ struct
 		bool healCompletedSuccessfully
 		int  clientSelectedConsumableType
 		int  healScreenFxHandle
+		int  ultAccelScreenFxHandle
 	#endif // CLIENT
 
 } file
@@ -174,11 +183,13 @@ struct
 global const int OFFHAND_SLOT_FOR_CONSUMABLES = OFFHAND_ANTIRODEO
 global const string CONSUMABLE_WEAPON_NAME = "mp_ability_consumable"
 
+const string SHOW_ULT_ACCEL_FX_PLAYLIST_VAR = "ult_accel_vfx_enable"
 const float HEAL_CHATTER_DEBOUNCE = 10.0
 const RESTORE_HEALTH_COCKPIT_FX = $"P_heal_loop_screen"
+const asset VFX_ULT_ACCEL_POP = $"P_UltAcc_screenSpace"
 global const vector HEALTH_RGB = < 114, 245, 250 >
 
-//Wattson
+// (dp): this is gross, but I will revisit it if we add more character/consumable specific sfx
 const string WATTSON_EXTRA_ULT_ACCEL_SFX = "Wattson_Xtra_A"
 
 // This init isn't with the rest of the weapon init functions in _utility_shared.gnut, because it has to run
@@ -187,7 +198,8 @@ void function Consumable_Init()
 {
 	RegisterWeaponForUse( CONSUMABLE_WEAPON_NAME )
 	RegisterSignal( "ConsumableDestroyRui" ) // idk really, from S7 or so...
-		RegisterSignal( "VCTBlueFX" )
+	
+	PrecacheParticleSystem( VFX_ULT_ACCEL_POP )
 
 	{ // Phoenix Kit - Full health and shields
 		ConsumableInfo phoenixKit
@@ -195,7 +207,6 @@ void function Consumable_Init()
 			phoenixKit.lootData = SURVIVAL_Loot_GetLootDataByRef( "health_pickup_combo_full" )
 			phoenixKit.healAmount = 100
 			phoenixKit.shieldAmount = 999
-			phoenixKit.chargeSoundName = "PhoenixKit_Charge"
 			phoenixKit.cancelSoundName = "shield_battery_failure"
 			phoenixKit.modName = "phoenix_kit"
 		}
@@ -225,7 +236,6 @@ void function Consumable_Init()
 			shieldSmall.healAmount = 0
 			shieldSmall.shieldAmount = 25
 			shieldSmall.healCap = 0.0
-			shieldSmall.chargeSoundName = "Shield_Battery_Charge_Short"
 			shieldSmall.cancelSoundName = "shield_battery_failure"
 			shieldSmall.modName = "shield_small"
 		}
@@ -239,7 +249,6 @@ void function Consumable_Init()
 			healthLarge.lootData = SURVIVAL_Loot_GetLootDataByRef( "health_pickup_health_large" )
 			healthLarge.healAmount = 100
 			healthLarge.shieldAmount = 0
-			healthLarge.chargeSoundName = "Health_Syringe_Charge"
 			healthLarge.cancelSoundName = "Health_Syringe_Failure"
 			healthLarge.modName = "health_large"
 		}
@@ -268,7 +277,6 @@ void function Consumable_Init()
 			ultimateBattery.healAmount = 0
 			ultimateBattery.healTime = 0.0
 			ultimateBattery.lootData = SURVIVAL_Loot_GetLootDataByRef( "health_pickup_ultimate" )
-			ultimateBattery.chargeSoundName = "Ult_Acc_Charge"
 			ultimateBattery.cancelSoundName = ""
 			ultimateBattery.modName = "ultimate_battery"
 		}
@@ -312,8 +320,8 @@ void function Consumable_Init()
 	#if SERVER
 		AddCallback_OnClientConnected( OnClientConnected )
 
-		AddClientCommandCallbackNew( "SetSelectedConsumableTypeNetInt", ClientCommand_SetSelectedConsumableTypeNetInt )
-		AddClientCommandCallbackNew( "SetNextHealModType", ClientCommand_SetNextHealModType  )
+		AddClientCommandCallbackVoid( "SetSelectedConsumableTypeNetInt", ClientCommand_SetSelectedConsumableTypeNetInt )
+		AddClientCommandCallbackVoid( "SetNextHealModType", ClientCommand_SetNextHealModType  )
 
 		RegisterSignal( "StartHeal" )
 	#endif
@@ -885,7 +893,7 @@ bool function OnWeaponChargeBegin_Consumable( entity weapon )
 			player.MovementDisable()
 			player.SetMoveSpeedScale(0)
 			player.ForceCrouch() 
-			thread UseConsumable_Bomb( player, info )			
+			// thread UseConsumable_Bomb( player, info )			
 		}
 		else
 			thread UseConsumable( player, info, useData )
@@ -1061,6 +1069,11 @@ var function OnWeaponPrimaryAttack_Consumable( entity weapon, WeaponPrimaryAttac
 		{
 			Consumable_DoHealScreenFx( player )
 		}
+		else if ( info.ultimateAmount > 0 )
+		{
+			Consumable_DoUltAccelScreenFx( player )
+		}
+
 		Chroma_ConsumableSucceeded( info )
 	#endif
 
@@ -1323,12 +1336,12 @@ int function Consumable_GetBestConsumableTypeForPlayer( entity player, int added
 
 	healthDataArray.sort( CompareHealData )
 
-	foreach ( PotentialHealData healData in healthDataArray )
-	{
-		#if CLIENT
-			printt( Localize( healData.consumableInfo.lootData.pickupString ), healData.totalAppliedHeal, healData.healthPerSecond )
-		#endif
-	}
+	// foreach ( PotentialHealData healData in healthDataArray )
+	// {
+		// #if CLIENT
+			// printt( Localize( healData.consumableInfo.lootData.pickupString ), healData.totalAppliedHeal, healData.healthPerSecond )
+		// #endif
+	// }
 
 	foreach ( PotentialHealData healData in healthDataArray )
 	{
@@ -1395,6 +1408,41 @@ void function DoHealScreenFx( entity player )
 	} )
 
 	WaitFrame()
+}
+
+void function Consumable_DoUltAccelScreenFx( entity player )
+{
+	if ( GetCurrentPlaylistVarBool( SHOW_ULT_ACCEL_FX_PLAYLIST_VAR, true ) )
+	{
+		thread DoUltAccelScreenFx( player )
+	}
+}
+
+void function DoUltAccelScreenFx( entity player )
+{
+	EndSignal( player, "OnDeath", "OnDestroy" )
+
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	entity cockpit = player.GetCockpit()
+	if ( !IsValid( cockpit ) )
+		return
+
+	if ( EffectDoesExist( file.ultAccelScreenFxHandle ) )
+		return
+
+	int fxID = GetParticleSystemIndex( VFX_ULT_ACCEL_POP )
+	file.ultAccelScreenFxHandle = StartParticleEffectOnEntity( cockpit, fxID, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	EffectSetIsWithCockpit( file.ultAccelScreenFxHandle, true )
+	EffectSetControlPointVector( file.ultAccelScreenFxHandle, 1, <255, 208, 56> )
+
+	OnThreadEnd( function() {
+		if ( EffectDoesExist( file.ultAccelScreenFxHandle ) )
+			EffectStop( file.ultAccelScreenFxHandle, false, true )
+	} )
+
+	wait 2
 }
 
 void function PlayConsumableUseChroma( entity weapon, ConsumableInfo info )
@@ -1494,11 +1542,18 @@ string function GetCanUseResultString( int consumableUseActionResult )
 
 		case eUseConsumableResult.DENY_FULL:
 			return "#DENY_FULL"
+
+		case eUseConsumableResult.DENY_DEATH_TOTEM:
+			return "#DENY_DEATH_TOTEM"
 		default:
 			return ""
 	}
 
 	unreachable
+}
+void function ServerToClient_DoUltAccelScreenFx()
+{
+	Consumable_DoUltAccelScreenFx( GetLocalViewPlayer() )
 }
 #endif // CLIENT
 
@@ -1772,150 +1827,150 @@ bool function Consumable_IsValidModCommand( entity player, entity weapon, string
 }
 void function UseConsumable_Bomb( entity player, ConsumableInfo info )//, ConsumablePersistentData useData )
 {
-	if( !IsValid(player) || player.GetTeam() != Sh_GetAttackerTeam() || GetGameState() != eGameState.Playing ) return
+	// if( !IsValid(player) || player.GetTeam() != Safe_GetAttackerTeam() || GetGameState() != eGameState.Playing ) return
 	
-	if( Gamemode() == eGamemodes.fs_snd )
-		PlayBattleChatterToSelfOnClientAndTeamOnServer( player,"bc_super" )
+	// if( Gamemode() == eGamemodes.fs_snd )
+		// PlayBattleChatterToSelfOnClientAndTeamOnServer( player,"bc_super" )
 
-	#if SERVER
-	EndSignal( player, "OnDeath" )
-	EndSignal( player, "OnChargeEnd" )
+	// #if SERVER
+	// EndSignal( player, "OnDeath" )
+	// EndSignal( player, "OnChargeEnd" )
 
-	string itemName = info.lootData.ref
+	// string itemName = info.lootData.ref
 
-	float delayScale = 1.0
-	float delayTime = ( info.chargeTime * delayScale )
+	// float delayScale = 1.0
+	// float delayTime = ( info.chargeTime * delayScale )
 
-	float endTime = Time() + delayTime
+	// float endTime = Time() + delayTime
 	
-	while ( Time() < endTime )
-		WaitFrame()
+	// while ( Time() < endTime )
+		// WaitFrame()
 
-	if( !IsValid(player) || player.GetTeam() != Sh_GetAttackerTeam() || GetGameState() != eGameState.Playing ) return
+	// if( !IsValid(player) || player.GetTeam() != Safe_GetAttackerTeam() || GetGameState() != eGameState.Playing ) return
 	
-	player.SetPlayerNetInt("planted", player.GetPlayerNetInt("planted") + 1 )
-	player.p.playerHasBomb = false
+	// player.SetPlayerNetInt("planted", player.GetPlayerNetInt("planted") + 1 )
+	// player.p.playerHasBomb = false
 
-	entity bomb = CreatePropDynamic($"mdl/Weapons/bomb/w_bomb.rmdl", player.GetOrigin() + Vector(0,0,2), Vector(0,0,0))
+	// entity bomb = CreatePropDynamic($"mdl/Weapons/bomb/w_bomb.rmdl", player.GetOrigin() + Vector(0,0,2), Vector(0,0,0))
 
-	if(!IsValid(bomb)) return
+	// if(!IsValid(bomb)) return
 	
-	// foreach( sPlayer in GetPlayerArray() )
+	// // foreach( sPlayer in GetPlayerArray() )
+	// // {
+		// // if(!IsValid(sPlayer)) continue
+	
+		// // Message(sPlayer, "Bomb planted", "Exploding in " + EXPLODE_BOMB_TIME.tostring() + " seconds")
+	// // }
+
+	// foreach ( entity sPlayer in GetPlayerArrayOfTeam(Safe_GetDefenderTeam()) )
+	// {
+		// thread function() : (sPlayer)
+		// {
+			// wait 1
+			// if(!IsValid(sPlayer)) return
+			
+			// Remote_CallFunction_NonReplay( sPlayer, "SND_HintCatalog", 10, 0)
+		// }()
+	// }
+	
+	// foreach ( sPlayer in GetPlayerArrayOfTeam(Safe_GetAttackerTeam()) )
 	// {
 		// if(!IsValid(sPlayer)) continue
-	
-		// Message(sPlayer, "Bomb planted", "Exploding in " + EXPLODE_BOMB_TIME.tostring() + " seconds")
-	// }
-
-	foreach ( entity sPlayer in GetPlayerArrayOfTeam(Sh_GetDefenderTeam()) )
-	{
-		thread function() : (sPlayer)
-		{
-			wait 1
-			if(!IsValid(sPlayer)) return
-			
-			Remote_CallFunction_NonReplay( sPlayer, "SND_HintCatalog", 10, 0)
-		}()
-	}
-	
-	foreach ( sPlayer in GetPlayerArrayOfTeam(Sh_GetAttackerTeam()) )
-	{
-		if(!IsValid(sPlayer)) continue
 		
-		int moneytoGive = SCORE_BOMBPLANTED_REWARD
-		sPlayer.p.availableMoney += moneytoGive
-		Remote_CallFunction_NonReplay( sPlayer, "ServerCallback_OnMoneyAdded",moneytoGive )
-		// Remote_CallFunction_NonReplay( sPlayer, "SND_HintCatalog", 9, moneytoGive)
-		AddPlayerScore( sPlayer, "FS_SND_BombPlanted", sPlayer, "", moneytoGive)
-	}
+		// int moneytoGive = SCORE_BOMBPLANTED_REWARD
+		// sPlayer.p.availableMoney += moneytoGive
+		// Remote_CallFunction_NonReplay( sPlayer, "ServerCallback_OnMoneyAdded",moneytoGive )
+		// // Remote_CallFunction_NonReplay( sPlayer, "SND_HintCatalog", 9, moneytoGive)
+		// AddPlayerScore( sPlayer, "FS_SND_BombPlanted", sPlayer, "", moneytoGive)
+	// }
 	
-	bomb.SetOwner( player )
-	bomb.kv.fadedist = 99999
-	// EmitSoundOnEntity(bomb, "HUD_MP_BountyHunt_BankBonusPts_Deposit_End_Successful_3P")
+	// bomb.SetOwner( player )
+	// bomb.kv.fadedist = 99999
+	// // EmitSoundOnEntity(bomb, "HUD_MP_BountyHunt_BankBonusPts_Deposit_End_Successful_3P")
 
-	thread HandleBombExplosion(bomb)
+	// thread HandleBombExplosion(bomb)
 	
-	if( IsValid( GetPlantedBombEntity() ) )
-		GetPlantedBombEntity().Destroy()
+	// if( IsValid( GetPlantedBombEntity() ) )
+		// GetPlantedBombEntity().Destroy()
 	
-	SetPlantedBombEntity(bomb)
-	SetBombState(bombState.ONGROUND_PLANTED)
+	// SetPlantedBombEntity(bomb)
+	// SetBombState(bombState.ONGROUND_PLANTED)
 	
-	SetTargetName(bomb, "flowstate_bomb")
-	bomb.SetUsable()
-	bomb.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	bomb.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
-	bomb.SetUsePrompts( "Press %use%to defuse the bomb", "Press %use% to defuse the bomb" )
+	// SetTargetName(bomb, "flowstate_bomb")
+	// bomb.SetUsable()
+	// bomb.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
+	// bomb.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
+	// bomb.SetUsePrompts( "Press %use%to defuse the bomb", "Press %use% to defuse the bomb" )
 	
-	Highlight_SetNeutralHighlight( bomb, "sp_objective_entity" )
+	// Highlight_SetNeutralHighlight( bomb, "sp_objective_entity" )
 
-	SetCallback_CanUseEntityCallback( bomb, Bomb_CanUse )
-	AddCallback_OnUseEntity( bomb, Bomb_OnUse )
+	// SetCallback_CanUseEntityCallback( bomb, Bomb_CanUse )
+	// AddCallback_OnUseEntity( bomb, Bomb_OnUse )
 
-	thread function() : (player)
-	{
-		player.ForceStand()
-		WaitFrame()
-		if ( IsValid( player ) && IsAlive( player ) )
-			player.UnforceStand()
-	}()
-	#endif
+	// thread function() : (player)
+	// {
+		// player.ForceStand()
+		// WaitFrame()
+		// if ( IsValid( player ) && IsAlive( player ) )
+			// player.UnforceStand()
+	// }()
+	// #endif
 }
 
 #if SERVER
 void function HandleBombExplosion(entity bomb)
 {
-	EndSignal(bomb, "OnDestroy")
+	// EndSignal(bomb, "OnDestroy")
 
-	float endTime = Time() + EXPLODE_BOMB_TIME
+	// float endTime = Time() + EXPLODE_BOMB_TIME
 	
-	foreach ( player in GetPlayerArray() )
-	{
-		if(!IsValid(player)) continue
+	// foreach ( player in GetPlayerArray() )
+	// {
+		// if(!IsValid(player)) continue
 		
-		Remote_CallFunction_Replay( player, "ServerCallback_OnBombPlantedInGameHint", bomb, endTime)
-	}
+		// Remote_CallFunction_Replay( player, "ServerCallback_OnBombPlantedInGameHint", bomb, endTime)
+	// }
 	
-	// if( endTime >= GetRoundEndTime() )
-		UpdateRoundEndTime( endTime + 1 ) // just adding a bit of extra time to guarantee the bomb to explode or being defused (time won't ran over)
+	// // if( endTime >= GetRoundEndTime() )
+		// UpdateRoundEndTime( endTime + 1 ) // just adding a bit of extra time to guarantee the bomb to explode or being defused (time won't ran over)
 	
-	while( Time() < endTime && IsValid(bomb) )
-		WaitFrame()
+	// while( Time() < endTime && IsValid(bomb) )
+		// WaitFrame()
 	
-	if(!IsValid(bomb) || GetGameState() != eGameState.Playing ) return
+	// if(!IsValid(bomb) || GetGameState() != eGameState.Playing ) return
 	
-	SetBombState( bombState.ONGROUND_EXPLODED )
+	// SetBombState( bombState.ONGROUND_EXPLODED )
 	
-	foreach ( player in GetPlayerArrayOfTeam( Sh_GetAttackerTeam() ) )
-	{
-		if(!IsValid(player)) continue
+	// foreach ( player in GetPlayerArrayOfTeam( Safe_GetAttackerTeam() ) )
+	// {
+		// if(!IsValid(player)) continue
 		
-		player.p.availableMoney += 3500
-		Remote_CallFunction_NonReplay(player, "ServerCallback_OnMoneyAdded", 3500)
-	}
+		// player.p.availableMoney += 3500
+		// Remote_CallFunction_NonReplay(player, "ServerCallback_OnMoneyAdded", 3500)
+	// }
 	
-	StartParticleEffectInWorld( PrecacheParticleSystem( $"P_xo_exp_nuke_3P" ), bomb.GetOrigin(), <0,0,0> )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, bomb.GetOrigin(), "bangalore_ultimate_explosion_concrete" )
+	// StartParticleEffectInWorld( PrecacheParticleSystem( $"P_xo_exp_nuke_3P" ), bomb.GetOrigin(), <0,0,0> )
+	// EmitSoundAtPosition( TEAM_UNASSIGNED, bomb.GetOrigin(), "bangalore_ultimate_explosion_concrete" )
 	
-	foreach ( player in GetPlayerArray_Alive() )
-	{
-		if(!IsValid(player)) continue
+	// foreach ( player in GetPlayerArray_Alive() )
+	// {
+		// if(!IsValid(player)) continue
 		
-		float playerDist = Distance2D( player.GetOrigin(), bomb.GetOrigin() )
-		if ( playerDist <= 700 )
-		{
-			entity attacker
+		// float playerDist = Distance2D( player.GetOrigin(), bomb.GetOrigin() )
+		// if ( playerDist <= 700 )
+		// {
+			// entity attacker
 			
-			if( IsValid(bomb.GetOwner()) && IsAlive(bomb.GetOwner()) )
-				attacker = bomb.GetOwner()
-			else
-				attacker = null
+			// if( IsValid(bomb.GetOwner()) && IsAlive(bomb.GetOwner()) )
+				// attacker = bomb.GetOwner()
+			// else
+				// attacker = null
 			
-			player.TakeDamage( player.GetMaxHealth() + 1, attacker, attacker, { damageSourceId = eDamageSourceId.snd_bomb, scriptType=DF_BYPASS_SHIELD } )
-		}
-	}
+			// player.TakeDamage( player.GetMaxHealth() + 1, attacker, attacker, { damageSourceId = eDamageSourceId.snd_bomb, scriptType=DF_BYPASS_SHIELD } )
+		// }
+	// }
 	
-	bomb.Destroy()
+	// bomb.Destroy()
 }
 
 #endif
@@ -1923,122 +1978,122 @@ void function HandleBombExplosion(entity bomb)
 #if CLIENT
 void function HandleBombSound(entity bomb)
 {
-	EndSignal(bomb, "OnDestroy")
+	// EndSignal(bomb, "OnDestroy")
 
-	Signal(GetLocalClientPlayer(), "OnlyOneBombSound")
-	EndSignal(GetLocalClientPlayer(), "OnlyOneBombSound")
+	// Signal(GetLocalClientPlayer(), "OnlyOneBombSound")
+	// EndSignal(GetLocalClientPlayer(), "OnlyOneBombSound")
 	
-	// P_thermite_spark
-	// P_thermite_igniter_dlight_FP
+	// // P_thermite_spark
+	// // P_thermite_igniter_dlight_FP
 	
-	float startTime = Time()
-	float endTime = Time() + EXPLODE_BOMB_TIME
-	string soundtoplay = "HUD_match_start_timer_tick_1P" 
-	float waittime
-	float timePercentage
+	// float startTime = Time()
+	// float endTime = Time() + EXPLODE_BOMB_TIME
+	// string soundtoplay = "HUD_match_start_timer_tick_1P" 
+	// float waittime
+	// float timePercentage
 	
-	while( Time() < endTime && IsValid(bomb) ) //sorry for this it was a desperate action
-	{
-		if(endTime - Time() <= 2)
-		{
-			// soundtoplay = "ui_ingame_markedfordeath_countdowntoyouaremarked"
-			// EmitSoundOnEntity( bomb, soundtoplay )
-			// wait 2
-			// break
-			waittime = 0.05
-		}
-		else if(endTime - Time() <= 5)
-		{
-			waittime = 0.1
-		}
-		else if(endTime - Time() <= 10)
-		{
-			waittime = 0.2
-		}
-		else if(endTime - Time() <= 15)
-		{
-			waittime = 0.4
-		}
-		else if(endTime - Time() <= 20)
-		{
-			waittime = 0.7
-		}
-		else
-		{
-			waittime = 1
-		}
+	// while( Time() < endTime && IsValid(bomb) ) //sorry for this it was a desperate action
+	// {
+		// if(endTime - Time() <= 2)
+		// {
+			// // soundtoplay = "ui_ingame_markedfordeath_countdowntoyouaremarked"
+			// // EmitSoundOnEntity( bomb, soundtoplay )
+			// // wait 2
+			// // break
+			// waittime = 0.05
+		// }
+		// else if(endTime - Time() <= 5)
+		// {
+			// waittime = 0.1
+		// }
+		// else if(endTime - Time() <= 10)
+		// {
+			// waittime = 0.2
+		// }
+		// else if(endTime - Time() <= 15)
+		// {
+			// waittime = 0.4
+		// }
+		// else if(endTime - Time() <= 20)
+		// {
+			// waittime = 0.7
+		// }
+		// else
+		// {
+			// waittime = 1
+		// }
 		
-		//lerp will update waittime each second, do we want that?
+		// //lerp will update waittime each second, do we want that?
 		
-		// timePercentage = (Time() - startTime) / ((endTime+5) - Time())	
-		// waittime = LerpFloat( 1, 0.15, timePercentage )
+		// // timePercentage = (Time() - startTime) / ((endTime+5) - Time())	
+		// // waittime = LerpFloat( 1, 0.15, timePercentage )
 		
-		StopSoundOnEntity( bomb, soundtoplay )
-		EmitSoundOnEntity( bomb, soundtoplay )
-		wait waittime
-	}
+		// StopSoundOnEntity( bomb, soundtoplay )
+		// EmitSoundOnEntity( bomb, soundtoplay )
+		// wait waittime
+	// }
 }
 
 void function BombCreated( entity ent )
 {
-	SetCallback_CanUseEntityCallback( ent, Bomb_CanUse )
-	AddCallback_OnUseEntity( ent, Bomb_OnUse )
+	// SetCallback_CanUseEntityCallback( ent, Bomb_CanUse )
+	// AddCallback_OnUseEntity( ent, Bomb_OnUse )
 	
-	thread HandleBombSound(ent)
+	// thread HandleBombSound(ent)
 }
 #endif
 
 bool function Bomb_CanUse( entity player, entity bomb)
 {
-	if(!IsValid(player) || !IsValid(bomb)) return false
-	#if SERVER
-		player.Server_TurnOffhandWeaponsDisabledOff()
-	#endif
-	if ( player.GetWeaponDisableFlags() == WEAPON_DISABLE_FLAGS_ALL )
-		return false
+	// if(!IsValid(player) || !IsValid(bomb)) return false
+	// #if SERVER
+		// player.Server_TurnOffhandWeaponsDisabledOff()
+	// #endif
+	// if ( player.GetWeaponDisableFlags() == WEAPON_DISABLE_FLAGS_ALL )
+		// return false
 	
-	if ( player.GetTeam() == Sh_GetAttackerTeam() )
-		return false
+	// if ( player.GetTeam() == Safe_GetAttackerTeam() )
+		// return false
 	
 	return true
 }
 
 void function Bomb_OnUse( entity bomb, entity player, int useInputFlags )
 {
-	if ( !(useInputFlags & USE_INPUT_LONG ) )
-		return
+	// if ( !(useInputFlags & USE_INPUT_LONG ) )
+		// return
 
-	#if CLIENT
-	HidePlayerHint( "Press %use% to defuse the bomb" )
-	#endif
+	// #if CLIENT
+	// HidePlayerHint( "Press %use% to defuse the bomb" )
+	// #endif
 
-	ExtendedUseSettings settings
-	settings.successSound = "UI_InGame_HalftimeText_Enter"
-	#if CLIENT
-		settings.loopSound = "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P"
-		settings.displayRui = $"ui/consumable_progress.rpak"
-		settings.displayRuiFunc = DisplayRuiForBomb
-		settings.icon = $"rui/flowstatecustom/bombicon"
-		settings.hint = "Defusing Bomb"
-	#elseif SERVER
-		//settings.startFunc = RespawnBeaconStartUse
-		//settings.endFunc = RespawnBeaconStopUse
-		settings.successFunc = BombDefused
-		settings.exclusiveUse = true
-		settings.movementDisable = true
-		settings.holsterWeapon = true
-		#endif
-	settings.duration = DEFUSE_BOMB_TIME
-	settings.useInputFlag = IN_USE_LONG
+	// ExtendedUseSettings settings
+	// settings.successSound = "UI_InGame_HalftimeText_Enter"
+	// #if CLIENT
+		// settings.loopSound = "HUD_MP_BountyHunt_BankBonusPts_Ticker_Loop_1P"
+		// settings.displayRui = $"ui/consumable_progress.rpak"
+		// settings.displayRuiFunc = DisplayRuiForBomb
+		// settings.icon = $"rui/flowstatecustom/bombicon"
+		// settings.hint = "Defusing Bomb"
+	// #elseif SERVER
+		// //settings.startFunc = RespawnBeaconStartUse
+		// //settings.endFunc = RespawnBeaconStopUse
+		// settings.successFunc = BombDefused
+		// settings.exclusiveUse = true
+		// settings.movementDisable = true
+		// settings.holsterWeapon = true
+		// #endif
+	// settings.duration = DEFUSE_BOMB_TIME
+	// settings.useInputFlag = IN_USE_LONG
 	
-	#if SERVER
-		if( Gamemode() == eGamemodes.fs_snd )
-		{
-			Highlight_SetFriendlyHighlight( player, "hackers_wallhack" )
-		}
-	#endif
+	// #if SERVER
+		// if( Gamemode() == eGamemodes.fs_snd )
+		// {
+			// Highlight_SetFriendlyHighlight( player, "hackers_wallhack" )
+		// }
+	// #endif
 	
-	thread ExtendedUse( bomb, player, settings )
+	// thread ExtendedUse( bomb, player, settings )
 	
 }
 
@@ -2064,26 +2119,26 @@ void function DisplayRuiForBomb_Internal( var rui, asset icon, float startTime, 
 
 void function BombDefused( entity bomb, entity player, ExtendedUseSettings settings )
 {
-	//player has bomb?
-	#if CLIENT
-	Signal(GetLocalClientPlayer(), "OnlyOneBombSound")
-	#endif
+	// //player has bomb?
+	// #if CLIENT
+	// Signal(GetLocalClientPlayer(), "OnlyOneBombSound")
+	// #endif
 	
-	#if SERVER
-	foreach ( sPlayer in GetPlayerArrayOfTeam(Sh_GetDefenderTeam()) )
-	{
-		if(!IsValid(sPlayer)) continue
+	// #if SERVER
+	// foreach ( sPlayer in GetPlayerArrayOfTeam(Safe_GetDefenderTeam()) )
+	// {
+		// if(!IsValid(sPlayer)) continue
 		
-		sPlayer.p.availableMoney += 3500
-		Remote_CallFunction_NonReplay(sPlayer, "ServerCallback_OnMoneyAdded", 3500)
-	}
+		// sPlayer.p.availableMoney += 3500
+		// Remote_CallFunction_NonReplay(sPlayer, "ServerCallback_OnMoneyAdded", 3500)
+	// }
 	
-	SetPlantedBombEntity(null)
-	SetBombState(bombState.ONGROUND_DEFUSED)
-	bomb.Destroy()
-	player.SetPlayerNetInt("defused", player.GetPlayerNetInt("defused") + 1 )
-	//Message(player, "You've defused the bomb", "Poggers")
-	#endif
+	// SetPlantedBombEntity(null)
+	// SetBombState(bombState.ONGROUND_DEFUSED)
+	// bomb.Destroy()
+	// player.SetPlayerNetInt("defused", player.GetPlayerNetInt("defused") + 1 )
+	// //Message(player, "You've defused the bomb", "Poggers")
+	// #endif
 }
 
 
@@ -2200,21 +2255,16 @@ int function Consumable_GetConsumableRecoveryType( int consumableType )
 
 bool function Consumable_CanUseConsumable( entity player, int consumableType, bool printReason = true )
 {
-
 	if ( IsFallLTM() && IsPlayerShadowSquad( player ) )
 		return false
 
 	int canUseResult = TryUseConsumable( player, consumableType )
 
-	if( consumableType == eConsumableType.SND_BOMB && canUseResult == eUseConsumableResult.ALLOW )
-	{
-		return CanPlantBombHere(player)
-	}
+	// if( consumableType == eConsumableType.SND_BOMB && canUseResult == eUseConsumableResult.ALLOW )
+		// return CanPlantBombHere( player )
 
 	if ( canUseResult == eUseConsumableResult.ALLOW )
-	{
 		return true
-	}
 
 	#if CLIENT
 		if ( printReason && !player.GetPlayerNetBool( "isHealing" ) )
@@ -2255,7 +2305,7 @@ bool function Consumable_CanUseConsumable( entity player, int consumableType, bo
 				reason = Localize( "#SWITCH_HEALTH_KIT_ENTIRE", Localize ( GetCanUseResultString( canUseResult ) ), Localize( "#SWITCH_HEALTH_KIT" ) )
 			}
 			//AnnouncementMessageRight( player, reason )
-			SND_QuickHint(reason, false)
+			// SND_QuickHint(reason, false)
 			return false
 		}
 	#endif
@@ -2266,6 +2316,12 @@ bool function Consumable_CanUseConsumable( entity player, int consumableType, bo
 int function TryUseConsumable( entity player, int consumableType )
 {
 #if CLIENT
+	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_vamp_1v1 || Playlist() == ePlaylists.fs_1v1_headshots_only || Playlist() == ePlaylists.fs_lgduels_1v1 )
+	{
+		if( player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.RESTING || player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.SPECTATING )
+			return eUseConsumableResult.DENY_NONE
+	}
+	
 	if ( player != GetLocalClientPlayer() )
 		return eUseConsumableResult.DENY_NONE
 
@@ -2278,6 +2334,9 @@ int function TryUseConsumable( entity player, int consumableType )
 	if ( Bleedout_IsPlayerGivingFirstAid( player ) )
 		return eUseConsumableResult.DENY_NONE
 #endif
+
+	if ( player.IsDisabledFor( WPT_CONSUMABLE ) )
+		return eUseConsumableResult.DENY_NONE
 
 	while ( player.ContextAction_IsActive() ) // not a real loop
 	{
@@ -2309,6 +2368,9 @@ int function TryUseConsumable( entity player, int consumableType )
 	{
 		return eUseConsumableResult.ALLOW
 	}
+	
+	if ( DeathTotem_PlayerCanRecall( player ) )
+		return eUseConsumableResult.DENY_DEATH_TOTEM
 	
 	if ( consumableType == eConsumableType.ULTIMATE )
 	{

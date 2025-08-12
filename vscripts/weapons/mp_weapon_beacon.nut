@@ -1,5 +1,3 @@
-// By (--__GimmYnkia__--)#2995 and @CafeFPS
-
 global function MpPortableBeacon_Init
 
 global function OnWeaponPrimaryAttack_weapon_beacon

@@ -1,0 +1,606 @@
+untyped
+
+// Parameter types for serialization
+enum eCallbackParamType
+{
+	ENTITY,
+	VECTOR,
+	INT,
+	STRING,
+	FLOAT,
+	BOOL
+}
+
+// Parameter container structure
+global struct CallbackParam
+{
+	int type
+	var value
+}
+
+// Basic callback functions
+global function ModCallbacks_RegisterBoolCallback
+global function ModCallbacks_RegisterVoidCallback
+global function ModCallbacks_RegisterCallback
+global function ModCallbacks_CallBoolCallback
+global function ModCallbacks_CallVoidCallback
+global function ModCallbacks_CallCallback
+global function ModCallbacks_IsCallbackRegistered
+global function ModCallbacks_UnregisterCallback
+
+// New return type callbacks  
+global function ModCallbacks_RegisterIntCallback
+global function ModCallbacks_RegisterEntityCallback
+global function ModCallbacks_CallIntCallback
+global function ModCallbacks_CallEntityCallback
+
+// Parameterized callback functions
+global function ModCallbacks_RegisterBoolCallbackWithParams
+global function ModCallbacks_RegisterVoidCallbackWithParams
+global function ModCallbacks_RegisterIntCallbackWithParams
+global function ModCallbacks_RegisterEntityCallbackWithParams
+global function ModCallbacks_CallBoolCallbackWithParams
+global function ModCallbacks_CallVoidCallbackWithParams
+global function ModCallbacks_CallIntCallbackWithParams
+global function ModCallbacks_CallEntityCallbackWithParams
+
+// Parameter helper functions
+global function ModCallbacks_CreateParams
+global function ModCallbacks_AddEntityParam
+global function ModCallbacks_AddVectorParam
+global function ModCallbacks_AddIntParam
+global function ModCallbacks_AddStringParam
+global function ModCallbacks_AddFloatParam
+global function ModCallbacks_AddBoolParam
+global function ModCallbacks_GetEntityParam
+global function ModCallbacks_GetVectorParam
+global function ModCallbacks_GetIntParam
+global function ModCallbacks_GetStringParam
+global function ModCallbacks_GetFloatParam
+global function ModCallbacks_GetBoolParam
+
+// File struct to hold callback registries
+struct {
+	// Callback registries - separate tables for each type
+	table<string, bool functionref()> boolCallbackRegistry = {}
+	table<string, void functionref()> voidCallbackRegistry = {}
+	table<string, var> varCallbackRegistry = {}
+	
+	// Additional registries for new return types
+	table<string, int functionref()> intCallbackRegistry = {}
+	table<string, entity functionref()> entityCallbackRegistry = {}
+	
+	// Parameterized callback registries
+	table<string, bool functionref(array<CallbackParam>)> boolParamCallbackRegistry = {}
+	table<string, void functionref(array<CallbackParam>)> voidParamCallbackRegistry = {}
+	table<string, int functionref(array<CallbackParam>)> intParamCallbackRegistry = {}
+	table<string, entity functionref(array<CallbackParam>)> entityParamCallbackRegistry = {}
+} file
+
+// Register a callback that returns a boolean value
+void function ModCallbacks_RegisterBoolCallback( string callbackName, bool functionref() callback )
+{
+	file.boolCallbackRegistry[callbackName] <- callback
+	#if DEVELOPER
+	printt( "[MOD_CALLBACKS] Registered boolean callback: " + callbackName )
+	#endif
+}
+
+// Register a callback that returns void
+void function ModCallbacks_RegisterVoidCallback( string callbackName, void functionref() callback )
+{
+	file.voidCallbackRegistry[callbackName] <- callback
+	#if DEVELOPER
+	printt( "[MOD_CALLBACKS] Registered void callback: " + callbackName )
+	#endif
+}
+
+// Register a generic callback (for custom return types)
+void function ModCallbacks_RegisterCallback( string callbackName, var callback )
+{
+	file.varCallbackRegistry[callbackName] <- callback
+	#if DEVELOPER
+	printt( "[MOD_CALLBACKS] Registered callback: " + callbackName )
+	#endif
+}
+
+// Call a boolean callback with a default value if not registered
+bool function ModCallbacks_CallBoolCallback( string callbackName, bool defaultValue = false )
+{
+	if ( callbackName in file.boolCallbackRegistry )
+	{
+		try
+		{
+			bool functionref() callback = file.boolCallbackRegistry[callbackName]
+			return callback()
+		}
+		catch ( exception )
+		{
+			// #if DEVELOPER
+			// printt( "[MOD_CALLBACKS] Error calling boolean callback '" + callbackName + "', using default value: " + defaultValue )
+			// #endif
+			return defaultValue
+		}
+	}
+	
+	//Return default value if callback not registered (no error message)
+	return defaultValue
+}
+
+// Call a void callback if registered
+void function ModCallbacks_CallVoidCallback( string callbackName )
+{
+	if ( callbackName in file.voidCallbackRegistry )
+	{
+		try
+		{
+			void functionref() callback = file.voidCallbackRegistry[callbackName]
+			callback()
+		}
+		catch ( exception )
+		{
+			// #if DEVELOPER
+			// printt( "[MOD_CALLBACKS] Error calling void callback '" + callbackName + "'" )
+			// #endif
+		}
+	}
+	//No action if callback not registered (no error message)
+}
+
+// Call a generic callback with a default value if not registered
+var function ModCallbacks_CallCallback( string callbackName, var defaultValue = null )
+{
+	if ( callbackName in file.varCallbackRegistry )
+	{
+		try
+		{
+			var callback = file.varCallbackRegistry[callbackName]
+			//For non-function values, return directly
+			return callback
+		}
+		catch ( exception )
+		{
+			// #if DEVELOPER
+			// printt( "[MOD_CALLBACKS] Error calling callback '" + callbackName + "', using default value" )
+			// #endif
+			return defaultValue
+		}
+	}
+	
+	//Return default value if callback not registered (no error message)
+	return defaultValue
+}
+
+// Check if a callback is registered
+bool function ModCallbacks_IsCallbackRegistered( string callbackName )
+{
+	return (callbackName in file.boolCallbackRegistry) || 
+		   (callbackName in file.voidCallbackRegistry) || 
+		   (callbackName in file.varCallbackRegistry) ||
+		   (callbackName in file.intCallbackRegistry) ||
+		   (callbackName in file.entityCallbackRegistry) ||
+		   (callbackName in file.boolParamCallbackRegistry) ||
+		   (callbackName in file.voidParamCallbackRegistry) ||
+		   (callbackName in file.intParamCallbackRegistry) ||
+		   (callbackName in file.entityParamCallbackRegistry)
+}
+
+// Unregister a callback
+void function ModCallbacks_UnregisterCallback( string callbackName )
+{
+	bool wasRegistered = false
+	
+	if ( callbackName in file.boolCallbackRegistry )
+	{
+		delete file.boolCallbackRegistry[callbackName]
+		wasRegistered = true
+	}
+	
+	if ( callbackName in file.voidCallbackRegistry )
+	{
+		delete file.voidCallbackRegistry[callbackName]
+		wasRegistered = true
+	}
+	
+	if ( callbackName in file.varCallbackRegistry )
+	{
+		delete file.varCallbackRegistry[callbackName]
+		wasRegistered = true
+	}
+	
+	if ( callbackName in file.intCallbackRegistry )
+	{
+		delete file.intCallbackRegistry[callbackName]
+		wasRegistered = true
+	}
+	
+	if ( callbackName in file.entityCallbackRegistry )
+	{
+		delete file.entityCallbackRegistry[callbackName]
+		wasRegistered = true
+	}
+	
+	if ( callbackName in file.boolParamCallbackRegistry )
+	{
+		delete file.boolParamCallbackRegistry[callbackName]
+		wasRegistered = true
+	}
+	
+	if ( callbackName in file.voidParamCallbackRegistry )
+	{
+		delete file.voidParamCallbackRegistry[callbackName]
+		wasRegistered = true
+	}
+	
+	if ( callbackName in file.intParamCallbackRegistry )
+	{
+		delete file.intParamCallbackRegistry[callbackName]
+		wasRegistered = true
+	}
+	
+	if ( callbackName in file.entityParamCallbackRegistry )
+	{
+		delete file.entityParamCallbackRegistry[callbackName]
+		wasRegistered = true
+	}
+	
+	if ( wasRegistered )
+	{
+		#if DEVELOPER
+		printt( "[MOD_CALLBACKS] Unregistered callback: " + callbackName )
+		#endif
+	}
+}
+
+// ====================================================================
+// PARAMETER SERIALIZATION SYSTEM
+// ====================================================================
+
+// Create a new parameter array
+array<CallbackParam> function ModCallbacks_CreateParams()
+{
+	array<CallbackParam> params = []
+	return params
+}
+
+// Add entity parameter (store as entity index)
+void function ModCallbacks_AddEntityParam( array<CallbackParam> params, entity ent )
+{
+	CallbackParam param
+	param.type = eCallbackParamType.ENTITY
+	param.value = IsValid(ent) ? ent.GetEntIndex() : -1
+	params.append(param)
+}
+
+// Add vector parameter (store as vector)
+void function ModCallbacks_AddVectorParam( array<CallbackParam> params, vector vec )
+{
+	CallbackParam param
+	param.type = eCallbackParamType.VECTOR
+	param.value = vec
+	params.append(param)
+}
+
+// Add int parameter
+void function ModCallbacks_AddIntParam( array<CallbackParam> params, int value )
+{
+	CallbackParam param
+	param.type = eCallbackParamType.INT
+	param.value = value
+	params.append(param)
+}
+
+// Add string parameter
+void function ModCallbacks_AddStringParam( array<CallbackParam> params, string str )
+{
+	CallbackParam param
+	param.type = eCallbackParamType.STRING
+	param.value = str
+	params.append(param)
+}
+
+// Add float parameter
+void function ModCallbacks_AddFloatParam( array<CallbackParam> params, float value )
+{
+	CallbackParam param
+	param.type = eCallbackParamType.FLOAT
+	param.value = value
+	params.append(param)
+}
+
+// Add bool parameter
+void function ModCallbacks_AddBoolParam( array<CallbackParam> params, bool value )
+{
+	CallbackParam param
+	param.type = eCallbackParamType.BOOL
+	param.value = value
+	params.append(param)
+}
+
+// Get entity parameter (convert from entity index)
+entity function ModCallbacks_GetEntityParam( array<CallbackParam> params, int index )
+{
+	if ( index >= params.len() )
+		return null
+		
+	CallbackParam param = params[index]
+	if ( param.type != eCallbackParamType.ENTITY )
+		return null
+		
+	int entIndex = expect int(param.value)
+	if ( entIndex == -1 )
+		return null
+		
+	return GetEntByIndex(entIndex)
+}
+
+// Get vector parameter
+vector function ModCallbacks_GetVectorParam( array<CallbackParam> params, int index )
+{
+	if ( index >= params.len() )
+		return <0,0,0>
+		
+	CallbackParam param = params[index]
+	if ( param.type != eCallbackParamType.VECTOR )
+		return <0,0,0>
+		
+	return expect vector(param.value)
+}
+
+// Get int parameter
+int function ModCallbacks_GetIntParam( array<CallbackParam> params, int index )
+{
+	if ( index >= params.len() )
+		return 0
+		
+	CallbackParam param = params[index]
+	if ( param.type != eCallbackParamType.INT )
+		return 0
+		
+	return expect int(param.value)
+}
+
+// Get string parameter
+string function ModCallbacks_GetStringParam( array<CallbackParam> params, int index )
+{
+	if ( index >= params.len() )
+		return ""
+		
+	CallbackParam param = params[index]
+	if ( param.type != eCallbackParamType.STRING )
+		return ""
+		
+	return expect string(param.value)
+}
+
+// Get float parameter
+float function ModCallbacks_GetFloatParam( array<CallbackParam> params, int index )
+{
+	if ( index >= params.len() )
+		return 0.0
+		
+	CallbackParam param = params[index]
+	if ( param.type != eCallbackParamType.FLOAT )
+		return 0.0
+		
+	return expect float(param.value)
+}
+
+// Get bool parameter
+bool function ModCallbacks_GetBoolParam( array<CallbackParam> params, int index )
+{
+	if ( index >= params.len() )
+		return false
+		
+	CallbackParam param = params[index]
+	if ( param.type != eCallbackParamType.BOOL )
+		return false
+		
+	return expect bool(param.value)
+}
+
+// ====================================================================
+// NEW RETURN TYPE REGISTRATION FUNCTIONS
+// ====================================================================
+
+// Register a callback that returns an integer value
+void function ModCallbacks_RegisterIntCallback( string callbackName, int functionref() callback )
+{
+	file.intCallbackRegistry[callbackName] <- callback
+	#if DEVELOPER
+	printt( "[MOD_CALLBACKS] Registered int callback: " + callbackName )
+	#endif
+}
+
+// Register a callback that returns an entity value
+void function ModCallbacks_RegisterEntityCallback( string callbackName, entity functionref() callback )
+{
+	file.entityCallbackRegistry[callbackName] <- callback
+	#if DEVELOPER
+	printt( "[MOD_CALLBACKS] Registered entity callback: " + callbackName )
+	#endif
+}
+
+// ====================================================================
+// PARAMETERIZED REGISTRATION FUNCTIONS
+// ====================================================================
+
+// Register a parameterized boolean callback
+void function ModCallbacks_RegisterBoolCallbackWithParams( string callbackName, bool functionref(array<CallbackParam>) callback )
+{
+	file.boolParamCallbackRegistry[callbackName] <- callback
+	#if DEVELOPER
+	printt( "[MOD_CALLBACKS] Registered parameterized bool callback: " + callbackName )
+	#endif
+}
+
+// Register a parameterized void callback
+void function ModCallbacks_RegisterVoidCallbackWithParams( string callbackName, void functionref(array<CallbackParam>) callback )
+{
+	file.voidParamCallbackRegistry[callbackName] <- callback
+	#if DEVELOPER
+	printt( "[MOD_CALLBACKS] Registered parameterized void callback: " + callbackName )
+	#endif
+}
+
+// Register a parameterized int callback
+void function ModCallbacks_RegisterIntCallbackWithParams( string callbackName, int functionref(array<CallbackParam>) callback )
+{
+	file.intParamCallbackRegistry[callbackName] <- callback
+	#if DEVELOPER
+	printt( "[MOD_CALLBACKS] Registered parameterized int callback: " + callbackName )
+	#endif
+}
+
+// Register a parameterized entity callback
+void function ModCallbacks_RegisterEntityCallbackWithParams( string callbackName, entity functionref(array<CallbackParam>) callback )
+{
+	file.entityParamCallbackRegistry[callbackName] <- callback
+	#if DEVELOPER
+	printt( "[MOD_CALLBACKS] Registered parameterized entity callback: " + callbackName )
+	#endif
+}
+
+// ====================================================================
+// NEW RETURN TYPE INVOCATION FUNCTIONS
+// ====================================================================
+
+// Call an int callback with a default value if not registered
+int function ModCallbacks_CallIntCallback( string callbackName, int defaultValue = 0 )
+{
+	if ( callbackName in file.intCallbackRegistry )
+	{
+		try
+		{
+			int functionref() callback = file.intCallbackRegistry[callbackName]
+			return callback()
+		}
+		catch ( exception )
+		{
+			// #if DEVELOPER
+			// printt( "[MOD_CALLBACKS] Error calling int callback '" + callbackName + "', using default value: " + defaultValue )
+			// #endif
+			return defaultValue
+		}
+	}
+	
+	//Return default value if callback not registered (no error message)
+	return defaultValue
+}
+
+// Call an entity callback with a default value if not registered
+entity function ModCallbacks_CallEntityCallback( string callbackName, entity defaultValue = null )
+{
+	if ( callbackName in file.entityCallbackRegistry )
+	{
+		try
+		{
+			entity functionref() callback = file.entityCallbackRegistry[callbackName]
+			return callback()
+		}
+		catch ( exception )
+		{
+			// #if DEVELOPER
+			// printt( "[MOD_CALLBACKS] Error calling entity callback '" + callbackName + "', using default value" )
+			// #endif
+			return defaultValue
+		}
+	}
+	
+	//Return default value if callback not registered (no error message)
+	return defaultValue
+}
+
+// ====================================================================
+// PARAMETERIZED INVOCATION FUNCTIONS
+// ====================================================================
+
+// Call a parameterized boolean callback
+bool function ModCallbacks_CallBoolCallbackWithParams( string callbackName, array<CallbackParam> params, bool defaultValue = false )
+{
+	if ( callbackName in file.boolParamCallbackRegistry )
+	{
+		try
+		{
+			bool functionref(array<CallbackParam>) callback = file.boolParamCallbackRegistry[callbackName]
+			return callback(params)
+		}
+		catch ( exception )
+		{
+			// #if DEVELOPER
+			// printt( "[MOD_CALLBACKS] Error calling parameterized bool callback '" + callbackName + "', using default value: " + defaultValue )
+			// #endif
+			return defaultValue
+		}
+	}
+	
+	//Return default value if callback not registered (no error message)
+	return defaultValue
+}
+
+// Call a parameterized void callback
+void function ModCallbacks_CallVoidCallbackWithParams( string callbackName, array<CallbackParam> params )
+{
+	if ( callbackName in file.voidParamCallbackRegistry )
+	{
+		try
+		{
+			void functionref(array<CallbackParam>) callback = file.voidParamCallbackRegistry[callbackName]
+			callback(params)
+		}
+		catch ( exception )
+		{
+			// #if DEVELOPER
+			// printt( "[MOD_CALLBACKS] Error calling parameterized void callback '" + callbackName + "'" )
+			// #endif
+		}
+	}
+	//No action if callback not registered (no error message)
+}
+
+// Call a parameterized int callback
+int function ModCallbacks_CallIntCallbackWithParams( string callbackName, array<CallbackParam> params, int defaultValue = 0 )
+{
+	if ( callbackName in file.intParamCallbackRegistry )
+	{
+		try
+		{
+			int functionref(array<CallbackParam>) callback = file.intParamCallbackRegistry[callbackName]
+			return callback(params)
+		}
+		catch ( exception )
+		{
+			// #if DEVELOPER
+			// printt( "[MOD_CALLBACKS] Error calling parameterized int callback '" + callbackName + "', using default value: " + defaultValue )
+			// #endif
+			return defaultValue
+		}
+	}
+	
+	//Return default value if callback not registered (no error message)
+	return defaultValue
+}
+
+// Call a parameterized entity callback
+entity function ModCallbacks_CallEntityCallbackWithParams( string callbackName, array<CallbackParam> params, entity defaultValue = null )
+{
+	if ( callbackName in file.entityParamCallbackRegistry )
+	{
+		try
+		{
+			entity functionref(array<CallbackParam>) callback = file.entityParamCallbackRegistry[callbackName]
+			return callback(params)
+		}
+		catch ( exception )
+		{
+			// #if DEVELOPER
+			// printt( "[MOD_CALLBACKS] Error calling parameterized entity callback '" + callbackName + "', using default value" )
+			// #endif
+			return defaultValue
+		}
+	}
+	
+	//Return default value if callback not registered (no error message)
+	return defaultValue
+}
+

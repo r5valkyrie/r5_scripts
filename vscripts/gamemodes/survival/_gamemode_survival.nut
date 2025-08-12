@@ -41,6 +41,7 @@ global function SURVIVAL_SetPlaneHeight
 global function Survival_RunPlaneLogic_Thread
 global function Survival_GenerateSingleRandomPlanePath
 global function Survival_RunSinglePlanePath_Thread
+global function Survival_GetPlayerRealm
 
 global function SetPlayerIntroDropSettings
 global function ClearPlayerIntroDropSettings
@@ -70,7 +71,7 @@ const string KNOCKED_SOUND = "flesh_bulletimpact_downedshot_3p_vs_3p"
 //fix debug draws calls
 const bool DEBUG_PLANE_PATH = false
 const bool DEBUG_PLANE_PATH_LIGHTWEIGHT = false
-const bool DEBUG_PLANE_PATH_JUMP = true
+const bool DEBUG_PLANE_PATH_JUMP = false
 const bool PLANE_PATH_DEBUG = false
 
 global float g_DOOR_OPEN_TIME = 0
@@ -123,7 +124,7 @@ struct
 	bool shouldFreezeControlsOnPrematch = true
 	table<EncodedEHandle, SurvivalPlayerData>        playerData
 	table< entity, float >         playerLastDamageSlowTime
-	
+
 	//Callbacks new
 	array<void functionref(entity, var, int) >    Callbacks_OnPlayerKillDamage
 	array<void functionref(entity, entity) >    Callbacks_OnAttackerSquadWipe
@@ -131,12 +132,12 @@ struct
 } file
 
 void function GamemodeSurvival_Init()
-{	
+{
 	if(GetCurrentPlaylistVarBool("enable_global_chat", true))
 		SetConVarBool("sv_forceChatToTeamOnly", false) //thanks rexx
 	else
 		SetConVarBool("sv_forceChatToTeamOnly", true)
-	
+
 	SurvivalFreefall_Init()
 	Sh_ArenaDeathField_Init()
 	SurvivalShip_Init()
@@ -144,15 +145,16 @@ void function GamemodeSurvival_Init()
 	FlagInit( "PlaneStartMoving" )
 	FlagInit( "PlaneDoorOpen" )
 	FlagInit( "PlaneAtLaunchPoint" )
-	FlagInit( "DeathCircleActive" )
 	FlagInit( "SpawnInDropship", false )
 	FlagInit( "PlaneDrop_Respawn_SetUseCallback", false )
 
+	RegisterSignal( "CleanupOutsideCircle" )
+
 	AddCallback_OnPlayerKilled( OnPlayerKilled )
-	
+
 	if ( Gamemode() == eGamemodes.SURVIVAL )
 		AddCallback_OnPlayerKilled( OnPlayerKilled_DropLoot )
-		
+
 	AddCallback_OnClientConnected( OnClientConnected )
 	AddCallback_OnPreClientDisconnected( Survival_OnClientDisconnected )
 
@@ -161,9 +163,8 @@ void function GamemodeSurvival_Init()
 	AddDamageCallbackSourceID( eDamageSourceId.deathField, RingDamagePunch )
 
 	AddClientCommandCallback("Flowstate_AssignCustomCharacterFromMenu", ClientCommand_Flowstate_AssignCustomCharacterFromMenu)
-	
+
 	#if DEVELOPER //uncommented dev defines
-		AddClientCommandCallback("SpawnDeathboxAtCrosshair", ClientCommand_deathbox)
 		AddClientCommandCallback("forceBleedout", ClientCommand_bleedout)
 		AddClientCommandCallback("lsm_restart", ClientCommand_restartServer)
 		AddClientCommandCallback("playerRequestsSword", ClientCommand_GiveSword)
@@ -171,15 +172,12 @@ void function GamemodeSurvival_Init()
 		// AddClientCommandCallback("forceChampionScreen", ClientCommand_ForceChampionScreen)
 		AddClientCommandCallback("forceGameOverScreen", ClientCommand_ForceGameOverScreen)
 		AddClientCommandCallback("forceRingMovement", ClientCommand_ForceRingMovement )
-		
+
 		AddClientCommandCallback("destroyEndScreen", ClientCommand_DestroyEndScreen)
 		AddClientCommandCallback("setLegendary", ClientCommand_SetLegendaryWeapon)
 		AddClientCommandCallback("giveGoodLoot", ClientCommand_GiveGoodLootToPlayers)
 		AddClientCommandCallback("enableGodMode", ClientCommand_EnableDemigod)
 		AddClientCommandCallback("disableGodMode", ClientCommand_EnableDemigod)
-		AddClientCommandCallback("becomeFade", ClientCommand_BecomeFade)
-		AddClientCommandCallback("becomeRhapsody", ClientCommand_BecomeRhapsody)
-		AddClientCommandCallback("spawnGreenWallIdk", ClientCommand_GreenWall) //requires custom material
 	#endif
 
 	FillSkyWithClouds()
@@ -191,50 +189,48 @@ void function GamemodeSurvival_Init()
 			thread Sequence_Playing()
 		}
 	)
-	
+
 	if( GetCurrentPlaylistVarBool( "deathfield_starts_in_prematch", false ) )
 		thread SURVIVAL_RunArenaDeathField()
-	
-	if( Playlist() == ePlaylists.fs_haloMod_survival )
-	{
-		BannerAssets_SetAllGroupsFunc
-		(
-			void function()
-			{
-				BannerAssets_RegisterAudioGroup
-				(
-					"halo_audio",
-					false //(audio interruptable, false = queued for audio from this group. )
-				)
-			}
-		)
-		
-		BannerAssets_SetAllAssetsFunc
-		(
-			void function()
-			{
-				array<string> haloAudio = WorldDrawAsset_GetAssetArrayByCategory( "halo" )
 
-				foreach( assetRef in haloAudio )
-				{
-					BannerAssets_GroupAppendAsset
-					(
-						"halo_audio",
-						WorldDrawAsset_AssetRefToID( assetRef )
-					)
-				}
-			}
-		)
-		
-		BannerAssets_Init()
-		
-		//Move faster while adsing
-		AddCallback_OnPlayerZoomIn( FS_HaloMod_OnPlayerZoomIn )
-		AddCallback_OnPlayerZoomOut( FS_HaloMod_OnPlayerZoomOut )
-		
-		//Precache Charm
-		PrecacheModel( $"mdl/flowstate_custom/charm_hiswattson.rmdl" )
-	}
+	// Halo audios, make callback and move when fixed
+	// if( Playlist() == ePlaylists.fs_haloMod_survival )
+	// {
+		// BannerAssets_SetAllGroupsFunc
+		// (
+			// void function()
+			// {
+				// BannerAssets_RegisterAudioGroup
+				// (
+					// "halo_audio",
+					// false //(audio interruptable, false = queued for audio from this group. )
+				// )
+			// }
+		// )
+
+		// BannerAssets_SetAllAssetsFunc
+		// (
+			// void function()
+			// {
+				// array<string> haloAudio = WorldDrawAsset_GetAssetArrayByCategory( "halo" )
+
+				// foreach( assetRef in haloAudio )
+				// {
+					// BannerAssets_GroupAppendAsset
+					// (
+						// "halo_audio",
+						// WorldDrawAsset_AssetRefToID( assetRef )
+					// )
+				// }
+			// }
+		// )
+
+		// BannerAssets_Init()
+
+		// //Move faster while adsing
+		// AddCallback_OnPlayerZoomIn( FS_HaloMod_OnPlayerZoomIn )
+		// AddCallback_OnPlayerZoomOut( FS_HaloMod_OnPlayerZoomOut )
+	// }
 }
 
 #if DEVELOPER
@@ -308,18 +304,18 @@ bool function ClientCommand_GiveGoodLootToPlayers(entity player, array<string> a
 		{
 			if ( ref == "" )
 				continue
-			
+
 			LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
 			if ( data.lootType == eLootType.MAINWEAPON )
 			{
-				player.GiveWeapon( ref, WEAPON_INVENTORY_SLOT_ANY, [] ) 
+				player.GiveWeapon( ref, WEAPON_INVENTORY_SLOT_ANY, [] )
 			} else
 			{
 				SURVIVAL_AddToPlayerInventory( bot, ref)
 			}
 		}
 	}
-	
+
 	return false
 }
 
@@ -329,7 +325,7 @@ bool function ClientCommand_SetLegendaryWeapon(entity player, array<string> args
 		return false
 
 	int index2 = -1
-	
+
 	if( args.len() > 1 )
 		index2 = args[1].tointeger()
 
@@ -369,7 +365,7 @@ bool function ClientCommand_ForceRingMovement(entity player, array<string> args)
 {
 	if ( GetConVarInt( "sv_cheats" ) != 1 )
 		return false
-	
+
 	thread function () : ( player )
 	{
 		FlagSet( "DeathCircleActive" )
@@ -413,22 +409,6 @@ bool function ClientCommand_DestroyEndScreen(entity player, array<string> args)
 
 	return true
 }
-
-bool function ClientCommand_deathbox(entity player, array<string> args)
-{
-	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return false
-
-	vector origin = OriginToGround( GetPlayerCrosshairOrigin( player ) )
-
-	vector org2 = player.GetOrigin()
-	vector vec1 = org2 - origin
-	vector angles1 = VectorToAngles( vec1 )
-	angles1.x = 0
-	
-	CreateAimtrainerDeathbox( gp()[0], origin )
-	return true
-}
 #endif
 
 void function EntitiesDidLoad_Survival()
@@ -439,6 +419,16 @@ void function EntitiesDidLoad_Survival()
 	//defaulting to false crashes survival game modes expecting a plane
 	if( GetCurrentPlaylistVarBool( "jump_from_plane_enabled", true ) || GetCurrentPlaylistVarBool( "force_plane_to_spawn_without_players", false ) )
 		thread Survival_RunPlaneLogic_Thread( Survival_GenerateSingleRandomPlanePath, Survival_RunSinglePlanePath_Thread, false )
+	else
+	{
+		if ( GetCurrentPlaylistVarBool( "survival_deathfield_enabled", true ) )
+			FlagSet( "DeathCircleActive" )
+
+		if ( GetCurrentPlaylistVarBool( "sur_circle_start_paused", false ) )
+		{
+			FlagSet( "DeathFieldPaused" )
+		}
+	}
 }
 
 void function Survival_RunPlaneLogic_Thread( array< PlanePathData > functionref( bool, int = 0 ) generatePlanePathFunc, void functionref( array< PlanePathData >, int = 0 ) runPlanePathFunc, bool beQuick, int planeInt = 0 )
@@ -770,7 +760,7 @@ void function Survival_RunSinglePlanePath_Thread( array< PlanePathData > paths, 
 		pelican.SetAbsOrigin( path.clampedPlaneStart + <0,0,-100> )
 		plane.Hide()
 	}
-	
+
 	file.plane.baseEnt           = plane
 
 	plane.EndSignal( "OnDestroy" )
@@ -823,7 +813,7 @@ void function Survival_RunSinglePlanePath_Thread( array< PlanePathData > paths, 
 
 	if ( GetCurrentPlaylistVarBool( "sur_circle_start_paused", false ) )
 	{
-		FlagClear( "DeathFieldPaused" )
+		FlagSet( "DeathFieldPaused" )
 	}
 }
 
@@ -891,17 +881,17 @@ bool function ClientCommand_Flowstate_AssignCustomCharacterFromMenu(entity playe
 		player.SetBodyModelOverride( $"mdl/Humans/pilots/w_master_chief.rmdl" )
 		player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_master_chief.rmdl" )
 		break
-		
-		case "1":
+
+		/*case "1":
 		player.SetBodyModelOverride( $"mdl/Humans/pilots/w_blisk.rmdl" )
 		player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_blisk.rmdl" )
-		break
-		
+		break*/
+
 		case "2":
 		player.SetBodyModelOverride( $"mdl/Humans/pilots/w_phantom.rmdl" )
 		player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_phantom.rmdl" )
 		break
-		
+
 		case "3":
 		player.SetBodyModelOverride( $"mdl/Humans/pilots/w_amogino.rmdl" )
 		player.SetArmsModelOverride( $"mdl/dev/empty_model.rmdl" )
@@ -911,23 +901,23 @@ bool function ClientCommand_Flowstate_AssignCustomCharacterFromMenu(entity playe
 		// player.SetBodyModelOverride( $"mdl/Humans/pilots/w_petergriffing.rmdl" )
 		// player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_petergriffing.rmdl" )
 		// break
-		
+
 		case "5":
 		player.SetBodyModelOverride( $"mdl/Humans/pilots/w_rhapsody.rmdl" )
 		player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_rhapsody.rmdl" )
 		break
-		
-		case "6":
+
+		/*case "6":
 		player.SetBodyModelOverride( $"mdl/Humans/pilots/w_ash_legacy.rmdl" )
 		player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_ash_legacy.rmdl" )
-		break
-		
+		break*/
+
 		// case "7":
 		// player.SetBodyModelOverride( $"mdl/Humans/pilots/w_cj.rmdl" )
 		// player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_amogino.rmdl" )
 		// break
-		
-		case "8":
+
+		/*case "8":
 		player.SetBodyModelOverride( $"mdl/Humans/pilots/w_jackcooper.rmdl" )
 		player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_jackcooper.rmdl" )
 		break
@@ -935,8 +925,8 @@ bool function ClientCommand_Flowstate_AssignCustomCharacterFromMenu(entity playe
 		case "9":
 		player.SetBodyModelOverride( $"mdl/Humans/pilots/pilot_medium_loba.rmdl" )
 		player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_pilot_medium_loba.rmdl" )
-		break
-		
+		break*/
+
 		// case "10":
 		// player.SetBodyModelOverride( $"mdl/Humans/pilots/pilot_heavy_revenant.rmdl" )
 		// player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_pilot_heavy_revenant.rmdl" )
@@ -946,16 +936,16 @@ bool function ClientCommand_Flowstate_AssignCustomCharacterFromMenu(entity playe
 		// player.SetBodyModelOverride( $"mdl/Humans/pilots/pilot_medium_loba_swimsuit.rmdl" )
 		// player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_loba_swimsuit.rmdl" )
 		// break
-		
+
 		case "12": // ballistic
 		player.SetBodyModelOverride( $"mdl/Humans/pilots/ballistic_base_w.rmdl" )
 		player.SetArmsModelOverride( $"mdl/Humans/pilots/ballistic_base_v.rmdl" )
 		break
-		
-		case "13": // mrvn
+
+		/*case "13": // mrvn
 		player.SetBodyModelOverride( $"mdl/flowstate_custom/w_marvin.rmdl" )
 		player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_amogino.rmdl" )
-		break
+		break*/
 
 		// case "14": // gojo
 		// player.SetBodyModelOverride( $"mdl/flowstate_custom/w_gojo.rmdl" )
@@ -1015,23 +1005,20 @@ void function Sequence_Playing()
 	{
 		player.StopObserverMode()
 		Survival_ClearPrematchSettings( player )
-		
+
 		if( !IsAlive( player ) )
 			DecideRespawnPlayer_Retail( player )
 	}
 
 	// Set settings for the drop-in
-	foreach ( entity player in GetPlayerArray() )
+	bool shouldSetDropSettings = true
+	if ( Gamemode() == eGamemodes.WINTEREXPRESS || Playlist() == ePlaylists.survival_dev || Playlist() == ePlaylists.dev_default || GetCurrentPlaylistVarBool( "is_practice_map", false ) || Playlist() == ePlaylists.fs_movementrecorder )
+		shouldSetDropSettings = false
+
+	if ( shouldSetDropSettings )
 	{
-		bool shouldSetDropSettings = true
-
-		if ( Gamemode() == eGamemodes.WINTEREXPRESS || Playlist() == ePlaylists.survival_dev || Playlist() == ePlaylists.dev_default || GetCurrentPlaylistVarBool( "is_practice_map", false ) || Playlist() == ePlaylists.fs_movementrecorder )
-			shouldSetDropSettings = false
-
-		if ( shouldSetDropSettings )
-		{
+		foreach ( entity player in GetPlayerArray() )
 			SetPlayerIntroDropSettings( player )
-		}
 	}
 
 	FlagClear( "PlaneStartMoving" )
@@ -1061,11 +1048,12 @@ void function Sequence_Playing()
 		{
 			WaitFrame()
 		}
-	} else if ( !GetCurrentPlaylistVarBool( "match_ending_enabled", true ) || GetConVarInt( "mp_enablematchending" ) < 1 )
+	}
+	else if ( !GetCurrentPlaylistVarBool( "match_ending_enabled", true ) || GetConVarInt( "mp_enablematchending" ) < 1 )
 	{
 		WaitForever() // match never ending
 	}
-	
+
 	while ( GetGameState() == eGameState.Playing )
 	{
 		if ( GetNumTeamsRemaining() <= 1 )
@@ -1075,7 +1063,7 @@ void function Sequence_Playing()
 				winnerTeam = GetTeamsForPlayers( GetPlayerArray_AliveConnected() )[0]
 			else
 				winnerTeam = -1
-			
+
 			level.nv.winningTeam = winnerTeam
 
 			SetGameState( eGameState.WinnerDetermined )
@@ -1097,7 +1085,7 @@ void function CircleRemainingTimeChatter_Think()
 
 		if( remainingTime < 0 )
 			continue
-		
+
 		string line = ""
 		array< int > alreadySaidTeam = []
 
@@ -1164,7 +1152,7 @@ void function Sequence_WinnerDetermined()
 			player.Signal( "BleedOut_OnRevive" )
 			player.Signal( "OnContinousUseStopped" )
 		}
-			
+
 	}
 
 	thread SurvivalCommentary_HostAnnounce( eSurvivalCommentaryBucket.WINNER, 3.0 )
@@ -1204,13 +1192,13 @@ void function Sequence_Epilogue()
 			)
 		}
 
-		Remote_CallFunction_NonReplay( player, "ServerCallback_ShowWinningSquadSequence" )
+		Remote_CallFunction_ByRef( player, "ServerCallback_ShowWinningSquadSequence" )
 	}
-	
+
 	if( GetCurrentPlaylistVarBool( "survival_server_restart_after_end", false ) )
 	{
 		wait GetCurrentPlaylistVarFloat( "survival_server_restart_after_end_time", 30 )
-		
+
 		GameRules_ChangeMap( GetMapName(), GameRules_GetGameMode() )
 	}
 }
@@ -1278,11 +1266,11 @@ void function OnPlayerDamaged( entity victim, var damageInfo )
 {
 	if ( !IsValid( victim ) || !victim.IsPlayer() || Bleedout_IsBleedingOut( victim ) )
 		return
-	
+
 	entity attacker = InflictorOwner( DamageInfo_GetAttacker( damageInfo ) )
-	
+
 	int sourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	
+
 	// #if DEVELOPER
 	// Warning( "OnPlayerDamaged " + victim )
 	// #endif
@@ -1294,7 +1282,7 @@ void function OnPlayerDamaged( entity victim, var damageInfo )
 	int currentHealth = victim.GetHealth()
 	if ( !( DamageInfo_GetCustomDamageType( damageInfo ) & DF_BYPASS_SHIELD ) )
 		currentHealth += victim.GetShieldHealth()
-	
+
 	vector damagePosition = DamageInfo_GetDamagePosition( damageInfo )
 	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
 	entity weapon = DamageInfo_GetWeapon( damageInfo )
@@ -1305,10 +1293,6 @@ void function OnPlayerDamaged( entity victim, var damageInfo )
 //Centralized start bleedout
 int function CodeCallback_KillDamagePlayerOrNPC( entity ent, var damageInfo, int actualTotalDamage )
 {
-	#if DEVELOPER
-	Warning( "CodeCallback_KillDamagePlayerOrNPC " + ent + " actualTotalDamage " + actualTotalDamage )
-	#endif
-
 	entity damagedEnt = ent
 
 	if ( !damagedEnt.IsPlayer() )
@@ -1329,9 +1313,9 @@ int function CodeCallback_KillDamagePlayerOrNPC( entity ent, var damageInfo, int
 
 		if ( attacker.IsPlayer() && attacker != damagedEnt )
 		{
-			if( Playlist() == ePlaylists.fs_haloMod_survival )
-				HisWattsons_HaloModFFA_KillStreakAnnounce( attacker )
-			
+			// if( Playlist() == ePlaylists.fs_haloMod_survival )
+				// HisWattsons_HaloModFFA_KillStreakAnnounce( attacker )
+
 			// AddGameSummaryKnockdown( attacker, ent, 1, damageInfo )
 
 			foreach ( entity assistCreditPlayer, float assistTime in ent.p.playerToTimeThatAssistCreditLastsTable )
@@ -1352,15 +1336,15 @@ int function CodeCallback_KillDamagePlayerOrNPC( entity ent, var damageInfo, int
 			{
 				foreach ( player in GetPlayerArray() )
 				{
-					Remote_CallFunction_Replay( player, "ServerCallback_OnEnemyDowned", attacker, damagedEnt, DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )	
+					Remote_CallFunction_Replay( player, "ServerCallback_OnEnemyDowned", attacker, damagedEnt, DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ) )
 				}
 
 				if( attacker.IsPlayer() && IsPlaylistAllowedForDefaultKillNotifications() )
 					AddPlayerScore( attacker, "Sur_DownedPilot", damagedEnt )
 
-				
-				if( attacker.IsPlayer() && Playlist() == ePlaylists.fs_scenarios )
-					FS_Scenarios_UpdatePlayerScore( attacker, FS_ScoreType.DOWNED, damagedEnt )
+
+				// if( attacker.IsPlayer() && Playlist() == ePlaylists.fs_scenarios )
+					// FS_Scenarios_UpdatePlayerScore( attacker, FS_ScoreType.DOWNED, damagedEnt )
 			}
 
 			damagedEnt.p.playerToTimeThatAssistCreditLastsTable = GetLatestAssistingPlayersFromSameTeam( damagedEnt, attacker )
@@ -1444,7 +1428,7 @@ void function Delayed_TryEliminateTeammates( entity victim, entity attacker = nu
 		wait 0.1
 		if( !IsValid( player ) ) //
 			continue
-			
+
 		if ( GetGameState() <= eGameState.Playing &&
 				IsAlive( player ) &&
 				player != victim &&
@@ -1458,14 +1442,14 @@ void function Delayed_TryEliminateTeammates( entity victim, entity attacker = nu
 			bleedingMatesKilled++
 		}
 	}
-	
+
 	if( !IsValid( attacker ) )
 		return
 
 	EndSignal( attacker, "OnDestroy" )
 	wait 0.1
-	
-	
+
+
 	if( !IsValid( attacker ) || !IsValid( victim ) ) //check again since waited frames...
 		return
 
@@ -1479,10 +1463,10 @@ void function Delayed_TryEliminateTeammates( entity victim, entity attacker = nu
 				AddPlayerScore( teammate, "Sur_SquadWipe", victim, teammate == attacker ? "killer" : "" )
 			}
 		}
-		
+
 		foreach ( func in file.Callbacks_OnAttackerSquadWipe )
 			func( victim, attacker )
-	} 
+	}
 	else if( attacker.IsPlayer() && bleedingMatesKilled == 0 )
 	{
 		if( IsPlaylistAllowedForDefaultKillNotifications() && GetCurrentPlaylistVarBool( "flowstate_rat_wipe_notification", false ) )
@@ -1522,7 +1506,7 @@ void function EnemyDownedDialogue( entity attacker, entity victim )
 {
 	if( !attacker.IsPlayer() || attacker == victim )
 		return
-	
+
 	attacker.p.downedEnemy++
 
 	string dialogue = ""
@@ -1530,7 +1514,7 @@ void function EnemyDownedDialogue( entity attacker, entity victim )
 	float anotherDelay = 10
 	if( Time() <= anotherDelay )
 		attacker.p.lastDownedEnemyTime -= anotherDelay // rare
-	
+
 	float time = Time() - attacker.p.lastDownedEnemyTime
 	int currentDownedEnemy = attacker.p.downedEnemy
 
@@ -1565,10 +1549,10 @@ void function TakingFireDialogue( entity attacker, entity victim, entity weapon 
 	{
 		if( !IsValid(player) )
 			continue
-		
+
 		if( !(attackerTeam in player.p.attackedTeam) )
 			player.p.attackedTeam[ attackerTeam ] <- -returnTime
-		
+
 		if( attackerTeam in player.p.attackedTeam && Time() - player.p.attackedTeam[ attackerTeam ] <= returnTime )
 			inTime = true
 	}
@@ -1594,7 +1578,7 @@ void function TakingFireDialogue( entity attacker, entity victim, entity weapon 
 	foreach( team, time in victim.p.attackedTeam )
 		if( Time() - time < returnTime )
 			attackerTotalTeam++
-	
+
 	if( attackerTotalTeam > 1 )
 		PlayBattleChatterLineToSpeakerAndTeam( victim, "bc_anotherSquadAttackingUs" )
 	else
@@ -1700,7 +1684,7 @@ void function Flowstate_TryUpgradeEvoOnKill( entity victim, entity attacker, var
 
 	if( !IsAlive( attacker ) )
 		return
-	
+
 	EvoCurrentShieldToNextTier( damageInfo, attacker )
 }
 
@@ -1711,12 +1695,12 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 	int attackerEHandle = -1
 	int victimEHandle = -1
-	
+
 	if( attacker.IsPlayer() && !IsFiringRangeGameMode() )
 	{
 		attackerEHandle = attacker ? attacker.GetEncodedEHandle() : -1
 		victimEHandle = victim ? victim.GetEncodedEHandle() : -1
-		
+
 		Flowstate_TryUpgradeEvoOnKill( victim, attacker, damageInfo )
 	}
 
@@ -1727,22 +1711,22 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 		thread function() : ( victim )
 		{
 			wait GetDeathCamLength()
-			
+
 			if( !IsValid(victim) )
 				return
-			
+
 			//SetRandomStagingPositionForPlayer( victim )
 			DecideRespawnPlayer( victim )
 		}()
 
 		return
 	}
-	
+
 	int victimTeamNum = victim.GetTeam()
 	array<entity> victimTeam = GetPlayerArrayOfTeam_Alive( victimTeamNum )
 	bool teamEliminated = victimTeam.len() == 0
 	bool canPlayerBeRespawned = PlayerRespawnEnabled() && !teamEliminated
-	
+
 	// PlayerFullyDoomed MUST be called before HandleSquadElimination
 	// HandleSquadElimination accesses player.p.respawnChanceExpiryTime which is set by PlayerFullyDoomed
 	// if it isn't called in this order, the survivalTime will be 0
@@ -1750,7 +1734,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	{
 		PlayerFullyDoomed( victim )
 	}
-	
+
 	if ( teamEliminated )
 		HandleSquadElimination( victimTeamNum )
 
@@ -1758,7 +1742,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	// // Restore weapons for deathbox
 	// if ( victim.p.storedWeapons.len() > 0 )
 		// RetrievePilotWeapons( victim )
-	
+
 	thread EnemyKilledDialogue( attacker, victimTeamNum, victim )
 }
 
@@ -1766,7 +1750,7 @@ void function EnemyKilledDialogue( entity attacker, int victimTeam, entity victi
 {
 	if( !attacker.IsPlayer() || attacker == victim )
 		return
-	
+
 	attacker.p.killedEnemy++
 
 	string dialogue = ""
@@ -1796,7 +1780,7 @@ void function EnemyKilledDialogue( entity attacker, int victimTeam, entity victi
 		PlayBattleChatterLineToSpeakerAndTeam( attacker, dialogue )
 		if( responsePlayer != null )
 			PlayBattleChatterLineToSpeakerAndTeam( responsePlayer, responseName )
-		
+
 		attacker.p.killedEnemy = 0
 	}
 }
@@ -1821,27 +1805,25 @@ void function OnClientConnected( entity player )
 		DecideRespawnPlayer( player )
 		GiveBasicSurvivalItems( player )
 		return
-	} 
+	}
 	else if ( IsSurvivalTraining() )
 	{
-		DecideRespawnPlayer( player )
-		thread PlayerStartsTraining( player )
 		return
-	} 
+	}
 
 	switch ( GetGameState() )
 	{
 		case eGameState.Epilogue:
-			Remote_CallFunction_NonReplay( player, "ServerCallback_ShowWinningSquadSequence" )
+			Remote_CallFunction_ByRef( player, "ServerCallback_ShowWinningSquadSequence" )
 			break
 	}
-	
+
 	if( Playlist() == ePlaylists.fs_haloMod_survival ) //Assign random stance and frame for halo mod survival, which always uses bloodhound character. Cafe
 	{
 		LoadoutEntry entry = GetAllLoadoutSlots()[56] //character_bloodhound GCard Frame
 		ItemFlavor itemFlavor = ConvertLoadoutSlotContentsIndexToItemFlavor( entry, RandomIntRangeInclusive(2, 17) ) //1 does not exists, starts from 2
 		SetItemFlavorLoadoutSlot( ToEHI( player ), entry, itemFlavor )
-		
+
 		LoadoutEntry entry2 = GetAllLoadoutSlots()[57] //character_bloodhound GCard Stance
 		ItemFlavor itemFlavor2 = ConvertLoadoutSlotContentsIndexToItemFlavor( entry2, RandomIntRangeInclusive(2, 17) ) //1 does not exists, starts from 2
 		SetItemFlavorLoadoutSlot( ToEHI( player ), entry2, itemFlavor2 )
@@ -1855,10 +1837,10 @@ void function OnClientConnected( entity player )
 void function Survival_OnClientConnected( entity player )
 {
 	float DEFAULT_ZOOM_LEVEL = 4.0
-	
+
 	if( Playlist() == ePlaylists.fs_haloMod_survival )
 		DEFAULT_ZOOM_LEVEL = 1.5
-	
+
 	player.SetMinimapZoomScale( DEFAULT_ZOOM_LEVEL, 0.0 )
 
 	SurvivalPlayerData data
@@ -2181,10 +2163,10 @@ bool function IsValidLegendaryMagazine( string mod )
 		case "bullets_mag_l4":
 		case "shotgun_bolt_l4":
 		case "energy_mag_l4":
-		
+
 		return true
 	}
-	
+
 	return false
 }
 
@@ -2192,14 +2174,14 @@ void function Flowstate_CheckForLv4MagazinesAndRefillAmmo( entity player )
 {
 	if( !IsValid( player ) )
 		return
-	
+
 	entity oldActiveWeapon
 	entity activeWeapon
 
 	while( IsValid( player ) )
 	{
 		wait 0.1
-		
+
 		if( !IsValid( player ) )
 			break
 
@@ -2215,7 +2197,7 @@ void function Flowstate_CheckForLv4MagazinesAndRefillAmmo( entity player )
 		{
 			if( !IsValid( weapon ) )
 				continue
-				
+
 			if( weapon == player.GetActiveWeapon( eActiveInventorySlot.mainHand ) )
 			{
 				Signal( weapon, "Flowstate_RestartLv4MagazinesThread" )
@@ -2231,7 +2213,7 @@ void function Flowstate_CheckForLv4MagazinesAndRefillAmmo( entity player )
 				continue
 
 			array<string> mods = clone weapon.GetMods()
-			
+
 			foreach( mod in mods )
 				if( IsValidLegendaryMagazine( mod ) )
 					thread Flowstate_Lv4MagazinesRefillAmmo_Thread( player, weapon )
@@ -2260,7 +2242,7 @@ void function Flowstate_Lv4MagazinesRefillAmmo_Thread( entity player, entity wea
 
 	int currentAmmo = weapon.GetWeaponPrimaryClipCount()
 	int maxAmmo = weapon.GetWeaponSettingInt( eWeaponVar.ammo_clip_size )
-	
+
 	if( currentAmmo == maxAmmo )
 		return
 
@@ -2297,7 +2279,7 @@ void function LSM_OnPlayerTouchGround( entity player )
 
 	if(fallDist > 1000)
 		Damagemultiplier = 0.05
-	
+
 	player.TakeDamage( Damagemultiplier * fallDist, null, null, { damageSourceId=damagedef_suicide } )
 }
 
@@ -2449,7 +2431,7 @@ void function ClearPlayerIntroDropSettings( entity player )
 		SurvivalPlayerData data
 		file.playerData[EHIToEncodedEHandle( player )] <- data
 	}
-	
+
 	file.playerData[ EHIToEncodedEHandle( player ) ].hasJumpedOutOfPlane = true
 	file.playerData[ EHIToEncodedEHandle( player ) ].landingOrigin       = player.GetOrigin()
 	file.playerData[ EHIToEncodedEHandle( player ) ].landingTime         = Time()
@@ -2748,10 +2730,9 @@ void function SurvivalPlayerRespawnedInit( entity player )
 		}
 		else
 		{
-			// Cafe was here
-			// The following should be allowed only in dev modes, but those are handled in a different way in r5r, which allows us to completely disable this. 
+			// The following should be allowed only in dev modes, but those are handled in a different way in r5r, which allows us to completely disable this.
 			// The fixed behavior for this part has been moved to OnClientConnected callback in sh_onboarding, where we do the pertinent checks before respawning the player.
-			
+
 			// Bad
 			// if a player is on the ground already, just spawn them near that player
 			// ClearPlayerIntroDropSettings( player )
@@ -2777,6 +2758,17 @@ void function Survival_ClearPrematchSettings( entity player )
 {
 	if ( file.shouldFreezeControlsOnPrematch )
 		player.UnfreezeControlsOnServer()
+}
+
+int function Survival_GetPlayerRealm( entity player )
+{
+	foreach ( realm in Survival_Loot_GetRealmsToPopulate() )
+	{
+		if ( player.IsInRealm( realm ) )
+			return realm
+	}
+
+	return eRealms.DEFAULT
 }
 
 void function Survival_ResetPlayerHighlights()
@@ -2828,7 +2820,7 @@ void function FS_HaloMod_OnPlayerZoomIn( entity player )
 {
 	if( !IsValid( player ) )
 		return
-	
+
 	GiveExtraWeaponMod( player, "unsc_super_soldier" )
 }
 
@@ -2836,6 +2828,6 @@ void function FS_HaloMod_OnPlayerZoomOut( entity player )
 {
 	if( !IsValid( player ) )
 		return
-	
+
 	TakeExtraWeaponMod( player, "unsc_super_soldier" )
 }

@@ -1,0 +1,118 @@
+global function ShPassiveShotgunKick_Init
+
+const int PILOT_SHOTGUN_KICK_OFFHAND_INDEX = OFFHAND_EQUIPMENT
+
+void function ShPassiveShotgunKick_Init()
+{
+	PrecacheWeapon( "mp_weapon_shotgun_kick" )
+
+	#if SERVER
+		RegisterSignal( "passiveShotgunKick_EndPassive" )
+		AddCallback_OnPassiveChanged( ePassives.PAS_SHOTGUN_KICK, PassiveShotgunKick_OnPassiveChanged )
+
+		AddDamageCallback( "player", PassiveShotgunKick_OnPlayerDamaged )
+		AddDamageCallback( "door_mover", PassiveShotgunKick_OnPlayerDamaged )
+		AddDamageCallback( "prop_door", PassiveShotgunKick_OnPlayerDamaged )
+		//AddDamageCallbackSourceID( eDamageSourceId.damagedef_grenade_gas, PassiveGasGear_StopGasGrenadeDamage )
+	#endif
+}
+
+#if SERVER
+void function PassiveShotgunKick_OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( didHave )
+	{
+		//entity weapon = player.GetOffhandWeapon( PILOT_SHIELD_OFFHAND_INDEX )
+		player.Signal( "passiveShotgunKick_EndPassive" )
+		player.TakeOffhandWeapon( PILOT_SHOTGUN_KICK_OFFHAND_INDEX )
+	}
+	if ( nowHas )
+	{
+		player.GiveOffhandWeapon( "mp_weapon_shotgun_kick", PILOT_SHOTGUN_KICK_OFFHAND_INDEX, [] )
+
+		player.Signal( "passiveShotgunKick_EndPassive" )
+		//thread PassiveShotgunKick_WaitForMelee( player )
+	}
+}
+#endif
+
+
+#if SERVER
+void function PassiveShotgunKick_WaitForMelee( entity player )
+{
+	Assert( IsNewThread(), "Must be threaded off." )
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "passiveShotgunKick_EndPassive" )
+
+	AddButtonPressedPlayerInputCallback( player, IN_MELEE, PassiveShotgunKick_FireShotgun )
+
+	OnThreadEnd(
+		function () : ( player )
+		{
+			if ( IsValid( player ) )
+				RemoveButtonPressedPlayerInputCallback( player, IN_MELEE, PassiveShotgunKick_FireShotgun )
+		}
+	)
+
+	WaitForever()
+}
+#endif
+
+
+#if SERVER
+void function PassiveShotgunKick_FireShotgun( entity player )
+{
+	entity weapon = player.GetOffhandWeapon( PILOT_SHOTGUN_KICK_OFFHAND_INDEX )
+
+	if ( !IsValid( weapon ) )
+		return
+
+	WeaponPrimaryAttackParams attackParams
+	attackParams.pos = player.EyePosition()
+	attackParams.dir = player.GetViewForward()
+	attackParams.firstTimePredicted = false
+	attackParams.burstIndex = 0
+	attackParams.barrelIndex = 0
+
+	WeaponShotgunKick_FireWeaponPlayerAndNPC( attackParams, false, weapon )
+}
+#endif
+
+
+#if SERVER
+void function PassiveShotgunKick_OnPlayerDamaged( entity target, var damageInfo )
+{
+	if ( target.IsTitan() )
+		return
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !attacker.IsPlayer() )
+		return
+
+	if ( !PlayerHasPassive( attacker, ePassives.PAS_SHOTGUN_KICK ) )
+		return
+
+	int flags = DamageInfo_GetCustomDamageType( damageInfo )
+
+	if ( !(flags & DF_MELEE) )
+		return
+
+	entity weapon = attacker.GetOffhandWeapon( PILOT_SHOTGUN_KICK_OFFHAND_INDEX )
+
+	if ( !IsValid( weapon ) )
+		return
+
+	WeaponPrimaryAttackParams attackParams
+	attackParams.pos = attacker.EyePosition()
+	attackParams.dir = attacker.GetViewForward()
+	attackParams.firstTimePredicted = false
+	attackParams.burstIndex = 0
+	attackParams.barrelIndex = 0
+
+	WeaponShotgunKick_FireWeaponPlayerAndNPC( attackParams, false, weapon )
+}
+#endif
+
+

@@ -10,8 +10,11 @@ global function Thirdperson_Init
 void function Thirdperson_Init()
 {
 	#if(CLIENT)
-		Toggle3pCamera()
-		RegisterConCommandTriggeredCallback( "+scriptCommand5", Press3pCameraToggle )
+		if( Gamemode() != eGamemodes.fs_spieslegends )
+		{
+			Toggle3pCamera()
+			RegisterConCommandTriggeredCallback( "+scriptCommand5", Press3pCameraToggle )
+		}
 	#endif //
 }
 #endif //
@@ -52,6 +55,8 @@ void function Press3pCameraToggle( entity player )
 	if ( !IsValid( player ) || !IsAlive( player ) )
 		return
 	if ( player.GetZoomFrac() > 0.1 )
+		return
+	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_vamp_1v1 || Playlist() == ePlaylists.fs_1v1_headshots_only || Playlist() == ePlaylists.fs_lgduels_1v1 )
 		return
 
 	Toggle3pCamera()

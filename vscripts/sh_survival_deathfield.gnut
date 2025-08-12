@@ -17,6 +17,7 @@ global function SURVIVAL_RunArenaDeathField
 global function SURVIVAL_GetCirclesCompleted
 global function SURVIVAL_GetDeathFieldData
 global function SURVIVAL_GetDeathFieldStages
+global function SURVIVAL_GetDeathFieldStagesNew
 global function SURVIVAL_GetCalculatedMapCenter
 global function SURVIVAL_GetCalculatedMapRadiusBig
 global function SURVIVAL_Server_GetNextDeathFieldEndRadius
@@ -26,6 +27,7 @@ global function SURVIVAL_PosInSafeZone
 global function SURVIVAL_PosInsideDeathField
 global function SURVIVAL_GetSafeZoneCenter
 global function SURVIVAL_GetSafeZoneRadius
+global function SURVIVAL_ShowSurveyRegionOnSquadMaps
 global function SURVIVAL_GetDeathFieldShrinking
 global function SetSurveyBaconMinimapVisibility
 global function Pathfinder_SurveySuccess
@@ -51,7 +53,7 @@ global function SURVIVAL_GetDeathFieldCurrentRadius
 global function SURVIVAL_GetCurrentDeathFieldStage
 global function SURVIVAL_GetCurrentRoundString
 global function SURVIVAL_IsFinalDeathFieldStage
-
+global function InitDeathFieldDataAndStageData
 global function AddCallback_OnSurvivalDeathFieldStageChanged
 global function RemoveCallback_OnSurvivalDeathFieldStageChanged
 
@@ -95,6 +97,7 @@ global struct DeathFieldData
 	vector center = <0, 0, 0>
 	vector nextCenter = <0, 0, 0>
 
+	int codeIndex = 0
 	float currentRadius  = 40000.0
 	float startRadius    = 40000.0
 	float endRadius      = 40000.0
@@ -136,6 +139,7 @@ struct
 	int                        deathFieldStartStage
 	entity                     deathField
 	entity                     safeZone
+	entity                      observerSurveyMinimapEnt
 
 	#if CLIENT
 		array< void functionref ( DeathFieldStageData ) > ClientCallbacks_OnDeathFieldStartShrink
@@ -162,7 +166,6 @@ void function Sh_ArenaDeathField_Init()
 	RegisterSignal( "DeathField_ShrinkNow" )
 
 	FlagInit( "UsePreciseFinalCircleOverride" )
-	FlagInit( "DeathCircleActive", false )
 	FlagInit( "AllowDeathFieldUpdate", true )
 	FlagInit( "DeathFieldPaused", GetCurrentPlaylistVarBool( "sur_circle_start_paused", false ) )
 	FlagInit( "DoneCreatingDeathFieldPosition" )
@@ -174,7 +177,7 @@ void function Sh_ArenaDeathField_Init()
 
 	AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_survey_beacon", Pathfinder_AddSurveyBeacon )
 
-	// AddClientCommandCallback( "UpdateCirclePos", ClientCommand_UpdateCirclePos )
+	AddClientCommandCallback( "UpdateCirclePos", ClientCommand_UpdateCirclePos )
 #endif
 
 	// InitDeathFieldDataAndStageData() //moved to eGameState.Playing enter
@@ -193,13 +196,17 @@ void function Sh_ArenaDeathField_Init()
 #endif
 }
 
-//Cafe was here
 //Moved to eGameState.Playing enter to modify preshrink and shrink speeds dynamically based on the amount of players connected.
 void function Deathfield_OnPlayingGameStateEnter()
 {
+	if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
+		return
+
 	InitDeathFieldDataAndStageData()
+	
 	#if SERVER
 	EntitiesDidLoad_DeathField()
+	FlagSet( "DeathCircleSetup" )
 	#endif
 }
 
@@ -299,7 +306,7 @@ DeathFieldStageData function CreateDeathFieldStageData( int index, bool allowMis
 	}
 
 	#if DEVELOPER
-	printw( "CreateDeathFieldStageData factor:", factor, " - ", index, allowMissingDefaults, " - preShrinkDuration: " + data.preShrinkDuration, " - shrinkDuration: " + data.shrinkDuration )
+	// printw( "CreateDeathFieldStageData factor:", factor, " - ", index, allowMissingDefaults, " - preShrinkDuration: " + data.preShrinkDuration, " - shrinkDuration: " + data.shrinkDuration )
 	#endif
 	
 	return data
@@ -311,6 +318,7 @@ void function InitDeathFieldDataAndStageData()
 
 	GenerateDeathFieldStageData()
 
+	file.deathFieldStartStage = GetCurrentPlaylistVarInt( "survival_death_field_start_stage", 0 )
 	if ( file.deathFieldStartStage >= file.deathFieldStages.len() )
 		file.deathFieldStartStage = file.deathFieldStages.len()
 }
@@ -319,8 +327,8 @@ float function SURVIVAL_Deathfield_GetStartRadius()
 {
 	float startRadius = GetCurrentPlaylistVarFloat( "survival_death_field_start_radius", 65000 )
 	
-	if( file.deathFieldStartStage == 0 && MapName() == eMaps.mp_rr_desertlands_64k_x_64k )
-		startRadius = 70000
+	//if( file.deathFieldStartStage == 0 && MapName() == eMaps.mp_rr_desertlands_64k_x_64k )
+		//startRadius = 70000
 
 	if ( file.deathFieldStartStage > 0 )
 	{
@@ -328,6 +336,13 @@ float function SURVIVAL_Deathfield_GetStartRadius()
 	}
 
 	return startRadius
+}
+
+float function SURVIVAL_Deathfield_GetStartDamage()
+{
+	int startStage = maxint( file.deathFieldStartStage - 1, 0 )
+
+	return file.deathFieldStages[startStage].percentDamagePerTick
 }
 
 bool function PlayerShouldSeeSurveyBeaconMarkers( entity player )
@@ -353,9 +368,20 @@ bool function PlayerShouldSeeSurveyBeaconMarkers( entity player )
 #if SERVER
 void function EntitiesDidLoad_DeathField()
 {
-    if(file.deathFieldStartStage > 0)
-        SetCurrentDeathFieldStage( file.deathFieldStartStage )
 	DeathFieldCreatePositions()
+
+	DeathFieldData data = file.deathFieldData
+
+	data.startRadius = SURVIVAL_Deathfield_GetStartRadius()
+	data.currentRadius = SURVIVAL_Deathfield_GetStartRadius()
+	data.endRadius = SURVIVAL_Deathfield_GetStartRadius()
+	data.percentDamagePerTick = SURVIVAL_Deathfield_GetStartDamage()
+
+    if(file.deathFieldStartStage > 0)
+	{
+		file.deathFieldData.center = file.deathFieldStages[ file.deathFieldStartStage ].endPos
+        SetCurrentDeathFieldStage( file.deathFieldStartStage )
+	}
 }
 
 bool s_deathFieldSynchronized = false
@@ -794,7 +820,7 @@ void function DeathFieldDamage( DeathFieldData data, entity deathField )
 			float playerDist = Distance2D( player.GetOrigin(), data.center )
 			if ( playerDist > currentRadius )
 			{
-				Remote_CallFunction_Replay( player, "ServerCallback_PlayerTookDamage", 0, 0, 0, 0, DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, eDamageSourceId.deathField, null )
+				Remote_CallFunction_Replay( player, "ServerCallback_PlayerTookDamage", 0, <0, 0, 0>, DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, eDamageSourceId.deathField, 0 )
 				player.TakeDamage( int( data.percentDamagePerTick * float( player.GetMaxHealth() ) ), null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.deathField } )
 			}
 		}
@@ -803,43 +829,42 @@ void function DeathFieldDamage( DeathFieldData data, entity deathField )
 	}
 }
 
-// bool function ClientCommand_UpdateCirclePos( entity player, array<string> args )
-// {
-	// if ( args.len() < 2 )
-		// return false
+bool function ClientCommand_UpdateCirclePos( entity player, array<string> args )
+{
+	if ( args.len() < 2 )
+		return false
 
-	// bool cheatsEnabled = GetConVarBool( "sv_cheats" )
-	// if ( !cheatsEnabled )
-	// {
-		// BigWarningLog( "UpdateCirclePos - disabled (server cheats are off): " + player )
-		// return true
-	// }
-	// if ( !Flag( "AllowDeathFieldUpdate" ) )
-	// {
-		// BigWarningLog( "UpdateCirclePos - no longer allowed to change circle pos" )
-		// return true
-	// }
+	bool cheatsEnabled = GetConVarBool( "sv_cheats" )
+	if ( !cheatsEnabled )
+	{
+		BigWarningLog( "UpdateCirclePos - disabled (server cheats are off): " + player )
+		return false
+	}
+	if ( !Flag( "AllowDeathFieldUpdate" ) )
+	{
+		BigWarningLog( "UpdateCirclePos - no longer allowed to change circle pos" )
+		return false
+	}
 
-	// float argX    = float( args[0] )
-	// float argY    = float( args[1] )
-	// vector newPos = <argX, argY, 0>
+	float argX    = float( args[0] )
+	float argY    = float( args[1] )
+	vector newPos = <argX, argY, 0>
 
-	// #if DEVELOPER
-		// thread DEV_ForceDeathFieldPosition( newPos )
-		// return true
-	// #endif
-
-	// return false
-// }
+	#if DEVELOPER
+		thread DEV_ForceDeathFieldPosition( newPos )
+		return true
+	#endif // DEVELOPER
+	return false
+}
 
 #if DEVELOPER
 void function DEV_ForceDeathFieldPosition( vector endPos )
 {
 	if ( !SURVIVAL_IsValidCircleLocation( endPos ) )
 	{
-		Warning( "Invalid Circle Location Requested: " + endPos )
-		return
+		Warning( "Invalid Circle Location Requested" )
 	}
+	Warning( "Updating the Circle Location to new position:" + endPos )
 	waitthread GenerateDeathFieldData( endPos, 5.0 )
 }
 
@@ -1402,6 +1427,11 @@ array<DeathFieldStageData> function SURVIVAL_GetDeathFieldStages()
 	return file.deathFieldStages
 }
 
+array< DeathFieldStageData > function SURVIVAL_GetDeathFieldStagesNew( int realm )
+{
+	return file.deathFieldStages
+}
+
 vector function SURVIVAL_GetNextCircleCenter()
 {
 	return file.deathFieldData.nextCenter
@@ -1484,6 +1514,40 @@ void function Pathfinder_SurveySuccess( entity beacon, entity player )
 	minimapObj.Minimap_Hide( player.GetTeam(), null )
 
 	StatsHook_SurveyBeacon_OnSurveySuccess( player )
+}
+
+entity function SURVIVAL_CreateSurveyZoneEntity( vector circleOrigin, float circleRadius, string targetName = "surveyZone" )
+{
+
+	entity surveyZone = CreateEntity( "prop_script" )
+	surveyZone.SetValueForModelKey( $"mdl/dev/empty_model.rmdl" )
+	surveyZone.kv.fadedist = -1
+	surveyZone.kv.renderamt = 255
+	surveyZone.kv.rendercolor = "255 255 255"
+	surveyZone.kv.solid = 0
+	surveyZone.SetOrigin( circleOrigin )
+	surveyZone.SetAngles( <0, 0, 0> )
+	surveyZone.Hide()
+	surveyZone.NotSolid()
+	surveyZone.DisableHibernation()
+
+	float radius = min( 65536.0, circleRadius )
+	surveyZone.Minimap_SetObjectScale( radius / SURVIVAL_MINIMAP_RING_SCALE )
+	surveyZone.Minimap_SetAlignUpright( true )
+	surveyZone.Minimap_SetZOrder( MINIMAP_Z_OBJECTIVE )
+	surveyZone.Minimap_SetClampToEdge( true )
+	surveyZone.Minimap_SetCustomState( eMinimapObject_prop_script.OBJECTIVE_AREA )
+
+	array<entity> players = GetPlayerArray()
+	foreach ( p in players )
+	{
+		surveyZone.Minimap_Hide( p.GetTeam(), null )
+	}
+
+	SetTargetName( surveyZone, targetName )
+	DispatchSpawn( surveyZone )
+
+	return surveyZone
 }
 
 void function Pathfinder_RemoveSuveryZones()
@@ -1591,6 +1655,73 @@ void function Pathfinder_RandomizeSurveyLocations()
 		file.surveyMinimapEnts.append( minimapObj )
 		file.surveyBeacons.append( beacon )
 	}
+}
+
+void function OBSERVER_OnSurveryBeaconScanned( int team )
+{
+	if ( file.observerSurveyMinimapEnt == null )
+		return
+
+	array<entity> spectators = GetPlayerArrayOfTeam( TEAM_SPECTATOR )
+	foreach ( spectator in spectators )
+	{
+		if ( spectator.GetObserverTarget() && spectator.GetObserverTarget().GetTeam() == team )
+			file.observerSurveyMinimapEnt.Minimap_Hide( TEAM_INVALID, spectator )
+	}
+}
+
+void function SURVIVAL_ShowSurveyRegionOnSquadMaps( entity player )
+{
+	if ( HasActiveSurveyZone( player ) )
+		return
+
+	int team = player.GetTeam()
+
+	DeathFieldStageData deathField
+	int currentDeathFieldStageValue
+
+	//Using a patch fix this logic will be replaced/refactored in a later version of the game.
+	//checking to see if this is before the Ring movement has started, bypassing normal setting of currentDeathFieldStageValue which will be set to 0, which will inherently make the later logic to set current deathfield return file.deathFieldStages[ realm ][1] which is the SECOND ring, not the FIRST (which is at index [0].
+	if (SURVIVAL_GetCurrentDeathFieldStage() > -1)
+	{
+		currentDeathFieldStageValue = int( max( 0, SURVIVAL_GetCurrentDeathFieldStage() ) )
+	}
+	else if (SURVIVAL_GetCurrentDeathFieldStage() <= -1)
+	{
+		currentDeathFieldStageValue = -1
+	}
+
+	int realm                      = Survival_GetPlayerRealm( player )
+	/*deathField = file.deathFieldStages[ realm ][ int( min( currentDeathFieldStageValue + 1, file.deathFieldStages[ realm ].len() - 1 ) ) ]
+	vector circleOrigin = deathField.endPos
+	float circleRadius  = deathField.endRadius < 175.0 ? 175.0 : deathField.endRadius
+
+	entity surveyZone = SURVIVAL_CreateSurveyZoneEntity( circleOrigin, circleRadius )
+
+	surveyZone.SetOwner( player )
+
+	file.surveyMinimapEnts.append( surveyZone )
+
+	surveyZone.Minimap_AlwaysShow( team, null )
+
+	                   
+		thread Perk_NextZoneSurveyBeacon_ListenForScannedZoneEntered( player, surveyZone, circleRadius )*/
+                          
+
+	OBSERVER_OnSurveryBeaconScanned( team )
+}
+
+void function Perk_NextZoneSurveyBeacon_ListenForScannedZoneEntered( entity player, entity zone, float radius )
+{
+	player.EndSignal( "OnDestroy" )
+	zone.EndSignal( "OnDestroy" )
+
+	vector zoneOrigin = zone.GetOrigin()
+	while( Distance2DSqr( player.GetOrigin(), zoneOrigin ) > radius * radius )
+	{
+		Wait( .5 )
+	}
+	//StatsHook_ScannedRingLocationReached( player )
 }
 
 void function SetSurveyBaconMinimapVisibility( entity player, bool show)

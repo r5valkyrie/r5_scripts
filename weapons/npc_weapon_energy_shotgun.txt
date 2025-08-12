@@ -37,7 +37,7 @@ WeaponData
 	"projectile_lifetime" 							"1.0"
 	"projectile_inherit_owner_velocity_scale"		"0.0"
 	"projectile_drag_coefficient"                   "0.001"
-	"projectiles_per_shot" 							"5"
+	"projectiles_per_shot" 							"4"
 
 	"projectile_launch_speed"						"7000"
 
@@ -103,15 +103,15 @@ WeaponData
 	"proficiency_good_spreadscale"					"4.5"
 	"proficiency_very_good_spreadscale"   			"3.7"
 
-	"npc_damage_near_value"   						"15"
-	"npc_damage_far_value"							"15"
-	"npc_damage_near_value_titanarmor"				"15"
-	"npc_damage_far_value_titanarmor" 				"15"
+	"npc_damage_near_value"   						"10"
+	"npc_damage_far_value"							"10"
+	"npc_damage_near_value_titanarmor"				"10"
+	"npc_damage_far_value_titanarmor" 				"10"
 	"npc_damage_near_distance"						"600"
 	"npc_damage_far_distance" 						"1200"
 
 	"npc_min_engage_range"							"0"
-	"npc_max_engage_range"							"550"
+	"npc_max_engage_range"							"250"
 	"npc_min_engage_range_heavy_armor"				"500"
 	"npc_max_engage_range_heavy_armor"				"800"
 	"npc_min_range"   								"0"
@@ -127,16 +127,16 @@ WeaponData
 	"npc_spread_cone_min_precision"                 "0"
 	"npc_spread_cone_max_precision"                 "0"
 
-	"blast_pattern"									"energy_shotgun"
+	"blast_pattern"									"energy_shotgun_2"
 	"blast_pattern_zero_distance"        			"512.0"
 	"blast_pattern_default_scale"        			"1.5"
 	"blast_pattern_npc_scale"            			"1.8"  // scales on top of the default
 
 	//shot cadence
-	"npc_min_burst_min_precision"   				"1"
-	"npc_max_burst_min_precision"                   "1"
-	"npc_min_burst_max_precision"                   "1"
-	"npc_max_burst_max_precision"                   "1"
+	"npc_min_burst_min_precision"   				"1.500000"
+	"npc_max_burst_min_precision"                   "1.500000"
+	"npc_min_burst_max_precision"                   "1.500000"
+	"npc_max_burst_max_precision"                   "1.500000"
 
 	"npc_min_rest_time_between_bursts_min_precision" "2.25"
 	"npc_max_rest_time_between_bursts_min_precision" "2.75"
@@ -191,4 +191,6 @@ WeaponData
 	"clip_bodygroup_show_for_milestone_1"	"0"
 	"clip_bodygroup_show_for_milestone_2"	"1"
 	"clip_bodygroup_show_for_milestone_3"	"1"
+
+	"headshot_distance"	"3940"
 }

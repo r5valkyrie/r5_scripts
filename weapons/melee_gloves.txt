@@ -15,7 +15,7 @@ WeaponData
 	"weapon_type_flags"							"WPT_MELEE"
 	
 	// Models
-    "viewmodel"   							    "mdl/Weapons/karambit/ptpov_karambit.rmdl"
+    "viewmodel"   							    "mdl/dev/empty_model.rmdl"//"mdl/Weapons/karambit/ptpov_karambit.rmdl"
 
 	"OnWeaponActivate"							"OnWeaponActivate_melee_shadowsquad_hands"
     "OnWeaponDeactivate"						"OnWeaponDeactivate_melee_shadowsquad_hands"

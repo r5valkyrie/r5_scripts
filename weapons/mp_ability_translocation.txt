@@ -57,6 +57,7 @@ WeaponData
 	ammo_clip_size                      30 // seconds to full charge
 	ammo_per_shot                       30
 	ammo_min_to_fire                    30
+	ammo_default_total                  30
 
 	fire_rate                           10.0
 	fire_duration                       1.0

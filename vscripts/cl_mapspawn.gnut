@@ -125,10 +125,10 @@ void function ClientCodeCallback_MapSpawn()
 	level.clientScriptInitialized <- false
 
 	RegisterSignal( "forever" )
-	RegisterSignal( "UpdatePlayerStatusCounts" )
 	
 	//main menu cameras thread end signal
 	RegisterSignal("ChallengeStartRemoveCameras")
+	RegisterSignal( "UpdatePlayerStatusCounts" )
 	
 	FlagInit( "ClientInitComplete" )
 	FlagInit( "EntitiesDidLoad" )
@@ -136,7 +136,8 @@ void function ClientCodeCallback_MapSpawn()
 	PrecacheResFiles()
 
 	#if DEVELOPER
-		ClModelViewInit()
+		ClModelViewer_Init()
+		ClModelViewer_DumpEnts()
 	#endif
 
 	CreateHUDRuiTopologies()
@@ -263,7 +264,7 @@ void function ClientCodeCallback_OnResolutionChanged()
 	UpdateFullscreenTopology( clGlobal.topoFullScreen, false )
 	UpdateFullscreenTopology( clGlobal.topoFullscreenFullMap, true )
 	InitChatHUD()    // sets the size of the vgui chat widow, if we donn't do this it will revert back to the default values set in the res file.
-
+	FS_RegisterAdmin()
 	if ( !IsLobby() )
 		FullMap_UpdateTopologies()
 
@@ -284,7 +285,6 @@ void function ClientCodeCallback_FullUpdate()
 {
 	foreach ( callbackFunc in clGlobal.fullUpdateCallbacks )
 		callbackFunc()
-	//ScreenCoverTransition( 4.5 )
 }
 
 
@@ -331,7 +331,7 @@ void function RunClientConnectScriptsThreaded( entity player )
 	if( GetCurrentPlaylistVarBool( "lsm_mod15", false ) )
 		thread Thread_StartFakeObituaries()
 	
-	DM_HintCatalog( 3, 0 )
+	// DM_HintCatalog( 3, null )
 }
 
 

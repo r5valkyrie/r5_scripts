@@ -60,25 +60,25 @@
 	
 	"fx_muzzle_flash_view"							""
 	"fx_muzzle_flash_world"							""
-	"fx_muzzle_flash_attach"						""
+	"fx_muzzle_flash_attach"						"muzzle_flash"
 	
 	// Behavior- Aim Assist
-	"aimassist_disable_hipfire"                "1"
-	"aimassist_disable_ads"                    "1"
-	"aimassist_disable_hipfire_titansonly"     "1"
-	"aimassist_disable_ads_titansonly"         "1"
+	"aimassist_disable_hipfire"                "0"
+	"aimassist_disable_ads"                    "0"
+	"aimassist_disable_hipfire_titansonly"     "0"
+	"aimassist_disable_ads_titansonly"         "0"
 	"aimassist_adspull_weaponclass"            "none"
-	"gamepad_use_yaw_speed_for_pitch_ads"      "1"
+	"gamepad_use_yaw_speed_for_pitch_ads"      "0"
 
 
 	// Damage
 	//
-	"damage_near_value"                        "140"
-	"damage_far_value"                         "140"
-	"damage_very_far_value"                    "140"
-	"damage_near_value_titanarmor"             "140"
-	"damage_far_value_titanarmor"              "140"
-	"damage_very_far_value_titanarmor"         "140"
+	"damage_near_value"                        "200"
+	"damage_far_value"                         "200"
+	"damage_very_far_value"                    "200"
+	"damage_near_value_titanarmor"             "200"
+	"damage_far_value_titanarmor"              "200"
+	"damage_very_far_value_titanarmor"         "200"
 
 	"damage_rodeo"                             "900"
 
@@ -87,7 +87,7 @@
 	"pass_through_depth"                       "64"
 	"pass_through_damage_preserved_scale"      "0.8"
 
-    "damage_headshot_scale"                    "2.0"
+    "damage_headshot_scale"                    "1.400000"
 	"damage_leg_scale"                         "0.8"
 
 
@@ -111,8 +111,8 @@
 	// Ammo
 	//
 	"ammo_clip_size"                           "4"
-	"ammo_stockpile_max"                       "8"
-	"ammo_default_total"                       "12"
+	"ammo_stockpile_max"                       "40"
+	"ammo_default_total"                       "40"
 	"ammo_min_to_fire"                         "1"
 	"reload_enabled"                           "1"
 
@@ -277,6 +277,15 @@
 	// 4d variable. means nothing outside of it.
 	"4d_fire_in_both_dimensions"			"1"
 
+
+	"critical_hit"	"1"
+	"titanarmor_critical_hit_required"	"1"
+	"headshot_distance"	"29528"
+	"damage_shield_scale"	"1"
+	"critical_hit_damage_scale"	"2"
+	"damage_near_distance"	"7500"
+	"damage_far_distance"	"10000"
+	"damage_very_far_distance"	"12000"
 	"Mods"
 	{
 	    crate
@@ -381,7 +390,15 @@
 			"viewkick_ads_weaponFraction_vmScale"      "0.2" // avoids the weapon flying off the screen
 			"is_burn_mod"					"1"
 		}
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 	// RUI
 	"ui1_enable"                               "1"

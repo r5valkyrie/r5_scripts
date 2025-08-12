@@ -30,6 +30,10 @@ global function OnProjectileCollision_weapon_impulse_grenade
 	global function EnableTrapWarningSound
 	global function AddToProximityTargets
 	global function ProximityMineThink
+	
+	global function AddToTrackedEnts_Level
+	global function CleanupLevelTrackedEnts
+	global function GetTrackedEnts_Level
 #endif
 global function Grenade_Init
 global function Grenade_Launch
@@ -95,6 +99,7 @@ void function Grenade_FileInit()
 	#if SERVER
 		level._empForcedCallbacks <- {}
 		level._proximityTargetArrayID <- CreateScriptManagedEntArray()
+		level._trackedEntsLevelArrayID <- CreateScriptManagedEntArray()
 
 	    //AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_proximity_mine, ProxMine_Triggered )
 		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_thermite_grenade, Thermite_DamagedPlayerOrNPC )
@@ -198,14 +203,15 @@ void function Grenade_OnWeaponReady_Halo( entity weapon )
 	if( weaponOwner.ContextAction_IsActive() || weaponOwner.PlayerMelee_IsAttackActive() )
 	{
 		#if SERVER
-		entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
-		weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
+			entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
+			weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
 		#endif
+		
 		return
 	}
 
 	#if DEVELOPER
-	Warning( "Halo nade On Activate. Next Weapon Allowed Attack Time: " + weapon.GetNextAttackAllowedTime() + " - Current Time: " + Time() )
+		Warning( "Halo nade On Activate. Next Weapon Allowed Attack Time: " + weapon.GetNextAttackAllowedTime() + " - Current Time: " + Time() )
 	#endif
 	if( weaponName != null )
 		weaponNameString = expect string( weaponName )
@@ -216,23 +222,26 @@ void function Grenade_OnWeaponReady_Halo( entity weapon )
 			// SwitchToLastUsedWeapon( weaponOwner )
 		// #endif
 		#if SERVER
-		entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
-		weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
-		
-		weaponOwner.TakeWeaponByEnt( weaponOwner.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN ) )
+			entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
+			weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
+			
+			weaponOwner.TakeWeaponByEnt( weaponOwner.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN ) )
 		#endif
 		return
 	}
 	
 	if( Time() < weaponOwner.p.haloGrenadeAttackTime + HALO_GRENADE_COOLDOWN )
 	{
-		Warning( "In Cooldown " + weapon.IsInCooldown() + " - " + ( weaponOwner.p.haloGrenadeAttackTime - Time() ) )
+		#if DEVELOPER
+			Warning( "In Cooldown " + weapon.IsInCooldown() + " - " + ( weaponOwner.p.haloGrenadeAttackTime - Time() ) )
+		#endif 
+		
 		// #if CLIENT
 			// SwitchToLastUsedWeapon( weaponOwner ) //From client sucks
 		// #endif
 		#if SERVER
-		entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
-		weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
+			entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
+			weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
 		#endif
 		
 		return
@@ -771,17 +780,60 @@ void function EnableTrapWarningSound( entity trap, float delay = 0, string warni
 	if ( delay > 0 )
 		wait delay
 
-	  while ( IsValid( trap ) )
-	  {
-		  EmitSoundOnEntity( trap, warningSound )
-		  wait 1.0
-	  }
+	float DISTANCE_TO_GET_TRAP_SOUND = 500.0 //(cafe) tune it if necessary
+	
+	while ( IsValid( trap ) )
+	{
+		foreach( player in GetPlayerArray() )
+		{
+			if( Distance2D( player.GetOrigin(), trap.GetOrigin() ) <= DISTANCE_TO_GET_TRAP_SOUND )
+				EmitSoundOnEntityOnlyToPlayer( trap, player, warningSound )
+		}
+		
+		wait 2.0
+	}
 }
 
 void function AddToProximityTargets( entity ent )
 {
 	AddToScriptManagedEntArray( level._proximityTargetArrayID, ent )
 }
+
+void function AddToTrackedEnts_Level( entity ent )
+{
+	AddToScriptManagedEntArray( level._trackedEntsLevelArrayID, ent )
+}
+
+array<entity> function GetTrackedEnts_Level()
+{
+	return GetScriptManagedEntArray( level._trackedEntsLevelArrayID )
+}
+
+void function CleanupLevelTrackedEnts( )
+{
+	array<entity> traps = GetScriptManagedEntArray( level._trackedEntsLevelArrayID )
+	
+	foreach( trap in traps )
+	{
+		if( trap.GetScriptName() == "flowstateTurret" )
+		{
+			foreach(entity part in trap.e.turretparts)
+			{
+				if(IsValid(part)) 
+					part.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 5000 )
+			}
+		}
+		
+		if( IsValid( trap ) )
+			trap.Destroy()
+	}
+}
+
+void function RemoveFromLevelTrackedEnts( entity ent )
+{
+	RemoveFromScriptManagedEntArray( level._trackedEntsLevelArrayID, ent )
+}
+
 
 void function ProximityMineThink( entity proximityMine, entity owner )
 {
@@ -844,7 +896,9 @@ void function ProximityMine_Explode( entity proximityMine )
 	wait PROXIMITY_MINE_EXPLOSION_DELAY
 
 	if ( IsValid( proximityMine ) )
+	{
 		proximityMine.GrenadeExplode( proximityMine.GetForwardVector() )
+	}
 }
 
 bool function ShouldSetOffProximityMine( entity proximityMine, entity ent )

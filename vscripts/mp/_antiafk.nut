@@ -23,7 +23,7 @@ enum eAntiAfkPlayerState
 void function Flowstate_Afk_Init()
 {
 	file.Flowstate_antiafk_warn 	= GetCurrentPlaylistVarFloat( "Flowstate_antiafk_warn", 15.0 )
-	file.Flowstate_antiafk_grace 	= GetCurrentPlaylistVarFloat( "Flowstate_antiafk_grace", 120 )
+	file.Flowstate_antiafk_grace 	= GetCurrentPlaylistVarFloat( "Flowstate_antiafk_grace", bAfkToRest() ? 45 : 120 )
 	file.Flowstate_antiafk_interval = GetCurrentPlaylistVarFloat( "Flowstate_antiafk_interval", 10.0 )
 	file.flowstate_afk_kick_enable 	= GetCurrentPlaylistVarBool( "flowstate_afk_kick_enable", true )
 	file.enable_afk_thread 			= GetCurrentPlaylistVarBool( "enable_afk_thread", true )
@@ -57,7 +57,7 @@ int function GetAfkState( entity player )
 
 	float lastmove = player.p.lastmoved
 	
-	if( bAfkToRest() && !isPlayerInRestingList( player ) )
+	if( bAfkToRest() && !Gamemode1v1_IsPlayerResting( player ) )
 	{
 		if ( Time() > lastmove + ( localgrace - warn ) )
 		{
@@ -86,7 +86,7 @@ void function AfkWarning( entity player )
 void function CheckAfkKickThread(entity player)
 {	
 	//printt("Flowstate - AFK thread initialized for " + player.GetPlayerName() )	
-	while( true )
+	for( ; ; )
 	{
 		wait file.Flowstate_antiafk_interval
 		
@@ -102,7 +102,7 @@ void function CheckAfkKickThread(entity player)
 		if ( player.p.isSpectating )
 			continue
 			
-		if ( g_bRestEnabled() && IsCurrentState( player, e1v1State.RESTING ) )
+		if ( bAfkToRest() && Gamemode1v1_IsRestEnabled() && Gamemode1v1_IsPlayerInState( player, e1v1State.RESTING ) )
 			continue
 		
 		switch ( GetAfkState( player ) )
@@ -114,17 +114,24 @@ void function CheckAfkKickThread(entity player)
 				AfkWarning( player )
 				break
 			
-			//mkos modificaiton, afk_to_rest = bAfkToRest()
 			case eAntiAfkPlayerState.AFK:
 				if ( bAfkToRest() )
-				{		
+				{
 					player.p.lastmoved = Time()
 					
-					if( g_bRestEnabled() )
-						mkos_Force_Rest( player )
-					else 
+					if( Gamemode1v1_IsRestEnabled()  )
+					{
+						if( Gamemode1v1_IsPlayerResting( player ) )
+						{
+							AfkThread_PlayerMoved( player )
+							continue
+						}
+						
+						Gamemode1v1_ForceRest( player )
+					}
+					else
 						mAssert( false, "Playlist has afk_to_rest enabled, but mode has rest disabled internally. Try using Gamemode1v1_SetRestEnabled()" )
-						// We WANT to assert here, because this condition will always run with no effect. 
+						//(mk): We WANT to assert here, because otherwise, this condition will always run with no effect. 
 				}
 				else 
 				{	
@@ -138,18 +145,13 @@ void function CheckAfkKickThread(entity player)
 				break
 		}
 		
-		wait 1
-		
+		wait 1		
     }
 }
 
-bool function AfkThread_PlayerMoved( entity player ) //callback is defined as bool return func...
+void function AfkThread_PlayerMoved( entity player )
 {
-	// if( !IsValid( player ) ) //is this needed? lets find out.
-		// return false
-	
     player.p.lastmoved = Time()
-	return true
 }
 
 void function AfkThread_AddPlayerCallbacks( entity player )

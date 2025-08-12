@@ -23,7 +23,7 @@ struct
 
 void function GunRacks_Init()
 {
-	if (MapName() != eMaps.mp_rr_desertlands_mu2 && MapName() != eMaps.mp_rr_desertlands_mu1_tt)
+	if (MapName() != eMaps.mp_rr_desertlands_mu2 && MapName() != eMaps.mp_rr_olympus_mu1 && MapName() != eMaps.mp_rr_desertlands_mu1_tt && MapName() != eMaps.mp_rr_desertlands_mu1 && MapName() != eMaps.mp_rr_olympus && MapName() != eMaps.mp_rr_olympus_tt && MapName() != eMaps.mp_rr_olympus_tt)
 		return
 
 	PrecacheModel( GUNRACK_MODEL )
@@ -31,8 +31,7 @@ void function GunRacks_Init()
 
 	file.gunRackLootOverride = GetCurrentPlaylistVarString( "standard_rack_loot_group_override", "" )
 
-	//AddSpawnCallbackEditorClass( "prop_dynamic", GUN_RACK_CLASS_NAME, OnGunRackSpawned )
-	AddSpawnCallbackEditorClass( "prop_dynamic_lightweight", GUN_RACK_CLASS_NAME, OnGunRackSpawned )
+	AddSpawnCallbackEditorClass( "prop_dynamic", GUN_RACK_CLASS_NAME, OnGunRackSpawned )
 	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
 	Loot_AddCallback_OnPlayerLootPickupRetail( GunRack_OnPlayerLootPickedUp )
 }

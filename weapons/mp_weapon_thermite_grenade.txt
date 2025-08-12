@@ -119,7 +119,7 @@ WeaponData
 		"fire_mode"   									"automatic"
 		"is_semi_auto"									"1"
 		"ammo_display"									"bar"
-		"ammo_stockpile_max"							"100"
+		"ammo_stockpile_max"							"0"
 		"ammo_clip_size"   								"100"
 		"ammo_default_total"							"100"
 		"ammo_per_shot"									"100"

@@ -1,5 +1,3 @@
-//Ported from retail scripts by @CafeFPS
-
 //todo
 //restrict weapon usage until player is on ground again
 

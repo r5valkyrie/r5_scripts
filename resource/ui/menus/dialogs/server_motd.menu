@@ -1,4 +1,4 @@
-platform/scripts/resource/ui/menus/dialogs/server_motd.menu
+scripts/resource/ui/menus/dialogs/server_motd.menu
 {
 	menu
 	{

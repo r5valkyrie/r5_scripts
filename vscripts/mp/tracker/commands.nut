@@ -116,7 +116,7 @@ struct
 	
 	Be mindful with user provided args, it can't be trusted innately. 
 	
-	numbers -> IsNumeric( string data, minRange, maxRange ) before Int() or .tointeger()
+	numbers -> IsStringNumeric( string data, minRange, maxRange ) before Int() or .tointeger()
 	check against pregmatch / max len -> IsSafeString( string str, int strlen = -1(unlimited), string pattern = ""(default pattern runs)  ) requires valid preg match expr 
 	try{}catch(e){} may be used here if logged properly to avoid failed input conversions and then fix with proper control logic flow using the above.
 	bool isTrue = arg[n] == "1" will compare the pointers of the two strings under the hood and wouldn't need checked for numeric because the logic can resume based on pre determined conditions for the pointer match of two strings.
@@ -129,7 +129,7 @@ struct
 	
 		void function cmd_rest( string tag, array<string> args, entity activator )
 		{
-			if( !g_bRestEnabled() )
+			if( !Gamemode1v1_IsRestEnabled() )
 				return
 				
 			switch( Playlist() )

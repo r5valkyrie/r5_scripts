@@ -373,7 +373,7 @@ void function EquipmentSlots_RegisterNetworkTrackingInts()
 	{
 		if ( slotData.trackingNetInt != "" )
 		{
-			RegisterNetworkedVariable( slotData.trackingNetInt, SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
+			ScriptRegisterNetworkedVariable( slotData.trackingNetInt, SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
 
 			#if CLIENT
 				RegisterNetworkedVariableChangeCallback_int( slotData.trackingNetInt, CreateTrackingNetVarFunction( slot ) )
@@ -424,8 +424,8 @@ int function EmptyCommsAction_AttachmentForParent( string equipmentSlot, string 
 					return eCommsAction.INVENTORY_NEED_ATTACHMENT_MAG_SHOTGUN
 				case "sniper":
 					return eCommsAction.INVENTORY_NEED_ATTACHMENT_MAG_SNIPER
-				case "explosive":
-					return eCommsAction.INVENTORY_NEED_ATTACHMENT_MAG_EXPLOSIVE
+				case "arrow":
+					return eCommsAction.INVENTORY_NEED_ATTACHMENT_MAG_ARROW
 				default:
 					Warning( format( "%s() - Unhandled ammo type: '%s'.", FUNC_NAME(), weaponData.ammoType ) )
 					return eCommsAction.BLANK
@@ -581,8 +581,13 @@ int function FilledCommsAction_Weapon( string equipmentSlotRef, string itemRef, 
 				// return eCommsAction.INVENTORY_NO_AMMO_SNIPER
         
 			return eCommsAction.INVENTORY_NEED_AMMO_SNIPER
-		case EXPLOSIVE_AMMO:
-			return eCommsAction.INVENTORY_NEED_AMMO_EXPLOSIVE
+			
+		case ARROWS_AMMO:
+                           
+			// if ( GetLocalClientPlayer().AmmoPool_GetCount( eAmmoPoolType.arrow ) <= 0 )
+				// return eCommsAction.INVENTORY_NO_AMMO_ARROW
+        
+			return eCommsAction.INVENTORY_NEED_AMMO_ARROWS
 	}
 
 	Warning( "GetCommsActionForEquipmentSlot() - Unhandled ammo type '" + ammotype + "'" )

@@ -33,6 +33,9 @@ global function GetLootBinForHitEnt
 
 global function LootBin_IsOpen
 
+
+global const string MYSTERY_BOX_SCRIPT_NAME            = "MysteryBoxScriptName"
+
 global const string LOOT_BIN_MARKER_SCRIPTNAME = "survival_lootbin"
 global const string LOOT_BIN_SCRIPTNAME = "survival_lootbin_spawned"
 global const string LOOT_BIN_SCRIPTNAME_CUSTOM_REALMS = "survival_lootbin_custom_realms"
@@ -139,9 +142,9 @@ void function EntitiesDidLoad()
 
 void function InitLootBinFromMap( entity lootbin )
 {
-	if( isScenariosMode() )
+	if( Safe_isScenariosMode() )
 	{
-		FS_Scenarios_SaveLootbinData( lootbin )
+		Safe_FS_Scenarios_SaveLootbinData( lootbin )
 		return
 	}
 
@@ -149,9 +152,9 @@ void function InitLootBinFromMap( entity lootbin )
 	{
 		if ( file.lootBinList.contains( lootbin ) )
 			return
-		lootbin.SetScriptName(MYSTERY_BOX_SCRIPT_NAME)
-		AddMysteryBox(lootbin)
-		SetMysteryBoxUsable(lootbin)
+		// lootbin.SetScriptName(MYSTERY_BOX_SCRIPT_NAME)
+		// AddMysteryBox(lootbin)
+		// SetMysteryBoxUsable(lootbin)
 		file.numLootBins++
 		file.lootBinList.append( lootbin )
 	
@@ -170,7 +173,7 @@ void function InitLootBinFromMap( entity lootbin )
 			lootbin.Destroy()
 			return
 		}
-		//Cafe was here
+
 		entity parentPoint = CreateEntity( "script_mover_lightweight" )
 		{
 			parentPoint.kv.solid = 0
@@ -180,8 +183,8 @@ void function InitLootBinFromMap( entity lootbin )
 			parentPoint.SetAngles( lootbin.GetAngles() )
 			DispatchSpawn( parentPoint )
 			parentPoint.Hide()
-			lootbin.SetParent(parentPoint)
 			parentPoint.SetParent( trace.hitEnt, "", true, 0 )
+			lootbin.SetParent( parentPoint )
 		}
 		
 		if( IsValid( parentPoint ) && trace.hitEnt.GetScriptName() == "train_brush" )
@@ -194,6 +197,17 @@ void function InitLootBinFromMap( entity lootbin )
 		InitLootBin( lootbin )
 	}
 
+}
+
+bool function SURVIVAL_ShouldBinOrSpawnPointMoveWithGeo( entity binOrSpawnPoint )
+{
+	if ( binOrSpawnPoint.HasKey( "onMovingGeo" ) )
+		return true
+
+	if ( binOrSpawnPoint.e.isOnMovingGeo )
+		return true
+
+	return false
 }
 #endif
 
@@ -329,6 +343,9 @@ void function InitLootBin( entity lootbin )
 
 	SetCallback_CanUseEntityCallback( lootbin, LootBin_CanUse )
 
+	if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
+		return
+	
 	if ( SURVIVAL_DEBUG_LOOT_BINS )
 	{
 		DebugDrawLine( lootbin.GetOrigin(), lootbin.GetOrigin() + <0, 0, 1000>, 255, 255, 255, true, 100.0 )
@@ -343,13 +360,59 @@ void function InitLootBin( entity lootbin )
 	if( lootbin.GetTargetName() == "train_bin" )
 	{
 		Refs = SURVIVAL_GetMultipleWeightedItemsFromGroup( "POI_Ultra", 4 )
-	} else
-		Refs = SURVIVAL_GetMultipleWeightedItemsFromGroup( LootZones_GetRefForOrigin(lootbin.GetOrigin()), RandomIntRangeInclusive(3,5) )
+	} else if( GetCurrentPlaylistVarBool( "ketchup_mod7", false ) )
+	{
+		int amount = RandomIntRangeInclusive(3,5)
+		string itemRef
+		for(int j = 0; j < amount; j++)
+		{
+			for(int i = 0; i < 1; i++)
+			{
+				itemRef = SURVIVAL_GetWeightedItemFromGroup( LootZones_GetRefForOrigin(lootbin.GetOrigin()) )
+				LootData lootData = SURVIVAL_Loot_GetLootDataByRef( itemRef )
+				
+				if( itemRef == "blank" || itemRef == "" ) //todo add more restricted loot
+				{
+					i--
+					continue
+				}
+				if ( lootData.tier >= 2 )
+				{
+					i--
+					continue
+				}
+				
+				if ( lootData.lootType == eLootType.MAINWEAPON )
+				{
+					i--
+					continue
+				}
 
+				Refs.append( itemRef )
+			}
+		}
+	} else
+	{
+		Refs = SURVIVAL_GetMultipleWeightedItemsFromGroup( LootZones_GetRefForOrigin(lootbin.GetOrigin()), RandomIntRangeInclusive(3,5) )
+	}
+	
+	if( GetCurrentPlaylistVarBool( "lsm_mod9", false ) )
+	{
+		Refs = ["mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol","mp_weapon_shotgun_pistol"]
+		if(RandomInt(4) == 3)
+			Refs = ["mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol"]
+		else if(RandomInt(4) == 2)
+			Refs = ["mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol"]
+		else if(RandomInt(4) == 1)
+			Refs = ["mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol", "mp_weapon_shotgun_pistol"]
+	}
+	
 	if( GetCurrentPlaylistVarBool("lootbin_loot_enable", true) == true && Gamemode() != eGamemodes.fs_snd )
 	{
 		AddMultipleLootItemsToLootBin( lootbin, Refs )
 	}
+	
+	// lootbin.SetSkin( RandomInt( 4 ) )
 }
 
 void function FS_Scenarios_InitLootBin( entity lootbin )
@@ -497,8 +560,7 @@ void function AddMultipleLootItemsToLootBin( entity lootBin, array<string> refs 
     array<string> lootToSpawn = GetLootBinContents( lootBin )
     if(lootToSpawn.len() > 0)
     {
-        //printt("Lootbin already has contents! Clear it first before adding multiple items.")
-        return
+        ClearLootBinContents(lootBin)
     }
 	int numRefs = refs.len()
 	for ( int i; i < numRefs; i++ )
@@ -762,8 +824,8 @@ void function OnPropDynamicCreated( entity lootbin )
 {
 	if( lootbin.GetScriptName() == "smartbin" && Gamemode() == eGamemodes.fs_infected )
 	{
-		AddMysteryBox( lootbin )
-		SetMysteryBoxUsable( lootbin )		
+		// AddMysteryBox( lootbin )
+		// SetMysteryBoxUsable( lootbin )		
 		file.lootBinList.append( lootbin )
 		return
 	}

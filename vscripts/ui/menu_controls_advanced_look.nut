@@ -203,7 +203,7 @@ var function SetupSlider( var slider, string buttonText, string description, str
 			file.textEntryFields[ textField ] <- {}
 			
 		if( convarName in file.textEntryFields[ textField ] )
-			mAssert( false, "file.textEntryFields already contains \"" + convarName + "\"" )
+			mAssert( false, "file.textEntryFields already contains \"%s\"", convarName )
 		
 		file.textEntryFields[ textField ][ convarName ] <- Hud_GetChild( file.contentPanel, textField )
 	}

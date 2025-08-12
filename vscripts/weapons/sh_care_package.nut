@@ -19,6 +19,7 @@ global struct CarePackagePlacementInfo
 {
 	vector origin
 	vector angles
+	vector surfaceNormal
 	bool failed
 	bool hide
 }
@@ -128,6 +129,12 @@ CarePackagePlacementInfo function GetCarePackagePlacementInfo( entity player )
 	const MAX_UP_ANGLE = -20
 	const MAX_DOWN_ANGLE = 75
 	const VELOCITY_MULTIPLIER = 800
+
+		const MAX_UP_ANGLE_FAST = -10
+		const MAX_DOWN_ANGLE_FAST = 70
+		const VELOCITY_MULTIPLIER_FAST = 1600
+		const TRACE_TIME_FAST = 1.6
+
 	const TRACE_TIME = 1.25
 	const MIN_DIST_SQR = 72 * 72
 	const PARENT_VELOCITY = <0,0,0>
@@ -142,14 +149,15 @@ CarePackagePlacementInfo function GetCarePackagePlacementInfo( entity player )
 	vector placementAngles = ClampAngles( VectorToAngles( flatForward ) + <0,180,0> )
 
 	vector eyeAngles = player.EyeAngles()
-	float pitch = GraphCapped( eyeAngles.x, MAX_UP_ANGLE, MAX_DOWN_ANGLE, 0, 1 )
-	pitch = PlacementEasing( pitch )
+	GravityLandData landData
+			float pitch = GraphCapped( eyeAngles.x, MAX_UP_ANGLE, MAX_DOWN_ANGLE, 0, 1 )
+			pitch = PlacementEasing( pitch )
 
-	float clampedPitch = GraphCapped( pitch, 0, 1, MAX_UP_ANGLE, MAX_DOWN_ANGLE )
-	vector clampedEyeAngles = < clampedPitch, eyeAngles.y, eyeAngles.z >
+			float clampedPitch = GraphCapped( pitch, 0, 1, MAX_UP_ANGLE, MAX_DOWN_ANGLE )
+			vector clampedEyeAngles = < clampedPitch, eyeAngles.y, eyeAngles.z >
+			vector objectVelocity = AnglesToForward( clampedEyeAngles ) * VELOCITY_MULTIPLIER
 
-	vector objectVelocity = AnglesToForward( clampedEyeAngles ) * VELOCITY_MULTIPLIER
-	GravityLandData landData = GetGravityLandData( startPos, PARENT_VELOCITY, objectVelocity, TRACE_TIME, false )
+			landData = GetGravityLandData( startPos, PARENT_VELOCITY, objectVelocity, TRACE_TIME, false )
 
 	TraceResults traceResults = landData.traceResults
 
@@ -175,6 +183,7 @@ CarePackagePlacementInfo function GetCarePackagePlacementInfo( entity player )
 
 	placementInfo.origin = origin
 	placementInfo.angles = placementAngles
+	placementInfo.surfaceNormal = traceResults.surfaceNormal
 	placementInfo.failed = failed
 	placementInfo.hide = hide
 	return placementInfo

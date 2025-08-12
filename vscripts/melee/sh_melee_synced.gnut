@@ -81,7 +81,7 @@ void function MeleeSyncedShared_Init()
 #if SERVER || CLIENT
 bool function AttackerCanStartSyncedMelee( entity attacker, entity meleeInputWeapon, entity meleeAttackWeapon )
 {
-	if ( !AttackerCanStartMelee( attacker, meleeInputWeapon, meleeAttackWeapon ) )
+	if ( Gamemode() != eGamemodes.fs_spieslegends && !AttackerCanStartMelee( attacker, meleeInputWeapon, meleeAttackWeapon ) )
 		return false
 
 	if ( attacker.IsHuman() && !attacker.IsOnGround() )
@@ -92,7 +92,6 @@ bool function AttackerCanStartSyncedMelee( entity attacker, entity meleeInputWea
 
 	//if ( IsDoingPullshot( attacker ) )
 	//	return false
-
 	return true
 }
 #endif
@@ -134,7 +133,7 @@ bool function IsValidSyncedMeleeTarget( entity attacker, entity meleeInputWeapon
 		if ( target.IsTraversing() )
 			return false
 
-		if ( !Bleedout_IsBleedingOut( target ) )
+		if ( !Bleedout_IsBleedingOut( target ) && Gamemode() != eGamemodes.fs_spieslegends )
 			return false
 
 		//if ( IsDoingPullshot( target ) )
@@ -155,10 +154,10 @@ bool function IsValidSyncedMeleeTarget( entity attacker, entity meleeInputWeapon
 			return false
 	}
 
-	if ( fabs( attacker.GetWorldSpaceCenter().z - target.GetWorldSpaceCenter().z ) > SYNCED_MELEE_MAX_HEIGHT_DIFFERENCE )
+	if ( Gamemode() != eGamemodes.fs_spieslegends && fabs( attacker.GetWorldSpaceCenter().z - target.GetWorldSpaceCenter().z ) > SYNCED_MELEE_MAX_HEIGHT_DIFFERENCE )
 		return false
 
-	if ( !PlayerMelee_IsExecutionReachable( attacker, target, 0.3 ) )
+	if ( Gamemode() != eGamemodes.fs_spieslegends && !PlayerMelee_IsExecutionReachable( attacker, target, 0.3 ) )
 		return false
 
 	return true
@@ -246,16 +245,23 @@ void function ServerCallback_SyncedMeleeDone()
 #if SERVER
 void function DoSyncedMelee_Thread( entity attacker, entity target )
 {
-	bool targetWasBleedingOut = (target.IsPlayer() && Bleedout_IsBleedingOut( target ))
-	
-	if(!targetWasBleedingOut) return
+	if( Gamemode() != eGamemodes.fs_spieslegends )
+	{
+		bool targetWasBleedingOut = (target.IsPlayer() && Bleedout_IsBleedingOut( target ) )
+		
+		if(!targetWasBleedingOut) 
+			return
+	}
 
 	OnThreadEnd( function() : ( attacker, target) {
 		if ( IsValid( attacker ) )
 		{
-			RemoveCinematicFlag( attacker, CE_FLAG_TITAN_3P_CAM | CE_FLAG_EXECUTION )
-			ScreenFade( attacker, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.x, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.y, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.z, SYNCED_MELEE_ATTACKER_SCREEN_FADE_ALPHA,
-				SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_HOLD, FFADE_IN )
+			if( Gamemode() != eGamemodes.fs_spieslegends )
+			{
+				RemoveCinematicFlag( attacker, CE_FLAG_TITAN_3P_CAM | CE_FLAG_EXECUTION )
+				ScreenFade( attacker, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.x, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.y, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.z, SYNCED_MELEE_ATTACKER_SCREEN_FADE_ALPHA,
+					SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_HOLD, FFADE_IN )
+			}
 
 			ClearPlayerAnimViewEntity( attacker, SYNCED_MELEE_CAMERA_BLEND_OUT_TIME )
 			attacker.PlayerMelee_ExecutionEndAttacker()
@@ -275,9 +281,12 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 
 			if ( target.IsPlayer() )
 			{
-				RemoveCinematicFlag( target, CE_FLAG_TITAN_3P_CAM | CE_FLAG_EXECUTION )
-				ScreenFade( target, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.x, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.y, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.z, SYNCED_MELEE_TARGET_SCREEN_FADE_ALPHA,
-					SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_HOLD, FFADE_IN )
+				if( Gamemode() != eGamemodes.fs_spieslegends )
+				{
+					RemoveCinematicFlag( target, CE_FLAG_TITAN_3P_CAM | CE_FLAG_EXECUTION )
+					ScreenFade( target, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.x, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.y, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.z, SYNCED_MELEE_TARGET_SCREEN_FADE_ALPHA,
+						SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_HOLD, FFADE_IN )
+				}
 
 				ClearPlayerAnimViewEntity( target, SYNCED_MELEE_CAMERA_BLEND_OUT_TIME )
 
@@ -288,7 +297,7 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 				if ( IsAlive( target ) )
 				{
 					//Bleedout_SetBleedoutEffects( target )
-					target.ForceCrouch()
+					// target.ForceCrouch()
 						
 					if ( target.e.markedForExecutionDeath && IsValid(attacker) && IsAlive(attacker))
 					{
@@ -352,6 +361,7 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 	// Anim sequence setup
 	FirstPersonSequenceStruct attackSequence
 	FirstPersonSequenceStruct targetSequence
+	
 	{
 		// positioning
 		attackSequence.noParent = true
@@ -377,8 +387,13 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 		// camera
 		attackSequence.firstPersonAnim = ""
 		targetSequence.firstPersonAnim = ""
-		attackSequence.thirdPersonCameraAttachments = ["VDU"]
-		targetSequence.thirdPersonCameraAttachments = ["VDU"]
+		
+		if( Gamemode() != eGamemodes.fs_spieslegends )
+		{
+			attackSequence.thirdPersonCameraAttachments = ["VDU"]
+			targetSequence.thirdPersonCameraAttachments = ["VDU"]
+		}
+		
 		attackSequence.thirdPersonCameraVisibilityChecks = true
 		targetSequence.thirdPersonCameraVisibilityChecks = true
 		attackSequence.snapForLocalPlayer = true
@@ -391,9 +406,12 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 
 	// Attacker state changes
 	{
-		AddCinematicFlag( attacker, CE_FLAG_TITAN_3P_CAM | CE_FLAG_EXECUTION )
-		ScreenFade( attacker, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.x, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.y, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.z, SYNCED_MELEE_ATTACKER_SCREEN_FADE_ALPHA,
-			SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_HOLD, FFADE_IN )
+		if( Gamemode() != eGamemodes.fs_spieslegends )
+		{
+			AddCinematicFlag( attacker, CE_FLAG_TITAN_3P_CAM | CE_FLAG_EXECUTION )
+			ScreenFade( attacker, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.x, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.y, SYNCED_MELEE_ATTACKER_SCREEN_FADE_COL.z, SYNCED_MELEE_ATTACKER_SCREEN_FADE_ALPHA,
+				SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_HOLD, FFADE_IN )
+		}
 
 		attacker.e.syncedMeleeTarget = target
 		attacker.PlayerMelee_SetState( PLAYER_MELEE_STATE_HUMAN_EXECUTION )
@@ -401,16 +419,20 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 		attacker.Lunge_ClearTarget()
 		attacker.ForceStand()
 		HolsterAndDisableWeapons( attacker )
-		Remote_CallFunction_NonReplay( attacker, "ServerCallback_WatchForSyncedMeleeCancelPeriod", 2 )
+		if( Gamemode() != eGamemodes.fs_spieslegends )
+			Remote_CallFunction_NonReplay( attacker, "ServerCallback_WatchForSyncedMeleeCancelPeriod", 2 )
 	}
 
 	// Victim state changes
 	{
 		if ( target.IsPlayer() )
 		{
-			AddCinematicFlag( target, CE_FLAG_TITAN_3P_CAM | CE_FLAG_EXECUTION )
-			ScreenFade( target, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.x, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.y, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.z, SYNCED_MELEE_TARGET_SCREEN_FADE_ALPHA,
-				SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_HOLD, FFADE_IN )
+			if( Gamemode() != eGamemodes.fs_spieslegends )
+			{
+				AddCinematicFlag( target, CE_FLAG_TITAN_3P_CAM | CE_FLAG_EXECUTION )
+				ScreenFade( target, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.x, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.y, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.z, SYNCED_MELEE_TARGET_SCREEN_FADE_ALPHA,
+					SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_HOLD, FFADE_IN )
+			}
 			target.ForceStand()
 			target.SetInvulnerable()
 		}
@@ -428,7 +450,13 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 
 	thread FirstPersonSequence( attackSequence, attacker )
 	thread FirstPersonSequence( targetSequence, target, attacker )
-
+	
+	if( Gamemode() == eGamemodes.fs_spieslegends )
+	{
+		attacker.Anim_SetPlaybackRate( 2.5 )
+		target.Anim_SetPlaybackRate( 2.5 )
+	}
+	
 	WaitForever()
 }
 

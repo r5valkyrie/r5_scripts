@@ -47,7 +47,7 @@ void function MpAbilityCryptoDroneEMP_Init()
 		StatusEffect_RegisterEnabledCallback( eStatusEffect.crypto_emp_warning, EMPWarningVisualsEnabled )
 		StatusEffect_RegisterDisabledCallback( eStatusEffect.crypto_emp_warning, EMPWarningVisualsDisabled )
 	#endif
-	RegisterNetworkedVariable( "isDoingEMPSequence", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	ScriptRegisterNetworkedVariable( "isDoingEMPSequence", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
 }
 
 

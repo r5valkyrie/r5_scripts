@@ -66,7 +66,7 @@ void function CardFramesPanel_Update( var panel )
 		file.cardFrameList = GetLoadoutItemsSortedForMenu( entry, GladiatorCardFrame_GetSortOrdinal )
 		FilterFrameList( file.cardFrameList )
 
-		file.cardFrameList = [file.cardFrameList[0]]
+		//file.cardFrameList = [file.cardFrameList[0]]
 
 		Hud_InitGridButtons( file.listPanel, file.cardFrameList.len() )
 		foreach ( int flavIdx, ItemFlavor flav in file.cardFrameList )

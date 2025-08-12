@@ -195,8 +195,8 @@ void function ShChallenges_LevelInit_PreStats()
 
 	#if SERVER || CLIENT
 		RegisterSignal( "ChallengeDataDidChange" )
-		Remote_RegisterClientFunction( "ServerToClient_AssignedChallengesDidChange" )
-		Remote_RegisterClientFunction( "ServerToClient_ChallengeDataDidChange" )
+		ScriptRemote_RegisterClientFunction( "ServerToClient_AssignedChallengesDidChange" )
+		ScriptRemote_RegisterClientFunction( "ServerToClient_ChallengeDataDidChange" )
 	#endif
 
 	#if UI
@@ -349,7 +349,7 @@ void function ClientToUI_ChallengeDataDidChange()
 	if ( IsLobby() && IsLocalClientEHIValid() )
 	{
 		UpdateLobbyChallengeMenu()
-		UpdateMiniPromoPinning()
+		//UpdateMiniPromoPinning()
 
 		var button = AllChallengesMenu_GetLastGroupButton()
 		AllChallengesMenu_UpdateCategories( true )

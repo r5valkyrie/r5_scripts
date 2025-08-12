@@ -7,6 +7,10 @@ global function LaunchAnimDropPod
 global function GetDropPodAnimDuration
 global function CreateDropPodSmokeTrail
 
+global function DropPod_ClearLandingZone
+
+global function ReturnCarePackagesNewArray
+
 global function DropPod_OnUse
 //const droppod_fireteam_collision = $"models/vehicle/droppod_fireteam/droppod_fireteam_collision.mdl"
 global const DROPPOD_MODEL = $"mdl/vehicle/droppod_fireteam/droppod_fireteam.rmdl"
@@ -31,6 +35,7 @@ struct
     #endif
 	array<entity>                 lootBinList
 	int                           numLootBins
+	array<entity>                 carePackagesNew
 } file
 
 void function CreateBeacondrop( vector origin, vector angles, entity fxToStop = null, string animationName = "droppod_loot_drop", entity owner = null, string sourceWeaponClassName = "" )
@@ -61,27 +66,51 @@ var function SpawnBeacon( entity ownerPlayer, vector origin, vector angles )
 	OnMobileRespawnChamberSpawned(respawn)
 }
 
+void function AirDropPingMinimap( entity dropPod, vector origin, string animationName )
+{
+	// Show up for twice as long so there's enough time for everyone to find
+	// it on the minimap after it has landed.
+	float pingDuration = dropPod.GetSequenceDuration( animationName ) * 2
+
+	foreach( entity player in GetPlayerArray_Alive() )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SUR_PingMinimap", origin, pingDuration, 500.0, 50.0, 2 )
+}
+
 void function AirdropItems( vector origin, vector angles, array<string> contents, entity fxToStop, string animationName, entity owner, int skin, string sourceWeaponClassName )
 {
+	// if(ReturnSelectedLocationName() == "Shipment")
+	// {
+		// origin = <11224.8115, 24494.2285, 247.695862>
+	// }
+	
 	entity dropPod = CreateDropPod( origin, angles, sourceWeaponClassName )
 	dropPod.SetSkin( skin )
     
-    entity threatProxy = CreateDropPodThreatIndicator(origin, angles)
-    thread DropPodBeamWaitForUse(dropPod, origin, angles)
+    file.carePackagesNew.append(dropPod)
 	
-    thread WaitForDropFX(dropPod, animationName, origin, angles)
+	EndSignal(dropPod, "OnDestroy")
+    entity threatProxy = CreateDropPodThreatIndicator(origin, angles)
+
+	OnThreadEnd(
+	function() : ( threatProxy, fxToStop )
+		{
+			if( IsValid( threatProxy ) )
+				threatProxy.Destroy()
+
+			if( IsValid( fxToStop ) )
+				fxToStop.Destroy()
+		}
+	)
+
+	AirDropPingMinimap( dropPod, origin, animationName )
+
+    thread DropPodBeamWaitForUse( dropPod, origin, angles )
+    thread WaitForDropFX( dropPod, animationName, origin, angles, false )
 	
 	waitthread LaunchAnimDropPod( dropPod, animationName, OriginToGround( origin ), angles )
-	    if(IsValid(threatProxy))
-        threatProxy.Destroy()
 
 	InitDropPod( dropPod )
-    
-    if(IsValid(fxToStop))
-        fxToStop.Destroy()
-	
 	AddMultipleLootItemsToDropPod(dropPod, contents)
-
 }
 
 void function AirdropItems_Lifeline( vector origin, vector angles, array<string> contents, entity fxToStop, string animationName, entity owner, int skin, string sourceWeaponClassName )
@@ -103,7 +132,7 @@ void function AirdropItems_Lifeline( vector origin, vector angles, array<string>
 				if( IsValid( threatProxy ) )
 					threatProxy.Destroy()
 
-				if( IsValid(fxToStop) )
+				if( IsValid( fxToStop ) )
 					fxToStop.Destroy()
 			}
 	)
@@ -112,15 +141,17 @@ void function AirdropItems_Lifeline( vector origin, vector angles, array<string>
     dropPod.SetScriptName( "lifeline_care_package" )
 
     thread DropPodBeamWaitForUse(dropPod, origin, angles)
-	
-    thread WaitForDropFX(dropPod, animationName, origin, angles)
+    thread WaitForDropFX( dropPod, animationName, origin, angles, true )
 	
 	waitthread LaunchAnimDropPod( dropPod, animationName, OriginToGround( origin ), angles )
 
 	InitDropPod( dropPod )
-   
 	AddMultipleLootItemsToDropPod_Lifeline(dropPod, contents)
+}
 
+array<entity> function ReturnCarePackagesNewArray()
+{
+	return file.carePackagesNew
 }
 
 void function AirDropFireteam( vector origin, vector angles, string animationName, int skin, string sourceWeaponClassName, entity player )
@@ -144,11 +175,13 @@ void function AirDropFireteam( vector origin, vector angles, string animationNam
 	}
 }
 
-void function WaitForDropFX(entity dropPod, string animationName, vector origin, vector angles)
+void function WaitForDropFX( entity dropPod, string animationName, vector origin, vector angles, bool isLifeLine )
 { 
 	EndSignal( dropPod, "OnDestroy" )
 
-    float scaledTime = dropPod.GetSequenceDuration(animationName) * 0.95
+	float scalar = isLifeLine ? 0.945 : 0.965 // todo(kawe): rework this entire thing with AddAnimEvent( "OnImpact" ).
+    float scaledTime = dropPod.GetSequenceDuration( animationName ) * scalar
+
 	wait scaledTime 
 	
 	if( !IsValid( dropPod ) )
@@ -731,7 +764,8 @@ function LaunchAnimDropPod2( entity dropPod, string anim, vector targetOrigin, v
 function CheckPlayersIntersectingPod( pod, targetOrigin )
 {
 	array<entity> playerList = GetPlayerArray()
-
+	playerList.extend( GetNPCArray() )
+	
 	// Multiplying the bounds by 1.42 to ensure this encloses the droppod when it's rotated 45 degrees
 	local mins = pod.GetBoundingMins() * 1.42 + targetOrigin
 	local maxs = pod.GetBoundingMaxs() * 1.42 + targetOrigin
@@ -752,10 +786,17 @@ function CheckPlayersIntersectingPod( pod, targetOrigin )
         
 		if ( DistanceSqr( targetOrigin, playerOrigin ) < (safeRadiusSqr / 8) && IsAlive(player))
 		{   
-            vector dif = Normalize( player.GetOrigin() - targetOrigin )
-            dif *= 300
-            dif.z = 0
-            player.SetVelocity( dif )
+			if( GetCurrentPlaylistVarBool( "ketchup_mod8", false ) )
+			{
+				player.Die( null, null, { damageSourceId = eDamageSourceId.droppod_impact } )
+			} else
+			{
+				vector dif = Normalize( player.GetOrigin() - targetOrigin )
+				dif *= 300
+				dif.z = 0
+				player.SetVelocity( dif )
+			}
+			
             return true
        }
 	}
@@ -847,6 +888,34 @@ entity function CreateMobileBeaconForVisualDrop( vector ornull origin = null, ve
 	DispatchSpawn( prop_dynamic )
 
 	return prop_dynamic
+}
+
+void function DropPod_ClearLandingZone( vector pos, entity inflictor, float innerRadius, float outerRadius, bool debugDraw = false )
+{
+	RadiusDamage(
+		pos,									// origin
+		svGlobal.worldspawn,					// owner
+		inflictor,		 						// inflictor
+		1000,									// pilot damage
+		1000,									// heavy armor damage
+		innerRadius,							// inner radius
+		outerRadius,							// outer radius
+		SF_ENVEXPLOSION_NO_NPC_SOUND_EVENT,		// explosion flags
+		0, 										// distanceFromAttacker
+		0, 										// explosionForce
+		DF_SKIPS_DOOMED_STATE,					// damage flags
+		eDamageSourceId.mp_ability_mobile_respawn_beacon					// damage source id
+	)
+
+	//HoverVehicle_WakeVehiclesIntersectingEntity( inflictor )
+
+	#if DEVELOPER
+		if ( debugDraw )
+		{
+			 //DebugDrawCylinder( pos, <270.0, 0.0, 0.0>, innerRadius, 20.0, COLOR_RED, true, 5.0 )
+			 //DebugDrawCylinder( pos, <270.0, 0.0, 0.0>, outerRadius, 20.0, COLOR_RED, true, 5.0 )
+		}
+	#endif
 }
 
 void function PushPlayerAndCreateDropPodCollision( entity pod, vector targetOrigin )

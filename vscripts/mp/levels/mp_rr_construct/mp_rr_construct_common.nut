@@ -24,7 +24,7 @@ void function Construct_MapInit_Common() {
 
     FlagInit("PlayConveyerStartFX", true)
     //RegisterNetwork*edVariable( "IsPlayerInWater", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-    //RegisterNetworkedVariable( "IsPlayerInWater", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+    //ScriptRegisterNetworkedVariable( "IsPlayerInWater", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
     AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 

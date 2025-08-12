@@ -175,11 +175,11 @@ void function Canyonlands_MapInit_Common()
 
         AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_pvpcurrency_container", OnPvpCurrencyContainerSpawned )
         AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_upgrade_station", OnSurvivalUpgradeStationSpawned )
-		if ( MapName() == eMaps.mp_rr_canyonlands_staging )
+		if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
 		{
-			// adjust skybox for staging area
 			AddCallback_GameStateEnter( eGameState.WaitingForPlayers, StagingArea_MoveSkybox )
 			AddCallback_GameStateEnter( eGameState.PickLoadout, StagingArea_ResetSkybox )
+			AddCallback_GameStateEnter( eGameState.Playing, StagingArea_MoveSkybox )
 		}
 	#endif
 
@@ -244,17 +244,21 @@ void function InitWaterLeviathans()
 
 void function EntitiesDidLoad()
 {
+	PrecacheModel( $"mdl/props/tree_green_forest_01_kingscanyon/tree_green_forest_01_kingscanyon.rmdl" )
 	thread __EntitiesDidLoad()
 }
 
 void function __EntitiesDidLoad()
 {
-	waitthread FindHoverTankEndNodes()
-	SpawnHoverTanks()
+	//Moved to Playing Game State due to some changes in survival deathfield. Cafe
+	// FlagWait( "DeathCircleSetup" )
+	// waitthread FindHoverTankEndNodes()
+	// SpawnHoverTanks()
 
-	if ( GetCurrentPlaylistVarBool( "enable_nessies", false ) )
-		Nessies()
+	// if ( GetCurrentPlaylistVarBool( "enable_nessies", false ) )
+		// Nessies()
 
+	// FlagSet( "IntroHovertanksSet" )
 	//DestroyHoverTankNodes()
 }
 
@@ -466,6 +470,10 @@ void function HoverTanksOnGamestatePlaying()
 void function HoverTanksOnGamestatePlaying_Thread()
 {
 	FlagWait( "Survival_LootSpawned" )
+	FlagWait( "DeathCircleSetup" )
+	
+	waitthread FindHoverTankEndNodes()
+	SpawnHoverTanks()
 
 	if ( GetCurrentPlaylistVarInt( "canyonlands_hovertank_flyin", 1 ) == 1 )
 	{
@@ -482,7 +490,8 @@ void function HoverTanksOnGamestatePlaying_Thread()
 		TeleportHoverTanksIntoPosition( file.hoverTanksIntro, HOVER_TANKS_TYPE_INTRO )
 	}
 
-	FlagSet( "IntroHovertanksSet" )
+	if ( GetCurrentPlaylistVarBool( "enable_nessies", false ) )
+		Nessies()
 }
 
 void function HoverTanksOnDeathFieldStageChanged( int stage, float nextCircleStartTime )
@@ -988,7 +997,10 @@ array<entity> function GetHoverTankEndNodes( int count, int endNodeType, array<e
 	int deathFieldStageIndexSmall = GetCurrentPlaylistVarInt( "canyonlands_hovertanks_circle_index", HOVER_TANKS_DEFAULT_CIRCLE_INDEX ) + 1
 	if ( deathFieldStageIndexSmall >= SURVIVAL_GetDeathFieldStages().len() )
 	{
-		Warning( "Hovertank playlist var 'canyonlands_hovertanks_circle_index' has bad death field stage: %d", deathFieldStageIndexSmall )
+		#if DEVELOPER
+			Warning( "Hovertank playlist var 'canyonlands_hovertanks_circle_index' has bad death field stage: %d", deathFieldStageIndexSmall )
+		#endif 
+		
 		deathFieldStageIndexSmall = SURVIVAL_GetDeathFieldStages().len() - 1
 	}
 	DeathFieldStageData deathFieldStageDataSmall = GetDeathFieldStage(  deathFieldStageIndexSmall )
@@ -1005,7 +1017,10 @@ array<entity> function GetHoverTankEndNodes( int count, int endNodeType, array<e
 		int deathFieldStageIndexLarge = GetCurrentPlaylistVarInt( "canyonlands_hovertanks_circle_index", HOVER_TANKS_DEFAULT_CIRCLE_INDEX )
 		if ( deathFieldStageIndexLarge >= SURVIVAL_GetDeathFieldStages().len() )
 		{
-			Warning( "Hovertank playlist var 'canyonlands_hovertanks_circle_index' has bad death field stage: %d", deathFieldStageIndexLarge )
+			#if DEVELOPER
+				Warning( "Hovertank playlist var 'canyonlands_hovertanks_circle_index' has bad death field stage: %d", deathFieldStageIndexLarge )
+			#endif
+			
 			deathFieldStageIndexLarge = SURVIVAL_GetDeathFieldStages().len() - 1
 		}
 		DeathFieldStageData deathFieldStageDataLarge = GetDeathFieldStage(  deathFieldStageIndexLarge )
@@ -1171,7 +1186,14 @@ void function StagingArea_MoveSkybox_Thread()
 
 	file.skyboxStartingOrigin = skyboxCamera.GetOrigin()
 	file.skyboxStartingAngles = skyboxCamera.GetAngles()
-	skyboxCamera.SetOrigin( skyboxCamera.GetOrigin() + <0, 0, SKYBOX_Z_OFFSET_STAGING_AREA> )
+
+	string mapName = GetMapName()
+	if ( mapName == "mp_rr_canyonlands_staging" ||
+	     mapName == "mp_rr_canyonlands_64k_x_64k_ps4" ||
+	     mapName == "mp_rr_canyonlands_64k_x_64k" )
+	{
+		skyboxCamera.SetOrigin( skyboxCamera.GetOrigin() + <0, 0, 10> )
+	}
 
 	skyboxCamera.SetAngles( SKYBOX_ANGLES_STAGING_AREA )
 }

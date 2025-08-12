@@ -286,7 +286,10 @@ void function PlayConversationToPlayer( string conversationType, entity player )
 {
 	if ( IsForcedDialogueOnly( player ) )
 	{
-		printt( "ForcedDialogueOnly, not playing conversationType: " + conversationType )
+		#if DEVELOPER
+			printt( "ForcedDialogueOnly, not playing conversationType: " + conversationType )
+		#endif
+		
 		return
 	}
 
@@ -418,7 +421,7 @@ bool function SquadExistsForConversation( entity ai, string conversationType )
 
 	if ( !(DoesConversationExist( conversationType ) ))
 	{
-		printt( "*****CONVERSATION WARNING***** Conversation " + conversationType + " does not exist! Returning" )
+		Warning( "*****CONVERSATION WARNING***** Conversation " + conversationType + " does not exist! Returning" )
 		return false
 	}
 
@@ -429,7 +432,7 @@ function GetSquadEHandles( ai )
 {
 	expect entity( ai )
 
-	local aiHandles = [ null, null, null, null ]
+	local aiHandles = [ 0, 0, 0, 0 ]
 
 	string squadName = expect string( ai.Get( "squadname" ) )
 

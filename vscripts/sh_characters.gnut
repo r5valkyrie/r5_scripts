@@ -40,6 +40,8 @@ global function GetPlayerSettingBaseHealth
 global function GetPlayerSettingBaseShield
 #endif
 
+global const asset CHARACTER_DUMMIE = $"settings/itemflav/character/dummie.rpak"
+global const asset CHARACTER_RANDOM = $"settings/itemflav/character/random.rpak"
 //////////////////////
 //////////////////////
 //// Global Types ////
@@ -58,6 +60,7 @@ global enum eCharacterClassRole
 }
 
 const table<int, asset> CHARACTER_ROLE_ICONS = {
+	[eCharacterClassRole.UNDECIDED] = $"",
 	[eCharacterClassRole.OFFENSE] = $"rui/menu/character_select/utility/util_role_offense",
 	[eCharacterClassRole.DEFENSE] = $"rui/menu/character_select/utility/util_role_defense",
 	[eCharacterClassRole.SUPPORT] = $"rui/menu/character_select/utility/util_role_support",

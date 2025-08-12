@@ -7,8 +7,8 @@ global function ServerCallback_MVEnable
 global function ServerCallback_MVDisable
 
 #if DEVELOPER
-global function ClModelViewInit
-global function ModelViewerSpawnModel
+global function ClModelViewer_Init
+global function ClModelViewer_DumpEnts
 global function SelectNextModel
 global function SelectPreviousModel
 global function SnapViewToModel
@@ -119,10 +119,23 @@ struct {
 	bool hlmv_moveInPlace = false
 } file
 
-void function ClModelViewInit()
+void function ClModelViewer_Init()
 {
 	RegisterSignal( "NewHLMVPreviewModel" )
 	RegisterSignal( "NewHLMVSequence" )
+}
+
+void function ClModelViewer_DumpEnts()
+{
+	int idx = 0
+	foreach ( modelData in file.hlmv_modelData )
+	{
+		if ( IsValid( modelData.model ) )
+		{
+			printt( idx, "-", modelData.model, "as", modelData.model.GetModelName() )
+			idx++
+		}
+	}
 }
 
 void function CreateControllerHud()
@@ -723,16 +736,6 @@ void function InitModel( entity model )
 	model.s.startOrg <- <0,0,0>
 }
 
-void function ModelViewerSpawnModel( vector pos, vector ang, int idx )
-{
-	if ( idx >= file.modelViewerModels.len() )
-		return
-
-	file.spawnedModels.append( CreateClientSidePropDynamic( pos, ang, file.modelViewerModels[ idx ] ) )
-
-	RefreshHudLabels()
-}
-
 void function DeleteSelectedModels()
 {
 	if ( file.selectedModels.len() <= 0 )
@@ -806,6 +809,7 @@ void function DeselectModel()
 
 void function SwapSelectedModel()
 {
+	file.selectedModels.clear()
 	if ( file.selectedModels.len() != 1 )
 	{
 		printt( "Model Viewer: More than one model is currently selected. Select a single model before trying to swap." )
@@ -1285,11 +1289,6 @@ string function ReplaceStringCharacter( string msg, string findChar, string repl
 	return newString
 }
 
-void function ClientCodeCallback_HLMV_ModelChanged( asset modelName )
-{
-	thread ClientCodeCallback_HLMV_ModelChanged_Thread( modelName )
-}
-
 bool function SetModelViewerMode( string mode )
 {
 	if ( file.modelViewerMode == mode )
@@ -1308,6 +1307,23 @@ bool function SetModelViewerMode( string mode )
 
 	file.modelViewerMode = mode
 	return true
+}
+
+bool function IsModelViewerActive()
+{
+	return file.modelViewerMode != MODELVIEWERMODE_INACTIVE
+}
+
+void function ClientCodeCallback_LevelEd_ClearPreviewEntity()
+{
+	foreach ( modelData in file.hlmv_modelData )
+	{
+		if ( IsValid( modelData.model ) )
+			modelData.model.Destroy()
+	}
+
+	file.hlmv_modelData = {}
+	file.hlmv_lastModel = $""
 }
 
 void function ClientCodeCallback_LevelEd_SetPosition( string script_name, vector origin, vector angles )
@@ -1354,9 +1370,9 @@ void function ClientCodeCallback_LevelEd_SetPositionThread( string script_name, 
 	}
 }
 
-bool function IsModelViewerActive()
+void function ClientCodeCallback_HLMV_ModelChanged( asset modelName )
 {
-	return file.modelViewerMode != MODELVIEWERMODE_INACTIVE
+	thread ClientCodeCallback_HLMV_ModelChanged_Thread( modelName )
 }
 
 void function ClientCodeCallback_HLMV_ModelChanged_Thread( asset modelName )
@@ -1607,16 +1623,4 @@ void function MapLimitsProtect( entity model )
 	}
 }
 
-void function ClientCodeCallback_LevelEd_ClearPreviewEntity()
-{
-	table<asset,HlmvModelData> hlmv_modelData
-	foreach ( modelData in file.hlmv_modelData )
-	{
-		if ( IsValid( modelData.model ) )
-			modelData.model.Destroy()
-	}
-
-	file.hlmv_modelData = {}
-	file.hlmv_lastModel = $""
-}
 #endif // DEVELOPER

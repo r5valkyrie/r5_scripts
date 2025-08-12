@@ -616,16 +616,17 @@ void function PlayerEmbarksTitan( entity player, entity titan, table embark )
 
 				if ( IsAlive( player ) )
 				{
-					if ( player.IsTitan() ) //Defensive fix, sometimes in SP (when game is shutting down etc ) this can run without the player being alive
+					//if ( player.IsTitan() ) //Defensive fix, sometimes in SP (when game is shutting down etc ) this can run without the player being alive
 					{
 						TitanEmbarkFailsafe( player, null, groundEntity, startOrigin )
 						Remote_CallFunction_Replay( player, "ServerCallback_TitanEmbark" )
-						LetTitanPlayerShootThroughBubbleShield( player )
+						//LetTitanPlayerShootThroughBubbleShield( player )
 					}
-					else if ( !player.p.embarkCancelled )
+					//else
 					{
-						player.Die() //Defensive fix, sometimes in SP (when game is shutting down etc ) this can run without the player being alive
+						//player.Die() //Defensive fix, sometimes in SP (when game is shutting down etc ) this can run without the player being alive
 					}
+
 				}
 			}
 		}
@@ -636,10 +637,6 @@ void function PlayerEmbarksTitan( entity player, entity titan, table embark )
 	player.p.isEmbarking = true
 	player.SetCinematicEventFlags( player.GetCinematicEventFlags() | CE_FLAG_EMBARK )
 
-	foreach ( func in svGlobal.onPilotEmbarkingTitanCallbacks )
-	{
-		func( player, titan )
-	}
 
 	waitthread PlayerEmbarksTitan_PlayerBecomesTitan( player, titan, embark )
 }
@@ -672,7 +669,7 @@ bool function TitanHasLeftAndRightEmbarkAnims( entity titan )
 {
 	entity soul = titan.GetTitanSoul()
 	asset settings = GetSoulPlayerSettings( soul )
-	return GetGlobalSettingsBool( settings, "hasLeftRightEmbarks" )
+	return false//GetGlobalSettingsBool( settings, "hasLeftRightEmbarks" )
 }
 
 void function TitanEmbark_PlayerCleanup( entity player )
@@ -749,9 +746,10 @@ void function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "TitanEjectionStarted" )
 	titan.EndSignal( "OnDeath" )
-
+	
+	printt( "1" )
 	e.threads++
-	OnThreadEnd(
+	/*OnThreadEnd(
 		function() : ( player, e )
 		{
 			if ( IsValid( player ) )
@@ -769,7 +767,7 @@ void function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 				Signal( e, "OnComplete" )
 			}
 		}
-	)
+	)*/
 
     player.ContextAction_SetBusy()
 
@@ -801,7 +799,7 @@ void function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 	{
 		player.ForceCrouch()
 	}
-
+	printt( "2" )
 	HolsterViewModelAndDisableWeapons( player )
 
 	FirstPersonSequenceStruct sequence
@@ -833,7 +831,7 @@ void function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 		// thirdPersonAudio = GetAudioFromAlias( settings, e.audioSet.thirdPersonKneelingAudioAlias )
 		// firstPersonAudio = GetAudioFromAlias( settings, e.audioSet.firstPersonKneelingAudioAlias )
 	}
-
+	printt( "3" )
 	sequence.thirdPersonAnimIdle = "pt_mount_idle"
 
 	bool doFirstPersonAnim = true
@@ -852,38 +850,26 @@ void function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 	}
 
 	//thread DelayedDisableEmbarkPlayerHud( player, sequence )
-
+	printt( "4" )
+	AddAnimEvent( player, "phase_shift_start", PhaseEmbarkPhaseStart )
+	AddAnimEvent( player, "phase_shift_stop", PhaseEmbarkPhaseStop )
 	AddAnimEvent( titan, "cockpit_light_start", CockpitLightStart )
 	AddAnimEvent( titan, "cockpit_light_stop", CockpitLightStop )
 
-	player.p.embarkCancelled = false
-	player.p.allowCancelEmbark = true
-
-	OnThreadEnd(
+	/*OnThreadEnd(
 	function() : ( player, titan )
 		{
-			bool embarkCancelled = false
-
 			if ( IsValid( player ) )
 			{
-				embarkCancelled = player.p.embarkCancelled
 				Signal( player, "PhaseEmbarkPhaseStop" )
 				DeleteAnimEvent( player, "phase_shift_start" )
 				DeleteAnimEvent( player, "phase_shift_stop" )
 			}
 
-			if ( IsAlive( titan ) && !embarkCancelled ) //Consider clearing titan.s.embarkingPlayer here?
-			{
+			if ( IsAlive( titan ) ) //Consider clearing titan.s.embarkingPlayer here?
 				titan.Die()
-			}
-			else if ( IsValid( titan ) )
-			{
-				CockpitLightStop( titan )
-				DeleteAnimEvent( titan, "cockpit_light_start" )
-				DeleteAnimEvent( titan, "cockpit_light_stop" )
-			}
 		}
-	)
+	)*/
 
 	thread FirstPersonSequence( sequence, player, titan )
 	// EmitDifferentSoundsOnEntityForPlayerAndWorld( firstPersonAudio, thirdPersonAudio, titan, player )
@@ -904,34 +890,33 @@ void function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 			animDuration = SKIP_AHEAD_TIME
 		}
 	}
+	printt( "5" )
 
 	thread Embark_DelayedFadeOut( player, titan, animDuration )
 
 	WaittillAnimDone( player )
 
 	Signal( player, "PhaseEmbarkPhaseStop" )
+
 	ClearPlayerAnimViewEntity( player )
+	PilotBecomesTitan( player, titan )
 
-	if ( !player.p.embarkCancelled )
-	{
-		PilotBecomesTitan( player, titan )
+	thread PlayAnim( player, "cqb_idle_mp" )
+	player.Anim_Stop()
+	player.SetVelocity( <0,0,0> )
 
-		thread PlayAnim( player, "cqb_idle_mp" )
-		player.Anim_Stop()
-		player.SetVelocity( <0,0,0> )
+	player.SetOrigin( titan.GetOrigin() )
+	local angles = titan.GetAngles()
+	angles.z = 0
+	angles.x = 0
+	player.SetAngles( angles )
+	printt( "6" )
+	player.SnapEyeAngles( angles )
 
-		player.SetOrigin( titan.GetOrigin() )
-		vector angles = titan.GetAngles()
-		angles.z = 0
-		angles.x = 0
-		player.SetAngles( angles )
-		player.SnapEyeAngles( angles )
-
-		// soul stuff should be from anim event
-		Assert( IsServer() )
-		SetStanceStand( player.GetTitanSoul() )
-		titan.Destroy()
-	}
+	// soul stuff should be from anim event
+	Assert( IsServer() )
+	//SetStanceStand( player.GetTitanSoul() )
+	//titan.Destroy()
 }
 
 void function CancelEmbark( entity player )
@@ -1083,7 +1068,6 @@ void function TitanEmbark_TitanEmbarks( entity player, entity titan, table e )
 {
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "TitanEjectionStarted" )
-	player.EndSignal( "CancelEmbark" )
 	titan.EndSignal( "OnDeath" )
 
 	titan.ContextAction_SetBusy()
@@ -1100,16 +1084,16 @@ void function TitanEmbark_TitanEmbarks( entity player, entity titan, table e )
 				Signal( e, "OnComplete" )
 			}
 
-			if ( (!IsAlive( player ) || player.p.embarkCancelled ) && IsAlive( titan ) )
+			if ( !IsAlive( player ) && IsAlive( titan ) )
 			{
 				titan.Anim_Stop()
 				titan.ContextAction_ClearBusy()
-				delete titan.s.embarkingPlayer
 				DeleteAnimEvent( titan, "play_startup_sound" )
 			}
 		}
 	)
 
+	local soul = titan.GetTitanSoul()
 	// dont let other players get in
 
 	string animation
@@ -1720,7 +1704,7 @@ void function SetCustomTitanIsEmbarkableForPlayerFunc( bool functionref( entity,
 
 bool function TitanIsCurrentlyEmbarkableForPlayer( entity player, entity titan ) //TODO: Collapse PlayerCanEmbarkTitan(), PlayerCanEmbarkIntoTitan(), PlayerCanImmediatelyEmbarkTitan() and TitanIsCurrentlyEmbarkableForPlayer() into one function
 {
-	if ( !CanEmbark( player ) )
+	/*if ( !CanEmbark( player ) )
 		return false
 
 	if ( player.Anim_IsActive() )
@@ -1738,9 +1722,6 @@ bool function TitanIsCurrentlyEmbarkableForPlayer( entity player, entity titan )
 	if ( titan.ContextAction_IsActive() )
 		return false
 
-	if ( titan.IsPlayer() )
-		return false
-
 	if ( !titan.IsInterruptable() )
 		return false
 
@@ -1750,10 +1731,11 @@ bool function TitanIsCurrentlyEmbarkableForPlayer( entity player, entity titan )
 	if ( !HasSoul( titan ) )
 		return false
 
+	local soul = titan.GetTitanSoul()
+
 	if ( GetDoomedState( titan ) && !PROTO_AlternateDoomedState() )
 		return false
 
-	entity soul = titan.GetTitanSoul()
 	if ( soul.IsEjecting() )
 		return false
 
@@ -1778,7 +1760,7 @@ bool function TitanIsCurrentlyEmbarkableForPlayer( entity player, entity titan )
 	#if SERVER
 		if ( file.customTitanIsEmbarkableForPlayer != null )
 			return file.customTitanIsEmbarkableForPlayer( player, titan )
-	#endif
+	#endif*/
 
 	return true
 }
@@ -1883,16 +1865,21 @@ vector function CalculateTitanToPlayerDir( entity titan, entity player )
 	return relTitanToPlayerDir
 }
 
-table function GenerateEmbarkActionTable( entity player, entity titan, table bestAction, var relTitanToPlayerDir = null )
+function GenerateEmbarkActionTable( entity player, entity titan, bestAction, var relTitanToPlayerDir = null )
 {
 	bool useFastAnims = player.IsPlayer() && PlayerHasFastEmbark( player )
 
 	if ( relTitanToPlayerDir == null )
+	{
  		relTitanToPlayerDir = CalculateTitanToPlayerDir( titan, player )
+ 		expect vector( relTitanToPlayerDir )
+	}
+	else
+	{
+		expect vector( relTitanToPlayerDir )
+	}
 
-	expect vector( relTitanToPlayerDir )
-
-	table Table
+	local Table = {}
 	Table.action <- bestAction
 
 	if ( "animSet" in bestAction )
@@ -2024,6 +2011,8 @@ bool function TitanCanStand( entity titan )
 
 bool function PlayerCanEmbarkTitan( entity player, entity titan ) //TODO: Collapse PlayerCanEmbarkTitan(), PlayerCanEmbarkIntoTitan(), PlayerCanImmediatelyEmbarkTitan() and TitanIsCurrentlyEmbarkableForPlayer() into one function
 {
+	return true
+	/*
 	PerfStart( PerfIndexClient.PlayerCanEmbarkTitan1 )
 	if ( !TitanIsCurrentlyEmbarkableForPlayer( player, titan ) )
 	{
@@ -2036,7 +2025,7 @@ bool function PlayerCanEmbarkTitan( entity player, entity titan ) //TODO: Collap
 	bool res = FindBestEmbark( player, titan ) != null
 	PerfEnd( PerfIndexClient.FindBestEmbark )
 
-	return res
+	return res*/
 }
 
 bool function PlayerCanImmediatelyEmbarkTitan( entity player, entity titan ) //TODO: Collapse PlayerCanEmbarkTitan(), PlayerCanEmbarkIntoTitan(), PlayerCanImmediatelyEmbarkTitan() and TitanIsCurrentlyEmbarkableForPlayer() into one function
@@ -2075,8 +2064,8 @@ void function PlayerLungesToEmbark( entity player, entity ent )
 	if ( ShouldStopLunging( player, ent ) )
 		return
 
-	player.Lunge_SetTargetEntity( ent )
-	player.Lunge_SetSmoothTime( 3.0 )
+	//player.Lunge_SetTargetEntity( ent )
+	//player.Lunge_SetSmoothTime( 3.0 )
 }
 
 bool function ShouldStopLunging( entity player, entity target )

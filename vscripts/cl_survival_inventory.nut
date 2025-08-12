@@ -617,12 +617,12 @@ void function SurvivalMenu_Internal( entity player, string uiScript, entity deat
 	file.currentGroundListData.deathBox = deathBox
 	file.currentGroundListData.behavior = groundListBehavior
 
-	RunUIScript( uiScript, false ) // player.IsTitan()
+	RunUIScript( uiScript, player.IsTitan() )
 
 	if ( IsValid( deathBox ) )
 	{
 		if( Gamemode() == eGamemodes.fs_aimtrainer )
-			thread StartUpdatingArmorSwapLastTime()
+			thread Safe_StartUpdatingArmorSwapLastTime()
 		
 		thread TrackDistanceFromDeathBox( player, deathBox )
 	}
@@ -881,8 +881,8 @@ int function GetCommsActionForBackpackItem( var button, int position )
 				case eAmmoPoolType.sniper:
 					return eCommsAction.INVENTORY_NEED_AMMO_SNIPER
 					
-				case eAmmoPoolType.explosive:
-					return eCommsAction.INVENTORY_NEED_AMMO_EXPLOSIVE
+				case eAmmoPoolType.arrow:
+					return eCommsAction.INVENTORY_NEED_AMMO_ARROWS
 			}
 		}
 	}
@@ -2070,6 +2070,14 @@ void function GroundItemsInit( entity player, array<entity> loot )
 	sniper.guids.append( 0 )
 	sniper.isRelevant = true
 	sniper.isUpgrade = false
+	
+	GroundLootData arrows
+	allItems[ "arrows" ] <- arrows
+	arrows.lootData = SURVIVAL_Loot_GetLootDataByRef( "arrows" )
+	arrows.count = 1
+	arrows.guids.append( 0 )
+	arrows.isRelevant = true
+	arrows.isUpgrade = false
 			
 	for ( int groundIndex = 0; groundIndex < loot.len(); groundIndex++ )
 	{
@@ -2148,6 +2156,8 @@ void function GroundItemsInit( entity player, array<entity> loot )
 			case eLootType.CUSTOMPICKUP:
 			case eLootType.BLANK:
 			case eLootType.DATAKNIFE:
+			case eLootType.MARVIN_ARM:
+			case eLootType.SHIPKEYCARD:
 			case eLootType.RESOURCE:
 			attachments.append( gd )
 			break

@@ -61,8 +61,9 @@ global enum eDamageSourceId
 	damagedef_dirty_bomb_explosion
 	damagedef_sonic_boom
 	damagedef_bangalore_smoke_explosion
-	damagedef_creeping_bombardment_detcord_explosion
 	damagedef_tank_bombardment_detcord_explosion
+	damagedef_creeping_bombardment_detcord_explosion
+	damagedef_ability_silence
 	damagedef_defensive_bombardment
 	damagedef_loot_drone_explosion
 	//// end of must match order ////
@@ -73,7 +74,7 @@ global enum eDamageSourceId
 	//---------------------------
 	mp_weapon_grenade_decoyaudio
 	mp_weapon_grenade_cryonade
-	
+
 	// Pilot Weapons - S3 Defaults. Cafe
 	mp_weapon_hemlok
 	mp_weapon_lmg
@@ -86,6 +87,7 @@ global enum eDamageSourceId
 	mp_weapon_wingman
 	mp_weapon_semipistol
 	mp_weapon_autopistol
+	mp_weapon_autopistol_fusion
 	mp_weapon_sniper
 	mp_weapon_sentinel
 	mp_weapon_shotgun
@@ -101,10 +103,16 @@ global enum eDamageSourceId
 	mp_weapon_energy_ar
 	mp_weapon_volt_smg
 	mp_weapon_defender
+	mp_ability_mobile_respawn_beacon
+	mp_ability_sniper_ult
 	// End S3 Defaults
 
+	// Crate Weapons
+	mp_weapon_energy_ar_crate
+	mp_weapon_energy_shotgun_crate
+	mp_weapon_doubletake_crate
+
 	mp_weapon_melee_survival
-	mp_weapon_car
 	mp_weapon_car_r2
 	mp_weapon_3030
 	mp_weapon_mgl
@@ -124,12 +132,18 @@ global enum eDamageSourceId
 	mp_weapon_wrecking_ball
 	mp_weapon_epg
 	mp_weapon_smr
+	mp_weapon_car
 	mp_weapon_rocket_launcher
 	mp_weapon_grenade_electric_smoke
 	mp_weapon_grenade_gravity
 	mp_weapon_rspn101_og
 	sp_weapon_arc_tool
 	mp_weapon_pulse_lmg
+	mp_weapon_mounted_turret_weapon
+	mp_titanweapon_flightcore_rockets
+	mp_titancore_laser_cannon
+	mp_titanweapon_xo16
+	mp_titanweapon_xo16_shorty
 	//
 	melee_pilot_emptyhanded
 	melee_pilot_arena
@@ -148,13 +162,13 @@ global enum eDamageSourceId
 
 	melee_boxing_ring
 	mp_weapon_melee_boxing_ring
-	
+
 	melee_data_knife
 	mp_weapon_data_knife_primary
 
 	melee_wraith_kunai
 	mp_weapon_wraith_kunai_primary
-	
+
 	melee_bolo_sword
 	mp_weapon_bolo_sword_primary
 
@@ -202,6 +216,18 @@ global enum eDamageSourceId
 	mp_weapon_gunship_turret
 	mp_weapon_gunship_missile
 
+	mp_titanweapon_stun_laser
+	mp_titanability_smoke
+
+	mp_titanweapon_predator_cannon
+	mp_titanweapon_particle_accelerator
+	mp_titanweapon_rocketeer_rocketstream
+	mp_titanweapon_leadwall
+	mp_titanweapon_meteor_thermite
+	mp_titanweapon_flame_wall
+	mp_titanweapon_meteor
+	mp_titanweapon_sniper
+
 	// Misc
 	rodeo
 	rodeo_forced_titan_eject //For awarding points when you force a pilot to eject via rodeo
@@ -214,6 +240,7 @@ global enum eDamageSourceId
 	grunt_melee
 	spectre_melee
 	prowler_melee
+	spider_melee
 	super_spectre_melee
 	titan_execution
 	human_execution
@@ -293,7 +320,7 @@ global enum eDamageSourceId
 	mp_titanweapon_stealth_sword
 	mp_ability_consumable
 	snd_bomb
-	
+
 	bombardment
 	bleedout
 	mp_weapon_energy_shotgun
@@ -304,7 +331,7 @@ global enum eDamageSourceId
 	//rocketstrike
 	//orbitallaser
 	//explosion
-	
+
 	//custom
 	nextbot
 	mp_weapon_raygun
@@ -322,25 +349,25 @@ global enum eDamageSourceId
 	mp_weapon_oddball_primary
 	melee_oddball
 	mp_weapon_bubble_bunker_master_chief
-	
+
 	mp_weapon_flagpole_primary
 	melee_flagpole
-	
+
 	mp_weapon_lightninggun
 
 	mp_weapon_titan_sword
 	mp_weapon_titan_sword_slam
 	melee_titan_sword
-	
+
 	mp_ability_heal
 	mp_ability_holopilot
 	mp_weapon_grenade_gas
-	
+
 	mp_weapon_decoy_grenade
 	mp_ability_cloak /* for stats */
 	mp_weapon_bubble_bunker /* for stats */
 	mp_weapon_grenade_defensive_bombardment /* for stats */
-	
+
 	//S0 Dev Protos
 	mp_weapon_concussive_breach
 	mp_weapon_grenade_flashbang
@@ -355,6 +382,10 @@ global enum eDamageSourceId
 	mp_weapon_cover_wall
 	mp_ability_ground_slam
 	mp_ability_split_timeline
+
+	mp_weapon_proximity_mine
+	mp_weapon_grenade_rev_shell
+	mp_ability_devices_jammer
 }
 
 //When adding new mods, they need to be added below and to persistent_player_data_version_N.pdef in r1/cfg/server.
@@ -500,13 +531,7 @@ void function DamageTypes_Init()
 #endif
 
 	foreach ( name, number in eDamageSourceId )
-	{
 		file.damageSourceIDToString[ number ] <- name
-		
-		#if SERVER 
-			TrackerWepTable()[ name ] <- number
-		#endif
-	}
 
 	PrecacheWeapon( $"mp_weapon_rspn101" ) // used by npc_soldier ><
 
@@ -529,41 +554,45 @@ void function DamageTypes_Init()
 	{
 	}
 
-	file.damageSourceIDToImage[eDamageSourceId.melee_shadowsquad_hands] 	<- $"rui/gamemodes/shadow_squad/shadow_icon_small"
+	file.damageSourceIDToImage[eDamageSourceId.melee_shadowsquad_hands] 				<- $"rui/gamemodes/shadow_squad/shadow_icon_small_sdk"
 
 	//file.damageSourceIDToImage[eDamageSourceId.mp_weapon_mobile_hmg]		<- $"rui/weapon_icons/r5/weapon_rampart_turret"
 
-	file.damageSourceIDToImage[eDamageSourceId.snd_bomb]					<- $"rui/flowstatecustom/bombicon"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_oddball_primary]	<- $"rui/flowstate_custom/oddball_white"
-	file.damageSourceIDToImage[eDamageSourceId.melee_oddball]				<- $"rui/flowstate_custom/oddball_white"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_flagpole_primary]	<- $"rui/gamemodes/capture_the_flag/mil_flag"
-	file.damageSourceIDToImage[eDamageSourceId.melee_flagpole]				<- $"rui/gamemodes/capture_the_flag/mil_flag"
-	
-	//Titanfall2 and Retail Apex guns, ported by @LorryLeKral, with the help from @AmosModz
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_volt_smg] 			<- $"rui/weapon_icons/r5/weapon_volt"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_car] 				<- $"rui/weapon_icons/r5/weapon_car"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_car_r2] 				<- $"rui/weapon_icons/r5/weapon_car"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_sentinel] 			<- $"rui/weapon_icons/r5/weapon_sentinel"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_softball] 			<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_softball"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_epg] 				<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_epg1"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_rocket_launcher] 	<- $"r2_ui/menus/loadout_icons/anti_titan/at_archer"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_arc_launcher] 		<- $"r2_ui/menus/loadout_icons/anti_titan/at_arcball"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_smr] 				<- $"r2_ui/menus/loadout_icons/anti_titan/at_sidewinder"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_mgl] 				<- $"r2_ui/menus/loadout_icons/anti_titan/at_mgl"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_pulse_lmg] 		<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_coldwar"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_wingman_n]			<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_wingman_elite"
-	file.damageSourceIDToImage[eDamageSourceId.sp_weapon_arc_tool]			<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_arc_tool"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_rspn101_og]		<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_arc_tool"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_smart_pistol]		<- $"rui/weapon_icons/r5/weapon_smart_pistol"
-	
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_flamethrower] 		<- $"rui/weapon_icons/kral/custom/flamethrower"
+	file.damageSourceIDToImage[eDamageSourceId.snd_bomb]								<- $"rui/flowstatecustom/bombicon"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_oddball_primary]				<- $"rui/flowstate_custom/oddball_white"
+	file.damageSourceIDToImage[eDamageSourceId.melee_oddball]							<- $"rui/flowstate_custom/oddball_white"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_flagpole_primary]				<- $"rui/gamemodes/capture_the_flag/mil_flag"
+	file.damageSourceIDToImage[eDamageSourceId.melee_flagpole]							<- $"rui/gamemodes/capture_the_flag/mil_flag"
 
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword]		<- $"rui/gamemodes/shadow_squad/legend_icon"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword_slam]	<- $"rui/gamemodes/shadow_squad/legend_icon"
-	file.damageSourceIDToImage[eDamageSourceId.melee_titan_sword]			<- $"rui/gamemodes/shadow_squad/legend_icon"
-	
-	file.damageSourceIDToImage[eDamageSourceId.nextbot]						<- $"rui/gamemodes/shadow_squad/legend_icon"
-	
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_volt_smg] 						<- $"rui/weapon_icons/r5/weapon_volt"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_car_r2] 						<- $"rui/weapon_icons/r5/weapon_car"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_sentinel] 						<- $"rui/weapon_icons/r5/weapon_sentinel"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_softball] 						<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_softball"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_epg] 							<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_epg1"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_rocket_launcher] 				<- $"r2_ui/menus/loadout_icons/anti_titan/at_archer"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_arc_launcher] 					<- $"r2_ui/menus/loadout_icons/anti_titan/at_arcball"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_smr] 							<- $"r2_ui/menus/loadout_icons/anti_titan/at_sidewinder"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_mgl] 							<- $"r2_ui/menus/loadout_icons/anti_titan/at_mgl"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_pulse_lmg] 					<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_coldwar"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_wingman_n]						<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_wingman_elite"
+	file.damageSourceIDToImage[eDamageSourceId.sp_weapon_arc_tool]						<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_arc_tool"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_rspn101_og]					<- $"r2_ui/menus/loadout_icons/primary_weapon/primary_arc_tool"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_smart_pistol]					<- $"rui/weapon_icons/r5/weapon_smart_pistol"
+	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_predator_cannon]			<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_predator"
+	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_particle_accelerator]		<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_particle_ac"
+	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_rocketeer_rocketstream]	<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_quad"
+	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_leadwall]					<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_leadwall"
+	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_meteor]					<- $"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_thermite_cannon"
+	file.damageSourceIDToImage[eDamageSourceId.mp_titanweapon_flightcore_rockets] 		<- $"rui/weapon_icons/kral/custom/flamethrower"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_flamethrower] 					<- $"rui/weapon_icons/kral/custom/flamethrower"
+	file.damageSourceIDToImage[eDamageSourceId.mp_ability_mobile_respawn_beacon] 		<- $"rui/weapon_icons/kral/custom/flamethrower"//remove this later
+
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword]					<- $"rui/gamemodes/shadow_squad/legend_icon_sdk"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword_slam]				<- $"rui/gamemodes/shadow_squad/legend_icon_sdk"
+	file.damageSourceIDToImage[eDamageSourceId.melee_titan_sword]						<- $"rui/gamemodes/shadow_squad/legend_icon_sdk"
+
+	file.damageSourceIDToImage[eDamageSourceId.nextbot]									<- $"rui/gamemodes/shadow_squad/legend_icon_sdk"
+
 
 	file.damageSourceIDToName =
 	{
@@ -584,7 +613,6 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.mp_weapon_turretplasma_mega ] 			= "#WPN_TURRETPLASMA_MEGA",
 		[ eDamageSourceId.mp_weapon_gunship_launcher ] 				= "#WPN_GUNSHIP_LAUNCHER",
 		[ eDamageSourceId.mp_weapon_gunship_turret ]				= "#WPN_GUNSHIP_TURRET",
-		[ eDamageSourceId.mp_weapon_gunship_turret ]				= "#WPN_GUNSHIP_MISSILE",
 
 		[ eDamageSourceId.mp_titanability_slow_trap ]				= "#DEATH_SLOW_TRAP",
 		[ eDamageSourceId.damagedef_suicide ] 						= "#DEATH_SUICIDE",
@@ -597,6 +625,7 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.auto_titan_melee ] 						= "#DEATH_AUTO_TITAN_MELEE",
 
 		[ eDamageSourceId.prowler_melee ] 							= "#DEATH_PROWLER_MELEE",
+		[ eDamageSourceId.spider_melee ] 							= "#DEATH_SPIDER_MELEE",
 		[ eDamageSourceId.super_spectre_melee ] 					= "#DEATH_SUPER_SPECTRE",
 		[ eDamageSourceId.grunt_melee ] 							= "#DEATH_GRUNT_MELEE",
 		[ eDamageSourceId.spectre_melee ] 							= "#DEATH_SPECTRE_MELEE",
@@ -672,12 +701,14 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.melee_titan_punch_stealth ] 				= "#DEATH_TITAN_MELEE",
 		[ eDamageSourceId.melee_titan_punch_rocket ] 				= "#DEATH_TITAN_MELEE",
 		[ eDamageSourceId.melee_titan_punch_drone ] 				= "#DEATH_TITAN_MELEE",
+		[ eDamageSourceId.mp_titanweapon_flightcore_rockets ] 				= "#flightcore_rocket",
 		[ eDamageSourceId.mp_weapon_volt_smg ] 						= "#WPN_VOLT_SMG",
 		[ eDamageSourceId.mp_weapon_pulse_lmg ] 					= "EM-4 Cold War",
 		[ eDamageSourceId.mp_weapon_flamethrower ] 					= "Flame Thrower",
 		[ eDamageSourceId.mp_weapon_arc_launcher ] 					= "#WPN_ARC_LAUNCHER",
-		[ eDamageSourceId.mp_ability_octane_stim ] 					= "#WPN_OCTANE_STIM_SHORT",		
+		[ eDamageSourceId.mp_ability_octane_stim ] 					= "#WPN_OCTANE_STIM_SHORT",
 		[ eDamageSourceId.mp_weapon_tesla_trap ] 					= "#DEATH_TESLA_TRAP",
+		[ eDamageSourceId.mp_weapon_mounted_turret_weapon ] 		= "#untyped",
 		[ eDamageSourceId.mp_ability_crypto_drone_emp ]				= "#WPN_DRONE_EMP",
 		[ eDamageSourceId.mp_ability_crypto_drone_emp_trap ]		= "#WPN_DRONE_EMP",
 		[ eDamageSourceId.melee_wraith_kunai ] 						= "#DEATH_MELEE_WRAITH_KUNAI",
@@ -688,7 +719,8 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.mp_weapon_lifeline_baton_primary ]		= "#DEATH_MELEE_LIFELINE_BATON",
 		[ eDamageSourceId.melee_shadowsquad_hands ] 				= "#DEATH_MELEE_SHADOWSQUAD_HANDS",
 		[ eDamageSourceId.mp_weapon_shadow_squad_hands_primary ] 	= "#DEATH_MELEE_SHADOWSQUAD_HANDS",
-		
+		[ eDamageSourceId.mp_ability_mobile_respawn_beacon ] 	= "#DEATH_MELEE_SHADOWSQUAD_HANDS",
+
 		//r5r
 		[ eDamageSourceId.melee_bolo_sword ] 						= "Bolo Sword Melee",
 		[ eDamageSourceId.mp_weapon_bolo_sword_primary ] 			= "Bolo Sword Melee",
@@ -705,12 +737,12 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.mp_weapon_epg ] 							= "EPG",
 		[ eDamageSourceId.mp_weapon_smr ] 							= "Sidewinder SMR",
 		[ eDamageSourceId.mp_weapon_rocket_launcher ] 				= "Archer",
-		[ eDamageSourceId.mp_weapon_car ] 							= "Car SMG",
-		[ eDamageSourceId.mp_weapon_car_r2 ] 							= "R2 Car SMG",
+		[ eDamageSourceId.mp_weapon_car_r2 ] 						= "Car SMG",
 		[ eDamageSourceId.mp_weapon_mgl ] 							= "MGL Mag Launcher",
 		[ eDamageSourceId.mp_weapon_3030 ] 							= "30-30 Repeater",
-		//[ eDamageSourceId.mp_weapon_energysword ] 				= "Energy Sword",
-		[ eDamageSourceId.mp_weapon_dragon_lmg ] 					= "Rampage LMG",		
+		[ eDamageSourceId.mp_titanweapon_particle_accelerator ] 	= "Splitter Rifle",
+		[ eDamageSourceId.mp_titanweapon_predator_cannon ] 			= "Predator Cannon",
+		[ eDamageSourceId.mp_weapon_dragon_lmg ] 					= "Rampage LMG",
 		[ eDamageSourceId.mp_weapon_smart_pistol ] 	 				= "Smart Pistol",
 		[ eDamageSourceId.mp_weapon_grenade_electric_smoke ] 	 	= "Electric Smoke",
 		[ eDamageSourceId.mp_weapon_grenade_gravity ] 	 			= "Gravity Star",
@@ -718,10 +750,10 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.mp_weapon_oddball_primary ] 	 			= "Ball",
 		[ eDamageSourceId.melee_oddball ] 	 						= "Ball",
 		[ eDamageSourceId.mp_weapon_flagpole_primary ] 	 			= "Ball",
-		[ eDamageSourceId.melee_flagpole ] 	 						= "Ball", 
+		[ eDamageSourceId.melee_flagpole ] 	 						= "Ball",
 		[ eDamageSourceId.mp_weapon_rspn101_og ] 	 				= "R101",
 		[ eDamageSourceId.sp_weapon_arc_tool] 	 					= "Arc Tool",
-		[ eDamageSourceId.mp_weapon_titan_sword ] 	 				= "Sword", 
+		[ eDamageSourceId.mp_weapon_titan_sword ] 	 				= "Sword",
 		[ eDamageSourceId.mp_weapon_titan_sword_slam ] 	 			= "Sword",
 		[ eDamageSourceId.melee_titan_sword ] 	 					= "Sword",
 		[ eDamageSourceId.mp_weapon_lightninggun ]					= "Lightning Gun",
@@ -757,7 +789,7 @@ string function DamageSourceIDToString( int index )
 	return file.damageSourceIDToString[ index ]
 }
 
-table<int,string> function DamageSourceIDToStringTable() 
+table<int,string> function DamageSourceIDToStringTable()
 {
 	return file.damageSourceIDToString
 }
@@ -766,19 +798,19 @@ table<int,string> function DamageSourceIDToStringTable()
 void function RegisterCustomWeaponDamageDef( string weaponRef, string name = "Unknown", string imgAssetString = "$\"\"" )
 {
 	int sourceID = file.damageSourceIDToString.len()
-	
+
 	mAssert( !(sourceID in file.damageSourceIDToName) && !(sourceID in file.damageSourceIDToImage) && !(sourceID in file.damageSourceIDToString), "Error registering custom weapon: " + weaponRef + " [already exists]" )
-	
+
 	file.damageSourceIDToString[ sourceID ] <- weaponRef
 	file.damageSourceIDToName[ sourceID ] <- name
-	
+
 	#if CLIENT || UI
 		file.damageSourceIDToImage[ sourceID ] <- GetAssetFromString( imgAssetString )
 	#endif
-	
-	#if SERVER 
+
+	#if SERVER
 		file.damageSourceIDToImage[ sourceID ] <- $""
-	#endif 
+	#endif
 }
 
 string function GetObitFromDamageSourceID( int damageSourceID )
@@ -838,30 +870,28 @@ string function PIN_GetDamageCause( var damageInfo )
 	void function DEV_PrintDamageSourceIDs()
 	{
 		string data = "\n\n ------ DAMAGE SOURCE IDS ------ \n\n";
-		
+
 		foreach( int idx, ref in file.damageSourceIDToString )
 		{
 			data += format( "[%d] = \"%s\", \n", idx, ref )
 		}
-		
+
 		printt( data )
 	}
-	
+
 	void function DEV_PrintBackendNames()
 	{
 		string printText = "TableForClientScript:\n\n table< string, string > serverOutput = {\n"
-		
+
 		foreach( int enumIdx, string ref in DamageSourceIDToStringTable()  )
 		{
 			if( enumIdx in file.damageSourceIDToName )//janu weapon framework weapons will be here too + precached weps
-			{
 				printText += ( "[ \"" + ref + "\" ] = \"" + file.damageSourceIDToName[ enumIdx ] + "\",\n" )
-			}
 		}
-		
+
 		printText += "}"
-		
+
 		print( printText )
 	}
-	
+
 #endif

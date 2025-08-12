@@ -46,7 +46,7 @@ ImpactTable
 		"splash" "xo_footstep_water" //brush water
 		"slime_splash" "P_xo_footstep_slime"
 		"airburst" ""
-		"shieldhit" "P_xo_armor_impact"
+		"shieldhit" "P_armor_impact"
 		"critical_hit" "xo_damage_exp_1"
 	}
 

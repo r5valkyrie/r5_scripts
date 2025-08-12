@@ -38,7 +38,7 @@ WeaponData
 	"battle_chatter_event"							"bc_pSatchel"
 
 	// Effects
-	"impact_effect_table" 							"exp_satchel"
+	"impact_effect_table" 							"exp_artillery_plasma"
 	"projectile_trail_effect_0" 						""
 	"vortex_absorb_effect"							"wpn_vortex_projectile_satchel_FP"
 	"vortex_absorb_effect_third_person"				"wpn_vortex_projectile_satchel"

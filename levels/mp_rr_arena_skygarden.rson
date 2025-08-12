@@ -1,3 +1,4 @@
+IsTestMap: true
 When: "SERVER"
 Scripts:
 [

@@ -343,7 +343,7 @@ WeaponData
 	"smart_ammo_track_cloaked_targets"				"0"
 	"smart_ammo_targeting_time_modifier_projectile_owner"	"0.35"
 	"smart_ammo_target_max_locks_normal"			"-1"	// divide health by damage near
-	"smart_ammo_target_npc_lock_factor"				"2"		// smart pistol does head shots at 2x damage
+	"smart_ammo_target_npc_lock_factor"				"1"		// smart pistol does head shots at 2x damage
 	"smart_ammo_new_target_delay"					"0.1"
 	"smart_ammo_draw_acquisition_lines"				"1"
 	"smart_ammo_hud_lock_style"						"pilot_pistol"
@@ -379,6 +379,9 @@ WeaponData
 
 	Mods
 	{
+		crate
+		{
+		}
 		survival_finite_ammo
 		{
 			"ammo_default_total"							"0"
@@ -526,7 +529,15 @@ WeaponData
 			"pass_through_depth"							"500"		// Not sure how long a dropship is, probably the biggest entity
 			"pass_through_damage_preserved_scale"			"1.0"
 		}
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 	"ui1_enable"		"1"
 	UiData1

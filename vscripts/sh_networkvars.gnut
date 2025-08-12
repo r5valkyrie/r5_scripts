@@ -63,8 +63,8 @@ int _currentStringIndex = MIN_REGISTERED_STRING_INDEX
 
 void function RegisterString( string thestring )
 {
-	Assert( _RegisteringFunctions, "Cannot register string outside of _remote_functions.nut" )
-	Assert( thestring.find( "#" ) == 0, "Cannot register unlocalized string \"" + thestring + "\"" )
+	mAssert( _RegisteringFunctions, "Cannot register string outside of _remote_functions.nut" )
+	mAssert( thestring.find( "#" ) == 0, "Cannot register unlocalized string \"" + thestring + "\"" )
 
 	int index = _currentStringIndex
 

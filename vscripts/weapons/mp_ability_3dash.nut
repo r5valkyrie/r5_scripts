@@ -63,7 +63,7 @@ void function DashPlayer(entity player, float chargeTime)
 		return
 	}
 	player.Zipline_Stop()
-	if ( MapName() == eMaps.mp_rr_ashs_redemption ) return
+	// if ( MapName() == eMaps.mp_rr_ashs_redemption ) return
 	player.Zipline_Stop()
 	vector yes
 	if(player.GetInputAxisForward() || player.GetInputAxisRight()) yes = Normalize(player.GetInputAxisForward() * player.GetViewForward() + player.GetInputAxisRight() * player.GetViewRight())

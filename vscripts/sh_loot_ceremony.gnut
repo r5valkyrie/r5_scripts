@@ -135,6 +135,14 @@ struct ItemPresentationData
 	int         rarity
 	int         quantity = 1
 }
+
+struct LootBoxItems
+{
+	array<ItemFlavor> common
+	array<ItemFlavor> rare
+	array<ItemFlavor> epic
+	array<ItemFlavor> legendary
+}
 #endif
 
 
@@ -458,148 +466,186 @@ void function UIToClient_LootCeremony_SetMenuHandles( var menu )
 
 
 #if CLIENT
+
+table< int, array<float> > itemProbabilities = {
+    [eItemType.weapon_skin] = [0.018, 0.013, 0.004, 0.002],
+    [eItemType.weapon_charm] = [0.0, 0.0, 0.004, 0.002],
+    [eItemType.character_skin] = [0.018, 0.013, 0.004, 0.002],
+    [eItemType.gladiator_card_stance] = [0.0, 0.013, 0.004, 0.0],
+    [eItemType.gladiator_card_frame] = [0.018, 0.013, 0.004, 0.002],
+    [eItemType.gladiator_card_intro_quip] = [0.018, 0.013, 0.0, 0.0],
+    [eItemType.gladiator_card_kill_quip] = [0.018, 0.0, 0.0, 0.0],
+    [eItemType.gladiator_card_stat_tracker] = [0.018, 0.013, 0.0, 0.0],
+    [eItemType.character_execution] = [0.0, 0.0, 0.0, 0.002]
+}
+
+table< int, float > itemTypeProbabilities = {
+    [eItemType.weapon_skin] = 0.35,
+    [eItemType.character_skin] = 0.35,
+    [eItemType.gladiator_card_frame] = 0.10,
+    [eItemType.gladiator_card_stance] = 0.10,
+    [eItemType.gladiator_card_intro_quip] = 0.02,
+    [eItemType.gladiator_card_kill_quip] = 0.02,
+    [eItemType.weapon_charm] = 0.05,
+    [eItemType.character_execution] = 0.01
+};
+
+array<float> function NormalizeProbabilities(array<float> probabilities)
+{
+    float sum = 0.0;
+    foreach (float prob in probabilities)
+    {
+        sum += prob;
+    }
+
+    if (sum == 0.0)
+    {
+        // Handle edge case where all probabilities are 0
+        return [0.0, 0.0, 0.0, 0.0];
+    }
+
+    array<float> normalizedProbabilities;
+    foreach (float prob in probabilities)
+    {
+        normalizedProbabilities.append(prob / sum);
+    }
+
+    return normalizedProbabilities;
+}
+
+int function SelectRarity(array<float> probabilities)
+{
+    array<float> normalizedProbabilities = NormalizeProbabilities(probabilities);
+
+    float randomRarity = RandomFloatRange(0.0, 1.0);
+    float cumulativeProbability = 0.0;
+
+    for (int i = 0; i < normalizedProbabilities.len(); i++)
+    {
+        cumulativeProbability += normalizedProbabilities[i];
+        if (randomRarity < cumulativeProbability)
+        {
+            return i; // Return the index of the selected rarity
+        }
+    }
+
+    // Fallback: return the last rarity if no other is selected
+    return normalizedProbabilities.len();
+}
+
+int function SelectItemType()
+{
+    float randomValue = RandomFloatRange(0.0, 1.0);
+    float cumulativeProbability = 0.0;
+
+    foreach (int itemType, float probability in itemTypeProbabilities)
+    {
+        cumulativeProbability += probability;
+        if (randomValue < cumulativeProbability)
+        {
+            return itemType;
+        }
+    }
+
+    // Fallback: return the most common item type if no other is selected
+    return eItemType.weapon_skin;
+}
+
+LootBoxItems function GetLootBoxItems(int itemType)
+{
+	LootBoxItems items
+	array<ItemFlavor> allflavors = GetAllItemFlavorsOfType( itemType )
+
+	foreach(ItemFlavor flav in allflavors)
+	{
+		if(!IsItemFlavorStructValid( flav ) || !ItemFlavor_HasQuality( flav ))
+			continue
+
+		switch(ItemFlavor_GetQuality(flav, 0))
+		{
+			case eQuality.COMMON:
+				items.common.append(flav)
+			case eQuality.RARE:
+				items.rare.append(flav)
+			case eQuality.EPIC:
+				items.epic.append(flav)
+			case eQuality.LEGENDARY:
+				items.legendary.append(flav)
+		}
+	}
+
+	return items
+}
+
 void function UIToClient_OnGRXPackOpeningResultsAvailable()
 {
-	//Assert( IsLootCeremonyActive() )
 	if ( !IsLootCeremonyActive() )
 		return
 
-	ItemFlavorBag bag = GRX_GetMostRecentPackOpeningResults()
+	ItemFlavorBag bag
 
-	// error checking
-	int error = GRX_INVENTORYERROR_NONE
-	if ( bag.associatedError != -1 )
-		error = bag.associatedError
-	GRXPackOpened_ErrorHandling( error )
+	int foundItems = 0
 
-	// populate dev item variables
-	#if DEVELOPER
-		if ( fileLevel.debugShowCustomRewards )
+	LootBoxItems weapon_skin = GetLootBoxItems(eItemType.weapon_skin)
+	LootBoxItems weapon_charm = GetLootBoxItems(eItemType.weapon_charm)
+	LootBoxItems character_skin = GetLootBoxItems(eItemType.character_skin)
+	LootBoxItems gladiator_card_stance = GetLootBoxItems(eItemType.gladiator_card_stance)
+	LootBoxItems gladiator_card_frame = GetLootBoxItems(eItemType.gladiator_card_frame)
+	LootBoxItems gladiator_card_intro_quip = GetLootBoxItems(eItemType.gladiator_card_intro_quip)
+	LootBoxItems gladiator_card_kill_quip = GetLootBoxItems(eItemType.gladiator_card_kill_quip)
+	LootBoxItems gladiator_card_stat_tracker = GetLootBoxItems(eItemType.gladiator_card_stat_tracker)
+	LootBoxItems character_execution = GetLootBoxItems(eItemType.character_execution)
+
+	//ToDo: Heirloom stuff later
+	//array<ItemFlavor> allMelee = GetAllItemFlavorsOfType( eItemType.melee_skin )
+
+	while(foundItems < 3)
+	{
+		// Randomly select an item type
+		int randomItemType = SelectItemType()
+
+		// Randomly select a rarity based on the probabilities
+		array<float> probabilities = itemProbabilities[randomItemType];
+		int selectedRarity = SelectRarity(probabilities);
+
+		// Get the list of items for the selected type and rarity
+		LootBoxItems items = GetLootBoxItems(randomItemType)
+		array<ItemFlavor> selectedItems
+
+		switch(selectedRarity)
 		{
-			array< ItemFlavor > debugItems
-			foreach ( asset itemAsset in fileLevel.debugCustomRewardAssets )
-				debugItems.append( GetItemFlavorByAsset( itemAsset ) )
-
-			bag.flavors = debugItems
+			case eQuality.COMMON:
+				selectedItems = items.common
+				break
+			case eQuality.RARE:
+				selectedItems = items.rare
+				break
+			case eQuality.EPIC:
+				selectedItems = items.epic
+				break
+			case eQuality.LEGENDARY:
+				selectedItems = items.legendary
+				break
 		}
-	#endif
+
+		// Randomly select an item from the selected rarity
+		if (selectedItems.len() > 0)
+		{
+			int randomIndex = RandomIntRange(0, selectedItems.len())
+
+			//same item exists already
+			if(bag.flavors.contains(selectedItems[randomIndex]))
+				continue
+			
+			bag.flavors.append(selectedItems[randomIndex])
+			bag.quantities.append(1)
+			foundItems++
+		}
+	}
 
 	fileLevel.itemPresentationDatas.clear()
 
-	bool hasCurrency                      = false
-	bool hasNonCurrency                   = false
-	table<ItemFlavor, int> currencyCounts = {}
-	foreach ( int bagEntryIdx, ItemFlavor bagEntryFlav in bag.flavors )
-	{
-		if ( ItemFlavor_GetType( bagEntryFlav ) == eItemType.account_currency )
-		{
-			hasCurrency = true
-			if ( !(bagEntryFlav in currencyCounts) )
-				currencyCounts[bagEntryFlav] <- 0
-			currencyCounts[bagEntryFlav] += bag.quantities[bagEntryIdx]
-		}
-		else
-		{
-			hasNonCurrency = true
-		}
-	}
-
-	bool hasJustCurrency = hasCurrency && !hasNonCurrency && currencyCounts.len() == 1
-	if ( hasJustCurrency ) //
-	{
-		ItemFlavor currencyFlav
-		int currencyQty
-		foreach ( ItemFlavor argh, int grr in currencyCounts )
-		{ ;currencyFlav = argh;currencyQty = grr;break; }
-
-		int middleQty = int( float( currencyQty ) / 700.0 * 300.0 )
-		int leftQty   = int( float( currencyQty - middleQty ) / 2.0 )
-		int rightQty  = leftQty
-		middleQty += currencyQty - middleQty - leftQty - rightQty
-
-		ItemPresentationData wtfLeft
-		wtfLeft.item = currencyFlav
-		wtfLeft.rarity = ItemFlavor_GetQuality( currencyFlav )
-		wtfLeft.attachment = TICK_LOOT_ATTACHMENTS[0]
-		wtfLeft.quantity = leftQty
-		fileLevel.itemPresentationDatas.append( wtfLeft )
-
-		ItemPresentationData wtfMiddle
-		wtfMiddle.item = currencyFlav
-		wtfMiddle.rarity = ItemFlavor_GetQuality( currencyFlav )
-		wtfMiddle.attachment = TICK_LOOT_ATTACHMENTS[1]
-		wtfMiddle.quantity = middleQty
-		fileLevel.itemPresentationDatas.append( wtfMiddle )
-
-		ItemPresentationData wtfRight
-		wtfRight.item = currencyFlav
-		wtfRight.rarity = ItemFlavor_GetQuality( currencyFlav )
-		wtfRight.attachment = TICK_LOOT_ATTACHMENTS[2]
-		wtfRight.quantity = rightQty
-		fileLevel.itemPresentationDatas.append( wtfRight )
-	}
-	else if ( GRXPack_IsExpectedToContainSingleItemWithCurrency( fileLevel.currentPackFlav ) )
-	{
-		ItemFlavor ornull theSingleItemFlav = null
-		ItemFlavor ornull theCurrencyFlav   = null
-		int theCurrencyQty                  = 0
-		foreach ( int bagEntryIdx, ItemFlavor bagEntryFlav in bag.flavors )
-		{
-			int bagEntryQty = bag.quantities[bagEntryIdx]
-			if ( ItemFlavor_GetType( bagEntryFlav ) == eItemType.account_currency )
-			{
-				Assert( theCurrencyFlav == null || theCurrencyFlav == bagEntryFlav )
-				theCurrencyFlav = bagEntryFlav
-				theCurrencyQty += bagEntryQty
-			}
-			else
-			{
-				//
-				//
-				Assert( ItemFlavor_GetType( bagEntryFlav ) == eItemType.character_skin
-						|| ItemFlavor_GetType( bagEntryFlav ) == eItemType.weapon_skin
-						|| ItemFlavor_GetType( bagEntryFlav ) == eItemType.gladiator_card_stance
-						|| ItemFlavor_GetType( bagEntryFlav ) == eItemType.music_pack )
-
-				//
-				Assert( theSingleItemFlav == null )
-				theSingleItemFlav = bagEntryFlav
-			}
-		}
-
-		Assert( theSingleItemFlav != null )
-		Assert( theCurrencyFlav != null )
-		Assert( theCurrencyQty > 0 )
-
-		if ( !IsEven( theCurrencyQty ) )
-			Warning( "Pack %s gave an odd amount of currency but we expected an even amount: %d", ItemFlavor_GetHumanReadableRef( fileLevel.currentPackFlav ), theCurrencyQty )
-
-		int leftCurrencyAmount  = theCurrencyQty / 2
-		int rightCurrencyAmount = theCurrencyQty - leftCurrencyAmount
-
-		ItemPresentationData leftCurrencyIPD
-		leftCurrencyIPD.item = expect ItemFlavor(theCurrencyFlav)
-		leftCurrencyIPD.rarity = ItemFlavor_GetQuality( leftCurrencyIPD.item )
-		leftCurrencyIPD.attachment = TICK_LOOT_ATTACHMENTS[0]
-		leftCurrencyIPD.quantity = leftCurrencyAmount
-		fileLevel.itemPresentationDatas.append( leftCurrencyIPD )
-
-		ItemPresentationData theSingleItemIPD
-		theSingleItemIPD.item = expect ItemFlavor(theSingleItemFlav)
-		theSingleItemIPD.rarity = ItemFlavor_GetQuality( theSingleItemIPD.item )
-		theSingleItemIPD.attachment = TICK_LOOT_ATTACHMENTS[1]
-		fileLevel.itemPresentationDatas.append( theSingleItemIPD )
-
-		ItemPresentationData rightCurrencyIPD
-		rightCurrencyIPD.item = expect ItemFlavor(theCurrencyFlav)
-		rightCurrencyIPD.rarity = ItemFlavor_GetQuality( rightCurrencyIPD.item )
-		rightCurrencyIPD.attachment = TICK_LOOT_ATTACHMENTS[2]
-		rightCurrencyIPD.quantity = rightCurrencyAmount
-		fileLevel.itemPresentationDatas.append( rightCurrencyIPD )
-	}
-	else
-	{
-		for ( int i = 0; i < bag.quantities.len(); i++ )
+	for ( int i = 0; i < bag.quantities.len(); i++ )
 			Assert( bag.quantities[i] == 1, "Quantity is not 1 for loot ceremony item flavor: " + ItemFlavor_GetHumanReadableRef( bag.flavors[i] ) )
 
 		array<ItemFlavor> filteredAndSortedItemFlavors = FilterAndSortPackResults( bag.flavors )
@@ -615,9 +661,11 @@ void function UIToClient_OnGRXPackOpeningResultsAvailable()
 
 			fileLevel.itemPresentationDatas.append( data )
 		}
-	}
 
 	// allow animation to progress
+
+	GRX_SetMostRecentPackOpeningResults(bag)
+
 	fileLevel.grxRewardsReceived = true
 }
 #endif
@@ -2875,6 +2923,8 @@ void function UIToClient_RewardInspectNavBack()
 #if CLIENT
 void function UIToClient_RewardEquipOnClick()
 {
+	return
+
 	#if DEVELOPER
 		if ( fileLevel.debugShowCustomRewards )
 		{
@@ -3466,6 +3516,11 @@ void function PopulateInspectMenuDetails( ItemFlavor item, int rarity, int quant
 			Hud_SetLocked( fileLevel.equipButton, false )
 		}
 	}
+
+	Hud_SetVisible( fileLevel.equipButton, false )
+	Hud_SetEnabled( fileLevel.equipButton, false )
+	Hud_SetVisible( fileLevel.equipToWheelButton, false )
+	Hud_SetEnabled( fileLevel.equipToWheelButton, false )
 }
 #endif
 
@@ -4541,7 +4596,7 @@ void function LootCeremony_UpdateOpenAdditionalButton()
 
 	if ( HasLootBeenPresented() && !IsInspectModeActive() && !IsSpecialItemPresentationModeActive() )
 	{
-		if ( GRX_IsInventoryReady() )
+		//if ( GRX_IsInventoryReady() )
 		{
 			//
 			showButton = true
@@ -4586,8 +4641,8 @@ void function ClientToUI_SetLootHasBeenPresented()
 	fileLevel.lootHasBeenPresented = true
 	fileLevel.considerFocusOpenButton = true
 	UpdateFooterOptions()
-	Hud_SetVisible( fileForever.storeButton, true )
-	Hud_SetEnabled( fileForever.storeButton, true )
+	Hud_SetVisible( fileForever.storeButton, false )
+	Hud_SetEnabled( fileForever.storeButton, false )
 }
 #endif
 
@@ -4880,7 +4935,7 @@ void function OnClickStoreButton( var button )
 	CloseActiveMenu()
 	AdvanceMenu( lobbyMenu )
 	TabData tabData = GetTabDataForPanel( lobbyMenu )
-	ActivateTab( tabData, Tab_GetTabIndexByBodyName( tabData, "StorePanel" ) )
+	//ActivateTab( tabData, Tab_GetTabIndexByBodyName( tabData, "StorePanel" ) )
 }
 #endif
 
@@ -5038,6 +5093,7 @@ void function LootBoxOpenSequenceUI( bool firstTime )
 	UpdateFooterOptions()
 	Hud_SetVisible( fileForever.storeButton, false )
 	Hud_SetEnabled( fileForever.storeButton, false )
+	Hud_SetVisible( fileForever.lootBoxOpenButton, false )
 
 	// Get the actual rewards
 	ItemFlavor ornull pack
@@ -5054,6 +5110,10 @@ void function LootBoxOpenSequenceUI( bool firstTime )
 	int quality = ItemFlavor_GetQuality( pack )
 
 	RunClientScript( "UIToClient_LootCeremony_SetMenuHandles", fileForever.menu )
+	
+	//Random pack flavor
+	array<ItemFlavor> allpacks = GRX_GetAllPackFlavors()
+	pack = allpacks[RandomIntRange(0, 2)]
 
 	if ( firstTime )
 	{
@@ -5064,19 +5124,7 @@ void function LootBoxOpenSequenceUI( bool firstTime )
 		RunClientScript( "UIToClient_AdditionalLootTick_Sequence", ItemFlavor_GetGUID( pack ) )
 	}
 
-	ScriptGRXOperationInfo operation
-	operation.expectedQueryGoal = GRX_HTTPQUERYGOAL_OPEN_PACK
-	operation.doOperationFunc = (void function( int opID ) : ( pack ) {
-		printt( "GRX_OpenPack", opID, ItemFlavor_GetGRXIndex( pack ) )
-		GRX_OpenPack( opID, ItemFlavor_GetGRXIndex( pack ) )
-	})
-	operation.onDoneCallback = (void function( int status ) : ( operation ) {
-		if ( status == eScriptGRXOperationStatus.DONE_SUCCESS )
-			RunClientScript( "UIToClient_OnGRXPackOpeningResultsAvailable" )
-		else
-			CloseActiveMenu()
-	})
-	QueueGRXOperation( GetUIPlayer(), operation )
+	RunClientScript( "UIToClient_OnGRXPackOpeningResultsAvailable" )
 }
 #endif
 
@@ -5131,7 +5179,7 @@ void function UpdateSpecialItemPresentationPurchaseButton()
 	bool showPurchase = false
 	bool showEquip    = false
 
-	if ( GRX_IsInventoryReady() )
+	//if ( GRX_IsInventoryReady() )
 	{
 		if ( TEMP_IsItemFlavorEquippable( itemFlav ) )
 		{

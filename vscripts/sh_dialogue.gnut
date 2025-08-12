@@ -8,8 +8,8 @@ global function DoesConversationExist
 
 global function IsForcedDialogueOnly
 global function GetAllConversationData
-global function GetIndexToConversationTable
-global function GetConversationToIndexTable
+global function GetIndexToConversationTable //(mk): set to 2000 in remote func
+global function GetConversationToIndexTable //(mk): set to 2000 in remote func
 global function GetConversationStruct
 global function GetConversationName
 global function GetConversationDebounce

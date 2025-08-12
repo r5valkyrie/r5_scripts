@@ -950,7 +950,7 @@ void function PreviewFriendCosmetics( bool isForLocalPlayer, CommunityUserInfo o
 		ItemFlavor skin = GetItemFlavorForCommunityUserInfo( userInfo, ePlayerStryderCharDataArraySlots.CHARACTER_SKIN, eItemType.character_skin )
 		SendMenuGladCardPreviewCommand( eGladCardPreviewCommandType.SKIN, 0, skin )
 
-		RunClientScript( "UIToClient_PreviewCharacterSkin", ItemFlavor_GetNetworkIndex_DEPRECATED( skin ), ItemFlavor_GetNetworkIndex_DEPRECATED( character ) )
+		RunClientScript( "UIToClient_PreviewCharacterSkin", ItemFlavor_GetGUID( skin ), ItemFlavor_GetGUID( character ) )
 
 		ItemFlavor frame = GetItemFlavorForCommunityUserInfo( userInfo, ePlayerStryderCharDataArraySlots.BANNER_FRAME, eItemType.gladiator_card_frame )
 		SendMenuGladCardPreviewCommand( eGladCardPreviewCommandType.FRAME, 0, frame )
@@ -1101,7 +1101,7 @@ void function InspectMenu_OnClose()
 
 	RemoveCallback_UserInfoUpdated( OnUserInfoUpdated )
 
-	ActivateNav(0)
+	//ActivateNav(0)
 }
 
 

@@ -110,7 +110,7 @@ bool function GRX_HasItem( ... )
 
 int function GRX_GetPackCount( entity player, int grxIndex ) 
 {
-	return 0
+	return 1
 }
 
 void function GRX_OpenPack( entity player, int opId, int grxIndex )

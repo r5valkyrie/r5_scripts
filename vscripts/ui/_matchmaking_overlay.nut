@@ -36,11 +36,11 @@ void function InitMatchmakingOverlay()
 	//foreach ( var el in file.matchStatusRuis )
 		//printt( "matchStatusRuis ", GetParentMenu( el ).GetHudName() )
 
-	RegisterSignal( "UpdateMatchmakingStatus" )
-	RegisterSignal( "BypassWaitBeforeRestartingMatchmaking" )
-	RegisterSignal( "PutPlayerInMatchmakingAfterDelay" )
-	RegisterSignal( "CancelRestartingMatchmaking" )
-	RegisterSignal( "LeaveParty" )
+	//RegisterSignal( "UpdateMatchmakingStatus" )
+	//RegisterSignal( "BypassWaitBeforeRestartingMatchmaking" )
+	//RegisterSignal( "PutPlayerInMatchmakingAfterDelay" )
+	//RegisterSignal( "CancelRestartingMatchmaking" )
+	//RegisterSignal( "LeaveParty" )
 }
 
 function GameStartTime_Changed()
@@ -124,7 +124,7 @@ void function UpdateRestartMatchmakingStatus( float time )
 
 void function MatchmakingOverlay_InitForHubLevelConnect()
 {
-	thread UpdateMatchmakingStatus()
+	//thread UpdateMatchmakingStatus()
 }
 
 
@@ -138,7 +138,7 @@ bool function IsConnectingToMatch()
 
 void function UpdateMatchmakingStatus()
 {
-	Signal( uiGlobal.signalDummy, "UpdateMatchmakingStatus" )
+	/*Signal( uiGlobal.signalDummy, "UpdateMatchmakingStatus" )
 	EndSignal( uiGlobal.signalDummy, "CleanupInGameMenus" )
 	EndSignal( uiGlobal.signalDummy, "UpdateMatchmakingStatus" )
 
@@ -238,7 +238,7 @@ void function UpdateMatchmakingStatus()
 		}
 
 		WaitFrameOrUntilLevelLoaded()
-	}
+	}*/
 }
 
 float function GetTimeToRestartMatchMaking()

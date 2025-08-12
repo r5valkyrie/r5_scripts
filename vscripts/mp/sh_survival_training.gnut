@@ -116,6 +116,8 @@ void function ShSurvivalTraining_Init()
 {
 	if ( !IsSurvivalTraining() )
 		return
+		
+	RegisterNetworkedVariable( "TrainingEndTime", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1 )
 
 	RegisterCSVDialogue( $"datatable/dialogue/survival_training.rpak" )
 
@@ -125,6 +127,9 @@ void function ShSurvivalTraining_Init()
 		RegisterSignal( "StopReplenishGrenadesAndHealth" )
 		RegisterSignal( "StopReplenishLightAmmo" )
 		RegisterSignal( "TrainingNPCAnim" )
+		RegisterSignal( "playerIsNearPathfinder" )
+		RegisterSignal( "playerUsedRespawnBeacon" )
+		RegisterSignal( "UltimateDropped" )
 
 		PrecacheModel( TRAINING_DUMMY_MODEL )
 		PrecacheModel( REVIVE_CHAMBER_MODEL )
@@ -150,10 +155,10 @@ void function ShSurvivalTraining_Init()
 		AddLocalPlayerFunc( Training_AddPlayer )
 		AddCallback_OnClientScriptInit( OnLocalClientConnected )
 		AddTargetNameCreateCallback( RESPAWN_CHAMBER_TARGET_NAME, RespawnChamberCreated )
-		//RegisterNetworkedVariableChangeCallback_time( "TrainingEndTime", TrainingEndTimeChanged )
+		RegisterNetworkedVariableChangeCallback_time( "TrainingEndTime", TrainingEndTimeChanged )
 		SetCommsDialogueEnabled( false )
 
-		AddCreateCallback( "prop_dynamic", TrainingDeathBoxCreated )
+		AddCreateCallback( "prop_death_box", TrainingDeathBoxCreated )
 	#endif
 }
 
@@ -250,23 +255,30 @@ void function Training_OnPlayerRespawned( entity player )
 
 	if ( player.IsBot() )
 		return
+		
+	ItemFlavor lifeLineCharacter = GetItemFlavorByAsset( CHARACTER_ASSET_LIFELINE )
+	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), lifeLineCharacter )
 
 	printt( "Training: Training_OnPlayerRespawned", player )
 
 	RemoveStagingAreaEntsForRealm( GetPlayerStagingSquadRealm( player ) )
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 	data.gun_range_enabled = false
-
+	DecideRespawnPlayer( player )
 	thread PlayerStartsTraining( player )
 }
 
 void function PlayerStartsTraining( entity player )
 {
+	WaitFrame()
 	// Training player always spawns at the back of the center tunnel
 	player.SetOrigin( < 26328, -6235, -27540 > )
+	player.UnfreezeControlsOnServer()
 	player.SetAngles( < 0, 0, 0 > )
 
 	bool skipToPing = GetBugReproNum() == 123
+
+	player.SetPlayerNetBool( "pingEnabled", false )
 
 	bool skipToPathfinder = GetBugReproNum() == 12345
 	if ( skipToPathfinder )
@@ -274,14 +286,13 @@ void function PlayerStartsTraining( entity player )
 		player.SetOrigin( < 33215, -7036, -28916 > )
 		player.SetAngles( < 0, -90, 0 > )
 		player.SetPlayerNetBool( "pingEnabled", true )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SetCommsDialogueEnabled", 1 )
 	}
 
-	//PlayerMatchState_Set( player, ePlayerMatchState.TRAINING )
+	PlayerMatchState_Set( player, ePlayerMatchState.TRAINING )
 	//player.SetPersistentVar( "trainingCompleted", 1 )
 
 	PIN_Training( player, "start", "training_start" )
-
-	player.SetPlayerNetBool( "pingEnabled", false )
 
 	// Force player to be Lifeline for training
 	ItemFlavor lifeLineCharacter = GetItemFlavorByAsset( CHARACTER_ASSET_LIFELINE )
@@ -290,7 +301,7 @@ void function PlayerStartsTraining( entity player )
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 
 	// Disable inventory for now (gets enabled later)
-	Survival_SetInventoryEnabled( player, false )
+	//Survival_SetInventoryEnabled( player, false )
 
 	EndSignal( player, "OnDeath" )
 
@@ -365,11 +376,15 @@ void function PlayerStartsTraining( entity player )
 	data.pingedAmmo = false
 
 	// Spawn Loot Bin ( Ordnance )
-	data.lootBin1 = SpawnTrainingLootBin( player, < 30739, -6937, -29162 >, < 0, 90, 0 >, [ LOOT_NAME_HEALTH_KIT, LOOT_NAME_THERMITE, LOOT_NAME_FRAG ] )
 
-	// Spawn Loot Bin ( Weapon & Ammo )
+	vector lootBin1_pos = < 30739, -6937, -29162 >
+	vector lootBin2_pos = < 30952, -6937, -29162 >
+	vector lootBin1_ang = < 0, 90, 0 >
+	vector lootBin2_ang = < 0, 90, 0 >
+	data.lootBin1 = SpawnTrainingLootBin( player, lootBin1_pos, lootBin1_ang, [ LOOT_NAME_HEALTH_KIT, LOOT_NAME_THERMITE, LOOT_NAME_FRAG ] )
+
 	LootData ammoLootData = SURVIVAL_Loot_GetLootDataByRef( LOOT_NAME_WEAPON )
-	data.lootBin2 = SpawnTrainingLootBin( player, < 30952, -6937,-29162 >, < 0, 90, 0 >, [ LOOT_NAME_WEAPON, ammoLootData.ammoType, ammoLootData.ammoType ] ) //< 30954, -6242, -29164 >, < 0, 90, 0 >
+	data.lootBin2 = SpawnTrainingLootBin( player, lootBin2_pos, lootBin2_ang, [ LOOT_NAME_WEAPON, ammoLootData.ammoType, ammoLootData.ammoType ] ) //< 30954, -6242, -29164 >, < 0, 90, 0 >
 
 	player.SetHealth( 75 )
 	player.TakeOffhandWeapon( OFFHAND_TACTICAL )
@@ -380,6 +395,7 @@ void function PlayerStartsTraining( entity player )
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
 	player.GiveWeapon( MeleeSkin_GetMainWeaponClassname( meleeSkin ), WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
 	player.GiveOffhandWeapon( MeleeSkin_GetOffhandWeaponClassname( meleeSkin ), OFFHAND_MELEE, [] )
+	player.GiveOffhandWeapon( CONSUMABLE_WEAPON_NAME, OFFHAND_SLOT_FOR_CONSUMABLES, [] )
 	
 	#if DEVELOPER
 	if ( GetBugReproNum() == 2020 )
@@ -415,7 +431,7 @@ void function PlayerStartsTraining( entity player )
 		data.lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 		data.lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 		CreateWeaponRacksForRealm( GetPlayerStagingSquadRealm( player ) )
-		CreateGunRangeTargetsForRealm( GetPlayerStagingSquadRealm( player ) )
+		CreateGunRangeTargetsForRealm()
 	}
 
 	if ( !data.completed_ping && !skipToPathfinder )
@@ -441,6 +457,8 @@ void function PlayerStartsTraining( entity player )
 
 	PIN_Training( player, "complete", "training_complete" )
 	player.SetPlayerNetTime( "TrainingEndTime", Time() + TRAINING_RETURN_TO_MENU_DURATION )
+	wait 21
+	GameRules_ChangeMap( "mp_lobby", "dev_default" )
 }
 
 entity function SpawnTrainingLootBin( entity player, vector origin, vector angles, array<string> lootRefs )
@@ -682,16 +700,23 @@ void function StartTraining_Movement( entity player )
 	// Welcome to Apex Legends
 	thread TrainingNPCAnim( npc, node, "mp_pt_medium_training_blood_intro", "mp_pt_medium_training_blood_intro_idle" )
 	wait 2.5
-	waitthread PlayDialogueForPlayer( "Training_Welcome", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Welcome", player, npc )
+	float duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trIntro_01_75_bloodhound_3p" )
 
+	wait duration
 	// I am Bloth Hoondr... you can call me bloodhound.
-	waitthread PlayDialogueForPlayer( "Training_Welcome2", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Welcome2", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trIntro_02_50_bloodhound_3p" )
 
+	wait duration
 	// Basic Movement Checklist
 	SetTutorialContext( player, eTutorialContext.MOVEMENT )
 
 	// Let's start with basic movement. Complete the checklist on your HUD and then we'll get to the real stuff.
-	waitthread PlayDialogueForPlayer( "Training_Movement", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Movement", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trIntro_03_50_bloodhound_3p" )
+	wait duration
+
 
 	while( !IsTutorialContextCompleted( player, eTutorialContext.MOVEMENT ) )
 		wait 1.0
@@ -738,15 +763,38 @@ void function StartTraining_Loot( entity player )
 {
 	EndSignal( player, "OnDeath" )
 
-	entity npc = GetTrainingNPCForPlayer( player, CHARACTER_BLOODHOUND )
+	entity lootBin
+	entity wp
+	entity wp2
+
+	OnThreadEnd( function() : ( lootBin, player, wp, wp2 )
+	{
+		DestroyEntities( [ wp, wp2 ] )
+
+		if( IsValid( player ) && !IsAlive( player ) )
+		{
+			file.playerTrainingData[ player ].completed_ordnance = false
+			file.playerTrainingData[ player ].openedLootBin1 = false
+			file.playerTrainingData[ player ].openedLootBin2 = false
+			file.playerTrainingData[ player ].openedOrdnanceMenu = false
+			if( IsValid( lootBin ))
+			{
+				lootBin.e.hasBeenOpened = false
+				Highlight_ClearNeutralHighlight( lootBin )
+				lootBin.UnsetUsable()
+			}
+
+			SetTutorialContext( player, eTutorialContext.NONE ) // from previous training section ( Movement ).
+		}
+	}
+	)
+
+	entity npc  = GetTrainingNPCForPlayer( player, CHARACTER_BLOODHOUND )
 	entity node = GetTrainingNPCNode( player, "npcNodeBloodhound2" )
 	thread TrainingNPCAnim( npc, node, "mp_pt_medium_training_blood_transA", "mp_pt_medium_training_blood_idle_A" )
 
 	// Wait for player to get close
-	entity wp = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, npc.GetOrigin(), -1, true )
-
-	// Remember you start with nothing and must seek out supplies on your own.
-	thread PlayDialogueForPlayer( "Training_Loot_LootIntro", player, npc )
+	wp = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, npc.GetOrigin(), -1, true )
 
 	while( Distance( player.GetOrigin(), npc.GetOrigin() ) > 1024 )
 		wait 0.1
@@ -755,11 +803,13 @@ void function StartTraining_Loot( entity player )
 
 	// Inside the territories, you can find Supply Bins that carry weapons and resources you will need to survive. Open one.
 	StopDialogueForPlayer( player )
-	waitthread PlayDialogueForPlayer( "Training_Loot_LootBin", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Loot_LootBin", player, npc )
+	float duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trLooting_02_50_bloodhound_3p" )
+	wait duration
 
 	SetTutorialContext( player, eTutorialContext.LOOT_BIN )
 
-	entity lootBin = file.playerTrainingData[ player ].lootBin1
+	lootBin = file.playerTrainingData[ player ].lootBin1
 
 	lootBin.SetUsableValue( USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
 	lootBin.SetUsablePriority( USABLE_PRIORITY_LOW )
@@ -769,7 +819,7 @@ void function StartTraining_Loot( entity player )
 	//lootBin.SetUsablePriority( USABLE_PRIORITY_LOW )
 	Highlight_SetNeutralHighlight( lootBin, "sp_objective_entity" )
 
-	entity wp2 = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, lootBin.GetOrigin(), -1, true )
+	wp2 = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, lootBin.GetOrigin(), -1, true )
 
 	while( !lootBin.e.hasBeenOpened )
 		WaitFrame()
@@ -779,6 +829,7 @@ void function StartTraining_Loot( entity player )
 
 	file.playerTrainingData[ player ].openedLootBin1 = true
 	Highlight_ClearNeutralHighlight( lootBin )
+	lootBin.UnsetUsable()
 
 	wait 1.0
 
@@ -809,11 +860,12 @@ void function StartTraining_Loot( entity player )
 
 	Signal( player, "StopReplenishGrenadesAndHealth" )
 
-	SetTutorialContext( player, eTutorialContext.NONE )
+	SetTutorialContext( player, eTutorialContext.ORDNANCE_DONE ) // was NONE
 }
 
 void function MonitorPlayerSwappedGrenades( entity player )
 {
+	EndSignal( player, "OnDeath" )
 	EndSignal( player, "OnDestroy" )
 	EndSignal( player, "SwitchToOrdnance" )
 	EndSignal( player, "SwapToNextOrdnance" )
@@ -821,7 +873,7 @@ void function MonitorPlayerSwappedGrenades( entity player )
 	OnThreadEnd(
 		function() : ( player )
 		{
-			if ( IsValid( player ) && player in file.playerTrainingData )
+			if ( IsValid( player ) && IsAlive( player ) && ( player in file.playerTrainingData ))
 			{
 				file.playerTrainingData[ player ].swappedGrenade = true
 			}
@@ -833,13 +885,14 @@ void function MonitorPlayerSwappedGrenades( entity player )
 
 void function MonitorPlayerThrewGrenade( entity player )
 {
+	EndSignal( player, "OnDeath" )
 	EndSignal( player, "OnDestroy" )
 	EndSignal( player, "ThrowGrenade" )
 
 	OnThreadEnd(
 		function() : ( player )
 		{
-			if ( IsValid( player ) && player in file.playerTrainingData )
+			if ( IsValid( player ) && IsAlive( player ) && ( player in file.playerTrainingData ))
 			{
 				file.playerTrainingData[ player ].threwGrenade = true
 			}
@@ -874,7 +927,7 @@ bool function PlayerPickedUpGrenadesAndHealth( entity player )
 
 void function ReplenishGrenadesAndHealth( entity player )
 {
-	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnDeath", "OnDestroy" )
 	EndSignal( player, "StopReplenishGrenadesAndHealth" )
 
 	while( true )
@@ -914,7 +967,31 @@ void function StartTraining_Weapons( entity player )
 {
 	EndSignal( player, "OnDeath" )
 
-	entity npc = GetTrainingNPCForPlayer( player, CHARACTER_BLOODHOUND )
+	entity lootBin
+	entity wp
+
+	OnThreadEnd( function() : ( lootBin, player, wp )
+	{
+		DestroyEntities( [wp] )
+
+		if( IsValid( player ) && !IsAlive( player ) )
+		{
+			file.playerTrainingData[ player ].openedLootBin2 = false
+			file.playerTrainingData[ player ].completed_weapons = false
+
+			if( IsValid( lootBin ))
+			{
+				lootBin.e.hasBeenOpened = false
+				Highlight_ClearNeutralHighlight( lootBin )
+				lootBin.UnsetUsable()
+			}
+
+			SetTutorialContext( player, eTutorialContext.ORDNANCE_DONE ) // From previous section ( Loot )
+		}
+	}
+	)
+
+	entity npc  = GetTrainingNPCForPlayer( player, CHARACTER_BLOODHOUND )
 	entity node = GetTrainingNPCNode( player, "npcNodeBloodhound2" )
 
 	thread TrainingNPCAnim( npc, node, "mp_pt_medium_training_blood_transB", "mp_pt_medium_training_blood_idle_B" )
@@ -927,14 +1004,14 @@ void function StartTraining_Weapons( entity player )
 
 	SetTutorialContext( player, eTutorialContext.WEAPON_LOOT_BIN )
 
-	entity lootBin = file.playerTrainingData[ player ].lootBin2
+	lootBin = file.playerTrainingData[ player ].lootBin2
 	lootBin.SetUsePrompts( "#SURVIVAL_LOOTBIN_OPEN", "#SURVIVAL_LOOTBIN_OPEN" )
 	lootBin.SetUsable()
 	SetTeam( lootBin, player.GetTeam() )
 	Highlight_SetFriendlyHighlight( lootBin, "sp_objective_entity" )
 	Highlight_SetNeutralHighlight( lootBin, "sp_objective_entity" )
 
-	entity wp = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, lootBin.GetOrigin(), -1, true )
+	wp = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, lootBin.GetOrigin(), -1, true )
 
 	while( !lootBin.e.hasBeenOpened )
 		WaitFrame()
@@ -955,15 +1032,17 @@ void function StartTraining_Weapons( entity player )
 	file.playerTrainingData[ player ].lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 	file.playerTrainingData[ player ].lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 	RemoveStagingAreaEntsForRealm( GetPlayerStagingSquadRealm( player ) )
-	CreateWeaponRacksForRealm( GetPlayerStagingSquadRealm( player ) )
-	CreateGunRangeTargetsForRealm( GetPlayerStagingSquadRealm( player ) )
+	CreateGunRangeTargetsForRealm()
+	thread FiringRangeProps()
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 	data.gun_range_enabled = true
 
 	thread TrainingNPCAnim( npc, node, "mp_pt_medium_training_blood_trans_C", "mp_pt_medium_training_blood_idle_C" )
 
 	// The battle calls upon you. Slatra as many targets as you wish.
-	waitthread PlayDialogueForPlayer( "Training_Weapons_EnableRange", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Weapons_EnableRange", player, npc )
+	float duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trWeapons_06_50_bloodhound_3p" )
+	wait duration
 
 	wait 6.0
 
@@ -972,7 +1051,9 @@ void function StartTraining_Weapons( entity player )
 	SetTutorialContext( player, eTutorialContext.WEAPON_SWAP )
 
 	// Each shot is important - as well as the weapon you hold. Grab a second. The field is full of choices.
-	waitthread PlayDialogueForPlayer( "Training_Weapons_SecondWeapon", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Weapons_SecondWeapon", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trWeapons_02_50_bloodhound_3p" )
+	wait duration
 
 	thread TrainingNPCAnim( npc, node, "mp_pt_medium_training_blood_idle_C" )
 
@@ -986,7 +1067,7 @@ void function StartTraining_Weapons( entity player )
 		wait 1.0
 
 	StopDialogueForPlayer( player )
-	SetTutorialContext( player, eTutorialContext.NONE )
+	SetTutorialContext( player, eTutorialContext.WEAPON_SWAP_DONE ) // was NONE
 }
 
 void function ReplenishLightAmmo( entity player )
@@ -995,7 +1076,7 @@ void function ReplenishLightAmmo( entity player )
 	EndSignal( player, "StopReplenishLightAmmo" )
 
 	string ammo = SURVIVAL_Loot_GetLootDataByRef( LOOT_NAME_WEAPON ).ammoType
-	int amount = SURVIVAL_Loot_GetLootDataByRef( ammo ).countPerDrop
+	int amount  = SURVIVAL_Loot_GetLootDataByRef( ammo ).countPerDrop
 
 	while( true )
 	{
@@ -1022,15 +1103,19 @@ void function StartTraining_Ping( entity player )
 {
 	EndSignal( player, "OnDeath" )
 
-	entity npc = GetTrainingNPCForPlayer( player, CHARACTER_BLOODHOUND )
+	entity npc  = GetTrainingNPCForPlayer( player, CHARACTER_BLOODHOUND )
 	entity node = GetTrainingNPCNode( player, "npcNodeBloodhound2" )
 
 	// A powerful key to becoming an Apex Legend is communication with your brethren.
 	thread TrainingNPCAnim( npc, node, "mp_pt_medium_training_blood_talk_C", "mp_pt_medium_training_blood_idle_C" )
-	waitthread PlayDialogueForPlayer( "Training_Ping1", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Ping1", player, npc )
+	float duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trPinging_01_50_bloodhound_3p" )
+	wait duration
 
 	// You can Ping different locations, objects, and enemies depending on where you are looking.
-	waitthread PlayDialogueForPlayer( "Training_Ping2", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Ping2", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trPinging_02_50_bloodhound_3p" )
+	wait duration
 
 	file.playerTrainingData[ player ].pingedEnemyTarget = false
 	file.playerTrainingData[ player ].openedPingMenu = false
@@ -1044,16 +1129,21 @@ void function StartTraining_Ping( entity player )
 	SetTutorialContext( player, eTutorialContext.PING )
 
 	// Follow the checklist to cycle through your Pings.
-	waitthread PlayDialogueForPlayer( "Training_Ping3", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Ping3", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trPinging_03_50_bloodhound_3p" )
+	wait duration
 
 	while( !IsTutorialContextCompleted( player, eTutorialContext.PING ) )
 		wait 1.0
 
 	// The Allfather blesses you. Pathfinder will continue your training. I will see you again my felagi fighter - we may even shed bloth together.
 	StopDialogueForPlayer( player )
-	Remote_CallFunction_NonReplay( player, "ServerCallback_SetCommsDialogueEnabled", 0 )
+	//Remote_CallFunction_NonReplay( player, "ServerCallback_SetCommsDialogueEnabled", 0 )
 	thread TrainingNPCAnim( npc, node, "mp_pt_medium_training_blood_twitch_C", "mp_pt_medium_training_blood_idle_C" )
-	waitthread PlayDialogueForPlayer( "Training_Ping_Complete", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Ping_Complete", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trpinging_06_50_bloodhound_3p" )
+	wait duration
+
 	npc.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 	wait 2.0
 	if ( IsValid( npc ) )
@@ -1104,10 +1194,29 @@ void function OnLootPinged( entity player, entity wp, entity pingEnt, int pingTy
 
 void function StartTraining_Revive( entity player )
 {
+	entity wp
+
 	EndSignal( player, "OnDeath" )
 
-	entity npc = GetTrainingNPCForPlayer( player, CHARACTER_PATHFINDER )
+	OnThreadEnd( function() : ( player, wp )
+	{
+		DestroyEntities( [wp] )
+
+		if( IsValid( player ) && !IsAlive( player ) && ( player in file.playerTrainingData ))
+		{
+			file.playerTrainingData[ player ].healedDummy = false
+		}
+	}
+	)
+
+	// Take away tac if player already has it... a byproduct of dying and respawning here.
+	entity currentTactical = player.GetOffhandWeapon( OFFHAND_TACTICAL )
+	if ( currentTactical != null )
+		player.TakeOffhandWeapon( OFFHAND_TACTICAL )
+
+	entity npc  = GetTrainingNPCForPlayer( player, CHARACTER_PATHFINDER )
 	entity node = GetTrainingNPCNode( player, "npcNodePathfinder1" )
+	npc.SnapToAbsOrigin( node.GetOrigin() )
 
 	thread TrainingNPCAnim( npc, node, "mp_pt_heavy_training_path_welcome_idle", "mp_pt_heavy_training_path_welcome_idle" )
 
@@ -1119,15 +1228,25 @@ void function StartTraining_Revive( entity player )
 
 	// Wait for player to get close
 
-	entity wp = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, npc.GetOrigin(), -1, true )
+	wp = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, npc.GetOrigin(), -1, true )
 
-	while( Distance( player.GetOrigin(), npc.GetOrigin() ) > 600 )
-		wait 0.1
+			vector npcPos = npc.GetOrigin()
+			vector playerPos = player.GetOrigin()
+
+			// Wait until the player is close enough and at the same height as Pathfinder.
+
+			thread VO_OverHere_Thread( player, npc, node )
+			while(( Distance( playerPos, npcPos ) > 600 ) || ( fabs( npcPos.z - playerPos.z ) > 80.0  ))
+			{
+				playerPos = player.GetOrigin()
+				wait 0.1
+			}
+			npc.Signal( "playerIsNearPathfinder" )
 
 	if ( IsValid( wp ) )
 		wp.Destroy()
 
-	SetTutorialContext( player, eTutorialContext.NONE )
+	SetTutorialContext( player, eTutorialContext.PATHFINDER_INTRO )
 
 	file.playerTrainingData[ player ].foundPathfinder = true
 	entity dummyReviveNode = GetTrainingNPCNode( player, "trainingDummyNode" )
@@ -1139,10 +1258,14 @@ void function StartTraining_Revive( entity player )
 	wait 2.0
 
 	// Hi Friend! I'm Pathfinder. I'm excited to fight you in the Arena, but first let me teach you some things I learned.
-	waitthread PlayDialogueForPlayer( "Training_Revive_Intro", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Revive_Intro", player, npc )
+	float duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trReviving_01_50_pathfinder_3p" )
+	wait duration
 
 	// Working together in a team is very important and very fun.
-	waitthread PlayDialogueForPlayer( "Training_Revive_Intro_1", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Revive_Intro_1", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trReviving_02_50_pathfinder_3p" )
+	wait duration
 
 	entity dummy = GetTrainingDummyForPlayer( player )
 	dummy.Hide()
@@ -1150,13 +1273,17 @@ void function StartTraining_Revive( entity player )
 	thread ShowDummyDelayed( dummy )
 
 	// Here is your teammate - a Digital Utility Mock Man Intelligent Example. Or DUMMIE for short.
-	waitthread PlayDialogueForPlayer( "Training_Revive_Intro_2", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Revive_Intro_2", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trReviving_03_50_pathfinder_3p" )
+	wait duration
 
 	// During a battle, you or your teammates can get knocked down. But don't worry, with skill, everyone can be revived.
-	waitthread PlayDialogueForPlayer( "Training_Revive_Intro_3", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Revive_Intro_3", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trReviving_04_50_pathfinder_3p" )
+	wait duration
 
 	// Just approach your DUMMIE and press the prompt button on your HUD to revive them.
-	thread PlayDialogueForPlayer( "Training_Revive_Intro_4", player, npc )
+	PlayDialogueForPlayer( "Training_Revive_Intro_4", player, npc )
 
 	Highlight_SetFriendlyHighlight( dummy, "sp_objective_entity" )
 	SetTutorialContext( player, eTutorialContext.REVIVE )
@@ -1170,7 +1297,10 @@ void function StartTraining_Revive( entity player )
 
 	// Great! Welcome back, Dummie!
 	thread TrainingNPCAnim( npc, node, "mp_pt_heavy_training_path_thinking", "mp_pt_heavy_grapple_idle" )
-	waitthread PlayDialogueForPlayer( "Training_Revive_Intro_Complete", player, npc )
+	StopDialogueForPlayer( player )
+	//waitthread PlayDialogueForPlayer( "Training_Revive_Intro_Complete", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trReviving_06_50_pathfinder_3p" )
+	wait duration
 
 	// Give player tactical
 	ItemFlavor lifeLineCharacter = GetItemFlavorByAsset( CHARACTER_ASSET_LIFELINE )
@@ -1179,11 +1309,10 @@ void function StartTraining_Revive( entity player )
 	entity tacticalWeapon = player.GetOffhandWeapon( OFFHAND_TACTICAL )
 	tacticalWeapon.SetWeaponPrimaryClipCount( tacticalWeapon.GetWeaponPrimaryClipCountMax() ) // give tactical straight away
 
-	SetTutorialContext( player, eTutorialContext.HEALING_DRONE )
-
-	thread DummyWaitForFakeHeal( player, dummy )
+	SetTutorialContext( player, eTutorialContext.REVIVE_DONE ) // was NONE.
 
 	thread PathfinderDialogueForHealDrone( player, npc, node )
+	thread DummyWaitForFakeHeal( player, dummy )
 
 	// Wait for a good heal drone placement
 	while( true )
@@ -1216,20 +1345,69 @@ void function StartTraining_Revive( entity player )
 	wait 6.0
 }
 
+void function VO_OverHere_Thread( entity player, entity npc, entity node )
+{
+	// Plays less and less frequent with each play.
+	float delay = 3.0
+	float timeIncreaseMultiplier = 2
+
+	player.EndSignal( "OnDeath", "OnDestroy" )
+	npc.EndSignal( "OnDestroy", "playerIsNearPathfinder" )
+
+	OnThreadEnd(
+		function () : ( npc )
+		{
+			if( IsValid( npc ) )
+			{
+				npc.Anim_Stop()
+				StopSoundOnEntity( npc, "diag_mp_trNagPrompts_02_50_pathfinder_3p" )
+			}
+		}
+	)
+
+	while( true )
+	{
+		wait( delay )
+		if( IsValid( npc ) )
+		{
+			npc.Anim_Stop()
+			thread TrainingNPCAnim( npc, node, "mp_pt_heavy_training_path_thinking", "mp_pt_heavy_grapple_idle" )
+			wait 1.0
+			EmitSoundOnEntity( npc, "diag_mp_trNagPrompts_02_50_pathfinder_3p" )
+		}
+		delay *= timeIncreaseMultiplier
+	}
+}
+
 void function PathfinderDialogueForHealDrone( entity player, entity npc, entity node )
 {
 	EndSignal( player, "OnDeath" )
 
+	DisableOffhandWeapons( player )
+
 	// Now here's a good thing to know. Each one of us has a unique special Tactical Ability that do different things. You are Lifeline and you have a special Health Drone that distributes health to anyone next to it.
 	thread TrainingNPCAnim( npc, node, "mp_pt_heavy_training_path_talk", "mp_pt_heavy_grapple_idle" )
-	waitthread PlayDialogueForPlayer( "Training_Tactical_1", player, npc )
+	StopDialogueForPlayer( player )
+	//waitthread PlayDialogueForPlayer( "Training_Tactical_1", player, npc )
+	float duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trTactical_01_50_pathfinder_3p" )
+	wait duration
 
 	if ( IsTutorialContextCompleted( player, eTutorialContext.HEALING_DRONE ) )
+	{
+		EnableOffhandWeapons( player )
 		return
+	}
 
 	// Give it a try and heal up your friend. Just hit the tactical button on your HUD.
 	thread TrainingNPCAnim( npc, node, "mp_pt_heavy_training_path_talk_alt", "mp_pt_heavy_grapple_idle" )
-	waitthread PlayDialogueForPlayer( "Training_Tactical_2", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Tactical_2", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trTactical_02_50_pathfinder_3p" )
+	wait duration
+
+	EnableOffhandWeapons( player )
+
+	SetTutorialContext( player, eTutorialContext.HEALING_DRONE )
+
 	thread TrainingNPCAnim( npc, node, "mp_pt_heavy_grapple_idle", "mp_pt_heavy_grapple_idle" )
 }
 
@@ -1245,7 +1423,7 @@ void function ShowDummyDelayed( entity dummy )
 
 void function ReviveDummyThink( entity player, entity dummy, entity node )
 {
-	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "OnDeath", "OnDestroy" )
 	EndSignal( dummy, "OnDestroy" )
 	EndSignal( node, "OnDestroy" )
 
@@ -1299,9 +1477,6 @@ void function DoReviveSequence( entity player, entity dummy, entity node )
 				player.ClearParent()
 				player.SnapEyesToFeet()
 				ClearPlayerAnimViewEntity( player )
-				bool foundSafeSpot = PutEntityInSafeSpot( player, dummy, null, reviverStartPos, player.GetOrigin() )
-				if ( !foundSafeSpot )
-					player.SetOrigin( reviverStartPos )
 				thread SetPlayerStanding( player )
 				DeployAndEnableWeapons( player )
 			}
@@ -1310,6 +1485,8 @@ void function DoReviveSequence( entity player, entity dummy, entity node )
 			{
 				dummy.Anim_Stop()
 				dummy.ClearParent()
+				dummy.SetMaxHealth( 100 )
+				dummy.SetHealth(20)
 
 				if ( player in file.playerTrainingData && file.playerTrainingData[ player ].revivedDummy )
 				{
@@ -1371,8 +1548,8 @@ void function SetPlayerStanding( entity player )
 
 void function DummyWaitForFakeHeal( entity player, entity dummy )
 {
+	EndSignal( player, "OnDeath", "OnDestroy" )
 	EndSignal( dummy, "OnDestroy" )
-	EndSignal( player, "OnDestroy" )
 	WaitSignal( dummy, "DeployableMedic_Attached" )
 	file.playerTrainingData[ player ].healedDummy = true
 }
@@ -1389,7 +1566,27 @@ void function DummyWaitForFakeHeal( entity player, entity dummy )
 
 void function StartTraining_Respawn( entity player )
 {
+	entity beaconFX
+	entity deathBox
+	entity dissolveDeathBox
+	entity respawnChamber
+	entity respawnChamberRadar
+	entity wp
+	entity wp2
+
 	EndSignal( player, "OnDeath" )
+
+	OnThreadEnd( function() : ( player, beaconFX, deathBox, dissolveDeathBox, respawnChamber, respawnChamberRadar, wp, wp2 )
+	{
+		DestroyEntities( [ beaconFX, deathBox, dissolveDeathBox, respawnChamber, respawnChamberRadar, wp ] )
+
+		if( IsValid( player ) && !IsAlive( player ) )
+		{
+			file.playerTrainingData[ player ].pickedUpDNA = false
+			file.playerTrainingData[ player ].usedRespawnChamber = false
+		}
+	}
+	)
 
 	entity npc = GetTrainingNPCForPlayer( player, CHARACTER_PATHFINDER )
 	entity node = GetTrainingNPCNode( player, "npcNodePathfinder1" )
@@ -1401,19 +1598,21 @@ void function StartTraining_Respawn( entity player )
 
 	entity dummyReviveNode = GetTrainingNPCNode( player, "trainingDummyNode" )
 
-	SetTutorialContext( player, eTutorialContext.NONE )
+	SetTutorialContext( player, eTutorialContext.HEALING_DRONE_DONE ) // was NONE
 
 	// Great job! Helping out your team is the best, but sometimes they die.
 	thread TrainingNPCAnim( npc, node, "mp_pt_heavy_training_path_point", "mp_pt_heavy_grapple_idle" )
 	StopDialogueForPlayer( player )
-	waitthread PlayDialogueForPlayer( "Training_Tactical_Complete", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Tactical_Complete", player, npc )
+	float duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trTactical_04_50_pathfinder_3p" )
+	wait duration
 
 	thread Survival_CleanupPlayerPermanents( player )
 
 	EmitSoundOnEntityOnlyToPlayer( dummy, player, "Survival_Training_Dummy_Bodyfall" )
 	thread PlayAnimTeleport( dummy, "mp_pt_dummy_training_death", dummyReviveNode )
 	wait 1.5
-	entity deathBox = CreateDeathBox( player, dummyReviveNode, true )
+	deathBox = Training_CreateDeathBox( player, dummyReviveNode, true )
 	dummy.NotSolid()
 	Highlight_ClearFriendlyHighlight( dummy )
 	Highlight_ClearNeutralHighlight( dummy )
@@ -1422,15 +1621,19 @@ void function StartTraining_Respawn( entity player )
 
 	// Don't worry too much. You still have a chance to bring your friend back.
 	thread TrainingNPCAnim( npc, node, "mp_pt_heavy_training_path_talk_alt", "mp_pt_heavy_grapple_idle" )
-	waitthread PlayDialogueForPlayer( "Training_Respawn_1", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Respawn_1", player, npc )
+	 duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trRespawn_01_50_pathfinder_3p" )
+	wait duration
 
 	// Approach Dummie's kill box and grab their card.
-	waitthread PlayDialogueForPlayer( "Training_Respawn_2", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Respawn_2", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trRespawn_02_50_pathfinder_3p" )
+	wait duration
 
 	SetTutorialContext( player, eTutorialContext.PICK_UP_DNA )
 	Highlight_SetNeutralHighlight( deathBox, "sp_objective_entity" )
 
-	entity wp = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, deathBox.GetOrigin(), -1, true )
+	wp = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, deathBox.GetOrigin(), -1, true )
 
 	deathBox.SetUsableByGroup( "pilot" )
 	deathBox.SetUsePrompts( "#HINT_PICKUP_DNA_USE_TRAINING", "#HINT_PICKUP_DNA_USE_TRAINING" )
@@ -1449,7 +1652,7 @@ void function StartTraining_Respawn( entity player )
 	deathBox.SetUsePrompts( "", "" )
 	deathBox.UnsetUsable()
 
-	entity dissolveDeathBox = CreateDeathBox( player, dummyReviveNode, false )
+	dissolveDeathBox = Training_CreateDeathBox( player, dummyReviveNode, false )
 	deathBox.Destroy()
 	PlayFirstPersonAnimation( player, "ptpov_burn_card_activate_seq_gladcard" )
 	wait 1.0
@@ -1461,14 +1664,16 @@ void function StartTraining_Respawn( entity player )
 	// Great. You can use that card to bring back your friend back through any active Respawn Beacon Chamber.
 	thread TrainingNPCAnim( npc, node, "mp_pt_heavy_training_path_thinking", "mp_pt_heavy_grapple_idle" )
 
-	waitthread PlayDialogueForPlayer( "Training_Respawn_3", player, npc )
+	//waitthread PlayDialogueForPlayer( "Training_Respawn_3", player, npc )
+	duration = EmitSoundOnEntityOnlyToPlayer( npc, player, "diag_mp_trRespawn_03_50_pathfinder_3p" )
+	wait duration
 
 	// Create respawn chamber
 	vector spawnPos = <33894, -7936, -28916>
 	if ( Distance( player.GetOrigin(), spawnPos ) < 80 )
 		spawnPos = <33724, -7937, -28916>
 
-	entity respawnChamber = CreatePropDynamic_NoDispatchSpawn( REVIVE_CHAMBER_MODEL, spawnPos, < 0, 0, 0 >, 6 )
+	respawnChamber = CreatePropDynamic_NoDispatchSpawn( REVIVE_CHAMBER_MODEL, spawnPos, < 0, 0, 0 >, 6 )
 	respawnChamber.kv.fadedist = 100000
 	respawnChamber.kv.targetname = RESPAWN_CHAMBER_TARGET_NAME
 	DispatchSpawn( respawnChamber )
@@ -1480,7 +1685,7 @@ void function StartTraining_Respawn( entity player )
 	AddCallback_OnUseEntity( respawnChamber, RespawnChamberOnUse )
 	file.playerTrainingData[ player ].respawnChamber = respawnChamber
 
-	entity respawnChamberRadar = StartParticleEffectOnEntityWithPos_ReturnEntity( respawnChamber, GetParticleSystemIndex( RESPAWN_BEACON_EMITTER_FX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, respawnChamber.LookupAttachment( "FX_EMITTER" ), <0,0,0>, <-90,0,0> )
+	respawnChamberRadar = StartParticleEffectOnEntityWithPos_ReturnEntity( respawnChamber, GetParticleSystemIndex( RESPAWN_BEACON_EMITTER_FX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, respawnChamber.LookupAttachment( "FX_EMITTER" ), <0,0,0>, <-90,0,0> )
 	respawnChamberRadar.RemoveFromAllRealms()
 	respawnChamberRadar.AddToRealm( GetPlayerStagingSquadRealm( player ) )
 	file.playerTrainingData[ player ].respawnChamberRadar = respawnChamberRadar
@@ -1491,14 +1696,15 @@ void function StartTraining_Respawn( entity player )
 
 	// Approach the Respawn Beacon Chamber and, when prompted, hold for activation.
 	thread TrainingNPCAnim( npc, node, "mp_pt_heavy_training_path_point", "mp_pt_heavy_grapple_idle" )
-	thread PlayDialogueForPlayer( "Training_Respawn_4", player, npc )
+	StopDialogueForPlayer( player )
+	PlayDialogueForPlayer( "Training_Respawn_4", player, npc )
 
 	respawnChamber.SetUsableByGroup( "pilot" )
 	respawnChamber.SetUsePrompts( "#HINT_RESPAWN_USE", "#HINT_RESPAWN_USE" )
 	respawnChamber.SetUsable()
 	respawnChamber.AddUsableValue( USABLE_CUSTOM_HINTS )
 	Highlight_SetNeutralHighlight( respawnChamber, "sp_objective_entity" )
-	entity wp2 = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, respawnChamber.GetOrigin(), -1, true )
+	wp2 = CreateWaypoint_Ping_Location( player, ePingType.LOCATION_TRAINING, null, respawnChamber.GetOrigin(), -1, true )
 
 	SetTutorialContext( player, eTutorialContext.RESPAWN_CHAMBER )
 
@@ -1512,7 +1718,7 @@ void function StartTraining_Respawn( entity player )
 	respawnChamber.SetUsePrompts( "", "" )
 	respawnChamber.UnsetUsable()
 
-	entity beaconFX = StartParticleEffectOnEntityWithPos_ReturnEntity( respawnChamber, GetParticleSystemIndex( RESPAWN_BEACON_SCAN_FX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, respawnChamber.LookupAttachment( "FX_EMITTER" ), <0,0,0>, <0,0,0> )
+	beaconFX = StartParticleEffectOnEntityWithPos_ReturnEntity( respawnChamber, GetParticleSystemIndex( RESPAWN_BEACON_SCAN_FX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, respawnChamber.LookupAttachment( "FX_EMITTER" ), <0,0,0>, <0,0,0> )
 	beaconFX.RemoveFromAllRealms()
 	beaconFX.AddToOtherEntitysRealms( respawnChamber )
 
@@ -1575,14 +1781,13 @@ void function DropshipBringDummyBack( entity player )
 	dropship.Destroy()
 }
 
-entity function CreateDeathBox( entity player, entity dummy, bool hasCard )
+entity function Training_CreateDeathBox( entity player, entity dummy, bool hasCard )
 {
-	entity box = CreatePropDynamic_NoDispatchSpawn( DEATH_BOX, dummy.GetOrigin(), <0, 45, 0>, 6 )
-	box.kv.fadedist = 100000
+	string targetName = ""
 	if ( hasCard )
-		box.kv.targetname = DEATH_BOX_TARGETNAME_TRAINING
+		targetName = DEATH_BOX_TARGETNAME_TRAINING
 
-	DispatchSpawn( box )
+	entity box = CreateDeathBox( dummy.GetOrigin(), <0, 45, 0>, targetName )
 
 	box.RemoveFromAllRealms()
 	box.AddToRealm( GetPlayerStagingSquadRealm( player ) )
@@ -1591,7 +1796,7 @@ entity function CreateDeathBox( entity player, entity dummy, bool hasCard )
 	box.EnableRenderAlways()
 	//box.AllowMantle()
 	box.SetOwner( player )
-
+	box.SetNetInt( "ownerEHI", EHIToEncodedEHandle( player ) )
 	if ( hasCard )
 	{
 		Highlight_SetNeutralHighlight( box, "sp_objective_entity" )

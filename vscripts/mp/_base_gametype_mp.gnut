@@ -26,7 +26,7 @@ void function BaseGametype_Init_MPSP()
 
 void function CodeCallback_OnClientConnectionCompleted( entity player )
 {
-	#if TRACKER && HAS_TRACKER_DLL //TODO(dw): server messages
+	#if TRACKER && HAS_TRACKER_DLL //TODO(mk): server messages
 		if( IsBotEnt( player ) )
 			return
 	#endif
@@ -61,8 +61,8 @@ void function CodeCallback_OnClientConnectionCompleted( entity player )
 	
 	FinishClientScriptInitialization( player )
 
-	if( Gamemode() == eGamemodes.fs_snd )
-		_OnPlayerConnectedSND( player )
+	// if( Gamemode() == eGamemodes.fs_snd )
+		// _OnPlayerConnectedSND( player )
 }
 
 
@@ -813,7 +813,7 @@ void function PostDeathThread( entity player, var damageInfo )
 	//if( GamemodeUtility_IsSpectatorEnabled() )
 		//DecideRespawnPlayer( player, false )
 	
-	thread ObserverThread( player ) //Cafe was here
+	thread ObserverThread( player )
 }
 
 void function WaitForDeathCamFadeOrAbort( entity player, float deathCamBeforeFadeDuration )

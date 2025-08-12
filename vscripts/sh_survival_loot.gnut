@@ -124,6 +124,7 @@ global function SURVIVAL_PlayerCanSwitchOrdnance
 global function SURVIVAL_IsPlayerCarryingLoot
 global function SURVIVAL_GetHighlightForTier
 global function SURVIVAL_Loot_SetHighlightForLoot
+global function SURVIVAL_Loot_UpdateHighlightForLoot
 global function SURVIVAL_GetBestHealthPickupType
 global function SURVIVAL_GetPotentialAppliedHealing
 global function SURVIVAL_CreateKitHealData
@@ -197,8 +198,8 @@ global function IsLootEntAccessibleViaDeathBox
 global function IsValidAndStandardGrabbableLootEnt
 #endif
 
+global function GetFadeDistForLoot
 
-global function GetNameOfTeammateWithVaultKey
 global const string WEAPON_LOCKEDSET_SUFFIX_GOLD = "_gold"
 global const string WEAPON_LOCKEDSET_MOD_GOLD = "gold"
 global const string WEAPON_LOCKEDSET_SUFFIX_WHITESET = "_whiteset"
@@ -525,6 +526,7 @@ void function SURVIVAL_Loot_InitShared()
 	
 	if( Gamemode() == eGamemodes.SURVIVAL )
 		AddCallback_OnPlayerRespawned( OnPlayerRespawned )
+		
 #endif // SERVER
 
 #if SERVER
@@ -632,7 +634,10 @@ void function SURVIVAL_Loot_InitShared()
 
 	file.initialized = true
 
-	var attachmentTable = GetDataTable( $"datatable/flowstate_weapon_mods.rpak" )
+	var attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk.rpak" )
+	if( Playlist() == ePlaylists.survival_firingrange ) 
+		attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk_firing_range.rpak" )
+	
 	int numRows = GetDatatableRowCount( attachmentTable )
 
 	for ( int i = 0; i < numRows; i++ )
@@ -654,7 +659,7 @@ void function SURVIVAL_Loot_InitShared()
 	// --------------------------
 	// attachment data
 	// --------------------------
-	var attachmentMatrix = GetDataTable( $"datatable/flowstate_weapon_attachment_data.rpak" )
+	var attachmentMatrix = GetDataTable( $"datatable/weapon_attachment_matrix.rpak" )
 	int amRowCount       = GetDatatableRowCount( attachmentMatrix )
 
 	array<LootData> allWeapons = SURVIVAL_Loot_GetByType( eLootType.MAINWEAPON )
@@ -914,17 +919,19 @@ void function OnClientConnected( entity player )
 	{
 		file.playerInventoryData[ player ][ slot ] <- ""
 	}
-
-	ValidateDataTable( player, "datatable/flowstate_all_new.rpak" )
-	ValidateDataTable( player, "datatable/survival_loot_sdk.rpak" )
-	ValidateDataTable( player, "datatable/flowstate_all_new_halomod.rpak" )
-	ValidateDataTable( player, "datatable/flowstate_all_new_snd.rpak" )
-	ValidateDataTable( player, "datatable/flowstate_weapon_mods.rpak" )
-	ValidateDataTable( player, "datatable/flowstate_all_new_groups.rpak" )
-	ValidateDataTable( player, "datatable/flowstate_weapon_attachment_data.rpak" )
 	
-	if( Playlist() == ePlaylists.fs_haloMod_survival ) 
-		ValidateDataTable( player, "datatable/flowstate_all_new_halomod_survival_groundloot.rpak" )
+	ValidateDataTable( player, "datatable/survival_loot_sdk.rpak" )
+	
+	if (IsFlowstateActive())
+	{
+		ValidateDataTable( player, "datatable/flowstate_all_new_snd.rpak" )
+	}
+		
+	if ( GetCurrentPlaylistVarBool( "survival_staging_area_enabled", false ) ){
+		ValidateDataTable( player, "datatable/weapon_mods_sdk_firing_range.rpak" )
+		ValidateDataTable( player, "datatable/survival_loot_sdk_firingrange.rpak" )}
+	else
+		ValidateDataTable( player, "datatable/weapon_mods_sdk.rpak" )
 }
 
 void function OnPlayerRespawned( entity player )
@@ -985,7 +992,7 @@ string function GetWeaponClassNameWithLockedSet( entity weapon )
 		lockedSet = expect int( GetEntityVar( weapon, "weaponLockedSet" ) )
 	}
 	
-	switch( lockedSet ) //Cafe was here. Retail implementation uses weapon.GetWeaponLockedSet() code funct which we don't have in s3.
+	switch( lockedSet ) //Retail implementation uses weapon.GetWeaponLockedSet() code funct which we don't have in s3.
 	{
 		case eWeaponLockedSet.WHITESET:
 			result += WEAPON_LOCKEDSET_SUFFIX_WHITESET
@@ -1171,7 +1178,10 @@ string function SURVIVAL_Loot_GetDetailTypeStringFromRef( string ref )
 		case eLootType.HELMET:
 			return "#ITEM_TYPE_DEFENSE"
 		case eLootType.DATAKNIFE:
+		case eLootType.SHIPKEYCARD:
 			return "#ITEM_TYPE_SPECIAL"
+		case eLootType.MARVIN_ARM:
+			return ""
 		case eLootType.RESOURCE:
 			return "#ITEM_TYPE_SHIELDS"
 		case eLootType.BLANK:
@@ -1203,6 +1213,9 @@ string function SURVIVAL_Loot_GetGeneralTypeStringFromType( int lootType )
 		case eLootType.CUSTOMPICKUP:
 			return ""
 		case eLootType.DATAKNIFE:
+		case eLootType.SHIPKEYCARD:
+			return "#SURVIVAL_SPECIAL"
+		case eLootType.MARVIN_ARM:
 			return "#SURVIVAL_SPECIAL"
 		case eLootType.RESOURCE:
 			return "#SURVIVAL_RECOVERY"
@@ -1553,15 +1566,7 @@ int function SURVIVAL_CountItemsInInventory( entity player, string ref )
 
 entity function SURVIVAL_GetLastActiveWeapon( entity player, bool includeSling = false )
 {
-                  
-                       
-                    
-                                                                     
-      
-                                                       
-      
-		array<entity> weapons = SURVIVAL_GetPrimaryWeaponsSorted( player )
-       
+	array<entity> weapons = SURVIVAL_GetPrimaryWeaponsSorted( player )
 
 	entity weapon
 
@@ -1932,6 +1937,30 @@ void function SURVIVAL_ClearExcessInventoryItems( entity player, array<Consumabl
 
 
 #if CLIENT || SERVER
+float function GetFadeDistForLoot( LootData lootData )
+{
+	switch ( lootData.lootType )
+	{
+		case eLootType.MAINWEAPON:
+			return 15000.0
+
+		case eLootType.BACKPACK:
+		case eLootType.HELMET:
+		case eLootType.ARMOR:
+			if ( lootData.tier > 1 )
+				return 5000.0
+			else
+				return 2000.0
+
+		case eLootType.HEALTH:
+			if ( lootData.tier > 1 )
+				return 5000.0
+			else
+				return 2000.0
+	}
+
+	return 2000.0
+}
 
 #if SERVER
 void function SetPlayerInventory( entity player, array<ConsumableInventoryItem> playerInventory )
@@ -2064,6 +2093,90 @@ void function OnPropSurvivalCreate( entity prop )
 
 	AddCallback_OnUseEntity( prop, OnUseSurvivalPickup )
 	SetCallback_CanUseEntityCallback( prop, SurvivalLoot_CanUseFunction )
+}
+
+void function SURVIVAL_Loot_UpdateHighlightForLoot( entity prop )
+{
+	int index = prop.GetSurvivalInt()
+
+	LootData data = SURVIVAL_Loot_GetLootDataByIndex( index )
+	string ref    = data.ref
+	int lootType  = data.lootType
+
+	#if CLIENT
+
+		int lootTier = data.tier
+
+		string highlight = SURVIVAL_GetHighlightForTier( lootTier )
+
+		switch( lootType )
+		{
+			case eLootType.MAINWEAPON:
+				if ( (lootTier - 1) <= eQuality.COMMON )
+					highlight = "survival_item_weapon"
+				break
+
+			case eLootType.AMMO:
+				switch ( ref )
+				{
+					case SPECIAL_AMMO:
+						highlight = "survival_item_ammo_a"
+						break
+
+					case HIGHCAL_AMMO:
+						highlight = "survival_item_ammo_a"
+						break
+
+					case SHOTGUN_AMMO:
+						highlight = "survival_item_ammo_a"
+						break
+
+					case SNIPER_AMMO:
+						highlight = "survival_item_ammo_a"
+						break
+						
+					case ARROWS_AMMO:
+						highlight = "survival_item_ammo_a"
+						break
+
+					default:
+						highlight = "survival_item_ammo_a"
+						break
+				}
+
+			case eLootType.ARMOR:
+			case eLootType.HELMET:
+				break
+		}
+
+		                       
+			string passiveHighlight = GetLootHighlightStringForItem( data, prop )
+			if( passiveHighlight != "" )
+			{
+				highlight = passiveHighlight
+			}
+             
+			//highlight = GoldenHorse_UpdateLootHighlight( prop, ref, data.tier, highlight )
+			
+		if ( prop.e.eyeForQuality_isScanned && PlayerHasPassive( GetLocalViewPlayer(), ePassives.PAS_LOBA_EYE_FOR_QUALITY ) )
+		{
+			if ( GetEyeForQualityCanSee( data ) )
+			{
+				if ( data.tier - 1 == eQuality.HEIRLOOM )
+					highlight = "survival_item_heirloom_no_los_check"
+				else if ( data.tier - 1 == eQuality.LEGENDARY )
+					highlight = "survival_item_legendary_no_los_check"
+				else if ( data.tier - 1 == eQuality.EPIC )
+					highlight = "survival_item_epic_no_los_check"
+				else if ( data.tier - 1 == eQuality.RARE )
+					highlight = "survival_item_rare_no_los_check"
+				else if ( data.tier - 1 == eQuality.COMMON )
+					highlight = "survival_item_gh_no_los_check"
+			}
+		}
+		SetSurvivalPropHighlight( prop, highlight, prop.e.isSelected )
+		ManageHighlightEntity( prop )
+	#endif // CLIENT
 }
 
 void function SURVIVAL_Loot_SetHighlightForLoot( entity prop, bool isSelected )
@@ -2758,19 +2871,19 @@ bool function SURVIVAL_PlayerAllowedToPickup( entity player, entity pickup = nul
 	if ( IsPlayingFirstAndThirdPersonAnimation( player ) )
 		return false
 
-	if(IsValid(pickup))
-	{
-		LootData data = SURVIVAL_Loot_GetLootDataByIndex( pickup.GetSurvivalInt() )
+	// if(IsValid(pickup))
+	// {
+		// LootData data = SURVIVAL_Loot_GetLootDataByIndex( pickup.GetSurvivalInt() )
 		
-		if(data.ref == "snd_bomb" && player.GetTeam() != Sh_GetAttackerTeam())
-		{
-			#if CLIENT
-			if(player.GetTeam() == Sh_GetDefenderTeam())
-				SND_HintCatalog(7, 0)
-			#endif
-			return false
-		}
-	}
+		// if(data.ref == "snd_bomb" && player.GetTeam() != Safe_GetAttackerTeam())
+		// {
+			// #if CLIENT
+			// if(player.GetTeam() == Safe_GetDefenderTeam())
+				// SND_HintCatalog(7, 0)
+			// #endif
+			// return false
+		// }
+	// }
 
 	return PlayerInValidState( player )
 }
@@ -2796,7 +2909,7 @@ bool function PlayerInValidState( entity player )
 {
 	#if SERVER
 	//printt("PlayerInValidState NOT - ", !IsAlive( player ), player.ContextAction_IsActive(), Bleedout_IsBleedingOut( player ), SURVIVAL_IsPlayerCarryingLoot( player ))
-	if( Playlist() == ePlaylists.fs_haloMod_oddball && GetBallCarrier() == player || Playlist() == ePlaylists.fs_dm_oddball && GetBallCarrier() == player || Playlist() == ePlaylists.fs_haloMod_ctf && GetGlobalNetEnt( "milFlag" ) == player || Playlist() == ePlaylists.fs_haloMod_ctf && GetGlobalNetEnt( "imcFlag" ) == player )
+	if( Playlist() == ePlaylists.fs_haloMod_oddball && Safe_GetBallCarrier() == player || Playlist() == ePlaylists.fs_dm_oddball && Safe_GetBallCarrier() == player || Playlist() == ePlaylists.fs_haloMod_ctf && GetGlobalNetEnt( "milFlag" ) == player || Playlist() == ePlaylists.fs_haloMod_ctf && GetGlobalNetEnt( "imcFlag" ) == player )
 		return false
 	#endif
 
@@ -3190,6 +3303,11 @@ LootActionStruct function SURVIVAL_BuildStringForAction( entity player, int cont
 				{
 					as.displayString = Localize( "#LOOT_ACTION", buttonString, actionString )
 				}
+				
+				else if ( actionLoot.lootType == eLootType.MARVIN_ARM )
+				{
+					as.displayString = Localize( "#LOOT_ACTION", buttonString, actionString )
+				}
 			}
 
 			break
@@ -3449,14 +3567,11 @@ string function Dev_GetNextBotLootWeapon()
 array<entity> s_incapBots
 void function Dev_SpawnBotWithIncapShieldToView( int shieldTier )
 {
-	ServerCommand( "bot -team 2" )
+	ServerCommand( "sv_addbot bot 1" )
 
 	array< entity > team2 = GetPlayerArrayOfTeam_Alive( 2 )
 	if ( team2.len() < 2 )
-		ServerCommand( "bot -team 2" )
-
-	ServerCommand( "bot_randomAttackChance_survival 1" )
-	ServerCommand( "bot_flipout 1" )
+		ServerCommand( "sv_addbot bot 2" )
 
 	if( shieldTier == -1 )
 		shieldTier = RandomIntRange( 1, 5 )
@@ -3508,13 +3623,13 @@ void function Dev_SpawnBotWithIncapShieldToView( int shieldTier )
 #if CLIENT || SERVER
 void function Inventory_RegisterNetworking()
 {
-	Remote_RegisterClientFunction( "ServerCallback_PickedupItem", "entity", "int", 0, 512, "int", 0, 512 )
-	Remote_RegisterClientFunction( "ServerCallback_DroppedItem", "entity", "int", 0, 512 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PickedupItem", "entity", "int", 0, 512, "int", 0, 512 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_DroppedItem", "entity", "int", 0, 512 )
 	// Yes. This was changed.
 	// It's because if we don't, the game will flop itself when you pick certain items up.
 	// If there's a better solution, you're welcome to suggest it.
 	// They shouldn't have added ranges into this.
-	Remote_RegisterClientFunction( "ServerCallback_AttachedMod", "int", 0, 999, "int", 0, 999 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_AttachedMod", "int", 0, 999, "int", 0, 999 )
 }
 #endif // CLIENT || SERVER
 
@@ -3708,10 +3823,11 @@ void function Inventory_SetPlayerEquipment_Internal( entity player, string itemR
 			player.SetShieldHealthMax( SURVIVAL_GetArmorShieldCapacity( 0 ) )
 		else
 			player.SetShieldHealthMax( 0 )
+		
 		player.SetShieldHealth( 0 )
 	}
 
-	if (SURVIVAL_Loot_IsRefValid( itemRef ) )
+	if ( SURVIVAL_Loot_IsRefValid( itemRef ) )
 	{
 		LootData data = SURVIVAL_Loot_GetLootDataByRef( itemRef )
 		index = data.index
@@ -4157,11 +4273,12 @@ int function GetPriorityForLootType( LootData lootData )
 
 		case eLootType.ORDNANCE:
 		case eLootType.HEALTH:
-
-		case eLootType.CUSTOMPICKUP:
-                      
-		case eLootType.DATAKNIFE:
 			return eLootSortCategories.CONSUMABLES
+		case eLootType.CUSTOMPICKUP:
+		case eLootType.DATAKNIFE:
+		case eLootType.SHIPKEYCARD:
+		case eLootType.MARVIN_ARM:
+			return eLootSortCategories.SPECIAL
 
 		case eLootType.HELMET:
 		case eLootType.ARMOR:
@@ -4190,6 +4307,7 @@ int function GetPriorityForLootType( LootData lootData )
 string function GetCategoryTitleFromPriority( int cat )
 {
 	table<int, string> catToTitle = {}
+	catToTitle[ eLootSortCategories.SPECIAL ] <- "#LOOT_CAT_SPECIAL"
 	catToTitle[ eLootSortCategories.CONSUMABLES ] <- "#LOOT_CAT_CONSUMABLE"
 	catToTitle[ eLootSortCategories.ATTACHMENTS ] <- "#LOOT_CAT_ATTACHMENTS"
 	catToTitle[ eLootSortCategories.EQUIPMENT ] <- "#LOOT_CAT_EQUIPMENT"
@@ -4687,30 +4805,6 @@ int function SURVIVAL_GetInventorySlotCountForPlayer( entity player, LootData da
 	}
 
 	return result
-}
-
-string function GetNameOfTeammateWithVaultKey( int team )
-{
-	foreach( player in GetPlayerArrayOfTeam( team ) )
-	{
-		if( !IsValid( player ) || !IsAlive( player) )
-			continue
-		
-		array<ConsumableInventoryItem> playerInventory = SURVIVAL_GetPlayerInventory( player )
-		
-		bool playerHasKey
-		foreach ( invItem in playerInventory )
-		{
-			LootData data = SURVIVAL_Loot_GetLootDataByIndex( invItem.type )
-			if( data.ref == "data_knife" )
-				playerHasKey = true
-		}
-		
-		if( playerHasKey )
-			return player.GetPlayerName()
-	}
-
-	return ""
 }
 
 #if CLIENT

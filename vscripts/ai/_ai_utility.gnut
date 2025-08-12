@@ -3,11 +3,28 @@ untyped
 globalize_all_functions
 int bots = 1
 
-void function GiveGrappleTest()
+void function GiveP2020AkimboTest()
 {
 	entity player = gp()[0]
-	player.TakeOffhandWeapon(OFFHAND_ULTIMATE)
-	player.GiveOffhandWeapon("mp_ability_grapple", OFFHAND_TACTICAL)
+	
+	player.TakeNormalWeaponByIndex( WEAPON_INVENTORY_SLOT_DUALPRIMARY_0 )
+	player.TakeNormalWeaponByIndex( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+
+	entity main = player.GiveWeapon( "mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_0, ["optic_cq_hcog_classic", "bullets_mag_l3", "laser_sight_l3"] )
+	entity second = player.GiveWeapon( "mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_DUALPRIMARY_0, ["optic_cq_hcog_classic", "bullets_mag_l3", "laser_sight_l3"] )
+	
+	player.SetActiveWeaponBySlot(eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+	
+	SetupInfiniteAmmoForWeapon( player, main )
+	SetupInfiniteAmmoForWeapon( player, second )
+	
+	foreach(string ammo in ["bullet"])
+	{
+		entity loot = SpawnGenericLoot( ammo, player.GetOrigin(), player.GetAngles(), 200 )
+
+		if(!Survival_PickupItem(loot, player))
+			loot.Destroy()
+	}
 }
 
 void function PutPlayersInOneTeam()
@@ -23,7 +40,7 @@ void function DisconnectAllBots()
         if( !IsValid( bot ) || !bot.p.IsBot )
             continue
 
-        KickPlayerByName( bot.GetPlayerName(), "cafe was here" )
+        KickPlayerByName( bot.GetPlayerName(), "disconnect_bot" )
     }
 }
 
@@ -34,7 +51,7 @@ void function SimulateRandomDisconnects()
 		if( !IsValid( bot ) || !bot.p.IsBot || CoinFlip() )
 			continue
 
-		KickPlayerByName( bot.GetPlayerName(), "cafe was here" )
+		KickPlayerByName( bot.GetPlayerName(), "disconnect_bot" )
     }
 }
 
@@ -54,7 +71,7 @@ void function SpawnBots( int amount = 1 )
 		if( bot.GetPlatformUID().slice( 0, 4 ) != "9999" )
 			continue
 			
-		printt( "Player marked as bot", bot, bot.GetPlatformUID() )
+		// printt( "Player marked as bot", bot, bot.GetPlatformUID() )
 		bot.p.IsBot = true
 	}
 }
@@ -337,7 +354,6 @@ int function TotalEntsInRadius( float radius = 1000 )
 }
 
 void function Flowstate_DebugGameEntities()
-//By @CafeFPS
 {
 	entity firstEnt = Entities_First()
 	entity nextEnt = Entities_Next( firstEnt )
@@ -397,7 +413,6 @@ void function Flowstate_DebugGameEntities()
 }
 void function AnimNameTest()
 {
-//By Colombia
     entity player = gp()[0]
 
 	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
@@ -459,7 +474,6 @@ void function StartRunningForward(entity player)
 
 void function SpawnDoubleDoorAtCrosshair()
 {
-//By Colombia
 	entity player = GetPlayerArray()[ 0 ]
 
 	vector origin = GetPlayerCrosshairOrigin( player )
@@ -915,219 +929,219 @@ void function DEV_MoveToAllAINodes( float delay = 0.0, int loglevel = 0 )
 
     // C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D
 
-    entity function CreateEditorPilot(asset entity_name,int model_select,int anim_select,vector pos, vector ang)
-    {
-        //###################################################
-        //d8888b. d888888b db       .d88b.  d888888b .d8888.
-        //88   8D    88'   88      .8P  Y8.  ~~88    88'  YP
-        //88oodD'    88    88      88    88    88     8bo.
-        //88~~~      88    88      88    88    88       Y8b.
-        //88        .88.   88booo.  8b  d8'    88    db   8D
-        //88      Y888888P Y88888P   Y88P'     YP     8888Y'
-        //###################################################  Written by Zer0Bytes#4428
+    // entity function CreateEditorPilot(asset entity_name,int model_select,int anim_select,vector pos, vector ang)
+    // {
+        // //###################################################
+        // //d8888b. d888888b db       .d88b.  d888888b .d8888.
+        // //88   8D    88'   88      .8P  Y8.  ~~88    88'  YP
+        // //88oodD'    88    88      88    88    88     8bo.
+        // //88~~~      88    88      88    88    88       Y8b.
+        // //88        .88.   88booo.  8b  d8'    88    db   8D
+        // //88      Y888888P Y88888P   Y88P'     YP     8888Y'
+        // //###################################################  Written by Zer0Bytes#4428
 
-        //defaults if nothing is selected
-        array <asset> model_array = [$"mdl/humans/class/medium/pilot_medium_holo.rmdl"]
-        array <string> anim_array = ["mirage_menu_lobby_center_laugh"] // can be pulled from legion and make sure to remove "_0" etc
+        // //defaults if nothing is selected
+        // array <asset> model_array = [$"mdl/humans/class/medium/pilot_medium_holo.rmdl"]
+        // array <string> anim_array = ["mirage_menu_lobby_center_laugh"] // can be pulled from legion and make sure to remove "_0" etc
 
-        Assert( model_select, "No Model Choosen Set to 1!" )
+        // Assert( model_select, "No Model Choosen Set to 1!" )
 
-        switch (string(entity_name))  // not the best way of doing this idk
-        {
-	        case "pilot_mirage":
-	            model_array = [
-				    $"mdl/humans/class/medium/pilot_medium_holo.rmdl"
-			    ]
-	            anim_array = [
-	                "mirage_menu_lobby_center_beard",
-	                "mirage_menu_lobby_center_laugh",
-	                "mirage_menu_lobby_center_picture",
-	                "mirage_menu_lobby_center_magic",
-	                "pilot_freefall_emote_backflip",
-	                "pilot_freefall_emote_backflip"
-				]
-            break
+        // switch (string(entity_name))  // not the best way of doing this idk
+        // {
+	        // case "pilot_mirage":
+	            // model_array = [
+				    // $"mdl/humans/class/medium/pilot_medium_holo.rmdl"
+			    // ]
+	            // anim_array = [
+	                // "mirage_menu_lobby_center_beard",
+	                // "mirage_menu_lobby_center_laugh",
+	                // "mirage_menu_lobby_center_picture",
+	                // "mirage_menu_lobby_center_magic",
+	                // "pilot_freefall_emote_backflip",
+	                // "pilot_freefall_emote_backflip"
+				// ]
+            // break
 
-            case "pilot_gibraltar":
-                model_array = [
-					$"mdl/humans/class/heavy/pilot_heavy_gibraltar.rmdl"
-				]
-                anim_array = ["gibraltar_menu_lobby_center_slap"]
-            break
+            // case "pilot_gibraltar":
+                // model_array = [
+					// $"mdl/humans/class/heavy/pilot_heavy_gibraltar.rmdl"
+				// ]
+                // anim_array = ["gibraltar_menu_lobby_center_slap"]
+            // break
 
-            case "pilot_support":
-                model_array = [
-					$"mdl/humans/class/light/pilot_light_support.rmdl"
-				]
-                anim_array = ["lifeline_idle_UA_dance"]
-            break
+            // case "pilot_support":
+                // model_array = [
+					// $"mdl/humans/class/light/pilot_light_support.rmdl"
+				// ]
+                // anim_array = ["lifeline_idle_UA_dance"]
+            // break
 
-            case "pilot_bloodhound":
-                model_array = [
-					$"mdl/humans/class/medium/pilot_medium_bloodhound.rmdl"
-				]
-                anim_array = ["bloodhound_menu_lobby_center_pet"]
-            break
+            // case "pilot_bloodhound":
+                // model_array = [
+					// $"mdl/humans/class/medium/pilot_medium_bloodhound.rmdl"
+				// ]
+                // anim_array = ["bloodhound_menu_lobby_center_pet"]
+            // break
 
-            case "pilot_bangalore":
-                model_array =[
-					$"mdl/humans/class/medium/pilot_medium_bangalore.rmdl"
-				]
-                anim_array = ["bangalore_menu_lobby_center_hair"]
-            break
+            // case "pilot_bangalore":
+                // model_array =[
+					// $"mdl/humans/class/medium/pilot_medium_bangalore.rmdl"
+				// ]
+                // anim_array = ["bangalore_menu_lobby_center_hair"]
+            // break
 
-            case "pilot_wraith":
-                model_array = [
-					$"mdl/humans/class/light/pilot_light_wraith.rmdl"
-				]
-                anim_array = ["wraith_menu_lobby_center_voices"]
-            break
+            // case "pilot_wraith":
+                // model_array = [
+					// $"mdl/humans/class/light/pilot_light_wraith.rmdl"
+				// ]
+                // anim_array = ["wraith_menu_lobby_center_voices"]
+            // break
 
-            case "pilot_pathfinder":
-                model_array = [
-					$"mdl/humans/class/heavy/pilot_heavy_pathfinder.rmdl"
-				]
-                anim_array  = ["pathfinder_menu_lobby_center_hopping"]
-            break
+            // case "pilot_pathfinder":
+                // model_array = [
+					// $"mdl/humans/class/heavy/pilot_heavy_pathfinder.rmdl"
+				// ]
+                // anim_array  = ["pathfinder_menu_lobby_center_hopping"]
+            // break
 
-            case "pilot_stim":
-                model_array = [
-					$"mdl/Humans/class/medium/pilot_medium_stim.rmdl"
-				]
-                anim_array = ["octane_menu_lobby_center_leg"]
-            break
+            // case "pilot_stim":
+                // model_array = [
+					// $"mdl/Humans/class/medium/pilot_medium_stim.rmdl"
+				// ]
+                // anim_array = ["octane_menu_lobby_center_leg"]
+            // break
 
-            case "pilot_wattson":
-                model_array = [
-					$"mdl/humans/class/light/pilot_light_wattson.rmdl"
-				]
-                anim_array = ["wattson_menu_lobby_center_idle"]
-            break
+            // case "pilot_wattson":
+                // model_array = [
+					// $"mdl/humans/class/light/pilot_light_wattson.rmdl"
+				// ]
+                // anim_array = ["wattson_menu_lobby_center_idle"]
+            // break
 
-            case "pilot_caustic":
-                model_array = [
-					$"mdl/humans/class/heavy/pilot_heavy_caustic.rmdl"
-				]
-                anim_array = ["caustic_menu_lobby_center_recorder"]
-            break
+            // case "pilot_caustic":
+                // model_array = [
+					// $"mdl/humans/class/heavy/pilot_heavy_caustic.rmdl"
+				// ]
+                // anim_array = ["caustic_menu_lobby_center_recorder"]
+            // break
 
-            case "pilot_crypto":
-                model_array = [
-					$"mdl/Humans/class/medium/pilot_medium_crypto.rmdl"
-				]
-                anim_array = ["crypto_menu_lobby_center_drone"]
-            break
+            // case "pilot_crypto":
+                // model_array = [
+					// $"mdl/Humans/class/medium/pilot_medium_crypto.rmdl"
+				// ]
+                // anim_array = ["crypto_menu_lobby_center_drone"]
+            // break
 
-		    case "npc_tick":
-                model_array = [
-				$"mdl/robots/drone_frag/drone_frag_loot.rmdl",
-			    $"mdl/robots/drone_frag/drone_frag_loot_bf.rmdl",
-				$"mdl/robots/drone_frag/drone_frag_loot_halloween.rmdl",
-				$"mdl/robots/drone_frag/drone_frag_loot_halloween.rmdl"]
+		    // case "npc_tick":
+                // model_array = [
+				// $"mdl/robots/drone_frag/drone_frag_loot.rmdl",
+			    // $"mdl/robots/drone_frag/drone_frag_loot_bf.rmdl",
+				// $"mdl/robots/drone_frag/drone_frag_loot_halloween.rmdl",
+				// $"mdl/robots/drone_frag/drone_frag_loot_halloween.rmdl"]
 
-				anim_array = [
-				"sd_search_idle",
-				"sd_angry_idle",
-				"sd_angry_idle",
-				"sp_suicide_spectre_explode_stand"]
-            break
+				// anim_array = [
+				// "sd_search_idle",
+				// "sd_angry_idle",
+				// "sd_angry_idle",
+				// "sp_suicide_spectre_explode_stand"]
+            // break
 
-            default:
-            break
-        }
+            // default:
+            // break
+        // }
 
-        asset model
-		for (int m;m < model_array.len();m++) // go trough array
-		{
-			if (model_select == m) // if is selected return anim
-			{
-				model = model_array[m]
-			}
-			else
-			{
-				model = model_array[model_select - 1]
-			}
-		}
+        // asset model
+		// for (int m;m < model_array.len();m++) // go trough array
+		// {
+			// if (model_select == m) // if is selected return anim
+			// {
+				// model = model_array[m]
+			// }
+			// else
+			// {
+				// model = model_array[model_select - 1]
+			// }
+		// }
 
 
-        entity ent_prop = CreatePropDynamic(model,pos,ang,SOLID_VPHYSICS,30000)
-        ent_prop.kv.fadedist = 30000 // lower fading
-        ent_prop.e.gameModeId = -1
-        ent_prop.NotSolid() // make the ent's not solid
-        ent_prop.StopPhysics()
-        ent_prop.kv.fadedist = 2000
-        string positionSerialized = pos.x.tostring() + "," + pos.y.tostring() + "," + pos.z.tostring()
-        string anglesSerialized = ang.x.tostring() + "," + ang.y.tostring() + "," + ang.z.tostring()
+        // entity ent_prop = CreatePropDynamic(model,pos,ang,SOLID_VPHYSICS,30000)
+        // ent_prop.kv.fadedist = 30000 // lower fading
+        // ent_prop.e.gameModeId = -1
+        // ent_prop.NotSolid() // make the ent's not solid
+        // ent_prop.StopPhysics()
+        // ent_prop.kv.fadedist = 2000
+        // string positionSerialized = pos.x.tostring() + "," + pos.y.tostring() + "," + pos.z.tostring()
+        // string anglesSerialized = ang.x.tostring() + "," + ang.y.tostring() + "," + ang.z.tostring()
 
-        if (anim_select != 0 )
-        {
-			string anim
-			for (int a;a < anim_array.len();a++) // go trough array
-			{
-				if (anim_select == a) // if is selected return anim
-				{
-					anim = anim_array[a]
-				}
-				else
-				{
-					anim = anim_array[anim_select - 1]
-				}
-			}
+        // if (anim_select != 0 )
+        // {
+			// string anim
+			// for (int a;a < anim_array.len();a++) // go trough array
+			// {
+				// if (anim_select == a) // if is selected return anim
+				// {
+					// anim = anim_array[a]
+				// }
+				// else
+				// {
+					// anim = anim_array[anim_select - 1]
+				// }
+			// }
 
-			printl( "[Load0_Pilot]" + string(model) + ";" + anim + ";" + positionSerialized + ";" + anglesSerialized + ";")
-            float RotateLoopSpeed =  15
-            float smalltick = 0.5
-    		float bigtick = 2.5
-            switch (anim_select)
-            {
-    			//tick
-    			case 2: // big gold tick
-    			if (string(entity_name) == "npc_tick")
-    			{
-    				ent_prop.SetModelScale(bigtick)
-    			}
-    			thread PlayAnim( ent_prop, anim )
-                break
+			// printl( "[Load0_Pilot]" + string(model) + ";" + anim + ";" + positionSerialized + ";" + anglesSerialized + ";")
+            // float RotateLoopSpeed =  15
+            // float smalltick = 0.5
+    		// float bigtick = 2.5
+            // switch (anim_select)
+            // {
+    			// //tick
+    			// case 2: // big gold tick
+    			// if (string(entity_name) == "npc_tick")
+    			// {
+    				// ent_prop.SetModelScale(bigtick)
+    			// }
+    			// thread PlayAnim( ent_prop, anim )
+                // break
 
-    			case 3: // small spook
-    			if (string(entity_name) == "npc_tick")
-    			{
-                    ent_prop.SetModelScale(smalltick)
-    			}
-    			thread PlayAnim( ent_prop, anim )
-                break
+    			// case 3: // small spook
+    			// if (string(entity_name) == "npc_tick")
+    			// {
+                    // ent_prop.SetModelScale(smalltick)
+    			// }
+    			// thread PlayAnim( ent_prop, anim )
+                // break
 
-    			case 4: // small front flip spook
-    			if (string(entity_name) == "npc_tick")
-    			{
-                    ent_prop.SetModelScale(smalltick)
-    			}
-    			thread AnimationLoop( ent_prop, anim, RotateLoopSpeed)
-                break
-                //tick end
+    			// case 4: // small front flip spook
+    			// if (string(entity_name) == "npc_tick")
+    			// {
+                    // ent_prop.SetModelScale(smalltick)
+    			// }
+    			// thread AnimationLoop( ent_prop, anim, RotateLoopSpeed)
+                // break
+                // //tick end
 
-				case 5: // big boy
-				ent_prop.SetModelScale(7.0)
-				thread BigMirageRotateLoop(ent_prop,anim,RotateLoopSpeed * 8) // rotation
-				break
+				// case 5: // big boy
+				// ent_prop.SetModelScale(7.0)
+				// thread BigMirageRotateLoop(ent_prop,anim,RotateLoopSpeed * 8) // rotation
+				// break
 
-				case 6: // table smol mirages
-				ent_prop.SetModelScale(0.5)
-				thread PlayAnim( ent_prop, anim )
-				thread MiniMirageRotateLoop(ent_prop,RotateLoopSpeed) // rotation
-				break
+				// case 6: // table smol mirages
+				// ent_prop.SetModelScale(0.5)
+				// thread PlayAnim( ent_prop, anim )
+				// thread MiniMirageRotateLoop(ent_prop,RotateLoopSpeed) // rotation
+				// break
 
-                default:
-                thread PlayAnim( ent_prop, anim )
-                break
-            }
-        } else{  // 0 - no animation / t-pose
-            //printl( "[Load0_Pilot]" + string(model) + ";" + positionSerialized + ";" + anglesSerialized + ";")
+                // default:
+                // thread PlayAnim( ent_prop, anim )
+                // break
+            // }
+        // } else{  // 0 - no animation / t-pose
+            // //printl( "[Load0_Pilot]" + string(model) + ";" + positionSerialized + ";" + anglesSerialized + ";")
 
-    	}
+    	// }
 
-    	return ent_prop
-    }
+    	// return ent_prop
+    // }
 
     // C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D
 
@@ -1192,81 +1206,81 @@ void function DEV_MoveToAllAINodes( float delay = 0.0, int loglevel = 0 )
 
     // C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D
 
-    entity function GenerateRings(asset ring_MODEL,vector origin,float rotate_speed,float ring_size)
-    {
-    	//Zer0Bytes#4428
+    // entity function GenerateRings(asset ring_MODEL,vector origin,float rotate_speed,float ring_size)
+    // {
+    	// //Zer0Bytes#4428
 
-        // #########################################
-        // d8888b. d888888b d8b   db  d888b  .d8888.
-        // 88   8D    88'   888o  88 88' Y8b 88'  YP
-        // 88oobY'    88    88V8o 88 88       8bo.
-        // 88 8b      88    88 V8o88 88  ooo    Y8b.
-        // 88  88.   .88.   88  V888 88. ~8~ db   8D
-        // 88   YD Y888888P VP   V8P  Y888P   8888Y'
-        // ######################################### Written by Zer0Bytes#4428
+        // // #########################################
+        // // d8888b. d888888b d8b   db  d888b  .d8888.
+        // // 88   8D    88'   888o  88 88' Y8b 88'  YP
+        // // 88oobY'    88    88V8o 88 88       8bo.
+        // // 88 8b      88    88 V8o88 88  ooo    Y8b.
+        // // 88  88.   .88.   88  V888 88. ~8~ db   8D
+        // // 88   YD Y888888P VP   V8P  Y888P   8888Y'
+        // // ######################################### Written by Zer0Bytes#4428
 
-        Assert( ring_MODEL != null, "No Ring Asset Selected" )
-        Assert( origin != null, "No Origin Set" )
-    	int amount_rings = 2 // the amount of rings
-    	int ring_size_scaling_begin = 0 // at what ring begin the scaling
-    	float ring_size_multiplier = 0.1
-    	entity ent_ring
-    	for (int i;i < amount_rings;i++) // top spinning rings
-    	{
+        // Assert( ring_MODEL != null, "No Ring Asset Selected" )
+        // Assert( origin != null, "No Origin Set" )
+    	// int amount_rings = 2 // the amount of rings
+    	// int ring_size_scaling_begin = 0 // at what ring begin the scaling
+    	// float ring_size_multiplier = 0.1
+    	// entity ent_ring
+    	// for (int i;i < amount_rings;i++) // top spinning rings
+    	// {
 
-    		origin = origin + <0,0,2048 * i + ring_size_multiplier> // modify the y
+    		// origin = origin + <0,0,2048 * i + ring_size_multiplier> // modify the y
 
-            for (int j = 0;j < 4;j++) // side duplication
-    		{
-    			switch(j)
-    			{
-    				case 0:  // 180
-    				ent_ring = CreateEditorPropZero( ring_MODEL , origin, <0,0,0>, true, -1, -1 )
-    			    thread vRotateLoop(ent_ring,rotate_speed, false)
-    				break
-    				case 1:  // 180
-    				ent_ring = CreateEditorPropZero( ring_MODEL, origin, <180,0,0>, true, -1, -1 )
-    			    thread vRotateLoop(ent_ring,rotate_speed,false)
-    				break
-    				case 2:  // 90
-    				ent_ring = CreateEditorPropZero( ring_MODEL , origin, <90,0,0>, true, -1, -1 )
-    			    thread vRotateLoop(ent_ring,rotate_speed, true)
-    				break
-    				case 3:  // 90
-    				ent_ring = CreateEditorPropZero( ring_MODEL, origin, <-90,0,0>, true, -1, -1 )
-    			    thread vRotateLoop(ent_ring,rotate_speed,false)
-    				break
-    				case 4: // 45
-    				ent_ring = CreateEditorPropZero( ring_MODEL , origin, <45,0,0>, true, -1, -1 )
-    			    thread vRotateLoop(ent_ring,rotate_speed, true)
-    				break
-    				case 5: // 45
-    				ent_ring = CreateEditorPropZero( ring_MODEL, origin, <-45,0,0>, true, -1, -1 )
-    			    thread vRotateLoop(ent_ring,rotate_speed,false)
-    				break
-    				case 6:  // 22
-    				ent_ring = CreateEditorPropZero( ring_MODEL , origin, <22,0,0>, true, -1, -1 )
-    			    thread vRotateLoop(ent_ring,rotate_speed, true)
-    				break
-    				case 7:  // 22
-    				ent_ring = CreateEditorPropZero( ring_MODEL, origin, <-22,0,0>, true, -1, -1 )
-    			    thread vRotateLoop(ent_ring,rotate_speed,false)
-    				break
+            // for (int j = 0;j < 4;j++) // side duplication
+    		// {
+    			// switch(j)
+    			// {
+    				// case 0:  // 180
+    				// ent_ring = CreateEditorPropZero( ring_MODEL , origin, <0,0,0>, true, -1, -1 )
+    			    // thread vRotateLoop(ent_ring,rotate_speed, false)
+    				// break
+    				// case 1:  // 180
+    				// ent_ring = CreateEditorPropZero( ring_MODEL, origin, <180,0,0>, true, -1, -1 )
+    			    // thread vRotateLoop(ent_ring,rotate_speed,false)
+    				// break
+    				// case 2:  // 90
+    				// ent_ring = CreateEditorPropZero( ring_MODEL , origin, <90,0,0>, true, -1, -1 )
+    			    // thread vRotateLoop(ent_ring,rotate_speed, true)
+    				// break
+    				// case 3:  // 90
+    				// ent_ring = CreateEditorPropZero( ring_MODEL, origin, <-90,0,0>, true, -1, -1 )
+    			    // thread vRotateLoop(ent_ring,rotate_speed,false)
+    				// break
+    				// case 4: // 45
+    				// ent_ring = CreateEditorPropZero( ring_MODEL , origin, <45,0,0>, true, -1, -1 )
+    			    // thread vRotateLoop(ent_ring,rotate_speed, true)
+    				// break
+    				// case 5: // 45
+    				// ent_ring = CreateEditorPropZero( ring_MODEL, origin, <-45,0,0>, true, -1, -1 )
+    			    // thread vRotateLoop(ent_ring,rotate_speed,false)
+    				// break
+    				// case 6:  // 22
+    				// ent_ring = CreateEditorPropZero( ring_MODEL , origin, <22,0,0>, true, -1, -1 )
+    			    // thread vRotateLoop(ent_ring,rotate_speed, true)
+    				// break
+    				// case 7:  // 22
+    				// ent_ring = CreateEditorPropZero( ring_MODEL, origin, <-22,0,0>, true, -1, -1 )
+    			    // thread vRotateLoop(ent_ring,rotate_speed,false)
+    				// break
 
-    			}
-    			ent_ring.NotSolid()
+    			// }
+    			// ent_ring.NotSolid()
 
-    			for(int k;k < amount_rings;k++)
-    			{
-    				ent_ring.kv.renderamt = 255
-    				ent_ring.kv.rendermode = 3
-    				ent_ring.kv.rendercolor = "255 255 255 255"
-    				ent_ring.SetModelScale(ring_size * ring_size_multiplier * i)
-    			}
-    		}
-        }
-    	return ent_ring
-    }
+    			// for(int k;k < amount_rings;k++)
+    			// {
+    				// ent_ring.kv.renderamt = 255
+    				// ent_ring.kv.rendermode = 3
+    				// ent_ring.kv.rendercolor = "255 255 255 255"
+    				// ent_ring.SetModelScale(ring_size * ring_size_multiplier * i)
+    			// }
+    		// }
+        // }
+    	// return ent_ring
+    // }
 
     // C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D C8888D
 
@@ -1403,84 +1417,84 @@ void function DEV_MoveToAllAINodes( float delay = 0.0, int loglevel = 0 )
     // Y88888P  `Y88P'   `Y88P'  88      `8888Y'
     // ######################################### Written by Zer0Bytes#4428
 
-    void function RotateLoop(entity ent,float speed,bool rightside)
-    {
-        vector result
-        while(isBrightWaterByZer0 && IsValid(ent))
-        {
-            if(rightside)
-            {
-               result =  ent.GetAngles() + <0,-speed,0>
-            }
-            else{
-               result = ent.GetAngles()  + <0,speed,00>
-            }
-    		ent.SetAngles( result ) // result
-        WaitFrame()
-        }
-    }
+    // void function RotateLoop(entity ent,float speed,bool rightside)
+    // {
+        // vector result
+        // while(isBrightWaterByZer0 && IsValid(ent))
+        // {
+            // if(rightside)
+            // {
+               // result =  ent.GetAngles() + <0,-speed,0>
+            // }
+            // else{
+               // result = ent.GetAngles()  + <0,speed,00>
+            // }
+    		// ent.SetAngles( result ) // result
+        // WaitFrame()
+        // }
+    // }
 
-    void function vRotateLoop(entity ent,float speed,bool rightside)
-    {
-        vector result
-    	float sbase = 2
-        while(isBrightWaterByZer0 && IsValid(ent))
-        {
-            if(rightside)
-            {
-               result =  ent.GetAngles() -  <speed,-speed, 0>
-            }
-            else{
-               result = ent.GetAngles()  +  <-speed,speed, 0>
-            }
-    		ent.SetAngles( result ) // result
-        WaitFrame()
-        }
-    }
+    // void function vRotateLoop(entity ent,float speed,bool rightside)
+    // {
+        // vector result
+    	// float sbase = 2
+        // while(isBrightWaterByZer0 && IsValid(ent))
+        // {
+            // if(rightside)
+            // {
+               // result =  ent.GetAngles() -  <speed,-speed, 0>
+            // }
+            // else{
+               // result = ent.GetAngles()  +  <-speed,speed, 0>
+            // }
+    		// ent.SetAngles( result ) // result
+        // WaitFrame()
+        // }
+    // }
 
-    void function AnimationLoop(entity decoy,string anim,float speed)
-    {
-        vector result
-        while(isBrightWaterByZer0)
-        {
-          PlayAnim( decoy, anim )
-          wait 0.00001
-        }
-    }
+    // void function AnimationLoop(entity decoy,string anim,float speed)
+    // {
+        // vector result
+        // while(isBrightWaterByZer0)
+        // {
+          // PlayAnim( decoy, anim )
+          // wait 0.00001
+        // }
+    // }
 
-    void function BigMirageRotateLoop(entity decoy,string anim,float speed)
-    {
-        vector result
-        while(isBrightWaterByZer0)
-        {
-            PlayAnim( decoy, anim )
-            if(RandomInt(1))
-            {
-               result =  decoy.GetAngles() + <speed,0,speed > - <0,speed,0>
-            }
-            else{
-               result = decoy.GetAngles() - <0,0,speed> + <speed,speed,0>
-            }
-          decoy.SetAngles( result ) // result
-          wait 0.00001
-        }
-    }
-    void function MiniMirageRotateLoop(entity decoy,float speed)
-    {
-        vector result
-        while(isBrightWaterByZer0)
-        {
-            if(RandomInt(1))
-            {
-               result =  decoy.GetAngles() + <0,0,speed> - <0,speed,0>
-            }
-            else{
-               result = decoy.GetAngles() - <0,0,speed> + <0,speed,0>
-            }
-          decoy.SetAngles( result ) // result
-          wait 0.00001
-        }
-    }
+    // void function BigMirageRotateLoop(entity decoy,string anim,float speed)
+    // {
+        // vector result
+        // while(isBrightWaterByZer0)
+        // {
+            // PlayAnim( decoy, anim )
+            // if(RandomInt(1))
+            // {
+               // result =  decoy.GetAngles() + <speed,0,speed > - <0,speed,0>
+            // }
+            // else{
+               // result = decoy.GetAngles() - <0,0,speed> + <speed,speed,0>
+            // }
+          // decoy.SetAngles( result ) // result
+          // wait 0.00001
+        // }
+    // }
+    // void function MiniMirageRotateLoop(entity decoy,float speed)
+    // {
+        // vector result
+        // while(isBrightWaterByZer0)
+        // {
+            // if(RandomInt(1))
+            // {
+               // result =  decoy.GetAngles() + <0,0,speed> - <0,speed,0>
+            // }
+            // else{
+               // result = decoy.GetAngles() - <0,0,speed> + <0,speed,0>
+            // }
+          // decoy.SetAngles( result ) // result
+          // wait 0.00001
+        // }
+    // }
 
     // ################
 	// d88888b db    db
@@ -1620,13 +1634,13 @@ void function DEV_SpawnDummyAtCrosshair(int team = 99)
 		thread PlayAnimOnTrainingDummy(dummy)
 
     array<string> weapons = ["npc_weapon_hemlok", "npc_weapon_energy_shotgun", "npc_weapon_lstar"]
-    string randomWeapon = weapons[RandomInt(weapons.len())]
-    dummy.GiveWeapon(randomWeapon, WEAPON_INVENTORY_SLOT_ANY)
+    // string randomWeapon = weapons[RandomInt(weapons.len())]
+    dummy.GiveWeapon("npc_weapon_lstar", WEAPON_INVENTORY_SLOT_ANY)
 	
-	weapons.fastremovebyvalue( randomWeapon )
+	// weapons.fastremovebyvalue( randomWeapon )
 
-	randomWeapon = weapons[RandomInt(weapons.len())]
-	dummy.GiveWeapon(randomWeapon, WEAPON_INVENTORY_SLOT_ANY)
+	// randomWeapon = weapons[RandomInt(weapons.len())]
+	// dummy.GiveWeapon(randomWeapon, WEAPON_INVENTORY_SLOT_ANY)
 }
 
 void function PlayAnimOnTrainingDummy(entity dummy)
@@ -1702,6 +1716,22 @@ void function DEV_SpawnSpectreAtCrosshair(int team = 99)
 	spectre.GiveWeapon("npc_weapon_lstar", WEAPON_INVENTORY_SLOT_ANY)
 }
 
+void function DEV_SpawnSupSpectreAtCrosshair(int team = 99)
+{
+	entity player = GetPlayerArray()[ 0 ]
+
+	vector origin = GetPlayerCrosshairOrigin( player )
+	vector angles = Vector( 0, 0, 0 )
+
+	entity spectre = CreateSupSpectre( team, origin, angles )
+	
+	DispatchSpawn( spectre )
+	
+	//array<string> weapons = ["npc_weapon_lstar", "npc_weapon_energy_shotgun", "npc_weapon_hemlok"] //We are giving them original firing range weapons, they are shooting better this way
+	//string randomWeapon = weapons[RandomInt(weapons.len())]
+	//spectre.GiveWeapon("npc_weapon_lstar", WEAPON_INVENTORY_SLOT_ANY)
+}
+
 void function DEV_SpawnStalkerAtCrosshair(int team = 99)
 {
 	entity player = GetPlayerArray()[ 0 ]
@@ -1726,6 +1756,58 @@ void function DEV_SpawnSpiderAtCrosshair(int team = 99)
 	entity spider = CreateSpider( team, origin, angles )
 
 	DispatchSpawn( spider )
+}
+
+/*void function DEV_SpawnBTAtCrosshair(int team = 99)
+{
+	entity player = GetPlayerArray()[ 0 ]
+
+	vector origin = GetPlayerCrosshairOrigin( player )
+	vector angles = Vector( 0, 0, 0 )
+
+	entity bt = CreateBT( team, origin, angles )
+
+	DispatchSpawn( bt )
+	//SetPlayerPetTitan( player, bt )
+	player.SetPetTitan( bt )
+	bt.SetCollisionAllowed( false )
+	//entity camera = CreateTitanDropCamera( origin, angles )
+	waitthread PlayersTitanHotdrops( bt, origin, angles, player, "at_hotdrop_drop_2knee_turbo" )
+	//bt.SetBossPlayer( player )
+}*/
+
+void function DEV_SpawnBTAtCrosshair( bool hotdrop = false )
+{
+	DisablePrecacheErrors()
+	wait 0.2
+	entity player = GetPlayerArray()[ 0 ]
+
+	entity pet_titan = player.GetPetTitan()
+	if ( IsValid(pet_titan) )
+		pet_titan.SetHealth(0)
+
+	vector origin = GetPlayerCrosshairOrigin( player )
+	vector angles = Vector( 0, 0, 0 )
+
+	//TitanLoadoutDef loadout = GetTitanLoadoutForCurrentMap()
+	entity npc = CreateNPCTitanFromSettings($"settings/player/mp/titan_survival_buddy.rpak",player.GetTeam(),origin, angles)//CreateAutoTitanForPlayer_FromTitanLoadout( player, loadout, origin, angles )
+
+	SetSpawnOption_AISettings( npc, "npc_titan_buddy" )
+	npc.SetCollisionAllowed( false )//TODO: Get rid of this when collision is fixed, it causes crash. - Kral
+
+	//DispatchSpawn( npc )
+	
+	npc.kv.solid = 8
+
+	npc.GiveWeapon("mp_titanweapon_xo16_shorty", WEAPON_INVENTORY_SLOT_ANY)
+
+	//SetPlayerPetTitan( player, npc )
+	SetupAutoTitan( npc, player )
+
+	if ( hotdrop )
+		thread NPCTitanHotdrops( npc, false )
+		
+	//CodeCallback_EmbarkTitan( player, npc )
 }
 
 void function DEV_SpawnTitanAtCrosshair(int team = 99)
@@ -1809,12 +1891,12 @@ void function DEV_SpawnLegendAtCrosshair( int team = 99)
 
 	if(GetCurrentPlaylistVarBool( "dummies_agressivedummies", true ))
 	{
-		dummy = CreateLegend_ai( team, origin, angles1 )
+		dummy = CreateDummy( team, origin, angles1 )
 		dummy.SetBehaviorSelector( "behavior_dummie_combat" )
 	}
 	else
 	{
-		dummy = CreateLegend_ai( team, origin, angles1, true)
+		dummy = CreateDummy( team, origin, angles1)
 		dummy.SetBehaviorSelector( "behavior_dummy_empty" )
 		dummy.EnableNPCFlag( NPC_DISABLE_SENSING )
 		dummy.EnableNPCFlag( NPC_IGNORE_ALL )

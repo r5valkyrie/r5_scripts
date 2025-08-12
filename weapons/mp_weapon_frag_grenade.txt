@@ -36,7 +36,7 @@ WeaponData
 	// "OnWeaponActivate"							"Grenade_OnWeaponActivate"
 	// "OnProjectileIgnite"							"Grenade_OnProjectileIgnite"
 
-	"projectile_killreplay_enabled"					"1"
+	"projectile_killreplay_enabled"					"0"
 
 	"grenade_arc_indicator_show_from_hip"			"0"
 	"grenade_arc_indicator_bounce_count"			"1"
@@ -51,18 +51,22 @@ WeaponData
 		"is_semi_auto"									"1"
 		"npc_explosion_damage"							"100"
 
-		"ammo_clip_size"   								"200"
-		"ammo_default_total"							"200"
+		"ammo_clip_size"   								"100"
+		"ammo_default_total"							"100"
 		"ammo_display"									"bar"
 		"ammo_min_to_fire"								"100"
 		"ammo_per_shot"									"100"
-		"ammo_stockpile_max"							"200"
+		"ammo_stockpile_max"							"0"
 		"regen_ammo_refill_rate"						"6.66"
 		"regen_ammo_refill_start_delay"					"0.0"
 
 		"enable_highlight_networking_on_creation"		"<KEEP_DEFAULT>"
 
 		"sound_weapon_ready"							"HUD_ordinance_meter_replenished_1P"
+
+	"damage_near_distance"	"1000"
+	"damage_far_distance"	"3000"
+	"critical_hit"	"0"
 	}
 
 	SP_BASE
@@ -335,7 +339,15 @@ WeaponData
             "regen_ammo_refill_start_delay"					"0.0"
             "ammo_no_remove_from_stockpile"					"1"
         }
-	}
+	
+		infinite_ammo
+		{
+			"ammo_min_to_fire"                      "0"
+			"ammo_no_remove_from_clip"              "1"
+			"ammo_no_remove_from_stockpile"         "1"
+			"low_ammo_fraction"                     "0.0"
+		}
+}
 
 	active_crosshair_count				"1"
 	rui_crosshair_index					"0"

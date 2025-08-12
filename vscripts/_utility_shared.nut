@@ -136,11 +136,7 @@ void function Utility_Shared_Init()
 void function InitWeaponScripts()
 {
 	SmartAmmo_Init()
-	MpWeaponNeedler_Init()
-	MpWeaponRayGun_Init()
-	MpAbilityShadowPounceFree_Init()
-	MpWeaponEnergySword_Init()
-
+	
 	// WEAPON SCRIPTS
 	ArcCannon_Init()
 	Grenade_FileInit()
@@ -199,8 +195,27 @@ void function InitWeaponScripts()
 	MpWeaponTrophy_Init()
 
 	MpWeaponBasicBolt_Init()
-
-	WeaponMastiff_Init() //mkos
+	
+	//(cafe) S0 Dev Protos
+	MpWeaponGroundSlam_Init()
+	Haunt_Init()
+	MpAbilityLootCompass_Init()
+	MpAbilityMaelstromJavelin_Init()
+	MpAbilityRiotShield_Init()
+	MpAbilitySonicShoutWeapon_Init()
+	MpAbilitySplitTimelineWeapon_Init()
+	MpAbilitySpotterSight_Init()
+	MpWeaponConcussiveBreach_Init()
+	MpWeaponGrenadeBarrier_Init()
+	MpWeaponGrenadeFlashbang_Init()
+	MpWeaponDebrisTrap_Init()
+	MpWeaponCoverWall_Init()
+	ShPassiveShotgunKick_Init()
+	
+	ChargePylons_Init()
+	
+	//(kral) wip abilities
+	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
 
 	#if SERVER
 		//BallLightning_Init()
@@ -3615,9 +3630,14 @@ bool function PROTO_VariableRegenDelay()
 	return ( GetCurrentPlaylistVarInt( "variable_regen_delay", 1 ) == 1 )
 }
 
+bool function PROTO_AutoTitansDisabled()
+{
+	return ( GetCurrentPlaylistVarInt( "always_enable_autotitans", 1 ) == 0 )
+}
+
 bool function TitanDamageRewardsTitanCoreTime()
 {
-	if ( GetCurrentPlaylistVarInt( "titan_core_from_titan_damage", 1 ) != 0 )
+	if ( GetCurrentPlaylistVarInt( "titan_core_from_titan_damage", 0 ) != 0 )
 		return true
 	return false
 }
@@ -4057,6 +4077,54 @@ array<vector> function GetPointsOnCircle( vector origin, vector angles, float ra
 
 	return pointsOnCircle
 }
+
+
+// Returns an array of equidistant points along a line dictated by start & end positions. If count == 1, returns midpoint between start and end.
+array< vector > function GetPointsAlongLine( vector start, vector end, int count, bool debugDraw = false )
+{
+	Assert( count > 0, FUNC_NAME() + "(): ERROR! Count Must Be > 0." )
+
+	array< vector > result = []
+
+	vector rowStartEdge = start
+	vector rowEndEdge = end
+	float rowWidth = Distance( rowStartEdge, rowEndEdge )
+	vector nextItemDir = ( rowEndEdge - rowStartEdge )/rowWidth
+
+
+	vector itemPos
+
+	if( count < 2 )
+	{
+		itemPos = ( rowEndEdge + rowStartEdge ) / 2
+		result.append( itemPos )
+	}
+	else // count >= 2
+	{
+		float distBtwnItems = rowWidth / ( count - 1 )
+		itemPos = rowStartEdge
+		vector nextItemDelta = nextItemDir * distBtwnItems
+
+		for( int i = 0; i < count; i++ )
+		{
+			result.append( itemPos )
+			itemPos = itemPos + nextItemDelta
+		}
+	}
+
+	#if DEVELOPER
+		if( debugDraw )
+		{
+			for( int i = 0; i < result.len(); i++ )
+			{
+				DebugDrawText( result[ i ], string( i ), false, 60 )
+			}
+		}
+	#endif // DEVELOPER
+
+	return result
+}
+
 #if SERVER
 void function Embark_Allow( entity player )
 {
@@ -4198,6 +4266,11 @@ bool function IsStalker( entity ent )
 bool function IsProwler( entity ent )
 {
 	return ent.GetNetworkedClassName() == "npc_prowler"
+}
+
+bool function IsSpider( entity ent )
+{
+	return ent.GetNetworkedClassName() == "npc_spider"
 }
 
 bool function IsAirDrone( entity ent )
@@ -5671,6 +5744,10 @@ bool function IsLobbyFallLTM()
 	return GetCurrentPlaylistVarInt( "menu_fall_ltm", 0 ) == 1
 }
 
+bool function UseFallBanners()
+{
+	return IsFallLTM() || GetCurrentPlaylistVarInt( "use_fall_banners", 0 ) == 1
+}
 
 table<int, array<entity> > function ArrangePlayersByTeam( array<entity> players )
 {
@@ -5684,6 +5761,102 @@ table<int, array<entity> > function ArrangePlayersByTeam( array<entity> players 
 			out[team] <- [ player ]
 	}
 	return out
+}
+
+void function GivePlayerSettingsMods( entity player, array<string> additionalMods )
+{
+	#if CLIENT
+		if ( !player.GetPredictable() )
+			return
+	#endif
+
+	int oldMaxHealth = player.GetMaxHealth()
+	int oldHealth    = player.GetHealth()
+
+#if CLIENT
+	if ( InPrediction() )
+#endif
+	{
+		#if CLIENT
+			Assert( additionalMods.len() == 1 )
+		#endif
+
+		// check if we can add these mods, in dev we assert to force a fix, but if a rare case (usually involving spectators) gets through
+		// we skip the bad mods
+		array<string> modsToAdd
+		foreach( mod in additionalMods ) // only need to check new ones
+		{
+			bool isModAvailable = player.IsClassModAvailableForPlayerSetting( string( player.GetPlayerSettings() ), mod )
+			Assert( isModAvailable, "Undefined mod '" + mod + "' requested for player class '" + player.GetPlayerClass() + "'" )
+
+			if( isModAvailable )
+				modsToAdd.append( mod )
+		}
+		if( modsToAdd.len() > 0 )
+		{
+			//if ( additionalMods.len() == 1 )
+			{
+				//player.AddPlayerClassMod( additionalMods[ 0 ] )
+			}
+			//else
+			{
+				#if SERVER
+
+					array<string> mods = player.GetPlayerSettingsMods()
+					mods.extend( modsToAdd ) // duplicates are OK
+					player.SetPlayerSettingsWithMods( player.GetPlayerSettings(), mods )
+				#endif
+			}
+		}
+	}
+
+	#if SERVER
+		if ( IsAlive( player ) )
+		{
+			player.SetMaxHealth( oldMaxHealth )
+			player.SetHealth( oldHealth )
+		}
+		//ApplyAppropriateCharacterSkin( player )//come back to this later (kral)
+	#endif
+}
+
+void function TakePlayerSettingsMods( entity player, array<string> modsToTake, bool isHealthReset = true )
+{
+	array<string> mods = player.GetPlayerSettingsMods()
+	int oldMaxHealth = player.GetMaxHealth()
+	int oldHealth    = player.GetHealth()
+
+#if CLIENT
+	if ( InPrediction() )
+#endif
+	{
+		#if CLIENT
+			Assert( modsToTake.len() == 1 )
+		#endif
+		/*if ( modsToTake.len() == 1 && mods.contains( modsToTake[ 0 ] ) )
+		{
+			player.RemovePlayerClassMod( modsToTake[ 0 ] )
+		}
+		else*/
+		{
+			foreach ( string modToTake in modsToTake )
+				mods.fastremovebyvalue( modToTake )
+
+			#if SERVER
+				player.SetPlayerSettingsWithMods( player.GetPlayerSettings(), mods )
+			#endif
+		}
+	}
+
+
+	#if SERVER
+		if ( IsAlive( player ) && isHealthReset )
+		{
+			player.SetMaxHealth( oldMaxHealth )
+			player.SetHealth( oldHealth )
+		}
+		//ApplyAppropriateCharacterSkin( player )
+	#endif
 }
 
 void function WaitForGameState(int state) {
@@ -5847,13 +6020,17 @@ vector function MapAngleToRadius( float angle, float radius )
 	return offset
 }
 
+bool function StatusEffect_HasSeverity( entity player, int statuseffect )
+{
+	return StatusEffect_GetSeverity( player, statuseffect ) > 0.0
+}
 
 #if DEVELOPER && CLIENT
 	void function DEV_PrintReadableBackendNames()
 	{
 		table<string, string> serverOutput =
 		{
-			//DEV_PrintBackendNames()
+			//uses DEV_PrintBackendNames() output pasted here
 		}
 		
 		string printText = "TableForBackend:\n\n [\n"
@@ -5868,3 +6045,18 @@ vector function MapAngleToRadius( float angle, float radius )
 		print( printText )
 	}
 #endif 
+
+// #if CLIENT
+	// void function TestFloatBits( float value )
+	// {
+		// printt( "Receieved Value in printt:", value )
+		// printf( "Accurately: %.8f", value )
+	// }
+// #endif
+
+// #if CLIENT
+	// void function VeryLongFunctionNameVeryLongFunctionNameVeryLongFunctionNameVeryLongVeryLong( bool v, bool _ )
+	// {
+		// printt( "boom" )
+	// }
+// #endif 

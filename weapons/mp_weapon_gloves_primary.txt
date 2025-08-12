@@ -13,7 +13,7 @@ WeaponData
 	"hud_icon"										"rui/menu/dpad_comms/emoji/fist"
 
 	// Models
-	"viewmodel"   								     "mdl/Weapons/karambit/ptpov_karambit.rmdl"
+	"viewmodel"   								     "mdl/dev/empty_model.rmdl"//"mdl/Weapons/karambit/ptpov_karambit.rmdl"
 
 	"OnWeaponActivate"								"OnWeaponActivate_weapon_shadow_squad_hands_primary"
 	"OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_shadow_squad_hands_primary"

@@ -4,8 +4,8 @@ global function Dev_RemoteStrings_Init
 void function Dev_RemoteFunctions_Init()
 {
 	#if DEVSCRIPTS
-	Remote_RegisterClientFunction( "ServerCallback_PROTO_OnInfoCordTargetFiredWeapon", "entity" )
-	Remote_RegisterClientFunction( "SendFPSToServer" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PROTO_OnInfoCordTargetFiredWeapon", "entity" )
+	ScriptRemote_RegisterClientFunction( "SendFPSToServer" )
 	#endif // DEVSCRIPTS
 }
 

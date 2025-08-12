@@ -12,6 +12,10 @@ void function MpWeaponGreandeElectricSmoke_Init()
 {
 	PrecacheParticleSystem( FX_ELECTRIC_SMOKESCREEN_PILOT )
 	PrecacheParticleSystem( FX_ELECTRIC_SMOKESCREEN_PILOT_AIR )
+	
+	#if SERVER
+	RegisterSignal( "RestartHighlightThread" )
+	#endif
 }
 
 void function OnProjectileCollision_weapon_grenade_electric_smoke( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
@@ -30,11 +34,13 @@ void function OnProjectileCollision_weapon_grenade_electric_smoke( entity projec
 		hitEnt = hitEnt,
 		hitbox = hitbox
 	}
-
+	
 	projectile.SetModel( $"mdl/dev/empty_model.rmdl" )
 	bool result = PlantStickyEntity( projectile, collisionParams, <90.0, 0.0, 0.0> )
 
 #if SERVER
+	AddToTrackedEnts_Level( projectile )
+	
 	if ( !result )
 	{
 		projectile.SetVelocity( <0.0, 0.0, 0.0> )
@@ -67,23 +73,23 @@ void function ElectricGrenadeSmokescreen( entity projectile, asset fx )
 	
 	float duration = 10
 	
-	entity effect = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( $"P_impact_exp_emp_med_default" ), pos+<0,0,32>, <0,0,0> )
-	effect.SetOwner( owner )
-	AddToUltimateRealm( owner, effect )
-	for(int i = 0; i<duration*2; i++)
-	{
-		EntFireByHandle( effect, "Stop", "", i*0.5, null, null )
-		EntFireByHandle( effect, "Start", "", i*0.5+0.1, null, null )
-	}
-	EntFireByHandle( effect, "Kill", "", duration, null, null )
-	
+	//(cafe) changed this logic to be threaded so it can be canceled with a signal, it was also moved to smokescreen file
+	// entity effect = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( $"P_impact_exp_emp_med_default" ), pos+<0,0,32>, <0,0,0> )
+	// effect.SetOwner( owner )
+	// AddToUltimateRealm( owner, effect )
+	// for(int i = 0; i<duration*2; i++)
+	// {
+		// EntFireByHandle( effect, "Stop", "", i*0.5, null, null )
+		// EntFireByHandle( effect, "Start", "", i*0.5+0.1, null, null )
+	// }
+	// EntFireByHandle( effect, "Kill", "", duration, null, null )
 
 	RadiusDamageData radiusDamageData = GetRadiusDamageDataFromProjectile( projectile, owner )
 
 	SmokescreenStruct smokescreen
 	smokescreen.smokescreenFX = fx
 	smokescreen.ownerTeam = owner.GetTeam()
-	smokescreen.damageSource = eDamageSourceId.mp_weapon_droneplasma
+	smokescreen.damageSource = eDamageSourceId.mp_weapon_grenade_electric_smoke
 	smokescreen.attacker = owner
 	smokescreen.inflictor = owner
 	smokescreen.weaponOrProjectile = projectile

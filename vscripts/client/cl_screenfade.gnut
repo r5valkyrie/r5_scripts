@@ -29,7 +29,7 @@ void function ClScreenfade_Init()
 	thread PlayerPainSoundThread()
 	thread PlayerDeathfieldSoundThread()
 
-	asset ruiAssetName = $"ui/screen_fade_shadow_fall.rpak" //$"ui/screen_fade.rpak"
+	asset ruiAssetName = UseFallBanners() ? $"ui/screen_fade_shadow_fall.rpak" : $"ui/screen_fade.rpak"
 
 	file.screenFade = RuiCreate( ruiAssetName, clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, RUI_SORT_SCREENFADE )
 	RuiSetResolutionToScreenSize( file.screenFade )
@@ -39,16 +39,16 @@ void function ClScreenfade_Init()
 
 	RuiSetFloat3( file.screenFade, "fadeColor", <0, 0, 0> )
 	RuiSetFloat( file.screenFade, "fadeAlpha", 0.0 )
-	//RuiSetImage( file.screenFade, "emblemImage", GetModeEmblemImage( GetCurrentPlaylistName() ) )
+	RuiSetImage( file.screenFade, "emblemImage", GetModeEmblemImage( GetCurrentPlaylistName() ) )
 }
 
 
 void function ScreenCoverTransition( float endTime )
 {
-	#if DEVELOPER
-		DumpStack()
-		printt( "Calling ScreenCoverTransition with endTime", endTime, " at time", Time() )
-	#endif
+	// #if DEVELOPER
+		// DumpStack()
+		// printt( "Calling ScreenCoverTransition with endTime", endTime, " at time", Time() )
+	// #endif
 	// can be called from server
 	// returns the time remaining until the out transition plays
 

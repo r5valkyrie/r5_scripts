@@ -58,10 +58,6 @@ global function PlayerSetting_DamageClosesMenu
 global function UpdatePlayerIsMuted //for future usage
 global function RunMuteClears
 
-#if ENTITYVAR_DEPRECATED
-	global function OnVarChangedCallback_PlayerMovement
-#endif
-
 #if DEVELOPER
 global function BloodSprayDecals_Toggle
 #endif
@@ -142,7 +138,7 @@ void function ClPlayer_Init()
 	level.grenadeIndicatorEnabled <- true
 	level.clientsLastKiller <- null
 
-	if( GetCurrentPlaylistVarBool( "flowstate_enable_health_bars", false ) ) //By Cafe
+	if( GetCurrentPlaylistVarBool( "flowstate_enable_health_bars", false ) && !GetCurrentPlaylistVarBool( "is_practice_map", false ) )
 	{
 		AddCreateCallback( "player", FS_HealthBars_StartForPlayer )
 		AddDestroyCallback( "player", FS_HealthBars_Destroy )
@@ -193,7 +189,6 @@ void function FS_HealthBars_StartForPlayer( entity player )
 	Flowstate_CreateCustomHealthBarForPlayer( player )
 }
 
-// cool health bars. Made by Cafe
 void function Flowstate_CreateCustomHealthBarForPlayer( entity player ) 
 {
 	entity vgui
@@ -1005,7 +1000,7 @@ void function ClientCodeCallback_PlayerDidDamage( PlayerDidDamageParams params )
 
 	BloodSprayDecals( attacker, victim, damagePosition, damageAmount, isHeadShot, isKillShot, isMelee, isExplosion, isBullet, isShotgun )
 
-	if ( isShieldBreak )
+	if ( isShieldBreak && victim.IsPlayer() )
 		PlayShieldBreakEffect( victim )
 
 	int hitType = eHitType.NORMAL
@@ -1143,7 +1138,7 @@ void function KillShotBloodSpray( entity player, entity victim, vector damagePos
 void function BloodSprayDecals( entity player, entity victim, vector damagePosition, float damageAmount, bool isHeadShot, bool isKillShot, bool isMelee, bool isExplosion, bool isBullet, bool isShotgun )
 {
 	//if ( GameRules_GetGameMode() == "fs_prophunt" || GetCurrentPlaylistName() == "fs_lgduels_1v1" )
-	if( Playlist() == ePlaylists.fs_lgduels_1v1 || Gamemode() == eGamemodes.fs_prophunt )
+	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 || Gamemode() == eGamemodes.fs_prophunt )
 		return
 
 	if ( IsSoftenedLocale() || !Flag( "EnableBloodSprayDecals" ) )
@@ -2445,13 +2440,3 @@ void function FS_RegisterAdmin()
 	
 	RunUIScript( "UICallback_AdminStatus", Gamemode() == eGamemodes.WINTEREXPRESS ? false : player.GetPlayerNetBool("IsAdmin") )	
 }
-
-#if ENTITYVAR_DEPRECATED
-	void function OnVarChangedCallback_PlayerMovement( ent, varName, newValue, oldValue )
-	{
-		entity player = GetLocalClientPlayer()
-		
-		if( IsValid( player ) )
-			player.ClientCommand( "set" + " " + varName + " " + newValue )
-	}
-#endif
