@@ -1,0 +1,280 @@
+
+#if CLIENT
+global function TrackFirstPersonGunShield
+#endif
+
+#if SERVER
+global function CreateGunAttachedShield_PropDynamic
+global function CreateGunAttachedShield_PropShield
+global function StartGunAttachedShieldFX
+
+global struct GunShieldSettings
+{
+	bool invulnerable = false
+	bool useFriendlyEnemyFx = false
+	bool useFxColorOverride = false
+	vector fxColorOverride = <255,255,255>
+	float maxHealth = 100
+	int spawnflags = SF_ABSORB_BULLETS
+	float bulletFOV = 30
+	float sphereRadius = 20
+	float sphereHeight = 20
+	entity ownerWeapon
+	entity owner
+	asset shieldFX
+	entity parentEnt
+	string parentAttachment = ""
+	string gunVortexAttachment = ""
+	void functionref( entity, var ) bulletHitRules
+	bool functionref( entity, entity, bool ) projectileHitRules
+	vector localVortexAngles
+	vector fxOverrideAngles
+	int impacteffectcolorID = 0
+
+	asset model
+	float shieldModelScaleOverride = 1.0
+	vector modelOverrideAngles
+	vector modelOverrideOrigin
+	bool modelHide = false
+	bool modelBlockRadiusDamage = false
+}
+
+const string SOUND_PILOT_GUN_SHIELD_3P = "gunshield_sustain_loop_3p"
+const string SOUND_PILOT_GUN_SHIELD_1P = "gunshield_sustain_loop_1p"
+
+// This creates the 3P shield, 1P shield needs to get created separately
+// Gibraltar's shield uses this function
+entity function CreateGunAttachedShield_PropDynamic( GunShieldSettings gs )
+{
+	Assert( gs.model != $"" )
+
+	int idx = gs.parentEnt.LookupAttachment( gs.parentAttachment )
+	if ( idx == 0 )
+		return null
+
+	entity shieldModel = CreatePropDynamic_NoDispatchSpawn( gs.model, gs.parentEnt.GetAttachmentOrigin( idx ), AnglesCompose( gs.parentEnt.GetAttachmentAngles( idx ), gs.modelOverrideAngles ), 6 )
+	shieldModel.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
+	shieldModel.kv.intensity = 0
+
+	// Saves server CPU
+	//shieldModel.DisablePhysicsBodyCreation()
+
+	if ( gs.modelHide )
+		shieldModel.Hide()
+
+	if ( gs.modelBlockRadiusDamage )
+		shieldModel.SetBlocksRadiusDamage( true )
+
+	if ( gs.owner != null )
+	{
+		shieldModel.RemoveFromAllRealms()
+		shieldModel.AddToOtherEntitysRealms( gs.owner )
+	}
+
+	DispatchSpawn( shieldModel )
+
+	shieldModel.SetMaxHealth( gs.maxHealth )
+	shieldModel.SetHealth( gs.maxHealth )
+	SetTeam( shieldModel, gs.owner.GetTeam() )
+
+	if ( !gs.invulnerable )
+	{
+		shieldModel.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+	}
+	else
+	{
+		shieldModel.SetTakeDamageType( DAMAGE_NO )
+	}
+
+	if ( gs.bulletHitRules != null )
+		SetVortexSphereBulletHitRules( shieldModel, gs.bulletHitRules )
+	if ( gs.projectileHitRules != null )
+		SetVortexSphereProjectileHitRules( shieldModel, gs.projectileHitRules )
+
+	shieldModel.SetOwner( gs.owner )
+	shieldModel.SetParent( gs.parentEnt, gs.parentAttachment, true )
+
+	gs.ownerWeapon.SetWeaponUtilityEntity( shieldModel )
+	shieldModel.e.ownerWeapon = gs.ownerWeapon
+
+	if ( gs.shieldFX != $"" )
+		StartGunAttachedShieldFX( gs, shieldModel )
+
+	return shieldModel
+}
+
+// Incap shield and others uses this function (NOT Gibraltar)
+entity function CreateGunAttachedShield_PropShield( GunShieldSettings gs )
+{
+	int parentAttachIdx	= gs.parentEnt.LookupAttachment( gs.parentAttachment )
+	if ( parentAttachIdx < 0 )
+	{
+		//ReportNonFatalErrorMsg( "CreateGunAttachedShield_PropShield: Attachment id is invalid for attachment: '" + gs.parentAttachment + "' on player: " + gs.parentEnt + " settings: " + gs.parentEnt.GetPlayerSettings() + " model:" + gs.parentEnt.GetModelName() )
+		return null
+	}
+
+	entity shieldModel= CreatePropShield( gs.model, gs.impacteffectcolorID, gs.parentEnt.GetAttachmentOrigin( parentAttachIdx ) + gs.modelOverrideOrigin,
+		AnglesCompose( gs.parentEnt.GetAttachmentAngles( parentAttachIdx ), gs.modelOverrideAngles ), 6 )
+
+	Assert( shieldModel )
+
+	shieldModel.kv.collisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
+
+	if ( gs.modelHide )
+		shieldModel.Hide()
+
+	if ( gs.modelBlockRadiusDamage )
+		shieldModel.SetBlocksRadiusDamage( true )
+
+	if ( IsValid( gs.owner ) )
+	{
+		shieldModel.RemoveFromAllRealms()
+		shieldModel.AddToOtherEntitysRealms( gs.owner )
+	}
+
+	shieldModel.SetMaxHealth( gs.maxHealth )
+	shieldModel.SetHealth( gs.maxHealth )
+	SetTeam( shieldModel, gs.owner.GetTeam() )
+
+	if ( !gs.invulnerable )
+		shieldModel.SetTakeDamageType( DAMAGE_EVENTS_ONLY )
+	else
+		shieldModel.SetTakeDamageType( DAMAGE_NO )
+
+	shieldModel.SetOwner( gs.owner )
+	shieldModel.SetParent( gs.parentEnt, gs.parentAttachment, true )
+
+	gs.ownerWeapon.SetWeaponUtilityEntity( shieldModel )
+
+	shieldModel.e.ownerWeapon = gs.ownerWeapon
+
+	if ( gs.shieldFX != $"" )
+		StartGunAttachedShieldFX( gs, shieldModel )
+
+	return shieldModel
+}
+
+void function StartGunAttachedShieldFX( GunShieldSettings gs, entity shieldModel )
+{
+	// Explicitly start gs.shieldFX at a later point after a call to CreateGunAttachedShield_***
+	Assert( shieldModel )
+	Assert( gs.shieldFX != $"" )
+
+	vector fxAngles = (gs.fxOverrideAngles != <0,0,0>) ? gs.fxOverrideAngles : (-1.0 * gs.modelOverrideAngles)
+
+	if ( gs.useFriendlyEnemyFx )
+	{
+		array<int> visFlags = [ ENTITY_VISIBLE_TO_FRIENDLY, ENTITY_VISIBLE_TO_ENEMY ]
+		array<vector> colors = [ TEAM_COLOR_FRIENDLY, TEAM_COLOR_ENEMY ]
+
+		for ( int i = 0; i < visFlags.len(); i++ )
+		{
+			int v = visFlags[i]
+			vector c = colors[i]
+			entity s = StartParticleEffectOnEntityWithPos_ReturnEntity( shieldModel, GetParticleSystemIndex( gs.shieldFX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1, <0,0,0>, fxAngles )
+
+			s.SetOwner( gs.owner )
+			SetTeam( s, gs.owner.GetTeam() )
+
+			if ( (v == ENTITY_VISIBLE_TO_FRIENDLY) && IsValid( gs.owner ) && gs.owner.IsPlayer() && gs.owner.IsThirdPersonShoulderModeOn() )
+				v = (v | ENTITY_VISIBLE_TO_OWNER)
+
+			s.kv.VisibilityFlags = v
+
+			s.DisableHibernation()
+			shieldModel.e.fxControlPoints.append( s )
+			EffectSetControlPointVector( s, 2, c )
+
+			if ( gs.owner != null )
+			{
+				s.RemoveFromAllRealms()
+				s.AddToOtherEntitysRealms( gs.owner )
+			}
+
+			//EffectSetControlPointVector( wallFX, 3, <gs.shieldModelScaleOverride, 0, 0> )
+		}
+	}
+	else
+	{
+		entity fxEnt = StartParticleEffectOnEntityWithPos_ReturnEntity( shieldModel,
+			GetParticleSystemIndex( gs.shieldFX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1, <0, 0, 0>, fxAngles )
+
+		fxEnt.SetOwner( gs.owner )
+		if ( gs.useFxColorOverride )
+		{
+			shieldModel.e.fxControlPoints.append( fxEnt )
+			EffectSetControlPointVector( fxEnt, 1, <1,1,1> )
+			EffectSetControlPointVector( fxEnt, 2, gs.fxColorOverride )
+		}
+
+		int visFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY )
+		if ( IsValid( gs.owner ) && gs.owner.IsPlayer() && gs.owner.IsThirdPersonShoulderModeOn() )
+			visFlags = (visFlags | ENTITY_VISIBLE_TO_OWNER)
+
+		fxEnt.kv.VisibilityFlags = visFlags
+		fxEnt.DisableHibernation()
+
+		if ( gs.owner )
+		{
+			fxEnt.RemoveFromAllRealms()
+			fxEnt.AddToOtherEntitysRealms( gs.owner )
+		}
+	}
+}
+#endif // #if SERVER
+
+#if CLIENT
+void function TrackFirstPersonGunShield( entity vortexWeapon, asset shieldEffect, string attachment )
+{
+	thread TrackFirstPersonGunShield_Thread( vortexWeapon, shieldEffect, attachment )
+}
+
+void function TrackFirstPersonGunShield_Thread( entity vortexWeapon, asset shieldFX, string attachment )
+{
+	vortexWeapon.EndSignal( "OnDestroy" )
+	vortexWeapon.EndSignal( "OnChargeEnd" )
+	vortexWeapon.EndSignal( "GunShieldDeactivate" )
+
+	table<string,int> e
+	e["fxHandle"] <- -1
+
+	OnThreadEnd(
+		function() : ( e )
+		{
+			if ( e["fxHandle"] != -1 )
+				EffectStop( e["fxHandle"], true, false )
+		}
+	)
+
+	while ( true )
+	{
+		entity vortexSphere = vortexWeapon.GetWeaponUtilityEntity()
+
+		if ( IsValid( vortexSphere ) )
+		{
+			float healthFrac = GetHealthFrac( vortexSphere ) * 0.01
+			if ( e["fxHandle"] == -1 )
+				e["fxHandle"] = vortexWeapon.PlayWeaponEffectReturnViewEffectHandle( shieldFX, $"", attachment )
+
+			UpdateShieldColor( healthFrac, e["fxHandle"] )
+		}
+		else if ( e["fxHandle"] != -1 )
+		{
+			EffectStop( e["fxHandle"], true, false )
+			e["fxHandle"] = -1
+		}
+
+		WaitFrame()
+	}
+
+	WaitForever()
+}
+
+void function UpdateShieldColor( float shieldFrac, int fxHandle )
+{
+	vector colorVec = GetShieldTriLerpColor( 1.0 - shieldFrac )
+
+	if ( EffectDoesExist( fxHandle ) )
+		EffectSetControlPointVector( fxHandle, 1, colorVec )
+}
+#endif // #if CLIENT

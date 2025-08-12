@@ -1,0 +1,249 @@
+
+global function GameModes_Init_SV_CL
+
+void function GameModes_Init_SV_CL()
+{
+	string gameMode
+
+	////////////////////////////
+	//                        //
+	//        Menufall        //
+	//                        //
+	////////////////////////////
+
+	gameMode = MENUFALL
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#endif
+
+	////////////////////////////
+	//                        //
+	//          TDM           //
+	//                        //
+	////////////////////////////
+
+	gameMode = TEAM_DEATHMATCH
+
+	{	
+		#if SERVER
+			GameMode_AddServerInit( gameMode, GamemodeTdm_Init )
+			GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Directional )
+			GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Directional )
+		#endif
+		#if !UI
+			GameMode_SetScoreCompareFunc( gameMode, CompareKills )
+			GameMode_AddSharedInit( gameMode, GamemodeTdmShared_Init )
+		#endif
+	}
+
+	////////////////////////////
+	//                        //
+	//        Survival        //
+	//                        //
+	////////////////////////////
+
+	gameMode = SURVIVAL
+
+	{
+		#if SERVER
+			GameMode_AddServerInit( gameMode, GamemodeSurvival_Init )
+			//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+			//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+			GameMode_SetEvacEnabled( gameMode, false )
+		#elseif CLIENT
+			//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+		#endif
+		#if !UI
+			GameMode_SetScoreCompareFunc( gameMode, CompareAssaultScore )
+			GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+		#endif
+	}
+
+
+	////////////////////////////
+	//                        //
+	//       Custom CTF       //
+	//                        //
+	////////////////////////////
+
+	gameMode = CUSTOM_CTF
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit(gameMode, Sh_CustomCTF_Init)
+		GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	GameMode_AddServerInit(gameMode, _CustomCTF_Init)
+	//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#elseif CLIENT
+	GameMode_AddClientInit(gameMode, Cl_CustomCTF_Init)
+	//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+	#endif
+
+	//
+	//FLOWSTATE DM
+	//
+	
+	gameMode = fs_dm
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit(gameMode, Sh_CustomTDM_Init)
+		GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	GameMode_AddServerInit(gameMode, _CustomTDM_Init)
+	//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#elseif CLIENT
+	GameMode_AddClientInit(gameMode, Cl_CustomTDM_Init)
+	//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+	#endif
+
+	#if !UI
+		GameMode_SetScoreCompareFunc( gameMode, CompareKills )
+	#endif
+	
+
+	//
+	//FLOWSTATE AIMTRAINER
+	//
+	
+	gameMode = fs_aimtrainer
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit(gameMode, Sh_ChallengesByColombia_Init)
+		GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	GameMode_AddServerInit(gameMode, _ChallengesByColombia_Init)
+	//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#elseif CLIENT
+	GameMode_AddClientInit(gameMode, Cl_ChallengesByColombia_Init)
+	//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+	#endif
+	
+	//
+	//FLOWSTATE PROPHUNT
+	//
+	
+	gameMode = fs_prophunt
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit(gameMode, GamemodeProphuntShared_Init)
+		GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	GameMode_AddServerInit(gameMode, _GamemodeProphunt_Init)
+	//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#elseif CLIENT
+	GameMode_AddClientInit(gameMode, ClGamemodeProphunt_Init)
+	//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+	#endif	
+	#if !UI
+		GameMode_SetScoreCompareFunc( gameMode, CompareKills )
+	#endif
+	
+	//
+	//FLOWSTATE DUCKHUNT
+	//
+	
+	gameMode = fs_duckhunt
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit(gameMode, GamemodeDuckhuntShared_Init)
+		GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	GameMode_AddServerInit(gameMode, _GamemodeDuckhunt_Init)
+	//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#elseif CLIENT
+	GameMode_AddClientInit(gameMode, Cl_GamemodeDuckhunt_Init)
+	//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+	#endif	
+	#if !UI
+		GameMode_SetScoreCompareFunc( gameMode, CompareKills )
+	#endif
+
+	//
+	//FLOWSTATE INFECTION
+	//
+	
+	gameMode = fs_infected
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit(gameMode, Sh_GamemodeInfection_Init)
+		GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	GameMode_AddServerInit(gameMode, _GamemodeInfection_Init)
+	//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#elseif CLIENT
+	GameMode_AddClientInit(gameMode, Cl_GamemodeInfection_Init)
+	//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+	#endif
+	
+	#if !UI
+		GameMode_SetScoreCompareFunc( gameMode, CompareKills )
+	#endif
+	
+	//
+	//FLOWSTATE SND
+	//
+	
+	gameMode = fs_snd
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit(gameMode, Sh_GamemodeSND_Init)
+		GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	GameMode_AddServerInit(gameMode, _GamemodeSND_Init)
+	//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#elseif CLIENT
+	GameMode_AddClientInit(gameMode, Cl_GamemodeSND_Init)
+	//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+	#endif
+
+/* //removed until added fully
+	gameMode = fs_apexkart
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit(gameMode, Sh_FS_Carritos_Init)
+		GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	GameMode_AddServerInit(gameMode, _FS_Carritos_Init)
+	//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#elseif CLIENT
+	GameMode_AddClientInit(gameMode, Cl_FS_Carritos_Init)
+	//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+	#endif
+*/
+	
+	gameMode = WINTEREXPRESS
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit(gameMode, WinterExpress_Init)
+		// GameMode_AddSharedInit( gameMode, GamemodeSurvivalShared_Init )
+	#endif
+	#if SERVER
+	// GameMode_AddServerInit(gameMode, _GamemodeSND_Init)
+	//GameMode_SetPilotSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	//GameMode_SetTitanSpawnpointsRatingFunc( gameMode, RateSpawnpoints_Generic )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#elseif CLIENT
+	// GameMode_AddClientInit(gameMode, Cl_GamemodeSND_Init)
+	//GameMode_AddClientInit( gameMode, ClGamemodeSurvival_Init )
+	#endif
+}

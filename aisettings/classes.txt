@@ -1,0 +1,48 @@
+classes
+{
+	import npc_dropship.txt
+	import npc_dropship_respawn.txt
+	import npc_frag_drone.txt
+	import npc_frag_drone_treasure_tick.txt
+	import npc_training_dummy.txt
+	import npc_dummie_combat.txt
+	import npc_frag_drone_throwable.txt
+	import npc_dummie_combat_trainer.txt
+	import npc_training_dummy_trainer.txt
+	import npc_spider.txt
+	import npc_soldier_infected.txt
+	import npc_marvin.txt
+	import npc_prowler.txt
+	import npc_soldier.txt
+	import npc_gunship.txt
+	import npc_drone.txt
+	import npc_drone_plasma.txt
+	import npc_spectre.txt
+	import npc_stalker.txt
+	import npc_pilot_elite.txt
+	//movement recorder
+	import npc_dummie_ballistic.txt
+	import npc_dummie_loba.txt
+	import npc_dummie_rampart.txt
+	import npc_dummie_catalyst.txt
+	import npc_dummie_horizon.txt
+	import npc_dummie_valk.txt
+	import npc_dummie_ash.txt
+	
+	import npc_dummie_loba.txt
+	import npc_dummie_wraith.txt
+	import npc_dummie_wattson.txt
+	import npc_dummie_gibby.txt
+	import npc_dummie_caustic.txt
+	import npc_dummie_crypto.txt
+	import npc_dummie_mirage.txt
+	import npc_dummie_lifeline.txt
+	import npc_dummie_bangalore.txt
+	import npc_dummie_bloodhound.txt
+	import npc_dummie_pathfinder.txt
+	import npc_dummie_octane.txt
+	
+	import npc_supressorturret.txt
+	
+	import npc_nextbot.txt
+}

@@ -1,0 +1,15 @@
+{
+	name: CommonShootWithLos
+	pathingCost: -2
+	goalDirectionTowardFacing: 1
+	startPosition: 3
+	filterEngageDist: true
+	filterEnemyLOS: true
+}
+{
+	name: FavorMovingForward
+	pathingCost: -2
+	goalDirectionTowardFacing: 5
+	filterEngageDist: true
+	filterEnemyLOS: true
+}

@@ -1,0 +1,435 @@
+//NOTE: This file is deprecated, use code triggers instead of script triggers! - Chin
+untyped
+
+struct
+{
+	table<entity, int > scriptTriggerExclusiveEnts_Deprecated
+}
+file
+
+globalize_all_functions
+
+const float TRIGGER_DEBUG_REFRESH_RATE = 1.0
+const float TRIGGER_LONG_DEBUG_DRAW_TIME = 10000.0
+
+bool function HasForceUseCodeTriggers()
+{
+	return GetCurrentPlaylistVarBool( "forceUseCodeTriggers", true )
+}
+
+// all triggers' flags default to player only
+entity function CreateTriggerRadiusMultiple_Deprecated( vector origin, float radius, array<entity> ents = [], int flags = TRIG_FLAG_PLAYERONLY, float height = 20000.0 )
+{
+	if ( HasForceUseCodeTriggers() )
+	{
+		entity trigger = CreateCodeCylinderTrigger( origin, <0,0,0>, radius, height, height, flags  ) //20000 as a sentinel value, using INT_MAX will cause errors
+
+		if ( ents.len() > 0  )
+		{
+			int managedEntArray = CreateScriptManagedEntArray()
+			foreach( ent in ents )
+			{
+				AddToScriptManagedEntArray( managedEntArray, ent )
+			}
+
+			file.scriptTriggerExclusiveEnts_Deprecated[ trigger  ] <- managedEntArray //Support for deprecated feature of specifying which ents trigger reacts to
+		}
+
+		return trigger
+	}
+
+	else
+		return _CreateScriptCylinderTriggerInternal( origin, radius, flags, ents, null, null )
+
+	unreachable
+}
+
+entity function CreateTriggerCylinderMultiple_Deprecated( vector origin, float radius, float ornull topDelta = null, float ornull bottomDelta = null, array<entity> ents = [], int flags = TRIG_FLAG_PLAYERONLY )
+{
+	if ( HasForceUseCodeTriggers() )
+	{
+		float aboveHeight
+		float belowHeight
+		if ( topDelta == null  )
+		{
+			aboveHeight = INT_MAX
+		}
+		else
+		{
+			expect float( topDelta )
+			aboveHeight = topDelta
+		}
+
+		if ( bottomDelta == null )
+		{
+			belowHeight = INT_MAX
+		}
+		else
+		{
+			expect float( bottomDelta )
+			belowHeight = bottomDelta
+		}
+
+		entity trigger = CreateCodeCylinderTrigger( origin, <0,0,0>, radius, aboveHeight, belowHeight, flags  )
+
+		if ( ents.len() > 0  )
+		{
+			int managedEntArray = CreateScriptManagedEntArray()
+			foreach( ent in ents )
+			{
+				AddToScriptManagedEntArray( managedEntArray, ent )
+			}
+
+			file.scriptTriggerExclusiveEnts_Deprecated[ trigger  ] <- managedEntArray //Support for deprecated feature of specifying which ents trigger reacts to
+		}
+
+		return trigger
+	}
+	else
+		return _CreateScriptCylinderTriggerInternal( origin, radius, flags, ents, topDelta, bottomDelta )
+
+	unreachable
+}
+
+entity function CreateCodeCylinderTrigger( vector origin, vector angles, float radius, float aboveHeight, float belowHeight, int flags = TRIG_FLAG_PLAYERONLY  )
+{
+	entity cylinder = CreateEntity( "trigger_cylinder"  )
+	cylinder.SetOrigin( origin )
+	cylinder.SetAngles( angles )
+	cylinder.SetRadius( radius )
+	cylinder.SetAboveHeight( aboveHeight )
+	cylinder.SetBelowHeight( belowHeight )
+
+	if ( flags & TRIG_FLAG_NO_PHASE_SHIFT  )
+		cylinder.SetPhaseShiftCanTouch( false )
+
+	if ( flags & TRIG_FLAG_START_DISABLED )
+		cylinder.Disable()
+
+	if ( ( flags & TRIG_FLAG_PLAYERONLY ) )
+	{
+		cylinder.kv.triggerFilterPlayer = "all"
+		cylinder.kv.triggerFilterNpc = "none"
+		cylinder.kv.triggerFilterNonCharacter = 0
+	}	
+
+	DispatchSpawn( cylinder )
+	return cylinder
+}
+
+entity function _CreateScriptCylinderTriggerInternal( vector origin, float radius, int flags, array<entity> ents, float ornull topDelta, float ornull bottomDelta )
+{
+	entity trigger = CreateScriptRef( origin )
+
+	if ( ( flags & TRIG_FLAG_START_DISABLED ) )
+		trigger.e.scriptTriggerData.enabled = false
+	else
+		trigger.e.scriptTriggerData.enabled = true
+
+	trigger.e.scriptTriggerData.radius = radius
+
+	trigger.e.scriptTriggerData.infiniteTop = ( topDelta == null )
+	if ( !trigger.e.scriptTriggerData.infiniteTop )
+		trigger.e.scriptTriggerData.topDelta = expect float( topDelta )
+
+	trigger.e.scriptTriggerData.infiniteBottom = ( bottomDelta == null )
+	if ( !trigger.e.scriptTriggerData.infiniteBottom )
+		trigger.e.scriptTriggerData.bottomDelta = expect float( bottomDelta )
+
+	trigger.e.scriptTriggerData.flags = flags
+	trigger.e.scriptTriggerData.managedEntArrayHandle = -1
+
+	if ( ents.len() > 0 )
+	{
+		trigger.e.scriptTriggerData.flags = (flags | TRIG_FLAG_EXCLUSIVE)
+		trigger.e.scriptTriggerData.managedEntArrayHandle = CreateScriptManagedEntArray()
+
+		foreach ( ent in ents )
+			AddToScriptManagedEntArray( trigger.e.scriptTriggerData.managedEntArrayHandle, ent )
+	}
+
+	// if ( ( flags & TRIG_FLAG_DEVDRAW ) )
+		// DebugDrawTrigger( origin, radius, <RandomInt( 255 ), RandomInt( 255 ), RandomInt( 255 )>, TRIGGER_LONG_DEBUG_DRAW_TIME, true )
+
+	thread CylinderTriggerThink_Deprecated( trigger )
+
+	return trigger
+}
+
+void function ScriptTriggerSetEnabled_Deprecated( entity trigger, bool state )
+{
+	if ( HasForceUseCodeTriggers() )
+	{
+		if ( state  )
+		{
+			trigger.Enable()
+			trigger.SearchForNewTouchingEntity()
+
+			if( GetBugReproNum() != 1234 )
+				return
+
+			if ( IsValid( trigger.GetParent() ) )
+			{
+				trigger.SetAbsOrigin( trigger.GetOrigin()  ) //Hack, Without doing this it seems like it doesn't actually work for entities already inside the trigger.
+			}
+			else
+			{
+				trigger.SetOrigin( trigger.GetOrigin()  ) //Hack, Without doing this it seems like it doesn't actually work for entities already inside the trigger.
+			}
+		}
+
+		else
+		{
+			trigger.Disable()
+		}
+
+
+		return
+
+	}
+	else
+	{
+		trigger.e.scriptTriggerData.enabled = state
+		return
+	}
+}
+
+void function CylinderTriggerThink_Deprecated( entity triggerEnt )
+{
+	//Ensures that any callbacks the user sets are in place when the user spawns.
+	WaitFrame()
+
+	bool wasEnabled = triggerEnt.e.scriptTriggerData.enabled
+	int flags = triggerEnt.e.scriptTriggerData.flags
+
+	while ( IsValid( triggerEnt ) )
+	{
+		if ( !triggerEnt.e.scriptTriggerData.enabled )
+		{
+			if ( wasEnabled )
+			{
+				array<entity> entitiesToRemove // build an array since looping through a table and removing elements is undefined
+				foreach ( ent in triggerEnt.e.scriptTriggerData.entities )
+				{
+					entitiesToRemove.append( ent )
+				}
+
+				foreach ( ent in entitiesToRemove )
+				{
+					ScriptTriggerRemoveEntity_Deprecated( triggerEnt, ent )
+				}
+
+				Assert( triggerEnt.e.scriptTriggerData.entities.len() == 0 )
+			}
+		}
+		else
+		{
+			array<entity> entities
+			if ( ( flags & TRIG_FLAG_EXCLUSIVE ) )
+			{
+				entities = GetScriptManagedEntArray( triggerEnt.e.scriptTriggerData.managedEntArrayHandle )
+				// all of the entites from this array are gone, this trigger is of no use
+				if ( entities.len() == 0 )
+				{
+					triggerEnt.Kill_Deprecated_UseDestroyInstead()
+					return
+				}
+			}
+			else if ( ( flags & TRIG_FLAG_PLAYERONLY ) )
+			{
+				entities = GetPlayerArray()
+			}
+			//else if ( ( flags, TRIG_FLAG_NPCONLY ) )//{
+			//	entities = GetNPCArray()
+			//}
+			else
+			{
+				entities = GetPlayerArray()
+				entities.extend( GetNPCArray() )
+				entities.extend( GetPlayerDecoyArray() )
+			}
+			//entities.extend( GetAllFlyers() )
+			//entities.extend( GetAllLeviathans() )
+
+			foreach ( ent in entities )
+			{
+				if ( !IsAlive( ent ) )
+				{
+					if ( ent in triggerEnt.e.scriptTriggerData.entities )
+						ScriptTriggerRemoveEntity_Deprecated( triggerEnt, ent )
+					continue
+				}
+
+				if ( ent.IsPlayer() && ent.IsPhaseShifted() && ( flags & TRIG_FLAG_NO_PHASE_SHIFT ) )
+				{
+					if ( ent in triggerEnt.e.scriptTriggerData.entities )
+						ScriptTriggerRemoveEntity_Deprecated( triggerEnt, ent )
+					continue
+				}
+
+				if ( !triggerEnt.DoesShareRealms( ent ) )
+				{
+					if ( ent in triggerEnt.e.scriptTriggerData.entities )
+						ScriptTriggerRemoveEntity_Deprecated( triggerEnt, ent )
+					continue
+				}
+
+				vector entityOrg = ent.GetOrigin()
+				vector triggerOrg = triggerEnt.GetOrigin()
+
+				if ( Distance2D( entityOrg, triggerOrg ) < triggerEnt.e.scriptTriggerData.radius )
+				{
+					if ( !triggerEnt.e.scriptTriggerData.infiniteTop && entityOrg.z > triggerOrg.z + triggerEnt.e.scriptTriggerData.topDelta )
+						continue
+
+					//72 is magic number for height of players. Should account for height of NPCs
+					if ( !triggerEnt.e.scriptTriggerData.infiniteBottom && entityOrg.z + 72.0 < triggerOrg.z - triggerEnt.e.scriptTriggerData.bottomDelta )
+						continue
+
+					//if ( (flags & TRIG_FLAG_NOCONTEXTBUSY) && !ent.IsPlayerDecoy() && ent.ContextAction_IsBusy() ) //This should probably be ContextAction_IsActive()
+					//	continue
+
+					if ( !(ent in triggerEnt.e.scriptTriggerData.entities) )
+					{
+						ScriptTriggerAddEntity_Deprecated( triggerEnt, ent )
+						//if ( ( flags, TRIG_FLAG_ONCE ) )//{
+						//	WaitEndFrame()
+						//	triggerEnt.Kill_Deprecated_UseDestroyInstead()
+						//	return
+						//}
+					}
+				}
+				else if ( ent in triggerEnt.e.scriptTriggerData.entities )
+				{
+					ScriptTriggerRemoveEntity_Deprecated( triggerEnt, ent )
+				}
+			}
+		}
+
+		wasEnabled = triggerEnt.e.scriptTriggerData.enabled
+		WaitFrame()
+	}
+}
+
+void function ScriptTriggerRemoveEntity_Deprecated( entity triggerEnt, entity ent )
+{
+	Assert( ent in triggerEnt.e.scriptTriggerData.entities )
+
+	foreach ( callbackFunc in triggerEnt.e.scriptTriggerData.leaveCallbacks )
+	{
+		callbackFunc( triggerEnt, ent )
+	}
+
+	delete triggerEnt.e.scriptTriggerData.entities[ent]
+}
+
+void function ScriptTriggerAddEntity_Deprecated( entity triggerEnt, entity ent )
+{
+	Assert( !(ent in triggerEnt.e.scriptTriggerData.entities) )
+
+	triggerEnt.e.scriptTriggerData.entities[ent] <- ent
+
+	foreach ( callbackFunc in triggerEnt.e.scriptTriggerData.enterCallbacks )
+	{
+		callbackFunc( triggerEnt, ent )
+	}
+
+	triggerEnt.Signal( TRIGGER_INTERNAL_SIGNAL )
+
+	thread ScriptTriggerPlayerDisconnectThink_Deprecated( triggerEnt, ent )
+}
+
+void function ScriptTriggerPlayerDisconnectThink_Deprecated( entity triggerEnt, entity ent )
+{
+	triggerEnt.EndSignal( "OnDestroy" )
+	ent.EndSignal( "OnDeath" )
+
+	OnThreadEnd(
+		function() : ( triggerEnt, ent )
+		{
+			if ( !IsValid( ent ) )
+				return
+
+			if ( ent in triggerEnt.e.scriptTriggerData.entities )
+				ScriptTriggerRemoveEntity_Deprecated( triggerEnt, ent )
+		}
+	)
+
+	ent.WaitSignal( "OnDestroy" )
+}
+
+array<entity> function GetAllEntitiesInTrigger_Deprecated( entity trigger )
+{
+
+	if ( HasForceUseCodeTriggers() )
+	{
+		array<entity> ents = trigger.GetTouchingEntities()
+
+		if( GetBugReproNum() == 1234 && ents.len() > 0  )
+		{
+			foreach( ent in ents )
+			{
+				printt( "Touching ent: " + ent  )
+			}
+		}
+
+
+		if ( !( trigger in file.scriptTriggerExclusiveEnts_Deprecated  ) ) //No exclusive ents set up
+			return ents
+
+		array<entity> managedEntArray = GetScriptManagedEntArray( file.scriptTriggerExclusiveEnts_Deprecated[ trigger ] )
+
+		array<entity> resultArray
+
+		foreach( touchingEnt in ents )
+		{
+			if (  managedEntArray.contains( touchingEnt )  )
+				resultArray.append( touchingEnt  )
+		}
+
+		return resultArray
+
+	}
+	else
+	{
+		array<entity> ents
+		foreach ( ent in trigger.e.scriptTriggerData.entities )
+		{
+			ents.append( ent )
+		}
+
+		return ents
+	}
+
+	unreachable
+}
+
+void function AddCallback_ScriptTriggerEnter_Deprecated( entity trigger, void functionref( entity, entity ) callbackFunc )
+{
+	if ( HasForceUseCodeTriggers() )
+	{
+		trigger.SetEnterCallback( callbackFunc  )
+		trigger.SearchForNewTouchingEntity()
+	}
+	else
+	{
+		trigger.e.scriptTriggerData.enterCallbacks.append( callbackFunc )
+	}
+
+}
+
+void function AddCallback_ScriptTriggerLeave_Deprecated( entity trigger, void functionref( entity, entity )  callbackFunc )
+{
+	if ( HasForceUseCodeTriggers() )
+	{
+		trigger.SetLeaveCallback( callbackFunc  )
+		trigger.SearchForNewTouchingEntity()
+
+	}
+	else
+	{
+		trigger.e.scriptTriggerData.leaveCallbacks.append( callbackFunc )
+	}
+
+}
+

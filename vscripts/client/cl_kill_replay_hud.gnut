@@ -1,0 +1,272 @@
+global function ClKillReplayHud_Init
+
+global function KillReplayHud_AddClient
+global function KillReplayHud_Activate
+global function KillReplayHud_Deactivate
+
+global function ServerCallback_KillReplayHud_Activate
+global function ServerCallback_KillReplayHud_Deactivate
+global function ServerCallback_UpdateSpectatorTargetCount
+global function RoundWinningKillReplayClientHud_Activate
+global function GetPlayerIsWatchingReplay
+
+struct
+{
+	var killReplayOverlayRui
+	bool IsWatchingReplay = false
+	int allowedSpectatorTargetCount = 0
+} file
+
+void function ClKillReplayHud_Init()
+{
+	RegisterSignal( "DeactivateKillReplayHud" )
+
+	AddCallback_KillReplayStarted( KillReplayHud_Activate )
+	AddCallback_KillReplayEnded( KillReplayHud_Deactivate )
+
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+}
+
+void function EntitiesDidLoad()
+{
+	if ( !IsRoundWinningKillReplayEnabled() ) //Need to check in EntitiesDidLoad as opposed to main() since the .nv isn't set yet in main()
+		return
+
+	AddCallback_KillReplayStarted( RoundWinningKillReplayClientHud_Activate )
+	AddCallback_KillReplayEnded( RoundWinningKillReplayClientHud_Deactivate )
+}
+
+void function KillReplayHud_AddClient()
+{
+	entity player = GetLocalClientPlayer()
+}
+
+string function GetRefFromDamageSourceId( int damageSourceId )
+{
+	table damageSourceIdEnum = expect table( getconsttable().eDamageSourceId )
+
+	array<string> damageSourceIndexToName
+	damageSourceIndexToName.resize( damageSourceIdEnum.len(), "UNDEFINED" )
+	foreach ( name, index in damageSourceIdEnum )
+	{
+		expect int( index )
+		if ( index >= 0 )
+			damageSourceIndexToName[index] = string( name )
+	}
+
+	if ( damageSourceId in damageSourceIndexToName )
+		return damageSourceIndexToName[damageSourceId]
+	else
+		return ""
+
+	unreachable
+}
+
+void function ServerCallback_KillReplayHud_Activate() {	
+	Custom_KillReplayHud_Activate()
+}
+
+void function ServerCallback_KillReplayHud_Deactivate() {
+	Custom_KillReplayHud_Deactivate()
+}
+
+void function KillReplayHud_Activate()
+{
+	if ( IsReplayRoundWinning() )
+		return
+
+	//printt( "KillReplayHud_Activate, replay not roundwinning" )
+
+	if ( file.killReplayOverlayRui != null )
+	{
+		RuiDestroyIfAlive( file.killReplayOverlayRui )
+		file.killReplayOverlayRui = null
+	}
+	
+	var rui = RuiCreate( $"ui/kill_replay_overlay.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 900 )
+	file.killReplayOverlayRui = rui
+	
+	// RuiSetGameTime( rui, "startTime", Time() )
+	RuiSetString( rui, "killReplayTitleText", "Kill Replay" )
+	Minimap_DisableDraw_Internal()
+	
+	AttackerDisplayNameStruct nameOfLastKiller = clGlobal.nameOfLastKiller
+
+	//Nothing of this works with the rui present in our build. Cafe
+	// if ( nameOfLastKiller.attackerName != "" )
+	// {
+		// RuiSetBool( file.killReplayOverlayRui, "showKillerWeaponInfo", true )
+		// RuiSetBool( file.killReplayOverlayRui, "showKillerInfo", true )
+		
+		// RuiSetString( file.killReplayOverlayRui, "killerWeaponName", "Test" )
+		// RuiSetString( file.killReplayOverlayRui, "killerLevel", "Test" )
+		// RuiSetFloat( file.killReplayOverlayRui, "killerHealthFrac", nameOfLastKiller.healthFrac )
+		// RuiSetString( file.killReplayOverlayRui, "killerName", nameOfLastKiller.attackerName )
+	// }
+}
+
+
+void function KillReplayHud_Deactivate()
+{
+	if ( IsReplayRoundWinning() )
+		return
+
+	Minimap_EnableDraw_Internal()
+	if ( file.killReplayOverlayRui != null )
+	{
+		RuiDestroyIfAlive( file.killReplayOverlayRui )
+		file.killReplayOverlayRui = null
+	}
+
+	entity player = GetLocalClientPlayer()
+	player.Signal( "DeactivateKillReplayHud" )
+}
+
+void function RoundWinningKillReplayClientHud_Activate()
+{
+	if ( IsRoundWinningKillReplayEnabled() == false )
+		return
+
+	if ( IsReplayRoundWinning() == false )
+		return
+
+	entity clientPlayer = GetLocalClientPlayer()
+
+	StopLocal1PDeathSound() //Don't want this sound playing in RoundWinningKillReplay
+
+	clientPlayer.EndSignal( "OnDestroy" )
+
+	var rui = RuiCreate( $"ui/kill_replay_overlay.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 900 )
+	file.killReplayOverlayRui = rui
+
+	string announcementText
+	if ( IsRoundBased() )
+		announcementText = "#KILL_REPLAY_ROUND_WINNING_KILL_ANNOUNCEMENT"
+	else if ( IsSwitchSidesBased() )
+		announcementText = "#KILL_REPLAY_ROUND_WINNING_CAP_ANNOUNCEMENT"
+	else
+		announcementText = "#KILL_REPLAY_ROUND_WINNING_PLAY_ANNOUNCEMENT"
+
+	RuiSetString( file.killReplayOverlayRui, "killReplayTitleText", announcementText )
+
+	ClearAnnouncements() //Clear the "ROUND WON" announcement from end of round
+
+	entity viewEntity = GetViewEntity()
+	if ( viewEntity == null ) //Sometimes this can be null, e.g. we went back in time on the client before the entity existed. See Bug 112390
+		return
+
+	AttackerDisplayNameStruct names = GetAttackerDisplayNamesFromClassname( viewEntity, true )
+	string attackerName = names.attackerName
+	string attackerPetName = names.attackerPetName
+	bool wasKilledByPet = attackerPetName == "" ? false: true
+
+	string killerName = ""
+	if ( wasKilledByPet )
+		killerName = Localize( "#KILLREPLAY_WATCHING_KILLER_PET", Localize( attackerName ), Localize( attackerPetName ) )
+	else
+		killerName = attackerName
+
+	RuiSetString( file.killReplayOverlayRui, "killerName", killerName ) //TODO: See if this works for ctf!
+
+	if ( !viewEntity.IsPlayer() )
+		return
+
+	RuiSetBool( file.killReplayOverlayRui, "showKillerInfo", true )
+	RuiSetFloat( file.killReplayOverlayRui, "killerHealthFrac", expect float( level.nv.roundWinningKillReplayEntHealthFrac ) )
+}
+
+void function RoundWinningKillReplayClientHud_Deactivate() //Not doing screen fade in here, but might need to?
+{
+	if ( IsRoundWinningKillReplayEnabled() == false )
+		return
+
+	if ( IsReplayRoundWinning() )
+	{
+		//printt( "RoundWinningKillReplayClientHud_Deactivate, IsReplayRoundWinning()" )
+		RuiDestroy( file.killReplayOverlayRui )
+
+		entity player = GetLocalClientPlayer()
+
+		player.Signal( "DeactivateKillReplayHud" )
+
+		StopLocal1PDeathSound()
+	}
+}
+
+void function Custom_KillReplayHud_Activate()
+{
+	entity player = GetLocalClientPlayer()
+	
+	if ( !IsValid( player ) )
+		return
+	
+	if ( IsReplayRoundWinning() )
+		return
+
+	string attackerName = ""
+
+	FS_SetHideEndTimeUI( true )
+	//Set is watching replay
+	file.IsWatchingReplay = true
+	
+	Minimap_DisableDraw_Internal()
+
+	//Get the attackers entity
+	entity observerTarget = GetLocalClientPlayer().GetObserverTarget()
+
+	//Make sure the entity is valid
+	if(!IsValid(observerTarget))
+		observerTarget = GetLocalClientPlayer()
+
+	if(observerTarget != GetLocalClientPlayer() && observerTarget.IsPlayer())
+	{
+		attackerName = observerTarget.GetPlayerName()
+	}
+
+	if ( file.killReplayOverlayRui != null )
+	{
+		RuiDestroyIfAlive( file.killReplayOverlayRui )
+		file.killReplayOverlayRui = null
+	}
+	var rui = RuiCreate( $"ui/kill_replay_overlay.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 900 )
+	file.killReplayOverlayRui = rui
+
+	string announcementText = "Kill Replay"
+	
+	if( Gamemode() == eGamemodes.fs_snd )
+		announcementText = "Spectating Team"
+
+	RuiSetString( file.killReplayOverlayRui, "killReplayTitleText", announcementText )
+
+	RuiSetBool( file.killReplayOverlayRui, "showKillerInfo", true )
+	RuiSetBool( file.killReplayOverlayRui, "showKillerWeaponInfo", true )
+	RuiSetString( file.killReplayOverlayRui, "killerName", attackerName )
+}
+
+void function ServerCallback_UpdateSpectatorTargetCount(int targetCount, bool reverse)
+{
+	file.allowedSpectatorTargetCount = targetCount
+	
+	RunUIScript("UI_FlowstateCustomSetSpectateTargetCount", file.allowedSpectatorTargetCount, reverse)
+}
+
+void function Custom_KillReplayHud_Deactivate()
+{
+	//Set is not watching replay
+	FS_SetHideEndTimeUI( false )
+	file.IsWatchingReplay = false
+
+	if ( IsReplayRoundWinning() )
+		return
+	
+	if ( file.killReplayOverlayRui != null )
+	{
+		RuiDestroyIfAlive( file.killReplayOverlayRui )
+		file.killReplayOverlayRui = null
+	}
+}
+
+bool function GetPlayerIsWatchingReplay()
+{
+	return file.IsWatchingReplay
+}

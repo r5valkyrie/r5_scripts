@@ -1,0 +1,90 @@
+// "Gamematerial" "effect_name"
+
+
+ImpactTable
+{
+	FX
+	{
+		"C" "P_hmn_bslam_concrete" // Concrete, rock, porcelain, boulder, gravel, asphalt, brick, concrete_block, plaster
+		"D" "P_hmn_bslam_dirt"     //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup, lava_rock
+		"E" "P_hmn_bslam_metal"	  // metal_titan
+
+		"F" "none" //flesh
+		"G" "P_hmn_bslam_metal"	  //metalgrate, chainlink, chain
+		"H" "none" //alienflesh
+
+		"J" "P_hmn_bslam_dirt"	  //grass
+		"K" "P_hmn_bslam_mud"		//Mud
+		"L" "P_hmn_bslam_concrete" //plastic_barrel, plastic_box, item, rubber, rubbertire, jeeptire, slidingrubbertire, brakingrubbertire, slidingrubbertire_front, slidingrubbertire_rear
+		"M" "P_hmn_bslam_metal" //Default, metal, metal_box, solidmetal, armorflesh, metal_bouncy, slippery_metal, shellcasing_small, shellcasing_large, metal_barrel, floating_metal_barrel, weapon
+		"N" "P_hmn_bslam_slime" //Slime
+		"O" "P_hmn_bslam_mud" //Foliage
+		"P" "P_hmn_bslam_metal" //Computer
+
+		"R" "P_hmn_bslam_metal" //metalpanel, grenade, canister
+
+		"Q" "P_hmn_land_impact_snow" //snow
+		"R" "P_hmn_land_impact_snow" //ice
+		"S" "P_impact_exp_med_water" //water, slime
+		"T" "P_hmn_bslam_concrete" //tile
+		"U" "P_hmn_bslam_metal"	 //glass_breakable
+
+		"V" "P_hmn_bslam_metal" //Metal Vent
+		"W" "P_hmn_bslam_concrete" //Wood, Wood_lowdensity, Wood_Box, Wood_Crate, Wood_Plank, Wood_Solid, Wood_Furniture, Wood_Panel watermelon
+
+		"Y" "" //glass, brokenglass, glassbottle, pottery
+		"Z" "P_hmn_bslam_sand"  //sand
+
+		"airburst" "none"  //No Surface
+
+		"0" "P_hmn_bslam_concrete"
+		"1" "P_hmn_land_impact_lava_nodecal" //lava_flow
+		"2" "P_hmn_land_impact_lava" //lava_rock_hot
+		"3" "P_hmn_bslam_concrete"
+		"4" "P_hmn_bslam_concrete"
+		"5" "P_hmn_bslam_concrete"
+		"6" "P_hmn_bslam_concrete"
+		"7" "P_hmn_bslam_concrete"
+		"8" "P_hmn_bslam_concrete"
+		"9" "P_hmn_bslam_concrete" //puddle
+	}
+
+Sound
+	{
+
+		"C" "ronin_sword_impact_concrete_3p_vs_3p"
+		"D" "ronin_sword_impact_dirt_3p_vs_3p"
+		"E" "ronin_sword_impact_titan_3p_vs_3p"
+
+		"F" "ronin_sword_impact_flesh_3p_vs_3p"
+		"G" "ronin_sword_impact_metal_3p_vs_3p"
+		"H" "titan_punch_human_impact"
+
+		"J" "ronin_sword_impact_grass_3p_vs_3p"
+		"K" "ronin_sword_impact_water_3p_vs_3p"
+		"L" "ronin_sword_impact_plastic_3p_vs_3p"
+		"M" "ronin_sword_impact_metal_3p_vs_3p"
+		"N" "titan_melee_hit_3p"
+		"O" "ronin_sword_impact_foilage_3p_vs_3p"
+		"P" "titan_punch_android_impact"
+
+		"R" "ronin_sword_impact_armor_3p_vs_3p"
+		"S" "ronin_sword_impact_water_3p_vs_3p"
+		"T" "ronin_sword_impact_tile_3p_vs_3p"
+		"U" "ronin_sword_impact_glass_3p_vs_3p"
+
+		"V" "ronin_sword_impact_metal_3p_vs_3p"
+		"W" "ronin_sword_impact_wood_3p_vs_3p"
+
+		"Y" "ronin_sword_impact_glass_3p_vs_3p"
+		"Z" "ronin_sword_impact_sand_3p_vs_3p"
+
+		"splash" "titan_melee_hit_3p_vs_3p"
+		"slime_splash" "titan_melee_hit_3p_vs_3p"
+
+		"airburst" ""
+		"shieldhit" "TitanShield.MeleeImpact_3P_vs_3P"
+	}
+
+
+}
