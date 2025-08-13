@@ -1367,7 +1367,7 @@ LootData function SURVIVAL_Loot_GetLootDataByIndex( int index )
 	}
 	catch (error)
 	{
-		RunUIScript("OpenErrorDialog", "Client loot table out of sync (code:items)\n\nMake sure you have R5Reloaded and Flowstate updated.")
+		RunUIScript("OpenErrorDialog", "Client loot table out of sync (code:items)\n\nMake sure you have the latest version of Valkyrie.")
 		GetLocalClientPlayer().ClientCommand("disconnect")
 		printt(error)
 		return file.lootData[ file.lootIndexToString[0] ]
