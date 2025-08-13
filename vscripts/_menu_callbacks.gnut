@@ -14,7 +14,7 @@ void function MenuCallbacks_Init()
 bool function ClientCommandCallback_LeaveMatch( entity player, array<string> args )
 {
 	foreach ( func in file.onLeaveMatchCallbacks )
-		func( player )
+		func( player )test
 
     // Maybe save persistent data here.
 	thread function() : ( player )
