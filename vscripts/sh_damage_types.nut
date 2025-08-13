@@ -86,6 +86,7 @@ global enum eDamageSourceId
 	mp_weapon_dmr
 	mp_weapon_wingman
 	mp_weapon_semipistol
+	mp_weapon_semipistol_crate
 	mp_weapon_autopistol
 	mp_weapon_autopistol_fusion
 	mp_weapon_sniper

@@ -27,7 +27,7 @@ void function InitR5RMainMenu( var newMenuArg )
 	//Setup subtitle
 	file.subtitle = Hud_GetChild( file.menu, "Subtitle" )
 	var subtitleRui = Hud_GetRui( file.subtitle )
-	RuiSetString( subtitleRui, "subtitleText", "R5RELOADED".toupper() )
+	RuiSetString( subtitleRui, "subtitleText", "VALKYRIE".toupper() )
 }
 
 void function OnR5RSB_Show()

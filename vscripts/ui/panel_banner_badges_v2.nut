@@ -148,11 +148,11 @@ void function CardBadgesPanel_Update( var panel )
 					}
 				}
 
-				//R5Reloaded Temp
+				//Valkyrie Temp
 				if(ItemFlavor_GetHumanReadableRef(flav) == "gcard_badge_account_dev_badge")
 				{
-					toolTipData.titleText = "R5Reloaded Badge"
-					toolTipData.descText = "Play R5Reloaded"
+					toolTipData.titleText = "Valkyrie Badge"
+					toolTipData.descText = "Play Valkyrie"
 				}
 				else
 					toolTipData.descText = Localize( ItemFlavor_GetShortDescription( flav ) )

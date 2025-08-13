@@ -521,7 +521,7 @@ void function UpdateSystemPanel( var panel )
 			msgonbottom = "Practice Map - Ping: " + MyPing() + " ms."
 	}
 	else
-		msgonbottom = "R5Reloaded Server: Ping: " + MyPing() + " ms."
+		msgonbottom = "Valkyrie Server: Ping: " + MyPing() + " ms."
 		
 	var dataCenterElem = Hud_GetChild( panel, "DataCenter" )
 	Hud_SetText( dataCenterElem, msgonbottom)

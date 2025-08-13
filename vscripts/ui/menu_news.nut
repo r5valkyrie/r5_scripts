@@ -161,13 +161,13 @@ void function GetR5RNews()
         else if (i == 1)
         {
             page.title = "New Maps!"
-            page.desc = "R5Reloaded now supports various new maps from season 4."
+            page.desc = "Valkyrie now supports various new maps from season 4."
             page.image = GetAssetFromString( $"rui/promo/sdk_1".tostring() )
         }
 		else if (i == 2)
         {
             page.title = "A fresh new look"
-            page.desc = "R5Reloaded now uses season 4 theme, enjoy the new look!"
+            page.desc = "Valkyrie now uses season 4 theme, enjoy the new look!"
             page.image = GetAssetFromString( $"rui/promo/sdk_2".tostring() )
         }
 		else if (i == 3)

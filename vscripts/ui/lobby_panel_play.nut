@@ -596,7 +596,7 @@ void function Lobby_SetSelectedPlaylist( string playlistName )
 	//             the playlist the party is currently targetting to make
 	//             make sure the mod system also works correctly when trying
 	//             to preload level and the necessary mods for the given party
-	//             playlist. However since the r5reloaded networking infra
+	//             playlist. However since the Valkyrie networking infra
 	//             currently isn't build around parties, this has been disabled
 	//             to avoid inteference (mod level preloading favors party
 	//             target playlist over currently active one, just like how the
