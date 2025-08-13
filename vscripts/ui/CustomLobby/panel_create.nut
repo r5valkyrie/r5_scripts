@@ -62,7 +62,7 @@ void function InitCreatePanel( var panel )
 
 	//Setup Default Server Config
 	ServerSettings.svServerName = "My custom server"
-	ServerSettings.svServerDesc = "A R5Reloaded server"
+	ServerSettings.svServerDesc = "A Valkyrie server"
 	ServerSettings.svMapName = "mp_rr_canyonlands_64k_x_64k"
 	ServerSettings.svPlaylist = "survival_dev"
 	ServerSettings.svVisibility = eServerVisibility.OFFLINE

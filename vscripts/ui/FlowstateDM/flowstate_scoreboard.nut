@@ -100,7 +100,7 @@ void function Set_FSDM_ScoreboardScreen()
 		else
 		{
 			Hud_SetText( Hud_GetChild( file.menu, "TextCredits2" ), "FLOWSTATE SCRIPTS" )
-			Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by R5Reloaded." )
+			Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by Valkyrie." )
 		}
 		
 		while(file.FSDM_Scoreboard.len() == 0) //defensive fix

@@ -2450,7 +2450,7 @@ void function FS4DIntroSequence()
 		RuiSetInt( rui, "maxLines", 1 );
 		RuiSetInt( rui, "lineNum", 0 );
 		RuiSetFloat2( rui, "msgPos", <0.55, 0.475, 0> )
-		RuiSetString( rui, "msgText", "Powered by flowstate\nand r5reloaded" )
+		RuiSetString( rui, "msgText", "Powered by flowstate\nand Valkyrie" )
 		RuiSetFloat3( rui, "msgColor", <1, 1, 1> )
 		RuiSetFloat( rui, "msgFontSize", 24.0)
 		RuiSetFloat( rui, "msgAlpha", 0.9 )

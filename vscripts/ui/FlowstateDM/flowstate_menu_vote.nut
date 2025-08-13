@@ -81,27 +81,27 @@ void function Open_FSDM_VotingPhase()
 		{
 			case ePlaylists.fs_prophunt:
 				Hud_SetText( Hud_GetChild( file.menu, "TextCredits2" ), "FS PROPHUNT" )
-				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by R5Reloaded." )
+				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by Valkyrie." )
 			break
 
 			case ePlaylists.fs_dm:
 				Hud_SetText( Hud_GetChild( file.menu, "TextCredits2" ), "FLOWSTATE DM" )
-				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by R5Reloaded." )
+				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by Valkyrie." )
 			break
 			
 			case ePlaylists.fs_snd:
 				Hud_SetText( Hud_GetChild( file.menu, "TextCredits2" ), "FS SEARCH AND DESTROY" )
-				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by R5Reloaded." )
+				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by Valkyrie." )
 			break
 			
 			case ePlaylists.flowstate_pkknockback:
 				Hud_SetText( Hud_GetChild( file.menu, "TextCredits2" ), "FS PK PUSHBACK" )
-				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by R5Reloaded." )
+				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by Valkyrie." )
 			break
 						
 			case ePlaylists.fs_infected:
 				Hud_SetText( Hud_GetChild( file.menu, "TextCredits2" ), "FS INFECTED" )
-				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by R5Reloaded." )
+				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by Valkyrie." )
 			break
 
 			case ePlaylists.fs_1v1:
@@ -116,7 +116,7 @@ void function Open_FSDM_VotingPhase()
 
 			default:
 				Hud_SetText( Hud_GetChild( file.menu, "TextCredits2" ), "FLOWSTATE" )
-				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by R5Reloaded." )
+				Hud_SetText( Hud_GetChild( file.menu, "TextCredits" ), "Made by @CafeFPS. Powered by Valkyrie." )
 			break
 		}
 	}

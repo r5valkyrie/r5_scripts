@@ -413,7 +413,7 @@ void function RepAnims( entity replicator, entity playerUser )
 	wait 1
 	StartParticleEffectOnEntityWithPos( replicator, GetParticleSystemIndex( $"P_trophy_sys_dmg" ), FX_PATTACH_CUSTOMORIGIN_FOLLOW, -1, <0, 0, 60>, <0, 0, 0> )
 	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Pilot_Mvmt_Execution_Cloak_AndroidSparks" )
-	Dev_PrintMessage( playerUser, "CRAFTING SYSTEM IS STILL WIP", "We are working hard to bring new content into R5Reloaded, Crafting is one of them!", 5, "UI_CraftingTable_Purchase_Accept_1P" )
+	Dev_PrintMessage( playerUser, "CRAFTING SYSTEM IS STILL WIP", "We are working hard to bring new content into Valkyrie, Crafting is one of them!", 5, "UI_CraftingTable_Purchase_Accept_1P" )
 	wait 5
 	replicator.SetUsable()
 }
@@ -469,7 +469,7 @@ void function CraftAnims( entity harvester, entity playerUser )
 	waitthread PlayAnim( harvester, "source_full_to_empty" )
 	thread PlayAnim( harvester, "source_empty_idle" )
 	wait 2
-	Dev_PrintMessage( playerUser, "CRAFTING SYSTEM IS STILL WIP", "We are working hard to bring new content into R5Reloaded, Crafting is one of them!", 2, "UI_CraftingTable_Purchase_Accept_1P" )
+	Dev_PrintMessage( playerUser, "CRAFTING SYSTEM IS STILL WIP", "We are working hard to bring new content into Valkyrie, Crafting is one of them!", 2, "UI_CraftingTable_Purchase_Accept_1P" )
 }
 
 entity function CraftingSiphon_CreateAmbientGeneric( vector origin, string alias, bool active )

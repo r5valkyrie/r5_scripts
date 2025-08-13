@@ -751,7 +751,7 @@ void function Flowstate_ServerSaveChat()
 
 	
 	file.allChatLines.clear()
-	Warning("[!] CHAT WAS SAVED in /r5reloaded/platform/, CHAT LINES: " + i)
+	Warning("[!] CHAT WAS SAVED in /valkyrie/platform/, CHAT LINES: " + i)
 }
 
 void function SetFallTriggersStatus(bool status){

@@ -153,7 +153,7 @@ global function SpawnSystem_GetPakInfoForKey
 					[" ==== SETTINGS ===="] = "",
 					["....."] = "",
 					[" script DEV_SpawnsPlaylist( string playlist = \"\" ) "] = "Sets the playlist this spawn pak should load for. This will also automatically apply the values saved in the playlists_r5_patch.txt for the specified playlisst.",
-					[" script DEV_SetAutoSave( bool value = true )"] = "Disabled by default. Make sure folder 'output' in r5reloaded/platform exists",
+					[" script DEV_SetAutoSave( bool value = true )"] = "Disabled by default. Make sure folder 'output' in Valkyrie/platform exists",
 					[" script DEV_LoadPak( string pak = \"\", string playlist = \"\" )"] = "Loads spawn pak specifying rpak asset and playlist. If none provided, loads current pak. If custom spawns are wrote into the script test function, it loads those instead.",
 					[" script DEV_SpawnType( string setToType = \"\" )"] = "Params: \"csv\" or \"sq\" Sets/Converts the current array of print outs to specified type, and further additions are added as the specified type. Returns the current type if no parameters are provided. ( call with printt() )",
 					[" script DEV_SetTeamCount( int size )"] = "Sets the count of teams per spawn set formatting the PrintSpawns() array",
@@ -2915,7 +2915,7 @@ string function CheckFirstUse()
     msg.append( "|                                                 |" )
     msg.append( "---------------------------------------------------" )
     msg.append( " " )
-	msg.append( "NOTICE: Make sure to have a folder called 'output' in r5reloaded/platform directory" )
+	msg.append( "NOTICE: Make sure to have a folder called 'output' in Valkyrie/platform directory" )
 	msg.append( "NOTICE: AutoSave is disabled by default. To turn on run 'script DEV_SetAutoSave()'" )	
 	msg.append( "NOTICE: You should run DEV_SpawnsPlaylist( \"fs_playlistname_here\" ) with the intended playlist for spawns." )
 	

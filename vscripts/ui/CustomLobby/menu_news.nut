@@ -145,7 +145,7 @@ void function GetR5RNews()
     for(int i = 0; i < 1; i++)
 	{
 		NewsPage page
-		page.title = "Welcome to R5Reloaded!"
+		page.title = "Welcome to Valkyrie!"
 		page.desc = "This news panel isnt currently used for much, but maybe one day."
 		page.image = GetAssetFromString( $"rui/promo/S3_General_" + (i + 1).tostring() )
 		file.newspages.append(page)
