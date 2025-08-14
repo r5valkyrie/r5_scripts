@@ -2077,16 +2077,6 @@ void function Flowstate_GivePlayerLoadoutOnGameStart_Copy( entity player, bool f
 		}
 	}
 
-	if( script_bGiveskins )
-	{
-		array<ItemFlavor> characterSkinsA = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( playerCharacter ) )
-		CharacterSkin_Apply( player, characterSkinsA[characterSkinsA.len()-RandomIntRangeInclusive(1,4)])
-		
-		#if DEVELOPER
-			print( "should have skins")
-		#endif
-	}
-
 	//give weapons on landing only? Cafe
 	if( fromRespawning && file.playersOnHovertank.contains( player ) )
 	{
