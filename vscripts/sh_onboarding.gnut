@@ -839,8 +839,6 @@ global enum eMovementType
 	HALO_MOVEMENT_NEW
 }
 
-global bool script_bGiveskins = false
-
 struct
 {
 	void functionref(entity player ) ObserverThreadOverrideCallback = null
@@ -1409,12 +1407,6 @@ void function DecideRespawnPlayer( entity player, bool giveLoadoutWeapons = true
 
 	if( Playlist() == ePlaylists.fs_scenarios )
 		return
-
-	if( script_bGiveskins )
-	{
-		array<ItemFlavor> characterSkinsA = GetValidItemFlavorsForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() ) ) )
-		CharacterSkin_Apply( player, characterSkinsA[characterSkinsA.len()-RandomIntRangeInclusive(1,4)])
-	}
 
 	//if( player.p.assignedCustomModel != -1 )//Custom models cause engine issues, disabling for now til models are updated. - Kral
 	{
