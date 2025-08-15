@@ -86,6 +86,7 @@ global enum eMaps
 	mp_rr_arena_empty, //27
 	mp_rr_salham, //28
 	mp_lobby, //29
+	mp_rr_rise, //30 -r2
 	
 	_MAP_COUNT //LAST
 }

@@ -47,11 +47,11 @@ void function StimPlayerWithOffhandWeapon( entity player, float duration, entity
 void function StimPlayer_Internal( entity player, float duration, float effectSeverity, entity offhandWeapon )
 {
 	int endlessStatusEffectHandle = 0
-	if ( duration == USE_TIME_INFINITE )
+	//if ( duration == USE_TIME_INFINITE )
 	{
 		endlessStatusEffectHandle = StatusEffect_AddEndless( player, eStatusEffect.speed_boost, effectSeverity )
 	}
-	else
+	/*else
 	{
 		float stimSpeed = StatusEffect_GetSeverity( player, eStatusEffect.speed_boost )
 		//
@@ -61,7 +61,7 @@ void function StimPlayer_Internal( entity player, float duration, float effectSe
 		StatusEffect_AddTimed( player, eStatusEffect.anti_slow, 0.5, duration + 0.5, 0.5 ) //
 		StatusEffect_AddTimed( player, eStatusEffect.speed_boost, stimSpeed, duration + 0.5, 0.5 ) //
 		StatusEffect_AddTimed( player, eStatusEffect.stim_visual_effect, 1.0, duration, duration )
-	}
+	}*/
 
 #if SERVER
 
