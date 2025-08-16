@@ -87,6 +87,7 @@ global enum JoinType
     None = 2
 }
 
+//Struct for server listing
 global struct ServerListing
 {
 	int	svServerID
@@ -96,6 +97,7 @@ global struct ServerListing
 	string svDescription
 	int svMaxPlayers
 	int svCurrentPlayers
+	bool svHasPassword
 }
 
 struct

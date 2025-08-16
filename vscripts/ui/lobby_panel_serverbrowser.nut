@@ -37,6 +37,7 @@ struct SelectedServerInfo
 	string svMapName = ""
 	string svPlaylist = ""
 	string svDescription = ""
+	bool svHasPassword = false
 }
 
 struct {
@@ -188,6 +189,7 @@ void function ServerBrowser_UpdateSelectedServerUI()
 void function ServerBrowser_NoServersLabel(bool show)
 {
 	//Set no servers found ui based on bool
+	Hud_SetVisible(Hud_GetChild( file.panel, "ServerNameLine" ), !show )
 	Hud_SetVisible(Hud_GetChild( file.panel, "PlayerCountLine" ), !show )
 	Hud_SetVisible(Hud_GetChild( file.panel, "PlaylistLine" ), !show )
 	Hud_SetVisible(Hud_GetChild( file.panel, "MapLine" ), !show )
@@ -249,6 +251,11 @@ void function ServerBrowser_ResetLabels()
 	array<var> serverlabels = GetElementsByClassname( file.menu, "ServerLabels" )
 	foreach ( var elem in serverlabels )
 		Hud_SetText(elem, "")
+
+		//Clear all server labels
+	array<var> serverlocked = GetElementsByClassname( file.menu, "ServLocked" )
+	foreach ( var elem in serverlocked )
+		Hud_SetVisible(elem, false)
 }
 
 void function ServerBrowser_NoServersFound(bool showlabel)
@@ -299,7 +306,7 @@ void function UICodeCallback_OnServerListRequestCompleted(bool success, string e
 	}
 
 	// Add each server to the array
-	for (int i=0, j=serverCount; i < j; i++) {
+	for (int i=0, j=GetServerCount(); i < j; i++) {
 		ServerListing Server
 		Server.svServerID = i
 		Server.svServerName = GetServerName(i)
@@ -308,6 +315,7 @@ void function UICodeCallback_OnServerListRequestCompleted(bool success, string e
 		Server.svDescription = GetServerDescription(i)
 		Server.svMaxPlayers = GetServerMaxPlayers(i)
 		Server.svCurrentPlayers = GetServerCurrentPlayers(i)
+		Server.svHasPassword = GetServerHasPassword(i)
 		file.m_vServerList.append(Server)
 	}
 
@@ -395,6 +403,7 @@ void function ServerBrowser_FilterServerList()
 		Hud_SetText( Hud_GetChild( file.panel, "Map" + i ), GetUIMapName(file.m_vFilteredServerList[i].svMapName))
 		Hud_SetText( Hud_GetChild( file.panel, "PlayerCount" + i ), file.m_vFilteredServerList[i].svCurrentPlayers + "/" + file.m_vFilteredServerList[i].svMaxPlayers)
 		Hud_SetVisible(Hud_GetChild( file.panel, "ServerButton" + i ), true)
+		Hud_SetVisible(Hud_GetChild( file.panel, "ServerLocked" + i ), file.m_vFilteredServerList[i].svHasPassword)
 		file.m_vAllPlayers += file.m_vFilteredServerList[i].svCurrentPlayers
 	}
 
@@ -477,6 +486,7 @@ void function UpdateShownPage()
 		Hud_SetText( Hud_GetChild( file.panel, "Map" + id ), GetUIMapName(file.m_vFilteredServerList[i].svMapName))
 		Hud_SetText( Hud_GetChild( file.panel, "PlayerCount" + id ), file.m_vFilteredServerList[i].svCurrentPlayers + "/" + file.m_vFilteredServerList[i].svMaxPlayers)
 		Hud_SetVisible(Hud_GetChild( file.panel, "ServerButton" + id ), true)
+		Hud_SetVisible(Hud_GetChild( file.panel, "ServerLocked" + i ), file.m_vFilteredServerList[i].svHasPassword)
 	}
 
 	UpdateListSliderHeight( float( file.m_vFilteredServerList.len() ) )
@@ -575,7 +585,7 @@ int function MS_GetPlayerCount()
 {
 	int count = 0
 	for (int i=0, j=file.m_vServerList.len(); i < j; i++) {
-		count += GetServerCurrentPlayers(i)
+		//count += GetServerCurrentPlayers(i)
 	}
 
 	return count

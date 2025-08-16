@@ -77,7 +77,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	"BtnSearchLabel"
 	{
 		"ControlName"			"Label"
-		"labelText"				"#FS_SEARCH"
+		"labelText"				"#SB_SEARCH"
 		"xpos"					"-23"
 		"ypos"					"-16"
 		"auto_wide_tocontents"	"1"
@@ -197,7 +197,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	"NoServersLbl"
 	{
 		"ControlName"			"Label"
-		"labelText"				"#FS_NO_SERVERS_FOUND"
+		"labelText"				"#SB_NO_SERVERS_FOUND"
 		"xpos"					"0"
 		"ypos"					"-15"
 		"auto_wide_tocontents"	"1"
@@ -236,7 +236,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	"RefreshServersText"
 	{
 		"ControlName"			"Label"
-		"labelText"				"#FS_REFRESH_SERVERS"
+		"labelText"				"#SB_REFRESH_SERVERS"
 		"font"					"DefaultBold_41"
 		"allcaps"				"1"
 		"auto_wide_tocontents"	"1"
@@ -279,7 +279,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	"ClearFlitersText"
 	{
 		"ControlName"			"Label"
-		"labelText"				"#FS_CLEAR_FILTERS"
+		"labelText"				"#SB_CLEAR_FILTERS"
 		"font"					"DefaultBold_41"
 		"allcaps"				"1"
 		"auto_wide_tocontents"	"1"
@@ -481,8 +481,8 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	"ServerNameLbl"
 	{
 		"ControlName"			"Label"
-		"labelText"				"#FS_SERVER_NAME"
-		"xpos"					"-15"
+		"labelText"				"#SB_SERVER_NAME"
+		"xpos"					"-65"
 		"ypos"					"0"
 		"zpos"					"6"
 		"textalignment"			"center"
@@ -499,7 +499,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	"PlayerCountLbl"
 	{
 		"ControlName"			"Label"
-		"labelText"				"#FS_PLAYERS"
+		"labelText"				"#SB_PLAYERS"
 		"xpos"					"-670"
 		"ypos"					"0"
 		"zpos"					"6"
@@ -517,7 +517,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	"PlaylistLbl"
 	{
 		"ControlName"			"Label"
-		"labelText"				"#FS_PLAYLIST"
+		"labelText"				"#SB_PLAYLIST"
 		"xpos"					"-800"
 		"ypos"					"0"
 		"zpos"					"6"
@@ -534,7 +534,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	"MapLbl"
 	{
 		"ControlName"			"Label"
-		"labelText"				"#FS_MAP"
+		"labelText"				"#SB_MAP"
 		"xpos"					"-1050"
 		"ypos"					"0"
 		"zpos"					"6"
@@ -548,10 +548,28 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 		"pin_to_sibling_corner"	"LEFT"
 	}
 
-	"ServerNameLine"
+	"ServerPasswordLine"
 	{
 		"ControlName"			"ImagePanel"
 		"xpos"					"0"
+		"ypos"					"0"
+		"tall"					"600"
+		"wide" 					"2"
+		"fillColor"				"155 155 155 200"
+        "drawColor"				"155 155 155 200"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"3"
+
+		"pin_to_sibling"		"ServerBrowserBG"
+		"pin_corner_to_sibling"	"TOP_LEFT"
+		"pin_to_sibling_corner"	"BOTTOM_LEFT"
+	}
+
+	"ServerNameLine"
+	{
+		"ControlName"			"ImagePanel"
+		"xpos"					"-50"
 		"ypos"					"0"
 		"tall"					"600"
 		"wide" 					"2"
@@ -1139,11 +1157,401 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 		"pin_to_sibling_corner"		"BOTTOM_LEFT"
 	}
 
+	"ServerLocked0"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton0"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked1"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton1"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked2"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton2"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked3"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton3"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked4"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton4"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked5"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton5"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked6"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton6"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked7"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton7"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked8"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton8"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked9"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton9"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked10"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton10"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked11"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton11"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked12"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton12"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked13"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton13"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
+	"ServerLocked14"
+	{
+		ControlName				RuiPanel
+		rui                     "ui/basic_image.rpak"
+		"classname"				"ServLocked"
+		"xpos"					"-10"
+		"ypos"					"0"
+		"tall"					"30"
+		"wide" 					"30"
+		"fillColor"				"30 30 30 120"
+        "drawColor"				"30 30 30 120"
+		"wrap"					"1"
+		"visible"				"1"
+		"zpos"					"0"
+		scaleImage              1
+
+        ruiArgs
+        {
+            basicImage "rui\menu\store\reqs_locked"
+        }
+
+		"pin_to_sibling"			"ServerButton14"
+		"pin_corner_to_sibling"		"LEFT"
+		"pin_to_sibling_corner"		"LEFT"
+	}
+
 	"ServerName0"
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1161,7 +1569,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1179,7 +1587,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1197,7 +1605,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1215,7 +1623,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1233,7 +1641,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1251,7 +1659,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1269,7 +1677,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1287,7 +1695,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1305,7 +1713,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1323,7 +1731,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1341,7 +1749,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1359,7 +1767,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1377,7 +1785,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
@@ -1395,7 +1803,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 	{
 		"ControlName"				"Label"
 		"labelText"					""
-		"xpos"						"-15"
+		"xpos"						"-65"
 		"ypos"						"0"
 		"zpos"						"0"
 		"wide"						"630"
