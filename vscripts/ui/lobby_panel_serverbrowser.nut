@@ -585,7 +585,7 @@ int function MS_GetPlayerCount()
 {
 	int count = 0
 	for (int i=0, j=file.m_vServerList.len(); i < j; i++) {
-		//count += GetServerCurrentPlayers(i)
+		count += GetServerCurrentPlayers(i)
 	}
 
 	return count
