@@ -55,5 +55,6 @@ localization/weapon/car
 localization/feature/battlepass
 localization/feature/challenges
 localization/feature/beasthunter
+localization/feature/seasonquest
 
 localization/cosmetics/charms
