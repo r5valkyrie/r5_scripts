@@ -3432,6 +3432,18 @@ void function Dev_PrintMessage( entity player, string text, string subText = "",
 	#endif
 }
 
+void function DoTimedAnnouncement( string text, string subText = "", float duration = 7.0, float repeatduration = 7.0, string soundAlias = "" )
+{
+	array<entity> players = GetPlayerArray()
+		foreach ( player in players ){
+		Dev_PrintMessage( player, text, subText, duration, soundAlias )
+	if (repeatduration >= 7.0){
+		wait repeatduration
+		thread DoTimedAnnouncement(text, subText, duration, repeatduration, soundAlias)}
+	else
+		Dev_PrintMessage( player, "Announcement timer is too short!", "", 4  )}
+}
+
 bool function IsAttackDefendBased() //If needed to, we can make this a .nv and then move this function into utility_shared
 {
 	return expect bool( level.attackDefendBased )
