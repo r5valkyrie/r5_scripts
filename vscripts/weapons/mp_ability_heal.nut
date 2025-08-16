@@ -3,7 +3,7 @@ global function OnWeaponPrimaryAttack_ability_heal
 global function OnWeaponChargeEnd_ability_heal
 global function OnWeaponAttemptOffhandSwitch_ability_heal
 
-const float STIM_DURATION = 5000.0
+const float STIM_DURATION = 6.0
 const int 	STIM_HEALTH_COST = 20
 
 bool function OnWeaponChargeBegin_ability_heal( entity weapon )
