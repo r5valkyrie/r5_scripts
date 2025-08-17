@@ -4575,11 +4575,11 @@ Scheme
         Logo
         {
             classname               LogoRui
-            xpos					2
+            xpos					-48
             ypos					0
             zpos					10
-            wide					630
-            tall					204
+            wide					123
+            tall					143
             visible					1
             proportionalToParent    1
             rui 					"ui/tab_logo.rpak"
