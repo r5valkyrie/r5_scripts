@@ -526,7 +526,7 @@ resource/ui/menus/dialog_gamemode_select_v2.menu
 			"fontHeight"			"30"
 			"zpos"					"5"
 			"textAlignment"			"north-west"
-			"labelText"				"#FS_SELECT_MAP"
+			"labelText"				"#SB_SELECT_MAP"
 			"font"					"TitleBoldFont"
 			"allcaps"				"1"
 			"fgcolor_override"		"200 200 200 255"

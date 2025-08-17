@@ -29,7 +29,7 @@
 			visible					0
 			enabled 0
 			fontHeight				27
-			labelText				"#FS_SELECT_A_TEAM"
+			labelText				"#SB_SELECT_A_TEAM"
 			font					"TitleBoldFont"
 			allcaps					1
 			fgcolor_override		"255 255 255 255"

@@ -1614,7 +1614,7 @@ void function InitMenus()
 {
 	InitGlobalMenuVars()
 
-	var mainMenu = AddMenu( "MainMenu", $"scripts/resource/ui/menus/main.menu", InitR5RMainMenu, "#MAIN" )
+	var mainMenu = AddMenu( "MainMenu", $"scripts/resource/ui/menus/main.menu", InitMainMenu, "#MAIN" )
 	AddPanel( mainMenu, "MainMenuPanel", InitR5RMainMenuPanel )
 
 	AddMenu( "PlayVideoMenu", $"scripts/resource/ui/menus/play_video.menu", InitPlayVideoMenu )

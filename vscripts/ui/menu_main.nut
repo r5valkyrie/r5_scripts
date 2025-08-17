@@ -34,21 +34,21 @@ void function InitMainMenu( var newMenuArg )
 
 	file.subtitle = Hud_GetChild( file.menu, "Subtitle" )
 	var subtitleRui = Hud_GetRui( file.subtitle )
-	RuiSetString( subtitleRui, "subtitleText", "Flowstate ".toupper() + FLOWSTATE_VERSION )
+	RuiSetString( subtitleRui, "subtitleText", "R5Valkyrie".toupper() )
 
 	file.versionDisplay = Hud_GetChild( menu, "VersionDisplay" )
-	file.signedInDisplay = Hud_GetChild( menu, "SignInDisplay" )
 }
 
 
 void function OnMainMenu_Show()
 {
 	//
+	float aspectRatio = 2.4 //
 	int width = int( Hud_GetHeight( file.titleArt ) * 1.77777778 )
 	Hud_SetWidth( file.titleArt, width )
 	Hud_SetWidth( file.subtitle, width )
 
-	Hud_SetText( file.versionDisplay, GetPublicGameVersion() + " - Valkyrie" )
+	Hud_SetText( file.versionDisplay, GetPublicGameVersion() )
 	Hud_Show( file.versionDisplay )
 
 	ActivatePanel( GetPanel( "MainMenuPanel" ) )
@@ -167,7 +167,7 @@ void function AttemptLaunch()
 		}
 	#endif // PS4_PROG
 
-	const int CURRENT_INTRO_VIDEO_VERSION = 3
+	const int CURRENT_INTRO_VIDEO_VERSION = 12
 	if ( (GetIntroViewedVersion() < CURRENT_INTRO_VIDEO_VERSION) || (InputIsButtonDown( KEY_LSHIFT ) && InputIsButtonDown( KEY_LCONTROL ))  || (InputIsButtonDown( BUTTON_TRIGGER_LEFT_FULL ) && InputIsButtonDown( BUTTON_TRIGGER_RIGHT_FULL )) )
 	{
 		if ( GetActiveMenu() == GetMenu( "PlayVideoMenu" ) )

@@ -60,7 +60,7 @@
 		{
 			ControlName				Label
 			"classname"				"CreateServerUI"
-			labelText				"#FS_SERVER_SETTINGS"
+			labelText				"#SB_SERVER_SETTINGS"
 			"font"					"DefaultBold_41"
 			"allcaps"				"1"
 			auto_wide_tocontents	1
@@ -225,7 +225,7 @@
 		{
 			ControlName				Label
 			"classname"				"CreateServerUI"
-			labelText				"#FS_START_GAME"
+			labelText				"#SB_START_GAME"
 			"font"					"DefaultBold_41"
 			"allcaps"				"1"
 			auto_wide_tocontents	1
@@ -392,7 +392,7 @@
 		{
 			ControlName				Label
 			"classname"				"CreateServerUI"
-			labelText				"#FS_SERVER_NAME"
+			labelText				"#SB_SERVER_NAME"
 			"font"					"DefaultBold_41"
 			"allcaps"				"1"
 			auto_wide_tocontents	1
@@ -448,7 +448,7 @@
 		{
 			ControlName				Label
 			"classname"				"CreateServerUI"
-			labelText				"#FS_SERVER_DESC"
+			labelText				"#SB_SERVER_DESC"
 			"font"					"DefaultBold_41"
 			"allcaps"				"1"
 			auto_wide_tocontents	1
@@ -504,7 +504,7 @@
 		{
 			ControlName				Label
 			"classname"				"CreateServerUI"
-			labelText				"#FS_SELECT_PLAYLIST"
+			labelText				"#SB_SELECT_PLAYLIST"
 			"font"					"DefaultBold_41"
 			"allcaps"				"1"
 			auto_wide_tocontents	1
@@ -560,7 +560,7 @@
 		{
 			ControlName				Label
 			"classname"				"CreateServerUI"
-			labelText				"#FS_SELECT_MAP"
+			labelText				"#SB_SELECT_MAP"
 			"font"					"DefaultBold_41"
 			"allcaps"				"1"
 			auto_wide_tocontents	1
@@ -616,7 +616,7 @@
 		{
 			ControlName				Label
 			"classname"				"CreateServerUI"
-			labelText				"#FS_SELECT_VISIBILITY"
+			labelText				"#SB_SELECT_VISIBILITY"
 			"font"					"DefaultBold_41"
 			"allcaps"				"1"
 			auto_wide_tocontents	1

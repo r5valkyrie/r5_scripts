@@ -73,13 +73,6 @@ void function ActivatePanel( var panel )
 	}
 
 	ShowPanel( panel )
-
-	// check if eula version is greater than the last accepted version
-	// as this will require the user to view the EULA again
-	if( !IsEULAAccepted() )
-	{
-		OpenEULADialog(false)
-	}
 }
 
 void function SetMainMenuBlackScreenVisible(bool show)

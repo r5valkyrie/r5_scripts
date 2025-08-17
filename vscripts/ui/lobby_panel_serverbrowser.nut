@@ -68,7 +68,7 @@ global bool ServerListFetching = false
 
 void function InitServerBrowserPanel( var panel )
 {
-	SetPanelTabTitle( panel, "SERVERS" )
+	SetPanelTabTitle( panel, "#SB_SERVERS" )
 	file.panel = panel
 	file.menu = GetParentMenu( file.panel )
 

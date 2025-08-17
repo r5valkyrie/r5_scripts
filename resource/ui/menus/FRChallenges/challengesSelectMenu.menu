@@ -154,7 +154,7 @@ scripts/resource/ui/menus/FRChallenges/challengesSelectMenu.menu
 			tall					60
 			visible					1
 			fontHeight				32
-			labelText				"#FS_SELECT_CHALLENGE"
+			labelText				"#SB_SELECT_CHALLENGE"
 			font					TitleBoldFont
 			allcaps					1
 			fgcolor_override		"252 198 3 255"

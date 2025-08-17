@@ -48,7 +48,7 @@ void function PopupPanel_OnNavBack( var panel )
 
 void function InitCreatePanel( var panel )
 {
-	SetPanelTabTitle( panel, "CREATE" )
+	SetPanelTabTitle( panel, "#SB_CREATE" )
 	file.panel = panel
 	file.menu = GetParentMenu( file.panel )
 

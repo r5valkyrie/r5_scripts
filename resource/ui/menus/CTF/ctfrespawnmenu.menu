@@ -802,7 +802,7 @@
 			"tall"						"40"
 			"visible"					"0"
 			"fontHeight"				"30"
-			"labelText"					"#FS_SELECT_LEGEND"
+			"labelText"					"#SB_SELECT_LEGEND"
 			"font"						"DefaultBold_41"
 			"allcaps"					"1"
 			"fgcolor_override"			"255 255 255 255"

@@ -474,7 +474,7 @@ scripts/resource/ui/menus/CustomLobby/panels/serverbrowser.res
 	"ServerNameLbl"
 	{
 		"ControlName"			"Label"
-		"labelText"				"#FS_SERVER_NAME"
+		"labelText"				"#SB_SERVER_NAME"
 		"xpos"					"-15"
 		"ypos"					"0"
 		"zpos"					"6"

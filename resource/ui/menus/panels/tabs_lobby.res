@@ -3,30 +3,36 @@ scripts/resource/ui/menus/panels/tabs_lobby.res
     Anchor
     {
 		ControlName				Label
+		zpos					-1
 		ypos					0
-		wide					%100
+		wide					1920//%100
 		tall					%100
 		labelText				""
-		visible				    1
+		visible				    0
         bgcolor_override        "0 0 0 0"
         paintbackground         1
+        enabled					0
     }
 
     Background
     {
         ControlName				RuiPanel
-		wide					%100
-		tall					%100
+		wide					%300
+		tall					84
         visible					1
         enabled					1
         proportionalToParent    1
         rui 					"ui/tabs_background.rpak"
+
+		pin_to_sibling			Anchor
+		pin_corner_to_sibling	TOP
+		pin_to_sibling_corner	TOP
     }
 
 	LeftNavButton
 	{
 		ControlName				RuiPanel
-		xpos                    -80
+		xpos                    -24
 		wide                    76
 		tall					28
 		visible					1
@@ -43,8 +49,7 @@ scripts/resource/ui/menus/panels/tabs_lobby.res
 		ControlName				RuiButton
 		InheritProperties		TabButtonLobby
 		scriptID				0
-		wide					250
-		xpos                    -650 //-700
+		xpos                    -410 //-700
 		pin_to_sibling			Anchor
 		pin_corner_to_sibling	TOP_LEFT
 		pin_to_sibling_corner	TOP
@@ -56,7 +61,7 @@ scripts/resource/ui/menus/panels/tabs_lobby.res
 		InheritProperties		TabButtonLobby
 		scriptID				1
 
-		xpos                    -70
+		xpos                    -80
 
 		pin_to_sibling			Tab0
 		pin_corner_to_sibling	TOP_LEFT

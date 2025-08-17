@@ -901,7 +901,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
 			"fontHeight"			"30"
 			"zpos"					"5"
 			"textAlignment"			"north-west"
-			"labelText"				"SERVERS"
+			"labelText"				"#SB_SERVERS"
 			"font"					"TitleFont"
 			"allcaps"				"1"
 			"fgcolor_override"		"255 255 255 255"

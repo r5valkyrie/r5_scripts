@@ -60,7 +60,7 @@
         rui					    "ui/basic_image.rpak"
         ruiArgs
         {
-            basicImage     "rui/hud/custom_badges/r5r_badge"
+            basicImage     "rui/hud/custom_badges/valk_badge"
         }
 
         pin_to_sibling			R5ReloadedBox

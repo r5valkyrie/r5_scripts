@@ -28,7 +28,7 @@ void function InitCreditPanel( var panel )
 {
 	file.panel = panel
 
-	SetPanelTabTitle( panel, "CREDITS" )
+	SetPanelTabTitle( panel, "#SB_CREDITS" )
 
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, CreditsPanel_OnShow )
 
