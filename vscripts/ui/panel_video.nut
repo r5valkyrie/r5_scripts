@@ -70,7 +70,7 @@ void function InitVideoPanel( var panel )
 		AddButtonEventHandler( button, UIE_CHANGE, AmdAntiLag_Changed )
 
 		button = Hud_GetChild( file.videoPanel, "SldFpsMax" )
-		SetupSettingsSlider( button, "#FS_FPS_MAX", "#FS_MAX_FPS_DESC", $"rui/menu/settings/settings_video" )
+		SetupSettingsSlider( button, "#SB_FPS_MAX", "#SB_MAX_FPS_DESC", $"rui/menu/settings/settings_video" )
 		//AddButtonEventHandler( button, UIE_CHANGE, FpsMax_Changed )
 		file.noApplyConfirmationRequired.append( button )
 		

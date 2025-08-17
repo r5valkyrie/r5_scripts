@@ -102,7 +102,7 @@
         navUp					SldBrightness
         navDown					SwchSprintCameraSmoothing
         minValue				1.0
-        maxValue				1.55
+        maxValue				1.687
         stepSize				0.0275
         inverseFill				0
     }
