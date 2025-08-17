@@ -237,7 +237,7 @@ int function GetActivePageIndexForRui()
 //promos will display in the order you place them here
 array<string> miniPromosData = [
 	"<m|rui/menu/maps/mp_rr_olympus_big_icon|Welcome to|Valkyrie|custom>",
-	"<m|rui/menu/maps/mp_rr_canyonlands_mu2_tt_big_icon|Join the Discord|Click me to join|url:https://discord.com/invite/jqMkUdXrBr>",
+	"<m|rui/menu/maps/mp_rr_canyonlands_mu2_tt_big_icon|Join the Discord|Click me to join|url:https://discord.gg/8nYYzSvf>",
 	"<m|m_openpack|OPEN PACK||openpack>"
 ]
 

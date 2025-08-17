@@ -19,6 +19,8 @@ struct
 	var socialButton
 	var gameMenuButton
 	var datacenterButton
+	var DcButton
+	var BlogButton
 
 	var serversButton
 	var playersButton
@@ -174,14 +176,23 @@ void function InitLobbyMenu( var newMenuArg )
 	HudElem_SetRuiArg( newsButton, "shortcutText", "%[R_TRIGGER|ESCAPE]%" )
 	Hud_AddEventHandler( newsButton, UIE_CLICK, NewsButton_OnActivate )
 
-	//var socialButton = Hud_GetChild( menu, "SocialButton" )
-	//file.socialButton = socialButton
-	//ToolTipData socialToolTip
-	//socialToolTip.descText = "#MENU_TITLE_FRIENDS"
-	//Hud_SetToolTipData( socialButton, socialToolTip )
-	//HudElem_SetRuiArg( socialButton, "icon", $"rui/menu/lobby/friends_icon" )
-	//HudElem_SetRuiArg( socialButton, "shortcutText", "%[STICK2|]%" )
-	//Hud_AddEventHandler( socialButton, UIE_CLICK, SocialButton_OnActivate )
+	var DcButton = Hud_GetChild( menu, "DcButton" )
+	file.DcButton = DcButton
+	ToolTipData dcToolTip
+	dcToolTip.descText = "#MENU_TITLE_DISCORD"
+	Hud_SetToolTipData( DcButton, dcToolTip )
+	HudElem_SetRuiArg( DcButton, "icon", $"rui/menu/lobby/dc_icon" )
+	HudElem_SetRuiArg( DcButton, "shortcutText", "%[STICK2|]%" )
+	Hud_AddEventHandler( DcButton, UIE_CLICK, DCButton_OnActivate )
+	
+	var BlogButton = Hud_GetChild( menu, "BlogButton" )
+	file.BlogButton = BlogButton
+	ToolTipData blogToolTip
+	blogToolTip.descText = "#MENU_TITLE_BLOG"
+	Hud_SetToolTipData( BlogButton, blogToolTip )
+	HudElem_SetRuiArg( BlogButton, "icon", $"rui/menu/lobby/blog_icon" )
+	HudElem_SetRuiArg( BlogButton, "shortcutText", "%[STICK2|]%" )
+	Hud_AddEventHandler( BlogButton, UIE_CLICK, BlogButton_OnActivate )
 
 	var playersButton = Hud_GetChild( menu, "PlayersButton" )
 	file.playersButton = playersButton
@@ -497,6 +508,27 @@ void function SocialButton_OnActivate( var button )
 	AdvanceMenu( GetMenu( "SocialMenu" ) )
 }
 
+void function DCButton_OnActivate( var button )
+{
+	if ( IsDialog( GetActiveMenu() ) )
+		return
+
+	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
+		return
+
+	LaunchExternalWebBrowser( "https://discord.gg/8nYYzSvf", WEBBROWSER_FLAG_NONE )
+}
+
+void function BlogButton_OnActivate( var button )
+{
+	if ( IsDialog( GetActiveMenu() ) )
+		return
+
+	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
+		return
+
+	LaunchExternalWebBrowser( "https://blog.playvalkyrie.org", WEBBROWSER_FLAG_NONE )
+}
 
 void function GameMenuButton_OnActivate( var button )
 {

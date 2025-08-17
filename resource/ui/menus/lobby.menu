@@ -354,6 +354,30 @@ scripts/resource/ui/menus/lobby.menu
             pin_corner_to_sibling	BOTTOM_RIGHT
             pin_to_sibling_corner	BOTTOM_LEFT
         }
+		
+		DcButton
+        {
+            ControlName				RuiButton
+            InheritProperties		CornerButton
+            xpos                    13
+            zpos                    5
+
+            pin_to_sibling			NewsButton
+            pin_corner_to_sibling	BOTTOM_RIGHT
+            pin_to_sibling_corner	BOTTOM_LEFT
+        }
+		
+		BlogButton
+        {
+            ControlName				RuiButton
+            InheritProperties		CornerButton
+            xpos                    13
+            zpos                    5
+
+            pin_to_sibling			DcButton
+            pin_corner_to_sibling	BOTTOM_RIGHT
+            pin_to_sibling_corner	BOTTOM_LEFT
+        }
 
         PostGameButton
         {
@@ -362,7 +386,7 @@ scripts/resource/ui/menus/lobby.menu
             xpos                    13
             zpos                    5
 
-            pin_to_sibling			NewsButton
+            pin_to_sibling			BlogButton
             pin_corner_to_sibling	BOTTOM_RIGHT
             pin_to_sibling_corner	BOTTOM_LEFT
         }
