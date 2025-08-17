@@ -399,6 +399,8 @@ void function UpdateCornerButtons()
 	Hud_SetVisible( file.playersButton, isPlayPanelActive )
 	Hud_SetVisible( file.serversButton, isPlayPanelActive )
 	Hud_SetVisible( file.gameMenuButton, isPlayPanelActive )
+	Hud_SetVisible( file.DcButton, isPlayPanelActive )
+	Hud_SetVisible( file.BlogButton, isPlayPanelActive )
 
 	var accessibilityHint = Hud_GetChild( playPanel, "AccessibilityHint" )
 	Hud_SetVisible( accessibilityHint, isPlayPanelActive && IsAccessibilityChatHintEnabled() )
