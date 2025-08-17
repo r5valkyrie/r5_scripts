@@ -95,6 +95,7 @@ global enum ePassives
 	PAS_ULTACCEL_HIGHLIGHT,
 	PAS_OPTIC_HIGHLIGHT,
 	PAS_GUNNER,
+	PAS_VALK,
 	//new
 	PAS_BONUS_SMALL_HEAL,
 	PAS_EXTRA_MED_INV,
@@ -198,6 +199,7 @@ void function PassivesShared_Init()
 		AddCallback_OnPassiveChanged( ePassives.PAS_BATTERY_POWERED, Wattson_PassiveToggle )
 		AddCallback_OnPassiveChanged( ePassives.PAS_DEATHSTALKER, Revenant_PassiveToggle )
 		AddCallback_OnPassiveChanged( ePassives.PAS_DUMMIE, Dummie_PassiveToggle )
+		AddCallback_OnPassiveChanged( ePassives.PAS_VALK, Dummie_PassiveToggle )
 		AddCallback_OnPassiveChanged( ePassives.PAS_LOBA_EYE_FOR_QUALITY, Loba_PassiveToggle )
 		AddCallback_OnPassiveChanged( ePassives.PAS_GUNNER, Loba_PassiveToggle )
 		
