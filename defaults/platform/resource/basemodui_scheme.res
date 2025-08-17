@@ -3868,7 +3868,7 @@ Scheme
 		{
 			classname               UserInfo
 			rui                     "ui/userinfo.rpak"
-			wide                    394
+			wide                    200
 			tall                    84
 			visible                 1
 			sound_focus             ""
@@ -4555,14 +4555,31 @@ Scheme
 			scaleImage				1
 		}
 
+        TabButtonSeason
+        {
+            classname               TabButtonClass
+            xpos					148
+            ypos					0
+            //zpos					10
+            wide					636
+            tall					84
+            visible					1
+            enabled					1
+			style					RuiButton
+            rui 					"ui/tab_button_lobby.rpak"
+			labelText				""
+			cursorVelocityModifier  0.7
+			sound_focus             "UI_Menu_Focus_Large"
+			sound_accept            "UI_Menu_ApexTab_Select"
+        }
         Logo
         {
             classname               LogoRui
-            xpos					-48
+            xpos					2
             ypos					0
             zpos					10
-            wide					123
-            tall					143
+            wide					630
+            tall					204
             visible					1
             proportionalToParent    1
             rui 					"ui/tab_logo.rpak"

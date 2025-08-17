@@ -596,7 +596,7 @@
         ControlName				RuiButton
         wide                    308
         tall                    106
-        ypos                    -310
+        ypos                    -110
         rui                     "ui/mini_promo.rpak"
         visible					1
         cursorVelocityModifier  0.7

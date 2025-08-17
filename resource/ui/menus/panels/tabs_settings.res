@@ -27,8 +27,6 @@ scripts/resource/ui/menus/panels/tabs_settings.res
 	{
 		ControlName				RuiPanel
 		xpos                    -80
-		wide                    76
-		tall					28
 		visible					1
 		rui                     "ui/shoulder_navigation_shortcut_angle.rpak"
 		activeInputExclusivePaint	gamepad
@@ -43,7 +41,9 @@ scripts/resource/ui/menus/panels/tabs_settings.res
 		ControlName				RuiButton
 		InheritProperties		TabButtonSettings
 		scriptID				0
+
 		xpos                    -650 //-700
+
 		pin_to_sibling			Anchor
 		pin_corner_to_sibling	TOP_LEFT
 		pin_to_sibling_corner	TOP
