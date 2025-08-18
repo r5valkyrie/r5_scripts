@@ -1502,7 +1502,7 @@ void function ActualVehicleBoost(entity vehicle, entity player)
 bool function CC_SpawnTrident( entity player, array<string> args )
 {
 	if ( GetConVarInt( "sv_cheats" ) != 1 )
-		return
+		return true
 	
     vector origin = GetPlayerCrosshairOrigin( player )
 	origin.z -= 25
