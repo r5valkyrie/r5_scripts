@@ -886,6 +886,7 @@ void function SetupPrototypesDevMenu()
 	SetupDevMenu( "Loot Marvin Debug (Olympus Only)", SetDevMenu_LootMarvin )
 	SetupDevMenu( "Vault System Debug", SetDevMenu_VaultDebug )
 	SetupDevCommand( "Summon Players to player 0", "script summonplayers()" )
+	SetupDevCommand( "Summon Trident", "spawntrident" )
 	//SetupDevMenu( "Incap Shield Debugging", SetDevMenu_SurvivalIncapShieldBots )
 }
 
