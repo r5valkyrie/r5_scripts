@@ -73,20 +73,21 @@ global enum eMaps
 	mp_rr_desertlands_mu1, //15
 	mp_rr_desertlands_mu1_tt, //16
 	mp_rr_desertlands_mu2, //17
-	mp_rr_desertlands_mu3, //18
-	mp_rr_olympus, //19
+	mp_rr_desertlands_mu3, //17
+	mp_rr_olympus, //18
+	mp_rr_olympus_mu2, //18
+	mp_rr_olympus_tt, //19
+	mp_rr_party_crasher, //20
+	mp_rr_arena_phase_runner, //21
+	mp_rr_arena_composite, //22
+	mp_rr_arena_skygarden, //23
+	mp_rr_aqueduct, //24
+	mp_rr_arena_empty, //25
+	mp_rr_salham, //26
+	mp_lobby, //27
 	mp_rr_olympus_mu1,
-	mp_rr_olympus_mu2, //20
-	mp_rr_olympus_tt, //21
-	mp_rr_party_crasher, //22
-	mp_rr_arena_phase_runner, //23
-	mp_rr_arena_composite, //24
-	mp_rr_arena_skygarden, //25
-	mp_rr_aqueduct, //26
-	mp_rr_arena_empty, //27
-	mp_rr_salham, //28
-	mp_lobby, //29
-	mp_rr_rise, //30 -r2
+	mp_rr_eden,
+	
 	
 	_MAP_COUNT //LAST
 }
