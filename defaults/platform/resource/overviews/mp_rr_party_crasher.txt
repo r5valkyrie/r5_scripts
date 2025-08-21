@@ -1,7 +1,0 @@
-"mp_rr_party_crasher"
-{
-	assets
-	{
-		minimap overviews\mp_rr_party_crasher
-	}
-}
