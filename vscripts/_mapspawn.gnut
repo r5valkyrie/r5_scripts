@@ -298,7 +298,7 @@ void function PrecacheSDKEntities()
 	///////////////////////misc///////////////////////
 	PrecacheModel( $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl")
 	PrecacheModel( $"mdl/communication/terminal_usable_imc_01.rmdl" )
-	//PrecacheModel( $"mdl/titans/buddy/titan_buddy.rmdl" )
+	PrecacheModel( $"mdl/robots/drone_frag/drone_frag.rmdl" )
 
 	//////////////////////NPC CACHE/////////////////////
 	//PrecacheModel( $"mdl/robots/super_spectre/super_spectre_v1.rmdl")

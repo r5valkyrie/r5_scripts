@@ -42,7 +42,7 @@ global const STRATON_DOGFIGHT_ANIM1_PERSUER = "st_Dogfight_Persuer_1"
 global const STRATON_DOGFIGHT_ANIM2_PERSUER = "st_Dogfight_Persuer_2"
 global const STRATON_DOGFIGHT_ANIM3_PERSUER = "st_Dogfight_Persuer_3"
 global const STRATON_ATTACK_FULL = "st_AngelCity_IMC_Win_Full"
-//global const FX_HORNET_DEATH =  $"P_veh_exp_hornet_HS" //TODO: "mdl\vehicle\hornet\hornet_fighter_dest_l_wing.rmdl" does not exist. This particle system requires it. All references have been commented for now.
+global const FX_HORNET_DEATH =  $"P_veh_exp_hornet_HS" //TODO: "mdl\vehicle\hornet\hornet_fighter_dest_l_wing.rmdl" does not exist. This particle system requires it. All references have been commented for now.
 
 
 global const AIRDROP_BASE_ANIM = "dp_droppod_idle"
@@ -181,10 +181,10 @@ global struct FlightPath
 
 	global function SkyboxCapitalShips
 	global function StratonHornetDogfights
-	//global function SpawnRandomDogFight
+	global function SpawnRandomDogFight
 	global function StratonHornetDogfightsIntense
-	//global function GetFlightPathModel
-	//global function HasFlightPathModel
+	global function GetFlightPathModel
+	global function HasFlightPathModel
 
 	global function GetAnalysisDataIndex
 	global function GetTitanfallNodesInRadius
@@ -208,7 +208,7 @@ global struct FlightPath
 		table<asset, table<string, int> > ainAnalysisIndices
 
 		table<entity, DropTable> dropshipDropOffDropTable
-		//table<string,asset> flightPathModel
+		table<string,asset> flightPathModel
 		table<asset,string> flightPathAttachOffset
 
 		var dataTable
@@ -476,26 +476,26 @@ void function EntitiesDidLoad()
 
 #if SERVER
 
-//asset function InitFlightPathAsset( string name )
-//{
-//	int row = GetDataTableRowMatchingStringValue( file.dataTable, file.nameColumn, name )
-//	Assert( row > -1, "Didn't find " + name )
-//	asset model = GetDataTableAsset( file.dataTable, row, file.modelColumn )
-//	PrecacheModel( model )
-//	file.flightPathModel[ name ] <- model
-//	return model
-//}
+asset function InitFlightPathAsset( string name )
+{
+	int row = GetDataTableRowMatchingStringValue( file.dataTable, file.nameColumn, name )
+	Assert( row > -1, "Didn't find " + name )
+	asset model = GetDataTableAsset( file.dataTable, row, file.modelColumn )
+	PrecacheModel( model )
+	file.flightPathModel[ name ] <- model
+	return model
+}
 
-//asset function GetFlightPathModel( string name )
-//{
-//	Assert( name in file.flightPathModel, "Model " + name + " has not been loaded" )
-//	return file.flightPathModel[ name ]
-//}
+asset function GetFlightPathModel( string name )
+{
+	Assert( name in file.flightPathModel, "Model " + name + " has not been loaded" )
+	return file.flightPathModel[ name ]
+}
 
-//bool function HasFlightPathModel( string name )
-//{
-//	return name in file.flightPathModel
-//}
+bool function HasFlightPathModel( string name )
+{
+	return name in file.flightPathModel
+}
 
 int function GetAnalysisDataIndex( FlightPath flightPath )
 {
@@ -1583,7 +1583,7 @@ void function StratonHornetDogfights()
 		for ( int i = 0; i < 20; i++ )
 		{
 			float yaw = RandomFloat( 360.0 )
-			//thread SpawnRandomDogFight( yaw )
+			thread SpawnRandomDogFight( yaw )
 
 			wait RandomFloatRange( 4, 6 )
 		}
@@ -1593,7 +1593,7 @@ void function StratonHornetDogfights()
 		for ( int i = 0; i < 20; i++ )
 		{
 			float yaw = RandomFloat( 360.0 )
-			//thread SpawnRandomDogFight( yaw )
+			thread SpawnRandomDogFight( yaw )
 
 			wait RandomFloatRange( 8, 20 )
 		}
@@ -1614,7 +1614,7 @@ void function StratonHornetDogfightsIntense()
 	for ( ;; )
 	{
 		float yaw = RandomFloat( 360.0 )
-		//thread SpawnRandomDogFight( yaw )
+		thread SpawnRandomDogFight( yaw )
 		wait RandomFloatRange( 1, 3 )
 	}
 }
@@ -1630,37 +1630,37 @@ void function OnClientConnected( entity player )
 
 }
 
-//void function SpawnRandomDogFight( float yaw )
-//{
-//	//PrintFunc()
-//	// int animIndex = RandomInt( 3 )
-//	int animIndex = RandomInt( 2 ) //reduced to 2 since we ran out of indeces
-//
-//	table<string,string> anims = DogFightAnimsFromIndex( animIndex )
-//	string anim1 = anims.anim1
-//
-//	asset model = GetFlightPathModel( "fp_straton_model" )
-//	FlightPath flightPath = GetAnalysisForModel( model, anim1 )
-//
-//	CallinData drop
-//	InitCallinData( drop )
-//	SetCallinStyle( drop, eDropStyle.RANDOM_FROM_YAW )
-//	SetCallinYaw( drop, yaw )
-// 	SpawnPointFP spawnPoint = GetSpawnPointForStyle( flightPath, drop )
-// 	if ( !spawnPoint.valid )
-// 		return
-//
-//	int x = int( spawnPoint.origin.x )
-//	int y = int( spawnPoint.origin.y )
-//	int z = int( spawnPoint.origin.z )
-//	yaw = spawnPoint.angles.y
-//
-//	array<entity> players = GetPlayerArray()
-//	foreach ( player in players )
-//	{
-//		Remote_CallFunction_NonReplay( player, "ServerCallback_DogFight", x, y, z, yaw, animIndex )
-//	}
-//}
+void function SpawnRandomDogFight( float yaw )
+{
+	//PrintFunc()
+	// int animIndex = RandomInt( 3 )
+	int animIndex = RandomInt( 2 ) //reduced to 2 since we ran out of indeces
+
+	table<string,string> anims = DogFightAnimsFromIndex( animIndex )
+	string anim1 = anims.anim1
+
+	asset model = GetFlightPathModel( "fp_straton_model" )
+	FlightPath flightPath = GetAnalysisForModel( model, anim1 )
+
+	CallinData drop
+	InitCallinData( drop )
+	SetCallinStyle( drop, eDropStyle.RANDOM_FROM_YAW )
+	SetCallinYaw( drop, yaw )
+ 	SpawnPointFP spawnPoint = GetSpawnPointForStyle( flightPath, drop )
+	if ( !spawnPoint.valid )
+ 		return
+
+	int x = int( spawnPoint.origin.x )
+	int y = int( spawnPoint.origin.y )
+	int z = int( spawnPoint.origin.z )
+	yaw = spawnPoint.angles.y
+
+	array<entity> players = GetPlayerArray()
+	foreach ( player in players )
+	{
+		Remote_CallFunction_NonReplay( player, "ServerCallback_DogFight", x, y, z, yaw, animIndex )
+	}
+}
 
 table function GetTitanfallNodesInRadius( vector titanfallOrigin, int radius )
 {
