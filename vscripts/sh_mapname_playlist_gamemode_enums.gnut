@@ -86,7 +86,8 @@ global enum eMaps
 	mp_rr_salham, //26
 	mp_lobby, //27
 	mp_rr_olympus_mu1,
-	mp_rr_eden,
+	mp_rr_rise,
+	mp_rr_exoplanet,
 	
 	
 	_MAP_COUNT //LAST
