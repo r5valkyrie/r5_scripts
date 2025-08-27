@@ -118,6 +118,7 @@ void function SV_CL_Init()
 	//MpTitanweaponMeteor_Init()
 	//MpTitanWeapon_SniperInit()
 	//MpTitanweaponXo16_Init()
+	MpTitanabilityFusionCore_Init()
 	FlightCore_Init()
 
 	//LaserCannon_Init()
@@ -189,7 +190,7 @@ void function SV_CL_Init()
 	Consumable_Init()
 	MpWeaponGreandeElectricSmoke_Init()
 	ShWarpGates_Init()
-
+	ShTitanfallAbility_Init()
 	Sh_Loot_Vault_Panel_Init()
 
 	ShLootDrones_Init()

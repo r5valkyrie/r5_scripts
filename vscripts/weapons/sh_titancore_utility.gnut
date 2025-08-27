@@ -67,7 +67,7 @@ void function MpTitanabilityFusionCore_Init()
 	//
 	//#if TITANS_CLASSIC_GAMEPLAY
 	//	Shift_Core_Init()
-	//	LaserCannon_Init()
+	LaserCannon_Init()
 	//	FlightCore_Init()
 	//	SalvoCore_Init()
 	//	UpgradeCore_Init()

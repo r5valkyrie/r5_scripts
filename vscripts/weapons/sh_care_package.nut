@@ -3,6 +3,7 @@ global function GetCarePackagePlacementInfo
 //global function OnWeaponPrimaryAttack_care_package
 global function OnWeaponActivate_care_package
 global function OnWeaponDeactivate_care_package
+global function PlacementEasing
 global function GetSkinForCarePackageModel
 
 #if CLIENT

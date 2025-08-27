@@ -128,5 +128,6 @@
 	bubble_bunker
 	sonar_round_embedded
 	healing_denied
+	placing_titan
 /////////////////////////////
 //}

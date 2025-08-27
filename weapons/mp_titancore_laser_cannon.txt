@@ -10,11 +10,6 @@ WeaponData
 
 	"damage_flags"									"DF_STOPS_TITAN_REGEN | DF_DOOM_FATALITY | DF_GIB"
 
-	// General
-	"weaponClass" 									"titan"
-	"weaponType"									"titan_core"
-	"fire_mode"   									"offhand"
-
 	// Ammo
 	"ammo_stockpile_max"							"200"
 	"ammo_clip_size"   								"200"

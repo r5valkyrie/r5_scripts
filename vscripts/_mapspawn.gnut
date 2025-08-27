@@ -277,12 +277,9 @@ void function PrecacheSDKWeapons()
 	PrecacheWeapon( $"mp_weapon_macks_knife_primary" )
 
 	//Titanfall Weapons
-	//PrecacheModel( $"mdl/weapons/arms/buddypov.rmdl" )
-	//PrecacheModel( $"mdl/weapons/arms/pov_titan_medium_cockpit.rmdl" )
-	//PrecacheModel( $"mdl/titans/medium/titan_medium_rodeo_battery.rmdl" )
-	//PrecacheWeapon( $"mp_titancore_flight_core" )
-	//PrecacheWeapon( $"mp_titancore_laser_cannon" )
 	PrecacheWeapon( $"mp_titanweapon_flightcore_rockets" ) // Not a loot
+	PrecacheWeapon( $"mp_titancore_laser_cannon" ) // Not a loot
+	PrecacheWeapon( $"mp_ability_titanfall" ) // Not a loot
 }
 
 void function PrecacheSDKEntities()

@@ -1063,6 +1063,8 @@ Scripts:
 	weapons/sh_care_package.nut
 
 	mp/sh_weapon_inspect.gnut
+
+	weapons/mp_ability_titanfall.nut
 ]
 
 When: "SERVER || CLIENT"

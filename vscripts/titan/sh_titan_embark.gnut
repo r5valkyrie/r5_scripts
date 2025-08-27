@@ -10,7 +10,7 @@ global function FindBestEmbark
 global function GenerateEmbarkActionTable
 global function FindEmbarkActionForCriteria
 global function GetRandomEmbarkAction
-//global function PlayerCanDisembarkTitan
+global function PlayerCanDisembarkTitan
 global function IsPlayerDisembarking
 
 #if SERVER
@@ -105,10 +105,13 @@ void function TitanEmbark_Init()
 		RegisterSignal( "CockpitLightStop" )
 		PrecacheParticleSystem( $"xo_cockpit_dlight" )
 
-		//AddClientCommandCallback( "TitanDisembark", ClientCommand_TitanDisembark ) //
-		//AddClientCommandCallback( "TitanKneel", ClientCommand_TitanKneel ) //
+		AddClientCommandCallback( "TitanDisembark", ClientCommand_TitanDisembark ) //
+		AddClientCommandCallback( "TitanKneel", ClientCommand_TitanKneel ) //
 		//AddClientCommandCallback( "TitanStand", ClientCommand_TitanStand ) //
-		//AddClientCommandCallback( "TitanNextMode", ClientCommand_TitanNextMode ) //
+		AddClientCommandCallback( "TitanNextMode", ClientCommand_TitanNextMode ) //
+
+		AddCallback_OnTitanBecomesPilot( TitanBecomesPilot_UpdateRodeoRiderHud )
+		AddCallback_OnPilotBecomesTitan( PilotBecomesTitan_UpdateRodeoRiderHud )
 	#endif
 }
 
@@ -575,15 +578,16 @@ bool function CodeCallback_EmbarkTitanFromGrapple( entity player, entity titan )
 
 void function PlayerEmbarksTitan( entity player, entity titan, table embark )
 {
-	//player.SetOrigin( <314.971405,-1826.728638,116.031250> )
-	//player.SetAngles( <0,133.945892,0> )
-	//titan.SetOrigin( <284.887970,-1622.180542,112.093750> )
-	//titan.SetAngles( <0,112.264252,0> )
+	//player.SetOrigin( Vector(314.971405, -1826.728638, 116.031250))
+	//player.SetAngles( Vector(0.000000, 133.945892, 0.000000))
+	//titan.SetOrigin( Vector(284.887970, -1622.180542, 112.093750))
+	//titan.SetAngles(Vector(0.000000, 112.264252, 0))
 
 	entity soul = titan.GetTitanSoul()
 	string settings = GetSoulTitanSubClass( soul )
 	printt( "TitanEmbarkDebug: Player ", player.GetOrigin(), player.GetAngles(), " Titan ", titan.GetOrigin(), titan.GetAngles(), settings, GetMapName() )
 
+	ItemFlavor Titan = GetItemFlavorByAsset( $"settings/itemflav/character/titans/buddy.rpak" )
 
 	Assert( IsAlive( titan ) )
 	Assert( IsAlive( player ) )
@@ -616,15 +620,15 @@ void function PlayerEmbarksTitan( entity player, entity titan, table embark )
 
 				if ( IsAlive( player ) )
 				{
-					//if ( player.IsTitan() ) //Defensive fix, sometimes in SP (when game is shutting down etc ) this can run without the player being alive
+					if ( player.IsTitan() ) //Defensive fix, sometimes in SP (when game is shutting down etc ) this can run without the player being alive
 					{
 						TitanEmbarkFailsafe( player, null, groundEntity, startOrigin )
 						Remote_CallFunction_Replay( player, "ServerCallback_TitanEmbark" )
 						//LetTitanPlayerShootThroughBubbleShield( player )
 					}
-					//else
+					else
 					{
-						//player.Die() //Defensive fix, sometimes in SP (when game is shutting down etc ) this can run without the player being alive
+						player.Die() //Defensive fix, sometimes in SP (when game is shutting down etc ) this can run without the player being alive
 					}
 
 				}
@@ -639,6 +643,9 @@ void function PlayerEmbarksTitan( entity player, entity titan, table embark )
 
 
 	waitthread PlayerEmbarksTitan_PlayerBecomesTitan( player, titan, embark )
+	//titan.Hide()
+	//titan.Destroy()
+	//SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), Titan )
 }
 
 void function PlayerEmbarksTitan_PlayerBecomesTitan( entity player, entity titan, table embark )
@@ -669,7 +676,7 @@ bool function TitanHasLeftAndRightEmbarkAnims( entity titan )
 {
 	entity soul = titan.GetTitanSoul()
 	asset settings = GetSoulPlayerSettings( soul )
-	return false//GetGlobalSettingsBool( settings, "hasLeftRightEmbarks" )
+	return true//GetGlobalSettingsBool( settings, "hasLeftRightEmbarks" )
 }
 
 void function TitanEmbark_PlayerCleanup( entity player )
@@ -1167,261 +1174,270 @@ void function TitanEmbark_TitanEmbarks( entity player, entity titan, table e )
 	WaitForever()
 }
 
-//bool function ClientCommand_TitanDisembark( entity player, array<string> args )
-//{
-//	if ( !PlayerCanDisembarkTitan( player ) )
-//		return true
-//
-//	ScreenFade( player, 0, 1, 0, 255, 0.2, 0.2, FFADE_IN | FFADE_PURGE )
-//	player.CockpitStartDisembark()
-//	Remote_CallFunction_Replay( player, "ServerCallback_TitanDisembark" )
-//	thread PlayerDisembarksTitan( player )
-//
-//	return true
-//}
+bool function ClientCommand_TitanDisembark( entity player, array<string> args )
+{
+	if ( !PlayerCanDisembarkTitan( player ) )
+		return true
 
-//void function ForcedTitanDisembark( entity player )
-//{
-//	Assert( PlayerCanDisembarkTitan( player ) )
-//
-//	player.CockpitStartDisembark()
-//	Remote_CallFunction_Replay( player, "ServerCallback_TitanDisembark" )
-//
-//	waitthread PlayerDisembarksTitan( player )
-//}
+	ScreenFade( player, 0, 1, 0, 255, 0.2, 0.2, FFADE_IN | FFADE_PURGE )
+	player.CockpitStartDisembark()
+	Remote_CallFunction_Replay( player, "ServerCallback_TitanDisembark" )
 
-//void function ForcedTitanDisembarkCustomAnims( entity player, FirstPersonSequenceStruct functionref( entity, entity ) playerSequenceFunc, FirstPersonSequenceStruct functionref( entity, entity ) titanSequenceFunc )
-//{
-//	Assert( PlayerCanDisembarkTitan( player ) )
-//
-//	player.CockpitStartDisembark()
-//	Remote_CallFunction_Replay( player, "ServerCallback_TitanDisembark" )
-//
-//	player.p.isCustomDisembark = true
-//	waitthread PlayerDisembarksTitanWithSequenceFuncs( player, playerSequenceFunc, titanSequenceFunc )
-//	player.p.isCustomDisembark = false
-//}
+	thread PlayerDisembarksTitan( player )
+
+	return true
+}
+
+void function ForcedTitanDisembark( entity player )
+{
+	Assert( PlayerCanDisembarkTitan( player ) )
+
+	player.CockpitStartDisembark()
+	Remote_CallFunction_Replay( player, "ServerCallback_TitanDisembark" )
+
+	waitthread PlayerDisembarksTitan( player )
+}
+
+void function ForcedTitanDisembarkCustomAnims( entity player, FirstPersonSequenceStruct functionref( entity, entity ) playerSequenceFunc, FirstPersonSequenceStruct functionref( entity, entity ) titanSequenceFunc )
+{
+	Assert( PlayerCanDisembarkTitan( player ) )
+
+	player.CockpitStartDisembark()
+	Remote_CallFunction_Replay( player, "ServerCallback_TitanDisembark" )
+
+	player.p.isCustomDisembark = true
+	waitthread PlayerDisembarksTitanWithSequenceFuncs( player, playerSequenceFunc, titanSequenceFunc )
+	player.p.isCustomDisembark = false
+}
 #endif // SERVER
 
-//bool function PlayerCanDisembarkTitan( entity player )
-//{
-//	if ( !player.IsTitan() )
-//		return false
-//
-//	if ( !IsAlive( player ) )
-//		return false
-//
-//	if ( IsValid( player.GetParent() ) )
-//		return false
-//
-//	if ( Riff_TitanExitEnabled() == eTitanExitEnabled.Never )
-//		return false
-//
-//	if ( !CanDisembark( player ) )
-//		return false
-//
-//	#if SERVER
-//		if ( player.IsNoclipping() )
-//			return false
-//		// client doesn't know these things
-//		if ( IsPlayerDisembarking( player ) )
-//			return false
-//		if ( IsPlayerEmbarking( player ) )
-//			return false
-//	#endif
-//
-//	if ( !HasSoul( player ) )
-//		return false
-//
-//	entity soul = player.GetTitanSoul()
-//	if ( soul.IsEjecting() )
-//		return false
-//
-//	Assert( soul == player.GetTitanSoul() )
-//
-//	return true
-//}
+bool function PlayerCanDisembarkTitan( entity player )
+{
+	if ( !player.IsTitan() )
+		return false
+
+	if ( !IsAlive( player ) )
+		return false
+
+	if ( IsValid( player.GetParent() ) )
+		return false
+
+	//if ( Riff_TitanExitEnabled() == eTitanExitEnabled.Never )
+		//return false
+
+	if ( !CanDisembark( player ) )
+		return false
+
+	#if SERVER
+		if ( player.IsNoclipping() )
+			return false
+		// client doesn't know these things
+		if ( IsPlayerDisembarking( player ) )
+			return false
+		if ( IsPlayerEmbarking( player ) )
+			return false
+	#endif
+
+	if ( !HasSoul( player ) )
+		return false
+
+	local soul = player.GetTitanSoul()
+	if ( soul.IsEjecting() )
+		return false
+
+	Assert( soul == player.GetTitanSoul() )
+
+	return true
+}
 
 #if SERVER
-//void function PlayerDisembarksTitan( entity player )
-//{
-//	PlayerDisembarksTitanWithSequenceFuncs( player, GetDisembarkSequenceForPlayer, GetDisembarkSequenceForTitan )
-//}
+function PlayerDisembarksTitan( player )
+{
+	expect entity( player )
+	PlayerDisembarksTitanWithSequenceFuncs( player, GetDisembarkSequenceForPlayer, GetDisembarkSequenceForTitan )
+}
 
-//void function PlayerDisembarksTitanWithSequenceFuncs( entity player, FirstPersonSequenceStruct functionref( entity, entity ) playerSequenceFunc, FirstPersonSequenceStruct functionref( entity, entity ) titanSequenceFunc )
-//{
-//	//printt( "Player disembarking with origin " + player.GetOrigin() + " and yaw " + player.GetAngles().y )
-//
-//  	//player.SetOrigin( <420.847626,-5214.960938,173.789520> )
-//  	//player.SetAngles( <0,179.572052,0> )
-//
-//	printt( "TitanDisembarkDebug: Player ", player.GetOrigin(), player.GetAngles(), GetMapName() )
-//
-//	player.EndSignal( "OnDeath" )
-//	player.Signal( "DisembarkingTitan" )
-//
-//	//Assert( !InSolid( player ), player + " is in solid" )
-//
-//	table e
-//	e.titan <- null
-//	e.pilotCleanUpDone <- false
-//	e.startOrigin <- player.GetOrigin()
-//	//e.startAngles <- player.GetAngles()
-//
-//	player.p.isDisembarking = true
-//	player.SetCinematicEventFlags( player.GetCinematicEventFlags() | CE_FLAG_DISEMBARK )
-//
-//	bool wasCustomDisembark = player.p.isCustomDisembark
-//
-//	player.ContextAction_SetBusy()
-//
-//	OnThreadEnd(
-//		function() : ( player, e )
-//		{
-//			if ( IsValid( player ) )
-//			{
-//				PlayerEndsDisembark( player, e )
-//
-//				entity titan = expect entity( e.titan )
-//				if ( !IsValid( titan ) )
-//					titan = null
-//			}
-//
-//			if ( IsAlive( expect entity( e.titan ) ) )
-//			{
-//				if ( IsAlive( player ) )
-//				{
-//					thread PlayerOwnsTitanUntilSeparation( player, expect entity( e.titan ), 80 )
-//				}
-//
-//				delete e.titan.s.disembarkingPlayer
-//				// ClearInvincible( expect entity( e.titan ) )
-//
-//
-//				//Make Titan get up immediately if he's kneeling and can stand
-//				//If he can't get up, well, then since the titan doesn't move when crouched he's going to be stuck...
-//				if ( !( "embarkingPlayer" in e.titan.s ) )
-//				{
-//					thread TitanNPC_Think( expect entity( e.titan ) ) //titan.s.disableAutoTitanConversation is deleted inside here
-//				}
-//			}
-//		}
-//	)
-//
-//	bool standing = player.IsStanding()
-//
-//	player.SetInvulnerable()
-//	player.SnapFeetToEyes()
-//
-//	entity titan = CreateAutoTitanForPlayer_ForTitanBecomesPilot( player )
-//	DispatchSpawn( titan )
-//	e.titan = titan
-//
-//	if ( !PlayerIsFarOffTheGround( player, [ player,titan ] ) ) //PlayerIsFarOffTheGround() necessary now for R2 because we have Titans that can jump/geo where Titans can fall down from large heights. Without check, mid-air disembarking will cause player to be teleported to the ground
-//	{
-//		vector ornull clampedPos = NavMesh_ClampPointForAIWithExtents( titan.GetOrigin(), titan, file.smallDisembarkFailSafeTeleportVector )
-//		if ( clampedPos == null )
-//			clampedPos = NavMesh_ClampPointForAIWithExtents( titan.GetOrigin(), titan, file.largeDisembarkFailSafeTeleportVector )
-//
-//		if ( clampedPos != null )
-//		{
-//			expect vector( clampedPos )
-//			vector titanOrigin = titan.GetOrigin()
-//
-//			array<entity> ignoreEnts = [ titan ]
-//			TraceResults result = TraceHull( titanOrigin, titanOrigin, titan.GetBoundingMins(), titan.GetBoundingMaxs(), ignoreEnts, TRACE_MASK_TITANSOLID, TRACE_COLLISION_GROUP_NONE )
-//
-//			// expensive checks to make sure titan doesn't teleport to navmesh on other side of wall usually in invalid places
-//			if ( result.startSolid ||
-//				 TraceLineSimple( titanOrigin + <0,0,128>, clampedPos + <0,0,0>, titan ) == 1.0 ||
-//			     TraceLineSimple( titanOrigin + <0,0,200>, clampedPos + <0,0,0>, titan ) == 1.0 ||
-//			     TraceLineSimple( titanOrigin + <0,0,200>, clampedPos + <0,0,128>, titan ) == 1.0 )
-//			{
-//				#if DEVELOPER
-//					if ( file.embarkDebugPrint )
-//					{
-//						printt( "PlayerDisembarksTitanWithSequenceFuncs, player origin: " + player.GetOrigin()+ ", titan origin: " + titan.GetOrigin() + ", clampedPos: " + clampedPos )
-//					}
-//				#endif
-//				titan.SetOrigin( clampedPos )
-//				titan.ForceCheckGroundEntity()
-//			}
-//		}
-//	}
-//	else
-//	{
-//		#if DEVELOPER
-//			if ( file.embarkDebugPrint )
-//			{
-//				printt( "PlayerIsFarOffGround() returned true, skip doing NavMesh_ClampPointForAIWithExtents checks" )
-//			}
-//		#endif
-//	}
-//
-//	titan.s.disembarkingPlayer <- player
-//	titan.EndSignal( "OnDeath" )
-//
-//	player.SetSyncedEntity( titan )
-//	titan.e.disableAutoTitanConversation = true
-//
-//	Assert( titan.IsTitan() )
-//	Assert( IsAlive( player ) )
-//	Assert( player.IsTitan() )
-//	//Set player to be temporarily invulnerable. Will be removed at end of animation
-//	//printt( "Set player invulnerable" )
-//	HolsterViewModelAndDisableWeapons( player )  //Holstering weapon before becoming pilot so we don't play the holster animation as a pilot. Player as Titan won't play the holster animation either since it'll be interrupted by the disembark animation
-//
-//	TitanBecomesPilot( player, titan )
-//
-//	string titanSubClass = GetSoulTitanSubClass( titan.GetTitanSoul() )
-//	switch ( titanSubClass )
-//	{
-//		case "ogre":
-//			ShowMainTitanWeapons( titan ) //JFS: Because we hide the Titan's weapons upon kneeling for ogre
-//			break
-//	}
-//
-//	titan.s.disembarkTime <- Time() // disembark debounce
-//
-//	// compound strings into these animations:
-//	// pt_dismount_atlas_stand
-//	// pt_dismount_ogre_stand
-//	// pt_dismount_stryder_stand
-//	// pt_dismount_atlas_crouch
-//	// pt_dismount_ogre_crouch
-//	// pt_dismount_stryder_crouch
-//	// ptpov_dismount_atlas_stand
-//	// ptpov_dismount_ogre_stand
-//	// ptpov_dismount_stryder_stand
-//	// ptpov_dismount_atlas_crouch
-//	// ptpov_dismount_ogre_crouch
-//	// ptpov_dismount_stryder_crouch
-//
-//	FirstPersonSequenceStruct playerSequence = playerSequenceFunc( player, titan )
-//	FirstPersonSequenceStruct titanSequence = titanSequenceFunc( player, titan )
-//
-//	#if SERVER
-//		StatusEffect_StopAllOfType( player, eStatusEffect.lockon_detected_titan )
-//	#endif
-//
-//	player.ForceStand()
-//	player.IgnoreEntityForMovementUntilNotTouching( titan )
-//
-//	thread FirstPersonSequence( titanSequence, titan )
-//	thread FirstPersonSequence( playerSequence, player, titan )
-//
-//	if ( !wasCustomDisembark )
-//		thread ClearParentBeforeIntersect( player, titan, e )
-//
-//	if ( !standing )
-//	{
-//		SetStanceKneel( titan.GetTitanSoul() )
-//	}
-//
-//	//player.Anim_EnablePlanting()
-//
-//	WaittillAnimDone( player )
-//}
+void function PlayerDisembarksTitanWithSequenceFuncs( entity player, FirstPersonSequenceStruct functionref( entity, entity ) playerSequenceFunc, FirstPersonSequenceStruct functionref( entity, entity ) titanSequenceFunc )
+{
+	//printt( "Player disembarking with origin " + player.GetOrigin() + " and yaw " + player.GetAngles().y )
+
+  	//player.SetOrigin( Vector(420.847626, -5214.960938, 173.789520) )
+  	//player.SetAngles( Vector(0.000000, 179.572052, 0.000000 ) )
+
+	printt( "TitanDisembarkDebug: Player ", player.GetOrigin(), player.GetAngles(), GetMapName() )
+
+	player.EndSignal( "OnDeath" )
+	player.Signal( "DisembarkingTitan" )
+
+	//Assert( !InSolid( player ), player + " is in solid" )
+
+	table e = {}
+	e.titan <- null
+	e.PilotCleanUpDone <- false
+
+	e.startOrigin <- player.GetOrigin()
+	//e.startAngles <- player.GetAngles()
+
+	player.p.isDisembarking = true
+	player.SetCinematicEventFlags( player.GetCinematicEventFlags() | CE_FLAG_DISEMBARK )
+
+	bool wasCustomDisembark = player.p.isCustomDisembark
+
+	player.ContextAction_SetBusy()
+
+	OnThreadEnd(
+		function() : ( player, e )
+		{
+			if ( IsValid( player ) )
+			{
+				PlayerEndsDisembark( player, e )
+
+				local titan = e.titan
+				if ( !IsValid( titan ) )
+					titan = null
+			}
+
+			if ( IsAlive( expect entity( e.titan ) ) )
+			{
+				if ( IsAlive( player ) )
+				{
+					thread PlayerOwnsTitanUntilSeparation( player, expect entity( e.titan ), 80 )
+				}
+
+				delete e.titan.s.disembarkingPlayer
+				ClearInvincible( expect entity( e.titan ) )
+
+
+				//Make Titan get up immediately if he's kneeling and can stand
+				//If he can't get up, well, then since the titan doesn't move when crouched he's going to be stuck...
+				if ( !( "embarkingPlayer" in e.titan.s ) )
+				{
+					thread TitanNPC_Think( expect entity( e.titan ) ) //titan.s.disableAutoTitanConversation is deleted inside here
+				}
+			}
+		}
+	)
+
+	bool standing = player.IsStanding()
+
+	player.SetInvulnerable()
+	player.SnapFeetToEyes()
+
+	entity titan = CreateAutoTitanForPlayer_ForTitanBecomesPilot( player )
+	DispatchSpawn( titan )
+	e.titan = titan
+
+	if ( !PlayerIsFarOffTheGround( player, [ player,titan ] ) ) //PlayerIsFarOffTheGround() necessary now for R2 because we have Titans that can jump/geo where Titans can fall down from large heights. Without check, mid-air disembarking will cause player to be teleported to the ground
+	{
+		vector ornull clampedPos = NavMesh_ClampPointForAIWithExtents( titan.GetOrigin(), titan, file.smallDisembarkFailSafeTeleportVector )
+		if ( clampedPos == null )
+			clampedPos = NavMesh_ClampPointForAIWithExtents( titan.GetOrigin(), titan, file.largeDisembarkFailSafeTeleportVector )
+
+		if ( clampedPos != null )
+		{
+			expect vector( clampedPos )
+			vector titanOrigin = titan.GetOrigin()
+
+			array<entity> ignoreEnts = []
+			ignoreEnts.append( titan )
+
+			TraceResults result = TraceHull( titanOrigin, titanOrigin, titan.GetBoundingMins(), titan.GetBoundingMaxs(), ignoreEnts, TRACE_MASK_TITANSOLID, TRACE_COLLISION_GROUP_NONE )
+
+			// expensive checks to make sure titan doesn't teleport to navmesh on other side of wall usually in invalid places
+			if ( result.startSolid ||
+				 TraceLineSimple( titanOrigin + Vector( 0, 0, 128 ), clampedPos + Vector( 0, 0, 0 ), titan ) == 1.0 ||
+			     TraceLineSimple( titanOrigin + Vector( 0, 0, 200 ), clampedPos + Vector( 0, 0, 0 ), titan ) == 1.0 ||
+			     TraceLineSimple( titanOrigin + Vector( 0, 0, 200 ), clampedPos + Vector( 0, 0, 128 ), titan ) == 1.0 )
+			{
+				#if DEVELOPER
+					if ( file.embarkDebugPrint )
+					{
+						printt( "PlayerDisembarksTitanWithSequenceFuncs, player origin: " + player.GetOrigin()+ ", titan origin: " + titan.GetOrigin() + ", clampedPos: " + clampedPos )
+					}
+				#endif
+				titan.SetOrigin( clampedPos )
+				titan.ForceCheckGroundEntity()
+			}
+		}
+	}
+	else
+	{
+		#if DEVELOPER
+			if ( file.embarkDebugPrint )
+			{
+				printt( "PlayerIsFarOffGround() returned true, skip doing NavMesh_ClampPointForAIWithExtents checks" )
+			}
+		#endif
+	}
+
+	titan.s.disembarkingPlayer <- player
+	titan.EndSignal( "OnDeath" )
+
+	player.SetSyncedEntity( titan )
+	titan.s.disableAutoTitanConversation <- true
+
+	Assert( titan.IsTitan() )
+	Assert( IsAlive( player ) )
+	Assert( player.IsTitan() )
+	//Set player to be temporarily invulnerable. Will be removed at end of animation
+	//printt("Set player invulnerable")
+	HolsterViewModelAndDisableWeapons( player )  //Holstering weapon before becoming pilot so we don't play the holster animation as a pilot. Player as Titan won't play the holster animation either since it'll be interrupted by the disembark animation
+
+	TitanBecomesPilot( player, titan )
+
+	string titanSubClass = GetSoulTitanSubClass( titan.GetTitanSoul() )
+	switch ( titanSubClass )
+	{
+		case "ogre":
+			ShowMainTitanWeapons( titan ) //JFS: Because we hide the Titan's weapons upon kneeling for ogre
+			break
+	}
+
+	titan.s.disembarkTime <- Time() // disembark debounce
+
+	// compound strings into these animations:
+	// pt_dismount_atlas_stand
+	// pt_dismount_ogre_stand
+	// pt_dismount_stryder_stand
+	// pt_dismount_atlas_crouch
+	// pt_dismount_ogre_crouch
+	// pt_dismount_stryder_crouch
+	// ptpov_dismount_atlas_stand
+	// ptpov_dismount_ogre_stand
+	// ptpov_dismount_stryder_stand
+	// ptpov_dismount_atlas_crouch
+	// ptpov_dismount_ogre_crouch
+	// ptpov_dismount_stryder_crouch
+
+	FirstPersonSequenceStruct playerSequence = playerSequenceFunc( player, titan )
+	FirstPersonSequenceStruct titanSequence = titanSequenceFunc( player, titan )
+
+	#if SERVER
+		StatusEffect_StopAllOfType( player, eStatusEffect.lockon_detected_titan )
+	#endif
+
+	player.ForceStand()
+
+	thread FirstPersonSequence( titanSequence, titan )
+	thread FirstPersonSequence( playerSequence, player, titan )
+
+	if ( !wasCustomDisembark )
+		thread ClearParentBeforeIntersect( player, titan, playerSequence.thirdPersonAnim, e )
+
+	if ( !standing )
+	{
+		SetStanceKneel( titan.GetTitanSoul() )
+	}
+
+	//player.Anim_EnablePlanting()
+
+	#if SERVER && MP
+		PIN_AddToPlayerCountStat( player, "disembarks" )
+		//PIN_PlayerAbility( player, "", "disembark", {}, 0 )
+	#endif
+
+	WaittillAnimDone( player )
+}
 
 bool function PlayerIsFarOffTheGround( entity player, array<entity> ignoreEnts )
 {
@@ -1561,7 +1577,7 @@ void function DelayedSafePlayerLocationForDisembark( entity player, entity titan
 	#endif
 }
 
-void function ClearParentBeforeIntersect( entity player, entity titan, table e )
+void function ClearParentBeforeIntersect( entity player, entity titan, string anim ,table e )
 {
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnAnimationDone" )
@@ -2064,8 +2080,36 @@ void function PlayerLungesToEmbark( entity player, entity ent )
 	if ( ShouldStopLunging( player, ent ) )
 		return
 
-	//player.Lunge_SetTargetEntity( ent )
-	//player.Lunge_SetSmoothTime( 3.0 )
+	player.Lunge_SetTargetEntity( ent )
+	player.Lunge_SetSmoothTime( 3.0 )
+}
+
+void function TitanBecomesPilot_UpdateRodeoRiderHud( entity playerTitan, entity npc_titan )
+{
+	/*entity rodeoPilot = GetRodeoPilot( npc_titan )
+	if ( !IsValid( rodeoPilot ) )
+		return
+
+	Remote_CallFunction_Replay( rodeoPilot, "ServerCallback_UpdateRodeoRiderHud" )*/
+}
+
+void function PilotBecomesTitan_UpdateRodeoRiderHud( entity playerTitan, entity npc_titan )
+{
+	/*entity rodeoPilot = GetRodeoPilot( playerTitan )
+	if ( !IsValid( rodeoPilot ) )
+		return
+
+	Remote_CallFunction_Replay( rodeoPilot, "ServerCallback_UpdateRodeoRiderHud" )*/
+
+}
+
+entity function GetRodeoPilot( entity rodeoTarget )
+{
+	entity rider  = expect entity( rodeoTarget.GetRodeoRider( 0 ) ) //Can do .rodeoTarget.GetNumRodeoSlots() to see what the upper limit for .GetRodeoRider() is
+	if ( IsValid( rider) && IsAlive( rider ) && IsPilot( rider ) )
+		return rider
+
+	return null
 }
 
 bool function ShouldStopLunging( entity player, entity target )

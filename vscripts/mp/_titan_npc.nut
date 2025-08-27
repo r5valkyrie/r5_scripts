@@ -386,6 +386,13 @@ void function SetupAutoTitan( entity npcTitan, entity player )
 	ShowName( npcTitan )
 
 	//SPMP_UpdateNPCProficiency( npcTitan )
+	AddCallback_OnUseEntity( npcTitan, bt_OnUse )
+}
+
+
+void function bt_OnUse( entity bt, entity user, int useInputFlags )
+{
+	thread PlayerEmbarksTitan(user,bt,expect table( FindBestEmbark( user, bt, false ) ))
 }
 
 void function SetPlayerPetTitan( entity player, entity npcTitan )
