@@ -293,17 +293,17 @@ void function ShowRUIHUD( entity cockpit )
 
 	//RuiSetDrawGroup( file.cockpitAdditionalRui, RUI_DRAW_NONE )
 	#endif
-
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
 #if SP
 	bool ejectIsAllowed = false
 #else
 	bool ejectIsAllowed = !TitanEjectIsDisabled()
 #endif
 	RuiSetBool( file.cockpitRui, "ejectIsAllowed", ejectIsAllowed )
-	//todo: check here later
+
 	string playerSettings = GetLocalViewPlayer().GetPlayerSettings()
 	float health = player.GetPlayerModHealth()
-	float healthPerSegment = 1000.0//GetPlayerSettingsFieldForClassName_HealthPerSegment( playerSettings )
+	float healthPerSegment = player.GetPlayerModHealthPerSegment()
 	RuiSetInt( file.cockpitRui, "numHealthSegments", int( health / healthPerSegment ) )
 	RuiTrackFloat( file.cockpitRui, "cockpitColor", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.cockpitColor )
 
@@ -315,7 +315,7 @@ void function ShowRUIHUD( entity cockpit )
 	var instrument1Rui = CreateTitanCockpitInstrument1Rui( $"ui/ajax_cockpit_insturment1.rpak" )
 	RuiTrackFloat3( instrument1Rui, "playerEyeAngles", player, RUI_TRACK_EYEANGLES_FOLLOW )
 
-	int numDashPips = 2//int( floor( 100 / GetSettingsForPlayer_DodgeTable( GetLocalViewPlayer() )["dodgePowerDrain"] ) )
+	int numDashPips = int( floor( 100 / player.GetPlayerSettingFloat( "dodgePowerDrain" )) )
 	RuiSetInt( file.cockpitRui, "numDashSegments", numDashPips )
 	RuiSetInt( file.cockpitLowerRui, "numDashSegments", numDashPips )
 
@@ -362,8 +362,8 @@ void function DisplayFrontierRank( bool isFirstBoot = true )
 //	else
 		firstBootDisplay = true
 
-	//RuiSetBool( file.cockpitAdditionalRui, "isFirstBoot", firstBootDisplay )
-	//RuiSetImage( file.cockpitAdditionalRui, "titanIcon", GetIconForTitanClass( titanClass ) )
+	RuiSetBool( file.cockpitAdditionalRui, "isFirstBoot", firstBootDisplay )
+	RuiSetImage( file.cockpitAdditionalRui, "titanIcon", GetIconForTitanClass( titanClass ) )
 	//RuiSetInt( file.cockpitAdditionalRui, "titanRank", FD_TitanGetLevel( GetLocalClientPlayer(), titanClass ) )
 	RuiSetInt( file.cockpitAdditionalRui, "maxActiveIndex", maxActiveIndex )
 	RuiSetGameTime( file.cockpitAdditionalRui, "updateTime", Time() )
@@ -395,6 +395,18 @@ void function DisplayFrontierRank( bool isFirstBoot = true )
 			wait 0.05
 		}
 	}
+}
+
+asset function GetIconForTitanClass( string titanClass )
+{
+	var dataTable = GetDataTable( $"datatable/titan_properties.rpak" )
+	int loadoutIconCol = GetDataTableColumnByName( dataTable, "loadoutIcon" )
+	int titanCol = GetDataTableColumnByName( dataTable, "titanRef" )
+
+	int row = GetDataTableRowMatchingStringValue( dataTable, titanCol,  titanClass )
+	asset icon = GetDataTableAsset( dataTable, row, loadoutIconCol )
+
+	return icon
 }
 
 string function GetVanguardCoreString( entity player, int index )
@@ -1091,7 +1103,7 @@ void function MonitorPlayerEjectAnimBeingStuck( entity player, float duration )
 	}
 }
 
-function ServerCallback_EjectConfirmed()
+void function ServerCallback_EjectConfirmed()
 {
 	if ( !IsWatchingReplay() )
 		return
@@ -1369,7 +1381,7 @@ void function TitanCockpitHealthChangedThink( cockpit, entity player )
 
 			string playerSettings = GetLocalViewPlayer().GetPlayerSettings()
 			float health = player.GetPlayerModHealth()
-			float healthPerSegment = 1800.0//GetPlayerSettingsFieldForClassName_HealthPerSegment( playerSettings )
+			float healthPerSegment = player.GetPlayerModHealthPerSegment()
 			RuiSetInt( rui, "numHealthSegments", int( health / healthPerSegment ) )
 		}
 	}
@@ -1594,7 +1606,7 @@ void function UpdateHealthSegmentCount()
 	entity player = GetLocalViewPlayer()
 	string playerSettings = player.GetPlayerSettings()
 	float health = player.GetPlayerModHealth()
-	float healthPerSegment = 1000.0//GetPlayerSettingsFieldForClassName_HealthPerSegment( playerSettings )
+	float healthPerSegment = player.GetPlayerModHealthPerSegment()
 	RuiSetInt( file.cockpitRui, "numHealthSegments", int( health / healthPerSegment ) )
 }
 #if MP
