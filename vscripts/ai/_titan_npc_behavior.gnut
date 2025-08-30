@@ -31,7 +31,7 @@ function TitanNpcBehavior_Init()
 void function OnClassChangeBecomePilot( entity player, entity titan )
 {
 	entity soul = titan.GetTitanSoul()
-	if ( !SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) )
+	//if ( !SoulHasPassive( soul, ePassives.PAS_ENHANCED_TITAN_AI ) )
 	{
 		entity ordnanceWeapon = titan.GetOffhandWeapon( OFFHAND_ORDNANCE )
 		if ( IsValid( ordnanceWeapon ) )
