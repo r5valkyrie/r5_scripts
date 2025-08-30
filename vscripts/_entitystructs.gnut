@@ -678,7 +678,7 @@ global struct ServerPlayerStruct
 	//RodeoPackageStruct&			rodeoPackage //To assign into a nested struct, reference is needed. Less efficient than directly changing values of struct
 	// bool rodeoReadyForAction = true
 	// float lastClamberFailedTime = 0.0
-
+	float lastEjectTime = 0
 	table<int, array<void functionref( entity )> > playerMovementEventCallbacks
 	array<PlayerInputEventCallbackStruct> playerInputEventCallbacks
 	array<PlayerHeldButtonEventCallbackStruct> playerHeldButtonEventCallbacks
