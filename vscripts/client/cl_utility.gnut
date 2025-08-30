@@ -864,6 +864,11 @@ void function ClientCodeCallback_OnDevnetBugScreenshot()
 	player.ClientCommand( "OnDevnetBugScreenshot" )
 }
 
+array<float> function GetTitanDamageStateHealthValues()
+{
+	return [ TITAN_DAMAGE_STAGE_1, TITAN_DAMAGE_STAGE_2, TITAN_DAMAGE_STAGE_3 ]
+}
+
 //float[2] function GetScreenSpaceClamped( vector origin )
 //{
 //	UISize screenSize = GetScreenSize()

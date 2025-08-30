@@ -54,6 +54,7 @@ void function TitanShared_Init()
 	RegisterSignal( "EjectLand" )
 	RegisterSignal( "EjectAttempt" )
 	RegisterSignal( "TempAirControl" )
+	RegisterSignal( "RodeoStarting" )
 
 	#if SERVER
 		AddSoulSettingsChangeFunc( UpdateTitanPanel )
@@ -69,7 +70,7 @@ void function TitanShared_Init()
 		PrecacheParticleSystem( TITAN_NUCLEAR_CORE_FX_1P )
 		PrecacheParticleSystem( TITAN_NUCLEAR_CORE_NUKE_FX )
 
-		//PrecacheModel( $"mdl/industrial/bolt_tiny01.rmdl" )
+		PrecacheModel( $"mdl/industrial/bolt_tiny01.rmdl" )
 	#endif
 }
 
@@ -240,452 +241,452 @@ void function TitanSkipsDeathOnEject( entity titan )
 
 void function TitanEjectPlayer( entity ejectTitan, bool instant = false ) //TODO: This needs a refactor badly. Way too long and unwieldy. I think it was a mistake to handle both player Titan eject and NPC titan eject in the same function
 {
-	Assert( false )
+	ejectTitan.Signal( "EjectAttempt" )
+
+	Assert( ejectTitan.IsTitan() )
+	Assert( IsAlive( ejectTitan ), "Ejecting titan expected to be alive. IsPlayer? " + ejectTitan.IsPlayer() + " ent: " + ejectTitan )
+
+	if ( ejectTitan.ContextAction_IsActive() )
+		return
+
+	entity soul = ejectTitan.GetTitanSoul()
+
+	if ( soul.IsEjecting() )
+		return
+
+	if ( ejectTitan.IsPlayer() )
+	{
+		if ( IsPlayerDisembarking( ejectTitan ) )
+			return
+	}
+
+	table e = {}
+	e.titan <- ejectTitan
+	e.team <- ejectTitan.GetTeam()
+
+	e.player <- null
+	e.npcPilot <- null
+	bool ejectTitanHasNpcPilot = false
+	if ( ejectTitan.IsPlayer() )
+		e.player = ejectTitan
+
+	#if NPC_TITAN_PILOT_PROTOTYPE
+	if ( TitanHasNpcPilot( ejectTitan ) )
+	{
+		ejectTitanHasNpcPilot = true
+	}
+	#endif
+
+	e.nukeFX <- []
+	e.attacker <- ( "attacker" in soul.lastAttackInfo ) ? soul.lastAttackInfo.attacker : null
+	e.inflictor <- ( "inflictor" in soul.lastAttackInfo ) ? soul.lastAttackInfo.inflictor : null
+	e.damageSourceId <- ( "damageSourceId" in soul.lastAttackInfo ) ? soul.lastAttackInfo.damageSourceId : -1
+	e.damageTypes <- soul.lastAttackInfo.scriptType
+	e.overrideAttacker <- soul.soul.nukeAttacker
+
+	local nuclearPayload = 0
+	if ( IsValid( e.player ) )
+		nuclearPayload = GetNuclearPayload( ejectTitan )
+	else
+		nuclearPayload = NPC_GetNuclearPayload( ejectTitan )
+
+	e.nuclearPayload <- nuclearPayload
+
+	if ( e.nuclearPayload )
+	{
+		e.needToClearNukeFX <- false
+		e.nukeFXInfoTarget <- CreateEntity( "info_target" )
+		e.nukeFXInfoTarget.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
+		DispatchSpawn( e.nukeFXInfoTarget )
+
+		AI_CreateDangerousArea_DamageDef( damagedef_nuclear_core, e.nukeFXInfoTarget, ejectTitan.GetTeam(), true, true )
+	}
+
+	entity rodeoPilot = GetRodeoPilot( ejectTitan )
+	if ( rodeoPilot && rodeoPilot == e.attacker )
+		e.damageSourceId = eDamageSourceId.rodeo_forced_titan_eject
+
+	ejectTitan.Signal( "TitanEjectionStarted" )
+	ejectTitan.EndSignal( "OnDeath" )
+
+	OnThreadEnd(
+		function() : ( e, ejectTitan )
+		{
+			if ( IsAlive( ejectTitan ) )
+			{
+				thread ClearEjectInvulnerability( ejectTitan )
+			}
+			else if ( IsValid( ejectTitan ) )
+			{
+				ejectTitan.ClearInvulnerable()
+			}
+
+			if ( IsValid( e.player ) )
+			{
+				e.player.UnfreezeControlsOnServer()
+			}
+
+			entity titan = expect entity( e.titan )
+
+			if ( e.nuclearPayload )
+			{
+				if ( e.needToClearNukeFX )
+				{
+					if ( IsAlive( titan ) )
+					{
+						//Nuclear eject sequence got interrupted early, probably because Pilot died
+						Assert( titan.IsTitan() )
+						thread NuclearCoreExplosion( titan.GetOrigin(), e )
+					}
+					else
+					{
+						//Nuclear eject fired, needs to be cleaned up
+						ClearNuclearBlueSunEffect( e )
+					}
+				}
+				//Nuclear core handles cleaning up the left over titan by itself, so just return out early
+				return
+			}
+
+			if ( !IsAlive( titan ) )
+				return
+
+			entity soul = titan.GetTitanSoul()
+			if ( !soul.soul.diesOnEject )
+				return
+
+			Assert( titan.IsTitan() )
+			Assert( soul.IsEjecting() )
+			titan.Die( e.attacker, e.inflictor, { scriptType = damageTypes.titanEjectExplosion | e.damageTypes, damageSourceId = e.damageSourceId } )
+		}
+	)
+
+	soul.SetEjecting( true )
+	ejectTitan.SetInvulnerable()  //Give both player and ejectTitan temporary invulnerability in the course of ejecting. Player invulnerability gets cleared in ClearEjectInvulnerability
+
+	#if SERVER
+		StatusEffect_StopAll( expect entity( e.titan ) )
+	#endif
+
+	#if HAS_STATS
+	if ( IsValid( e.player ) )
+	{
+		/*UpdatePlayerStat( expect entity( e.player ), "misc_stats", "timesEjected" )
+		if ( nuclearPayload )
+			UpdatePlayerStat( expect entity( e.player ), "misc_stats", "timesEjectedNuclear" )*/
+	}
+	#endif
+	#if SERVER && MP
+		PIN_AddToPlayerCountStat( expect entity( e.player ), "ejects" )
+	#endif
+
+	if ( !ejectTitan.ContextAction_IsBusy() )
+		ejectTitan.ContextAction_SetBusy()
+
+	local standing = true
+	if ( IsValid( e.player ) )
+		standing = e.player.IsStanding()
+	else
+		standing = soul.GetStance() == STANCE_STAND
+
+	local titanEjectAnimPlayer, titanEjectAnimTitan
+	if ( standing )
+	{
+		if ( nuclearPayload )
+		{
+			titanEjectAnimPlayer = "at_nuclear_eject_standing"
+			titanEjectAnimTitan = "at_nuclear_eject_standing_idle"
+		}
+		else
+		{
+			titanEjectAnimPlayer = "at_MP_eject_stand_start"
+			titanEjectAnimTitan = "at_MP_eject_stand_end"
+		}
+	}
+	else
+	{
+		titanEjectAnimPlayer = "at_MP_eject_crouch_idle"
+		titanEjectAnimTitan = "at_MP_eject_crouch_start"
+	}
+
+	float ejectDuration // = TITAN_PLAYEREJECT_DURATION
+	if ( nuclearPayload )
+		ejectDuration = TITAN_PLAYEREJECT_DURATION * 2.0
+	else
+		ejectDuration = TITAN_PLAYEREJECT_DURATION
+
+//	ejectDuration = ejectTitan.GetSequenceDuration( titanEjectAnimPlayer )
+
+	if ( nuclearPayload )
+	{
+		array<entity> players = GetPlayerArray()
+		local frequency = 40
+		local duration = 8.5
+		vector origin = ejectTitan.GetOrigin()
+
+		foreach ( guy in players )
+		{
+			if ( guy == e.player )
+				continue
+
+			if ( !IsAlive( guy ) )
+				continue
+
+			float dist = Distance( guy.GetOrigin(), origin )
+			float result = Graph( dist, 750, 1500, 5.0, 0.0 )
+			Remote_CallFunction_Replay( guy, "ServerCallback_ScreenShake", result, frequency, duration )
+		}
+
+		e.needToClearNukeFX = true
+		e.nukeFXInfoTarget.SetParent( ejectTitan, "CHESTFOCUS" ) //Play FX and sound on entity since we need something that lasts across the player titan -> pilot transition
+		e.nukeFX.append( PlayFXOnEntity( TITAN_NUCLEAR_CORE_NUKE_FX, expect entity( e.nukeFXInfoTarget ) ) )
+		e.nukeFX.append( e.nukeFXInfoTarget )
+		//ejectDuration += 0.5
+
+		EmitSoundOnEntity( e.nukeFXInfoTarget, "titan_nuclear_death_charge" )
+	}
+
+	entity rodeoPlayer = GetRodeoPilot( ejectTitan )
+	if ( IsValid( rodeoPlayer ) )
+		Remote_CallFunction_Replay( rodeoPlayer, "ServerCallback_RodeoerEjectWarning", ejectTitan.GetTitanSoul().GetEncodedEHandle(), TITAN_PLAYEREJECT_DELAY + ejectDuration )
+
+	if ( IsValid( e.player ) )
+		e.player.CockpitStartEject()
+
+	float blendDelay = 0.15
+	vector origin = ejectTitan.GetOrigin()
+
+	if ( !instant )
+	{
+		if ( IsValid( e.player ) )
+		{
+			Remote_CallFunction_Replay( e.player, "ServerCallback_EjectConfirmed" )
+			EmitSoundAtPositionExceptToPlayer( e.team, ejectTitan.GetOrigin(), e.player, "Titan_Eject_Servos_3P" )
+			e.player.FreezeControlsOnServer()
+		}
+		else
+		{
+			EmitSoundAtPosition( e.team, ejectTitan.GetOrigin(), "Titan_Eject_Servos_3P" )
+		}
+
+		if ( !ejectTitan.IsTitan() )
+		{
+			// must be a titan, something bad has happened
+			KillStuckPlayer( ejectTitan )
+			return
+		}
+
+		ejectTitan.Anim_Play( titanEjectAnimPlayer )
+
+		wait blendDelay  // wait for ejectTitan to blend into disembark pose
+
+	    Assert( ejectDuration > MAX_EJECT_LATENCY_COMPENSATION )
+	    wait ejectDuration - MAX_EJECT_LATENCY_COMPENSATION
+
+	    if ( IsValid( e.player ) )
+	    {
+		    // subtract player latency so that the client gets the eject at the same time they finish the animation
+		    float latency = expect entity( e.player ).GetLatency()
+		    float waitduration = MAX_EJECT_LATENCY_COMPENSATION - min( latency, MAX_EJECT_LATENCY_COMPENSATION )
+		    //printt( "Eject: compensating for " + latency + " seconds of latency; wait " + waitduration )
+		    wait waitduration
+		}
+	}
+
+	// Defensive fix for if player becomes a spectator between initiating eject and now
+	if ( IsValid( e.player ) && e.player.GetPlayerSettings() == "spectator" )
+		return
+
+	if ( ejectTitan.GetTitanSoul() == null )
+		return
+
+	if ( IsValid( e.player ) )
+		EmitSoundAtPositionExceptToPlayer( e.team, ejectTitan.GetOrigin(), e.player, "Titan_Eject_PilotLaunch_3P" )
+	else
+		EmitSoundAtPosition( e.team, ejectTitan.GetOrigin(), "Titan_Eject_PilotLaunch_3P" )
+
+	entity titan
+	if ( IsValid( e.player ) )
+	{
+		entity player = expect entity( e.player )
+		titan = CreateAutoTitanForPlayer_ForTitanBecomesPilot( player )
+		DispatchSpawn( titan )
+		player.p.lastEjectTime = Time()
+		HolsterAndDisableWeapons( player ) //Primarily done to not play the holster animation, then deploy animation of weapon if we happened to switch the active weapon in GiveWeaponsFromStoredArray()
+		TitanBecomesPilot( ejectTitan, titan )
+		DeployAndEnableWeapons( player )//Undo Holster
+		player.UnfreezeControlsOnServer()
+	}
+	else
+	{
+		// the titan is an AI
+		titan = ejectTitan
+	}
+
+	#if NPC_TITAN_PILOT_PROTOTYPE
+	if ( ejectTitanHasNpcPilot )
+		e.npcPilot = NpcTitanBecomesPilot( ejectTitan )
+	#endif
+
+	vector titanOrigin = titan.GetOrigin()
+
+	// HACKY, surprised there isn't a wrapper for this yet
+	if ( !( "disableAutoTitanConversation" in titan.s ) )
+		titan.s.disableAutoTitanConversation <- true // no auto titan chatter
+
+	titan.SetInvulnerable() //Titan dies at the end of eject sequence by script
+	titan.SetNPCPriorityOverride_NoThreat()	// AI shouldn't consider this ejecting titan as an enemy and shoot it, etc
+
+	if ( e.nuclearPayload )
+	{
+		e.nukeFXInfoTarget.SetParent( titan, "CHESTFOCUS" )
+	}
+
+	local isInDeepWater = ( "isInDeepWater" in ejectTitan.s && ejectTitan.s.isInDeepWater )
+
+	if ( e.nuclearPayload || isInDeepWater )
+	{
+		thread TitanNonSolidTemp( titan )
+	}
+
+	ejectTitan.Anim_Stop()
+	e.titan = titan
+
+	if ( ejectTitan.ContextAction_IsBusy() )
+		ejectTitan.ContextAction_ClearBusy()
+
+	FirstPersonSequenceStruct sequence
+	sequence.thirdPersonAnim = expect string ( titanEjectAnimTitan )
+	sequence.teleport = true
+	thread FirstPersonSequence( sequence, titan )
+
+	if ( IsValid( e.player ) )
+	{
+		entity player = expect entity( e.player )
+		thread TempAirControl( player )
+
+		PutEntityInSafeSpot( player, titan, null, origin + <0,0,60>, player.GetOrigin() + <0,0,60> )
+	}
+
+	vector ejectAngles = titan.GetAngles()
+	ejectAngles.x = 270
+	//ejectAngles.x = RandomIntRange( 263, 277 ) //5 degrees back of straight up was 245
+
+	float speed = RandomFloatRange( 1500, 1700 ) //was 1000
+	if ( nuclearPayload )
+		speed += 400
+
+	if ( isInDeepWater )
+		speed += 1000
+
+	e.singleRodeoPilot <- null //HACKY. Need to store it off because after time passes we don't have a handle to the rider anymore. Terribly hacky
+
+	entity rider = GetRodeoPilot( titan )
+	if ( rider && rider.GetParent() == titan )
+	{
+		e.singleRodeoPilot = rider //Need to store it off because after time passes we don't have a handle to the rider anymore. Terribly hacky
+		if ( IsValid( e.player ) )
+			thread TemporarilyNonSolidPlayer( expect entity( e.player ) )
+
+		thread TemporarilyNonSolidPlayer( rider )
+
+		vector riderEjectAngles = AnglesCompose( ejectAngles, < 5, 0, 0 > )
+
+		float gravityScale = expect float ( rider.GetPlayerSettingsField( "gravityscale" ) )
+		vector riderVelocity = AnglesToForward( riderEjectAngles ) * (speed * gravityScale) * 0.95
+
+		//ThrowRiderOff( rider, titan, riderVelocity )
+
+		wait 0.05
+	}
+
+	if ( IsAlive( expect entity( e.player ) ) )
+	{
+		/*if ( PlayerHasPassive( expect entity( e.player ), ePassives.PAS_PHASE_EJECT ) )
+		{
+			PhaseShift( expect entity( e.player ), 0.0, 3.0 )
+			ejectAngles.x = 315
+			speed *= 0.5
+		}*/
+		ejectAngles = AnglesCompose( ejectAngles, < -5, 0, 0 > )
+
+		float gravityScale = 1.0//expect float ( e.player.GetPlayerSettingsField( "gravityscale" ) )
+		vector velocity = AnglesToForward( ejectAngles ) * speed * sqrt( gravityScale )
+		e.player.SetOrigin( e.player.GetOrigin() )
+		e.player.SetVelocity( velocity )
+		vector player_look_angles = titan.GetAngles()
+		player_look_angles.x = 80  //was 35
+		e.player.SetAngles( player_look_angles )
+
+		thread EjectFlightTracker( expect entity( e.player ) )
+
+		rider = expect entity( e.singleRodeoPilot )
+		if ( IsAlive( rider ) && e.player.GetTeam() != rider.GetTeam() )
+			thread LookAtEachOther( rider, expect entity( e.player ) )
+	}
+	else if ( ejectTitanHasNpcPilot && IsAlive( expect entity( e.npcPilot ) ) )
+	{
+		speed *= 0.6//magic number
+		vector velocity = < 0, 0, speed > //straight up
+		e.npcPilot.SetOrigin( titan.GetOrigin() /* + Vector(0,0,100)*/ )
+		e.npcPilot.SetAngles( titan.GetAngles() )
+		e.npcPilot.Anim_ScriptedPlay( "running_jump_F_float" )
+		e.npcPilot.SetVelocity( velocity )
+	}
+
+	if ( IsValid( e.player ) )
+		TitanEjectVO( expect entity( e.player ), titanOrigin )
+
+	wait 0.15
+
+	vector explosionOrigin = titanOrigin + Vector( 0, 0, 200 )
+
+	if ( nuclearPayload )
+	{
+		thread NuclearCoreExplosion( explosionOrigin, e )
+	}
+	else
+	{
+		entity explosionOwner = GetExplosionOwner( e )
+		entity inflictor
+		if ( IsValid( titan ) )
+			inflictor = titan
+		else
+			inflictor = explosionOwner
+
+		RadiusDamage(
+			explosionOrigin,				// origin
+			explosionOwner,					// owner
+			inflictor,		 				// inflictor
+			1,								// normal damage
+			1800,							// heavy armor damage
+			100,							// inner radius
+			300,							// outer radius
+			SF_ENVEXPLOSION_NO_DAMAGEOWNER,	// explosion flags
+			0, 								// distanceFromAttacker
+			0, 								// explosionForce
+			damageTypes.explosive,			// damage flags
+			eDamageSourceId.titan_explosion	// damage source id
+		)
+
+		entity shake = CreateEntity( "env_shake" )
+		shake.SetOrigin( titanOrigin )
+		shake.kv.amplitude = 12  //1-16
+		shake.kv.duration = 1
+		shake.kv.frequency = 100 //.001 - 255
+		shake.kv.radius = 1000
+		shake.kv.spawnflags = 4 //in air
+		DispatchSpawn( shake )
+		shake.Fire( "StartShake" )
+		shake.Kill_Deprecated_UseDestroyInstead( 1 )
+	}
+
+	if ( IsValid( titan ) )
+	{
+		if ( titan.ContextAction_IsBusy() )
+			titan.ContextAction_ClearBusy()
+	}
 }
-//{
-//	ejectTitan.Signal( "EjectAttempt" )
-//
-//	Assert( ejectTitan.IsTitan() )
-//	Assert( IsAlive( ejectTitan ), "Ejecting titan expected to be alive. IsPlayer? " + ejectTitan.IsPlayer() + " ent: " + ejectTitan )
-//
-//	if ( ejectTitan.ContextAction_IsActive() )
-//		return
-//
-//	entity soul = ejectTitan.GetTitanSoul()
-//
-//	if ( soul.IsEjecting() )
-//		return
-//
-//	if ( ejectTitan.IsPlayer() )
-//	{
-//		if ( IsPlayerDisembarking( ejectTitan ) )
-//			return
-//	}
-//
-//	table e
-//	e.titan <- ejectTitan
-//	e.team <- ejectTitan.GetTeam()
-//
-//	e.player <- null
-//	e.npcPilot <- null
-//	bool ejectTitanHasNpcPilot = false
-//	if ( ejectTitan.IsPlayer() )
-//		e.player = ejectTitan
-//
-//	#if NPC_TITAN_PILOT_PROTOTYPE
-//	if ( TitanHasNpcPilot( ejectTitan ) )
-//	{
-//		ejectTitanHasNpcPilot = true
-//	}
-//	#endif
-//
-//	e.nukeFX <- []
-//	e.attacker <- ( "attacker" in soul.lastAttackInfo ) ? soul.lastAttackInfo.attacker : null
-//	e.inflictor <- ( "inflictor" in soul.lastAttackInfo ) ? soul.lastAttackInfo.inflictor : null
-//	e.damageSourceId <- ( "damageSourceId" in soul.lastAttackInfo ) ? soul.lastAttackInfo.damageSourceId : -1
-//	e.damageTypes <- soul.lastAttackInfo.scriptType
-//	e.overrideAttacker <- soul.soul.nukeAttacker
-//
-//	int nuclearPayload = 0
-//	if ( IsValid( e.player ) )
-//		nuclearPayload = GetNuclearPayload( ejectTitan )
-//	else
-//		nuclearPayload = NPC_GetNuclearPayload( ejectTitan )
-//
-//	e.nuclearPayload <- nuclearPayload
-//
-//	if ( e.nuclearPayload )
-//	{
-//		e.needToClearNukeFX <- false
-//		e.nukeFXInfoTarget <- CreateEntity( "info_target" )
-//		e.nukeFXInfoTarget.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
-//		DispatchSpawn( e.nukeFXInfoTarget )
-//
-//		AI_CreateDangerousArea_DamageDef( damagedef_nuclear_core, e.nukeFXInfoTarget, ejectTitan.GetTeam(), true, true )
-//	}
-//
-//	array<entity> riderList = RodeoState_GetPlayersRodeingVehicle( ejectTitan )
-//	entity enemyToLookAt    = null
-//	foreach ( entity rider in riderList )
-//	{
-//		if ( rider.GetTeam() != ejectTitan.GetTeam() )
-//		{
-//			enemyToLookAt = rider
-//		}
-//
-//		if ( rider == e.attacker )
-//		{
-//			e.damageSourceId = eDamageSourceId.rodeo_forced_titan_eject
-//		}
-//	}
-//
-//	ejectTitan.Signal( "TitanEjectionStarted" )
-//	ejectTitan.EndSignal( "OnDeath" )
-//
-//	OnThreadEnd(
-//		function() : ( e, ejectTitan )
-//		{
-//			if ( IsAlive( ejectTitan ) )
-//			{
-//				thread ClearEjectInvulnerability( ejectTitan )
-//			}
-//			else if ( IsValid( ejectTitan ) )
-//			{
-//				ejectTitan.ClearInvulnerable()
-//			}
-//
-//			if ( IsValid( e.player ) )
-//			{
-//				e.player.UnfreezeControlsOnServer()
-//			}
-//
-//			entity titan = expect entity( e.titan )
-//
-//			if ( e.nuclearPayload )
-//			{
-//				if ( e.needToClearNukeFX )
-//				{
-//					if ( IsAlive( titan ) )
-//					{
-//						//Nuclear eject sequence got interrupted early, probably because Pilot died
-//						Assert( titan.IsTitan() )
-//						thread NuclearCoreExplosion( titan.GetOrigin(), e )
-//					}
-//					else
-//					{
-//						//Nuclear eject fired, needs to be cleaned up
-//						ClearNuclearBlueSunEffect( e )
-//					}
-//				}
-//				//Nuclear core handles cleaning up the left over titan by itself, so just return out early
-//				return
-//			}
-//
-//			if ( !IsAlive( titan ) )
-//				return
-//
-//			entity soul = titan.GetTitanSoul()
-//			if ( !soul.soul.diesOnEject )
-//				return
-//
-//			Assert( titan.IsTitan() )
-//			Assert( soul.IsEjecting() )
-//			titan.Die( e.attacker, e.inflictor, { scriptType = damageTypes.titanEjectExplosion | e.damageTypes, damageSourceId = e.damageSourceId } )
-//		}
-//	)
-//
-//	soul.SetEjecting( true )
-//	ejectTitan.SetInvulnerable()  //Give both player and ejectTitan temporary invulnerability in the course of ejecting. Player invulnerability gets cleared in ClearEjectInvulnerability
-//
-//	#if SERVER
-//		StatusEffect_StopAllOfType( expect entity( e.titan ), eStatusEffect.lockon_detected_titan )
-//	#endif
-//
-//	//#if HAS_STATS
-//	//if ( IsValid( e.player ) )
-//	//{
-//	//	UpdatePlayerStat( expect entity( e.player ), "misc_stats", "timesEjected" )
-//	//	if ( nuclearPayload )
-//	//		UpdatePlayerStat( expect entity( e.player ), "misc_stats", "timesEjectedNuclear" )
-//	//}
-//	//#endif
-//	#if SERVER
-//		PIN_AddToPlayerCountStat( expect entity( e.player ), "ejects" )
-//	#endif
-//
-//	if ( !ejectTitan.ContextAction_IsBusy() )
-//		ejectTitan.ContextAction_SetBusy()
-//
-//	bool standing = true
-//	if ( IsValid( e.player ) )
-//		standing = expect entity( e.player ).IsStanding()
-//	else
-//		standing = soul.GetStance() == STANCE_STAND
-//
-//	string titanEjectAnimPlayer, titanEjectAnimTitan
-//	if ( standing )
-//	{
-//		if ( nuclearPayload )
-//		{
-//			titanEjectAnimPlayer = "at_nuclear_eject_standing"
-//			titanEjectAnimTitan = "at_nuclear_eject_standing_idle"
-//		}
-//		else
-//		{
-//			titanEjectAnimPlayer = "at_MP_eject_stand_start"
-//			titanEjectAnimTitan = "at_MP_eject_stand_end"
-//		}
-//	}
-//	else
-//	{
-//		titanEjectAnimPlayer = "at_MP_eject_crouch_idle"
-//		titanEjectAnimTitan = "at_MP_eject_crouch_start"
-//	}
-//
-//	float ejectDuration // = TITAN_PLAYEREJECT_DURATION
-//	if ( nuclearPayload )
-//		ejectDuration = TITAN_PLAYEREJECT_DURATION * 2.0
-//	else
-//		ejectDuration = TITAN_PLAYEREJECT_DURATION
-//
-//	//ejectDuration = ejectTitan.GetSequenceDuration( titanEjectAnimPlayer )
-//
-//	if ( nuclearPayload )
-//	{
-//		array<entity> players = GetPlayerArray()
-//		float frequency = 40.0
-//		float duration = 8.5
-//		vector origin = ejectTitan.GetOrigin()
-//
-//		foreach ( guy in players )
-//		{
-//			if ( guy == e.player )
-//				continue
-//
-//			if ( !IsAlive( guy ) )
-//				continue
-//
-//			float dist = Distance( guy.GetOrigin(), origin )
-//			float result = Graph( dist, 750, 1500, 5.0, 0.0 )
-//			Remote_CallFunction_Replay( guy, "ServerCallback_ScreenShake", result, frequency, duration )
-//		}
-//
-//		e.needToClearNukeFX = true
-//		e.nukeFXInfoTarget.SetParent( ejectTitan, "CHESTFOCUS" ) //Play FX and sound on entity since we need something that lasts across the player titan -> pilot transition
-//		e.nukeFX.append( PlayFXOnEntity( TITAN_NUCLEAR_CORE_NUKE_FX, expect entity( e.nukeFXInfoTarget ) ) )
-//		e.nukeFX.append( e.nukeFXInfoTarget )
-//		//ejectDuration += 0.5
-//
-//		EmitSoundOnEntity( e.nukeFXInfoTarget, "titan_nuclear_death_charge" )
-//	}
-//
-//	foreach ( entity rider in riderList )
-//	{
-//		Remote_CallFunction_Replay( rider, "ServerCallback_RodeoerEjectWarning", ejectTitan.GetTitanSoul().GetEncodedEHandle(), TITAN_PLAYEREJECT_DELAY + ejectDuration )
-//	}
-//
-//	if ( IsValid( e.player ) )
-//		e.player.CockpitStartEject()
-//
-//	float blendDelay = 0.15
-//	vector origin = ejectTitan.GetOrigin()
-//
-//	if ( !instant )
-//	{
-//		if ( IsValid( e.player ) )
-//		{
-//			Remote_CallFunction_Replay( e.player, "ServerCallback_EjectConfirmed" )
-//			EmitSoundAtPositionExceptToPlayer( e.team, ejectTitan.GetOrigin(), e.player, "Titan_Eject_Servos_3P" )
-//			e.player.FreezeControlsOnServer()
-//		}
-//		else
-//		{
-//			EmitSoundAtPosition( e.team, ejectTitan.GetOrigin(), "Titan_Eject_Servos_3P" )
-//		}
-//
-//		if ( !ejectTitan.IsTitan() )
-//		{
-//			// must be a titan, something bad has happened
-//			KillStuckPlayer( ejectTitan )
-//			return
-//		}
-//
-//		ejectTitan.Anim_Play( titanEjectAnimPlayer )
-//
-//		wait blendDelay  // wait for ejectTitan to blend into disembark pose
-//
-//	    Assert( ejectDuration > MAX_EJECT_LATENCY_COMPENSATION )
-//	    wait ejectDuration - MAX_EJECT_LATENCY_COMPENSATION
-//
-//	    if ( IsValid( e.player ) )
-//	    {
-//		    // subtract player latency so that the client gets the eject at the same time they finish the animation
-//		    float latency = expect entity( e.player ).GetLatency()
-//		    float waitduration = MAX_EJECT_LATENCY_COMPENSATION - min( latency, MAX_EJECT_LATENCY_COMPENSATION )
-//		    //printt( "Eject: compensating for " + latency + " seconds of latency; wait " + waitduration )
-//		    wait waitduration
-//		}
-//	}
-//
-//	// Defensive fix for if player becomes a spectator between initiating eject and now
-//	if ( IsValid( e.player ) && e.player.GetPlayerSettings() == "spectator" )
-//		return
-//
-//	if ( ejectTitan.GetTitanSoul() == null )
-//		return
-//
-//	if ( IsValid( e.player ) )
-//		EmitSoundAtPositionExceptToPlayer( e.team, ejectTitan.GetOrigin(), e.player, "Titan_Eject_PilotLaunch_3P" )
-//	else
-//		EmitSoundAtPosition( e.team, ejectTitan.GetOrigin(), "Titan_Eject_PilotLaunch_3P" )
-//
-//	entity titan
-//	if ( IsValid( e.player ) )
-//	{
-//		entity player = expect entity( e.player )
-//		titan = CreateAutoTitanForPlayer_ForTitanBecomesPilot( player )
-//		DispatchSpawn( titan )
-//		HolsterAndDisableWeapons( player ) //Primarily done to not play the holster animation, then deploy animation of weapon if we happened to switch the active weapon in GiveWeaponsFromStoredArray()
-//		TitanBecomesPilot( ejectTitan, titan )
-//		DeployAndEnableWeapons( player )//Undo Holster
-//		player.UnfreezeControlsOnServer()
-//	}
-//	else
-//	{
-//		// the titan is an AI
-//		titan = ejectTitan
-//	}
-//
-//	#if NPC_TITAN_PILOT_PROTOTYPE
-//	if ( ejectTitanHasNpcPilot )
-//		e.npcPilot = NpcTitanBecomesPilot( ejectTitan, true )
-//	#endif
-//
-//	vector titanOrigin = titan.GetOrigin()
-//
-//	titan.e.disableAutoTitanConversation = true // no auto titan chatter
-//
-//	titan.SetInvulnerable() //Titan dies at the end of eject sequence by script
-//	titan.SetNPCPriorityOverride_NoThreat()	// AI shouldn't consider this ejecting titan as an enemy and shoot it, etc
-//
-//	if ( e.nuclearPayload )
-//	{
-//		e.nukeFXInfoTarget.SetParent( titan, "CHESTFOCUS" )
-//	}
-//
-//	bool isInDeepWater = expect bool( "isInDeepWater" in ejectTitan.s && ejectTitan.s.isInDeepWater )
-//
-//	if ( e.nuclearPayload || isInDeepWater )
-//	{
-//		thread TitanNonSolidTemp( titan )
-//	}
-//
-//	ejectTitan.Anim_Stop()
-//	e.titan = titan
-//
-//	if ( ejectTitan.ContextAction_IsBusy() )
-//		ejectTitan.ContextAction_ClearBusy()
-//
-//	FirstPersonSequenceStruct sequence
-//	sequence.thirdPersonAnim = titanEjectAnimTitan
-//	sequence.teleport = true
-//	thread FirstPersonSequence( sequence, titan )
-//
-//	if ( IsValid( e.player ) )
-//	{
-//		entity player = expect entity( e.player )
-//		thread TempAirControl( player )
-//
-//		PutEntityInSafeSpot( player, titan, null, origin + <0,0,60>, player.GetOrigin() + <0,0,60> )
-//	}
-//
-//	vector ejectAngles = titan.GetAngles()
-//	ejectAngles.x = 270
-//	//ejectAngles.x = RandomIntRange( 263, 277 ) //5 degrees back of straight up was 245
-//
-//	float speed = 1.2 * RandomFloatRange( 1500, 1700 ) //was 1000
-//	if ( nuclearPayload )
-//		speed += 400
-//
-//	if ( isInDeepWater )
-//		speed += 1000
-//
-//	if ( IsValid( e.player ) )
-//		thread TemporarilyNonSolidPlayer( expect entity( e.player ) )
-//
-//	foreach ( entity rider in riderList )
-//	{
-//		thread TemporarilyNonSolidPlayer( rider )
-//
-//		vector riderEjectAngles = AnglesCompose( ejectAngles, <5,0,0> )
-//
-//		float gravityScale = rider.GetPlayerSettingFloat( "gravityScale" )
-//		vector riderVelocity = AnglesToForward( riderEjectAngles ) * (speed * gravityScale) * 0.95
-//
-//		thread Rodeo_ThrowRiderOff( rider, titan, riderVelocity )
-//	}
-//
-//	entity player = expect entity( e.player )
-//	if ( IsAlive( player ) )
-//	{
-//		ejectAngles = AnglesCompose( ejectAngles, <-5,0,0> )
-//
-//		float gravityScale =  player.GetPlayerSettingFloat( "gravityScale" )
-//		vector velocity = AnglesToForward( ejectAngles ) * speed * sqrt( gravityScale )
-//		player.SetOrigin( player.GetOrigin() )
-//		player.SetVelocity( velocity )
-//		vector player_look_angles = titan.GetAngles()
-//		player_look_angles.x = 80  //was 35
-//		player.SetAngles( player_look_angles )
-//
-//		thread EjectFlightTracker( player )
-//
-//		if ( IsValid( enemyToLookAt ) )
-//			thread LookAtEachOther( enemyToLookAt, player )
-//	}
-//	else if ( ejectTitanHasNpcPilot && IsAlive( expect entity( e.npcPilot ) ) )
-//	{
-//		speed *= 0.6//magic number
-//		vector velocity = <0,0,speed> //straight up
-//		e.npcPilot.SetOrigin( titan.GetOrigin() /* + <0,0,100>*/ )
-//		e.npcPilot.SetAngles( titan.GetAngles() )
-//		e.npcPilot.Anim_ScriptedPlay( "running_jump_F_float" )
-//		e.npcPilot.SetVelocity( velocity )
-//	}
-//
-//	if ( IsValid( player ) )
-//		TitanEjectVO( player, titanOrigin )
-//
-//	wait 0.15
-//
-//	vector explosionOrigin = titanOrigin + <0,0,200>
-//
-//	if ( nuclearPayload )
-//	{
-//		thread NuclearCoreExplosion( explosionOrigin, e )
-//	}
-//	else
-//	{
-//		entity explosionOwner = GetExplosionOwner( e )
-//		entity inflictor
-//		if ( IsValid( titan ) )
-//			inflictor = titan
-//		else
-//			inflictor = explosionOwner
-//
-//		RadiusDamage(
-//			explosionOrigin,				// origin
-//			explosionOwner,					// owner
-//			inflictor,		 				// inflictor
-//			1,								// normal damage
-//			1800,							// heavy armor damage
-//			100,							// inner radius
-//			300,							// outer radius
-//			SF_ENVEXPLOSION_NO_DAMAGEOWNER,	// explosion flags
-//			0, 								// distanceFromAttacker
-//			0, 								// explosionForce
-//			damageTypes.explosive,			// damage flags
-//			eDamageSourceId.titan_explosion	// damage source id
-//		)
-//
-//		entity shake = CreateEntity( "env_shake" )
-//		shake.SetOrigin( titanOrigin )
-//		shake.kv.amplitude = 12  //1-16
-//		shake.kv.duration = 1
-//		shake.kv.frequency = 100 //.001 - 255
-//		shake.kv.radius = 1000
-//		shake.kv.spawnflags = 4 //in air
-//		DispatchSpawn( shake )
-//		shake.Fire( "StartShake" )
-//		shake.Kill_Deprecated_UseDestroyInstead( 1.0 )
-//	}
-//
-//	if ( IsValid( titan ) )
-//	{
-//		if ( titan.ContextAction_IsBusy() )
-//			titan.ContextAction_ClearBusy()
-//	}
-//}
 
 void function TitanEjectVO( entity player, vector titanOrigin )
 {

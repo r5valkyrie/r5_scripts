@@ -821,6 +821,7 @@ Scripts:
 	client/objects/cl_draconis_flyin.nut
 	client/objects/cl_drone.nut
 	client/objects/cl_drone_crypto.nut
+	client/objects/cl_titan_buddy.nut
 
 	client/rui/cl_weapon_status.gnut
 	client/rui/cl_custom_use_prompt.gnut

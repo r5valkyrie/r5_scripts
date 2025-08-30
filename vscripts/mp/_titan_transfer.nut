@@ -49,13 +49,13 @@ function TitanCoreEffectTransfer_threaded( entity soul, entity titan, entity old
 
 void function OnClassChangeBecomePilot( entity player, entity titan ) //Stuff here used to be in old CPlayer:OnChangedPlayerClass, for turning into Pilot class
 {
-	player.ClearDoomed()
+	//player.ClearDoomed()
 	player.UnsetUsable()
 	player.lastTitanTime = Time()
 
 	player.Minimap_SetHeightTracking( true )
 	ResetTitanBuildTime( player )
-	RandomizeHead( player )
+	//RandomizeHead( player )
 }
 
 void function OnClassChangeBecomeTitan( entity player, entity titan ) //Stuff here used to be in old CPlayer:OnChangedPlayerClass, for turning into Titan class
@@ -78,7 +78,7 @@ function CopyWeapons( entity fromEnt, entity toEnt )
 	foreach ( weapon in weapons )
 	{
 		entity giveWeapon = fromEnt.TakeWeapon_NoDelete( weapon.GetWeaponClassName() )
-		toEnt.GiveExistingWeapon( giveWeapon )
+		//toEnt.GiveExistingWeapon( giveWeapon )
 	}
 
 	for ( int i = 0; i < OFFHAND_COUNT; i++ )
@@ -87,8 +87,8 @@ function CopyWeapons( entity fromEnt, entity toEnt )
 		offhandWeapon = fromEnt.TakeOffhandWeapon_NoDelete( i )
 
 		// maintain offhand index
-		if ( offhandWeapon )
-			toEnt.GiveExistingOffhandWeapon( offhandWeapon, i )
+		//if ( offhandWeapon )
+			//toEnt.GiveExistingOffhandWeapon( offhandWeapon, i )
 	}
 
 	if ( activeWeapon )
@@ -334,7 +334,7 @@ function TitanBecomesPilot( entity player, entity titan )
 	int skin = player.GetSkin()
 	int camo = player.GetCamo()
 	int decal = player.GetDecal()
-	titan.SetModel( model )
+	//titan.SetModel( model )
 	titan.SetSkin( skin )
 	titan.SetCamo( camo )
 	titan.SetDecal( decal )
@@ -345,8 +345,8 @@ function TitanBecomesPilot( entity player, entity titan )
 
 	TransferHealth( player, titan )
 	//Transfer children before player becomes pilot model
-	player.TransferChildrenTo( titan )
-	player.TransferTethersToEntity( titan )
+	//player.TransferChildrenTo( titan )
+	//player.TransferTethersToEntity( titan )
 	entity soul = player.GetTitanSoul()
 	SetSoulOwner( soul, titan )
 	Assert( player.GetTitanSoul() == null )
@@ -365,10 +365,10 @@ function TitanBecomesPilot( entity player, entity titan )
 
 	delete player.s.storedPlayerSettings
 	delete player.s.storedPlayerSettingsMods
-	delete player.s.storedPlayerStandMods
-	delete player.s.storedPlayerCrouchMods
-	delete player.s.storedPlayerSkinIndex
-	delete player.s.storedPlayerCamoIndex
+	//delete player.s.storedPlayerStandMods
+	//delete player.s.storedPlayerCrouchMods
+	//delete player.s.storedPlayerSkinIndex
+	//delete player.s.storedPlayerCamoIndex
 
 	TakeAllWeapons( titan )
 	CopyWeapons( player, titan )

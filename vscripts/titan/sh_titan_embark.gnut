@@ -22,9 +22,9 @@ global function IsPlayerDisembarking
 	global function PlayerEmbarksTitan
 	global function PlayerLungesToEmbark
 	global function FindBestEmbarkForNpcAnim
-	//global function PlayerDisembarksTitan
-	//global function ForcedTitanDisembark
-	//global function ForcedTitanDisembarkCustomAnims
+	global function PlayerDisembarksTitan
+	global function ForcedTitanDisembark
+	global function ForcedTitanDisembarkCustomAnims
 	global function OverrideCockpitLightFX
 	global function StartCockpitLightThink
 	global function CockpitLightStop
@@ -34,6 +34,7 @@ global function IsPlayerDisembarking
 	global function SetLargeDisembarkFailSafeTeleportVector //TODO: Re-examine this for next game, probably should have different values for SP versus MP
 	global function SetCustomTitanIsEmbarkableForPlayerFunc
 	global function CancelEmbark
+	global function GetRodeoPilot
 	//global function ClientCommand_TitanDisembark
 #endif
 
@@ -643,9 +644,9 @@ void function PlayerEmbarksTitan( entity player, entity titan, table embark )
 
 
 	waitthread PlayerEmbarksTitan_PlayerBecomesTitan( player, titan, embark )
-	//titan.Hide()
-	//titan.Destroy()
-	//SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), Titan )
+	titan.Hide()
+	titan.Destroy()
+	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), Titan )
 }
 
 void function PlayerEmbarksTitan_PlayerBecomesTitan( entity player, entity titan, table embark )
@@ -756,7 +757,7 @@ void function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 	
 	printt( "1" )
 	e.threads++
-	/*OnThreadEnd(
+	OnThreadEnd(
 		function() : ( player, e )
 		{
 			if ( IsValid( player ) )
@@ -774,7 +775,7 @@ void function TitanEmbark_PlayerEmbarks( entity player, entity titan, table e )
 				Signal( e, "OnComplete" )
 			}
 		}
-	)*/
+	)
 
     player.ContextAction_SetBusy()
 
@@ -1254,6 +1255,8 @@ bool function PlayerCanDisembarkTitan( entity player )
 function PlayerDisembarksTitan( player )
 {
 	expect entity( player )
+	ItemFlavor Pilot = GetItemFlavorByAsset( $"settings/itemflav/character/pilots/pilot_f.rpak" )
+	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), Pilot )
 	PlayerDisembarksTitanWithSequenceFuncs( player, GetDisembarkSequenceForPlayer, GetDisembarkSequenceForTitan )
 }
 
@@ -1654,10 +1657,10 @@ void function PlayerEndsDisembarkThread( entity player, table e )
 {
 	player.EndSignal( "OnDestroy" )
 
-	if ( e.pilotCleanUpDone )
-		return
+	//if ( e.pilotCleanUpDone )
+		//return
 
-	e.pilotCleanUpDone = true
+	//e.pilotCleanUpDone = true
 	bool wasCustomDisembark = player.p.isCustomDisembark
 
 	wait 0.1
@@ -2105,9 +2108,9 @@ void function PilotBecomesTitan_UpdateRodeoRiderHud( entity playerTitan, entity 
 
 entity function GetRodeoPilot( entity rodeoTarget )
 {
-	entity rider  = expect entity( rodeoTarget.GetRodeoRider( 0 ) ) //Can do .rodeoTarget.GetNumRodeoSlots() to see what the upper limit for .GetRodeoRider() is
+	/*entity rider  = expect entity( rodeoTarget.GetRodeoRider( 0 ) ) //Can do .rodeoTarget.GetNumRodeoSlots() to see what the upper limit for .GetRodeoRider() is
 	if ( IsValid( rider) && IsAlive( rider ) && IsPilot( rider ) )
-		return rider
+		return rider*/
 
 	return null
 }
