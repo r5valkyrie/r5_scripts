@@ -174,9 +174,15 @@ void function SetStandardAbilityBindingsForPilot( entity player )
 #if CLIENT || UI
 void function SetStandardAbilityBindingsForTitan( entity player )
 {
-	// Keyboard:
-	SetAbilityBinding( player, 15, "+dodge", "-dodge", KBT_TAPPED )						// 				"+ability 15"
-	SetAbilityBinding( player, 20, "+speed", "-speed", KBT_TAPPED )						// 				"+ability 20"
+	SetAbilityBinding( player, 1, "+offhand3", "-offhand3", KBT_TAPPED )				// "+ability 1"
+	SetAbilityBinding( player, 2, "+exit", "-exit", KBT_TAPPED )						// "+ability 2"
+	SetAbilityBinding( player, 3, "+dodge", "-dodge", KBT_TAPPED )						// "+ability 3"
+	SetAbilityBinding( player, 4, "+offhand1", "-offhand1", KBT_TAPPED )				// "+ability 4"
+	SetAbilityBinding( player, 5, "+dodge", "-dodge", KBT_TAPPED )						// "+ability 5"
+	// (custom)																// "+ability 6"
+	SetAbilityBinding( player, 7, "+offhand2", "-offhand2", KBT_TAPPED )				// "+ability 7"
+	SetAbilityBinding( player, 8, "+offhand0", "-offhand0", KBT_TAPPED )				// "+ability 8"
+	SetAbilityBinding( player, 9, "+toggle_duck", "-toggle_duck", KBT_TAPPED )			// "+ability 9"
 
 	SetCustomGamepadBindsForTitan( player )
 }

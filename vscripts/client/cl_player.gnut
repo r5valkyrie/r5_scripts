@@ -150,6 +150,8 @@ void function ClPlayer_Init()
 	AddCreateCallback( "player", EnableDoDeathCallback )
 	AddCreateCallback( "npc_titan", EnableDoDeathCallback )
 
+	AddCreateCallback( "titan_soul", CreateCallback_TitanSoul )
+
 	AddCallback_OnPlayerLifeStateChanged( PlayerADSDof )
 
 	level.menuHideGroups <- {}
@@ -595,12 +597,10 @@ bool function ConditionNoTitan()
 
 void function Player_AddClient( entity player )
 {
-	//if ( GetCurrentPlaylistVarInt( "titan_mode_change_allowed", 1 ) )
-	//	RegisterConCommandTriggeredCallback( "+offhand3", Pressed_TitanNextMode )
-	//RegisterConCommandTriggeredCallback( "+offhand3", Pressed_RequestTitanfall )
-	//AddCallback_OnUseButtonPressed( player, Pressed_OfferOrRequestRodeoBattery )
+	if ( GetCurrentPlaylistVarInt( "titan_mode_change_allowed", 1 ) )
+		RegisterConCommandTriggeredCallback( "+scriptCommand2", Pressed_RequestTitanfall )
 
-	//Create_DamageIndicatorHUD()
+	Create_DamageIndicatorHUD()
 
 	if ( !IsLobby() )
 	{
@@ -688,6 +688,7 @@ void function ClientPlayerClassChanged( entity player, newClass )
 	{
 		case "titan":
 			SetStandardAbilityBindingsForTitan( player )
+		//	SetAbilityBinding( player, 6, "+offhand4", "-offhand4" )	// "+ability 6"
 
 			LinkButtonPair( -1, -1, -1 )
 			break
@@ -1753,6 +1754,9 @@ void function OnExtraLowMantle( entity firstPersonProxy )
 	EmitSoundOnEntity( firstPersonProxy, "mantle_extralow" )
 }
 
+void function CreateCallback_TitanSoul( entity ent )
+{
+}
 
 bool function ShouldHideRespawnSelectionText( entity player )
 {

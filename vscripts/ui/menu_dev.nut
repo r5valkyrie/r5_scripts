@@ -320,8 +320,8 @@ void function SetupDefaultDevCommandsMP()
 		SetupDevMenu( "Equip Legend Abilities", SetDevMenu_Abilities )
 		//SetupDevMenu( "Equip Custom Abilities", SetDevMenu_CustomAbilities )
 		SetupDevMenu( "Equip Apex Weapons", SetDevMenu_Weapons )
-		//if( Playlist() != ePlaylists.survival_firingrange )
-			//SetupDevMenu( "Equip Titanfall Weapons", SetDevMenu_R2Weapons )
+		if( Playlist() != ePlaylists.survival_firingrange )
+			SetupDevMenu( "Equip Titanfall Weapons", SetDevMenu_R2Weapons )
 
 		if ( IsSurvivalMenuEnabled() )
 		{

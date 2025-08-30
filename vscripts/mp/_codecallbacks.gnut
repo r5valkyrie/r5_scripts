@@ -885,7 +885,8 @@ void function PlayerTookDamage( entity player, var damageInfo, entity attacker, 
 		entity storeEnt
 		if ( isTitan )
 		{
-			storeEnt = player.GetTitanSoul()
+			//storeEnt = player.GetTitanSoul()
+			storeEnt = player
 		}
 		else
 		{

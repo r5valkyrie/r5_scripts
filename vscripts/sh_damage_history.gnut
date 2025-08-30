@@ -77,6 +77,13 @@ global struct DamageHistoryStruct
 
 	float healthFrac
 	float shieldFrac
+	
+	string attackerName
+	string attackerPetName
+	float attackerHealthPercent
+	array<string> weaponMods
+	bool victimIsTitan
+	bool rodeoDamage
 }
 
 global struct AssistingPlayerStruct
@@ -113,6 +120,8 @@ void function ClearRecentDamageHistory( entity player )
 DamageHistoryStruct function StoreDamageHistoryAndUpdate( entity storeEnt, float maxTime, float damage, vector damageOrigin, int damageType, int damageSourceId, entity attacker = null, array<string> mods = [] )
 {
 	//Warning( "Incoming damage from: " + string( attacker ) + " Damage: " + damage )
+	if ( storeEnt.IsTitan() )
+		return StoreDamageHistoryAndUpdateR2(storeEnt, maxTime, damage, damageOrigin, damageType, damageSourceId, attacker, mods)
 	DamageHistoryStruct damageHistory
 
 	float time = Time()
@@ -187,6 +196,81 @@ DamageHistoryStruct function StoreDamageHistoryAndUpdate( entity storeEnt, float
 
 	return damageHistory
 }
+
+DamageHistoryStruct function StoreDamageHistoryAndUpdateR2( entity storeEnt, float maxTime, float damage, vector damageOrigin, int damageType, int damageSourceId, entity attacker = null, array<string> weaponMods = [] )
+{
+	DamageHistoryStruct damageHistory
+
+	float time = Time()
+
+	#if SERVER
+		if ( !attacker.IsPlayer() )
+		{
+			entity newAttacker = GetPlayerFromEntity( attacker )
+			if ( IsValid_ThisFrame( newAttacker ) )
+				attacker = newAttacker
+		}
+	#endif
+
+	if ( damageType & DF_VORTEX_REFIRE )
+		damageSourceId = eDamageSourceId.mp_titanweapon_vortex_shield
+
+	if ( IsValid( attacker ) )
+	{
+		#if CLIENT
+			AttackerDisplayNameStruct names = GetAttackerDisplayNamesFromClassname( attacker )
+			damageHistory.attackerName = names.attackerName
+			damageHistory.attackerPetName = names.attackerPetName
+			damageHistory.attackerHealthPercent = max( 0.0, float( attacker.GetHealth() ) / float( attacker.GetMaxHealth() ) * 100.0 )
+		#endif
+	}
+
+	damageHistory.origin = damageOrigin
+	damageHistory.damage = damage
+	damageHistory.damageType = damageType
+	damageHistory.damageSourceId = damageSourceId
+	damageHistory.attacker = attacker
+	damageHistory.time = time
+	damageHistory.weaponMods = weaponMods
+
+	if ( IsSoul( storeEnt ) )
+	{
+		damageHistory.victimIsTitan = true
+	}
+	else
+	{
+		// clear the damage history
+		if ( GetHealthFrac( storeEnt ) == 1.0 )
+			maxTime = 0
+
+		damageHistory.victimIsTitan = false
+	}
+
+	if ( maxTime >= 0 )
+		UpdateDamageHistory( storeEnt, maxTime, time )
+
+	storeEnt.e.recentDamageHistory.insert( 0, damageHistory )
+
+	return damageHistory
+}
+
+void function UpdateDamageHistory( entity player, float maxTime, float time )
+{
+	// remove old damage history entries
+	int i
+	float removeTime = time - maxTime
+
+	for ( i = player.e.recentDamageHistory.len() - 1; i >= 0; i-- )
+	{
+		DamageHistoryStruct history = player.e.recentDamageHistory[ i ]
+
+		if ( history.time > removeTime )
+			return
+
+		player.e.recentDamageHistory.remove( i )
+	}
+}
+
 #endif //if server
 
 void function PurgeDamageHistory( entity player, float maxTime, float time )

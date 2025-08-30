@@ -296,6 +296,7 @@ void function PrecacheSDKEntities()
 	PrecacheModel( $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl")
 	PrecacheModel( $"mdl/communication/terminal_usable_imc_01.rmdl" )
 	PrecacheModel( $"mdl/robots/drone_frag/drone_frag.rmdl" )
+	PrecacheModel( $"mdl/weapons/arms/pov_titan_medium_cockpit.rmdl" )
 
 	//////////////////////NPC CACHE/////////////////////
 	//PrecacheModel( $"mdl/robots/super_spectre/super_spectre_v1.rmdl")
