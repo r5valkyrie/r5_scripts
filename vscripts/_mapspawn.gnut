@@ -274,12 +274,9 @@ void function PrecacheSDKWeapons()
 	PrecacheWeapon( $"mp_ability_dodge_roll" )
 	//Custom Heirlooms
 	PrecacheWeapon( $"melee_macks_knife" )
-	PrecacheWeapon( $"mp_weapon_macks_knife_primary" )
+	PrecacheWeapon( $"mp_weapon_macks_knife_primary" )//needs to be a mod, we dont want custom models in sdk rpaks
 
 	//Titanfall Weapons
-	PrecacheWeapon( $"mp_titanweapon_flightcore_rockets" ) // Not a loot
-	PrecacheWeapon( $"mp_titancore_laser_cannon" ) // Not a loot
-	PrecacheWeapon( $"mp_ability_titanfall" ) // Not a loot
 }
 
 void function PrecacheSDKEntities()
@@ -296,7 +293,6 @@ void function PrecacheSDKEntities()
 	PrecacheModel( $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl")
 	PrecacheModel( $"mdl/communication/terminal_usable_imc_01.rmdl" )
 	PrecacheModel( $"mdl/robots/drone_frag/drone_frag.rmdl" )
-	PrecacheModel( $"mdl/weapons/arms/pov_titan_medium_cockpit.rmdl" )
 
 	//////////////////////NPC CACHE/////////////////////
 	//PrecacheModel( $"mdl/robots/super_spectre/super_spectre_v1.rmdl")
@@ -321,6 +317,14 @@ void function PrecacheSDKEntities()
 	PrecacheParticleSystem( $"P_warp_brac_ring_hld" )
 	PrecacheParticleSystem( $"P_mrb_destruction" )
 	PrecacheParticleSystem( $"P_skydive_smoke_shdw" )
+
+
+	//////R2 STUFFS//////
+	PrecacheModel( $"mdl/weapons/arms/pov_titan_medium_cockpit.rmdl" )
+	PrecacheModel( $"mdl/weapons/arms/buddypov.rmdl" )
+	PrecacheWeapon( $"mp_titanweapon_flightcore_rockets" ) // Not a loot
+	PrecacheWeapon( $"mp_titancore_laser_cannon" ) // Not a loot
+	PrecacheWeapon( $"mp_ability_titanfall" ) // Not a loot
 }
 
 void function FS_RestartServerAfterSomeTimeWithoutPlayers()

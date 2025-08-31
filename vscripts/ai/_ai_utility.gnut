@@ -1724,7 +1724,8 @@ void function DEV_SpawnSupSpectreAtCrosshair(int team = 99)
 	vector angles = Vector( 0, 0, 0 )
 
 	entity spectre = CreateSupSpectre( team, origin, angles )
-	
+	//spectre.SetCollisionAllowed( false )
+	spectre.kv.solid = 8
 	DispatchSpawn( spectre )
 	
 	//array<string> weapons = ["npc_weapon_lstar", "npc_weapon_energy_shotgun", "npc_weapon_hemlok"] //We are giving them original firing range weapons, they are shooting better this way
@@ -1776,21 +1777,14 @@ void function DEV_SpawnSpiderAtCrosshair(int team = 99)
 	//bt.SetBossPlayer( player )
 }*/
 
-void function DEV_SpawnBTAtCrosshair( bool hotdrop = false )
+void function DEV_SpawnBTAtCrosshair( int team = 99 )
 {
-	DisablePrecacheErrors()
-	wait 0.2
 	entity player = GetPlayerArray()[ 0 ]
-
-	entity pet_titan = player.GetPetTitan()
-	if ( IsValid(pet_titan) )
-		pet_titan.SetHealth(0)
 
 	vector origin = GetPlayerCrosshairOrigin( player )
 	vector angles = Vector( 0, 0, 0 )
 
-	//TitanLoadoutDef loadout = GetTitanLoadoutForCurrentMap()
-	entity npc = CreateNPCTitanFromSettings($"settings/player/mp/titan_survival_buddy.rpak",player.GetTeam(),origin, angles)//CreateAutoTitanForPlayer_FromTitanLoadout( player, loadout, origin, angles )
+	entity npc = CreateNPCTitanFromSettings($"settings/player/mp/titan_survival_buddy.rpak",team,origin, angles)
 
 	SetSpawnOption_AISettings( npc, "npc_titan_buddy" )
 	npc.SetCollisionAllowed( false )//TODO: Get rid of this when collision is fixed, it causes crash. - Kral
@@ -1800,14 +1794,6 @@ void function DEV_SpawnBTAtCrosshair( bool hotdrop = false )
 	npc.kv.solid = 8
 
 	npc.GiveWeapon("mp_titanweapon_xo16_shorty", WEAPON_INVENTORY_SLOT_ANY)
-
-	//SetPlayerPetTitan( player, npc )
-	SetupAutoTitan( npc, player )
-
-	if ( hotdrop )
-		thread NPCTitanHotdrops( npc, false )
-		
-	//CodeCallback_EmbarkTitan( player, npc )
 }
 
 void function DEV_SpawnTitanAtCrosshair(int team = 99)
@@ -1817,9 +1803,14 @@ void function DEV_SpawnTitanAtCrosshair(int team = 99)
 	vector origin = GetPlayerCrosshairOrigin( player )
 	vector angles = Vector( 0, 0, 0 )
 
-	entity npc = CreateNPCTitan( "titan", team, origin, angles )
+	entity npc = CreateNPCTitan( "", team, origin, angles )
 	SetSpawnOption_AISettings( npc, "npc_titan_buddy" )
+	npc.SetCollisionAllowed( false )
 	DispatchSpawn( npc )
+	
+	array<string> weapons = ["mp_titanweapon_leadwall", "mp_titanweapon_meteor", "mp_titanweapon_particle_accelerator", "mp_titanweapon_predator_cannon", "mp_titanweapon_sniper","mp_titanweapon_xo16"]
+	string randomWeapon = weapons[RandomInt(weapons.len())]
+	npc.GiveWeapon( randomWeapon, WEAPON_INVENTORY_SLOT_PRIMARY_0, [])
 }
 
 void function DEV_SpawnInfectedSoldierAtCrosshair(int team = 99)

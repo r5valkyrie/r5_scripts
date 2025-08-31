@@ -67,6 +67,7 @@ function AiSuperspectre_Init()
 	//AddPostDamageCallback( "npc_super_spectre", SuperSpectre_PostDamage )
 
 	file.activeMinions_GlobalArrayIdx = CreateScriptManagedEntArray()
+	PrecacheModel( $"mdl/robots/super_spectre/super_spectre_v1.rmdl" )
 }
 
 void function SuperSpectre_OnDamage( entity npc, var damageInfo )
@@ -377,41 +378,41 @@ void function ReaperMinionLauncherThink( entity reaper )
 {
 	// if ( GetBugReproNum() != 221936 )
 	// 	reaper.kv.squadname = ""
+	//implement _ai_stationary_firing_positions
+	/*StationaryAIPosition launchPos = GetClosestAvailableStationaryPosition( reaper.GetOrigin(), 8000, eStationaryAIPositionTypes.LAUNCHER_REAPER )
+	launchPos.inUse = true
 
-	// StationaryAIPosition launchPos = GetClosestAvailableStationaryPosition( reaper.GetOrigin(), 8000, eStationaryAIPositionTypes.LAUNCHER_REAPER )
-	// launchPos.inUse = true
+	OnThreadEnd(
+	 	function () : ( launchPos )
+	 	{
+	 		launchPos.inUse = false
+	 	}
+	)
 
-	// OnThreadEnd(
-	// 	function () : ( launchPos )
-	// 	{
-	// 		launchPos.inUse = false
-	// 	}
-	// )
+	reaper.EndSignal( "OnDeath" )
+	reaper.AssaultSetFightRadius( 96 )
+	reaper.AssaultSetGoalRadius( reaper.GetMinGoalRadius() )
 
-	// reaper.EndSignal( "OnDeath" )
-	// reaper.AssaultSetFightRadius( 96 )
-	// reaper.AssaultSetGoalRadius( reaper.GetMinGoalRadius() )
+	while ( true )
+	{
+		WaitFrame()
 
-	// while ( true )
-	// {
-	// 	WaitFrame()
+		if ( Distance( reaper.GetOrigin(), launchPos.origin ) > 96 )
+		{
+			printt( reaper," ASSAULT:", launchPos.origin, Distance( reaper.GetOrigin(), launchPos.origin ) )
+	 		reaper.AssaultPoint( launchPos.origin )
+	 		table signalData = WaitSignal( reaper, "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
+	 		printt( reaper," END ASSAULT:", launchPos.origin, signalData.signal )
+	 		if ( signalData.signal == "OnFailedToPath" )
+	 			continue
+	 	}
 
-	// 	if ( Distance( reaper.GetOrigin(), launchPos.origin ) > 96 )
-	// 	{
-	// 		printt( reaper," ASSAULT:", launchPos.origin, Distance( reaper.GetOrigin(), launchPos.origin ) )
-	// 		reaper.AssaultPoint( launchPos.origin )
-	// 		table signalData = WaitSignal( reaper, "OnFinishedAssault", "OnEnterGoalRadius", "OnFailedToPath" )
-	// 		printt( reaper," END ASSAULT:", launchPos.origin, signalData.signal )
-	// 		if ( signalData.signal == "OnFailedToPath" )
-	// 			continue
-	// 	}
-
-	// 	printt( reaper," LAUNCH:", launchPos.origin )
-	// 	waitthread Reaper_LaunchFragDrone_Think( reaper, "npc_frag_drone_fd" )
-	// 	printt( reaper," END LAUNCH:", launchPos.origin )
-	// 	while ( GetScriptManagedEntArrayLen( reaper.ai.activeMinionEntArrayID ) > 2 )
-	// 		WaitFrame()
-	// }
+	 	printt( reaper," LAUNCH:", launchPos.origin )
+	 	waitthread Reaper_LaunchFragDrone_Think( reaper, "npc_frag_drone_fd" )
+	 	printt( reaper," END LAUNCH:", launchPos.origin )
+	 	while ( GetScriptManagedEntArrayLen( reaper.ai.activeMinionEntArrayID ) > 2 )
+	 		WaitFrame()
+	}*/
 }
 
 void function Reaper_LaunchFragDrone_Think( entity reaper, string fragDroneSettings = "" )
@@ -729,8 +730,5 @@ function SuperSpectre_WarpFall( entity ai )
 
 bool function ShouldNukeOnDeath( entity ent )
 {
-	if ( IsMultiplayer() )
-		return false
-
 	return ent.Dev_GetAISettingByKeyField( "nuke_on_death" ) == 1
 }

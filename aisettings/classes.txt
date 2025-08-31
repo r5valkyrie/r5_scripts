@@ -21,6 +21,7 @@ classes
 	import npc_spectre.txt
 	import npc_stalker.txt
 	import npc_pilot_elite.txt
+	import npc_super_spectre.txt
 	//movement recorder
 	import npc_dummie_ballistic.txt
 	import npc_dummie_loba.txt
