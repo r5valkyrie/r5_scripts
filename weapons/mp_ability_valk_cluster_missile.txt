@@ -120,9 +120,9 @@ WeaponData
     //viewmodel										"mdl/Weapons/valk_tactical/ptpov_valk_tactical.rmdl"
     "viewmodel"                                     "mdl/weapons/valkyrie_rockets/valkyrie_rockets.rmdl"
     //	playermodel									"mdl/weapons/empty_handed/w_empty_handed_human.rmdl"
-    //  projectilemodel 							"mdl/weapons/bullets/projectile_rocket_launcher_sram.rmdl"
+      projectilemodel 							"mdl/weapons/bullets/projectile_rocket_launcher_sram.rmdl"
 
-    projectilemodel                                 "mdl/humans_r5/pilots_r5/pilot_valkyrie/w_valkyrie_rocket_cannister_projectile.rmdl"
+    //projectilemodel                                 "mdl/humans_r5/pilots_r5/pilot_valkyrie/w_valkyrie_rocket_cannister_projectile.rmdl"
 
     //projectile_trail_effect_0_1p     				"P_FlightCore_trail"
    	//projectile_trail_effect_0_3p 					"P_FlightCore_trail"
