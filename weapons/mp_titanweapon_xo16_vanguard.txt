@@ -542,6 +542,9 @@ WeaponData
 		gold
 		{
 		}
+		crate
+		{
+		}
 		fd_vanguard_weapon_1
 		{
 			"zoom_toggle_lerp_time"							"0.2"

@@ -534,6 +534,9 @@ WeaponData
 		gold
 		{
 		}
+		crate
+		{
+		}
 	}
 
 	active_crosshair_count				"2"
