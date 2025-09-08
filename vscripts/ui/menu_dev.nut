@@ -1648,10 +1648,10 @@ void function SetupFriendlyNPC()
 	SetupDevCommand( "Friendly NPC: Loot Tick", "script SpawnLootTickAtCrosshair()" )
 	SetupDevCommand( "Friendly NPC: Prowler", "script DEV_SpawnProwlerAtCrosshair(gp()[0].GetTeam())" )
 	SetupDevCommand( "Friendly NPC: Marvin", "script DEV_SpawnMarvinAtCrosshair(gp()[0].GetTeam())" )
-	//SetupDevCommand( "Friendly NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair(gp()[0].GetTeam())" )
+	SetupDevCommand( "Friendly NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair(gp()[0].GetTeam())" )
 	SetupDevCommand( "Friendly NPC: Spider", "script DEV_SpawnSpiderAtCrosshair(gp()[0].GetTeam())" )
-	SetupDevCommand( "Friendly NPC: Infected", "script DEV_SpawnInfectedSoldierAtCrosshair(gp()[0].GetTeam())" )
-	SetupDevCommand( "Friendly NPC: Tick", "script DEV_SpawnExplosiveTickAtCrosshair(gp()[0].GetTeam())" )
+	SetupDevCommand( "Friendly NPC: Infected Pilot", "script DEV_SpawnInfectedSoldierAtCrosshair(gp()[0].GetTeam())" )
+	SetupDevCommand( "Friendly NPC: Explosive Tick", "script DEV_SpawnExplosiveTickAtCrosshair(gp()[0].GetTeam())" )
 	#endif
 }
 
@@ -1667,11 +1667,11 @@ void function SetupEnemyNPC()
 	SetupDevCommand( "Enemy NPC: Plasma Drone", "script DEV_SpawnPlasmaDroneAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Rocket Drone", "script DEV_SpawnRocketDroneAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Prowler", "script DEV_SpawnProwlerAtCrosshair()" )
-	SetupDevCommand( "Enemy NPC: Marvin", "script DEV_SpawnMarvinAtCrosshair()" )
-	//SetupDevCommand( "Enemy NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair()" )//Come back to this NPC later, we have animations and models but they are unstable -lorrylekral
+	//SetupDevCommand( "Enemy NPC: Marvin", "script DEV_SpawnMarvinAtCrosshair()" )
+	SetupDevCommand( "Enemy NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair()" )//Come back to this NPC later, we have animations and models but they are unstable -lorrylekral
 	SetupDevCommand( "Enemy NPC: Spider", "script DEV_SpawnSpiderAtCrosshair()" )
-	SetupDevCommand( "Enemy NPC: Infected", "script DEV_SpawnInfectedSoldierAtCrosshair()" )
-	SetupDevCommand( "Enemy NPC: Tick", "script DEV_SpawnExplosiveTickAtCrosshair()" )
+	SetupDevCommand( "Enemy NPC: Infected Pilot", "script DEV_SpawnInfectedSoldierAtCrosshair()" )
+	SetupDevCommand( "Enemy NPC: Explosive Tick", "script DEV_SpawnExplosiveTickAtCrosshair()" )
 	#endif
 }
 

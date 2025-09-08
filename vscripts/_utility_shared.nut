@@ -119,7 +119,9 @@ struct
 void function Utility_Shared_Init()
 {
 	PrecacheModel( $"mdl/weapons/arms/human_pov_cockpit.rmdl" ) // todo(dw): move this to a better place
-
+	PrecacheModel( $"mdl/humans/pilots/pilot_medium_reaper_f.rmdl" )
+	PrecacheModel( $"mdl/humans/pilots/pilot_medium_reaper_m.rmdl" )
+	
 	RegisterSignal( TRIGGER_INTERNAL_SIGNAL )
 	RegisterSignal( "devForcedWin" )
 	RegisterSignal( "OnContinousUseStopped" )
