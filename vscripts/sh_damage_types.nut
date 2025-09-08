@@ -141,6 +141,7 @@ global enum eDamageSourceId
 	sp_weapon_arc_tool
 	mp_weapon_pulse_lmg
 	mp_weapon_mounted_turret_weapon
+	mp_ability_valk_cluster_missile
 	mp_titanweapon_flightcore_rockets
 	mp_titancore_laser_cannon
 	mp_titanweapon_xo16

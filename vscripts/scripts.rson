@@ -278,6 +278,7 @@ Scripts:
 	weapons/mp_ability_item_spawner.nut
 	weapons/mp_ability_panic_button.nut
 	weapons/mp_ability_mobile_respawn_beacon.nut
+	weapons/mp_ability_valk_cluster_missile.nut
 	weapons/sh_silence.gnut
 
 	weapons/sp_weapon_arc_tool.nut

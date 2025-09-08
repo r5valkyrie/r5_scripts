@@ -1377,6 +1377,12 @@ global struct ServerAIStruct
 	int  npcType = -1    // eNPC.*
 }
 
+global struct WeaponMissileMultipleTargetData
+{
+	vector pos
+	vector normal
+	float delay
+}
 
 // hooked up to entity.w in code
 global struct ServerWeaponStruct
@@ -1396,6 +1402,8 @@ global struct ServerWeaponStruct
 	// bool initialized = false
 	entity lastProjectileFired
 	array<VortexImpact> vortexImpactData
+	
+	array<WeaponMissileMultipleTargetData>   valkTac_targetData
 
 	array<PhaseRewindData> phaseRetreatSavedPositions
 	bool phaseRetreatShouldSave = true
@@ -1524,6 +1532,8 @@ global struct ServerProjectileStruct
 	array<entity> healWeaponEffects
 	
 	float lastVortexBounceTime = 0.0
+	vector valkTacMissileStartPos
+	int valkTacGrenadeHandle // this is used to identify warning entities and associated them with the missile for which they were spawned
 }
 
 // hooked up to entity.soul in code

@@ -22,7 +22,6 @@ global struct BurnMeterHudStruct //Have to put this struct def here so I can put
 	float burnMeterRewardProgress
 }
 
-
 // This struct is hooked up to entity.e in code
 global struct ClientEntityStruct
 {
@@ -94,12 +93,8 @@ global struct ClientEntityStruct
 
 	// for clientside clones to know abt their server counterpart
 	entity svCounterpart
-	#if(false)
-//
-//
 
-#endif //
-
+//	array<WeaponMissileMultipleTargetData>   valkTac_targetData
 	bool canBeMeleed = true
 	bool gravityOrbInteraction
 	int cameraMaxRangeFXHandle = -1

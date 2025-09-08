@@ -48,12 +48,12 @@ WeaponData
 
     OnWeaponRegenEnd                                "OnWeaponRegenEndGeneric"
     //"OnWeaponAttemptOffhandSwitch_ability_valk_cluster_missile"
-    //OnWeaponActivate                                "OnWeaponActivate_ability_valk_cluster_missile"
-    //OnWeaponDeactivate					            "OnWeaponDeactivate_ability_valk_cluster_missile"
-    //OnWeaponPrimaryAttack                           "OnWeaponPrimaryAttack_valk_cluster_missile"
+    OnWeaponActivate                                "OnWeaponActivate_ability_valk_cluster_missile"
+    OnWeaponDeactivate					            "OnWeaponDeactivate_ability_valk_cluster_missile"
+    OnWeaponPrimaryAttack                           "OnWeaponPrimaryAttack_valk_cluster_missile"
     //GetProjectilePosition                         "GetProjectilePosition_ability_valk_cluster_missile"
-    //OnProjectileCollision				            "OnProjectileCollision_ability_valk_cluster_missile"
-    //OnClientAnimEvent					            "OnClientAnimEvent_ability_valk_cluster_missile"
+    OnProjectileCollision				            "OnProjectileCollision_ability_valk_cluster_missile"
+    OnClientAnimEvent					            "OnClientAnimEvent_ability_valk_cluster_missile"
 
 	"fire_sound_1_player_1p" 						""
 	"fire_sound_1_player_3p" 						""
