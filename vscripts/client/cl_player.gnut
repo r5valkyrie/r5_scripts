@@ -597,7 +597,7 @@ bool function ConditionNoTitan()
 
 void function Player_AddClient( entity player )
 {
-	if ( GetCurrentPlaylistVarInt( "titan_mode_change_allowed", 1 ) )
+	if ( GetCurrentPlaylistVarInt( "titan_mode_change_allowed", 0 ) )
 		RegisterConCommandTriggeredCallback( "+scriptCommand2", Pressed_RequestTitanfall )
 
 	Create_DamageIndicatorHUD()
