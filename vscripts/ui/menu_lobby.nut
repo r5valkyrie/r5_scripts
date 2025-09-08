@@ -61,6 +61,7 @@ global table<string, asset> MapAssets = {
 	[ "mp_rr_aqueduct" ] = $"rui/menu/maps/mp_rr_aqueduct_big_icon",
 	[ "mp_rr_olympus" ] = $"rui/menu/maps/mp_rr_olympus_big_icon",
 	[ "mp_rr_olympus_tt" ] = $"rui/menu/maps/mp_rr_olympus_tt_big_icon",
+	[ "mp_rr_olympus_mu1" ] = $"rui/menu/maps/mp_rr_olympus_mu1_big_icon",
 	[ "mp_lobby" ] = $"rui/menu/maps/mp_lobby_big_icon"
 }
 
@@ -88,6 +89,7 @@ global table<string, asset> MapAssetsSquare = {
 	[ "mp_rr_aqueduct" ] = $"rui/menu/maps/mp_rr_aqueduct_square_icon",
 	[ "mp_rr_olympus" ] = $"rui/menu/maps/mp_rr_olympus_square_icon",
 	[ "mp_rr_olympus_tt" ] = $"rui/menu/maps/mp_rr_olympus_tt_square_icon",
+	[ "mp_rr_olympus_mu1" ] = $"rui/menu/maps/mp_rr_olympus_mu1_square_icon",
 	[ "mp_lobby" ] = $"rui/menu/maps/mp_lobby"
 }
 
@@ -117,6 +119,7 @@ global table<string, string> MapNames = {
 	[ "mp_rr_arena_phase_runner" ] = "Phase Runner",
 	[ "mp_rr_olympus" ] = "Olympus S7",
 	[ "mp_rr_olympus_tt" ] = "Olympus S7 - Boxing Ring",
+	[ "mp_rr_olympus_mu1" ] = "Olympus S9",
 	[ "mp_lobby" ] = "Lobby"
 }
 
