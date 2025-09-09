@@ -90,6 +90,19 @@ global enum eMaps
 	mp_rr_exoplanet,
 	mp_rr_exoplanet_night,
 	mp_rr_eden,
+	mp_rr_angel_city,
+	mp_rr_arena_centrifuge,
+	mp_rr_arena_defense_complex,
+	mp_rr_arena_divinity,
+	mp_rr_arena_frosted
+	mp_rr_arena_monument,
+	mp_rr_black_water_canal,
+	mp_rr_boneyard,
+	mp_rr_dev_moon,
+	mp_rr_divided_moon,
+	mp_rr_homestead,
+	mp_rr_colony,
+	mp_rr_crashsite,
 	
 	
 	_MAP_COUNT //LAST
@@ -271,7 +284,9 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 	#endif
 	
 		SH_globals.currentMap = getMapEnumFromName( level )
+		#if !DEVELOPER
 		mAssert( SH_globals.currentMap != -1, format( "Current map \"%s\" is not registered in %s", level, FILE_NAME() ) )
+		#endif
 		
 		#if UI 
 			if( level != "" )
@@ -288,7 +303,10 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 			}
 			
 			SH_globals.currentPlaylist = getPlaylistEnumFromName( currentPlaylistName )
+			
+			#if !DEVELOPER
 			mAssert( SH_globals.currentPlaylist != -1, format( "Current playlist \"%s\" is not registered in %s", currentPlaylistName, FILE_NAME() ) )
+			#endif
 		
 		#if UI 
 			}
