@@ -270,7 +270,7 @@ void function CharactersPanel_OnFocusChanged( var panel, var oldFocus, var newFo
 	//Hud_SetVisible( file.actionButton, IsCharacterButtonFocused() )
 	Hud_SetVisible( file.actionLabel, IsCharacterButtonFocused() )
 
-	printt( ItemFlavor_GetHumanReadableRef( character ) )
+	//printt( ItemFlavor_GetHumanReadableRef( character ) )
 	PresentCharacter( character )
 }
 
