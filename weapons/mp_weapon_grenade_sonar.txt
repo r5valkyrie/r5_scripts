@@ -63,12 +63,12 @@ WeaponData
 
 	// Damage - When Used by Players
 	"damage_type" 									"burn"
-	"damage_near_distance"							"10"
-	"damage_far_distance" 							"10"
-	"damage_near_value"   							"10"
-	"damage_far_value"								"10"
-	"damage_near_value_titanarmor"					"10"
-	"damage_far_value_titanarmor" 					"10"
+	"damage_near_distance"							"240"
+	"damage_far_distance" 							"240"
+	"damage_near_value"   							"240"
+	"damage_far_value"								"240"
+	"damage_near_value_titanarmor"					"240"
+	"damage_far_value_titanarmor" 					"240"
 	"explosion_damage"								"0"
 	"explosion_damage_heavy_armor"					"0"
 	"explosion_inner_radius"  						"0"
