@@ -8,9 +8,10 @@ global function DumpGunRackContent
 #endif
 
 global const string GUN_RACK_CLASS_NAME = "script_gun_rack"
+global const string TF2_GUN_RACK = "control_gun_rack"
 
-const asset GUNRACK_MODEL = $"mdl/industrial/gun_rack_arm_down.rmdl"
-const asset GUNRACK_MODEL_OFF = $"mdl/industrial/gun_rack_arm_down_new_off.rmdl"
+global const asset GUNRACK_MODEL = $"mdl/industrial/gun_rack_arm_down.rmdl"
+global const asset GUNRACK_MODEL_OFF = $"mdl/industrial/gun_rack_arm_down_new_off.rmdl"
 
 struct
 {
@@ -23,7 +24,7 @@ struct
 
 void function GunRacks_Init()
 {
-	if (MapName() != eMaps.mp_rr_desertlands_mu2 && MapName() != eMaps.mp_rr_olympus_mu1 && MapName() != eMaps.mp_rr_desertlands_mu1_tt && MapName() != eMaps.mp_rr_desertlands_mu1 && MapName() != eMaps.mp_rr_olympus && MapName() != eMaps.mp_rr_olympus_tt && MapName() != eMaps.mp_rr_olympus_tt)
+	if( !IsTitanfall2Map() && MapName() != eMaps.mp_rr_desertlands_mu2 && MapName() != eMaps.mp_rr_olympus_mu1 && MapName() != eMaps.mp_rr_desertlands_mu1_tt && MapName() != eMaps.mp_rr_desertlands_mu1 && MapName() != eMaps.mp_rr_olympus && MapName() != eMaps.mp_rr_olympus_tt && MapName() != eMaps.mp_rr_olympus_tt)
 		return
 
 	PrecacheModel( GUNRACK_MODEL )
@@ -32,6 +33,10 @@ void function GunRacks_Init()
 	file.gunRackLootOverride = GetCurrentPlaylistVarString( "standard_rack_loot_group_override", "" )
 
 	AddSpawnCallbackEditorClass( "prop_dynamic", GUN_RACK_CLASS_NAME, OnGunRackSpawned )
+	
+	if( IsTitanfall2Map() )
+		AddSpawnCallbackEditorClass( "prop_dynamic", TF2_GUN_RACK, OnGunRackSpawned )
+	
 	AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
 	Loot_AddCallback_OnPlayerLootPickupRetail( GunRack_OnPlayerLootPickedUp )
 }
@@ -52,7 +57,10 @@ void function OnEntitiesDidLoad()
 		if ( !gunRack.HasKey( "loot_is_custom" ) || gunRack.GetValueForKey( "loot_is_custom" ) == "0" )
 		{ // if loot_is_custom, you are responsible for spawning the gun racks loot and setting its model state
 			string lootRef = ""
-			if ( file.gunRackLootOverride != "" )
+			if( GetEditorClass( gunRack ) == TF2_GUN_RACK && file.gunRackLootOverride == "" )
+			{
+				lootRef = SURVIVAL_Loot_GetByType_InLevel( eLootType.MAINWEAPON , 1 ).getrandom().ref
+			} else if ( file.gunRackLootOverride != "" )
 			{
 				lootRef = SURVIVAL_GetWeightedItemFromGroup( file.gunRackLootOverride )
 			}

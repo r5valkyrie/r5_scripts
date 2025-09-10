@@ -1844,6 +1844,35 @@ void function OnClientConnected( entity player )
 			
 			default:
 				entity startEnt = GetEnt( "info_player_start" )
+				
+				if( !IsValid( startEnt ) )
+					startEnt = GetAltSpawn()
+				
+				if( IsTitanfall2Map() )
+				{
+					SetConVarFloat( "model_fadeRangeFraction", 400 )
+					SetConVarFloat( "mat_bloom_cutoff", 0.0 )
+					
+					#if DEVELOPER
+					if( MapName() == eMaps.mp_rr_boneyard )
+					{
+						thread function () : ( player )
+						{
+							EndSignal( player, "OnDestroy" )
+							wait 1
+							Remote_CallFunction_ByRef( player, "Minimap_DisableDraw_Internal" )
+						}()
+					}
+					#endif
+				}
+				
+				if( !IsValid( startEnt ) )
+				{
+					player.SetOrigin( <0, 0, 0> )
+					player.SetAngles( <0, 0, 0> )
+					return
+				}
+				
 				player.SetOrigin( startEnt.GetOrigin() )
 				player.SetAngles( startEnt.GetAngles() )
 			break
@@ -1854,6 +1883,19 @@ void function OnClientConnected( entity player )
 	player.Signal( "OnConnected" )
 	
 	thread Flowstate_CheckForLv4MagazinesAndRefillAmmo( player )
+}
+
+entity function GetAltSpawn()
+{
+	array<entity> ents = GetEntArrayByClass_Expensive( "info_spawnpoint_human_start" )
+	
+	if( ents.len() == 0 )
+		ents = GetEntArrayByClass_Expensive( "info_spawnpoint_human" )
+	
+	if( ents.len() > 0 )
+		return ents.getrandom()
+	
+	return null
 }
 
 void function GiveInitialTeamToPlayer( entity player )

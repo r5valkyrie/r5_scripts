@@ -91,6 +91,7 @@ global enum eMaps
 	mp_rr_exoplanet_night,
 	mp_rr_eden,
 	mp_rr_angel_city,
+	mp_rr_angel_city_night,
 	mp_rr_arena_centrifuge,
 	mp_rr_arena_defense_complex,
 	mp_rr_arena_divinity,
