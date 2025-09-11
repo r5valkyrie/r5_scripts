@@ -96,7 +96,7 @@ void function Anim_Init()
 	AddGlobalAnimEvent( "spawn_decoy1", AnimEvent_spawn_decoy1 )
 	AddGlobalAnimEvent( "spawn_decoy2", AnimEvent_spawn_decoy2 )
 	AddGlobalAnimEvent( "spawn_decoy3", AnimEvent_spawn_decoy3 )
-	AddGlobalAnimEvent( "headshot_death", AnimEvent_headshot_death )
+	//AddGlobalAnimEvent( "headshot_death", AnimEvent_headshot_death )
 	AddGlobalAnimEvent( "holopilot_headshot_sfx", AnimEvent_holopilot_headshot_sfx )
 	
 	AddGlobalAnimEvent( "grapple_stab", GrappleStabSound )
