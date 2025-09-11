@@ -1687,9 +1687,15 @@ void function OnClientConnectionStarted( entity player )
 	PlayerStopSpectating( player )
 	GiveInitialTeamToPlayer( player )
 	
-	if( IsPlayerEliminated( player ) && GetGameState() == eGameState.WaitingForPlayers )
+	// If player reconnects mid-match, optionally clear eliminated state so they don't get stuck in spectator
+	if( IsPlayerEliminated( player ) )
 	{
-		ClearPlayerEliminated( player )
+		bool __ffa = IsFFAGame() || GetCurrentPlaylistVarBool( "ffa_mode", false ) || GetCurrentPlaylistVarBool( "ffa", false ) || GetCurrentPlaylistVarInt( "max_team_size", 1 ) <= 1
+		bool __allowMidgameReturn = !GetCurrentPlaylistVarBool( "midgame_join_spectate", false ) || __ffa
+		if( GetGameState() == eGameState.WaitingForPlayers || __allowMidgameReturn )
+		{
+			ClearPlayerEliminated( player )
+		}
 	}
 }
 
@@ -1790,8 +1796,15 @@ void function OnClientConnected( entity player )
 			bool __isFFA = ( __maxTeamSize <= 1 ) || IsFFAGame() || GetCurrentPlaylistVarBool( "ffa_mode", false ) || GetCurrentPlaylistVarBool( "ffa", false )
 			if ( !__isFFA && !putInPlane && !IsValid( skydiveFollowPlayer ) )
 			{
-				//If team is on the ground already, means that player has connected too late, which shouldn't be allowed to respawn in the game.
-				//Let's put the player to spectate.
+				// If team is already on ground and no follow target, treat as late join. Allow playlist to override spectate behavior.
+				bool __spectateLateJoin = GetCurrentPlaylistVarBool( "midgame_join_spectate", false )
+				if ( !__spectateLateJoin )
+				{
+					DecideRespawnPlayer_Retail( player )
+					GiveBasicSurvivalItems( player )
+					return
+				}
+				// Else: spectate
 				
 				if( !IsPlayerEliminated( player ) )
 				{

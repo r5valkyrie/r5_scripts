@@ -304,9 +304,18 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 			}
 			
 			SH_globals.currentPlaylist = getPlaylistEnumFromName( currentPlaylistName )
-			
-			#if !DEVELOPER
-			mAssert( SH_globals.currentPlaylist != -1, format( "Current playlist \"%s\" is not registered in %s", currentPlaylistName, FILE_NAME() ) )
+
+			#if UI
+				if ( SH_globals.currentPlaylist == -1 )
+				{
+					// Client without mod: register a UI-local external playlist stub so code paths can proceed
+					RegisterExternalPlaylist( currentPlaylistName, "ui_auto" )
+					SH_globals.currentPlaylist = getPlaylistEnumFromName( currentPlaylistName )
+				}
+			#endif
+
+			#if !DEVELOPER && !UI
+				mAssert( SH_globals.currentPlaylist != -1, format( "Current playlist \"%s\" is not registered in %s", currentPlaylistName, FILE_NAME() ) )
 			#endif
 		
 		#if UI 
@@ -320,6 +329,12 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 	#elseif UI 
 		string curentGamemodeName = GetConVarString( "mp_gamemode" )
 		int currentGamemodeEnum = getGamemodeEnumFromName( curentGamemodeName )
+		if ( currentGamemodeEnum == -1 && curentGamemodeName != "" )
+		{
+			// Client without mod: register a UI-local external gamemode stub so code paths can proceed
+			RegisterExternalGamemodeEnum( curentGamemodeName, "ui_auto" )
+			currentGamemodeEnum = getGamemodeEnumFromName( curentGamemodeName )
+		}
 			
 			#if DEVELOPER
 				printt( "UI Playlist: ", SH_globals.currentPlaylist )
@@ -328,7 +343,9 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 	#endif
 		
 		SH_globals.currentGamemode = currentGamemodeEnum
-		mAssert( SH_globals.currentGamemode != -1, format( "Current gamemode \"%s\" is not registered in sh_mapname_playlist_gamemode_enums.nut", curentGamemodeName ) )
+		#if !UI
+			mAssert( SH_globals.currentGamemode != -1, format( "Current gamemode \"%s\" is not registered in sh_mapname_playlist_gamemode_enums.nut", curentGamemodeName ) )
+		#endif
 	
 	
 	#if SERVER //prevents errors of gamemodes not loading
