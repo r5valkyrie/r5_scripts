@@ -120,7 +120,7 @@ const asset FX_MUZZLE_FLASH_FP = $"P_wpn_mflash_bang_rocket_FP"
 const asset FX_MUZZLE_FLASH_3P = $"P_wpn_mflash_bang_rocket"
 const asset MISSILE_TRAIL = $"P_valk_rckt_stg2"
 const asset GRENADE_TRAIL = $"P_valk_rckt_stg1"
-const asset ROCKET_PROJECTILE = $"mdl/humans_r5/pilots_r5/pilot_valkyrie/w_valkyrie_rocket_projectile.rmdl"
+const asset ROCKET_PROJECTILE = $"mdl/weapons/bullets/projectile_rocket_launcher_sram.rmdl"
 
 void function MpAbilityValkClusterMissile_Init()
 {

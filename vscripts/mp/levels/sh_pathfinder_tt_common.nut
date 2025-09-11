@@ -572,10 +572,13 @@ void function PathTT_SpawnLootRollers()
 #if SERVER
 void function PathTT_OnEnterPathTTRingTrigger( entity trigger, entity ent )
 {
-	if ( !IsValid( ent ) || !IsAlive( ent ) || !ent.IsPlayer() )
+	if ( !IsValid( ent ) || !IsAlive( ent ) || !ent.IsPlayer()  || ent.Player_IsFreefalling()  )
 	{
 		return
 	}
+
+	Signal( ent, "FreefallEnded" )
+	ent.SetPlayerNetBool( "freefallActive", false )
 
 	// Getting revived gets registered as a leave callback.
 	if ( Bleedout_IsPlayerGettingFirstAid( ent ) || Bleedout_IsPlayerSelfReviving( ent ) )
