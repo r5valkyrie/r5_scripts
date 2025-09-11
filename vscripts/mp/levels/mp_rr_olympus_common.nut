@@ -35,7 +35,7 @@ void function Olympus_MapInit_Common()
 
 	SetVictorySequencePlatformModel( $"mdl/levels_terrain/mp_rr_olympus/floating_victory_platform_01.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
 
-	if ( MapName() == eMaps.mp_rr_olympus_tt || MapName() == eMaps.mp_rr_olympus_mu1 ){
+	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" ){
 		PathTT_Init()}
 
 	#if CLIENT
@@ -51,8 +51,8 @@ void function Olympus_MapInit_Common()
 		{
 			AddSpawnCallback( "info_target", Rift_Init )
 		}
-		
-		if ( MapName() == eMaps.mp_rr_olympus_tt || MapName() == eMaps.mp_rr_olympus_mu1 )
+
+		if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" )
 		{
 			InitLootRollers()
 		}
@@ -181,5 +181,5 @@ void function DisableGravityAirControl( entity player )
 void function Olympus_SetRiftParams( OlympusRiftParams params )
 {
 	file.riftParams = params
-}            
+}
 #endif

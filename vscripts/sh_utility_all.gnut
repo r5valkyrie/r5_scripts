@@ -3696,19 +3696,19 @@ function MakeFunctionRefFromString( string funcName )
 
 bool function IsTitanfall2Map()
 {
-	switch( MapName() )
+	switch( GetMapName() )
 	{
-		case eMaps.mp_rr_eden:
-		case eMaps.mp_rr_angel_city:
-		case eMaps.mp_rr_angel_city_night:
-		case eMaps.mp_rr_black_water_canal:
-		case eMaps.mp_rr_boneyard:
-		case eMaps.mp_rr_homestead:
-		case eMaps.mp_rr_colony:
-		case eMaps.mp_rr_crashsite:
-		case eMaps.mp_rr_exoplanet:
-		case eMaps.mp_rr_exoplanet_night:
-		case eMaps.mp_rr_rise:
+		case "mp_rr_eden":
+		case "mp_rr_angel_city":
+		case "mp_rr_angel_city_night":
+		case "mp_rr_black_water_canal":
+		case "mp_rr_boneyard":
+		case "mp_rr_homestead":
+		case "mp_rr_colony":
+		case "mp_rr_crashsite":
+		case "mp_rr_exoplanet":
+		case "mp_rr_exoplanet_night":
+		case "mp_rr_rise":
 		
 		return true
 	}

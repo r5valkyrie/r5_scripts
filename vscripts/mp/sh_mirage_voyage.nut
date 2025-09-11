@@ -194,7 +194,7 @@ void function MirageVoyage_Init()
 		return
 
 	CreateAudioLogFunc()
-	
+
 	PrecacheModel( MIRAGE_DECOY_MODEL_ASSET )
 	PrecacheModel( LOOT_LAUNCHER_MODEL_OFF )
 
@@ -444,12 +444,12 @@ void function SetMirageVoyagePartyInitialState( entity partyButton )
 
 bool function IsMirageVoyageEnabled()
 {
-	if (MapName() != eMaps.mp_rr_desertlands_mu1 &&
-		MapName() != eMaps.mp_rr_desertlands_64k_x_64k_mv &&
-		MapName() != eMaps.mp_rr_desertlands_mu1_tt &&
-		MapName() != eMaps.mp_rr_desertlands_64k_x_64k_tt &&
-		MapName() != eMaps.mp_rr_canyonlands_mu2_mv 
-		
+	if (GetMapName() != "mp_rr_desertlands_mu1" &&
+		GetMapName() != "mp_rr_desertlands_64k_x_64k_mv" &&
+		GetMapName() != "mp_rr_desertlands_mu1_tt" &&
+		GetMapName() != "mp_rr_desertlands_64k_x_64k_tt" &&
+		GetMapName() != "mp_rr_canyonlands_mu2_mv"
+
 	)
 		return false
 	return true

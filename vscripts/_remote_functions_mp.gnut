@@ -320,7 +320,7 @@ void function RemoteFunctions_Init_Begin()
 	// which would require further auditing and checks to make sure it doesn't get treated as a valid damagesource id. 
 	int RT_EDAMAGESOURCE_MAX = eDamageSourceId.len() + 2  // starts at -1. int maxrange requires max + 1
 	
-	if ( MapName() == eMaps.mp_rr_olympus_tt || MapName() == eMaps.mp_rr_olympus_mu1 )
+	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" )
 		PathTT_OnNetworkRegistration()
 
 	//Sentinel

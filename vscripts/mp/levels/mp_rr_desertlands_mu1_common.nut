@@ -38,7 +38,7 @@ const int NUM_LOOT_DRONES_WITH_VAULT_KEYS = 4
 global struct UpdraftTriggerSettings
 {
 	//needs script_server_fps 20 so it feels like retail native implementation, otherwise reduce maxShakeActivationHeight to 375 and liftExitDuration to 1.5
-	
+
 	float minShakeActivationHeight = 500.0               // At what z-position to start shaking the player's view
 	float maxShakeActivationHeight = 380 //400.0               // At what z-position will the player's view be shaking at the maximum
 	float liftSpeed                = 300.0                   	// Maximum upward speed
@@ -55,7 +55,7 @@ struct
 	array<LootData> ordnance
 	#endif
 	UpdraftTriggerSettings&      updraftSettings = { ... }
-	
+
 	array<string> jumpJetAttachments = [ "vent_left", "vent_right" ]
 
 } file
@@ -69,7 +69,7 @@ void function Desertlands_MapInit_Common()
 {
 	printt( "Desertlands_MapInit_Common" )
 
-	if (MapName() == eMaps.mp_rr_desertlands_mu1_tt )
+	if (GetMapName() == "mp_rr_desertlands_mu1_tt" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu1_tt.rpak" )
 	else
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu1.rpak" )
@@ -118,12 +118,12 @@ void function EntitiesDidLoad()
 
 	if ( file.isTrainEnabled )
 		thread DesertlandsTrain_Init()
-		
+
 	Desertlands_MU1_EntitiesLoaded_Common()
 
 	FillLootTable()
-	
-	if( Gamemode() == eGamemodes.SURVIVAL && MapName() != eMaps.mp_rr_desertlands_64k_x_64k_tt ) 
+
+	if( Gamemode() == eGamemodes.SURVIVAL && GetMapName() != "mp_rr_desertlands_64k_x_64k_tt" )
 	{
 		thread function () : ()
 		{
@@ -411,7 +411,7 @@ void function Updrafts_Init()
 	array<entity> triggers = GetEntArrayByScriptName( UPDRAFT_TRIGGER_SCRIPT_NAME )
 	foreach ( entity trigger in triggers )
 	{
-		
+
 		trigger.SetEnterCallback( PlayerEnterUpdraftTrigger )
 	}
 }
@@ -439,7 +439,7 @@ void function PlayerEnterUpdraftTrigger( entity trigger, entity player )
 {
 	if( !IsValid( player ) )
 		return
-	
+
 	if ( !player.IsPlayer() )
 		return
 
@@ -452,9 +452,9 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 {
 	EndSignal( player, "OnDestroy" )
 	EndSignal( player, "OnDeath" )
-	
+
 	array<entity> fxs
-	
+
 	OnThreadEnd(
 		function() : ( player, fxs )
 		{
@@ -464,14 +464,14 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 				player.kv.airSpeed = player.GetPlayerSettingFloat( "airSpeed" )
 				player.kv.airAcceleration = player.GetPlayerSettingFloat( "airAcceleration" )
 				player.SetThirdPersonShoulderModeOff()
-				
+
 				player.Anim_Stop()
 				StopSoundOnEntity( player, "Survival_InGameFlight_Travel_1P" )
 				StopSoundOnEntity( player, "Survival_InGameFlight_Travel_3P" )
-				
+
 				DeployAndEnableWeapons( player )
 			}
-			
+
 			foreach( entity ent in fxs )
 			{
 				if( IsValid( ent ) )
@@ -488,18 +488,18 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 	player.p.isPlayerUpdrafting = true
 
 	HolsterAndDisableWeapons( player )
-	
+
 	thread PlayerSkydiveLandingFromCurrentPosition(player)
 	//player.Player_BeginFreefallAnticipate()
-	
+
 	thread BurnPlayerOverTime( trigger, player )
-	
+
 	float velocity
 
 	while ( trigger.IsTouching( player ) )
 	{
 		velocity += liftAcceleration
-		
+
 		vector playerCurrentVel = < player.GetVelocity().x, player.GetVelocity().y, velocity >
 
 		player.SetVelocity( ClampVelocity( playerCurrentVel, liftSpeed ) )
@@ -510,11 +510,11 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 	// Player is out of trigger, use liftExitDuration
 	float starttime = Time()
 	float endTime = starttime + liftExitDuration
-	
+
 	while ( Time() < endTime )
 	{
 		velocity += liftAcceleration
-		
+
 		vector playerCurrentVel = < player.GetVelocity().x, player.GetVelocity().y, velocity >
 
 		player.SetVelocity( ClampVelocity( playerCurrentVel, liftSpeed ) )
@@ -523,11 +523,11 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 	}
 }
 
-vector function ClampVelocity(vector velocity, float maxSpeed) 
+vector function ClampVelocity(vector velocity, float maxSpeed)
 {
     float speed = velocity.Length()
 
-    if (speed > maxSpeed) 
+    if (speed > maxSpeed)
 	{
         velocity = velocity * (maxSpeed / speed)
     }
@@ -558,7 +558,7 @@ void function MinimapPackage_Train( entity ent, var rui )
 	#if DEVELOPER
 		printt( "Adding 'rui/hud/gametype_icons/sur_train_minimap' icon to minimap" )
 	#endif
-	
+
 	RuiSetImage( rui, "defaultIcon", $"rui/hud/gametype_icons/sur_train_minimap" )
 	RuiSetImage( rui, "clampedDefaultIcon", $"" )
 	RuiSetBool( rui, "useTeamColor", false )

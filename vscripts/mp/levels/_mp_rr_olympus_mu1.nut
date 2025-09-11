@@ -24,13 +24,13 @@ void function CodeCallback_MapInit()
 	SURVIVAL_SetMapCenter( <-6900, 2940, 0> )
 	// SURVIVAL_SetMapDelta( 50000 )
 
-	if (MapName() == eMaps.mp_rr_olympus_tt )
+	if (GetMapName() == "mp_rr_olympus_tt" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_olympus_tt.rpak" )
-	else if (MapName() == eMaps.mp_rr_olympus )
+	else if (GetMapName() == "mp_rr_olympus" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_olympus.rpak" )
-	else if (MapName() == eMaps.mp_rr_olympus_mu1 )
+	else if (GetMapName() == "mp_rr_olympus_mu1" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_olympus_mu1.rpak" )
-	
+
 	//Clean up unused ents
 	AddCallback_EntitiesDidLoad( Olympus_OnEntitiesDidLoad )
 	// AddSpawnCallbackEditorClass( "prop_dynamic", "script_loot_marvin", CleanupEnt )
@@ -39,20 +39,20 @@ void function CodeCallback_MapInit()
 	// AddSpawnCallbackEditorClass( "player_vehicle", "hover_vehicle", CleanupEnt )
 	// AddSpawnCallbackEditorClass( "prop_script", "control_vehicle_summon_platform", CleanupEnt )
 	AddSpawnCallbackEditorClass( "func_brush", "func_brush_arenas_start_zone", CleanupEnt )
-	
+
 	// AddSpawnCallback( "info_spawnpoint_human", InitSpawnpoint )
 	// AddSpawnCallback( "info_spawnpoint_human_start", InitSpawnpoint )
 	// AddSpawnCallback( "info_spawnpoint_titan", InitSpawnpoint )
 	// AddSpawnCallback( "info_spawnpoint_titan_start", InitSpawnpoint )
 	// AddSpawnCallback( "trigger_multiple", InitTriggerMultiple )
-	
+
 	// AddSpawnCallback( "script_ref", InitScriptRef )
 	// AddSpawnCallback( "info_target", InitInfoTarget )
-	
+
 	AddSpawnCallbackEditorClass( "trigger_multiple", "trigger_warp_gate", InitWarpGateTrigger )
 }
 
-void function Olympus_OnEntitiesDidLoad() 
+void function Olympus_OnEntitiesDidLoad()
 {
 	//Adjust props
 	array<entity> props
@@ -84,16 +84,16 @@ void function Olympus_OnEntitiesDidLoad()
 		}
 	}
 
-	PrecacheModel( $"mdl/fx/oly_sphere_edges.rmdl" )		
-	PrecacheModel( $"mdl/fx/oly_sphere_inner_LG.rmdl" )		
-	PrecacheModel( $"mdl/fx/oly_sphere_main_LG.rmdl" )		
-	PrecacheModel( $"mdl/fx/oly_sphere_ring_nrg.rmdl" )	
-	PrecacheModel( $"mdl/fx/holo_branthium_crystal.rmdl" )	
+	PrecacheModel( $"mdl/fx/oly_sphere_edges.rmdl" )
+	PrecacheModel( $"mdl/fx/oly_sphere_inner_LG.rmdl" )
+	PrecacheModel( $"mdl/fx/oly_sphere_main_LG.rmdl" )
+	PrecacheModel( $"mdl/fx/oly_sphere_ring_nrg.rmdl" )
+	PrecacheModel( $"mdl/fx/holo_branthium_crystal.rmdl" )
 	PrecacheModel( $"mdl/fx/holo_branthium_structure.rmdl" )
 	PrecacheModel( $"mdl/fx/holo_branthium_01.rmdl" )
 	PrecacheModel( $"mdl/fx/holo_branthium_02.rmdl" )
 	PrecacheModel( $"mdl/fx/holo_branthium_03.rmdl" )
-	
+
 	entity sphereedge = CreatePropDynamic( $"mdl/fx/oly_sphere_edges.rmdl", <6290.46, 24305.8, -5529.8>, <0, 0, 0> )
 	entity sphereinner = CreatePropDynamic( $"mdl/fx/oly_sphere_inner_LG.rmdl", <6290.46, 24305.8, -5529.8>, <0, 0, 0> )
 	entity spherering = CreatePropDynamic( $"mdl/fx/oly_sphere_ring_nrg.rmdl", <6290.46, 24305.8, -5529.8>, <0, 0, 0> )
@@ -121,7 +121,7 @@ void function SpawnWeaponsonRacks()
 void function SetupKeyForShipVault()
 {
 	entity chosenKey = file.vaultKeys.getrandom()
-	
+
 	SpawnGenericLoot( "ship_keycard", chosenKey.GetOrigin(), chosenKey.GetAngles(), 1 )
 	printt( "Spawned key for Ship Bridge Vault at ", chosenKey.GetOrigin() )
 	chosenKey.Destroy()
@@ -151,7 +151,7 @@ void function DEV_KoScreenToggle( bool toggle )
 }
 
 #endif
- 
+
 void function InitSpawnpoint( entity spawn )
 {
 	// #if DEVELOPER
@@ -165,7 +165,7 @@ void function InitInfoTarget( entity infotarget )
 	if( GetEditorClass( infotarget ) == "info_warp_gate_path_node" || GetEditorClass( infotarget ) == "warp_node_rift_exit" || GetEditorClass( infotarget ) == "oly_pr_warn_fx_ref"  )
 	{
 		//screen_flash_on_node && cinematic_path_node
-	
+
 		InitWarpNode( infotarget )
 		return
 	}
@@ -196,7 +196,7 @@ void function InitScriptRef( entity scriptref )
 	if( GetEditorClass( scriptref ) != "" )
 	{
 		stringCats = split( GetEditorClass( scriptref ), "_" )
-		
+
 		if( stringCats[1] != "survival" )
 		{
 			// printt( "Removed Unused Script Ref Ent. Editor: ", GetEditorClass( scriptref ), " ScriptRef: ", scriptref.GetScriptName()," Target: ", scriptref.GetTargetName() )
@@ -204,7 +204,7 @@ void function InitScriptRef( entity scriptref )
 			return
 		}
 	}
-	
+
 	if( scriptref.GetScriptName() != "" )
 	{
 		// printt( "Script Ref started. Editor: ", GetEditorClass( scriptref ), " ScriptRef: ", scriptref.GetScriptName()," Target: ", scriptref.GetTargetName() )
@@ -238,10 +238,10 @@ void function CleanupEnt( entity ent )
 }
 
 //Warp Tunnels
-// ██     ██  █████  ██████  ██████      ████████ ██    ██ ███    ██ ███    ██ ███████ ██      ███████ 
-// ██     ██ ██   ██ ██   ██ ██   ██        ██    ██    ██ ████   ██ ████   ██ ██      ██      ██      
-// ██  █  ██ ███████ ██████  ██████         ██    ██    ██ ██ ██  ██ ██ ██  ██ █████   ██      ███████ 
-// ██ ███ ██ ██   ██ ██   ██ ██             ██    ██    ██ ██  ██ ██ ██  ██ ██ ██      ██           ██ 
+// ██     ██  █████  ██████  ██████      ████████ ██    ██ ███    ██ ███    ██ ███████ ██      ███████
+// ██     ██ ██   ██ ██   ██ ██   ██        ██    ██    ██ ████   ██ ████   ██ ██      ██      ██
+// ██  █  ██ ███████ ██████  ██████         ██    ██    ██ ██ ██  ██ ██ ██  ██ █████   ██      ███████
+// ██ ███ ██ ██   ██ ██   ██ ██             ██    ██    ██ ██  ██ ██ ██  ██ ██ ██      ██           ██
  // ███ ███  ██   ██ ██   ██ ██             ██     ██████  ██   ████ ██   ████ ███████ ███████ ███████
 
 void function InitWarpGateTrigger( entity ent )
@@ -270,7 +270,7 @@ void function InitWarpGateTrigger( entity ent )
 void function InitWarpNode( entity infotarget )
 {
 	file.nodes.append( infotarget )
-	
+
 	#if DEVELOPER
 	if( infotarget.GetLinkEntArray().len() == 2 )
 	{
@@ -305,7 +305,7 @@ void function DEV_StartNodesLinksShow()
 			continue
 
 		DebugDrawSphere( node.GetOrigin(), 80, 255, 0, 255, true, 3.0 ) //purple
-		
+
 		printt( "purple:", node.GetLinkEntArray()[0], node.GetLinkEntArray()[0].GetOrigin() )
 		printt( "green:", node.GetLinkEntArray()[1], node.GetLinkEntArray()[1].GetOrigin() )
 		DebugDrawLine( node.GetOrigin(), node.GetLinkEntArray()[0].GetOrigin(), 255, 0, 255, true, 3.0 )
@@ -320,25 +320,25 @@ array<entity> function GenerateWarpBasePathForTrigger( entity ent )
 {
 	array<entity> nodes
 	array<entity> linkedEnts = ent.GetLinkEntArray()
-	
+
 	foreach ( entity link in linkedEnts )
 	{
 		if( GetEditorClass( link ) != "info_warp_gate_path_node" )
 			continue
-				
+
 		if( link.GetLinkEntArray().len() == 0 )
 		{
 			nodes.append( link )
 		}
 	}
-	
+
 	entity nextEnt
 	int type
 	foreach ( entity link in linkedEnts )
 	{
 		if( GetEditorClass( link ) != "info_warp_gate_path_node" )
 			continue
-		
+
 		if( link.GetLinkEntArray().len() == 2 || link.GetLinkEntArray().len() == 1 )
 		{
 			type = link.GetLinkEntArray().len()
@@ -347,7 +347,7 @@ array<entity> function GenerateWarpBasePathForTrigger( entity ent )
 			nodes.append( link )
 		}
 	}
-	
+
 	if( !IsValid( nextEnt ) )
 		return []
 
@@ -361,7 +361,7 @@ array<entity> function GenerateWarpBasePathForTrigger( entity ent )
 		{
 			if( newLink.GetClassName() != "info_target" && type == 2 && nodes.len() < 5 )
 				continue
-			
+
 			if( newLink.GetClassName() == "script_ref" )
 				continue
 
@@ -371,7 +371,7 @@ array<entity> function GenerateWarpBasePathForTrigger( entity ent )
 				printt( "added link", newLink, newLink.GetOrigin() )
 				nextEnt = newLink
 				added++
-				
+
 				continue
 			}
 		}
@@ -382,7 +382,7 @@ array<entity> function GenerateWarpBasePathForTrigger( entity ent )
 	}
 
 	// nodes.removebyvalue( nodes[0] ) //Eliminar el nodo verde del comienzo, no es necesario
-	
+
 	//R5RDEV-1
 	//Eliminar los trigger multiple que se hayan agregado
 	// foreach( node in nodes )
@@ -392,11 +392,11 @@ array<entity> function GenerateWarpBasePathForTrigger( entity ent )
 			// nodes.removebyvalue( node )
 		// }
 	// }
-	
+
 	nodes.remove( 0 )
-	
+
 	int maxIter = nodes.len() - 1
-	
+
 	for( int i = maxIter; i >= 0; i-- )
 	{
 		if( nodes[i].GetClassName() != "info_target" )
@@ -408,7 +408,7 @@ array<entity> function GenerateWarpBasePathForTrigger( entity ent )
 	return nodes
 }
 
-array<vector> function GenerateSmoothPathForBasePath( array<vector> path ) 
+array<vector> function GenerateSmoothPathForBasePath( array<vector> path )
 {
 	printt( "generating smooth points for path with len", path.len() )
 	if( path.len() == 0 )
@@ -416,7 +416,7 @@ array<vector> function GenerateSmoothPathForBasePath( array<vector> path )
 
     array<vector> smoothPath
 	array<vector> points = clone path
-	
+
 	int numPoints = 10
 
 	points.insert( 0, points[0] )
@@ -459,7 +459,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 
 	array<vector> portalNodes
 	array<vector> pathAngles
-	
+
 	foreach( node in entNodes )
 	{
 		portalNodes.append( node.GetOrigin() )
@@ -474,7 +474,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 		portalNodes = clone trigger.e.warpEntranceSmoothedPath
 		portalNodes.append( entNodes[entNodes.len()-1].GetOrigin() )
 	}
-	
+
 	#if DEVELOPER
 	foreach( point in trigger.e.warpEntranceSmoothedPath )
 	{
@@ -483,7 +483,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 	#endif
 
 	player.EndSignal( "OnDeath" )
-	
+
 	player.Zipline_Stop()
 	player.ClearTraverse()
 	player.SetPredictionEnabled( false )
@@ -504,7 +504,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 		{
 			player.ClearParent()
 			player.SetVelocity( <0,0,0> )
-			
+
 			StopSoundOnEntity( player, "Wraith_PhaseGate_Travel_1p" )
 			StopSoundOnEntity( player, "Wraith_PhaseGate_Travel_3p" )
 
@@ -512,12 +512,12 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 				mover.Destroy()
 
 			player.UnfreezeControlsOnServer()
-			
+
 
 			thread function () : ( player )
 			{
 				wait 2
-				
+
 				if ( IsValid( player ) )
 				{
 					CancelPhaseShift( player )
@@ -556,7 +556,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 	thread function () : ( mover, pathAngles, player, portalNodes, anglesToUse)
 	{
 		WaitFrame()
-	
+
 		if( !IsValid( player ) || !IsAlive( player ) || !player.e.isInPhaseTunnel )
 			return
 
@@ -567,13 +567,13 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 		// mover.SetAbsAngles( anglesToUse + <0, -180, 0> )
 	}()
 
-	player.SetParent( mover, "REF", true )	
-	
+	player.SetParent( mover, "REF", true )
+
 	//Play Warp Screen Flash
 	entity fx = PlayFXOnEntity( $"P_wrth_tt_portal_screen_flash", player )
 
 	float travelSpeed = 3500
-	
+
 	if( trigger.HasKey( "warp_travel_speed" ) )
 		travelSpeed = expect string( trigger.kv.warp_travel_speed ).tofloat()
 
@@ -584,7 +584,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 
 	//Phase Shift Player
 	PhaseShift( player, 0.0, 999, eShiftStyle.Gate )
-	
+
 	int actualmovements
 
 	foreach( int i, node in portalNodes )
@@ -622,7 +622,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 		{
 			// mover.SetAngles( anglesToUse )
 			// player.SetAbsAngles( anglesToUse )
-			
+
 			// mover.NonPhysicsRotateTo( anglesToUse + <0, -180, 0>, 0.01, 0, 0 )
 			// mover.SetOrigin( portalNodes[ i + 1 ] )
 			// mover.SetAngles( pathAngles[ i + 1 ] )
@@ -657,7 +657,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 		}
 
 		distanceToNextNode = Distance( mover.GetOrigin(), node )
-		
+
 		float distanceToFinalNode = 0
 		for( int j = i ; j < portalNodes.len()-2; j++)
 		{
@@ -668,7 +668,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 		}
 
 		phaseTime = distanceToNextNode / travelSpeed // :)
-	
+
 		// printt( "travelling to warp node - Elapsed time: ", elapsedTime)// , "Total movements", actualmovements, phaseTime )
 		// printt( "distanceToNextNode: ", distanceToNextNode, "- distanceToFinalNode ", distanceToFinalNode )
 
@@ -676,7 +676,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 		mover.NonPhysicsRotateTo( anglesToUse + <0, -180, 0>, phaseTime, 0, 0 )
 		wait phaseTime - 0.055
 	}
-	
+
 	#if DEVELOPER
 		printt( "travel finished in ", elapsedTime, "s.")
 	#endif

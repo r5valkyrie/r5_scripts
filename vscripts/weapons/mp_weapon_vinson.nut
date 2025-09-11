@@ -33,7 +33,7 @@ void function OnWeaponActivate_Vinson( entity weapon )
 
 void function OnWeaponDeactivate_Vinson( entity weapon )
 {
-    
+
 }
 
 var function OnWeaponPrimaryAttack_Vinson( entity weapon, WeaponPrimaryAttackParams attackParams )
@@ -73,7 +73,7 @@ var function OnWeaponPrimaryAttack_Vinson( entity weapon, WeaponPrimaryAttackPar
 void function OnWeaponActivate_HaloAR( entity weapon )
 {
 	OnWeaponActivate_weapon_basic_bolt( weapon )
-	
+
 	HaloAR_UpdateAmmoWeaponHUD( weapon, false, true )
 }
 
@@ -84,7 +84,7 @@ void function OnWeaponDeactivate_HaloAR( entity weapon )
 	{
 		Minimap_EnableDraw()
 	}
-	WeaponInspectHideHudElements( false )  
+	WeaponInspectHideHudElements( false )
 	#endif
 }
 
@@ -109,27 +109,27 @@ void function HaloAR_UpdateAmmoWeaponHUD( entity weapon, bool fromReload = false
 
 	#if SERVER
 	int currentAmmo
-	
+
 	if( fromActivate )
 		currentAmmo = weapon.GetWeaponPrimaryClipCount()
 	else
 		currentAmmo = int( max( 0, weapon.GetWeaponPrimaryClipCount() - 1 ) )
-	
+
 	if( fromReload )
 		currentAmmo = weapon.GetWeaponPrimaryClipCountMax()
 
 	//printt( weapon, " current ammo: ", currentAmmo )
 
 	string ammoString = currentAmmo.tostring()
-	
+
 	string left = "0"
 	string right = "0"
-	
+
 	if( ammoString.len() > 1 && ammoString.len() < 3 )
 	{
 		left = ammoString.slice( 0, 1 )
 		right = ammoString.slice( 1, 2 )
-	} else 
+	} else
 	{
 		right = ammoString
 	}
@@ -138,10 +138,10 @@ void function HaloAR_UpdateAmmoWeaponHUD( entity weapon, bool fromReload = false
 	foreach( string mod in GetWeaponMods_Global( weapon.GetWeaponClassName() ) )
 	{
 		array<string> splitName = split( mod, "_" )
-		
+
 		if( splitName.len() < 2 )
 			continue
-		
+
 		if( splitName[0] == "ammoCounter" && weapon.HasMod( mod ) )
 			weapon.RemoveMod( mod )
 	}
@@ -175,7 +175,7 @@ var function OnWeaponPrimaryAttack_weapon_haloshotgun( entity weapon, WeaponPrim
 		return
 
 	bool playerFired = true
-	
+
 	entity owner = weapon.GetWeaponOwner()
 
 	float patternScale = 1.0
@@ -196,12 +196,12 @@ var function OnWeaponPrimaryAttack_weapon_haloshotgun( entity weapon, WeaponPrim
 
     owner.HolsterWeapon()
     owner.DeployWeapon()
-	
+
 	#if SERVER
 	owner.ForceWeaponReload()
 	#endif
 	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
-	
+
 }
 
 void function OnWeaponZoomIn_HaloModBattleRifle( entity weapon )
@@ -217,19 +217,19 @@ void function OnWeaponZoomIn_HaloModBattleRifle( entity weapon )
 	Hud_SetVisible( BRAds, true )
 
 	weapon.HideWeapon()
-	
-	if( !Flowstate_IsHaloMode() && MapName() == eMaps.mp_rr_arena_empty )
+
+	if( !Flowstate_IsHaloMode() && GetMapName() == "mp_rr_arena_empty" )
 	{
 		Minimap_DisableDraw()
 	}
-	
+
 	//Hide the HUD.
 	var gamestateRui = ClGameState_GetRui()
 	RuiSetBool( gamestateRui, "weaponInspect", true )
 	PlayerHudSetWeaponInspect( true )
 	WeaponStatusSetWeaponInspect( true )
 	#endif
-	
+
 	weapon.w.isInAdsCustom = true
 }
 
@@ -246,11 +246,11 @@ void function OnWeaponZoomOut_HaloModBattleRifle( entity weapon )
 
 	weapon.ShowWeapon()
 
-	if( !Flowstate_IsHaloMode() && MapName() == eMaps.mp_rr_arena_empty )
+	if( !Flowstate_IsHaloMode() && GetMapName() == "mp_rr_arena_empty" )
 	{
 		Minimap_EnableDraw()
 	}
-	
+
 	//Hide the HUD.
 	var gamestateRui = ClGameState_GetRui()
 	RuiSetBool( gamestateRui, "weaponInspect", false )
@@ -274,19 +274,19 @@ void function OnWeaponZoomIn_HaloModMagnum( entity weapon )
 	Hud_SetVisible( BRAds, true )
 
 	weapon.HideWeapon()
-	
-	if( !Flowstate_IsHaloMode() && MapName() == eMaps.mp_rr_arena_empty )
+
+	if( !Flowstate_IsHaloMode() && GetMapName() == "mp_rr_arena_empty" )
 	{
 		Minimap_DisableDraw()
 	}
-	
+
 	//Hide the HUD.
 	var gamestateRui = ClGameState_GetRui()
 	RuiSetBool( gamestateRui, "weaponInspect", true )
 	PlayerHudSetWeaponInspect( true )
 	WeaponStatusSetWeaponInspect( true )
 	#endif
-	
+
 	weapon.w.isInAdsCustom = true
 }
 
@@ -303,11 +303,11 @@ void function OnWeaponZoomOut_HaloModMagnum( entity weapon )
 
 	weapon.ShowWeapon()
 
-	if( !Flowstate_IsHaloMode() && MapName() == eMaps.mp_rr_arena_empty )
+	if( !Flowstate_IsHaloMode() && GetMapName() == "mp_rr_arena_empty" )
 	{
 		Minimap_EnableDraw()
 	}
-	
+
 	//Hide the HUD.
 	var gamestateRui = ClGameState_GetRui()
 	RuiSetBool( gamestateRui, "weaponInspect", false )
@@ -331,19 +331,19 @@ void function OnWeaponZoomIn_HaloModSniper(  entity weapon )
 	Hud_SetVisible( BRAds, true )
 
 	weapon.HideWeapon()
-	
-	if( !Flowstate_IsHaloMode() && MapName() == eMaps.mp_rr_arena_empty )
+
+	if( !Flowstate_IsHaloMode() && GetMapName() == "mp_rr_arena_empty" )
 	{
 		Minimap_DisableDraw()
 	}
-	
+
 	//Hide the HUD.
 	var gamestateRui = ClGameState_GetRui()
 	RuiSetBool( gamestateRui, "weaponInspect", true )
 	PlayerHudSetWeaponInspect( true )
 	WeaponStatusSetWeaponInspect( true )
 	#endif
-	
+
 	weapon.w.isInAdsCustom = true
 }
 
@@ -360,11 +360,11 @@ void function OnWeaponZoomOut_HaloModSniper(  entity weapon )
 
 	weapon.ShowWeapon()
 
-	if( !Flowstate_IsHaloMode() && MapName() == eMaps.mp_rr_arena_empty )
+	if( !Flowstate_IsHaloMode() && GetMapName() == "mp_rr_arena_empty" )
 	{
 		Minimap_EnableDraw()
 	}
-	
+
 	//Show the HUD.
 	var gamestateRui = ClGameState_GetRui()
 	RuiSetBool( gamestateRui, "weaponInspect", false )
@@ -384,7 +384,7 @@ void function OnWeaponZoomIn_ModdedPistol(  entity weapon )
 
 	#if CLIENT
 	asset overlayToShow = $"rui/flowstate_custom/modded_pistol_overlay"
-	
+
 	foreach( mod in weapon.GetMods() )
 	{
 		if( mod == "optic_cq_threat" )
@@ -399,19 +399,19 @@ void function OnWeaponZoomIn_ModdedPistol(  entity weapon )
 	Hud_SetVisible( BRAds, true )
 
 	weapon.HideWeapon()
-	
+
 	// if( !Flowstate_IsHaloMode() && GetMapName() == "mp_rr_arena_empty" )
 	// {
 		Minimap_DisableDraw()
 	// }
-	
+
 	//Hide the HUD.
 	var gamestateRui = ClGameState_GetRui()
 	RuiSetBool( gamestateRui, "weaponInspect", true )
 	PlayerHudSetWeaponInspect( true )
 	WeaponStatusSetWeaponInspect( true )
 	#endif
-	
+
 	weapon.w.isInAdsCustom = true
 }
 
@@ -432,7 +432,7 @@ void function OnWeaponZoomOut_ModdedPistol(  entity weapon )
 	// {
 		Minimap_EnableDraw()
 	// }
-	
+
 	//Show the HUD.
 	var gamestateRui = ClGameState_GetRui()
 	RuiSetBool( gamestateRui, "weaponInspect", false )
@@ -449,7 +449,7 @@ void function FS_ForceDestroyCustomAdsOverlay()
 	#if DEVELOPER
 		printt( "You died! Removing custom overlay and restoring HUD visibility." )
 	#endif
-	
+
 	var BRAds = HudElement( "FS_HaloMod_BattleRifleAdsOverlay")
 	Hud_SetVisible( BRAds, false )
 
@@ -458,10 +458,10 @@ void function FS_ForceDestroyCustomAdsOverlay()
 	RuiSetBool( gamestateRui, "weaponInspect", false )
 	PlayerHudSetWeaponInspect( false )
 	WeaponStatusSetWeaponInspect( false )
-	
+
 	entity player = GetLocalClientPlayer()
 	entity weapon = SURVIVAL_GetLastActiveWeapon( player )
-	
+
 	if( IsValid( weapon ) && weapon.w.isInAdsCustom )
 	{
 		weapon.ShowWeapon()
@@ -477,10 +477,10 @@ void function FS_ForceDestroyCustomAdsOverlay_Callback( entity attacker, float h
 	#if DEVELOPER
 		printt( "You died! Removing custom overlay and restoring HUD visibility. - From callback." )
 	#endif
-	
+
 	var BRAds = HudElement( "FS_HaloMod_BattleRifleAdsOverlay")
 	Hud_SetVisible( BRAds, false )
-	
+
 	//Show the HUD.
 	var gamestateRui = ClGameState_GetRui()
 	RuiSetBool( gamestateRui, "weaponInspect", false )
@@ -489,7 +489,7 @@ void function FS_ForceDestroyCustomAdsOverlay_Callback( entity attacker, float h
 
 	entity player = GetLocalClientPlayer()
 	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
-	
+
 	if( IsValid( weapon ) && weapon.w.isInAdsCustom )
 	{
 		weapon.ShowWeapon()

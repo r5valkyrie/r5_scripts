@@ -155,8 +155,8 @@ void function Sh_CustomCTF_Init()
 	#if CLIENT
 	AddCreatePilotCockpitCallback( CTFCustomDeathfield )
 	file.colorCorrection = ColorCorrection_Register( "materials/correction/outside_ring.raw_hdr" )
-	#endif		
-	
+	#endif
+
 	// Set Playlist Vars
 	CTF_SCORE_GOAL_TO_WIN = GetCurrentPlaylistVarInt( "max_score", 5 )
 	CTF_ROUNDTIME = GetCurrentPlaylistVarInt( "round_time", 1500 )
@@ -184,9 +184,9 @@ void function Sh_CustomCTF_Init()
 
 	// dtbl pls
 	// Map locations, flag spawns, team spawns, deathcam, victory pos, and undermap Z
-	switch( MapName() )
+	switch( GetMapName() )
 	{
-		case eMaps.mp_rr_arena_empty:
+		case "mp_rr_arena_empty":
 
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
@@ -215,7 +215,7 @@ void function Sh_CustomCTF_Init()
 					-20500 // Undermap Z
 				)
 			)
-	
+
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
 					"Narrows",
@@ -247,7 +247,7 @@ void function Sh_CustomCTF_Init()
 			)
 			break
 
-		case eMaps.mp_rr_canyonlands_staging:
+		case "mp_rr_canyonlands_staging":
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
 					"Firing Range",
@@ -279,8 +279,8 @@ void function Sh_CustomCTF_Init()
 			)
 			break
 
-		case eMaps.mp_rr_aqueduct:
-		//case eMaps.mp_rr_aqueduct_night:
+		case "mp_rr_aqueduct":
+		//case "mp_rr_aqueduct_night":
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
 					"Overflow",
@@ -309,7 +309,7 @@ void function Sh_CustomCTF_Init()
 			)
 			break
 
-		case eMaps.mp_rr_arena_composite:
+		case "mp_rr_arena_composite":
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
 					"Drop Off",
@@ -339,9 +339,9 @@ void function Sh_CustomCTF_Init()
 			)
 			break
 
-		case eMaps.mp_rr_canyonlands_mu1:
-		case eMaps.mp_rr_canyonlands_mu1_night:
-		case eMaps.mp_rr_canyonlands_64k_x_64k:
+		case "mp_rr_canyonlands_mu1":
+		case "mp_rr_canyonlands_mu1_night":
+		case "mp_rr_canyonlands_64k_x_64k":
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
 					"Relay",
@@ -566,8 +566,8 @@ void function Sh_CustomCTF_Init()
 			)
 
 			break
-		case eMaps.mp_rr_olympus:
-		case eMaps.mp_rr_olympus_tt:
+		case "mp_rr_olympus":
+		case "mp_rr_olympus_tt":
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
 					"Gardens",
@@ -626,8 +626,8 @@ void function Sh_CustomCTF_Init()
 				)
 			)
 			break
-		case eMaps.mp_rr_desertlands_64k_x_64k:
-		case eMaps.mp_rr_desertlands_64k_x_64k_nx:
+		case "mp_rr_desertlands_64k_x_64k":
+		case "mp_rr_desertlands_64k_x_64k_nx":
 			Shared_RegisterLocationCTF(
 				NewCTFLocationSettings(
 					"Overlook",
@@ -919,8 +919,8 @@ vector function FSIntro_GetVictorySquadFormationPosition( vector mainPosition, v
 {
 	index += 1
 
-	float internalGroupOffsetSide = 45.0																						   
-	float internalGroupOffsetBack = -40.0																			  
+	float internalGroupOffsetSide = 45.0
+	float internalGroupOffsetBack = -40.0
 
 	//fix me
 	if( index == 1 || index == 2 )
@@ -941,7 +941,7 @@ vector function FSIntro_GetVictorySquadFormationPosition( vector mainPosition, v
 	#if DEVELOPER
 		printt( "building position for player in victory screen:", mainPosition, index, finalOffsetSide, finalOffsetBack )
 	#endif
-	
+
 	vector offset = < finalOffsetSide, finalOffsetBack, -8 >
 	return OffsetPointRelativeToVector( mainPosition, offset, AnglesToForward( angles ) )
 }

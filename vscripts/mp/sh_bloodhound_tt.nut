@@ -234,7 +234,7 @@ struct
 #if CLIENT
 void function ClBloodhound_TT_Init()
 {
-	if (MapName() != eMaps.mp_rr_desertlands_mu2 && MapName() != eMaps.mp_rr_desertlands_mu1_tt)
+	if (GetMapName() != "mp_rr_desertlands_mu2" && GetMapName() != "mp_rr_desertlands_mu1_tt")
 		return
 
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
@@ -260,9 +260,9 @@ void function Bloodhound_TT_RegisterNetworking()
 #if SERVER
 void function Bloodhound_TT_Init()
 {
-	if (MapName() != eMaps.mp_rr_desertlands_mu2 && MapName() != eMaps.mp_rr_desertlands_mu1_tt)
+	if (GetMapName() != "mp_rr_desertlands_mu2" && GetMapName() != "mp_rr_desertlands_mu1_tt")
 		return
-	
+
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
 	AddSpawnCallback( "prop_dynamic", ArenaDoorSpawned )
@@ -1136,7 +1136,7 @@ void function HatchChallengeSequence( HatchChallengeData data, int currentChalle
 			break
 	}
 
-	                    
+
 		/*if( UpgradeCore_IsEnabled() )
 		{
 			if( currentChallengeLevel == 2 )
@@ -1144,7 +1144,7 @@ void function HatchChallengeSequence( HatchChallengeData data, int currentChalle
 				UpgradeCore_GrantXp_BloodHoundTTComplete( file.teamActivatingPanel )
 			}
 		}*/
-       
+
 
 }
 
@@ -1330,8 +1330,8 @@ void function SpawnProwlerAndAnimate( int hatchIdx, int prowlerSkinIdx )
 	{
 		entity player = DamageInfo_GetAttacker(damageInfo)
 		//if ( IsValid( player ) && player.IsPlayer() )
-			//PIN_PlayerItemDestruction( player, ITEM_DESTRUCTION_TYPES.PROWLER, { death_pos = npc.GetOrigin(), bloodhound_tt_wave = waveNum, } 
-		
+			//PIN_PlayerItemDestruction( player, ITEM_DESTRUCTION_TYPES.PROWLER, { death_pos = npc.GetOrigin(), bloodhound_tt_wave = waveNum, }
+
 	} )
 
 	file.aliveProwlers.append( prowler )
@@ -1359,9 +1359,9 @@ void function OnProwlerKilled( entity prowler, var DamageInfo )
 	file.aliveProwlers.fastremovebyvalue( prowler )
 
 	bool dropSmartLootDefault = false
-	                           
+
 		dropSmartLootDefault = true
-       
+
 
 	if ( GetCurrentPlaylistVarBool("blood_tt_drops_smart_loot", dropSmartLootDefault) )
 	{

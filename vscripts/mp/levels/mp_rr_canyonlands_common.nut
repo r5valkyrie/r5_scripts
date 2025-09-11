@@ -110,7 +110,7 @@ void function Canyonlands_MapInit_Common()
 {
 	printt( "Canyonlands_MapInit_Common" )
 	SetVictorySequencePlatformModel( $"mdl/rocks/victory_platform.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
-	
+
 	FlagInit( "IntroHovertanksSet", false )
 
 	#if SERVER
@@ -156,7 +156,7 @@ void function Canyonlands_MapInit_Common()
 
 		svGlobal.evacEnabled = false //Need to disable this on a map level if it doesn't support it at all
 
-		
+
 		RegisterSignal( SIGNAL_HOVERTANK_AT_ENDPOINT )
 		RegisterSignal( "PathFinished" )
 
@@ -199,7 +199,7 @@ void function Canyonlands_MapInit_Common()
 		if ( !IsPVEMode() )
 			SetMapFeatureItem( 300, "#SUPPLY_DROP", "#SUPPLY_DROP_DESC", $"rui/hud/gametype_icons/survival/supply_drop" )
 
-		if ( MapName() == eMaps.mp_rr_canyonlands_mu1_night )// TODO(AMOS): desertlands_nx
+		if ( GetMapName() == "mp_rr_canyonlands_mu1_night" )// TODO(AMOS): desertlands_nx
 		{
 			SetVictorySequenceLocation( <10472, 30000, 8500>, <0, 60, 0> )
 			SetVictorySequenceSunSkyIntensity( 0.8, 0.0 )
@@ -279,7 +279,7 @@ void function DestroyHoverTankNodes()
 	{
 		if( GetEditorClass( ent ) == "info_hover_tank_node" )
 			ent.Destroy()
-	}	
+	}
 }
 
 void function Canyonlands_UpdraftInit_Common( entity player )
@@ -471,7 +471,7 @@ void function HoverTanksOnGamestatePlaying_Thread()
 {
 	FlagWait( "Survival_LootSpawned" )
 	FlagWait( "DeathCircleSetup" )
-	
+
 	waitthread FindHoverTankEndNodes()
 	SpawnHoverTanks()
 
@@ -999,8 +999,8 @@ array<entity> function GetHoverTankEndNodes( int count, int endNodeType, array<e
 	{
 		#if DEVELOPER
 			Warning( "Hovertank playlist var 'canyonlands_hovertanks_circle_index' has bad death field stage: %d", deathFieldStageIndexSmall )
-		#endif 
-		
+		#endif
+
 		deathFieldStageIndexSmall = SURVIVAL_GetDeathFieldStages().len() - 1
 	}
 	DeathFieldStageData deathFieldStageDataSmall = GetDeathFieldStage(  deathFieldStageIndexSmall )
@@ -1020,7 +1020,7 @@ array<entity> function GetHoverTankEndNodes( int count, int endNodeType, array<e
 			#if DEVELOPER
 				Warning( "Hovertank playlist var 'canyonlands_hovertanks_circle_index' has bad death field stage: %d", deathFieldStageIndexLarge )
 			#endif
-			
+
 			deathFieldStageIndexLarge = SURVIVAL_GetDeathFieldStages().len() - 1
 		}
 		DeathFieldStageData deathFieldStageDataLarge = GetDeathFieldStage(  deathFieldStageIndexLarge )
@@ -1051,7 +1051,7 @@ void function HoverTankFlyNodeChain( HoverTank hoverTank, array<entity> nodes )
 	EndSignal( hoverTank.flightMover, "OnDestroy" )
 
 	int numNodes = nodes.len()
-	
+
 	#if DEVELOPER
 	printt( "hovertank flying to " + numNodes + " nodes." )
 	#endif

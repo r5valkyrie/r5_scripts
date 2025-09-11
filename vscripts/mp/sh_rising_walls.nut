@@ -103,7 +103,7 @@ void function RisingWalls_Init()
 	if ( !DoRisableWallEntsExist() )
 		return
 
-	if (MapName() != eMaps.mp_rr_desertlands_mu2 )
+	if (GetMapName() != "mp_rr_desertlands_mu2" )
 		return;
 
 	//PrecacheScriptString( RISABLE_WALL_BRUSH_SCRIPTNAME )
@@ -123,7 +123,7 @@ void function ClRisingWalls_Init()
 	if ( !DoRisableWallEntsExist() )
 		return
 
-	if (MapName() != eMaps.mp_rr_desertlands_mu2 )
+	if (GetMapName() != "mp_rr_desertlands_mu2" )
 		return;
 
 	AddCreateCallback( "info_target", OnRisableWallHelperSpawned )

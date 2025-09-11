@@ -1954,7 +1954,7 @@ void function EntityOutOfBounds( entity trigger, entity ent, entity caller, var 
 
 		dataStruct.timeLeftBeforeDyingFromOutOfBounds = deadTime
 
-		if ( MapName() == eMaps.mp_rr_aqueduct || MapName() == eMaps.mp_rr_party_crasher || MapName() == eMaps.mp_rr_arena_phase_runner  )
+		if ( GetMapName() == "mp_rr_aqueduct" || GetMapName() == "mp_rr_party_crasher" || GetMapName() == "mp_rr_arena_phase_runner"  )
 		{
 			ent.SetOutOfBoundsDeadTime( Time() + 5 )
 		}

@@ -27,14 +27,14 @@ void function CodeCallback_MapInit()
 	//thread InitCryptoMap()
 	thread InitLootRollers()
 	///Canyonlands_MU1_CommonMapInit()
-		
+
 	//PrecacheModel( $"mdl/props/quest_s05/object.rmdl" )
 	//PrecacheModel( $"mdl/props/quest_s05/object_eyes.rmdl" )
 	//PrecacheModel( $"mdl/props/quest_s05/object_body.rmdl" )
 
-	if (MapName() == eMaps.mp_rr_canyonlands_mu2_mv )
+	if (GetMapName() == "mp_rr_canyonlands_mu2_mv" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2_mv.rpak" )
-	else if (MapName() == eMaps.mp_rr_canyonlands_mu2_tt )
+	else if (GetMapName() == "mp_rr_canyonlands_mu2_tt" )
 	{
 		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01.rmdl")
 		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02.rmdl")
@@ -69,7 +69,7 @@ void function CryptoTTButton( entity panel )
 	panel.SetUsable()
 	panel.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
 	panel.SetUsePrompts( "Hold %use% to scan map", "Hold %use% to scan map" )
-	
+
 	//SetCallback_CanUseEntityCallback( panel, CryptoTTPanel_CanUseFunction )
 	AddCallback_OnUseEntity( panel, OnCryptoTTPanelUse )
 
@@ -146,7 +146,7 @@ void function S5_Quest()
 {
     entity ash = CreatePropDynamic( $"mdl/props/quest_s05/object_body.rmdl", <-24755,22020,-340>, <0,0,0> )
 	thread PlayAnim( ash, "obj_body_quest_se05_idle" )
-	
+
 	ash.SetUsable()
 	ash.SetUsePrompts( "%&use% Complete Quest", "%&use% Complete Quest" )
 	AddCallback_OnUseEntity( ash, Ash_OnUse )
@@ -212,7 +212,7 @@ void function StartQuest( entity ash, entity user, int useInputFlags )
 	//thread ToggleHud()
 
 	thread PlayAnim( ash, "obj_body_quest_se05" )
-	
+
 	PlayFirstPersonAnimation( player, "ptpov_quest_se05" )
 	wait 43
 	ScreenFade( player, 0, 0, 0, 255, 0, 6, FFADE_OUT )

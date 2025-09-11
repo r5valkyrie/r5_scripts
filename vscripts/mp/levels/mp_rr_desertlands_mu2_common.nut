@@ -103,7 +103,7 @@ const int NUM_LOOT_DRONES_WITH_VAULT_KEYS = 4
 global struct UpdraftTriggerSettings
 {
 	//needs script_server_fps 20 so it feels like retail native implementation, otherwise reduce maxShakeActivationHeight to 375 and liftExitDuration to 1.5
-	
+
 	float minShakeActivationHeight = 500.0               // At what z-position to start shaking the player's view
 	float maxShakeActivationHeight = 380 //400.0               // At what z-position will the player's view be shaking at the maximum
 	float liftSpeed                = 300.0                   	// Maximum upward speed
@@ -121,7 +121,7 @@ struct
 	#endif
 
 	UpdraftTriggerSettings&      updraftSettings = { ... }
-	
+
 	array<string> jumpJetAttachments = [ "vent_left", "vent_right" ]
 
 } file
@@ -144,7 +144,7 @@ void function Desertlands_MapInit_Common()
 	#if SERVER
 		//thread KillPlayersUnderMap_Thread( -6376 ) //-28320
 		PrecacheModel( SILO_PANEL_MDL )
-		PrecacheModel( HARVESTER_BEAM_MDL )		
+		PrecacheModel( HARVESTER_BEAM_MDL )
 
 		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 		SURVIVAL_SetPlaneHeight( 15250 )
@@ -320,7 +320,7 @@ void function OnSiloPanelActivate( entity activePanel, array<entity> allPanels, 
 
 void function EntitiesDidLoad()
 {
-	
+
 	if( GetCurrentPlaylistVarBool( "firingrange_aimtrainerbycolombia", false ) )
 		return
 
@@ -331,8 +331,8 @@ void function EntitiesDidLoad()
 	Updrafts_Init()
 
 	FillLootTable()
-	
-	if( Gamemode() == eGamemodes.SURVIVAL && MapName() != eMaps.mp_rr_desertlands_64k_x_64k_tt ) 
+
+	if( Gamemode() == eGamemodes.SURVIVAL && GetMapName() != "mp_rr_desertlands_64k_x_64k_tt" )
 	{
 		thread function () : ()
 		{
@@ -370,7 +370,7 @@ void function SetupFakeReplicator( entity ent)
 	replicator.AddUsableValue( USABLE_CUSTOM_HINTS )
 	replicator.SetUsePrompts( "%use% Replicate", "%use% Replicate" )
 
-	
+
 	thread PlayAnim( replicator, "crafting_replicator_ready_groundidle" )
 	AddCallback_OnUseEntity( replicator, OnRepUse )
 	#if CLIENT
@@ -380,7 +380,7 @@ void function SetupFakeReplicator( entity ent)
 
 
 void function OnRepUse( entity replicator, entity playerUser, int useInputFlags )
-{	
+{
 	replicator.UnsetUsable()
 
 	thread PlayBattleChatterLineDelayedToSpeakerAndTeam( playerUser, "bc_MatsPickedUp", 0.80 )
@@ -393,7 +393,7 @@ void function OnRepUse( entity replicator, entity playerUser, int useInputFlags 
 }
 
 void function RepAnims( entity replicator, entity playerUser )
-{	
+{
 	EmitSoundOnEntityOnlyToPlayer( replicator, playerUser, "Crafting_Replicator_DoorOpen" )
 	waitthread PlayAnim( replicator, "crafting_replicator_open" )
 	wait 1
@@ -443,7 +443,7 @@ void function SetupFakeCraftingSiphon( entity ent)
 	harvester.AddUsableValue( USABLE_CUSTOM_HINTS )
 	harvester.SetUsePrompts( "%use% Extract", "%use% Extract" )
 
-	
+
 	thread PlayAnim( harvester, "source_full_idle" )
 	AddCallback_OnUseEntity( harvester, OnCraftUse )
 	#if CLIENT
@@ -452,7 +452,7 @@ void function SetupFakeCraftingSiphon( entity ent)
 }
 
 void function OnCraftUse( entity harvester, entity playerUser, int useInputFlags )
-{	
+{
 	harvester.UnsetUsable()
 
 	thread PlayBattleChatterLineDelayedToSpeakerAndTeam( playerUser, "bc_MatsPickedUp", 0.80 )
@@ -465,7 +465,7 @@ void function OnCraftUse( entity harvester, entity playerUser, int useInputFlags
 }
 
 void function CraftAnims( entity harvester, entity playerUser )
-{	
+{
 	waitthread PlayAnim( harvester, "source_full_to_empty" )
 	thread PlayAnim( harvester, "source_empty_idle" )
 	wait 2
@@ -820,7 +820,7 @@ const string UPDRAFT_TRIGGER_SCRIPT_NAME = "skydive_dust_devil"
 void function Updrafts_Init()
 {
 	array<entity> triggers = GetEntArrayByScriptName( UPDRAFT_TRIGGER_SCRIPT_NAME )
-	
+
 	foreach ( entity trigger in triggers )
 	{
 		//Warning( "[+] Spawning Cafe's Updraft Trigger pos at " + trigger.GetOrigin() )
@@ -853,7 +853,7 @@ void function PlayerEnterUpdraftTrigger( entity trigger, entity player )
 {
 	if( !IsValid( player ) )
 		return
-	
+
 	if ( !player.IsPlayer() )
 		return
 
@@ -866,9 +866,9 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 {
 	EndSignal( player, "OnDestroy" )
 	EndSignal( player, "OnDeath" )
-	
+
 	array<entity> fxs
-	
+
 	OnThreadEnd(
 		function() : ( player, fxs )
 		{
@@ -878,14 +878,14 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 				player.kv.airSpeed = player.GetPlayerSettingFloat( "airSpeed" )
 				player.kv.airAcceleration = player.GetPlayerSettingFloat( "airAcceleration" )
 				player.SetThirdPersonShoulderModeOff()
-				
+
 				player.Anim_Stop()
 				StopSoundOnEntity( player, "Survival_InGameFlight_Travel_1P" )
 				StopSoundOnEntity( player, "Survival_InGameFlight_Travel_3P" )
-				
+
 				DeployAndEnableWeapons( player )
 			}
-			
+
 			foreach( entity ent in fxs )
 			{
 				if( IsValid( ent ) )
@@ -901,9 +901,9 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 
 	player.p.isPlayerUpdrafting = true
 	player.kv.airSpeed = 300
-	player.kv.airAcceleration = 1000 
+	player.kv.airAcceleration = 1000
 	HolsterAndDisableWeapons( player )
-	
+
 	// Play freefall landing anim + jumpjets fx
 	// Can't play the anim and make it move at the same time kral pls help (use wattson temp)
 	// player.Anim_NonScriptedPlay("animseq/humans/class/light/pilot_light_wattson/mp_pilot_freefall_anticipate.rseq" )
@@ -913,9 +913,9 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 
 	EmitSoundOnEntityOnlyToPlayer( player, player, "Survival_InGameFlight_Land_Start_1P" )
 	EmitSoundOnEntityExceptToPlayer( player, player, "Survival_InGameFlight_Land_Start_3P" )
-	
+
 	player.SetThirdPersonShoulderModeOn()
-	
+
 	thread BurnPlayerOverTime( trigger, player )
 
 	//Jumpjet fx
@@ -927,13 +927,13 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 		EffectSetControlPointVector( handle, 1, GetSkydiveSmokeColorForTeam( player.GetTeam() ) )
 		fxs.append( handle )
 	}
-	
+
 	float velocity
 
 	while ( trigger.IsTouching( player ) )
 	{
 		velocity += liftAcceleration
-		
+
 		vector playerCurrentVel = < player.GetVelocity().x, player.GetVelocity().y, velocity >
 
 		player.SetVelocity( ClampVelocity( playerCurrentVel, liftSpeed ) )
@@ -944,11 +944,11 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 	// Player is out of trigger, use liftExitDuration
 	float starttime = Time()
 	float endTime = starttime + liftExitDuration
-	
+
 	while ( Time() < endTime )
 	{
 		velocity += liftAcceleration
-		
+
 		vector playerCurrentVel = < player.GetVelocity().x, player.GetVelocity().y, velocity >
 
 		player.SetVelocity( ClampVelocity( playerCurrentVel, liftSpeed ) )
@@ -957,11 +957,11 @@ void function Player_EnterUpdraft( entity trigger, entity player, float minHeigh
 	}
 }
 
-vector function ClampVelocity(vector velocity, float maxSpeed) 
+vector function ClampVelocity(vector velocity, float maxSpeed)
 {
     float speed = velocity.Length()
 
-    if (speed > maxSpeed) 
+    if (speed > maxSpeed)
 	{
         velocity = velocity * (maxSpeed / speed)
     }

@@ -503,13 +503,12 @@ void function Load_Level_based_UIGlobals()
 {	
 	mAssert
 	( 
-		Playlist() != -1 && Gamemode() != -1 && MapName() != -1, 		
+		Playlist() != -1 && Gamemode() != -1, 		
 		format
 		( 
-			"INVALID INIT enums -- PlaylistEnumIdx: %d GamemodeEnumIdx: %d MapNameEnumIdx: %d \n Try doing \"ui_script_reset\" if recently added.", 
+			"INVALID INIT enums -- PlaylistEnumIdx: %d GamemodeEnumIdx: %d \n Try doing \"ui_script_reset\" if recently added.", 
 			Playlist(),
-			Gamemode(),
-			MapName()
+			Gamemode()
 		)
 	)
 	

@@ -1,14 +1,14 @@
-struct 
+struct
 {
   table<string, array<asset> > we_assets = {}
   table<string, array<asset> > kc_assets = {}
   table<string, array<asset> > range_assets = {}
-  
+
   // manually written, might not work lmao
   array<string> we_sections = []
   array<string> kc_sections = []
   array<string> range_sections = []
-  
+
 } file
 
 global function GetAssets
@@ -51,7 +51,7 @@ void function Sh_MapEditor_Init()
 }
 #endif
 
-void function ShAssets_Init() 
+void function ShAssets_Init()
 {
 array<asset> base_models = [$"mdl/thunderdome/thunderdome_cage_ceiling_256x256_06.rmdl", $"mdl/thunderdome/thunderdome_cage_wall_256x256_01.rmdl", $"mdl/Humans/class/medium/combat_dummie_medium.rmdl"]
 file.we_assets ["mdl/base_models"] <- base_models
@@ -261,19 +261,19 @@ foreach(string key, array<asset> assets in GetAssets()) {
 
 table<string, array<asset> > function GetAssets() {
   #if !UI
-  switch( MapName() )
+  switch( GetMapName() )
   {
-	  case eMaps.mp_rr_canyonlands_staging:
+	  case "mp_rr_canyonlands_staging":
 		return file.range_assets
-	  case eMaps.mp_rr_canyonlands_mu1:
-	  case eMaps.mp_rr_canyonlands_mu1_night:
+	  case "mp_rr_canyonlands_mu1":
+	  case "mp_rr_canyonlands_mu1_night":
 		return {}
-	  case eMaps.mp_rr_canyonlands_64k_x_64k:
+	  case "mp_rr_canyonlands_64k_x_64k":
 		return file.kc_assets
-	  case eMaps.mp_lobby:
+	  case "mp_lobby":
 		return {}
-	  case eMaps.mp_rr_desertlands_64k_x_64k:
-	  case eMaps.mp_rr_desertlands_64k_x_64k_nx:
+	  case "mp_rr_desertlands_64k_x_64k":
+	  case "mp_rr_desertlands_64k_x_64k_nx":
 		return file.we_assets
 	  default:
 		return {}
@@ -287,19 +287,19 @@ table<string, array<asset> > function GetAssets() {
 
 #if !UI
 array<string> function GetSections() {
-  switch( MapName() )
+  switch( GetMapName() )
   {
-	  case eMaps.mp_rr_canyonlands_staging:
+	  case "mp_rr_canyonlands_staging":
 		  return file.range_sections
-	  case eMaps.mp_rr_canyonlands_mu1:
-	  case eMaps.mp_rr_canyonlands_mu1_night:
+	  case "mp_rr_canyonlands_mu1":
+	  case "mp_rr_canyonlands_mu1_night":
 		return []
-	  case eMaps.mp_rr_canyonlands_64k_x_64k:
+	  case "mp_rr_canyonlands_64k_x_64k":
 		return file.kc_sections
-	  case eMaps.mp_lobby:
+	  case "mp_lobby":
 		return []
-	  case eMaps.mp_rr_desertlands_64k_x_64k:
-	  case eMaps.mp_rr_desertlands_64k_x_64k_nx:
+	  case "mp_rr_desertlands_64k_x_64k":
+	  case "mp_rr_desertlands_64k_x_64k_nx":
 		return file.we_sections
 	  default:
 		return []

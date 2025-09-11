@@ -57,7 +57,7 @@ void function Desertlands_MapInit_Common()
 
 	printt( "Desertlands_MapInit_Common" )
 
-	if (MapName() == eMaps.mp_rr_desertlands_64k_x_64k_tt )
+	if (GetMapName() == "mp_rr_desertlands_64k_x_64k_tt" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_64k_x_64k_tt.rpak")
 	else
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_64k_x_64k.rpak")
@@ -111,8 +111,8 @@ void function EntitiesDidLoad()
 		thread ForgeTeaser()
 
 	FillLootTable()
-	
-	if( Gamemode() == eGamemodes.SURVIVAL ) 
+
+	if( Gamemode() == eGamemodes.SURVIVAL )
 	{
 		thread function () : ()
 		{
@@ -475,7 +475,7 @@ void function MinimapPackage_Train( entity ent, var rui )
 	#if DEVELOPER
 		printt( "Adding 'rui/hud/gametype_icons/sur_train_minimap' icon to minimap" )
 	#endif
-	
+
 	RuiSetImage( rui, "defaultIcon", $"rui/hud/gametype_icons/sur_train_minimap" )
 	RuiSetImage( rui, "clampedDefaultIcon", $"" )
 	RuiSetBool( rui, "useTeamColor", false )

@@ -128,7 +128,7 @@ void function MapTriggers_Init()
     if( Gamemode() == eGamemodes.fs_duckhunt )
         return
     
-    switch ( MapName() )
+    switch ( GetMapName() )
     {
         default:
             break

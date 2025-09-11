@@ -10,9 +10,9 @@ void function ClientCodeCallback_MapInit()
 
 void function MinimapLabelsOlympus()
 {
-	if (MapName() == eMaps.mp_rr_olympus )
+	if (GetMapName() == "mp_rr_olympus" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_olympus.rpak" )
-	else if (MapName() == eMaps.mp_rr_olympus_tt )
+	else if (GetMapName() == "mp_rr_olympus_tt" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_olympus_tt.rpak" )
 
 
@@ -32,7 +32,7 @@ void function MinimapLabelsOlympus()
 	SURVIVAL_AddMinimapLevelLabel( GetZoneMiniMapNameForZoneId( MapZones_GetZoneIdForTriggerName( "Z_04_A" ) ), 0.65, 0.26, 0.6 ) //Rift
 	SURVIVAL_AddMinimapLevelLabel( GetZoneMiniMapNameForZoneId( MapZones_GetZoneIdForTriggerName( "Z_14_B" ) ), 0.78, 0.56, 0.6 ) //Grow Towers
 	SURVIVAL_AddMinimapLevelLabel( GetZoneMiniMapNameForZoneId( MapZones_GetZoneIdForTriggerName( "Z_02_A" ) ), 0.37, 0.20, 0.6 ) //Docks
-	if (MapName() == eMaps.mp_rr_olympus_tt )
+	if (GetMapName() == "mp_rr_olympus_tt" )
 		SURVIVAL_AddMinimapLevelLabel( GetZoneMiniMapNameForZoneId( MapZones_GetZoneIdForTriggerName( "Z_02_C" ) ), 0.39, 0.33, 0.6 ) //Path TT
 
 }

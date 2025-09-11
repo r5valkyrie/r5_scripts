@@ -1556,7 +1556,7 @@ void function DEV_ToggleStaticPropRuiVisibilityDebug()
 void function ClientCodeCallback_OnEnumStaticPropRui( StaticPropRui propRui )
 {
 	bool shouldCreateDefaultStaticRui = true
-	if( MapName() == eMaps.mp_rr_olympus || MapName() == eMaps.mp_rr_olympus_tt || MapName() == eMaps.mp_rr_olympus_mu1 )
+	if( GetMapName() == "mp_rr_olympus" || GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" )
 		shouldCreateDefaultStaticRui = false//Olympus has some models that calls rui assets we don't have, currently porting rui assets not possible so it's better to just disable it. - Kral
 	foreach( bool functionref(StaticPropRui) callbackFunc in s_callbacksOnEnumStaticPropRui )
 	{

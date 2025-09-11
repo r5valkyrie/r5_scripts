@@ -17,9 +17,9 @@ void function CodeCallback_MapInit()
 	SURVIVAL_SetMapCenter( <0, 0, 0> )
     SURVIVAL_SetMapDelta( 4900 )
 
-	if (MapName() == eMaps.mp_rr_canyonlands_mu2_mv )
+	if (GetMapName() == "mp_rr_canyonlands_mu2_mv" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2_mv.rpak" )
-	else if (MapName() == eMaps.mp_rr_canyonlands_mu2_tt )
+	else if (GetMapName() == "mp_rr_canyonlands_mu2_tt" )
 	{
 		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01.rmdl")
 		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02.rmdl")
@@ -30,7 +30,7 @@ void function CodeCallback_MapInit()
 	}
 	else
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2.rpak" )
-	
+
 	//Clean up unused ents
 	AddCallback_EntitiesDidLoad( KCMU2_OnEntitiesDidLoad )
 
@@ -66,10 +66,10 @@ bool function ShouldDestroyInfoTarget( entity infotarget )
 
 	if( GetEditorClass( infotarget ) == "info_warp_gate_path_node" || infotarget.GetScriptName() == "apex_screen" )
 		return false
-	
+
 	if( infotarget.GetModelName() == $"mdl/test/loot_box_half_01.rmdl" || infotarget.GetModelName() == $"mdl/vehicle/droppod_fireteam/droppod_fireteam.rmdl" )
 		return true
-	
+
 	return false
 }
 
@@ -80,7 +80,7 @@ void function InitScriptRef( entity scriptref )
 	if( GetEditorClass( scriptref ) != "" )
 	{
 		stringCats = split( GetEditorClass( scriptref ), "_" )
-		
+
 		if( stringCats[1] != "survival" )
 		{
 			// printt( "Removed Unused Script Ref Ent. Editor: ", GetEditorClass( scriptref ), " ScriptRef: ", scriptref.GetScriptName()," Target: ", scriptref.GetTargetName() )
@@ -96,7 +96,7 @@ void function InitScriptRef( entity scriptref )
 	}
 }
 
-void function KCMU2_OnEntitiesDidLoad() 
+void function KCMU2_OnEntitiesDidLoad()
 {
 	printt( "KCMU2_OnEntitiesDidLoad" )
 
@@ -112,7 +112,7 @@ void function KCMU2_OnEntitiesDidLoad()
 	foreach( prop in props )
 		InitPropDynamic( prop )
 
-	if (MapName() == eMaps.mp_rr_canyonlands_mu2_tt )
+	if (GetMapName() == "mp_rr_canyonlands_mu2_tt" )
 		thread CryptoTT_Init()
 
 	SetupBunkersDoors()
@@ -142,7 +142,7 @@ bool function ShouldDestroyPropDynamic( string model )
 		//case "mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl":
 		return true
 	}
-	
+
 	return false
 }
 
@@ -207,7 +207,7 @@ entity function BunkerDoor_GetDoorForButton( entity button )
 				return door
 		}
 	}
-	
+
 	return null
 }
 
@@ -233,23 +233,23 @@ void function BunkerDoor_OnOpen( entity button, entity user, int input )
 	vector forward = AnglesToForward( door.GetAngles() )
 	vector right   = AnglesToRight( door.GetAngles() )
 	vector up      = AnglesToUp( door.GetAngles() )
-	
+
 	// Define start offset relative to the door
 	float startForwardOffset = -25
 	float startRightOffset   = -60
 	float startUpOffset      = 365
-	
+
 	vector startOffset = (forward * startForwardOffset) + (right * startRightOffset) + (up * startUpOffset)
 	vector worldStart = door.GetOrigin() + startOffset
-	
+
 	// Define end offset relative to the door
 	float endForwardOffset = -25
 	float endRightOffset   = -60
 	float endUpOffset      = -700
-	
+
 	vector endOffset = (forward * endForwardOffset) + (right * endRightOffset) + (up * endUpOffset)
 	vector worldEnd = door.GetOrigin() + endOffset
-	
+
 	thread function() : ( door, button, worldStart, worldEnd )
 	{
 		door.Anim_PlayOnly( "bunker_hatch_open" )
@@ -300,8 +300,8 @@ void function BunkerDoor_CreateZipline( vector startPos, vector endPos, bool mov
 
 	zip_start.SetOrigin( startPos )
 
-	entity mover 
-	
+	entity mover
+
 	if( moveIt )
 	{
 		zip_end.SetOrigin( startPos - <0,0,1> )
@@ -327,7 +327,7 @@ void function BunkerDoor_CreateZipline( vector startPos, vector endPos, bool mov
 
 	DispatchSpawn(zip_start)
 	DispatchSpawn(zip_end)
-	
+
 	if( moveIt )
 	{
 		mover.NonPhysicsMoveTo( endPos, 1.0, 1.0, 0.0  )
@@ -344,7 +344,7 @@ void function BunkerDoor_CreateZipline( vector startPos, vector endPos, bool mov
 	}
 }
 
-array<vector> function Flowstate_GenerateSmoothPathForBasePath( array<vector> path ) 
+array<vector> function Flowstate_GenerateSmoothPathForBasePath( array<vector> path )
 {
 	printt( "generating smooth points for path with len", path.len() )
 	if( path.len() == 0 )
@@ -352,7 +352,7 @@ array<vector> function Flowstate_GenerateSmoothPathForBasePath( array<vector> pa
 
     array<vector> smoothPath
 	array<vector> points = clone path
-	
+
 	int numPoints = 10
 
 	points.insert( 0, points[0] )

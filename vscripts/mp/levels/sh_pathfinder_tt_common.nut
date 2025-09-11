@@ -1,4 +1,4 @@
-               
+
 global function PathTT_Init
 global function PathTT_OnNetworkRegistration
 global function IsPathTTEnabled
@@ -851,7 +851,7 @@ void function PathTT_OnExitPathTTRingTrigger( entity trigger, entity ent )
 BoxingRingPlayerData ornull function PathTT_GetBoxingRingPlayerData( entity player )
 {
 	PathTT_CleanUpInvalidPlayerData()
-	
+
 	foreach( BoxingRingPlayerData playerData in file.allRingPlayerData )
 		if ( playerData.player == player )
 			return playerData
@@ -1048,7 +1048,7 @@ void function SetMeleeWeaponToActiveSlot_Thread( entity player )
 	}
 	DisableOffhandWeapons( player )
 	player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-	
+
 	player.LockWeaponChange()
 }
 
@@ -1399,7 +1399,7 @@ void function Boxing_WeaponStatusCheck( entity player, var rui, int slot )
 //CHECK IF THE TT EXISTS IN THE MAP
 bool function IsPathTTEnabled()
 {
-	if ( MapName() == eMaps.mp_rr_olympus_tt || MapName() == eMaps.mp_rr_olympus_mu1 )
+	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" )
 	{
 		return true
 	}

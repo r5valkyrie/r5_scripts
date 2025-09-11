@@ -8,7 +8,7 @@ void function ClientCodeCallback_MapInit()
 	ClLaserMesh_Init()
 	Desertlands_MapInit_Common()
 
-	if (MapName() == eMaps.mp_rr_desertlands_mu1_tt )
+	if (GetMapName() == "mp_rr_desertlands_mu1_tt" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu1_tt.rpak" )
 	else
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_desertlands_mu1.rpak" )
@@ -19,7 +19,7 @@ void function ClientCodeCallback_MapInit()
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_6_FRAGMENT_EAST", 0.66, 0.44, 0.5 )
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_3_SURVEY", 0.59, 0.20, 0.5 )
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_9_HARVESTER", 0.52, 0.60, 0.5 )
-	
+
 	//Old Zones
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_11_THERMAL_STATION", 0.28, 0.73, 0.5 )
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_7_SNOW_FIELD", 0.85, 0.40, 0.5 )
@@ -37,7 +37,7 @@ void function ClientCodeCallback_MapInit()
 
 	//TownTakerover Zones
 	SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_8_MIRAGE", 0.23, 0.54, 0.5 )
-	if (MapName() == eMaps.mp_rr_desertlands_mu1_tt ){
+	if (GetMapName() == "mp_rr_desertlands_mu1_tt" ){
 		SURVIVAL_AddMinimapLevelLabel( "#DES_ZONE_1_BLOOD_SHORT", 0.2175, 0.195, 0.5 )
 		ClDesertlandsStoryEvents_Init()}
 }
