@@ -573,6 +573,7 @@ void function PlayerRespawnModes_Init()
 //
 void function MapHasTrain_Init()
 {
+	#if !UI
 	const array<string> trainEnabledMaps = 
 	[
 		"mp_rr_desertlands_64k_x_64k",
@@ -585,6 +586,7 @@ void function MapHasTrain_Init()
 	]
 	
 	modeSettings.mapHasTrain = trainEnabledMaps.contains( GetMapName() )
+	#endif
 }
 
 //

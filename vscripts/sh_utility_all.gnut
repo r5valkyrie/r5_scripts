@@ -3696,6 +3696,7 @@ function MakeFunctionRefFromString( string funcName )
 
 bool function IsTitanfall2Map()
 {
+	#if !UI
 	switch( GetMapName() )
 	{
 		case "mp_rr_eden":
@@ -3712,6 +3713,7 @@ bool function IsTitanfall2Map()
 		
 		return true
 	}
-	
+	#endif
 	return false
+
 }
