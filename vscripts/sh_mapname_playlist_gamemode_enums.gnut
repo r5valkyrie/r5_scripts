@@ -555,11 +555,17 @@ void function PassivesAllowed_Init()
 	#if DEVELOPER && PRINT_GAMEMODE_DEBUGS
 		if( !result )
 		{
+			#if SERVER || CLIENT
+				string __gmNameDbg = GameRules_GetGameMode()
+			#elseif UI
+				string __gmNameDbg = GetConVarString( "mp_gamemode" )
+			#endif
+			string __plNameDbg = GetCurrentPlaylistName()
 			printt( format( "PRINT_GAMEMODE_DEBUGS: Mode not supported for passives. GamemodeEnum: %d - %s, PlaylistEnum: %d - %s", 
 				Gamemode(), 
-				Gamemode() > -1 ? AllGamemodesArray()[Gamemode()] : "_INVALID", 
+				__gmNameDbg, 
 				Playlist(), 
-				Playlist() > - 1 ? AllPlaylistsArray()[Playlist()]  : "_INVALID"
+				__plNameDbg
 			))
 		}
 	#endif 
@@ -610,11 +616,17 @@ void function TrackerSupportedMode_Init()
 	#if DEVELOPER && PRINT_GAMEMODE_DEBUGS
 		if( !result )
 		{
+			#if SERVER || CLIENT
+				string __gmNameDbg = GameRules_GetGameMode()
+			#elseif UI
+				string __gmNameDbg = GetConVarString( "mp_gamemode" )
+			#endif
+			string __plNameDbg = GetCurrentPlaylistName()
 			printt( format( "PRINT_GAMEMODE_DEBUGS: Mode not supported for tracker. GamemodeEnum: %d - %s, PlaylistEnum: %d - %s", 
 				Gamemode(), 
-				Gamemode() > -1 ? AllGamemodesArray()[Gamemode()] : "_INVALID", 
+				__gmNameDbg, 
 				Playlist(), 
-				Playlist() > - 1 ? AllPlaylistsArray()[Playlist()]  : "_INVALID"
+				__plNameDbg
 			))
 		}
 	#endif 

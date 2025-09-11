@@ -1778,7 +1778,17 @@ void function OnClientConnected( entity player )
 					groundPlayer = teammate
 			}
 
-			if ( !putInPlane && !IsValid( skydiveFollowPlayer ) )
+			// In FFA (team size 1) there may be no teammate to follow; don't force spectator
+			int __maxTeamSize = GetCurrentPlaylistVarInt( "max_team_size", 1 )
+			#if SERVER || CLIENT
+				string __gmName = GameRules_GetGameMode().tolower()
+			#elseif UI
+				string __gmName = GetConVarString( "mp_gamemode" ).tolower()
+			#endif
+			string __plName = GetCurrentPlaylistName().tolower()
+			// Fallback FFA detection without tag helpers
+			bool __isFFA = ( __maxTeamSize <= 1 ) || IsFFAGame() || GetCurrentPlaylistVarBool( "ffa_mode", false ) || GetCurrentPlaylistVarBool( "ffa", false )
+			if ( !__isFFA && !putInPlane && !IsValid( skydiveFollowPlayer ) )
 			{
 				//If team is on the ground already, means that player has connected too late, which shouldn't be allowed to respawn in the game.
 				//Let's put the player to spectate.
@@ -1919,6 +1929,14 @@ void function GiveInitialTeamToPlayer( entity player )
 	maxPlayers = maxPlayers > 0 ? maxPlayers : 1
 
 	int numTeams = maxPlayers / maxTeamSize
+
+	// In FFA, each player is its own team slot; clamp to available team range
+	if ( maxTeamSize == 1 )
+	{
+		int __teamSlots = (TEAM_MULTITEAM_LAST - TEAM_MULTITEAM_FIRST + 1)
+		if ( numTeams > __teamSlots )
+			numTeams = __teamSlots
+	}
 	
 	#if DEVELOPER
 		printw( "TEAMING - Team Size:", maxTeamSize, " - Num Teams: ", numTeams )
