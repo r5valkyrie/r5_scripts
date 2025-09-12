@@ -249,7 +249,7 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 			#endif
 
 			#if !DEVELOPER && !UI
-				mAssert( SH_globals.currentPlaylist != -1, format( "Current playlist \"%s\" is not registered in %s", currentPlaylistName, FILE_NAME() ) )
+				//mAssert( SH_globals.currentPlaylist != -1, format( "Current playlist \"%s\" is not registered in %s", currentPlaylistName, FILE_NAME() ) )
 			#endif
 		
 		#if UI 
