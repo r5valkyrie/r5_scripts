@@ -521,7 +521,7 @@ void function DCButton_OnActivate( var button )
 	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
 		return
 
-	LaunchExternalWebBrowser( "https://discord.gg/8nYYzSvf", WEBBROWSER_FLAG_NONE )
+	LaunchExternalWebBrowser( "https://discord.gg/r5valkyrie", WEBBROWSER_FLAG_NONE )
 }
 
 void function BlogButton_OnActivate( var button )
