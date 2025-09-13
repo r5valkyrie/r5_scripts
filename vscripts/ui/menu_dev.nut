@@ -1362,8 +1362,9 @@ void function SetupTitanfallWeapons()
 	// Dev
 	SetupDevCommand( "Dev: Softball Apex Version", "give mp_weapon_softball apex_model" )
 	SetupDevCommand( "Dev: Flight Core", "give mp_titanweapon_flightcore_rockets")
-	SetupDevCommand( "Dev: Satchel", "give mp_weapon_satchel")
 	SetupDevCommand( "Dev: Disable Titan POV Hands", "script ResetCharacterSkin(gp()[0])")
+	SetupDevCommand( " ", "give mp" )
+	SetupDevCommand( "Pilot Ability: Satchel", "give mp_weapon_satchel")
 	#endif
 }
 

@@ -277,6 +277,7 @@ void function PrecacheSDKWeapons()
 	PrecacheWeapon( $"mp_weapon_macks_knife_primary" )//needs to be a mod, we dont want custom models in sdk rpaks
 
 	//Titanfall Weapons
+	PrecacheWeapon( $"mp_weapon_satchel" )
 }
 
 void function PrecacheSDKEntities()
