@@ -56,7 +56,7 @@ var function OnWeaponPrimaryAttack_call_for_titan( entity weapon, WeaponPrimaryA
 		//fx.RemoveFromAllRealms()
 		//fx.AddToOtherEntitysRealms( ownerPlayer )
 
-		thread CallBT( origin, angles )
+		thread CallBT( ownerPlayer, origin, angles )
 
 		//PlayBattleChatterLineToSpeakerAndTeam( ownerPlayer, "bc_super" )
 
@@ -136,11 +136,10 @@ TitanPlacementInfo function GetTitanPlacementInfo( entity player )
 
 
 #if SERVER
-void function CallBT( vector origin, vector angles)
+void function CallBT( entity player, vector origin, vector angles)
 {
 	DisablePrecacheErrors()
 	wait 0.2
-	entity player = GetPlayerArray()[ 0 ]
 
 	entity pet_titan = player.GetPetTitan()
 	if ( IsValid(pet_titan) )
