@@ -5,6 +5,8 @@ global function StopSearchForPartyServer
 global function IsSearchingForPartyServer
 global function SetLaunchState
 global function PrelaunchValidateAndLaunch
+global function IsSteamInitialized
+global function IsPTUGame
 
 
 global function UICodeCallback_GetOnPartyServer
@@ -836,6 +838,16 @@ bool function IsStryderAuthenticated()
 bool function IsStryderAllowingMP()
 {
 	return GetConVarInt( "mp_allowed" ) == 1
+}
+
+bool function IsSteamInitialized()
+{
+	return GetConVarInt( "steam_enabled" ) == 1
+}
+
+bool function IsPTUGame()
+{
+	return true
 }
 
 

@@ -193,7 +193,10 @@ void function ServerBrowser_NoServersLabel(bool show)
 	Hud_SetVisible(Hud_GetChild( file.panel, "PlayerCountLine" ), !show )
 	Hud_SetVisible(Hud_GetChild( file.panel, "PlaylistLine" ), !show )
 	Hud_SetVisible(Hud_GetChild( file.panel, "MapLine" ), !show )
-	Hud_SetVisible(Hud_GetChild( file.panel, "NoServersLbl" ), show )
+	if ( IsSteamInitialized() )
+		Hud_SetVisible(Hud_GetChild( file.panel, "NoServersLbl" ), show )
+	else
+		Hud_SetVisible(Hud_GetChild( file.panel, "NoSteamLbl" ), show )
 }
 
 void function ServerBrowser_UpdateServerPlayerCount()
@@ -224,9 +227,9 @@ void function ServerBrowser_SelectServer(int id)
 
 	if(id == -1) {
 		file.m_vSelectedServer.svServerID = -1
-		file.m_vSelectedServer.svServerName = "Please select a server from the list"
-		file.m_vSelectedServer.svMapName = "error"
-		file.m_vSelectedServer.svPlaylist = "error"
+		file.m_vSelectedServer.svServerName = Localize( "#SELECT_SERVER" )
+		file.m_vSelectedServer.svMapName = Localize( "#MAP_NOT_SELECTED" )
+		file.m_vSelectedServer.svPlaylist = Localize( "#PLAYLIST_NOT_SELECTED" )
 		file.m_vSelectedServer.svDescription = ""
 		ServerBrowser_UpdateSelectedServerUI()
 		return

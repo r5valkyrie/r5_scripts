@@ -202,7 +202,24 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 		"ypos"					"-15"
 		"auto_wide_tocontents"	"1"
 		"zpos" 					"10"
-		"fontHeight"			"40"
+		"fontHeight"			"30"
+		"visible"				"0"
+
+		"pin_to_sibling"		"ServersBG"
+		"pin_corner_to_sibling"	"CENTER"
+		"pin_to_sibling_corner"	"CENTER"
+	}
+	
+	"NoSteamLbl"
+	{
+		"ControlName"			"Label"
+		"labelText"				"#MAINMENU_WARNING_NO_STEAM"
+		"xpos"					"0"
+		"ypos"					"-15"
+		"auto_wide_tocontents"	"1"
+		"zpos" 					"10"
+		"fontHeight"			"30"
+		"visible"				"0"
 
 		"pin_to_sibling"		"ServersBG"
 		"pin_corner_to_sibling"	"CENTER"
@@ -839,6 +856,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 		"pin_to_sibling"		"ServerInfoBG"
 		"pin_corner_to_sibling"	"TOP"
 		"pin_to_sibling_corner"	"BOTTOM"
+		sound_focus             "UI_Menu_Focus_Large"
 	}
 
 	"ServerButton0"

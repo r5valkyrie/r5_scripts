@@ -72,7 +72,14 @@ void function OnMainMenuPanel_Show( var panel )
 	var statusRui = Hud_GetRui( Hud_GetChild( file.panel, "Status" ) )
 
 	RuiSetGameTime( statusDetailsRui, "initTime", Time() )
-	RuiSetString( statusRui, "prompt", Localize("#MAINMENU_CONTINUE") )
+	if ( IsSteamInitialized() )
+		RuiSetString( statusRui, "prompt", Localize("#MAINMENU_CONTINUE") )
+	else{
+		RuiSetString( statusRui, "prompt", Localize("#MAINMENU_STEAM_OFFLINE") )
+		OpenWarningDialog("#MAINMENU_WARNING_NO_STEAM","#MAINMENU_DESC_NO_STEAM")}
+
+	if ( IsPTUGame() )
+		OpenWarningDialog("#MAINMENU_WARNING_PTU","#MAINMENU_DESC_PTU")
 	RuiSetBool( statusRui, "showPrompt", true )
 	RuiSetBool( statusRui, "showSpinner", false )
 	Hud_SetVisible( file.launchButton, true )
