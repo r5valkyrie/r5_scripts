@@ -27,11 +27,11 @@ WeaponData
 
     "does_not_interrupt_cloak"						"1"
 
-	//"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_weapon_cover_wall"
-	//"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_cover_wall"
-    //"OnWeaponActivate"							    "OnWeaponActivate_weapon_cover_wall"
-    //"OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_cover_wall"
-    //"OnCreateClientOnlyModel"						"OnCreateClientOnlyModel_weapon_cover_wall"
+	"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_weapon_cover_wall"
+	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_cover_wall"
+    "OnWeaponActivate"							    "OnWeaponActivate_weapon_cover_wall"
+    "OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_cover_wall"
+    "OnCreateClientOnlyModel"						"OnCreateClientOnlyModel_weapon_cover_wall"
     "OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
 	"projectile_ignores_vortex"						"fall_vortex"
 

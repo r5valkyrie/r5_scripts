@@ -285,6 +285,7 @@ Scripts:
 	weapons/mp_weapon_smart_pistol.nut
 	weapons/mp_weapon_softball.nut
 	weapons/mp_weapon_sheila.nut
+	weapons/mp_weapon_cover_wall.nut
 	weapons/mp_weapon_mdlspawner.nut
 	weapons/mp_weapon_satchel.nut
 	weapons/mp_titanweapon_flightcore_rockets.nut
@@ -393,7 +394,7 @@ Scripts:
 	
 	//Rampart (OG)
 	//Build cover with an upper barrier that blocks incoming shots.
-	weapons/s0_dev_protos/mp_weapon_cover_wall.nut
+	//weapons/s0_dev_protos/mp_weapon_cover_wall.nut
 
 	//PROTOS - NOT ASSIGNED TO A CHARACTER YET
 	//Stryder Dodge Roll (Proto)
