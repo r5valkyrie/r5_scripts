@@ -85,6 +85,8 @@ global function OnWeaponAttemptOffhandSwitch_Never
 global function DevPrintAllStatusEffectsOnEnt
 #endif // #if DEVELOPER
 
+global function Weapon_AddSingleCharge
+
 #if SERVER
 global function PassThroughDamage
 global function PROTO_CleanupTrackedProjectiles
@@ -5186,4 +5188,22 @@ bool function IsABaseGrenade( entity ent )
 	#else
 	return (ent instanceof CBaseGrenade)
 	#endif
+}
+
+void function Weapon_AddSingleCharge( entity weapon )
+{
+	int ammoReq = weapon.GetAmmoPerShot()
+	int maxClip = weapon.GetWeaponPrimaryClipCountMax()
+	int fullAdd = weapon.GetWeaponPrimaryClipCount() + ammoReq
+	int newClip = minint( maxClip, fullAdd )
+	weapon.SetWeaponPrimaryClipCount( newClip )
+
+	if ( fullAdd > maxClip )
+	{
+		int diff = fullAdd - maxClip
+		int maxAmmo = weapon.GetWeaponPrimaryAmmoCountMax( AMMOSOURCE_STOCKPILE )
+		int fullAmmoAdd = weapon.GetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE ) + diff
+		int newAmmo = minint( maxAmmo, fullAmmoAdd )
+		weapon.SetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE, newAmmo )
+	}
 }
