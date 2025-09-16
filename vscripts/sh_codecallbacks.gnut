@@ -69,6 +69,7 @@ global function CodeCallback_OnPlayerStartZoomOut
 global function CodeCallback_CanStartCustomWeaponActivity
 global function AddCallback_CanStartCustomWeaponActivity
 
+global function AddCallback_OnPassThrough
 global function AddCallback_CanUseZipline
 
 global typedef CanUseZiplineCallback bool functionref( entity player, entity zipline, vector ziplineClosestPoint )
@@ -718,6 +719,13 @@ void function AddCallback_CanStartCustomWeaponActivity( int activity, bool funct
 
 	Assert( !s_callbacksCanStartCustomWeaponActivity[ activity ].contains( func ) )
 	s_callbacksCanStartCustomWeaponActivity[activity].append( func )
+}
+
+array <void functionref( entity, entity, vector )> s_callbacksOnPassThrough
+void function AddCallback_OnPassThrough( void functionref( entity owner, entity hitEnt, vector hitPos ) func )
+{
+	Assert( !s_callbacksOnPassThrough.contains( func ) )
+	s_callbacksOnPassThrough.append( func )
 }
 
 #if SERVER

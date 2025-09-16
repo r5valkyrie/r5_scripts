@@ -63,6 +63,7 @@ global function OnWeaponRegenEndGeneric
 global function Ultimate_OnWeaponRegenBegin
 global function OnWeaponActivate_RUIColorSchemeOverrides
 global function PlayDelayedShellEject
+global function DoesPlayerHaveAutoLoaderBuff
 
 #if SERVER
 global function CreateDamageInflictorHelper
@@ -465,6 +466,10 @@ int function EnergyChargeWeapon_GetChargeLevel( entity weapon )
 	return chargeLevel
 }
 
+bool function DoesPlayerHaveAutoLoaderBuff( entity player )
+{
+	return StatusEffect_HasSeverity( player, eStatusEffect.has_auto_loader )
+}
 
 bool function EnergyChargeWeapon_OnWeaponChargeLevelIncreased( entity weapon, EnergyChargeWeaponData chargeWeaponData )
 {

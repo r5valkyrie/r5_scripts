@@ -203,7 +203,9 @@ global struct ServerEntityStruct
 	bool isHotDropping
 
 	bool spawnPointInUse
-	entity lastAttacker //(mk): not even used,  ( .e.lastAttacker IS used )
+	entity lastAttacker
+	bool blocksThermite = false
+	bool preventStickyEnts = false
 
 	// sticky props
 	float spawnTime = 0.0
@@ -212,6 +214,7 @@ global struct ServerEntityStruct
 	bool isStickyCrit = false
 	int stickyRoundsArrayId = -1 //script managed ent array index
 	bool   isOnMovingGeo = false
+	bool noFriendlyFireProtection = false
 
 	table<string,AnimEventData> animEventDataForEntity
 
@@ -1429,6 +1432,8 @@ global struct ServerWeaponStruct
 	entity ziplineStartModel
 	var ziplineStartPos
 	// bool translocate_isADSForced
+	
+	array<string> modsToRemoveOnDrop
 
 	//portal gun
 	entity portal1root = null

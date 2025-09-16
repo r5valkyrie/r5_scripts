@@ -130,5 +130,6 @@
 	healing_denied
 	placing_titan
 	skyward_embark
+	has_auto_loader
 /////////////////////////////
 //}
