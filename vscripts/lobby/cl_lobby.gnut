@@ -17,7 +17,7 @@ void function Lobby_AddLocalPlayer()
 	
 	foreach ( model in GetEntArrayByScriptName( "lobby_background_character" ) )
 	{
-		if(IsValid(model))
+		if ( !IsLobbyFallLTM() )
 			model.Destroy()
 	}
 

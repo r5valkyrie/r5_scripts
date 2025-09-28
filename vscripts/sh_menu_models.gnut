@@ -397,7 +397,7 @@ bool function MenuMapEntitiesExist()
 		"customize_weapon_camera_target",
 		"customize_weapon_ref",
 
-		"store_inspect_ref",
+		//"store_inspect_ref",
 	]
 
 	foreach ( name in entNames )
@@ -1278,11 +1278,11 @@ void function InitMenuEntities()
 
 	Assert( MenuMapEntitiesExist() )
 
-	/*if ( IsLobbyFallLTM() )  //S4 Lobby does not have shadowfall lobby
+	if ( IsLobbyFallLTM() )  //S4 Lobby does not have shadowfall lobby
 	{
 		ApplyEventPositioning()
 		SpawnShadowEyeEffects()
-	}*/
+	}
 
 	InitPresentationData()
 
@@ -1351,12 +1351,12 @@ void function InitMenuEntities()
 	ItemFlavor weaponSkin = LoadoutSlot_GetItemFlavor( localPlayerEHI, Loadout_WeaponSkin( weapon ) )
 	WeaponCosmetics_Apply( model, weaponSkin, null )
 
-	refEnt = GetEntByScriptName( "store_inspect_ref" )
+	/*refEnt = GetEntByScriptName( "store_inspect_ref" )
 	ModelData_SetBaseOrigin( file.storeInspectModelData, refEnt.GetOrigin() )
 	ModelData_SetBaseAngles( file.storeInspectModelData, refEnt.GetAngles() )
 	ModelData_SetBaseRotationDelta( file.storeInspectModelData, baseRotationDelta )
 	model = CreateMenuModel( file.storeInspectModelData, $"mdl/dev/empty_model.rmdl" )
-	ModelData_CreateMover( file.storeInspectModelData )
+	ModelData_CreateMover( file.storeInspectModelData )*/
 
 	vector x = <7176, 345, 53>
 	switch( GetMapName() ) 
@@ -2621,7 +2621,7 @@ void function ModelRotationThread()
 		{
 			//if ( file.desiredPresentationType == ePresentationType.STORE_INSPECT )
 			{
-				file.storeInspectModelData.mover.NonPhysicsStop()
+				//file.storeInspectModelData.mover.NonPhysicsStop()
 				currentRotationDelta = ModelData_GetRotationDelta( modelData )
 			}
 		}
