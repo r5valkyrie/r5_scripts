@@ -1005,7 +1005,8 @@ void function UpdatePlayerRuiTracking( entity player )
 
 	foreach ( var rui in file.minimapOtherRuis )
 	{
-		Minimap_RuiSetPlayerData( rui )
+		if ( rui != null )
+			Minimap_RuiSetPlayerData( rui )
 	}
 }
 
@@ -1480,7 +1481,8 @@ void function Minimap_SetSizeScale( float scale )
 
 	foreach ( var rui in file.minimapOtherRuis )
 	{
-		RuiSetFloat( rui, "minimapSizeScale", scale )
+		if ( rui != null )
+			RuiSetFloat( rui, "minimapSizeScale", scale )
 	}
 
 	var gameStateRui = ClGameState_GetRui()
@@ -1582,10 +1584,13 @@ void function Minimap_DisableDraw_Internal()
 	
 	for( int i = maxIter; i >= 0; i-- )
 	{
-		if( file.minimapOtherRuis[ i ] == null )		
+		var rui = file.minimapOtherRuis[ i ]
+		if( rui == null )
 			file.minimapOtherRuis.remove( i )
 		else
-			RuiSetVisible( file.minimapOtherRuis[ i ], false )
+		{
+			RuiSetVisible( rui, false )
+		}
 	}
 }
 
@@ -1601,7 +1606,8 @@ void function Minimap_EnableDraw_Internal()
 
 	foreach ( var rui in file.minimapOtherRuis )
 	{
-		RuiSetVisible( rui, true )
+		if ( rui != null )
+			RuiSetVisible( rui, true )
 	}
 }
 
@@ -1613,7 +1619,8 @@ void function Minimap_SetNorthFacing( bool northFacing )
 
 	foreach ( var rui in file.minimapOtherRuis )
 	{
-		RuiSetBool( rui, "isNorthFacing", northFacing )
+		if ( rui != null )
+			RuiSetBool( rui, "isNorthFacing", northFacing )
 	}
 }
 

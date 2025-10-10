@@ -492,7 +492,7 @@ void function GivePlayerShadowPowers( entity player )
 	if ( !IsValid( player ) )
 		return
 
-	player.SetPlayerNetBool( "isPlayerShadowForm", true )
+	player.SetPlayerNetBool( "isPlayerShadowZombie", true )
 	
 	TakeAllPassives( player )
 	player.TakeOffhandWeapon(OFFHAND_MELEE)
@@ -684,7 +684,7 @@ bool function IsPlayerShadowSquad( entity player )
 	if( Gamemode() != eGamemodes.fs_infected )
 		return false
 
-	return player.GetPlayerNetBool( "isPlayerShadowForm" )
+	return player.GetPlayerNetBool( "isPlayerShadowZombie" )
 }
 
 bool function IsPlayerShadowSquadFinalLegend( entity player )

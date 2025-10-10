@@ -152,9 +152,11 @@ void function InitLootBinFromMap( entity lootbin )
 	{
 		if ( file.lootBinList.contains( lootbin ) )
 			return
-		// lootbin.SetScriptName(MYSTERY_BOX_SCRIPT_NAME)
-		// AddMysteryBox(lootbin)
-		// SetMysteryBoxUsable(lootbin)
+			
+		lootbin.SetScriptName(MYSTERY_BOX_SCRIPT_NAME)
+		AddMysteryBox(lootbin)
+		SetMysteryBoxUsable(lootbin)
+		
 		file.numLootBins++
 		file.lootBinList.append( lootbin )
 	
