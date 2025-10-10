@@ -1218,8 +1218,16 @@ bool function IsVaultDoor( entity ent )
 	                  
 		if ( scriptName == SHIP_VAULT_DOOR_SCRIPTNAME )
 			return true
-
-		entity parentEnt = ent.GetParent()
+		
+		entity parentEnt
+		
+		try{
+			parentEnt = ent.GetParent()
+		} catch(e420)
+		{
+		
+		}
+		
 		if ( IsValid( parentEnt ) && parentEnt.GetScriptName() == SHIP_VAULT_PANEL_SCRIPTNAME )
 			return true
                          
