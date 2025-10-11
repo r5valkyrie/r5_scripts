@@ -21,8 +21,8 @@ global function ServerCallback_PlayerLandedNOCAudio
 global function ServerCallback_MoreNOCAudio
 global function ShadowClientEffectsEnable
 
-const asset ANNOUNCEMENT_LEGEND_ICON = $"rui/gamemodes/shadow_squad/legend_icon_sdk"
-const asset ANNOUNCEMENT_SHADOW_ICON = $"rui/gamemodes/shadow_squad/shadow_icon_orange_sdk"
+const asset ANNOUNCEMENT_LEGEND_ICON = $"rui/gamemodes/shadow_squad/legend_icon"
+const asset ANNOUNCEMENT_SHADOW_ICON = $"rui/gamemodes/shadow_squad/shadow_icon_orange"
 #endif
 
 global enum eShadowSquadMessage
@@ -760,8 +760,8 @@ void function OnPlayerLifeStateChanged( entity player, int oldState, int newStat
 		//
 		//
 		//
-		SetCustomPlayerInfoCharacterIcon( player, $"rui/gamemodes/shadow_squad/generic_shadow_character_sdk" )
-		SetCustomPlayerInfoTreatment( player, $"rui/gamemodes/shadow_squad/player_info_custom_treatment_sdk" )
+		SetCustomPlayerInfoCharacterIcon( player, $"rui/gamemodes/shadow_squad/generic_shadow_character" )
+		SetCustomPlayerInfoTreatment( player, $"rui/gamemodes/shadow_squad/player_info_custom_treatment" )
 		SetCustomPlayerInfoColor( player, <245, 81, 35 > )
 	}
 }

@@ -217,8 +217,8 @@ void function ShadowAbilitiesClientEffectsEnable( entity player, bool enableFx, 
 			file.playerShadowZombieClientFxHandles[playerTeam].append( fxHandle )
 
 			// Set HUD elements for local player only
-			SetCustomPlayerInfoCharacterIcon( player, $"rui/gamemodes/shadow_squad/generic_shadow_character_sdk" )
-			SetCustomPlayerInfoTreatment( player, $"rui/gamemodes/shadow_squad/player_info_custom_treatment_sdk" )
+			SetCustomPlayerInfoCharacterIcon( player, $"rui/gamemodes/shadow_squad/generic_shadow_character" )
+			SetCustomPlayerInfoTreatment( player, $"rui/gamemodes/shadow_squad/player_info_custom_treatment" )
 			SetCustomPlayerInfoColor( player, <245, 81, 35 > )
 		}
 

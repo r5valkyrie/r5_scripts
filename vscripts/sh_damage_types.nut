@@ -556,7 +556,7 @@ void function DamageTypes_Init()
 	{
 	}
 
-	file.damageSourceIDToImage[eDamageSourceId.melee_shadowsquad_hands] 				<- $"rui/gamemodes/shadow_squad/shadow_icon_small_sdk"
+	file.damageSourceIDToImage[eDamageSourceId.melee_shadowsquad_hands] 				<- $"rui/gamemodes/shadow_squad/shadow_icon_small"
 
 	//file.damageSourceIDToImage[eDamageSourceId.mp_weapon_mobile_hmg]		<- $"rui/weapon_icons/r5/weapon_rampart_turret"
 
@@ -589,11 +589,11 @@ void function DamageTypes_Init()
 	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_flamethrower] 					<- $"rui/weapon_icons/kral/custom/flamethrower"
 	file.damageSourceIDToImage[eDamageSourceId.mp_ability_mobile_respawn_beacon] 		<- $"rui/weapon_icons/kral/custom/flamethrower"//remove this later
 
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword]					<- $"rui/gamemodes/shadow_squad/legend_icon_sdk"
-	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword_slam]				<- $"rui/gamemodes/shadow_squad/legend_icon_sdk"
-	file.damageSourceIDToImage[eDamageSourceId.melee_titan_sword]						<- $"rui/gamemodes/shadow_squad/legend_icon_sdk"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword]					<- $"rui/gamemodes/shadow_squad/legend_icon"
+	file.damageSourceIDToImage[eDamageSourceId.mp_weapon_titan_sword_slam]				<- $"rui/gamemodes/shadow_squad/legend_icon"
+	file.damageSourceIDToImage[eDamageSourceId.melee_titan_sword]						<- $"rui/gamemodes/shadow_squad/legend_icon"
 
-	file.damageSourceIDToImage[eDamageSourceId.nextbot]									<- $"rui/gamemodes/shadow_squad/legend_icon_sdk"
+	file.damageSourceIDToImage[eDamageSourceId.nextbot]									<- $"rui/gamemodes/shadow_squad/legend_icon"
 
 
 	file.damageSourceIDToName =
