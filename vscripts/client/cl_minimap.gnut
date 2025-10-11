@@ -1586,10 +1586,20 @@ void function Minimap_DisableDraw_Internal()
 	{
 		var rui = file.minimapOtherRuis[ i ]
 		if( rui == null )
+		{
 			file.minimapOtherRuis.remove( i )
+		}
 		else
 		{
-			RuiSetVisible( rui, false )
+			try
+			{
+				RuiSetVisible( rui, false )
+			}
+			catch ( error )
+			{
+				// RUI was destroyed, remove it from the array
+				file.minimapOtherRuis.remove( i )
+			}
 		}
 	}
 }
@@ -1607,7 +1617,16 @@ void function Minimap_EnableDraw_Internal()
 	foreach ( var rui in file.minimapOtherRuis )
 	{
 		if ( rui != null )
-			RuiSetVisible( rui, true )
+		{
+			try
+			{
+				RuiSetVisible( rui, true )
+			}
+			catch ( error )
+			{
+				// RUI was destroyed, skip it
+			}
+		}
 	}
 }
 
