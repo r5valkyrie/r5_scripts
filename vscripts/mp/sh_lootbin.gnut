@@ -152,15 +152,13 @@ void function InitLootBinFromMap( entity lootbin )
 	{
 		if ( file.lootBinList.contains( lootbin ) )
 			return
-			
-		lootbin.SetScriptName(MYSTERY_BOX_SCRIPT_NAME)
-		AddMysteryBox(lootbin)
-		SetMysteryBoxUsable(lootbin)
 		
+		array<CallbackParam> params = ModCallbacks_CreateParams()
+		ModCallbacks_AddEntityParam( params, lootbin )
+		ModCallbacks_CallVoidCallbackWithParams( "InitMysteryBoxFromLootbin", params )
+
 		file.numLootBins++
 		file.lootBinList.append( lootbin )
-	
-		//printt( "new infected lootbin" )
 		return
 	}
 	
@@ -826,8 +824,10 @@ void function OnPropDynamicCreated( entity lootbin )
 {
 	if( lootbin.GetScriptName() == "smartbin" && Gamemode() == eGamemodes.fs_infected )
 	{
-		// AddMysteryBox( lootbin )
-		// SetMysteryBoxUsable( lootbin )		
+		array<CallbackParam> params = ModCallbacks_CreateParams()
+		ModCallbacks_AddEntityParam( params, lootbin )
+		ModCallbacks_CallVoidCallbackWithParams( "InitMysteryBoxFromLootbin", params )
+
 		file.lootBinList.append( lootbin )
 		return
 	}
