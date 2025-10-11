@@ -216,8 +216,12 @@ void function ShadowAbilitiesClientEffectsEnable( entity player, bool enableFx, 
 				file.playerShadowZombieClientFxHandles[ playerTeam ] <- []
 			file.playerShadowZombieClientFxHandles[playerTeam].append( fxHandle )
 
+			// Set HUD elements for local player only
+			SetCustomPlayerInfoCharacterIcon( player, $"rui/gamemodes/shadow_squad/generic_shadow_character_sdk" )
+			SetCustomPlayerInfoTreatment( player, $"rui/gamemodes/shadow_squad/player_info_custom_treatment_sdk" )
+			SetCustomPlayerInfoColor( player, <245, 81, 35 > )
 		}
-	
+
 
 		/////////////////////
 		// Non-players only
@@ -234,10 +238,6 @@ void function ShadowAbilitiesClientEffectsEnable( entity player, bool enableFx, 
 			clientAG.SetParent( player, "", true, 0.0 )
 			clientAG.SetScriptName( STRING_SHADOW_SOUNDS )
 		}
-		
-		SetCustomPlayerInfoCharacterIcon( player, $"rui/gamemodes/shadow_squad/generic_shadow_character_sdk" )
-		SetCustomPlayerInfoTreatment( player, $"rui/gamemodes/shadow_squad/player_info_custom_treatment_sdk" )
-		SetCustomPlayerInfoColor( player, <245, 81, 35 > )
 
 
 		///////////////
