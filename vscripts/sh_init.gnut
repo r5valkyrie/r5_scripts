@@ -517,6 +517,7 @@ void function Shared_Lobby_Init()
 	ShPakRequests_LevelInit()
 	PassivesShared_Init()
 	RemoteFunctions_Init_Begin()
+	ModSystem_RunCallbacks() // MOD SYSTEM CALLBACKS
 	ShPersistentData_LevelInit_Begin()
 	ShAnimWindows_LevelInit()
 	ShGamepad_LevelInit()

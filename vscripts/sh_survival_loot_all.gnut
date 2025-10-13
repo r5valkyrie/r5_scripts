@@ -397,13 +397,6 @@ bool function IsNewLootEnabled( string ref )
 		case "":
 		//disabled until proper porting and fix
 		case "mp_weapon_grenade_gravity":
-		
-		case "mp_weapon_flamethrower":
-			if( !IsFlowstateActive() )
-				return false
-			else 
-				return true
-		break
 		case "armor_pickup_lv0_evolving":
 		case "armor_pickup_lv1_evolving":
 		case "armor_pickup_lv2_evolving":
@@ -1074,8 +1067,12 @@ bool function ClientCallback_SetNextCustomConsumable( entity player, array<strin
 
 void function RegisterWeapon( CustomWeaponData weaponData )
 {
-	LootData data
+	//Skip if weapon already registered
+	if( SURVIVAL_Loot_IsRefValid( weaponData.className ) )
+		return
 	
+	LootData data
+
 	data.ref = weaponData.className
 	// have no idea why we do this, but it's needed.
 	data.baseWeapon = weaponData.className

@@ -799,9 +799,18 @@ table<int,string> function DamageSourceIDToStringTable()
 //(mk): for adding custom wep
 void function RegisterCustomWeaponDamageDef( string weaponRef, string name = "Unknown", string imgAssetString = "$\"\"" )
 {
+	//Check if weapon already registered
+	foreach( int idx, string ref in file.damageSourceIDToString )
+	{
+		if( ref == weaponRef )
+			return
+	}
+
 	int sourceID = file.damageSourceIDToString.len()
 
-	mAssert( !(sourceID in file.damageSourceIDToName) && !(sourceID in file.damageSourceIDToImage) && !(sourceID in file.damageSourceIDToString), "Error registering custom weapon: " + weaponRef + " [already exists]" )
+	//If sourceID already exists in any table, skip registration
+	if( (sourceID in file.damageSourceIDToName) || (sourceID in file.damageSourceIDToImage) || (sourceID in file.damageSourceIDToString) )
+		return
 
 	file.damageSourceIDToString[ sourceID ] <- weaponRef
 	file.damageSourceIDToName[ sourceID ] <- name
