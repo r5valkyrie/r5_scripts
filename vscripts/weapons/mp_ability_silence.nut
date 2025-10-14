@@ -49,6 +49,7 @@ void function MpAbilitySilence_Init()
 	PrecacheParticleSystem( FX_SILENCE_SMOKE )
 	PrecacheParticleSystem( FX_SILENCE_SMOKE_CENTER )
 	PrecacheParticleSystem( SHADOW_SCREEN_FX )
+	PrecacheParticleSystem( $"P_exp_bSilent_default" )
 
 	RegisterSignal( "hasBeenSilenced" )
 

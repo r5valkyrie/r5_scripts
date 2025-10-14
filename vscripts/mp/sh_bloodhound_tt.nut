@@ -248,6 +248,9 @@ void function ClBloodhound_TT_Init()
 
 	AddCreateCallback( "prop_dynamic", OnCreate_PropDynamic )
 	AddDestroyCallback( "prop_dynamic", OnDestroy_PropDynamic )
+	
+	PrecacheParticleSystem( $"P_prowler_hatch_light" )
+	PrecacheParticleSystem( $"P_holo_bhtt_chargerifle" )
 }
 #endif
 
@@ -278,21 +281,9 @@ void function Bloodhound_TT_Init()
 
 	AddCallback_OnClientConnected( Blood_TT_OnClientConnected )
 	AddCallback_OnClientDisconnected( Blood_TT_OnClientDisconnected )
-	//AddCallback_OnClientConnectionRestored( Blood_TT_OnClientConnected )
 
-	//PrecacheScriptString( HATCH_MDL_SCRIPTNAME )
-	thread CreateClientSideFakeFxProps()
-}
-
-
-void function CreateClientSideFakeFxProps()
-{
-	wait 2
-	entity defenderholo = CreatePropDynamic( $"mdl/weapons_r5/at_charge_rifle/w_at_charge_rifle_miningtool_holo.rmdl", <-24867, 24666, -2826>, <0,55,0>, 0, -1 )
-	entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( $"P_BT_eye_proj_holo" ), <-24867, 24666, -2868>, <270,55,0> )
-
-	defenderholo.kv.rendercolor = "4 163 154"
-	fx.kv.rendercolor = "4 163 154"
+	PrecacheParticleSystem( $"P_prowler_hatch_light" )
+	PrecacheParticleSystem( $"P_holo_bhtt_chargerifle" )
 }
 #endif // SERVER
 
@@ -1233,13 +1224,11 @@ void function LightShow_CreateSpotLightFX( int spotlightIdx, bool playSound )
 		EmitSoundOnEntity( data.hatchModel, SPOTLIGHT_ACTIVATE_SFX )
 
 	data.hatchModel.SetSkin( 1 )
-	//entity SpotLight = CreatePropDynamic( $"mdl/fx/prowler_hatch_tt_beam.rmdl", data.hatchModel.GetOrigin(), data.hatchModel.GetAngles() + <0,270,0> )
-	//SpotLight.SetParent(data.hatchModel)
 
 	WaitFrame()
 
 	data.hatchModel.kv.intensity = 1
-	//data.fxEnt = StartParticleEffectOnEntity_ReturnEntity( data.hatchModel, GetParticleSystemIndex( $"P_prowler_hatch_light" ), FX_PATTACH_POINT_FOLLOW, data.hatchModel.LookupAttachment( "FX_LIGHT" ) )
+	data.fxEnt = StartParticleEffectOnEntity_ReturnEntity( data.hatchModel, GetParticleSystemIndex( GetAssetFromString( SPOTLIGHT_FX ) ), FX_PATTACH_POINT_FOLLOW, data.hatchModel.LookupAttachment( "FX_LIGHT" ) )
 }
 
 
@@ -1257,7 +1246,7 @@ void function LightShow_TurnOffSpotlight( int spotlightIdx )
 		}
 	)
 
-	//EffectStop( data.fxEnt )
+	EffectStop( data.fxEnt )
 	PROTO_FadeModelIntensityOverTime( data.hatchModel, SPOTLIGHT_FADE_OUT_TIME, 1, 0 )
 }
 
