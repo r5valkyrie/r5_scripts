@@ -205,6 +205,11 @@ void function MirageVoyage_Init()
 	FlagInit( FLAG_MIRAGE_VOYAGE_BUTTON_ENABLED )
 	FlagInit( FLAG_MIRAGE_VOYAGE_MAIN_FX )
 
+	foreach ( string fxFlag, table<int, bool> sequenceTable in FLAGS_MIRAGE_VOYAGE_FILLER_FX )
+	{
+		FlagInit( fxFlag )
+	}
+
 	AddCallback_OnSurvivalDeathFieldStageChanged( OnDeathFieldStageChanged_KillInitialParty )
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 }
@@ -373,6 +378,28 @@ void function EntitiesDidLoad()
 					data1.shouldScale = true
 					file.partyDataEntries.append( data1 )
 					break
+			}
+
+			// Register map-placed particle systems that use the main party script flag so
+			// they will be enabled/disabled when the flag changes. Map entities often
+			// have "start_active" set and are not automatically wired into the flag
+			// trigger arrays, so explicitly add them here.
+			array<entity> pents = GetEntArrayByClass_Expensive( "info_particle_system" )
+
+			foreach ( entity p in pents )
+			{
+
+
+				//if ( p.HasKey( "script_flag" ) && p.kv.script_flag == FLAG_MIRAGE_VOYAGE_MAIN_FX )
+				{
+					p.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+					p.kv.start_active = 1
+					// Add to the global flag-trigger arrays so UpdateTriggerStatusFromFlagChange
+					// will call SetTriggerEnableFromFlag on this entity. FlagInit is safe to call
+					// (it returns early if already initialized).
+
+					//SetTriggerEnableFromFlag( p )
+				}
 			}
 		}
 	}
@@ -616,10 +643,12 @@ void function FillerFXSequence()
 			{
 				if ( sequenceTable[ idx ] )
 				{
+					FlagSet( fxFlag )
 					effectTurningOn = true
 				}
 				else
 				{
+					FlagClear( fxFlag )
 					effectTurningOn = false
 				}
 			}
@@ -627,12 +656,25 @@ void function FillerFXSequence()
 			if ( !effectTurningOn )
 				continue
 
+			if ( fxFlag == "F_F_01" )
 				EmitSoundOnEntity( GetEntByScriptName( "F_F_sound" ), FIREWORKS_STREAMER_SFX )
+
+			else if ( fxFlag == "F_B_01" )
 				EmitSoundOnEntity( GetEntByScriptName( "F_B_sound" ), FIREWORKS_STREAMER_SFX )
+
+			else if ( fxFlag == "F_S_01" )
 				EmitSoundOnEntity( GetEntByScriptName( "F_S_sound" ), FIREWORKS_STREAMER_SFX )
+
+			else if ( fxFlag == "F_T_01" )
 				EmitSoundOnEntity( GetEntByScriptName( "F_T_sound" ), FIREWORKS_STREAMER_SFX )
+
+			else if ( fxFlag == "F_A_01" )
 				EmitSoundOnEntity( GetEntByScriptName( "F_A_sound" ), FIREWORKS_STREAMER_SFX )
+
+			else if ( fxFlag == "F_R_01" )
 				EmitSoundOnEntity( GetEntByScriptName( "F_R_sound" ), FIREWORKS_STREAMER_SFX )
+
+			else if ( fxFlag == "F_P_01" )
 				EmitSoundOnEntity( GetEntByScriptName( "F_P_sound" ), FIREWORKS_STREAMER_SFX )
 		}
 
@@ -649,6 +691,10 @@ void function FillerFXSequence()
 				WaitFrame()
 		}
 	}
+
+	// turn all the fx off again just to be sure
+	foreach ( string fxFlag, table<int, bool> sequenceTable in FLAGS_MIRAGE_VOYAGE_FILLER_FX )
+		FlagClear( fxFlag )
 }
 #endif
 

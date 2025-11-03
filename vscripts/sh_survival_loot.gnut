@@ -505,6 +505,7 @@ void function SURVIVAL_Loot_InitShared()
 	PrecacheParticleSystem( $"P_ar_loot_drop_point_far" )
 	PrecacheParticleSystem( $"P_ar_loot_drop_point" )
 	PrecacheParticleSystem( $"P_ar_hot_zone_far" )
+	PrecacheParticleSystem( $"P_Lgnd_Upgrade_Armor_Holo" )
 
 	PrecacheModel( $"mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl" )
 
@@ -2090,10 +2091,59 @@ void function OnPropSurvivalCreate( entity prop )
 	SURVIVAL_Loot_SetHighlightForLoot( prop, false )
 
 	file.allLoot.append( prop )
+	
+	LootData data = SURVIVAL_Loot_GetLootDataByIndex( index )
+	
+	#if SERVER
+	if( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
+		{
+			// we don't want to set this on armor that's in a deathbox, but since this is called at spawn we don't know if its in one yet
+			// wait a frame and then check if it is parented to a deathbox
+			thread DelayedSetArmorSkin( prop, data.tier )
+		}
+	#endif
 
 	AddCallback_OnUseEntity( prop, OnUseSurvivalPickup )
 	SetCallback_CanUseEntityCallback( prop, SurvivalLoot_CanUseFunction )
 }
+
+#if SERVER
+void function DelayedSetArmorSkin( entity ent, int tier )
+{
+	ent.EndSignal( "OnDestroy" )
+	WaitFrame()
+	entity entParent = ent.GetParent()
+	if( IsValid( entParent ) && entParent.GetNetworkedClassName() == "prop_death_box")
+		return
+	// if fully depleted use the 0 index skin, otherwise use the tier to determine the skin.
+	// gold is skipped in the skins so we can just clamp red tier to be the max skin index
+	int currentShieldCharge = 1//GetPropSurvivalMainPropertyFromEnt( ent )
+	if( currentShieldCharge <= 0 )
+	{
+		ent.SetSkin( minint( tier, 0 ) )
+		return
+	}
+
+	ent.SetSkin( minint( tier, ent.GetSkinCount() - 1 ) )
+	int holoEffect     = GetParticleSystemIndex( $"P_Lgnd_Upgrade_Armor_Holo" )
+	// for some reason the fx does not obey rotation when spawn on the entity, so just spawn it at its location and parent for now
+	entity effect = StartParticleEffectInWorld_ReturnEntity( holoEffect, ent.GetOrigin(), ent.GetAngles() )
+	effect.SetParent( ent )
+	EffectSetControlPointVector( effect, 1, GetFXRarityColorForTier( tier ) )
+}
+
+const array<string> ALL_EVO_ARMOR_REFS = [
+	"armor_pickup_lv1_evolving",
+	"armor_pickup_lv2_evolving",
+	"armor_pickup_lv3_evolving",
+	"armor_pickup_lv5_evolving"
+]
+
+bool function EvolvingArmor_IsEquipmentEvolvingArmor( string itemRef )
+{
+	return ALL_EVO_ARMOR_REFS.contains( itemRef )
+}
+#endif
 
 void function SURVIVAL_Loot_UpdateHighlightForLoot( entity prop )
 {

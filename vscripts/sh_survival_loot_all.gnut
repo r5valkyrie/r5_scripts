@@ -397,11 +397,6 @@ bool function IsNewLootEnabled( string ref )
 		case "":
 		//disabled until proper porting and fix
 		case "mp_weapon_grenade_gravity":
-		case "armor_pickup_lv0_evolving":
-		case "armor_pickup_lv1_evolving":
-		case "armor_pickup_lv2_evolving":
-		case "armor_pickup_lv3_evolving":
-		case "armor_pickup_lv5_evolving":
 		case "hopup_smart_reload":
 		case "hopup_dual_loader":
 		
