@@ -177,7 +177,11 @@ void function AnimWindow_CreateProp_Precache( var settingsBlock )
 	int selectModelFrom = eAnimWindowCreatePropModelSelectionStrategy[GetSettingsBlockString( settingsBlock, "selectModelFrom" )]
 	if ( selectModelFrom == eAnimWindowCreatePropModelSelectionStrategy.HARD_CODED )
 	{
-		PrecacheModel( GetSettingsBlockAsset( settingsBlock, "modelName" ) )
+		asset model = GetSettingsBlockAsset( settingsBlock, "modelName" )
+		if ( model == $"" )
+			return
+
+		PrecacheModel( model )
 	}
 }
 
