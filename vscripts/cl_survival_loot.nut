@@ -29,6 +29,8 @@ global function CreateDeathBoxRui
 global function GetHighlightFillAlphaForLoot
 global function HideLootPrompts
 
+global function ApplyEquipmentColorAndFXOverrides
+
 global const string PING_SOUND_DEFAULT = "ui_mapping_item_1p"
 const float LOOT_PING_DISTANCE = 500.0
 
@@ -42,6 +44,9 @@ const bool HAS_ITEM_PICKUP_FEEDACK_FX = false
 #if HAS_ITEM_PICKUP_FEEDACK_FX
 const asset PICKUP_FEEDBACK_FX = $"P_impact_amped_shield"
 #endif //
+
+const asset EVO_ARMOR_FX = $"P_item_evo_armor"
+const asset EVO_ARMOR_PICKUP_FX = $"P_item_evo_armor_pickup"
 
 struct VerticalLineStruct
 {
@@ -146,6 +151,9 @@ void function Cl_Survival_LootInit()
 	file.lootTypePromptRui[eLootType.MAINWEAPON][eLootPromptStyle.COMPACT] = compactWeaponPromptRui
 
 	AddCallback_OnRefreshCustomGamepadBinds( OnRefreshCustomGamepadBinds )
+	
+	PrecacheParticleSystem( EVO_ARMOR_FX )
+	PrecacheParticleSystem( EVO_ARMOR_PICKUP_FX )
 }
 
 
@@ -177,27 +185,26 @@ void function PlayLootPickupFeedbackFX( entity ent )
 
 	Chroma_PredictedLootPickup( ent )
 
-	#if HAS_ITEM_PICKUP_FEEDACK_FX
-		vector lootOrigin = ent.GetOrigin() + <0, 0, 0.5>
-		entity entParent  = ent.GetParent()
-
-		if ( IsValid( entParent ) )
+		if ( SURVIVAL_Loot_IsLootIndexValid( ent.GetSurvivalInt() ) )
 		{
-			vector offset = lootOrigin - entParent.GetOrigin()
-			vector angles = <0, 0, 0>
+			vector origin     = ent.GetOrigin() + <0, 0, 15>
+			vector angles     = ent.GetAngles()
+			LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( ent.GetSurvivalInt() )
+			int lootType      = lootData.lootType
 
-			entity mover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", lootOrigin, angles )
-			mover.SetParent( entParent )
+			if ( lootType == eLootType.ARMOR )
+			{
+				vector tierColor = GetFXRarityColorForTier( lootData.tier )
 
-			StartParticleEffectOnEntity( mover, GetParticleSystemIndex( PICKUP_FEEDBACK_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
-
-			thread DelayDestroy( mover )
+				if ( EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref ) )
+				{
+					int fxIdx    = GetParticleSystemIndex( $"P_item_evo_armor_pickup" )
+					int pickupFX = StartParticleEffectInWorldWithHandle( fxIdx, origin, angles )
+					EffectSetControlPointVector( pickupFX, 1, tierColor )
+				}
+			}
 		}
-		else
-		{
-			StartParticleEffectInWorld( GetParticleSystemIndex( PICKUP_FEEDBACK_FX ), lootOrigin, <0, 0, 0> )
-		}
-	#endif //
+	
 }
 
 
@@ -530,6 +537,8 @@ string function DeathBoxTextOverride( entity ent )
 void function OnPropCreated( entity prop )
 {
 	AddEntityCallback_GetUseEntOverrideText( prop, Sur_LootTextOverride )
+	
+	ApplyEquipmentColorAndFXOverrides( prop )
 }
 
 
@@ -1964,4 +1973,32 @@ void function CreateDeathBoxRuiWithOverridenData( entity deathBox, NestedGladiat
 	int thirdBadgeDataInt = deathBox.GetNetInt( "thirdBadgeDataInt"  )
 	SetNestedGladiatorCardOverrideBadge( nestedGCHandle, 2, ConvertLoadoutSlotContentsIndexToItemFlavor( thirdBadgeLoadoutEntry, thirdBadgeIndex ), thirdBadgeDataInt )
 
+}
+
+void function ApplyEquipmentColorAndFXOverrides( entity prop )
+{
+	if ( !IsValid( prop ) )
+		return
+
+	if ( IsLootEntInsideDeathBox( prop ) )
+		return
+
+	LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( prop.GetSurvivalInt() )
+	int lootType      = lootData.lootType
+
+	if ( (lootType == eLootType.ARMOR || lootType == eLootType.HELMET) && lootData.skinOverride <= 0 )
+	{
+		vector tierColor       = GetFXRarityColorForTier( lootData.tier )
+		string tierColorString = format( "%f %f %f", tierColor.x, tierColor.y, tierColor.z )
+		prop.kv.rendercolor = tierColorString
+
+                        
+			if ( EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref ) )
+			{
+				int fxIdx   = GetParticleSystemIndex( EVO_ARMOR_FX )
+				int armorFX = StartParticleEffectOnEntityWithPos( prop, fxIdx, FX_PATTACH_ABSORIGIN_FOLLOW, -1, < 0, 0, 15>, <0, 0, 0> )
+				EffectSetControlPointVector( armorFX, 1, tierColor )
+			}
+        
+	}
 }

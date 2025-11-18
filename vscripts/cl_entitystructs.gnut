@@ -230,6 +230,8 @@ global struct ClientPlayerStruct
 	
 	float lastTimeUsedRailjump
 	bool isInAdsCustom
+
+	float  lastTimeDeactivatedJetpack
 }
 
 

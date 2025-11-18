@@ -711,6 +711,10 @@ global struct ServerPlayerStruct
 
 	int disableOffhandWeaponsStackCount
 
+	float  lastTimeDeactivatedJetpack
+	float  nextAllowUseValkUltTime
+	entity valkUltProxyEnt
+
 	// float timeTitanUpgradesStartCountingDown = -1.0
 	// float timeTitanUpgradesAccumulatedPauseTime = -1.0
 

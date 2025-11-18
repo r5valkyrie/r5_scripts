@@ -21,11 +21,11 @@ WeaponData
 	"menu_icon"										"rui/pilot_loadout/suit/hardcover"
 	"hud_icon"										"rui/hud/tactical_icons/tactical_valk"
 
-	//"OnWeaponActivate"								"OnWeaponActivate_ability_valk_jets"
-	//"OnWeaponDeactivate"							"OnWeaponDeactivate_ability_valk_jets"
-	//"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_ability_valk_jets"
+	"OnWeaponActivate"								"OnWeaponActivate_ability_valk_jets"
+	"OnWeaponDeactivate"							"OnWeaponDeactivate_ability_valk_jets"
+	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_ability_valk_jets"
     "OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
-   	//"OnWeaponAttemptOffhandSwitch" 					"OnWeaponAttemptOffhandSwitch_ability_valk_jets"
+   	"OnWeaponAttemptOffhandSwitch" 					"OnWeaponAttemptOffhandSwitch_ability_valk_jets"
 
 	MP_BASE
 	{
