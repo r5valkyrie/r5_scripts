@@ -560,7 +560,7 @@ void function OnWeaponActivate_ability_valk_jets( entity weapon )
 	entity owner = weapon.GetWeaponOwner()
 
 	owner.SetActivateJetpack( true )
-	owner.Signal("JumpPadStart") //Ends grav cannon/jump pad threads
+	//owner.Signal("JumpPadStart") //Ends grav cannon/jump pad threads
 
 	#if CLIENT
 		if ( GetLocalViewPlayer() != owner )
@@ -735,14 +735,14 @@ void function CreateValkJumpJetEffects( entity player, array<string> attachments
 			friendlyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_OWNER
 		else
 			friendlyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
-		friendlyFX.SetStopType( "wakeOnStop" )
+		friendlyFX.SetStopType( "destroyImmediately" )
 		file.valkToJumpJetFXs[player].append( friendlyFX )
 
 		int enemyID    = GetParticleSystemIndex( enemyVFX )
 		entity enemyFX = StartParticleEffectOnEntity_ReturnEntity( player, enemyID, FX_PATTACH_POINT_FOLLOW, player.LookupAttachment( attachment ) )
 		SetTeam( enemyFX, team )
 		enemyFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
-		enemyFX.SetStopType( "wakeOnStop" )
+		enemyFX.SetStopType( "destroyImmediately" )
 		file.valkToJumpJetFXs[player].append( enemyFX )
 	}
 }

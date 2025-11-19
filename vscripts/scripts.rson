@@ -279,8 +279,9 @@ Scripts:
 	weapons/mp_ability_panic_button.nut
 	weapons/mp_ability_mobile_respawn_beacon.nut
 	weapons/mp_ability_valk_cluster_missile.nut
-	weapons/sh_silence.gnut
 	weapons/mp_ability_valk_jets.nut
+	//weapons/mp_ability_valk_skyward.nut
+	weapons/sh_silence.gnut
 	weapons/sp_weapon_arc_tool.nut
 	weapons/mp_weapon_smart_pistol.nut
 	weapons/mp_weapon_softball.nut

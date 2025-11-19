@@ -1463,6 +1463,9 @@ global struct ServerWeaponStruct
 	int savedShieldHealth
 
 	bool toggleShot = true
+
+	float valkUltStartTime
+	array<entity> valkLaunchedTeammates
 }
 
 
