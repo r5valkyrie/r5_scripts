@@ -335,14 +335,7 @@ void function RemoteFunctions_Init_Begin()
 	switch ( Gamemode() )
 	{
 		case eGamemodes.WINTEREXPRESS:
-			ScriptRemote_RegisterClientFunction( "OpenFRChallengesSettingsWpnSelector" )
-			ScriptRemote_RegisterClientFunction( "CloseFRChallengesSettingsWpnSelector" )	
-			ScriptRemote_RegisterClientFunction( "FS_Scenarios_ChangeAliveStateForPlayer", "entity", "bool" )//Audit 2-22-2025
-			ScriptRemote_RegisterClientFunction( "FS_Scenarios_TogglePlayersCardsVisibility", "bool", "bool" )
-			ScriptRemote_RegisterClientFunction( "FS_Scenarios_SetupPlayersCards", "bool" )
-			ScriptRemote_RegisterClientFunction( "FS_Scenarios_AddEnemyHandle", "entity" )//Audit 2-22-2025
-			ScriptRemote_RegisterClientFunction( "FS_Scenarios_AddEnemyHandle2", "entity" )//Audit 2-22-2025
-			ScriptRemote_RegisterClientFunction( "FS_Scenarios_AddAllyHandle", "entity" )//Audit 2-22-2025
+			WinterExpress_RegisterNetworking()
 		break
 
 		case eGamemodes.CUSTOM_CTF:

@@ -377,11 +377,6 @@ void function PlayPanel_OnShow( var panel )
 {
 	//UI_SetPresentationType( ePresentationType.PLAY )
 
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "playerName", GetPlayerName() )
-	RuiSetString( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "accountLevel", GetAccountDisplayLevel( 100 ) )
-	RuiSetImage( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "accountBadge", $"rui/hud/custom_badges/valk_badge" )
-	RuiSetFloat( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "accountXPFrac", 1.0 )
-
 	if ( IsFullyConnected() )
 	{
 		AccessibilityHint( eAccessibilityHint.LOBBY_CHAT )

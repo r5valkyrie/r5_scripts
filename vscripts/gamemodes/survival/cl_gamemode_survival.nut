@@ -102,6 +102,7 @@ global function SetNextCircleDisplayCustomClear
 
 global function SetChampionScreenRuiAsset
 global function InitSurvivalHealthBar
+global function SURVIVAL_SetGameStateAssetOverrideCallback
 #if DEVELOPER
 global function Dev_ShowVictorySequence
 global function Dev_AdjustVictorySequence
@@ -312,6 +313,7 @@ struct
 	var fullmaprui
 	VictorySoundPackage functionref() victorySoundPackageCallback
 	table<entity functionref( vector, float ), bool functionref( entity )> fullMapAimTargetCallbacks
+	void functionref() gameStateOverrideCallback
 } file
 
 void function ClGamemodeSurvival_Init()
@@ -344,6 +346,10 @@ void function ClGamemodeSurvival_Init()
 	FlagInit( "SquadEliminated" )
 
 	ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_survival.rpak" )
+	if ( file.gameStateOverrideCallback != null )
+	{
+		file.gameStateOverrideCallback()
+	}
 
 	if ( IsFallLTM() )
 	{
@@ -452,6 +458,11 @@ void function ClGamemodeSurvival_Init()
 	
 	if( Playlist() == ePlaylists.fs_haloMod_survival )
 		RegisterSignal("NewKillChangeRui")
+}
+
+void function SURVIVAL_SetGameStateAssetOverrideCallback( void functionref() func )
+{
+	file.gameStateOverrideCallback = func
 }
 
 void function AddCallback_OnLocalPlayerUnitframeInit( void functionref(entity, var) func )

@@ -6,6 +6,7 @@ global function Obituary_Print_Localized
 global function Obituary_SetEnabled
 global function Obituary_SetIndexOffset
 global function Obituary_SetHorizontalOffset
+global function Obituary_SetVerticalOffset
 global function ShouldShowObituaryLineForPlayer
 
 global function Thread_StartFakeObituaries
@@ -28,6 +29,7 @@ struct
 	bool obituariesEnabled = true
 	int indexOffest      = 0
 	int horizontalOffset = 0
+	int verticalOffset = 0
 } file
 
 struct ObitEntityInfo
@@ -404,6 +406,13 @@ void function Obituary_SetIndexOffset( int offset )
 void function Obituary_SetHorizontalOffset( int offset )
 {
 	file.horizontalOffset = offset
+
+	UpdateObituaryQueue()
+}
+
+void function Obituary_SetVerticalOffset( int offset )
+{
+	file.verticalOffset = offset
 
 	UpdateObituaryQueue()
 }

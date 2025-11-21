@@ -13,6 +13,8 @@ const float FLEX_SCREEN_A_WIDTH = 1200
 const float FLEX_SCREEN_A_HEIGHT =  1200
 const float FLEX_SCREEN_A_INSET = 128.0
 
+global const string SOUND_NEW_KILL_LEADER = "UI_InGame_KillLeader"
+
 global function ClSurvivalCommentary_Init
 global function DEV_ShowAllSpeakerLocations
 global function SurvivalCommentary_GetCurrentSpeakerPrefix
@@ -500,8 +502,17 @@ void function ServerCallback_Survival_NewKillLeader( entity killLeader, int numK
 
 	Obituary_Print_Localized( Localize( "#SURVIVAL_NEWKILLLEADER_OBIT", playerName, numKills ), playerNameColor )
 
-	if (GetLocalViewPlayer() == killLeader)
-		AnnouncementMessageSweep( GetLocalClientPlayer(), "#SURVIVAL_YOUAREKILLLEADER", Localize( "#SURVIVAL_KILLLEADERKILLS", numKills, GetPlayerInfoColor( killLeader ) ) )
+	if (GetLocalViewPlayer() == killLeader )
+	{
+		AnnouncementData announcement = Announcement_Create( "" )
+		Announcement_SetStyle( announcement, ANNOUNCEMENT_STYLE_KILL_LEADER )
+		Announcement_SetPurge( announcement, true )
+		Announcement_SetOptionalTextArgsArray( announcement, [Localize("#SURVIVAL_YOUAREKILLLEADER"), Localize( "#SURVIVAL_KILLLEADERKILLS", numKills, GetPlayerInfoColor( killLeader ) ), string( numKills ) ] )
+		Announcement_SetPriority( announcement, 200 )
+		Announcement_SetSoundAlias( announcement, SOUND_NEW_KILL_LEADER )
+		announcement.duration = 4.0
+		AnnouncementFromClass( GetLocalViewPlayer(), announcement )
+	}
 }
 
 

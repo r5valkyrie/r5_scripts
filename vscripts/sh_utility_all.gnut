@@ -688,6 +688,22 @@ array<int> function GetAllEnemyTeams( int team )
 	return resultArray
 }
 
+
+array<int> function GetAllTeams()
+{
+	array<int> resultArray
+
+	int maxTeams = GetCurrentPlaylistVarInt( "max_teams", MAX_TEAMS )
+
+	for ( int i = TEAM_MULTITEAM_FIRST; i < TEAM_MULTITEAM_FIRST + maxTeams; ++i )
+	{
+		resultArray.append( i )
+	}
+
+	return resultArray
+}
+
+
 int function GetDefaultNonSpectatorTeam()
 {
 	int resultTeam

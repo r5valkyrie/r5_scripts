@@ -1,4 +1,6 @@
 global function WinterExpress_Init
+global function WinterExpress_RegisterNetworking
+global function WinterExpress_IsModeEnabled
 global function WinterExpress_IsNarrowWin
 
 #if SERVER
@@ -35,6 +37,7 @@ global function DEV_UpdateTopoPos
 
 #if UI
 global function UI_UpdateOpenMenuButtonCallbacks_Spectate
+global function UI_UpdateaButtonCallbacks
 #endif
 
 global enum eWinterExpressRoundState
@@ -71,11 +74,12 @@ const SPAWN_MIN_RADIUS = 64
 const SPAWN_MAX_RADIUS = 320
 const SPAWN_MAX_TRY_COUNT = 40
 const SPAWN_MAX_ARC = 45.0
-const GRACE_PERIOD_SPAWN_DELAY = 5.0
+const RESPAWN_GRACE_PERIOD = 10.0 //
+const GRACE_PERIOD_SPAWN_DELAY = 3.0
 const CHARACTER_SELECT_MIN_TIME = 5.0 // this should match the same const in winter_express.rui
 
-const float WINTER_EXPRESS_TRAIN_MAX_SPEED = 500
-const float WINTER_EXPRESS_TRAIN_ACCELERATION = 50
+const float WINTER_EXPRESS_TRAIN_MAX_SPEED = 580
+const float WINTER_EXPRESS_TRAIN_ACCELERATION = 58
 const float WINTER_EXPRESS_LEAVE_BUFFER = 12
 const float WINTER_EXPRESS_FIRST_STATION_UNLOCK_DELAY = 10
 
@@ -117,8 +121,8 @@ global const array<string> LONG_OR_FLAVORFUL_LINES = [    "Host_Mirage_SquadWinR
 	"Host_Mirage_TrainStop_03_02",
 	"Host_Mirage_TrainStop_03_03" ]
 
-const vector OBJECTIVE_GREEN = <118, 224, 221>
-const vector OBJECTIVE_RED = <164, 62, 62>
+const vector OBJECTIVE_GREEN = <159, 236, 255>
+const vector OBJECTIVE_RED = <235, 65, 65>
 const vector OBJECTIVE_ORANGE = <240, 104, 64>
 const vector OBJECTIVE_YELLOW = <245, 231, 110>
 
@@ -166,6 +170,9 @@ const asset RESPAWN_BEACON_MOBILE_MODEL = $"mdl/props/pathfinder_beacon_radar/pa
 const float  HOLIDAY_HOVERTANK_ALT_CHECK 	= 0
 
 struct {
+	bool          isModeEnabled
+	int           scoreLimit
+	int           roundLimit
 	entity        trainRef
 	array<entity> trainTriggers
 
@@ -235,12 +242,17 @@ struct {
 		table<int, var> squadOnObjectiveElements
 
 		bool gameStartRuiCreated = false
+		int localObjectiveState = -1
+		int localObjectiveOwner = -1
 
 		int    bestSquadIndex = -1
+		var    respawnRui = null
+		float  characterSelectClosedTime = 0
 		entity trainWaypoint
 
 		var gameStartRui = null
 		var activeSpectateMusic = null
+		
 		bool OpenMenuGameplayButtonCallbackRegistered = false
 		var legendSelectMenuPromptRui = null
 		var legendSelectMenuPromptRuiTopo = null
@@ -261,6 +273,10 @@ struct {
 		int currentEnemy1 = -1
 		int currentEnemy2 = -1
 		float captureEndTime
+	#endif
+	
+	#if UI
+		bool buttonCallbackRegistered = false
 	#endif
 } file
 
@@ -288,6 +304,9 @@ struct {
 
 void function WinterExpress_Init()
 {
+	file.scoreLimit = GetCurrentPlaylistVarInt( "winter_express_score_limit", 100 )
+	file.roundLimit = GetCurrentPlaylistVarInt( "winter_express_round_limit", 30 )
+
 	#if SERVER
 		SurvivalShip_Init()
 		MapZones_SharedInit()
@@ -393,12 +412,16 @@ void function WinterExpress_Init()
 
 		AddCallback_OnPlayerLifeStateChanged( WinterExpress_OnPlayerLifeStateChanged )
 
+		InitRespawnRui()
+		AddCreateCallback( "player", UpdateRespawnRui )
+
+		SetHeaderBannerOverrideFunc( WinterExpress_DeathScreenHeaderOverride )
 		AddCreateCallback( PLAYER_WAYPOINT_CLASSNAME, OnWaypointCreated )
 		AddCallback_GameStateEnter( eGameState.WaitingForPlayers, OnWaitingForPlayers_Client )
 
-		AddCallback_GameStateEnter( eGameState.PickLoadout, DestroyGameStartRuiForGamestate )
-		AddCallback_GameStateEnter( eGameState.Playing, DestroyGameStartRuiForGamestate )
-		// AddCallback_GameStateEnter( eGameState.Resolution, WinterExpress_OnResolution )
+		AddCallback_GameStateEnter( eGameState.PickLoadout, OnPickLoadout )
+		AddCallback_GameStateEnter( eGameState.Playing, OnPickLoadout )
+		AddCallback_GameStateEnter( eGameState.Epilogue, WinterExpress_OnEpilogue )
 		AddCallback_GameStateEnter( eGameState.WinnerDetermined, Client_OnWinnerDetermined )
 		AddCallback_OnPlayerChangedTeam( Client_OnTeamChanged )
 
@@ -407,6 +430,9 @@ void function WinterExpress_Init()
 		Survival_SetVictorySoundPackageFunction( GetVictorySoundPackage )
 
 		RegisterDisabledBattleChatterEvents( WINTER_EXPRESS_DISABLED_BATTLE_CHATTER_EVENTS )
+	AddCallback_OnCharacterSelectMenuClosed( WinterExpress_OnCharacterSelectMenuClosed )
+		Obituary_SetVerticalOffset( 60 )
+		SURVIVAL_SetGameStateAssetOverrideCallback( WinterExpressOverrideGameState )
 
 		FlagInit( "WinterExpress_ObjectiveStateUpdated", false )
 		FlagInit( "WinterExpress_ObjectiveOwnerUpdated", false )
@@ -437,8 +463,6 @@ void function WinterExpress_Init()
 	
 	//Flowstate custom
 	settings.winter_express_show_player_cards = GetCurrentPlaylistVarBool( "winter_express_show_player_cards", true )
-
-	WinterExpress_RegisterNetworking()
 }
 
 void function WinterExpress_RegisterNetworking()
@@ -459,29 +483,29 @@ void function WinterExpress_RegisterNetworking()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_CL_UpdateCurrentLoadoutHUD" )
 	// ScriptRemote_RegisterClientFunction( "ServerCallback_FlowstateCaptureProgressUI", "float", -1.0, 99999.0, 32, "float", -1.0, 99999.0, 32 )
 
-	ScriptRegisterNetworkedVariable( "WinterExpress_RoundState", SNDC_GLOBAL, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_RoundEnd", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_ObjectiveState", SNDC_GLOBAL, SNVT_INT, eWinterExpressObjectiveState.INACTIVE )
-	ScriptRegisterNetworkedVariable( "WinterExpress_ObjectiveOwner", SNDC_GLOBAL, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_UnlockDelayEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_CaptureEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_CaptureEndTimeCopy", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_TrainArrivalTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_TrainTravelTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_WaveRespawnTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_RoundRespawnTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_IsOvertime", SNDC_GLOBAL, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "WinterExpress_RoundCounter", SNDC_GLOBAL, SNVT_INT, 0 )
-	ScriptRegisterNetworkedVariable( "WinterExpress_NarrowWin", SNDC_GLOBAL, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "WinterExpress_HasGracePeriodPermit", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "WinterExpress_RoundState", SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariable( "WinterExpress_RoundEnd", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "WinterExpress_ObjectiveState", SNDC_GLOBAL, SNVT_INT, eWinterExpressObjectiveState.INACTIVE )
+	RegisterNetworkedVariable( "WinterExpress_ObjectiveOwner", SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariable( "WinterExpress_UnlockDelayEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "WinterExpress_CaptureEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "WinterExpress_TrainArrivalTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "WinterExpress_TrainTravelTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "WinterExpress_WaveRespawnTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "WinterExpress_RoundRespawnTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "WinterExpress_IsOvertime", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "WinterExpress_RoundCounter", SNDC_GLOBAL, SNVT_INT, 0 )
+	RegisterNetworkedVariable( "WinterExpress_NarrowWin", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariable( "WinterExpress_HasGracePeriodPermit", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "WinterExpress_IsPlayerAllowedLegendChange", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	ScriptRegisterNetworkedVariable( "WinterExpress_CaptureEndTimeCopy", SNDC_GLOBAL, SNVT_TIME, -1 )
+	//ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_CreateBeaconWorldIcon", "entity", "entity" )
 
 	#if CLIENT
 		RegisterNetworkedVariableChangeCallback_int( "WinterExpress_RoundState", OnServerVarChanged_RoundState )
 		RegisterNetworkedVariableChangeCallback_int( "WinterExpress_ObjectiveState", OnServerVarChanged_ObjectiveState )
 		RegisterNetworkedVariableChangeCallback_int( "WinterExpress_ObjectiveOwner", OnServerVarChanged_ObjectiveOwner )
 		RegisterNetworkedVariableChangeCallback_int( "connectedPlayerCount", OnServerVarChanged_ConnectedPlayers )
-		RegisterNetworkedVariableChangeCallback_time( "WinterExpress_CaptureEndTimeCopy", OnServerVarChanged_CaptureEndTime )
 		RegisterNetworkedVariableChangeCallback_time( "WinterExpress_TrainArrivalTime", OnServerVarChanged_TrainArrival )
 		RegisterNetworkedVariableChangeCallback_time( "WinterExpress_TrainTravelTime", OnServerVarChanged_TrainTravelTime )
 		RegisterNetworkedVariableChangeCallback_bool( "WinterExpress_IsOvertime", OnServerVarChanged_OvertimeChanged )
@@ -489,6 +513,12 @@ void function WinterExpress_RegisterNetworking()
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnPlayerLoadoutChanged )
 		RegisterSignal( "FSDM_EndTimer" )
 	#endif
+}
+
+
+bool function WinterExpress_IsModeEnabled()
+{
+	return file.isModeEnabled
 }
 
 bool function WinterExpress_IsNarrowWin()
@@ -565,6 +595,12 @@ void function TurnOffArenaWalls( entity wall )
 #endif
 
 #if CLIENT
+void function WinterExpressOverrideGameState()
+{
+	ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_winter_express.rpak" )
+	ClGameState_RegisterGameStateFullmapAsset( $"ui/gamestate_info_fullmap_winter_express.rpak" )
+}
+
 void function OnPlayerLoadoutChanged( EHI playerEHI, ItemFlavor flavour )
 {
 	// if( settings.winter_express_show_player_cards )
@@ -587,128 +623,77 @@ void function Client_OnTeamChanged( entity player, int oldTeam, int newTeam )
 #if CLIENT
 void function OnEntitiesDidLoad_Client()
 {
-	// //Local players team
-	// int uiTeam = TEAM_IMC
-	// file.scoreElements[uiTeam] <- RuiCreateNested( ClGameState_GetRui(), "squadScore", $"ui/winter_express_squad_score_element.rpak" )
-	// file.scoreElementsFullmap[uiTeam] <- RuiCreateNested( GetFullmapGamestateRui(), "squadScore", $"ui/winter_express_squad_score_element.rpak" )
-	// file.squadOnObjectiveElements[uiTeam] <- RuiCreateNested( ClGameState_GetRui(), "squadOnObjective", $"ui/winter_express_squad_on_objective.rpak" )
-	// RuiSetBool( file.squadOnObjectiveElements[uiTeam], "isMySquad", true )
-	// RuiSetBool( file.squadOnObjectiveElements[uiTeam], "teamValid", true )
+	file.scoreElements[GetLocalClientPlayer().GetTeam()] <- RuiCreateNested( ClGameState_GetRui(), "squadScore", $"ui/winter_express_squad_score_element.rpak" )
+	file.scoreElementsFullmap[GetLocalClientPlayer().GetTeam()] <- RuiCreateNested( GetFullmapGamestateRui(), "squadScore", $"ui/winter_express_squad_score_element.rpak" )
+	file.squadOnObjectiveElements[GetLocalClientPlayer().GetTeam()] <- RuiCreateNested( ClGameState_GetRui(), "squadOnObjective", $"ui/winter_express_squad_on_objective.rpak" )
+	RuiSetBool( file.squadOnObjectiveElements[GetLocalClientPlayer().GetTeam()], "isMySquad", true )
+	RuiSetBool( file.squadOnObjectiveElements[GetLocalClientPlayer().GetTeam()], "teamValid", true )
 
-	// int mySquadIndex      = Squads_GetArrayIndexForTeam( uiTeam )
-	// asset squadIcon  = Squads_GetSquadIcon( mySquadIndex )
+	int i = 0
+	foreach ( team in GetAllEnemyTeams( GetLocalClientPlayer().GetTeam() ) )
+	{
+		file.scoreElements[team] <- RuiCreateNested( ClGameState_GetRui(), "enemyScore" + i, $"ui/winter_express_enemy_score_element.rpak" )
+		file.scoreElementsFullmap[team] <- RuiCreateNested( GetFullmapGamestateRui(), "enemyScore" + i, $"ui/winter_express_enemy_score_element.rpak" )
+		RuiSetInt( file.scoreElements[team], "teamOrderIndex", i )
+		RuiSetInt( file.scoreElementsFullmap[team], "teamOrderIndex", i )
 
-	// RuiSetAsset( file.squadOnObjectiveElements[uiTeam], "squadImage",  squadIcon)
-	// RuiSetAsset( file.scoreElements[uiTeam], "squadImage", squadIcon )
-	// RuiSetColorAlpha( file.scoreElements[uiTeam], "teamColor", Squads_GetSquadColor( mySquadIndex ) , 1.0 )
+		file.squadOnObjectiveElements[team] <- RuiCreateNested( ClGameState_GetRui(), "enemyOnObjective" + i, $"ui/winter_express_squad_on_objective.rpak" )
+		RuiSetInt( file.squadOnObjectiveElements[team], "teamOrderIndex", i )
 
-	// RuiSetAsset( file.scoreElementsFullmap[uiTeam], "squadImage", squadIcon )
-	// RuiSetColorAlpha( file.scoreElementsFullmap[uiTeam], "teamColor", Squads_GetSquadColor( mySquadIndex ) , 1.0 )
+		if ( GetPlayerArrayOfTeam( team ).len() == 0 )
+		{
+			RuiSetBool( file.scoreElements[team], "teamValid", false )
+			RuiSetBool( file.scoreElementsFullmap[team], "teamValid", false )
+			RuiSetBool( file.squadOnObjectiveElements[team], "teamValid", false )
+		}
+		else
+		{
+			RuiSetBool( file.scoreElements[team], "teamValid", true )
+			RuiSetBool( file.scoreElementsFullmap[team], "teamValid", true )
+			RuiSetBool( file.squadOnObjectiveElements[team], "teamValid", true )
+		}
 
-
-	// //enemy teams
-	// foreach ( int i, int team in GetAllEnemyTeams( uiTeam ) )
-	// {
-		// int squadIndex = Squads_GetArrayIndexForTeam( team )
-
-		// file.scoreElements[team] <- RuiCreateNested( ClGameState_GetRui(), "enemyScore" + i, $"ui/winter_express_enemy_score_element.rpak" )
-		// file.scoreElementsFullmap[team] <- RuiCreateNested( GetFullmapGamestateRui(), "enemyScore" + i, $"ui/winter_express_enemy_score_element.rpak" )
-		// RuiSetInt( file.scoreElements[team], "teamOrderIndex", i )
-		// RuiSetInt( file.scoreElementsFullmap[team], "teamOrderIndex", i )
-
-		// file.squadOnObjectiveElements[team] <- RuiCreateNested( ClGameState_GetRui(), "enemyOnObjective" + i, $"ui/winter_express_squad_on_objective.rpak" )
-		// RuiSetInt( file.squadOnObjectiveElements[team], "teamOrderIndex", i )
-
-		// if ( GetPlayerArrayOfTeam( team ).len() == 0 )
-		// {
-			// RuiSetBool( file.scoreElements[team], "teamValid", false )
-			// RuiSetBool( file.scoreElementsFullmap[team], "teamValid", false )
-			// RuiSetBool( file.squadOnObjectiveElements[team], "teamValid", false )
-		// }
-		// else
-		// {
-			// RuiSetBool( file.scoreElements[team], "teamValid", true )
-			// RuiSetBool( file.scoreElementsFullmap[team], "teamValid", true )
-			// RuiSetBool( file.squadOnObjectiveElements[team], "teamValid", true )
-		// }
-
-		// squadIcon = Squads_GetSquadIcon(squadIndex)
-		// RuiSetAsset( file.squadOnObjectiveElements[team], "squadImage",  squadIcon)
-		// RuiSetAsset( file.scoreElements[team], "squadImage", squadIcon )
-		// RuiSetColorAlpha( file.scoreElements[team], "teamColor", Squads_GetSquadColor( squadIndex ), 1.0 )
-
-		// RuiSetAsset( file.scoreElementsFullmap[team], "squadImage", squadIcon )
-		// RuiSetColorAlpha( file.scoreElementsFullmap[team], "teamColor", Squads_GetSquadColor( squadIndex ), 1.0 )
-	// }
+		i++
+	}
 
 	SurvivalCommentary_SetHost( eSurvivalHostType.MIRAGE )
-	
-	// FS_Scenarios_InitPlayersCards()
-	if( GetGameState() == eGameState.Playing )
-	{
-		// FS_Scenarios_SetupPlayersCards( false )
-		FS_CreateScoreHUD()
-	}
 }
 
 void function FinishGamestateRui()
 {
-	// RuiSetFloat( ClGameState_GetRui(), "overtimeTimeLimit", settings.winter_express_overtime_limit )
-	// RuiSetFloat( ClGameState_GetRui(), "captureTimeRequired", settings.winter_express_cap_time )
-	// RuiSetFloat( ClGameState_GetRui(), "trainTravelTime", 10.0 )
+	RuiSetFloat( ClGameState_GetRui(), "overtimeTimeLimit", GetCurrentPlaylistVarFloat( "winter_express_overtime_limit", 15 ) )
+	RuiSetFloat( ClGameState_GetRui(), "captureTimeRequired", GetCurrentPlaylistVarFloat( "winter_express_cap_time", 10 ) )
+	RuiSetFloat( ClGameState_GetRui(), "trainTravelTime", 10.0 )
 
-	// RuiTrackInt( ClGameState_GetRui(), "roundState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "WinterExpress_RoundState" ) )
-	// RuiTrackInt( ClGameState_GetRui(), "roundCounter", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "WinterExpress_RoundCounter" ) )
-	// RuiTrackFloat( ClGameState_GetRui(), "unlockEndTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "WinterExpress_UnlockDelayEndTime" ) )
-	// RuiSetInt( ClGameState_GetRui(), "roundLimit", settings.roundLimit )
+	RuiTrackInt( ClGameState_GetRui(), "roundState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "WinterExpress_RoundState" ) )
+	RuiTrackInt( ClGameState_GetRui(), "roundCounter", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "WinterExpress_RoundCounter" ) )
+	RuiTrackFloat( ClGameState_GetRui(), "unlockEndTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "WinterExpress_UnlockDelayEndTime" ) )
+	RuiSetInt( ClGameState_GetRui(), "roundLimit", file.roundLimit )
 }
 
 void function OnServerVarChanged_ConnectedPlayers( entity player, int old, int new, bool actuallyChanged )
 {
-	// foreach ( team in GetAllTeams() )
-	// {
-		// int uiTeam = Squads_GetTeamsUIId( team )
-		// if ( !(uiTeam in file.scoreElements) )
-			// continue
+	if ( new != old )
+	{
+		foreach ( team in GetAllTeams() )
+		{
+			if ( !(team in file.scoreElements) )
+				continue
 
-		// if ( GetPlayerArrayOfTeam( team ).len() == 0 )
-		// {
-			// RuiSetBool( file.scoreElements[uiTeam], "teamValid", false )
-			// RuiSetBool( file.scoreElementsFullmap[uiTeam], "teamValid", false )
-			// RuiSetBool( file.squadOnObjectiveElements[uiTeam], "teamValid", false )
-		// }
-		// else
-		// {
-			// RuiSetBool( file.scoreElements[uiTeam], "teamValid", true )
-			// RuiSetBool( file.scoreElementsFullmap[uiTeam], "teamValid", true )
-			// RuiSetBool( file.squadOnObjectiveElements[uiTeam], "teamValid", true )
-		// }
-	// }
-
-	// foreach ( entity p in GetPlayerArray() )
-	// {
-		// if ( !IsValid( p ) )
-			// continue
-
-		// // Squads_SetCustomPlayerInfo( p )
-	// }
-
-	// entity localPlayer = GetLocalViewPlayer()
-	// if ( !IsValid( localPlayer ))
-		// return
-
-	// int myTeam = localPlayer.GetTeam()
-	// if ( myTeam == TEAM_SPECTATOR )
-		// return
-
-	// if ( ClGameState_GetRui() != null )
-	// {
-		// int squadIndex = Squads_GetSquadUIIndex( myTeam )
-		// RuiSetInt( ClGameState_GetRui(), "squadSize", GetPlayerArrayOfTeam( myTeam ).len())
-		// RuiSetImage( ClGameState_GetRui(), "squadIcon",  Squads_GetSquadIcon(squadIndex))
-		// RuiSetColorAlpha( ClGameState_GetRui(), "squadColor", Squads_GetSquadColor( squadIndex ) , 1.0 )
-		// RuiSetString( ClGameState_GetRui(), "squadString", Squads_GetSquadName(squadIndex) )
-	// }
+			if ( GetPlayerArrayOfTeam( team ).len() == 0 )
+			{
+				RuiSetBool( file.scoreElements[team], "teamValid", false )
+				RuiSetBool( file.scoreElementsFullmap[team], "teamValid", false )
+				RuiSetBool( file.squadOnObjectiveElements[team], "teamValid", false )
+			}
+			else
+			{
+				RuiSetBool( file.scoreElements[team], "teamValid", true )
+				RuiSetBool( file.scoreElementsFullmap[team], "teamValid", true )
+				RuiSetBool( file.squadOnObjectiveElements[team], "teamValid", true )
+			}
+		}
+	}
 }
 
 string function WinterExpress_DeathScreenHeaderOverride()
@@ -717,23 +702,29 @@ string function WinterExpress_DeathScreenHeaderOverride()
 		return ""
 
 	entity player            = GetLocalClientPlayer()
-	float arrivalTime        = GetGlobalNetTime( "WinterExpress_TrainArrivalTime" )
+	float respawnTime        = GetGlobalNetTime( "WinterExpress_RoundRespawnTime" )
+	float gracePeriodEndTime = respawnTime + RESPAWN_GRACE_PERIOD
 
-	if ( Time() < arrivalTime && player.GetPlayerNetBool( "WinterExpress_HasGracePeriodPermit" ) )
+	if ( Time() < gracePeriodEndTime && player.GetPlayerNetBool( "WinterExpress_HasGracePeriodPermit" ) )
 		return "#WINTER_EXPRESS_DIED_IN_GRACE_PERIOD"
 
 	return "#WINTER_EXPRESS_WAITING_TO_RESPAWN"
 }
 
-void function WinterExpress_OnResolution()
+
+void function WinterExpress_OnWinnerDetermined()
 {
-	// if ( GetNetWinningTeam() != TEAM_UNASSIGNED )
-		// return
+	CloseCharacterSelectNewMenu()
+}
 
-	// if a draw open the death screen and show the match summary
 
-	Assert( !IsSquadDataPersistenceEmpty( GetLocalClientPlayer() ), "Persistence didn't get transmitted to the client in time!" )
-	SetSquadDataToLocalTeam()    // since the winning team never gets eliminated the data isn't set from before.
+void function WinterExpress_OnEpilogue()
+{
+	if ( level.nv.winningTeam != TEAM_UNASSIGNED )
+		return
+
+	Assert( !IsSquadDataPersistenceEmpty(), "Persistence didn't get transmitted to the client in time!" )
+	SetSquadDataToLocalTeam()    //
 
 	ShowDeathScreen( eDeathScreenPanel.SQUAD_SUMMARY )
 	EnableDeathScreenTab( eDeathScreenPanel.SPECTATE, false )
@@ -1124,38 +1115,6 @@ void function ResetObjectiveOwnership()
 void function OnWaitingForPlayers_Server()
 {
 	SurvivalCommentary_SetHost( eSurvivalHostType.MIRAGE )
-
-	thread function () : ()
-	{
-		int max_teams = GetCurrentPlaylistVarInt( "max_teams", 3 )
-		int max_players = GetCurrentPlaylistVarInt( "max_players", 9 )
-		int max_time_waiting = 60
-		int min_players = 3
-		
-		//Force start and assign teams
-		while( GetGameState() == eGameState.WaitingForPlayers && GetPlayerArray().len() < max_players )
-		{
-			int playersThatForceMatchmaking = 0
-			foreach( player in GetPlayerArray() )
-			{
-				if( Time() - player.p.timeWaitingInLobby > max_time_waiting )
-					playersThatForceMatchmaking++
-			}
-			
-			if( playersThatForceMatchmaking >= min_players && playersThatForceMatchmaking == GetPlayerArray().len() )
-			{
-				foreach( int i, entity player in GetPlayerArray() )
-				{
-					SetTeam( player, TEAM_IMC + i %  max_teams )
-				}
-				
-				SetGameState( eGameState.Playing )
-				break
-			}
-			
-			wait 0.5
-		}
-	}()
 }
 
 void function OnGameStatePlaying()
@@ -1260,7 +1219,7 @@ void function FS_SendPlayerHUDData()
 	array<entity> team2 = GetPlayerArrayOfTeam( team2Int )
 	array<entity> team3 = GetPlayerArrayOfTeam( team3Int )
 	
-	foreach( player in team1 )
+	/*foreach( player in team1 )
 	{
 		foreach( splayer in team1 )
 		{
@@ -1315,7 +1274,7 @@ void function FS_SendPlayerHUDData()
 			if( IsValid( player ) && IsValid( splayer ) )
 				Remote_CallFunction_NonReplay( player, "FS_Scenarios_AddAllyHandle", splayer )
 		}
-	}
+	}*/
 }
 
 void function OnWinnerDetermined()
@@ -1358,9 +1317,9 @@ void function OnPlayerKilled_GameState( entity victim, entity attacker, var atta
 
 	}
 	
-	if( settings.winter_express_show_player_cards )
+	/*if( settings.winter_express_show_player_cards )
 		foreach ( player in GetConnectedPlayers() )
-			Remote_CallFunction_Replay( player, "FS_Scenarios_ChangeAliveStateForPlayer", victim, false )
+			Remote_CallFunction_Replay( player, "FS_Scenarios_ChangeAliveStateForPlayer", victim, false )*/
 	
 	file.deadPlayers.append( victim )
 
@@ -2536,11 +2495,11 @@ void function WinterExpress_OnPlayerRespawnedThread( entity player, bool startin
 	Flowstate_GivePlayerLoadoutOnGameStart_Copy( player, startingGame )
 	CheckAutoHealPassive( player ) //^ gets reset above
 	
-	if( settings.winter_express_show_player_cards && !startingGame )
+	/*if( settings.winter_express_show_player_cards && !startingGame )
 	{
 		foreach ( sPlayer in GetConnectedPlayers() )
 			Remote_CallFunction_Replay( sPlayer, "FS_Scenarios_ChangeAliveStateForPlayer", player, true )
-	}
+	}*/
 }
 
 int function GetLastValidTeamToScore()
@@ -3350,6 +3309,24 @@ string function PickCommentaryLineFromBucket_WinterExpressCustom( int commentary
 /////////////////////////////////
 
 #if UI
+void function UI_UpdateaButtonCallbacks( int newLifeState )
+{
+	if ( newLifeState == LIFE_ALIVE && file.buttonCallbackRegistered )
+	{
+		DeregisterButtonPressedCallback( KEY_N, WinterExpress_OpenCharacterSelect )
+		DeregisterButtonPressedCallback( BUTTON_A, WinterExpress_OpenCharacterSelect )
+
+		file.buttonCallbackRegistered = false
+	}
+	if ( newLifeState == LIFE_DEAD && !file.buttonCallbackRegistered )
+	{
+		RegisterButtonPressedCallback( KEY_N, WinterExpress_OpenCharacterSelect )
+		RegisterButtonPressedCallback( BUTTON_A, WinterExpress_OpenCharacterSelect )
+
+		file.buttonCallbackRegistered = true
+	}
+}
+
 void function UI_UpdateOpenMenuButtonCallbacks_Spectate( int newLifeState, bool shouldCloseMenu )
 {
 	if ( GetGameState() > eGameState.WinnerDetermined ) // || uiGlobal.isLevelShuttingDown )
@@ -3365,7 +3342,7 @@ void function UI_UpdateOpenMenuButtonCallbacks_Spectate( int newLifeState, bool 
 	}
 }
 
-void function WinterExpress_UI_OpenCharacterSelect( var button )
+void function WinterExpress_OpenCharacterSelect( var button )
 {
 	var deathScreenMenu = GetMenu( "DeathScreenMenu" )
 	if ( GetActiveMenu() != deathScreenMenu )
@@ -3521,17 +3498,14 @@ void function WinterExpress_CL_TryOpenLoadoutSelect( var button )
 
 void function OnWaitingForPlayers_Client()
 {
-	if ( file.gameStartRuiCreated )
-		return
-
 	SurvivalCommentary_SetHost( eSurvivalHostType.MIRAGE )
 
-	EmitSoundOnEntity( GetLocalClientPlayer(), GetAnyDialogueAliasFromName( PickCommentaryLineFromBucket_WinterExpressCustom( eSurvivalCommentaryBucket.MATCH_INTRO ) ) )
+	file.gameStartRui = RuiCreate( $"ui/winter_express_game_start.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 1 )
 
-	file.gameStartRuiCreated = true
+	EmitSoundOnEntity( GetLocalClientPlayer(), GetAnyDialogueAliasFromName( PickCommentaryLineFromBucket_WinterExpressCustom( eSurvivalCommentaryBucket.MATCH_INTRO ) ) )
 }
 
-void function DestroyGameStartRuiForGamestate()
+void function OnPickLoadout()
 {
 	if ( file.gameStartRui != null )
 		RuiDestroy( file.gameStartRui )
@@ -3554,30 +3528,72 @@ void function SetupObjectiveWaypoint( entity wp )
 	if ( !IsValid( wp ) )
 		return
 
-	// if ( wp.GetWaypointType() == eWaypoint.OBJECTIVE )
-	// {
-		// file.trainWaypoint = wp
-		// RuiTrackInt( file.trainWaypoint.wp.ruiHud, "roundState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "WinterExpress_RoundState" ) )
-		// RuiSetBool( file.trainWaypoint.wp.ruiHud, "useWinterExpressColors", true )
-	// }
+	if ( wp.GetWaypointType() == eWaypoint.OBJECTIVE )
+	{
+		file.trainWaypoint = wp
+		RuiTrackInt( file.trainWaypoint.wp.ruiHud, "roundState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "WinterExpress_RoundState" ) )
+	}
+}
+
+
+void function InitRespawnRui()
+{
+	if ( IsWaveRespawn() )
+	{
+		if ( file.respawnRui == null )
+			file.respawnRui = RuiCreate( $"ui/winter_express_wave_respawn_overlay.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 1 )
+
+		RuiTrackFloat( file.respawnRui, "waveRespawnTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "WinterExpress_WaveRespawnTime" ) )
+		RuiTrackFloat( file.respawnRui, "roundEndTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "WinterExpress_RoundEnd" ) )
+	}
+	else if ( IsRoundBasedRespawn() )
+	{
+		if ( file.respawnRui == null )
+			file.respawnRui = CreateFullscreenPostFXRui( $"ui/winter_express_round_based_respawn_overlay.rpak", -32768 )
+
+		RuiTrackFloat( file.respawnRui, "roundEndTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "WinterExpress_RoundEnd" ) )
+		RuiTrackFloat( file.respawnRui, "roundRespawnTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "WinterExpress_RoundRespawnTime" ) )
+		RuiTrackInt( file.respawnRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "gameState" ) )
+	}
+	else
+	{
+		if ( file.respawnRui == null )
+			file.respawnRui = RuiCreate( $"ui/winter_express_manual_respawn_overlay.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 1 )
+	}
+}
+
+
+void function UpdateRespawnRui( entity player )
+{
+	if ( player != GetLocalClientPlayer() )
+		return
+
+	if ( IsRoundBasedRespawn() )
+	{
+		RuiTrackBool( file.respawnRui, "hasGracePeriodPermit", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "WinterExpress_HasGracePeriodPermit" ) )
+		RuiTrackFloat( file.respawnRui, "roundEndTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "WinterExpress_RoundEnd" ) )
+		RuiTrackFloat( file.respawnRui, "roundRespawnTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( "WinterExpress_RoundRespawnTime" ) )
+	}
 }
 
 
 void function WinterExpress_OnPlayerLifeStateChanged( entity player, int oldState, int newState )
 {
 	entity clientPlayer = GetLocalClientPlayer()
-	if ( player != clientPlayer || !IsValid( GetLocalClientPlayer() ) || IsWatchingKillReplay() )
+	if ( player != clientPlayer || !IsValid( GetLocalClientPlayer() ) )
 		return
 
 	switch( newState )
 	{
 		case LIFE_ALIVE:
-			RunUIScript( "UI_UpdateOpenMenuButtonCallbacks_Spectate", newState, true )
+			RunUIScript( "UI_UpdateaButtonCallbacks", newState )
+			if ( GetGameState() == eGameState.Playing )
+				CloseCharacterSelectNewMenu()
 			StopSoundOnEntity( GetLocalClientPlayer(), "Music_LTM32_SpectateCam" )
 			break
 
 		case LIFE_DEAD:
-			thread WinterExpress_ManageCharacterSelectAvailability_Thread()
+			RunUIScript( "UI_UpdateaButtonCallbacks", newState )
 			if ( GetGameState() == eGameState.Playing && (file.activeSpectateMusic == null || !IsSoundStillPlaying( file.activeSpectateMusic )))
 			{
 				file.activeSpectateMusic = EmitSoundOnEntity( GetLocalClientPlayer(), "Music_LTM32_SpectateCam" )
@@ -3645,19 +3661,37 @@ float function WinterExpress_GetTimeUntilSpawn()
 	return timeUntilSpawn
 }
 
+void function WinterExpress_OnCharacterSelectMenuClosed()
+{
+	file.characterSelectClosedTime = Time()
+}
 void function UICallback_WinterExpress_OpenCharacterSelect()
 {
 	entity clientPlayer = GetLocalClientPlayer()
 	entity viewPlayer = GetLocalViewPlayer()
 
-	//safety so if this gets called outside of the mode due to a button callback, we can cancel the state
-	if ( Gamemode() != eGamemodes.WINTEREXPRESS )
+	if ( IsAlive( clientPlayer ) || clientPlayer.GetObserverMode() == OBS_MODE_DEATHCAM )
+		return
+
+	//
+	if ( file.characterSelectClosedTime + 0.75 > Time() )
+		return
+
+	//
+	float roundRespawnTime = GetGlobalNetTime( "WinterExpress_RoundRespawnTime" )//
+	float timeUntilSpawn = roundRespawnTime - Time()
+	if ( timeUntilSpawn > 0 && timeUntilSpawn < CHARACTER_SELECT_MIN_TIME )
+		return
+
+	//
+	bool inGracePeriod = timeUntilSpawn < 0 && timeUntilSpawn > -RESPAWN_GRACE_PERIOD
+	if ( inGracePeriod )
 		return
 
 	const bool browseMode = true
 	const bool showLockedCharacters = true
 	HideScoreboard()
-	OpenCharacterSelectAimTrainer( browseMode )
+	OpenCharacterSelectNewMenu( browseMode )
 }
 
 bool function WinterExpress_ShouldShowDeathScreen()
@@ -3687,59 +3721,45 @@ int function GetTeamRemappedForRui( int rawIndex )
 void function ServerCallback_CL_GameStartAnnouncement()
 {
 	AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( GAME_START_ANNOUNCEMENT ), Localize( GAME_START_ANNOUNCEMENT_SUB ), < 214, 214, 214 >, "WXpress_Train_Update", 7.0, $"", $"", $"", true, false )
-	FS_CreateScoreHUD()
 }
 
 void function ServerCallback_CL_RoundEnded( int endCondition, int winningTeam, int newScore )
 {
-	#if DEVELOPER
-		printt( "ServerCallback_CL_RoundEnded - Team:", winningTeam, "now has", newScore )
-	#endif
-
 	string winningSquad      = ""
-	vector announcementColor = <1, 1, 1>
-
-	int uiWinningTeam     = Squads_GetTeamsUIId( winningTeam )
-	int squadWinningIndex = -1
-	if	(winningTeam >= TEAM_IMC)
-	{
-		squadWinningIndex  = Squads_GetSquadUIIndex( winningTeam )
-	}
-
+	vector announcementColor = <0, 0, 0>
 	asset borderIcon         = $""
 	string soundAlias        = "WXpress_Train_Update"
 
-	if ( squadWinningIndex < 0)
-	{
-		borderIcon = $""//$"rui/hud/gametype_icons/winter_express/icon_announcement_fail"
-	}
-	else if ( uiWinningTeam == TEAM_IMC ) // local team won
+	if ( winningTeam == GetLocalClientPlayer().GetTeam() )
 	{
 		winningSquad = Localize( "#PL_YOUR_SQUAD" )
-		announcementColor = Squads_GetNonLinearSquadColor( squadWinningIndex )
-		borderIcon = $""//$"rui/hud/gametype_icons/winter_express/legend_icon_round_won"
+		announcementColor = OBJECTIVE_GREEN
+		borderIcon = $"rui/hud/gametype_icons/winter_express/legend_icon_round_won"
 		soundAlias = "WXpress_Train_Capture"
-		FS_UpdateScoreForTeam( winningTeam, newScore )
 	}
-	else  // local team lost 
+	else if ( winningTeam != -1 )
 	{
-		int winningSquadRuiIndex = GetTeamRemappedForRui( winningTeam )
-		winningSquad = Localize( Squads_GetSquadNameLong( squadWinningIndex ) )
-		announcementColor = Squads_GetNonLinearSquadColor( squadWinningIndex )
-		borderIcon = $""//winningSquadRuiIndex == 1 ? $"rui/hud/gametype_icons/winter_express/icon_announcement_fail" : $"rui/hud/gametype_icons/winter_express/icon_announcement_fail_alt"
+		winningSquad = Localize( "#PL_ENEMY_SQUAD" )
+		announcementColor = OBJECTIVE_RED
+		borderIcon = $"rui/hud/gametype_icons/winter_express/icon_announcement_fail"
 		soundAlias = "WXpress_Train_Capture_Enemy"
-		FS_UpdateScoreForTeam( squadWinningIndex, newScore )
 	}
+	else
+	{
+		winningSquad = Localize( "#PL_NO_SQUAD" )
+		announcementColor = OBJECTIVE_YELLOW
+	}
+
 
 	if ( endCondition == eWinterExpressRoundEndCondition.OBJECTIVE_CAPTURED )
 	{
-		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( ROUND_END_OBJECTIVE_CAPTURED, winningSquad ), Localize( ROUND_END_OBJECTIVE_CAPTURED_SUB, "`1" + winningSquad + "`0", newScore, Localize( newScore > 1 ? "#PL_ROUND_MULTIPLE" : "#PL_ROUND_SINGULAR" ) ), announcementColor, soundAlias, 5.0, $"", borderIcon, borderIcon, false )
-		Obituary_Print_Localized( Localize( ROUND_END_OBJECTIVE_CAPTURED, "`1" + winningSquad + "`0" ), announcementColor )
+		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( ROUND_END_OBJECTIVE_CAPTURED, winningSquad ), Localize( ROUND_END_OBJECTIVE_CAPTURED_SUB, winningSquad, newScore, Localize( newScore > 1 ? "#PL_ROUND_MULTIPLE" : "#PL_ROUND_SINGULAR" ) ), announcementColor, soundAlias, 5.0, $"", borderIcon, borderIcon, true )
+		Obituary_Print_Localized( Localize( ROUND_END_OBJECTIVE_CAPTURED, winningSquad ), announcementColor )
 	}
 	else if ( endCondition == eWinterExpressRoundEndCondition.LAST_SQUAD_ALIVE )
 	{
-		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( ROUND_END_LAST_SQUAD_ALIVE, winningSquad ), Localize( ROUND_END_LAST_SQUAD_ALIVE_SUB , "`1" + winningSquad + "`0", newScore, Localize( newScore > 1 ? "#PL_ROUND_MULTIPLE" : "#PL_ROUND_SINGULAR" ) ), announcementColor, soundAlias, 5.0, $"", borderIcon, borderIcon, false )
-		Obituary_Print_Localized( Localize( ROUND_END_LAST_SQUAD_ALIVE, "`1" + winningSquad + "`0" ), announcementColor )
+		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( ROUND_END_LAST_SQUAD_ALIVE, winningSquad ), Localize( ROUND_END_LAST_SQUAD_ALIVE_SUB, winningSquad, newScore, Localize( newScore > 1 ? "#PL_ROUND_MULTIPLE" : "#PL_ROUND_SINGULAR" ) ), announcementColor, soundAlias, 5.0, $"", borderIcon, borderIcon, true )
+		Obituary_Print_Localized( Localize( ROUND_END_LAST_SQUAD_ALIVE, winningSquad ), announcementColor )
 	}
 	else if ( endCondition == eWinterExpressRoundEndCondition.TIMER_EXPIRED )
 	{
@@ -3762,18 +3782,20 @@ void function ServerCallback_CL_RoundEnded( int endCondition, int winningTeam, i
 
 void function CL_ScoreUpdate( int team, int score )
 {
-	int uiTeam     = Squads_GetTeamsUIId( team )
-	file.objectiveScore[uiTeam] <- score
+	if ( team in file.objectiveScore )
+	{
+		file.objectiveScore[team] = score
+	}
+	else
+	{
+		file.objectiveScore[team] <- score
+	}
 
-	//update match point state
-	if ( file.objectiveScore[uiTeam] == settings.scoreLimit - 1 )
-		file.isTeamOnMatchPoint[uiTeam] <- true
-
-	if ( !(uiTeam in file.scoreElements) )
+	if ( !(team in file.scoreElements) )
 		return
 
-	// RuiSetInt( file.scoreElements[uiTeam], "score", score )
-	// RuiSetInt( file.scoreElementsFullmap[uiTeam], "score", score )
+	RuiSetInt( file.scoreElements[team], "score", score )
+	RuiSetInt( file.scoreElementsFullmap[team], "score", score )
 }
 
 int function WinterExpress_GetTeamScore( int uiTeam )
@@ -3809,123 +3831,127 @@ void function OnServerVarChanged_RoundState( entity player, int old, int new, bo
 	if ( GetGameState() != eGameState.Playing )
 		return
 
-	#if DEVELOPER
-		print( "WINTER EXPRESS: server var changed: " + new )
-	#endif
+	printf( "WINTER EXPRESS: server var changed: " + old + " " + new + " " + actuallyChanged )
 
-	if ( new == eWinterExpressRoundState.OBJECTIVE_ACTIVE )
-		thread DisplayRoundStart()
-	else if ( new == eWinterExpressRoundState.CHANGING_STATIONS )
-		thread DisplayRoundChanging()
-	else if ( new == eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS )
-		thread DisplayRoundFinished()
-	else if ( new == eWinterExpressRoundState.ABOUT_TO_UNLOCK_STATION )
-		thread DisplayUnlockDelay()
+	if ( actuallyChanged )
+	{
+		if ( new == eWinterExpressRoundState.OBJECTIVE_ACTIVE && (old == eWinterExpressRoundState.ABOUT_TO_UNLOCK_STATION || old == -1) )
+			thread DisplayRoundStart()
+		else if ( new == eWinterExpressRoundState.CHANGING_STATIONS && (old == eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS || old == -1) )
+			thread DisplayRoundChanging()
+		else if ( new == eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS && (old == eWinterExpressRoundState.OBJECTIVE_ACTIVE || old == -1 || old == eWinterExpressRoundState.ABOUT_TO_UNLOCK_STATION) )
+			thread DisplayRoundFinished()
+		else if ( new == eWinterExpressRoundState.ABOUT_TO_UNLOCK_STATION && (old == eWinterExpressRoundState.CHANGING_STATIONS || old == -1) )
+			thread DisplayUnlockDelay()
+	}
 }
 
 void function DisplayRoundStart()
 {
-	asset borderIcon = $""//$"rui/hud/gametype_icons/winter_express/objective_gold_left"
+	asset borderIcon = $"rui/hud/gametype_icons/winter_express/objective_gold_left"
 
 	if ( IsWaveRespawn() )
 		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( PL_ROUND_STARTED ), "", < 214, 214, 214 >, "WXpress_Train_Update", 5.0 )
 	if ( IsRoundBasedRespawn() )
-		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( PL_ROUND_STARTED ), Localize( PL_ROUND_STARTED_SUB ), < 214, 214, 214 >, "WXpress_Train_Update", 5.0, $"", borderIcon, borderIcon, true, false )
+		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( PL_ROUND_STARTED ), Localize( PL_ROUND_STARTED_SUB ), < 214, 214, 214 >, "WXpress_Train_Update", 5.0, $"", borderIcon, borderIcon )
 	else
-		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( PL_ROUND_STARTED ), Localize( PL_ROUND_STARTED_SUB ), < 214, 214, 214 >, "WXpress_Train_Update", 5.0, $"", borderIcon, borderIcon, true, false )
+		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( PL_ROUND_STARTED ), Localize( PL_ROUND_STARTED_SUB ), < 214, 214, 214 >, "WXpress_Train_Update", 5.0, $"", borderIcon, borderIcon )
 
-	// RuiSetGameTime( ClGameState_GetRui(), "roundStateChangedTime", Time() )
-	// RuiSetGameTime( ClGameState_GetRui(), "roundEndTime", GetGlobalNetTime( "WinterExpress_RoundEnd" ) )
-	// RuiSetInt( ClGameState_GetRui(), "roundState", eWinterExpressRoundState.OBJECTIVE_ACTIVE )
+	RuiSetGameTime( ClGameState_GetRui(), "roundStateChangedTime", Time() )
+	RuiSetGameTime( ClGameState_GetRui(), "roundEndTime", GetGlobalNetTime( "WinterExpress_RoundEnd" ) )
+	RuiSetInt( ClGameState_GetRui(), "roundState", eWinterExpressRoundState.OBJECTIVE_ACTIVE )
 
-	// foreach ( team, rui in file.squadOnObjectiveElements )
-		// RuiSetInt( rui, "roundState", eWinterExpressRoundState.OBJECTIVE_ACTIVE )
-	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "WinterExpress_RoundEnd" ) )
+	foreach ( team, rui in file.squadOnObjectiveElements )
+		RuiSetInt( rui, "roundState", eWinterExpressRoundState.OBJECTIVE_ACTIVE )
 }
 
 void function DisplayRoundFinished()
 {
-	// RuiSetGameTime( ClGameState_GetRui(), "roundStateChangedTime", Time() )
-	// RuiSetInt( ClGameState_GetRui(), "roundState", eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS )
+	RuiSetGameTime( ClGameState_GetRui(), "roundStateChangedTime", Time() )
+	RuiSetInt( ClGameState_GetRui(), "roundState", eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS )
 
-	// foreach ( team, rui in file.squadOnObjectiveElements )
-		// RuiSetInt( rui, "roundState", eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS )
-	
-	// Flowstate_ShowRoundEndTimeUI( -1 )
+	foreach ( team, rui in file.squadOnObjectiveElements )
+		RuiSetInt( rui, "roundState", eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS )
 }
 
 void function DisplayRoundChanging()
 {
-	// RuiSetGameTime( ClGameState_GetRui(), "roundStateChangedTime", Time() )
-	// RuiSetInt( ClGameState_GetRui(), "roundState", eWinterExpressRoundState.CHANGING_STATIONS )
+	RuiSetGameTime( ClGameState_GetRui(), "roundStateChangedTime", Time() )
+	RuiSetInt( ClGameState_GetRui(), "roundState", eWinterExpressRoundState.CHANGING_STATIONS )
 
-	// foreach ( team, rui in file.squadOnObjectiveElements )
-		// RuiSetInt( rui, "roundState", eWinterExpressRoundState.CHANGING_STATIONS )
+	foreach ( team, rui in file.squadOnObjectiveElements )
+		RuiSetInt( rui, "roundState", eWinterExpressRoundState.CHANGING_STATIONS )
 
-		wait 5.0
+	//
 
-	asset borderIcon = $""//$"rui/hud/gametype_icons/winter_express/icon_announcement_changing_stations"
-	AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( PL_OBJECTIVE_MOVING ), "", < 214, 214, 214 >, "WXpress_Train_Update", 5.0, $"", borderIcon, borderIcon, true, false )
+	asset borderIcon = $"rui/hud/gametype_icons/winter_express/icon_announcement_changing_stations"
+	AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( PL_OBJECTIVE_MOVING ), "", < 214, 214, 214 >, "WXpress_Train_Update", 5.0, $"", borderIcon, borderIcon )
 }
 
 void function DisplayUnlockDelay()
 {
-	// RuiSetGameTime( ClGameState_GetRui(), "roundStateChangedTime", Time() )
-	// RuiSetInt( ClGameState_GetRui(), "roundState", eWinterExpressRoundState.ABOUT_TO_UNLOCK_STATION )
-
-	bool shouldShowMatchPoint
-	int uiMatchTeam = -1
-	foreach( uiTeam, value in file.isTeamOnMatchPoint )
-	{
-		if ( uiTeam == TEAM_INVALID )
-			continue
-
-		if ( value )
-		{
-			if ( uiTeam in file.hasTeamGottenMatchPointAnnounce && file.hasTeamGottenMatchPointAnnounce[uiTeam] )
-				continue
-
-			shouldShowMatchPoint = true
-			file.hasTeamGottenMatchPointAnnounce[uiTeam] <- true
-			uiMatchTeam          = uiTeam
-			break
-		}
-	}
-
-	if ( shouldShowMatchPoint )
-	{
-		int uiSquadIndex  = Squads_GetArrayIndexForTeam( uiMatchTeam )
-		string matchSquad = uiSquadIndex == 0 ? "#PL_YOUR_SQUAD" : Localize( Squads_GetSquadNameLong( uiSquadIndex ) )
-		matchSquad = "`3" + Localize( matchSquad ) + "`0"
-
-		vector announcementColor = Squads_GetSquadColor( uiSquadIndex )
-		AnnouncementMessageRight( GetLocalClientPlayer(), Localize( "#PL_MATCH_POINT", matchSquad ), "", announcementColor, $"", 4, "WXpress_Train_Update_Small", announcementColor )
-	}
+	RuiSetGameTime( ClGameState_GetRui(), "roundStateChangedTime", Time() )
+	RuiSetInt( ClGameState_GetRui(), "roundState", eWinterExpressRoundState.ABOUT_TO_UNLOCK_STATION )
 }
 
 void function OnServerVarChanged_ObjectiveState( entity player, int old, int new, bool actuallyChanged )
 {
+	file.localObjectiveState = new
 	FlagSet( "WinterExpress_ObjectiveStateUpdated" )
 
-	#if DEVELOPER
-		print( "WINTER EXPRESS: Setting your train status to: " + new )
-	#endif
+	printf( "WINTER EXPRESS: Setting your train status to: " + new )
+	RuiSetInt( ClGameState_GetRui(), "yourTrainStatus", new )
+	if ( file.trainWaypoint != null && file.trainWaypoint.wp.ruiHud != null )
+		RuiSetInt( file.trainWaypoint.wp.ruiHud, "yourObjectiveStatus", new )
 
-	//Revisit this. The train state could be shown in a custom hud ui as well. Cafe
 	if ( new == eWinterExpressObjectiveState.CONTROLLED )
 	{
-		file.captureEndTime = GetGlobalNetTime( "WinterExpress_CaptureEndTime" )
+		RuiSetGameTime( ClGameState_GetRui(), "captureEndTime", GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) )
+		RuiSetFloat( ClGameState_GetRui(), "captureTimeRequired", GetCurrentPlaylistVarFloat( "winter_express_cap_time", 10 ) )
 	}
 	else
 	{
-		file.captureEndTime = GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) - Time()
+		RuiSetGameTime( ClGameState_GetRui(), "captureEndTime", GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) - Time() )
+	}
+
+	if ( file.trainWaypoint != null && file.trainWaypoint.wp.ruiHud != null )
+	{
+		if ( new == eWinterExpressObjectiveState.CONTROLLED )
+		{
+			RuiSetGameTime( file.trainWaypoint.wp.ruiHud, "captureEndTime", GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) )
+			RuiSetFloat( file.trainWaypoint.wp.ruiHud, "captureTimeRequired", GetCurrentPlaylistVarFloat( "winter_express_cap_time", 10 ) )
+		}
+		else
+		{
+			RuiSetGameTime( file.trainWaypoint.wp.ruiHud, "captureEndTime", GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) - Time() )
+		}
 	}
 }
 
 void function OnServerVarChanged_ObjectiveOwner( entity player, int old, int new, bool actuallyChanged )
 {
+	file.localObjectiveOwner = new
 	FlagSet( "WinterExpress_ObjectiveOwnerUpdated" )
-	//Revisit this. We can implement some ui to show current controlling team. Cafe
+
+	entity clientPlayer = GetLocalClientPlayer()
+	if ( !IsValid( clientPlayer ) )
+		return
+
+	var gamestateRui = ClGameState_GetRui()
+	if ( gamestateRui == null )
+		return
+
+	RuiSetInt( gamestateRui, "yourTeamIndex", clientPlayer.GetTeam() )
+	RuiSetInt( gamestateRui, "currentControllingTeam", new )
+
+	printf( "WINTER EXPRESS: Setting your team index to: " + GetLocalClientPlayer().GetTeam() )
+	printf( "WINTER EXPRESS: Setting current controlling team to: " + new )
+
+	if ( file.trainWaypoint != null && file.trainWaypoint.wp.ruiHud != null )
+	{
+		RuiSetInt( file.trainWaypoint.wp.ruiHud, "yourTeamIndex", GetLocalClientPlayer().GetTeam() )
+		RuiSetInt( file.trainWaypoint.wp.ruiHud, "currentControllingTeam", new )
+	}
 }
 
 void function ClearObjectiveUpdate()
@@ -3936,19 +3962,19 @@ void function ClearObjectiveUpdate()
 
 void function OnServerVarChanged_TrainArrival( entity player, float old, float new, bool actuallyChanged )
 {
-	// RuiSetGameTime( ClGameState_GetRui(), "trainArrivalTime", new )
+	RuiSetGameTime( ClGameState_GetRui(), "trainArrivalTime", new )
 }
 
 void function OnServerVarChanged_TrainTravelTime( entity player, float old, float new, bool actuallyChanged )
 {
-	// RuiSetFloat( ClGameState_GetRui(), "trainTravelTime", new )
+	RuiSetFloat( ClGameState_GetRui(), "trainTravelTime", new )
 }
 
 void function OnServerVarChanged_OvertimeChanged( entity player, bool old, bool new, bool actuallyChanged )
 {
 	if ( new == true )
 	{
-		asset borderIcon = $""//$"rui/hud/gametype_icons/winter_express/objective_gold_left"
+		asset borderIcon = $"rui/hud/gametype_icons/winter_express/objective_gold_left"
 		EmitSoundOnEntity( GetLocalClientPlayer(), "WXpress_Train_Capture_Overtime" )
 		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( "#PL_OVERTIME_OBJECTIVE_CHANGED" ), "", < 214, 214, 214 >, "WXpress_Train_Update", 5.0, $"", borderIcon, borderIcon, true, false )
 	}
@@ -3956,14 +3982,12 @@ void function OnServerVarChanged_OvertimeChanged( entity player, bool old, bool 
 
 void function ServerCallback_CL_SquadOnObjectiveStateChanged( int team, bool isOnObjective )
 {
-	// int uiTeam = Squads_GetTeamsUIId( team )
-	// RuiSetBool( file.squadOnObjectiveElements[uiTeam], "isSquadOnObjective", isOnObjective )
+	RuiSetBool( file.squadOnObjectiveElements[team], "isSquadOnObjective", isOnObjective )
 }
 
 void function ServerCallback_CL_SquadEliminationStateChanged( int team, bool eliminationState )
 {
-	// int uiTeam = Squads_GetTeamsUIId( team )
-	// RuiSetBool( file.squadOnObjectiveElements[uiTeam], "isEliminated", eliminationState )
+	RuiSetBool( file.squadOnObjectiveElements[team], "isEliminated", eliminationState )
 }
 
 void function ServerCallback_CL_ObjectiveStateChanged( int newState, int team )
@@ -3994,12 +4018,9 @@ void function ServerCallback_CL_ObjectiveStateChanged( int newState, int team )
 
 void function ServerCallback_CL_WinnerDetermined( int team )
 {
-	RunUIScript( "UI_UpdateOpenMenuButtonCallbacks_Spectate", LIFE_ALIVE, true )
+	CloseCharacterSelectNewMenu()
+	RunUIScript( "UI_UpdateaButtonCallbacks", LIFE_ALIVE )
 	StopSoundOnEntity( GetLocalClientPlayer(), "Music_LTM32_SpectateCam" )
-	
-	FS_UpdateScoreForTeam( team, 3 )
-	// FS_Scenarios_TogglePlayersCardsVisibility( false, false )
-	// Flowstate_ShowRoundEndTimeUI( -1 )
 }
 
 void function ServerCallback_CL_RespawnAnnouncement()
@@ -4012,15 +4033,8 @@ void function ServerCallback_CL_ObserverModeSetToTrain()
 	if ( !IsValid( GetLocalClientPlayer() ) )
 		return
 
-	// FS_Scenarios_TogglePlayersCardsVisibility( false, false )
 	UpdateMainHudVisibility( GetLocalClientPlayer() )
 	DeathScreen_SpectatorTargetChanged( GetLocalClientPlayer(), null, null )
-
-	ShowDeathScreen( eDeathScreenPanel.SPECTATE )
-	EnableDeathScreenTab( eDeathScreenPanel.SPECTATE, true )
-	EnableDeathScreenTab( eDeathScreenPanel.DEATH_RECAP, !IsAlive( GetLocalClientPlayer() ) )
-	EnableDeathScreenTab( eDeathScreenPanel.SQUAD_SUMMARY, false )
-	SwitchDeathScreenTab( eDeathScreenPanel.SPECTATE )
 }
 
 void function AnnouncementMessageSweepWinterExpress( entity player, string messageText, string subText, vector titleColor, string soundAlias, float duration, asset icon = $"", asset leftIcon = $"", asset rightIcon = $"", bool useColorOnText = false, bool useColorOnHeader = true )
@@ -4038,8 +4052,8 @@ void function AnnouncementMessageSweepWinterExpress( entity player, string messa
 	Announcement_SetLeftIcon( announcement, leftIcon )
 	Announcement_SetRightIcon( announcement, rightIcon )
 	//Announcement_SetVerticalOffset( announcement, 50 )
-	// Announcement_SetUseColorOnAnnouncementText( announcement, useColorOnHeader )
-	// Announcement_SetUseColorOnSubtext( announcement, useColorOnText )
+	Announcement_SetUseColorOnAnnouncementText( announcement, useColorOnText )
+	Announcement_SetUseColorOnSubtext( announcement, useColorOnText )
 	AnnouncementFromClass( player, announcement )
 }
 #endif //CLIENT
@@ -4047,19 +4061,19 @@ void function AnnouncementMessageSweepWinterExpress( entity player, string messa
 #if SERVER || CLIENT || UI
 float function GetWaveRespawnInterval()
 {
-	return settings.winter_express_wave_respawn_interval
+	return GetCurrentPlaylistVarFloat( "winter_express_wave_respawn_intreval", -1 )
 }
 
 bool function IsWaveRespawn()
 {
-	// Assert ( !GetCurrentPlaylistVarBool( "winter_express_wave_respawn", false ) || (GetCurrentPlaylistVarBool( "winter_express_wave_respawn", false ) && GetWaveRespawnInterval() > 0) )
+	Assert ( !GetCurrentPlaylistVarBool( "winter_express_wave_respawn", false ) || (GetCurrentPlaylistVarBool( "winter_express_wave_respawn", false ) && GetWaveRespawnInterval() > 0) )
 
-	return settings.winter_express_wave_respawn
+	return GetCurrentPlaylistVarBool( "winter_express_wave_respawn", false )
 }
 
 bool function IsRoundBasedRespawn()
 {
-	return settings.winter_express_round_based_respawn
+	return GetCurrentPlaylistVarBool( "winter_express_round_based_respawn", false )
 }
 #endif //SERVER || CLIENT || UI
 

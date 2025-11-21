@@ -2654,7 +2654,11 @@ void function UpdateButtonStates()
 	}
 	else if ( SquadMuteLegendSelectEnabled() )
 	{
-		if ( !IsSoloMode() )
+		if ( WinterExpress_IsModeEnabled() && GetGameState() == eGameState.Playing )
+			{
+				bottomString = Localize( "#CHAR_SEL_BUTTON_HINT_SELECT_DETAILS" )
+			}
+		else if ( !IsSoloMode() )
 			bottomString = Localize( IsSquadMuted() ? "#CHAR_SEL_BUTTON_UNMUTE" : "#CHAR_SEL_BUTTON_MUTE" )
 		else
 			bottomString = ""

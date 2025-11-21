@@ -16,7 +16,8 @@ global const int ANNOUNCEMENT_STYLE_RESULTS = 6
 global const int ANNOUNCEMENT_STYLE_OBJECTIVE = 7
 global const int ANNOUNCEMENT_STYLE_CIRCLE_WARNING = 8
 global const int ANNOUNCEMENT_STYLE_ELITE = 9
-global const int ANNOUNCEMENT_STYLE_WAVE = 10
+global const int ANNOUNCEMENT_STYLE_KILL_LEADER = 10
+global const int ANNOUNCEMENT_STYLE_WAVE = 11
 
 const int ANNOUNCEMENT_STYLE_DEFAULT = ANNOUNCEMENT_STYLE_BIG
 
@@ -219,10 +220,29 @@ void function Announcement_SetIcon( AnnouncementData announcement, asset image )
 	announcement.icon = image
 }
 
+void function Announcement_SetIconAspect( AnnouncementData announcement, vector aspect )
+{
+	announcement.iconAspect = aspect
+}
 
 void function Announcement_SetDisplayEndTime( AnnouncementData announcement, float endTime )
 {
 	announcement.displayEndTime = endTime
+}
+
+void function Announcement_SetVerticalOffset( AnnouncementData announcement, int offset )
+{
+	announcement.verticalOffset = offset
+}
+
+void function Announcement_SetUseColorOnAnnouncementText( AnnouncementData announcement, bool shouldUse )
+{
+	announcement.useColorOnAnnouncementText = shouldUse
+}
+
+void function Announcement_SetUseColorOnSubtext( AnnouncementData announcement, bool shouldUse )
+{
+	announcement.useColorOnSubtext = shouldUse
 }
 
 
@@ -457,6 +477,10 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 			RuiSetImage( rui, "leftIconImage", announcement.leftIcon )
 			RuiSetImage( rui, "rightIconImage", announcement.rightIcon )
 
+			RuiSetInt( rui, "verticalOffset", announcement.verticalOffset )
+
+			RuiSetBool( rui, "useColorOnAnnouncementText", announcement.useColorOnAnnouncementText )
+			RuiSetBool( rui, "useColorOnSubtext", announcement.useColorOnSubtext )
 			break
 
 		case ANNOUNCEMENT_STYLE_BIG:
@@ -550,6 +574,18 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 			if ( announcement.soundAlias != "" )
 				EmitSoundOnEntity( player, announcement.soundAlias )
 				
+			break
+			
+		case ANNOUNCEMENT_STYLE_KILL_LEADER:
+			customAnnouncement = true
+			rui = RuiCreate( $"ui/kill_leader_noti.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 0 )
+
+			RuiSetFloat( rui, "startTime", Time() )
+
+			RuiSetString( rui, "messageText", optionalTextArgs[0])
+			RuiSetString( rui, "messageSubText", optionalTextArgs[1])
+
+			EmitSoundOnEntity( player, announcement.soundAlias )
 			break
 
 		default:

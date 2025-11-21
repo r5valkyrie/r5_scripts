@@ -38,6 +38,9 @@ global function IsViewingDeathRecap
 global function IsViewingDeathScreen
 global function DeathScreenSummaryShouldFadeIn
 
+global function SetHeaderBannerOverrideFunc
+global function ClearHeaderBannerOverrideFunc
+
 #if DEVELOPER
 global function GetRecapPlayerEHIArray
 global function DEV_TestDeathScreenMenu
@@ -100,6 +103,7 @@ struct
 
 	var            sidePaneRui
 	bool           showGladCard = true
+	bool           allowGladCard = true
 	EncodedEHandle lastObserverTargetEHandle = 0
 
 	var blackBarRui
@@ -109,6 +113,8 @@ struct
 	var deathScreenRecapRui
 	bool deathScreenBannerDisabled
 
+
+	string functionref() deathScreenBannerOverrideFunc
 	float bkupRespawnStartTime
 	float bkupRespawnEndTime
 
@@ -580,6 +586,7 @@ void function DeathScreenUpdateHeader( var headerElem )
 	RuiSetBool( headerRui, "playerIsAlive", IsAlive( clientPlayer ) )
 	RuiSetBool( headerRui, "isWinner", isWinner )
 
+	RuiSetBool( headerRui, "isFinalDeathFieldStage", SURVIVAL_IsFinalDeathFieldStage() )
 
 	if ( animateBanner )
 		RuiSetFloat( headerRui, "bannerAnimStartTime", Time() )
@@ -613,10 +620,23 @@ void function DeathScreenUpdateHeader( var headerElem )
 		RuiSetBool( headerRui, "playerIsShadowSquad", IsPlayerShadowSquad( clientPlayer ) )
 	}
 
+	if ( file.deathScreenBannerOverrideFunc != null )
+		RuiSetString( headerRui, "bannerOverride", file.deathScreenBannerOverrideFunc() )
+	else
+		RuiSetString( headerRui, "bannerOverride", "" )
 	if ( gameState >= eGameState.WinnerDetermined )
 		file.didGameOverAnimation = true
 }
 
+void function SetHeaderBannerOverrideFunc( string functionref() func )
+{
+	file.deathScreenBannerOverrideFunc = func
+}
+
+void function ClearHeaderBannerOverrideFunc()
+{
+	file.deathScreenBannerOverrideFunc = null
+}
 
 void function DeathScreenUpdateHeaderDR( var headerElem, var recapElem )
 {
