@@ -1520,9 +1520,9 @@ void function SetBodyGroupVisibilityForDragRevive( entity useTarget, bool visibl
 				bodyGroup = "turret"
 				break
 
-			// case "character_valkyrie":
-				// bodyGroup = "jetpack"
-				// break
+			case "character_valkyrie":
+				bodyGroup = "jetpack"
+				break
 
 			case "character_wattson":
 				bodyGroup = "trophy"

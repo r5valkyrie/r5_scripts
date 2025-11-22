@@ -377,6 +377,13 @@ void function PlayPanel_OnShow( var panel )
 {
 	//UI_SetPresentationType( ePresentationType.PLAY )
 
+	RuiSetString( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "playerName", GetPlayerName() )
+	//RuiSetInt( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "accountBadgeHandle", 500 )
+	//var nestedAccountBadge = CreateNestedAccountDisplayBadge( file.panel, "accountBadgeHandle", 500 )
+	var rewardDisplayRui = Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) )
+	RuiSetFloat( Hud_GetRui( Hud_GetChild( file.panel, "SelfButton" ) ), "accountXPFrac", 1.0 )
+	var accountBadge = CreateNestedAccountDisplayBadge( rewardDisplayRui, "accountBadgeHandle", (499) )
+
 	if ( IsFullyConnected() )
 	{
 		AccessibilityHint( eAccessibilityHint.LOBBY_CHAT )
@@ -418,7 +425,7 @@ void function PlayPanel_OnShow( var panel )
 
 	if(!file.firststart)
 	{
-		R5RPlay_SetSelectedPlaylist("mp_rr_canyonlands_64k_x_64k", GetUIMapAsset("mp_rr_canyonlands_64k_x_64k", true), "survival_dev", "FreeRoam - " + GetUIMapName("mp_rr_canyonlands_64k_x_64k"))
+		R5RPlay_SetSelectedPlaylist("mp_rr_desertlands_holiday", GetUIMapAsset("mp_rr_desertlands_holiday", true), "winterexpress", "" + GetUIMapName("mp_rr_desertlands_holiday"))
 		file.firststart = true
 	}
 }
@@ -655,14 +662,12 @@ void function UpdateFriendButton( var rui, PartyMember info, bool inMatch )
 	if ( userInfo == null )
 	{
 		RuiSetFloat( rui, "accountXPFrac", 0.0 )
-		RuiSetString( rui, "accountLevel", "" )
 
 		int accountLevel = 0
 		if ( info.uid == GetPlayerUID() && IsPersistenceAvailable() )
 			accountLevel = GetAccountLevelForXP( GetPersistentVarAsInt( "xp" ) )
 
-		RuiSetString( rui, "accountLevel", GetAccountDisplayLevel( accountLevel ) )
-		RuiSetImage( rui, "accountBadge", GetAccountDisplayBadge( accountLevel ) )
+		var nestedAccountBadge = CreateNestedAccountDisplayBadge( rui, "accountBadgeHandle", accountLevel )
 
 		if ( info.uid == GetPlayerUID() && IsPersistenceAvailable() )
 			rankScore = GetPlayerRankScore( GetUIPlayer() )
@@ -671,8 +676,7 @@ void function UpdateFriendButton( var rui, PartyMember info, bool inMatch )
 	{
 		expect CommunityUserInfo( userInfo )
 		RuiSetFloat( rui, "accountXPFrac", userInfo.charData[ePlayerStryderCharDataArraySlots.ACCOUNT_PROGRESS_INT] / 100.0 )
-		RuiSetString( rui, "accountLevel", GetAccountDisplayLevel( userInfo.charData[ePlayerStryderCharDataArraySlots.ACCOUNT_LEVEL] ) )
-		RuiSetImage( rui, "accountBadge", GetAccountDisplayBadge( userInfo.charData[ePlayerStryderCharDataArraySlots.ACCOUNT_LEVEL] ) )
+		var accountBadge = CreateNestedAccountDisplayBadge( rui, "accountBadgeHandle", userInfo.charData[ePlayerStryderCharDataArraySlots.ACCOUNT_LEVEL] )
 
 		rankScore = userInfo.rankScore
 		ladderPosition = userInfo.rankedLadderPos
@@ -717,14 +721,6 @@ void function KeepMicIconUpdated( PartyMember info, var rui )
 
 void function UpdateFriendButtons()
 {
-	Hud_SetVisible( file.inviteFriendsButton0, false )
-	Hud_SetVisible( file.inviteFriendsButton1, false )
-
-	Hud_SetVisible( file.friendButton0, false )
-	Hud_SetVisible( file.friendButton1, false )
-
-	return
-
 	Signal( uiGlobal.signalDummy, "UpdateFriendButtons" )
 
 	Hud_SetVisible( file.inviteFriendsButton0, !file.personInLeftSpot )
@@ -749,7 +745,7 @@ void function UpdateFriendButtons()
 
 			var friendRui = Hud_GetRui( file.selfButton )
 
-			RuiSetBool( friendRui, "canViewStats", true )
+				RuiSetBool( friendRui, "canViewStats", true )
 
 			UpdateFriendButton( friendRui, partyMember, false )
 		}
@@ -913,40 +909,6 @@ void function UpdatePlaylistBadges()
 
 		Hud_SetToolTipData( rankedBadge, tooltip )
 		return
-	}
-
-	if ( shouldShowEliteBadge )
-	{
-		Hud_SetVisible( eliteBadge, shouldShowEliteBadge )
-
-		var rui = Hud_GetRui( eliteBadge )
-
-		RuiSetInt( rui, "streak", currentStreak )
-
-		if ( IsFullyConnected() )
-			RuiSetBool( rui, "eliteForgiveness", expect bool( GetPersistentVar( "hasEliteForgiveness" ) ) )
-
-		int maxStreak = GetMaxEliteStreak( GetUIPlayer() )
-		ToolTipData tooltip
-		tooltip.titleText = Localize( "#ELITE_TOOLTIP_INFO", currentStreak )
-		tooltip.descText = Localize( "#ELITE_TOOLTIP_INFO_2", maxStreak )
-		Hud_SetToolTipData( eliteBadge, tooltip )
-	}
-	else if ( PartyHasEliteAccess() )
-	{
-		bool foundElitePlaylist = false
-
-		foreach ( playlist in GetVisiblePlaylistNames() )
-		{
-			if ( IsElitePlaylist( playlist ) )
-			{
-				foundElitePlaylist = true
-				break
-			}
-		}
-
-		if ( foundElitePlaylist )
-			Hud_SetVisible( msgLabel, true )
 	}
 
 	if ( showLTMAboutButton )
@@ -2533,7 +2495,7 @@ void function R5RPlay_SetSelectedServer(ServerListing server)
 
 void function GamemodeButtonSetSearching(bool searching)
 {
-	HudElem_SetRuiArg( file.gamemodeSelectV2Button, "isReady", searching )	
+	HudElem_SetRuiArg( file.gamemodeSelectV2Button, "isReady", searching )
 	RuiSetBool( Hud_GetRui(file.gamemodeSelectV2Button), "statusVisible", searching )
 	RuiSetBool( Hud_GetRui(file.gamemodeSelectV2Button), "statusHasText", searching )
 }
@@ -2552,7 +2514,7 @@ void function JoinMatch( var button, string v )
 	{
 		if(file.searchCancelled)
 			break;
-		
+
 		SetSearchingText( GetProgressText( v, i ) )
 		wait 0.5
 	}
@@ -2579,7 +2541,7 @@ void function JoinMatch( var button, string v )
 
 	if(file.searchCancelled)
 		EmitUISound("UI_Menu_Deny")
-	
+
 	file.searchCancelled = false
 	file.searching = false;
 	RuiSetBool(Hud_GetRui(Hud_GetChild(file.panel, "SelfButton")), "isReady", false)

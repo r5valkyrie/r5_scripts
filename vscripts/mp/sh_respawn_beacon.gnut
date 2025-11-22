@@ -79,6 +79,7 @@ global enum eRespawnStyle
 	NONE,
 	DEPRECATED,
 	RESPAWN_CHAMBERS,
+	CUSTOM_RESPAWN,
 	_COUNT
 }
 

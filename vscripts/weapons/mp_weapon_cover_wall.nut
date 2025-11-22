@@ -151,7 +151,7 @@ void function CoverWall_Precache()
 	RegisterSignal( "CoverWall_OnContinousUseStopped" )
 
 	PrecacheModel( COVER_WALL_MODEL )
-	PrecacheModel( COLLISION_CYLINDER_MODEL )
+	//PrecacheModel( COLLISION_CYLINDER_MODEL )
 
 	file.shieldFxIndex = PrecacheParticleSystem( DEPLOYABLE_SHIELD_FX_AMPED )
 	PrecacheParticleSystem( AMPED_WALL_DESTROYED_FX )
@@ -577,8 +577,8 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 	AddEntityCallback_OnDamaged( wallProxy, CoverWall_OnDamaged )
 	AddEntityCallback_OnPostDamaged( wallProxy, CoverWall_OnPostDamaged )
 
-	entity cylinder = CreatePropScript( COLLISION_CYLINDER_MODEL, origin - ( wallProxy.GetRightVector() * 62 ) + ( wallProxy.GetUpVector() * 20 ), RotateAnglesAboutAxis( angles, wallProxy.GetForwardVector(), 90 ), SOLID_CAPSULE )
-	InitCollisionCylinder( cylinder, owner, wallProxy )
+	//entity cylinder = CreatePropScript( COLLISION_CYLINDER_MODEL, origin - ( wallProxy.GetRightVector() * 62 ) + ( wallProxy.GetUpVector() * 20 ), RotateAnglesAboutAxis( angles, wallProxy.GetForwardVector(), 90 ), SOLID_CAPSULE )
+	//InitCollisionCylinder( cylinder, owner, wallProxy )
 
 	PIN_Interact( owner, "rampart_wall_deployed", origin )
 
@@ -604,12 +604,12 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 	thread CoverWall_WaitForPickup( wallProxy )
 
 	OnThreadEnd(
-	function() : ( owner, wallProxy, noSpawnIdx, cylinder )
+	function() : ( owner, wallProxy, noSpawnIdx )
 		{
 			DeleteNoSpawnArea( noSpawnIdx )
 
-			if ( IsValid( cylinder ) )
-				cylinder.Destroy()
+			//if ( IsValid( cylinder ) )
+				//cylinder.Destroy()
 
 			//if ( IsValid( owner ) && wallProxy != null )
 			//	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_COVER_WALL, wallProxy, wallProxy.GetOrigin(), owner.GetTeam(), owner )

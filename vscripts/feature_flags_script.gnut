@@ -20,8 +20,8 @@ global const table<string, bool> FEATURE_FLAGS_TBL = {
 	HAS_SHIP_VAULT	    	= true,
 	HAS_LOOT_MARVIN      	= true,
 	HAS_VAULTS              = true,
-	HAS_LOOT_DRONES         = true
-	HAS_LOOT_ROLLERS        = true
+	HAS_LOOT_DRONES         = true,
+	HAS_LOOT_ROLLERS        = true,
 	HAS_FLYERS              = true,
 	HAS_DESERTLANDS_TRAIN   = true,
 	HAS_WEAPON_DEFENDER     = true,
@@ -39,6 +39,7 @@ global const table<string, bool> FEATURE_FLAGS_TBL = {
 	HAS_RANDOMIZED_TRAINING = true,
 	HAS_MOBILE_RESPAWN 		= true,
 	HAS_EVOLVING_ARMOR 		= true,
+	HAS_VALK 				= true,
 }
 
 

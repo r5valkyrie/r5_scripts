@@ -18,6 +18,28 @@ struct {
 
 	string freeRoamSelectedMap = "mp_rr_canyonlands_64k_x_64k"
 
+	array<asset> freeRoamVideoAssets = [
+		$"media/gamemodes/always_be_closing.bik",
+		$"media/gamemodes/apex_elite.bik",
+		$"media/gamemodes/deja_loot.bik",
+		$"media/gamemodes/dummies.bik",
+		$"media/gamemodes/duos_v2.bik",
+		$"media/gamemodes/generic_01.bik",
+		$"media/gamemodes/generic_02.bik",
+		$"media/gamemodes/hunt_the_beast.bik",
+		$"media/gamemodes/live_die_live.bik",
+		$"media/gamemodes/night.bik",
+		$"media/gamemodes/Olympus.bik",
+		$"media/gamemodes/play_apex.bik",
+		$"media/gamemodes/ranked_3.bik",
+		$"media/gamemodes/shadow_squad.bik",
+		$"media/gamemodes/third_person.bik",
+		$"media/gamemodes/trios.bik",
+		$"media/gamemodes/Worlds_Edge.bik",
+		$"media/gamemodes/worlds_edge_mu1.bik",
+		$"media/gamemodes/solo_iron_crown.bik",
+	]
+
 	table <var, int> buttonVideoChannels
 } file
 
@@ -90,7 +112,7 @@ void function Servers_PageBackward( var button )
 		Maps_PageBackwards(button)
 		return
 	}
-	
+
 	if(GetMaxPages() == 0)
 		return
 
@@ -177,13 +199,13 @@ void function OnOpenModeSelectDialog()
 {
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, Servers_PageForward )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, Servers_PageBackward )
-	
+
 	thread SetupGameSelectV4()
 
 	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "TrainingChangeMapButton"), $"media/gamemodes/training.bik")
-	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "FreeRoamChangeMapButton"), $"media/gamemodes/freerom_sdk.bik")
+	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "FreeRoamChangeMapButton"), GetRandomFreeRoamVideo())
 	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "WinterExpressButton"), $"media/gamemodes/winter_express.bik")
-	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "FiringRangeButton"), $"media/gamemodes/firingrange_sdk.bik")
+	//PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "FiringRangeButton"), $"media/gamemodes/training.bik")
 }
 
 void function SetupGameSelectV4()
@@ -196,17 +218,50 @@ void function PlayVideoOnGamemodeButton(var button, asset videoAsset)
 {
 	if(button in file.buttonVideoChannels)
 	{
-		StartVideoOnChannel( file.buttonVideoChannels[button], videoAsset, true, 0.0 )
+		// If this is the FreeRoam button we want non-looping playback so we can swap videos
+		if ( button == Hud_GetChild(file.menu, "FreeRoamChangeMapButton") )
+			StartVideoOnChannel( file.buttonVideoChannels[button], videoAsset, false, 0.0 )
+		else
+			StartVideoOnChannel( file.buttonVideoChannels[button], videoAsset, true, 0.0 )
 		return
 	}
 
-	int channel = ReserveVideoChannel()
+	// Reserve a callback-aware channel for FreeRoam so we can swap videos when one ends.
+	int channel
+	if ( button == Hud_GetChild(file.menu, "FreeRoamChangeMapButton") )
+		channel = ReserveVideoChannel( FreeRoamVideoOnFinished )
+	else
+		channel = ReserveVideoChannel()
+
 	file.buttonVideoChannels[button] <- channel
 
-	StartVideoOnChannel( channel, videoAsset, true, 0.0 )
+	if ( button == Hud_GetChild(file.menu, "FreeRoamChangeMapButton") )
+		StartVideoOnChannel( channel, videoAsset, false, 0.0 )
+	else
+		StartVideoOnChannel( channel, videoAsset, true, 0.0 )
 
 	RuiSetBool( Hud_GetRui( button ), "hasVideo", true )
 	RuiSetInt( Hud_GetRui( button ), "channel", channel )
+}
+
+
+// Called by the engine when a non-looping video on a reserved channel finishes.
+void function FreeRoamVideoOnFinished( int channel )
+{
+	// Find the button associated with this channel
+	foreach ( button, ch in file.buttonVideoChannels )
+	{
+		if ( ch == channel )
+		{
+			// If the menu is still the active menu and the FreeRoam selector is active, play another random video
+			if ( GetActiveMenu() == file.menu )
+			{
+				asset nextVideo = GetRandomFreeRoamVideo()
+				StartVideoOnChannel( channel, nextVideo, false, 0.0 )
+			}
+			return
+		}
+	}
 }
 
 void function ReleaseAllVideoChannels()
@@ -236,7 +291,7 @@ void function OnCloseModeSelectDialog()
 {
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, Servers_PageForward )
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, Servers_PageBackward )
-	
+
 	Lobby_OnGamemodeSelectV2Close()
 	ReleaseAllVideoChannels()
 }
@@ -309,4 +364,12 @@ string function WrapText(string text, int maxLineWidth)
 	file.lastServerNameLineHeight = lines.len()
 
 	return lines.join("\n");
+}
+
+asset function GetRandomFreeRoamVideo()
+{
+	if ( file.freeRoamVideoAssets.len() == 0 )
+		return $"media/gamemodes/freerom_sdk.bik"
+
+	return file.freeRoamVideoAssets.getrandom()
 }
