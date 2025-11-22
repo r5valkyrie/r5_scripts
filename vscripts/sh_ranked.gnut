@@ -98,12 +98,23 @@ global function Ranked_PlayRankedLobbyCharacterDialogue
 
 #endif
 
+#if DEVELOPER
+global function Ranked_GetHistoricalRankedTiers
+global function Ranked_GetHistoricalRankedDivisions
+global function Ranked_GetHistoricalLadderOnlyDivision
+global function Ranked_GetHistoricalNumPlayersOnLadder
+#endif
+
 //////////////////////
 //////////////////////
 //// Global Types ////
 //////////////////////
 //////////////////////
 const int RANKED_FORGIVENESS_LIMIT = 3
+
+
+global const RANKED_INVALID_RANK_SCORE = -1
+global const RANKED_INVALID_LADDER_POSITION = -1
 
 global enum emblemDisplayMode
 {
@@ -132,6 +143,7 @@ global struct RankedTierData
 	asset               levelUpRuiAsset
 	int                 entryCost = 9999999
 	string				promotionAnnouncement
+	bool				isLadderOnlyTier = false
 	array<RankedReward> rewards
 }
 
@@ -139,10 +151,13 @@ global struct RankedDivisionData
 {
 	string          divisionName
 	string          iconString
+	string          emblemText
 	RankedTierData& tier
 	int             scoreMin
 	int             index
 	bool            showLadderPosition
+	int            emblemDisplayMode = emblemDisplayMode.DISPLAY_DIVISION
+	bool			isLadderOnlyDivision = false
 }
 
 global struct RankedPlacementScoreStruct
@@ -169,6 +184,7 @@ global struct RankedPostGameScoringStruct
 {
 	bool wasAbandoned
 	bool lossForgiveness
+	int  damage
 	int  kills
 	int  assists
 	int  killsAndAssistsScore
@@ -192,7 +208,11 @@ struct
 	bool                  initialized = false
 	array<RankedTierData> rankedTiers
 	array<RankedDivisionData>     rankedDivisions
-	table< string, array < RankedTierData > >historicalRankedTiers
+	RankedDivisionData ornull ladderOnlyDivision = null
+	int numPlayersOnLadder = 0
+	table<string, int > historicalNumPlayersOnLadder
+	table<string, RankedDivisionData > historicalLadderOnlyDivision
+	table< string, array < RankedTierData > > historicalRankedTiers
 	table< string, array< RankedDivisionData > > historicalRankedDivisions
 
 	table<EHI, int> playerToCurrentLadderPositionTable
@@ -298,9 +318,9 @@ void function OnRankedPeriodRegistered( ItemFlavor rp )
 		{
 			RankedDivisionData data
 			data.divisionName = GetSettingsBlockString( divBlock, "name" )
-			data.iconString = GetSettingsBlockString( divBlock, "iconString" )
+			//data.emblemText = GetSettingsBlockString( divBlock, "emblemText" )
 			data.scoreMin = GetSettingsBlockInt( divBlock, "scoreMin" )
-			data.showLadderPosition = GetSettingsBlockBool( divBlock, "shouldShowLadderPos" )
+			data.emblemDisplayMode = Ranked_GetEmblemDisplayModeFromEmblemText( data.emblemText )
 			data.tier = tier
 
 			if ( data.scoreMin < tier.scoreMin )
@@ -340,12 +360,52 @@ void function OnRankedPeriodRegistered( ItemFlavor rp )
 
 }
 
+int function Ranked_GetEmblemDisplayModeFromEmblemText(  string emblemText  )
+{
+	switch( emblemText )
+	{
+		case "#RANKED_DIVISION_I":
+		case "#RANKED_DIVISION_II":
+		case "#RANKED_DIVISION_III":
+		case "#RANKED_DIVISION_IV":
+		{
+			return emblemDisplayMode.DISPLAY_DIVISION
+
+		}
+		case "SHOW_RP":
+		{
+			return emblemDisplayMode.DISPLAY_RP
+		}
+
+		case "LADDER_POSITION":
+		{
+			return emblemDisplayMode.DISPLAY_LADDER_POSITION
+		}
+
+		default:
+		{
+			return emblemDisplayMode.NONE
+		}
+	}
+
+	unreachable
+}
 void function Ranked_AllItemFlavorsRegistered()
 {
-	//string latestRankedPeriodGUID = ItemFlavor_GetGUIDString ( GetLatestRankedPeriod( GetUnixTimestamp() ) )
-	//file.rankedTiers = 	file.historicalRankedTiers[ latestRankedPeriodGUID ]
-	//file.rankedDivisions = file.historicalRankedDivisions[ latestRankedPeriodGUID ]
-	//file.topRankedDivisionData = file.rankedDivisions.top()
+	string latestRankedPeriodGUID = ItemFlavor_GetGUIDString ( GetLatestRankedPeriod( GetUnixTimestamp() ) )
+	file.rankedTiers = 	file.historicalRankedTiers[ latestRankedPeriodGUID ]
+	file.rankedDivisions = file.historicalRankedDivisions[ latestRankedPeriodGUID ]
+	
+	if ( latestRankedPeriodGUID in file.historicalLadderOnlyDivision  )
+	{
+		file.ladderOnlyDivision = file.historicalLadderOnlyDivision[ latestRankedPeriodGUID  ]
+		file.topRankedDivisionData = file.historicalLadderOnlyDivision[ latestRankedPeriodGUID  ]
+		file.numPlayersOnLadder =  GetCurrentPlaylistVarInt( "ranked_num_players_on_ladder", file.historicalNumPlayersOnLadder[ latestRankedPeriodGUID  ] )
+	}
+	else
+	{
+		file.topRankedDivisionData = file.rankedDivisions.top()
+	}
 
 	//
 }
@@ -355,6 +415,33 @@ void function ShRanked_RegisterNetworkFunctions()
 {
 	//RegisterNetworkedVariableChangeCallback_int( "currentRankedScore", OnRankedScoreChanged )
 	//RegisterNetworkedVariableChangeCallback_int( "currentRankedLadderPosition", OnRankedLadderPositionChanged )
+}
+#endif
+
+#if DEVELOPER
+array< RankedTierData > function Ranked_GetHistoricalRankedTiers( string rankedPeriodGUIDString )
+{
+	Assert( rankedPeriodGUIDString in file.historicalRankedTiers )
+	return file.historicalRankedTiers[ rankedPeriodGUIDString  ]
+}
+
+array < RankedDivisionData  > function Ranked_GetHistoricalRankedDivisions( string rankedPeriodGUIDString )
+{
+	Assert( rankedPeriodGUIDString in file.historicalRankedDivisions )
+	return file.historicalRankedDivisions[ rankedPeriodGUIDString  ]
+}
+
+
+RankedDivisionData function Ranked_GetHistoricalLadderOnlyDivision( string rankedPeriodGUIDString )
+{
+	Assert( rankedPeriodGUIDString in file.historicalLadderOnlyDivision )
+	return file.historicalLadderOnlyDivision[ rankedPeriodGUIDString  ]
+}
+
+int function Ranked_GetHistoricalNumPlayersOnLadder( string rankedPeriodGUIDString )
+{
+	Assert( rankedPeriodGUIDString in file.historicalNumPlayersOnLadder )
+	return file.historicalNumPlayersOnLadder[ rankedPeriodGUIDString  ]
 }
 #endif
 
@@ -1057,15 +1144,18 @@ void function PopulateRuiWithRankedBadgeDetails( var rui, int rankScore, int lad
 	RankedDivisionData currentRank = GetCurrentRankedDivisionFromScore( rankScore )
 	RankedTierData currentTier     = currentRank.tier
 	RuiSetImage( rui, "rankedIcon", currentTier.icon )
-	RuiSetInt( rui, "rankedIconState", currentTier.index )
-	RuiSetString( rui, "rankedIconString", currentRank.iconString )
+	if (  currentTier.isLadderOnlyTier ) //
+	{
+		RankedTierData tierByScore = GetCurrentRankedDivisionFromScore( rankScore ).tier
+		RuiSetInt( rui, "rankedIconState", tierByScore.index + 1 )
 
-	if ( GetCurrentPlaylistVarBool( "ranked_show_ladder_position", true ) )
-		RuiFillInRankedLadderPos( rui, ladderPosition )
+	}
 	else
-		RuiFillInRankedLadderPos( rui, rankScore )
+	{
+		RuiSetInt( rui, "rankedIconState", currentTier.index )
+	}
 
-	RuiSetBool( rui, "rankedShowLadderPosition", Ranked_ShouldShowLadderPosition( currentRank ) )
+	Ranked_FillInRuiEmblemText( rui, currentRank, rankScore, ladderPosition )
 
 	if ( !isNested )
 	{
@@ -1080,16 +1170,20 @@ void function PopulateRuiWithHistoricalRankedBadgeDetails( var rui, int rankScor
 	RankedDivisionData historicalRank = Ranked_GetHistoricalRankedDivisionFromScore( rankScore, rankedSeriesGUID )
 	RankedTierData historicalTier     = historicalRank.tier
 	RuiSetImage( rui, "rankedIcon", historicalTier.icon )
-	RuiSetInt( rui, "rankedIconState", historicalTier.index )
-	RuiSetString( rui, "rankedIconString", historicalRank.iconString )
-
 	//
-	if ( rankedSeriesGUID == "SAID00747315762" )
-		RuiFillInRankedLadderPos( rui, rankScore )
-	else
-		RuiFillInRankedLadderPos( rui, ladderPosition )
 
-	RuiSetBool( rui, "rankedShowLadderPosition", Ranked_ShouldShowLadderPosition( historicalRank ) )
+	if (  historicalTier.isLadderOnlyTier ) //
+	{
+		RankedTierData tierByScore = Ranked_GetHistoricalRankedDivisionFromScore( rankScore, rankedSeriesGUID ).tier
+		RuiSetInt( rui, "rankedIconState", tierByScore.index + 1 )
+
+	}
+	else
+	{
+		RuiSetInt( rui, "rankedIconState", historicalTier.index )
+	}
+
+	Ranked_FillInRuiEmblemText( rui, historicalRank, rankScore, ladderPosition )
 
 	if ( !isNested )
 	{
@@ -1123,6 +1217,45 @@ void function RuiFillInRankedLadderPos( var rui, int ladderPosition )
 	string rankedString        = playlistShowLadderPos ? "#RANKED_LADDER_POSITION_DISPLAY" : "#RANKED_POINTS_GENERIC"
 
 	RuiSetString( rui, "rankedLadderPosition", Localize( rankedString, rs ) )
+}
+
+void function Ranked_FillInRuiEmblemText( var rui, RankedDivisionData divData, int rankScore, int ladderPosition, string ruiArgumentPostFix = "" )
+{
+	RuiSetInt( rui, "emblemDisplayMode" + ruiArgumentPostFix , divData.emblemDisplayMode )
+	switch( divData.emblemDisplayMode )
+	{
+		case emblemDisplayMode.DISPLAY_DIVISION:
+		{
+			RuiSetString( rui, "emblemText" + ruiArgumentPostFix, divData.emblemText )
+			break
+		}
+
+		case emblemDisplayMode.DISPLAY_RP:
+		{
+			string rankScoreShortened = ShortenNumber( string( rankScore ) )
+			RuiSetString( rui, "emblemText" + ruiArgumentPostFix, Localize(  "#RANKED_POINTS_GENERIC", rankScoreShortened )  )
+			break
+		}
+
+		case emblemDisplayMode.DISPLAY_LADDER_POSITION:
+		{
+			string ladderPosShortened
+			if ( ladderPosition == RANKED_INVALID_LADDER_POSITION  )
+				ladderPosShortened = ""
+			else
+				ladderPosShortened = Localize(  "#RANKED_LADDER_POSITION_DISPLAY", ShortenNumber( string( ladderPosition ) ) )
+
+			RuiSetString( rui, "emblemText" + ruiArgumentPostFix,  ladderPosShortened )
+			break
+		}
+
+		case emblemDisplayMode.NONE:
+		default:
+		{
+			RuiSetString( rui, "emblemText" + ruiArgumentPostFix, "" )
+			break
+		}
+	}
 }
 
 #endif //

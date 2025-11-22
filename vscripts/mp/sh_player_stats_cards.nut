@@ -114,6 +114,7 @@ struct
 	table<string, array<string> > toolTipStrings
 
 	table<string, int> GUIDToSeasonNumber
+	int currentGUIDToSeasonNumber = 1
 } file
 
 const string NO_DATA_REF = "000"
@@ -482,11 +483,11 @@ void function StatCard_ConstructStatCardProgressBar( var panel, int totalXP, int
 
 	if ( cardType == eStatCardType.CAREER )
 	{
-		RuiSetString( progressBarRui, "currentDisplayLevel", GetAccountDisplayLevel( start_accountLevel ) )
-		RuiSetString( progressBarRui, "nextDisplayLevel", GetAccountDisplayLevel( start_accountLevel + 1 ) )
+		//RuiSetString( progressBarRui, "currentDisplayLevel", GetAccountDisplayLevel( start_accountLevel ) )
+		//RuiSetString( progressBarRui, "nextDisplayLevel", GetAccountDisplayLevel( start_accountLevel + 1 ) )
 
-		RuiSetImage( progressBarRui, "currentDisplayBadge", GetAccountDisplayBadge( start_accountLevel ) )
-		RuiSetImage( progressBarRui, "nextDisplayBadge", GetAccountDisplayBadge( start_accountLevel + 1 ) )
+		//RuiSetImage( progressBarRui, "currentDisplayBadge", GetAccountDisplayBadge( start_accountLevel ) )
+		//RuiSetImage( progressBarRui, "nextDisplayBadge", GetAccountDisplayBadge( start_accountLevel + 1 ) )
 	}
 
 	if ( cardType == eStatCardType.SEASON )
@@ -538,17 +539,18 @@ void function StatCard_ConstructAccountProgressBar( var panel, int start_account
 	RuiSetFloat( progressBarRui, "progressBarFillTime", 2.0 )
 	RuiSetInt( progressBarRui, format( "displayLevel1XP", start_accountLevel + 1 ), GetTotalXPToCompleteAccountLevel( start_accountLevel ) - GetTotalXPToCompleteAccountLevel( start_accountLevel - 1 ) )
 
-	RuiSetString( progressBarRui, "currentDisplayLevel", GetAccountDisplayLevel( start_accountLevel ) )
-	RuiSetString( progressBarRui, "nextDisplayLevel", GetAccountDisplayLevel( start_accountLevel + 1 ) )
-
-	RuiSetImage( progressBarRui, "currentDisplayBadge", GetAccountDisplayBadge( start_accountLevel ) )
-	RuiSetImage( progressBarRui, "nextDisplayBadge", GetAccountDisplayBadge( start_accountLevel + 1 ) )
+	var nestedCurrentLevelBadge = CreateNestedAccountDisplayBadge( progressBarRui, "currentBadgeHandle", start_accountLevel )
+	var nestedNextLevelBadge = CreateNestedAccountDisplayBadge( progressBarRui, "nextBadgeHandle", start_accountLevel + 1 )
 }
 
 void function StatCard_ConstructBattlePassLevelBadge( var panel, entity player, int battlePassLevel, string seasonRef )
 {
 	var rui = Hud_GetRui( panel )
 	RuiDestroyNestedIfAlive( rui, "battlePassLevelBadge" )
+	RuiDestroyNestedIfAlive( rui, "battlePassLevelBadge2" )
+	RuiSetString( rui, "rankedSplitTextLabel", ""  )
+	RuiSetString( rui, "rankedSplitTextLabel2", ""  )
+	RuiSetBool( rui, "twoBadgeMode", false  )
 
 	SettingsAssetGUID seasonGUID = ConvertItemFlavorGUIDStringToGUID( seasonRef )
 	ItemFlavor season = GetItemFlavorByGUID( seasonGUID )
@@ -564,7 +566,21 @@ void function StatCard_ConstructRankedBadge( var panel, entity player, string ra
 {
 	var rui = Hud_GetRui( panel )
 	RuiDestroyNestedIfAlive( rui, "battlePassLevelBadge" )
+	RuiDestroyNestedIfAlive( rui, "battlePassLevelBadge2" )
+	RuiSetString( rui, "rankedSplitTextLabel", "" )
+	RuiSetString( rui, "rankedSplitTextLabel2", ""  )
+	RuiSetBool( rui, "twoBadgeMode", false  )
 
+	ItemFlavor rankedPeriodItemFlavor = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( rankedPeriodRef ) )
+
+	{
+		StatsCard_ConstructRankBadgesForSingleBadge( rui, player, rankedPeriodRef )
+
+	}
+}
+
+void function StatsCard_ConstructRankBadgesForSingleBadge( var rui, entity player,  string rankedPeriodRef  )
+{
 	var badgeRui            = CreateNestedRankedBadge( rui, "battlePassLevelBadge" )
 	int score               = Ranked_GetHistoricalRankScore( player, rankedPeriodRef )
 	RankedDivisionData data = Ranked_GetHistoricalRankedDivisionFromScore( score, rankedPeriodRef )
@@ -760,6 +776,8 @@ StatTemplate function GetStatTemplateFromString( string statRef )
 			return CAREER_STATS.season_placements_win
 		case "CAREER_STATS.placements_top_5":
 			return CAREER_STATS.placements_top_5
+		case "CAREER_STATS.placements_top_10":
+			return CAREER_STATS.placements_top_10
 		case "CAREER_STATS.rankedperiod_assists":
 			return CAREER_STATS.rankedperiod_assists
 		case "CAREER_STATS.rankedperiod_character_damage_done_max_single_game":
@@ -1036,19 +1054,10 @@ array< ItemFlavor > function StatCard_GetAvailableSeasons()
 {
 	array< ItemFlavor > seasons = GetAllSeasonFlavors()
 
-	//R5RDEV-1
-	// foreach( ItemFlavor season in seasons )
-	// {
-		// if ( !CalEvent_IsRevealed( season, GetUnixTimestamp() ) )
-			// seasons.removebyvalue( season )
-	// }
-	
-	int maxIter = seasons.len() - 1
-	
-	for( int i = maxIter; i >= 0; i-- )
+	foreach( ItemFlavor season in seasons )
 	{
-		if( !CalEvent_IsRevealed( seasons[ i ], GetUnixTimestamp() ) ) 
-			seasons.remove( i )
+		if ( !CalEvent_IsRevealed( season, GetUnixTimestamp() ) )
+			seasons.removebyvalue( season )
 	}
 
 	return seasons
@@ -1058,36 +1067,17 @@ array< ItemFlavor > function StatCard_GetAvailableSeasonsAndRankedPeriods()
 {
 	array< ItemFlavor > seasons = GetAllSeasonFlavors()
 
-	//R5RDEV-1
-	// foreach( ItemFlavor season in seasons )
-	// {
-		// if ( !CalEvent_IsRevealed( season, GetUnixTimestamp() ) )
-			// seasons.removebyvalue( season )
-	// }
-	
-	int maxIter = seasons.len() - 1
-	
-	for( int i = maxIter; i >= 0; i-- )
+	foreach( ItemFlavor season in seasons )
 	{
-		if( !CalEvent_IsRevealed( seasons[ i ], GetUnixTimestamp() ) ) 
-			seasons.remove( i )
+		if ( !CalEvent_IsRevealed( season, GetUnixTimestamp() ) )
+			seasons.removebyvalue( season )
 	}
 
 	array< ItemFlavor > rankedPeriods = GetAllRankedPeriodFlavors()
-	
-	//R5RDEV-1
-	// foreach( ItemFlavor period in rankedPeriods )
-	// {
-		// if ( !CalEvent_IsRevealed( period, GetUnixTimestamp() ) )
-			// rankedPeriods.removebyvalue( period )
-	// }
-	
-	maxIter = rankedPeriods.len() - 1
-	
-	for( int i = maxIter; i >= 0; i-- )
+	foreach( ItemFlavor period in rankedPeriods )
 	{
-		if( !CalEvent_IsRevealed( rankedPeriods[ i ], GetUnixTimestamp() ) ) 
-			rankedPeriods.remove( i )
+		if ( !CalEvent_IsRevealed( period, GetUnixTimestamp() ) )
+			rankedPeriods.removebyvalue( period )
 	}
 
 	array< ItemFlavor > seasonsAndPeriods = []
@@ -1348,4 +1338,18 @@ var function CreateNestedRankedBadge( var parentRui, string argName )
 
 	return nestedRui
 }
+
+
+void function StatsCard_OnRankedPeriodRegistered( ItemFlavor rp )
+{
+	string seasonGUIDString = ItemFlavor_GetGUIDString( rp )
+	file.GUIDToSeasonNumber[ seasonGUIDString ] <- 0
+}
+
+void function StatsCard_OnSeasonRegistered( ItemFlavor rp ) //
+{
+	string seasonGUIDString = ItemFlavor_GetGUIDString( rp )
+	file.GUIDToSeasonNumber[ seasonGUIDString ] <- file.currentGUIDToSeasonNumber++
+}
+
 #endif // UI

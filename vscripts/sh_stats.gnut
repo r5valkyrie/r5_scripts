@@ -131,6 +131,7 @@ global struct CareerStats
 	StatTemplate& placements_win_with_squad_alive
 	StatTemplate& placements_top_3
 	StatTemplate& placements_top_5
+	StatTemplate& placements_top_10
 	StatTemplate& win_streak_current
 	StatTemplate& win_streak_longest
 	StatTemplate& neutral_airdrops_looted
@@ -613,6 +614,7 @@ void function RegisterAllStats()
 	CAREER_STATS.placements_win_with_squad_alive = RegisterAccumulatedStat_Int( null, "placements_win_with_squad_alive" ) // ✓
 	CAREER_STATS.placements_top_3 = RegisterAccumulatedStat_Int( null, "placements_top_3", CHALLENGES_NEED ) // ✓
 	CAREER_STATS.placements_top_5 = RegisterAccumulatedStat_Int( null, "placements_top_5", CHALLENGES_NEED ) // ✓
+	CAREER_STATS.placements_top_10 = RegisterAccumulatedStat_Int( null, "placements_top_10", CHALLENGES_NEED ) //
 	CAREER_STATS.placements_win_with_friends = RegisterAccumulatedStat_Int( null, "placements_win_with_friends", BADGES_NEED )
 	CAREER_STATS.placements_win_with_no_witnessess = RegisterAccumulatedStat_Int( null, "placements_win_with_no_witnessess", BADGES_NEED )
 	CAREER_STATS.placements_win_with_min_executions_per_person = RegisterAccumulatedStat_Int( null, "placements_win_with_min_executions_per_person", BADGES_NEED )
