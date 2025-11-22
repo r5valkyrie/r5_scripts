@@ -57,7 +57,7 @@ void function SimulateRandomDisconnects()
 
 void function SpawnBots( int amount = 1 )
 {
-	string botName = "flowstate"
+	string botName = "bot"
 	
 	for( int i = 0; i<amount; i++)
 	{
@@ -80,7 +80,7 @@ void function SpawnAllyBots( int amount = 1 )
 {
 	for( int i = 0; i<amount; i++)
 	{
-		ClientCommand( gp()[0], "sv_addbot flowstate -1" )
+		ClientCommand( gp()[0], "sv_addbot bot -1" )
 		wait 0.1
 	}
 

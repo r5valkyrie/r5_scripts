@@ -40,7 +40,7 @@ void function InitGamemodeSelectDialogV4( var newMenuArg )
 	Hud_AddEventHandler( Hud_GetChild(file.menu, "FreeRoamChangeMapButton"), UIE_CLICK, FreeRoamChangeMapButton )
 	Hud_AddEventHandler( Hud_GetChild(file.menu, "TrainingChangeMapButton"), UIE_CLICK, SelectTraining )
 	Hud_AddEventHandler( Hud_GetChild(file.menu, "FiringRangeButton"), UIE_CLICK, SelectFiringRange )
-	Hud_AddEventHandler( Hud_GetChild(file.menu, "AimtrainerButton"), UIE_CLICK, SelectAimTrainer )
+	Hud_AddEventHandler( Hud_GetChild(file.menu, "WinterExpressButton"), UIE_CLICK, SelectWinterExpress )
 
 	for(int i = 0; i < MAX_DISPLAYED_SERVERS; i++)
 	{
@@ -138,12 +138,12 @@ void function SelectFiringRange( var button )
 	CloseActiveMenu()
 }
 
-void function SelectAimTrainer( var button )
+void function SelectWinterExpress( var button )
 {
-	string map = "mp_rr_desertlands_64k_x_64k"
-	string playlist = "fs_aimtrainer"
+	string map = "mp_rr_desertlands_holiday"
+	string playlist = "winterexpress"
 
-	R5RPlay_SetSelectedPlaylist(map, $"rui/menu/maps/aim_trainer", playlist, "Aim Trainer")
+	R5RPlay_SetSelectedPlaylist(map, $"rui/menu/gamemode/winter_express", playlist, "Winter Express")
 	CloseActiveMenu()
 }
 
@@ -182,7 +182,7 @@ void function OnOpenModeSelectDialog()
 
 	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "TrainingChangeMapButton"), $"media/gamemodes/training.bik")
 	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "FreeRoamChangeMapButton"), $"media/gamemodes/freerom_sdk.bik")
-	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "AimtrainerButton"), $"media/gamemodes/training_flowstate.bik")
+	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "WinterExpressButton"), $"media/gamemodes/winter_express.bik")
 	PlayVideoOnGamemodeButton(Hud_GetChild(file.menu, "FiringRangeButton"), $"media/gamemodes/firingrange_sdk.bik")
 }
 

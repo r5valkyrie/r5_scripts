@@ -3631,13 +3631,11 @@ void function WaitingForPlayers_CreateCustomCameras()
 		DisableCustomMapAndGamemodeNameFrames()
 		return
 	}
-	FS_GamemodeHudSetup()
+	//FS_GamemodeHudSetup()
 }
 
 void function FS_GamemodeHudSetup()
 {
-	if( Gamemode() == eGamemodes.SURVIVAL )
-		return//hud is set in wrong place, needs to be on loadscreen
 	Hud_SetVisible(HudElement( "WaitingForPlayers_GamemodeFrame" ), true)
 
 	RuiSetImage( Hud_GetRui( HudElement( "WaitingForPlayers_GamemodeFrame" ) ), "basicImage", $"rui/gamemodes/survival/waitingforplayers/gamemode")
@@ -3651,26 +3649,6 @@ void function FS_GamemodeHudSetup()
 	string modeSubString
 	switch( Playlist() )
 	{
-		case ePlaylists.winterexpress:
-		modeString = "FLOWSTATE"
-		modeSubString = "WINTER EXPRESS"
-		break
-		
-		case ePlaylists.fs_haloMod_ctf:
-		modeString = "Halo Mod"
-		modeSubString = "CAPTURE THE FLAG"
-		break
-		
-		case ePlaylists.fs_haloMod_oddball:
-		modeString = "Halo Mod"
-		modeSubString = "ODDBALL"
-		break
-
-		case ePlaylists.fs_haloMod:
-		modeString = "Halo Mod"
-		modeSubString = "DEATH MATCH"
-		break
-		
 		default:
 		modeString = GetCurrentPlaylistVarString( "name", "APEX" )
 		modeSubString = "#" + GetMapName()

@@ -308,7 +308,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
 			"pin_to_sibling_corner"	"BOTTOM"
 		}
 
-        AimtrainerButton
+        WinterExpressButton
         {
             ControlName				RuiButton
             wide					345
@@ -329,7 +329,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
                 modeNameText ""
                 modeDescText ""
                 alwaysShowDesc 0
-                modeImage "rui/menu/maps/aim_trainer"
+                modeImage "rui/menu/gamemode/winter_express"
             }
 
             pin_to_sibling			FreeRoamBackground
@@ -337,7 +337,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             pin_to_sibling_corner	BOTTOM_RIGHT
         }
 
-        "AimtrainerText"
+        "WinterExpressText"
 		{
 			"ControlName"			"Label"
 			"xpos"                  "0"
@@ -350,12 +350,12 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
 			"fontHeight"			"30"
 			"zpos"					"5"
 			"textAlignment"			"north-west"
-			"labelText"				"AIM TRAINER"
+			"labelText"				"WINTER EXPRESS"
 			"font"					"TitleBoldFont"
 			"allcaps"				"1"
 			"fgcolor_override"		"255 255 255 255"
 
-			"pin_to_sibling"		"AimtrainerButton"
+			"pin_to_sibling"		"WinterExpressButton"
 			"pin_corner_to_sibling"	"BOTTOM"
 			"pin_to_sibling_corner"	"BOTTOM"
 		}
@@ -373,12 +373,12 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
 			"fontHeight"			"20"
 			"zpos"					"5"
 			"textAlignment"			"north-west"
-			"labelText"				"Flowstate Aim Trainer"
+			"labelText"				"HOLIDAY-BASH"
 			"font"					"Default"
 			"allcaps"				"1"
 			"fgcolor_override"		"229 157 11 255"
 
-			"pin_to_sibling"		"AimtrainerButton"
+			"pin_to_sibling"		"WinterExpressButton"
 			"pin_corner_to_sibling"	"BOTTOM"
 			"pin_to_sibling_corner"	"BOTTOM"
 		}
