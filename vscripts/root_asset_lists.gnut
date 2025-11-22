@@ -78,6 +78,7 @@ global const array<asset> LOADSCREEN_ASSET_LIST =
 
 global const array<asset> MUSIC_PACK_ASSET_LIST =
 [
+	$"settings/itemflav/musicpack/s03e02.rpak",//PORTED
 	$"settings/itemflav/musicpack/default.rpak",
 	$"settings/itemflav/musicpack/random.rpak",
 	$"settings/itemflav/musicpack/season02_event01.rpak",
@@ -93,7 +94,6 @@ global const array<asset> MUSIC_PACK_ASSET_LIST =
 	$"settings/itemflav/musicpack/wraith.rpak",
 	$"settings/itemflav/musicpack/s03bp_crypto.rpak",
 	$"settings/itemflav/musicpack/s03bp_gibraltar.rpak",
-	$"settings/itemflav/musicpack/s03e02.rpak",//PORTED
 	$"settings/itemflav/musicpack/s04bp_revenant.rpak",//PORTED
 	$"settings/itemflav/musicpack/s04bp_assimilation.rpak",//PORTED
 	$"settings/itemflav/musicpack/s04e02.rpak",//PORTED
