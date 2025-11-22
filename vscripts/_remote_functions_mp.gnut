@@ -334,10 +334,6 @@ void function RemoteFunctions_Init_Begin()
 	//Custom gamemodes
 	switch ( Gamemode() )
 	{
-		case eGamemodes.WINTEREXPRESS:
-			WinterExpress_RegisterNetworking()
-		break
-
 		case eGamemodes.CUSTOM_CTF:
 			// CTF: Server to Client
 			
@@ -598,6 +594,7 @@ void function RemoteFunctions_Init_Begin()
 		ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_CreateBeaconWorldIcon", "entity", "entity" )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_SUR_PingMinimap", "vector", -1.0, 1.0, 32, "float", 0.0, 300.0, 8, "float", 1.0, 5000.0, 8, "float", 1.0, 5000.0, 8, "int", 0, 2047 )
 	}
+
 	
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanks", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptWelcome" )
@@ -774,6 +771,12 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "SeasonPlaytime", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
 	ScriptRegisterNetworkedVariable( "SeasonGamesplayed", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
 	ScriptRegisterNetworkedVariable( "stats_loaded", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	
+	
+	if( Gamemode() == eGamemodes.WINTEREXPRESS )
+	{
+		WinterExpress_RegisterNetworking()
+	}
 	
 	//TestNetworkedVarLimit() //(mk): for testing sh_net_wrapper.gnut
 	//ScriptRemote_RegisterClientFunction( "TestFloatBits", "float", 0.0, 2000.0, 32 )
