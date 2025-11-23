@@ -1130,6 +1130,7 @@ void function ShowCommsMenu( int chatPage )
 				continue
 
 			RuiSetInt( rui, "selectedSlot", idx )
+			SetCurrentChoice( idx )
 			break
 		}
 	}

@@ -18,7 +18,7 @@ global function GetVictorySequencePlatformModel
 global function PredictHealthPackUse
 
 global function Survival_GetCurrentRank
-#if CLIENT || UI 
+#if CLIENT || UI
 global function GetMusicForJump
 #endif
 global function CanWeaponInspect
@@ -155,15 +155,15 @@ struct
 #if SERVER || CLIENT
 void function GamemodeSurvivalShared_Init()
 {
-	
+
 	//printt("GamemodeSurvivalShared_Init")
 	RegisterSignal("GameStateChanged")
-	
+
 	#if SERVER || CLIENT
 		ShApexScreens_Init()
 		AddCallback_PlayerCanUseZipline( Sur_CanUseZipline )
 		AddCallback_CanStartCustomWeaponActivity( ACT_VM_WEAPON_INSPECT, CanWeaponInspect )
-		
+
 		if( Gamemode() == eGamemodes.fs_prophunt || Gamemode() == eGamemodes.fs_snd ) return
 
 		//Bleedout system already started in sh init
@@ -605,42 +605,39 @@ TargetKitHealthAmounts function PredictHealthPackUse( entity player, HealthPicku
 	int currentHealth = player.GetHealth()
 	int currentShields = player.GetShieldHealth()
 	int shieldHealthMax = player.GetShieldHealthMax()
-
 	int resourceHealthRemaining = 0
-	int virtualHealth = minint( currentHealth + resourceHealthRemaining, 100 )
-	int missingHealth = 100 - virtualHealth
+	int virtualHealth = minint( currentHealth + resourceHealthRemaining, player.GetMaxHealth() )
+	int missingHealth = player.GetMaxHealth() - virtualHealth
 	int missingShields = shieldHealthMax - currentShields
 
 	TargetKitHealthAmounts targetValues
+	targetValues.targetHealth = 0.0
+	targetValues.targetShields = 0.0
 
 	if ( itemData.healAmount > 0 )
 	{
 		int healthToApply = minint( int( itemData.healAmount ), missingHealth )
-		Assert( virtualHealth + healthToApply <= 100, "Bad math: " + virtualHealth + " + " + healthToApply + " > 100 " )
-
+		Assert( virtualHealth + healthToApply <= player.GetMaxHealth(), "Bad math: " + virtualHealth + " + " + healthToApply + " > " + player.GetMaxHealth() )
 		int remainingHealth = int( itemData.healAmount - healthToApply )
-
 		int shieldsToApply = 0
+
 		if ( itemData.healCap > 100 && remainingHealth > 0 )
-		{
 			shieldsToApply = minint( remainingHealth, missingShields )
-		}
 
 		Assert( currentShields + shieldsToApply <= shieldHealthMax, "Bad math: " + currentShields + " + " + shieldsToApply + " > " + shieldHealthMax )
 
-		if ( healthToApply || itemData.healTime > 0 ) // healTime items can exceed the cap
-			targetValues.targetHealth = (currentHealth + healthToApply + resourceHealthRemaining) / 100.0
+		if ( healthToApply > 0 || itemData.healTime > 0 ) // healTime items can exceed the cap
+			targetValues.targetHealth = (healthToApply + resourceHealthRemaining) / float( player.GetMaxHealth() )
 
-		if ( shieldsToApply && shieldHealthMax > 0 )
-			targetValues.targetShields = (currentShields + shieldsToApply) / float( shieldHealthMax )
+		if ( shieldsToApply > 0 && shieldHealthMax > 0 )
+			targetValues.targetShields = shieldsToApply / float( shieldHealthMax )
 	}
 
 	if ( itemData.shieldAmount > 0 && shieldHealthMax > 0 )
-		targetValues.targetShields = minint(player.GetShieldHealth() + int( itemData.shieldAmount ), shieldHealthMax) / float( shieldHealthMax )
+		targetValues.targetShields = minint(int( itemData.shieldAmount ), shieldHealthMax - player.GetShieldHealth()) / float( shieldHealthMax )
 
 	return targetValues
 }
-
 
 #endif
 #if SERVER || CLIENT
@@ -651,7 +648,7 @@ bool function CanWeaponInspect( entity player, int activity )
 
 	if( player.ContextAction_IsZipline() )
 		return false
-	
+
 	return GetCurrentPlaylistVarBool( "enable_weapon_inspect", true )
 }
 
@@ -691,7 +688,7 @@ VictoryPlatformModelData function GetVictorySequencePlatformModel()
 	return file.victorySequencePlatforData
 
 }
-#if CLIENT || UI 
+#if CLIENT || UI
 string function GetMusicForJump( entity player )
 {
 	return MusicPack_GetSkydiveMusic( GetMusicPackForPlayer( player ) )
@@ -733,7 +730,7 @@ bool function ShouldModeDisableCharacterComms()
 
 	if( GetCurrentPlaylistVarBool( "flowstate_give_random_custom_models_toall", false ) )
 		return true
-	
+
 	return false
 }
 
