@@ -700,6 +700,36 @@ string[2] function GetPromptsForMenuOption( int index )
 	return promptTexts
 }
 
+bool function ShouldPopulateRuiForIndex( int index )
+{
+	CommsMenuOptionData op = s_currentMenuOptions[index]
+	switch( op.optionType )
+	{
+		case eOptionType.QUIP:
+			ItemFlavor data = expect ItemFlavor( op.emote )
+			int type = ItemFlavor_GetType( data )
+	}
+
+	return true
+}
+
+var function GetRuiForMenuOption( var mainRui, int index )
+{
+	asset ruiAsset = $"ui/comms_menu_icon_default.rpak"
+
+	CommsMenuOptionData op = s_currentMenuOptions[index]
+	switch( op.optionType )
+	{
+		case eOptionType.QUIP:
+			ItemFlavor data = expect ItemFlavor( op.emote )
+			LoadoutEntry characterSlot = Loadout_CharacterClass()
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), characterSlot )
+			return CreateNestedRuiForQuip( mainRui, "iconHandle"+index, LocalClientEHI(), data, character )
+	}
+
+	return RuiCreateNested( mainRui, "iconHandle"+index, ruiAsset )
+}
+
 asset function GetIconForMenuOption( int index )
 {
 	if ( (index < 0) || (index >= s_currentMenuOptions.len()) )
@@ -1017,48 +1047,36 @@ void function ShowCommsMenu( int chatPage )
 	int optionCount = options.len()
 	for ( int idx = 0; idx < MAX_COMMS_MENU_OPTIONS; ++idx )
 	{
+		RuiDestroyNestedIfAlive( rui, "iconHandle"+idx )
+
+		if ( idx >= s_currentMenuOptions.len() )
+			continue
+
+		var nestedRui = GetRuiForMenuOption( rui, idx )
+
+		bool shouldPopulate = ShouldPopulateRuiForIndex( idx )
+		if ( !shouldPopulate )
+			continue
+
 		asset icon       = GetIconForMenuOption( idx )
 		vector iconColor = SrgbToLinear( GetIconColorForMenuOption( idx ) )
-		RuiSetImage( rui, ("optionIcon" + idx), icon )
-		RuiSetInt( rui, ("optionTier" + idx), 0 )
-		RuiSetFloat3( rui, ("optionColor" + idx), iconColor )
+		RuiSetImage( nestedRui, "icon", icon )
+		RuiSetInt( nestedRui, "tier", 0 )
+		RuiSetFloat3( nestedRui, "iconColor", iconColor )
+		RuiSetString( nestedRui, "centerText", "" )
 
-		RuiSetString( rui, ("optionCenterText" + idx), "" )
-
-		if ( idx < s_currentMenuOptions.len() )
-		{
 			CommsMenuOptionData op = s_currentMenuOptions[idx]
-			int WORD_MAX_LEN = 11
-			int TEXT_MAX_LEN = 26
-			int TEXT_MAX_LEN_W_DOTS = TEXT_MAX_LEN - 2
-
 			if ( op.emote != null )
 			{
 				ItemFlavor flav = expect ItemFlavor( op.emote )
-				int itemType = ItemFlavor_GetType( flav )
-				if ( itemType == eItemType.gladiator_card_kill_quip || itemType == eItemType.gladiator_card_intro_quip )
-				{
-					string txt = Localize( ItemFlavor_GetLongName( flav ) )
-
-					txt = CondenseText( txt, WORD_MAX_LEN, TEXT_MAX_LEN )
-					print( "setting optionCenterText" + idx + " to " + txt + "\n" )
-					RuiSetString( rui, ("optionCenterText" + idx), txt)
-				}
-			}
-			
-			if ( op.optionType == eOptionType.HOLOSPRAY )
-			{
-				RuiSetImage( rui, ("optionIcon" + idx), op.Asset )	
-			}
-		}
-
+			string txt = CharacterQuip_ShortenTextForCommsMenu( flav )
+			RuiSetString( nestedRui, "centerText", txt )
+					}
 
 		if ( chatPage == eChatPage.INVENTORY_HEALTH )
 		{
-			if ( idx < s_currentMenuOptions.len() )
-			{
 				string countText = GetCountStringForHealthItem( options[idx].healType )
-				RuiSetString( rui, ("optionText" + idx), countText )
+			RuiSetString( nestedRui, "text", countText )
 				int tier      = -1
 				int itemCount = GetCountForHealthItem( GetLocalViewPlayer(), options[idx].healType )
 				if ( itemCount > 0 )
@@ -1069,14 +1087,11 @@ void function ShowCommsMenu( int chatPage )
 					tier = 0
 				}
 
-				RuiSetInt( rui, ("optionTier" + idx), tier )
-				RuiSetBool( rui, ("optionEnabled" + idx), itemCount > 0 )
-			}
+			RuiSetInt( nestedRui, "tier", tier )
+			RuiSetBool( nestedRui, "isEnabled", itemCount > 0 )
 		}
 		else if ( chatPage == eChatPage.ORDNANCE_LIST )
 		{
-			if ( idx < s_currentMenuOptions.len() )
-			{
 				int index = options[idx].healType
 
 				if ( index != -1 )
@@ -1084,14 +1099,13 @@ void function ShowCommsMenu( int chatPage )
 					LootData data    = SURVIVAL_Loot_GetLootDataByIndex( index )
 					int itemCount    = SURVIVAL_CountItemsInInventory( GetLocalViewPlayer(), data.ref )
 					string countText = string( itemCount )
-					RuiSetString( rui, ("optionText" + idx), countText )
+				RuiSetString( nestedRui, "text", countText )
 
 					int tier = -1
 					if ( itemCount > 0 )
 						tier = 0
-					RuiSetInt( rui, ("optionTier" + idx), tier )
-					RuiSetBool( rui, ("optionEnabled" + idx), itemCount > 0 )
-				}
+				RuiSetInt( nestedRui, "tier", tier )
+				RuiSetBool( nestedRui, "isEnabled", itemCount > 0 )
 			}
 		}
 	}
@@ -1269,7 +1283,7 @@ bool function CommsMenu_HandleKeyInput( int key )
 	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.CHAT_MENU) && ButtonIsBoundToAction( key, CHAT_MENU_BIND_COMMAND ))
 	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.PING_MENU) && ButtonIsBoundToAction( key, "+ping" ))
 	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.PINGREPLY_MENU) && ButtonIsBoundToAction( key, "+ping" ))
-	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.INVENTORY_HEALTH_MENU) && ButtonIsBoundToAction( key, HEALTHKIT_BIND_COMMAND ) && !Flowstate_IsHaloMode())
+	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.INVENTORY_HEALTH_MENU) && ButtonIsBoundToAction( key, HEALTHKIT_BIND_COMMAND ))
 	shouldExecute = shouldExecute || ((file.commsMenuStyle == eCommsMenuStyle.SKYDIVE_EMOTE_MENU) && executeType == eWheelInputType.USE )
 
 	shouldCancelMenu = shouldCancelMenu || ((file.commsMenuStyle == eCommsMenuStyle.CHAT_MENU) && ButtonIsBoundToAction( key, CHAT_MENU_BIND_COMMAND ))
@@ -1409,6 +1423,7 @@ vector function ProcessMouseInput( float deltaX, float deltaY )
 	//DebugScreenText( 0.25, 0.25, format( "result:(%.1f, %.1f)  posNow:(%.1f, %.1f)  lenNow:%.2f", result.x, result.y, s_mousePad.x, s_mousePad.y, lenNow ) )
 	return result
 }
+
 
 bool function CommsMenu_HandleMoveInputControllerOnly( float x, float y )
 {
