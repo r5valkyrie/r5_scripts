@@ -30,6 +30,8 @@ global function ClApexScreens_OnStaticPropRuiVisibilityChange
 global function ClApexScreens_AddScreenOverride
 #endif
 
+global function GetCurrentPlaylistVarAsset
+
 #if CLIENT && DEVELOPER
 global function DEV_CreatePerfectApexScreen
 global function DEV_ToggleActiveApexScreenDebug
@@ -319,7 +321,7 @@ asset function CastStringToAsset( string val )
 }
 #endif
 
-#if CLIENT
+
 asset function GetCurrentPlaylistVarAsset( string varName, asset defaultAsset = $"" )
 {
 	string assetRaw = GetCurrentPlaylistVarString( varName, "" )
@@ -329,6 +331,7 @@ asset function GetCurrentPlaylistVarAsset( string varName, asset defaultAsset = 
 	return CastStringToAsset( assetRaw )
 }
 
+#if CLIENT
 vector function CastStringToFloat3( string val )
 {
 	array<string> fields = split( val, ", " )

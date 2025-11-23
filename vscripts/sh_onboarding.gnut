@@ -1182,7 +1182,15 @@ void function PlayPickLoadoutMusic( bool introCountdownEnabled )
 
 	foreach ( player in GetPlayerArray() )
 	{
-		string pickLoadoutMusicID = MusicPack_GetCharacterSelectMusic( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MusicPack() ) )
+		string pickLoadoutMusicID
+		if ( IsSoloMode() )
+			pickLoadoutMusicID = MusicPack_GetCharacterSelectMusic_Solo( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MusicPack() ) )
+		else if ( IsDuoMode() )
+			pickLoadoutMusicID = MusicPack_GetCharacterSelectMusic_Duo( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MusicPack() ) )
+		else if ( IsQuadMode() )
+			pickLoadoutMusicID = MusicPack_GetCharacterSelectMusic_Quad( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MusicPack() ) )
+		else
+			pickLoadoutMusicID = MusicPack_GetCharacterSelectMusic_Squad( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MusicPack() ) )
 		EmitSoundOnEntityOnlyToPlayer( player, player, pickLoadoutMusicID )
 	}
 

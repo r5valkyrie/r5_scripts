@@ -612,6 +612,11 @@ bool function IsSoloMode()
 	return GetCurrentPlaylistVarBool( "solo_mode", false )
 }
 
+bool function IsQuadMode()
+{
+	return GetCurrentPlaylistVarBool( "quad_mode", false )
+}
+
 bool function IsLastPlaylistSolo( entity player )
 {
 	return GetPersistentLastGameTypeFlag( player, eGameType.SOLO )

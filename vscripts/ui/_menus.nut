@@ -84,9 +84,6 @@ global function RemoveButtonEventHandler
 global function AddEventHandlerToButton
 global function AddEventHandlerToButtonClass
 global function RemoveEventHandlerFromButtonClass
-global function UIMusicUpdate
-global function PlayCustomUIMusic
-global function CancelCustomUIMusic
 global function IsMenuInMenuStack
 global function RemoveFromMenuStack
 global function GetTopNonDialogMenu
@@ -2148,100 +2145,6 @@ const array<string> WORKAROUND_UI_MUSIC_SOUND_LIST = [
 	LOOT_CEREMONY_MUSIC_P2
 ]
 
-void function UIMusicUpdate( bool wasManualMusicPackChange = false )
-{
-	int currentMusicContext  = uiGlobal.activeMusicContext
-	string currentMusicTrack = uiGlobal.activeMusicTrack
-	int desiredMusicContext  = eMenuMusicContext.NONE
-	string desiredMusicTrack = ""
-
-	if ( uiGlobal.playingVideo )
-	{
-		desiredMusicContext = eMenuMusicContext.NONE
-		desiredMusicTrack = ""
-	}
-	else if ( !IsConnected() )
-	{
-		//
-		desiredMusicContext = eMenuMusicContext.MAIN_MENU
-		desiredMusicTrack = "Music_FrontEnd"
-	}
-	else if ( IsLobby() )
-	{
-		if ( uiGlobal.desiredCustomMusicOrNull != null )
-		{
-			desiredMusicContext = eMenuMusicContext.CUSTOM
-			desiredMusicTrack = expect string(uiGlobal.desiredCustomMusicOrNull)
-		}
-		else
-		{
-			if ( IsLocalClientEHIValid() && LoadoutSlot_IsReady( LocalClientEHI(), Loadout_MusicPack() ) )
-			{
-				ItemFlavor musicPack = GetMusicPackForPlayer( GetUIPlayer() )
-				uiGlobal.WORKAROUND_activeMusicPack = musicPack
-
-				desiredMusicContext = eMenuMusicContext.LOBBY
-				if ( currentMusicContext == eMenuMusicContext.MAIN_MENU || wasManualMusicPackChange )
-					desiredMusicTrack = MusicPack_GetMainMenuToLobbyMusic( musicPack )
-				else
-					desiredMusicTrack = MusicPack_GetLobbyMusic( musicPack )
-			}
-			else
-			{
-				desiredMusicContext = currentMusicContext
-				desiredMusicTrack = currentMusicTrack
-
-				thread UpdateUIMusicOnMusicPackLoadoutSlotReadyThread()
-			}
-		}
-	}
-	else
-	{
-		desiredMusicContext = eMenuMusicContext.NONE
-		desiredMusicTrack = ""
-	}
-
-	bool changeIfDesiredMusicTrackIsDifferentEvenIfContextIsUnchanged = false
-	if ( wasManualMusicPackChange )
-		changeIfDesiredMusicTrackIsDifferentEvenIfContextIsUnchanged = true
-	if ( desiredMusicContext == eMenuMusicContext.CUSTOM )
-		changeIfDesiredMusicTrackIsDifferentEvenIfContextIsUnchanged = true
-
-	bool shouldChangeMusic = false
-	if ( desiredMusicContext != currentMusicContext )
-		shouldChangeMusic = true
-	else if ( currentMusicTrack == "" && desiredMusicTrack != "" )
-		shouldChangeMusic = true
-	else if ( currentMusicTrack != "" && desiredMusicTrack == "" )
-		shouldChangeMusic = true
-	else if ( desiredMusicTrack != currentMusicTrack && changeIfDesiredMusicTrackIsDifferentEvenIfContextIsUnchanged ) //
-		shouldChangeMusic = true
-
-	if ( shouldChangeMusic )
-	{
-		if ( desiredMusicContext != eMenuMusicContext.LOBBY )
-			uiGlobal.WORKAROUND_activeMusicPack = null
-
-		uiGlobal.activeMusicContext = desiredMusicContext
-
-		// printf( "Menu music update: %s (%s) -> %s (%s) (%s)", currentMusicTrack, DEV_GetEnumStringSafe( "eMenuMusicContext", currentMusicContext ), desiredMusicTrack, DEV_GetEnumStringSafe( "eMenuMusicContext", desiredMusicContext ), changeIfDesiredMusicTrackIsDifferentEvenIfContextIsUnchanged ? "T" : "F" )
-
-		if ( desiredMusicTrack != currentMusicTrack )
-		{
-			foreach ( string soundName in WORKAROUND_UI_MUSIC_SOUND_LIST )
-				StopUISoundByName( soundName )
-
-			if ( desiredMusicTrack != "" )
-			{
-				Assert( WORKAROUND_UI_MUSIC_SOUND_LIST.contains( desiredMusicTrack ), format( "Tried to play '%s' for UI music but its not in WORKAROUND_UI_MUSIC_SOUND_LIST", desiredMusicTrack ) )
-				EmitUISound( desiredMusicTrack )
-			}
-
-			uiGlobal.activeMusicTrack = desiredMusicTrack
-		}
-	}
-}
-
 
 void function UpdateUIMusicOnMusicPackLoadoutSlotReadyThread()
 {
@@ -2251,22 +2154,6 @@ void function UpdateUIMusicOnMusicPackLoadoutSlotReadyThread()
 	WaitForLocalClientEHI()
 	LoadoutSlot_WaitForItemFlavor( LocalClientEHI(), Loadout_MusicPack() )
 
-	UIMusicUpdate()
-}
-
-
-void function PlayCustomUIMusic( string music )
-{
-	Assert( IsConnected() && IsLobby() )
-
-	uiGlobal.desiredCustomMusicOrNull = music
-	UIMusicUpdate()
-}
-
-
-void function CancelCustomUIMusic()
-{
-	uiGlobal.desiredCustomMusicOrNull = null
 	UIMusicUpdate()
 }
 

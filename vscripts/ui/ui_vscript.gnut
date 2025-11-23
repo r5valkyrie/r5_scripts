@@ -194,15 +194,6 @@ global struct PieChartData
 	float                sum = 0.0
 }
 
-global enum eMenuMusicContext
-{
-	NONE,
-	MAIN_MENU,
-	LOBBY,
-	CUSTOM,
-}
-
-
 global struct ConfirmDialogData
 {
 	string        headerText = "headerText"

@@ -64,9 +64,6 @@ global function GetNextLootBox
 global function TEMP_GetVoidwalkerBundle
 #endif
 
-global const string LOOT_CEREMONY_MUSIC_P1 = "Music_LootCeremony_Pt1"
-global const string LOOT_CEREMONY_MUSIC_P2 = "Music_LootCeremony_Pt2"
-
 #if SERVER || CLIENT
 const float CAMERA_FOV = 35.5
 
