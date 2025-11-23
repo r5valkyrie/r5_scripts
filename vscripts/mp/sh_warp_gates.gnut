@@ -153,7 +153,7 @@ struct
 	array< entity > triggerWarpGates
 	#endif
 
-	bool devPrintsOn = true
+	bool devPrintsOn = false
 } file
 #endif // SERVER
 
