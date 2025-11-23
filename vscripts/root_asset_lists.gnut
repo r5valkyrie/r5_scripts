@@ -98,6 +98,16 @@ global const array<asset> MUSIC_PACK_ASSET_LIST =
 	$"settings/itemflav/musicpack/s04bp_assimilation.rpak",//PORTED
 	$"settings/itemflav/musicpack/s04e02.rpak",//PORTED
 	$"settings/itemflav/musicpack/s04e01.rpak",//PORTED
+    $"settings/itemflav/musicpack/s05bp_loba.rpak",//PORTED
+    $"settings/itemflav/musicpack/s05bp_season5.rpak",//PORTED
+    $"settings/itemflav/musicpack/s05e01.rpak",//PORTED
+    $"settings/itemflav/musicpack/s06bp_rampart.rpak",//PORTED
+    $"settings/itemflav/musicpack/s06bp_season6.rpak",//PORTED
+    $"settings/itemflav/musicpack/s06e01.rpak",//PORTED
+    $"settings/itemflav/musicpack/s06e02.rpak",//PORTED
+    $"settings/itemflav/musicpack/s09bp_season9.rpak",//PORTED
+    $"settings/itemflav/musicpack/s09bp_valkyrie.rpak",//PORTED
+    $"settings/itemflav/musicpack/s09e01.rpak",//PORTED
 ]
 
 
