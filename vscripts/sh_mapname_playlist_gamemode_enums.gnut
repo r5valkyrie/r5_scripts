@@ -472,7 +472,8 @@ void function PassivesAllowed_Init()
 		ePlaylists.winterexpress,
 		ePlaylists.survival_solos,
 		ePlaylists.survival_duos,
-		ePlaylists.survival
+		ePlaylists.survival,
+		ePlaylists.survival_firingrange
 	]
 
 	bool result = ( allowedPassiveGamemodes.contains( Gamemode() ) && allowedPassivePlaylists.contains( Playlist() ) )
