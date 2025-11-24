@@ -684,6 +684,7 @@ Scripts:
 	mp/_loot_ticks.nut
 	pilot/_pilot_tracking_vision.gnut
 	pilot/_pilot_passive_gas_gear.gnut
+	pilot/_pilot_passive_soft_landings.gnut
 	mp/_jump_pads.gnut
 ]
 
@@ -770,6 +771,7 @@ Scripts:
 
 	pilot/cl_pilot_tracking_vision.gnut
 	pilot/cl_pilot_passive_dash.gnut
+	pilot/cl_pilot_passive_soft_landings.gnut
 	client/cl_bleedout.gnut
 	mp/cl_jump_pads.gnut
 ]
