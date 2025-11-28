@@ -1878,6 +1878,8 @@ void function OnClientConnected( entity player )
 				
 				if( !IsValid( startEnt ) )
 					startEnt = GetAltSpawn()
+					
+				SetConVarFloat( "model_fadeRangeFraction", 8.0 )
 				
 				if( IsTitanfall2Map() )
 				{
