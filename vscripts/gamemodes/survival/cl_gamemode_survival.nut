@@ -712,14 +712,27 @@ void function OnPlayerCreated( entity player )
 
 	if( IsFiringRangeGameMode() )
 	{
-		ItemFlavor musicPack = GetMusicPackForPlayer( player )
-		string desiredMusicTrack = MusicPack_GetLobbyMusic( musicPack )
-
-		EmitSoundOnEntity( player, desiredMusicTrack )
+		thread PlayFiringRangeMusicForPlayer( player )
 	}
 	
 	if( GetCurrentPlaylistVarBool( "fs_stamina_mod", false ) && player == GetLocalClientPlayer() )
 		thread UpdateStaminaBar(player)
+}
+
+
+void function PlayFiringRangeMusicForPlayer( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	player.EndSignal( "OnDestroy" )
+
+	ItemFlavor musicPack = GetMusicPackForPlayer( player )
+	if ( !IsValid( player ) )
+		return
+
+	string desiredMusicTrack = MusicPack_GetLobbyMusic( musicPack )
+	EmitSoundOnEntity( player, desiredMusicTrack )
 }
 
 void function UpdateStaminaBar(entity player)
