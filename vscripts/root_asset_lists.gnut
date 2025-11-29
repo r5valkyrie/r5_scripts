@@ -167,6 +167,7 @@ global array<asset> WEAPON_ASSETS =
 	$"settings/itemflav/loot/main_weapon/chargerifle.rpak",
 	$"settings/itemflav/loot/main_weapon/sentinel.rpak",
 	$"settings/itemflav/loot/main_weapon/volt_smg.rpak",
+	$"settings/itemflav/loot/main_weapon/3030repeater.rpak",
 ]
 
 void function ShLoadWeaponAssetsInit()

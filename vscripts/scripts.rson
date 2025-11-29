@@ -363,6 +363,8 @@ Scripts:
 
 	weapons/mp_weapon_mounted_turret_placeable.nut
 	weapons/mp_weapon_mounted_turret_weapon.nut
+
+	weapons/mp_weapon_3030.nut
 	
 	//S0 Dev Protos
 	//Husaria
