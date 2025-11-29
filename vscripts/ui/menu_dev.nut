@@ -2,27 +2,37 @@ untyped
 
 global function InitDevMenu
 global function DEV_InitLoadoutDevSubMenu
+
 global function SetupDevCommand // for dev
 global function SetupDevFunc // for dev
 global function SetupDevMenu
+
 global function RepeatLastDevCommand
 global function UpdatePrecachedSPWeapons
 global function ServerCallback_OpenDevMenu
 global function RunCodeDevCommandByAlias
+
 global function DEV_ExecBoundDevMenuCommand
 global function DEV_InitCodeDevMenu
+
 global function UpdateCheatsState
 global function AddLevelDevCommand
 global function ChangeToThisMenu
 global function UpdateDevMenuButtons
+
 global function OnDevButton_Activate
 global function OnDevButton_GetFocus
 global function OnDevButton_LoseFocus
+
 global function BackOnePage_Activate
 global function RepeatLastCommand_Activate
 global function BindCommandToGamepad_Activate
+
 global function ClearCodeDevMenu
 global function PushPageHistory
+
+global function UI_AddSurvivalLootGroup
+global function UI_OpenSurvivalLootGroupPage
 
 global function AddUICallback_OnDevMenuLoaded
 global function GetCheatsState
@@ -45,10 +55,10 @@ struct DevCommand
 	bool                    isAMenuCommand = false
 }
 
-
 struct
 {
 	array<DevMenuPage> pageHistory = []
+	array<string>      pagePath = []
 	DevMenuPage &      currentPage
 	var                header
 	array<var>         buttons
@@ -147,39 +157,24 @@ void function AddLevelDevCommand( string label, string command )
 void function OnOpenDevMenu()
 {
 	file.pageHistory.clear()
+	file.pagePath.clear()
 	file.currentPage.devMenuFunc = null
 	file.currentPage.devMenuFuncWithOpParm = null
 	file.currentPage.devMenuOpParm = null
 	file.lastDevCommandLabelInProgress = ""
 
 	SetDevMenu_MP()
-
-	//DelayedFocusFirstButton()
 }
-
-
-//void function DelayedFocusFirstButton()
-//{
-//	//Hud_SetFocused( file.buttons[0] )
-//	//Hud_SetSelected( file.buttons[0], true )
-//	//vector screenSize = <GetScreenSize().width, GetScreenSize().height, 0>
-//	vector buttonPos = <Hud_GetAbsX( file.buttons[0] ), Hud_GetAbsY( file.buttons[1] ), 0>
-//	buttonPos += 0.5 * <Hud_GetWidth( file.buttons[0] ), -1 * Hud_GetHeight( file.buttons[0] ), 0>
-//	WarpMouseCursorDEV( <buttonPos.x, buttonPos.y, 0> )
-//}
-
 
 void function ServerCallback_OpenDevMenu()
 {
 	AdvanceMenu( GetMenu( "DevMenu" ) )
 }
 
-
 void function DEV_InitCodeDevMenu()
 {
 	thread DEV_InitCodeDevMenu_Internal()
 }
-
 
 void function DEV_InitCodeDevMenu_Internal()
 {
@@ -198,13 +193,11 @@ void function DEV_InitCodeDevMenu_Internal()
 	file.initializingCodeDevMenu = false
 }
 
-
 void function ClearCodeDevMenu()
 {
 	DevMenu_Alias_DEV( DEV_MENU_NAME, "" )
 	DevMenu_Rm_DEV( DEV_MENU_NAME )
 }
-
 
 void function UpdateDevMenuButtons()
 {
@@ -213,13 +206,12 @@ void function UpdateDevMenuButtons()
 	if ( file.initializingCodeDevMenu )
 		return
 
-	// Title:
+	string titleText = "Developer Menu"
+	foreach ( string pageName in file.pagePath )
 	{
-		string titleText = file.lastDevCommandLabelInProgress
-		if ( titleText == "" )
-			titleText = ("Developer Menu    -    " + GetActiveLevel())
-		Hud_SetText( file.header, titleText )
+		titleText += " > " + pageName
 	}
+	Hud_SetText( file.header, titleText )
 
 	if ( file.currentPage.devMenuOpParm != null )
 		file.currentPage.devMenuFuncWithOpParm( file.currentPage.devMenuOpParm )
@@ -260,7 +252,6 @@ void function SetDevMenu_MP()
 	UpdateDevMenuButtons()
 }
 
-
 void function ChangeToThisMenu( void functionref() menuFunc )
 {
 	if ( file.initializingCodeDevMenu )
@@ -274,7 +265,6 @@ void function ChangeToThisMenu( void functionref() menuFunc )
 	file.currentPage.devMenuOpParm = null
 	UpdateDevMenuButtons()
 }
-
 
 void function ChangeToThisMenu_WithOpParm( void functionref( var ) menuFuncWithOpParm, opParm = null )
 {
@@ -291,14 +281,6 @@ void function ChangeToThisMenu_WithOpParm( void functionref( var ) menuFuncWithO
 	UpdateDevMenuButtons()
 }
 
-const array<int> allowedWeaponChangeModes = [
-
-	ePlaylists.fs_dm,
-	ePlaylists.fs_1v1,
-	ePlaylists.fs_lgduels_1v1,
-	ePlaylists.fs_realistic_ttv
-]
-
 void function SetupDefaultDevCommandsMP()
 {
 	//Player is fully connected at this point, a check was made before
@@ -306,14 +288,6 @@ void function SetupDefaultDevCommandsMP()
 
 	foreach ( callback in file.OnDevMenuLoaded )
 		callback()
-	
-	if( allowedWeaponChangeModes.contains( Playlist() ) )
-	{
-		SetupDevMenu( "FSDM: Change Primary weapon", SetDevMenu_TDMPrimaryWeapons )
-		SetupDevMenu( "FSDM: Change Secondary weapon", SetDevMenu_TDMSecondaryWeapons )
-		SetupDevCommand( "FSDM: Save Current Weapons", "saveguns" )
-		SetupDevCommand( "FSDM: Reset Saved Weapons", "resetguns" )
-	}
 
 	if( GetCheatsState() )
 	{
@@ -343,7 +317,7 @@ void function SetupDefaultDevCommandsMP()
 			SetupDevMenu( "Custom: Attachments", SetDevMenu_SurvivalLoot, "attachment_custom" )
 			SetupDevCommand( "", "give blank" )
 		}
-		SetupDevMenu( "Equip Custom Loadouts", SetDevMenu_CustomCosmetics )
+		SetupDevMenu( "Equip Custom Cosmetics", SetDevMenu_CustomCosmetics )
 		SetupDevMenu( "Equip Custom Heirlooms", SetDevMenu_CustomHeirlooms )
 		SetupDevCommand( "", "give blank" )
 		SetupDevMenu( "Respawn Players", SetDevMenu_RespawnPlayers )
@@ -457,7 +431,6 @@ void function DEV_InitLoadoutDevSubMenu()
 	file.initializingCodeDevMenu = false
 }
 
-
 void function SetDevMenu_AlterLoadout( var _ )
 {
 	if ( file.initializingCodeDevMenu )
@@ -470,7 +443,6 @@ void function SetDevMenu_AlterLoadout( var _ )
 		thread ChangeToThisMenu( SetupAlterLoadout )
 	}
 }
-
 
 void function SetupAlterLoadout()
 {
@@ -490,7 +462,6 @@ void function SetupAlterLoadout()
 		} )
 	}
 }
-
 
 void function SetupAlterLoadout_CategoryScreen( string category )
 {
@@ -563,7 +534,6 @@ void function SetupAlterLoadout_CategoryScreenForCharacter( string category, str
 		entriesToUse.append( entry )
 	}
 
-
 	if ( entriesToUse.len() > 1 )
 	{
 		foreach ( LoadoutEntry entry in entriesToUse )
@@ -627,31 +597,25 @@ void function SetupAlterLoadout_SlotScreen( LoadoutEntry entry )
 	}
 }
 
-
 void function SetDevMenu_OverrideSpawnSurvivalCharacter( var _ )
 {
 	thread ChangeToThisMenu( SetupOverrideSpawnSurvivalCharacter )
 }
-
 
 void function SetDevMenu_Survival( var _ )
 {
 	thread ChangeToThisMenu( SetupSurvival )
 }
 
-
 void function SetDevMenu_SurvivalLoot( var categories )
 {
 	thread ChangeToThisMenu_WithOpParm( SetupSurvivalLoot, categories )
 }
 
-
 void function SetDevMenu_SurvivalIncapShieldBots( var _ )
 {
 	thread ChangeToThisMenu( SetupSurvivalIncapShieldBot )
 }
-
-
 
 void function ChangeToThisMenu_PrecacheWeapons( void functionref() menuFunc )
 {
@@ -670,7 +634,6 @@ void function ChangeToThisMenu_PrecacheWeapons( void functionref() menuFunc )
 	UpdateDevMenuButtons()
 }
 
-
 void function ChangeToThisMenu_PrecacheWeapons_WithOpParm( void functionref( var ) menuFuncWithOpParm, opParm = null )
 {
 	if ( file.initializingCodeDevMenu )
@@ -687,7 +650,6 @@ void function ChangeToThisMenu_PrecacheWeapons_WithOpParm( void functionref( var
 	file.currentPage.devMenuOpParm = opParm
 	UpdateDevMenuButtons()
 }
-
 
 void function PrecacheWeaponsIfNecessary()
 {
@@ -708,7 +670,6 @@ void function PrecacheWeaponsIfNecessary()
 	AdvanceMenu( GetMenu( "DevMenu" ) )
 }
 
-
 void function UpdatePrecachedSPWeapons()
 {
 	file.precachedWeapons = true
@@ -717,11 +678,6 @@ void function UpdatePrecachedSPWeapons()
 void function SetDevMenu_RespawnPlayers( var _ )
 {
 	ChangeToThisMenu( SetupRespawnPlayersDevMenu )
-}
-
-void function SetDevMenu_CustomHeirlooms( var _ )
-{
-	ChangeToThisMenu( SetupHeirloomsDevMenu )
 }
 
 void function SetupRespawnPlayersDevMenu()
@@ -735,6 +691,11 @@ void function SetupRespawnPlayersDevMenu()
 	SetupDevCommand( "Respawn dead bots", "respawn deadbots" )
 	SetupDevCommand( "Respawn my teammates", "respawn allies" )
 	SetupDevCommand( "Respawn my enemies", "respawn enemies" )
+}
+
+void function SetDevMenu_CustomHeirlooms( var _ )
+{
+	ChangeToThisMenu( SetupHeirloomsDevMenu )
 }
 
 void function SetupHeirloomsDevMenu()
@@ -826,7 +787,6 @@ void function SetDevMenu_RespawnOverride( var _ )
 	ChangeToThisMenu( SetupRespawnOverrideDevMenu )
 }
 
-
 void function SetupRespawnOverrideDevMenu()
 {
 	SetupDevCommand( "Use gamemode behaviour", "set_respawn_override off" )
@@ -835,12 +795,10 @@ void function SetupRespawnOverrideDevMenu()
 	SetupDevCommand( "Override: Allow bot respawning", "set_respawn_override allowbots" )
 }
 
-
 void function SetDevMenu_ThreatTracker( var _ )
 {
 	ChangeToThisMenu( SetupThreatTrackerDevMenu )
 }
-
 
 void function SetupThreatTrackerDevMenu()
 {
@@ -855,12 +813,10 @@ void function SetupThreatTrackerDevMenu()
 	SetupDevCommand( "Console Debug Level 3", "script ThreatTracker_SetDebugLevel( 3 )" )
 }
 
-
 void function SetDevMenu_HighVisNPCTest( var _ )
 {
 	ChangeToThisMenu( SetupHighVisNPCTest )
 }
-
 
 void function SetupHighVisNPCTest()
 {
@@ -924,7 +880,6 @@ void function RunCodeDevCommandByAlias( string alias )
 	RunDevCommand( file.codeDevMenuCommands[alias], false )
 }
 
-
 void function SetupDevCommand( string label, string command )
 {
 	if ( command.slice( 0, 5 ) == "give " )
@@ -944,7 +899,6 @@ void function SetupDevCommand( string label, string command )
 	}
 }
 
-
 void function SetupDevFunc( string label, void functionref( var ) func, var opParm = null )
 {
 	DevCommand cmd
@@ -961,7 +915,6 @@ void function SetupDevFunc( string label, void functionref( var ) func, var opPa
 		DevMenu_Alias_DEV( codeDevMenuAlias, codeDevMenuCommand )
 	}
 }
-
 
 void function SetupDevMenu( string label, void functionref( var ) func, var opParm = null )
 {
@@ -982,7 +935,6 @@ void function SetupDevMenu( string label, void functionref( var ) func, var opPa
 	}
 }
 
-
 void function OnDevButton_Activate( var button )
 {
 	if ( level.ui.disableDev )
@@ -990,13 +942,16 @@ void function OnDevButton_Activate( var button )
 		Warning( "Dev commands disabled on matchmaking servers." )
 		return
 	}
-
 	int buttonID   = int( Hud_GetScriptID( button ) )
 	DevCommand cmd = file.devCommands[buttonID]
 
+	if ( cmd.isAMenuCommand )
+	{
+		string menuName = cmd.label.slice( 0, cmd.label.len() - 3 )
+		file.pagePath.append( menuName )
+	}
 	RunDevCommand( cmd, false )
 }
-
 
 void function OnDevButton_GetFocus( var button )
 {
@@ -1013,26 +968,24 @@ void function OnDevButton_GetFocus( var button )
 	file.focusedCmdIsAssigned = true
 }
 
-
 void function OnDevButton_LoseFocus( var button )
 {
 }
 
-
 void function RunDevCommand( DevCommand cmd, bool isARepeat )
 {
-	if ( !isARepeat )
+	if ( !isARepeat && !cmd.isAMenuCommand )
 	{
-		if ( file.lastDevCommandLabelInProgress.len() > 0 )
-			file.lastDevCommandLabelInProgress += "  "
-		file.lastDevCommandLabelInProgress += cmd.label
-
-		if ( !cmd.isAMenuCommand )
+		file.lastDevCommand = cmd
+		file.lastDevCommandAssigned = true
+		string pathString = ""
+		foreach ( int i, pageName in file.pagePath )
 		{
-			file.lastDevCommand = cmd
-			file.lastDevCommandAssigned = true
-			file.lastDevCommandLabel = file.lastDevCommandLabelInProgress
+			pathString += pageName + " > "
 		}
+		pathString += cmd.label
+		file.lastDevCommandLabel = pathString
+		RefreshRepeatLastDevCommandPrompts()
 	}
 
 	if ( cmd.command != "" )
@@ -1043,17 +996,12 @@ void function RunDevCommand( DevCommand cmd, bool isARepeat )
 			CloseAllMenus()
 			AdvanceMenu( GetMenu( "LobbyMenu" ) )
 		}
-		else
-		{
-			//CloseAllMenus() // Temporarily disable dev menu closing itself - todo: revert this later, -lorrylekral
-		}
 	}
 	else
 	{
 		cmd.func( cmd.opParm )
 	}
 }
-
 
 void function RepeatLastDevCommand( var _ )
 {
@@ -1063,12 +1011,10 @@ void function RepeatLastDevCommand( var _ )
 	RunDevCommand( file.lastDevCommand, true )
 }
 
-
 void function RepeatLastCommand_Activate( var button )
 {
 	RepeatLastDevCommand( null )
 }
-
 
 void function PushPageHistory()
 {
@@ -1077,7 +1023,6 @@ void function PushPageHistory()
 		file.pageHistory.push( clone page )
 }
 
-
 void function BackOnePage_Activate()
 {
 	if ( file.pageHistory.len() == 0 )
@@ -1085,11 +1030,12 @@ void function BackOnePage_Activate()
 		CloseActiveMenu( true )
 		return
 	}
+	if ( file.pagePath.len() > 0 )
+		file.pagePath.pop()
 
 	file.currentPage = file.pageHistory.pop()
 	UpdateDevMenuButtons()
 }
-
 
 void function RefreshRepeatLastDevCommandPrompts()
 {
@@ -1108,7 +1054,6 @@ void function RefreshRepeatLastDevCommandPrompts()
 	Hud_SetText( file.footerHelpTxtLabel, newText )
 }
 
-
 bool function AreOnDefaultDevCommandMenu()
 {
 	if ( file.currentPage.devMenuFunc == SetupDefaultDevCommandsMP )
@@ -1116,7 +1061,6 @@ bool function AreOnDefaultDevCommandMenu()
 
 	return false
 }
-
 
 void function BindCommandToGamepad_Activate( var button )
 {
@@ -1153,7 +1097,6 @@ void function BindCommandToGamepad_Activate( var button )
 	CloseAllMenus()
 }
 
-
 bool function BindCommandToGamepad_ShouldShow()
 {
 	if ( !file.focusedCmdIsAssigned )
@@ -1162,7 +1105,6 @@ bool function BindCommandToGamepad_ShouldShow()
 		return false
 	return true
 }
-
 
 void function DEV_ExecBoundDevMenuCommand()
 {
@@ -1207,7 +1149,6 @@ void function SetupChangeCharacterModel()
 		SetupDevCommand( "Pete", "Flowstate_AssignCustomCharacterFromMenu 16" )
 	#endif
 }
-
 
 void function SetupOverrideSpawnSurvivalCharacter()
 {
@@ -1539,7 +1480,6 @@ void function SetupSurvival()
 		SetupDevCommand( "Drop My Death Box", "script thread SURVIVAL_Death_DropLoot_Internal( gp()[0], null, 100, true )" )
 	#endif
 }
-
 
 void function SetupSurvivalLoot( var categories )
 {
@@ -1943,4 +1883,16 @@ void function SetupCustomCosmetics_SlotScreen( LoadoutEntry entry )
 			DEV_RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), entry, flav )
 		} )
 	}
+}
+
+void function UI_AddSurvivalLootGroup( string label, string groupName )
+{
+	SetupDevMenu( label, UI_OpenSurvivalLootGroupPage, groupName )
+}
+
+void function UI_OpenSurvivalLootGroupPage( var groupName )
+{
+	thread ChangeToThisMenu_WithOpParm( void function( var gName ) {
+		RunClientScript( "PopulateSurvivalLootGroup", gName )
+	}, groupName )
 }

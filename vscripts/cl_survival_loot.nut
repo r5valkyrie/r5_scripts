@@ -12,6 +12,7 @@ global function AttachmentTags
 global function UpdateLootRuiWithData
 global function LootGoesInPack
 global function SetupSurvivalLoot
+global function PopulateSurvivalLootGroup
 global function SetupCustomLoot
 global function SURVIVAL_Loot_QuickSwap
 global function SURVIVAL_Loot_UpdateRuiLastUseTime
@@ -1567,7 +1568,6 @@ entity function GetEntityPlayerIsLookingAt( entity player, array<entity> ents, f
 	return theEnt
 }
 
-
 entity function GetPropSurvivalUseEntity( entity player )
 {
 	entity useEnt = player.GetUsePromptEntity() != null ? player.GetUsePromptEntity() : file.crosshairEntity
@@ -1586,7 +1586,6 @@ entity function GetPropSurvivalUseEntity( entity player )
 	return useEnt
 }
 
-
 float function GetFovScalar( entity player )
 {
 	float fov     = DEFAULT_FOV
@@ -1601,7 +1600,6 @@ float function GetFovScalar( entity player )
 	return DEFAULT_FOV / fov
 }
 
-
 void function DumpAttachmentTags()
 {
 	var attachmentMatrix = GetDataTable( $"datatable/weapon_attachment_matrix.rpak" )
@@ -1613,7 +1611,6 @@ void function DumpAttachmentTags()
 	}
 }
 
-
 AttachmentTagData function AttachmentTags( string attachment )
 {
 	AttachmentData aData = GetAttachmentData( attachment )
@@ -1622,48 +1619,162 @@ AttachmentTagData function AttachmentTags( string attachment )
 
 void function SetupSurvivalLoot( var categories )
 {
-	string cats              = expect string( categories )
+	string cats = expect string( categories )
 	array<string> stringCats = split( cats, " " )
-	
+
 	if( GetCurrentPlaylistVarBool( "custom_loot", true ) )
 	{
-		if (stringCats.contains("attachment_custom"))
-		{
-			SetupCustomLoot( "attachment", true )
-			return	
-		}
-
-		if (stringCats.contains("weapon_custom"))
-		{
-			SetupCustomLoot( "main_weapon", false )
-			return	
-		}
+		if (stringCats.contains("attachment_custom")) { SetupCustomLoot( "attachment", true ); return }
+		if (stringCats.contains("weapon_custom")) { SetupCustomLoot( "main_weapon", false ); return }
 	}
-	
-	// turn menu strings into real category enums
+
 	array<int> catTypes
 	foreach( string cat in stringCats )
 		catTypes.append( SURVIVAL_Loot_GetLootTypeFromString( cat ) )
 
-	// // HACK
 	if ( catTypes.contains( eLootType.ATTACHMENT ) )
 		RunUIScript( "SetupDevCommand", "Spawn All Optics", "script SpawnAllOptics()" )
 
-	// flip thru all the loot and find the ones that match the cats we want to display
+	table<string, int> groupCounts
+	
 	foreach ( ref, data in SURVIVAL_Loot_GetLootDataTable() )
 	{
-		if ( !IsLootTypeValid( data.lootType ) )
-			continue
+		if ( !ShouldProcessLoot( data, catTypes ) ) continue
 
-		if ( !catTypes.contains( data.lootType ) )
-			continue
+		string groupName = GetLootGroupName( data )
 		
-		if (data.lootType == eLootType.ATTACHMENT && IsCustomAttachment(data)) continue
-		if (data.lootType == eLootType.MAINWEAPON && IsCustomWeapon(data)) continue
-
-		string displayString = CreateLootDisplayString( data )
-		RunUIScript( "SetupDevCommand", displayString, "script SpawnGenericLoot( \"" + data.ref + "\", gp()[0].GetOrigin(), <-1,-1,-1>, " + data.countPerDrop + " )" )
+		if ( !( groupName in groupCounts ) )
+			groupCounts[groupName] <- 0
+			
+		groupCounts[groupName]++
 	}
+
+	array<string> sortedKeys
+	foreach ( key, val in groupCounts )
+		sortedKeys.append( key )
+	sortedKeys.sort()
+
+	foreach ( string groupName in sortedKeys )
+	{
+		int count = groupCounts[groupName]
+
+		if ( count > 1 || groupName == "Hopups" || groupName == "Optics" )
+		{
+			RunUIScript( "UI_AddSurvivalLootGroup", groupName, groupName )
+		}
+		else
+		{
+			foreach ( ref, data in SURVIVAL_Loot_GetLootDataTable() )
+			{
+				if ( !ShouldProcessLoot( data, catTypes ) ) continue
+				if ( GetLootGroupName( data ) != groupName ) continue
+
+				string displayString = CreateLootDisplayString( data )
+				RunUIScript( "SetupDevCommand", displayString, "script SpawnGenericLoot( \"" + data.ref + "\", gp()[0].GetOrigin(), <-1,-1,-1>, " + data.countPerDrop + " )" )
+				break 
+			}
+		}
+	}
+}
+
+void function PopulateSurvivalLootGroup( var groupNameVal )
+{
+	string targetGroup = expect string( groupNameVal )
+	array<LootData> itemsInGroup
+
+	foreach ( ref, data in SURVIVAL_Loot_GetLootDataTable() )
+	{
+		if ( !IsLootTypeValid( data.lootType ) ) continue
+		if ( GetLootGroupName( data ) == targetGroup )
+			itemsInGroup.append( data )
+	}
+
+	itemsInGroup.sort( int function( LootData a, LootData b ) {
+		bool sortByName = false
+		if ( a.lootType == eLootType.ATTACHMENT )
+		{
+			if ( a.ref.find( "optic" ) > -1 || a.ref.find( "hopup" ) > -1 )
+				sortByName = true
+		}
+
+		if ( sortByName )
+		{
+			string nameA = Localize( a.pickupString )
+			string nameB = Localize( b.pickupString )
+			if ( nameA < nameB ) return -1
+			if ( nameA > nameB ) return 1
+			return 0
+		}
+		
+		if ( a.tier < b.tier ) return -1
+		if ( a.tier > b.tier ) return 1
+		return 0
+	} )
+
+	foreach ( LootData data in itemsInGroup )
+	{
+		string buttonLabel = ""
+		
+		if ( targetGroup == "Optics" || targetGroup == "Hopups" )
+		{
+			buttonLabel = Localize( data.pickupString )
+		}
+		else
+		{
+			string tierDesc = ""
+			
+			if ( data.tier == 0 ) 
+			{
+				tierDesc = "[Base]"
+			}
+			else 
+			{
+				tierDesc = "[Lv " + data.tier + "]"
+				if ( data.tier == 4 ) tierDesc += " (Gold)"
+				else if ( data.tier == 3 ) tierDesc += " (Purple)"
+				else if ( data.tier == 2 ) tierDesc += " (Blue)"
+			}
+
+			buttonLabel = targetGroup + " " + tierDesc
+		}
+
+		string cmd = "script SpawnGenericLoot( \"" + data.ref + "\", gp()[0].GetOrigin(), <-1,-1,-1>, " + data.countPerDrop + " )"
+		RunUIScript( "SetupDevCommand", buttonLabel, cmd )
+	}
+}
+
+bool function ShouldProcessLoot( LootData data, array<int> catTypes )
+{
+	if ( !IsLootTypeValid( data.lootType ) ) return false
+	if ( !catTypes.contains( data.lootType ) ) return false
+	if ( data.lootType == eLootType.ATTACHMENT && IsCustomAttachment(data) ) return false
+	if ( data.lootType == eLootType.MAINWEAPON && IsCustomWeapon(data) ) return false
+	return true
+}
+
+string function GetLootGroupName( LootData data )
+{
+	if ( data.lootType == eLootType.ATTACHMENT )
+	{
+		if ( data.ref.find( "optic" ) > -1 ) 
+			return "Optics"
+			
+		if ( data.ref.find( "hopup" ) > -1 ) 
+			return "Hopups"
+	}
+
+	string fullName = Localize( data.pickupString )
+	if ( fullName == "" ) return "Unknown Item"
+
+	int dashIndex = fullName.find( " - " )
+	if ( dashIndex > 0 )
+		return fullName.slice( 0, dashIndex )
+
+	int parenIndex = fullName.find( " (" )
+	if ( parenIndex > 0 )
+		return fullName.slice( 0, parenIndex )
+		
+	return fullName
 }
 
 void function SetupCustomLoot( var categories, bool isAttachment = false)
@@ -1716,7 +1827,6 @@ string function CreateLootDisplayString( LootData data )
 
 	return displayString
 }
-
 
 bool function ShouldAppendLootLevel( LootData data )
 {
