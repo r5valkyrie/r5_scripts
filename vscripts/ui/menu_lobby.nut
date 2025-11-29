@@ -58,6 +58,7 @@ global table<string, asset> MapAssets = {
 	[ "mp_rr_arena_composite" ] = $"rui/menu/maps/mp_rr_arena_composite_big_icon",
 	[ "mp_rr_party_crasher" ] = $"rui/menu/maps/mp_rr_party_crasher_big_icon",
 	[ "mp_rr_arena_phase_runner" ] = $"rui/menu/maps/mp_rr_arena_phase_runner_big_icon",
+	[ "mp_rr_arena_skygarden" ] = $"rui/menu/maps/mp_rr_arena_skygarden_big_icon",
 	[ "mp_rr_aqueduct" ] = $"rui/menu/maps/mp_rr_aqueduct_big_icon",
 	[ "mp_rr_olympus" ] = $"rui/menu/maps/mp_rr_olympus_big_icon",
 	[ "mp_rr_olympus_tt" ] = $"rui/menu/maps/mp_rr_olympus_tt_big_icon",
@@ -86,6 +87,7 @@ global table<string, asset> MapAssetsSquare = {
 	[ "mp_rr_arena_composite" ] = $"rui/menu/maps/mp_rr_arena_composite_square_icon",
 	[ "mp_rr_party_crasher" ] = $"rui/menu/maps/mp_rr_party_crasher_square_icon",
 	[ "mp_rr_arena_phase_runner" ] = $"rui/menu/maps/mp_rr_arena_phase_runner_square_icon",
+	[ "mp_rr_arena_skygarden" ] = $"rui/menu/maps/mp_rr_arena_skygarden_square_icon",
 	[ "mp_rr_aqueduct" ] = $"rui/menu/maps/mp_rr_aqueduct_square_icon",
 	[ "mp_rr_olympus" ] = $"rui/menu/maps/mp_rr_olympus_square_icon",
 	[ "mp_rr_olympus_tt" ] = $"rui/menu/maps/mp_rr_olympus_tt_square_icon",
@@ -114,6 +116,7 @@ global table<string, string> MapNames = {
 	[ "mp_rr_desertlands_mu2" ] = "World's Edge S6",
 	[ "mp_rr_arena_composite" ] = "Drop Off",
 	[ "mp_rr_party_crasher" ] = "Party Crasher",
+	[ "mp_rr_arena_skygarden" ] = "Encore",
 	[ "mp_rr_aqueduct" ] = "Overflow",
 	[ "mp_rr_arena_empty" ] = "Creative",
 	[ "mp_rr_arena_phase_runner" ] = "Phase Runner",
@@ -150,7 +153,7 @@ void function InitLobbyMenu( var newMenuArg )
 
 	AddMenuVarChangeHandler( "isFullyConnected", UpdateFooterOptions )
 	AddMenuVarChangeHandler( "isPartyLeader", UpdateFooterOptions )
-	
+
 	#if DURANGO_PROG
 		AddMenuVarChangeHandler( "DURANGO_canInviteFriends", UpdateFooterOptions )
 		AddMenuVarChangeHandler( "DURANGO_isJoinable", UpdateFooterOptions )
@@ -187,7 +190,7 @@ void function InitLobbyMenu( var newMenuArg )
 	HudElem_SetRuiArg( DcButton, "icon", $"rui/menu/lobby/dc_icon" )
 	HudElem_SetRuiArg( DcButton, "shortcutText", "%[STICK2|]%" )
 	Hud_AddEventHandler( DcButton, UIE_CLICK, DCButton_OnActivate )
-	
+
 	var BlogButton = Hud_GetChild( menu, "BlogButton" )
 	file.BlogButton = BlogButton
 	ToolTipData blogToolTip
@@ -485,7 +488,9 @@ void function NewsButton_OnActivate( var button )
 	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
 		return
 
-	AdvanceMenu( GetMenu( "R5RNews" ) )
+	LaunchExternalWebBrowser( "https://blog.playvalkyrie.org/", WEBBROWSER_FLAG_NONE )
+
+	//AdvanceMenu( GetMenu( "R5RNews" ) )
 }
 
 
@@ -570,7 +575,7 @@ void function OnLobbyMenu_NavigateBack()
 	{
 		if(pmatch_MenuOpen)
 			return
-			
+
 		TabData tabData = GetTabDataForPanel( file.menu )
 		ActivateTab( tabData, 0 )
 	}
