@@ -1,4 +1,4 @@
-IsTestMap: true
+IsTestMap: false
 When: "SERVER"
 Scripts:
 [
