@@ -38,7 +38,7 @@ global const table<string, bool> FEATURE_FLAGS_TBL = {
 	HAS_WARP_GATES          = true,
 	HAS_RANDOMIZED_TRAINING = true,
 	HAS_MOBILE_RESPAWN 		= true,
-	HAS_EVOLVING_ARMOR 		= true,
+	HAS_EVOLVING_ARMOR 		= false,
 	HAS_VALK 				= true,
 }
 
