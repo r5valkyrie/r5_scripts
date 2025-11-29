@@ -757,7 +757,7 @@ void function PS4_PSNSignIn()
 			SetLaunchState( eLaunchState.WAIT_TO_CONTINUE, Localize( "#PS4_DISCONNECT_NOT_SIGNED_IN_TO_PSN" ), Localize( "#MAINMENU_SIGN_IN" ) )
 		}
 		else
-		{		
+		{
 			//printt( "!!!!!!!!!!!!!!!!!!!!!!!!! PS4_getUserNetworkingResolution", PS4_getUserNetworkingResolution() )
 			//printt( "!!!!!!!!!!!!!!!!!!!!!!!!! Ps4_PSN_Is_Loggedin", Ps4_PSN_Is_Loggedin() )
 
@@ -847,7 +847,7 @@ bool function IsSteamInitialized()
 
 bool function IsPTUGame()
 {
-	return true
+	return false
 }
 
 
