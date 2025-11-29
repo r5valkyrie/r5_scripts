@@ -41,6 +41,10 @@ global function ShHoverVehicle_Init
 
 #if SERVER
 global function DEV_TpToTestArea1
+global function CodeCallback_EmbarkVehicleStart
+global function CodeCallback_EmbarkVehicleFinished
+global function CodeCallback_DisembarkVehicleStart
+global function CodeCallback_DisembarkVehicleFinished
 #endif
 
 #if CLIENT
@@ -134,8 +138,20 @@ float SPEEDOMETER_REFRESH_RATE = 0.05
 
 // Model asset
 asset HOVER_VEHICLE_MODEL = $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl"
-bool ENABLE_TRIDENT_ANIMS = false
-string HOVER_VEHICLE_SCRIPTNAME = "flowstate_trident" 
+bool ENABLE_TRIDENT_ANIMS = true
+string HOVER_VEHICLE_SCRIPTNAME = "hover_vehicle" 
+const string SIG_DRIVER_EMBARK_FINISHED = "VEHICLE_DRIVER_EMBARK_FINISHED"
+const string SIG_VEHICLE_EMBARK_BEGIN = "VEHICLE_EMBARK_BEGIN"
+const string SIG_HOVERVEHICLE_OCCUPANT_STATS_STARTED = "HOVERVEHICLE_OCCUPANT_STATS_STARTED"
+
+const int HOVER_VEHICLE_SEAT_DRIVER = 0
+const int HOVER_VEHICLE_SEAT_PASSENGER_LEFT = 1
+const int HOVER_VEHICLE_SEAT_PASSENGER_RIGHT = 2
+const int HOVER_VEHICLE_SEAT_INVALID = -1
+const array<int> HOVER_VEHICLE_SEAT_ORDER = [ HOVER_VEHICLE_SEAT_DRIVER, HOVER_VEHICLE_SEAT_PASSENGER_LEFT, HOVER_VEHICLE_SEAT_PASSENGER_RIGHT ]
+const string HOVER_VEHICLE_DRIVER_ATTACHMENT = "driver"
+const string HOVER_VEHICLE_PASSENGER_LEFT_ATTACHMENT = "passenger1"
+const string HOVER_VEHICLE_PASSENGER_RIGHT_ATTACHMENT = "passenger0"
 
 // Debug Draws
 bool PUSHERS_ENABLE_DEBUG_DRAWS = false
@@ -146,7 +162,22 @@ struct {
 	#if CLIENT
 	var activeQuickHint2
 	#endif
+
+	#if SERVER
+	table seatEmbarkAnims
+	table seatDisembarkAnims
+	table seatOverrides
+	#endif
 } file
+
+#if SERVER
+void function HoverVehicle_DebugPrint( string msg )
+{
+	if ( !ENABLE_HOVER_DEBUG_PRINTS )
+		return
+	printt( "[HOVER ANIM]", msg )
+}
+#endif
 
 void function ShHoverVehicle_Init()
 {
@@ -162,11 +193,16 @@ void function ShHoverVehicle_Init()
 		#endif
 		
 		RegisterSignal("NewTridentAnim")
+		RegisterSignal( SIG_VEHICLE_EMBARK_BEGIN )
+		RegisterSignal( SIG_DRIVER_EMBARK_FINISHED )
+		RegisterSignal( SIG_HOVERVEHICLE_OCCUPANT_STATS_STARTED )
 		RegisterSignal("StopDriving")
 		RegisterSignal("PlayerStoppedDriving")
 		
 		AddSpawnCallbackEditorClass( "player_vehicle", "hover_vehicle", EditorSpawnCallbackForPlacedHoverVehicle )
 		AddCallback_CanStartCustomWeaponActivity( ACT_VM_WEAPON_INSPECT, CanDriverInspect )
+		HoverVehicle_InitAnims()
+		file.seatOverrides = {}
 		
 		// BleedoutState_AddCallback_OnPlayerBleedoutStateChanged( OnPlayerBleedoutStateChanged )
 		// AddCallback_OnPlayerKilled( Vehicle_KickPlayer_OnPlayerKilled )
@@ -256,6 +292,288 @@ entity function GetValidParentOrGrandparentHoverVehicle( entity player )
 
 	return null
 }
+
+#if SERVER
+void function HoverVehicle_InitAnims()
+{
+	if ( !ENABLE_TRIDENT_ANIMS )
+		return
+
+	file.seatEmbarkAnims = {}
+	file.seatDisembarkAnims = {}
+
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_DRIVER, -200, "", "pilot_hovercraft_driver_mount_above" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_DRIVER, -180, "", "pilot_hovercraft_driver_mount_rear" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_DRIVER, -135, "", "pilot_hovercraft_driver_mount_right" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_DRIVER,  -45, "", "pilot_hovercraft_driver_mount_front" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_DRIVER,   45, "", "pilot_hovercraft_driver_mount_left" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_DRIVER,  135, "", "pilot_hovercraft_driver_mount_rear" )
+
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_RIGHT, -180, "ptpov_hovercraft_Rside_mount_rear", "pilot_hovercraft_Rside_mount_rear" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_RIGHT, -160, "ptpov_hovercraft_Rside_mount_sideback", "pilot_hovercraft_Rside_mount_sideback" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_RIGHT, -135, "ptpov_hovercraft_Rside_mount_side", "pilot_hovercraft_Rside_mount_side" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_RIGHT,  -45, "ptpov_hovercraft_Rside_mount_sidefront", "pilot_hovercraft_Rside_mount_sidefront" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_RIGHT,  -10, "ptpov_hovercraft_Rside_mount_across", "pilot_hovercraft_Rside_mount_across" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_RIGHT,  135, "ptpov_hovercraft_Rside_mount_rear", "pilot_hovercraft_Rside_mount_rear" )
+
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_LEFT, -180, "ptpov_hovercraft_Lside_mount_rear", "pilot_hovercraft_Lside_mount_rear" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_LEFT, -135, "ptpov_hovercraft_Lside_mount_across", "pilot_hovercraft_Lside_mount_across" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_LEFT,   10, "ptpov_hovercraft_Lside_mount_sidefront", "pilot_hovercraft_Lside_mount_sidefront" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_LEFT,   45, "ptpov_hovercraft_Lside_mount_side", "pilot_hovercraft_Lside_mount_side" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_LEFT,  135, "ptpov_hovercraft_Lside_mount_sideback", "pilot_hovercraft_Lside_mount_sideback" )
+	HoverVehicle_SeatAddEmbarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_LEFT,  160, "ptpov_hovercraft_Lside_mount_rear", "pilot_hovercraft_Lside_mount_rear" )
+
+	HoverVehicle_SeatAddDisembarkAnim( HOVER_VEHICLE_SEAT_DRIVER, "ptpov_hovercraft_driver_dismount_left", "pilot_hovercraft_driver_dismount_left" )
+	HoverVehicle_SeatAddDisembarkAnim( HOVER_VEHICLE_SEAT_DRIVER, "ptpov_hovercraft_driver_dismount_right", "pilot_hovercraft_driver_dismount_right" )
+	//
+	HoverVehicle_SeatAddDisembarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_RIGHT, "ptpov_hovercraft_Rside_dismount_back", "pilot_hovercraft_Rside_dismount_back" )
+	HoverVehicle_SeatAddDisembarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_RIGHT, "ptpov_hovercraft_Rside_dismount_front", "pilot_hovercraft_Rside_dismount_front" )
+	HoverVehicle_SeatAddDisembarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_RIGHT, "ptpov_hovercraft_Rside_dismount_side", "pilot_hovercraft_Rside_dismount_side" )
+	//
+	HoverVehicle_SeatAddDisembarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_LEFT, "ptpov_hovercraft_Lside_dismount_back", "pilot_hovercraft_Lside_dismount_back" )
+	HoverVehicle_SeatAddDisembarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_LEFT, "ptpov_hovercraft_Lside_dismount_front", "pilot_hovercraft_Lside_dismount_front" )
+	HoverVehicle_SeatAddDisembarkAnim( HOVER_VEHICLE_SEAT_PASSENGER_LEFT, "ptpov_hovercraft_Lside_dismount_side", "pilot_hovercraft_Lside_dismount_side" )
+}
+
+void function HoverVehicle_SeatAddEmbarkAnim( int seat, float yawDegrees, string firstPersonAnim, string thirdPersonAnim )
+{
+	if ( seat == HOVER_VEHICLE_SEAT_INVALID )
+		return
+
+	if ( !( seat in file.seatEmbarkAnims ) )
+		file.seatEmbarkAnims[seat] <- []
+
+	array seatDefs = expect array( file.seatEmbarkAnims[seat] )
+	table entry = { yaw = yawDegrees, firstPersonAnim = firstPersonAnim, thirdPersonAnim = thirdPersonAnim }
+	seatDefs.append( entry )
+	file.seatEmbarkAnims[seat] = seatDefs
+}
+
+void function HoverVehicle_SeatAddDisembarkAnim( int seat, string firstPersonAnim, string thirdPersonAnim )
+{
+	if ( seat == HOVER_VEHICLE_SEAT_INVALID )
+		return
+
+	if ( !( seat in file.seatDisembarkAnims ) )
+		file.seatDisembarkAnims[seat] <- []
+
+	array seatDefs = expect array( file.seatDisembarkAnims[seat] )
+	table entry = { firstPersonAnim = firstPersonAnim, thirdPersonAnim = thirdPersonAnim }
+	seatDefs.append( entry )
+	file.seatDisembarkAnims[seat] = seatDefs
+}
+
+table ornull function HoverVehicle_SelectEmbarkAnim( int seat, float relativeYaw )
+{
+	if ( !( seat in file.seatEmbarkAnims ) )
+		return null
+
+	array seatDefs = expect array( file.seatEmbarkAnims[seat] )
+	if ( seatDefs.len() == 0 )
+		return null
+
+	table best = expect table( seatDefs[0] )
+	float bestDelta = 9999.0
+	foreach ( var defRaw in seatDefs )
+	{
+		table def = expect table( defRaw )
+		float delta = fabs( AngleNormalize( relativeYaw - expect float( def.yaw ) ) )
+		if ( delta < bestDelta )
+		{
+			bestDelta = delta
+			best = def
+		}
+	}
+
+	return best
+}
+
+table ornull function HoverVehicle_SelectDisembarkAnim( int seat )
+{
+	if ( !( seat in file.seatDisembarkAnims ) )
+		return null
+
+	array seatDefs = expect array( file.seatDisembarkAnims[seat] )
+	if ( seatDefs.len() == 0 )
+		return null
+
+	return expect table( seatDefs[ RandomInt( seatDefs.len() ) ] )
+}
+
+void function HoverVehicle_PlaySeatEmbarkAnim( entity player, entity vehicle )
+{
+	if ( !HoverVehicle_ShouldPlaySeatAnim( player, vehicle ) )
+		return
+
+	int seat = HoverVehicle_DetermineSeatForPlayer( player, vehicle )
+	if ( seat == HOVER_VEHICLE_SEAT_INVALID )
+		return
+	player.Signal( "VEHICLE_EMBARK_BEGIN" )
+	float relativeYaw = HoverVehicle_CalcRelativeYaw( player, vehicle )
+	table ornull def = HoverVehicle_SelectEmbarkAnim( seat, relativeYaw )
+	if ( def == null )
+		return
+
+	table defTable = expect table( def )
+	HoverVehicle_DebugPrint( format( "Embark seat %d yaw %.1f -> %s / %s", seat, relativeYaw, defTable.firstPersonAnim, defTable.thirdPersonAnim ) )
+	HoverVehicle_ExecuteSeatAnim( player, expect string( defTable.firstPersonAnim ), expect string( defTable.thirdPersonAnim ), vehicle, seat, true )
+}
+
+void function HoverVehicle_PlaySeatDisembarkAnim( entity player, entity vehicle )
+{
+	if ( !HoverVehicle_ShouldPlaySeatAnim( player, vehicle ) )
+		return
+
+	int seat = HoverVehicle_DetermineSeatForPlayer( player, vehicle )
+	if ( seat == HOVER_VEHICLE_SEAT_INVALID )
+		return
+
+	table ornull def = HoverVehicle_SelectDisembarkAnim( seat )
+	if ( def == null )
+		return
+
+	table defTable = expect table( def )
+	HoverVehicle_DebugPrint( format( "Disembark seat %d -> %s / %s", seat, defTable.firstPersonAnim, defTable.thirdPersonAnim ) )
+	HoverVehicle_ExecuteSeatAnim( player, expect string( defTable.firstPersonAnim ), expect string( defTable.thirdPersonAnim ), vehicle, seat, false )
+	player.ClearParent()
+}
+
+bool function HoverVehicle_ShouldPlaySeatAnim( entity player, entity vehicle )
+{
+	if ( !ENABLE_TRIDENT_ANIMS )
+		return false
+	if ( !IsValid( player ) || !IsValid( vehicle ) )
+		return false
+	return true
+}
+
+int function HoverVehicle_DetermineSeatForPlayer( entity player, entity vehicle )
+{
+	HoverVehicle_DebugPrint( "Embark request" )
+	int overrideSeat = HoverVehicle_GetSeatOverride( player )
+	if ( overrideSeat != HOVER_VEHICLE_SEAT_INVALID )
+	{
+		HoverVehicle_DebugPrint( format( "Using seat override %d", overrideSeat ) )
+		HoverVehicle_SetSeatOverride( player, HOVER_VEHICLE_SEAT_INVALID )
+		return overrideSeat
+	}
+	return HoverVehicle_GuessSeatFromPosition( player, vehicle )
+}
+
+int function HoverVehicle_GuessSeatFromPosition( entity player, entity vehicle )
+{	HoverVehicle_DebugPrint( "Disembark request" )
+
+	entity ornull driverEnt = null
+	if ( "driver" in vehicle.e && vehicle.e.driver != null )
+		driverEnt = vehicle.e.driver
+
+	if ( driverEnt != null && driverEnt == player )
+		return HOVER_VEHICLE_SEAT_DRIVER
+
+	vector toPlayer = player.GetOrigin() - vehicle.GetOrigin()
+	if ( Length( toPlayer ) <= 0.01 )
+		return HOVER_VEHICLE_SEAT_DRIVER
+
+	vector forward = AnglesToForward( vehicle.GetAngles() )
+	vector right = AnglesToRight( vehicle.GetAngles() )
+	vector dir = Normalize( toPlayer )
+	float forwardDot = DotProduct( dir, forward )
+	if ( forwardDot > 0.5 )
+		return HOVER_VEHICLE_SEAT_DRIVER
+
+	float lateralDot = DotProduct( dir, right )
+	return lateralDot >= 0.0 ? HOVER_VEHICLE_SEAT_PASSENGER_RIGHT : HOVER_VEHICLE_SEAT_PASSENGER_LEFT
+}
+
+float function HoverVehicle_CalcRelativeYaw( entity player, entity vehicle )
+{
+	vector toPlayer = player.GetOrigin() - vehicle.GetOrigin()
+	if ( Length( toPlayer ) < 1.0 )
+		toPlayer = player.GetForwardVector()
+
+	float worldYaw = VectorToAngles( toPlayer ).y
+	float vehicleYaw = vehicle.GetAngles().y
+	return AngleNormalize( worldYaw - vehicleYaw )
+}
+
+int function HoverVehicle_GetSeatOverride( entity player )
+{
+	if ( !( "seatOverrides" in file ) )
+		return HOVER_VEHICLE_SEAT_INVALID
+
+	if ( !( player in file.seatOverrides ) )
+		return HOVER_VEHICLE_SEAT_INVALID
+
+	return expect int( file.seatOverrides[player] )
+}
+
+void function HoverVehicle_SetSeatOverride( entity player, int seat )
+{
+	if ( !( "seatOverrides" in file ) )
+		file.seatOverrides = {}
+
+	if ( seat == HOVER_VEHICLE_SEAT_INVALID )
+	{
+		if ( player in file.seatOverrides )
+			delete file.seatOverrides[player]
+		return
+	}
+
+	file.seatOverrides[player] <- seat
+}
+
+string function HoverVehicle_GetSeatAttachmentName( int seat )
+{
+	switch ( seat )
+	{
+		case HOVER_VEHICLE_SEAT_DRIVER:
+			return HOVER_VEHICLE_DRIVER_ATTACHMENT
+		case HOVER_VEHICLE_SEAT_PASSENGER_LEFT:
+			return HOVER_VEHICLE_PASSENGER_LEFT_ATTACHMENT
+		case HOVER_VEHICLE_SEAT_PASSENGER_RIGHT:
+			return HOVER_VEHICLE_PASSENGER_RIGHT_ATTACHMENT
+	}
+
+	return HOVER_VEHICLE_DRIVER_ATTACHMENT
+}
+
+void function HoverVehicle_ExecuteSeatAnim( entity player, string firstPersonAnim, string thirdPersonAnim, entity vehicle, int seat, bool shouldParentToVehicle )
+{
+	if ( firstPersonAnim == "" && thirdPersonAnim == "" )
+		return
+
+ 	player.Signal( "NewTridentAnim" )
+
+	FirstPersonSequenceStruct sequence
+	sequence.firstPersonAnim = firstPersonAnim
+	sequence.thirdPersonAnim = thirdPersonAnim
+	sequence.attachment = HoverVehicle_GetSeatAttachmentName( seat )
+	sequence.useAnimatedRefAttachment = true
+	sequence.hideProxy = false
+	sequence.snapPlayerFeetToEyes = false
+	sequence.noParent = !shouldParentToVehicle
+
+	thread FirstPersonSequence( sequence, player, vehicle )
+}
+
+void function CodeCallback_EmbarkVehicleStart( entity player, entity vehicle )
+{
+	HoverVehicle_PlaySeatEmbarkAnim( player, vehicle )
+}
+
+void function CodeCallback_EmbarkVehicleFinished( entity player, entity vehicle )
+{
+}
+
+void function CodeCallback_DisembarkVehicleStart( entity player, entity vehicle )
+{
+	HoverVehicle_PlaySeatDisembarkAnim( player, vehicle )
+}
+
+void function CodeCallback_DisembarkVehicleFinished( entity player, entity vehicle )
+{
+}
+#endif
 
 #if CLIENT
 void function OnPressHornButton( entity player )
@@ -356,7 +674,6 @@ void function HoverVehicle_PermaHint( string hintText )
 #if SERVER
 void function EditorSpawnCallbackForPlacedHoverVehicle( entity vehicle )
 {
-	//allow playlists to keep vehicles enabled but ignore all leveled placed ones
 	if ( !HoverVehiclesAreEnabled() || !GetCurrentPlaylistVarBool( "should_spawn_placed_vehicles", true ) )
 	{
 		foreach( ent in vehicle.GetLinkEntArray() )
@@ -1595,6 +1912,10 @@ void function GetPlayerInVehicle( entity player, entity trident )
 	
 	trident.e.physicsCar = trident
 	trident.e.driver = player
+
+	HoverVehicle_SetSeatOverride( player, HOVER_VEHICLE_SEAT_DRIVER )
+	// Trigger embark animation/debug flow for entry path that bypasses retail callbacks
+	HoverVehicle_PlaySeatEmbarkAnim( player, trident )
 	
 	trident.RemoveUsableValue(USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
 	trident.UnsetUsable()
@@ -1622,7 +1943,7 @@ void function GetPlayerInVehicle( entity player, entity trident )
 	// thread HandlePlayerAnims(dummy, RandomInt(3))
 	
 	player.SetAngles(trident.GetAngles())
-	player.SetParent(trident)
+	player.SetParent(trident, HOVER_VEHICLE_DRIVER_ATTACHMENT)
  
 	thread HoverVehicleThink(player, trident)
 	
@@ -1729,13 +2050,18 @@ void function GetPlayerOutVehicle( entity player, entity vehicle )
 	RemoveButtonPressedPlayerInputCallback( player, IN_SPEED, VehicleBoost )
 	RemoveButtonPressedPlayerInputCallback( player, IN_ATTACK, VehicleBreak )
 	RemoveButtonReleasedPlayerInputCallback( player, IN_ATTACK, VehicleBreakRelease )
+
+	HoverVehicle_SetSeatOverride( player, HOVER_VEHICLE_SEAT_DRIVER )
+	// Fire disembark animation hooks now that custom exit skips retail callbacks
+	HoverVehicle_PlaySeatDisembarkAnim( player, vehicle )
+	player.ClearParent()
+	ClearPlayerAnimViewEntity( player )
 	
 	// leaving car
 	vector side = vehicle.GetRightVector()
 	player.SetOrigin(vehicle.GetOrigin() + < 0, 0, 100>  - side * 75)
 	player.SetThirdPersonShoulderModeOff() 	
 	player.Show()
-	player.ClearParent()
 
 	DeployAndEnableWeapons( player )
 	player.UnforceStand()
