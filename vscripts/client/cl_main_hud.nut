@@ -15,7 +15,7 @@ global function UpdateMainHudFromCEFlags
 global function UpdatePlayerStatusCounts
 global function UpdateCoreFX
 global function InitCrosshair
-
+global function GetHudStatus
 global function HideChat
 global function ShowChat
 
@@ -41,6 +41,9 @@ const float OFFHAND_ALERT_ICON_ANIMRATE = 0.35
 const float OFFHAND_ALERT_ICON_SCALE    = 4.5
 
 const bool ALWAYS_SHOW_BOOST_MOBILITY_BAR = true
+const float CROSSHAIR_ADS_ENTER_THRESHOLD = 0.15
+const float CROSSHAIR_ADS_EXIT_THRESHOLD  = 0.05
+const float CROSSHAIR_ADS_HIDE_DELAY      = 0.04
 
 global string CHAT_TEXT
 struct HudVisibilityStatus
@@ -59,6 +62,9 @@ struct
 
 	var  rodeoRUI //Primarily because cl_rodeo_titan needs to update the rodeo rui
 	bool trackingDoF = false
+	bool adsWatcherRunning = false
+	bool crosshairAdsActive = false
+	float crosshairAdsHideStartTime = -1.0
 	
 	bool hideChat = false
 	
@@ -401,6 +407,11 @@ void function UpdateMainHudVisibility( entity player, float duration = 0.0 )
 	bool shouldBeVisiblePermanent 	= hudStatus.permanentHud
 	bool shouldBeVisibleTargetInfo	= hudStatus.targetInfoHud
 
+	if ( shouldBeVisiblePermanent )
+		ShowPermanentHudTopo()
+	else
+		HidePermanentHudTopo()
+
 	if ( shouldBeVisible )
 		ShowFriendlyIndicatorAndCrosshairNames()
 	else
@@ -446,11 +457,6 @@ void function UpdateMainHudVisibility( entity player, float duration = 0.0 )
 
 		thread MainHud_TurnOn( mainVGUI, duration, expect float( warpSettings.xWarp ), expect float( warpSettings.xScale ), expect float( warpSettings.yWarp ), expect float( warpSettings.yScale ), expect float( warpSettings.viewDist ) )
 	}
-
-	if ( shouldBeVisiblePermanent )
-		ShowPermanentHudTopo()
-	else
-		HidePermanentHudTopo()
 
 	if ( shouldBeVisibleTargetInfo )
 		ShowTargetInfoHudTopo()
@@ -623,6 +629,7 @@ void function InitCrosshair()
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.ROUND_WINNING_KILL_REPLAY )
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.MENU )
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.PREMATCH )
+	file.crosshairPriorityOrder.append( crosshairPriorityLevel.ADS )
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.TITANHUD )
 	file.crosshairPriorityOrder.append( crosshairPriorityLevel.DEFAULT )
 
@@ -632,6 +639,7 @@ void function InitCrosshair()
 	// Fallback default
 	file.crosshairPriorityLevel[crosshairPriorityLevel.DEFAULT] = CROSSHAIR_STATE_SHOW_ALL
 	UpdateCrosshairState()
+	StartCrosshairAdsWatcher()
 }
 
 
@@ -666,6 +674,90 @@ void function ClearCrosshairPriority( int priority )
 		file.crosshairPriorityLevel[priority] = null
 
 	UpdateCrosshairState()
+}
+
+
+void function StartCrosshairAdsWatcher()
+{
+	if ( file.adsWatcherRunning )
+		return
+
+	file.adsWatcherRunning = true
+	thread CrosshairAdsWatcher()
+}
+
+
+void function CrosshairAdsWatcher()
+{
+	OnThreadEnd(
+		function() : ()
+		{
+			if ( file.crosshairAdsActive )
+			{
+				ClearCrosshairPriority( crosshairPriorityLevel.ADS )
+				file.crosshairAdsActive = false
+			}
+			file.crosshairAdsHideStartTime = -1.0
+			file.adsWatcherRunning = false
+		}
+	)
+
+	while ( true )
+	{
+		entity player = GetLocalViewPlayer()
+		bool shouldHide = ShouldHideCrosshairForADS( player )
+
+		if ( shouldHide )
+		{
+			if ( file.crosshairAdsActive )
+			{
+				file.crosshairAdsHideStartTime = -1.0
+			}
+			else
+			{
+				if ( file.crosshairAdsHideStartTime < 0.0 )
+					file.crosshairAdsHideStartTime = Time()
+
+				if ( Time() - file.crosshairAdsHideStartTime >= CROSSHAIR_ADS_HIDE_DELAY )
+				{
+					SetCrosshairPriorityState( crosshairPriorityLevel.ADS, CROSSHAIR_STATE_HIDE_ALL )
+					file.crosshairAdsActive = true
+					file.crosshairAdsHideStartTime = -1.0
+				}
+			}
+		}
+		else
+		{
+			file.crosshairAdsHideStartTime = -1.0
+			if ( file.crosshairAdsActive )
+			{
+				ClearCrosshairPriority( crosshairPriorityLevel.ADS )
+				file.crosshairAdsActive = false
+			}
+		}
+
+		WaitFrame()
+	}
+}
+
+
+bool function ShouldHideCrosshairForADS( entity player )
+{
+	if ( !IsValid( player ) )
+		return false
+
+	if ( player.IsTitan() )
+		return false
+
+	if ( !player.IsPlayer() )
+		return false
+
+	if ( !IsAlive( player ) )
+		return false
+
+	float adsFraction = player.GetAdsFraction()
+	float threshold = file.crosshairAdsActive ? CROSSHAIR_ADS_EXIT_THRESHOLD : CROSSHAIR_ADS_ENTER_THRESHOLD
+	return adsFraction >= threshold
 }
 
 

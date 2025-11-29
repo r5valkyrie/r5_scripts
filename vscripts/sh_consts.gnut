@@ -541,6 +541,7 @@ global enum crosshairPriorityLevel
 	ROUND_WINNING_KILL_REPLAY,
 	MENU,
 	PREMATCH,
+	ADS,
 	TITANHUD,
 	DEFAULT
 }
