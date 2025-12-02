@@ -26,16 +26,12 @@ WeaponData
 
 
 
-	//"OnWeaponTossPrep"								"OnWeaponTossPrep_weapon_black_hole"
-	//"OnWeaponTossReleaseAnimEvent"					"OnWeaponPrimaryAttack_weapon_black_hole"
-
+	"OnWeaponTossPrep"								"OnWeaponTossPrep_weapon_black_hole"
+	"OnWeaponTossReleaseAnimEvent"					"OnWeaponPrimaryAttack_weapon_black_hole"
 	//"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_weapon_black_hole"
-                      
-    		//"OnProjectileCollision"							"OnProjectileCollision_weapon_deployable_noVehicles"
-                              
-                                                                             
-                               
-	//"OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_black_hole"
+
+    "OnProjectileCollision"							"OnProjectileCollision_weapon_black_hole" //OnProjectileCollision_weapon_deployable_noVehicles
+	"OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_black_hole"
 
 	"OnWeaponRegenEnd"								"OnWeaponRegenEndGeneric"
 	"projectile_ignores_vortex"						"fall_vortex"

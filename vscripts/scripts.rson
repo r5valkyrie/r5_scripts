@@ -369,6 +369,8 @@ Scripts:
 	weapons/mp_weapon_mounted_turret_weapon.nut
 
 	weapons/mp_weapon_3030.nut
+
+	weapons/mp_ability_horizon_black_hole.nut
 	
 	//S0 Dev Protos
 	//Husaria

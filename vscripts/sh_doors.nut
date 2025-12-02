@@ -21,6 +21,7 @@ global function RemoveDoorFromManagedEntArray
 global function OpenDoor
 global function CloseDoor
 global function GetDoorType
+global function GetEntsFromArrayInRange
 #endif
 
 #if SERVER && DEVELOPER
