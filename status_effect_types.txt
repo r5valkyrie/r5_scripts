@@ -134,5 +134,9 @@
 	in_olympus_rift
 	in_black_hole_field
 	softLandings_visuals
+	mortar_ring_push
+	in_mortar_ring
+	mortar_ring_burn
+	mortar_ring_reveal
 /////////////////////////////
 //}

@@ -1,0 +1,263 @@
+global function PassiveGrenadier_Init
+                               
+#if SERVER
+global function ClientCallback_ToggleThrowPower
+#endif
+
+#if CLIENT
+global function ServerToClient_DisplayToggleThrowPowerHintForPlayer
+global function AttemptToggleThrowPower
+#endif
+      
+
+global const string GRENADIER_PASSIVE_WEAPON_MOD = "fuse_long_throw_passive"
+global const string FUSE_TOGGLE_THROW_POWER_CMD = "FuseToggleThrowPower"
+
+void function PassiveGrenadier_Init()
+{
+                               
+	#if SERVER
+		AddClientCommandCallback( FUSE_TOGGLE_THROW_POWER_CMD, ClientCommand_ToggleThrowPower )
+		SURVIVAL_AddCallback_OnInventoryChanged( Grenadier_OnInventoryChanged )
+	#endif
+
+	#if SERVER || CLIENT
+		AddCallback_OnPassiveChanged( ePassives.PAS_FUSE, Grenadier_PassiveToggle )
+	#endif
+	#if !SERVER
+	                                
+		//RegisterConCommandTriggeredCallback( "+offhand1", AttemptToggleThrowPower )
+		RegisterConCommandTriggeredCallback( "+scriptCommand5", AttemptToggleThrowPower )
+       
+	#endif
+}
+
+#if SERVER || CLIENT
+void function Grenadier_PassiveToggle( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( !IsAlive( player ) )
+		return
+
+	#if SERVER
+	array<ConsumableInventoryItem> playerInventory = SURVIVAL_GetPlayerInventory( player )
+	#endif
+	
+	//Remove excess stacked grenades
+	if ( didHave )
+	{
+		#if SERVER
+		SURVIVAL_ClearExcessInventoryItems( player, playerInventory )
+		SURVIVAL_ConsolidateInventoryItems( player, playerInventory )
+		SetPlayerInventory( player, playerInventory )
+		#endif
+	}
+
+	//Stack grenades that are spread out
+	if ( nowHas )
+	{
+		#if SERVER
+		player.p.fuseToggleHintShown = false
+		Grenadier_EnableFastThrowByDefault( player )
+		SURVIVAL_ConsolidateInventoryItems( player, playerInventory )
+		SetPlayerInventory( player, playerInventory )
+		#endif
+	}
+	#if SERVER
+	else if ( didHave )
+	{
+		player.p.fuseToggleHintShown = false
+		Grenadier_DisableFastThrow( player )
+	}
+	#endif
+}
+#endif
+
+#if SERVER
+                               
+void function ClientCallback_ToggleThrowPower( entity player )
+{
+	if( !IsValid( player ) || !player.IsPlayer() || !PlayerHasPassive ( player, ePassives.PAS_FUSE ) )
+		return
+
+	entity weapon = ( player.GetActiveWeapon( eActiveInventorySlot.mainHand ) )
+	entity ordnanceWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+
+	if ( !IsValid( weapon ) )
+		return
+
+	if( weapon != ordnanceWeapon )
+		return
+
+	string weaponName = weapon.GetWeaponClassName()
+	int ammo = SURVIVAL_NumItemsInInventory( player, weaponName )
+	if( ammo <= 0 )
+		return
+
+	array mods = player.GetExtraWeaponMods()
+	player.TakeWeaponByEntNow( weapon )
+	if( mods.contains( GRENADIER_PASSIVE_WEAPON_MOD ) )
+	{
+		mods.fastremovebyvalue( GRENADIER_PASSIVE_WEAPON_MOD )
+		player.SetExtraWeaponMods( mods )
+	}
+	else
+	{
+		GiveExtraWeaponMod( player, GRENADIER_PASSIVE_WEAPON_MOD )
+	}
+	player.GiveWeapon( weaponName, WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+	player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
+}
+
+bool function ClientCommand_ToggleThrowPower( entity player, array<string> args )
+{
+	if ( !IsValid( player ) )
+		return false
+
+	ClientCallback_ToggleThrowPower( player )
+	return true
+}
+
+void function Grenadier_OnInventoryChanged( entity player, array<ConsumableInventoryItem> inventory )
+{
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+
+	if ( !PlayerHasPassive( player, ePassives.PAS_FUSE ) )
+		return
+
+	if ( player.p.fuseToggleHintShown )
+		return
+
+	if ( !GrenadierInventoryHasGrenade( inventory ) )
+		return
+
+	player.p.fuseToggleHintShown = true
+	Remote_CallFunction_NonReplay( player, "ServerToClient_DisplayToggleThrowPowerHintForPlayer" )
+}
+
+bool function GrenadierInventoryHasGrenade( array<ConsumableInventoryItem> inventory )
+{
+	foreach ( invItem in inventory )
+	{
+		if ( invItem.count <= 0 )
+			continue
+
+		LootData data = SURVIVAL_Loot_GetLootDataByIndex( invItem.type )
+		if ( data.lootType == eLootType.ORDNANCE )
+			return true
+	}
+
+	return false
+}
+
+void function Grenadier_EnableFastThrowByDefault( entity player )
+{
+	array mods = player.GetExtraWeaponMods()
+	if ( mods.contains( GRENADIER_PASSIVE_WEAPON_MOD ) )
+		return
+
+	entity ordnanceWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	bool ordnanceIsActive = IsValid( ordnanceWeapon ) && ordnanceWeapon == activeWeapon
+	string ordnanceWeaponName = ordnanceIsActive ? ordnanceWeapon.GetWeaponClassName() : ""
+
+	if ( ordnanceIsActive )
+		player.TakeWeaponByEntNow( ordnanceWeapon )
+
+	GiveExtraWeaponMod( player, GRENADIER_PASSIVE_WEAPON_MOD )
+
+	if ( ordnanceIsActive && ordnanceWeaponName != "" )
+	{
+		player.GiveWeapon( ordnanceWeaponName, WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+		player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, ordnanceWeaponName )
+	}
+}
+
+void function Grenadier_DisableFastThrow( entity player )
+{
+	array mods = player.GetExtraWeaponMods()
+	if ( !mods.contains( GRENADIER_PASSIVE_WEAPON_MOD ) )
+		return
+
+	entity ordnanceWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	bool ordnanceIsActive = IsValid( ordnanceWeapon ) && ordnanceWeapon == activeWeapon
+	string ordnanceWeaponName = ordnanceIsActive ? ordnanceWeapon.GetWeaponClassName() : ""
+
+	if ( ordnanceIsActive )
+		player.TakeWeaponByEntNow( ordnanceWeapon )
+
+	mods.fastremovebyvalue( GRENADIER_PASSIVE_WEAPON_MOD )
+	player.SetExtraWeaponMods( mods )
+
+	if ( ordnanceIsActive && ordnanceWeaponName != "" )
+	{
+		player.GiveWeapon( ordnanceWeaponName, WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+		player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, ordnanceWeaponName )
+	}
+}
+      
+#endif // #if SERVER
+
+#if CLIENT
+                               
+void function AttemptToggleThrowPower( entity player )
+{
+	if ( !PlayerHasPassive( player, ePassives.PAS_FUSE ) )
+		return
+
+	if ( !TryCharacterButtonCommonReadyChecks( player ) )
+		return
+
+	entity weapon = ( player.GetActiveWeapon( eActiveInventorySlot.mainHand ) )
+
+	if ( !IsValid( weapon ) )
+		return
+
+	if ( weapon.GetWeaponTypeFlags() != WPT_GRENADE )
+		return
+
+	player.ClientCommand( FUSE_TOGGLE_THROW_POWER_CMD )
+}
+
+void function ServerToClient_DisplayToggleThrowPowerHintForPlayer()
+{
+	thread _DisplayToggleThrowPowerHintForPlayer()
+}
+
+
+void function _DisplayToggleThrowPowerHintForPlayer()
+{
+	entity player = GetLocalViewPlayer()
+
+	if ( !IsValid( player ) )
+		return
+
+	entity weapon = ( player.GetActiveWeapon( eActiveInventorySlot.mainHand ) )
+
+	player.EndSignal( "OnDeath" )
+	weapon.EndSignal( "WeaponDeactivateEvent" )
+
+	OnThreadEnd(
+		function() : ()
+		{
+			HidePlayerHint( "#FUSE_PASSIVE_TOGGLE_THROW_POWER" )
+		}
+	)
+
+	AddPlayerHint( 6.5, 0.15, $"", "#FUSE_PASSIVE_TOGGLE_THROW_POWER" )
+
+	WaitForever()
+}
+      
+
+bool function TryCharacterButtonCommonReadyChecks( entity player )
+{
+	if ( player != GetLocalViewPlayer() )
+		return false
+	if ( player != GetLocalClientPlayer() )
+		return false
+      
+	return true
+}
+#endif // #if CLIENT

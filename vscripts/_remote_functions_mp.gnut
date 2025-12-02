@@ -393,6 +393,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SonarPulseFromPosition", "vector", -32000.0, 32000.0, 32, "float", 0.0, 3000.0, 16, "float", 0.0, 10.0, 16, "bool" ) //Audit 2-22-2025
 	
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SonarPulseConeFromPosition", "vector", -32000.0, 32000.0, 32, "float", 0.0, 32000.0, 16, "vector", -1.0, 1.0, 32, "float", -360.0, 360.0, 16, "int", 0, 128, "float", 0.0, 32000.0, 32, "bool", "bool" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_MortarRingFireSegmentCreated", "entity", "entity", "entity" )
 
 	ScriptRegisterNetworkedVariable( "playerAllowedToLeech", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
@@ -402,6 +403,7 @@ void function RemoteFunctions_Init_Begin()
 	RegisterEntityVar( "player", "musicPackAssigned", 0 )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateMarker", "int", 0, 31 )//Audit 2-22-2025
+	ScriptRemote_RegisterClientFunction( "ServerToClient_DisplayToggleThrowPowerHintForPlayer" )
 	
 	ScriptRemote_RegisterUIFunction( "DisablePrecacheErrors" ) 
 	ScriptRemote_RegisterUIFunction( "RestorePrecacheErrors" )

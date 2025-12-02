@@ -422,6 +422,8 @@ global struct ServerEntityStruct
 	bool                   canBurn = false
 	bool                   isBurning = false
 	array<BurnDamageStack> burnDamageStacks
+	array<entity>          mortarRingPreburnInflictors
+	array<entity>          mortarRingBurnInflictors
 	vector originalLocalAngles
 	bool   scanSoundPlaying
 
@@ -609,6 +611,7 @@ global struct ServerPlayerStruct
 	// table<string,int> 			weaponsAndMeleeLockedSources
 	float						connectTime
 	bool						clientScriptInitialized = false
+	bool					fuseToggleHintShown = false
 
 	bool						hasMatchLossProtection = false
 
@@ -1537,6 +1540,11 @@ global struct ServerProjectileStruct
 	void functionref( entity, DeployableCollisionParams ) bounceFunc
 	void functionref( entity, DeployableCollisionParams ) deployFunc
 	// void functionref( entity, ProximityExplodeParams ) explodeFunc
+	vector mortarRingDirForFireEffect
+	vector mortarRingDirFromCenter
+	bool   bombletLanded = false
+	bool   bombletFireLinked = false
+	bool   bombletIgnited = false
 
 	float lastTeleportTime
 	// bool dontbouncethistime = false

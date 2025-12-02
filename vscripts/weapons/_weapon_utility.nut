@@ -64,6 +64,9 @@ global function Ultimate_OnWeaponRegenBegin
 global function OnWeaponActivate_RUIColorSchemeOverrides
 global function PlayDelayedShellEject
 global function DoesPlayerHaveAutoLoaderBuff
+global function SolveBallisticArc
+global function GetCrosshairTargetData
+global function GetCrosshairTargetDataAngles
 
 #if SERVER
 global function CreateDamageInflictorHelper
@@ -242,6 +245,24 @@ global struct HoverSounds
 	string landing_3p
 }
 #endif
+
+global struct ArcSolution
+{
+	bool valid
+	vector fire_velocity
+	float duration
+}
+
+global struct CrosshairTargetData
+{
+	bool inRange
+	vector crosshairStart
+	vector groundTarget
+	vector groundTargetNormal
+	vector airburstTarget
+	float distanceToTarget
+	vector directionToTarget
+}
 
 struct
 {
@@ -5193,6 +5214,259 @@ bool function IsABaseGrenade( entity ent )
 	#else
 	return (ent instanceof CBaseGrenade)
 	#endif
+}
+
+//If possible, returns a starting velocity and flight duration for a projectile starting at launchOrigin and going to targetOrigin at launchSpeed against gravity
+ArcSolution function SolveBallisticArc( vector launchOrigin, float launchSpeed, vector targetOrigin, float gravity, bool lowAngle = true )
+{
+	ArcSolution as
+
+	// Derivation
+	//   (1) x = v*t*cos O
+	//   (2) y = v*t*sin O - .5*g*t^2
+	//
+	//   (3) t = x/(cos O*v)                                        [solve t from (1)]
+	//   (4) y = v*x*sin O/(cos O * v) - .5*g*x^2/(cos^2 O*v^2)     [plug t into y=...]
+	//   (5) y = x*tan O - g*x^2/(2*v^2*cos^2 O)                    [reduce; cos/sin = tan]
+	//   (6) y = x*tan O - (g*x^2/(2*v^2))*(1+tan^2 O)              [reduce; 1+tan O = 1/cos^2 O]
+	//   (7) 0 = ((-g*x^2)/(2*v^2))*tan^2 O + x*tan O - (g*x^2)/(2*v^2) - y    [re-arrange]
+	//   Quadratic! a*p^2 + b*p + c where p = tan O
+	//
+	//   (8) let gxv = -g*x*x/(2*v*v)
+	//   (9) p = (-x +- sqrt(x*x - 4gxv*(gxv - y)))/2*gxv           [quadratic formula]
+	//   (10) p = (v^2 +- sqrt(v^4 - g(g*x^2 + 2*y*v^2)))/gx        [multiply top/bottom by -2*v*v/x; move 4*v^4/x^2 into root]
+	//   (11) O = atan(p)
+
+	vector diff = targetOrigin - launchOrigin
+	vector diffXZ =FlattenVec( diff );
+	float groundDist = Length( diffXZ );
+
+	float speed2 = launchSpeed*launchSpeed;
+	float speed4 = launchSpeed*launchSpeed*launchSpeed*launchSpeed;
+	float y = diff.z;
+	float x = groundDist;
+	float gx = gravity*x;
+
+	float root = speed4 - gravity*(gravity*x*x + 2*y*speed2);
+
+	// No solution
+	if (root < 0)
+		return as;
+
+	as.valid = true
+	root = sqrt( root );
+
+	float lowAng = atan2(speed2 - root, gx)
+	float highAng = atan2(speed2 + root, gx)
+
+	float goodAngle = ( lowAngle ) ? lowAng : highAng
+
+	vector groundDir = Normalize( diffXZ )
+	as.fire_velocity = ( groundDir * cos( goodAngle ) *launchSpeed ) + ( < 0, 0, 1 > * sin( goodAngle ) * launchSpeed )
+	float groundSpeed = Length( FlattenVec( as.fire_velocity ) )
+	groundSpeed = ( groundSpeed > 0 ) ? groundSpeed : 1.0
+	as.duration = groundDist / groundSpeed
+
+	return as;
+}
+
+CrosshairTargetData function GetCrosshairTargetData( entity player, float minDistance, float maxDistance, float airBurstHeight, bool capAtMaxRange = false )
+{
+	CrosshairTargetData data
+	data.crosshairStart = player.CameraPosition()
+	vector crosshairEnd = data.crosshairStart + player.GetViewForward() * maxDistance
+	DoTraceCoordCheck( false )
+	array< entity > ignoreEnts = [ player ]
+	ignoreEnts.extend( GetEntArrayByScriptName( CRYPTO_DRONE_SCRIPTNAME ) )
+	TraceResults crosshairResults = TraceLineHighDetail( data.crosshairStart, crosshairEnd, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+	data.groundTarget = crosshairResults.endPos
+	data.groundTargetNormal = crosshairResults.surfaceNormal
+	data.airburstTarget = data.groundTarget + < 0, 0, airBurstHeight >
+	data.distanceToTarget = Distance( data.groundTarget, data.crosshairStart )
+	data.directionToTarget =  Normalize( data.groundTarget - data.crosshairStart )
+	float flattenedDistanceToTarget = Distance2D( data.groundTarget, data.crosshairStart )
+	if( flattenedDistanceToTarget < minDistance )
+	{
+		data.groundTarget = crosshairResults.endPos + ( FlattenNormalizeVec ( data.directionToTarget ) * ( minDistance - flattenedDistanceToTarget ) )
+		vector downTraceEnd = < data.groundTarget.x, data.groundTarget.y, data.groundTarget.z - 250 >
+		TraceResults downTraceResults = TraceLineHighDetail( data.groundTarget, downTraceEnd, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+		if( downTraceResults.startSolid || downTraceResults.fraction < 1.0 )
+			data.groundTarget = downTraceResults.endPos
+		data.airburstTarget = data.groundTarget + < 0, 0, airBurstHeight >
+		data.distanceToTarget = Distance( data.groundTarget, data.crosshairStart )
+		data.inRange = true
+	}
+	else if ( capAtMaxRange && crosshairResults.fraction == 1.0 )
+	{
+		vector downTraceStart = data.crosshairStart + ( FlattenNormalizeVec ( data.directionToTarget ) *  maxDistance )
+		vector downTraceEnd = < data.groundTarget.x, data.groundTarget.y, data.groundTarget.z - 25000 >
+		TraceResults downTraceResults = TraceLineHighDetail( data.groundTarget, downTraceEnd, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+		if( downTraceResults.startSolid || downTraceResults.fraction < 1.0 )
+			data.groundTarget = downTraceResults.endPos
+		data.airburstTarget = data.groundTarget + < 0, 0, airBurstHeight >
+		data.distanceToTarget = Distance( data.groundTarget, data.crosshairStart )
+		data.inRange = true
+
+	}
+	else
+	{
+		data.inRange = ( crosshairResults.fraction < 1.0 )
+	}
+	DoTraceCoordCheck( true )
+
+	return data
+}
+
+CrosshairTargetData function GetCrosshairTargetDataAngles( entity player, float minDistance, float maxDistance, float airBurstHeight, bool capAtMaxRange = false )
+{
+	const bool DEBUG_AIRBUST_TARGET = false
+	CrosshairTargetData data
+
+	vector cameraAngles           = player.CameraAngles()
+	vector cameraFwd              = AnglesToForward( cameraAngles )
+	vector cameraFwdFlat          = FlattenNormalizeVec( cameraFwd )
+
+	DoTraceCoordCheck( false )
+	array< entity > ignoreEnts = [ player ]
+	ignoreEnts.extend( GetEntArrayByScriptName( CRYPTO_DRONE_SCRIPTNAME ) )
+	TraceResults testTrace = TraceLineHighDetail( player.CameraPosition(), player.CameraPosition() + cameraFwd*maxDistance*2.0, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+	float heightDiff = testTrace.endPos.z - player.CameraPosition().z
+	float PITCH_ADJUST = GraphCapped( heightDiff, 300, -1000, -10, 20 )
+
+	if ( DEBUG_AIRBUST_TARGET )
+		printt( "GetCrosshairTargetDataAngles - heightDiff: " + heightDiff + " PITCH_ADJUST: " + PITCH_ADJUST )
+
+	float MIN_PITCH = 25 + PITCH_ADJUST
+	float MAX_PITCH = -10  + PITCH_ADJUST
+
+	float desiredDistanceToTarget = GraphCapped( cameraAngles.x, MIN_PITCH, MAX_PITCH, minDistance, maxDistance )
+
+
+	data.crosshairStart = player.CameraPosition()
+	vector crosshairEnd = player.GetOrigin() + cameraFwdFlat*desiredDistanceToTarget
+
+	TraceResults initialCameraTrace = TraceLineHighDetail( data.crosshairStart, crosshairEnd, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+
+	if ( DEBUG_AIRBUST_TARGET )
+	{
+		DebugDrawLine( data.crosshairStart + <0, 0, 1>, crosshairEnd, COLOR_ORANGE, false, 0.1 )
+		DebugDrawSphere( crosshairEnd, 5, COLOR_ORANGE, true, 0.1 )
+		DebugDrawSphere( initialCameraTrace.endPos, 10, COLOR_GREEN, false, 0.1 )
+	}
+
+	data.groundTarget = initialCameraTrace.endPos
+	data.groundTargetNormal = initialCameraTrace.surfaceNormal
+	data.airburstTarget = data.groundTarget + < 0, 0, airBurstHeight >
+	data.distanceToTarget = Distance( data.groundTarget, data.crosshairStart )
+	data.directionToTarget =  Normalize( data.groundTarget - data.crosshairStart )
+	float flattenedDistanceToTarget = Distance2D( data.groundTarget, data.crosshairStart )
+
+	if ( initialCameraTrace.fraction < 1.0 ) //flattenedDistanceToTarget < (desiredDistanceToTarget - 2*METERS_TO_INCHES ) )
+	{
+		if ( DEBUG_AIRBUST_TARGET )
+			DebugDrawText( initialCameraTrace.endPos, "Initial cant see", false, 0.1 )
+
+		// Can I see a point above it
+		bool canTraceAbove = false
+		float heightMult = 0.0
+		TraceResults traceAbove
+		while ( !canTraceAbove && heightMult < 10.0)
+		{
+			heightMult += 1.0
+			traceAbove = TraceLineHighDetail( data.crosshairStart, crosshairEnd + < 0, 0, airBurstHeight*heightMult >, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+			canTraceAbove = traceAbove.fraction == 1.0
+		}
+
+		if ( canTraceAbove )
+		{
+			TraceResults traceDown = TraceLineHighDetail( traceAbove.endPos, crosshairEnd, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+			data.groundTarget = traceDown.endPos
+			data.groundTargetNormal = traceDown.surfaceNormal
+			data.airburstTarget = data.groundTarget + < 0, 0, airBurstHeight >
+			data.distanceToTarget = Distance( data.groundTarget, data.crosshairStart )
+			data.directionToTarget =  Normalize( data.groundTarget - data.crosshairStart )
+
+			if ( DEBUG_AIRBUST_TARGET )
+			{
+				DebugDrawText( traceAbove.endPos, "Can see this point", false, 0.1 )
+				DebugDrawLine( traceAbove.endPos, traceDown.endPos, COLOR_GREEN, false, 0.1)
+				DebugDrawSphere( traceDown.endPos, 10, COLOR_GREEN, false, 0.1 )
+			}
+		}
+
+	}
+	else
+	{
+		//Make sure we arent up in the air.
+		TraceResults traceDown = TraceLineHighDetail( initialCameraTrace.endPos, initialCameraTrace.endPos - <0,0,6000>, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+		data.groundTarget = traceDown.endPos
+		data.groundTargetNormal = traceDown.surfaceNormal
+		data.airburstTarget = data.groundTarget + < 0, 0, airBurstHeight >
+
+		if ( DEBUG_AIRBUST_TARGET )
+		{
+			DebugDrawLine( initialCameraTrace.endPos, traceDown.endPos, COLOR_GREEN, false, 0.1)
+			DebugDrawSphere( traceDown.endPos, 10, COLOR_GREEN, false, 0.1 )
+		}
+
+		////Make sure I can see the airburst
+		//TraceResults traceToAirburst = TraceLineHighDetail( player.GetWorldSpaceCenter(), data.airburstTarget, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+		//float heightMult = 1.0
+		//while ( traceToAirburst.fraction < 1.0 &&  heightMult < 5.0 )
+		//{
+		//	heightMult += 0.5
+		//	data.airburstTarget = data.groundTarget + < 0, 0, heightMult*airBurstHeight >
+		//	traceToAirburst = TraceLineHighDetail( player.GetWorldSpaceCenter(), data.airburstTarget, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+		//}
+		//
+		//data.distanceToTarget = Distance( data.groundTarget, data.crosshairStart )
+		//data.directionToTarget =  Normalize( data.groundTarget - data.crosshairStart )
+		//
+		//if ( DEBUG_AIRBUST_TARGET )
+		//{
+		//	DebugDrawLine(player.GetWorldSpaceCenter(), data.airburstTarget, COLOR_PURPLE, false, 0.1  )
+		//	printt( "GetCrosshairTargetDataAngles - heightMult needed: " + heightMult )
+		//}
+	}
+
+
+	//Make sure I can see the airburst
+	TraceResults traceToAirburst = TraceLineHighDetail( player.GetWorldSpaceCenter(), data.airburstTarget, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+	if( traceToAirburst.fraction < 1.0 )
+	{
+		float heightMult = 1.0
+		while ( traceToAirburst.fraction < 1.0 &&  heightMult < 5.0 )
+		{
+			heightMult += 0.5
+			data.airburstTarget = data.groundTarget + < 0, 0, heightMult*airBurstHeight >
+			traceToAirburst = TraceLineHighDetail( player.GetWorldSpaceCenter(), data.airburstTarget, ignoreEnts, (TRACE_MASK_SHOT | CONTENTS_BLOCKLOS ) & ~CONTENTS_WINDOW, TRACE_COLLISION_GROUP_PROJECTILE )
+		}
+
+		data.distanceToTarget = Distance( data.groundTarget, data.crosshairStart )
+		data.directionToTarget =  Normalize( data.groundTarget - data.crosshairStart )
+
+		if ( DEBUG_AIRBUST_TARGET )
+		{
+			DebugDrawLine(player.GetWorldSpaceCenter(), data.airburstTarget, COLOR_PURPLE, false, 0.1  )
+			printt( "GetCrosshairTargetDataAngles - heightMult needed: " + heightMult )
+		}
+	}
+
+	data.inRange = true
+
+	DoTraceCoordCheck( true )
+
+
+	if ( DEBUG_AIRBUST_TARGET )
+	{
+		DebugDrawSphere( data.groundTarget , 5, COLOR_PURPLE, false, 0.1 )
+		DebugDrawText( data.groundTarget, "ground", false, 0.1 )
+		DebugDrawSphere( data.airburstTarget , 15, COLOR_PURPLE, false, 0.1 )
+		DebugDrawText( data.airburstTarget, "air", false, 0.1 )
+		DebugDrawLine( data.groundTarget, data.airburstTarget, COLOR_PURPLE, false, 0.1  )
+	}
+
+	return data
 }
 
 void function Weapon_AddSingleCharge( entity weapon )

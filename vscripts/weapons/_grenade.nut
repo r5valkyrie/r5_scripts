@@ -30,7 +30,7 @@ global function OnProjectileCollision_weapon_impulse_grenade
 	global function EnableTrapWarningSound
 	global function AddToProximityTargets
 	global function ProximityMineThink
-	
+
 	global function AddToTrackedEnts_Level
 	global function CleanupLevelTrackedEnts
 	global function GetTrackedEnts_Level
@@ -71,10 +71,10 @@ const SOLDIER_ARC_STUN_ANIMS = [
 		"pt_react_ARC_scream",
 		"pt_react_ARC_stumble_F",
 		"pt_react_ARC_stumble_R" ]
-		
-struct 
+
+struct
 {
-	#if CLIENT 
+	#if CLIENT
 		entity lastWeapon
 	#endif
 
@@ -132,7 +132,7 @@ void function Grenade_OnWeaponTossPrep( entity weapon, WeaponTossPrepParams prep
 	#endif
 }
 
-#if CLIENT 
+#if CLIENT
 	void function Grenade_SetLastActive( entity weapon )
 	{
 		file.lastWeapon = weapon
@@ -194,19 +194,19 @@ void function Grenade_Init( entity grenade, entity weapon )
 void function Grenade_OnWeaponReady_Halo( entity weapon )
 {
 	entity weaponOwner = weapon.GetWeaponOwner()
-	var weaponName = weapon.GetWeaponClassName()	
+	var weaponName = weapon.GetWeaponClassName()
 	string weaponNameString
-	
+
 	if( !IsValid( weaponOwner ) )
 		return
-	
+
 	if( weaponOwner.ContextAction_IsActive() || weaponOwner.PlayerMelee_IsAttackActive() )
 	{
 		#if SERVER
 			entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
 			weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
 		#endif
-		
+
 		return
 	}
 
@@ -215,7 +215,7 @@ void function Grenade_OnWeaponReady_Halo( entity weapon )
 	#endif
 	if( weaponName != null )
 		weaponNameString = expect string( weaponName )
-	
+
 	if( !SURVIVAL_GetAllPlayerOrdnance( weaponOwner ).contains( weaponNameString ) )
 	{
 		// #if CLIENT
@@ -224,18 +224,18 @@ void function Grenade_OnWeaponReady_Halo( entity weapon )
 		#if SERVER
 			entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
 			weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
-			
+
 			weaponOwner.TakeWeaponByEnt( weaponOwner.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN ) )
 		#endif
 		return
 	}
-	
+
 	if( Time() < weaponOwner.p.haloGrenadeAttackTime + HALO_GRENADE_COOLDOWN )
 	{
 		#if DEVELOPER
 			Warning( "In Cooldown " + weapon.IsInCooldown() + " - " + ( weaponOwner.p.haloGrenadeAttackTime - Time() ) )
-		#endif 
-		
+		#endif
+
 		// #if CLIENT
 			// SwitchToLastUsedWeapon( weaponOwner ) //From client sucks
 		// #endif
@@ -243,12 +243,12 @@ void function Grenade_OnWeaponReady_Halo( entity weapon )
 			entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
 			weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
 		#endif
-		
+
 		return
 	}
 
 	// weapon.StartCustomActivity( "ACT_VM_TOSS", WCAF_NONE )
-	
+
 	// #if SERVER
 	// entity vm = weapon.GetWeaponViewmodel()
 
@@ -256,7 +256,7 @@ void function Grenade_OnWeaponReady_Halo( entity weapon )
 	// vm.Anim_PlayOnly("animseq/weapons/grenades/ptpov_gibraltar_beacon/beacon_toss_seq.rseq")
 	// }catch(e420){}
 	// #endif
-	
+
 	weaponOwner.p.haloGrenadeAttackTime = Time()
 	weapon.OverrideNextAttackTime( Time() + HALO_GRENADE_COOLDOWN )
 	weapon.SetNextAttackAllowedTime( Time() + HALO_GRENADE_COOLDOWN )
@@ -265,19 +265,19 @@ void function Grenade_OnWeaponReady_Halo( entity weapon )
 
 	attackParams.dir = weaponOwner.GetViewVector()
 	attackParams.pos = weaponOwner.UseableEyePosition( weaponOwner )
-	
+
 	bool bFirstTimePredicted = false
-	
-	#if CLIENT 
+
+	#if CLIENT
 		if( InPrediction() && IsFirstTimePredicted() )
 			bFirstTimePredicted = true
 	#endif
-	
+
 	attackParams.firstTimePredicted = bFirstTimePredicted
 
 	float directionScale = 1.0
 	Grenade_OnWeaponToss_Halo( weapon, attackParams, directionScale )
-	
+
 	//Not required anymore since grenade are being cleaned up in AddCallback_OnPlayerUsedOffhandWeapon( SURVIVAL_RemoveOffhandFromInventory ) _survival_loot.gnut which is executed in PlayerUsedOffhand. Cafe
 	//SURVIVAL_RemoveFromPlayerInventory( weaponOwner, weaponNameString, 1 )
 }
@@ -285,6 +285,9 @@ void function Grenade_OnWeaponReady_Halo( entity weapon )
 int function Grenade_OnWeaponToss( entity weapon, WeaponPrimaryAttackParams attackParams, float directionScale )
 {
 	weapon.EmitWeaponSound_1p3p( GetGrenadeThrowSound_1p( weapon ), GetGrenadeThrowSound_3p( weapon ) )
+	#if SERVER
+		Grenadier_MaybePlayFuseThrowSounds( weapon )
+	#endif
 	bool projectilePredicted = PROJECTILE_PREDICTED
 	bool projectileLagCompensated = PROJECTILE_LAG_COMPENSATED
 #if SERVER
@@ -302,7 +305,7 @@ int function Grenade_OnWeaponToss( entity weapon, WeaponPrimaryAttackParams atta
 
 	if ( IsValid( grenade ) )
 		grenade.proj.savedDir = weaponOwner.GetViewForward()
-	
+
 #if SERVER
 	LiveAPI_GrenadeThrown( weaponOwner, weapon )
 
@@ -335,7 +338,7 @@ int function Grenade_OnWeaponToss_Halo( entity weapon, WeaponPrimaryAttackParams
 
 	if ( IsValid( grenade ) )
 		grenade.proj.savedDir = weaponOwner.GetViewForward()
-	
+
 #if SERVER
 	LiveAPI_GrenadeThrown( weaponOwner, weapon )
 
@@ -343,15 +346,15 @@ int function Grenade_OnWeaponToss_Halo( entity weapon, WeaponPrimaryAttackParams
 		// TryPlayWeaponBattleChatterLine( weaponOwner, weapon )
 	// #endif
 #endif
-	
+
 // #if CLIENT
 	// SwitchToLastUsedWeapon( weaponOwner )
 // #endif
-	
+
 	#if SERVER
 	entity latestDeployedWeapon      = weaponOwner.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
 	weaponOwner.SetActiveWeaponByName( eActiveInventorySlot.mainHand, latestDeployedWeapon.GetWeaponClassName() )
-	
+
 	thread function () : ( weaponOwner, weapon ) //Don't allow weapon activation while in cooldown. Cafe
 	{
 		EndSignal( weapon, "OnDestroy" )
@@ -361,13 +364,56 @@ int function Grenade_OnWeaponToss_Halo( entity weapon, WeaponPrimaryAttackParams
 	}()
 	// weaponOwner.TakeWeaponByEnt( weaponOwner.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN ) )
 	#endif
-	
-	
+
+
 	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
 }
 
+#if SERVER
+void function Grenadier_MaybePlayFuseThrowSounds( entity weapon )//Shitty hack fix, throw sounds do not work with weapon mods? - Kral
+{
+	if ( !IsValid( weapon ) )
+		return
 
-#if CLIENT 
+	entity owner = weapon.GetWeaponOwner()
+	if ( !IsValid( owner ) || !owner.IsPlayer() )
+		return
+
+	if ( !PlayerHasPassive( owner, ePassives.PAS_FUSE ) )
+		return
+
+	array mods = owner.GetExtraWeaponMods()
+	if ( !mods.contains( GRENADIER_PASSIVE_WEAPON_MOD ) )
+		return
+
+	switch ( weapon.GetWeaponClassName() )
+	{
+		case "mp_weapon_thermite_grenade":
+			Grenadier_PlayFuseThrowSounds( owner, "Fuse_Ord_Launcher_Throw_Thermite_1P", "Fuse_Ord_Launcher_Throw_Thermite_3P" )
+			break
+
+		case "mp_weapon_frag_grenade":
+			Grenadier_PlayFuseThrowSounds( owner, "Fuse_Ord_Launcher_Throw_FragGrenade_1P", "Fuse_Ord_Launcher_Throw_FragGrenade_3P" )
+			break
+
+		case "mp_weapon_grenade_emp":
+			Grenadier_PlayFuseThrowSounds( owner, "Fuse_Ord_Launcher_Throw_ArcStar_1P", "Fuse_Ord_Launcher_Throw_ArcStar_3P" )
+			break
+	}
+}
+
+void function Grenadier_PlayFuseThrowSounds( entity owner, string sound1p, string sound3p )
+{
+	if ( sound1p != "" )
+		EmitSoundOnEntityOnlyToPlayer( owner, owner, sound1p )
+
+	if ( sound3p != "" )
+		EmitSoundOnEntityExceptToPlayer( owner, owner, sound3p )
+}
+#endif
+
+
+#if CLIENT
 void function SwitchToLastUsedWeapon( entity weaponOwner )
 {
 	if( IsValid( file.lastWeapon ) )
@@ -375,32 +421,32 @@ void function SwitchToLastUsedWeapon( entity weaponOwner )
 		if( weaponOwner == file.lastWeapon.GetWeaponOwner() )
 		{
 			int slot = GetSlotForWeapon( weaponOwner, file.lastWeapon )
-			
-			string cmd	
+
+			string cmd
 			switch( slot )
 			{
 				case WEAPON_INVENTORY_SLOT_PRIMARY_0:
 					cmd = "weaponSelectPrimary0"
 				break
-				
+
 				case WEAPON_INVENTORY_SLOT_PRIMARY_1:
 					cmd = "weaponSelectPrimary1"
 				break
-				
+
 				case WEAPON_INVENTORY_SLOT_PRIMARY_2:
 					cmd = "weaponSelectPrimary2"
 				break
-				
-				default: 
+
+				default:
 					cmd = "weaponSelectPrimary1"
 				break
 			}
-			
+
 			weaponOwner.ClientCommand( cmd )
 		}
 	}
 }
-#endif 
+#endif
 
 void function OnProjectileCollision_weapon_impulse_grenade( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
 {
@@ -426,30 +472,30 @@ void function OnProjectileCollision_weapon_impulse_grenade( entity projectile, v
 
 	if( result && IsValid( projectile ) && !projectile.GrenadeHasIgnited() )
 	{
-		thread function () : ( player, projectile, weapon ) 
+		thread function () : ( player, projectile, weapon )
 		{
 			float radius = projectile.GetDamageRadius()
 			vector origin = projectile.GetWorldSpaceCenter()
 
 			wait 1
-			
+
 			if( IsValid( projectile ) && !projectile.GrenadeHasIgnited() )
 			{
 				projectile.GrenadeIgnite()
 			}
-	
+
 			foreach( sPlayer in GetPlayerArray() )
 			{
 				#if DEVELOPER
 					printt( sPlayer, Distance( origin, sPlayer.GetOrigin() ) )
-				#endif 
-				
+				#endif
+
 				if( Distance( origin, sPlayer.GetOrigin() ) < radius )
 				{
 					#if DEVELOPER
 						printt( "player should knockback" )
 					#endif
-					
+
 					#if SERVER
 						thread PushPlayerApart( sPlayer, origin, 1500 )
 					#endif
@@ -781,7 +827,7 @@ void function EnableTrapWarningSound( entity trap, float delay = 0, string warni
 		wait delay
 
 	float DISTANCE_TO_GET_TRAP_SOUND = 500.0 //(cafe) tune it if necessary
-	
+
 	while ( IsValid( trap ) )
 	{
 		foreach( player in GetPlayerArray() )
@@ -789,7 +835,7 @@ void function EnableTrapWarningSound( entity trap, float delay = 0, string warni
 			if( Distance2D( player.GetOrigin(), trap.GetOrigin() ) <= DISTANCE_TO_GET_TRAP_SOUND )
 				EmitSoundOnEntityOnlyToPlayer( trap, player, warningSound )
 		}
-		
+
 		wait 2.0
 	}
 }
@@ -812,18 +858,18 @@ array<entity> function GetTrackedEnts_Level()
 void function CleanupLevelTrackedEnts( )
 {
 	array<entity> traps = GetScriptManagedEntArray( level._trackedEntsLevelArrayID )
-	
+
 	foreach( trap in traps )
 	{
 		if( trap.GetScriptName() == "flowstateTurret" )
 		{
 			foreach(entity part in trap.e.turretparts)
 			{
-				if(IsValid(part)) 
+				if(IsValid(part))
 					part.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 5000 )
 			}
 		}
-		
+
 		if( IsValid( trap ) )
 			trap.Destroy()
 	}

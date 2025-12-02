@@ -347,9 +347,9 @@ void function PlayIntroQuipThread( entity emitter, EHI playerEHI, entity excepti
 void function PlayKillQuipThread( entity emitter, EHI playerEHI, entity exceptionPlayer = null, float delay = 0.0 )
 {
 	EndSignal( emitter, "OnDestroy" )
-	
+
 	wait delay
-	
+
 	#if CLIENT
 		Timeout timeout = BeginTimeout( 4.0 )
 		EndSignal( timeout, "Timeout" )
@@ -442,7 +442,7 @@ void function CharacterSkin_Apply( entity ent, ItemFlavor skin )
 
 	ent.SetSkin( skinIndex )
 	ent.SetCamo( camoIndex )
-	
+
 	#if SERVER
 		if ( ent.IsPlayer() )
 		{
@@ -769,18 +769,18 @@ void function DEV_TestCharacterSkinData()
 array< ItemFlavor > function FS_ReturnAllLegendarySkinsForCharacter( ItemFlavor character )
 {
 	array< ItemFlavor > skins = clone GetValidItemFlavorsForLoadoutSlot( ToEHI( null ), Loadout_CharacterSkin( character ) )
-	
+
 	if( skins.len() == 0 )
 		return []
-	
+
 	asset baseModel = GetGlobalSettingsAsset( ItemFlavor_GetAsset( skins[0] ), "bodyModel" ) // Legendary are always at the end, so we can safely say that the first skin is the base one
-	
+
 	for ( int i = skins.len() - 1; i >= 0; i-- )
 	{
 		if ( GetGlobalSettingsAsset( ItemFlavor_GetAsset( skins[i] ), "bodyModel" ) == baseModel )
 			skins.remove( i )
 	}
-	
+
 	return skins
 }
 
@@ -794,24 +794,24 @@ void function FS_TestCharacterSkinData()
 		{
 			printt( GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "armsModel" ), GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "bodyModel" ) )
 		}
-		
+
 	}
-	
+
 }
 
 void function FS_TestLegendarySkinData()
 {
 	foreach ( character in GetAllCharacters() )
 	{
-		array<ItemFlavor> characterSkins = FS_ReturnAllLegendarySkinsForCharacter( character ) 
+		array<ItemFlavor> characterSkins = FS_ReturnAllLegendarySkinsForCharacter( character )
 
 		foreach ( skin in characterSkins )
 		{
 			printt( GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "armsModel" ), GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "bodyModel" ) )
 		}
-		
+
 	}
-	
+
 }
 
 ItemFlavor ornull function FS_ReturnCharacterItemFlavorFromModel( asset model, bool isPovModel = false )
@@ -829,8 +829,8 @@ ItemFlavor ornull function FS_ReturnCharacterItemFlavorFromModel( asset model, b
 			if( compareModel.tolower() == model )
 				return character
 		}
-		
+
 	}
-	
+
 	return null
 }

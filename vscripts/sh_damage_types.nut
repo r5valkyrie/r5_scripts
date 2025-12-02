@@ -106,6 +106,7 @@ global enum eDamageSourceId
 	mp_weapon_defender
 	mp_ability_mobile_respawn_beacon
 	mp_ability_sniper_ult
+	mp_weapon_cluster_bomb_launcher
 	// End S3 Defaults
 
 	// Crate Weapons
@@ -263,6 +264,8 @@ global enum eDamageSourceId
 	evac_dropship_explosion
 	sticky_explosive
 	titan_grapple
+
+	mp_weapon_mortar_ring
 
 	// streaks
 

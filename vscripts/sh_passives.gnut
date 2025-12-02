@@ -20,7 +20,7 @@ global function TakeAllPassives
 global function GetAllPassivesForPlayer
 #endif
 
-#if (SERVER || CLIENT) && DEVELOPER
+#if SERVER || CLIENT && DEVELOPER
 global function DEV_PrintAllPassives
 #endif
 
@@ -97,6 +97,8 @@ global enum ePassives
 	PAS_GUNNER,
 	PAS_VALK,
 	PAS_NOVA,
+	PAS_FUSE,
+	PAS_TAC_UPGRADE_ONE,
 	//new
 	PAS_BONUS_SMALL_HEAL,
 	PAS_EXTRA_MED_INV,

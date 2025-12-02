@@ -363,6 +363,18 @@ WeaponData
             "regen_ammo_refill_start_delay"					"0.0"
             "ammo_no_remove_from_stockpile"					"1"
         }
+
+                    
+        fuse_long_throw_passive
+        {
+            "projectile_launch_speed"                       "*1.7"
+			"viewmodel"										"mdl/weapons/shuriken/ptpov_fuse_shuriken_held_03.rmdl"
+			"sound_deploy_1p"								"Fuse_Ord_Launcher_Raise_ArcStar_1P"
+			"sound_deploy_3p"                               "Fuse_Ord_Launcher_Raise_Base_3P"
+			"sound_throw_1p"								"Fuse_Ord_Launcher_Throw_ArcStar_1P"
+            "sound_throw_3p"								"Fuse_Ord_Launcher_Throw_ArcStar_3P"
+        }
+              
 	}
 
 

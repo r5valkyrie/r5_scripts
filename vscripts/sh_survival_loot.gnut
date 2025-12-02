@@ -4880,6 +4880,11 @@ int function SURVIVAL_GetInventorySlotCountForPlayer( entity player, LootData da
 				result++
 		}
 	}
+	else if ( data.lootType == eLootType.ORDNANCE && IsValid( player ) && PlayerHasPassive( player, ePassives.PAS_FUSE ) )
+	{
+		// Fuse doubles grenade capacity by increasing the stack size per slot
+		result *= 2
+	}
 
 	return result
 }
