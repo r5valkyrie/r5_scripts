@@ -30,6 +30,8 @@ global function CreateDeathBoxRui
 global function GetHighlightFillAlphaForLoot
 global function HideLootPrompts
 
+global function ServerToClient_UpdateItem
+
 global function ApplyEquipmentColorAndFXOverrides
 
 global const string PING_SOUND_DEFAULT = "ui_mapping_item_1p"
@@ -246,6 +248,26 @@ void function OnPlayerLifeStateChanged( entity player, int oldState, int newStat
 		{
 			thread TrackLootToPing( player )
 		}
+	}
+}
+
+void function ServerToClient_UpdateItem( entity lootEnt )
+{
+	if ( IsValid( lootEnt ) )
+	{
+		LootData lootFlavor = SURVIVAL_Loot_GetLootDataByIndex( lootEnt.GetSurvivalInt() )
+
+		bool hasSpecialAmmo = (lootFlavor.lootType == eLootType.MAINWEAPON && !GetWeaponInfoFileKeyField_GlobalBool( lootFlavor.baseWeapon, "uses_ammo_pool" ))
+		string itemKey = (hasSpecialAmmo ? format( "specialammo%d", lootEnt.GetEncodedEHandle() ) : lootFlavor.ref)
+
+		/*if ( fileLevel.listPanel != null )
+		{
+			DeathBoxListPanelItem ornull item = DeathBoxListPanel_GetItemByKey( fileLevel.listPanel, itemKey )
+			if ( item != null )
+			{
+				UpdateItem( expect DeathBoxListPanelItem(item) )
+			}
+		}*/
 	}
 }
 

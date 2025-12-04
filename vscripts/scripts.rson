@@ -499,6 +499,7 @@ Scripts:
 	mp/sh_rising_walls.nut  //World's Edge MU2/MU3
 	mp/sh_bloodhound_tt.nut  //World's Edge MU2/MU3
 	mp/sh_mirage_voyage.nut  //World's Edge MU1
+	mp/sh_caustic_tt.nut  //King's Canyon MU2TT/MU3
 	sh_mp_utility.gnut
 	sh_score.gnut
 	sh_elite_streak.gnut

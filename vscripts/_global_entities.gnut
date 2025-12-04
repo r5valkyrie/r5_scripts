@@ -237,6 +237,10 @@ void function InitDamageTriggers( entity self )
 			self.kv.damageSourceId = eDamageSourceId.burn
 			break
 
+		case "caustic_toxin":
+			self.kv.damageSourceId = eDamageSourceId.caustic_toxin
+			break
+
 		case "submerged":
 			self.kv.damageSourceId = eDamageSourceId.submerged
 			break
@@ -274,6 +278,7 @@ bool function IsDamageFromDamageTrigger( damageInfo )
 		case eDamageSourceId.splat:
 		case eDamageSourceId.burn:
 		case eDamageSourceId.submerged:
+		case eDamageSourceId.caustic_toxin:
 			return true
 	}
 

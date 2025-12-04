@@ -501,6 +501,9 @@ void function RemoteFunctions_Init_Begin()
 	if( Gamemode() == eGamemodes.SURVIVAL )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", -1, 127, "int", EHANDLE_MIN, EHANDLE_MAX, "int", 0, 5001, "int", 0, INT_MAX, "int", -1, 5001, "int", 0, 9999, "int", 0, 9999 )
 
+	if ( IsCausticTTEnabled() == true )
+		ScriptRemote_RegisterClientFunction( "ServerToClient_UpdateItem", "entity" )
+
 	ScriptRegisterNetworkedVariable( "focalTrap", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
 
 	ScriptRegisterNetworkedVariable( "gladCardPlayer", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
@@ -644,8 +647,12 @@ void function RemoteFunctions_Init_Begin()
 
 	if ( !IsLobby() )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_ShowDeathHint", "int", 0, MAX_DEATH_HINTS )
-		
-	Bloodhound_TT_RegisterNetworking() // Bloodhound Town Takeover //Audit 2-22-2025
+	
+	if ( IsBloodhoundTTEnabled() )	
+		Bloodhound_TT_RegisterNetworking() // Bloodhound Town Takeover //Audit 2-22-2025
+	
+	if ( IsCausticTTEnabled() == true )
+		Caustic_TT_RegisterNetworking() // Caustic Town Takeover
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SetAssistInformation", "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeStartLeech", "float", -1.0, 4000.0, 16 )//Audit 2-22-2025

@@ -178,8 +178,8 @@ void function GamemodeSurvivalShared_Init()
 		ClientMusic_SharedInit()
 	#endif
 	#if SERVER
-	//printt("Setting Game State")
-	//SetGameState(eGameState.PickLoadout)
+		//AddDamageCallbackSourceID( eDamageSourceId.burn, Player_OnBurnDamage )
+		AddDamageCallbackSourceID( eDamageSourceId.caustic_toxin, Player_OnCausticToxinDamage )
 	#elseif CLIENT
 		AddCreateCallback( "prop_dynamic", OnPropDynamicCreated )
 	#endif
@@ -640,6 +640,32 @@ TargetKitHealthAmounts function PredictHealthPackUse( entity player, HealthPicku
 }
 
 #endif
+
+#if SERVER
+//This should live in sh_fire, but for now we're avoiding DFS
+const string SFX_BURN_1P = "flesh_fire_damage_1p"
+const string SFX_BURN_3P = "flesh_thermiteburn_1p_vs_3p"
+void function Player_OnBurnDamage( entity target, var damageInfo )
+{
+	if ( !target.IsPlayer() )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( target, target, SFX_BURN_1P )
+	EmitSoundOnEntityExceptToPlayer( target, target, SFX_BURN_3P )
+}
+
+                  
+void function Player_OnCausticToxinDamage( entity target, var damageInfo )
+{
+	if ( !target.IsPlayer() )
+		return
+
+	EmitSoundOnEntityOnlyToPlayer( target, target, "flesh_causticgas_damage_1p" )
+	EmitSoundOnEntityExceptToPlayer( target, target, "flesh_causticgas_damage_3p" )
+}
+                        
+#endif
+
 #if SERVER || CLIENT
 bool function CanWeaponInspect( entity player, int activity )
 {

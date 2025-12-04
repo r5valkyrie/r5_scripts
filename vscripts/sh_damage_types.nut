@@ -274,6 +274,7 @@ global enum eDamageSourceId
 	splat
 	crushed
 	burn
+	caustic_toxin
 	lasergrid
 	outOfBounds
 	deathField
@@ -649,6 +650,7 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.rodeo_trap ] 								= "#DEATH_RODEO_TRAP",
 		[ eDamageSourceId.round_end ] 								= "#DEATH_ROUND_END",
 		[ eDamageSourceId.burn ]	 								= "#DEATH_BURN",
+		[ eDamageSourceId.caustic_toxin ] 							= "#DEATH_CAUSTIC_TOXIN",
 		[ eDamageSourceId.mind_crime ]								= "Mind Crime",
 		[ eDamageSourceId.charge_ball ]								= "Charge Ball",
 		[ eDamageSourceId.core_overload ]							= "#DEATH_CORE_OVERLOAD",

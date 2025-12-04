@@ -2117,7 +2117,7 @@ void function SURVIVAL_AddLootBin( entity lootbin )
 
 void function SURVIVAL_AddLootGroupRemapping( string hovertank, string supplyship )
 {
-
+	Survival_Loot_RegisterLootGroupRemap( hovertank, supplyship )
 }
 
 void function SURVIVAL_DebugLoot( string lootBinsLootInside, vector origin )

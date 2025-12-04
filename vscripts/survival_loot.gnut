@@ -52,6 +52,9 @@ global function SURVIVAL_IsCrushDeath
 global function SpawnVaultKey
 global function SURVIVAL_DropLoot_IncrementThrowAngle
 
+global function Survival_Loot_RegisterLootGroupRemap
+global function Survival_Loot_CheckLootGroupRemap
+
 global function ShouldForceUseSafeSpotForDeathBox_AddPlayer
 global function ShouldForceUseSafeSpotForDeathBox_RemovePlayer
 
@@ -168,6 +171,7 @@ struct {
 	table<vector, array<string> > vaultLootSpawned
 	array<entity> spawnedAmmoStacks
 	table< string, LootGroup >              lootGroups
+	table< string, string >                 lootGroupRemaps
 	table<entity, bool> hasEquippedAttachmentEver
 	table<entity, bool> hasEquippedOrdnanceEver
 	table<entity, int>  specialAmmoCounts
@@ -5590,6 +5594,23 @@ void function SurvivalLoot_OnPhysicsDisabled( entity physicsEnt )
 bool function SURVIVAL_IsValidLootGroup( string groupName )
 {
 	return groupName in file.lootGroups
+}
+
+void function Survival_Loot_RegisterLootGroupRemap( string fromGroupRef, string toGroupRef )
+{
+	if ( fromGroupRef == "" || toGroupRef == "" )
+		return
+
+	file.lootGroupRemaps[ fromGroupRef.tolower() ] <- toGroupRef
+}
+
+string function Survival_Loot_CheckLootGroupRemap( string groupRef )
+{
+	string key = groupRef.tolower()
+	if ( key in file.lootGroupRemaps )
+		return file.lootGroupRemaps[ key ]
+
+	return groupRef
 }
 
 void function MoveToNewPosition( entity loot, vector origin, vector angles )
