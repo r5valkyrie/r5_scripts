@@ -203,6 +203,14 @@ string function SURVIVAL_GetWeightedItemFromGroup(string groupRef)
 		string replacementRef = FindValidReplacementItem( theRef, groupDistro )
 		theRef = replacementRef != "" ? replacementRef : "blank"
 	}
+
+	if ( theRef == "" )
+	{
+		#if DEVELOPER
+			Warning( "SURVIVAL_GetWeightedItemFromGroup rolled empty ref for group: " + groupRef )
+		#endif
+		return "blank"
+	}
 	
     return theRef
 }

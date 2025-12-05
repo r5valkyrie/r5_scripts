@@ -28,6 +28,15 @@ void function CodeCallback_MapInit()
 		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05.rmdl")
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2_tt.rpak" )
 	}
+	else if (GetMapName() == "mp_rr_canyonlands_mu3" )
+	{
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01.rmdl")
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02.rmdl")//replace these models with s8 variant - kral
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03.rmdl")
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04.rmdl")
+		PrecacheModel( $"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05.rmdl")
+		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu3.rpak" )
+	}
 	else
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2.rpak" )
 
@@ -255,7 +264,7 @@ void function BunkerDoor_OnOpen( entity button, entity user, int input )
 		door.Anim_PlayOnly( "bunker_hatch_open" )
 		wait door.GetSequenceDuration( "bunker_hatch_open" )
 		door.Anim_PlayOnly( "bunker_hatch_open_idle" )
-		BunkerDoor_CreateZipline( worldStart, worldEnd, true )
+		BunkerDoor_CreateZipline( worldStart, worldEnd, true, <0,0,0>, -1, true )
 	}()
 }
 
@@ -280,7 +289,7 @@ void function BunkerDoorSmall_OnOpen( entity button, entity user, int input )
 
 	if( doorHasSpecialZiplineStart && specialZipStartInfoTarget )
 	{
-		thread BunkerDoor_CreateZipline( specialZipStartInfoTarget.GetOrigin() + <0,0,50>, < specialZipStartInfoTarget.GetOrigin().x, specialZipStartInfoTarget.GetOrigin().y, button.GetOrigin().z >, <0,0,0>, -1, true )
+		thread BunkerDoor_CreateZipline( specialZipStartInfoTarget.GetOrigin() + <0,0,50>, < specialZipStartInfoTarget.GetOrigin().x, specialZipStartInfoTarget.GetOrigin().y, button.GetOrigin().z >, true, <0,0,0>, -1, true )
 	}
 
 	thread function() : ( door, button )
@@ -289,7 +298,7 @@ void function BunkerDoorSmall_OnOpen( entity button, entity user, int input )
 		wait door.GetSequenceDuration( "bunker_hatch_open" )
 		door.Anim_PlayOnly( "bunker_hatch_open_idle" )
 
-		BunkerDoor_CreateZipline( < door.GetOrigin().x, door.GetOrigin().y, door.GetOrigin().z + 200 > , < door.GetOrigin().x, door.GetOrigin().y, door.GetOrigin().z - 1000 >,<0,0,0>, -1, true )
+		BunkerDoor_CreateZipline( < door.GetOrigin().x, door.GetOrigin().y, door.GetOrigin().z + 200 > , < door.GetOrigin().x, door.GetOrigin().y, door.GetOrigin().z - 1000 >, true, <0,0,0>, -1, true )
 	}()
 }
 

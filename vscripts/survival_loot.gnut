@@ -815,6 +815,31 @@ void function OnGroundLootSpawned( entity ent )
 		for(int i = 0; i < 1; i++)
 		{
 			itemRef = SURVIVAL_GetWeightedItemFromGroup( zoneRef )
+
+			if ( itemRef == "" )
+			{
+				#if DEVELOPER
+					Warning( "OnGroundLootSpawned empty ref for zone '" + zoneRef + "'" )
+				#endif
+				i--
+				continue
+			}
+
+			if ( itemRef == "blank" )
+			{
+				i--
+				continue
+			}
+
+			if ( !SURVIVAL_Loot_IsRefValid( itemRef ) )
+			{
+				#if DEVELOPER
+					Warning( "OnGroundLootSpawned invalid ref '" + itemRef + "' for zone '" + zoneRef + "'" )
+				#endif
+				i--
+				continue
+			}
+
 			LootData lootData = SURVIVAL_Loot_GetLootDataByRef( itemRef )
 
 			if( settings.ketchup_1 )
@@ -2983,6 +3008,18 @@ bool function ShouldSpawnThisLoot( string entryRef )
 
 entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngles = < -1, -1, -1>, int clipCount = 1, int collisionGroup = TRACE_COLLISION_GROUP_NONE, bool onlySetModsForLockedAttachPoints = false, int stockpileCount = 0, bool isHaloModWeaponFromRack = false )
 {
+	if ( ref == "" )
+	{
+		Warning( "SpawnGenericLoot - Missing loot ref" )
+		return null
+	}
+
+	if ( !SURVIVAL_Loot_IsRefValid( ref ) )
+	{
+		Warning( "SpawnGenericLoot - Invalid loot ref: " + ref )
+		return null
+	}
+
 	if( SURVIVAL_Loot_IsReforBaseWeaponDisabled( ref ) )
 	{
 		Warning( "SpawnGenericLoot - Attempting to spawn disabled item: %s", ref )
@@ -3009,7 +3046,7 @@ entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngl
 	ent.SetOrigin( origin )
 	ent.SetAngles( angles )
 
-	ent.SetSurvivalInt( SURVIVAL_Loot_GetLootDataTable()[ref].index )
+	ent.SetSurvivalInt( lootData.index )
 
 	if ( lootData.lootType == eLootType.ARMOR )
 		ent.SetSurvivalProperty( SURVIVAL_GetArmorShieldCapacity( lootData.tier ) )

@@ -9,7 +9,7 @@ file
 
 void function CodeCallback_PreMapInit()
 {
-	CryptoTT_PreMapInit()
+	//CryptoTT_PreMapInit()
 }
 
 void function ClientCodeCallback_MapInit()
@@ -20,15 +20,15 @@ void function ClientCodeCallback_MapInit()
 	MinimapLabelsCanyonlandsMU3()
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, MU1_OnWinnerDetermined )
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
-	ClCanyonLandsCausticLore_Init()
+	//ClCanyonLandsCausticLore_Init()
 
-	ClCryptoTVsInit()
-	RegisterCLCryptoCallbacks()
+	//ClCryptoTVsInit()
+	//RegisterCLCryptoCallbacks()
 }
 
 void function EntitiesDidLoad()
 {
-	InitCryptoMap()
+	//InitCryptoMap()
 }
 
 void function MinimapLabelsCanyonlandsMU3()

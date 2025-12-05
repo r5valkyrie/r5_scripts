@@ -1377,6 +1377,14 @@ bool function SURVIVAL_Loot_IsLootIndexValid( int index )
 }
 LootData function SURVIVAL_Loot_GetLootDataByRef( string ref )
 {
+	if ( ref == "" || !(ref in file.lootData) )
+	{
+		#if DEVELOPER
+			Warning( "SURVIVAL_Loot_GetLootDataByRef missing ref: " + ref )
+		#endif
+		return file.lootData[ "blank" ]
+	}
+
 	return file.lootData[ ref ]
 }
 bool function SURVIVAL_Loot_IsRefValid( string ref )
