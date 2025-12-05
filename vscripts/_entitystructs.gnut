@@ -713,7 +713,8 @@ global struct ServerPlayerStruct
 	// float empEndTime
 
 	int disableOffhandWeaponsStackCount
-
+	int disableInventoryStackCount
+	
 	float  lastTimeDeactivatedJetpack
 	float  nextAllowUseValkUltTime
 	entity valkUltProxyEnt

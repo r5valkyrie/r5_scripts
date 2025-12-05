@@ -70,10 +70,41 @@ global struct DisplayTime
 	int milliseconds
 }
 
+global struct Coord
+{
+	vector pos
+	vector ang
+}
+
 global struct AABB
 {
 	vector mins
 	vector maxs
+}
+
+global struct PassByReferenceInt
+{
+	int value
+}
+
+global struct PassByReferenceFloat
+{
+	float value
+}
+
+global struct PassByReferenceBool
+{
+	bool value
+}
+
+global struct PassByReferenceVector
+{
+	vector value
+}
+
+global struct PassByReferenceEntity
+{
+	entity value
 }
 
 global enum eStreamMode
@@ -107,11 +138,6 @@ global struct ThrottleData
 	float decayingActionCount = 0
 	float interval = THROTTLE_DEFAULT_INTERVAL
 	int   maxPerInterval = THROTTLE_DEFAULT_MAXPERINTERVAL
-}
-
-global struct PassByReferenceBool
-{
-	bool value
 }
 
 global struct WaitQuotaItem

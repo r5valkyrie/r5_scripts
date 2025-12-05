@@ -17,6 +17,7 @@ global function SURVIVAL_Loot_RunConditionalCheck
 global function IsAmmoInUse
 global function FS_GetWeaponsThatUseThisAmmo
 global function SetPlayerRequireLootType
+global function SURVIVAL_HasSpecificItemInInventory
 
 global function SURVIVAL_CountSquaresInInventory
 global function SURVIVAL_CountItemsInInventory

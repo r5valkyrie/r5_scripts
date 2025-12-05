@@ -500,9 +500,12 @@ Scripts:
 	mp/sh_bloodhound_tt.nut  //World's Edge MU2/MU3
 	mp/sh_mirage_voyage.nut  //World's Edge MU1
 	mp/sh_caustic_tt.nut  //King's Canyon MU2TT/MU3
+	mp/sh_canyonlands_caustic_lore.nut
+	mp/sh_sniper_tower.nut
 	sh_mp_utility.gnut
 	sh_score.gnut
 	sh_elite_streak.gnut
+	worldsystems/sh_explosive_loot_hold.nut
 
 	gamemodes/sh_gamemode_tdm.nut
 	gamemodes/sh_gamemode_recruit.nut

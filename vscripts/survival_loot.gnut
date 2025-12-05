@@ -61,6 +61,7 @@ global function ShouldForceUseSafeSpotForDeathBox_RemovePlayer
 global function AddCallback_LootPhysicsParented
 global function RemoveCallback_LootPhysicsParented
 global function GetRefOrRefFromGroup
+global function SURVIVAL_GetWeightedItemFromTrimmedGroup
 global function GiveLoot
 
 global function Dev_ForceDropDeathbox
@@ -191,6 +192,7 @@ struct {
 	table< string, array<void functionref( entity parentEnt, entity childEnt ) > >  Callbacks_OnLootSpawnParented
 	array< void functionref(entity, entity, entity) >								Callbacks_OnGiveMainWeapon
 	array< void functionref(entity, entity, entity) >								Callbacks_OnWeaponDrop
+	table<string, string> lootGroupRemappings
 	array<int>                     realmsToPopulate = [ eRealms.DEFAULT ]
 
 	array<entity> playersThatShouldForceUseSafeSpotForDeathBox
@@ -2827,6 +2829,14 @@ void function SURVIVAL_TransferBetterModsToOtherWeapon( entity player, entity we
 	// }
 }
 
+float function RandomFloatForLoot( float max )
+{
+	//if ( IsLockedLootActive() )
+		//return RandomFloatSeeded( file.randomSeedLoot, max )
+
+	return RandomFloat( max )
+}
+
 
 void function WeaponDropBehavior( entity player, entity droppedProp, entity weaponToDrop, bool setModsFromDropWeapon = true )
 {
@@ -4557,6 +4567,37 @@ void function SURVIVAL_TryGivePlayerDefaultMeleeWeapons( entity player )
 	}
 }
 
+string function SURVIVAL_GetWeightedItemFromTrimmedGroup( string groupRef, array<string> validItems = [] )
+{
+	groupRef = CheckLootGroupRemapping( groupRef )
+	LootGroup groupData = file.lootGroups[groupRef.tolower()]
+
+	table < string, array<float> > trimmedEntries
+	float totalDistribution = 0
+
+	foreach ( item, distribution in groupData.entries )
+	{
+		if ( validItems.contains( item ) )
+		{
+			trimmedEntries[item] <- [totalDistribution, totalDistribution+distribution]
+			totalDistribution += distribution
+		}
+	}
+
+	Assert( trimmedEntries.len() != 0, "No valid items found in " + groupRef )
+
+	float rand = RandomFloatForLoot( totalDistribution )
+
+	foreach ( item, distribution in trimmedEntries )
+	{
+		if ( rand > distribution[0] && rand <= distribution[1] )
+		{
+			return item
+		}
+	}
+
+	unreachable
+}
 void function SURVIVAL_EquipOrdnanceFromInventory( entity player, string item, bool forceDontSwitch = false )
 {
 	#if DEVELOPER
@@ -5675,6 +5716,16 @@ void function RemoveCallback_LootPhysicsParented( entity ent, void functionref( 
 	{
 		file.Callbacks_OnLootPhysicsParented[ent].removebyvalue( callbackFunc )
 	}
+}
+
+string function CheckLootGroupRemapping( string groupName )
+{
+	string group = groupName.tolower()
+
+	if ( group in file.lootGroupRemappings )
+		return file.lootGroupRemappings[ group ]
+
+	return groupName
 }
 
 //TODO(mk): Create separate logic for halo specific loot dropping.

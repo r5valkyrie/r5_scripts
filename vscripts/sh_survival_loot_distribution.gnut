@@ -249,6 +249,13 @@ array<string> function SURVIVAL_GetMultipleWeightedItemsFromGroup( string lootGr
     for(int i = 0; i < numLootItems; i++)
     {
 		string ref = SURVIVAL_GetWeightedItemFromGroup(lootGroup)
+
+		if ( ref == "" || ref == "blank" )
+		{
+			i--
+			continue
+		}
+
 		LootData lootData = SURVIVAL_Loot_GetLootDataByRef( ref )
 
 		if( GetCurrentPlaylistVarBool( "lsm_mod1", false ) )
@@ -260,7 +267,7 @@ array<string> function SURVIVAL_GetMultipleWeightedItemsFromGroup( string lootGr
 			}
 		}
 		
-		if( lootData.lootType == eLootType.ARMOR || ref == "blank" || ref == "" )
+		if( lootData.lootType == eLootType.ARMOR )
 		{
 			i--
 			continue

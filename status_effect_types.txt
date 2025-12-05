@@ -138,5 +138,6 @@
 	in_mortar_ring
 	mortar_ring_burn
 	mortar_ring_reveal
+	hold_is_open
 /////////////////////////////
 //}

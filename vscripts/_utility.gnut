@@ -1778,6 +1778,21 @@ entity function CreateTriggerCylinder( vector origin, int radius, int aboveHeigh
 	return trigger
 }
 
+entity function CreateTriggerCylinderNoCylinderRadius( vector origin, int radius, int aboveHeight, int belowHeight )
+{
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )
+	trigger.SetRadius( radius )
+	trigger.SetAboveHeight( aboveHeight )
+	trigger.SetBelowHeight( belowHeight )
+	trigger.kv.triggerFilterNpc = "none"
+	trigger.kv.triggerFilterPlayer = "all"
+	trigger.kv.triggerFilterNonCharacter = 0
+	trigger.SetOrigin( origin )
+	DispatchSpawn( trigger )
+
+	return trigger
+}
+
 //-----------------------------------------------------------
 // CreateTriggerCylinderNetworked( origin, radius, height ) - create a networked trigger_cylinder. Works like a normal trigger.
 //------------------------------------------------------------
@@ -3636,6 +3651,58 @@ void function PopulateTitanLoadoutFromLevelTrans( TitanLoadoutDef titanLoadout )
 	}
 }*/
 
+void function BunkerDoor_CreateZipline( vector startPos, vector endPos, bool pushOff, vector startAngles, float detatchDistanceOverride = -1, bool moveIt = true, float deployDuration = 1.0, )
+{
+	entity zip_start = CreateEntity("zipline")
+	entity zip_end = CreateEntity("zipline_end")
+
+	zip_start.SetOrigin( startPos )
+
+	entity mover
+
+	if( moveIt )
+	{
+		zip_end.SetOrigin( startPos - <0,0,1> )
+		mover = CreateScriptMover( zip_start.GetOrigin(), zip_start.GetAngles())
+		zip_end.SetParent(mover)
+		EmitSoundOnEntity( zip_start, "Canyonlands_Scr_Bunker_Hatch_Zipline_Drop" )
+	} else
+	{
+		zip_end.SetOrigin( endPos )
+		zip_start.kv._zipline_rest_point_0 = startPos.x + " " + startPos.y + " " + startPos.z
+		zip_start.kv._zipline_rest_point_1 = endPos.x + " " + endPos.y + " " + endPos.z
+	}
+
+	zip_start.kv.ZiplineAutoDetachDistance = "160"
+	zip_end.kv.ZiplineAutoDetachDistance = "160"
+
+	zip_start.LinkToEnt(zip_end)
+	zip_start.kv.Material = "cable/zipline.vmt"
+	zip_start.kv.ZiplineVertical = true
+	zip_start.kv.ZiplinePreserveVelocity = true
+
+	zip_start.Zipline_Disable()
+
+	DispatchSpawn(zip_start)
+	DispatchSpawn(zip_end)
+
+	if( moveIt )
+	{
+		mover.NonPhysicsMoveTo( endPos, deployDuration, 1.0, 0.0  )
+		wait deployDuration + 0.099
+		zip_end.SetOrigin( endPos )
+		zip_end.ClearParent()
+		mover.Destroy()
+		zip_start.Zipline_Enable()
+		zip_start.Zipline_WakeUp()
+	} else
+	{
+		zip_start.Zipline_Enable()
+		zip_start.Zipline_WakeUp()
+	}
+}
+
+
 array<entity> function CreateZipline( vector startPos, vector endPos, bool disableResting = false, float detatchDistanceOverride = -1, bool skin = false )
 {
 	vector delta     = startPos - endPos
@@ -4434,6 +4501,37 @@ void function EnableOffhandWeapons( entity player )
 		player.Server_TurnOffhandWeaponsDisabledOff()
 
 	Assert( player.p.disableOffhandWeaponsStackCount >= 0, "Warning! Called EnableOffhandWeapons() but the weapons aren't disabled!" )
+}
+
+void function DisableInventory( entity player )
+{
+	Assert( IsValid( player ), "Warning! Called DisableInventory() but the player is invalid!" )
+
+	// Force-close any menus that are open to prevent exploits and glitches.
+	Remote_CallFunction_NonReplay( player, "ServerCallback_TryCloseInventory" )
+
+	player.SetPlayerNetBool( "inventoryEnabled", false ) // For ALL modes.
+	player.p.disableInventoryStackCount++
+}
+
+void function EnableInventory( entity player )
+{
+	string errorMsg = format( "%s(): player data invalid!", FUNC_NAME() )
+	Assert ( IsValid ( player ) || (  !IsValid ( player ) && IsInvalidButMemberVarsStillValid ( player ) ), errorMsg )
+
+	player.p.disableInventoryStackCount--
+	if ( player.p.disableInventoryStackCount <= 0 )
+		player.SetPlayerNetBool( "inventoryEnabled", true ) // For ALL modes.
+
+	Assert( player.p.disableInventoryStackCount >= 0, "WARNING! Called EnableInventory() when Inventory was not disabled." )
+}
+
+bool function IsInventoryDisabled( entity player )
+{
+	string errorMsg = format( "%s(): player data invalid!", FUNC_NAME() )
+	Assert ( IsValid( player ) || ( !IsValid( player ) && IsInvalidButMemberVarsStillValid( player )), errorMsg )
+
+	return( player.p.disableInventoryStackCount > 0 )
 }
 
 void function PushEntWithDamageInfoAndDistanceScale( entity ent, var damageInfo, float nearRange, float farRange, float nearScale, float farScale, float forceMultiplier_dotBase = 0.5 )

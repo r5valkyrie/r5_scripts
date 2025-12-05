@@ -18,6 +18,8 @@ global function IsDoorLocked
 
 #if SERVER
 global function RemoveDoorFromManagedEntArray
+global function LockDoor
+global function UnlockDoor
 global function OpenDoor
 global function CloseDoor
 global function GetDoorType

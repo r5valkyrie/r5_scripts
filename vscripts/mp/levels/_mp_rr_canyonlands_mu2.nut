@@ -280,7 +280,7 @@ void function BunkerDoorSmall_OnOpen( entity button, entity user, int input )
 
 	if( doorHasSpecialZiplineStart && specialZipStartInfoTarget )
 	{
-		thread BunkerDoor_CreateZipline( specialZipStartInfoTarget.GetOrigin() + <0,0,50>, < specialZipStartInfoTarget.GetOrigin().x, specialZipStartInfoTarget.GetOrigin().y, button.GetOrigin().z >, true )
+		thread BunkerDoor_CreateZipline( specialZipStartInfoTarget.GetOrigin() + <0,0,50>, < specialZipStartInfoTarget.GetOrigin().x, specialZipStartInfoTarget.GetOrigin().y, button.GetOrigin().z >, <0,0,0>, -1, true )
 	}
 
 	thread function() : ( door, button )
@@ -289,60 +289,10 @@ void function BunkerDoorSmall_OnOpen( entity button, entity user, int input )
 		wait door.GetSequenceDuration( "bunker_hatch_open" )
 		door.Anim_PlayOnly( "bunker_hatch_open_idle" )
 
-		BunkerDoor_CreateZipline( < door.GetOrigin().x, door.GetOrigin().y, door.GetOrigin().z + 200 > , < door.GetOrigin().x, door.GetOrigin().y, door.GetOrigin().z - 1000 >, true )
+		BunkerDoor_CreateZipline( < door.GetOrigin().x, door.GetOrigin().y, door.GetOrigin().z + 200 > , < door.GetOrigin().x, door.GetOrigin().y, door.GetOrigin().z - 1000 >,<0,0,0>, -1, true )
 	}()
 }
 
-void function BunkerDoor_CreateZipline( vector startPos, vector endPos, bool moveIt )
-{
-	entity zip_start = CreateEntity("zipline")
-	entity zip_end = CreateEntity("zipline_end")
-
-	zip_start.SetOrigin( startPos )
-
-	entity mover
-
-	if( moveIt )
-	{
-		zip_end.SetOrigin( startPos - <0,0,1> )
-		mover = CreateScriptMover( zip_start.GetOrigin(), zip_start.GetAngles())
-		zip_end.SetParent(mover)
-		EmitSoundOnEntity( zip_start, "Canyonlands_Scr_Bunker_Hatch_Zipline_Drop" )
-	} else
-	{
-		zip_end.SetOrigin( endPos )
-		zip_start.kv._zipline_rest_point_0 = startPos.x + " " + startPos.y + " " + startPos.z
-		zip_start.kv._zipline_rest_point_1 = endPos.x + " " + endPos.y + " " + endPos.z
-	}
-
-	zip_start.kv.ZiplineAutoDetachDistance = "160"
-	zip_end.kv.ZiplineAutoDetachDistance = "160"
-
-	zip_start.LinkToEnt(zip_end)
-	zip_start.kv.Material = "cable/zipline.vmt"
-	zip_start.kv.ZiplineVertical = true
-	zip_start.kv.ZiplinePreserveVelocity = true
-
-	zip_start.Zipline_Disable()
-
-	DispatchSpawn(zip_start)
-	DispatchSpawn(zip_end)
-
-	if( moveIt )
-	{
-		mover.NonPhysicsMoveTo( endPos, 1.0, 1.0, 0.0  )
-		wait 1.0
-		zip_end.SetOrigin( endPos )
-		zip_end.ClearParent()
-		mover.Destroy()
-		zip_start.Zipline_Enable()
-		zip_start.Zipline_WakeUp()
-	} else
-	{
-		zip_start.Zipline_Enable()
-		zip_start.Zipline_WakeUp()
-	}
-}
 
 array<vector> function Flowstate_GenerateSmoothPathForBasePath( array<vector> path )
 {
