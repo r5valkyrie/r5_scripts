@@ -1147,7 +1147,7 @@ bool function IsCausticTTEnabled()
 			return true
 	}
 
-	return true
+	return false
 }
 
 
