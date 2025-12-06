@@ -1141,7 +1141,7 @@ bool function IsPlayerCaustic( entity player )
 
 bool function IsCausticTTEnabled()
 {
-	if ( GetCurrentPlaylistVarBool( "caustic_tt_enabled", false ) )
+	if ( GetCurrentPlaylistVarBool( "caustic_tt_enabled", true ) )
 	{
 		if (GetMapName() == "mp_rr_canyonlands_mu3" )
 			return true
