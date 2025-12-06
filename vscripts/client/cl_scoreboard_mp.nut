@@ -56,7 +56,7 @@ struct {
 	var backgroundCustom
 	var titleCustom
 	var hintCustom
-	
+
 	array<var> scoreboardOverlays
 	array<var> scoreboardElems
 
@@ -83,12 +83,12 @@ struct {
 	void functionref(entity,var) scoreboardUpdateCallback
 	array <void functionref()> scoreboardCallbacks_OnShowing
 	array <void functionref()> scoreboardCallbacks_OnHiding
-	
+
 	bool bResetScoreboardIgnore
 	int max_teams
 } file
 
-const array<int> IGNORE_SCORE_BOARD_RESET = 
+const array<int> IGNORE_SCORE_BOARD_RESET =
 [
 	eGamemodes.SURVIVAL,
 	eGamemodes.fs_aimtrainer
@@ -104,7 +104,7 @@ void function ClScoreboardMp_Init()
 	// RegisterConCommandTriggeredCallback( "+scriptCommand4", ScoreboardToggleFocus )
 	RegisterConCommandTriggeredCallback( "scoreboard_toggle_focus", ScoreboardToggleFocus )
 	RegisterSignal( "ShutDownScoreboardRefresh" )
-	
+
 	AddClientCallback_OnResolutionChanged( ReInitScoreboard )
 	file.bResetScoreboardIgnore = IGNORE_SCORE_BOARD_RESET.contains( Gamemode() )
 	file.max_teams = GetCurrentPlaylistVarInt( "max_teams", MAX_TEAM_SLOTS )
@@ -118,7 +118,7 @@ void function ReInitScoreboard( )
 }
 
 void function ScoreboardFocus( entity player )
-{ 
+{
 	thread ShowScoreboardMP()
 	file.hasFocus = true
 }
@@ -186,12 +186,17 @@ void function InitScoreboardMP()
 	file.backgroundCustom = HudElement( "FS_DMScoreboard_Frame" )
 	file.titleCustom = HudElement( "FS_DMScoreboard_Title" )
 	file.hintCustom = HudElement( "FS_DMScoreboard_Hint" )
-	
+
 	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 )
 	{
 		Hud_SetText( file.hintCustom, "%toggle_map% Close")
 	}
-	
+
+	if( Playlist() == ePlaylists.survival_dev || Playlist() == ePlaylists.dev_default )
+	{
+		Hud_SetText( file.hintCustom, "%toggle_legend% Close")
+	}
+
 	string title = "SCOREBOARD"
 
 	Hud_SetText( file.titleCustom, title)
@@ -211,7 +216,7 @@ void function InitScoreboardMP()
 
 	file.footer = HudElement( "ScoreboardGamepadFooter", scoreboard )
 	file.pingText = HudElement( "ScoreboardPingText", scoreboard )
-	
+
 	file.scoreboardElems.clear()
 	file.scoreboardElems.append( file.header.gametypeAndMap )
 	file.scoreboardElems.append( file.header.gametypeDesc )
@@ -369,22 +374,22 @@ void function ScoreboardFadeOut()
 }
 
 void function ShowScoreboardMP()
-{	
+{
 	clGlobal.levelEnt.Signal( "ShutDownScoreboardRefresh" )
 	clGlobal.levelEnt.EndSignal( "ShutDownScoreboardRefresh" )
-	
-	if( file.bResetScoreboardIgnore ) 
+
+	if( file.bResetScoreboardIgnore )
 		return
 
 	#if DEVELOPER
 		printf("[SB] %s - %s\n", FUNC_NAME(), GameRules_GetGameMode())
 	#endif
-	
+
 	foreach( void functionref() callbackFunc in file.scoreboardCallbacks_OnShowing )
 		callbackFunc()
 
 	entity localPlayer = GetLocalClientPlayer()
-	
+
 	Hud_SetVisible( file.backgroundCustom, true )
 	Hud_SetVisible( file.titleCustom, true )
 	// if( IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod_oddball" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_1v1" && GetCurrentPlaylistName() == "fs_lgduels_1v1" )
@@ -393,7 +398,7 @@ void function ShowScoreboardMP()
 	// }
 	// else
 		Hud_SetVisible( file.hintCustom, false )
-	
+
 	//file.scoreboardBg = RuiCreate( $"ui/scoreboard_background.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
 	file.scoreboardOverlays = CreateScoreboardOverlays()
 
@@ -586,7 +591,7 @@ void function ShowScoreboardMP()
 					// name = "* " + name
 
 				RuiSetString( rui, "playerName", name )
-				
+
 				ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
 				asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 				RuiSetImage( rui, "playerCard", classIcon )
@@ -693,12 +698,12 @@ void function ShowScoreboardMP()
 		}
 
 		firstUpdate = false
-		
+
 		wait 0.1
 	}
 }
 
-//Todo: create standalone version for each mode and init for the mode. 
+//Todo: create standalone version for each mode and init for the mode.
 void function UpdateScoreboardForGamemode( entity player, var rowRui, var scoreHeaderRui )
 {
 	array<string> headers = GameMode_GetScoreboardColumnTitles( GAMETYPE )
@@ -739,7 +744,7 @@ void function UpdateScoreboardForGamemode( entity player, var rowRui, var scoreH
 			{
 				if( Playlist() == ePlaylists.fs_dm_oddball || Playlist() == ePlaylists.fs_haloMod_oddball )
 					playerScore3 = player.GetPlayerNetInt( "oddball_ballHeldTime" )
-				else if( Gamemode() == eGamemodes.fs_snd ) 
+				else if( Gamemode() == eGamemodes.fs_snd )
 					playerScore3 = player.GetPlayerNetInt( "defused" )
 				else if( Playlist() == ePlaylists.fs_scenarios )
 					playerScore3 = player.GetPlayerNetInt( "FS_Scenarios_PlayerScore" )
@@ -756,7 +761,7 @@ void function UpdateScoreboardForGamemode( entity player, var rowRui, var scoreH
 					playerScore2 = player.GetPlayerNetInt( "returns" )
 				else if( Playlist() == ePlaylists.fs_lgduels_1v1 )
 					playerScore2 = player.GetPlayerNetInt( "accuracy" )
-				else if( Gamemode() == eGamemodes.fs_snd ) 
+				else if( Gamemode() == eGamemodes.fs_snd )
 					playerScore2 = player.GetPlayerNetInt( "planted" )
 				else if( Playlist() == ePlaylists.fs_scenarios )
 					playerScore2 = player.GetPlayerNetInt( "FS_Scenarios_MatchesWins")
@@ -808,13 +813,13 @@ void function HideScoreboardMP()
 
 	//if ( file.hasFocus )
 		//HudInput_PopContext()
-	
+
 	Hud_SetVisible( file.backgroundCustom, false )
 	Hud_SetVisible( file.titleCustom, false )
 	Hud_SetVisible( file.hintCustom, false )
 
 	ScoreboardFadeOut()
-	
+
 	WaitFrame()
 
 	file.hasFocus = false

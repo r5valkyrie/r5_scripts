@@ -115,6 +115,7 @@ void function Survival_AddPassthroughCommandsToMenu( var menu )
 	AddCommandForMenuToPassThrough( menu, "weapon_inspect" )
 	AddCommandForMenuToPassThrough( menu, "toggle_inventory" )
 	AddCommandForMenuToPassThrough( menu, "toggle_map" )
+	AddCommandForMenuToPassThrough( menu, "toggle_legend" )
 	AddCommandForMenuToPassThrough( menu, "+scriptCommand3" )
 	AddCommandForMenuToPassThrough( menu, "say_team" )
 }

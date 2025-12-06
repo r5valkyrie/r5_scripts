@@ -1867,8 +1867,11 @@ void function UpdateForFocusOnButtonIndex( int buttonIndex )
 	if ( !fileLevel.isBrowseMode && stepIndex != fileLevel.localClientLockstepIndex )
 		return
 
-	// If we have a character locked in we don't update the model
-	if ( GetLocalClientPlayer().GetPlayerNetBool( "hasLockedInCharacter" ) || Gamemode() == eGamemodes.WINTEREXPRESS )
+	// Skip focus feedback only during lockstep picks; browse mode should always preview
+	if ( !fileLevel.isBrowseMode && GetLocalClientPlayer().GetPlayerNetBool( "hasLockedInCharacter" ) )
+		return
+
+	if ( Gamemode() == eGamemodes.WINTEREXPRESS )
 		return
 
 	foreach( func in file.Callbacks_OnCharacterFocused )
@@ -1877,21 +1880,6 @@ void function UpdateForFocusOnButtonIndex( int buttonIndex )
 	// Update Scene
 	fileLevel.desiredCharacterOrNull = itemFlav
 	Signal( fileLevel.signalDummy, "UpdateScene" )
-	
-	// todo: reimplement character select models:
-	// this displays nothing.
-	// but like, using actual stgs for actual characters causes even more issues
-	// (bodyModel not found)
-
-	// CreateNewCharacterModel(GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" ))
-
-
-	
-	// Request Loadout. In browse mode we dont change loadout on focus, only activate
-	//if ( !fileLevel.isBrowseMode )
-	//	RequestSetLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), itemFlav )
-
-	//UpdateButtonStates()
 }
 
 void function OnLoadoutButton_Focused( var button )
@@ -1989,7 +1977,7 @@ void function OnLoadoutButton_Activate( var button )
 		return
 
 	// We already have a character locked
-	if ( GetLocalClientPlayer().GetPlayerNetBool( "hasLockedInCharacter" ) )
+	if ( !fileLevel.isBrowseMode && GetLocalClientPlayer().GetPlayerNetBool( "hasLockedInCharacter" ) )
 		return
 
 	int buttonIndex      = fileLevel.characterButtons.find( button )

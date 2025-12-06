@@ -18,6 +18,7 @@
 "+use_alt"				  				"#USE_ALT_BINDING_HINT"
 "toggle_inventory"	      				"#INVENTORY"
 "toggle_map"			  				"#MAP"
+"toggle_legend"			  				"#LEGEND"
 "+attack"				  				"#FIRE"
 "+scriptcommand3"		  				"#SWITCH_FIRE_MODE"
 "+toggle_zoom"			  				"#AIM_TOGGLE_PC"

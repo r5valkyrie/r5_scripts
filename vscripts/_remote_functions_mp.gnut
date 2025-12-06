@@ -591,6 +591,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_RefreshInventory" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_RefreshInventoryAndWeaponInfo" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_TryCloseInventory" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ToggleLegend" )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SurvivalHint", "int", 0, 11 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_NewKillLeader", "entity", "int", 0, 999 )

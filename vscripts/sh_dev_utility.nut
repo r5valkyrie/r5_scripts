@@ -30,6 +30,7 @@ void function ShDevUtility_Init()
 		AddClientCommandCallback( "respawn", ClientCommand_Respawn )
 		AddClientCommandCallback( "set_respawn_override", ClientCommand_SetRespawnOverride )
 		AddClientCommandCallback( "giveheirloom", ClientCommand_GiveHeirloom )
+		AddClientCommandCallback( "toggle_legend", ClientCommand_ToggleLegend )
 	#endif
 
 	#if CLIENT
@@ -79,7 +80,7 @@ bool function ClientCommand_GiveHeirloom( entity commandPlayer, array<string> ar
 		Dev_PrintMessage( commandPlayer, "Reset Melee", "" )
 		return true
 	}
-	
+
     if(selected == -2)
 	{
 		commandPlayer.TakeOffhandWeapon( OFFHAND_MELEE )
@@ -126,6 +127,15 @@ bool function ClientCommand_GiveHeirloom( entity commandPlayer, array<string> ar
 
     return false
 }
+
+bool function ClientCommand_ToggleLegend( entity commandPlayer, array<string> argList )
+{
+	if ( GetConVarInt( "sv_cheats" ) != 1 || !IsValid( commandPlayer ) )
+		return true
+
+	Remote_CallFunction_NonReplay( commandPlayer, "ServerCallback_ToggleLegend" )
+	return true
+}
 #endif
 
 #if SERVER
@@ -142,34 +152,34 @@ void function SetupHeirloom( int heirloomIndex )
 	{
 		case 0:
 		player.GiveWeapon( "mp_weapon_bolo_sword_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_bolo_sword", OFFHAND_MELEE, [] )			
+		player.GiveOffhandWeapon( "melee_bolo_sword", OFFHAND_MELEE, [] )
 		break
-		
+
 		case 1:
 		// player.GiveWeapon( "mp_weapon_paracord_knife_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		// player.GiveOffhandWeapon( "melee_paracord_knife", OFFHAND_MELEE, [] )		
-		break	
-		
+		// player.GiveOffhandWeapon( "melee_paracord_knife", OFFHAND_MELEE, [] )
+		break
+
 		case 2:
 		player.GiveWeapon( "mp_weapon_vctblue_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
 		player.GiveOffhandWeapon( "melee_vctblue", OFFHAND_MELEE, [] )
 		break
-		
+
 		case 3:
 		player.GiveWeapon( "mp_weapon_shadow_squad_hands_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_shadowsquad_hands", OFFHAND_MELEE, [] )	
+		player.GiveOffhandWeapon( "melee_shadowsquad_hands", OFFHAND_MELEE, [] )
 		break
 
 		case 4:
 		player.GiveWeapon( "mp_weapon_melee_boxing_ring", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
-		player.GiveOffhandWeapon( "melee_boxing_ring", OFFHAND_MELEE, [] )	
+		player.GiveOffhandWeapon( "melee_boxing_ring", OFFHAND_MELEE, [] )
 		break
-		
+
 		case 5:
 		player.GiveWeapon( "mp_weapon_gloves_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
 		player.GiveOffhandWeapon( "melee_gloves", OFFHAND_MELEE, [] )
 		break
-		
+
 		case 6:
 		player.GiveWeapon( "mp_weapon_macks_knife_primary", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
 		player.GiveOffhandWeapon( "melee_macks_knife", OFFHAND_MELEE, [] )
@@ -192,7 +202,7 @@ void function UnEquipMelee( bool allplayers = false)
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
 	string meleePrimary = MeleeSkin_GetMainWeaponClassname( meleeSkin )
 	string meleeOffhand = MeleeSkin_GetOffhandWeaponClassname( meleeSkin )
-	
+
 	player.GiveWeapon( meleePrimary, WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
 	player.GiveOffhandWeapon( meleeOffhand, OFFHAND_MELEE, [] )
 }
@@ -580,7 +590,7 @@ void function DevRespawnPlayer( entity player, bool shouldForce, void functionre
 
 		if( IsFiringRangeGameMode() || Gamemode() == eGamemodes.fs_dm )
 			return
-		
+
 		wait 1.0
 	}
 	if ( !IsAlive( player ) )

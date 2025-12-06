@@ -21,6 +21,7 @@ global function UICodeCallback_NavigateBack
 global function UICodeCallback_ToggleInGameMenu
 global function UICodeCallback_ToggleInventoryMenu
 global function UICodeCallback_ToggleMap
+global function UICodeCallback_ToggleLegend
 global function UICodeCallback_TryCloseDialog
 global function UICodeCallback_UpdateLoadingLevelName
 global function UICodeCallback_ConsoleKeyboardClosed
@@ -404,6 +405,18 @@ void function UICodeCallback_ToggleMap()
 		return
 
 	RunClientScript( "ClientToUI_ToggleScoreboard" )
+}
+
+
+void function UICodeCallback_ToggleLegend()
+{
+	if ( !IsFullyConnected() )
+		return
+
+	if ( IsLobby() )
+		return
+
+	RunClientScript( "ClientToUI_ToggleSelectScreen" )
 }
 
 

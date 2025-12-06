@@ -91,6 +91,7 @@ global const array<string> CUSTOM_BIND_ALIASES_PILOT =
 	"scriptCommand3",				// "+offhand0"			bind "LEFT" 		"+ability 12"
 	"weaponselectordnance"			// "+scriptCommand4"	bind "RIGHT" 		"+ability 13"
 	"toggle_map"					// "toggle_map"			bind "BACK"			"+ability 14"
+	"toggle_legend"					// "toggle_legend"		bind "?"			"+ability 15"
 ]
 
 global const array<string> CUSTOM_BIND_ALIASES_TITAN =
@@ -111,6 +112,7 @@ global const array<string> CUSTOM_BIND_ALIASES_TITAN =
 	"scriptCommand3",				// "+offhand0"			bind "LEFT" 		"+ability 12"
 	"weaponselectordnance"			// "+scriptCommand4"	bind "RIGHT" 		"+ability 13"
 	"toggle_map"					// "toggle_map"			bind "BACK"			"+ability 14"
+	"toggle_legend"					// "toggle_legend"		bind "?"			"+ability 15"
 ]
 
 global struct ABBind
@@ -512,6 +514,7 @@ array<string> function GetABBindsForBaseBind( string baseBind )
 		case "toggle_inventory":
 		case "toggle_map":
 		case "chat_wheel":
+		case "toggle_legend":
 			return [ baseBind, "" ]
 
 		case "":

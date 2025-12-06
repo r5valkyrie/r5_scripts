@@ -167,7 +167,7 @@ void function InitGamepadLayoutMenu( var newMenuArg ) //
 	var customBtn = Hud_GetChild( menu, "BtnCustomizeLayout" )
 	SetButtonRuiText( customBtn, "#GAMEPAD_CUSTOM" )
 	HudElem_SetRuiArg( customBtn, "hideBlur", true )
-	
+
 	AddButtonEventHandler( customBtn, UIE_CLICK, OnCustomButton_Clicked )
 	AddButtonEventHandler( customBtn, UIE_GET_FOCUS, OnPresetButton_FocusedOn )
 	AddButtonEventHandler( customBtn, UIE_LOSE_FOCUS, OnPresetButton_FocusedOff )
@@ -741,6 +741,12 @@ ButtonVars function GetBindDisplayName( string bind )
 			displayName.titan = ""
 			break
 
+		case "toggle_legend":
+			displayName.common = "#LEGEND"
+			displayName.pilot = ""
+			displayName.titan = ""
+			break
+
 		case "score":
 			displayName.common = "#GIB_SHIELD_TOGGLE"
 			displayName.pilot = ""
@@ -1224,6 +1230,7 @@ string function GetBindString( string baseBind )
 		case "weaponselectordnance":
 		case "toggle_inventory":
 		case "toggle_map":
+		case "toggle_legend":
 			return baseBind
 	}
 

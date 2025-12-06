@@ -210,6 +210,7 @@ void function InitInventoryFooter( var panel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_BACK, false, "", "", TryToggleMap )
 
 	AddPanelFooterOption( panel, LEFT, KEY_M, false, "", "", TryToggleMap, PROTO_ShouldInventoryFooterHack )
+	AddPanelFooterOption( panel, LEFT, KEY_N, false, "", "", DevToggleLegend, PROTO_ShouldInventoryFooterHack )
 	AddPanelFooterOption( panel, LEFT, KEY_TAB, false, "", "", TryCloseSurvivalInventory, PROTO_ShouldInventoryFooterHack )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
@@ -849,6 +850,11 @@ void function CloseCharacterDetails()
 void function TryToggleMap( var button )
 {
 	RunClientScript( "ClientToUI_ToggleScoreboard" )
+}
+
+void function DevToggleLegend( var button )
+{
+	RunClientScript( "ClientToUI_ToggleSelectScreen" )
 }
 
 void function TrackMouseDrag( var panel, var button, int index, void functionref(var,var,int) clickFunc )

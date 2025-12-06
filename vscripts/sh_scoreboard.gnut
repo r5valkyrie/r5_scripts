@@ -1,8 +1,5 @@
 #if CLIENT
 global function ClScoreboard_Init
-#endif
-
-#if CLIENT
 global function IsScoreboardShown
 global function UpdateScoreboardVisibility
 global function ShowScoreboard
@@ -14,8 +11,10 @@ global function TPPromptIsActive
 
 global function ClientCodeCallback_ToggleScoreboard
 global function ClientToUI_ToggleScoreboard
+global function ClientToUI_ToggleSelectScreen
 global function ClientToUI_ShowScoreboardWithTPPrompt
 global function ClientToUI_HideScoreboard
+global function ServerCallback_ToggleLegend
 #endif
 
 
@@ -136,6 +135,22 @@ void function ClientToUI_ToggleScoreboard()
 	}
 
 	ToggleScoreboard()
+}
+
+void function ClientToUI_ToggleSelectScreen()
+{
+	if ( Playlist() == ePlaylists.survival_dev || Playlist() == ePlaylists.dev_default )
+	{
+		printf( "%s() - Showing character select because we're in Dev gamemode.", FUNC_NAME() )
+		RunUIScript( "TryCloseSurvivalInventory", null )
+		EmitSoundOnEntity( GetLocalViewPlayer(), "UI_Menu_accept" )
+		OpenCharacterSelectNewMenu( true )
+	}
+}
+
+void function ServerCallback_ToggleLegend()
+{
+	ClientToUI_ToggleSelectScreen()
 }
 void function ClientToUI_ShowScoreboardWithTPPrompt()
 {
