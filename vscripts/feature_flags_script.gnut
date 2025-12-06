@@ -40,6 +40,14 @@ global const table<string, bool> FEATURE_FLAGS_TBL = {
 	HAS_MOBILE_RESPAWN 		= true,
 	HAS_EVOLVING_ARMOR 		= false,
 	HAS_VALK 				= true,
+	HAS_GAMEMODE_RING_COLLAPSE 	= true,
+	HAS_CAUSTIC_TT 				= true,
+	HAS_EXPLOSIVE_LOOT_HOLDS 	= true,
+	HAS_GAMEMODE_SHADOW_ROYALE 	= true,
+	HAS_GAMEMODE_ARENAS 		= true,
+	HAS_HOVER_VEHICLE 			= true,
+	HAS_CRAFTING 				= true,
+	HAS_LOOT_VOID_RING 			= true,
 }
 
 
