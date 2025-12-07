@@ -653,7 +653,7 @@ void function RemoteFunctions_Init_Begin()
 	if ( IsBloodhoundTTEnabled() )	
 		Bloodhound_TT_RegisterNetworking() // Bloodhound Town Takeover //Audit 2-22-2025
 	
-	if ( IsCausticTTEnabled() == true )
+	if ( IsCausticTTEnabled() )
 		Caustic_TT_RegisterNetworking() // Caustic Town Takeover
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SetAssistInformation", "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
