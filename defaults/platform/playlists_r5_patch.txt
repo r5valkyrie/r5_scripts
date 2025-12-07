@@ -1100,7 +1100,7 @@ playlists
 				"MOTD_TEXT" "A R5Valkyrie Server" //set your servers message of the day. 1000 char max.  Use \n for newline.
 				"MOTD_TEXT_EXTENDED" "" // appends to first, 1000 char max.
 			
-				"BETA_BUILD_WATERMARK" "R5Valkyrie PTU - v2.8.0"
+				"BETA_BUILD_WATERMARK" "R5Valkyrie PTU - v2.9.31"
 
 				//////////////////////////////////////////////////
 				// TEMP TOKENS (remove before release shipping )//
