@@ -21,6 +21,7 @@ global function Survival_AddCallback_OnAirdropLaunched
 global function Survival_CleanupPlayerPermanents
 global function Survival_SetCallback_Leviathan_ConsiderLookAtEnt
 global function Leviathan_ConsiderLookAtEnt
+global function Survival_IsArenaMap
 
 global entity WORKAROUND_DESERTLANDS_TRAIN = null
 
@@ -67,6 +68,11 @@ const float PLANE_HEIGHT_REALBIG = 17000.0
 const float CLAMP_TO_RING_BUFFER = 400
 const float SURVIVAL_PLANE_DROP_RADIUS_MIN = 22000
 const string KNOCKED_SOUND = "flesh_bulletimpact_downedshot_3p_vs_3p"
+
+const float SURVIVAL_MINIMAP_ZOOM_DEFAULT = 4.0
+const float SURVIVAL_MINIMAP_ZOOM_HALOMOD = 1.5
+const float SURVIVAL_MINIMAP_ZOOM_ARENA = 1.0
+const string PLAYLISTVAR_ARENA_MINIMAP_ZOOM = "arena_minimap_default_zoom_scale"
 
 //fix debug draws calls
 const bool DEBUG_PLANE_PATH = false
@@ -1834,14 +1840,41 @@ void function OnClientConnected( entity player )
 	}
 }
 
+global bool function Survival_IsArenaMap()
+{
+	string mapName = GetMapName()
+
+	if ( mapName.len() == 0 )
+		return false
+
+	if ( mapName.find( "_arena_" ) != -1 )
+		return true
+
+	switch ( mapName )
+	{
+		case "mp_rr_party_crasher":
+		case "mp_rr_aqueduct":
+			return true
+	}
+
+	return false
+}
+
+float function Survival_GetDefaultMinimapZoomScale()
+{
+	if ( Playlist() == ePlaylists.fs_haloMod_survival )
+		return SURVIVAL_MINIMAP_ZOOM_HALOMOD
+
+	if ( Survival_IsArenaMap() )
+		return GetCurrentPlaylistVarFloat( PLAYLISTVAR_ARENA_MINIMAP_ZOOM, SURVIVAL_MINIMAP_ZOOM_ARENA )
+
+	return SURVIVAL_MINIMAP_ZOOM_DEFAULT
+}
+
 void function Survival_OnClientConnected( entity player )
 {
-	float DEFAULT_ZOOM_LEVEL = 4.0
-
-	if( Playlist() == ePlaylists.fs_haloMod_survival )
-		DEFAULT_ZOOM_LEVEL = 1.5
-
-	player.SetMinimapZoomScale( DEFAULT_ZOOM_LEVEL, 0.0 )
+	float defaultZoom = Survival_GetDefaultMinimapZoomScale()
+	player.SetMinimapZoomScale( defaultZoom, 0.0 )
 
 	SurvivalPlayerData data
 	file.playerData[EHIToEncodedEHandle( player )] <- data
