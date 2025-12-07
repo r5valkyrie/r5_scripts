@@ -1840,7 +1840,7 @@ void function OnClientConnected( entity player )
 	}
 }
 
-global bool function Survival_IsArenaMap()
+bool function Survival_IsArenaMap()
 {
 	string mapName = GetMapName()
 
