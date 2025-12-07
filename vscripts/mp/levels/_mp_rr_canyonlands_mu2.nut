@@ -121,9 +121,6 @@ void function KCMU2_OnEntitiesDidLoad()
 	foreach( prop in props )
 		InitPropDynamic( prop )
 
-	if (GetMapName() == "mp_rr_canyonlands_mu2_tt" )
-		thread CryptoTT_Init()
-
 	SetupBunkersDoors()
 }
 

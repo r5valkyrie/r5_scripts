@@ -86,7 +86,7 @@ const array< string > CRYPTO_MAP_PIECES_MU3 = [ "mdl/levels_terrain/mp_rr_canyon
 	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03_mu3.rmdl",
 	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04_mu3.rmdl",
 	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05_mu3.rmdl" ]
-	
+
 const array< string > CRYPTO_MAP_PIECES_HU = [ "mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_01.rmdl",
 	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_02.rmdl",
 	"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_03.rmdl",
@@ -277,7 +277,7 @@ array< string > function GetMapPieces()
 	{
 		return CRYPTO_MAP_PIECES_MU3
 	}
-	
+
 	return CRYPTO_MAP_PIECES
 }
 
@@ -1977,7 +1977,7 @@ vector function CryptoTT_GetRuiOriginToUse( HoloMapRUIData ruiData )
 //CHECK IF THE TT EXISTS IN THE MAP
 bool function IsCryptoTTEnabled()
 {
-	if ( GetMapName() == "mp_rr_canyonlands_mu2_tt" )
+	if ( GetMapName() == "mp_rr_canyonlands_mu2_tt" || GetMapName() == "mp_rr_canyonlands_mu3" )
 	{
 		return true
 	}

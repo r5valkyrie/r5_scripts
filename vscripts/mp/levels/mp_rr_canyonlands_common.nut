@@ -55,32 +55,6 @@ global const string CANYONLANDS_LEVIATHANBABY_NAME= "leviathan3"
 const string HOVER_TANKS_ZIP_MOVER_SCRIPTNAME = "hovertank_zip_mover"
 
 global const asset MU1_LEVIATHAN_MODEL = $"mdl/Creatures/leviathan/leviathan_kingscanyon_animated.rmdl"
-//Crypto TT
-const array< asset > CRYPTO_TT_MODELS = [
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05.rmdl"
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_01_mu3.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02_mu3.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_02_mu3_b.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_03_mu3.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_04_mu3.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_05_mu3.rmdl"
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_01.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_02.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_03.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_04.rmdl",
-	$"mdl/levels_terrain/mp_rr_canyonlands/crypto_holo_map_hu_05.rmdl"
-]
-const array< asset > CRYPTO_TT_PFX = [
-	$"P_holo_ar_radius_pc64_CP_1x20",
-	$"P_map_holo_ring_CP",
-	$"P_map_player_pt_enemy",
-	$"P_map_player_pt_team",
-	$"P_crypto_holo_sat_scan"
-]
 
 struct
 {
@@ -244,22 +218,6 @@ void function InitWaterLeviathans()
 
 void function EntitiesDidLoad()
 {
-	PrecacheModel( $"mdl/props/tree_green_forest_01_kingscanyon/tree_green_forest_01_kingscanyon.rmdl" )
-	thread __EntitiesDidLoad()
-}
-
-void function __EntitiesDidLoad()
-{
-	//Moved to Playing Game State due to some changes in survival deathfield. Cafe
-	// FlagWait( "DeathCircleSetup" )
-	// waitthread FindHoverTankEndNodes()
-	// SpawnHoverTanks()
-
-	// if ( GetCurrentPlaylistVarBool( "enable_nessies", false ) )
-		// Nessies()
-
-	// FlagSet( "IntroHovertanksSet" )
-	//DestroyHoverTankNodes()
 }
 
 void function DestroyHoverTankNodes()

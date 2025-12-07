@@ -138,23 +138,17 @@ struct{
 void function Canyonlands_MU1_CommonMapInit()
 {
 	Canyonlands_MapInit_Common()
-	if (GetMapName() == "mp_rr_canyonlands_mu3" )
-		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu3.rpak" )
-	else
-		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu1.rpak" )
+	MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu3.rpak" )
 
-	AddCallback_EntitiesDidLoad( MU1_EntitiesDidLoad )
+	AddCallback_EntitiesDidLoad( MU3_EntitiesDidLoad )
 	AddCallback_GameStateEnter( eGameState.Playing, Leviathan_OptimizeUpperBoneFollowersWhenAllPlayersHaveLanded )
 	AddSpawnCallback_ScriptName( "leviathan_staging", CreateClientSideLeviathanMarkers)
 	Survival_SetCallback_Leviathan_ConsiderLookAtEnt( Leviathan_ConsiderLookAtEnt_Callback )
 
 	InitOctaneTownTakeover()
-
-	// if ( RelayRockFixEnabled() )
-		// RegisterGeoFixAsset( RELAY_ROCK_FIX_MODEL )
 }
 
-void function MU1_EntitiesDidLoad()
+void function MU3_EntitiesDidLoad()
 {
 	array<entity> leviathan1 = GetEntArrayByScriptName("leviathan_zone_6")
 	array<entity> leviathan2 = GetEntArrayByScriptName("leviathan_zone_9")
@@ -1898,10 +1892,6 @@ void function RecreateLeviathanDeathTriggers()
 		entity frontleftFootTriggerSupplemental5 = CreateDeathTriggersInsideLeviathanFeet( file.leviathan_zone_9, "FX_L_FOOT_A", zone9LeftFrontFootStompDataStructSupplemental5  )
 
 	}
-
-
-
-
 }
 #endif // if DEVELOPER
 #endif // SERVER
