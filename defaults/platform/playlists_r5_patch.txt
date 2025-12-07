@@ -608,6 +608,7 @@ playlists
 				mp_rr_canyonlands_mu1_night						1
 				mp_rr_canyonlands_mu2							1
 				mp_rr_canyonlands_mu2_tt						1
+				mp_rr_canyonlands_mu3							1
 			} } }
 		}
 		
@@ -669,6 +670,7 @@ playlists
 				mp_rr_canyonlands_mu1_night						1
 				mp_rr_canyonlands_mu2							1
 				mp_rr_canyonlands_mu2_tt						1
+				mp_rr_canyonlands_mu3							1
 			} } }
 		}
 		
@@ -734,6 +736,7 @@ playlists
 				mp_rr_canyonlands_mu1_night						1
 				mp_rr_canyonlands_mu2							1
 				mp_rr_canyonlands_mu2_tt						1
+				mp_rr_canyonlands_mu3							1
 			} } }
 		}
 
@@ -762,6 +765,7 @@ playlists
 				loot_preprocessing_should_be_skipped		   	1
 				survival_staging_area_enabled				  	1
 				make_room_for_new_players					  	1
+				activate_passive_abilities						1
 				
 				// match teams will not fill with more than one party, up to max_teams of size max_team_size (or less) -- not exceeding max_players
 				max_team_size									3
@@ -884,6 +888,82 @@ playlists
 			} } }
 		}
 		
+		winterexpress
+		{
+			inherit survival
+			vars
+			{
+				visible											1
+
+				name							   				"Winter Express"
+				description										"Winter Express"
+				abbreviation					  				"Winter Express"
+				lobbytitle										"Winter Express"
+				
+				// match teams will not fill with more than one party, up to max_teams of size max_team_size (or less) -- not exceeding max_players
+				max_teams									  	3
+				max_players										9
+				min_players										9
+
+				// Skip intros:
+				jump_from_plane_enabled							0
+				match_ending_enabled						   	1
+				
+				// No circle:
+				sur_circle_start_paused							0
+				
+				
+
+				bleedout_enabled								0
+				
+				ground_loot_enable								0
+				lootbin_loot_enable								0
+
+				flowstate_disable_all_map_triggers				0
+				
+				//Ammo
+				survival_infinite_ammo							0
+				give_weapon_stack_count_amount					2 // Gives extra ammo stacks for the random given weapon - DOES NOT WORK WITH: survival_infinite_ammo 1
+				
+				flowstate_spectator_team_only					1
+				
+				flowstate_give_random_custom_models_toall		0
+				flowstate_seconds_to_wait_without_players_before_restarting		3600 // 3600 : 1 hour
+				
+				flowstateAdminTgive 							0 //tgive is for the admin ONLY
+				
+				activate_passive_abilities				1
+				
+				//winter express exclusive
+				infinite_heal_items								0 //seting to 0 is auto heal
+				desertlands_script_train_enable					1
+				desertlands_script_train_car_count 				3
+				desertlands_script_train_stoppanel_enabled  	0
+				ignore_station_loot_bins 						1
+				
+				winter_express_score_limit 						3
+				winter_express_round_limit 						30
+				winter_express_round_time 						180
+				winter_express_store_ultimate_charge 			0
+				winter_express_cap_unlock_delay 				7
+				winter_express_respawn_skydive_height 			10000
+				winter_express_overtime_limit 					15
+				winter_express_cap_time 						10
+				
+				winter_express_hovertank_spawn 					1
+				winter_express_skydive_spawn 					0
+				
+				winter_express_wave_respawn 					0
+				winter_express_wave_respawn_interval 			10
+				
+				winter_express_round_based_respawn 				1
+				winter_express_show_player_cards 				1
+			}
+			gamemodes { winterexpress { maps {
+				mp_rr_desertlands_holiday 						1
+			} } }
+		}
+
 		survival_dev
 		{
 			inherit survival
@@ -947,10 +1027,12 @@ playlists
 				mp_rr_canyonlands_mu1_night						1
 				mp_rr_canyonlands_mu2							1
 				mp_rr_canyonlands_mu2_tt						1
+				mp_rr_canyonlands_mu3							1
 				mp_rr_party_crasher					 			1
 				mp_rr_aqueduct								 	1
 				mp_rr_arena_phase_runner						1
 				mp_rr_arena_composite							1
+				mp_rr_arena_skygarden							1
 			} } }
 		}
 
@@ -965,8 +1047,7 @@ playlists
 				cmdlineMapLoad								 	1
 				// R5DEV-196963
 				reconnect_disabled							 	1
-
-				set_legend									 	"character_revenant"
+				menu_fall_ltm 									1
 			}
 			gamemodes { survival { maps {
 				mp_rr_desertlands_64k_x_64k						1
@@ -986,10 +1067,12 @@ playlists
 				mp_rr_canyonlands_mu1_night						1
 				mp_rr_canyonlands_mu2							1
 				mp_rr_canyonlands_mu2_tt						1
+				mp_rr_canyonlands_mu3							1
 				mp_rr_party_crasher					 			1
 				mp_rr_aqueduct								 	1
 				mp_rr_arena_phase_runner						1
 				mp_rr_arena_composite							1
+				mp_rr_arena_skygarden							1
 			} } }
 		}
 
@@ -1017,7 +1100,7 @@ playlists
 				"MOTD_TEXT" "A R5Valkyrie Server" //set your servers message of the day. 1000 char max.  Use \n for newline.
 				"MOTD_TEXT_EXTENDED" "" // appends to first, 1000 char max.
 			
-				"BETA_BUILD_WATERMARK" "R5Valkyrie PTU - v2.72.7"
+				"BETA_BUILD_WATERMARK" "R5Valkyrie PTU - v2.8.0"
 
 				//////////////////////////////////////////////////
 				// TEMP TOKENS (remove before release shipping )//
