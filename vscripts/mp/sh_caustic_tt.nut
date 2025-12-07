@@ -133,6 +133,9 @@ struct
 
 void function Caustic_TT_Init()
 {
+	if ( !IsCausticTTEnabled() )
+		return
+
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 	#if CLIENT
 		AddCreateCallback( "prop_dynamic", CausticCanisterSwitchSpawned )
