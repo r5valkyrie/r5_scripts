@@ -1,6 +1,7 @@
 global function InitErrorDialog
 global function OpenErrorDialogThread
 global function OpenErrorDialog
+global function OpenErrorDialogWithContext
 global function OpenWarningDialog
 
 struct
@@ -56,6 +57,11 @@ void function OpenErrorDialog( string errorMessage )
 	thread OpenErrorDialogThread( errorMessage )
 }
 
+void function OpenErrorDialogWithContext( string errorHeader, string errorMessage )
+{
+	thread OpenErrorDialogWithContextThread( errorHeader, errorMessage )
+}
+
 void function OpenWarningDialog( string warningHeader, string warningMessage )
 {
 	thread OpenWarningDialogThread( warningHeader, warningMessage )
@@ -67,6 +73,18 @@ void function OpenErrorDialogThread( string errorMessage )
 
 	file.contextImage = isIdleDisconnect ? $"ui/menu/common/dialog_notice" : $"ui/menu/common/dialog_error"
 	file.headerText = ( isIdleDisconnect ? Localize( "#DISCONNECTED_HEADER" ) : Localize( "#ERROR" ) ).toupper()
+	file.messageText = errorMessage
+
+	while ( GetActiveMenu() != GetMenu( "MainMenu" ) )
+		WaitSignal( uiGlobal.signalDummy, "OpenErrorDialog", "ActiveMenuChanged" )
+
+	AdvanceMenu( file.menu )
+}
+
+void function OpenErrorDialogWithContextThread( string errorHeader, string errorMessage )
+{
+	file.contextImage = $"ui/menu/common/dialog_error"
+	file.headerText = errorHeader
 	file.messageText = errorMessage
 
 	while ( GetActiveMenu() != GetMenu( "MainMenu" ) )

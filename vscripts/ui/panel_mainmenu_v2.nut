@@ -72,11 +72,19 @@ void function OnMainMenuPanel_Show( var panel )
 	var statusRui = Hud_GetRui( Hud_GetChild( file.panel, "Status" ) )
 
 	RuiSetGameTime( statusDetailsRui, "initTime", Time() )
-	if ( IsSteamInitialized() )
+	bool steamReady = IsSteamInitialized()
+	bool clientModeActive = Dev_CommandLineHasParm( "-noserverdll" )
+	if ( steamReady )
 		RuiSetString( statusRui, "prompt", Localize("#MAINMENU_CONTINUE") )
-	else{
+	else if ( clientModeActive ){
+		RuiSetString( statusRui, "prompt", Localize("#MAINMENU_NOLISTENSERVER") )
+		OpenErrorDialogWithContext("#MAINMENU_ERROR_NO_LISTENSERVER","#MAINMENU_ERROR_DESC_NO_LISTENSERVER" )}
+	else
+	{
 		RuiSetString( statusRui, "prompt", Localize("#MAINMENU_STEAM_OFFLINE") )
-		OpenWarningDialog("#MAINMENU_WARNING_NO_STEAM","#MAINMENU_DESC_NO_STEAM")}
+		OpenWarningDialog("#MAINMENU_WARNING_NO_STEAM","#MAINMENU_DESC_NO_STEAM")
+	}
+
 
 	if ( IsPTUGame() )
 		OpenWarningDialog("#MAINMENU_WARNING_PTU","#MAINMENU_DESC_PTU")
