@@ -1,0 +1,14 @@
+When: "SERVER"
+Scripts:
+[
+]
+
+When: "CLIENT"
+Scripts:
+[
+]
+
+When: "CLIENT || SERVER"
+Scripts:
+[
+]
