@@ -498,6 +498,7 @@ Scripts:
 	mp/sh_warp_gates.gnut
 	mp/sh_rising_walls.nut  //World's Edge MU2/MU3
 	mp/sh_bloodhound_tt.nut  //World's Edge MU2/MU3
+	mp/sh_rampart_tt.nut  //World's Edge MU3TT/HU
 	mp/sh_mirage_voyage.nut  //World's Edge MU1
 	mp/sh_gondola_mover.nut  //World's Edge MU3
 	mp/sh_caustic_tt.nut  //King's Canyon MU2TT/MU3

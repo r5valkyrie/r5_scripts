@@ -656,6 +656,9 @@ void function RemoteFunctions_Init_Begin()
 	if ( IsCausticTTEnabled() )
 		Caustic_TT_RegisterNetworking() // Caustic Town Takeover
 
+	if ( IsRampartTTEnabled() )
+		Rampart_TT_RegisterNetworking() // Caustic Town Takeover
+
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SetAssistInformation", "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeStartLeech", "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeCancelLeech" )
