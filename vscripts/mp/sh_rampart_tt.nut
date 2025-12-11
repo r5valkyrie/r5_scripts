@@ -178,6 +178,9 @@ struct
 //....................................
 void function Rampart_TT_Init()
 {
+	if ( !IsRampartTTEnabled() )
+		return
+	
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 	#if SERVER
 		AddCallback_OnPlayerRespawned( Rampart_TT_OnPlayerStateChanged )
