@@ -1,17 +1,17 @@
 When: "SERVER"
 Scripts:
 [
-	mp/levels/mp_rr_desertlands_mu2.nut
+	mp/levels/mp_rr_desertlands_mu3.nut
 	mp/_lasermesh.gnut
 ]
 When: "CLIENT"
 Scripts:
 [
-	mp/levels/cl_mp_rr_desertlands_mu2.nut
+	mp/levels/cl_mp_rr_desertlands_mu3.nut
 	mp/cl_lasermesh.gnut
 ]
 When: "SERVER || CLIENT"
 Scripts:
 [
-	mp/levels/mp_rr_desertlands_mu2_common.nut
+	mp/levels/mp_rr_desertlands_mu3_common.nut
 ]

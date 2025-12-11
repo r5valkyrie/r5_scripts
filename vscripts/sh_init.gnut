@@ -379,8 +379,11 @@ void function Server_Init()
 	
 	RisingWalls_Init()
 
+	GondolaMover_Init()
+
 	// Town Takeovers                
 	Bloodhound_TT_Init()
+	Sh_JumpPad_Init()
 	MirageVoyage_Init()
 	Caustic_TT_Init()
 	CanyonLandsCausticLore_Init()

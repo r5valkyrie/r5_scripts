@@ -330,17 +330,17 @@ void function OnSpawnedGravityCannonEditorClass( entity ent )
 
 void function EntitiesDidLoad()
 {
-	// foreach ( ent in file.gravityCannonEnts )
-	// {
-		// vector landingLocation = <0, 0, 0>
-		// if ( ent.HasKey( "landing_location" ) )
-			// landingLocation = StringToVector( ent.GetValueForKey( "landing_location" ) )
+	foreach ( ent in file.gravityCannonEnts )
+	{
+		vector landingLocation = <0, 0, 0>
+		 if ( ent.HasKey( "landing_location" ) )
+			landingLocation = StringToVector( ent.GetValueForKey( "landing_location" ) )
 
-		// GravityCannon_Create( ent.GetOrigin(), ent.GetAngles(), landingLocation ) //TODO: implement this. Cafe
-		// ent.Destroy() //no need to hang onto the reference spawner ent
-	// }
+		GravityCannon_Create( ent.GetOrigin(), ent.GetAngles(), landingLocation ) //TODO: implement this. Cafe
+		//ent.Destroy() //no need to hang onto the reference spawner ent
+	}
 
-	// file.gravityCannonEnts.clear()
+	file.gravityCannonEnts.clear()
 }
 
       

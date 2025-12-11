@@ -499,6 +499,7 @@ Scripts:
 	mp/sh_rising_walls.nut  //World's Edge MU2/MU3
 	mp/sh_bloodhound_tt.nut  //World's Edge MU2/MU3
 	mp/sh_mirage_voyage.nut  //World's Edge MU1
+	mp/sh_gondola_mover.nut  //World's Edge MU3
 	mp/sh_caustic_tt.nut  //King's Canyon MU2TT/MU3
 	mp/sh_canyonlands_caustic_lore.nut
 	mp/sh_sniper_tower.nut
@@ -549,6 +550,8 @@ Scripts:
   mp/sh_supply_ship.gnut
 
 	sh_onboarding.gnut
+
+	mp/sh_jump_pads.gnut
 
 	sh_loot_vault_panel.nut
 	mp/sh_charge_pylons.gnut
