@@ -717,6 +717,7 @@ Scripts:
 	pilot/_pilot_passive_grenadier.gnut
 	
 	mp/sh_desertlands_train.nut
+	mp/sh_desertlands_story_events.nut
 	sh_scoreboard.gnut
 	_squads_utility.gnut
 ]
@@ -755,7 +756,6 @@ Scripts:
 When: "CLIENT"
 Scripts:
 [
-	mp/sh_desertlands_story_events.nut
 	client/cl_codecallbacks.gnut
 	client/cl_codecallbacks_mp.gnut
 	client/rui/cl_hud.gnut

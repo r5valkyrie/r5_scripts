@@ -7,9 +7,8 @@ void function ClientCodeCallback_MapInit()
 	DesertlandsTrainAnnouncer_Init()
 	ClLaserMesh_Init()
 	Desertlands_MapInit_Common()
-	
+
 	//Story event func
-	//ClDesertlandsStoryEvents_Init()
 	//ClCommonStoryEvents_Init()
 	//ShPrecacheEvacShipAssets()
 	//ShPrecacheBreachAndClearAssets()

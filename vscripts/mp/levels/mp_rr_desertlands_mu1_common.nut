@@ -79,6 +79,8 @@ void function Desertlands_MapInit_Common()
 
 	SetVictorySequencePlatformModel( $"mdl/rocks/desertlands_victory_platform.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
 
+	DesertlandsStoryEvents_Init()
+
 	#if SERVER
 		//thread KillPlayersUnderMap_Thread( -6376 ) //-28320
 		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
