@@ -22,9 +22,9 @@ npc_spider_jungle
 
 	health							18
 
-	DefaultModelName				"mdl/creatures/spider/spider_jungle.rmdl"
-	DefaultModelName_IMC			"mdl/creatures/spider/spider_jungle.rmdl"
-	DefaultModelName_MIL			"mdl/creatures/spider/spider_jungle.rmdl"
+	DefaultModelName				"mdl/creatures/spider/spider.rmdl"
+	DefaultModelName_IMC			"mdl/creatures/spider/spider.rmdl"
+	DefaultModelName_MIL			"mdl/creatures/spider/spider.rmdl"
 	GibModel0						"mdl/gibs/human_gibs.rmdl"
 
 	DefaultWeapon					"npc_weapon_spider_jungle"
