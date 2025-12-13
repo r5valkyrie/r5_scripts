@@ -174,8 +174,10 @@ void function Sh_ArenaDeathField_Init()
 	// AddCallback_EntitiesDidLoad( EntitiesDidLoad_DeathField ) //moved to eGameState.Playing enter
 	AddCallback_GameStateEnter( eGameState.Playing, Pathfinder_RandomizeSurveyLocations )
 	AddCallback_GameStateEnter( eGameState.Epilogue, Deathfield_Destroy )
-
-	AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_survey_beacon", Pathfinder_AddSurveyBeacon )
+	if( GetMapName() == "mp_rr_tropic_island" )
+		AddSpawnCallbackEditorClass( "prop_script", "script_survival_survey_beacon", Pathfinder_AddSurveyBeacon )
+	else
+		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_survey_beacon", Pathfinder_AddSurveyBeacon )
 
 	AddClientCommandCallback( "UpdateCirclePos", ClientCommand_UpdateCirclePos )
 #endif
