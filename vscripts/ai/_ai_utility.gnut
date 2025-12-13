@@ -318,6 +318,11 @@ void function ForceReloadAnimTest()
 	}catch(e420){}
 }
 
+void function ForceFirstDrawAnimTest()
+{
+	gp()[0].GetActiveWeapon( eActiveInventorySlot.mainHand ).StartCustomActivity("ACT_VM_DRAWFIRST", 0)
+}
+
 // useful for finding out what ents are in a level. Should only be used for debugging.
 int function TotalEntsInRadius( float radius = 1000 )
 {
