@@ -34,11 +34,11 @@ const string MOBILE_RESPAWN_INTERACT_PULSATE_SOUND = "Survival_RespawnEquippedBe
 
 const asset MOBILE_RESPAWN_BEACON_MODEL = $"mdl/props/mobile_respawn_beacon/mobile_respawn_beacon_animated.rmdl"
 const asset MOBILE_RESPAWN_BEACON_EFFECT = $"P_mrb_holo"
-const asset MOBILE_RESPAWN_BEACON_AR_DROP_POINT_FX = $"P_ar_loot_drop_point"
+const asset MOBILE_RESPAWN_BEACON_AR_DROP_POINT_FX = $"P_mrb_ar_drop_point"
 const asset MOBILE_RESPAWN_BEACON_AB_FX = $"P_mrb_afterburner"
 const asset MOBILE_RESPAWN_BEACON_AB_LIGHTS_FX = $"P_mrb_ab_lights"
 const asset MOBILE_RESPAWN_BEACON_COUNTDOWN_PULSE_FX = $"P_mrb_countdown_pulse"
-const asset MOBILE_RESPAWN_BEACON_SMOKE_TRAIL = $"droppod_trail_smoke_linger"
+const asset MOBILE_RESPAWN_BEACON_SMOKE_TRAIL = $"P_mrb_trail_smoke_linger"
 const bool MOBILE_RESPAWN_BEACON_DEBUG_DRAW = false
 const float MOBILE_RESPAWN_BEACON_DESTROY_PROP_RADIUS = 25 	// Distance around the landing mbr where non player entities will be destroyed - made small so less likely to kill the player
 const int MOBILE_RESPAWN_BEACON_BAD_AIRSPACE_RADIUS = 150 	// Don't allow another beacon to go in this location
