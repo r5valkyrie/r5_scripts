@@ -82,6 +82,9 @@ global enum eMinimapObject_prop_script
 	RISING_WALL_DOWN,
 	RISING_WALL_MOVING,
 	RISING_WALL_UP,
+	PROWLER_DENS,
+	PROWLER_CAMP,
+	SPIDER_CAMP,
 	COUNT
 }
 

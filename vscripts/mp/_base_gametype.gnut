@@ -634,6 +634,15 @@ bool function ShouldTakeLegDamage( entity ent )
 	return true
 }
 
+bool function CanNPCDoDamageOnBehalfOfPlayer( entity ent )
+{
+	if (!IsValid(ent))
+		return false
+
+	return false
+}
+
+
 function PlayerDamageFeedback( entity ent, damageInfo, int shieldDamage = 0 )
 {
 	if( Playlist() == ePlaylists.fs_dm_fast_instagib )
@@ -1648,6 +1657,7 @@ bool function IsValidNPCTarget( entity ent )
 		case "npc_super_spectre":
 		case "npc_prowler":
 		case "npc_spider":
+		case "npc_spider_jungle":
 		case "npc_drone":
 		case "npc_titan":
 		case "npc_turret_sentry":

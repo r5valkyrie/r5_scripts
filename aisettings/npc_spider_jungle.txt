@@ -1,16 +1,17 @@
-npc_spider
+npc_spider_jungle
 {
 	HullType						"HULL_HUMAN"
 	orientToGround					1
 	BodyType						spider
 	ArmorType						normal
 	smartAmmoLockAttachmentName0	CHESTFOCUS
-	title							#NPC_SPIDER
+	title							#NPC_SPIDER_JUNGLE
 
 	ui_targetinfo					"ui/targetinfo_npc_simple"
 
-	BaseClass						npc_spider
+	BaseClass						npc_spider_jungle
 	AIClass							spider
+	TraverseAnimType				frag_drone
 	BehaviorSelector				"behavior_spider_jungle"
 
 	footstep_type					"spider"
@@ -19,11 +20,11 @@ npc_spider
 	creature						1
 	meleeable						1
 
-	health							30
+	health							18
 
-	DefaultModelName				"mdl/creatures/spider/spider.rmdl"
-	DefaultModelName_IMC			"mdl/creatures/spider/spider.rmdl"
-	DefaultModelName_MIL			"mdl/creatures/spider/spider.rmdl"
+	DefaultModelName				"mdl/creatures/spider/spider_jungle.rmdl"
+	DefaultModelName_IMC			"mdl/creatures/spider/spider_jungle.rmdl"
+	DefaultModelName_MIL			"mdl/creatures/spider/spider_jungle.rmdl"
 	GibModel0						"mdl/gibs/human_gibs.rmdl"
 
 	DefaultWeapon					"npc_weapon_spider_jungle"
@@ -52,7 +53,7 @@ npc_spider
 	meleeEnemyArmorType				any
 	meleeChargeEnemyArmorType		any
 
-	meleeImpactEffectTable			"melee_prowler"
+	meleeImpactEffectTable			"melee_spider"
 
 	canTargetPlayerVehicle          1
 

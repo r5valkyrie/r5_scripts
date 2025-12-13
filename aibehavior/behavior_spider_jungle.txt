@@ -1,0 +1,50 @@
+Selector Common
+
+	SelectSchedule_FallToGround
+	//SelectSchedule_Flinch
+    SelectSchedule_DisplaceFromDangerousArea
+    SelectSchedule_ReactCloak
+    SelectSchedule_ReactSurprised
+	SelectSchedule_SyncedMeleeAttack
+	SelectSchedule_PressToInitiateSyncedMeleeAttack
+	SelectSchedule_LayeredBehavior
+
+Selector_End
+
+
+
+Selector Idle
+
+	SelectSchedule_Idle
+
+Selector_End
+
+
+
+Selector Alert
+
+	SelectSchedule_Alert
+	// SelectSchedule_TakeCoverFromUnreachableEnemy
+    // FleeIfShotAt
+
+Selector_End
+
+
+
+Selector Combat
+
+	SelectSchedule_DisengageAfterMeleeAttack
+	//SelectSchedule_TauntDownedEnemy
+	SelectSchedule_EnemyAimDodge
+
+	SelectSchedule_CantSeeEnemy
+	SelectSchedule_MoveToWeaponRange
+
+	SelectSchedule_MeleeAttack
+	SelectSchedule_RangeAttack
+
+	//SelectSchedule_TauntEnemy
+	//SelectSchedule_RepositionWithinEngagmentRanges
+	SelectSchedule_CombatFace
+
+Selector_End

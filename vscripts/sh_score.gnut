@@ -460,6 +460,7 @@ string function ScoreEventForNPCKilled( entity npc, var damageInfo )
 	switch ( classname )
 	{
 		case "npc_spider":
+		case "npc_spider_jungle":
 			return "KillSpider"
 		case "npc_frag_drone":
 			return "KillTick"

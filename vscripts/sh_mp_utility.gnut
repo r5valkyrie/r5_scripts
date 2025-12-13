@@ -2,6 +2,15 @@ untyped
 
 globalize_all_functions
 
+global enum eWildLifeCampType
+{
+	SPIDER_NEST,
+	PROWLER_DENS,
+	UNKNOWN,
+	Count
+}
+global const string[ eWildLifeCampType.Count ] WILDLIFE_REWARD_STRINGS = [ "#WILDLIFE_SPIDER_CAMP_REWARD", "#WILDLIFE_PROWLER_CAMP_REWARD", "" ]
+
 struct
 {
 	table<string,table<string,int> > mapModeScoreLimits

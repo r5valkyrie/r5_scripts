@@ -1,0 +1,1307 @@
+global function SpiderEgg_Init
+#if SERVER
+global function SpiderEgg_Create
+global function SpiderEgg_Reset
+global function SpiderEgg_ToggleHatchedState
+global function SpiderEgg_Destroy
+
+global function SpiderEgg_SetActive
+
+global function AddCallback_OnSpiderEggDamaged
+global function RemoveCallback_OnSpiderEggDamaged
+global function AddCallback_OnSpiderEggKilled
+global function RemoveCallback_OnSpiderEggKilled
+
+global function SetCallback_SpiderEgg_OnSpiderSpawn
+global function SetCallback_SpiderEgg_OnAdditionalSpawnCheck
+
+global function GetAllSpiderEggs
+global function GetSpiderEggData
+global function GetAllSpiderEggData
+global function IsSpiderEgg
+
+#if DEVELOPER
+global function DEV_SpiderEgg_SpawnEggAtCrosshair
+global function DEV_SpiderEgg_ResetEggAtCrosshair
+global function DEV_SpiderEgg_PrintEggDataAtCrosshair
+global function DEV_SpiderEgg_ToggleDebugDrawSpawnPointTraceTests
+global function DEV_SpiderEgg_ToggleDebugDrawSpawnAttachments
+global function DEV_SpiderEgg_ToggleFixedSpawns
+#endif
+
+#endif // SERVER
+
+#if DEVELOPER
+const bool SPIDER_EGG_DEBUG = false
+#endif
+
+//-----------------------------------------------
+//
+// 		===   MODELS   ===
+
+global const asset EGG_WHOLE_MODEL = $"mdl/tropics/tropics_spider_eggs_whole_01.rmdl"
+global const asset EGG_HATCHED_MODEL = $"mdl/tropics/tropics_spider_eggs_broken_01.rmdl"
+global const asset SPIDER_EGG_WEB_ROPE_MATERIAL = $"models/cable/jungle_spider_web_cable"
+
+global const string SPIDER_EGG_SCRIPT_NAME = "prop_spider_egg"
+global const string SPIDER_HATCHED_EGG_EDITOR_CLASS_KEYWORD = "script_ai_spider_egg_hatched"
+
+// attachment spawn points
+
+const string SPAWN_POINT_ONE = "SPAWN_SPIDER_1"
+const string SPAWN_POINT_TWO = "SPAWN_SPIDER_2"
+const string SPAWN_POINT_THREE = "SPAWN_SPIDER_3"
+
+// END MODELS
+
+//
+// 		===   AUDIO   ===
+//-----------------------------------------------
+
+#if CLIENT
+const string SFX_SPIDER_EGG_IDLE = "SpdrJungle_EggIdle"
+#endif
+
+// END AUDIO
+
+#if SERVER
+global const string SPIDER_EGG_PLAYLIST_VAR_ENABLE_KEYWORD = "enable_spider_eggs"
+
+global const int SPIDER_EGG_NUM_OF_SPIDERS_TO_SPAWN_MIN = 2
+global const int SPIDER_EGG_NUM_OF_SPIDERS_TO_SPAWN_MAX = 3
+
+global const string SPIDER_EGG_EDITOR_CLASS_KEYWORD = "script_ai_spider_egg"
+
+const string SPIDER_TO_SPAWN_NPC_KEYWORD = "npc_spider_jungle"
+
+const int SPIDER_TEAM = 105
+
+const float SPIDER_EGG_HEALTH = 10.0
+
+const float SPIDER_WEB_ROPE_LENGTH = 256
+
+const int SPIDER_EGG_MAP_COUNT_LIMIT = 96
+
+//
+// 		===   AUDIO   ===
+//-----------------------------------------------
+
+const string SFX_SPIDER_SPAWN_CRY = "SpdrJungle_EggBurst"
+
+// END AUDIO
+
+//
+// 		===   VFX   ===
+//-----------------------------------------------
+
+global const asset FX_SPIDER_WEB_CONE = $"P_eggsplode_webrope_cone"
+
+global const asset FX_EGG_EXPLOSION	= $"P_eggsplode"
+
+global const asset FX_EGG_CEILING_SPAWN = $"P_eggsplode_spawn"
+
+// END VFX
+
+//
+//		===   ANIMATIONS   ===
+//-----------------------------------------------
+
+global const string SPIDER_EGG_SIDEWALL_SPAWN_A_ANIM_KEYWORD = "spdr_spawner_sidewall_A"
+global const string SPIDER_EGG_SIDEWALL_SPAWN_B_ANIM_KEYWORD = "spdr_spawner_sidewall_B"
+global const string SPIDER_EGG_SIDEWALL_SPAWN_C_ANIM_KEYWORD = "spdr_spawner_sidewall_C"
+
+global const string SPIDER_EGG_CEILING_SPAWN_A_ANIM_KEYWORD = "spdr_spawner_ceiling_A"
+global const string SPIDER_EGG_CEILING_SPAWN_B_ANIM_KEYWORD = "spdr_spawner_ceiling_B"
+global const string SPIDER_EGG_CEILING_SPAWN_C_ANIM_KEYWORD = "spdr_spawner_ceiling_C"
+
+// END ANIMATIONS
+
+#if DEVELOPER
+global struct SpiderEgg_SpawnPointTraceData
+{
+	vector origin
+	vector endPoint
+	bool bSuccess = false
+}
+#endif
+
+global enum eEggState
+{
+	WHOLE,
+	HATCHED
+}
+
+global enum eEggSpawnMode
+{
+	CEILING,
+	WALL,
+	GROUND
+}
+
+global struct SpiderAnimSetup
+{
+	Point	spawnPoint
+	string	anim
+}
+
+global struct SpiderEggData
+{
+	entity 			eggEntity
+
+	int				eggState // eEggState
+	int				eggSpawnMode
+	float			lastDamagedTime
+
+	int				spidersSpawned = 0
+	int				spidersInside = -1
+
+	bool			isActive = false
+
+	array<SpiderAnimSetup> 	spiderAnimSetups
+	array<int>				spiderSpawnAttachIds
+
+	#if DEVELOPER
+		bool 									debugSpawned = false
+		array<SpiderEgg_SpawnPointTraceData>	spawnPointTraceDatas
+	#endif
+}
+
+struct
+{
+	array<entity> spiderEggs
+	table<entity, SpiderEggData> spiderEggsToData
+	table< entity, array< void functionref( entity, var ) > > onSpiderEggDamagedCallbacks
+	table< entity, array< void functionref( entity, var ) > > onSpiderEggKilledCallbacks
+	entity functionref( SpiderEggData ) spiderSpawnOverrideCallback
+	int functionref( SpiderEggData ) spiderAdditionalSpawnCheckCallback
+
+	// spawn points initialied
+	bool spawnPtsInitialized = false
+
+	array<int> spawnPointIndices
+	array<string> spawnPointNames = [SPAWN_POINT_ONE, SPAWN_POINT_TWO, SPAWN_POINT_THREE]
+	array<string> wallSpawnAnims = [SPIDER_EGG_SIDEWALL_SPAWN_A_ANIM_KEYWORD, SPIDER_EGG_SIDEWALL_SPAWN_B_ANIM_KEYWORD, SPIDER_EGG_SIDEWALL_SPAWN_C_ANIM_KEYWORD]
+	array<string> ceilingSpawnAnims = [SPIDER_EGG_CEILING_SPAWN_A_ANIM_KEYWORD, SPIDER_EGG_CEILING_SPAWN_B_ANIM_KEYWORD, SPIDER_EGG_CEILING_SPAWN_C_ANIM_KEYWORD]
+
+	#if DEVELOPER
+	bool fixedSpiderSpawns = false
+	#endif
+} file
+#endif // SERVER
+
+void function SpiderEgg_Init()
+{
+	#if SERVER
+	Assert( !Flag( "EntitiesDidLoad" ), "Warning! You need to call SpiderEgg_Init() before entities loaded!" )
+	PrecacheParticleSystem( FX_EGG_EXPLOSION )
+	PrecacheParticleSystem( FX_SPIDER_WEB_CONE )
+	PrecacheParticleSystem( FX_EGG_CEILING_SPAWN )
+	PrecacheModel( EGG_WHOLE_MODEL )
+	PrecacheModel( EGG_HATCHED_MODEL )
+	PrecacheMaterial( SPIDER_EGG_WEB_ROPE_MATERIAL )
+
+	AddSpawnCallbackEditorClass( "prop_dynamic", SPIDER_EGG_EDITOR_CLASS_KEYWORD, OnSpiderEggSpawned )
+	#endif
+
+	#if CLIENT
+	AddCreateCallback( "prop_dynamic", OnSpiderEggCreated )
+	#endif
+}
+
+#if CLIENT
+void function OnSpiderEggCreated( entity eggEntity )
+{
+	if ( eggEntity.GetScriptName() != SPIDER_EGG_SCRIPT_NAME )
+	{
+		return
+	}
+
+	#if DEVELOPER
+		if ( SPIDER_EGG_DEBUG )
+			printf("SpiderEgg.OnSpiderEggCreated()")
+	#endif
+
+	const float SFX_OFFSET = 96.0
+
+	vector idlePos = eggEntity.GetOrigin() + (eggEntity.GetUpVector() * SFX_OFFSET)
+	entity soundEntity = CreateClientSideAmbientGeneric( idlePos, SFX_SPIDER_EGG_IDLE, 0 )
+	soundEntity.SetEnabled( true )
+
+	AddEntityDestroyedCallback( eggEntity, void function ( entity ent ) : (soundEntity)
+	{
+		#if DEVELOPER
+			if ( SPIDER_EGG_DEBUG )
+				printf("SpiderEgg.OnSpiderEggDestroyed()")
+		#endif
+
+		if ( IsValid( soundEntity ) )
+		{
+			soundEntity.Destroy()
+		}
+	} )
+}
+#endif
+
+#if SERVER
+void function SetCallback_SpiderEgg_OnSpiderSpawn( entity functionref( SpiderEggData ) callbackFunc )
+{
+	file.spiderSpawnOverrideCallback = callbackFunc
+}
+
+void function SetCallback_SpiderEgg_OnAdditionalSpawnCheck( int functionref( SpiderEggData ) callbackFunc )
+{
+	file.spiderAdditionalSpawnCheckCallback = callbackFunc
+}
+
+SpiderEggData function SpiderEgg_Create( vector origin, vector angles, int team = SPIDER_TEAM, int numOfSpiders = -1 )
+{
+	#if DEVELOPER
+		if ( SPIDER_EGG_DEBUG )
+			printf("SpiderEgg.SpiderEgg_Create()")
+	#endif
+
+	entity eggEntity = SpiderEgg_Create_Internal( origin, angles, team )
+	SetupSpiderEggEntity( eggEntity )
+	SpiderEggData eggData = SetupSpiderEggData( eggEntity, numOfSpiders )
+	StoreSpiderEgg( eggData )
+	return eggData
+}
+
+void function SpiderEgg_Reset( SpiderEggData eggData )
+{
+	if ( eggData.eggState == eEggState.WHOLE )
+	{
+		return
+	}
+
+	entity eggEntity = eggData.eggEntity
+	if ( !IsValid( eggEntity ) )
+	{
+		return
+	}
+
+	vector origin = eggData.eggEntity.GetOrigin()
+	vector angles = eggData.eggEntity.GetAngles()
+	int team = eggData.eggEntity.GetTeam()
+
+	array< void functionref( entity, var ) > cachedDamagedCallbacks = []
+	if( eggEntity in file.onSpiderEggDamagedCallbacks )
+	{
+		cachedDamagedCallbacks = file.onSpiderEggDamagedCallbacks[ eggEntity ]
+	}
+
+	array< void functionref( entity, var ) > cachedKilledCallbacks = []
+	if ( eggEntity in file.onSpiderEggKilledCallbacks )
+	{
+		cachedKilledCallbacks = file.onSpiderEggKilledCallbacks[ eggEntity ]
+	}
+
+	SpiderEgg_Destroy( eggData )
+
+	entity newEggEntity = SpiderEgg_Create_Internal( origin, angles, team )
+	SetupSpiderEggEntity( newEggEntity )
+	eggData.eggState = eEggState.WHOLE
+	eggData.eggEntity = newEggEntity
+	eggData.spidersSpawned = 0
+
+	if ( cachedDamagedCallbacks.len() > 0 )
+	{
+		file.onSpiderEggDamagedCallbacks[ newEggEntity ] = cachedDamagedCallbacks
+	}
+
+	if ( cachedKilledCallbacks.len() > 0 )
+	{
+		file.onSpiderEggKilledCallbacks[ newEggEntity ] = cachedKilledCallbacks
+	}
+
+	StoreSpiderEgg( eggData )
+}
+
+void function SpiderEgg_ToggleHatchedState( SpiderEggData eggData )
+{
+	entity eggEntity = eggData.eggEntity
+	if ( !IsValid( eggEntity ) )
+	{
+		return
+	}
+
+	if ( eggData.eggState == eEggState.HATCHED )
+	{
+		return
+	}
+
+	ReplaceEggModelWithHuskModel( eggData )
+}
+
+void function SpiderEgg_Destroy( SpiderEggData eggData )
+{
+	#if DEVELOPER
+		if ( SPIDER_EGG_DEBUG )
+			printf("SpiderEgg.SpiderEgg_Destroy()")
+	#endif
+
+	entity eggEntity = eggData.eggEntity
+	if ( !IsValid( eggEntity ) )
+	{
+		return
+	}
+
+	file.spiderEggs.fastremovebyvalue( eggEntity )
+	delete file.spiderEggsToData[ eggEntity ]
+
+	if( eggEntity in file.onSpiderEggDamagedCallbacks )
+		delete file.onSpiderEggDamagedCallbacks[ eggEntity ]
+
+	if ( eggEntity in file.onSpiderEggKilledCallbacks )
+		delete file.onSpiderEggKilledCallbacks[ eggEntity ]
+
+	eggEntity.Destroy()
+}
+
+void function SpiderEgg_SetActive( SpiderEggData eggData, bool isActive )
+{
+	// todo (tgoodbrand): need to handle this...
+	//eggData.isActive = isActive
+}
+
+entity function SpiderEgg_Create_Internal( vector origin, vector angles, int team = SPIDER_TEAM )
+{
+	entity eggEntity = CreateEntity( "prop_dynamic" )
+	eggEntity.SetValueForModelKey( EGG_WHOLE_MODEL )
+	eggEntity.kv.fadedist = 30000
+	eggEntity.kv.solid = SOLID_VPHYSICS
+	//eggEntity.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
+	//eggEntity.kv.contents = CONTENTS_SOLID | CONTENTS_BLOCKLOS | CONTENTS_PLAYERCLIP | CONTENTS_MONSTERCLIP | CONTENTS_MONSTER
+	SetTeam( eggEntity, team )	// need to have a team other then 0 or it won't take impact damage
+	eggEntity.SetOrigin( origin )
+	eggEntity.SetAngles( angles )
+	DispatchSpawn( eggEntity )
+
+	return eggEntity
+}
+
+void function OnSpiderEggSpawned( entity eggEntity )
+{
+	#if DEVELOPER
+		if ( SPIDER_EGG_DEBUG )
+			printf("SpiderEgg.OnSpiderEggSpawned()")
+	#endif
+
+	if ( GetCurrentPlaylistVarBool( SPIDER_EGG_PLAYLIST_VAR_ENABLE_KEYWORD, true ) )
+	{
+		SetupSpiderEggEntity( eggEntity )
+		SpiderEggData eggData = SetupSpiderEggData( eggEntity )
+		StoreSpiderEgg( eggData )
+	} else {
+		eggEntity.Destroy()
+	}
+}
+
+void function SetupSpiderEggEntity( entity eggEntity )
+{
+	eggEntity.SetMaxHealth( SPIDER_EGG_HEALTH )
+	eggEntity.SetHealth( SPIDER_EGG_HEALTH )
+	eggEntity.SetDamageNotifications( true )
+	eggEntity.SetDeathNotifications( true )
+	eggEntity.SetTakeDamageType( DAMAGE_YES )
+	eggEntity.SetTouchTriggers( true )
+
+	eggEntity.EnableAttackableByAI( AI_PRIORITY_NO_THREAT, 0, AI_AP_FLAG_NONE ) // Allows burn damage by forcing the entity to be "alive"
+	eggEntity.e.noOwnerFriendlyFire = false
+	eggEntity.e.noFriendlyFireProtection = false
+	eggEntity.e.canBurn = true
+	eggEntity.e.canBeDamagedFromGas = true
+
+	eggEntity.SetCanBeMeleed( true )
+	SetVisibleEntitiesInConeQueriableEnabled( eggEntity, true )
+
+	AddEntityCallback_OnKilled( eggEntity, OnSpiderEggKilled )
+	AddEntityCallback_OnDamaged( eggEntity, OnSpiderEggDamaged )
+	AddEntityCallback_OnPostDamaged ( eggEntity, OnSpiderEggPostDamaged )
+
+	// Highlight
+	// todo (tgoodbrand): highlight with threat, and legend abilities like Seer tact, bloodhound etc
+	eggEntity.Highlight_Enable()
+
+	// todo (tgoodbrand): pings
+
+	eggEntity.SetScriptName( SPIDER_EGG_SCRIPT_NAME )
+}
+
+SpiderEggData function SetupSpiderEggData( entity eggEntity, int numOfSpiders = -1 )
+{
+	#if DEVELOPER
+		if ( SPIDER_EGG_DEBUG )
+			printf("SpiderEgg.SetupSpiderEgg()")
+	#endif
+
+	SpiderEggData eggData
+
+	eggData.eggEntity = eggEntity
+	eggData.spidersInside = (numOfSpiders == -1) ? RandomIntRangeInclusive( SPIDER_EGG_NUM_OF_SPIDERS_TO_SPAWN_MIN, SPIDER_EGG_NUM_OF_SPIDERS_TO_SPAWN_MAX ) : numOfSpiders
+	#if DEVELOPER
+	if (file.fixedSpiderSpawns  && (numOfSpiders == -1))
+	{
+		eggData.spidersInside = SPIDER_EGG_NUM_OF_SPIDERS_TO_SPAWN_MAX;
+	}
+	#endif
+	eggData.eggState = eEggState.WHOLE
+
+	CreateSpiderSpawnPointsForEgg( eggData )
+
+	return eggData
+}
+
+void function StoreSpiderEgg( SpiderEggData eggData )
+{
+	Assert( file.spiderEggs.len() <= SPIDER_EGG_MAP_COUNT_LIMIT, "SpiderEgg.StoreSpiderEgg() Exceed Spider Egg limit! Map limit is: " + SPIDER_EGG_MAP_COUNT_LIMIT )
+
+	file.spiderEggs.append( eggData.eggEntity )
+	file.spiderEggsToData[ eggData.eggEntity ] <- eggData
+}
+
+void function AddCallback_OnSpiderEggDamaged( SpiderEggData eggData, void functionref( entity, var ) callbackFunc )
+{
+	Assert( IsValid( eggData.eggEntity ), "Trying to register damage callback for spider egg, but entity is invalid!" )
+	entity eggEntity = eggData.eggEntity
+
+	if ( eggEntity in file.onSpiderEggDamagedCallbacks )
+	{
+		Assert( !file.onSpiderEggDamagedCallbacks[ eggEntity ].contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnSpiderEggDamaged" )
+	} else {
+		file.onSpiderEggDamagedCallbacks[ eggEntity ] <- []
+	}
+
+	file.onSpiderEggDamagedCallbacks[ eggEntity ].append( callbackFunc )
+}
+
+void function RemoveCallback_OnSpiderEggDamaged( SpiderEggData eggData, void functionref( entity, var ) callbackFunc )
+{
+	Assert( IsValid( eggData.eggEntity ), "Trying to register damage callback for spider egg, but entity is invalid!" )
+	entity eggEntity = eggData.eggEntity
+
+	Assert( eggEntity in file.onSpiderEggDamagedCallbacks, "Entity: " + eggEntity + " not in callback table onSpiderEggDamagedCallbacks!" )
+
+	int index = file.onSpiderEggDamagedCallbacks[ eggEntity ].find( callbackFunc )
+	if ( index != -1 )
+	{
+		file.onSpiderEggDamagedCallbacks[ eggEntity ].fastremove( index )
+	}
+}
+
+void function AddCallback_OnSpiderEggKilled( SpiderEggData eggData, void functionref( entity, var ) callbackFunc )
+{
+	Assert( IsValid( eggData.eggEntity ), "Trying to register damage callback for spider egg, but entity is invalid!" )
+	entity eggEntity = eggData.eggEntity
+
+	if ( eggEntity in file.onSpiderEggKilledCallbacks )
+	{
+		Assert( !file.onSpiderEggKilledCallbacks[ eggEntity ].contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnSpiderEggKilled" )
+	} else {
+		file.onSpiderEggKilledCallbacks[ eggEntity ] <- []
+	}
+
+	file.onSpiderEggKilledCallbacks[ eggEntity ].append( callbackFunc )
+}
+
+void function RemoveCallback_OnSpiderEggKilled( SpiderEggData eggData, void functionref( entity, var ) callbackFunc )
+{
+	Assert( IsValid( eggData.eggEntity ), "Trying to register damage callback for spider egg, but entity is invalid!" )
+	entity eggEntity = eggData.eggEntity
+
+	Assert( eggEntity in file.onSpiderEggKilledCallbacks, "Entity: " + eggEntity + " not in callback table onSpiderEggKilledCallbacks!" )
+
+	int index = file.onSpiderEggKilledCallbacks[ eggEntity ].find( callbackFunc )
+	if ( index != -1 )
+	{
+		file.onSpiderEggKilledCallbacks[ eggEntity ].fastremove( index )
+	}
+}
+
+void function CreateSpiderSpawnPointsForEgg( SpiderEggData eggData )
+{
+	entity eggEntity = eggData.eggEntity
+
+	if ( file.spawnPtsInitialized == false )
+	{
+		int attachIdx
+
+		attachIdx = eggEntity.LookupAttachment( SPAWN_POINT_ONE )
+		file.spawnPointIndices.push( attachIdx )
+
+		attachIdx = eggEntity.LookupAttachment( SPAWN_POINT_TWO )
+		file.spawnPointIndices.push( attachIdx )
+
+		attachIdx = eggEntity.LookupAttachment( SPAWN_POINT_THREE )
+		file.spawnPointIndices.push( attachIdx )
+
+		file.spawnPtsInitialized = true
+	}
+
+	const vector TEST_HULL_MIN = <-24, -24, -24>
+	const vector TEST_HULL_MAX = <24, 24, 24>
+
+	const float SPAWN_TRACE_START_OFFSET = 48
+	const vector CEILING_SPAWN_TRACE_TEST_LENGTH = <0, 0, -(232 - SPAWN_TRACE_START_OFFSET)>
+
+	const float JUMP_ANGLE_UP_OFFSET = -120
+	const vector JUMP_TRACE_TEST_LENGTH =  <64, 0, 0>
+	const vector WALL_SPAWN_TRACE_TEST_LENGTH =  <208, 0, 0>
+
+	const float SPIDER_ANIM_X_ROTATION = 90
+	const float	FLIP_AXIS = 180
+
+	const int MIN_VALID_SPAWN_POINTS_ALLOWED = 2
+
+	vector eggOrigin = eggEntity.GetOrigin()
+	vector eggAngles = eggEntity.GetAngles()
+	vector eggUpAngles = AnglesToUp( eggAngles )
+
+	if ( eggUpAngles.z < -0.5 )
+	{
+		eggData.eggSpawnMode = eEggSpawnMode.CEILING
+	}
+	else if ( eggUpAngles.z >= 0.85 )
+	{
+		eggData.eggSpawnMode = eEggSpawnMode.GROUND
+	} else {
+		eggData.eggSpawnMode = eEggSpawnMode.WALL
+	}
+
+	vector spawnPoint
+	vector spawnAngles
+	vector testOrigin
+	vector endPoint
+	vector jumpTestEndPoint
+	string selectedAnim
+
+	for ( int i = 0; i < file.spawnPointIndices.len(); i++ )
+	{
+		SpiderAnimSetup spiderAnimSetup
+
+		int attachIndex = file.spawnPointIndices[i]
+
+		if ( eggData.eggSpawnMode == eEggSpawnMode.CEILING )
+		{
+			// set up the animation and spawn point
+			spawnPoint = eggEntity.GetAttachmentOrigin( attachIndex )
+			vector rotation = VectorToAngles( eggOrigin - spawnPoint ) // animate out from egg center
+			spawnAngles     = AnglesCompose( <0, eggAngles.y, 0>, <0, rotation.y, 0> )
+
+			selectedAnim = file.ceilingSpawnAnims.getrandom()
+			#if DEVELOPER
+			if (file.fixedSpiderSpawns)
+			{
+				selectedAnim = DEV_InternalGetAnimationsForFixedSpawns( i, file.ceilingSpawnAnims, spawnPoint, eggEntity.GetOrigin(), "Ceiling" )
+			}
+			#endif
+
+			// set up trace test vectors
+			testOrigin = spawnPoint + (eggUpAngles * SPAWN_TRACE_START_OFFSET)
+			endPoint   = testOrigin + CEILING_SPAWN_TRACE_TEST_LENGTH
+		}
+		else if ( eggData.eggSpawnMode == eEggSpawnMode.GROUND )
+		{
+			// set up the animation and spawn point
+			spawnPoint = eggEntity.GetAttachmentOrigin( attachIndex )
+
+			spawnAngles = VectorToAngles( spawnPoint - eggOrigin )
+
+			// set up trace test vectors
+			testOrigin = spawnPoint + (eggUpAngles * SPAWN_TRACE_START_OFFSET)
+			endPoint = testOrigin + VectorRotate( JUMP_TRACE_TEST_LENGTH, spawnAngles )
+
+			selectedAnim = file.wallSpawnAnims.getrandom()
+			#if DEVELOPER
+			if (file.fixedSpiderSpawns)
+			{
+				selectedAnim = DEV_InternalGetAnimationsForFixedSpawns( i, file.wallSpawnAnims, spawnPoint, eggEntity.GetOrigin(), "Ground" )
+			}
+			#endif
+
+		} else { // wall and slope eggs
+			spawnPoint = eggData.eggEntity.GetAttachmentOrigin( attachIndex )
+
+			vector flatSurfaceNormal = FlattenNormalizeVec(eggUpAngles)
+			vector left = CrossProduct( eggUpAngles, flatSurfaceNormal )
+			vector vecDownSlope = CrossProduct( left, eggUpAngles )
+			vector wallSlopeAngles = VectorToAngles(vecDownSlope)
+			spawnAngles = VectorToAngles( vecDownSlope )
+
+			testOrigin = spawnPoint + (eggUpAngles*SPAWN_TRACE_START_OFFSET)
+
+			float slope = fabs( eggUpAngles.x ) + fabs( eggUpAngles.y )
+			if ( slope >= 1 || eggUpAngles.z < 0 ) // when we have a flat 90 degree wall or inclined ceiling within the ceiling threshold above
+			{
+				if ( slope >= 1 && eggUpAngles.z > 0 ) // math is fun.... I have no idea what I'm doing
+				{
+					wallSlopeAngles = AnglesCompose( wallSlopeAngles, <FLIP_AXIS, 0, 0> )
+					spawnAngles.x -= SPIDER_ANIM_X_ROTATION
+				} else {
+					spawnAngles.x += SPIDER_ANIM_X_ROTATION
+				}
+				endPoint = testOrigin - VectorRotate( WALL_SPAWN_TRACE_TEST_LENGTH, wallSlopeAngles )
+				vector testAngles = AnglesCompose( wallSlopeAngles, <JUMP_ANGLE_UP_OFFSET, 0, 0> )
+				jumpTestEndPoint = testOrigin - VectorRotate( JUMP_TRACE_TEST_LENGTH, testAngles )
+			} else {
+				spawnAngles.x -= SPIDER_ANIM_X_ROTATION
+				endPoint = testOrigin + VectorRotate( WALL_SPAWN_TRACE_TEST_LENGTH, wallSlopeAngles )
+				vector testAngles = AnglesCompose( wallSlopeAngles, <JUMP_ANGLE_UP_OFFSET, 0, 0> )
+				jumpTestEndPoint = testOrigin + VectorRotate( JUMP_TRACE_TEST_LENGTH, testAngles )
+			}
+
+			selectedAnim = file.wallSpawnAnims.getrandom()
+			#if DEVELOPER
+			if (file.fixedSpiderSpawns)
+			{
+				selectedAnim = DEV_InternalGetAnimationsForFixedSpawns( i, file.wallSpawnAnims, spawnPoint, eggEntity.GetOrigin(), "Wall" )
+			}
+			#endif
+		}
+
+		float frac = TraceHullSimple( testOrigin, endPoint, TEST_HULL_MIN, TEST_HULL_MAX, eggEntity )
+
+		bool bSuccess = false
+
+		if ( frac < 1 && eggData.eggSpawnMode == eEggSpawnMode.WALL ) // if wall, try a 'jump out' trace test
+		{
+			// try jump test
+			frac = TraceHullSimple( testOrigin, jumpTestEndPoint, TEST_HULL_MIN, TEST_HULL_MAX, eggEntity )
+			if ( frac == 1 )
+			{
+				endPoint = jumpTestEndPoint
+				selectedAnim = file.wallSpawnAnims.getrandom()
+				#if DEVELOPER
+				if (file.fixedSpiderSpawns)
+				{
+					selectedAnim = DEV_InternalGetAnimationsForFixedSpawns( i, file.wallSpawnAnims, spawnPoint, eggEntity.GetOrigin(), "Wall" )
+				}
+				#endif
+			} else {
+				#if DEVELOPER
+					SpiderEgg_SpawnPointTraceData spawnPointTraceData
+					spawnPointTraceData.bSuccess = false
+					spawnPointTraceData.origin = testOrigin
+					spawnPointTraceData.endPoint = jumpTestEndPoint
+					eggData.spawnPointTraceDatas.push( spawnPointTraceData )
+				#endif
+			}
+		}
+
+		if ( frac == 1 )
+		{
+			bSuccess = true
+
+			spiderAnimSetup.spawnPoint.origin = spawnPoint
+			spiderAnimSetup.spawnPoint.angles = <0, spawnAngles.y, spawnAngles.z>
+			spiderAnimSetup.anim = selectedAnim
+			eggData.spiderSpawnAttachIds.push( attachIndex )
+			eggData.spiderAnimSetups.push( spiderAnimSetup )
+		}
+
+		#if DEVELOPER
+			SpiderEgg_SpawnPointTraceData spawnPointTraceData
+			spawnPointTraceData.bSuccess = bSuccess
+			spawnPointTraceData.origin = testOrigin
+			spawnPointTraceData.endPoint = endPoint
+			eggData.spawnPointTraceDatas.push( spawnPointTraceData )
+		#endif
+	}
+
+	int validSpawnPoints = eggData.spiderAnimSetups.len()
+	if ( validSpawnPoints < eggData.spidersInside )
+	{
+		eggData.spidersInside = validSpawnPoints
+		if ( validSpawnPoints < MIN_VALID_SPAWN_POINTS_ALLOWED ) // zero is possible but we throw a warning in this case
+		{
+			eggData.spidersInside = validSpawnPoints
+			Warning( "%s() - Not enough valid spawn positions found for Spider Egg at " + eggOrigin, FUNC_NAME() )
+		}
+	}
+
+	#if DEVELOPER
+		if ( SPIDER_EGG_DEBUG )
+			DEV_SpiderEgg_ToggleDebugDrawSpawnPointTraceTests()
+	#endif
+}
+
+void function ExplodeSpiderEgg( SpiderEggData eggData )
+{
+	entity eggEntity = eggData.eggEntity
+
+	vector fxOrg = eggEntity.GetOrigin()
+	int expFX = GetParticleSystemIndex( FX_EGG_EXPLOSION )
+	entity fx = StartParticleEffectInWorld_ReturnEntity( expFX, fxOrg, eggEntity.GetAngles() )
+
+	thread DestroyAfterDelay( fx, 3.0 )
+
+	EmitSoundAtPosition( TEAM_UNASSIGNED, fxOrg, SFX_SPIDER_SPAWN_CRY, eggEntity )
+
+	ReplaceEggModelWithHuskModel( eggData )
+}
+
+void function ReplaceEggModelWithHuskModel( SpiderEggData eggData )
+{
+	eggData.eggState = eEggState.HATCHED
+
+	entity eggHuskEntity = CreateEntity( "prop_dynamic" )
+	eggHuskEntity.SetValueForModelKey( EGG_HATCHED_MODEL )
+	eggHuskEntity.kv.fadedist = 30000
+	eggHuskEntity.kv.solid = SOLID_VPHYSICS
+	eggHuskEntity.SetScriptName( SPIDER_HATCHED_EGG_EDITOR_CLASS_KEYWORD )
+	SetTeam( eggHuskEntity, eggData.eggEntity.GetTeam() )
+	eggHuskEntity.SetOrigin( eggData.eggEntity.GetOrigin() )
+	eggHuskEntity.SetAngles( eggData.eggEntity.GetAngles() )
+	DispatchSpawn( eggHuskEntity )
+
+	SpiderEgg_Destroy( eggData )
+
+	eggData.eggEntity = eggHuskEntity
+	file.spiderEggsToData[ eggHuskEntity ] <- eggData
+	file.spiderEggs.append( eggHuskEntity )
+}
+
+void function OnSpiderEggDamaged( entity eggEntity, var damageInfo )
+{
+	#if DEVELOPER
+		if ( SPIDER_EGG_DEBUG )
+			printf("SpiderEgg.OnSpiderEggDamaged()")
+	#endif
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( !IsValid( attacker ) || IsWorldSpawn( attacker ) || eggEntity.GetHealth() <= 0 )
+	{
+		DamageInfo_SetDamage( damageInfo, 0 )
+		#if DEVELOPER
+			if ( SPIDER_EGG_DEBUG )
+				printf( "SpiderEgg.OnSpiderEggDamaged: Zero'd!" )
+		#endif
+	}
+}
+
+void function OnSpiderEggPostDamaged( entity eggEntity, var damageInfo )
+{
+
+	#if DEVELOPER
+		if ( SPIDER_EGG_DEBUG )
+			printf( "SpiderEgg.OnSpiderEggDamaged: Damage Dealt = " + DamageInfo_GetDamage( damageInfo ) )
+	#endif
+
+	if ( !( eggEntity in file.spiderEggsToData ) )
+	{
+		return
+	}
+
+	SpiderEggData eggData = file.spiderEggsToData[ eggEntity ]
+
+	eggData.lastDamagedTime = Time()
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( attacker.IsPlayer() && IsAlive( attacker ) )
+	{
+		attacker.NotifyDidDamage( eggEntity, DamageInfo_GetHitBox( damageInfo ),
+			DamageInfo_GetDamagePosition( damageInfo ),
+			DamageInfo_GetCustomDamageType( damageInfo ),
+			DamageInfo_GetDamage( damageInfo ),
+			DamageInfo_GetDamageFlags( damageInfo ),
+			DamageInfo_GetHitGroup( damageInfo ),
+			DamageInfo_GetWeapon( damageInfo ),
+			DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
+	}
+
+	if ( eggEntity in file.onSpiderEggDamagedCallbacks )
+	{
+		foreach ( callbackFunc in file.onSpiderEggDamagedCallbacks[ eggEntity ] )
+			callbackFunc( eggEntity, damageInfo )
+	}
+}
+
+void function OnSpiderEggKilled( entity eggEntity, var damageInfo )
+{
+	#if DEVELOPER
+		if ( SPIDER_EGG_DEBUG )
+			printf("SpiderEgg.OnSpiderEggKilled()")
+	#endif
+
+	if ( !( eggEntity in file.spiderEggsToData ) )
+		return
+
+	SpiderEggData eggData = file.spiderEggsToData[ eggEntity ]
+
+	if ( eggEntity in file.onSpiderEggKilledCallbacks )
+	{
+		foreach ( callbackFunc in file.onSpiderEggKilledCallbacks[ eggEntity ] )
+			callbackFunc( eggEntity, damageInfo )
+	}
+
+	thread SpawnSpiders_Thread( eggData )
+
+	ExplodeSpiderEgg( eggData )
+}
+
+void function SpawnSpiders_Thread( SpiderEggData eggData )
+{
+	int spawnAmount = eggData.spidersInside
+	if ( file.spiderAdditionalSpawnCheckCallback != null )
+	{
+		spawnAmount = file.spiderAdditionalSpawnCheckCallback( eggData )
+	}
+
+	wait 0.2 // ensure the same damage that breaks the egg doesn't damage the spiders as well
+
+	array<SpiderAnimSetup> animSetups = clone eggData.spiderAnimSetups
+
+	//preroll the wait times to make sure that there is a minimum time between spawns
+	float totalWaitTime = 0
+	array<float> waitTimes
+	int indexPickedToShoot = -1
+
+	float minTime = .35
+	//HACK we still are getting a few stuck spiders, so this will make the one case that causes problems have slightly longer spawns
+	if (eggData.eggSpawnMode == eEggSpawnMode.CEILING)
+	{
+		vector eggAngles = eggData.eggEntity.GetAngles()
+		vector eggUpAngles = AnglesToUp( eggAngles )
+
+		if (eggUpAngles.z > -.65)
+		{
+			//we're sorta sideways, so we need to delay things a bit more to make sure we don't get stuck
+			minTime = .6
+		}
+		else
+		{
+			minTime = .42 //bring a towel
+		}
+	}
+	for ( int i = 0; i < spawnAmount; ++i )
+	{
+		if ( indexPickedToShoot == -1 && RandomFloatRange(0.0, 1.0) > 0.5 )
+		{
+			indexPickedToShoot = i
+		}
+		if ( i ==  0 )
+		{
+			waitTimes.push(0.0)
+			continue
+		}
+
+		float timeToWait = RandomFloatRange( minTime, (minTime + 0.15) )
+
+		#if DEVELOPER
+		if (file.fixedSpiderSpawns)
+		{
+			timeToWait = minTime
+		}
+		#endif
+		totalWaitTime += timeToWait
+		waitTimes.push(totalWaitTime)
+	}
+
+	for ( int i = 0; i < spawnAmount; ++i )
+	{
+		bool pickedToShoot = (i == indexPickedToShoot)
+		thread function() : (i, waitTimes, eggData, animSetups, pickedToShoot)
+		{
+			entity spider
+
+			wait ( waitTimes[i] )
+
+			SpiderAnimSetup spiderAnimSetup = animSetups.getrandom()
+			#if DEVELOPER
+			if (file.fixedSpiderSpawns)
+			{
+				spiderAnimSetup = DEV_InternalPickAnimSpawnSetupForFixedSpawns(i, animSetups)
+			}
+			#endif
+			animSetups.fastremovebyvalue(spiderAnimSetup)
+
+			#if DEVELOPER
+			if ( file.spiderSpawnOverrideCallback != null && eggData.debugSpawned == false )
+			#else
+			if ( file.spiderSpawnOverrideCallback != null )
+			#endif
+			{
+				spider = file.spiderSpawnOverrideCallback( eggData )
+				if ( !IsValid( spider ) || spider.ai.npcType != eNPC.SPIDER_JUNGLE )
+				{
+					#if DEVELOPER
+						if ( SPIDER_EGG_DEBUG )
+							printf( FUNC_NAME() + " - WARNING: spiderSpawnOverrideCallback is registered but didn't return a valid Jungle Spider NPC!" )
+					#endif
+					return
+				}
+			} else {
+				spider = CreateNPCFromAISettings( SPIDER_TO_SPAWN_NPC_KEYWORD, SPIDER_TEAM, spiderAnimSetup.spawnPoint.origin, spiderAnimSetup.spawnPoint.angles )
+				DispatchSpawn( spider )
+			}
+
+			spider.EndSignal( "OnDeath" )
+			spider.EndSignal( "OnDestroy" )
+
+			spider.Hide()
+			eggData.spidersSpawned++
+
+			if ( !pickedToShoot )
+			{
+				spider.ResetAttackRestTimes(10)
+				//spider.DisableTauntSchedule()
+			}
+
+			if ( spider.IsInterruptable() )
+			{
+				#if DEVELOPER
+					if ( SPIDER_EGG_DEBUG )
+						printf( "SpiderEgg.SpawnSpiders_Thread - Spawn spider with animation: " + spiderAnimSetup.anim )
+				#endif
+				thread PlayAnimTeleport( spider, spiderAnimSetup.anim, spiderAnimSetup.spawnPoint.origin, spiderAnimSetup.spawnPoint.angles, 0.0 )
+				if ( eggData.eggSpawnMode == eEggSpawnMode.CEILING )
+				{
+					//vector fxOrg = spiderAnimSetup.spawnPoint.origin
+					int expFXId = GetParticleSystemIndex( FX_SPIDER_WEB_CONE )
+					entity explosionfx = StartParticleEffectInWorld_ReturnEntity( expFXId, spiderAnimSetup.spawnPoint.origin, <-180, eggData.eggEntity.GetAngles().y, 0> )
+					thread DestroyAfterDelay( explosionfx, 6.0 )
+
+					int spawnFXId = GetParticleSystemIndex( FX_EGG_CEILING_SPAWN )
+					entity spawnfx = StartParticleEffectInWorld_ReturnEntity( spawnFXId, spiderAnimSetup.spawnPoint.origin, eggData.eggEntity.GetAngles() )
+					thread DestroyAfterDelay( spawnfx, 3.0 )
+
+					thread CreateAndUpdateSpiderWebRopeVFX_Thread( spider, eggData.eggEntity, spiderAnimSetup.spawnPoint.origin, eggData.spiderSpawnAttachIds[i] )
+				}
+			}
+
+			spider.Show()
+			UpdateEnemyMemoryWithinRadius( spider, 1024 )
+			if ( !pickedToShoot )
+			{
+				while ( !spider.IsOnGround() )
+				{
+					WaitFrame()
+				}
+				spider.ResetAttackRestTimes(0.5)
+				//Wait(1)
+				//spider.EnableTauntSchedule()
+			}
+		}()
+	}
+}
+
+void function CreateAndUpdateSpiderWebRopeVFX_Thread( entity spider, entity eggEntity, vector spawnOrigin, int eggAttachmentId )
+{
+	spider.EndSignal( "OnDeath" )
+	spider.EndSignal( "OnDestroy" )
+	eggEntity.EndSignal( "OnDestroy" )
+
+	const string ROPE_ATTACHMENT = "ROPE_ATTACHMENT"
+	const int ROPE_NODE_COUNT = 5
+	const float SPIDER_ANIM_TIME = 2.0
+
+	// startEnt == egg attachpoint
+	// endEnt == spider
+
+	int spiderAttachmentId = spider.LookupAttachment( ROPE_ATTACHMENT )
+
+	entity webEnt = CreateRope( <0, 0, 0>, <0, 0, 0>, 0, eggEntity, spider, eggAttachmentId, spiderAttachmentId, 2, SPIDER_EGG_WEB_ROPE_MATERIAL, ROPE_NODE_COUNT )
+	webEnt.Rope_SetSlack( 100 )
+	webEnt.Rope_SetCollisionEnabled( false )
+	webEnt.Rope_SetTension( 1 )
+	webEnt.Rope_SetPhysicsDampening( 0.1 )
+	webEnt.Rope_ActivateStartDirectionConstraints( true )
+	webEnt.Rope_SetDirectionConstraintFalloff( SPIDER_WEB_ROPE_LENGTH * 0.12 )
+	webEnt.Rope_SetDirectionConstraintStrength( .35 )
+	webEnt.Rope_SetSubdivisionSliceCount( 10 )
+	webEnt.Rope_SetSubdivisionStackCount( 6 )
+	webEnt.Rope_SetCanEnterRestingState( true )
+	webEnt.SetFadeDistance( 2000 )
+	webEnt.SetOwner( spider )
+	webEnt.AddToAllRealms()
+	webEnt.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+
+	OnThreadEnd( void function() : ( webEnt) {
+		#if DEVELOPER
+			if ( SPIDER_EGG_DEBUG )
+				printf("CreateAndUpdateSpiderWebRopeVFX_Thread - OnThreadEnd()")
+		#endif
+
+		thread RetractSpiderWebRopeVFX_Thread( webEnt )
+	} )
+
+	spider.EndSignal( "OnAnimationInterrupted" )
+	spider.EndSignal( "OnAnimationDone" )
+	while ( true )
+	{
+		vector eggOrigin = eggEntity.GetAttachmentOrigin( eggAttachmentId )
+		vector spiderOrigin = spider.GetAttachmentOrigin( spiderAttachmentId )
+		float dist         = Distance( eggOrigin, spiderOrigin )
+		float ropeLength   = min( dist, SPIDER_WEB_ROPE_LENGTH )
+		webEnt.Rope_SetLength( ropeLength )
+		WaitFrame()
+	}
+}
+
+void function RetractSpiderWebRopeVFX_Thread( entity webEnt )
+{
+	OnThreadEnd( void function() : ( webEnt) {
+		if ( IsValid( webEnt ) )
+		{
+			webEnt.Destroy()
+		}
+	} )
+
+	const float ROPE_HANG_TIME = 4.0
+
+	webEnt.Rope_DetachPoint( 1 )
+	webEnt.RopeWiggle( SPIDER_WEB_ROPE_LENGTH * RandomFloatRange( 0.75, 1.25 ), 0.01, 10, ROPE_HANG_TIME, ROPE_HANG_TIME / 2 )    // rope length, magnitude, speed, DURATION, fade DURATION
+
+	wait 1.5
+
+	webEnt.Rope_SetCollisionEnabled( true )
+	webEnt.Rope_DetachPoint( 0 )
+
+	wait 5.0
+}
+
+array<entity> function GetAllSpiderEggs()
+{
+	return clone file.spiderEggs
+}
+
+bool function IsSpiderEgg( entity ent )
+{
+	return ent.GetScriptName() == SPIDER_EGG_SCRIPT_NAME
+}
+
+SpiderEggData function GetSpiderEggData( entity eggEntity )
+{
+	SpiderEggData spiderEggData
+	if ( eggEntity in file.spiderEggsToData )
+	{
+		spiderEggData = file.spiderEggsToData[eggEntity]
+	}
+	return spiderEggData
+}
+
+array<SpiderEggData> function GetAllSpiderEggData()
+{
+	array<entity> eggs = GetAllSpiderEggs()
+	array<SpiderEggData> eggData
+	foreach( egg in eggs )
+	{
+		if ( egg in file.spiderEggsToData )
+		{
+			eggData.append( file.spiderEggsToData[ egg ] )
+		}
+	}
+
+	return eggData
+}
+
+#if DEVELOPER
+SpiderAnimSetup function DEV_InternalPickAnimSpawnSetupForFixedSpawns( int index, array<SpiderAnimSetup> setups)
+{
+	switch (index)
+	{
+		//just remember that each setup can only be used once, and then is removed from this list. 0, 0, 0 actually means use setup 0, 1, 2
+		case 0:
+			return setups[0]
+		case 1:
+			return setups[0]
+		case 2:
+			return setups[0]
+	}
+
+	unreachable
+}
+
+string function DEV_InternalGetAnimationsForFixedSpawns( int index, array<string> anims, vector spawnPoint, vector eggLocation, string locationName )
+{
+	string selectedAnim
+
+	if ( index == 0 )
+	{
+		DebugDrawText( eggLocation, locationName, true, 2.5 )
+	}
+	switch( index )
+	{
+		case 0:
+			selectedAnim = anims[1]
+			//red
+			DebugDrawSphere( spawnPoint, 10, 255, 0, 0, true, 2.5 )
+			break
+
+		case 1:
+			selectedAnim = anims[1]
+			//green
+			DebugDrawSphere( spawnPoint, 10, 0, 255, 0, true, 2.5 )
+			break
+
+		case 2:
+			selectedAnim = anims[1]
+			//blue
+			DebugDrawSphere( spawnPoint, 10, 0, 0, 255, true, 2.5 )
+			break
+	}
+
+	return selectedAnim
+}
+
+void function DEV_SpiderEgg_ResetEggAtCrosshair( entity player )
+{
+	entity spiderEgg
+	TraceResults traceResult = PlayerViewTrace( player )
+	if ( IsValid( traceResult.hitEnt ) )
+	{
+		if ( traceResult.hitEnt.GetScriptName() == SPIDER_HATCHED_EGG_EDITOR_CLASS_KEYWORD )
+		{
+			spiderEgg = traceResult.hitEnt
+		}
+	}
+
+	if ( IsValid( spiderEgg ) )
+	{
+		SpiderEggData eggData = GetSpiderEggData( spiderEgg )
+		SpiderEgg_Reset( eggData )
+		if (file.fixedSpiderSpawns)
+		{
+			spiderEgg = eggData.eggEntity
+			eggData = SetupSpiderEggData( spiderEgg )
+			file.spiderEggsToData[spiderEgg] = eggData
+		}
+	}
+}
+
+void function DEV_SpiderEgg_PrintEggDataAtCrosshair( entity player )
+{
+	entity spiderEgg
+	TraceResults traceResult = PlayerViewTrace( player )
+	if ( IsValid( traceResult.hitEnt ) )
+	{
+		if ( traceResult.hitEnt.GetScriptName() == SPIDER_EGG_SCRIPT_NAME )
+		{
+			spiderEgg = traceResult.hitEnt
+		}
+	}
+
+	if ( IsValid( spiderEgg ) )
+	{
+		SpiderEggData eggData = GetSpiderEggData( spiderEgg )
+		vector eggUpAngles = AnglesToUp( eggData.eggEntity.GetAngles() )
+		printf("SpiderEgg.PrintEggDataAtCrosshair()")
+		printf("\t SpiderEgg - Origin: " + eggData.eggEntity.GetOrigin())
+		printf("\t SpiderEgg - Angles: " + eggData.eggEntity.GetAngles())
+		printf("\t SpiderEgg - Surface Slope: " + ( fabs( eggUpAngles.x ) + fabs( eggUpAngles.y ) ) + " Up Angles: " + eggUpAngles )
+		printf("\t SpiderEgg - Spiders Inside: " + ((eggData.eggState == eEggState.WHOLE) ? eggData.spidersInside : 0) )
+		printf("\t SpiderEgg - Is Active: " + eggData.isActive )
+	}
+}
+
+void function DEV_SpiderEgg_SpawnEggAtCrosshair( entity player, int spidersInside = -1 )
+{
+	vector origin = GetPlayerCrosshairOrigin( player )
+	vector eyeAngles = player.EyeAngles()
+	vector angles = <0.0, (eyeAngles.y + 180.0), 0>
+	TraceResults traceResult = PlayerViewTrace( player )
+	if ( traceResult.fraction < 1.0 )
+	{
+		vector forward = AnglesToForward( eyeAngles )
+		angles = AnglesOnSurface( traceResult.surfaceNormal, forward )
+	}
+
+	if ( traceResult.surfaceNormal.z > 0.9 )
+		origin = origin - ( AnglesToUp( angles ) * 40 )
+	else if ( traceResult.surfaceNormal.z < -0.9 )
+		origin = origin + ( AnglesToUp( angles ) * 20 )
+	else if ( traceResult.surfaceNormal.y < -0.6 || traceResult.surfaceNormal.y > 0.6 )
+		origin = origin - ( AnglesToUp( angles ) * 20 )
+
+	SpiderEggData eggData = SpiderEgg_Create( origin, angles, SPIDER_TEAM, spidersInside )
+	eggData.debugSpawned = true
+}
+
+bool s_isDebugDrawSpawnPointTraceTestsEnabled = false
+void function DEV_SpiderEgg_ToggleDebugDrawSpawnPointTraceTests()
+{
+	if ( s_isDebugDrawSpawnPointTraceTestsEnabled == true )
+	{
+		s_isDebugDrawSpawnPointTraceTestsEnabled = false
+	} else {
+		s_isDebugDrawSpawnPointTraceTestsEnabled = true
+		thread function() : ()
+		{
+			for ( ;; )
+			{
+				WaitFrame()
+				if ( !s_isDebugDrawSpawnPointTraceTestsEnabled )
+				{
+					break
+				}
+
+				foreach ( SpiderEggData eggData in file.spiderEggsToData )
+				{
+					if ( !IsValid( eggData.eggEntity ) )
+					{
+						continue
+					}
+
+					for ( int i = 0; i < eggData.spawnPointTraceDatas.len(); ++i )
+					{
+						float r = 0
+						float g = 0
+						if ( eggData.spawnPointTraceDatas[i].bSuccess )
+						{
+							g = 255
+						} else {
+							r = 255
+						}
+
+						DebugDrawLine( eggData.spawnPointTraceDatas[i].origin, eggData.spawnPointTraceDatas[i].endPoint, r, g, 0, true, 0.1 )
+					}
+				}
+			}
+		}()
+	}
+}
+
+bool s_isDebugDrawSpawnAttachmentsEnabled = false
+void function DEV_SpiderEgg_ToggleDebugDrawSpawnAttachments()
+{
+	if ( s_isDebugDrawSpawnAttachmentsEnabled == true )
+	{
+		s_isDebugDrawSpawnAttachmentsEnabled = false
+	} else
+	{
+		s_isDebugDrawSpawnAttachmentsEnabled = true
+		thread function() : ()
+		{
+			for ( ;; )
+			{
+				WaitFrame()
+				if ( !s_isDebugDrawSpawnAttachmentsEnabled )
+				{
+					break
+				}
+
+				foreach ( SpiderEggData eggData in file.spiderEggsToData )
+				{
+					if ( !IsValid( eggData.eggEntity ) )
+					{
+						continue
+					}
+
+					entity eggEntity = eggData.eggEntity
+
+					for ( int i = 0; i < file.spawnPointIndices.len(); ++i )
+					{
+						DebugDrawAxis( eggEntity.GetAttachmentOrigin( file.spawnPointIndices[ i ] ), eggEntity.GetAttachmentAngles( file.spawnPointIndices[ i ] ), 0.1, 10 )
+					}
+				}
+			}
+		}()
+	}
+}
+
+void function DEV_SpiderEgg_ToggleFixedSpawns()
+{
+	file.fixedSpiderSpawns = !file.fixedSpiderSpawns;
+}
+#endif
+#endif

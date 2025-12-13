@@ -1,0 +1,1062 @@
+#if SERVER
+global function ProwlerDen_Init
+global function ProwlerDen_Create
+global function ProwlerDen_Reset
+global function ProwlerDen_Destroy
+
+global function ProwlerDen_SetActive
+global function ProwlerDen_SetLockSpawns
+
+global function ProwlerDen_ForceSpawnProwlers
+
+global function SetCallback_ProwlerDen_OnProwlerSpawn
+
+global function SetCallback_ProwlerDen_OnAdditionalSpawnCheck
+// todo (tgoodbrand): callback overrides for shared cooldown & activation / deactivation
+
+global function GetAllProwlerDens
+global function GetProwlerDenData
+global function GetAllProwlerDenData
+
+global const string PROWLER_DEN_PLAYLIST_VAR_ENABLE_KEYWORD = "enable_prowler_dens"
+
+global const int PROWLER_DEN_SPAWN_TIGGER_RADIUS = 1972
+
+global const float PROWLER_DEN_MULTI_SPAWN_RANGE_THRESHOLD_FRAC = 0.5
+
+global const string PROWLER_DEN_EDITOR_CLASS_KEYWORD = "script_ai_prowler_den"
+global const string PROWLER_DEN_SCRIPT_NAME = "prop_prowler_den"
+
+const string PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME = "DeactivateProwlerDenTrigger"
+
+const string PROWLER_TO_SPAWN_NPC_KEYWORD = "npc_prowler"
+
+#if DEV
+const bool PROWLER_DEN_DEBUG = false
+global function DEV_ProwlerDen_SpawnDenAtCrosshair
+global function DEV_ProwlerDen_ToggleDebugDrawTriggerRadii
+global function DEV_ProwlerDen_ToggleDebugDrawSpawnAttachments
+global function DEV_ProwlerDen_ToggleDebugDrawSpawnPointTraceTests
+global function DEV_ProwlerDen_ToggleEnabled
+global function DEV_ProwlerDen_DebugSpawnProwlerAtIndex
+#endif
+
+const int NUM_OF_PROWLERS_IN_DEN_MIN = 5
+const int NUM_OF_PROWLERS_IN_DEN_MAX = 10
+
+const float PROWLER_DEN_SPAWNER_COOLDOWN = 24
+
+const float PROWLER_DEN_SPAWN_DELAY = 1
+
+const int PROWLER_DEN_TRIGGER_HALF_HEIGHT = 4000
+
+const vector TRACE_OFFSET = <256, 0, 0>
+
+const float PROWLER_DEN_IDLE_SFX_OFFSET = 672
+
+const int PROWLER_TEAM = 104
+
+//
+// 		===   MODELS   ===
+//-----------------------------------------------
+
+global const asset DEN_MODEL = $"mdl/props/prowler_mound/prowler_mound_proxy_01.rmdl"
+
+// attachments spawn points
+
+const string SPAWN_POINT_TOP_ONE = "SPAWN_PROWLER_1"
+const string SPAWN_POINT_TOP_SEVEN = "SPAWN_PROWLER_7"
+const string SPAWN_POINT_MID_TWO = "SPAWN_PROWLER_2"
+const string SPAWN_POINT_MID_FIVE = "SPAWN_PROWLER_5"
+
+const string SPAWN_POINT_BTM_THREE = "SPAWN_PROWLER_3"
+const string SPAWN_POINT_BTM_FOUR = "SPAWN_PROWLER_4"
+const string SPAWN_POINT_BTM_SIX = "SPAWN_PROWLER_6"
+
+// END MODELS
+
+//
+// 		===   AUDIO   ===
+//-----------------------------------------------
+
+const string SFX_PROWLER_SPAWN_WARNING = "prowler_den_spawn_PT1"
+const string SFX_PROWLER_SPAWN_WARNING_FINAL = "prowler_den_spawn_final_PT1"
+const string SFX_PROWLER_SPAWN_ACTION = "prowler_den_spawn_PT2"
+const string SFX_PROWLER_SPAWN_ACTION_FINAL = "prowler_den_spawn_final_PT2"
+
+                                
+                                                                 
+                                                                             
+                                                                
+                                                                            
+
+                                                                   
+
+                                                                        
+                                                                                  
+                                                                                  
+      
+
+const string SFX_PROWLER_DEN_AMBIENT = "prowler_dens_ambient_idle"
+
+const string SFX_PROWLER_DEN_AMBIENT_FULL = "prowler_dens_ambient_idle"
+const string SFX_PROWLER_DEN_AMBIENT_TWO = "prowler_dens_ambient_idle_2remaining"
+const string SFX_PROWLER_DEN_AMBIENT_ONE = "prowler_dens_ambient_idle_1remaining"
+
+// END AUDIO
+
+//
+//		===   VFX   ===
+//-----------------------------------------------
+
+global const asset FX_DEN_EXIT_TELL = $"P_pr_mound_EXIT"
+
+global const asset FX_PROWLER_SPAWN_TELL = $"P_pr_mound_SPAWN"
+
+// END VFX
+
+//
+//		===   ANIMATIONS   ===
+//-----------------------------------------------
+
+global const string PROWLER_DEN_SPAWN_TOP_ONE_ANIM_KEYWORD = "pr_mound_spawn_top01"
+global const string PROWLER_DEN_SPAWN_TOP_SEVEN_ANIM_KEYWORD = "pr_mound_spawn_top02"
+global const string PROWLER_DEN_SPAWN_MID_TWO_ANIM_KEYWORD = "pr_mound_spawn_mid02"
+global const string PROWLER_DEN_SPAWN_MID_FIVE_ANIM_KEYWORD = "pr_mound_spawn_mid01"
+
+global const string PROWLER_DEN_SPAWN_BTM_THREE_ANIM_KEYWORD = "pr_mound_spawn_base03"
+global const string PROWLER_DEN_SPAWN_BTM_FOUR_ANIM_KEYWORD = "pr_mound_spawn_base01"
+global const string PROWLER_DEN_SPAWN_BTM_SIX_ANIM_KEYWORD = "pr_mound_spawn_base02"
+
+global const string PROWLER_DEN_SPAWN_ANIM_KEYWORD = "pr_bloodhoundTT_hatch_spawn"
+
+// END ANIMATIONS
+
+#if DEV
+global struct ProwlerDen_SpawnPointTraceData
+{
+	vector origin
+	vector endPoint
+	bool bSuccess = false
+}
+#endif
+
+global struct ProwlerDenData
+{
+	entity 			denEntity
+	entity			trigger
+	array<entity>	playersInTrigger
+
+	int				life
+	int				lifeMax
+
+	int				queuedSpawnCount = 0
+
+	float			lastSpawnTime = 0
+	float			lastIdleSpawnTime = 0
+
+	bool			isActive = false
+	bool			lockSpawning = false
+
+	bool			monitorThreadActive = false
+
+	#if DEV
+		bool							debugSpawned = false
+		array<ProwlerDen_SpawnPointTraceData>		spawnPointTraceDatas
+	#endif
+}
+
+struct
+{
+	array<entity> prowlerDens
+	table<entity, ProwlerDenData> prowlerDensToData
+	table<entity, ProwlerDenData> triggerToProwlerDenData
+	entity functionref( ProwlerDenData, vector, vector ) prowlerSpawnOverrideCallback
+	int functionref( ProwlerDenData, bool ) prowlerAdditionalSpawnCheckCallback
+
+	// spawn points initialized
+	bool spawnPtsInitialized = false
+
+	//new spawn points
+	array<int> lowerSpawnPointIndices
+	array<int> upperSpawnPointIndices
+
+	// spawn point idx to anim
+	table<int, string> spawnPointsToSpawnAnimations
+} file
+
+void function ProwlerDen_Init()
+{	
+	Assert( !Flag( "EntitiesDidLoad" ), "Warning! You need to call ProwlerDen_Init() before entities loaded!" )
+
+	PrecacheParticleSystem( FX_DEN_EXIT_TELL )
+	PrecacheParticleSystem( FX_PROWLER_SPAWN_TELL )
+	PrecacheModel( DEN_MODEL )
+
+	RegisterSignal( PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME )
+
+	AddSpawnCallbackEditorClass( "prop_dynamic", PROWLER_DEN_EDITOR_CLASS_KEYWORD, OnProwlerDenSpawned )
+}
+
+void function SetCallback_ProwlerDen_OnProwlerSpawn( entity functionref( ProwlerDenData, vector, vector ) callbackFunc )
+{
+	file.prowlerSpawnOverrideCallback = callbackFunc
+}
+
+void function SetCallback_ProwlerDen_OnAdditionalSpawnCheck( int functionref( ProwlerDenData, bool ) callbackFunc )
+{
+	file.prowlerAdditionalSpawnCheckCallback = callbackFunc
+}
+
+ProwlerDenData function ProwlerDen_Create( vector origin, vector angles, int team = PROWLER_TEAM, int numOfProwlers = -1 )
+{
+	entity denEntity = CreateEntity( "prop_dynamic" )
+	denEntity.SetOrigin( origin )
+	denEntity.SetAngles( angles )
+
+	denEntity.Hide()
+	denEntity.kv.SpawnAsPhysicsMover = false
+	denEntity.SetValueForModelKey( DEN_MODEL )
+	denEntity.kv.fadedist = 30000
+	denEntity.kv.solid = SOLID_VPHYSICS
+	denEntity.kv.SpawnAsPhysicsMover = false
+	denEntity.kv.DisableBoneFollowers = 1
+	denEntity.kv.collide_bullet = 0
+	denEntity.kv.contents = CONTENTS_BLOCK_PING
+	denEntity.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD )
+	SetTeam( denEntity, team )	// need to have a team other then 0 or it won't take impact damage
+	DispatchSpawn( denEntity )
+
+	return SetupProwlerDen( denEntity, numOfProwlers )
+}
+
+void function ProwlerDen_Reset( ProwlerDenData denData )
+{
+	if ( !IsValid( denData.denEntity ) )
+	{
+		return
+	}
+
+	denData.trigger.Disable()
+	if ( denData.monitorThreadActive )
+	{
+		Signal( denData.denEntity, PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME )
+	}
+
+	denData.queuedSpawnCount = 0
+	denData.life = denData.lifeMax
+	denData.lastSpawnTime = Time()
+	denData.lockSpawning = false
+
+	ProwlerDen_SetActive( denData, true )
+}
+
+void function ProwlerDen_Destroy( ProwlerDenData denData )
+{
+	entity denEntity = denData.denEntity
+	if ( !IsValid( denEntity ) )
+	{
+		return
+	}
+
+	if ( denData.monitorThreadActive )
+	{
+		Signal( denEntity, PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME )
+	}
+
+	file.prowlerDens.fastremovebyvalue( denEntity )
+	delete file.triggerToProwlerDenData[ denEntity ]
+
+	denData.playersInTrigger.clear()
+
+	denData.denEntity.Destroy()
+	denData.trigger.Disable()
+	denData.trigger.Destroy()
+}
+
+void function ProwlerDen_SetActive( ProwlerDenData denData, bool isActive )
+{
+	if ( isActive == true )
+	{
+		if ( denData.life == 0 )
+		{
+			return // Dens with no life remain off
+		}
+
+		denData.trigger.Enable()
+		denData.trigger.SearchForNewTouchingEntity()
+	}
+	else
+	{
+		denData.queuedSpawnCount = 0
+		denData.trigger.Disable()
+		Signal( denData.denEntity, PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME )
+	}
+
+	denData.isActive = isActive
+}
+
+void function ProwlerDen_SetLockSpawns( ProwlerDenData denData, bool lockSpawns )
+{
+	denData.lockSpawning = lockSpawns
+}
+
+void function OnProwlerDenSpawned( entity denEntity )
+{
+	#if DEV
+		if ( PROWLER_DEN_DEBUG )
+			printf("ProwlerDen.OnProwlerDenSpawned()")
+	#endif
+
+	if ( GetCurrentPlaylistVarBool( PROWLER_DEN_PLAYLIST_VAR_ENABLE_KEYWORD, true ) )
+	{
+		SetupProwlerDen( denEntity )
+		file.prowlerDens.append( denEntity )
+	}
+	else
+	{
+		denEntity.Destroy()
+	}
+}
+
+ProwlerDenData function SetupProwlerDen( entity denEntity, int numOfProwlers = -1 )
+{
+	#if DEV
+		if ( PROWLER_DEN_DEBUG )
+			printf("ProwlerDen.SetupProwlerDen()")
+	#endif
+
+	ProwlerDenData denData
+
+	denData.lifeMax = numOfProwlers
+	if ( denData.lifeMax == -1 )
+	{
+		int minNumOfProwlers = NUM_OF_PROWLERS_IN_DEN_MIN
+		if ( denEntity.HasKey( "minNumOfProwlers" ) )
+		{
+			minNumOfProwlers = int(denEntity.GetValueForKey( "minNumOfProwlers" ))
+		}
+		int maxNumOfProwlers = NUM_OF_PROWLERS_IN_DEN_MAX
+		if ( denEntity.HasKey( "maxNumOfProwlers" ) )
+		{
+			maxNumOfProwlers = int(denEntity.GetValueForKey( "maxNumOfProwlers" ))
+		}
+		denData.lifeMax = RandomIntRangeInclusive( minNumOfProwlers, maxNumOfProwlers )
+	}
+	denData.life = denData.lifeMax
+
+	entity spawnTrigger = CreateTriggerCylinderNoCylinderRadius( denEntity.GetOrigin(), PROWLER_DEN_SPAWN_TIGGER_RADIUS, PROWLER_DEN_TRIGGER_HALF_HEIGHT, PROWLER_DEN_TRIGGER_HALF_HEIGHT )
+	spawnTrigger.SetEnterCallback( ProwlerDen_OnPlayerEnterTrigger )
+	spawnTrigger.SetLeaveCallback( ProwlerDen_OnPlayerExitTrigger )
+
+	// Highlight
+	// todo (tgoodbrand): highlight with threat, and legend abilities like Seer tact, bloodhound etc
+	denEntity.Highlight_Enable()
+
+	// todo (tgoodbrand): pings
+
+	denEntity.SetScriptName( PROWLER_DEN_SCRIPT_NAME )
+	denData.denEntity = denEntity
+	denData.trigger = spawnTrigger
+
+	// create spawn points
+	CreateProwlerSpawnPointsForDen( denData )
+
+	file.prowlerDensToData[ denEntity ] <- denData
+
+	file.triggerToProwlerDenData[spawnTrigger] <- denData
+
+	ProwlerDen_SetActive( denData, true )
+
+	return denData
+}
+
+void function ProwlerDen_OnPlayerEnterTrigger( entity trigger, entity player )
+{
+	#if DEV
+		if ( PROWLER_DEN_DEBUG )
+			printf("ProwlerDen_OnPlayerEnterTrigger()")
+	#endif
+
+	if ( !IsValidPlayer( player ) )
+		return
+
+	Assert( trigger in file.triggerToProwlerDenData, FUNC_NAME() + " - Trigger Entity: " + trigger + " not associated with a valid Prowler Den. This Trigger volume is rogue!" )
+
+	ProwlerDenData denData = file.triggerToProwlerDenData[trigger]
+	denData.playersInTrigger.append( player )
+
+	if ( !denData.monitorThreadActive )
+	{
+		denData.lastIdleSpawnTime = Time()
+		thread ProwlerDenActiveMonitor_Thread( denData )
+	}
+}
+
+void function ProwlerDen_OnPlayerExitTrigger( entity trigger, entity player )
+{
+	#if DEV
+		if ( PROWLER_DEN_DEBUG )
+			printf("ProwlerDen_OnPlayerExitTrigger()")
+	#endif
+
+
+	if ( !IsValidPlayer( player ) )
+		return
+
+	Assert( trigger in file.triggerToProwlerDenData, FUNC_NAME() + " - Trigger Entity: " + trigger + " not associated with a valid Prowler Den. This Trigger volume is rogue!" )
+
+	ProwlerDenData denData = file.triggerToProwlerDenData[trigger]
+	denData.playersInTrigger.fastremovebyvalue( player )
+
+	if ( denData.playersInTrigger.len() == 0 )
+	{
+		Signal( denData.denEntity, PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME )
+	}
+}
+
+void function ProwlerDen_ForceSpawnProwlers( ProwlerDenData denData )
+{
+	thread SpawnProwlers( denData, true )
+}
+
+void function ProwlerDenActiveMonitor_Thread( ProwlerDenData denData )
+{
+	#if DEV
+		if ( PROWLER_DEN_DEBUG )
+			printf("ProwlerDenActiveMonitor_Thread()")
+	#endif
+
+	EndSignal( denData.denEntity, PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME )
+
+	OnThreadEnd( void function() : ( denData ) {
+		#if DEV
+			if ( PROWLER_DEN_DEBUG )
+				printf("ProwlerDenActiveMonitor_Thread - OnThreadEnd()")
+		#endif
+		if ( denData.life == 0 )
+		{
+			ProwlerDen_SetActive( denData, false )
+		}
+		denData.monitorThreadActive = false
+		StopAllAmbientDenSounds( denData )
+		denData.playersInTrigger.clear()
+	} )
+
+	StartAmbientDenSound( denData )
+
+	denData.monitorThreadActive = true
+
+	while ( denData.life > 0 )
+	{
+		#if DEV
+			if ( PROWLER_DEN_DEBUG )
+				printf( "ProwlerDenActiveMonitor_Thread - Time remaining = " + (PROWLER_DEN_SPAWNER_COOLDOWN - ( Time() - denData.lastSpawnTime )) )
+		#endif
+
+		if ( Time() >= denData.lastSpawnTime + PROWLER_DEN_SPAWNER_COOLDOWN ) // handles the case where a player enters the trigger of a den off cooldown
+		{
+			foreach ( entity player in denData.playersInTrigger )
+			{
+				if ( HasPlayerDischargedWeapon( player ) )
+				{
+					thread SpawnProwlers( denData, false )
+					break
+				}
+			}
+		}
+
+		if ( Time() >= denData.lastIdleSpawnTime + PROWLER_DEN_SPAWNER_COOLDOWN )
+		{
+			thread SpawnProwlers( denData, false )
+		}
+
+		wait PROWLER_DEN_SPAWNER_COOLDOWN - ( Time() - denData.lastSpawnTime )
+	}
+}
+
+void function SpawnProwlers( ProwlerDenData denData, bool isForced )
+{
+	if ( denData.lockSpawning == true )
+	{
+		return
+	}
+
+	int spawnAmount = 1
+	if ( file.prowlerAdditionalSpawnCheckCallback != null )
+	{
+		spawnAmount = file.prowlerAdditionalSpawnCheckCallback( denData, isForced )
+	}
+	else if ( denData.life > 1 )
+	{
+		spawnAmount = CoinFlip() ? 2 : 1
+	}
+
+	if ( spawnAmount > 0 )
+	{
+		entity closestPlayer
+		if ( denData.playersInTrigger.len() > 0 )
+		{
+			float closestPlayerDist = 99999
+			for ( int i = 0; i < denData.playersInTrigger.len(); i++ )
+			{
+				float dist = Distance2D( denData.playersInTrigger[i].GetOrigin(), denData.denEntity.GetOrigin() )
+				if ( dist < closestPlayerDist )
+				{
+					closestPlayerDist = dist
+					closestPlayer = denData.playersInTrigger[i]
+					if ( dist < PROWLER_DEN_SPAWN_TIGGER_RADIUS * PROWLER_DEN_MULTI_SPAWN_RANGE_THRESHOLD_FRAC )
+					{
+						spawnAmount = 1
+					}
+				}
+			}
+		}
+
+		vector spawnOrigin
+		vector spawnAngles
+		vector spawnUpVector
+
+		if ( spawnAmount == 2 )
+		{
+			int rIdx = RandomIntRange( 0, file.upperSpawnPointIndices.len() )
+			int upperSpawnIdx = file.upperSpawnPointIndices[rIdx]
+			spawnOrigin = denData.denEntity.GetAttachmentOrigin( upperSpawnIdx )
+			spawnAngles = AnglesCompose( denData.denEntity.GetAngles(), denData.denEntity.GetAttachmentForward( upperSpawnIdx ) )
+			spawnUpVector = denData.denEntity.GetAttachmentUp( upperSpawnIdx )
+			thread SpawnProwlerAfterDelay_Thread( denData, spawnOrigin, spawnAngles, spawnUpVector, file.spawnPointsToSpawnAnimations[upperSpawnIdx] )
+		}
+
+		float closestSpawnPoint = 99999
+		string spawnAnim
+		if ( denData.playersInTrigger.len() > 0 )
+		{
+			for ( int i = 0; i < file.lowerSpawnPointIndices.len(); i++ )
+			{
+
+				vector spawnPoint = denData.denEntity.GetAttachmentOrigin( file.lowerSpawnPointIndices[i] )
+				float dist = Distance2D( closestPlayer.GetOrigin(), spawnPoint )
+				if ( dist < closestSpawnPoint )
+				{
+					closestSpawnPoint = dist
+					spawnOrigin = spawnPoint
+					spawnAngles = AnglesCompose( denData.denEntity.GetAngles(), denData.denEntity.GetAttachmentForward( file.lowerSpawnPointIndices[i] ) )
+					spawnUpVector = denData.denEntity.GetAttachmentUp( file.lowerSpawnPointIndices[i] )
+					spawnAnim = file.spawnPointsToSpawnAnimations[file.lowerSpawnPointIndices[i]]
+				}
+			}
+		}
+		else
+		{
+			int idx = file.lowerSpawnPointIndices.getrandom()
+			spawnOrigin = denData.denEntity.GetAttachmentOrigin( idx )
+			spawnAngles = AnglesCompose( denData.denEntity.GetAngles(), denData.denEntity.GetAttachmentForward( idx ) )
+			spawnUpVector = denData.denEntity.GetAttachmentUp( idx )
+			spawnAnim = file.spawnPointsToSpawnAnimations[idx]
+		}
+
+		waitthreadsolo SpawnProwlerAfterDelay_Thread( denData, spawnOrigin, spawnAngles, spawnUpVector, spawnAnim )
+	}
+}
+
+bool function HasPlayerDischargedWeapon( entity player )
+{
+	bool result = false
+
+	const float WEAPON_FIRE_MIN_WAIT_TIME = 0.15
+
+	if ( IsValid(player) && player.IsPlayer() )
+	{
+		entity weapon     = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+
+		if ( IsValid( weapon ) )
+		{
+			float rechamberDuration = weapon.GetWeaponSettingFloat( eWeaponVar.rechamber_time )
+			float fireRate = weapon.GetWeaponSettingFloat( eWeaponVar.fire_rate )
+
+			float fireCooldown = fireRate > 0.0 ? 1.0 / fireRate : 0.0
+			float totalFireTime = rechamberDuration + fireCooldown
+
+			float lastFireTimeWeapon = player.GetLastFiredTime()
+			float fireTimeDelta = Time() - lastFireTimeWeapon
+
+			float checkTime = max( totalFireTime, WEAPON_FIRE_MIN_WAIT_TIME )
+
+			result = fireTimeDelta < checkTime
+		}
+	}
+
+	return result
+}
+
+void function SpawnProwlerAfterDelay_Thread( ProwlerDenData denData, vector spawnOrigin, vector spawnAngles, vector upVector, string anim )
+{
+	const float SFX_OFFSET = 96.0
+
+	denData.queuedSpawnCount++
+
+	int tellFXIndex = GetParticleSystemIndex( FX_DEN_EXIT_TELL )
+	entity tellFX = StartParticleEffectInWorld_ReturnEntity( tellFXIndex, spawnOrigin, VectorToAngles( upVector ) )
+
+	thread DestroyAfterDelay( tellFX, 3.0 )
+
+	denData.lastSpawnTime = Time()
+	denData.lastIdleSpawnTime = Time()
+	denData.life--
+
+	string soundName = ( denData.life == 0 ) ? SFX_PROWLER_SPAWN_WARNING_FINAL : SFX_PROWLER_SPAWN_WARNING
+
+                                 
+                                    
+   
+                                                                                                        
+   
+       
+	EmitSoundAtPosition( TEAM_UNASSIGNED, spawnOrigin + (upVector * SFX_OFFSET), soundName, tellFX  )
+
+	wait PROWLER_DEN_SPAWN_DELAY
+
+	int prowlerFXIndex = GetParticleSystemIndex( FX_PROWLER_SPAWN_TELL )
+	entity prowlerFX = StartParticleEffectInWorld_ReturnEntity( prowlerFXIndex, spawnOrigin, VectorToAngles( upVector ) )
+
+	thread DestroyAfterDelay( prowlerFX, 6.0 )
+
+	entity prowler
+	denData.queuedSpawnCount--
+
+	#if DEV
+	if ( file.prowlerSpawnOverrideCallback != null && denData.debugSpawned == false )
+	#else
+	if ( file.prowlerSpawnOverrideCallback != null )
+	#endif
+	{
+		prowler = file.prowlerSpawnOverrideCallback( denData, spawnOrigin, spawnAngles )
+		if ( !IsValid( prowler ) || prowler.ai.npcType != eNPC.PROWLER )
+		{
+			#if DEV
+				if ( PROWLER_DEN_DEBUG )
+					printf( FUNC_NAME() + " - WARNING: prowlerSpawnOverrideCallback is registered but didn't return a valid Prowler NPC!" )
+			#endif
+			denData.life++ // return the life we didn't use
+			return
+		}
+	} else {
+		prowler = CreateNPCFromAISettings( PROWLER_TO_SPAWN_NPC_KEYWORD, PROWLER_TEAM, spawnOrigin, spawnAngles )
+		DispatchSpawn( prowler )
+		UpdateEnemyMemoryWithinRadius( prowler, PROWLER_DEN_SPAWN_TIGGER_RADIUS )
+	}
+
+	#if DEV
+		if ( PROWLER_DEN_DEBUG )
+			printf( "ProwlerDen.SpawnProwlerAfterDelay_Thread() Den life remaining = " + denData.life + " At, Origin: " + spawnOrigin + ", with Angles:" + spawnAngles )
+	#endif
+
+	soundName = ( denData.life == 0 ) ? SFX_PROWLER_SPAWN_ACTION_FINAL : SFX_PROWLER_SPAWN_ACTION
+
+                                 
+                                    
+   
+                                                                                                      
+   
+       
+
+	EmitSoundAtPosition( TEAM_UNASSIGNED, spawnOrigin + (upVector * SFX_OFFSET), soundName, prowler )
+
+	thread DisableProwlerTauntForDuration( prowler )
+	thread PlayAnimTeleport( prowler, anim, spawnOrigin, spawnAngles )
+
+	StopAllAmbientDenSounds( denData )
+	StartAmbientDenSound( denData )
+}
+
+void function DisableProwlerTauntForDuration( entity prowler )
+{
+	//prowler.DisableTauntSchedule()
+	prowler.EndSignal( "OnDestroy" )
+
+	float endTime = Time() + 10.0
+
+	while ( Time() < endTime )
+	{
+		entity target = prowler.GetEnemy()
+		if ( IsValid( target ) && Bleedout_IsBleedingOut( target ) )
+		{
+			break
+		}
+		WaitFrame()
+	}
+
+	//prowler.EnableTauntSchedule()
+}
+
+void function CreateProwlerSpawnPointsForDen( ProwlerDenData denData )
+{
+	if ( file.spawnPtsInitialized == false )
+	{
+		entity denEntity = denData.denEntity
+
+		int attachIdx
+
+		attachIdx = denEntity.LookupAttachment( SPAWN_POINT_BTM_THREE )
+		file.lowerSpawnPointIndices.push( attachIdx )
+		file.spawnPointsToSpawnAnimations[attachIdx] <- PROWLER_DEN_SPAWN_BTM_THREE_ANIM_KEYWORD
+
+		attachIdx = denEntity.LookupAttachment( SPAWN_POINT_BTM_FOUR )
+		file.lowerSpawnPointIndices.push( attachIdx )
+		file.spawnPointsToSpawnAnimations[attachIdx] <- PROWLER_DEN_SPAWN_BTM_FOUR_ANIM_KEYWORD
+
+		attachIdx = denEntity.LookupAttachment( SPAWN_POINT_BTM_SIX )
+		file.lowerSpawnPointIndices.push( attachIdx )
+		file.spawnPointsToSpawnAnimations[attachIdx] <- PROWLER_DEN_SPAWN_BTM_SIX_ANIM_KEYWORD
+
+		attachIdx = denEntity.LookupAttachment( SPAWN_POINT_MID_TWO )
+		file.upperSpawnPointIndices.push( attachIdx )
+		file.spawnPointsToSpawnAnimations[attachIdx] <- PROWLER_DEN_SPAWN_MID_TWO_ANIM_KEYWORD
+		attachIdx = denEntity.LookupAttachment( SPAWN_POINT_MID_FIVE )
+		file.upperSpawnPointIndices.push( attachIdx )
+		file.spawnPointsToSpawnAnimations[attachIdx] <- PROWLER_DEN_SPAWN_MID_FIVE_ANIM_KEYWORD
+		attachIdx = denEntity.LookupAttachment( SPAWN_POINT_TOP_ONE )
+		file.upperSpawnPointIndices.push( attachIdx )
+		file.spawnPointsToSpawnAnimations[attachIdx] <- PROWLER_DEN_SPAWN_TOP_ONE_ANIM_KEYWORD
+		attachIdx = denEntity.LookupAttachment( SPAWN_POINT_TOP_SEVEN )
+		file.upperSpawnPointIndices.push( attachIdx )
+		file.spawnPointsToSpawnAnimations[attachIdx] <- PROWLER_DEN_SPAWN_TOP_SEVEN_ANIM_KEYWORD
+
+		file.spawnPtsInitialized = true
+	}
+
+	PerformLowerSpawnPointTraceTests( denData )
+
+	#if DEV
+		if ( PROWLER_DEN_DEBUG )
+			DEV_ProwlerDen_ToggleDebugDrawTriggerRadii()
+	#endif
+}
+
+void function PerformLowerSpawnPointTraceTests( ProwlerDenData denData )
+{
+	vector origin = denData.denEntity.GetOrigin()
+	vector angles = denData.denEntity.GetAngles()
+	vector up = AnglesToUp( angles )
+
+	for ( int i = 0; i < file.lowerSpawnPointIndices.len(); i++ )
+	{
+		vector spawnOrigin = denData.denEntity.GetAttachmentOrigin( file.lowerSpawnPointIndices[i] ) + <0, 0, 16>
+		vector endPoint = spawnOrigin - VectorRotate( TRACE_OFFSET, <0, denData.denEntity.GetAttachmentAngles( file.lowerSpawnPointIndices[i] ).y, 0> )
+		float frac = TraceHullSimple( spawnOrigin, endPoint, GetBoundsMin( HULL_PROWLER ), GetBoundsMax( HULL_PROWLER ), denData.denEntity )
+
+		bool bSuccess = false
+		if ( frac == 1 )
+		{
+			bSuccess = true
+		} else {
+			Warning( "%s() - spawn point trace test failed for Prowler Den at " + origin, FUNC_NAME() )
+		}
+
+		#if DEV
+			ProwlerDen_SpawnPointTraceData spawnPointTraceData
+			spawnPointTraceData.bSuccess = bSuccess
+			spawnPointTraceData.origin = spawnOrigin
+			spawnPointTraceData.endPoint = endPoint
+			denData.spawnPointTraceDatas.push( spawnPointTraceData )
+		#endif
+	}
+
+	#if DEV
+		if ( PROWLER_DEN_DEBUG )
+			DEV_ProwlerDen_ToggleDebugDrawSpawnPointTraceTests()
+	#endif
+}
+
+void function StopAllAmbientDenSounds( ProwlerDenData denData )
+{
+                                 
+                                    
+   
+                                                                                                                              
+                                                                                                                             
+                                                                                                                             
+   
+       
+	StopSoundAtPosition( denData.denEntity.GetOrigin() + <0, 0, PROWLER_DEN_IDLE_SFX_OFFSET>, SFX_PROWLER_DEN_AMBIENT_FULL )
+	StopSoundAtPosition( denData.denEntity.GetOrigin() + <0, 0, PROWLER_DEN_IDLE_SFX_OFFSET>, SFX_PROWLER_DEN_AMBIENT_TWO )
+	StopSoundAtPosition( denData.denEntity.GetOrigin() + <0, 0, PROWLER_DEN_IDLE_SFX_OFFSET>, SFX_PROWLER_DEN_AMBIENT_ONE )
+}
+
+void function StartAmbientDenSound( ProwlerDenData denData )
+{
+	const int FULL_DEN = 3
+	if ( denData.life >= FULL_DEN )
+	{
+                                  
+                                     
+    
+                                                                                                                                                                   
+    
+       
+        
+		EmitSoundAtPosition( TEAM_UNASSIGNED, denData.denEntity.GetOrigin() + <0, 0, PROWLER_DEN_IDLE_SFX_OFFSET>, SFX_PROWLER_DEN_AMBIENT_FULL, denData.denEntity  )
+	}
+	else if ( denData.life == 2 )
+	{
+                                  
+                                     
+    
+                                                                                                                                                                   
+    
+       
+        
+		EmitSoundAtPosition( TEAM_UNASSIGNED, denData.denEntity.GetOrigin() + <0, 0, PROWLER_DEN_IDLE_SFX_OFFSET>, SFX_PROWLER_DEN_AMBIENT_TWO, denData.denEntity  )
+	}
+	else if ( denData.life == 1 )
+	{
+                                  
+                                     
+    
+                                                                                                                                                                   
+    
+       
+        
+		EmitSoundAtPosition( TEAM_UNASSIGNED, denData.denEntity.GetOrigin() + <0, 0, PROWLER_DEN_IDLE_SFX_OFFSET>, SFX_PROWLER_DEN_AMBIENT_ONE, denData.denEntity  )
+	}
+}
+
+array<entity> function GetAllProwlerDens()
+{
+	return clone file.prowlerDens
+}
+
+ProwlerDenData function GetProwlerDenData( entity denEntity )
+{
+	ProwlerDenData prowlerDenData
+	if ( denEntity in file.prowlerDensToData )
+	{
+		prowlerDenData = file.prowlerDensToData[denEntity]
+	}
+	return prowlerDenData
+}
+
+array<ProwlerDenData> function GetAllProwlerDenData()
+{
+	array<entity> dens = GetAllProwlerDens()
+	array<ProwlerDenData> denData
+	foreach( den in dens )
+	{
+		if ( den in file.prowlerDensToData )
+		{
+			denData.append( file.prowlerDensToData[ den ] )
+		}
+	}
+
+	return denData
+}
+
+#if DEV
+bool s_isProwlerDensEnabled = true
+void function DEV_ProwlerDen_ToggleEnabled()
+{
+	s_isProwlerDensEnabled = !s_isProwlerDensEnabled
+
+	foreach ( ProwlerDenData denData in file.prowlerDensToData )
+	{
+		if ( !IsValid( denData.denEntity ) )
+		{
+			continue
+		}
+
+		ProwlerDen_SetActive( denData, s_isProwlerDensEnabled )
+	}
+
+	printf( "DEV_ProwlerDen_ToggleEnabled() Dens enabled? " + s_isProwlerDensEnabled )
+}
+
+entity s_lastDebugSpawnedProwlerDen
+void function DEV_ProwlerDen_SpawnDenAtCrosshair( entity player, int numOfProwlers = -1, bool isActive = false )
+{
+	vector origin = GetPlayerCrosshairOrigin( player )
+	vector eyeAngles = player.EyeAngles()
+	vector angles = <0.0, (eyeAngles.y + 180.0), 0>
+	TraceResults traceResult = PlayerViewTrace( player )
+	if ( traceResult.fraction < 1.0 )
+	{
+		vector forward = AnglesToForward( eyeAngles )
+		angles = AnglesOnSurface( traceResult.surfaceNormal, forward )
+	}
+
+	origin = origin - ( AnglesToUp( angles ) * 72 )
+
+	entity denEntity = CreateEntity( "prop_dynamic" )
+	denEntity.SetValueForModelKey( DEN_MODEL )
+	denEntity.kv.fadedist = 30000
+	denEntity.kv.solid = SOLID_VPHYSICS
+	denEntity.SetScriptName( PROWLER_DEN_SCRIPT_NAME )
+
+	denEntity.SetOrigin( origin )
+	denEntity.SetAngles( <0, 0, 0> )
+	DispatchSpawn( denEntity )
+
+	ProwlerDenData denData = SetupProwlerDen( denEntity, numOfProwlers )
+	denData.debugSpawned = true
+	ProwlerDen_SetActive( denData, isActive )
+
+	s_lastDebugSpawnedProwlerDen = denEntity
+}
+
+void function DEV_ProwlerDen_DebugSpawnProwlerAtIndex( int idx )
+{
+	entity denToSpawnFrom
+	TraceResults traceResult = PlayerViewTrace( GP() )
+	if ( IsValid( traceResult.hitEnt ) )
+	{
+		if ( traceResult.hitEnt.GetScriptName().find( PROWLER_DEN_SCRIPT_NAME ) != -1 )
+		{
+			denToSpawnFrom = traceResult.hitEnt
+		}
+	}
+	if ( !IsValid( denToSpawnFrom ) )
+	{
+		denToSpawnFrom = s_lastDebugSpawnedProwlerDen
+	}
+
+	if ( IsValid( denToSpawnFrom ) )
+	{
+		ProwlerDenData denData = GetProwlerDenData( denToSpawnFrom )
+		vector spawnOrigin = denToSpawnFrom.GetAttachmentOrigin( idx )
+		vector spawnAngles = AnglesCompose( denToSpawnFrom.GetAngles(), denToSpawnFrom.GetAttachmentForward( idx ) )
+		thread SpawnProwlerAfterDelay_Thread( denData, spawnOrigin, spawnAngles, denToSpawnFrom.GetAttachmentUp( idx ), file.spawnPointsToSpawnAnimations[ idx ] )
+	}
+}
+
+bool s_isDebugDrawSpawnPointTraceTestsEnabled = false
+void function DEV_ProwlerDen_ToggleDebugDrawSpawnPointTraceTests()
+{
+	if ( s_isDebugDrawSpawnPointTraceTestsEnabled == true )
+	{
+		s_isDebugDrawSpawnPointTraceTestsEnabled = false
+	} else {
+		s_isDebugDrawSpawnPointTraceTestsEnabled = true
+		thread function() : ()
+		{
+			for ( ;; )
+			{
+				WaitFrame()
+				if ( !s_isDebugDrawSpawnPointTraceTestsEnabled )
+				{
+					break
+				}
+
+				foreach ( ProwlerDenData denData in file.prowlerDensToData )
+				{
+					if ( !IsValid( denData.denEntity ) )
+					{
+						continue
+					}
+
+					for ( int i = 0; i < denData.spawnPointTraceDatas.len(); ++i )
+					{
+						float r = 0
+						float g = 0
+						if ( denData.spawnPointTraceDatas[i].bSuccess )
+						{
+							g = 255
+						} else {
+							r = 255
+						}
+
+						DebugDrawLine( denData.spawnPointTraceDatas[i].origin, denData.spawnPointTraceDatas[i].endPoint, <r, g, 0>, true, 0.1 )
+					}
+				}
+			}
+		}()
+	}
+}
+
+bool s_isDebugDrawTriggerRadiiEnabled = false
+void function DEV_ProwlerDen_ToggleDebugDrawTriggerRadii()
+{
+	if ( s_isDebugDrawTriggerRadiiEnabled == true )
+	{
+		s_isDebugDrawTriggerRadiiEnabled = false
+	} else {
+		s_isDebugDrawTriggerRadiiEnabled = true
+		thread function() : ()
+		{
+			for ( ;; )
+			{
+				WaitFrame()
+				if ( !s_isDebugDrawTriggerRadiiEnabled )
+				{
+					break
+				}
+
+				foreach ( ProwlerDenData denData in file.prowlerDensToData )
+				{
+					if ( !IsValid( denData.denEntity ) )
+					{
+						continue
+					}
+
+					DebugDrawTrigger( denData.denEntity.GetOrigin(), PROWLER_DEN_SPAWN_TIGGER_RADIUS, <26, 230, 0>, 1.0, true )
+				}
+			}
+		}()
+	}
+}
+
+bool s_isDebugDrawSpawnAttachmentsEnabled = false
+void function DEV_ProwlerDen_ToggleDebugDrawSpawnAttachments()
+{
+	if ( s_isDebugDrawSpawnAttachmentsEnabled == true )
+	{
+		s_isDebugDrawSpawnAttachmentsEnabled = false
+	}
+	else
+	{
+		s_isDebugDrawSpawnAttachmentsEnabled = true
+		thread function() : ()
+		{
+			for ( ;; )
+			{
+				WaitFrame()
+				if ( !s_isDebugDrawSpawnAttachmentsEnabled )
+				{
+					break
+				}
+
+				foreach ( ProwlerDenData denData in file.prowlerDensToData )
+				{
+					if ( !IsValid( denData.denEntity ) )
+					{
+						continue
+					}
+
+					entity denEntity = denData.denEntity
+					int attachIdx
+
+					attachIdx = denEntity.LookupAttachment( SPAWN_POINT_TOP_ONE )
+					DebugDrawAxis( denEntity.GetAttachmentOrigin( attachIdx ), denEntity.GetAttachmentAngles( attachIdx ), 0.1, 10 )
+
+					attachIdx = denEntity.LookupAttachment( SPAWN_POINT_TOP_SEVEN )
+					DebugDrawAxis( denEntity.GetAttachmentOrigin( attachIdx ), denEntity.GetAttachmentAngles( attachIdx ), 0.1, 10 )
+
+					attachIdx = denEntity.LookupAttachment( SPAWN_POINT_MID_TWO )
+					DebugDrawAxis( denEntity.GetAttachmentOrigin( attachIdx ), denEntity.GetAttachmentAngles( attachIdx ), 0.1, 10 )
+
+					attachIdx = denEntity.LookupAttachment( SPAWN_POINT_MID_FIVE )
+					DebugDrawAxis( denEntity.GetAttachmentOrigin( attachIdx ), denEntity.GetAttachmentAngles( attachIdx ), 0.1, 10 )
+
+					attachIdx = denEntity.LookupAttachment( SPAWN_POINT_BTM_THREE )
+					DebugDrawAxis( denEntity.GetAttachmentOrigin( attachIdx ), denEntity.GetAttachmentAngles( attachIdx ), 0.1, 10 )
+
+					attachIdx = denEntity.LookupAttachment( SPAWN_POINT_BTM_FOUR )
+					DebugDrawAxis( denEntity.GetAttachmentOrigin( attachIdx ), denEntity.GetAttachmentAngles( attachIdx ), 0.1, 10 )
+
+					attachIdx = denEntity.LookupAttachment( SPAWN_POINT_BTM_SIX )
+					DebugDrawAxis( denEntity.GetAttachmentOrigin( attachIdx ), denEntity.GetAttachmentAngles( attachIdx ), 0.1, 10 )
+				}
+			}
+		}()
+	}
+}
+#endif
+#endif 

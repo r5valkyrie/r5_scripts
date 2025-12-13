@@ -1963,6 +1963,7 @@ global const int TRACE_MASK_WATER = 48
 global const int TT_JUMP_PAD = 1
 global const int TT_TESLA_TRAP = 2
 global const int TT_MORTAR_RING_SEGMENT = 3
+global const int TT_GRAVITY_CANNON = 8
 global const int TURRET_ACTIVE = 2
 global const int TURRET_DEAD = 5
 global const int TURRET_DEPLOYING = 3

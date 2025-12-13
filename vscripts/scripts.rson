@@ -490,7 +490,9 @@ Scripts:
 
 	mp/levels/sh_pathfinder_tt_common.nut
 	npc/npc_assets.nut
-
+	npc/npc_precache_prowler.nut
+	npc/npc_precache_spider_jungle.nut
+	weapons/npc_weapon_spider_jungle.nut
 	mp/sh_game_state_dialog.nut
 	mp/sh_comms_menu.nut
 	mp/sh_loot_marvin.nut
@@ -570,6 +572,8 @@ Scripts:
 [
 	mp/_utility_mp.gnut
 	_menu_callbacks.gnut
+	npc/_dev_npc_camp_registry.nut
+
 ]
 
 When: "SERVER"
@@ -616,6 +620,7 @@ Scripts:
 	ai/_droppod.gnut
 	ai/_squad_spawn.gnut
 	ai/_titan_npc_behavior.gnut
+	ai/_ai_loot.gnut
 	conversation/_conversation_schedule.gnut
 	mp/_ai_superspectre.nut
 	
@@ -715,6 +720,8 @@ Scripts:
 	pilot/sh_pilot_passive_adrenaline.gnut
 	pilot/sh_pilot_passive_dash.gnut
 	pilot/_pilot_passive_grenadier.gnut
+	ai/_ai_spider_egg.gnut
+	ai/_ai_prowler_den.gnut
 	
 	mp/sh_desertlands_train.nut
 	mp/sh_desertlands_story_events.nut
@@ -1174,6 +1181,7 @@ Scripts:
 	sh_localized_strings.nut
 	mp/_zipline_utility/sh_zipline_utility.gnut
 	mp/_zipline_utility/sh_zipline_panel.gnut
+	freelance/freelance_npcs.gnut
 ]
 
 When: "SERVER || CLIENT || UI"

@@ -51,7 +51,7 @@ global function SURVIVAL_IsFallDeath
 global function SURVIVAL_IsCrushDeath
 global function SpawnVaultKey
 global function SURVIVAL_DropLoot_IncrementThrowAngle
-
+global function SURVIVAL_Loot_GetRandomLootOfSpecifiedTierAndType
 global function Survival_Loot_RegisterLootGroupRemap
 global function Survival_Loot_CheckLootGroupRemap
 
@@ -4754,6 +4754,32 @@ void function SURVIVAL_RemoveSpecificItemFromPlayerInventory( entity player, str
 
 	SetPlayerInventory( player, playerInventory )
 }
+
+string function SURVIVAL_Loot_GetRandomLootOfSpecifiedTierAndType( int lootTier, int lootType )
+{
+	array<LootData> lootItems = SURVIVAL_Loot_GetByType( lootType )
+
+	array<string> refs
+	foreach ( lootItem in lootItems )
+	{
+		if ( !IsLootTypeValid( lootItem.lootType ) )
+			continue
+
+		if ( !LootTypeHasAnyChanceToSpawn( lootItem.ref ) )
+			continue
+
+		if ( lootItem.tier != lootTier )
+			continue
+
+		refs.append( lootItem.ref )
+	}
+
+	if ( refs.len() == 0 )
+		return ""
+
+	return refs[ RandomInt( refs.len() )  ]
+}
+
 
 int function SURVIVAL_NumItemsInInventory( entity player, string ref )
 {

@@ -1,0 +1,1282 @@
+#if SERVER || CLIENT
+global function FreelanceNPCs_Init
+global function NPCs_RegisterNetworking
+global function NPCs_GetLastTimePlayerSpotted
+#endif // SERVER || CLIENT
+
+#if SERVER
+global function SpawnNPC
+global function SpawnNPCDetailed
+global function CalcHullCenterForOrigin
+global function PrintAttackerHistoryForNPC
+global function NpcShadowDeath
+
+#if DEVELOPER
+global function DEV_CrosshairSpawn
+global function DEV_NPC_ToggleOverlay
+global function NPCDebugOverlayIsActive
+#endif // DEV
+
+global function PVE_TestDropPod
+global function DropCandy               
+
+global function CommonSpawnInitNPC
+global function CommonSpawnInfantryBehavior
+
+
+const float FRIENDLYFIRE_HINT_DISPLAY_TIME = 5.0
+const float	HINT_COOLDOWN_FRIENDLYFIRE = 10
+#endif // SERVER
+
+#if SERVER
+global struct NpcSpawnInfo
+{
+	int npcType = -1 			// eNPC.*
+	int npcRank = 0
+
+	int npcSpawnFlags			// eNPCSpawnFlags*
+	int npcTeamOverride = -1	// eNpcTeam.*
+
+	vector spawnOrigin
+	vector spawnAngles
+}
+
+global enum eNPCSpawnFlags
+{
+	WITH_HOT_DROP =			(1 << 0)
+}
+#endif // SERVER
+
+// Moved out of server VM so these could work with alliances
+global enum eNpcTeam
+{
+	FRIENDLY =	TEAM_NPC_FRIENDLY_TO_PLAYERS,		// 101
+	ENRAGED =	TEAM_NPC_HOSTILE_TO_ALL,			// 102
+
+	//
+	LEGION =	103,
+	WILDLIFE =	104,
+	INFECTED =	105,
+	TICKS = TEAM_TICK //110
+}
+
+#if SERVER || CLIENT
+bool isInitialized = false
+bool isNetworkingRegistered = false
+#endif // SERVER || CLIENT
+
+#if SERVER || CLIENT
+void function FreelanceNPCs_Init()
+{
+	if ( isInitialized )
+	{
+		#if DEVELOPER
+			printf( "Freelance NPCs System is already initialized" )
+		#endif
+		return
+	}
+	isInitialized = true
+#if SERVER
+
+	SetupNPCTypes()
+
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+
+	AddDamageCallback( "player", OnPlayerDamaged )
+	AddDamageCallback( "npc_soldier", NPCSoldier_OnDamaged )
+
+	//
+	RegisterSignal( "NpcDealsExecutionDamage" )
+	RegisterSignal( "ShieldTickDeactivated" )
+#endif // SERVER
+
+#if CLIENT
+	AddCreateCallback( "npc_spectre", OnNPCCreatedClient )
+#endif //CLIENT
+}
+#endif // SERVER || CLIENT
+
+#if SERVER || CLIENT
+const string NV_LastSpottedByNPC = "LastSpottedByNPC"
+void function NPCs_RegisterNetworking()
+{
+	if ( isNetworkingRegistered == false )
+	{
+		RegisterNetworkedVariable( NV_LastSpottedByNPC, SNDC_PLAYER_GLOBAL, SNVT_TIME, -1.0 )
+		isNetworkingRegistered = true
+	}
+}
+#endif // SERVER || CLIENT
+
+#if SERVER || CLIENT
+float function NPCs_GetLastTimePlayerSpotted( entity player )
+{
+	if ( isNetworkingRegistered == true )
+	{
+		return player.GetPlayerNetTime( NV_LastSpottedByNPC )
+	}
+	return -1.0
+}
+#endif // SERVER || CLIENT
+
+#if CLIENT
+void function OnNPCCreatedClient( entity npc )
+{
+	AddEntityCallback_GetUseEntOverrideText( npc, NPCBleedoutUseTextOverride )
+}
+
+string function NPCBleedoutUseTextOverride( entity npc )
+{
+	entity localPlayer = GetLocalViewPlayer()
+	if(	IsValidSyncedMeleeTarget( localPlayer, null, null, npc ) )
+		return "#MELEE_EXECUTE_PROMPT_DYNAMIC"
+
+	return " "
+}
+#endif //CLIENT
+
+#if SERVER
+float s_damageflagWeaknessScalar = 1.0
+float s_playerBleedoutNPCDamageScale = 1.0
+void function EntitiesDidLoad()
+{
+	//
+	CacheDifficultyDamageScalesFromPlaylist()
+
+	//
+	s_damageflagWeaknessScalar = GetCurrentPlaylistVarFloat( "npc_damageflag_weakness_global_scalar", 1.0 )
+	s_playerBleedoutNPCDamageScale = GetCurrentPlaylistVarFloat( "npc_damage_scale_on_bleedout_players", 1.0 )
+
+	//
+	{
+		array<entity> turrets = GetNPCArrayByClass( "npc_turret_sentry" )
+		foreach ( turret in turrets )
+			turret.DisableTurret()
+	}
+
+#if DEVELOPER
+	thread DebugFrameThread()
+#endif // DEV
+}
+
+void function OnPlayerDamaged( entity player, var di )
+{
+	OnPlayerDamaged_DifficultyScaling( player, di )
+	OnPlayerDamaged_RepeatBulletDamageShield( player, di )
+	OnPlayerDamaged_HandleProwlerDamage( player, di )
+
+	entity attacker = DamageInfo_GetAttacker( di )
+	if ( Bleedout_IsBleedingOut( player ) && IsValid( attacker ) && attacker.IsNPC() )
+		DamageInfo_ScaleDamage( di, s_playerBleedoutNPCDamageScale )
+}
+
+struct PlayerProwlerCombatHistory
+{
+	float lastGotDamagedTime = -9999.0
+	int meleeHintCounter
+	int meleeHintTimesHinted
+}
+table<entity, PlayerProwlerCombatHistory> s_mapPlayerToPlayerProwlerCombatHistory
+PlayerProwlerCombatHistory function GetPlayerProwlerCombatHistory( entity player )
+{
+	Assert( player.IsPlayer() )
+	if ( !(player in s_mapPlayerToPlayerProwlerCombatHistory) )
+	{
+		PlayerProwlerCombatHistory newHistory
+		s_mapPlayerToPlayerProwlerCombatHistory[player] <- newHistory
+	}
+
+	return s_mapPlayerToPlayerProwlerCombatHistory[player]
+}
+
+void function OnPlayerDamaged_HandleProwlerDamage( entity player, var di )
+{
+	if ( DamageInfo_GetDamageSourceIdentifier( di ) != eDamageSourceId.prowler_melee )
+		return
+
+	int rawDamage = int( DamageInfo_GetDamage( di ) )
+	if ( rawDamage <= 0 )
+		return
+
+	if ( GetCurrentPlaylistVarBool( "prowlercombat_damagescale_enabled", true ) )
+	{
+		int lowhealthThreshold = GetProwlerDamageScaleLowhealthThreshold( player )
+		float lowhealthScalar = GetProwlerDamageScaleLowhealthScalar( player )
+		int deathProtectionMinHP = GetProwlerDamageScaleDeathProtectMinHp( player )
+
+		int playerShield = player.GetShieldHealth()
+		int playerHealth = player.GetHealth()
+
+		int damage = rawDamage
+		if ( playerShield > 0 )
+		{
+			damage = minint( playerShield, damage )
+		}
+		else
+		{
+			if ( (playerHealth - damage) < lowhealthThreshold )
+				damage = int( damage * lowhealthScalar )
+
+			if ( playerHealth > deathProtectionMinHP )
+			{
+				damage = minint( (playerHealth - 1), damage )
+			}
+		}
+
+		vector damageOrigin = DamageInfo_GetDamagePosition( di )
+		int scriptDamageType = DamageInfo_GetCustomDamageType( di )
+		int damageType = DamageInfo_GetDamageType( di )
+		entity attacker = DamageInfo_GetAttacker( di )
+		printf( "%s() - Scaled %d -> %d dmg for player with health:%d shields:%d  (%s)", FUNC_NAME(), rawDamage, damage, playerHealth, playerShield, string( player ) )
+		if ( damage != rawDamage )
+			DamageInfo_SetDamage( di, damage )
+	}
+}
+
+int function GetProwlerDamageTeamCount( entity player )
+{
+	int team = player.GetTeam()
+	if ( IsTeamRabid( team ) )
+		return 1
+
+	// 2: count players connected
+	// 1: count players not bleeding out
+	// 0: count players alive
+	switch( GetCurrentPlaylistVarInt( "prowlercombat_player_counting_style", 0 ) )
+	{
+		case 2:
+			return GetPlayerArrayOfTeam( team ).len()
+		case 1:
+			return GetPlayerArrayOfTeam( team ).len()
+	}
+
+	return GetPlayerArrayOfTeam_Alive( team ).len()
+}
+
+float function GetProwlerDamageImmunityWindow( entity player )
+{
+	int playerCount = GetProwlerDamageTeamCount( player )
+	if ( playerCount >= 3 )
+		return GetCurrentPlaylistVarFloat( "prowlercombat_immunity_window_time_trios", 0.75 )
+	else if ( playerCount == 2 )
+		return GetCurrentPlaylistVarFloat( "prowlercombat_immunity_window_time_duos", 0.75 )
+
+	return GetCurrentPlaylistVarFloat( "prowlercombat_immunity_window_time_solos", 0.75 )
+}
+
+float function GetProwlerDamageScaleLowhealthScalar( entity player )
+{
+	int playerCount = GetProwlerDamageTeamCount( player )
+	if ( playerCount >= 3 )
+		return GetCurrentPlaylistVarFloat( "prowlercombat_damagescale_lowhealth_scalar_trios", 0.5 )
+	else if ( playerCount == 2 )
+		return GetCurrentPlaylistVarFloat( "prowlercombat_damagescale_lowhealth_scalar_duos", 0.5 )
+
+	return GetCurrentPlaylistVarFloat( "prowlercombat_damagescale_lowhealth_scalar_solos", 0.5 )
+}
+
+int function GetProwlerDamageScaleLowhealthThreshold( entity player )
+{
+	int playerCount = GetProwlerDamageTeamCount( player )
+	if ( playerCount >= 3 )
+		return GetCurrentPlaylistVarInt( "prowlercombat_damagescale_lowhealth_threshold_trios", 60 )
+	else if ( playerCount == 2 )
+		return GetCurrentPlaylistVarInt( "prowlercombat_damagescale_lowhealth_threshold_duos", 60 )
+
+	return GetCurrentPlaylistVarInt( "prowlercombat_damagescale_lowhealth_threshold_solos", 60 )
+}
+
+int function GetProwlerDamageScaleDeathProtectMinHp( entity player )
+{
+	int playerCount = GetProwlerDamageTeamCount( player )
+	if ( playerCount >= 3 )
+		return GetCurrentPlaylistVarInt( "prowlercombat_damagescale_deathprotection_minhp_trios", 5 )
+	else if ( playerCount == 2 )
+		return GetCurrentPlaylistVarInt( "prowlercombat_damagescale_deathprotection_minhp_duos", 5 )
+
+	return GetCurrentPlaylistVarInt( "prowlercombat_damagescale_deathprotection_minhp_solos", 5 )
+}
+
+void function OnPlayerDamagedProwler( entity player, entity npc, var damageInfo )
+{
+}
+
+//
+
+typedef npcSpawnFunc_t entity functionref( NpcSpawnInfo )
+struct NpcRegistrationInfo
+{
+	npcSpawnFunc_t spawnFunc
+	int defaultTeam = -1		// eNpcTeam.*
+
+	array<array<int> > healthTiers
+}
+
+NpcRegistrationInfo[eNPC._count] s_spawnRegistrationInfos
+
+void function RegisterNPCType( int npcType, int defaultTeam, array<array<int> > healthTiers, npcSpawnFunc_t spawnFunc )
+{
+	NpcRegistrationInfo regInfo = s_spawnRegistrationInfos[npcType]
+
+	regInfo.defaultTeam = defaultTeam
+	regInfo.spawnFunc = spawnFunc
+	regInfo.healthTiers = clone healthTiers
+}
+
+void function SetupNPCTypes()
+{
+	//Season 5.0: might want to adjust health on-the-fly with playlist vars
+	                   
+		int prowlerHealth = GetCurrentPlaylistVarInt( "health_prowler", 114 )
+		int shadowProwlerHealth = GetCurrentPlaylistVarInt( "health_shadow_prowler", 20 )
+       
+	//Season 11.0: Goliath and Spider
+                
+		int jungleSpiderHealth = GetCurrentPlaylistVarInt( "health_jungle_spider", 42 )
+
+	// type						// team default			//=========  [Health, Shield] Tiers =========
+         
+		RegisterNPCType( eNPC.PROWLER,				eNpcTeam.WILDLIFE,		[ [ prowlerHealth ], 		[prowlerHealth],		[prowlerHealth]			],	NPCSpawn_Prowler )
+		RegisterNPCType( eNPC.DIRE_PROWLER,			eNpcTeam.WILDLIFE,		[ [shadowProwlerHealth],	[shadowProwlerHealth],	[shadowProwlerHealth]	],	NPCSpawn_DireProwler )
+         
+		int spectreHealth = GetCurrentPlaylistVarInt( "armory_health_spectre", 150 )
+		RegisterNPCType( eNPC.SPECTRE,				eNpcTeam.LEGION,		[ [ spectreHealth, 0],		[ spectreHealth, 0],	[ spectreHealth, 0],	],	NPCSpawn_Spectre )
+		RegisterNPCType( eNPC.DEATH_SPECTRE,		eNpcTeam.LEGION,		[ [125, 75],	[125, 75],	[125, 75],		],	NPCSpawn_DeathSpectre )               
+		RegisterNPCType( eNPC.SPIDER_JUNGLE,		eNpcTeam.INFECTED,		[ [jungleSpiderHealth],	[jungleSpiderHealth], [jungleSpiderHealth] ],	NPCSpawn_SpiderJungle )                   
+}
+
+entity function SpawnNPCDetailed( NpcSpawnInfo infoRaw )
+{
+	NpcSpawnInfo spInfo = clone infoRaw
+
+	NpcRegistrationInfo regInfo = s_spawnRegistrationInfos[spInfo.npcType]
+	spInfo.npcTeamOverride = ((spInfo.npcTeamOverride >= 0) ? spInfo.npcTeamOverride : regInfo.defaultTeam)
+
+	entity ent = regInfo.spawnFunc( spInfo )
+	ent.ai.npcType = spInfo.npcType
+	InitRankAndHealth( ent, spInfo, regInfo )
+	return ent
+}
+
+entity function SpawnNPC( int npcType, vector spawnOrigin, vector spawnAngles, int rank = 0 )
+{
+	NpcSpawnInfo info
+	info.npcType = npcType
+	info.spawnOrigin = spawnOrigin
+	info.spawnAngles = spawnAngles
+	info.npcRank = rank
+
+	return SpawnNPCDetailed( info )
+}
+
+#if DEVELOPER
+entity function DEV_CrosshairSpawn( int npcType, int rank = 0 )
+{
+	entity player = GP()
+
+	NpcSpawnInfo info
+	info.npcType = npcType
+	info.spawnOrigin = GetPlayerCrosshairOrigin( player )
+	info.spawnAngles = (player.GetAngles() + <0, 180, 0>)
+	info.npcRank = rank
+
+	return SpawnNPCDetailed( info )
+}
+#endif // #if DEVELOPER
+
+////////////////
+
+vector function CalcHullCenterForOrigin( vector origin, int hullType )
+{
+	vector mins = GetBoundsMin( hullType )
+	vector maxs = GetBoundsMax( hullType )
+	vector result = origin + ((mins + maxs) * 0.5)
+
+	return result
+}
+
+///////////////////
+
+entity function DropPodSpawnWrapper( int team, vector origin, vector angles, table spawnInfo )
+{
+	Assert( team == TEAM_ANY )
+	int npcType = expect int(spawnInfo.npcType)
+	int rank = expect int(spawnInfo.rank)
+	entity result = SpawnNPC( npcType, origin, angles, rank )
+	return result
+}
+
+array<entity> function PVE_TestDropPod( vector dropPos, int npcType, int spawnCount, int rank = 0 )
+{
+	entity marker = CreateEntity( "info_target" )
+	DispatchSpawn( marker )
+	marker.SetOrigin( dropPos )
+
+	table spawnInfo
+	spawnInfo.npcType <- npcType // eNPC.SPECTRE
+	spawnInfo.rank <- rank
+
+	array<entity functionref( int, vector, vector, table )> spawnfuncs
+	array<table> customData
+	spawnfuncs.resize( spawnCount, DropPodSpawnWrapper )
+	customData.resize( spawnCount, spawnInfo )
+
+	//int podFlags = eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS
+	array<entity> spawnedEnts
+	//waitthread Spawn_DropPodSquadCustom( spawnfuncs, customData, spawnedEnts, TEAM_ANY, marker, podFlags, 0 )
+
+	marker.Destroy()
+	return spawnedEnts
+}
+
+
+
+///////////////////
+// UTILS
+
+#if DEVELOPER
+void function DebugDrawOverlay( array<entity> npcs )
+{
+	int skitWithGC = 0
+	int skit = 0
+	int orphanedWithGC = 0
+	int orphaned = 0
+
+	foreach ( entity npc in npcs )
+	{
+		if ( npc.ai.skitId >= 0 )
+			++skit
+
+		else
+			++orphaned
+	}
+
+	string promptText = format(
+			""
+			+"%3d - skit AI\n"
+			+"%3d - skit AI to gc\n"
+			+"%3d - orphaned to gc\n"
+			+"%3d - orphaned\n"
+			+"\n-------------------------",
+		skit,
+		skitWithGC,
+		orphanedWithGC,
+		orphaned
+	)
+
+	//DebugDrawScreenText( 0.01, 0.35, promptText )
+}
+
+bool function IsNPCOrphanedNoGC( entity npc )
+{
+	if ( npc.ai.skitId >= 0 )
+		return false
+
+	return true
+}
+
+void function DebugDrawEntsInWorld( array<entity> npcs )
+{
+	foreach ( npc in npcs )
+	{
+		vector color = (IsNPCOrphanedNoGC( npc ) ? <255, 10, 10> : <255, 0, 200>)
+		vector markPos = CalcHullCenterForOrigin( npc.GetOrigin(), GetNpcHullType( npc ) )
+		array<int> colorRGB = [ int( color.x ), int( color.y ), int( color.z ) ]
+		DebugDrawMark( markPos, 30.0, colorRGB, true, 0.15 )
+	}
+}
+
+
+bool s_debugDrawFrame = false
+void function DEV_NPC_ToggleOverlay()
+{
+	s_debugDrawFrame = !s_debugDrawFrame
+}
+
+bool function NPCDebugOverlayIsActive()
+{
+	return s_debugDrawFrame
+}
+
+void function DebugFrameThread()
+{
+	while ( true )
+	{
+		if ( s_debugDrawFrame )
+		{
+			array<entity> npcs = GetNPCArray()
+			DebugDrawOverlay( npcs )
+			DebugDrawEntsInWorld( npcs )
+		}
+
+		WaitFrame()
+	}
+}
+#endif // DEV
+
+
+/*
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+##        #######   #######  ########       ########  ########   #######  ########
+##       ##     ## ##     ##    ##          ##     ## ##     ## ##     ## ##     ##
+##       ##     ## ##     ##    ##          ##     ## ##     ## ##     ## ##     ##
+##       ##     ## ##     ##    ##          ##     ## ########  ##     ## ########
+##       ##     ## ##     ##    ##          ##     ## ##   ##   ##     ## ##
+##       ##     ## ##     ##    ##          ##     ## ##    ##  ##     ## ##
+########  #######   #######     ##          ########  ##     ##  #######  ##
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+*/
+
+string function GetRandomAmmoRef()
+{
+	float roll = RandomFloat( 0.5 )
+	string ammoString
+	if ( roll < 0.10 )
+		return BULLET_AMMO
+	if ( roll < 0.20 )
+		return HIGHCAL_AMMO
+	if ( roll < 0.30 )
+		return SPECIAL_AMMO
+	if ( roll < 0.40 )
+		return SNIPER_AMMO
+
+	return SHOTGUN_AMMO
+}
+
+void function DoGruntDrops( vector org, bool wasExecution )
+{
+	/*LootDropChance( org, "health_pickup_health_small", 0.05 )
+	LootDropChance( org, "ordnance_drops", 0.20 )
+	if ( wasExecution )
+		LootDrop( org, "health_pickup_health_small" )*/
+}
+
+void function RollAmmoDrops( vector org, float chance )
+{
+	/*AmmoDropChance( org, BULLET_AMMO, -1, chance )
+	AmmoDropChance( org, HIGHCAL_AMMO, -1, chance )
+	AmmoDropChance( org, SPECIAL_AMMO, -1, chance )
+	AmmoDropChance( org, SHOTGUN_AMMO, -1, chance )
+	AmmoDropChance( org, SNIPER_AMMO, -1, chance )*/
+}
+
+void function RollAmmoDropsForKiller( vector org, float chance, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( !IsAlive( attacker ) || !attacker.IsPlayer() )
+	{
+		//RollAmmoDrops( org, (0.2 * chance) )
+		return
+	}
+
+	//RollAmmoDropsForPlayer( org, chance, attacker )
+}
+
+void function DropCandy( array<int> counts, array<int> rareCounts, vector pos, int flags = 0 )
+{  
+}
+
+void function DoItemDropForDeath( entity victim, var damageInfo )
+{
+	DoItemDropForDeath_( victim, damageInfo )
+}
+void function DoItemDropForDeath_( entity victim, var damageInfo )
+{
+	if ( !KilledNpcShouldThrowLoot( victim, damageInfo ) )
+		return
+
+	bool wasExecution = (DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.human_execution)
+	vector org = (wasExecution ? victim.GetWorldSpaceCenter() : victim.EyePosition())
+
+	float weaponDropChance = 0.20
+	string healthItem
+
+	switch( victim.ai.npcType )
+	{
+                   
+		case eNPC.PROWLER:
+			//LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), GetCurrentPlaylistVarFloat( "loot_drop_chance_health_item_small_prowler", 0.1 ) )
+			//RollAmmoDropsForKiller( org, 0.6, damageInfo )
+			//RollAmmoDrops( org, 0.05 )
+			break
+		case eNPC.DIRE_PROWLER:
+			//LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), GetCurrentPlaylistVarFloat( "loot_drop_chance_health_item_small_shadow_prowler", 0.05 ) )
+			//RollAmmoDropsForKiller( org, 0.6, damageInfo )
+			//RollAmmoDrops( org, 0.05 )
+			break
+		case eNPC.SPECTRE:
+			//LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), 0.25 )
+			//RollAmmoDropsForKiller( org, 0.75, damageInfo )
+			//RollAmmoDrops( org, 0.1 )
+			//LootDropChance( org, "ordnance_drops", 0.2 )
+			//InstantHealthPickup_DropForAll( 2, 1, org )
+			break
+		case eNPC.DEATH_SPECTRE:
+			//LootDropChance( org, (CoinFlip() ? "health_pickup_combo_small" : "health_pickup_health_small" ), 0.40 )
+			//RollAmmoDropsForKiller( org, 0.9, damageInfo )
+			//RollAmmoDrops( org, 0.2 )
+			//LootDropChance( org, "health_3", 0.50 )
+			//InstantHealthPickup_DropForAll( 2, 1, org )
+			break
+		default:
+			Warning( "%s() - Unhandled type: eNPC.%s", FUNC_NAME(), GetNameForEnum( eNPC, victim.ai.npcType ) )
+			break
+	}
+}
+
+bool function KilledNpcShouldThrowLoot( entity victim, var damageInfo )
+{
+	if ( victim.ai.shouldDisableLootDrops )
+		return false
+
+	int damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( GetCurrentPlaylistVarBool( "npc_drop_loot", true ) == false )
+		return false
+
+	if ( IsValid( attacker ) && attacker.IsPlayer() ) //npcs killing each other shouldn't throw loot
+		return true
+
+	if ( damageSourceId == damagedef_suicide )
+		return false
+	if ( damageSourceId == damagedef_despawn )
+		return false
+
+	return true
+}
+
+/*
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+ ######  ########     ###    ##      ## ##    ## #### ##    ##  ######
+##    ## ##     ##   ## ##   ##  ##  ## ###   ##  ##  ###   ## ##    ##
+##       ##     ##  ##   ##  ##  ##  ## ####  ##  ##  ####  ## ##
+ ######  ########  ##     ## ##  ##  ## ## ## ##  ##  ## ## ## ##   ####
+      ## ##        ######### ##  ##  ## ##  ####  ##  ##  #### ##    ##
+##    ## ##        ##     ## ##  ##  ## ##   ###  ##  ##   ### ##    ##
+ ######  ##        ##     ##  ###  ###  ##    ## #### ##    ##  ######
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+*/
+
+void function CommonSpawnInitNPC( entity npc )
+{
+	AddEntityCallback_OnKilled( npc, OnNPCKilled )
+	AddEntityCallback_OnDamaged( npc, OnNPCDamaged )
+	AddEntityCallback_OnPostDamaged( npc, OnNPCPostDamaged )
+	AddEntityCallback_OnPostShieldDamage( npc, OnNPCPostShieldDamage )
+	//AddEntityCallback_OnShieldBreak( npc, OnShieldBreak )
+	npc.EnableNPCFlag( NPC_NO_MOVING_PLATFORM_DEATH ) //TODO: find a better solution for doors sometimes killing these guys
+	npc.ai.hasDeathFieldImmunity = false //primarily for robots/wildlife. can make this more granular when we get to doing soldiers
+
+	HookPlayerSpotting( npc )
+
+	npc.SetAutoSquad()
+}
+
+void function HookPlayerSpotting( entity npc )
+{
+	thread function() : (npc)
+	{
+		npc.EndSignal( "OnDestroy" )
+		npc.EndSignal( "OnDeath" )
+
+		for ( ;; )
+		{
+			table details = WaitSignal( npc, "OnFoundEnemy" )
+			//printf( "%s() - OnFoundEnemy", FUNC_NAME() )
+			//PrintTable( details )
+			entity target = expect entity( details.value )
+			if ( !IsValid( target ) )
+				continue
+			if ( !target.IsPlayer() )
+				continue
+			if ( !IsEnemyTeam( npc.GetTeam(), target.GetTeam() ) )
+				continue
+
+			//printf( "Player '%s' spotted by enemy NPC: %s", string( target ), string( npc ) )
+			if ( isNetworkingRegistered == true )
+			{
+				target.SetPlayerNetTime( NV_LastSpottedByNPC, Time() )
+			}
+		}
+	}()
+}
+
+void function GiveCreditAndAssistsForNPCDeath( entity npc, entity killer )
+{
+}
+
+void function OnNPCKilled( entity victim, var damageInfo )
+{
+	if ( GetCurrentPlaylistVarBool( "freelance_npcs_drop_loot_on_death", false ) == true )
+		DoItemDropForDeath( victim, damageInfo )
+
+	entity killer = DamageInfo_GetAttacker( damageInfo )
+
+	if ( IsValid( killer ) )
+	{
+		if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.human_execution )
+		{
+			//thread OnSuccessfulSyncedMelee( victim, killer, damageInfo  )
+
+			bool killerIsPlayer = (IsValid( killer ) && killer.IsPlayer())
+			if ( killerIsPlayer && (killer.p.nagCounter.killedGruntsWithExecutions == 0) )
+			{
+				//DoFreelanceModeSplashToPlayer( killer, eModeSplash.CombatHint_GruntFinishers )
+				killer.p.nagCounter.killedGruntsWithExecutions = 1
+			}
+		}
+	}
+
+	// Remove real weapon:
+	{
+		entity currentWeapon = victim.GetActiveWeapon( eActiveInventorySlot.mainHand )
+		if ( IsValid( currentWeapon ) )
+			victim.TakeWeaponByEntNow( currentWeapon )
+	}
+}
+
+int function GetShieldFlagsForDmg( entity npc )
+{
+	if ( npc.GetShieldHealth() <= 0 )
+		return 0
+
+	int result = DAMAGEFLAG_VICTIM_ARMORED
+
+	switch( npc.GetGrade() )
+	{
+		case 0:
+			result = (result | DAMAGEFLAG_ARMOR1)
+			break
+		case 1:
+			result = (result | DAMAGEFLAG_ARMOR2)
+			break
+		case 2:
+			result = (result | DAMAGEFLAG_ARMOR3)
+			break
+		case 3:
+			result = (result | DAMAGEFLAG_ARMOR4)
+			break
+	}
+
+	return result
+}
+
+void function OnNPCDamaged( entity npc, var damageInfo )
+{
+	if ( s_damageflagWeaknessScalar != 1.0 )
+	{
+		int dmgFlags = DamageInfo_GetCustomDamageType( damageInfo )
+		int matchedFlags = (dmgFlags & npc.ai.damageFlagsVulnerable)
+		if ( matchedFlags != 0 )
+		{
+			printf( "NPC '%s' is vulnerable to: %s", string( npc ), GetDescStringForDamageFlags( matchedFlags ) )
+			DamageInfo_ScaleDamage( damageInfo, s_damageflagWeaknessScalar )
+			DamageInfo_AddCustomDamageType( damageInfo, DF_CRITICAL )
+
+			if ( matchedFlags == DF_SNIPER )
+				DoNag_SniperVSRobots( npc, DamageInfo_GetAttacker( damageInfo ) )
+			if ( matchedFlags == DF_SHOTGUN )
+				DoNag_ShotgunsVSWildlife( npc, DamageInfo_GetAttacker( damageInfo ) )
+		}
+	}
+
+	DamageInfo_AddDamageFlags( damageInfo, GetShieldFlagsForDmg( npc ) )
+}
+
+void function OnNPCPostDamaged( entity npc, var damageInfo )
+{
+	//printf( "%s() - shield:%d/%d,  health:%d/%d, damage:%.1f", FUNC_NAME(), npc.GetShieldHealth(), npc.GetShieldHealthMax(), npc.GetHealth(), npc.GetMaxHealth(), DamageInfo_GetDamage( damageInfo ) )
+	//AddAttackerToHistory( npc, DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetDamage( damageInfo ) )
+}
+
+void function OnNPCPostShieldDamage( entity npc, var damageInfo, float actualShieldDamage )
+{
+	//printf( "%s() - shield:%d/%d,  health:%d/%d, damage:%.1f", FUNC_NAME(), npc.GetShieldHealth(), npc.GetShieldHealthMax(), npc.GetHealth(), npc.GetMaxHealth(), actualShieldDamage )
+	//AddAttackerToHistory( npc, DamageInfo_GetAttacker( damageInfo ), actualShieldDamage )
+}
+
+
+void function PrintAttackerHistoryForNPC( entity npc )
+{
+	printf( "Attacker history for '%s':", string( npc ) )
+}
+
+void function CommonSpawnInfantryBehavior( entity npc, vector behaviorOrigin )
+{
+	npc.kv.AlwaysAlert = false
+
+	//npc.SetDefaultSchedule( "SCHED_PATROL_PATH" )
+	npc.SetDefaultSchedule( "" )
+	npc.EnableNPCFlag( 0
+		| NPC_NO_LISTEN_TEAMMATE		//
+		| NPC_ALLOW_INVESTIGATE			//
+		| NPC_ALLOW_PATROL				//
+	)
+}
+
+void function InitRankAndHealth( entity npc, NpcSpawnInfo spInfo, NpcRegistrationInfo regInfo )
+{
+	int healthRank = ClampInt( spInfo.npcRank, 0, (regInfo.healthTiers.len() - 1) )
+	array<int> set = regInfo.healthTiers[healthRank]
+	int maxHealth = set[0]
+	int maxShields = ((set.len() > 1) ? set[1] : 0)
+
+	npc.SetGrade( spInfo.npcRank )
+	npc.SetMaxHealth( maxHealth )
+	npc.SetHealth( maxHealth )
+	npc.SetShieldHealthMax( maxShields )
+	npc.SetShieldHealth( maxShields )
+
+	if ( ShouldStartWithExecutionEnabled( npc ) )
+		NPCEnableExecution( npc )
+}
+
+void function SetupNPCExecutionHandling( entity npc, bool enableHighlight = true )
+{
+	AddEntityCallback_OnPostDamaged( npc, void function ( entity npc, var damageInfo ) : ( enableHighlight )
+	{
+		if ( npc.ai.executionHasBeenEnbled )
+			return
+		if ( !IsAlive( npc ) )
+			return
+
+		float damage = DamageInfo_GetDamage( damageInfo )
+		if ( damage <= 0.0 )
+			return
+		int health = npc.GetHealth()
+		int healthNext = (health - int( damage ))
+		if ( healthNext <= 0 )
+			return
+
+		int healthMax = npc.GetMaxHealth()
+		int healthThreshold = (healthMax / 2)
+		if ( healthNext > healthThreshold )
+			return
+
+		/*if ( !npc.ContextAction_IsActive() && npc.IsInterruptableForScriptedAnim() )
+		{
+			//npc.Anim_ScriptedPlayActivityByName( "ACT_STUNNED", true, false, 0.1 )
+			npc.Anim_ScriptedPlayActivityByName( "ACT_BIG_FLINCH", true, false, 0.1 )
+			npc.EnableNPCFlag( NPC_PAIN_IN_SCRIPTED_ANIM )
+		}*/
+
+		if( enableHighlight )
+		{
+			Highlight_SetEnemyHighlight( npc, "enemy_sonar" )
+		}
+		NPCEnableExecution( npc )
+	} )
+}
+
+entity function NPCSpawn_Spectre( NpcSpawnInfo info )
+{
+	entity npc = CreateNPCFromAISettings( "npc_spectre_outlands", info.npcTeamOverride, info.spawnOrigin, info.spawnAngles )
+	DispatchSpawn( npc )
+
+	npc.SetSkin( 0 )
+
+	HideCrit( npc )
+	npc.SetPreventCrits( true )
+
+	npc.SetChanceToHitEnabled( true )
+
+	npc.e.forceHeadshotDeath = true
+
+	npc.kv.defenseActive = true
+
+	TakeAllWeapons( npc )
+	npc.GiveWeapon( string( GetNPCAsset( eNPC.SPECTRE, eNPCAsset.WEAPON_0 ) ), WEAPON_INVENTORY_SLOT_PRIMARY_0, [] )
+	npc.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+	npc.ai.damageFlagsVulnerable = (DF_SNIPER)
+
+	SetupNPCExecutionHandling( npc, false )
+	CommonSpawnInitNPC( npc )
+	CommonSpawnInfantryBehavior( npc, info.spawnOrigin )
+	return npc
+}
+
+entity function NPCSpawn_DeathSpectre( NpcSpawnInfo info )
+{
+	entity npc = CreateNPCFromAISettings( "npc_spectre_outlands", info.npcTeamOverride, info.spawnOrigin, info.spawnAngles )
+	DispatchSpawn( npc )
+
+	npc.SetSkin( 2 )
+	npc.SetTitle( "Death Spectre" )
+
+	HideCrit( npc )
+	npc.SetPreventCrits( true )
+
+	npc.SetChanceToHitEnabled( true )
+	npc.kv.AlwaysAlert = true
+
+	npc.e.forceHeadshotDeath = true
+
+	//npc.SetRangeAttackTwitchScale( 0.5 )
+
+	TakeAllWeapons( npc )
+	//npc.GiveWeapon( string( GetNPCAsset( eNPC.SPECTRE, eNPCAsset.WEAPON_0 ) ), WEAPON_INVENTORY_SLOT_PRIMARY_0, ["death_spectre"] )
+	npc.GiveWeapon( string( GetNPCAsset( eNPC.DEATH_SPECTRE, eNPCAsset.WEAPON_0 ) ), WEAPON_INVENTORY_SLOT_PRIMARY_0, [] )
+	npc.EnableNPCFlag( NPC_NO_WEAPON_DROP )
+	npc.ai.damageFlagsVulnerable = (DF_SNIPER)
+
+	CommonSpawnInitNPC( npc )
+	CommonSpawnInfantryBehavior( npc, info.spawnOrigin )
+	return npc
+}
+   
+entity function NPCSpawn_SpiderJungle( NpcSpawnInfo info )
+{
+	entity npc = CreateNPCFromAISettings( "npc_spider", info.npcTeamOverride, info.spawnOrigin, info.spawnAngles )
+	DispatchSpawn( npc )
+
+	int skinIdx = GetCurrentPlaylistVarInt( "ai_force_junglespider_skin", -1 )
+
+	if ( skinIdx == -1 )
+	{
+		const int SPIDERJUNGLE_SKIN_COUNT = 3
+		skinIdx = RandomIntRangeInclusive( 1, SPIDERJUNGLE_SKIN_COUNT ) // duplicate of default skin. BUG: R5DEV-279020
+	}
+	npc.SetSkin( skinIdx )
+
+	npc.SetChanceToHitEnabled( true ) // So spider bullets can hit player
+
+	npc.ai.damageFlagsVulnerable = (DF_SHOTGUN)
+
+	npc.ai.preventFriendlyDamage = true
+
+	CommonSpawnInitNPC( npc )
+	return npc
+}
+
+entity function NPCSpawn_Prowler( NpcSpawnInfo info )
+{
+	entity npc = CreateNPCFromAISettings( "npc_prowler", info.npcTeamOverride, info.spawnOrigin, info.spawnAngles )
+	DispatchSpawn( npc )
+
+	int skinIdx = GetCurrentPlaylistVarInt( "ai_force_prowler_skin", -1 )
+
+	if ( skinIdx == -1 )
+	{
+		const int PROWLER_SKIN_COUNT = 3
+		skinIdx = RandomInt( PROWLER_SKIN_COUNT )
+	}
+	npc.SetSkin( skinIdx )
+
+	npc.ai.damageFlagsVulnerable = (DF_SHOTGUN)
+
+	npc.ai.preventFriendlyDamage = true
+
+	CommonSpawnInitNPC( npc )
+	//entity eyeGlow = StartParticleEffectOnEntity_ReturnEntity( npc, GetParticleSystemIndex( GetObjectiveAsset_FX( "PROWLER_EYEGLOW_FX" ) ), FX_PATTACH_POINT_FOLLOW, npc.LookupAttachment( "EYEGLOW" ) )
+	//eyeGlow.DisableHibernation()
+
+	npc.SetSoundCodeControllerValue( 100.0 )
+
+	AddEntityCallback_OnDamaged( npc, OnProwlerDamaged )
+	return npc
+}
+
+entity function NPCSpawn_DireProwler( NpcSpawnInfo info )
+{
+	entity npc = CreateNPCFromAISettings( "npc_prowler", info.npcTeamOverride, info.spawnOrigin, info.spawnAngles )
+	DispatchSpawn( npc )
+
+	npc.SetTitle( "#NPC_DIREPROWLER_UI_TITLE" )
+
+	int skinIdx = npc.GetSkinIndexByName( "ShadowSqaud" )
+	npc.SetSkin( skinIdx )
+
+	npc.ai.damageFlagsVulnerable = (DF_SHOTGUN)
+
+	npc.ai.preventFriendlyDamage = true
+
+	CommonSpawnInitNPC( npc )
+
+	npc.SetNPCMoveSpeedScale( 1.25 ) //slightly faster since health is low
+
+	const asset SHADOW_TRAIL_FX = $"P_Bshadow_body"
+
+	//entity eyeGlow = StartParticleEffectOnEntity_ReturnEntity( npc, GetParticleSystemIndex( GetObjectiveAsset_FX( "PROWLER_EYEGLOW_SHADOW_FX" ) ), FX_PATTACH_POINT_FOLLOW, npc.LookupAttachment( "EYEGLOW" ) )
+	//eyeGlow.DisableHibernation()
+
+	if ( npc.LookupAttachment( "CHESTFOCUS" ) > 0 )
+	{
+		entity smokeFx = StartParticleEffectOnEntity_ReturnEntity( npc, GetParticleSystemIndex( SHADOW_TRAIL_FX ), FX_PATTACH_POINT_FOLLOW, npc.LookupAttachment( "CHESTFOCUS" ) )
+		smokeFx.DisableHibernation()
+	}
+
+	//
+	AddEntityCallback_OnKilled( npc, void function ( entity npc, var damageInfo ) : ()
+	{
+		thread NpcShadowDeath( npc )
+	} )
+
+	npc.SetSoundCodeControllerValue( 100.0 )
+
+	AddEntityCallback_OnDamaged( npc, OnProwlerDamaged )
+	return npc
+}
+void function OnProwlerDamaged( entity npc, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( IsValid( attacker ) && attacker.IsPlayer() )
+		OnPlayerDamagedProwler( attacker, npc, damageInfo )
+}
+
+void function NpcShadowDeath( entity npc )
+{
+	const asset DEATH_TOTEM_SHADOW_DEATH_FX = $"P_BShadow_death"
+	vector deathOrigin = npc.GetOrigin()
+	vector deathFXOrigin = deathOrigin + <0,0,64>
+	thread CreateAirShake( deathOrigin, 2, 50, 1 )
+	EmitSoundAtPosition( TEAM_ANY, deathFXOrigin, "ShadowLegend_Shadow_DeathVanish", npc )
+
+	int attach_id       = npc.LookupAttachment( "CHESTFOCUS" )
+	vector effectOrigin = npc.GetAttachmentOrigin( attach_id )
+	vector effectAngles = npc.GetAttachmentAngles( attach_id )
+	StartParticleEffectOnEntity_ReturnEntity( npc, GetParticleSystemIndex( DEATH_TOTEM_SHADOW_DEATH_FX ), FX_PATTACH_POINT_FOLLOW, attach_id )
+
+	npc.MakeInvisible()
+	npc.NotSolid()
+
+	wait 1
+	if ( IsValid( npc ) )
+		npc.Destroy()
+}
+
+/*
+=======================================================================================================================
+=======================================================================================================================
+=======================================================================================================================
+
+########   #######  ########  ##     ##    ###    ##    ## ########       ##    ## ########   ######   ######
+##     ## ##     ## ##     ## ###   ###   ## ##   ###   ##    ##          ###   ## ##     ## ##    ## ##    ##
+##     ## ##     ## ##     ## #### ####  ##   ##  ####  ##    ##          ####  ## ##     ## ##       ##
+##     ## ##     ## ########  ## ### ## ##     ## ## ## ##    ##          ## ## ## ########  ##        ######
+##     ## ##     ## ##   ##   ##     ## ######### ##  ####    ##          ##  #### ##        ##             ##
+##     ## ##     ## ##    ##  ##     ## ##     ## ##   ###    ##          ##   ### ##        ##    ## ##    ##
+########   #######  ##     ## ##     ## ##     ## ##    ##    ##          ##    ## ##         ######   ######
+
+
+=======================================================================================================================
+=======================================================================================================================
+=======================================================================================================================
+*/
+
+/////////////////////////////////////
+void function OnShieldBreak( entity npc, var damageInfo )
+{
+}
+
+bool function ShouldStartWithExecutionEnabled( entity npc )
+{
+	return false
+}
+
+void function NPCEnableExecution( entity npc )
+{
+	if ( !GetCurrentPlaylistVarBool( "ai_execution_enabled",  true) )
+		return
+
+	if ( npc.ai.executionHasBeenEnbled )
+	{
+		Warning( "%s() - Already enabled on npc: '%s'", FUNC_NAME(), string( npc ) )
+		return
+	}
+
+	thread function () : (npc)
+	{
+		npc.EndSignal( "OnDeath" )
+		npc.SetUsableByGroup( "pilot" )
+		npc.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_NO_FOV_REQUIREMENTS | USABLE_SHRINK_USEABLE_BOX | USABLE_BLOCK_CONTINUOUS_USE )
+		npc.ai.executionHasBeenEnbled = true
+
+		for ( ;; )
+		{
+			table inputTable  = npc.WaitSignal( "OnPlayerUseLong" )
+			entity playerUser = expect entity( inputTable.player )
+
+			if ( TryStartSyncedMelee( playerUser, npc ) )
+			{
+				playerUser.p.nagCounter.executions = -1 // to stop hints
+				WaitFrame()
+			}
+		}
+	}()
+}
+
+void function DoNag_Executions( entity npc, entity attacker )
+{
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() )
+		return
+	if ( attacker.p.nagCounter.executions < 0 )
+		return
+
+	thread function() : ( npc, attacker )
+	{
+		npc.EndSignal( "OnDestroy" )
+		npc.EndSignal( "OnDeath" )
+		attacker.EndSignal( "OnDestroy" )
+		attacker.EndSignal( "OnDeath" )
+
+		wait ( 3.0 )
+
+		if ( attacker.p.nagCounter.executions < 0 )
+			return
+
+		attacker.p.nagCounter.executions++
+		switch( attacker.p.nagCounter.executions )
+		{
+			case 1:
+			case 5:
+			case 15:
+				//DoFreelanceModeSplashToPlayer( attacker, eModeSplash.CombatHint_ShieldBreaks )
+				break
+		}
+	}()
+}
+
+void function DoNag_SniperVSRobots( entity npc, entity attacker )
+{
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() )
+		return
+
+	if ( attacker.p.nagCounter.sniperVSRobots < 0 )
+		return
+
+	thread function() : ( attacker )
+	{
+		attacker.EndSignal( "OnDestroy" )
+		attacker.EndSignal( "OnDeath" )
+		wait ( 1.0 )
+
+		if ( attacker.p.nagCounter.sniperVSRobots < 0 )
+			return
+
+		attacker.p.nagCounter.sniperVSRobots = -1	// no more
+		//DoFreelanceModeSplashToPlayer( attacker, eModeSplash.CombatHint_SnipersHurtRobots )
+	}()
+}
+
+void function DoNag_ShotgunsVSWildlife( entity npc, entity attacker )
+{
+	if ( !IsValid( attacker ) || !attacker.IsPlayer() )
+		return
+
+	if ( attacker.p.nagCounter.shotgunsVSWildlife < 0 )
+		return
+
+	thread function() : ( attacker )
+	{
+		attacker.EndSignal( "OnDestroy" )
+		attacker.EndSignal( "OnDeath" )
+		wait ( 1.0 )
+
+		if ( attacker.p.nagCounter.shotgunsVSWildlife < 0 )
+			return
+		attacker.p.nagCounter.shotgunsVSWildlife = -1	// no more
+		//DoFreelanceModeSplashToPlayer( attacker, eModeSplash.CombatHint_ShotgunsHurtWildlife )
+	}()
+}
+
+/*
+=======================================================================================================================
+=======================================================================================================================
+=======================================================================================================================
+
+########  #### ######## ######## ####  ######  ##     ## ##       ######## ##    ##
+##     ##  ##  ##       ##        ##  ##    ## ##     ## ##          ##     ##  ##
+##     ##  ##  ##       ##        ##  ##       ##     ## ##          ##      ####
+##     ##  ##  ######   ######    ##  ##       ##     ## ##          ##       ##
+##     ##  ##  ##       ##        ##  ##       ##     ## ##          ##       ##
+##     ##  ##  ##       ##        ##  ##    ## ##     ## ##          ##       ##
+########  #### ##       ##       ####  ######   #######  ########    ##       ##
+
+
+=======================================================================================================================
+=======================================================================================================================
+=======================================================================================================================
+*/
+
+float s_difficultyDamageScale_0 = 1.0
+float s_difficultyDamageScale_1 = 1.0
+float s_difficultyDamageScale_2 = 1.0
+float s_difficultyDamageScale_3 = 1.0
+void function CacheDifficultyDamageScalesFromPlaylist()
+{
+	s_difficultyDamageScale_0 = GetCurrentPlaylistVarFloat( "difficulty_damage_scaling_0", 1.0 )
+	s_difficultyDamageScale_1 = GetCurrentPlaylistVarFloat( "difficulty_damage_scaling_1", 1.0 )
+	s_difficultyDamageScale_2 = GetCurrentPlaylistVarFloat( "difficulty_damage_scaling_2", 1.0 )
+	s_difficultyDamageScale_3 = GetCurrentPlaylistVarFloat( "difficulty_damage_scaling_3", 1.0 )
+}
+float function GetDamageScaleForDifficulty()
+{
+	int diff = DIFFICULTY_NORMAL
+	switch( diff )
+	{
+		case 0:
+			return s_difficultyDamageScale_0
+		case 1:
+			return s_difficultyDamageScale_1
+		case 2:
+			return s_difficultyDamageScale_2
+		case 3:
+			return s_difficultyDamageScale_3
+	}
+
+	Assert( false, "Unhandled difficulty scale." )
+	return s_difficultyDamageScale_2
+}
+
+void function OnPlayerDamaged_DifficultyScaling( entity target, var damageInfo )
+{
+	float scale = GetDamageScaleForDifficulty()
+	if ( scale == 1.0 )
+		return
+	DamageInfo_ScaleDamage( damageInfo, scale )
+}
+
+
+void function OnPlayerDamaged_RepeatBulletDamageShield( entity target, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( !IsValid( attacker ) )
+		return
+
+	if ( !(attacker.IsNPC() && attacker.ai.allowsPlayerBurstShield) )
+		return
+
+	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
+	bool isBullet = IsBitFlagSet( damageType, DF_BULLET ) ? true : false
+	if ( !isBullet )
+		return
+
+	const float BULLET_SAFETY_TIME = 0.5
+	bool wasRecentlyHit = WasRecentlyHitByEntityWithDamagetype( target, attacker, damageType, BULLET_SAFETY_TIME )
+	if ( wasRecentlyHit )
+	{
+		printt( "BULLET_REPEAT_SHIELD - Nullifying repeat hit from: " + attacker )
+		DamageInfo_SetDamage( damageInfo, 0 )
+		return
+	}
+}
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
+
+void function NPCSoldier_OnDamaged( entity target, var di )
+{
+	target.ResetAttackRestTimes( 1.0 )
+}
+
+#endif // SERVER

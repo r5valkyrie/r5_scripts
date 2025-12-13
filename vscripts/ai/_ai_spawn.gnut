@@ -37,6 +37,7 @@ global function CreateStalker
 global function CreateStryder
 global function CreateSuperSpectre
 global function CreateWorkerDrone
+global function CreateJungleSpider
 global function CreateZombieStalker
 global function CreateZombieStalkerMossy
 global function StopAssaultMoveTarget
@@ -272,6 +273,11 @@ entity function CreateGunship( int team, vector origin, vector angles )
 entity function CreateSoldier( int team, vector origin, vector angles )
 {
 	return CreateNPC( "npc_soldier", team, origin, angles )
+}
+
+entity function CreateJungleSpider( int team, vector origin, vector angles )
+{
+	return CreateNPC( "npc_spider_jungle", team, origin, angles )
 }
 
 entity function CreateNPC( string baseClass, int team, vector origin, vector angles )

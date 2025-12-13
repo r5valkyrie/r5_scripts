@@ -2445,6 +2445,7 @@ int function GetEnemyPingCommsAction( int pingType, entity pingedEnt )
 			// Creatures:
 
 			case "npc_spider":
+			case "npc_spider_jungle":
 				return eCommsAction.PING_ENEMY_NPC_SPIDER
 			case "npc_prowler":
 				return eCommsAction.PING_ENEMY_NPC_PROWLER

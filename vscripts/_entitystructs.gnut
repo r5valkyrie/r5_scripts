@@ -290,6 +290,7 @@ global struct ServerEntityStruct
 	vector windTunnelDirection
 
 	bool forceGibDeath = false
+	bool forceHeadshotDeath = false
 
 	// SpawnPointData spawnPointData
 
@@ -784,23 +785,13 @@ global struct ServerPlayerStruct
 	// float earnMeterRewardFrac
 
 	BurnCardPhaseRewindStruct burnCardPhaseRewindStruct
-	// array<entity> rodeoAnimTempProps
-
-	// bool controllingTurret = false
-
-	// int pveTacticalType = -1
-	// int pveTacticalLevel = -1
-
-	// array<RecentUnlock> challengeUnlocks
-
-	// float lastDpadSayTime = -999
-	// int consecutiveDpadMessages = 0
-	// float replacementTitanETATimer = 0
-	// float replacementTitanReady_lastNagTime = 0
-
-	// int turretArrayId = -1
-
-	// float hotStreakTime = 0.0
+	struct
+	{
+		int executions
+		int killedGruntsWithExecutions
+		int sniperVSRobots
+		int shotgunsVSWildlife
+	} nagCounter
 
 	// extra stuff for apex
 	int skydiveDecoysFired = 0
@@ -1381,11 +1372,26 @@ global struct ServerAIStruct
 	//nextbots
 	float screamSoundDebounce
 	
+	bool shouldDisableLootDrops = false
+	bool isBossMob = false
+	
+	//////////////
 	// pve:
 	bool isMarkedForGarbageCollection = false
 	int  aiPriority = -1
 	int  skitId = -1
 	int  npcType = -1    // eNPC.*
+	bool isInSquad = false
+	bool squadNoRespawn = false
+	bool executionHasBeenEnbled = false
+	int  damageFlagsVulnerable = 0
+
+	bool allowsPlayerBurstShield = false
+	bool hasDeathFieldImmunity
+
+	array<void functionref( entity ent )> onNPCGarbageCollectedCallbacks
+	bool  preventFriendlyDamage = false
+	//////////////
 }
 
 global struct WeaponMissileMultipleTargetData

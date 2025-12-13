@@ -4067,6 +4067,33 @@ void function ShowCrit( entity ent )
 	ent.SetBodygroup( bodyGroupIndex, 0 )
 }
 
+array<vector> function GetEvenlySpacedPointsAroundCircle( vector origin, vector angles, int numPoints, float radius, bool debug = false )
+{
+	float degrees                = 360.0 / float( numPoints )
+	array<vector> pointsOnCircle = []
+	for ( int i = 0; i < numPoints; i++ )
+	{
+		vector angles2 = AnglesCompose( angles, <0, degrees * i, 0> )
+		vector forward = AnglesToForward( angles2 )
+		pointsOnCircle.append( origin + (forward * radius) )
+	}
+	#if DEVELOPER
+		if( debug )
+		{
+			const float DEBUGDRAWTIME = 240
+			DebugDrawSphere( origin, 45, 128, 0, 128, true, DEBUGDRAWTIME )
+			foreach( pt in pointsOnCircle )
+			{
+				vector debugAngles = VectorToAngles( pt - origin )
+				DebugDrawLine( origin, pt, 0, 255, 0, true, DEBUGDRAWTIME )
+				DebugDrawAxis( origin, debugAngles, DEBUGDRAWTIME, 64, COLOR_BLUE )
+			}
+		}
+
+	#endif // DEVELOPER
+
+	return pointsOnCircle
+}
 
 #if DEVELOPER
 void function TeleportEnemyBotToView()

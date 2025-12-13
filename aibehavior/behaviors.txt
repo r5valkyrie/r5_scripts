@@ -6,6 +6,7 @@ behavior_training_dummy
 behavior_treasure_tick
 behavior_dummy_empty
 behavior_spider
+behavior_spider_jungle
 behavior_infected
 behavior_marvin
 behavior_mp_auto_titan

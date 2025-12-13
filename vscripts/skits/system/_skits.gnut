@@ -1,0 +1,677 @@
+global function SkitSystem_Init
+
+#if SERVER
+
+global function Skit_AllocInstance
+global function Skit_LaunchInstance
+
+global function Skit_RegisterFunc_OnNPCGarbageCollected
+
+global function Sk_GetSkit
+global function Sk_KillSkit
+global function Sk_KillAllSkits
+
+global function SkRes_MarkResourceInUse
+global function SkRes_FreeResource
+
+global function SkThread_MarkAsNewSubthread
+
+global function SkTools_WatchZonePopulationForThreshold
+global function SkTools_WatchZonePopulationsForThreshold
+
+global function SkDebug_GetDebugLineForSkit
+global function SkDebug_AddMessageToDump
+global function SkDebug_OnGameEndDump
+
+global function DEV_PrintAllSkits
+
+global function HighlightEntsForDuration
+global function BroadcastTestMsg
+global function BroadcastHudSplashToRadius
+
+#if DEV
+global function DEV_Skits_ToggleOverlay
+#endif // DEV
+
+
+////////////////////
+global const string SIG_SKIT_FORCE_SHUTDOWN = "_sig_skit_force_shutdown"
+//
+global const string SIG_SKIT_LAUNCHING = "_sig_skit_launching"
+global const string SIG_SKIT_SHUTDOWN_STARTING = "_sig_skit_shutdown_starting"
+global const string SIG_SKIT_SHUTDOWN_COMPLETE = "_sig_skit_shutdown_complete"
+//
+global const string SIG_ZONEPOPCHANGED = "_sig_zonepopchanged"
+
+global enum eSkitAIPriority
+{
+	VERY_LOW,
+	LOW,
+	MEDIUM,
+	HIGH,
+	VERY_HIGH,
+
+	_count
+}
+
+global struct SkitInstance
+{
+	int skitId = -1
+	int lifeState = 0		// eSkitLifeState.INVALID
+
+	string dbg_invokedBy
+	float dbg_startTime
+
+	//
+	table localVars
+
+	//
+	table<string,bool> skitFlags	// _skit_flags.gnut
+
+	// Zone notifies:
+	array<int> zonePopNotifies
+
+	// Functions:
+	void functionref( SkitInstance )			runtimeFunc	// skitRuntimeFunc_t
+	void functionref( SkitInstance )			cleanupFunc	// skitCleanupFunc_t
+	void functionref( SkitInstance, entity )	func_onNPCGarbageCollected	// skitOnNPCGCFunc_t
+
+	vector functionref( SkitInstance ) dbgFunc_GetPos
+	string functionref( SkitInstance ) dbgFunc_GetHUDDesc
+
+	// AI priority
+	int aiPriority
+
+	// Subthreads:
+	table<string, var> subThreads
+
+	// Garbage collection:
+	//ResourceCollection _gc_resources
+	array<entity> _gc_npcs
+}
+
+global enum eSkitLifeState
+{
+	INVALID = 0,
+
+	ALLOCATED,
+	RUNNING,
+
+	SHUTTING_DOWN,
+	SHUT_DOWN,
+
+	_count
+}
+#endif // #if SERVER
+
+bool isInitialized = false
+
+void function SkitSystem_Init()
+{
+	if ( isInitialized )
+	{
+		#if DEV
+			printf( "Skit System is already initialized" )
+		#endif
+		return
+	}
+	isInitialized = true
+#if SERVER
+
+	RegisterSignal( SIG_SKIT_FORCE_SHUTDOWN )
+	RegisterSignal( SIG_SKIT_LAUNCHING )
+	RegisterSignal( SIG_SKIT_SHUTDOWN_STARTING )
+	RegisterSignal( SIG_SKIT_SHUTDOWN_COMPLETE )
+	RegisterSignal( SIG_ZONEPOPCHANGED )
+
+	AddCallback_GameStateEnter( eGameState.Playing, OnGameStateEnterPlaying )
+
+	SkNPC_InitForGameMode()
+#endif // #if SERVER
+
+#if CLIENT
+	Waypoints_RegisterCustomType( WAYPOINTTYPE_BROADCAST_HUD_SPLASH, Instance_BroadcastHudSplashToRadius )
+	Waypoints_RegisterCustomType( WAYPOINTTYPE_HIGHLIGHTER, InstanceHighlighterWP )
+#endif // #CLIENT
+}
+
+////////////////////
+
+#if SERVER
+vector function DefaultDbgGetPos( SkitInstance si )
+{
+	/*if ( si._gc_resources.groups.len() > 0 )
+	{
+		vector sum
+		foreach( ResourceGroup group in si._gc_resources.groups )
+			sum += group.core.spawnOrigin
+		vector result = (sum / float( si._gc_resources.groups.len() ))
+		return (result + <0, 0, (2.0 * (si.skitId % 64))>)
+	}*/
+
+	if ( si._gc_npcs.len() > 0 )
+	{
+		int count = 0
+		vector sum
+		foreach( entity npc in si._gc_npcs )
+		{
+			if ( !IsValid( npc ) )
+				continue
+			sum += npc.GetOrigin()
+			++count
+		}
+		if ( count > 0 )
+		{
+			vector result = (sum / float( count ))
+			return (result + <0, 0, (2.0 * (si.skitId % 64))>)
+		}
+	}
+
+	return <0, 0, (2.0 * (si.skitId % 64))>
+}
+
+string function DefaultDbgGetHUDDesc( SkitInstance si )
+{
+	//return format( "#%d - %s", si.skitId, si.dbg_invokedBy )
+	return format( "#%d - %s %s", si.skitId, string( si.runtimeFunc ), ((si.lifeState == eSkitLifeState.RUNNING) ? "" : GetNameForLifestate( si.lifeState )) )
+}
+
+////////////////////
+
+//typedef skitRuntimeFunc_t void functionref( SkitInstance )
+//typedef skitCleanupFunc_t void functionref( SkitInstance )
+//typedef skitOnNPCGCFunc_t void functionref( SkitInstance, entity )
+
+table<int, SkitInstance> s_skitRegistry
+int s_skitRunningCount = 0
+int s_lastSkitId = 0
+
+//SkitInstance function Skit_AllocInstance( skitRuntimeFunc_t runtimeFunc, skitCleanupFunc_t cleanupFunc )
+Assert( eSkitAIPriority._count == 5 )
+SkitInstance function Skit_AllocInstance( void functionref( SkitInstance ) runtimeFunc, void functionref( SkitInstance ) cleanupFunc, int aiPriority = eSkitAIPriority.VERY_HIGH )
+{
+	SkitInstance si
+	si.lifeState = eSkitLifeState.ALLOCATED
+
+	// registration:
+	{
+		si.skitId = (s_lastSkitId + 1)
+		s_lastSkitId = si.skitId
+
+		s_skitRegistry[si.skitId] <- si
+	}
+
+	// debug:
+	{
+		si.dbgFunc_GetPos = DefaultDbgGetPos
+		si.dbgFunc_GetHUDDesc = DefaultDbgGetHUDDesc
+	}
+
+	si.runtimeFunc = runtimeFunc
+	si.cleanupFunc = cleanupFunc
+
+	si.dbg_invokedBy = STACK_LINE( 1 )
+	si.dbg_startTime = Time()
+
+	si.aiPriority = aiPriority
+
+	return si
+}
+
+void function Skit_FreeInstance( SkitInstance si )
+{
+	Assert( si.lifeState < eSkitLifeState.SHUTTING_DOWN )
+	si.lifeState = eSkitLifeState.SHUTTING_DOWN
+	Signal( si, SIG_SKIT_SHUTDOWN_STARTING )
+
+	if ( si.cleanupFunc != null )
+		si.cleanupFunc( si )
+
+	// GC resources:
+	/*if ( si._gc_resources._total > 0 )
+	{
+		for ( int orType = 0; orType < eORType._count; ++orType )
+		{
+			array<ResourceCore> list = si._gc_resources._listByType[orType]
+			foreach ( ResourceCore core in list )
+				ORS_Free( core )
+			list.clear()
+		}
+		si._gc_resources._total = 0
+	}*/
+
+	// GC NPCs:
+	printf( "%s() - NPCs to be released: %d", FUNC_NAME(), si._gc_npcs.len() )
+	RemoveAllNPCsFromSkit( si )
+	Assert( si._gc_npcs.len() == 0 )
+
+	// Map Zones:
+	MapZones_StopAllNotificationsForSkit( si )
+
+	delete s_skitRegistry[si.skitId]
+	--s_skitRunningCount
+	si.lifeState = eSkitLifeState.SHUT_DOWN
+	Signal( si, SIG_SKIT_SHUTDOWN_COMPLETE )
+}
+
+void function Skit_LaunchInstance( SkitInstance si )
+{
+	Assert( si.lifeState == eSkitLifeState.ALLOCATED )
+	thread function() : (si)
+	{
+		EndSignal( si, SIG_SKIT_FORCE_SHUTDOWN )
+		OnThreadEnd(
+			function() : ( si )
+			{
+				Skit_FreeInstance( si )
+				printf( "Skit has finished: %s", SkDebug_GetDebugLineForSkit( si ) )
+			}
+		)
+
+		si.lifeState = eSkitLifeState.RUNNING
+		++s_skitRunningCount
+		Signal( si, SIG_SKIT_LAUNCHING )
+		si.runtimeFunc( si )
+	}()
+}
+
+void function OnGameStateEnterPlaying()
+{
+#if DEV
+	thread DebugFrameThread()
+#endif // DEV
+}
+
+/////
+// Debug Stuffs
+
+string function GetNameForLifestate( int lifeState )
+{
+	foreach( string key, int val in eSkitLifeState )
+	{
+		if ( lifeState == val )
+			return key
+	}
+
+	Assert( false )
+	return ""
+}
+
+string function SkDebug_GetDebugLineForSkit( SkitInstance si )
+{
+	return "e"//format( "#%d (%s) T:%.1f NPCs:%d threads:%d resources:%d runtimeFunc:%s startedBy:%s", si.skitId, GetNameForLifestate( si.lifeState ), si.dbg_startTime, si._gc_npcs.len(), si.subThreads.len(), si._gc_resources._total, string( si.runtimeFunc ), si.dbg_invokedBy )
+}
+string function SkDebug_GetDebugLineForSubthreadsTable( SkitInstance si )
+{
+	string res = "["
+	foreach ( id, threadObj in si.subThreads )
+	{
+		res += " (" + id + "), "
+	}
+	res += "]"
+
+	return res
+}
+
+array<string> s_debugMessageDump
+void function SkDebug_AddMessageToDump( float time, string funcName, string message )
+{
+	s_debugMessageDump.append( format( "[%.3f] %s: %s", time, funcName, message ) )
+}
+
+void function SkDebug_OnGameEndDump()
+{
+	printf( "\n\n\n=====================================================================\n				SKIT DEBUG MESSAGE DUMP\n=====================================================================")
+	foreach ( string message in s_debugMessageDump )
+	{
+		printf( message )
+	}
+	printf( "\n=====================================================================\n				END SKIT DEBUG MESSAGE DUMP\n=====================================================================")
+
+	printf( "\n\n\n=====================================================================\n				SKIT NPCS STAT DUMP\n=====================================================================" )
+	printf( SkNPC_GetSkitSpawningReport() )
+	printf( "\n=====================================================================\n				END SKIT NPCS STAT DUMP\n=====================================================================" )
+}
+
+void function DEV_PrintAllSkits()
+{
+
+	foreach( int skitId, SkitInstance si in s_skitRegistry )
+	{
+		Assert( skitId == si.skitId )
+		printt( SkDebug_GetDebugLineForSkit( si ) )
+	}
+}
+
+/////
+//
+
+#if DEV
+bool s_debugDrawFrame = false
+void function DEV_Skits_ToggleOverlay()
+{
+	s_debugDrawFrame = !s_debugDrawFrame
+}
+
+void function DebugFrameThread()
+{
+	while ( true )
+	{
+		if ( s_debugDrawFrame )
+		{
+			DebugDrawFrame()
+		}
+		WaitFrame()
+	}
+}
+
+void function DebugDrawFrame()
+{
+	int subthreadCount = 0
+	foreach( int skitId, SkitInstance si in s_skitRegistry )
+	{
+		vector pos = si.dbgFunc_GetPos( si )
+		DebugDrawText( pos, si.dbgFunc_GetHUDDesc( si ), false, 0.1 )
+
+		subthreadCount += si.subThreads.len()
+	}
+
+	//
+	{
+		string promptText = format(
+					""
+					+"Skits Running: %d\n"
+					+"Skits Allocated: %d\n"
+					+"Subthreads: %d\n",
+			s_skitRunningCount,
+			s_skitRegistry.len(),
+			subthreadCount
+		)
+
+		DebugDrawScreenText( 0.01, 0.55, promptText )
+	}
+}
+#endif // DEV
+
+
+/////
+// Skit Utils
+
+
+SkitInstance ornull function Sk_GetSkit( int skitId )
+{
+	if ( skitId in s_skitRegistry)
+	{
+		return s_skitRegistry[skitId]
+	}
+	else
+	{
+		string warningStr = format( "Attempted to get skit from skitId %d, but that skit does not exist in the skit registry!", skitId )
+		Warning( warningStr )
+		SkDebug_AddMessageToDump( Time(), FUNC_NAME(), warningStr )
+		return null
+	}
+	unreachable
+}
+
+void function Sk_KillSkit( SkitInstance si )
+{
+	Assert( si.lifeState == eSkitLifeState.RUNNING )
+	printf( "Killing skit %s", SkDebug_GetDebugLineForSkit( si ) )
+	Signal( si, SIG_SKIT_FORCE_SHUTDOWN )
+	Assert( si.lifeState == eSkitLifeState.SHUT_DOWN )
+}
+
+void function KillSkitByInternalId( int skitId )
+{
+	SkitInstance si = s_skitRegistry[skitId]
+	Sk_KillSkit( si )
+}
+
+bool function IsValidSkitId( int skitId )
+{
+	return (skitId in s_skitRegistry)
+}
+
+void function Sk_KillAllSkits()
+{
+	array<int> killList
+	killList.resize( s_skitRegistry.len() )
+
+	int index = 0
+	foreach( int skitId, SkitInstance si in s_skitRegistry )
+	{
+		killList[index] = skitId
+		++index
+	}
+
+	printf( "%s() - Killing %d skit(s).", FUNC_NAME(), killList.len() )
+	foreach( int skitId in killList )
+	{
+		if ( IsValidSkitId( skitId ) )	// skits shutting down could cause other skits in the list to decide to shut down
+			KillSkitByInternalId( skitId )
+	}
+}
+
+void function Skit_RegisterFunc_OnNPCGarbageCollected( SkitInstance si, void functionref( SkitInstance, entity ) func )
+{
+	Assert( si.func_onNPCGarbageCollected == null )
+	si.func_onNPCGarbageCollected = func
+}
+
+void function RemoveAllNPCsFromSkit( SkitInstance si )
+{
+	array<entity> list = clone si._gc_npcs
+	foreach( entity npc in list )
+	{
+		Assert( IsValid( npc ), format( "Skit garbage collection list contains an invalid NPC, this is unexpected: %s", SkDebug_GetDebugLineForSkit( si ) ) )
+		_RemoveNPCFromSkitDirectly( npc, si )
+
+		if ( IsAlive( npc ) && !GarbageCollection_IsNPCMarked( npc ) )
+			GarbageCollection_MarkNPC( npc )
+	}
+}
+
+void function SkRes_MarkResourceInUse( ResourceCore core, SkitInstance si )
+{
+	Assert( !ORS_IsInUse( core ) )
+	ORS_MarkInUse( core )
+	//ORS_AddResourceToCollection( si._gc_resources, core )
+}
+
+void function SkRes_FreeResource( ResourceCore core, SkitInstance si )
+{
+	Assert( ORS_IsInUse( core ) )
+	//ORS_RemoveResourceFromCollection( si._gc_resources, core )
+	ORS_Free( core )
+}
+
+string function STACK_LINE( int up = 0 )
+{
+	table infos = expect table( getstackinfos( 2 + up ) )
+	return format( "%s(),%s:%s", string( infos.func ), string( infos.src ), string( infos.line ) )
+}
+
+void function SkThread_MarkAsNewSubthread( SkitInstance si )
+{
+	//Assert( CallingFuncIsNewThread() )
+
+	EndSignal( si, SIG_SKIT_SHUTDOWN_STARTING )
+
+	var threadObj = getthread()
+	string threadId = string( getthread() )
+	Assert( !(threadId in si.subThreads) )
+	si.subThreads[threadId] <- threadObj
+	OnThreadEnd( function() : (si, threadId)
+	{
+		if ( threadId in si.subThreads )
+			delete si.subThreads[threadId]
+		else
+		{
+			string warningStr = format( "ThreadId: %s was not found in skit subthreads table for %s! This shouldn't have gotten removed! Current subthreads keys: %s", FUNC_NAME(), threadId, SkDebug_GetDebugLineForSkit( si ), SkDebug_GetDebugLineForSubthreadsTable( si ) )
+			Warning( warningStr )
+			SkDebug_AddMessageToDump( Time(), FUNC_NAME(), warningStr )
+		}
+
+	})
+}
+
+//////
+//
+
+//typedef skitFunc_t void functionref( SkitInstance )
+
+void function SkTools_WatchZonePopulationForThreshold( SkitInstance si, int zoneId, int zonePopThreshold, void functionref( SkitInstance ) arriveFunc, void functionref( SkitInstance ) leaveFunc )
+{
+	SkTools_WatchZonePopulationsForThreshold( si, [zoneId], zonePopThreshold, arriveFunc, leaveFunc )
+}
+
+void function SkTools_WatchZonePopulationsForThreshold( SkitInstance si, array<int> zoneIds, int zonePopThreshold, void functionref( SkitInstance ) arriveFunc, void functionref( SkitInstance ) leaveFunc )
+{
+	thread function() : (si, zoneIds, zonePopThreshold, arriveFunc, leaveFunc )
+	{
+		SkThread_MarkAsNewSubthread( si )
+
+		foreach( zoneId in zoneIds)
+			MapZones_RegisterSkitForNotifications( si, zoneId )
+
+		int lastPop = eZonePop.NO_PLAYERS_AROUND
+		for ( ;; )
+		{
+			int zonePop = MapZones_GetPopEnumForZones( zoneIds )
+
+			if ( (zonePop >= zonePopThreshold) && (lastPop < zonePopThreshold) )
+			{
+				if ( arriveFunc != null )
+					arriveFunc( si )
+			}
+
+			if ( (zonePop < zonePopThreshold) && (lastPop >= zonePopThreshold) )
+			{
+				if ( leaveFunc != null )
+					leaveFunc( si )
+			}
+
+			lastPop = zonePop
+			WaitSignal( si, SIG_ZONEPOPCHANGED )
+			WaitEndFrame()	// in case multiple zone-pop changes are coming
+		}
+	}()
+}
+
+#endif // #if SERVER
+
+
+
+//////////////
+///////// Utils
+//////////////
+
+
+
+//////////////
+// Highlighter
+
+const string WAYPOINTTYPE_HIGHLIGHTER = "highlighter"
+const int HIGHLIGHTER_LIMIT_COUNT = 8
+#if SERVER
+void function HighlightEntsForDuration( array<entity> ents, float duration )
+{
+	array<entity> entsCopy = clone( ents )
+	if ( entsCopy.len() > HIGHLIGHTER_LIMIT_COUNT )
+	{
+		Warning( "%s() - Can't handle more than %d ents in one batch.", FUNC_NAME(), HIGHLIGHTER_LIMIT_COUNT )
+		entsCopy.resize( HIGHLIGHTER_LIMIT_COUNT )
+	}
+	thread function() : (entsCopy, duration)
+	{
+		entity wp = CreateWaypoint_Custom( WAYPOINTTYPE_HIGHLIGHTER )
+		foreach ( int idx, entity ent in entsCopy )
+			wp.SetWaypointEntity( idx, ent )
+		wait duration
+		wp.Destroy()
+	}()
+}
+#endif // SERVER
+
+#if CLIENT
+void function InstanceHighlighterWP( entity wp )	// WAYPOINTTYPE_HIGHLIGHTER
+{
+	array<entity> ents
+	for ( int idx = 0; idx < HIGHLIGHTER_LIMIT_COUNT; ++idx )
+	{
+		entity ent = wp.GetWaypointEntity( idx )
+		if ( IsValid( ent ) )
+			ents.append( ent )
+	}
+
+	thread function() : (wp, ents)
+	{
+		foreach( ent in ents )
+			ent.Highlight_PushPingedState()
+
+		wp.EndSignal( "OnDestroy" )
+		OnThreadEnd( function() : (ents)
+		{
+			foreach( ent in ents )
+			{
+				if ( IsValid( ent ) )
+					ent.Highlight_PopPingedState()
+			}
+		} )
+
+		WaitForever()
+	}()
+}
+#endif // CLIENT
+
+
+
+//////////////
+// Broadcast Test Message
+
+const string WAYPOINTTYPE_BROADCAST_HUD_SPLASH = "broadcasthudsplash_msg"
+
+#if SERVER
+void function BroadcastHudSplashToRadius( string messageText, string subText, vector origin, float range, float duration )
+{
+	entity wp = CreateWaypoint_Custom( WAYPOINTTYPE_BROADCAST_HUD_SPLASH )
+	wp.SetWaypointString( 0, messageText )
+	wp.SetWaypointString( 1, subText )
+	wp.SetWaypointVector( 0, origin )
+	wp.SetWaypointFloat( 0, range )
+	wp.SetWaypointFloat( 1, duration )
+
+	thread function() : (wp)
+	{
+		wait 1.0
+		wp.Destroy()
+	}()
+}
+void function BroadcastTestMsg( string messageText, string subText )
+{
+	BroadcastHudSplashToRadius( messageText, subText, <0,0,0>, -1.0, 4.0 )
+}
+#endif // SERVER
+
+#if CLIENT
+void function Instance_BroadcastHudSplashToRadius( entity wp )
+{
+	entity player = GetLocalClientPlayer()
+	if ( !IsAlive( player ) )
+		return
+
+	string messageText = wp.GetWaypointString( 0 )
+	string subText = wp.GetWaypointString( 1 )
+	vector origin = wp.GetWaypointVector( 0 )
+	float range = wp.GetWaypointFloat( 0 )
+	float duration = wp.GetWaypointFloat( 1 )
+
+	if ( (range > 0.0) && (Distance( player.GetOrigin(), origin ) > range) )
+		return
+
+	//AnnouncementMessageSweep( entity player, string messageText, string subText = "", vector titleColor = <1,1,1>, asset icon = $"", string soundAlias = SFX_HUD_ANNOUNCE_QUICK, float duration = 2.0 )
+	AnnouncementMessageSweep( GetLocalClientPlayer(), messageText, subText, <220,220,220>, $"", SFX_HUD_ANNOUNCE_QUICK, duration )
+}
+#endif // CLIENT
+ 
