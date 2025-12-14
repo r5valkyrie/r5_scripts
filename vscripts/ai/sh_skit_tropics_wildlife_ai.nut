@@ -18,6 +18,7 @@ global function DEV_TropicsWildlife_HardResetAllSkits
 
 #if SERVER
 global function Wildlife_ClientToServer_PingWildlifeFromMap
+global function DEV_TropicsWildlife_GetCampDetailsAllString
 #endif
 
 #if CLIENT
@@ -54,9 +55,9 @@ const string EDITOR_CLASS_CAMP_TREASURE_CHEST_KEYWORD = "info_ai_camp_treasurech
 
 const string EDITOR_CLASS_PROWLER_SPAWNPOINT_KEYWORD = "info_ai_spawnpoint_prowler"
 const string EDITOR_CLASS_SPIDER_SPAWNPOINT_KEYWORD = "info_ai_spawnpoint_spider"
-                   
-                                                                                   
-      
+
+
+
 
 const string EDITOR_CLASS_SPIDER_EGG_KEYWORD = "script_ai_spider_egg"
 const string EDITOR_CLASS_PROWLER_DEN_KEYWORD = "script_ai_prowler_den"
@@ -206,9 +207,9 @@ array<NPCGeneratorData> s_prowlerDenGeneratorDatas
 array<TreasureChestData> s_treasureChestDatas
 array<NPCSpawnerData> s_prowlerSpawnPoints
 array<NPCSpawnerData> s_spiderSpawnPoints
-                   
-                                          
-      
+
+
+
 
 // TODO (tgoodbrand): these should be skit resources???
 table<SpiderEggData, WildlifeCampData> s_spiderEggToWildlifeCamp
@@ -315,11 +316,11 @@ void function Instance_BroadcastHudSplashToRadius( entity wp )
 	if ( (range > 0.0) && (Distance( player.GetOrigin(), origin ) > range) )
 		return
 
-	
+
 	AnnouncementMessageSweep( GetLocalClientPlayer(), messageText, subText, <220,220,220>, $"", SFX_HUD_ANNOUNCE_QUICK, duration )
 }
 
-void function InstanceHighlighterWP( entity wp )	
+void function InstanceHighlighterWP( entity wp )
 {
 	array<entity> ents
 	for ( int idx = 0; idx < 8; ++idx )
@@ -773,16 +774,16 @@ void function TropicsWildlife_EntitiesDidLoad()
 					newCamp.linkedNPCSpawners.append( newData )
 					s_spiderSpawnPoints.append( newData )
 					break
-                   
-                                                 
-                           
-                                   
-                                         
-                                         
-                                                
-                                           
-          
-      
+
+
+
+
+
+
+
+
+
+
 				case EDITOR_CLASS_SPIDER_EGG_KEYWORD:
 					NPCGeneratorData newData
 					newData.type = eGeneratorType.SPIDER_EGG
@@ -890,17 +891,17 @@ void function FinalizeCampSetup()
 		campData.totalLife += campData.initialSpawnTotal
 		campData.lifeRemaining = campData.totalLife
 
-                    
-                         
-    
-                                        
-                                                                                                                   
-          
-                                       
-                                                                                                                  
-          
-    
-        
+
+
+
+
+
+
+
+
+
+
+
 
 		#if DEVELOPER
 			if ( TROPICS_WILDLIFE_AI_DEBUG )
@@ -1576,9 +1577,9 @@ entity function CreateTreasureChest( vector origin, vector angles )
 
 	UpdateDeathBoxHighlight( deathBox )
 
-	                         
+
 		//SendGenericProfileForDeathBoxRui( deathBox )
-       
+
 
 	return deathBox
 }
@@ -1768,9 +1769,9 @@ void function HandleNPCDeath( entity npc, var damageInfo, WildlifeCampData campD
 			}
 		}
 
-		                    
+
 		//UpgradeCore_GrantXp_WildlifeClear( validPlayersToReward )
-        
+
 
 		{
 			thread DisplayCampCompletionMessageAfterDelay_Thread( validPlayersToReward, campData.type )
@@ -2018,6 +2019,24 @@ void function TropicsWildlife_InitializeNPCDependencies()
 	#endif
 }
 
+#if SERVER
+string function DEV_TropicsWildlife_GetCampDetailsAllString()
+{
+    string wildlifeInfo =
+	"-= Tropics Wildlife AI =-\n" +
+	"\t Total Wildlife Camps = " + s_wildlifeCampDatas.len() + "\n" +
+	"\t Total Active Camps = " + s_activeWildlifeCampDatas.len() + "\n" +
+	"\t Total Prowler Camps = " + DEV_TropicsWildlife_CountCampsByType( eWildLifeCampType.PROWLER_DENS ) + "\n" +
+	"\t Total Prowler Spawners = " + s_prowlerSpawnPoints.len() + "\n" +
+	"\t Total Prowler Den Spawners = " + s_prowlerDenGeneratorDatas.len() + "\n" +
+	"\t Total Treasure Chests = " + s_treasureChestDatas.len() + "\n" +
+	"\t Total Spider Camps = " + DEV_TropicsWildlife_CountCampsByType( eWildLifeCampType.SPIDER_NEST ) + "\n" +
+	"\t Total Spider Spawners = " + s_spiderSpawnPoints.len() + "\n" +
+	"\t Total Spider Egg Spawners = " + s_spiderEggGeneratorDatas.len()
+    return wildlifeInfo
+}
+#endif
+
 #if DEVELOPER && SERVER
 void function DEV_TropicsWildlife_PrintCampDetails( entity player )
 {
@@ -2057,9 +2076,6 @@ void function DEV_TropicsWildlife_PrintCampDetailsAll()
 	printf( "\t Total Spider Camps = " + DEV_TropicsWildlife_CountCampsByType( eWildLifeCampType.SPIDER_NEST ) )
 	printf( "\t Total Spider Spawners = " + s_spiderSpawnPoints.len() )
 	printf( "\t Total Spider Egg Spawners = " + s_spiderEggGeneratorDatas.len() )
-                   
-                                                                      
-      
 }
 
 int function DEV_TropicsWildlife_CountCampsByType( int type )

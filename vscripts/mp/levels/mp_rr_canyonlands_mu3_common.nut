@@ -163,7 +163,6 @@ void function MU3_EntitiesDidLoad()
 	thread PlaceOctaneTownTakeoverLoot()
 }
 
-
 void function InitOctaneTownTakeover()
 {
 	PrecacheParticleSystem( FX_OCTANE_TT_GUN_BG )

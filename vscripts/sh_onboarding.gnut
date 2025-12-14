@@ -1860,6 +1860,11 @@ void function OnClientConnected( entity player )
 				player.SetOrigin( <-3557.94165, 9962.51074, 3600> )
 				player.SetAngles( <0, 65.3776093, 0> )
 			break
+
+			case "mp_rr_tropic_island":				
+				player.SetOrigin( <9993.31, 6054.72, 2219.81> )
+				player.SetAngles( <0, -95.22, 0> )
+			break
 			
 			case "mp_rr_desertlands_holiday":
 			case "mp_rr_desertlands_64k_x_64k":

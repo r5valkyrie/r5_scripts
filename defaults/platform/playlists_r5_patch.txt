@@ -602,6 +602,7 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
+				mp_rr_tropic_island								1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
 				mp_rr_canyonlands_mu1						  	1
@@ -664,6 +665,7 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
+				mp_rr_tropic_island								1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
 				mp_rr_canyonlands_mu1						  	1
@@ -730,6 +732,7 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
+				mp_rr_tropic_island								1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
 				mp_rr_canyonlands_mu1						  	1
@@ -1020,6 +1023,7 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
+				mp_rr_tropic_island								1
 				mp_rr_canyonlands_staging					  	1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
@@ -1060,6 +1064,7 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
+				mp_rr_tropic_island								1
 				mp_rr_canyonlands_staging					  	1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
@@ -1100,7 +1105,7 @@ playlists
 				"MOTD_TEXT" "A R5Valkyrie Server" //set your servers message of the day. 1000 char max.  Use \n for newline.
 				"MOTD_TEXT_EXTENDED" "" // appends to first, 1000 char max.
 			
-				"BETA_BUILD_WATERMARK" "R5Valkyrie PTU - v2.9.31"
+				"BETA_BUILD_WATERMARK" "R5Valkyrie LIVE - v2.8.0"
 
 				//////////////////////////////////////////////////
 				// TEMP TOKENS (remove before release shipping )//

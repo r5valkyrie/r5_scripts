@@ -18,9 +18,25 @@ void function CodeCallback_MapInit()
 	AddCallback_EntitiesDidLoad( KCMU3_OnEntitiesDidLoad )
 
 	AddSpawnCallback( "info_spawnpoint_human", CleanupEnt )
+	AddCallback_OnPlayerRespawned( OnPlayerCreated )
 	Canyonlands_MapInit_Common()
 }
 
+void function OnPlayerCreated( entity player )
+{
+	thread warningprint( player )
+}
+
+void function warningprint( entity player )
+{
+	wait 1
+	Dev_PrintMessage(
+    player,
+    "THIS MAP IS WORK IN PROGRESS",
+    "Detected map: " + GetMapName() +
+	"\n\nKnown Bugs: Missing audiolog in caustic town takeover\nSome flickery textures." + "\n\nPlease report any glitch you see outside of known bugs\nto our discord server!",
+    25, "SQ_UI_InGame_10SecondTimeWarning" )
+}
 
 void function CleanupEnt( entity ent )
 {

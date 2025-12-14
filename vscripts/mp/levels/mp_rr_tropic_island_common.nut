@@ -28,7 +28,6 @@ void function Tropics_MapInit_Common()
 		}
 
 #if SERVER
-	//AddSpawnCallback_ScriptName( "ss_crush_prevention", HideArmoryTrigger )
 	//RegisterGeoFixAsset( STORMCATCHER_GEOFIX_MODEL )
 
 	thread KillPlayersUnderMap_Thread( MAP_KILL_VOLUME_OFFSET_TROPIC_ISLAND ) //-2048
@@ -37,6 +36,7 @@ void function Tropics_MapInit_Common()
 
 	#if SERVER
 		//CommonStoryEvents_Init()
+		AddCallback_OnPlayerRespawned( OnPlayerCreated )
 	#elseif CLIENT
 		//ClCommonStoryEvents_Init()
 	#endif
@@ -44,11 +44,21 @@ void function Tropics_MapInit_Common()
 }
 
 #if SERVER
-void function HideArmoryTrigger( entity ent )
+void function OnPlayerCreated( entity player )
 {
-	if( !IsValid( ent ) )
-		return
+	thread warningprint( player )
+}
 
-	ent.Destroy()
+void function warningprint( entity player )
+{
+	wait 1
+	string wildlife = DEV_TropicsWildlife_GetCampDetailsAllString()
+	Dev_PrintMessage(
+    player,
+    "THIS MAP IS WORK IN PROGRESS",
+    "Detected map: " + GetMapName() +
+	"\n\nKnown Bugs: Missing ocean water\nBroken wildlife\nSome flickery textures." + "\n\n" + wildlife + "\n\nPlease report any glitch you see outside of known bugs\nto our discord server!",
+    25, "SQ_UI_InGame_10SecondTimeWarning" )
 }
 #endif // SERVER
+
