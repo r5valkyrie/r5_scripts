@@ -267,6 +267,8 @@ global enum eDamageSourceId
 
 	mp_weapon_mortar_ring
 
+	mp_weapon_arc_bolt
+
 	// streaks
 
 	// Environmental

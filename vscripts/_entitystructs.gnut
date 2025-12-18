@@ -279,6 +279,8 @@ global struct ServerEntityStruct
 	// entity lastPlayerToSpot
 	// float lastSpotTime = -9999.0
 
+	bool ignoreJumpPad = false
+
 	bool forceRagdollDeath = false
 
 	// int projectileID

@@ -33,6 +33,15 @@ const SHIFTER_PERSONAL_FX = $"P_phase_shift_player"
 const SHIFTER_SCREEN_FX_START = $"P_phase_shift_screen_start"
 const SHIFTER_COLORCORRECTION = "materials/correction/fx_phase_shift.raw_hdr"
 
+//const SHIFTER_START_SOUND_1P_BREACH   = "Ash_PhaseBreach_Activate_1p"
+const SHIFTER_START_SOUND_3P_BREACH   = "Ash_PhaseBreach_PortalOpen_Enter_3p"
+const SHIFTER_LOOP_SOUND_1P_BREACH    = "Ash_PhaseBreach_loop_1p"
+const SHIFTER_LOOP_SOUND_3P_BREACH    = "Ash_PhaseBreach_loop_3p"
+const SHIFTER_PRE_END_SOUND_1P_BREACH = "Ash_PhaseBreach_warningtoend_1p"
+const SHIFTER_PRE_END_SOUND_3P_BREACH = "Ash_PhaseBreach_warningtoend_3p"
+const SHIFTER_END_SOUND_1P_BREACH 	  = "Ash_PhaseBreach_End_1p"
+const SHIFTER_END_SOUND_3P_BREACH     = "Ash_PhaseBreach_End_3p"
+
 const SHIFTER_PRE_SOUND_1P = "Pilot_PhaseShift_PreActivate_1P"
 const SHIFTER_PRE_SOUND_3P = "Pilot_PhaseShift_PreActivate_3P"
 global const SHIFTER_START_SOUND_1P = "Pilot_PhaseShift_Activate_1P"
@@ -53,6 +62,20 @@ const GATE_PRE_END_SOUND_1P 		= "Olympus_phaseshift_warningtoend_1p"
 const GATE_PRE_END_SOUND_3P 		= "Olympus_phaseshift_warningtoend_3p"
 global const GATE_END_SOUND_1P 		= "Olympus_phaseshift_end_1p"
 global const GATE_END_SOUND_3P 		= "Olympus_phaseshift_end_3p"
+
+//const SHIFTER_START_SOUND_1P_TRANSPORT = "Pilot_PhaseShift_Activate_1P"//no sound
+//const SHIFTER_START_SOUND_3P_TRANSPORT = "Pilot_PhaseShift_Activate_3P"//no sound
+const SHIFTER_END_SOUND_1P_TRANSPORT  = "Alter_Ult_Teleport_VoidExit_1p"
+const SHIFTER_END_SOUND_3P_TRANSPORT  = "Alter_Ult_Teleport_VoidExit_3p"
+const SHIFTER_LOOP_SOUND_1P_TRANSPORT = "Alter_Ult_Teleport_VoidTravel_1p"
+const SHIFTER_LOOP_SOUND_3P_TRANSPORT = "Alter_Ult_Teleport_VoidTravel_3p"
+
+//const SHIFTER_START_SOUND_1P_DOOR 	= "Pilot_PhaseShift_Activate_1P"//no sound
+//const SHIFTER_START_SOUND_3P_DOOR 	= "Pilot_PhaseShift_Activate_3P"//no sound
+const SHIFTER_END_SOUND_1P_DOOR  	= "Alter_Tac_Portal_VoidExit_1p"
+const SHIFTER_END_SOUND_3P_DOOR  	= "Alter_Tac_Portal_VoidExit_3p"
+const SHIFTER_LOOP_SOUND_1P_DOOR	= "Alter_Tac_Portal_VoidTravel_1p"
+const SHIFTER_LOOP_SOUND_3P_DOOR 	= "Alter_Tac_Portal_VoidTravel_3p"
 
 const SHIFTER_PRE_SOUND_1P_TITAN = "Pilot_PhaseShift_PreActivate_1P"
 const SHIFTER_PRE_SOUND_3P_TITAN = "Pilot_PhaseShift_PreActivate_3P"
@@ -77,6 +100,10 @@ global enum eShiftStyle
 	Tunnel,
 	Dash,
 	Gate,
+	PHASETYPE_BREACH,
+	PHASETYPE_GATE,
+	PHASETYPE_TRANSPORT,
+	PHASETYPE_DOOR,
 	COUNT,
 }
 
@@ -195,6 +222,15 @@ int function PhaseShift( entity ent, float warmupTime, float duration, int shift
 				ent.SetSeeOtherNonShifters( false )
 				StatusEffect_AddTimed( ent, eStatusEffect.speed_boost, 0.05, duration, 0.25 )
 			break
+			case eShiftStyle.PHASETYPE_BREACH:
+				                       
+				if ( IsVoidVisionEnabled_PhaseBreach() )
+				{
+					ent.SetSeeOtherNonShifters( true )
+				}
+          
+				StatusEffect_AddTimed( ent, eStatusEffect.speed_boost, 0.05, duration, 0.25 )
+				break
 			case eShiftStyle.Dash:
 				#if SERVER
 				int statusID = StatusEffect_AddEndless( ent, eStatusEffect.phase_dash, 1.0 )
@@ -232,6 +268,12 @@ int function PhaseShift( entity ent, float warmupTime, float duration, int shift
 
 	unreachable
 }
+
+bool function IsVoidVisionEnabled_PhaseBreach()
+{
+	return GetCurrentPlaylistVarBool( "ash_void_vision_enabled", true )
+}
+      
 
 #if SERVER
 
@@ -377,8 +419,39 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 		}
 		else
 		{
-			EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_START_SOUND_3P )
-			EmitSoundOnEntityExceptToPlayerNotPredicted( ent, ent, SHIFTER_LOOP_SOUND_3P )
+			if ( shiftStyle == eShiftStyle.PHASETYPE_GATE )
+			{
+				EmitSoundOnEntityExceptToPlayer( ent, ent, GATE_START_SOUND_3P )
+				EmitSoundOnEntityExceptToPlayer( ent, ent, GATE_LOOP_SOUND_3P )
+			}
+			else if ( shiftStyle == eShiftStyle.PHASETYPE_BREACH )
+			{
+				EmitSoundAtPositionExceptToPlayer( TEAM_ANY, ent.GetOrigin(), ent, SHIFTER_START_SOUND_3P_BREACH )
+				EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_LOOP_SOUND_3P_BREACH )
+			}
+			             
+			else if ( shiftStyle == eShiftStyle.PHASETYPE_TRANSPORT )
+			{
+				//EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_START_SOUND_3P_TRANSPORT )
+				EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_LOOP_SOUND_3P_TRANSPORT )
+			}
+			else if ( shiftStyle == eShiftStyle.PHASETYPE_DOOR )
+			{
+				//EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_START_SOUND_3P_DOOR )
+				EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_LOOP_SOUND_3P_DOOR )
+			}
+         
+			else
+			{
+				                   
+				if ( shiftStyle != eShiftStyle.PHASETYPE_TUNNEL )
+				{
+					//VoidVisionStartPhaseShift( ent, null )
+				}
+          
+				EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_START_SOUND_3P )
+				EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_LOOP_SOUND_3P )
+			}
 		}
 
 		foreach ( statusEffect in ent.p.empStatusEffectsToClearForPhaseShift ) //Not great, done to avoid needing code work to get a separate empSlow/empSTurnEffects
@@ -424,8 +497,27 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 			}
 			else
 			{
-				EmitSoundOnEntityOnlyToPlayer( ent, ent, SHIFTER_PRE_END_SOUND_1P )
-				EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_PRE_END_SOUND_3P )
+				if ( shiftStyle == eShiftStyle.PHASETYPE_GATE )
+				{
+					EmitSoundOnEntityOnlyToPlayer( ent, ent, GATE_PRE_END_SOUND_1P )
+					EmitSoundOnEntityExceptToPlayer( ent, ent, GATE_PRE_END_SOUND_3P )
+				}
+				else if ( shiftStyle == eShiftStyle.PHASETYPE_BREACH )
+				{
+					EmitSoundOnEntityOnlyToPlayer( ent, ent, SHIFTER_PRE_END_SOUND_1P_BREACH )
+					EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_PRE_END_SOUND_3P_BREACH )
+				}
+				             
+				else if ( shiftStyle == eShiftStyle.PHASETYPE_TRANSPORT || shiftStyle == eShiftStyle.PHASETYPE_DOOR )
+				{
+					//no sound
+				}
+          
+				else
+				{
+					EmitSoundOnEntityOnlyToPlayer( ent, ent, SHIFTER_PRE_END_SOUND_1P )
+					EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_PRE_END_SOUND_3P )
+				}
 			}
 		}
 		else
@@ -448,6 +540,9 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 		case eShiftStyle.Dash:
 		case eShiftStyle.Balance:
 			PlayPhaseShiftAppearFX( ent, SHIFTER_DASH_APPEAR_FX )
+			break
+		case eShiftStyle.PHASETYPE_BREACH:
+			PlayPhaseShiftAppearFX_Retail( ent, SHIFTER_DASH_APPEAR_FX, SHIFTER_END_SOUND_3P_BREACH, SHIFTER_END_SOUND_1P_BREACH )
 			break
 		default:
 			PlayPhaseShiftAppearFX( ent )
@@ -492,6 +587,44 @@ void function PhaseShiftDisappearEffectCleanup( entity ent, entity fx, float dur
 		bufferTime = 0.0
 
 	wait max( duration - bufferTime, 0.0 )
+}
+
+entity function PlayPhaseShiftAppearFX_Retail( entity ent, asset effectOverride = $"", string soundOverride3p = "", string soundOverride1p = "" )
+{
+	asset effect
+	if ( effectOverride != $"" )
+		effect = effectOverride
+	else if ( !IsHumanSized( ent ) )
+		effect = SHIFTER_APPEAR_FX_TITAN
+	else
+		effect = SHIFTER_APPEAR_FX
+
+	if ( ent.IsPlayer() )
+	{
+		if ( soundOverride3p != "" )
+			EmitSoundOnEntityExceptToPlayer( ent, ent, soundOverride3p )
+		else if ( ent.IsTitan() )
+			EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_END_SOUND_3P_TITAN )
+		else if ( StatusEffect_HasSeverity( ent, eStatusEffect.phase_gate_tracking ) )
+			EmitSoundOnEntityExceptToPlayer( ent, ent, GATE_END_SOUND_3P )
+		else
+			EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_END_SOUND_3P )
+
+		if ( soundOverride1p != "" )
+			EmitSoundOnEntityOnlyToPlayer( ent, ent, soundOverride1p )
+
+		return PlayFXOnEntityForEveryoneExceptPlayer( effect, ent, ent )
+	}
+	else
+	{
+		if ( ent.IsTitan() )
+			EmitSoundOnEntity( ent, SHIFTER_END_SOUND_3P_TITAN )
+		else
+			EmitSoundOnEntity( ent, SHIFTER_END_SOUND_3P )
+		return PlayFXOnEntity( effect, ent )
+	}
+
+	unreachable
 }
 
 entity function PlayPhaseShiftAppearFX( entity ent, asset effectOverride = $"" )
@@ -760,11 +893,41 @@ void function ClientPhaseShiftFirstPersonFXThread()
 
 				ClientPhaseShift_SCRIPT_HACKS_ON()
 
+				int phaseType = eShiftStyle.Default
+				#if SERVER
+					phaseType = localViewPlayer.GetPhaseShiftType()
+				#else
+					if ( IsValid( localViewPlayer ) && typeof( localViewPlayer.e.phaseShiftType ) != "null" )
+						phaseType = localViewPlayer.e.phaseShiftType
+				#endif
+
 				if ( localViewPlayer.IsTitan() )
 				{
 					EmitSoundOnEntity( localViewPlayer, SHIFTER_START_SOUND_1P_TITAN )
 					EmitSoundOnEntity( localViewPlayer, SHIFTER_LOOP_SOUND_1P_TITAN )
 				}
+				else if ( phaseType == eShiftStyle.PHASETYPE_GATE )
+				{
+					EmitSoundOnEntity( localViewPlayer, GATE_START_SOUND_1P )
+					EmitSoundOnEntity( localViewPlayer, GATE_LOOP_SOUND_1P )
+				}
+				else if ( phaseType == eShiftStyle.PHASETYPE_BREACH )
+				{
+					EmitSoundAtPosition( TEAM_ANY, localViewPlayer.GetOrigin(), SHIFTER_START_SOUND_3P_BREACH )
+					EmitSoundOnEntity( localViewPlayer, SHIFTER_LOOP_SOUND_1P_BREACH )
+				}
+                 
+				else if ( phaseType == eShiftStyle.PHASETYPE_TRANSPORT )
+				{
+					//EmitSoundOnEntity( localViewPlayer, SHIFTER_START_SOUND_1P_TRANSPORT )
+					EmitSoundOnEntity( localViewPlayer, SHIFTER_LOOP_SOUND_1P_TRANSPORT )
+				}
+				else if ( phaseType == eShiftStyle.PHASETYPE_DOOR )
+				{
+					//EmitSoundOnEntity( localViewPlayer, SHIFTER_START_SOUND_1P_DOOR )
+					EmitSoundOnEntity( localViewPlayer, SHIFTER_LOOP_SOUND_1P_DOOR )
+				}
+          
 				else
 				{
 					EmitSoundOnEntity( localViewPlayer, SHIFTER_START_SOUND_1P )

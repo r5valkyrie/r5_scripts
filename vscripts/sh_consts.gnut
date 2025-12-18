@@ -886,6 +886,11 @@ global enum PerfIndexClient
 	InventoryRefreshEnd,
 	UpdateLootRui,
 	LootGoesInPack,
+	PhaseBreach_GetPosition_OLD,
+	PhaseBreach_GetPosition,
+	PhaseBreach_WallToTop,
+	PhaseBreach_ScorePos,
+	PhaseBreach_ScorePos_Generate
 }
 
 global enum PerfIndexServer

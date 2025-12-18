@@ -94,6 +94,9 @@ global struct ClientEntityStruct
 	// for clientside clones to know abt their server counterpart
 	entity svCounterpart
 
+	// phase shift type (added so client code can read phase type without calling server methods)
+	int phaseShiftType = 0
+
 //	array<WeaponMissileMultipleTargetData>   valkTac_targetData
 	bool canBeMeleed = true
 	bool gravityOrbInteraction

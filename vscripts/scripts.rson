@@ -1072,6 +1072,8 @@ Scripts:
 	weapons/mp_ability_phase_walk.nut
 	weapons/mp_ability_3dash.nut
 	weapons/mp_weapon_phase_tunnel.nut
+	weapons/mp_weapon_phase_breach.nut
+	weapons/mp_weapon_arc_bolt.nut
 	weapons/mp_weapon_incap_shield.nut
 	weapons/mp_ability_care_package.nut
 	

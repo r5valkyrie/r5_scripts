@@ -114,6 +114,14 @@ global enum eStreamMode
 	ALL,
 }
 
+global struct WallToTopResults
+{
+	bool found
+	vector pos
+	vector normal
+	entity hitEnt
+}
+
 const int IS_LOBBY_UNSURE = -1
 const int IS_LOBBY_YES = 1
 const int IS_LOBBY_NO = 0
@@ -156,6 +164,8 @@ struct
 	int cachedIsLobby = IS_LOBBY_UNSURE
 	int hud_setting_accessibleChatCache
 } file
+
+global vector UP_VECTOR = <0,0,1>
 
 void function ShUtilityAll_Init()
 {
@@ -2075,6 +2085,80 @@ vector function OriginToGround( vector origin, int traceMask = TRACE_MASK_NPCWOR
 	return traceResult.endPos
 }
 #endif
+
+#if SERVER || CLIENT
+WallToTopResults function TraceFromWallToTop(vector wallPos, vector wallNormal, array<entity> ignoreEnts, float checkBackDistance, float checkUpDistance, int traceMask, int collisionGroup, float DEBUG_DRAW_TIME = 0.0, bool doHullTrace = false, vector hullBoundsMin = ZERO_VECTOR, vector hullBoundsMax = ZERO_VECTOR )
+{
+	WallToTopResults results
+	results.found = false
+
+	vector flattenedNormal = FlattenNormalizeVec( wallNormal )
+	//////////////////////
+	//trace up
+	vector traceUpStart = wallPos + (wallNormal * checkBackDistance )
+	vector traceUpEnd = traceUpStart + (UP_VECTOR * checkUpDistance )
+
+	TraceResults trUp
+	if ( doHullTrace )
+		trUp = TraceHull( traceUpStart, traceUpEnd, hullBoundsMin, hullBoundsMax, ignoreEnts, traceMask, collisionGroup)
+	else
+		trUp = TraceLine( traceUpStart, traceUpEnd, ignoreEnts, traceMask , collisionGroup )
+
+	//if ( trUp.fraction > 0.99 )
+	{
+		///////////////////////
+		// trace back
+		vector traceBackStart = trUp.endPos
+		vector traceBackEnd = traceBackStart - (flattenedNormal * checkBackDistance * 2 )
+		TraceResults trBack
+		if ( doHullTrace )
+			trBack = TraceHull( traceBackStart, traceBackEnd, hullBoundsMin, hullBoundsMax, ignoreEnts, traceMask, collisionGroup)
+		else
+			trBack = TraceLine( traceBackStart, traceBackEnd, ignoreEnts, traceMask , collisionGroup )
+
+		if ( trBack.fraction > 0.5 )
+		{
+			vector ledgeStartTrace = trBack.endPos + (flattenedNormal * checkBackDistance*(1.5-trBack.fraction)/2.0)//trInitial.endPos + (UP_VECTOR * checkUpDistance) - (flattenedNormal * checkBackDistance)
+			vector ledgeEndTrace = ledgeStartTrace - (UP_VECTOR * checkUpDistance * 1.25)
+
+			TraceResults trDownToLedge
+			if ( doHullTrace )
+				trDownToLedge = TraceHull( ledgeStartTrace, ledgeEndTrace, hullBoundsMin, hullBoundsMax, ignoreEnts, traceMask, collisionGroup)
+			else
+				trDownToLedge = TraceLine( ledgeStartTrace, ledgeEndTrace, ignoreEnts, traceMask , collisionGroup )
+
+			if ( trDownToLedge.fraction >= 1.0 )
+			{
+				ledgeStartTrace = trBack.endPos//trInitial.endPos + (UP_VECTOR * checkUpDistance) - (flattenedNormal * checkBackDistance)
+				ledgeEndTrace = ledgeStartTrace - (UP_VECTOR * checkUpDistance * 1.25)
+				if ( doHullTrace )
+					trDownToLedge = TraceHull( ledgeStartTrace, ledgeEndTrace, hullBoundsMin, hullBoundsMax, ignoreEnts, traceMask, collisionGroup)
+				else
+					trDownToLedge = TraceLine( ledgeStartTrace, ledgeEndTrace, ignoreEnts, traceMask , collisionGroup )
+			}
+
+			if ( !trDownToLedge.startSolid && trDownToLedge.fraction < 1.0 && IsNormalVertical(trDownToLedge.surfaceNormal) )
+			{
+				results.found = true
+				results.pos = trDownToLedge.endPos - (FLT_EPSILON*UP_VECTOR)
+				results.normal = trDownToLedge.surfaceNormal
+				results.hitEnt = trDownToLedge.hitEnt
+			}
+		}
+	}
+
+	return results
+}
+#endif
+
+bool function IsNormalVertical( vector normal )
+{
+	float dot = DotProduct( normal, <0, 0, 1> )
+	if ( dot > 0.707106781187 )	//  45 degrees, our benchmark for walkable
+		return true
+
+	return false
+}
 
 //////
 // Shuffle:

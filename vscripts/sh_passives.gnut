@@ -98,6 +98,7 @@ global enum ePassives
 	PAS_VALK,
 	PAS_NOVA,
 	PAS_FUSE,
+	PAS_ASH,
 	PAS_TAC_UPGRADE_ONE,
 	//new
 	PAS_BONUS_SMALL_HEAL,
@@ -207,6 +208,7 @@ void function PassivesShared_Init()
 		AddCallback_OnPassiveChanged( ePassives.PAS_NOVA, Dummie_PassiveToggle )
 		AddCallback_OnPassiveChanged( ePassives.PAS_LOBA_EYE_FOR_QUALITY, Loba_PassiveToggle )
 		AddCallback_OnPassiveChanged( ePassives.PAS_GUNNER, Loba_PassiveToggle )
+		AddCallback_OnPassiveChanged( ePassives.PAS_ASH, Loba_PassiveToggle )
 		
 		RegisterSignal( "PassiveMirage_StartRes" )
 		Bleedout_AddCallback_OnPlayerStartGiveFirstAid( Passives_OnPlayerStartRes )		
