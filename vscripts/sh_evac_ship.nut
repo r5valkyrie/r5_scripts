@@ -13,7 +13,7 @@ global function EvacShip_RegisterNetworking
 	global function EvacShipUseAltAttachments
 	global function GetEvacShipDataForShip
 	global function IsPlayerEvacShipPassenger
-	
+
 	#if DEVELOPER
 		global function Dev_DebugEvacPos
 		global function Dev_TestEvacAtCursorPosition
@@ -24,13 +24,13 @@ global function EvacShip_RegisterNetworking
 	global function EvacShip_ServerCallback_DisplayShipFullHint
 #endif //CLIENT
 
-#if (CLIENT || SERVER)
+#if CLIENT || SERVER
 global function PrecacheObjectiveAsset_Model
 global function GetObjectiveAsset_Model
 
 global function PrecacheObjectiveAsset_FX
 global function GetObjectiveAsset_FX
-#endif // (CLIENT || SERVER)
+#endif // CLIENT || SERVER
 
 global const string EVAC_DROPSHIP_TARGETNAME = "evac_dropship"
 
@@ -402,7 +402,7 @@ void function OnTriggerEvacTrigger( entity trigger, entity ent, entity caller, v
 void function OnTriggerEnterEvacTrigger( entity trigger, entity ent )
 {
 	printt( "on player trigger enter " )
-	
+
 		string failMsg
 		if ( !IsValid( ent ) )
 		{
@@ -542,11 +542,11 @@ void function PlayerBoardsEvacShip( entity player, EvacShipData evacShipData )
 
 	if ( !player.IsInvulnerable() )
 		player.SetInvulnerable()
-	
-		
+
+
 	// Message_New( player, "The danger is behind you... for now. You made it out alive.", 10 )
-	
-	
+
+
 	//fixme Cafe
 	//if crypto in evac trigger while flying around in his drone, get out
 	// if ( !player.IsBot() && IsValid( player.p.cryptoActiveCamera ) )
@@ -1024,8 +1024,7 @@ bool function IsPlayerEvacShipPassenger( entity player )
 #endif
 
 
-#if (CLIENT || SERVER)
-
+#if CLIENT || SERVER
 table<string, asset> s_models
 void function PrecacheObjectiveAsset_Model( string name, asset model )
 {
@@ -1053,5 +1052,5 @@ asset function GetObjectiveAsset_FX( string name )
 	return s_fxs[name]
 }
 
-#endif // (CLIENT || SERVER)
+#endif // CLIENT || SERVER
 

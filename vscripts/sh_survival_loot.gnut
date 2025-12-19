@@ -4638,7 +4638,7 @@ void function OnDeathBoxCreated( entity ent )
 
 void function OnDeathBoxDestroyed( entity ent )
 {
-	#if(CLIENT)
+	#if CLIENT
 	if ( file.allDeathBoxes.contains( ent ) )
 		file.allDeathBoxes.removebyvalue( ent )
 	#endif // CLIENT

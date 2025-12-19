@@ -1113,13 +1113,13 @@ Scripts:
 	sv_pilots_passage.gnut
 ]
 
-When: "DEV && (SERVER || CLIENT || UI)"
+When: "DEV && SERVER || CLIENT || UI"
 Scripts:
 [
 	//sh_dev_utility.nut
 ]
 
-When: "(SERVER || CLIENT || UI)"
+When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	sh_dev_utility.nut // For convenience

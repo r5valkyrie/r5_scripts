@@ -1989,7 +1989,7 @@ const float WEAPON_CHARM_BASE_SCALE = 1.0
 const float WEAPON_CHARM_EXTRA_SCALE = 1.34
 
 
-#if(CLIENT)
+#if CLIENT
 void function ShowRewards_WeaponCharm( ItemFlavor item, vector origin, vector angles, int rarity, int displayIndex, string attachment )
 {
 	EndSignal( level, "EndSetPresentationType" )

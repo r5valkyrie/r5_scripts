@@ -2373,7 +2373,7 @@ bool function IsAccessibilityChatHintEnabled()
 #endif
 
 
-#if (CLIENT || UI) && PC_PROG
+#if CLIENT || UI && PC_PROG
 bool function IsAccessibilitySpeechToChat()
 {
 	if ( !IsAccessibilityAvailable() )

@@ -1851,7 +1851,7 @@ void function WaitForUnfollow( entity player )
 				{
 					if ( Time() >= endTime )
 					{
-#if(CLIENT)
+#if CLIENT
 						player.Skydive_QueueStopFollowing()
 						player.ClientCommand( "StopFreefallFollowMode" )
 #endif

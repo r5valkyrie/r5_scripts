@@ -656,7 +656,7 @@ var function Ranked_GetHistoricalRankedPersistenceData( entity player, string pe
 	#endif
 
 	Assert( rankedPeriodGUID in file.historicalRankedTiers )
-	#if(UI)
+	#if UI
 		return GetPersistentVar( "allRankedData[" + rankedPeriodGUID + "]." + persistenceField )
 	#else
 		return player.GetPersistentVar( "allRankedData[" + rankedPeriodGUID + "]." + persistenceField )
@@ -796,7 +796,7 @@ var function GetRankedPersistenceData( entity player, string persistenceField )
 	{
 		expect string( currentSeasonRefOrNull )
 
-		#if(UI)
+		#if UI
 			return GetPersistentVar( "allRankedData[" + currentSeasonRefOrNull + "]." + persistenceField )
 		#else
 			return player.GetPersistentVar( "allRankedData[" + currentSeasonRefOrNull + "]." + persistenceField )
@@ -804,7 +804,7 @@ var function GetRankedPersistenceData( entity player, string persistenceField )
 	}
 	else
 	{
-		#if(UI)
+		#if UI
 			return GetPersistentVar( "offSeasonRankedData." + persistenceField )
 		#else
 			return player.GetPersistentVar( "offSeasonRankedData." + persistenceField )

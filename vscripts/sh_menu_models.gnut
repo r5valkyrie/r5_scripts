@@ -3318,7 +3318,7 @@ void function OnMouseWheelUp( var unused )
 #endif
 
 
-#if(CLIENT)
+#if CLIENT
 void function ShMenuModels_ClientToUI_OnMouseWheel( bool isDown )
 {
 	foreach ( void functionref() cb in (isDown ? file.mouseWheelDownCallbacks : file.mouseWheelUpCallbacks))

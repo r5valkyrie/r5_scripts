@@ -129,7 +129,7 @@ struct
 		int commsMenuStyle    // eCommsMenuStyle
 
 		array< void functionref(bool menuOpen) > onCommsMenuStateChangedCallbacks
-		
+
 		array<void functionref(array<CommsMenuOptionData> results, int quipsInWheel)> OnBuildMenuOptions
 	#endif // CLIENT
 } file
@@ -467,7 +467,7 @@ void function AddCallback_OnBuildMenuOptions( void functionref( array<CommsMenuO
 {
 	if(file.OnBuildMenuOptions.contains(callback))
 		return
-	
+
 	file.OnBuildMenuOptions.append( callback )
 }
 
@@ -579,7 +579,7 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 			{
 				if(player.GetTeam() == Safe_GetAttackerTeam() && Gamemode() == eGamemodes.fs_snd )
 					results.append( MakeOption_UseHealItem( eHealthPickupType.SND_BOMB ) )
-				
+
 				results.append( MakeOption_UseHealItem( eHealthPickupType.COMBO_FULL ) )
 				results.append( MakeOption_UseHealItem( eHealthPickupType.SHIELD_SMALL ) )
 				results.append( MakeOption_UseHealItem( eHealthPickupType.SHIELD_LARGE ) )
@@ -1508,13 +1508,13 @@ bool function MakeCommMenuSelection( int choice, int wheelInputType )
 			HandleQuipPick( expect ItemFlavor( op.emote ), op.healType )
 			return true
 		}
-		
+
 		case eOptionType.HOLOSPRAY:
 		{
 			HoloSpray_OnUse( choice )
 			return true
 		}
-		
+
 		case eOptionType.SKYDIVE_EMOTE:
 		{
 			entity player = GetLocalViewPlayer()
@@ -1606,7 +1606,7 @@ void function HoloSpray_OnUse( int choice )
 	EmitSoundOnEntity( player, WHEEL_SOUND_ON_EXECUTE )
 	int actualChoice = maxint(0,choice - 1)
 	player.ClientCommand( "HoloSpray_OnUse " + actualChoice )
-	
+
 	ActivateOffhandWeaponByIndex( OFFHAND_EQUIPMENT )
 }
 void function HandleCommsActionPick( int commsAction, int directionIndex )
@@ -1779,7 +1779,7 @@ bool function CommsMenu_CanUseMenu( entity player )
 	if ( IsScoreboardShown() )
 		return false
 
-	
+
 	if ( IsCommsMenuActive() )
 		return false
 
@@ -1787,16 +1787,16 @@ bool function CommsMenu_CanUseMenu( entity player )
 		if ( IsFallLTM() && IsPlayerShadowSquad( player ) )
 			return false
 	#endif
-	
+
 	if( StatusEffect_GetSeverity( player, eStatusEffect.camera_view) > 0 )
 		return false
-	
+
 	if( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_vamp_1v1 || Playlist() == ePlaylists.fs_1v1_headshots_only || Playlist() == ePlaylists.fs_lgduels_1v1 )
 	{
 		if( player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.WAITING || player.GetPlayerNetInt( "FS_1v1_PlayerState" ) == e1v1State.RESTING )
 			return false
 	}
-	
+
 	return true
 }
 
@@ -1845,7 +1845,7 @@ void function ClientCommand_Quip( entity player, array<string> args )
 	PlayQuip( player, commsAction )
 }
 #endif
-#if(CLIENT)
+#if CLIENT
 void function SetHintTextOnHudElem( var hudElem, string text )
 {
 	RuiSetString( Hud_GetRui( hudElem ), "buttonText", Localize( text ) )

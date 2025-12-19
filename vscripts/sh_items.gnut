@@ -1509,7 +1509,7 @@ bool function PlayerIsOnXbox( entity player )
 		#if SERVER
 			return player.GetPlayerPlatformName().tolower() == "x1"
 		#endif
-		#if ( UI || CLIENT )
+		#if UI || CLIENT 
 			#if DURANGO_PROG
 				return true
 			#else
@@ -1519,12 +1519,10 @@ bool function PlayerIsOnXbox( entity player )
 }
 bool function PlayerHasTwitchPrimeRewards( entity player, string rewardName )
 {
-	//#if(CLIENT)
-	//	return player.DoesUserHaveTwitchPrimeReward( rewardName ) ? true : false
-	//#else
-	//	return DoesUserHaveTwitchPrimeReward( rewardName )
-	//#endif
-	return true
+	#if !UI
+		return player.DoesUserHaveTwitchPrimeReward( rewardName ) ? true : false
+	#endif
+	return false
 }
 
 bool function PlayerHasEAAccess( entity player )

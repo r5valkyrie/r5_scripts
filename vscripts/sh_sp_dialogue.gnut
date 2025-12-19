@@ -285,7 +285,7 @@ void function SPDialogueInit()
 
 	AddCallback_OnItemFlavorRegistered( eItemType.character, OnCharacterRegistered )
 
-	#if(CLIENT)
+	#if CLIENT
 		AddCallback_OnClientScriptInit( ClientScriptInitForPlayer )
 		AddCallback_EntitiesDidLoad( EnvironmentSpeakerListInit )
 
@@ -347,7 +347,7 @@ void function OnCharacterRegistered( ItemFlavor flavor )
 #endif //SERVER && DEVELOPER
 
 
-#if(CLIENT)
+#if CLIENT
 int function GetAnyAliasIdForName( string dialogueName )
 {
 	if ( !(dialogueName in file.nameToGroupMap) )
@@ -366,7 +366,7 @@ void function OnCharacterRegistered( ItemFlavor flavor )
 	if ( !file.validVoices.contains( voice ) )
 	{
 		file.validVoices.append( voice )
-		#if(CLIENT)
+		#if CLIENT
 			CachedCharacterData ccd
 			ccd.longName = ItemFlavor_GetLongName( flavor )
 			ccd.portraitImage = CharacterClass_GetCharacterLockedPortrait( flavor )
@@ -379,7 +379,7 @@ void function OnCharacterRegistered( ItemFlavor flavor )
 
 void function EnvironmentSpeakerListInit()
 {
-	#if(CLIENT)
+	#if CLIENT
 		array<entity> speakerEnts = GetEntArrayByScriptName( ENVIRONMENT_SPEAKER_SCRIPT_NAME )
 
 		foreach( speaker in speakerEnts )
@@ -403,7 +403,7 @@ int function RequestCustomDialogueQueueIndex()
 }
 #endif
 
-#if(CLIENT)
+#if CLIENT
 void function CustomSpeakers1ListInit( array<entity> customSpeakers1 )
 {
 	if ( file.customSpeakers1.len() > 0 )
@@ -414,7 +414,7 @@ void function CustomSpeakers1ListInit( array<entity> customSpeakers1 )
 #endif //
 
 
-// #if(CLIENT)
+// #if CLIENT
 // EnvironmentSpeaker function RegisterEnvironmentSpeaker( entity speakerEnt )
 // {
 	// EnvironmentSpeaker speaker
@@ -446,7 +446,7 @@ void function AddCallback_OnDialoguePopupDestroyed( void functionref() cb )
 }
 #endif
 
-// #if(CLIENT)
+// #if CLIENT
 // void function DeregisterEnvironmentSpeaker( EnvironmentSpeaker speaker )
 // {
 	// file.environmentSpeakers.fastremovebyvalue( speaker )
@@ -1015,7 +1015,7 @@ bool function ClientCommand_AllDialogueFinished( entity player, array<string> ar
 #endif //SERVER
 
 
-#if(CLIENT)
+#if CLIENT
 string function GetAnyDialogueAliasFromName( string name )
 {
 	int aliasID = GetAnyAliasIdForName( name )

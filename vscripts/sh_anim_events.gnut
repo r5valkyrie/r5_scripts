@@ -479,7 +479,7 @@ void function GlobalAnimEvent_Show( entity guy )
 
 void function GlobalAnimEvent_HideBodygroupReliable( entity ent, array<string> tokens )
 {
-	#if(CLIENT)
+	#if CLIENT
 		if ( !ent.IsClientOnly() )
 			return
 	#endif
@@ -503,7 +503,7 @@ void function GlobalAnimEvent_HideBodygroupReliable( entity ent, array<string> t
 
 void function GlobalAnimEvent_EndHideBodygroupReliable( entity guy, array<string> tokens )
 {
-	#if(CLIENT)
+	#if CLIENT
 		if ( !guy.IsClientOnly() )
 			return
 	#endif

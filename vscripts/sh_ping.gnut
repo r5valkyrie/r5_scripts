@@ -459,7 +459,7 @@ void function OnPlayerConnected( entity player )
 
 #endif // SERVER
 
-#if(CLIENT)
+#if CLIENT
 bool function Ping_ShouldExecutePing( entity player )
 {
 	if ( InPrediction() && !IsFirstTimePredicted() )
@@ -481,7 +481,7 @@ bool function Ping_ShouldExecutePing( entity player )
 
 void function CodeCallback_PingOnDown( entity player )
 {
-	#if(CLIENT)
+	#if CLIENT
 		if ( !Ping_ShouldExecutePing( player ) )
 			return
 
@@ -1792,7 +1792,7 @@ entity function GetDeathBoxFromFlyerForHitEnt( entity hitEnt )
 	if ( !IsValid( hitEnt ) )
 		return null
 
-	#if(CLIENT)
+	#if CLIENT
 		if ( !(hitEnt instanceof C_DynamicProp) )
 			return null
 
@@ -1916,44 +1916,12 @@ bool function EntIsADynamicProp( entity ent )
 	#if SERVER
 
 
-#elseif(CLIENT)
+#elseif CLIENT
 		if ( ent instanceof C_DynamicProp )
 			return true
 	#endif
 	return false
 }
-
-
-#if(false)
-
-
-
-
-
-
-
-
-
-
-#endif //
-
-#if(false)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif
 
 PingCommandParams function GetPingParamsForHitEnt( entity hitEnt, entity player, PingTraceResults tr )
 {
@@ -2543,7 +2511,7 @@ int function GetEnemyPingCommsAction( int pingType, entity pingedEnt )
 	return eCommsAction.PING_ENEMY_SPOTTED_SPECIFIC
 }
 #endif
-#if(CLIENT)
+#if CLIENT
 void function DoPlayerDefaultPingForLootEntity( entity player, entity lootEnt )
 {
 	if ( !Waypoint_LootItemIsBeingPingedByAnyone( lootEnt ) )

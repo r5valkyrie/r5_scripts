@@ -81,7 +81,7 @@ struct
 	bool                      initializingCodeDevMenu = false
 	string                    codeDevMenuPrefix = DEV_MENU_NAME + "/"
 	table<string, DevCommand> codeDevMenuCommands
-	
+
 	array<void functionref()>                   OnDevMenuLoaded
 
 	array<DevCommand> levelSpecificCommands = []
@@ -92,7 +92,7 @@ void function AddUICallback_OnDevMenuLoaded( void functionref() callback ) //(ca
 {
 	if(file.OnDevMenuLoaded.contains(callback))
 		return
-	
+
 	file.OnDevMenuLoaded.append( callback )
 }
 
@@ -332,7 +332,7 @@ void function SetupDefaultDevCommandsMP()
 
 		SetupDevCommand( "Toggle NoClip", "noclip" )
 		SetupDevCommand( "Toggle Infinite Ammo", "infinite_ammo" )
-		SetupDevCommand( "Toggle HUD", "ToggleHUD" )		
+		SetupDevCommand( "Toggle HUD", "ToggleHUD" )
 		SetupDevCommand( "Toggle God Mode", "demigod" )
 		SetupDevCommand( "Toggle Third Person Mode", "ToggleThirdPerson" )
 
@@ -412,10 +412,7 @@ void function SetDevMenu_Editor( var _ )
 {
 	thread ChangeToThisMenu( SetupEditor )
 }
-void function SetDevMenu_CustomPRModel( var _ )
-{
-	thread ChangeToThisMenu( SetupChangeCharacterModel )
-}
+
 void function DEV_InitLoadoutDevSubMenu()
 {
 	file.initializingCodeDevMenu = true
@@ -708,7 +705,7 @@ void function SetupHeirloomsDevMenu()
 		SetupDevCommand( "Mjolnir", "giveheirloom 3" )
 		SetupDevCommand( "Le Karambit", "giveheirloom 4" )
 	}
-	
+
 	SetupDevCommand( "Dragonfly Knife", "giveheirloom 1" )
 }
 
@@ -1135,24 +1132,9 @@ void function SetupChangeSurvivalCharacterClass()
 	#endif
 }
 
-void function SetupChangeCharacterModel()
-{
-	#if UI
-		SetupDevCommand( "TF2 Ash", "Flowstate_AssignCustomCharacterFromMenu 6")
-		SetupDevCommand( "TF2 Blisk", "Flowstate_AssignCustomCharacterFromMenu 1")
-		SetupDevCommand( "TF2 Jack Cooper", "Flowstate_AssignCustomCharacterFromMenu 8")
-		SetupDevCommand( "Ballistic", "Flowstate_AssignCustomCharacterFromMenu 12")
-		SetupDevCommand( "Fade", "Flowstate_AssignCustomCharacterFromMenu 2")
-		SetupDevCommand( "Rhapsody", "Flowstate_AssignCustomCharacterFromMenu 5")
-		SetupDevCommand( "Crewmate [3p only]", "Flowstate_AssignCustomCharacterFromMenu 3")
-		SetupDevCommand( "MRVN [3p only]", "Flowstate_AssignCustomCharacterFromMenu 13")
-		SetupDevCommand( "Pete", "Flowstate_AssignCustomCharacterFromMenu 16" )
-	#endif
-}
-
 void function SetupOverrideSpawnSurvivalCharacter()
 {
-	#if(UI)
+	#if UI
 		SetupDevCommand( "Random (default)", "dev_sur_force_spawn_character random" )
 		SetupDevCommand( "Shipping only", "dev_sur_force_spawn_character special" )
 		array<ItemFlavor> characters = clone GetAllCharacters()

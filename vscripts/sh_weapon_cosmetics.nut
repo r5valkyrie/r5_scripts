@@ -235,7 +235,7 @@ array<int> function FS_ReturnLegendaryModelMapForWeaponFlavor( ItemFlavor weapon
 		return fileLevel.legendaryWeaponSkinsMap_FS[ ItemFlavor_GetHumanReadableRef( weaponFlavor ) ]
 	else
 		return []
-		
+
 	unreachable
 }
 #endif
@@ -261,7 +261,7 @@ void function SetupWeaponSkin( ItemFlavor skin )
 		if ( !(worldModel in weaponLegendaryIndexMap) )
 		{
 			int skinLegendaryIndex = weaponLegendaryIndexMap.len()
-			
+
 			#if !UI
 				// printt( skinLegendaryIndex, "to weapon:", ItemFlavor_GetHumanReadableRef( weaponFlavor ), "Added to worldModel", worldModel)
 				if ( !( ItemFlavor_GetHumanReadableRef( weaponFlavor ) in fileLevel.legendaryWeaponSkinsMap_FS ) )
@@ -374,7 +374,7 @@ int function WeaponSkin_GetSortOrdinal( ItemFlavor flavor )
 	return fileLevel.cosmeticFlavorSortOrdinalMap[flavor]
 }
 
-#if DEVELOPER && CLIENT 
+#if DEVELOPER && CLIENT
 void function DEV_SetCharmForCurrentWeapon( asset charmModel, string attachmentName )
 {
 	entity player = GetLocalClientPlayer()
@@ -682,7 +682,7 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 				#if CHARM_DEBUG
 					printt( "CHARM_DEBUG: Setting weapon charm " + string(ItemFlavor_GetAsset( charm )) + " for weapon " + ent + "( " + ent.GetModelName() + ") owned by player " + ent.GetWeaponOwner() + "(server)" )
 				#endif
-				
+
 				//ent.SetWeaponCharmOrArtifactBladeGUID( ent.e.charmItemFlavorGUID )
 				if ( charmModel != "" )
 					ent.SetWeaponCharm( charmModel, attachmentName )
@@ -698,9 +698,9 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 			Assert( ent.GetCodeClassName() == "dynamicprop", ent + " has classname \"" + ent.GetCodeClassName() + "\" instead of \"dynamicprop\"" )
 
 		#if CHARM_DEBUG
-			printt( "CHARM_DEBUG: Setting weapon charm " + ItemFlavor_GetHumanReadableRef( charm ) + " for weapon " + ent + " ( " + ent.GetModelName() + " ) (client)" )
-		#endif 
-		
+			printt( "CHARM_DEBUG: Setting weapon charm " + ItemFlavor_GetHumanReadableRef( charm ) + " for weapon " + ent + " ( " + ent.GetModelName() + " )  CLIENT" )
+		#endif
+
 			DestroyCharmForWeaponEntity( ent )
 			if ( charmModel != $"" )
 			{
@@ -754,7 +754,7 @@ void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
 		camoIndex = 0
 	}
 
-	if ( camoIndex >= 210 ) //CAMO_SKIN_COUNT 
+	if ( camoIndex >= 210 ) //CAMO_SKIN_COUNT
 	{
 		Assert ( false, "Tried to set camoIndex of " + string(camoIndex) + " but the maximum index is " + string(CAMO_SKIN_COUNT) )
 		camoIndex = 0

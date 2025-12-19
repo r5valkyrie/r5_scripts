@@ -760,7 +760,7 @@ void function AnimWindow_ShadowFormFX_Start( ScriptAnimWindow window, var settin
 }
 
 
-#if(CLIENT)
+#if CLIENT
 void function AnimWindow_ShadowFormBodyFX_Thread( entity ent, int attachIndex, float fadeInDuration, float fadeOutDuration, bool fadeAlphaIN = false, bool fadeAlphaOUT = false )
 {
 	EndSignal( ent, "OnDestroy" )
@@ -975,7 +975,7 @@ void function AnimWindow_LifelineDroneCommonFX_Thread( entity ent )
 
 	fxToCleanUp.append( StartParticleEffectOnEntity( ent, LIFELINE_DRONE_EYEGLOW_FX_IDX, FX_PATTACH_POINT_FOLLOW, ent.LookupAttachment( "EYEGLOW" ) ) )
 
-	if ( SERVER || (CLIENT && ent.IsClientOnly()) )
+	if ( SERVER || CLIENT && ent.IsClientOnly() )
 		ent.SetSkin( LIFELINE_DRONE_ONLINE_SKIN )
 
 	OnThreadEnd( void function() : ( ent, fxToCleanUp ) {
@@ -985,7 +985,7 @@ void function AnimWindow_LifelineDroneCommonFX_Thread( entity ent )
 				EffectStop( fxHandle, true, true )
 		}
 
-		if ( IsValid( ent ) && (SERVER || (CLIENT && ent.IsClientOnly())) )
+		if ( IsValid( ent ) && (SERVER || CLIENT && ent.IsClientOnly()) )
 			ent.SetSkin( LIFELINE_DRONE_OFFLINE_SKIN )
 	} )
 

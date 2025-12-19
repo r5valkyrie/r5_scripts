@@ -229,7 +229,7 @@ int function GetInGameFriendCount( bool filterParty = false )
 }
 #endif
 
-#if(UI)
+#if UI
 bool function HasCommunityUserPlayedApex( CommunityUserInfo cui )
 {
 	int stryderCharacterData = cui.charData[ ePlayerStryderCharDataArraySlots.CHARACTER ]
