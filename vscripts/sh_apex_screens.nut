@@ -8,6 +8,10 @@ global function SvApexScreens_HighlightPlayerForKillSpree
 global function SvApexScreens_SetEventTimeA
 global function SvApexScreens_SetEventTimeB
 global function SvApexScreens_SetEventIntA
+global function SvApexScreens_SetScreenSequenceForGameState
+global function SvApexScreens_RefreshScreenSequence
+global function SvApexScreens_QueueCustomScreenSequence
+global function SvApexScreens_SetLogoModeCenterOnly
 #endif
 
 #if SERVER && DEVELOPER
@@ -112,6 +116,17 @@ global enum eApexScreenMods
 	RED = (1 << 0),
 }
 
+global enum eApexScreenDisplayGroup
+{
+	DISPLAY_PLAYER,
+	DISPLAY_PLAYER_SQUAD,
+	DISPLAY_LOGOS,
+	DISPLAY_CENTER_LOGO_ONLY,
+	DISPLAY_RANDOM_PLAYERS,
+	DISPLAY_PLAYER_SQUAD_CENTERED,
+	DISPLAY_LOCALPLAYER,
+	DISPLAY_RANDOM_LOCALTEAMMATE
+}
 
 #if CLIENT
 global struct ScreenOverrideInfo
@@ -198,12 +213,28 @@ struct ApexScreenJob
 {
 	int mode = eApexScreenMode.INVALID
 }
+
+global struct ApexScreenSettingsGroup
+{
+	float duration = 20.0
+	int displayMode = eApexScreenDisplayGroup.DISPLAY_LOGOS
+	EncodedEHandle functionref() getFocusPlayerFunc
+	int overrideScreen_L = -1
+	int overrideScreen_C = -1
+	int overrideScreen_R = -1
+}
 #endif
 
 
 struct {
 	#if SERVER && DEVELOPER
 		bool DEV_inDebugPreviewMode = false
+	#endif
+
+	#if SERVER
+		array<ApexScreenSettingsGroup> queuedScreenSettings
+		table< int, array<ApexScreenSettingsGroup> > gameStateToScreenSettings
+		bool logoModeCenterOnly = false
 	#endif
 
 	#if CLIENT
@@ -1587,3 +1618,25 @@ void function ServerToClient_ApexScreenRefreshAll()
 //	// logo
 //}
 //#endif
+
+#if SERVER
+void function SvApexScreens_SetScreenSequenceForGameState( int gameState, array<ApexScreenSettingsGroup> sequence )
+{
+	file.gameStateToScreenSettings[ gameState ] = sequence
+}
+
+void function SvApexScreens_RefreshScreenSequence()
+{
+	thread ApexScreenMasterThink()
+}
+
+void function SvApexScreens_QueueCustomScreenSequence( ApexScreenSettingsGroup sequence )
+{
+	file.queuedScreenSettings.append( sequence )
+}
+
+void function SvApexScreens_SetLogoModeCenterOnly( bool logoModeCenterOnly )
+{
+	file.logoModeCenterOnly = logoModeCenterOnly
+}
+#endif

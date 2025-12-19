@@ -36,6 +36,7 @@ Scripts:
 [
 	flowstate_globals.gnut
 	sh_damage_history.gnut // needs to come before _entitystructs
+	realms.gnut
 	sh_mod_callbacks.gnut
 ]
 
@@ -547,6 +548,7 @@ Scripts:
 
 	mp/sh_lootbin.gnut
 	mp/_sh_tutorial.gnut
+	mp/sh_combatrange_spawning.nut
 	mp/sh_survival_training.gnut
 	mp/firing_range.gnut
 	mp/sh_airdrops.gnut

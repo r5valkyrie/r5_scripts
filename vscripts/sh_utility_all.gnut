@@ -2373,21 +2373,13 @@ bool function IsAccessibilityChatHintEnabled()
 #endif
 
 
-#if (CLIENT || UI) && PC_PROG
+#if CLIENT || UI && PC_PROG
 bool function IsAccessibilitySpeechToChat()
 {
 	if ( !IsAccessibilityAvailable() )
 		return false
 
 	return GetConVarInt( "hudchat_play_text_to_speech" ) > 0
-}
-#endif
-
-#if SERVER || CLIENT
-void function CopyRealmsFromTo( entity source, entity target )
-{
-	target.RemoveFromAllRealms()
-	target.AddToOtherEntitysRealms( source )
 }
 #endif
 
