@@ -3,7 +3,6 @@ global function HealthRegen_Init
 
 //global function PilotHealthRegenThinkSP
 global function PilotShieldHealthUpdate
-global function ShadowHealthUpdate
 
 const NO_HEALTH_DMG = ( 1 << eDamageSourceId.mp_ability_crypto_drone_emp ) // | ( 1 << eDamageSourceId. )
 const string SOUND_SHIELD_BREAK_3P_VS_1P = "humanshield_break_3p_vs_1p"
@@ -132,31 +131,6 @@ void function HealthRegen_OnPassiveChanged(entity player, int passive, bool didH
 void function HealthRegen_OnPlayerClassChangedMP( entity player )
 {	
 	thread PilotHealthRegenThinkMP( player )
-}
-
-
-bool function ShadowHealthUpdate( entity player, var damageInfo )
-{
-	float damage = DamageInfo_GetDamage( damageInfo )
-	
-	if ( damage == 0 )
-		return false
-		
-	bool shadowSaveFromDeath = false
-	
-	DamageInfo_AddCustomDamageType( damageInfo, DF_SHADOW_DAMAGE )
-	
-	// If this shot would kill the player, ask Shadow features if they'd like to save him
-	if ( player.GetHealth() - int( damage ) <= 0 )
-	{
-		foreach ( func in player.e.entOnShadowHealthExhaustedCallbacks )
-		{
-			if ( func( player ) )
-				shadowSaveFromDeath = true
-		}
-	}
-	
-	return shadowSaveFromDeath
 }
 
 int function PilotShieldHealthUpdate( entity player, var damageInfo )

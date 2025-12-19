@@ -10,8 +10,8 @@ global function DumpGunRackContent
 global const string GUN_RACK_CLASS_NAME = "script_gun_rack"
 global const string TF2_GUN_RACK = "control_gun_rack"
 
-const asset GUNRACK_MODEL = $"mdl/industrial/gun_rack_arm_down.rmdl"
-const asset GUNRACK_MODEL_OFF = $"mdl/industrial/gun_rack_arm_down_new_off.rmdl"
+global const asset GUNRACK_MODEL = $"mdl/industrial/gun_rack_arm_down.rmdl"
+global const asset GUNRACK_MODEL_OFF = $"mdl/industrial/gun_rack_arm_down_new_off.rmdl"
 
 struct
 {

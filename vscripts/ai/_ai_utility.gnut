@@ -2,7 +2,7 @@ untyped
 
 globalize_all_functions
 int bots = 1
-global const asset FIRINGRANGE_DOOR_ASSET = $"mdl/door/canyonlands_door_single_02.rmdl"
+
 void function GiveP2020AkimboTest()
 {
 	entity player = gp()[0]

@@ -266,8 +266,6 @@ global struct ServerEntityStruct
 	bool destroyOutOfBounds = false
 	bool destroyTriggerHurt = false
 
-	bool   recreateLootOnPickup = false
-
 	//Rodeo
 	// entity lastRodeoAttacker
 

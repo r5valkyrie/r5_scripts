@@ -75,7 +75,6 @@ global function Loot_AddCallback_OnGiveMainWeapon
 global function Loot_RemoveCallback_OnGiveMainWeapon
 global function Loot_AddCallback_OnWeaponDrop
 global function Loot_RemoveCallback_OnWeaponDrop
-global function Loot_AddCallback_OnLootSpawn
 global function Loot_IsStandardSurvivalLootEnabled
 
 global function AddCallback_OnPlayerWeaponAttachmentChanged
@@ -2045,12 +2044,6 @@ void function GiveLoot( entity player, string refOrGroup, int countOverride = -1
 	int count        = ((countOverride >= 0) ? countOverride : countNatural)
 	entity item      = SpawnGenericLoot( ref, player.GetOrigin() + <0, 0, 32>, <-1, -1, -1>, count )
 	Survival_PickupItem( item, player, 0 )
-}
-
-void function Loot_AddCallback_OnLootSpawn( void functionref(entity, LootData, int) callbackFunc )
-{
-	Assert( !file.Callbacks_OnLootSpawn.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Loot_AddCallback_OnLootSpawn" )
-	file.Callbacks_OnLootSpawn.append( callbackFunc )
 }
 
 string function GetRefOrRefFromGroup( string refOrGroup )
