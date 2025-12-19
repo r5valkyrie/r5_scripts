@@ -3,8 +3,7 @@ global const float METERS_TO_INCHES = 39.3701
 global const float INCHES_TO_METERS = 0.0254
 global const float KILOMETERS_TO_INCHES = 39370.1
 
-global string SDK_VERSION = "v2.6"
-global string FLOWSTATE_VERSION = "v4.5"
+global string SDK_VERSION = "v2.9"
 global const FLOWSTATE_HWLTM_SHIELD_AMOUNT = 25
 
 global const SCRIPT_GAME_VERSION__RELEASE = true  //not used currently
@@ -2676,30 +2675,6 @@ global enum eValidation
 	ASSERT,
 }
 
-global const int REALM_COUNT = 32
-global enum eRealms
-{
-	// Default realm for players in the match
-	DEFAULT 					= 0,
-	PROTO_ABILITY_HAUNT = 1,
-
-	//----------------------
-	// STAGING AREA REALMS
-	//----------------------
-
-	// We need to reserve realms for players in the staging area. Each player is in 2 player realms, one for just your squad so things like ultimates are
-	// only seen by your squad, and also in one of a few common realms with other squads on the server so we see some of the other players running around.
-	// In a 60 man, 3 player squads game we need the following number of slots:
-	// 60 players / 15 players per common realm = 4 common slots
-	// 60 players / 3 players per squad = 20 squad slots
-	//   24 realm slots total needed
-	//   more realms may be needed for playlists with smaller squads
-	STAGING_REALM_PLAYERS_START = 2,
-	STAGING_REALM_PLAYERS_END	= 63,
-
-	_count = REALM_COUNT
-}
-
 global const bool HAS_AUTOPICKUP_STACKABLE_ITEMS = false
 global const bool HAS_FIRST_PERSON_SPECTATE = true
 global const bool HAS_ENEMY_NAMES_OVERHEAD = false
@@ -2735,6 +2710,254 @@ global const vector MEMBER_COLOR1 = <245, 165, 35> //old <50, 158, 255>
 global const vector MEMBER_COLOR2 = <125, 175, 10> //old <68, 216, 17>
 global const vector MEMBER_COLOR3 = <10, 180, 180> //old <208, 215, 6>
 global const vector MEMBER_COLOR4 = <150, 95, 215> //old <153, 6, 215>
+
+// -------------------
+// ----- Training Dummie & Combat Range Consts & Enum
+// -------------------
+global const string FIRING_RANGE_TARGET_FLIP_SCRIPTNAME = "fr_target_flip"
+global const string FIRING_RANGE_TARGET_FOLD_SCRIPTNAME = "fr_target_fold"
+
+global const string FIRING_RANGE_DUMMIE_SCRIPT_NAME = "npc_dummie"
+global const string FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME = "npc_dummie_combat"
+
+global const int FIRING_RANGE_AI_BUDGET_MAX = 190
+
+global const string COMBATRANGE_DUMMIE_HIGHLIGHT = "enemy_sonar"
+
+                         
+global enum eFRSettingType
+{
+	// ----- Personal FR Bool Settings.
+	// To add new Personal Settings, add to the end of this section.
+	SHOWRUI,				// Show the Settings RUI Overlay?
+	SHOWDYNSTATS,			// Show Dynamic Stats?
+	SHOWDYNTIMER,			// Show Dynamic Stats Timer?
+	LEGENDUPGRADES_RESET,	// Reset Legend Upgrades.
+	INFINITEMAGS,			// Infinite Reloads: ON/OFF
+	SHOWHITMARKS,			// Hit Markers: ON/OFF
+	SHOW3RDPERSON,			// 3rd-Person Mode: ON/OFF
+	                    
+		LEGENDUPGRADESENABLED,
+                           
+
+	// ----- Shared FR bool Settings.
+	// To add new Shared Settings, add to the end of this section.
+	FRIENDLYFIRE,			// Friendly Fire: ON/OFF
+	FRDUMMIEHELMETMATCHSHIELDS,	// Dummie Helmets Match Shield Levels.
+	                   
+	DYNAMICDUMMIESON,	// Dynamic Dummies Enabled/Disabled
+	DUMMIEHIGHLIGHTSON,	// Whether or not to highlight dummies.
+       
+	//	// ----- Shared Int Settings.
+	// To add new Shared Int Setting:
+	//		- add to the end of this section
+	//		- register a new NetVar and PVar.
+	//		- follow the function patterns established by targetspeed and frdummieshieldlvl.
+	//			- UCB_SV_FRSetting_<SettingName>_Change(): called from UI.
+	//			- FRSetting_<SettingName>_Set_OnPlayer(): called from above to set the data.
+	//			- SCB_Broadcast_FRSettings_<SettingName>_Change(): Remote called from above to notify players of change.
+	TARGETSPEED,			// TARGET SPEED: < number >
+	FRDUMMIESHIELDLVL,		// FIRING RANGE DUMMIE SHIELD LEVEL: < number >
+	FRDUMMIESPEED,
+	FRDUMMIEMOVEMENT,
+	FRDUMMIESTANCE,
+                   
+	FRDUMMIESHOOTING,
+	FRDUMMIESPAWNDISTS,
+      
+	COUNT_
+}
+
+global enum eTarget_Selector_Speeds
+{
+	CROUCHWALK 	= 1,
+	WALK		= 2,
+	RUN			= 3,
+	ZIPLINE		= 4,
+	COUNT_
+}
+
+global const int FR_RANDOM_SHIELD_SETTING = 10
+
+global enum eDummie_Selector_Shields
+{
+	WHITE 	= 1,
+	BLUE 	= 2,
+	PURPLE 	= 3,
+	RED 	= 4,
+	RANDOM 	= 10,
+	COUNT_	= 11
+}
+
+global enum eDummie_Selector_Movements
+{
+	STAYINPLACE,
+	STRAFECONST,
+	STRAFERANDOM,
+	RANDOM,
+	COUNT_
+}
+
+global enum eDummie_Selector_States
+{
+	STAND,
+	CROUCH,
+	RANDOM,
+	COUNT_
+}
+
+global enum eDummie_Selector_Speeds
+{
+	WALK 	= 1,
+	RUN		= 2,
+	RANDOM 	= 3,
+	COUNT_
+}
+
+global const int FRINTSETTINGS_MAXSELECTIONS = 20
+
+global struct sFRS_PackedBools
+{
+	int frSS_PackedBools = 0
+	int frPS_PackedBools = 0
+}
+
+
+global enum eFRPSettingType
+{
+	SHOW_RUI,
+	SHOW_DYNSTATS,
+	INFINITERELOADS,
+	SHOW_HITMARKS,
+	COUNT_
+}
+
+//
+global enum eDummieOptions
+{
+	                   
+	DYNSPAWNS_ON,
+       
+	COUNT_
+}
+
+// Used internally, set by the Selectors.
+global enum eDummieBehaviorType
+{
+	// - Movements( fka "Movement Behaviors" ) Start
+	STAYINPLACE,
+	STRAFE,
+	// - Movements End. To Add more Movements, add to above.
+	// - Modifiers( aka "Dummie Settings" in-game ) Start
+	// -- Stances subset start.
+	CANSTAND,
+	CANCROUCH,
+	// -- Stances subset end.
+	RANDINTERVALS,
+	// - Modifiers End. To add new Modifiers, add to above.
+//%if HAS_COMBATRANGE
+//	// - Spawn Settings subset start.
+//	DYNSPAWNS_ON,
+//	// - Spawn Settings End. To add more Spawn Settings, add to the above.
+//%endif // HAS_COMBATRANGE
+	// ---
+	COUNT_
+}
+
+global enum eDummieSettingChangeType
+{
+	NONE,
+	DECREASED,
+	INCREASED,
+	TOGGLED,
+	COUNT_
+}
+
+global enum eFiringRangeSettingsPINRecordContext
+{
+	MENUCLOSE,
+	DUMMIEKILLED,
+	PLAYERDEATHBYCRUSH,
+	PLAYERDEATHBYFALL,
+	PLAYERDEATHBYNONPLAYER,
+	PLAYERDEATHBYOOB,
+	PLAYERDEATHBYPLAYER,
+	PLAYERDEATHBYPLAYEREXECUTION,
+	PLAYERDEATHBYUNKNOWN,
+	COUNT_
+}
+
+global enum eFRLootSource
+{
+	GROUND,
+	BLACKMARKET,
+	SUPPLYBOX,
+	OTHERSOURCE,
+	COUNT_
+}
+
+                               
+
+// -------------------
+// ----- Combat Range stuff that has to be in here so other files ( like menu_dev.nut ) can see them.
+// -------------------
+
+global enum eFiringRangeChallengeState
+{
+	FR_CHALLENGE_INACTIVE,
+	FR_CHALLENGE_PENDING,
+	FR_CHALLENGE_ACTIVE,
+	FR_CHALLENGE_POST
+}
+
+                   
+global enum eCRng_SettingTypes
+{
+	INFINITESPAWNSON,
+	COUNT_
+}
+
+global enum eCRng_SpawnDistances
+{
+	CQB,	// 5m - 25m
+	MID,	// 25m - 50m
+	FAR,	// 50m - 125m
+	VFAR,	// > 125m
+	COUNT_
+}
+
+global enum eDummie_Selector_Shooting
+{
+	OFF,
+	EASY,
+	MEDIUM,
+	HARD,
+	FULLCOMBAT,
+	COUNT_
+}
+
+global enum eDummie_Selector_SpawnDists
+{
+	CQB,
+	MID,
+	FAR,
+	VFAR,
+	RANDOM,
+	COUNT_
+}
+
+global enum eDummieShooting_ParameterTypes
+{
+	SHOTDELAY,
+	SHOTACCURACY,
+	MAXTIMEONONETARGET,
+	MAXDUMMIESPERPLAYER,
+	COUNT_
+}
+
+                         
+// -------------------
+
 
 global enum eQuality
 {

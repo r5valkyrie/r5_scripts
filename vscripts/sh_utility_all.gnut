@@ -2383,14 +2383,6 @@ bool function IsAccessibilitySpeechToChat()
 }
 #endif
 
-#if SERVER || CLIENT
-void function CopyRealmsFromTo( entity source, entity target )
-{
-	target.RemoveFromAllRealms()
-	target.AddToOtherEntitysRealms( source )
-}
-#endif
-
 #if CLIENT || UI
 bool function IsAccessibilityChatToSpeech()
 {

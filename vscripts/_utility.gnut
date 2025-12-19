@@ -5361,17 +5361,6 @@ void function DestroyAfterDelay( entity ent, float delay )
 	ent.Destroy()
 }
 
-void function AddToUltimateRealm( entity player, entity offhandWeapon )
-{
-	entity ultimateAbility = player.GetOffhandWeapon( OFFHAND_INVENTORY )
-
-	if( !IsValid( ultimateAbility ) )
-		return
-
-	offhandWeapon.RemoveFromAllRealms()
-	offhandWeapon.AddToOtherEntitysRealms( ultimateAbility )
-}
-
 void function UpdateDamageState( entity ent, var damageInfo )
 {
 	//stub
