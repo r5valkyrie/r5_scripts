@@ -228,4 +228,20 @@ void function ClientCodeCallback_SetupRumble()
 	DefineRumble( "wraith_phase_buildup",
 		[ pt(0.0,0.01), pt(0.6,0.05), pt(0.8,0.1), pt(1.0,0.15), pt(1.2,0.2), pt(1.4,0.3), pt(1.6,0.4), pt(1.8,0.5), pt(2.0,0.7), pt(2.2,0.9), pt(2.4,1.0) ],
 		[ pt(0.0,0.01), pt(0.6,0.05), pt(0.8,0.1), pt(1.0,0.15), pt(1.2,0.2), pt(1.4,0.3), pt(1.6,0.4), pt(1.8,0.5), pt(2.0,0.7), pt(2.2,0.9), pt(2.4,1.0) ] )
+
+	DefineRumble( "loba_tactical_pull",
+		[	pt( 0.00, 0.10 ),	pt( 0.10, 0.25 ),	pt( 0.15, 0.00 )											],
+		[	pt( 0.00, 1.00 ),	pt( 0.10, 0.00 ),						pt( 0.20, 1.00 ),	pt( 0.10, 0.00 )	] )
+	DefineRumble( "loba_tactical_toss",
+		[	pt( 0.00, 1.00 ),						pt( 1.00, 0.00 )						],
+		[						pt( 0.20, 1.00 ),						pt( 1.20, 0.00 )	] )
+	DefineRumble( "loba_tactical_toss_loop",
+		[	pt( 0.00, 0.00 )											],
+		[	pt( 0.00, 0.07 ),	pt( 0.80, 0.16 ),	pt( 1.60, 0.07 )	] )
+	DefineRumble( "loba_tactical_impact_and_teleport",
+		[	pt( 0.00, 1.00 ),	pt( 0.20, 0.00 ),	pt( 0.45, 0.00 )	pt( 0.5, 1.00 ),	pt( 1.10, 0.00 )	],
+		[	pt( 0.00, 0.00 ),						pt( 0.45, 1.00 )											] )
+	DefineRumble( "loba_ultimate_deploy",
+		[	pt( 0.00, 1.00 ),	pt( 0.10, 0.00 ),						],
+		[	pt( 0.00, 1.00 ),						pt( 1.00, 0.00 )	] )
 }

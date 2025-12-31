@@ -146,30 +146,6 @@ global const array<asset> SHARED_BANNERFRAMES_ASSET_LIST = [
 global array<asset> WEAPON_ASSETS =
 [
 	$"settings/itemflav/loot/main_weapon/alternator.rpak",
-	$"settings/itemflav/loot/main_weapon/autopistol.rpak",
-	$"settings/itemflav/loot/main_weapon/devotion.rpak",
-	$"settings/itemflav/loot/main_weapon/dmr.rpak",
-	$"settings/itemflav/loot/main_weapon/eva.rpak",
-	$"settings/itemflav/loot/main_weapon/flatline.rpak",
-	$"settings/itemflav/loot/main_weapon/g7.rpak",
-	$"settings/itemflav/loot/main_weapon/hemlok.rpak",
-	$"settings/itemflav/loot/main_weapon/kraber.rpak",
-	$"settings/itemflav/loot/main_weapon/mastiff.rpak",
-	$"settings/itemflav/loot/main_weapon/mozambique.rpak",
-	$"settings/itemflav/loot/main_weapon/pdw.rpak",
-	$"settings/itemflav/loot/main_weapon/peacekeeper.rpak",
-	$"settings/itemflav/loot/main_weapon/r97.rpak",
-	$"settings/itemflav/loot/main_weapon/r301.rpak",
-	$"settings/itemflav/loot/main_weapon/semipistol.rpak",
-	$"settings/itemflav/loot/main_weapon/spitfire.rpak",
-	$"settings/itemflav/loot/main_weapon/tripletake.rpak",
-	$"settings/itemflav/loot/main_weapon/wingman.rpak",
-	$"settings/itemflav/loot/main_weapon/energy_ar.rpak",
-	$"settings/itemflav/loot/main_weapon/lstar.rpak",
-	$"settings/itemflav/loot/main_weapon/chargerifle.rpak",
-	$"settings/itemflav/loot/main_weapon/sentinel.rpak",
-	$"settings/itemflav/loot/main_weapon/volt_smg.rpak",
-	$"settings/itemflav/loot/main_weapon/3030repeater.rpak",
 ]
 
 void function ShLoadWeaponAssetsInit()

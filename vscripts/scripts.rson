@@ -290,6 +290,7 @@ Scripts:
 	weapons/mp_weapon_cover_wall.nut
 	weapons/mp_weapon_mdlspawner.nut
 	weapons/mp_weapon_satchel.nut
+	weapons/mp_weapon_car.nut
 	weapons/mp_titanweapon_flightcore_rockets.nut
 	weapons/mp_titanweapon_predator_cannon.nut
 	weapons/mp_titanweapon_particle_accelerator.nut
