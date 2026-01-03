@@ -60,8 +60,9 @@ bool function ClientCommand_SwapAmmo( entity player, array<string> args )
 	if( weapon.IsInCustomActivity() )
 		return false
 
-	weapon.StartCustomActivity("ACT_VM_WEAPON_MOD_ADD", 0)
-	return true
+    //weapon.AddMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD )
+    weapon.StartCustomActivity("ACT_VM_RELOADEMPTY", 0)
+    return true
 }
 #endif
 
@@ -136,8 +137,8 @@ void function OnWeaponReadyToFire_Car( entity weapon )
 		return
 
 #if SERVER
-	//if ( weapon.HasMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD ) )
-	//	weapon.RemoveMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD )
+	if ( weapon.HasMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD ) )
+		weapon.RemoveMod( CAR_AMMO_SWAP_MOD_FOR_RELOAD )
 #endif
 }
 

@@ -374,7 +374,7 @@ WeaponData
 		}
 		ammo_type_swap
 		{
-			"activitymodifier"                    "ammo_type_swap"
+			"activitymodifier"                    	"ammo_type_swap"
 			"reloadempty_time"						"3"
 			"reloadempty_time_late1"				"1.75"
 			"reloadempty_time_late2"				"1.04"

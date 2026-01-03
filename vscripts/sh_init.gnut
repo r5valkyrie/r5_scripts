@@ -237,6 +237,7 @@ void function SV_CL_Init()
 	Dash_Init()
 
 	MpWeaponCar_Init()
+	MpWeaponBow_Init()
 
 	MpWeaponPhaseBreach_Init()
 	MpWeaponArcBolt_Init()

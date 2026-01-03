@@ -1052,37 +1052,16 @@ Scripts:
 When: "SERVER || CLIENT"
 Scripts:
 [
-	weapons/mp_weapon_grenade_gravity.nut
-
-	weapons/mp_weapon_bubble_bunker.nut
-	weapons/mp_weapon_grenade_defensive_bombardment.nut
 	weapons/mp_ability_mirage_ultimate.nut
 	weapons/mp_ability_hunt_mode.nut
 	weapons/mp_ability_area_sonar_scan.nut
-	weapons/mp_weapon_grenade_gas.nut
-	weapons/mp_weapon_dirty_bomb.nut
-	weapons/mp_weapon_deployable_medic.nut
-	weapons/mp_weapon_grenade_bangalore.nut
-	weapons/mp_weapon_frag_drone.nut
-	weapons/mp_weapon_grenade_creeping_bombardment.nut
-	weapons/mp_weapon_grenade_electric_smoke.nut
-	weapons/mp_weapon_creeping_bombardment_weapon.nut
-	weapons/mp_weapon_jump_pad.nut
-	weapons/mp_weapon_tesla_trap.nut
-	weapons/mp_weapon_trophy_defense_system.nut
 	weapons/mp_ability_phase_walk.nut
 	weapons/mp_ability_3dash.nut
-	weapons/mp_weapon_phase_tunnel.nut
-	weapons/mp_weapon_phase_breach.nut
-	weapons/mp_weapon_arc_bolt.nut
-	weapons/mp_weapon_incap_shield.nut
 	weapons/mp_ability_care_package.nut
-	
 	weapons/mp_ability_crypto_drone.nut
 	weapons/mp_ability_crypto_drone_emp.nut
-	weapons/mp_weapon_gunship_missile.nut
-	weapons/mp_weapon_droneplasma.nut
-	weapons/mp_weapon_dronerocket.nut
+	weapons/mp_ability_titanfall.nut
+	weapons/sh_care_package.nut
 	
 	// abilities/loba_tactical_translocation.nut
 	abilities/loba_passive_eye_for_quality.nut
@@ -1094,11 +1073,36 @@ Scripts:
 
 	mp/sh_gas.gnut
 	mp/sh_shellshock.gnut
-	weapons/sh_care_package.nut
 
 	mp/sh_weapon_inspect.gnut
+]
 
-	weapons/mp_ability_titanfall.nut
+// WEAPON CONTENT
+When: "SERVER || CLIENT"
+Scripts:
+[
+	weapons/mp_weapon_grenade_gravity.nut
+	weapons/mp_weapon_bubble_bunker.nut
+	weapons/mp_weapon_grenade_defensive_bombardment.nut
+	weapons/mp_weapon_grenade_gas.nut
+	weapons/mp_weapon_dirty_bomb.nut
+	weapons/mp_weapon_deployable_medic.nut
+	weapons/mp_weapon_grenade_bangalore.nut
+	weapons/mp_weapon_frag_drone.nut
+	weapons/mp_weapon_grenade_creeping_bombardment.nut
+	weapons/mp_weapon_grenade_electric_smoke.nut
+	weapons/mp_weapon_creeping_bombardment_weapon.nut
+	weapons/mp_weapon_jump_pad.nut
+	weapons/mp_weapon_tesla_trap.nut
+	weapons/mp_weapon_trophy_defense_system.nut
+	weapons/mp_weapon_phase_tunnel.nut
+	weapons/mp_weapon_phase_breach.nut
+	weapons/mp_weapon_arc_bolt.nut
+	weapons/mp_weapon_incap_shield.nut
+	weapons/mp_weapon_bow.nut
+	weapons/mp_weapon_gunship_missile.nut
+	weapons/mp_weapon_droneplasma.nut
+	weapons/mp_weapon_dronerocket.nut
 ]
 
 When: "SERVER || CLIENT"
