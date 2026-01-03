@@ -2,8 +2,6 @@ global function Desertlands_MapInit_Common
 
 global function CodeCallback_PreMapInit
 
-const string HARVESTER_BEAM_MDL = $"mdl/fx/harvester_beam_mu1.rmdl"
-
 const string SILO_PANEL_SCRIPTNAME = "silo_doors_panel"
 const string SILO_PANEL_MDL = $"mdl/beacon/crane_room_monitor_console.rmdl"
 const string SILO_MOVER_SCRIPTNAME = "silo_platform_mover"
@@ -144,7 +142,6 @@ void function Desertlands_MapInit_Common()
 	#if SERVER
 		//thread KillPlayersUnderMap_Thread( -6376 ) //-28320
 		PrecacheModel( SILO_PANEL_MDL )
-		PrecacheModel( HARVESTER_BEAM_MDL )
 
 		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 		SURVIVAL_SetPlaneHeight( 15250 )
@@ -646,9 +643,6 @@ void function Desertlands_MU1_UpdraftInit_Common( entity player )
 
 void function Desertlands_MU1_EntitiesLoaded_Common()
 {
-	entity HarvestFX = CreatePropDynamic( HARVESTER_BEAM_MDL, <-2541, -11265, -6243>, <0, 0, 0> )
-	entity HarvestFX2 = CreatePropDynamic( HARVESTER_BEAM_MDL, <-2541, -11265, 24820>, <0, 0, 0> )
-	entity HarvestFX3 = CreatePropDynamic( HARVESTER_BEAM_MDL, <-2541, -11265, 55642>, <0, 0, 0> )
 }
 
 //Geyster stuff

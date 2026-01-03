@@ -33,7 +33,7 @@ global const string SILENCE_TRACE_SCRIPTNAME = "silence_trace_blocker"
 
 const float SILENCE_BOUNCE_DOT_MAX = 0.5
 
-const bool SILENCE_DEBUG = true
+const bool SILENCE_DEBUG = false
 const bool SILENCE_DEBUG_STATUSEFFECT = false
 const bool SILENCE_DEBUG_WEAPONEFFECT = false
 
@@ -180,7 +180,8 @@ void function CreateSilenceField( entity player, vector origin, entity mover, ve
 		EmitSoundAtPosition( TEAM_UNASSIGNED, origin, "Revenant_Silence_Sustain", player )
 	}
 
-	DebugDrawSphere( origin, 100, 0, 255, 0, true, SILENCE_AREA_DURATION )
+	if ( SILENCE_DEBUG )
+		DebugDrawSphere( origin, 100, 0, 255, 0, true, SILENCE_AREA_DURATION )
 
 	vector center = origin
 	float radius = SILENCE_AREA_RADIUS

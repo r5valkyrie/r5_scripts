@@ -1,7 +1,6 @@
 global function Desertlands_MapInit_Common
 global function CodeCallback_PreMapInit
 
-const string HARVESTER_BEAM_MDL = $"mdl/fx/harvester_beam_mu1.rmdl"
 #if SERVER
 global function Desertlands_MU1_MapInit_Common
 global function Desertlands_MU1_EntitiesLoaded_Common
@@ -236,9 +235,6 @@ void function Desertlands_MU1_EntitiesLoaded_Common()
 {
 	GeyserInit()
 	Updrafts_Init()
-	entity HarvestFX = CreatePropDynamic( HARVESTER_BEAM_MDL, <-2541, -11265, -6243>, <0, 0, 0> )
-	entity HarvestFX2 = CreatePropDynamic( HARVESTER_BEAM_MDL, <-2541, -11265, 24820>, <0, 0, 0> )
-	entity HarvestFX3 = CreatePropDynamic( HARVESTER_BEAM_MDL, <-2541, -11265, 55642>, <0, 0, 0> )
 }
 
 //Geyster stuff
