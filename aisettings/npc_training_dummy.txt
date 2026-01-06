@@ -17,7 +17,7 @@ npc_training_dummy
 
 	footstep_type					"human"
 
-	DefaultModelName				"mdl/humans/class/medium/pilot_medium_generic.rmdl"
+	DefaultModelName				"mdl/Humans/class/medium/dummy_v20_base_w.rmdl"
 	DefaultWeapon					""
 
 	Health							10
