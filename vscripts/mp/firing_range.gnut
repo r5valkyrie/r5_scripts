@@ -36,6 +36,12 @@ global const asset FIRINGRANGE_256x256_ASSET = $"mdl/thunderdome/thunderdome_cag
 global const asset FIRINGRANGE_GRATE_ASSET = $"mdl/industrial/landing_mat_metal_02_large.rmdl"
 global const asset FIRINGRANGE_QUARRY_BLOCK_ASSET = $"mdl/rocks/thunderdome_quarry_block_01_orange.rmdl"
 
+const asset DUMMIE_FX_SPAWN = $"P_dummie_warp_default"
+const asset DUMMIE_FX_DESPAWN = $"P_dummie_warp_default"
+global const string DUMMIE_SOUND_SPAWN = "Dummie_WarpIn_3P"
+global const string DUMMIE_SOUND_SPAWNNEW = "Dummie_WarpIn_3P"
+global const string DUMMIE_SOUND_DESPAWN = "Dummie_WarpOut_3P"
+
 #if SERVER
 // To be used outside if needed
 global int firingrange_infinite_ammo = 0
@@ -155,6 +161,8 @@ void function FiringRangeGameMode_Init()
 	PrecacheModel( TARGET_FOLDING_MODEL )
 	PrecacheModel( TARGET_SPINNING_MODEL )
 	PrecacheParticleSystem( FIRINGRANGE_FLICK_TARGET_PARTICLE_HIT )
+	PrecacheParticleSystem( DUMMIE_FX_SPAWN )
+	PrecacheParticleSystem( DUMMIE_FX_DESPAWN )
 
 	RegisterSignal( "GunRangeTargetDamaged" )
 	RegisterSignal( "SlideTargetSpeedReset" )
@@ -209,26 +217,12 @@ void function OnEntitiesDidLoad()
 
 	thread FiringRangeProps()
 
-	//array< entity > dummypts = GetEntArrayByScriptName( "spawnnpoint_frdummy" )
-	//foreach( dummypt in dummypts)
 	SpawnDummy(<31541,-7964,-29200>, <0,179,0>)
 	SpawnDummy(<31541,-6705,-29200>, <0,179,0>)
 	SpawnDummy(<31541,-5885,-29200>, <0,179,0>)
 
-	// Doors
-	//SpawnDoors_Init()
 
-	// Map Props
-	//SpawnMapProps()
-
-	// Targets
-	//SpawnTrainingTarget(file.flickTraining_pos, file.flickTraining_ang, OnTrainingTargetDamagedReposition)
-	//thread MoveTrainingTargetAround(
-		//SpawnTrainingTarget(file.trackingTraining_pos, file.flickTraining_ang, OnTrainingTargetDamagedNothing))
-
-		CreateGunRangeTargetsForRealm()
-	//SpawnTargets()
-	// - - - -
+	CreateGunRangeTargetsForRealm()
 	#endif
 }
 
@@ -293,28 +287,32 @@ bool function ClientCommand_ToggleFriendlyFire( entity player, array<string> arg
 }
 
 void function SpawnDummy(vector origin, vector angles)
-
 {
-    entity dummy = CreateEntity( "npc_dummie" )
-    SetSpawnOption_AISettings( dummy, "npc_training_dummy" )
-    dummy.SetOrigin( origin )
-    dummy.SetAngles( angles )
-	DispatchSpawn( dummy )
-	dummy.SetShieldHealthMax( 100 )
-	dummy.SetShieldHealth( 100 )
-	dummy.SetMaxHealth( 100 )
-	dummy.SetHealth( 100 )
-	dummy.SetTakeDamageType( DAMAGE_YES )
-	dummy.SetDamageNotifications( true )
-	dummy.SetDeathNotifications( true )
-	dummy.SetValidHealthBarTarget( true )
-	SetObjectCanBeMeleed( dummy, true )
-	dummy.SetSkin(1)
-	dummy.DisableHibernation()
-	dummy.GiveWeapon("mp_weapon_rspn101", WEAPON_INVENTORY_SLOT_ANY)
-    SetTeam(dummy, 99)
+    entity npc = CreateEntity( "npc_dummie" )
+    SetSpawnOption_AISettings( npc, "npc_training_dummy" )
+    npc.SetOrigin( origin )
+    npc.SetAngles( angles )
+	npc.kv.spawnflags = (SF_NPC_ALLOW_SPAWN_SOLID | SF_NPC_NO_PLAYER_PUSHAWAY)
+	DispatchSpawn( npc )
+	npc.SetTitle( "" )
+	npc.SetShieldHealthMax( 100 )
+	npc.SetShieldHealth( 100 )
+	npc.SetMaxHealth( 100 )
+	npc.SetHealth( 100 )
+	npc.SetTakeDamageType( DAMAGE_YES )
+	npc.SetDamageNotifications( true )
+	npc.SetDeathNotifications( true )
+	npc.SetValidHealthBarTarget( true )
+	SetObjectCanBeMeleed( npc, true )
+	npc.SetSkin(1)
+	npc.SetScriptName( "npc_dummie" )
+	npc.DisableHibernation()
+	npc.GiveWeapon( "mp_weapon_rspn101", WEAPON_INVENTORY_SLOT_PRIMARY_0, [] )
+	npc.EnableNPCFlag( NPC_IGNORE_ALL | NPC_DISABLE_SENSING | NPC_NO_WEAPON_DROP )
+    SetTeam(npc, 99)
+	thread DummieFX_Spawn_Thread( npc )
 
-	thread OnDummyKilled(dummy)
+	thread OnDummyKilled(npc)
 }
 
 void function OnDummyKilled(entity dummy)
@@ -326,6 +324,25 @@ void function OnDummyKilled(entity dummy)
 	wait 2
 	//StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), pos, angles )
 	thread SpawnDummy( pos, angles)
+}
+
+void function DummieFX_Spawn_Thread( entity dummie, bool doSpawnFX = true  )
+{
+	EndSignal( dummie, "OnDestroy" )
+
+	if( IsValid( dummie ) )
+	{
+		dummie.Highlight_Enable()
+		vector dummiePos = dummie.GetOrigin()
+
+		if( doSpawnFX )
+		{
+			//StartParticleEffectInWorld( GetParticleSystemIndex( DUMMIE_FX_SPAWN ), dummiePos, <0, 1, 0> )
+			//PlayImpactFXTable( dummiePos, dummie, DUMMIE_FX_SPAWN ) //this is a particle system refernce, we can add impact table if we want terrain reaction/splash etc
+
+			EmitSoundOnEntity( dummie, DUMMIE_SOUND_SPAWN )
+		}
+	}
 }
 
 // ==================================================
