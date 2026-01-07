@@ -246,6 +246,9 @@ void function FiringRangeProps()
 	FillOrdnanceTable() // nades
 	FillItemTable() // health + batts + the rest
 	
+	if ( GetMapName() != "mp_rr_canyonlands_staging" )
+		return
+
 	CreateRackGroups()
 	if ( !IsSurvivalTraining() )
 	{
@@ -358,7 +361,10 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 void function WaitForPlayerSpawn( entity player )
 {
-	thread WaitForPlayerSpawn_Thread(player)
+	if ( GetMapName() == "mp_rr_canyonlands_staging" )
+		thread WaitForPlayerSpawn_Thread(player)
+	else
+		thread WaitForPlayerSpawnMU1_Thread(player)
 }
 
 void function WaitForPlayerSpawn_Thread(entity player)
@@ -367,6 +373,14 @@ void function WaitForPlayerSpawn_Thread(entity player)
 		wait 1
 	player.SetOrigin(<26539, -5637, -27479>)
 	player.SetAngles(<0, 0, 0>)
+	SetPlayerInventory( player, [] )
+	thread OnPlayerRespawned(player)
+}
+
+void function WaitForPlayerSpawnMU1_Thread(entity player)
+{
+	while(IsValid(player) && !IsAlive(player))
+		wait 1
 	SetPlayerInventory( player, [] )
 	thread OnPlayerRespawned(player)
 }
