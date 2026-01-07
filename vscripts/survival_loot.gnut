@@ -593,6 +593,7 @@ bool function ClientCommand_PickupSurvivalItem( entity player, array<string> arg
 		}
 	}
 
+	/*
 	// Vending machine black market effects for firing range
 	if ( deathBox != null && deathBox.GetScriptName() == "vending_machine" && Playlist() == ePlaylists.survival_firingrange )
 	{
@@ -602,7 +603,7 @@ bool function ClientCommand_PickupSurvivalItem( entity player, array<string> arg
 			EmitSoundAtPosition( TEAM_UNASSIGNED, lootEnt.GetOrigin(), "Loba_Ultimate_BlackMarket_WarpIn", deathBox )
 			thread WarpBeamFXThread( player, deathBox.GetOrigin() + (deathBox.GetUpVector() * 48.0), lootEnt.GetOrigin() )
 		}
-	}
+	}*/
 
 	Survival_PickupItem( lootEnt, player, pickupFlags, deathBox )
 
