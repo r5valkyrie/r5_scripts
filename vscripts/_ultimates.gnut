@@ -190,34 +190,6 @@ void function Ultimates_OnPlayerUltIsReady( entity player, entity weapon )
 		}*/
        
 }
-
-                    
-void function WarpBeamFXThread( vector startPos, vector endPos )
-{
-	entity controlPoint = CreateEntity( "info_placement_helper" )
-	SetTargetName( controlPoint, UniqueString( "translocation_endPos" ) )
-	controlPoint.SetOrigin( endPos )
-	DispatchSpawn( controlPoint )
-
-	entity beamFX = CreateEntity( "info_particle_system" )
-	const asset BLACK_MARKET_WARP_BEAM_FX = $"P_item_warp_travel"
-	beamFX.SetValueForEffectNameKey( BLACK_MARKET_WARP_BEAM_FX )
-	beamFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
-	beamFX.kv.cpoint1 = controlPoint.GetTargetName()
-	beamFX.kv.start_active = 1
-	beamFX.SetOrigin( startPos )
-	DispatchSpawn( beamFX )
-
-	OnThreadEnd( function () : ( beamFX, controlPoint ) {
-		if ( IsValid( beamFX ) )
-			beamFX.Destroy()
-
-		if ( IsValid( controlPoint ) )
-			controlPoint.Destroy()
-	} )
-
-	wait 2.0
-}
       
 #endif // #if SERVER
 

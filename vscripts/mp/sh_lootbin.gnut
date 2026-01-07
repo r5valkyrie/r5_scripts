@@ -4,6 +4,8 @@ global function GetAllLootBins
 #if SERVER
 global function Survival_AddCallback_OnLootbinOpened
 global function SURVIVAL_DebugLootBins
+global function TriggerLootSpawnForLootBinsInRadius
+global function LootBin_RegisterRadiusSpawnFilter
 
 global function AddLootToLootBin
 global function AddMultipleLootItemsToLootBin
@@ -33,9 +35,27 @@ global function GetLootBinForHitEnt
 
 global function LootBin_IsOpen
 
+// Loot bin compartment types
+global enum eLootBinCompartment
+{
+	REGULAR,
+	SECRET,
+	BOTH,
+	_COUNT
+}
+global enum lootBinType
+{
+	REGULAR,
+                   
+	MUNITIONS,
+	SUPPORT
+      
+}
+
+const bool IS_R5DEV_137998_FIXED = false
 
 global const string MYSTERY_BOX_SCRIPT_NAME            = "MysteryBoxScriptName"
-
+global const string LOOT_BIN_DELAY_LOOT_SPAWNING_PLAYLIST_VAR = "survival_lootbin_delay_loot_spawning"
 global const string LOOT_BIN_MARKER_SCRIPTNAME = "survival_lootbin"
 global const string LOOT_BIN_SCRIPTNAME = "survival_lootbin_spawned"
 global const string LOOT_BIN_SCRIPTNAME_CUSTOM_REALMS = "survival_lootbin_custom_realms"
@@ -60,8 +80,22 @@ struct LootBinLocationBackupData
 	bool   onMovingGeo
 }
 
+struct LootBinServerData
+{
+	entity openRegularFX
+
+	array<LootRef> delayedRegularLoot
+	array<LootRef> delayedSecretLoot
+
+	array<entity> spawnedLootIndexes
+	int numberOfPiecesOfSpawnedLoot
+
+	void functionref( entity, entity ) addItemsToBinOnOpenCallback
+}
+
 struct
 {
+	int                           lootBinSMEA
 	bool                          lootBinsInfinite = false
 	table<entity, array<entity> > lootBinsSpawnedLootMap
 	table<entity, array<string> > lootBinsLootInside
@@ -70,6 +104,9 @@ struct
 	int                              numLootBins
 	
 	array<OnLootBinOpenedCallbackType> onLootBinOpenedCallbacks
+	table<entity, LootBinServerData> lootBinServerDataMap
+	
+	table<int, bool functionref( LootData )> binSpawnFilters
 	
 	bool returnFromModesForRefreshBinBool
 } file
@@ -115,6 +152,245 @@ void function ShLootBin_Init()
 
 // These callbacks are called before loot is spawned in a lootbin
 #if SERVER
+void function LootBin_RegisterRadiusSpawnFilter( int index, bool functionref( LootData ) filter )
+{
+	file.binSpawnFilters[index] <- filter
+}
+
+void function TriggerLootSpawnForLootBinsInRadius( vector pos, float radius, int lootTier, int spawnLimitPerFrame = -1, int spawnFilter = -1 )
+{
+	if ( spawnLimitPerFrame != -1 && GetCurrentPlaylistVarBool( LOOT_BIN_DELAY_LOOT_SPAWNING_PLAYLIST_VAR, true ) )
+	{
+		thread TriggerLootSpawnForLootBinsInRadius_Thread( pos, radius, lootTier, spawnLimitPerFrame, spawnFilter )
+		return
+	}
+
+	foreach ( entity lootBin in file.lootBinList )
+	{
+		if ( !IsValid( lootBin ) )
+			continue
+			
+		if ( Distance( lootBin.GetOrigin(), pos ) > radius )
+			continue
+		
+		if( spawnFilter != -1  && spawnFilter in lootBin.e.spawnedFilters )
+			continue
+
+		if ( lootBin.e.lootOfRarityHasBeenSpawned <= lootTier ) // Set to true by LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary
+			continue
+
+
+		if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) )
+			LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.REGULAR, false, lootTier, spawnFilter )
+		//if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN_SECRET ) )
+		//	LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.SECRET, false )
+	}
+}
+
+int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootBin, int compartment, bool isCompartmentOpen, int onlySpawnLootOfTierOrHigher = eLootTier.NONE, int spawnFilter = -1 )
+{
+	LootBinServerData lbsd = file.lootBinServerDataMap[lootBin]
+
+	bool isSecretCompartment = compartment == eLootBinCompartment.SECRET
+
+	array<LootRef> delayedLoot = (!isSecretCompartment ? lbsd.delayedRegularLoot : lbsd.delayedSecretLoot)
+
+	bool delayLootSpawning = GetCurrentPlaylistVarBool( LOOT_BIN_DELAY_LOOT_SPAWNING_PLAYLIST_VAR, true )
+
+	int amountOfLootSpawned = 0
+
+	int currentEmptySpace = lbsd.spawnedLootIndexes.len() - lbsd.numberOfPiecesOfSpawnedLoot
+	if ( delayLootSpawning && !isSecretCompartment && ( currentEmptySpace < delayedLoot.len() ) )
+	{
+		int newSize = delayedLoot.len() + lbsd.numberOfPiecesOfSpawnedLoot
+		lbsd.spawnedLootIndexes.resize( newSize, null )
+	}
+
+	int delayedLootInitialSize = delayedLoot.len()
+	array<entity> spawnedLoot
+	for ( int i = delayedLoot.len() - 1; i >= 0; i-- )
+	{
+		LootRef lootToSpawn = delayedLoot[i]
+
+		Assert( lootToSpawn.lootData.ref != "blank" )
+
+		if ( delayLootSpawning && lootToSpawn.lootData.tier < onlySpawnLootOfTierOrHigher )
+			continue
+
+		if( delayLootSpawning && spawnFilter != -1 && spawnFilter in file.binSpawnFilters && !file.binSpawnFilters[spawnFilter]( lootToSpawn.lootData ) )
+			continue
+
+		entity lootEnt = SpawnGenericLoot( lootToSpawn.lootData.ref, lootBin.GetWorldSpaceCenter(), lootBin.GetAngles(), lootToSpawn.count )
+		//DebugDrawLine( lootEnt.GetOrigin(), lootEnt.GetOrigin() + <0, 0, 9000>, COLOR_RED, true, 10.0 )
+		CopyRealmsFromTo( lootBin, lootEnt )
+		lootEnt.SetParent( lootBin )
+		CopyRealmsFromTo( lootBin, lootEnt )
+		amountOfLootSpawned++
+		spawnedLoot.append( lootEnt )
+
+		SetItemSpawnSource( lootEnt, eSpawnSource.LOOTBIN, lootBin )
+		lootEnt.e.isSecretLoot = isSecretCompartment
+
+		delayedLoot.fastremove(i)
+
+		if ( delayLootSpawning && !isSecretCompartment )
+		{
+			lbsd.numberOfPiecesOfSpawnedLoot++
+
+			Assert( lbsd.spawnedLootIndexes.len() == (delayedLoot.len() + lbsd.numberOfPiecesOfSpawnedLoot) )
+
+			int firstIndex = (lbsd.spawnedLootIndexes.len() - 1) - (delayedLootInitialSize - 1 - i)
+
+			Assert( firstIndex >= 0 && firstIndex < lbsd.spawnedLootIndexes.len() )
+			for ( int j = firstIndex; j >= 0; j-- )
+			{
+				if ( lbsd.spawnedLootIndexes[j] == null )
+				{
+					lbsd.spawnedLootIndexes[j] = lootEnt
+					break
+				}
+
+				Assert( j != 0, "Failed to find index for loot!" )
+			}
+
+		}
+	}
+
+	array<entity> lootEnts = LootBin_GetSpawnedLoot( lootBin, (compartment == eLootBinCompartment.REGULAR), (compartment == eLootBinCompartment.SECRET) )
+	int numberOfLootItems = lootEnts.len() + delayedLoot.len()
+	foreach ( int lootIdx, entity lootEnt in lootEnts )
+	{
+		if ( delayLootSpawning && !isSecretCompartment )
+		{
+			int index = lbsd.spawnedLootIndexes.find( lootEnt )
+
+			Assert( index != -1 )
+
+			lootIdx = index
+		}
+
+		LootData lootFlavor = SURVIVAL_Loot_GetLootDataByIndex( lootEnt.GetSurvivalInt() )
+
+		float posY = Graph( lootIdx + 1, 0, numberOfLootItems + 1, -51, 51 )
+
+		bool turn90Deg = (lootFlavor.lootType == eLootType.AMMO)
+                       
+                                                                        
+       
+
+		vector localPos = <0, 0, 0>
+		vector localAng = <0, 0, 0>
+		if ( isCompartmentOpen )
+		{
+			PropSurvivalFlagsClear( lootEnt, ePropSurvivalFlag.HIDE_LOOT_LINE )
+
+			lootEnt.MakeVisible()
+			lootEnt.SetUsable()
+			lootEnt.SetUsableByGroup( "pilot" )
+                        
+                                                    
+        
+				lootEnt.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_USE_COLLISION_ORIGIN | USABLE_USE_VERTICAL_LINE | USABLE_HORIZONTAL_FOV | USABLE_HIGH_DETAIL_TRACE )
+                        
+       
+                                                                                                                                  
+        
+
+			localPos = <14, posY, 33>
+			if ( compartment == eLootBinCompartment.SECRET )
+				localPos += <24, 0, -16>
+
+			localAng = <10, 0, 0>
+		}
+		else
+		{
+			// todo(dw): R5DEV-121201
+			//lootEnt.SetModelScale( 0.5 )
+
+			if ( compartment == eLootBinCompartment.REGULAR )
+				localPos = <5, posY, 19>
+			else if ( compartment == eLootBinCompartment.SECRET )
+				localPos = <-5, posY, 12>
+
+			if ( lootFlavor.lootType == eLootType.MAINWEAPON )
+				turn90Deg = true
+
+			if( spawnedLoot.contains( lootEnt ) )
+			{
+				#if IS_R5DEV_137998_FIXED
+					if ( lootFlavor.tier >= eLootTier.EPIC )
+					{
+						PropSurvivalFlagsSet( lootEnt, ePropSurvivalFlag.HIDE_LOOT_LINE )
+						lootEnt.MakeVisible()
+						lootEnt.SetUsable()
+						lootEnt.SetUsableByGroup( "pilot" )
+						lootEnt.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_USE_COLLISION_ORIGIN | USABLE_USE_VERTICAL_LINE | USABLE_HORIZONTAL_FOV | USABLE_HIGH_DETAIL_TRACE )
+					}
+					else
+					{
+						lootEnt.MakeInvisible()
+						lootEnt.UnsetUsable()
+					}
+				#else
+					PropSurvivalFlagsSet( lootEnt, ePropSurvivalFlag.HIDE_LOOT_LINE )
+					lootEnt.SetUsable()
+					lootEnt.SetUsableByGroup( "pilot" )
+					lootEnt.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_USE_COLLISION_ORIGIN | USABLE_USE_VERTICAL_LINE | USABLE_HORIZONTAL_FOV | USABLE_HIGH_DETAIL_TRACE )
+
+					if ( lootFlavor.tier >= eLootTier.EPIC || spawnFilter != -1 )
+						lootEnt.MakeVisible()
+					else
+						lootEnt.MakeInvisible()
+				#endif
+			}
+		}
+
+		if ( turn90Deg )
+			localAng = AnglesCompose( localAng, <0, 90.0, 0> )
+
+		//dbocek: Bow needs special rotation to not clip horribly in the loot bins. I tried making this a loot table setting but I didn't really forsee this being used again anytime soon and it added too much unnecessary data
+		if ( lootFlavor.ref == "mp_weapon_bow" || lootFlavor.baseWeapon == "mp_weapon_bow" )
+		{
+			localPos += lootBin.GetUpVector() * 9 + lootBin.GetRightVector() * 2
+			localAng = AnglesCompose( localAng, <-45, 0, 0> )
+		}
+
+
+		lootEnt.SetLocalOrigin( localPos )
+		lootEnt.SetLocalAngles( localAng )
+	}
+
+	if( spawnFilter == -1 )
+		lootBin.e.lootOfRarityHasBeenSpawned = onlySpawnLootOfTierOrHigher
+	else
+		lootBin.e.spawnedFilters[spawnFilter] <- IN_SET
+
+	return amountOfLootSpawned
+}
+
+void function TriggerLootSpawnForLootBinsInRadius_Thread( vector pos, float radius, int lootTier, int spawnLimitPerFrame, int spawnFilter )
+{
+	int lootSpawnedSinceWait = 0
+	foreach ( entity lootBin in GetScriptManagedEntArrayWithinCenter( file.lootBinSMEA, TEAM_ANY, pos, radius ) )
+	{
+		if( spawnFilter != -1 && spawnFilter in lootBin.e.spawnedFilters )
+			continue
+
+		if ( lootBin.e.lootOfRarityHasBeenSpawned <= lootTier ) // Set to true by LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary
+			continue
+
+
+		if ( !GradeFlagsHas( lootBin, eGradeFlags.IS_OPEN ) )
+			lootSpawnedSinceWait += LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( lootBin, eLootBinCompartment.REGULAR, false, lootTier, spawnFilter )
+
+		if ( lootSpawnedSinceWait > spawnLimitPerFrame )
+		{
+			lootSpawnedSinceWait = 0
+			WaitFrame()
+		}
+	}
+}
+
 void function Survival_AddCallback_OnLootbinOpened( OnLootBinOpenedCallbackType callbackFunc )
 {
 	Assert( !file.onLootBinOpenedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnLootbinOpened" )
@@ -122,8 +398,32 @@ void function Survival_AddCallback_OnLootbinOpened( OnLootBinOpenedCallbackType 
 }
 #endif
 
+#if SERVER || CLIENT
+array<entity> function LootBin_GetSpawnedLoot( entity lootBin, bool includeRegular, bool includeSecret )
+{
+	#if CLIENT
+		Assert( includeRegular && includeSecret, "Cannot distinguish between regular and secret compartments on CLIENT -- must include both" )
+	#endif
 
+	array<entity> out = []
+	foreach ( entity child in lootBin.GetLinkEntArray() )
+	{
+		if ( child.GetNetworkedClassName() != "prop_survival" )
+			continue
 
+		#if SERVER
+			if ( child.e.spawnSource != eSpawnSource.LOOTBIN )
+				continue
+
+			if ( (!includeRegular && !child.e.isSecretLoot) || (!includeSecret && child.e.isSecretLoot) )
+				continue
+		#endif
+
+		out.append( child )
+	}
+	return out
+}
+#endif
 
 
 

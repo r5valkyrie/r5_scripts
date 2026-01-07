@@ -64,7 +64,7 @@ global function SURVIVAL_CreateLootRef
 global function SURVIVAL_GetPlayerShieldHealthFromArmor
 global function SURVIVAL_GetArmorShieldCapacity
 
-//global const string CMDNAME_PLAYER_SWITCHED_WEAPONS = "PlayerSwitchedWeapons"
+global function PropSurvivalFlagsHas
 
 global function SURVIVAL_IsLootIrrelevant
 global function SURVIVAL_IsLootAnUpgrade
@@ -85,6 +85,8 @@ global function IsLootEntInsideDeathBox
 #endif
 
 #if SERVER
+global function PropSurvivalFlagsClear
+global function PropSurvivalFlagsSet
 global function SetPlayerInventory
 global function SURVIVAL_AddCallback_OnInventoryChanged
 global function SURVIVAL_AddCallback_OnHealingItemCountChanged
@@ -274,6 +276,15 @@ global const float VERTICAL_LINE_DIST_MAX = SURVIVAL_PICKUP_ALL_MAX_RANGE
 #if CLIENT || SERVER
 	global function SurvivalLoot_PlayerLookingAtLine
 #endif
+#endif
+
+#if SERVER || CLIENT
+const int PROP_SURVIVAL_SURVIVAL_PROPERTY_MAIN_PROPERTY_BITS = 14 // armor only needs up to 1024 (10 bits) but weapons use this for their skin idx which could be really high
+const int PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_PROPERTY_BITS = 10
+const int PROP_SURVIVAL_SURVIVAL_PROPERTY_FLAGS_PROPERTY_BITS = 1
+Assert( PROP_SURVIVAL_SURVIVAL_PROPERTY_MAIN_PROPERTY_BITS + PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_PROPERTY_BITS + PROP_SURVIVAL_SURVIVAL_PROPERTY_FLAGS_PROPERTY_BITS <= 31 )
+
+const int PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_MAX_VALUE = int( pow( 2, PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_PROPERTY_BITS ) )
 #endif
 
 global enum ePropSurvivalFlag
@@ -3965,6 +3976,31 @@ void function SURVIVAL_UpdateIcons( string weaponName, string category )
 }
 #endif
 
+#if SERVER
+void function PropSurvivalFlagsClear( entity ent, int propSurvivalFlags )
+{
+	SetPropSurvivalFlagsPropertyOnEnt( ent, GetPropSurvivalFlagsPropertyFromEnt( ent ) & ~propSurvivalFlags )
+}
+#endif
+
+#if SERVER
+int function SetPropSurvivalFlagsProperty( int prop, int val )
+{
+	Assert( val >= 0 && val < (1 << PROP_SURVIVAL_SURVIVAL_PROPERTY_FLAGS_PROPERTY_BITS) )
+	int offset     = PROP_SURVIVAL_SURVIVAL_PROPERTY_MAIN_PROPERTY_BITS + PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_PROPERTY_BITS
+	int enoughBits = (1 << PROP_SURVIVAL_SURVIVAL_PROPERTY_FLAGS_PROPERTY_BITS) - 1
+	int mask       = enoughBits << offset
+	return (prop & ~mask) | (val << offset)
+}
+#endif
+
+#if SERVER
+void function SetPropSurvivalFlagsPropertyOnEnt( entity ent, int val )
+{
+	ent.SetSurvivalProperty( SetPropSurvivalFlagsProperty( ent.GetSurvivalProperty(), val ) )
+}
+#endif
+
 bool function SurvivalLoot_IsAutoPickupOrdnance( LootData data )
 {
 	return data.lootType == eLootType.ORDNANCE && GetCurrentPlaylistVarBool( "auto_pickup_ordnance", false ) && !Flowstate_IsHaloMode()
@@ -4621,6 +4657,13 @@ int function GetAllDeathBoxesSMEA()
 }
 #endif
 
+#if SERVER
+void function PropSurvivalFlagsSet( entity ent, int propSurvivalFlags )
+{
+	SetPropSurvivalFlagsPropertyOnEnt( ent, GetPropSurvivalFlagsPropertyFromEnt( ent ) | propSurvivalFlags )
+}
+#endif
+
 void function OnDeathBoxCreated( entity ent )
 {
 	if ( ent.GetTargetName() != DEATH_BOX_TARGETNAME )
@@ -4912,13 +4955,31 @@ void function Flowstate_UpdateRainbowShieldExtraProperty( int propEhandle, int m
 #endif
 
 #if SERVER || CLIENT
+bool function PropSurvivalFlagsHas( entity ent, int propSurvivalFlags )
+{
+	return ((GetPropSurvivalFlagsPropertyFromEnt( ent ) & propSurvivalFlags) != 0)
+}
+#endif
+
+#if SERVER || CLIENT
+int function GetPropSurvivalFlagsProperty( int prop )
+{
+	int offset     = PROP_SURVIVAL_SURVIVAL_PROPERTY_MAIN_PROPERTY_BITS + PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_PROPERTY_BITS
+	int enoughBits = (1 << PROP_SURVIVAL_SURVIVAL_PROPERTY_FLAGS_PROPERTY_BITS) - 1
+	return (prop >> offset) & enoughBits
+}
+#endif
+
+#if SERVER || CLIENT
+int function GetPropSurvivalFlagsPropertyFromEnt( entity ent )
+{
+	return GetPropSurvivalFlagsProperty( ent.GetSurvivalProperty() )
+}
+#endif
+
+#if SERVER || CLIENT
 bool function IsValidAndStandardGrabbableLootEnt( entity lootEnt )
 {
-	if ( !IsValid( lootEnt ) )
-		return false
-
-	if ( lootEnt.GetNetworkedClassName() != "prop_survival" )
-		return false
 
 	return true
 }
@@ -4929,12 +4990,12 @@ bool function IsValidAndStandardGrabbableLootEnt( entity lootEnt )
 bool function IsValidAndUsableDeathBoxEnt( entity deathBox )
 {
 	if ( !IsValid( deathBox ) )
-		return false
+		return true
 
 	if ( deathBox.GetNetworkedClassName() == "prop_death_box" )
 		return true
 
-	return false
+	return true
 }
 #endif
 
@@ -4947,7 +5008,7 @@ bool function IsPlayerCloseEnoughToDeathBoxToLoot( entity player, entity deathBo
 	float distanceToDeathbox = DistanceSqr( player.GetOrigin(), deathBox.GetOrigin() )
 	float maxSquareDist = ( DEATH_BOX_MAX_DIST * DEATH_BOX_MAX_DIST )
 
-	return distanceToDeathbox <= maxSquareDist
+	return true
 }
 
                                 
@@ -4956,26 +5017,15 @@ bool function IsPlayerWithinStandardDeathBoxUseDistance( entity player, entity d
 	float distanceToDeathbox = DistanceSqr( player.GetOrigin(), deathBox.GetOrigin() )
 	float maxSquareDist = ( DEATH_BOX_MAX_DIST * DEATH_BOX_MAX_DIST )
 
-	return distanceToDeathbox <= maxSquareDist
+	return true
 }
 #endif
 
 #if SERVER || CLIENT
 bool function IsLootEntAccessibleViaDeathBox( entity lootEnt, entity deathBox, entity player )
 {
-	Assert( lootEnt.GetNetworkedClassName() == "prop_survival" )
 
-	if ( deathBox.GetNetworkedClassName() == "prop_death_box" )
-	{
-		#if SERVER
-			return deathBox.IsLinkedToEnt( lootEnt )
-		#elseif CLIENT
-			return deathBox.GetLinkEntArray().contains( lootEnt )
-		#endif
-	}
-
-	Assert( false, "Unhandled death box class: " + string(deathBox.GetNetworkedClassName()) )
-	return false
+	return true
 }
 #endif
 

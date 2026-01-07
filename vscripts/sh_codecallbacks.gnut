@@ -10,6 +10,8 @@ global function SetCallback_CanUseEntityCallback
 global function SetCallback_CanUseEntityCallback_Retail
 global function CodeCallback_CanUseZipline
 global function CodeCallback_PlayerClassChanged
+global function CodeCallback_ShouldUseBlockReload
+global function SetCallback_ShouldUseBlockReloadCallback
 global function CodeCallback_OnUseEntity
 //global function CodeCallback_OnUseStart
 global function CodeCallback_OnUseEnd
@@ -239,6 +241,25 @@ bool function CodeCallback_CanUseEntity( entity player, entity ent )
 	}
 
 	return true
+}
+
+void function ClearCallback_ShouldUseBlockReloadCallback( entity ent, bool functionref( entity, entity ) callbackFunc )
+{
+	ent.e.shouldUseBlockReloadCallback = null
+}
+
+void function SetCallback_ShouldUseBlockReloadCallback( entity ent, bool functionref( entity, entity ) callbackFunc )
+{
+	Assert( ent.e.shouldUseBlockReloadCallback == null )
+	ent.e.shouldUseBlockReloadCallback = callbackFunc
+}
+
+bool function CodeCallback_ShouldUseBlockReload( entity player, entity ent )
+{
+	if ( ent.e.shouldUseBlockReloadCallback != null )
+		return ent.e.shouldUseBlockReloadCallback( player, ent )
+
+	return true;
 }
 
 void function ResetZiplineUsageDelayed(entity player)

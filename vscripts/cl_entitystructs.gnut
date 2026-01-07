@@ -97,7 +97,7 @@ global struct ClientEntityStruct
 	// phase shift type (added so client code can read phase type without calling server methods)
 	int phaseShiftType = 0
 
-//	array<WeaponMissileMultipleTargetData>   valkTac_targetData
+	bool functionref( entity player, entity ent ) shouldUseBlockReloadCallback = null
 	bool canBeMeleed = true
 	bool gravityOrbInteraction
 	int cameraMaxRangeFXHandle = -1

@@ -150,6 +150,22 @@ struct {
 	vector doorSingle_ang = <0,90,0>
 	vector doorDouble_pos = <30550,-10025,-25972>
 	vector doorDouble_ang = <0,90,0>
+	
+	// CLootV2 data
+	table<string, array<LootData> > weaponDataByAmmoType
+	array<string> ammoTypesUsed
+	
+	// CLootV4 data
+	table<int, array<LootData> > gearDataByType
+	table<int, array<string> > gearRefsByType
+	array<LootData> scopes_LootData
+	array<LootData> mags_LootData
+	array<LootData> stocks_LootData
+	array<LootData> barrels_LootData
+	array<LootData> hopUps_LootData
+
+	// Vending Machines
+	bool vendingMachinesCreated = false
 } file
 
 void function FiringRangeGameMode_Init()
@@ -177,15 +193,12 @@ void function FiringRangeGameMode_Init()
 	if( Playlist() != ePlaylists.survival_firingrange )
 		return
 
-	//PrecacheParticleSystem( FIRINGRANGE_ITEM_RESPAWN_PARTICLE )
-
 	ScriptRemote_RegisterClientFunction( "SCB_BroadcastFriendlyFireChange", "entity" )
 
 	#if SERVER
 		AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
 		AddCallback_OnClientConnected( WaitForPlayerSpawn )
 		AddCallback_OnPlayerKilled( OnPlayerKilled )
-		//AddCallback_OnWeaponAttack( OnWeaponAttack )
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnTeammateLoadoutSelectionChanged, false )
 		AddClientCommandCallback( "firingrange_toggle_friendlyfire", ClientCommand_ToggleFriendlyFire )
 
@@ -226,7 +239,6 @@ void function OnEntitiesDidLoad()
 	SpawnDummy(<31541,-6705,-29200>, <0,179,0>)
 	SpawnDummy(<31541,-5885,-29200>, <0,179,0>)
 
-
 	CreateGunRangeTargetsForRealm()
 	#endif
 }
@@ -245,25 +257,691 @@ void function FiringRangeProps()
 		file.rackSpawns.append(r)
 	}
 
-	FillWeaponTable() // load first to know where the rest goes
-	FillAttachmentTable() // requires weapons to be loaded
-	FillEquipmentTable() // armor + helmet + bp + shield
-	FillOrdnanceTable() // nades
-	FillItemTable() // health + batts + the rest
+	if ( GetMapName() == "mp_rr_canyonlands_staging" )
+	{
+		FillWeaponTable() // load first to know where the rest goes
+		FillAttachmentTable() // requires weapons to be loaded
+		FillEquipmentTable() // armor + helmet + bp + shield
+		FillOrdnanceTable() // nades
+		FillItemTable() // health + batts + the rest
+		
+		
+
+		CreateRackGroups()
+		if ( !IsSurvivalTraining() )
+		{
+			SpawnEquipments()
+			SpawnOrdnance()
+			SpawnItems()
+			SpawnAttachments()
+		}
+		SpawnAmmo()
+	}
+
+	if ( GetMapName() == "mp_rr_canyonlands_staging_mu1" )
+	{
+		CLootV2_InitLootInfo()
+		Create_FiringRange_WeaponsAndLoot()
+		Create_VendingMachines_ForAllRealms()
+	}
+}
+
+// ===============================
+//    NEW LOOT SYSTEM - CLootV2/V4 
+// ===============================
+
+void function Create_FiringRange_WeaponsAndLoot()
+{
+	CLootV2_Create_AllWeapons()
+	CreateAttachmentsForRealm()
+}
+
+void function Create_VendingMachines_ForAllRealms()
+{
+	if( !file.vendingMachinesCreated )
+	{
+		array< entity > gearStationNodes = GetEntArrayByScriptName( "gear_vending" )
+		foreach( _gearStationNode in gearStationNodes )
+		{
+			if ( IsValid( _gearStationNode ) )
+			{
+				VendingMachine_CreateSimple( _gearStationNode.GetOrigin(), _gearStationNode.GetAngles() )
+			}
+		}
+		file.vendingMachinesCreated = true
+	}
+}
+
+void function CLootV2_InitLootInfo()
+{
+	printt("CLootV2_InitLootInfo: Initializing...")
 	
-	if ( GetMapName() != "mp_rr_canyonlands_staging" )
+	// Get all weapons and group by ammo type
+	array<string> weaponRefs = SURVIVAL_GetAllRefsInLootGroup("firing_range_all_weapons")
+	array<LootData> weaponData = LootRefs_To_LootDatas(weaponRefs)
+	
+	table<string, array<LootData> > weaponDataByAmmoType
+	array<string> ammoTypesUsed
+	
+	foreach (LootData ld in weaponData)
+	{
+		string ammoType = ld.ammoType
+		if (!GetWeaponInfoFileKeyField_GlobalBool(ld.baseWeapon, "uses_ammo_pool"))
+			ammoType = "_none"
+		
+		if (!(ammoType in weaponDataByAmmoType))
+		{
+			weaponDataByAmmoType[ammoType] <- []
+			ammoTypesUsed.append(ammoType)
+		}
+		weaponDataByAmmoType[ammoType].append(ld)
+	}
+	
+	file.weaponDataByAmmoType = weaponDataByAmmoType
+	file.ammoTypesUsed = ammoTypesUsed
+	
+	printt("CLootV2_InitLootInfo: Found " + ammoTypesUsed.len() + " ammo types")
+}
+
+void function CLootV2_Create_AllWeapons()
+{
+	foreach (string ammoType in file.ammoTypesUsed)
+	{
+		CLootV2_Spawn_AllWeapons_ByAmmoType(ammoType)
+	}
+}
+
+void function CLootV2_Spawn_AllWeapons_ByAmmoType(string ammoType)
+{
+	string nodeName = "guns_" + ammoType + "_start"
+	
+	array<entity> startNodes = GetEntArrayByScriptName(nodeName)
+	printt("CLootV2: Looking for nodes: " + nodeName + ", found: " + startNodes.len())
+	
+	foreach (entity startNode in startNodes)
+	{
+		thread CLootV2_Spawn_WeaponRowAndAmmo(ammoType, startNode)
+	}
+}
+
+void function CLootV2_Spawn_WeaponRowAndAmmo(string ammoType, entity startNode)
+{
+	if (!IsValid(startNode))
 		return
 
-	CreateRackGroups()
-	if ( !IsSurvivalTraining() )
+	array<LootData> lootData = file.weaponDataByAmmoType[ammoType]
+
+	if (lootData.len() == 0)
+		return
+
+	// Get the end node
+	entity endNode = startNode.GetLinkEnt()
+	if (!IsValid(endNode))
 	{
-		SpawnEquipments()
-		SpawnOrdnance()
-		SpawnItems()
-		SpawnAttachments()
+		printt("ERROR: No end node linked to " + startNode.GetScriptName())
+		return
 	}
-	SpawnAmmo()
+
+	// Prepare parameters to spawn a row of weapons
+	array<string> lootRefs
+	foreach (LootData ld in lootData)
+	{
+		if (SURVIVAL_Loot_IsRefDisabled(ld.ref))
+			continue
+		if (ld.ref.find(WEAPON_SUFFIX_NONCOMBAT) > 0)
+			continue
+		lootRefs.append(ld.ref)
+	}
+
+	vector rowStart = startNode.GetOrigin()
+	float rowWidth = Distance(endNode.GetOrigin(), startNode.GetOrigin())
+	vector defaultAngles = <0, 0, -90> + startNode.GetAngles()
+	vector nextItemDir = startNode.GetRightVector()
+
+	printt("CLootV2: Spawning " + lootRefs.len() + " weapons for ammo type: " + ammoType)
+	printt("  Row start: " + rowStart + ", width: " + rowWidth)
+
+	// Spawn weapons in a row
+	int spawnCount = 500
+	array<entity> spawnedWeapons = _SpawnLootRow(lootRefs, spawnCount, rowStart, rowWidth, nextItemDir, defaultAngles)
+
+	// Spawn ammo
+	if (ammoType != "_none")
+	{
+		LootData ammoLootData = SURVIVAL_Loot_GetLootDataByRef(ammoType)
+		array<entity> ammoNodes = GetEntArrayByScriptName("ammo_" + ammoType)
+		
+		printt("CLootV2: Found " + ammoNodes.len() + " ammo nodes for " + ammoType)
+		
+		foreach (entity ammoNode in ammoNodes)
+		{
+			vector pos = ammoNode.GetOrigin()
+			vector ang = ammoNode.GetAngles()
+			
+			entity ammoEnt = SpawnGenericLoot(ammoType, pos, ang, ammoLootData.countPerDrop)
+			ammoEnt.SetNetworkDistanceCull(false)
+			ammoEnt.e.recreateLootOnPickup = true
+			
+			thread OnPickupGenericThread(ammoEnt, ammoType, ammoLootData.countPerDrop)
+		}
+	}
 }
+
+array<entity> function _SpawnLootRow(array<string> lootRefs, int spawnCount, vector rowStart, float rowWidth, vector nextItemDir, vector defaultAngles)
+{
+	array<entity> result
+	
+	int numItems = lootRefs.len()
+	if (numItems == 0)
+		return result
+	
+	float spacing = rowWidth / numItems
+	
+	for (int i = 0; i < numItems; i++)
+	{
+		vector pos = rowStart + (nextItemDir * spacing * i)
+		vector ang = defaultAngles
+		
+		// Special angle adjustments
+		if (lootRefs[i] == "mp_weapon_bow" || lootRefs[i] == "mp_weapon_throwingknife")
+			ang = AnglesCompose(ang, <85, 0, 0>)
+		
+		entity lootEnt = SpawnGenericLoot(lootRefs[i], pos, ang, spawnCount)
+		lootEnt.SetNetworkDistanceCull(false)
+		lootEnt.e.recreateLootOnPickup = true
+		
+		thread OnPickupGenericThread(lootEnt, lootRefs[i])
+		
+		result.append(lootEnt)
+	}
+	
+	return result
+}
+
+array<LootData> function LootRefs_To_LootDatas(array<string> refs)
+{
+	array<LootData> result
+	foreach (string ref in refs)
+	{
+		LootData data = SURVIVAL_Loot_GetLootDataByRef(ref)
+		result.append(data)
+	}
+	return result
+}
+
+// ==================================================
+
+void function CreateAttachmentsForRealm()
+{
+	printt("CreateAttachmentsForRealm: Starting...")
+	CLootV4_InitLootInfo()
+	CLootV4_Create_AllStuff()
+}
+
+void function CreateGearForRealm()
+{
+	printt("CreateGearForRealm: Handled by CreateAttachmentsForRealm")
+}
+
+void function CreateHealthItemsForRealm()
+{
+	printt("CreateHealthItemsForRealm: Handled by CreateAttachmentsForRealm")
+}
+
+// ==================================================
+// CLootV4 - Attachments, Gear, Health Items
+// ==================================================
+
+void function CLootV4_InitLootInfo()
+{
+	printt("CLootV4_InitLootInfo: Starting...")
+	
+	// Get all gear from loot group
+	array<string> gearRefs_Raw = SURVIVAL_GetAllRefsInLootGroup("loot_roller_contents_03")
+	array<string> gearRefs_All = []
+	array<string> gearRefs = []
+	
+	// Remove duplicates
+	foreach (_ref in gearRefs_Raw)
+	{
+		if (gearRefs_All.contains(_ref))
+			continue
+		gearRefs_All.append(_ref)
+	}
+	
+	gearRefs_All.sort()
+	
+	// Remove disabled items
+	foreach (ref in gearRefs_All)
+	{
+		if (SURVIVAL_Loot_IsRefDisabled(ref))
+			continue
+		gearRefs.append(ref)
+	}
+	
+	array<LootData> equipmentData_All = LootRefs_To_LootDatas(gearRefs)
+	
+	// Build gear lists
+	foreach (item in equipmentData_All)
+	{
+		// Skip weapons
+		if (item.lootType == eLootType.MAINWEAPON)
+			continue
+			
+		// Skip attachments for now
+		if (item.lootType == eLootType.ATTACHMENT)
+			continue
+			
+		if (!(item.lootType in file.gearDataByType))
+			file.gearDataByType[item.lootType] <- []
+		if (!(item.lootType in file.gearRefsByType))
+			file.gearRefsByType[item.lootType] <- []
+			
+		if (!file.gearDataByType[item.lootType].contains(item))
+			file.gearDataByType[item.lootType].append(item)
+			
+		if (!file.gearRefsByType[item.lootType].contains(item.ref))
+			file.gearRefsByType[item.lootType].append(item.ref)
+	}
+	
+	// Attachments
+	array<string> allAttachRefs_Unfiltered = []
+	allAttachRefs_Unfiltered.extend(SURVIVAL_GetAllRefsInLootGroup("Attachment_L1"))
+	allAttachRefs_Unfiltered.extend(SURVIVAL_GetAllRefsInLootGroup("Attachment_L2"))
+	allAttachRefs_Unfiltered.extend(SURVIVAL_GetAllRefsInLootGroup("Attachment_L3"))
+	allAttachRefs_Unfiltered.extend(SURVIVAL_GetAllRefsInLootGroup("Attachment_L4"))
+	
+	printt("CLootV4: Found " + allAttachRefs_Unfiltered.len() + " attachment refs (unfiltered)")
+	
+	array<string> allAttachRefs = []
+	foreach (ref in allAttachRefs_Unfiltered)
+	{
+		if (SURVIVAL_Loot_IsRefDisabled(ref))
+			continue
+		allAttachRefs.append(ref)
+	}
+	
+	printt("CLootV4: Found " + allAttachRefs.len() + " attachment refs (after disabled filter)")
+	
+	array<LootData> allAttaches = LootRefs_To_LootDatas(allAttachRefs)
+	
+	printt("CLootV4: Converted to " + allAttaches.len() + " LootData objects")
+	
+	// Don't sort by attachmentType (it's -1), just collect all attachments
+	// The ItemRefsTableBySubType_Build function will sort them by ref name later
+	file.scopes_LootData = []
+	file.mags_LootData = []
+	file.stocks_LootData = []
+	file.barrels_LootData = []
+	file.hopUps_LootData = LootRefs_To_LootDatas(SURVIVAL_GetAllRefsInLootGroup("attachments_hopups_only"))
+	
+	foreach (ld in allAttaches)
+	{
+		if (!LootIsSpawnable(ld))
+			continue
+			
+		// Sort by ref name patterns
+		if (ld.ref.find("optic_") != -1)
+			file.scopes_LootData.append(ld)
+		else if (ld.ref.find("_mag_") != -1)
+			file.mags_LootData.append(ld)
+		else if (ld.ref.find("stock_") != -1)
+			file.stocks_LootData.append(ld)
+		else if (ld.ref.find("barrel_") != -1 || ld.ref.find("laser_") != -1 || ld.ref.find("shotgun_bolt") != -1)
+			file.barrels_LootData.append(ld)
+	}
+	
+	printt("CLootV4_InitLootInfo: Scopes:" + file.scopes_LootData.len() + " Mags:" + file.mags_LootData.len() + " Stocks:" + file.stocks_LootData.len() + " Barrels:" + file.barrels_LootData.len())
+	printt("CLootV4_InitLootInfo: Complete")
+}
+
+bool function LootIsSpawnable( LootData lootData )
+{
+	if ( WeaponLootRefIsLockedSet( lootData.ref ) )
+		return false
+
+	if ( lootData.ref.find( WEAPON_SUFFIX_NONCOMBAT ) > 0 ) // don't spawn pets/noncombat weapons
+		return false
+
+	if ( SURVIVAL_Loot_IsRefDisabled( lootData.ref ) )
+		return false
+
+	return true
+}
+
+void function CLootV4_Create_AllStuff()
+{
+	table<string, array<entity> > startNodesTable
+	table<string, array<string> > lootRefsTable
+	table<string, array<int> > lootCountsTable
+	
+	array<string> startNodeNames = [
+		"cloot4_scopes_basic_start",
+		"cloot4_scopes_advanced_start",
+		"cloot4_scopes_sniper_start",
+		"cloot4_mags_energy_start",
+		"cloot4_mags_heavy_start",
+		"cloot4_mags_light_start",
+		"cloot4_mags_sniper_start",
+		"cloot4_stocks_basic_start",
+		"cloot4_stocks_sniper_start",
+		"cloot4_barrels_start",
+		"cloot4_lasers_start",
+		"cloot4_shotgunbolts_start",
+		"cloot4_hopups_start",
+		"cloot4_bodyarmor_start",
+		//"cloot4_evoarmor_start",
+		"cloot4_helmets_start",
+		"cloot4_incaps_start",
+		"cloot4_ordinances_start",
+		"cloot4_batts_start",
+		"cloot4_health_start",
+		"cloot4_specialgear_start",
+		"cloot4_backpacks_start"
+	]
+	
+	// Get all start nodes
+	string missingStartNodes = ""
+	foreach (_startNodeName in startNodeNames)
+	{
+		startNodesTable[_startNodeName] <- GetEntArrayByScriptName(_startNodeName)
+		printt("CLootV4: Checking node '" + _startNodeName + "' - found " + startNodesTable[_startNodeName].len() + " nodes")
+		if (startNodesTable[_startNodeName].len() == 0)
+		{
+			missingStartNodes = _startNodeName
+			break
+		}
+	}
+	
+	if (missingStartNodes != "")
+	{
+		printt("CLootV4_Create_AllStuff: Missing start nodes: " + missingStartNodes + " - skipping CLootV4 spawn")
+		return
+	}
+	
+	// Build scopes refs
+	table<string, array<string> > scopesRefs = ItemRefsTableBySubType_Build(file.scopes_LootData, ["optic_cq", "optic_ranged", "optic_sniper"])
+	array<string> scopesRefs_cq = scopesRefs["optic_cq"]
+	array<string> scopesRefs_advanced = scopesRefs["optic_ranged"]
+	
+	printt("CLootV4: Scopes found - CQ:" + scopesRefs_cq.len() + " Advanced:" + scopesRefs_advanced.len() + " Sniper:" + scopesRefs["optic_sniper"].len())
+	
+	// Move digi scope to advanced
+	if (scopesRefs_cq.len() > 0)
+	{
+		string digiscope = scopesRefs_cq[scopesRefs_cq.len() - 1]
+		scopesRefs_advanced.append(digiscope)
+		scopesRefs_cq.remove(scopesRefs_cq.len() - 1)
+	}
+	
+	lootRefsTable["cloot4_scopes_basic_start"] <- scopesRefs_cq
+	lootRefsTable["cloot4_scopes_advanced_start"] <- scopesRefs_advanced
+	lootRefsTable["cloot4_scopes_sniper_start"] <- scopesRefs["optic_sniper"]
+	
+	lootCountsTable["cloot4_scopes_basic_start"] <- CLootV4_InitLootSpawnCount(scopesRefs_cq)
+	lootCountsTable["cloot4_scopes_advanced_start"] <- CLootV4_InitLootSpawnCount(scopesRefs_advanced)
+	lootCountsTable["cloot4_scopes_sniper_start"] <- CLootV4_InitLootSpawnCount(scopesRefs["optic_sniper"])
+	
+	// Mags
+	table<string, array<string> > magsRefs = ItemRefsTableBySubType_Build(file.mags_LootData, ["bullets_mag", "highcal_mag", "energy_mag", "sniper_mag"])
+	printt("CLootV4: Mags found - Light:" + magsRefs["bullets_mag"].len() + " Heavy:" + magsRefs["highcal_mag"].len() + " Energy:" + magsRefs["energy_mag"].len() + " Sniper:" + magsRefs["sniper_mag"].len())
+	
+	lootRefsTable["cloot4_mags_energy_start"] <- magsRefs["energy_mag"]
+	lootRefsTable["cloot4_mags_heavy_start"] <- magsRefs["highcal_mag"]
+	lootRefsTable["cloot4_mags_light_start"] <- magsRefs["bullets_mag"]
+	lootRefsTable["cloot4_mags_sniper_start"] <- magsRefs["sniper_mag"]
+	
+	lootCountsTable["cloot4_mags_energy_start"] <- CLootV4_InitLootSpawnCount(magsRefs["energy_mag"])
+	lootCountsTable["cloot4_mags_heavy_start"] <- CLootV4_InitLootSpawnCount(magsRefs["highcal_mag"])
+	lootCountsTable["cloot4_mags_light_start"] <- CLootV4_InitLootSpawnCount(magsRefs["bullets_mag"])
+	lootCountsTable["cloot4_mags_sniper_start"] <- CLootV4_InitLootSpawnCount(magsRefs["sniper_mag"])
+	
+	// Stocks
+	table<string, array<string> > stocksRefs = ItemRefsTableBySubType_Build(file.stocks_LootData, ["stock_tactical", "stock_sniper"])
+	lootRefsTable["cloot4_stocks_basic_start"] <- stocksRefs["stock_tactical"]
+	lootRefsTable["cloot4_stocks_sniper_start"] <- stocksRefs["stock_sniper"]
+	
+	lootCountsTable["cloot4_stocks_basic_start"] <- CLootV4_InitLootSpawnCount(stocksRefs["stock_tactical"])
+	lootCountsTable["cloot4_stocks_sniper_start"] <- CLootV4_InitLootSpawnCount(stocksRefs["stock_sniper"])
+	
+	// Barrels/Lasers/Shotgun Bolts
+	table<string, array<string> > gunEndRefs = ItemRefsTableBySubType_Build(file.barrels_LootData, ["barrel_stabilizer", "shotgun_bolt", "laser_sight"])
+	lootRefsTable["cloot4_barrels_start"] <- gunEndRefs["barrel_stabilizer"]
+	lootRefsTable["cloot4_lasers_start"] <- gunEndRefs["laser_sight"]
+	lootRefsTable["cloot4_shotgunbolts_start"] <- gunEndRefs["shotgun_bolt"]
+	
+	lootCountsTable["cloot4_barrels_start"] <- CLootV4_InitLootSpawnCount(gunEndRefs["barrel_stabilizer"])
+	lootCountsTable["cloot4_lasers_start"] <- CLootV4_InitLootSpawnCount(gunEndRefs["laser_sight"])
+	lootCountsTable["cloot4_shotgunbolts_start"] <- CLootV4_InitLootSpawnCount(gunEndRefs["shotgun_bolt"])
+	
+	// Hopups
+	lootRefsTable["cloot4_hopups_start"] <- SURVIVAL_GetAllRefsInLootGroup("attachments_hopups_only")
+	lootCountsTable["cloot4_hopups_start"] <- CLootV4_InitLootSpawnCount(SURVIVAL_GetAllRefsInLootGroup("attachments_hopups_only"))
+	
+	// Armors - filter to only valid refs
+	array<string> armorRefs_All = ["armor_pickup_lv1", "armor_pickup_lv2", "armor_pickup_lv3", "armor_pickup_lv4_all_fast"]
+	array<string> evoShieldRefs_All = ["armor_pickup_lv1_evolving", "armor_pickup_lv2_evolving", "armor_pickup_lv3_evolving", "armor_pickup_lv4_all_fast", "armor_pickup_lv5_evolving"]
+	
+	array<string> armorRefs = []
+	foreach (ref in armorRefs_All)
+	{
+		if (!SURVIVAL_Loot_IsRefDisabled(ref))
+			armorRefs.append(ref)
+	}
+	
+	/*array<string> evoShieldRefs = []
+	foreach (ref in evoShieldRefs_All)
+	{
+		if (!SURVIVAL_Loot_IsRefDisabled(ref))
+			evoShieldRefs.append(ref)
+	}*/
+	
+	lootRefsTable["cloot4_bodyarmor_start"] <- armorRefs
+	lootCountsTable["cloot4_bodyarmor_start"] <- CLootV4_InitLootSpawnCount(armorRefs)
+	//lootRefsTable["cloot4_evoarmor_start"] <- evoShieldRefs
+	//lootCountsTable["cloot4_evoarmor_start"] <- CLootV4_InitLootSpawnCount(evoShieldRefs)
+	
+	// Helmets
+	array<string> helmetRefs = []
+	if (eLootType.HELMET in file.gearDataByType)
+		helmetRefs = LootDatas_To_LootRefs(file.gearDataByType[eLootType.HELMET])
+	if (!helmetRefs.contains("helmet_pickup_lv1"))
+		helmetRefs.insert(0, "helmet_pickup_lv1")
+	lootRefsTable["cloot4_helmets_start"] <- helmetRefs
+	lootCountsTable["cloot4_helmets_start"] <- CLootV4_InitLootSpawnCount(helmetRefs)
+	
+	// Knockdown shields
+	array<string> incapShieldRefs = []
+	if (eLootType.INCAPSHIELD in file.gearDataByType)
+		incapShieldRefs = LootDatas_To_LootRefs(file.gearDataByType[eLootType.INCAPSHIELD])
+	if (!incapShieldRefs.contains("incapshield_pickup_lv1"))
+		incapShieldRefs.insert(0, "incapshield_pickup_lv1")
+	lootRefsTable["cloot4_incaps_start"] <- incapShieldRefs
+	lootCountsTable["cloot4_incaps_start"] <- CLootV4_InitLootSpawnCount(incapShieldRefs)
+	
+	// Ordinances
+	lootRefsTable["cloot4_ordinances_start"] <- SURVIVAL_GetAllRefsInLootGroup("ordnance_drops")
+	lootCountsTable["cloot4_ordinances_start"] <- CLootV4_InitLootSpawnCount(SURVIVAL_GetAllRefsInLootGroup("ordnance_drops"))
+	
+	// Batteries
+	lootRefsTable["cloot4_batts_start"] <- ["health_pickup_combo_full", "health_pickup_combo_large", "health_pickup_combo_small", "health_pickup_combo_small"]
+	lootCountsTable["cloot4_batts_start"] <- [1, 1, 1, 1]
+	
+	// Health
+	lootRefsTable["cloot4_health_start"] <- ["health_pickup_health_large", "health_pickup_health_small", "health_pickup_health_small"]
+	lootCountsTable["cloot4_health_start"] <- [1, 2, 2]
+	
+	// Special Gear
+	lootRefsTable["cloot4_specialgear_start"] <- ["health_pickup_ultimate", "mp_ability_redeploy_balloon"]
+	lootCountsTable["cloot4_specialgear_start"] <- [1, 1]
+	
+	// Backpacks
+	array<string> backpackRefs = []
+	if (eLootType.BACKPACK in file.gearDataByType)
+		backpackRefs = LootDatas_To_LootRefs(file.gearDataByType[eLootType.BACKPACK])
+	if (!backpackRefs.contains("backpack_pickup_lv1"))
+		backpackRefs.insert(0, "backpack_pickup_lv1")
+	lootRefsTable["cloot4_backpacks_start"] <- backpackRefs
+	lootCountsTable["cloot4_backpacks_start"] <- CLootV4_InitLootSpawnCount(backpackRefs)
+	
+	// Spawn all the stuff
+	foreach (category in startNodeNames)
+	{
+		CLootV4_Spawn_LootRows_For_ArrayOfStartNodes(startNodesTable[category], lootRefsTable[category], lootCountsTable[category])
+	}
+	
+	printt("CLootV4_Create_AllStuff: Complete")
+}
+
+array<int> function CLootV4_InitLootSpawnCount(array<string> lootRefs)
+{
+	array<int> results = []
+	foreach (_lref in lootRefs)
+	{
+		results.append(1)
+	}
+	return results
+}
+
+void function CLootV4_Spawn_LootRows_For_ArrayOfStartNodes(array<entity> allStartNodes, array<string> lootRefs, array<int> lootCountsParm)
+{
+	foreach (startNode in allStartNodes)
+	{
+		entity endNode = startNode.GetLinkEnt()
+		if (!IsValid(endNode))
+		{
+			printt("CLootV4_Spawn: Missing end node for " + startNode.GetScriptName())
+			continue
+		}
+		
+		array<int> lootCounts = []
+		if (lootCountsParm.len() > 0)
+		{
+			lootCounts = lootCountsParm
+		}
+		else
+		{
+			lootCounts = CLootV4_InitLootSpawnCount(lootRefs)
+		}
+		
+		CLootV4_SpawnLootRow(lootRefs, lootCounts, startNode, endNode)
+	}
+}
+
+void function CLootV4_SpawnLootRow(array<string> lootRefsParm, array<int> lootCounts, entity startNode, entity endNode)
+{
+	// Filter out empty refs
+	array<string> lootRefs = []
+	foreach (item in lootRefsParm)
+	{
+		if (item != "")
+			lootRefs.append(item)
+	}
+	
+	if (!IsValid(startNode) || !IsValid(endNode))
+		return
+		
+	if (lootRefs.len() == 0)
+		return
+	
+	vector rowStartEdge = startNode.GetOrigin()
+	vector rowEndEdge = endNode.GetOrigin()
+	float rowWidth = Distance(rowStartEdge, rowEndEdge)
+	vector nextItemDir = Normalize(rowEndEdge - rowStartEdge)
+	vector itemAnglesDefault = startNode.GetAngles()
+	
+	// Calculate spacing
+	vector itemPos
+	float distBtwnItems
+	if (lootRefs.len() >= 2)
+	{
+		distBtwnItems = rowWidth / (lootRefs.len() - 1)
+		itemPos = rowStartEdge
+	}
+	else
+	{
+		// Single item - spawn in middle
+		distBtwnItems = rowWidth / lootRefs.len()
+		itemPos = rowStartEdge + (nextItemDir * rowWidth / 2)
+	}
+	vector nextItemDelta = Normalize(nextItemDir) * distBtwnItems
+	
+	// Spawn each item
+	for (int i = 0; i < lootRefs.len(); i++)
+	{
+		string _lootRef = lootRefs[i]
+		int howMany = lootCounts[i]
+		
+		if (_lootRef != "")
+		{
+			// Use default node angles (no rotation adjustment for attachments/gear)
+			vector itemAngles = itemAnglesDefault
+			entity lootEnt = SpawnGenericLoot(_lootRef, itemPos, itemAngles, howMany)
+			
+			if (IsValid(lootEnt))
+			{
+				lootEnt.SetNetworkDistanceCull(false)
+				lootEnt.e.recreateLootOnPickup = true
+				thread OnPickupGenericThread(lootEnt, _lootRef, howMany)
+			}
+			
+			itemPos = itemPos + nextItemDelta
+		}
+	}
+}
+
+table<string, array<string> > function ItemRefsTableBySubType_Build(array<LootData> items, array<string> subTypes)
+{
+	table<string, array<LootData> > itemsByType = ItemsTableBySubType_Build(items, subTypes)
+	
+	table<string, array<string> > itemRefsByType
+	foreach (sType in subTypes)
+	{
+		itemRefsByType[sType] <- LootDatas_To_LootRefs(itemsByType[sType])
+	}
+	
+	return itemRefsByType
+}
+
+table<string, array<LootData> > function ItemsTableBySubType_Build(array<LootData> items, array<string> subTypes)
+{
+	table<string, array<LootData> > itemsByType
+	foreach (sType in subTypes)
+	{
+		itemsByType[sType] <- []
+	}
+	
+	// Split into subgroups
+	foreach (item in items)
+	{
+		if (!LootIsSpawnable(item))
+			continue
+			
+		foreach (sType in subTypes)
+		{
+			if (item.ref.find(sType) != -1)
+			{
+				itemsByType[sType].append(item)
+				continue
+			}
+		}
+	}
+	
+	return itemsByType
+}
+
+array<string> function LootDatas_To_LootRefs(array<LootData> lootDatas)
+{
+	array<string> refs = []
+	foreach (ld in lootDatas)
+	{
+		refs.append(ld.ref)
+	}
+	return refs
+}
+
+// ==================================================
+
 entity function CreateLegendaryRack()
 {
 	entity Rack_Index_Six = CreateEntity( "info_target" )
@@ -1053,13 +1731,19 @@ entity function CreateGunRangeTarget( entity ent, int type, bool autoReset, bool
 			collision.SetParent( targetGeo )
 			collision.Hide()
 	
-			anglesReady = targetMover.GetLocalAngles()
-			anglesShot = AnglesCompose( targetMover.GetLocalAngles(), < 180, 0, 0 > )
+			// Capture the initial local angles BEFORE parenting
+			vector initialAngles = targetMover.GetAngles()
+			
+			anglesReady = <0, 0, 0>  // Local angles relative to parent (will be set after parenting)
+			anglesShot = <180, 0, 0>  // Always flip 180 degrees on pitch
 			rotateDuration = 0.0
 
 			if ( IsValid( slideTarget ) )
 			{
 				targetMover.SetParent( targetBase, "", true )
+				
+				// Now that it's parented, set the local angles to maintain the original orientation
+				targetMover.SetLocalAngles( anglesReady )
 
 				// Save slideTarget to do Instant Speed Change upon speed change via a signal.
 				sMovingTarget newMovingTarget = MovingTarget_Register( targetBase, slideTarget )
@@ -1067,6 +1751,9 @@ entity function CreateGunRangeTarget( entity ent, int type, bool autoReset, bool
 			}
 			else // Not sliding target, so we don't need scripted base.
 			{
+				// No parent, so use the initial world angles
+				anglesReady = initialAngles
+				anglesShot = AnglesCompose( initialAngles, <180, 0, 0> )
 				//targetBase.Destroy()
 			}
 		}

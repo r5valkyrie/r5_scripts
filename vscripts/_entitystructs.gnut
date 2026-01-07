@@ -198,7 +198,7 @@ global struct ServerEntityStruct
 	entity lastSyncedMeleeAttacker
 	bool markedForExecutionDeath
 
-	// bool proto_weakToPilotWeapons
+	IntSet spawnedFilters
 
 	bool isHotDropping
 
@@ -227,15 +227,7 @@ global struct ServerEntityStruct
 	float lastTakeDamageTime_thermite // meteor thermite does an extra burst of damage on first contact
 	float lastTakeDamageTime_laser_cannon
 
-	// tracker rounds
-	// int myTrackerRoundsIdx = -1 //script managed ent array index
-	// int myReservedTrackerRoundsIdx = -1 //script managed ent array index
-	// int trackerRoundsOnMeIdx = -1 //script managed ent array index
-	// bool allowLifetimeDeath = true
-
-	// entities
-	// float nextAllowStickyExplodeTime = 0.0
-	// float stickyClearTime = 0.0
+	bool  recreateLootOnPickup = false
 	bool  canBeDamagedFromGas = false
 
 	entity shieldWallFX
@@ -381,12 +373,13 @@ global struct ServerEntityStruct
 	array<void functionref( entity )> onEntityDestroyedCallbacks
 	bool functionref( entity player, entity ent ) canUseEntityCallback
 	bool functionref( entity player, entity ent, int useFlags ) canUseEntityCallbackNew = null
+	bool functionref( entity player, entity ent ) shouldUseBlockReloadCallback = null
 	bool headshotImmunity
 	bool isLeftDoor
 	vector spawnAngles
 	vector goalAngles
 	bool   isOpen // used by sh_lootbins.nut and sh_doors.nut
-	//bool   isLeftDoor // used by sh_doors.nut
+	int    lootOfRarityHasBeenSpawned
 	entity usePlayer
 	bool isDoorBlocker
 	void functionref( entity, entity, var ) Callback_VortexTriggerBulletHit

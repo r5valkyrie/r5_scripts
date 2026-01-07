@@ -9,6 +9,7 @@ global function ClientCommand_OpenVendingMachine
 global function ClientCommand_CloseVendingMachine
 global function GetVendingMachineInUseByPlayer
 global function VendingMachine_CreateSimple
+global function WarpBeamFXThread
 
 const string SUPPLYBOX_SOUND_OPEN 	= "UI_Survival_SupplyBoxOpen"
 const string SUPPLYBOX_SOUND_CLOSE 	= "UI_Survival_SupplyBoxClose"
@@ -70,6 +71,10 @@ void function VendingMachine_LevelInit()
 	#if CLIENT
 		AddCreateCallback( "prop_death_box", OnPropScriptCreated )
 	#endif //CLIENT
+
+	#if !UI
+		PrecacheParticleSystem( BLACK_MARKET_WARP_BEAM_FX )
+	#endif
 
 	//Remote_RegisterClientFunction( "CL_VendingMachineHighlight_Init" )
 
@@ -148,7 +153,7 @@ void function VendingMachineDeployThread( vector origin, vector angles, entity s
 
 		SetCallback_CanUseEntityCallback_Retail( vendingMachine, CanUseVendingMachine )
 		AddCallback_OnUseEntity_ClientServer( vendingMachine, OnVendingMachineUsed )
-		//SetCallback_ShouldUseBlockReloadCallback( vendingMachine, SimpleShouldNotBlockReloadCallback )
+		SetCallback_ShouldUseBlockReloadCallback( vendingMachine, SimpleShouldNotBlockReloadCallback )
 	}
 
 	vendingMachine.SetUsable()
@@ -161,7 +166,7 @@ void function VendingMachineDeployThread( vector origin, vector angles, entity s
 	while( true )
 	{
 		//eLootTier.NONE causes ALL the loot get spawned
-		//TriggerLootSpawnForLootBinsInRadius( vendingMachine.GetOrigin(), lootGrabDist, eLootTier.NONE ) // Need to do this repeatedly as the vending machine may be on moving geo
+		TriggerLootSpawnForLootBinsInRadius( vendingMachine.GetOrigin(), lootGrabDist, eLootTier.NONE ) // Need to do this repeatedly as the vending machine may be on moving geo
 
 		wait 0.5
 	}
@@ -177,7 +182,7 @@ void function OnPropScriptCreated( entity ent )
 		AddEntityCallback_GetUseEntOverrideText( ent, GetVendingMachineUsePromptText )
 		SetCallback_CanUseEntityCallback_Retail( ent, CanUseVendingMachine )
 		AddCallback_OnUseEntity_ClientServer( ent, OnVendingMachineUsed )
-		//SetCallback_ShouldUseBlockReloadCallback( ent, SimpleShouldNotBlockReloadCallback )
+		SetCallback_ShouldUseBlockReloadCallback( ent, SimpleShouldNotBlockReloadCallback )
 
 		CL_VendingMachineFake_Create( ent.GetOrigin(), ent.GetAngles() )
 	}
@@ -266,16 +271,36 @@ void function DoVendingMachinePostPickupLogic( entity player, entity vendingMach
 #if SERVER
 void function OnPlayerLootPickup( entity player, entity lootEnt, string ref, int unitsPickedUp, bool willDestroy, entity vendingMachine, int pickupFlags )
 {
+	printt("OnPlayerLootPickup called!")
+
 	LootData lootFlav = SURVIVAL_Loot_GetLootDataByRef( ref )
 
 	if ( !IsValid( vendingMachine ) )
+	{
+		printt("vendingMachine invalid")
 		return
+	}
 
 	if ( !IsValid( lootEnt ) )
+	{
+		printt("lootEnt invalid")
 		return
+	}
 
 	if ( vendingMachine.GetScriptName() != VENDING_MACHINE_SCRIPTNAME )
+	{
+		printt("Not a vending machine, scriptname:", vendingMachine.GetScriptName())
 		return
+	}
+
+	/*printt("Playing black market effects")
+	// Play black market effects
+	if ( IsValid( lootEnt ) )
+	{
+		EmitSoundOnEntity( vendingMachine, "Loba_Ultimate_BlackMarket_WarpOut" )
+		EmitSoundAtPosition( TEAM_UNASSIGNED, lootEnt.GetOrigin(), "Loba_Ultimate_BlackMarket_WarpIn", vendingMachine )
+		thread WarpBeamFXThread( player, vendingMachine.GetOrigin() + (vendingMachine.GetUpVector() * 48.0), lootEnt.GetOrigin() )
+	}*/
 
 	Assert( unitsPickedUp > 0, "In OnPlayerLootPickup with unitsPickedUp: " + unitsPickedUp + ". player: " + player + " lootRef: " + ref )
 
@@ -290,7 +315,7 @@ void function WarpBeamFXThread( entity player, vector startPos, vector endPos )
 	entity controlPoint = CreateEntity( "info_placement_helper" )
 	SetTargetName( controlPoint, UniqueString( "translocation_endPos" ) )
 	controlPoint.SetOrigin( endPos )
-	CopyRealmsFromTo( player, controlPoint )
+	//CopyRealmsFromTo( player, controlPoint )
 	DispatchSpawn( controlPoint )
 
 	entity beamFX = CreateEntity( "info_particle_system" )
@@ -299,7 +324,7 @@ void function WarpBeamFXThread( entity player, vector startPos, vector endPos )
 	beamFX.kv.cpoint1 = controlPoint.GetTargetName()
 	beamFX.kv.start_active = 1
 	beamFX.SetOrigin( startPos )
-	CopyRealmsFromTo( player, beamFX )
+	//CopyRealmsFromTo( player, beamFX )
 	DispatchSpawn( beamFX )
 
 	OnThreadEnd( function () : ( beamFX, controlPoint ) {
