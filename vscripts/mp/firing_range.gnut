@@ -54,6 +54,7 @@ global function CreateGunRangeTargetsForRealm
 
 #if CLIENT
 global function SCB_BroadcastFriendlyFireChange
+global function ServerToClient_DoPresentation
 #endif // CLIENT
 
 struct RackGroup
@@ -189,6 +190,10 @@ void function FiringRangeGameMode_Init()
 		AddClientCommandCallback( "firingrange_toggle_friendlyfire", ClientCommand_ToggleFriendlyFire )
 
 		firingrange_infinite_ammo = GetCurrentPlaylistVarBool( "survival_infinite_ammo", false ) ? 1 : 2
+		if ( GetCurrentPlaylistVarBool( "survival_staging_high_point_enabled", true ) )
+		{
+			thread HighPointMonitor_Thread()
+		}
 	#endif
 	#if CLIENT
 		IntroDisplayThread()
@@ -1568,6 +1573,144 @@ void function FixWeapon(entity weapon)
 	}
 	catch(error){}*/
 }
+
+//the top of the flag
+const vector HIGH_POINT_POS = <-1211.045532, 5884.230469, 3477.838623>
+const float HIGH_POINT_MAX_DIST = 150
+const float HIGH_POINT_MAX_Z_DIST = 10
+//TLDR, if you climb to the top of the flag when in 3rd person mode, crouch and don't move for some time, this will activate
+void function HighPointMonitor_Thread()
+{
+	array<entity> playersWithThreads
+
+	while (true)
+	{
+		foreach ( player in GetPlayerArray_AliveConnected() )
+		{
+			if ( !IsValid( player ) )
+				continue
+
+			if ( !player.IsCrouched() )
+				continue
+
+			if ( !player.IsThirdPersonShoulderModeOn() )
+				continue
+
+			if ( playersWithThreads.contains(player) )
+				continue
+
+			vector playerOrigin = player.GetOrigin()
+			float zDiff = fabs(playerOrigin.z - HIGH_POINT_POS.z)
+			if ( zDiff > HIGH_POINT_MAX_Z_DIST )
+				continue
+
+			if ( Distance2DSqr(playerOrigin, HIGH_POINT_POS) > HIGH_POINT_MAX_DIST )
+				continue
+
+			playersWithThreads.append( player )
+			thread HighPointMonitorPlayer_Thread( player, playersWithThreads )
+		}
+
+		wait 0.5
+	}
+}
+
+void function HighPointMonitorPlayer_Thread( entity player, array<entity> playersWithThreads )
+{
+	PassByReferenceBool needToClearFlags
+	PassByReferenceInt crouchHandle
+
+	OnThreadEnd(
+		function () : ( player, playersWithThreads, needToClearFlags, crouchHandle )
+		{
+			playersWithThreads.fastremovebyvalue( player )
+
+			if ( needToClearFlags.value )
+			{
+				//player.RemoveForcedStance( crouchHandle.value )
+				player.MovementEnable()
+				player.ClearInvulnerable()
+				//player.EnableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS )
+				RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
+				RemoveCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
+				player.PlayerCone_Disable()
+			}
+		}
+	)
+
+	EndSignal( player, "OnDeath", "OnDestroy" )
+
+	vector oldPlayerPosition = player.GetOrigin()
+	float lastMoveTime = Time()
+	float waitTime = GetCurrentPlaylistVarFloat( "survival_staging_high_point_time", 3 )
+
+	while ( (lastMoveTime + waitTime) > Time() )
+	{
+		if ( !player.IsCrouched() )
+			return
+
+		if ( !player.IsThirdPersonShoulderModeOn() )
+			return
+
+		vector newPlayerPosition = player.GetOrigin()
+		if ( oldPlayerPosition != newPlayerPosition )
+		{
+			float zDiff = fabs(newPlayerPosition.z - HIGH_POINT_POS.z)
+			if ( zDiff > HIGH_POINT_MAX_Z_DIST )
+				return
+
+			if ( Distance2DSqr(newPlayerPosition, HIGH_POINT_POS) > HIGH_POINT_MAX_DIST )
+				return
+
+			oldPlayerPosition = newPlayerPosition
+			lastMoveTime = Time()
+		}
+
+		WaitFrame()
+	}
+
+	vector angles = player.CameraAngles()
+	Remote_CallFunction_NonReplay( player, "ServerToClient_DoPresentation" )
+
+	needToClearFlags.value = true
+	//crouchHandle.value = player.PushForcedStance( FORCE_STANCE_CROUCH )
+	player.MovementDisable()
+	player.SetInvulnerable()
+	//player.DisableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS )
+	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
+	AddCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
+
+	wait .1
+	player.PlayerCone_SetSpecific(angles)
+
+	wait 12.4
+
+	//player.RemoveForcedStance( crouchHandle.value )
+	player.MovementEnable()
+	player.ClearInvulnerable()
+	player.SetShieldHealth( player.GetShieldHealthMax() )
+	player.SetHealth( player.GetMaxHealth() )
+	//player.EnableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS )
+	RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
+	RemoveCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
+	needToClearFlags.value = false
+	player.PlayerCone_Disable()
+
+	//wait until the move off the flag to kill the thread, which in turn prevents it starting again
+	while ( true )
+	{
+		vector playerPosition = player.GetOrigin()
+		float zDiff = fabs(playerPosition.z - HIGH_POINT_POS.z)
+		if ( zDiff > HIGH_POINT_MAX_Z_DIST )
+			return
+
+		if ( Distance2DSqr(playerPosition, HIGH_POINT_POS) > HIGH_POINT_MAX_DIST )
+			return
+
+		WaitFrame()
+	}
+}
+
 #endif
 
 #if CLIENT
@@ -1582,5 +1725,136 @@ void function IntroDisplayThread()
 		if ( IsValid( viewPlayer ) )
 			MapZones_ZoneIntroText( viewPlayer, ("#" + GetMapName()), -1 )
 	}()
+}
+
+void function ServerToClient_DoPresentation()
+{
+	if ( GetCurrentPlaylistVarBool( "survival_staging_high_point_enabled", true ) )
+	{
+		thread DoRealization_Thread()
+		thread DoPresentation_Thread()
+	}
+}
+
+void function DoRealization_Thread()
+{
+	entity player = GetLocalViewPlayer()
+
+	EndSignal( player, "OnDeath", "OnDestroy" )
+
+	entity rotator = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", player.EyePosition(), <0,0,0> )
+	entity model = CreateClientSidePropDynamic( player.EyePosition() + <0,0,150>, <0,0,0>, $"mdl/dev/empty_model.rmdl" )
+
+	OnThreadEnd( void function() : ( rotator, model  ) {
+		model.Destroy()
+		rotator.Destroy()
+	} )
+	rotator.NonPhysicsSetRotateModeLocal( true )
+	rotator.NonPhysicsRotate( <0,0,-1>, 50 )
+
+	vector cameraForwardFlatNormalized = Normalize(FlattenVec(AnglesToForward(player.CameraAngles())))
+	vector offset = cameraForwardFlatNormalized * 400 + <0,0,300>
+
+	vector forwardAngle = VectorToAngles( cameraForwardFlatNormalized )
+	vector rotatedAngle = AnglesCompose( forwardAngle, <0, -100, 35> )
+
+	entity mover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", player.CameraPosition(), <0,0,0> )
+	mover.SetParent( rotator )
+	mover.NonPhysicsSetMoveModeLocal(true)
+
+	mover.SetLocalAngles( rotatedAngle )
+	mover.SetLocalOrigin( offset )
+
+	model.SetParent( mover )
+	//model.Anim_Play( "Bird_fly_cycle_long_no_root_motion" )
+
+	const float HALF_ROTATE_TIME = 6
+	const float EASE_IN_TIME = 1
+	const float START_STAGE_TIME = HALF_ROTATE_TIME + ( EASE_IN_TIME / 2 )
+	const float TOTAL_ROTATE_TIME = HALF_ROTATE_TIME + START_STAGE_TIME
+	wait TOTAL_ROTATE_TIME - 1
+}
+
+void function DoPresentation_Thread()
+{
+	entity player = GetLocalViewPlayer()
+
+	EndSignal( player, "OnDeath", "OnDestroy" )
+
+	//SCB_FiringRange_EnableCharacterChange( false )
+
+	bool needToShowStats = false//FR_DynStats_Hide_RUI()
+	bool needToShowTimer = false//FR_DynTimer_Hide_RUI()
+	bool needToRestoreSettings = false//FR_Settings_Hide_RUI_If_Shown()
+
+	EmitSoundOnEntity( player, "FiringRangeMu1_HighPoint_1P" )
+
+	entity rotator = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", player.EyePosition(), <0,0,0> )
+
+	OnThreadEnd( void function() : ( player, rotator, needToShowStats, needToShowTimer, needToRestoreSettings ) {
+
+		//SCB_FiringRange_EnableCharacterChange( true )
+
+
+
+		player.ClearMenuCameraEntity()
+		rotator.Destroy()
+	} )
+
+	rotator.NonPhysicsSetRotateModeLocal( true )
+
+	const float HALF_ROTATE_TIME = 6
+	const float EASE_IN_TIME = 1
+	const float START_STAGE_TIME = HALF_ROTATE_TIME + ( EASE_IN_TIME / 2 )
+	rotator.NonPhysicsRotateTo( <0,180,0>, START_STAGE_TIME, EASE_IN_TIME, 0 )
+	entity mover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", player.CameraPosition(), player.CameraAngles() )
+	mover.SetParent( rotator )
+	vector endPos = mover.GetLocalOrigin()
+	mover.NonPhysicsSetMoveModeLocal(true)
+	vector cameraForwardFlatNormalized = Normalize(FlattenVec(AnglesToForward(player.CameraAngles())))
+	mover.NonPhysicsMoveTo( (cameraForwardFlatNormalized * -300) + <0, 0, 300>, 3, 1, .5 )
+	entity camera = CreateClientSidePointCamera( mover.GetOrigin(), mover.GetAngles(), player.GetFOV() )
+	camera.SetParent( mover )
+	player.SetMenuCameraEntity( camera )
+	//player.SetMenuCameraUseGameExposure()
+
+	vector focusPoint = player.CameraPosition() + (AnglesToForward(player.CameraAngles()) * Distance( player.CameraPosition(), player.EyePosition() ) )
+	entity cameraFocusPoint = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", focusPoint, <0,0,0> )
+	cameraFocusPoint.NonPhysicsMoveTo( focusPoint + <0, 0, 150>, 3, 1, .5 )
+
+	
+
+	float startTime = Time()
+	const float TOTAL_ROTATE_TIME = HALF_ROTATE_TIME + START_STAGE_TIME
+	float endTime = startTime + TOTAL_ROTATE_TIME
+
+	bool finshedStartStage = false
+	float startStageEndTime = Time() + START_STAGE_TIME
+
+	bool startedEndStage = false
+	const float END_STAGE_TIME = 2
+	float endStageStartTime = Time() + TOTAL_ROTATE_TIME - END_STAGE_TIME
+	while ( Time() < endTime )
+	{
+		if ( !finshedStartStage && Time() >= startStageEndTime )
+		{
+			finshedStartStage = true
+			rotator.NonPhysicsRotate( <0,0,1>, 30 )
+		}
+
+		if ( !startedEndStage && Time() >= endStageStartTime )
+		{
+			startedEndStage = true
+			cameraFocusPoint.NonPhysicsMoveTo( focusPoint, END_STAGE_TIME, 1, .5 )
+			mover.NonPhysicsMoveTo( endPos, END_STAGE_TIME, 1, .5 )
+		}
+
+		vector cameraToCameraFocus = Normalize(cameraFocusPoint.GetOrigin() - mover.GetOrigin())
+
+		camera.SetAngles( VectorToAngles(cameraToCameraFocus) )
+		
+		
+		WaitFrame()
+	}
 }
 #endif // CLIENT

@@ -57,6 +57,9 @@ struct {
 #if SERVER || CLIENT || UI
 void function VendingMachine_LevelInit()
 {
+	if ( !IsFiringRangeGameMode() )
+		return
+
 	#if SERVER
 		AddClientCommandCallback( VENDING_MACHINE_OPEN_CMD, ClientCommand_OpenVendingMachine )
 		AddClientCommandCallback( VENDING_MACHINE_CLOSE_CMD, ClientCommand_CloseVendingMachine )

@@ -395,6 +395,8 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SonarPulseConeFromPosition", "vector", -32000.0, 32000.0, 32, "float", 0.0, 32000.0, 16, "vector", -1.0, 1.0, 32, "float", -360.0, 360.0, 16, "int", 0, 128, "float", 0.0, 32000.0, 32, "bool", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_MortarRingFireSegmentCreated", "entity", "entity", "entity" )
 
+	ScriptRemote_RegisterClientFunction( "ServerToClient_DoPresentation" )
+
 	ScriptRegisterNetworkedVariable( "playerAllowedToLeech", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
 	RegisterEntityVar_AllSyncedEntity( "weaponx", "weaponLockedSet", 0 )
