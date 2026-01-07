@@ -454,7 +454,7 @@ void function HideInventoryGridPanel( bool isClosingTopPanel = false )
 	file.groundListSelected = null
 }
 
-void function OpenSurvivalGroundListMenu( bool playerIsTitan )
+void function OpenSurvivalGroundListMenu( bool playerIsTitan = false )
 {
 	CloseAllMenus()
 	AdvanceMenu( file.menu )
@@ -519,7 +519,7 @@ float function GetGroundListItemHeight( var panel, int index )
 {
 	if( SurvivalGroundItem_IsHeader( index ) )
 		return 0.5
-	
+
 	if( SurvivalGroundItem_IsWeapon( index ) || SurvivalGroundItem_IsAmmo( index ) )
 		return 1.0
 
@@ -530,12 +530,12 @@ float function GetGroundListItemWidth( var panel, int index )
 {
 	if( SurvivalGroundItem_IsHeader( index ) )
 		return 1
-	
+
 	if( SurvivalGroundItem_IsWeapon( index ) )
 		return 0.497
 	else if( SurvivalGroundItem_IsAmmo( index ) )
-		return 0.195
-	
+		return 0.155
+
 	return 1
 }
 

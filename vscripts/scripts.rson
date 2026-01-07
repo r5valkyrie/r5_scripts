@@ -524,6 +524,7 @@ Scripts:
 	melee/sh_melee.gnut
 	melee/sh_melee_synced.gnut
 	gamemodes/survival/sh_gamemode_survival.nut
+	mp/sh_firing_range_vending_machine.nut
 
 	sh_ping.gnut
 ]

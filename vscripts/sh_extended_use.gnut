@@ -16,6 +16,7 @@ global struct ExtendedUseSettings
 	float duration = 1.0
 	entity entityArg = null
 	bool requireMatchingUseEnt = false
+	int    disableWeaponTypes = 0 // WPT_*
 	#if CLIENT
 		string hint
 		string holdHint = "%use_long%"

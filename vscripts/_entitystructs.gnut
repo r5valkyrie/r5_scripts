@@ -206,6 +206,7 @@ global struct ServerEntityStruct
 	entity lastAttacker
 	bool blocksThermite = false
 	bool preventStickyEnts = false
+	bool   isSecretLoot = false
 
 	// sticky props
 	float spawnTime = 0.0
@@ -678,6 +679,7 @@ global struct ServerPlayerStruct
 	// float						lastMayhemTime = -MAYHEM_REQUIREMENT_TIME
 
 	entity						lastSpawnPoint
+	entity justCreatedSurvivalMainWeapon
 
 	// string						lastExecutionUsed
 

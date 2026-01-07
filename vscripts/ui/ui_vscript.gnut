@@ -371,6 +371,7 @@ void function UICodeCallback_UIInit()
 	GridPanelInit()
 
 	ShGladiatorCards_Init()
+	VendingMachine_LevelInit()
 
 	#if HAS_TOOLTIPS
 		Sh_InitToolTips()

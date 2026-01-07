@@ -8,6 +8,7 @@ global function ServerCallback_RefreshInventory
 global function ResetInventoryMenu
 global function OpenSurvivalInventory
 global function OpenSurvivalGroundList
+global function OpenSurvivalGroundListRetail
 
 global function Survival_IsInventoryOpen
 global function Survival_IsGroundlistOpen
@@ -81,10 +82,19 @@ global enum eGroundListBehavior
 	NEARBY,
 }
 
+global enum eGroundListType
+{
+	DEATH_BOX,
+	GRABBER,
+	VENDINGMACHINE,
+	_COUNT
+}
+
 struct CurrentGroundListData
 {
 	entity deathBox
 	int    behavior
+	int    listType
 }
 
 struct GroundLootData
@@ -634,6 +644,61 @@ void function SurvivalMenu_Internal( entity player, string uiScript, entity deat
 	}
 }
 
+void function SurvivalMenu_Internal_Retail( entity player, string uiScriptFuncName, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS, int groundListType = eGroundListType.DEATH_BOX )
+{
+	if ( !CanOpenInventory( player ) )
+		return
+
+	ResetInventoryMenu( player )
+
+	ServerCallback_ClearHints()
+	player.ClientCommand( "-zoom" )
+
+	file.currentGroundListData.deathBox = deathBox
+	file.currentGroundListData.behavior = groundListBehavior
+	file.currentGroundListData.listType = groundListType
+
+	RunUIScript( uiScriptFuncName )
+
+	if ( IsValid( deathBox ) )
+	{
+
+		if ( uiScriptFuncName != "OpenSurvivalGroundListMenu" )
+		{
+			thread TrackCloseDeathBoxConditions( player, deathBox )
+		}
+	}
+}
+
+void function TrackCloseDeathBoxConditions( entity player, entity deathBox )
+{
+	player.EndSignal( "OnDeath" )
+	deathBox.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ()
+		{
+			if ( Survival_IsGroundlistOpen() )
+			{
+				RunUIScript( "TryCloseSurvivalInventory", null )
+			}
+		}
+	)
+
+	wait 0.5
+
+	while ( Survival_IsGroundlistOpen() )
+	{
+		if ( Distance( player.GetOrigin(), deathBox.GetOrigin() ) > DEATH_BOX_MAX_DIST )
+			return
+
+		if ( file.currentGroundListData.behavior != eGroundListBehavior.NEARBY && file.filteredGroundItems.len() == 0 )
+			return
+
+		WaitFrame()
+	}
+}
+
 bool function CanOpenInventory( entity player )
 {
 	if ( IsWatchingReplay() )
@@ -689,6 +754,12 @@ void function TrackDistanceFromDeathBox( entity player, entity deathBox )
 void function OpenSurvivalGroundList( entity player, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS )
 {
 	SurvivalMenu_Internal( player, "OpenSurvivalGroundListMenu", deathBox, groundListBehavior )
+}
+
+void function OpenSurvivalGroundListRetail( entity player, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS, int groundListType = eGroundListType.DEATH_BOX )
+{
+	string funcName = "OpenSurvivalGroundListMenu"
+	SurvivalMenu_Internal_Retail( player, funcName, deathBox, groundListBehavior, groundListType )
 }
 
 void function UICallback_UpdateInventoryButton( var button, int position )

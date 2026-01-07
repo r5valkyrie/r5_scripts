@@ -51,6 +51,7 @@ global function ClientCodeCallback_HighlightServerContextChanged
 global function ClientCodeCallback_HighlightServerFunctionsChanged
 global function ManageHighlightEntity
 global function SpotViewModelHighlight
+global function FiringRangeSupplyBoxHighlight
 global function SonarViewModelHighlight
 global function SonarViewModelClearHighlight
 global function SonarPlayerCloneHighlight
@@ -82,6 +83,7 @@ global const HIGHLIGHT_CHARACTER_SPECIAL_HIGHLIGHT = 5
 global const HIGHLIGHT_CONTEXT_DEATH_RECAP = 6
 global const HIGHLIGHT_CONTEXT_SONAR = 7
 global const HIGHLIGHT_MAX_CONTEXTS = 8
+global const HIGHLIGHT_FIRING_RANGE_SUPPLY_BOX = 0
 
 global const HIGHLIGHT_COLOR_TEAMMATE_CLASS = <1.0, 1.0, 1.0>
 
@@ -95,6 +97,7 @@ global const HIGHLIGHT_COLOR_INTERACT = <0.63, 0.8, 1>
 global const HIGHLIGHT_COLOR_OBJECTIVE = <0.9, 0.63, 0.09>
 const HIGHLIGHT_COLOR_FOCUSED_LOOT = <0, 1.0, 0>
 const HIGHLIGHT_COLOR_PINGED_LOOT = <0, 1.0, 0>
+global const HIGHLIGHT_COLOR_FIRINGRANGE_SUPPLYBOX = < 0.25, 0.5, 0.75 >
 
 global const HIGHLIGHT_OUTLINE_NONE = 0
 const HIGHLIGHT_OUTLINE_CUSTOM_COLOR = 101 // outline_default_custom_color
@@ -242,6 +245,14 @@ void function Highlight_Init()
 	HighlightContext_SetFill( highlight, HIGHLIGHT_FILL_INTERACT_BUTTON )
 	HighlightContext_SetRadius( highlight, 2 )
 	HighlightContext_SetParam( highlight, 0, HIGHLIGHT_COLOR_INTERACT )
+
+	highlight = RegisterHighlight( "firingrange_supplybox" )
+	HighlightContext_SetOutline( highlight, HIGHLIGHT_OUTLINE_CUSTOM_COLOR )
+	HighlightContext_SetFill( highlight, HIGHLIGHT_FILL_CUSTOM_COLOR )
+	HighlightContext_SetRadius( highlight, 5 )
+	HighlightContext_SetParam( highlight, 0, HIGHLIGHT_COLOR_FIRINGRANGE_SUPPLYBOX )
+	HighlightContext_SetDrawFunc( highlight, eHighlightDrawFunc.LOS )
+	HighlightContext_SetFarFadeDistance( highlight, 125.0 )
 
 	highlight = RegisterHighlight( "enemy_sonar" )
 	HighlightContext_SetOutline( highlight, HIGHLIGHT_OUTLINE_SONAR )
@@ -1819,6 +1830,21 @@ void function SpotViewModelHighlight( entity viewModelEntity, vector highlightCo
 	viewModelEntity.Highlight_SetFadeInTime( SPOT_HIGHLIGHT_FADE_IN_TIME )
 	viewModelEntity.Highlight_SetFadeOutTime( SPOT_HIGHLIGHT_FADE_OUT_TIME )
 	viewModelEntity.Highlight_SetLifeTime( SPOT_HIGHLIGHT_TIME - SPOT_HIGHLIGHT_FADE_OUT_TIME )
+	viewModelEntity.Highlight_StartOn()
+}
+
+void function FiringRangeSupplyBoxHighlight( entity viewModelEntity )
+{
+	float highlight_TotalTime = 5.0
+	float highlight_FadeInTime = 0.5
+	float highlight_FadeOutTime = 4.5
+	float highlight_LifeTime = highlight_TotalTime - highlight_FadeOutTime
+
+	viewModelEntity.Highlight_SetVisibilityType( HIGHLIGHT_VIS_ALWAYS )
+	viewModelEntity.Highlight_SetCurrentContext( HIGHLIGHT_FIRING_RANGE_SUPPLY_BOX )
+	viewModelEntity.Highlight_SetFadeInTime( highlight_FadeInTime )
+	viewModelEntity.Highlight_SetFadeOutTime( highlight_FadeOutTime )
+	viewModelEntity.Highlight_SetLifeTime( highlight_LifeTime )
 	viewModelEntity.Highlight_StartOn()
 }
 

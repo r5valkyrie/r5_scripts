@@ -623,7 +623,7 @@ array<int> function GetVisibleListItemsIndices( ListPanelData data, float offset
 
 	int lastIndex = firstIndex + 1
 	
-	bool alreadyAddedAWeaponHeight = false
+	int weaponCountInLoop = 0
 	bool alreadyAddedAnAmmoHeight = false
 	
 	while ( visibleHeight < data.panelHeight + heightPadding && lastIndex < data.indexAtOffset.len() )
@@ -631,15 +631,18 @@ array<int> function GetVisibleListItemsIndices( ListPanelData data, float offset
 
 		visibleHeight += ListPanel_GetItemHeight( data, lastIndex ) + data.paddingVert
 
-		if( data.weaponCount > 1 && SurvivalGroundItem_IsWeapon(lastIndex) && alreadyAddedAWeaponHeight )
-			visibleHeight -= ListPanel_GetItemHeight( data, lastIndex ) + data.paddingVert
+		// Every 2nd weapon shares row with previous weapon (pairs of 2)
+		if( SurvivalGroundItem_IsWeapon(lastIndex) )
+		{
+			weaponCountInLoop++
+			if( weaponCountInLoop % 2 == 0 ) // Even weapon (2nd, 4th, etc.) shares row
+				visibleHeight -= ListPanel_GetItemHeight( data, lastIndex ) + data.paddingVert
+		}
 
 		if( data.ammoCount > 1 && SurvivalGroundItem_IsAmmo(lastIndex) && alreadyAddedAnAmmoHeight )
 			visibleHeight -= ListPanel_GetItemHeight( data, lastIndex ) + data.paddingVert
 		
-		if( SurvivalGroundItem_IsWeapon(lastIndex) && !alreadyAddedAWeaponHeight )
-			alreadyAddedAWeaponHeight = true
-		else if( SurvivalGroundItem_IsAmmo(lastIndex) && !alreadyAddedAnAmmoHeight )
+		if( SurvivalGroundItem_IsAmmo(lastIndex) && !alreadyAddedAnAmmoHeight )
 			alreadyAddedAnAmmoHeight = true
 		
 		visibleIndices.append ( lastIndex )
@@ -705,6 +708,8 @@ void function UpdateButtonElements( ListPanelData data, bool forceRefresh = fals
 	
 	int firstAmmoIndex = -1
 	int ammoIndex = 0
+	int weaponIndex = 0
+	int firstWeaponIndex = -1
 	
 	foreach ( visIndex, itemIndex in visibleIndices )
 	{
@@ -723,11 +728,15 @@ void function UpdateButtonElements( ListPanelData data, bool forceRefresh = fals
 			firstAmmoIndex = itemIndex
 		}
 		
-		if( data.availableElements.len() == 0 )
+		if( SurvivalGroundItem_IsWeapon(itemIndex) && firstWeaponIndex == -1 )
 		{
-			Warning("_list_panel data.availableElements was 0 and we catched a crash")
-			
-			return
+			firstWeaponIndex = itemIndex
+		}
+		
+		// Check if we need an available element and don't have one
+		if ( !HasElementDataForItemIndex( data, itemIndex ) && data.availableElements.len() == 0 )
+		{
+			continue // Skip this item, we don't have enough button elements
 		}
 		ListElementData buttonData = GetElementDataForItemIndex( data, itemIndex )
 
@@ -749,15 +758,28 @@ void function UpdateButtonElements( ListPanelData data, bool forceRefresh = fals
 		}
 		
 		//poner dos armas por fila
-		if( SurvivalGroundItem_IsWeapon(itemIndex) && itemIndex > 1 && !ListPanel_IsHeaderItemAtIndex( data, itemIndex ) )
+		if( SurvivalGroundItem_IsWeapon(itemIndex) && !ListPanel_IsHeaderItemAtIndex( data, itemIndex ) )
 		{
-			float previousY     = data.indexAtOffset[itemIndex-1] - data.listOffset - (ListPanel_GetItemHeight( data, itemIndex-1 ) + data.paddingVert)
-			Hud_SetY( listButton, previousY )
-			
 			UISize screenSize = GetScreenSize()
 			float resMultX = screenSize.width / 1280.0
 			
-			Hud_SetX( listButton, 176.8 * resMultX ) //offset that seems to fit
+			// Calculate which row this weapon is on (0, 1, 2, ...)
+			int weaponRow = weaponIndex / 2
+			int weaponCol = weaponIndex % 2 // 0 = left, 1 = right
+			
+			// Calculate Y position based on the first weapon's position + row offset
+			// Use actual button height (already includes 1.3x scale)
+			float rowHeight = float( Hud_GetHeight( listButton ) + data.paddingVert )
+			float firstWeaponY = data.indexAtOffset[firstWeaponIndex] - data.listOffset - rowHeight
+			Hud_SetY( listButton, firstWeaponY + (weaponRow * rowHeight) )
+			
+			// Position in column
+			if( weaponCol == 1 )
+				Hud_SetX( listButton, 130.8 * resMultX ) // Right column
+			else
+				Hud_SetX( listButton, 0 ) // Left column
+			
+			weaponIndex++
 		}
 		//poner todas las municiones en la misma fila
 		else if( SurvivalGroundItem_IsAmmo(itemIndex) )
@@ -768,7 +790,9 @@ void function UpdateButtonElements( ListPanelData data, bool forceRefresh = fals
 			UISize screenSize = GetScreenSize()
 			float resMultX = screenSize.width / 1280.0
 			
-			Hud_SetX( listButton, ammoIndex * 70.5 * resMultX ) //offset that seems to fit
+			// Adjusted spacing to fit up to 6 ammo types (including arrows)
+			float ammoSpacing = 44.0
+			Hud_SetX( listButton, ammoIndex * ammoSpacing * resMultX )
 			ammoIndex++
 		}
 		
@@ -1133,7 +1157,7 @@ float function ListPanel_GetTotalSize( ListPanelData data, bool updateOffsets = 
 	
 	passedHeader = 0
 
-	bool alreadyAddedAWeapon = false
+	int weaponCountInSize = 0
 	bool alreadyAddedAnAmmo = false
 	int firstWeaponHeightWithPadding = -1
 	int firstAmmoHeightWithPadding = -1
@@ -1151,7 +1175,25 @@ float function ListPanel_GetTotalSize( ListPanelData data, bool updateOffsets = 
 			data.indexAtOffset[index] = totalItemHeightWithPadding
 		}
 
-		if( SurvivalGroundItem_IsWeapon( index ) && alreadyAddedAWeapon || SurvivalGroundItem_IsAmmo( index ) && alreadyAddedAnAmmo )
+		// Weapons: every 2nd weapon shares a row with the previous one
+		if( SurvivalGroundItem_IsWeapon( index ) )
+		{
+			weaponCountInSize++
+			if( weaponCountInSize % 2 == 0 ) // Even weapon (2nd, 4th, etc.) shares row
+			{
+				totalItemHeightWithPadding -= toadd
+				
+				if ( updateOffsets )
+				{
+					data.indexAtOffset[index] -= height + data.paddingVert
+				}
+			}
+			else if( firstWeaponHeightWithPadding == -1 )
+			{
+				firstWeaponHeightWithPadding = toadd
+			}
+		}
+		else if( SurvivalGroundItem_IsAmmo( index ) && alreadyAddedAnAmmo )
 		{
 			totalItemHeightWithPadding -= toadd
 			
@@ -1160,12 +1202,6 @@ float function ListPanel_GetTotalSize( ListPanelData data, bool updateOffsets = 
 				data.indexAtOffset[index] -= height + data.paddingVert
 			}
 		}
-		
-		if( SurvivalGroundItem_IsWeapon( index ) && !alreadyAddedAWeapon )
-		{
-			firstWeaponHeightWithPadding = toadd
-			alreadyAddedAWeapon = true
-		}
 
 		if( SurvivalGroundItem_IsAmmo( index ) && !alreadyAddedAnAmmo )
 		{
@@ -1173,24 +1209,26 @@ float function ListPanel_GetTotalSize( ListPanelData data, bool updateOffsets = 
 			alreadyAddedAnAmmo = true
 		}
 			
+		// Add padding after header items (WEAPONS, AMMO, GEAR headers)
 		if( ListPanel_IsHeaderItemAtIndex( data, index ) && SurvivalGroundItem_GetHeaderIndex( index ) < 5  )
 		{
-			totalItemHeightWithPadding += ( 12 * screenSize.height / 1080 )
+			totalItemHeightWithPadding += ( 20 * screenSize.height / 1080 )
 		}
 		
+		// Add padding before header items (space before next section)
 		if( index + 1 < listItemCount && ListPanel_IsHeaderItemAtIndex( data, index + 1 ) && SurvivalGroundItem_GetHeaderIndex( index + 1 ) < 5 )
 		{
-			totalItemHeightWithPadding += ( 30 * screenSize.height / 1080 )
+			totalItemHeightWithPadding += ( 45 * screenSize.height / 1080 )
 		}
 		
 		if( ListPanel_IsHeaderItemAtIndex( data, index ) && SurvivalGroundItem_GetHeaderIndex( index ) >= 5  )
 		{
-			totalItemHeightWithPadding += ( 12 * screenSize.height / 1080 )
+			totalItemHeightWithPadding += ( 20 * screenSize.height / 1080 )
 		}
 		
 		if( index + 1 < listItemCount && ListPanel_IsHeaderItemAtIndex( data, index + 1 ) && SurvivalGroundItem_GetHeaderIndex( index + 1 ) >= 5 )
 		{
-			totalItemHeightWithPadding += ( 10 * screenSize.height / 1080 )
+			totalItemHeightWithPadding += ( 15 * screenSize.height / 1080 )
 		}
 	}
 

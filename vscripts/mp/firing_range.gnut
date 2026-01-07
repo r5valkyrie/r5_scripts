@@ -782,6 +782,7 @@ void function OnPropSurvivalSpawned(entity prop)
 
 void function OnPropSurvivalSpawned_Thread(entity prop)
 {
+	return
 	wait FIRINGRANGE_DISSOLVE_TIME
 	if(prop == null || IsValid(prop) == false)
 		return
