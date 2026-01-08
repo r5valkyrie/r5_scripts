@@ -329,6 +329,10 @@ void function CLootV2_InitLootInfo()
 		if (!GetWeaponInfoFileKeyField_GlobalBool(ld.baseWeapon, "uses_ammo_pool"))
 			ammoType = "_none"
 		
+		// Override bow to use sniper ammo type in firing range
+		if (ld.baseWeapon == "mp_weapon_bow")
+			ammoType = "sniper"
+		
 		if (!(ammoType in weaponDataByAmmoType))
 		{
 			weaponDataByAmmoType[ammoType] <- []
