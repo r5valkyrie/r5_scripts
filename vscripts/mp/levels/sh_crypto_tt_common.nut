@@ -6,7 +6,7 @@ global function IsCryptoTTEnabled
 #if SERVER
 global function InitCryptoSquadTVs
 global function GetCryptoTTAssetsToPrecache
-	#if DEV
+	#if DEVELOPER
 	global function DEV_SpawnBotsRandomlyForCryptoTT
 	global function DEV_TestSatelliteBlendMatrix
 	global function DEV_TestFireCryptoSatellite_Thread
@@ -229,6 +229,10 @@ void function RegisterCLCryptoCallbacks()
 
 void function CryptoTT_Init()
 {
+	#if SERVER
+		RegisterSignal( "StopCryptoSatelliteAnim" )
+	#endif
+
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
 	#if CLIENT
@@ -483,7 +487,7 @@ void function InitCryptoMap()
 		entity hackTestScriptMover = CreateExpensiveScriptMover( file.cryptoSatProp.GetOrigin(), file.cryptoSatProp.GetAngles(), SOLID_VPHYSICS )
 		//file.cryptoSatProp.SetParent( hackTestScriptMover )
 		file.cryptoSatProp.kv.DisableBoneFollowers = 1
-		thread PlayAnim( file.cryptoSatProp, "crypto_satellite_dish_idle" )
+		thread CryptoTTSatellite_PlayIdleAnim()
 
 		thread DrawDeathFieldOnCryptoTTMap()
 
@@ -644,7 +648,7 @@ void function DisplayHoldUseRUIForCryptoTTSatellite_Internal( var rui, asset ico
 
 #if SERVER
 
-#if DEV
+#if DEVELOPER
 	void function DEV_TestFireCryptoSatellite_Thread()
 	{
 		ExtendedUseSettings blankSettings
@@ -653,7 +657,7 @@ void function DisplayHoldUseRUIForCryptoTTSatellite_Internal( var rui, asset ico
 		wait CRYPTO_TT_BUTTON_USE_TIME
 		CryptoTTScan_UseSuccess( GP( 0 ), GetEntByScriptName( "crypto_map_switch" ), blankSettings )
 	}
-#endif // DEV
+#endif // DEVELOPER
 
 void function CryptoTTScan_UseStart( entity button, entity player, ExtendedUseSettings settings )
 {
@@ -670,6 +674,9 @@ void function CryptoTTScan_UseStart( entity button, entity player, ExtendedUseSe
 
 vector function CryptoTT_GetExteriorStatelliteSoundEmitOrigin()
 {
+	if ( !IsValid( file.cryptoSatProp ) )
+		return file.cryptoHoloMapOrigin
+
 	int attach = file.cryptoSatProp.LookupAttachment( "sat_center" )
 	return file.cryptoSatProp.GetAttachmentOrigin( attach ) + ( file.cryptoSatProp.GetAttachmentUp( attach ) * 320.0 )
 }
@@ -690,7 +697,7 @@ void function CryptoTTScan_UseFailure( entity button, entity player, ExtendedUse
 	CryptoTT_SetSatelliteBlendValueTarget( CRYPTO_TT_SAT_BLEND_BASE )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_CryptoTT_FakeReturningToIdle()
 {
 	CryptoTT_SetSatelliteBlendValueTarget( CRYPTO_TT_SAT_BLEND_BASE )
@@ -705,6 +712,9 @@ void function CryptoTT_SetSatelliteBlendValueTarget( float newTarget )
 
 void function CryptoTT_SetSatelliteIdleBlend( float newVal )
 {
+	if ( !IsValid( file.cryptoSatProp ) )
+		return
+
 	int poseID = file.cryptoSatProp.LookupPoseParameterIndex( "transition" )
 	file.cryptoSatProp.SetPoseParameter( poseID, newVal )
 }
@@ -712,6 +722,11 @@ void function CryptoTT_SetSatelliteIdleBlend( float newVal )
 const float POSE_DECAY_TIME = CRYPTO_TT_BUTTON_USE_TIME * 2.0
 void function CryptoTT_SatelliteWarmupPoseParamsThink( float initialPoseOverride = 0 )
 {
+	if ( !IsValid( file.cryptoSatProp ) )
+		return
+
+	EndSignal( file.cryptoSatProp, "OnDestroy" )
+
 	file.satelliteBlendThinkActive = true
 
 	float poseParamValue = initialPoseOverride
@@ -754,6 +769,10 @@ void function CryptoTT_SatelliteWarmupPoseParamsThink( float initialPoseOverride
 			poseParamValue = GraphCapped( Time(), blendPoseStartTime, blendPoseEndTime, blendPoseGraphStartValue, file.satelliteBlendThinkTarget )
 
 		lastBlendTarget = file.satelliteBlendThinkTarget
+
+		if ( !IsValid( file.cryptoSatProp ) )
+			break
+
 		file.cryptoSatProp.SetPoseParameter( poseID, poseParamValue )
 
 		if( ( poseParamValue == CRYPTO_TT_SAT_BLEND_BASE && !isInputDebouncing ) || poseParamValue == CRYPTO_TT_SAT_BLEND_FIRE )
@@ -765,7 +784,7 @@ void function CryptoTT_SatelliteWarmupPoseParamsThink( float initialPoseOverride
 	file.satelliteBlendThinkActive = false
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestSatelliteBlendMatrix()
 {
 	if ( file.satelliteBlendThinkActive )
@@ -808,7 +827,7 @@ void function DEV_TestSatelliteBlendMatrix()
 	printt( "    | ---- Finally, base..." )
 	CryptoTT_SetSatelliteBlendValueTarget( CRYPTO_TT_SAT_BLEND_BASE )
 }
-#endif // DEV
+#endif // DEVELOPER
 #endif
 
 void function CryptoTTScan_UseSuccess( entity button, entity player, ExtendedUseSettings settings )
@@ -858,6 +877,9 @@ void function SCB_ShowSatelliteChargeRUI_Thread( float useSuccessTime )
 void function CryptoTTScan_UseSuccess_Thread( entity button, entity player )
 {
 	if ( !IsValid( button ) )
+		return
+
+	if ( !IsValid( file.cryptoSatProp ) )
 		return
 
 	EndSignal( button, "OnDestroy" )
@@ -963,6 +985,17 @@ void function DeleteHolomapFX_Delayed( HoloMapFXCircleData fxCircleData, float d
 	file.holoMapFXForClearnup.clear()
 }
 
+void function CryptoTTSatellite_PlayIdleAnim()
+{
+	if ( !IsValid( file.cryptoSatProp ) )
+		return
+
+	EndSignal( file.cryptoSatProp, "OnDestroy" )
+	EndSignal( file.cryptoSatProp, "StopCryptoSatelliteAnim" )
+
+	PlayAnim( file.cryptoSatProp, "crypto_satellite_dish_idle" )
+}
+
 void function DeleteHoloMapFXCircleData( HoloMapFXCircleData fxCircleData )
 {
 	int numFxEnts = fxCircleData.fxEnts.len()
@@ -974,10 +1007,22 @@ void function DeleteHoloMapFXCircleData( HoloMapFXCircleData fxCircleData )
 
 void function AnimateCryptoTTSatellite()
 {
+	if ( !IsValid( file.cryptoSatProp ) )
+		return
+
+	EndSignal( file.cryptoSatProp, "OnDestroy" )
+
+	// Stop any currently playing animation to prevent concurrent animation crash
+	file.cryptoSatProp.Signal( "StopCryptoSatelliteAnim" )
+
 	waitthread PlayAnim( file.cryptoSatProp,"crypto_satellite_dish_activate" )
+
+	if ( !IsValid( file.cryptoSatProp ) )
+		return
+
 	CryptoTT_SetSatelliteBlendValueTarget( CRYPTO_TT_SAT_BLEND_BASE )
 	CryptoTT_SetSatelliteIdleBlend( 0.0 )
-	thread PlayAnim( file.cryptoSatProp, "crypto_satellite_dish_idle" )
+	thread CryptoTTSatellite_PlayIdleAnim()
 }
 
 HoloMapFXCircleData function CreateWorldCircleOnCryptoMap( vector worldOrigin, float radius, vector color, vector fxOffset = CRYPTO_TT_CIRCLE_DEFAULT_OFFSET, asset fxOverride = $"", bool debug = false )
@@ -1349,25 +1394,13 @@ void function CryptoTT_CleanUpSoundByName( string soundName )
 	delete file.audioForCleanup[ soundName ]
 }
 
-#if DEV
+#if DEVELOPER
 const int DEV_NUM_BOTS_TO_SPAWN = 30
 void function DEV_SpawnBotsRandomlyForCryptoTT()
 {
-	int playerArrayLastIdx = GetPlayerArray().len() - 1
-	ServerCommand( "bots " + DEV_NUM_BOTS_TO_SPAWN )
 
-	array<entity> allPlayers = GetPlayerArray()
-	int numPlayers = allPlayers.len()
-	for( int i; i < numPlayers; i++ )
-	{
-		if ( !allPlayers[ i ].IsBot() )
-			continue
-
-		vector randomPoint = OriginToGround( GetRandomPointInCircle( < 0, 0, 10000 >, 25000 ) ) + < 0, 0, 256.0 >
-		allPlayers[ i ].SetOrigin( randomPoint )
-	}
 }
-#endif // DEV
+#endif // DEVELOPER
 #endif // SERVER
 
 vector function WorldToCryptoMapPos( vector origin )
