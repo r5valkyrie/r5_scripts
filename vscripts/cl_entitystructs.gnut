@@ -279,6 +279,7 @@ global struct ClientWeaponStruct
 	bool   translocate_isADSForced = false
 	bool fromWall
 	bool wasFired
+	string activeOptic = ""
 	
 	bool isInAdsCustom = false
 	bool toggleShot = true

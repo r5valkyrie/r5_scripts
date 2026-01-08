@@ -324,7 +324,12 @@ void function RemoteFunctions_Init_Begin()
 		PathTT_OnNetworkRegistration()
 
 	//Sentinel
-	ScriptRemote_RegisterClientFunction( "Flowstate_SentinelChargeHUD", "float", 0.0, 4000.0, 16 ) //Audit 2-22-2025 (mk): 66 mins server time, charge end max
+	ScriptRemote_RegisterClientFunction( "SentinelChargeHUD", "float", 0.0, 4000.0, 16 ) //Audit 2-22-2025 (mk): 66 mins server time, charge end max
+	ScriptRemote_RegisterClientFunction( "Sentinel_UpdateChargeEndTime", "float", 0.0, 4000.0, 16 ) //Sentinel update timer on shot
+	ScriptRemote_RegisterClientFunction( "Sentinel_NoShieldCellHint" ) //Sentinel no shield cell hint
+	ScriptRemote_RegisterClientFunction( "DragonLMG_ChargeHUD", "float", 0.0, 4000.0, 16 ) //Dragon LMG energized timer
+	ScriptRemote_RegisterClientFunction( "DragonLMG_UpdateChargeEndTime", "float", 0.0, 4000.0, 16 ) //Dragon LMG update timer on shot
+	ScriptRemote_RegisterClientFunction( "DragonLMG_NoThermiteHint" ) //Dragon LMG no thermite hint
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ShouldExitDrone" )
 	
 	RegisterNetworkedVariable( "coreAvailableFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )

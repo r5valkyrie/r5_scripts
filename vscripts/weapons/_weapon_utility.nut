@@ -67,6 +67,9 @@ global function DoesPlayerHaveAutoLoaderBuff
 global function SolveBallisticArc
 global function GetCrosshairTargetData
 global function GetCrosshairTargetDataAngles
+global function GetNeededEnergizeConsumableCount
+global function HasEnoughEnergizeConsumable
+global function OnWeaponEnergizedStart
 
 #if SERVER
 global function CreateDamageInflictorHelper
@@ -171,6 +174,9 @@ global const PRO_SCREEN_IDX_MATCH_KILLS 					= 1
 global const PRO_SCREEN_IDX_AMMO_COUNTER_OVERRIDE_HACK 		= 2
 
 const float DEFAULT_SHOTGUN_SPREAD_INNEREXCLUDE_FRAC 		= 0.4
+global const string ENERGIZE_STATUS_RUI_ABORT_SIGNAL = "EnergizRuiThinkAbortSignal"
+global const string WEAPON_CHARGED_RUI_ABORT_SIGNAL = "ChargedRuiThinkAbortSignal"
+
 const bool DEBUG_PROJECTILE_BLAST = false
 
 const float EMP_SEVERITY_SLOWTURN 				= 0.35
@@ -341,7 +347,7 @@ void function WeaponUtility_Init()
 			AddDamageCallbackSourceID( eDamageSourceId.damagedef_ticky_arc_blast, EMP_DamagedPlayerOrNPC )
 		}
 		//AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_tesla_trap, EMP_DamagedPlayerOrNPC )
-		
+
 		//AddCallback_OnPlayerRespawned( PROTO_TrackedProjectile_OnPlayerRespawned )
 		//AddCallback_OnPlayerKilled( PAS_CooldownReduction_OnKill )
 		//AddCallback_OnPlayerGetsNewPilotLoadout( OnPlayerGetsNewPilotLoadout )
@@ -1394,7 +1400,7 @@ bool function PlantStickyEntity_Retail( entity ent, DeployableCollisionParams cp
 		if( moveOnNoHitTrace || trace.fraction < 1.0 )
 		{
 			plantPosition = trace.endPos
-		
+
 			#if DEV
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
@@ -1405,7 +1411,7 @@ bool function PlantStickyEntity_Retail( entity ent, DeployableCollisionParams cp
 		else
 		{
 			plantPosition = cp.pos
-			
+
 			#if DEV
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
@@ -2835,7 +2841,7 @@ void function AddToTrackedEnts( entity player, entity ent )
 	if( Safe_isScenariosMode() )
 	{
 		Safe_AddToTrackedEnts_RefScenarios( player, ent )
-	} 
+	}
 	else
 	{
 		AddToScriptManagedEntArray( player.s.activeTrapArrayId, ent )
@@ -3082,8 +3088,8 @@ entity function GetMeleeWeapon( entity player )
 	{
 		#if DEVELOPER
 			printt( "ismelee", weaponEnt.IsWeaponMelee() )
-		#endif 
-		
+		#endif
+
 		if ( weaponEnt.IsWeaponMelee() )
 			return weaponEnt
 	}
@@ -3946,7 +3952,7 @@ void function EMPGrenade_EffectsPlayer( entity player, var damageInfo )
 {
 	if( Flowstate_IsHaloMode() )
 		return
-	
+
 	player.Signal( "OnEMPPilotHit" )
 	player.EndSignal( "OnEMPPilotHit" )
 
@@ -3963,14 +3969,14 @@ void function EMPGrenade_EffectsPlayer( entity player, var damageInfo )
 	float fadeoutDuration = EMP_GRENADE_PILOT_SCREEN_EFFECTS_FADE * frac
 	float duration        = EMP_GRENADE_PILOT_SCREEN_EFFECTS_DURATION_MIN + ((EMP_GRENADE_PILOT_SCREEN_EFFECTS_DURATION_MAX - EMP_GRENADE_PILOT_SCREEN_EFFECTS_DURATION_MIN) * frac) - fadeoutDuration
 	//vector origin = inflictor.GetOrigin()
-	
+
 	int dmgSource = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	//if ( dmgSource == eDamageSourceId.mp_weapon_proximity_mine || dmgSource == eDamageSourceId.mp_titanweapon_stun_laser )
 		//strength *= 0.1
 
 	if( dmgSource == eDamageSourceId.mp_weapon_tesla_trap )
 		duration = 3
-	
+
 	if ( player.IsTitan() )
 	{
 		// Hit player should do EMP screen effects locally
@@ -4056,7 +4062,7 @@ void function GetWeaponDPS( int activeSlot, bool vsTitan = false )
 
 			printt( "DPS Near", (burstPerSecond * burst_fire_count) * damage_near_value )
 			printt( "DPS Far ", (burstPerSecond * burst_fire_count) * damage_far_value )
-		#endif 
+		#endif
 	}
 	else
 	{
@@ -4466,7 +4472,7 @@ void function PlayerUsedOffhand( entity player, entity offhandWeapon, bool sendP
 			{
 				if (sendPINEvent) // PIN
 					PIN_PlayerAbility( player, offhandWeapon.GetWeaponClassName(), ABILITY_TYPE.ULTIMATE, trackedProjectile, pinAdditionalData )
-				
+
 				LiveAPI_PlayerAbilityUsed( player, offhandWeapon )
 			}
 
@@ -4974,7 +4980,7 @@ void function SetEntityIsBurning( entity ent, bool isBurning )
 		ent.e.isBurning = isBurning
 	else if ( ent.IsPlayer() )
 		ent.p.isBurning = isBurning
-	else 
+	else
 		ent.ai.isBurning = isBurning
 }
 
@@ -5485,4 +5491,101 @@ void function Weapon_AddSingleCharge( entity weapon )
 		int newAmmo = minint( maxAmmo, fullAmmoAdd )
 		weapon.SetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE, newAmmo )
 	}
+}
+
+int function GetNeededEnergizeConsumableCount( entity weapon, entity player )
+{
+	string weaponRef = weapon.GetWeaponClassName()
+	string consumableRef = GetWeaponInfoFileKeyField_GlobalString ( weaponRef, "energized_consumable" )
+	int consumableRequiredCount = GetWeaponInfoFileKeyField_GlobalInt ( weaponRef, "energized_consumable_needed_amount" )
+
+	int requiredCountWithPassive = consumableRequiredCount
+	// Put all passive cases on different consumables here
+	{
+		if ( consumableRef == "health_pickup_combo_small" )
+			requiredCountWithPassive = player.HasPassive( ePassives.PAS_BONUS_SMALL_HEAL ) ? maxint( 1, consumableRequiredCount - 1 ) : consumableRequiredCount
+	}
+
+	return requiredCountWithPassive
+}
+
+bool function HasEnoughEnergizeConsumable( entity weapon, entity player )
+{
+	string weaponRef = weapon.GetWeaponClassName()
+	string consumableRef = GetWeaponInfoFileKeyField_GlobalString ( weaponRef, "energized_consumable" )
+	int consumableRequiredCount = GetNeededEnergizeConsumableCount( weapon, player )
+	int consumableCurrentCount = SURVIVAL_CountItemsInInventory( player, consumableRef )
+
+	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( consumableRef )
+
+	//If we have infinite healing and the consumable is a healing item... we have enough
+	if ( PlayerHasPassive( player, ePassives.PAS_INFINITE_HEAL ) && lootData.lootType == eLootType.HEALTH )
+		return true
+
+	return consumableCurrentCount >= consumableRequiredCount
+}
+
+bool function OnWeaponTryEnergize( entity weapon, entity player )
+{
+	if ( !IsValid( player ) )
+		return false
+
+	if ( !IsValid( weapon ) )
+		return false
+
+	string weaponName = weapon.GetWeaponClassName()
+	float maxInputFrac = GetWeaponInfoFileKeyField_GlobalFloat( weaponName, "energized_max_reenergize_frac" )
+	float energizedDuration = GetWeaponInfoFileKeyField_GlobalFloat( weaponName, "energized_duration" )
+	float chargeFrac = max( weapon.GetEnergizedEndTime() - Time(), 0 ) / energizedDuration
+
+	if ( !(weapon.GetEnergizeState() == eEnergizeState.ENERGIZE_ENERGIZED && weapon.GetLastEnergizeState() == eEnergizeState.ENERGIZE_ENERGIZING) )
+	{
+		if ( chargeFrac > maxInputFrac )
+		{
+			#if CLIENT
+				string pingStringData = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "energized_full_text" )
+				AnnouncementMessageRight( player, Localize( pingStringData ) )
+			#endif
+			return false
+		}
+	}
+
+	if( !HasEnoughEnergizeConsumable( weapon, player ) )
+	{
+		#if CLIENT
+		int consumableRequiredCount = GetNeededEnergizeConsumableCount( weapon, player )
+		string consumableName = GetWeaponInfoFileKeyField_GlobalString( weaponName, consumableRequiredCount > 1 ? "energized_consumable_name_plural" : "energized_consumable_name_singular" )
+		string pingStringData = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "energized_consumable_required_hint" )
+
+		// TODO: we might want to make sure these hints take the same number of parameters
+		if( weaponName == "mp_weapon_dragon_lmg"  )
+			AnnouncementMessageRight( player, Localize( pingStringData, Localize( consumableName ) ) )
+		else
+			AnnouncementMessageRight( player, Localize( pingStringData, consumableRequiredCount, Localize( consumableName ) ) )
+
+		string commsData = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "energized_comms" )
+		Quickchat( player, eCommsAction[commsData], null )
+		#endif
+
+		return false
+	}
+
+	return true
+}
+void function OnWeaponEnergizedStart( entity weapon, entity player, bool costConsumable )
+{
+	if ( !IsValid( weapon ) || !costConsumable )
+		return
+
+	string weaponRef = weapon.GetWeaponClassName()
+	string consumableRef = GetWeaponInfoFileKeyField_GlobalString ( weaponRef, "energized_consumable" )
+	int consumableRequiredCount = GetNeededEnergizeConsumableCount( weapon, player )
+
+	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( consumableRef )
+
+	//If we have infinite healing and the consumable is a healing item... do NOT remove from inventory
+	if ( PlayerHasPassive( player, ePassives.PAS_INFINITE_HEAL ) && lootData.lootType == eLootType.HEALTH )
+		return
+
+	SURVIVAL_RemoveFromPlayerInventory( player, consumableRef, consumableRequiredCount )
 }

@@ -1062,6 +1062,27 @@ int function GetWeaponInfoFileKeyField_GlobalInt( string ref, string variable )
 	return expect int( val )
 }
 
+int function GetWeaponInfoFileKeyField_WithMods_GlobalInt( string ref, array<string> mods, string variable )
+{
+	var val = GetWeaponInfoFileKeyField_WithMods_Global( ref, mods, variable )
+	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
+	return expect int( val )
+}
+
+float function GetWeaponInfoFileKeyField_WithMods_GlobalFloat( string ref, array<string> mods, string variable )
+{
+	var val = GetWeaponInfoFileKeyField_WithMods_Global( ref, mods, variable )
+	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
+	return expect float( val )
+}
+
+int function GetWeaponInfoFileKeyField_GlobalInt_WithDefault( string ref, string variable, int defaultVal )
+{
+	var val = GetWeaponInfoFileKeyField_Global( ref, variable )
+	return val != null ? expect int( val ) : defaultVal
+}
+
+
 float function GetWeaponInfoFileKeyField_GlobalFloat( string ref, string variable )
 {
 	var val = GetWeaponInfoFileKeyField_Global( ref, variable )
@@ -1069,12 +1090,34 @@ float function GetWeaponInfoFileKeyField_GlobalFloat( string ref, string variabl
 	return expect float( val )
 }
 
+
 bool function GetWeaponInfoFileKeyField_GlobalBool( string ref, string variable )
 {
 	var val = GetWeaponInfoFileKeyField_Global( ref, variable )
 	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
 	return expect bool( val )
 }
+
+vector function GetWeaponInfoFileKeyField_GlobalVectorFloat( string ref, string variable, string delimiter = WHITESPACE_CHARACTERS )
+{
+	var val = GetWeaponInfoFileKeyField_Global( ref, variable )
+	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
+	expect string( val )
+	array<string> arr = split( val, delimiter )
+	Assert( arr.len() >= 3, "Vector value \"" + val + " has < 3 arguments" )
+	return <float(arr[0]), float(arr[1]), float(arr[2])>
+}
+
+vector function GetWeaponInfoFileKeyField_GlobalVectorInt( string ref, string variable, string delimiter = WHITESPACE_CHARACTERS )
+{
+	var val = GetWeaponInfoFileKeyField_Global( ref, variable )
+	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
+	expect string( val )
+	array<string> arr = split( val, delimiter )
+	Assert( arr.len() >= 3, "Vector value \"" + val + " has < 3 arguments" )
+	return <int(arr[0]), int(arr[1]), int(arr[2])>
+}
+
 
 #if SERVER
 #if DEVELOPER

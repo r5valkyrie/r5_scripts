@@ -243,6 +243,7 @@ void function SV_CL_Init()
 	MpWeaponPhaseBreach_Init()
 	MpWeaponArcBolt_Init()
 	MpWeaponMountedTurretWeapon_Init()
+	MpWeaponDragon_LMG_Init()
 
     // Zipline Utility
     #if SERVER

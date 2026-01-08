@@ -1,3 +1,5 @@
+untyped
+
 global function MpWeaponSentinel_Init
 global function OnWeaponPrimaryAttack_weapon_sentinel
 global function OnWeaponActivate_weapon_sentinel
@@ -8,11 +10,16 @@ global function OnWeaponStartZoomIn_weapon_sentinel
 global function OnWeaponStartZoomOut_weapon_sentinel
 
 #if CLIENT
-global function Flowstate_SentinelChargeHUD
+global function SentinelChargeHUD
+global function Sentinel_UpdateChargeEndTime
+global function Sentinel_NoShieldCellHint
 #endif
 
 const string SENTINEL_DEACTIVATE_SIGNAL = "SentinelDeactivate"
 const string ENERGIZED_MOD = "energized"
+
+const asset SENTINEL_CHARGE_FX_1P = $"P_wpn_sentinel_charge_FP"
+const asset SENTINEL_CHARGE_FX_3P = $"P_wpn_sentinel_charge_3P"
 
 void function MpWeaponSentinel_Init()
 {
@@ -22,24 +29,27 @@ void function MpWeaponSentinel_Init()
 		return
 
 	#if SERVER
+	PrecacheEnergizeFX( "mp_weapon_sentinel" )
 	AddClientCommandCallback( "Sentinel_TryCharge", ClientCommand_TryCharge )
+	PrecacheParticleSystem( SENTINEL_CHARGE_FX_1P )
+	PrecacheParticleSystem( SENTINEL_CHARGE_FX_3P )
 	#endif
 
 	#if CLIENT
 	RegisterConCommandTriggeredCallback( "+scriptCommand3", Sentinel_TryCharge )
 	#endif
-	
+
 }
 
 #if CLIENT
 void function Sentinel_TryCharge( entity player )
 {
-	if( !IsValid(player) ) 
+	if( !IsValid(player) )
 		return
-		
+
 	if ( player != GetLocalViewPlayer() )
 		return
-	
+
 	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 
 	if ( !IsValid( weapon ) )
@@ -47,15 +57,14 @@ void function Sentinel_TryCharge( entity player )
 
 	if ( weapon.GetWeaponClassName() != "mp_weapon_sentinel" )
 		return
-	
+
 	//has battery?
-	
+
 	player.ClientCommand( "Sentinel_TryCharge" )
 }
 
-void function Flowstate_SentinelChargeHUD( float chargeEndTime )
+void function SentinelChargeHUD( float chargeEndTime )
 {
-	//printt "Flowstate_SentinelChargeHUD" )
 	thread function () : ( chargeEndTime )
 	{
 		entity weapon
@@ -74,49 +83,92 @@ void function Flowstate_SentinelChargeHUD( float chargeEndTime )
 
 		weapon.EndSignal( "OnDestroy" )
 
-		var Border = HudElement( "Sentinel_ChargeElementBorder")
-		RuiSetImage( Hud_GetRui( Border ), "basicImage", $"rui/flowstate_custom/fs_titan_swod/1_border")
-		Hud_SetVisible( Border, true )
+		// Store end time in weapon client struct
+		weapon.s.energizedEndTime <- chargeEndTime
 
-		var Bg = HudElement( "Sentinel_ChargeElementBg")
-		RuiSetImage( Hud_GetRui( Bg ), "basicImage", $"rui/flowstate_custom/fs_titan_swod/1_bg")
-		Hud_SetVisible( Bg, true )
+		// Create topology positioned above the weapon icon in bottom right
+		UISize screenSize = GetScreenSize()
+		var screenAlignmentTopo = RuiTopology_CreatePlane( <(screenSize.width * 0.54), (screenSize.height * 0.51), 0>, <float(screenSize.width) * 0.5, 0, 0>, <0, float(screenSize.height) * 0.5, 0>, false )
+		var rui = RuiCreate( $"ui/consumable_progress.rpak", screenAlignmentTopo, RUI_DRAW_HUD, 0 )
 
-		var Bar = HudElement( "Sentinel_ChargeElementBar")
-		RuiSetImage( Hud_GetRui( Bar ), "basicImage", $"rui/flowstate_custom/fs_titan_swod/1_bar")
-		Hud_SetVisible( Bar, true )
+		float initialDuration = chargeEndTime - Time()
+		float startTime = Time()
 
-		var Text = HudElement( "Sentinel_ChargeElementText")
-		Hud_SetVisible( Text, true )
+		RuiSetString( rui, "consumableName", "SENTINEL DISCHARGING" )
+		RuiSetFloat( rui, "raiseTime", 0.0 )
+		RuiSetFloat( rui, "chargeTime", initialDuration )
+		RuiSetImage( rui, "hudIcon", $"rui/hud/loot/loot_stim_shield_small" )
+		RuiSetInt( rui, "consumableType", 0 )
+		RuiSetString( rui, "hintController", "" )
+		RuiSetString( rui, "hintKeyboardMouse", "" )
+		RuiSetGameTime( rui, "healStartTime", startTime )
 
 		OnThreadEnd(
-			function() : ( Border, Bg, Bar, Text )
+			function() : ( rui, screenAlignmentTopo, weapon )
 			{
-				Hud_SetVisible( Border, false )
-				Hud_SetVisible( Bg, false )
-				Hud_SetVisible( Bar, false )
-				Hud_SetVisible( Text, false )
-				SetWidth( Bar, 1.0 )
+				RuiDestroyIfAlive( rui )
+				RuiTopology_Destroy( screenAlignmentTopo )
+				if ( IsValid( weapon ) && "energizedEndTime" in weapon.s )
+					delete weapon.s.energizedEndTime
 			}
 		)
 
-		while( Time() < chargeEndTime && IsValid ( weapon ) && IsValid( player ) && weapon.HasMod( ENERGIZED_MOD ) )
-		{
-			float superFrac       = 1 - ( Time() / chargeEndTime )
-			string chargeBarText  = "SENTINEL DISCHARGING " + int( (superFrac*100) ).tostring() + "%"
+		float lastKnownEndTime = chargeEndTime
 
-			SetWidth( Bar, superFrac )
-			Hud_SetText( Text, chargeBarText )
+		while( IsValid( weapon ) && IsValid( player ) && weapon.HasMod( ENERGIZED_MOD ) )
+		{
+			if ( "energizedEndTime" in weapon.s )
+			{
+				float currentEndTime = expect float( weapon.s.energizedEndTime )
+				float remainingTime = currentEndTime - Time()
+
+				if ( remainingTime <= 0 )
+					break
+
+				// Update chargeTime when end time changes from shooting
+				if ( fabs( currentEndTime - lastKnownEndTime ) > 0.1 )
+				{
+					lastKnownEndTime = currentEndTime
+					float elapsedTime = Time() - startTime
+					float newChargeTime = elapsedTime + remainingTime
+					RuiSetFloat( rui, "chargeTime", newChargeTime )
+				}
+			}
+			else
+			{
+				break
+			}
 
 			WaitFrame()
 		}
 	}()
 }
 
-void function SetWidth(var element, float chargeFraction)
+void function Sentinel_UpdateChargeEndTime( float newEndTime )
 {
-	int baseWidth = Hud_GetBaseWidth( element )
-	Hud_SetWidth( element, baseWidth*chargeFraction)
+	entity player = GetLocalViewPlayer()
+	if ( !IsValid( player ) )
+		return
+
+	array<entity> weapons = player.GetMainWeapons()
+	foreach ( weapon in weapons )
+	{
+		if ( weapon.GetWeaponClassName() == "mp_weapon_sentinel" )
+		{
+			if ( "energizedEndTime" in weapon.s )
+				weapon.s.energizedEndTime = newEndTime
+			break
+		}
+	}
+}
+
+void function Sentinel_NoShieldCellHint()
+{
+	entity player = GetLocalViewPlayer()
+	if ( IsValid( player ) )
+		player.ClientCommand( "ClientCommand_Quickchat " + eCommsAction.INVENTORY_NEED_SHIELDS )
+
+	AddPlayerHint( 2.0, 0.25, $"rui/hud/loot/loot_stim_shield_small", "Need Shield Cell to charge Sentinel" )
 }
 #endif
 
@@ -136,12 +188,22 @@ bool function ClientCommand_TryCharge( entity player, array<string> args )
 
 	if( weapon.IsInCustomActivity() )
 		return false
-		
+
 	if( weapon.HasMod( ENERGIZED_MOD ) )
 		return false
-	//has battery?
 
-	weapon.StartCustomActivity("ACT_VM_CHARGE_VER4", 0)	
+	// Check if player has shield cell in inventory
+	int shieldCellCount = SURVIVAL_CountItemsInInventory( player, "health_pickup_combo_small" )
+	if ( shieldCellCount <= 0 )
+	{
+		Remote_CallFunction_NonReplay( player, "Sentinel_NoShieldCellHint" )
+		return false
+	}
+
+	// Consume one shield cell
+	SURVIVAL_RemoveFromPlayerInventory( player, "health_pickup_combo_small", 1 )
+
+	weapon.StartCustomActivity("ACT_VM_CHARGE_VER4", 0)
 	return true
 }
 
@@ -152,7 +214,7 @@ void function Flowstate_SentinelCharging( entity player, entity weapon )
 
 	float chargeEndTime = Time() + weapon.GetCustomActivityDuration()
 
-	OnThreadEnd( function() : ( player, weapon ) 
+	OnThreadEnd( function() : ( player, weapon )
 	{
 		if( IsValid( weapon ) && weapon != player.GetActiveWeapon( eActiveInventorySlot.mainHand ) )
 			return
@@ -162,7 +224,7 @@ void function Flowstate_SentinelCharging( entity player, entity weapon )
 			weapon.StopCustomActivity()
 			//printt "Charging was canceled" )
 		}
-		
+
 		if( IsValid( weapon ) && !weapon.IsInCustomActivity() && IsValid( player ) && weapon == player.GetActiveWeapon( eActiveInventorySlot.mainHand ) ) //is there a better way to do this?
 		{
 		    player.HolsterWeapon()
@@ -170,7 +232,7 @@ void function Flowstate_SentinelCharging( entity player, entity weapon )
 			weapon.AddMod( ENERGIZED_MOD )
 			//printt"Sentinel charging success, mod added")
 
-			thread Flowstate_SentinelOnModAddedWatcher( player, weapon )
+			thread SentinelOnModAddedWatcher( player, weapon )
 		}
 	})
 
@@ -181,30 +243,44 @@ void function Flowstate_SentinelCharging( entity player, entity weapon )
 	}
 }
 
-void function Flowstate_SentinelOnModAddedWatcher( entity player, entity weapon )
+void function SentinelOnModAddedWatcher( entity player, entity weapon )
 {
 	EndSignal( weapon, "OnDestroy" )
 
 	float duration = GetWeaponInfoFileKeyField_GlobalFloat( weapon.GetWeaponClassName(), "energized_duration" )
-	float chargeEndTime = Time() + duration //save in weapon struct to increase time on each shot?? Cafe
+	float chargeEndTime = Time() + duration
+	weapon.s.energizedEndTime <- chargeEndTime // Store in weapon struct
 	weapon.Signal( SENTINEL_DEACTIVATE_SIGNAL )
 
-	Remote_CallFunction_NonReplay( player, "Flowstate_SentinelChargeHUD", chargeEndTime )
+	Remote_CallFunction_NonReplay( player, "SentinelChargeHUD", chargeEndTime )
 
-	OnThreadEnd( function() : ( weapon ) 
+	// Play energize particle effects
+	weapon.PlayWeaponEffect( SENTINEL_CHARGE_FX_1P, SENTINEL_CHARGE_FX_3P, "muzzle_flash" )
+
+	OnThreadEnd( function() : ( weapon )
 	{
 		if( IsValid( weapon ) )
 		{
 			weapon.RemoveMod( ENERGIZED_MOD )
-			//printt"Sentinel energized ended, mod removed")
+			// Stop energize particle effects
+			weapon.StopWeaponEffect( SENTINEL_CHARGE_FX_1P, SENTINEL_CHARGE_FX_3P )
 		}
 	})
 
-	//printt"sentinel started mod watcher. End Time:", chargeEndTime )
-	while( Time() < chargeEndTime && weapon.HasMod( ENERGIZED_MOD ) )
+	while( IsValid( weapon ) && weapon.HasMod( ENERGIZED_MOD ) )
 	{
-		//printt"sentinel energized time remaining:", chargeEndTime - Time() )
-		wait 1
+		// Check if energy ran out from shooting
+		if ( "energizedEndTime" in weapon.s )
+		{
+			float currentEndTime = expect float( weapon.s.energizedEndTime )
+			if ( Time() >= currentEndTime )
+				break
+		}
+		else
+		{
+			break
+		}
+		wait 0.1
 	}
 }
 #endif
@@ -216,7 +292,7 @@ void function OnWeaponCustomActivityStart_weapon_sentinel( entity weapon )
 
 	entity player = weapon.GetWeaponOwner()
 	if ( !IsValid( player ) )
-		return 
+		return
 
 	#if SERVER
 	thread Flowstate_SentinelCharging( player, weapon )
@@ -260,6 +336,16 @@ var function OnWeaponPrimaryAttack_weapon_sentinel( entity weapon, WeaponPrimary
 
 	weapon.FireWeapon_Default( attackParams.pos, attackParams.dir, 1.0, 1.0, false )
 
+	#if SERVER
+	if ( weapon.HasMod( ENERGIZED_MOD ) && "energizedEndTime" in weapon.s )
+	{
+		// Reduce 1.5 seconds from energizer timer per shot
+		weapon.s.energizedEndTime = expect float( weapon.s.energizedEndTime ) - 1.5
+		if ( IsValid( player ) && player.IsPlayer() )
+			Remote_CallFunction_NonReplay( player, "Sentinel_UpdateChargeEndTime", expect float( weapon.s.energizedEndTime ) )
+	}
+	#endif
+
 	int ammoPerShot = weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
 	return ammoPerShot
 }
@@ -280,3 +366,30 @@ void function OnWeaponActivate_weapon_sentinel( entity weapon )
 	// weapon.Signal( SENTINEL_DEACTIVATE_SIGNAL )
 
 }
+
+#if SERVER
+void function PrecacheEnergizeFX( string weaponClassName )
+{
+	string baseStr = "energize_effect"
+	string preBaseStr = "pre_energize_effect"
+
+	string str1p = baseStr + "_1p"
+	string preStr1p = preBaseStr + "_1p"
+	string str3p = baseStr + "_3p"
+	string preStr3p = preBaseStr + "_3p"
+
+	asset fx1p = GetWeaponInfoFileKeyFieldAsset_Global( weaponClassName, str1p )
+	asset preFx1p = GetWeaponInfoFileKeyFieldAsset_Global( weaponClassName, preStr1p )
+	asset fx3p = GetWeaponInfoFileKeyFieldAsset_Global( weaponClassName, str3p )
+	asset preFx3p = GetWeaponInfoFileKeyFieldAsset_Global( weaponClassName, preStr3p )
+
+	if ( fx1p != "" )
+		PrecacheEffect( fx1p )
+	if ( preFx1p != "" )
+		PrecacheEffect( preFx1p )
+	if ( fx3p != "" )
+		PrecacheEffect( fx3p )
+	if ( preFx3p != "" )
+		PrecacheEffect( preFx3p )
+}
+#endif

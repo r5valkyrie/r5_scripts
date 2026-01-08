@@ -195,11 +195,11 @@
     "projectile_trail_effect_0"             "P_tracer_proj_sniper"
 
     // FX
-	"fx_muzzle_flash_view"				""
-	"fx_muzzle_flash_world"				""
+	"fx_muzzle_flash_view"				"P_muzzleflash_sent_FP"
+	"fx_muzzle_flash_world"				"wpn_muzzleflash_snp_hmn"
 
 	//FX - Shell Eject
-	"fx_shell_eject_view"                   	""
+	"fx_shell_eject_view"                   	"P_sentinel_reload_FP"
 
 
 	// NPC
@@ -321,11 +321,11 @@
             "impact_effect_table"                      "doubletake_bullet"
 
             // FX - Projectile
-            "projectile_trail_effect_0"                	"P_tracer_proj_sniper_piercer"
+            "projectile_trail_effect_0"                	"P_tracer_proj_sniper_shield_breaker"
 
             // FX - Muzzle Flash
-			"fx_muzzle_flash_view"						""
-			"fx_muzzle_flash_world"						""
+			"fx_muzzle_flash_view"						"p_muzzleflash_sent_nrg_FP"
+			"fx_muzzle_flash_world"						"P_muzzleflash_sent_nrg_3P"
 
             // Sounds
             "fire_sound_1_npc"                             "Weapon_DoubleTake_Fire_NPC"

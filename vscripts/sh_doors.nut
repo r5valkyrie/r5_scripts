@@ -73,7 +73,7 @@ struct
 	#if CLIENT
 		array<entity> allPropDoors
 	#endif //CLIENT
-	
+
 	bool doorsEnabled
 	bool useBlockableDoors
 	bool useCodeDoors
@@ -90,7 +90,7 @@ struct
 	bool flowstateDoorRegen
 	float blockableDoorRegenStartDelay
 	float blockableDoorRegenDuration
-	
+
 
 } file
 
@@ -112,7 +112,7 @@ void function ShDoors_Init()
 	file.flowstateDoorRegen 					= GetCurrentPlaylistVarBool( "flowstateDoorsRegen", false )
 	file.blockableDoorRegenStartDelay 			= GetCurrentPlaylistVarFloat( "blockable_door_regen_start_delay", 1.8 )
 	file.blockableDoorRegenDuration 			= GetCurrentPlaylistVarFloat( "blockable_door_regen_duration", 4.2 )
-	
+
 	#if SERVER
 		RegisterSignal( "PlayerEnteredDoorTrigger" )
 		RegisterSignal( "PlayerLeftDoorTrigger" )
@@ -1207,10 +1207,10 @@ void function OnCodeDoorSpawned( entity door )
 	door.SetHealth( door.GetMaxHealth() )
 	door.SetTakeDamageType( DAMAGE_YES )
 	door.SetDamageNotifications( true )
-	
-	door.EnableAttackableByAI( AI_PRIORITY_NO_THREAT, 0, AI_AP_FLAG_NONE ) 
+
+	door.EnableAttackableByAI( AI_PRIORITY_NO_THREAT, 0, AI_AP_FLAG_NONE )
 	door.SetTouchTriggers( true )
-	
+
 	AddEntityCallback_OnPostDamaged( door, BlockableDoor_OnDamage )
 	SetObjectCanBeMeleed( door, true )
 	SetVisibleEntitiesInConeQueriableEnabled( door, true )
@@ -1759,6 +1759,11 @@ void function BlockableDoor_OnDamage( entity door, var damageInfo )
 	}
 	else if (DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_weapon_thermite_grenade ) {
 		damageInflicted = DamageInfo_GetDamage( damageInfo )
+	}
+	else if ( DamageInfo_GetDamageSourceIdentifier( damageInfo ) == eDamageSourceId.mp_weapon_dragon_lmg && DamageInfo_GetWeapon( damageInfo ) != null && DamageInfo_GetWeapon( damageInfo ).HasMod( "energized" ) )
+	{
+		damageInflicted = 25.0
+		DamageInfo_SetDamage( damageInfo, damageInflicted )
 	}
 	else if ( !file.blockableDoorHurtByNormalWeapons )
 	{
