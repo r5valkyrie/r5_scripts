@@ -121,7 +121,7 @@ void function Utility_Shared_Init()
 	PrecacheModel( $"mdl/weapons/arms/human_pov_cockpit.rmdl" ) // todo(dw): move this to a better place
 	PrecacheModel( $"mdl/humans/pilots/pilot_medium_reaper_f.rmdl" )
 	PrecacheModel( $"mdl/humans/pilots/pilot_medium_reaper_m.rmdl" )
-	
+
 	RegisterSignal( TRIGGER_INTERNAL_SIGNAL )
 	RegisterSignal( "devForcedWin" )
 	RegisterSignal( "OnContinousUseStopped" )
@@ -138,7 +138,7 @@ void function Utility_Shared_Init()
 void function InitWeaponScripts()
 {
 	SmartAmmo_Init()
-	
+
 	// WEAPON SCRIPTS
 	ArcCannon_Init()
 	Grenade_FileInit()
@@ -171,7 +171,7 @@ void function InitWeaponScripts()
 	MpWeaponLifelineBatonPrimary_Init()
 	MpWeaponDeployableCover_Init()
 	MeleeShadowsquadHands_Init()
-	
+
 	#if DEVELOPER
 		MpWeaponShadowsquadHandsPrimary_Init()
 		MDLSpawner_Init()
@@ -197,7 +197,7 @@ void function InitWeaponScripts()
 	MpWeaponTrophy_Init()
 
 	MpWeaponBasicBolt_Init()
-	
+
 	//(cafe) S0 Dev Protos
 	MpWeaponGroundSlam_Init()
 	Haunt_Init()
@@ -213,9 +213,9 @@ void function InitWeaponScripts()
 	MpWeaponDebrisTrap_Init()
 	MpWeaponCoverWall_Init()
 	ShPassiveShotgunKick_Init()
-	
+
 	ChargePylons_Init()
-	
+
 	//(kral) wip abilities
 	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
 
@@ -942,7 +942,7 @@ bool function ControlPanel_CanUseFunction( entity playerUser, entity controlPane
 {
 	if ( Bleedout_IsBleedingOut( playerUser ) )
 		return false
-		
+
 	if ( !IsValid( playerUser ) )
 		return false
 
@@ -1936,10 +1936,10 @@ int function CompareKills( entity a, entity b )
 {
 	if( !IsValid( a ) || !IsValid( b ) )
 		return 0
-	
+
 	int aVal
 	int bVal
-	
+
 	if( Playlist() == ePlaylists.fs_scenarios )
 	{
 		aVal = a.GetPlayerNetInt( "FS_Scenarios_PlayerScore" )
@@ -1957,7 +1957,7 @@ int function CompareKills( entity a, entity b )
 			return 1
 		else if ( aVal < bVal )
 			return -1
-		
+
 		return 0
 	}
 
@@ -1978,7 +1978,7 @@ int function CompareKills( entity a, entity b )
 			return 1
 		else if ( aVal < bVal )
 			return -1
-		
+
 		return 0
 	}
 
@@ -1999,7 +1999,7 @@ int function CompareKills( entity a, entity b )
 			return 1
 		else if ( aVal < bVal )
 			return -1
-		
+
 		return 0
 	}
 
@@ -3576,12 +3576,12 @@ string function GetPlayerVoice( entity player )
 void function SetTeam( entity ent, int team )
 {
 	int oldTeam = ent.GetTeam()
-	
+
 	#if DEVELOPER
 	if( ent.IsPlayer() )
 		printw( "TEAMING - ASSIGNING TEAM TO PLAYER", ent, "NEW", team, "OLD", oldTeam )
 	#endif
-	
+
 	ent.Code_SetTeam( team )
 
 	#if SERVER
@@ -3589,7 +3589,7 @@ void function SetTeam( entity ent, int team )
 		{
 			if( team != oldTeam )
 				AssignTeamIndexToPlayer( ent )
-			
+
 			foreach ( player in GetPlayerArrayOfTeam( oldTeam ) )
 			{
 				if( IsValid( player ) && player.p.isConnected )
@@ -4192,6 +4192,11 @@ vector function FlattenAngles( vector angles )
 	return <0, angles.y, 0>
 }
 
+bool function SimpleShouldNotBlockReloadCallback( entity player, entity ent )
+{
+	return false
+}
+
 bool function IsDropship( entity ent )
 {
 	#if CLIENT
@@ -4450,15 +4455,15 @@ void function WaitSignalOrTimeout( entity ent, float timeout, string signal1, st
 
 	if ( signal3 != "" )
 		ent.EndSignal( signal3 )
-		
+
 	if ( signal4 != "" )
 		ent.EndSignal( signal4 )
 
 	wait( timeout )
-	
+
 	#if DEVELOPER
 		//Warning("WARNING: Timeout reached for signals: " + format("%s, %s, %s, %s, func: %s", signal1, signal2, signal3, signal4, FUNC_NAME( 3 ) ) )
-	#endif 
+	#endif
 }
 
 void function AddWaitMultipleSignal( table signalTable, string signalToWait, string signalToReturn )
@@ -4872,7 +4877,7 @@ array<string> function GetValidLootModsInstalled( entity weapon )
 
 	foreach ( mod in mods )
 	{
-		if ( SURVIVAL_Loot_IsRefValid( mod ) )                                         
+		if ( SURVIVAL_Loot_IsRefValid( mod ) )
 			validMods.append( mod )
 	}
 
@@ -5936,13 +5941,13 @@ void function DEV_PrintClientCommands( table< string, void functionref( entity, 
 {
 	string data = "\n\n ------ CLIENTCOMMAND CALLBACK TABLE ------ \n\n"
 	int idx = 0
-	
+
 	foreach ( string command, ref in callbackTable )
 	{
 		data += idx.tostring() + " = Command: [ " + command + " ]  callbackFunc: [ " + string( ref ) + " ] \n";
 		idx++
 	}
-	
+
 	printt( data )
 }
 
@@ -5950,17 +5955,17 @@ void function DEV_PrintClientCommands( table< string, void functionref( entity, 
 	void function printm( ... )
 	{
 		#if !MULTIPLAYER_DEBUG_PRINTS
-			return 
+			return
 		#endif
-		
+
 		if ( vargc <= 0 )
 			return
 
 		local msg = vargv[0]
-		
+
 		for ( int i = 1; i < vargc; i++ )
 			msg = (msg + " " + vargv[i])
-			
+
 		CenterPrintAll( msg )
 	}
 #endif
@@ -6034,19 +6039,19 @@ bool function StatusEffect_HasSeverity( entity player, int statuseffect )
 		{
 			//uses DEV_PrintBackendNames() output pasted here
 		}
-		
+
 		string printText = "TableForBackend:\n\n [\n"
-		
+
 		foreach( string ref, string token in serverOutput )
 		{
 			printText += ( "'" + ref + "' => '" + Localize( token ) + "',\n" )
 		}
-		
+
 		printText += "]"
-		
+
 		print( printText )
 	}
-#endif 
+#endif
 
 // #if CLIENT
 	// void function TestFloatBits( float value )
@@ -6061,4 +6066,4 @@ bool function StatusEffect_HasSeverity( entity player, int statuseffect )
 	// {
 		// printt( "boom" )
 	// }
-// #endif 
+// #endif

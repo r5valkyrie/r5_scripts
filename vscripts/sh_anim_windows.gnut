@@ -67,6 +67,7 @@ void function ShAnimWindows_LevelInit()
 		RegisterAnimWindowType( BOTH, "CreateProp", null, AnimWindow_CreateProp_Precache, AnimWindow_CreateProp_Start, AnimWindow_CreateProp_Transition, AnimWindow_CreateProp_Stop )
 		RegisterAnimWindowType( CLIENT, "PlaySound", null, AnimWindow_PlaySound_Precache, AnimWindow_PlaySound_Start, AnimWindow_PlaySound_Transition, AnimWindow_PlaySound_Stop )
 		RegisterAnimWindowType( BOTH, "PlayFX", null, AnimWindow_PlayFX_Precache, AnimWindow_PlayFX_Start, AnimWindow_PlayFX_Transition, AnimWindow_PlayFX_Stop )
+		RegisterAnimWindowType( BOTH, "Callback", null, null, AnimWindow_Callback_Start, null, AnimWindow_Callback_Stop )
 		RegisterAnimWindowType( CLIENT, "FadeAlphaOverTime", null, null, AnimWindow_FadeAlphaOverTime_Start, null, AnimWindow_FadeAlphaOverTime_Stop )
 		RegisterAnimWindowType( CLIENT, "SetSkin", null, null, AnimWindow_SetSkin_Start, null, null )
 		
