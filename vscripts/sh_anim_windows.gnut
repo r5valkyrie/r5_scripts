@@ -205,6 +205,7 @@ void function AnimWindow_CreateProp_Start( ScriptAnimWindow window, var settings
 		Assert( false ) // todo(dw)
 	#elseif CLIENT
 		entity prop = CreateClientSidePropDynamic( window.ent.GetOrigin(), window.ent.GetAngles(), model )
+		prop.SetParent( window.ent )
 		// if ( window.ent.IsSafeForUIScriptHack() ) // todo(dw)
 		prop.MakeSafeForUIScriptHack()
 
@@ -217,13 +218,14 @@ void function AnimWindow_CreateProp_Start( ScriptAnimWindow window, var settings
 		//	printt ( "><><><><><><>" + FUNC_NAME() + ": WAT " + string(window.ent.kv.renderamt) + " " + string(window.ent.IsHidden()) )
 		//#endif
 
+		SetTeam( prop, window.ent.GetTeam() )
 		prop.kv.renderamt = window.ent.kv.renderamt
 		prop.CopyHighlightState( window.ent )
-		if ( window.ent.IsHidden() )
-			prop.Hide()
+		// if ( window.ent.IsHidden() )
+			// prop.Hide()
 	#endif
 
-	//
+	// set bodygroups for the created prop
 	var bodyGroupArr = GetSettingsBlockArray( settingsBlock, "propBodygroups" )
 	int bodygroupArraySize = GetSettingsArraySize( bodyGroupArr )
 	for( int index = 0; index < bodygroupArraySize; index++ )
@@ -350,9 +352,7 @@ void function AnimWindow_PlaySound_Precache( var settingsBlock )
 void function AnimWindow_PlaySound_Start( ScriptAnimWindow window, var settingsBlock )
 {
 	string soundEventName = GetSettingsBlockString( settingsBlock, "soundEventName" )
-	
-	if( soundEventName == "settings/scriptAnimWIndow/sound_spider_casual_idle.rpak" ) return
-	
+
 	#if SERVER
 		Assert( 0, "Not Yet Implemented" )
 	#elseif CLIENT
@@ -478,6 +478,13 @@ void function AnimWindow_PlayFX_Start( ScriptAnimWindow window, var settingsBloc
 			#endif
 		}
 	}
+
+	#if CLIENT
+		if ( GetCurrentPlaylistVarBool( "anim_fx_window_sound", true ) && fxHandleOrNull )
+		{
+		//	EffectSetSoundEnabled( expect int( fxHandleOrNull ), true )
+		}
+	#endif
 
 	#if DEVELOPER
 		disableoverwrite( windowFXHandleMap )
@@ -623,6 +630,12 @@ void function AnimWindow_FadeAlphaOverTime_Stop( ScriptAnimWindow window, var se
 	window.ent.kv.renderamt = GetSettingsBlockInt( settingsBlock, "alphaEnd" )
 }
 
+
+/////////////////////
+/////////////////////
+////// SetSkin //////
+/////////////////////
+/////////////////////
 void function AnimWindow_SetSkin_Start( ScriptAnimWindow window, var settingsBlock )
 {
 	int selectModelFrom = eAnimWindowSkinSelectionStrategy[GetSettingsBlockString( settingsBlock, "selectFlavorFrom" )]
