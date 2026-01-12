@@ -94,7 +94,7 @@ void function Olympus_OnEntitiesDidLoad()
 	PrecacheModel( $"mdl/fx/holo_branthium_02.rmdl" )
 	PrecacheModel( $"mdl/fx/holo_branthium_03.rmdl" )
 
-	entity sphereedge = CreatePropDynamic( $"mdl/fx/oly_sphere_edges.rmdl", <6290.46, 24305.8, -5529.8>, <0, 0, 0> )
+	/*entity sphereedge = CreatePropDynamic( $"mdl/fx/oly_sphere_edges.rmdl", <6290.46, 24305.8, -5529.8>, <0, 0, 0> )
 	entity sphereinner = CreatePropDynamic( $"mdl/fx/oly_sphere_inner_LG.rmdl", <6290.46, 24305.8, -5529.8>, <0, 0, 0> )
 	entity spherering = CreatePropDynamic( $"mdl/fx/oly_sphere_ring_nrg.rmdl", <6290.46, 24305.8, -5529.8>, <0, 0, 0> )
 	entity mainlg = CreatePropDynamic( $"mdl/fx/oly_sphere_main_LG.rmdl", <6290.46, 24305.8, -5529.8>, <0, 0, 0> )
@@ -105,7 +105,7 @@ void function Olympus_OnEntitiesDidLoad()
 	entity branthium_03 = CreatePropDynamic( $"mdl/fx/holo_branthium_03.rmdl", <-5347.69, -1035.13, -6060.35>, <-90, 0, 90> )
 
 	entity branthium_crystal2 = CreatePropDynamic( $"mdl/fx/holo_branthium_crystal.rmdl", <-5347.72, -1034.98, -5865.16>, <90, 0, -90> )
-	entity branthium_structure2 = CreatePropDynamic( $"mdl/fx/holo_branthium_structure.rmdl", <-5347.72, -1034.98, -5865.16>, <90, 0, -90> )
+	entity branthium_structure2 = CreatePropDynamic( $"mdl/fx/holo_branthium_structure.rmdl", <-5347.72, -1034.98, -5865.16>, <90, 0, -90> )*/
 }
 
 void function SpawnWeaponsonRacks()
