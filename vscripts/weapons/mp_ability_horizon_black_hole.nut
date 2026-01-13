@@ -57,7 +57,7 @@ const string BLACKHOLE_SOUND_PHASE_1_UPGRADE = "Nova_Ultimate_BlackHole_Phase1_Q
 //NEWT TUNING
 const float NEWT_THROWFORCE_MULT = 1
 const float NEWT_BOUNCEFORCEMULT = 0.5
-      
+
 //NOVA GRAVITY TUNING
 const bool BLACKHOLE_DEBUG = false
 const bool BLACKHOLE_DEBUG_DRONES = false
@@ -67,12 +67,12 @@ const bool BLACKHOLE_DEBUG_VORTEX = false
 
 const float BLACKHOLE_TROPHY_HEALTH_AMOUNT = 175
 const float BLACKHOLE_TROPHY_HEALTH_AMOUNT_UPGRADED = 90
-const float BLACKHOLE_TUNING_RADIUS = 200
+const float BLACKHOLE_TUNING_RADIUS = 400
 const int BLACKHOLE_TUNING_ABOVE_HEIGHT = 200
 const int BLACKHOLE_TUNING_BELOW_HEIGHT = 200
 const float BLACKHOLE_TUNING_INNER_RADIUS = 100
 
-const float BLACKHOLE_TUNING_PROJECTILE_PULL_SPEED = 40.0
+const float BLACKHOLE_TUNING_PROJECTILE_PULL_SPEED = 80.0
 
 const float BLACKHOLE_TUNING_CODE_PULL_OUTER_SPEED = 300
 const float BLACKHOLE_TUNING_CODE_PULL_INNER_SPEED = 400
@@ -85,18 +85,18 @@ const float BLACKHOLE_TUNING_TAKE_EXPLOSIVE_DAMAGE_MULTIPLIER = 1.5
 const float BLACKHOLE_TUNING_ACTIVATION_TIME = 1.75
 const float BLACKHOLE_TUNING_ACTIVATION_TIME_UPGRADED = 0.9
 const float BLACKHOLE_TUNING_DESTROY_REFUND = 0.25
-      
+
 const float BLACKHOLE_TUNING_PULL_ACTIVATION_FX_LEAD_TIME = 1.0
 const float BLACKHOLE_TUNING_START_FX_STOP_OFFSET = 0.0
 const float BLACKHOLE_TUNING_PULL_TIME = 0.8
 const float BLACKHOLE_TUNING_STABLE_TIME = 10
 const float BLACKHOLE_TUNING_DOOR_CHECK_DELAY = 0.3
 
-const float GRAVITY_PULL_TRAVEL_TIME = 1.2 
+const float GRAVITY_PULL_TRAVEL_TIME = 1.2
 const float GRAVITY_PULL_HEIGHT_OFFSET = 0
 
 const float GRAVITY_POP_DELAY = 1
-const float GRAVITY_HOLD_RADIUS = 40.0 
+const float GRAVITY_HOLD_RADIUS = 40.0
 
 const float GRAVITY_PLAYER_PULL_STRENGTH = 130.0
 const float GRAVITY_PLAYER_AIR_FRICTION = 0.80
@@ -120,7 +120,8 @@ void function MpWeaponBlackHole_Init()
 	PrecacheParticleSystem( BLACKHOLETROPHY_DAMAGE_ADD_FX )
 	BLACKHOLE_1P_SCREEN_FX_ID = PrecacheParticleSystem( BLACKHOLE_1P_SCREEN_FX )
 
-	PrecacheParticleSystem( BLACKHOLE_SWIRLING_BLACKHOLE_FX )
+	//PrecacheParticleSystem( BLACKHOLE_SWIRLING_BLACKHOLE_FX )
+	PrecacheParticleSystem( BLACKHOLE_PREVIEW_RING_FX )
 	PrecacheParticleSystem( BLACKHOLE_NEWT_THRUSTER_FX )
 	PrecacheParticleSystem( BLACKHOLE_NEWT_THRUSTER_LIGHT_FX )
 	BLACKHOLE_1P_SCREEN_OTHER_FX_ID = PrecacheParticleSystem( BLACKHOLE_1P_SCREEN_OTHER_FX )
@@ -135,6 +136,7 @@ void function MpWeaponBlackHole_Init()
 	#endif //SERVER
 
 	#if CLIENT
+		RegisterSignal( "Blackhole_EndPreview" )
 		RegisterSignal( "Blackhole_Stop1PFXSignal" )
 
 		StatusEffect_RegisterEnabledCallback( eStatusEffect.in_black_hole_field, Blackhole_Start1PFX )
@@ -145,7 +147,7 @@ void function MpWeaponBlackHole_Init()
 
 	#endif //CLIENT
 }
-                    
+
 float function GetUpgradedActivationTime()
 {
 	return GetCurrentPlaylistVarFloat( "horizon_upgraded_blackhole_activation_time", BLACKHOLE_TUNING_ACTIVATION_TIME_UPGRADED )
@@ -160,31 +162,31 @@ float function GetUpgradedTrophyDestroyRefund()
 {
 	return GetCurrentPlaylistVarFloat( "horizon_upgraded_blackhole_destroy_refund", BLACKHOLE_TUNING_DESTROY_REFUND )
 }
-      
+
 float function GetActivationTime( entity player )
 {
 	float result = BLACKHOLE_TUNING_ACTIVATION_TIME
-		//if( PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_TWO ) ) 
+		//if( PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_TWO ) )
 		//	result = GetUpgradedActivationTime()
-       
+
 	return result
 }
 
 string function GetActivationSFX( entity player )
 {
 	string result = BLACKHOLE_SOUND_PHASE_1
-		//if( PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_TWO ) ) 
+		//if( PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_TWO ) )
 		//	result = BLACKHOLE_SOUND_PHASE_1_UPGRADE
-       
+
 	return result
 }
 
 float function GetTrophyHealth( entity player )
 {
 	float result = BLACKHOLE_TROPHY_HEALTH_AMOUNT
-		//if( PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_TWO ) ) 
+		//if( PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_TWO ) )
 		//	result = GetUpgradedTrophyHealth()
-       
+
 	return result
 }
 
@@ -203,11 +205,33 @@ void function OnWeaponTossPrep_weapon_black_hole( entity weapon, WeaponTossPrepP
 }
 
 #if CLIENT
+vector function CalculateGrenadeLandingPos( entity weapon )
+{
+	entity player = weapon.GetOwner()
+	if ( !IsValid( player ) )
+		return weapon.GetOrigin()
+
+	vector eyePos = player.EyePosition()
+	vector viewDir = player.GetViewVector()
+
+	// Trace forward from player's view to find where they're aiming
+	TraceResults trace = TraceLine( eyePos, eyePos + viewDir * 3000, player, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+
+	return trace.endPos
+}
+
 void function ShowBlackHoleRadius( entity weapon )
 {
+	EndSignal( weapon, "Blackhole_EndPreview" )
 	EndSignal( weapon, "OnDestroy" )
 	wait 0.2
 	int fxHandle
+	if ( IsValid( weapon ) )
+	{
+		fxHandle = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( BLACKHOLE_PREVIEW_RING_FX ), weapon.GetOrigin(), ZERO_VECTOR )
+		EffectSetControlPointVector( fxHandle, 1, < GetBlackholeRadius( weapon.GetOwner() ) , 0, 0> )
+		//EffectSetControlPointVector( fxHandle, 2, <134, 182, 255> )
+	}
 	OnThreadEnd(
 		function() : ( fxHandle )
 		{
@@ -215,6 +239,14 @@ void function ShowBlackHoleRadius( entity weapon )
 				EffectStop( fxHandle, true, false )
 		}
 	)
+
+	while( IsValid( fxHandle ) )
+	{
+		vector dropPosition = CalculateGrenadeLandingPos( weapon )
+		//DebugDrawSphere( dropPosition, GetBlackholeRadius( weapon.GetOwner() ), <0, 0, 150>, true, 0.1 )
+		EffectSetControlPointVector( fxHandle, 0, dropPosition )
+		WaitFrame()
+	}
 }
 
 vector function BlackHole_OffsetDamageNumbersLower( entity newt, vector damageFlyoutPosition )
@@ -231,20 +263,24 @@ var function OnWeaponPrimaryAttack_weapon_black_hole( entity weapon, WeaponPrima
 
 	weapon.EmitWeaponSound_1p3p( GetGrenadeThrowSound_1p( weapon ), GetGrenadeThrowSound_3p( weapon ) )
 
+	#if CLIENT
+		Signal( weapon, "Blackhole_EndPreview" )
+	#endif
+
 	WeaponFireGrenadeParams fireGrenadeParams
 	fireGrenadeParams.pos = attackParams.pos
-	
+
 	fireGrenadeParams.vel = attackParams.dir * NEWT_THROWFORCE_MULT
-	fireGrenadeParams.angVel = <0, 0, 600> 
-	fireGrenadeParams.fuseTime = 100.0 
+	fireGrenadeParams.angVel = <0, 0, 600>
+	fireGrenadeParams.fuseTime = 100.0
 	fireGrenadeParams.scriptTouchDamageType = damageTypes.projectileImpact
 	fireGrenadeParams.scriptExplosionDamageType = damageTypes.explosive
 	fireGrenadeParams.clientPredicted = true
 	fireGrenadeParams.lagCompensated = true
 	fireGrenadeParams.useScriptOnDamage = true
-	
+
 	entity projectile = weapon.FireWeaponGrenade( fireGrenadeParams )
-	
+
 	if ( IsValid( projectile ) )
 	{
 		entity player = weapon.GetWeaponOwner()
@@ -277,6 +313,8 @@ void function OnWeaponDeactivate_weapon_black_hole( entity weapon )
 	#if CLIENT
 		if ( weapon.GetWeaponOwner() != GetLocalViewPlayer() )
 			return
+
+		Signal( weapon, "Blackhole_EndPreview" )
 	#endif
 }
 
@@ -289,8 +327,8 @@ void function OnProjectileCollision_weapon_black_hole( entity projectile, vector
 			vector bounceVel = velocity - 2 * DotProduct(velocity, normal) * normal
 			projectile.SetVelocity( (bounceVel * NEWT_BOUNCEFORCEMULT) + (normal * 50) )
 		#endif
-		
-		return 
+
+		return
 	}
 
 	bool didStick = PlantSuperStickyGrenade( projectile, pos, normal, hitEnt, hitbox )
@@ -300,10 +338,10 @@ void function OnProjectileCollision_weapon_black_hole( entity projectile, vector
 	#if SERVER
 		if ( projectile.IsMarkedForDeletion() )
 			return
-			
+
 		entity projOwner = projectile.GetOwner()
 		entity parentTo = projectile.GetParent()
-		
+
 		vector surfaceAngles = projectile.proj.savedAngles
 		TraceResults traceResult = TraceLine( pos, pos - normal * 32, [ projectile ], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
 		if ( traceResult.fraction < 1.0 )
@@ -311,12 +349,12 @@ void function OnProjectileCollision_weapon_black_hole( entity projectile, vector
 			vector forward = AnglesToForward( projectile.proj.savedAngles )
 			surfaceAngles = AnglesOnSurface( traceResult.surfaceNormal, forward )
 		}
-		
+
 		if ( IsValid( projectile ) )
 			projectile.Destroy()
-			
+
 		vector adjustedPos = pos - <0, 0, 8.0>
-			
+
 		thread BLACKHOLE_MainLifetimeThread( projOwner, adjustedPos, surfaceAngles, parentTo )
 	#endif
 }
@@ -363,9 +401,9 @@ entity function CreateNewtProp( entity owner, vector origin, vector angles, enti
 	newtProp.SetArmorType( ARMOR_TYPE_HEAVY )
 	newtProp.SetScriptName( BLACKHOLE_PROP_SCRIPTNAME )
 	newtProp.SetBlocksRadiusDamage( false )
-	newtProp.SetTouchTriggers( true ) 
-	newtProp.SetPhysics( MOVETYPE_FLY ) 
-	newtProp.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD ) 
+	newtProp.SetTouchTriggers( true )
+	newtProp.SetPhysics( MOVETYPE_FLY )
+	newtProp.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD )
 
 	if ( ownerIsValid )
 	{
@@ -437,7 +475,7 @@ void function BLACKHOLE_MainLifetimeThread( entity owner, vector origin, vector 
 	entity traceBlocker = CreateTraceBlockerVolume( pingOrigin, 64.0, false, CONTENTS_BLOCK_PING, newtProp.GetTeam(), BLACKHOLE_PROP_SCRIPTNAME )
 
 	array<entity> newtPropFXArray
-	entity swirlingBlackHoleFXID = StartParticleEffectOnEntityWithPos_ReturnEntity ( newtProp, GetParticleSystemIndex( BLACKHOLE_SWIRLING_BLACKHOLE_FX ), FX_PATTACH_POINT_FOLLOW, newtProp.LookupAttachment( "BLACKHOLE_FX" ), <0, 0, 0>, ZERO_VECTOR )
+	//entity swirlingBlackHoleFXID = StartParticleEffectOnEntityWithPos_ReturnEntity ( newtProp, GetParticleSystemIndex( BLACKHOLE_SWIRLING_BLACKHOLE_FX ), FX_PATTACH_POINT_FOLLOW, newtProp.LookupAttachment( "BLACKHOLE_FX" ), <0, 0, 0>, ZERO_VECTOR )
 
 	int thrusterFXID   = GetParticleSystemIndex( BLACKHOLE_NEWT_THRUSTER_FX )
 	entity thruster1FX = StartParticleEffectOnEntityWithPos_ReturnEntity ( newtProp, thrusterFXID, FX_PATTACH_POINT_FOLLOW, newtProp.LookupAttachment( "thruster1" ), <0, 0, 0>, <90, 0, 0> )
@@ -458,6 +496,7 @@ void function BLACKHOLE_MainLifetimeThread( entity owner, vector origin, vector 
 	EffectSetControlPointVector( blackHoleStartFX, 2, <50, 40, 125> )
 	newtPropFXArray.append( blackHoleStartFX )
 	thread BlackholeStartFXLifetimeThread( owner, blackHoleStartFX )
+	//Vortex cylinder for detecting grenades
 	entity vortexCylinder
 
 	OnThreadEnd(
@@ -492,7 +531,9 @@ void function BLACKHOLE_MainLifetimeThread( entity owner, vector origin, vector 
 
 	EmitSoundOnEntity( newtProp, GetActivationSFX( owner ) )
 
-	wait GRAVITY_POP_DELAY
+	float blackholeActivationTime = GetCurrentPlaylistVarFloat( "blackhole_activation_time", GetActivationTime( owner ) )
+	float waitTime                = max( blackholeActivationTime - BLACKHOLE_TUNING_PULL_ACTIVATION_FX_LEAD_TIME, 0.0 )
+	wait waitTime
 
 	int blackHoleMainFXID
 	blackHoleMainFXID = GetParticleSystemIndex( BLACKHOLE_MAIN_FX )
@@ -502,6 +543,8 @@ void function BLACKHOLE_MainLifetimeThread( entity owner, vector origin, vector 
 	EffectSetControlPointVector( blackHoleMainFX, 2, <255, 0, 0> )
 	newtPropFXArray.append( blackHoleMainFX )
 	EmitSoundOnEntity( newtProp, BLACKHOLE_SOUND_PHASE_2 )
+
+	wait BLACKHOLE_TUNING_PULL_ACTIVATION_FX_LEAD_TIME
 
 	if ( IsValid( blackholeThreatProp ) )
 		blackholeThreatProp.Destroy()
@@ -513,14 +556,14 @@ void function BLACKHOLE_MainLifetimeThread( entity owner, vector origin, vector 
 
 	newtProp.e.isBusy = false
 	vortexCylinder    = CreateBlackholeVortexTrigger( newtProp, owner, GetBlackholeRadius( newtProp.GetOwner() ), BLACKHOLE_TUNING_ABOVE_HEIGHT )
-	
+
 	waitthread BLACKHOLE_PullTriggerThread( newtProp, blackHoleMainFX )
 
 	Highlight_ClearOwnedHighlight( newtProp )
 	Highlight_ClearFriendlyHighlight( newtProp )
 	Highlight_ClearEnemyHighlight( newtProp )
 
-	EffectStop( swirlingBlackHoleFXID )
+	//EffectStop( swirlingBlackHoleFXID )
 	EffectStop( blackHoleMainFX )
 	EmitSoundOnEntity( newtProp, BLACKHOLE_SOUND_PHASE_4 )
 	file.fullBlackholeEffectsActive[newtProp] = false
@@ -675,7 +718,7 @@ void function BLACKHOLE_PullTriggerThread( entity newtProp, entity pullSphereFX 
 	trigger.SetParent( newtProp, "", false, 0.0 /*, true*/ )
 	trigger.Code_SetTeam( newtProp.GetTeam() )
 	trigger.SetEnterCallback( BLACKHOLE_TriggerEnter )
-	trigger.SearchForNewTouchingEntity() 
+	trigger.SearchForNewTouchingEntity()
 
 	thread TryOpenAndBreakDoors( newtProp, trigger )
 
@@ -693,7 +736,7 @@ void function BLACKHOLE_PullTriggerThread( entity newtProp, entity pullSphereFX 
 
 	float blackholePullTime   = GetCurrentPlaylistVarFloat( "blackhole_pull_time", BLACKHOLE_TUNING_PULL_TIME )
 	float blackholeStableTime = GetCurrentPlaylistVarFloat( "blackhole_stable_time", BLACKHOLE_TUNING_STABLE_TIME )
-	
+
 	wait blackholePullTime
 	EmitSoundOnEntity( newtProp, BLACKHOLE_SOUND_PHASE_3 )
 	wait blackholeStableTime
@@ -907,7 +950,7 @@ void function BLACKHOLE_NEWT_DestroyExplosion( entity newtProp, entity attacker 
 	int damageFXAttachID = newtProp.LookupAttachment( "BLACKHOLE_FX" )
 	entity fx            = StartParticleEffectInWorld( damageFXID, newtProp.GetAttachmentOrigin( damageFXAttachID ), newtProp.GetAttachmentAngles( damageFXAttachID ) )
 
-                        
+
         entity owningHorizon = newtProp.GetOwner()
 
 		if ( !IsValid( owningHorizon ) )
@@ -927,15 +970,15 @@ void function BLACKHOLE_NEWT_DestroyExplosion( entity newtProp, entity attacker 
 	    		int maxAmmo = weapon.GetWeaponPrimaryClipCountMax()
 	    		weapon.SetWeaponPrimaryClipCount( maxAmmo * GetUpgradedTrophyDestroyRefund() )
 	    	}
-        }    
+        }
 }
-                  
+
 #endif //SERVER
 void function BLACKHOLE_TriggerEnter( entity trigger, entity ent )
 {
 	if ( !ent.DoesShareRealms( trigger ) )
 		return
-		
+
 	//if ( IsFriendlyTeam( trigger.GetTeam(), ent.GetTeam() ) )
 	//	return
 
@@ -944,7 +987,7 @@ void function BLACKHOLE_TriggerEnter( entity trigger, entity ent )
 		{
 			if ( !StatusEffect_HasSeverity( ent, eStatusEffect.in_black_hole_field ) )
 			{
-				thread BLACKHOLE_PullLogic( trigger, ent )
+				thread BLACKHOLE_InTriggerThread( trigger, ent )
 			}
 			return
 		}
@@ -953,20 +996,20 @@ void function BLACKHOLE_TriggerEnter( entity trigger, entity ent )
 	if ( !ent.IsPlayer() )
 		return
 
-	thread BLACKHOLE_PullLogic( trigger, ent )
+	thread BLACKHOLE_InTriggerThread( trigger, ent )
 }
 
-void function BLACKHOLE_PullLogic( entity trigger, entity ent )
+void function BLACKHOLE_InTriggerThread( entity trigger, entity ent )
 {
 	EndSignal( trigger, "OnDestroy" )
 	EndSignal( ent, "OnDestroy" )
 	EndSignal( ent, "OnDeath" )
-	
+
 	if ( StatusEffect_HasSeverity( ent, eStatusEffect.in_black_hole_field ) )
 		return
 
 	StatusEffect_AddEndless( ent, eStatusEffect.in_black_hole_field, 1.0 )
-	
+
 	entity newtProp = trigger.GetParent()
 
 	#if SERVER
@@ -1006,21 +1049,21 @@ void function BLACKHOLE_PullLogic( entity trigger, entity ent )
 				{
 					pullStrength = GRAVITY_TEAMMATE_PULL_STRENGTH
 				}
-				
+
 				vector newVel = (currentVel * GRAVITY_PLAYER_AIR_FRICTION) + (dir * pullStrength)
 				if ( ent.IsOnGround() )
 				{
 					newVel.z = GRAVITY_GROUND_LIFT
 				}
-				
+
 				ent.SetVelocity( newVel )
 			}
-			
+
 			WaitFrame()
 		}
 	}
 
-	else 
+	else
 	{
 		if ( IsFriendlyTeam( ent.GetTeam(), newtProp.GetTeam() ) )
 		{
@@ -1045,7 +1088,7 @@ void function BLACKHOLE_PullLogic( entity trigger, entity ent )
 				{
 					ent.ClearParent()
 					StatusEffect_StopAllOfType( ent, eStatusEffect.in_black_hole_field )
-					
+
 					if ( ent.IsNPC() )
 					{
 						ent.Anim_Stop()
@@ -1056,20 +1099,20 @@ void function BLACKHOLE_PullLogic( entity trigger, entity ent )
 					mover.Destroy()
 			}
 		)
-		
+
 		vector entOrigin = ent.GetOrigin()
 		vector centerOrigin = newtProp.GetOrigin()
-	   
+
 		vector dir = entOrigin - centerOrigin
 		dir.z = 0
 		dir = Normalize(dir)
-	   
+
 		vector targetPos = centerOrigin + (dir * GRAVITY_HOLD_RADIUS) + <0, 0, GRAVITY_PULL_HEIGHT_OFFSET>
-	   
+
 		mover.NonPhysicsMoveTo( targetPos, GRAVITY_PULL_TRAVEL_TIME, 0, 0 )
-		
+
 		wait GRAVITY_PULL_TRAVEL_TIME
-		
+
 		while( IsValid( trigger ) && IsValid( newtProp ) )
 		{
 			mover.NonPhysicsMoveTo( targetPos, 0.1, 0, 0 )

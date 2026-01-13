@@ -31,14 +31,14 @@ WeaponData
 
 	//"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_weapon_space_elevator_tac"
 
-	//"OnWeaponReadyToFire"							"OnWeaponReadyToFire_weapon_space_elevator_tac"
-	//"OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_space_elevator_tac"
-	//"OnWeaponTossReleaseAnimEvent"					"OnWeaponTossRelease_weapon_space_elevator_tac"
-    	"OnWeaponTossPrep"								"Grenade_OnWeaponTossPrep"
-    	"OnWeaponTossCancel"							"Grenade_OnWeaponTossCancelDrop"
-    	"OnWeaponDeactivate"							"Grenade_OnWeaponDeactivate"
+	"OnWeaponReadyToFire"							"OnWeaponReadyToFire_weapon_space_elevator_tac"
+	"OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_space_elevator_tac"
+	"OnWeaponTossReleaseAnimEvent"					"OnWeaponTossRelease_weapon_space_elevator_tac"
+    //	"OnWeaponTossPrep"								"Grenade_OnWeaponTossPrep"
+    //	"OnWeaponTossCancel"							"Grenade_OnWeaponTossCancelDrop"
+    //	"OnWeaponDeactivate"							"Grenade_OnWeaponDeactivate"
                      
-		//"OnProjectileCollision"							"OnProjectileCollision_weapon_deployable_noVehicles"
+		"OnProjectileCollision"							"SpaceElevatorTac_ProjectileLanded"
                           
                                                                          
                            

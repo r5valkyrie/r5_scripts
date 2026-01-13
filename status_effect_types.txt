@@ -139,5 +139,7 @@
 	mortar_ring_burn
 	mortar_ring_reveal
 	hold_is_open
+	in_space_elevator
+	in_black_hole_field
 /////////////////////////////
 //}

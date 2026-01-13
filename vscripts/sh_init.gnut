@@ -231,9 +231,12 @@ void function SV_CL_Init()
 	MpAbilityCryptoDrone_Init()
 	MpAbilityCryptoDroneEMP_Init()
 	MpAbilitySilence_Init()
+	MpSpaceElevator_Init()
+	MpSpaceElevatorAbility_Init()
 	MpWeaponSmartPistol_Init()
 	MpWeaponProximityMine_Init()
 	MpWeaponRocketLauncher_Init()
+	MpWeaponBlackHole_Init()
 	
 	Dash_Init()
 

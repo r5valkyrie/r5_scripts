@@ -499,6 +499,7 @@ Scripts:
 	mp/sh_game_state_dialog.nut
 	mp/sh_comms_menu.nut
 	mp/sh_loot_marvin.nut
+	mp/sh_space_elevator.gnut
 	
 	mp/sh_warp_gates.gnut
 	mp/sh_rising_walls.nut  //World's Edge MU2/MU3
@@ -536,7 +537,7 @@ When: "SERVER || CLIENT"
 Scripts:
 [
 	weapons/mp_ability_gibraltar_shield.nut
-
+	weapons/mp_ability_space_elevator_tac.nut
 	weapons/mp_ability_consumable.nut
 
 	mp/sh_bleedout.gnut
