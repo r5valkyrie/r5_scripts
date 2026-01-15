@@ -414,6 +414,14 @@ void function SPACEELEVATOR_KeepAliveThread( entity elevator )
 
 entity function CreateElevatorVortex( entity elevatorProp, entity owner, float radius, float height )
 {
+	// Vortex to detect bullets, projectiles, and mortars in our defensive perimeter.
+	// Vortex detects in-air projectiles, whereas trigger_cylinders do not.
+	// However, Vortex can't seem to detect live arc-stars (i.e. arc-stars in the wall/ground)*
+	// *See hack comment for the trigger_cylinder - apparently having a trigger_cylinder poll
+	// fixes the vortex not working with arc-stars in walls!!!????
+	// If you comment out Suction_CreateTriggerArea you will see that somehow the vortex_sphere will
+	// stop detecting arc-stars.  Also if you remove the loop in Suction_CreateTriggerArea, the vortex_sphere
+	// will also stop detecting arc-stars.
 	entity vortexSphere = CreateEntity( "vortex_sphere" )
 	vortexSphere.kv.spawnflags = SF_ABSORB_CYLINDER | SF_BLOCK_OWNER_WEAPON | SF_ABSORB_BULLETS
 	vortexSphere.kv.enabled = 0
@@ -442,6 +450,8 @@ entity function CreateElevatorVortex( entity elevatorProp, entity owner, float r
 	vortexSphere.SetOwner( elevatorProp )
 	vortexSphere.SetParent( elevatorProp, "", true, 0.0 )
 
+	//HACK: Until we get a better way to do this use the vortex's target name to specify that it is a vortex trigger that
+	//will run a set callback when a projectile or bullet hits it instead of preforming its normal vortex logic.
 	Vortex_ConvertToVortexTriggerArea( vortexSphere )
 	SetCallback_VortexSphereTriggerOnBulletHit( vortexSphere, SPACEELEVATOR_VortexTriggerOnBulletHit )
 	SetCallback_VortexSphereTriggerOnProjectileHit( vortexSphere, SPACEELEVATOR_VortexTriggerOnProjectileHit )
@@ -956,6 +966,7 @@ void function SpaceElevator_3PPlayerFX_Stop( array<entity> spaceElevatorFXArray 
 		printt( "DestroyPlayerSpaceElevatorFX" )
 	}
 
+	// 3P effects
 	foreach ( fx in spaceElevatorFXArray )
 	{
 		if ( IsValid( fx ) )
@@ -966,6 +977,7 @@ void function SpaceElevator_3PPlayerFX_Stop( array<entity> spaceElevatorFXArray 
 #endif //SERVER
 
 #if CLIENT
+//Gravity Reduction field 1p effects
 void function SpaceElevatorTac_1PFX_Start( entity ent, int statusEffect, bool actuallyChanged )
 {
 	ManageHighlightEntity( ent )
@@ -1001,7 +1013,6 @@ void function SpaceElevatorTac_1PFX_Stop( entity ent, int statusEffect, bool act
 
 	ent.Signal( "SpaceElevator_StopSignal" )
 }
-
 void function  SpaceElevator_1PFX_Thread( entity player, int fxHandle )
 {
 	player.EndSignal( "SpaceElevator_StopSignal" )
@@ -1024,6 +1035,7 @@ void function  SpaceElevator_1PFX_Thread( entity player, int fxHandle )
 		if ( !EffectDoesExist( fxHandle ) )
 			break
 
+		// For FX performance reasons, we dont want or need both 1p effecs on at the same time.
 		bool shouldBeOn = !StatusEffect_HasSeverity( player, eStatusEffect.in_black_hole_field )
 		if ( !wasOn && shouldBeOn )
 		{
@@ -1077,10 +1089,14 @@ void function CL_SpaceElevatorProgressRUIThread( entity player, entity base )
 		RuiDestroy( file.elevatorProgressRui )
 		file.elevatorProgressRui = null
 	}
+	//file.elevatorProgressRui = CreateCockpitRui( $"ui/nova_elevator_progress.rpak" )
+	//RuiSetFloat( file.elevatorProgressRui, "progress", 0.0 )
+	//RuiSetString( file.elevatorProgressRui, "barLabel", "#WPN_SPACE_ELEVATOR" )
 
 	float progress = 0.0
 	while ( IsValid( base ) && StatusEffect_HasSeverity( player, eStatusEffect.in_space_elevator ) )
 	{
+		//Find my distance from the base
 		vector playerPos       = player.GetOrigin()
 		vector basePos         = base.GetOrigin()
 		vector triggerToPlayer = playerPos - basePos
