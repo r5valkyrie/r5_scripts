@@ -35,7 +35,7 @@ void function Olympus_MapInit_Common()
 
 	SetVictorySequencePlatformModel( $"mdl/levels_terrain/mp_rr_olympus/floating_victory_platform_01.rmdl", < 0, 0, -10 >, < 0, 0, 0 > )
 
-	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" ){
+	if ( GetMapName() != "mp_rr_olympus" ){
 		PathTT_Init()}
 
 	#if CLIENT
@@ -52,7 +52,7 @@ void function Olympus_MapInit_Common()
 			AddSpawnCallback( "info_target", Rift_Init )
 		}
 
-		if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" )
+		if ( GetMapName() != "mp_rr_olympus" )
 		{
 			InitLootRollers()
 		}

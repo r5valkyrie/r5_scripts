@@ -377,6 +377,31 @@ const array<string> RING_ANNOUNCER_LINES = [
 	"bc_OlyPathTTRing_flawless_win",
 	"bc_OlyPathTTRing_chain_kill"
 ]
+                              
+const array<string> RING_ANNOUNCER_LINES_REVENANT = [
+	"bc_OlyRevTTRing_recalibrate"
+	"SR_OlyRevTTRing_runsAway"
+	"SR_OlyRevTTRing_entersRing"
+	"SR_OlyRevTTRing_challengeAccepted"
+	"SR_OlyRevTTRing_killed"
+	"SR_OlyRevTTRing_downed"
+	"SR_OlyRevTTRing_winNoDmg"
+	"SR_OlyRevTTRing_chainKill"
+
+]
+const array<string> RING_ANNOUNCER_LINES_REVENANT_EXT = [
+	"bc_OlyRevTTRing_recalibrate_ext"
+	"SR_OlyRevTTRing_runsAway_ext"
+	"SR_OlyRevTTRing_entersRing_ext"
+	"SR_OlyRevTTRing_challengeAccepted_ext"
+	"SR_OlyRevTTRing_killed_ext"
+	"SR_OlyRevTTRing_downed_ext"
+	"SR_OlyRevTTRing_winNoDmg_ext"
+	"SR_OlyRevTTRing_chainKill_ext"
+
+
+]
+
 
 const array<string> RING_ANNOUNCER_LINES_EXT  = [
 	"bc_OlyPathTTRing_recalibrate_ext",
@@ -422,6 +447,8 @@ void function SCB_PathTT_PlayRingAnnouncerDialogue( int lineId )
 	}
 
 	string lineToPlay = file.isInStadium? RING_ANNOUNCER_LINES[ lineId ] : RING_ANNOUNCER_LINES_EXT[ lineId ]
+		if ( GetMapName() == "mp_rr_olympus_mu1_night" )
+			lineToPlay = file.isInStadium? RING_ANNOUNCER_LINES_REVENANT[ lineId ] : RING_ANNOUNCER_LINES_REVENANT_EXT[ lineId ]
 	float duration = GetSoundDuration( GetAnyDialogueAliasFromName( lineToPlay ) )
 	file.announcerLineFinishedPlayingTime = Time() + duration + ANNOUNCER_DEBOUNCE_TIME
 	file.currentlyPlayingLinePriority = lineId
@@ -1399,7 +1426,7 @@ void function Boxing_WeaponStatusCheck( entity player, var rui, int slot )
 //CHECK IF THE TT EXISTS IN THE MAP
 bool function IsPathTTEnabled()
 {
-	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" )
+	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" || GetMapName() == "mp_rr_olympus_mu1_night" )
 	{
 		return true
 	}
