@@ -68,8 +68,8 @@ WeaponData
 	// Effects
 	"bounce_effect_table"							"bounce_small_nosound_nowhizby"
     "impact_effect_table"							"default_nosound_nowhizby"
-	"projectile_trail_effect_0_1P"						"P_tracer_proj_sniper_piercer"
-	"projectile_trail_effect_0_3P"						"P_tracer_proj_sniper_piercer"
+	"projectile_trail_effect_0"						"P_fuse_tac_bomb_trail"
+	"projectile_trail_effect_1"						"P_fuse_tac_bomb_trail"
 	//"vortex_absorb_effect"						"wpn_vortex_projectile_frag_FP"
 	//"vortex_absorb_effect_third_person"			"wpn_vortex_projectile_frag"
 	//"vortex_absorb_sound"							"Vortex_Shield_AbsorbBulletLarge"

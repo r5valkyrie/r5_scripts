@@ -439,8 +439,8 @@
 
 
     // FX - Muzzle Flash
-    "fx_muzzle_flash_view"                       "wpn_muzzleflash_pistol_sup_FP"
-    "fx_muzzle_flash_world"                      "wpn_muzzleflash_pistol_sup"
+    "fx_muzzle_flash_view"                       "P_bow_muzzleflash_arrow"
+    "fx_muzzle_flash_world"                      "P_bow_muzzleflash_arrow_3P"
     "fx_muzzle_flash_attach"                     "muzzle_flash"
 
     // FX - Shell Eject
@@ -454,8 +454,8 @@
 	// FX - Projectile
 	"projectilemodel"                            "mdl/weapons/bullets/w_arrow_projectile.rmdl"
 
-    "projectile_trail_effect_0"               "P_tracer_proj_sniper_piercer"
-    "projectile_trail_effect_0_3p"               "P_tracer_proj_sniper_piercer"
+    "projectile_trail_effect_0"               "P_tracer_proj_arrow"
+    "projectile_trail_effect_0_3p"               "P_tracer_proj_arrow"
 
     // FX - Bow Custom
     "fx_bow_light_ironsights_0_1p"                          "P_bow_charge_light_01"

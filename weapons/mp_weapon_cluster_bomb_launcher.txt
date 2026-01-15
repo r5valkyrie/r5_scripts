@@ -53,7 +53,7 @@ WeaponData
     "npc_explosion_damage"							"100"
 
     "ammo_clip_size"   								"400"
-    "ammo_default_total"							"0"
+    "ammo_default_total"							"400"
     "ammo_display"									"bar"
     "ammo_min_to_fire"								"200"
     "ammo_per_shot"									"200"

@@ -43,8 +43,8 @@ WeaponData
 	"chroma_color"									"1 .9 .5"
 
 	//Sounds
-	"fire_sound_1_player_1p"						"Weapon_bulletCasings.Bounce"
-	"fire_sound_1_player_3p"						"Weapon_bulletCasings.Bounce"
+	//"fire_sound_1_player_1p"						"Weapon_bulletCasings.Bounce"
+	//"fire_sound_1_player_3p"						"Weapon_bulletCasings.Bounce"
 	"fire_sound_2_player_1p"						"Weapon_R97_SecondShot_1P"
 	"fire_sound_2_player_3p"						""
 	"fire_sound_2_npc"								"Weapon_r97_secondshot_npc"
@@ -119,10 +119,6 @@ WeaponData
 	"npc_max_engage_range"							"1100"
 	"npc_min_engage_range_heavy_armor"				"500"
 	"npc_max_engage_range_heavy_armor"				"2000"
-	
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
-	"fx_muzzle_flash_attach"						"muzzle_flash"
 	
 	"npc_min_burst"   								"4"
 	"npc_max_burst"   								"7"

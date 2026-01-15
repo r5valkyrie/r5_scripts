@@ -169,7 +169,7 @@ WeaponData
 	"vortex_refire_behavior"  						"absorb"
 	//"play_offhand_charging_anim"  					"1"
 	"offhand_blocks_sprint"							"0"
-	"allow_empty_fire"								"1"
+	"allow_empty_fire"								"0"
 	"reload_enabled"  								"0"
 	"allow_empty_click"   							"0"
 	"empty_reload_only"   							"0"
