@@ -9,9 +9,9 @@ global function DEV_PhaseBreach_DestroyAll
 #endif
 #if CLIENT
 global function ServerToClient_PhaseBreachPortalCancelled
-                    
+
     global function ServerToClient_NotifyAshCooldownReduction
-      
+
 
 #if DEV
 global function DEV_ClearTargetingData
@@ -38,26 +38,26 @@ const vector BREACH_HULLCHECK_MAXS   = < 5.0,  5.0, 36.0 + 5.0>
 const float PHASE_BREACH_SPEED = 1200.0
 const float PHASE_BREACH_TRAVEL_TIME_MIN = 0.3
 
-                    
+
 const float PHASE_BREACH_TRAVEL_TIME_MAX_UPGRADED = 1.4
-      
+
 const float PHASE_BREACH_PORTAL_LIFETIME = 15.0
-                       
-                                              
-                                                     
-     
+
+
+
+
 const float PHASE_BREACH_TRAVEL_TIME_MAX = 1.8
 const float PHASE_BREACH_MAX_2D_DIST_DEFAULT = 3000.0
-      
+
 const float PHASE_BREACH_MAX_ANGLE_FOR_FULL_DIST_DEFAULT = 45.0
 const bool  PHASE_BREACH_ALLOW_START_ON_MOVERS_DEFAULT = true
 const bool  PHASE_BREACH_ALLOW_END_ON_MOVERS_DEFAULT = true
 const float PHASE_BREACH_MOVERS_MAX_SPEED_FOR_END_DEFAULT = 12.0
-                         
+
 const bool  PHASE_BREACH_ALLOW_END_ON_OOB = false
-     
-                                                
-      
+
+
+
 const float PHASE_BREACH_MIN_VIEW_DOT = deg_cos(15.0)
 
 const bool DEBUG_DRAW_TARGETING = false
@@ -175,13 +175,13 @@ void function MpWeaponPhaseBreach_Init()
 	}
 
 	Remote_RegisterClientFunction( FUNC_BREACH_FAILED )
-	                    
+
 		Remote_RegisterClientFunction( "ServerToClient_NotifyAshCooldownReduction" )
-       
+
 	file.breachPersistsWhenAshDies = GetCurrentPlaylistVarBool( "ash_ult_persists_past_ash_death", true )
 }
 
-                    
+
 float function GetUpgradedMaxPhaseTravelTime()
 {
 	return GetCurrentPlaylistVarFloat( "ash_upgraded_max_phase_travel_time", PHASE_BREACH_TRAVEL_TIME_MAX_UPGRADED )
@@ -190,10 +190,10 @@ float function GetUpgradedMaxPhaseTravelTime()
 float function GetMaxPhaseTravelTime( entity player )
 {
 	float result = PHASE_BREACH_TRAVEL_TIME_MAX
-       
+
 	return result
 }
-      
+
 
 void function OnWeaponActivate_weapon_phase_breach( entity weapon )
 {
@@ -312,7 +312,7 @@ var function OnWeaponPrimaryAttackAnimEvent_ability_phase_breach( entity weapon,
 
 		data.pathNodes[ data.pathNodes.len() - 1 ].wasCrouched = info.startCrouched
 		data.pathDistance = info.pathDistance
-                      
+
 			PhaseTunnel_CleanAndFinalizePath( data, PHASE_BREACH_SPEED, PHASE_BREACH_TRAVEL_TIME_MIN, GetMaxPhaseTravelTime( player ), true )
 
 		thread MoveEntAndCreateTunnel( player, data, info.finalPos )
@@ -339,7 +339,7 @@ void function MoveEntAndCreateTunnel( entity player, PhaseTunnelPathData data, v
 
 	player.EndSignal( "PlayerChangedClass" )
 
-	entity endpointFxEnt = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BREACH_ENDPOINT_FX ), endpoint + BREACH_OFFSET, data.pathNodes[0].angles )
+	entity endpointFxEnt = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BREACH_ENDPOINT_FX ), endpoint + BREACH_OFFSET, data.pathNodes[0].angles + <0, 90, -90> )
 	endpointFxEnt.RemoveFromAllRealms()
 	endpointFxEnt.AddToOtherEntitysRealms( player )
 
@@ -355,9 +355,9 @@ void function MoveEntAndCreateTunnel( entity player, PhaseTunnelPathData data, v
 	traceBlocker.SetTouchTriggers( true )
 	traceBlocker.SetOwner( player )
 
-	                   
+
 	//VoidVisionSetExitEnt( data, traceBlocker )
-       
+
 
 	EmitSoundAtPositionExceptToPlayer( TEAM_ANY, endpoint, player, SOUND_PORTAL_EXIT_OPEN )
 
@@ -427,7 +427,7 @@ void function MoveEntAndCreateTunnel( entity player, PhaseTunnelPathData data, v
 	waitthread CreateTunnelAndWaitForExpiration( player, tunnelData )
 }
 
-                    
+
 bool function UpdateAshAbilityCooldowns( entity player )
 {
 	// refresh Tactical
@@ -499,7 +499,7 @@ void function UpdateAshAbilityCooldowns_Thread( entity player )
 	}
 	Remote_CallFunction_NonReplay( player, "ServerToClient_NotifyAshCooldownReduction" )
 }
-      
+
 #endif
 
 #if CLIENT
@@ -514,7 +514,7 @@ void function ServerToClient_PhaseBreachPortalCancelled()
 	StopSoundOnEntity( localPlayer, "Ash_PhaseBreach_Enter_1p" )
 }
 
-                    
+
 void function ServerToClient_NotifyAshCooldownReduction()
 {
 	entity localViewPlayer = GetLocalViewPlayer()
@@ -524,7 +524,7 @@ void function ServerToClient_NotifyAshCooldownReduction()
 		AddPlayerHint( 2.5, 0.25, $"rui/hud/ultimate_icons/ultimate_ash", hintStr )
 	}
 }
-      
+
 #endif
 
 #if SERVER
@@ -544,7 +544,7 @@ PhaseTunnelPortalData function PhaseBreach_CreatePortalData( PhaseTunnelPathData
 	portalData.endOrigin    = endingPoint.origin
 	portalData.endAngles    = endingPoint.angles
 	portalData.crouchPortal = startingPoint.wasCrouched
-	portalData.portalFX     = StartParticleEffectInWorld_ReturnEntity( fxid, startingPoint.origin + BREACH_OFFSET, startingPoint.angles  + <0, -90, -90>)
+	portalData.portalFX     = StartParticleEffectInWorld_ReturnEntity( fxid, startingPoint.origin + BREACH_OFFSET, startingPoint.angles )
 
 	//TO DO: READ START AND END POSITION OUT OF THE PATH DATA.
 	portalData.pathData = pathData
@@ -700,7 +700,7 @@ void function OnPhaseTunnelTriggerEnter_Internal( entity trigger, entity player 
 
 void function PhaseBreach_PhaseEntity( entity ent, entity tunnelEnt, PhaseTunnelData tunnelData, PhaseTunnelPortalData portalData, PhaseTunnelTravelState travelState )
 {
-	                       
+
 	if ( GetCurrentPlaylistVarBool( "ash_void_vision_enabled", true ) )
 	{
 		ent.EndSignal( "OnDestroy", "OnDeath" )
@@ -713,7 +713,7 @@ void function PhaseBreach_PhaseEntity( entity ent, entity tunnelEnt, PhaseTunnel
 				//VoidVision_TakeVoidVision( ent )
 			} )
 	}
-       
+
 
 	waitthread PhaseTunnel_PhaseEntity( ent, tunnelEnt, tunnelData, portalData, travelState )
 }
@@ -756,12 +756,12 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 	vector maxs = player.GetPlayerMaxs()
 
 	// See if we're on a pusher and we're not allowed to be
-	/*if ( !file.allowStartOnMovers )
+	if ( !file.allowStartOnMovers )
 	{
 		entity groundEnt = player.GetGroundEntity()
-		if ( GetPusherEnt( groundEnt ) )
+		if ( IsValid( groundEnt ) && LengthSqr( groundEnt.GetVelocity() ) > file.maxEndingMoverSpeedSqr )
 			return info
-	}*/
+	}
 
 	// Make sure the portal entrance position will be valid (otherwise the portal will instantly die)
 	// These parameters should match the checks in PhaseTunnel_WaitForPhaseTunnelExpiration
@@ -961,6 +961,8 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo_OLD( entity player )
 	if ( !file.allowStartOnMovers )
 	{
 		entity groundEnt = player.GetGroundEntity()
+		if ( IsValid( groundEnt ) && LengthSqr( groundEnt.GetVelocity() ) > file.maxEndingMoverSpeedSqr )
+			return info
 	}
 
 	// Make sure the portal entrance position will be valid (otherwise the portal will instantly die)
@@ -1154,6 +1156,22 @@ bool function IsBreachPositionValid( entity player, vector position, entity trac
 
 		if ( traceHitEnt.IsProjectile() )
 			return false
+
+		// Check if hit entity is a mover by checking its velocity
+		if ( LengthSqr( traceHitEnt.GetVelocity() ) > 0 )
+		{
+			if ( ! file.allowEndOnMovers )
+				return false
+
+			if ( DEBUG_DRAW_PUSHER_MOVEMENT )
+			{
+				vector pusherVelAtPoint = traceHitEnt.GetVelocity()
+				//DebugDrawScreenText( 0.1,0.6, "Mover " + traceHitEnt + ", speed is " + Length(pusherVelAtPoint) + " , vel is " + pusherVelAtPoint )
+			}
+
+			if ( LengthSqr( traceHitEnt.GetVelocity() ) > file.maxEndingMoverSpeedSqr )	// Needs to be a bit above 0 since gondolas don't report velocity well on the client
+				return false
+		}
 	}
 
 	vector eyePos = player.EyePosition()
@@ -1162,6 +1180,16 @@ bool function IsBreachPositionValid( entity player, vector position, entity trac
 
 	if ( !IsNormalVertical( normal ) )
 		return false
+
+	// Trigger check for invalid ending types (out of bounds, etc) - disabled due to missing function
+	// foreach ( entity trigger in GetTriggersByClassesInRealms_HullSize(
+	// 	file.invalidTriggerEndingTypes,
+	// 	position, position,
+	// 	player.GetRealms(), TRACE_MASK_PLAYERSOLID,
+	// 	player.GetPlayerMins(), player.GetPlayerMaxs() ) )
+	// {
+	// 	return false
+	// }
 
 	TraceResults eyeToDownTrace = TraceLine( eyePos, position + <0, 0, 48.0>, [player], TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
 	if ( eyeToDownTrace.fraction < 1.0 )
@@ -1402,19 +1430,19 @@ void function PhaseBreachPlacement_Thread( entity weapon )
 			info = file.portalTargetTable[ player ]
 		else
 		{
-                          
-                                                       
-                                             
-                                                     
 
-          
-                          
-                                                   
-         
-               
-			     
+
+
+
+
+
+
+
+
+
+
 			info = GetPhaseBreachTargetInfo_OLD( player  )
-         
+
 
 		}
 
@@ -1429,37 +1457,37 @@ void function PhaseBreachPlacement_Thread( entity weapon )
 			EffectSetControlPointVector( file.targetingFxHandle, 0, info.finalPos )
 
 
-                          
-                                                       
-    
-                                                                                                                 
-    
 
-                                        
-                                                             
 
-                                                                                          
-    
-                                         
-                                  
-                                        
 
-                                                 
-                                                                                 
-                                                                          
-                                                                                    
-                                                                                 
-    
-       
-    
-                                                                            
-    
 
-                           
-                                                                        
-       
-                                                                        
-         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 			//if ( EffectDoesExist( file.targetingInvalidFxHandle ) )
 			//{

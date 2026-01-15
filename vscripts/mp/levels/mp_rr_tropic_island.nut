@@ -1,4 +1,5 @@
 global function CodeCallback_MapInit
+global function DEVlightningStrike
 
 const asset FX_LIGHTING_STRIKE = $"P_trop_elec_tower"
 const asset FX_LIGHTING_STRIKE_SKYBOX = $"P_trop_elec_tower_sb"
@@ -52,6 +53,32 @@ void function lightningStrike()
 	while(true )
 	{
 		wait RandomFloatRange( 80, 120 )
+		EmitSoundAtPosition( TEAM_ANY, Origin_Audio, "Tropics_scr_LightningRod_Strike" )
+		wait 0.5
+		StartParticleEffectInWorld( GetParticleSystemIndex( FX_LIGHTING_STRIKE ), Origin, Angles )
+
+		//SkyBox effects
+		LIGHTING_STRIKE_SKYBOX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( FX_LIGHTING_STRIKE_SKYBOX ), Origin_skyboxFX, Angles_skyboxFX )
+		LIGHTING_STRIKE_SKYBOX.kv.in_skybox = true
+	}
+}
+
+void function DEVlightningStrike()
+{
+	//Zone 7 Lightning Rod
+	vector Origin = < 37246.1, 35927.2, 18699.5 >
+	vector Angles = < -60, 10, 10 >
+
+	//skybox Lightning
+	vector Origin_skyboxFX = < -30531.25, 45048, -27703.5 >
+	vector Angles_skyboxFX = < -62.584, 18, -85.4297 >
+	entity LIGHTING_STRIKE_SKYBOX = null
+
+	//skybox lightning audio emitter location
+	vector Origin_Audio = < 37323.828125, 36011.734375, 19882.410156 >
+
+	//while(true )
+	{
 		EmitSoundAtPosition( TEAM_ANY, Origin_Audio, "Tropics_scr_LightningRod_Strike" )
 		wait 0.5
 		StartParticleEffectInWorld( GetParticleSystemIndex( FX_LIGHTING_STRIKE ), Origin, Angles )
