@@ -90,6 +90,7 @@ void function AnimEvents_Init()
 	RegisterImpactTable( "jump_pad_bounce_no_sound" )
 	RegisterImpactTable( "pilot_emote_thruster_wash" )
 	RegisterImpactTable( "melee_human" )
+	RegisterImpactTable( "fuse_flag" )
 
 	AddGlobalAnimEvent( "hide", GlobalAnimEvent_Hide )
 	AddGlobalAnimEvent( "show", GlobalAnimEvent_Show )
