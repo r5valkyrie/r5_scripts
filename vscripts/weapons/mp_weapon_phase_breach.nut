@@ -69,9 +69,9 @@ bool DEV_DO_VALIDATION = true
 const bool LOG_VALIDATION_DATA = true
 const bool DEBUG_DRAW_VALIDATION = false
 
-const asset BREACH_TARGET_FX = $"P_ar_ping_squad_CP" // $"P_ar_ping_squad_CP_altZ"
-const asset BREACH_STARTPOINT_FX = $"P_phasegate_portal"
-const asset BREACH_ENDPOINT_FX = $"P_phasegate_portal_rnd"
+const asset BREACH_TARGET_FX = $"P_ar_ping_squad_CP_altZ"
+const asset BREACH_STARTPOINT_FX = $"P_ash_breach_start"
+const asset BREACH_ENDPOINT_FX = $"P_ash_breach_end"
 const asset BREACH_AIM_FX = $"P_wrp_trl_end"
 
 const asset BREACH_FX_AR_DIR = $"P_ar_ping_wall_dir_CP"
@@ -98,8 +98,6 @@ struct PhaseBreachTargetInfo
 
 	float         portalQuality
 }
-
-
 
 struct PhaseBreachTraceResults
 {
@@ -341,7 +339,7 @@ void function MoveEntAndCreateTunnel( entity player, PhaseTunnelPathData data, v
 
 	player.EndSignal( "PlayerChangedClass" )
 
-	entity endpointFxEnt = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BREACH_ENDPOINT_FX ), endpoint + BREACH_OFFSET, data.pathNodes[0].angles   + <0, -90, -90> )
+	entity endpointFxEnt = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BREACH_ENDPOINT_FX ), endpoint + BREACH_OFFSET, data.pathNodes[0].angles )
 	endpointFxEnt.RemoveFromAllRealms()
 	endpointFxEnt.AddToOtherEntitysRealms( player )
 

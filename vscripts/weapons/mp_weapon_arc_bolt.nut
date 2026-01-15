@@ -23,12 +23,12 @@ const string ARC_BOLT_SOUND_PROJECTILE_HOLD_1P      = "ash_tactical_glaive_hold_
 const string ARC_BOLT_SOUND_PROJECTILE_IDLE_1P	    = "Ash_Tactical_Glaive_Idle_1p"
 const string ARC_BOLT_SOUND_PROJECTILE_LOOP         = "Ash_Tactical_Glaive_Projectile_Loop_3p"
 const string ARC_BOLT_SOUND_TRAP_LOOP				= "Phys_Glaive_Imp_Loop"
-                    
+
 const string ARC_BOLT_SOUND_IMP_UPGRADE				= "Phys_Glaive_LastingSnare_Imp"
 const string ARC_BOLT_SOUND_TRAP_LOOP_UPGRADE		= "Ash_Tactical_Glaive_Projectile_LegendUpgrade_Loop_3p"
 const string ARC_BOLT_SOUND_END_WARNING_UPGRADE		= "Ash_Tactical_Glaive_LegendUpgrade_5sec_Ending_Beep"
 const float ARC_BOLT_LIFETIME_NOTI_TIME_UPGRADE		= 5.0
-      
+
 const string ARC_BOLT_SOUND_TETHER_CONNECT_3P       = "Ash_Tactical_Glaive_Connect_3P"
 const string ARC_BOLT_SOUND_TETHER_CONNECT_1P       = "Ash_Tactical_Glaive_Connect_1P"
 const string ARC_BOLT_SOUND_TETHER_CONNECT_FEEDBACK = "Ash_Tactical_Glaive_Connect_Feedback_1p"
@@ -76,9 +76,9 @@ global const string ARCBOLT_THREAT_INDICATOR_SCRIPTNAME = "arcbolt_threat"
 
 // GAMEPLAY
 const float TETHER_DURATION_DEFAULT = 5.0
-                    
+
 const float TETHER_DURATION_UPGRADE = 15.0
-      
+
 const float SHIELD_SCALE_DAMAGE_MULT_DEFAULT = 2.0
 
 const float TETHER_MAX_PULL_VELOCITY_DEFAULT = 100.0
@@ -86,17 +86,17 @@ const float TETHER_DEFAULT_STRENGTH = 80.0
 const float TETHER_STRENGTH_HEALTH_SCALE = 0.6
 const float TETHER_HEALTH_BASE = 1000.0
 
-                       
-                                       
-                                                       
-                                                                                                                           
-                                                            
-     
+
+
+
+
+
+
 const float TETHER_RADIUS_DEFAULT = 190
 const float TETHER_HEALTH_DRAIN_PER_SEC_DEFAULT = 250.0
 const float TETHER_MAX_STRETCH_DAMAGE_DEFAULT = 4.0    // Per-frame, maximum amont of damage dealt by stretching + velocity
 const float TETHER_HEALTH_STRETCH_DAMAGE_SCALE_DEFAULT = 0.11
-      
+
 const float TETHER_HEALTH_DRAIN_DELAY = 1.0
 const float TETHER_HEALTH_DRAIN_CUTOFF_PCT = 0.0
 
@@ -124,11 +124,11 @@ struct boltState
 	float  timeBeforePlanted
 	entity plantedRadiusFx
 
-	                    
+
 	#if SERVER
 		array<entity> tetheredEntities
 	#endif
-       
+
 }
 
 struct
@@ -140,11 +140,11 @@ struct
 		bool  hasSettingsData
 		int   shockRadius
 		int   shockDamage
-                         
-                                  
-		     
+
+
+
 			float boltRadiusGrowTime = 0.5
-        
+
 		float boltRadiusExponent = 1.5
 		float shieldDamageScale
 		float healthDrainPerSec
@@ -159,9 +159,9 @@ struct
 	float tetherRadiusSqr
 	bool  doOnHitPing
 	float boltLifetime
-	                    
+
 		float upgradedBoltLifetime
-       
+
 } file
 
 void function MpWeaponArcBolt_Init()
@@ -181,9 +181,9 @@ void function MpWeaponArcBolt_Init()
 	file.doOnHitPing = GetCurrentPlaylistVarBool( "ash_tether_do_hit_ping", true )
 
 	file.boltLifetime 				= GetCurrentPlaylistVarFloat( "ash_tether_duration", TETHER_DURATION_DEFAULT )
-	                    
+
 		file.upgradedBoltLifetime		= GetCurrentPlaylistVarFloat( "ash_tether_duration_upgraded", TETHER_DURATION_UPGRADE )
-       
+
 
 	#if SERVER
 		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_arc_bolt, OnDamaged_Shock )
@@ -399,12 +399,12 @@ float function GetBoltLifetime( entity player )
 {
 	float result = file.boltLifetime
 
-	                    
+
 	if( PlayerHasPassive( player, ePassives.PAS_TAC_UPGRADE_ONE ) ) //upgrade_ash_longer_tac_duration
 	{
 		result = file.upgradedBoltLifetime
 	}
-       
+
 
 	return result
 }
@@ -426,19 +426,19 @@ bool function PlantBolt( DeployableCollisionParams collisionParams, entity owner
 
 	file.boltStateTable[ newBolt ].timeBeforePlanted = projectile.GetTimeSinceSpawning()
 
-	                    
+
 	if( PlayerHasPassive( owner, ePassives.PAS_TAC_UPGRADE_ONE ) ) //upgrade_ash_longer_tac_duration
 	{
 		EmitSoundOnEntity( newBolt, ARC_BOLT_SOUND_IMP_UPGRADE )
 		thread UpgradedBoltEndingSoundBeep_Thread( owner, newBolt )
 	}
-       
+
 	thread Bolt_Thread( newBolt, owner, lifetime, 0.3, true )
 
 	return true
 }
 
-                    
+
 void function UpgradedBoltEndingSoundBeep_Thread( entity owner, entity newBolt )
 {
 	EndSignal( newBolt, "OnDestroy" )
@@ -449,7 +449,7 @@ void function UpgradedBoltEndingSoundBeep_Thread( entity owner, entity newBolt )
 		wait 1.0
 	}
 }
-      
+
 
 
 void function Bolt_Thread( entity bolt, entity owner, float lifetime, float activationDelay, bool boltIsPlanted )
@@ -476,10 +476,10 @@ void function Bolt_Thread( entity bolt, entity owner, float lifetime, float acti
 		plantedFx.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY | ENTITY_VISIBLE_TO_OWNER
 		boltFxArray.append( plantedFx )
 
-		                    
+
 		if( PlayerHasPassive( owner, ePassives.PAS_TAC_UPGRADE_ONE ) ) //upgrade_ash_longer_tac_duration
 			boltFxArray.append( StartParticleEffectOnEntity_ReturnEntity ( bolt, GetParticleSystemIndex( ARC_BOLT_TETHER_RADIUS_FX_UPGRADED ), FX_PATTACH_POINT_FOLLOW, bolt.LookupAttachment( "ORIGIN" ) ) )
-        
+
 
 		file.boltStateTable[ bolt ].plantedRadiusFx = plantedFx
 	}
@@ -489,11 +489,11 @@ void function Bolt_Thread( entity bolt, entity owner, float lifetime, float acti
 		EmitSoundOnEntity( bolt, ARC_BOLT_SOUND_PROJECTILE_LOOP )
 	else
 	{
-		                    
+
 		if( PlayerHasPassive( owner, ePassives.PAS_TAC_UPGRADE_ONE ) ) //upgrade_ash_longer_tac_duration
 			EmitSoundOnEntity( bolt, ARC_BOLT_SOUND_TRAP_LOOP_UPGRADE )
 		else
-        
+
 			EmitSoundOnEntity( bolt, ARC_BOLT_SOUND_TRAP_LOOP )
 	}
 
@@ -512,10 +512,10 @@ void function Bolt_Thread( entity bolt, entity owner, float lifetime, float acti
 		traceBlocker.SetOwner( owner )
 	}
 
-               
-                              
-                                        
-      
+
+
+
+
 
 	OnThreadEnd(
 		function() : ( bolt, boltFxArray, traceBlocker, owner )
@@ -534,10 +534,10 @@ void function Bolt_Thread( entity bolt, entity owner, float lifetime, float acti
 
 			if ( IsValid( bolt ) )
 			{
-				                    
+
 				if( PlayerHasPassive( owner, ePassives.PAS_TAC_UPGRADE_ONE ) ) //upgrade_ash_longer_tac_duration
 					StopSoundOnEntity( bolt, ARC_BOLT_SOUND_TRAP_LOOP_UPGRADE )
-          
+
 				StopSoundOnEntity( bolt, ARC_BOLT_SOUND_PROJECTILE_LOOP )
 				StopSoundOnEntity( bolt, ARC_BOLT_SOUND_TRAP_LOOP )
 			}
@@ -590,13 +590,13 @@ void function Bolt_Thread( entity bolt, entity owner, float lifetime, float acti
 		{
 			float numerator = pow( min( curTime - startTime, file.boltRadiusGrowTime ), file.boltRadiusExponent )
 			float divisor = pow( file.boltRadiusGrowTime, file.boltRadiusExponent )
-                          
-                                        
-                                                                                                
-			     
+
+
+
+
 				const int MIN_PROJECTILE_RADIUS = 1
 				effectiveRadius = int( max( effectiveRadius * numerator / divisor, MIN_PROJECTILE_RADIUS ) )
-         
+
 
 			if ( boltIsPlanted && IsValid( file.boltStateTable[bolt].plantedRadiusFx ) )
 			{
@@ -708,10 +708,10 @@ void function OnDamaged_Shock( entity victim, var damageInfo )
 {
 	thread OnDamaged_Shock_Thread( victim, damageInfo )
 
-                      
-                                                       
-                                       
-      
+
+
+
+
 }
 
 
@@ -746,7 +746,7 @@ void function OnDamaged_Shock_Thread( entity victim, var damageInfo )
 	{
 		DamageInfo_SetDamage( damageInfo, 0 )
 		return
-	} 
+	}
 
 	thread CreateTether_Thread( attacker, victim, inflictor )
 }
@@ -887,25 +887,25 @@ void function CreateTether_Thread( entity attacker, entity victim, entity inflic
 	OnThreadEnd(
 		function() : ( victim, owner, tetherId, ropeConnector1p, tetherFxArray, ropeFxArray, tetherEnt, wp, startTime )
 		{
-                          
-                                                                         
-                                                                         
 
-                              
-     
-                                             
-                                                                                                     
-                                                                                 
-                                              
-     
-                           
-     
-                                                                                             
-                                                                                                    
-                                                                  
-                                              
-     
-         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 			if ( IsValid( tetherEnt ) )
 			{
@@ -979,15 +979,16 @@ void function CreateTether_Thread( entity attacker, entity victim, entity inflic
 
 	thread TrackTetherHealthForAudio_Thread( victim, owner, tetherEnt, tetherId )
 
-	                    
+
 	if( PlayerHasPassive( attacker, ePassives.PAS_TAC_UPGRADE_ONE ) ) //upgrade_ash_longer_tac_duration
 	{
 		thread TetherTimeOut( attacker, victim )
 	}
 	else
-       
+
 	{
 		CleanUpBolt( inflictor )
+		thread TetherTimeOut( attacker, victim )
 	}
 
 	//TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ASH_ENEMY_TETHERED, victim, tetherEnt.GetOrigin(), victim.GetTeam(), victim )
@@ -1001,7 +1002,7 @@ void function CreateTether_Thread( entity attacker, entity victim, entity inflic
 	}
 }
 
-                    
+
 void function TetherTimeOut( entity attacker, entity victim )
 {
 	if( !IsValid( attacker ) )
@@ -1013,7 +1014,7 @@ void function TetherTimeOut( entity attacker, entity victim )
 		return
 	victim.Signal( SIGNAL_TETHER_REMOVED )
 }
-      
+
 
 void function TetherAnchor_PlantOnFirstCollision( entity physicsEnt )
 {
