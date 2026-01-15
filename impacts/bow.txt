@@ -12,75 +12,186 @@ ImpactTable
 
 		//Extra Sparks
 	FX
-    {
-		"C" "P_bhaxe_impact_base" //Concrete, rock, porcelain, boulder, gravel, asphalt, brick, concrete_block, plaster
-		"D" "P_bhaxe_impact_base" //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup, lava_rock
-		"E" "P_bhaxe_impact_base" // metal_titan
+	{
+		"C" "P_impact_bow_arrow"	//Concrete, rock, porcelain, boulder, gravel, asphalt, brick, concrete_block, plaster
+		"D" "P_impact_bow_arrow"			//Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup
+		//"E" "P_impact_bow_arrow"	// metal_titan
 
-		"F" "P_bhaxe_impact_base" //flesh
-		"G" "P_bhaxe_impact_base" //metalgrate, chainlink, chain
-		"H" "P_bhaxe_impact_base" //alienflesh
+		"F" "P_impact_bow_arrow"	//flesh
+		"G" "P_impact_bow_arrow"	//metalgrate, chainlink, chain
+		"H" "P_impact_bow_arrow"	//alienflesh
 
-		"J" "P_bhaxe_impact_base" //grass
-		"K" "P_bhaxe_impact_base" //Mud
-		"L" "P_bhaxe_impact_base" //plastic_barrel, plastic_box, item, rubber, rubbertire, jeeptire, slidingrubbertire, brakingrubbertire, slidingrubbertire_front, slidingrubbertire_rear
-		"M" "P_bhaxe_impact_base" //Default, metal, metal_box, solidmetal, armorflesh, metal_bouncy, slippery_metal, shellcasing_small, shellcasing_large, metal_barrel, floating_metal_barrel, weapon
-		"N" "P_bhaxe_impact_base" //slime
-		"O" "P_bhaxe_impact_base" //Foliage
-		"P" "P_bhaxe_impact_base" //metal_spectre
+		"J" "P_impact_bow_arrow"	//grass
+		"K" "P_impact_bow_arrow" 	//Mud
+		"L" "P_impact_bow_arrow"	//plastic_barrel, plastic_box, item, rubber, rubbertire, jeeptire, slidingrubbertire, brakingrubbertire, slidingrubbertire_front, slidingrubbertire_rear
+		"M" "P_impact_bow_arrow"	//Default, metal, metal_box, solidmetal, armorflesh, metal_bouncy, slippery_metal, shellcasing_small, shellcasing_large, metal_barrel, floating_metal_barrel, weapon
+		"N" "P_impact_bow_arrow"
+		"O" "P_impact_bow_arrow"	//Foliage
+		"P" "P_impact_bow_arrow"	//Computer
 
-		"Q" "P_bhaxe_impact_base" //metalpanel, grenade, canister
-		"R" "P_bhaxe_impact_base" //metalpanel, grenade, canister
-		"S" "P_bhaxe_impact_base" //water, slime
-		"T" "P_bhaxe_impact_base" //tile
-		"U" "P_bhaxe_impact_base" // glass_breakable
-		"V" "P_bhaxe_impact_base" //Metal Vent
-		"W" "P_bhaxe_impact_base"//Wood, Wood_lowdensity, Wood_Box, Wood_Crate, Wood_Plank, Wood_Solid, Wood_Furniture, Wood_Panel watermelon
+		"Q" "P_impact_bow_arrow"	//Snow
 
-		"X" "P_bhaxe_impact_base" //xo_shield
+		"R" "P_impact_bow_arrow"	//metalpanel, grenade, canister
+		"S" "P_impact_water_xo16_elec"	//water, slime
+		"T" "P_impact_bow_arrow"	//tile
+		//"U" "impact_glass"		//glass_breakble
 
-		"Y" "P_bhaxe_impact_base" //glass, brokenglass, glassbottle, pottery
-		"Z" "P_bhaxe_impact_base" //sand
+		"V" "P_impact_bow_arrow"	//Metal Vent
+		"W" "P_impact_bow_arrow"	//Wood, Wood_lowdensity, Wood_Box, Wood_Crate, Wood_Plank, Wood_Solid, Wood_Furniture, Wood_Panel watermelon
 
-		"0" "P_bhaxe_impact_base"
-		"1" "P_bhaxe_impact_base" //lava_flow
-		"2" "P_bhaxe_impact_base" //lava_rock_hot
-		"3" "P_bhaxe_impact_base"
-		"4" "P_bhaxe_impact_base"
-		"5" "P_bhaxe_impact_base"
-		"6" "P_bhaxe_impact_base"
-		"7" "P_bhaxe_impact_base"
-		"8" "P_bhaxe_impact_base"
-		"9" "P_bhaxe_impact_base"
+		//"Y" "impact_glass"		/glass, brokenglass, glassbottle, pottery
+	    "Z" "P_impact_bow_arrow"	//Sand
 
-		"splash" "P_bhaxe_impact_base" //brush water
-		"slime_splash" "P_bhaxe_impact_base"
-		"airburst" ""
-		"shieldhit" "P_bhaxe_impact_base"
-		"critical_hit" "P_bhaxe_impact_base"
-    }
+		"0" "P_impact_bow_arrow"
+		"1" "P_impact_bow_arrow"
+		"2" "P_impact_bow_arrow"
+		"3" "P_impact_bow_arrow"
+		"4" "P_impact_bow_arrow"
+		"5" "P_impact_bow_arrow"
+		"6" "P_impact_bow_arrow"
+		"7" "P_impact_bow_arrow"
+		"8" "P_impact_bow_arrow"
+		//"9" "impact_puddle"		//puddle
 
-    	FX_victim
-    	{
-    		"F" "impact_empty"
-    		"shieldhit" "impact_empty"
-    		"holohit" "impact_empty"
-    	}
+		"splash" "P_impact_water_xo16_elec" //brush water
+		"slime_splash" "P_impact_water_xo16_elec"
+		//"shieldhit" "P_armor_impact"
+		//"critical_hit" "P_impact_bow_arrow"
+	}
 
-    	FX_attacker_replace
-    	{
-    		//"F" "impact_empty"
-    	}
 
-    	FX_attacker_layered_MP
-    	{
-    		"F" "impact_empty"
-    	}
+	FX //env impact
+	{
+		"C" "impact_concrete" //Concrete, rock, porcelain, boulder, gravel, asphalt, brick, concrete_block, plaster
+		"D" "impact_dirt" //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup, lava_rock
+		"E" "impact_metal" // metal_titan
 
-    	FX_attacker_layered_SP
-    	{
-    		"F" "impact_empty"
-    	}
+		"F" "P_impact_flesh" //flesh
+		"G" "impact_metal" //metalgrate, chainlink, chain
+		"H" "impact_alienflesh" //alienflesh
+
+		"J" "impact_grass" //grass
+		"K" "impact_mud" //Mud
+		"L" "impact_plastic" //plastic_barrel, plastic_box, item, rubber, rubbertire, jeeptire, slidingrubbertire, brakingrubbertire, slidingrubbertire_front, slidingrubbertire_rear
+		"M" "impact_metal" //Default, metal, metal_box, solidmetal, armorflesh, metal_bouncy, slippery_metal, shellcasing_small, shellcasing_large, metal_barrel, floating_metal_barrel, weapon
+		"N" "P_impact_slime" //Slime
+		"O" "impact_leaves"  //Foliage
+		"P" "P_impact_metal_spectre" //metal_spectre
+		"Q" "P_impact_snow"  //Snow
+		"R" "P_impact_snow" //Ice
+		"S" "P_impact_water" //water
+		"T" "impact_tile" //tile
+		"U" "impact_glass" // glass_breakable
+		"V" "impact_metal" //Metal Vent
+		"W" "impact_wood"//Wood, Wood_lowdensity, Wood_Box, Wood_Crate, Wood_Plank, Wood_Solid, Wood_Furniture, Wood_Panel watermelon
+
+		"X" "P_impact_xo_shield_cp" //xo_shield
+
+		"Y" "impact_glass" //glass, brokenglass, glassbottle, pottery
+		"Z" "impact_sand"  //sand
+
+//		"0" "openslot"
+		"1" "P_impact_lava_nodecal" //lava_flow
+		"2" "P_impact_lava" //lava_rock_hot
+//		"3" "openslot"
+//		"4" "openslot"
+//		"5" "openslot"
+//		"6" "openslot"
+//		"7" "openslot"
+//		"8" "openslot"
+//		"9" "openslot"
+
+		"splash" "P_impact_water" //brush water
+		"slime_splash" "P_impact_slime"
+		"airburst" "P_impact_exp_smll_air"  //No Surface
+		"shieldhit" "P_armor_impact"
+		"shadowhit" "P_impact_shadow"
+		"holohit" "P_holohit_impact"
+		"critical_hit" "impact_metal"
+
+		"headshot_flesh" "P_impact_flesh"
+		"headshot_mechanical" "P_armor_impact"
+
+		"pass_through"	"P_rampart_impact_amp"
+	}
+
+	FX //Impacts Far
+	{
+		"C" "P_impact_gen_far_noflash" //Concrete, rock, porcelain, boulder, gravel, asphalt, brick, concrete_block, plaster
+		"D" "P_impact_gen_far_noflash" //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup, lava_rock
+		"E" "P_impact_gen_far_noflash" // metal_titan
+
+		//"F" "P_impact_gen_far_noflash" //flesh
+		"G" "P_impact_gen_far_noflash" //metalgrate, chainlink, chain
+		"H" "P_impact_gen_far_noflash" //alienflesh
+
+		"J" "P_impact_gen_far_noflash" //grass
+		"K" "P_impact_gen_far_noflash" //Mud
+		"L" "P_impact_gen_far_noflash" //plastic_barrel, plastic_box, item, rubber, rubbertire, jeeptire, slidingrubbertire, brakingrubbertire, slidingrubbertire_front, slidingrubbertire_rear
+		"M" "P_impact_gen_far_noflash" //Default, metal, metal_box, solidmetal, armorflesh, metal_bouncy, slippery_metal, shellcasing_small, shellcasing_large, metal_barrel, floating_metal_barrel, weapon
+		"N" "P_impact_gen_far_noflash" //Slime
+		"O" "P_impact_gen_far_noflash"  //Foliage
+		"P" "P_impact_gen_far_noflash" //metal_spectre
+		"Q" "P_impact_gen_far_noflash"  //Snow
+		"R" "P_impact_gen_far_noflash" //Ice
+		"S" "P_impact_gen_far_noflash" //water
+		"T" "P_impact_gen_far_noflash" //tile
+		"U" "P_impact_gen_far_noflash" // glass_breakable
+		"V" "P_impact_gen_far_noflash" //Metal Vent
+		"W" "P_impact_gen_far_noflash"//Wood, Wood_lowdensity, Wood_Box, Wood_Crate, Wood_Plank, Wood_Solid, Wood_Furniture, Wood_Panel watermelon
+
+		"X" "P_impact_gen_far_noflash" //xo_shield
+
+		"Y" "P_impact_gen_far_noflash" //glass, brokenglass, glassbottle, pottery
+		"Z" "P_impact_gen_far_noflash"  //sand
+
+//		"0" "P_impact_gen_far_noflash"
+		"1" "P_impact_gen_far_noflash" //lava_flow
+		"2" "P_impact_gen_far_noflash" //lava_rock_hot
+//		"3" "openslot"
+//		"4" "openslot"
+//		"5" "openslot"
+//		"6" "openslot"
+//		"7" "openslot"
+//		"8" "openslot"
+//		"9" "openslot"
+
+		"splash" "none" //brush water
+		"slime_splash" "none"
+		"airburst" "none"  //No Surface
+		"shieldhit" "P_impact_gen_far_noflash"
+		"shadowhit" "P_impact_gen_far_noflash"
+		"holohit" "P_impact_gen_far_noflash"
+		"critical_hit" "P_impact_gen_far_noflash"
+
+		"headshot_flesh" "P_impact_flesh"
+		"headshot_mechanical" "P_impact_gen_far_noflash"
+
+		"pass_through"	"P_impact_gen_far_noflash"
+	}
+
+	FX_victim
+	{
+		"F" "impact_flesh_victim"
+		"X" "P_impact_xo_shield_victim_CP"
+		"shieldhit" "impact_metal"
+		"holohit" "impact_metal"
+	}
+
+	FX_attacker_replace
+	{
+		//"F" "P_impact_flesh_attacker"
+	}
+
+	FX_attacker_layered_MP
+	{
+		"F" "P_impact_flesh_attacker"
+	}
+
+	FX_attacker_layered_SP
+	{
+		"F" "P_impact_flesh_attacker"
+	}
 
 	Sound
 	{

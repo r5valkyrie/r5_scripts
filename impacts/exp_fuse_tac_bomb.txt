@@ -5,56 +5,56 @@ ImpactTable
 {
 	FX
 	{
-		"C" "P_impact_exp_smll_concrete" // Concrete, rock, porcelain, boulder, gravel, asphalt, brick, concrete_block, plaster
-		"D" "P_impact_exp_smll_dirt"     //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup, lava_rock
+		"C" "P_hmn_bslam_concrete" // Concrete, rock, porcelain, boulder, gravel, asphalt, brick, concrete_block, plaster
+		"D" "P_hmn_bslam_dirt"     //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup, lava_rock
 		"E" "P_hmn_bslam_metal"	  // metal_titan
 
 		"F" "none" //flesh
 		"G" "P_hmn_bslam_metal"	  //metalgrate, chainlink, chain
 		"H" "none" //alienflesh
 
-		"J" "P_impact_exp_smll_dirt"	  //grass
-		"K" "P_impact_exp_smll_dirt"		//Mud
-		"L" "P_impact_exp_smll_concrete" //plastic_barrel, plastic_box, item, rubber, rubbertire, jeeptire, slidingrubbertire, brakingrubbertire, slidingrubbertire_front, slidingrubbertire_rear
-		"M" "P_impact_exp_smll_metal" //Default, metal, metal_box, solidmetal, armorflesh, metal_bouncy, slippery_metal, shellcasing_small, shellcasing_large, metal_barrel, floating_metal_barrel, weapon
-		"N" "P_impact_exp_smll_dirt" //Slime
-		"O" "P_impact_exp_smll_dirt" //Foliage
-		"P" "P_impact_exp_smll_metal" //Computer
+		"J" "P_hmn_bslam_dirt"	  //grass
+		"K" "P_hmn_bslam_mud"		//Mud
+		"L" "P_hmn_bslam_concrete" //plastic_barrel, plastic_box, item, rubber, rubbertire, jeeptire, slidingrubbertire, brakingrubbertire, slidingrubbertire_front, slidingrubbertire_rear
+		"M" "P_hmn_bslam_metal" //Default, metal, metal_box, solidmetal, armorflesh, metal_bouncy, slippery_metal, shellcasing_small, shellcasing_large, metal_barrel, floating_metal_barrel, weapon
+		"N" "P_hmn_bslam_slime" //Slime
+		"O" "P_hmn_bslam_mud" //Foliage
+		"P" "P_hmn_bslam_metal" //Computer
 
-		"R" "P_impact_exp_smll_metal" //metalpanel, grenade, canister
+		"R" "P_hmn_bslam_metal" //metalpanel, grenade, canister
 
-		"Q" "P_impact_exp_smll_dirt" //snow
-		"R" "P_impact_exp_smll_dirt" //ice
-		"S" "P_impact_exp_smll_water" //water, slime
-		"T" "P_impact_exp_smll_concrete" //tile
-		"U" "P_impact_exp_smll_metal"	 //glass_breakable
+		"Q" "P_hmn_land_impact_snow" //snow
+		"R" "P_hmn_land_impact_snow" //ice
+		"S" "P_fuse_tac_impact_water" //water, slime
+		"T" "P_hmn_bslam_concrete" //tile
+		"U" "P_hmn_bslam_metal"	 //glass_breakable
 
-		"V" "P_impact_exp_smll_metal" //Metal Vent
-		"W" "P_impact_exp_smll_concrete" //Wood, Wood_lowdensity, Wood_Box, Wood_Crate, Wood_Plank, Wood_Solid, Wood_Furniture, Wood_Panel watermelon
+		"V" "P_hmn_bslam_metal" //Metal Vent
+		"W" "P_hmn_bslam_concrete" //Wood, Wood_lowdensity, Wood_Box, Wood_Crate, Wood_Plank, Wood_Solid, Wood_Furniture, Wood_Panel watermelon
 
 		"Y" "" //glass, brokenglass, glassbottle, pottery
-		"Z" "P_impact_exp_smll_sand"  //sand
+		"Z" "P_hmn_bslam_sand"  //sand
 
 		"airburst" "none"  //No Surface
 
-		"0" "P_impact_exp_smll_concrete"
-		"1" "P_impact_exp_smll_dirt" //lava_flow
-		"2" "P_impact_exp_smll_dirt" //lava_rock_hot
-		"3" "P_impact_exp_smll_concrete"
-		"4" "P_impact_exp_smll_concrete"
-		"5" "P_impact_exp_smll_concrete"
-		"6" "P_impact_exp_smll_concrete"
-		"7" "P_impact_exp_smll_concrete"
-		"8" "P_impact_exp_smll_concrete"
-		"9" "P_impact_exp_smll_concrete" //puddle
+		"0" "P_hmn_bslam_concrete"
+		"1" "P_hmn_land_impact_lava_nodecal" //lava_flow
+		"2" "P_hmn_land_impact_lava" //lava_rock_hot
+		"3" "P_hmn_bslam_concrete"
+		"4" "P_hmn_bslam_concrete"
+		"5" "P_hmn_bslam_concrete"
+		"6" "P_hmn_bslam_concrete"
+		"7" "P_hmn_bslam_concrete"
+		"8" "P_hmn_bslam_concrete"
+		"9" "P_hmn_bslam_concrete" //puddle
 
-		"splash" "P_impact_exp_smll_water" //brush water
-		"slime_splash" "P_impact_exp_smll_dirt"
-		"airburst" "P_impact_exp_smll_metal"  //No Surface
-		"shieldhit" "P_impact_exp_smll_dirt"
-		"shadowhit" "P_impact_exp_smll_dirt"
-		"holohit" "P_impact_exp_smll_dirt"
-		"critical_hit" "P_impact_exp_smll_dirt"
+		"splash" "P_fuse_tac_impact_water" //brush water
+		"slime_splash" "P_xo_footstep_slime"
+		"airburst" "P_hmn_bslam_metal"  //No Surface
+		"shieldhit" "P_hmn_bslam_metal"
+		"shadowhit" "P_hmn_bslam_metal"
+		"holohit" "P_hmn_bslam_metal"
+		"critical_hit" "P_hmn_bslam_metal"
 	}
 	Sound
 	{
