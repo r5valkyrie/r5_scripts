@@ -55,7 +55,7 @@ void function lightningStrike()
 		wait RandomFloatRange( 80, 120 )
 		EmitSoundAtPosition( TEAM_ANY, Origin_Audio, "Tropics_scr_LightningRod_Strike" )
 		wait 0.5
-		StartParticleEffectInWorld( GetParticleSystemIndex( FX_LIGHTING_STRIKE ), Origin, Angles )
+		StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( FX_LIGHTING_STRIKE ), Origin, Angles )
 
 		//SkyBox effects
 		LIGHTING_STRIKE_SKYBOX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( FX_LIGHTING_STRIKE_SKYBOX ), Origin_skyboxFX, Angles_skyboxFX )
@@ -81,7 +81,7 @@ void function DEVlightningStrike()
 	{
 		EmitSoundAtPosition( TEAM_ANY, Origin_Audio, "Tropics_scr_LightningRod_Strike" )
 		wait 0.5
-		StartParticleEffectInWorld( GetParticleSystemIndex( FX_LIGHTING_STRIKE ), Origin, Angles )
+		StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( FX_LIGHTING_STRIKE ), Origin, Angles )
 
 		//SkyBox effects
 		LIGHTING_STRIKE_SKYBOX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( FX_LIGHTING_STRIKE_SKYBOX ), Origin_skyboxFX, Angles_skyboxFX )
