@@ -339,7 +339,7 @@ void function MoveEntAndCreateTunnel( entity player, PhaseTunnelPathData data, v
 
 	player.EndSignal( "PlayerChangedClass" )
 
-	entity endpointFxEnt = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BREACH_ENDPOINT_FX ), endpoint + BREACH_OFFSET, data.pathNodes[0].angles + <0, 90, -90> )
+	entity endpointFxEnt = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BREACH_ENDPOINT_FX ), endpoint + BREACH_OFFSET, data.pathNodes[0].angles )
 	endpointFxEnt.RemoveFromAllRealms()
 	endpointFxEnt.AddToOtherEntitysRealms( player )
 
