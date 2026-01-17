@@ -83,8 +83,8 @@ WeaponData
 	"vortex_absorb_sound_1P_VS_3P"					"Vortex_Shield_AbsorbBulletSmall_1P_VS_3P"
 	"projectile_adjust_to_gun_barrel"				"1"
 
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
+	"fx_muzzle_flash_view"							"wpn_muzzleflash_lmg_FP"
+	"fx_muzzle_flash_world"							"wpn_muzzleflash_lmg"
 	"fx_muzzle_flash_attach"						"muzzle_flash"
 
 	"chroma_color"									".6 1 .6"
@@ -443,6 +443,13 @@ WeaponData
             "spread_max_kick_air_hip" 						"4.0"
 	    }
 
+        purple_paintball
+        {
+           "impact_effect_table" 				"bullet_pb_Random"
+
+           "projectile_trail_effect_0" 		"P_tracer_projectile_pb"
+           "projectile_trail_effect_1" 		"P_tracer_projectile_pb"
+        }
 
 		optic_cq_hcog_classic
 		{
