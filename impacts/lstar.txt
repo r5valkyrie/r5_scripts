@@ -63,7 +63,7 @@ ImpactTable
 
 	FX_victim
 	{
-		"F" "P_impact_lstar_victim"
+		"F" "impact_flesh_victim" //"F" "P_impact_lstar_victim" //Changed for Lstar redesign
 		"shieldhit" "P_impact_lstar_default"
 		"E" "P_impact_lstar_victim"		// metal_titan
 		"P" "P_impact_lstar_victim"
@@ -80,7 +80,7 @@ ImpactTable
 
 		"F" "Flesh.BulletImpact_3P_vs_3P"
 		"G" "MetalGrate.BulletImpact_3P_vs_3P" // "ChainLink.BulletImpact"
-		"H" "Flesh.BulletImpact_3P_vs_3P"
+		"H" "AlienFlesh.BulletImpact_3P_vs_3P" // alien flesh
 
 		"J" "Grass.BulletImpact_3P_vs_3P"
 		"K" "Mud.BulletImpact_3P_vs_3P"  // mud?
@@ -103,7 +103,7 @@ ImpactTable
 //		"0" "openslot"
 		"1" "Mud.BulletImpact_3P_vs_3P" //lava_flow
 		"2" "Concrete.BulletImpact_3P_vs_3P" //lava_rock_hot
-//		"3" "openslot"
+		"3" "AlienFlesh.BulletImpact_3P_vs_3P" // spider jungle
 //		"4" "openslot"
 //		"5" "openslot"
 //		"6" "openslot"
@@ -130,7 +130,7 @@ ImpactTable
 
 		"F" "Flesh.BulletImpact_1P_vs_3P"
 		"G" "MetalGrate.BulletImpact_1P_vs_3P" // "ChainLink.BulletImpact"
-		"H" "Flesh.BulletImpact_1P_vs_3P"
+		"H" "AlienFlesh.BulletImpact_1P_vs_3P"
 
 		"J" "Grass.BulletImpact_1P_vs_3P"
 		"K" "Mud.BulletImpact_1P_vs_3P"  // mud?
@@ -153,7 +153,7 @@ ImpactTable
 //		"0" "openslot"
 		"1" "Mud.BulletImpact_1P_vs_3P" //lava_flow
 		"2" "Concrete.BulletImpact_1P_vs_3P" //lava_rock_hot
-//		"3" "openslot"
+		"3" "AlienFlesh.BulletImpact_1P_vs_3P" // spider jungle
 //		"4" "openslot"
 //		"5" "openslot"
 //		"6" "openslot"
@@ -180,7 +180,7 @@ ImpactTable
 
 		"F" "Flesh.BulletImpact_3P_vs_1P"
 		"G" "MetalGrate.BulletImpact_3P_vs_1P" // "ChainLink.BulletImpact"
-		"H" "Flesh.BulletImpact_3P_vs_1P"
+		"H" "AlienFlesh.BulletImpact_3P_vs_1P"
 
 		"J" "Grass.BulletImpact_3P_vs_1P"
 		"K" "Mud.BulletImpact_3P_vs_1P"  // mud?

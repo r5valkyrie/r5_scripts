@@ -130,7 +130,7 @@ ImpactTable
 
 		"F" "Flesh.BulletImpact_1P_vs_3P"
 		"G" "MetalGrate.BulletImpact_1P_vs_3P" // "ChainLink.BulletImpact"
-		"H" "Mud.BulletImpact_1P_vs_3P"
+		"H" "Flesh.BulletImpact_1P_vs_3P"
 
 		"J" "Grass.BulletImpact_1P_vs_3P"
 		"K" "Mud.BulletImpact_1P_vs_3P"  // mud?

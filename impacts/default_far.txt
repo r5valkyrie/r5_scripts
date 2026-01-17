@@ -43,7 +43,7 @@ ImpactTable
 //		"0" "openslot"
 		"1" "P_impact_lava_nodecal" //lava_flow
 		"2" "P_impact_lava" //lava_rock_hot
-//		"3" "openslot"
+		"3" "impact_spiderflesh"//spiderflesh
 //		"4" "openslot"
 //		"5" "openslot"
 //		"6" "openslot"
@@ -55,13 +55,14 @@ ImpactTable
 		"slime_splash" "P_impact_slime"
 		"airburst" "P_impact_exp_smll_air"  //No Surface
 		"shieldhit" "P_armor_impact"
+		"shadowhit" "P_impact_shadow"
 		"holohit" "P_holohit_impact"
 		"critical_hit" "impact_metal"
 
 		"headshot_flesh" "P_impact_flesh"
 		"headshot_mechanical" "P_armor_impact"
 
-		"pass_through"	"P_impact_amped_shield"
+		"pass_through"	"P_rampart_impact_amp"
 	}
 
 	FX //Impacts Far
@@ -97,7 +98,7 @@ ImpactTable
 //		"0" "P_impact_gen_far"
 		"1" "P_impact_gen_far" //lava_flow
 		"2" "P_impact_gen_far" //lava_rock_hot
-//		"3" "openslot"
+		"3" "P_impact_gen_far"  //spiderflesh
 //		"4" "openslot"
 //		"5" "openslot"
 //		"6" "openslot"
@@ -109,6 +110,7 @@ ImpactTable
 		"slime_splash" "none"
 		"airburst" "none"  //No Surface
 		"shieldhit" "P_impact_gen_far"
+		"shadowhit" "P_impact_gen_far"
 		"holohit" "P_impact_gen_far"
 		"critical_hit" "P_impact_gen_far"
 
@@ -149,7 +151,7 @@ ImpactTable
 
 		"F" "Flesh.BulletImpact_3P_vs_3P"
 		"G" "MetalGrate.BulletImpact_3P_vs_3P" // "ChainLink.BulletImpact"
-		"H" "Flesh.BulletImpact_3P_vs_3P"
+		"H" "AlienFlesh.BulletImpact_3P_vs_3P"
 
 		"J" "Grass.BulletImpact_3P_vs_3P"
 		"K" "Mud.BulletImpact_3P_vs_3P"  // mud?
@@ -172,7 +174,7 @@ ImpactTable
 //		"0" "openslot"
 		"1" "Mud.BulletImpact_3P_vs_3P" //lava_flow
 		"2" "Concrete.BulletImpact_3P_vs_3P" //lava_rock_hot
-//		"3" "openslot"
+		"3" "AlienFlesh.BulletImpact_3P_vs_3P" // spiderflesh
 //		"4" "openslot"
 //		"5" "openslot"
 //		"6" "openslot"
@@ -199,7 +201,7 @@ ImpactTable
 
 		"F" "Flesh.BulletImpact_1P_vs_3P"
 		"G" "MetalGrate.BulletImpact_1P_vs_3P" // "ChainLink.BulletImpact"
-		"H" "Flesh.BulletImpact_1P_vs_3P"
+		"H" "AlienFlesh.BulletImpact_1P_vs_3P"
 
 		"J" "Grass.BulletImpact_1P_vs_3P"
 		"K" "Mud.BulletImpact_1P_vs_3P"  // mud?
@@ -222,7 +224,7 @@ ImpactTable
 //		"0" "openslot"
 		"1" "Mud.BulletImpact_1P_vs_3P" //lava_flow
 		"2" "Concrete.BulletImpact_1P_vs_3P" //lava_rock_hot
-//		"3" "openslot"
+		"3" "AlienFlesh.BulletImpact_1P_vs_3P" // spiderflesh
 //		"4" "openslot"
 //		"5" "openslot"
 //		"6" "openslot"
@@ -249,7 +251,7 @@ ImpactTable
 
 		"F" "Flesh.BulletImpact_3P_vs_1P"
 		"G" "MetalGrate.BulletImpact_3P_vs_1P" // "ChainLink.BulletImpact"
-		"H" "Flesh.BulletImpact_3P_vs_1P"
+		"H" "AlienFlesh.BulletImpact_3P_vs_1P"
 
 		"J" "Grass.BulletImpact_3P_vs_1P"
 		"K" "Mud.BulletImpact_3P_vs_1P"  // mud?
@@ -271,6 +273,7 @@ ImpactTable
 
 		"1" "Mud.BulletImpact_3P_vs_1P"  // lava_flow
 		"2" "Default.BulletImpact_3P_vs_1P" // lava_rock_hot
+		"3" "AlienFlesh.BulletImpact_3P_vs_1P" //spiderflesh
 
 		"splash" "Water.BulletImpact"
 		"slime_splash" "Water.BulletImpact"

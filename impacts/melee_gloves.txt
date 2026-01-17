@@ -159,7 +159,7 @@ ImpactTable
 
 		"F" "Victim_Gloves_Impact_1p_vs_3p"
 		"G" "Generic_Gloves_Impact_1p_vs_3p"
-		"H" "Victim_Gloves_Impact_1p_vs_3p"
+		"H" "Generic_Gloves_Impact_1p_vs_3p"
 
 		"J" "Generic_Gloves_Impact_1p_vs_3p"
 		"K" "Generic_Gloves_Impact_1p_vs_3p"

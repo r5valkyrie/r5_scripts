@@ -43,13 +43,14 @@ ImpactTable
 		"slime_splash" "P_impact_slime"
 		"airburst" "P_impact_exp_smll_air"  //No Surface
 		"shieldhit" "P_armor_impact"
+		"shadowhit" "P_impact_shadow"
 		"holohit" "P_holohit_impact"
 		"critical_hit" "impact_metal"
 
-		"headshot_flesh" "impact_metal"
+		"headshot_flesh" "P_impact_flesh"
 		"headshot_mechanical" "P_armor_impact"
 
-		"pass_through"	"P_impact_amped_shield"
+		"pass_through"	"P_rampart_impact_amp"
 	}
 
 	Sound

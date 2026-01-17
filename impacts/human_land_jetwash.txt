@@ -27,7 +27,7 @@ ImpactTable
 		"Q" "P_human_jetwash_snow" //snow
 		"R" "P_human_jetwash_snow" //ice
 
-		"S" "P_human_jetwash_dirt" //water, slime
+		"S" "P_hmn_land_impact_water" //water, slime
 		"T" "P_human_jetwash_concrete" //tile
 		"U" "P_human_jetwash_metal" //glass_breakable
 
@@ -50,10 +50,10 @@ ImpactTable
 		"8" "P_human_jetwash_dirt"
 		"9" "P_human_jetwash_dirt" //puddle
 
-		"splash" "P_human_jetwash_dirt"
+		"splash" "P_hmn_land_impact_water"
 		"slime_splash" "P_human_jetwash_dirt"
 
-		"airburst" "P_human_jetwash_dirt"
+		"airburst" "P_human_jetwash_metal"
 		"critical_hit" "P_human_jetwash_metal"
 	}
 
@@ -86,16 +86,16 @@ Sound
 		"Y" "none"
 		"Z" "none"
 
-//		"0" "none"
+		"0" "none"
 		"1" "none" //lava_flow
 		"2" "none" //lava_rock_hot
-//		"3" "none"
-//		"4" "none"
-//		"5" "none"
-//		"6" "none"
-//		"7" "none"
-//		"8" "none"
-//		"9" "none"
+		"3" "none"
+		"4" "none"
+		"5" "none"
+		"6" "none"
+		"7" "none"
+		"8" "none"
+		"9" "none"
 
 		"splash" "none"
 		"slime_splash" "none"
@@ -122,7 +122,7 @@ Sound
 		"K" "none"  // mud?
 		"L" "none" // "Plastic_Box.BulletImpact"
 		"M" "none"	//"ArmorFlesh.BulletImpact"
-		"N" "none"	// Slime
+		"N" "none"	// sand?
 		"O" "none"
 		"P" "none"
 
@@ -173,7 +173,7 @@ Sound
 		"K" "none"  // mud?
 		"L" "none" // "Plastic_Box.BulletImpact"
 		"M" "none"	//"ArmorFlesh.BulletImpact"
-		"N" "none"	// Slime
+		"N" "none"	// sand?
 		"O" "none"
 		"P" "none"
 
@@ -184,7 +184,7 @@ Sound
 
 		"V" "none"
 		"W" "none"
-
+		"X"	"none" // Titan bubble shield
 		"Y" "none"
 		"Z" "none"
 

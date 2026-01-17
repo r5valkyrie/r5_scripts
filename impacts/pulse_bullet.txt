@@ -110,5 +110,10 @@ ImpactTable
 		"shieldhit" "P_impact_metal_pulse"
 
 	}
+	
+	Sound_attacker
+	{
+		"H" "AlienFlesh.Heavy.Bulletimpact_1p_vs_3p"
+	}
 
 }

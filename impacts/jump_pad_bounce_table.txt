@@ -17,7 +17,7 @@ ImpactTable
 		"H" "P_hmn_land_impact_metal" //alienflesh
 
 		"J" "P_hmn_land_impact_dust"	  //grass
-		"K" "P_hmn_land_impact_dust"		//Mud
+		"K" "P_hmn_bslam_mud_small"		//Mud
 		"L" "P_hmn_land_impact_metal" //plastic_barrel, plastic_box, item, rubber, rubbertire, jeeptire, slidingrubbertire, brakingrubbertire, slidingrubbertire_front, slidingrubbertire_rear
 		"M" "P_hmn_land_impact_metal" //Default, metal, metal_box, solidmetal, armorflesh, metal_bouncy, slippery_metal, shellcasing_small, shellcasing_large, metal_barrel, floating_metal_barrel, weapon
 		"N" "P_hmn_land_impact_dust"
@@ -50,8 +50,8 @@ ImpactTable
 
 
 		//Hardcocded Surfacprops
-		"splash" "P_impact_water" //brush water
-		"slime_splash" "P_impact_slime"
+		"splash" "P_hmn_land_impact_water" //brush water
+		"slime_splash" "P_xo_footstep_slime"
 		"airburst" "none"  //No Surface
 		"shieldhit" "none" //Invisible armor
 		"holohit" "none" //Holopilot entity
