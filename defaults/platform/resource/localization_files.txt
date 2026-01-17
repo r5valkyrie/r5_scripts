@@ -22,6 +22,10 @@ localization/character/dummie
 localization/character/revenant
 localization/character/loba
 localization/character/rampart
+localization/character/horizon
+localization/character/fuse
+localization/character/valkyrie
+localization/character/ash
 
 localization/weapon/r301
 localization/weapon/flatline
@@ -51,6 +55,7 @@ localization/weapon/eva
 localization/weapon/dmr
 localization/weapon/pdw
 localization/weapon/car
+localization/weapon/nemesis
 
 localization/feature/battlepass
 localization/feature/challenges
