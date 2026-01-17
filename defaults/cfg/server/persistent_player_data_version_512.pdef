@@ -146,6 +146,7 @@ $ENUM_START eCharacterFlavor
 	SAID00088599337//character_horizon
 	SAID00405279270//character_fuse
 	SAID00435256162//character_valkyrie
+	SAID00216194192//character_ash
 $ENUM_END
 
 // All the weapon item flavors from Bakery that are registered in the game.
