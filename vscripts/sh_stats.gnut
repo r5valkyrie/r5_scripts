@@ -61,6 +61,9 @@ global function StatsHook_Tactical_TimeSpentInPhase
 //Bangalore
 global function StatsHook_TrackAdrenalineDistance
 global function StatsHook_CreepingBarrageDamage
+
+// Seer
+global function StatsHook_SeerTacHits
 #endif
 
 
@@ -261,6 +264,9 @@ global struct CareerStats
 	StatTemplate& revenant_silenced_target
 	StatTemplate& revenant_silenced_target_knockdowns
 	StatTemplate& revenant_death_totem_activates
+
+	// Seer
+	StatTemplate& seer_tactical_enemies_hit
 
 	// Wattson
 	StatTemplate& wattson_breaches_detected
@@ -770,6 +776,7 @@ void function RegisterAllStats()
 	CAREER_STATS.revenant_silenced_target = RegisterAccumulatedStat_Int( null, "revenant_silenced_target", TRACKERS_NEED | CHALLENGES_NEED ) // ✓
 	CAREER_STATS.revenant_silenced_target_knockdowns = RegisterAccumulatedStat_Int( null, "revenant_silenced_target_knockdowns", TRACKERS_NEED | CHALLENGES_NEED ) // ✓
 	CAREER_STATS.revenant_death_totem_activates = RegisterAccumulatedStat_Int( null, "revenant_death_totem_activates", TRACKERS_NEED | CHALLENGES_NEED ) // ✓
+	CAREER_STATS.seer_tactical_enemies_hit = RegisterAccumulatedStat_Int( null, "seer_tactical_enemies_hit", TRACKERS_NEED | CHALLENGES_NEED ) // ✓
 
 	StatEnumStruct season_SES = RegisterStatEnumStruct( null, "seasons", "eSeasonFlavor", allSeasonRefs )
 	CAREER_STATS.season_battlepass_level = RegisterCachedCalculatedStat_Int( season_SES, "battlepass_level", BADGES_NEED, SetupGetSeasonBattlePassLevelForStat, [] ) // ✓
@@ -1904,6 +1911,15 @@ void function StatsHook_SmokeHits_OnPlayerTookDamage( entity attacker, int damag
 void function StatsHook_CreepingBarrageDamage( entity player, int damageDone )
 {
 	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.bangalore_ultimate_damage_done ), damageDone )
+}
+
+// Seer
+void function StatsHook_SeerTacHits( entity player, int hits )
+{
+	if ( !ShouldGatherStats( player ) )
+		return
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.seer_tactical_enemies_hit ), hits )
 }
 #endif
 

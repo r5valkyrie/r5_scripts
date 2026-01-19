@@ -33,11 +33,11 @@ const asset SKYWARD_RADIUS_FX = $"P_radius_marker"
 const float SKYWARD_LAUNCH_TIME = 5.0
 const float SKYWARD_LAUNCH_SLOW_TIME = 1.83
 const float SKYWARD_TEAMMATE_ALIGN_TIME = 1
-                           
-                                        
-     
+
+
+
 const float SKYWARD_REFUND_AMOUNT = 0.75
-      
+
 
 
 const float SKYWARD_ALLY_USE_DEBOUNCE_TIME = 1
@@ -53,7 +53,7 @@ const float SKYWARD_TRANSITIOIN_SPEED_SCALE = 0.5
 
 const string SKYWARD_PROXY_SCRIPT_NAME = "valk_ult_proxy"
 
-const asset VALK_SKYWARD_USE_MODEL = $"mdl/humans_r5/pilots_r5/pilot_valkyrie/invisible_prop.rmdl"
+const asset VALK_SKYWARD_USE_MODEL = $"mdl/props/revenant_totem/revenant_totem.rmdl"
 
 //const asset VALK_SKYWARD_USE_MODEL = $"mdl/props/revenant_totem/revenant_totem.rmdl"//"mdl/props/caustic_gas_tank/caustic_gas_tank.rmdl"
 
@@ -93,7 +93,7 @@ void function MpAbilityValkSkyward_Init()
 	PrecacheModel( VALK_SKYWARD_USE_MODEL )
 	//PrecacheScriptString( SKYWARD_PROXY_SCRIPT_NAME )
 
-	PrecacheMaterial( $"models/cable/valk_team_cable" )
+	PrecacheMaterial( $"models/cable/drone_medic_cable" )
 
 	RegisterSignal( "OnSkywardLaunched" )
 	RegisterSignal( "OnSkywardCanceled" )
@@ -125,7 +125,7 @@ void function MpAbilityValkSkyward_Init()
 		AddOnSpectatorTargetChangedCallback( OnSpectatorTargetChanged )
 	#endif
 
-	AddCallback_GameStateEnter( eGameState.Resolution, ValkUlt_EnterGameStateResolution)
+	AddCallback_GameStateEnter( eGameState.Epilogue, ValkUlt_EnterGameStateResolution)
 }
 
 void function OnSpectatorTargetChanged( entity player, entity prevTarget, entity newTarget )
@@ -152,7 +152,7 @@ void function OnPlayerClassChanged( entity player )
 		return
 
 	// would also like to check if is valk or not to destroy mid flight, but not needed.
-	if ( !player.Player_IsSkydiving() )
+	if ( !player.p.isSkydiving )
 		UpdateValkFlightRui( player, false )
 #endif
 
@@ -211,7 +211,7 @@ bool function OnWeaponAttemptOffhandSwitch_ability_valk_skyward( entity weapon )
 	float traceDist      = GetValkUltMaxHeight( owner ) + 40 + transitionDist // plus deploy height and transition height
 
 	TraceResults results = TraceHull( owner.GetOrigin(), owner.GetOrigin() + <0, 0, traceDist>, owner.GetPlayerMins(), owner.GetPlayerMaxs(), [ owner ], TRACE_MASK_PLAYERSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
-	if ( results.fraction < 1.0 )	
+	if ( results.fraction < 1.0 )
 	{
 
 		if( IsValid( tactical ) && !tactical.IsBurstFireInProgress() )
@@ -225,7 +225,7 @@ bool function OnWeaponAttemptOffhandSwitch_ability_valk_skyward( entity weapon )
 		return false
 	}
 
-	                
+
 		/*if ( GondolasAreActive() && IsPlayerInsideGondola( owner ) )
 		{
 			if( IsValid( tactical ) && !tactical.IsBurstFireInProgress() )
@@ -238,7 +238,7 @@ bool function OnWeaponAttemptOffhandSwitch_ability_valk_skyward( entity weapon )
 			#endif
 			return false
 		}*/
-       
+
 
 	bool blockBecauseDebounce = false
 
@@ -383,9 +383,11 @@ var function OnWeaponPrimaryAttack_ability_valk_skyward( entity weapon, WeaponPr
 
 		if ( IsValid( owner ) )
 		{
-			// leads to CodeCallback_PlayerSkywardLaunchBegin, which signals the state thread to move on
-			// this begins the physical launch process for Valk and for her allies who are hooked in
-			//owner.Player_BeginSkywardLaunch( slowUpDistance / slowUpTime, slowUpTime, (totalUpDistance - slowUpDistance) / fastUpTime, fastUpTime )
+			#if SERVER
+				// Manually trigger the launch since Player_BeginSkywardLaunch native is not available
+				// This triggers CodeCallback_PlayerSkywardLaunchBegin which signals the state thread
+				thread CodeCallback_PlayerSkywardLaunchBegin( owner )
+			#endif
 		}
 	}
 
@@ -409,7 +411,7 @@ void function ValkUlt_DeployToPeakStateForValk( entity valk, entity weapon )
 
 	// Set state tracking vars, tell code to begin deploy state
 	file.isInLaunchingState[valk] <- false
-	valk.SkyDive_SetIsFromSkywardLaunch( false )
+	// valk.SkyDive_SetIsFromSkywardLaunch( false )
 	Remote_CallFunction_NonReplay( valk, "ServerToClient_SetSkydiveAfterUlt", valk, false )
 	// maybe after I kick myself out?
 
@@ -434,6 +436,12 @@ void function ValkUlt_DeployToPeakStateForValk( entity valk, entity weapon )
 	// --- status effect initializes RUI, redirects pings to self, disables tactical ---
 	StatusEffect_AddEndless( valk, eStatusEffect.skyward_embark, 1.0 )
 
+	// Play hover animation - Anim_DisableUpdatePosition() allows visual playback without locking movement
+	if ( valk.Anim_HasSequence( "valkyrie_ultimate_hover" ) )
+	{
+		valk.Anim_Play( "valkyrie_ultimate_hover" )
+		valk.SetUseDoomedAnims(true )
+	}
 
 	// ==================== Set 3rd person settings ================//
 	{
@@ -472,7 +480,7 @@ void function ValkUlt_DeployToPeakStateForValk( entity valk, entity weapon )
 		ultProxy.AddUsableValue( USABLE_BY_TEAMMATES | USABLE_BLOCK_CONTINUOUS_USE | USABLE_NO_FOV_REQUIREMENTS | USABLE_CUSTOM_HINTS )
 		valk.p.valkUltProxyEnt = ultProxy
 
-		SetCallback_CanUseEntityCallback( ultProxy, ValkUlt_CanUseAlly )
+		SetCallback_CanUseEntityCallback_Retail( ultProxy, ValkUlt_CanUseAlly )
 		AddCallback_OnUseEntity_ClientServer( ultProxy, ValkUlt_AllyUse )
 	}
 
@@ -495,6 +503,10 @@ void function ValkUlt_DeployToPeakStateForValk( entity valk, entity weapon )
 			// --- some cleanup in case we get to thread end before we launched; otherwise this is done below ---
 			if ( !e["launched"] )
 			{
+				// Stop hover animation (disabled - Anim_Play locks movement)
+				// if ( valk.Anim_IsActive() )
+				// 	valk.Anim_Stop()
+
 				// Let client know we canceled
 				Remote_CallFunction_NonReplay( valk, "ServerToClient_ValkUltCanceled", valk )
 
@@ -559,7 +571,7 @@ void function ValkUlt_DeployToPeakStateForValk( entity valk, entity weapon )
 
 	TraceResults groundTrace = TraceLine( valk.GetOrigin(), valk.GetOrigin() + <0, 0, -5000>, [ valk ], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
 
-	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_START, valk, groundTrace.endPos, valk.GetTeam(), valk )
+	//TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_START, valk, groundTrace.endPos, valk.GetTeam(), valk )
 
 	// update state tracking vars
 	file.isInLaunchingState[valk] = true
@@ -567,7 +579,7 @@ void function ValkUlt_DeployToPeakStateForValk( entity valk, entity weapon )
 
 	// We need this set for survival_freefall to play nice
 	Remote_CallFunction_NonReplay( valk, "ServerToClient_SetSkydiveAfterUlt", valk, true )
-	valk.SkyDive_SetIsFromSkywardLaunch( true )
+	//valk.SkyDive_SetIsFromSkywardLaunch( true )
 
 	// --- cleanup deploy state specific settings ---
 	// it's a little awkward that this is in two places, but it's still better than two threads
@@ -692,7 +704,7 @@ void function ValkUlt_DeployToPeakStateForAlly( entity ally, entity valk, entity
 	file.isFollower[ally] <- true
 	file.leaderPlayer[ally] <- valk
 	file.isInLaunchingState[ally] <- false
-	ally.SkyDive_SetIsFromSkywardLaunch( false )
+	//ally.SkyDive_SetIsFromSkywardLaunch( false )
 	Remote_CallFunction_NonReplay( ally, "ServerToClient_SetSkydiveAfterUlt", ally, false )
 
 	table<string, bool> e
@@ -700,20 +712,17 @@ void function ValkUlt_DeployToPeakStateForAlly( entity ally, entity valk, entity
 	e["finishedSuccessfully"] <- false
 	e["tautVFXCreated"] <- false
 
-	// disable stuff
-	Vehicle_KickPlayer_ForAbility( ally )
-
 	//Travis - TODO - Seer's heartbeat sensor ADS on melee is not currently disabled when joining Valk ult.  Long term I think we should fix with this call:
 	//HolsterAndDisableWeapons( ally )
 	//Code is currently doing the disabling of weapons inside of Player_JoinSkywardLaunch.
 	//Given that we're so close to 10.0 though I will go with this more conservative Seer specific fix.  To be revisited for 10.1 or later.
-	if ( PlayerHasPassive( ally, ePassives.PAS_PARIAH ) )
+	//if ( PlayerHasPassive( ally, ePassives.PAS_PARIAH ) )
 	{
-		WeaponModDisableHeartbeatSensorADSMelee( ally )
+	//	WeaponModDisableHeartbeatSensorADSMelee( ally )
 	}
-	else if ( PlayerHasPassive( ally, ePassives.PAS_VANTAGE ) )
+	//else if ( PlayerHasPassive( ally, ePassives.PAS_VANTAGE ) )
 	{
-		Vantage_EnableUnarmedADS( ally, false )
+	//	Vantage_EnableUnarmedADS( ally, false )
 	}
 
 	// tell code to attach this player to valk
@@ -727,7 +736,7 @@ void function ValkUlt_DeployToPeakStateForAlly( entity ally, entity valk, entity
 	int attachIndex = availableIndices[ 0 ]
 	vector myOffset = attachPositions[ attachIndex ]
 	file.playerToAttachIndex[ ally ] <- attachIndex
-	ally.Player_JoinSkywardLaunch( valk, myOffset, 600 )
+	//ally.Player_JoinSkywardLaunch( valk, myOffset, 600 )
 
 	// ============= VFX, SFX, Input ================= //
 
@@ -739,7 +748,7 @@ void function ValkUlt_DeployToPeakStateForAlly( entity ally, entity valk, entity
 	entity tautUltVFX
 	table<string, entity> ent
 	ent[ "tautUltVFX" ] <- tautUltVFX
-	entity ultVFX = CreateRope( <0, 0, 0>, <0, 0, 0>, 178.0, valk, ally, valkCableAttachID, allyCableAttachID, 1, $"models/cable/valk_team_cable", 10 )
+	entity ultVFX = CreateRope( <0, 0, 0>, <0, 0, 0>, 178.0, valk, ally, valkCableAttachID, allyCableAttachID, 1, $"models/cable/drone_medic_cable", 10 )
 	ultVFX.SetOwner( valk )
 	ultVFX.RemoveFromAllRealms()
 	ultVFX.AddToOtherEntitysRealms( valk )
@@ -824,7 +833,7 @@ void function ValkUlt_DeployToPeakStateForAlly( entity ally, entity valk, entity
 					weapon.w.valkLaunchedTeammates.fastremovebyvalue( ally )
 					ally.ClearTrackEntitySettings()
 
-					ally.SkyDive_SetIsFromSkywardLaunch( false )
+					//ally.SkyDive_SetIsFromSkywardLaunch( false )
 					Remote_CallFunction_NonReplay( ally, "ServerToClient_SetSkydiveAfterUlt", ally, false )
 				}
 			}
@@ -833,13 +842,13 @@ void function ValkUlt_DeployToPeakStateForAlly( entity ally, entity valk, entity
 			//DeployAndEnableWeapons( ally )
 			if ( IsValid( ally ) )
 			{
-				if ( PlayerHasPassive( ally, ePassives.PAS_PARIAH ) )
+				//if ( PlayerHasPassive( ally, ePassives.PAS_PARIAH ) )
 				{
-					WeaponModEnableHeartbeatSensorADSMelee( ally )
+				//	WeaponModEnableHeartbeatSensorADSMelee( ally )
 				}
-				else if( PlayerHasPassive( ally, ePassives.PAS_VANTAGE ) )
+				//else if( PlayerHasPassive( ally, ePassives.PAS_VANTAGE ) )
 				{
-					Vantage_EnableUnarmedADS( ally, true )
+				//	Vantage_EnableUnarmedADS( ally, true )
 				}
 			}
 		}
@@ -863,12 +872,12 @@ void function ValkUlt_DeployToPeakStateForAlly( entity ally, entity valk, entity
 	StopSoundOnEntity( ally, "Valk_Ultimate_Squadmate_Joined_1P" )
 	StopSoundOnEntity( ally, "Valk_Ultimate_Squadmate_Joined_3P" )
 
-	ally.SkyDive_SetIsFromSkywardLaunch( true )
+	//ally.SkyDive_SetIsFromSkywardLaunch( true )
 	Remote_CallFunction_NonReplay( ally, "ServerToClient_SetSkydiveAfterUlt", ally, true )
 
 
 	weapon.w.valkLaunchedTeammates.append( ally )
-	StatsHook_ValkTeammatesCarriedSkyward( valk )
+	//StatsHook_ValkTeammatesCarriedSkyward( valk )
 
 	// VFX need to be switched to taut cable after slowUpTime
 	table<string, float> launchParams = Helper_GetLaunchParams( valk )
@@ -882,7 +891,7 @@ void function ValkUlt_DeployToPeakStateForAlly( entity ally, entity valk, entity
 
 	// recreate the rope with fewers segments for flight so it's taut
 	ultVFX.Destroy()
-	ent["tautUltVFX"]   = CreateRope( <0, 0, 0>, <0, 0, 0>, 178.0, valk, ally, valkCableAttachID, allyCableAttachID, 1, $"models/cable/valk_team_cable", 1 )
+	ent["tautUltVFX"]   = CreateRope( <0, 0, 0>, <0, 0, 0>, 178.0, valk, ally, valkCableAttachID, allyCableAttachID, 1, $"models/cable/drone_medic_cable", 1 )
 	ent["tautUltVFX"].SetOwner( valk )
 	ent["tautUltVFX"].RemoveFromAllRealms()
 	ent["tautUltVFX"].AddToOtherEntitysRealms( valk )
@@ -950,8 +959,8 @@ void function ValkUlt_ShowEmbarkUI( entity player, int statusEffect, bool actual
 	thread ValkUlt_ChargeBarSounds( player, SKYWARD_WAIT_TIME_BEFORE_LAUNCH )
 
 	entity weapon = player.GetOffhandWeapon ( OFFHAND_ULTIMATE )
-	RuiSetGameTime( file.countdownRui, "startTime", weapon.w.valkUltStartTime )
-	RuiSetGameTime( file.countdownRui, "endTime", weapon.w.valkUltStartTime + SKYWARD_WAIT_TIME_BEFORE_LAUNCH + 0.1 )
+	//RuiSetGameTime( file.countdownRui, "startTime", weapon.w.valkUltStartTime )
+	//RuiSetGameTime( file.countdownRui, "endTime", weapon.w.valkUltStartTime + SKYWARD_WAIT_TIME_BEFORE_LAUNCH + 0.1 )
 }
 #endif // CLIENT
 
@@ -1105,7 +1114,7 @@ void function OnPropScriptCreated( entity proxy )
 	if ( proxy.GetScriptName() != SKYWARD_PROXY_SCRIPT_NAME )
 		return
 
-	SetCallback_CanUseEntityCallback( proxy, ValkUlt_CanUseAlly )
+	SetCallback_CanUseEntityCallback_Retail( proxy, ValkUlt_CanUseAlly )
 	AddEntityCallback_GetUseEntOverrideText( proxy, ValkUlt_UseOverrideText )
 }
 #endif
@@ -1156,9 +1165,6 @@ bool function ValkUlt_CanUseAlly( entity ally, entity proxy, int useFlags )
 			return false
 	}*/
 
-	if ( Crafting_IsPlayerAtWorkbench( ally ) )
-		return false
-
 	if ( ally.p.isInExtendedUse )
 		return false
 
@@ -1177,16 +1183,13 @@ bool function ValkUlt_CanUseAlly( entity ally, entity proxy, int useFlags )
 	if ( Time() < ally.p.nextAllowUseValkUltTime )
 		return false
 
-	if ( GetPlayerIsEmoting( ally ) )
-		return false
-
 	if ( ally.ContextAction_IsActive() )
 		return false
 
 	if ( ally.IsPhaseShiftedOrPending() )
 		return false
 
-	if ( weapon.w.valkAlliesWaitingForLaunch.len() >= GetExpectedSquadSize() - 1 )
+	if ( weapon.w.valkAlliesWaitingForLaunch.len() >= GetExpectedSquadSize( ally ) - 1 )
 		return false
 
 	return true
@@ -1210,7 +1213,7 @@ void function ValkUlt_AllyUse( entity proxy, entity ally, int useInputFlags )
 	}
 
 	#if SERVER
-		if ( IsPlayerAttachedToValkUlt( ally, proxy ) || ally.Player_IsSkywardFollowing() )
+		if ( IsPlayerAttachedToValkUlt( ally, proxy ) )
 		{
 			ValkUlt_AllyCancel( ally )
 			return
@@ -1244,8 +1247,8 @@ void function ValkUlt_AllyCancel( entity ally )
 	if ( ally.p.nextAllowUseValkUltTime > Time() )
 		return
 
-	if (file.isInLaunchingState[ally])
-		ally.Player_StopFollowSkywardLaunch( true )
+	//if (file.isInLaunchingState[ally])
+		//ally.Player_StopFollowSkywardLaunch( true )
 
 	ally.p.nextAllowUseValkUltTime = Time() + SKYWARD_ALLY_USE_DEBOUNCE_TIME
 
@@ -1281,12 +1284,81 @@ void function CodeCallback_PlayerSkywardDeployBegin( entity owner )
 }
 
 
+#if SERVER
+void function ValkUlt_LaunchPlayerUpward( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	// NOTE: Anim_Play() locks player movement, so launch animation is disabled
+	// The launch animation is handled by first-person view and VFX instead
+	// if ( player.Anim_HasSequence( "valkyrie_ultimate_launch" ) )
+	// {
+	// 	player.Anim_Stop() // Stop the hover animation
+	// 	player.Anim_Play( "valkyrie_ultimate_launch" )
+	// 	player.Anim_DisableUpdatePosition()
+	// }
+
+	// Get launch parameters
+	table<string, float> launchParams = Helper_GetLaunchParams( player )
+
+	float totalUpTime     = launchParams["totalUpTime"]
+	float slowUpTime      = launchParams["slowUpTime"]
+	float fastUpTime      = launchParams["fastUpTime"]
+	float totalUpDistance = launchParams["totalUpDistance"]
+	float slowUpDistance  = launchParams["slowUpDistance"]
+
+	// Calculate velocities for each phase
+	float slowUpSpeed = slowUpDistance / slowUpTime
+	float fastUpDistance = totalUpDistance - slowUpDistance
+	float fastUpSpeed = fastUpDistance / fastUpTime
+
+	float startTime = Time()
+	float phase1EndTime = startTime + slowUpTime
+	float phase2EndTime = phase1EndTime + fastUpTime
+
+	// Phase 1: Slow upward movement
+	while ( IsValid( player ) && Time() < phase1EndTime )
+	{
+		vector currentVel = player.GetVelocity()
+		// Preserve horizontal velocity, set upward velocity
+		player.SetVelocity( <currentVel.x, currentVel.y, slowUpSpeed> )
+		WaitFrame()
+	}
+
+	if ( !IsValid( player ) )
+		return
+
+	// Phase 2: Fast upward movement (blastoff)
+	while ( IsValid( player ) && Time() < phase2EndTime )
+	{
+		vector currentVel = player.GetVelocity()
+		// Preserve horizontal velocity, set upward velocity
+		player.SetVelocity( <currentVel.x, currentVel.y, fastUpSpeed> )
+		WaitFrame()
+	}
+
+	if ( !IsValid( player ) )
+		return
+
+	// Stop the launch animation when done (disabled - Anim_Play locks movement)
+	// if ( player.Anim_IsActive() )
+	// 	player.Anim_Stop()
+
+	// Signal that launch is complete
+	player.Signal( "OnSkywardDone" )
+}
+#endif
+
+
 void function CodeCallback_PlayerSkywardLaunchBegin( entity owner )
 {
 	if ( !IsValid( owner ) )
 		return
 
 	#if SERVER
+		// Manually launch the player upward since native functions are not available
+		thread ValkUlt_LaunchPlayerUpward( owner )
 		owner.Signal( "OnSkywardLaunched" )
 	#endif
 
@@ -1323,7 +1395,7 @@ void function CodeCallback_PlayerSkywardLaunchEnd( entity owner, bool interrupte
 {
 	if ( !IsValid( owner ) )
 		return
-	
+
 	#if SERVER
 		if ( !(owner in file.isFollower) )
 			return
@@ -1362,22 +1434,28 @@ void function ClientCodeCallback_OnSkywardLaunchStateChanged( entity owner, bool
 	if( owner != GetLocalClientPlayer() )
 		return
 
-	switch (owner.GetSkywardLaunchState())
+	// GetSkywardLaunchState() is not available, use isInLaunchingState table instead
+	bool isLaunching = false
+	if ( owner in file.isInLaunchingState )
+		isLaunching = file.isInLaunchingState[owner]
+
+	if ( isLaunching )
 	{
-		case PLAYER_SKYWARD_LAUNCH_STATE_LAUNCH:
-			owner.Signal( "OnSkywardLaunched" )
-			break
-		case PLAYER_SKYWARD_LAUNCH_STATE_NONE:
-			file.isInLaunchingState[owner] <- false
-			if ( isInterrupted )
-			{
-				owner.Signal( "OnSkywardInterrupted" )
-			}
-			else
-			{
-				owner.Signal( "OnSkywardDone" )
-			}
-			break
+		// Launch state
+		owner.Signal( "OnSkywardLaunched" )
+	}
+	else
+	{
+		// None state
+		file.isInLaunchingState[owner] <- false
+		if ( isInterrupted )
+		{
+			owner.Signal( "OnSkywardInterrupted" )
+		}
+		else
+		{
+			owner.Signal( "OnSkywardDone" )
+		}
 	}
 }
 #endif
@@ -1390,15 +1468,15 @@ void function ClientCodeCallback_OnSkywardLaunchStateChanged( entity owner, bool
 #if SERVER
 void function OnPlayerFreefallEnd( entity player )
 {
-	if ( player.Skydive_IsFromSkywardLaunch() == false )
-		return
+	//if ( player.Skydive_IsFromSkywardLaunch() == false )
+		//return
 
-	player.SkyDive_SetIsFromSkywardLaunch( false )
+	//player.SkyDive_SetIsFromSkywardLaunch( false )
 	Remote_CallFunction_NonReplay( player, "ServerToClient_SetSkydiveAfterUlt", player, false )
 
 	TraceResults groundTrace = TraceLine( player.GetOrigin(), player.GetOrigin() + <0, 0, -5000>, [ player ], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
-	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_END, player, groundTrace.endPos, player.GetTeam(), player )
-	PIN_PlayerLandedOnGround( player, "valk_ult_land" )
+	//TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_END, player, groundTrace.endPos, player.GetTeam(), player )
+	//PIN_PlayerLandedOnGround( player, "valk_ult_land" )
 
 	if ( PlayerHasPassive( player, ePassives.PAS_VALK ) )
 	{
@@ -1460,10 +1538,10 @@ void function PlayValkUltSoundsOnePlayerOnly( entity owner, entity valk, float s
 	string blastOff = "Valk_Ultimate_BlastOff_" + perspective
 
 	if ( predicted )
-		EmitSoundOnEntityOnlyToPlayer_PredictedByPlayer( valk, owner, buildUp )
+		EmitSoundOnEntityOnlyToPlayer( valk, owner, buildUp )
 	else
 		EmitSoundOnEntityOnlyToPlayer( valk, owner, buildUp )
-	
+
 	table<string, bool> e
 	e["blastOffPlayed"] <- false
 
@@ -1476,14 +1554,14 @@ void function PlayValkUltSoundsOnePlayerOnly( entity owner, entity valk, float s
 				StopSoundOnEntity( valk, blastOff )
 		}
 	)
-	
+
 	Wait( slowUpTime )
-	
+
 	if ( predicted )
-		EmitSoundOnEntityOnlyToPlayer_PredictedByPlayer( valk, owner, blastOff )
+		EmitSoundOnEntityOnlyToPlayer( valk, owner, blastOff )
 	else
 		EmitSoundOnEntityOnlyToPlayer( valk, owner, blastOff )
-	
+
 	e["blastOffPlayed"] = true
 	Wait( fastUpTime )
 }
@@ -1518,15 +1596,16 @@ void function ValkUlt_DoClientSoundsForLaunch( entity owner, float slowUpTime, f
  */
 void function UpdateLaunchRui( entity owner, float totalUpDistance )
 {
+	return
 	owner.EndSignal( "OnDeath" )
 	owner.EndSignal( "BleedOut_OnStartDying" )
 	owner.EndSignal( "OnSkywardInterrupted" )
 
 	file.launchRui = CreateFullscreenRui( $"ui/skyward_launch.rpak" )
 	thread Valk_EnableHudColorCorrection()
-	RuiSetFloat( file.launchRui, "seaHeight", GetSeaHeightForDisplay() )
-	RuiTrackFloat3( file.launchRui, "playerPos", owner, RUI_TRACK_ABSORIGIN_FOLLOW )
-	RuiSetFloat( file.launchRui, "maxHeight", totalUpDistance )
+	//RuiSetFloat( file.launchRui, "seaHeight", GetSeaHeightForDisplay() )
+	//RuiTrackFloat3( file.launchRui, "playerPos", owner, RUI_TRACK_ABSORIGIN_FOLLOW )
+	//RuiSetFloat( file.launchRui, "maxHeight", totalUpDistance )
 
 	OnThreadEnd ( function() : ( owner )
 	{
@@ -1538,9 +1617,9 @@ void function UpdateLaunchRui( entity owner, float totalUpDistance )
 	{
 		if ( file.launchRui )
 		{
-			RuiSetFloat3( file.launchRui, "cameraAngle", owner.CameraAngles() )
-			RuiSetFloat( file.launchRui, "seaHeight", GetSeaHeightForDisplay() )
-			RuiSetBool( file.launchRui, "isFullmapOpen", Fullmap_IsVisible() || IsScoreboardShown())
+			//RuiSetFloat3( file.launchRui, "cameraAngle", owner.CameraAngles() )
+			//RuiSetFloat( file.launchRui, "seaHeight", GetSeaHeightForDisplay() )
+			//RuiSetBool( file.launchRui, "isFullmapOpen", Fullmap_IsVisible() || IsScoreboardShown())
 		}
 		WaitFrame()
 	}
@@ -1563,10 +1642,10 @@ bool function DestroyValkLaunchRui()
 
 void function UpdateValkFlightRui( entity player, bool isInAir )
 {
-	#if CLIENT
+	/*#if CLIENT
 		bool isValk = false
-		if ( LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() ) )
-			isValk = ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) ) == VALK_ITEMFLAVOR
+		if ( LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterClass() ) )
+			isValk = ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() ) ) == $"settings/itemflav/character/valkyrie.rpak"
 
 		bool showValkRui = isInAir && isValk
 
@@ -1585,9 +1664,9 @@ void function UpdateValkFlightRui( entity player, bool isInAir )
 			thread Valk_DisableHudColorCorrection()
 
 		bool isValidMode = true
-                        
-                                                                  
-       
+
+
+
 
 		if ( isValidMode && IsValid( GetCompassRui() ) )
 			RuiSetBool( GetCompassRui(), "isValkAirborn", showValkRui )
@@ -1610,13 +1689,13 @@ void function UpdateValkFlightRui( entity player, bool isInAir )
 		{
 			DestroyAllValkRui()
 		}
-	#endif
+	#endif*/
 }
 
 #if CLIENT
 void function DestroyAllValkRui()
 {
-	if ( GetDpadMenuRui() != null )
+	/*if ( GetDpadMenuRui() != null )
 		RuiSetBool( GetDpadMenuRui(), "isValkAirborn", false )
 	if ( GetWeaponRui() != null )
 		RuiSetBool( GetWeaponRui(), "isValkAirborn", false )
@@ -1641,7 +1720,7 @@ void function DestroyAllValkRui()
 	thread Valk_DisableHudColorCorrection()
 	file.flightRui    = null
 	file.launchRui    = null
-	file.countdownRui = null
+	file.countdownRui = null*/
 }
 
 #endif
@@ -1743,11 +1822,6 @@ bool function IsThisPlayerInDeployState( entity player )
 float function GetValkUltMaxHeight( entity player )
 {
 	float result = GetCurrentPlaylistVarFloat( "valk_ult_up_distance", SKYWARD_MAX_HEIGHT )
-
-	                    
-	if( IsValid( player ) && player.HasPassive( ePassives.PAS_ULT_UPGRADE_TWO ) ) // upgrade_valkyrie_jetpacks_during_ult
-		result *= GetCurrentPlaylistVarFloat( "valk_ult_up_distance_upgraded_multiplier", 1.15 )
-       
 
 	return result
 }

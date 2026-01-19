@@ -71,6 +71,13 @@ global struct VisibleEntityInCone
 	int extraMods
 }
 
+global struct WeaponMissileMultipleTargetData
+{
+	vector pos
+	vector normal
+	float delay
+}
+
 global struct PlayerDidDamageParams
 {
 	entity victim

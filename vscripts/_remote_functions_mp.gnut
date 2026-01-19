@@ -611,6 +611,11 @@ void function RemoteFunctions_Init_Begin()
 		ScriptRemote_RegisterClientFunction( "ServerCallback_SUR_PingMinimap", "vector", -1.0, 1.0, 32, "float", 0.0, 300.0, 8, "float", 1.0, 5000.0, 8, "float", 1.0, 5000.0, 8, "int", 0, 2047 )
 	}
 
+	//Seer
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ApplyScreenShake", "entity", "vector", -1.0, 1.0, 32 ) // entity:player, vector: normalized player eyePos to sonicOrigin
+	ScriptRemote_RegisterClientFunction( "ServerCallback_DoDamageIndicator", "entity", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerToClient_ShowHealthRUI", "entity", "entity", "float", 0.0, 99.0, 8 )
+	ScriptRemote_RegisterClientFunction( "ServerToClient_SpawnedSonicBlast", "entity", "int", 0, 9999, "vector", -32000.0, 32000.0, 32, "vector", -32000.0, 32000.0, 32, "float", 0.0, 32000.0, 32 )
 	
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanks", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptWelcome" )

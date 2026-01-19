@@ -207,6 +207,7 @@ void function InitWeaponScripts()
 	MpAbilitySonicShoutWeapon_Init()
 	MpAbilitySplitTimelineWeapon_Init()
 	MpAbilitySpotterSight_Init()
+	MpAbilitySonicBlast_Init()
 	MpWeaponConcussiveBreach_Init()
 	MpWeaponGrenadeBarrier_Init()
 	MpWeaponGrenadeFlashbang_Init()
@@ -218,6 +219,7 @@ void function InitWeaponScripts()
 
 	//(kral) wip abilities
 	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
+	LobaUltimateBlackMarket_LevelInit()				// Loba Ultimate
 
 	#if SERVER
 		//BallLightning_Init()
@@ -4305,9 +4307,25 @@ bool function IsAttackDrone( entity ent )
 	return ( ent.IsNPC() && !ent.IsNonCombatAI() && IsAirDrone( ent ) )
 }
 
+bool function IsTrainingDummie( entity ent )
+{
+	string ornull networkedClassName = ent.GetNetworkedClassName()
+
+	if( networkedClassName == null )
+		return false
+
+	expect string( networkedClassName )
+	return (( networkedClassName == "npc_training_dummy" ) || ( networkedClassName == "npc_combatrange_dummy" ) || ( networkedClassName == "npc_dummie" ))
+}
+
 bool function IsGunship( entity ent )
 {
 	return ent.GetNetworkedClassName() == "npc_gunship"
+}
+
+bool function IsCombatNPC( entity ent )
+{
+	return ( ent.IsNPC() && !ent.IsNonCombatAI() )
 }
 
 bool function IsMinion( entity ent )

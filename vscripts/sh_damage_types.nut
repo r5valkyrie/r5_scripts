@@ -206,6 +206,7 @@ global enum eDamageSourceId
 	mp_ability_octane_stim
 	mp_ability_crypto_drone_emp
 	mp_ability_crypto_drone_emp_trap
+	mp_ability_sonic_blast
 	mp_weapon_dirty_bomb
 	// AI only Weapons
 	mp_weapon_super_spectre

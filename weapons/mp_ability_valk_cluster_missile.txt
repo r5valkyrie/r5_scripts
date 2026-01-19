@@ -47,11 +47,10 @@ WeaponData
 
 
     OnWeaponRegenEnd                                "OnWeaponRegenEndGeneric"
-    //"OnWeaponAttemptOffhandSwitch_ability_valk_cluster_missile"
+	OnWeaponAttemptOffhandSwitch                    "OnWeaponAttemptOffhandSwitch_ability_valk_cluster_missile"
     OnWeaponActivate                                "OnWeaponActivate_ability_valk_cluster_missile"
     OnWeaponDeactivate					            "OnWeaponDeactivate_ability_valk_cluster_missile"
     OnWeaponPrimaryAttack                           "OnWeaponPrimaryAttack_valk_cluster_missile"
-    //GetProjectilePosition                         "GetProjectilePosition_ability_valk_cluster_missile"
     OnProjectileCollision				            "OnProjectileCollision_ability_valk_cluster_missile"
     OnClientAnimEvent					            "OnClientAnimEvent_ability_valk_cluster_missile"
 

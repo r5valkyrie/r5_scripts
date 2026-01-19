@@ -244,39 +244,14 @@ global struct ServerEntityStruct
 	// ball lightning
 	BallLightningData ballLightningData
 	int ballLightningTargetsIdx = -1
-	// int arcPylonArrayIdx = -1 //script managed ent array index
-	// float lastArcTime = 0.0
-
-	// laser tripwire
-	// int laserPylonArrayIdx = -1 //script managed ent array index
-
-	//Survivor
-	// int crateType
-
-	//Bomb
-	// TODO: remove hasBomb and replace with deterministic checks
-	// bool hasBomb = false
 	bool destroyOutOfBounds = false
 	bool destroyTriggerHurt = false
-
-	//Rodeo
-	// entity lastRodeoAttacker
-
-	// array<int> smokeScreenSlowdownIdx
-
-	// number of shield beacons affecting me
-	// int shieldBeaconCount
-	// array<BeamEffect> shieldBeaconFXArray
-
-	//Ping
-	// entity lastPlayerToSpot
-	// float lastSpotTime = -9999.0
 
 	bool ignoreJumpPad = false
 
 	bool forceRagdollDeath = false
 
-	// int projectileID
+	table<int, int> hightlightForTeam
 
 	bool windPushEnabled = true
 	bool inWindTunnel
@@ -1391,13 +1366,6 @@ global struct ServerAIStruct
 	//////////////
 }
 
-global struct WeaponMissileMultipleTargetData
-{
-	vector pos
-	vector normal
-	float delay
-}
-
 // hooked up to entity.w in code
 global struct ServerWeaponStruct
 {
@@ -1423,8 +1391,15 @@ global struct ServerWeaponStruct
 	bool phaseRetreatShouldSave = true
 
 	entity laserWorldModel
-	// entity guidedMissileTarget = null
-	// array<entity> salvoMissileArray
+	float voDebounceTime = -1.0
+
+	// allies waiting for launch is used to derive attach locations
+	// and to serve the correct 1p/3p sound to allies
+	array<entity>			   	valkAlliesWaitingForLaunch
+	table<entity, array<int> > 	valkFreefallStatusEffectsTable
+	float                      	valkUltStartTime
+	bool						valkUltCanceled
+	array<entity> 				valkLaunchedTeammates
 
 	// entity weaponOwner
 	entity bubbleShield
@@ -1470,9 +1445,6 @@ global struct ServerWeaponStruct
 	int savedShieldHealth
 
 	bool toggleShot = true
-
-	float valkUltStartTime
-	array<entity> valkLaunchedTeammates
 }
 
 

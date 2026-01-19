@@ -280,7 +280,7 @@ Scripts:
 	weapons/mp_ability_mobile_respawn_beacon.nut
 	weapons/mp_ability_valk_cluster_missile.nut
 	weapons/mp_ability_valk_jets.nut
-	//weapons/mp_ability_valk_skyward.nut
+	weapons/mp_ability_valk_skyward.nut
 	weapons/sh_silence.gnut
 	weapons/sp_weapon_arc_tool.nut
 	weapons/mp_weapon_dragon_lmg.nut
@@ -374,7 +374,8 @@ Scripts:
 	weapons/mp_weapon_3030.nut
 
 	weapons/mp_ability_horizon_black_hole.nut
-	
+	weapons/mp_ability_sonic_blast.nut
+
 	//S0 Dev Protos
 	//Husaria
 	//Plant a breaching charge that fires a sonic wave through walls to destroy traps, force open doors, and disorient enemies.

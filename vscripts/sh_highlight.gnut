@@ -31,6 +31,8 @@ global function Highlight_SetSonarHighlightOrigin
 global function Highlight_HasSonarHighlight
 
 global function Highlight_SetSonarExecutionHighlightOrigin
+global function IncrementHighlightEnableForTeam
+global function DecrementHighlightEnableForTeam
 
 global function Highlight_ClearFriendlyHighlight
 global function Highlight_ClearEnemyHighlight
@@ -913,6 +915,30 @@ void function ClearEnemyHighlightDelayed( entity victim )
 		return
 
 	Highlight_ClearEnemyHighlight( victim )
+}
+#endif
+
+#if SERVER
+void function IncrementHighlightEnableForTeam( entity ent, int team )
+{
+	if ( !(team in ent.e.hightlightForTeam) )
+		ent.e.hightlightForTeam[ team ] <- 0
+
+	ent.e.hightlightForTeam[ team ]++
+	ent.HighlightEnableForTeam( team )
+}
+
+void function DecrementHighlightEnableForTeam( entity ent, int team )
+{
+	if ( !(team in ent.e.hightlightForTeam) )
+		ent.e.hightlightForTeam[ team ] <- 0
+	else
+		ent.e.hightlightForTeam[ team ]--
+
+	ent.e.hightlightForTeam[ team ] = maxint( ent.e.hightlightForTeam[ team ], 0 )
+
+	if ( ent.e.hightlightForTeam[ team ] == 0 )
+		ent.HighlightDisableForTeam( team )
 }
 #endif
 

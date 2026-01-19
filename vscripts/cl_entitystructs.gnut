@@ -162,6 +162,9 @@ global struct ClientPlayerStruct
 	int lastCanceledCommsAction
 	table<int,float> commActionFlavorDebounceTimes
 	float commActionFlavorGlobalDebounceTime = -30.0
+	bool inSkydiveAfterUlt
+	float  nextAllowUseValkUltTime
+	entity valkUltProxyEnt
 
 	array<TitanCockpitRUI> titanCockpitRUIs
 	entity cryptoActiveCamera
@@ -191,6 +194,8 @@ global struct ClientPlayerStruct
 	
 	bool onetimetimer = false
 	float lasttime
+
+	bool isSkydiving
 	//prophunt
 	asset PROPHUNT_LastModel
 	bool isAttackerProphunt = false
@@ -270,6 +275,10 @@ global struct ClientWeaponStruct
 	float PROTO_lastFireAttemptTime = -1.0
 	float PROTO_lastRandomSpreadUpdate = -1
 	vector PROTO_lastForwardAngle
+
+	array<WeaponMissileMultipleTargetData>   valkTac_targetData
+	array<entity>			   valkAlliesWaitingForLaunch
+	float                      valkUltStartTime
 
 	bool useRapidHitbeep = false
 	

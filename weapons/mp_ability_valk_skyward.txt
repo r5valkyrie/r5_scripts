@@ -27,10 +27,10 @@ WeaponData
 	"play_offhand_charging_anim"  					"1"
 	"play_offhand_start_end_anim"					"0"
 
-	//"OnWeaponActivate"							    "OnWeaponActivate_ability_valk_skyward"
-    //"OnWeaponDeactivate"							"OnWeaponDeactivate_ability_valk_skyward"
-	//"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_ability_valk_skyward"
-	//"OnWeaponAttemptOffhandSwitch" 					"OnWeaponAttemptOffhandSwitch_ability_valk_skyward"
+	"OnWeaponActivate"							    "OnWeaponActivate_ability_valk_skyward"
+    "OnWeaponDeactivate"							"OnWeaponDeactivate_ability_valk_skyward"
+	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_ability_valk_skyward"
+	"OnWeaponAttemptOffhandSwitch" 					"OnWeaponAttemptOffhandSwitch_ability_valk_skyward"
 	"OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
 	"leveled_pickup"								"1"
 

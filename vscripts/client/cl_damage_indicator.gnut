@@ -4,6 +4,7 @@ global function ClDamageIndicator_Init
 global function Create_DamageIndicatorHUD
 global function GrenadeArrowThink
 global function RumbleForTitanDamage
+global function DamageIndicators
 
 global function ServerCallback_PlayerTookDamage
 //global function ClientCodeCallback_OnMissileCreation
