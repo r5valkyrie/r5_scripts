@@ -64,7 +64,7 @@ var function OnWeaponTossRelease_weapon_space_elevator_tac( entity weapon, Weapo
 	}
 
 	#if SERVER
-		PlayBattleChatterLineToSpeakerAndTeam( weapon.GetOwner(), "bc_super" )
+		PlayBattleChatterLineToSpeakerAndTeam( weapon.GetOwner(), "bc_tactical" )
 	#endif
 
 	return ammoReq
