@@ -880,6 +880,13 @@ void function CLootV4_SpawnLootRow(array<string> lootRefsParm, array<int> lootCo
 		{
 			// Use default node angles (no rotation adjustment for attachments/gear)
 			vector itemAngles = itemAnglesDefault
+			
+			// Kral: Nodes are rotated for some reason? Gotta manually fix the sight rotation
+			if (_lootRef.find("optic") != -1)
+			{
+				itemAngles = <0, 0, 0>
+			}
+			
 			entity lootEnt = SpawnGenericLoot(_lootRef, itemPos, itemAngles, howMany)
 			
 			if (IsValid(lootEnt))
@@ -1175,7 +1182,17 @@ void function FillEquipmentTable()
 {
 	file.equipmentsPerIndex.append(SURVIVAL_Loot_GetByType( eLootType.ARMOR ))
 	file.equipmentsPerIndex.append(SURVIVAL_Loot_GetByType( eLootType.HELMET ))
-	file.equipmentsPerIndex.append(SURVIVAL_Loot_GetByType( eLootType.INCAPSHIELD ))
+	
+	// Prevent lv0 incap shield from spawning
+	array<LootData> incapShields = SURVIVAL_Loot_GetByType( eLootType.INCAPSHIELD )
+	array<LootData> filteredIncapShields = []
+	foreach ( LootData shield in incapShields )
+	{
+		if ( shield.ref != "incapshield_pickup_lv0" )
+			filteredIncapShields.append( shield )
+	}
+	file.equipmentsPerIndex.append( filteredIncapShields )
+	
 	file.equipmentsPerIndex.append(SURVIVAL_Loot_GetByType( eLootType.BACKPACK ))
 }
 
@@ -1184,7 +1201,7 @@ void function FillItemTable()
 {
 	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.HEALTH ))
 	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.RESOURCE ))
-	//file.items.extend(SURVIVAL_Loot_GetByType( eLootType.SURVIVAL ))
+	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.SURVIVAL ))
 	//file.items.extend(SURVIVAL_Loot_GetByType( eLootType.CUSTOMPICKUP ))
 	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.JUMPKIT ))
 }
