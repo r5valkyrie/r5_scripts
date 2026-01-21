@@ -273,6 +273,10 @@ void function PrecacheSDKWeapons()
 	PrecacheWeapon( $"mp_ability_haunt" )
 	PrecacheWeapon( $"mp_ability_ground_slam" )
 	PrecacheWeapon( $"mp_ability_dodge_roll" )
+
+	//Gadget Items
+	PrecacheWeapon( $"mp_ability_mobile_respawn_beacon" )
+	PrecacheWeapon( $"mp_ability_void_ring" )
 	//Custom Heirlooms
 	PrecacheWeapon( $"melee_macks_knife" )
 	PrecacheWeapon( $"mp_weapon_macks_knife_primary" )//needs to be a mod, we dont want custom models in sdk rpaks

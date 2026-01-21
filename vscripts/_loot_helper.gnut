@@ -1521,6 +1521,9 @@ int function LootHelper_GetLootType_Expensive( string lootRef )
 		case "health":
 			lootType = eLootType.HEALTH
 			break
+		case "gadget":
+			lootType = eLootType.SURVIVAL
+			break
 		case "helmet":
 			lootType = eLootType.HELMET
 			break

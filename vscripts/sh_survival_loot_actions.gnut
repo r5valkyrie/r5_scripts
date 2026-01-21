@@ -205,7 +205,7 @@ bool function TryPickupItem( int action, entity pickup, entity player, int picku
 	//printt("TryPickupItem", pickedUp)
 
 #if CLIENT
-	if ( !pickedUp && (data.inventorySlotCount > 0) && data.lootType != eLootType.GADGET )
+	if ( !pickedUp && (data.inventorySlotCount > 0) && data.lootType != eLootType.SURVIVAL )
 	{
 		SURVIVAL_Loot_QuickSwap( pickup, player, pickupFlags, deathBox )
 	}

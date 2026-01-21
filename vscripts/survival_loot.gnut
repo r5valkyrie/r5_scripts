@@ -461,30 +461,58 @@ bool function ClientCommand_Sur_SwitchToOrdnance( entity player, array<string> a
 
 bool function ClientCommand_Sur_EquipOrdnance( entity player, array<string> args )
 {
+	string argsStr = ""
+	foreach ( arg in args )
+		argsStr += arg + " "
+	printt( "DEBUG: ClientCommand_Sur_EquipOrdnance called with args:", argsStr )
+	
 	if ( !IsValid( player ) || !IsAlive( player ) )
+	{
+		printt( "DEBUG: Player not valid or not alive" )
 		return true
+	}
 
 	if ( args.len() < 1 )
+	{
+		printt( "DEBUG: No args provided" )
 		return true
+	}
 
 	if ( !SURVIVAL_PlayerCanSwitchOrdnance( player ) )
+	{
+		printt( "DEBUG: Player cannot switch ordnance" )
 		return true
+	}
 
 	string ordnanceRef = args[0]
+	printt( "DEBUG: Attempting to equip:", ordnanceRef )
 
 	if ( !SURVIVAL_Loot_IsRefValid( ordnanceRef ) )
+	{
+		printt( "DEBUG: Ref not valid:", ordnanceRef )
 		return true
+	}
 
 	LootData ordnanceLootData = SURVIVAL_Loot_GetLootDataByRef( ordnanceRef )
+	printt( "DEBUG: Loot type:", ordnanceLootData.lootType, "Expected GADGET:", eLootType.SURVIVAL )
 
-	if ( ordnanceLootData.lootType != eLootType.ORDNANCE )
+	// Allow both ordnance and gadgets (void ring, mobile respawn beacon)
+	if ( ordnanceLootData.lootType != eLootType.ORDNANCE && ordnanceLootData.lootType != eLootType.SURVIVAL )
+	{
+		printt( "DEBUG: Not ordnance or gadget, returning" )
 		return true
+	}
 
 	int ordnanceCount = SURVIVAL_CountItemsInInventory( player, ordnanceLootData.ref )
+	printt( "DEBUG: Count in inventory:", ordnanceCount )
 
 	if ( ordnanceCount == 0 )
+	{
+		printt( "DEBUG: Count is 0" )
 		return true
+	}
 	
+	printt( "DEBUG: Calling SURVIVAL_EquipOrdnanceFromInventory" )
 	SURVIVAL_EquipOrdnanceFromInventory( player, ordnanceLootData.ref )
 	return true
 }
@@ -3497,7 +3525,7 @@ array<string> function CreateLootForFlyerDeathBox( entity deathBox = null, bool 
 	if ( numOfLootItemsRemaining == 0 )
 		return lootRefs
 
-	int numGadget = ( RandomFloat( 1.0 ) < 0.25 && guaranteedTierLootItemType != eLootType.GADGET ) ? 1 : 0 //Next do Survival Slot Items. At most 1 Survival Slot Items
+	int numGadget = ( RandomFloat( 1.0 ) < 0.25 && guaranteedTierLootItemType != eLootType.SURVIVAL ) ? 1 : 0 //Next do Survival Slot Items. At most 1 Survival Slot Items
 
 	if ( numGadget > 0 )
 	{
@@ -4654,38 +4682,59 @@ string function SURVIVAL_GetWeightedItemFromTrimmedGroup( string groupRef, array
 }
 void function SURVIVAL_EquipOrdnanceFromInventory( entity player, string item, bool forceDontSwitch = false )
 {
+	printt( "DEBUG: SURVIVAL_EquipOrdnanceFromInventory called for:", item )
+	
 	#if DEVELOPER
 		// DumpStack()
 		// Warning( "SURVIVAL_EquipOrdnanceFromInventory " + player + " " + item + " " + forceDontSwitch )
 	#endif
 	if ( !SURVIVAL_PlayerCanSwitchOrdnance( player ) )
+	{
+		printt( "DEBUG: Player cannot switch ordnance" )
 		return
+	}
 
 	if ( !SURVIVAL_Loot_IsRefValid( item ) )
+	{
+		printt( "DEBUG: Invalid ref" )
 		return
+	}
 
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( item )
 
 	int ammo = SURVIVAL_NumItemsInInventory( player, item )
 	if ( ammo <= 0 )
+	{
+		printt( "DEBUG: No ammo in inventory:", ammo )
 		return
+	}
 
 	entity heldOrdnance = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
 	bool shouldRecord   = true
 
 	if ( data.conditional )
 	{
+		printt( "DEBUG: Data has conditional, checking..." )
 		if ( !SURVIVAL_Loot_RunConditionalCheck( data.ref, player ) )
 		{
+			printt( "DEBUG: Conditional check FAILED" )
 			shouldRecord = false
+		}
+		else
+		{
+			printt( "DEBUG: Conditional check PASSED" )
 		}
 	}
 
 	if ( shouldRecord )
 		file.lastOrdnanceHeld[ player ] = item
 
-	if ( IsValid( heldOrdnance ) && heldOrdnance.GetWeaponClassName() == item && !Flowstate_IsHaloMode() )
+	// Gadgets (void ring, portable respawn beacon) use the same weapon system as normal ordnance
+	// They use GiveWeapon with ANTI_TITAN slot, not offhand
+	bool isEmpty = IsValid( heldOrdnance ) && heldOrdnance.GetWeaponPrimaryClipCount() <= 0
+	if ( IsValid( heldOrdnance ) && heldOrdnance.GetWeaponClassName() == item && !Flowstate_IsHaloMode() && !isEmpty )
 	{
+		printt( "DEBUG: Already equipped, switching to it" )
 		entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 		if ( activeWeapon != heldOrdnance  )
 			player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, heldOrdnance.GetWeaponClassName() )
@@ -4694,28 +4743,33 @@ void function SURVIVAL_EquipOrdnanceFromInventory( entity player, string item, b
 	}
 	else
 	{
+		printt( "DEBUG: Giving new weapon" )
 		entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 		bool wasActive      = heldOrdnance == activeWeapon && (activeWeapon != null)
 	
 		entity ordnance = null
 		if ( wasActive && !forceDontSwitch || wasActive && Flowstate_IsHaloMode() )
 		{
+			printt( "DEBUG: Replacing active weapon" )
 			ordnance = player.ReplaceActiveWeapon( eActiveInventorySlot.mainHand, item, ["survival_finite_ordnance"] )
 		}
 		else
 		{
+			printt( "DEBUG: Taking old weapon and giving new one" )
 			if ( IsValid( heldOrdnance ) )
 				player.TakeWeaponByEntNow( heldOrdnance )
 			
 			ordnance = player.GiveWeapon( item, WEAPON_INVENTORY_SLOT_ANTI_TITAN, ["survival_finite_ordnance"] )
 		}
 
+		printt( "DEBUG: Ordnance valid?", IsValid( ordnance ) )
 		if ( IsValid( ordnance ) )
 		{
 			PlayPickupSound( player, item )
 
 			int count = minint( SURVIVAL_CountItemsInInventory( player, item ), ordnance.GetWeaponPrimaryClipCountMax() )
 			ordnance.SetWeaponPrimaryClipCount( count )
+			printt( "DEBUG: Set clip count to:", count )
 			if ( ordnance.GetWeaponSettingInt( eWeaponVar.ammo_stockpile_max ) > 0 )
 			{
 				int numStockpileToAdd = SURVIVAL_CountItemsInInventory( player, item ) - count
@@ -4732,6 +4786,12 @@ void function SURVIVAL_EquipOrdnanceFromInventory( entity player, string item, b
 
 			if ( !(player in file.hasEquippedOrdnanceEver) )
 				file.hasEquippedOrdnanceEver[ player ] <- true
+				
+			printt( "DEBUG: Successfully equipped", item )
+		}
+		else
+		{
+			printt( "DEBUG: FAILED to give weapon!" )
 		}
 	}
 }
@@ -4975,7 +5035,8 @@ void function Delayed_TryReplaceOrdnance( entity player, entity offhandWeapon, b
 
 	if ( itemCount <= 0 )
 	{
-		autoEquip = autoEquip && offhandWeapon.GetWeaponClassName() != "mp_ability_mobile_respawn_beacon" && offhandWeapon.GetWeaponClassName() != "mp_ability_void_ring"
+		// Removed void ring from the exclusion list to allow auto-equip
+		autoEquip = autoEquip && offhandWeapon.GetWeaponClassName() != "mp_ability_mobile_respawn_beacon"
 
 		if ( autoEquip )
 		{
@@ -5878,7 +5939,7 @@ void function SURVIVAL_RemoveOffhandFromInventory( entity player, entity offhand
 		return
 
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( lootRef )
-	if ( data.lootType == eLootType.ORDNANCE )
+	if ( data.lootType == eLootType.ORDNANCE || data.lootType == eLootType.SURVIVAL )
 	{
 		SURVIVAL_RemoveFromPlayerInventory( player, lootRef )
 		StatsHook_PlayerUsedResource( player, offhandWeapon, lootRef )

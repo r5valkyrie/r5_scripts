@@ -2900,7 +2900,7 @@ array<string> function SURVIVAL_GetAllPlayerOrdnance( entity player )
 	foreach ( invItem in playerInventory )
 	{
 		LootData data = SURVIVAL_Loot_GetLootDataByIndex( invItem.type )
-		if ( data.lootType != eLootType.ORDNANCE )
+		if ( data.lootType != eLootType.ORDNANCE && data.lootType != eLootType.SURVIVAL )
 			continue
 
 		if ( data.conditional )

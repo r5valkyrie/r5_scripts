@@ -205,7 +205,7 @@ global enum eLootType
 	DATAKNIFE
 	SHIPKEYCARD
 	RESOURCE
-	GADGET
+	SURVIVAL
 	MARVIN_ARM
 
 	_count
@@ -1310,7 +1310,7 @@ int function SURVIVAL_Loot_GetLootTypeFromString( string lootTypeString )
 			return eLootType.RESOURCE
 			
 		case "gadget":
-			return eLootType.GADGET
+			return eLootType.SURVIVAL
 			
 		case "marvin_arm":
 			return eLootType.MARVIN_ARM
@@ -1371,10 +1371,12 @@ LootData function SURVIVAL_Loot_GetLootDataByIndex( int index )
 	return file.lootData[ file.lootIndexToString[ index ] ]
 	#endif
 }
+
 bool function SURVIVAL_Loot_IsLootIndexValid( int index )
 {
 	return ( index in file.lootIndexToString )
 }
+
 LootData function SURVIVAL_Loot_GetLootDataByRef( string ref )
 {
 	if ( ref == "" || !(ref in file.lootData) )
