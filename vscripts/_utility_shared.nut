@@ -1423,6 +1423,10 @@ int function GetGameState()
 
 bool function GamePlaying()
 {
+	// Allow firing range to count as playing for equipping gadgets and testing
+	if ( Playlist() == ePlaylists.survival_firingrange )
+		return true
+	
 	return GetGameState() == eGameState.Playing
 }
 
