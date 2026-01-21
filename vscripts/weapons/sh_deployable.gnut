@@ -1,9 +1,17 @@
 global const DEPLOYABLE_THROW_POWER = 500.0
+global const DEPLOYABLE_BOUNCE_DOT = 0.707106781187
 
 global function ThrowDeployable
 global function ThrowDeployable_Retail
 global function OnProjectileCollision_weapon_deployable
 global function OnProjectileCollision_weapon_deployable_crypto
+global function OnProjectileCollision_weapon_deployable_noVehicles
+global enum eDeployableFlags
+{
+	VEHICLES_NO_STICK			= (1 << 0),
+	VEHICLES_LARGE_DEPLOYABLE	= (1 << 1),
+	_count				= 2
+}
 
 entity function ThrowDeployable( entity weapon, WeaponPrimaryAttackParams attackParams, float throwPower, void functionref(entity) deployFunc, vector ornull angularVelocity = null )
 {
@@ -137,6 +145,30 @@ vector function GetDeployableThrowStartPos( entity player, vector baseStartPos )
 	return attackPos
 }
 
+void function OnProjectileCollision_weapon_deployableInternal( entity projectile, DeployableCollisionParams cp )
+{
+	#if SERVER
+		if ( projectile.proj.isPlanted )
+			return
+
+		//Deployable_CountBouncesAndRefund( projectile, cp )
+	#endif
+
+	PlantStickyEntityThatBouncesOffWalls_Retail( projectile, cp, DEPLOYABLE_BOUNCE_DOT, <90, 0, 0> )
+}
+
+void function OnProjectileCollision_weapon_deployableInternal_Retail( entity projectile, DeployableCollisionParams cp )
+{
+	#if SERVER
+		if ( projectile.proj.isPlanted )
+			return
+
+		//Deployable_CountBouncesAndRefund( projectile, cp )
+	#endif
+
+	PlantStickyEntityThatBouncesOffWalls_Retail( projectile, cp, DEPLOYABLE_BOUNCE_DOT, <90, 0, 0> )
+}
+
 vector function GetDeployableThrowVelocity( entity player, vector baseAngles, float throwPower )
 {
 	vector forward = AnglesToForward( baseAngles )
@@ -193,6 +225,19 @@ void function OnProjectileCollision_weapon_deployable_crypto( entity projectile,
 	}
 
 	bool result = PlantStickyEntity( projectile, collisionParams, <0,0,0> )
+}
+
+void function OnProjectileCollision_weapon_deployable_noVehicles( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical )
+{
+	DeployableCollisionParams cp
+	cp.pos = pos
+	cp.normal = normal
+	cp.hitEnt = hitEnt
+	cp.hitBox = hitBox
+	cp.isCritical = isCritical
+	cp.deployableFlags = eDeployableFlags.VEHICLES_NO_STICK
+
+	OnProjectileCollision_weapon_deployableInternal_Retail( projectile, cp )
 }
 
 #if SERVER

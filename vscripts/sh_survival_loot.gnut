@@ -1184,6 +1184,8 @@ string function SURVIVAL_Loot_GetDetailTypeStringFromRef( string ref )
 		case eLootType.ORDNANCE:
 			if ( lootData.ref == "mp_ability_mobile_respawn_beacon" )
 				return "#ITEM_TYPE_SPECIAL"
+			if ( lootData.ref == "mp_ability_void_ring" )
+				return "#ITEM_TYPE_SPECIAL"
 			return "#ITEM_TYPE_THROWN"
 		case eLootType.ATTACHMENT:
 			array<string> attachPoints = GetAttachPointsForAttachment( lootData.ref )
@@ -1349,7 +1351,12 @@ void function SURVIVAL_Loot_RegisterConditionalCheck( string ref, bool functionr
 
 bool function SURVIVAL_Loot_RunConditionalCheck( string ref, entity player )
 {
-	Assert( ref in file.conditionalLootChecks, "Loot ref does not have registered conditional function!" )
+	if ( !( ref in file.conditionalLootChecks ) )
+	{
+		Warning( "Loot ref does not have registered conditional function: " + ref )
+		return true
+	}
+
 	return file.conditionalLootChecks[ ref ]( ref, player )
 }
 

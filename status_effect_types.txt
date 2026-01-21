@@ -143,5 +143,6 @@
 	in_black_hole_field
 	seer_highlight_target
 	seer_detected
+	in_void_ring
 /////////////////////////////
 //}

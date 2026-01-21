@@ -220,6 +220,7 @@ void function SV_CL_Init()
 	MpAbilitySharedSilence_Init()
 	MpAbilityRevenantDeathTotem_Init()
 	MobileRespawnBeacon_Init()
+	VOID_RING_Init()
 	PanicButton_Init()
 	WeaponMastiff_Init()
 

@@ -4975,7 +4975,7 @@ void function Delayed_TryReplaceOrdnance( entity player, entity offhandWeapon, b
 
 	if ( itemCount <= 0 )
 	{
-		autoEquip = autoEquip && offhandWeapon.GetWeaponClassName() != "mp_ability_mobile_respawn_beacon"
+		autoEquip = autoEquip && offhandWeapon.GetWeaponClassName() != "mp_ability_mobile_respawn_beacon" && offhandWeapon.GetWeaponClassName() != "mp_ability_void_ring"
 
 		if ( autoEquip )
 		{

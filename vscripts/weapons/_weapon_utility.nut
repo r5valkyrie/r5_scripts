@@ -20,6 +20,7 @@ global function IsPilotShotgunWeapon
 global function PlantStickyEntity
 global function PlantStickyEntity_Retail
 global function PlantStickyEntityThatBouncesOffWalls
+global function PlantStickyEntityThatBouncesOffWalls_Retail
 global function PlantStickyEntityOnWorldThatBouncesOffWalls
 global function PlantStickyGrenade
 global function PlantSuperStickyGrenade
@@ -1277,6 +1278,37 @@ bool function PlantStickyEntityThatBouncesOffWalls( entity ent, table collisionP
 	return PlantStickyEntity( ent, collisionParams, angleOffset )
 }
 
+bool function PlantStickyEntityThatBouncesOffWalls_Retail( entity projectile, DeployableCollisionParams cp, float bounceDot, vector angleOffset = ZERO_VECTOR )
+{
+	float dot = cp.normal.Dot( UP_VECTOR )
+	if ( dot < bounceDot )
+	{
+		#if SERVER
+			if ( projectile.IsProjectile() )
+			{
+				if ( projectile.proj.bounceFunc != null )
+					projectile.proj.bounceFunc( projectile, cp )
+				if ( projectile.proj.projectileForceBounceWithinDist > 0.0 && projectile.proj.projectileFirstProperBouncePos == null )
+					projectile.proj.projectileFirstProperBouncePos = cp.pos
+			}
+		#endif
+		return false
+	}
+
+	#if SERVER
+		if ( projectile.IsProjectile()
+		&& (projectile.proj.projectileForceBounceWithinDist > 0.0)
+		&& (projectile.proj.projectileFirstProperBouncePos != null)
+		&& (Distance( projectile.GetOrigin(), expect vector( projectile.proj.projectileFirstProperBouncePos ) ) < projectile.proj.projectileForceBounceWithinDist)
+		&& (projectile.proj.projectileBounceCount < 8)
+		&& (Length( projectile.GetVelocity() ) > 1.0) )
+		{
+			return false
+		}
+	#endif
+
+	return PlantStickyEntity_Retail( projectile, cp, angleOffset )
+}
 
 bool function PlantStickyEntity( entity ent, table collisionParams, vector angleOffset = <0, 0, 0> )
 {

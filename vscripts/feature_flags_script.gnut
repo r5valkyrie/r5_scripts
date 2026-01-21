@@ -38,6 +38,7 @@ global const table<string, bool> FEATURE_FLAGS_TBL = {
 	HAS_WARP_GATES          = true,
 	HAS_RANDOMIZED_TRAINING = true,
 	HAS_MOBILE_RESPAWN 		= true,
+	HAS_LOOT_VOID_RING 		= true,
 	HAS_EVOLVING_ARMOR 		= false,
 	HAS_VALK 				= true,
 	HAS_GAMEMODE_RING_COLLAPSE 	= true,
@@ -47,7 +48,7 @@ global const table<string, bool> FEATURE_FLAGS_TBL = {
 	HAS_GAMEMODE_ARENAS 		= true,
 	HAS_HOVER_VEHICLE 			= true,
 	HAS_CRAFTING 				= true,
-	HAS_LOOT_VOID_RING 			= true,
+	HAS_VOID_RING 			= true,
 }
 
 

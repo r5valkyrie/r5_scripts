@@ -1499,14 +1499,17 @@ global struct ServerProjectileStruct
 	entity inflictorOverride
 	bool hasBouncedOffVortex = false
 	bool isPlanted = false
+	string ownerStringDebug
+	vector projectileBounceNormal
 
 	bool ignoreOwnerForPlaceStickyEnt = false
 
 	// r5 stuff
 	vector savedDir
 	float savedShotTime
-	string ownerStringDebug
+	int refundAmount = 0
 	vector ownerLocationDebug
+	
 
 	vector                  savedVel
 	// vector                  savedRelativeDelta

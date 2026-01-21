@@ -2,6 +2,7 @@ global function Sh_ArenaDeathField_Init
 global function GetDeathFieldStage
 global function GetDeathfieldFinalCenter
 global function SURVIVAL_GetDeathField
+global function Survival_GetNumDeathfieldStages
 
 #if SERVER && DEVELOPER
 global function DEV_DrawCircleLocations
@@ -2653,4 +2654,9 @@ void function DisplayHolsterWeaponHint()
 entity function SURVIVAL_GetDeathField()
 {
 	return file.deathField
+}
+
+int function Survival_GetNumDeathfieldStages()
+{
+	return file.deathFieldStages.len()
 }
