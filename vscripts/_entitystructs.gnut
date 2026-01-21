@@ -600,6 +600,8 @@ global struct ServerPlayerStruct
 	bool 						demigod
 	// bool						partyMember
 
+	int         bubbleBunkerStatusEffectId = -1
+
 	bool[OFFHAND_COUNT]			offhandSlotLocked = [ false, false, false, false, false, false ]
 	float[OFFHAND_COUNT]		lastPilotOffhandUseTime = [ -99.0, -99.0, -99.0, -99.0, -99.0, -99.0 ]
 	float[OFFHAND_COUNT]		lastPilotOffhandChargeFrac = [ -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 ]
