@@ -306,7 +306,7 @@ void function SetupDefaultDevCommandsMP()
 			SetupDevMenu( "Survival: Attachments", SetDevMenu_SurvivalLoot, "attachment" )
 			string GearsString = "helmet armor backpack incapshield"
 			SetupDevMenu( "Survival: Gears", SetDevMenu_SurvivalLoot, GearsString )
-			string itemsString = "ordnance ammo health custom_pickup data_knife ship_keycard marvin_arm"
+			string itemsString = "ordnance ammo health custom_pickup data_knife ship_keycard marvin_arm gadget"
 			SetupDevMenu( "Survival: Consumables", SetDevMenu_SurvivalLoot, itemsString )
 			SetupDevCommand( "", "give blank" )
 		}
