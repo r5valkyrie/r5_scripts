@@ -1504,17 +1504,17 @@ void function SetBodyGroupVisibilityForDragRevive( entity useTarget, bool visibl
 
 		switch( characterName )
 		{
-			// case "character_ash":
-				// bodyGroup = "sword_grp"
-				// break
+			case "character_ash":
+				bodyGroup = "sword_grp"
+				break
 
-			// case "character_fuse":
-				// bodyGroup = "launcher"
-				// break
+			case "character_fuse":
+				bodyGroup = "launcher"
+				break
 
-			// case "character_newcastle":
-				// bodyGroup = "Shield"
-				// break
+			case "character_newcastle":
+				bodyGroup = "shield"
+				break
 
 			case "character_rampart":
 				bodyGroup = "turret"
