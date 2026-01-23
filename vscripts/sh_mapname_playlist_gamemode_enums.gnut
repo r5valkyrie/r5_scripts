@@ -170,7 +170,12 @@ const array<int> gamemode1v1Types =
 
 ]
 
-const PRINT_GAMEMODE_DEBUGS = true
+#if DEVELOPER
+	const PRINT_GAMEMODE_DEBUGS = true
+#else
+	const PRINT_GAMEMODE_DEBUGS = false
+#endif
+
 //////////////////////////////////////////
 // 			internal functions			//
 //////////////////////////////////////////

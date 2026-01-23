@@ -679,9 +679,9 @@ void function UIMusicUpdate( bool wasManualMusicPackChange = false )
 			SetActiveMusicPack( null )
 
 		SetActiveMusicContext( desiredMusicContext )
-
+		#if DEVELOPER
 		printf( "Menu music update: %s (%s) -> %s (%s) (%s)", currentMusicTrack, DEV_GetEnumStringSafe( "eMenuMusicContext", currentMusicContext ), desiredMusicTrack, DEV_GetEnumStringSafe( "eMenuMusicContext", desiredMusicContext ), changeIfDesiredMusicTrackIsDifferentEvenIfContextIsUnchanged ? "T" : "F" )
-
+		#endif
 		if ( desiredMusicTrack != currentMusicTrack )
 		{
 			foreach ( string soundName in WORKAROUND_UI_MUSIC_SOUND_LIST )

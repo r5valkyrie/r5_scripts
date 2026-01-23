@@ -431,7 +431,9 @@ void function OpenInGameMenu( var button )
 // levelname can be "" because the level to load isn't always known when the load screen starts
 bool function UICodeCallback_LevelLoadingStarted( string levelname )
 {
+	#if DEVELOPER
 	printt( "UICodeCallback_LevelLoadingStarted: " + levelname )
+	#endif
 
 	CloseAllMenus()
 
@@ -492,9 +494,9 @@ void function UICodeCallback_LevelLoadingFinished( bool error )
 }
 
 void function UICodeCallback_LevelInit( string levelname )
-{	
+{
 	if ( GetCurrentPlaylistVarBool( "random_loadscreen", false ) )
-	{	
+	{
 		//SetCustomLoadScreen( $"loadscreens/custom/loadscreen_r5r_community_01" )
 	}
 }
@@ -518,7 +520,7 @@ void function UICodeCallback_FullyConnected( string levelname )
 	//		InitStatsTables()
 	//	}
 	//}
-	
+
 	PlayLists_Mapnames_Gamemodes_Init()
 	InitXPData()
 
@@ -572,7 +574,7 @@ void function UICodeCallback_FullyConnected( string levelname )
 
 	//InitItems()
 	ModSystem_RunCallbacks()//MOD SYSTEM CALLBACK
-	
+
 	SURVIVAL_Loot_All_InitShared()
 	//ShWeaponXP_Init()
 	//ShFactionXP_Init()
@@ -673,9 +675,9 @@ void function UICodeCallback_LevelShutdown()
 	UiNewnessQueries_LevelShutdown()
 
 	TEMP_CircularReferenceCleanup()
-	
+
 	#if TRACKER && HAS_TRACKER_DLL //(mk): what was I doing here..
-	//TODO: state !ready waitframe 
+	//TODO: state !ready waitframe
 	//while( SQ_GetLogstate() )
 	#endif
 }
@@ -1058,17 +1060,17 @@ void function CloseAllMenusExcept( array<var> targetMenus )
 {
 	int breakPoint = targetMenus.len()
 	var currentMenu
-	
+
 	if( uiGlobal.menuStack.len() == 0 )
 		return
-			
+
 	for( ; ; )
-	{		
+	{
 		currentMenu = GetActiveMenu()
-			
+
 		if( !targetMenus.contains( currentMenu ) )
 			CloseActiveMenu( true, false )
-		
+
 		if( uiGlobal.menuStack.len() <= breakPoint )
 			break
 	}
@@ -1080,7 +1082,7 @@ void function CloseAllMenusExcept( array<var> targetMenus )
 	// {
 		// if ( menuDef.menu )
 		// {
-			// if( !targetMenus.contains( menuDef.menu ) )	
+			// if( !targetMenus.contains( menuDef.menu ) )
 				// CloseMenu( menuDef.menu ) //CloseMenuWrapper( menuDef.menu )
 		// }
 	// }
@@ -1570,51 +1572,51 @@ void function UILevelLoadCallback()
 	if( Gamemode() == eGamemodes.fs_aimtrainer)
 	{
 		var weaponselector = GetMenu("FRChallengesSettingsWpnSelector")
-		
-		UIPos wepSelectorBasePos = REPLACEHud_GetBasePos( weaponselector )		
+
+		UIPos wepSelectorBasePos = REPLACEHud_GetBasePos( weaponselector )
 		Hud_SetPos( weaponselector, wepSelectorBasePos.x, wepSelectorBasePos.y )
-		
+
 		var wepmenu = Hud_GetChild( weaponselector, "Title" )
 		Hud_SetColor( wepmenu, 191, 13, 13, 255 )
-		
+
 		UIPos wepmenuBasePos = REPLACEHud_GetBasePos( wepmenu )
-		Hud_SetPos( wepmenu, wepmenuBasePos.x, wepmenuBasePos.y )	
+		Hud_SetPos( wepmenu, wepmenuBasePos.x, wepmenuBasePos.y )
 		Hud_SetText( wepmenu, "FLOWSTATE AIM TRAINER" )
-		
+
 		var titletext = Hud_GetChild( weaponselector, "TitleWeaponSelector" )
 		Hud_SetColor( titletext, 252, 198, 3, 255 )
 	}
 	else if( g_bIs1v1GameType() )
-	{	
+	{
 		var weaponselector = GetMenu("FRChallengesSettingsWpnSelector")
-		
-		UIPos wepSelectorBasePos = REPLACEHud_GetBasePos( weaponselector )		
+
+		UIPos wepSelectorBasePos = REPLACEHud_GetBasePos( weaponselector )
 		Hud_SetPos( weaponselector, wepSelectorBasePos.x, wepSelectorBasePos.y + 100 )
-		
+
 		var wepmenu = Hud_GetChild( weaponselector, "Title" )
 		Hud_SetColor( wepmenu, 171, 132, 14, 220 )
-		
+
 		UIPos wepmenuBasePos = REPLACEHud_GetBasePos( wepmenu )
-		Hud_SetPos( wepmenu, wepmenuBasePos.x - 30, wepmenuBasePos.y - 40 )	
+		Hud_SetPos( wepmenu, wepmenuBasePos.x - 30, wepmenuBasePos.y - 40 )
 		Hud_SetText( wepmenu, "Flowstate 1v1" )
-		
+
 		var titletext = Hud_GetChild( weaponselector, "TitleWeaponSelector" )
 		Hud_SetColor( titletext, 180, 114, 41, 255 )
 	}
 	else if( Playlist() == ePlaylists.fs_movementrecorder )
 	{
 		var weaponselector = GetMenu("FRChallengesSettingsWpnSelector")
-		
-		UIPos wepSelectorBasePos = REPLACEHud_GetBasePos( weaponselector )		
+
+		UIPos wepSelectorBasePos = REPLACEHud_GetBasePos( weaponselector )
 		Hud_SetPos( weaponselector, wepSelectorBasePos.x, wepSelectorBasePos.y + 100 )
-		
+
 		var wepmenu = Hud_GetChild( weaponselector, "Title" )
 		Hud_SetColor( wepmenu, 171, 132, 14, 220 )
-		
+
 		UIPos wepmenuBasePos = REPLACEHud_GetBasePos( wepmenu )
-		Hud_SetPos( wepmenu, wepmenuBasePos.x - 30, wepmenuBasePos.y - 40 )	
+		Hud_SetPos( wepmenu, wepmenuBasePos.x - 30, wepmenuBasePos.y - 40 )
 		Hud_SetText( wepmenu, "FS Movement Recorder" )
-		
+
 		var titletext = Hud_GetChild( weaponselector, "TitleWeaponSelector" )
 		Hud_SetColor( titletext, 180, 114, 41, 255 )
 	}
@@ -1647,7 +1649,7 @@ void function InitMenus()
 
 	//Custom Weapon Mods Menu
 	var weaponmodsmenu = AddMenu( "WeaponMods", $"scripts/resource/ui/menus/weaponmods.menu", InitWeaponModsMenu )
-	
+
 	var lobbyMenu = AddMenu( "LobbyMenu", $"scripts/resource/ui/menus/lobby.menu", InitLobbyMenu )
 	AddPanel( lobbyMenu, "PlayPanel", InitPlayPanel )
 	AddPanel( lobbyMenu, "CharactersPanel", InitCharactersPanel )
@@ -1811,9 +1813,9 @@ void function InitMenus()
 	AddMenu( "StatsSeasonSelectPopUp", $"scripts/resource/ui/menus/dialog_player_stats_season_select.menu", InitSeasonSelectPopUp )
 
 	AddMenu( "DevMenu", $"scripts/resource/ui/menus/dev.menu", InitDevMenu, "Dev" )
-	
+
 	AddMenu( "SERVER_MOTD", $"scripts/resource/ui/menus/dialogs/server_motd.menu", Init_Server_MOTD, "Server MOTD" )
-	
+
 	InitTabs()
 	InitSurveys()
 	ShMenuModels_UIInit()
@@ -2530,7 +2532,7 @@ void function OpenDevMenu( var button )
 }
 
 void function OpenModelMenu (string equipped) {
-	
+
 	SetTopLevelCustomizeContext(GetAllWeaponCategories()[0])
 	CustomizeModelMenus_Equip(equipped)
 	AdvanceMenu( GetMenu( "CustomizeModelMenu" ) )
@@ -2642,10 +2644,10 @@ bool function IsDialogOnlyActiveMenu()
 void function AddUICallback_OnInitMenus( void functionref() callbackFunc )
 {
 	Assert( !file.OnInitMenusCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnPartyUpdated" )
-	
+
 	if( file.OnInitMenusCallbacks.contains( callbackFunc ) )
 		return
-	
+
 	file.OnInitMenusCallbacks.append( callbackFunc )
 }
 

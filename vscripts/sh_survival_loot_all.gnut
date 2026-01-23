@@ -589,6 +589,10 @@ void function SURVIVAL_Loot_RegFromDataTable(var dt)
 			#endif
 		}
 
+		#if DEVELOPER
+			printt( "Registered loot item: " + data.ref + " (type: " + data.lootType + ", tier: " + data.tier + ")" )
+		#endif
+
 		#if !UI
 			if ( data.model != $"" )
 				PrecacheModel( data.model )
