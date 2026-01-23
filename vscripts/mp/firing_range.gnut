@@ -1125,8 +1125,13 @@ void function OnTeammateLoadoutSelectionChanged( EHI playerEHI, ItemFlavor unuse
 // Get All weapons, arange them in a table per ammo type
 void function FillWeaponTable()
 {
-	foreach ( string lootRef, LootData lootData in SURVIVAL_Loot_GetLootDataTable() )
+	// Use the same loot pool as v2/v4 system
+	array<string> weaponRefs = SURVIVAL_GetAllRefsInLootGroup("firing_range_all_weapons")
+	
+	foreach ( string ref in weaponRefs )
 	{
+		LootData lootData = SURVIVAL_Loot_GetLootDataByRef(ref)
+		
 		if ( lootData.lootType != eLootType.MAINWEAPON )
 			continue
 
