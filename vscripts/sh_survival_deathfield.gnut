@@ -43,7 +43,7 @@ global function ServerCallback_Survival_CreateBeaconWorldIcon
 global function SURVIVAL_AddCallback_OnDeathFieldStartShrink
 global function SURVIVAL_AddCallback_OnDeathFieldStopShrink
 global function UpdateSurveyBeaconHint
-
+global function ShouldShowDeathFieldEffects
 global function FS_Scenarios_OnRingCreated
 #endif
 
