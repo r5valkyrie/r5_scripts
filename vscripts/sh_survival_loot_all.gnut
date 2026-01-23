@@ -14,7 +14,6 @@ global function SURVIVAL_Loot_GetAttachmentType_Enum
 global function SURVIVAL_Loot_GetByTier
 global function SURVIVAL_Loot_GetSortedStringArrayFromSupportedAttachmentsString
 global function SURVIVAL_Loot_RegFromDataTable
-global function FS_HaloSurvival_GetRandomItemFromPool
 
 global function SURVIVAL_Loot_IsUniqueAmmoWeapon
 global function GetCustomHopupArray
@@ -325,21 +324,14 @@ void function SURVIVAL_Loot_All_InitShared()
 	file.disabledRefs.clear()
 	file.disabledRefs = split( GetCurrentPlaylistVarString( "survival_disabled_loot", " " ), " " )
 
-	if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
-	{
-		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/survival_loot_sdk_firingrange.rpak" ) )
-	} 
-	else
-	{
-		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/survival_loot_sdk.rpak" ) )
-		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/titanfall_loot_sdk.rpak" ) )
+	SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/survival_loot_sdk.rpak" ) )
+	SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/titanfall_loot_sdk.rpak" ) )
 		
-		foreach ( callbackFunc in file.lootDatatablesLoadedCallbacks ) //To load loot datatables from mods
-			callbackFunc()
+	foreach ( callbackFunc in file.lootDatatablesLoadedCallbacks ) //To load loot datatables from mods
+		callbackFunc()
 		
-		RegisterCustomWeapons() //JANU's Framework - Load custom items from playlist.
-		RegisterCustomModItems() //Items added from Mods. Similar to JANU's but from Mod Init scripts.
-	}
+	RegisterCustomWeapons() //JANU's Framework - Load custom items from playlist.
+	RegisterCustomModItems() //Items added from Mods. Similar to JANU's but from Mod Init scripts.
 
 	#if UI
 		RegisterSignal( "GatherFriendInfo" )
@@ -356,35 +348,11 @@ bool function IsEnabledForGroundLoot( string ref )
 	if(IsModItemExcludedFromGroundLoot(ref))
 		return false
 	
-	if( Playlist() == ePlaylists.fs_haloMod_survival )
-	{
-		switch( ref )
-		{
-			case "armor_pickup_lv2":
-			case "armor_pickup_lv3":
-			case "armor_pickup_lv5":
-			case "armor_pickup_lv6":
-			case "armor_pickup_lv7":
-			
-			return false
-		}
-	}
-	
 	return true
 }
 
 bool function IsNewLootEnabled( string ref )
-{
-	if( Playlist() == ePlaylists.fs_haloMod_survival )
-	{
-		switch( ref )
-		{
-			case "mp_weapon_energysword":
-
-			return false
-		}
-	}
-		
+{	
 	switch( ref )
 	{
 		case "armor_pickup_lv4_all_fast":
@@ -442,8 +410,6 @@ int function GetLockedSetFromName( string ref )
 void function SURVIVAL_Loot_RegFromDataTable(var dt)
 {
 	var attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk.rpak" )
-	if( Playlist() == ePlaylists.survival_firingrange ) 
-		attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk_firing_range.rpak" )
 	
 	int numRows = GetDatatableRowCount( dt )
 	for ( int i = 0; i < numRows; i++ )
@@ -1214,11 +1180,6 @@ void function CreateCustomHopup(CustomHopupData hopupData)
 table< string, LootData > function SURVIVAL_Loot_GetLootDataTable()
 {
 	return file.lootData
-}
-
-LootData function FS_HaloSurvival_GetRandomItemFromPool()
-{
-	return file.lootData[ file.lootIndexToString[ RandomIntRangeInclusive( 0, file.lootIndexToString.len() - 1 ) ] ]
 }
 
 array<LootData> function SURVIVAL_Loot_GetByType( int lootType )
