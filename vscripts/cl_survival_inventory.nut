@@ -208,7 +208,7 @@ void function ResetInventoryMenuInternal( entity player )
 void function Survival_UseInventoryItem( string ref, string secondRef )
 {
 	printt( "CLIENT DEBUG: Survival_UseInventoryItem called for:", ref )
-	
+
 	if ( GetLocalViewPlayer() != GetLocalClientPlayer() )
 	{
 		printt( "CLIENT DEBUG: LocalViewPlayer != LocalClientPlayer" )
@@ -217,7 +217,7 @@ void function Survival_UseInventoryItem( string ref, string secondRef )
 
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
 	int type      = data.lootType
-	
+
 	printt( "CLIENT DEBUG: Loot type:", type, "GADGET enum:", eLootType.SURVIVAL, "ORDNANCE enum:", eLootType.ORDNANCE )
 
 	if ( ref in file.itemUseFunctions )
@@ -2399,9 +2399,6 @@ void function UpdateHealHint( entity player )
 
 bool function ShouldShowHealHint( entity player )
 {
-	if( Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival )
-		return false
-
 	if ( !IsAlive( player ) )
 		return false
 
@@ -2477,7 +2474,7 @@ void function UseHealthPickupRefFromInventory( entity player, string ref )
 void function EquipOrdnance( entity player, string ref )
 {
 	printt( "CLIENT DEBUG: EquipOrdnance called for:", ref )
-	
+
 	if ( player.IsTitan() )
 	{
 		printt( "CLIENT DEBUG: Player is titan" )

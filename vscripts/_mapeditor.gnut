@@ -289,51 +289,6 @@ entity function MapEditor_CreateProp( asset a, vector pos, vector ang, bool mant
     e.e.gameModeId = realm
     e.SetModelScale( scale )
 
-    #if IS_FLOWSTATE_SCRIPT
-        // e.kv.contents = CONTENTS_PLAYERCLIP | CONTENTS_BULLETCLIP | CONTENTS_MONSTERCLIP | CONTENTS_SOLID | CONTENTS_PHYSICSCLIP
-		
-		// if( a == $"mdl/props/octane_jump_pad/octane_jump_pad.rmdl" )
-			// e.SetScriptName( "map_editor_jumppad" )
-		
-		// if( Flowstate_IsHaloMode() )
-		// {
-            // if( a == $"mdl/imc_base/imc_fan_large_case_01.rmdl" )
-                // thread HaloMod_Cyberdyne_CreateFanPusher( e.GetOrigin() + Vector( -60, 0, 15 ), e.GetAngles() )
-		// }
-        // if( Gamemode() == eGamemodes.fs_duckhunt )
-        // {
-            // if( a == $"mdl/foliage/plant_leafy_02.rmdl" && IsValid( e ) || a == $"mdl/foliage/plant_tropical_green_large_02.rmdl" && IsValid( e ) )
-            // {
-                // e.kv.solid = 0
-            // }
-            // else e.kv.solid = 6
-    
-            // if( a == $"mdl/imc_base/imc_fan_large_case_01.rmdl" )
-                // CreateFanPusher( e.GetOrigin() + Vector( 0, 0, 56 ), e.GetAngles() )
-    
-            // if( a == $"mdl/industrial/traffic_cone_01.rmdl" )
-            // {
-                // SpawnKillerWalls( e.GetOrigin() )
-                // e.Destroy()
-                // return null
-            // }
-    
-            // if( a == $"mdl/industrial/traffic_tube_01.rmdl" )
-            // {
-                // SpawnMovingPlatform( e.GetOrigin() )
-                // e.Destroy()
-                // return null		
-            // }
-    
-            // if( a == $"mdl/industrial/traffic_barrel_01.rmdl" )
-            // {
-                // SpawnMovingPlatformWithFanPusher( e.GetOrigin() )
-                // e.Destroy()
-                // return null		
-            // }
-        // }
-    #endif
-
     if( addToArray ) MapEditorEnts.append( e )
     
     return e

@@ -104,7 +104,6 @@ void function Grenade_FileInit()
 	    //AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_proximity_mine, ProxMine_Triggered )
 		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_thermite_grenade, Thermite_DamagedPlayerOrNPC )
 		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_frag_grenade, Frag_DamagedPlayerOrNPC )
-		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_frag_grenade_halomod, Frag_DamagedPlayerOrNPC )
 
 		level._empForcedCallbacks[eDamageSourceId.mp_weapon_grenade_emp] <- true
 		//level._empForcedCallbacks[eDamageSourceId.mp_weapon_arc_blade] <- true

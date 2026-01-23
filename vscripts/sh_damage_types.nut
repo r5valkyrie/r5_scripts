@@ -346,17 +346,7 @@ global enum eDamageSourceId
 	//custom
 	nextbot
 	mp_weapon_raygun
-	mp_weapon_haloshotgun
-	mp_weapon_halosmg
-	mp_weapon_halomagnum
-	mp_weapon_halodmr
-	mp_weapon_halobattlerifle
-	mp_weapon_haloassaultrifle
-	mp_weapon_halosniperrifle
-	mp_weapon_haloneedler
 	mp_weapon_energysword
-	mp_weapon_frag_grenade_halomod
-	mp_weapon_plasma_grenade_halomod
 	mp_weapon_oddball_primary
 	melee_oddball
 	mp_weapon_bubble_bunker_master_chief

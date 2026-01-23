@@ -105,10 +105,6 @@ table< int, string > healthKitResultStrings =
 
 //todo move this to a better place. Cafe
 global const array<int> nonCharacterDialoguesModes = [
-	ePlaylists.fs_haloMod,
-	ePlaylists.fs_haloMod_oddball,
-	ePlaylists.fs_haloMod_ctf,
-	ePlaylists.fs_haloMod_survival,
 	ePlaylists.fs_movementgym
 ]
 

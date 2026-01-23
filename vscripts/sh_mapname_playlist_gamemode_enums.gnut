@@ -42,7 +42,6 @@ global function Flowstate_PassivesAllowedForMode
 global function Flowstate_IsTrackerSupportedMode
 global function Flowstate_PlayerDoesRespawn
 global function Flowstate_MapHasTrain
-global function Flowstate_IsHaloMode
 global function Flowstate_Is4DMode
 global function Flowstate_ModeDisablesRagdolls
 
@@ -70,16 +69,13 @@ global enum ePlaylists
 	custom_ctf, //13
 	fs_lgduels_1v1, //14
 	fs_scenarios, //15
-	fs_haloMod_oddball, //16
-	fs_dm_fast_instagib, //17
+	fs_dm_fast_instagib, //16
 	fs_snd, //18
 	SURVIVAL, //19
 	fs_dm_oddball, //20
 	fs_fallingforever, //21
 	survival_firingrange, //22
-	fs_haloMod_ctf, //23
-	fs_haloMod, //24
-	fs_aimtrainer, //25
+	fs_aimtrainer, //23
 	menufall, //26
 	flowstate_pkknockback, //27
 	fs_movementrecorder, //28
@@ -102,8 +98,7 @@ global enum ePlaylists
 	fs_4d, //45
 	fs_realistic_ttv, //45
 	fs_1v1_coaching, //46
-	fs_haloMod_survival, //47
-	fs_strafeitmovementmappractice, //48
+	fs_strafeitmovementmappractice, //47
 	fs_spieslegends, //49,
 	fs_knockbackknockout, //50
 	fs_onlyup, //51
@@ -429,9 +424,8 @@ void function AllModeConditionals_Init()
 	PlayerRespawnModes_Init()
 	MapHasTrain_Init()
 	GamemodeHasSinglePlayerChampion()
-	IsHaloGamemode_Init()
 	Is4DGamemode_Init()
-	RagdollsDisabled_Init() //must be after IsHaloGamemode_Init()
+	RagdollsDisabled_Init()
 }
 
 
@@ -447,7 +441,7 @@ struct
 	bool mapHasTrain			= false
 	bool bSinglePlayerChampion	= false
 	bool dissolveDrops			= false
-	bool bIsHaloGamemode		= false
+
 	bool bRagdollsDisabled		= false
 	bool is4DMode				= false
 	
@@ -517,9 +511,6 @@ void function TrackerSupportedMode_Init()
 		ePlaylists.fs_scenarios,
 		ePlaylists.survival,
 		ePlaylists.SURVIVAL,
-		ePlaylists.fs_haloMod,
-		ePlaylists.fs_haloMod_oddball,
-		ePlaylists.fs_haloMod_ctf,
 		ePlaylists.survival_solos,
 		ePlaylists.fs_dm_fast_instagib,
 		ePlaylists.fs_snd,
@@ -603,19 +594,7 @@ void function GamemodeHasSinglePlayerChampion()
 	modeSettings.bSinglePlayerChampion = singlePlayerChampionPlaylists.contains( Playlist() )
 }
 
-void function IsHaloGamemode_Init()
-{
-	const array<int> haloPlaylists =
-	[
-		ePlaylists.fs_haloMod,
-		ePlaylists.fs_haloMod_ctf,
-		ePlaylists.fs_haloMod_oddball,
-		ePlaylists.fs_haloMod_survival
-	]
-	
-	bool result = GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) || haloPlaylists.contains( Playlist() )
-	modeSettings.bIsHaloGamemode = result
-}
+
 
 void function Is4DGamemode_Init()
 {
@@ -632,7 +611,7 @@ void function RagdollsDisabled_Init()
 		ePlaylists.fs_lgduels_1v1	
 	]
 	
-	bool result = Flowstate_IsHaloMode() || playlistDisablesRagdolls.contains( Playlist() )
+	bool result = playlistDisablesRagdolls.contains( Playlist() )
 	modeSettings.bRagdollsDisabled = result
 }
 
@@ -677,10 +656,7 @@ bool function g_bSinglePlayerChampion()
 	return modeSettings.bSinglePlayerChampion
 }
 
-bool function Flowstate_IsHaloMode()
-{
-	return modeSettings.bIsHaloGamemode
-}
+
 
 bool function Flowstate_ModeDisablesRagdolls()
 {

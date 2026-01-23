@@ -606,14 +606,6 @@ void function CodeCallback_OnMeleeStartActivity( entity attacker, entity meleeAt
 		Assert( attacker.PlayerMelee_IsAttackActive() )
 	else if ( !IsValid( attacker ) || !IsValid( meleeAttackWeapon ) || !attacker.PlayerMelee_IsAttackActive() ) 
 		return // todo(dw): workaround for R5DEV-53982
-
-	#if CLIENT
-	if( Flowstate_IsHaloMode() )
-	{
-		FS_ForceDestroyCustomAdsOverlay()
-		GetLocalClientPlayer().ClientCommand( "-zoom" )
-	}
-	#endif
 	
 	#if SERVER
 	const float STUN_EFFECT_CUTOFF = 0.05
@@ -621,9 +613,6 @@ void function CodeCallback_OnMeleeStartActivity( entity attacker, entity meleeAt
 	bool movestunBlocked = (movestunEffect > STUN_EFFECT_CUTOFF)
 	if ( !movestunBlocked )
 	{
-		// if( meleeAttackWeapon.GetWeaponClassName() == "melee_titan_sword" && !FS_TitanSword_ModsShouldTriggerLunge( attacker, meleeAttackWeapon ) )
-			// return
-
 		entity lungeTarget = GetMeleeAttackLungeTarget( attacker, meleeAttackWeapon )
 		if ( IsValid( lungeTarget ) && lungeTarget.IsPlayer() && lungeTarget.DoesShareRealms( attacker ) || IsValid( lungeTarget ) && lungeTarget.IsNPC() && lungeTarget.DoesShareRealms( attacker ))
 		{

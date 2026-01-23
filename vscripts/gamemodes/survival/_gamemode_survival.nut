@@ -198,45 +198,6 @@ void function GamemodeSurvival_Init()
 
 	if( GetCurrentPlaylistVarBool( "deathfield_starts_in_prematch", false ) )
 		thread SURVIVAL_RunArenaDeathField()
-
-	// Halo audios, make callback and move when fixed
-	// if( Playlist() == ePlaylists.fs_haloMod_survival )
-	// {
-		// BannerAssets_SetAllGroupsFunc
-		// (
-			// void function()
-			// {
-				// BannerAssets_RegisterAudioGroup
-				// (
-					// "halo_audio",
-					// false //(audio interruptable, false = queued for audio from this group. )
-				// )
-			// }
-		// )
-
-		// BannerAssets_SetAllAssetsFunc
-		// (
-			// void function()
-			// {
-				// array<string> haloAudio = WorldDrawAsset_GetAssetArrayByCategory( "halo" )
-
-				// foreach( assetRef in haloAudio )
-				// {
-					// BannerAssets_GroupAppendAsset
-					// (
-						// "halo_audio",
-						// WorldDrawAsset_AssetRefToID( assetRef )
-					// )
-				// }
-			// }
-		// )
-
-		// BannerAssets_Init()
-
-		// //Move faster while adsing
-		// AddCallback_OnPlayerZoomIn( FS_HaloMod_OnPlayerZoomIn )
-		// AddCallback_OnPlayerZoomOut( FS_HaloMod_OnPlayerZoomOut )
-	// }
 }
 
 #if DEVELOPER
@@ -750,22 +711,6 @@ void function Survival_RunSinglePlanePath_Thread( array< PlanePathData > paths, 
 	DispatchSpawn( plane )
 	plane.SetParent( mover )
 	plane.Show()
-
-	if( Playlist() == ePlaylists.fs_haloMod_survival )
-	{
-		entity pelican = CreateEntity( "prop_script" )
-		pelican.kv.solid = 0
-		pelican.kv.fadedist = -1
-		pelican.SetValueForModelKey( $"mdl/flowstate_custom/pelican.rmdl" )
-		pelican.kv.SpawnAsPhysicsMover = 0
-		pelican.SetOrigin( path.clampedPlaneStart )
-		pelican.SetAngles( path.angles )
-		DispatchSpawn( pelican )
-		pelican.SetParent( plane )
-		pelican.SetModelScale( 13.0 )
-		pelican.SetAbsOrigin( path.clampedPlaneStart + <0,0,-100> )
-		plane.Hide()
-	}
 
 	file.plane.baseEnt           = plane
 
@@ -1824,20 +1769,7 @@ void function OnClientConnected( entity player )
 			break
 	}
 
-	if( Playlist() == ePlaylists.fs_haloMod_survival ) //Assign random stance and frame for halo mod survival, which always uses bloodhound character. Cafe
-	{
-		LoadoutEntry entry = GetAllLoadoutSlots()[56] //character_bloodhound GCard Frame
-		ItemFlavor itemFlavor = ConvertLoadoutSlotContentsIndexToItemFlavor( entry, RandomIntRangeInclusive(2, 17) ) //1 does not exists, starts from 2
-		SetItemFlavorLoadoutSlot( ToEHI( player ), entry, itemFlavor )
-
-		LoadoutEntry entry2 = GetAllLoadoutSlots()[57] //character_bloodhound GCard Stance
-		ItemFlavor itemFlavor2 = ConvertLoadoutSlotContentsIndexToItemFlavor( entry2, RandomIntRangeInclusive(2, 17) ) //1 does not exists, starts from 2
-		SetItemFlavorLoadoutSlot( ToEHI( player ), entry2, itemFlavor2 )
-
-		LoadoutEntry entry3 = GetAllLoadoutSlots()[37] //character_bloodhound Execution
-		ItemFlavor itemFlavor3 = ConvertLoadoutSlotContentsIndexToItemFlavor( entry3, RandomIntRangeInclusive(2, 4) ) //1 does not exists, starts from 2
-		SetItemFlavorLoadoutSlot( ToEHI( player ), entry3, itemFlavor3 )
-	}
+	// Halo survival Bloodhound gladiator card randomization removed
 }
 
 bool function Survival_IsArenaMap()
@@ -1862,9 +1794,6 @@ bool function Survival_IsArenaMap()
 
 float function Survival_GetDefaultMinimapZoomScale()
 {
-	if ( Playlist() == ePlaylists.fs_haloMod_survival )
-		return SURVIVAL_MINIMAP_ZOOM_HALOMOD
-
 	if ( Survival_IsArenaMap() )
 		return GetCurrentPlaylistVarFloat( PLAYLISTVAR_ARENA_MINIMAP_ZOOM, SURVIVAL_MINIMAP_ZOOM_ARENA )
 
@@ -2537,15 +2466,7 @@ void function Survival_PlayerCharacterSetup( entity player, ItemFlavor character
 	ClearExtraWeaponMods( player )
 	Survival_SetupWeaponMods( player )
 
-	if( Playlist() == ePlaylists.fs_haloMod_survival )
-	{
-		asset setFile = CharacterClass_GetSetFile( GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00898565421" ) ) ) //Give bloodhound always in halo mod survival
-		player.SetPlayerSettingsWithMods( setFile, [] )
-	} else
-	{
-		asset setFile = CharacterClass_GetSetFile( character )
-		player.SetPlayerSettingsWithMods( setFile, [] )
-	}
+	// Halo survival character setup removed
 
 	// GiveLoadoutRelatedWeapons( player )
 

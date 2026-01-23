@@ -344,17 +344,8 @@ void function WeaponUtility_Init()
 		if(!GetCurrentPlaylistVarBool( "firingrange_aimtrainerbycolombia", false ))
 		{
 			AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_grenade_emp, EMP_DamagedPlayerOrNPC )
-			AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_plasma_grenade_halomod, EMP_DamagedPlayerOrNPC )
 			AddDamageCallbackSourceID( eDamageSourceId.damagedef_ticky_arc_blast, EMP_DamagedPlayerOrNPC )
 		}
-		//AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_tesla_trap, EMP_DamagedPlayerOrNPC )
-
-		//AddCallback_OnPlayerRespawned( PROTO_TrackedProjectile_OnPlayerRespawned )
-		//AddCallback_OnPlayerKilled( PAS_CooldownReduction_OnKill )
-		//AddCallback_OnPlayerGetsNewPilotLoadout( OnPlayerGetsNewPilotLoadout )
-		//AddCallback_OnPlayerKilled( OnPlayerKilled )
-		//AddCallback_OnPlayerRespawned( WeaponAllowLogic_OnPlayerRespawed )
-		//AddCallback_OnPlayerInventoryChanged( WeaponAllowLogic_OnPlayerInventoryChanged )
 
 		file.activeThermiteBurnsManagedEnts = CreateScriptManagedEntArray()
 
@@ -3982,9 +3973,6 @@ void function EMPGrenade_AffectsAccuracy( entity npcTitan )
 
 void function EMPGrenade_EffectsPlayer( entity player, var damageInfo )
 {
-	if( Flowstate_IsHaloMode() )
-		return
-
 	player.Signal( "OnEMPPilotHit" )
 	player.EndSignal( "OnEMPPilotHit" )
 

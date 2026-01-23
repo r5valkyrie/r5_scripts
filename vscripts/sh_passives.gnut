@@ -663,13 +663,6 @@ void function SparkOfGenius_Passive_Body( entity player )
 	float healthRegenRate = 1.0
 	float healthWait = 2.0
 	
-	if( Flowstate_IsHaloMode() )
-	{
-		healthRegenStartDelay = 5.0
-		healthRegenRate = 1.0
-		healthWait = 0.5
-	}
-	
 	EndSignal( player, "EndSparkOfGeniusThread" )
 	
 	while ( IsValid( player ) && PlayerHasPassive( player, ePassives.PAS_BATTERY_POWERED ) )
@@ -714,7 +707,7 @@ void function PilotBlood_Passive_Body( entity player ) //monitor for passive abi
 
 	EndSignal( player, "EndPilotBloodThread", "OnDestroy", "OnDeath" )
 	
-	if( Gamemode() == eGamemodes.fs_duckhunt || Gamemode() == eGamemodes.fs_infected || Flowstate_IsHaloMode() || Playlist() == ePlaylists.fs_movementgym )//|| Gamemode() == eGamemodes.WINTEREXPRESS )
+	if( Gamemode() == eGamemodes.fs_duckhunt || Gamemode() == eGamemodes.fs_infected || Playlist() == ePlaylists.fs_movementgym )
 		tickTime = 0.05
 	
 	if( Gamemode() == eGamemodes.fs_duckhunt || Gamemode() == eGamemodes.fs_infected || Playlist() == ePlaylists.fs_movementgym )

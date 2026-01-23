@@ -831,8 +831,6 @@ void function OnPlayerCreate( entity player )
 	{
 		if( file.FLOWSTATE_ENEMIES_IN_MINIMAP_ENABLED )
 			FS_Minimap_AddEnemyToMinimap_HACK( player )
-		else if( Flowstate_IsHaloMode() )
-			FS_HandleHaloRadarForPlayer( player )
 		return
 	}
 	
@@ -1925,14 +1923,6 @@ MapFeature function SetMapFeatureItem( int priority, string titleText, string de
 const int MAX_MAP_FEATURES = 5
 void function UpdateMapFeatures()
 {
-	if ( Flowstate_IsHaloMode() && file.fullmap_legendRui != null )
-	{
-		RuiSetString( file.fullmap_legendRui, "itemTitle1", "Flowstate Halo Mod" )
-		RuiSetString( file.fullmap_legendRui, "itemDesc1", "Made in Colombia with love by @CafeFPS." )
-		RuiSetImage( file.fullmap_legendRui, "itemIcon1", $"rui/hiswattson/ltm" )
-		return
-	}
-	
 	if ( Gamemode() != eGamemodes.SURVIVAL )
 		return
 	
@@ -1995,10 +1985,7 @@ var function FS_Minimap_AddEnemyToMinimap_HACK( entity enemy )
 	RuiSetImage( rui, "defaultIcon", $"rui/menu/buttons/new" )
 	RuiSetImage( rui, "clampedDefaultIcon", $"" )
 
-	if( Flowstate_IsHaloMode() )
-		thread FS_TrackPlayerPositionOnScript_NEW_HaloRadar( rui, enemy ) 
-	else
-		thread FS_TrackPlayerPositionOnScript_NEW( rui, enemy ) 
+	thread FS_TrackPlayerPositionOnScript_NEW( rui, enemy ) 
 	
 	return rui
 }

@@ -49,10 +49,10 @@ entity function CreateWeaponRackSkillTrainer(vector origin, vector angles, strin
 	rack.kv.solid = SOLID_VPHYSICS
 	rack.AllowMantle()
 	DispatchSpawn( rack )
-	
+
 	entity loot = SpawnGenericLoot( weaponName, rack.GetOrigin()+WEAPONRACK_ORIGIN_OFFSET, rack.GetAngles()+WEAPONRACK_ANGLES_OFFSET, 1 )
 	thread RespawnWeaponOnRackST(loot,weaponName, 1, 15)
-	
+
 	return rack
 }
 
@@ -66,21 +66,21 @@ entity function CreateWeaponRack(vector origin, vector angles, string weaponName
 	rack.kv.solid = SOLID_VPHYSICS
 	rack.AllowMantle()
 	DispatchSpawn( rack )
-	
+
 	SpawnWeaponOnRack(rack, weaponName)
-	
+
 	return rack
 }
 
 entity function SpawnWeaponOnRack(entity rack, string weaponName)
-{	
+{
 	if(weaponName.len() == 0)
 		return null
 
 	if(rack.e.cpoint1 != null && IsValid(rack.e.cpoint1) && rack.e.cpoint1.GetParent() == rack)
 		return null
-	
-	entity loot = SpawnGenericLoot( weaponName, rack.GetOrigin()+WEAPONRACK_ORIGIN_OFFSET, rack.GetAngles()+WEAPONRACK_ANGLES_OFFSET, 1, TRACE_COLLISION_GROUP_NONE, false, 0, true )
+
+	entity loot = SpawnGenericLoot( weaponName, rack.GetOrigin()+WEAPONRACK_ORIGIN_OFFSET, rack.GetAngles()+WEAPONRACK_ANGLES_OFFSET, 1, TRACE_COLLISION_GROUP_NONE, false, 0 )
 	loot.SetParent( rack )
 	rack.e.cpoint1 = loot
 

@@ -331,10 +331,7 @@ void function GenerateZoneTiers()
             
 			int zoneTier = SURVIVAL_LootTierForLootGroup( lootZone.zoneClass )
             
-			if( Playlist() == ePlaylists.fs_haloMod_survival )
-				mapZoneData.zoneTier = eLootTier.EPIC //make all the zones the same, since loot is randomized
-			else
-				mapZoneData.zoneTier = maxint( zoneTier, mapZoneData.zoneTier )
+			mapZoneData.zoneTier = maxint( zoneTier, mapZoneData.zoneTier )
 		}
 	}
 

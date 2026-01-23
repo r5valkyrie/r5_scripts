@@ -160,10 +160,7 @@ global struct LootThrowData
 }
 
 const array<int> nonLootMoveModes = [
-	ePlaylists.fs_snd,
-	ePlaylists.fs_haloMod_ctf,
-	ePlaylists.fs_haloMod_oddball,
-	ePlaylists.fs_haloMod
+	ePlaylists.fs_snd
 ]
 
 struct {
@@ -985,11 +982,6 @@ void function OnGroundLootSpawned( entity ent )
 	else
 	{
 		int count = SURVIVAL_Loot_GetLootDataByRef( itemRef ).countPerDrop
-		
-		if( Playlist() == ePlaylists.fs_haloMod_survival && SURVIVAL_Loot_GetLootDataByRef( itemRef ).lootType == eLootType.AMMO )
-		{
-			count *= 2
-		}
 		
 		loot = SpawnGenericLoot( itemRef, newOrigin, <-1, -1, -1>, count )
 	}
@@ -3051,7 +3043,7 @@ bool function ShouldSpawnThisLoot( string entryRef )
 	return true
 }
 
-entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngles = < -1, -1, -1>, int clipCount = 1, int collisionGroup = TRACE_COLLISION_GROUP_NONE, bool onlySetModsForLockedAttachPoints = false, int stockpileCount = 0, bool isHaloModWeaponFromRack = false )
+entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngles = < -1, -1, -1>, int clipCount = 1, int collisionGroup = TRACE_COLLISION_GROUP_NONE, bool onlySetModsForLockedAttachPoints = false, int stockpileCount = 0 )
 {
 	if ( ref == "" )
 	{
@@ -3857,15 +3849,8 @@ void function FakePhysicsThrow_Retail( entity player, entity drop, vector vel, b
 
 	physicsEnt.SetVelocity( vel + baseVel )
 	
-	if( Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival )
-	{
-		physicsEnt.PhysicsSetDamping( 5.0, 100.0 )
-		thread PhysicsEntOnFirstCollision_Halo( physicsEnt )
-	} else
-	{
-		physicsEnt.PhysicsSetDamping( 0.0, 100.0 )
-		thread PhysicsEntDampOnFirstCollision( physicsEnt )
-	}
+	physicsEnt.PhysicsSetDamping( 0.0, 100.0 )
+	thread PhysicsEntDampOnFirstCollision( physicsEnt )
 
 	if ( drop.GetTargetName() != DEATH_BOX_TARGETNAME )
 	{
@@ -4514,9 +4499,6 @@ void function SURVIVAL_AutoEquipOrdnanceFromInventory( entity player, bool shoul
 	// Warning( "SURVIVAL_AutoEquipOrdnanceFromInventory" )
 	#endif
 	
-	if( Flowstate_IsHaloMode() )
-		shouldSwitch = false
-	
 	string lootRef                                 = ""
 	array<ConsumableInventoryItem> playerInventory = SURVIVAL_GetPlayerInventory( player )
 
@@ -4587,15 +4569,6 @@ void function SURVIVAL_AutoEquipOrdnanceFromInventory( entity player, bool shoul
 				entity weapon = SURVIVAL_GetPrimaryWeapons( player )[latestCycleSlot]
 				player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weapon.GetWeaponClassName() )
 			}
-		}
-
-		if( Flowstate_IsHaloMode() )
-		{
-			player.TakeWeaponByEnt( player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN ) )
-			
-			// RefreshOrdnanceSlot( player, lootRef )
-			// SURVIVAL_TryGivePlayerDefaultMeleeWeapons( player )
-			// Warning("Nade weapon removed")
 		}
 
 	}
@@ -4732,7 +4705,7 @@ void function SURVIVAL_EquipOrdnanceFromInventory( entity player, string item, b
 	// Gadgets (void ring, portable respawn beacon) use the same weapon system as normal ordnance
 	// They use GiveWeapon with ANTI_TITAN slot, not offhand
 	bool isEmpty = IsValid( heldOrdnance ) && heldOrdnance.GetWeaponPrimaryClipCount() <= 0
-	if ( IsValid( heldOrdnance ) && heldOrdnance.GetWeaponClassName() == item && !Flowstate_IsHaloMode() && !isEmpty )
+	if ( IsValid( heldOrdnance ) && heldOrdnance.GetWeaponClassName() == item && !isEmpty )
 	{
 		printt( "DEBUG: Already equipped, switching to it" )
 		entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
@@ -4748,7 +4721,7 @@ void function SURVIVAL_EquipOrdnanceFromInventory( entity player, string item, b
 		bool wasActive      = heldOrdnance == activeWeapon && (activeWeapon != null)
 	
 		entity ordnance = null
-		if ( wasActive && !forceDontSwitch || wasActive && Flowstate_IsHaloMode() )
+		if ( wasActive && !forceDontSwitch )
 		{
 			printt( "DEBUG: Replacing active weapon" )
 			ordnance = player.ReplaceActiveWeapon( eActiveInventorySlot.mainHand, item, ["survival_finite_ordnance"] )
@@ -4777,7 +4750,7 @@ void function SURVIVAL_EquipOrdnanceFromInventory( entity player, string item, b
 					AddRoundsToWeapon( player, ordnance, numStockpileToAdd )
 			}
 
-			if ( !wasActive && !forceDontSwitch && !Flowstate_IsHaloMode() )
+			if ( !wasActive && !forceDontSwitch )
 			{
 				player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, ordnance.GetWeaponClassName() )
 			}
@@ -5300,10 +5273,6 @@ void function SURVIVAL_Death_DropLoot_Internal( entity player, entity attacker, 
 	int itemsPerFrame  = settings.deathbox_items_per_server_frame
 	int itemFrameCount = 0
 	
-	//Todo: Create separate loot dropper function for halomode. 
-	if( Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival )
-		RemoveRefs( VALID_FOR_HALO, playerWeapons )
-		
 	for ( int i = 0; i < playerWeapons.len(); i++ )
 	{
 		vector throwDir = <sin( throwData.throwAngle ), cos( throwData.throwAngle ), 0> * throwData.throwScale
@@ -5323,10 +5292,6 @@ void function SURVIVAL_Death_DropLoot_Internal( entity player, entity attacker, 
 			WaitFrame()
 		}
 	}
-
-	//Todo: Create separate loot dropper function for halomode. 
-	if( Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival )
-		RemoveRefs( VALID_FOR_HALO, playerEquipment )
 
 	foreach ( itemName in playerEquipment )
 	{
@@ -5406,10 +5371,6 @@ void function SURVIVAL_Death_DropLoot_Internal( entity player, entity attacker, 
 		}
 	}
 
-	//Todo: Create separate loot dropper function for halomode. 
-	if( Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival )
-		RemoveRefs_Loot( VALID_FOR_HALO, playerInventory )
-		
 	foreach ( invItem in playerInventory )
 	{
 		LootData data   = SURVIVAL_Loot_GetLootDataByIndex( invItem.type )
@@ -5438,8 +5399,7 @@ void function SURVIVAL_Death_DropLoot_Internal( entity player, entity attacker, 
 		}
 	}
 
-	//Todo: Create separate loot dropper function for halomode. 
-	if ( !Flowstate_IsHaloMode() && playerBackpack != "" && SURVIVAL_Loot_IsRefValid( playerBackpack ) )
+	if ( playerBackpack != "" && SURVIVAL_Loot_IsRefValid( playerBackpack ) )
 	{
 		savedOrigin = IsValid( player ) ? player.GetOrigin() + vOffset : savedOrigin
 		entity itemEnt = SpawnGenericLoot( playerBackpack, savedOrigin )
@@ -5870,23 +5830,6 @@ string function CheckLootGroupRemapping( string groupName )
 }
 
 //TODO(mk): Create separate logic for halo specific loot dropping.
-const array<string> VALID_FOR_HALO = 
-[ 
-	"mp_weapon_haloassaultrifle",  
-	"mp_weapon_haloshotgun", 
-	"mp_weapon_halosmg", 
-	"mp_weapon_halomagnum", 
-	"mp_weapon_halodmr", 
-	"mp_weapon_halobattlerifle", 
-	"mp_weapon_haloassaultrifle", 
-	"mp_weapon_halosniperrifle", 
-	"mp_weapon_haloneedler", 
-	"mp_weapon_energysword", 
-	"mp_weapon_frag_grenade_halomod", 
-	"mp_weapon_plasma_grenade_halomod", 
-	"mp_weapon_oddball_primary"
-]
-
 void function RemoveRefs( array<string> refsToKeep, array<string> arrayToRemoveFrom )
 {
 	for( int i = arrayToRemoveFrom.len() -1; i >= 0; i-- )

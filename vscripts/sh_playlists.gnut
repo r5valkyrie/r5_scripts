@@ -380,18 +380,6 @@ asset function GetModeEmblemImage( string playlistName )
 		emblemImage = $"rui/flowstatecustom/generic_ltm"
 		break
 
-		case "fs_haloMod":
-		emblemImage = $"rui/flowstatecustom/halo"
-		break
-
-		case "fs_haloMod_oddball":
-		emblemImage = $"rui/flowstatecustom/halo"
-		break
-
-		case "fs_haloMod_ctf":
-		emblemImage = $"rui/flowstatecustom/halo"
-		break
-		
 		case "fs_dm_fast_instagib":
 		emblemImage = $"rui/flowstatecustom/cafesinstagib"
 		break
@@ -402,10 +390,6 @@ asset function GetModeEmblemImage( string playlistName )
 		
 		case "fs_realistic_ttv":
 		emblemImage = $""
-		break
-		
-		case "fs_haloMod_survival":
-		emblemImage = $"rui/hiswattson/ltm"
 		break
 	}
 

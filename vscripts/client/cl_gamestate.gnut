@@ -161,9 +161,6 @@ void function SetCommonScoreRUIVars( var rui )
 			RuiSetVisible(rui, true)
 			break
 		}
-		
-		if( Flowstate_IsHaloMode() )
-			RuiSetString( rui, "gameModeString", "HALO SLAYER" )
 			
 		switch( pl )
 		{
@@ -211,17 +208,7 @@ void function SetCommonScoreRUIVars( var rui )
 			
 			case ePlaylists.survival_solos:
 			RuiSetString( rui, "gameModeString", "APEX SOLOS" )
-			break
-
-			case ePlaylists.fs_haloMod_ctf:	
-			RuiSetString( rui, "gameModeString", "HALO CTF" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ALIVE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ALIVE" )
-			RuiSetVisible(rui, true)
-			break
-			
-			case ePlaylists.fs_haloMod_oddball:	
+			break	
 			RuiSetString( rui, "gameModeString", "HALO ODDBALL" )
 			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
 			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ALIVE" )
@@ -310,9 +297,6 @@ void function SetCommonScoreRUIVars( var rui )
 		} else if( Playlist() == ePlaylists.survival_duos )
 		{
 			RuiSetString( rui, "gameModeString", "APEX DUOS" )
-		} else if( Playlist() == ePlaylists.fs_haloMod_survival )
-		{
-			RuiSetString( rui, "gameModeString", "FS Halo BR" )
 		}
 	}
 }
