@@ -175,7 +175,8 @@ void function FiringRangeGameMode_Init()
 
 	PrecacheModel( FIRINGRANGE_BLUE_STAND_ASSET )
 	PrecacheModel( FIRINGRANGE_FLICK_TARGET_ASSET )
-	PrecacheModel( TARGET_FOLDING_MODEL )
+	if ( GetMapName() != "mp_rr_canyonlands_staging_mu1" )
+		PrecacheModel( TARGET_FOLDING_MODEL )
 	PrecacheModel( TARGET_SPINNING_MODEL )
 	PrecacheParticleSystem( FIRINGRANGE_FLICK_TARGET_PARTICLE_HIT )
 	PrecacheParticleSystem( DUMMIE_FX_SPAWN )
@@ -257,7 +258,7 @@ void function FiringRangeProps()
 		file.rackSpawns.append(r)
 	}
 
-	if ( GetMapName() == "mp_rr_canyonlands_staging" )
+	if ( GetMapName() != "mp_rr_canyonlands_staging_mu1" )
 	{
 		FillWeaponTable() // load first to know where the rest goes
 		FillAttachmentTable() // requires weapons to be loaded
