@@ -1105,23 +1105,7 @@ void function WaitForPlayerSpawnMU1_Thread(entity player)
 void function OnPlayerRespawned(entity player)
 {
 	array<entity> weapons = player.GetMainWeapons()
-
-	entity primary = player.GiveWeapon("mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_1, [])
-	//entity secondary = player.GiveWeapon("mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_1, ["bullets_mag_l3","optic_cq_threat"])
-	player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, "mp_weapon_semipistol" )
-	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
-
-	foreach(string ammo in ["bullet"])
-	{
-		entity loot = SpawnGenericLoot( ammo, player.GetOrigin(), player.GetAngles(),
-			20-SURVIVAL_CountItemsInInventory( player, ammo ) )
-
-		if(!Survival_PickupItem(loot, player))
-			loot.Destroy()
-	}
-
 	player.SetShieldHealth( player.GetShieldHealthMax() )
-	
 	player.UnfreezeControlsOnServer()
 }
 
