@@ -590,7 +590,7 @@ void function SURVIVAL_Loot_RegFromDataTable(var dt)
 		}
 
 		#if DEVELOPER
-			printt( "Registered loot item: " + data.ref + " (type: " + data.lootType + ", tier: " + data.tier + ")" )
+			//printt( "Registered loot item: " + data.ref + " (type: " + data.lootType + ", tier: " + data.tier + ")" )
 		#endif
 
 		#if !UI

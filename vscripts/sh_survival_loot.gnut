@@ -678,13 +678,13 @@ void function SURVIVAL_Loot_InitShared()
 	int amRowCount       = GetDatatableRowCount( attachmentMatrix )
 
 	#if DEVELOPER
-		printt( "Weapon attachment matrix total rows: " + amRowCount )
+		//printt( "Weapon attachment matrix total rows: " + amRowCount )
 		
 		// Debug: Print all attachment names in the matrix
-		for ( int i = 0; i < amRowCount; i++ )
+		//for ( int i = 0; i < amRowCount; i++ )
 		{
-			string attachmentName = GetDataTableString( attachmentMatrix, i, GetDataTableColumnByName( attachmentMatrix, "attachmentName" ) )
-			printt( "  Row " + i + ": " + attachmentName )
+			//string attachmentName = GetDataTableString( attachmentMatrix, i, GetDataTableColumnByName( attachmentMatrix, "attachmentName" ) )
+			//printt( "  Row " + i + ": " + attachmentName )
 		}
 	#endif
 
@@ -751,7 +751,7 @@ void function SURVIVAL_Loot_InitShared()
 			}
 		}
 
-		printt( "Adding to attachment matrix: " + attachmentName + " (compatible weapons: " + aData.compatibleWeapons.len() + ")" )
+		//printt( "Adding to attachment matrix: " + attachmentName + " (compatible weapons: " + aData.compatibleWeapons.len() + ")" )
 		file.attachmentMatrix[ attachmentName ] <- aData
 	}
 	bool debugAttachments = false

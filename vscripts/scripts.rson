@@ -256,7 +256,7 @@ Scripts:
 	sh_capturemode.gnut
 	
 	sh_weaponrack.nut
-
+	sh_player_objects.gnut
 	sh_clientsidepickups.gnut
 	titan/sh_titan.gnut
 	titan/sh_titan_embark.gnut
@@ -294,6 +294,7 @@ Scripts:
 	weapons/mp_weapon_mdlspawner.nut
 	weapons/mp_weapon_satchel.nut
 	weapons/mp_weapon_car.nut
+	weapons/mp_weapon_mobile_hmg.nut
 	weapons/mp_titanweapon_flightcore_rockets.nut
 	weapons/mp_titanweapon_predator_cannon.nut
 	weapons/mp_titanweapon_particle_accelerator.nut

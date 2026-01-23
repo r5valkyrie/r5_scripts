@@ -6245,6 +6245,11 @@ void function RegisterDynamicEntCleanupItem_Area_Scriptname( string scriptname, 
 	file.dynamicEntCleanupFuncs_Area_Scriptname[ scriptname ] <- func
 }
 
+void function AddCallback_OnPlayerPositionReset( void functionref(entity) func )
+{
+	file.onPlayerPositionResetFuncs.append( func )
+}
+
 void function PreparePlayerForPositionReset( entity player )
 {
 	player.Signal( "ScriptAnimStop" )

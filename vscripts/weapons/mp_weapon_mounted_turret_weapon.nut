@@ -7,8 +7,6 @@ global function OnWeaponStartZoomOut_weapon_mounted_turret_weapon
 global function OnWeaponReload_weapon_mounted_turret_weapon
 global function OnAnimEvent_weapon_mounted_turret_weapon
 global function OnWeaponZoomFOVToggle_weapon_mounted_turret_weapon
-global function OnAnimEvent_weapon_mobile_hmg
-
 
 #if SERVER
 global function MountedTurretWeapon_Play1pDamageFX
@@ -385,26 +383,6 @@ void function OnWeaponZoomFOVToggle_weapon_mounted_turret_weapon( entity weapon,
 		StopSoundOnEntity( weapon, TURRET_SIGHT_FLIP_DOWN_1P )
 	}
 	#endif
-}
-
-void function OnAnimEvent_weapon_mobile_hmg( entity weapon, string eventName )
-{
-#if CLIENT
-	//if ( !weapon.IsPredicted() )
-		//return
-#endif
-
-	switch ( eventName )
-	{
-		case "rampart_turret_mobile_button_press":
-			weapon.EmitWeaponSound_1p3p( TURRET_BUTTON_PRESS_SOUND_1P, TURRET_BUTTON_PRESS_SOUND_3P )
-			break
-		case "rampart_turret_mobile_spin_up":
-			weapon.EmitWeaponSound_1p3p( TURRET_BARREL_SPIN_LOOP_1P, TURRET_BARREL_SPIN_LOOP_3P )
-			break
-		default:
-			return
-	}
 }
 
 #if SERVER

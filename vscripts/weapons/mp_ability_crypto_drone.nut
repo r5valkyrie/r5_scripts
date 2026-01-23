@@ -83,11 +83,11 @@ const string DRONE_RECALL_3P = "Char_11_TacticalA_A"
 const string DRONE_RECALL_CRYPTO_3P = "Char_11_TacticalA_A"
 
 global const float EMP_RANGE = 1181.1
-                    
+
 global const float EMP_RANGE_UPGRADE_MULTIPLIER = 1.25
 const float UPGRADE_DRONE_EXIT_SPEED_DURATION = 5.0
 const float UPGRADE_DRONE_EXIT_SPEED_INCREASE = 0.15
-      
+
 global const float MAX_FLIGHT_RANGE = 7913 //~201m - needs to match crypto_cam_max_distance convar
 const float WARNING_RANGE = 5906 //150m
 const float CAMERA_FLIGHT_SPEED = 450 //Slightly reduced N / 1.1
@@ -99,7 +99,7 @@ const asset CAMERA_HIT_ENEMY_FX = $"P_drone_shield_hit_enemy"//$"wpn_arc_cannon_
 
 const float NEUROLINK_VIEW_MINDOT = 80.0
 const int CRYPTO_DRONE_HEALTH = 60
-                               
+
 const float DEPLOYABLE_CAMERA_THROW_POWER = 400.0
 const float NEUROLINK_VIEW_MINDOT_BUFFED = 120.0
 const int CRYPTO_DRONE_HEALTH_PROJECTILE = 50
@@ -115,7 +115,7 @@ const asset CRYPTO_DRONE_SIGHTBEAM_FX = $"P_BT_scan_SML" //P_BT_scan_SML r5r ver
 const bool CRYPTO_DRONE_USE_SONAR_FX = false
 //const string CRYPTO_DRONE_ATTACH_SOUND_1P = "weapon_tethergun_attach_1p"
 //const string CRYPTO_DRONE_ATTACH_SOUND_3P = "weapon_tethergun_attach_3p"
-      
+
 
 global const string CRYPTO_DRONE_SCRIPTNAME = "crypto_camera"
 global const string CRYPTO_DRONE_TARGETNAME = "drone_no_minimap_object"
@@ -129,13 +129,6 @@ struct SpeedBoostStatusEffectIndexes
 	int speedBoostVisualsID
 }
 #endif
-      
-
-global enum eEmpDestroyType
-{
-	EMP_DESTROY_DISSOLVE,
-	EMP_DESTROY_DAMAGE
-}
 
 struct
 {
@@ -143,9 +136,9 @@ struct
 		var            cameraRui
 		var            cameraCircleStatusRui
 		var            cryptoAnimatedTacticalRui
-		                               
+
 		var 			fakePlayerMarkerRui
-        
+
 		array <entity> allDrones
 	//%if HAS_CRYPTO_DRONE_HUD_UPDATE
 	//	int 		   droneRangeVFX
@@ -161,10 +154,10 @@ struct
 		table <entity, array<int> >                 cameraDetectedStatusEffects
 		table <entity, void functionref(entity) >   empDeviceDisabledCallbacks
 		table <entity, float>                       lastTimeUsedVaultKey
-	                               
+
 		table <entity, entity> 						dummyPlayerProps
-       
-	                    
+
+
 		table<entity, SpeedBoostStatusEffectIndexes> playerStatusEffects
 		table<entity, bool> 						hasDroneExitSpeedBoost
 		int crypto_drone_upgraded_health
@@ -195,19 +188,19 @@ void function MpAbilityCryptoDrone_Init()
 	PrecacheParticleSystem( CAMERA_HIT_FX )
 	PrecacheParticleSystem( CAMERA_HIT_ENEMY_FX )
 	PrecacheParticleSystem( CRYPTO_DRONE_SIGHTBEAM_FX )
-	
+
 	//PrecacheParticleSystem( CRYPTO_DRONE_RANGE_NO_INTRO )
 	//PrecacheParticleSystem( $"lootpoint_far_beam_close_small" )
 	// Remote_RegisterServerFunction( "ClientCallback_AttemptDroneRecall" )
-	
+
 	file.neurolinkRange = GetCurrentPlaylistVarFloat( "crypto_neurolink_range", EMP_RANGE )
 	file.droneHealth = GetCurrentPlaylistVarInt( "crypto_drone_health", CRYPTO_DRONE_HEALTH_PROJECTILE )
-	file.crypto_tactical_auto_reload_weapons = GetCurrentPlaylistVarBool( "crypto_tactical_auto_reload_weapons", true )	
-	
-	#if SERVER 
+	file.crypto_tactical_auto_reload_weapons = GetCurrentPlaylistVarBool( "crypto_tactical_auto_reload_weapons", true )
+
+	#if SERVER
 	file.crypto_drone_upgraded_health = GetCurrentPlaylistVarInt( "crypto_drone_upgraded_health", 100 )
 	#endif
-	
+
 	#if SERVER
 		RegisterSignal( "ExitCameraView" )
 		RegisterSignal( "FinishDroneRecall" )
@@ -217,7 +210,7 @@ void function MpAbilityCryptoDrone_Init()
 		file.empDamageArrayID = CreateScriptManagedEntArray()
 		file.empDestroyArrayID = CreateScriptManagedEntArray()
 		file.empDisableArrayID = CreateScriptManagedEntArray()
-		
+
 		AddClientCommandCallback( "AttemptDroneRecall", ClientCommand_AttemptDroneRecall )
 	#else
 		RegisterSignal( "StopUpdatingCameraRui" )
@@ -243,7 +236,7 @@ void function MpAbilityCryptoDrone_Init()
 		AddCallback_DestroyPlayerPassiveRui( DestroyCryptoAnimatedTacticalRui )
 
 		// RegisterMinimapPackage( "prop_script", eMinimapObject_prop_script.CRYPTO_DRONE, MINIMAP_OBJECT_RUI, MinimapPackage_CryptoDrone, FULLMAP_OBJECT_RUI, MinimapPackage_CryptoDrone )
-	                               
+
 		//Crypto Dummy Update uncomment
 		//RegisterMinimapPackage( "prop_script", eMinimapObject_prop_script.PLAYER_DUMMY, MINIMAP_OBJECT_RUI, MinimapPackage_PlayerDummy, FULLMAP_OBJECT_RUI, MinimapPackage_PlayerDummy )
 	#endif
@@ -333,7 +326,7 @@ void function CreateStowedDrone( entity player )
 	//owner.p.cryptoActiveCamera = cameraProxy
 }
 #endif
-      
+
 
 //////////////////////////////////
 ////// ONWEAPON FUNCTIONS ////////
@@ -371,7 +364,7 @@ var function OnWeaponToss_ability_crypto_drone( entity weapon, WeaponPrimaryAtta
 		{
 				entity camera = CryptoDrone_ReleaseCamera( weapon, attackParams, Drone_GetDeployableCameraThrowPower( player ) )
 				Signal( player, "Crypto_StopSendPointThink" )
-         
+
 			#if SERVER
 				AnnounceNearbySquads( player )
 			#endif // SERVER
@@ -484,7 +477,7 @@ void function OnWeaponRegenEnd_ability_crypto_drone( entity weapon )
 			// thread CreateStowedDrone( player )
 		// }
 	#endif
-       
+
 }
 
 #if CLIENT
@@ -501,20 +494,20 @@ void function OnClientAnimEvent_ability_crypto_drone( entity weapon, string name
 	if ( weaponOwner != localViewPlayer )
 		return
 
-                               
+
 	Crypto_TryPlayScreenTransition( weaponOwner, weapon, weapon.HasMod( "crypto_has_camera" ) )
-     
-                                                                                         
-      
+
+
+
 }
 
-                               
+
 void function Crypto_TryPlayScreenTransition( entity player, entity weapon, bool playFastTransition )
 {
 	if ( weapon.HasMod( "crypto_drone_access" ) )
 		thread PlayScreenTransition( player, weapon, playFastTransition )
 }
-      
+
 
 void function PlayScreenTransition( entity player, entity weapon, bool playFastTransition )
 {
@@ -581,23 +574,23 @@ void function PlayScreenTransition( entity player, entity weapon, bool playFastT
 		}
 	)
 
-                   
+
 		float endTime = playFastTransition ? 1.2 + Time() : 1.2 + Time()
-      
-                                                                   
-       
-	
-	                               
+
+
+
+
+
 		bool needsButtonHeldDown = !playFastTransition
-       
+
 	while( Time() < endTime )
 	{
-		                               
+
 			// break out of the transition early if the button isn't held down
 			// testing different method for confirming immediate camera accesss
 			//if ( needsButtonHeldDown && !player.IsInputCommandHeld( IN_OFFHAND1 ) )
 			//	break
-        
+
 
 		if ( IsValid( file.cameraRui ) )
 			RuiSetBool( file.cameraRui, "inTransition", true )
@@ -641,7 +634,7 @@ void function ServerCallback_ShouldExitDrone()
 
 	if( !PlayerHasPassive( player, ePassives.PAS_CRYPTO ) )
 		return
-		
+
 	if( IsValid( player ) )
 	{
 		if( PlayerSetting_DamageClosesMenu() )
@@ -684,7 +677,7 @@ void function ClientCommand_ShouldExitDrone( entity player, array<string> args )
 {
 	if( !IsValid( player ) || GetGameState() != eGameState.Playing )
 		return
-		
+
 	Drone_ExitView( player )
 }
 
@@ -892,16 +885,16 @@ void function CryptoDrone_WeaponInputThink( entity player, entity weapon )
 			weapon.RemoveMod( "crypto_drone_access" )
 	}
 }
-                                     
+
 
 #if SERVER
 void function Drone_ExitView( entity player )
 {
 	player.Signal( "ExitCameraView" )
 	RemoveEntityCallback_OnDamaged( player, OnPlayerTookDamage )
-	#if DEVELOPER 
+	#if DEVELOPER
 		//printt( "Crypto RemoveEntityCallback_OnDamaged:", player )
-	#endif 
+	#endif
 }
 
 //Prototyping the hacking / drone gameplay. The current plan is to clean this up and have the vehicle use the normal use system.
@@ -944,7 +937,7 @@ void function Drone_AttemptUse( entity player )
 			// BreakRebuiltDoor( trace.hitEnt )
 			// success = true
 		// }
-		// else 
+		// else
 		if ( IsValid( isLootBin ) )
 		{
 			if ( LootBin_OnUse( isLootBin, player, USE_INPUT_DEFAULT ) )
@@ -960,7 +953,7 @@ void function Drone_AttemptUse( entity player )
 			DeathBoxOnUse( trace.hitEnt, player, 0 )
 			success = true
 		}
-              
+
 		// else if ( IsVaultPanel( trace.hitEnt ) )
 		// {
 			// UniqueVaultData vaultData = GetUniqueVaultData( trace.hitEnt )
@@ -1031,11 +1024,11 @@ void function Drone_TryEMP( entity player )
 	if ( IsValid( ult ) )
 	{
 		int maxClipCount = ult.GetWeaponPrimaryClipCountMax()
-		
+
 		#if DEVELOPER
-			printt( "\t| Drone TRY emp. Clip count good?", ult.GetWeaponPrimaryClipCount() == maxClipCount, "net bool is false?", player.GetPlayerNetBool( "isDoingEMPSequence" ) )	
+			printt( "\t| Drone TRY emp. Clip count good?", ult.GetWeaponPrimaryClipCount() == maxClipCount, "net bool is false?", player.GetPlayerNetBool( "isDoingEMPSequence" ) )
 		#endif
-		
+
 		if ( ult.GetWeaponPrimaryClipCount() == maxClipCount && !player.GetPlayerNetBool( "isDoingEMPSequence" ) )
 		{
 			PlayerUsedOffhand( player, ult, true ) //Unfortunately only called on the server if you're in the camera
@@ -1071,7 +1064,7 @@ void function Drone_RecallThink( entity camera, entity player )
 	{
 		PlayBattleChatterLineToSpeakerAndTeamWithDebounceTime( owner, "bc_droneRecall", 30.0, 60.0 )
 		float animLength = camera.GetSequenceDuration( "animseq/props/crypto_drone/crypto_drone/drone_EMP.rseq" )
-                  
+
 		animLength = animLength / 3 //Not sure why this is necessary but the animLength as long as it actually is.
 
 		StatusEffect_AddTimed( owner, eStatusEffect.crypto_camera_is_recalling, 1.0, animLength, animLength )
@@ -1080,7 +1073,7 @@ void function Drone_RecallThink( entity camera, entity player )
 	player.Signal( "OnContinousUseStopped" )
 
 	Crypto_TryDestroyDroneProjectile( camera )
-    
+
 	entity recallFX = StartParticleEffectOnEntity_ReturnEntity( camera, GetParticleSystemIndex( DRONE_RECALL_START_FX_3P ), FX_PATTACH_POINT_FOLLOW, camera.LookupAttachment( "__illumPosition" ) )
 	recallFX.SetOwner( owner )
 	if ( IsPlayerInCryptoDroneCameraView( owner ) )
@@ -1099,12 +1092,12 @@ void function Drone_RecallThink( entity camera, entity player )
 	StartParticleEffectInWorld( GetParticleSystemIndex( DRONE_RECALL_END_FX_3P ), cameraOrigin, <0, 0, 0> )
 
 	thread CryptoDrone_TestSendPoint_Think( player )
-    
+
 	// if( PlayerHasPassive( owner, ePassives.PAS_STOWED_DRONE_SCAN ) )
 	// {
 		// thread CreateStowedDrone( player )
 	// }
-       
+
 	if ( IsValid( owner ) && GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
 		Remote_CallFunction_Replay( owner, "ServerToClient_ApexScreenRefreshAll" )
 
@@ -1131,7 +1124,7 @@ void function AddExtraCharge( entity offhandWeapon )
 	}
 }
 
-                               
+
 bool function Crypto_TryDestroyDroneProjectile( entity cameraVehicle, bool useFacingOverride = false, vector facingOverride = < 0, 0, 0 > )
 {
 	if ( !IsValid( cameraVehicle ) )
@@ -1170,14 +1163,14 @@ bool function Crypto_TryDestroyDroneProjectile( entity cameraVehicle, bool useFa
 	}
 	return false
 }
-      
 
-                    
+
+
 int function CryptoDrone_GetUpgradedHealth() //(mk): not called yet
 {
 	return file.crypto_drone_upgraded_health
 }
-      
+
 
 float function CryptoDrone_GetScanLingerTime( entity scannedEnt, entity cameraOwner )
 {
@@ -1231,11 +1224,11 @@ entity function CryptoDrone_CreateFlyingCameraVehicle( entity owner, entity pare
 
 	DispatchSpawn( cameraProxy )
 
-                               
+
 	if ( projectileDrone && IsValid( parentEnt ) )
 		cameraProxy.SetParent( parentEnt )
 	else
-      
+
 		PutPlayerVehicleInSafeSpot( cameraProxy, owner, null, eyePosition, origin )
 
 	cameraProxy.VehicleSetType( VEHICLE_FLYING_CAMERA )
@@ -1295,7 +1288,7 @@ entity function CryptoDrone_CreateFlyingCameraVehicle( entity owner, entity pare
 
 	thread NeurolinkThink( cameraProxy )
 	thread UpdateNumberOfEnemySquadsInDroneRange_Thread( cameraProxy )
-       
+
 	Highlight_SetFriendlyHighlight( cameraProxy, "crypto_camera_friendly" )
 	Highlight_SetOwnedHighlight( cameraProxy, "crypto_camera_friendly" )
 
@@ -1628,7 +1621,7 @@ void function Camera_ShieldHitFX( entity camera, vector contactPos )
 	wait 0.3
 }
 
-                               
+
 void function Crypto_TryAutoEnterDroneView( entity player, entity weapon )
 {
 	if ( weapon.HasMod( "crypto_drone_access" ) && PlayerCanUseCamera( player, true ) )
@@ -1644,7 +1637,7 @@ void function Crypto_TryAddExitViewCommand( entity player )
 
 	AddButtonPressedPlayerInputCallback( player, IN_OFFHAND1, Drone_ExitView )
 }
-      
+
 
 void function SwapToCameraView_Thread( entity owner, entity activeCamera )
 {
@@ -1653,14 +1646,14 @@ void function SwapToCameraView_Thread( entity owner, entity activeCamera )
 
 	if( isFreefallEnabled() )
 		EndSignal( owner, "PlayerSkydiveFromCurrentPosition" )
-	                     
+
 		// if ( owner.IsDrivingVehicle() )
 			// return
 
 		// EndSignal( owner, SIG_VEHICLE_EMBARK_BEGIN )
-       
 
-	                
+
+
 		// if ( Crafting_IsEnabled() )
 		// {
 			// if ( Crafting_IsPlayerAtWorkbench( owner ) )
@@ -1668,18 +1661,18 @@ void function SwapToCameraView_Thread( entity owner, entity activeCamera )
 
 			// EndSignal( owner, "CraftingPlayerAttaching" )
 		// }
-       
 
-	                               
+
+
 		Crypto_TryDestroyDroneProjectile( activeCamera )
-       
+
 
 	owner.e.originalLocalAngles = owner.GetAngles()
 
 	StatusEffect_AddEndless( owner, eStatusEffect.camera_view, 0.5 )
 	owner.ContextAction_SetInVehicle()
 	AddCinematicFlag( owner, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
-                                 
+
 
 		// if ( !( owner in file.dummyPlayerProps ) )
 		// {
@@ -1695,7 +1688,7 @@ void function SwapToCameraView_Thread( entity owner, entity activeCamera )
 
 			// file.dummyPlayerProps[ owner ] <- minimapObj
 		// }
-       
+
 	activeCamera.VehicleSetDriver( owner )
 
 	SetCameraAngles( activeCamera, activeCamera.e.originalLocalAngles )
@@ -1785,15 +1778,15 @@ void function SwapToCameraView_Thread( entity owner, entity activeCamera )
 	float reloadEndTime = -1.0
 
 	AddEntityCallback_OnDamaged( owner, OnPlayerTookDamage ) //(mk): adding damage callback here..
-	#if DEVELOPER 
+	#if DEVELOPER
 		//printt( "Crypto AddEntityCallback_OnDamaged:", owner )
-	#endif 
+	#endif
 
 	while( true )
 	{
-                                 
-                                                                                                 
-        
+
+
+
 
 		if ( AutoReloadWhileInCryptoDroneCameraView() )
 		{
@@ -2008,9 +2001,9 @@ void function TransitionOutOfCamera( entity owner, entity activeCamera, entity v
 		owner.EnablePrediction()
 		StatusEffect_StopAllOfType( owner, eStatusEffect.camera_view )
 		RemoveCinematicFlag( owner, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
-                                  
-                                                           
-        
+
+
+
 
 		StatusEffect_AddTimed( owner, eStatusEffect.script_helper, 1.0, 0.25, 0.25 ) //Need something to prevent re-entering the camera when you leave it.
 		owner.ContextAction_ClearInVehicle()
@@ -2026,7 +2019,7 @@ void function TransitionOutOfCamera( entity owner, entity activeCamera, entity v
 	}
 }
 
-                    
+
 void function CryptoDrone_TryExitCameraSpeedBoost( entity player )
 {
 	if ( !IsValid( player ) )
@@ -2254,7 +2247,7 @@ void function Camera_OnBeginView_Think( entity player, int statusEffect, bool ac
 		cb()
 
 	entity activeCamera
-	
+
 	float preventInfiniteLoop = Time()
 	while ( !IsValid( activeCamera ) )
 	{
@@ -2268,7 +2261,7 @@ void function Camera_OnBeginView_Think( entity player, int statusEffect, bool ac
 			}
 		}
 		WaitFrame()
-		
+
 		if ( Time() - preventInfiniteLoop > 3 ) //(mk): for if all entities get destroyed at a bad time (for say at the execution of this loop)
 		{
 			Warning("infinite loop prevented in " + FUNC_NAME() + "()  -- file: " + FILE_NAME() )
@@ -2344,7 +2337,7 @@ void function Camera_OnEndView( entity player, int statusEffect, bool actuallyCh
 
 	// ClGameState_SetHasScreenBorder( false )
 
-	                               
+
 		Minimap_SetSizeScale( 1.0 )
 		// Minimap_SetMasterTint( < 1.0, 1.0, 1.0 > )
 		// Minimap_SetOffset( 0.0, 0.0 )
@@ -2368,7 +2361,7 @@ void function Camera_OnEndView( entity player, int statusEffect, bool actuallyCh
 			file.fakePlayerMarkerRui = null
 		}
 		// Minimap_StopTrackVehicleData()
-       
+
 
 	///Minimap_SetVisiblityCone( false )
 
@@ -2494,19 +2487,19 @@ void function TempUpdateRuiDistance( entity player )
 				{
 					targetString = "#CAMERA_INTERACT_DOOR"
 				}
-				//fixme. Cafe 
+				//fixme. Cafe
 				// // else if ( trace.hitEnt.GetTargetName() == PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME && IsReinforced( trace.hitEnt ) && IsFriendlyTeam( activeCamera.GetTeam(), trace.hitEnt.GetTeam() ) )
 				// // {
 					// // targetString = "#ABL_REINFORCE_BREAK_REBUILT"
 				// // }
-              
+
 				// else if ( (IsVaultPanel( trace.hitEnt ) || IsVaultPanel( parentEnt )) )
 				// {
 					// UniqueVaultData vaultData = GetUniqueVaultData( trace.hitEnt )
 					// if ( HasVaultKey( player ) )
 						// targetString = vaultData.hintVaultKeyUse
 				// }
-                    
+
 				else if ( IsValid( isLootBin ) && !LootBin_IsBusy( isLootBin ) && !GradeFlagsHas( isLootBin, eGradeFlags.IS_OPEN ) )
 				{
 					targetString = "#CAMERA_INTERACT_LOOT_BIN"
@@ -2532,7 +2525,7 @@ void function TempUpdateRuiDistance( entity player )
 				// // }
 				// else if ( SurveyBeacon_IsSurveyBeacon( trace.hitEnt ) || ( IsValid( parentEnt ) && SurveyBeacon_IsSurveyBeacon( parentEnt ) ) )
 				// {
-                       
+
 					// entity surveyBeacon = SurveyBeacon_IsSurveyBeacon( trace.hitEnt ) ? trace.hitEnt : parentEnt
 					// if( ControlPanel_CanUseFunction( player, surveyBeacon, 0 ) )
 					// {
@@ -2596,10 +2589,10 @@ bool function PlayerCanUseCamera( entity ownerPlayer, bool needsValidCamera )
 	if ( needsValidCamera && !IsValid( ownerPlayer.p.cryptoActiveCamera ) )
 		return false
 
-	                     
+
 		// if ( ownerPlayer.IsDrivingVehicle() )
 			// return false
-       
+
 
 	// array <entity> activeWeapons = ownerPlayer.GetAllActiveWeapons()
 	// if ( activeWeapons.len() > 1 )
@@ -2711,14 +2704,14 @@ void function NeurolinkThink( entity camera, bool attachFx = true )
 	array<entity> HUDWarningEnts	//entities that are given the HUD warning status effect (subset of sonarEnts)
 
 	entity sightBeam
-                               
+
 	if( attachFx )
 	{
 		sightBeam                    = StartParticleEffectOnEntity_ReturnEntity( camera, GetParticleSystemIndex( CRYPTO_DRONE_SIGHTBEAM_FX ), FX_PATTACH_POINT_FOLLOW, camera.LookupAttachment( "EYE_POINT_ROTATED" ) )
 		sightBeam.SetOwner( cameraOwner )
 		sightBeam.kv.VisibilityFlags = ENTITY_VISIBLE_TO_OWNER
 	}
-      
+
 
 	file.cameraSonarTeamID[cameraOwner] <- camera.GetTeam()
 
@@ -2844,11 +2837,11 @@ void function NeurolinkThink( entity camera, bool attachFx = true )
 
 			//otherwise, start the scan on this newly-found nearby entity
 			SonarStart( nearbyEnt, nearbyEnt.GetOrigin(), file.cameraSonarTeamID[cameraOwner], cameraOwner )
-			
+
 			#if DEVELOPER
 				printt("should start sonar" )
 			#endif
-			
+
 			if ( nearbyEnt.IsPlayer() || nearbyEnt.IsNPC() )
 			{
 				// StatsHook_DroneEnemiesScanned( nearbyEnt, cameraOwner )
@@ -2876,7 +2869,7 @@ void function NeurolinkThink( entity camera, bool attachFx = true )
 		}
 
 		//check for all currently-detected entities to see if they need to be removed
-		
+
 		//R5RDEV-1
 		// foreach ( sonarEnt in sonarEnts )
 		// {
@@ -2903,20 +2896,20 @@ void function NeurolinkThink( entity camera, bool attachFx = true )
 					// HUDWarningEnts = RemoveEntityFromWarningEntitiesArray( sonarEnt, HUDWarningEnts )
 
 				// if ( scanLingerTimeExpired )
-          
+
 				// {
 					// SonarEnd( sonarEnt, file.cameraSonarTeamID[cameraOwner], cameraOwner )
 					// sonarEnts.fastremovebyvalue( sonarEnt )
 				// }
 			// }
 		// }
-		
+
 		int maxIter = sonarEnts.len() - 1
-		
+
 		for( int i = maxIter; i >= 0; i-- )
 		{
-			entity sonarEnt = sonarEnts[ i ] 
-			
+			entity sonarEnt = sonarEnts[ i ]
+
 			if ( !IsValid( sonarEnt ) )
 			{
 				sonarEnts.remove( i )
@@ -2940,7 +2933,7 @@ void function NeurolinkThink( entity camera, bool attachFx = true )
 					HUDWarningEnts = RemoveEntityFromWarningEntitiesArray( sonarEnt, HUDWarningEnts )
 
 				if ( scanLingerTimeExpired )
-          
+
 				{
 					SonarEnd( sonarEnt, file.cameraSonarTeamID[cameraOwner], cameraOwner )
 					sonarEnts.remove( i )
@@ -2971,7 +2964,7 @@ void function UpdateNumberOfEnemySquadsInDroneRange_Thread( entity camera )
 		wait 1.0
 	}
 }
-      
+
 
 array<entity> function AddEntityToWarningEntitiesArray( entity nearbyEnt, array<entity> HUDWarningEnts )
 {
@@ -3016,7 +3009,7 @@ array<entity> function CryptoDrone_GetNearbyTargetsForEMPRange( entity camera )
 	results.extend( GetNPCArrayEx( "any", TEAM_ANY, TEAM_ANY, camera.GetOrigin(), GetNeurolinkRange( camera.GetOwner() ) ) )
 
 	// results.extend( GetHoverVehicleArrayEx( camera.GetOrigin(), GetNeurolinkRange( camera.GetOwner() ) ) )
-     
+
 	array<int> badList
 	foreach ( int index, entity ent in results )
 	{
@@ -3109,7 +3102,7 @@ bool function DroneHasActiveAnimation( entity camera )
 ////// HUD FUNCTIONS ////////
 /////////////////////////////
 
-                               
+
 void function CryptoDrone_TestSendPoint_Think( entity player )
 {
 	EndSignal( player, "OnDestroy", "Crypto_StopSendPointThink" )
@@ -3154,7 +3147,7 @@ void function CryptoDrone_TestSendPoint_Think( entity player )
 
 
 }
-      
+
 
 #if CLIENT
 void function CryptoDrone_OnPropScriptCreated( entity ent )
@@ -3233,8 +3226,8 @@ void function CryptoDrone_CreateHUDMarker( entity drone )
 {
 	#if DEVELOPER
 		printt( "create hud marker")
-	#endif 
-	
+	#endif
+
 	EndSignal( drone, "OnDestroy", "CameraViewStart" )
 	entity localViewPlayer = GetLocalViewPlayer()
 
@@ -3247,7 +3240,7 @@ void function CryptoDrone_CreateHUDMarker( entity drone )
 	RuiTrackFloat3( rui, "pos", drone, RUI_TRACK_OVERHEAD_FOLLOW )
 
 	RuiSetBool( rui, "showIconOnScreen", true )
-	
+
 	OnThreadEnd(
 		function() : ( rui )
 		{
@@ -3397,7 +3390,7 @@ void function CryptoDrone_WeaponStatusCheck( entity player, var rui, int slot )
 		case OFFHAND_INVENTORY:
 			if ( !(StatusEffect_GetSeverity( player, eStatusEffect.crypto_has_camera ) > 0) ) //This should handle a case of the drone getting killed while the weapon is raising and hasn't fired yet.
 				RuiSetString( rui, "hintText", Localize( "#CRYPTO_DRONE_REQUIRED" ) )
-        
+
 			break
 	}
 }

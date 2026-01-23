@@ -262,7 +262,7 @@ global struct ServerEntityStruct
 	bool forceGibDeath = false
 	bool forceHeadshotDeath = false
 
-	// SpawnPointData spawnPointData
+	array<entity> mountedTurrets
 
 	array<void functionref( entity ent, var damageInfo )> entDamageCallbacks
 	array<void functionref( entity ent, var damageInfo )> entPostDamageCallbacks
@@ -278,14 +278,7 @@ global struct ServerEntityStruct
 
 	array<entity> attachedEnts
 
-	//Scorch Variables
-	// table< int, array<entity> > waveLinkFXTable //Wave FX Link - Used for the wide projectile attacks so we can link FX across the rows.
-	// table< int, vector > fireTrapEndPositions //Used to spawn 1 particle per arm instead of many.
-	// table< int, entity > fireTrapMovingGeo //Used track which piece of moving geo the fire trap arms are on
-
-	//Legion Variables
-	// bool ammoSwapPlaying = false
-	// bool gunShieldActive = false
+	entity highlightProxy
 
 	int fxType
 	array<entity> fxControlPoints
@@ -399,26 +392,12 @@ global struct ServerEntityStruct
 	vector originalLocalAngles
 	bool   scanSoundPlaying
 
-	//Flowstate
-
-	//Trophy Structs
+	bool ignorePingTrace = false
 	float pylonhealth
-
-	//Flyers easteregg
-	// entity ParentedPlayerToFlyer
-
-	//Lootbins mod
-	// int lootbinusages
-
-	//Arthur's revenge
-	// array<entity> birdsFromThisCluster
 
 	//portal gun
 	bool isplayercomingfromportal1 = false
 	bool isplayercomingfromportal2 = false
-
-	// bool alreadyPingedUltraDecoy = false
-	// bool isBeingAttackedByDroneMedic = false
 
 	//HoloSprays mp
 	array<entity> holoSpraysFX

@@ -28,13 +28,13 @@ WeaponData
 
     "does_not_interrupt_cloak"						"1"
 
-   //"OnWeaponOwnerChanged"							"OnWeaponOwnerChanged_weapon_mounted_turret_placeable"
-	//"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_weapon_mounted_turret_placeable"
-	//"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_mounted_turret_placeable"
-    //"OnWeaponActivate"							    "OnWeaponActivate_weapon_mounted_turret_placeable"
-    //"OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_mounted_turret_placeable"
-    //"OnCreateClientOnlyModel"						"OnCreateClientOnlyModel_weapon_mounted_turret_placeable"
-   // "OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
+    "OnWeaponOwnerChanged"							"OnWeaponOwnerChanged_weapon_mounted_turret_placeable"
+	"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_weapon_mounted_turret_placeable"
+	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_weapon_mounted_turret_placeable"
+    "OnWeaponActivate"							    "OnWeaponActivate_weapon_mounted_turret_placeable"
+    "OnWeaponDeactivate"							"OnWeaponDeactivate_weapon_mounted_turret_placeable"
+    "OnCreateClientOnlyModel"						"OnCreateClientOnlyModel_weapon_mounted_turret_placeable"
+   	"OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
 	"projectile_ignores_vortex"						"fall_vortex"
 
 	// Menu Stats
