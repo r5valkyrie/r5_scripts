@@ -43,8 +43,8 @@ WeaponData
 	"chroma_color"									"1 .9 .5"
 
 	//Sounds
-	//"fire_sound_1_player_1p"						"Weapon_bulletCasings.Bounce"
-	//"fire_sound_1_player_3p"						"Weapon_bulletCasings.Bounce"
+	"fire_sound_1_player_1p"						"Weapon_bulletCasings.Bounce"
+	"fire_sound_1_player_3p"						"Weapon_bulletCasings.Bounce"
 	"fire_sound_2_player_1p"						"Weapon_R97_SecondShot_1P"
 	"fire_sound_2_player_3p"						""
 	"fire_sound_2_npc"								"Weapon_r97_secondshot_npc"

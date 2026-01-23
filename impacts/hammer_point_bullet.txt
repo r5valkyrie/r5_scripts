@@ -8,7 +8,7 @@ ImpactTable
 		"D" "P_impact_hammerpoint_sparks" //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup
 		"E" "P_impact_hammerpoint_sparks" // metal_titan
 
-		//"F" "P_impact_hammerpoint_sparks" //flesh
+		"F" "impact_flesh" //flesh
 		"G" "P_impact_hammerpoint_sparks" //metalgrate, chainlink, chain
 //		"H" "P_impact_hammerpoint_sparks" //alienflesh
 
@@ -59,7 +59,7 @@ ImpactTable
 		"D" "impact_dirt" //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup
 		"E" "impact_metal_cheap" // metal_titan
 
-		"F" "P_impact_flesh" //flesh
+		"F" "impact_flesh" //flesh
 		"G" "impact_metal_cheap" //metalgrate, chainlink, chain
 		"H" "impact_alienflesh" //alienflesh
 

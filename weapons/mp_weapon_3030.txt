@@ -262,11 +262,12 @@
 
 
     // FX
-	"fx_muzzle_flash_view"				"wpn_muzzleflash_snp_sup_hmn_FP"
-	"fx_muzzle_flash_world"				"wpn_muzzleflash_snp_sup_hmn"
+	"fx_muzzle_flash_view"				"P_wpn_mflash_Repeater_FP_burn"
+	"fx_muzzle_flash_world"				"P_wpn_mflash_Repeater_FP_burn_3p"
 
 	//FX - Shell Eject
-	"fx_shell_eject_view"                   	"wpn_shelleject_rifle_assault_FP"
+	"fx_shell_eject_view"				"P_3030_reload_FP"
+	"fx_shell_eject_world"				"P_3030_reload_3p"
 	"fx_shell_eject_attach"				"shell"
 
 

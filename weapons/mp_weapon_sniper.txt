@@ -57,11 +57,6 @@
 
     zoomed_convar_sensitivity_index             4
     zoomed_convar_toggle_sensitivity_index      6
-	
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
-	"fx_muzzle_flash_attach"						"muzzle_flash"
-	
 	// Behavior- Aim Assist
 	"aimassist_disable_hipfire"                "0"
 	"aimassist_disable_ads"                    "0"
@@ -109,7 +104,7 @@
 
 
 	// Ammo
-	//
+	// For crate weapons, default total should be set to clip size + stockpile max
 	"ammo_clip_size"                           "4"
 	"ammo_stockpile_max"                       "40"
 	"ammo_default_total"                       "40"
@@ -244,10 +239,6 @@
 	"proficiency_good_spreadscale"             "2.0"
 	"proficiency_very_good_spreadscale"        "1.5"
 
-
-	// FX - Impacts
-	//
-	"impact_effect_table"                      "titan_bullet"
 
 	// FX - Projectile
 	"projectilemodel"                          "mdl/weapons/bullets/projectile_20mm.rmdl"

@@ -80,7 +80,6 @@ WeaponData
 	"sound_throw_3p"								"weapon_sentryfragdrone_throw_3p"
 	"sound_deploy_3p"								"weapon_sentryfragdrone_pinpull_3p"
 	"sound_grenade_projectile"						""
-	"sound_dryfire"									"Survival_UI_Ability_NotReady"
 	"idle_sound_player_1p"							"Wattson_Mvmt_PreTactical_J"
 
 	// Damage - When Used by Players

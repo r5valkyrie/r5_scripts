@@ -72,11 +72,6 @@ WeaponData
 	"sound_dryfire"									"assault_rifle_dryfire"
 	"sound_zoom_in"									"Weapon_r101_ADS_In"
 	"sound_zoom_out"								"Weapon_r101_ADS_Out"
-	
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
-	"fx_muzzle_flash_attach"						"muzzle_flash"
-	
      "ammo_clip_size"   								"21"
     "ammo_min_to_fire"								"1"
     "ammo_default_total"							"0"

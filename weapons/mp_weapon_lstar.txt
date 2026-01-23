@@ -76,7 +76,7 @@ WeaponData
 	//Sounds
 	"fire_sound_1_player_1p"						"Weapon_LSTAR_Fire_1P"
 	//"fire_sound_1_player_3p"						"Weapon_LSTAR_Fire_3P"
-	"fire_sound_2_player_1p"						"weapon_lstar_secondshot_1p"
+	//"fire_sound_2_player_1p"						"weapon_lstar_secondshot_1p"
 	"fire_sound_2_player_3p"						"Weapon_LSTAR_SecondShot_3P"
 
 	//"idle_sound_player_1p"							"weapon_lstar_idle_gears_1p"

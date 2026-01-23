@@ -53,8 +53,8 @@ WeaponData
 	"fx_shell_eject2_attach"						"shell_l"
 
 	// NOTE: Alternator has a special muzzle flash to look good with two barrels
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
+	"fx_muzzle_flash_view"							"P_wpn_muzzleflash_alternator_FP"
+	"fx_muzzle_flash_world"							"P_wpn_muzzleflash_alternator"
 	"fx_muzzle_flash_attach"						"muzzle_flash"
 
 	// NOTE: specifies muzzle flash for the second barrel
