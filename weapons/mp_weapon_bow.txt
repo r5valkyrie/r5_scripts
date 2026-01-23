@@ -143,10 +143,10 @@
 
 	// Ammo
                   
-	    "uses_ammo_pool"                            "1"
+	    "uses_ammo_pool"                            "0"
 	    "ammo_default_total"                        "40"
         "ammo_stockpile_max"                        "40"
-        "ammo_clip_size"                            "0"
+        "ammo_clip_size"                            "40"
 
         "damage_near_value"                         "35"
         "damage_far_value"                          "35"
