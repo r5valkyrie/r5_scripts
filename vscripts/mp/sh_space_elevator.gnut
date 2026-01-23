@@ -874,6 +874,29 @@ void function SPACEELEVATOR_InTriggerThread( entity trigger, entity player )
 
 				vector curVel = player.GetVelocity()
 
+				// Check player input to allow early exit
+				float inputForward = player.GetInputAxisForward()
+				float inputRight = player.GetInputAxisRight()
+				vector inputVector = Normalize( <inputForward, inputRight, 0> )
+
+				if ( Length( inputVector ) >= SPACEELEVATOR_TUNING_INPUT_THRESHOLD )
+				{
+					// Player is trying to move
+					vector diff = liftPos - playerPos
+					diff.z = 0
+					vector playerToCenter = Normalize(diff)
+					
+					vector movementIntent = Normalize( inputForward * player.GetForwardVector() + inputRight * player.GetRightVector() )
+					float intentIntoElevator = DotProduct( Normalize( movementIntent ), playerToCenter )
+					
+					// If player is pushing AWAY from elevator center, let them out!
+					if ( intentIntoElevator < 0 )
+					{
+						// Player wants to exit, break the loop
+						break
+					}
+				}
+
 				vector diff = liftPos - playerPos
 				diff.z = 0 
 				
@@ -938,7 +961,32 @@ void function SPACEELEVATOR_EjectPlayer( entity player, entity trigger, bool isT
 		}
 		else
 		{
-			player.SetVelocity( velocity + <0, 0, SPACEELEVATOR_TUNING_EJECT_UP_SPEED> )
+			// Use player's view direction for throw direction
+			vector viewForward = player.GetViewVector()
+			viewForward.z = 0
+			viewForward = Normalize(viewForward)
+			
+			// Check if player is actively moving
+			float inputForward = player.GetInputAxisForward()
+			float inputRight = player.GetInputAxisRight()
+			vector inputVector = Normalize( <inputForward, inputRight, 0> )
+			
+			vector throwDir
+			if ( Length( inputVector ) >= SPACEELEVATOR_TUNING_INPUT_THRESHOLD )
+			{
+				// Use player's movement input direction
+				throwDir = Normalize( inputForward * player.GetForwardVector() + inputRight * player.GetRightVector() )
+				throwDir.z = 0
+			}
+			else
+			{
+				// Use view direction
+				throwDir = viewForward
+			}
+			
+			// Add current upward velocity to the throw
+			float upVel = max( velocity.z, SPACEELEVATOR_TUNING_UP_SPEED * 0.5 )
+			player.SetVelocity( (throwDir * SPACEELEVATOR_TUNING_EJECT_HORIZ_SPEED) + <0, 0, SPACEELEVATOR_TUNING_EJECT_UP_SPEED> )
 		}
 
 		EmitSoundAtPositionOnlyToPlayer( TEAM_ANY, player.GetOrigin(), player, SPACEELEVATOR_SOUND_PLAYER_EXIT_1P )
