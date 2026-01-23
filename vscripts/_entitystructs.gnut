@@ -803,6 +803,7 @@ global struct ServerPlayerStruct
 	bool allowCancelEmbark
 	int allWeaponsDisallowDeployStackCount
 	entity forceAllowDeployOfWeapon
+	entity mountedTurretEnt
 	array<BurnDamageStack> burnDamageStacks
 	bool isBurning
 	entity TEMP_lastMeleeInputWeapon = null
