@@ -555,6 +555,20 @@ void function CLootV4_InitLootInfo()
 	allAttachRefs_Unfiltered.extend(SURVIVAL_GetAllRefsInLootGroup("Attachment_L3"))
 	allAttachRefs_Unfiltered.extend(SURVIVAL_GetAllRefsInLootGroup("Attachment_L4"))
 	
+	// why are these missing
+	allAttachRefs_Unfiltered.append("optic_sniper")
+	allAttachRefs_Unfiltered.append("optic_sniper_variable")
+	allAttachRefs_Unfiltered.append("optic_sniper_threat")
+	
+	// Remove duplicates
+	array<string> allAttachRefs_Unfiltered_unique = []
+	foreach (ref in allAttachRefs_Unfiltered)
+	{
+		if (!allAttachRefs_Unfiltered_unique.contains(ref))
+			allAttachRefs_Unfiltered_unique.append(ref)
+	}
+	allAttachRefs_Unfiltered = allAttachRefs_Unfiltered_unique
+	
 	printt("CLootV4: Found " + allAttachRefs_Unfiltered.len() + " attachment refs (unfiltered)")
 	
 	array<string> allAttachRefs = []
@@ -776,8 +790,16 @@ void function CLootV4_Create_AllStuff()
 	lootCountsTable["cloot4_health_start"] <- [1, 2, 2]
 	
 	// Special Gear
-	lootRefsTable["cloot4_specialgear_start"] <- ["health_pickup_ultimate", "mp_ability_redeploy_balloon"]
-	lootCountsTable["cloot4_specialgear_start"] <- [1, 1]
+	array<string> gadgetRefs = []
+	if (eLootType.SURVIVAL in file.gearDataByType)
+		gadgetRefs = LootDatas_To_LootRefs(file.gearDataByType[eLootType.SURVIVAL])
+	
+	// Add beacons cuz we are pepega
+	if (!gadgetRefs.contains("mp_ability_mobile_respawn_beacon"))
+		gadgetRefs.append("mp_ability_mobile_respawn_beacon")
+	
+	lootRefsTable["cloot4_specialgear_start"] <- gadgetRefs
+	lootCountsTable["cloot4_specialgear_start"] <- CLootV4_InitLootSpawnCount(gadgetRefs)
 	
 	// Backpacks
 	array<string> backpackRefs = []
