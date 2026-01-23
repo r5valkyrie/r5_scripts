@@ -18,7 +18,7 @@ WeaponData
 	"hud_icon"										"rui/weapon_icons/r5/weapon_prowler"
 
 	"fire_mode"   									"automatic"
-	"is_semi_auto"									"1"
+	"is_semi_auto"									"0"
 
 	"activitymodifier"								"pistol"
 
@@ -191,7 +191,7 @@ WeaponData
 	"viewkick_scale_pitch_valueLerpEnd" 			"10"
 	"viewkick_scale_yaw_valueLerpStart"   			"0"
 	"viewkick_scale_yaw_valueLerpEnd" 				"10"
-	"viewkick_scale_valueDecayDelay"  				"0.33"  // for burstfire, match to burst delay + fire rate (0.05 + 0.2)
+	"viewkick_scale_valueDecayDelay"  				"0.350000"
     "viewkick_scale_valueDecayRate"   				"45"
 
 	"viewmodel_shake_forward"						"0.0"

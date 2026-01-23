@@ -78,7 +78,7 @@
 	"viewmodel_offset_ads"                     "0 -1.6 0"
 
 	// Projectile
-	"projectile_launch_speed"                  "30000"  //"31500"
+	"projectile_launch_speed"                  "29000"
 
     //"bolt_hitsize_grow1_time"				    "0.123"  //~100m
     //"bolt_hitsize_grow1_size"				    "0.33"
@@ -263,7 +263,7 @@
 
 
 	"headshot_distance"	"17716"
-	"damage_headshot_scale"	"1.600000"
+	"damage_headshot_scale"	"1.450000"
 	"damage_shield_scale"	"1"
 	"damage_near_distance"	"1000"
 	"damage_far_distance"	"2500"

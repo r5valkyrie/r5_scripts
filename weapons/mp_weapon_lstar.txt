@@ -26,8 +26,8 @@ WeaponData
 	"cooldown_type"									"chargeFrac"
     "cooldown_time"	                                "0.16" // actually, "blowoff animation time"
     "charge_time"                                   "2.200000"
-    "charge_cooldown_time"                          "3.630000"
-    "charge_cooldown_delay"                         "0.06"
+    "charge_cooldown_time"                          "1.190000"
+    "charge_cooldown_delay"                         "0.080000"
 
 	"charge_overheats_when_full"                    "1"
 	"charge_weapon_fires_while_charging"            "1"
@@ -126,12 +126,12 @@ WeaponData
 	//"net_optimize"		                            "1"
 
 	"bolt_hitsize"									"0.0"
-    "bolt_hitsize_grow1_time"						"0.065000"
+    "bolt_hitsize_grow1_time"						"0.030000"
 	"bolt_hitsize_grow1_size"						"0.1"
-	"bolt_hitsize_grow2_time"						"0.125000"
-	"bolt_hitsize_grow2_size"						"0.100000"
+	"bolt_hitsize_grow2_time"						"0.065000"
+	"bolt_hitsize_grow2_size"						"0.200000"
 	"bolt_hitsize_growfinal_lerptime"				"0.14"
-	"bolt_hitsize_growfinal_size"					"0.100000"
+	"bolt_hitsize_growfinal_size"					"0.400000"
 
 	"bolt_gravity_enabled"							"1"
 
@@ -373,7 +373,7 @@ WeaponData
 	
 	"ammo_min_to_fire"								"1"
 	"ammo_per_shot"		    						"1"
-	"reload_enabled"  							"0"
+	"reload_enabled"  							"1"
 
     "aimassist_adspull_weaponclass"					"none"
 

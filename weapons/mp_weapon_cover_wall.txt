@@ -123,13 +123,13 @@ WeaponData
 
 	"ammo_drains_to_empty_on_fire"					"0"
 
-    "ammo_clip_size"   								"300"
-    "ammo_default_total"							"300"
+    "ammo_clip_size"   								"60"
+    "ammo_default_total"							"60"
     "ammo_display"									"count"
-    "ammo_min_to_fire"								"100"
-    "ammo_per_shot"									"100"
-    "ammo_stockpile_max"							"100"
-    "regen_ammo_refill_rate"						"5"
+    "ammo_min_to_fire"								"20"
+    "ammo_per_shot"									"20"
+    "ammo_stockpile_max"							"60"
+    "regen_ammo_refill_rate"						"1"
     "regen_ammo_refill_start_delay"					"0.0"
 
 

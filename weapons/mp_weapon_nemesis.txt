@@ -258,8 +258,8 @@ WeaponData
 
 	"viewmodel_shake_forward"				    "0.2"
 
-	"sway_rotate_attach"  							""
-	"sway_rotate_attach_zoomed"						""
+	"sway_rotate_attach"  							"SWAY_ROTATE"
+	"sway_rotate_attach_zoomed"						"SWAY_ROTATE_ZOOMED"
 
   //Currently taking from default AR
    // "spread_stand_hip"								"4.5"

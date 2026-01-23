@@ -48,7 +48,7 @@ WeaponData
 
     "projectile_inherit_owner_velocity_scale"		"0.2"
 
-	"projectile_launch_speed"						"600"
+	"projectile_launch_speed"						"800"
 	"projectile_launch_pitch_offset"				"2"
 	"projectile_first_person_offset_fraction"		"0"
 
@@ -139,7 +139,7 @@ WeaponData
 	"fire_duration"									"0.1"
 	"deploy_time" 									"0.05"
 	"raise_time" 									"0.05"
-	"lower_time"  									"0.15"
+	"lower_time"  									"0.100000"
 	"allow_empty_fire"								"0"
 	"no_ammo_used_on_primary_attack"				"0"
 	"reload_enabled"  								"0"
@@ -153,8 +153,8 @@ WeaponData
 	"grenade_inherit_owner_velocity"				"1"
 	"cooldown_type"									"ammo_timed"
 	"toss_pullout_time"								"0.01"  //0.05
-	"toss_time"										"0.75"  //0.30
-	"toss_overhead_time"							"0.75"  //0.30
+	"toss_time"										"0.650000"
+	"toss_overhead_time"							"0.650000"
 
 	"grenade_touch_triggers_on_impact"				"1"
 	"grenade_orient_to_velocity"					"0"

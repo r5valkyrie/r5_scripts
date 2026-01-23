@@ -115,7 +115,7 @@ WeaponData
                             
                                                              
          
-    "fire_duration"									"15.0"
+    "fire_duration"									"14.000000"
           
     "ammo_no_remove_from_stockpile"					"0"
 

@@ -81,12 +81,12 @@ WeaponData
 	"r_trig_custom_str"								"1"
 
     // Damage - When Used by Players
-    "damage_near_value"   							"48"
-    "damage_far_value"								"48"
-    "damage_very_far_value"							"48"
-    "damage_near_value_titanarmor"					"48"
-    "damage_far_value_titanarmor" 					"48"
-    "damage_very_far_value_titanarmor" 				"48"
+    "damage_near_value"   							"50"
+    "damage_far_value"								"50"
+    "damage_very_far_value"							"50"
+    "damage_near_value_titanarmor"					"50"
+    "damage_far_value_titanarmor" 					"50"
+    "damage_very_far_value_titanarmor" 				"50"
     "damage_rodeo" 									"350"
 
     "damage_headshot_scale"                         "1.500000"

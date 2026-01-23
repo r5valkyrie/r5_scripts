@@ -54,7 +54,7 @@ WeaponData
 
 	"blast_pattern"									"shotgun_pistol_3"
 	"blast_pattern_zero_distance"        			"512.0"
-	"blast_pattern_default_scale"        			"1.050000"
+	"blast_pattern_default_scale"        			"1.000000"
 	"blast_pattern_ads_scale"                       "0.750000"
 	"blast_pattern_npc_scale"            			"0.75"  // scales on top of the default
 
@@ -152,7 +152,7 @@ WeaponData
 	"bolt_hitsize_growfinal_size"					"7.5"
 
 	// Behavior
-	"fire_rate"   									"2.660000"
+	"fire_rate"   									"2.800000"
 	"reload_time" 									"2.1"
 	"reload_time_late1" 							"1.05"
 	"reloadempty_time"								"2.6"

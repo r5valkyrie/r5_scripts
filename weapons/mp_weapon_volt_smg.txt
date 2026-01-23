@@ -55,7 +55,7 @@ WeaponData
     "projectile_do_predict_impact_effects"			"1"
 
     // Bolt info
-    "bolt_hitsize"									"0.0"
+    "bolt_hitsize"									"0.200000"
     //"bolt_hitsize_grow1_time"						"0.005"
     //"bolt_hitsize_grow1_size"						"0.2"
     //"bolt_hitsize_grow2_time"						"0.07"
