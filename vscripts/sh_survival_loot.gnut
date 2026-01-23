@@ -652,8 +652,6 @@ void function SURVIVAL_Loot_InitShared()
 	file.initialized = true
 
 	var attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk.rpak" )
-	if( Playlist() == ePlaylists.survival_firingrange ) 
-		attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk_firing_range.rpak" )
 	
 	int numRows = GetDatatableRowCount( attachmentTable )
 
@@ -944,11 +942,7 @@ void function OnClientConnected( entity player )
 		ValidateDataTable( player, "datatable/flowstate_all_new_snd.rpak" )
 	}
 		
-	if ( GetCurrentPlaylistVarBool( "survival_staging_area_enabled", false ) ){
-		ValidateDataTable( player, "datatable/weapon_mods_sdk_firing_range.rpak" )
-		ValidateDataTable( player, "datatable/survival_loot_sdk_firingrange.rpak" )}
-	else
-		ValidateDataTable( player, "datatable/weapon_mods_sdk.rpak" )
+	ValidateDataTable( player, "datatable/weapon_mods_sdk.rpak" )
 }
 
 void function OnPlayerRespawned( entity player )
