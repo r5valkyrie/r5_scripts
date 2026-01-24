@@ -1318,6 +1318,9 @@ array<string> function LootHelper_FilterAndGrabCompatibleAttachmentUpgrades( Loo
 	if ( SURVIVAL_Weapon_IsAttachmentLocked( weaponData.ref ) )
 		return unequippedAttachment
 
+	if ( !(attachmentType in attachmentTable) )
+		return unequippedAttachment
+
 	array<string> candidates = attachmentTable[attachmentType]
 	array< int > upgradeTiers
 
