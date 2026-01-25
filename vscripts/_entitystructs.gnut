@@ -1121,11 +1121,14 @@ global struct ServerPlayerStruct
 	
 	array< var > recordingAnims
 	array< LocPair > recordingAnimsCoordinates
-	array< int > recordingAnimsChosenCharacters
+	array< string > recordingAnimsChosenCharacters
+	array< table ornull > recordingAnimsWeaponData
 
 	bool isRecording = false
 	vector currentOrigin
 	vector currentAngles
+	string currentRecordingCharacterRef = ""
+	table ornull currentRecordingWeaponData
 	bool recorderHideHud
 	bool continueLoop = true
 	array<entity> dummyList
