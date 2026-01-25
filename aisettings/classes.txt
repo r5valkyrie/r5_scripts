@@ -29,7 +29,8 @@ classes
 	import npc_dummie_rampart.txt
 	import npc_dummie_catalyst.txt
 	import npc_dummie_horizon.txt
-	import npc_dummie_valk.txt
+	import npc_dummie_revenant.txt
+	import npc_dummie_valkyrie.txt
 	import npc_dummie_ash.txt
 	
 	import npc_dummie_loba.txt
