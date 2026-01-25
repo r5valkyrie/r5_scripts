@@ -1519,38 +1519,38 @@ entity function CreateShake_internal( vector org, float amplitude, float frequen
 
 entity function CreateShake( vector org, float amplitude = 16, float frequency = 150, float duration = 1.5, float radius = 2048 )
 {
-	return CreateShake_internal( org, amplitude, frequency, duration, radius, 0 );
+	return CreateShake_internal( org, amplitude, frequency, duration, radius, 0 )
 }
 
 entity function CreateShakeRumbleOnly( vector org, float amplitude = 16, float frequency = 150, float duration = 1.5, float radius = 2048 )
 {
-	return CreateShake_internal( org, amplitude, frequency, duration, radius, SF_SHAKE_RUMBLE_ONLY );
+	return CreateShake_internal( org, amplitude, frequency, duration, radius, SF_SHAKE_RUMBLE_ONLY )
 }
 
 entity function CreateShakeNoRumble( vector org, float amplitude = 16, float frequency = 150, float duration = 1.5, float radius = 2048 )
 {
-	return CreateShake_internal( org, amplitude, frequency, duration, radius, SF_SHAKE_NO_RUMBLE );
+	return CreateShake_internal( org, amplitude, frequency, duration, radius, SF_SHAKE_NO_RUMBLE )
 }
 
 entity function CreateAirShake( vector org, float amplitude = 16, float frequency = 150, float duration = 1.5, float radius = 2048 )
 {
-	return CreateShake_internal( org, amplitude, frequency, duration, radius, SF_SHAKE_INAIR );
+	return CreateShake_internal( org, amplitude, frequency, duration, radius, SF_SHAKE_INAIR )
 }
 
 entity function CreateAirShakeRumbleOnly( vector org, float amplitude = 16, float frequency = 150, float duration = 1.5, float radius = 2048 )
 {
-	return CreateShake_internal( org, amplitude, frequency, duration, radius, (SF_SHAKE_INAIR | SF_SHAKE_RUMBLE_ONLY) );
+	return CreateShake_internal( org, amplitude, frequency, duration, radius, (SF_SHAKE_INAIR | SF_SHAKE_RUMBLE_ONLY) )
 }
 
 entity function CreateAirShakeNoRumble( vector org, float amplitude = 16, float frequency = 150, float duration = 1.5, float radius = 2048 )
 {
-	return CreateShake_internal( org, amplitude, frequency, duration, radius, (SF_SHAKE_INAIR | SF_SHAKE_NO_RUMBLE) );
+	return CreateShake_internal( org, amplitude, frequency, duration, radius, (SF_SHAKE_INAIR | SF_SHAKE_NO_RUMBLE) )
 }
 
 //-------------------------------------
 // CreatePhysExplosion - physExplosion...small, medium or large
 //--------------------------------------
-entity function CreatePhysExplosion( vector org, float radius, int magnitude = 1, int flags = 1, bool dealsDamage = true )
+void function CreatePhysExplosion( vector org, float radius, int magnitude = 1, int flags = 1, bool dealsDamage = true )
 {
 	entity env_physexplosion = CreateEntity( "env_physexplosion" )
 	env_physexplosion.kv.spawnflags = flags // default 1 = No Damage - Only Force
@@ -1562,7 +1562,6 @@ entity function CreatePhysExplosion( vector org, float radius, int magnitude = 1
 
 	EntFireByHandle( env_physexplosion, "Explode", "", 0, null, null )
 	EntFireByHandle( env_physexplosion, "Kill", "", 2, null, null )
-	return env_physexplosion
 }
 
 entity function CreateThreatIndicator( vector origin, int threadIndicatorID = eThreatIndicatorID.GRENADE_INDICATOR_GENERIC, float radius = 128.0, vector visualOffset = <0,0,0>, int threatIndicatorVisibilityType = eThreatIndicatorVisibility.INDICATOR_SHOW_TO_ALL , entity owner = null )
@@ -1583,7 +1582,13 @@ entity function CreateThreatIndicator( vector origin, int threadIndicatorID = eT
 //-----------------------------------------------------------
 // CreatePropDynamic( model ) - create a generic prop_dynamic with default properties
 //------------------------------------------------------------
-entity function CreatePropDynamic( asset model, vector ornull origin = null, vector ornull angles = null, var solidType = 0, float fadeDist = -1 )
+entity function CreatePropDynamic_NoDispatchSpawn( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1 )
+{
+	return CreatePropDynamic( model, origin, angles, solidType, fadeDist, false )
+}
+
+
+entity function CreatePropDynamic( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true )
 {
 	entity prop_dynamic = CreateEntity( "prop_dynamic" )
 	prop_dynamic.SetValueForModelKey( model )
@@ -1598,7 +1603,10 @@ entity function CreatePropDynamic( asset model, vector ornull origin = null, vec
 		if ( angles )
 			prop_dynamic.SetAngles( expect vector( angles ) )
 	}
-	DispatchSpawn( prop_dynamic )
+
+	if ( dispatchSpawn )
+		DispatchSpawn( prop_dynamic )
+
 	if ( origin )
 	{
 		// hack: Setting origin twice. SetOrigin needs to happen after DispatchSpawn, otherwise origin is snapped to nearest whole unit
@@ -1632,10 +1640,53 @@ entity function CreateEnvDecoy( asset model, vector ornull origin = null, vector
 
 	return decoy
 }
+
+
+entity function CreatePropShield( asset model, int impacteffectcolorID, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true )
+{
+	entity prop_shield = CreateEntity( "prop_shield" )
+	prop_shield.SetValueForModelKey( model )
+	prop_shield.kv.fadedist = fadeDist
+	prop_shield.kv.renderamt = 255
+	prop_shield.kv.rendercolor = "255 255 255"
+	prop_shield.kv.solid = solidType // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
+	prop_shield.kv.impacteffectcolorid = impacteffectcolorID
+	prop_shield.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
+	prop_shield.SetBlocksLOS( false )
+	prop_shield.EnableAttackableByAI( AI_PRIORITY_NO_THREAT, 0, AI_AP_FLAG_NONE)
+
+	if ( origin )
+	{
+		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
+		prop_shield.SetOrigin( expect vector( origin ) )
+		if ( angles )
+			prop_shield.SetAngles( expect vector( angles ) )
+	}
+
+	if ( dispatchSpawn )
+		DispatchSpawn( prop_shield )
+
+	if ( origin )
+	{
+		// hack: Setting origin twice. SetOrigin needs to happen after DispatchSpawn, otherwise origin is snapped to nearest whole unit
+		prop_shield.SetOrigin( expect vector( origin ) )
+		if ( angles )
+			prop_shield.SetAngles( expect vector( angles ) )
+	}
+
+	return prop_shield
+}
+
 //-----------------------------------------------------------
 // CreatePropDynamicLightweight( model ) - create a generic prop_dynamic_lightweight with default properties
 //------------------------------------------------------------
-entity function CreatePropDynamicLightweight( asset model, vector ornull origin = null, vector ornull angles = null, var solidType = 0, float fadeDist = -1 )
+
+entity function CreatePropDynamicLightweight_NoDispatchSpawn( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1 )
+{
+	return CreatePropDynamicLightweight( model, origin, angles, solidType, fadeDist, false )
+}
+
+entity function CreatePropDynamicLightweight( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true  )
 {
 	entity prop_dynamic = CreateEntity( "prop_dynamic_lightweight" )
 	prop_dynamic.SetValueForModelKey( model )
@@ -1650,7 +1701,10 @@ entity function CreatePropDynamicLightweight( asset model, vector ornull origin 
 		if ( angles )
 			prop_dynamic.SetAngles( expect vector( angles ) )
 	}
-	DispatchSpawn( prop_dynamic )
+
+	if ( dispatchSpawn )
+		DispatchSpawn( prop_dynamic )
+
 	if ( origin )
 	{
 		// hack: Setting origin twice. SetOrigin needs to happen after DispatchSpawn, otherwise origin is snapped to nearest whole unit
@@ -1662,11 +1716,50 @@ entity function CreatePropDynamicLightweight( asset model, vector ornull origin 
 	return prop_dynamic
 }
 
+//-----------------------------------------------------------
+// CreatePropSurvival( model ) - create a prop_survival with default properties.
+// Note, weapon pickups MUST have their names set before being used
+//------------------------------------------------------------
+entity function CreatePropSurvival( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1 )
+{
+	entity prop_survival = CreateEntity( "prop_survival" )
+	prop_survival.SetValueForModelKey( model )
+	prop_survival.kv.fadedist = fadeDist
+	prop_survival.kv.renderamt = 255
+	prop_survival.kv.rendercolor = "255 255 255"
+	prop_survival.kv.solid = solidType // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
+
+	if ( origin )
+	{
+		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
+		prop_survival.SetOrigin( expect vector( origin ) )
+		if ( angles )
+			prop_survival.SetAngles( expect vector( angles ) )
+	}
+
+	DispatchSpawn( prop_survival )
+
+	if ( origin )
+	{
+		// hack: Setting origin twice. SetOrigin needs to happen after DispatchSpawn, otherwise origin is snapped to nearest whole unit
+		prop_survival.SetOrigin( expect vector( origin ) )
+		if ( angles )
+			prop_survival.SetAngles( expect vector( angles ) )
+	}
+
+	return prop_survival
+}
 
 //-----------------------------------------------------------
 // CreatePropScript( model ) - create a generic prop_script with default properties
 //------------------------------------------------------------
-entity function CreatePropScript( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1 )
+entity function CreatePropScript_NoDispatchSpawn( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1 )
+{
+	return CreatePropScript( model, origin, angles, solidType, fadeDist, false )
+}
+
+
+entity function CreatePropScript( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true )
 {
 	entity prop_script = CreateEntity( "prop_script" )
 	prop_script.SetValueForModelKey( model )
@@ -1679,35 +1772,20 @@ entity function CreatePropScript( asset model, vector ornull origin = null, vect
 		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
 		prop_script.SetOrigin( expect vector( origin ) )
 		if ( angles )
-			prop_script.SetAngles( expect vector( angles ) )
-	}
-	DispatchSpawn( prop_script )
-	if ( origin )
-	{
-		// hack: Setting origin twice. SetOrigin needs to happen after DispatchSpawn, otherwise origin is snapped to nearest whole unit
-		prop_script.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			prop_script.SetAngles( expect vector( angles ) )
+		{
+			vector checkAngles = expect vector( angles )
+			if ( LegalAngles(checkAngles) )
+				prop_script.SetAngles( expect vector( angles ) )
+			#if DEVELOPER
+			else
+				Assert( false, "CreatePropScript: angles are not between valid -360.0 and 360.0 range. angles=" + checkAngles)
+			#endif
+		}
 	}
 
-	return prop_script
-}
+	if ( dispatchSpawn )
+		DispatchSpawn( prop_script )
 
-entity function CreatePropScript_NoDispatchSpawn( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0 )
-{
-	entity prop_script = CreateEntity( "prop_script" )
-	prop_script.SetValueForModelKey( model )
-	prop_script.kv.renderamt = 255
-	prop_script.kv.rendercolor = "255 255 255"
-	prop_script.kv.solid = solidType // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
-	if ( origin )
-	{
-		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
-		prop_script.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			prop_script.SetAngles( expect vector( angles ) )
-	}
-	//DispatchSpawn( prop_script )
 	if ( origin )
 	{
 		// hack: Setting origin twice. SetOrigin needs to happen after DispatchSpawn, otherwise origin is snapped to nearest whole unit
@@ -5843,58 +5921,6 @@ entity function CreateDeathBox_NoDispatch( vector origin, vector angles, string 
 	box.kv.fadedist = fadeDistance
 
 	return box
-}
-
-entity function CreatePropDynamic_NoDispatchSpawn( asset model, vector ornull origin = null, vector ornull angles = null, var solidType = 0, float fadeDist = -1 )
-{
-	entity prop_dynamic = CreateEntity( "prop_dynamic" )
-	prop_dynamic.SetValueForModelKey( model )
-	prop_dynamic.kv.fadedist = fadeDist
-	prop_dynamic.kv.renderamt = 255
-	prop_dynamic.kv.rendercolor = "255 255 255"
-	prop_dynamic.kv.solid = solidType // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
-	if ( origin )
-	{
-		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
-		prop_dynamic.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			prop_dynamic.SetAngles( expect vector( angles ) )
-	}
-	
-	return prop_dynamic
-}
-
-entity function CreatePropShield( asset model, int colorID, vector ornull origin = null, vector ornull angles = null, var solidType = 0, float fadeDist = -1 )
-{
-	entity prop_shield = CreateEntity( "prop_shield" )
-
-	prop_shield.SetValueForModelKey( model )
-
-	prop_shield.kv.fadedist = fadeDist
-	prop_shield.kv.renderamt = 255
-	prop_shield.kv.rendercolor = "255 255 255"
-	prop_shield.kv.solid = solidType // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
-	prop_shield.kv.impacteffectcolorid = colorID
-
-	if ( origin )
-	{
-		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
-		prop_shield.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			prop_shield.SetAngles( expect vector( angles ) )
-	}
-
-	DispatchSpawn( prop_shield )
-
-	if ( origin )
-	{
-		// hack: Setting origin twice. SetOrigin needs to happen before DispatchSpawn, otherwise the prop may not touch triggers
-		prop_shield.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			prop_shield.SetAngles( expect vector( angles ) )
-	}
-
-	return prop_shield
 }
 
 entity function CreatePropDeathBox_NoDispatchSpawn( asset model, vector ornull origin = null, vector ornull angles = null, var solidType = 0, float fadeDist = -1 )

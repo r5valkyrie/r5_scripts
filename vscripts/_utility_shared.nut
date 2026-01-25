@@ -902,6 +902,21 @@ bool function LegalOrigin( vector origin )
 	return true
 }
 
+bool function LegalAngles( vector angles )
+{
+	if ( fabs( angles.x ) > 360 )
+		return false
+
+	if ( fabs( angles.y ) > 360 )
+		return false
+
+	if ( fabs( angles.z ) > 360 )
+		return false
+
+	return true
+}
+
+
 vector function AnglesOnSurface( vector surfaceNormal, vector playerVelocity )
 {
 	playerVelocity.Norm()

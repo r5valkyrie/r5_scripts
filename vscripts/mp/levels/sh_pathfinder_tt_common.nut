@@ -247,13 +247,14 @@ void function InitPathTTBoxingRingEntities()
 		}
 
 		entity ringShieldTarget = ringShieldTargets[ 0 ]
-		entity ringShield = CreatePropScript( GetAssetFromString( BOXING_RING_MODEL ), ringShieldTarget.GetOrigin(), ringShieldTarget.GetAngles(), SOLID_VPHYSICS, 1 )
+		entity ringShield = CreatePropScript( GetAssetFromString( BOXING_RING_MODEL ), ringShieldTarget.GetOrigin(), ringShieldTarget.GetAngles(), SOLID_VPHYSICS, 1, false )
 		//ringShield.kv.CollisionGroup = TRACE_COLLISION_GROUP_NONE
 		ringShield.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
 		ringShield.kv.contents = int( ringShield.kv.contents ) | CONTENTS_NOGRAPPLE | CONTENTS_BLOCKLOS
 		ringShield.kv.renderamt = 10
 		ringShield.kv.collide_human = 0
 		ringShield.SetScriptName( BOXING_RING_SCRIPTNAME )
+		DispatchSpawn( ringShield )
 		ringShield.Hide()
 		ringShield.kv.contents = int( ringShield.kv.contents ) | CONTENTS_NOGRAPPLE | CONTENTS_BLOCKLOS
 
