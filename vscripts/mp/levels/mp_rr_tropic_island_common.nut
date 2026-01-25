@@ -46,7 +46,7 @@ void function Tropics_MapInit_Common()
 #if SERVER
 void function OnPlayerCreated( entity player )
 {
-	thread warningprint( player )
+	//thread warningprint( player )
 }
 
 void function warningprint( entity player )
