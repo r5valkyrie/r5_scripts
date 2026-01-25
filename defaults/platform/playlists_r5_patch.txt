@@ -602,7 +602,6 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
-				mp_rr_tropic_island								1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
 				mp_rr_canyonlands_mu1						  	1
@@ -665,7 +664,6 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
-				mp_rr_tropic_island								1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
 				mp_rr_canyonlands_mu1						  	1
@@ -732,7 +730,6 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
-				mp_rr_tropic_island								1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
 				mp_rr_canyonlands_mu1						  	1
@@ -978,7 +975,7 @@ playlists
 				
 				// match teams will not fill with more than one party, up to max_teams of size max_team_size (or less) -- not exceeding max_players
 				max_team_size									2
-				max_players										120
+				max_players										200
 				min_players										1
 
 				// Skip intros:
@@ -1023,7 +1020,6 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
-				mp_rr_tropic_island								1
 				mp_rr_canyonlands_staging					  	1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
@@ -1064,7 +1060,77 @@ playlists
 				mp_rr_olympus						 			1
 				mp_rr_olympus_tt						 		1
 				mp_rr_olympus_mu1						 		1
-				mp_rr_tropic_island								1
+				mp_rr_canyonlands_staging					  	1
+				mp_rr_canyonlands_64k_x_64k_ps4					1
+				mp_rr_canyonlands_64k_x_64k						1
+				mp_rr_canyonlands_mu1						  	1
+				mp_rr_canyonlands_mu1_night						1
+				mp_rr_canyonlands_mu2							1
+				mp_rr_canyonlands_mu2_tt						1
+				mp_rr_canyonlands_mu3							1
+				mp_rr_party_crasher					 			1
+				mp_rr_aqueduct								 	1
+				mp_rr_arena_phase_runner						1
+				mp_rr_arena_composite							1
+				mp_rr_arena_skygarden							1
+			} } }
+		}
+
+		Movement_Recorder
+		{
+			inherit survival_dev
+			vars
+			{
+				visible											1
+			
+				name										   	"Survival Dev"
+				
+				// match teams will not fill with more than one party, up to max_teams of size max_team_size (or less) -- not exceeding max_players
+				max_team_size									2
+				max_players										200
+				min_players										1
+
+				// Skip intros:
+				waiting_for_players_spawning_enabled		   	1
+				waiting_for_players_countdown_seconds		  	0
+				waiting_for_players_timeout_seconds				1
+				character_select_time_max					  	0.0
+				character_select_time_min					  	0.0
+				survival_enable_gladiator_intros			   	0
+				jump_from_plane_enabled							0
+
+				// No circle:
+				sur_circle_start_paused							1
+
+				// Can change loadouts:
+				dev_loadout_changeable_at_any_time			 	1
+				sur_dev_unrestricted_character_changes		 	1
+
+				// Bots:
+				sur_bots_spawn_with_random_weapons			 	1
+				match_ending_enabled						   	0
+
+				enable_global_chat								1
+				enable_bullet_slow								1
+
+				activate_passive_abilities						1
+
+				dodge_dash_enabled								0
+
+				custom_loot               						0
+				enable_motd										0
+			}
+			gamemodes { survival { maps {
+				mp_rr_desertlands_64k_x_64k						1
+				mp_rr_desertlands_64k_x_64k_nx				 	1
+				mp_rr_desertlands_64k_x_64k_tt				 	1
+				mp_rr_desertlands_64k_x_64k_mv				 	1
+				mp_rr_desertlands_mu1				 			1
+				mp_rr_desertlands_mu1_tt				 		1
+				mp_rr_desertlands_mu2					 		1
+				mp_rr_olympus						 			1
+				mp_rr_olympus_tt						 		1
+				mp_rr_olympus_mu1						 		1
 				mp_rr_canyonlands_staging					  	1
 				mp_rr_canyonlands_64k_x_64k_ps4					1
 				mp_rr_canyonlands_64k_x_64k						1
@@ -1105,7 +1171,7 @@ playlists
 				"MOTD_TEXT" "A R5Valkyrie Server" //set your servers message of the day. 1000 char max.  Use \n for newline.
 				"MOTD_TEXT_EXTENDED" "" // appends to first, 1000 char max.
 			
-				"BETA_BUILD_WATERMARK" "R5Valkyrie LIVE - v2.8.0"
+				"BETA_BUILD_WATERMARK" "R5Valkyrie PTU - v2.8.0"
 
 				//////////////////////////////////////////////////
 				// TEMP TOKENS (remove before release shipping )//

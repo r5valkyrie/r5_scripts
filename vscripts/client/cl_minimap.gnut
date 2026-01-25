@@ -1540,6 +1540,9 @@ void function Minimap_UpdateMinimapVisibility( entity player )
 	if ( MiniMapIsDisabled() )
 		isVisible = false
 
+	if ( Playlist() == ePlaylists.Movement_Recorder )
+		isVisible = false
+
 	if ( GetGameState() == eGameState.WaitingForPlayers || GetGameState() == eGameState.PickLoadout )
 		isVisible = false
 

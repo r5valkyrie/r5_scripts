@@ -125,7 +125,7 @@ void function ClientToUI_ToggleScoreboard()
 		return
 	}
 
-	if ( IsFiringRangeGameMode() )
+	if ( IsFiringRangeGameMode() || Playlist() == ePlaylists.Movement_Recorder )
 	{
 		printf( "%s() - Showing character select because we're in Firing Range.", FUNC_NAME() )
 		RunUIScript( "TryCloseSurvivalInventory", null )

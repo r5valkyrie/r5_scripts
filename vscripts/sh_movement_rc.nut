@@ -1,5 +1,3 @@
-// Todo(mk): QOL Update-- Allow each slot to have a set playback rate per player, with a ui slider/input field to modify per-slot. 0 for inf or frozen.
-
 #if SERVER
 	global function ClientCommand_DestroyDummys
 	global function MovementRecorder_SetPlaybackRate
@@ -34,7 +32,6 @@ struct
 		int playbackLimit = -1
 		table<int, table<int, array<entity> > > playerDummyMaps //[ehandle][slot] = dummy
 		table<int, table<int,int> > playerPlaybackAmounts = {} //[ehandle][slot] = amount
-		//table<int, table<int,float> > playerPlaybackDurations = {} //[ehandle][slot] = duration
 
 		float helmet_lv4 = 0.65
 		float adminSetPlaybackRate = 1.0
@@ -108,7 +105,7 @@ void function Sh_FS_MovementRecorder_Init()
 #if SERVER
 bool function MessagePlayer_Disabled( entity player, array<string> args )
 {
-	LocalEventMsg( player, "#FS_DisabledTDMWeps" )
+	LocalEventMsg( player, "#DisabledTDMWeps" )
 	return true
 }
 
@@ -307,7 +304,7 @@ void function FS_MovementRecorder_CreateInputHintsRUI( bool state )
 
 	UISize screenSize = GetScreenSize()
 	const float hudScale = 0.7
-	var topo = RuiTopology_CreatePlane( <( screenSize.width * 0.015),( screenSize.height * 0 ), 0>, <float( screenSize.width ) * hudScale, 0, 0>, <0, float( screenSize.height ) * hudScale, 0>, false )
+	var topo = RuiTopology_CreatePlane( <( screenSize.width * 0.33),( screenSize.height * 0 ), 0>, <float( screenSize.width ) * hudScale, 0, 0>, <0, float( screenSize.height ) * hudScale, 0>, false )
 	var hintRui = RuiCreate( $"ui/tutorial_hint_line.rpak", topo, RUI_DRAW_POSTEFFECTS, MINIMAP_Z_BASE + 10 )
 	RuiSetString( hintRui, "buttonText", "%F2%" )
 	RuiSetString( hintRui, "gamepadButtonText", "%F2%" )
@@ -458,7 +455,6 @@ void function _HandlePlayerDisconnect( entity player )
 {
 	int playerHandle = player.p.handle
 
-	//(mk): might be helpful to free up open slots. ty wanderer for looking up internal mechanisms.
 	ForceStopRecording( player )
 
 	foreach ( slot, dummies in file.playerDummyMaps[playerHandle] )
@@ -485,7 +481,6 @@ void function FS_MovementRecorder_OnPlayerConnected( entity player )
 	FS_MovementRecorder_PlayerInit( player )
 	SetTeam( player, 2 )
 
-	// Assign character on first spawn (with delay to ensure player is ready)
 	thread AssignCharacterOnFirstSpawn( player )
 }
 
@@ -509,13 +504,9 @@ void function FS_MovementRecorder_PlayerInit( entity player )
 
 	table<int, array<entity> > init_playerDummyMap 	= clone file._dummyMaps__Template
 	table<int,int> init_playerPlaybackAmounts 		= clone file._playbackAmounts__Template
-	//table<int,float> init_playerPlaybackDurations	= clone file._playbackDuration__Template
 
 	file.playerPlaybackAmounts[ playerHandle ] <- init_playerPlaybackAmounts
 	file.playerDummyMaps[ playerHandle ] <- init_playerDummyMap
-	//file.playerPlaybackDurations[ playerHandle ] <- init_playerPlaybackDurations
-
-	//PrintMovementRecorderTable( file.playerPlaybackAmounts )
 }
 
 bool function ClientCommand_ToggleMovementRecorder( entity player, array<string> args )
@@ -530,7 +521,7 @@ bool function ClientCommand_ToggleMovementRecorder( entity player, array<string>
 		if( !bDoesAnyAnimationExist( player ) )
 		{
 			if( !player.p.recorderHideHud )
-				LocalEventMsg( player, "#FS_NO_ANIMS", "", 3 )
+				LocalEventMsg( player, "#NO_ANIMS", "", 3 )
 
 			return true
 		}
@@ -552,7 +543,7 @@ bool function ClientCommand_ToggleMovementRecorder( entity player, array<string>
 		if( slot == -1 )
 		{
 			if( !player.p.recorderHideHud )
-				LocalEventMsg( player, "#FS_NO_SLOTS" )
+				LocalEventMsg( player, "#NO_SLOTS" )
 
 			return true
 		}
@@ -560,7 +551,7 @@ bool function ClientCommand_ToggleMovementRecorder( entity player, array<string>
 		if( !IsAlive( player ) )
 			DecideRespawnPlayer( player, true )
 
-		player.p.isRecording = true //(mk): prevent thread leak, set here.
+		player.p.isRecording = true
 		thread StartRecordingAnimation( player )
 	}
 
@@ -572,7 +563,7 @@ bool function ClientCommand_PlayAnimInSlot( entity player, array<string> args )
 	if( !IsValid( player ) )
 		return false
 
-	if( !CheckRate( player, "play_anim", COMMAND_RATE_LIMIT, true ) ) //(mk)todo: verify
+	if( !CheckRate( player, "play_anim", COMMAND_RATE_LIMIT, true ) )
 		return true
 
 	if( args.len() == 0 )
@@ -612,7 +603,7 @@ bool function ClientCommand_PlayAllAnims( entity player, array<string> args )
 
 	if( !player.p.recorderHideHud )
 	{
-		string token = remove ? "#FS_REMOVING_ALL_ANIMS" : "#FS_PLAYING_ALL_ANIMS";
+		string token = remove ? "#REMOVING_ALL_ANIMS" : "#PLAYING_ALL_ANIMS";
 		LocalEventMsg( player, token )
 	}
 
@@ -685,13 +676,10 @@ void function StartRecordingAnimation( entity player )
 
 	if( !player.p.recorderHideHud )
 	{
-		LocalEventMsg( player, "#FS_RECORDINGANIM_CUSTOM", msg1, 6 )
+		LocalEventMsg( player, "#RECORDINGANIM_CUSTOM", msg1, 6 )
 		Remote_CallFunction_NonReplay( player, "FS_MovementRecorder_UpdateHints", 0, true, 0 )
 	}
 
-	//asset playermodel = player.GetModelName() //?
-
-	//MovementRecorder_SetStartRecordingTime( player, Time() )
 	player.StartRecordingAnimation( player.p.currentOrigin, player.p.currentAngles )
 
 	OnThreadEnd
@@ -710,7 +698,7 @@ void function StartRecordingAnimation( entity player )
 	waitthread WaitSignalOrTimeout( player, 148, "OnDestroy", "OnDisconnected", "FinishedRecording" )
 }
 
-void function ForceStopRecording( entity player ) //(mk):caller must check
+void function ForceStopRecording( entity player )
 {
 	if( !player.p.isRecording )
 		return
@@ -718,19 +706,9 @@ void function ForceStopRecording( entity player ) //(mk):caller must check
 	player.StopRecordingAnimation()
 	player.p.isRecording = false
 
-	LocalEventMsg( player, "#FS_SPACE", "", 1 )
+	LocalEventMsg( player, "#SPACE", "", 1 )
 	Remote_CallFunction_NonReplay( player, "FS_MovementRecorder_UpdateHints", 0, false, -1 )
 }
-
-// void function MovementRecorder_SetStartRecordingTime( entity player, float time )
-// {
-	// player.p.recordingStartTime = time
-// }
-
-// float function MovementRecorder_GetStartRecordingTime( entity player )
-// {
-	// return player.p.recordingStartTime
-// }
 
 int function FS_MovementRecorder_GetEmptySlotForPlayer( entity player )
 {
@@ -752,7 +730,7 @@ void function StopRecordingAnimation( entity player )
 	if( slot == -1 )
 	{
 		if( !player.p.recorderHideHud )
-			LocalEventMsg( player, "#FS_NO_SLOTS" )
+			LocalEventMsg( player, "#NO_SLOTS" )
 
 		ForceStopRecording( player )
 
@@ -769,16 +747,9 @@ void function StopRecordingAnimation( entity player )
 	player.p.recordingAnimsWeaponData[ slot ] = player.p.currentRecordingWeaponData
 	player.Signal( "FinishedRecording" ) //(mk): cleanup watcher thread.
 
-
-	// float endTime = Time()
-	// float startTime = MovementRecorder_GetStartRecordingTime( player )
-	// float slotDuration = endTime - startTime
-
-	// MovementRecorder_SetSlotDuration( player, slot, slotDuration )
-
 	if( !player.p.recorderHideHud )
 	{
-		LocalEventMsg( player, "#FS_MOVEMENT_SAVED", slotname( slot + 1 ) )
+		LocalEventMsg( player, "#MOVEMENT_SAVED", slotname( slot + 1 ) )
 		Remote_CallFunction_NonReplay( player, "FS_MovementRecorder_UpdateHints", 0, false, 0 )
 
 		var anim = player.p.recordingAnims[ slot ]
@@ -791,7 +762,7 @@ const array<string> r5vDevs =
 [
 	"CafeFPS",
 	"zee_x64",
-	"LorryLeKral",
+    "LorryLeKral",
 	"Glitch"
 ]
 
@@ -827,7 +798,7 @@ void function PlayRandomAnimation( entity player )
 	int playerHandle = player.p.handle
 
 	if( !player.p.recorderHideHud )
-		LocalMsg( player, "#FS_PLAYING_RANDOM", "#FS_PLAYING_RANDOM_DESC" )
+		LocalMsg( player, "#PLAYING_RANDOM", "#PLAYING_RANDOM_DESC" )
 
 	OnThreadEnd
 	(
@@ -861,7 +832,7 @@ void function PlayRandomAnimation( entity player )
 		if( randomSlots.len() <= 0 )
 		{
 			if( !player.p.recorderHideHud )
-				LocalEventMsg( player, "#FS_NO_ANIMS" )
+				LocalEventMsg( player, "#NO_ANIMS" )
 
 			return
 		}
@@ -915,7 +886,7 @@ void function PlayAnimInSlot( entity player, int slot, bool remove = false, bool
 	if( !remove && anim == null )
 	{
 		if( !player.p.recorderHideHud )
-			LocalEventMsg( player, "#FS_ANIM_NOT_FOUND", "", 3 )
+			LocalEventMsg( player, "#ANIM_NOT_FOUND", "", 3 )
 
 		return
 	}
@@ -927,7 +898,7 @@ void function PlayAnimInSlot( entity player, int slot, bool remove = false, bool
 		Remote_CallFunction_NonReplay( player, "FS_MovementRecorder_UpdateHints", slot + 1, false, -1 )
 
 		if( !player.p.recorderHideHud && !removeAll )
-			LocalEventMsg( player, "#FS_ANIM_REMOVED_SLOT", slotname( slot + 1 ), 3 )
+			LocalEventMsg( player, "#ANIM_REMOVED_SLOT", slotname( slot + 1 ), 3 )
 
 		DestroyDummyForSlot( player, slot )
 
@@ -936,7 +907,7 @@ void function PlayAnimInSlot( entity player, int slot, bool remove = false, bool
 	else if( !remove )
 	{
 		if( !player.p.recorderHideHud )
-			LocalEventMsg( player, "#FS_PLAYING_ANIM", slotname( slot + 1 ), 3 )
+			LocalEventMsg( player, "#PLAYING_ANIM", slotname( slot + 1 ), 3 )
 	}
 	else if ( remove )
 	{
@@ -1203,7 +1174,7 @@ void function ClientCommand_DestroyDummys( entity player, array<string> args )
 				DestroyDummyForSlot( player, slot )
 
 			if( !player.p.recorderHideHud )
-				LocalEventMsg( player, "#FS_RECORDER_ENDALL" )
+				LocalEventMsg( player, "#RECORDER_ENDALL" )
 
 			break
 
@@ -1239,14 +1210,13 @@ void function ClientCommand_DestroyDummys( entity player, array<string> args )
 					continue
 
 				if( !player.p.recorderHideHud )
-					LocalEventMsg( sPlayer, "#FS_ADMIN_RECORDER_ENDALL" )
+					LocalEventMsg( sPlayer, "#ADMIN_RECORDER_ENDALL" )
 			}
 
 			break
 	}
 }
 
-//TODO(mk): Preferably we use more performant budget management strategy in the future, for now.. this.
 bool function IsOverBudget( entity player, int amountToPlay = 1 )
 {
 	if ( ( GetEntArrayByClass_Expensive( "npc_dummie" ).len() + amountToPlay ) < MAX_NPC_BUDGET )
@@ -1258,7 +1228,7 @@ bool function IsOverBudget( entity player, int amountToPlay = 1 )
 		if( IsValid( player ) )
 		{
 			if( !player.p.recorderHideHud )
-				LocalEventMsg( player, "#FS_OVER_BUDGET" )
+				LocalEventMsg( player, "#OVER_BUDGET" )
 		}
 
 		return true
@@ -1272,7 +1242,7 @@ bool function HasSlotAllocation( entity player, int slot, bool hidehud = false )
 	if ( file.playbackLimit > -1 && file.playerPlaybackAmounts[ player.p.handle ][ slot ] >= file.playbackLimit )
 	{
 		if( !hidehud && !player.p.recorderHideHud )
-			LocalEventMsg( player, "#FS_PLAYBACK_LIMIT" )
+			LocalEventMsg( player, "#PLAYBACK_LIMIT" )
 
 		return false
 	}
@@ -1291,7 +1261,7 @@ bool function CheckRate( entity player, string key = DEFAULT_RATE_KEY, float rat
 	if ( Time() - player.p.rateLimitTable[ key ] <= rate )
 	{
 		if( notify )
-			LocalEventMsg( player, "#FS_CMD", "", 2 )
+			LocalEventMsg( player, "#CMD", "", 2 )
 
 		return false
 	}
