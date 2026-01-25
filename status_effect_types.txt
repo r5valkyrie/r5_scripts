@@ -88,6 +88,7 @@
 	placing_phase_gate
 	placing_phase_tunnel
 	placing_caustic_barrel
+	placing_death_totem
 
 	camera_view
 	crypto_has_camera

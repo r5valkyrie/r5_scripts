@@ -8,6 +8,9 @@ global function OnWeaponPrimaryAttack_ability_revenant_death_totem
 
 #if CLIENT
 	global function OnCreateClientOnlyModel_ability_revenant_death_totem
+	global function DeathTotem_OnBeginPlacement
+	global function DeathTotem_OnEndPlacement
+	global function DeathTotem_GetOwnedTotemCountOnClient
 #endif
 
 #if SERVER
@@ -158,6 +161,7 @@ void function MpAbilityRevenantDeathTotem_Init()
 	RegisterSignal( "DeathTotem_PreRecallPlayer" )
 	RegisterSignal( "DeathTotem_Cancel" )
 	RegisterSignal( "DeathTotem_RemoveWallClimbDisables" )
+	RegisterSignal( "DeathTotem_StopPlacement" )
 
 	#if CLIENT
 		PrecacheParticleSystem( DEATH_TOTEM_TELEPORT_SCREEN_FX )
@@ -165,6 +169,8 @@ void function MpAbilityRevenantDeathTotem_Init()
 		StatusEffect_RegisterEnabledCallback( eStatusEffect.death_totem_visual_effect, DeathTotem_StartVisualEffect )
 		StatusEffect_RegisterDisabledCallback( eStatusEffect.death_totem_visual_effect, DeathTotem_StopVisualEffect )
 		StatusEffect_RegisterEnabledCallback( eStatusEffect.death_totem_recall, DeathTotem_RecallVisualEffect )
+		StatusEffect_RegisterEnabledCallback( eStatusEffect.placing_death_totem, DeathTotem_OnBeginPlacement )
+		StatusEffect_RegisterDisabledCallback( eStatusEffect.placing_death_totem, DeathTotem_OnEndPlacement )
 		AddCallback_OnPlayerChangedTeam( DeathTotem_ChangedTeamHUDUpdate )
 		AddCallback_PlayerClassChanged( DeathTotem_OnPlayerClassChanged )
 
@@ -209,6 +215,11 @@ var function OnWeaponPrimaryAttack_ability_revenant_death_totem( entity weapon, 
 {
 	entity ownerPlayer = weapon.GetWeaponOwner()
 	Assert( ownerPlayer.IsPlayer() )
+
+	#if CLIENT
+		if ( ownerPlayer == GetLocalViewPlayer() )
+			ownerPlayer.Signal( "DeathTotem_StopPlacement" )
+	#endif
 
 	PlayerUsedOffhand( ownerPlayer, weapon )
 
@@ -1649,6 +1660,78 @@ void function DeathTotem_PlayRecallScreenFX( entity clientPlayer )
 }
 #endif //CLIENT
 
+#if CLIENT
+void function DeathTotem_OnBeginPlacement( entity player, int statusEffect, bool actuallyChanged )
+{
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	thread DeathTotem_Placement( player )
+}
+
+void function DeathTotem_OnEndPlacement( entity player, int statusEffect, bool actuallyChanged )
+{
+	if ( player != GetLocalViewPlayer() )
+		return
+
+	player.Signal( "DeathTotem_StopPlacement" )
+}
+
+void function DeathTotem_Placement( entity player )
+{
+	player.EndSignal( "DeathTotem_StopPlacement" )
+
+	entity totemProxy = CreateClientSidePropDynamic( <0,0,0>, <0,0,0>, DEATH_TOTEM_TOTEM_MDL )
+	totemProxy.EnableRenderAlways()
+	totemProxy.Show()
+	DeployableModelHighlight( totemProxy )
+
+	OnThreadEnd(
+		function() : ( totemProxy )
+		{
+			if ( IsValid( totemProxy ) )
+				totemProxy.Destroy()
+		}
+	)
+
+	while ( true )
+	{
+		DeathTotemPlacementInfo placementInfo = CalculateDeathTotemPosition( player, totemProxy )
+
+		// Check if placement is valid
+		bool placementValid = true
+		if ( placementInfo.origin == player.GetOrigin() + player.GetForwardVector() * 20 )
+		{
+			// Fallback position means placement failed
+			placementValid = false
+		}
+
+		if ( !placementValid )
+			DeployableModelInvalidHighlight( totemProxy )
+		else
+			DeployableModelHighlight( totemProxy )
+
+		vector angles = < 0, VectorToAngles( player.GetViewVector() ).y, 0 >
+		totemProxy.SetOrigin( placementInfo.origin )
+		totemProxy.SetAngles( angles )
+
+		WaitFrame()
+	}
+}
+
+int function DeathTotem_GetOwnedTotemCountOnClient( entity player )
+{
+	int count = 0
+	array<entity> totems = GetEntArrayByScriptName( DEATH_TOTEM_TARGETNAME )
+	foreach ( entity totem in totems )
+	{
+		if ( totem.GetOwner() == player )
+			count++
+	}
+	return count
+}
+#endif //CLIENT
+
 void function OnWeaponActivate_ability_revenant_death_totem( entity weapon )
 {
 	entity weaponOwner = weapon.GetWeaponOwner()
@@ -1658,6 +1741,14 @@ void function OnWeaponActivate_ability_revenant_death_totem( entity weapon )
 	{
 		weapon.RemoveMod( ABILITY_USED_MOD )
 	}
+
+	#if CLIENT
+		if ( !InPrediction() )
+			return
+	#endif
+
+	int statusEffect = eStatusEffect.placing_death_totem
+	StatusEffect_AddEndless( weaponOwner, statusEffect, 1.0 )
 
 	#if SERVER
 		vector angles = FlattenAngles( VectorToAngles( weaponOwner.GetViewVector() ) )
@@ -1673,6 +1764,13 @@ void function OnWeaponDeactivate_ability_revenant_death_totem( entity weapon )
 	entity ownerPlayer = weapon.GetWeaponOwner()
 	Assert( ownerPlayer.IsPlayer() )
 	weapon.Signal( "DeathTotem_RemoveWallClimbDisables" )
+
+	#if CLIENT
+		if ( !InPrediction() )
+			return
+	#endif
+
+	StatusEffect_StopAllOfType( ownerPlayer, eStatusEffect.placing_death_totem )
 
 	#if SERVER
 		if( weapon.w.wasFired )
@@ -1734,14 +1832,16 @@ DeathTotemPlacementInfo function CalculateDeathTotemPosition( entity weaponOwner
 	totemBoundMaxs = < totemBoundMaxs.x + dx, totemBoundMaxs.y + dy, totemBoundMaxs.z >
 
 	TraceResults traceResults = TraceHull( startPos, startPos + viewVector * magnitude, totemBoundMins, totemBoundMaxs, [weaponOwner, totemProxy], TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
-	DebugDrawSphere( traceResults.endPos, 16.0, 0,255,0, true, 15.0, 2 )
+	if ( DEATH_TOTEM_DEBUG )
+		DebugDrawSphere( traceResults.endPos, 16.0, 0,255,0, true, 15.0, 2 )
 	bool isUpwardSlope        = (IsValid( traceResults.hitEnt ) && traceResults.hitEnt.IsWorld()) && forwardVector.Dot( traceResults.surfaceNormal ) < -0.05
 	if ( isUpwardSlope )
 	{
 		float slopeAngle   = 180 - RAD_TO_DEG * acos( forwardVector.Dot( traceResults.surfaceNormal ) )
 		vector slopeVector = ClampViewVectorToMaxAngle( upVector, viewVector, angle )
 		traceResults = TraceHull( startPos, startPos + slopeVector * magnitude, totemBoundMins, totemBoundMaxs, [weaponOwner, totemProxy], TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
-		DebugDrawSphere( traceResults.endPos, 16.0, 0,0,255, true, 15.0, 2 )
+		if ( DEATH_TOTEM_DEBUG )
+			DebugDrawSphere( traceResults.endPos, 16.0, 0,0,255, true, 15.0, 2 )
 	}
 	TraceResults traceResultsDown = TraceLine( traceResults.endPos, traceResults.endPos + <0, 0, -150>, [weaponOwner, totemProxy], TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 	//TraceResults traceResultsDown = TraceHull( traceResults.endPos, traceResults.endPos + <0,0,-150>, DEATH_TOTEM_BOUND_MINS, DEATH_TOTEM_BOUND_MAXS, [weaponOwner], TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_NONE )
@@ -1756,7 +1856,8 @@ DeathTotemPlacementInfo function CalculateDeathTotemPosition( entity weaponOwner
 	}
 	else
 	{
-		DebugDrawSphere( traceResultsDown.endPos, 16.0, 255,0,0, true, 15.0, 2 )
+		if ( DEATH_TOTEM_DEBUG )
+			DebugDrawSphere( traceResultsDown.endPos, 16.0, 255,0,0, true, 15.0, 2 )
 		info.origin = traceResultsDown.endPos
 		info.parentTo = null
 		info.normal = traceResultsDown.surfaceNormal
