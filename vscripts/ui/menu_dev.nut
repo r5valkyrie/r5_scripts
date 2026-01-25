@@ -292,10 +292,8 @@ void function SetupDefaultDevCommandsMP()
 	if( GetCheatsState() )
 	{
 		SetupDevMenu( "Equip Legend Abilities", SetDevMenu_Abilities )
-		//SetupDevMenu( "Equip Custom Abilities", SetDevMenu_CustomAbilities )
 		SetupDevMenu( "Equip Apex Weapons", SetDevMenu_Weapons )
-		if( Playlist() != ePlaylists.survival_firingrange )
-			SetupDevMenu( "Equip Titanfall Weapons", SetDevMenu_R2Weapons )
+		SetupDevMenu( "Equip Titanfall Weapons", SetDevMenu_R2Weapons )
 
 		if ( IsSurvivalMenuEnabled() )
 		{
@@ -317,6 +315,7 @@ void function SetupDefaultDevCommandsMP()
 			SetupDevMenu( "Custom: Attachments", SetDevMenu_SurvivalLoot, "attachment_custom" )
 			SetupDevCommand( "", "give blank" )
 		}
+
 		SetupDevMenu( "Equip Custom Cosmetics", SetDevMenu_CustomCosmetics )
 		SetupDevMenu( "Equip Custom Heirlooms", SetDevMenu_CustomHeirlooms )
 		SetupDevCommand( "", "give blank" )
@@ -1434,6 +1433,19 @@ void function SetupAbilities()
 	SetupDevCommand( "Wraith Ultimate", "give mp_weapon_phase_tunnel" )
 	SetupDevCommand( "Revenant Tactical", "give mp_ability_silence" )
 	SetupDevCommand( "Revenant Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Loba Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Loba Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Rampart Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Rampart Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Horizon Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Horizon Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Fuse Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Fuse Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Valkyrie Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Valkyrie Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Seer Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Ash Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Ash Ultimate", "give mp_ability_revenant_death_totem" )
 	#endif
 }
 
