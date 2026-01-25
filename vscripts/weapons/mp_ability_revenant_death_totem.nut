@@ -178,11 +178,11 @@ void function MpAbilityRevenantDeathTotem_Init()
 	var revenant_totem_has_distance_limit = GetWeaponInfoFileKeyField_Global( "mp_ability_revenant_death_totem", "revenant_totem_has_distance_limit" )
 	if( revenant_totem_has_distance_limit != null )
 		file.revenant_totem_has_distance_limit = bool( expect int( revenant_totem_has_distance_limit ) )
-		
+
 	var revenant_totem_buff_use_ending_fx = GetWeaponInfoFileKeyField_Global( "mp_ability_revenant_death_totem", "revenant_totem_buff_use_ending_fx" )
 	if( revenant_totem_buff_use_ending_fx != null )
-		file.showEndOfBuffFX = bool( expect int( revenant_totem_buff_use_ending_fx ) )	
-		
+		file.showEndOfBuffFX = bool( expect int( revenant_totem_buff_use_ending_fx ) )
+
 	var revenant_totem_buff_duration = GetWeaponInfoFileKeyField_Global( "mp_ability_revenant_death_totem", "revenant_totem_buff_duration" )
 	if( revenant_totem_buff_duration != null )
 		file.deathTotemBuffDuration = expect float( revenant_totem_buff_duration )
@@ -207,38 +207,27 @@ void function OnCreateClientOnlyModel_ability_revenant_death_totem( entity weapo
 
 var function OnWeaponPrimaryAttack_ability_revenant_death_totem( entity weapon, WeaponPrimaryAttackParams attackParams )
 {
-	// Check for valid spot
-	/*if ( !weapon.ObjectPlacementHasValidSpot() )
-	{
-		weapon.DoDryfire()
-		return 0
-	}*/
-
 	entity ownerPlayer = weapon.GetWeaponOwner()
 	Assert( ownerPlayer.IsPlayer() )
 
 	PlayerUsedOffhand( ownerPlayer, weapon )
-	/*bool serverOrPredicted = IsServer() || (InPrediction() && IsFirstTimePredicted())
-	if ( serverOrPredicted )
-	{
-		weapon.AddMod( ABILITY_USED_MOD )
-		weapon.AddMod( ULTIMATE_ACTIVE_MOD_STRING )
-	}*/
 
 	thread DeathTotem_DisableWallClimbWhileDeployingTotem( ownerPlayer, weapon )
 
 	#if SERVER
 		PlayBattleChatterLineToSpeakerAndTeam( ownerPlayer, "bc_super" )
 		weapon.w.wasFired = true
-		//LockWeaponsAndMelee( ownerPlayer )
 
-		vector origin = ownerPlayer.GetOrigin()
-		vector angles = ownerPlayer.GetAngles()
-		//entity parentTo = weapon.GetParent()
-		thread DeathTotem_DeployTotem( ownerPlayer, origin, angles ) // Place your object in some utility function as normal using object placement's final positional data
+		entity placementProxy = CreatePropDynamic( DEATH_TOTEM_TOTEM_MDL, <0,0,0>, <0,0,0>, 0 )
+		DeathTotemPlacementInfo placementInfo = CalculateDeathTotemPosition( ownerPlayer, placementProxy )
+		placementProxy.Destroy()
+
+		vector viewAngles = VectorToAngles( ownerPlayer.GetViewVector() )
+		vector angles = < 0, viewAngles.y, 0 >
+		thread DeathTotem_DeployTotem( ownerPlayer, placementInfo.origin, angles ) // Place your object in some utility function as normal using object placement's final positional data
 
 		if ( DEATH_TOTEM_DEBUG )
-			DebugDrawAxis( origin, angles )
+			DebugDrawAxis( placementInfo.origin, angles )
 	#endif
 
 	return weapon.GetAmmoPerShot()
@@ -705,11 +694,11 @@ void function DeathTotem_RecallPlayer( entity player )
 	// way to have death totem clear players from random positions
 	// ========================================
 
-	                
+
 		//if player is crafting, wait for detach
 		if ( player.GetParent() != null && player.GetParent().GetScriptName() == "crafting_workbench_cluster" )
 			player.WaitSignal( "CraftingPlayerDetached" )
-       
+
 
 	PreparePlayerForPositionReset( player )
 
@@ -1134,11 +1123,11 @@ void function DeathTotem_HandleUserDeathOrDesync( entity player, entity totemPro
 #if SERVER
 void function ShadowSquadApplyCharacterSkin( entity player )
 {
-	                            
+
 		// Don't want shadow shader in this mode
 		//if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 			//return
-       
+
 
 	//////////////////////////////////////////////
 	// Switch to base character model for Legend
@@ -1191,7 +1180,7 @@ void function DeathTotem_CrouchPlayer( entity player )
 	Assert ( IsNewThread(), "Must be threaded off." )
 	Signal( player, "DeathTotem_ChangePlayerStance" )
 	EndSignal( player, "OnDeath", "DeathTotem_ChangePlayerStance" )
-	
+
 	/*int forceCrouchHandle = player.PushForcedStance( FORCE_STANCE_CROUCH )
 	OnThreadEnd(
 		function() : ( player, forceCrouchHandle )
@@ -1202,9 +1191,9 @@ void function DeathTotem_CrouchPlayer( entity player )
 			}
 		}
 	)*/
-	
+
 	player.ForceCrouch()
-	
+
 	OnThreadEnd
 	(
 		void function() : ( player )
@@ -1213,7 +1202,7 @@ void function DeathTotem_CrouchPlayer( entity player )
 				player.UnforceCrouch()
 		}
 	)
-	
+
 	wait 0.2
 }
 
@@ -1232,9 +1221,9 @@ void function DeathTotem_StandPlayer( entity player )
 			}
 		}
 	)*/
-	
+
 	player.ForceStand()
-	
+
 	OnThreadEnd
 	(
 		void function() : ( player )
@@ -1243,7 +1232,7 @@ void function DeathTotem_StandPlayer( entity player )
 				player.UnforceStand()
 		}
 	)
-	
+
 	wait 0.2
 }
 
@@ -1704,7 +1693,7 @@ void function CancelDeathTotemForPlayer( entity player )
 
 bool function DoesPlayerHaveDeathProtection( entity player )
 {
-	return StatusEffect_GetSeverity( player, eStatusEffect.death_totem_visual_effect ) > 0.0 
+	return StatusEffect_GetSeverity( player, eStatusEffect.death_totem_visual_effect ) > 0.0
 }
 
 //TODO: Add a minimum angle check to try to spawn the Totem slightly in front of you even when looking down.
