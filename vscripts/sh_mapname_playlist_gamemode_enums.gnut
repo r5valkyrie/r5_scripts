@@ -103,6 +103,7 @@ global enum ePlaylists
 	fs_knockbackknockout, //50
 	fs_onlyup, //51
 	fs_nextbots, //52
+	Movement_Recorder,
 	
 	_PLAYLISTS_COUNT //LAST
 }
@@ -467,11 +468,11 @@ void function PassivesAllowed_Init()
 		ePlaylists.fs_1v1,
 		ePlaylists.fs_scenarios,
 		ePlaylists.dev_default,
-		ePlaylists.survival_dev,
+		ePlaylists.Movement_Recorder,
 		ePlaylists.winterexpress,
+		ePlaylists.survival,
 		ePlaylists.survival_solos,
 		ePlaylists.survival_duos,
-		ePlaylists.survival,
 		ePlaylists.survival_firingrange
 	]
 

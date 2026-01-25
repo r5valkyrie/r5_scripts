@@ -205,7 +205,7 @@ void function SV_CL_Init()
 
 	CharacterSelectNewMenu_Init()
 
-	//ShHoverBike_Init()
+	Sh_FS_MovementRecorder_Init()
 	Sh_SkydiveLaunchers_Init()
 	ShLootBin_Init()
 	ShFlyers_Init()

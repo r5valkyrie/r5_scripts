@@ -116,6 +116,7 @@ Scripts:
 	sh_dev_weapons.nut
 	sh_dev_menu.nut
 	sh_weapon_cosmetics.nut
+	sh_movement_rc.nut
 ]
 
 When: "CLIENT"
