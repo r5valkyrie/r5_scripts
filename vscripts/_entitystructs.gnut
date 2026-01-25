@@ -248,6 +248,7 @@ global struct ServerEntityStruct
 	bool destroyTriggerHurt = false
 
 	bool ignoreJumpPad = false
+	bool gravityCannonCharging = false
 
 	bool forceRagdollDeath = false
 
