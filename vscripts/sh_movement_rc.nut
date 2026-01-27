@@ -659,7 +659,7 @@ bool function ClientCommand_ToggleContinueLoop(entity player, array<string> args
 
 void function StartRecordingAnimation( entity player )
 {
-	if( !IsValid( player ) )//(mk):threaded off
+	if( !IsValid( player ) )
 		return
 
 	if( !player.p.isRecording )
@@ -749,7 +749,7 @@ void function StopRecordingAnimation( entity player )
 
 	if( !player.p.recorderHideHud )
 	{
-		LocalEventMsg( player, "#MOVEMENT_SAVED", slotname( slot + 1 ) )
+		LocalEventMsg( player, "#MOVEMENT_IS_SAVED", slotname( slot + 1 ) )
 		Remote_CallFunction_NonReplay( player, "FS_MovementRecorder_UpdateHints", 0, false, 0 )
 
 		var anim = player.p.recordingAnims[ slot ]
