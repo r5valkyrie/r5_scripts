@@ -17,8 +17,8 @@
 	ContentRui
     {
         ControlName				RuiPanel
-        wide					%100
-        tall					500
+        wide					1200
+        tall					750
         visible				    1
         rui                     "ui/dialog_content.rpak"
 
@@ -115,42 +115,18 @@
         pin_to_sibling_corner	RIGHT
     }
 
-	MapButton2
-	{
-		ControlName				RuiButton
-        wide					350
-        tall					197
-        ypos                    0
-        xpos                    0
-        zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
-        labelText               ""
-        visible					1
-        sound_accept            "UI_Menu_GameMode_Select"
-		"scriptID"					"2"
-        scaleImage              1
-
-        ruiArgs
-        {
-            lockIconEnabled 0
-            modeNameText "Map Name"
-            modeDescText ""
-            alwaysShowDesc 0
-            modeImage ""
-        }
-
-        pin_to_sibling			ContentRui
-        pin_corner_to_sibling	CENTER
-        pin_to_sibling_corner	CENTER
-	}
+	// 5x5 Grid with absolute positioning
+	// Button size: 200x112, spacing: 10px
+	// Grid starts at x=260, y=150 (centered horizontally on 1920 screen)
+	// Each row is y + 122 (112 height + 10 spacing)
 
 	MapButton0
 	{
 		ControlName				RuiButton
-        wide					350
-        tall					197
-        ypos                    0
-        xpos                    15
+		xpos					440
+		ypos					260
+        wide					200
+        tall					112
         zpos                    10
         rui                     "ui/gamemode_select_v2_lobby_button.rpak"
         labelText               ""
@@ -167,19 +143,15 @@
             alwaysShowDesc 0
             modeImage ""
         }
-
-        pin_to_sibling			MapButton1
-        pin_corner_to_sibling	RIGHT
-        pin_to_sibling_corner	LEFT
 	}
 
 	MapButton1
 	{
 		ControlName				RuiButton
-        wide					350
-        tall					197
-        ypos                    0
-        xpos                    15
+		xpos					650
+		ypos					260
+        wide					200
+        tall					112
         zpos                    10
         rui                     "ui/gamemode_select_v2_lobby_button.rpak"
         labelText               ""
@@ -196,26 +168,47 @@
             alwaysShowDesc 0
             modeImage ""
         }
+	}
 
-        pin_to_sibling			MapButton2
-        pin_corner_to_sibling	RIGHT
-        pin_to_sibling_corner	LEFT
+	MapButton2
+	{
+		ControlName				RuiButton
+		xpos					860
+		ypos					260
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"2"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
 	}
 
 	MapButton3
 	{
 		ControlName				RuiButton
-        wide					350
-        tall					197
-        ypos                    0
-        xpos                    15
+		xpos					1070
+		ypos					260
+        wide					200
+        tall					112
         zpos                    10
         rui                     "ui/gamemode_select_v2_lobby_button.rpak"
         labelText               ""
         visible					1
-        scaleImage              1
         sound_accept            "UI_Menu_GameMode_Select"
 		"scriptID"					"3"
+        scaleImage              1
 
         ruiArgs
         {
@@ -225,26 +218,22 @@
             alwaysShowDesc 0
             modeImage ""
         }
-
-        pin_to_sibling			MapButton2
-        pin_corner_to_sibling	LEFT
-        pin_to_sibling_corner	RIGHT
 	}
 
 	MapButton4
 	{
 		ControlName				RuiButton
-        wide					350
-        tall					197
-        ypos                    0
-        xpos                    15
+		xpos					1280
+		ypos					260
+        wide					200
+        tall					112
         zpos                    10
         rui                     "ui/gamemode_select_v2_lobby_button.rpak"
         labelText               ""
         visible					1
-        scaleImage              1
         sound_accept            "UI_Menu_GameMode_Select"
 		"scriptID"					"4"
+        scaleImage              1
 
         ruiArgs
         {
@@ -254,9 +243,509 @@
             alwaysShowDesc 0
             modeImage ""
         }
+	}
 
-        pin_to_sibling			MapButton3
-        pin_corner_to_sibling	LEFT
-        pin_to_sibling_corner	RIGHT
+	// Row 2
+	MapButton5
+	{
+		ControlName				RuiButton
+		xpos					440
+		ypos					382
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"5"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton6
+	{
+		ControlName				RuiButton
+		xpos					650
+		ypos					382
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"6"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton7
+	{
+		ControlName				RuiButton
+		xpos					860
+		ypos					382
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"7"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton8
+	{
+		ControlName				RuiButton
+		xpos					1070
+		ypos					382
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"8"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton9
+	{
+		ControlName				RuiButton
+		xpos					1280
+		ypos					382
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"9"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	// Row 3
+	MapButton10
+	{
+		ControlName				RuiButton
+		xpos					440
+		ypos					504
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"10"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton11
+	{
+		ControlName				RuiButton
+		xpos					650
+		ypos					504
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"11"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton12
+	{
+		ControlName				RuiButton
+		xpos					860
+		ypos					504
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"12"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton13
+	{
+		ControlName				RuiButton
+		xpos					1070
+		ypos					504
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"13"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton14
+	{
+		ControlName				RuiButton
+		xpos					1280
+		ypos					504
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"14"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	// Row 4
+	MapButton15
+	{
+		ControlName				RuiButton
+		xpos					440
+		ypos					626
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"15"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton16
+	{
+		ControlName				RuiButton
+		xpos					650
+		ypos					626
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"16"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton17
+	{
+		ControlName				RuiButton
+		xpos					860
+		ypos					626
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"17"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton18
+	{
+		ControlName				RuiButton
+		xpos					1070
+		ypos					626
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"18"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton19
+	{
+		ControlName				RuiButton
+		xpos					1280
+		ypos					626
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"19"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	// Row 5
+	MapButton20
+	{
+		ControlName				RuiButton
+		xpos					440
+		ypos					748
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"20"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton21
+	{
+		ControlName				RuiButton
+		xpos					650
+		ypos					748
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"21"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton22
+	{
+		ControlName				RuiButton
+		xpos					860
+		ypos					748
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"22"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton23
+	{
+		ControlName				RuiButton
+		xpos					1070
+		ypos					748
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"23"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
+	}
+
+	MapButton24
+	{
+		ControlName				RuiButton
+		xpos					1280
+		ypos					748
+        wide					200
+        tall					112
+        zpos                    10
+        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        labelText               ""
+        visible					1
+        sound_accept            "UI_Menu_GameMode_Select"
+		"scriptID"					"24"
+        scaleImage              1
+
+        ruiArgs
+        {
+            lockIconEnabled 0
+            modeNameText "Map Name"
+            modeDescText ""
+            alwaysShowDesc 0
+            modeImage ""
+        }
 	}
 }
