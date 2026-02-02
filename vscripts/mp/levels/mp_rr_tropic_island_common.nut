@@ -51,6 +51,7 @@ void function OnPlayerCreated( entity player )
 
 void function warningprint( entity player )
 {
+	/*
 	wait 1
 	string wildlife = DEV_TropicsWildlife_GetCampDetailsAllString()
 	Dev_PrintMessage(
@@ -58,7 +59,7 @@ void function warningprint( entity player )
     "THIS MAP IS WORK IN PROGRESS",
     "Detected map: " + GetMapName() +
 	"\n\nKnown Bugs: Missing ocean water\nBroken wildlife\nSome flickery textures." + "\n\n" + wildlife + "\n\nPlease report any glitch you see outside of known bugs\nto our discord server!",
-    25, "SQ_UI_InGame_10SecondTimeWarning" )
+    25, "SQ_UI_InGame_10SecondTimeWarning" )*/
 }
 #endif // SERVER
 

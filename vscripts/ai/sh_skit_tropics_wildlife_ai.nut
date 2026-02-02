@@ -14,11 +14,11 @@ global function DEV_TropicsWildlife_SpawnXProwlers
 global function DEV_TropicsWildlife_DestroyAllSkits
 global function DEV_TropicsWildlife_CreateAllSkits
 global function DEV_TropicsWildlife_HardResetAllSkits
+global function DEV_TropicsWildlife_GetCampDetailsAllString
 #endif // DEV && SERVER
 
 #if SERVER
 global function Wildlife_ClientToServer_PingWildlifeFromMap
-global function DEV_TropicsWildlife_GetCampDetailsAllString
 #endif
 
 #if CLIENT
@@ -2019,7 +2019,7 @@ void function TropicsWildlife_InitializeNPCDependencies()
 	#endif
 }
 
-#if SERVER
+#if DEVELOPER && SERVER
 string function DEV_TropicsWildlife_GetCampDetailsAllString()
 {
     string wildlifeInfo =
@@ -2035,9 +2035,7 @@ string function DEV_TropicsWildlife_GetCampDetailsAllString()
 	"\t Total Spider Egg Spawners = " + s_spiderEggGeneratorDatas.len()
     return wildlifeInfo
 }
-#endif
 
-#if DEVELOPER && SERVER
 void function DEV_TropicsWildlife_PrintCampDetails( entity player )
 {
 	if ( !IsValid( player ) )
