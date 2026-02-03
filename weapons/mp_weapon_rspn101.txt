@@ -293,12 +293,6 @@ WeaponData
 			"low_ammo_sound_name_6"                         "R101_LowAmmo_Shot6"
 		}
 
-		funny_selector
-		{
-			"projectile_ricochet_max_count"					"9999"
-			"bolt_bounce_frac" 								"1"
-			"projectile_damages_owner"						"1"		
-		}
                       
         hopup_highcal_rounds
         {
@@ -359,6 +353,7 @@ WeaponData
 			vis							player_zoomfrac
 			ammo						weapon_ammo
 			clipSize					weapon_clipSize
+			centerOffset				weapon_ads_center_offset
 		}
 	}
 
