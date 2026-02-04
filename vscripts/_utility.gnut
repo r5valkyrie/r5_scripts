@@ -6215,6 +6215,32 @@ void function CleanUpPermanentsParentedToDynamicEnt( entity dynamicEnt )
 }
 
 #if DEVELOPER 
+void function Dev_GetMapCenterBasedOnNavmesh()
+{
+	vector navmeshMaxs, navmeshMins
+
+	const float WORLD_COORD_DEV = 45000
+	navmeshMaxs.x = Survival_GetPlaneJumpPointOverMap( < WORLD_COORD_DEV, 0, 5000 >, < -WORLD_COORD_DEV, 0, 5000 > ).x
+	navmeshMaxs.y = Survival_GetPlaneJumpPointOverMap( < 0, WORLD_COORD_DEV, 5000 >, < 0, -WORLD_COORD_DEV, 5000 > ).y
+	navmeshMins.x = Survival_GetPlaneJumpPointOverMap( < -WORLD_COORD_DEV, 0, 5000 >, < WORLD_COORD_DEV, 0, 5000 > ).x
+	navmeshMins.y = Survival_GetPlaneJumpPointOverMap( < 0, -WORLD_COORD_DEV, 5000 >, < 0, WORLD_COORD_DEV, 5000 > ).y
+
+	vector navmeshTopRight = < navmeshMaxs.x, navmeshMaxs.y, 0 >
+	vector navmeshBottomRight = < navmeshMaxs.x, navmeshMins.y, 0 >
+	vector navmeshBottomLeft = < navmeshMins.x, navmeshMins.y, 0 >
+	vector navmeshTopLeft = < navmeshMins.x, navmeshMaxs.y, 0 >
+	DebugDrawLine( navmeshTopRight, navmeshBottomRight, 255, 0, 255, true, 100.0 )
+	DebugDrawLine( navmeshBottomRight, navmeshBottomLeft, 255, 0, 255, true, 100.0 )
+	DebugDrawLine( navmeshBottomLeft, navmeshTopLeft, 255, 0, 255, true, 100.0 )
+	DebugDrawLine( navmeshTopLeft, navmeshTopRight, 255, 0, 255, true, 100.0 )
+
+	vector navmeshCenter = ( navmeshMaxs + navmeshMins ) * 0.5
+	DebugDrawSphere( navmeshCenter, 1024, 255, 0, 255, true, 100.0, 64 )
+
+	Warning( "Map center (from NAVMESH) coordinates in console! Look for the PINK sphere" )
+	printt( "\tMap center (from NAVMESH):", navmeshCenter )
+}
+
 	void function HP( int index )
 	{
 		if( index > GetPlayerArray().len() - 1 || index < 0 )
