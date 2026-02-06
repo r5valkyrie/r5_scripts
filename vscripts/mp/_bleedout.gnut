@@ -31,6 +31,7 @@ global function Bleedout_IsPlayerGettingFirstAid
 global function Bleedout_IsReceivingFirstAid
 global function Bleedout_IsReviveButtonDown
 global function Bleedout_ReviveForceStop
+global function Bleedout_ForceRevive
 global function Bleedout_ForceStop
 global function ReviveThread_Target
 global function ReviveThread_Reviver
@@ -1061,7 +1062,7 @@ bool function Bleedout_IsPressToRevive( entity reviver, entity target )
 	return false
 }
 
-void function Bleedout_PlayerAttemptRes( entity reviver, entity target )
+void function Bleedout_PlayerAttemptRes( entity reviver, entity target, bool forcePressToRevive = false )
 {
 	Assert( IsNewThread(), "Must be threaded off." )
 	target.EndSignal( "OnDeath" )
@@ -1070,7 +1071,7 @@ void function Bleedout_PlayerAttemptRes( entity reviver, entity target )
 
 	file.IsGettingFirstAidFrom[ target ] = reviver
 
-	bool pressToRevive        = Bleedout_IsPressToRevive( reviver, target )
+	bool pressToRevive        = forcePressToRevive || Bleedout_IsPressToRevive( reviver, target )
 	bool doAutoRevive 		  = false
 
 	doAutoRevive = ( !Bleedout_IsPlayerSelfReviving( target ) && PassiveMedic_ShouldDoCombatRevive( reviver ) )
@@ -1762,4 +1763,11 @@ void function EnablePlayerForceBleedout_Thread( entity player, int inputOptionA 
 bool function IsForceBleedoutButtonDown( entity player, int inputOptionA = IN_DUCKTOGGLE, int inputOptionB = IN_DUCK )
 {
 	return player.IsInputCommandHeld( inputOptionA ) || player.IsInputCommandHeld( inputOptionB )
+}
+
+void function Bleedout_ForceRevive( entity reviver, entity target )
+{
+	if ( !IsValid( reviver ) || !IsValid( target ) )
+		return
+	thread Bleedout_PlayerAttemptRes( reviver, target, true )
 }
