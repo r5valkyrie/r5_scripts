@@ -154,7 +154,7 @@ void function Cl_Survival_LootInit()
 	file.lootTypePromptRui[eLootType.MAINWEAPON][eLootPromptStyle.COMPACT] = compactWeaponPromptRui
 
 	AddCallback_OnRefreshCustomGamepadBinds( OnRefreshCustomGamepadBinds )
-
+	
 	PrecacheParticleSystem( EVO_ARMOR_FX )
 	PrecacheParticleSystem( EVO_ARMOR_PICKUP_FX )
 }
@@ -207,7 +207,7 @@ void function PlayLootPickupFeedbackFX( entity ent )
 				}
 			}
 		}
-
+	
 }
 
 
@@ -290,8 +290,16 @@ int function Survival_Health_GetSelectedHealthPickupType()
 
 void function UseSelectedHealthPickupType( entity player )
 {
+	if( Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival ) //Make a system aruond this for a third ability, hook UpdateDpadHud as well to show an icon and a cooldown one
+	{
+		printt("Hooked to do something hehe find how to execute the weapon on the consumable slot, so we can add a third ability")
+		ActivateOffhandWeaponByIndex( OFFHAND_SLOT_FOR_CONSUMABLES )
+		return
+	}
+
 	if ( HealthkitWheelToggleEnabled() && IsCommsMenuActive() )
 		return
+	//printt("UseSelectedHealthPickupType ", WeaponDrivenConsumablesEnabled())
 
 	if ( WeaponDrivenConsumablesEnabled() )
 	{
@@ -443,7 +451,7 @@ void function CreateDeathBoxRui( entity deathBox )
 		return
 
 	expect EHI( ehi )
-
+	
 	if( Gamemode() != eGamemodes.fs_aimtrainer )
 	{
 		clGlobal.levelEnt.Signal( "CreateDeathBoxRui" )
@@ -552,7 +560,7 @@ string function DeathBoxTextOverride( entity ent )
 void function OnPropCreated( entity prop )
 {
 	AddEntityCallback_GetUseEntOverrideText( prop, Sur_LootTextOverride )
-
+	
 	ApplyEquipmentColorAndFXOverrides( prop )
 }
 
@@ -797,10 +805,10 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 
 	RuiSetImage( rui, "iconImage", data.hudIcon )
 	RuiSetInt( rui, "lootTier", data.tier )
-
+	
 	// if( data.tier > 5 )
 		// RuiSetInt( rui, "lootTier", 5 )
-
+		
 	vector iconScale = data.lootType == eLootType.MAINWEAPON ? <2.0, 1.0, 0.0> : <1.0, 1.0, 0.0>
 	RuiSetFloat2( rui, "iconScale", iconScale )
 
@@ -1320,7 +1328,7 @@ void function ShowVerticalLineStruct( VerticalLineStruct lineStruct, entity ent 
 	#if LINE_COLORS
 		LootData data = SURVIVAL_Loot_GetLootDataByIndex( ent.GetSurvivalInt() )
 		RuiSetInt( lineStruct.rui, "tier", data.tier )
-
+		
 		// if( data.tier > 5 )
 			// RuiSetInt( lineStruct.rui, "tier", 5 )
 	#else
@@ -1650,16 +1658,16 @@ void function SetupSurvivalLoot( var categories )
 		RunUIScript( "SetupDevCommand", "Spawn All Optics", "script SpawnAllOptics()" )
 
 	table<string, int> groupCounts
-
+	
 	foreach ( ref, data in SURVIVAL_Loot_GetLootDataTable() )
 	{
 		if ( !ShouldProcessLoot( data, catTypes ) ) continue
 
 		string groupName = GetLootGroupName( data )
-
+		
 		if ( !( groupName in groupCounts ) )
 			groupCounts[groupName] <- 0
-
+			
 		groupCounts[groupName]++
 	}
 
@@ -1685,7 +1693,7 @@ void function SetupSurvivalLoot( var categories )
 
 				string displayString = CreateLootDisplayString( data )
 				RunUIScript( "SetupDevCommand", displayString, "script SpawnGenericLoot( \"" + data.ref + "\", gp()[0].GetOrigin(), <-1,-1,-1>, " + data.countPerDrop + " )" )
-				break
+				break 
 			}
 		}
 	}
@@ -1719,7 +1727,7 @@ void function PopulateSurvivalLootGroup( var groupNameVal )
 			if ( nameA > nameB ) return 1
 			return 0
 		}
-
+		
 		if ( a.tier < b.tier ) return -1
 		if ( a.tier > b.tier ) return 1
 		return 0
@@ -1728,7 +1736,7 @@ void function PopulateSurvivalLootGroup( var groupNameVal )
 	foreach ( LootData data in itemsInGroup )
 	{
 		string buttonLabel = ""
-
+		
 		if ( targetGroup == "Optics" || targetGroup == "Hopups" )
 		{
 			buttonLabel = Localize( data.pickupString )
@@ -1736,12 +1744,12 @@ void function PopulateSurvivalLootGroup( var groupNameVal )
 		else
 		{
 			string tierDesc = ""
-
-			if ( data.tier == 0 )
+			
+			if ( data.tier == 0 ) 
 			{
 				tierDesc = "[Base]"
 			}
-			else
+			else 
 			{
 				tierDesc = "[Lv " + data.tier + "]"
 				if ( data.tier == 4 ) tierDesc += " (Gold)"
@@ -1770,10 +1778,10 @@ string function GetLootGroupName( LootData data )
 {
 	if ( data.lootType == eLootType.ATTACHMENT )
 	{
-		if ( data.ref.find( "optic" ) > -1 )
+		if ( data.ref.find( "optic" ) > -1 ) 
 			return "Optics"
-
-		if ( data.ref.find( "hopup" ) > -1 )
+			
+		if ( data.ref.find( "hopup" ) > -1 ) 
 			return "Hopups"
 	}
 
@@ -1787,7 +1795,7 @@ string function GetLootGroupName( LootData data )
 	int parenIndex = fullName.find( " (" )
 	if ( parenIndex > 0 )
 		return fullName.slice( 0, parenIndex )
-
+		
 	return fullName
 }
 
@@ -1809,16 +1817,16 @@ void function SetupCustomLoot( var categories, bool isAttachment = false)
 
 		if ( !catTypes.contains( data.lootType ) )
 			continue
-
+		
 		if (IsFlowstateActive()){
 		if( ref == "mp_weapon_titan_sword" )
 			continue}
-
+		
 		if (data.lootType == eLootType.ATTACHMENT && !IsCustomAttachment(data)) continue
 		if (data.lootType == eLootType.MAINWEAPON && !IsCustomWeapon(data)) continue
 
 		string displayString = CreateLootDisplayString( data )
-
+		
 		if(!isAttachment)
 			RunUIScript( "SetupDevCommand", displayString, "give " + data.ref )
 		else
@@ -1943,7 +1951,7 @@ void function ExtendedTryOpenGroundList( entity ent, entity player, ExtendedUseS
 EHI ornull function GetEHIForDeathBox( entity box )
 {
 	EHI eHandle = box.GetNetInt( "ownerEHI" )
-
+	
 	if ( eHandle == -1  )
 		return null
 
@@ -2061,8 +2069,8 @@ void function CreateDeathBoxRuiWithOverridenData( entity deathBox, NestedGladiat
 {
 	#if DEVELOPER
 		printt( "Creating with overriden profile data"  )
-	#endif
-
+	#endif 
+	
 	SetNestedGladiatorCardOverrideName( nestedGCHandle, deathBox.GetCustomOwnerName() )
 
 	int characterIndex = deathBox.GetNetInt(  "characterIndex" )
@@ -2116,13 +2124,13 @@ void function ApplyEquipmentColorAndFXOverrides( entity prop )
 		string tierColorString = format( "%f %f %f", tierColor.x, tierColor.y, tierColor.z )
 		prop.kv.rendercolor = tierColorString
 
-
+                        
 			if ( EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref ) )
 			{
 				int fxIdx   = GetParticleSystemIndex( EVO_ARMOR_FX )
 				int armorFX = StartParticleEffectOnEntityWithPos( prop, fxIdx, FX_PATTACH_ABSORIGIN_FOLLOW, -1, < 0, 0, 15>, <0, 0, 0> )
 				EffectSetControlPointVector( armorFX, 1, tierColor )
 			}
-
+        
 	}
 }

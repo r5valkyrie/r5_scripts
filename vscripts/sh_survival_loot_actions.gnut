@@ -428,6 +428,9 @@ bool function PickupOrdnanceItem( entity ammoPickup, entity player, int pickupFl
 		bool conditionalResult = data.conditional ? SURVIVAL_Loot_RunConditionalCheck( data.ref, player ) : true
 		if ( !conditionalResult )
 			autoSwitch = false
+
+		if( Flowstate_IsHaloMode() )
+			autoSwitch = false
 		
 		if ( IsValid( currentOrdnanceWeapon ) )
 		{

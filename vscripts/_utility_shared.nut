@@ -2024,7 +2024,7 @@ int function CompareKills( entity a, entity b )
 		return 0
 	}
 
-	if( Playlist() == ePlaylists.fs_dm_oddball )
+	if( Playlist() == ePlaylists.fs_dm_oddball || Playlist() == ePlaylists.fs_haloMod_oddball )
 	{
 		aVal = a.GetPlayerNetInt( "oddball_ballHeldTime" )
 		bVal = b.GetPlayerNetInt( "oddball_ballHeldTime" )
@@ -2048,7 +2048,7 @@ int function CompareKills( entity a, entity b )
 	else if ( aVal < bVal )
 		return -1
 
-	if( Playlist() == ePlaylists.fs_dm_oddball )
+	if( Playlist() == ePlaylists.fs_dm_oddball || Playlist() == ePlaylists.fs_haloMod_oddball )
 	{
 		aVal = a.GetPlayerNetInt( "kills" )
 		bVal = b.GetPlayerNetInt( "kills" )

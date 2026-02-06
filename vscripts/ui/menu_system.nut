@@ -64,14 +64,14 @@ struct
 	table<var, ButtonData > OpenChampionCard
 	table<var, ButtonData > CoachingStartAgain
 	table<var, ButtonData > CoachingStop
-
+	
 	InputDef& qaFooter
-
+	
 	bool SETHUNTERALLOWED
-
+	
 	string motdText = ""
 	table<string,bool> seenMotdForServer = {}
-
+	
 } file
 
 void function InitSystemMenu( var newMenuArg ) //
@@ -148,7 +148,7 @@ void function OpenWeaponSelector()
 	var child = Hud_GetChild( menu , "Title" )
 	Hud_SetColor( menu, 255, 255, 0, 255 )
 	thread FancyLabelFadeIn( menu, child, 200, 1000, true, .40, false, 0, "", false )
-	Hud_SetColorBG( menu, 0, 0, 0, 0 )
+	Hud_SetColorBG( menu, 0, 0, 0, 0 )		
 	RunClientScript("OpenTDMWeaponSelectorUI")
 	thread PulsateElem( menu, child, 255, 25, 2.0 )
 }
@@ -159,7 +159,7 @@ void function OpenRecordingsMenu()
 }
 
 void function InitSystemPanel( var panel )
-{
+{	
 	var menu = Hud_GetParent( panel )
 	file.buttons[ panel ] <- GetElementsByClassname( menu, "SystemButtonClass" )
 	file.buttonDatas[ panel ] <- []
@@ -207,19 +207,19 @@ void function InitSystemPanel( var panel )
 	file.OpenChampionCard[ panel ] <- clone data
 	file.CoachingStartAgain[ panel ] <- clone data
 	file.CoachingStop[ panel ] <- clone data
-
+	
 	file.ExitChallengeButtonData[ panel ].label = "#FS_FINISH_CHALLENGE"
 	file.ExitChallengeButtonData[ panel ].activateFunc = SignalExitChallenge
 
 	file.settingsButtonData[ panel ].label = "#SETTINGS"
 	file.settingsButtonData[ panel ].activateFunc = OpenSettingsMenu
-
+	
 	file.SetHunterButtonData[ panel ].label = "#FS_SET_HUNTER"
 	file.SetHunterButtonData[ panel ].activateFunc = SetHunterFunct
-
+		
 	file.TDM_ChangeWeapons[ panel ].label = "#FS_CHANGE_WEAPON"
 	file.TDM_ChangeWeapons[ panel ].activateFunc = OpenWeaponSelector
-
+	
 	file.leaveMatchButtonData[ panel ].label = "#LEAVE_MATCH"
 	file.leaveMatchButtonData[ panel ].activateFunc = LeaveDialog
 
@@ -240,13 +240,13 @@ void function InitSystemPanel( var panel )
 
 	file.friendlyFireButtonData[ panel ].label = "#BUTTON_FRIENDLY_FIRE_TOGGLE"
 	file.friendlyFireButtonData[ panel ].activateFunc = ToggleFriendlyFire
-
+	
 	file.thirdPersonButtonData[ panel ].label = "Toggle Third Person"
 	file.thirdPersonButtonData[ panel ].activateFunc = ToggleThirdPerson
 
 	file.endmatchButtonData[ panel ].label = "#FS_END_GAME_LOBBY"
 	file.endmatchButtonData[ panel ].activateFunc = HostEndMatch
-
+	
 	file.hubButtonData[ panel ].label = "#FS_HUB"
 	file.hubButtonData[ panel ].activateFunc = RunHub
 
@@ -255,13 +255,13 @@ void function InitSystemPanel( var panel )
 
 	file.spectateButtonData[ panel ].label = "#DEATH_SCREEN_SPECTATE"
 	file.spectateButtonData[ panel ].activateFunc = RunSpectateCommand
-
+	
 	file.respawnButtonData[ panel ].label = "#PROMPT_PING_RESPAWN_STATION_SHORT"
 	file.respawnButtonData[ panel ].activateFunc = RunKillSelf
 
 	file.ToggleScoreboardFocus[ panel ].label = "#FS_TOGGLE_SCOREBOARD"
 	file.ToggleScoreboardFocus[ panel ].activateFunc = ShowScoreboard_System
-
+	
 	file.Toggle1v1ScoreboardFocus[ panel ].label = "#FS_TOGGLE_VS_UI"
 	file.Toggle1v1ScoreboardFocus[ panel ].activateFunc = Toggle1v1Scoreboard_System
 
@@ -270,40 +270,40 @@ void function InitSystemPanel( var panel )
 
 	file.OpenValkSimulatorSettingsData[ panel ].label = "#FS_VALK_ULT_SIM_SETTINGS"
 	file.OpenValkSimulatorSettingsData[ panel ].activateFunc = OpenValkSimulatorSettings_System
-
+	
 	file.LockCurrent1v1Enemy[ panel ].label = "TOGGLE ENEMY LOCK" //set by server, not used here
 	file.LockCurrent1v1Enemy[ panel ].activateFunc = OpenLockCurrent1v1Enemy_System
-
+	
 	file.ToggleRest[ panel ].label = "#FS_TOGGLE_REST"
 	file.ToggleRest[ panel ].activateFunc = ToggleRest_1v1
-
+	
 	file.DestroyDummies[ panel ].label = "#FS_DESTROY_DUMMIES"
 	file.DestroyDummies[ panel ].activateFunc = DestroyDummys_MovementRecorder
-
+	
 	file.DestroyDummiesAdmin[ panel ].label = "#FS_ADMIN_DESTROY_DUMMIES"
 	file.DestroyDummiesAdmin[ panel ].activateFunc = AdminDestroyDummys_MovementRecorder
-
+	
 	file.OpenWeaponsMenu[ panel ].label = "#FS_WEAPONS_MENU"
 	file.OpenWeaponsMenu[ panel ].activateFunc = OpenWeaponSelector
 
 	file.OpenRecordingsMenu[ panel ].label = "RECORDINGS LIST"
 	file.OpenRecordingsMenu[ panel ].activateFunc = OpenRecordingsMenu
-
+	
 	file.OpenMOTD[ panel ].label = "#FS_SERVER_MOTD"
-	file.OpenMOTD[ panel ].activateFunc = OpenMOTD
-
+	file.OpenMOTD[ panel ].activateFunc = OpenMOTD	
+	
 	file.OpenScenariosStandings[ panel ].label = "#FS_SCENARIOS_STANDINGS"
-	file.OpenScenariosStandings[ panel ].activateFunc = OpenScenariosStandings_System
-
+	file.OpenScenariosStandings[ panel ].activateFunc = OpenScenariosStandings_System	
+	
 	file.OpenChampionCard[ panel ].label = "#FS_OPEN_CHAMPION"
-	file.OpenChampionCard[ panel ].activateFunc = OpenChampionCard
+	file.OpenChampionCard[ panel ].activateFunc = OpenChampionCard	
 
 	file.CoachingStartAgain[ panel ].label = "REPEAT RECORDING"
-	file.CoachingStartAgain[ panel ].activateFunc = OpenCoachingStartAgain
+	file.CoachingStartAgain[ panel ].activateFunc = OpenCoachingStartAgain	
 
 	file.CoachingStop[ panel ].label = "STOP RECORDING"
 	file.CoachingStop[ panel ].activateFunc = OpenCoachingStop
-
+	
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, SystemPanelShow )
 }
 
@@ -321,9 +321,9 @@ void function OnSystemMenu_Open()
 
 
 void function UpdateSystemPanel( var panel )
-{
+{	
 	//entity player = GetLocalClientPlayer()
-
+	
 	//temp workaround, not the best place for this tbh
 	if( IsConnected() && Playlist() != ePlaylists.fs_aimtrainer )
 		file.lobbyReturnButtonData[ panel ].label = "#RETURN_TO_LOBBY"
@@ -341,7 +341,7 @@ void function UpdateSystemPanel( var panel )
 		SetCursorPosition( <1920.0 * 0.5, 1080.0 * 0.5, 0> )
 
 		SetButtonData( panel, buttonIndex++, file.settingsButtonData[ panel ] )
-
+		
 		if( Playlist() == ePlaylists.fs_dm || Playlist() == ePlaylists.fs_realistic_ttv )
 			SetButtonData( panel, buttonIndex++, file.ToggleScoreboardFocus[ panel ] )
 
@@ -357,7 +357,7 @@ void function UpdateSystemPanel( var panel )
 				SetButtonData( panel, buttonIndex++, file.CoachingStartAgain[ panel ] )
 				SetButtonData( panel, buttonIndex++, file.CoachingStop[ panel ] )
 			}
-
+			
 			SetButtonData( panel, buttonIndex++, file.OpenRecordingsMenu[ panel ] )
 			SetButtonData( panel, buttonIndex++, file.OpenWeaponsMenu[ panel ] )
 		}
@@ -369,18 +369,18 @@ void function UpdateSystemPanel( var panel )
 		{
 			SetButtonData( panel, buttonIndex++, file.ToggleRest[ panel ] )
 		}
-
+		
 		// if( Flowstate_IsTrackerSupportedMode() ) // (cafe) it should check for tracker enabled as well, disabled for now
 			// SetButtonData( panel, buttonIndex++, file.OpenChampionCard[ panel ] )
 
-		if( Playlist() == ePlaylists.fs_lgduels_1v1 || Playlist() == ePlaylists.fs_dm_fast_instagib )
+		if( Playlist() == ePlaylists.fs_lgduels_1v1 || Playlist() == ePlaylists.fs_dm_fast_instagib )		
 			SetButtonData( panel, buttonIndex++, file.OpenLGDuelsSettingsData[ panel ] )
-
+		
 		if ( IsFiringRangeGameMode() && !uiGlobal.isAimTrainer )
 		{
 			SetButtonData( panel, buttonIndex++, file.changeCharacterButtonData[ panel ] ) // !FIXME
 			SetButtonData( panel, buttonIndex++, file.thirdPersonButtonData[ panel ] )
-
+		
 			if ( (GetTeamSize( GetTeam() ) > 1) && FiringRangeHasFriendlyFire() )
 				SetButtonData( panel, buttonIndex++, file.friendlyFireButtonData[ panel ] )
 		}
@@ -397,9 +397,9 @@ void function UpdateSystemPanel( var panel )
 		if( Playlist() == ePlaylists.fs_movementrecorder )
 		{
 			SetButtonData( panel, buttonIndex++, file.DestroyDummies[ panel ] )
-
+			
 			if( uiGlobal.bIsServerAdmin )
-			{
+			{	
 				SetButtonData( panel, buttonIndex++, file.DestroyDummiesAdmin[ panel ] )
 			}
 		}
@@ -408,21 +408,21 @@ void function UpdateSystemPanel( var panel )
 			SetButtonData( panel, buttonIndex++, file.OpenScenariosStandings[ panel ] )
 		}
 
-		if( GetCurrentPlaylistVarBool( "enable_motd", true ) && Playlist() != ePlaylists.fs_1v1_coaching )
+		if( GetCurrentPlaylistVarBool( "enable_motd", true ) && Playlist() != ePlaylists.fs_1v1_coaching && Playlist() != ePlaylists.fs_haloMod_survival )
 			SetButtonData( panel, buttonIndex++, file.OpenMOTD[ panel ] )
-
+		
 		// if( GetCurrentPlaylistName() == "fs_duckhunt" && IsConnected() && file.SETHUNTERALLOWED )
 		// {
 			// SetButtonData( panel, buttonIndex++, file.SetHunterButtonData[ panel ] )
 		// }
-
+		
 		if( Playlist() != ePlaylists.fs_aimtrainer )
 		{
 			if ( IsSurvivalTraining() || IsFiringRangeGameMode() )
 				SetButtonData( panel, buttonIndex++, file.lobbyReturnButtonData[ panel ] )
 			else
 				SetButtonData( panel, buttonIndex++, file.leaveMatchButtonData[ panel ] )
-		}
+		} 
 		else
 		{
 			if(ISAIMTRAINER)
@@ -459,11 +459,15 @@ void function UpdateSystemPanel( var panel )
 	}
 
 	string msgonbottom = ""
-
+	
 	if( IsConnected() )
 	{
 		switch( Playlist() )
 		{
+			case ePlaylists.fs_haloMod_survival:
+			msgonbottom = "Halo Mod Battle Royale - Ping: " + MyPing() + " ms."
+			break
+			
 			case ePlaylists.fs_aimtrainer:
 			msgonbottom = "Flowstate Aim Trainer by @CafeFPS"
 			break
@@ -481,38 +485,44 @@ void function UpdateSystemPanel( var panel )
 			case ePlaylists.fs_movementrecorder:
 			msgonbottom = "FS Movement Recorder - Ping: " + MyPing() + " ms."
 			break
-
+			
 			case ePlaylists.fs_snd:
 			msgonbottom = "Flowstate S&D - Ping: " + MyPing() + " ms."
 			break
-
+			
 			case ePlaylists.winterexpress:
 			msgonbottom = "FS Winter Express - Ping: " + MyPing() + " ms."
 			break
-
+			
 			case ePlaylists.fs_dm:
 			msgonbottom = "FS DM - Ping: " + MyPing() + " ms."
 			break
-
+			
 			case ePlaylists.fs_dm:
 			msgonbottom = "Realistic TTV - Ping: " + MyPing() + " ms."
 			break
-
+			
 			case ePlaylists.fs_lgduels_1v1:
 			msgonbottom = "Flowstate LGDuels - Ping: " + MyPing() + " ms."
 			break
-
+			
 			case ePlaylists.fs_dm_fast_instagib:
 			msgonbottom = "Cafe's Instagib - Ping: " + MyPing() + " ms."
 			break
-		}
 
+			case ePlaylists.fs_haloMod:
+			case ePlaylists.fs_haloMod_ctf:
+			case ePlaylists.fs_haloMod_oddball:
+			msgonbottom = "FS Halo Mod - Ping: " + MyPing() + " ms."
+			break
+		}
+		
 		if( IsConnected() && GetCurrentPlaylistVarBool( "is_practice_map", false ) )
 			msgonbottom = "Practice Map - Ping: " + MyPing() + " ms."
 	}
 	else
 		msgonbottom = "Valkyrie Server: Ping: " + MyPing() + " ms."
-
+		
 	var dataCenterElem = Hud_GetChild( panel, "DataCenter" )
 	Hud_SetText( dataCenterElem, msgonbottom)
 }
@@ -660,7 +670,7 @@ void function OpenCoachingStop()
 {
 	ClientCommand( "coaching_stop" )
 }
-
+	
 
 void function ReturnToMain_OnActivate( var button )
 {
@@ -708,7 +718,7 @@ void function UI_Callback_MOTD()
 void function SetMotdText( string text )
 {
 	file.motdText = text + file.motdText
-
+	
 	// auto-opening motd disabled as per amos request
 
 	if( !GetConVarInt( "motd_enable" ) )
@@ -717,7 +727,7 @@ void function SetMotdText( string text )
 	if ( GetConVarBool( "motd_once_per_server" ) )
 	{
 		string server = GetServerID()
-
+	
 		if( !( server in file.seenMotdForServer ) )
 		{
 			OpenMOTD()
@@ -735,27 +745,27 @@ void function OpenMOTD()
 {
 	if ( IsLobby() )
 		return
-
+		
 	if ( file.motdText != "" )
-	{
+	{ 
 		OpenServerMOTD( file.motdText )
 		return
 	}
-
+	
 	string motd = ""
 	string motdLocalized = Localize( "#MOTD_TEXT" )
-
+	
 	if( motdLocalized != "" && motdLocalized != "#MOTD_TEXT" )
 	{
 		motd = motdLocalized
 		string motdLocaliziedExtended = Localize( "#MOTD_TEXT_EXTENDED" )
-
+		
 		if( motdLocaliziedExtended != "" && motdLocaliziedExtended != "#MOTD_TEXT" )
-			motd = motd + motdLocaliziedExtended
-
+			motd = motd + motdLocaliziedExtended	
+		
 		file.motdText = motd //save for repeat opens
 	}
-
+	
 	OpenServerMOTD( motd )
 }
 
@@ -784,7 +794,7 @@ bool function ShouldShowDevMenu()
 {
 	if( IsLobby() )
 		return false
-
+	
 	return true
 }
 

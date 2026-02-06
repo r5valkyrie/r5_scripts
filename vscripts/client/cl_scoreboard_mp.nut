@@ -392,6 +392,12 @@ void function ShowScoreboardMP()
 
 	Hud_SetVisible( file.backgroundCustom, true )
 	Hud_SetVisible( file.titleCustom, true )
+	// if( IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod_oddball" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_1v1" && GetCurrentPlaylistName() == "fs_lgduels_1v1" )
+	// {
+		// Hud_SetVisible( file.hintCustom, true )
+	// }
+	// else
+		Hud_SetVisible( file.hintCustom, false )
 
 	//file.scoreboardBg = RuiCreate( $"ui/scoreboard_background.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
 	file.scoreboardOverlays = CreateScoreboardOverlays()
@@ -466,7 +472,7 @@ void function ShowScoreboardMP()
 		Assert( clGlobal.isScoreboardShown )
 
 		//if( IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod_ctf" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_haloMod_oddball" || IsAlive( GetLocalClientPlayer() ) && GetCurrentPlaylistName() == "fs_1v1" && GetCurrentPlaylistName() == "fs_lgduels_1v1" )
-		if( IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 )
+		if( IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod_ctf || IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod || IsAlive( GetLocalClientPlayer() ) && Playlist() == ePlaylists.fs_haloMod_oddball || Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 )
 		{
 			Hud_SetVisible( file.hintCustom, true )
 		}
@@ -736,7 +742,7 @@ void function UpdateScoreboardForGamemode( entity player, var rowRui, var scoreH
 			playerScore3Header = headers[ 2 ]
 			if (IsValid( player ))
 			{
-				if( Playlist() == ePlaylists.fs_dm_oddball )
+				if( Playlist() == ePlaylists.fs_dm_oddball || Playlist() == ePlaylists.fs_haloMod_oddball )
 					playerScore3 = player.GetPlayerNetInt( "oddball_ballHeldTime" )
 				else if( Gamemode() == eGamemodes.fs_snd )
 					playerScore3 = player.GetPlayerNetInt( "defused" )

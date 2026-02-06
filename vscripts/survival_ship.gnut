@@ -347,7 +347,14 @@ void function GiveBasicSurvivalItems( entity player )
 	// todo: find why it's not playing fx on cockpit
 	// BroadcastItemPickup( player, "armor_pickup_lv1", eLootAction.EQUIP )
 
-	GiveLoadoutRelatedWeapons( player )
+	if( Playlist() == ePlaylists.fs_haloMod_survival )
+	{
+		GiveLoadoutRelatedWeapons_HaloMod( player )
+	} 
+	else
+	{
+		GiveLoadoutRelatedWeapons( player )
+	}
 	
 	if( player.p.respawnPodLanded )
 		return
@@ -355,6 +362,10 @@ void function GiveBasicSurvivalItems( entity player )
 	if( Playlist() == ePlaylists.fs_ltm_mortalevoshields )
 	{
 		Message(player, "MORTAL EVOSHIELDS", "Kill enemies to evolve your shields infinitely.", 8) // todo move this to localization. Cafe
+	} 
+	else if( Playlist() == ePlaylists.fs_haloMod_survival && GetCurrentPlaylistVarBool( "is_hiswattson_event", false ) )
+	{
+		Remote_CallFunction_ByRef( player, "HaloBrIntroSequence" )
 	}
 }
 

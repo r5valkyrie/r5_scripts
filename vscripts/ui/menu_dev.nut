@@ -383,6 +383,10 @@ void function SetDevMenu_R2Weapons( var _ )
 {
 	thread ChangeToThisMenu( SetupTitanfallWeapons )
 }
+void function SetDevMenu_Throwables( var _ )
+{
+	thread ChangeToThisMenu( SetupThrowables )
+}
 void function SetDevMenu_TDMPrimaryWeapons( var _ )
 {
 	thread ChangeToThisMenu( SetupTDMPrimaryWeapons )
@@ -1147,6 +1151,52 @@ void function SetupOverrideSpawnSurvivalCharacter()
 	#endif
 }
 
+void function SetupWeapons()
+{
+	#if UI
+	// Rifles
+	SetupDevCommand( "Rifle: Flatline", "give mp_weapon_vinson" )
+	SetupDevCommand( "Rifle: G7 Scout", "give mp_weapon_g2" )
+	SetupDevCommand( "Rifle: Havoc", "give mp_weapon_energy_ar" )
+	SetupDevCommand( "Rifle: Hemlok", "give mp_weapon_hemlok" )
+	SetupDevCommand( "Rifle: R-301", "give mp_weapon_rspn101" )
+
+	// SMGs
+	SetupDevCommand( "SMG: Alternator", "give mp_weapon_alternator_smg" )
+	SetupDevCommand( "SMG: Prowler", "give mp_weapon_pdw" )
+	SetupDevCommand( "SMG: R-99", "give mp_weapon_r97" )
+	SetupDevCommand( "SMG: Volt SMG", "give mp_weapon_volt_smg" )
+
+	// LMGs
+	SetupDevCommand( "LMG: Devotion", "give mp_weapon_esaw" )
+	SetupDevCommand( "LMG: L-Star", "give mp_weapon_lstar" )
+	SetupDevCommand( "LMG: Spitfire", "give mp_weapon_lmg" )
+
+	// Snipers
+	SetupDevCommand( "Sniper: Charge Rifle", "give mp_weapon_defender" )
+	SetupDevCommand( "Sniper: Kraber", "give mp_weapon_sniper" )
+	SetupDevCommand( "Sniper: Longbow", "give mp_weapon_dmr" )
+	SetupDevCommand( "Sniper: Triple Take", "give mp_weapon_doubletake" )
+	SetupDevCommand( "Sniper: Sentinel", "give mp_weapon_sentinel" )
+
+	// Shotguns
+	SetupDevCommand( "Shotgun: EVA-8 Auto", "give mp_weapon_shotgun" )
+	SetupDevCommand( "Shotgun: Mastiff", "give mp_weapon_mastiff" )
+	SetupDevCommand( "Shotgun: Mozambique", "give mp_weapon_shotgun_pistol" )
+	SetupDevCommand( "Shotgun: Peacekeeper", "give mp_weapon_energy_shotgun" )
+
+	// Pistols
+	SetupDevCommand( "Pistol: P2020", "give mp_weapon_semipistol" )
+	SetupDevCommand( "Pistol: RE-45", "give mp_weapon_autopistol" )
+	SetupDevCommand( "Pistol: Wingman", "give mp_weapon_wingman" )
+
+	// Custom
+	//SetupDevCommand( "Custom: Flame Thrower", "give mp_weapon_flamethrower" )
+	//SetupDevCommand( "Custom: Raygun ", "give mp_weapon_raygun" )
+	//SetupDevCommand( "Custom: Flowstate Sword", "playerRequestsSword")
+	#endif
+}
+
 void function SetupRetailWeapons()
 {
 	#if UI
@@ -1376,6 +1426,24 @@ void function SetDevMenu_XOPanel()
 	SetupDevCommand( "Weapon Mod (Vanguard): Vanguard Weapon 1", "give mp_titanweapon_xo16_vanguard fd_vanguard_weapon_1; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
 	SetupDevCommand( "Weapon Mod (Vanguard): Vanguard Weapon 2", "give mp_titanweapon_xo16_vanguard fd_vanguard_weapon_2; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
 	SetupDevCommand( "Weapon Mod (Vanguard): Balance", "give mp_titanweapon_xo16_vanguard fd_balance; script Dev_PrintMessage( gp()[0], \"DETECTED A TITAN WEAPON\", \"Switching player POV to titan. To reset, simply choose Disable Titan POV Hands in the dev menu!\", 7, \"UI_CraftingTable_Purchase_Accept_1P\" ); script gp()[0].SetArmsModelOverride( $\"mdl/weapons/arms/buddypov.rmdl\" )" )
+	#endif
+}
+
+
+void function SetupThrowables()
+{
+	#if UI
+	// Grenades
+	SetupDevCommand( "Grenade: Arc Star", "give mp_weapon_grenade_emp" )
+	SetupDevCommand( "Grenade: Frag", "give mp_weapon_frag_grenade" )
+	SetupDevCommand( "Grenade: Thermite", "give mp_weapon_thermite_grenade" )
+
+	// Custom Grenades
+	if( GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) )
+	{
+		SetupDevCommand( "Grenade: Halo Frag", "give mp_weapon_frag_grenade_halomod" )
+		SetupDevCommand( "Grenade: Halo Plasma  Frag", "give mp_weapon_plasma_grenade_halomod" )
+	}
 	#endif
 }
 

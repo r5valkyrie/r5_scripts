@@ -76,12 +76,14 @@ global struct SH_flowstateSettings
 	bool GetRespawnKitEnabled
 	bool movementgym
 	bool dm_oddball
+	bool haloMod_oddball
 	bool fs_1v1
 	bool fs_lgduels_1v1
 	bool fs_dm_fast_instagib
 	bool fs_dm
 	bool Is_PartyCrasher
 	bool Is_Canyon_Staging
+	bool IsHaloMode
 	bool DisableAllMapTriggers
 	bool Is_gamemode_1v1_type
 	bool GivePassive
@@ -175,13 +177,14 @@ void function Initialize_SH_FlowstateSettings()
 	fsGlobal.GetRespawnKitEnabled					= GetCurrentPlaylistVarBool("respawn_kit_enabled", false)
 	fsGlobal.movementgym 							= ( Playlist() == ePlaylists.fs_movementgym )
 	fsGlobal.dm_oddball								= ( Playlist() == ePlaylists.fs_dm_oddball )
-
+	fsGlobal.haloMod_oddball						= ( Playlist() == ePlaylists.fs_haloMod_oddball )
 	fsGlobal.fs_1v1									= ( Playlist() == ePlaylists.fs_1v1 )
 	fsGlobal.fs_lgduels_1v1							= ( Playlist() == ePlaylists.fs_lgduels_1v1 )
 	fsGlobal.fs_dm_fast_instagib					= ( Playlist() == ePlaylists.fs_dm_fast_instagib )
 	fsGlobal.fs_dm									= ( Playlist() == ePlaylists.fs_dm || Playlist() == ePlaylists.fs_realistic_ttv )
 	fsGlobal.Is_PartyCrasher						= ( GetMapName() == "mp_rr_party_crasher" )
 	fsGlobal.Is_Canyon_Staging						= ( GetMapName() == "mp_rr_canyonlands_staging" )
+	fsGlobal.IsHaloMode								= ( GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) )
 	fsGlobal.DisableAllMapTriggers					= ( GetCurrentPlaylistVarBool( "flowstate_disable_all_map_triggers", false ) )
 	fsGlobal.Is_gamemode_1v1_type					= g_bIs1v1GameType()
 	fsGlobal.GivePassive							= GetCurrentPlaylistVarBool( "activate_passive_abilities", true )
@@ -269,10 +272,12 @@ bool function FlowState_EnableMovementGymLogs()					{ return fsGlobal.EnableMove
 bool function Flowstate_MovementGym_ClassicMovement()			{ return fsGlobal.MovementGym_ClassicMovement }
 int function Flowstate_MovementGym_ClassicMovement_Type()		{ return fsGlobal.MovementGym_ClassicMovement_Type }
 bool function Flowstate_MovementGym_ClassicMovement_AutoBHOP()	{ return fsGlobal.MovementGym_ClassicMovement_AutoBHOP }
+//bool function Flowstate_IsHaloMode()							{ return fsGlobal.Flowstate_IsHaloMode }	//(mk):moved to sh_mapname_playlist_gamemode_enums.gnut	
 bool function Flowstate_DisableAllMapTriggers()					{ return fsGlobal.DisableAllMapTriggers }
 bool function Flowstate_IsLGDuels()								{ return fsGlobal.fs_lgduels_1v1 }
 bool function Flowstate_IsMovementGym()							{ return fsGlobal.movementgym }
 bool function Flowstate_IsDmOddball()							{ return fsGlobal.dm_oddball }
+bool function Flowstate_IsHalomodeOddball()						{ return fsGlobal.haloMod_oddball }
 bool function Flowstate_IsFS1v1()								{ return fsGlobal.fs_1v1 }
 bool function Flowstate_IsFastInstaGib()						{ return fsGlobal.fs_dm_fast_instagib }
 bool function Flowstate_IsFSDM()								{ return fsGlobal.fs_dm }

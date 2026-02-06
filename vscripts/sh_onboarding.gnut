@@ -44,6 +44,7 @@ global function SV_CL_Onboarding_Init
 #if SERVER
 	global function TakeLoadoutRelatedWeapons
 	global function GiveLoadoutRelatedWeapons
+	global function GiveLoadoutRelatedWeapons_HaloMod
 	
 	global function DecideRespawnPlayer
 	global function DecideRespawnPlayer_Retail
@@ -972,13 +973,18 @@ void function Sequence_WaitingForPlayers()
 
 void function Sequence_PickLoadout()
 {
-	if ( Playlist() == ePlaylists.fs_scenarios || !Survival_CharacterSelectEnabled() || Gamemode() != eGamemodes.SURVIVAL || Gamemode() == eGamemodes.fs_snd || Gamemode() == eGamemodes.fs_spieslegends ) 
+	if ( Playlist() == ePlaylists.fs_scenarios || !Survival_CharacterSelectEnabled() || Gamemode() != eGamemodes.SURVIVAL || Playlist() == ePlaylists.fs_haloMod_survival || Gamemode() == eGamemodes.fs_snd || Gamemode() == eGamemodes.fs_spieslegends ) 
 	{
 		foreach ( player in GetPlayerArray() )
 		{
 			ItemFlavor musicPack = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MusicPack() )
 			string skydiveMusicID = MusicPack_GetSkydiveMusic( musicPack )
 			StopMusicOnPlayer( player, skydiveMusicID )
+			
+			if( Playlist() == ePlaylists.fs_haloMod_survival )
+			{
+				CharacterSelect_AssignCharacter( player, GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00898565421" ) ) )
+			}
 		}
 
 		thread Sequence_Prematch() 
@@ -1281,7 +1287,22 @@ void function GiveLoadoutRelatedWeapons( entity player )
 	}
 }
 
-// HaloMod loadout function removed
+void function GiveLoadoutRelatedWeapons_HaloMod( entity player )
+{	
+	TakeLoadoutRelatedWeapons(player)
+
+	player.GiveOffhandWeapon( CONSUMABLE_WEAPON_NAME, OFFHAND_SLOT_FOR_CONSUMABLES, [] )
+	
+	player.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
+	player.GiveOffhandWeapon( "melee_pilot_emptyhanded_halo", OFFHAND_MELEE, [] )
+	
+	player.GiveOffhandWeapon( "mp_ability_grapple_master_chief", OFFHAND_TACTICAL )
+	player.GiveOffhandWeapon( "mp_weapon_bubble_bunker_master_chief", OFFHAND_ULTIMATE )
+
+	GivePassive( player, ePassives.PAS_BATTERY_POWERED )
+	
+	// StatusEffect_AddEndless( player, eStatusEffect.minimap_jammed, 1.0 )
+}
 
 array<string> enabledMods = []
 bool script_bHighlight = true
@@ -1476,6 +1497,19 @@ bool function RespawnTitanPilot( entity player )
 	
 	Flowstate_ApplyModifiedMovementToPlayer( player )
 
+	//if( player.p.assignedCustomModel != -1 )//Custom models cause engine issues, disabling for now til models are updated. - Kral
+	{
+		//Flowstate_SetAssignedCustomModelToPlayer( player, player.p.assignedCustomModel )
+	}
+	
+	if( Playlist() == ePlaylists.fs_haloMod_survival )
+	{
+		CharacterSelect_AssignCharacter( player, GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00898565421" ) ) )
+		player.SetPlayerNetBool( "hasLockedInCharacter", true )
+		
+		// HaloMod_HandlePlayerModel( player )
+	}
+	
 	return true
 }
 
@@ -1628,7 +1662,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	
 	victim.SetPredictionEnabled( false )
 	
-	if( Gamemode() == eGamemodes.fs_spieslegends || Gamemode() == eGamemodes.fs_snd ) //todo: init single bool conditional
+	if( Gamemode() == eGamemodes.fs_spieslegends || Gamemode() == eGamemodes.fs_snd || Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival ) //todo: init single bool conditional
 		return
 	
 	victim.StartObserverMode( OBS_MODE_DEATHCAM )
@@ -1950,7 +1984,7 @@ void function GiveInitialTeamToPlayer( entity player )
 
 void function OnCharacterClassChanged( EHI playerEHI, ItemFlavor flavor )
 {
-	if ( GetGameState() < eGameState.Playing && !IsFiringRangeGameMode() )
+	if ( GetGameState() < eGameState.Playing && !IsFiringRangeGameMode() || Playlist() == ePlaylists.fs_haloMod_survival )
 		return
 
 	entity player = FromEHI( playerEHI )

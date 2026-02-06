@@ -124,9 +124,20 @@ void function _CustomCTF_Init()
 	#endif
 	// Used for telling the server the player wants to drop the flag
 	AddClientCommandCallback("DropFlag", ClientCommand_DropFlag)
-	AddClientCommandCallback("VoteForMap", ClientCommand_VoteForMap)
-	// Used for setting players class
-	AddClientCommandCallback("SetPlayerClass", ClientCommand_SetPlayerClass)
+
+	// if( Flowstate_IsHaloMode() )
+	// {
+		// AddClientCommandCallback("VoteTeam_AskForTeam", ClientCommand_AskForTeam)
+		// PrecacheCyberdyne()
+		// PrecacheLockout()
+		// PrecacheChill()
+	// } else
+	// {
+		AddClientCommandCallback("VoteForMap", ClientCommand_VoteForMap)
+		// Used for setting players class
+		AddClientCommandCallback("SetPlayerClass", ClientCommand_SetPlayerClass)
+	// }
+
 	thread RUNCTF()
 }
 
@@ -324,12 +335,30 @@ void function VotingPhase()
 				}()
 			}
 		}
+
+		// thread function () : ()
+		// {
+			// wait 4
+			// Signal( svGlobal.levelEnt, "FS_WaitForBlackScreen" )
+		// }()
 	}
 
 	if( file.playerSpawnedProps.len() > 0 ) //|| GetServerPropsInDmFile().len() > 0 )
 	{
 		DestroyPlayerProps()
+		if( Flowstate_IsHaloMode()  )
+			wait 1
 	}
+
+	// switch(file.selectedLocation.name)
+	// {
+		// case "Narrows":
+		// thread SpawnChill()
+		// break
+		// case "The Pit":
+		// thread SpawnCyberdyne()
+		// break
+	// }
 
 	if( file.selectedLocation.name == "Lockout" )
 	{
@@ -339,10 +368,36 @@ void function VotingPhase()
 		file.playerSpawnedProps.append( AddDeathTriggerWithParams( <42099.9922, -9965.91016, -21099.1738>, 7000 ) )
 	}
 
-	foreach( player in GetPlayerArray() )
+	//Open Vote for Team Menu ( Halo Mod Only )
+
+	if( Flowstate_IsHaloMode() && !debugging )
 	{
-		ScreenFade( player, 0, 0, 0, 255, 0.3, 0.0, FFADE_IN | FFADE_PURGE )
+		file.VoteTeamEnabled = true
+		// SetGlobalNetTime( "FSVoteTeam_StartTime", Time() )
+		SetGlobalNetTime( "FSVoteTeam_EndTime", Time() + FS_HALOMOD_VOTETEAM_TIME )
+
+		foreach( player in GetPlayerArray() )
+		{
+			Remote_CallFunction_ByRef( player, "ForceScoreboardLoseFocus" )
+			Remote_CallFunction_NonReplay( player, "FS_ForceDestroyCustomAdsOverlay" )
+			SetTeam( player, 4 ) //reset team to an unused one, make sure to set max_teams to 3 in playlist so we can use the team number 4
+			Remote_CallFunction_NonReplay(player, "ServerCallback_FS_OpenVoteTeamMenu", true )
+		}
+
+		// WaitForever()
+		while( Time() < GetGlobalNetTime( "FSVoteTeam_EndTime" ) )
+			WaitFrame()
+
+		file.VoteTeamEnabled = false
+		SetGlobalNetTime( "FSVoteTeam_EndTime", -1 )
+	} else
+	{
+		foreach( player in GetPlayerArray() )
+		{
+			ScreenFade( player, 0, 0, 0, 255, 0.3, 0.0, FFADE_IN | FFADE_PURGE )
+		}
 	}
+
 
 	int maxplayers = GetPlayerArray().len()
 	int idealMilitia = int ( ceil( float( maxplayers ) /2 ) )
@@ -427,6 +482,10 @@ void function StartRound()
 	ResetMILITIAFlag()
 	thread ResetIMCFlag()
 
+	if( Flowstate_IsHaloMode() )
+		while( !IsValid( GetGlobalNetEnt( "imcFlag" ) ) )
+			WaitFrame()
+
 	int milCount
 	int imcCount
 	foreach(player in GetPlayerArray())
@@ -448,11 +507,79 @@ void function StartRound()
 		player.SetPlayerNetInt("captures", 0)
 		player.SetPlayerNetInt("returns", 0)
 
-		TpPlayerToSpawnPoint(player)
+
+
+		if( Flowstate_IsHaloMode() )
+		{
+			Common_ClearPlayerData( player )
+
+			if( player.GetTeam() == TEAM_IMC )
+			{
+				player.SetBodyModelOverride( $"mdl/Humans/pilots/w_master_chief_pink.rmdl" )
+				player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_master_chief_pink.rmdl" )
+			} else if( player.GetTeam() == TEAM_MILITIA )
+			{
+				player.SetBodyModelOverride( $"mdl/Humans/pilots/w_master_chief_purple.rmdl" )
+				player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_master_chief_purple.rmdl" )
+			}
+		}
+
+		if( Flowstate_IsHaloMode() )
+		{
+			vector angles
+			if( player.GetTeam() == TEAM_IMC )
+			{
+				switch( file.selectedLocation.name )
+				{
+					case "Narrows":
+					angles = <0, 180, 0>
+					break
+
+					case "The Pit":
+					angles = <0, 180, 0>
+					break
+
+					case "Lockout":
+
+					break
+				}
+				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEnt( "imcFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
+				player.SetOrigin( FSIntro_GetVictorySquadFormationPosition( startingpoint, angles, imcCount ) )
+				player.SetAngles( angles )
+				imcCount++
+			} else if( player.GetTeam() == TEAM_MILITIA )
+			{
+				switch( file.selectedLocation.name )
+				{
+					case "Narrows":
+					angles = <0, 0, 0>
+					break
+
+					case "The Pit":
+					angles = <0, 0, 0>
+					break
+
+					case "Lockout":
+
+					break
+				}
+				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEnt( "milFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
+				player.SetOrigin( FSIntro_GetVictorySquadFormationPosition( startingpoint, angles, milCount ) )
+				player.SetAngles( angles )
+				milCount++
+			}
+		} else
+		{
+			TpPlayerToSpawnPoint(player)
+		}
 
 		player.MakeInvisible()
 		player.MovementDisable()
 		TakeAllWeapons( player )
+		if( Flowstate_IsHaloMode() )
+		{
+			TakeAllPassives( player )
+		}
 
 		// Give passive regen (pilot blood)
 		GivePassive(player, ePassives.PAS_PILOT_BLOOD)
@@ -470,6 +597,20 @@ void function StartRound()
 		Survival_SetInventoryEnabled( player, file.bHeals )
 
 		AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT | CE_FLAG_HIDE_PERMANENT_HUD )
+	}
+
+	if( !debugging && Flowstate_IsHaloMode() )
+	{
+		SetGlobalNetTime( "FSIntro_StartTime", Time() + 3 )
+		SetGlobalNetTime( "FSIntro_EndTime", Time() + 7 + max( GetPlayerArrayOfTeam(TEAM_IMC).len(), GetPlayerArrayOfTeam(TEAM_MILITIA).len() ) * 2 )
+
+		while( Time() < GetGlobalNetTime( "FSIntro_EndTime" ) )
+			WaitFrame()
+
+		foreach(player in GetPlayerArray())
+		{
+			Remote_CallFunction_ByRef(player, "FSIntro_ForceEnd")
+		}
 	}
 
 	//Stats
@@ -602,6 +743,11 @@ void function StartRound()
 			else if ( GameRules_GetTeamScore( TEAM_MILITIA ) > GameRules_GetTeamScore( TEAM_IMC ) )
 				TeamWon = TEAM_MILITIA
 
+			if( Flowstate_IsHaloMode() )
+			{
+				CTF.mappicked = ( CTF.mappicked + 1 ) % file.locationSettings.len()
+			}
+
 			file.winnerTeam = TeamWon
 
 			if( TeamWon == 69 )
@@ -636,7 +782,7 @@ void function StartRound()
 			}
 
 			// Only do voting for maps with multi locations
-			if ( file.locationSettings.len() >= NUMBER_OF_MAP_SLOTS )
+			if ( file.locationSettings.len() >= NUMBER_OF_MAP_SLOTS && !Flowstate_IsHaloMode() )
 			{
 				for( int i = 0; i < NUMBER_OF_MAP_SLOTS; ++i )
 				{
@@ -799,6 +945,13 @@ void function StartRound()
 						continue
 
 					SetGameState(eGameState.MapVoting)
+
+					if( Flowstate_IsHaloMode() )
+					{
+						Remote_CallFunction_ByRef( player, "ForceScoreboardLoseFocus" )
+						Remote_CallFunction_NonReplay( player, "FS_ForceDestroyCustomAdsOverlay" )
+					}
+
 					AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD | CE_FLAG_HIDE_PERMANENT_HUD )
 
 					if( file.winnerTeam > -1 )
@@ -837,6 +990,18 @@ void function StartRound()
 	#endif
 
 	file.currentRound++
+
+	// if( Flowstate_IsHaloMode() &&
+		// Flowstate_CycleHaloPlaylists() &&
+		// file.maxRounds > -1 &&
+		// file.currentRound >= file.maxRounds
+	// )
+	// {
+		// waitthread g__InternalCheckReload()
+		// Halo_GotoNextPlaylist()
+	// }
+	// else
+		// waitthread g__InternalCheckReload()
 }
 
 void function Common_ClearPlayerData( entity player )
@@ -1086,6 +1251,10 @@ void function PlayerPickedUpFlag(entity ent)
 		}
 	}
 
+	if( Flowstate_IsHaloMode() )
+	{
+		Remote_CallFunction_NonReplay( ent, "FS_ForceDestroyCustomAdsOverlay" )
+	}
 	StorePilotWeapons( ent )
 
 	//ball carrier can't run
@@ -1338,25 +1507,40 @@ void function GiveBackWeapons(entity player)
 
 	TakeAllWeapons(player)
 
-	entity primary = player.GiveWeapon(file.ctfclasses[player.p.CTFClassID].primary, WEAPON_INVENTORY_SLOT_PRIMARY_0, file.ctfclasses[player.p.CTFClassID].primaryattachments)
-	SetupInfiniteAmmoForWeapon( player, primary )
+	// if( Flowstate_IsHaloMode() )
+	// {
+		// GiveRandomPrimaryWeaponHalo(player)
+		// GiveRandomSecondaryWeaponHalo(player)
+	// } else
+	// {
+		entity primary = player.GiveWeapon(file.ctfclasses[player.p.CTFClassID].primary, WEAPON_INVENTORY_SLOT_PRIMARY_0, file.ctfclasses[player.p.CTFClassID].primaryattachments)
+		SetupInfiniteAmmoForWeapon( player, primary )
 
-	entity secondary = player.GiveWeapon(file.ctfclasses[player.p.CTFClassID].secondary, WEAPON_INVENTORY_SLOT_PRIMARY_1, file.ctfclasses[player.p.CTFClassID].secondaryattachments)
-	SetupInfiniteAmmoForWeapon( player, secondary )
+		entity secondary = player.GiveWeapon(file.ctfclasses[player.p.CTFClassID].secondary, WEAPON_INVENTORY_SLOT_PRIMARY_1, file.ctfclasses[player.p.CTFClassID].secondaryattachments)
+		SetupInfiniteAmmoForWeapon( player, secondary )
+	// }
 
-	if( !USE_LEGEND_ABILITYS )
-	{
-		player.GiveOffhandWeapon( file.ctfclasses[player.p.CTFClassID].tactical, OFFHAND_TACTICAL )
-		player.GiveOffhandWeapon( file.ctfclasses[player.p.CTFClassID].ult, OFFHAND_ULTIMATE )
-	}
-	else
-	{
-		ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
-		ItemFlavor ultiamteAbility = CharacterClass_GetUltimateAbility( character )
-		ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
-		player.GiveOffhandWeapon(CharacterAbility_GetWeaponClassname(tacticalAbility), OFFHAND_TACTICAL, [] )
-		player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultiamteAbility ), OFFHAND_ULTIMATE, [] )
-	}
+	// if( Flowstate_IsHaloMode() )
+	// {
+		// player.GiveOffhandWeapon( "mp_ability_grapple_master_chief", OFFHAND_TACTICAL )
+		// player.GiveOffhandWeapon( "mp_weapon_bubble_bunker_master_chief", OFFHAND_ULTIMATE )
+	// }
+	// else
+	// {
+		if( !USE_LEGEND_ABILITYS )
+		{
+			player.GiveOffhandWeapon( file.ctfclasses[player.p.CTFClassID].tactical, OFFHAND_TACTICAL )
+			player.GiveOffhandWeapon( file.ctfclasses[player.p.CTFClassID].ult, OFFHAND_ULTIMATE )
+		}
+		else
+		{
+			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor ultiamteAbility = CharacterClass_GetUltimateAbility( character )
+			ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
+			player.GiveOffhandWeapon(CharacterAbility_GetWeaponClassname(tacticalAbility), OFFHAND_TACTICAL, [] )
+			player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultiamteAbility ), OFFHAND_ULTIMATE, [] )
+		}
+	// }
 
 	player.TakeOffhandWeapon(OFFHAND_MELEE)
 	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
@@ -1717,8 +1901,15 @@ void function _OnPlayerDied(entity victim, entity attacker, var damageInfo)
 			if( !IsValid( victim ) )
 				return
 
+			if( Flowstate_IsHaloMode() )
+			{
+				Remote_CallFunction_ByRef( victim, "ForceScoreboardLoseFocus" )
+				Remote_CallFunction_NonReplay( victim, "FS_ForceDestroyCustomAdsOverlay" )
+			}
+
 			if (!CTF.votingtime)
 			{
+				if( !Flowstate_IsHaloMode() )
 				{
 					Remote_CallFunction_ByRef( victim, "ServerCallback_CTF_HideCustomUI" )
 
@@ -1745,6 +1936,9 @@ void function _OnPlayerDied(entity victim, entity attacker, var damageInfo)
 		void functionref() attackerHandleFunc = void function() : (victim, attacker, damageInfo)  {
 			if(IsValid(attacker) && attacker.IsPlayer() && IsAlive(attacker) && attacker != victim)
 			{
+				// if( Flowstate_IsHaloMode() )
+					// HisWattsons_HaloModFFA_KillStreakAnnounce( attacker )
+
 				Remote_CallFunction_NonReplay(attacker, "ServerCallback_CTF_UpdatePlayerStats", eCTFStats.Kills)
 				attacker.SetPlayerNetInt( "kills", attacker.GetPlayerNetInt( "kills" ) + 1 )
 
@@ -1781,6 +1975,12 @@ void function _HandleRespawn(entity player, bool forceGive = false)
 		thread GiveBackWeapons(player)
 	}
 
+	if( Flowstate_IsHaloMode() && !player.GetPlayerNetBool( "hasLockedInCharacter" ) )
+	{
+		// CharSelect(player)
+		player.SetPlayerNetBool( "hasLockedInCharacter", true )
+	}
+
 	// SetPlayerSettings(player, CTF_PLAYER_SETTINGS)
 	PlayerRestoreHP(player, 100, CTF_Equipment_GetDefaultShieldHP())
 
@@ -1794,6 +1994,21 @@ void function _HandleRespawn(entity player, bool forceGive = false)
 
 	player.SetActiveWeaponBySlot(eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0)
 	Survival_SetInventoryEnabled( player, false )
+
+
+
+	if( Flowstate_IsHaloMode() && player.GetTeam() == TEAM_IMC )
+	{
+		TakeAllPassives( player )
+		player.SetBodyModelOverride( $"mdl/Humans/pilots/w_master_chief_pink.rmdl" )
+		player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_master_chief_pink.rmdl" )
+	}
+	else if( Flowstate_IsHaloMode() && player.GetTeam() == TEAM_MILITIA )
+	{
+		TakeAllPassives( player )
+		player.SetBodyModelOverride( $"mdl/Humans/pilots/w_master_chief_purple.rmdl" )
+		player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_master_chief_purple.rmdl" )
+	}
 
 	// Give passive regen (pilot blood)
 	GivePassive(player, ePassives.PAS_PILOT_BLOOD)

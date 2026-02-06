@@ -315,7 +315,7 @@ void function HealthHUD_Update( entity player )
 
 void function Init_EvoShields_Flowstate_HUD( bool toggle = true, bool viewPlayerChanged = false )
 {
-	if( !file.flowstate_evo_shields || toggle && GetGameState() != eGameState.Playing )
+	if( !file.flowstate_evo_shields || toggle && GetGameState() != eGameState.Playing || Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival )
 		return
 
 	if( viewPlayerChanged && GetLocalClientPlayer() != GetLocalViewPlayer() && !file.changedViewPlayer )
