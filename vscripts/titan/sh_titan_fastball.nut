@@ -64,7 +64,7 @@ void function TitanFastball_Init()
 		RegisterButtonPressedCallback( MOUSE_LEFT, ButtonCallback_FastballLaunch )
 		RegisterButtonPressedCallback( BUTTON_B, ButtonCallback_FastballCancelLaunch )
 		RegisterButtonPressedCallback( BUTTON_Y, ButtonCallback_FastballPressedActivate )
-		RegisterConCommandTriggeredCallback( "+melee", ButtonCallback_FastballPressedActivatePC )
+		//RegisterConCommandTriggeredCallback( "+melee", ButtonCallback_FastballPressedActivatePC )
 		RegisterButtonReleasedCallback( BUTTON_Y, ButtonCallback_FastballReleasedActivate )
 		RegisterSignal( "ActivateButtonReleased" )
 	#endif

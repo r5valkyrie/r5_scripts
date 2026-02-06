@@ -133,7 +133,7 @@ void function CodeCallbacksShared_Init()
 
 	#if CLIENT
 		RegisterConCommandTriggeredCallback( "-useAndReload", CancelDisembark )
-		RegisterConCommandTriggeredCallback( "-use", CancelDisembark )
+		//RegisterConCommandTriggeredCallback( "-use", CancelDisembark )
 		if( Gamemode() == eGamemodes.SURVIVAL || Playlist() == ePlaylists.fs_scenarios )
 			RegisterConCommandTriggeredCallback( "+offhand4", CheckForAccelerants )
 	
