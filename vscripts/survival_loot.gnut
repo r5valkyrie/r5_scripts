@@ -4238,6 +4238,16 @@ entity function SURVIVAL_DropWeapon( entity player, entity dropWeapon, vector or
 	if ( !SURVIVAL_Loot_IsRefValid( dropWeapon.GetWeaponClassName() ) )
 		return null
 
+	// Remove energized mod from dropped sentinel and dragon LMG
+	if ( dropWeapon.HasMod( "energized" ) )
+	{
+		string weaponClass = dropWeapon.GetWeaponClassName()
+		if ( weaponClass == "mp_weapon_sentinel" || weaponClass == "mp_weapon_dragon_lmg" )
+		{
+			dropWeapon.RemoveMod( "energized" )
+		}
+	}
+
 	bool replaceWithMelee = (weapons.len() == 1)
 
 	entity activeWeapon        = player.GetActiveWeapon( eActiveInventorySlot.mainHand )

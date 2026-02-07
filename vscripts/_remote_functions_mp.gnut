@@ -628,8 +628,8 @@ void function RemoteFunctions_Init_Begin()
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_EjectConfirmed" )
 
-	// ScriptRegisterNetworkedVariable( "inMatchRankScoreProgress", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
-	// ScriptRegisterNetworkedVariable( "rankedKillAssistMultiplier", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 10 )
+	ScriptRemote_RegisterClientFunction( "Sentinel_PlayEnergizeEffect" )
+	ScriptRemote_RegisterClientFunction( "Sentinel_StopEnergizeEffect" )
 
 	#if CLIENT
 		ShRanked_RegisterNetworkFunctions()
