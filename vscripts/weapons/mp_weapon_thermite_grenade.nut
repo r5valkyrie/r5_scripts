@@ -10,9 +10,11 @@ const asset BURN_EFFECT_ASSET = $"P_wpn_meteor_wall"
 
 #if SERVER
 	const bool DEBUG_THERMITE_GRENADE_TRACES = false
+	global function CreateSpreadPattern
+	global function BurnSequence
 #endif // SERVER
 
-struct SegmentData
+global struct SegmentData
 {
 	//int index
 	vector startPos

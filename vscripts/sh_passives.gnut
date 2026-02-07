@@ -113,6 +113,8 @@ global enum ePassives
 	PAS_SUPPORT,
 	PAS_SHOTGUN_KICK, //husaria
 	PAS_LIGHT_STEP, //skunner
+	PAS_ULT_UPGRADE_ONE,
+	PAS_ULT_UPGRADE_TWO,
 	
 	_count,
 }

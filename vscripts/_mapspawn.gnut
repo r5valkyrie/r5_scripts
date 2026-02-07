@@ -245,6 +245,7 @@ void function PrecacheSDKWeapons()
 	PrecacheWeapon( $"mp_weapon_droneplasma" )//remove these from here later!!! -kral
 	PrecacheWeapon( $"mp_weapon_dronerocket" )
 	PrecacheWeapon( $"mp_ability_sonic_blast" )
+	PrecacheWeapon( $"mp_ability_wrecking_ball" )
 
 	PrecacheWeapon( $"mp_weapon_melee_boxing_ring" )
 	PrecacheWeapon( $"melee_boxing_ring" ) // Olympus ring

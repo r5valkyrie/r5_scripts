@@ -152,6 +152,7 @@ global enum eDamageSourceId
 	mp_titanweapon_xo16_shorty
 	mp_ability_void_ring
 	heatwave
+	mp_weapon_wrecking_ball_puck
 	//
 	melee_pilot_emptyhanded
 	melee_pilot_arena
