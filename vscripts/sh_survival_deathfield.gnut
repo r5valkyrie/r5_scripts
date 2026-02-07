@@ -820,12 +820,15 @@ void function DeathFieldDamage( DeathFieldData data, entity deathField )
 			if ( player.IsPhaseShifted() )
 				continue
 
-			float playerDist = Distance2D( player.GetOrigin(), data.center )
-			if ( playerDist > currentRadius )
-			{
-				Remote_CallFunction_Replay( player, "ServerCallback_PlayerTookDamage", 0, <0, 0, 0>, DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, eDamageSourceId.deathField, 0 )
-				player.TakeDamage( int( data.percentDamagePerTick * float( player.GetMaxHealth() ) ), null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.deathField } )
-			}
+			vector playerOrigin = player.GetOrigin()
+			float playerDist = Distance2D( playerOrigin, data.center )
+
+			//have to add this dumb check because listen server causes tick slipping
+			if ( currentRadius <= 0 || playerDist <= currentRadius )
+				continue
+
+			Remote_CallFunction_Replay( player, "ServerCallback_PlayerTookDamage", 0, <0, 0, 0>, DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, eDamageSourceId.deathField, 0 )
+			player.TakeDamage( int( data.percentDamagePerTick * float( player.GetMaxHealth() ) ), null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.deathField } )
 		}
 
 		wait DAMAGE_CHECK_STEP_TIME
