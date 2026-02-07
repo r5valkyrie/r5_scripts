@@ -457,15 +457,11 @@ var function OnWeaponPrimaryAttack_weapon_sentinel( entity weapon, WeaponPrimary
 	if ( !IsValid( player ) )
 		return 0
 
-    player.HolsterWeapon()
-    player.DeployWeapon()
-
 	weapon.FireWeapon_Default( attackParams.pos, attackParams.dir, 1.0, 1.0, false )
 
 	#if SERVER
 	if ( weapon.HasMod( ENERGIZED_MOD ) && "energizedEndTime" in weapon.s )
 	{
-		// Reduce 14 seconds from energizer timer per shot
 		weapon.s.energizedEndTime = expect float( weapon.s.energizedEndTime ) - 14
 		if ( IsValid( player ) && player.IsPlayer() )
 			Remote_CallFunction_NonReplay( player, "Sentinel_UpdateChargeEndTime", expect float( weapon.s.energizedEndTime ) )
