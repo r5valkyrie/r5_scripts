@@ -28,6 +28,7 @@ global const array<asset> CHARACTER_ASSETS =
 	$"settings/itemflav/character/horizon.rpak",
 	$"settings/itemflav/character/fuse.rpak",
 	$"settings/itemflav/character/valkyrie.rpak",
+	$"settings/itemflav/character/seer.rpak",
 	$"settings/itemflav/character/ash.rpak",
 ]
 

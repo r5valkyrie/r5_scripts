@@ -186,6 +186,7 @@ void function FiringRangeGameMode_Init()
 	RegisterSignal( "SlideTargetSpeedReset" )
 	RegisterSignal( "SlideTargetThinkStart" )
 	RegisterSignal( "SlideTargetWaitForReset" )
+	RegisterSignal( "SquadEliminated" )
 
 	#if SERVER
 	AddSpawnCallback( "prop_survival", OnPropSurvivalSpawned )

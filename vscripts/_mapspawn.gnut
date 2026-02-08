@@ -246,6 +246,7 @@ void function PrecacheSDKWeapons()
 	PrecacheWeapon( $"mp_weapon_dronerocket" )
 	PrecacheWeapon( $"mp_ability_sonic_blast" )
 	PrecacheWeapon( $"mp_ability_wrecking_ball" )
+	PrecacheWeapon( $"mp_weapon_grenade_gravity" )
 
 	PrecacheWeapon( $"mp_weapon_melee_boxing_ring" )
 	PrecacheWeapon( $"melee_boxing_ring" ) // Olympus ring
@@ -295,6 +296,7 @@ void function PrecacheSDKEntities()
 	PrecacheModel( $"mdl/robots/marvin/marvin.rmdl" )
 	PrecacheModel( $"mdl/weapons/sentry_turret/sentry_turret.rmdl" )
 	PrecacheModel( $"mdl/Humans/class/medium/combat_dummie_medium.rmdl" )
+	PrecacheModel( $"mdl/Humans/class/medium/spectre_v20_corporate_ai.rmdl" )
 	
 	///////////////////////misc///////////////////////
 	PrecacheModel( $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl")

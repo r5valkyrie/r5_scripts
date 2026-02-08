@@ -26,7 +26,6 @@
 	player_carrying_oddball
 	ring_immunity
 	placing_respawn_beacon
-	slowedbyCustomGrenade
 	anti_slow
 	move_slow
 	turn_slow
@@ -145,5 +144,6 @@
 	seer_highlight_target
 	seer_detected
 	in_void_ring
+	inside_echo_locator
 /////////////////////////////
 //}

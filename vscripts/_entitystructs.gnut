@@ -354,6 +354,7 @@ global struct ServerEntityStruct
 	void functionref( entity, entity, var ) Callback_VortexTriggerBulletHit
 	void functionref( entity, entity, entity, entity, vector ) Callback_VortexTriggerProjectileHit
 
+	bool ignoreSafePushMode = false //If a pusher has set Anim_SetSafePushMode, which "Stops playing the animation when continuing it would hit a pushable object. Resumes automatically.".  This bool will override that behaviour where you have a pushable entity that you don't want to stop the animation on the pusher when it collides.  Example: large sliding doors vs Seer ult.
 
 	bool   isInWarpTrigger
 	float  phaseTunnelExitTime

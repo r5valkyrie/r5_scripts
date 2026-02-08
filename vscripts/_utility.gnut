@@ -1816,6 +1816,28 @@ bool function TeleportPlayerNoInterp( entity player, vector pos, vector angles =
     return success
 }
 
+void function PropCheckDamageFromDeathfield( entity ent, float damageScaleAmount )
+{
+	Assert ( IsNewThread(), "Must be started as new thread" )
+	Assert( IsValid( ent ) )
+
+	EndSignal( ent, "OnDestroy" )
+
+	while( true )
+	{
+		wait DEATHFIELD_DAMAGE_CHECK_STEP_TIME
+
+		DeathFieldData deathFieldData = SURVIVAL_GetDeathFieldData()
+		bool insideSafeRing           = SURVIVAL_PosInsideDeathField( ent.GetOrigin() )
+		if ( !insideSafeRing )
+		{
+			int deathfieldDamage = int( deathFieldData.percentDamagePerTick * float( ent.GetMaxHealth() ) * damageScaleAmount )
+			ent.TakeDamage( deathfieldDamage, null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.deathField } )
+		}
+	}
+}
+
+
 //-----------------------------------------------------------
 // CreatePropPhysics( model ) - create a generic prop_physics with default properties
 //------------------------------------------------------------

@@ -380,6 +380,7 @@ Scripts:
 
 	weapons/mp_ability_horizon_black_hole.nut
 	weapons/mp_ability_sonic_blast.nut
+	weapons/mp_ability_echo_locator.nut
 
 	//S0 Dev Protos
 	//Husaria
