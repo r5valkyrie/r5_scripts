@@ -997,6 +997,9 @@ void function PlayDialogueForPlayer( string name, entity player, entity speaker,
 
 bool function ClientCommand_DialogueFinishedForID( entity player, array<string> args )
 {
+	if ( !args.len() ) // exploit patch
+		return false
+
 	string aliasID = args[ 0 ]
 	table signalData = { aliasID = aliasID }
 	if ( int( aliasID ) in file.waitingOnDialogue )
