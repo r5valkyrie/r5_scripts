@@ -55,6 +55,7 @@ global function SURVIVAL_Loot_IsAmmoSpawningDisabled
 #endif
 
 global function AddCallback_OnLootDatatablesLoaded
+global function RegisterCustomLootDatatables
 
 global enum eLootTier
 {
@@ -243,6 +244,9 @@ struct
 	array<string>             uniqueAmmoWeaponRefs
 	array<CustomHopupData>	  customHopups = []
 
+	array<asset>              customLootDatatables
+	bool                      customDatatablesProcessed = false
+
 	#if(true)
 		table<EHI, array< OverrideDeathBoxRUI_NetworkOptimizedStruct > > EHIToOverrideDeathBoxRUIProfilesTable
 		table<string, EHI>                                               corpseToEHITable
@@ -317,7 +321,7 @@ float function GetLootTableFloat( string ref, var datatable, int rowIndex, strin
 void function SURVIVAL_Loot_All_InitShared()
 {
 	file.ENABLE_DEFINED_SETS = GetCurrentPlaylistVarBool( "flowstate_enable_weapons_locked_sets", false )
-	
+
 	file.lootIndexToString.clear()
 	file.lootData.clear()
 
@@ -326,7 +330,9 @@ void function SURVIVAL_Loot_All_InitShared()
 
 	SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/survival_loot_sdk.rpak" ) )
 	SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/titanfall_loot_sdk.rpak" ) )
-		
+
+	ProcessCustomLootDatatables()
+
 	foreach ( callbackFunc in file.lootDatatablesLoadedCallbacks ) //To load loot datatables from mods
 		callbackFunc()
 		
@@ -1636,6 +1642,67 @@ void function AddCallback_OnLootDatatablesLoaded( void functionref() callback )
 		return
 	
 	file.lootDatatablesLoadedCallbacks.append( callback )
+}
+
+//   RegisterCustomLootDatatables( [
+//       $"datatable/my_mod/custom_weapons.rpak",
+//       $"datatable/my_mod/custom_attachments.rpak"
+//   ] )
+void function RegisterCustomLootDatatables( array<asset> datatableAssets )
+{
+	if ( file.customDatatablesProcessed )
+	{
+		#if DEVELOPER
+			Warning( "RegisterCustomLootDatatables called after loot datatables have already been registered." )
+		#endif
+		return
+	}
+
+	foreach ( asset datatableAsset in datatableAssets )
+	{
+		if ( file.customLootDatatables.contains( datatableAsset ) )
+			continue
+
+		file.customLootDatatables.append( datatableAsset )
+
+		#if DEVELOPER
+			printt( "Registered custom loot datatable: " + string( datatableAsset ) )
+		#endif
+	}
+}
+
+void function ProcessCustomLootDatatables()
+{
+	file.customDatatablesProcessed = true
+
+	if ( file.customLootDatatables.len() == 0 )
+		return
+
+	#if DEVELOPER
+		printt( "Processing " + file.customLootDatatables.len() + " custom loot datatable(s)..." )
+	#endif
+
+	foreach ( asset datatableAsset in file.customLootDatatables )
+	{
+		var datatable = GetDataTable( datatableAsset )
+		if ( datatable == null )
+		{
+			#if DEVELOPER
+				Warning( "Failed to load custom loot datatable: " + string( datatableAsset ) )
+			#endif
+			continue
+		}
+
+		#if DEVELOPER
+			printt( "Loading custom loot datatable: " + string( datatableAsset ) )
+		#endif
+
+		SURVIVAL_Loot_RegFromDataTable( datatable )
+	}
+
+	#if DEVELOPER
+		printt( "Finished processing custom loot datatables." )
+	#endif
 }
 
 #if CLIENT || UI
