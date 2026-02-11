@@ -285,6 +285,7 @@ Scripts:
 	weapons/mp_ability_valk_skyward.nut
 	weapons/mp_weapon_maggie_common.nut
 	weapons/mp_ability_wrecking_ball.nut
+	weapons/mp_weapon_riot_drill.nut
 	weapons/sh_silence.gnut
 	weapons/sp_weapon_arc_tool.nut
 	weapons/mp_weapon_dragon_lmg.nut

@@ -180,6 +180,8 @@ void function SV_CL_Init()
 	MpWeapon_Mortar_Ring_Init()
 	MpWeapon_Mortar_Ring_Missile_Init()
 
+	MpWeaponRiotDrill_Init()
+
 	SURVIVAL_Loot_All_InitShared()
 	SURVIVAL_Loot_InitShared()
 	SURVIVAL_LootActions_InitShared()

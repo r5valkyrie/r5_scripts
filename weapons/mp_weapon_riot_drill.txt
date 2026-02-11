@@ -23,23 +23,23 @@ WeaponData
     "projectilemodel"								"mdl/props/madmaggie_tactical_drill_bit/madmaggie_tactical_drill_bit.rmdl"
 
 	// Offhand
-    "offhand_default_inventory_slot"				"0"
+    "offhand_default_inventory_slot"				"1"
 
 	// Character-Specific
     "fire_in_real_world_while_phased"				"1"                                                                 //whether or not the weapon is fired (and the subsequent effects) in the "real-world" (realm?) of the gameworld when the user is the "phased" world. Unclear on how real/phasing actually works in regards to Apex, since Wraith's abilities force locking weapons down while they're being used.
     "trophy_system_ignores"                         "none"                                                              //apparently the "trophy" is Wattson's ultimate thingy that zaps projectiles out of the air. Can be set to "always", "none" (gets zapped), "friendly only" (presumably only zaps enemy-owned projectiles)
 
 	// Script - Callbacks
-	//"OnWeaponActivate"                              "OnWeaponActivate_riot_drill"
-    //"OnWeaponDeactivate"							"OnWeaponDeactivate_riot_drill"
-    //"OnProjectileCollision"							"OnProjectileCollision_weapon_riot_drill"
+	"OnWeaponActivate"                              "OnWeaponActivate_riot_drill"
+    "OnWeaponDeactivate"							"OnWeaponDeactivate_riot_drill"
+    "OnProjectileCollision"							"OnProjectileCollision_weapon_riot_drill"
 	//"OnWeaponToss"                                  "OnWeaponToss_weapon_riot_drill"
-    //"OnWeaponTossReleaseAnimEvent"				    "OnWeaponTossReleaseAnimEvent_weapon_riot_drill"
-    //"OnWeaponTossPrep"								"Grenade_OnWeaponTossPrep"
-    //"OnWeaponTossCancel"							"OnWeaponTossCancel_weapon_riot_drill"
+    "OnWeaponTossReleaseAnimEvent"				    "OnWeaponTossReleaseAnimEvent_weapon_riot_drill"
+    "OnWeaponTossPrep"								"Grenade_OnWeaponTossPrep"
+    "OnWeaponTossCancel"							"OnWeaponTossCancel_weapon_riot_drill"
     "OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
 
-    //"OnClientAnimEvent"                             "OnClientAnimEvent_weapon_riot_drill"
+    "OnClientAnimEvent"                             "OnClientAnimEvent_weapon_riot_drill"
 
 	// Behavior - Animation
 	"max_cook_time"									"-1"
