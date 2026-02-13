@@ -84,6 +84,7 @@ global function WeaponHasCosmetics
 
 #if CLIENT
 global function ServerCallback_SetWeaponPreviewState
+global function GetAmmoColorByType
 #endif
 
 global function GetRadiusDamageDataFromProjectile
@@ -5621,3 +5622,12 @@ void function OnWeaponEnergizedStart( entity weapon, entity player, bool costCon
 
 	SURVIVAL_RemoveFromPlayerInventory( player, consumableRef, consumableRequiredCount )
 }
+
+#if CLIENT
+vector function GetAmmoColorByType( string ammoType )
+{
+	int colorID  = ammoColors[ammoType]
+	vector color = GetKeyColor( colorID ) / 255.0
+	return color
+}
+#endif

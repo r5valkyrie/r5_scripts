@@ -1098,19 +1098,7 @@
     }
 
 
-	"ui1_enable"		"1"
-	"ui1_draw_cloaked"	"1"
-	UiData1
-	{
-		"ui"							"ui/car_smg_ammo_counter_small"
-		"mesh"							"models/weapons/attachments/compound_bow_rui_upper"
-		Args
-		{
-			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
-		}
-	}
+
 
 	// // bow weapon rui
 	// "ui2_enable"		"1"

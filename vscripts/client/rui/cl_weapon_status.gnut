@@ -35,6 +35,15 @@ global enum eUltimateState
 	ACTIVE        // weapon has been activated
 }
 
+struct PassiveWeaponBonusData
+{
+	string                     nameText
+	string                     descText
+	string                     altDescText
+	asset                      icon
+	bool functionref( entity ) shouldShowAltDescTextFunc
+}
+
 struct
 {
 	var    ammo_status_hint
@@ -50,6 +59,12 @@ struct
 
 	array<void functionref( entity, var, int )> weaponStatusUpdateCallbacks
 	array<void functionref( entity, var )>      primaryWeaponStatusUpdateCallbacks
+	array<bool functionref( entity, var )>      shouldChargeBarShowCallbacks
+
+	table< string, PassiveWeaponBonusData > passiveWeaponBonusMods
+	table< string, float >                  haveShownBonusPopupTimestamp
+
+	array<vector> firingModeIndicatorColorOverrides
 
 	#if DEVELOPER
 		bool devTestingUltimateStates
@@ -72,6 +87,8 @@ void function ClWeaponStatus_Init()
 	AddCallback_KillReplayEnded( OnKillReplayEnded )
 
 	AddCallback_OnCommsMenuStateChanged( AmmoStatusHint_OnCommsMenu )
+
+	AddCallback_OnSettingsUpdated( UpdateHudDataForCurrentActiveWeapon )
 
 	if ( GetCurrentPlaylistVarBool( "hud_ultimate_ready_video", false ) )
 	{
@@ -99,10 +116,33 @@ void function AddCallback_OnPrimaryWeaponStatusUpdate( void functionref( entity,
 }
 
 
+void function AddCallback_ShouldShowChargeBar( bool functionref( entity, var ) func )
+{
+	Assert( !file.shouldChargeBarShowCallbacks.contains( func ) )
+	file.shouldChargeBarShowCallbacks.append( func )
+}
+
+
 void function AddCallback_OnWeaponStatusUpdate( void functionref( entity, var, int ) func )
 {
 	Assert( !file.weaponStatusUpdateCallbacks.contains( func ) )
 	file.weaponStatusUpdateCallbacks.append( func )
+}
+
+
+void function AddModToTableOfPassiveWeaponBonuses( string modName, string nameText, string descText, asset icon, string altDescText = "", bool functionref( entity ) func = null )
+{
+	PassiveWeaponBonusData data
+	data.nameText = nameText
+	data.descText = descText
+	data.altDescText = altDescText
+	data.shouldShowAltDescTextFunc = func == null ? bool function( entity weapon ){ return false } : func
+	data.icon = icon
+
+	if ( altDescText != "" )
+		Assert( func != null, "Must specificy alt text function if alt text is specified" )
+
+	file.passiveWeaponBonusMods[ modName ] <- data
 }
 
 void function ClWeaponStatus_RefreshWeaponStatus( entity player )
@@ -153,6 +193,8 @@ void function ClWeaponStatus_AddClient( entity player )
 		var rui = CreateCockpitPostFXRui( $"ui/tactical_ability_hud.rpak", HUD_Z_BASE )
 		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
 		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+		RuiTrackFloat( rui, "silencedTimeRemaining", player, RUI_TRACK_STATUS_EFFECT_TIME_REMAINING, eStatusEffect.silenced )
+		RuiSetFloat( rui, "silenceEffectDuration", Silence_GetEffectDuration() )
 		file.ability_center_hud = rui
 	}
 
@@ -166,8 +208,6 @@ void function ClWeaponStatus_AddClient( entity player )
 
 		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
 		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
-		RuiSetInt( rui, "ultimateCredits", -1 )
-		//RuiTrackInt( rui, "ultimateCredits", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "ultimateCredits" ) )
 		file.ability_left_hud = rui
 	}
 
@@ -179,25 +219,28 @@ void function ClWeaponStatus_AddClient( entity player )
 		file.ability_right_hud = rui
 	}
 
-	var rui = CreateCockpitPostFXRui( SURVIVAL_HUD_WEAPON_RUI, HUD_Z_BASE )
-	RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
-	RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
-	file.weapon_hud_rui = rui
-	UpdateWeaponStatusOnBindingChange()
+	{
+		var rui = CreateCockpitPostFXRui( SURVIVAL_HUD_WEAPON_RUI, HUD_Z_BASE )
+		//
+		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+		file.weapon_hud_rui = rui
+		UpdateWeaponStatusOnBindingChange()
+	}
 }
 
 
 void function ClWeaponStatus_RefreshWeaponInfo()
 {
 	// this gets called when a weapons attachments change
-	entity player       = GetLocalViewPlayer()
-	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	UpdateHudDataForMainWeapons( GetLocalViewPlayer(), null )
+}
 
-	if ( !IsWeaponInPrimarySlot( player, activeWeapon ) )
-	{
-		// if the active weapon is a primary weapon we don't need to update.
-		UpdateHudDataForMainWeapons( player, null )
-	}
+
+void function UpdateHudDataForCurrentActiveWeapon()
+{
+	entity activeWeapon = GetLocalViewPlayer().GetLatestPrimaryWeaponForIndexZeroOrOne( eActiveInventorySlot.mainHand )
+	UpdateHudDataForMainWeapons( GetLocalViewPlayer(), activeWeapon )
 }
 
 bool function IsWeaponInPrimarySlot( entity player, entity weapon )
@@ -239,6 +282,21 @@ void function OnSelectedWeaponChanged( entity selectedWeapon )
 
 	foreach ( func in file.primaryWeaponStatusUpdateCallbacks )
 		func( selectedWeapon, file.weapon_hud_rui )
+
+	bool showChargeBar = false
+	foreach ( func in file.shouldChargeBarShowCallbacks )
+	{
+		if ( func( selectedWeapon, file.weapon_hud_rui ) )
+		{
+			showChargeBar = true
+			break
+		}
+	}
+
+	if ( !showChargeBar )
+	{
+		RuiSetBool( file.weapon_hud_rui, "showChargeBar", false )
+	}
 }
 
 void function AmmoStatusHint_OnCommsMenu( bool menuOpened )
@@ -247,9 +305,27 @@ void function AmmoStatusHint_OnCommsMenu( bool menuOpened )
 	RuiSetVisible( file.ammo_status_hint, !menuOpened )
 }
 
+
+void function ServerCallback_UpdateOffhandRuis()
+{
+	entity player = GetLocalViewPlayer()
+
+	if ( !IsValid( player ) )
+		return
+
+	UpdateOffhandRuis( player )
+	thread TrackOffhandWeaponSlot( player, file.ability_center_hud, OFFHAND_LEFT )
+	thread TrackOffhandWeaponSlot( player, file.ability_left_hud, OFFHAND_INVENTORY )
+}
+
 void function ServerCallback_UpdateHudWeaponData( entity weaponFromServer )
 {
 	entity player = GetLocalViewPlayer()
+	if ( IsValid( weaponFromServer ) && weaponFromServer.GetWeaponClassName() == "mp_ability_crypto_drone" )
+	{
+		TrackCryptoAnimatedTacticalRuiOffhandWeapon()
+		return
+	}
 	entity weapon = player.GetSelectedWeapon( eActiveInventorySlot.mainHand )
 	if ( !IsValid( weapon ) )
 		weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
@@ -261,12 +337,13 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 	var rui = file.weapon_hud_rui
 
 	bool isOffhandUsesAmmoStatus = IsValid( selectedWeapon ) && selectedWeapon.GetWeaponSettingBool( eWeaponVar.offhand_uses_hud_ammo_status )
+	bool isTurret = IsValid( selectedWeapon) && GetWeaponInfoFileKeyField_GlobalInt_WithDefault( selectedWeapon.GetWeaponClassName(), "is_turret_weapon" , 0 ) == 1
 
 	entity weaponInSlot0 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
 	entity weaponInSlot1 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
-	bool noWeapon        = !IsValid( weaponInSlot0 ) && !IsValid( weaponInSlot1 ) && !isOffhandUsesAmmoStatus
-	bool isMainWeapon    = IsValid( selectedWeapon ) && (selectedWeapon == weaponInSlot0 || selectedWeapon == weaponInSlot1 )
-	bool isTitan =			player.IsTitan()
+	bool noWeapon        = !IsValid( weaponInSlot0 ) && !IsValid( weaponInSlot1 ) && !isOffhandUsesAmmoStatus && !isTurret
+	bool isMainWeapon    = IsValid( selectedWeapon ) && (selectedWeapon == weaponInSlot0 || selectedWeapon == weaponInSlot1)
+	bool isTitan         = player.IsTitan()
 
 	if ( noWeapon || isTitan )
 	{
@@ -293,9 +370,24 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 		if ( selectedWeapon == weaponInSlot1 && IsValid( weaponInSlot1 ) )
 			activeWeaponTab = 1
 	}
-	else if ( !IsValid( file.lastSelectedPrimaryWeapon ) )
+	else if( IsValid( file.lastSelectedPrimaryWeapon ) )
 	{
-		// if we are not using one of the main weapons and the old selection is invalid. set the tab to the one that is valid, and update the rui tracks
+		//
+		//
+		if ( IsValid( weaponInSlot0 ) && file.lastSelectedPrimaryWeapon == weaponInSlot0 )
+		{
+			InitWeaponRuiTracks( rui, player, weaponInSlot0 )
+			activeWeaponTab = 0
+		}
+		else if ( IsValid( weaponInSlot1 ) && file.lastSelectedPrimaryWeapon == weaponInSlot1  )
+		{
+			InitWeaponRuiTracks( rui, player, weaponInSlot1 )
+			activeWeaponTab = 1
+		}
+	}
+	else
+	{
+		//
 		if ( IsValid( weaponInSlot0 ) )
 		{
 			InitWeaponRuiTracks( rui, player, weaponInSlot0 )
@@ -310,8 +402,39 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 		}
 	}
 
-	UpdateRUIWeaponData( player, rui, weaponInSlot0, 0, activeWeaponTab == 0 )
-	UpdateRUIWeaponData( player, rui, weaponInSlot1, 1, activeWeaponTab == 1 )
+	if (!isTurret)
+	{
+		UpdateRUIWeaponData( player, rui, weaponInSlot0, 0, activeWeaponTab == 0 )
+		UpdateRUIWeaponData( player, rui, weaponInSlot1, 1, activeWeaponTab == 1 )
+
+		RuiSetString ( rui, "weaponSwitchOverride", "" )
+	}
+	else
+	{
+		ClearRuiWeaponData( rui, false )
+
+		RuiSetBool( rui, "isMainWeaponSelected", true )
+		RuiSetBool( rui, "noMainWeaponEquiped", false )
+
+		activeWeaponTab = 1
+		UpdateRUIWeaponData( player, rui, selectedWeapon, 0, false )
+		UpdateRUIWeaponData( player, rui, selectedWeapon, 1, true )
+
+		RuiSetString( rui, "weaponNameTab0", "#WPN_MOUNTED_TURRET_WEAPON_RELEASE" )
+		RuiSetFloat3( rui, "ammoColorTab0", <0.1, 0.1, 0.1> )
+		RuiSetFloat3( rui, "ammoColorTab1", <0.8, 0.1, 0.8> )
+
+		if ( IsControllerModeActive() )
+			RuiSetString( rui, "weaponSwitchOverride", "%&weaponCycle%" )
+		else
+			RuiSetString( rui, "weaponSwitchOverride", "%&use%" )
+
+		RuiSetImage( rui, "ammoIcon", $"rui/hud/gametype_icons/survival/sur_ammo_rampart_hmg" )
+		RuiSetFloat3( rui, "ammoColor", <0.8, 0.1, 0.8> )
+		RuiSetImage( rui, "hudIcon", selectedWeapon.GetWeaponSettingAsset( eWeaponVar.hud_icon ) )
+
+		InitWeaponRuiTracks( rui, player, selectedWeapon )
+	}
 
 	if ( isMainWeapon )
 	{
@@ -338,7 +461,7 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 		RuiSetFloat( file.ammo_status_hint, "lowAmmoFrac", 0.0 )
 
 		// update modes on the last selected primary weapon since they might have changed
-		if ( IsWeaponInPrimarySlot( player, file.lastSelectedPrimaryWeapon ) )
+		if ( IsWeaponInPrimarySlot( player, file.lastSelectedPrimaryWeapon ) && !isTurret )
 			UpdateModsOnSurvivalWeaponRui( rui, file.lastSelectedPrimaryWeapon )
 	}
 }
@@ -356,6 +479,8 @@ void function ClearRuiWeaponData( var rui, bool isTitan )
 	RuiSetBool( rui, "gripAllowed", false )
 	RuiSetInt( rui, "hopupTier", 0 )
 	RuiSetBool( rui, "hopupAllowed", false )
+	RuiSetInt( rui, "hopupLootIdx", -1 )
+	RuiSetBool( rui, "showPassiveBonusPopup", false )
 	RuiSetInt( rui, "weaponTier", 0 )
 
 	RuiSetFloat( rui, "maxMagAmmo", 0 )
@@ -372,9 +497,11 @@ void function ClearRuiWeaponData( var rui, bool isTitan )
 	RuiSetFloat3( rui, "ammoColor", SrgbToLinear( <0.5, 0.5, 0.5> ) )
 	RuiSetImage( rui, "ammoIcon", $"rui/hud/gametype_icons/survival/sur_ammo_blank" )
 
+	RuiSetInt( rui, "selectedWeaponLootIdx", -1 )
 	RuiSetInt( rui, "weaponTabSelected", -1 )
 	RuiSetBool( rui, "isMainWeaponSelected", false )
 	RuiSetBool( rui, "noMainWeaponEquiped", true )
+	RuiSetString( rui, "weaponSwitchOverride", "" )
 	RuiSetString( rui, "weaponNameTab0", "" )
 	RuiSetString( rui, "weaponNameTab1", "" )
 
@@ -414,6 +541,7 @@ void function UpdateRUIWeaponData( entity player, var rui, entity weapon, int ta
 			if ( selected )
 			{
 				RuiSetInt( rui, "weaponTier", weaponData.tier )
+				RuiSetInt( rui, "selectedWeaponLootIdx", weaponData.index )
 
 				if ( weaponName != "" )
 				{
@@ -427,17 +555,27 @@ void function UpdateRUIWeaponData( entity player, var rui, entity weapon, int ta
 				}
 			}
 
-			vector ammoColor  = SrgbToLinear( <0.5, 0.5, 0.5> )
-			asset ammoIcon = weaponData.fakeAmmoIcon == $"" ? $"rui/hud/gametype_icons/survival/sur_ammo_unique" : weaponData.fakeAmmoIcon
-			bool isLegendary = weaponData.tier == 4
-			bool isCPWeapon = weaponData.tier == 5
-			if ( weaponData.ammoType != "" && !isCPWeapon )
+			vector ammoColor = SrgbToLinear( <0.5, 0.5, 0.5> )
+			asset ammoIcon   = weaponData.fakeAmmoIcon == $"" ? $"rui/hud/gametype_icons/survival/sur_ammo_unique" : weaponData.fakeAmmoIcon
+			bool isLegendary = weaponData.tier >= 4
+			bool isAttachmentLocked =  SURVIVAL_Weapon_IsAttachmentLocked( weaponData.ref )
+			RuiSetInt( rui, "weaponTier", weaponData.tier )
+
+			if ( weaponData.ammoType != "" )
 			{
 				LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( weaponData.ammoType )
-				if ( weaponData.ammoType in ammoColors && weaponData.tier < 4 )
-					ammoColor = SrgbToLinear( ammoColors[weaponData.ammoType] )
-				else if ( weaponData.tier == 4)
-					ammoColor = SrgbToLinear( AMMO_LEGENDARY_COLOR )
+				if ( weaponData.ammoType in ammoColors && ( weaponData.tier <= 1 ) && !isAttachmentLocked  )
+					ammoColor = SrgbToLinear( GetAmmoColorByType( weaponData.ammoType ) )
+				else if ( ( weaponData.tier == eLootTier.COMMON ) && isAttachmentLocked )
+					ammoColor = SrgbToLinear( GetKeyColor( COLORID_FRAME_LOOT_TIER1 ) / 255.0 )
+				else if ( weaponData.tier == eLootTier.RARE )
+					ammoColor = SrgbToLinear( GetKeyColor( COLORID_FRAME_LOOT_TIER2 ) / 255.0 )
+				else if ( weaponData.tier == eLootTier.EPIC )
+					ammoColor = SrgbToLinear( GetKeyColor( COLORID_FRAME_LOOT_TIER3 ) / 255.0 )
+				else if ( weaponData.tier == eLootTier.LEGENDARY )
+					ammoColor = SrgbToLinear( GetAmmoColorByType( "legendary" ) )
+				else if ( weaponData.tier == eLootTier.HEIRLOOM )
+					ammoColor = SrgbToLinear( GetAmmoColorByType( "supply_drop" ) )
 
 				if ( ammoData.hudIcon != $"" )
 					ammoIcon = ammoData.hudIcon
@@ -445,14 +583,12 @@ void function UpdateRUIWeaponData( entity player, var rui, entity weapon, int ta
 
 			if ( isLegendary )
 			{
-				ammoColor = SrgbToLinear( AMMO_LEGENDARY_COLOR )
+				if ( weaponData.tier == 4 )
+					ammoColor = SrgbToLinear( GetAmmoColorByType( "legendary" ) )
+				else if ( weaponData.tier == 5 )
+					ammoColor = SrgbToLinear( GetAmmoColorByType( "supply_drop" ) )
 			}
-			
-			if ( isCPWeapon )
-			{
-				ammoColor = SrgbToLinear( <216, 0, 73> / 255.0 )
-			}
-			
+
 			RuiSetFloat3( rui, "ammoColorTab" + tabIndex, ammoColor )
 			if ( selected )
 			{
@@ -502,19 +638,42 @@ void function PrimaryWeapon_UpdateFireSelectHUD( entity weapon )
 	// traditional single/burst/auto select
 	if ( WeaponHasFireModeSelect( weapon ) )
 	{
-		bool isAltFire = WeaponIsUsingAltFireMode( weapon )
+		int currentFireModeIndex = GetWeaponCurrentFireModeIndex( weapon )
 
 		if ( IsWeaponInSingleShotMode( weapon ) )
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_shot", "#FIRE_MODE_SINGLE", true, isAltFire )
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_shot", "#FIRE_MODE_SINGLE", 2, currentFireModeIndex )
 		}
 		else if ( IsWeaponInBurstMode( weapon ) )
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/burst", "#FIRE_MODE_BURST", true, isAltFire )
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/burst", "#FIRE_MODE_BURST", 2, currentFireModeIndex )
 		}
 		else if ( IsWeaponInAutomaticMode( weapon ) )
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_AUTO", true, isAltFire )
+			if ( DoesModExist( weapon, "hopup_paintball" ) && IsModActive( weapon, "hopup_paintball" ) )
+			{
+				if ( currentFireModeIndex == 0 )
+				{
+					SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_01", 3, currentFireModeIndex, true )
+				}
+				else if ( currentFireModeIndex == 1 )
+				{
+					SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_02", 3, currentFireModeIndex, true )
+				}
+				else if ( currentFireModeIndex == 2 )
+				{
+					SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_03", 3, currentFireModeIndex, true )
+				}
+				else if ( currentFireModeIndex == 3 )
+				{
+					SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_04", 3, currentFireModeIndex, true )
+				}
+			}
+			else
+      
+			{
+				SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_AUTO", 2, currentFireModeIndex )
+			}
 		}
 		else
 		{
@@ -526,55 +685,44 @@ void function PrimaryWeapon_UpdateFireSelectHUD( entity weapon )
 	{
 		if ( weapon.HasMod( "vertical_firestar" ) )
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/akimbo", "#FIRE_MODE_LINE", true )
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/akimbo", "#FIRE_MODE_LINE", 2 )
 		}
 		else
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_gun", "#FIRE_MODE_WALL", true )
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_gun", "#FIRE_MODE_WALL", 2 )
 		}
 	}
 	else if ( DoesModExist( weapon, "double_link_mod" ) )
 	{
 		if ( weapon.HasMod( "double_link_mod" ) )
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/akimbo", "#FIRE_MODE_SPLIT", true )
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/akimbo", "#FIRE_MODE_SPLIT", 2 )
 		}
 		else
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_gun", "#FIRE_MODE_COMBINED", true )
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_gun", "#FIRE_MODE_COMBINED", 2 )
 		}
 	}
-	else if ( DoesModExist( weapon, "akimbo" ) )
-	{
-		if ( weapon.HasMod( "akimbo" ) )
-		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/akimbo", "#FIRE_MODE_AKIMBO", true )
-		}
-		else
-		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_gun", "#FIRE_MODE_SINGLE", true )
-		}
-	}
-	 else if ( weapon.HasMod( "hopup_energy_choke" ) )
+	else if ( weapon.HasMod( "hopup_energy_choke" ) )
 	 {
-		  if ( weapon.HasMod( "choke" ) )
-			  SetWeaponToggleHUD( $"rui/hud/weapon_toggle/choke_enabled", "#ENERGY_CHOKE_ENABLED", true )
-		  else
-			  SetWeaponToggleHUD( $"rui/hud/weapon_toggle/choke_disabled", "#ENERGY_CHOKE_DISABLED", true )
-	}
+		 if ( weapon.HasMod( "choke" ) )
+			 SetWeaponToggleHUD( $"rui/hud/weapon_toggle/choke_enabled", "#ENERGY_CHOKE_ENABLED", 2, 0 )
+		 else
+			 SetWeaponToggleHUD( $"rui/hud/weapon_toggle/choke_disabled", "#ENERGY_CHOKE_DISABLED", 2, 1 )
+	 }
 	else
 	{
 		if ( IsWeaponInSingleShotMode( weapon ) )
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_shot", "#FIRE_MODE_SINGLE_ONLY", false )
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_shot", "#FIRE_MODE_SINGLE_ONLY", 1 )
 		}
 		else if ( IsWeaponInBurstMode( weapon ) )
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/burst", "#FIRE_MODE_BURST_ONLY", false )
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/burst", "#FIRE_MODE_BURST_ONLY", 1 )
 		}
 		else if ( IsWeaponInAutomaticMode( weapon ) )
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_AUTO_ONLY", false )
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_AUTO_ONLY", 1 )
 		}
 		else
 		{
@@ -618,6 +766,7 @@ void function UpdateModsOnSurvivalWeaponRui( var rui, entity weapon )
 		weaponData = SURVIVAL_GetLootDataFromWeapon( weapon )
 
 	string weaponRef = weaponData.ref
+	bool isTurret = GetWeaponInfoFileKeyField_GlobalInt_WithDefault( weapon.GetWeaponClassName(), "is_turret_weapon" , 0 ) == 1
 
 	if ( !SURVIVAL_Loot_IsRefValid( weaponData.ref ) )
 	{
@@ -628,7 +777,9 @@ void function UpdateModsOnSurvivalWeaponRui( var rui, entity weapon )
 			RuiSetInt( rui, ruiAttachmentTierArgs[attachmentName], 0 )
 			RuiSetImage( rui, ruiAttachmentIconArgs[attachmentName], $"" )
 		}
-		return
+
+		if ( !isTurret )
+			return
 	}
 
 	array<string> attachments = GetAllAttachmentPoints()
@@ -680,7 +831,7 @@ void function ClearWeaponToggleHUD()
 	if ( rui != null )
 	{
 		RuiSetString( rui, "fireMode", "" )
-		RuiSetBool( rui, "hasFireMode", false )
+		//RuiSetBool( rui, "hasFireMode", false )
 	}
 }
 
@@ -721,7 +872,7 @@ void function SetWeaponToggleHUD( asset icon, string modeName, bool hasFireMode,
 	var rui = ClWeaponStatus_GetWeaponHudRui( GetLocalViewPlayer() )
 	if ( rui != null )
 	{
-		RuiSetBool( rui, "hasFireMode", hasFireMode )
+		//RuiSetBool( rui, "hasFireMode", hasFireMode )
 		RuiSetString( rui, "fireMode", modeName )
 		RuiSetImage( rui, "fireModeIcon", icon )
 		RuiSetBool( rui, "isAltFire", isAltFire )

@@ -2757,12 +2757,14 @@ global const vector AMMO_ARROW_COLOR 		= <202.0, 180.0, 72.0> / 255.0
 
 global const vector AMMO_LEGENDARY_COLOR 	= <255, 215, 30> / 255.0
 
-global const table<string, vector> ammoColors = {
-	bullet = AMMO_SMALL_COLOR
-	special = AMMO_ENERGY_COLOR
-	shotgun = AMMO_SHOTGUN_COLOR
-	highcal = AMMO_LARGE_COLOR
-	sniper = AMMO_SNIPER_COLOR
+global const table<string, int> ammoColors = {
+	bullet = COLORID_AMMO_SMALL_COLOR
+	special = COLORID_AMMO_ENERGY_COLOR
+	shotgun = COLORID_AMMO_SHUTGUN_COLOR
+	highcal = COLORID_AMMO_LARGE_COLOR
+	legendary = COLORID_AMMO_LEGENDARY_COLOR
+	supply_drop = COLORID_AMMO_SUPPLY_DROP_COLOR
+	sniper = COLORID_AMMO_SNIPER_COLOR
 	arrows = AMMO_ARROW_COLOR
 }
 
