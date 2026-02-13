@@ -501,6 +501,8 @@ global struct ServerEntityStruct
 	int hackableTerminalSpawnID
 	int terminalID
 	bool isBeingDataknifed
+
+	int stateFlags
 }
 
 global struct MeritData
@@ -547,6 +549,8 @@ global struct ServerPlayerStruct
 	int chosenHeirloom = 0
 	int chosenCharm = 0
 	float max_enemy_ping = 999.0
+	int winStreak = 0
+	int bestStreak = 0
 	//End 1v1 Settings
 	bool 						fastballActivatePressed
 	bool isPlayerInVent = false

@@ -131,6 +131,7 @@ global enum eGamemodes
 	fs_apexkart, //13
 	WINTEREXPRESS, //14	
 	fs_spieslegends, //15
+	fs_1v1,
 	
 	_GAMEMODES_COUNT //LAST
 }
@@ -171,9 +172,9 @@ const array<int> playlist1v1Types =
 	ePlaylists.fs_scenarios
 ]
 
-const array<int> gamemode1v1Types = 
+const array<int> gamemode1v1Types =
 [
-
+	eGamemodes.fs_1v1
 ]
 
 #if DEVELOPER
@@ -283,9 +284,9 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 	#endif
 		
 		SH_globals.currentGamemode = currentGamemodeEnum
-		#if !UI
-			mAssert( SH_globals.currentGamemode != -1, format( "Current gamemode \"%s\" is not registered in sh_mapname_playlist_gamemode_enums.nut", curentGamemodeName ) )
-		#endif
+		// #if !UI
+			// mAssert( SH_globals.currentGamemode != -1, format( "Current gamemode \"%s\" is not registered in sh_mapname_playlist_gamemode_enums.nut", curentGamemodeName ) )
+		// #endif
 	
 	AllModeConditionals_Init()
 }

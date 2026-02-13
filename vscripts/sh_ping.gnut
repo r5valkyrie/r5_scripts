@@ -71,6 +71,9 @@ global function PingFlavor_GetDrawHeightLine
 global function PingFlavor_GetColor
 #endif
 
+#if SERVER
+global function Ping_SetCanPingCallback
+#endif
 
 global enum pingWheelRevision
 {
@@ -306,6 +309,7 @@ struct
 struct
 {
 	table< entity, table<int, float> >    nextPingTypeTimes
+	bool functionref( entity ) canPingFuncCallback
 
 } file
 #endif
@@ -419,6 +423,7 @@ void function ShPing_Init()
 		AddCallback_OnCommsMenuStateChanged( OnCommsMenuChanged )
 		AddCallback_OnPlayerLifeStateChanged( OnLifeStateChanged )
 	#elseif SERVER
+		file.canPingFuncCallback = NULL_CAN_PING_CALLBACK
 		AddCallback_OnPlayerMatchStateChanged( OnPlayerMatchStateChanged )
 		AddCallback_OnClientConnected( OnPlayerConnected )
 
@@ -457,7 +462,17 @@ void function OnPlayerConnected( entity player )
 	}
 }
 
+void function Ping_SetCanPingCallback( bool functionref( entity ) callbackFunc )
+{
+	file.canPingFuncCallback = callbackFunc
+}
+
 #endif // SERVER
+
+bool function NULL_CAN_PING_CALLBACK( entity _ )
+{
+	return true
+}
 
 #if CLIENT
 bool function Ping_ShouldExecutePing( entity player )
@@ -525,11 +540,8 @@ void function CodeCallback_PingCommandExecuteQueued( entity player, int pingType
 	if ( !player.p.pingQueuedTraceIsValid )
 		return
 
-	if( Playlist() == ePlaylists.fs_scenarios ) //TODO: set state for allowed ping in gamemode logic
-	{
-		if( !Safe_FS_Scenarios_PlayerCanPing( player ) )
-			return
-	}
+	if( !file.canPingFuncCallback( player ) )
+		return
 
 	CreateWaypoint_Ping_Location( player, pingType, player.p.pingQueuedTraceEnt, player.p.pingQueuedTraceOrigin, userTicketId, false )
 	player.p.pingQueuedTraceIsValid = false

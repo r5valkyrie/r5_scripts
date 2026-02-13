@@ -52,10 +52,10 @@ void function MpWeaponEditor_Init()
     #if CLIENT
     RegisterSignal("EndSetPresentationType")
     RegisterSignal("CloseModelRUI")
-    ClMenuModels_Init()
+	ClMenuModels_Init()
     #elseif SERVER
-    AddClientCommandCallback("SetEditorMode", ClientCommand_SetCurrentEditorMode)
-    #endif
+		AddClientCommandCallback( "SetEditorMode", ClientCommand_SetCurrentEditorMode )
+     #endif
 }
 
 void function RegisterEditorMode(EditorMode mode)
@@ -73,7 +73,11 @@ array<EditorMode> function GetEditorModes()
 
 bool function ClientCommand_SetCurrentEditorMode(entity player, array<string> args)
 {
-    if(!IsValid( player )) return false
+    if( !IsValid( player ) )
+		return false
+
+	if( !args.len() )
+		return true
 
     int idx = int( args[0] )
     if(idx >= GetEditorModes().len() || idx < 0) return false

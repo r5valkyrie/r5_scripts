@@ -437,8 +437,13 @@ struct
 		"#BADGE_SAVED",
 		
 		/* 4/8/2025 */
-		
-		"#FS_STATS_NOT_READY"
+
+		"#FS_STATS_NOT_READY",
+
+		"#FS_MATCHMAKING_COUNTDOWN",
+		"#FS_RESTING_PANEL",
+		"#FS_MATCH_FOUND",
+		"#FS_MATCHING_ANY"
 	]
 	
 } file

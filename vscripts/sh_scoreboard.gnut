@@ -101,6 +101,10 @@ void function ToggleScoreboard()
 #if CLIENT
 void function ClientCodeCallback_ToggleScoreboard()
 {
+	// 1v1 modes use the custom FSLeaderboard instead of the fullscreen map scoreboard
+	if ( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 )
+		return
+
 	ToggleScoreboard()
 }
 #endif

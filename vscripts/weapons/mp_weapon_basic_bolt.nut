@@ -19,13 +19,16 @@ void function MpWeaponBasicBolt_Init()
 	BasicBoltPrecache()
 
 	#if SERVER && DEVELOPER
-	AddClientCommandCallback( "fs_setweaponitem", ClientCommand_dev_set_weapon_item )
+		AddClientCommandCallback( "fs_setweaponitem", ClientCommand_dev_set_weapon_item )
 	#endif
 }
 
 #if SERVER && DEVELOPER
 bool function ClientCommand_dev_set_weapon_item( entity player, array<string> args )
 {
+	if( !args.len() )
+		return false
+
 	itemFromWeapon = args[0].tointeger()
 	return true
 }
