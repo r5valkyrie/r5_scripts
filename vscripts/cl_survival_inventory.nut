@@ -2359,7 +2359,7 @@ void function UpdateHealHint( entity player )
 		if ( Time() - file.lastHealHintDisplayTime < 10.0 )
 			return
 
-		if ( CanDeployHealDrone( player ) && player.GetHealth() < player.GetMaxHealth() )
+			if ( CanDeployHealDrone( player ) && player.GetHealth() < player.GetMaxHealth() && StatusEffect_GetSeverity( player, eStatusEffect.silenced ) == 0.0 )
 		{
 			AddPlayerHint( HINT_DURATION, 0.25, $"", "#SURVIVAL_MEDIC_HEAL_HINT" )
 			file.lastHealHintDisplayTime = Time()
@@ -2375,6 +2375,7 @@ void function UpdateHealHint( entity player )
 			if ( Consumable_IsCurrentSelectedConsumableTypeUseful() )
 			{
 				AddPlayerHint( HINT_DURATION, 0.25, $"", "#SURVIVAL_HEAL_HINT_CROSSHAIR", Localize( kitInfo.lootData.pickupString ) )
+				file.lastHealHintDisplayTime = Time()
 			}
 		}
 		else
@@ -2387,6 +2388,7 @@ void function UpdateHealHint( entity player )
 			HealthPickup pickup = SURVIVAL_Loot_GetHealthKitDataFromStruct( kitType )
 
 			AddPlayerHint( HINT_DURATION, 0.25, $"", "#SURVIVAL_HEAL_HINT_CROSSHAIR", Localize( pickup.lootData.pickupString ) )
+			file.lastHealHintDisplayTime = Time()
 		}
 	}
 	else
@@ -2758,7 +2760,7 @@ void function UICallback_OnInventoryMouseDrop( var dropButton, var sourcePanel, 
 					if ( initOnly )
 						Hud_SetLocked( dropButton, false )
 					else
-						player.ClientCommand( "Sur_SwapPrimaryPositions" )
+						player.ClientCommand( "Sur_SwapPrimaryPositions " + Time() )
 				}
 			}
 		}
@@ -2851,7 +2853,7 @@ void function UICallback_UpdatePlayerInfo( var elem )
 	entity player = GetLocalClientPlayer()
 
 	if ( GetBugReproNum() == 54268 )
-		thread SURVIVAL_PopulatePlayerInfoRui( player, rui )
+		SURVIVAL_PopulatePlayerInfoRui( player, rui )
 	else
 		thread TEMP_UpdatePlayerRui( rui, player )
 }
@@ -2867,11 +2869,8 @@ void function UICallback_UpdateTeammateInfo( var elem )
 	array<entity> team = GetPlayerArrayOfTeam( player.GetTeam() )
 	team.fastremovebyvalue( player )
 
-	#if(true)
-		//
-		if ( IsFallLTM() )
-			team.clear()
-	#endif
+	if ( IsFallLTM() )
+		team.clear()
 
 	if ( teammateIndex < team.len() )
 	{
@@ -2921,16 +2920,17 @@ void function TEMP_UpdateUltimateInfo( var rui, entity player )
 			if ( IsValid( weapon ) )
 			{
 				thread UpdateInventoryUltimateRui( rui, player, weapon )
-			}
 
-			if ( IsValid( weapon ) )
-			{
 				float currentAmmoRegenRate = weapon.GetWeaponSettingFloat( eWeaponVar.regen_ammo_refill_rate )
 				if ( currentAmmoRegenRate != PROTO_storedAmmoRegenRate )
 				{
 					RuiSetFloat( rui, "refillRate", currentAmmoRegenRate )
 					PROTO_storedAmmoRegenRate = currentAmmoRegenRate
 				}
+			}
+			else
+			{
+				RuiSetBool( rui, "isVisible", false )
 			}
 		}
 		WaitFrame()
@@ -2949,6 +2949,7 @@ void function UpdateInventoryUltimateRui( var rui, entity player, entity weapon 
 	RuiSetBool( rui, "isReverseCharge", false )
 	bool isPaused = weapon.HasMod( "survival_ammo_regen_paused" )
 	RuiSetBool( rui, "isPaused", isPaused )
+	RuiSetBool( rui, "isVisible", true )
 
 	RuiSetFloat( rui, "chargeFrac", 0.0 )
 	RuiSetFloat( rui, "useFrac", 0.0 )
@@ -3016,6 +3017,7 @@ void function UpdateInventoryUltimateRui( var rui, entity player, entity weapon 
 
 void function TEMP_UpdatePlayerRui( var rui, entity player )
 {
+	printf( "EvoShieldDebug: Temp_UpdatePlayerRui called" )
 	player.EndSignal( "OnDestroy" )
 	clGlobal.levelEnt.EndSignal( "BackpackClosed" )
 
@@ -3035,10 +3037,29 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 				int tier      = data.tier
 				asset hudIcon = data.hudIcon
 
-				RuiSetInt( rui, es.unitFrameTierVar, tier )
+				if ( data.lootType == eLootType.ARMOR )
+				{
+					int armorCapacity = SURVIVAL_GetArmorShieldCapacity( tier )
 
-				// if( tier > 5 )
-					// RuiSetInt( rui, es.unitFrameTierVar, 5 )
+                           
+						bool isEvolving = EvolvingArmor_IsEquipmentEvolvingArmor( data.ref )
+						RuiSetBool( rui, "isEvolvingShield", isEvolving )
+						RuiSetInt( rui, "evolvingShieldKillCounter", EvolvingArmor_GetEvolutionProgress( player ) )
+           
+                                  
+						RuiSetBool( rui, "hasReducedShieldValues", true )
+          
+                                                        
+           
+				}
+                          
+				else if ( equipSlot == "armor" && data.ref == "" )
+				{
+					RuiSetBool( rui, "isEvolvingShield", false )
+				}
+          
+
+				RuiSetInt( rui, es.unitFrameTierVar, tier )
 
 				RuiSetImage( rui, es.unitFrameImageVar, hudIcon )
 			}
@@ -3048,6 +3069,7 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 		RuiSetFloat( rui, "playerHealthFrac", GetHealthFrac( player ) )
 		RuiSetFloat( rui, "playerShieldFrac", GetShieldHealthFrac( player ) )
 		RuiSetInt( rui, "teamMemberIndex", player.GetTeamMemberIndex() )
+		RuiSetInt( rui, "squadID", player.GetSquadID() )
 
 		vector shieldFrac = < SURVIVAL_GetArmorShieldCapacity( 0 ) / 100.0,
 				SURVIVAL_GetArmorShieldCapacity( 1 ) / 100.0,
@@ -3058,6 +3080,9 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 		RuiSetFloat( rui, "playerTargetShieldFrac", StatusEffect_GetSeverity( player, eStatusEffect.target_shields ) )
 		RuiSetFloat( rui, "playerTargetHealthFrac", StatusEffect_GetSeverity( player, eStatusEffect.target_health ) )
 		RuiSetFloat( rui, "cameraViewFrac", StatusEffect_GetSeverity( player, eStatusEffect.camera_view ) )
+		RuiSetBool( rui, "useShadowFormFrame", player.IsShadowForm() )
+
+		RuiSetInt( rui, "micStatus", GetPlayerMicStatus( player ) )
 
 		//
 		OverwriteWithCustomPlayerInfoTreatment( player, rui )
@@ -3090,6 +3115,14 @@ void function TEMP_UpdateTeammateRui( var rui, entity ent )
 				int tier      = data.tier
 				asset hudIcon = tier > 0 ? data.hudIcon : es.emptyImage
 
+					if ( data.lootType == eLootType.ARMOR )
+					{
+						bool isEvolving = EvolvingArmor_IsEquipmentEvolvingArmor( data.ref )
+						RuiSetBool( rui, "isEvolvingShield", isEvolving )
+					}
+          
+                                 
+					RuiSetBool( rui, "hasReducedShieldValues", true )
 				RuiSetInt( rui, es.unitFrameTierVar, tier )
 
 				// if( tier > 5 )
@@ -3106,9 +3139,8 @@ void function TEMP_UpdateTeammateRui( var rui, entity ent )
 		RuiSetFloat( rui, "targetShieldFrac", StatusEffect_GetSeverity( ent, eStatusEffect.target_shields ) )
 		RuiSetFloat( rui, "cameraViewFrac", StatusEffect_GetSeverity( ent, eStatusEffect.camera_view ) )
 		RuiSetInt( rui, "teamMemberIndex", ent.GetTeamMemberIndex() )
-		#if(false)
-
-#endif //
+		RuiSetInt( rui, "squadID", ent.GetSquadID() )
+		RuiSetBool( rui, "disconnected", false )  // TODO: client can't track disconnection
 
 		asset hudIcon = $""
 		int kitType   = ent.GetPlayerNetInt( "healingKitTypeCurrentlyBeingUsed" )
@@ -3135,8 +3167,16 @@ void function TEMP_UpdateTeammateRui( var rui, entity ent )
 		RuiSetInt( rui, "reviveType", ent.GetPlayerNetInt( "reviveType" ) )
 		RuiSetFloat( rui, "bleedoutEndTime", ent.GetPlayerNetTime( "bleedoutEndTime" ) )
 		RuiSetInt( rui, "respawnStatus", ent.GetPlayerNetInt( "respawnStatus" ) )
+		RuiSetFloat( rui, "respawnStatusEndTime", ent.GetPlayerNetTime( "respawnStatusEndTime" ) )
+		RuiSetBool( rui, "useShadowFormFrame", ent.IsShadowForm() )
+
+		RuiSetInt( rui, "micStatus", GetPlayerMicStatus( ent ) )
+
+		//
+		RuiSetGameTime( rui, "realGameTime", Time() )
 
 		SetUnitFrameAmmoTypeIcons( rui, ent )
+		OverwriteWithCustomUnitFrameInfo( ent, rui )
 
 		WaitFrame()
 	}

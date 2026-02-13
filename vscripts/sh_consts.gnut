@@ -2761,17 +2761,7 @@ global const vector AMMO_ARROW_COLOR 		= <202.0, 180.0, 72.0> / 255.0
 
 global const vector AMMO_LEGENDARY_COLOR 	= <255, 215, 30> / 255.0
 
-// Color IDs for ammo (matching datatable values)
-global const int COLORID_AMMO_SHUTGUN_COLOR		= 0
-global const int COLORID_AMMO_ENERGY_COLOR		= 1
-global const int COLORID_AMMO_SMALL_COLOR		= 2
-global const int COLORID_AMMO_LARGE_COLOR		= 3
-global const int COLORID_AMMO_BOOMJUICE_COLOR	= 4
-global const int COLORID_AMMO_SNIPER_COLOR		= 5
-global const int COLORID_AMMO_ARROWS_COLOR		= 6
-global const int COLORID_AMMO_LEGENDARY_COLOR	= 7
-global const int COLORID_AMMO_SUPPLY_DROP_COLOR	= 8
-
+#if !UI
 global const table<string, int> ammoColors = {
 	bullet = COLORID_AMMO_SMALL_COLOR
 	special = COLORID_AMMO_ENERGY_COLOR
@@ -2782,6 +2772,7 @@ global const table<string, int> ammoColors = {
 	sniper = COLORID_AMMO_SNIPER_COLOR
 	arrows = COLORID_AMMO_ARROWS_COLOR
 }
+#endif
 
 global struct BurnDamageSettings
 {

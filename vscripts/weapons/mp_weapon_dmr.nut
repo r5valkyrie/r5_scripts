@@ -45,7 +45,7 @@ void function OnClientAnimEvent_weapon_dmr( entity weapon, string name )
 	{
 		if ( IsOwnerViewPlayerFullyADSed( weapon ) )
 			return
-		if ( !weapon.HasMod( "silencer" ) )
+		if ( !weapon.HasMod( "barrel_stabilizer_l4_flash_hider" ) )
 		{
 			weapon.PlayWeaponEffect( $"wpn_mflash_snp_hmn_smoke_side_FP", $"wpn_mflash_snp_hmn_smoke_side", "muzzle_flash_L" )
 			weapon.PlayWeaponEffect( $"wpn_mflash_snp_hmn_smoke_side_FP", $"wpn_mflash_snp_hmn_smoke_side", "muzzle_flash_R" )

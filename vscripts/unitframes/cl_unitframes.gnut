@@ -21,6 +21,10 @@ global function SetUnitFrameDataFromOwner
 global function UpdateRUITest
 global function AddCallback_OnTeammateUnitframeInit
 
+global function OverwriteWithCustomUnitFrameInfo
+
+global function RefreshUnitframesForPlayer
+
 #if DEVELOPER
 global function PrintUnitFrames
 global function PrintTeammates
@@ -35,6 +39,7 @@ global struct UnitFrameDef
 
 struct
 {
+	array<UnitFrameDef>				  RASUnitFrames
 	table<entity, UnitFrameDef>       teamUnitFrames
 	array< void functionref(int) >    Callbacks_OnTeamUnitFrameCreated
 	array< void functionref(int) >    Callbacks_OnTeamUnitFrameDestroyed
@@ -227,17 +232,33 @@ void function CreateTeamUnitFrame( entity player )
 	UnitFrameDef unitFrame
 	unitFrame.rui = rui
 
-	file.teamUnitFrames[player] <- unitFrame
+	if ( player == GetLocalClientPlayer() )
+	{
+		unitFrame.index = 0
 
-	UpdateUnitFrameIndices()
+		foreach ( frame in file.teamUnitFrames )
+		{
+			if ( frame.index >= 0 )
+			{
+				frame.index++
+				SetUnitFramePosition( frame )
+			}
+		}
+	}
+	else
+	{
+		unitFrame.index = file.teamUnitFrames.len()
+	}
 
 	foreach ( callbackFunc in file.Callbacks_OnTeamUnitFrameCreated )
 	{
 		callbackFunc( unitFrame.index )
 	}
 
+	file.teamUnitFrames[player] <- unitFrame
 	SetUnitFrameOwner( unitFrame, player )
 	SetUnitFramePosition( unitFrame )
+	UpdateEquipmentSlot( player, unitFrame.rui )
 }
 
 int function SquadMemberIndexSort( entity a, entity b )
@@ -301,7 +322,6 @@ void function SetUnitFrameDataFromOwner( var rui, entity ent, bool forceUpdate =
 	while ( !EHIHasValidScriptStruct( ToEHI( ent ) ) )
 		WaitFrame() // todo(dw): temp fix for R5DEV-60667
 
-	WaitFrame()
 	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( ent ), Loadout_CharacterClass() )
 	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 
@@ -312,17 +332,12 @@ void function SetUnitFrameDataFromOwner( var rui, entity ent, bool forceUpdate =
 
 	RuiTrackString( rui, "name", ent, RUI_TRACK_PLAYER_NAME_STRING )
 	RuiTrackInt( rui, "micStatus", ent, RUI_TRACK_MIC_STATUS )
+	RuiSetInt( rui, "baseShield", GetPlayerSettingBaseShield( ent ) )
 	RuiTrackFloat( rui, "healthFrac", ent, RUI_TRACK_HEALTH )
 	RuiTrackFloat( rui, "shieldFrac", ent, RUI_TRACK_SHIELD_FRACTION )
 	RuiTrackGameTime( rui, "lastFireTime", ent, RUI_TRACK_LAST_FIRED_TIME )
 	RuiSetBool( rui, "isLocalPlayer", (ent == GetLocalViewPlayer()) )
 	RuiSetImage( rui, "icon", classIcon )
-
-	foreach ( callbackFunc in file.callbacks_onTeammateUnitframeInit )
-	{
-		callbackFunc( ent, rui )
-	}
-	
 	RuiTrackFloat( rui, "reviveEndTime", ent, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 	RuiTrackInt( rui, "reviveType", ent, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "reviveType" ) )
 	RuiTrackFloat( rui, "bleedoutEndTime", ent, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
@@ -330,8 +345,7 @@ void function SetUnitFrameDataFromOwner( var rui, entity ent, bool forceUpdate =
 	RuiTrackInt( rui, "respawnStatus", ent, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "respawnStatus" ) )
 	RuiTrackFloat( rui, "respawnStatusEndTime", ent, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "respawnStatusEndTime" ) )
 	RuiTrackFloat( rui, "cameraViewFrac", ent, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.camera_view ) //
-
-	RuiSetBool( rui, "disconnected", false )
+	RuiSetBool( rui, "disconnected", false )  // TODO: client can't track disconnection
 	RuiSetImage( rui, "healTypeIcon", $"" )
 	#if !MP_PVEMODE
 		RuiTrackInt( rui, "teamMemberIndex", ent, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
@@ -349,6 +363,12 @@ void function SetUnitFrameDataFromOwner( var rui, entity ent, bool forceUpdate =
 	RuiTrackInt( rui, "squadID", ent, RUI_TRACK_SQUADID )
 	UpdateWaitingToRespawnTextForFrame( rui )
 	#endif //MP_PVEMODE
+}
+
+void function SetUnitFrameDataFromRAS( var rui, entity ent, bool forceUpdate = false )
+{
+	RuiSetBool( rui, "isVisible", true )
+	RuiTrackInt( rui, "squadID", ent, RUI_TRACK_SQUADID )
 }
 
 void function OnInUseHealingKitTypeChanged( entity player, int oldkitType, int kitType, bool actuallyChanged )
@@ -409,7 +429,7 @@ void function OnPlayerEquippedWeaponChanged( entity player, int oldWeaponRef, in
 			{
 				LootData weaponData = SURVIVAL_Loot_GetLootDataByIndex( weaponIndex )
 				string ammoType     = weaponData.ammoType
-				if ( GetWeaponInfoFileKeyField_GlobalBool( weaponData.baseWeapon, "uses_ammo_pool" ) )
+				if ( ammoType != "" )
 				{
 					LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoType )
 					hudIcon = ammoData.hudIcon
@@ -458,7 +478,14 @@ void function DestroyTeamUnitFrame( entity player )
 		callbackFunc( removedIndex )
 	}
 
-	UpdateUnitFrameIndices()
+	foreach ( unitFrame in file.teamUnitFrames )
+	{
+		if ( unitFrame.index >= removedIndex )
+		{
+			unitFrame.index--
+			SetUnitFramePosition( unitFrame )
+		}
+	}
 }
 
 

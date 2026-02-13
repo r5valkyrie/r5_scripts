@@ -51,7 +51,7 @@ global function FS_Scenarios_MinimapDeathFieldCreated
 global function HACK_TrackPlayerPositionOnScript
 global function SetCustomXYOffsetsMapScaleAndImageOnFullmapAndMinimap
 global function RefreshImageAndScaleOnMinimapAndFullmap
-
+global function UpdateEquipmentSlot
 #if DEVELOPER
 global function DumpMinimapHandles
 #endif
@@ -1856,11 +1856,23 @@ void function UpdateEquipmentSlot( entity player, var rui )
 			int tier      = data.tier
 			asset hudIcon = tier > 0 ? data.hudIcon : es.emptyImage
 
-			// if(equipSlot == "armor" && player.GetShieldHealthMax() > 100)
-					// RuiSetInt( rui, es.unitFrameTierVar, 5 )
-				// else
-					RuiSetInt( rui, es.unitFrameTierVar, tier )
+			RuiSetInt( rui, es.unitFrameTierVar, tier )
+
 			RuiSetImage( rui, es.unitFrameImageVar, hudIcon )
+
+                         
+				if ( data.lootType == eLootType.ARMOR )
+				{
+					bool isEvolving = EvolvingArmor_IsEquipmentEvolvingArmor( data.ref )
+					RuiSetBool( rui, "isEvolvingShield", isEvolving )
+				}
+				else if ( equipSlot == "armor" && data.ref == "" )
+				{
+					RuiSetBool( rui, "isEvolvingShield", false )
+				}
+         
+				RuiSetBool( rui, "hasReducedShieldValues", true )
+        
 		}
 	}
 }
