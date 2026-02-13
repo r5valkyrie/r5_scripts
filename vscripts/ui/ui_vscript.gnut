@@ -13,7 +13,6 @@ global function AddUICallback_InputModeChanged
 global function AddUICallback_KeyBindSet
 global function AddUICallback_UIShutdown
 global function UICallback_AdminStatus
-global function IsKralStuffActive
 global function SetShowingMap
 global function IsShowingMap
 
@@ -236,7 +235,6 @@ global struct UIGlobals
 	ItemFlavor ornull WORKAROUND_activeMusicPack = null
 	string ornull     desiredCustomMusicOrNull = null
 	bool              isShowingMap = false // Quickfix for beta so Esc closes the map. Longterm map should be a menu that client updates.
-	bool              kralsmods = false
 
 	//int		pilotSpawnLoadoutIndex = -1
 	int titanSpawnLoadoutIndex = -1
@@ -296,6 +294,7 @@ global struct UIGlobals
 
 	bool cachedLoadoutsReady = false
 	bool commsMenuOpen = false
+	bool modeSelectMenuOpen = false
 
 	bool isOptInEnabled = false
 
@@ -355,6 +354,7 @@ void function UICodeCallback_UIInit()
 	RegisterSignal( "ActiveMenuChanged" )
 	RegisterSignal( "LevelFinishedLoading" )
 	RegisterSignal( "OpenErrorDialog" )
+	RegisterSignal( "ReconnectFailed" )
 	RegisterSignal( "BoughtItem" )
 	RegisterSignal( "TrackIsOverScrollBar" )
 	RegisterSignal( "UpdateUIMusicOnMusicPackLoadoutSlotReadyThread" )
@@ -453,11 +453,6 @@ void function AddUICallback_OnLevelInit( void functionref() callbackFunc )
 		return
 	
 	uiGlobal.onLevelInitCallbacks.append( callbackFunc )
-}
-
-bool function IsKralStuffActive()
-{
-	return uiGlobal.kralsmods
 }
 
 void function SetShowingMap( bool val )

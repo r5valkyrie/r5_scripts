@@ -229,7 +229,7 @@ scripts/resource/ui/menus/postgame.menu
             zpos					2 // Needed or clicking on the background can hide this
             visible					1
             enabled					1
-            rui                     "ui/challenge_eog_button.rpak"
+            //rui                     "ui/challenge_eog_button.rpak"
             clipRui                 1
             labelText				""
             style					RuiButton
@@ -261,7 +261,7 @@ scripts/resource/ui/menus/postgame.menu
             zpos					2 // Needed or clicking on the background can hide this
             visible					1
             enabled					1
-            rui                     "ui/challenge_eog_button.rpak"
+            // rui                     "ui/challenge_eog_button.rpak"
             clipRui                 1
             labelText				""
             style					RuiButton

@@ -693,14 +693,6 @@ void function SetDevMenu_CustomHeirlooms( var _ )
 void function SetupHeirloomsDevMenu()
 {
 	SetupDevCommand( "Default Melee", "giveheirloom -1" )
-	if ( IsKralStuffActive() )
-	{
-		SetupDevCommand( "Bolo Sword", "giveheirloom 0" )
-		SetupDevCommand( "Diamond Sword", "giveheirloom 2" )
-		SetupDevCommand( "Mjolnir", "giveheirloom 3" )
-		SetupDevCommand( "Le Karambit", "giveheirloom 4" )
-	}
-
 	SetupDevCommand( "Dragonfly Knife", "giveheirloom 1" )
 }
 

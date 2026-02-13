@@ -13,7 +13,6 @@
 	rev_shell_targeted
 	ring_flare
 	cryonade
-	rhapsody_tactical
 	crypto_beacon_scan
 	immune_to_abilities
 	phase_gate_tracking

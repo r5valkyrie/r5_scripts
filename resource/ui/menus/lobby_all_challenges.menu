@@ -215,7 +215,7 @@ scripts/resource/ui/menus/lobby_all_challenges.menu
             zpos					2 // Needed or clicking on the background can hide this
             visible					1
             enabled					1
-            rui                     "ui/challenge_full_button.rpak"
+            //rui                     "ui/challenge_full_button.rpak"
             clipRui                 1
             labelText				""
             style					RuiButton
@@ -266,7 +266,7 @@ scripts/resource/ui/menus/lobby_all_challenges.menu
 
             ButtonSettings
             {
-                rui                     "ui/challenge_full_button.rpak"
+                //rui                     "ui/challenge_full_button.rpak"
                 clipRui                 1
                 wide					990
                 tall					70

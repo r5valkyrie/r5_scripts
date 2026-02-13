@@ -266,8 +266,7 @@ bool function ClientCommand_BecomeRhapsody(entity player, array<string> args)
 	player.TakeOffhandWeapon(OFFHAND_ULTIMATE)
 	TakeAllPassives( player )
 
-	player.GiveOffhandWeapon( "mp_weapon_rhapsody_ultimate", OFFHAND_ULTIMATE)
-	player.GiveOffhandWeapon( "mp_ability_rhapsody_tactical", OFFHAND_TACTICAL)
+
 	// GivePassive(player, ePassives.PAS_SLIPSTREAM)
 	return true
 }
