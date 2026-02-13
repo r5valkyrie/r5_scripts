@@ -1318,6 +1318,9 @@ array<string> function LootHelper_FilterAndGrabCompatibleAttachmentUpgrades( Loo
 	if ( SURVIVAL_Weapon_IsAttachmentLocked( weaponData.ref ) )
 		return unequippedAttachment
 
+	if ( !(attachmentType in attachmentTable) )
+		return unequippedAttachment
+
 	array<string> candidates = attachmentTable[attachmentType]
 	array< int > upgradeTiers
 
@@ -1520,6 +1523,9 @@ int function LootHelper_GetLootType_Expensive( string lootRef )
 			break
 		case "health":
 			lootType = eLootType.HEALTH
+			break
+		case "gadget":
+			lootType = eLootType.SURVIVAL
 			break
 		case "helmet":
 			lootType = eLootType.HELMET

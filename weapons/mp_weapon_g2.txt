@@ -78,7 +78,7 @@
 	"viewmodel_offset_ads"                     "0 -1.6 0"
 
 	// Projectile
-	"projectile_launch_speed"                  "30000"  //"31500"
+	"projectile_launch_speed"                  "29000"
 
     //"bolt_hitsize_grow1_time"				    "0.123"  //~100m
     //"bolt_hitsize_grow1_size"				    "0.33"
@@ -203,10 +203,6 @@
 	"sound_zoom_out"                           "Weapon_G2A4_ADS_Out"
 	"sound_trigger_pull"                       "assault_rifle_dryfire"
 	"sound_trigger_release"                    "assault_rifle_dryfire"
-	
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
-	"fx_muzzle_flash_attach"						"muzzle_flash"
 
 	// NPC
 	//
@@ -247,6 +243,10 @@
 	"fx_shell_eject_world"						"wpn_shelleject_rifle_assault"
 	"fx_shell_eject_attach"						"shell"
 
+	// FX - Impacts
+	//
+	"impact_effect_table"                      "default_far_sniper"
+
 	// Bodygroups
 	//
 	"bodygroup1_name"                          "sight_rear"
@@ -263,16 +263,18 @@
 
 
 	"headshot_distance"	"17716"
-	"damage_headshot_scale"	"1.600000"
+	"damage_headshot_scale"	"1.450000"
 	"damage_shield_scale"	"1"
 	"damage_near_distance"	"1000"
 	"damage_far_distance"	"2500"
 	"damage_very_far_distance"	"5000"
 	"Mods"
 	{
-	    gold
-	    {
-	    }
+	    gold	    {}
+	    whiteset    {}
+        blueset     {}
+        purpleset   {}
+	    crate	    {}
 
 		"survival_finite_ammo"
 		{
@@ -296,12 +298,11 @@
 
 		    "fire_rate"                                 "10.0"
             "burst_fire_count"                          "2"
+            "burst_fire_delay"                          "0.475"   //was .25 from 4.0 RoF
 
             "viewkick_pattern"                          "g2_double_tap"
 
             "viewkick_spring_hot"                       "g2_vkp_double_tap_hot"     //pulls in less than g2_vkp_hot
-
-            "burst_fire_delay"                          "0.40"   //was .25 from 4.0 RoF
 
             "viewkick_spring_heatpershot"				"1.0"
             "viewkick_spring_cooldown_holdtime"         "0.24"
@@ -325,6 +326,54 @@
 		}
 // end HAS_DOUBLE_TAP
       
+
+		blue_paintball
+        {
+           "impact_effect_table" 				"bullet_pb_Random"
+
+           "projectile_trail_effect_0" 		"P_tracer_projectile_pb"
+           "projectile_trail_effect_1" 		"P_tracer_projectile_pb"
+
+           "reload_time"						"*0.75"
+           "reload_time_late1"					"*0.75"
+           "reload_time_late2"					"*0.75"
+           "reload_time_late3"					"*0.75"
+           "reload_time_late4"					"*0.75"
+           "reload_time_late5"					"*0.75"
+           "reloadempty_time"					"*0.75"
+           "reloadempty_time_late1"			"*0.75"
+           "reloadempty_time_late2"			"*0.75"
+           "reloadempty_time_late3"			"*0.75"
+           "reloadempty_time_late4"			"*0.75"
+           "reloadempty_time_late5"			"*0.75"
+
+           "ammo_clip_size"                    "*1.15"
+           "ammo_clip_reload_max"              "*1.15"
+        }
+
+		gold_paintball
+        {
+           "impact_effect_table" 				"bullet_pb_Random"
+
+           "projectile_trail_effect_0" 		"P_tracer_projectile_pb"
+           "projectile_trail_effect_1" 		"P_tracer_projectile_pb"
+
+           "reload_time"						"*0.75"
+           "reload_time_late1"					"*0.75"
+           "reload_time_late2"					"*0.75"
+           "reload_time_late3"					"*0.75"
+           "reload_time_late4"					"*0.75"
+           "reload_time_late5"					"*0.75"
+           "reloadempty_time"					"*0.75"
+           "reloadempty_time_late1"			"*0.75"
+           "reloadempty_time_late2"			"*0.75"
+           "reloadempty_time_late3"			"*0.75"
+           "reloadempty_time_late4"			"*0.75"
+           "reloadempty_time_late5"			"*0.75"
+
+           "ammo_clip_size"                    "*1.15"
+           "ammo_clip_reload_max"              "*1.15"
+        }
 
         // G2 non-fullscreen optics override normal sniper handling settings to be snappier
         optic_cq_hcog_classic
@@ -367,39 +416,6 @@
             "viewmodel_jolt_scale"  "0.35"
         }
 
-        "optic_sniper"
-		{
-		    "viewmodel_spring_jolt"                     "g2_scoped_viewmodel_jolt"
-			"viewmodel_jolt_backwardPerShot"            "-0.04"
-            "viewmodel_jolt_roll"                       "0 0.0 0.0"
-            "viewmodel_jolt_side"                       "0 0.02 0"
-		}
-
-        "optic_sniper_variable"
-		{
-		    "viewmodel_spring_jolt"                     "g2_scoped_viewmodel_jolt"
-			"viewmodel_jolt_backwardPerShot"            "-0.035"
-			"viewmodel_jolt_roll"                       "0 0.0 0.0"
-            "viewmodel_jolt_side"                       "0 0.02 0"
-		}
-
-		"optic_sniper_threat"
-		{
-            "viewmodel_spring_jolt"                     "g2_scoped_viewmodel_jolt"
-			"viewmodel_jolt_backwardPerShot"            "-0.03"
-			"viewmodel_jolt_roll"                       "0 0.0 0.0"
-            "viewmodel_jolt_side"                       "0 0.02 0"
-
-			"viewmodel_offset_hip"                      "0 0 -1.0"
-		}
-
-		"barrel_stabilizer_l4_flash_hider"
-		{
-			"fx_muzzle_flash_view"							""
-			"fx_muzzle_flash_world"							""
-			"fx_muzzle_flash_attach"						""
-		}
-
 		"bullets_mag_l1"
 		{
 			"ammo_clip_size"  "15"
@@ -414,10 +430,12 @@
 		{
 			"ammo_clip_size"  "20"
 		}
+
         bullets_mag_l4
         {
             "ammo_clip_size"  "20"
         }
+
         "stock_sniper_l1"
         {
             "zoom_time_in"					    "*0.9"
@@ -525,7 +543,7 @@
 			"ammo_no_remove_from_stockpile"         "1"
 			"low_ammo_fraction"                     "0.0"
 		}
-}
+	}
 
 	// RUI
 	"ui1_enable"                               "1"

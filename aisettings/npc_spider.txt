@@ -5,7 +5,7 @@ npc_spider
 	BodyType						spider
 	ArmorType						normal
 	smartAmmoLockAttachmentName0	CHESTFOCUS
-	title							#NPC_SPIDER
+	title							#NPC_SPIDER_JUNGLE
 
 	ui_targetinfo					"ui/targetinfo_npc_simple"
 
@@ -13,7 +13,7 @@ npc_spider
 	AIClass							spider
 	BehaviorSelector				"behavior_spider_jungle"
 
-	footstep_type					"spider"
+	footstep_type					"SpdrJungle"
 
 	mechanical						0
 	creature						1
@@ -24,7 +24,7 @@ npc_spider
 	DefaultModelName				"mdl/creatures/spider/spider.rmdl"
 	DefaultModelName_IMC			"mdl/creatures/spider/spider.rmdl"
 	DefaultModelName_MIL			"mdl/creatures/spider/spider.rmdl"
-	GibModel0						"mdl/gibs/human_gibs.rmdl"
+	GibModel0						"mdl/fx/spider_gibs.rmdl"
 
 	DefaultWeapon					"npc_weapon_spider_jungle"
 
@@ -52,7 +52,7 @@ npc_spider
 	meleeEnemyArmorType				any
 	meleeChargeEnemyArmorType		any
 
-	meleeImpactEffectTable			"melee_prowler"
+	meleeImpactEffectTable			"melee_spider"
 
 	canTargetPlayerVehicle          1
 

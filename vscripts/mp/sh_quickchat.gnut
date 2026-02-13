@@ -599,6 +599,9 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 	if ( IsValid( subjectEnt ) )
 		subjectEnt.e.lastVocalizedCommsTime = Time()
 
+	if ( !(commsAction in file.actions) )
+		return
+
 	CommsAction act = file.actions[commsAction]
 
 	CommsOptions opt
@@ -643,6 +646,9 @@ void function PlaySoundForCommsAction( entity player, int commsAction, CommsOpti
 	string sound = GetPlayerDialogSound( player, commsAction, opt )
 	if ( sound != "" )
 	{
+		if ( !(commsAction in file.actions) )
+			return
+
 		printt( format( "Comms: '%s' #%d    base:'%s'   (%s) far:%d urgent:%d    :  '%s'", GetNameForCommsAction( commsAction ), commsAction, file.actions[commsAction].aliasSubname, (opt.isFirstPerson ? "1p" : "3p"), (opt.isFar ? 1 : 0), (opt.isUrgent ? 1 : 0), sound ) )
 
 		float sincePlastPlayed = (Time() - player.p.sayLineLatestTime)
@@ -690,6 +696,8 @@ CommsAction function GetCommsAction( int index )
 {
 	CommsAction blankAction
 	if ( (index < 0) || (index >= eCommsAction._count) )
+		return blankAction
+	if ( !(index in file.actions) )
 		return blankAction
 
 	return file.actions[ index ]
@@ -750,6 +758,8 @@ void function PlaySoundForSubActionWhenPrimaryFinishes( var primarySoundHandle, 
 string function GetMenuOptionTextForCommsAction( int commsAction )
 {
 	Assert( commsAction < eCommsAction._count )
+	if ( !(commsAction in file.actions) )
+		return ""
 	CommsAction data = file.actions[commsAction]
 	return Localize( data.menuText )
 }
@@ -757,6 +767,8 @@ string function GetMenuOptionTextForCommsAction( int commsAction )
 string function GetShortTextForCommsAction( int commsAction )
 {
 	Assert( commsAction < eCommsAction._count )
+	if ( !(commsAction in file.actions) )
+		return ""
 	CommsAction data = file.actions[commsAction]
 	return Localize( data.shortText )
 }
@@ -764,6 +776,8 @@ string function GetShortTextForCommsAction( int commsAction )
 asset function GetDefaultIconForCommsAction( int commsAction )
 {
 	Assert( commsAction < eCommsAction._count )
+	if ( !(commsAction in file.actions) )
+		return $""
 	CommsAction data = file.actions[commsAction]
 	return data.defaultIcon
 }
@@ -771,6 +785,8 @@ asset function GetDefaultIconForCommsAction( int commsAction )
 asset function GetPingAssetForCommsAction( int commsAction )
 {
 	Assert( commsAction < eCommsAction._count )
+	if ( !(commsAction in file.actions) )
+		return $""
 	CommsAction data = file.actions[commsAction]
 	return data.pingAsset
 }
@@ -780,6 +796,8 @@ string function GetPlayerDialogSound( entity player, int index, CommsOptions opt
 	if ( !file.quickchatInitialized )
 		return ""
 	if ( (index < 0) || (index >= eCommsAction._count) )
+		return ""
+	if ( !(index in file.actions) )
 		return ""
 
 	CommsAction act = file.actions[index]

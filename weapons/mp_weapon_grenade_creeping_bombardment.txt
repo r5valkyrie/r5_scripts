@@ -106,11 +106,11 @@ WeaponData
 	"damage_flags"									"DF_RAGDOLL | DF_EXPLOSION"
 
 
-	"ammo_clip_size"   								"270"
+	"ammo_clip_size"   								"210"
 	"ammo_default_total"							"0"
 	"ammo_display"									"count"
-	"ammo_min_to_fire"								"270"
-	"ammo_per_shot"									"270"
+	"ammo_min_to_fire"								"210"
+	"ammo_per_shot"									"210"
 	"ammo_stockpile_max"							"0"
 	"regen_ammo_refill_rate"						"1"
 	"regen_ammo_refill_start_delay"					"0.0"

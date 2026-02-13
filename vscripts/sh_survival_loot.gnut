@@ -652,8 +652,6 @@ void function SURVIVAL_Loot_InitShared()
 	file.initialized = true
 
 	var attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk.rpak" )
-	if( Playlist() == ePlaylists.survival_firingrange ) 
-		attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk_firing_range.rpak" )
 	
 	int numRows = GetDatatableRowCount( attachmentTable )
 
@@ -678,6 +676,17 @@ void function SURVIVAL_Loot_InitShared()
 	// --------------------------
 	var attachmentMatrix = GetDataTable( $"datatable/weapon_attachment_matrix.rpak" )
 	int amRowCount       = GetDatatableRowCount( attachmentMatrix )
+
+	#if DEVELOPER
+		//printt( "Weapon attachment matrix total rows: " + amRowCount )
+		
+		// Debug: Print all attachment names in the matrix
+		//for ( int i = 0; i < amRowCount; i++ )
+		{
+			//string attachmentName = GetDataTableString( attachmentMatrix, i, GetDataTableColumnByName( attachmentMatrix, "attachmentName" ) )
+			//printt( "  Row " + i + ": " + attachmentName )
+		}
+	#endif
 
 	array<LootData> allWeapons = SURVIVAL_Loot_GetByType( eLootType.MAINWEAPON )
 
@@ -706,6 +715,11 @@ void function SURVIVAL_Loot_InitShared()
 		AttachmentData aData
 		aData.ref = attachmentName
 		aData.attachPoints = split( GetDataTableString( attachmentMatrix, i, GetDataTableColumnByName( attachmentMatrix, "attachmentPoint" ) ), WHITESPACE_CHARACTERS )
+
+		#if DEVELOPER
+			printt( "Processing attachment: " + attachmentName + " (valid: " + SURVIVAL_Loot_IsRefValid( aData.ref ) + ", disabled: " + SURVIVAL_Loot_IsRefDisabled( aData.ref ) + ")" )
+		#endif
+
 		if ( SURVIVAL_Loot_IsRefValid( aData.ref ) && !SURVIVAL_Loot_IsRefDisabled( aData.ref ) )
 		{
 			foreach ( data in allWeapons )
@@ -737,6 +751,7 @@ void function SURVIVAL_Loot_InitShared()
 			}
 		}
 
+		//printt( "Adding to attachment matrix: " + attachmentName + " (compatible weapons: " + aData.compatibleWeapons.len() + ")" )
 		file.attachmentMatrix[ attachmentName ] <- aData
 	}
 	bool debugAttachments = false
@@ -944,11 +959,7 @@ void function OnClientConnected( entity player )
 		ValidateDataTable( player, "datatable/flowstate_all_new_snd.rpak" )
 	}
 		
-	if ( GetCurrentPlaylistVarBool( "survival_staging_area_enabled", false ) ){
-		ValidateDataTable( player, "datatable/weapon_mods_sdk_firing_range.rpak" )
-		ValidateDataTable( player, "datatable/survival_loot_sdk_firingrange.rpak" )}
-	else
-		ValidateDataTable( player, "datatable/weapon_mods_sdk.rpak" )
+	ValidateDataTable( player, "datatable/weapon_mods_sdk.rpak" )
 }
 
 void function OnPlayerRespawned( entity player )
@@ -2900,7 +2911,7 @@ array<string> function SURVIVAL_GetAllPlayerOrdnance( entity player )
 	foreach ( invItem in playerInventory )
 	{
 		LootData data = SURVIVAL_Loot_GetLootDataByIndex( invItem.type )
-		if ( data.lootType != eLootType.ORDNANCE )
+		if ( data.lootType != eLootType.ORDNANCE && data.lootType != eLootType.SURVIVAL )
 			continue
 
 		if ( data.conditional )

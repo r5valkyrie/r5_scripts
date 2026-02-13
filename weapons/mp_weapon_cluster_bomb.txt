@@ -36,7 +36,7 @@ WeaponData
 	// Menu Stats
     "trophy_system_ignores"                         "none"
 
-	"projectile_killreplay_enabled"					"1"
+	"projectile_killreplay_enabled"					"0"
 
 	"grenade_arc_indicator_show_from_hip"			"0"
 	"grenade_arc_indicator_bounce_count"			"2"

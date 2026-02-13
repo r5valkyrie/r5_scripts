@@ -43,8 +43,8 @@ WeaponData
 	// Effects
 
 	"tracer_effect"   								"weapon_tracers_shotgun"
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
+	"fx_muzzle_flash_view"							"mflash_shotgun_fp_FULL"
+	"fx_muzzle_flash_world"							"mflash_shotgun_FULL"
 	"fx_muzzle_flash_attach"						"muzzle_flash"
 
 	"chroma_color"									".5 .3 1"
@@ -103,10 +103,10 @@ WeaponData
 	"blast_pattern_npc_scale"            			"1.0"  // scales on top of the default scale
 
 	// Damage - When Used by Players
-	"damage_near_value"   							"6"
-	"damage_far_value"								"6"
-	"damage_near_value_titanarmor"					"6"
-	"damage_far_value_titanarmor" 					"6"
+	"damage_near_value"   							"7"
+	"damage_far_value"								"7"
+	"damage_near_value_titanarmor"					"7"
+	"damage_far_value_titanarmor" 					"7"
 	"damage_rodeo" 									"550"
 	"damage_near_distance"							"250"
 	"damage_far_distance" 							"850"
@@ -168,7 +168,7 @@ WeaponData
 	"dof_nearDepthEnd"								"0.0"
 
 	// Behavior
-	"fire_rate"   									"3.100000"
+	"fire_rate"   									"2.700000"
 	"reload_time" 									"2.75"
 	"reload_time_late1"								"1.45"
 	"reload_time_late2"								"0.25"

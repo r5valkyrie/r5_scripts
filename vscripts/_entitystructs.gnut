@@ -248,6 +248,7 @@ global struct ServerEntityStruct
 	bool destroyTriggerHurt = false
 
 	bool ignoreJumpPad = false
+	bool gravityCannonCharging = false
 
 	bool forceRagdollDeath = false
 
@@ -262,7 +263,7 @@ global struct ServerEntityStruct
 	bool forceGibDeath = false
 	bool forceHeadshotDeath = false
 
-	// SpawnPointData spawnPointData
+	array<entity> mountedTurrets
 
 	array<void functionref( entity ent, var damageInfo )> entDamageCallbacks
 	array<void functionref( entity ent, var damageInfo )> entPostDamageCallbacks
@@ -278,14 +279,7 @@ global struct ServerEntityStruct
 
 	array<entity> attachedEnts
 
-	//Scorch Variables
-	// table< int, array<entity> > waveLinkFXTable //Wave FX Link - Used for the wide projectile attacks so we can link FX across the rows.
-	// table< int, vector > fireTrapEndPositions //Used to spawn 1 particle per arm instead of many.
-	// table< int, entity > fireTrapMovingGeo //Used track which piece of moving geo the fire trap arms are on
-
-	//Legion Variables
-	// bool ammoSwapPlaying = false
-	// bool gunShieldActive = false
+	entity highlightProxy
 
 	int fxType
 	array<entity> fxControlPoints
@@ -360,6 +354,7 @@ global struct ServerEntityStruct
 	void functionref( entity, entity, var ) Callback_VortexTriggerBulletHit
 	void functionref( entity, entity, entity, entity, vector ) Callback_VortexTriggerProjectileHit
 
+	bool ignoreSafePushMode = false //If a pusher has set Anim_SetSafePushMode, which "Stops playing the animation when continuing it would hit a pushable object. Resumes automatically.".  This bool will override that behaviour where you have a pushable entity that you don't want to stop the animation on the pusher when it collides.  Example: large sliding doors vs Seer ult.
 
 	bool   isInWarpTrigger
 	float  phaseTunnelExitTime
@@ -399,26 +394,12 @@ global struct ServerEntityStruct
 	vector originalLocalAngles
 	bool   scanSoundPlaying
 
-	//Flowstate
-
-	//Trophy Structs
+	bool ignorePingTrace = false
 	float pylonhealth
-
-	//Flyers easteregg
-	// entity ParentedPlayerToFlyer
-
-	//Lootbins mod
-	// int lootbinusages
-
-	//Arthur's revenge
-	// array<entity> birdsFromThisCluster
 
 	//portal gun
 	bool isplayercomingfromportal1 = false
 	bool isplayercomingfromportal2 = false
-
-	// bool alreadyPingedUltraDecoy = false
-	// bool isBeingAttackedByDroneMedic = false
 
 	//HoloSprays mp
 	array<entity> holoSpraysFX
@@ -603,6 +584,8 @@ global struct ServerPlayerStruct
 	// float 						nextATShieldRegenTime
 	bool 						demigod
 	// bool						partyMember
+
+	int         bubbleBunkerStatusEffectId = -1
 
 	bool[OFFHAND_COUNT]			offhandSlotLocked = [ false, false, false, false, false, false ]
 	float[OFFHAND_COUNT]		lastPilotOffhandUseTime = [ -99.0, -99.0, -99.0, -99.0, -99.0, -99.0 ]
@@ -805,6 +788,7 @@ global struct ServerPlayerStruct
 	bool allowCancelEmbark
 	int allWeaponsDisallowDeployStackCount
 	entity forceAllowDeployOfWeapon
+	entity mountedTurretEnt
 	array<BurnDamageStack> burnDamageStacks
 	bool isBurning
 	entity TEMP_lastMeleeInputWeapon = null
@@ -1142,11 +1126,14 @@ global struct ServerPlayerStruct
 	
 	array< var > recordingAnims
 	array< LocPair > recordingAnimsCoordinates
-	array< int > recordingAnimsChosenCharacters
+	array< string > recordingAnimsChosenCharacters
+	array< table ornull > recordingAnimsWeaponData
 
 	bool isRecording = false
 	vector currentOrigin
 	vector currentAngles
+	string currentRecordingCharacterRef = ""
+	table ornull currentRecordingWeaponData
 	bool recorderHideHud
 	bool continueLoop = true
 	array<entity> dummyList

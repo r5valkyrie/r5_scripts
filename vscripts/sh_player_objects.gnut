@@ -1,0 +1,45 @@
+global function PlayerObjects_Init
+#if SERVER
+global function PlayerObjects_CommonInit
+#endif
+
+global enum eEmpDestroyType
+{
+	EMP_DESTROY_DISSOLVE,
+	EMP_DESTROY_DAMAGE
+}
+
+// TODO: Other potential "wrappings" - DEPLOYABLE_ABILITY_NAMES, TrapDestroyOnRoundEnd
+
+void function PlayerObjects_Init()
+{
+}
+
+#if SERVER
+bool function PlayerObjects_CommonInit( entity owner, entity object, bool doSonarDetection, string highlight,
+		bool canBeReinforced, bool doEMPDamage, bool doEMPDestroy, void functionref( entity ) doEMPDisableCallback = null, int destroyType = eEmpDestroyType.EMP_DESTROY_DISSOLVE )
+{
+	if ( doSonarDetection )
+	{
+		AddSonarDetectionForPropScript( object )
+	}
+
+	if ( highlight != "")
+	{
+		Highlight_SetOwnedHighlight( object, highlight )
+		Highlight_SetFriendlyHighlight( object, highlight )
+		object.Highlight_Enable()
+	}
+
+	if ( doEMPDamage )
+		AddEMPDamageDevice( object )
+
+	if ( doEMPDestroy )
+		AddEMPDestroyDevice( object, destroyType )
+
+	if ( doEMPDisableCallback != null )
+		AddEMPDisableDevice( object, doEMPDisableCallback )
+		
+	return true
+}
+#endif

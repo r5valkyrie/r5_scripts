@@ -245,6 +245,8 @@ void function PrecacheSDKWeapons()
 	PrecacheWeapon( $"mp_weapon_droneplasma" )//remove these from here later!!! -kral
 	PrecacheWeapon( $"mp_weapon_dronerocket" )
 	PrecacheWeapon( $"mp_ability_sonic_blast" )
+	PrecacheWeapon( $"mp_ability_wrecking_ball" )
+	PrecacheWeapon( $"mp_weapon_grenade_gravity" )
 
 	PrecacheWeapon( $"mp_weapon_melee_boxing_ring" )
 	PrecacheWeapon( $"melee_boxing_ring" ) // Olympus ring
@@ -273,6 +275,10 @@ void function PrecacheSDKWeapons()
 	PrecacheWeapon( $"mp_ability_haunt" )
 	PrecacheWeapon( $"mp_ability_ground_slam" )
 	PrecacheWeapon( $"mp_ability_dodge_roll" )
+
+	//Gadget Items
+	PrecacheWeapon( $"mp_ability_mobile_respawn_beacon" )
+	PrecacheWeapon( $"mp_ability_void_ring" )
 	//Custom Heirlooms
 	PrecacheWeapon( $"melee_macks_knife" )
 	PrecacheWeapon( $"mp_weapon_macks_knife_primary" )//needs to be a mod, we dont want custom models in sdk rpaks
@@ -290,6 +296,7 @@ void function PrecacheSDKEntities()
 	PrecacheModel( $"mdl/robots/marvin/marvin.rmdl" )
 	PrecacheModel( $"mdl/weapons/sentry_turret/sentry_turret.rmdl" )
 	PrecacheModel( $"mdl/Humans/class/medium/combat_dummie_medium.rmdl" )
+	PrecacheModel( $"mdl/Humans/class/medium/spectre_v20_corporate_ai.rmdl" )
 	
 	///////////////////////misc///////////////////////
 	PrecacheModel( $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl")

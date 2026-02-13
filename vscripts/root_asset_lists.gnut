@@ -28,7 +28,9 @@ global const array<asset> CHARACTER_ASSETS =
 	$"settings/itemflav/character/horizon.rpak",
 	$"settings/itemflav/character/fuse.rpak",
 	$"settings/itemflav/character/valkyrie.rpak",
+	$"settings/itemflav/character/seer.rpak",
 	$"settings/itemflav/character/ash.rpak",
+	$"settings/itemflav/character/madmaggie.rpak"
 ]
 
 global const array<asset> CAL_EVENT_ASSET_LIST =
@@ -37,7 +39,7 @@ global const array<asset> CAL_EVENT_ASSET_LIST =
 	$"settings/itemflav/calevent/season02.rpak",
 	$"settings/itemflav/calevent/season03.rpak",
 	$"settings/itemflav/calevent/rankedperiod01.rpak",
-	$"settings/itemflav/calevent/rankedperiod02.rpak",
+	$"settings/itemflav/calevent/rankedperiod02.rpak"
 	
 ]
 
@@ -76,7 +78,7 @@ global const array<asset> LOADSCREEN_ASSET_LIST =
 	$"settings/itemflav/loadscreen/custom_sdk_4.rpak",
 	$"settings/itemflav/loadscreen/custom_sdk_5.rpak",
 	$"settings/itemflav/loadscreen/custom_sdk_6.rpak",
-	$"settings/itemflav/loadscreen/custom_sdk_7.rpak",
+	$"settings/itemflav/loadscreen/custom_sdk_7.rpak"
 ]
 
 global const array<asset> MUSIC_PACK_ASSET_LIST =
@@ -112,17 +114,15 @@ global const array<asset> MUSIC_PACK_ASSET_LIST =
     $"settings/itemflav/musicpack/s07bp_season7.rpak",//PORTED
     $"settings/itemflav/musicpack/s09bp_season9.rpak",//PORTED
     $"settings/itemflav/musicpack/s09bp_valkyrie.rpak",//PORTED
-    $"settings/itemflav/musicpack/s09e01.rpak",//PORTED
+    $"settings/itemflav/musicpack/s09e01.rpak"//PORTED
 ]
-
 
 global const array<asset> SKYDIVE_TRAIL_ASSET_LIST = [
 	$"settings/itemflav/skydive_trail/default.rpak",
 	$"settings/itemflav/skydive_trail/rankedperiod_01_diamond.rpak",
 	$"settings/itemflav/skydive_trail/rankedperiod_01_apex.rpak",
-	$"settings/itemflav/skydive_trail/shadow_default.rpak",
+	$"settings/itemflav/skydive_trail/shadow_default.rpak"
 ]
-
 
 global const array<asset> ENTITLEMENT_ASSETS = [
 	//$"settings/itemflav/entitlement/BLOODHOUND_SKU_PACK.rpak",
@@ -133,21 +133,12 @@ global const array<asset> ENTITLEMENT_ASSETS = [
 	//$"settings/itemflav/entitlement/twitch_launch_promo.rpak",
 	//$"settings/itemflav/entitlement/twitch_mirage_skin1.rpak",
 	//$"settings/itemflav/entitlement/twitch_octane_skin1.rpak",
-	//$"settings/itemflav/entitlement/twitch_wattson_skin1.rpak",
+	//$"settings/itemflav/entitlement/twitch_wattson_skin1.rpak"
 ]
 
+global const array<asset> SHARED_BANNERFRAMES_ASSET_LIST = [$""]
 
-global const array<asset> SHARED_BANNERFRAMES_ASSET_LIST = [
-	$""
-	//$"settings/itemflav/gcard_frame_template_rare_01.rpak", //(mk): removed missing rpak until available in assets repo.
-]
-
-
-global array<asset> WEAPON_ASSETS =
-[
-	$"settings/itemflav/loot/main_weapon/alternator.rpak",
-]
-
+global array<asset> WEAPON_ASSETS = [$""]
 void function ShLoadWeaponAssetsInit()
 {
     WEAPON_ASSETS.clear()

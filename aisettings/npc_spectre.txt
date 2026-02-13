@@ -31,9 +31,9 @@ npc_spectre
 	traverseCostFactor				2.0
 	minGoalRadius					256
 
-	DefaultModelName				"mdl/robots/spectre/imc_spectre.rmdl"
-	DefaultModelName_IMC			"mdl/robots/spectre/imc_spectre.rmdl"
-	DefaultModelName_MIL			"mdl/robots/spectre/imc_spectre.rmdl"
+	DefaultModelName				"mdl/Humans/class/medium/spectre_v20_corporate_ai.rmdl"
+	DefaultModelName_IMC			"mdl/Humans/class/medium/spectre_v20_corporate_ai.rmdl"
+	DefaultModelName_MIL			"mdl/Humans/class/medium/spectre_v20_corporate_ai.rmdl"
 
 	DefaultWeapon					"mp_weapon_rspn101"
 	WeaponCapacity					"PilotMainWeapons"

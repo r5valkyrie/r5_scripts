@@ -42,9 +42,9 @@ WeaponData
 	"OnWeaponChargeBegin"					        "EnergyChargeWeapon_OnWeaponChargeBegin"
 	"OnWeaponChargeEnd"					            "OnWeaponChargeEnd_weapon_energy_shotgun"
 
-	"charge_time" 									"1.250000"
-	"charge_levels"									"4"
-	"charge_level_base"								"1"
+	"charge_time" 									"0.000000"
+	"charge_levels"									"0"
+	"charge_level_base"								"0"
 
     "charge_cooldown_time"							"1.000000"
     "charge_cooldown_delay"   						"0.000000"
@@ -75,7 +75,7 @@ WeaponData
                          
                                                  
      
-	"blast_pattern_default_scale"        			"1.800000"
+	"blast_pattern_default_scale"        			"1.650000"
       
 	"blast_pattern_npc_scale"            			"1.8"  // scales on top of the default
 
@@ -148,11 +148,11 @@ WeaponData
     "low_ammo_fraction" 							"0.3"
 
     // Damage - When Used by Players
-    "damage_near_value"   							"12"
-    "damage_far_value"								"12"
+    "damage_near_value"   							"11"
+    "damage_far_value"								"11"
 
-    "damage_near_value_titanarmor"					"12"
-    "damage_far_value_titanarmor" 					"12"
+    "damage_near_value_titanarmor"					"11"
+    "damage_far_value_titanarmor" 					"11"
     "damage_rodeo" 									"550"
     "damage_near_distance"							"100"
     "damage_far_distance" 							"750"
@@ -253,7 +253,7 @@ WeaponData
 	"projectile_spread_choke_frac_1" 				"1.0"
 	"projectile_spread_choke_frac_2" 				"0.85"
 	"projectile_spread_choke_frac_3" 				"0.65"
-	"projectile_spread_choke_frac_4" 				"0.35"
+	"projectile_spread_choke_frac_4" 				"0.450000"
 
 	// for projectile shotguns, set this to the size of the spread pattern at the intended engagement range
 	"spread_stand_hip"								"2.8"       //"3.173" @ 1.7 blast pattern
@@ -315,13 +315,6 @@ WeaponData
 	    gold
 	    {
 	    }
-
-		hopup_shield_breaker
-        {
-            "damage_shield_scale"                       "1.25"
-			"projectile_trail_effect_0"                 "P_tracer_proj_smg_shield_breaker"
-			"impact_effect_table" 				        "shield_breaker_bullet"
-        }
 
         hopup_energy_choke
         {

@@ -16,11 +16,12 @@ global function PlayFPSAnimTeleport
 global function PlayFPSAnimTeleportShowProxy
 
 global function PlayAnim
-global function PlayAnimNoWait
+global function PlayAnimOnly
 global function PlayAnimGravity
 global function PlayAnimGravityClientSyncing
 global function PlayAnimRunGravity
 global function PlayAnimRun
+global function PlayAnimNoWait
 
 global function RunToAnimStart_Deprecated
 global function RunToAnimStartForced_Deprecated
@@ -1690,6 +1691,13 @@ void function PlaySoundsForBodyType( entity ent, string roboSound, string humanS
 	{
 		EmitSoundOnEntity( ent, humanSound )
 	}
+}
+
+// plays the anim without updating position (useful for parented entities when you don't want to animate relative to an attachment)
+void function PlayAnimOnly( entity guy, string animation_name )
+{
+	guy.Anim_PlayOnly( animation_name )
+	WaittillAnimDone( guy )
 }
 
 // play the anim

@@ -8,6 +8,8 @@ global function GetRefFromDamageSourceID //duplicate of DamageSourceIDToString
 global function PIN_GetDamageCause
 global function DamageSourceIDToStringTable
 global function RegisterCustomWeaponDamageDef
+global function RegisterAdditionalMainWeapon
+global function GetIsAdditionalMainWeapon
 
 #if DEVELOPER
 	global function DEV_PrintDamageSourceIDs
@@ -19,6 +21,7 @@ struct
 	table<int,string> damageSourceIDToName
 	table<int,asset> damageSourceIDToImage
 	table<int,string> damageSourceIDToString
+	array<int>         additionalMainWeapons
 } file
 
 global enum eDamageSourceId
@@ -113,7 +116,7 @@ global enum eDamageSourceId
 	mp_weapon_energy_ar_crate
 	mp_weapon_energy_shotgun_crate
 	mp_weapon_doubletake_crate
-
+	mp_weapon_car_crate
 	mp_weapon_melee_survival
 	mp_weapon_car_r2
 	mp_weapon_3030
@@ -149,6 +152,7 @@ global enum eDamageSourceId
 	mp_titanweapon_xo16_shorty
 	mp_ability_void_ring
 	heatwave
+	mp_weapon_wrecking_ball_puck
 	//
 	melee_pilot_emptyhanded
 	melee_pilot_arena
@@ -884,6 +888,19 @@ string function PIN_GetDamageCause( var damageInfo )
 	//int id = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 
 	return ""
+}
+
+void function RegisterAdditionalMainWeapon( string weaponRef )
+{
+	int damageSourceID = eDamageSourceId[weaponRef]
+	if ( !file.additionalMainWeapons.contains( damageSourceID ) )
+		file.additionalMainWeapons.push( damageSourceID )
+}
+
+
+bool function GetIsAdditionalMainWeapon( int damageSourceID )
+{
+	return file.additionalMainWeapons.contains( damageSourceID )
 }
 
 #if DEVELOPER

@@ -7,8 +7,6 @@ global function OnWeaponStartZoomOut_weapon_mounted_turret_weapon
 global function OnWeaponReload_weapon_mounted_turret_weapon
 global function OnAnimEvent_weapon_mounted_turret_weapon
 global function OnWeaponZoomFOVToggle_weapon_mounted_turret_weapon
-global function OnAnimEvent_weapon_mobile_hmg
-
 
 #if SERVER
 global function MountedTurretWeapon_Play1pDamageFX
@@ -33,9 +31,9 @@ const string TURRET_WINDDOWN_1P = "weapon_sheilaturret_winddown_1P"
 const string TURRET_WINDDOWN_3P = "weapon_sheilaturret_winddown_3P"
 const string TURRET_RELOAD_3P = "weapon_sheilaturret_reload_generic_comp_3p"
 const string TURRET_RELOAD_RAMPART_3P = "weapon_sheilaturret_reload_rampart_comp_3p"
-                    
+
 const string TURRET_RELOAD_RAMPART_UPGRADE_3P = "weapon_sheilaturret_reload_rampart_comp_upgraded_3p"
-      
+
 const string TURRET_RELOAD = "weapon_sheilaturret_reload_rampart_null"
 const string TURRET_FIRED_LAST_SHOT_1P = "weapon_sheilaturret_lastshot_1p"
 const string TURRET_FIRED_LAST_SHOT_3P = "weapon_sheilaturret_lastshot_3p"
@@ -53,7 +51,7 @@ const float SUSTAINED_FIRE_QUIP_CHANCE = 0.15
 // FX
 const TURRET_1P_DAMAGE_FX_ATTACH	= "__illumPosition"
 const TURRET_DAMAGE_FX_1P			= $"P_ramp_tur_dmg_FP"
-const TURRET_LASER_1P				= $"P_wpn_lasercannon_aim_long"
+const TURRET_LASER_1P				= $"P_wpn_rampart_laser_aim_FP"
 
 struct
 {
@@ -74,12 +72,12 @@ struct
 void function MpWeaponMountedTurretWeapon_Init()
 {
 	RegisterWeaponForUse( MOUNTED_TURRET_WEAPON_NAME )
-	//RegisterAdditionalMainWeapon( MOUNTED_TURRET_WEAPON_NAME )
+	RegisterAdditionalMainWeapon( MOUNTED_TURRET_WEAPON_NAME )
 
 	PrecacheParticleSystem( TURRET_LASER_1P )
-	PrecacheParticleSystem( $"P_muzzleflash_laserturret" )
-	PrecacheParticleSystem( $"P_muzzleflash_laserturret" )
-	PrecacheParticleSystem( $"P_muzzleflash_laserturret" )
+	PrecacheParticleSystem( $"wpn_muzzleflash_rampart_turret_FP" )
+	PrecacheParticleSystem( $"wpn_muzzleflash_rampart_turret" )
+	PrecacheParticleSystem( $"wpn_muzzleflash_turret_center_FP" )
 	file.turret1pDamageFxIndex = PrecacheParticleSystem( TURRET_DAMAGE_FX_1P )
 
 	RegisterSignal( "DeactivateMountedTurret" )
@@ -104,44 +102,26 @@ void function OnWeaponActivate_weapon_mounted_turret_weapon( entity weapon )
 	if ( ! ( weapon in file.hasBeenFired ) )
 		file.hasBeenFired[weapon] <- false
 
-	//if ( IsValid( weaponOwner.p.mountedTurretEnt ) && weaponOwner.p.mountedTurretEnt.GetHealth() <= weaponOwner.p.mountedTurretEnt.GetMaxHealth() / 2.0 )
+	if ( IsValid( weaponOwner.p.mountedTurretEnt ) && weaponOwner.p.mountedTurretEnt.GetHealth() <= weaponOwner.p.mountedTurretEnt.GetMaxHealth() / 2.0 )
 	{
-		//MountedTurretWeapon_Play1pDamageFX( weapon )
+		MountedTurretWeapon_Play1pDamageFX( weapon )
 	}
 
 	int clipCount = weapon.GetWeaponPrimaryClipCount()
-	int lastCount = clipCount//MountedTurretPlaceable_GetLastAmmoCount( weaponOwner.p.mountedTurretEnt )
+	int lastCount = MountedTurretPlaceable_GetLastAmmoCount( weaponOwner.p.mountedTurretEnt )
 	int newAmmoCount = maxint( clipCount, lastCount )
 	newAmmoCount = minint( newAmmoCount, weapon.GetWeaponPrimaryClipCountMax() )
 	//weapon.SetWeaponPrimaryClipCount_MaintainReloadProgress( newAmmoCount )
 
 	TryPlayTurretChatterLine( weaponOwner, "bc_rampart_getOnHMG" )
 
-	                    
-	//if( weaponOwner.HasPassive( ePassives.PAS_GUNNER ) && weaponOwner.HasPassive( ePassives.PAS_PAS_UPGRADE_TWO ) ) // upgrade_rampart_fast_reloads
+
+	if( weaponOwner.HasPassive( ePassives.PAS_GUNNER ) ) // upgrade_rampart_fast_reloads
 	{
-		//weapon.AddMod( "upgrade_ult_one" )
+		weapon.AddMod( "upgrade_ult_one" )
 	}
-       
+
 #endif // SERVER
-
-#if CLIENT
-	if( IsValid ( GetCompassRui() ) && IsValid( weapon.GetOwner() ) )
-	{
-		if( weapon.GetOwner() == GetLocalClientPlayer() )
-		{
-			//RuiSetBool( GetCompassRui(), "showCompassAreaModifier", true )
-			//RuiTrackFloat( GetCompassRui(), "viewConeMin", weapon.GetOwner(), RUI_TRACK_VIEWCONE_MINYAW )
-			//RuiTrackFloat( GetCompassRui(), "viewConeMax", weapon.GetOwner(), RUI_TRACK_VIEWCONE_MAXYAW )
-		}
-	}
-#endif
-
-	#if SERVER
-                       
-                                           
-        
-	#endif
 }
 
 void function OnWeaponDeactivate_weapon_mounted_turret_weapon( entity weapon )
@@ -155,27 +135,25 @@ void function OnWeaponDeactivate_weapon_mounted_turret_weapon( entity weapon )
 	StopSoundOnEntity( weapon, TURRET_WINDDOWN_1P )
 	StopSoundOnEntity( weapon, TURRET_RELOAD_3P )
 	StopSoundOnEntity( weapon, TURRET_RELOAD_RAMPART_3P )
-	                    
+
 		StopSoundOnEntity( weapon, TURRET_RELOAD_RAMPART_UPGRADE_3P )
-       
+
+	entity weaponOwner = weapon.GetOwner()
 
 #if SERVER
 	MountedTurretWeapon_Stop1pDamageFX()
-	//entity parentTurret = weapon.GetParentTurretEnt()
-	//if( IsValid( parentTurret ) )
+
+	if ( IsValid( weaponOwner.p.mountedTurretEnt ) )
 	{
-		//MountedTurretPlaceable_SetLastAmmoCount( parentTurret, weapon.GetWeaponPrimaryClipCount() )
+		MountedTurretPlaceable_SetLastAmmoCount( weaponOwner.p.mountedTurretEnt, weapon.GetWeaponPrimaryClipCount() )
 	}
 
-	                    
 	if( weapon.HasMod( "upgrade_ult_one" ) )
 	{
 		weapon.RemoveMod( "upgrade_ult_one" )
 	}
-       
-#endif // SERVER
 
-	entity weaponOwner = weapon.GetOwner()
+#endif // SERVER
 
 	if ( !IsValid( weaponOwner ) )
 		return
@@ -195,32 +173,9 @@ void function OnWeaponDeactivate_weapon_mounted_turret_weapon( entity weapon )
 	{
 		EmitSoundOnEntity( weaponOwner, TURRET_DISMOUNT_1P )
 	}
-
-	if ( IsValid( GetCompassRui() ) )
-	{
-		if ( weaponOwner == GetLocalClientPlayer() )
-		{
-			//RuiSetBool( GetCompassRui(), "showCompassAreaModifier", false )
-			//RuiSetFloat( GetCompassRui(), "viewConeMin", 0 )
-			//RuiSetFloat( GetCompassRui(), "viewConeMax", 0 )
-		}
-	}
 #endif // CLIENT
 
 	weaponOwner.Signal( "DeactivateMountedTurret" )
-
-#if CLIENT
-	if ( InPrediction() && IsFirstTimePredicted() )
-#endif
-	{
-		//weapon.SetTargetingLaserEnabled( false )
-	}
-
-	#if SERVER
-                       
-                                             
-        
-	#endif
 }
 
 
@@ -248,13 +203,6 @@ void function OnWeaponStartZoomIn_weapon_mounted_turret_weapon( entity weapon )
 			}
 		}
 	#endif
-
-#if CLIENT
-	if ( InPrediction() && IsFirstTimePredicted() )
-#endif
-	{
-		//weapon.SetTargetingLaserEnabled( true )
-	}
 }
 
 void function OnWeaponStartZoomOut_weapon_mounted_turret_weapon( entity weapon )
@@ -286,13 +234,6 @@ void function OnWeaponStartZoomOut_weapon_mounted_turret_weapon( entity weapon )
 			if ( weaponOwner == GetLocalViewPlayer() )
 				EmitSoundOnEntityWithSeek( turretEnt, TURRET_WINDDOWN_1P, (1 - zoomFrac) * zoomOutTime )
 		#endif
-	}
-
-#if CLIENT
-	if ( InPrediction() && IsFirstTimePredicted() )
-#endif
-	{
-		//weapon.SetTargetingLaserEnabled( false )
 	}
 }
 
@@ -391,20 +332,16 @@ void function OnWeaponReload_weapon_mounted_turret_weapon( entity weapon, int mi
 		float seekTime
 		seekTime = ( reloadTimeLateVar > -1 ) ? weapon.GetWeaponSettingFloat( eWeaponVar.reload_time ) - weapon.GetWeaponSettingFloat( reloadTimeLateVar ) : 0.0
 
-		/*if ( weapon.HasMod( GUNNER_MOD_NAME ) )
+		if ( weapon.HasMod( "rampart_gunner" ) )
 		{
-			                    
+
 			entity weaponOwner = weapon.GetWeaponOwner()
 			if ( !IsValid( weaponOwner ) )
 				return
 
-			if ( PlayerHasPassive( weaponOwner, ePassives.PAS_PAS_UPGRADE_TWO ) ) // upgrade_rampart_fast_reloads
-				EmitSoundOnEntityExceptToPlayerWithSeek( weapon, weapon.GetOwner(), TURRET_RELOAD_RAMPART_UPGRADE_3P, seekTime )
-			else
-         
-				EmitSoundOnEntityExceptToPlayerWithSeek( weapon, weapon.GetOwner(), TURRET_RELOAD_RAMPART_3P, seekTime )
+			EmitSoundOnEntityExceptToPlayerWithSeek( weapon, weapon.GetOwner(), TURRET_RELOAD_RAMPART_3P, seekTime )
 		}
-		else*/
+		else
 			EmitSoundOnEntityExceptToPlayerWithSeek( weapon, weapon.GetOwner(), TURRET_RELOAD_3P, seekTime )
 	#endif
 }
@@ -446,26 +383,6 @@ void function OnWeaponZoomFOVToggle_weapon_mounted_turret_weapon( entity weapon,
 		StopSoundOnEntity( weapon, TURRET_SIGHT_FLIP_DOWN_1P )
 	}
 	#endif
-}
-
-void function OnAnimEvent_weapon_mobile_hmg( entity weapon, string eventName )
-{
-#if CLIENT
-	//if ( !weapon.IsPredicted() )
-		//return
-#endif
-
-	switch ( eventName )
-	{
-		case "rampart_turret_mobile_button_press":
-			weapon.EmitWeaponSound_1p3p( TURRET_BUTTON_PRESS_SOUND_1P, TURRET_BUTTON_PRESS_SOUND_3P )
-			break
-		case "rampart_turret_mobile_spin_up":
-			weapon.EmitWeaponSound_1p3p( TURRET_BARREL_SPIN_LOOP_1P, TURRET_BARREL_SPIN_LOOP_3P )
-			break
-		default:
-			return
-	}
 }
 
 #if SERVER
@@ -525,7 +442,7 @@ void function OnClientAnimEvent_weapon_mounted_turret_weapon( entity weapon, str
 	//OnClientAnimEvent_weapon_basic_bolt( weapon, eventName )
 
 	if ( eventName == "muzzle_flash" )
-		weapon.PlayWeaponEffect( $"wpn_muzzleflash_snp_hmn_FP", $"", "muzzle_flash" )
+		weapon.PlayWeaponEffect( $"wpn_muzzleflash_turret_center_FP", $"", "muzzle_flash" )
 }
 
 void function SetTurretVMLaserEnabled( entity weapon, bool enabled )
@@ -557,8 +474,10 @@ void function SetTurretVMLaserEnabled( entity weapon, bool enabled )
 
 entity function GetPlaceableTurretEntForPlayer( entity player )
 {
-	//if ( player.GetParent().GetScriptName() == MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME )
-		//return player.GetParent()
+	if (!IsValid(player.GetParent()))
+		return null
+	if ( player.GetParent().GetScriptName() == MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME )
+		return player.GetParent()
 
 	return null
 }

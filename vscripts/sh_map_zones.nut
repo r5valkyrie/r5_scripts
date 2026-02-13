@@ -36,6 +36,7 @@ global function MapZones_ForceRetouchForPlayer
 #if SERVER && DEVELOPER
 global function DEV_PrintMapZoneInfo
 global function DEV_MapZone_ToggleOverlay
+global function DEV_DrawLootZones
 #endif // SERVER && DEVELOPER
 
 global struct ZonePopulationInfo
@@ -778,6 +779,47 @@ void function DebugFrameThread()
 		}
 
 		WaitFrame()
+	}
+}
+
+void function DEV_DrawLootZones()
+{
+	array<LootZone> lootZones = GetAllLootZones()
+	printt( "Drawing " + lootZones.len() + " loot zones..." )
+
+	foreach ( LootZone zone in lootZones )
+	{
+		int tier = SURVIVAL_LootTierForLootGroup( zone.zoneClass )
+
+		// Color by tier
+		int r, g, b
+		switch ( tier )
+		{
+			case 0: // NONE/Default - White
+				r = 255; g = 255; b = 255
+				break
+			case 1: // COMMON - Gray/White
+				r = 200; g = 200; b = 200
+				break
+			case 2: // RARE - Blue
+				r = 0; g = 100; b = 255
+				break
+			case 3: // EPIC - Purple
+				r = 200; g = 0; b = 255
+				break
+			case 4: // LEGENDARY - Gold/Yellow
+				r = 255; g = 200; b = 0
+				break
+			case 5: // HEIRLOOM - Red
+				r = 255; g = 0; b = 0
+				break
+			default:
+				r = 255; g = 255; b = 255
+				break
+		}
+
+		DebugDrawCircle( zone.origin, <0, 0, 1>, zone.radius, r, g, b, true, 60.0 )
+		printt( "Zone: " + zone.zoneClass + " - Tier " + tier + " - Origin: " + zone.origin + " - Radius: " + zone.radius )
 	}
 }
 

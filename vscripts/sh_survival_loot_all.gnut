@@ -14,7 +14,6 @@ global function SURVIVAL_Loot_GetAttachmentType_Enum
 global function SURVIVAL_Loot_GetByTier
 global function SURVIVAL_Loot_GetSortedStringArrayFromSupportedAttachmentsString
 global function SURVIVAL_Loot_RegFromDataTable
-global function FS_HaloSurvival_GetRandomItemFromPool
 
 global function SURVIVAL_Loot_IsUniqueAmmoWeapon
 global function GetCustomHopupArray
@@ -56,6 +55,7 @@ global function SURVIVAL_Loot_IsAmmoSpawningDisabled
 #endif
 
 global function AddCallback_OnLootDatatablesLoaded
+global function RegisterCustomLootDatatables
 
 global enum eLootTier
 {
@@ -205,7 +205,7 @@ global enum eLootType
 	DATAKNIFE
 	SHIPKEYCARD
 	RESOURCE
-	GADGET
+	SURVIVAL
 	MARVIN_ARM
 
 	_count
@@ -243,6 +243,9 @@ struct
 	array<string>             disabledRefs
 	array<string>             uniqueAmmoWeaponRefs
 	array<CustomHopupData>	  customHopups = []
+
+	array<asset>              customLootDatatables
+	bool                      customDatatablesProcessed = false
 
 	#if(true)
 		table<EHI, array< OverrideDeathBoxRUI_NetworkOptimizedStruct > > EHIToOverrideDeathBoxRUIProfilesTable
@@ -318,28 +321,23 @@ float function GetLootTableFloat( string ref, var datatable, int rowIndex, strin
 void function SURVIVAL_Loot_All_InitShared()
 {
 	file.ENABLE_DEFINED_SETS = GetCurrentPlaylistVarBool( "flowstate_enable_weapons_locked_sets", false )
-	
+
 	file.lootIndexToString.clear()
 	file.lootData.clear()
 
 	file.disabledRefs.clear()
 	file.disabledRefs = split( GetCurrentPlaylistVarString( "survival_disabled_loot", " " ), " " )
 
-	if (Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training)
-	{
-		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/survival_loot_sdk_firingrange.rpak" ) )
-	} 
-	else
-	{
-		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/survival_loot_sdk.rpak" ) )
-		SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/titanfall_loot_sdk.rpak" ) )
+	SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/survival_loot_sdk.rpak" ) )
+	SURVIVAL_Loot_RegFromDataTable( GetDataTable( $"datatable/titanfall_loot_sdk.rpak" ) )
+
+	ProcessCustomLootDatatables()
+
+	foreach ( callbackFunc in file.lootDatatablesLoadedCallbacks ) //To load loot datatables from mods
+		callbackFunc()
 		
-		foreach ( callbackFunc in file.lootDatatablesLoadedCallbacks ) //To load loot datatables from mods
-			callbackFunc()
-		
-		RegisterCustomWeapons() //JANU's Framework - Load custom items from playlist.
-		RegisterCustomModItems() //Items added from Mods. Similar to JANU's but from Mod Init scripts.
-	}
+	RegisterCustomWeapons() //JANU's Framework - Load custom items from playlist.
+	RegisterCustomModItems() //Items added from Mods. Similar to JANU's but from Mod Init scripts.
 
 	#if UI
 		RegisterSignal( "GatherFriendInfo" )
@@ -356,35 +354,11 @@ bool function IsEnabledForGroundLoot( string ref )
 	if(IsModItemExcludedFromGroundLoot(ref))
 		return false
 	
-	if( Playlist() == ePlaylists.fs_haloMod_survival )
-	{
-		switch( ref )
-		{
-			case "armor_pickup_lv2":
-			case "armor_pickup_lv3":
-			case "armor_pickup_lv5":
-			case "armor_pickup_lv6":
-			case "armor_pickup_lv7":
-			
-			return false
-		}
-	}
-	
 	return true
 }
 
 bool function IsNewLootEnabled( string ref )
-{
-	if( Playlist() == ePlaylists.fs_haloMod_survival )
-	{
-		switch( ref )
-		{
-			case "mp_weapon_energysword":
-
-			return false
-		}
-	}
-		
+{	
 	switch( ref )
 	{
 		case "armor_pickup_lv4_all_fast":
@@ -442,8 +416,6 @@ int function GetLockedSetFromName( string ref )
 void function SURVIVAL_Loot_RegFromDataTable(var dt)
 {
 	var attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk.rpak" )
-	if( Playlist() == ePlaylists.survival_firingrange ) 
-		attachmentTable = GetDataTable( $"datatable/weapon_mods_sdk_firing_range.rpak" )
 	
 	int numRows = GetDatatableRowCount( dt )
 	for ( int i = 0; i < numRows; i++ )
@@ -622,6 +594,10 @@ void function SURVIVAL_Loot_RegFromDataTable(var dt)
 				SURVIVAL_AddSpawnPointGroup( data.ref )
 			#endif
 		}
+
+		#if DEVELOPER
+			//printt( "Registered loot item: " + data.ref + " (type: " + data.lootType + ", tier: " + data.tier + ")" )
+		#endif
 
 		#if !UI
 			if ( data.model != $"" )
@@ -1225,11 +1201,6 @@ table< string, LootData > function SURVIVAL_Loot_GetLootDataTable()
 	return file.lootData
 }
 
-LootData function FS_HaloSurvival_GetRandomItemFromPool()
-{
-	return file.lootData[ file.lootIndexToString[ RandomIntRangeInclusive( 0, file.lootIndexToString.len() - 1 ) ] ]
-}
-
 array<LootData> function SURVIVAL_Loot_GetByType( int lootType )
 {
 	array<LootData> lootOfType = []
@@ -1319,7 +1290,7 @@ int function SURVIVAL_Loot_GetLootTypeFromString( string lootTypeString )
 			return eLootType.RESOURCE
 			
 		case "gadget":
-			return eLootType.GADGET
+			return eLootType.SURVIVAL
 			
 		case "marvin_arm":
 			return eLootType.MARVIN_ARM
@@ -1380,10 +1351,12 @@ LootData function SURVIVAL_Loot_GetLootDataByIndex( int index )
 	return file.lootData[ file.lootIndexToString[ index ] ]
 	#endif
 }
+
 bool function SURVIVAL_Loot_IsLootIndexValid( int index )
 {
 	return ( index in file.lootIndexToString )
 }
+
 LootData function SURVIVAL_Loot_GetLootDataByRef( string ref )
 {
 	if ( ref == "" || !(ref in file.lootData) )
@@ -1678,6 +1651,67 @@ void function AddCallback_OnLootDatatablesLoaded( void functionref() callback )
 		return
 	
 	file.lootDatatablesLoadedCallbacks.append( callback )
+}
+
+//   RegisterCustomLootDatatables( [
+//       $"datatable/my_mod/custom_weapons.rpak",
+//       $"datatable/my_mod/custom_attachments.rpak"
+//   ] )
+void function RegisterCustomLootDatatables( array<asset> datatableAssets )
+{
+	if ( file.customDatatablesProcessed )
+	{
+		#if DEVELOPER
+			Warning( "RegisterCustomLootDatatables called after loot datatables have already been registered." )
+		#endif
+		return
+	}
+
+	foreach ( asset datatableAsset in datatableAssets )
+	{
+		if ( file.customLootDatatables.contains( datatableAsset ) )
+			continue
+
+		file.customLootDatatables.append( datatableAsset )
+
+		#if DEVELOPER
+			printt( "Registered custom loot datatable: " + string( datatableAsset ) )
+		#endif
+	}
+}
+
+void function ProcessCustomLootDatatables()
+{
+	file.customDatatablesProcessed = true
+
+	if ( file.customLootDatatables.len() == 0 )
+		return
+
+	#if DEVELOPER
+		printt( "Processing " + file.customLootDatatables.len() + " custom loot datatable(s)..." )
+	#endif
+
+	foreach ( asset datatableAsset in file.customLootDatatables )
+	{
+		var datatable = GetDataTable( datatableAsset )
+		if ( datatable == null )
+		{
+			#if DEVELOPER
+				Warning( "Failed to load custom loot datatable: " + string( datatableAsset ) )
+			#endif
+			continue
+		}
+
+		#if DEVELOPER
+			printt( "Loading custom loot datatable: " + string( datatableAsset ) )
+		#endif
+
+		SURVIVAL_Loot_RegFromDataTable( datatable )
+	}
+
+	#if DEVELOPER
+		printt( "Finished processing custom loot datatables." )
+	#endif
 }
 
 #if CLIENT || UI

@@ -69,18 +69,18 @@ WeaponData
                                 
                                   
          
-    "ammo_stockpile_max"							"300"
-    "ammo_clip_size"   								"300"
-    "ammo_default_total"							"300"
-    "ammo_per_shot"									"300"
-    "ammo_min_to_fire"								"300"
+    "ammo_stockpile_max"							"20"
+    "ammo_clip_size"   								"20"
+    "ammo_default_total"							"20"
+    "ammo_per_shot"									"20"
+    "ammo_min_to_fire"								"20"
           
 
     // Regen Ammo
                                 
                                      
          
-    "regen_ammo_refill_rate"						"10"
+    "regen_ammo_refill_rate"						"1"
           
     "regen_ammo_refill_start_delay"					"0.0"
 
@@ -97,8 +97,8 @@ WeaponData
     "deploy_time" 									"0"
     "lower_time"  									"0.4"
     "raise_time"  									"0"
-    "toss_pullout_time"								"0.2"
-    "toss_time"									    "1"
+    "toss_pullout_time"								"0.100000"
+    "toss_time"									    "0.900000"
     "toss_overhead_time"							"0"
 
 
@@ -118,7 +118,7 @@ WeaponData
                                 
                                                                                                                                  
          
-    "sonic_blast_delay"                             "1.6" //how long from when the drones are summoned until the blast goes off.
+    "sonic_blast_delay"                             "1.000000"
           
 
     "red_crosshair_range" 							"0"

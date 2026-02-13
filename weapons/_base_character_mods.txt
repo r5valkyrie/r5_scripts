@@ -24,6 +24,22 @@ WeaponData
 			"reload_time"						"*0.5"
 		}
 
+		amped_damage
+		{
+            "sustained_laser_damage_scale"                  "*0.83333" // this should be set to 1/(amped scale), so weapons like the charge rifle don't get buffed before the last hit
+
+			"damage_near_value"                             "*1.2"
+			"damage_far_value"                              "*1.2"
+			"damage_very_far_value"                         "*1.2"
+			"damage_near_value_titanarmor"                  "*1.2"
+			"damage_far_value_titanarmor"                   "*1.2"
+			"damage_very_far_value_titanarmor"              "*1.2"
+
+			"projectile_trail_effect_0"     				"P_tracer_proj_smg_shield_breaker"
+            "projectile_trail_effect_1"     				"P_tracer_proj_smg_shield_breaker"
+            "impact_effect_table" 							"hammer_point_bullet"
+		}
+
 		4d
 		{
 			"spread_stand_hip" 						"*0.40"

@@ -106,7 +106,7 @@
 
 
     // Projectile
-    "projectile_launch_speed"                  "29000"
+    "projectile_launch_speed"                  "28000"
     "projectile_gravity_scale"				   "1.4"
     "projectile_drag_coefficient" 			   "0.0033"
 
@@ -170,7 +170,7 @@
 
 	// Viewkick Spring
 	//
-	"viewkick_pattern"                          "3030"
+	"viewkick_pattern"                          "3030_repeater"
     "viewkick_spring" 						    "3030_vkp"
     "viewkick_spring_hot"                       "3030_vkp_hot"
 
@@ -262,11 +262,12 @@
 
 
     // FX
-	"fx_muzzle_flash_view"				"wpn_muzzleflash_snp_sup_hmn_FP"
-	"fx_muzzle_flash_world"				"wpn_muzzleflash_snp_sup_hmn"
+	"fx_muzzle_flash_view"				"P_wpn_mflash_Repeater_FP_burn"
+	"fx_muzzle_flash_world"				"P_wpn_mflash_Repeater_FP_burn_3p"
 
 	//FX - Shell Eject
-	"fx_shell_eject_view"                   	"wpn_shelleject_rifle_assault_FP"
+	"fx_shell_eject_view"				"P_3030_reload_FP"
+	"fx_shell_eject_world"				"P_3030_reload_3p"
 	"fx_shell_eject_attach"				"shell"
 
 
@@ -324,7 +325,7 @@
 	"sway_rotate_attach" "SWAY_ROTATE"
 
 	"headshot_distance"	"17716"
-	"damage_headshot_scale"	"1.600000"
+	"damage_headshot_scale"	"1.400000"
 	"damage_shield_scale"	"1"
 	"damage_near_distance"	"1000"
 	"damage_far_distance"	"2500"
