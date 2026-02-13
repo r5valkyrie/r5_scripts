@@ -562,6 +562,7 @@
 			"clipSize"   		"weapon_clipSize"
 			"clipCount"  		"weapon_ammoClipCount"
 			"playerDirection"	"player_eye_angles"
+			"centerOffset"		"weapon_ads_center_offset"
 		}
 	}
 
@@ -583,6 +584,25 @@
 			"playerDirection"	"player_eye_angles"
 		}
 	}
+
+	// The reactive skin ammo counter
+	"ui3_enable"                               "0"
+	"UiData3"
+	{
+
+		"ui"    "ui/g7_reactive_ammo_counter"
+		"mesh"  "models/weapons/attachments/g7_reactive_ammo_counter_rui"
+
+		"Args"
+		{
+			"vis"        		"player_zoomfrac"
+			"ammo"       		"weapon_ammo"
+			"clipSize"   		"weapon_clipSize"
+			"clipCount"  		"weapon_ammoClipCount"
+			"playerDirection"	"player_eye_angles"
+		}
+	}
+
 
 	// UI - Crosshair
 	"rui_crosshair_index"                      "0"

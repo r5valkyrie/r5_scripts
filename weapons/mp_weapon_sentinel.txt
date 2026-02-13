@@ -484,14 +484,13 @@
 	"UiData1"
 	{
 
-		"ui"							"ui/r97_reticle"
+		"ui"    "ui/sentinel_reticle"
 		"mesh"  "models/weapons/attachments/sentinel_rui_reticle"
 
 		"Args"
 		{
-			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
+			"vis"       		"player_zoomfrac"
+			"centerOffset"		"weapon_ads_center_offset"
 		}
 	}
 
@@ -500,7 +499,7 @@
 	"UiData2"
 	{
 
-		"ui"    "ui/kraber_ammo_counter"
+		"ui"    "ui/sentinel_ammo_counter"
 		"mesh"  "models/weapons/attachments/sentinel_rui_ammo_counter"
 
 		"Args"

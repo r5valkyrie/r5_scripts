@@ -348,6 +348,7 @@ WeaponData
 		Args
 		{
 			vis							player_zoomfrac
+			centerOffset				weapon_ads_center_offset
 		}
 	}
 

@@ -830,51 +830,50 @@ WeaponData
 		}
 	}
 
+
 	"ui1_enable"		"1"
 	UiData1
 	{
-		"ui"							"ui/lstar_screens"
-		"mesh"							"models/weapons/attachments/lstar_rui_lower"
-		Args
-		{
-			"clipAmmo" "weapon_ammoClipCount"
-			"clipSize" "weapon_clipSize"
-			"lifetimeShots" "weapon_lifetime_shots"
-			"ammoFrac" "weapon_ammofrac"
-			"chargeFrac" "player_chargeFrac"
-			"isFiring" "weapon_is_firing"
-			"isCooling" "weapon_is_inCooldown"
-			"isReloading" "weapon_is_reloading"
-			"isAmped" "weapon_is_amped"
-			"lastDryFireTime" "weapon_latest_dryfire_time"
-		}
-	}
-
-	"ui2_enable"		"0"
-	"ui2_draw_cloaked"	"1"
-	UiData2
-	{
-		"ui"					"ui/aog_ammo_counter_lstar"
-		"mesh"					"models/weapons/attachments/aog_rui_lower"
+		"ui"					"ui/lstar_reticle"
+		"mesh"					"models/weapons/attachments/lstar_rui_upper"
 		Args
 		{
 			vis					player_zoomfrac
-			ammo				weapon_ammo
+			centerOffset		weapon_ads_center_offset
+		}
+	}
+
+	"ui2_enable"		"1"
+	"ui2_draw_cloaked"	"1"
+	UiData2
+	{
+		"ui"					"ui/lstar_screens"
+		"mesh"					"models/weapons/attachments/lstar_rui_lower"
+		Args
+		{
+			clipAmmo			weapon_ammoClipCount
 			clipSize			weapon_clipSize
+			lifetimeShots		weapon_lifetime_shots
+			ammoFrac			weapon_ammofrac
+			chargeFrac          player_chargeFrac
+
+			isFiring			weapon_is_firing
+			isCooling			weapon_is_inCooldown
+			isReloading			weapon_is_reloading
+			isAmped				weapon_is_amped
+
+			lastDryFireTime		weapon_latest_dryfire_time
 		}
 	}
 
 	"ui3_enable"		"0"
 	UiData3
 	{
-		"ui"						"ui/lstar_screens_rcee"
-		"mesh"						"models/weapons/attachments/lstar_rui_lower"
+		"ui"					"ui/lstar_screens_rcee"
+		"mesh"					"models/weapons/attachments/lstar_rui_lower"
 		Args
 		{
-			lastDryFireTime			weapon_latest_dryfire_time
-			vis					player_zoomfrac
-			ammo				weapon_ammo
-			clipSize			weapon_clipSize
+			lastDryFireTime		weapon_latest_dryfire_time
 		}
 	}
 
@@ -886,14 +885,14 @@ WeaponData
     "ui10_draw_cloaked"	"1"
     UiData10
     {
-        "ui"							"ui/cro_threat_sights"
-        "mesh"							"models/weapons/attachments/cro_rui_upper"
+        "ui"					"ui/cro_threat_sights"
+        "mesh"					"models/weapons/attachments/cro_rui_upper"
         Args
         {
-            zoomFrac					player_zoomfrac
-            ammo						weapon_ammo
-            clipSize					weapon_clipSize
-            centerOffset				weapon_ads_center_offset
+            zoomFrac			player_zoomfrac
+            ammo				weapon_ammoClipCount
+            clipSize			weapon_clipSize
+            centerOffset		weapon_ads_center_offset
         }
     }
 

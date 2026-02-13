@@ -286,6 +286,7 @@
 			"vis"       "player_zoomfrac"
 			"ammo"      "weapon_ammo"
 			"clipSize"  "weapon_clipSize"
+			"centerOffset"			"weapon_ads_center_offset"
 		}
 	}
 

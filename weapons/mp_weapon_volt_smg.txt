@@ -16,8 +16,8 @@ WeaponData
 	"weapon_type_flags"								"WPT_PRIMARY"
 	"ammo_pool_type"								"special"
 
-	"menu_icon"										"rui/weapon_icons/r5/weapon_volt_smg"
-	"hud_icon"										"rui/weapon_icons/r5/weapon_volt_smg"
+	"menu_icon"										"rui/weapon_icons/r5/weapon_volt"
+	"hud_icon"										"rui/weapon_icons/r5/weapon_volt"
 
 	"weaponClass" 									"human"
 	"body_type"										"medium"
@@ -436,7 +436,6 @@ WeaponData
 			ammo						weapon_ammo
 			clipSize					weapon_clipSize
 			centerOffset				weapon_ads_center_offset
-			clipCount 					weapon_ammoClipCount
 		}
 	}
 

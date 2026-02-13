@@ -333,6 +333,7 @@ WeaponData
 			clipCount					weapon_ammoClipCount
 			clipSize					weapon_clipSize
 			charging					player_chargeFrac
+			centerOffset				weapon_ads_center_offset
 		}
 	}
 

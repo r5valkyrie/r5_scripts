@@ -450,13 +450,12 @@ WeaponData
 	"ui1_draw_cloaked"	"1"
 	UiData1
 	{
-		"ui"							"ui/r97_reticle"
-		"mesh"							"models/weapons/attachments/r97_rui_upper"
+		"ui"							"ui/prowler_smg_reticle"
+		"mesh"							"models/weapons/attachments/prowler_smg_upper_reticle"
 		Args
 		{
 			vis							player_zoomfrac
-			ammo						weapon_ammo
-			clipSize					weapon_clipSize
+			centerOffset				weapon_ads_center_offset
 		}
 	}
 

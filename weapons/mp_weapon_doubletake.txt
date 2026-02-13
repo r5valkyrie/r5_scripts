@@ -649,6 +649,7 @@
 			vis					player_zoomfrac
 			charge				player_chargeFrac
 			chargeEnabled		eWeaponVar.custom_int_0
+			centerOffset		weapon_ads_center_offset
 		}
 	}
 
@@ -742,50 +743,50 @@
 		}
 	}
 
-//	// HOPUP - sniper
-//	"ui27_enable"		"0"
-//	UiData27
-//	{
-//		"ui"					"ui/hopup_sights_tripletake_sniper"
-//		"mesh"					"models/weapons/attachments/hopup_sights_sniper"
-//		Args
-//		{
-//			vis					player_zoomfrac
-//			charge				player_chargeFrac
-//			chargeEnabled		eWeaponVar.custom_int_0
-//			centerOffset		weapon_ads_center_offset
-//		}
-//	}
-//
-//	// HOPUP - sniper variable
-//	"ui28_enable"		"0"
-//	UiData28
-//	{
-//		"ui"					"ui/hopup_sights_tripletake_sniper_variable"
-//		"mesh"					"models/weapons/attachments/hopup_sights_sniper_variable"
-//		Args
-//		{
-//			vis					player_zoomfrac
-//			charge				player_chargeFrac
-//			chargeEnabled		eWeaponVar.custom_int_0
-//			centerOffset		weapon_ads_center_offset
-//		}
-//	}
-//
-//	// HOPUP - sniper threat
-//	"ui29_enable"		"0"
-//	UiData29
-//	{
-//		"ui"					"ui/hopup_sights_tripletake_sniper_threat"
-//		"mesh"					"models/weapons/attachments/hopup_sights_sniper_threat"
-//		Args
-//		{
-//			vis					player_zoomfrac
-//			charge				player_chargeFrac
-//			chargeEnabled		eWeaponVar.custom_int_0
-//			centerOffset		weapon_ads_center_offset
-//		}
-//	}
+	// HOPUP - sniper
+	"ui27_enable"		"0"
+	UiData27
+	{
+		"ui"					"ui/hopup_sights_tripletake_sniper"
+		"mesh"					"models/weapons/attachments/hopup_sights_sniper"
+		Args
+		{
+			vis					player_zoomfrac
+			charge				player_chargeFrac
+			chargeEnabled		eWeaponVar.custom_int_0
+			centerOffset		weapon_ads_center_offset
+		}
+	}
+
+	// HOPUP - sniper variable
+	"ui28_enable"		"0"
+	UiData28
+	{
+		"ui"					"ui/hopup_sights_tripletake_sniper_variable"
+		"mesh"					"models/weapons/attachments/hopup_sights_sniper_variable"
+		Args
+		{
+			vis					player_zoomfrac
+			charge				player_chargeFrac
+			chargeEnabled		eWeaponVar.custom_int_0
+			centerOffset		weapon_ads_center_offset
+		}
+	}
+
+	// HOPUP - sniper threat
+	"ui29_enable"		"0"
+	UiData29
+	{
+		"ui"					"ui/hopup_sights_tripletake_sniper_threat"
+		"mesh"					"models/weapons/attachments/hopup_sights_sniper_threat"
+		Args
+		{
+			vis					player_zoomfrac
+			charge				player_chargeFrac
+			chargeEnabled		eWeaponVar.custom_int_0
+			centerOffset		weapon_ads_center_offset
+		}
+	}
 
 
 	// UI - Crosshair
@@ -813,7 +814,7 @@
 			"base_spread"				"0.0"
 			Args
 			{
-				isFiring				weapon_is_firing
+				//isFiring				weapon_is_firing
 			}
 		}
 
