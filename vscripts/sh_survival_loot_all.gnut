@@ -1042,20 +1042,29 @@ array<string> function SURVIVAL_Loot_GetSortedStringArrayFromSupportedAttachment
 #if SERVER
 bool function ClientCallback_SetNextCustomConsumable( entity player, array<string> args )
 {
-	if (!SURVIVAL_Loot_IsRefValid(args[0])) return true
-	if (SURVIVAL_CountItemsInInventory(player, args[0]) <= 0) return true
+	if( !args.len() )
+		return true
 
-	printt("setting next consumable: ", args[0])
-	
-	if (IsValid(player.GetOffhandWeapon(OFFHAND_EQUIPMENT)) && player.GetOffhandWeapon(OFFHAND_EQUIPMENT).GetWeaponClassName() != args[0])
+	if ( !SURVIVAL_Loot_IsRefValid( args[ 0 ] ) )
+		return true
+
+	if ( SURVIVAL_CountItemsInInventory( player, args[ 0 ] ) <= 0 )
+		return true
+
+	#if DEVELOPER
+		printt("setting next consumable: ", args[ 0 ])
+	#endif
+
+	if ( IsValid( player.GetOffhandWeapon( OFFHAND_EQUIPMENT ) ) && player.GetOffhandWeapon( OFFHAND_EQUIPMENT ).GetWeaponClassName() != args[0] )
 	{
 		player.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
-		player.GiveOffhandWeapon( args[0], OFFHAND_EQUIPMENT )
+		player.GiveOffhandWeapon( args[ 0 ], OFFHAND_EQUIPMENT )
 	}
-	else if (!IsValid(player.GetOffhandWeapon(OFFHAND_EQUIPMENT))) 
+	else if ( !IsValid( player.GetOffhandWeapon( OFFHAND_EQUIPMENT ) ) )
 	{
-		player.GiveOffhandWeapon( args[0], OFFHAND_EQUIPMENT )
+		player.GiveOffhandWeapon( args[ 0 ], OFFHAND_EQUIPMENT )
 	}
+
 	return true
 }
 #endif

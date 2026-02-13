@@ -381,6 +381,10 @@ void function ShowScoreboardMP()
 	if( file.bResetScoreboardIgnore )
 		return
 
+	// 1v1 modes use the custom FSLeaderboard menu
+	if ( Playlist() == ePlaylists.fs_1v1 || Playlist() == ePlaylists.fs_lgduels_1v1 )
+		return
+
 	#if DEVELOPER
 		printf("[SB] %s - %s\n", FUNC_NAME(), GameRules_GetGameMode())
 	#endif
