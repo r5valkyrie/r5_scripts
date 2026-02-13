@@ -157,6 +157,8 @@ global function UpdateViewmodelAmmo
 global function IsOwnerViewPlayerFullyADSed
 global function ServerCallback_SatchelPlanted
 #endif //CLIENT
+global function ShouldShowADSScopeView
+global function HasFullscreenScope
 
 global function AddCallback_OnPlayerAddWeaponMod
 global function AddCallback_OnPlayerRemoveWeaponMod
@@ -176,7 +178,6 @@ global const PRO_SCREEN_IDX_MATCH_KILLS 					= 1
 global const PRO_SCREEN_IDX_AMMO_COUNTER_OVERRIDE_HACK 		= 2
 
 const float DEFAULT_SHOTGUN_SPREAD_INNEREXCLUDE_FRAC 		= 0.4
-global const string ENERGIZE_STATUS_RUI_ABORT_SIGNAL = "EnergizRuiThinkAbortSignal"
 global const string WEAPON_CHARGED_RUI_ABORT_SIGNAL = "ChargedRuiThinkAbortSignal"
 
 const bool DEBUG_PROJECTILE_BLAST = false
@@ -5558,6 +5559,24 @@ bool function HasEnoughEnergizeConsumable( entity weapon, entity player )
 	return consumableCurrentCount >= consumableRequiredCount
 }
 
+bool function ShouldShowADSScopeView( entity weapon )
+{
+	if ( !IsValid( weapon ) )
+		return false
+
+	if ( !HasFullscreenScope( weapon ) )
+		return false
+
+	entity player = weapon.GetWeaponOwner()
+	if ( !IsValid( player ) )
+		return false
+
+	if ( player.GetZoomFrac() < weapon.GetWeaponSettingFloat( eWeaponVar.ads_fov_zoomfrac_end ) )
+		return false
+
+	return true
+}
+
 bool function OnWeaponTryEnergize( entity weapon, entity player )
 {
 	if ( !IsValid( player ) )
@@ -5605,6 +5624,20 @@ bool function OnWeaponTryEnergize( entity weapon, entity player )
 
 	return true
 }
+bool function HasFullscreenScope( entity weapon )
+{
+	if ( !IsValid( weapon ) )
+		return false
+
+	if ( weapon.GetWeaponSettingInt( eWeaponVar.bodygroup_ads_scope_set ) <= 0 )
+		return false
+
+	if ( weapon.GetWeaponInfoFileKeyField( "bodygroup_ads_scope_name" ) == null )
+		return false
+
+	return true
+}
+
 void function OnWeaponEnergizedStart( entity weapon, entity player, bool costConsumable )
 {
 	if ( !IsValid( weapon ) || !costConsumable )

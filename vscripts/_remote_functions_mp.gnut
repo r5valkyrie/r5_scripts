@@ -323,10 +323,6 @@ void function RemoteFunctions_Init_Begin()
 	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" )
 		PathTT_OnNetworkRegistration()
 
-	//Sentinel
-	ScriptRemote_RegisterClientFunction( "SentinelChargeHUD", "float", 0.0, 4000.0, 16 ) //Audit 2-22-2025 (mk): 66 mins server time, charge end max
-	ScriptRemote_RegisterClientFunction( "Sentinel_UpdateChargeEndTime", "float", 0.0, 4000.0, 16 ) //Sentinel update timer on shot
-	ScriptRemote_RegisterClientFunction( "Sentinel_NoShieldCellHint" ) //Sentinel no shield cell hint
 	ScriptRemote_RegisterClientFunction( "DragonLMG_ChargeHUD", "float", 0.0, 4000.0, 16 ) //Dragon LMG energized timer
 	ScriptRemote_RegisterClientFunction( "DragonLMG_UpdateChargeEndTime", "float", 0.0, 4000.0, 16 ) //Dragon LMG update timer on shot
 	ScriptRemote_RegisterClientFunction( "DragonLMG_NoThermiteHint" ) //Dragon LMG no thermite hint
@@ -627,9 +623,6 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "playerObservedCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_EjectConfirmed" )
-
-	ScriptRemote_RegisterClientFunction( "Sentinel_PlayEnergizeEffect" )
-	ScriptRemote_RegisterClientFunction( "Sentinel_StopEnergizeEffect" )
 
 	#if CLIENT
 		ShRanked_RegisterNetworkFunctions()

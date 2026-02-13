@@ -65,7 +65,12 @@ global function SURVIVAL_GetPlayerShieldHealthFromArmor
 global function SURVIVAL_GetArmorShieldCapacity
 
 global function PropSurvivalFlagsHas
+global function EvolvingArmor_GetEvolutionProgress
 
+global const string NV_EVOLVING_ARMOR_KILL_COUNT = "playerEvolvingArmorKillCount"
+         
+
+global const string CMDNAME_PLAYER_SWITCHED_WEAPONS = "PlayerSwitchedWeapons"
 global function SURVIVAL_IsLootIrrelevant
 global function SURVIVAL_IsLootAnUpgrade
 global function SURVIVAL_IsLootRefAnUpgrade
@@ -904,6 +909,7 @@ void function SURVIVAL_Loot_InitShared()
 			wData.disabledAttachments.append( attachmentToDisable )
 		}
 	}
+	RegisterNetworkedVariable( NV_EVOLVING_ARMOR_KILL_COUNT, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 0 )
 }
 
 bool function IsAttachmentCompatibleWithCustomWeapon(LootData weapon, AttachmentData att)
@@ -4388,6 +4394,13 @@ int function SURVIVAL_GetArmorShieldCapacity( int tier )
 	return 0
 }
 
+int function EvolvingArmor_GetEvolutionProgress( entity player )
+{
+	Assert( IsValid( player ), "Attempted to get evo progress on invalid entity" )
+	Assert( player.IsPlayer(), format( "Attempted to get player's Evo Progress, but entity %s is not a player!", string( player ) ) )
+
+	return player.GetPlayerNetInt( NV_EVOLVING_ARMOR_KILL_COUNT )
+}
 int function SortByPriorityThenTier( ConsumableInventoryItem a, ConsumableInventoryItem b )
 {
 	LootData lootData_a = SURVIVAL_Loot_GetLootDataByIndex( a.type )

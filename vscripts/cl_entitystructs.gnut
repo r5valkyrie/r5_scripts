@@ -292,6 +292,8 @@ global struct ClientWeaponStruct
 	
 	bool isInAdsCustom = false
 	bool toggleShot = true
+
+	var    sentinelEnergizeHintRui = null
 }
 
 
