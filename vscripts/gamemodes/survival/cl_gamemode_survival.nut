@@ -38,6 +38,8 @@ global function SURVIVAL_PopulatePlayerInfoRui
 
 global function MarkDpadAsBlocked
 
+global function SetEvoArmorModifier
+
 global function ScorebarInitTracking
 global function FullMap_CommonAdd
 global function FullMap_CommonTrackEntOrigin
@@ -104,6 +106,7 @@ global function SetChampionScreenRuiAsset
 global function InitSurvivalHealthBar
 global function SURVIVAL_SetGameStateAssetOverrideCallback
 #if DEVELOPER
+global function EvolvingArmor_SetEvolutionRuiAnimTime
 global function Dev_ShowVictorySequence
 global function Dev_AdjustVictorySequence
 #endif
@@ -127,6 +130,7 @@ global struct NextCircleDisplayCustomData
 {
 	float  circleStartTime
 	float  circleCloseTime
+	float  countdownGoalTime
 	int    roundNumber
 	string roundString
 
@@ -139,6 +143,7 @@ global struct NextCircleDisplayCustomData
 
 	asset  altIcon = $""
 	string altIconText
+	vector altColor = <1, 1, 1>
 }
 
 global struct VictorySoundPackage
@@ -1843,17 +1848,24 @@ asset function GetArmorIconForTypeIndex( int typeIndex )
 
 void function EquipmentChanged( entity player, string equipSlot, int new )
 {
-	int tier              = 0
-	EquipmentSlot es      = Survival_GetEquipmentSlotDataByRef( equipSlot )
-	asset hudIcon         = es.emptyImage
-	bool isEvolvingShield = false
-	int evolvingKillCount = 0
+	int tier          = 0
+	EquipmentSlot es  = Survival_GetEquipmentSlotDataByRef( equipSlot )
+	asset hudIcon     = es.emptyImage
+	int armorCapacity = -1
+
+	bool isEvo   = false
+	int evoCount = 0
 
 	if ( new > -1 )
 	{
 		LootData data = SURVIVAL_Loot_GetLootDataByIndex( new )
 		tier = data.tier
 		hudIcon = data.hudIcon
+
+		if ( data.lootType == eLootType.ARMOR )
+		{
+			armorCapacity = SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, data )
+		}
 
 		if ( es.attachmentPoint != "" )
 		{
@@ -1862,6 +1874,14 @@ void function EquipmentChanged( entity player, string equipSlot, int new )
 		}
 	}
 
+
+		LootData data = EquipmentSlot_GetEquippedLootDataForSlot( player, "armor" )
+		if ( data.lootType == eLootType.ARMOR && EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
+		{
+			isEvo = true
+			evoCount = EvolvingArmor_GetRequirementForEvolution( data.tier )
+		}
+
 	if ( player == GetLocalViewPlayer() )
 	{
 		// if( tier > 5 )
@@ -1869,7 +1889,41 @@ void function EquipmentChanged( entity player, string equipSlot, int new )
 		
 		RuiSetInt( file.pilotRui, es.unitFrameTierVar, tier )
 		RuiSetImage( file.pilotRui, es.unitFrameImageVar, hudIcon )
+		if ( armorCapacity >= 0 )
+		{
+			RuiSetInt( file.pilotRui, "armorShieldCapacity", armorCapacity )
+		}
+                        
+			if ( data.lootType == eLootType.ARMOR )
+			{
+				if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
+				{
+					RuiSetBool( file.pilotRui, "isEvolvingShield", isEvo )
+					RuiTrackInt( file.pilotRui, "evolvingShieldKillCounter", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( NV_EVOLVING_ARMOR_KILL_COUNT ) )
+				}
+				else
+				{
+					RuiSetBool( file.pilotRui, "isEvolvingShield", false )
+				}
+			}
+			else if ( data.ref == "" )
+			{
+				RuiSetBool( file.pilotRui, "isEvolvingShield", false )
+			}
+        
+
+                               
+			RuiSetBool( file.pilotRui, "hasReducedShieldValues", true )
 		UpdateActiveLootPings()
+	}
+	else
+	{
+		if ( PlayerHasUnitFrame( player ) )
+		{
+			var rui = GetUnitFrame( player ).rui
+
+			RuiSetInt( rui, "armorShieldCapacity", armorCapacity )
+		}
 	}
 
 	if ( player == GetLocalClientPlayer() )
@@ -5715,4 +5769,22 @@ void function DEV_SendCheatsStateToUI()
 {
 	bool cheatsState = GetConVarBool( "sv_cheats" )	
 	RunUIScript("UpdateCheatsState", cheatsState)
+}
+
+void function EvolvingArmor_SetEvolutionRuiAnimTime()
+{
+	if ( file.pilotRui == null )
+		return
+
+	RuiSetGameTime( file.pilotRui, "evolvingArmorUpgradeStartTime", Time() )
+}
+
+
+void function SetEvoArmorModifier( float modifier, asset image )
+{
+	if( IsValid( file.pilotRui ) )
+	{
+		RuiSetFloat( file.pilotRui, "evoShieldMultiplier", modifier )
+		RuiSetImage( file.pilotRui, "evoShieldMultiplierImage", image )
+	}
 }

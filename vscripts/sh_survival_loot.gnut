@@ -30,7 +30,7 @@ global function GetCommsActionEnumForName
 global function ShouldDropOpticForKittedWeapon
 global function GetWeaponClassNameWithLockedSet
 global function WeaponLootRefIsLockedSet
-
+global function SURVIVAL_GetCharacterShieldHealthMaxForArmor
 global function SURVIVAL_GetActiveWeapon
 global function SURVIVAL_GetLastActiveWeapon
 global function SURVIVAL_GetActiveWeaponSlot
@@ -65,6 +65,9 @@ global function SURVIVAL_GetPlayerShieldHealthFromArmor
 global function SURVIVAL_GetArmorShieldCapacity
 
 global function PropSurvivalFlagsHas
+global function EvolvingArmor_GetEvolvingArmorHealthForTier
+global function EvolvingArmor_IsEquipmentEvolvingArmor
+global function EvolvingArmor_GetRequirementForEvolution
 global function EvolvingArmor_GetEvolutionProgress
 
 global const string NV_EVOLVING_ARMOR_KILL_COUNT = "playerEvolvingArmorKillCount"
@@ -80,8 +83,6 @@ global function SURVIVAL_GetInventorySlotCountForPlayer
 
 global function GetAllDeathBoxes
 global function ShouldPickupDNAFromDeathBox
-
-global function EvolvingArmor_IsEquipmentEvolvingArmor
 
 #if CLIENT
 global function SURVIVAL_BuildStringForAction
@@ -201,6 +202,7 @@ global function IsValidAttachment
 global function GetAttachmentData
 global function SURVIVAL_EquipmentPretendsToBeBlank
 global function GetWeaponAmmoTypeFromWeaponEnt
+global function GetPropSurvivalMainProperty
 
 #if SERVER || CLIENT
 global function IsPlayerCloseEnoughToDeathBoxToLoot
@@ -461,6 +463,32 @@ struct
 
 	bool initialized
 
+	bool useAltInteractForArmorSwap
+
+	int evoArmor_ReqDamage_Tier1
+	int evoArmor_ReqDamage_Tier2
+	int evoArmor_ReqDamage_Tier3
+	int evoArmor_ReqDamage_Tier4
+
+	bool evoArmor_SquadPetsEnabled
+	bool evoArmor_AiPointsEnabled
+	float evoMultiplier_SquadPets
+	float evoMultiplier_Prowlers
+	float evoMultiplier_Flyers
+                    
+                              
+       
+                   
+                             
+       
+	                         
+		float evoMultiplier_JungleSpiders
+       
+	                      
+		float evoMultiplier_Spectres
+       
+	float evoMultiplier_Armorsmith
+	float evoMultiplier_Shadows
 	table<string, int> maxAmmoForType
 
 #if SERVER
@@ -496,6 +524,15 @@ struct
 	int survival_shields
 	bool drop_optic_for_kitted_weapons
 
+
+	table<entity, int> evolvingArmorKillCount
+	int                evoShieldUpgradeFXFP
+	int                evoShieldUpgradeFX3P
+	#if SERVER
+		table<entity, int> evoProgress
+	#endif
+
+	int functionref( entity player, LootData data, int originalMax ) 			shieldHealthMaxOverride = null
 } file
 
 
@@ -526,8 +563,10 @@ void function SURVIVAL_Loot_InitShared()
 	PrecacheParticleSystem( $"P_ar_loot_drop_point_far" )
 	PrecacheParticleSystem( $"P_ar_loot_drop_point" )
 	PrecacheParticleSystem( $"P_ar_hot_zone_far" )
-	PrecacheParticleSystem( $"P_item_evo_armor_pickup" )
-	PrecacheParticleSystem( $"P_item_evo_armor" )
+	PrecacheParticleSystem( FX_SHIELD_EVO_UPGRADE_FP )
+	PrecacheParticleSystem( FX_SHIELD_EVO_UPGRADE_3P )
+	file.evoShieldUpgradeFXFP = GetParticleSystemIndex( FX_SHIELD_EVO_UPGRADE_FP )
+	file.evoShieldUpgradeFX3P = GetParticleSystemIndex( FX_SHIELD_EVO_UPGRADE_3P )
 
 	PrecacheModel( $"mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl" )
 
@@ -2193,7 +2232,7 @@ void function DelayedSetArmorSkin( entity ent, int tier )
 	}
 
 	ent.SetSkin( minint( tier, ent.GetSkinCount() - 1 ) )
-	int holoEffect     = GetParticleSystemIndex( $"P_item_evo_armor" )
+	int holoEffect     = GetParticleSystemIndex(  $"P_item_evo_armor"  )
 	// for some reason the fx does not obey rotation when spawn on the entity, so just spawn it at its location and parent for now
 	entity effect = StartParticleEffectInWorld_ReturnEntity( holoEffect, ent.GetOrigin(), ent.GetAngles() )
 	effect.SetParent( ent )
@@ -2224,17 +2263,6 @@ bool function IsLootEntInsideDeathBox( entity lootEnt )
 }
 #endif
 
-const array<string> ALL_EVO_ARMOR_REFS = [
-	"armor_pickup_lv1_evolving",
-	"armor_pickup_lv2_evolving",
-	"armor_pickup_lv3_evolving",
-	"armor_pickup_lv5_evolving"
-]
-
-bool function EvolvingArmor_IsEquipmentEvolvingArmor( string itemRef )
-{
-	return ALL_EVO_ARMOR_REFS.contains( itemRef )
-}
 
 void function SURVIVAL_Loot_UpdateHighlightForLoot( entity prop )
 {
@@ -4345,6 +4373,7 @@ void function ReplaceOpticInMods( array<string> mods, string opticRef )
 		mods.append( opticRef )
 }
 
+
 string function GetOpticAttachmentFromMods( string weaponRef, array<string> mods )
 {
 	if( !SURVIVAL_Loot_IsRefValid( weaponRef ) )
@@ -4364,9 +4393,11 @@ string function GetOpticAttachmentFromMods( string weaponRef, array<string> mods
 
 int function SURVIVAL_GetPlayerShieldHealthFromArmor( entity player )
 {
+	// Current shields are contained in base shields
 	if ( player.GetShieldHealth() <= GetPlayerSettingBaseShield( player ) )
 		return 0
 
+	// Subtract off base shields to get armor's contribution
 	return player.GetShieldHealth() - GetPlayerSettingBaseShield( player )
 }
 
@@ -4375,7 +4406,7 @@ int function SURVIVAL_GetArmorShieldCapacity( int tier )
 	switch ( tier )
 	{
 		case 0:
-			return 0
+			return 25
 		case 1:
 			return 50
 		case 2:
@@ -4383,15 +4414,185 @@ int function SURVIVAL_GetArmorShieldCapacity( int tier )
 		case 3:
 		case 4:
 			return 100
-		case 5:
-			return 125
-		case 6:
-			return 150
-		case 7:
-			return 175
 	}
 
 	return 0
+}
+
+void function SURVIVAL_SetShieldHealthMaxOverrideCallback( int functionref( entity player, LootData data, int originalMax ) callback )
+{
+	file.shieldHealthMaxOverride = callback
+}
+
+int function SURVIVAL_GetCharacterShieldHealthMaxForArmor( entity player, LootData data )
+{
+	int shieldMaxHealth = 0
+	                    
+	if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
+	{
+		shieldMaxHealth = EvolvingArmor_GetCharacterShieldHealthMaxForArmorTier( player, data.tier )
+	}
+	else
+	{
+		shieldMaxHealth = GetPlayerSettingBaseShield( player )
+		int tier = data.tier
+
+		switch ( tier )
+		{
+			case 0:
+                        
+				shieldMaxHealth += 25
+         
+                        
+          
+				break
+                             
+
+          
+                         
+         
+
+          
+                         
+         
+
+          
+          
+                         
+         
+     
+
+			case 1:
+				shieldMaxHealth += 50
+				break
+
+			case 2:
+				shieldMaxHealth += 75
+				break
+
+			case 3:
+			case 4:
+				shieldMaxHealth += 100
+				break
+			case 5:
+				shieldMaxHealth += 125
+				break
+      
+
+			default:
+					Assert( false, "Invalid armor tier: " + tier + ", data.ref: " + data.ref )
+				shieldMaxHealth += 0
+		}
+	}
+
+	if ( file.shieldHealthMaxOverride != null )
+		shieldMaxHealth = file.shieldHealthMaxOverride( player, data, shieldMaxHealth )
+
+	return shieldMaxHealth
+}
+
+const array<string> ALL_EVO_ARMOR_REFS = [
+	"armor_pickup_lv0_evolving",
+	"armor_pickup_lv1_evolving",
+	"armor_pickup_lv2_evolving",
+	"armor_pickup_lv3_evolving",
+	"armor_pickup_lv5_evolving"
+]
+
+bool function EvolvingArmor_IsEquipmentEvolvingArmor( string itemRef )
+{
+	return ALL_EVO_ARMOR_REFS.contains( itemRef )
+}
+int function EvolvingArmor_GetCharacterShieldHealthMaxForArmorTier( entity player, int tier )
+{
+	int shieldMaxHealth = GetPlayerSettingBaseShield( player )
+
+	switch ( tier )
+	{
+		case 0:
+			shieldMaxHealth += 0
+			break
+
+		case 1:
+			shieldMaxHealth += 50
+			break
+
+		case 2:
+			shieldMaxHealth += 75
+			break
+
+		case 3:
+			shieldMaxHealth += 100
+			break
+
+		case 4:
+		case 5:
+			shieldMaxHealth += 125
+			break
+      
+
+		default:
+			Assert( false, "Evolving Armor: Invalid armor tier" )
+			shieldMaxHealth += 0
+	}
+
+	return shieldMaxHealth
+}
+
+int function EvolvingArmor_GetEvolvingArmorHealthForTier( int tier )
+{
+	switch ( tier )
+	{
+		case 0:
+			return 0
+
+		case 1:
+			return 50
+
+		case 2:
+			return 75
+
+		case 3:
+			return 100
+
+		case 4:
+		case 5:
+			return 125
+	}
+
+	return 0
+}
+
+
+int function EvolvingArmor_GetRequirementForEvolution( int tier )
+{
+	switch ( tier )
+	{
+		case 0:
+			return file.evoArmor_ReqDamage_Tier1
+
+		case 1:
+			return file.evoArmor_ReqDamage_Tier2
+
+		case 2:
+			return file.evoArmor_ReqDamage_Tier3
+
+		case 3:
+			return file.evoArmor_ReqDamage_Tier4
+
+		default:
+			return 0
+	}
+
+	return 0
+}
+
+bool function EvolvingArmor_ExceedsMaxIntLimit( LootData data )
+{
+	if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
+		return EvolvingArmor_GetRequirementForEvolution( data.tier ) > PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_MAX_VALUE
+
+	return false
 }
 
 int function EvolvingArmor_GetEvolutionProgress( entity player )
@@ -4399,8 +4600,269 @@ int function EvolvingArmor_GetEvolutionProgress( entity player )
 	Assert( IsValid( player ), "Attempted to get evo progress on invalid entity" )
 	Assert( player.IsPlayer(), format( "Attempted to get player's Evo Progress, but entity %s is not a player!", string( player ) ) )
 
+	#if SERVER
+		return file.evoProgress[ player ]
+	#endif
+
+	if ( EvolvingArmor_ExceedsMaxIntLimit( EquipmentSlot_GetEquippedLootDataForSlot( player, "armor" ) ) )
+		return player.GetPlayerNetInt( NV_EVOLVING_ARMOR_KILL_COUNT ) * 2
+
 	return player.GetPlayerNetInt( NV_EVOLVING_ARMOR_KILL_COUNT )
 }
+
+#if SERVER
+void function EvolvingArmor_SetEvolutionProgress( entity player, int amount )
+{
+	if ( !IsValid( player ) )
+		return
+
+	//printf( "EvolvingArmorDebug: Setting required kill counter to %i", amount )
+
+	file.evoProgress[ player ] <- amount
+
+	if ( EvolvingArmor_ExceedsMaxIntLimit( EquipmentSlot_GetEquippedLootDataForSlot( player, "armor" ) ) )
+		player.SetPlayerNetInt( NV_EVOLVING_ARMOR_KILL_COUNT, int( (float( amount ) / 2.0) + 0.5 ) )
+	else
+		player.SetPlayerNetInt( NV_EVOLVING_ARMOR_KILL_COUNT, amount )
+}
+
+void function EvolvingArmor_ResetKillCount( entity player )
+{
+	player.SetPlayerNetInt( NV_EVOLVING_ARMOR_KILL_COUNT, 0 )
+}
+
+int function EvolvingArmor_CalculateEvoPointsToGive( entity player, entity victim, entity weapon, int healthDamage, int shieldDamage, int absorbedDamage, int damageType )
+{
+	int evoPointsToGive = healthDamage + shieldDamage + absorbedDamage
+
+	if ( Bleedout_IsBleedingOut( victim ) || Bleedout_IsBleedingOut( player ) )
+		return 0
+
+	if ( player == victim )
+		return 0
+
+	if ( damageType == DMG_MELEE_EXECUTION )
+		return 0
+
+	float enemyMultiplier = 1.0
+	if ( !victim.IsPlayer() )
+	{
+		if ( victim.IsNPC() && file.evoArmor_SquadPetsEnabled )	// TODO: This won't work for AI on maps - need to check damage specifically against the pets
+		{
+			enemyMultiplier = file.evoMultiplier_SquadPets
+		}
+		else if ( file.evoArmor_AiPointsEnabled )
+		{
+			if ( victim.IsNPC() )
+			{
+				if ( victim.IsNonCombatAI() )
+				{
+					return 0
+				}
+
+				switch ( victim.GetClassName() )
+				{
+					case "npc_prowler":
+						enemyMultiplier = file.evoMultiplier_Prowlers
+						break
+                        
+                        
+                                                   
+           
+           
+                       
+                       
+                                                  
+           
+           
+					                         
+					case "npc_spider_jungle":
+						enemyMultiplier = file.evoMultiplier_JungleSpiders
+						break
+           
+					                      
+					case "npc_spectre":
+						enemyMultiplier = file.evoMultiplier_Spectres
+						break
+           
+					default:
+						enemyMultiplier = 0.25
+				}
+			}
+			else if ( victim.GetScriptName() == "deathboxFlyer" )
+			{
+				enemyMultiplier = file.evoMultiplier_Flyers
+			}
+		}
+		else if ( victim.IsNPC() )
+			return 0
+	}
+
+	evoPointsToGive = int( evoPointsToGive * enemyMultiplier )
+	evoPointsToGive = maxint( evoPointsToGive, 1 )
+
+	float overallMultiplier = 1.0
+
+       
+
+	                    
+	/*if( player.HasPassive( ePassives.PAS_EXPLOSIVE_EVO_BONUS ) && (damageType == DMG_BLAST || damageType == DMG_BURN) )
+	{
+		overallMultiplier *= 2
+	}*/
+       
+
+	evoPointsToGive = int( evoPointsToGive * overallMultiplier )
+	return evoPointsToGive
+}
+
+
+void function EvolvingArmor_PlayerDealtDamage( entity player, entity victim, entity weapon, int healthDamage, int shieldDamage, int absorbedDamage, int damageType )
+{
+	int evoPointsToGive = EvolvingArmor_CalculateEvoPointsToGive( player, victim, weapon, healthDamage, shieldDamage, absorbedDamage, damageType )
+	if( evoPointsToGive == 0 )
+		return
+	EvolvingArmor_ApplyEvoPoints( player, evoPointsToGive )
+}
+
+void function EvolvingArmor_ApplyEvoPoints( entity player, int points )
+{
+	                    
+	LootData armorData = EquipmentSlot_GetEquippedLootDataForSlot( player, "armor" )
+	if ( !SURVIVAL_Loot_IsLootIndexValid( armorData.index ) )
+		return
+
+	if ( !EvolvingArmor_IsEquipmentEvolvingArmor( armorData.ref ) )
+		return
+
+	int armorTier               = armorData.tier
+	int remainingDamageToEvolve = EvolvingArmor_GetEvolutionProgress( player ) - points
+
+	int overflow
+	if ( remainingDamageToEvolve < 0)
+	{
+		overflow = remainingDamageToEvolve * -1
+	}
+
+	remainingDamageToEvolve = maxint( remainingDamageToEvolve, 0 )
+	//printf( "EvoArmorDebug: Attacker Evo Stats: Armor Tier: %i, Damage Done: %f, Dmg To Evo: %i", armorTier, points, remainingDamageToEvolve )
+
+	EvolvingArmor_SetEvolutionProgress( player, remainingDamageToEvolve )
+
+	bool passedDamageReq = (remainingDamageToEvolve == 0)
+
+	int currentShield = SURVIVAL_GetPlayerShieldHealthFromArmor( player )
+
+	if ( passedDamageReq && armorTier <= 3 )
+	{
+		int newTier = armorTier + 1
+		string newArmorRef
+		if ( newTier == 4 )
+			newArmorRef = "armor_pickup_lv5_evolving"
+		else
+			newArmorRef = "armor_pickup_lv" + newTier + "_evolving"
+
+		SURVIVAL_GivePlayerEquipment( player, newArmorRef, currentShield )
+		EvolvingArmor_SetEvolutionProgress( player, EvolvingArmor_GetRequirementForEvolution( newTier ) )
+		Remote_CallFunction_Replay( player, "ServerCallback_PlayFPEvoShieldUpgradeFX", player )
+		EvolvingArmor_BroadcastEvoShieldUpgrade( player, newTier )
+
+		if (overflow > 0)
+		{
+			EvolvingArmor_ApplyEvoPoints (player, overflow)
+		}
+
+	}
+}
+
+const float EVOSHIELD_UPGRADE_FX_RANGE = 5000.0
+void function EvolvingArmor_BroadcastEvoShieldUpgrade( entity upgradePlayer, int upgradeTier )
+{
+	vector playerPos = upgradePlayer.GetOrigin()
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( !IsValid( player ) )
+			continue
+
+		//if ( !IsAlive( player ) )
+		//	continue
+
+		if ( player == upgradePlayer )
+			continue
+
+		vector viewerPos = player.GetOrigin()
+		if ( Distance( playerPos, viewerPos ) <= EVOSHIELD_UPGRADE_FX_RANGE )
+			Remote_CallFunction_Replay( player, "ServerCallback_Play3PEvoShieldUpgradeFX", upgradePlayer )
+	}
+
+
+      
+
+	switch ( upgradeTier )
+	{
+		case 2:
+			EmitSoundOnEntityOnlyToPlayer( upgradePlayer, upgradePlayer, "EVO_Shield_Upgrade_lvl2_1P" )
+			EmitSoundOnEntityExceptToPlayer( upgradePlayer, upgradePlayer, "EVO_Shield_Upgrade_lvl2_3P" )
+			break
+
+		case 3:
+			EmitSoundOnEntityOnlyToPlayer( upgradePlayer, upgradePlayer, "EVO_Shield_Upgrade_lvl3_1P" )
+			EmitSoundOnEntityExceptToPlayer( upgradePlayer, upgradePlayer, "EVO_Shield_Upgrade_lvl3_3P" )
+			break
+
+		case 4:
+			EmitSoundOnEntityOnlyToPlayer( upgradePlayer, upgradePlayer, "EVO_Shield_Upgrade_lvl3_1P" )
+			EmitSoundOnEntityExceptToPlayer( upgradePlayer, upgradePlayer, "EVO_Shield_Upgrade_lvl3_3P" )
+			break
+	}
+}
+#endif //SERVER
+
+#if CLIENT
+void function ServerCallback_PlayFPEvoShieldUpgradeFX( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	EvolvingArmor_SetEvolutionRuiAnimTime()
+
+	int armorTier      = maxint( 1, EquipmentSlot_GetEquipmentTier( GetLocalViewPlayer(), "armor" ) )
+	vector shieldColor = GetFXRarityColorForTier( armorTier )
+
+	entity cockpit = player.GetCockpit()
+	if ( !cockpit )
+		return
+
+	int fxHandle = StartParticleEffectOnEntity( cockpit, file.evoShieldUpgradeFXFP, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+
+	EffectSetIsWithCockpit( fxHandle, true )
+	EffectSetControlPointVector( fxHandle, 1, shieldColor )
+}
+
+void function ServerCallback_Play3PEvoShieldUpgradeFX( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	if ( player == GetLocalClientPlayer() )
+		return
+
+	if ( !player.DoesShareRealms( GetLocalClientPlayer() ) )
+		return
+
+	int armorTier = EquipmentSlot_GetEquipmentTier( player, "armor" )
+
+	if ( armorTier == 0 )
+		return
+
+	vector shieldColor = GetFXRarityColorForTier( armorTier )
+
+	int attachID         = player.LookupAttachment( "CHESTFOCUS" )
+	int shield3pFXHandle = StartParticleEffectOnEntity( player, file.evoShieldUpgradeFX3P, FX_PATTACH_POINT_FOLLOW, attachID )
+	EffectSetControlPointVector( shield3pFXHandle, 1, shieldColor )
+}
+                                          
+#endif //CLIENT
 int function SortByPriorityThenTier( ConsumableInventoryItem a, ConsumableInventoryItem b )
 {
 	LootData lootData_a = SURVIVAL_Loot_GetLootDataByIndex( a.type )
@@ -5020,6 +5482,25 @@ bool function PropSurvivalFlagsHas( entity ent, int propSurvivalFlags )
 }
 #endif
 
+
+#if SERVER || CLIENT
+int function GetPropSurvivalMainProperty( int prop )
+{
+	int offset     = 0
+	int enoughBits = (1 << PROP_SURVIVAL_SURVIVAL_PROPERTY_MAIN_PROPERTY_BITS) - 1
+	return (prop >> offset) & enoughBits
+}
+#endif
+
+
+#if SERVER || CLIENT
+int function GetPropSurvivalExtraProperty( int prop )
+{
+	int offset     = PROP_SURVIVAL_SURVIVAL_PROPERTY_MAIN_PROPERTY_BITS
+	int enoughBits = (1 << PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_PROPERTY_BITS) - 1
+	return (prop >> offset) & enoughBits
+}
+#endif
 #if SERVER || CLIENT
 int function GetPropSurvivalFlagsProperty( int prop )
 {
@@ -5036,6 +5517,16 @@ int function GetPropSurvivalFlagsPropertyFromEnt( entity ent )
 }
 #endif
 
+#if SERVER
+int function SetPropSurvivalMainProperty( int prop, int val )
+{
+	Assert( val >= 0 && val < (1 << PROP_SURVIVAL_SURVIVAL_PROPERTY_MAIN_PROPERTY_BITS) )
+	int offset     = 0
+	int enoughBits = (1 << PROP_SURVIVAL_SURVIVAL_PROPERTY_MAIN_PROPERTY_BITS) - 1
+	int mask       = enoughBits << offset
+	return (prop & ~mask) | (val << offset)
+}
+#endif
 #if SERVER || CLIENT
 bool function IsValidAndStandardGrabbableLootEnt( entity lootEnt )
 {

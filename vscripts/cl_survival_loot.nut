@@ -132,6 +132,8 @@ void function Cl_Survival_LootInit()
 			HideVerticalLineStruct( v )
 		}
 	#endif // #if LOOT_GROUND_VERTICAL_LINES
+		PrecacheParticleSystem( EVO_ARMOR_FX )
+		PrecacheParticleSystem( EVO_ARMOR_PICKUP_FX )
 
 	#if HAS_ITEM_PICKUP_FEEDACK_FX
 		PrecacheParticleSystem( PICKUP_FEEDBACK_FX )
@@ -201,7 +203,7 @@ void function PlayLootPickupFeedbackFX( entity ent )
 
 				if ( EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref ) )
 				{
-					int fxIdx    = GetParticleSystemIndex( $"P_item_evo_armor_pickup" )
+					int fxIdx    = GetParticleSystemIndex( EVO_ARMOR_PICKUP_FX )
 					int pickupFX = StartParticleEffectInWorldWithHandle( fxIdx, origin, angles )
 					EffectSetControlPointVector( pickupFX, 1, tierColor )
 				}
@@ -833,6 +835,10 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 	RuiSetInt( rui, "propertyValue", -1 )
 	RuiSetInt( rui, "replacePropertyValue", -1 )
 
+		if ( lootRef.lootData.lootType == eLootType.ARMOR )
+		{
+			RuiSetBool( rui, "isEvolvingArmor", EvolvingArmor_IsEquipmentEvolvingArmor( lootRef.lootData.ref ) )
+		}
 
 	RuiSetString( rui, "usePromptText", asMain.displayString )
 	if ( asMain.additionalData.ref != "" )
@@ -853,7 +859,26 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 
 		if ( asMain.additionalData.lootType == eLootType.ARMOR )
 		{
-			RuiSetInt( rui, "replacePropertyValue", int( SURVIVAL_GetPlayerShieldHealthFromArmor( player ) / float(SURVIVAL_GetArmorShieldCapacity( asMain.additionalData.tier )) * 100) )
+			int replacePropertyValue = int( SURVIVAL_GetPlayerShieldHealthFromArmor( player ) / float(SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, asMain.additionalData )) * 100)
+			//
+
+                         
+				if ( EvolvingArmor_IsEquipmentEvolvingArmor( asMain.additionalData.ref ) )
+				{
+					//
+                                  
+						replacePropertyValue = int( SURVIVAL_GetPlayerShieldHealthFromArmor( player ) / float(SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, asMain.additionalData )) * 100)
+          
+                                                                                                                                                                                 
+           
+					RuiSetBool( rui, "isReplaceEvolvingArmor", EvolvingArmor_IsEquipmentEvolvingArmor( asMain.additionalData.ref ) )
+				}
+				else
+				{
+					RuiSetBool( rui, "isReplaceEvolvingArmor", false )
+				}
+         
+			RuiSetInt( rui, "replacePropertyValue", replacePropertyValue )
 		}
 	}
 
@@ -879,13 +904,28 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 	}
 	else if ( data.lootType == eLootType.ARMOR )
 	{
-		int maxShield = lootRef.lootExtraProperty != -1 ? lootRef.lootExtraProperty : SURVIVAL_GetArmorShieldCapacity( data.tier )
 		if ( !isInMenu && GetLootPromptStyle() == eLootPromptStyle.COMPACT )
 		{
-			RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_ARMOR_STATUS", Localize( data.pickupString ).toupper(), lootRef.lootProperty, maxShield ) )
+			RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_ARMOR_STATUS", Localize( data.pickupString ).toupper(), GetPropSurvivalMainProperty( lootRef.lootProperty ), SURVIVAL_GetArmorShieldCapacity( data.tier ) ) )
+
+                         
+				if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
+					RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_ARMOR_STATUS", Localize( data.pickupString ).toupper(), GetPropSurvivalMainProperty( lootRef.lootProperty ), EvolvingArmor_GetEvolvingArmorHealthForTier( data.tier ) ) )
+         
 		}
 
-		RuiSetInt( rui, "propertyValue", int(lootRef.lootProperty / float(maxShield) * 100) )
+		RuiSetInt( rui, "propertyValue", int(lootRef.lootProperty / float(SURVIVAL_GetArmorShieldCapacity( data.tier )) * 100) )
+
+                        
+			if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
+			{
+				int propertyValue = GetPropSurvivalMainProperty( lootRef.lootProperty )
+                                 
+					RuiSetInt( rui, "propertyValue", int(propertyValue / float(EvolvingArmor_GetEvolvingArmorHealthForTier( data.tier )) * 100) )
+         
+                                                                                                                                  
+          
+			}
 	}
 
 	if ( data.ammoType != "" )

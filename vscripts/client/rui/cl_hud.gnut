@@ -237,8 +237,10 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 {
 	if ( !file.damageFlyoutEnabled )
 		return
-
 	if ( !IsValid( victim ) )
+		return
+
+	if ( IsPlayerShadowZombie( GetLocalViewPlayer() ) )
 		return
 
 	bool showHitIndicator = GetConVarInt( "hud_setting_damageIndicatorStyle" ) > 0
@@ -261,7 +263,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	bool isShieldBreak   	= (damageType & DF_SHIELD_BREAK) ? true : false
 	bool isShadowShot    	= (damageType & DF_SHADOW_DAMAGE) ? true: false
 	bool isOvershieldShot	= (damageType & DF_OVERSHIELD) ? true : false
-
+	bool isSourShot 	 	= (damageType & DF_SHIELD_DAMAGE) ? true : false
 	// if( victim.IsPlayer() )
 	// {
 		// LootData victimShieldData = EquipmentSlot_GetEquippedLootDataForSlot( victim, "armor" )
@@ -274,15 +276,13 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 
 	asset shieldIcon = $""
 	int shieldLevel  = 0
+	float timeScale = 1.0 	
+	float shieldFrac = -1.0
 	if ( victim.IsPlayer() && (isShieldShot || isShieldBreak || hitType == eHitType.ARMOR) )
 	{
 		LootData shieldData = EquipmentSlot_GetEquippedLootDataForSlot( victim, "armor" )
 		shieldIcon = shieldData.hudIcon
-		shieldLevel = shieldData.tier//GetArmorLevelFromDamageFlags( damageFlags )
-		
-		// if( victim.GetShieldHealth() > 100 ) {
-			// shieldLevel = 5
-		// }
+		shieldLevel = shieldData.tier//
 	}
 	
 	if ( victim.IsPlayer() && isShadowShot )
@@ -290,46 +290,33 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		//
 	}
 
-	if ( !victim.IsPlayer() && isShieldShot) //props shield bleedtrough visuals
-	{
-		if(victim.e.firsttime){			
-			if( victim.GetShieldHealth() <= 50 ){
-			victim.e.shieldTier = 1
-			}
-			else if( victim.GetShieldHealth() > 50 && victim.GetShieldHealth() <= 75 ) {
-			victim.e.shieldTier = 2
-			} else if( victim.GetShieldHealth() > 75 && victim.GetShieldHealth() <= 100  ) {
-			victim.e.shieldTier = 3
-			} else if( victim.GetShieldHealth() > 100 ) {
-			victim.e.shieldTier = 5
-			}
-			victim.e.firsttime = false
-		}
-		shieldIcon = $"rui/hud/loot/loot_armor_3"
-		shieldLevel = victim.e.shieldTier
-	}
-	
-	if ( !victim.IsPlayer() && victim.GetShieldHealth() == 0)
-	{
-		shieldIcon = $""
-		shieldLevel = 0
-	}
 	
 	if ( !victim.IsPlayer() && (isKOShieldShot || hitType == eHitType.VORTEX) )
 	{
 		entity shieldOwner = victim.GetOwner()
-		if ( IsValid( shieldOwner ) && shieldOwner.IsPlayer() )
+                 
+		if ( IsAmpedWallEnt( victim ) )
 		{
-			if ( Bleedout_IsBleedingOut( shieldOwner ) )
+			shieldIcon = $""
+			shieldLevel = 1
+			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
+		}
+		else
+           
+		{
+			if ( IsValid( shieldOwner ) && shieldOwner.IsPlayer() )
 			{
-				LootData shieldData = EquipmentSlot_GetEquippedLootDataForSlot( shieldOwner, "incapshield" )
-				shieldIcon = shieldData.hudIcon
-				shieldLevel = shieldData.tier
-			}
-			else
-			{
-				shieldIcon = GIBRALTAR_PASSIVE_ICON
-				shieldLevel = 1
+				if ( Bleedout_IsBleedingOut( shieldOwner ) )
+				{
+					LootData shieldData = EquipmentSlot_GetEquippedLootDataForSlot( shieldOwner, "incapshield" )
+					shieldIcon = shieldData.hudIcon
+					shieldLevel = shieldData.tier
+				}
+				else
+				{
+					shieldIcon = GIBRALTAR_PASSIVE_ICON
+					shieldLevel = 1
+				}
 			}
 		}
 	}
@@ -337,7 +324,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	if ( victim.IsPlayer() && isOvershieldShot )
 	{
 		shieldIcon = GIBRALTAR_PASSIVE_ICON
-		shieldLevel = 5
+		shieldLevel = 1
 	}
 
 	if ( showHitIndicator )
@@ -358,6 +345,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		{
 			RuiSetImage( rui, "shieldIcon", shieldIcon )
 			RuiSetInt( rui, "shieldTier", shieldLevel )
+			RuiSetFloat( rui, "shieldFrac", shieldFrac )
 		}
 		else
 		{
@@ -412,8 +400,8 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		}
 	}
 
-	float distance = Distance( victim.GetOrigin() + offset, GetLocalViewPlayer().EyePosition() )
-	vector damageFlyoutDisplayPosition = GraphCappedVector( distance, 0, 256, victim.GetWorldSpaceCenter() + offset, victim.GetOrigin() + <0, 0, victim.GetBoundingMaxs().z> + offset )
+	float distance = Distance( victim.GetOrigin(), GetLocalViewPlayer().EyePosition() )
+	vector damageFlyoutDisplayPosition = GraphCappedVector( distance, 0, 256, victim.GetWorldSpaceCenter(), victim.GetOrigin() + <0, 0, victim.GetBoundingMaxs().z> )
 
 
 	if ( victim.GetScriptName() in file.modifyDamageFlyoutForScriptNameCallbacks )
@@ -450,9 +438,9 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		RuiSetInt( stackingRui, "hitType", hitType )
 		RuiSetAsset( stackingRui, "shieldIcon", shieldIcon )
 		RuiSetInt( stackingRui, "shieldTier", shieldLevel )
+		RuiSetFloat( stackingRui, "shieldFrac", shieldFrac )
 		RuiSetBool( stackingRui, "isCrit", isHeadShot || isCritShot )
-		// We should be able to track all of this in RUI, but since RUI is threaded, multiple events on the same frame (such as a Kraber shot that breaks shield)
-		// are combined, meaning the RUI will never know that the player had a shield in the first place
+		RuiSetBool( stackingRui, "isSour", isSourShot )
 		if ( isShieldBreak )
 		{
 			//printt( "wasShieldBreak" )
@@ -489,6 +477,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			RuiSetImage( floatingRui, "shieldIcon", shieldIcon )
 			RuiSetInt( floatingRui, "shieldTier", shieldLevel )
 			RuiSetBool( floatingRui, "isCrit", isHeadShot || isCritShot )
+			RuiSetBool( floatingRui, "isSour", isSourShot )
 			RuiSetBool( floatingRui, "showStacking", showStackingDamageText )
 
 			DamageData newDamageData

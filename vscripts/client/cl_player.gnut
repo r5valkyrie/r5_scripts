@@ -62,6 +62,7 @@ global function RunMuteClears
 global function BloodSprayDecals_Toggle
 #endif
 
+global const FX_KILLSHOT_SHADOWFORM = $"P_BShadow_death"
 const float DEFAULT_GAMEMODE_ANNOUNCEMENT_DURATION = 5.0
 const float WAIT_TO_HIDE_HEALTHBAR = 1.4
 
@@ -138,6 +139,7 @@ void function ClPlayer_Init()
 	level.grenadeIndicatorEnabled <- true
 	level.clientsLastKiller <- null
 
+	AddCreateCallback( "player", SetupPlayerAnimEvents )
 	if( GetCurrentPlaylistVarBool( "flowstate_enable_health_bars", false ) && !GetCurrentPlaylistVarBool( "is_practice_map", false ) )
 	{
 		AddCreateCallback( "player", FS_HealthBars_StartForPlayer )
@@ -813,20 +815,16 @@ void function PlayerConnectedOrDisconnected( entity player, int state, string di
 	string playerName
 	if ( state == 0 )
 	{
-		if ( disconnectingPlayerName == "" || Gamemode() != eGamemodes.SURVIVAL )
+		if ( disconnectingPlayerName == "" )
 			return
-		
 		playerName = disconnectingPlayerName
-		
-		Obituary_Print_Localized( Localize( "#MP_PLAYER_DISCONNECTED", playerName ), <255, 255, 255> )
 	}
 	else
 	{
 		playerName = GetPlayerName( ToEHI( player ) )
 
-		// ShouldShowObituaryLineForPlayer checks for playlist var: obituary_only_teammates already. Cafe
-		// if ( player.GetTeam() == GetLocalViewPlayer().GetTeam() )
-		// {
+		if ( player.GetTeam() == GetLocalViewPlayer().GetTeam() )
+		{
 			vector playerNameColor = <255, 255, 255>
 
 			int teamMemberIndex = player.GetTeamMemberIndex()
@@ -836,7 +834,7 @@ void function PlayerConnectedOrDisconnected( entity player, int state, string di
 				playerNameColor = GetPlayerInfoColor( player )
 
 			Obituary_Print_Localized( Localize( "#MP_PLAYER_CONNECTED", playerName ), playerNameColor )
-		// }
+		}
 	}
 }
 
@@ -972,7 +970,7 @@ void function ClientCodeCallback_PlayerDidDamage( PlayerDidDamageParams params )
 
 		vector armorColor = GetFXRarityColorForTier( armorTier )
 
-		//PlayShieldHitEffect( params, armorColor )
+		PlayShieldHitEffect( params, armorColor )
 		if ( isShieldShot )
 			showCrosshairHitIndicator = true
 	}
@@ -994,10 +992,10 @@ void function ClientCodeCallback_PlayerDidDamage( PlayerDidDamageParams params )
 		showCrosshairHitIndicator = false
 
 	if ( isKillShot || isKnockdownShot )
-		KillShotBloodSpray( attacker, victim, damagePosition, isExplosion, isBullet, isShotgun )
+		KillShotBloodSpray( attacker, victim, damagePosition, isExplosion, isBullet, isShotgun, isShadowShot )
 
-	//if ( victim.IsTitan() && isKillShot )
-	//	ClientScreenShake( 8, 10, 1, <0, 0, 0> )
+	if ( victim.IsTitan() && isKillShot )
+		ClientScreenShake( 8, 10, 1, <0, 0, 0> )
 
 	BloodSprayDecals( attacker, victim, damagePosition, damageAmount, isHeadShot, isKillShot, isMelee, isExplosion, isBullet, isShotgun )
 
@@ -1054,7 +1052,7 @@ void function ClientCodeCallback_PlayerDidDamage( PlayerDidDamageParams params )
 	// Play a hit sound effect if we didn't play a kill shot sound, and other conditions are met
 	if ( playHitSound && IsAlive( victim ) && !playedHitSound )
 	{
-		PlayHitSound( victim, attacker, damageFlags, isCritShot, victimIsHeavyArmor, isKillShot, hitType )
+		PlayHitSound( victim, attacker, damageFlags, isCritShot, isShieldShot, victimIsHeavyArmor, isKillShot, hitType )
 	}
 	
 	if( victim in file.onPlayerDamagedTimes )
@@ -1069,7 +1067,7 @@ void function ClientCodeCallback_PlayerDidDamage( PlayerDidDamageParams params )
 }
 
 
-void function PlayHitSound( entity victim, entity attacker, int damageFlags, bool isCritShot, bool victimIsHeavyArmor, bool isKillShot, int hitType )
+void function PlayHitSound( entity victim, entity attacker, int damageFlags, bool isCritShot, bool isShieldShot, bool victimIsHeavyArmor, bool isKillShot, int hitType )
 {
 	if ( damageFlags & DAMAGEFLAG_VICTIM_INVINCIBLE )
 	{
@@ -1079,9 +1077,9 @@ void function PlayHitSound( entity victim, entity attacker, int damageFlags, boo
 	{
 		EmitSoundOnEntity( attacker, "Player.HitbeepVortex" )
 	}
-	else if ( isCritShot && victimIsHeavyArmor )
+	else if ( isCritShot && isShieldShot )
 	{
-		EmitSoundOnEntity( attacker, "titan_damage_crit" )
+		EmitSoundOnEntity( attacker, "titan_damage_crit" ) //
 	}
 	else if ( isCritShot )
 	{
@@ -1098,25 +1096,38 @@ void function PlayHitSound( entity victim, entity attacker, int damageFlags, boo
 }
 
 
-void function KillShotBloodSpray( entity player, entity victim, vector damagePosition, bool isExplosion, bool isBullet, bool isShotgun )
+void function KillShotBloodSpray( entity player, entity victim, vector damagePosition, bool isExplosion, bool isBullet, bool isShotgun, bool isShadowShot  )
 {
+	if ( isShadowShot )
+	{
+		int fxId = GetParticleSystemIndex( FX_KILLSHOT_SHADOWFORM )
+
+		vector victimVelocity = victim.GetVelocity()
+		damagePosition += (Length( victimVelocity ) * 0.15) * Normalize( victimVelocity )
+		StartParticleEffectOnEntity( victim, fxId, FX_PATTACH_POINT, victim.LookupAttachment( "CHESTFOCUS" ) )
+		return
+	}
 	if ( victim.IsMechanical() )
 	{
 		int fxId = GetParticleSystemIndex( FX_KILLSHOT_MECHANICAL )
 
 		vector victimVelocity = victim.GetVelocity()
 		damagePosition += (Length( victimVelocity ) * 0.15) * Normalize( victimVelocity )
-		StartParticleEffectOnEntityWithPos( victim, fxId, FX_PATTACH_ABSORIGIN_FOLLOW, -1, damagePosition - victim.GetOrigin(), <0, 0, 0> )
+		StartParticleEffectOnEntity( victim, fxId, FX_PATTACH_POINT, victim.LookupAttachment( "CHESTFOCUS" ) )
 		return
 	}
 
 	if ( IsSoftenedLocale() )
 	{
+		int chestFocusAttachment = victim.LookupAttachment( "CHESTFOCUS" )
+		if ( chestFocusAttachment == 0  )
+			return
+
 		int fxId = GetParticleSystemIndex( FX_KILLSHOT_AR )
 
 		vector victimVelocity = victim.GetVelocity()
 		damagePosition += (Length( victimVelocity ) * 0.15) * Normalize( victimVelocity )
-		StartParticleEffectOnEntityWithPos( victim, fxId, FX_PATTACH_ABSORIGIN_FOLLOW, -1, damagePosition - victim.GetOrigin(), <0, 0, 0> )
+		StartParticleEffectOnEntity( victim, fxId, FX_PATTACH_POINT, chestFocusAttachment )
 		return
 	}
 
@@ -2000,18 +2011,17 @@ void function PlayShieldActivateEffect( entity ent )
 
 	int shieldBreakFX = GetParticleSystemIndex( SHIELD_MAX_FX )
 
-	int attachID = ent.LookupAttachment( "ref" )
-	
-	if( attachID == 0 )
-		return
-	
-	if ( Gamemode() == eGamemodes.fs_prophunt )
-	{
-		int shieldFXHandle = StartParticleEffectInWorldWithHandle( shieldBreakFX, ent.GetOrigin(), ent.GetAngles() )
-		EffectSetControlPointVector( shieldFXHandle, 1, shieldColor )
-		
-		return
-	}
+
+		bool isEvoShield = EvolvingArmor_IsEquipmentEvolvingArmor( EquipmentSlot_GetLootRefForSlot( ent, "armor" ) )
+		if ( isEvoShield )
+			shieldBreakFX = GetParticleSystemIndex( FX_SHIELD_EVO_UPGRADE_3P )
+       
+
+	int attachID
+	if ( shieldEnt.IsTitan() )
+		attachID = shieldEnt.LookupAttachment( "exp_torso_main" )
+	else
+		attachID = shieldEnt.LookupAttachment( "CHESTFOCUS" )
 	
 	int shieldFXHandle = StartParticleEffectOnEntity( shieldEnt, shieldBreakFX, FX_PATTACH_POINT_FOLLOW, attachID )
 	EffectSetControlPointVector( shieldFXHandle, 1, shieldColor )
@@ -2023,16 +2033,12 @@ void function PlayIt( entity victim )
 	float shieldHealthFrac = GetShieldHealthFrac( victim )
 
 	int shieldbodyFX = GetParticleSystemIndex( SHIELD_BODY_FX )
-	int attachID = victim.LookupAttachment( "ref" )
-	
-	if ( Gamemode() == eGamemodes.fs_prophunt )
-	{
-		int shieldFXHandle = StartParticleEffectInWorldWithHandle( shieldbodyFX, victim.GetOrigin(), victim.GetAngles() )
-		EffectSetControlPointVector( shieldFXHandle, 1, GetShieldEffectCurrentColor( 1 - shieldHealthFrac ) )
-		
-		return
-	}
-	
+	int attachID
+	if ( victim.IsTitan() )
+		attachID = victim.LookupAttachment( "exp_torso_main" )
+	else
+		attachID = victim.LookupAttachment( "CHESTFOCUS" )
+
 	int shieldFXHandle = StartParticleEffectOnEntity( victim, shieldbodyFX, FX_PATTACH_POINT_FOLLOW, attachID )
 
 	EffectSetControlPointVector( shieldFXHandle, 1, GetShieldEffectCurrentColor( 1 - shieldHealthFrac ) )
@@ -2058,23 +2064,12 @@ void function PlayShieldHitEffect( PlayerDidDamageParams params, vector shieldCo
 	float shieldHealthFrac = GetShieldHealthFrac( victim )
 
 	int shieldbodyFX = GetParticleSystemIndex( SHIELD_BODY_FX )
-	int attachID = victim.LookupAttachment( "ref" )
-	
-	if ( Gamemode() == eGamemodes.fs_prophunt )
-	{
-		int shieldFXHandle = StartParticleEffectInWorldWithHandle( shieldbodyFX, victim.GetOrigin(), victim.GetAngles() )
-		vector color
+	int attachID
+	if ( victim.IsTitan() )
+		attachID = victim.LookupAttachment( "exp_torso_main" )
+	else
+		attachID = victim.LookupAttachment( "CHESTFOCUS" ) //
 
-		if ( shieldColorOverride == < -1, -1, -1 > )
-			color = GetShieldEffectCurrentColor( 1 - shieldHealthFrac )
-		else
-			color = shieldColorOverride
-
-		EffectSetControlPointVector( shieldFXHandle, 1, color )	
-		
-		return
-	}
-	
 	int shieldFXHandle = StartParticleEffectOnEntity( victim, shieldbodyFX, FX_PATTACH_POINT_FOLLOW, attachID )
 
 	vector color

@@ -309,7 +309,48 @@ LootActionStruct function GroundAction_ForEquipment( entity player, LootRef loot
 		if ( lootData.lootType == eLootType.ARMOR )
 		{
 			int currentShields = SURVIVAL_GetPlayerShieldHealthFromArmor( player )
-			int lootShields    = lootRef.lootProperty
+			int lootShields    = GetPropSurvivalMainProperty( lootRef.lootProperty )
+
+                         
+				if ( EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref ) )
+				{
+					//
+					if ( !EvolvingArmor_IsEquipmentEvolvingArmor( equippedData.ref ) )
+					{
+						if ( currentShields < lootShields )
+						{
+							as.action = eLootAction.EQUIP
+							return as
+						}
+						else
+						{
+							as.action = eLootAction.SWAP
+							return as
+						}
+					}
+
+					//
+					if ( EvolvingArmor_IsEquipmentEvolvingArmor( equippedData.ref ) )
+					{
+						if ( lootData.tier > equippedData.tier || currentShields < lootShields )
+						{
+							as.action = eLootAction.EQUIP
+							return as
+						}
+					}
+				}
+				else
+				{
+					//
+					if ( EvolvingArmor_IsEquipmentEvolvingArmor( equippedData.ref ) )
+					{
+						if ( lootData.tier >= equippedData.tier )
+						{
+							as.action = eLootAction.SWAP
+							return as
+						}
+					}
+				}
 
 			if ( currentShields < lootShields )
 			{

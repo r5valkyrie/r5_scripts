@@ -759,7 +759,7 @@ void function ExtendedTrySwapEquipment( entity ent, entity player, ExtendedUseSe
 {
 #if SERVER
 	entity deathBox = settings.entityArg
-	if ( SwapMainWeapon( ent, player, 0, deathBox ) )
+	if ( PickupGroundEquipment( ent, player, 0, deathBox ) )
 		SURVIVAL_PlayerPickedupItem( ent, player, eLootAction.EQUIP, 0 )
 #else
 		LootData data = SURVIVAL_Loot_GetLootDataByIndex( ent.GetSurvivalInt() )

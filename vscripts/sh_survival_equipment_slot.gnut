@@ -28,8 +28,8 @@ global const table<string, asset> emptyAttachmentSlotImages = {
 	barrel = $"rui/pilot_loadout/mods/empty_barrel"
 	barrel_stabilizer = $"rui/pilot_loadout/mods/empty_barrel_stabilizer"
 	laser_sight = $"rui/pilot_loadout/mods/empty_laser_sight"
-	grip = $"rui/pilot_loadout/mods/empty_stock_tactical"
-	stock = $"rui/pilot_loadout/mods/empty_stock_tactical"
+	grip = $"rui/pilot_loadout/mods/empty_stock"
+	stock = $"rui/pilot_loadout/mods/empty_stock"
 	stock_tactical = $"rui/pilot_loadout/mods/empty_stock_tactical"
 	stock_sniper = $"rui/pilot_loadout/mods/empty_stock_sniper"
 	mag = $"rui/pilot_loadout/mods/empty_mag"
@@ -905,6 +905,19 @@ void function SetUnitFrameHudImageIfValid( string imageVarName, string tierVarNa
 	{
 		int lootTier = (lootIndex < 0) ? 0 : SURVIVAL_Loot_GetLootDataByIndex( lootIndex ).tier
 		RuiSetInt( rui, tierVarName, lootTier )
+			if ( SURVIVAL_Loot_IsLootIndexValid( lootIndex ) && SURVIVAL_Loot_GetLootDataByIndex( lootIndex ).lootType == eLootType.ARMOR )
+			{
+				string lootRef = SURVIVAL_Loot_GetLootDataByIndex( lootIndex ).ref
+				if ( EvolvingArmor_IsEquipmentEvolvingArmor( lootRef ) )
+				{
+					bool isEvolving = (lootIndex < 0) ? false : EvolvingArmor_IsEquipmentEvolvingArmor( SURVIVAL_Loot_GetLootDataByIndex( lootIndex ).ref )
+					RuiSetBool( rui, "isEvolvingShield", isEvolving )
+				}
+				else
+				{
+					RuiSetBool( rui, "isEvolvingShield", false )
+				}
+			}
 	}
 }
 #endif
