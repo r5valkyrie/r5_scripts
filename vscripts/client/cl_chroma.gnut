@@ -580,7 +580,7 @@ Assert( CHROMAWAVE_VERTICALONE + 2 == CHROMAWAVE_VERTICALTHREE )
 
 vector function GetAmmoChromaColor( string ref )
 {
-	vector color = ammoColors[ref]
+	vector color = GetAmmoColorByType( ref )
 	float maxComp = max( max( max( color.x, color.y ), color.z ), 0.1 )
 	return color / maxComp
 }

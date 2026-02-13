@@ -2480,6 +2480,13 @@ bool function DisplayObituaryName()
 }
 #endif
 
+#if CLIENT || UI 
+bool function DisplayHopupPopup()
+{
+	return GetConVarBool( "hud_setting_showButtonHints" )
+}
+#endif
+
 #if CLIENT || UI
 vector function GetKeyColor( int colorID, int optionalParam = 0 )
 {

@@ -82,6 +82,7 @@ global function EvolvingArmor_IsEquipmentEvolvingArmor
 global function SURVIVAL_BuildStringForAction
 global function SURVIVAL_UpdateStringForEquipmentAction
 global function IsLootEntInsideDeathBox
+global function GetInstalledWeaponAttachment
 #endif
 
 #if SERVER
@@ -1380,6 +1381,16 @@ array<string> function GetAttachPointsForAttachment( string attachmentName )
 	return aData.attachPoints
 }
 
+string function GetAttachPointForAttachment( string attachmentName )
+{
+	var attachmentMatrix = GetDataTable( $"datatable/weapon_attachment_matrix.rpak" )
+	int attachmentRow    = GetDataTableRowMatchingStringValue( attachmentMatrix, GetDataTableColumnByName( attachmentMatrix, "attachmentName" ), attachmentName )
+	Assert( attachmentRow >= 0, "Attachment not defined in datatable/weapon_attachment_matrix.rpak" )
+	int attachmentPointColumn = GetDataTableColumnByName( attachmentMatrix, "attachmentPoint" )
+
+	return GetDataTableString( attachmentMatrix, attachmentRow, attachmentPointColumn )
+}
+
 string function GetAttachPointForAttachmentOnWeapon( string weaponRef, string attachmentName )
 {
 	Assert( SURVIVAL_Loot_IsRefValid( weaponRef ), "Invalid weapon loot ref: " + weaponRef )
@@ -1466,6 +1477,23 @@ string function GetInstalledWeaponAttachmentForPoint( entity weapon, string atta
 }
 #endif
 
+#if CLIENT
+string function GetInstalledWeaponAttachment( entity weapon, string attachmentPoint )
+{
+	array<string> mods = GetWeaponMods( weapon )
+
+	foreach ( attachmentName in mods )
+	{
+		if ( !SURVIVAL_Loot_IsRefValid( attachmentName ) )
+			continue
+
+		if ( GetAttachPointForAttachment( attachmentName ) == attachmentPoint )
+			return attachmentName
+	}
+
+	return ""
+}
+#endif
 
 string function AmmoType_GetRefFromIndex( int ammoType )
 {
