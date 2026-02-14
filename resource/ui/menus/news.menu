@@ -228,7 +228,7 @@ scripts/resource/ui/menus/dialog.menu
 			wide			256  
 			tall            144
 			visible			1
-			rui             "ui/gamemode_select_v2_lobby_button.rpak"
+			rui             "ui/gamemode_select_lobby_button.rpak"
 			ypos			-100
 			xpos			0
 			zpos 2
@@ -246,7 +246,7 @@ scripts/resource/ui/menus/dialog.menu
 			wide			256  
 			tall            144
 			visible			1
-			rui             "ui/gamemode_select_v2_lobby_button.rpak"
+			rui             "ui/gamemode_select_lobby_button.rpak"
 			xpos			10
 			zpos 2
 			"scriptID"					"1"
@@ -263,7 +263,7 @@ scripts/resource/ui/menus/dialog.menu
 			wide			256  
 			tall            144
 			visible			1
-			rui             "ui/gamemode_select_v2_lobby_button.rpak"
+			rui             "ui/gamemode_select_lobby_button.rpak"
 			xpos			10
 			zpos 2
 			"scriptID"					"2"
@@ -280,7 +280,7 @@ scripts/resource/ui/menus/dialog.menu
 			wide			256  
 			tall            144
 			visible			1
-			rui             "ui/gamemode_select_v2_lobby_button.rpak"
+			rui             "ui/gamemode_select_lobby_button.rpak"
 			xpos			10
 			zpos 2
 			"scriptID"					"3"
@@ -297,7 +297,7 @@ scripts/resource/ui/menus/dialog.menu
 			wide			256  
 			tall            144
 			visible			1
-			rui             "ui/gamemode_select_v2_lobby_button.rpak"
+			rui             "ui/gamemode_select_lobby_button.rpak"
 			xpos			10
 			zpos 2
 			"scriptID"					"4"
@@ -314,7 +314,7 @@ scripts/resource/ui/menus/dialog.menu
 			wide			256  
 			tall            144
 			visible			1
-			rui             "ui/gamemode_select_v2_lobby_button.rpak"
+			rui             "ui/gamemode_select_lobby_button.rpak"
 			xpos			10
 			zpos 2
 			"scriptID"					"5"

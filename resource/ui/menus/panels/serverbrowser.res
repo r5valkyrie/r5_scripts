@@ -679,7 +679,7 @@ scripts/resource/ui/menus/panels/serverbrowser.res
 		"wide"					"450"
 		"tall"            		"250"
 		"visible"				"1"
-		rui                     "ui/gamemode_select_v2_button.rpak"
+		rui                     "ui/gamemode_select_v3_button.rpak"
 		"xpos"					"40"
 		"zpos" 					"4"
 		polyShape               "5.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"

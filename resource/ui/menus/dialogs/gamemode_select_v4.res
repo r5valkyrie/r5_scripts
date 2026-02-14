@@ -104,7 +104,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             ypos                    0
             xpos                    -50
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             tabPosition             1
@@ -135,7 +135,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             ypos                    0
             xpos                    0
             zpos                    10
-            rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+            rui                     "ui/gamemode_select_lobby_button.rpak"
             labelText               ""
             visible					1
             tabPosition             1
@@ -165,7 +165,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             ypos                    -80
             xpos                    0
             zpos                    90
-            rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+            rui                     "ui/gamemode_select_lobby_button.rpak"
             labelText               ""
             visible					1
             tabPosition             1
@@ -241,7 +241,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             ypos                    0
             xpos                    15
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             tabPosition             1
@@ -316,7 +316,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             ypos                    0
             xpos                    15
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             tabPosition             1
@@ -391,7 +391,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             ypos                    0
             xpos                    15
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             tabPosition             1
@@ -517,7 +517,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             ypos                    0
             xpos                    15
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             tabPosition             1
@@ -642,7 +642,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             ypos                    0
             xpos                    15
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             tabPosition             1

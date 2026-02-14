@@ -128,7 +128,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -153,7 +153,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -178,7 +178,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -203,7 +203,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -228,7 +228,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -254,7 +254,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -279,7 +279,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -304,7 +304,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -329,7 +329,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -354,7 +354,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -380,7 +380,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -405,7 +405,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -430,7 +430,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -455,7 +455,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -480,7 +480,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -506,7 +506,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -531,7 +531,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -556,7 +556,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -581,7 +581,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -606,7 +606,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -632,7 +632,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -657,7 +657,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -682,7 +682,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -707,7 +707,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"
@@ -732,7 +732,7 @@
         wide					200
         tall					112
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         sound_accept            "UI_Menu_GameMode_Select"

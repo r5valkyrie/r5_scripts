@@ -77,7 +77,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             xpos                    -48
             ypos                    -110
             zpos                    5
-            rui                     "ui/gamemode_select_v2_bg_panel.rpak"
+            rui                     "ui/gamemode_select_v3_bg_panel.rpak"
             labelText               ""
             visible					1
             cursorVelocityModifier  0.7
@@ -110,7 +110,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             tall					365
             xpos                    48
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             tabPosition             1
@@ -139,7 +139,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             tall					365
             xpos                    48
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             cursorVelocityModifier  0.7
@@ -162,7 +162,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             tall					365
             xpos                    48
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             cursorVelocityModifier  0.7
@@ -185,7 +185,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             tall					365
             xpos                    48
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             cursorVelocityModifier  0.7
@@ -208,7 +208,7 @@ scripts/resource/ui/menus/dialog_gamemode_select_v2.menu
             tall					365
             xpos                    48
             zpos                    10
-            rui                     "ui/gamemode_select_v2_button.rpak"
+            rui                     "ui/gamemode_select_v3_button.rpak"
             labelText               ""
             visible					1
             cursorVelocityModifier  0.7

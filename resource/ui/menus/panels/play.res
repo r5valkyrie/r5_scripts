@@ -130,7 +130,7 @@
         tall					168
         ypos                    13
         zpos                    10
-        rui                     "ui/gamemode_select_v2_lobby_button.rpak"
+        rui                     "ui/gamemode_select_lobby_button.rpak"
         labelText               ""
         visible					1
         cursorVelocityModifier  0.7

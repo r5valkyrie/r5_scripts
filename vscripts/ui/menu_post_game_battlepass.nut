@@ -4,7 +4,6 @@ global function OpenPostGameBattlePassMenu
 struct
 {
 	var menu
-	var summaryBox
 	var continueButton
 	var menuHeaderRui
 
@@ -45,7 +44,6 @@ void function InitPostGameBattlePassMenu( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_SHOW, OnPostGameBattlePassMenu_Show )
 	AddMenuEventHandler( menu, eUIEvent.MENU_HIDE, OnPostGameBattlePassMenu_Hide )
 
-	file.summaryBox = Hud_GetChild( menu, "SummaryBox" )
 
 	RegisterSignal( "ShowBPSummary" )
 
@@ -95,39 +93,6 @@ void function OnPostGameBattlePassMenu_Show()
 		RegisterButtonPressedCallback( KEY_SPACE, OnContinue_Activate )
 		file.buttonsRegistered = true
 	}
-
-	COLOR_BP_PREMIUM               = SrgbToLinear( <255, 90, 40> / 255.0 )
-	COLOR_BP_PINNED_CHALLENGE      = SrgbToLinear( <255, 215, 55> / 255.0 )
-	COLOR_BP_PINNED_CHALLENGE_TEXT = SrgbToLinear( <254, 227, 113> / 255.0 )
-
-	HudElem_SetRuiArg( file.summaryBox, "borderColor", COLOR_BP_PREMIUM )
-	HudElem_SetRuiArg( file.summaryBox, "innerColor", COLOR_BP_PREMIUM * 1.5 )
-	HudElem_SetRuiArg( file.summaryBox, "titleText", "#EOG_MATCH_BP" )
-
-	ItemFlavor ornull pass = GetActiveBattlePass()
-
-	if ( pass == null )
-		return
-
-	expect ItemFlavor( pass )
-
-	string bpLongName = ItemFlavor_GetShortName( pass )
-
-	HudElem_SetRuiArg( file.summaryBox, "subTitleText", bpLongName )
-
-	var matchRankRui = Hud_GetRui( Hud_GetChild( file.menu, "MatchRank" ) )
-
-	//
-	//
-	//
-
-	RuiSetInt( matchRankRui, "squadRank", GetPersistentVarAsInt( "lastGameRank" ) )
-	RuiSetInt( matchRankRui, "totalPlayers", GetPersistentVarAsInt( "lastGameSquads" ) )
-	int elapsedTime = GetUnixTimestamp() - GetPersistentVarAsInt( "lastGameTime" )
-
-	RuiSetString( matchRankRui, "lastPlayedText", Localize( "#EOG_LAST_PLAYED", GetFormattedIntByType( elapsedTime, eNumericDisplayType.TIME_MINUTES_LONG ) ) )
-
-	thread ShowBPSummary( pass )
 }
 
 void function OnPostGameBattlePassMenu_Hide()

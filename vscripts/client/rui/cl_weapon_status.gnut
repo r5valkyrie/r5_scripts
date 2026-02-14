@@ -208,7 +208,6 @@ void function ClWeaponStatus_AddClient( entity player )
 
 		RuiTrackFloat( rui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
 		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
-		RuiTrackInt( rui, "ultimateCredits", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "ultimateCredits" ) )
 		file.ability_left_hud = rui
 	}
 
@@ -558,7 +557,7 @@ void function UpdateRUIWeaponData( entity player, var rui, entity weapon, int ta
 
 			vector ammoColor = SrgbToLinear( <0.5, 0.5, 0.5> )
 			asset ammoIcon   = weaponData.fakeAmmoIcon == $"" ? $"rui/hud/gametype_icons/survival/sur_ammo_unique" : weaponData.fakeAmmoIcon
-			bool isLegendary = weaponData.tier >= 4
+			bool isCrateWeapon = weaponData.tier >= 5
 			bool isAttachmentLocked =  SURVIVAL_Weapon_IsAttachmentLocked( weaponData.ref )
 			RuiSetInt( rui, "weaponTier", weaponData.tier )
 
@@ -582,20 +581,11 @@ void function UpdateRUIWeaponData( entity player, var rui, entity weapon, int ta
 					ammoIcon = ammoData.hudIcon
 			}
 
-			if ( isLegendary )
-			{
-				if ( weaponData.tier == 4 )
-					ammoColor = SrgbToLinear( GetAmmoColorByType( "legendary" ) )
-				else if ( weaponData.tier == 5 )
-					ammoColor = SrgbToLinear( GetAmmoColorByType( "supply_drop" ) )
-			}
-
 			RuiSetFloat3( rui, "ammoColorTab" + tabIndex, ammoColor )
 			if ( selected )
 			{
 				RuiSetFloat3( rui, "ammoColor", ammoColor )
 				RuiSetImage( rui, "ammoIcon", ammoIcon )
-				RuiSetBool( rui, "isLegendary", isLegendary )
 			}
 		}
 	}

@@ -99,6 +99,7 @@ scripts/resource/ui/menus/post_game_battlepass.menu
 			ControlName				Label
 			xpos					0
 			ypos					c-420
+			ypos_nx_handheld		c-380		[$NX]
 			wide					%100
 			tall					906
 			labelText				""
@@ -107,127 +108,340 @@ scripts/resource/ui/menus/post_game_battlepass.menu
 			paintbackground			1
 		}
 
-        SummaryBox
-        {
-            ControlName				RuiPanel
-            rui                     "ui/match_summary_bg.rpak"
-            xpos                    0
-            ypos                    50
-            wide                    900
-            tall                    700
-            visible					1
+		MatchSummaryBackground
+		{
+			ControlName				RuiPanel
+			xpos					0
+			ypos					-80
+			wide					1520
+			wide_nx_handheld		1820		[$NX]
+			tall					700
+			visible				    1
+			rui                     "ui/match_summary_bg.rpak"
 
-            zpos                    400
+			pin_to_sibling			MenuFrame
+			pin_corner_to_sibling	TOP
+			pin_to_sibling_corner	TOP
+		}
 
-            pin_to_sibling          ScreenFrame
-            pin_corner_to_sibling   CENTER
-            pin_to_sibling_corner   CENTER
-        }
+	    ChallengeList
+	    {
+	        ControlName				GridButtonListPanel
+	        xpos                    -80
+	        xpos_nx_handheld        -90		[$NX]
+	        ypos                    -25
+	        columns                 1
+	        rows                    8
+	        buttonSpacing           6
+	        scrollbarSpacing        6
+	        scrollbarOnLeft         0
+	        visible					1
+	        selectOnDpadNav         0
 
-        PinnedChallenge1
+	        pin_to_sibling			MatchSummaryBackground
+	        pin_corner_to_sibling	TOP_LEFT
+	        pin_to_sibling_corner	TOP_LEFT
+
+			ButtonSettings
+			{
+				//rui                     "ui/generic_button.rpak"
+	            rui                     "ui/postmatch_challenge_row.rpak"
+
+				clipRui                 1
+				wide					655
+				wide_nx_handheld		955		[$NX]
+				tall					76
+				cursorVelocityModifier  0.7
+				enabled					0
+			}
+	    }
+
+	    BattlePassProgressAnchor
+	    {
+	        ControlName				Label
+			xpos					-25
+			ypos					-25
+			wide					630
+			tall					155
+	        labelText               ""
+			pin_to_sibling			MatchSummaryBackground
+			pin_corner_to_sibling	TOP_RIGHT
+			pin_to_sibling_corner	TOP_RIGHT
+	    }
+
+		MatchSummary
+		{
+			ControlName				RuiPanel
+			xpos					-25
+			ypos					-25
+			wide					615
+			tall					650
+			visible				    1
+			rui                     "ui/match_summary.rpak"
+
+			pin_to_sibling			MatchSummaryBackground
+			pin_corner_to_sibling	TOP_RIGHT
+			pin_to_sibling_corner	TOP_RIGHT
+		}
+
+		VguiDevBox
+		{
+			ControlName				ImagePanel
+			xpos                    -105
+			ypos                    -120
+			zpos					500
+			wide					100
+			tall					100
+			visible					0
+			enabled 				1
+			scaleImage				1
+			image					"vgui/HUD/white"
+			drawColor				"64 0 0 200"
+			pin_to_sibling			MatchSummary
+			pin_corner_to_sibling	TOP_RIGHT
+			pin_to_sibling_corner	TOP_RIGHT
+		}
+
+		ChallengesNextBPReward
+		{
+			ControlName				RuiButton
+			wide					103
+			tall					103
+			xpos                    -93
+			ypos                    -83
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
+
+	        pin_to_sibling			MatchSummary
+	        pin_corner_to_sibling	CENTER
+	        pin_to_sibling_corner	TOP_RIGHT
+		}
+
+	    AcrchivedRewardAnchor
+	    {
+	        ControlName				Label
+			xpos					-67
+			ypos					-60
+			wide					600
+			tall					128
+	        labelText               ""
+			pin_to_sibling			MatchSummaryBackground
+			pin_corner_to_sibling	BOTTOM_RIGHT
+			pin_to_sibling_corner	BOTTOM_RIGHT
+	    }
+
+        AcrchivedReward01
         {
             ControlName				RuiButton
-            xpos                    0
-            ypos                    16
-            wide					690
-            tall					70
-            zpos					500 // Needed or clicking on the background can hide this
+            classname               "RewardButton"
+            wide					90
+            tall					90
+			xpos                    0
+			ypos                    0
+            zpos                    300
             visible					1
-            enabled					1
-            // rui                     "ui/challenge_eog_button.rpak"
-            clipRui                 1
-            labelText				""
-            style					RuiButton
-            clip 					1
             cursorVelocityModifier  0.7
-            rightClickEvents		1
-            doubleClickEvents       1
-            sound_focus             ""
-            sound_accept            ""
-            sound_deny              ""
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
 
-            ruiArgs
-            {
-                actualWidth         690
-                showBlur 0
-            }
-
-            pin_to_sibling          PinnedChallenge0
-            pin_corner_to_sibling   TOP_LEFT
-            pin_to_sibling_corner   BOTTOM_LEFT
+			pin_to_sibling			AcrchivedRewardAnchor
+            pin_corner_to_sibling	BOTTOM_RIGHT
+            pin_to_sibling_corner	BOTTOM_RIGHT
         }
 
-        PinnedChallenge0
-        {
-            ControlName				RuiButton
-            xpos                    -128
-            ypos                    -32
-            wide					690
-            tall					70
-            zpos					500 // Needed or clicking on the background can hide this
-            visible					1
-            enabled					1
-            // rui                     "ui/challenge_eog_button.rpak"
-            clipRui                 1
-            labelText				""
-            style					RuiButton
-            clip 					1
+		AcrchivedReward02
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
             cursorVelocityModifier  0.7
-            rightClickEvents		1
-            doubleClickEvents       1
-            sound_focus             ""
-            sound_accept            ""
-            sound_deny              ""
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
 
-            ruiArgs
-            {
-                actualWidth         690
-                showBlur 0
-            }
+	        pin_to_sibling			AcrchivedReward01
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
 
-            pin_to_sibling          SummaryBox
-            pin_corner_to_sibling   TOP_LEFT
-            pin_to_sibling_corner   TOP_LEFT
-        }
+		AcrchivedReward03
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
 
-        XPEarned3
-        {
-            ControlName             RuiPanel
-            rui                     "ui/xp_earned_box.rpak"
-            xpos                    0
-            ypos                    64
-            wide                    380
-            tall                    280
-            visible                 1
+	        pin_to_sibling			AcrchivedReward02
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
 
-            zpos                    500
+		AcrchivedReward04
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
 
-            pin_to_sibling          PinnedChallenge1
-            pin_corner_to_sibling   TOP_LEFT
-            pin_to_sibling_corner   BOTTOM_LEFT
-        }
+	        pin_to_sibling			AcrchivedReward03
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
 
-        XPProgressBarBattlePass
-        {
-            ControlName				RuiPanel
-            rui                     "ui/xp_progress_bars_bp.rpak"
-            xpos                    0
-            ypos                    0
-            wide                    512
-            tall                    360
-            visible					0
+		AcrchivedReward05
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
 
-            zpos                    500
+	        pin_to_sibling			AcrchivedReward04
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
 
-            pin_to_sibling          SummaryBox
-            pin_corner_to_sibling   BOTTOM_RIGHT
-            pin_to_sibling_corner   BOTTOM_RIGHT
-        }
+		AcrchivedReward06
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
+
+	        pin_to_sibling			AcrchivedReward05
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
+
+		AcrchivedReward07
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    0
+			ypos                    -138
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
+
+	        pin_to_sibling			AcrchivedRewardAnchor
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_RIGHT
+		}
+
+		AcrchivedReward08
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
+
+	        pin_to_sibling			AcrchivedReward07
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
+
+		AcrchivedReward09
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
+
+	        pin_to_sibling			AcrchivedReward08
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
+
+		AcrchivedReward10
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
+
+	        pin_to_sibling			AcrchivedReward09
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
+
+		AcrchivedReward11
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
+
+	        pin_to_sibling			AcrchivedReward10
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
+
+		AcrchivedReward12
+		{
+			ControlName				RuiButton
+			classname				"RewardButton"
+			wide					90
+			tall					90
+			xpos                    10
+			ypos                    0
+			zpos                    300
+			visible					1
+	        rui					    "ui/battle_pass_reward_button_v2.rpak"
+
+	        pin_to_sibling			AcrchivedReward11
+	        pin_corner_to_sibling	BOTTOM_RIGHT
+	        pin_to_sibling_corner	BOTTOM_LEFT
+		}
 
         ContinueButton
         {
             ControlName				RuiButton
             classname               "MenuButton"
+            ypos_nx_handheld		-40		[$NX]
             wide					384
             tall					66
             rui                     "ui/generic_button.rpak"
