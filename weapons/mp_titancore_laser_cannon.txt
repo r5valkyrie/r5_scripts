@@ -8,7 +8,7 @@ WeaponData
 	"menu_icon"										"rui/titan_loadout/core/titan_core_laser"
 	"hud_icon"										"rui/titan_loadout/core/titan_core_laser"
 
-	"damage_flags"									"DF_STOPS_TITAN_REGEN | DF_DOOM_FATALITY | DF_GIB"
+	"damage_flags"									"DF_SOUR | DF_SHIELD_ONLY_DAMAGE | DF_GIB"
 
 	// Ammo
 	"ammo_stockpile_max"							"200"

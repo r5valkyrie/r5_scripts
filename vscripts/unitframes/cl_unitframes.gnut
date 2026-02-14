@@ -97,9 +97,6 @@ void function OnPlayerTeamChanged( entity player, int oldTeam, int newTeam )
 	{
 		DestroyTeamUnitFrame( player )
 	}
-	
-	if( newTeam == GetLocalViewPlayer().GetTeam() || player == GetLocalViewPlayer() )
-		RefreshUnitframesForPlayer( GetLocalViewPlayer() )
 }
 
 
@@ -111,37 +108,14 @@ void function OnPlayerDestroyed( entity player )
 
 void function OnPlayerClassChanged( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
-	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
-
-	bool characterChanged = true
-
-	bool playerIsSpectator = player.GetPlayerSettings() == SPECTATOR_SETTINGS
-
-	if ( characterRef != "" )
+	if ( PlayerHasUnitFrame( player ) && player.GetPlayerSettings() != SPECTATOR_SETTINGS )
 	{
-		if ( !( player in file.characterRefTable ) )
-			file.characterRefTable[player] <- characterRef
-		else
-		{
-			if ( file.characterRefTable[player] == characterRef )
-				characterChanged = false
-			else if ( ! playerIsSpectator ) 
-				file.characterRefTable[player] = characterRef
-		}
+		SetUnitFrameOwner( GetUnitFrame( player ), player )
 	}
-
-	if ( characterChanged )
+	else if ( PlayerShouldHaveUnitFrame( player ) )
 	{
-		if ( PlayerHasUnitFrame( player ) && !playerIsSpectator )
-		{
-			SetUnitFrameOwner( GetUnitFrame( player ), player )
-		}
-		else if ( PlayerShouldHaveUnitFrame( player ) )
-		{
-			
-			CreateTeamUnitFrame( player )
-		}
+		printt( "UF: OnPlayerClassChanged", player )
+		CreateTeamUnitFrame( player )
 	}
 }
 
@@ -180,7 +154,7 @@ void function UpdateRUITest()
 	// thread InitSurvivalHealthBar()
 }
 
-void function RefreshUnitframesForPlayer( entity player )
+void function RefreshUnitframesForPlayer( entity player, int RASState = 0, bool RASMergeSuccessful = false )
 {
 	if ( player == null ) // Can happen at the end of a match
 		return
@@ -194,7 +168,7 @@ void function RefreshUnitframesForPlayer( entity player )
 
 	foreach ( unitframePlayer, unitFrame in file.teamUnitFrames )
 	{
-		if ( !IsValid( unitframePlayer ) || !IsAlive( unitframePlayer ) && Gamemode() == eGamemodes.fs_snd || unitframePlayer.GetTeam() != playerTeam || !PlayerShouldHaveUnitFrame( unitframePlayer ) )
+		if ( !IsValid( unitframePlayer ) || unitframePlayer.GetTeam() != playerTeam || !PlayerShouldHaveUnitFrame( unitframePlayer ) )
 			playersToRemove.append( unitframePlayer )
 		else
 			thread SetUnitFrameDataFromOwner( unitFrame.rui, unitframePlayer )
@@ -203,8 +177,7 @@ void function RefreshUnitframesForPlayer( entity player )
 	foreach ( unitframePlayer in playersToRemove )
 		DestroyTeamUnitFrame( unitframePlayer )
 
-	array<entity> teamPlayers = GetPlayerArrayOfTeam( playerTeam )
-	foreach ( teamPlayer in teamPlayers )
+	foreach ( teamPlayer in GetPlayerArrayOfTeam( playerTeam ) )
 	{
 		if ( PlayerShouldHaveUnitFrame( teamPlayer ) )
 			CreateTeamUnitFrame( teamPlayer )
@@ -232,30 +205,15 @@ void function CreateTeamUnitFrame( entity player )
 	UnitFrameDef unitFrame
 	unitFrame.rui = rui
 
-	if ( player == GetLocalClientPlayer() )
-	{
-		unitFrame.index = 0
+	file.teamUnitFrames[player] <- unitFrame
 
-		foreach ( frame in file.teamUnitFrames )
-		{
-			if ( frame.index >= 0 )
-			{
-				frame.index++
-				SetUnitFramePosition( frame )
-			}
-		}
-	}
-	else
-	{
-		unitFrame.index = file.teamUnitFrames.len()
-	}
+	UpdateUnitFrameIndices()
 
 	foreach ( callbackFunc in file.Callbacks_OnTeamUnitFrameCreated )
 	{
 		callbackFunc( unitFrame.index )
 	}
 
-	file.teamUnitFrames[player] <- unitFrame
 	SetUnitFrameOwner( unitFrame, player )
 	SetUnitFramePosition( unitFrame )
 	UpdateEquipmentSlot( player, unitFrame.rui )
@@ -481,14 +439,7 @@ void function DestroyTeamUnitFrame( entity player )
 		callbackFunc( removedIndex )
 	}
 
-	foreach ( unitFrame in file.teamUnitFrames )
-	{
-		if ( unitFrame.index >= removedIndex )
-		{
-			unitFrame.index--
-			SetUnitFramePosition( unitFrame )
-		}
-	}
+	UpdateUnitFrameIndices()
 }
 
 
@@ -529,27 +480,21 @@ bool function PlayerShouldHaveUnitFrame( entity player )
 	if ( player == viewer && ( !IsSpectating() || IsAlive( player ) ) )
 		return false
 
-	if( client.GetTeam() == TEAM_SPECTATOR )
-		if ( client.GetObserverTarget() == player )
-			return false
 
 	if ( playerTeam == TEAM_UNASSIGNED )
 		return false
 
-	if ( playerTeam == TEAM_SPECTATOR && GetCurrentPlaylistName() != "fs_scenarios" )
+	if ( playerTeam == TEAM_SPECTATOR )
 		return false
 
 	if ( playerTeam != viewer.GetTeam() )
 		return false
-	
-	if( Gamemode() == eGamemodes.fs_snd && !IsAlive(player) )
-		return false
-	
-	if ( GetGameState() < eGameState.Playing && !IsFiringRangeGameMode() )
-		return false
-	
-	if( viewer.GetRealms().len() > 1 && Playlist() == ePlaylists.fs_scenarios )
-		return false
+	int gameState = GetGameState()
+	if ( gameState < eGameState.Playing && !IsFiringRangeGameMode() )
+	{
+		if( !( gameState == eGameState.Prematch && GetCurrentPlaylistVarBool( "show_teamunitframes_in_prematch", false ) ) )
+			return false
+	}
 
 	return true
 }

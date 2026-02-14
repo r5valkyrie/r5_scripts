@@ -1855,10 +1855,11 @@ void function UpdateEquipmentSlot( entity player, var rui )
 			LootData data = EquipmentSlot_GetEquippedLootDataForSlot( player, equipSlot )
 			int tier      = data.tier
 			asset hudIcon = tier > 0 ? data.hudIcon : es.emptyImage
+			if ( es.unitFrameTierVar != "" )
+				RuiSetInt( rui, es.unitFrameTierVar, tier )
 
-			RuiSetInt( rui, es.unitFrameTierVar, tier )
-
-			RuiSetImage( rui, es.unitFrameImageVar, hudIcon )
+			if ( es.unitFrameImageVar != "" )
+				RuiSetImage( rui, es.unitFrameImageVar, hudIcon )
 
                          
 				if ( data.lootType == eLootType.ARMOR )

@@ -153,7 +153,7 @@ WeaponData
 			"melee_range"								"300"
 			"melee_anim_1p_number"						"3"			// ACT_VM_MELEE_ATTACK1, 2, or 3
 			"melee_anim_3p"								"ACT_GESTURE_MELEE_ATTACK3"
-			"damage_flags"								"DF_MELEE | DF_EXPLOSION | DF_CRITICAL | DF_KNOCK_BACK | DF_DOOM_FATALITY"
+			"damage_flags"								"DF_MELEE | DF_EXPLOSION | DF_CRITICAL | DF_KNOCK_BACK | DF_SHIELD_ONLY_DAMAGE"
 			"impact_effect_table"						"40mm_splasher_rounds"
 
 		}

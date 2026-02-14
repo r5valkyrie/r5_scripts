@@ -30,7 +30,7 @@ global struct BallLightningData
 	float damageToPilots      = BALL_LIGHTNING_DAMAGE_TO_PILOTS
 	float damage              = BALL_LIGHTNING_DAMAGE
 	bool zapPylons            = false
-	int deathPackage          = ( DF_DISSOLVE | DF_GIB | DF_ELECTRICAL | DF_STOPS_TITAN_REGEN )
+	int deathPackage          = ( DF_DISSOLVE | DF_GIB | DF_ELECTRICAL | DF_SOUR )
 	bool fatalToDoomedTitans  = false
 }
 

@@ -460,7 +460,7 @@ void function MortarFromWeapon( entity weapon, asset markerFx, float delay, vect
 	fireMissileParams.pos = gunOrigin
 	fireMissileParams.dir = fwd
 	fireMissileParams.speed = 1
-	fireMissileParams.scriptTouchDamageType = damageTypes.projectileImpact// | DF_IMPACT
+	fireMissileParams.scriptTouchDamageType = damageTypes.projectileImpact// | DF_SHIELD_SYPHON
 	fireMissileParams.scriptExplosionDamageType = damageTypes.explosive
 	fireMissileParams.doRandomVelocAndThinkVars = false
 	fireMissileParams.clientPredicted = false

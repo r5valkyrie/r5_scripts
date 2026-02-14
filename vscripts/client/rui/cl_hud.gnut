@@ -169,11 +169,17 @@ void function QueueMessageThink()
 
 		messageData.startTime = Time()
 
+		asset ruiAsset = $""
 		var rui
-		if ( messageData.messageScale > 1.0 )
-			rui = CreateCockpitPostFXRui( $"ui/centerevent_info.rpak" )
+		if ( GetScoreMessageRuiAssetForMode() != $"" )
+			ruiAsset = GetScoreMessageRuiAssetForMode()
+		else if ( messageData.messageScale > 1.0 )
+			ruiAsset = $"ui/centerevent_info.rpak"
 		else
-			rui = CreateCockpitPostFXRui( $"ui/pickup_info.rpak" )
+			ruiAsset = $"ui/pickup_info.rpak"
+
+		rui = CreateCockpitPostFXRui( ruiAsset )
+
 
 		RuiSetGameTime( rui, "startTime", messageData.startTime )
 		RuiSetFloat( rui, "duration", messageData.duration )
@@ -225,6 +231,10 @@ void function MessageThink( MessageData messageData )
 }
 
 
+asset function GetScoreMessageRuiAssetForMode()
+{
+	return $""
+}
 //
 void function DEV_DamageFlyout( entity victim )
 {
@@ -233,6 +243,10 @@ void function DEV_DamageFlyout( entity victim )
 
 
 const GIBRALTAR_PASSIVE_ICON = $"rui/hud/character_abilities/gibraltar_passive_transparent"
+const RAMPART_AMPED_WALL_ICON = $"rui/hud/character_abilities/rampart_amped_wall_transparent"
+            
+const STUN_GRENADE_ICON = $"rui/hud/character_abilities/fuse_stun_indicator" 
+const float STUN_GRENADE_ICON_TIMESCALE = 0.3
 void function DamageFlyout( float damageAmount, vector damagePosition, entity victim, int hitType, int damageFlags = 0, int damageType = 0, entity weapon = null )
 {
 	if ( !file.damageFlyoutEnabled )
@@ -263,14 +277,8 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	bool isShieldBreak   	= (damageType & DF_SHIELD_BREAK) ? true : false
 	bool isShadowShot    	= (damageType & DF_SHADOW_DAMAGE) ? true: false
 	bool isOvershieldShot	= (damageType & DF_OVERSHIELD) ? true : false
-	bool isSourShot 	 	= (damageType & DF_SHIELD_DAMAGE) ? true : false
-	// if( victim.IsPlayer() )
-	// {
-		// LootData victimShieldData = EquipmentSlot_GetEquippedLootDataForSlot( victim, "armor" )
-		
-		// if( victimShieldData.tier > 4 && isShieldShot && victim.GetShieldHealth() > 100 )
-			// isOvershieldShot = true
-	// }
+	bool isSourShot 	  	= (damageType & DF_SOUR) ? true : false
+	bool isStunned        = false //
 		
 	int sortKey = (file.lastSortKey++) % 100
 
@@ -327,6 +335,13 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		shieldLevel = 1
 	}
 
+	if ( victim.IsPlayer() && isStunned )
+	{
+		shieldIcon = STUN_GRENADE_ICON
+		shieldLevel = 1
+		timeScale = STUN_GRENADE_ICON_TIMESCALE
+	}
+       
 	if ( showHitIndicator )
 	{
 		if ( file.rui_hitIndicator == null )
@@ -352,6 +367,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			RuiSetImage( rui, "shieldIcon", $"" )
 			RuiSetInt( rui, "shieldTier", 0 )
 		}
+			RuiSetFloat( rui, "timeScale", timeScale )
 	}
 
 	if ( ShouldShowProjectileHitDot( damageType, weapon ) || GetCurrentPlaylistVarBool( "firingrange_aimtrainerbycolombia", false ) && ENABLE_HIT_DOT )
@@ -573,8 +589,7 @@ void function AddScoreEventMessage( ScoreEvent scoreEvent, EHI associatedEHI, in
 	messageData.scoreEventValue = pointValue
 	messageData.messageText = eventText
 	messageData.messageScale = (displayType & eEventDisplayType.BIG) ? 1.01 : 1.0
-	if ( ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilot" ||
-		ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilotAssist" )
+	if ( ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilot" || ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilotAssist" )
 		messageData.messageScale = 1.5
 		
 	if( ScoreEvent_GetEventName( scoreEvent ) == "FS_Scenarios_SoloWin" || 

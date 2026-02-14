@@ -1,4 +1,4 @@
-scripts/resource/ui/menus/panels/survival_inventory_list.res
+scripts/Resource/UI/menus/panels/survival_inventory_list.res
 {
     PanelFrame
     {
@@ -27,47 +27,17 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		enabled             1
 	}
 
-	// WeaponButton0
-	// {
-		// ControlName			RuiButton
-		// Classname			"ListButtonClass"
-		// InheritProperties	SurvivalInventoryListButton
-		// wide			240
-		// tall			68
-		// visible			1
-
-		// zpos			1
-
-		// navDown         WeaponButton1
-	// }
-
-	// WeaponButton1
-	// {
-		// ControlName			RuiButton
-		// Classname			"ListButtonClass"
-		// InheritProperties	SurvivalInventoryListButton
-		// wide			240
-		// tall			68
-		// visible			1
-
-		// zpos			1
-		
-		// navUp           WeaponButton0
-		// navDown         ListButton0
-	// }
-		
 	ListButton0
 	{
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
-		
-		navUp           WeaponButton1
+
 		navDown         ListButton1
 	}
 
@@ -76,8 +46,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -91,8 +61,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -106,8 +76,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -118,8 +88,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -130,8 +100,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -142,8 +112,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -154,8 +124,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -166,8 +136,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -178,8 +148,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -190,8 +160,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -202,8 +172,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -214,8 +184,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -226,8 +196,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -238,8 +208,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -250,8 +220,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -262,8 +232,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -274,8 +244,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -286,8 +256,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -298,8 +268,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1
@@ -310,116 +280,8 @@ scripts/resource/ui/menus/panels/survival_inventory_list.res
 		ControlName			RuiButton
 		Classname			"ListButtonClass"
 		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
-		visible			1
-
-		zpos			1
-	}
-
-	ListButton21
-	{
-		ControlName			RuiButton
-		Classname			"ListButtonClass"
-		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
-		visible			1
-
-		zpos			1
-	}
-
-	ListButton22
-	{
-		ControlName			RuiButton
-		Classname			"ListButtonClass"
-		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
-		visible			1
-
-		zpos			1
-	}
-
-	ListButton23
-	{
-		ControlName			RuiButton
-		Classname			"ListButtonClass"
-		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
-		visible			1
-
-		zpos			1
-	}
-
-	ListButton24
-	{
-		ControlName			RuiButton
-		Classname			"ListButtonClass"
-		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
-		visible			1
-
-		zpos			1
-	}
-
-	ListButton25
-	{
-		ControlName			RuiButton
-		Classname			"ListButtonClass"
-		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
-		visible			1
-
-		zpos			1
-	}
-
-	ListButton26
-	{
-		ControlName			RuiButton
-		Classname			"ListButtonClass"
-		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
-		visible			1
-
-		zpos			1
-	}
-
-	ListButton27
-	{
-		ControlName			RuiButton
-		Classname			"ListButtonClass"
-		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
-		visible			1
-
-		zpos			1
-	}
-
-	ListButton28
-	{
-		ControlName			RuiButton
-		Classname			"ListButtonClass"
-		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
-		visible			1
-
-		zpos			1
-	}
-
-	ListButton29
-	{
-		ControlName			RuiButton
-		Classname			"ListButtonClass"
-		InheritProperties	SurvivalInventoryListButton
-		wide			525
-		tall			68
+		wide			500
+		tall			88
 		visible			1
 
 		zpos			1

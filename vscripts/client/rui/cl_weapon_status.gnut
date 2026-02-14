@@ -179,6 +179,7 @@ void function ClWeaponStatus_AddClient( entity player )
 	{
 		var rui = CreateCockpitPostFXRui( $"ui/ammo_status_hint.rpak", HUD_Z_BASE )
 		RuiTrackFloat( rui, "ammoFrac", GetLocalClientPlayer(), RUI_TRACK_WEAPON_CLIP_AMMO_FRACTION )
+		RuiTrackFloat( rui, "maxClipAmmo", GetLocalClientPlayer(), RUI_TRACK_WEAPON_CLIP_AMMO_MAX )
 		RuiTrackFloat( rui, "remainingAmmoFrac", GetLocalClientPlayer(), RUI_TRACK_WEAPON_REMAINING_AMMO_FRACTION )
 		RuiTrackFloat( rui, "readyToFireFrac", GetLocalClientPlayer(), RUI_TRACK_WEAPON_READY_TO_FIRE_FRACTION )
 		RuiTrackFloat( rui, "reloadingFrac", GetLocalClientPlayer(), RUI_TRACK_WEAPON_RELOAD_FRACTION )
@@ -370,7 +371,7 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 		if ( selectedWeapon == weaponInSlot1 && IsValid( weaponInSlot1 ) )
 			activeWeaponTab = 1
 	}
-	else if( IsValid( file.lastSelectedPrimaryWeapon ) )
+	else if( IsValid( file.lastSelectedPrimaryWeapon ) && file.lastSelectedPrimaryWeapon.GetWeaponOwner() == player ) //
 	{
 		//
 		//
@@ -467,6 +468,10 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 }
 
 
+entity function GetLastSelectedPrimaryWeapon()
+{
+	return file.lastSelectedPrimaryWeapon
+}
 void function ClearRuiWeaponData( var rui, bool isTitan )
 {
 	RuiSetInt( rui, "sightTier", 0 )
@@ -479,6 +484,10 @@ void function ClearRuiWeaponData( var rui, bool isTitan )
 	RuiSetBool( rui, "gripAllowed", false )
 	RuiSetInt( rui, "hopupTier", 0 )
 	RuiSetBool( rui, "hopupAllowed", false )
+	RuiSetInt( rui, "hopupMultiATier", 0 )
+	RuiSetBool( rui, "hopupMultiAAllowed", false )
+	RuiSetInt( rui, "hopupMultiBTier", 0 )
+	RuiSetBool( rui, "hopupMultiBAllowed", false )
 	RuiSetInt( rui, "hopupLootIdx", -1 )
 	RuiSetBool( rui, "showPassiveBonusPopup", false )
 	RuiSetInt( rui, "weaponTier", 0 )
@@ -496,6 +505,8 @@ void function ClearRuiWeaponData( var rui, bool isTitan )
 
 	RuiSetFloat3( rui, "ammoColor", SrgbToLinear( <0.5, 0.5, 0.5> ) )
 	RuiSetImage( rui, "ammoIcon", $"rui/hud/gametype_icons/survival/sur_ammo_blank" )
+	RuiSetFloat3( rui, "borderDefaultColor", SrgbToLinear( <0.5, 0.5, 0.5> ) )
+	RuiSetInt( rui, "attachmentLockPips", 0 )
 
 	RuiSetInt( rui, "selectedWeaponLootIdx", -1 )
 	RuiSetInt( rui, "weaponTabSelected", -1 )
@@ -556,26 +567,30 @@ void function UpdateRUIWeaponData( entity player, var rui, entity weapon, int ta
 			}
 
 			vector ammoColor = SrgbToLinear( <0.5, 0.5, 0.5> )
+			vector rarityColor = SrgbToLinear( <0.3, 0.3, 0.3> ) //
 			asset ammoIcon   = weaponData.fakeAmmoIcon == $"" ? $"rui/hud/gametype_icons/survival/sur_ammo_unique" : weaponData.fakeAmmoIcon
-			bool isCrateWeapon = weaponData.tier >= 5
+			bool isCrateWeapon = ( weaponData.tier == eLootTier.HEIRLOOM )
 			bool isAttachmentLocked =  SURVIVAL_Weapon_IsAttachmentLocked( weaponData.ref )
 			RuiSetInt( rui, "weaponTier", weaponData.tier )
 
-			if ( weaponData.ammoType != "" )
+			if ( ( weaponData.tier == eLootTier.COMMON ) && isAttachmentLocked )
+				rarityColor = SrgbToLinear( GetKeyColor( COLORID_FRAME_LOOT_TIER1 ) / 255.0 )
+			else if ( weaponData.tier == eLootTier.RARE )
+				rarityColor = SrgbToLinear( GetKeyColor( COLORID_FRAME_LOOT_TIER2 ) / 255.0 )
+			else if ( weaponData.tier == eLootTier.EPIC )
+				rarityColor = SrgbToLinear( GetKeyColor( COLORID_FRAME_LOOT_TIER3 ) / 255.0 )
+			else if ( weaponData.tier == eLootTier.LEGENDARY )
+				rarityColor = SrgbToLinear( GetAmmoColorByType( "legendary" ) )
+			else if ( weaponData.tier == eLootTier.HEIRLOOM )
+			{
+				rarityColor = SrgbToLinear( GetAmmoColorByType( "supply_drop" ) )
+				ammoColor = rarityColor
+			}
+
+			if ( weapon.GetWeaponSettingBool( eWeaponVar.uses_ammo_pool ) )
 			{
 				LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( weaponData.ammoType )
-				if ( weaponData.ammoType in ammoColors && ( weaponData.tier <= 1 ) && !isAttachmentLocked  )
-					ammoColor = SrgbToLinear( GetAmmoColorByType( weaponData.ammoType ) )
-				else if ( ( weaponData.tier == eLootTier.COMMON ) && isAttachmentLocked )
-					ammoColor = SrgbToLinear( GetKeyColor( COLORID_FRAME_LOOT_TIER1 ) / 255.0 )
-				else if ( weaponData.tier == eLootTier.RARE )
-					ammoColor = SrgbToLinear( GetKeyColor( COLORID_FRAME_LOOT_TIER2 ) / 255.0 )
-				else if ( weaponData.tier == eLootTier.EPIC )
-					ammoColor = SrgbToLinear( GetKeyColor( COLORID_FRAME_LOOT_TIER3 ) / 255.0 )
-				else if ( weaponData.tier == eLootTier.LEGENDARY )
-					ammoColor = SrgbToLinear( GetAmmoColorByType( "legendary" ) )
-				else if ( weaponData.tier == eLootTier.HEIRLOOM )
-					ammoColor = SrgbToLinear( GetAmmoColorByType( "supply_drop" ) )
+				ammoColor = SrgbToLinear( GetAmmoColorByType( weaponData.ammoType ) )
 
 				if ( ammoData.hudIcon != $"" )
 					ammoIcon = ammoData.hudIcon
@@ -584,7 +599,11 @@ void function UpdateRUIWeaponData( entity player, var rui, entity weapon, int ta
 			RuiSetFloat3( rui, "ammoColorTab" + tabIndex, ammoColor )
 			if ( selected )
 			{
+				RuiSetFloat3( rui, "borderDefaultColor", rarityColor )
+				RuiSetInt( rui, "attachmentLockPips", isAttachmentLocked && !( weaponData.tier == eLootTier.HEIRLOOM ) ? weaponData.tier : 0 )
+				RuiSetFloat3( rui, "rarityColor", rarityColor )
 				RuiSetFloat3( rui, "ammoColor", ammoColor )
+				RuiSetFloat3( rui, "ammoGlowColor", isAttachmentLocked ? rarityColor : ammoColor )
 				RuiSetImage( rui, "ammoIcon", ammoIcon )
 			}
 		}
@@ -633,7 +652,21 @@ void function PrimaryWeapon_UpdateFireSelectHUD( entity weapon )
 
 		if ( IsWeaponInSingleShotMode( weapon ) )
 		{
-			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_shot", "#FIRE_MODE_SINGLE", 2, currentFireModeIndex )
+				if ( DoesModExist( weapon, "hopup_shatter_rounds" ) && weapon.HasMod( "hopup_shatter_rounds" ) )
+				{
+					LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weapon.GetWeaponClassName() )
+					asset shatterCapsImg = weaponData.ammoType == "arrows" ? $"rui/hud/weapon_toggle/shatter_caps_enabled_bow" : $"rui/hud/weapon_toggle/shatter_caps_enabled"
+					asset singleShotImg = weaponData.ammoType == "arrows" ? $"rui/hud/weapon_toggle/single_shot_bow" : $"rui/hud/weapon_toggle/single_shot"
+
+					if ( weapon.HasMod( "altfire_shatter_rounds" ) )
+						SetWeaponToggleHUD( shatterCapsImg, "#SHATTER_ROUNDS_ENABLED", 2, currentFireModeIndex )
+					else
+						SetWeaponToggleHUD( singleShotImg, "#SHATTER_ROUNDS_DISABLED", 2, currentFireModeIndex )
+				}
+				else
+				{
+					SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_shot", "#FIRE_MODE_SINGLE", 2, currentFireModeIndex )
+				}
 		}
 		else if ( IsWeaponInBurstMode( weapon ) )
 		{
@@ -641,26 +674,26 @@ void function PrimaryWeapon_UpdateFireSelectHUD( entity weapon )
 		}
 		else if ( IsWeaponInAutomaticMode( weapon ) )
 		{
-			if ( DoesModExist( weapon, "hopup_paintball" ) && IsModActive( weapon, "hopup_paintball" ) )
-			{
-				if ( currentFireModeIndex == 0 )
+				if ( DoesModExist( weapon, "hopup_paintball" ) && IsModActive( weapon, "hopup_paintball" ) )
 				{
-					SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_01", 3, currentFireModeIndex, true )
+					if ( currentFireModeIndex == 0 )
+					{
+						SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_01", 3, currentFireModeIndex, true )
+					}
+					else if ( currentFireModeIndex == 1 )
+					{
+						SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_02", 3, currentFireModeIndex, true )
+					}
+					else if ( currentFireModeIndex == 2 )
+					{
+						SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_03", 3, currentFireModeIndex, true )
+					}
+					else if ( currentFireModeIndex == 3 )
+					{
+						SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_04", 3, currentFireModeIndex, true )
+					}
 				}
-				else if ( currentFireModeIndex == 1 )
-				{
-					SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_02", 3, currentFireModeIndex, true )
-				}
-				else if ( currentFireModeIndex == 2 )
-				{
-					SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_03", 3, currentFireModeIndex, true )
-				}
-				else if ( currentFireModeIndex == 3 )
-				{
-					SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_PAINT_04", 3, currentFireModeIndex, true )
-				}
-			}
-			else
+				else
       
 			{
 				SetWeaponToggleHUD( $"rui/hud/weapon_toggle/automatic", "#FIRE_MODE_AUTO", 2, currentFireModeIndex )
@@ -703,7 +736,16 @@ void function PrimaryWeapon_UpdateFireSelectHUD( entity weapon )
 	 }
 	else
 	{
-		if ( IsWeaponInSingleShotMode( weapon ) )
+		LootData weaponData
+		if( SURVIVAL_Loot_IsRefValid( weapon.GetWeaponClassName() ) )
+		{
+			weaponData = SURVIVAL_Loot_GetLootDataByRef( weapon.GetWeaponClassName() )
+		}
+		if ( weaponData.ammoType == "arrows" )
+		{
+			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_shot_bow", "#FIRE_MODE_SINGLE_ONLY", 1 )
+		}
+		else if ( IsWeaponInSingleShotMode( weapon ) )
 		{
 			SetWeaponToggleHUD( $"rui/hud/weapon_toggle/single_shot", "#FIRE_MODE_SINGLE_ONLY", 1 )
 		}
@@ -729,6 +771,8 @@ const table<string, string> ruiAttachmentAllowedArgs = {
 	mag = "magAllowed"
 	sight = "sightAllowed"
 	hopup = "hopupAllowed"
+	hopupMulti_a = "hopupMultiAAllowed"
+	hopupMulti_b = "hopupMultiBAllowed"
 }
 
 const table<string, string> ruiAttachmentTierArgs = {
@@ -737,6 +781,8 @@ const table<string, string> ruiAttachmentTierArgs = {
 	mag = "magTier"
 	sight = "sightTier"
 	hopup = "hopupTier"
+	hopupMulti_a = "hopupMultiATier"
+	hopupMulti_b = "hopupMultiBTier"
 }
 
 const table<string, string> ruiAttachmentIconArgs = {
@@ -745,6 +791,8 @@ const table<string, string> ruiAttachmentIconArgs = {
 	mag = "magIcon"
 	sight = "sightIcon"
 	hopup = "hopupIcon"
+	hopupMulti_a = "hopupMultiAIcon"
+	hopupMulti_b = "hopupMultiBIcon"
 }
 
 void function UpdateModsOnSurvivalWeaponRui( var rui, entity weapon )
@@ -791,17 +839,17 @@ void function UpdateModsOnSurvivalWeaponRui( var rui, entity weapon )
 			{
 				RuiSetBool( rui, ruiAttachmentAllowedArgs[attachmentName], true )
 
-				string mod = GetInstalledWeaponAttachment( weapon, attachmentName )
+				string mod = GetInstalledWeaponAttachmentForPoint( weapon, attachmentName )
 				if ( SURVIVAL_Loot_IsRefValid( mod ) )
 				{
 					LootData data = SURVIVAL_Loot_GetLootDataByRef( mod )
-					if ( isAttachmentLockedWeapon )
+					if ( SURVIVAL_IsAttachmentPointLocked( weaponRef, attachmentName ) )
 						RuiSetInt( rui, ruiAttachmentTierArgs[attachmentName], weaponData.tier )
 					else
 						RuiSetInt( rui, ruiAttachmentTierArgs[attachmentName], data.tier )
 					RuiSetImage( rui, ruiAttachmentIconArgs[attachmentName], data.hudIcon )
 
-					if ( attachmentName == "hopup" && DisplayHopupPopup() )
+					if ( (attachmentName == "hopup" || attachmentName == "hopupMulti_a" || attachmentName == "hopupMulti_b") && DisplayHopupPopup() )
 					{
 						RuiSetInt( rui, "hopupLootIdx", data.index )
 						RuiSetString( rui, "hopupName", Localize( data.pickupString ).toupper() )
@@ -839,8 +887,15 @@ void function UpdateModsOnSurvivalWeaponRui( var rui, entity weapon )
 				string descText = weaponInfo.shouldShowAltDescTextFunc( weapon ) ? weaponInfo.altDescText : weaponInfo.descText
 				RuiSetString( rui, "hopupDesc", Localize( descText ) )
 
-				RuiSetImage( rui, "hopupIcon", weaponInfo.icon )
-				RuiSetInt( rui, "hopupTier", 1 )
+				string attachPoint = ""
+				if ( SURVIVAL_Loot_IsRefValid( modName ) )
+					attachPoint = GetAttachPointForAttachmentOnWeapon( weaponRef, modName )
+				else
+					attachPoint = "hopup"	//
+				string hopupIconArg = ruiAttachmentIconArgs[attachPoint]
+				string hopupTierArg = ruiAttachmentTierArgs[attachPoint]
+				RuiSetImage( rui, hopupIconArg, weaponInfo.icon )
+				RuiSetInt( rui, hopupTierArg, 1 )
 
 				RuiSetBool( rui, "showPassiveBonusPopup", true )
 
@@ -876,9 +931,9 @@ bool function WeaponHasFireModeSelect( entity weapon )
                       
 	else if ( DoesModExist( weapon, "hopup_highcal_rounds" ) && IsModActive( weapon, "hopup_highcal_rounds" ) )
 		return true
-	else if ( DoesModExist( weapon, "hopup_double_tap" ) && IsModActive( weapon, "hopup_double_tap" ) )
-		return true
 	else if ( DoesModExist( weapon, "hopup_paintball" ) && IsModActive( weapon, "hopup_paintball" ) )
+		return true
+	else if ( DoesModExist( weapon, "hopup_shatter_rounds" ) && IsModActive( weapon, "hopup_shatter_rounds" ) )
 		return true
 	else if ( DoesModExist( weapon, "altfire" ) )
 		return true
@@ -889,9 +944,9 @@ bool function WeaponHasFireModeSelect( entity weapon )
 
 int function GetWeaponCurrentFireModeIndex( entity weapon )
 {
-	if ( DoesModExist( weapon, "hopup_double_tap" ) && IsModActive( weapon, "hopup_double_tap" ) )
+	if ( DoesModExist( weapon, "hopup_highcal_rounds" ) && IsModActive( weapon, "hopup_highcal_rounds" ) )
 	{
-		if ( IsModActive( weapon, "altfire_double_tap" ) )
+		if ( IsModActive( weapon, "altfire_highcal" ) )
 			return 1
 		else
 			return 0
@@ -929,6 +984,17 @@ int function GetWeaponCurrentFireModeIndex( entity weapon )
 			return 0
 	}
 
+	if ( DoesModExist( weapon, "hopup_selectfire" ) )
+	{
+		if ( IsModActive( weapon, "altfire_selectfire" ) )
+			return 1
+		else
+			return 0
+	}
+
+                      
+	if ( DoesModExist( weapon, "hopup_shatter_rounds" ) )
+		return weapon.HasMod( "altfire_shatter_rounds" ) ? 1 : 0
 	return 0
 }
 
@@ -1009,7 +1075,7 @@ void function UpdateChokeHint( entity player, entity weapon, string mod )
 
 void function OnPlayerAddWeaponMod( entity player, entity weapon, string mod )
 {
-	if ( mod == "altfire" || mod == "altfire_highcal" || mod == "altfire_double_tap" )
+	if ( IsModAltfireMod( mod ) )
 	{
 		if ( WeaponHasFireModeSelect( weapon ) )
 			UpdateFireSelectHint( player, weapon, mod )
@@ -1023,7 +1089,7 @@ void function OnPlayerAddWeaponMod( entity player, entity weapon, string mod )
 
 void function OnPlayerRemoveWeaponMod( entity player, entity weapon, string mod )
 {
-	if ( mod == "altfire" || mod == "altfire_highcal" || mod == "altfire_double_tap" )
+	if ( IsModAltfireMod( mod ) )
 	{
 		if ( WeaponHasFireModeSelect( weapon ) )
 			UpdateFireSelectHint( player, weapon, mod )
@@ -1036,6 +1102,15 @@ void function OnPlayerRemoveWeaponMod( entity player, entity weapon, string mod 
 	OnSelectedWeaponChanged( weapon )
 }
 
+bool function IsModAltfireMod( string mod )
+{
+	if ( mod == "altfire" || mod == "altfire_highcal" || mod == "altfire_double_tap" || mod == "altfire_selectfire")
+		return true
+             
+	if ( mod == "shatter_rounds_mode" )
+		return true
+	return false
+}
 bool function CanShowWeaponCycleHint( entity selectedWeapon, entity weaponInSlot0, entity weaponInSlot1 )
 {
 	if ( !IsValid( selectedWeapon ) )
@@ -1348,6 +1423,11 @@ int function GetUltimateWeaponState()
 	return currentUltimateState
 }
 
+var function GetWeaponRui()
+{
+	return file.weapon_hud_rui
+}
+
 var function GetTacticalRui()
 {
 	return file.ability_center_hud
@@ -1569,14 +1649,17 @@ void function InitOffhandRui( var rui, entity player, entity weapon )
 		case eWeaponCooldownType.ammo:
 			int maxAmmoReady = weapon.UsesClipsForAmmo() ? weapon.GetWeaponSettingInt( eWeaponVar.ammo_clip_size ) : weapon.GetWeaponPrimaryAmmoCountMax( weapon.GetActiveAmmoSource() )
 			int ammoPerShot = weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
-			int ammoMinToFire = weapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire )
+			int burstCount = maxint( weapon.GetWeaponSettingInt( eWeaponVar.burst_fire_count ), 1 )
+			int ammoMinToFire = weapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire ) * burstCount
+
+			RuiSetInt( rui, "ammoMinToFire", ammoMinToFire )
 
 			if ( maxAmmoReady == 0 )
 				maxAmmoReady = 1
 			RuiSetFloat( rui, "minFireFrac", float( ammoMinToFire ) / float( maxAmmoReady ) )
 			if ( ammoPerShot == 0 )
 				ammoPerShot = 1
-			RuiSetInt( rui, "segments", maxAmmoReady / ammoPerShot )
+			RuiSetInt( rui, "segments", maxAmmoReady / (ammoPerShot * burstCount ) )
 
 			RuiTrackFloat( rui, "chargeFrac", weapon, RUI_TRACK_WEAPON_CLIP_AMMO_FRACTION )
 

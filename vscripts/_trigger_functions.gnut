@@ -245,7 +245,7 @@ void function FireDamagedEntity( entity trigger, entity ent )
 		}
 
 		vector damageOrigin = ent.GetOrigin()
-		int scriptTypeMask = damageTypes.dissolve// | DF_STOPS_TITAN_REGEN
+		int scriptTypeMask = damageTypes.dissolve// | DF_SOUR
 
 		int damageAmount = 1
 
@@ -330,7 +330,7 @@ void function DeadlyFogDamagedEntity( entity trigger, entity ent )
 		bool isTitan = ent.IsTitan()
 		vector damageOrigin = ent.GetOrigin() + ( isTitan ? <0,0,0> : <0,0,-200> )
 		damageOrigin += <RandomFloatRange( -300.0, 300.0 ), RandomFloatRange( -300.0, 300.0 ), RandomFloatRange( -100.0, 100.0 )>
-		int scriptTypeMask = damageTypes.dissolve// | DF_STOPS_TITAN_REGEN
+		int scriptTypeMask = damageTypes.dissolve// | DF_SOUR
 
 		int damageAmount = int( ent.GetMaxHealth() / ( timeTillDeath / tickTime ) )
 

@@ -811,30 +811,21 @@ void function PlayerConnectedOrDisconnected( entity player, int state, string di
 		return
 
 	Assert( state == 0 || state == 1 )
-
-	string playerName
 	if ( state == 0 )
+		return
+
+	if ( player.GetTeam() == GetLocalViewPlayer().GetTeam() )
 	{
-		if ( disconnectingPlayerName == "" )
-			return
-		playerName = disconnectingPlayerName
-	}
-	else
-	{
-		playerName = GetPlayerName( ToEHI( player ) )
+		string playerName = GetPlayerName( ToEHI( player ) )
+		vector playerNameColor = <255, 255, 255>
 
-		if ( player.GetTeam() == GetLocalViewPlayer().GetTeam() )
-		{
-			vector playerNameColor = <255, 255, 255>
+		int teamMemberIndex = player.GetTeamMemberIndex()
+		if ( teamMemberIndex < 0 )
+			Warning( "%s() - Invalid team member index (%d) for player: %s", FUNC_NAME(), teamMemberIndex, string( player ) )
+		else
+			playerNameColor = GetPlayerInfoColor( player )
 
-			int teamMemberIndex = player.GetTeamMemberIndex()
-			if ( teamMemberIndex < 0 )
-				Warning( "%s() - Invalid team member index (%d) for player: %s", FUNC_NAME(), teamMemberIndex, string( player ) )
-			else
-				playerNameColor = GetPlayerInfoColor( player )
-
-			Obituary_Print_Localized( Localize( "#MP_PLAYER_CONNECTED", playerName ), playerNameColor )
-		}
+		Obituary_Print_Localized( Localize( "#MP_PLAYER_CONNECTED", playerName ), playerNameColor )
 	}
 }
 
@@ -981,7 +972,7 @@ void function ClientCodeCallback_PlayerDidDamage( PlayerDidDamageParams params )
 		showCrosshairHitIndicator = false
 	}
 
-	if ( damageType & DF_NO_INDICATOR )
+	if ( damageType & DF_STUN_AI )
 	{
 		playHitSound = false
 		playKillSound = false

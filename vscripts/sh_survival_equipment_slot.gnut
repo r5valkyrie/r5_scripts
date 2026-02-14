@@ -217,6 +217,16 @@ void function SURVIVAL_EquipmentSlot_InitShared()
 		e.trackingVisionDropPOI        = eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_INCAPSHIELD
 		e.getEquippedRefFunc           = GetEquippedRefBasedOnTrackingNetInt
 	#endif
+		e = RegisterEquipslot( "gadgetslot" )
+		e.title = "#GADGET_SLOT"
+		e.emptyCommsAction = eCommsAction.INVENTORY_NEED_GADGET
+		e.filledCommsActionFunc = FilledCommsAction_Gadget
+		e.trackingNetInt = "equipedItemLootIndex_Gadgets"
+		#if(CLIENT)
+
+			e.getEquippedRefFunc = GetEquippedRefBasedOnTrackingNetInt
+		#endif
+       
 
 	e = RegisterEquipslot( "main_weapon0" )
 	e.title                  = "#SURVIVAL_WEAPON"
@@ -516,6 +526,31 @@ int function EmptyCommsAction_AttachmentForParent( string equipmentSlot, string 
 #endif // #if CLIENT
 
 	return eCommsAction.QUICKCHAT_READY
+}
+
+int function FilledCommsAction_Gadget( string equipmentSlotRef, string itemRef, EquipmentSlot es )
+{
+	int commsAction 	= eCommsAction.BLANK
+	LootData lootData 	= SURVIVAL_Loot_GetLootDataByRef( itemRef )
+
+	if ( lootData.lootType == eLootType.GADGET )
+	{
+		switch ( lootData.ref )
+		{
+                         
+			case "mp_ability_mobile_respawn_beacon":
+				commsAction = eCommsAction.INVENTORY_HAS_MOBILE_RESPAWN_BEACON
+				break
+         
+                         
+			case "mp_ability_void_ring":
+				commsAction = eCommsAction.INVENTORY_HAS_VOID_RING
+				break
+         
+		}
+	}
+
+	return commsAction
 }
 
 int function FilledCommsAction_Weapon( string equipmentSlotRef, string itemRef, EquipmentSlot es )

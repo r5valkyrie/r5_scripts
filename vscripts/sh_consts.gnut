@@ -2608,13 +2608,14 @@ global enum eTooltipStyle
 
 global struct LootTooltipData
 {
-	int index
-	int guid
-	int count
-	int lootContext
-	int property = -1
-	bool isPinged
-	bool isPingedByUs
+	int           index
+	int           guid
+	int           count
+	int           lootContext
+	int           property = 0
+	bool          isPinged
+	bool          isPingedByUs
+	bool		  isInDeathBox = false
 	array<string> mods
 }
 

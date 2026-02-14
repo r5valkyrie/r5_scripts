@@ -71,9 +71,9 @@ void function FireArcBall( entity weapon, vector pos, vector dir, bool shouldPre
 	if ( IsValid( owner ) )
 		team = owner.GetTeam()
 
-	//entity bolt = weapon.FireWeaponBolt( pos, dir, speed, damageTypes.arcCannon | DF_IMPACT, damageTypes.arcCannon | DF_EXPLOSION, shouldPredict, 0 )
+	//entity bolt = weapon.FireWeaponBolt( pos, dir, speed, damageTypes.arcCannon | DF_SHIELD_SYPHON, damageTypes.arcCannon | DF_EXPLOSION, shouldPredict, 0 )
 
-	int damageType = DF_IMPACT | DF_EXPLOSION
+	int damageType = DF_SHIELD_SYPHON | DF_EXPLOSION
 	WeaponFireBoltParams fireGrenadeParams
 	fireGrenadeParams.pos = pos
 	fireGrenadeParams.dir = dir

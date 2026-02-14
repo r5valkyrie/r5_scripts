@@ -186,7 +186,7 @@ var function OnWeaponPrimaryAttack_titanweapon_predator_cannon( entity weapon, W
 			fireBoltParams.pos = attackParams.pos
 			fireBoltParams.dir = attackParams.dir
 			fireBoltParams.speed = 10000
-			fireBoltParams.scriptTouchDamageType = damageTypes.gibBullet | DF_IMPACT | DF_EXPLOSION
+			fireBoltParams.scriptTouchDamageType = damageTypes.gibBullet | DF_SHIELD_SYPHON | DF_EXPLOSION
 			fireBoltParams.scriptExplosionDamageType = DF_EXPLOSION | DF_RAGDOLL
 			fireBoltParams.clientPredicted = false
 			fireBoltParams.additionalRandomSeed = 0
@@ -296,10 +296,10 @@ var function OnWeaponNpcPrimaryAttack_titanweapon_predator_cannon( entity weapon
 
 int function FireWeaponPlayerAndNPC( entity weapon, WeaponPrimaryAttackParams attackParams, bool playerFired )
 {
-	int damageType = DF_BULLET | DF_STOPS_TITAN_REGEN | DF_GIB
+	int damageType = DF_BULLET | DF_SOUR | DF_GIB
 	if ( weapon.HasMod( "Smart_Core" ) )
 	{
-		return SmartAmmo_FireWeapon( weapon, attackParams, damageType, damageTypes.largeCaliber | DF_STOPS_TITAN_REGEN )
+		return SmartAmmo_FireWeapon( weapon, attackParams, damageType, damageTypes.largeCaliber | DF_SOUR )
 	}
 	else
 	{

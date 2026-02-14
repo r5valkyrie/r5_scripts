@@ -2656,7 +2656,7 @@ array<entity> function FireExpandContractMissiles_S2S( entity weapon, WeaponPrim
 		fireMissileParams.pos = attackPos
 		fireMissileParams.dir = attackDir
 		fireMissileParams.speed = expect float( missileSpeed )
-		fireMissileParams.scriptTouchDamageType = DF_GIB | DF_IMPACT
+		fireMissileParams.scriptTouchDamageType = DF_GIB | DF_SHIELD_SYPHON
 		fireMissileParams.scriptExplosionDamageType = damageTypes.explosive
 		fireMissileParams.doRandomVelocAndThinkVars = false
 		fireMissileParams.clientPredicted = shouldPredict

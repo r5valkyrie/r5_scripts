@@ -99,7 +99,7 @@ void function OnBallLightningDamage( entity victim, var damageInfo )
 	if ( victim.IsProjectile() )
 		return
 
-	if ( DamageInfo_GetCustomDamageType( damageInfo ) & (DF_EXPLOSION | DF_IMPACT) )
+	if ( DamageInfo_GetCustomDamageType( damageInfo ) & (DF_EXPLOSION | DF_SHIELD_SYPHON) )
 		return
 
 	// if ( IsHumanSized( victim ) )

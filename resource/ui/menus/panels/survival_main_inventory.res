@@ -106,12 +106,40 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
 
         navUp                   GridButton1x4
         navLeft                 IncapShield
+                   
+        navRight                GadgetSlot
 
         pin_to_sibling          IncapShield
         pin_corner_to_sibling   LEFT
         pin_to_sibling_corner   RIGHT
     }
 
+    GadgetSlot
+    {
+        ControlName             RuiButton
+        InheritProperties       SurvivalEquipmentButton
+
+        classname               "SurvivalEquipment"
+        scriptID                "gadgetslot"
+
+        wide                    94
+        wide_nx_handheld        119			[$NX]
+        tall                    120
+        tall_nx_handheld        152			[$NX]
+
+        rightClickEvents        1
+
+        xpos                    100
+        xpos_nx_handheld        38			[$NX]
+        ypos                    0
+
+        navUp                   GridButton1x5
+        navLeft                 BackPack
+        
+		pin_to_sibling          BackPack
+        pin_corner_to_sibling   LEFT
+        pin_to_sibling_corner   RIGHT
+    }
     MainWeapon0
     {
         ControlName             RuiButton
@@ -160,6 +188,28 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
         pin_to_sibling_corner   TOP_RIGHT
     }
 
+    MainWeaponChargeUp0
+    {
+        ControlName             RuiButton
+        InheritProperties       SurvivalWeaponButtonWide
+        rui						"ui/survival_weapon_chargeup_ping_button.rpak"
+
+        wide					280
+        tall					32
+
+		classname               "RequestButton"
+        scriptID                "main_weapon0"
+
+        xpos                    0
+        ypos                    30
+        zpos                    0
+        visible                 0
+        cursorPriority          1
+
+        pin_to_sibling          MainWeapon0
+        pin_corner_to_sibling   TOP_RIGHT
+        pin_to_sibling_corner   TOP_RIGHT
+    }
     MainWeapon0_Name
     {
         ControlName				Label
@@ -295,6 +345,7 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
 
         navLeft                 MainWeapon0_Grip
         navDown                 MainWeapon0
+        navRight                MainWeapon0_HopupMulti_a
 
         xpos                    4
         ypos                    0
@@ -306,6 +357,58 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
         pin_to_sibling_corner   TOP_RIGHT
     }
 
+    MainWeapon0_HopupMulti_a
+    {
+        ControlName             RuiButton
+        InheritProperties       SurvivalAttachmentButton
+
+        wide					75
+        tall					75
+
+        classname               "SurvivalEquipment"
+        scriptID                "main_weapon0_hopupMulti_a"
+
+        rightClickEvents        1
+
+        navLeft                 MainWeapon0_Hopup
+        navDown                 MainWeapon0
+        navRight                MainWeapon0_HopupMulti_b
+
+        xpos                    4
+        ypos                    0
+        zpos                    3
+        cursorPriority          1
+
+        pin_to_sibling          MainWeapon0_Hopup
+        pin_corner_to_sibling   TOP_LEFT
+        pin_to_sibling_corner   TOP_RIGHT
+    }
+
+    MainWeapon0_HopupMulti_b
+    {
+        ControlName             RuiButton
+        InheritProperties       SurvivalAttachmentButton
+
+        wide					75
+        tall					75
+
+        classname               "SurvivalEquipment"
+        scriptID                "main_weapon0_hopupMulti_b"
+
+        rightClickEvents        1
+
+        navLeft                 MainWeapon0_HopupMulti_a
+        navDown                 MainWeapon0
+
+        xpos                    4
+        ypos                    0
+        zpos                    3
+        cursorPriority          1
+
+        pin_to_sibling          MainWeapon0_HopupMulti_a
+        pin_corner_to_sibling   TOP_LEFT
+        pin_to_sibling_corner   TOP_RIGHT
+    }
     MainWeapon1
     {
         ControlName             RuiButton
@@ -354,6 +457,28 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
         pin_to_sibling_corner   TOP_RIGHT
     }
 
+	MainWeaponChargeUp1
+    {
+        ControlName             RuiButton
+        InheritProperties       SurvivalWeaponButtonWide
+        rui						"ui/survival_weapon_chargeup_ping_button.rpak"
+
+        wide					280
+        tall					32
+
+		classname               "RequestButton"
+        scriptID                "main_weapon1"
+
+        xpos                    0
+        ypos                    30
+        zpos                    0
+        visible                 0
+        cursorPriority          1
+
+        pin_to_sibling          MainWeapon1
+        pin_corner_to_sibling   TOP_RIGHT
+        pin_to_sibling_corner   TOP_RIGHT
+    }
     MainWeapon1_Barrel
     {
         ControlName             RuiButton
@@ -487,6 +612,72 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
         pin_to_sibling_corner   TOP_RIGHT
     }
 
+    MainWeapon1_HopupMulti_a
+    {
+        ControlName             RuiButton
+        InheritProperties       SurvivalAttachmentButton
+
+        wide					75
+        tall					75
+
+        classname               "SurvivalEquipment"
+        scriptID                "main_weapon1_hopupMulti_a"
+
+        rightClickEvents        1
+
+        navLeft                 MainWeapon1_Hopup
+        navDown                 MainWeapon1
+        navRight                MainWeapon1_HopupMulti_b
+
+        xpos                    4
+        ypos                    0
+        zpos                    3
+        cursorPriority          1
+
+        pin_to_sibling          MainWeapon1_Hopup
+        pin_corner_to_sibling   TOP_LEFT
+        pin_to_sibling_corner   TOP_RIGHT
+    }
+
+    MainWeapon1_HopupMulti_b
+    {
+        ControlName             RuiButton
+        InheritProperties       SurvivalAttachmentButton
+
+        wide					75
+        tall					75
+
+        classname               "SurvivalEquipment"
+        scriptID                "main_weapon1_hopupMulti_b"
+
+        rightClickEvents        1
+
+        navLeft                 MainWeapon1_HopupMulti_a
+        navDown                 MainWeapon1
+
+        xpos                    4
+        ypos                    0
+        zpos                    3
+        cursorPriority          1
+
+        pin_to_sibling          MainWeapon1_HopupMulti_a
+        pin_corner_to_sibling   TOP_LEFT
+        pin_to_sibling_corner   TOP_RIGHT
+    }
+
+                 
+               
+     
+                                         
+                                                        
+
+                           
+                           
+
+                                                   
+                                              
+
+                                 
 	BackpackGrid
 	{
 		ControlName				CNestedPanel
@@ -774,7 +965,7 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
     {
 	    ControlName				RuiPanel
         ypos                    28
-        xpos                    100
+        xpos                    50
         wide					468
         tall					91
         visible					1

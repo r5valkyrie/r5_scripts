@@ -1104,20 +1104,20 @@ array<string> function TypeMatch( int type )
 	df[ "DF_OVERFLOW" ] <- 65536
 	df[ "DF_DISSOLVE" ] <- 2
 	df[ "DF_DOOMED_HEALTH_LOSS" ] <- 268435456
-	//df[ "DF_DOOM_FATALITY" ] <- 1073741824
+	//df[ "DF_SHIELD_ONLY_DAMAGE" ] <- 1073741824
 	df[ "DF_SHADOW_DAMAGE" ] <- 536870912
 	df[ "DF_ELECTRICAL" ] <- 512
 	df[ "DF_EXPLOSION" ] <- 2048
 	df[ "DF_GIB" ] <- 1
 	df[ "DF_HEADSHOT" ] <- 2097152
-	//df[ "DF_IMPACT" ] <- 16
+	//df[ "DF_SHIELD_SYPHON" ] <- 16
 	df[ "DF_INSTANT" ] <- 4
 	df[ "DF_KILLSHOT" ] <- 33554432
 	df[ "DF_KNOCKDOWN" ] <- 16777216
 	df[ "DF_KNOCK_BACK" ] <- 16384
 	df[ "DF_MAX_RANGE" ] <- 131072
 	df[ "DF_MELEE" ] <- 4096
-	//df[ "DF_NO_INDICATOR" ] <- 8192
+	//df[ "DF_STUN_AI" ] <- 8192
 	df[ "DF_NO_SELF_DAMAGE" ] <- 8
 	df[ "DF_OVERSHIELD" ] <- 8388608
 	df[ "DF_RADIUS_DAMAGE" ] <- 256
@@ -1127,7 +1127,7 @@ array<string> function TypeMatch( int type )
 	df[ "DF_SHOTGUN" ] <- 67108864
 	df[ "DF_SKIPS_DOOMED_STATE" ] <- 134217728
 	df[ "DF_SNIPER" ] <- 1048576
-	df[ "DF_STOPS_TITAN_REGEN" ] <- 32768
+	df[ "DF_SOUR" ] <- 32768
 	df[ "DF_VORTEX_REFIRE" ] <- 4194304
 
 	int combined

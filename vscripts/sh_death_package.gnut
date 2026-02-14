@@ -96,7 +96,7 @@ global enum damageTypes
 	titanBerserkerMelee	= (DF_MELEE | DF_RAGDOLL)
 	titanEjectExplosion	= (DF_GIB | DF_EXPLOSION)
 	dissolveForce		= (DF_DISSOLVE | DF_KNOCK_BACK | DF_EXPLOSION)
-	//rodeoBatteryRemoval	= (DF_RODEO | DF_EXPLOSION | DF_STOPS_TITAN_REGEN )
+	//rodeoBatteryRemoval	= (DF_RODEO | DF_EXPLOSION | DF_SOUR )
 }
 
 global const array<string> DamageStateBodyGroups =
@@ -591,7 +591,7 @@ const table<int, string> damageFlagsToNames =
 	[DF_DISSOLVE			] = "DF_DISSOLVE",
 	[DF_INSTANT				] = "DF_INSTANT",
 	[DF_NO_SELF_DAMAGE		] = "DF_NO_SELF_DAMAGE",
-	[DF_IMPACT				] = "DF_IMPACT",
+	[DF_SHIELD_SYPHON				] = "DF_SHIELD_SYPHON",
 	[DF_BYPASS_SHIELD		] = "DF_BYPASS_SHIELD",
 	[DF_RAGDOLL				] = "DF_RAGDOLL",
 	[DF_RADIUS_DAMAGE 		] = "DF_RADIUS_DAMAGE",
@@ -599,9 +599,9 @@ const table<int, string> damageFlagsToNames =
 	[DF_BULLET 				] = "DF_BULLET",
 	[DF_EXPLOSION			] = "DF_EXPLOSION",
 	[DF_MELEE				] = "DF_MELEE",
-	[DF_NO_INDICATOR		] = "DF_NO_INDICATOR",
+	[DF_STUN_AI		] = "DF_STUN_AI",
 	[DF_KNOCK_BACK			] = "DF_KNOCK_BACK",
-	[DF_STOPS_TITAN_REGEN	] = "DF_STOPS_TITAN_REGEN",
+	[DF_SOUR	] = "DF_SOUR",
 	[DF_DISMEMBERMENT		] = "DF_DISMEMBERMENT",
 	[DF_MAX_RANGE			] = "DF_MAX_RANGE",
 	[DF_SHIELD_DAMAGE		] = "DF_SHIELD_DAMAGE",
@@ -616,7 +616,7 @@ const table<int, string> damageFlagsToNames =
 	[DF_SKIPS_DOOMED_STATE	] = "DF_SKIPS_DOOMED_STATE",
 	[DF_DOOMED_HEALTH_LOSS	] = "DF_DOOMED_HEALTH_LOSS",
 	//[DF_DOOM_PROTECTED		] = "DF_DOOM_PROTECTED",
-	[DF_DOOM_FATALITY		] = "DF_DOOM_FATALITY",
+	[DF_SHIELD_ONLY_DAMAGE		] = "DF_SHIELD_ONLY_DAMAGE",
 	[DF_NO_HITBEEP			] = "DF_NO_HITBEEP"
 }
 

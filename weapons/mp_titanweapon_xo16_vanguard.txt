@@ -38,7 +38,7 @@ WeaponData
 
 	"bolt_gravity_enabled"							"0"
 
-	"damage_flags"									"DF_STOPS_TITAN_REGEN | DF_BULLET | DF_NO_SELF_DAMAGE"
+	"damage_flags"									"DF_SOUR | DF_BULLET | DF_NO_SELF_DAMAGE"
 
 	// Effects
 	"tracer_effect"   								"weapon_tracers_xo16"
@@ -396,7 +396,7 @@ WeaponData
 
 			"ammo_clip_size"   								"50"
 
-			"damage_flags"									"DF_STOPS_TITAN_REGEN | DF_BULLET | DF_NO_SELF_DAMAGE | DF_ELECTRICAL"
+			"damage_flags"									"DF_SOUR | DF_BULLET | DF_NO_SELF_DAMAGE | DF_ELECTRICAL"
 		}
 
 		arc_rounds_with_battle_rifle
@@ -412,7 +412,7 @@ WeaponData
 
 			"ammo_clip_size"   								"50"
 
-			"damage_flags"									"DF_STOPS_TITAN_REGEN | DF_BULLET | DF_NO_SELF_DAMAGE | DF_ELECTRICAL"
+			"damage_flags"									"DF_SOUR | DF_BULLET | DF_NO_SELF_DAMAGE | DF_ELECTRICAL"
 
 			"hud_icon"										"r2_ui/menus/loadout_icons/titan_weapon/titan_weapon_xo16_combo"
 

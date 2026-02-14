@@ -70,6 +70,7 @@ global function EvolvingArmor_GetEvolvingArmorHealthForTier
 global function EvolvingArmor_IsEquipmentEvolvingArmor
 global function EvolvingArmor_GetRequirementForEvolution
 global function EvolvingArmor_GetEvolutionProgress
+global function EvolvingArmor_ExceedsMaxIntLimit
 
 global const string NV_EVOLVING_ARMOR_KILL_COUNT = "playerEvolvingArmorKillCount"
          

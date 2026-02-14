@@ -51,7 +51,7 @@ var function OnWeaponPrimaryAttack_cindershot( entity weapon, WeaponPrimaryAttac
 		fireMissileParams.pos = attackParams.pos
 		fireMissileParams.dir = attackParams.dir
 		fireMissileParams.speed = 0.5
-		fireMissileParams.scriptTouchDamageType = damageTypes.largeCaliberExp | DF_IMPACT
+		fireMissileParams.scriptTouchDamageType = damageTypes.largeCaliberExp | DF_SHIELD_SYPHON
 		fireMissileParams.scriptExplosionDamageType = damageTypes.explosive
 		fireMissileParams.doRandomVelocAndThinkVars = false
 		fireMissileParams.clientPredicted = false

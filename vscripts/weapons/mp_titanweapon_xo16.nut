@@ -53,7 +53,7 @@ var function OnWeaponNpcPrimaryAttack_titanweapon_xo16( entity weapon, WeaponPri
 
 int function FireWeaponPlayerAndNPC( entity weapon, WeaponPrimaryAttackParams attackParams, bool playerFired )
 {
-	int damageType = damageTypes.gibs | DF_STOPS_TITAN_REGEN
+	int damageType = damageTypes.gibs | DF_SOUR
 	if ( weapon.HasMod( "burn_mod_titan_xo16" ) )
 		damageType = damageType | damageTypes.electric
 

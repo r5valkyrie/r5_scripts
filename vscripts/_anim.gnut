@@ -1591,7 +1591,7 @@ void function PhaseGib( entity target )
 	}
 	target.Gib( target.GetOrigin() )
 	//int damageAmount = target.GetMaxHealth() + 1
-	//target.TakeDamage( damageAmount , attacker, attacker, { forceKill = true, damageType = DMG_MELEE_EXECUTION, damageSourceId = eDamageSourceId.human_execution, scriptType = DF_NO_INDICATOR | DF_GIB } )
+	//target.TakeDamage( damageAmount , attacker, attacker, { forceKill = true, damageType = DMG_MELEE_EXECUTION, damageSourceId = eDamageSourceId.human_execution, scriptType = DF_STUN_AI | DF_GIB } )
 }
 
 void function AnimEvent_attach_pulseBlade( entity ent ) //Copy of the function that attaches the data knife. Easier to do this than to pass in a model to load instead because of the animeevent limitation

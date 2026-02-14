@@ -227,13 +227,12 @@ struct
 	var titanLinkProgressRui
 	var dpadMenuRui
 	var pilotRui
-	var compassRui
 
 	var fallbackMMRui
 
 	array<var>         minimapTopos
 	table<entity, var> minimapTopoClientEnt
-
+	var compassRui
 	// fullscreen map
 	var   mapAimRui
 	var   mapTopo
@@ -897,47 +896,37 @@ void function Cl_Survival_AddClient( entity player )
 	getroottable().testRui <- file.dpadMenuRui
 	SetDpadMenuVisible()
 
-	// #if DEVELOPER
-		// if ( GetBugReproNum() == 1972 )
-			// file.pilotRui = CreatePermanentCockpitPostFXRui( $"ui/survival_player_hud_editor_version.rpak", HUD_Z_BASE )
-		// else
-			// file.pilotRui = CreatePermanentCockpitPostFXRui( SURVIVAL_HUD_PLAYER, HUD_Z_BASE )
-	// #else
-		// file.pilotRui = CreatePermanentCockpitPostFXRui( SURVIVAL_HUD_PLAYER, HUD_Z_BASE )
-	// #endif
-
-	if ( GetCurrentPlaylistVarBool( "flowstate_enable_editor_hud", false ) )
-		file.pilotRui = CreatePermanentCockpitPostFXRui( $"ui/survival_player_hud_editor_version.rpak", HUD_Z_BASE )
-	else
+	#if DEVELOPER
+		if ( GetBugReproNum() == 1972 )
+			file.pilotRui = CreatePermanentCockpitPostFXRui( $"ui/survival_player_hud_editor_version.rpak", HUD_Z_BASE )
+		else
+			file.pilotRui = CreatePermanentCockpitPostFXRui( SURVIVAL_HUD_PLAYER, HUD_Z_BASE )
+	#else
 		file.pilotRui = CreatePermanentCockpitPostFXRui( SURVIVAL_HUD_PLAYER, HUD_Z_BASE )
+	#endif
 
 	RuiSetBool( file.pilotRui, "isVisible", GetHudDefaultVisibility() )
 	RuiSetBool( file.pilotRui, "useShields", true )
 
+	if ( GetCurrentPlaylistVarBool( "compass_flat_enabled", true ) )
+	{
+
+		file.compassRui = CreatePermanentCockpitRui( $"ui/compass_flat.rpak", HUD_Z_BASE )
+		RuiTrackFloat3( file.compassRui, "playerAngles", player, RUI_TRACK_CAMANGLES_FOLLOW )
+		RuiTrackInt( file.compassRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "gameState" ) )
+	}
+
+	#if(PC_PROG)
+		if ( GetCurrentPlaylistVarBool( "pc_force_pushtotalk", false ) )
+			player.ClientCommand( "+pushtotalk" )
+	#endif //
+	
+	SetConVarFloat( "dof_variable_blur", 0.0 )
+
+	RuiTrackInt( file.pilotRui, "squadID", player, RUI_TRACK_SQUADID )
 
 	WaitingForPlayersOverlay_Setup( player )
 
-	if( nonCompassModes.contains( Playlist() ) )
-	{	
-		#if DEVELOPER 
-			printt("non compass mode")
-		#endif 
-		return
-	}
-
-	file.compassRui = CreatePermanentCockpitRui( $"ui/compass_flat.rpak", HUD_Z_BASE )
-	RuiTrackFloat3( file.compassRui, "playerAngles", player, RUI_TRACK_CAMANGLES_FOLLOW )
-	RuiTrackInt( file.compassRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "gameState" ) )
-
-	if ( GetCurrentPlaylistVarBool( "pc_force_pushtotalk", false ) )
-		player.ClientCommand( "+pushtotalk" )
-	
-	//SetConVarFloat( "dof_variable_blur", 0.0 )
-
-	if(GetCurrentPlaylistVarBool( "firingrange_aimtrainerbycolombia", false ))
-	{
-		RuiTrackInt( file.compassRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, 0 )
-	}
 }
 
 void function FS_ForceCompass( )
@@ -961,11 +950,6 @@ void function InitSurvivalHealthBar()
 	Assert( IsNewThread(), "Must be threaded off" )
 	entity player = GetLocalViewPlayer()
 
-	foreach ( callbackFunc in file.callbacks_onLocalPlayerUnitframeInit )
-	{
-		callbackFunc( player, file.pilotRui )
-		return
-	}
 	
 	if( IsFlowstateActive() )
 	{
@@ -1042,6 +1026,8 @@ void function SURVIVAL_PopulatePlayerInfoRui( entity player, var rui )
 	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 
 	RuiSetImage( rui, "playerIcon", classIcon )
+	RuiSetInt( rui, "playerBaseHealth", GetPlayerSettingBaseHealth( player ) )
+	RuiSetInt( rui, "playerBaseShield", GetPlayerSettingBaseShield( player ) )
 
 	RuiSetGameTime( rui, "trackedPlayerChangeTime", Time() )
 	RuiTrackFloat( rui, "playerHealthFrac", player, RUI_TRACK_HEALTH )
@@ -1057,14 +1043,16 @@ void function SURVIVAL_PopulatePlayerInfoRui( entity player, var rui )
 	RuiTrackFloat( rui, "playerTargetShieldFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_shields )
 	RuiTrackFloat( rui, "playerTargetHealthFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_health )
 	RuiTrackFloat( rui, "playerTargetHealthFracTemp", player, RUI_TRACK_HEAL_TARGET )
-	
+	string platformString = "#CROSSPLAY_ICON_PC"
+	RuiSetString( rui, "platformString", platformString )
+		RuiSetString( rui, "platformString", platformString )
+
+	bool isSwitchHardware = player.GetHardware() == "HARDWARE_SWITCH"
+	if ( isSwitchHardware )
+		RuiSetFloat( rui, "nxPlatformTextOffsetX", -1.5 )
 	OverwriteWithCustomPlayerInfoTreatment( player, rui )
 	
-	if( Gamemode() != eGamemodes.SURVIVAL && !GetCurrentPlaylistVarBool( "flowstate_evo_shields", false ) ) //TODO playlist init to struct
-	{
-		RuiSetColorAlpha( rui, "customCharacterColor", SrgbToLinear( <255, 0, 119> / 255.0 ), 1.0 )
-		RuiSetBool( rui, "useCustomCharacterColor", true )
-	}
+	RuiSetBool( rui, "displayCharacterOverlayPrompt", !IsControllerModeActive() )
 	
 	if(RGB_HUD)
 		thread RGBRui(rui)
@@ -1884,10 +1872,10 @@ void function EquipmentChanged( entity player, string equipSlot, int new )
 
 	if ( player == GetLocalViewPlayer() )
 	{
-		// if( tier > 5 )
-			// tier = 5
+		if ( es.unitFrameTierVar != "" )
 		
 		RuiSetInt( file.pilotRui, es.unitFrameTierVar, tier )
+		if ( es.unitFrameImageVar != "" )
 		RuiSetImage( file.pilotRui, es.unitFrameImageVar, hudIcon )
 		if ( armorCapacity >= 0 )
 		{
@@ -1898,6 +1886,7 @@ void function EquipmentChanged( entity player, string equipSlot, int new )
 			{
 				if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
 				{
+					RuiSetBool( file.pilotRui, "evoShieldDoubleDisplayAmount", EvolvingArmor_ExceedsMaxIntLimit( data ) )
 					RuiSetBool( file.pilotRui, "isEvolvingShield", isEvo )
 					RuiTrackInt( file.pilotRui, "evolvingShieldKillCounter", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( NV_EVOLVING_ARMOR_KILL_COUNT ) )
 				}

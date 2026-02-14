@@ -669,7 +669,7 @@ void function AdjustVelocityFromHit( entity player, var damageInfo, entity attac
 // 		table lastAttackInfo = expect table( titanSoul.lastAttackInfo )
 
 // 		table extraDeathInfo = {}
-// 		extraDeathInfo.scriptType <- (DF_NO_INDICATOR | DF_DOOMED_HEALTH_LOSS)
+// 		extraDeathInfo.scriptType <- (DF_STUN_AI | DF_DOOMED_HEALTH_LOSS)
 // 		if ( expect int( lastAttackInfo.scriptType ) & DF_BURN_CARD_WEAPON )
 // 			extraDeathInfo.scriptType = expect int( extraDeathInfo.scriptType ) | DF_BURN_CARD_WEAPON
 // 		if ( expect int( lastAttackInfo.scriptType ) & DF_VORTEX_REFIRE )
@@ -879,7 +879,7 @@ void function AutoTitan_TryMultipleTitanCallout( entity titan, var damageInfo )
 
 float function CalculateNextRegenTime( float damage, int damageType, bool critHit, float oldNextRegenTime, float maxRegenDelay )
 {
-	if ( damage >= TITAN_REGEN_MIN_DAMAGE || critHit || damageType & DF_STOPS_TITAN_REGEN )
+	if ( damage >= TITAN_REGEN_MIN_DAMAGE || critHit || damageType & DF_SOUR )
 	{
 		if ( PROTO_VariableRegenDelay() )
 		{

@@ -173,7 +173,7 @@ bool function ShouldReduceDamageForSegmentedHealth( entity soul, damageInfo )
 	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_DOOMED_HEALTH_LOSS )
 		return false
 
-	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_DOOM_FATALITY )
+	if ( DamageInfo_GetCustomDamageType( damageInfo ) & DF_SHIELD_ONLY_DAMAGE )
 		return false
 
 	return true

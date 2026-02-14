@@ -24,6 +24,8 @@ global function GetLockedSetFromName
 #if CLIENT || UI
 global function AddCallback_EditLootDesc
 global function RemoveCallback_EditLootDesc
+global function SURVIVAL_Loot_GetPickupString
+global function SURVIVAL_Loot_GetDesc
 #endif
 
 #if CLIENT
@@ -207,6 +209,7 @@ global enum eLootType
 	RESOURCE
 	SURVIVAL
 	MARVIN_ARM
+	GADGET
 
 	_count
 }
@@ -1640,6 +1643,47 @@ void function SURVIVAL_UI_OnLevelInit()
 		return
 
 	thread SURVIVAL_UI_GatherFriendInfo()
+}
+#endif
+
+#if CLIENT || UI 
+string function SURVIVAL_Loot_GetPickupString( LootData data, entity forPlayer )
+{
+	string result = Localize( data.pickupString )
+
+	if ( data.passive != ePassives.INVALID )
+	{
+		string passiveName = PASSIVE_NAME_MAP[data.passive]
+		result = Localize( "#HUD_LOOT_WITH_PASSIVE", result, Localize( passiveName ) )
+	}
+
+	return result
+}
+
+string function SURVIVAL_Loot_GetDesc( LootData data, entity forPlayer )
+{
+	string result = Localize( data.desc )
+
+	if ( data.passive != ePassives.INVALID )
+	{
+		string passiveName = PASSIVE_NAME_MAP[data.passive]
+		string passiveDesc = PASSIVE_DESCRIPTION_SHORT_MAP[data.passive]
+		result = Localize( "#HUD_LOOT_WITH_PASSIVE_DESC", result, Localize( passiveName ).toupper(), Localize( passiveDesc ) )
+	}
+
+	//
+	//
+	//
+	//
+	if ( data.ref == "health_pickup_ultimate"
+	&& IsValid( forPlayer )
+	&& LoadoutSlot_IsReady( ToEHI( forPlayer ), Loadout_CharacterClass() )
+	&& ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( forPlayer ), Loadout_CharacterClass() ) ) == $"settings/itemflav/character/loba.rpak" )
+	{
+		return Localize( "#SURVIVAL_PICKUP_HEALTH_ULTIMATE_HINT_LOBA" )
+	}
+
+	return result
 }
 #endif
 
