@@ -100,7 +100,7 @@ void function MpWeapon_Mortar_Ring_Init()
 
 	PrecacheImpactEffectTable( MORTAR_RING_IMPACT_TABLE )
 
-		PrecacheParticleSystem( MORTAR_RING_RADIUS_INSTANT_FX )
+		PrecacheParticleSystem( MORTAR_RING_RADIUS_FX )
 
 
 
@@ -232,14 +232,12 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 	owner.EndSignal( "MortarRingDeactivate" )
 	weapon.EndSignal( "OnDestroy" )
 
-	/*var overlayRui = CreateCockpitPostFXRui( $"ui/mortar_binoculars.rpak", HUD_Z_BASE )
+	var overlayRui = CreateCockpitPostFXRui( $"ui/mortar_binoculars.rpak", HUD_Z_BASE )
 	RuiSetVisible( overlayRui, false )
 	RuiSetFloat( overlayRui, "maxRangeDist", MORTAR_MAX_FIRE_DISTANCE )
 	RuiSetBool( overlayRui, "useWeaponCycleToCancel", GetKeyCodeForBinding( "weaponCycle" ) != -1 )
-*/
-	int ringFX
 
-		ringFX = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( MORTAR_RING_RADIUS_INSTANT_FX ), ZERO_VECTOR, ZERO_VECTOR )
+	int ringFX = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( MORTAR_RING_RADIUS_FX ), ZERO_VECTOR, ZERO_VECTOR )
 
 
 
@@ -256,7 +254,7 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 	bool visibleUI = false
 
 	OnThreadEnd(
-		function() : ( owner, ringFX, markerFX, weapon )
+		function() : ( owner, ringFX, markerFX, weapon, overlayRui  )
 		{
 			if( EffectDoesExist( ringFX ) )
 				EffectStop( ringFX, true, false )
@@ -269,8 +267,8 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 
 			EmitSoundOnEntity( owner, MORTAR_RING_UI_CLOSE_SOUND )
 
-			//RuiDestroyIfAlive( overlayRui )
-			//file.activateUI = false
+			RuiDestroyIfAlive( overlayRui )
+			file.activateUI = false
 			if ( weapon in file.weaponAimPitch )
 				delete file.weaponAimPitch[ weapon ]
 		}
@@ -314,7 +312,7 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 
 		if( file.activateUI && !visibleUI)
 		{
-			//RuiSetVisible( overlayRui, true )
+			RuiSetVisible( overlayRui, true )
 			EmitSoundOnEntity( owner, MORTAR_RING_UI_OPEN_SOUND )
 			visibleUI = true
 			firstUILoop = true
@@ -386,9 +384,9 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 		/////////////////////////
 		// Set rui variables
 		/////////////////////////
-		//RuiSetBool( overlayRui, "inRange", newInRange )
-		//RuiSetBool( overlayRui, "hasClearance", newClearance )
-		//RuiSetFloat( overlayRui, "rangeDist",  crosshairData.distanceToTarget )
+		RuiSetBool( overlayRui, "inRange", newInRange )
+		RuiSetBool( overlayRui, "hasClearance", newClearance )
+		RuiSetFloat( overlayRui, "rangeDist",  crosshairData.distanceToTarget )
 
 		lastInRange = newInRange
 		lastClearance = newClearance

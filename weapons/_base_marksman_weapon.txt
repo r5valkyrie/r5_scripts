@@ -1,4 +1,4 @@
-#base "_base_marksman_weapon_optics.txt"
+#base "_base_assault_rifle_optics.txt"
 #base "_base_stocks_sniper.txt"
 #base "_base_projectile_ricochet.txt"
 #base "_base_character_mods.txt"

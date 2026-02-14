@@ -6,10 +6,10 @@
 
 	// General
 	//
-	"printname"                                "30-30 Repeater"
-	"shortprintname"                           "30-30 Repeater"
-	"description"                              "Semi-auto heavy repeater."
-	"longdesc"                                 "Semi-auto heavy repeater."
+	"printname"                                "#WPN_3030"
+	"shortprintname"                           "#WPN_3030_SHORT"
+	"description"                              "#WPN_3030_DESC"
+	"longdesc"                                 "#WPN_3030_LONGDESC"
 
 	// UI - HUD
 	"hud_icon"                                 "rui/weapon_icons/r5/weapon_3030repeater"
@@ -23,7 +23,7 @@
 	// Models
 	"viewmodel"   								"mdl/weapons/3030repeater/ptpov_3030repeater.rmdl"
 	"playermodel" 								"mdl/weapons/3030repeater/w_3030repeater.rmdl"
-	//"holster_offset"						    "8 0 2"
+	"holster_offset"						    "8 0 2"
 
 	"chroma_color"								"1 .6 .2"
 
@@ -480,7 +480,7 @@
 	"ui1_draw_cloaked"	"1"
 	UiData1
 	{
-		"ui"							"ui/rspn101_dmr_reticle"
+		"ui"							"ui/weapon_3030_reticle"
 		"mesh"							"models/weapons/attachments/3030repeater_rui_upper"
 		Args
 		{
@@ -493,7 +493,7 @@
 	"ui2_enable"		"1"
 	UiData2
 	{
-		"ui"							"ui/rspn101_dmr_ammo_counter"
+		"ui"							"ui/weapon_3030_ammo_counter"
 		"mesh"							"models/weapons/attachments/3030repeater_rui_lower"
 		Args
 		{
@@ -507,7 +507,7 @@
 	"ui3_draw_cloaked"	"1"
 	UiData3
 	{
-		"ui"							"ui/charge_rifle_screen"
+		"ui"							"ui/weapon_3030_charge_bars"
 		"mesh"							"models/weapons/attachments/3030repeater_rui_lower"
 		Args
 		{
@@ -522,7 +522,7 @@
 	"ui10_enable"		"0"
 	UiData10
 	{
-		"ui"					"ui/hcog_classic_sights"
+		"ui"					"ui/hopup_sights_3030_hcog_classic"
 		"mesh"					"models/weapons/attachments/hopup_sights_hcog_classic"
 		Args
 		{
@@ -536,7 +536,7 @@
 	"ui11_enable"		"0"
 	UiData11
 	{
-		"ui"					"ui/hcog_upper"
+		"ui"					"ui/hopup_sights_3030_hcog_bruiser"
 		"mesh"					"models/weapons/attachments/hopup_sights_hcog_bruiser"
 		Args
 		{
@@ -550,7 +550,7 @@
 	"ui12_enable"		"0"
 	UiData12
 	{
-		"ui"					"ui/holo_sights"
+		"ui"					"ui/hopup_sights_3030_holo"
 		"mesh"					"models/weapons/attachments/hopup_sights_holosight"
 		Args
 		{
@@ -564,7 +564,7 @@
 	"ui13_enable"		"0"
 	UiData13
 	{
-		"ui"					"ui/holo_variable_sights"
+		"ui"					"ui/hopup_sights_3030_holo_variable"
 		"mesh"					"models/weapons/attachments/hopup_sights_holosight_variable"
 		Args
 		{
@@ -578,7 +578,7 @@
 	"ui14_enable"		"0"
 	UiData14
 	{
-		"ui"					"ui/hcog_ranged_sights"
+		"ui"					"ui/hopup_sights_3030_hcog_ranged"
 		"mesh"					"models/weapons/attachments/hopup_sights_hcog_ranged"
 		Args
 		{
@@ -592,7 +592,7 @@
 	"ui15_enable"		"0"
 	UiData15
 	{
-		"ui"					"ui/aog_variable_sights"
+		"ui"					"ui/hopup_sights_3030_aog_variable"
 		"mesh"					"models/weapons/attachments/hopup_sights_aog_variable"
 		Args
 		{

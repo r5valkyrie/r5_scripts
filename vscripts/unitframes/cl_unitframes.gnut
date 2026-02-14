@@ -351,11 +351,14 @@ void function SetUnitFrameDataFromOwner( var rui, entity ent, bool forceUpdate =
 		RuiTrackInt( rui, "teamMemberIndex", ent, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
 	#endif
 
+	RuiTrackBool( rui, "isDriving", ent, RUI_TRACK_PLAYER_IS_DRIVING_HOVER_VEHICLE, GetNetworkedVariableIndex( "isDriving" ) )
 	RuiTrackFloat( rui, "targetHealthFrac", ent, RUI_TRACK_HEAL_TARGET )
 	RuiTrackFloat( rui, "targetShieldFrac", ent, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_shields )
 	RuiTrackFloat( rui, "targetHealthFrac", ent, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_health )
 	RuiTrackFloat( rui, "targetHealthFracTemp", ent, RUI_TRACK_HEAL_TARGET )
 
+	string platformString = "#CROSSPLAY_ICON_PC"
+	RuiSetString( rui, "platformString", platformString )
 	RuiSetBool( rui, "isVisible", true )
 
 	#if MP_PVEMODE

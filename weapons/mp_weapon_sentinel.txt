@@ -40,6 +40,12 @@
 	"OnWeaponCustomActivityEnd"              	"OnWeaponCustomActivityEnd_weapon_sentinel"
 	"OnWeaponStartZoomIn"                    	"OnWeaponStartZoomIn_weapon_sentinel"
 	"OnWeaponStartZoomOut"                   	"OnWeaponStartZoomOut_weapon_sentinel"
+	//Energized UI info
+    "has_energized"                            "1"
+    "energized_consumable"                     "health_pickup_combo_small"
+    "energized_ping_string"                    "#PING_CELLS"
+    "energized_comms"                          "INVENTORY_NEED_SHIELDS"
+    "energized_consumable_hint"                "#WPN_SENTINEL_CELLS_HINT"
 
     // Energize mechanics
     "energized_duration"                       "150.000000"
