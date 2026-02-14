@@ -490,7 +490,7 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
 	BackpackGrid
 	{
 		ControlName				CNestedPanel
-        wide					900
+        wide					1000
 		tall					220
 		visible					1
 		enabled                 1
@@ -547,8 +547,8 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
     {
         ControlName             RuiButton
 
-        wide					720
-		tall					220
+        wide					840
+		tall					230
 
         classname               "DropSlot"
         scriptID                "inventory"
@@ -785,7 +785,7 @@ scripts/resource/ui/menus/panels/survival_main_inventory.res
 
         pin_to_sibling			BackpackGrid
         pin_corner_to_sibling	TOP_RIGHT
-        pin_to_sibling_corner	BOTTOM_LEFT
+        pin_to_sibling_corner				BOTTOM_LEFT
     }
 
     TeammateInfo1

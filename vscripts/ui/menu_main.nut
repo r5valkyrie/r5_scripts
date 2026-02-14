@@ -37,6 +37,7 @@ void function InitMainMenu( var newMenuArg )
 	RuiSetString( subtitleRui, "subtitleText", "R5Valkyrie".toupper() )
 
 	file.versionDisplay = Hud_GetChild( menu, "VersionDisplay" )
+	file.signedInDisplay = Hud_GetChild( menu, "SignInDisplay" )
 }
 
 
@@ -44,7 +45,7 @@ void function OnMainMenu_Show()
 {
 	//
 	float aspectRatio = 2.4 //
-	int width = int( Hud_GetHeight( file.titleArt ) * 1.77777778 )
+	int width = int( Hud_GetHeight( file.titleArt ) * aspectRatio )
 	Hud_SetWidth( file.titleArt, width )
 	Hud_SetWidth( file.subtitle, width )
 

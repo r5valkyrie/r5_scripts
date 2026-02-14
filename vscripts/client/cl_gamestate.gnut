@@ -332,7 +332,7 @@ void function UpdateCommonScoreRuiTracking( var rui, entity player )
 
 	//	if ( Crafting_IsEnabled() )
 		{
-		//	RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
+		RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
 		}
 		
 

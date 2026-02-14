@@ -46,7 +46,7 @@ global function ConvertCursorToScreenPos
 const float INACTIVE_WEAPON_SCALE = 0.8
 
 global const int INVENTORY_ROWS = 2
-global const int INVENTORY_COLS = 9
+global const int INVENTORY_COLS = 10
 
 const float MOUSE_DRAG_BUFFER = 25.0
 const float MOUSE_DRAG_BUFFER_TIME = 1.0

@@ -145,7 +145,7 @@ scripts/resource/ui/menus/panels/tabs_inventory.res
 	RightNavButton
 	{
 		ControlName				RuiPanel
-		xpos                    56
+		xpos                    -24
 		wide                    76
 		tall					28
 		visible					1

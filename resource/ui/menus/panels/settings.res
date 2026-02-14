@@ -120,7 +120,7 @@
         {
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
-            tall                    980
+            tall                    1040
             tabPosition             1
 
             controlSettingsFile		"scripts/resource/ui/menus/panels/controls.res"
@@ -200,7 +200,7 @@
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
             //tall                    952 [$WINDOWS]
-            tall                    940 [$WINDOWS]
+            tall                    882 [$WINDOWS]
             tabPosition             1
 
             controlSettingsFile		"scripts/resource/ui/menus/panels/audio.res" [$WINDOWS]
@@ -239,8 +239,8 @@
         {
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
-            tall                    1351 [$WINDOWS]
-            tall                    1286 [$GAMECONSOLE]
+            tall                    1408 [$WINDOWS]
+            tall                    1212 [$GAMECONSOLE]
 
             tabPosition             1
 

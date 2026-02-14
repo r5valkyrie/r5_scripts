@@ -620,8 +620,10 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanks", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptWelcome" )
 	
-	ScriptRegisterNetworkedVariable( "damageDealt", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
-	ScriptRegisterNetworkedVariable( "assistCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	ScriptRegisterNetworkedVariable( "damageDealt", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+	ScriptRegisterNetworkedVariable( "assistCount", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+	ScriptRegisterNetworkedVariable( "craftingMaterials", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )//these networked variables important, come back to this later ! - kral
+	ScriptRegisterNetworkedVariable( "ultimateCredits", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_EjectConfirmed" )
 
@@ -791,12 +793,12 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterUntypedFunction_deprecated( "Tracker_ResyncStatForPlayer" )	
 		
 	//Todo(mk): Move to client fetch( for cards ), remove networked vars
-	ScriptRegisterNetworkedVariable( "SeasonScore", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0 )
-	ScriptRegisterNetworkedVariable( "SeasonKills", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	ScriptRegisterNetworkedVariable( "SeasonDeaths", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	ScriptRegisterNetworkedVariable( "SeasonPlaytime", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	ScriptRegisterNetworkedVariable( "SeasonGamesplayed", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	ScriptRegisterNetworkedVariable( "stats_loaded", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	//ScriptRegisterNetworkedVariable( "SeasonScore", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0 )
+	//ScriptRegisterNetworkedVariable( "SeasonKills", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
+	//ScriptRegisterNetworkedVariable( "SeasonDeaths", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
+	//ScriptRegisterNetworkedVariable( "SeasonPlaytime", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
+	//ScriptRegisterNetworkedVariable( "SeasonGamesplayed", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
+	//ScriptRegisterNetworkedVariable( "stats_loaded", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	
 	
 	if( Gamemode() == eGamemodes.WINTEREXPRESS )

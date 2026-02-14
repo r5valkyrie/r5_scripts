@@ -27,6 +27,8 @@ scripts/resource/ui/menus/panels/tabs_settings.res
 	{
 		ControlName				RuiPanel
 		xpos                    -80
+		wide                    76
+		tall					28
 		visible					1
 		rui                     "ui/shoulder_navigation_shortcut_angle.rpak"
 		activeInputExclusivePaint	gamepad
@@ -143,7 +145,7 @@ scripts/resource/ui/menus/panels/tabs_settings.res
 	RightNavButton
 	{
 		ControlName				RuiPanel
-		xpos                    56
+		xpos                    -23
 		wide                    76
 		tall					28
 		visible					1

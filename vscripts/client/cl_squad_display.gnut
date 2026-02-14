@@ -158,6 +158,7 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 	entity player
 	player = GetLocalClientPlayer()
 	EHI ehi = player.GetEncodedEHandle()
+	string hardware
 
 	var rui = Hud_GetRui( elem )
 	RuiSetBool( rui, "isEmpty", true )
@@ -175,9 +176,12 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 	}
 
 	SetIsVisible( disconnectedElem, false )
-	if (Hud_GetHudName( elem ) == "GCard0" && GetExpectedSquadSize( GetLocalClientPlayer() ) == 2 )
+
+	if ( Hud_GetHudName( elem ) == "GCard0" )
 	{
-		Hud_SetX( elem, 201 )
+		Hud_SetX( elem, 0 )
+		if ( GetExpectedSquadSize( GetLocalClientPlayer() ) == 2 )
+			Hud_SetX( elem, 201 )
 	}
 
 	if ( teamMemberIndex > 0 )
@@ -268,6 +272,8 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 
 			if ( overlayButton != null )
 				RunUIScript( "ClientCallback_UpdatePlayerOverlayButton", panel, overlayButton, GetPlayerName( ehi ), teammateInfo.uid, teammateInfo.hardware, teamMemberIndex )
+
+			hardware = teammateInfo.hardware
 		}
 		else
 		{
@@ -282,6 +288,10 @@ void function UICallback_PopulateClientGladCard( var panel, var elem, var muteBu
 
 			return
 		}
+	}
+	else
+	{
+		hardware = player.GetHardware()
 	}
 
 	if ( ehi == EHI_null )

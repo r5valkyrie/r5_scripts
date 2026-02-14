@@ -45,7 +45,7 @@ scripts/resource/ui/menus/dialog_mode_select.menu
         ModeSelectPopup
         {
             ControlName				CNestedPanel
-            wide					100
+            wide					1000
             tall					100
             controlSettingsFile		"scripts/resource/ui/menus/panels/mode_popup.res"
             labelText               ""

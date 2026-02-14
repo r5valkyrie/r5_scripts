@@ -38,6 +38,7 @@ global enum eRuiArgType
 	IMAGE
 	VECTOR
 	BOOL
+	COLOR
 }
 
 void function UtilityUI_Init()
@@ -437,6 +438,11 @@ void function RuiSetArgByType( var rui, string argName, var argVal, int ruiArgTy
 		case eRuiArgType.VECTOR:
 			expect vector( argVal )
 			RuiSetFloat3( rui, argName, argVal )
+			break
+
+		case eRuiArgType.COLOR:
+			expect vector( argVal )
+			RuiSetColorAlpha( rui, argName, SrgbToLinear( argVal ), 1.0 )
 			break
 
 		case eRuiArgType.ASSET:
