@@ -1289,7 +1289,7 @@ void function OnPlayerDamaged( entity victim, var damageInfo )
 	vector damagePosition = DamageInfo_GetDamagePosition( damageInfo )
 	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
 	entity weapon = DamageInfo_GetWeapon( damageInfo )
-
+	EvolvingArmor_PlayerDealtDamage( attacker, victim, weapon, 299, 0, 200, damageType )
 	TakingFireDialogue( attacker, victim, weapon )
 }
 

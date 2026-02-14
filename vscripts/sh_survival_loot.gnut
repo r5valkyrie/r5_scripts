@@ -18,6 +18,7 @@ global function IsAmmoInUse
 global function FS_GetWeaponsThatUseThisAmmo
 global function SetPlayerRequireLootType
 global function SURVIVAL_HasSpecificItemInInventory
+global function GetPropSurvivalMainPropertyFromEnt
 
 global function SURVIVAL_CountSquaresInInventory
 global function SURVIVAL_CountItemsInInventory
@@ -89,9 +90,12 @@ global function SURVIVAL_BuildStringForAction
 global function SURVIVAL_UpdateStringForEquipmentAction
 global function IsLootEntInsideDeathBox
 global function GetInstalledWeaponAttachment
+global function ServerCallback_PlayFPEvoShieldUpgradeFX
+global function ServerCallback_Play3PEvoShieldUpgradeFX
 #endif
 
 #if SERVER
+global function EvolvingArmor_SetEvolutionProgress
 global function PropSurvivalFlagsClear
 global function PropSurvivalFlagsSet
 global function SetPlayerInventory
@@ -133,6 +137,7 @@ global function SURVIVAL_GetAllPlayerOrdnance
 global function SURVIVAL_PlayerCanUse_AnimatedInteraction
 global function SURVIVAL_CanPlayerPickup
 global function SURVIVAL_PlayerAllowedToPickup
+global function GetPropSurvivalExtraPropertyFromEnt
 global function SURVIVAL_PlayerCanSwitchOrdnance
 global function SURVIVAL_IsPlayerCarryingLoot
 global function SURVIVAL_GetHighlightForTier
@@ -158,6 +163,8 @@ global function Inventory_RegisterNetworking
 global function BroadcastItemPickup
 global function BroadcastItemDrop
 global function BroadcastItemDrop_Retail
+global function SetPropSurvivalExtraProperty
+global function EvolvingArmor_PlayerDealtDamage
 #elseif CLIENT
 global function AddCallback_LocalPlayerPickedUpLoot
 global function ServerCallback_PickedupItem
@@ -166,6 +173,8 @@ global function ServerCallback_AttachedMod
 #endif
 
 #if SERVER
+global function SetPropSurvivalMainPropertyOnEnt
+global function SetPropSurvivalExtraPropertyOnEnt
 global function Inventory_SetPlayerEquipment
 global function Inventory_GetPlayerEquipment
 
@@ -992,6 +1001,7 @@ bool function IsAttachmentCompatibleWithCustomWeapon(LootData weapon, Attachment
 #if SERVER
 void function OnClientConnected( entity player )
 {
+	file.evoProgress[ player ] <- 0
 	file.playerInventoryData[ player ] <- {}
 	foreach ( slot,slotData in EquipmentSlot_GetAllEquipmentSlots() )
 	{
@@ -2237,11 +2247,6 @@ void function DelayedSetArmorSkin( entity ent, int tier )
 	entity effect = StartParticleEffectInWorld_ReturnEntity( holoEffect, ent.GetOrigin(), ent.GetAngles() )
 	effect.SetParent( ent )
 	EffectSetControlPointVector( effect, 1, GetFXRarityColorForTier( tier ) )
-}
-
-int function GetPropSurvivalMainPropertyFromEnt( entity ent )
-{
-	return ent.GetSurvivalProperty()
 }
 #endif
 
@@ -3799,6 +3804,9 @@ void function Inventory_RegisterNetworking()
 	// If there's a better solution, you're welcome to suggest it.
 	// They shouldn't have added ranges into this.
 	ScriptRemote_RegisterClientFunction( "ServerCallback_AttachedMod", "int", 0, 999, "int", 0, 999 )
+
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayFPEvoShieldUpgradeFX", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_Play3PEvoShieldUpgradeFX", "entity" )
 }
 #endif // CLIENT || SERVER
 
@@ -3989,11 +3997,17 @@ void function Inventory_SetPlayerEquipment_Internal( entity player, string itemR
 	if ( equipmentSlot == "armor" )
 	{
 		if ( file.survival_shields )
-			player.SetShieldHealthMax( SURVIVAL_GetArmorShieldCapacity( 0 ) )
+		{
+			// Only reset to 0 if we're removing armor (itemRef is empty), not when equipping new armor
+			if ( !SURVIVAL_Loot_IsRefValid( itemRef ) )
+				player.SetShieldHealthMax( SURVIVAL_GetArmorShieldCapacity( 0 ) )
+		}
 		else
 			player.SetShieldHealthMax( 0 )
 		
-		player.SetShieldHealth( 0 )
+		// Only reset shield health to 0 if we're removing armor
+		if ( !SURVIVAL_Loot_IsRefValid( itemRef ) )
+			player.SetShieldHealth( 0 )
 	}
 
 	if ( SURVIVAL_Loot_IsRefValid( itemRef ) )
@@ -4007,12 +4021,46 @@ void function Inventory_SetPlayerEquipment_Internal( entity player, string itemR
 		}
 
 		if ( data.lootType == eLootType.ARMOR && equipmentSlot == "armor" && file.survival_shields )
-		{
-			if( extraPropertyValue != -1 )
-				player.SetShieldHealthMax( extraPropertyValue )
+{
+			// Calculate shield capacity directly based on armor ref to avoid function call issues
+			int shieldCapacity = 0
+			switch ( data.ref )
+			{
+				case "armor_pickup_lv1_evolving":
+				case "armor_pickup_lv1":
+					shieldCapacity = 50
+					break
+				case "armor_pickup_lv2_evolving":
+				case "armor_pickup_lv2":
+					shieldCapacity = 75
+					break
+				case "armor_pickup_lv3_evolving":
+				case "armor_pickup_lv3":
+					shieldCapacity = 100
+					break
+				case "armor_pickup_lv4_evolving":
+				case "armor_pickup_lv4_all_fast":
+				case "armor_pickup_lv4":
+					shieldCapacity = 100
+					break
+				case "armor_pickup_lv5_evolving":
+					shieldCapacity = 125
+					break
+				default:
+					shieldCapacity = SURVIVAL_GetArmorShieldCapacity( data.tier )
+			}
+			
+			// Use extra property value if provided (for evo armor with progress)
+			if( extraPropertyValue != -1 && extraPropertyValue > 0 )
+				shieldCapacity = extraPropertyValue
+			
+			player.SetShieldHealthMax( shieldCapacity )
+			
+			// For armor, set shield health to the capacity value (fresh pickup) or use propertyValue (dropped armor)
+			if ( propertyValue > 0 )
+				player.SetShieldHealth( propertyValue )
 			else
-				player.SetShieldHealthMax( SURVIVAL_GetArmorShieldCapacity( data.tier ) )
-			player.SetShieldHealth( propertyValue )
+				player.SetShieldHealth( shieldCapacity )
 		}
 	}
 
@@ -4764,7 +4812,9 @@ void function EvolvingArmor_ApplyEvoPoints( entity player, int points )
 
 		SURVIVAL_GivePlayerEquipment( player, newArmorRef, currentShield )
 		EvolvingArmor_SetEvolutionProgress( player, EvolvingArmor_GetRequirementForEvolution( newTier ) )
+		#if CLIENT
 		Remote_CallFunction_Replay( player, "ServerCallback_PlayFPEvoShieldUpgradeFX", player )
+		#endif
 		EvolvingArmor_BroadcastEvoShieldUpgrade( player, newTier )
 
 		if (overflow > 0)
@@ -4790,9 +4840,12 @@ void function EvolvingArmor_BroadcastEvoShieldUpgrade( entity upgradePlayer, int
 		if ( player == upgradePlayer )
 			continue
 
+					#if CLIENT
 		vector viewerPos = player.GetOrigin()
 		if ( Distance( playerPos, viewerPos ) <= EVOSHIELD_UPGRADE_FX_RANGE )
 			Remote_CallFunction_Replay( player, "ServerCallback_Play3PEvoShieldUpgradeFX", upgradePlayer )
+			#endif
+
 	}
 
 
@@ -5510,6 +5563,47 @@ int function GetPropSurvivalFlagsProperty( int prop )
 }
 #endif
 
+
+#if SERVER || CLIENT
+int function GetPropSurvivalMainPropertyFromEnt( entity ent )
+{
+	return GetPropSurvivalMainProperty( ent.GetSurvivalProperty() )
+}
+#endif
+#if SERVER || CLIENT
+int function GetPropSurvivalExtraPropertyFromEnt( entity ent )
+{
+	int val = GetPropSurvivalExtraProperty( ent.GetSurvivalProperty() )
+
+	LootData data = SURVIVAL_Loot_GetLootDataByIndex( ent.GetSurvivalInt() )
+	if ( data.lootType == eLootType.ARMOR )
+	{
+		if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
+		{
+			if ( EvolvingArmor_ExceedsMaxIntLimit( data ) )
+			{
+				val *= 2
+			}
+		}
+	}
+                    
+                                            
+  
+                                                                                                               
+                                         
+                                                                                          
+                                       
+   
+                                                                                                                 
+    
+            
+    
+   
+  
+       
+	return val
+}
+#endif
 #if SERVER || CLIENT
 int function GetPropSurvivalFlagsPropertyFromEnt( entity ent )
 {
@@ -5527,6 +5621,18 @@ int function SetPropSurvivalMainProperty( int prop, int val )
 	return (prop & ~mask) | (val << offset)
 }
 #endif
+#if SERVER
+int function SetPropSurvivalExtraProperty( int prop, int value )
+{
+	int val = value
+	Assert( val >= 0 && val < (1 << PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_PROPERTY_BITS) )
+	int offset     = PROP_SURVIVAL_SURVIVAL_PROPERTY_MAIN_PROPERTY_BITS
+	int enoughBits = (1 << PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_PROPERTY_BITS) - 1
+	int mask       = enoughBits << offset
+	return (prop & ~mask) | (val << offset)
+}
+#endif
+
 #if SERVER || CLIENT
 bool function IsValidAndStandardGrabbableLootEnt( entity lootEnt )
 {
@@ -5535,7 +5641,47 @@ bool function IsValidAndStandardGrabbableLootEnt( entity lootEnt )
 }
 #endif
 
+#if SERVER
+void function SetPropSurvivalMainPropertyOnEnt( entity ent, int val )
+{
+	ent.SetSurvivalProperty( SetPropSurvivalMainProperty( ent.GetSurvivalProperty(), val ) )
+}
+#endif
 
+#if SERVER
+void function SetPropSurvivalExtraPropertyOnEnt( entity ent, int value )
+{
+	int val = value
+
+	LootData data = SURVIVAL_Loot_GetLootDataByIndex( ent.GetSurvivalInt() )
+	if ( data.lootType == eLootType.ARMOR )
+	{
+		if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
+		{
+			if ( EvolvingArmor_ExceedsMaxIntLimit( data ) )
+			{
+				Assert( false, "Max armor level exceeded the max bit field value of 1024. Consider increasing PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_PROPERTY_BITS by 1 and multiply PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_MAX_VALUE by 2" )
+				val = minint( value / 2, PROP_SURVIVAL_SURVIVAL_PROPERTY_EXTRA_MAX_VALUE )
+			}
+		}
+	}
+
+                    
+                                            
+  
+                                     
+   
+                                                                                                                 
+    
+                   
+    
+   
+  
+       
+
+	ent.SetSurvivalProperty( SetPropSurvivalExtraProperty( ent.GetSurvivalProperty(), val ) )
+}
+#endif
 #if SERVER || CLIENT
 bool function IsValidAndUsableDeathBoxEnt( entity deathBox )
 {

@@ -40,6 +40,7 @@ global struct LootActionData
 	LootActionDataFuncType func
 }
 
+global typedef CustomItemPickupActionCB_t bool functionref( entity pickup, entity player, int pickupFlags, LootData data )
 struct
 {
 	table<int, LootActionData> lootActionData
@@ -220,6 +221,7 @@ bool function TryEquipItem( int action, entity pickup, entity player, int pickup
 	LootData data = SURVIVAL_Loot_GetLootDataByIndex( pickup.GetSurvivalInt() )
 	bool pickedUp = false
 
+	// TODO: lazy init here for now, move elsewhere; e.g. in a client connected callback
 	if ( !(player in file.lastEquipData) )
 	{
 		file.lastEquipData[player] <- []
@@ -418,8 +420,8 @@ bool function PickupOrdnanceItem( entity ammoPickup, entity player, int pickupFl
 		entity currentOrdnanceWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
 
 		bool autoSwitch = false
-		// if ( bool(GetWeaponInfoFileKeyField_GlobalInt_WithDefault( data.ref, "survival_ordnance_auto_switch_on_pickup", 0 )) )
-			// autoSwitch = true
+		if ( bool(GetWeaponInfoFileKeyField_GlobalInt_WithDefault( data.ref, "survival_ordnance_auto_switch_on_pickup", 0 )) )
+			autoSwitch = true
 		if ( SURVIVAL_GetPrimaryWeapons( player ).len() == 0 )
 			autoSwitch = true
 		if ( IsValid( currentOrdnanceWeapon ) && player.GetActiveWeapon( eActiveInventorySlot.mainHand ) == currentOrdnanceWeapon && currentOrdnanceWeapon.GetWeaponPrimaryClipCount() <= 0 )
@@ -671,19 +673,21 @@ bool function EquipEquipment( entity pickup, entity player, string equipSlot, en
 		{
 			if ( GetCurrentPlaylistVarInt( "survival_shields", 1 ) == 1 )
 			{
-				int dropShieldHealth = player.GetShieldHealth()
-				drop.SetSurvivalProperty( dropShieldHealth )
-				drop.e.extraSurvivalProperty = player.GetShieldHealthMax()
-				
-				if( oldEquipData.ref == "armor_pickup_lv7" )
-					foreach ( sPlayer in GetPlayerArray() )
-						Remote_CallFunction_NonReplay( sPlayer, "Flowstate_UpdateRainbowShieldExtraProperty", drop.GetEncodedEHandle(), drop.e.extraSurvivalProperty )
+				int dropShieldHealth = SURVIVAL_GetPlayerShieldHealthFromArmor( player )
+					dropShieldHealth += player.GetShieldHealth()
+					player.SetShieldHealth( 0 )
+				int extraProperty    = 0
+
+				if ( EvolvingArmor_IsEquipmentEvolvingArmor( oldEquipData.ref ) )
+					extraProperty = EvolvingArmor_GetEvolutionProgress( player )
+
+				printf( "LootDebug: Setting dropped Armor health to %i and evoProgress to %i", dropShieldHealth, extraProperty )
+
+				SetPropSurvivalMainPropertyOnEnt( drop, dropShieldHealth )
+				SetPropSurvivalExtraPropertyOnEnt( drop, extraProperty )
+
+				drop.AddUsableValue( USABLE_BLOCK_CONTINUOUS_USE )
 			}
-			else if ( GetCurrentPlaylistVarInt( "survival_shields", 1 ) == 4 )
-			{
-				drop.SetSurvivalProperty( 0 )
-			}
-		}
 
 		if ( IsValid( deathBox ) && deathBox.GetTargetName() == DEATH_BOX_TARGETNAME )
 		{
@@ -693,6 +697,7 @@ bool function EquipEquipment( entity pickup, entity player, string equipSlot, en
 		{
 			FakePhysicsThrow_Retail( player, drop, fwd * 100, true )
 		}
+		}
 	}
 	else
 	{
@@ -700,11 +705,18 @@ bool function EquipEquipment( entity pickup, entity player, string equipSlot, en
 		TrackingVision_CreatePOI( es.trackingVisionPickupPOI, player, pickup.GetOrigin(), player.GetTeam(), player )
 	}
 
-	int propertyValue = pickup.GetSurvivalProperty()
-	if ( GetCurrentPlaylistVarInt( "survival_shields", 1 ) > 1 && GetCurrentPlaylistVarInt( "survival_shields", 1 ) < 4 )
-		propertyValue = player.GetShieldHealth()
+		int evoProgress = 0
+		int extraPropertyValue = -1
+		if ( EvolvingArmor_IsEquipmentEvolvingArmor( newEquipData.ref ) )
+		{
+			evoProgress = GetPropSurvivalExtraPropertyFromEnt( pickup )
+			extraPropertyValue = evoProgress
+		}
 
-	SURVIVAL_GivePlayerEquipment( player, newEquip, propertyValue, deathBox, "", true, pickup.e.extraSurvivalProperty )
+		SURVIVAL_GivePlayerEquipment( player, newEquip, GetPropSurvivalMainPropertyFromEnt( pickup ), deathBox, equipSlot, true, extraPropertyValue )
+
+		if ( EvolvingArmor_IsEquipmentEvolvingArmor( newEquipData.ref ) )
+			EvolvingArmor_SetEvolutionProgress( player, evoProgress )
 #endif
 
 	return true

@@ -620,7 +620,8 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanks", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptWelcome" )
 	
-	ScriptRegisterNetworkedVariable( "playerObservedCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	ScriptRegisterNetworkedVariable( "damageDealt", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	ScriptRegisterNetworkedVariable( "assistCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_EjectConfirmed" )
 
