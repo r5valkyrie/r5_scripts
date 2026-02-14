@@ -259,7 +259,7 @@ BreachTraceResults function BreachTrace( vector startPos, vector direction, vect
 
 void function MpWeaponRiotDrill_Init()
 {
-	PrecacheParticleSystem( RIOT_DRILL_FRONT_FX )
+	/*PrecacheParticleSystem( RIOT_DRILL_FRONT_FX )
 	PrecacheParticleSystem( RIOT_DRILL_AOE_WARNING_01_FX )
 
 	    PrecacheParticleSystem( RIOT_DRILL_BLAST_BEAM_WARN_FX_UPGRADE )
@@ -280,7 +280,7 @@ void function MpWeaponRiotDrill_Init()
 	PrecacheModel( RIOT_DRILL_SPIKE )
 	PrecacheModel( RIOT_DRILL_DRILL )
 	PrecacheModel( RIOT_DRILL_DRILL_FIZZLE )
-	PrecacheModel( RIOT_DRILL_EMPTY_MODEL )
+	PrecacheModel( RIOT_DRILL_EMPTY_MODEL )*/
 
 	RegisterSignal( "DeployableBreachChargePlacement_End" )
 	RegisterSignal( "RiotDrill_TempAnimWindDown" )
