@@ -149,7 +149,7 @@ string function MakeSquadName( int team, string msg )
 // common init for grunts and spectres
 void function CommonMinionInit( entity npc )
 {
-	RandomizeHead( npc )
+	//RandomizeHead( npc )
 
 	if ( IsMultiplayer() )
 	{

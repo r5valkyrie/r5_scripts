@@ -250,7 +250,7 @@ WeaponData
 
 	// FX - Impacts
 	//
-	"impact_effect_table"                      "default_far_sniper"
+	"impact_effect_table"                      "titan_bullet"
 
 	// FX
 	"fx_muzzle_flash_attach"                   "muzzle_flash"

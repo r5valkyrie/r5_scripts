@@ -1578,7 +1578,7 @@ void function CreateMoverDangrousAreaUntilMoverPasses( entity mover, vector star
 	entity lifetimeEnt = CreateScriptRef( pos )
 
 	// Create the dangerous area
-	// AI_CreateDangerousArea_Static( lifetimeEnt, null, radius, TEAM_INVALID, true, true, false, pos )
+	AI_CreateDangerousArea_Static( lifetimeEnt, null, radius, TEAM_INVALID, true, true, pos )
 
 	// Wait for mover to go past the dangerous area, or timeout
 	float endTime = Time() + maxDuration

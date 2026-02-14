@@ -38,14 +38,13 @@ WeaponData
 	"sound_dryfire"									"hemlok_dryfire"
 	"sound_pickup"									"wpn_pickup_Rifle_1P"
 	"sound_trigger_pull"							"Weapon_Hemlok_Trigger"
-	"sound_trigger_release"							"Weapon_RE45Auto_TriggerOff"
 	"sound_zoom_in"									"Weapon_Hemlok_ADS_In"
 	"sound_zoom_out"								"Weapon_Hemlok_ADS_Out"
 
 	// Sound
 
-	//"fire_sound_1_player_1p"						"Weapon_bulletCasings.Bounce"
-	//"fire_sound_1_player_3p"						"Weapon_bulletCasings.Bounce"
+	"fire_sound_1_player_1p"						"Weapon_bulletCasings.Bounce"
+	"fire_sound_1_player_3p"						"Weapon_bulletCasings.Bounce"
 
 	"fire_sound_partial_burst_player_1p"			"Weapon_Hemlok_SingleShot_1P"
 	"fire_sound_partial_burst_player_3p"			"Weapon_Hemlok_SingleShot_3P"
@@ -161,11 +160,6 @@ WeaponData
 
 	// View Kick
 	"viewkick_pattern"                              "hemlok_2"
-	
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
-	"fx_muzzle_flash_attach"						"muzzle_flash"
-	
 	"viewkick_spring" 								"hemlok_vkp"
     "viewkick_spring_hot"                           "hemlok_vkp_hot"
 
@@ -291,17 +285,6 @@ WeaponData
 			"damage_near_value_titanarmor"					"15"
 			"damage_far_value_titanarmor" 					"15"
 			"damage_very_far_value_titanarmor" 				"15"
-		}
-		
-		barrel_stabilizer_l3
-		{
-			"bodygroup27_set"	                "1"
-
-			"fx_muzzle_flash_attach"	        "muzzle_flash_suppressor_small"
-			"viewkick_pitch_base" 				"*0.8"
-			"viewkick_pitch_random"   			"*0.65"
-			"viewkick_yaw_base" 				"*0.8"
-			"viewkick_yaw_random"   			"*0.75"
 		}
 	
 		hopup_smart_reload

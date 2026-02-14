@@ -66,7 +66,7 @@
 	"is_semi_auto"								"1"
 
 	"projectile_launch_speed"                               "10000"
-	"projectile_launch_speed_full_charge"                   "28000.0"
+	"projectile_launch_speed_full_charge"                   "27000.000000"
 	"projectile_launch_speed_full_charge_shatter_arrows"    "16000.0"
 	"bolt_zero_distance"                                    "32.0" //very short, bolt zeroing uses the projectile_launch_speed lookup, so it is super overcorrecting with upwards aim in the calculation
 
@@ -88,9 +88,9 @@
     "bolt_hitsize_grow1_time"				    "0.05"
     "bolt_hitsize_grow1_size"				    "0.2"
     "bolt_hitsize_grow2_time"                   "0.281" //@~200m for 28000 launch speed (max)
-    "bolt_hitsize_grow2_size"                   "3.0"
+    "bolt_hitsize_grow2_size"                   "2.500000"
     "bolt_hitsize_growfinal_lerptime"           "0.281" //@~200m as above
-    "bolt_hitsize_growfinal_size"               "3.0"
+    "bolt_hitsize_growfinal_size"               "2.500000"
 
 	"ads_move_speed_scale"						"0.85"  //as fast as smg
 
@@ -106,7 +106,7 @@
 	"raise_time"                                "0.5"   //READY_TO_FIRE at "0.43"
 	"lower_time"                                "0.4"
 
-	"charge_time" 								"0.45"
+	"charge_time" 								"0.350000"
 	"charge_require_input"						"1"
 	"charge_allow_hold_when_full"               "1"
 	"charge_remain_full_when_fired"             "1"
@@ -138,14 +138,14 @@
 
 	"allow_headshots"                           "1"
     "headshot_distance" 						"11828"  // 300m
-    "damage_headshot_scale"                     "1.600000"
+    "damage_headshot_scale"                     "1.500000"
     "damage_leg_scale"                          "0.8"
 
 	// Ammo
                   
-	    "uses_ammo_pool"                            "1"
-	    "ammo_default_total"                        "40"
-        "ammo_stockpile_max"                        "40"
+	    "uses_ammo_pool"                            "0"
+	    "ammo_default_total"                        "80"
+        "ammo_stockpile_max"                        "80"
         "ammo_clip_size"                            "0"
 
         "damage_near_value"                         "35"
@@ -190,15 +190,15 @@
 	"empty_reload_only"                         "0"
 
     // Spread
-	"spread_stand_hip"							"2.75"
-	"spread_stand_hip_run"						"3.5"
-	"spread_stand_hip_sprint"                   "4.0"
-	"spread_crouch_hip"   						"2.25"
-	"spread_air_hip"  							"3.5"  //"4.5"
+	"spread_stand_hip"							"2.200000"
+	"spread_stand_hip_run"						"2.240000"
+	"spread_stand_hip_sprint"                   "3.200000"
+	"spread_crouch_hip"   						"1.800000"
+	"spread_air_hip"  							"2.800000"
 
 	"spread_stand_ads"							"0.0"
 	"spread_crouch_ads"   						"0.0"
-	"spread_air_ads"  							"3.5"
+	"spread_air_ads"  							"2.800000"
 
 	// movement based crosshair bloom
 	"spread_moving_increase_rate" 				"3.0"

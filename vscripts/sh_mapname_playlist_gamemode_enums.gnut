@@ -108,6 +108,7 @@ global enum ePlaylists
 	fs_knockbackknockout, //50
 	fs_onlyup, //51
 	fs_nextbots, //52
+	Movement_Recorder,
 	
 	_PLAYLISTS_COUNT //LAST
 }
@@ -176,7 +177,12 @@ const array<int> gamemode1v1Types =
 	eGamemodes.fs_1v1
 ]
 
-const PRINT_GAMEMODE_DEBUGS = true
+#if DEVELOPER
+	const PRINT_GAMEMODE_DEBUGS = true
+#else
+	const PRINT_GAMEMODE_DEBUGS = false
+#endif
+
 //////////////////////////////////////////
 // 			internal functions			//
 //////////////////////////////////////////
@@ -469,11 +475,11 @@ void function PassivesAllowed_Init()
 		ePlaylists.fs_1v1,
 		ePlaylists.fs_scenarios,
 		ePlaylists.dev_default,
-		ePlaylists.survival_dev,
+		ePlaylists.Movement_Recorder,
 		ePlaylists.winterexpress,
+		ePlaylists.survival,
 		ePlaylists.survival_solos,
 		ePlaylists.survival_duos,
-		ePlaylists.survival,
 		ePlaylists.survival_firingrange
 	]
 

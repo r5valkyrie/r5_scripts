@@ -57,6 +57,8 @@ global function Survival_GetPlayerTimeOnGround
 global function Survival_GetPlayerData
 global function Survival_OnClientConnected
 
+global function Survival_GetPlaneJumpPointOverMap
+
 global function CodeCallback_KillDamagePlayerOrNPC
 global function Survival_AddCallback_OnPlayerKillDamage
 global function Survival_AddCallback_OnAttackerSquadWipe
@@ -622,11 +624,7 @@ array< PlanePathData > function Survival_GenerateSingleRandomPlanePath( bool beQ
 	return [ result ]
 }
 
-// #if NAVMESH_ALL_SUPPORTED
 const int FLIGHTPATH_HULL = HULL_TITAN
-// #else
-// const int FLIGHTPATH_HULL = HULL_PROWLER
-// #endif
 
 vector function Survival_GetPlaneJumpPointOverMap( vector pathStart, vector pathEnd )
 {

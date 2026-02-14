@@ -8,7 +8,7 @@ void function CodeCallback_MapInit()
 	PrecacheModel( $"mdl/props/ash_hologram/holo_ash_bust.rmdl" )
 	PrecacheModel( ARENA_LEVIATHAN_MODEL )
 	thread InitARBarriers()
-	thread SpawnAshHolo()
+	//thread SpawnAshHolo()
 	#endif
 }
 

@@ -2,7 +2,7 @@ global function InitFreeRoamMapPanel
 global function Maps_PageForward
 global function Maps_PageBackwards
 
-const int MAX_SHOWN_MAPS = 5
+const int MAX_SHOWN_MAPS = 25
 
 struct {
 	var panel
@@ -26,7 +26,7 @@ void function InitFreeRoamMapPanel( var panel )
 
 void function Select_Map(var button)
 {
-	int index = Hud_GetScriptID( button ).tointeger() + (file.currentPage * 5 )
+	int index = Hud_GetScriptID( button ).tointeger() + (file.currentPage * MAX_SHOWN_MAPS)
 
 	SetFreeRoamMap(file.m_vMaps[index])
 
@@ -70,7 +70,7 @@ void function Maps_PageBackwards(var button)
 
 int function GetMaxPages()
 {
-	int maxPages = int( ceil(file.m_vMaps.len() / 5 ) ) + 1
+	int maxPages = int( ceil(file.m_vMaps.len() / float( MAX_SHOWN_MAPS ) ) )
 
 	if(maxPages > 21)
 		maxPages = 21
@@ -87,17 +87,26 @@ void function LoadMaps(int page)
 	HudElem_SetRuiArg( Hud_GetChild(file.panel, "PagesFooter"), "currentPage", file.currentPage )
 	HudElem_SetRuiArg( Hud_GetChild(file.panel, "PagesFooter"), "numPages", GetMaxPages() )
 
+	print( "Loading maps page " + page + ", total maps: " + file.m_vMaps.len() )
+
 	for(int i = 0; i < MAX_SHOWN_MAPS; i++)
 	{
-		int adjustedPageIndex = i + (file.currentPage * 5 )
+		int adjustedPageIndex = i + (file.currentPage * MAX_SHOWN_MAPS)
 		bool invalidIndex = adjustedPageIndex >= file.m_vMaps.len()
 
-		Hud_SetVisible( Hud_GetChild(file.panel, "MapButton" + i), !invalidIndex )
+		var button = Hud_GetChild(file.panel, "MapButton" + i)
+		if ( button == null )
+		{
+			print( "MapButton" + i + " not found!" )
+			continue
+		}
+
+		Hud_SetVisible( button, !invalidIndex )
 
 		if(!invalidIndex)
 		{
-			RuiSetString( Hud_GetRui( Hud_GetChild( file.panel, "MapButton" + i ) ), "modeNameText", GetUIMapName(file.m_vMaps[adjustedPageIndex]) )
-			RuiSetImage( Hud_GetRui( Hud_GetChild( file.panel, "MapButton" + i ) ), "modeImage", GetUIMapAsset(file.m_vMaps[adjustedPageIndex], true) )
+			RuiSetString( Hud_GetRui( button ), "modeNameText", GetUIMapName(file.m_vMaps[adjustedPageIndex]) )
+			RuiSetImage( Hud_GetRui( button ), "modeImage", GetUIMapAsset(file.m_vMaps[adjustedPageIndex], true) )
 		}
 	}
 }

@@ -9,7 +9,7 @@ global function Sh_SkydiveLaunchers_Init
 
 	const float SKYDIVE_TRIGGER_RADIUS = 36
 #endif //SERVER
-
+//TODO: FIND THE ORIGINAL PARTICLES!
 global const string SKYDIVE_LAUNCHER_TARGETNAME = "skydive_launcher"
 
 //SHARED
@@ -333,11 +333,11 @@ void function EntitiesDidLoad()
 	foreach ( ent in file.gravityCannonEnts )
 	{
 		vector landingLocation = <0, 0, 0>
-		 if ( ent.HasKey( "landing_location" ) )
+		if ( ent.HasKey( "landing_location" ) )
 			landingLocation = StringToVector( ent.GetValueForKey( "landing_location" ) )
 
-		GravityCannon_Create( ent.GetOrigin(), ent.GetAngles(), landingLocation ) //TODO: implement this. Cafe
-		//ent.Destroy() //no need to hang onto the reference spawner ent
+		GravityCannon_Create( ent.GetOrigin(), ent.GetAngles() )
+		ent.Destroy() //no need to hang onto the reference spawner ent
 	}
 
 	file.gravityCannonEnts.clear()
@@ -429,7 +429,7 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 			{
 				DefaultLauncherData dld = expect DefaultLauncherData( defaultLauncherData )
 				modelAsset         = dld.worldModel
-				fxLoop             = (dld.idleFx != $"") ? dld.idleFx : $"P_s2s_flap_wind" //FX_SKYDIVE_LAUNCHER_LOOP_DEFAULT
+				fxLoop             = (dld.idleFx != $"") ? dld.idleFx : FX_SKYDIVE_LAUNCHER_LOOP_DEFAULT
 				sfxLaunchPlayer3p  = (dld.sfxLaunchPlayer3p != "") ? dld.sfxLaunchPlayer3p : "WXpress_LaunchPad_3p"
 				sfxAirborneMvmt3p  = (dld.sfxAirborneMvmt3p != "") ? dld.sfxAirborneMvmt3p : "JumpPad_AirborneMvmt_3p"
 				launcherScriptName = (dld.scriptName != "") ? dld.scriptName : ""
@@ -456,8 +456,8 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 
 				//if ( setTargetPosition )
 				//{
-				//	//DebugDrawSphere( targetPosition, 200.0, <255, 200, 0>, true, 6000.0 )
-				//	//DebugDrawSphere( targetPosition, 70.0, <255, 200, 0>, true, 6000.0 )
+				//	DebugDrawSphere( targetPosition, 200.0, <255, 200, 0>, true, 6000.0 )
+				//	DebugDrawSphere( targetPosition, 70.0, <255, 200, 0>, true, 6000.0 )
 				//	DebugDrawLine( origin, origin + < 0, 0, 1200 >, < 0, 255, 0 >, true, 6000.0 )
 				//}
 
@@ -568,9 +568,9 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 	{
 		launcherModel.SetScriptName( launcherScriptName )
 		//if ( launcherScriptName == "district_launcher_vertical" )
-		//	//DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_RED, true, 150 )
+		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_RED, true, 150 )
 		//if ( launcherScriptName == "district_launcher_horizontal" )
-		//	//DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_YELLOW, true, 150 )
+		//	DebugDrawSphere( launcherModel.GetOrigin(), 40, COLOR_YELLOW, true, 150 )
 	}
 
 	AddSonarDetectionForPropScript( launcherModel )
@@ -578,15 +578,12 @@ entity function CreateSkydiveLauncher( vector origin, vector angles, int skydive
 
 	if ( fxLoop != $"" )
 	{
-		entity fxLauncherLoop = StartParticleEffectOnEntityWithPos_ReturnEntity( launcherModel, GetParticleSystemIndex( fxLoop ), FX_PATTACH_ABSORIGIN_FOLLOW, -1, <0,0,0>, Vector(-90,0,0) )
-		entity fx = StartParticleEffectOnEntityWithPos_ReturnEntity(launcherModel, PrecacheParticleSystem( $"P_menu_char_base_rarity" ), FX_PATTACH_ABSORIGIN_FOLLOW, -1, <0,0,0>, Vector(0,0,0) )
+		entity fxLauncherLoop = StartParticleEffectOnEntityWithPos_ReturnEntity( launcherModel, GetParticleSystemIndex( fxLoop ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, <0,0,0>, <0,0,0> )
 		fxLauncherLoop.SetParent( launcherModel )
-		fx.SetParent( launcherModel )
 		                
 		if ( skydiveLauncherType == eSkydiveLauncherType.ZIPRAIL && endPoint != < 0,0,0 > )
 			EffectSetControlPointVector( fxLauncherLoop, 1, endPoint )
 		else
-        	EffectSetControlPointVector( fx, 1, <32,255,128> )
 			EffectSetControlPointVector( fxLauncherLoop, 1, <32,255,128> )
 	}
 

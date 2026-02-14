@@ -133,13 +133,9 @@ struct {
 
 void function Cl_Survival_InventoryInit()
 {
-	//
-	//
-	#if(false)
-
-#endif
 	file.itemTypeUseFunctions[ eLootType.HEALTH ] <- UseHealthPickupRefFromInventory
 	file.itemTypeUseFunctions[ eLootType.ORDNANCE ] <- EquipOrdnance
+	file.itemTypeUseFunctions[ eLootType.SURVIVAL ] <- EquipOrdnance  // we don't have gadget slot in our ui.dll so using grenade functions for now - kral
 	file.specialItemTypeUseFunctions[ eLootType.ATTACHMENT ] <- EquipAttachment
 
 	RegisterSignal( "OpenSwapForItem" )
@@ -211,27 +207,42 @@ void function ResetInventoryMenuInternal( entity player )
 
 void function Survival_UseInventoryItem( string ref, string secondRef )
 {
+	printt( "CLIENT DEBUG: Survival_UseInventoryItem called for:", ref )
+	
 	if ( GetLocalViewPlayer() != GetLocalClientPlayer() )
+	{
+		printt( "CLIENT DEBUG: LocalViewPlayer != LocalClientPlayer" )
 		return
+	}
 
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
 	int type      = data.lootType
+	
+	printt( "CLIENT DEBUG: Loot type:", type, "GADGET enum:", eLootType.SURVIVAL, "ORDNANCE enum:", eLootType.ORDNANCE )
 
 	if ( ref in file.itemUseFunctions )
 	{
+		printt( "CLIENT DEBUG: Using itemUseFunctions for:", ref )
 		file.itemUseFunctions[ ref ]( GetLocalViewPlayer(), ref )
 	}
 	else if ( ref in file.specialItemUseFunctions )
 	{
+		printt( "CLIENT DEBUG: Using specialItemUseFunctions for:", ref )
 		file.specialItemTypeUseFunctions[ type ]( GetLocalViewPlayer(), ref, secondRef )
 	}
 	else if ( type in file.itemTypeUseFunctions )
 	{
+		printt( "CLIENT DEBUG: Using itemTypeUseFunctions for type:", type )
 		file.itemTypeUseFunctions[ type ]( GetLocalViewPlayer(), ref )
 	}
 	else if ( type in file.specialItemTypeUseFunctions )
 	{
+		printt( "CLIENT DEBUG: Using specialItemTypeUseFunctions for type:", type )
 		file.specialItemTypeUseFunctions[ type ]( GetLocalViewPlayer(), ref, secondRef )
+	}
+	else
+	{
+		printt( "CLIENT DEBUG: No handler found for:", ref, "type:", type )
 	}
 
 	ResetInventoryMenu( GetLocalViewPlayer() )
@@ -2236,6 +2247,7 @@ void function GroundItemsInit( entity player, array<entity> loot )
 			case eLootType.MARVIN_ARM:
 			case eLootType.SHIPKEYCARD:
 			case eLootType.RESOURCE:
+			case eLootType.SURVIVAL:
 			attachments.append( gd )
 			break
 		}
@@ -2462,54 +2474,35 @@ void function UseHealthPickupRefFromInventory( entity player, string ref )
 	}
 }
 
-
-#if(false)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-#endif
-
-
 void function EquipOrdnance( entity player, string ref )
 {
+	printt( "CLIENT DEBUG: EquipOrdnance called for:", ref )
+	
 	if ( player.IsTitan() )
+	{
+		printt( "CLIENT DEBUG: Player is titan" )
 		return
+	}
 
 	if ( !IsAlive( player ) )
+	{
+		printt( "CLIENT DEBUG: Player not alive" )
 		return
+	}
 
 	if ( !GamePlaying() )
+	{
+		printt( "CLIENT DEBUG: Game not playing" )
 		return
+	}
 
 	if ( Bleedout_IsBleedingOut( player ) )
+	{
+		printt( "CLIENT DEBUG: Player bleeding out" )
 		return
+	}
 
+	printt( "CLIENT DEBUG: Sending Sur_EquipOrdnance command for:", ref )
 	player.ClientCommand( "Sur_EquipOrdnance " + ref )
 
 	ServerCallback_ClearHints()

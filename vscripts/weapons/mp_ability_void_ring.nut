@@ -145,6 +145,8 @@ struct
 
 void function VOID_RING_Init()
 {
+	SURVIVAL_Loot_RegisterConditionalCheck( VOID_RING_WEAPON_REF, VoidRing_ConditionalCheck )
+	
 	PrecacheModel( VOID_RING_PROJECTILE )
 	//PrecacheParticleSystem( VOID_RING_BEAM_END_FX )
 	PrecacheParticleSystem( VOID_RING_BEAM_FX )
@@ -197,6 +199,13 @@ void function VOID_RING_Init()
 		//AddCreateCallback( PLAYER_WAYPOINT_CLASSNAME, OnWaypointCreated )
 
 	#endif
+}
+
+bool function VoidRing_ConditionalCheck( string ref, entity player )
+{
+	// Void ring is always available unless restricted by specific playlist logic
+	// Returns true to allow void ring to be equipped and used
+	return true
 }
 
 void function OnWeaponActivate_void_ring( entity weapon )
@@ -1738,7 +1747,7 @@ void function InVoidRing_OnDamaged( entity ent , var damageInfo )
 //Runs when AddCallback_OnPlayerInventoryChanged() is called to initiate checks to announce VoidRing Usage Hints on the Client
 void function VoidRing_HintCheck( entity player )
 {
-	string equipRef = EquipmentSlot_GetLootRefForSlot( player, "MAIN_WEAPON0" )
+	string equipRef = EquipmentSlot_GetLootRefForSlot( player, "gadget" )
 	if( equipRef == VOID_RING_WEAPON_REF )
 	{
 		Remote_CallFunction_Replay( player, "ServerToClient_VoidRingHintDetection", player )

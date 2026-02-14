@@ -1,4 +1,4 @@
-npc_dummie_valk
+npc_dummie_revenant
 {
 	AIClass							dummie
 	TraverseAnimType				spectre
@@ -31,7 +31,7 @@ npc_dummie_valk
 	traverseCostFactor				2.0
 	minGoalRadius					256
 
-	DefaultModelName				"mdl/Humans/class/medium/pilot_medium_valkyrie.rmdl"
+	DefaultModelName				"mdl/Humans/class/heavy/pilot_heavy_revenant.rmdl"
 
 	DefaultWeapon					"mp_weapon_rspn101"
 	WeaponCapacity					"PilotMainWeapons"

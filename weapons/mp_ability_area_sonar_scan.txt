@@ -69,14 +69,14 @@ WeaponData
 	"damage_far_value"								"0"
 	
     "ammo_display"									"bar"
-    "ammo_stockpile_max"							"250"
-    "ammo_clip_size"   								"250"
-    "ammo_default_total"							"250"
-    "ammo_per_shot"									"250"
-    "ammo_min_to_fire"								"250"
+    "ammo_stockpile_max"							"25"
+    "ammo_clip_size"   								"25"
+    "ammo_default_total"							"25"
+    "ammo_per_shot"									"25"
+    "ammo_min_to_fire"								"25"
     
     // Regen Ammo
-    "regen_ammo_refill_rate"						"10"
+    "regen_ammo_refill_rate"						"1"
     "regen_ammo_refill_start_delay"					"0.0"
 
     "enable_highlight_networking_on_creation"		"0"

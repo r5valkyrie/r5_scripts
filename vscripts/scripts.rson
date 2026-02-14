@@ -116,6 +116,7 @@ Scripts:
 	sh_dev_weapons.nut
 	sh_dev_menu.nut
 	sh_weapon_cosmetics.nut
+	sh_movement_rc.nut
 ]
 
 When: "CLIENT"
@@ -256,7 +257,7 @@ Scripts:
 	sh_capturemode.gnut
 	
 	sh_weaponrack.nut
-
+	sh_player_objects.gnut
 	sh_clientsidepickups.gnut
 	titan/sh_titan.gnut
 	titan/sh_titan_embark.gnut
@@ -282,6 +283,9 @@ Scripts:
 	weapons/mp_ability_valk_cluster_missile.nut
 	weapons/mp_ability_valk_jets.nut
 	weapons/mp_ability_valk_skyward.nut
+	weapons/mp_weapon_maggie_common.nut
+	weapons/mp_ability_wrecking_ball.nut
+	weapons/mp_weapon_riot_drill.nut
 	weapons/sh_silence.gnut
 	weapons/sp_weapon_arc_tool.nut
 	weapons/mp_weapon_dragon_lmg.nut
@@ -294,6 +298,7 @@ Scripts:
 	weapons/mp_weapon_mdlspawner.nut
 	weapons/mp_weapon_satchel.nut
 	weapons/mp_weapon_car.nut
+	weapons/mp_weapon_mobile_hmg.nut
 	weapons/mp_titanweapon_flightcore_rockets.nut
 	weapons/mp_titanweapon_predator_cannon.nut
 	weapons/mp_titanweapon_particle_accelerator.nut
@@ -376,6 +381,7 @@ Scripts:
 
 	weapons/mp_ability_horizon_black_hole.nut
 	weapons/mp_ability_sonic_blast.nut
+	weapons/mp_ability_echo_locator.nut
 
 	//S0 Dev Protos
 	//Husaria

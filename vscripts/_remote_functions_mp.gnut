@@ -515,6 +515,10 @@ void function RemoteFunctions_Init_Begin()
 
 	ScriptRegisterNetworkedVariable( "gladCardPlayer", SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
 
+	if( Playlist() == ePlaylists.Movement_Recorder ){
+		ScriptRemote_RegisterClientFunction( "FS_MovementRecorder_UpdateHints", "int", 0, 21, "bool", "float", -1.0, FLT_MAX, 16 )
+		ScriptRemote_RegisterClientFunction( "FS_MovementRecorder_CreateInputHintsRUI", "bool" )}
+
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayWaitingForRespawn", "entity", "float", 0.0, 5000.0, 32, "float", 0.0, 5000.0, 32 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_RespawnPodStarted", "float", 0.0, 5000.0, 32 )
 	
@@ -624,8 +628,8 @@ void function RemoteFunctions_Init_Begin()
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_EjectConfirmed" )
 
-	// ScriptRegisterNetworkedVariable( "inMatchRankScoreProgress", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
-	// ScriptRegisterNetworkedVariable( "rankedKillAssistMultiplier", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 10 )
+	ScriptRemote_RegisterClientFunction( "Sentinel_PlayEnergizeEffect" )
+	ScriptRemote_RegisterClientFunction( "Sentinel_StopEnergizeEffect" )
 
 	#if CLIENT
 		ShRanked_RegisterNetworkFunctions()

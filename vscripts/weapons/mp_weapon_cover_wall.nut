@@ -6,7 +6,7 @@ global function OnWeaponDeactivate_weapon_cover_wall
 global function OnWeaponAttemptOffhandSwitch_weapon_cover_wall
 
 #if CLIENT
-global function OnCreateClientOnlyModel_weapon_cover_wall 
+global function OnCreateClientOnlyModel_weapon_cover_wall
 #endif
 
 #if SERVER
@@ -14,6 +14,10 @@ global function DestroyWallFX
 #endif
 
 global function IsAmpedWallEnt
+
+//$"mdl/barriers/sandbags_large_01.rmdl"
+//$"mdl/barriers/sandbags_curved_01.rmdl"
+
 
 #if CLIENT
 global function ServerToClient_CoverWallUpgrade_StartFastReload
@@ -67,18 +71,25 @@ global const string AMPED_WALL_MOVER_SCRIPTNAME = "amped_wall_mover"
 const string HEALTH_TICKS_SCRIPT_NAME = "health_ticks"
 
 const float AMPED_WALL_BUILD_DELAY = 3.0
-const float AMPED_WALL_BUILD_DELAY_IMPROVED = 2.0
 
+	const float AMPED_WALL_BUILD_DELAY_IMPROVED = 2.0
+
+// animation was authored for 3 second deploy time, set FPS of prop_rampart_wall_extend_arms in bakery to ( 3 / rampart_wall_build_time ) * 30
+
+// FX
+// base wall
 const BASE_WALL_DESTROYED_FX = $"P_rampart_wall_destroy"
 const BASE_WALL_DAMAGE_STATE_TRANSITION_FX = $"P_rampart_wall_damaged"
 const BASE_WALL_DAMAGE_STATE_PERSISTENT_FX = $"P_rampart_wall_damaged_idle"
 const BASE_WALL_TAKE_DAMAGE_WHILE_HEALTH_LOW_FX = $"P_rampart_wall_damaged_hit"
 
+//amped wall
 const float FX_IMPACT_DURATION = 0.05
 const DEPLOYABLE_SHIELD_FX_AMPED = $"P_rampart_shield_top"
 const AMPED_WALL_DESTROYED_FX = $"P_rampart_amp_destroy"
 const AMPED_WALL_PACKED_UP_FX = $"P_rampart_amp_end"
 
+// AUDIO
 const WALL_PLACED_SFX_1P = "Wall_Place_1p"
 const WALL_PLACED_SFX_3P = "Wall_Place_3p"
 const WALL_LANDS_ON_GROUND = "Wall_Land_Default"
@@ -95,8 +106,10 @@ const AMPED_WALL_POWER_DOWN_SFX = "Wall_ShieldPowerDown"
 const AMPED_WALL_BREAK_SFX_1P = "Wall_Shield_Break_1p"
 const AMPED_WALL_BREAK_SFX_3P = "Wall_Shield_Break_3p"
 
+// DIALOGUE
 const float WALL_DESTROYED_CALLOUT_MIN_DIST = 1024.0
 
+// ART
 const asset DEPLOYABLE_SHIELD_MODEL = $"mdl/fx/rampart_shield_cell.rmdl"
 const asset HEALTH_TICKS_MODEL = $"mdl/fx/rampart_health_ticks.rmdl"
 
@@ -126,8 +139,18 @@ struct
 void function MpWeaponCoverWall_Init()
 {
 	#if SERVER
+		AddCallback_OnPassThrough( AmpedWallPassThroughFX )
+
 		RegisterDynamicEntCleanupItem_Parented_Scriptname( BASE_WALL_SCRIPT_NAME )
 		RegisterDynamicEntCleanupItem_Area_Scriptname( BASE_WALL_SCRIPT_NAME )
+		AddClientCommandCallback( "ClientCallback_TryPickupCoverWall", ClientCommand_ClientCallback_TryPickupCoverWall )
+	#endif
+
+	#if CLIENT
+		RegisterConCommandTriggeredCallback( "+scriptCommand5", OnCharacterButtonPressed )
+
+		AddCallback_UseEntGainFocus( CoverWall_OnGainFocus )
+		AddCallback_UseEntLoseFocus( CoverWall_OnLoseFocus )
 	#endif
 
 	#if SERVER || CLIENT
@@ -143,36 +166,6 @@ void function MpWeaponCoverWall_Init()
 	file.ampedWallMaxHealth = GetRampartAmpedShieldHealth()
 
 	CoverWall_Precache()
-}
-
-void function CoverWall_Precache()
-{
-	RegisterSignal( "CoverWall_PickedUp" )
-	RegisterSignal( "CoverWall_OnContinousUseStopped" )
-
-	PrecacheModel( COVER_WALL_MODEL )
-	//PrecacheModel( COLLISION_CYLINDER_MODEL )
-
-	file.shieldFxIndex = PrecacheParticleSystem( DEPLOYABLE_SHIELD_FX_AMPED )
-	PrecacheParticleSystem( AMPED_WALL_DESTROYED_FX )
-	PrecacheParticleSystem( AMPED_WALL_PACKED_UP_FX )
-
-	PrecacheParticleSystem( BASE_WALL_DESTROYED_FX )
-	PrecacheParticleSystem( BASE_WALL_DAMAGE_STATE_TRANSITION_FX )
-	file.persistentDamageFxIndex = PrecacheParticleSystem( BASE_WALL_DAMAGE_STATE_PERSISTENT_FX )
-	PrecacheParticleSystem( BASE_WALL_TAKE_DAMAGE_WHILE_HEALTH_LOW_FX )
-
-	PrecacheModel( DEPLOYABLE_SHIELD_MODEL )
-	PrecacheModel( HEALTH_TICKS_MODEL )
-
-	#if CLIENT
-		RegisterSignal( "CoverWall_StopPlacementProxy" )
-		StatusEffect_RegisterEnabledCallback( eStatusEffect.placing_cover_wall, CoverWall_OnBeginPlacement )
-		StatusEffect_RegisterDisabledCallback( eStatusEffect.placing_cover_wall, CoverWall_OnEndPlacement )
-
-		AddCreateCallback( "prop_script", CoverWall_OnPropScriptCreated )
-		AddCallback_ModifyDamageFlyoutForScriptName( BASE_WALL_SCRIPT_NAME, CoverWall_OffsetDamageNumbersLower )
-	#endif
 }
 
 float function GetRampartAmpedShieldHealth()
@@ -312,6 +305,38 @@ void function FastReload_1PFX_Thread( entity player )
 	}
 }
 #endif
+void function CoverWall_Precache()
+{
+	RegisterSignal( "CoverWall_PickedUp" )
+	RegisterSignal( "CoverWall_OnContinousUseStopped" )
+	RegisterSignal( "CoverWall_ServerPickup" )
+
+	PrecacheModel( COVER_WALL_MODEL )
+	PrecacheModel( COLLISION_CYLINDER_MODEL )
+
+	file.shieldFxIndex = PrecacheParticleSystem( DEPLOYABLE_SHIELD_FX_AMPED )
+	PrecacheParticleSystem( AMPED_WALL_DESTROYED_FX )
+	PrecacheParticleSystem( AMPED_WALL_PACKED_UP_FX )
+
+	PrecacheParticleSystem( BASE_WALL_DESTROYED_FX )
+	PrecacheParticleSystem( BASE_WALL_DAMAGE_STATE_TRANSITION_FX )
+	file.persistentDamageFxIndex = PrecacheParticleSystem( BASE_WALL_DAMAGE_STATE_PERSISTENT_FX )
+	PrecacheParticleSystem( BASE_WALL_TAKE_DAMAGE_WHILE_HEALTH_LOW_FX )
+
+	PrecacheModel( DEPLOYABLE_SHIELD_MODEL )
+	PrecacheModel( HEALTH_TICKS_MODEL )
+
+	#if CLIENT
+		RegisterSignal( "CoverWall_StopPlacementProxy" )
+		StatusEffect_RegisterEnabledCallback( eStatusEffect.placing_cover_wall, CoverWall_OnBeginPlacement )
+		StatusEffect_RegisterDisabledCallback( eStatusEffect.placing_cover_wall, CoverWall_OnEndPlacement )
+
+		AddCreateCallback( "prop_script", CoverWall_OnPropScriptCreated )
+		AddDestroyCallback( "prop_script", CoverWall_OnPropScriptDestroyed )
+
+		AddCallback_ModifyDamageFlyoutForScriptName( BASE_WALL_SCRIPT_NAME, CoverWall_OffsetDamageNumbersLower )
+	#endif
+}
 
 bool function IsAmpedWallEnt( entity ent )
 {
@@ -336,7 +361,7 @@ bool function CanReclaimWall( entity baseWall )
 	if ( !IsValid( baseWall ) )
 		return false
 
-	if ( IsValid( baseWall.GetOwner() ) && baseWall.GetOwner().HasPassive( ePassives.PAS_PAS_UPGRADE_ONE ) )
+	if ( IsValid( baseWall.GetOwner() ) )
 		return true
 
 	if ( !IsValid( ampedWall) )
@@ -508,7 +533,7 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 	vector angles = placementInfo.angles
 	entity parentTo = placementInfo.parentEnt
 
-	entity mover = CreateScriptMover( origin, angles )
+	entity mover = CreateScriptMover_NEW( AMPED_WALL_MOVER_SCRIPTNAME, origin, angles )
 
 	if ( IsValid( parentTo ) )
 	{
@@ -517,8 +542,9 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 
 	entity wallProxy = CreatePropScript( COVER_WALL_MODEL, origin, angles, SOLID_VPHYSICS )
 
-	wallProxy.EndSignal( "OnDestroy" )
-	wallProxy.EndSignal( "CoverWall_PickedUp" )
+	EndSignal( mover, "OnDestroy" )
+	EndSignal( wallProxy, "OnDestroy" )
+	EndSignal( wallProxy, "CoverWall_PickedUp" )
 
 	wallProxy.SetParent( mover )
 	thread CoverWall_DestoryMoverAfterProxy( mover, wallProxy )
@@ -542,6 +568,7 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 	wallProxy.SetTakeDamageType( DAMAGE_YES )
 
 	wallProxy.SetScriptName( BASE_WALL_SCRIPT_NAME )
+	//wallProxy.SetTitle( "#WPN_COVER_WALL" )
 	SetTargetName( wallProxy, BASE_WALL_SCRIPT_NAME )
 
 	wallProxy.SetOwner( owner )
@@ -555,7 +582,7 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 	wallProxy.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION )
 	wallProxy.EnableAttackableByAI( 5, 0, AI_AP_FLAG_NONE )
 
-	wallProxy.SetTouchTriggers( true )
+	wallProxy.SetTouchTriggers( true ) //Make it destroyable by triggers e.g. Leviathan stomp, thermite
 
 	int team = owner.GetTeam()
 	wallProxy.Minimap_SetAlignUpright( true )
@@ -577,42 +604,50 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 	AddEntityCallback_OnDamaged( wallProxy, CoverWall_OnDamaged )
 	AddEntityCallback_OnPostDamaged( wallProxy, CoverWall_OnPostDamaged )
 
-	//entity cylinder = CreatePropScript( COLLISION_CYLINDER_MODEL, origin - ( wallProxy.GetRightVector() * 62 ) + ( wallProxy.GetUpVector() * 20 ), RotateAnglesAboutAxis( angles, wallProxy.GetForwardVector(), 90 ), SOLID_CAPSULE )
-	//InitCollisionCylinder( cylinder, owner, wallProxy )
+	wallProxy.SetUsable()
+	wallProxy.SetUsablePriority( USABLE_PRIORITY_LOW )
+	wallProxy.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER ) //Update hint text every server frame so that we can keep unique client texts up to date.
+	SetCallback_CanUseEntityCallback( wallProxy, CoverWall_CanUse )
+
+	entity cylinder = CreatePropScript( COLLISION_CYLINDER_MODEL, origin - ( wallProxy.GetRightVector() * 62 ) + ( wallProxy.GetUpVector() * 20 ), RotateAnglesAboutAxis( angles, wallProxy.GetForwardVector(), 90 ), SOLID_CAPSULE )
+	InitCollisionCylinder( cylinder, owner, wallProxy )
 
 	PIN_Interact( owner, "rampart_wall_deployed", origin )
 
+	// Manage existing walls
 	owner.e.coverWalls.insert( 0, wallProxy )
 	while ( owner.e.coverWalls.len() > GetCurrentPlaylistVarInt( "rampart_max_walls_deployed", COVER_WALL_MAX_WALLS ) )
 	{
 		entity entToDelete = owner.e.coverWalls.pop()
 		if ( IsValid( entToDelete ) )
 		{
-			entToDelete.Destroy()
+			Signal( entToDelete, "OnDestroy" )
 		}
 	}
 
+
+
+
+
+	// Sounds
 	EmitSoundOnEntityOnlyToPlayer( wallProxy, owner, WALL_PLACED_SFX_1P )
 	EmitSoundOnEntityExceptToPlayer( wallProxy, owner, WALL_PLACED_SFX_3P )
 	EmitSoundOnEntity( wallProxy, WALL_LANDS_ON_GROUND )
 
+	// Animation
 	wallProxy.SetBodygroupModelByIndex( wallProxy.FindBodygroup( "rampart_cover_wall_arms" ), 1 )
 	thread PlayAnim( wallProxy, "prop_rampart_wall_folded_idle", mover )
 
+	// FX
 	file.baseWallToPersistentDamageFX[ wallProxy ] <- null
 
-	thread CoverWall_WaitForPickup( wallProxy )
-
 	OnThreadEnd(
-	function() : ( owner, wallProxy, noSpawnIdx )
+	function() : ( owner, wallProxy, noSpawnIdx, cylinder )
 		{
 			DeleteNoSpawnArea( noSpawnIdx )
 
-			//if ( IsValid( cylinder ) )
-				//cylinder.Destroy()
-
-			//if ( IsValid( owner ) && wallProxy != null )
-			//	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_COVER_WALL, wallProxy, wallProxy.GetOrigin(), owner.GetTeam(), owner )
+			if ( IsValid( cylinder ) )
+				cylinder.Destroy()
 
 			bool wasWallDestroyedDueToExceededLimit = true
 			if ( IsValid( owner ) )
@@ -650,6 +685,8 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 
 					if ( IsValid( owner ) && GetPlayerVoice( owner ) == "rampart" && !wasWallDestroyedDueToExceededLimit )
 						PlayBattleChatterLineToSpeakerAndTeamWithDebounceTime( owner, "bc_rampart_coverPackedUp", 5.0, 5.0 )
+
+					Signal( wallProxy, "OnDestroy" )
 				}
 				else
 				{
@@ -661,6 +698,7 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 
 	int passThroughThickness = GetCurrentPlaylistVarInt( "rampart_wall_thickness", 1 )
 	wallProxy.SetPassThroughThickness( passThroughThickness )
+	wallProxy.SetPassThroughFlags( PTF_NO_DMG_ON_PASS_THROUGH )
 
 	thread Wall_CheckForGeoIntersection( wallProxy )
 
@@ -705,7 +743,8 @@ void function CoverWall_WaitForPickup( entity wallProxy )
 
  	while( true )
  	{
- 		entity player = expect entity( wallProxy.WaitSignal( "OnPlayerUseLong" ).player )
+ 		table signalData = wallProxy.WaitSignal( "OnPlayerUseLong", "CoverWall_ServerPickup" )
+ 		entity player = expect entity( signalData.player )
 
  		if ( player.IsTitan() )
  			continue
@@ -746,70 +785,6 @@ void function CoverWall_PlayerAttemptPickup( entity player, entity wallProxy )
 	}
 }
 
-bool function CoverWall_PickUp( entity player, entity baseWall )
-{
-	entity weapon = player.GetOffhandWeapon( OFFHAND_TACTICAL )
-
-	if ( !IsValid( weapon ) || weapon.GetWeaponClassName() != COVER_WALL_WEAPON_NAME )
-		return false
-
-	if ( Bleedout_IsBleedingOut( player ) )
-		return false
-
-	if ( CanReclaimWall( baseWall ) )
-	{
-		Weapon_AddSingleCharge( weapon )
-	}
-	else // If not reclaimable, destroy it
-	{
-		baseWall.TakeDamage( baseWall.GetMaxHealth() + 1, player, player, {} )
-		return false
-	}
-
-	return true
-}
-
-void function CoverWall_TrackContinuousUse( entity player, entity useTarget, float useTime, bool doRequireUseButtonHeld )
-{
-	player.EndSignal( "OnDeath" )
-	useTarget.EndSignal( "OnDeath" )
-	useTarget.EndSignal( "OnDestroy" )
-	player.EndSignal( "StartPhaseShift" )
-	useTarget.EndSignal( "StartPhaseShift" )
-
-	table result = {}
-	result.success <- false
-
-	float maxDist2 = DistanceSqr( player.GetOrigin(), useTarget.GetOrigin() ) + COVER_WALL_MAX_USE_DIST2_MOD
-
-	OnThreadEnd
-	(
-		function() : ( player, result )
-		{
-			if ( !result.success )
-			{
-				player.Signal( "CoverWall_OnContinousUseStopped" )
-			}
-		}
-	)
-
-	float startTime = Time()
-	while ( Time() < startTime + useTime && (!doRequireUseButtonHeld || CoverWall_IsReviveButtonDown( player )) && DistanceSqr( player.GetOrigin(), useTarget.GetOrigin() ) <= maxDist2 )
-		WaitFrame()
-
-	if ( (!doRequireUseButtonHeld || CoverWall_IsReviveButtonDown( player )) && DistanceSqr( player.GetOrigin(), useTarget.GetOrigin() ) <= maxDist2 )
-		result.success = true
-}
-
-bool function CoverWall_IsReviveButtonDown( entity player )
-{
-	bool inUse      = player.IsInputCommandHeld( IN_USE )
-	bool inUseAlt   = COVER_WALL_USE_ALT && player.IsInputCommandHeld( IN_USE_ALT )
-	bool inUseQuick = COVER_WALL_USE_QUICK && player.IsInputCommandHeld( IN_USE_LONG )
-
-	return inUse || inUseAlt || inUseQuick
-}
-
 void function Wall_CheckForGeoIntersection( entity wallProxy )
 {
 	Assert ( IsNewThread(), "Must be threaded off." )
@@ -819,7 +794,7 @@ void function Wall_CheckForGeoIntersection( entity wallProxy )
 	float hullWidth = hullDepth
 	float wallFullWidth = 62
 	float hullHeight = 10
-	float heightOffGround = 10
+	float heightOffGround = 10 // Matches object_placement_ground_penetration_max
 
 	while ( true )
 	{
@@ -833,6 +808,9 @@ void function Wall_CheckForGeoIntersection( entity wallProxy )
 		vector endPos   = wallProxy.GetOrigin() + up * heightOffGround + right * wallFullWidth * 0.8
 
 		TraceResults results = TraceHull( startPos, endPos, <-hullWidth, -hullDepth, 0>, <hullWidth, hullDepth, hullHeight>, ignoreEnts, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
+		//DebugDrawBox( startPos, <-hullWidth,-hullDepth,0>, <hullWidth,hullDepth,hullHeight>, COLOR_GREEN, 1, 1.0 )
+		//DebugDrawBox( endPos, <-hullWidth,-hullDepth,0>, <hullWidth,hullDepth,hullHeight>, <0, 128, 0>, 1, 1.0 )
+		//PrintTraceResults( results )
 		if ( results.startSolid || results.fraction != 1 )
 		{
 			entity hitEnt = results.hitEnt
@@ -928,20 +906,12 @@ void function DeployAmpedWallAfterDelay( entity baseWall, entity animReference )
 float function GetAmpedWallHealth( entity owner )
 {
 	float health = GetRampartAmpedShieldHealth()
-		/*if( IsValid( owner ) && owner.HasPassive( ePassives.PAS_TAC_UPGRADE_TWO ) )
-		{
-			health *= GetRampartUpgradedShieldHealth()
-		}*/
 	return health
 }
 
 float function GetBaseWallHealth( entity owner )
 {
 	float baseHealth = COVER_WALL_MAX_HEALTH
-		/*if( IsValid( owner ) && owner.HasPassive( ePassives.PAS_TAC_UPGRADE_TWO ) )
-		{
-			baseHealth *= GetRampartUpgradedBaseHealth()
-		}*/
 	return baseHealth
 }
 
@@ -955,13 +925,13 @@ void function DeployAmpedWall( entity baseWall, vector origin, vector angles, en
 	vector up = AnglesToUp( angles )
 	origin = origin + (up * AMPED_WALL_HEIGHT_OFFSET )
 
-	entity ampedWall = CreatePropScript( DEPLOYABLE_SHIELD_MODEL, origin, RotateAnglesAboutAxis( angles, up, 180 ), SOLID_VPHYSICS ) 
+	entity ampedWall = CreatePropScript( DEPLOYABLE_SHIELD_MODEL, origin, RotateAnglesAboutAxis( angles, up, 180 ), SOLID_VPHYSICS )
 	EmitSoundOnEntity( ampedWall, AMPED_WALL_SHIELD_LOOP_SFX )
 
 	EndSignal( ampedWall, "OnDestroy" )
 
 	ampedWall.kv.contents = (CONTENTS_WINDOW | CONTENTS_BLOCK_PING)
-	ampedWall.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS //TODO:Fix collision //TRACE_COLLISION_GROUP_PLAYER
+	ampedWall.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS
     //ampedWall.e.noFriendlyFireProtection = true
 	ampedWall.e.canBeDamagedFromGas = false
 	//ampedWall.e.preventStickyEnts = true
@@ -979,8 +949,8 @@ void function DeployAmpedWall( entity baseWall, vector origin, vector angles, en
 	ampedWall.RemoveFromAllRealms()
 	ampedWall.AddToOtherEntitysRealms( baseWall )
 
-	ampedWall.SetParent( baseWall )
-	baseWall.LinkToEnt( ampedWall )
+	ampedWall.SetParent( baseWall ) //Make amped wall work with moving geo
+	baseWall.LinkToEnt( ampedWall ) //Make amped wall easier to find later
 	ampedWall.SetScriptName( AMPED_WALL_SCRIPT_NAME )
 
 	SetTeam( ampedWall, baseWall.GetTeam() )
@@ -1009,19 +979,16 @@ void function DeployAmpedWall( entity baseWall, vector origin, vector angles, en
 	int bodyGroupIndexMid = healthTicks.FindBodygroup( "shield_health_mid" )
 	int bodyGroupIndexLow = healthTicks.FindBodygroup( "shield_health_low" )
 
-	if ( bodyGroupIndexHigh != -1 )
-		healthTicks.SetBodygroupModelByIndex( bodyGroupIndexHigh, 1 )
-	if ( bodyGroupIndexMid != -1 )
-		healthTicks.SetBodygroupModelByIndex( bodyGroupIndexMid, 0 )
-	if ( bodyGroupIndexLow != -1 )
-		healthTicks.SetBodygroupModelByIndex( bodyGroupIndexLow, 0 )
+	healthTicks.SetBodygroupModelByIndex( bodyGroupIndexHigh, 1 )
+	healthTicks.SetBodygroupModelByIndex( bodyGroupIndexMid, 0 )
+	healthTicks.SetBodygroupModelByIndex( bodyGroupIndexLow, 0 )
 
 	entity shieldFX = StartParticleEffectInWorld_ReturnEntity( file.shieldFxIndex, origin, angles )
 
 	shieldFX.RemoveFromAllRealms()
 	shieldFX.AddToOtherEntitysRealms( baseWall )
 
-	shieldFX.SetParent( baseWall )
+	shieldFX.SetParent( baseWall ) //Make amped wall work with moving geo
 
 	file.ampedWallEntToShieldFX[ ampedWall ] <- shieldFX
 
@@ -1109,6 +1076,114 @@ void function PlayIncomingDamageFX_Thread( entity shieldFX )
 	EffectSetControlPointVector( shieldFX, 3, <0,0,0> )
 }
 
+#if SERVER
+bool function ClientCommand_ClientCallback_TryPickupCoverWall( entity player, array<string> args )
+{
+	if ( args.len() < 1 )
+		return false
+
+	int entIndex = int( args[0] )
+	entity useEnt = GetEntityFromEncodedEHandle( entIndex )
+
+	if ( !IsValid( useEnt ) || useEnt.GetScriptName() != BASE_WALL_SCRIPT_NAME )
+		return true
+
+	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
+		return true
+
+	thread PickupCoverWall( player, useEnt )
+	return true
+}
+
+void function ClientCallback_TryPickupCoverWall( entity device )
+{
+	entity player = device.GetOwner()
+
+	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
+		return
+
+	if ( !IsValid( device ) || device.GetScriptName() != BASE_WALL_SCRIPT_NAME )
+		return
+
+	PickupCoverWall( player, device )
+}
+
+void function PickupCoverWall( entity player, entity device )
+{
+	if ( GradeFlagsHas( device, eGradeFlags.IS_BUSY ) )
+		return
+
+	GradeFlagsSet( device, eGradeFlags.IS_BUSY )
+	if ( CoverWall_PickUp( player, device ) )
+	{
+		device.Signal( "CoverWall_PickedUp" )
+	}
+}
+#endif
+
+void function CoverWall_TrackContinuousUse( entity player, entity useTarget, float useTime, bool doRequireUseButtonHeld )
+{
+	player.EndSignal( "OnDeath" )
+	useTarget.EndSignal( "OnDeath" )
+	useTarget.EndSignal( "OnDestroy" )
+	player.EndSignal( "StartPhaseShift" )
+	useTarget.EndSignal( "StartPhaseShift" )
+
+	table result = {}
+	result.success <- false
+
+	float maxDist2 = DistanceSqr( player.GetOrigin(), useTarget.GetOrigin() ) + COVER_WALL_MAX_USE_DIST2_MOD
+
+	OnThreadEnd
+	(
+		function() : ( player, result )
+		{
+			if ( !result.success )
+			{
+				player.Signal( "CoverWall_OnContinousUseStopped" )
+			}
+		}
+	)
+
+	float startTime = Time()
+	while ( Time() < startTime + useTime && (!doRequireUseButtonHeld || CoverWall_IsReviveButtonDown( player )) && DistanceSqr( player.GetOrigin(), useTarget.GetOrigin() ) <= maxDist2 )
+		WaitFrame()
+
+	if ( (!doRequireUseButtonHeld || CoverWall_IsReviveButtonDown( player )) && DistanceSqr( player.GetOrigin(), useTarget.GetOrigin() ) <= maxDist2 )
+		result.success = true
+}
+
+bool function CoverWall_IsReviveButtonDown( entity player )
+{
+	bool inUse      = player.IsInputCommandHeld( IN_USE )
+	bool inUseAlt   = COVER_WALL_USE_ALT && player.IsInputCommandHeld( IN_USE_ALT )
+	bool inUseQuick = COVER_WALL_USE_QUICK && player.IsInputCommandHeld( IN_USE_LONG )
+
+	return inUse || inUseAlt || inUseQuick
+}
+
+bool function CoverWall_PickUp( entity player, entity baseWall )
+{
+	entity weapon = player.GetOffhandWeapon( OFFHAND_TACTICAL )
+
+	string className = weapon.GetWeaponClassName()
+	if ( className != COVER_WALL_WEAPON_NAME )
+		return false
+
+	if ( Bleedout_IsBleedingOut( player ) )
+		return false
+
+	//Don't allow the player to pick up walls if they are using a mounted turret.
+	if ( MountedTurretPlaceable_IsUsingMountedTurret( player ) )
+		return false
+
+	if ( CanReclaimWall( baseWall ) )
+	{
+		Weapon_AddSingleCharge( weapon )
+	}
+
+	return true
+}
 void function PlayPickupAnimAndDissolveAfter( entity wall )
 {
 	waitthread PlayAnim( wall, "prop_rampart_wall_destroy" )
@@ -1132,6 +1207,7 @@ void function CoverWall_OnDamaged( entity wallProxy, var damageInfo )
 
 	int damageFlags = DamageInfo_GetCustomDamageType( damageInfo )
 
+	//Two melees will destroy the wall
 	if ( IsBitFlagSet( damageFlags, DF_EXPLOSION ) || IsBitFlagSet( damageFlags, DF_MELEE ) )
 	{
 		if ( IsBitFlagSet( damageFlags, DF_EXPLOSION ) )
@@ -1150,8 +1226,6 @@ void function CoverWall_OnDamaged( entity wallProxy, var damageInfo )
 				default:
 					if ( IsProwler( attacker ) )
 						DamageInfo_SetDamage( damageInfo, wallProxy.GetMaxHealth() / 2 )
-					else if( IsValid( wallProxy.GetOwner() ) && wallProxy.GetOwner().HasPassive( ePassives.PAS_TAC_UPGRADE_ONE ) )
-						DamageInfo_SetDamage( damageInfo, DamageInfo_GetDamage( damageInfo ) * GetRampartUpgradedWallDamageResilienceMultiplier() )
 			}
 		}
 
@@ -1166,6 +1240,7 @@ void function CoverWall_OnDamaged( entity wallProxy, var damageInfo )
 void function CoverWall_OnPostDamaged( entity wallProxy, var damageInfo )
 {
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	entity weapon = DamageInfo_GetWeapon( damageInfo )
 
 	if ( !IsValid( wallProxy ) )
 		return
@@ -1266,6 +1341,7 @@ void function DestroyWallFX( entity wallProxy, entity attacker )
 
 void function AmpedWall_OnDamaged( entity ampedWall, var damageInfo )
 {
+	// Damage Math
 	int damageSourceIdentifier = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	float damageScale = 1.0
 	float damage = DamageInfo_GetDamage( damageInfo )
@@ -1290,10 +1366,13 @@ void function AmpedWall_OnDamaged( entity ampedWall, var damageInfo )
 
 void function AmpedWall_OnPostDamaged( entity ampedWall, var damageInfo )
 {
+	int damageSourceIdentifier = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	float damageScale = 1.0
 	float damage = DamageInfo_GetDamage( damageInfo )
 	if ( damage <= 0 )
 		return
 
+	//	Rampart unique tracker
 	#if SERVER
 		if ( !IsBitFlagSet( DamageInfo_GetCustomDamageType( damageInfo ), DF_MELEE ) )
 		{
@@ -1301,7 +1380,9 @@ void function AmpedWall_OnPostDamaged( entity ampedWall, var damageInfo )
 		}
 	#endif
 
-	bool ampedWallDestroyed = ( ampedWall.GetHealth() - damage ) <= 0
+	bool ampedWallDestroyed = ( ampedWall.GetHealth() - DamageInfo_GetDamage( damageInfo ) ) <= 0
+
+	// Damage Feedback
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	if ( !IsValid( attacker ) )
@@ -1312,7 +1393,7 @@ void function AmpedWall_OnPostDamaged( entity ampedWall, var damageInfo )
 	if ( IsBitFlagSet( DamageInfo_GetCustomDamageType( damageInfo ), DF_MELEE ) )
 	{
 		if ( baseWall != null && baseWall.GetScriptName() == BASE_WALL_SCRIPT_NAME )
-			baseWall.TakeDamage( damage, attacker, attacker, { scriptType = DamageInfo_GetCustomDamageType( damageInfo ), damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo ) } )
+			baseWall.TakeDamage( DamageInfo_GetDamage( damageInfo ), attacker, attacker, { scriptType = DamageInfo_GetCustomDamageType( damageInfo ), damageSourceId = DamageInfo_GetDamageSourceIdentifier( damageInfo ) } )
 
 	}
 	else if ( attacker.IsPlayer() )
@@ -1324,7 +1405,7 @@ void function AmpedWall_OnPostDamaged( entity ampedWall, var damageInfo )
 			DamageInfo_AddCustomDamageType( damageInfo, DF_KILLSHOT )
 
 		attacker.NotifyDidDamage( ampedWall, 0, DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ),
-			damage, DamageInfo_GetDamageFlags( damageInfo ) | DF_NO_HITBEEP | DAMAGEFLAG_VICTIM_HAS_VORTEX,
+			DamageInfo_GetDamage( damageInfo ), DamageInfo_GetDamageFlags( damageInfo ) | DF_NO_HITBEEP | DAMAGEFLAG_VICTIM_HAS_VORTEX,
 			DamageInfo_GetHitGroup( damageInfo ), DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo ) )
 	}
 
@@ -1357,7 +1438,7 @@ void function AmpedWall_OnPostDamaged( entity ampedWall, var damageInfo )
 			PIN_Interact( baseWall.GetOwner(), "rampart_amped_wall_destroyed", baseWall.GetOrigin() )
 	}
 
-	HealthTick_OnDamaged( ampedWall, damage )
+	HealthTick_OnDamaged( ampedWall, DamageInfo_GetDamage( damageInfo ) )
 }
 
 void function HealthTick_OnDamaged( entity ampedWall, float damage )
@@ -1375,7 +1456,7 @@ void function HealthTick_OnDamaged( entity ampedWall, float damage )
 	if ( !IsValid( healthTicks ) )
 		return
 
-	string bodyGroupIndexOn
+	string bodyGroupIndexOn = "shield_health_high"
 	array<string> bodyGroups = [ "shield_health_high", "shield_health_low" ]
 
 	if ( ampedWall.GetHealth() - damage > ampedWall.GetMaxHealth() * ( 1.0 / 2.0 ) )
@@ -1417,8 +1498,35 @@ void function CoverWall_OnPropScriptCreated( entity ent )
 	if ( ent.GetScriptName() == BASE_WALL_SCRIPT_NAME )
 	{
 		SetCallback_CanUseEntityCallback( ent, CoverWall_CanUse )
-		//thread CoverWall_CreateHUDMarker( ent )
 	}
+}
+
+void function CoverWall_OnPropScriptDestroyed( entity ent )
+{
+	if ( !IsValid( ent ) )
+		return
+
+	if ( ent.GetScriptName() == BASE_WALL_SCRIPT_NAME )
+	{
+		CustomUsePrompt_ClearForEntity( ent )
+	}
+}
+
+void function OnCharacterButtonPressed( entity player )
+{
+	entity useEnt = player.GetUsePromptEntity()
+	if ( !IsValid( useEnt ) || useEnt.GetScriptName() != BASE_WALL_SCRIPT_NAME )
+		return
+
+	if ( useEnt.GetOwner() != player )
+		return
+
+	//CustomUsePrompt_SetLastUsedTime( Time() )
+
+	// Send client command to server
+	// Get ent index to pass to server
+	int entIndex = useEnt.GetEncodedEHandle()
+	player.ClientCommand( "ClientCallback_TryPickupCoverWall " + entIndex )
 }
 
 void function CoverWall_CreateHUDMarker( entity wall )
@@ -1458,6 +1566,22 @@ bool function CoverWall_ShouldShowIcon( entity localPlayer, entity wall )
 		return false
 
 	return true
+}
+
+void function CoverWall_OnGainFocus( entity ent )
+{
+	if ( !IsValid( ent ) )
+		return
+
+	if ( ent.GetScriptName() == BASE_WALL_SCRIPT_NAME )
+	{
+	//	CustomUsePrompt_Show( ent )
+	}
+}
+
+void function CoverWall_OnLoseFocus( entity ent )
+{
+	//CustomUsePrompt_ClearForAny()
 }
 
 void function CoverWall_OnBeginPlacement( entity player, int statusEffect, bool actuallyChanged )

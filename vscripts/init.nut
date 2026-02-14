@@ -44,6 +44,20 @@ global struct VehicleSim
 	bool   isResting
 }
 
+global struct BreachTraceResults
+{
+	int result
+	vector endPos
+	vector surfaceNormal
+}
+
+global const int BREACH_TRACE_RESULT_SUCCESS = 0
+global const int BREACH_TRACE_RESULT_WALL_TOO_THIN = 1
+global const int BREACH_TRACE_RESULT_WALL_TOO_THICK = 2
+global const int BREACH_TRACE_RESULT_INVALID_END_POINT = 3
+global const int BREACH_TRACE_RESULT_FAILURE = 4
+global const int BREACH_TRACE_RESULT_COUNT = 5
+
 global struct TraceResults
 {
 	entity hitEnt

@@ -156,17 +156,12 @@ void function SURVIVAL_LootTypes_InitShared()
 	lt.groundActionFunc = GroundAction_ForResource
 	lt.groundAltActionFunc = GroundAltAction_None
 	
-	lt = RegisterLootType( eLootType.GADGET )
+	lt = RegisterLootType( eLootType.SURVIVAL )
 	lt.equipmentSlot = ""
-	lt.equipmentAction = eLootAction.EQUIP
-	lt.groundActionFunc = GroundAction_ForEquipment
-	lt.groundAltActionFunc = GroundAltAction_ForEquipment
-	
-	lt = RegisterLootType( eLootType.GADGET )
-	lt.equipmentSlot = "gadgetslot"
-	lt.equipmentAction = eLootAction.EQUIP
-	lt.groundActionFunc = GroundAction_ForEquipment
-	lt.groundAltActionFunc = GroundAltAction_ForEquipment
+	lt.backpackAction = eLootAction.EQUIP
+	lt.groundActionFunc = GroundAction_ForBackpackItem
+	lt.groundUseLongActionFunc = GroundLongAction_ForBackpackItem
+	lt.groundAltActionFunc = GroundAltAction_None
 }
 
 LootTypeData function RegisterLootType( int lootType )
@@ -265,16 +260,8 @@ LootActionStruct function GroundAction_ForEquipment( entity player, LootRef loot
 	{
 		as.action = eLootAction.EQUIP
 	}
-
-                  
-                                                                                                                          
-  
-                              
-  
-           
-      
-	        if  ( lootData.lootType == eLootType.GADGET )
-	{
+	    if  ( lootData.lootType == eLootType.SURVIVAL )
+		{
 		if ( tier == 0 )                         
 		{
 			as.action = eLootAction.EQUIP
@@ -508,5 +495,27 @@ bool function MainActionIsNotPickup( entity player, entity ent )
 
 	LootActionStruct asMain = SURVIVAL_GetActionForGroundItem( player, lootRef, false )
 
+	// Register custom ground actions for special gadgets
+	RegisterCustomItemGroundAction("mp_ability_void_ring", GroundAction_UseVoidRing)
+	RegisterCustomItemGroundAction("mp_ability_mobile_respawn_beacon", GroundAction_UseMobileRespawnBeacon)
+
 	return asMain.action != eLootAction.PICKUP
+}
+
+// Custom ground action for Void Ring
+LootActionStruct function GroundAction_UseVoidRing(entity player, LootRef lootRef)
+{
+	LootActionStruct as
+	as.action = eLootAction.USE
+	as.displayString = "#USE_VOID_RING"
+	return as
+}
+
+// Custom ground action for Mobile Respawn Beacon
+LootActionStruct function GroundAction_UseMobileRespawnBeacon(entity player, LootRef lootRef)
+{
+	LootActionStruct as
+	as.action = eLootAction.USE
+	as.displayString = "#USE_MOBILE_RESPAWN_BEACON"
+	return as
 }

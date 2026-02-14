@@ -902,6 +902,21 @@ bool function LegalOrigin( vector origin )
 	return true
 }
 
+bool function LegalAngles( vector angles )
+{
+	if ( fabs( angles.x ) > 360 )
+		return false
+
+	if ( fabs( angles.y ) > 360 )
+		return false
+
+	if ( fabs( angles.z ) > 360 )
+		return false
+
+	return true
+}
+
+
 vector function AnglesOnSurface( vector surfaceNormal, vector playerVelocity )
 {
 	playerVelocity.Norm()
@@ -1423,6 +1438,10 @@ int function GetGameState()
 
 bool function GamePlaying()
 {
+	// Allow firing range to count as playing for equipping gadgets and testing
+	if ( Playlist() == ePlaylists.survival_firingrange )
+		return true
+	
 	return GetGameState() == eGameState.Playing
 }
 
@@ -3562,8 +3581,14 @@ string function GetPlayerBodyType( entity player )
 	return player.GetPlayerSettingString( "weaponClass" )
 }
 
+table customPlayerVoices
+
 string function GetPlayerVoice( entity player )
 {
+	int playerKey = player.GetEncodedEHandle()
+	if ( playerKey in customPlayerVoices )
+		return expect string( customPlayerVoices[playerKey] )
+
 	if ( player.IsTitan() )
 	{
 		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
@@ -3573,6 +3598,12 @@ string function GetPlayerVoice( entity player )
 	}
 
 	return player.GetPlayerSettingString( "voice" )
+}
+
+void function SetPlayerVoiceOverride( entity player, string voice )
+{
+	int playerKey = player.GetEncodedEHandle()
+	customPlayerVoices[playerKey] <- voice
 }
 
 void function SetTeam( entity ent, int team )

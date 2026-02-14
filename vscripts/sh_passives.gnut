@@ -98,8 +98,8 @@ global enum ePassives
 	PAS_VALK,
 	PAS_NOVA,
 	PAS_FUSE,
+	PAS_PARIAH,
 	PAS_ASH,
-	PAS_TAC_UPGRADE_ONE,
 	//new
 	PAS_BONUS_SMALL_HEAL,
 	PAS_EXTRA_MED_INV,
@@ -113,6 +113,11 @@ global enum ePassives
 	PAS_SUPPORT,
 	PAS_SHOTGUN_KICK, //husaria
 	PAS_LIGHT_STEP, //skunner
+
+	PAS_TAC_UPGRADE_ONE,
+	PAS_TAC_UPGRADE_TWO,
+	PAS_ULT_UPGRADE_ONE,
+	PAS_ULT_UPGRADE_TWO,
 	
 	_count,
 }

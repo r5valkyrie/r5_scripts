@@ -1170,10 +1170,7 @@ var function OnWeaponPrimaryAttack_Consumable( entity weapon, WeaponPrimaryAttac
 				[ 3/*player*/,                              4/*item*/, 5/*quantity*/ ]
 			)
 		}
-		
-		if ( !PlayerHasPassive( player, ePassives.PAS_INFINITE_HEAL ) )
-			SURVIVAL_RemoveFromPlayerInventory( player, itemName, 1 )
-		
+
 		StatsHook_PlayerUsedResource( player, null, itemName )
 		Remote_CallFunction_NonReplay( player, "ServerCallback_RefreshInventory" )
 	#endif

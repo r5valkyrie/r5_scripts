@@ -99,7 +99,7 @@ WeaponData
 	"npc_burst_radius_distribution_bias_min_precision"  "-0.5"
 	"npc_burst_radius_distribution_bias_max_precision"  ".5"
 
-	"npc_lead_projectiles"                          "1"
+	"npc_lead_projectiles"                          "0"
 	"npc_lead_projectiles_fraction_min_precision"   "0.3"
 	"npc_lead_projectiles_fraction_max_precision"   "0.9"
 

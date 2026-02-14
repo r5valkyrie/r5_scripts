@@ -48,11 +48,10 @@ void function MpWeaponBubbleBunker_Init()
 	PrecacheModel( BUBBLE_BUNKER_SHIELD_PROJECTILE )
 
 	#if SERVER
-	//RegisterSignal( "ActivateArcTrap" )
 	RegisterSignal( "DeployBubbleBunker" )
 	#else
-	// StatusEffect_RegisterEnabledCallback( eStatusEffect.bubble_bunker, BubbleBunker_EnterDome )
-	// StatusEffect_RegisterDisabledCallback( eStatusEffect.bubble_bunker, BubbleBunker_ExitDome )
+	//StatusEffect_RegisterEnabledCallback( eStatusEffect.bubble_bunker, BubbleBunker_EnterDome )
+	//StatusEffect_RegisterDisabledCallback( eStatusEffect.bubble_bunker, BubbleBunker_ExitDome )
 	#endif
 }
 
@@ -279,6 +278,7 @@ void function CreateBubbleShieldAroundProjectile( entity projectile, int team, f
 	bubbleShield.SetParent( projectile, "", true )
 	bubbleShield.SetCollisionDetailHigh()
 
+	thread CreateDomeTrigger( projectile )
 	AddEntityCallback_OnPostDamaged( bubbleShield, void function( entity bubbleShield, var damageInfo ) : ( owner ) {
 		if ( IsValid( owner ) )
 			StatsHook_BubbleShield_OnDamageAbsorbed( owner, damageInfo )
@@ -328,6 +328,86 @@ void function CreateBubbleShieldAroundProjectile( entity projectile, int team, f
 	//wait rest of shield life duration
 	wait BUBBLE_BUNKER_DURATION_WARNING
 
+}
+
+void function CreateDomeTrigger( entity projectile )
+{
+	projectile.EndSignal( "OnDestroy")
+	projectile.EndSignal( "ProjectileShutdown")
+
+	int aboveHeight = BUBBLE_BUNKER_RADIUS
+	int belowHeight = 0
+
+	entity trigger = CreateTriggerCylinderNoCylinderRadius( projectile.GetOrigin(), BUBBLE_BUNKER_RADIUS, aboveHeight, belowHeight )
+	trigger.RemoveFromAllRealms()
+	trigger.AddToOtherEntitysRealms( projectile )
+	trigger.SetOwner( projectile.GetOwner() )
+
+	trigger.SetEnterCallback( DomeTriggerEnter )
+	trigger.SearchForNewTouchingEntity()
+	trigger.SetParent( projectile )
+
+	EndSignal( trigger, "OnDestroy" )
+
+	OnThreadEnd(
+		function () : ( trigger )
+		{
+			if ( IsValid( trigger ) )
+				trigger.Destroy()
+		}
+	)
+
+	WaitForever()
+}
+
+void function DomeTriggerEnter( entity trigger, entity ent )
+{
+	if ( ent.IsPlayer() )
+		thread DomeTriggerTouchingThread( trigger, ent )
+}
+
+void function DomeTriggerTouchingThread( entity trigger, entity ent )
+{
+	EndSignal( ent, "OnDestroy" )
+	EndSignal( ent, "OnDeath" )
+	EndSignal( trigger, "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( ent )
+		{
+			if ( IsValid( ent ) )
+			{
+				if ( ent.p.bubbleBunkerStatusEffectId != -1 )
+				{
+					StatusEffect_Stop( ent, ent.p.bubbleBunkerStatusEffectId )
+					ent.p.bubbleBunkerStatusEffectId = -1
+				}
+			}
+		}
+	)
+
+	while( trigger.IsTouching( ent ) )
+	{
+		bool inRange = Distance( trigger.GetOrigin(), ent.GetOrigin() ) <= BUBBLE_BUNKER_RADIUS
+		if ( inRange )
+		{
+			if ( ent.p.bubbleBunkerStatusEffectId == -1 )
+				ent.p.bubbleBunkerStatusEffectId = StatusEffect_AddEndless( ent, eStatusEffect.bubble_bunker, 1.0 )
+		}
+		else
+		{
+			StatusEffect_Stop( ent, ent.p.bubbleBunkerStatusEffectId )
+			ent.p.bubbleBunkerStatusEffectId = -1
+		}
+
+		WaitFrame()
+	}
+
+	if ( ent.p.bubbleBunkerStatusEffectId != -1 )
+	{
+		StatusEffect_Stop( ent, ent.p.bubbleBunkerStatusEffectId )
+		ent.p.bubbleBunkerStatusEffectId = -1
+	}
 }
 
 void function ProjectileShutdown( entity projectile )

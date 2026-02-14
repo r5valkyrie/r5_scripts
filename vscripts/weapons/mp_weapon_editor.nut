@@ -7,7 +7,7 @@ global function OnWeaponPrimaryAttack_weapon_editor
 global function GetEditorModes
 
 #if SERVER
-global function ClientCommand_Compile 
+global function ClientCommand_Compile
 global function ClientCommand_Load
 #endif
 #if CLIENT
@@ -100,8 +100,8 @@ void function ServerCallback_SetCurrentEditorMode(int idx)
 void function SetCurrentEditorMode(entity player, EditorMode mode)
 {
     if(!IsValid( player )) return
-    if(player.GetActiveWeapon( eActiveInventorySlot.mainHand ).GetWeaponClassName() != "mp_weapon_editor") 
-        return   
+    if(player.GetActiveWeapon( eActiveInventorySlot.mainHand ).GetWeaponClassName() != "mp_weapon_editor")
+        return
     if( GetEditorModes().find(mode) == GetEditorModes().find(player.p.selectedEditorMode) )
         return
 
@@ -121,9 +121,9 @@ void function OnWeaponActivate_weapon_editor( entity weapon )
     if (weapon.GetOwner() != GetLocalClientPlayer()) return
     entity player = GetLocalClientPlayer()
 
-    
-    RegisterConCommandTriggeredCallback("+use_alt", OpenEditorModeSelector)
-    RegisterConCommandTriggeredCallback("-use_alt", CloseEditorModeSelector)
+
+    //RegisterConCommandTriggeredCallback("+use_alt", OpenEditorModeSelector)
+    //RegisterConCommandTriggeredCallback("-use_alt", CloseEditorModeSelector)
 
 
     thread MakeRUI()
@@ -187,19 +187,19 @@ var function OnWeaponPrimaryAttack_weapon_editor( entity weapon, WeaponPrimaryAt
     #elseif SERVER
     entity player = weapon.GetOwner()
     #endif
-    
+
     //player.p.selectedEditorMode = file.editorModes[0]
     player.p.selectedEditorMode.onAttackCallback(player)
 }
 
 void function OnWeaponOwnerChanged_weapon_editor( entity weapon, WeaponOwnerChangedParams changeParams )
 {
-	
+
 }
 
 void function CycleWeaponMode( entity player, entity weapon, string mod )
 {
-    if (weapon.GetWeaponClassName() != "mp_weapon_editor") return; 
+    if (weapon.GetWeaponClassName() != "mp_weapon_editor") return;
     EditorMode curMode = player.p.selectedEditorMode
     int modeIndex = file.editorModes.find(curMode)
     if (modeIndex == -1) return
@@ -213,7 +213,7 @@ void function CycleWeaponMode( entity player, entity weapon, string mod )
         {
             if (!weapon.HasMod("crosshair_active")) weapon.AddMod("crosshair_active")
         }
-        else 
+        else
         {
             if (weapon.HasMod("crosshair_active")) weapon.RemoveMod("crosshair_active")
         }
@@ -241,9 +241,9 @@ bool function OnWeaponAttemptOffhandSwitch_weapon_editor( entity weapon )
 
 string function serialize() {
     // Model Serializer
-    
+
     string serialized = ""
-    
+
     int index = 0
     bool isNext = false // file.spawnPoints.len() != 0
     foreach (model in file.allProps) {
@@ -259,7 +259,7 @@ string function serialize() {
     }
     index = 0
     // foreach(position in file.spawnPoints) {
-    //     vector origin = position.origin 
+    //     vector origin = position.origin
     //     vector angles = position.angles
 
     //     string oSer = origin.x + "," + origin.y + "," + origin.z
@@ -273,7 +273,7 @@ string function serialize() {
     // }
 
     printl("Serialization: " + serialized)
-    
+
     return serialized
 }
 
@@ -286,7 +286,7 @@ array<entity> function deserialize(string serialized, bool dummies) {
         index++
         bool isModelSection = section.find("m:") != -1
         bool isPositionSection = section.find("s:") != -1
-        
+
         if (isModelSection) {
             string payload = StringReplace(section, "m:", "")
             array<string> payloadSections = split(payload, ";")
@@ -300,10 +300,10 @@ array<entity> function deserialize(string serialized, bool dummies) {
             string modelName = payloadSections[0]
             vector origin = deserializeVector(payloadSections[1], "origin")
             vector angles = deserializeVector(payloadSections[2], "angles")
-            
+
             entities.append(CreateFRProp(CastStringToAsset(modelName), origin, angles))
             printl("Loading model: " + modelName + " at " + origin + " with angle " + angles)
-        } else if (isPositionSection) { 
+        } else if (isPositionSection) {
             string payload = StringReplace(section, "s:", "")
             array<string> payloadSections = split(payload, ";")
             if (payloadSections.len() < 2) {
@@ -315,7 +315,7 @@ array<entity> function deserialize(string serialized, bool dummies) {
             }
             vector origin = deserializeVector(payloadSections[0], "origin")
             vector angles = deserializeVector(payloadSections[1], "angles")
-            
+
             if (dummies) {
                 entities.append(SpawnDummyAtPosition(origin, angles))
             }
@@ -323,7 +323,7 @@ array<entity> function deserialize(string serialized, bool dummies) {
         } else {
             printl("Problem with section number " + index.tostring())
         }
-    } 
+    }
     return entities
 }
 */
@@ -380,15 +380,15 @@ void function MakeRUI()
     UISize screenSize = GetScreenSize()
     var screenAlignmentTopo = RuiTopology_CreatePlane( <(screenSize.width * -0.3),( screenSize.height * -0.52 ), 0>, <float( screenSize.width ), 0, 0>, <0, float( screenSize.height ), 0>, false )
     var rui = RuiCreate( $"ui/announcement_quick_right.rpak", screenAlignmentTopo, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 1 )
-    
+
     RuiSetGameTime( rui, "startTime", Time() )
     RuiSetString( rui, "messageText", "0/0 | None" )
     RuiSetString( rui, "messageSubText", "Text 2")
     RuiSetFloat( rui, "duration", 9999999 )
     RuiSetFloat3( rui, "eventColor", SrgbToLinear( <128, 188, 255> ) )
-	
+
     file.rui = rui
-    
+
     OnThreadEnd(
 		function() : ( rui )
 		{
@@ -396,7 +396,7 @@ void function MakeRUI()
 			file.rui = null
 		}
 	)
-    
+
     WaitForever()
 }
 

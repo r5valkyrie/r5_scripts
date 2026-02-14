@@ -53,8 +53,8 @@ WeaponData
 	"fx_shell_eject2_attach"						"shell_l"
 
 	// NOTE: Alternator has a special muzzle flash to look good with two barrels
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
+	"fx_muzzle_flash_view"							"P_wpn_muzzleflash_alternator_FP"
+	"fx_muzzle_flash_world"							"P_wpn_muzzleflash_alternator"
 	"fx_muzzle_flash_attach"						"muzzle_flash"
 
 	// NOTE: specifies muzzle flash for the second barrel
@@ -111,12 +111,12 @@ WeaponData
 	"low_ammo_fraction" 							"0.3"
 
     // Damage - When Used by Players
-    "damage_near_value"   							"18"
-    "damage_far_value"								"18"
-    "damage_very_far_value"							"18"
-    "damage_near_value_titanarmor"					"18"
-    "damage_far_value_titanarmor" 					"18"
-    "damage_very_far_value_titanarmor" 				"18"
+    "damage_near_value"   							"19"
+    "damage_far_value"								"19"
+    "damage_very_far_value"							"19"
+    "damage_near_value_titanarmor"					"19"
+    "damage_far_value_titanarmor" 					"19"
+    "damage_very_far_value_titanarmor" 				"19"
     "damage_rodeo" 									"90"
 
 	"damage_unshielded_scale"              			"1.0"

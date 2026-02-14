@@ -9,7 +9,7 @@ global function AddCallback_OnWeaponStatusUpdate
 global function AddCallback_OnPrimaryWeaponStatusUpdate
 
 global function TrackPrimaryWeaponEnabled
-
+global function InitWeaponStatusRuis
 global function GetHudDefaultVisibility
 global function WeaponStatusSetWeaponInspect
 global function UltimateWeaponStateSet

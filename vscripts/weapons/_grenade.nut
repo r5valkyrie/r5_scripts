@@ -41,6 +41,8 @@ global function Grenade_Launch
 const EMP_MAGNETIC_FORCE = 1600
 const MAG_FLIGHT_SFX_LOOP = "Explo_MGL_MagneticAttract"
 const float HALO_GRENADE_COOLDOWN = 0.85
+global const vector GRENADE_ANG_VEL_DEFAULT = <10, -1600, 10>
+global const vector GRENADE_ANG_VEL_DISC = <0, 30, -2200>
 
 //Proximity Mine Settings
 global const PROXIMITY_MINE_EXPLOSION_DELAY = 1.2
@@ -567,7 +569,7 @@ var function Grenade_OnWeaponTossCancelDrop( entity weapon, WeaponPrimaryAttackP
 }
 
 // Can return entity or nothing
-entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVelocity, bool isPredicted, bool isLagCompensated )
+entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVelocity, bool isPredicted, bool isLagCompensated, vector angularVelocity = GRENADE_ANG_VEL_DEFAULT )
 {
 	#if CLIENT
 		if ( !weapon.ShouldPredictProjectiles() || !isPredicted )
@@ -594,9 +596,9 @@ entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVel
 
 	// NOTE: DO NOT apply randomness to angularVelocity, it messes up lag compensation
 	// KNOWN ISSUE: angularVelocity is applied relative to the world, so currently the projectile spins differently based on facing angle
-	vector angularVelocity = <10, -1600, 10>
-	if ( discThrow == 1 )
-		angularVelocity = <0, 30, -2200>
+
+	if ( discThrow == 1 && angularVelocity == GRENADE_ANG_VEL_DEFAULT )
+		angularVelocity = GRENADE_ANG_VEL_DISC
 
 	int damageFlags = weapon.GetWeaponDamageFlags()
 	WeaponFireGrenadeParams fireGrenadeParams
@@ -643,6 +645,7 @@ entity function Grenade_Launch( entity weapon, vector attackPos, vector throwVel
 		}
 	}
 
+	frag.proj.savedOrigin = attackPos
 	Grenade_OnPlayerNPCTossGrenade_Common( weapon, frag )
 
 	return frag

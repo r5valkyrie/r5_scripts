@@ -18,7 +18,7 @@ WeaponData
 	"hud_icon"										"rui/weapon_icons/r5/weapon_prowler"
 
 	"fire_mode"   									"automatic"
-	"is_semi_auto"									"1"
+	"is_semi_auto"									"0"
 
 	"activitymodifier"								"pistol"
 
@@ -41,17 +41,13 @@ WeaponData
 	"sound_pickup"									"wpn_pickup_SMG_1P"
 
     "projectile_launch_speed"						"18000"
-	
-	"fx_muzzle_flash_view"							""
-	"fx_muzzle_flash_world"							""
-	"fx_muzzle_flash_attach"						"muzzle_flash"
-	
+
 	//Sounds
 	"fire_sound_1_player_1p" 						"weapon_prowler_burst_secondshot_1p"
 	"fire_sound_1_player_3p" 						""
 
-	//"fire_sound_2_player_1p"						"Weapon_bulletCasings.Bounce"
-	//"fire_sound_2_player_3p"						"Weapon_bulletCasings.Bounce"
+	"fire_sound_2_player_1p"						"Weapon_bulletCasings.Bounce"
+	"fire_sound_2_player_3p"						"Weapon_bulletCasings.Bounce"
 
 	"sound_zoom_in"									"Weapon_Car_ADS_In"
 	"sound_zoom_out"								"Weapon_Car_ADS_Out"
@@ -195,7 +191,7 @@ WeaponData
 	"viewkick_scale_pitch_valueLerpEnd" 			"10"
 	"viewkick_scale_yaw_valueLerpStart"   			"0"
 	"viewkick_scale_yaw_valueLerpEnd" 				"10"
-	"viewkick_scale_valueDecayDelay"  				"0.33"  // for burstfire, match to burst delay + fire rate (0.05 + 0.2)
+	"viewkick_scale_valueDecayDelay"  				"0.350000"
     "viewkick_scale_valueDecayRate"   				"45"
 
 	"viewmodel_shake_forward"						"0.0"

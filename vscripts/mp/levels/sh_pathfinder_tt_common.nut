@@ -35,7 +35,6 @@ const float RING_TV_KNOCKOUT_TIME_ELAPSED_CAN_OVERRIDE = 4.0
 
 const asset RING_CSV_DIALOGUE = $"datatable/dialogue/oly_path_tt_ring_announcer_dialogue.rpak"
 const string BOXING_RING_MODEL = "mdl/test/davis_test/pathfinder_tt_ring_shield.rmdl"
-const string BOXING_RING_FX = "mdl/fx/pathfinder_tt_fill_fx.rmdl"
 global const string BOXING_RING_SCRIPTNAME = "pathfinder_tt_ring_shield"
 
 const string FLAG_ARENA_LIGHTS_01 = "arena_lights_01"
@@ -97,6 +96,9 @@ struct
 	float lastBellDingTime
 
 	array< void functionref( int ) > OnHologramChangedCallbacks
+
+	entity hologramGlovesFX
+	entity hologramTextFX
 #endif
 
 #if CLIENT
@@ -140,6 +142,8 @@ void function EntitiesDidLoad()
 	RegisterSignal( "OnEndTouch" )
 	PrecacheWeapon( $"mp_weapon_melee_boxing_ring" )
 	PrecacheWeapon( $"melee_boxing_ring" )
+	PrecacheParticleSystem( $"P_arena_hologram_text" )
+	PrecacheParticleSystem( $"P_arena_hologram_gloves" )
 
 	InitPathTTBoxingRing()
 
@@ -231,7 +235,6 @@ void function InitPathTTBoxingRingEntities()
 			ambient.SetEnabled( false )
 			file.boxingRingCrowdAmbients_AudioPlaced.append( ambient )
 		}
-
 	#endif
 
 	#if SERVER
@@ -243,16 +246,15 @@ void function InitPathTTBoxingRingEntities()
 			return
 		}
 
-		entity ringShieldTarget = ringShieldTargets[ 0 ] //TODO: Used FX model instead actually FX until we figure out how to port efct assets, remove this model after fixing particles -LorryLeKral
-		entity ringShield = CreatePropScript( GetAssetFromString( BOXING_RING_MODEL ), ringShieldTarget.GetOrigin(), ringShieldTarget.GetAngles(), SOLID_VPHYSICS, 1 )
-		entity ringFx = CreatePropScript( GetAssetFromString( BOXING_RING_FX ), ringShieldTarget.GetOrigin(), ringShieldTarget.GetAngles(), 0, 50000 )
-		ringFx.kv.rendercolor = "83 114 186 255"
-		ringFx.kv.solid = 0
+		entity ringShieldTarget = ringShieldTargets[ 0 ]
+		entity ringShield = CreatePropScript( GetAssetFromString( BOXING_RING_MODEL ), ringShieldTarget.GetOrigin(), ringShieldTarget.GetAngles(), SOLID_VPHYSICS, 1, false )
+		//ringShield.kv.CollisionGroup = TRACE_COLLISION_GROUP_NONE
 		ringShield.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
 		ringShield.kv.contents = int( ringShield.kv.contents ) | CONTENTS_NOGRAPPLE | CONTENTS_BLOCKLOS
 		ringShield.kv.renderamt = 10
 		ringShield.kv.collide_human = 0
 		ringShield.SetScriptName( BOXING_RING_SCRIPTNAME )
+		DispatchSpawn( ringShield )
 		ringShield.Hide()
 		ringShield.kv.contents = int( ringShield.kv.contents ) | CONTENTS_NOGRAPPLE | CONTENTS_BLOCKLOS
 
@@ -301,6 +303,7 @@ void function InitPathTTBoxingRingEntities()
 
 		PathTT_UpdateRingCrowdAudio()
 
+		PathTT_RegisterHologramParticles()
 		thread PathTT_AlternateHolograms()
 	#endif
 }
@@ -338,17 +341,51 @@ bool function GetPathfinderTTAssetsToPrecache( array< string > models, array< st
 #endif
 
 #if SERVER
+void function PathTT_RegisterHologramParticles()
+{
+	array<entity> pents = GetEntArrayByClass_Expensive( "info_particle_system" )
+	foreach ( entity p in pents )
+	{
+		if ( p.HasKey( "script_flag" ) )
+		{
+			var flag = p.kv.script_flag
+			if ( flag == FLAG_ARENA_TOP_GLOVES )
+			{
+				file.hologramGlovesFX = p
+				print( "Registered hologram gloves FX" )
+			}
+			else if ( flag == FLAG_ARENA_TOP_TEXT )
+			{
+				file.hologramTextFX = p
+				print( "Registered hologram text FX" )
+			}
+		}
+	}
+}
+
 void function PathTT_AlternateHolograms()
 {
-	array<string> flagsToSet = [ FLAG_ARENA_TOP_GLOVES, FLAG_ARENA_TOP_TEXT ]
 	int curIdx = 0
 	while ( true )
 	{
 		foreach( callFunc in file.OnHologramChangedCallbacks )
 			callFunc( curIdx )
 
-		FlagSet( flagsToSet[ curIdx ] )
-		FlagClear( flagsToSet[ 1 - curIdx ] )
+		if ( curIdx == 0 )
+		{
+			if ( IsValid( file.hologramGlovesFX ) )
+				EntFireByHandle( file.hologramGlovesFX, "Start", "", 0, null, null )
+			if ( IsValid( file.hologramTextFX ) )
+				EntFireByHandle( file.hologramTextFX, "Stop", "", 0, null, null )
+		}
+		else
+		{
+			if ( IsValid( file.hologramGlovesFX ) )
+				EntFireByHandle( file.hologramGlovesFX, "Stop", "", 0, null, null )
+			if ( IsValid( file.hologramTextFX ) )
+				EntFireByHandle( file.hologramTextFX, "Start", "", 0, null, null )
+		}
+
 		wait 5.0
 
 		curIdx = 1 - curIdx
@@ -377,7 +414,7 @@ const array<string> RING_ANNOUNCER_LINES = [
 	"bc_OlyPathTTRing_flawless_win",
 	"bc_OlyPathTTRing_chain_kill"
 ]
-                              
+
 const array<string> RING_ANNOUNCER_LINES_REVENANT = [
 	"bc_OlyRevTTRing_recalibrate"
 	"SR_OlyRevTTRing_runsAway"

@@ -71,7 +71,7 @@ ImpactTable
 		"D" "P_impact_gen_far" //Dirt, slipperyslime, snow, carpet, cardboard, floatingstandable, ceiling_tile, papercup, lava_rock
 		"E" "P_impact_gen_far" // metal_titan
 
-		//"F" "P_impact_gen_far" //flesh
+		"F" "impact_flesh" //flesh
 		"G" "P_impact_gen_far" //metalgrate, chainlink, chain
 		"H" "P_impact_gen_far" //alienflesh
 
@@ -130,17 +130,17 @@ ImpactTable
 
 	FX_attacker_replace
 	{
-		//"F" "P_impact_flesh_attacker"
+		"F" "impact_flesh"
 	}
 
 	FX_attacker_layered_MP
 	{
-		"F" "P_impact_flesh_attacker"
+		"F" "impact_flesh"
 	}
 
 	FX_attacker_layered_SP
 	{
-		"F" "P_impact_flesh_attacker"
+		"F" "impact_flesh"
 	}
 
 	Sound

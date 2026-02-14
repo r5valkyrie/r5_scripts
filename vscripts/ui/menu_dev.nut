@@ -292,10 +292,8 @@ void function SetupDefaultDevCommandsMP()
 	if( GetCheatsState() )
 	{
 		SetupDevMenu( "Equip Legend Abilities", SetDevMenu_Abilities )
-		//SetupDevMenu( "Equip Custom Abilities", SetDevMenu_CustomAbilities )
 		SetupDevMenu( "Equip Apex Weapons", SetDevMenu_Weapons )
-		if( Playlist() != ePlaylists.survival_firingrange )
-			SetupDevMenu( "Equip Titanfall Weapons", SetDevMenu_R2Weapons )
+		SetupDevMenu( "Equip Titanfall Weapons", SetDevMenu_R2Weapons )
 
 		if ( IsSurvivalMenuEnabled() )
 		{
@@ -306,7 +304,7 @@ void function SetupDefaultDevCommandsMP()
 			SetupDevMenu( "Survival: Attachments", SetDevMenu_SurvivalLoot, "attachment" )
 			string GearsString = "helmet armor backpack incapshield"
 			SetupDevMenu( "Survival: Gears", SetDevMenu_SurvivalLoot, GearsString )
-			string itemsString = "ordnance ammo health custom_pickup data_knife ship_keycard marvin_arm"
+			string itemsString = "ordnance ammo health custom_pickup data_knife ship_keycard marvin_arm gadget"
 			SetupDevMenu( "Survival: Consumables", SetDevMenu_SurvivalLoot, itemsString )
 			SetupDevCommand( "", "give blank" )
 		}
@@ -317,6 +315,7 @@ void function SetupDefaultDevCommandsMP()
 			SetupDevMenu( "Custom: Attachments", SetDevMenu_SurvivalLoot, "attachment_custom" )
 			SetupDevCommand( "", "give blank" )
 		}
+
 		SetupDevMenu( "Equip Custom Cosmetics", SetDevMenu_CustomCosmetics )
 		SetupDevMenu( "Equip Custom Heirlooms", SetDevMenu_CustomHeirlooms )
 		SetupDevCommand( "", "give blank" )
@@ -383,10 +382,6 @@ void function SetDevMenu_Weapons( var _ )
 void function SetDevMenu_R2Weapons( var _ )
 {
 	thread ChangeToThisMenu( SetupTitanfallWeapons )
-}
-void function SetDevMenu_Throwables( var _ )
-{
-	thread ChangeToThisMenu( SetupThrowables )
 }
 void function SetDevMenu_TDMPrimaryWeapons( var _ )
 {
@@ -1152,65 +1147,22 @@ void function SetupOverrideSpawnSurvivalCharacter()
 	#endif
 }
 
-void function SetupWeapons()
-{
-	#if UI
-	// Rifles
-	SetupDevCommand( "Rifle: Flatline", "give mp_weapon_vinson" )
-	SetupDevCommand( "Rifle: G7 Scout", "give mp_weapon_g2" )
-	SetupDevCommand( "Rifle: Havoc", "give mp_weapon_energy_ar" )
-	SetupDevCommand( "Rifle: Hemlok", "give mp_weapon_hemlok" )
-	SetupDevCommand( "Rifle: R-301", "give mp_weapon_rspn101" )
-
-	// SMGs
-	SetupDevCommand( "SMG: Alternator", "give mp_weapon_alternator_smg" )
-	SetupDevCommand( "SMG: Prowler", "give mp_weapon_pdw" )
-	SetupDevCommand( "SMG: R-99", "give mp_weapon_r97" )
-	SetupDevCommand( "SMG: Volt SMG", "give mp_weapon_volt_smg" )
-
-	// LMGs
-	SetupDevCommand( "LMG: Devotion", "give mp_weapon_esaw" )
-	SetupDevCommand( "LMG: L-Star", "give mp_weapon_lstar" )
-	SetupDevCommand( "LMG: Spitfire", "give mp_weapon_lmg" )
-
-	// Snipers
-	SetupDevCommand( "Sniper: Charge Rifle", "give mp_weapon_defender" )
-	SetupDevCommand( "Sniper: Kraber", "give mp_weapon_sniper" )
-	SetupDevCommand( "Sniper: Longbow", "give mp_weapon_dmr" )
-	SetupDevCommand( "Sniper: Triple Take", "give mp_weapon_doubletake" )
-	SetupDevCommand( "Sniper: Sentinel", "give mp_weapon_sentinel" )
-
-	// Shotguns
-	SetupDevCommand( "Shotgun: EVA-8 Auto", "give mp_weapon_shotgun" )
-	SetupDevCommand( "Shotgun: Mastiff", "give mp_weapon_mastiff" )
-	SetupDevCommand( "Shotgun: Mozambique", "give mp_weapon_shotgun_pistol" )
-	SetupDevCommand( "Shotgun: Peacekeeper", "give mp_weapon_energy_shotgun" )
-
-	// Pistols
-	SetupDevCommand( "Pistol: P2020", "give mp_weapon_semipistol" )
-	SetupDevCommand( "Pistol: RE-45", "give mp_weapon_autopistol" )
-	SetupDevCommand( "Pistol: Wingman", "give mp_weapon_wingman" )
-
-	// Custom
-	//SetupDevCommand( "Custom: Flame Thrower", "give mp_weapon_flamethrower" )
-	//SetupDevCommand( "Custom: Raygun ", "give mp_weapon_raygun" )
-	//SetupDevCommand( "Custom: Flowstate Sword", "playerRequestsSword")
-	#endif
-}
-
 void function SetupRetailWeapons()
 {
 	#if UI
 	// Marksman
-	SetupDevCommand( "Marksman Rifle: G7 Scout", "give mp_weapon_g2" )
+	SetupDevCommand( "Marksman: Rifle: G7 Scout", "give mp_weapon_g2" )
 	SetupDevCommand( "Marksman: Triple Take", "give mp_weapon_doubletake" )
 	SetupDevCommand( "Marksman: 30-30 Repeater", "give mp_weapon_3030" )
+	SetupDevCommand( "Marksman: Triple Take", "give mp_weapon_doubletake" )
+	SetupDevCommand( "Marksman: Bocek Bow", "give mp_weapon_bow" )
 	SetupDevCommand( "", "give blank" )
 
 	// LMGs
 	SetupDevCommand( "Light Machine Gun: Devotion", "give mp_weapon_esaw" )
 	SetupDevCommand( "Light Machine Gun: L-Star", "give mp_weapon_lstar" )
 	SetupDevCommand( "Light Machine Gun: Spitfire", "give mp_weapon_lmg" )
+	SetupDevCommand( "Light Machine Gun: Rampage", "give mp_weapon_dragon_lmg" )
 	SetupDevCommand( "", "give blank" )
 
 	// Snipers
@@ -1220,9 +1172,10 @@ void function SetupRetailWeapons()
 	SetupDevCommand( "", "give blank" )
 
 	// Pistols
-	SetupDevCommand( "Pistol: P2020", "give mp_weapon_semipistol" )
 	SetupDevCommand( "Pistol: RE-45", "give mp_weapon_autopistol" )
 	SetupDevCommand( "Pistol: Wingman", "give mp_weapon_wingman" )
+	SetupDevCommand( "Pistol: Mozambique", "give mp_weapon_shotgun_pistol" )
+	SetupDevCommand( "", "give blank" )
 	SetupDevCommand( "", "give blank" )
 
 	// SMGs
@@ -1230,27 +1183,28 @@ void function SetupRetailWeapons()
 	SetupDevCommand( "Submachine Gun: Prowler", "give mp_weapon_pdw" )
 	SetupDevCommand( "Submachine Gun: R-99", "give mp_weapon_r97" )
 	SetupDevCommand( "Submachine Gun: Volt SMG", "give mp_weapon_volt_smg" )
+	SetupDevCommand( "", "give blank" )
 
 	// Rifles
 	SetupDevCommand( "Assault Rifle: Flatline", "give mp_weapon_vinson" )
 	SetupDevCommand( "Assault Rifle: Hemlok", "give mp_weapon_hemlok" )
 	SetupDevCommand( "Assault Rifle: R-301", "give mp_weapon_rspn101" )
-	SetupDevCommand( "Assault Rifle:  Havoc AR", "give mp_weapon_energy_ar" )
+	SetupDevCommand( "Assault Rifle: Havoc AR", "give mp_weapon_energy_ar" )
+	SetupDevCommand( "Assault Rifle: Nemesis", "give mp_weapon_nemesis" )
 	SetupDevCommand( "", "give blank" )
 
 	// Shotguns
+	SetupDevCommand( "Shotgun: Peacekeeper", "give mp_weapon_energy_shotgun" )
 	SetupDevCommand( "Shotgun: EVA-8 Auto", "give mp_weapon_shotgun" )
 	SetupDevCommand( "Shotgun: Mastiff", "give mp_weapon_mastiff" )
-	SetupDevCommand( "Shotgun: Mozambique", "give mp_weapon_shotgun_pistol" )
 	SetupDevCommand( "", "give blank" )
 	SetupDevCommand( "", "give blank" )
 
 
 	//Drop Weapons
-	SetupDevCommand( "Crate: Triple Take", "give mp_weapon_doubletake_crate crate optic_ranged_aog_variable" )
-	SetupDevCommand( "Crate: Peacekeeper", "give mp_weapon_energy_shotgun_crate crate optic_cq_hcog_classic shotgun_bolt_l4" )
+	SetupDevCommand( "Crate: Car SMG", "give mp_weapon_car_crate crate optic_cq_hcog_classic highcal_mag_l4" )
+	SetupDevCommand( "Crate: P2020", "give mp_weapon_semipistol_crate crate optic_cq_hcog_classic bullets_mag_l4 laser_sight_l3" )
 	SetupDevCommand( "Crate: Kraber", "give mp_weapon_sniper" )
-	//SetupDevCommand( "Crate: Bocek Bow", "give mp_weapon_bow" )
 	#endif
 }
 
@@ -1425,24 +1379,6 @@ void function SetDevMenu_XOPanel()
 	#endif
 }
 
-
-void function SetupThrowables()
-{
-	#if UI
-	// Grenades
-	SetupDevCommand( "Grenade: Arc Star", "give mp_weapon_grenade_emp" )
-	SetupDevCommand( "Grenade: Frag", "give mp_weapon_frag_grenade" )
-	SetupDevCommand( "Grenade: Thermite", "give mp_weapon_thermite_grenade" )
-
-	// Custom Grenades
-	if( GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) )
-	{
-		SetupDevCommand( "Grenade: Halo Frag", "give mp_weapon_frag_grenade_halomod" )
-		SetupDevCommand( "Grenade: Halo Plasma  Frag", "give mp_weapon_plasma_grenade_halomod" )
-	}
-	#endif
-}
-
 void function SetupSurvival()
 {
 	#if UI
@@ -1497,6 +1433,19 @@ void function SetupAbilities()
 	SetupDevCommand( "Wraith Ultimate", "give mp_weapon_phase_tunnel" )
 	SetupDevCommand( "Revenant Tactical", "give mp_ability_silence" )
 	SetupDevCommand( "Revenant Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Loba Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Loba Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Rampart Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Rampart Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Horizon Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Horizon Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Fuse Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Fuse Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Valkyrie Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Valkyrie Ultimate", "give mp_ability_revenant_death_totem" )
+	SetupDevCommand( "Seer Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Ash Tactical", "give mp_ability_silence" )
+	SetupDevCommand( "Ash Ultimate", "give mp_ability_revenant_death_totem" )
 	#endif
 }
 

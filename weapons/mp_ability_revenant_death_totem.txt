@@ -19,10 +19,22 @@ WeaponData
 	"offhand_interupts_weapon_anims"				"1"
 	"play_offhand_charging_anim"  					"0"
 	"play_offhand_start_end_anim"					"1"
+	"has_linked_anims"								"1"
 
-	"fire_mode"   									"offhand"
+	"fire_mode"   									"offhandHybrid"
+	"is_semi_auto"                                  "1"
+
+	"object_placer"                                 "1"
+    "object_placement_model"                        "mdl/props/revenant_totem/revenant_totem.rmdl"
+	"object_placement_percent_off_ledge_max"        "0.70"
+	"object_placement_distance_to_ground_max"       "5.0"
+	"object_placement_distance_max"                 "75.0"
+	"object_placement_force_upright"                "1"
+	"object_placement_ignore_players"               "1"
+	"object_placement_vehicle_attachment_index"		"0"
 
 	"OnWeaponPrimaryAttack" 						"OnWeaponPrimaryAttack_ability_revenant_death_totem"
+	"OnCreateClientOnlyModel"                       "OnCreateClientOnlyModel_ability_revenant_death_totem"
 	"OnWeaponActivate"								"OnWeaponActivate_ability_revenant_death_totem"
 	"OnWeaponDeactivate"							"OnWeaponDeactivate_ability_revenant_death_totem"
 	"OnWeaponRegenEnd"                              "OnWeaponRegenEndGeneric"
@@ -31,9 +43,6 @@ WeaponData
 	// Models
 	"viewmodel"   									"mdl/weapons/empty_handed/ptpov_revenant_totem.rmdl"
 	"playermodel" 									"mdl/weapons/empty_hands/ptpov_empty_hands.rmdl"
-
-	// Audio
-	"battle_chatter_event"                          "bc_super"
 
 	// Damage - When Used by Players
 	"damage_type" 									"burn"

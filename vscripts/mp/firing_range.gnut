@@ -175,7 +175,8 @@ void function FiringRangeGameMode_Init()
 
 	PrecacheModel( FIRINGRANGE_BLUE_STAND_ASSET )
 	PrecacheModel( FIRINGRANGE_FLICK_TARGET_ASSET )
-	PrecacheModel( TARGET_FOLDING_MODEL )
+	if ( GetMapName() != "mp_rr_canyonlands_staging_mu1" )
+		PrecacheModel( TARGET_FOLDING_MODEL )
 	PrecacheModel( TARGET_SPINNING_MODEL )
 	PrecacheParticleSystem( FIRINGRANGE_FLICK_TARGET_PARTICLE_HIT )
 	PrecacheParticleSystem( DUMMIE_FX_SPAWN )
@@ -185,6 +186,7 @@ void function FiringRangeGameMode_Init()
 	RegisterSignal( "SlideTargetSpeedReset" )
 	RegisterSignal( "SlideTargetThinkStart" )
 	RegisterSignal( "SlideTargetWaitForReset" )
+	RegisterSignal( "SquadEliminated" )
 
 	#if SERVER
 	AddSpawnCallback( "prop_survival", OnPropSurvivalSpawned )
@@ -257,7 +259,7 @@ void function FiringRangeProps()
 		file.rackSpawns.append(r)
 	}
 
-	if ( GetMapName() == "mp_rr_canyonlands_staging" )
+	if ( GetMapName() != "mp_rr_canyonlands_staging_mu1" )
 	{
 		FillWeaponTable() // load first to know where the rest goes
 		FillAttachmentTable() // requires weapons to be loaded
@@ -555,6 +557,20 @@ void function CLootV4_InitLootInfo()
 	allAttachRefs_Unfiltered.extend(SURVIVAL_GetAllRefsInLootGroup("Attachment_L3"))
 	allAttachRefs_Unfiltered.extend(SURVIVAL_GetAllRefsInLootGroup("Attachment_L4"))
 	
+	// why are these missing
+	allAttachRefs_Unfiltered.append("optic_sniper")
+	allAttachRefs_Unfiltered.append("optic_sniper_variable")
+	allAttachRefs_Unfiltered.append("optic_sniper_threat")
+	
+	// Remove duplicates
+	array<string> allAttachRefs_Unfiltered_unique = []
+	foreach (ref in allAttachRefs_Unfiltered)
+	{
+		if (!allAttachRefs_Unfiltered_unique.contains(ref))
+			allAttachRefs_Unfiltered_unique.append(ref)
+	}
+	allAttachRefs_Unfiltered = allAttachRefs_Unfiltered_unique
+	
 	printt("CLootV4: Found " + allAttachRefs_Unfiltered.len() + " attachment refs (unfiltered)")
 	
 	array<string> allAttachRefs = []
@@ -776,8 +792,16 @@ void function CLootV4_Create_AllStuff()
 	lootCountsTable["cloot4_health_start"] <- [1, 2, 2]
 	
 	// Special Gear
-	lootRefsTable["cloot4_specialgear_start"] <- ["health_pickup_ultimate", "mp_ability_redeploy_balloon"]
-	lootCountsTable["cloot4_specialgear_start"] <- [1, 1]
+	array<string> gadgetRefs = []
+	if (eLootType.SURVIVAL in file.gearDataByType)
+		gadgetRefs = LootDatas_To_LootRefs(file.gearDataByType[eLootType.SURVIVAL])
+	
+	// Add beacons cuz we are pepega
+	if (!gadgetRefs.contains("mp_ability_mobile_respawn_beacon"))
+		gadgetRefs.append("mp_ability_mobile_respawn_beacon")
+	
+	lootRefsTable["cloot4_specialgear_start"] <- gadgetRefs
+	lootCountsTable["cloot4_specialgear_start"] <- CLootV4_InitLootSpawnCount(gadgetRefs)
 	
 	// Backpacks
 	array<string> backpackRefs = []
@@ -880,6 +904,13 @@ void function CLootV4_SpawnLootRow(array<string> lootRefsParm, array<int> lootCo
 		{
 			// Use default node angles (no rotation adjustment for attachments/gear)
 			vector itemAngles = itemAnglesDefault
+			
+			// Kral: Nodes are rotated for some reason? Gotta manually fix the sight rotation
+			if (_lootRef.find("optic") != -1)
+			{
+				itemAngles = <0, 0, 0>
+			}
+			
 			entity lootEnt = SpawnGenericLoot(_lootRef, itemPos, itemAngles, howMany)
 			
 			if (IsValid(lootEnt))
@@ -1075,23 +1106,7 @@ void function WaitForPlayerSpawnMU1_Thread(entity player)
 void function OnPlayerRespawned(entity player)
 {
 	array<entity> weapons = player.GetMainWeapons()
-
-	entity primary = player.GiveWeapon("mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_1, [])
-	//entity secondary = player.GiveWeapon("mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_1, ["bullets_mag_l3","optic_cq_threat"])
-	player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, "mp_weapon_semipistol" )
-	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
-
-	foreach(string ammo in ["bullet"])
-	{
-		entity loot = SpawnGenericLoot( ammo, player.GetOrigin(), player.GetAngles(),
-			20-SURVIVAL_CountItemsInInventory( player, ammo ) )
-
-		if(!Survival_PickupItem(loot, player))
-			loot.Destroy()
-	}
-
 	player.SetShieldHealth( player.GetShieldHealthMax() )
-	
 	player.UnfreezeControlsOnServer()
 }
 
@@ -1111,8 +1126,13 @@ void function OnTeammateLoadoutSelectionChanged( EHI playerEHI, ItemFlavor unuse
 // Get All weapons, arange them in a table per ammo type
 void function FillWeaponTable()
 {
-	foreach ( string lootRef, LootData lootData in SURVIVAL_Loot_GetLootDataTable() )
+	// Use the same loot pool as v2/v4 system
+	array<string> weaponRefs = SURVIVAL_GetAllRefsInLootGroup("firing_range_all_weapons")
+	
+	foreach ( string ref in weaponRefs )
 	{
+		LootData lootData = SURVIVAL_Loot_GetLootDataByRef(ref)
+		
 		if ( lootData.lootType != eLootType.MAINWEAPON )
 			continue
 
@@ -1175,7 +1195,17 @@ void function FillEquipmentTable()
 {
 	file.equipmentsPerIndex.append(SURVIVAL_Loot_GetByType( eLootType.ARMOR ))
 	file.equipmentsPerIndex.append(SURVIVAL_Loot_GetByType( eLootType.HELMET ))
-	file.equipmentsPerIndex.append(SURVIVAL_Loot_GetByType( eLootType.INCAPSHIELD ))
+	
+	// Prevent lv0 incap shield from spawning
+	array<LootData> incapShields = SURVIVAL_Loot_GetByType( eLootType.INCAPSHIELD )
+	array<LootData> filteredIncapShields = []
+	foreach ( LootData shield in incapShields )
+	{
+		if ( shield.ref != "incapshield_pickup_lv0" )
+			filteredIncapShields.append( shield )
+	}
+	file.equipmentsPerIndex.append( filteredIncapShields )
+	
 	file.equipmentsPerIndex.append(SURVIVAL_Loot_GetByType( eLootType.BACKPACK ))
 }
 
@@ -1184,7 +1214,7 @@ void function FillItemTable()
 {
 	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.HEALTH ))
 	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.RESOURCE ))
-	//file.items.extend(SURVIVAL_Loot_GetByType( eLootType.SURVIVAL ))
+	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.SURVIVAL ))
 	//file.items.extend(SURVIVAL_Loot_GetByType( eLootType.CUSTOMPICKUP ))
 	file.items.extend(SURVIVAL_Loot_GetByType( eLootType.JUMPKIT ))
 }

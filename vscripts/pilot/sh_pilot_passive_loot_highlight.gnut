@@ -249,7 +249,7 @@ bool function UltAccelItemFilter( LootData lootData )
 
 bool function SurvivalSlotItemFilter( LootData lootData )
 {
-	return lootData.lootType == eLootType.GADGET
+	return lootData.lootType == eLootType.SURVIVAL
 }
 
 bool function OpticItemFilter( LootData lootData )
