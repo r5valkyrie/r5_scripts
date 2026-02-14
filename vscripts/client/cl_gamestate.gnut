@@ -32,7 +32,6 @@ global function GameState_UpdateRuiRoundEndGameTime
 
 global function ClGameState_SetSwitchingSidesSubText
 global function UpdateIsSonyMP
-global function SND_ForceUpdateObservedCount
 
 global enum ePlayerStatusType
 {
@@ -326,27 +325,17 @@ void function UpdateGamestateRuiTracking( entity player )
 void function UpdateCommonScoreRuiTracking( var rui, entity player )
 {
 	RuiTrackInt( rui, "killCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kills" ) )
-	RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-
-	if( Playlist() != ePlaylists.fs_scenarios && Gamemode() != eGamemodes.WINTEREXPRESS )
-		RuiTrackInt( rui, "playerObservedCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "damage" ) )
-	// else
-		// RuiTrackInt( rui, "playerObservedCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "playerObservedCount" ) )
-	
+	//RuiTrackInt( rui, "damageDealt", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "damageDealt" ) )
 
 	RuiTrackBool( rui, "hasDeathFieldImmunity", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "hasDeathFieldImmunity" ) )
+	RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "assists" ) )
 
-	if ( IsRankedGame() )
-		RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "assists" ) )
+	//	if ( Crafting_IsEnabled() )
+		{
+		//	RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
+		}
 		
 
-}
-
-void function SND_ForceUpdateObservedCount(int newObservedCount)
-{
-	var rui = file.gamestateRui
-	
-	RuiSetInt( rui, "playerObservedCount", newObservedCount )
 }
 
 void function GameModeScoreBarUpdateRules_Default( var rui )
@@ -408,12 +397,12 @@ void function ClGameState_AddClient( entity player )
 	#else
 		player.cv.scoreboardBadRepPresentMessage.SetText( "#ASTERISK_BAD_REPUTATION" )
 	#endif
-	
-	// player.cv.hudCheaterMessage <- HudElement( "HudCheaterMessage" )
-	// if ( !Durango_IsDurango() && !IsLobby() && player.HasBadReputation() )
-		// player.cv.hudCheaterMessage.Show()
-	// else
-		// player.cv.hudCheaterMessage.Hide()
+
+	player.cv.hudCheaterMessage <- HudElement( "HudCheaterMessage" )
+	if ( !Durango_IsDurango() && !IsLobby() && player.HasBadReputation() )
+		player.cv.hudCheaterMessage.Show()
+	else
+		player.cv.hudCheaterMessage.Hide()
 }
 
 
@@ -513,7 +502,8 @@ void function ClGameStateThink_WaitingForPlayers( entity player )
 
 		if ( timeRemaining != player.cv.lastTimeRemaining )
 		{
-			EmitSoundOnEntity( player, WAITING_FOR_PLAYERS_COUNTDOWN_SOUND )
+			string waitingForPlayersSound = WAITING_FOR_PLAYERS_COUNTDOWN_SOUND
+			EmitSoundOnEntity( player, waitingForPlayersSound )
 		}
 
 		player.cv.lastTimeRemaining = timeRemaining
