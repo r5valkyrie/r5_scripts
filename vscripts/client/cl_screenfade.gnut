@@ -6,6 +6,7 @@ global function UpdateScreenFade
 
 global function ScreenCoverTransition
 global function ServerToClient_ScreenCoverTransition
+global function SetCustomScreenFadeAsset
 
 // these must match content/r2/ui/screen_fade.rui
 global const float SCREEN_COVER_TRANSITION_IN_DURATION = 0.7
@@ -19,6 +20,7 @@ struct
 	void functionref() screenFadeFunc
 
 	float screenCoverEndTime = 0.0
+	asset ruiAssetName = $"ui/screen_fade.rpak"
 } file
 
 void function ClScreenfade_Init()
@@ -29,7 +31,7 @@ void function ClScreenfade_Init()
 	thread PlayerPainSoundThread()
 	thread PlayerDeathfieldSoundThread()
 
-	asset ruiAssetName = UseFallBanners() ? $"ui/screen_fade_shadow_fall.rpak" : $"ui/screen_fade.rpak"
+	asset ruiAssetName = file.ruiAssetName
 
 	file.screenFade = RuiCreate( ruiAssetName, clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, RUI_SORT_SCREENFADE )
 	RuiSetResolutionToScreenSize( file.screenFade )
@@ -42,6 +44,10 @@ void function ClScreenfade_Init()
 	RuiSetImage( file.screenFade, "emblemImage", GetModeEmblemImage( GetCurrentPlaylistName() ) )
 }
 
+void function SetCustomScreenFadeAsset( asset fade )
+{
+	file.ruiAssetName = fade
+}
 
 void function ScreenCoverTransition( float endTime )
 {

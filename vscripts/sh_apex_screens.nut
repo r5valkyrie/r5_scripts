@@ -21,13 +21,19 @@ global function ApexScreenMasterThink
 global function ClApexScreens_DisableAllScreens
 global function ClApexScreens_EnableAllScreens
 global function ClApexScreens_IsDisabled
-global function ClApexScreens_PosInStaticBanner
 global function ServerToClient_ApexScreenKillDataChanged
 global function ServerToClient_ApexScreenRefreshAll
 //global function ClApexScreens_Lobby_SetMode
 //global function ClApexScreens_Lobby_SetCardOwner
 global function ClApexScreens_OnStaticPropRuiVisibilityChange
 global function ClApexScreens_AddScreenOverride
+global function ClApexScreens_GetCustomBannerScreen
+global function ClApexScreens_PosInStaticBanner
+global function ClApexScreens_SetCustomApexScreenBGAsset
+global function ClApexScreens_SetCustomLogoTint
+global function ClApexScreens_SetCustomLogoImage
+global function ClApexScreens_SetCustomLogoSize
+global function ClApexScreens_SetAnimatedLogoAsset
 #endif
 
 global function GetCurrentPlaylistVarAsset
@@ -44,6 +50,10 @@ global int countDestruction = 0
 const bool HAS_FLOATING_BITS_PROTOTYPE = false
 #endif // CLIENT
 
+global const string CUSTOM_BANNER_LEFT_SCRIPTNAME = "leftScreen_custom"
+global const string CUSTOM_BANNER_CENTER_SCRIPTNAME = "centerScreen_custom"
+global const string CUSTOM_BANNER_RIGHT_SCRIPTNAME = "rightScreen_custom"
+
 #if CLIENT || SERVER
 global function CastStringToAsset
 #endif
@@ -58,6 +68,7 @@ const vector[3] APEX_SCREEN_RANDOM_TINT_PALETTE = [
 			<1.0, 1.0, 1.0> - <0.98, 1.00, 1.00>,
 ]
 
+const asset BLANK_ASSET = $"ui/apex_screen_logo_only.rpak"
 
 // "Apex Screen" = really big flex screen (not an entity)
 // "Apex Screen state" = what's showing on a particular screen, in particular "mode index" where mode means "show logo", "show blisk's face", "show a gladiator card", etc
@@ -93,6 +104,7 @@ global enum eApexScreenMode
 	ZONE_NAME               = 11,
 	ZONE_LOOT               = 12,
 	CAMERA_VIEW             = 13,
+	BG_NO_LOGO 				= 14,
 
 	_COUNT,
 	INVALID = -1,
@@ -112,6 +124,14 @@ global enum eApexScreenMods
 	RED = (1 << 0),
 }
 
+global enum eApexScreenDisplayGroup
+{
+	DISPLAY_PLAYER,
+	DISPLAY_PLAYER_SQUAD,
+	DISPLAY_LOGOS,
+	DISPLAY_CENTER_LOGO_ONLY,
+	DISPLAY_RANDOM_PLAYERS
+}
 
 #if CLIENT
 global struct ScreenOverrideInfo
@@ -142,6 +162,7 @@ table<string, ScreenOverrideInfo> s_screenOverrides
 global struct ApexScreenState
 {
 	var    rui
+	var 	nestedRui
 	int    magicId
 	string mockup
 	asset  ruiToCreate
@@ -178,6 +199,8 @@ global struct ApexScreenState
 	var    floatingTopo  = null
 	var    floatingRui   = null
 	var[3] floatingNestedBadgeRuiList = [null, null, null]
+
+	int updateSerialNum = 0
 }
 #endif
 
@@ -220,8 +243,15 @@ struct {
 		string                      killedPlayerName
 		table                       signalDummy
 
+		table<string, ApexScreenState> customBannerList
+
 		bool DEV_activeScreenDebug                                     = false
 		bool DEV_isFloatyBitsPrototypeEnabled                          = false
+		asset bannerBGAssert = $"rui/rui_screens/banner_c"
+		vector logoOverlayTint = < 1.0 , 1.0, 1.0 >
+		vector logoSize = <562,407,0>
+		asset logoImage = $"rui/rui_screens/apex_logo"
+		asset animatedLogoAsset = $""
 	#endif
 } file
 
@@ -279,6 +309,7 @@ void function ShApexScreens_Init()
 		} )
 	#endif //
 	ScriptRegisterNetworkedVariable( NV_ApexScreensEventTimeB, SNDC_GLOBAL, SNVT_TIME, -1 )
+	ScriptRegisterNetworkedVariable( NV_ApexScreensEventIntA, SNDC_GLOBAL, SNVT_INT, -1 )
 	#if SERVER
 		RegisterSignal( "ApexScreenMasterThink" )
 
@@ -407,6 +438,10 @@ void function ClApexScreens_AddScreenOverride( ScreenOverrideInfo newInfo )
 	s_screenOverrides[newInfo.scriptNameRequired] <- newInfo
 }
 
+ApexScreenState function ClApexScreens_GetCustomBannerScreen( string teaseScreenKey )
+{
+	return file.customBannerList[ teaseScreenKey ]
+}
 #endif //
 
 ////
@@ -994,10 +1029,53 @@ bool function ClApexScreens_PosInStaticBanner( vector pos )
 	return false
 }
 
+var function CreateBlankApexScreenRUIElement( ApexScreenState screen )
+{
+	var rui
+
+	if ( screen.magicId != -1 )
+	{
+		StaticPropRui propStaticRuiInfo
+		propStaticRuiInfo.ruiName = BLANK_ASSET
+		propStaticRuiInfo.magicId = screen.magicId
+		rui = RuiCreateOnStaticProp( propStaticRuiInfo )
+
+		screen.ruiLastCreated = BLANK_ASSET
+
+		RuiSetFloat2( rui, "uvMin", screen.uvMin )
+		RuiSetFloat2( rui, "uvMax", screen.uvMax )
+
+		return rui
+	}
+
+	return null
+}
+
+void function RuiDestroyIfAliveDelay_Thread( var rui, float delayTime )
+{
+	OnThreadEnd(
+		function() : ( rui )
+		{
+			RuiDestroyIfAlive( rui )
+		}
+	)
+
+	wait delayTime
+}
+
+struct DelayedScreenContentData
+{
+	int              serialNum
+	ApexScreenState& screen
+	float            modeChangeTime
+	int              transitionStyle
+	int              gcardPresentation
+	EHI              playerEHI
+	int              lifestateOverride
+}
 void function UpdateScreensContent( array<ApexScreenState> screenList )
 {
-	if ( GetGameState() >= eGameState.WinnerDetermined )
-		return
+	array<DelayedScreenContentData> delayedData = []
 
 
 	entity localViewPlayer = GetLocalViewPlayer()
@@ -1016,10 +1094,28 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 		else if ( screen.isOutsideCircle )
 			shouldShow = false
 
+		bool needShutdown = ((screen.rui != null && screen.ruiLastCreated != BLANK_ASSET) && (!shouldShow || (screen.ruiToCreate != screen.ruiLastCreated)))
+		if ( needShutdown )
+		{
+			screen.commenceTime = -1.0
+			Signal( screen, "ScreenOff" ) //
+
+			CleanupNestedGladiatorCard( screen.nestedGladiatorCard0Handle )
+
+			if ( screen.nestedRui != null )
+			{
+				RuiDestroyNestedIfAlive( screen.rui, "animatedLogoHandle" )
+				screen.nestedRui = null
+			}
+
+			RuiDestroyIfAlive( screen.rui )
+			screen.rui = null
+
+		}
 
 		bool doStandardVars = (!screen.overrideInfoIsValid || !screen.overrideInfo.skipStandardVars)
 
-		bool needStartup = (shouldShow && (screen.rui == null))
+		bool needStartup = (shouldShow && (screen.rui == null || screen.ruiLastCreated == BLANK_ASSET))
 		if ( needStartup )
 		{
 			// #if DEVELOPER
@@ -1038,28 +1134,8 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 			{
 				shouldShow = false
 			}
-		}
 		
-		// RUI: Couldn't allocate a client rui instance.
-		
-		//because this block sets the screen.rui to null on the same frame, the needstartup condition can potentially 
-		//execute due to the screen.rui being null and bool shouldshow being true
-		//(mk): TEMP FIX: moved shutdown after startup check. Needs more tracking to determine why shouldShow is not handling this (todo after release)
-		bool needShutdown = ((screen.rui != null) && (!shouldShow || (screen.ruiToCreate != screen.ruiLastCreated)))
-		if ( needShutdown )
-		{
-			// #if DEVELOPER
-				// ++countDestruction
-				// Warning( "Is this block being reached?? --------------------- " + countDestruction )
-			// #endif	
-			
-			screen.commenceTime = -1.0
-			Signal( screen, "ScreenOff" ) // to clean up any threads expecting the RUI to exist
 
-			CleanupNestedGladiatorCard( screen.nestedGladiatorCard0Handle )
-
-			RuiDestroyIfAlive( screen.rui )
-			screen.rui = null
 		}
 
 		if ( !shouldShow )
@@ -1095,18 +1171,48 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 		RuiSetInt( screen.rui, "transitionStyle", desiredTransitionStyle )
 
 		int lifestateOverride = eGladCardLifestateOverride.NONE
-		int gcardPresentation = GetGCardpresentationForApexScreenMode( desiredMode )
+		int gcardPresentation = GetGCardPresentationForApexScreenMode( desiredMode )
 
-		#if(false)
+		screen.updateSerialNum = modint( screen.updateSerialNum + 1, INT_MAX )
 
-
-#endif //
-
-		thread UpdateScreenDetails( screen, desiredTransitionStyle, gcardPresentation, desiredPlayerEHI, lifestateOverride )
+		DelayedScreenContentData dscd
+		dscd.serialNum = screen.updateSerialNum
+		dscd.modeChangeTime = screen.commenceTime
+		if ( dscd.transitionStyle != eApexScreenTransitionStyle.NONE )
+			dscd.modeChangeTime += APEX_SCREEN_TRANSITION_IN_DURATION
+		dscd.screen = screen
+		dscd.transitionStyle = desiredTransitionStyle
+		dscd.gcardPresentation = gcardPresentation
+		dscd.playerEHI = desiredPlayerEHI
+		dscd.lifestateOverride = lifestateOverride
+		delayedData.append( dscd )
 	}
+
+	thread (void function() : (delayedData) {
+		delayedData.sort( int function( DelayedScreenContentData a, DelayedScreenContentData b ) {
+			return (a.modeChangeTime == b.modeChangeTime) ? 0 : (a.modeChangeTime < b.modeChangeTime) ? -1 : 1
+		} )
+		foreach ( DelayedScreenContentData dscd in delayedData )
+		{
+			if ( dscd.screen.updateSerialNum != dscd.serialNum )
+				continue
+
+			if ( dscd.modeChangeTime - Time() > 0.02 )
+				wait (dscd.modeChangeTime - Time())
+
+			if ( dscd.screen.updateSerialNum != dscd.serialNum )
+				continue
+
+			//
+			if ( dscd.screen.rui == null )
+				continue
+
+			UpdateScreenDetails( dscd.screen, dscd.modeChangeTime, dscd.transitionStyle, dscd.gcardPresentation, dscd.playerEHI, dscd.lifestateOverride )
+		}
+	})()
 }
 
-int function GetGCardpresentationForApexScreenMode( int screenMode )
+int function GetGCardPresentationForApexScreenMode( int screenMode )
 {
 	switch( screenMode )
 	{
@@ -1126,20 +1232,9 @@ int function GetGCardpresentationForApexScreenMode( int screenMode )
 
 
 #if CLIENT
-void function UpdateScreenDetails( ApexScreenState screen, int transitionStyle, int gcardPresentation, EHI playerEHI, int lifestateOverride )
+void function UpdateScreenDetails( ApexScreenState screen, float modeChangeTime, int transitionStyle, int gcardPresentation, EHI playerEHI, int lifestateOverride )
 {
-	Signal( screen, "UpdateScreenCards" )
-	EndSignal( screen, "UpdateScreenCards" )
-	EndSignal( screen, "ScreenOff" )
 
-	float modeChangeTime = screen.commenceTime
-	if ( transitionStyle != eApexScreenTransitionStyle.NONE )
-		modeChangeTime += APEX_SCREEN_TRANSITION_IN_DURATION
-
-	if ( modeChangeTime - Time() > 0.02 )
-		wait (modeChangeTime - Time())
-
-	//RuiSetBool( screen.rui, "isCardValid", IsValid( player ) )
 
 	string playerName = ""
 	if ( EHIHasValidScriptStruct( playerEHI ) )
@@ -1251,6 +1346,22 @@ void function SetupForHorizontalTVScreen( StaticPropRui staticPropRuiInfo, ApexS
 	apexScreen.position = eApexScreenPosition.DISABLED
 }
 
+void function SetupForVerticalBannerScreen( StaticPropRui staticPropRuiInfo, ApexScreenState apexScreen )
+{
+	if ( staticPropRuiInfo.scriptName in s_screenOverrides )
+	{
+		apexScreen.overrideInfo = s_screenOverrides[staticPropRuiInfo.scriptName]
+		apexScreen.overrideInfoIsValid = true
+		apexScreen.ruiToCreate = apexScreen.overrideInfo.ruiAsset
+
+		if ( apexScreen.position > eApexScreenPosition._COUNT_BANNERTYPES )
+			apexScreen.position = eApexScreenPosition.TV_LIKE
+
+		return
+	}
+
+	//
+}
 bool function OnEnumStaticPropRui( StaticPropRui staticPropRuiInfo )
 {
 	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
@@ -1354,10 +1465,26 @@ bool function OnEnumStaticPropRui( StaticPropRui staticPropRuiInfo )
 					apexScreen.position = eApexScreenPosition.L
 					break
 
+				case CUSTOM_BANNER_LEFT_SCRIPTNAME:
+					apexScreen.position = eApexScreenPosition.L
+					SetupForVerticalBannerScreen( staticPropRuiInfo, apexScreen )
+					file.customBannerList["left"] <- apexScreen
+					break
 				case "rightScreen":
 					apexScreen.position = eApexScreenPosition.R
 					break
 
+				case CUSTOM_BANNER_RIGHT_SCRIPTNAME:
+					apexScreen.position = eApexScreenPosition.R
+					SetupForVerticalBannerScreen( staticPropRuiInfo, apexScreen )
+					file.customBannerList["right"] <- apexScreen
+					break
+
+				case CUSTOM_BANNER_CENTER_SCRIPTNAME:
+					apexScreen.position = eApexScreenPosition.C
+					SetupForVerticalBannerScreen( staticPropRuiInfo, apexScreen )
+					file.customBannerList["center"] <- apexScreen
+					break
 				default:
 					apexScreen.position = eApexScreenPosition.C
 					break
@@ -1417,18 +1544,21 @@ var function CreateApexScreenRUIElement( ApexScreenState screen )
 	RuiSetFloat3( rui, "tintColor", screen.tint )
 	RuiSetFloat( rui, "tintIntensity", 1.0 )
 	RuiSetInt( rui, "unixTimeStamp", GetUnixTimestamp() )
+	RuiSetImage( rui, "overlayImg", file.bannerBGAssert )
+	RuiSetImage( rui, "logoImage", file.logoImage )
+	RuiSetFloat3( rui, "logoTint", file.logoOverlayTint )
+	RuiSetFloat2( rui, "logoSize", file.logoSize )
+
+	if ( file.animatedLogoAsset != $"" )
+	{
+		var nestedRui = RuiCreateNested( rui, "animatedLogoHandle", file.animatedLogoAsset )
+		screen.nestedRui = nestedRui
+	}
 	if ( screen.sharesPropWithEnvironmentalRUI )
 		RuiSetBool( rui, "sharesPropWithEnvironmentalRUI", true )
 
 	RuiTrackInt( rui, "cameraNearbyEnemySquads", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "cameraNearbyEnemySquads" ) )
-	
-	#if(true)
-		if ( UseFallBanners() )
-		{
-			RuiSetImage( rui, "overlayImg", $"rui/rui_screens/banner_c_shadowfall" )
-			RuiSetFloat3( rui, "logoTint", <1.0, 1.0, 1.0> )
-		}
-	#endif
+
 
 	if ( screen.overrideInfoIsValid )
 	{
@@ -1457,9 +1587,34 @@ var function CreateApexScreenRUIElement( ApexScreenState screen )
 			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( NV_ApexScreensEventTimeA ) )
 		if ( screen.overrideInfo.bindStartTimeVarToEventTimeB )
 			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( NV_ApexScreensEventTimeB ) )
+		if ( screen.overrideInfo.bindEventIntA )
+			RuiTrackInt( rui, "intA", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( NV_ApexScreensEventIntA ) )
 	}
 
 	return rui
+}
+void function ClApexScreens_SetCustomApexScreenBGAsset( asset bg )
+{
+	file.bannerBGAssert = bg
+}
+
+void function ClApexScreens_SetCustomLogoTint( vector tint )
+{
+	file.logoOverlayTint = tint
+}
+
+void function ClApexScreens_SetCustomLogoImage( asset logo )
+{
+	file.logoImage = logo
+}
+
+void function ClApexScreens_SetCustomLogoSize( vector l_size )
+{
+	file.logoSize = l_size
+}
+void function ClApexScreens_SetAnimatedLogoAsset( asset ruiAsset )
+{
+	file.animatedLogoAsset = ruiAsset
 }
 #endif
 

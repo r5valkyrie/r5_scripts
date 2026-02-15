@@ -484,19 +484,18 @@ void function ShGamemodeArenas_Init()
 
 
 
-#elseif(CLIENT)
+#elseif CLIENT
 	RegisterSignal( "GameStateChanged" )
 	RegisterSignal( "Arenas_WaitFullyConnected" )
 
 	PakHandle pakHandle = RequestPakFile( "arenas" )
 
-	// R5V: S9 apex screen customization functions not available
-	// SetCustomScreenFadeAsset( $"ui/screen_fade_arenas.rpak" )
-	// ClApexScreens_SetCustomApexScreenBGAsset( $"rui/rui_screens/banner_c_arenas" )
-	// ClApexScreens_SetCustomLogoTint( <1.0, 1.0, 1.0> )
-	// ClApexScreens_SetCustomLogoImage( $"rui/rui_screens/arenas_logo" )
-	// ClApexScreens_SetCustomLogoSize( <640,640,0> )
-	// ClApexScreens_SetAnimatedLogoAsset( $"ui/arenas_logo_glitch.rpak" )
+	SetCustomScreenFadeAsset( $"ui/screen_fade_arenas.rpak" )
+	ClApexScreens_SetCustomApexScreenBGAsset( $"rui/rui_screens/banner_c_arenas" )
+	ClApexScreens_SetCustomLogoTint( <1.0, 1.0, 1.0> )
+	ClApexScreens_SetCustomLogoImage( $"rui/rui_screens/arenas_logo" )
+	ClApexScreens_SetCustomLogoSize( <640,640,0> )
+	ClApexScreens_SetAnimatedLogoAsset( $"ui/arenas_logo_glitch.rpak" )
 
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, ClSurvivalArenas_OnWaitingForPlayers )
 	AddCallback_GameStateEnter( eGameState.Prematch, CLSurvivalArenas_OnPrematch )
