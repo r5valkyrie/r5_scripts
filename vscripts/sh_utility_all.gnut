@@ -2246,6 +2246,17 @@ int function Shuffle_GetCount( ShuffleData sd )
 	return sd._indices.len()
 }
 //////
+#if CLIENT
+string function PlatformIDToIconString( bool platformISController )
+{
+	if ( platformISController )
+		return Localize( "#CROSSPLAY_ICON_PC" )
+	else
+		return Localize( "#CROSSPLAY_ICON_CONTROLLER" )
+	return ""
+}
+#endif
+
 
 #if SERVER || CLIENT
 void function DestroyEntities( array<entity> ents )

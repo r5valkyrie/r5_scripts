@@ -294,7 +294,7 @@ void function SetUnitFrameDataFromOwner( var rui, entity ent, bool forceUpdate =
 	RuiTrackFloat( rui, "targetHealthFrac", ent, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_health )
 	RuiTrackFloat( rui, "targetHealthFracTemp", ent, RUI_TRACK_HEAL_TARGET )
 
-	string platformString = "#CROSSPLAY_ICON_PC"
+	string platformString = PlatformIDToIconString( IsControllerModeActive() )
 	RuiSetString( rui, "platformString", platformString )
 	RuiSetBool( rui, "isVisible", true )
 
