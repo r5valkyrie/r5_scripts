@@ -27,20 +27,6 @@ global enum eVideoPanelPinPositions
 	CENTER
 }
 
-global enum eRuiArgType
-{
-	INT
-	FLOAT
-	GAMETIME
-	WALLTIME
-	STRING
-	ASSET
-	IMAGE
-	VECTOR
-	BOOL
-	COLOR
-}
-
 void function UtilityUI_Init()
 {
 	RegisterSignal( "forever" )

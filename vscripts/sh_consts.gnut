@@ -2815,6 +2815,10 @@ global const float MAP_KILL_VOLUME_OFFSET_DESERTLANDS = -22290.0
 global const float MAP_KILL_VOLUME_OFFSET_DIVIDED_MOON = -2400.0
 global int PLAYER_STRYDER_CHAR_DATA_ARRAY_VERSION = 0 // be careful changing this
 
+global const int TEAM_TICK = 110
+global const TEAM_BOTH = 4 // used to be (TEAM_NPC == 4)
+global const int PROP_IS_VALID_FOR_TURRET_PLACEMENT = SPF_CUSTOM_SCRIPT_3
+
 global enum ePlayerStryderCharDataArraySlots
 {
 	INVALID = -1,
@@ -2854,15 +2858,14 @@ global enum ePlayerStryderCharDataArraySlots
 }
 Assert( ePlayerStryderCharDataArraySlots.COUNT == 32 )
 
+global const float PLAYER_STANDING_SPEED = 173.5
+global const float PLAYER_STANDING_SPRINT_SPEED = 260
 
 // ===============================================================================
 //  don't put anything referenced by preprocessor defines after this block
 // ===============================================================================
 // references to variables that are defined in the game code should be at the end
 // ===============================================================================
-global const int TEAM_TICK = 110
-global const TEAM_BOTH = 4 // used to be (TEAM_NPC == 4)
-global const int PROP_IS_VALID_FOR_TURRET_PLACEMENT = SPF_CUSTOM_SCRIPT_3
 
 global struct VortexImpact
 {
@@ -2886,6 +2889,20 @@ global struct VortexImpact
 #if CLIENT
 global const FULLMAP_RUI_DRAW_LAYER	= RUI_DRAW_POSTEFFECTS
 #endif
+
+global enum eRuiArgType
+{
+	INT
+	FLOAT
+	GAMETIME
+	WALLTIME
+	STRING
+	ASSET
+	IMAGE
+	VECTOR
+	BOOL
+	COLOR
+}
 
 // ===============================================================================
 // Don't add any constants below here. Add constants that don't reference variables
