@@ -3037,7 +3037,7 @@ entity function SafeCallFunctionEntity( string functionName, entity defaultValue
 
 bool function IsArenaMode()
 {
-	return Playlist() == ePlaylists.arenas
+	return Playlist() == ePlaylists.survival_arenas
 }
 
 #if SERVER || CLIENT

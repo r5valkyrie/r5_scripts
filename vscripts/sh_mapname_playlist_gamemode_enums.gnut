@@ -109,7 +109,7 @@ global enum ePlaylists
 	fs_onlyup, //51
 	fs_nextbots, //52
 	Movement_Recorder,
-	arenas,
+	survival_arenas,
 	
 	_PLAYLISTS_COUNT //LAST
 }
@@ -469,7 +469,7 @@ void function PassivesAllowed_Init()
 	[
 		eGamemodes.SURVIVAL,
 		eGamemodes.WINTEREXPRESS,
-		eGamemodes.fs_dm
+		eGamemodes.fs_dm,
 		eGamemodes.ARENAS
 	]
 	
@@ -483,8 +483,8 @@ void function PassivesAllowed_Init()
 		ePlaylists.survival,
 		ePlaylists.survival_solos,
 		ePlaylists.survival_duos,
-		ePlaylists.survival_firingrange
-		ePlaylists.arenas
+		ePlaylists.survival_firingrange,
+		ePlaylists.survival_arenas
 	]
 
 	bool result = ( allowedPassiveGamemodes.contains( Gamemode() ) && allowedPassivePlaylists.contains( Playlist() ) )
