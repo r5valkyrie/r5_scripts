@@ -109,6 +109,7 @@ global enum ePlaylists
 	fs_onlyup, //51
 	fs_nextbots, //52
 	Movement_Recorder,
+	arenas,
 	
 	_PLAYLISTS_COUNT //LAST
 }
@@ -469,6 +470,7 @@ void function PassivesAllowed_Init()
 		eGamemodes.SURVIVAL,
 		eGamemodes.WINTEREXPRESS,
 		eGamemodes.fs_dm
+		eGamemodes.ARENAS
 	]
 	
 	const array<int> allowedPassivePlaylists = 
@@ -482,6 +484,7 @@ void function PassivesAllowed_Init()
 		ePlaylists.survival_solos,
 		ePlaylists.survival_duos,
 		ePlaylists.survival_firingrange
+		ePlaylists.arenas
 	]
 
 	bool result = ( allowedPassiveGamemodes.contains( Gamemode() ) && allowedPassivePlaylists.contains( Playlist() ) )

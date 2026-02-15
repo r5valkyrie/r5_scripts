@@ -3035,6 +3035,11 @@ entity function SafeCallFunctionEntity( string functionName, entity defaultValue
 	}
 }
 
+bool function IsArenaMode()
+{
+	return Playlist() == ePlaylists.arenas
+}
+
 #if SERVER || CLIENT
 // Safe wrappers for Flowstate team functions
 int function Safe_GetAttackerTeam()

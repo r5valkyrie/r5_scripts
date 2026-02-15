@@ -77,6 +77,7 @@ global enum eMenuMusicContext
 
 global const string LOOT_CEREMONY_MUSIC_P1 = "Music_LootCeremony_Pt1"
 global const string LOOT_CEREMONY_MUSIC_P2 = "Music_LootCeremony_Pt2"
+global const asset ARENAS_MUSICPACK = $"settings/itemflav/musicpack/arenas_default.rpak"
 
 global array<string> WORKAROUND_UI_MUSIC_SOUND_LIST = [
 	"Music_FrontEnd",

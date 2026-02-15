@@ -64,7 +64,6 @@ global function Arenas_GetCashAmountForRound
 global function Arenas_GetTeamWins
 global function Arenas_IsMatchComplete
 global function Arenas_IsFinalRound
-global function IsArenaMode
 
 #if(CLIENT)
 const asset LOOT_BIN_ICON = $"rui/hud/ping/icon_arenas_loot_bin"
@@ -265,8 +264,6 @@ const float ARENAS_ASH_SHOP_ROTATE = -30.0
 const asset HOLOGRAM_FX_LOGO = $"P_holospray_arenas_logo"
 const asset HOLOGRAM_FX_ASH = $"P_holo_ash_readyroom"
 const asset HOLOGRAM_FX_PROJECTOR = $"P_arenas_holo_projector"
-
-global const asset ARENAS_MUSICPACK = $"settings/itemflav/musicpack/arenas_default.rpak"
 
 void function Sh_Arenas_ItemRegistrationInit()
 {
@@ -2881,11 +2878,6 @@ string function GetTeamName( int team )
 int function Arenas_GetTeamWins( int team )
 {
 	return GameRules_GetTeamScore2( team )
-}
-
-bool function IsArenaMode()
-{
-	return GameRules_GetGameMode() == GAMEMODE_ARENAS
 }
 
 #if(false)
