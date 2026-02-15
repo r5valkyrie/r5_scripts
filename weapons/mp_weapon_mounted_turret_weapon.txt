@@ -651,7 +651,54 @@ WeaponData
             "reloadempty_time_late3"			"2.333"
             "reloadempty_time_late4"			"1.567"
         }
-      
+	}
+
+	"ui1_enable"		"1"
+	"ui1_draw_cloaked"	"1"
+	UiData1
+	{
+		"ui"							"ui/rampart_turret_screen"
+		"mesh"							"models/weapons/attachments/rampart_turret_screen"
+		Args
+		{
+			vis							player_zoomfrac
+			ammo						weapon_ammo
+			clipSize					weapon_clipSize
+			centerOffset				weapon_ads_center_offset
+			eyeAngles					player_eye_angles
+			crossDist					distance_to_crosshair_target
+		}
+	}
+
+	"ui2_enable"		"1"
+	"ui2_draw_cloaked"	"1"
+	UiData2
+	{
+		"ui"							"ui/rampart_turret_reticle"
+		"mesh"							"models/weapons/attachments/rampart_turret_reticle"
+		Args
+		{
+			isFiring					weapon_is_firing
+			clipAmmo					weapon_ammo
+			clipSize					weapon_clipSize
+		}
+	}
+
+	"ui3_enable"		"1"
+	"ui3_draw_cloaked"	"1"
+	UiData3
+	{
+		"ui"							"ui/rampart_turret_ammo_counter"
+		"mesh"							"models/weapons/attachments/rampart_turret_ammo_counter"
+		Args
+		{
+			vis							player_zoomfrac
+			ammo						weapon_ammo
+			clipSize					weapon_clipSize
+			isReloading					weapon_is_reloading
+			isAmped						weapon_is_amped
+			spreadAmount				weapon_spread
+		}
 	}
 
 	active_crosshair_count				"1"
@@ -671,5 +718,14 @@ WeaponData
 		    crosshairMovementY          crosshair_movement_y
 		}
 
+		Crosshair_1
+		{
+			"ui"						"ui/rampart_turret_crosshair"
+			"base_spread"				"0"
+			Args
+			{
+				//isFiring				weapon_is_firing
+			}
+		}
 	}
 }
