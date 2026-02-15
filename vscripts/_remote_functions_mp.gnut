@@ -335,6 +335,32 @@ void function RemoteFunctions_Init_Begin()
 	//Custom gamemodes
 	switch ( Gamemode() )
 	{
+		case eGamemodes.ARENAS:
+			// Arenas: Server to Client
+			ScriptRemote_RegisterClientFunction( "ServerCallback_EnableDeathScreenBanner" )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayArenasPrematch", "int", 0, 30, "int", 0, 30, "int", 0, 5000, "int", 0, 100, "int", 0, 100 )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayRoundLost" )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayRoundWon", "int", 0, 4 ) // eArenasRoundWonDescriptor.MAX_COUNT
+			ScriptRemote_RegisterClientFunction( "ServerCallback_Arenas_AnnounceResourcesCollected", "int", 0, 255 )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_Arenas_UpdateAirdropPreview", "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_Arenas_AnnounceRoundStart", "int", 0, 255 )
+
+			// Arenas Buy System: Server to Client
+			ScriptRemote_RegisterClientFunction( "ServerCallback_RefreshMenu" )
+			ScriptRemote_RegisterClientFunction( "OnCurrentCashChanged", "entity" )
+			ScriptRemote_RegisterClientFunction( "ServerCallback_FinishedProcessingClickEvent" )
+
+			// Arenas Cash Station: Server to Client
+			ScriptRemote_RegisterClientFunction( "ServerToClient_CashStationStartUse", "entity", "int", TEAM_ANY, INT_MAX )
+			ScriptRemote_RegisterClientFunction( "ServerToClient_CashStationStopUse", "entity" )
+			ScriptRemote_RegisterClientFunction( "ServerToClient_OnUseCashStationSmall", "entity", "int", 0, 500 )
+
+			// Arenas Networked Variables
+			ScriptRegisterNetworkedVariable( "arenas_numties", SNDC_GLOBAL, SNVT_INT, 0 )
+			ScriptRegisterNetworkedVariable( "arenas_lastWonTeam", SNDC_GLOBAL, SNVT_INT, 0 )
+			ScriptRegisterNetworkedVariable( "arenas_buyMenuStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+			break
+
 		case eGamemodes.CUSTOM_CTF:
 			// CTF: Server to Client
 			
@@ -568,6 +594,7 @@ void function RemoteFunctions_Init_Begin()
 	RespawnBeacons_RegisterNetworking()
 
 	Gamemode_ShadowSquad_RegisterNetworking()
+	ShArenas_RegisterNetworking()
 
 	MapZones_RegisterNetworking() //1 func
 	Ultimates_RegisterNetworking() //1 func

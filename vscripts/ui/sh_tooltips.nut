@@ -19,6 +19,9 @@ global function ToolTips_MenuOpened
 global function ToolTips_MenuClosed
 
 global function ToolTips_HideTooltipUntilRefocus
+
+global function ClientToUI_Tooltip_MarkForClientUpdate
+global function ClientToUI_Tooltip_Clear
 #endif
 
 // needs to match the .menu entry and the .rui
@@ -144,6 +147,19 @@ void function ToolTips_HideTooltipUntilRefocus( var element )
 	s_hideElement = element
 }
 
+void function ClientToUI_Tooltip_MarkForClientUpdate( var button, int style )
+{
+	ToolTipData dt
+	dt.tooltipFlags = dt.tooltipFlags | eToolTipFlag.CLIENT_UPDATE
+	dt.tooltipStyle = style
+	Hud_SetToolTipData( button, dt )
+}
+
+void function ClientToUI_Tooltip_Clear( var button )
+{
+	Hud_ClearToolTipData( button )
+}
+
 // TODO: could probably be replaced with a few event driven code callbacks and the ability to pin an element to the cursor
 void function OnToolTipMenuThink( var menu )
 {
@@ -258,6 +274,9 @@ void function UpdateToolTipElement( var toolTipElement, var focusElement )
 			break
 		case eTooltipStyle.CURRENCY:
 			ruiAsset = $"ui/currency_tooltip.rpak"
+			break
+		case eTooltipStyle.ARENAS_SHOP_WEAPON:
+			ruiAsset = $"ui/arenas_weapon_tooltip.rpak"
 			break
 		default:
 			ruiAsset = $"ui/generic_tooltip.rpak"

@@ -325,15 +325,15 @@ void function UpdateGamestateRuiTracking( entity player )
 void function UpdateCommonScoreRuiTracking( var rui, entity player )
 {
 	RuiTrackInt( rui, "killCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kills" ) )
-	//RuiTrackInt( rui, "damageDealt", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "damageDealt" ) )
+	RuiTrackInt( rui, "damageDealt", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "damageDealt" ) )
 
 	RuiTrackBool( rui, "hasDeathFieldImmunity", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "hasDeathFieldImmunity" ) )
 	RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "assists" ) )
 
 	//	if ( Crafting_IsEnabled() )
-		{
-		RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
-		}
+	//	{
+	//		RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
+	//	}
 		
 
 }
@@ -1045,6 +1045,9 @@ void function UpdateChatHudLocationForTop3()
 
 float function GetGameStartTime()
 {
+	if ( level.nv.gameStartTime == null )
+		return Time() + 30.0 // fallback: assume 30s from now if not set yet
+
 	return expect float( level.nv.gameStartTime.tofloat() )
 }
 

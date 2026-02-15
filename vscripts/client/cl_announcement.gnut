@@ -18,6 +18,8 @@ global const int ANNOUNCEMENT_STYLE_CIRCLE_WARNING = 8
 global const int ANNOUNCEMENT_STYLE_ELITE = 9
 global const int ANNOUNCEMENT_STYLE_KILL_LEADER = 10
 global const int ANNOUNCEMENT_STYLE_WAVE = 11
+global const int ANNOUNCEMENT_STYLE_GENERIC_WARNING = 12
+global const int ANNOUNCEMENT_STYLE_ROUND_WON = 13
 
 const int ANNOUNCEMENT_STYLE_DEFAULT = ANNOUNCEMENT_STYLE_BIG
 
@@ -584,6 +586,16 @@ void function AnnouncementMessage_DisplayOnHud( AnnouncementData announcement )
 
 			RuiSetString( rui, "messageText", optionalTextArgs[0])
 			RuiSetString( rui, "messageSubText", optionalTextArgs[1])
+
+			EmitSoundOnEntity( player, announcement.soundAlias )
+			break
+
+		case ANNOUNCEMENT_STYLE_ROUND_WON:
+			customAnnouncement = true
+			rui = RuiCreate( $"ui/arenas_round_won.rpak", clGlobal.topoFullScreen, RUI_DRAW_POSTEFFECTS, 0 )
+			RuiSetFloat( rui, "startTime", Time() )
+			RuiSetString( rui, "messageText", Localize( announcement.messageText ) )
+			RuiSetString( rui, "subText", Localize( announcement.subText ) )
 
 			EmitSoundOnEntity( player, announcement.soundAlias )
 			break

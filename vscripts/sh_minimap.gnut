@@ -85,6 +85,8 @@ global enum eMinimapObject_prop_script
 	PROWLER_DENS,
 	PROWLER_CAMP,
 	SPIDER_CAMP,
+	CASH_STATION,
+	LOOT_BIN,
 	COUNT
 }
 

@@ -1731,6 +1731,12 @@ void function InitMenus()
 	AddMenu( "AboutGameModeMenu", $"resource/ui/menus/about_game_mode.menu", InitAboutGameModeMenu )
 
 	var inventoryMenu = AddMenu( "SurvivalInventoryMenu", $"resource/ui/menus/survival_inventory.menu", InitSurvivalInventoryMenu )
+
+	// Arenas
+	AddMenu( "ArenasBuyMenu", $"scripts/resource/ui/menus/arenas_buy.menu", InitArenasBuyMenu )
+	AddMenu( "ArenasPostRoundSummary", $"scripts/resource/ui/menus/arenas_post_round_summary.menu", InitArenasPostRoundSummary )
+	AddMenu( "ArenasSelectOpticDialog", $"scripts/resource/ui/menus/dialogs/arenas_select_optic.menu", InitArenasSelectOpticDialog )
+	
 	AddPanel( inventoryMenu, "SurvivalQuickInventoryPanel", InitSurvivalQuickInventoryPanel )
 	AddPanel( inventoryMenu, "SquadPanel", InitSquadPanelInventory )
 	AddPanel( inventoryMenu, "CharacterDetailsPanel", InitLegendPanelInventory )

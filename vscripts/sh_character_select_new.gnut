@@ -60,6 +60,13 @@ global function AddCallback_CharacterSelectMenu_OnCharacterLocked
 
 global function CharacterSelect_SetMenuState
 global function IsShowingChampionPresentation
+global function UpdateBackgroundViaFunc
+global function CreateCharacterSelectClientEnts
+global function CharacterSelect_EnsureMenuEntsReady
+global function SetCharacterSelectSceneForChampionSquad
+global function UpdateCamera
+global function CharacterSelect_RestorePlayerView
+
 
 const string CAMERA_ENT_NAME = "target_char_sel_camera_new"
 const string CHARACTER_ENT_NAME = "target_char_sel_pilot_new"
@@ -441,6 +448,11 @@ void function AddCallback_CharacterSelectMenu_OnCharacterLocked( void functionre
 void function AddCallback_OnCharacterSelectMenuClosed( void functionref() callbackFunc )
 {
 	file.Callbacks_OnCharacterMenuClosed.append( callbackFunc )
+}
+
+void function UpdateBackgroundViaFunc( void functionref( entity, entity, var ) callbackFunc )
+{
+	callbackFunc( fileLevel.backgroundModelGeo, fileLevel.backgroundModelSmoke, fileLevel.backgroundRui )
 }
 
 void function PanAwayCharacterSelect()
@@ -1497,6 +1509,18 @@ LocPair function NewCameraPair(vector origin, vector angles)
 	return locPair
 }
 
+// Initializes the menu entity state so CreateCharacterSelectClientEnts() works
+// even when the full character select menu was never opened (e.g., charselect_enabled = 0).
+// Called by gamemodes that need the background scene without running character selection.
+void function CharacterSelect_EnsureMenuEntsReady()
+{
+	if ( fileLevel.menuEntsExist )
+		return
+
+	fileLevel.menuEntsExist = DoMenuEntsExist()
+	fileLevel.lightEntsExist = DoMenuLightsExist()
+}
+
 void function CreateCharacterSelectClientEnts()
 {
 	if (FS_ShouldShowCustomCharacterSelect())
@@ -1741,6 +1765,21 @@ void function FooterRui()
 
 		fileLevel.ruiPlayerBarRuis.append( rui )
 	}
+}
+
+void function CharacterSelect_RestorePlayerView()
+{
+	if ( IsValid( fileLevel.camera ) )
+		fileLevel.camera.SetFOV( CAMERA_FOV )
+	GetLocalClientPlayer().ClearMenuCameraEntity()
+	DoF_SetNearDepthToDefault()
+	DoF_SetFarDepthToDefault()
+	DoFSetDilateInfocus( false )
+	ColorCorrection_SetWeight( fileLevel.colorCorrection, 0.0 )
+	ColorCorrection_SetExclusive( fileLevel.colorCorrection, false )
+	SetMapSetting_FogEnabled( true )
+
+	DeleteMenuEntities()
 }
 
 void function DeleteMenuEntities()

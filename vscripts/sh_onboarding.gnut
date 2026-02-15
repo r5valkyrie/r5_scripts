@@ -973,7 +973,7 @@ void function Sequence_WaitingForPlayers()
 
 void function Sequence_PickLoadout()
 {
-	if ( Playlist() == ePlaylists.fs_scenarios || !Survival_CharacterSelectEnabled() || Gamemode() != eGamemodes.SURVIVAL || Playlist() == ePlaylists.fs_haloMod_survival || Gamemode() == eGamemodes.fs_snd || Gamemode() == eGamemodes.fs_spieslegends ) 
+	if ( Playlist() == ePlaylists.fs_scenarios || !Survival_CharacterSelectEnabled() || (Gamemode() != eGamemodes.SURVIVAL && Gamemode() != eGamemodes.ARENAS) || Playlist() == ePlaylists.fs_haloMod_survival || Gamemode() == eGamemodes.fs_snd || Gamemode() == eGamemodes.fs_spieslegends )
 	{
 		foreach ( player in GetPlayerArray() )
 		{

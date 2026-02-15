@@ -931,6 +931,9 @@ Scripts:
 	ui/dialogs/gamemode_select_v2.nut
 	ui/dialogs/report_player.nut
 	ui/dialogs/server_motd.nut
+	ui/dialogs/arenas_select_optic.nut
+	ui/menu_arenas_buy.nut
+	ui/menu_arenas_post_round_summary.nut
 	ui/menu_eula_dialog.nut
 	ui/menu_accessibility_dialog.nut
 	ui/menu_postgame.nut
@@ -1207,4 +1210,27 @@ When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	gamemodes/sh_gamemode_winterexpress.nut
+]
+
+// Arenas
+When: "SERVER || CLIENT"
+Scripts:
+[
+	gamemodes/sh_gamemode_arenas.nut
+	gamemodes/sh_arenas_buy_system.nut
+	gamemodes/sh_arenas_common.nut
+	gamemodes/sh_arenas_post_round_summary.nut
+	mp/sh_cash_station.gnut
+]
+
+When: "SERVER"
+Scripts:
+[
+	gamemodes/arenas/_gamemode_arenas.nut
+]
+
+When: "CLIENT"
+Scripts:
+[
+	gamemodes/arenas/cl_gamemode_arenas.nut
 ]

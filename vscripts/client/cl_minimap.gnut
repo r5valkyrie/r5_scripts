@@ -152,7 +152,8 @@ void function RegisterMinimapPackage( string entityClassname, int customStateInd
 		return
 
 	Assert( (entityClassname != "prop_dynamic"), "prop_dynamic should be registered with RegisterMinimapPackage_PropDynamic" )
-	Assert( (entityClassname in minimapAssetMap), "minimap is not currently setup to handle this type of entity: " + entityClassname )
+	if ( !(entityClassname in minimapAssetMap) )
+		minimapAssetMap[entityClassname] <- []
 
 	MinmapPackage minimapPackage
 	minimapPackage.minimapAsset = minimapAsset

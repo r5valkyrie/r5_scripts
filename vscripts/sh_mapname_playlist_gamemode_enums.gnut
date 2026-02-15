@@ -132,7 +132,8 @@ global enum eGamemodes
 	WINTEREXPRESS, //14	
 	fs_spieslegends, //15
 	fs_1v1,
-	
+	ARENAS, //17
+
 	_GAMEMODES_COUNT //LAST
 }
 

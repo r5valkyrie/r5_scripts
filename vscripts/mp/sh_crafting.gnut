@@ -1,0 +1,101 @@
+
+global function Crafting_Init
+global function Crafting_RegisterNetworking
+global function Crafting_IsEnabled
+global function Crafting_GetPlayerCraftingMaterials
+global function Crafting_GetLootDataFromIndex
+global function Crafting_GetCraftingDataArray
+global function Crafting_IsItemCurrentlyOwnedByAnyPlayer
+global function Crafting_DoesPlayerOwnItem
+global function Crafting_IsPingMapIconEnabled
+
+#if SERVER
+global function Crafting_GetDisabledGroundLoot
+global function Crafting_GetDisabledPoolLoot
+global function Crafting_IsLootRemovedFromGround
+global function Crafting_IsLootRemovedFromPool
+global function Crafting_AddExclusiveLoot
+global function Crafting_GetPreviousAirdropLocations
+
+global function Crafting_GetCraftingItemsByCategoryName
+
+global function AirdropWorkbench_Thread
+global function Crafting_GetAllWorkbenchClusters
+global function Crafting_WorkbenchAirdropLogicForRound_Thread
+global function Crafting_GetAllHarvesters
+
+global function Crafting_ClearUseLinksForAllHarvesters
+
+global function Crafting_AddMaterialsToPlayer
+global function AddCallback_OnCraftingMaterialsGranted
+
+global function Crafting_RemoveMaterialsFromPlayer
+global function Crafting_GetUseStatusForWorkbench
+global function Crafting_OnPlayerConnectionChanged
+global function Crafting_AirdropWorkbenchAtPlayer
+global function Crafting_CloseCraftingMenu
+
+global function ClientCallback_InitializeCraftingAtWorkbench
+global function ClientCallback_ClosedCraftingMenu
+
+global function Crafting_PingNearestWorkbench
+
+global function Crafting_IsPlayerAtWorkbench
+global function Crafting_CreateHolderEnt
+
+global function Crafting_DoorCloseCheck
+
+global function Crafting_ClientToServer_PingCrafterFromMap
+
+global function Crafting_PossibleWorkbenchLocations_Get
+global function Crafting_SetCrafterGoalCount
+#endif // SERVER
+
+#if DEV
+#if SERVER
+global function DEV_PrintUsedHarvesters
+#endif
+global function DEV_Crafting_PrintsOn
+#endif
+
+#if CLIENT
+global function UICallback_PopulateCraftingPanel
+global function Crafting_Workbench_OpenCraftingMenu
+global function Crafting_PopulateItemRuiAtIndex
+global function ServerCallback_CL_MaterialsChanged
+global function ServerCallback_CL_HarvesterUsed
+global function ServerCallback_CL_ArmorDeposited
+global function ServerCallback_PromptNextHarvester
+global function ServerCallback_PromptWorkbench
+global function ServerCallback_PromptAllWorkbenches
+global function ServerCallback_UpdateWorkbenchVars
+
+global function Crafting_IsPlayerCrafting
+
+global function Crafting_OnMenuItemSelected
+global function Crafting_OnWorkbenchMenuClosed
+global function TryCloseCraftingMenuFromDamage
+global function TryCloseCraftingMenu
+global function ServerCallback_SetCraftingIndexForSpectator
+
+global function MarkNextStepForPlayer
+global function MarkAllWorkbenches
+global function DestroyWorkbenchMarkers
+global function HarvesterAnimThread
+
+global function Crafting_ShowCraftingMapFeature
+
+global function Crafting_GetWorkbenchTitleString
+global function Crafting_GetWorkbenchDescString
+
+global function Crafting_IsPlayerAtWorkbench
+
+global function Crafting_GetCraftingIcon
+global function Crafting_GetSmallCraftingIcon
+global function Crafting_GetCraftingZoneIcon
+
+#if DEV
+global function DEV_Crafting_TogglePreMatchRotation
+global function DEV_Crafting_PrintUsedHarvesterEHIs
+#endif // DEV
+#endif // CLIENT

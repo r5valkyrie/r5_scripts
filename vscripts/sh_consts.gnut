@@ -197,6 +197,8 @@ global const flowstate_pkknockback			= "flowstate_pkknockback"
 
 //Respawn modes
 global const WINTEREXPRESS					= "winterexpress"
+global const ARENAS							= "arenas"
+global const GAMEMODE_ARENAS				= "arenas"
 
 //////////////////////////////
 

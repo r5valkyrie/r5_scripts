@@ -3,9 +3,9 @@ global function CodeCallback_MapInit
 
 void function CodeCallback_MapInit()
 {
-	#if SERVER
-	thread InitARBarriers()
-	#endif
+	// #if SERVER
+	// thread InitARBarriers()
+	// #endif
 }
 
 void function ShInit_Skygarden()

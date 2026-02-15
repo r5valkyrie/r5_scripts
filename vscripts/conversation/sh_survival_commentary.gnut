@@ -187,6 +187,7 @@ global enum eSurvivalHostType
 	JOHN,
 	ICET,
 	NOC,
+	ARENAS,
 
 	_count
 }

@@ -156,7 +156,8 @@ invalid =             -1,
 	FS_INFECTED_ID =       9,
 	FS_SND_ID =            10,
 	FS_APEXKART_ID =       11,
-	WINTEREXPRESS_ID =	   12
+	WINTEREXPRESS_ID =	   12,
+	ARENAS_ID =            13
 }
 
 const table<string, int> gameModesStringToIdMap = {
@@ -174,7 +175,8 @@ const table<string, int> gameModesStringToIdMap = {
 	[ fs_infected ]       = eGameModes.FS_INFECTED_ID,
 	[ fs_snd ]            = eGameModes.FS_SND_ID,
 	[ fs_apexkart ]            = eGameModes.FS_APEXKART_ID,
-	[ WINTEREXPRESS ]            = eGameModes.WINTEREXPRESS_ID
+	[ WINTEREXPRESS ]            = eGameModes.WINTEREXPRESS_ID,
+	[ ARENAS ]                   = eGameModes.ARENAS_ID
 }
 
 struct
@@ -254,6 +256,31 @@ void function GameModes_Init()
 	GameMode_AddScoreboardColumnData( gameMode, "Planted", PGS_DEATHS, 2 )
 	//GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_ASSISTS", PGS_ASSISTS, 2 )
 	GameMode_SetColor( gameMode, [212, 83, 152, 255] )
+
+	gameMode = ARENAS
+	GameMode_Create( gameMode )
+	GameMode_SetName( gameMode, "#GAMEMODE_ARENAS" )
+	GameMode_SetDesc( gameMode, "#GAMEMODE_ARENAS_DESC" )
+	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
+	GameMode_SetDefaultScoreLimits( gameMode, 3, 0 )
+	GameMode_SetDefaultTimeLimits( gameMode, 30, 0.0 )
+	GameMode_SetEvacEnabled( gameMode, false )
+	GameMode_SetSuddenDeath( gameMode, true )
+	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
+	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
+	#if !UI
+		GameMode_AddScoreboardColumnData( gameMode, "Damage", PGS_ASSISTS, 5 )
+	#endif
+	GameMode_SetColor( gameMode, [255, 87, 51, 255] )
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit( gameMode, Arenas_SharedInit )
+	#endif
+	#if SERVER
+		GameMode_AddServerInit( gameMode, Arenas_ServerInit )
+	#endif
+	#if CLIENT
+		GameMode_AddClientInit( gameMode, Arenas_ClientInit )
+	#endif
 	
 	#if DEVSCRIPTS
 	DevGameModes_Init()
