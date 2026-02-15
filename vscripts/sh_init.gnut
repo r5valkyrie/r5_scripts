@@ -268,9 +268,13 @@ void function SV_CL_Init()
 
 	#if CLIENT
 		Cl_DeathScreen_Init()
-		ClMainHud_Init()
 	#endif
 
+	//Sh_PersistentDamageLayer_Init()
+
+	// #if DEVSCRIPTS
+	// Dev_RemoteFunctions_Init()
+	// #endif
 	
 	RemoteFunctions_Init_Finish()
 }
@@ -451,6 +455,7 @@ void function Client_Init()
 	ClPip_LevelInit()
 	ClDataKnife_Init()
 	BleedoutClient_Init()
+	
 	// Town Takeovers                  
 	ClRisingWalls_Init()
 	ClBloodhound_TT_Init()
@@ -466,6 +471,7 @@ void function Client_Init()
 	ShSniperTowers_Init()
 	ClPlayerADSDofInit()
 	ClPlayer_Init()
+	ClMainHud_Init()
 	ClSuicideSpectres_Init()
 	CinematicIntroScreen_Init()
 	ClWeaponStatus_Init()
