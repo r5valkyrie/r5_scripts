@@ -253,6 +253,7 @@ global struct ClientAIStruct
 	bool ongoingneedlesexplode = false
 	bool firsttime = true
 	int shieldTier
+	entity primaryWaypoint
 	entity secondaryWaypoint
 }
 

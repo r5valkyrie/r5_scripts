@@ -22,8 +22,8 @@ global function ShowChat
 global function IsWatchingReplay
 
 //Chat
-global function mute;
-global function isMuted;
+global function mute
+global function isMuted
 
 global const MAX_ACTIVE_TRAPS_DISPLAYED = 5
 global const VGUI_CLOSED                = 0
