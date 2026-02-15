@@ -1,0 +1,25 @@
+// NOTE: the first font gets added as the base font, all other fonts are merged
+// with the base font.
+"ImguiFonts"
+{
+	"resource\ProggyClean.ttf"
+	{
+		size 13
+
+		"ranges"
+		{
+			1 latin
+		}
+	}
+	"resource\FusionPixel.ttf"
+	{
+		size 10
+
+		"ranges"
+		{
+			1 tchinese
+			//2 japanese
+			//3 korean
+		}
+	}
+}

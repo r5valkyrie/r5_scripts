@@ -1,0 +1,14 @@
+"lang"
+{
+	"Language" "english"
+	"Tokens"
+	{
+        "character_titan_NAME"                                "BT-7274"
+        "character_titan_NAME_SHORT"                          "BT-7274"
+        "character_titan_DESCRIPTION_LONG"                    "TODO"
+        "character_titan_DESCRIPTION_SHORT"                   "[Description needed]"
+        "character_titan_CHARSELECT_SUBTITLE"                 "Vanguard-Class Titan"
+        "skin_titan_default" "Default"
+
+	}
+}

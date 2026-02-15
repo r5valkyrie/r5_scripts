@@ -23,7 +23,6 @@
         style					RuiFooterButton
         rui						"ui/dialog_footer_button.rpak"
         wide                    200
-        wide_nx_handheld        300		[$NX]
         tall					60
         font                    Default_28
         labelText				"DEFAULT"
@@ -44,7 +43,6 @@
         style					RuiFooterButton
         rui						"ui/dialog_footer_button.rpak"
         wide                    200
-        wide_nx_handheld        300		[$NX]
         tall					60
         font                    Default_28
         labelText				"DEFAULT"
