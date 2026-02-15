@@ -153,6 +153,7 @@ void function SV_CL_Init()
 	ShQuips_Init()
 	ShLoadscreen_LevelInit()
 	ShMusic_LevelInit()
+
 	ShBattlePass_LevelInit()
 	ShSceneCapture_LevelInit()
 	ShCommsMenu_Init()
@@ -173,7 +174,6 @@ void function SV_CL_Init()
 	GameMode_RunSharedInits()
 	DamageHistoryInit()
 	ShPersistentData_LevelInit_Finish()
-	
 	ShWeaponRack_Init()
 	MpWeaponSatchel_Init()
 

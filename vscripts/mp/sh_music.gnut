@@ -134,6 +134,9 @@ void function OnRegisterRootItemFlavors()
 		ItemFlavor ornull musicPack = RegisterItemFlavorFromSettingsAsset( musicPackAsset )
 		if ( musicPack == null )
 			continue
+			
+		if ( IsArenaMode() )
+			musicPack = RegisterItemFlavorFromSettingsAsset( ARENAS_MUSICPACK )
 
 		expect ItemFlavor( musicPack )
 		musicPackList.append( musicPack )

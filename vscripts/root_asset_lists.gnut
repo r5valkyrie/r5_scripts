@@ -115,6 +115,7 @@ global const array<asset> MUSIC_PACK_ASSET_LIST =
     $"settings/itemflav/musicpack/s09bp_season9.rpak",//PORTED
     $"settings/itemflav/musicpack/s09bp_valkyrie.rpak",//PORTED
     $"settings/itemflav/musicpack/s09e01.rpak"//PORTED
+	$"settings/itemflav/musicpack/arenas_default.rpak"//PORTED
 ]
 
 global const array<asset> SKYDIVE_TRAIL_ASSET_LIST = [

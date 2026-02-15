@@ -266,7 +266,7 @@ const asset HOLOGRAM_FX_LOGO = $"P_holospray_arenas_logo"
 const asset HOLOGRAM_FX_ASH = $"P_holo_ash_readyroom"
 const asset HOLOGRAM_FX_PROJECTOR = $"P_arenas_holo_projector"
 
-const asset ARENAS_MUSICPACK = $"settings/itemflav/musicpack/arenas_default.rpak"
+global const asset ARENAS_MUSICPACK = $"settings/itemflav/musicpack/arenas_default.rpak"
 
 void function Sh_Arenas_ItemRegistrationInit()
 {
