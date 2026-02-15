@@ -525,7 +525,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DeathRecapDataUpdated", "bool", "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025
 	RegisterNetworkedVariable( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
 
-	if( Gamemode() == eGamemodes.SURVIVAL )
+	if( Gamemode() == eGamemodes.SURVIVAL || Gamemode() == eGamemodes.ARENAS )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", -1, 127, "int", EHANDLE_MIN, EHANDLE_MAX, "int", 0, 5001, "int", 0, INT_MAX, "int", -1, 5001, "int", 0, 9999, "int", 0, 9999 )
 
 	if ( IsCausticTTEnabled() == true )
