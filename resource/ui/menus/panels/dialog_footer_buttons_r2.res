@@ -1,4 +1,4 @@
-"scripts/resource/ui/menus/panels/dialog_footer_buttons_r2.res"
+"resource/ui/menus/panels/dialog_footer_buttons_r2.res"
 {
 	PinFrame
 	{
@@ -59,6 +59,7 @@
 		pin_corner_to_sibling	TOP_LEFT
 		pin_to_sibling_corner	TOP_RIGHT
 		xpos 					22
+		xpos_nx_handheld		100		[$NX]
 		activeInputExclusivePaint	gamepad // Doesn't fully support clickable footers
 	}
 

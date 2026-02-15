@@ -1,4 +1,4 @@
-"scripts/resource/ui/menus/panels/settings.res"
+"resource/ui/menus/panels/settings.res"
 {
 	PanelFrame
 	{
@@ -29,7 +29,7 @@
         wide					f0
         tall					84
         visible					1
-        controlSettingsFile		"scripts/resource/ui/menus/panels/tabs_settings.res"
+        controlSettingsFile		"resource/ui/menus/panels/tabs_settings.res"
 
         pin_to_sibling			PanelFrame
         pin_corner_to_sibling	TOP
@@ -43,6 +43,8 @@
         ControlName				RuiPanel
         InheritProperties       SettingsDetailsPanel
         visible					1
+        xpos_nx_handheld        600   [$NX]
+        wide_nx_handheld		640   [$NX]
 
         pin_to_sibling			PanelFrame
         pin_corner_to_sibling	TOP
@@ -85,7 +87,7 @@
         //        wide					1408
         //        tall					840
         //        visible				0
-        //        controlSettingsFile	"scripts/resource/ui/menus/panels/controls_pc.res"
+        //        controlSettingsFile	"resource/ui/menus/panels/controls_pc.res"
         //    }
     }
 
@@ -120,10 +122,16 @@
         {
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
-            tall                    1040
+                   
+			tall                    1100 [!$NX]
+     
+                                      
+      
+            tall                    1580 [$NX]
+			tall_nx_handheld        2090 [$NX]
             tabPosition             1
 
-            controlSettingsFile		"scripts/resource/ui/menus/panels/controls.res"
+            controlSettingsFile		"resource/ui/menus/panels/controls.res"
         }
     }
 
@@ -163,7 +171,7 @@
     //        wide					1408
     //        tall					840
     //        visible				0
-    //        controlSettingsFile	"scripts/resource/ui/menus/panels/video.res"
+    //        controlSettingsFile	"resource/ui/menus/panels/video.res"
     //        clip                  1
     //    }
     }
@@ -199,12 +207,12 @@
         {
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
-            //tall                    952 [$WINDOWS]
             tall                    882 [$WINDOWS]
+			tall_nx_handheld        800 [$NX]
             tabPosition             1
 
-            controlSettingsFile		"scripts/resource/ui/menus/panels/audio.res" [$WINDOWS]
-            controlSettingsFile		"scripts/resource/ui/menus/panels/audio_console.res" [$GAMECONSOLE]
+            controlSettingsFile		"resource/ui/menus/panels/audio.res" [$WINDOWS]
+            controlSettingsFile		"resource/ui/menus/panels/audio_console.res" [$GAMECONSOLE]
         }
     }
 
@@ -239,12 +247,14 @@
         {
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
-            tall                    1408 [$WINDOWS]
-            tall                    1212 [$GAMECONSOLE]
+			tall                    1665		[$WINDOWS]
+            tall                    1715		[$GAMECONSOLE && !$NX]
+            tall                    1525		[$NX]
+            tall_nx_handheld        2020        [$NX]
 
             tabPosition             1
 
-            controlSettingsFile		"scripts/resource/ui/menus/panels/hud_options.res"
+            controlSettingsFile		"resource/ui/menus/panels/hud_options.res"
         }
     }
 }

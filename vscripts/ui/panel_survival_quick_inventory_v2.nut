@@ -341,6 +341,8 @@ void function SurvivalQuickInventory_OnUpdate()
 		"Sight",
 		"Grip",
 		"Hopup",
+		"HopupMulti_a",
+		"HopupMulti_b",
 	]
 
 	for ( int i=0; i<2; i++ )
@@ -393,18 +395,6 @@ string function GetEquipmentSlotTypeForButton( var button )
 	return scriptID
 }
 
-
-void function OnEquipmentCommand( var button, string command )
-{
-	if ( IsLobby() )
-		return
-
-	if ( command == "+ping" )
-	{
-		if ( IsFullyConnected() )
-			RunClientScript( "UICallback_PingEquipmentItem", button )
-	}
-}
 
 
 void function InitMainInventoryPanel( var panel )
@@ -510,6 +500,17 @@ bool function OnEquipmentKeyPress( var button, int keyId, bool isDown )
 	return false
 }
 
+void function OnEquipmentCommand( var button, string command )
+{
+	if ( IsLobby() )
+		return
+
+	if ( command == "+ping" )
+	{
+		if ( IsFullyConnected() )
+			RunClientScript( "UICallback_PingEquipmentItem", button )
+	}
+}
 void function SurvivalQuickInventory_UpdateEquipmentForActiveWeapon( int activeWeaponSlot )
 {
 	array<int> allSlots = [ 0, 1 ]
@@ -543,7 +544,7 @@ void function SurvivalQuickInventory_UpdateWeaponSlot( int weaponSlot, int skinT
 	Hud_SetVisible( reskin, isVisible )
 
 	ToolTipData toolTipData
-	toolTipData.titleText = "Apply Loadout"
+	toolTipData.titleText = Localize( "#LOOT_APPLY_LOADOUT" )
 	toolTipData.descText = skinName
 
 	Hud_SetToolTipData( reskin, toolTipData )
@@ -571,12 +572,7 @@ void function SurvivalGroundItem_SetGroundItemCount( int count )
 {
 	file.groundItemCount = count
 	file.groundItemHeaders = []
-	file.groundItemWeapons = []
-	file.groundItemAmmo = []
 	file.groundItemHeaders.resize( count, false )
-	file.groundItemWeapons.resize( count, false )
-	file.groundItemAmmo.resize( count, false )
-	file.presentHeaders.resize( count, -1 )
 }
 
 int function GetGroundItemCount( var panel )
@@ -609,6 +605,13 @@ ListPanelListDef function GetGroundItemDef( var panel )
 {
 	ListPanelListDef def
 	def.itemCount = file.groundItemCount
+	int headerCount = 0
+	foreach ( isHeader in file.groundItemHeaders )
+	{
+		if ( isHeader )
+			headerCount++
+	}
+	def.headerCount = headerCount
 	return def
 }
 
@@ -941,8 +944,8 @@ void function StartMouseDrag( var panel, var button, int index )
 
 	foreach ( slot in file.allDropSlots )
 	{
-		RunClientScript( "UICallback_OnInventoryMouseDrop", slot, panel, button, index, true )
 		Hud_Show( slot )
+		RunClientScript( "UICallback_OnInventoryMouseDrop", slot, panel, button, index, true )
 		Hud_SetEnabled( slot, true )
 	}
 
@@ -1040,7 +1043,7 @@ void function StartEquipmentExtendedUse( var button, float duration )
 	RuiSetString( rui, "holdButtonHint", "%[X_BUTTON|MOUSE2]%" )
 	float uiEndTime = Time() + duration
 
-	EmitUISound( "survival_titan_linking_loop" )
+	EmitUISound( "UI_Survival_PickupTicker" )
 
 	OnThreadEnd(
 		function() : ( rui, elem )
@@ -1048,7 +1051,7 @@ void function StartEquipmentExtendedUse( var button, float duration )
 			ShowGameCursor()
 			Hud_Hide( elem )
 			RuiSetBool( rui, "isVisible", false )
-			StopUISound( "survival_titan_linking_loop" )
+			StopUISound( "UI_Survival_PickupTicker" )
 		}
 	)
 
@@ -1092,22 +1095,12 @@ void function UpdateBackpackDpadNav()
 	Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x2" ), Hud_GetChild( file.mainInventoryPanel, "Armor" ) )
 	Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x3" ), Hud_GetChild( file.mainInventoryPanel, "IncapShield" ) )
 	Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x4" ), Hud_GetChild( file.mainInventoryPanel, "BackPack" ) )
-	#if(false)
-
-
-#endif
 
 	if( Hud_IsEnabled( Hud_GetChild( file.inventoryGridStatic, "GridButton1x4" ) ) )
 		Hud_SetNavUp( Hud_GetChild( file.mainInventoryPanel, "BackPack" ), Hud_GetChild( file.inventoryGridStatic, "GridButton1x4" ) )
 	else
 		Hud_SetNavUp( Hud_GetChild( file.mainInventoryPanel, "BackPack" ), Hud_GetChild( file.mainInventoryPanel, "BackPack" ) )
 
-	#if(false)
-
-
-
-
-#endif
 }
 
 void function SetInventoryDpadTooltipVisible( bool isVisible )

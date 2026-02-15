@@ -25,7 +25,8 @@ global function ListPanel_GetBaseButtonHeight
 
 global struct ListPanelListDef
 {
-	int          itemCount
+	int itemCount
+	int headerCount
 }
 
 struct ListElementData
@@ -68,7 +69,7 @@ struct ListPanelData
 
 	array<int> indexAtOffset = []
 
-	array<int> lastVisibleIndices = []
+	array<int> lastVisibleIndices = [-1, -1]
 	int buttonWidth = 0
 	int buttonHeight = 0
 	int panelHeight = 0
@@ -208,12 +209,10 @@ void function ListPanel_InitPanel( var panel, void functionref( var panel, var b
 
 	UISize screenSize = GetScreenSize()
 
-	data.paddingVert = ContentScaledYAsInt( data.paddingVert ) - ( 2 * screenSize.height / 1080 )
-	data.paddingHoriz = ContentScaledXAsInt( data.paddingHoriz )
+	data.paddingVert = ContentScaledYAsInt( data.paddingVert )
 	int buttonWidth  = Hud_GetWidth( listButtonElements[0] )
 	int buttonHeight = Hud_GetHeight( listButtonElements[0] )
 
-	data.buttonWidth = buttonWidth
 	data.buttonHeight = buttonHeight
 	data.listButtonElements = listButtonElements
 

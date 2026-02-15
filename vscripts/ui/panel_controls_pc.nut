@@ -27,7 +27,7 @@ struct
 
 void function InitControlsPCPanelForCode( var panel )
 {
-	file.keyBindingPanel = CreateKeyBindingPanel( panel, "ContentPanel", $"scripts/resource/ui/menus/panels/controls_pc.res" )
+	file.keyBindingPanel = CreateKeyBindingPanel( panel, "ContentPanel", $"resource/ui/menus/panels/controls_pc.res" )
 	Hud_SetPos( file.keyBindingPanel, 0, 0 ) // TEMP
 	//
 	Assert( Hud_HasChild( file.keyBindingPanel, "PanelFrame" ) )
