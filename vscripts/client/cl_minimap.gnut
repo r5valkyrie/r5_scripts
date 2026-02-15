@@ -1000,8 +1000,9 @@ void function UpdatePlayerRuiTracking( entity player )
 
 	RuiTrackFloat( file.minimap_you, "minimapZoomScale", viewPlayer, RUI_TRACK_MINIMAP_ZOOM_SCALE )
 
-	RuiTrackInt( file.minimap_you, "objectFlags", viewPlayer, RUI_TRACK_MINIMAP_FLAGS )
-	RuiTrackInt( file.minimap_you, "customState", viewPlayer, RUI_TRACK_MINIMAP_CUSTOM_STATE )
+	int localPlayerFlags = OF_IS_VISIBLE | OF_TEAM_SAME | OF_IN_OUR_PARTY | OF_IS_OWNED_BY_US | OF_IS_PLAYER
+	RuiSetInt( file.minimap_you, "objectFlags", localPlayerFlags )
+	RuiSetInt( file.minimap_you, "customState", 0 )
 	RuiTrackFloat3( file.minimap_you, "playerAngles", viewPlayer, RUI_TRACK_CAMANGLES_FOLLOW )
 	//#if MP_PVEMODE // In r5r, MP_PVEMODE part is not compiled and must be commented out
 		RuiTrackInt( file.minimap_you, "teamMemberIndex", viewPlayer, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
