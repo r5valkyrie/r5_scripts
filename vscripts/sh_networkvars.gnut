@@ -20,6 +20,7 @@ global function GetEntityVar
 global function GetHasEntityVar
 global function GetServerVar
 global function GetNetworkVar
+global function RegisterNetVarIntChangeCallback
 
 global function RegisterServerVarChangeCallback
 global function RegisterEntityVarChangeCallback
@@ -32,8 +33,22 @@ global function ServerVarChangedCallbacks
 
 #if CLIENT
 global function CodeCallback_ServerVarChanged
+
+const int CB_NET_TYPE_BOOL = 1
+const int CB_NET_TYPE_INT = 2
+const int CB_NET_TYPE_TIME = 3
+const int CB_NET_TYPE_ENTITY = 4
 #endif
 
+struct BufferedCallback
+{
+	string varName
+	entity player
+	var oldValue
+	var newValue
+	bool actuallyChanged
+	int callbackType
+}
 
 global table _serverVars = {}
 global table _serverEntityVars = {}
@@ -54,6 +69,13 @@ table<int,string> _indexToString = {}
 struct
 {
 	table<string, array<void functionref()> > _serverVarChangeCallbacks
+	table<string, array<void functionref(entity, bool, bool, bool)> > _netVarBoolChangeCallbacks
+	table<string, array<void functionref(entity, int, int, bool)> > _netVarIntChangeCallbacks
+	table<string, array<void functionref(entity, float, float, bool)> > _netVarTimeChangeCallbacks
+	table<string, array<void functionref(entity, entity, entity, bool)> > _netVarEntityChangeCallbacks
+#if CLIENT
+	array<BufferedCallback> _bufferedCallbacks
+#endif
 } file
 
 // start at a high index to easily detect inval indices being use as registered strings
@@ -224,6 +246,38 @@ function GetNetworkVar( obj, varName )
 		return GetEntityVar( obj, varName )
 }
 
+void function ExecuteNetVarIntChangeCallback(string varName, entity player, int oldVal, int newVal, bool actuallyChanged)
+{
+	foreach ( callbackFunc in file._netVarIntChangeCallbacks[varName] )
+	{
+		thread callbackFunc( player, oldVal, newVal, actuallyChanged )
+	}
+}
+
+void function RegisterNetVarIntChangeCallback( string varName, void functionref(entity, int, int, bool) callbackFunc )
+{
+#if(CLIENT)
+	if ( !(varName in file._netVarIntChangeCallbacks ) )
+	{
+		file._netVarIntChangeCallbacks[varName] <- []
+
+		RegisterNetworkedVariableChangeCallback_int( varName, void function( entity player, int oldVal, int newVal, bool actuallyChanged ) : (varName) {
+			if( !IsNetVarCallbackAvailable() )
+			{
+				RegisterBufferedCallback( varName, player, oldVal, newVal, actuallyChanged, CB_NET_TYPE_INT )
+				return
+			}
+
+			ExecuteNetVarIntChangeCallback(varName, player, oldVal, newVal, actuallyChanged)
+		} )
+	}
+
+	file._netVarIntChangeCallbacks[varName].append(callbackFunc)
+#else
+	Assert( false )
+#endif
+}
+
 #if SERVER
 void function ServerVarChangedCallbacks( string varName )
 {
@@ -240,6 +294,31 @@ void function ServerVarChangedCallbacks( string varName )
 
 
 #if CLIENT
+bool function IsNetVarCallbackAvailable()
+{
+	if( !level.clientScriptInitialized ) //
+		return false
+
+	entity localPlayer = GetLocalClientPlayer()
+	if( !IsValid( localPlayer ) ) //
+		return false
+
+	return true
+}
+void function RegisterBufferedCallback(	string varName, entity player, var oldValue, var newValue, bool actuallyChanged, int callbackType )
+{
+	BufferedCallback bufferedCallback
+	bufferedCallback.varName = varName
+	bufferedCallback.player = player
+	bufferedCallback.oldValue = oldValue
+	bufferedCallback.newValue = newValue
+	bufferedCallback.actuallyChanged = actuallyChanged
+	bufferedCallback.callbackType = callbackType
+
+	file._bufferedCallbacks.append( bufferedCallback )
+}
+
+
 void function CodeCallback_ServerVarChanged( string varName )
 {
 	if ( !(varName in file._serverVarChangeCallbacks) )

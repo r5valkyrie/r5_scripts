@@ -407,6 +407,7 @@ void function RemoteFunctions_Init_Begin()
 	// ScriptRegisterNetworkedVariable( "skyDiveTrailOverrideIndex", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_EventNotification" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateHudWeaponData", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateOffhandRuis" )
 	
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_BLEEDOUT_ShowWoundedMarker" ) //Audit 2-22-2025 unused
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_BLEEDOUT_HideWoundedMarker" ) //Audit 2-22-2025 unused
