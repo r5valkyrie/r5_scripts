@@ -43,6 +43,8 @@
         ControlName				RuiPanel
         InheritProperties       SettingsDetailsPanel
         visible					1
+        xpos_nx_handheld        600   [$NX]
+        wide_nx_handheld		640   [$NX]
 
         pin_to_sibling			PanelFrame
         pin_corner_to_sibling	TOP
@@ -120,7 +122,13 @@
         {
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
-            tall                    1040
+                   
+			tall                    1100 [!$NX]
+     
+                                      
+      
+            tall                    1580 [$NX]
+			tall_nx_handheld        2090 [$NX]
             tabPosition             1
 
             controlSettingsFile		"resource/ui/menus/panels/controls.res"
@@ -199,8 +207,8 @@
         {
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
-            //tall                    952 [$WINDOWS]
             tall                    882 [$WINDOWS]
+			tall_nx_handheld        800 [$NX]
             tabPosition             1
 
             controlSettingsFile		"resource/ui/menus/panels/audio.res" [$WINDOWS]
@@ -239,8 +247,10 @@
         {
             ControlName				CNestedPanel
             InheritProperties       SettingsContentPanel
-            tall                    1408 [$WINDOWS]
-            tall                    1212 [$GAMECONSOLE]
+			tall                    1665		[$WINDOWS]
+            tall                    1715		[$GAMECONSOLE && !$NX]
+            tall                    1525		[$NX]
+            tall_nx_handheld        2020        [$NX]
 
             tabPosition             1
 
