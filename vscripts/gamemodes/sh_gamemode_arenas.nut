@@ -266,12 +266,11 @@ const asset HOLOGRAM_FX_LOGO = $"P_holospray_arenas_logo"
 const asset HOLOGRAM_FX_ASH = $"P_holo_ash_readyroom"
 const asset HOLOGRAM_FX_PROJECTOR = $"P_arenas_holo_projector"
 
-// R5V: ARENAS_MUSICPACK asset registration disabled - not needed for now
-// const asset ARENAS_MUSICPACK = $"settings/itemflav/musicpack/arenas_default.rpak"
+const asset ARENAS_MUSICPACK = $"settings/itemflav/musicpack/arenas_default.rpak"
 
 void function Sh_Arenas_ItemRegistrationInit()
 {
-	// AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
+	AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
 }
 
 void function ShGamemodeArenas_Init()
@@ -520,15 +519,13 @@ void function ShGamemodeArenas_Init()
 	SURVIVAL_SetGameStateAssetOverrideCallback( ArenasOverrideGameState )
 
 	Survival_SetVictorySoundPackageFunction( GetVictorySoundPackage )
-	// R5V: S9 champion/victory/death screen functions not available
-	// SetChampionScreenRuiAssetExtraFunc( Arenas_VictoryScreen )
-	// SetPreVictoryScreenCallback( OnPreVictory )
-	// DeathScreenSetBannerEnabled( false )
+	SetChampionScreenRuiAssetExtraFunc( Arenas_VictoryScreen )
+	SetPreVictoryScreenCallback( OnPreVictory )
+	DeathScreenSetBannerEnabled( false )
 	RegisterMinimapPackages()
-	// R5V: S9 character select customization callbacks not available
-	// AddCallback_OnCharacterSelectBackgroundCreated( OnCharacterSelectBackgroundCreated )
-	// AddCallback_OnCharacterSelectModelChanged( OnCharacterSelectModelChanged )
-	// AddCallback_OnCharacterSelectUpdateLights( OnCharacterSelectUpdateLights )
+	AddCallback_OnCharacterSelectBackgroundCreated( OnCharacterSelectBackgroundCreated )
+	AddCallback_OnCharacterSelectModelChanged( OnCharacterSelectModelChanged )
+	AddCallback_OnCharacterSelectUpdateLights( OnCharacterSelectUpdateLights )
 	AddCallback_OnCharacterSelectMenuClosed( OnCharacterSelectMenuClosed )
 
 	//
@@ -552,11 +549,10 @@ void function ShGamemodeArenas_Init()
 	ShCashStation_Init()
 }
 
-// R5V: Music pack registration disabled
-// void function OnRegisterRootItemFlavors()
-// {
-// 	ItemFlavor ornull musicPack = RegisterItemFlavorFromSettingsAsset( ARENAS_MUSICPACK )
-// }
+void function OnRegisterRootItemFlavors()
+{
+ 	ItemFlavor ornull musicPack = RegisterItemFlavorFromSettingsAsset( ARENAS_MUSICPACK )
+}
 
 void function ShArenas_RegisterNetworking()
 {

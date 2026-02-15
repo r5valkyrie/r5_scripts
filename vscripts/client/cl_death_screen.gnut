@@ -39,6 +39,7 @@ global function IsViewingDeathScreen
 global function DeathScreenSummaryShouldFadeIn
 
 global function SetHeaderBannerOverrideFunc
+global function DeathScreenSetBannerEnabled
 global function ClearHeaderBannerOverrideFunc
 
 #if DEVELOPER
@@ -633,6 +634,11 @@ void function SetHeaderBannerOverrideFunc( string functionref() func )
 	file.deathScreenBannerOverrideFunc = func
 }
 
+void function DeathScreenSetBannerEnabled( bool isEnabled )
+{
+	//
+	file.deathScreenBannerDisabled = !isEnabled
+}
 void function ClearHeaderBannerOverrideFunc()
 {
 	file.deathScreenBannerOverrideFunc = null

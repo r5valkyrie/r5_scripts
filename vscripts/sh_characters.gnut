@@ -74,6 +74,7 @@ global struct CharacterMenuLightData
 	vector fill_color
 	vector rimL_color
 	vector rimR_color
+	asset  animSeq
 }
 
 global struct CharacterHudUltimateColorData

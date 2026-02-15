@@ -102,7 +102,10 @@ global function SetNextCircleDisplayCustomStarting
 global function SetNextCircleDisplayCustomClosing
 global function SetNextCircleDisplayCustomClear
 
+global function SetPreVictoryScreenCallback
 global function SetChampionScreenRuiAsset
+global function SetChampionScreenSound
+global function SetChampionScreenRuiAssetExtraFunc
 global function InitSurvivalHealthBar
 global function SURVIVAL_SetGameStateAssetOverrideCallback
 #if DEVELOPER
@@ -312,6 +315,8 @@ struct
 	table<entity, asset> customCharacterIcon
 
 	asset customChampionScreenRuiAsset
+	string customChampionScreenSound
+	void functionref( bool) onPreVictoryScreenCallback
 
 	table<entity, var> playerArrows
 	var fullmaprui
@@ -4603,10 +4608,16 @@ void function ShowChampionVictoryScreen( int winningTeam )
 	Chroma_VictoryScreen()
 }
 
+string function GetChampionScreenSound()
+{
+	if ( file.customChampionScreenSound != "" )
+		return file.customChampionScreenSound
+
+	return "UI_InGame_ChampionVictory"
+}
+
 asset function GetChampionScreenRuiAsset()
 {
-	if( Gamemode() == eGamemodes.fs_infected )
-		return $"ui/shadowfall_legend_champion_screen.rpak"
 
 	if ( file.customChampionScreenRuiAsset != $"" )
 		return file.customChampionScreenRuiAsset
@@ -4614,11 +4625,25 @@ asset function GetChampionScreenRuiAsset()
 	return $"ui/champion_screen.rpak"
 }
 
+void functionref( var ) s_championScreenExtraFunc = null
+void function SetChampionScreenRuiAssetExtraFunc( void functionref( var ) func )
+{
+	s_championScreenExtraFunc = func
+}
 void function SetChampionScreenRuiAsset( asset ruiAsset )
 {
 	file.customChampionScreenRuiAsset = ruiAsset
 }
 
+void function SetChampionScreenSound( string alias )
+{
+	file.customChampionScreenSound = alias
+}
+
+void function SetPreVictoryScreenCallback( void functionref(bool) func )
+{
+	file.onPreVictoryScreenCallback = func
+}
 void function ShowSquadSummary()
 {
 	entity player = GetLocalClientPlayer()

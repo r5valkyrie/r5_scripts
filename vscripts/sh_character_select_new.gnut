@@ -11,10 +11,11 @@ const bool DEBUG_LOCK_STEP_PICK = true //Todo: switch off in print/debug nuke be
 const bool DEBUG_CHARACTER_SELECT = false
 #endif
 
-const asset BACKGROUND_SMOKE_MODEL = $"mdl/levels_terrain/mp_lobby/mp_character_select_smoke.rmdl" // 1.2
-const asset BACKGROUND_GEO_MODEL = $"mdl/rocks/desertlands_victory_platform.rmdl"
+const asset BACKGROUND_SMOKE_MODEL = $"mdl/levels_terrain/mp_lobby/mp_character_select_smoke.rmdl" //
+const asset BACKGROUND_GEO_MODEL = $"mdl/levels_terrain/mp_lobby/mp_character_select_geo.rmdl" //
 const asset BACKGROUND_GEO_MODEL_KC = $"mdl/rocks/victory_platform.rmdl"
 const asset BACKGROUND_GEO_MODEL_LEGACY   = $"mdl/levels_terrain/mp_lobby/mp_character_select_geo.rmdl"
+const asset LIGHT_RIG_MDL = $"mdl/empty/lights/empty_lights.rmdl"
 
 #if SERVER
 global function AssignLockStepOrder
@@ -60,6 +61,10 @@ global function AddCallback_CharacterSelectMenu_OnCharacterLocked
 
 global function CharacterSelect_SetMenuState
 global function IsShowingChampionPresentation
+global function AddCallback_OnCharacterSelectBackgroundCreated
+global function AddCallback_OnCharacterSelectDetailsToggled
+global function AddCallback_OnCharacterSelectModelChanged
+global function AddCallback_OnCharacterSelectUpdateLights
 global function UpdateBackgroundViaFunc
 global function CreateCharacterSelectClientEnts
 global function CharacterSelect_EnsureMenuEntsReady
@@ -151,6 +156,7 @@ struct FileLevelStruct
 		entity characterModel
 		entity characterNode
 		entity characterNodeMover
+		entity lightRigModel
 		entity keyLight
 		entity fillLight
 		entity rimLightL
@@ -169,9 +175,11 @@ struct FileLevelStruct
 		table<int, ItemFlavor> buttonIndexCharacterMap
 		array<int>             buttonIndexUsed
 		array<int>             lockedButtonIndexies
+		array<ItemFlavor> characterSkins
 
 		ItemFlavor ornull desiredCharacterOrNull = null
 		//ItemFlavor ornull lastLockedCharacterOrNull = null
+		ItemFlavor ornull desiredSkinOrNull = null
 		entity            lastLockedPlayer
 		int               desiredMenuState = eNewCharacterSelectMenuState.PICKING
 		table             signalDummy
@@ -207,9 +215,17 @@ struct {
 	array< void functionref() > Callbacks_OnCharacterMenuClosed
 	array< void functionref(ItemFlavor) > Callbacks_OnCharacterFocused
 	array< void functionref(ItemFlavor) > Callbacks_OnCharacterLocked
+	array< void functionref(bool) > Callbacks_OnCharacterDetailsToggled
 
 	array<entity> cleanupEnts
 	array<var> overHeadRuis
+	#ifCLIENT
+		array< bool functionref( ItemFlavor, entity ) > Callbacks_CustomIsCharacterLocked
+		array< void functionref(var) > Callbacks_CustomizeBackgroundRui
+		array< void functionref(ItemFlavor, entity, entity, entity, var) > Callbacks_OnCharacterModelChanged
+		array< void functionref( entity, entity, entity, entity, entity ) > Callbacks_CustomUpdateLights
+		bool isFullClubSquad = false
+	#endif
 } file
 
 //  ██╗███╗   ██╗██╗████████╗
@@ -280,20 +296,9 @@ void function ClientToUI_UpdateSquadMute( bool muteState )
 #if SERVER || CLIENT
 void function CharacterSelectNewMenu_Init()
 {
-	if (FS_ShouldShowCustomCharacterSelect())
-	{
-		if ( GetMapName() == "mp_rr_desertlands_64k_x_64k" || GetMapName() == "mp_rr_desertlands_64k_x_64k_nx" || GetMapName() == "mp_rr_desertlands_holiday" )
-		{
-			PrecacheModel( BACKGROUND_GEO_MODEL )
-		}
-		else if( GetMapName() == "mp_rr_canyonlands_mu1" || GetMapName() == "mp_rr_canyonlands_mu1_night" || GetMapName() == "mp_rr_canyonlands_64k_x_64k" || GetMapName() == "mp_rr_canyonlands_staging" )
-		{
-			PrecacheModel( BACKGROUND_GEO_MODEL_KC)
-		}
-	} else {
-		PrecacheModel( BACKGROUND_GEO_MODEL_LEGACY)
-	}
+	PrecacheModel( BACKGROUND_GEO_MODEL )
 	PrecacheModel( BACKGROUND_SMOKE_MODEL )
+	PrecacheModel( LIGHT_RIG_MDL )
 
 	#if SERVER
 		AddCallback_OnClientConnected( CharacterSelect_OnClientConnected )
@@ -402,7 +407,7 @@ void function _OpenCharacterSelectNewMenu_AimTrainer( var menu )
 
 	UpdateMenuButtons()
 
-	thread UpdateSceneThink_AimTrainer()
+
 	
 	fileLevel.desiredCharacterOrNull = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 	SetMenuState( eNewCharacterSelectMenuState.LOCKED )
@@ -450,6 +455,25 @@ void function AddCallback_OnCharacterSelectMenuClosed( void functionref() callba
 	file.Callbacks_OnCharacterMenuClosed.append( callbackFunc )
 }
 
+void function AddCallback_OnCharacterSelectDetailsToggled( void functionref(bool) callbackFunc )
+{
+	file.Callbacks_OnCharacterDetailsToggled.append( callbackFunc )
+}
+
+void function AddCallback_OnCharacterSelectBackgroundCreated( void functionref( var ) callbackFunc )
+{
+	file.Callbacks_CustomizeBackgroundRui.append( callbackFunc )
+}
+
+void function AddCallback_OnCharacterSelectModelChanged( void functionref( ItemFlavor, entity, entity, entity, var ) callbackFunc )
+{
+	file.Callbacks_OnCharacterModelChanged.append( callbackFunc )
+}
+
+void function AddCallback_OnCharacterSelectUpdateLights( void functionref( entity, entity, entity, entity, entity ) callbackFunc )
+{
+	file.Callbacks_CustomUpdateLights.append( callbackFunc )
+}
 void function UpdateBackgroundViaFunc( void functionref( entity, entity, var ) callbackFunc )
 {
 	callbackFunc( fileLevel.backgroundModelGeo, fileLevel.backgroundModelSmoke, fileLevel.backgroundRui )
@@ -1459,6 +1483,98 @@ void function OnCharacterSelectNewMenuClosed_RemoveCallbacks()
 	}
 }
 
+void function CreateCharacterSelectClientEnts()
+{
+	if ( !fileLevel.menuEntsExist )
+	{
+		fileLevel.menuEntsExist = DoMenuEntsExist()
+		fileLevel.lightEntsExist = DoMenuLightsExist()
+	}
+
+	if ( !fileLevel.menuEntsExist )
+		return
+
+	entity targetCamera = GetEntByScriptName( CAMERA_ENT_NAME )
+	vector cameraOrigin = targetCamera.GetOrigin()
+
+	entity targetPilot = GetEntByScriptName( CHARACTER_ENT_NAME )
+
+	fileLevel.camera = CreateClientSidePointCamera( cameraOrigin, targetCamera.GetAngles(), CAMERA_FOV )
+
+	fileLevel.characterNode = CreateScriptRef( targetPilot.GetOrigin(), targetPilot.GetAngles() )
+
+	asset defaultModel = GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
+	CreateNewCharacterModel( defaultModel )
+
+	if ( DoesBackgroundEntExist() )
+	{
+		//
+
+		entity targetBackground = GetEntByScriptName( BACKGROUND_ENT_NAME )
+
+		vector offset = <0, 0, 24>
+		UISize screenSize = GetScreenSize()
+		float nearestAspectRatio = GetNearestAspectRatio( screenSize.width, screenSize.height )
+		if ( nearestAspectRatio > 2.25 )
+			offset += <0, 25, 0>
+
+		fileLevel.backgroundModelGeo = CreateClientSidePropDynamic( targetBackground.GetOrigin() - offset, targetBackground.GetAngles(), BACKGROUND_GEO_MODEL )
+		fileLevel.backgroundModelGeo.kv.solid = 0
+		fileLevel.backgroundModelGeo.kv.disableshadows = 1
+		fileLevel.backgroundModelGeo.kv.fadedist = -1
+		fileLevel.backgroundModelGeo.MakeSafeForUIScriptHack()
+
+		fileLevel.backgroundModelSmoke = CreateClientSidePropDynamic( targetBackground.GetOrigin() - offset, targetBackground.GetAngles(), BACKGROUND_SMOKE_MODEL )
+		fileLevel.backgroundModelSmoke.kv.solid = 0
+		fileLevel.backgroundModelSmoke.kv.disableshadows = 1
+		fileLevel.backgroundModelSmoke.kv.fadedist = -1
+		fileLevel.backgroundModelSmoke.MakeSafeForUIScriptHack()
+	}
+
+	if ( DoMenuLightsExist() )
+	{
+		CreateNewLightRigModel()
+		fileLevel.keyLight = GetEntByScriptName( LIGHT_KEY_NAME )
+		fileLevel.keyLight.SetTweakLightRealtimeShadows( true )
+		fileLevel.keyLight.SetTweakLightUpdateShadowsEveryFrame( true )
+
+		fileLevel.fillLight = GetEntByScriptName( LIGHT_FILL_NAME )
+		fileLevel.fillLight.SetTweakLightRealtimeShadows( true )
+		fileLevel.fillLight.SetTweakLightUpdateShadowsEveryFrame( true )
+
+		fileLevel.rimLightL = GetEntByScriptName( LIGHT_RIML_NAME )
+		fileLevel.rimLightL.SetTweakLightRealtimeShadows( true )
+		fileLevel.rimLightL.SetTweakLightUpdateShadowsEveryFrame( true )
+
+		fileLevel.rimLightR = GetEntByScriptName( LIGHT_RIMR_NAME )
+		fileLevel.rimLightR.SetTweakLightRealtimeShadows( true )
+		fileLevel.rimLightR.SetTweakLightUpdateShadowsEveryFrame( true )
+	}
+
+	//
+	vector backgroundRuiOrigin = cameraOrigin + (targetCamera.GetForwardVector() * 200)
+	vector backgroundRuiAngles = targetPilot.GetAngles()
+
+	fileLevel.backgroundRuiTopo = CreateRUITopology_Worldspace( backgroundRuiOrigin, backgroundRuiAngles * -1, RUI_NAME_PLATE_WIDTH, RUI_NAME_PLATE_HEIGHT )
+	fileLevel.backgroundRui = RuiCreate( $"ui/character_select_name_plate_new.rpak", fileLevel.backgroundRuiTopo, RUI_DRAW_WORLD, 0 )
+
+	foreach ( func in file.Callbacks_CustomizeBackgroundRui )
+		func( fileLevel.backgroundRui )
+
+	Chroma_BeginCharacterSelect()
+
+	if ( !fileLevel.isBrowseMode )
+	{
+		fileLevel.countdownRui = CreateFullscreenRui( $"ui/character_select_timer_new.rpak" )
+		RuiSetResolutionToScreenSize( fileLevel.countdownRui )
+		float pickStartTime = GetGlobalNetTime( "pickLoadoutGamestateStartTime" )
+		Assert( pickStartTime > -1 )
+		RuiSetGameTime( fileLevel.countdownRui, "countdownEndTime", pickStartTime )
+		RuiSetInt( fileLevel.countdownRui, "yourPick", fileLevel.localClientLockstepIndex + 1 )
+		thread CountdownTimerSounds()
+	}
+}
+
 LocPair function FS_ReturnRandomCameraPosForMap()
 {
 	array<LocPair> locs
@@ -1519,163 +1635,6 @@ void function CharacterSelect_EnsureMenuEntsReady()
 
 	fileLevel.menuEntsExist = DoMenuEntsExist()
 	fileLevel.lightEntsExist = DoMenuLightsExist()
-}
-
-void function CreateCharacterSelectClientEnts()
-{
-	if (FS_ShouldShowCustomCharacterSelect())
-	{ 
-		if ( !fileLevel.menuEntsExist )
-			return
-		
-		entity targetCamera
-		vector cameraOrigin
-		vector cameraAngles
-		entity targetPilot
-
-		targetCamera = GetEntByScriptName( CAMERA_ENT_NAME )
-		LocPair cameracool = FS_ReturnRandomCameraPosForMap()
-		fileLevel.camera = CreateClientSidePointCamera( cameracool.origin, cameracool.angles, 100 )
-		targetPilot = GetEntByScriptName( CHARACTER_ENT_NAME )
-		fileLevel.characterNode = CreateScriptRef( targetPilot.GetOrigin(), targetPilot.GetAngles() )
-		asset defaultModel = GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
-		CreateNewCharacterModel( defaultModel )
-
-		fileLevel.dontdestroy = false
-
-		if ( DoMenuLightsExist() )
-		{
-			fileLevel.keyLight = GetEntByScriptName( LIGHT_KEY_NAME )
-			fileLevel.keyLight.SetTweakLightRealtimeShadows( true )
-			fileLevel.keyLight.SetTweakLightUpdateShadowsEveryFrame( true )
-
-			fileLevel.fillLight = GetEntByScriptName( LIGHT_FILL_NAME )
-			fileLevel.fillLight.SetTweakLightRealtimeShadows( true )
-			fileLevel.fillLight.SetTweakLightUpdateShadowsEveryFrame( true )
-
-			fileLevel.rimLightL = GetEntByScriptName( LIGHT_RIML_NAME )
-			fileLevel.rimLightL.SetTweakLightRealtimeShadows( true )
-			fileLevel.rimLightL.SetTweakLightUpdateShadowsEveryFrame( true )
-
-			fileLevel.rimLightR = GetEntByScriptName( LIGHT_RIMR_NAME )
-			fileLevel.rimLightR.SetTweakLightRealtimeShadows( true )
-			fileLevel.rimLightR.SetTweakLightUpdateShadowsEveryFrame( true )
-		}
-
-		// In-World RUI for name
-
-			vector backgroundRuiOrigin = cameraOrigin + (targetCamera.GetForwardVector() * 200)
-			vector backgroundRuiAngles = targetPilot.GetAngles()
-			fileLevel.backgroundRuiTopo = CreateRUITopology_Worldspace( backgroundRuiOrigin, backgroundRuiAngles * -1, RUI_NAME_PLATE_WIDTH, RUI_NAME_PLATE_HEIGHT )
-			fileLevel.backgroundRui = RuiCreate( $"ui/character_select_name_plate_new.rpak", fileLevel.backgroundRuiTopo, RUI_DRAW_WORLD, 0 )
-			Chroma_BeginCharacterSelect()
-			vector r5reloadedOrigin
-			
-			if ( GetMapName() == "mp_rr_desertlands_64k_x_64k" || GetMapName() == "mp_rr_desertlands_64k_x_64k_nx"  || GetMapName() == "mp_rr_desertlands_holiday" )
-			{
-			r5reloadedOrigin = fileLevel.camera.GetOrigin() + fileLevel.camera.GetForwardVector() * 120 + fileLevel.camera.GetRightVector() * 40
-			}
-			else if( GetMapName() == "mp_rr_canyonlands_mu2" || GetMapName() == "mp_rr_canyonlands_mu1" || GetMapName() == "mp_rr_canyonlands_mu1_night" || GetMapName() == "mp_rr_canyonlands_64k_x_64k" || GetMapName() == "mp_rr_canyonlands_staging" )
-			{
-			r5reloadedOrigin = fileLevel.camera.GetOrigin() + fileLevel.camera.GetForwardVector() * 120 - fileLevel.camera.GetRightVector() * 40
-			}
-			
-		if ( !fileLevel.isBrowseMode )
-		{
-			var countdownRuiTopo = CreateRUITopology_Worldspace( fileLevel.camera.GetOrigin() + fileLevel.camera.GetForwardVector() * 110 - fileLevel.camera.GetRightVector() * 40 - fileLevel.camera.GetUpVector() * 25 , fileLevel.camera.GetAngles() + <0, 0, 0>, RUI_NAME_PLATE_WIDTH, RUI_NAME_PLATE_HEIGHT )
-			fileLevel.countdownRui = RuiCreate( $"ui/character_select_name_plate_new.rpak", countdownRuiTopo, RUI_DRAW_WORLD, 0 )
-			RuiSetString( fileLevel.countdownRui, "nameString", "FLOWSTATE" )
-			RuiSetString( fileLevel.countdownRui, "footnoteString", "POWERED BY R5RELOADED" )
-			thread CountdownTimerSounds()
-		}
-	} else 
-	{
-		if ( !fileLevel.menuEntsExist )
-			return
-
-		entity targetCamera = GetEntByScriptName( CAMERA_ENT_NAME )
-		vector cameraOrigin = targetCamera.GetOrigin()
-
-		entity targetPilot = GetEntByScriptName( CHARACTER_ENT_NAME )
-
-		fileLevel.camera = CreateClientSidePointCamera( cameraOrigin, targetCamera.GetAngles(), CAMERA_FOV_LEGACY )
-
-		fileLevel.characterNode = CreateScriptRef( targetPilot.GetOrigin(), targetPilot.GetAngles() )
-
-		asset defaultModel = GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
-		CreateNewCharacterModel( defaultModel )
-
-		if ( DoesBackgroundEntExist() )
-		{
-			// Temp until maps are recompiled
-
-			entity targetBackground = GetEntByScriptName( BACKGROUND_ENT_NAME )
-
-			fileLevel.backgroundModelGeo = CreateClientSidePropDynamic( targetBackground.GetOrigin() - <0, 0, 24>, targetBackground.GetAngles(), BACKGROUND_GEO_MODEL_LEGACY )
-			fileLevel.backgroundModelGeo.kv.solid = 0
-			fileLevel.backgroundModelGeo.kv.disableshadows = 1
-			fileLevel.backgroundModelGeo.kv.fadedist = -1
-			fileLevel.backgroundModelGeo.MakeSafeForUIScriptHack()
-
-			fileLevel.backgroundModelSmoke = CreateClientSidePropDynamic( targetBackground.GetOrigin() - <0, 0, 24>, targetBackground.GetAngles(), BACKGROUND_SMOKE_MODEL )
-			fileLevel.backgroundModelSmoke.kv.solid = 0
-			fileLevel.backgroundModelSmoke.kv.disableshadows = 1
-			fileLevel.backgroundModelSmoke.kv.fadedist = -1
-			fileLevel.backgroundModelSmoke.MakeSafeForUIScriptHack()
-		}
-
-		if ( DoMenuLightsExist() )
-		{
-			fileLevel.keyLight = GetEntByScriptName( LIGHT_KEY_NAME )
-			fileLevel.keyLight.SetTweakLightRealtimeShadows( true )
-			fileLevel.keyLight.SetTweakLightUpdateShadowsEveryFrame( true )
-
-			fileLevel.fillLight = GetEntByScriptName( LIGHT_FILL_NAME )
-			fileLevel.fillLight.SetTweakLightRealtimeShadows( true )
-			fileLevel.fillLight.SetTweakLightUpdateShadowsEveryFrame( true )
-
-			fileLevel.rimLightL = GetEntByScriptName( LIGHT_RIML_NAME )
-			fileLevel.rimLightL.SetTweakLightRealtimeShadows( true )
-			fileLevel.rimLightL.SetTweakLightUpdateShadowsEveryFrame( true )
-
-			fileLevel.rimLightR = GetEntByScriptName( LIGHT_RIMR_NAME )
-			fileLevel.rimLightR.SetTweakLightRealtimeShadows( true )
-			fileLevel.rimLightR.SetTweakLightUpdateShadowsEveryFrame( true )
-		}
-
-		// In-World RUI for name
-		vector backgroundRuiOrigin = cameraOrigin + (targetCamera.GetForwardVector() * 200)
-		vector backgroundRuiAngles = targetPilot.GetAngles()
-
-		fileLevel.backgroundRuiTopo = CreateRUITopology_Worldspace( backgroundRuiOrigin, backgroundRuiAngles * -1, RUI_NAME_PLATE_WIDTH, RUI_NAME_PLATE_HEIGHT )
-		fileLevel.backgroundRui = RuiCreate( $"ui/character_select_name_plate_new.rpak", fileLevel.backgroundRuiTopo, RUI_DRAW_WORLD, 0 )
-
-		Chroma_BeginCharacterSelect()
-
-		if( Playlist() == ePlaylists.fs_scenarios )
-		{
-			RuiSetString( fileLevel.backgroundRui, "nameString", "FLOWSTATE" )
-			RuiSetString( fileLevel.backgroundRui, "footnoteString", "POWERED BY R5RELOADED" )
-	
-			fileLevel.countdownRui = CreateFullscreenRui( $"ui/character_select_timer_new.rpak" )
-			RuiSetResolutionToScreenSize( fileLevel.countdownRui )
-
-			RuiSetInt( fileLevel.countdownRui, "yourPick", fileLevel.localClientLockstepIndex + 1 )
-			thread CountdownTimerSounds()
-			return
-		}
-
-		if ( !fileLevel.isBrowseMode )
-		{
-			fileLevel.countdownRui = CreateFullscreenRui( $"ui/character_select_timer_new.rpak" )
-			RuiSetResolutionToScreenSize( fileLevel.countdownRui )
-			float pickStartTime = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetTime( "pickLoadoutGamestateStartTime" ) : GetGlobalNetTime( "pickLoadoutGamestateStartTime" )
-			Assert( pickStartTime > -1 )
-			RuiSetGameTime( fileLevel.countdownRui, "countdownEndTime", pickStartTime )
-			RuiSetInt( fileLevel.countdownRui, "yourPick", fileLevel.localClientLockstepIndex + 1 )
-			thread CountdownTimerSounds()
-		}	
-	}
 }
 
 void function CountdownTimerSounds()
@@ -1886,9 +1845,19 @@ void function ReloadMenu()
 //	╚═════╝  ╚═════╝    ╚═╝      ╚═╝    ╚═════╝ ╚═╝  ╚═══╝    ╚═╝  ╚═╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
 #if CLIENT
+ItemFlavor ornull function GetCharacterSkinOrNullForButtonIndex( int index )
+{
+	if ( index < fileLevel.characterSkins.len() )
+		return fileLevel.characterSkins[index]
+
+	return null
+}
+
 void function UpdateForFocusOnButtonIndex( int buttonIndex )
 {
 	ItemFlavor itemFlav = fileLevel.buttonIndexCharacterMap[buttonIndex]
+	ItemFlavor character = fileLevel.buttonIndexCharacterMap[buttonIndex]
+	ItemFlavor ornull skin = GetCharacterSkinOrNullForButtonIndex( buttonIndex )
 
 	UpdateCharacterDetailsMenu( fileLevel.detailsRui, itemFlav, false )
 	Hud_SetVisible( fileLevel.detailsPanel, fileLevel.detailsPanelVisible )
@@ -1917,6 +1886,9 @@ void function UpdateForFocusOnButtonIndex( int buttonIndex )
 		func( itemFlav )
 
 	// Update Scene
+	fileLevel.desiredCharacterOrNull = character
+	fileLevel.desiredSkinOrNull = skin
+	
 	fileLevel.desiredCharacterOrNull = itemFlav
 	Signal( fileLevel.signalDummy, "UpdateScene" )
 }
@@ -2021,12 +1993,14 @@ void function OnLoadoutButton_Activate( var button )
 
 	int buttonIndex      = fileLevel.characterButtons.find( button )
 	ItemFlavor character = fileLevel.buttonIndexCharacterMap[ buttonIndex ]
+	ItemFlavor ornull skinOrNull = GetCharacterSkinOrNullForButtonIndex( buttonIndex )
 
 	if ( fileLevel.isBrowseMode )
 	{
 		entity player = GetLocalClientPlayer()
 		ItemFlavor currentCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-		if ( character == currentCharacter )
+		ItemFlavor currentSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterSkin( currentCharacter ) )
+		if ( (character == currentCharacter) && ((skinOrNull == null) || (skinOrNull == currentSkin)) )
 		{
 			EmitSoundOnEntity( player, "ui_menu_back" )
 			CloseCharacterSelectNewMenu()
@@ -2059,6 +2033,7 @@ void function OnLoadoutButton_Activate( var button )
 
 	// Update Scene
 	fileLevel.desiredCharacterOrNull = character
+	fileLevel.desiredSkinOrNull = skinOrNull
 	SetMenuState( eNewCharacterSelectMenuState.LOCKED )
 }
 
@@ -2180,6 +2155,7 @@ void function OnLockStepPickIndexChanged( entity player, int old, int new, bool 
 		{
 			ItemFlavor character = LoadoutSlot_GetItemFlavor( pickingPlayerEHI, characterSlot )
 			fileLevel.desiredCharacterOrNull = character
+			fileLevel.desiredSkinOrNull = null
 		}
 	}
 
@@ -2247,7 +2223,7 @@ void function OnPlayerUpdatedCharacterLock( entity player, bool wasLocked, bool 
 
 		// Update Scene
 		fileLevel.desiredCharacterOrNull = character
-		//fileLevel.lastLockedCharacterOrNull = character
+		fileLevel.desiredSkinOrNull = null
 		fileLevel.lastLockedPlayer = player
 		SetMenuState( eNewCharacterSelectMenuState.LOCKED )
 	}
@@ -2731,22 +2707,16 @@ void function CharacterSelect_SetMenuState( int state )
 	SetMenuState( state )
 }
 
-void function UpdateSceneThink_AimTrainer()
+void function UpdateSceneThink()
 {
 	EndSignal( fileLevel.signalDummy, "CharacterSelectClosing" )
 
-	int currentMenuState                     = -1 // eNewCharacterSelectMenuState.PICKING
-	ItemFlavor ornull currentCharacterOrNull = fileLevel.desiredCharacterOrNull
+	int currentMenuState                     = -1
+	ItemFlavor ornull currentCharacterOrNull = null
+	ItemFlavor ornull currentSkinOrNull = null
 	bool playedPickingAnimForCharacter       = false
 	bool playedReadyAnimForCharacter         = false
-	
-	OnThreadEnd(
-		function() : ()
-		{
-			printt("exit UpdateScene thread")
-		}
-	)
-	
+
 	while( true )
 	{
 		WaitSignal( fileLevel.signalDummy, "UpdateScene" )
@@ -2754,8 +2724,8 @@ void function UpdateSceneThink_AimTrainer()
 		if ( fileLevel.desiredMenuState == -1 || fileLevel.desiredCharacterOrNull == null )
 			continue
 
-		bool shouldUpdateModel = true
-		bool shouldUpdateAnim  = true
+		bool shouldUpdateModel = false
+		bool shouldUpdateAnim  = false
 		int currentPickIndex   = GetGlobalNetInt( "characterSelectLockstepIndex" )
 
 		bool menuStateChanged = fileLevel.desiredMenuState != currentMenuState
@@ -2763,11 +2733,12 @@ void function UpdateSceneThink_AimTrainer()
 			currentMenuState = fileLevel.desiredMenuState
 
 		// New character was selected, we want to update the model and animation
-		if ( fileLevel.desiredCharacterOrNull != currentCharacterOrNull )
+		if ( (fileLevel.desiredCharacterOrNull != currentCharacterOrNull ) || (fileLevel.desiredSkinOrNull != currentSkinOrNull) )
 		{
 			shouldUpdateModel = true
 			shouldUpdateAnim = true
 			currentCharacterOrNull = fileLevel.desiredCharacterOrNull
+			currentSkinOrNull = fileLevel.desiredSkinOrNull
 		}
 
 		// Don't update the model or animation if we are seeing a lock-in sequence
@@ -2785,93 +2756,11 @@ void function UpdateSceneThink_AimTrainer()
 			shouldUpdateModel = true
 		}
 
-		#if DEVELOPER
-			printt( "| -------- UpdateScene --------" )
-			printt( "| shouldUpdateModel:", shouldUpdateModel )
-			printt( "| shouldUpdateAnim:", shouldUpdateAnim )
-			printt( "| -----------------------------" )
-		#endif
-
-		if ( shouldUpdateModel )
-		{
-			// if we change the model we need to update the anim as well
-			shouldUpdateAnim = true
-			playedPickingAnimForCharacter = false
-			playedReadyAnimForCharacter = false
-
-			// Update the model
-			thread UpdatePlayerModel( expect ItemFlavor(currentCharacterOrNull) )
-		}
-
-		if ( shouldUpdateAnim )
-		{
-			// Update the anim
-
-			if ( currentMenuState == eNewCharacterSelectMenuState.PICKING )
-				playedPickingAnimForCharacter = true
-			if ( currentMenuState == eNewCharacterSelectMenuState.LOCKED )
-				playedReadyAnimForCharacter = true
-
-			thread UpdatePlayerAnim( expect ItemFlavor(currentCharacterOrNull), currentMenuState )
-		}
-	}
-}
-void function UpdateSceneThink()
-{
-	EndSignal( fileLevel.signalDummy, "CharacterSelectClosing" )
-
-	int currentMenuState                     = -1
-	ItemFlavor ornull currentCharacterOrNull = null
-	bool playedPickingAnimForCharacter       = false
-	bool playedReadyAnimForCharacter         = false
-	
-	while( true )
-	{
-		WaitSignal( fileLevel.signalDummy, "UpdateScene" )
-
-		if ( fileLevel.desiredMenuState == -1 || fileLevel.desiredCharacterOrNull == null )
-			continue
-
-		bool shouldUpdateModel = false
-		bool shouldUpdateAnim  = false
-		int currentPickIndex   = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" )
-
-		bool menuStateChanged = fileLevel.desiredMenuState != currentMenuState
-		if ( menuStateChanged )
-			currentMenuState = fileLevel.desiredMenuState
-
-		// New character was selected, we want to update the model and animation
-		if ( fileLevel.desiredCharacterOrNull != currentCharacterOrNull )
-		{
-			shouldUpdateModel = true
-			shouldUpdateAnim = true
-			currentCharacterOrNull = fileLevel.desiredCharacterOrNull
-		}
-
-		// Don't update the model or animation if we are seeing a lock-in sequence
-		if ( currentPickIndex != fileLevel.localClientLockstepIndex && fileLevel.lastLockedPlayer != GetTeammateForPickingIndex( currentPickIndex ) && Time() - fileLevel.lockSequenceAnimTime < READY_ANIM_MIN_DURATION )
-		{
-			shouldUpdateAnim = false
-			shouldUpdateModel = false
-		}
-
-
-		// A character was just locked in
-		if ( menuStateChanged && currentMenuState == eNewCharacterSelectMenuState.LOCKED )
-		{
-			shouldUpdateAnim = true
-			shouldUpdateModel = true
-		}
-
-		// Don't play a 'picking' anim on a model that already played the 'ready' anim
 		if ( currentMenuState == eNewCharacterSelectMenuState.PICKING && playedReadyAnimForCharacter )
 		{
 			shouldUpdateAnim = false
 		}
 
-		//if ( shouldUpdateModel )
-		//	shouldUpdateAnim = true
-
 		#if DEVELOPER
 			printt( "| -------- UpdateScene --------" )
 			printt( "| shouldUpdateModel:", shouldUpdateModel )
@@ -2887,7 +2776,7 @@ void function UpdateSceneThink()
 			playedReadyAnimForCharacter = false
 
 			// Update the model
-			thread UpdatePlayerModel( expect ItemFlavor(currentCharacterOrNull) )
+			thread UpdatePlayerModel( expect ItemFlavor(currentCharacterOrNull), currentSkinOrNull  )
 		}
 
 		if ( shouldUpdateAnim )
@@ -2904,137 +2793,57 @@ void function UpdateSceneThink()
 	}
 }
 
+
+void function TryUpdateLightingRig( ItemFlavor character, ItemFlavor characterSkin )
+{
+	if ( !fileLevel.lightEntsExist )
+	{
+		printt( "Map doesn't have menu lights compiled in. Make sure the latest menu box instance is in the level and recompile the map." )
+		return
+	}
+
+	CharacterMenuLightData lightData
+
+	{
+		lightData = CharacterClass_GetMenuLightData( character )
+	}
+
+	//
+	fileLevel.keyLight.SetTweakLightColor( lightData.key_color )
+	fileLevel.fillLight.SetTweakLightColor( lightData.fill_color )
+	fileLevel.rimLightL.SetTweakLightColor( lightData.rimL_color )
+	fileLevel.rimLightR.SetTweakLightColor( lightData.rimR_color )
+
+	//
+	//fileLevel.lightRigModel.Anim_Play( lightData.animSeq )
+	int attachIdx_fill = fileLevel.lightRigModel.LookupAttachment( "LIGHT_1" )
+	int attachIdx_rimL = fileLevel.lightRigModel.LookupAttachment( "LIGHT_2" )
+	int attachIdx_rimR = fileLevel.lightRigModel.LookupAttachment( "LIGHT_3" )
+	int attachIdx_key = fileLevel.lightRigModel.LookupAttachment( "LIGHT_4" )
+
+	fileLevel.fillLight.SetTweakLightOrigin( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_fill ) )
+	fileLevel.fillLight.SetTweakLightAngles( fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_fill ) )
+
+	fileLevel.rimLightL.SetTweakLightOrigin( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_rimL ) )
+	fileLevel.rimLightL.SetTweakLightAngles( fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_rimL ) )
+
+	fileLevel.rimLightR.SetTweakLightOrigin( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_rimR ) )
+	fileLevel.rimLightR.SetTweakLightAngles( fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_rimR ) )
+
+	fileLevel.keyLight.SetTweakLightOrigin( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_key ) )
+	fileLevel.keyLight.SetTweakLightAngles( fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_key ) )
+
+	foreach ( func in file.Callbacks_CustomUpdateLights )
+	{
+		func( fileLevel.lightRigModel, fileLevel.keyLight, fileLevel.fillLight, fileLevel.rimLightL, fileLevel.rimLightR )
+	}
+}
 
 void function SetChromaCharacter( ItemFlavor character )
 {
 	Chroma_SetBaseLayer( CHROMALOOP_SMOKE, CHROMATRANS_VERTICAL, CharacterClass_GetChromaGradient( character ), 0.5 )
 }
 
-void function UpdatePlayerModel( ItemFlavor character )
-{
-	if (FS_ShouldShowCustomCharacterSelect())
-	{
-		if ( !fileLevel.menuEntsExist )
-			return
-
-		if ( !IsValid( fileLevel.characterModel ) )
-			return
-		
-		// DoF_SetNearDepth( 7.5, 7.7 )
-		// DoF_SetFarDepth( 500, 1000 )
-		DoFSetDilateInfocus( true )
-
-		entity ornull pickingPlayer = GetTeammateForPickingIndex( Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" ) )
-		if ( pickingPlayer == null )
-			return
-		ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( ToEHI( expect entity( pickingPlayer ) ), Loadout_CharacterSkin( character ) )
-		
-		if ( !IsValid( fileLevel.characterModel ) )
-			return
-
-		CreateNewCharacterModel( CharacterSkin_GetBodyModel( characterSkin ) )
-		CharacterSkin_Apply( fileLevel.characterModel, characterSkin )
-		fileLevel.characterModel.Show()
-
-		if( Playlist() == ePlaylists.fs_scenarios )
-		{
-			fileLevel.characterModel.SetSkin(2)
-			entity playerTeam = GetLocalClientPlayer() // expect entity( pickingPlayer )
-			fileLevel.characterModel.SetCamo( playerTeam.GetTeam() % 10 )
-		}
-		// Model swap effect
-		vector rarityColor           = ItemFlavor_GetQualityColor( characterSkin )
-		float fillIntensityScalar    = 10
-		float outlineIntensityScalar = 300
-		float fadeInTime             = 0.01
-		float fadeOutTime            = 0.25
-		float lifeTime               = 0.1
-		float ditherDelay            = 0.1
-		float ditherDuration         = 0.1
-		thread PROTO_HighlightTest( fileLevel.characterModel, rarityColor / 255, fillIntensityScalar, outlineIntensityScalar, fadeInTime, fadeOutTime, lifeTime, ditherDelay, ditherDuration, false )
-	} else {
-		//Signal( fileLevel.signalDummy, "UpdatingModel" )
-		//EndSignal( fileLevel.signalDummy, "UpdatingModel" )
-
-		//fileLevel.isUpdatePlayerModelRunning = true
-		//OnThreadEnd( void function() {
-		//	fileLevel.isUpdatePlayerModelRunning = false
-		//} )
-	//
-		if ( !fileLevel.menuEntsExist )
-			return
-
-		if ( !IsValid( fileLevel.characterModel ) )
-			return
-
-		entity ornull pickingPlayer = GetTeammateForPickingIndex( Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" ) )
-		if ( pickingPlayer == null )//&& !fileLevel.isBrowseMode )
-			return
-		//else
-		//	pickingPlayer = GetLocalClientPlayer()
-
-		// Apply Model and Skin
-		//expect entity( pickingPlayer )
-		ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( ToEHI( expect entity( pickingPlayer ) ), Loadout_CharacterSkin( character ) )
-
-
-
-		//ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( ToEHI( pickingPlayer ), Loadout_CharacterSkin( character ) )
-
-		if ( !IsValid( fileLevel.characterModel ) )
-			return
-
-		CreateNewCharacterModel( CharacterSkin_GetBodyModel( characterSkin ) )
-		CharacterSkin_Apply( fileLevel.characterModel, characterSkin )
-
-		fileLevel.characterModel.Show()
-
-		//Signal( fileLevel.signalDummy, "PlayerModelUpdated" )
-
-		// Model swap effect
-		vector rarityColor           = ItemFlavor_GetQualityColor( characterSkin )
-		float fillIntensityScalar    = 10
-		float outlineIntensityScalar = 300
-		float fadeInTime             = 0.01
-		float fadeOutTime            = 0.25
-		float lifeTime               = 0.1
-		float ditherDelay            = 0.1
-		float ditherDuration         = 0.1
-		thread PROTO_HighlightTest( fileLevel.characterModel, rarityColor / 255, fillIntensityScalar, outlineIntensityScalar, fadeInTime, fadeOutTime, lifeTime, ditherDelay, ditherDuration, false )
-
-		// Background
-		int backgroundSkinIndex = CharacterClass_GetMenuBackgroundSkinIndex( character )
-		if ( IsValid( fileLevel.backgroundModelGeo ) )
-			fileLevel.backgroundModelGeo.SetSkin( backgroundSkinIndex )
-
-		// Smoke Background
-		int smokeSkinIndex = CharacterClass_GetMenuSmokeSkinIndex( character )
-		if ( IsValid( fileLevel.backgroundModelSmoke ) )
-			fileLevel.backgroundModelSmoke.SetSkin( smokeSkinIndex )
-
-		CharacterMenuLightData lightData = CharacterClass_GetMenuLightData( character )
-		if ( fileLevel.lightEntsExist )
-		{
-			fileLevel.keyLight.SetTweakLightColor( lightData.key_color )
-			fileLevel.fillLight.SetTweakLightColor( lightData.fill_color )
-			fileLevel.rimLightL.SetTweakLightColor( lightData.rimL_color )
-			fileLevel.rimLightR.SetTweakLightColor( lightData.rimR_color )
-		}
-		else
-		{
-			#if DEVELOPER
-				printt( "Map doesn't have menu lights compiled in. Make sure the latest menu box instance is in the level and recompile the map." )
-			#endif
-		}
-
-		SetChromaCharacter( character )
-
-		// Name and Quote
-		RuiSetString( fileLevel.backgroundRui, "nameString", Localize( ItemFlavor_GetLongName( character ) ) )
-		RuiSetString( fileLevel.backgroundRui, "footnoteString", Localize( CharacterClass_GetCharacterSelectSubtitle( character ) ) )
-		RuiSetFloat( fileLevel.backgroundRui, "startTime", Time() )	
-	}
-}
 
 array<ItemFlavor> function GetAllGoodAnimsFromGladcardStancesForCharacter( ItemFlavor character )
 //Don't try this at home
@@ -3169,6 +2978,89 @@ array<ItemFlavor> function GetAllGoodAnimsFromGladcardStancesForCharacter( ItemF
 	
 	return actualGoodAnimsForThisCharacter
 }
+
+ItemFlavor function GetCharacterSkinForPlayerSelection( EHI pickingPlayerEHI, ItemFlavor character, ItemFlavor ornull characterSkinOverride )
+{
+	if ( characterSkinOverride != null )
+		return (expect ItemFlavor( characterSkinOverride ))
+
+	return LoadoutSlot_WaitForItemFlavor( pickingPlayerEHI, Loadout_CharacterSkin( character ) )
+}
+
+
+void function UpdatePlayerModel( ItemFlavor character, ItemFlavor ornull characterSkinOverride )
+{
+	Signal( fileLevel.signalDummy, "UpdatingModel" )
+	EndSignal( fileLevel.signalDummy, "UpdatingModel" )
+
+	fileLevel.isUpdatePlayerModelRunning = true
+	OnThreadEnd( void function() {
+		fileLevel.isUpdatePlayerModelRunning = false
+	} )
+
+	if ( !fileLevel.menuEntsExist )
+		return
+
+	if ( !IsValid( fileLevel.characterModel ) )
+		return
+
+	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( "characterSelectLockstepIndex" ) )
+	if ( fileLevel.isBrowseMode ) //
+		pickingPlayer = GetLocalClientPlayer()
+	if ( pickingPlayer == null )
+			return //
+
+	expect entity( pickingPlayer )
+
+	//
+	//
+	ItemFlavor characterSkin = GetCharacterSkinForPlayerSelection( ToEHI( pickingPlayer ), character, characterSkinOverride )
+	if ( !IsValid( fileLevel.characterModel ) )
+		return
+
+	CreateNewCharacterModel( CharacterSkin_GetBodyModel( characterSkin ) )
+	CharacterSkin_Apply( fileLevel.characterModel, characterSkin )
+	//
+	fileLevel.characterModel.Show()
+
+	Signal( fileLevel.signalDummy, "PlayerModelUpdated" )
+
+	//
+	vector rarityColor           = ItemFlavor_GetQualityColor( characterSkin )
+	float fillIntensityScalar    = 10
+	float outlineIntensityScalar = 300
+	float fadeInTime             = 0.01
+	float fadeOutTime            = 0.25
+	float lifeTime               = 0.1
+	float ditherDelay            = 0.1
+	float ditherDuration         = 0.1
+	thread PROTO_HighlightTest( fileLevel.characterModel, rarityColor / 255, fillIntensityScalar, outlineIntensityScalar, fadeInTime, fadeOutTime, lifeTime, ditherDelay, ditherDuration, false )
+
+	//
+	int backgroundSkinIndex = CharacterClass_GetMenuBackgroundSkinIndex( character )
+	if ( IsValid( fileLevel.backgroundModelGeo ) )
+		fileLevel.backgroundModelGeo.SetSkin( backgroundSkinIndex )
+
+	//
+	int smokeSkinIndex = CharacterClass_GetMenuSmokeSkinIndex( character )
+	if ( IsValid( fileLevel.backgroundModelSmoke ) )
+		fileLevel.backgroundModelSmoke.SetSkin( smokeSkinIndex )
+
+	TryUpdateLightingRig( character, characterSkin )
+
+	SetChromaCharacter( character )
+
+	//
+	RuiSetString( fileLevel.backgroundRui, "nameString", Localize( ItemFlavor_GetLongName( character ) ) )
+	RuiSetString( fileLevel.backgroundRui, "footnoteString", Localize( ItemFlavor_GetShortDescription( character ) ) )
+	RuiSetFloat( fileLevel.backgroundRui, "startTime", Time() )
+
+	foreach ( func in file.Callbacks_OnCharacterModelChanged )
+	{
+		func( character, fileLevel.characterModel, fileLevel.backgroundModelGeo, fileLevel.backgroundModelSmoke, fileLevel.backgroundRui )
+	}
+}
+
 
 void function UpdatePlayerAnim( ItemFlavor character, int currentMenuState )
 {
@@ -3765,17 +3657,20 @@ void function CreateNewCharacterModel( asset model )
 	fileLevel.characterModel.SetParent( fileLevel.characterNode )
 	fileLevel.characterModel.Hide()
 }
-/*
-bool function PlayerArrayContainsCurrentLockstepPlayer( array<entity> players )
+void function CreateNewLightRigModel()
 {
-	foreach( entity player in players )
-	{
-		if ( player.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" ) == GetGlobalNetInt( "characterSelectLockstepIndex" ) )
-			return true
-	}
-	return false
+	Assert( DoesBackgroundEntExist() )
+
+	if ( IsValid( fileLevel.lightRigModel ) )
+		fileLevel.lightRigModel.Destroy()
+
+	entity targetBackground = GetEntByScriptName( BACKGROUND_ENT_NAME )
+
+	fileLevel.lightRigModel = CreateClientSidePropDynamic( targetBackground.GetOrigin(), targetBackground.GetAngles(), LIGHT_RIG_MDL )
+	fileLevel.lightRigModel.MakeSafeForUIScriptHack()
+	fileLevel.lightRigModel.SetParent( targetBackground )
+	fileLevel.lightRigModel.Hide()
 }
-*/
 
 bool function PlayerHasCharacterLockedInOrFocused( entity player, ItemFlavor character )
 {
@@ -3997,6 +3892,25 @@ void function SetCharacterSelectSceneForChampionSquad()
 		fileLevel.fillLight.SetTweakLightColor( < 0.2, 0.2, 0.2 > )
 		fileLevel.rimLightL.SetTweakLightColor( < 0.75, 0.75, 0.75 > )
 		fileLevel.rimLightR.SetTweakLightColor( < 0.6, 0.6, 0.6 > )
+
+		//
+		fileLevel.lightRigModel.Anim_Play( $"animseq/humans/class/char_select_light_default.rseq" )
+		int attachIdx_fill = fileLevel.lightRigModel.LookupAttachment( "LIGHT_1" )
+		int attachIdx_rimL = fileLevel.lightRigModel.LookupAttachment( "LIGHT_2" )
+		int attachIdx_rimR = fileLevel.lightRigModel.LookupAttachment( "LIGHT_3" )
+		int attachIdx_key = fileLevel.lightRigModel.LookupAttachment( "LIGHT_4" )
+
+		fileLevel.fillLight.SetTweakLightOrigin( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_fill ) )
+		fileLevel.fillLight.SetTweakLightAngles( fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_fill ) )
+
+		fileLevel.rimLightL.SetTweakLightOrigin( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_rimL ) )
+		fileLevel.rimLightL.SetTweakLightAngles( fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_rimL ) )
+
+		fileLevel.rimLightR.SetTweakLightOrigin( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_rimR ) )
+		fileLevel.rimLightR.SetTweakLightAngles( fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_rimR ) )
+
+		fileLevel.keyLight.SetTweakLightOrigin( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_key ) )
+		fileLevel.keyLight.SetTweakLightAngles( fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_key ) )
 	}
 	else
 	{
