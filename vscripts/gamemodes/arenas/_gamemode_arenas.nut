@@ -120,6 +120,9 @@ struct
 	// Spawned canister props (created from canisterInfoEnts positions)
 	array<entity> activeCanisters
 
+	// Spawned loot bins (created from medLootbinLocations)
+	array<entity> activeLootBins
+
 	// Legacy spawn arrays (populated from spawnLocations)
 	array<entity> leftSpawns
 	array<entity> rightSpawns
@@ -128,6 +131,8 @@ struct
 	bool mainLoopStarted = false
 	bool teamsAssigned = false
 	bool forceNextRound = false
+	bool firstBloodThisRound = false
+	bool deathfieldThreadNeeded = false
 
 	// Map config extracted from info_arenas_map_location
 	string mapName = ""
@@ -220,6 +225,15 @@ void function Arenas_OnPrematch()
 		printt( "[Arenas] Prematch - teams assigned (charselect skipped). IMC:", GetPlayerArrayOfTeam( file.leftTeam ).len(),
 			"MILITIA:", GetPlayerArrayOfTeam( file.rightTeam ).len() )
 	}
+
+	// Set up deathfield circle overrides from map entities so the ring
+	// targets one of the designated circle end locations each round.
+	foreach ( entity endLoc in file.circleEndLocations )
+	{
+		if ( IsValid( endLoc ) )
+			SURVIVAL_AddOverrideCircleLocation( endLoc.GetOrigin(), 250.0 )
+	}
+	printt( "[Arenas] Deathfield circle overrides set:", file.circleEndLocations.len() )
 }
 
 void function Arenas_OnGameStatePlaying()
@@ -608,6 +622,9 @@ void function Arenas_BuyPhase()
 				continue
 		}
 
+		// Zoom minimap in for buy phase
+		player.SetMinimapZoomScale( ARENAS_PREMATCH_MINIMAP_ZOOM, 0.0 )
+
 		// Reset player state
 		Arenas_ResetPlayerForRound( player )
 
@@ -810,13 +827,14 @@ void function Arenas_SetStartZoneWalls( bool enabled )
 
 		if ( enabled )
 		{
-			// EntFireByHandle( wall, "Enable", "", 0, null, null )
 			wall.Solid()
 			wall.MakeVisible()
+			EmitSoundOnEntity( wall, ARENAS_SPAWNROOMWALL_SOUND_EVENT_NAME )
 		}
 		else
 		{
-			// EntFireByHandle( wall, "Disable", "", 0, null, null )
+			StopSoundOnEntity( wall, ARENAS_SPAWNROOMWALL_SOUND_EVENT_NAME )
+			EmitSoundOnEntity( wall, ARENAS_SPAWNROOMWALL_DISSOLVE_SOUND )
 			wall.NotSolid()
 			wall.MakeInvisible()
 		}
@@ -870,6 +888,144 @@ void function Arenas_CleanupCanisters()
 			canister.Destroy()
 	}
 	file.activeCanisters.clear()
+}
+
+// ============================================================================
+// LOOT BINS
+// ============================================================================
+void function Arenas_SpawnLootBins()
+{
+	// Med loot bins contain healing items for mid-round recovery
+	array<string> healingRefs = [
+		"health_pickup_health_small",
+		"health_pickup_health_large",
+		"health_pickup_combo_small",
+		"health_pickup_combo_large"
+	]
+
+	foreach ( entity locationEnt in file.medLootbinLocations )
+	{
+		if ( !IsValid( locationEnt ) )
+			continue
+
+		vector origin = locationEnt.GetOrigin()
+		vector angles = locationEnt.GetAngles()
+
+		// Spawn loot bin with random healing items (2-3 items per bin)
+		int numItems = RandomIntRangeInclusive( 2, 3 )
+		array<string> lootRefs
+		for ( int i = 0; i < numItems; i++ )
+			lootRefs.append( healingRefs.getrandom() )
+
+		entity lootbin = CreateCustomLootBin( origin, angles, lootRefs )
+		file.activeLootBins.append( lootbin )
+		printt( "[Arenas] Loot bin spawned at", origin, "with", numItems, "items" )
+	}
+}
+
+void function Arenas_CleanupLootBins()
+{
+	foreach ( entity lootbin in file.activeLootBins )
+	{
+		if ( IsValid( lootbin ) )
+			lootbin.Destroy()
+	}
+	file.activeLootBins.clear()
+}
+
+// ============================================================================
+// DEATHFIELD / RING MANAGEMENT
+// ============================================================================
+void function Arenas_DeathfieldTimer()
+{
+	wait ARENAS_RING_ACTIVATION_DELAY
+
+	if ( file.matchOver || file.currentPhase != eArenaPhase.COMBAT )
+		return
+
+	FlagSet( "DeathCircleActive" )
+	FlagClear( "DeathFieldPaused" )
+	printt( "[Arenas] Death field activated after", ARENAS_RING_ACTIVATION_DELAY, "seconds" )
+}
+
+void function Arenas_StopDeathfield()
+{
+	entity deathField = SURVIVAL_GetDeathField()
+	if ( IsValid( deathField ) )
+		deathField.Destroy()
+
+	if ( Flag( "DeathCircleActive" ) )
+		FlagClear( "DeathCircleActive" )
+
+	file.deathfieldThreadNeeded = true
+	printt( "[Arenas] Death field stopped for round end" )
+}
+
+// ============================================================================
+// CARE PACKAGE AIRDROPS
+// ============================================================================
+void function Arenas_AirdropTimer()
+{
+	wait ARENAS_AIRDROP_DELAY
+
+	if ( file.matchOver || file.currentPhase != eArenaPhase.COMBAT )
+		return
+
+	Arenas_SpawnAirdrops()
+}
+
+void function Arenas_SpawnAirdrops()
+{
+	// Loot pool for arenas care packages: high-tier healing and shields
+	array< array<string> > airdropLootPool = [
+		[ "health_pickup_combo_full", "health_pickup_combo_large", "health_pickup_combo_large" ],
+		[ "health_pickup_combo_full", "health_pickup_health_large", "health_pickup_combo_large" ],
+		[ "health_pickup_combo_large", "health_pickup_combo_large", "health_pickup_health_large" ]
+	]
+
+	foreach ( entity locationEnt in file.airdropLocations )
+	{
+		if ( !IsValid( locationEnt ) )
+			continue
+
+		vector origin = locationEnt.GetOrigin()
+		vector angles = locationEnt.GetAngles()
+
+		// Pick random loot loadout for this care package
+		array<string> contents = airdropLootPool[ RandomInt( airdropLootPool.len() ) ]
+
+		// Create the spawn marker FX
+		entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( DROPPOD_SPAWN_FX ), origin, angles )
+
+		// Spawn the airdrop
+		thread AirdropItems( origin, angles, contents, fx, ARENAS_AIRDROP_ANIMATION, null, 0, "" )
+
+		printt( "[Arenas] Care package airdrop spawned at", origin )
+	}
+
+	// Announce care packages to all players via minimap ping
+	if ( file.airdropLocations.len() > 0 && IsValid( file.airdropLocations[0] ) )
+	{
+		vector pingOrigin = file.airdropLocations[0].GetOrigin()
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( IsValid( player ) )
+				Remote_CallFunction_NonReplay( player, "ServerCallback_SUR_PingMinimap", pingOrigin, 10.0, 500.0, 50.0, 2 )
+		}
+	}
+}
+
+void function Arenas_CleanupAirdrops()
+{
+	// Care packages spawned by AirdropItems are tracked in the global array
+	array<entity> carePackages = ReturnCarePackagesNewArray()
+	for ( int i = carePackages.len() - 1; i >= 0; i-- )
+	{
+		entity pod = carePackages[i]
+		if ( IsValid( pod ) )
+			pod.Destroy()
+	}
+	printt( "[Arenas] Airdrops cleaned up" )
 }
 
 void function Arenas_OnCanisterUsed( entity canister, entity player, int useInputFlags )
@@ -1551,11 +1707,36 @@ void function Arenas_CombatPhase()
 
 	// Walls already opened at end of BuyPhase (synced with client RUI timer)
 
-	// Spawn material canisters for this round
+	// Zoom minimap out for combat
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( IsValid( player ) )
+			player.SetMinimapZoomScale( ARENAS_DEFAULT_MINIMAP_ZOOM, 1.0 )
+	}
+
+	// Reset first blood flag for this round
+	file.firstBloodThisRound = false
+
+	// Spawn material canisters and loot bins for this round
 	Arenas_SpawnCanisters()
+	Arenas_SpawnLootBins()
 
 	// Notify all clients that combat has begun (per-player announcement style)
 	Arenas_SendRoundStartAnnouncement()
+
+	// Round start battle chatter
+	thread SurvivalCommentary_HostAnnounce( GetRoundCommentaryBucket( file.roundNumber ), ARENAS_ROUNDSTART_BC_DELAY )
+
+	// Start deathfield timer for this round. The survival init already threaded
+	// SURVIVAL_RunArenaDeathField() for round 0 (waiting on DeathCircleActive flag).
+	// For round 1+, the previous thread was killed at round end so we re-thread.
+	if ( file.deathfieldThreadNeeded )
+		thread SURVIVAL_RunArenaDeathField()
+	thread Arenas_DeathfieldTimer()
+
+	// Care package airdrop timer
+	if ( file.airdropLocations.len() > 0 )
+		thread Arenas_AirdropTimer()
 
 	// Wait for one team to be eliminated or timeout
 	float combatStartTime = Time()
@@ -1608,8 +1789,11 @@ void function Arenas_RoundEnd( int winningTeam )
 {
 	file.currentPhase = eArenaPhase.ROUND_END
 
-	// Clean up any remaining canisters
+	// Clean up any remaining canisters, loot bins, airdrops, and deathfield
 	Arenas_CleanupCanisters()
+	Arenas_CleanupLootBins()
+	Arenas_CleanupAirdrops()
+	Arenas_StopDeathfield()
 
 	if ( winningTeam == 0 )
 	{
@@ -1656,6 +1840,9 @@ void function Arenas_RoundEnd( int winningTeam )
 			Remote_CallFunction_NonReplay( player, "ServerCallback_DisplayRoundLost" )
 		}
 	}
+
+	// Round end battle chatter
+	thread SurvivalCommentary_HostAnnounce( eSurvivalCommentaryBucket.ROUND_WIN_BY_ELIM, ARENAS_ROUNDEND_BC_DELAY )
 
 	wait ARENAS_ROUND_END_DELAY
 
@@ -1776,6 +1963,9 @@ void function Arenas_MatchEnd()
 
 	printt( "[Arenas] Match ended - Winner:", winningTeam, "Score:", file.leftTeamScore, "-", file.rightTeamScore )
 
+	// Match end battle chatter
+	thread SurvivalCommentary_HostAnnounce( eSurvivalCommentaryBucket.WINNER, ARENAS_MATCHEND_COMMENTARY_DEALY )
+
 	// Set winning team so GetWinningTeam() works on client for champion screen
 	level.nv.winningTeam = winningTeam
 
@@ -1873,6 +2063,13 @@ void function Arenas_OnPlayerKilled( entity victim, entity attacker, var damageI
 
 				// Sync kills to client netvar for HUD display
 				attacker.SetPlayerNetInt( "kills", attackerData.killsThisMatch )
+			}
+
+			// First blood commentary
+			if ( !file.firstBloodThisRound )
+			{
+				file.firstBloodThisRound = true
+				thread SurvivalCommentary_KilledPlayerAnnounce( eSurvivalCommentaryBucket.FIRST_BLOOD, attacker, ARENAS_ONKILL_BC_DELAY, "bc_firstBlood", "bc_weTookFirstBlood" )
 			}
 		}
 	}

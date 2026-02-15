@@ -225,6 +225,13 @@ void function CodeCallback_MapSpawn() // original script entry point
 	FlagInit( "ShowExplosionRadius" )  // temp HACK
 	FlagInit( "DeathCircleActive", false ) //(cafe) moved here because Sh_ArenaDeathField_Init is not called in all gamemodes but this flag may
 	FlagInit( "DeathCircleSetup", false ) //(cafe) moved here because Sh_ArenaDeathField_Init is not called in all gamemodes but this flag may
+	FlagInit( "DeathFieldPaused", false ) //(cafe) same reason as above
+	FlagInit( "UsePreciseFinalCircleOverride" ) //(cafe) deathfield system flags
+	FlagInit( "AllowDeathFieldUpdate", true )
+	FlagInit( "DoneCreatingDeathFieldPosition" )
+	FlagInit( "SUR_DeathFieldShrinking" )
+	RegisterSignal( "GenerateDeathFieldData" )
+	RegisterSignal( "DeathField_ShrinkNow" )
 	
 	svGlobal.levelEnt = GetEnt( "worldspawn" )
 
@@ -335,6 +342,8 @@ void function PrecacheSDKEntities()
 	PrecacheWeapon( $"mp_titanweapon_flightcore_rockets" ) // Not a loot
 	PrecacheWeapon( $"mp_titancore_laser_cannon" ) // Not a loot
 	PrecacheWeapon( $"mp_ability_titanfall" ) // Not a loot
+	
+	PrecacheWeapon( $"mp_ability_echo_locator" )
 }
 
 void function FS_RestartServerAfterSomeTimeWithoutPlayers()

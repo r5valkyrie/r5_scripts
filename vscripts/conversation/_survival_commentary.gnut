@@ -32,6 +32,7 @@ global function PlayBattleChatterLineToSpeakerAndTeamWithDebounceTime
 global function SetCanDoDamageCallout
 
 global function PlayBattleChatterLineToPlayer
+global function GetRoundCommentaryBucket
 
 global const DELAY_COMMENTARY = 2
 global const int COMMENTARY_ANNOUNCER_DIALOGUE_FLAGS = eDialogueFlags.SURVIVAL_HOST_ALL_SPEAKERS

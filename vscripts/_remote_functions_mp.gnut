@@ -629,7 +629,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_NewKillLeader", "entity", "int", 0, 999 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_HighlightedPlayerKilled", "entity", "entity", "int", 0, 17 )
 	
-	if( Gamemode() == eGamemodes.SURVIVAL )
+	if( Gamemode() == eGamemodes.SURVIVAL || Gamemode() == eGamemodes.ARENAS )
 	{
 		ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_PathfinderSurveyNotifications", "entity", "int", 0, 9 )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_CreateBeaconWorldIcon", "entity", "entity" )

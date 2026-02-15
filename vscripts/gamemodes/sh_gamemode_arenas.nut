@@ -80,23 +80,24 @@ const float ASH_ROUND_SUMMARY_ASH_HOLD_TIME = 1.933
 
 const int MAX_PURCHASE_RUIS = 5
 
-const string ARENAS_AIRDROP_ANIMATION = "droppod_loot_drop_lifeline"
-const float ARENAS_AIRDROP_DELAY = 20.0
+global const string ARENAS_AIRDROP_ANIMATION = "droppod_loot_drop_lifeline"
+global const float ARENAS_AIRDROP_DELAY = 20.0
 
 const float ROUND_START_COMMENTARY_DELAY = ROUND_SUMMARY_DURATION + 2.0
-const float ARENAS_MATCHEND_COMMENTARY_DEALY = 2.0
-const float ARENAS_ROUNDSTART_BC_DELAY = 4.0
-const float ARENAS_ROUNDEND_DELAY = 2.75
-const float ARENAS_ROUNDEND_BC_DELAY = 2.0
-const float ARENAS_ONKILL_BC_DELAY = 3.0
+global const float ARENAS_MATCHEND_COMMENTARY_DEALY = 2.0
+global const float ARENAS_ROUNDSTART_BC_DELAY = 4.0
+global const float ARENAS_ROUNDEND_DELAY = 2.75
+global const float ARENAS_ROUNDEND_BC_DELAY = 2.0
+global const float ARENAS_ONKILL_BC_DELAY = 3.0
 
-const float ARENAS_DEFAULT_MINIMAP_ZOOM = 2.0
-const float ARENAS_PREMATCH_MINIMAP_ZOOM = 3.0
+global const float ARENAS_DEFAULT_MINIMAP_ZOOM = 2.0
+global const float ARENAS_PREMATCH_MINIMAP_ZOOM = 3.0
+global const float ARENAS_RING_ACTIVATION_DELAY = 30.0
 
 const string ARENAS_ASH_EMITTER_SCRIPT_NAME				= "Arenas_Spawnroom_Emit_Ash_Hologram"
 const string ARENAS_SPAWNROOMWALL_EMITTER_SCRIPT_NAME	= "arenas_spawnroomwall_emitter"
-const string ARENAS_SPAWNROOMWALL_SOUND_EVENT_NAME		= "Arena_SpawnRoom_Emit_BoundaryWall"
-const string ARENAS_SPAWNROOMWALL_DISSOLVE_SOUND		= "arenas_spawnroomwall_dissolve"
+global const string ARENAS_SPAWNROOMWALL_SOUND_EVENT_NAME		= "Arena_SpawnRoom_Emit_BoundaryWall"
+global const string ARENAS_SPAWNROOMWALL_DISSOLVE_SOUND		= "arenas_spawnroomwall_dissolve"
 
 const string ARENAS_SPAWNROOM_TIMER			= "ui_arenas_spawnroomtimer"		//
 const string ARENAS_SPAWNROOM_TIMER_URGENT	= "ui_arenas_spawnroomtimer_urgent" //
