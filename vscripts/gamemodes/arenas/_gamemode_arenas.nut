@@ -1795,6 +1795,32 @@ void function Arenas_RoundEnd( int winningTeam )
 	Arenas_CleanupAirdrops()
 	Arenas_StopDeathfield()
 
+	// Clean up player abilities, tracked projectiles (traps, gas, drones, etc.), and deathboxes
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( !IsValid( player ) )
+			continue
+
+		PROTO_CleanupTrackedProjectiles( player )
+		player.Signal( "CleanUpPlayerAbilities" )
+	}
+
+	// Destroy all deathboxes
+	array<entity> deathboxes = GetEntArrayByClass_Expensive( "prop_death_box" )
+	foreach ( entity deathbox in deathboxes )
+	{
+		if ( IsValid( deathbox ) )
+			deathbox.Destroy()
+	}
+
+	// Destroy all dropped loot
+	array<entity> droppedLoot = GetEntArrayByClass_Expensive( "prop_survival" )
+	foreach ( entity loot in droppedLoot )
+	{
+		if ( IsValid( loot ) )
+			loot.Destroy()
+	}
+
 	if ( winningTeam == 0 )
 	{
 		// Draw - counts as a tie
