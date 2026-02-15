@@ -193,14 +193,9 @@ void function DisplayRechamberRui( entity weapon )
 	weapon.EndSignal( "OnDestroy" )
 	weapon.EndSignal( RECHAMBER_RUI_ABORT_SIGNAL )
 
-	var rui = CreateCockpitPostFXRui( $"ui/crosshair_single_dot_sentinel.rpak" )
-	RuiSetBool( rui, "isActive", false )
-
 	OnThreadEnd(
-		function() : ( rui, weapon, player )
+		function() : ( weapon )
 		{
-			RuiDestroy( rui )
-
 			if ( IsValid( weapon ) && weapon.w.sentinelEnergizeHintRui != null )
 				RuiSetBool( weapon.w.sentinelEnergizeHintRui, "isRechambering", false)
 		}
@@ -214,23 +209,9 @@ void function DisplayRechamberRui( entity weapon )
 	if ( !IsValid( weapon ) )
 		return
 
-	float duration = weapon.GetSequenceDuration( RECHAMBER_RUI_END_EVENT_ANIM )
-	float frac = weapon.GetScriptedAnimEventCycleFrac( RECHAMBER_RUI_END_EVENT_ANIM, RECHAMBER_RUI_END_EVENT )
-	float endTime = Time() + duration * frac
+	float duration = weapon.GetWeaponSettingFloat( eWeaponVar.rechamber_time ) * 0.66
 
-	RuiSetBool( rui, "isActive", true )
-	RuiSetFloat( rui, "birthTime", Time() )
-	RuiSetFloat( rui, "deathTime", endTime )
-
-	if ( weapon.w.sentinelEnergizeHintRui != null )
-		RuiSetBool( weapon.w.sentinelEnergizeHintRui, "isRechambering", true)
-
-	while ( Time() < endTime )
-	{
-		WaitFrame()
-	}
-
-	RuiSetBool( rui, "isActive", false )
+	waitthread DisplayCenterDotRui( weapon, RECHAMBER_RUI_ABORT_SIGNAL, 0.0, duration, 0.5, 0.1, 0.2 )
 
 	if ( IsValid( weapon ) && weapon.w.sentinelEnergizeHintRui != null )
 		RuiSetBool( weapon.w.sentinelEnergizeHintRui, "isRechambering", false)

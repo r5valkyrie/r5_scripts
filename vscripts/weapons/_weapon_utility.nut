@@ -85,6 +85,7 @@ global function WeaponHasCosmetics
 #if CLIENT
 global function ServerCallback_SetWeaponPreviewState
 global function GetAmmoColorByType
+global function DisplayCenterDotRui
 #endif
 
 global function GetRadiusDamageDataFromProjectile
@@ -5244,6 +5245,53 @@ bool function AreAbilitiesSilenced( entity player )
 		return true*/
 
 	return false
+}
+#endif
+
+#if CLIENT
+void function DisplayCenterDotRui( entity weapon, string abortSignal, float appearDelay, float duration, float dotAlpha, float fadeInDuration, float fadeOutDuration )
+{
+	AssertIsNewThread()
+	if ( !IsValid( weapon ) )
+		return
+	entity player = weapon.GetWeaponOwner()
+	if ( !IsValid( player ) )
+		return
+
+	player.EndSignal( "OnDeath" )
+	weapon.EndSignal( "OnDestroy" )
+	weapon.EndSignal( abortSignal )
+
+	var rui = CreateCockpitPostFXRui( $"ui/crosshair_single_dot_helper.rpak" )
+	RuiSetBool( rui, "isActive", false )
+
+	OnThreadEnd(
+		function() : ( rui, weapon, player )
+		{
+			RuiDestroy( rui )
+		}
+	)
+
+	wait appearDelay
+
+	if ( !IsValid( weapon ) )
+		return
+
+	float endTime = Time() + duration
+
+	RuiSetBool( rui, "isActive", true )
+	RuiSetFloat( rui, "birthTime", Time() )
+	RuiSetFloat( rui, "deathTime", endTime )
+	RuiSetFloat( rui, "dotAlpha", dotAlpha )
+	RuiSetFloat( rui, "fadeInDuration", fadeInDuration )
+	RuiSetFloat( rui, "fadeOutDuration", fadeOutDuration )
+
+	while ( Time() < endTime )
+	{
+		WaitFrame()
+	}
+
+	RuiSetBool( rui, "isActive", false )
 }
 #endif
 
