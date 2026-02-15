@@ -57,6 +57,7 @@ global struct TabData
 	bool            centerTabs = false
 
 	table<int, void functionref()> tabNavigationEndCallbacks
+	bool groupNavHints = false
 
 	int initialFirstTabButtonWidth = -1
 	int initialFirstTabButtonXPos = -1
@@ -234,6 +235,9 @@ void function SetTabNavigationEndCallback( TabData tabData, int tabSide, void fu
 
 bool function IsTabActive( TabData tabData )
 {
+	if ( tabData.activeTabIdx == INVALID_TAB_INDEX )
+		return false
+
 	var panel = tabData.tabDefs[tabData.activeTabIdx].panel
 	return uiGlobal.panelData[panel].isActive
 }
@@ -303,7 +307,7 @@ void function ShowPanel( var panel )
 
 	if ( IsMenuVisible( panel ) )
 		return
-	
+
 	ShowPanelInternal( panel )
 }
 
@@ -726,7 +730,7 @@ TabData ornull function Tab_GetActiveNestedTabData( var menu )
 
 		if ( Tab_IsRootLevel( tabData ) )
 			continue
-		
+
 		if( parentPanel in uiGlobal.panelData)
 		{
 			if ( !uiGlobal.panelData[ parentPanel ].isActive )
@@ -737,7 +741,7 @@ TabData ornull function Tab_GetActiveNestedTabData( var menu )
 			continue
 		}
 
-		
+
 		return tabData
 	}
 
