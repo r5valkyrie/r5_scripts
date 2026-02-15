@@ -198,7 +198,7 @@ void function UnEquipMelee( bool allplayers = false)
 	player.TakeOffhandWeapon(OFFHAND_MELEE)
 	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
 	string meleePrimary = MeleeSkin_GetMainWeaponClassname( meleeSkin )
 	string meleeOffhand = MeleeSkin_GetOffhandWeaponClassname( meleeSkin )
@@ -361,7 +361,7 @@ void function BatchClientsideExecutionTest( vector refPoint, vector ang, array<I
 }
 void function ClientsideExecutionTestInspiration( vector refPoint, entity attackerInspiration, entity victimInspiration, string whichCamera = "none" )
 {
-	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterClass() )
+	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_Character() )
 	ItemFlavor attackerSkin      = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterSkin( attackerCharacter ) )
 	ItemFlavor victimCharacter, victimSkin
 	if ( victimInspiration == null )
@@ -380,7 +380,7 @@ void function ClientsideExecutionTestInspiration( vector refPoint, entity attack
 	}
 	else
 	{
-		victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_CharacterClass() )
+		victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_Character() )
 		victimSkin = LoadoutSlot_GetItemFlavor( ToEHI( victimInspiration ), Loadout_CharacterSkin( victimCharacter ) )
 	}
 	ItemFlavor attackerExecution = LoadoutSlot_GetItemFlavor( ToEHI( attackerInspiration ), Loadout_CharacterExecution( attackerCharacter ) )

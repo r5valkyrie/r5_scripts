@@ -259,7 +259,7 @@ void function SetUnitFrameDataFromOwner( var rui, entity ent, bool forceUpdate =
 	while ( !EHIHasValidScriptStruct( ToEHI( ent ) ) )
 		WaitFrame() // todo(dw): temp fix for R5DEV-60667
 
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( ent ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( ent ), Loadout_Character() )
 	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 
 	// getting the characer can take so long that the RUI got deleted during the wait

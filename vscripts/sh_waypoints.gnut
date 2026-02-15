@@ -1467,11 +1467,11 @@ void function InstanceLocationPing_Thread( entity wp )
 	}
 
 	// This can happen with reconnect or late join. If the loadoutSlot is not ready, wait until it is
-	if ( owner.IsPlayer() && !LoadoutSlot_IsReady( ToEHI( owner ), Loadout_CharacterClass() ) )
+	if ( owner.IsPlayer() && !LoadoutSlot_IsReady( ToEHI( owner ), Loadout_Character() ) )
 	{
 		printf( "New ping #%d owners (%s) loadout slot wasn't ready.", ticketID, string( owner ) )
 
-		LoadoutSlot_WaitForItemFlavor( ToEHI( owner ), Loadout_CharacterClass() )
+		LoadoutSlot_WaitForItemFlavor( ToEHI( owner ), Loadout_Character() )
 	}
 
 	// store the latest valid waypoint ticket id so that we can cancel it when needed.

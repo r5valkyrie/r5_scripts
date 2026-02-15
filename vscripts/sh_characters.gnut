@@ -1,6 +1,6 @@
 global function ShCharacters_LevelInit
 
-global function Loadout_CharacterClass
+global function Loadout_Character
 global function GetAllCharacters
 global function GetLaunchCharacters
 global function CharacterClass_GetSetFile
@@ -212,7 +212,7 @@ void function GenerateCharactersPDef()
 //// Global functions ////
 //////////////////////////
 //////////////////////////
-LoadoutEntry function Loadout_CharacterClass()
+LoadoutEntry function Loadout_Character()
 {
 	return fileLevel.characterSelectionSlot
 }
@@ -421,7 +421,7 @@ array<string> function GetStringArrayAvailableClassesForPlayer( entity player )
 	array<string> classes
 	foreach( ItemFlavor itemFlav in GetAllCharacters() )
 	{
-		if ( IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), itemFlav ) )
+		if ( IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_Character(), itemFlav ) )
 			classes.append( ItemFlavor_GetHumanReadableRef( itemFlav ) )
 	}
 	return classes

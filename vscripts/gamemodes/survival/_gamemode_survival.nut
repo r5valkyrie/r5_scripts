@@ -870,7 +870,7 @@ bool function ClientCommand_Flowstate_AssignCustomCharacterFromMenu(entity playe
 
 	CharacterSelect_AssignCharacter( ToEHI( player ), GetAllCharacters()[5] )
 
-	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
 	player.SetPlayerSettingsWithMods( characterSetFile, [] )
 
@@ -2671,7 +2671,7 @@ void function SurvivalPlayerRespawnedInit( entity player )
 	player.TurnLowHealthEffectsOff()
 	player.AmmoPool_SetCapacity( SURVIVAL_MAX_AMMO_PICKUPS )
 
-	Survival_PlayerCharacterSetup( player, LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() ) )
+	Survival_PlayerCharacterSetup( player, LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) )
 
 	// SURVIVAL_SetDefaultPlayerSettings( player )
 

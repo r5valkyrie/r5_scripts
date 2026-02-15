@@ -190,7 +190,7 @@ bool function ShouldSonarGiveAssistCredit( entity victimEnt, entity sonarOwner )
 	if ( ( victimEnt.GetTeam() == sonarOwner.GetTeam() ) && IsTeamRabid( sonarOwner.GetTeam() ) )
 		return false
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( sonarOwner, Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( sonarOwner, Loadout_Character() )
 	string characterRef = ItemFlavor_GetHumanReadableRef( character )
 	string disabledRefs = GetCurrentPlaylistVarString( "disable_sonar_assist", " " )
 	file.disabledRefs.extend( split( disabledRefs, WHITESPACE_CHARACTERS ) )

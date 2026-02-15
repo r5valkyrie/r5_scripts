@@ -151,7 +151,7 @@ table< int, var > function LiveAPI_GetPlayerIdentityTable( entity player )
 			? sortedPlayerSquadIndex 
 			: EEH_GetTeamMemberIndex( EHIToEncodedEHandle( playerEHI ) )
 
-		LoadoutEntry characterSlot = Loadout_CharacterClass()
+		LoadoutEntry characterSlot = Loadout_Character()
 		if( LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 		{
 			ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
@@ -209,7 +209,7 @@ table< string, var > function LiveAPI_GetPlayerIdentityTableString( entity playe
 			? sortedPlayerSquadIndex 
 			: EEH_GetTeamMemberIndex( EHIToEncodedEHandle( playerEHI ) )
 
-		LoadoutEntry characterSlot = Loadout_CharacterClass()
+		LoadoutEntry characterSlot = Loadout_Character()
 		if( LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 		{
 			ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )

@@ -439,7 +439,7 @@ void function InitCryptoMap()
 
 	#if CLIENT
 		// RUIs for hatch bunkers
-		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), CryptoTT_OnPlayerChangeLoadout )
+		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), CryptoTT_OnPlayerChangeLoadout )
 
 		//if ( IsCanyonlandsBunkersEnabled() )//active this back later when bunkers fixed - kral
 		/*{

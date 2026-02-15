@@ -278,7 +278,7 @@ void function Chroma_SkyDiveUpdate()
 			Chroma_RemovePersistentOverlay( overlay, CHROMATRANS_CONELEFT + idx, SkyDiveLayerTransitionTime )
 	})
 
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 
 	Chroma_SetBaseLayer( CHROMALOOP_SMOOTHNOISE, CHROMATRANS_FLAGS, {[0.0] = <0,0,0>}, 2.0 )
 
@@ -710,7 +710,7 @@ void function Chroma_ViewPlayerChanged( entity player )
 void function Chroma_UltimateReady()
 {
 	entity player              = GetLocalViewPlayer()
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 
 	if ( !LoadoutSlot_IsReady( ToEHI( player ), characterSlot ) )
 		return
@@ -852,7 +852,7 @@ void function Chroma_PlayerUsedAbility( entity player, entity offhandWeapon )
 		return
 	}
 
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 	if ( !LoadoutSlot_IsReady( ToEHI( player ), characterSlot ) )
 		return
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), characterSlot )

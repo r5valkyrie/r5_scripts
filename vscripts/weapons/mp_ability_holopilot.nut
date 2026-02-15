@@ -285,7 +285,7 @@ bool function ClientCommand_ToggleDecoys( entity player, array<string> args )
 
 	entity weapon = player.GetOffhandWeapon( OFFHAND_TACTICAL )
 	asset modelName = $""
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor skin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterSkin( character ) )
 
 	if ( !IsValid( weapon ) )
@@ -318,7 +318,7 @@ void function CreateHoloPilotDecoys( entity player, int numberOfDecoysToMake = 1
 	bool isUltimate = numberOfDecoysToMake > 1
 
 	asset modelName = $""
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor skin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterSkin( character ) )
 
 	vector eyePos = player.EyePosition()

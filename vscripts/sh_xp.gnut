@@ -208,7 +208,7 @@ void function XP_GameStartedPlaying()
 	// Current character class being used (so XP gets added to this character, and EOG knows what you used)
 	foreach( entity player in GetPlayerArray() )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		player.SetPersistentVar( "characterForXP", ItemFlavor_GetGUIDString( character ) )
 	}
 }

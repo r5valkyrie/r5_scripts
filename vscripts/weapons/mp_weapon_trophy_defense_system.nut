@@ -266,7 +266,7 @@ var function OnWeaponPrimaryAttack_weapon_trophy_defense_system( entity weapon, 
 	if( !IsValid( ownerPlayer ) || !ownerPlayer.IsPlayer() )
 		return
 	
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ownerPlayer ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ownerPlayer ), Loadout_Character() )
 	string charRef = ItemFlavor_GetHumanReadableRef( character )
 
 	if( charRef == "character_wattson")

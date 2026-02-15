@@ -201,7 +201,7 @@ void function FiringRangeGameMode_Init()
 		AddCallback_EntitiesDidLoad( OnEntitiesDidLoad )
 		AddCallback_OnClientConnected( WaitForPlayerSpawn )
 		AddCallback_OnPlayerKilled( OnPlayerKilled )
-		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnTeammateLoadoutSelectionChanged, false )
+		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnTeammateLoadoutSelectionChanged, false )
 		AddClientCommandCallback( "firingrange_toggle_friendlyfire", ClientCommand_ToggleFriendlyFire )
 
 		firingrange_infinite_ammo = GetCurrentPlaylistVarBool( "survival_infinite_ammo", false ) ? 1 : 2

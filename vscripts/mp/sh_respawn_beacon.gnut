@@ -624,7 +624,7 @@ void function RespawnDNA_SetCharacterIcon( entity ent, var rui, string argName )
 
 	owner.EndSignal( "OnDestroy" )
 
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( owner ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( owner ), Loadout_Character() )
 
 	asset setFile = CharacterClass_GetSetFile( character )
 	asset icon = GetGlobalSettingsAsset( setFile, "unitframe_icon" )
@@ -1260,8 +1260,6 @@ void function RespawnBeacon_PutPlayerInDropship( entity player, entity ship, int
 	GiveBasicSurvivalItems( player )
 
 	FallTempAirControl( player )
-	
-	Remote_CallFunction_ByRef( player, "UpdateRUITest" )
 	
 	if(!IsValid(player)) 
 		return

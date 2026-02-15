@@ -354,7 +354,7 @@ bool function PlayerShouldSeeSurveyBeaconMarkers( entity player )
 		if ( IsAlive( player ) )
 			return player.HasPassive( ePassives.PAS_PATHFINDER )
 
-		LoadoutEntry characterSlot = Loadout_CharacterClass()
+		LoadoutEntry characterSlot = Loadout_Character()
 		if ( !LoadoutSlot_IsReady( ToEHI( player ), characterSlot ) )
 			return false
 

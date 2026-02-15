@@ -404,12 +404,12 @@ void function _OpenCharacterSelectNewMenu_AimTrainer( var menu )
 
 	thread UpdateSceneThink_AimTrainer()
 	
-	fileLevel.desiredCharacterOrNull = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+	fileLevel.desiredCharacterOrNull = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 	SetMenuState( eNewCharacterSelectMenuState.LOCKED )
 	
 	if ( fileLevel.isBrowseMode )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 		int buttonIndex = GetButtonIndexForCharacter( character )
 		if ( buttonIndex >= 0)
 		{
@@ -420,7 +420,7 @@ void function _OpenCharacterSelectNewMenu_AimTrainer( var menu )
 	{
 		if ( Gamemode() == eGamemodes.WINTEREXPRESS )
 		{
-			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnTeammateLoadoutSelectionChanged, false )
+			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnTeammateLoadoutSelectionChanged, false )
 			foreach( ItemFlavor character in GetAllCharacters() )
 			{
 				LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
@@ -538,7 +538,7 @@ void function DoSquadCardsPresentation()
 
 		if ( teammate == GetLocalViewPlayer() )
 		{
-			LoadoutEntry characterSlot = Loadout_CharacterClass()
+			LoadoutEntry characterSlot = Loadout_Character()
 			ItemFlavor character       = LoadoutSlot_GetItemFlavor( ToEHI( teammate ), characterSlot )
 			SetChromaCharacter( character )
 		}
@@ -638,7 +638,7 @@ void function IntroSquadSequence( int team, bool animOnlyChampion = false, float
 	entity clientPlayer = GetLocalClientPlayer()
 
 	asset defaultModel                = GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
-	LoadoutEntry loadoutSlotCharacter = Loadout_CharacterClass()
+	LoadoutEntry loadoutSlotCharacter = Loadout_Character()
 	vector characterAngles            = < squadIntroSequenceAngles.x / 2.0, squadIntroSequenceAngles.y, squadIntroSequenceAngles.z >
 
 	VictoryPlatformModelData victoryPlatformModelData = GetVictorySequencePlatformModel()
@@ -850,7 +850,7 @@ void function DoAnimatedChampionSquadCardsPresentation()
 		}
 	)
 
-	PlayCharacterReadyUpLine( LoadoutSlot_GetItemFlavor( ToEHI( GetEntityFromEncodedEHandle( championEEH ) ), Loadout_CharacterClass() ) )
+	PlayCharacterReadyUpLine( LoadoutSlot_GetItemFlavor( ToEHI( GetEntityFromEncodedEHandle( championEEH ) ), Loadout_Character() ) )
 
 	wait 1.5
 
@@ -1096,7 +1096,7 @@ void function _OpenCharacterSelectNewMenu( var menu )
 				Assert( teammatePickingIndex != fileLevel.localClientLockstepIndex )
 		}
 
-		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnTeammateLoadoutSelectionChanged, false )
+		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnTeammateLoadoutSelectionChanged, false )
 		foreach( ItemFlavor character in GetAllCharacters() )
 		{
 			LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
@@ -1106,7 +1106,7 @@ void function _OpenCharacterSelectNewMenu( var menu )
 
 	if ( fileLevel.isBrowseMode )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 		int buttonIndex = GetButtonIndexForCharacter( character )
 		if ( buttonIndex >= 0)
 		{
@@ -1223,7 +1223,7 @@ void function UpdateMenuButtons()
 		if ( !ItemFlavor_ShouldBeVisible( itemFlav, null, GetConVarInt( "mtx_svEdition" ) ) )
 			continue
 
-		bool isAvailable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), itemFlav, true )
+		bool isAvailable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), itemFlav, true )
 		bool isOwned     = GRX_IsItemOwnedByPlayer_AllowOutOfDateData( itemFlav, GetLocalClientPlayer() )
 
 		int playlistOpinion = ItemFlavor_GetPlaylistOpinion( itemFlav )
@@ -1451,7 +1451,7 @@ void function CloseCharacterSelectNewMenu_AimTrainer()
 }
 void function OnCharacterSelectNewMenuClosed_RemoveCallbacks()
 {
-	RemoveCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnTeammateLoadoutSelectionChanged, false )
+	RemoveCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnTeammateLoadoutSelectionChanged, false )
 	foreach( ItemFlavor character in GetAllCharacters() )
 	{
 		LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
@@ -1965,7 +1965,7 @@ void function OnLoadoutButton_Activate_AimTrainer( var button )
 		if ( fileLevel.isBrowseMode )
 		{
 			entity player = GetLocalClientPlayer()
-			ItemFlavor currentCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor currentCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 			if ( character == currentCharacter )
 			{
 				EmitSoundOnEntity( player, "ui_menu_back" )
@@ -1982,7 +1982,7 @@ void function OnLoadoutButton_Activate_AimTrainer( var button )
 	}
 
 	// // Request this character
-	RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character )
+	RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_Character(), character )
 
 	// Close the menu if we are in browse mode
 	// if ( fileLevel.isBrowseMode )
@@ -2025,7 +2025,7 @@ void function OnLoadoutButton_Activate( var button )
 	if ( fileLevel.isBrowseMode )
 	{
 		entity player = GetLocalClientPlayer()
-		ItemFlavor currentCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor currentCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		if ( character == currentCharacter )
 		{
 			EmitSoundOnEntity( player, "ui_menu_back" )
@@ -2040,7 +2040,7 @@ void function OnLoadoutButton_Activate( var button )
 		return
 
 	// Request this character
-	RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character )
+	RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_Character(), character )
 
 	// Close the menu if we are in browse mode
 	if ( fileLevel.isBrowseMode )
@@ -2174,7 +2174,7 @@ void function OnLockStepPickIndexChanged( entity player, int old, int new, bool 
 	if ( pickingPlayer != null )
 	{
 		expect entity( pickingPlayer )
-		LoadoutEntry characterSlot = Loadout_CharacterClass()
+		LoadoutEntry characterSlot = Loadout_Character()
 		EHI pickingPlayerEHI       = ToEHI( pickingPlayer )
 		if ( LoadoutSlot_IsReady( pickingPlayerEHI, characterSlot ) )
 		{
@@ -2230,7 +2230,7 @@ void function OnPlayerUpdatedCharacterLock( entity player, bool wasLocked, bool 
 		// Player locked a character
 
 		// Get locked character
-		LoadoutEntry characterSlot = Loadout_CharacterClass()
+		LoadoutEntry characterSlot = Loadout_Character()
 		if ( !LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 			return
 		ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
@@ -2299,7 +2299,7 @@ void function OnPlayerUpdatedCharacterFocus( entity player, int oldFocusIndex, i
 	/*
 	// Get character
 	EHI playerEHI = ToEHI( player )
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 	if ( !LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 		return
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
@@ -2369,7 +2369,7 @@ void function OnTeammateLoadoutSelectionChanged( EHI playerEHI, ItemFlavor unuse
 		return
 
 	// Get character
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 	if ( !LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 		return
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
@@ -2513,7 +2513,7 @@ void function UpdateButtonStates()
 	}
 
 	// Update player footer RUIs
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 	for ( int i = 0 ; i < fileLevel.ruiPlayerBarRuis.len() ; i++ )
 	{
 		var playerRui = fileLevel.ruiPlayerBarRuis[i]
@@ -3365,11 +3365,11 @@ bool function CharacterSelect_AssignCharacter( entity player, ItemFlavor charact
 {
 	TakeAllPassives( player )
 	
-	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	
 	if ( updateLoadoutSlot && ItemFlavor_GetHumanReadableRef( playerCharacter ) != ItemFlavor_GetHumanReadableRef( character ) )
 	{
-		SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), character )
+		SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), character )
 		#if DEVELOPER
 			printt( "AssignCharacter: player", player, "is now", ItemFlavor_GetHumanReadableRef( character ) )
 		#endif
@@ -3643,7 +3643,7 @@ bool function ClientCommand_UpdateCharacterSelectFocus( entity player, array<str
 
 	if ( player.GetPlayerNetBool( "hasLockedInCharacter" ) == true )
 	{
-		LoadoutEntry characterSlot = Loadout_CharacterClass()
+		LoadoutEntry characterSlot = Loadout_Character()
 		EHI playerEHI              = ToEHI( player )
 		if ( LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 		{
@@ -3796,7 +3796,7 @@ bool function PlayerHasCharacterLockedInOrFocused( entity player, ItemFlavor cha
 
 bool function PlayerHasCharacterLockedIn( entity player, ItemFlavor character )
 {
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 
 	// player doens't have any character locked in
 	if ( !player.GetPlayerNetBool( "hasLockedInCharacter" ) && Gamemode() != eGamemodes.WINTEREXPRESS )
@@ -3949,7 +3949,7 @@ void function FlashScreenWhite( float holdTime = 0.5, float fadeOutDuration = 0.
 void function UpdateCharacterDetailsMenu( var detailsRui, ItemFlavor character, bool showCharacterName )
 {
 	RuiSetGameTime( detailsRui, "initTime", Time() )
-	if ( LoadoutSlot_IsReady( ToEHI( GetLocalClientPlayer() ), Loadout_CharacterClass() ) )
+	if ( LoadoutSlot_IsReady( ToEHI( GetLocalClientPlayer() ), Loadout_Character() ) )
 	{
 		CharacterHudUltimateColorData colorData = CharacterClass_GetHudUltimateColorData( character )
 		RuiSetColorAlpha( detailsRui, "ultimateColor", SrgbToLinear( colorData.ultimateColor ), 1 )
@@ -4024,7 +4024,7 @@ bool function FS_ShouldShowCustomCharacterSelect()
 entity ornull function GetPlayerWithLockedCharacter( ItemFlavor character, array<entity> players )
 {
 	// Return what player has the specified character locked, or null if nobody
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 	foreach( entity player in players )
 	{
 		// player doesn't have a character locked in

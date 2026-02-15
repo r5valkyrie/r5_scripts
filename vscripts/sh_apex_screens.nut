@@ -567,7 +567,7 @@ void function ApexScreenMasterThink()
 				array<entity> allPlayers = GetPlayerArray()
 				if ( allPlayers.len() == 0 )
 					continue
-				LoadoutEntry characterSlot = Loadout_CharacterClass()
+				LoadoutEntry characterSlot = Loadout_Character()
 
 				array<EncodedEHandle> randomPlayerOrNullList
 				table<ItemFlavor, bool> chosenCharacterSet
@@ -1164,7 +1164,7 @@ void function UpdateScreenDetails( ApexScreenState screen, int transitionStyle, 
 
 	//if ( screen.floatingRui != null )
 	//{
-	//	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterClass() )
+	//	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
 	//
 	//	// todo(dw): aaaaaaaaa
 	//	// todo(dw): aaaaaaaaa

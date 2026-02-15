@@ -2400,7 +2400,7 @@ void function Arenas_PopulateSquadmateWeapons( var rui, entity player )
 void function Arenas_PopulatePlayerLoadouts( var playerRui, array<var> squadmateRuis )
 {
 	entity player = GetLocalClientPlayer()
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
 	RuiSetBool( playerRui, "show", true )
 	RuiSetBool( playerRui, "isLocalPlayer", true )
@@ -2423,7 +2423,7 @@ void function Arenas_PopulatePlayerLoadouts( var playerRui, array<var> squadmate
 			continue
 		}
 
-		character = LoadoutSlot_GetItemFlavor( ToEHI( squadmateArray[i] ), Loadout_CharacterClass() )
+		character = LoadoutSlot_GetItemFlavor( ToEHI( squadmateArray[i] ), Loadout_Character() )
 
 		RuiSetBool( squadmateRuis[i], "show", true )
 		RuiSetBool( squadmateRuis[i], "isLocalPlayer", false )
@@ -2761,7 +2761,7 @@ void function PupulateGamestate_WaitForFullyConnected( entity player )
 	EHI playerEHI = ToEHI( player )
 	while ( !EHIHasValidScriptStruct( playerEHI ) )
 		WaitFrame()
-	LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterClass() )
+	LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_Character() )
 
 	PupulateGamestatePlayerData()
 }

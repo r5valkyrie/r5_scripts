@@ -70,7 +70,7 @@ var function OnWeaponPrimaryAttack_care_package_medic( entity weapon, WeaponPrim
 			fx, "droppod_loot_drop_lifeline",
 			ownerPlayer, weapon.GetWeaponClassName()
 		)
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ownerPlayer ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ownerPlayer ), Loadout_Character() )
 		string charRef = ItemFlavor_GetHumanReadableRef( character )
 
 		if( charRef == "character_lifeline")

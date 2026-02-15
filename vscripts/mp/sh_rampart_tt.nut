@@ -946,7 +946,7 @@ string function MirageOnly_UseTextOverride( entity loreEnt )
 		return ""
 	}
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	if ( characterRef != "character_mirage" )
 	{
@@ -966,7 +966,7 @@ string function RampartOnly_UseTextOverride( entity loreEnt )
 		return ""
 	}
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	if ( characterRef != "character_rampart" )
 	{
@@ -980,7 +980,7 @@ string function RampartOnly_UseTextOverride( entity loreEnt )
 #if SERVER
 void function Lore_OnUse( entity loreEnt, entity playerUser, int useInputFlags )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( playerUser ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( playerUser ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	string dialogueLine
 
@@ -1038,7 +1038,7 @@ entity function CreateVendShieldWall( entity shieldTarget )
 bool function CheckRampartTTMuralLegends( entity player )
 {
 	//CHECK YOUR CHARACTER AGAINST VALID S10 LEGENDS
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string playerChar  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	foreach ( validChar in RAMPART_TT_S10_MURAL_LEGENDS )
 	{

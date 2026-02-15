@@ -781,7 +781,7 @@ string function GetObsfuscatedName( EHI playerEHI )
 		int randomAppend = RandomIntRange( 1000, 9999 )
 		string obsName   = ""
 
-		LoadoutEntry characterSlot = Loadout_CharacterClass()
+		LoadoutEntry characterSlot = Loadout_Character()
 		if ( GetGameState() >= eGameState.Playing && LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 		{
 			ItemFlavor ornull characterOrNull = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )

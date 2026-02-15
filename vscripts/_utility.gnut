@@ -6405,9 +6405,9 @@ void function StoreAllChargeForPlayer( entity victim, entity attacker, var attac
 void function StoreChargeForPlayer( entity victim, int type)
 {
 	if ( victim in file.playerChargeValidation )
-		file.playerChargeValidation[victim] = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_CharacterClass() )
+		file.playerChargeValidation[victim] = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_Character() )
 	else
-		file.playerChargeValidation[victim] <- LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_CharacterClass() )
+		file.playerChargeValidation[victim] <- LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_Character() )
 
 	if ( type & eChargeStorageType.Ultimate )
 	{
@@ -6456,7 +6456,7 @@ void function RestoreChargesForPlayer( entity player )
 	if ( !IsAlive( player ) )
 		return
 
-	if ( player in file.playerChargeValidation && LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() ) == file.playerChargeValidation[player] )
+	if ( player in file.playerChargeValidation && LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) == file.playerChargeValidation[player] )
 	{
 		if ( player in file.playerToStoredUltimateCharge )
 		{

@@ -484,12 +484,12 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 
 			results.append( MakeOption_CommsAction( eCommsAction.QUICKCHAT_CELEBRATE ) )
 
-			if ( !LoadoutSlot_IsReady( playerEHI, Loadout_CharacterClass() ) )
+			if ( !LoadoutSlot_IsReady( playerEHI, Loadout_Character() ) )
 			{
 				break
 			}
 
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
 			ItemFlavor ornull emptyQuip
 			int quipsInWheel
 			for ( int i=0; i<MAX_QUIPS_EQUIPPED; i++ )
@@ -722,7 +722,7 @@ var function GetRuiForMenuOption( var mainRui, int index )
 	{
 		case eOptionType.QUIP:
 			ItemFlavor data = expect ItemFlavor( op.emote )
-			LoadoutEntry characterSlot = Loadout_CharacterClass()
+			LoadoutEntry characterSlot = Loadout_Character()
 			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), characterSlot )
 			return CreateNestedRuiForQuip( mainRui, "iconHandle"+index, LocalClientEHI(), data, character )
 	}

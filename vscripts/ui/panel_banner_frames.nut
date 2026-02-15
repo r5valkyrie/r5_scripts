@@ -107,7 +107,7 @@ bool function ShouldDisplayFrame( ItemFlavor frame )
 {
 	if ( GladiatorCardFrame_ShouldHideIfLocked( frame ) )
 	{
-		if ( !IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), frame ) )
+		if ( !IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), frame ) )
 			return false
 	}
 

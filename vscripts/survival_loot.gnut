@@ -3271,7 +3271,7 @@ entity function SURVIVAL_CreateDeathBox( entity player, bool hasCard )
 
 		// EHI playerEHI = ToEHI( player )
 
-		// LoadoutEntry characterLoadoutEntry = Loadout_CharacterClass()
+		// LoadoutEntry characterLoadoutEntry = Loadout_Character()
 		// ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterLoadoutEntry )
 		// box.SetNetInt( "characterIndex", ConvertItemFlavorToLoadoutSlotContentsIndex( characterLoadoutEntry, character ) )
 
@@ -4988,7 +4988,7 @@ void function VaultKey_Decrement( entity player, string ref, int count )
 
 string function Survival_GetOffhandMeleeWeaponName( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
 	asset meleeWeaponAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( meleeSkin ), "parentItemFlavor" ) // fixme Café
 	ItemFlavor meleeWeapon = GetItemFlavorByAsset( meleeWeaponAsset )
@@ -4998,7 +4998,7 @@ string function Survival_GetOffhandMeleeWeaponName( entity player )
 
 string function Survival_GetMeleeWeaponName( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
 	asset meleeWeaponAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( meleeSkin ), "parentItemFlavor" )
 	ItemFlavor meleeWeapon = GetItemFlavorByAsset( meleeWeaponAsset )

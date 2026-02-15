@@ -1534,7 +1534,7 @@ void function GiveBackWeapons(entity player)
 		}
 		else
 		{
-			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 			ItemFlavor ultiamteAbility = CharacterClass_GetUltimateAbility( character )
 			ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
 			player.GiveOffhandWeapon(CharacterAbility_GetWeaponClassname(tacticalAbility), OFFHAND_TACTICAL, [] )

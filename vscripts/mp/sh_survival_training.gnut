@@ -257,7 +257,7 @@ void function Training_OnPlayerRespawned( entity player )
 		return
 		
 	ItemFlavor lifeLineCharacter = GetItemFlavorByAsset( CHARACTER_ASSET_LIFELINE )
-	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), lifeLineCharacter )
+	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), lifeLineCharacter )
 
 	printt( "Training: Training_OnPlayerRespawned", player )
 
@@ -296,7 +296,7 @@ void function PlayerStartsTraining( entity player )
 
 	// Force player to be Lifeline for training
 	ItemFlavor lifeLineCharacter = GetItemFlavorByAsset( CHARACTER_ASSET_LIFELINE )
-	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), lifeLineCharacter )
+	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), lifeLineCharacter )
 
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 
@@ -391,7 +391,7 @@ void function PlayerStartsTraining( entity player )
 	player.TakeOffhandWeapon( OFFHAND_ULTIMATE )
 
 	// Loadout meleeskin
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor meleeSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_MeleeSkin( character ) )
 	player.GiveWeapon( MeleeSkin_GetMainWeaponClassname( meleeSkin ), WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
 	player.GiveOffhandWeapon( MeleeSkin_GetOffhandWeaponClassname( meleeSkin ), OFFHAND_MELEE, [] )

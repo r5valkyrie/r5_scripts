@@ -377,7 +377,7 @@ ItemFlavor function GetItemFlavorForCommunityUserInfo( CommunityUserInfo userInf
 	LoadoutEntry entry
 	if ( itemType == eItemType.character )
 	{
-		entry = Loadout_CharacterClass()
+		entry = Loadout_Character()
 	}
 	else
 	{

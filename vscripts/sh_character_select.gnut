@@ -53,9 +53,9 @@ bool function Survival_DoesTeamHaveCharacter( int team, ItemFlavor checkCharacte
 		if ( !Survival_HasPlayerLockedInCharacter( teammateEHI ) )
 			continue
 
-		if ( LoadoutSlot_IsReady( teammateEHI, Loadout_CharacterClass() ) )
+		if ( LoadoutSlot_IsReady( teammateEHI, Loadout_Character() ) )
 		{
-			if ( LoadoutSlot_GetItemFlavor( teammateEHI, Loadout_CharacterClass() ) == checkCharacter )
+			if ( LoadoutSlot_GetItemFlavor( teammateEHI, Loadout_Character() ) == checkCharacter )
 				return true
 		}
 	}

@@ -596,7 +596,7 @@ void function ShowScoreboardMP()
 
 				RuiSetString( rui, "playerName", name )
 
-				ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+				ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 				asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 				RuiSetImage( rui, "playerCard", classIcon )
 

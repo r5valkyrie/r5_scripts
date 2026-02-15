@@ -130,7 +130,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		entry.isSlotLocked = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
-		entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		entry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
 		entry.networkVarName = "CharacterSkin"
 		#if CLIENT
@@ -161,7 +161,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		entry.isSlotLocked = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
-		entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		entry.networkTo = eLoadoutNetworking.PLAYER_EXCLUSIVE
 		fileLevel.loadoutCharacterExecutionSlotMap[characterClass] <- entry
 	}
@@ -185,7 +185,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		entry.isSlotLocked = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
-		entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		entry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
 		entry.networkVarName = "IntroQuip"
 		fileLevel.loadoutCharacterIntroQuipSlotMap[characterClass] <- entry
@@ -209,7 +209,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		entry.isSlotLocked = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
-		entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		entry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
 		entry.networkVarName = "KillQuip"
 		fileLevel.loadoutCharacterKillQuipSlotMap[characterClass] <- entry
@@ -256,7 +256,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 
 
 #endif
-			entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+			entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 			entry.networkTo = eLoadoutNetworking.PLAYER_EXCLUSIVE
 			fileLevel.loadoutCharacterSkydiveEmoteSlotMap[characterClass].append( entry )
 		}
@@ -331,7 +331,7 @@ void function PlayIntroQuipThread( entity emitter, EHI playerEHI, entity excepti
 		Timeout timeout = BeginTimeout( 4.0 )
 		EndSignal( timeout, "Timeout" )
 	#endif
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_Character() )
 	ItemFlavor quip      = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterIntroQuip( character ) )
 	#if CLIENT
 		CancelTimeoutIfAlive( timeout )
@@ -354,7 +354,7 @@ void function PlayKillQuipThread( entity emitter, EHI playerEHI, entity exceptio
 		Timeout timeout = BeginTimeout( 4.0 )
 		EndSignal( timeout, "Timeout" )
 	#endif
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_Character() )
 	ItemFlavor quip      = LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterKillQuip( character ) )
 	#if CLIENT
 		CancelTimeoutIfAlive( timeout )
@@ -457,7 +457,7 @@ void function CharacterSkin_Apply( entity ent, ItemFlavor skin )
 #if SERVER || CLIENT
 void function CharacterSkin_WaitForAndApplyFromLoadout( entity player, entity targetEnt )
 {
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	if ( !IsValid( player ) || !IsValid( targetEnt ) )
 		return
 
@@ -702,9 +702,9 @@ table<int, ItemFlavor> function GetValidPlayerSkydiveEmotes( entity player )
 
 ItemFlavor function GetPlayerSkydiveEmote( entity player, int index )
 {
-	if ( LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterClass() ) )
+	if ( LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() ) )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		if ( LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterSkydiveEmote( character, index ) ) )
 		{
 			return LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterSkydiveEmote( character, index ) )

@@ -1113,7 +1113,7 @@ void function SetupChangeSurvivalCharacterClass()
 		foreach( ItemFlavor character in characters )
 		{
 			SetupDevFunc( Localize( ItemFlavor_GetLongName( character ) ), void function( var unused ) : ( character ) {
-				DEV_RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character )
+				DEV_RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_Character(), character )
 			} )
 		}
 	#endif

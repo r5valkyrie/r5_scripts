@@ -137,7 +137,7 @@ var function OnWeaponPrimaryAttack_weapon_zipline( entity weapon, WeaponPrimaryA
 
 			PlayerUsedOffhand( weaponOwner, weapon, true, projectile )
 
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( weaponOwner ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( weaponOwner ), Loadout_Character() )
 			string charRef = ItemFlavor_GetHumanReadableRef( character )
 
 			if( charRef == "character_pathfinder")

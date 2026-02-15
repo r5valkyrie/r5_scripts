@@ -68,7 +68,7 @@ void function SetLabAccessPanelUsable ( entity panel )
 
 void function OnLabAccessPanelUse( entity panel, entity playerUser, int useInputFlags )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( playerUser ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( playerUser ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	if ( characterRef != "character_caustic" && characterRef != "character_wattson" )
 	{
@@ -106,7 +106,7 @@ string function OnLabAccessTextOverride( entity ent )
 		return ""
 	}
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 	if ( characterRef != "character_caustic" && characterRef != "character_wattson" )
 	{

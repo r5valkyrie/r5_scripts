@@ -714,7 +714,7 @@ void function Haunt( entity owner, entity weapon, array<entity> victimList )
 		vector moveToDir = Normalize( moveToPos - decoyPos )
 		moveToPos = decoyPos + 5000.0 * moveToDir
 
-		ItemFlavor character = GetUnlockedItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterClass() ).getrandom()
+		ItemFlavor character = GetUnlockedItemFlavorsForLoadoutSlot( EHI_null, Loadout_Character() ).getrandom()
 		ItemFlavor skin      = GetUnlockedItemFlavorsForLoadoutSlot( ToEHI( owner ), Loadout_CharacterSkin( character ) ).getrandom()
 
 		asset modelName = CharacterSkin_GetBodyModel( skin )

@@ -249,7 +249,7 @@ bool function IsLegDamage( entity ent, var damageInfo )
 
 	if ( ent.IsPlayer() )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ent ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ent ), Loadout_Character() )
 		if ( CharacterClass_ConsiderLegHitBoxAsTorso( character, DamageInfo_GetHitBox( damageInfo ) ) )
 			return false
 	}

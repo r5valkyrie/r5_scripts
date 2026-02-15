@@ -1644,8 +1644,8 @@ void function UpdateValkFlightRui( entity player, bool isInAir )
 {
 	/*#if CLIENT
 		bool isValk = false
-		if ( LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterClass() ) )
-			isValk = ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() ) ) == $"settings/itemflav/character/valkyrie.rpak"
+		if ( LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() ) )
+			isValk = ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) ) == $"settings/itemflav/character/valkyrie.rpak"
 
 		bool showValkRui = isInAir && isValk
 

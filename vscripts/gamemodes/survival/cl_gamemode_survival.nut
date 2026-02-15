@@ -419,7 +419,7 @@ void function ClGamemodeSurvival_Init()
 
 	AddFirstPersonSpectateStartedCallback( OnFirstPersonSpectateStarted )
 	AddCallback_OnViewPlayerChanged( OnViewPlayerChanged )
-	AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnPlayerLoadoutChanged )
+	AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnPlayerLoadoutChanged )
 	AddCallback_OnPlayerConsumableInventoryChanged( UpdateDpadHud )
 
 	AddClientCallback_OnResolutionChanged( OnResolutionChanged_FixRuiSize )
@@ -996,7 +996,7 @@ void function SURVIVAL_PopulatePlayerInfoRui( entity player, var rui )
 		RuiTrackString( rui, "name", player, RUI_TRACK_PLAYER_NAME_STRING )
 		RuiTrackInt( rui, "micStatus", player, RUI_TRACK_MIC_STATUS )
 
-		ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 		asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 
 		RuiSetImage( rui, "playerIcon", classIcon )
@@ -1021,7 +1021,7 @@ void function SURVIVAL_PopulatePlayerInfoRui( entity player, var rui )
 	RuiTrackString( rui, "name", player, RUI_TRACK_PLAYER_NAME_STRING )
 	RuiTrackInt( rui, "micStatus", player, RUI_TRACK_MIC_STATUS )
 
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 
 	RuiSetImage( rui, "playerIcon", classIcon )
@@ -1114,7 +1114,7 @@ void function ClearCustomPlayerInfoCharacterIcon(entity player)
 	if ( player in file.customCharacterIcon )
 	{
 		delete file.customCharacterIcon[player]
-		ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 		asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 		RuiSetImage( file.pilotRui, "playerIcon", classIcon )
 	}
@@ -3024,7 +3024,7 @@ void function Survival_OnPlayerClassChanged( entity player )
 			ResetInventoryMenu( player )
 		}
 
-		bool isReady = LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterClass() )
+		bool isReady = LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() )
 		if ( isReady )
 		{
 			thread InitSurvivalHealthBar()
@@ -4812,7 +4812,7 @@ void function ShowVictorySequence( bool placementMode = false )
 		// DM_HintCatalog( 5, null )
 
 	asset defaultModel                = GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
-	LoadoutEntry loadoutSlotCharacter = Loadout_CharacterClass()
+	LoadoutEntry loadoutSlotCharacter = Loadout_Character()
 	vector characterAngles            = < file.victorySequenceAngles.x / 2.0, file.victorySequenceAngles.y, file.victorySequenceAngles.z >
 
 	array<entity> cleanupEnts
@@ -5494,7 +5494,7 @@ void function OnPlayerMatchStateChanged( entity player, int oldState, int newSta
 void function UICallback_UpdateCharacterDetailsPanel( var ruiPanel )
 {
 	var rui              = Hud_GetRui( ruiPanel )
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( GetLocalClientPlayer() ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( GetLocalClientPlayer() ), Loadout_Character() )
 	UpdateCharacterDetailsMenu( rui, character, true )
 }
 

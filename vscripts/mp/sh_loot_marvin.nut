@@ -586,7 +586,7 @@ void function OnUseStoryMarvin_Thread( entity marvin, entity playerUser )
 #if SERVER || CLIENT
 bool function IsPlayerPathfinder( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 
 	if ( characterRef != "character_pathfinder" )

@@ -1148,7 +1148,7 @@ void function GladCardDebug()
 {
 	printt( "GladCard:" )
 
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), characterSlot )
 
@@ -1311,7 +1311,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		entry.isSlotLocked = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
-		entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		entry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
 		entry.networkVarName = "GladiatorCardFrame"
 		#if CLIENT
@@ -1337,7 +1337,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		entry.isSlotLocked = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
-		entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		entry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
 		entry.networkVarName = "GladiatorCardStance"
 		#if CLIENT
@@ -1400,7 +1400,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		entry.isSlotLocked = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
-		entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		entry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
 		entry.networkVarName = "GladiatorCardBadge" + badgeIndex
 		#if CLIENT
@@ -1423,7 +1423,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		tierEntry.maxInteger = INT_MAX
 		tierEntry.defaultInteger = 0
 		//tierEntry.TEMP_doNotValidateLocking = true
-		tierEntry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		tierEntry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		tierEntry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
 		tierEntry.networkVarName = "GladiatorCardBadge" + badgeIndex + "Tier"
 		#if CLIENT
@@ -1478,7 +1478,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		entry.isSlotLocked = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
-		entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		entry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
 		entry.networkVarName = "GladiatorCardTracker" + trackerIndex
 		#if CLIENT
@@ -1495,7 +1495,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 		valueEntry.maxInteger = INT_MAX
 		valueEntry.defaultInteger = 0
 		//valueEntry.TEMP_doNotValidateLocking = true
-		valueEntry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		valueEntry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		valueEntry.networkTo = eLoadoutNetworking.PLAYER_GLOBAL
 		valueEntry.networkVarName = "GladiatorCardTracker" + trackerIndex + "Value"
 		#if CLIENT
@@ -1558,7 +1558,7 @@ void function ManageGladiatorCardBadgeState( EHI playerEHI, int badgeIndex, Item
 {
 	// We need to update the player's appropriate badge tier loadout slot with the data for their newly selected badge.
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
 	LoadoutEntry entry   = Loadout_GladiatorCardBadgeTier( character, badgeIndex )
 
 	int tier = GetPlayerBadgeDataInteger( playerEHI, badge, badgeIndex, character )
@@ -1833,7 +1833,7 @@ void function ActualUpdateNestedGladiatorCard( NestedGladiatorCardHandle handle 
 		if ( handle.overrideCharacter != null )
 			characterOrNull = handle.overrideCharacter
 
-		LoadoutEntry characterSlot = Loadout_CharacterClass()
+		LoadoutEntry characterSlot = Loadout_Character()
 		if ( characterOrNull == null && havePlayer && LoadoutSlot_IsReady( handle.currentOwnerEHI, characterSlot ) && !Flowstate_IsHaloMode() )
 			characterOrNull = LoadoutSlot_GetItemFlavor( handle.currentOwnerEHI, characterSlot )
 		else if ( Flowstate_IsHaloMode() )

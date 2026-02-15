@@ -2884,9 +2884,9 @@ asset function Ping_IconForPing_Hud( entity player, int pingType, entity pingedE
 
 		case ePingType.BLEEDOUT:
 		case ePingType.RESPAWN_BANNER:
-			if ( LoadoutSlot_IsReady( ToEHI( owner ), Loadout_CharacterClass() ) )
+			if ( LoadoutSlot_IsReady( ToEHI( owner ), Loadout_Character() ) )
 			{
-				ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( owner ), Loadout_CharacterClass() )
+				ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( owner ), Loadout_Character() )
 				return CharacterClass_GetGalleryPortrait( character )
 			}
 

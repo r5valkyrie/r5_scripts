@@ -59,8 +59,8 @@ string function Loba_EditUALootDesc( string lootRef, entity player, string origi
 	// (Also, we can't use PlayerHasPassive here because it's not available in the UI VM.)
 	if ( lootRef == "health_pickup_ultimate"
 			&& IsValid( player )
-			&& LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterClass() )
-			&& ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() ) ) == $"settings/itemflav/character/loba.rpak" )
+			&& LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() )
+			&& ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) ) == $"settings/itemflav/character/loba.rpak" )
 	{
 		finalDesc = Localize( "#SURVIVAL_PICKUP_HEALTH_ULTIMATE_HINT_LOBA" )
 	}

@@ -922,9 +922,9 @@ void function PreviewFriendCosmetics( bool isForLocalPlayer, CommunityUserInfo o
 
 	if ( isForLocalPlayer )
 	{
-		if ( LoadoutSlot_IsReady( LocalClientEHI(), Loadout_CharacterClass() ) )
+		if ( LoadoutSlot_IsReady( LocalClientEHI(), Loadout_Character() ) )
 		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 			if ( LoadoutSlot_IsReady( LocalClientEHI(), Loadout_CharacterIntroQuip( character ) ) )
 			{
 				ItemFlavor introQuip = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterIntroQuip( character ) )

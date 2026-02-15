@@ -40,7 +40,7 @@ void function CharacterSkillsDialog_OnOpen()
 	//printt( Time() )
 	EmitUISound( "UI_Menu_Legend_Details" )
 
-	if ( LoadoutSlot_IsReady( ToEHI( GetUIPlayer() ), Loadout_CharacterClass() ) )
+	if ( LoadoutSlot_IsReady( ToEHI( GetUIPlayer() ), Loadout_Character() ) )
 	{
 		CharacterHudUltimateColorData colorData = CharacterClass_GetHudUltimateColorData( file.character )
 		RuiSetColorAlpha( file.contentRui, "ultimateColor", SrgbToLinear( colorData.ultimateColor ), 1 )

@@ -3056,7 +3056,7 @@ array<LoadoutEntry> function EquipButton_GetItemLoadoutEntries( ItemFlavor item,
 			break
 
 		case eItemType.gladiator_card_badge:
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 
 			for ( int badgeIndex = 0; badgeIndex < GLADIATOR_CARDS_NUM_BADGES; badgeIndex++ )
 			{

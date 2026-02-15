@@ -194,7 +194,7 @@ void function SpawnBot( bool customModel = false, bool startSkydive = false, boo
 
 		entity player = newBot
 		CharacterSelect_AssignCharacter( ToEHI( player ), GetAllCharacters()[5] )
-		ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
 		player.SetPlayerSettingsWithMods( characterSetFile, [] )
 

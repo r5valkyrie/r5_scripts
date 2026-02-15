@@ -1633,7 +1633,7 @@ void function InitOffhandRui( var rui, entity player, entity weapon )
 
 	RuiSetInt( rui, "ammoMinToFire", weapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire ) )
 
-	ItemFlavor character                    = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character                    = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	CharacterHudUltimateColorData colorData = CharacterClass_GetHudUltimateColorData( character )
 
 	RuiSetColorAlpha( rui, "ultimateColor", SrgbToLinear( colorData.ultimateColor ), 1 )

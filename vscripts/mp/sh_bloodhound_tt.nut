@@ -1877,7 +1877,7 @@ bool function StoryProp_CanUse( entity playerUser, entity storyProp, int useFlag
 #if SERVER || CLIENT
 bool function IsPlayerBloodhound( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 
 	if ( characterRef != "character_bloodhound" )

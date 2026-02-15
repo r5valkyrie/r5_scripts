@@ -970,7 +970,7 @@ string function GetReviveAnimation_Victim( entity reviver, entity victim, bool e
 
 	if ( Bleedout_IsPlayerSelfReviving( victim ) )
 	{
-		ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( victim, Loadout_CharacterClass() )
+		ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( victim, Loadout_Character() )
 		asset setFile              = CharacterClass_GetSetFile( victimCharacter )
 		Assert( setFile == victim.GetPlayerSettings(), "Revive victim animation expected " + string( setFile ) + " but got " + string( victim.GetPlayerSettings() ) )
 
@@ -1329,7 +1329,7 @@ float function Bleedout_SetRevivedPlayerShields( entity reviver, entity target )
 {
 	int shieldsToGive = target.GetShieldHealth()
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( reviver ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( reviver ), Loadout_Character() )
 
 	if ( reviver.HasPassive( ePassives.PAS_GUARDIAN_ANGEL ) )
 		shieldsToGive = maxint( REVIVE_GUARDIAN_ANGEL_SHIELD_BONUS, target.GetShieldHealth() )
@@ -1499,7 +1499,7 @@ void function SetBodyGroupVisibilityForDragRevive( entity useTarget, bool visibl
 {
 	if ( IsValid( useTarget ) )
 	{
-		ItemFlavor useTargetCharacter = LoadoutSlot_GetItemFlavor( useTarget, Loadout_CharacterClass() )
+		ItemFlavor useTargetCharacter = LoadoutSlot_GetItemFlavor( useTarget, Loadout_Character() )
 		string characterName = ItemFlavor_GetHumanReadableRef( useTargetCharacter ).tolower()
 		string bodyGroup = ""
 

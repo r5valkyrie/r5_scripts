@@ -1189,7 +1189,7 @@ void function _Arenas_BindBuyButtonV2( entity player, var button, var rui, int i
 
 		if( item.ref == "tactical_upgrade" )
 		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 			ItemFlavor tac = CharacterClass_GetTacticalAbility( character )
 
 			td.titleText = Localize( ItemFlavor_GetShortName( tac ) )
@@ -1199,7 +1199,7 @@ void function _Arenas_BindBuyButtonV2( entity player, var button, var rui, int i
 
 		if( item.ref == "arenas_full_ultimate" )
 		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 			ItemFlavor ult = CharacterClass_GetUltimateAbility( character )
 
 			td.titleText = Localize( ItemFlavor_GetShortName( ult ) )
@@ -1209,7 +1209,7 @@ void function _Arenas_BindBuyButtonV2( entity player, var button, var rui, int i
 
 		if( item.ref == "buy_passive" )
 		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 			ItemFlavor pas = CharacterClass_GetPassiveAbility( character )
 
 			td.titleText = Localize( ItemFlavor_GetShortName( pas ) )
@@ -1272,7 +1272,7 @@ void function _Arenas_BindBuyButtonV2_PopulateInfoOnly( entity player, var butto
 
 		if( player != null )
 		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 			ItemFlavor ability
 
 			int slot = OFFHAND_TACTICAL
@@ -1319,7 +1319,7 @@ void function _Arenas_BindBuyButtonV2_PopulateInfoOnly( entity player, var butto
 
 		if( player != null )
 		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 			ItemFlavor ability   = CharacterClass_GetPassiveAbility( character )
 
 			RuiSetImage( rui, "iconImage", ItemFlavor_GetIcon( ability ) )
@@ -1384,7 +1384,7 @@ void function UICallback_Arenas_BindUtilityTitle( var button )
 	entity player = GetLocalClientPlayer()
 
 	var rui = Hud_GetRui( button )
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	asset icon = CharacterClass_GetGalleryPortrait( character )
 	RuiSetImage( rui, "characterIcon", icon )
 }
@@ -1827,7 +1827,7 @@ int function GetArenasStoreItemPurchaseLimit( entity player, string ref )
 		refToUse = GetOffhandWeaponRef( player, ref )
 	else if ( ref == "buy_passive" )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
 		ItemFlavor passive = CharacterClass_GetPassiveAbility( character )
 
@@ -1850,7 +1850,7 @@ int function GetArenasStoreItemCost( entity player, string ref )
 		refToUse = GetOffhandWeaponRef( player, ref )
 	else if ( ref == "buy_passive" )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
 		ItemFlavor passive = CharacterClass_GetPassiveAbility( character )
 
@@ -1873,7 +1873,7 @@ int function Arenas_GetItemCostByRef( entity player, string itemRef )
 		refToUse = GetOffhandWeaponRef( player, itemRef )
 	else if ( itemRef == "buy_passive" )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
 		ItemFlavor passive = CharacterClass_GetPassiveAbility( character )
 
@@ -1915,7 +1915,7 @@ string function GetOffhandWeaponRef( entity player, string ref )
 			return ability.GetWeaponClassName()
 
 		// Weapon not equipped yet - look up from character loadout
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		ItemFlavor abilityFlavor
 		if ( ref == "tactical_upgrade" )
 			abilityFlavor = CharacterClass_GetTacticalAbility( character )
@@ -2000,7 +2000,7 @@ bool function PlayerHasCharacterPassive( entity player )
 {
 	bool owned = false
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
 	array<ItemFlavor> passives = [ CharacterClass_GetPassiveAbility( character ) ]
 
@@ -2282,7 +2282,7 @@ void function __UpdatePassiveRui( entity player )
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "UpdatePassiveRui" )
 
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	array<ItemFlavor> passives = [ CharacterClass_GetPassiveAbility( character ) ]
 	ItemFlavor mainPassive = passives[0]
 

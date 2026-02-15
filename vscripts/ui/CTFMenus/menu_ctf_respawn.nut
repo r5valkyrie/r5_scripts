@@ -46,7 +46,7 @@ void function OpenCTFRespawnMenu(string classname1, string classname2, string cl
 
 	entity player = GetLocalClientPlayer()
 
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 
 	file.newcharacter = character
@@ -85,7 +85,7 @@ void function CloseCTFRespawnMenu()
 
 void function CTFUpdatePlayerLegend()
 {
-	try{RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), file.newcharacter )} catch(e0){}
+	try{RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_Character(), file.newcharacter )} catch(e0){}
 }
 
 void function ToggleLegendsUI(bool open)
@@ -250,7 +250,7 @@ void function Set_CTF_Class(string primary, string secondary, string tactical, s
 		//again this is a very rare crash and try catching it wont cause any adverse side effects
 		try {
 		entity player = GetLocalClientPlayer()
-		ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	    ItemFlavor ultiamteAbility = CharacterClass_GetUltimateAbility( character )
         ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
 		RuiSetImage(Hud_GetRui(Hud_GetChild(file.menu, "Ability1Img")), "basicImage", GetWeaponInfoFileKeyFieldAsset_Global(CharacterAbility_GetWeaponClassname(tacticalAbility), "hud_icon"))

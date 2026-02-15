@@ -39,7 +39,7 @@ var function OnWeaponTossReleaseAnimEvent_weapon_jump_pad( entity weapon, Weapon
 		if( !IsValid( player ) || !player.IsPlayer() )
 			return
 		
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		string charRef = ItemFlavor_GetHumanReadableRef( character )
 
 		if( charRef == "character_octane")

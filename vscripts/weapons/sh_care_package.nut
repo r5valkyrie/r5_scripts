@@ -209,7 +209,7 @@ float function PlacementEasing( float frac )
 
 int function GetSkinForCarePackageModel( entity player )
 {
-	LoadoutEntry characterSlot = Loadout_CharacterClass()
+	LoadoutEntry characterSlot = Loadout_Character()
 
 	#if DEVELOPER
 		if ( !LoadoutSlot_IsReady( ToEHI( player ), characterSlot ) )

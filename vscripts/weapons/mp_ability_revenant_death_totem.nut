@@ -1143,7 +1143,7 @@ void function ShadowSquadApplyCharacterSkin( entity player )
 	//////////////////////////////////////////////
 	// Switch to base character model for Legend
 	/////////////////////////////////////////////
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ),  Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ),  Loadout_Character() )
 	ItemFlavor skin = GetDefaultItemFlavorForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( character ) )
 	CharacterSkin_Apply( player, skin )
 
@@ -1177,7 +1177,7 @@ void function SetShadowAbilitiesSkin( entity player )
 #if SERVER
 void function ShadowSquadCancelCharacterSkin( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ),  Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ),  Loadout_Character() )
 	LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
 	ItemFlavor skin = LoadoutSlot_GetItemFlavor( ToEHI( player ), skinSlot )
 

@@ -78,7 +78,7 @@ bool function IsReadyAndNonfeaturedCharacterButtonFocused()
 	var focus = GetFocus()
 
 	if ( focus in file.buttonToCharacter )
-		return file.buttonToCharacter[focus] != LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+		return file.buttonToCharacter[focus] != LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 
 	return false
 }
@@ -105,7 +105,7 @@ void function SetFeaturedCharacter( ItemFlavor character )
 	}
 
 	Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( character )
-	RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character )
+	RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_Character(), character )
 
 	EmitUISound( "UI_Menu_Legend_SetFeatured" )
 }
@@ -156,7 +156,7 @@ void function InitCharacterButtons()
 	array<ItemFlavor> characters
 	foreach ( ItemFlavor itemFlav in GetAllCharacters() )
 	{
-		bool isAvailable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), itemFlav )
+		bool isAvailable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), itemFlav )
 		if ( !isAvailable )
 		{
 			if ( !ItemFlavor_ShouldBeVisible( itemFlav, GetUIPlayer() ) )
@@ -206,12 +206,12 @@ void function CharacterButton_Init( var button, ItemFlavor character )
 
 	//bool isNew = (Newness_ReverseQuery_GetNewCount( NEWNESS_QUERIES.CharacterButton[character] ) > 0)
 	// todo(jpg): make new and locked mutually exclusive
-	bool isLocked   = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character )
-	bool isSelected = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() ) == character
+	bool isLocked   = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), character )
+	bool isSelected = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() ) == character
 
 	Hud_SetVisible( button, true )
 	//Hud_SetNew( button, isNew )
-	Hud_SetLocked( button, !IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character ) )
+	Hud_SetLocked( button, !IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), character ) )
 	Hud_SetSelected( button, isSelected )
 
 	RuiSetString( Hud_GetRui( button ), "buttonText", Localize( ItemFlavor_GetLongName( character ) ).toupper() )
@@ -228,7 +228,7 @@ void function CharactersPanel_OnShow( var panel )
 {
 	UI_SetPresentationType( ePresentationType.CHARACTER_SELECT )
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 	SetTopLevelCustomizeContext( character )
 	PresentCharacter( character )
 
@@ -264,7 +264,7 @@ void function CharactersPanel_OnFocusChanged( var panel, var oldFocus, var newFo
 	if ( file.buttons.contains( newFocus ) )
 		character = file.buttonToCharacter[newFocus]
 	else
-		character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+		character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 
 
 	//Hud_SetVisible( file.actionButton, IsCharacterButtonFocused() )
@@ -281,7 +281,7 @@ void function CharacterButton_OnActivate( var button )
 	SetTopLevelCustomizeContext( character )
 	CustomizeCharacterMenu_SetCharacter( character )
 	if ( GRX_IsItemOwnedByPlayer( character ) )
-		RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character ) // TEMP, Some menu state is broken without this. Need Declan to look at why RefreshLoadoutSlotInternal doesn't run when editing a loadout that isn't the featured one before removing this.
+		RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_Character(), character ) // TEMP, Some menu state is broken without this. Need Declan to look at why RefreshLoadoutSlotInternal doesn't run when editing a loadout that isn't the featured one before removing this.
 	Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( character )
 	EmitUISound( "UI_Menu_Legend_Select" )
 	AdvanceMenu( GetMenu( "CustomizeCharacterMenu" ) )

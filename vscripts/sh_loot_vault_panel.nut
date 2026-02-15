@@ -1461,7 +1461,7 @@ void function ShipVaultKeyPickupRandomVO( entity player )
 	float rand = RandomFloat( 1.0 )
 	if ( rand > 0.75 )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass())
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character())
 		string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 
 		if ( characterRef == "character_bloodhound" )

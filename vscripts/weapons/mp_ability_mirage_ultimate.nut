@@ -151,7 +151,7 @@ bool function OnWeaponChargeBegin_ability_mirage_ultimate( entity weapon )
 
 	PlayerUsedOffhand( ownerPlayer, weapon, true )
 	#if SERVER
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ownerPlayer ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ownerPlayer ), Loadout_Character() )
 	string charRef = ItemFlavor_GetHumanReadableRef( character )
 
 	if( charRef == "character_mirage")	

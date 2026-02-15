@@ -87,10 +87,10 @@ void function Arenas_PopulateTeamRuis( var rui, int team, array<entity> teamPlay
 
 void function PopulateCharacterRui( var rui, entity player, int i, string side )
 {
-	bool loadoutReady = LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterClass() )
+	bool loadoutReady = LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() )
 	if ( loadoutReady )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		RuiSetImage( rui, "portraitImage_" + side + (i+1), CharacterClass_GetGalleryPortrait( character ) )
 		RuiSetBool( rui, "portraitImageVisible_" + side + (i+1), true )
 		RuiSetImage( rui, "portraitBackground_" + side + (i+1), CharacterClass_GetGalleryPortraitBackground( character ) )

@@ -866,7 +866,7 @@ void function SV_CL_Onboarding_Init()
 		
 		AddCallback_OnClientDisconnected( OnClientDisconnected )
 
-		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnCharacterClassChanged )
+		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnCharacterClassChanged )
 		foreach ( character in GetAllCharacters() )
 			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterSkin( character ), OnCharacterSkinChanged )
 
@@ -1042,7 +1042,7 @@ void function Sequence_PickLoadout()
 
 		foreach ( player in GetAllPlayersOfLockstepIndex( pickIndex ) )
 		{
-			ItemFlavor selectedCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor selectedCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 			CharacterSelect_AssignCharacter( player, selectedCharacter )
 		}
 
@@ -1101,7 +1101,7 @@ void function Flowstate_AssignUniqueCharacterForPlayer(entity player, bool lock)
 			if( squadMate == player )
 				continue
 			
-			ItemFlavor mateCharacter = LoadoutSlot_GetItemFlavor( ToEHI( squadMate ), Loadout_CharacterClass() )
+			ItemFlavor mateCharacter = LoadoutSlot_GetItemFlavor( ToEHI( squadMate ), Loadout_Character() )
 			if( mateCharacter == characters[ i ] )
 			{
 				characters.remove( i )
@@ -1117,7 +1117,7 @@ void function Flowstate_AssignUniqueCharacterForPlayer(entity player, bool lock)
 	else
 		initialCharacter = characters.getrandom()
 	
-	player.SetPlayerNetInt( "characterSelectFocusIndex", ConvertItemFlavorToLoadoutSlotContentsIndex( Loadout_CharacterClass(), initialCharacter ) )
+	player.SetPlayerNetInt( "characterSelectFocusIndex", ConvertItemFlavorToLoadoutSlotContentsIndex( Loadout_Character(), initialCharacter ) )
 	
 	CharacterSelect_AssignCharacter( player, initialCharacter )
 	
@@ -1216,7 +1216,7 @@ void function PlayPickLoadoutMusic( bool introCountdownEnabled )
 
 void function TakeLoadoutRelatedWeapons( entity player )
 {
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
 	// Shared
 	if(IsValid(player.GetOffhandWeapon( OFFHAND_SLOT_FOR_CONSUMABLES )))
@@ -1243,7 +1243,7 @@ void function GiveLoadoutRelatedWeapons( entity player )
 {
 	TakeLoadoutRelatedWeapons(player)
 	
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor tactical = CharacterClass_GetTacticalAbility( character )
 	ItemFlavor ultimate = CharacterClass_GetUltimateAbility( character )
 	ItemFlavor passive = CharacterClass_GetPassiveAbility( character )
@@ -1357,7 +1357,7 @@ void function DecideRespawnPlayer( entity player, bool giveLoadoutWeapons = true
 
 	player.p.lastRespawnTime = Time()
 	
-	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
 	player.SetPlayerSettingsWithMods( characterSetFile, enabledMods )
 
@@ -2395,7 +2395,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 		{
 			foreach( player in players )
 			{
-				ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+				ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 				asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
 				player.SetPlayerSettingsWithMods( characterSetFile, [] )
 			}

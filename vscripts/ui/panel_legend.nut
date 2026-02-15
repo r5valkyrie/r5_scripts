@@ -15,9 +15,9 @@ void function OnShowLegendPage( var panel )
 
 	ItemFlavor ornull character = null
 
-	if ( LoadoutSlot_IsReady( ToEHI( GetUIPlayer() ), Loadout_CharacterClass() ) )
+	if ( LoadoutSlot_IsReady( ToEHI( GetUIPlayer() ), Loadout_Character() ) )
 	{
-		character = LoadoutSlot_GetItemFlavor( ToEHI( GetUIPlayer() ), Loadout_CharacterClass() )
+		character = LoadoutSlot_GetItemFlavor( ToEHI( GetUIPlayer() ), Loadout_Character() )
 	}
 
 	if ( character == null )

@@ -95,7 +95,7 @@ void function RegisterEquippableQuipsForCharacter( ItemFlavor characterClass, ar
 		entry.isSlotLocked = bool function( EHI playerEHI ) {
 			return !IsLobby()
 		}
-		entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+		entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 		entry.networkTo = eLoadoutNetworking.PLAYER_EXCLUSIVE
 		//
 		fileLevel.loadoutCharacterQuipsSlotListMap[characterClass].append( entry )
@@ -203,7 +203,7 @@ array<ItemFlavor> function GetAllValidQuipsForPlayer( entity player )
 
 	EHI playerEHI = ToEHI( player )
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
 
 	for ( int i = 0; i < MAX_QUIPS_EQUIPPED; i++ )
 	{

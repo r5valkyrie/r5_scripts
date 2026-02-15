@@ -746,7 +746,7 @@ void function Arenas_GiveLegendAbilities( entity player )
 		return
 
 	// Give character's tactical and ultimate abilities
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor ultimateAbility = CharacterClass_GetUltimateAbility( character )
 	ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
 
@@ -1092,7 +1092,7 @@ void function Arenas_GrantPurchasedLoadout( entity player )
 			entity existingTactical = player.GetOffhandWeapon( OFFHAND_TACTICAL )
 			if ( !IsValid( existingTactical ) )
 			{
-				ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+				ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 				ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
 				player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( tacticalAbility ), OFFHAND_TACTICAL, [] )
 				printt( "[Arenas Grant] Tactical weapon given" )
@@ -1108,7 +1108,7 @@ void function Arenas_GrantPurchasedLoadout( entity player )
 			entity existingUlt = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
 			if ( !IsValid( existingUlt ) )
 			{
-				ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+				ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 				ItemFlavor ultimateAbility = CharacterClass_GetUltimateAbility( character )
 				player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultimateAbility ), OFFHAND_ULTIMATE, [] )
 				printt( "[Arenas Grant] Ultimate weapon given" )
@@ -1252,7 +1252,7 @@ void function Arenas_GrantItem( entity player, string ref )
 		entity existingTactical = player.GetOffhandWeapon( OFFHAND_TACTICAL )
 		if ( !IsValid( existingTactical ) )
 		{
-			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 			ItemFlavor tacticalAbility = CharacterClass_GetTacticalAbility( character )
 			player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( tacticalAbility ), OFFHAND_TACTICAL, [] )
 		}
@@ -1267,7 +1267,7 @@ void function Arenas_GrantItem( entity player, string ref )
 		entity existingUlt = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
 		if ( !IsValid( existingUlt ) )
 		{
-			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 			ItemFlavor ultimateAbility = CharacterClass_GetUltimateAbility( character )
 			player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultimateAbility ), OFFHAND_ULTIMATE, [] )
 		}

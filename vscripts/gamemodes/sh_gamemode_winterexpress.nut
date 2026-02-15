@@ -511,7 +511,7 @@ void function WinterExpress_RegisterNetworking()
 		RegisterNetworkedVariableChangeCallback_bool( "WinterExpress_IsOvertime", OnServerVarChanged_OvertimeChanged )
         RegisterNetworkedVariableChangeCallback_time( "WinterExpress_CaptureEndTime", OnServerVarChanged_CaptureEndTime )
 
-		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterClass(), OnPlayerLoadoutChanged )
+		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnPlayerLoadoutChanged )
 		RegisterSignal( "FSDM_EndTimer" )
 	#endif
 }
@@ -2000,7 +2000,7 @@ void function Flowstate_GivePlayerLoadoutOnGameStart_Copy( entity player, bool f
 	SetPlayerInventory( player, [] )
 
 	//just get itemflavor
-	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
 	asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
 	player.SetPlayerSettingsWithMods( characterSetFile, [] )

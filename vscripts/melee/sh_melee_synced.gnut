@@ -355,7 +355,7 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 	}
 
 	// Execution loadout data
-	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( attacker, Loadout_CharacterClass() )
+	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( attacker, Loadout_Character() )
 	ItemFlavor attackerExecution = LoadoutSlot_GetItemFlavor( attacker, Loadout_CharacterExecution( attackerCharacter ) )
 
 	// Anim sequence setup

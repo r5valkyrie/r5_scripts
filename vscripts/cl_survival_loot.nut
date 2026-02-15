@@ -2114,7 +2114,7 @@ void function CreateDeathBoxRuiWithOverridenData( entity deathBox, NestedGladiat
 	SetNestedGladiatorCardOverrideName( nestedGCHandle, deathBox.GetCustomOwnerName() )
 
 	int characterIndex = deathBox.GetNetInt(  "characterIndex" )
-	LoadoutEntry characterLoadoutEntry = Loadout_CharacterClass()
+	LoadoutEntry characterLoadoutEntry = Loadout_Character()
 	ItemFlavor character = ConvertLoadoutSlotContentsIndexToItemFlavor( characterLoadoutEntry, characterIndex )
 	SetNestedGladiatorCardOverrideCharacter( nestedGCHandle, character )
 

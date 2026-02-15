@@ -1127,7 +1127,7 @@ void function ShowCTFVictorySequence()
 	file.victorySequenceAngles = file.selectedLocation.victorypos.angles
 
 	asset defaultModel				= GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
-	LoadoutEntry loadoutSlotCharacter = Loadout_CharacterClass()
+	LoadoutEntry loadoutSlotCharacter = Loadout_Character()
 	vector characterAngles			= < file.victorySequenceAngles.x / 2.0, file.victorySequenceAngles.y, file.victorySequenceAngles.z >
 
 	VictoryPlatformModelData victoryPlatformModelData = GetVictorySequencePlatformModel()
@@ -1407,7 +1407,7 @@ void function FSIntro_StartIntroScreen()
 	}
 
 	asset defaultModel				= GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
-	LoadoutEntry loadoutSlotCharacter = Loadout_CharacterClass()
+	LoadoutEntry loadoutSlotCharacter = Loadout_Character()
 	vector characterAngles			= < file.victorySequenceAngles.x / 2.0, file.victorySequenceAngles.y, file.victorySequenceAngles.z >
 
 	int maxPlayersToShow = 9

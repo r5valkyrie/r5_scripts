@@ -1323,7 +1323,7 @@ void function InitMenuEntities()
 	ModelData_SetBaseAngles( file.playCharacter, refEnt.GetAngles() )
 
 	model = CreateMenuModel( file.playCharacter, $"mdl/dev/empty_model.rmdl" )
-	ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterClass() )
+	ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_Character() )
 	ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterSkin( character ) )
 	CharacterSkin_Apply( model, characterSkin )
 	model.SetAlive( true )
@@ -1426,11 +1426,11 @@ void function UpdateMenuCharacterModelInternal( int overrideCharacterFlavorNetwo
 		WaitFrame()
 
 	EHI playerEHI = LocalClientEHI()
-	LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterClass() )
+	LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_Character() )
 
 	ItemFlavor character
 	if ( overrideCharacterFlavorNetworkIndex == -1 )
-		character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterClass() )
+		character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
 	else
 		character = GetItemFlavorByGUID( overrideCharacterFlavorNetworkIndex )
 	LoadoutSlot_WaitForItemFlavor( playerEHI, Loadout_CharacterSkin( character ) )
@@ -1667,7 +1667,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 				ItemFlavor ornull characterOrNull = null
 				#if DEVELOPER
 					if ( file.DEV_previewSelfAsParty )
-						characterOrNull = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+						characterOrNull = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 				#endif
 				if ( characterOrNull == null )
 				{

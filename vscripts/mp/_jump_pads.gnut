@@ -310,7 +310,7 @@ void function OnJumpPadAreaEnter( entity trigger, entity ent )
 	thread JumpPad_PlayLaunchAnim( trigger )
 	JumpPadPushEnt( trigger, ent, trigger.GetOrigin(), trigger.GetAngles() )
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ent ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ent ), Loadout_Character() )
 	string charRef = ItemFlavor_GetHumanReadableRef( character )
 
 	if( charRef == "character_octane" && Time() - ent.p.lastJumpPadChatterTime >= 30 )

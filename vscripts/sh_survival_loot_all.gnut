@@ -1677,8 +1677,8 @@ string function SURVIVAL_Loot_GetDesc( LootData data, entity forPlayer )
 	//
 	if ( data.ref == "health_pickup_ultimate"
 	&& IsValid( forPlayer )
-	&& LoadoutSlot_IsReady( ToEHI( forPlayer ), Loadout_CharacterClass() )
-	&& ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( forPlayer ), Loadout_CharacterClass() ) ) == $"settings/itemflav/character/loba.rpak" )
+	&& LoadoutSlot_IsReady( ToEHI( forPlayer ), Loadout_Character() )
+	&& ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( forPlayer ), Loadout_Character() ) ) == $"settings/itemflav/character/loba.rpak" )
 	{
 		return Localize( "#SURVIVAL_PICKUP_HEALTH_ULTIMATE_HINT_LOBA" )
 	}
@@ -1853,7 +1853,7 @@ void function HAS_DEATHBOX_OVERRIDE_OnUserInfoUpdated( string hardware, string i
 	profileData.playerID = cui.uid
 
 	ItemFlavor character               = GetItemFlavorForCommunityUserInfo( cui, ePlayerStryderCharDataArraySlots.CHARACTER, eItemType.character )
-	LoadoutEntry characterLoadoutEntry = Loadout_CharacterClass()
+	LoadoutEntry characterLoadoutEntry = Loadout_Character()
 	profileData.characterIndex = ConvertItemFlavorToLoadoutSlotContentsIndex( characterLoadoutEntry, character )
 
 	ItemFlavor skin               = GetItemFlavorForCommunityUserInfo( cui, ePlayerStryderCharDataArraySlots.CHARACTER_SKIN, eItemType.character_skin )

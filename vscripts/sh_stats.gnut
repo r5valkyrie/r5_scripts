@@ -961,7 +961,7 @@ void function StatsHook_RecordPlacementStats( entity player )
 	Assert( rank > 0 )
 	GameSummarySquadData gameSummaryData = GameSummary_GetPlayerData( player )
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetGUIDString( character )
 
 	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.games_played ), 1 )
@@ -1254,7 +1254,7 @@ void function OnPlayerGotRevived( entity injured, entity healer )
 	if ( PlayerHasPassive( injured, ePassives.PAS_MIRAGE ) )
 		__IncrementStat_Int( injured, ResolveStatEntry( CAREER_STATS.mirage_successful_revives ), 1 )
 
-	ItemFlavor healerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( healer ), Loadout_CharacterClass() )
+	ItemFlavor healerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( healer ), Loadout_Character() )
 	string healerCharacterRef  = ItemFlavor_GetGUIDString( healerCharacter )
 	__IncrementStat_Int( healer, ResolveStatEntry( CAREER_STATS.character_revived_ally, healerCharacterRef ), 1 )
 }
@@ -1274,7 +1274,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var attackerDamage
 
 	__IncrementStat_Int( victim, ResolveStatEntry( CAREER_STATS.deaths ), 1 )
 
-	ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_CharacterClass() )
+	ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_Character() )
 	string victimCharacterRef  = ItemFlavor_GetGUIDString( victimCharacter )
 	__IncrementStat_Int( victim, ResolveStatEntry( CAREER_STATS.character_deaths, victimCharacterRef ), 1 )
 
@@ -1284,7 +1284,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var attackerDamage
 	ItemFlavor attackerCharacter
 	if ( attacker.IsPlayer() )
 	{
-		attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_CharacterClass() )
+		attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Character() )
 		if ( DamageInfo_GetDamageType( attackerDamageInfo ) == DMG_MELEE_EXECUTION )
 		{
 			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.executions ), 1 )
@@ -1307,7 +1307,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var attackerDamage
 		{
 			haveKiller = true
 			killer = bleedoutAttacker
-			killerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( killer ), Loadout_CharacterClass() )
+			killerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( killer ), Loadout_Character() )
 			//killerDamageInfo = Bleedout_GetBleedoutDamageInfo( victim )
 			killerDIC = Bleedout_GetBleedoutDamageInfo( victim )
 		}
@@ -1411,7 +1411,7 @@ void function StatsHook_PlayerRespawnedTeammate( entity respawnCaller, entity re
 		respawnCaller.p.playersRespawned.append( respawningPlayer )
 		if ( respawnCaller.p.playersRespawned.len() == 2 )
 		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( respawnCaller ), Loadout_CharacterClass() )
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( respawnCaller ), Loadout_Character() )
 			string characterRef  = ItemFlavor_GetGUIDString( character )
 			__IncrementStat_Int( respawnCaller, ResolveStatEntry( CAREER_STATS.character_games_with_respawning_both_teammates, characterRef ), 1 )
 		}
@@ -1447,7 +1447,7 @@ void function OnWeaponAttack( entity player, entity weapon, string weaponName, i
 	{
 		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.shots ), 1 )
 
-		ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		string playerCharacterRef  = ItemFlavor_GetGUIDString( playerCharacter )
 		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_shots, playerCharacterRef ), 1 )
 
@@ -1486,7 +1486,7 @@ void function StatsHook_OnPlayerOrNPCTookDamage( entity attacker, entity victim,
 			// track damage done for all things
 			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.damage_done ), damageAmount )
 
-			ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_CharacterClass() )
+			ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( attacker ), Loadout_Character() )
 			string attackerCharacterRef  = ItemFlavor_GetGUIDString( attackerCharacter )
 			__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.character_damage_done, attackerCharacterRef ), damageAmount )
 			UpdateCalculatedStatCachedValue( attacker, ResolveStatEntry( CAREER_STATS.well_rounded ), eStatGetWhen.CURRENT )
@@ -1583,7 +1583,7 @@ void function OnPlayerLootPickup( entity user, entity lootPickup, string ref, bo
 		{
 			if ( !(user in droppod.e.stats_usersSet) )
 			{
-				ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( user ), Loadout_CharacterClass() )
+				ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( user ), Loadout_Character() )
 				string characterRef  = ItemFlavor_GetGUIDString( character )
 
 				__IncrementStat_Int( user, ResolveStatEntry( CAREER_STATS.neutral_airdrops_looted ), 1 )

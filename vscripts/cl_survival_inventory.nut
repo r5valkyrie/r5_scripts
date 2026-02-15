@@ -3019,7 +3019,7 @@ void function UpdateInventoryUltimateRui( var rui, entity player, entity weapon 
 
 	RuiSetInt( rui, "ammoMinToFire", weapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire ) )
 
-	ItemFlavor character                    = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character                    = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	CharacterHudUltimateColorData colorData = CharacterClass_GetHudUltimateColorData( character )
 
 	RuiSetColorAlpha( rui, "ultimateColor", SrgbToLinear( colorData.ultimateColor ), 1 )
@@ -3070,7 +3070,7 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 	player.EndSignal( "OnDestroy" )
 	clGlobal.levelEnt.EndSignal( "BackpackClosed" )
 
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 	RuiSetImage( rui, "playerIcon", classIcon )
 
@@ -3148,7 +3148,7 @@ void function TEMP_UpdateTeammateRui( var rui, entity ent )
 	ent.EndSignal( "OnDestroy" )
 	clGlobal.levelEnt.EndSignal( "BackpackClosed" )
 
-	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( ent ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( ent ), Loadout_Character() )
 	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
 	RuiSetImage( rui, "icon", classIcon )
 

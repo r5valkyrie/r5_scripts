@@ -1132,7 +1132,7 @@ bool function IsPlayerCaustic( entity player )
 	if ( !IsValidPlayer( player ) )
 		return false
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetHumanReadableRef( character ).tolower()
 
 	if ( characterRef != "character_caustic" )

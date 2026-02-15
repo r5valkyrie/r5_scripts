@@ -1106,9 +1106,9 @@ void function Ranked_PlayRankedLobbyCharacterDialogue_internal( string aliasPart
 {
 	wait delay
 	waitthread WaitForLocalClientEHI()
-	if ( LoadoutSlot_IsReady( LocalClientEHI(), Loadout_CharacterClass() ) )
+	if ( LoadoutSlot_IsReady( LocalClientEHI(), Loadout_Character() ) )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 		string characterName = Localize( ItemFlavor_GetLongName( character ) )
 		string soundAliasName = "diag_mp_" + characterName +"_" + aliasPart + "_menu"
 		EmitUISound( soundAliasName )

@@ -3591,7 +3591,7 @@ string function GetPlayerVoice( entity player )
 
 	if ( player.IsTitan() )
 	{
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 		Assert( ItemFlavor_GetType( character ) == eItemType.character )
 		var block = GetSettingsBlockForAsset( CharacterClass_GetSetFile( character ) )
 		return GetSettingsBlockString( block, "voice" )
@@ -3622,17 +3622,6 @@ void function SetTeam( entity ent, int team )
 		{
 			if( team != oldTeam )
 				AssignTeamIndexToPlayer( ent )
-
-			foreach ( player in GetPlayerArrayOfTeam( oldTeam ) )
-			{
-				if( IsValid( player ) && player.p.isConnected )
-					Remote_CallFunction_ByRef( player, "UpdateRUITest" )
-			}
-			foreach ( player in GetPlayerArrayOfTeam( team ) )
-			{
-				if( IsValid( player ) && player.p.isConnected )
-					Remote_CallFunction_ByRef( player, "UpdateRUITest" )
-			}
 		}
 	#endif
 }

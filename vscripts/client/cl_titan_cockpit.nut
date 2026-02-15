@@ -293,7 +293,7 @@ void function ShowRUIHUD( entity cockpit )
 
 	//RuiSetDrawGroup( file.cockpitAdditionalRui, RUI_DRAW_NONE )
 	#endif
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 #if SP
 	bool ejectIsAllowed = false
 #else
@@ -736,7 +736,7 @@ function CockpitBodyThink( cockpit, cockpitBody )
 entity function CreateCockpitBody( entity cockpit, entity player, entity cockpitParent )
 {
 	EHI localPlayerEHI = WaitForLocalClientEHI()
-	ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterClass() )
+	ItemFlavor character     = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_Character() )
 	ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( localPlayerEHI, Loadout_CharacterSkin( character ) )
 	#if SP
 		string bodySettings = DEFAULT_PILOT_SETTINGS

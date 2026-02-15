@@ -131,7 +131,7 @@ void function OnItemFlavorRegistered_Character( ItemFlavor characterClass )
 	entry.isSlotLocked = bool function( EHI playerEHI ) {
 		return !IsLobby()
 	}
-	entry.isActiveConditions = { [Loadout_CharacterClass()] = { [characterClass] = true, }, }
+	entry.isActiveConditions = { [Loadout_Character()] = { [characterClass] = true, }, }
 	entry.networkTo = eLoadoutNetworking.PLAYER_EXCLUSIVE
 	fileLevel.characterMeleeSkinLoadoutEntryMap[characterClass] <- entry
 

@@ -187,7 +187,7 @@ string function MovementRecorder_GetPlayerCharacterRef( entity player )
 	if( !IsValid( player ) )
 		return "character_wraith"
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	return ItemFlavor_GetHumanReadableRef( character )
 }
 
@@ -1053,7 +1053,7 @@ void function AssignCharacter( entity player, int index )
 	ItemFlavor Character = GetAllCharacters()[ index ]
 	CharacterSelect_AssignCharacter( ToEHI( player ), Character )
 
-	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
+	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
 	player.SetPlayerSettingsWithMods( characterSetFile, [] )
 

@@ -178,7 +178,7 @@ void function ClientToUI_Arenas_RefreshBuyMenu()
 		RunClientScript( "UICallback_Arenas_BindEquipment", equipment )
 	}
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( GetLocalClientPlayer() ), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( GetLocalClientPlayer() ), Loadout_Character() )
 	if ( file.abilityLabel != null )
 		RuiSetString( Hud_GetRui( file.abilityLabel ), "labelText", Localize( "#ARENAS_SHOP_LEGEND_ABILITIES", Localize( ItemFlavor_GetLongName( character ) ).toupper() ) )
 

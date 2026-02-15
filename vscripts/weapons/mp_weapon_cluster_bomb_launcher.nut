@@ -341,7 +341,7 @@ void function ClusterBombDamageCallback( entity victim, var damageInfo )
 			float damageScale = 1.0
 			if( victim.IsPlayer() )
 			{
-				ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_CharacterClass() )
+				ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( ToEHI( victim ), Loadout_Character() )
 				damageScale = CharacterClass_GetDamageScale( victimCharacter )
 			}
 			table< entity, int > playerData = file.clusterBombHitTable[ inflictor ]

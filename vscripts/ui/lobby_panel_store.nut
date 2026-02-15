@@ -667,7 +667,7 @@ void function CharactersPanel_OnShow( var panel )
 {
 	UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 	SetTopLevelCustomizeContext( character )
 
 	AddCallbackAndCallNow_OnGRXInventoryStateChanged( UpdateCharacterButtons )
@@ -696,7 +696,7 @@ void function UpdateCharacterButtons()
 	array<ItemFlavor> unownedCharacters
 	foreach ( ItemFlavor character in GetAllCharacters() )
 	{
-		bool isAvailable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_CharacterClass(), character )
+		bool isAvailable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), character )
 		if ( !isAvailable )
 		{
 			if ( !ItemFlavor_ShouldBeVisible( character, GetUIPlayer() ) )
@@ -767,7 +767,7 @@ bool function AnyLegendsLocked()
 	var focus = GetFocus()
 
 	if ( focus in s_characters.buttonToCharacter )
-		return s_characters.buttonToCharacter[focus] != LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterClass() )
+		return s_characters.buttonToCharacter[focus] != LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
 
 	return false
 }

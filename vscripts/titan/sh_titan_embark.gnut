@@ -646,7 +646,7 @@ void function PlayerEmbarksTitan( entity player, entity titan, table embark )
 	waitthread PlayerEmbarksTitan_PlayerBecomesTitan( player, titan, embark )
 	titan.Hide()
 	titan.Destroy()
-	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), Titan )
+	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), Titan )
 }
 
 void function PlayerEmbarksTitan_PlayerBecomesTitan( entity player, entity titan, table embark )
@@ -1256,7 +1256,7 @@ function PlayerDisembarksTitan( player )
 {
 	expect entity( player )
 	ItemFlavor Pilot = GetItemFlavorByAsset( $"settings/itemflav/character/pilots/pilot_f.rpak" )
-	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), Pilot )
+	SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), Pilot )
 	PlayerDisembarksTitanWithSequenceFuncs( player, GetDisembarkSequenceForPlayer, GetDisembarkSequenceForTitan )
 }
 
