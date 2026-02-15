@@ -104,6 +104,9 @@ struct {
 	array<var> fullmap_unitframesRui
 	var        fullmap_gamestateRui
 
+	array<var> fullmap_challengeRuiArray
+	var fullmap_questBoxRui
+
 	array< void functionref( var ) > updateFullmapTracking_Callbacks
 	array< void functionref( var ) > onFullmapCreated_Callbacks
 	var fullmap_challengeBoxRui
@@ -399,7 +402,7 @@ void function OnSpectateTargetChanged( entity spectatingPlayer, entity oldSpecta
 
 var function CreateMinimapRui( asset ruiAsset, int sortKey = 0 )
 {
-	var rui = RuiCreate( ruiAsset, clGlobal.topoFullscreenHudPermanent, GetHudDrawGroup(), sortKey )
+	var rui = RuiCreate( ruiAsset, clGlobal.topoFullscreenHudPermanent, RUI_DRAW_HUD, sortKey )
 	InitHUDRui( rui, true )
 	return rui
 }
@@ -1682,6 +1685,7 @@ void function Fullmap_RemoveRui( var rui )
 void function Fullmap_SetVisible( bool state )
 {
 	FullMap_UpdateTopologies()
+	SetFullmapRuiResolutionsToScreenSize()
 	UpdateSurveyBeaconHint() // TODO: meh
 
 	UpdateMapFeatures()
@@ -1714,6 +1718,21 @@ bool function Fullmap_IsVisible()
 	return file.fullmapVisible
 }
 
+void function SetFullmapRuiResolutionsToScreenSize()
+{
+	foreach( rui in file.fullmap_challengeRuiArray )
+	{
+		RuiSetResolutionToScreenSize( rui )
+	}
+
+	if( file.fullmap_questBoxRui )
+		RuiSetResolutionToScreenSize( file.fullmap_questBoxRui )
+
+	//
+	RuiSetResolutionToScreenSize( file.fullmap_legendRui )
+}
+
+
 
 void function UpdateFullmapRuiTracks()
 {
@@ -1738,6 +1757,7 @@ void function UpdateFullmapRuiTracks()
 	UpdateEquipmentSlot( viewPlayer, viewPlayerRui )
 
 	RuiSetInt( viewPlayerRui, "frameSlot", -1 )
+	RuiSetBool( viewPlayerRui, "useShadowFormFrame", viewPlayer.IsShadowForm() )
 
                     
                                                                                                                                                            
@@ -1784,6 +1804,7 @@ void function UpdateFullmapRuiTracks()
 		UpdateEquipmentSlot( teamMember, rui )
 
 		RuiSetInt( rui, "frameSlot", slotIndex )
+		RuiSetBool( rui, "useShadowFormFrame", teamMember.IsShadowForm() )
 
 		RuiSetBool( rui, "isVisible", !IsFallLTM() )
 	}

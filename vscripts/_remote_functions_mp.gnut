@@ -779,6 +779,7 @@ void function RemoteFunctions_Init_Begin()
 	RegisterServerVar( "respawnAvailableBits2", 0 )
 	RegisterServerVar( "respawnAvailableBits3", 0 )
 
+	ScriptRegisterNetworkedVariable( "hackStartTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRegisterNetworkedVariable( "bleedoutEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRegisterNetworkedVariable( "bleedoutType", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
 	ScriptRegisterNetworkedVariable( "reviveEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
