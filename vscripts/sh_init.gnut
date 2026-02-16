@@ -269,8 +269,9 @@ void function SV_CL_Init()
 	#if CLIENT
 		Cl_DeathScreen_Init()
 		ClMainHud_Init()
+		NewScriptInit_Level()
+		NewScriptInit_VM()
 	#endif
-
 	
 	RemoteFunctions_Init_Finish()
 }
