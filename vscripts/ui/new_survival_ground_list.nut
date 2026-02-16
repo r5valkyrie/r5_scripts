@@ -364,6 +364,12 @@ void function UIToClient_NEW_SurvivalGroundListOpened( var menu )
 			category.itemHeight = 100
 			category.itemPadding = 4
 		}
+		else if ( enumVal == eLootSortCategories.HEALING )
+		{
+			category.itemWidth = 100
+			category.itemHeight = 100
+			category.itemPadding = 4
+		}
 		else
 		{
 			category.itemWidth = 406 + 110
@@ -377,6 +383,9 @@ void function UIToClient_NEW_SurvivalGroundListOpened( var menu )
 	//
 	foreach ( string ammoPoolTypeKey, int ammoPoolTypeVal in eAmmoPoolType )
 	{
+		if ( ammoPoolTypeKey == "arrows" )
+			continue
+
 		DeathBoxEntryData entryData
 		entryData.lootFlav = SURVIVAL_Loot_GetLootDataByRef( ammoPoolTypeKey )
 		entryData.key = entryData.lootFlav.ref
@@ -387,6 +396,32 @@ void function UIToClient_NEW_SurvivalGroundListOpened( var menu )
 		item.categoryKey = format( "%02d", 99 - eLootSortCategories.AMMO )
 		item.key = entryData.key
 		item.sortOrdinal = format( "%02d", 50 - ammoPoolTypeVal )
+		DeathBoxListPanel_AddItem( fileLevel.listPanel, item )
+	}
+
+	array<string> healingPlaceholderRefs = [
+		"health_pickup_combo_full",
+		"health_pickup_combo_small",
+		"health_pickup_health_small",
+		"health_pickup_combo_large",
+		"health_pickup_health_large"
+	]
+	for ( int healthRefIdx = 0; healthRefIdx < healingPlaceholderRefs.len(); healthRefIdx++ )
+	{
+		string healthPickupRef = healingPlaceholderRefs[healthRefIdx]
+		if ( !SURVIVAL_Loot_IsRefValid( healthPickupRef ) )
+			continue
+
+		DeathBoxEntryData entryData
+		entryData.lootFlav = SURVIVAL_Loot_GetLootDataByRef( healthPickupRef )
+		entryData.key = entryData.lootFlav.ref
+		entryData.lootEnts = []
+		fileLevel.deathBoxEntryDataByKey[entryData.key] <- entryData
+
+		DeathBoxListPanelItem item
+		item.categoryKey = format( "%02d", 99 - eLootSortCategories.HEALING )
+		item.key = entryData.key
+		item.sortOrdinal = format( "%02d", 50 - healthRefIdx )
 		DeathBoxListPanel_AddItem( fileLevel.listPanel, item )
 	}
 
@@ -458,7 +493,7 @@ void function UIToClient_NEW_SurvivalGroundListOpened( var menu )
 		}
 	}
 
-	//
+
 	HudElem_SetRuiArg( fileLevel.backer, "headerMainText", headerMainText )
 	HudElem_SetRuiArg( fileLevel.backer, "headerOwnerText", headerOwnerText )
 	HudElem_SetRuiArg( fileLevel.backer, "headerRightText", headerRightText )
@@ -585,6 +620,11 @@ void function NEW_UpdateSurvivalGroundList( NEW_SurvivalGroundListUpdateParams p
 		DeathBoxEntryData entryData
 
 		LootData lootFlavor = SURVIVAL_Loot_GetLootDataByIndex( lootEnt.GetSurvivalInt() )
+		if ( lootFlavor.ref == "snd_bomb" )
+			continue
+		if ( lootFlavor.lootType == eLootType.AMMO && lootFlavor.ref == "arrows" )
+			continue
+
 		bool isArmor        = (lootFlavor.lootType == eLootType.ARMOR)
 		bool hasSpecialAmmo = (lootFlavor.lootType == eLootType.MAINWEAPON && !GetWeaponInfoFileKeyField_GlobalBool( lootFlavor.baseWeapon, "uses_ammo_pool" ))
 
@@ -673,7 +713,6 @@ void function NEW_UpdateSurvivalGroundList( NEW_SurvivalGroundListUpdateParams p
 		delete fileLevel.deathBoxEntryDataByLootEnt[deletedLootEnt]
 	}
 
-	//
 	bool deathBoxBlocked = false
 	{
 		string specialStateSamenessKey = ""
@@ -767,11 +806,21 @@ void function NEW_UpdateSurvivalGroundList( NEW_SurvivalGroundListUpdateParams p
 			entryData.isRelevant = !SURVIVAL_IsLootIrrelevant( params.player, bestLootEnt, entryData.lootFlav, eLootContext.GROUND )
 			entryData.isUpgrade = false
 		}
+		if ( entryData.lootFlav.lootType == eLootType.HEALTH && entryData.lootFlav.ref != "health_pickup_ultimate" )
+			entryData.isRelevant = true
+
 		if (!(isAmmo && isBlackMarket))
 			entryData.isBlocked = deathBoxBlocked
 
+		if ( isAmmo && entryData.lootFlav.ref == "arrows" )
+			entryData.isBlocked = true
+
 		bool shouldBeVisible = true
 		if ( entryData.lootFlav.lootType == eLootType.AMMO )
+		{
+			//
+		}
+		else if ( entryData.lootFlav.lootType == eLootType.HEALTH )
 		{
 			//
 		}
@@ -955,6 +1004,7 @@ void function UpdateItem( DeathBoxListPanelItem item )
 	var rui = Hud_GetRui( button )
 
 	bool isAmmo         = (lootFlavor.lootType == eLootType.AMMO)
+	bool isHealing      = (lootFlavor.lootType == eLootType.HEALTH && lootFlavor.ref != "health_pickup_ultimate")
 	bool isMainWeapon   = (lootFlavor.lootType == eLootType.MAINWEAPON)
 	bool hasSpecialAmmo = (isMainWeapon && !GetWeaponInfoFileKeyField_GlobalBool( lootFlavor.baseWeapon, "uses_ammo_pool" ))
 
@@ -999,7 +1049,7 @@ void function UpdateItem( DeathBoxListPanelItem item )
 		RuiSetAsset( rui, "dibsAvatar", $"" )
 
 	string title = lootFlavor.pickupString
-	if ( isAmmo )
+	if ( isAmmo || isHealing )
 	{
 		title = (entryData.totalCount == 0 ? "--" : format( "%d", entryData.totalCount ))
 	}
@@ -1033,7 +1083,8 @@ void function UpdateItem( DeathBoxListPanelItem item )
 
 	RuiSetImage( rui, "iconImage", lootFlavor.hudIcon )
 	RuiSetInt( rui, "lootTier", lootFlavor.tier )
-	RuiSetInt( rui, "lootType", lootFlavor.lootType )
+	int visualLootType = (isAmmo || isHealing ? eLootType.AMMO : lootFlavor.lootType)
+	RuiSetInt( rui, "lootType", visualLootType )
 
 	asset ammoTypeIcon = $""
 	if ( hasSpecialAmmo )
@@ -1283,6 +1334,8 @@ void function PerformItemAction( DeathBoxListPanelItem item, bool isAltAction, b
 {
 	entity player               = GetLocalClientPlayer()
 	DeathBoxEntryData entryData = fileLevel.deathBoxEntryDataByKey[item.key]
+	if ( entryData.lootFlav.lootType == eLootType.AMMO && entryData.lootFlav.ref == "arrows" )
+		return
 	if ( !entryData.isClickable )
 		return
 	LootData lootFlavor = entryData.lootFlav
@@ -1680,7 +1733,6 @@ void function PingItem( DeathBoxListPanelItem item )
 
 	if ( IsValid( lootEntPingedByUs ) )
 	{
-		//
 		PingGroundLoot( lootEntPingedByUs, deathBox )
 		entryData.pingCounter = 0
 	}

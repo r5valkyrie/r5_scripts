@@ -321,6 +321,7 @@ global enum eLootSortCategories
 	AMMO,
 	SPECIAL,
 	PVE,
+	HEALING,
 	EQUIPMENT,
 	CONSUMABLES,
 	ATTACHMENTS,
@@ -4966,8 +4967,11 @@ int function GetPriorityForLootType( LootData lootData )
 			return eLootSortCategories.ATTACHMENTS
 
 		case eLootType.ORDNANCE:
-		case eLootType.HEALTH:
 			return eLootSortCategories.CONSUMABLES
+		case eLootType.HEALTH:
+			if ( lootData.ref == "health_pickup_ultimate" )
+				return eLootSortCategories.CONSUMABLES
+			return eLootSortCategories.HEALING
 		case eLootType.CUSTOMPICKUP:
 		case eLootType.DATAKNIFE:
 		case eLootType.SHIPKEYCARD:
@@ -5002,6 +5006,7 @@ string function GetCategoryTitleFromPriority( int cat )
 {
 	table<int, string> catToTitle = {}
 	catToTitle[ eLootSortCategories.SPECIAL ] <- "#LOOT_CAT_SPECIAL"
+	catToTitle[ eLootSortCategories.HEALING ] <- "#LOOT_CAT_HEALING"
 	catToTitle[ eLootSortCategories.CONSUMABLES ] <- "#LOOT_CAT_CONSUMABLE"
 	catToTitle[ eLootSortCategories.ATTACHMENTS ] <- "#LOOT_CAT_ATTACHMENTS"
 	catToTitle[ eLootSortCategories.EQUIPMENT ] <- "#LOOT_CAT_EQUIPMENT"
