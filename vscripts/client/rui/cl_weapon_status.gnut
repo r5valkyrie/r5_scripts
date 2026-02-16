@@ -186,9 +186,7 @@ void function ClWeaponStatus_AddClient( entity player )
 		player = GetLocalClientPlayer()
 
 	if ( !IsValid( player ) )
-	{
 		return
-	}
 
 	{
 		var rui = CreateCockpitPostFXRui( $"ui/ammo_status_hint.rpak", HUD_Z_BASE )
@@ -217,7 +215,7 @@ void function ClWeaponStatus_AddClient( entity player )
 		// ultimate ablility
 		var rui
 		if ( GetCurrentPlaylistVarBool( "hud_ultimate_ready_video", false ) )
-			rui = CreateCockpitPostFXRui( $"ui/inventory_ultimate_ability.rpak", HUD_Z_BASE )
+			rui = CreateCockpitPostFXRui( $"ui/ultimate_ability_hud.rpak", HUD_Z_BASE )
 		else
 			rui = CreateCockpitPostFXRui( $"ui/ability_hud.rpak", HUD_Z_BASE )
 
