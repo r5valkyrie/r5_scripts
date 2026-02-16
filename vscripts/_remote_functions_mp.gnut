@@ -336,6 +336,7 @@ void function RemoteFunctions_Init_Begin()
 	{
 		case eGamemodes.ARENAS:
 			// Arenas: Server to Client
+			ScriptRemote_RegisterClientFunction( "ServerCallback_ShowWinningSquadSequence" )
 			ScriptRemote_RegisterClientFunction( "ServerCallback_EnableDeathScreenBanner" )
 			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayArenasPrematch", "int", 0, 30, "int", 0, 30, "int", 0, 5000, "int", 0, 100, "int", 0, 100 )
 			ScriptRemote_RegisterClientFunction( "ServerCallback_DisplayRoundLost" )

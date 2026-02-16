@@ -116,6 +116,7 @@ global function Dev_AdjustVictorySequence
 
 global function ChangeHUDVisibilityWhenInCryptoDrone
 global function GetCompassRui
+global function Survival_SetPilotHudVisible
 global function CircleAnnouncementsEnable
 global function SetDpadMenuHidden
 global function UpdateImageAndScaleOnFullmapRUI
@@ -911,6 +912,11 @@ void function Cl_Survival_AddClient( entity player )
 
 	RuiSetBool( file.pilotRui, "isVisible", GetHudDefaultVisibility() )
 	RuiSetBool( file.pilotRui, "useShields", true )
+
+	// For arenas, hide the HUD during WaitingForPlayers since the blackscreen overlay
+	// is a regular CockpitRui that renders behind PostFX HUD elements
+	if ( Gamemode() == eGamemodes.ARENAS )
+		Survival_SetPilotHudVisible( false )
 
 	if ( GetCurrentPlaylistVarBool( "compass_flat_enabled", true ) )
 	{
@@ -1990,6 +1996,16 @@ void function LinkInUseChanged( entity player, bool old, bool new, bool actually
 	RuiSetBool( file.titanLinkProgressRui, "isInUse", new )
 }
 
+
+void function Survival_SetPilotHudVisible( bool visible )
+{
+	if ( file.pilotRui != null )
+		RuiSetBool( file.pilotRui, "isVisible", visible )
+	if ( file.dpadMenuRui != null )
+		RuiSetBool( file.dpadMenuRui, "isVisible", visible )
+	if ( file.compassRui != null )
+		RuiSetBool( file.compassRui, "isVisible", visible )
+}
 
 void function OnPilotCockpitCreated( entity cockpit, entity player )
 {
@@ -3625,7 +3641,10 @@ bool function GetWaitingForPlayersOverlayEnabled( entity player )
 var s_overlayRui = null
 void function WaitingForPlayersOverlay_Setup( entity player )
 {
-	if ( !GetWaitingForPlayersOverlayEnabled( player ) )
+	bool enabled = GetWaitingForPlayersOverlayEnabled( player )
+	bool hasBlackScreen = PreGame_GetWaitingForPlayersHasBlackScreen()
+
+	if ( !enabled )
 		return
 
 	s_overlayRui = CreatePermanentCockpitRui( $"ui/waiting_for_players_blackscreen.rpak", -1 )
@@ -3639,7 +3658,7 @@ void function WaitingForPlayersOverlay_Setup( entity player )
 		WaitingForPlayers_CreateCustomCameras()
 	} else
 	{
-		RuiSetBool( s_overlayRui, "isOpaque", PreGame_GetWaitingForPlayersHasBlackScreen() && !CircularHudEnabled() )
+		RuiSetBool( s_overlayRui, "isOpaque", hasBlackScreen && !CircularHudEnabled() )
 	}
 }
 

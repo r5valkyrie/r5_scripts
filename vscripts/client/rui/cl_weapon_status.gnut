@@ -1811,6 +1811,12 @@ var function GetRuiForIndex( entity player, int offhandIndex )
 
 bool function GetHudDefaultVisibility()
 {
+	// Hide HUD during arenas WaitingForPlayers: the blackscreen overlay is a regular
+	// CockpitRui that renders behind PostFX HUD elements and cannot cover them
+	int gameState = GetGameState()
+	if ( Gamemode() == eGamemodes.ARENAS && ( gameState < 0 || gameState <= eGameState.WaitingForPlayers ) )
+		return false
+
 	return true
 }
 

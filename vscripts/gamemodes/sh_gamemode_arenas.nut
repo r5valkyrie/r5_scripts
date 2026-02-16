@@ -239,7 +239,6 @@ struct {
 		bool hasEnteredBuyPhase = false
 		bool charSelectMenuClosed = false
 		int ashParticle = -1
-		var waitingOverlay = null
 	#if(DEV)
 		bool devBuyMenu = false
 	#endif
@@ -502,17 +501,6 @@ void function ShGamemodeArenas_Init()
 	AddCallback_OnClientScriptInit( void function( entity player ) : ()
 	{
 		SetGameModeScoreBarUpdateRulesWithFlags( GameModeScoreBarRules, sbflag.SKIP_STANDARD_UPDATE )
-		if ( GetGameState() < eGameState.Playing )
-		{
-			if ( file.waitingOverlay != null )
-			{
-				RuiDestroyIfAlive( file.waitingOverlay )
-				file.waitingOverlay = null
-			}
-			file.waitingOverlay = CreatePermanentCockpitRui( $"ui/waiting_for_players_blackscreen.rpak", -1 )
-			RuiSetResolutionToScreenSize( file.waitingOverlay )
-			RuiSetBool( file.waitingOverlay, "isOpaque", true )
-		}
 	} )
 	SURVIVAL_SetGameStateAssetOverrideCallback( ArenasOverrideGameState )
 
@@ -572,12 +560,20 @@ void function ShArenas_RegisterNetworking()
 // R5V init entry points
 void function Arenas_SharedInit()
 {
+	PrecacheModel( SURVIVAL_SQUAD_SUMMARY_MODEL )
 	ShGamemodeArenas_Init()
 }
 
 #if SERVER
 void function Arenas_ServerInit()
 {
+	// Arenas does not run GamemodeSurvival_Init (which sets the default plane height
+	// via EntitiesDidLoad_Survival). Set it here so Survival_GetMapFloorZ traces from
+	// above the map instead of from Z=0 (which misses the ground on floating arenas).
+	if ( SURVIVAL_GetPlaneHeight() == 0 )
+		SURVIVAL_SetPlaneHeight( 17000.0 )
+
+	Sh_ArenaDeathField_Init()
 	Arenas_ServerGamemode_Init()
 }
 #endif
@@ -2060,32 +2056,17 @@ void function EntitiesDidLoad()
 #endif //
 
 #if(CLIENT)
-void function Arenas_CreateWaitingOverlay()
-{
-	if ( file.waitingOverlay != null )
-	{
-		RuiDestroyIfAlive( file.waitingOverlay )
-		file.waitingOverlay = null
-	}
-
-	file.waitingOverlay = CreatePermanentCockpitRui( $"ui/waiting_for_players_blackscreen.rpak", -1 )
-	RuiSetResolutionToScreenSize( file.waitingOverlay )
-	RuiSetBool( file.waitingOverlay, "isOpaque", true )
-}
-
 void function ClSurvivalArenas_OnWaitingForPlayers()
 {
-	Arenas_CreateWaitingOverlay()
+	// Overlay is handled by the survival system via waiting_for_players_has_black_screen playlist var.
+	// Hide the PostFX HUD since the blackscreen overlay (regular CockpitRui) renders behind it.
+	Survival_SetPilotHudVisible( false )
 }
 
 void function CLSurvivalArenas_OnPrematch()
 {
-	// Destroy the waiting for players overlay
-	if ( file.waitingOverlay != null )
-	{
-		RuiDestroyIfAlive( file.waitingOverlay )
-		file.waitingOverlay = null
-	}
+	// Restore HUD visibility (hidden during WaitingForPlayers)
+	Survival_SetPilotHudVisible( true )
 
 	// Close the character select menu if it's still open from PickLoadout.
 	// The squad/champion presentations leave the menu open (footer bars, camera,
@@ -2105,13 +2086,6 @@ void function CLSurvivalArenas_OnPrematch()
 
 void function ClSurvivalArenas_OnPlaying()
 {
-	// Safety cleanup of waiting overlay in case Prematch was skipped
-	if ( file.waitingOverlay != null )
-	{
-		RuiDestroyIfAlive( file.waitingOverlay )
-		file.waitingOverlay = null
-	}
-
 	__DestroyRoundRuis()
 
 	// Only play the timer-end sound when transitioning from a buy phase to combat.
@@ -2596,13 +2570,6 @@ void function Arenas_OnResolutionChanged()
 void function Arenas_OnBuyMenuOpen( )
 {
 	file.hasEnteredBuyPhase = true
-
-	// Destroy waiting for players overlay now that buy menu is visible
-	if ( file.waitingOverlay != null )
-	{
-		RuiDestroyIfAlive( file.waitingOverlay )
-		file.waitingOverlay = null
-	}
 
 	if( !file.inAshRoom )
 		SetupAshRoom()

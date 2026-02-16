@@ -33,6 +33,9 @@ global function Arenas_ServerGamemode_Init
 // Economy constants defined in sh_arenas_buy_system.nut (shared):
 // ARENAS_MAX_CASH, ARENAS_KILL_REWARD, ARENAS_CANISTER_REWARD, ARENAS_ROUND_PER_LOSE_CASH
 
+// Dev mode: skip buy phase, give default loadout, jump straight to combat
+const bool ARENAS_DEV_MODE = true
+
 // Timing constants
 const float ARENAS_BUY_PHASE_DURATION = 30.0
 const float ARENAS_ROUND_END_DELAY = 3.0
@@ -130,9 +133,9 @@ struct
 	float buyPhaseEndTime = 0.0
 	bool mainLoopStarted = false
 	bool teamsAssigned = false
+	bool deathfieldOverridesSet = false
 	bool forceNextRound = false
 	bool firstBloodThisRound = false
-	bool deathfieldThreadNeeded = false
 
 	// Map config extracted from info_arenas_map_location
 	string mapName = ""
@@ -217,7 +220,8 @@ void function Arenas_OnPickLoadout()
 
 void function Arenas_OnPrematch()
 {
-	// Fallback: if PickLoadout was skipped (char select disabled), assign teams now
+	// Assign teams on first Prematch (from onboarding). Subsequent Prematch
+	// transitions (from BuyPhase each round) skip this.
 	if ( !file.teamsAssigned )
 	{
 		file.teamsAssigned = true
@@ -226,25 +230,37 @@ void function Arenas_OnPrematch()
 			"MILITIA:", GetPlayerArrayOfTeam( file.rightTeam ).len() )
 	}
 
-	// Set up deathfield circle overrides from map entities so the ring
-	// targets one of the designated circle end locations each round.
-	foreach ( entity endLoc in file.circleEndLocations )
+	// Set up deathfield circle overrides once from map entities
+	if ( !file.deathfieldOverridesSet )
 	{
-		if ( IsValid( endLoc ) )
-			SURVIVAL_AddOverrideCircleLocation( endLoc.GetOrigin(), 250.0 )
+		file.deathfieldOverridesSet = true
+		foreach ( entity endLoc in file.circleEndLocations )
+		{
+			if ( IsValid( endLoc ) )
+				SURVIVAL_AddOverrideCircleLocation( endLoc.GetOrigin(), 250.0 )
+		}
+		printt( "[Arenas] Deathfield circle overrides set:", file.circleEndLocations.len() )
 	}
-	printt( "[Arenas] Deathfield circle overrides set:", file.circleEndLocations.len() )
+
+	// Start the main game loop on first Prematch from onboarding.
+	// Onboarding stops at Prematch for arenas; we take over from here.
+	if ( !file.mainLoopStarted )
+	{
+		file.mainLoopStarted = true
+		printt( "[Arenas] Prematch -> starting main game loop" )
+		thread Arenas_MainGameLoop()
+	}
 }
 
 void function Arenas_OnGameStatePlaying()
 {
-	// Only start the main loop once. Subsequent Playing transitions
-	// (from Prematch during buy->combat phase changes) must not restart it.
+	// Game loop is started from Arenas_OnPrematch. This callback exists
+	// as a safety guard only.
 	if ( file.mainLoopStarted )
 		return
 
 	file.mainLoopStarted = true
-	printt( "[Arenas] GameState -> Playing, starting main game loop" )
+	printt( "[Arenas] GameState -> Playing, starting main game loop (fallback)" )
 	thread Arenas_MainGameLoop()
 }
 
@@ -599,8 +615,16 @@ void function Arenas_BuyPhase()
 	printt( "[Arenas] BuyPhase started" )
 	file.currentPhase = eArenaPhase.BUY_PHASE
 	SetGameState( eGameState.Prematch )
+	SetGlobalNetInt( "gameState", eGameState.Prematch )
 	SetGlobalNetInt( "roundsPlayed", file.roundNumber )
 	level.nv.roundsPlayed = file.roundNumber
+
+	if ( ARENAS_DEV_MODE )
+	{
+		Arenas_DevMode_SetupPlayers()
+		Arenas_SetStartZoneWalls( false )
+		return
+	}
 
 	// Enable spawn room blockers
 	Arenas_SetStartZoneWalls( true )
@@ -621,6 +645,9 @@ void function Arenas_BuyPhase()
 			if ( !IsValid( player ) )
 				continue
 		}
+
+		// Unfreeze controls (frozen during WaitingForPlayers for safe parking)
+		player.UnfreezeControlsOnServer()
 
 		// Zoom minimap in for buy phase
 		player.SetMinimapZoomScale( ARENAS_PREMATCH_MINIMAP_ZOOM, 0.0 )
@@ -769,6 +796,47 @@ void function Arenas_GiveLegendAbilities( entity player )
 
 	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( tacticalAbility ), OFFHAND_TACTICAL, [] )
 	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultimateAbility ), OFFHAND_ULTIMATE, [] )
+}
+
+void function Arenas_DevMode_SetupPlayers()
+{
+	printt( "[Arenas] DEV MODE - skipping buy phase, giving default loadout" )
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( !IsValid( player ) )
+			continue
+
+		if ( !IsAlive( player ) )
+		{
+			DecideRespawnPlayer( player, false )
+			wait 0.1
+			if ( !IsValid( player ) )
+				continue
+		}
+
+		player.UnfreezeControlsOnServer()
+		Arenas_ResetPlayerForRound( player )
+		Arenas_TeleportToSpawn( player )
+
+		// Give wingman + full ammo
+		player.GiveWeapon( "mp_weapon_wingman", WEAPON_INVENTORY_SLOT_PRIMARY_0, [] )
+		entity weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+		if ( IsValid( weapon ) )
+		{
+			weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
+			player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+		}
+
+		// Give legend abilities
+		Arenas_GiveLegendAbilities( player )
+
+		// Give full armor and health
+		player.SetHealth( player.GetMaxHealth() )
+		player.SetShieldHealth( player.GetShieldHealthMax() )
+
+		ScreenFadeFromBlack( player, 0.3, 0.0 )
+	}
 }
 
 void function Arenas_TeleportToSpawn( entity player )
@@ -945,20 +1013,24 @@ void function Arenas_DeathfieldTimer()
 
 	FlagSet( "DeathCircleActive" )
 	FlagClear( "DeathFieldPaused" )
-	printt( "[Arenas] Death field activated after", ARENAS_RING_ACTIVATION_DELAY, "seconds" )
+}
+
+void function Arenas_FreezeDeathfield()
+{
+	// Stop the ring movement thread but keep entities alive so the ring stays visible.
+	// DeathFieldKeepCodeUpdated_THREAD continues calling SetDeathFieldParams, freezing the
+	// ring at its current position and radius until entities are destroyed.
+	svGlobal.levelEnt.Signal( "GenerateDeathFieldData" )
+	FlagClear( "SUR_DeathFieldShrinking" )
+	FlagClear( "DeathCircleActive" )
 }
 
 void function Arenas_StopDeathfield()
 {
-	entity deathField = SURVIVAL_GetDeathField()
-	if ( IsValid( deathField ) )
-		deathField.Destroy()
-
-	if ( Flag( "DeathCircleActive" ) )
-		FlagClear( "DeathCircleActive" )
-
-	file.deathfieldThreadNeeded = true
-	printt( "[Arenas] Death field stopped for round end" )
+	// Full deathfield reset: destroys all entities (deathField, safeZone),
+	// resets per-realm DeathFieldData tables, clears flags, resets netvars and native params.
+	// This ensures the next round starts with a completely clean deathfield state.
+	RoundBased_ResetDeathfield()
 }
 
 // ============================================================================
@@ -1698,6 +1770,7 @@ void function Arenas_CombatPhase()
 	printt( "[Arenas] CombatPhase started" )
 	file.currentPhase = eArenaPhase.COMBAT
 	SetGameState( eGameState.Playing )
+	SetGlobalNetInt( "gameState", eGameState.Playing )
 
 	// Log team state at combat start for debugging
 	array<entity> leftAll = GetPlayerArrayOfTeam( file.leftTeam )
@@ -1727,11 +1800,10 @@ void function Arenas_CombatPhase()
 	// Round start battle chatter
 	thread SurvivalCommentary_HostAnnounce( GetRoundCommentaryBucket( file.roundNumber ), ARENAS_ROUNDSTART_BC_DELAY )
 
-	// Start deathfield timer for this round. The survival init already threaded
-	// SURVIVAL_RunArenaDeathField() for round 0 (waiting on DeathCircleActive flag).
-	// For round 1+, the previous thread was killed at round end so we re-thread.
-	if ( file.deathfieldThreadNeeded )
-		thread SURVIVAL_RunArenaDeathField()
+	// Start deathfield for this round. Thread SURVIVAL_RunArenaDeathField which blocks
+	// on FlagWait("DeathCircleActive") until the timer activates it.
+	// The thread is killed at round end when the deathfield entity is destroyed.
+	thread SURVIVAL_RunArenaDeathField()
 	thread Arenas_DeathfieldTimer()
 
 	// Care package airdrop timer
@@ -1789,11 +1861,13 @@ void function Arenas_RoundEnd( int winningTeam )
 {
 	file.currentPhase = eArenaPhase.ROUND_END
 
-	// Clean up any remaining canisters, loot bins, airdrops, and deathfield
+	// Clean up any remaining canisters, loot bins, airdrops
 	Arenas_CleanupCanisters()
 	Arenas_CleanupLootBins()
 	Arenas_CleanupAirdrops()
-	Arenas_StopDeathfield()
+
+	// Freeze ring in place (stays visible during round-end celebration)
+	Arenas_FreezeDeathfield()
 
 	// Clean up player abilities, tracked projectiles (traps, gas, drones, etc.), and deathboxes
 	foreach ( entity player in GetPlayerArray() )
@@ -1876,6 +1950,7 @@ void function Arenas_RoundEnd( int winningTeam )
 	if ( Arenas_CheckMatchEnd() )
 	{
 		file.matchOver = true
+		Arenas_StopDeathfield()
 		return
 	}
 
@@ -1885,6 +1960,9 @@ void function Arenas_RoundEnd( int winningTeam )
 		if ( IsValid( player ) )
 			ScreenFadeToBlack( player, 1.0, ARENAS_ROUND_RESTART_DELAY + 1.0 )
 	}
+
+	// Destroy ring during black screen before players are teleported
+	Arenas_StopDeathfield()
 
 	wait ARENAS_ROUND_RESTART_DELAY
 }
@@ -2048,6 +2126,7 @@ void function Arenas_MatchEnd()
 
 	// End the match via game state transition
 	SetGameState( eGameState.WinnerDetermined )
+	SetGlobalNetInt( "gameState", eGameState.WinnerDetermined )
 
 	// Restart map after champion screen
 	wait 15.0
