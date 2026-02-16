@@ -1497,18 +1497,77 @@ void function UpdateDpadHud( entity player )
 	RuiSetInt( file.dpadMenuRui, "healthTypeCount", GetCountForLootType( eLootType.HEALTH ) )
 
 	entity ordnanceWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
-	int ammo              = 0
+	int ordnanceAmmo      = 0
 	asset ordnanceIcon    = $""
 
 	if ( IsValid( ordnanceWeapon ) )
 	{
-		ammo = SURVIVAL_CountItemsInInventory( player, ordnanceWeapon.GetWeaponClassName() )
-		ordnanceIcon = ordnanceWeapon.GetWeaponSettingAsset( eWeaponVar.hud_icon )
+		string ordnanceRef = ordnanceWeapon.GetWeaponClassName()
+		if ( SURVIVAL_Loot_IsRefValid( ordnanceRef ) )
+		{
+			LootData ordnanceLootData = SURVIVAL_Loot_GetLootDataByRef( ordnanceRef )
+			if ( ordnanceLootData.lootType == eLootType.ORDNANCE )
+			{
+				ordnanceAmmo = SURVIVAL_CountItemsInInventory( player, ordnanceRef )
+				ordnanceIcon = ordnanceWeapon.GetWeaponSettingAsset( eWeaponVar.hud_icon )
+			}
+		}
 	}
 
 	RuiSetImage( file.dpadMenuRui, "ordnanceIcon", ordnanceIcon )
-	RuiSetInt( file.dpadMenuRui, "ordnanceCount", ammo )
+	RuiSetInt( file.dpadMenuRui, "ordnanceCount", ordnanceAmmo )
 	RuiSetInt( file.dpadMenuRui, "ordnanceTypeCount", GetCountForLootType( eLootType.ORDNANCE ) )
+
+	RuiSetBool( file.dpadMenuRui, "gadgetUIEnabled", true )
+	asset gadgetIcon = $"rui/hud/dpad/empty_slot"
+	LootData lootData = EquipmentSlot_GetEquippedLootDataForSlot( player, "gadgetslot" )
+	string gadgetRef = EquipmentSlot_GetLootRefForSlot( player, "gadgetslot" )
+	int gadgetAmmo = 0
+	int maxAmmoCount = 0
+	if ( gadgetRef == "" && IsLootTypeValid( lootData.lootType ) && SURVIVAL_Loot_IsRefValid( lootData.ref ) )
+		gadgetRef = lootData.ref
+
+	if ( gadgetRef != "" && SURVIVAL_Loot_IsRefValid( gadgetRef ) )
+	{
+		LootData gadgetLootData = SURVIVAL_Loot_GetLootDataByRef( gadgetRef )
+		if ( gadgetLootData.lootType == eLootType.SURVIVAL )
+		{
+			gadgetIcon = gadgetLootData.hudIcon
+			maxAmmoCount = gadgetLootData.inventorySlotCount
+			gadgetAmmo = SURVIVAL_CountItemsInInventory( player, gadgetRef )
+		}
+
+		entity gadgetWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+		if ( IsValid( gadgetWeapon ) && gadgetWeapon.GetWeaponClassName() == gadgetRef )
+			gadgetAmmo = gadgetWeapon.GetWeaponPrimaryClipCount()
+	}
+
+	if ( gadgetRef == "" )
+	{
+		entity gadgetWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+		if ( IsValid( gadgetWeapon ) )
+		{
+			string activeRef = gadgetWeapon.GetWeaponClassName()
+			if ( SURVIVAL_Loot_IsRefValid( activeRef ) )
+			{
+				LootData activeLootData = SURVIVAL_Loot_GetLootDataByRef( activeRef )
+				if ( activeLootData.lootType == eLootType.SURVIVAL )
+				{
+					gadgetIcon = activeLootData.hudIcon
+					maxAmmoCount = activeLootData.inventorySlotCount
+					gadgetAmmo = gadgetWeapon.GetWeaponPrimaryClipCount()
+				}
+			}
+		}
+
+	}
+	RuiSetImage( file.dpadMenuRui, "gadgetIcon", gadgetIcon )
+	RuiSetInt( file.dpadMenuRui, "gadgetCount", gadgetAmmo )
+	RuiSetInt( file.dpadMenuRui, "maxGadgetCount", maxAmmoCount )
+
+	int useSurvivalSlotButton = GetConVarInt( "hud_setting_showButtonHints" )
+	bool showGadgetButtonText = (useSurvivalSlotButton == 0)
+	RuiSetBool( file.dpadMenuRui, "showGadgetButtonText", showGadgetButtonText )
 }
 
 void function UpdateDpadHud_Copy()
@@ -1558,18 +1617,77 @@ void function UpdateDpadHud_Copy()
 	RuiSetInt( file.dpadMenuRui, "healthTypeCount", GetCountForLootType( eLootType.HEALTH ) )
 
 	entity ordnanceWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
-	int ammo              = 0
+	int ordnanceAmmo      = 0
 	asset ordnanceIcon    = $""
 
 	if ( IsValid( ordnanceWeapon ) )
 	{
-		ammo = SURVIVAL_CountItemsInInventory( player, ordnanceWeapon.GetWeaponClassName() )
-		ordnanceIcon = ordnanceWeapon.GetWeaponSettingAsset( eWeaponVar.hud_icon )
+		string ordnanceRef = ordnanceWeapon.GetWeaponClassName()
+		if ( SURVIVAL_Loot_IsRefValid( ordnanceRef ) )
+		{
+			LootData ordnanceLootData = SURVIVAL_Loot_GetLootDataByRef( ordnanceRef )
+			if ( ordnanceLootData.lootType == eLootType.ORDNANCE )
+			{
+				ordnanceAmmo = SURVIVAL_CountItemsInInventory( player, ordnanceRef )
+				ordnanceIcon = ordnanceWeapon.GetWeaponSettingAsset( eWeaponVar.hud_icon )
+			}
+		}
 	}
 
 	RuiSetImage( file.dpadMenuRui, "ordnanceIcon", ordnanceIcon )
-	RuiSetInt( file.dpadMenuRui, "ordnanceCount", ammo )
+	RuiSetInt( file.dpadMenuRui, "ordnanceCount", ordnanceAmmo )
 	RuiSetInt( file.dpadMenuRui, "ordnanceTypeCount", GetCountForLootType( eLootType.ORDNANCE ) )
+
+	RuiSetBool( file.dpadMenuRui, "gadgetUIEnabled", true )
+	asset gadgetIcon = $"rui/hud/dpad/empty_slot"
+	LootData lootData = EquipmentSlot_GetEquippedLootDataForSlot( player, "gadgetslot" )
+	string gadgetRef = EquipmentSlot_GetLootRefForSlot( player, "gadgetslot" )
+	int gadgetAmmo = 0
+	int maxAmmoCount = 0
+	if ( gadgetRef == "" && IsLootTypeValid( lootData.lootType ) && SURVIVAL_Loot_IsRefValid( lootData.ref ) )
+		gadgetRef = lootData.ref
+
+	if ( gadgetRef != "" && SURVIVAL_Loot_IsRefValid( gadgetRef ) )
+	{
+		LootData gadgetLootData = SURVIVAL_Loot_GetLootDataByRef( gadgetRef )
+		if ( gadgetLootData.lootType == eLootType.SURVIVAL )
+		{
+			gadgetIcon = gadgetLootData.hudIcon
+			maxAmmoCount = gadgetLootData.inventorySlotCount
+			gadgetAmmo = SURVIVAL_CountItemsInInventory( player, gadgetRef )
+		}
+
+		entity gadgetWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+		if ( IsValid( gadgetWeapon ) && gadgetWeapon.GetWeaponClassName() == gadgetRef )
+			gadgetAmmo = gadgetWeapon.GetWeaponPrimaryClipCount()
+	}
+
+	if ( gadgetRef == "" )
+	{
+		entity gadgetWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+		if ( IsValid( gadgetWeapon ) )
+		{
+			string activeRef = gadgetWeapon.GetWeaponClassName()
+			if ( SURVIVAL_Loot_IsRefValid( activeRef ) )
+			{
+				LootData activeLootData = SURVIVAL_Loot_GetLootDataByRef( activeRef )
+				if ( activeLootData.lootType == eLootType.SURVIVAL )
+				{
+					gadgetIcon = activeLootData.hudIcon
+					maxAmmoCount = activeLootData.inventorySlotCount
+					gadgetAmmo = gadgetWeapon.GetWeaponPrimaryClipCount()
+				}
+			}
+		}
+
+	}
+	RuiSetImage( file.dpadMenuRui, "gadgetIcon", gadgetIcon )
+	RuiSetInt( file.dpadMenuRui, "gadgetCount", gadgetAmmo )
+	RuiSetInt( file.dpadMenuRui, "maxGadgetCount", maxAmmoCount )
+
+	int useSurvivalSlotButton = GetConVarInt( "hud_setting_showButtonHints" )
+	bool showGadgetButtonText = (useSurvivalSlotButton == 0)
+	RuiSetBool( file.dpadMenuRui, "showGadgetButtonText", showGadgetButtonText )
 }
 
 array<void functionref( bool )> s_callbacks_OnUpdateShowButtonHints

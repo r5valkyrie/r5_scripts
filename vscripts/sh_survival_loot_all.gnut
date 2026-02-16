@@ -20,7 +20,14 @@ global function GetCustomHopupArray
 global function IsNewLootEnabled
 global function IsEnabledForGroundLoot
 global function GetLockedSetFromName
+#if SERVER
+global function SURVIVAL_Loot_MaybeStartRestrictedDefense_Thread
+global function SURVIVAL_Loot_IsLootRestricted
+#endif
 
+#if UI
+global function SURVIVAL_Loot_GetRestrictedDialogArray
+#endif
 #if CLIENT || UI
 global function AddCallback_EditLootDesc
 global function RemoveCallback_EditLootDesc
@@ -214,6 +221,34 @@ global enum eLootType
 	_count
 }
 
+global const int NORMAL_UNRESTRICTED_LOOT = -1
+global enum eRestrictedLootTypes
+{
+	VAULT,
+	SHIP_VAULT,
+	BLOODHOUND_TT,
+	CAUSTIC_TT,
+	RAMPART_TT,      
+	SPECTRE_SHACK,             
+	EXPLOSIVE_HOLDS,
+}
+
+struct RestrictedLootInfo
+{
+	#if SERVER || CLIENT
+		entity functionref( entity ) getRestrictedPanel
+		bool functionref( entity ) isRestrictedPanelLocked
+	#endif
+	#if SERVER
+		void functionref( entity, entity, entity) maybeActivateRestrictedPanelDefense
+	#endif
+	#if UI
+		string dialogPopupHeader
+		string dialogPopupAreYouSure
+		string dialogPopupDeny
+	#endif
+}
+
 global const int HAS_DEATHBOX_OVERRIDE_FRIEND_PROFILES_TO_SEND = 3
 global function IsDeathboxAutoPickupEnabled
 #if(true)
@@ -246,7 +281,7 @@ struct
 	array<string>             disabledRefs
 	array<string>             uniqueAmmoWeaponRefs
 	array<CustomHopupData>	  customHopups = []
-
+	table<int, RestrictedLootInfo> restrictedLootInfo
 	array<asset>              customLootDatatables
 	bool                      customDatatablesProcessed = false
 
@@ -347,6 +382,9 @@ void function SURVIVAL_Loot_All_InitShared()
 		RegisterSignal( "GatheredEnoughFriendInfo" )
 		SURVIVAL_UIInit_Override_DeathBox_RUI()
 	#endif
+
+	if ( file.restrictedLootInfo.len() == 0 )
+		SURVIVAL_Loot_InitRestrictedLoot()
 
 	file.initialized = true
 }
@@ -1940,6 +1978,231 @@ bool function IsDeathboxAutoPickupEnabled()
 	return GetCurrentPlaylistVarBool( "survival_deathbox_autopickup_enabled", defaultVal )
 }
 
+#if CLIENT || SERVER
+void function SetCallback_LootTypeExtraCanUseFunction( LootData data, bool functionref( entity, entity, int ) func )
+{
+	Assert( IsValid( data ) )
+	Assert( data.extraCanUseFunction == null, "Tried to set extraCanUseFunction for ref " + data.ref + " but it already has one." )
+	data.extraCanUseFunction = func
+}
+
+void function ClearCallback_LootTypeExtraCanUseFunction( LootData data )
+{
+	Assert( IsValid( data ) )
+	data.extraCanUseFunction = null
+}
+#endif
+
+#if SERVER || CLIENT
+bool function SURVIVAL_Loot_IsRestrictedPanelLocked ( int restrictedLootType, entity vendPanel )
+{
+	if ( !(restrictedLootType in file.restrictedLootInfo) )
+		return false
+
+	return file.restrictedLootInfo[ restrictedLootType ].isRestrictedPanelLocked( vendPanel )
+}
+
+// The flags check works for all restricted loot EXCEPT Caustic TT; Caustic TT just uses its own function
+bool function IsPanelWithGradeFlagsLocked( entity vendPanel )
+{
+	return GradeFlagsHas( vendPanel, eGradeFlags.IS_LOCKED )
+}
+
+entity function SURVIVAL_Loot_GetRestrictedPanel( int restrictedLootType, entity lootEnt )
+{
+	if ( !(restrictedLootType in file.restrictedLootInfo) )
+		return null
+
+	return file.restrictedLootInfo[ restrictedLootType ].getRestrictedPanel( lootEnt )
+}
+
+int function SURVIVAL_Loot_GetRestrictedLootType ( entity lootEnt )
+{
+	foreach ( int restrictedLootType in eRestrictedLootTypes )
+	{
+		if ( SURVIVAL_Loot_GetRestrictedPanel ( restrictedLootType, lootEnt ) != null )
+			return restrictedLootType
+	}
+	return -1
+}
+#endif
+
+#if SERVER
+void function SURVIVAL_Loot_MaybeStartRestrictedDefense_Thread( int restrictedLootType, entity pickup, entity device, entity player )
+{
+	if ( !(restrictedLootType in file.restrictedLootInfo) )
+		return
+
+	if ( file.restrictedLootInfo[ restrictedLootType ].maybeActivateRestrictedPanelDefense == null )
+		return
+
+	thread file.restrictedLootInfo[ restrictedLootType ].maybeActivateRestrictedPanelDefense( pickup, device, player )
+}
+
+bool function SURVIVAL_Loot_IsLootRestricted ( entity lootEnt )
+{
+	int restrictedLootType = SURVIVAL_Loot_GetRestrictedLootType ( lootEnt )
+
+	if ( IsValidEnumValue ( "eRestrictedLootTypes", restrictedLootType ) )
+	{
+		entity restrictedPanel = SURVIVAL_Loot_GetRestrictedPanel ( restrictedLootType, lootEnt )
+		if ( restrictedPanel != null && SURVIVAL_Loot_IsRestrictedPanelLocked ( restrictedLootType, restrictedPanel ) )
+			return true
+	}
+	return false
+}
+#endif
+
+#if UI
+array< string > function SURVIVAL_Loot_GetRestrictedDialogArray( int restrictedLootType )
+{
+	array< string > dialogArray = [ file.restrictedLootInfo[ restrictedLootType ].dialogPopupHeader,
+	                                file.restrictedLootInfo[ restrictedLootType ].dialogPopupAreYouSure,
+	                                file.restrictedLootInfo[ restrictedLootType ].dialogPopupDeny ]
+
+	return dialogArray
+}
+#endif
+
+#if SERVER || CLIENT || UI
+void function SURVIVAL_Loot_InitRestrictedLoot()
+{
+	{
+		RestrictedLootInfo emptyLoot
+		// VAULT LOOT
+		file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ] <- emptyLoot
+		#if SERVER || CLIENT
+			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].getRestrictedPanel = GetVaultPanelForLoot
+			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
+		#endif
+		#if SERVER
+			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].maybeActivateRestrictedPanelDefense = MaybeActivateVaultDefense_Thread
+		#endif
+		#if UI
+			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_VAULT_CONFIRM_HEADER"
+			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_VAULT_CONFIRM_BODY"
+			file.restrictedLootInfo[ eRestrictedLootTypes.VAULT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_VAULT_DENY_BODY"
+		#endif
+	}
+
+	{
+		RestrictedLootInfo emptyLoot
+		// BRIDGE LOOT
+		file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ] <- emptyLoot
+		#if SERVER || CLIENT
+			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].getRestrictedPanel = GetVaultPanelForLoot
+			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
+		#endif
+		#if SERVER
+			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].maybeActivateRestrictedPanelDefense = MaybeActivateVaultDefense_Thread
+		#endif
+		#if UI
+			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_BRIDGE_VAULT_CONFIRM_HEADER"
+			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_BRIDGE_VAULT_CONFIRM_BODY"
+			file.restrictedLootInfo[ eRestrictedLootTypes.SHIP_VAULT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_BRIDGE_VAULT_DENY_BODY"
+		#endif
+	}
+
+	{
+		RestrictedLootInfo emptyLoot
+		// BLOODHOUND TT LOOT
+		file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ] <- emptyLoot
+		#if SERVER || CLIENT
+			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].getRestrictedPanel = GetBloodTTRewardPanelForLoot
+			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
+		#endif
+		#if SERVER
+			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].maybeActivateRestrictedPanelDefense = MaybeActivateBloodTTDefense_Thread
+		#endif
+		#if UI
+			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_BLOODTT_CONFIRM_HEADER"
+			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_BLOODTT_CONFIRM_BODY"
+			file.restrictedLootInfo[ eRestrictedLootTypes.BLOODHOUND_TT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_BLOODTT_DENY_BODY"
+		#endif
+	}
+
+	{
+		RestrictedLootInfo emptyLoot
+		// CAUSTIC TT LOOT
+		file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ] <- emptyLoot
+		                  
+		#if SERVER || CLIENT
+
+		file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].getRestrictedPanel = GetCausticTTCanisterFrameForLoot
+		file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].isRestrictedPanelLocked = AreCausticTTCanistersClosed
+		#endif
+		#if SERVER
+			file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].maybeActivateRestrictedPanelDefense = MaybeActivateCausticTTDefense_Thread
+		#endif
+        
+		#if UI
+			file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_CAUSTICTT_CONFIRM_HEADER"
+			file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_CAUSTICTT_CONFIRM_BODY"
+			file.restrictedLootInfo[ eRestrictedLootTypes.CAUSTIC_TT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_CAUSTICTT_DENY_BODY"
+		#endif
+	}
+
+	{
+		RestrictedLootInfo emptyLoot
+		                  
+			// RAMPART TT LOOT
+			file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ] <- emptyLoot
+			#if SERVER || CLIENT
+			file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].getRestrictedPanel = GetRampartTTPanelForLoot
+			file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
+			#endif
+			#if SERVER
+				file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].maybeActivateRestrictedPanelDefense = MaybeActivateRampartTTDefense_Thread
+			#endif
+			#if UI
+				file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_RAMPARTTT_CONFIRM_HEADER"
+				file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_RAMPARTTT_CONFIRM_BODY"
+				file.restrictedLootInfo[ eRestrictedLootTypes.RAMPART_TT ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_RAMPARTTT_DENY_BODY"
+			#endif
+        
+	}
+
+	{
+		//RestrictedLootInfo emptyLoot
+		                      
+			// Spectre Shack Smart Loot
+		//	file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ] <- emptyLoot
+		//	#if SERVER || CLIENT
+		//		file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].getRestrictedPanel = GetSpectreShackSmartLootBinForLoot
+		//		file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].isRestrictedPanelLocked = IsSpectreShackSmartLootLocked
+		//	#endif
+		//	#if SERVER
+		//		file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].maybeActivateRestrictedPanelDefense = SpectreShackLootDefense
+		//	#endif
+		//	#if UI
+		//		file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_SMARTLOOT_CONFIRM_HEADER"
+		//		file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_SMARTLOOT_CONFIRM_BODY"
+		//		file.restrictedLootInfo[ eRestrictedLootTypes.SPECTRE_SHACK ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_SMARTLOOT_DENY_BODY"
+		//	#endif
+        
+	}
+
+	{
+		RestrictedLootInfo emptyLoot
+		                            
+			// Explosive holds
+			file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ] <- emptyLoot
+			#if SERVER || CLIENT
+				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].getRestrictedPanel = GetExplosiveHoldProxyForLoot
+				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].isRestrictedPanelLocked = IsPanelWithGradeFlagsLocked
+			#endif
+			#if SERVER
+				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].maybeActivateRestrictedPanelDefense = MaybeActivateExplosiveHoldDefense_Thread
+			#endif
+			#if UI
+				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].dialogPopupHeader = "#LOBA_ULT_BLACK_MARKET_EXPLOSIVEHOLD_CONFIRM_HEADER"
+				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].dialogPopupAreYouSure = "#LOBA_ULT_BLACK_MARKET_EXPLOSIVEHOLD_CONFIRM_BODY"
+				file.restrictedLootInfo[ eRestrictedLootTypes.EXPLOSIVE_HOLDS ].dialogPopupDeny = "#LOBA_ULT_BLACK_MARKET_EXPLOSIVEHOLD_DENY_BODY"
+			#endif
+        
+	}
+}
+#endif
 #if SERVER || CLIENT
 bool function SURVIVAL_Loot_IsAmmoSpawningDisabled()
 {

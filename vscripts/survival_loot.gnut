@@ -1687,6 +1687,7 @@ void function SURVIVAL_ThrowLootFromPoint_OG( vector throwOrigin, vector forward
 void function SURVIVAL_PlayerPickedupItem( entity pickup, entity player, int unitsPickedUp, int pickupAction, int pickupFlags = 0, bool dontDestroy = false, entity deathBox = null )
 {
 	string ref = pickup.e.lootRef
+	bool willDestroy = !dontDestroy
 
 	PIN_ItemPickup( player, pickup, ref, unitsPickedUp )
 	LootData pickupData = SURVIVAL_Loot_GetLootDataByIndex( pickup.GetSurvivalInt() )
@@ -1699,6 +1700,9 @@ void function SURVIVAL_PlayerPickedupItem( entity pickup, entity player, int uni
 		printf(pickupData.ref + pickup)
 		LootMarvinArm_OnPickup(pickup, player, pickupFlags, deathBox, unitsPickedUp  )
 	}
+
+	foreach ( callbackFunc in file.Callbacks_OnPlayerLootPickup )
+		callbackFunc( player, pickup, ref, unitsPickedUp, willDestroy, deathBox, pickupFlags )
 
 	if ( dontDestroy )
 		return

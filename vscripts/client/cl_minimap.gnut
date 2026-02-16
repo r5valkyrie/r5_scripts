@@ -47,11 +47,14 @@ global function UpdateImageAndScaleOnMinimapRUI
 
 global function Minimap_AddIconAtPosition
 global function FS_Scenarios_MinimapDeathFieldCreated
+global function AddMinimapObject
 
 global function HACK_TrackPlayerPositionOnScript
 global function SetCustomXYOffsetsMapScaleAndImageOnFullmapAndMinimap
 global function RefreshImageAndScaleOnMinimapAndFullmap
 global function UpdateEquipmentSlot
+
+global function RegisterDefaultMinimapPackage
 #if DEVELOPER
 global function DumpMinimapHandles
 #endif

@@ -3083,6 +3083,31 @@ int function Safe_GetDefenderTeam()
 	return ModCallbacks_CallIntCallback( "GetDefenderTeam", TEAM_MILITIA )
 }
 
+bool function CanScriptPlaceableBePlacedOn( entity hitEnt )
+{
+	//
+
+	if ( hitEnt.IsWorld() )
+		return true
+
+	var hitEntClassname = hitEnt.GetNetworkedClassName()
+
+	if ( hitEntClassname == "func_brush" || hitEntClassname == "script_mover" )
+		return true
+
+	return false
+}
+
+bool function ShouldScriptedPlaceableParentTo( entity hitEnt )
+{
+	var hitEntClassname = hitEnt.GetNetworkedClassName()
+
+	if ( hitEntClassname == "func_brush" || hitEntClassname == "script_mover" )
+		return true
+
+	return false
+}
+
 // Safe wrapper for Flowstate ball carrier function
 entity function Safe_GetBallCarrier()
 {
@@ -3540,6 +3565,17 @@ string function truncate( string str, int limit )
     
     return str
 }
+
+#if SERVER || CLIENT || UI 
+bool function IsInfiniteAmmoEnabled()
+{
+	#if(DEV)
+		if ( GetConVarBool( "sv_infinite_ammo" ) )
+			return true
+	#endif
+	return false
+}
+#endif
 
 bool function IsSpectator( entity player )
 {

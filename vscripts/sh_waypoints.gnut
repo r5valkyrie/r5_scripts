@@ -32,6 +32,7 @@ global function GetCommsWaypointSoundsEnabled
 global function Waypoint_IsPOI
 global function GetPingedEntForLocWaypoint
 
+
 #if SERVER
 global function CreateWaypoint_Custom
 global function CreateWaypoint_Test
@@ -70,6 +71,7 @@ global function Waypoints_DestroyPingsForSkydiveEnding
 global function Waypoint_SetPingResponseForSquadMember
 global function Waypoint_ClearPlayerSimilarPingsForReply
 
+global function Waypoint_AnyEnemySpottedNearPointForPlayer
 global function CreateBasicPOI
 global function AddPingCallbackForType
 #endif // #if SERVER
@@ -558,7 +560,6 @@ array<entity> function Waypoint_GetWaypointsForLootItemPingedByTeam( entity item
 	}
 	return out
 }
-
 bool function Waypoint_AnyEnemySpottedNearPoint( vector origin, float range )
 {
 	foreach ( entity wp in s_activeLocationPings )
@@ -575,6 +576,36 @@ bool function Waypoint_AnyEnemySpottedNearPoint( vector origin, float range )
 	return false
 }
 #endif // CLIENT
+
+
+#if SERVER
+bool function Waypoint_AnyEnemySpottedNearPointForPlayer( vector origin, float range, entity player )
+{
+	foreach ( entity wp in player.p.pings.locations )
+	{
+		if ( !IsValid( wp ) )
+			continue
+
+		if ( player != wp.GetOwner() )
+			continue
+
+		int pingType = Waypoint_GetPingTypeForWaypoint( wp )
+                           
+		if ( pingType != ePingType.ENEMY_SPECIFIC && pingType != ePingType.ENEMY_REVIVING && pingType != ePingType.ENEMY_HEALING_HEALTH && pingType != ePingType.ENEMY_HEALING_SHIELD )
+     
+                                                                                     
+      
+			continue
+
+		float dist = Distance( wp.GetOrigin(), origin )
+		if ( dist < range )
+			return true
+	}
+
+	return false
+}
+#endif
+
 
 bool function Waypoint_IsPOI( entity wp )
 {

@@ -371,8 +371,15 @@ int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootB
 void function TriggerLootSpawnForLootBinsInRadius_Thread( vector pos, float radius, int lootTier, int spawnLimitPerFrame, int spawnFilter )
 {
 	int lootSpawnedSinceWait = 0
-	foreach ( entity lootBin in GetScriptManagedEntArrayWithinCenter( file.lootBinSMEA, TEAM_ANY, pos, radius ) )
+	float radiusSqr = radius * radius
+	foreach ( entity lootBin in file.lootBinList )
 	{
+		if ( !IsValid( lootBin ) )
+			continue
+
+		if ( DistanceSqr( lootBin.GetOrigin(), pos ) > radiusSqr )
+			continue
+
 		if( spawnFilter != -1 && spawnFilter in lootBin.e.spawnedFilters )
 			continue
 

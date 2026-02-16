@@ -770,6 +770,9 @@ Scripts:
 	sh_matchmaking_util.gnut
 	sh_character_select.gnut
 	sh_character_select_new.gnut
+
+	abilities/loba_ultimate_black_market.nut
+
 	sh_social.gnut
 ]
 

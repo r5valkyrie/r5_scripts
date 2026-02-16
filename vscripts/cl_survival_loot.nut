@@ -1200,6 +1200,17 @@ bool function ShouldLootHintBeVisible( entity prop )
 	return true
 }
 
+bool function IsBlackMarketDeathBoxEntity( entity ent )
+{
+	if ( !IsValid( ent ) )
+		return false
+
+	if ( ent.GetScriptName() == "black_market" )
+		return true
+
+	return ent.GetNetworkedClassName() == "prop_loot_grabber"
+}
+
 void function ManageDeathBoxLoot()
 {
 	while ( 1 )
@@ -1224,10 +1235,10 @@ void function ManageDeathBoxLoot()
 				if ( !IsValid( currentDeathBox ) && isNewGroundListVisible )
 				{
 					entity promptEnt = player.GetUsePromptEntity()
-					if ( IsValid( promptEnt ) && (promptEnt.GetNetworkedClassName() == "prop_death_box" || promptEnt.GetNetworkedClassName() == "prop_loot_grabber") )
+					if ( IsValid( promptEnt ) && (promptEnt.GetNetworkedClassName() == "prop_death_box" || IsBlackMarketDeathBoxEntity( promptEnt )) )
 						currentDeathBox = promptEnt
 				}
-				if ( IsValid( currentDeathBox ) && currentDeathBox.GetNetworkedClassName() == "prop_loot_grabber" )
+				if ( IsBlackMarketDeathBoxEntity( currentDeathBox ) )
 					isBlackMarket = true
 
 				array<entity> loot

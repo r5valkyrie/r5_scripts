@@ -1,11 +1,13 @@
 global function ShQuickchat_Init
+#if SERVER || CLIENT
+global function PlayerDeliveryShouldBeUrgent
+#endif
 #if CLIENT
 global function AddCallback_OnQuickchatEvent
 global function Quickchat
 global function QuickchatToLivingAndDead
 global function HandleBroadcastCommsAction
 global function ServerToClient_BroadcastCommsActionToTeam
-global function PlayerDeliveryShouldBeUrgent
 global function GetChatTitleColorForPlayer
 global function GetMenuOptionTextForCommsAction
 global function GetShortTextForCommsAction
@@ -409,7 +411,9 @@ string function GetSubjectLootTierForCommsAction( entity subjectEnt )
 	tier = SURVIVAL_Loot_GetLootDataByIndex( subjectEnt.GetSurvivalInt() ).tier
 	return string( tier )
 }
+#endif
 
+#if CLIENT
 bool function GetCommsActionIsFar( entity player, entity subjectEnt, vector subjectPos, int commsFlags )
 {
 	const float FAR_DIST_THRESHOLD = 2048.0
@@ -425,6 +429,9 @@ bool function GetCommsActionIsFar( entity player, entity subjectEnt, vector subj
 	bool result      = (dist > FAR_DIST_THRESHOLD)
 	return result
 }
+#endif
+
+#if SERVER || CLIENT
 
 float function GetEffectiveDeltaSince( float timeThen )
 {
@@ -470,7 +477,11 @@ bool function PlayerDeliveryShouldBeUrgent_Common( entity player )
 	}
 
 	//
+#if SERVER
+	if ( Waypoint_AnyEnemySpottedNearPointForPlayer( player.EyePosition(), TEAMMATE_NEAR_SPOTTED_ENEMY, player ) )
+#elseif CLIENT
 	if ( Waypoint_AnyEnemySpottedNearPoint( player.EyePosition(), TEAMMATE_NEAR_SPOTTED_ENEMY ) )
+#endif
 	{
 		printt( "Urgent [YES] <- Any teammate near spotted enemy" )
 		return true
@@ -478,8 +489,11 @@ bool function PlayerDeliveryShouldBeUrgent_Common( entity player )
 
 	return false
 }
+#endif // SERVER || CLIENT
 
-bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, int commsFlags )
+#if SERVER || CLIENT
+
+bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, int commsFlags = eCommsFlags.NONE)
 {
 	const float TEAMMATE_NEAR_PLAYER = 2048.0
 	const float TEAMMATE_NEAR_SUBJECT_POS = 1024.0
@@ -508,7 +522,11 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 			return true
 	}
 
+#if SERVER
+	if ( Waypoint_AnyEnemySpottedNearPointForPlayer( subjectPos, SUBJECT_NEAR_SPOTTED_ENEMY, player ) )
+#elseif CLIENT
 	if ( Waypoint_AnyEnemySpottedNearPoint( subjectPos, SUBJECT_NEAR_SPOTTED_ENEMY ) )
+#endif
 	{
 		printt( "Urgent [YES] <- Waypoint near spotted enemy" )
 		return true
@@ -535,6 +553,9 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 
 	return false
 }
+#endif // SERVER || CLIENT
+
+#if CLIENT
 
 float function GetCooldownTimeForCommsAction( int commsAction )
 {

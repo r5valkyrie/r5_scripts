@@ -2550,7 +2550,7 @@ void function EquipGadget( entity player, string ref )
 	if ( Bleedout_IsBleedingOut( player ) )
 		return
 
-	//player.ClientCommand( "Sur_EquipGadget " + ref )
+	player.ClientCommand( "Sur_EquipGadget " + ref )
 	ServerCallback_ClearHints()
 }
 

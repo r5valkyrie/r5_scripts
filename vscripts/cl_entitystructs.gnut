@@ -115,6 +115,8 @@ global struct ClientEntityStruct
 	float  clientEntMinimapScale = 1.0
 	int    clientEntMinimapZOrder
 
+
+	bool   blackMarket_haveSeenReady
                            
 		int deathBoxMenu_lastSeenClipCount
 	EncodedEHandle ornull gladCardPropOwnerPlayerEEH = null

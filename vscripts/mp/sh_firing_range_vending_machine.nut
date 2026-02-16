@@ -9,7 +9,6 @@ global function ClientCommand_OpenVendingMachine
 global function ClientCommand_CloseVendingMachine
 global function GetVendingMachineInUseByPlayer
 global function VendingMachine_CreateSimple
-global function WarpBeamFXThread
 
 const string SUPPLYBOX_SOUND_OPEN 	= "UI_Survival_SupplyBoxOpen"
 const string SUPPLYBOX_SOUND_CLOSE 	= "UI_Survival_SupplyBoxClose"
@@ -305,37 +304,6 @@ void function OnPlayerLootPickup( entity player, entity lootEnt, string ref, int
 	Assert( unitsPickedUp > 0, "In OnPlayerLootPickup with unitsPickedUp: " + unitsPickedUp + ". player: " + player + " lootRef: " + ref )
 
 	DoVendingMachinePostPickupLogic( player, vendingMachine, lootEnt, lootFlav, unitsPickedUp, pickupFlags )
-}
-#endif // SERVER
-
-
-#if SERVER
-void function WarpBeamFXThread( entity player, vector startPos, vector endPos )
-{
-	entity controlPoint = CreateEntity( "info_placement_helper" )
-	SetTargetName( controlPoint, UniqueString( "translocation_endPos" ) )
-	controlPoint.SetOrigin( endPos )
-	//CopyRealmsFromTo( player, controlPoint )
-	DispatchSpawn( controlPoint )
-
-	entity beamFX = CreateEntity( "info_particle_system" )
-	beamFX.SetValueForEffectNameKey( BLACK_MARKET_WARP_BEAM_FX )
-	beamFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
-	beamFX.kv.cpoint1 = controlPoint.GetTargetName()
-	beamFX.kv.start_active = 1
-	beamFX.SetOrigin( startPos )
-	//CopyRealmsFromTo( player, beamFX )
-	DispatchSpawn( beamFX )
-
-	OnThreadEnd( function () : ( beamFX, controlPoint ) {
-		if ( IsValid( beamFX ) )
-			beamFX.Destroy()
-
-		if ( IsValid( controlPoint ) )
-			controlPoint.Destroy()
-	} )
-
-	wait 2.0
 }
 #endif // SERVER
 

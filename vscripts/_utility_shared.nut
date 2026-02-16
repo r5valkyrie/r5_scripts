@@ -219,9 +219,9 @@ void function InitWeaponScripts()
 
 	//(kral) wip abilities
 	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
-	//LobaUltimateBlackMarket_LevelInit()				// Loba Ultimate
-
+	LobaUltimateBlackMarket_LevelInit()				// Loba Ultimate
 	#if SERVER
+
 		//BallLightning_Init()
 	#endif
 }

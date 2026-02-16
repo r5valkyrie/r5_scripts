@@ -168,6 +168,7 @@ global enum eHighlightDrawFunc
 	SONAR_DETECTED
 	ALWAYS_LONG_FADE
 	CAUSTIC_THREAT
+	FORCE_ON
 
 	LAST_DRAW_FUNC
 }
@@ -340,6 +341,16 @@ void function Highlight_Init()
 	HighlightContext_SetParam( highlight, 0, HIGHLIGHT_COLOR_FRIENDLY )
 	HighlightContext_SetRadius( highlight, 3 )
 	HighlightContext_SetDrawFunc( highlight, eHighlightDrawFunc.ALWAYS )
+	HighlightContext_SetADSFade( highlight, false )
+	HighlightContext_SetAfterPostProcess( highlight, false )
+	HighlightContext_SetFarFadeDistance( highlight, 10000.0 )
+
+	highlight = RegisterHighlight( "sp_friendly_hero_force_on" )
+	HighlightContext_SetOutline( highlight, HIGHLIGHT_OUTLINE_CUSTOM_COLOR )
+	HighlightContext_SetFill( highlight, HIGHLIGHT_FILL_CUSTOM_COLOR )
+	HighlightContext_SetParam( highlight, 0, HIGHLIGHT_COLOR_FRIENDLY )
+	HighlightContext_SetRadius( highlight, 3 )
+	HighlightContext_SetDrawFunc( highlight, eHighlightDrawFunc.FORCE_ON )
 	HighlightContext_SetADSFade( highlight, false )
 	HighlightContext_SetAfterPostProcess( highlight, false )
 	HighlightContext_SetFarFadeDistance( highlight, 10000.0 )
@@ -1615,6 +1626,13 @@ void function ClHighlight_UpdateHighlightFlags( entity ent, int contextId )
 			ent.Highlight_SetFadeOutTime( 0.15 )
 		}
 			break
+		case eHighlightDrawFunc.FORCE_ON:
+		{
+			ent.Highlight_SetVisibilityType( HIGHLIGHT_VIS_FORCE_ON )
+			ent.Highlight_SetFadeInTime( 0.15 )
+			ent.Highlight_SetFadeOutTime( 0.15 )
+			break
+		}
 	}
 }
 

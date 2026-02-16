@@ -208,6 +208,7 @@ void function ClWeaponStatus_AddClient( entity player )
 		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 		RuiTrackFloat( rui, "silencedTimeRemaining", player, RUI_TRACK_STATUS_EFFECT_TIME_REMAINING, eStatusEffect.silenced )
 		RuiSetFloat( rui, "silenceEffectDuration", Silence_GetEffectDuration() )
+		
 		file.ability_center_hud = rui
 	}
 

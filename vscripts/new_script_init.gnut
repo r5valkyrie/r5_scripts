@@ -22,9 +22,9 @@ void function NewScriptInit_Level()
 	#if CLIENT || UI 
 		NEW_SurvivalGroundList_LevelInit()
 	#endif
-	//ShLobaPassiveEyeForQuality_LevelInit()
-	//LobaTacticalTranslocation_LevelInit()
-	//LobaUltimateBlackMarket_LevelInit()
+	#if UI 
+	LobaUltimateBlackMarket_LevelInit()				// Loba Ultimate
+	#endif
 }
 #endif
 

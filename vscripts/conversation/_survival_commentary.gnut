@@ -28,6 +28,7 @@ global function PlayBattleChatterLineDelayedToSpeakerAndTeam
 global function PlayBattleChatterLineToSpeakerAndTeam
 global function PlayBattleChatterLineToSpeakerWithDebounceTime
 global function PlayBattleChatterLineToSpeakerAndTeamWithDebounceTime
+global function PlayBattleChatterLineDelayedToSpeakerAndTeamWithDebounceTime_Thread
 
 global function SetCanDoDamageCallout
 
@@ -231,6 +232,16 @@ void function PlayBattleChatterLineToSpeakerAndTeamWithDebounceTime( entity spea
 		PlayBattleChatterLineToSpeakerAndTeam( speakingPlayer, chatterLine, addressee )
 	}
 }
+
+void function PlayBattleChatterLineDelayedToSpeakerAndTeamWithDebounceTime_Thread( entity speakingPlayer, string chatterLine, float delay, float debounceMin, float debounceMax, entity addressee = null, bool isDebounceForAllTeamSpeakers = false )
+{
+	EndSignal( speakingPlayer, "OnDeath", "OnDestroy" )
+
+	wait delay
+
+	PlayBattleChatterLineToSpeakerAndTeamWithDebounceTime( speakingPlayer, chatterLine, debounceMin, debounceMax, addressee, isDebounceForAllTeamSpeakers )
+}
+
 
 void function PlayBattleChatterLineDelayedToPlayer( entity speakingPlayer, string chatterLine, float delay )
 {

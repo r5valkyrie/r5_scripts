@@ -1121,7 +1121,7 @@ entity function GetCausticTTCanisterFrameForLoot( entity lootEnt )
 	return null
 }
 
-bool function AreCausticTTCanistersClosed( )
+bool function AreCausticTTCanistersClosed( entity player )
 {
 	return file.canistersClosed
 }
