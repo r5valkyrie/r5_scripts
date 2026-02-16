@@ -12,6 +12,7 @@ global function TrackPrimaryWeaponEnabled
 global function InitWeaponStatusRuis
 global function GetHudDefaultVisibility
 global function WeaponStatusSetWeaponInspect
+global function WeaponStatusSetDeathBoxMenuOpen
 global function UltimateWeaponStateSet
 global function UpdateHudDataForMainWeapons
 global function ServerCallback_UpdateHudWeaponData

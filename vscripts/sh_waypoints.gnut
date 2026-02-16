@@ -10,6 +10,7 @@ global function Waypoint_AnyEnemySpottedNearPoint
 global function Waypoint_FindPingByTicketID
 global function Waypoint_HideOnLocalHud
 global function Waypoint_ShowOnLocalHud
+global function Waypoint_IsHiddenFromLocalHud
 global function Waypoint_MarkAsAcknowledgedLocally
 
 global function Waypoints_RegisterCustomType
@@ -496,6 +497,10 @@ void function Waypoint_ShowOnLocalHud ( entity wp )
 		RuiSetBool( wp.wp.ruiHud, "isHidden", false )
 }
 
+bool function Waypoint_IsHiddenFromLocalHud( entity wp )
+{
+	return wp.wp.isHiddenOnLocalHUD
+}
 void function Waypoint_MarkAsAcknowledgedLocally( entity wp )
 {
 	//wp.WaypointFocusTracking_Deregister()

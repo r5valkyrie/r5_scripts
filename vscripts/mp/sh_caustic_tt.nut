@@ -54,10 +54,10 @@ const string CANISTER_TRAP_DEACTIVATED_VO = "diag_mp_caustic_tt_gasDeactivate_3p
 const string CANISTER_TRAP_WARNING_VO = "diag_mp_caustic_tt_timer10sec_3p"
 const string CANISTER_TRAP_ACTIVATED_VO = "diag_mp_caustic_tt_timer00sec_3p"
 
-                        
+
 const string CAUSTIC_TT_GAS_ALARM_SFX_CONTROL_MODE = "Canyonlands_Mu3_CausticTT_GasAlarm_Control"
 const string CAUSTIC_TT_GAS_TIMER_SFX_CONTROL_MODE = "Canyonlands_Mu3_CausticTT_GasTimer_Control"
-                              
+
 
 const float CAUSTIC_TT_CANISTER_MOVE_TO_DURATION_OPEN = 3.0
 const float CAUSTIC_TT_CANISTER_MOVE_TO_DURATION_CLOSE = 2.0
@@ -179,9 +179,9 @@ void function Caustic_TT_SetButtonUsable( entity canisterSwitch )
 	#endif // SERVER
 	#if CLIENT
 		//need a way to prevent from adding callbacks on existing canisters on client side
-		//this is mostly a hack for console as this dynamic prop spawns after the entitiesloaded callback 
+		//this is mostly a hack for console as this dynamic prop spawns after the entitiesloaded callback
 		//and therefore need to map the buttons properly for the UI prompts to pop up
-		//similar fix to sh_crypto_tt_common for the crypto map podium 
+		//similar fix to sh_crypto_tt_common for the crypto map podium
 		if( canisterSwitch.e.canUseEntityCallback != null )
 			return
 	#endif // CLIENT
@@ -580,10 +580,10 @@ void function CanisterSwitch_TrapActivate_Inverted_Thread( entity player )
 {
 	bool useDefaultSFX = true
 
-	                        
+
 		//if ( GameMode_IsActive( eGameModes.CONTROL ) )
 			//useDefaultSFX = false
-                               
+
 
 	#if SERVER
 
@@ -593,14 +593,14 @@ void function CanisterSwitch_TrapActivate_Inverted_Thread( entity player )
 			// Need EmitSoundOnEntity() to play "timer" sfx in predetermined space (interior of building), EmitSoundAtPosition() plays automatically in a radius
 			EmitSoundOnEntity( file.audioSpeaker, CAUSTIC_TT_GAS_TIMER_SFX )
 		}
-		                        
+
 		else
 		{
 			EmitSoundAtPosition( TEAM_UNASSIGNED, file.audioSpeaker.GetOrigin(), CAUSTIC_TT_GAS_ALARM_SFX_CONTROL_MODE, file.audioSpeaker )
 			// Need EmitSoundOnEntity() to play "timer" sfx in predetermined space (interior of building), EmitSoundAtPosition() plays automatically in a radius
 			EmitSoundOnEntity( file.audioSpeaker, CAUSTIC_TT_GAS_TIMER_SFX_CONTROL_MODE )
 		}
-                                
+
 
 		foreach ( windowHighlight in file.windowHighlights )
 			windowHighlight.SetSkin( 1 )
@@ -1121,7 +1121,7 @@ entity function GetCausticTTCanisterFrameForLoot( entity lootEnt )
 	return null
 }
 
-bool function AreCausticTTCanistersClosed( entity canisterPanel )
+bool function AreCausticTTCanistersClosed( )
 {
 	return file.canistersClosed
 }

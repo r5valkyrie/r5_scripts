@@ -215,7 +215,7 @@ global enum eLootType
 }
 
 global const int HAS_DEATHBOX_OVERRIDE_FRIEND_PROFILES_TO_SEND = 3
-
+global function IsDeathboxAutoPickupEnabled
 #if(true)
 global struct OverrideDeathBoxRUI_NetworkOptimizedStruct
 {
@@ -1930,6 +1930,15 @@ void function HAS_DEATHBOX_OVERRIDE_OnUserInfoUpdated( string hardware, string i
 	}
 }
 #endif
+bool function IsDeathboxAutoPickupEnabled()
+{
+                            
+                        
+      
+		bool defaultVal = false
+       
+	return GetCurrentPlaylistVarBool( "survival_deathbox_autopickup_enabled", defaultVal )
+}
 
 #if SERVER || CLIENT
 bool function SURVIVAL_Loot_IsAmmoSpawningDisabled()

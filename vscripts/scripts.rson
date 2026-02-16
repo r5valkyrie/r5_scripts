@@ -25,6 +25,12 @@ Scripts:
 	root_asset_lists.gnut
 ]
 
+When: "CLIENT || UI "
+Scripts:
+[
+	new_script_init.gnut
+]
+
 When: "SP || MP_CAMPAIGNCOOP"
 Scripts:
 [
@@ -883,6 +889,8 @@ Scripts:
 	ui/clui_menus.nut
 	ui/clui_lobby_panel_pass.nut
 	client/cl_chroma.gnut
+	ui/_death_box_list_panel.gnut
+	ui/new_survival_ground_list.nut
 	ui/image_pak_load.nut
 	ui/panel_loadscreens.nut
 ]

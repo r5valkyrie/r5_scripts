@@ -19,7 +19,11 @@ global function VisGroup_Hide
 global function UIToClient_SettingsUpdated
 global function AddCallback_OnSettingsUpdated
 
+
 global function SetMenuOpenState
+global function GetScreenSpace
+
+global function HudElem_SetRuiArg
 
 table _visGroupStates = {}
 
@@ -709,5 +713,104 @@ void function SetMenuOpenState( int state )
 			ColorCorrection_SetWeight( file.menuColorCorrection, 0.0 )
 			ColorCorrection_SetExclusive( file.menuColorCorrection, false )
 		}
+	}
+}
+
+float[2] function GetScreenSpace( vector origin )
+{
+	UISize screenSize = GetScreenSize()
+	var result = Hud.ToScreenSpace( origin )
+	float[2] coordinates
+	coordinates[0] = float( result[0] )
+	coordinates[1] = float( result[1] )
+	return coordinates
+}
+void function HudElem_SetRuiArg( var elem, string argName, var argVal, int ruiArgType = -1 )
+{
+	if ( ruiArgType < 0 )
+	{
+		switch ( type( argVal ) )
+		{
+			case "string":
+				ruiArgType = eRuiArgType.STRING
+				break
+
+			case "float":
+				ruiArgType = eRuiArgType.FLOAT
+				break
+
+			case "int":
+				ruiArgType = eRuiArgType.INT
+				break
+
+			case "bool":
+				ruiArgType = eRuiArgType.BOOL
+				break
+
+			case "vector":
+				ruiArgType = eRuiArgType.VECTOR
+				break
+
+			case "asset":
+				ruiArgType = eRuiArgType.ASSET
+				break
+
+			default:
+				Assert( false, "unexpected argument type: " + type( argVal ) )
+		}
+	}
+
+	var rui = Hud_GetRui( elem )
+	RuiSetArgByType( rui, argName, argVal, ruiArgType )
+}
+
+
+void function RuiSetArgByType( var rui, string argName, var argVal, int ruiArgType )
+{
+	switch ( ruiArgType )
+	{
+		case eRuiArgType.STRING:
+			expect string( argVal )
+			RuiSetString( rui, argName, argVal )
+			break
+
+		case eRuiArgType.FLOAT:
+			expect float( argVal )
+			RuiSetFloat( rui, argName, argVal )
+			break
+
+		case eRuiArgType.INT:
+			expect int( argVal )
+			RuiSetInt( rui, argName, argVal )
+			break
+
+		case eRuiArgType.BOOL:
+			expect bool( argVal )
+			RuiSetBool( rui, argName, argVal )
+			break
+
+		case eRuiArgType.VECTOR:
+			expect vector( argVal )
+			RuiSetFloat3( rui, argName, argVal )
+			break
+
+		case eRuiArgType.ASSET:
+			expect asset( argVal )
+			RuiSetAsset( rui, argName, argVal )
+			break
+
+		case eRuiArgType.IMAGE:
+			expect asset( argVal )
+			RuiSetImage( rui, argName, argVal )
+			break
+
+		case eRuiArgType.WALLTIME:
+		case eRuiArgType.GAMETIME:
+			expect float( argVal )
+			RuiSetGameTime( rui, argName, argVal )
+			break
+
+		default:
+			Assert( false, "unexpected argument type: " + type( argVal ) )
 	}
 }

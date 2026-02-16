@@ -47,7 +47,7 @@ global function Ping_GetSoundForItemPing
 global function Ping_HandleWaypointDelete
 
 global function UIFunc_PingGroundLoot
-
+global function PingGroundLoot
 global function AddPingBlockingFunction
 global function OnPingDown
 global function OnPingUp
@@ -2524,7 +2524,7 @@ int function GetEnemyPingCommsAction( int pingType, entity pingedEnt )
 }
 #endif
 #if CLIENT
-void function DoPlayerDefaultPingForLootEntity( entity player, entity lootEnt )
+void function DoPlayerDefaultPingForLootEntity( entity player, entity lootEnt, entity deathBox = null )
 {
 	if ( !Waypoint_LootItemIsBeingPingedByAnyone( lootEnt ) )
 	{
@@ -3204,6 +3204,14 @@ void function UIFunc_PingGroundLoot( int entIndex )
 	DoPlayerDefaultPingForLootEntity( player, lootEnt )
 }
 
+void function PingGroundLoot( entity lootEnt, entity deathBox )
+{
+	if ( !IsValid( lootEnt ) )
+		return
+
+	entity player = GetLocalViewPlayer()
+	DoPlayerDefaultPingForLootEntity( player, lootEnt, deathBox )
+}
 struct
 {
 	int[5] ticketIDs = [-1, -1, -1, -1, -1]

@@ -75,6 +75,7 @@ global function OnLocalPlayerPickedUpItem
 global function ServerCallback_TryCloseInventory
 
 global function TryUpdateGroundList
+global function IsOrdnanceEquipped
 
 global enum eGroundListBehavior
 {
@@ -780,12 +781,12 @@ void function TrackDistanceFromDeathBox( entity player, entity deathBox )
 
 void function OpenSurvivalGroundList( entity player, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS )
 {
-	SurvivalMenu_Internal( player, "OpenSurvivalGroundListMenu", deathBox, groundListBehavior )
+	SurvivalMenu_Internal( player, "NEW_OpenSurvivalGroundListMenu", deathBox, groundListBehavior )
 }
 
 void function OpenSurvivalGroundListRetail( entity player, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS, int groundListType = eGroundListType.DEATH_BOX )
 {
-	string funcName = "OpenSurvivalGroundListMenu"
+	string funcName = "NEW_OpenSurvivalGroundListMenu"
 	SurvivalMenu_Internal_Retail( player, funcName, deathBox, groundListBehavior, groundListType )
 }
 
@@ -1547,7 +1548,7 @@ void function UICallback_UpdateGroundItem( var button, int position )
 	{
 		string ammoType = groundLootData.lootData.ammoType
 		asset icon      = $""
-		if ( SURVIVAL_Loot_IsRefValid( ammoType ) && ent.GetWeaponSettingBool( eWeaponVar.uses_ammo_pool ) )
+		if ( SURVIVAL_Loot_IsRefValid( ammoType )  )
 		{
 			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoType )
 			icon = ammoData.hudIcon
@@ -1649,7 +1650,7 @@ void function UICallback_GroundItemAction( var button, int position, bool fromEx
 
 	if ( groundAction == eLootAction.SWAP && !fromExtendedUse )
 	{
-		RunUIScript( "ClientCallback_StartGroundItemExtendedUse", button, position, 0.4 )
+		RunUIScript( "ClientCallback_StartGroundItemExtendedUse", "ground", button, position, 0.4 )
 	}
 	else if ( isInventoryFull && groundAction == eLootAction.PICKUP )
 	{
@@ -2043,11 +2044,13 @@ void function UpdateDpadTooltipText( string ref, string emptySlotText, string eq
 
 void function GroundItemUpdate( entity player, array<entity> loot )
 {
-	loot.sort()
 	RunUIScript( "SurvivalGroundItem_BeginUpdate" )
+	loot.sort()
+
 	if ( file.shouldResetGroundItems )
 	{
 		GroundItemsInit( player, loot )
+		RunUIScript( "ClientCallback_ClearPickedUpGroundListItems" )
 
 		if ( GetCurrentPlaylistVarBool( "deathbox_diff_enabled", true ) )
 		{
@@ -2090,14 +2093,13 @@ void function GroundItemUpdate( entity player, array<entity> loot )
 		foreach ( index, item in file.filteredGroundItems )
 		{
 			RunUIScript( "SurvivalGroundItem_SetGroundItemHeader", index, item.isHeader )
-			RunUIScript( "SurvivalGroundItem_SetGroundItemWeapon", index, item.lootData.lootType == eLootType.MAINWEAPON )
-			RunUIScript( "SurvivalGroundItem_SetGroundItemAmmo", index, item.lootData.lootType == eLootType.AMMO )
-			RunUIScript( "SurvivalGroundItem_SetGroundHeaderIndex", index, item.isHeader ? item.lootData.index : -1 )
 		}
 	}
 
+	file.visibleItemIndices.clear()
+
+	RunUIScript( "SurvivalGroundItem_EndUpdate", file.shouldUpdateGroundItems )
 	file.shouldUpdateGroundItems = false
-	RunUIScript( "SurvivalGroundItem_EndUpdate" )
 }
 
 

@@ -113,6 +113,10 @@ global struct ClientEntityStruct
 	int    clientEntMinimapCustomState
 	int    clientEntMinimapFlags
 	float  clientEntMinimapScale = 1.0
+	int    clientEntMinimapZOrder
+
+                           
+		int deathBoxMenu_lastSeenClipCount
 	EncodedEHandle ornull gladCardPropOwnerPlayerEEH = null
 	ItemFlavor ornull     animWindowCosmeticItemFlavor = null
 	ItemFlavor ornull     animWindowSkinItemFlavor = null
@@ -342,6 +346,8 @@ global struct ClientPlayerWaypoint
 	var ruiMinimap
 	var ruiFullmap
 	var ruiHud
+
+	bool isHiddenOnLocalHUD = false
 
 	array<int> fxHandles
 

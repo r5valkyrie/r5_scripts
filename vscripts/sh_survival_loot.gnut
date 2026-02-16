@@ -38,7 +38,9 @@ global function SURVIVAL_GetActiveWeaponSlot
 global function SURVIVAL_GetPrimaryWeaponRefs
 global function SURVIVAL_GetWeaponBySlot
 global function SURVIVAL_GetWeaponAttachmentForPoint
+global function SURVIVAL_AddToInventory
 global function SURVIVAL_AddToPlayerInventory
+global function SURVIVAL_RemoveFromInventory
 global function SURVIVAL_RemoveFromPlayerInventory
 global function SURVIVAL_GetPlayerInventory
 global function SURVIVAL_CountPrimaryWeapons
@@ -5005,12 +5007,16 @@ string function GetCategoryTitleFromPriority( int cat )
 	catToTitle[ eLootSortCategories.EQUIPMENT ] <- "#LOOT_CAT_EQUIPMENT"
 	catToTitle[ eLootSortCategories.AMMO ] <- "#LOOT_CAT_AMMO"
 	catToTitle[ eLootSortCategories.WEAPONS ] <- "#LOOT_CAT_MAINWEAPON"
+ 	catToTitle[ eLootSortCategories.PVE ] <- "#LOOT_CAT_PVE"
 #if(false)
 
 #endif
 	catToTitle[ eLootSortCategories.DEFAULT ] <- ""
 
-	return catToTitle[ cat ]
+	if ( cat in catToTitle )
+		return catToTitle[ cat ]
+
+	return ""
 }
 
 string function GetStringForTagId( int tagId )

@@ -576,8 +576,7 @@ void function UICodeCallback_FullyConnected( string levelname )
 	ModSystem_RunCallbacks()//MOD SYSTEM CALLBACK
 
 	SURVIVAL_Loot_All_InitShared()
-	//ShWeaponXP_Init()
-	//ShFactionXP_Init()
+	NewScriptInit_Level()
 
 	#if DEVELOPER
 		UpdatePrecachedSPWeapons()
@@ -1736,11 +1735,12 @@ void function InitMenus()
 	AddMenu( "ArenasBuyMenu", $"scripts/resource/ui/menus/arenas_buy.menu", InitArenasBuyMenu )
 	AddMenu( "ArenasPostRoundSummary", $"scripts/resource/ui/menus/arenas_post_round_summary.menu", InitArenasPostRoundSummary )
 	AddMenu( "ArenasSelectOpticDialog", $"scripts/resource/ui/menus/dialogs/arenas_select_optic.menu", InitArenasSelectOpticDialog )
-	
+
 	AddPanel( inventoryMenu, "SurvivalQuickInventoryPanel", InitSurvivalQuickInventoryPanel )
 	AddPanel( inventoryMenu, "SquadPanel", InitSquadPanelInventory )
 	AddPanel( inventoryMenu, "CharacterDetailsPanel", InitLegendPanelInventory )
 
+	AddMenu( "NEW_SurvivalGroundListMenu", $"resource/ui/menus/new_survival_ground_list.menu", NEW_InitSurvivalGroundList )
 	AddMenu( "SurvivalGroundListMenu", $"resource/ui/menus/survival_ground_list.menu", InitGroundListMenu )
 	AddMenu( "SurvivalQuickSwapMenu", $"resource/ui/menus/survival_quick_swap.menu", InitQuickSwapMenu )
 

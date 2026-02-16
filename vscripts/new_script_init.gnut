@@ -1,0 +1,31 @@
+#if CLIENT || UI 
+global function NewScriptInit_VM
+global function NewScriptInit_Level
+#endif
+
+
+#if CLIENT || UI 
+void function NewScriptInit_VM()
+{
+	#if CLIENT || UI 
+		DeathBoxListPanel_VMInit()
+	#endif
+}
+#endif
+
+
+#if CLIENT || UI 
+void function NewScriptInit_Level()
+{
+	//Realms_LevelInit()
+                           
+	#if CLIENT || UI 
+		NEW_SurvivalGroundList_LevelInit()
+	#endif
+	//ShLobaPassiveEyeForQuality_LevelInit()
+	//LobaTacticalTranslocation_LevelInit()
+	//LobaUltimateBlackMarket_LevelInit()
+}
+#endif
+
+

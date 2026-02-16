@@ -24,6 +24,7 @@ global function SCB_BloodTT_SetCustomSpeakerIdx
 global function Bloodhound_TT_RegisterNetworking
 global function GetBloodTTRewardPanelForLoot
 global function IsBloodhoundTTEnabled
+global function IsBloodTTRewardPanelLocked
 
 global const string HATCH_MDL_SCRIPTNAME = "prowler_hatch_model"
 #endif

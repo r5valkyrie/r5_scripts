@@ -156,7 +156,7 @@ void function Cl_Survival_LootInit()
 	file.lootTypePromptRui[eLootType.MAINWEAPON][eLootPromptStyle.COMPACT] = compactWeaponPromptRui
 
 	AddCallback_OnRefreshCustomGamepadBinds( OnRefreshCustomGamepadBinds )
-	
+
 	PrecacheParticleSystem( EVO_ARMOR_FX )
 	PrecacheParticleSystem( EVO_ARMOR_PICKUP_FX )
 }
@@ -209,7 +209,7 @@ void function PlayLootPickupFeedbackFX( entity ent )
 				}
 			}
 		}
-	
+
 }
 
 
@@ -453,7 +453,7 @@ void function CreateDeathBoxRui( entity deathBox )
 		return
 
 	expect EHI( ehi )
-	
+
 	if( Gamemode() != eGamemodes.fs_aimtrainer )
 	{
 		clGlobal.levelEnt.Signal( "CreateDeathBoxRui" )
@@ -562,7 +562,7 @@ string function DeathBoxTextOverride( entity ent )
 void function OnPropCreated( entity prop )
 {
 	AddEntityCallback_GetUseEntOverrideText( prop, Sur_LootTextOverride )
-	
+
 	ApplyEquipmentColorAndFXOverrides( prop )
 }
 
@@ -807,10 +807,10 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 
 	RuiSetImage( rui, "iconImage", data.hudIcon )
 	RuiSetInt( rui, "lootTier", data.tier )
-	
+
 	// if( data.tier > 5 )
 		// RuiSetInt( rui, "lootTier", 5 )
-		
+
 	vector iconScale = data.lootType == eLootType.MAINWEAPON ? <2.0, 1.0, 0.0> : <1.0, 1.0, 0.0>
 	RuiSetFloat2( rui, "iconScale", iconScale )
 
@@ -862,22 +862,22 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 			int replacePropertyValue = int( SURVIVAL_GetPlayerShieldHealthFromArmor( player ) / float(SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, asMain.additionalData )) * 100)
 			//
 
-                         
+
 				if ( EvolvingArmor_IsEquipmentEvolvingArmor( asMain.additionalData.ref ) )
 				{
 					//
-                                  
+
 						replacePropertyValue = int( SURVIVAL_GetPlayerShieldHealthFromArmor( player ) / float(SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, asMain.additionalData )) * 100)
-          
-                                                                                                                                                                                 
-           
+
+
+
 					RuiSetBool( rui, "isReplaceEvolvingArmor", EvolvingArmor_IsEquipmentEvolvingArmor( asMain.additionalData.ref ) )
 				}
 				else
 				{
 					RuiSetBool( rui, "isReplaceEvolvingArmor", false )
 				}
-         
+
 			RuiSetInt( rui, "replacePropertyValue", replacePropertyValue )
 		}
 	}
@@ -908,23 +908,23 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 		{
 			RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_ARMOR_STATUS", Localize( data.pickupString ).toupper(), GetPropSurvivalMainProperty( lootRef.lootProperty ), SURVIVAL_GetArmorShieldCapacity( data.tier ) ) )
 
-                         
+
 				if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
 					RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_ARMOR_STATUS", Localize( data.pickupString ).toupper(), GetPropSurvivalMainProperty( lootRef.lootProperty ), EvolvingArmor_GetEvolvingArmorHealthForTier( data.tier ) ) )
-         
+
 		}
 
 		RuiSetInt( rui, "propertyValue", int(lootRef.lootProperty / float(SURVIVAL_GetArmorShieldCapacity( data.tier )) * 100) )
 
-                        
+
 			if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
 			{
 				int propertyValue = GetPropSurvivalMainProperty( lootRef.lootProperty )
-                                 
+
 					RuiSetInt( rui, "propertyValue", int(propertyValue / float(EvolvingArmor_GetEvolvingArmorHealthForTier( data.tier )) * 100) )
-         
-                                                                                                                                  
-          
+
+
+
 			}
 	}
 
@@ -1216,16 +1216,30 @@ void function ManageDeathBoxLoot()
 
 		if ( !player.IsPhaseShifted() )
 		{
-			if ( Survival_IsGroundlistOpen() )
+			bool isNewGroundListVisible = ("NEW_IsGroundListMenuOpen" in getroottable() && NEW_IsGroundListMenuOpen())
+			if ( Survival_IsGroundlistOpen() || isNewGroundListVisible )
 			{
+				bool isBlackMarket = false
+				entity currentDeathBox = Survival_GetDeathBox()
+				if ( !IsValid( currentDeathBox ) && isNewGroundListVisible )
+				{
+					entity promptEnt = player.GetUsePromptEntity()
+					if ( IsValid( promptEnt ) && (promptEnt.GetNetworkedClassName() == "prop_death_box" || promptEnt.GetNetworkedClassName() == "prop_loot_grabber") )
+						currentDeathBox = promptEnt
+				}
+				if ( IsValid( currentDeathBox ) && currentDeathBox.GetNetworkedClassName() == "prop_loot_grabber" )
+					isBlackMarket = true
+
 				array<entity> loot
 
-				if ( IsValid( Survival_GetDeathBox() ) )
+				if ( IsValid( currentDeathBox ) )
 				{
 					switch ( Survival_GetGroundListBehavior() )
 					{
 						case eGroundListBehavior.CONTENTS:
 							loot = Survival_GetDeathBoxItems()
+							if ( loot.len() == 0 )
+								loot = GetSurvivalLootNearbyPos( currentDeathBox.GetOrigin(), SURVIVAL_GROUNDLIST_NEARBY_RADIUS, false, false )
 							break
 
 						case eGroundListBehavior.NEARBY:
@@ -1236,6 +1250,16 @@ void function ManageDeathBoxLoot()
 				else if ( IsValid( file.swapOnUseItem ) )
 				{
 					loot = GetSurvivalLootNearbyPlayer( player, SURVIVAL_PICKUP_ALL_MAX_RANGE, true, false )
+				}
+
+				if ( "NEW_UpdateSurvivalGroundList" in getroottable() )
+				{
+					NEW_SurvivalGroundListUpdateParams params
+					params.player = player
+					params.currentLootEnts = loot
+					params.isBlackMarket = isBlackMarket
+					params.blackMarketUseCount = -1
+					NEW_UpdateSurvivalGroundList( params )
 				}
 
 				GroundItemUpdate( player, loot )
@@ -1368,7 +1392,7 @@ void function ShowVerticalLineStruct( VerticalLineStruct lineStruct, entity ent 
 	#if LINE_COLORS
 		LootData data = SURVIVAL_Loot_GetLootDataByIndex( ent.GetSurvivalInt() )
 		RuiSetInt( lineStruct.rui, "tier", data.tier )
-		
+
 		// if( data.tier > 5 )
 			// RuiSetInt( lineStruct.rui, "tier", 5 )
 	#else
@@ -1698,16 +1722,16 @@ void function SetupSurvivalLoot( var categories )
 		RunUIScript( "SetupDevCommand", "Spawn All Optics", "script SpawnAllOptics()" )
 
 	table<string, int> groupCounts
-	
+
 	foreach ( ref, data in SURVIVAL_Loot_GetLootDataTable() )
 	{
 		if ( !ShouldProcessLoot( data, catTypes ) ) continue
 
 		string groupName = GetLootGroupName( data )
-		
+
 		if ( !( groupName in groupCounts ) )
 			groupCounts[groupName] <- 0
-			
+
 		groupCounts[groupName]++
 	}
 
@@ -1733,7 +1757,7 @@ void function SetupSurvivalLoot( var categories )
 
 				string displayString = CreateLootDisplayString( data )
 				RunUIScript( "SetupDevCommand", displayString, "script SpawnGenericLoot( \"" + data.ref + "\", gp()[0].GetOrigin(), <-1,-1,-1>, " + data.countPerDrop + " )" )
-				break 
+				break
 			}
 		}
 	}
@@ -1767,7 +1791,7 @@ void function PopulateSurvivalLootGroup( var groupNameVal )
 			if ( nameA > nameB ) return 1
 			return 0
 		}
-		
+
 		if ( a.tier < b.tier ) return -1
 		if ( a.tier > b.tier ) return 1
 		return 0
@@ -1776,7 +1800,7 @@ void function PopulateSurvivalLootGroup( var groupNameVal )
 	foreach ( LootData data in itemsInGroup )
 	{
 		string buttonLabel = ""
-		
+
 		if ( targetGroup == "Optics" || targetGroup == "Hopups" )
 		{
 			buttonLabel = Localize( data.pickupString )
@@ -1784,12 +1808,12 @@ void function PopulateSurvivalLootGroup( var groupNameVal )
 		else
 		{
 			string tierDesc = ""
-			
-			if ( data.tier == 0 ) 
+
+			if ( data.tier == 0 )
 			{
 				tierDesc = "[Base]"
 			}
-			else 
+			else
 			{
 				tierDesc = "[Lv " + data.tier + "]"
 				if ( data.tier == 4 ) tierDesc += " (Gold)"
@@ -1818,10 +1842,10 @@ string function GetLootGroupName( LootData data )
 {
 	if ( data.lootType == eLootType.ATTACHMENT )
 	{
-		if ( data.ref.find( "optic" ) > -1 ) 
+		if ( data.ref.find( "optic" ) > -1 )
 			return "Optics"
-			
-		if ( data.ref.find( "hopup" ) > -1 ) 
+
+		if ( data.ref.find( "hopup" ) > -1 )
 			return "Hopups"
 	}
 
@@ -1835,7 +1859,7 @@ string function GetLootGroupName( LootData data )
 	int parenIndex = fullName.find( " (" )
 	if ( parenIndex > 0 )
 		return fullName.slice( 0, parenIndex )
-		
+
 	return fullName
 }
 
@@ -1857,16 +1881,16 @@ void function SetupCustomLoot( var categories, bool isAttachment = false)
 
 		if ( !catTypes.contains( data.lootType ) )
 			continue
-		
+
 		if (IsFlowstateActive()){
 		if( ref == "mp_weapon_titan_sword" )
 			continue}
-		
+
 		if (data.lootType == eLootType.ATTACHMENT && !IsCustomAttachment(data)) continue
 		if (data.lootType == eLootType.MAINWEAPON && !IsCustomWeapon(data)) continue
 
 		string displayString = CreateLootDisplayString( data )
-		
+
 		if(!isAttachment)
 			RunUIScript( "SetupDevCommand", displayString, "give " + data.ref )
 		else
@@ -1991,7 +2015,7 @@ void function ExtendedTryOpenGroundList( entity ent, entity player, ExtendedUseS
 EHI ornull function GetEHIForDeathBox( entity box )
 {
 	EHI eHandle = box.GetNetInt( "ownerEHI" )
-	
+
 	if ( eHandle == -1  )
 		return null
 
@@ -2109,8 +2133,8 @@ void function CreateDeathBoxRuiWithOverridenData( entity deathBox, NestedGladiat
 {
 	#if DEVELOPER
 		printt( "Creating with overriden profile data"  )
-	#endif 
-	
+	#endif
+
 	SetNestedGladiatorCardOverrideName( nestedGCHandle, deathBox.GetCustomOwnerName() )
 
 	int characterIndex = deathBox.GetNetInt(  "characterIndex" )
@@ -2164,13 +2188,13 @@ void function ApplyEquipmentColorAndFXOverrides( entity prop )
 		string tierColorString = format( "%f %f %f", tierColor.x, tierColor.y, tierColor.z )
 		prop.kv.rendercolor = tierColorString
 
-                        
+
 			if ( EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref ) )
 			{
 				int fxIdx   = GetParticleSystemIndex( EVO_ARMOR_FX )
 				int armorFX = StartParticleEffectOnEntityWithPos( prop, fxIdx, FX_PATTACH_ABSORIGIN_FOLLOW, -1, < 0, 0, 15>, <0, 0, 0> )
 				EffectSetControlPointVector( armorFX, 1, tierColor )
 			}
-        
+
 	}
 }
