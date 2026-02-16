@@ -912,7 +912,7 @@ void function CryptoTTScan_UseSuccess_Thread( entity button, entity player )
 	DeathFieldStageData deathField
 	int currentDeathFieldStageValue               = int( max( 0, SURVIVAL_GetCurrentDeathFieldStage() ) )
 	int realm                                     = Survival_Loot_GetDefaultRealm()
-	array< DeathFieldStageData > deathfieldStages = SURVIVAL_GetDeathFieldStagesNew( realm )
+	array< DeathFieldStageData > deathfieldStages = SURVIVAL_GetDeathFieldStages( realm )
 	deathField 									  = deathfieldStages[ int( min( currentDeathFieldStageValue + 1, deathfieldStages.len() - 1 ) ) ]
 
 	// Map pulse
