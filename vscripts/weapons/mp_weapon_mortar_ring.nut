@@ -79,9 +79,6 @@ struct
 #endif //CLIENT
 } file
 
-#if CLIENT
-
-
 void function MpWeapon_Mortar_Ring_Init()
 {
 
