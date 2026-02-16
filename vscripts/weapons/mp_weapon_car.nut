@@ -452,6 +452,7 @@ void function UpdatePoseParameter( entity weapon )
 	bool inLightAmmoModeLastFrame = weapon.HasMod( CAR_ALT_AMMO_MOD )
 	float swapAmmoTime = 0.0
 	float swapAnimDuration = 0.25
+	weapon.SetScriptPoseParam0( 0.0 )
 
 	while( true )
 	{
@@ -467,6 +468,7 @@ void function UpdatePoseParameter( entity weapon )
 		{
 			float swapAnimFrac = Clamp( Time() - swapAmmoTime, 0.0, swapAnimDuration ) / swapAnimDuration
 			float poseParam = inLightAmmoMode ? swapAnimFrac : 1.0 - swapAnimFrac
+			weapon.SetScriptPoseParam0( poseParam )
 		}
 
 		WaitFrame()

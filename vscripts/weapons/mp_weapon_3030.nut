@@ -168,7 +168,7 @@ void function CloseHammerThread( entity weapon, bool skipLerp )
 	{
 		float poseParam = GraphCapped( Time(), startTime, endTime, 0.0, 1.0 )
 		poseParam = (skipLerp) ? 1.0 : poseParam
-		//weapon.LookupPoseParameterIndex( poseParam )
+		weapon.SetScriptPoseParam0( poseParam )
 		WaitFrame()
 	}
 }
@@ -192,7 +192,7 @@ void function OpenHammerThread( entity weapon, bool skipLerp )
 	{
 		float poseParam = GraphCapped( Time(), startTime, endTime, 1.0, 0.0 )
 		poseParam = (skipLerp) ? 0.0 : poseParam
-		//weapon.SetScriptPoseParam0( poseParam )
+		weapon.SetScriptPoseParam0( poseParam )
 		WaitFrame()
 	}
 }

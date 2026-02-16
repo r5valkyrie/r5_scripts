@@ -76,16 +76,10 @@ struct
 #if CLIENT
 	bool weaponActive = false
 	bool activateUI = false
-	table<entity, float> weaponAimPitch = {}
 #endif //CLIENT
 } file
 
 #if CLIENT
-void function MortarRingStoreAimPitch( entity weapon, float pitch )
-{
-	file.weaponAimPitch[ weapon ] <- pitch
-}
-#endif
 
 
 void function MpWeapon_Mortar_Ring_Init()
@@ -269,8 +263,6 @@ void function WeaponActiveThread_Client( entity owner, entity weapon )
 
 			RuiDestroyIfAlive( overlayRui )
 			file.activateUI = false
-			if ( weapon in file.weaponAimPitch )
-				delete file.weaponAimPitch[ weapon ]
 		}
 	)
 
@@ -400,9 +392,7 @@ void function DoPoseParamLerp( entity weapon, float target, bool immeadiate )
 {
 	if( !immeadiate )
 	{
-		float currentAimPitch = 0.0
-		if ( weapon in file.weaponAimPitch )
-			currentAimPitch = file.weaponAimPitch[ weapon ]
+		float currentAimPitch = weapon.GetScriptPoseParam0()
 
 		float diff = target - currentAimPitch
 		float aimPitchIncrement = GraphCapped( diff, MORTAR_RING_AIM_PITCH_DIFF_CHECK_MIN, MORTAR_RING_AIM_PITCH_DIFF_CHECK_MAX, MORTAR_RING_AIM_PITCH_INCREMENT_MIN, MORTAR_RING_AIM_PITCH_INCREMENT_MAX )
@@ -412,11 +402,11 @@ void function DoPoseParamLerp( entity weapon, float target, bool immeadiate )
 		else
 			aimPitch = currentAimPitch + aimPitchIncrement
 
-		MortarRingStoreAimPitch( weapon, aimPitch )
+		weapon.SetScriptPoseParam0( aimPitch )
 	}
 	else
 	{
-		MortarRingStoreAimPitch( weapon, target )
+		weapon.SetScriptPoseParam0( target )
 	}
 }
 #endif
