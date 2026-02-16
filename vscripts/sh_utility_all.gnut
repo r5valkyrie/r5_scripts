@@ -1785,9 +1785,9 @@ UIScaleFactor function GetContentFixedScaleFactor( var panel )
 	float vwidth  = 1920
 	float vheight = 1080
 
-	#if(UI)
+	#if UI
 		size = REPLACEHud_GetSize( panel )
-	#elseif(CLIENT)
+	#elseif CLIENT
 		array screenSize = expect array( panel.GetScreenSize() )
 		size.width = expect int( screenSize[0] )
 		size.height = expect int ( screenSize[1] )
@@ -3324,11 +3324,25 @@ string loopSound = "survival_titan_linking_loop", string successSound = "ui_menu
 		return
 
 	MenuExtendedUse_callback = callback
-	#if(UI)
+	#if UI
 		thread _MenuExtendedUse_InternalThread( focusElem, holdToUseElem, duration, loopSound, successSound, false )
-	#elseif(CLIENT)
+	#elseif CLIENT
 		RunUIScript( "_ClientToUI_MenuExtendedUseBegin", focusElem, holdToUseElem, duration, loopSound, successSound )
 	#endif
+}
+#endif
+
+#if UI
+void function _ClientToUI_MenuExtendedUseBegin( var focusElem, var holdToUseElem, float duration, string loopSound, string successSound )
+{
+	thread _MenuExtendedUse_InternalThread( focusElem, holdToUseElem, duration, loopSound, successSound, true )
+}
+#elseif CLIENT
+void function _UIToClient_MenuExtendedUseEnded( bool success )
+{
+	Assert( MenuExtendedUse_callback != null )
+	MenuExtendedUse_callback( success )
+	MenuExtendedUse_callback = null
 }
 #endif
 
