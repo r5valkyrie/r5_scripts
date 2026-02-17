@@ -2455,6 +2455,10 @@ bool function IsAccessibilityChatHintEnabled()
 }
 #endif
 
+bool function Crafting_IsEnabled()
+{
+	return true
+}
 
 #if CLIENT || UI && PC_PROG
 bool function IsAccessibilitySpeechToChat()
@@ -2523,16 +2527,31 @@ bool function DisplayObituaryName()
 #if CLIENT || UI 
 bool function DisplayHopupPopup()
 {
-	return GetConVarBool( "hud_setting_showButtonHints" )
+	return GetConVarBool( "hud_setting_showHopUpPopUp" )
 }
 #endif
 
-#if CLIENT || UI
+#if CLIENT || UI 
+bool function IsNetGraphEnabled()
+{
+	if ( GetCurrentPlaylistVarInt( "ngOverride", 0 ) == 1 )
+		return false
+
+	return GetConVarInt( "net_netGraph2" ) > 0
+}
+#endif
+
+#if CLIENT || UI 
+bool function IsAnonymousModeEnabled()
+{
+	return GetConVarInt( "hud_setting_anonymousMode" ) > 0
+}
+#endif
+
+#if CLIENT || UI 
 vector function GetKeyColor( int colorID, int optionalParam = 0 )
 {
 	Assert( optionalParam >= 0, "optionalParam must not be negative" )
-	
-	//return Vector( 22, 163, 0 )
 	return ColorPalette_GetColorFromID( colorID + optionalParam )
 }
 #endif

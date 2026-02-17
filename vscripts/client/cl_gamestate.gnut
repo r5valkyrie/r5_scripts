@@ -86,6 +86,10 @@ struct
 
 	asset gameStateRuiAsset = $""
 	asset gameStateFullmapRuiAsset = $""
+
+	var  nestedNetGraphRui
+	bool netGraphRuiCreated = false
+	bool isNetGraphEnabled
 } file
 
 const DEV_COUNTDOWNTIMER = 0//turn on to see the countdown timer to match starts - helps with lining up intros
@@ -101,6 +105,8 @@ void function ClGameState_Init()
 
 	AddCallback_OnClientScriptInit( ClGameState_AddClient )
 	AddCallback_GameStateEnter( eGameState.Playing, Hud_SetModeEmblem )
+	file.isNetGraphEnabled = IsNetGraphEnabled()
+	AddCallback_OnSettingsUpdated( OnSettingsUpdated )
 
 	CreateScoreRUI()
 }
@@ -118,6 +124,11 @@ void function CreateScoreRUI()
 	RuiTrackFloat( rui, "hdTextureProgress", null, RUI_TRACK_GAME_FULLY_INSTALLED_PROGRESS )
 	RuiTrackBool( rui, "hdTextureNeedsReboot", null, RUI_TRACK_GAME_HAS_NON_FULLY_INSTALLED_ASSETS_LOADED )
 
+	if ( file.isNetGraphEnabled == true )
+	{
+		RuiSetBool( rui, "isNetGraphEnabled", file.isNetGraphEnabled )
+		CreateNestedNetGraph( rui )
+	}
 	RuiSetInt( rui, "maxPlayerCount", GetCurrentPlaylistVarInt( "max_players", 12 ) )
 	RuiSetString( rui, "gameModeString", GetCurrentPlaylistVarString( "gameModeString", "" ) )
 	file.gamestateRui = rui
@@ -141,7 +152,7 @@ void function Hud_SetModeEmblem()
 
 void function SetCommonScoreRUIVars( var rui )
 {	
-	if ( Gamemode() != eGamemodes.SURVIVAL || Playlist() == ePlaylists.survival_solos )
+	/*if ( Gamemode() != eGamemodes.SURVIVAL || Playlist() == ePlaylists.survival_solos )
 	{
 		RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
 		RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ALIVE" )
@@ -285,7 +296,7 @@ void function SetCommonScoreRUIVars( var rui )
 		}
 	}
 	else
-	{
+	{*/
 		if ( IsFallLTM() )
 		{
 			RuiSetString( rui, "gameModeString", "" )
@@ -296,22 +307,30 @@ void function SetCommonScoreRUIVars( var rui )
 			RuiSetString( rui, "squadsRemaining2TextPlural", "#SHADOW_SQUAD_SHADOW_PLAYERS_REMAIN" )
 			return
 		}
-
+       
+	if ( IsSoloMode() )
+	{
+		RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
+		RuiSetString( rui, "squadsRemainingTextSingular", "#SURVIVAL_PLAYERS_REMAIN" )
+		RuiSetString( rui, "squadsRemainingTextPlural", "#SURVIVAL_PLAYERS_REMAIN" )
+	}
+	else
+	{
 		RuiSetBool( rui, "shouldDisplayLivingPlayerCount", true )
 
-		RuiSetInt( rui, "livingPlayerCountMin", 10 )
-		RuiSetString( rui, "squadsRemainingTextSingular", "#SURVIVAL_SQUADS_REMAIN" )
-		RuiSetString( rui, "squadsRemainingTextPlural", "#SURVIVAL_SQUADS_REMAIN" )
-		
-		if( Playlist() == ePlaylists.survival )
+		if ( IsPVEMode() )
 		{
-			RuiSetString( rui, "gameModeString", "APEX" )
-		} else if( Playlist() == ePlaylists.survival_duos )
+			RuiSetInt( rui, "livingPlayerCountMin", -1 )
+			RuiSetString( rui, "squadsRemainingTextSingular", "Squad" )
+			RuiSetString( rui, "squadsRemainingTextPlural", "Squads" )
+			//
+			//
+		}
+		else
 		{
-			RuiSetString( rui, "gameModeString", "APEX DUOS" )
-		} else if( Playlist() == ePlaylists.fs_haloMod_survival )
-		{
-			RuiSetString( rui, "gameModeString", "FS Halo BR" )
+			RuiSetInt( rui, "livingPlayerCountMin", 10 )
+			RuiSetString( rui, "squadsRemainingTextSingular", "#SURVIVAL_SQUADS_REMAIN" )
+			RuiSetString( rui, "squadsRemainingTextPlural", "#SURVIVAL_SQUADS_REMAIN" )
 		}
 	}
 }
@@ -330,10 +349,10 @@ void function UpdateCommonScoreRuiTracking( var rui, entity player )
 	RuiTrackBool( rui, "hasDeathFieldImmunity", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "hasDeathFieldImmunity" ) )
 	RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "assists" ) )
 
-	//	if ( Crafting_IsEnabled() )
-	//	{
-	//		RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
-	//	}
+		if ( Crafting_IsEnabled() )
+		{
+			RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
+		}
 		
 
 }
@@ -1071,8 +1090,90 @@ void function UpdateScoreBar( entity player )
 
 void function AddCallback_OnScoreboardCreated( void functionref() func )
 {
-	Assert( !file.onScoreboardCreatedFuncs.contains(func) )
-	file.onScoreboardCreatedFuncs.append(func)
+	Assert( !file.onScoreboardCreatedFuncs.contains( func ) )
+	file.onScoreboardCreatedFuncs.append( func )
 }
 
+
+var function CreateNestedNetGraph( var rui )
+{
+	RuiDestroyNestedIfAlive( rui, "netGraphHandle" )
+	file.netGraphRuiCreated = false
+
+	if ( GetCurrentPlaylistVarInt( "ngOverride", 0 ) == 1 )
+		return
+
+	var nestedGraphRui = RuiCreateNested( rui, "netGraphHandle", $"ui/gamestate_netgraph.rpak" )
+	
+	// Initialize values with RuiSetInt - thread will update FPS every frame
+	RuiSetInt( nestedGraphRui, "netGraphFPS", int( GetClientFPS() + 0.5 ) )
+	RuiSetInt( nestedGraphRui, "netGraphAmortizedLatency", 0 )
+	RuiSetInt( nestedGraphRui, "netGraphBandwidthIn", 0 )
+	RuiSetInt( nestedGraphRui, "netGraphBandwidthOut", 0 )
+	RuiSetInt( nestedGraphRui, "netGraphPacketLoss", 0 )
+	RuiSetInt( nestedGraphRui, "netGraphChoke", 0 )
+	RuiSetString( nestedGraphRui, "netGraphServerID", "R5Valkyrie V3.2" )
+
+	file.nestedNetGraphRui  = nestedGraphRui
+	file.netGraphRuiCreated = true
+	
+	thread UpdateNetGraphThread()
+}
+
+
+var function CLGameState_GetNetGraphRui()
+{
+	if ( file.netGraphRuiCreated == false )
+		return null
+
+	if ( file.isNetGraphEnabled == false )
+		return null
+
+	return file.nestedNetGraphRui
+}
+
+
+void function OnSettingsUpdated()
+{
+	printf( "OnSettingsUpdated()" )
+	bool isNetGraphEnabled = IsNetGraphEnabled()
+
+	if ( file.isNetGraphEnabled != isNetGraphEnabled )
+	{
+		RuiSetBool( file.gamestateRui, "isNetGraphEnabled", isNetGraphEnabled )
+
+		if ( isNetGraphEnabled )
+		{
+			CreateNestedNetGraph( file.gamestateRui )
+		}
+		else
+		{
+			RuiDestroyNestedIfAlive( file.gamestateRui, "netGraphHandle" )
+			file.netGraphRuiCreated = false
+		}
+
+		file.isNetGraphEnabled = isNetGraphEnabled
+	}
+}
+
+
+void function UpdateAnonymousModeSetting( entity playerEnt, bool oldVal, bool newVal, bool actuallyChanged )
+{
+	//
+}
+
+void function UpdateNetGraphThread()
+{
+	while ( file.netGraphRuiCreated && file.isNetGraphEnabled )
+	{
+		if ( file.nestedNetGraphRui != null )
+		{
+			// Update FPS every frame
+			int fps = int( GetClientFPS() )
+			RuiSetInt( file.nestedNetGraphRui, "netGraphFPS", fps )
+		}
+		
+		WaitFrame()
+	}
+}
 //maxPlayerCount

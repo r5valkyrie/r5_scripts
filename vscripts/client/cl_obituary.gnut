@@ -316,6 +316,8 @@ void function Obituary_Print_Localized( string localizedPrint, vector altColor1 
 	RuiSetFloat3( rui, "string2Color", SrgbToLinear( altColor2 / 255.0 ) )
 	RuiSetFloat3( rui, "string3Color", SrgbToLinear( altColor3 / 255.0 ) )
 
+	RuiSetBool( rui, "showObitsDuringSpectate", GetCurrentPlaylistVarBool( "show_obits_during_spectate", true ) )
+
 	ObituaryData newObituary
 	newObituary.rui = rui
 	newObituary.startTime = Time()
@@ -358,10 +360,8 @@ void function Obituary_Print_PlayerDeath( string attackerString, asset weaponIco
 
 void function UpdateObituaryQueue()
 {
-	int EXTRA_OFFSET = 0
-
-	if( Gamemode() == eGamemodes.WINTEREXPRESS )
-		EXTRA_OFFSET = 4
+	int EXTRA_OFFSET = (IsPVEMode() ? 1 : 0)
+	int netGraphOffset = GetConVarInt( "net_netGraph2" ) == 1 ? 2 : 0
 
 	for ( int index = file.obituaryQueue.len() - 1; index >= 0; index-- )
 	{
@@ -374,8 +374,9 @@ void function UpdateObituaryQueue()
 			continue
 		}
 
-		RuiSetInt( obitData.rui, "offset", (EXTRA_OFFSET + index + file.indexOffest) )
+		RuiSetInt( obitData.rui, "offset", (EXTRA_OFFSET + netGraphOffset + index + file.indexOffest) )
 		RuiSetInt( obitData.rui, "horizontalOffset", file.horizontalOffset  )
+		RuiSetInt( obitData.rui, "verticalOffset", file.verticalOffset )
 		RuiSetGameTime( obitData.rui, "updateTime", Time() )
 	}
 }
