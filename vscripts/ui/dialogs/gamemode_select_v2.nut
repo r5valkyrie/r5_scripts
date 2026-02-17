@@ -280,8 +280,6 @@ void function OnOpenModeSelectDialog()
 	float scale = float( GetScreenSize().width ) / 1920.0
 	drawWidth += int( 48 * scale )
 
-	bool hasLimitedMode = (slotToPlaylistNameMap["ltm"] != "")
-	RuiSetBool( Hud_GetRui( file.selectionPanel ), "hasLimitedMode", hasLimitedMode )
 	RuiSetFloat( Hud_GetRui( file.selectionPanel ), "drawWidth", (drawWidth / scale) )
 	Hud_SetWidth( file.selectionPanel, drawWidth )
 }
