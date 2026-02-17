@@ -1334,6 +1334,10 @@ void function CodeCallback_OnServerAnimEvent( entity ent, string eventName )
 			LootMarvin_OnDispenseLootAnimEvent( ent )
 			break
 
+		case "catalyst_spike_strip_idle_3p_fx":
+			//SpikeStrip_Start3PIdleFXAnimEvent( ent )
+			break
+
 		case "spawn_prop_in_world":
 			//Emote_AnimEvent_SpawnModelInWorld( ent, tokens[1], tokens[2] )
 			break
