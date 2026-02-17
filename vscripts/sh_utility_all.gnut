@@ -3685,6 +3685,21 @@ void function DEV_SetBreakPoint( bool bPrintLocals = true )
 	#endif
 }
 
+bool function CrossplayUserOptIn()
+{
+	return IsUserOptedInToCrossPlay() && CrossplayEnabled()
+}
+
+bool function CrossplayEnabled()
+{
+	return GetConVarInt( "crossPlay_enabled" ) != 0
+}
+
+bool function IsUserOptedInToCrossPlay()
+{
+	return GetConVarInt( "crossPlay_enabled" ) != 0
+}
+
 vector function GetCenterOfCircle( array<LocPair> spawns )
 {
 	vector total

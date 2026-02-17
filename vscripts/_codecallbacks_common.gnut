@@ -1343,7 +1343,7 @@ void function CodeCallback_OnServerAnimEvent( entity ent, string eventName )
 			break
 
 		case "ammo_swap_reload_complete":
-			//OnAnimEvent_weapon_car_ammo_swap_complete(ent)
+			OnAnimEvent_weapon_car_ammo_swap_complete(ent)
 			break
 	}
 
