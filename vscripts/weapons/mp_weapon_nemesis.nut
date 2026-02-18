@@ -45,9 +45,12 @@ global function OnWeaponPrimaryAttack_weapon_nemesis
 const float NEMESIS_CHARGE_PER_SHOT = 0.0417	//16.68% charge per burst
 const float NEMESIS_DECAY_DELAY = 8.0			//8 seconds before decay starts
 const float NEMESIS_DECAY_RATE = 0.15			//15% per second decay rate
+const float NEMESIS_DECAY_EPSILON = 0.00008
+const float NEMESIS_DECAY_LERP_TIME = 0.005
 const float NEMESIS_FULL_CHARGE = 1.0			//100% charge
 const float NEMESIS_CHARGE_EPSILON = 0.01		//Small value for float comparison
 const float NEMESIS_TIME_TO_FULL_DISCHARGE = 7.0
+
 
 
 //Charge level thresholds and corresponding mods
@@ -772,7 +775,7 @@ break
 
 		}
 
-nemesisData.chargeLevel-= 0.00025 // NEMESIS_CHARGE_PER_SHOT
+nemesisData.chargeLevel-= NEMESIS_DECAY_EPSILON // 0.00008 // NEMESIS_CHARGE_PER_SHOT
 
 
 
@@ -800,11 +803,11 @@ entity player = weapon.GetWeaponOwner()
 if (!IsValid(player))
 return
 
-printt("[NEMESIS] Magnet Latch LERP Value (Script Pose Param 0) for charge DECAY is " + paramValueFromChargeLerpDecay)
+// printt("[NEMESIS] Magnet Latch LERP Value (Script Pose Param 0) for charge DECAY is " + paramValueFromChargeLerpDecay)
 
 weapon.SetScriptPoseParam0(paramValueFromChargeLerpDecay)
 
-wait 0.01
+wait NEMESIS_DECAY_LERP_TIME // 0.005
 
 
 	}
