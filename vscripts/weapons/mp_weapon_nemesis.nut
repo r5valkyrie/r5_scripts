@@ -43,10 +43,10 @@ global function OnWeaponPrimaryAttack_weapon_nemesis
 //Nemesis charge constants
 //Retail values - Update each season, calculate how many mods we need based on heat_per_bullet
 const float NEMESIS_CHARGE_PER_SHOT = 0.0417	//16.68% charge per burst
-const float NEMESIS_DECAY_DELAY = 8.0			//8 seconds before decay starts
+const float NEMESIS_DECAY_DELAY = 8.0			// 8 seconds before decay starts
 const float NEMESIS_DECAY_RATE = 0.15			//15% per second decay rate
-const float NEMESIS_DECAY_EPSILON = 0.00008
-const float NEMESIS_DECAY_LERP_TIME = 0.005
+const float NEMESIS_DECAY_EPSILON = 0.00007     // Charge decays by this amount every NEMESIS_DECAY_LERP_TIME - Not retail
+const float NEMESIS_DECAY_LERP_TIME = 0.005     // Controls the frequency that the charge level is decreased by NEMESIS_DECAY_EPSILON - Not retail
 const float NEMESIS_FULL_CHARGE = 1.0			//100% charge
 const float NEMESIS_CHARGE_EPSILON = 0.01		//Small value for float comparison
 const float NEMESIS_TIME_TO_FULL_DISCHARGE = 7.0
