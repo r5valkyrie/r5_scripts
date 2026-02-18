@@ -14,7 +14,14 @@ global function Nemesis_VisualsWatcher
 global function Nemesis_DecayWatcher
 global function Nemesis_GetEmissiveRenderColorKVString
 //global function Nemesis_GetDeltaAnimations
-global function Nemesis_AnimationHandler
+//global function Nemesis_AnimationHandler
+global function Nemesis_DEBUGPLAYANIM
+#endif
+
+#if SERVER
+// DEBUG & TESTING
+
+global function Nemesis_DEBUGPLAYACTIVITY
 #endif
 
 
@@ -63,7 +70,7 @@ const array<string> NEMESIS_CHARGE_MODS = ["nemesis_charge_1", "nemesis_charge_2
 
 
 const string NEMESIS_IDLE_ANIMATION_STRING = "animseq/weapons/nemesis/ptpov_nemesis/idle_nemesis_layer.rseq"
-const string NEMESIS_FIRE_FULLYCHARGED_ANIMATION_STRING = "anmimseq/weapons/nemesis/ptpov_nemesis/fire_fullyCharged.rseq"
+const string NEMESIS_FIRE_FULLYCHARGED_ANIMATION_STRING = ""
 const string NEMESIS_FIRE_FULLYCHARGED_ONEHANDED_ANIMATION_STRING = "anmimseq/weapons/nemesis/ptpov_nemesis/fire_fullyCharged_onehanded.rseq"
 
 const string NEMESIS_Idle_Anim_LVL1 = "ptpov_nemesis_idle_lv1_dmx__loop_sub_ptpov_nemesis_idle_precharge_dmx_CE0ECADD" // lvl1 charge
@@ -79,6 +86,9 @@ const string NEMESIS_Fire_FullyCharged_OneHanded_RSEQ_Name = "fire_fullyCharged_
 
 
 const string NEMESIS_IDLE_PRECHARGE_LOOP = "ptpov_nemesis_idle_precharge_dmx__loop_sub_BE91F7B4"
+
+
+
 
 //string function Nemesis_GetDeltaAnimations(entity weapon)
 
@@ -284,6 +294,7 @@ var function OnWeaponPrimaryAttack_weapon_nemesis( entity weapon, WeaponPrimaryA
 }
 
 
+
 void function NemesisChargeDecayCalculate( entity weapon )
 {		
 	NemesisData nemesisData = file.nemesisDataTable[weapon] // TODO: delete on destroy!!! put it in weapon.w or something
@@ -294,7 +305,7 @@ void function NemesisChargeDecayCalculate( entity weapon )
 
 	nemesisData.lastFireTime = Time()
 	
-	if ( nemesisData.chargeLevel >= 0.0 )
+	if ( nemesisData.chargeLevel >= 0.0 && !nemesisData.chargeIsDecaying )
 	{
 		nemesisData.chargeLevel = GraphCapped( Time() - nemesisData.lastFireTime, NEMESIS_DECAY_DELAY, NEMESIS_DECAY_DELAY + ( nemesisData.chargeLevel / NEMESIS_DECAY_RATE ), nemesisData.chargeLevel, 0) // (1.0 / NEMESIS_DECAY_RATE * nemesisData.chargeLevel), nemesisData.chargeLevel, 0 )
 		//	NEMESIS_DECAY_DELAY, 
@@ -307,7 +318,7 @@ void function NemesisChargeDecayCalculate( entity weapon )
 	#if CLIENT
 	thread Nemesis_VisualsWatcher(weapon)
 	thread Nemesis_DecayWatcher(weapon)
-	thread Nemesis_AnimationHandler(weapon)
+	//thread Nemesis_AnimationHandler(weapon)
     #endif
 
 //////////////////////////
@@ -321,12 +332,15 @@ void function NemesisChargeDecayCalculate( entity weapon )
 		#endif
 		
 		//Update charge mod if charge level changed significantly
+		#if SERVER
 		if ( fabs(oldCharge - nemesisData.chargeLevel) > NEMESIS_CHARGE_EPSILON )
+
 			UpdateChargeMod( weapon )
+        #endif  
 	}
 }
 
-
+#if SERVER
 
 void function UpdateChargeMod( entity weapon )
 {
@@ -357,7 +371,7 @@ void function UpdateChargeMod( entity weapon )
 		}
 		
 		//Apply new charge mod
-		if ( newChargeMod >= 0 && newChargeMod < NEMESIS_CHARGE_MODS.len() )
+		if ( newChargeMod >= 0 && newChargeMod < NEMESIS_CHARGE_MODS.len() ) 
 		{
 			string newMod = NEMESIS_CHARGE_MODS[newChargeMod]
 			weapon.AddMod( newMod )
@@ -368,6 +382,14 @@ void function UpdateChargeMod( entity weapon )
 			#endif
 		}
 		
+		if ( nemesisData.chargeLevel <= 0.0 )
+		{
+
+			RemoveAllChargeMods(weapon)	
+			printt("[NEMESIS] Removed all weapon mods")
+			nemesisData.chargeLevel = 0.0 // reset charge to flat 0.0
+		}
+
 		nemesisData.currentChargeMod = newChargeMod
 	}
 }
@@ -405,6 +427,8 @@ void function RemoveAllChargeMods( entity weapon )
 	}
 }
 
+#endif
+
 // #endif
 
 
@@ -427,8 +451,178 @@ void function OnWeaponHeatStateChanged_weapon_nemesis( entity weapon, int newHea
 
 #endif
 
+
+
+#if SERVER
+
+// ACTIVITIES REFERENCE
+
+// ACT_VM_DRAW 
+// ACT_VM_ONEHANDED_DRAW
+// ACT_VM_DRAWFIRST
+// ACT_VM_ONEHANDED_DRAWFIRST
+// ACT_VM_DRAW_TO_SPRINT
+// ACT_VM_PRIMARYATTACK
+// ACT_VM_ONEHANDED_PRIMARYATTACK
+// ACT_VM_HOLSTER
+// ACT_VM_ONEHANDED_HOLSTER
+// ACT_VM_WEAPON_INSPECT
+// ACT_VM_LOWER
+// ACT_VM_ONEHANDED_LOWER
+// ACT_VM_RAISE_FROM_MELEE
+// ACT_VM_ONEHANDED_RAISE_FROM_MELEE
+// ACT_VM_RAISE
+// ACT_VM_ONEHANDED_RAISE
+// ACT_VM_RELOAD
+// ACT_VM_RELOAD_LATE1
+// ACT_VM_ONEHANDED_RELOAD_LATE1 
+// ACT_VM_ONEHANDED_RELOAD
+// ACT_VM_RELOADEMPTY
+// ACT_VM_RELOADEMPTY_LATE1
+// ACT_VM_ONEHANDED_RELOADEMPTY_LATE1
+// ACT_VM_RELOADEMPTY_LATE2
+// ACT_VM_IDLE
+
+
+// ACT_VM_CHARGE_VER4
+
+
+// ANIM TESTING AND DEBUGGING HELPER FUNCTION
+
+
+void function Nemesis_DEBUGPLAYACTIVITY(string ACTIVITY_NAME_STRING, bool STARTORSTOP) // bool THREADOFF)
+
+{
+
+
+entity player = GetPlayerArray()[0]
+
+
+entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand)
+
+entity vm = weapon.GetWeaponViewmodel()
+
+if (IsAlive(player))
+
+{
+ 
+if (STARTORSTOP)
+
+{
+
+// float duration = vm.GetSequenceDuration(ACTIVITY_NAME_STRING)
+
+// float finishTime = Time() + duration
+
+
+weapon.StartCustomActivity(ACTIVITY_NAME_STRING, 0)
+ 
+printt("Playing activity " + ACTIVITY_NAME_STRING)
+
+
+}
+
+
+
+}
+
+
+else
+
+{
+
+
+weapon.StopCustomActivity()
+
+printt("Stopped activity " + ACTIVITY_NAME_STRING)
+
+
+}
+
+
+}
+
+#endif
+
+
+
 #if CLIENT 
+
+
+void function Nemesis_DEBUGPLAYANIM(string ANIM_NAME_STRING, bool STARTORSTOP, bool THREADOFF)
+{
+
+entity player = GetPlayerArray()[0]
+
+
+entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand)
+
+entity vm = weapon.GetWeaponViewmodel()
+
+if (IsAlive(player))
+
+{
+ 
+if (STARTORSTOP && THREADOFF) 
+
+{
+thread function():( player, weapon, vm, ANIM_NAME_STRING ) {
+
+
+float duration = vm.GetSequenceDuration(ANIM_NAME_STRING)
+
+float finishTime = Time() + duration
+
+while (Time() <= finishTime) 
+
+
+{
+
+vm.Anim_NonScriptedPlay(ANIM_NAME_STRING)
+
+printt("Playing animation " + ANIM_NAME_STRING + " in thread")
+
+WaitFrame()
+
+}
+
+}()
+
+}
+
+else if(STARTORSTOP && !THREADOFF)
+
+{
+
+
+vm.Anim_NonScriptedPlay(ANIM_NAME_STRING)
+
+printt("Playing animation " + ANIM_NAME_STRING + " non-threaded")
+
+
+}
+
+else if(!STARTORSTOP)
+
+{
+
+
+vm.Anim_Stop()
+
+printt("Stopped animation " + ANIM_NAME_STRING)
+
+
+}
+
+
+}
+
+
+
+}
+
 // CLIENTSIDED VISUALS WATCHER
+
 
 void function Nemesis_VisualsWatcher( entity weapon )
 
@@ -476,6 +670,20 @@ float f_BlueValue = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 255.0) /
 string NewKVString = Nemesis_GetEmissiveRenderColorKVString(f_RedValue, f_GreenValue, f_BlueValue) // , weapon)
 
 weapon.kv.rendercolor = NewKVString
+
+float paramValueFromChargeLerp = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 1.0)
+
+entity vm = weapon.GetWeaponViewmodel()
+
+entity player = weapon.GetWeaponOwner()
+
+
+if (!IsValid(player))
+return
+
+weapon.SetScriptPoseParam0(paramValueFromChargeLerp)
+
+
 
 
 //if (NewKVString != OldKVString.tostring())
@@ -530,7 +738,7 @@ OnThreadEnd(
 
 
 while (IsValid(weapon))
-{
+	{
 
 // NemesisData nemesisData = file.nemesisDataTable[weapon] 
 
@@ -541,12 +749,32 @@ float timeSinceLastFire = Time() - nemesisData.lastFireTime
 
 // nemesisData.lastFireTime = Time()
 
-if (timeSinceLastFire > NEMESIS_DECAY_DELAY)
+float paramValueFromChargeLerpDecay
+
+if (timeSinceLastFire > NEMESIS_DECAY_DELAY )
 
 {
 
+while (nemesisData.chargeLevel > 0)
+
+	{
 
 nemesisData.chargeIsDecaying = true	
+
+if (nemesisData.chargeLevel - 0.01 <= 0)
+
+		{
+
+
+nemesisData.chargeIsDecaying = false
+
+break
+
+		}
+
+nemesisData.chargeLevel-= 0.00025 // NEMESIS_CHARGE_PER_SHOT
+
+
 
 float f_RedValue_d = GraphCapped(timeSinceLastFire, NEMESIS_DECAY_DELAY, NEMESIS_DECAY_DELAY + NEMESIS_TIME_TO_FULL_DISCHARGE, 255.0, 0.0) // GraphCapped(nemesisData.chargeLevel, 0.0, 1.01, 255.0, 0.0) 
 
@@ -558,9 +786,29 @@ float f_BlueValue_d = GraphCapped(timeSinceLastFire, NEMESIS_DECAY_DELAY, NEMESI
 
 string NewKVString_d = Nemesis_GetEmissiveRenderColorKVString(f_RedValue_d, f_GreenValue_d, f_BlueValue_d) // , weapon)
 
+
+paramValueFromChargeLerpDecay = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 1.0)
+
+
+
 // printt("[NEMESIS] NEW DECAY RGB VALUES ARE: " + NewKVString_d)
 
 weapon.kv.rendercolor = NewKVString_d
+
+entity player = weapon.GetWeaponOwner()
+
+if (!IsValid(player))
+return
+
+printt("[NEMESIS] Magnet Latch LERP Value (Script Pose Param 0) for charge DECAY is " + paramValueFromChargeLerpDecay)
+
+weapon.SetScriptPoseParam0(paramValueFromChargeLerpDecay)
+
+wait 0.01
+
+
+	}
+
 
 }
 
@@ -576,24 +824,15 @@ weapon.kv.rendercolor = NewKVString_d
 
 WaitFrame()
 
+	}
+
+
 }
-
-
-
-}
-
-
-
-
-
-
 
 
 
 
 /////////////////////////
-
-
 
 
 
@@ -623,95 +862,6 @@ string KVString = RedValue.tostring() + " " + GreenValue.tostring() + " " + Blue
 
 return KVString
 }
-
-
-
-
-
-void function Nemesis_AnimationHandler(entity weapon)
-
-{
-
-
-NemesisData nemesisData = file.nemesisDataTable[weapon]
-
-entity vm = weapon.GetWeaponViewmodel()
-
-
- 
-
-thread function(): (vm, nemesisData)
-
-{
-
-// vm.Anim_Play(ANIMATION_NAME_STRING)
-
-float cLevel = nemesisData.chargeLevel
-
-switch(cLevel)
-
-{
-
-
-// idfk how to control which animation inside the sequence plays yet so no levelled animations for now
-
-case (cLevel >= 0.0 && cLevel < 0.2):
-     vm.Anim_NonScriptedPlay(NEMESIS_IDLE_ANIMATION_STRING)
-
-break
-
-case (cLevel >= 0.2 && cLevel < 0.4):
-    vm.Anim_NonScriptedPlay(NEMESIS_IDLE_ANIMATION_STRING)
-break
-
-case (cLevel >= 0.4 && cLevel < 0.6):
-    vm.Anim_NonScriptedPlay(NEMESIS_IDLE_ANIMATION_STRING)
-break
-
-
-case (cLevel >= 0.6 && cLevel < 0.8):
-    vm.Anim_NonScriptedPlay(NEMESIS_IDLE_ANIMATION_STRING)
-break
-
-
-case (cLevel >= 0.8 && cLevel < 1.0):
-    vm.Anim_NonScriptedPlay(NEMESIS_IDLE_ANIMATION_STRING)
-break
-
-case (cLevel >= 1.0):
-    vm.Anim_NonScriptedPlay(NEMESIS_FIRE_FULLYCHARGED_ANIMATION_STRING)
-break
-
-
-}
-
-
-WaitFrame()
-
-}()
-
-
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
