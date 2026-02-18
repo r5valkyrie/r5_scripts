@@ -9,6 +9,7 @@ global function DEV_TestRapidRingEntryAndDeath
 global function PathTT_PlayAnnouncerLineForPlayersInRing
 global function PathTT_AddCallbackOnHologramChanged
 global function GetPathfinderTTAssetsToPrecache
+global function InitPathTTRingTVSystem
 #endif
 #if CLIENT
 global function ClInitPathTTRingTVEntities
@@ -123,13 +124,6 @@ void function PathTT_Init()
 {
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
-	#if SERVER
-	thread InitPathTTRingTVSystem()
-	#endif
-
-	#if CLIENT
-	thread ClInitPathTTRingTVEntities()
-	#endif
 }
 
 void function EntitiesDidLoad()
@@ -146,10 +140,6 @@ void function EntitiesDidLoad()
 	PrecacheParticleSystem( $"P_arena_hologram_gloves" )
 
 	InitPathTTBoxingRing()
-
-	#if SERVER
-		InitPathTTRingTVSystemEntities()
-	#endif
 
 	InitPathTTBoxingRingEntities()
 }
@@ -522,9 +512,6 @@ void function InitPathTTRingTVSystemEntities()
 
 void function PathTT_RingTVThink()
 {
-	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
-		return
-
 	float stateEnterTime = Time()
 	float lockStateEndTime = 0.0
 	while ( true )
@@ -1078,7 +1065,7 @@ void function GivePathTTMeleeWeaponsToPlayer( BoxingRingPlayerData playerData )
 		player.TakeOffhandWeapon(OFFHAND_MELEE)
 		player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 
-		StatusEffect_AddEndless( player, eStatusEffect.silenced, 1.0 )
+		StatusEffect_AddEndless( player, eStatusEffect.is_boxing, 1.0 )
 	}
 
 	else
@@ -1141,7 +1128,7 @@ void function ReturnOriginalMeleeWeaponsToPlayer( BoxingRingPlayerData playerDat
 		player.TakeWeaponNow( "mp_weapon_melee_boxing_ring" )
 		player.TakeWeaponNow( "melee_boxing_ring" )
 
-		StatusEffect_StopAllOfType( player, eStatusEffect.silenced)
+		StatusEffect_StopAllOfType( player, eStatusEffect.is_boxing)
 
 		player.UnlockWeaponChange()
 		EnableOffhandWeapons( player )
@@ -1447,14 +1434,14 @@ void function Boxing_WeaponStatusCheck( entity player, var rui, int slot )
 	{
 		case OFFHAND_LEFT:
 		case OFFHAND_INVENTORY:
-			/*if ( StatusEffect_HasSeverity( player, eStatusEffect.is_boxing ) )
+			if ( StatusEffect_HasSeverity( player, eStatusEffect.is_boxing ) )
 			{
 				RuiSetBool( rui, "isBoxing", true )
 			}
 			else
 			{
 				RuiSetBool( rui, "isBoxing", false )
-			}*/
+			}
 			break
 	}
 }

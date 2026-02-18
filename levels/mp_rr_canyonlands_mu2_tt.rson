@@ -1,10 +1,7 @@
 When: "SERVER || CLIENT"
 Scripts:
 [
-                   
-	//sh_s05_end_precache.nut
-      
-
+	mp/levels/sh_crypto_tt_common.nut
 	mp/levels/mp_rr_canyonlands_common.nut
 ]
 When: "SERVER"

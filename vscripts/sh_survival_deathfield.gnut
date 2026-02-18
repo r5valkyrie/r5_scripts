@@ -51,6 +51,7 @@ global function SURVIVAL_Deathfield_GetStartRadius
 #endif
 
 #if CLIENT
+global function Cl_SURVIVAL_GetDeathFieldCurrentRadius
 global function ServerCallback_Survival_PathfinderSurveyNotifications
 global function ServerCallback_Survival_CreateBeaconWorldIcon
 global function SURVIVAL_AddCallback_OnDeathFieldStartShrink
@@ -194,6 +195,7 @@ void function Sh_ArenaDeathField_Init()
 		FlagInit( "DeathFieldPaused", GetCurrentPlaylistVarBool( "sur_circle_start_paused", false ) )
 		FlagInit( "DoneCreatingDeathFieldPosition" )
 		FlagInit( "SUR_DeathFieldShrinking" )
+		FlagInit( "DeathFieldCalculationComplete" )
 
 		AddCallback_EntitiesDidLoad( EntitiesDidLoad_DeathField )
 		AddCallback_GameStateEnter( eGameState.Playing, Pathfinder_RandomizeSurveyLocations )
@@ -502,6 +504,7 @@ void function __EntitiesDidLoad()
 	}
 
 	ResetDeathFieldDataToDefault()
+	FlagSet( "DeathFieldCalculationComplete" )
 }
 
 void function DeleteMinimapZoneAfterPlaneCompletes( entity tempZoneEnt )
@@ -1813,6 +1816,7 @@ void function RoundBased_ClearDeathfieldData()
 
 void function RoundBased_RoundResetDeathfieldData()
 {
+	FlagClear( "DeathFieldCalculationComplete" )
 	FlagClear( "DoneCreatingDeathFieldPosition" )
 
 	InitDeathFieldDataAndStageData()
@@ -2773,6 +2777,33 @@ var function SurveyBeacon_CreateHUDMarker( asset beaconImage, entity minimapObj 
 	RuiKeepSortKeyUpdated( rui, true, "pos" )
 	return rui
 }
+
+#if CLIENT
+float function Cl_SURVIVAL_GetDeathFieldCurrentRadius()
+{
+		float startRadius = SURVIVAL_Deathfield_GetStartRadius()
+
+		int i = SURVIVAL_GetCurrentDeathFieldStage()
+
+		if ( i == -1 )
+			return startRadius
+
+		float startTime = GetGlobalNetTime( "nextCircleStartTime" ) + MARGIN_WAIT_TIME
+		DeathFieldStageData data = file.deathFieldStageData[i]
+		if ( i > 0 )
+		{
+			DeathFieldStageData prevData = file.deathFieldStageData[i - 1]
+			startRadius = prevData.endRadius
+		}
+
+		float duration = data.shrinkDuration
+		float endRadius = data.endRadius
+
+		float frac = (Time() - startTime) / duration
+		frac = clamp( frac, 0.0, 1.0 )
+		return startRadius + ((endRadius - startRadius) * frac)
+}
+#endif
 
 void function TrackDeathfieldDistance( entity cockpit, entity player )
 {

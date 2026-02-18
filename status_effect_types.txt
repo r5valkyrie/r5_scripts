@@ -12,7 +12,6 @@
 	spotter_sight
 	rev_shell_targeted
 	ring_flare
-	cryonade
 	crypto_beacon_scan
 	immune_to_abilities
 	phase_gate_tracking
@@ -144,5 +143,6 @@
 	seer_detected
 	in_void_ring
 	inside_echo_locator
+	is_boxing
 /////////////////////////////
 //}

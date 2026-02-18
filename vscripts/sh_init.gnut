@@ -70,7 +70,6 @@ void function SV_CL_Init()
 	Settings_Init() // Should run after gamemodes are verified
 	
 	ShHoverVehicle_Init()
-	CryptoTT_Init()
 	ShGamepad_LevelInit()
 	Thirdperson_Init()
 	DeathHints_Init()
@@ -507,6 +506,7 @@ void function Client_Init()
 	ClScoreboardMp_Init()
 	ClTitanSoul_Init()
 	ClMinimap_Init()
+	Cl_FullmapInit()
 
 	ClGruntChatter_MP_Init()
 	ClSpectatorModeAudio_Init()
