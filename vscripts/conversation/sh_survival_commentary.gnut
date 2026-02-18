@@ -10,7 +10,6 @@ global function TryFindSpeakingPlayerOnTeamDisallowSelf
 global function AllowPlayersToTalkToThemselves
 global function IsBattleChatterEnabled
 global function ShouldPlayBattleChatter
-global function CanPlayerSpeak
 
 global function SurvivalCommentary_SetBattleChatterEnabled
 global function SurvivalCommentary_SetHost
@@ -448,8 +447,7 @@ entity function TryFindSpeakingPlayerOnTeam( int team )
 		// downed players shouldn't talk
 		if ( Bleedout_IsBleedingOut( playerOnTeam ) )
 			continue
-		if ( !CanPlayerSpeak( playerOnTeam ) )
-			continue
+
 		return playerOnTeam
 	}
 
@@ -469,9 +467,6 @@ entity function TryFindSpeakingPlayerOnTeamDisallowSelf( int team, entity forbid
 		if ( Bleedout_IsBleedingOut( playerOnTeam ) )
 			continue
 
-		if ( !CanPlayerSpeak( playerOnTeam ) )
-			continue
-
 		// talking to self disallowed
 		if ( playerOnTeam == forbiddenPlayer )
 			continue
@@ -486,16 +481,6 @@ entity function TryFindSpeakingPlayerOnTeamDisallowSelf( int team, entity forbid
 	return null
 }
 
-bool function CanPlayerSpeak( entity player )
-{
-	if ( !IsValid( player ) )
-		return false
-
-	if ( IsPlayerShadowZombie( player ) )
-		return false
-	
-	return true
-}
 
 bool function AreWeSquadMembers( entity player1, entity player2 )
 {
@@ -539,8 +524,6 @@ bool function ShouldPlayBattleChatter( string conversationType, entity listening
 	if ( !IsAlive( speakingPlayer ) )
 		return false
 
-	if ( !CanPlayerSpeak( speakingPlayer ) )
-		return false
 	if ( !IsBattleChatterLineEnabled( conversationType ) )
 		return false
 	

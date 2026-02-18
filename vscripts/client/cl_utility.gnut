@@ -454,18 +454,6 @@ void function AddOnSpectatorTargetChangedCallback( void functionref( entity spec
 	clGlobal.onSpectatorTargetChangedCallbacks.append( callbackFunc )
 }
 
-void function AddOnSpectatorTagModeChangedCallback( void functionref( entity spectatingPlayer, int newMode ) callbackFunc )
-{
-	Assert( !clGlobal.onSpectatorPlayerTagModeChangedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddOnSpectatorTagModeChangedCallback" )
-	clGlobal.onSpectatorPlayerTagModeChangedCallbacks.append( callbackFunc )
-}
-
-void function AddOnSpectatorVisibleEnemiesChanged( void functionref( bool enemiesVisible ) callbackFunc )
-{
-	Assert( !clGlobal.onSpectatorMinimapEnemiesVisibleChangedCallbacks.contains(callbackFunc), "Already added " + string( callbackFunc ) + " with AddOnSpectatorVisibleEnemiesChanged" )
-	clGlobal.onSpectatorMinimapEnemiesVisibleChangedCallbacks.append( callbackFunc )
-}
-
 void function AddCallback_OnSelectedWeaponChanged( void functionref( entity ) callbackFunc )
 {
 	Assert( !clGlobal.onWeaponChangedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnSelectedWeaponChanged" )
@@ -480,7 +468,7 @@ void function AddCallback_OnViewPlayerChanged( void functionref( entity ) callba
 
 void function RunLocalViewPlayerChangedCallbacks( entity player )
 {
-	printt( "RunLocalViewPlayerChangedCallbacks", player )
+	//printt( "RunLocalViewPlayerChangedCallbacks", player )
 	foreach ( callbackFunc in clGlobal.onLocalViewPlayerChangedFuncs )
 	{
 		callbackFunc( player )

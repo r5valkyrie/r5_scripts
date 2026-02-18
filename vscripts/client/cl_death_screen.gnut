@@ -16,7 +16,6 @@ global function PopulatePlayerStatsRui
 global function ClearPlayerStatsRui
 global function ForceDestroyBlackBarRui
 global function SetClearDeathRecapOnClose
-global function UpdateGladCardVisibility
 
 global function UICallback_ShowSquadSummary
 global function UICallback_HideSquadSummary
@@ -1355,7 +1354,6 @@ void function PopulatePlayerStatsRui( var gladCardRui, int index, bool connected
 
 void function UpdateGladCardVisibility()
 {
-	printt( "DS: UpdateGladCardVisibility", CanShowGladCard() )
 	bool canShowGladCard    = CanShowGladCard()
 	bool shouldShowGladCard = canShowGladCard && file.showGladCard
 

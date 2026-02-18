@@ -14,6 +14,5 @@ Scripts:
 When: "SERVER || CLIENT"
 Scripts:
 [
-	mp/sh_skydive_launchers_precache.nut
 	mp/levels/mp_rr_desertlands_common.nut
 ]

@@ -72,6 +72,7 @@ int function SetupRemoteFuncAliases()
 		"ServerCallback_KillReplayHud_Activate",
 		"ServerCallback_KillReplayHud_Deactivate",
 		"TridentBoost_Visuals",
+		"RefreshImageAndScaleOnMinimapAndFullmap",
 		"ServerCallback_UpdateHeroStats",
 		"SCB_WeaponInspectHint",
 		"ServerCallback_PlayMatchEndMusic",
@@ -549,6 +550,8 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "isJumpmaster", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "isJumpingWithSquad", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "playerInPlane", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	
+	CryptoTT_OnNetworkRegistration()
 
 	ScriptRegisterNetworkedVariable( "freefallActive", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "freefallEmoteAvailable", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )

@@ -78,11 +78,6 @@ global function GetGamemodeModSource
 // Direct gamemode registration
 global function RegisterGamemode
 
-#if CLIENT
-global function GameMode_DoesModeDisplayIconsForAllFriendlyTeams
-global function GameMode_DoesModeDisplayIconsForAllTeams
-#endif
-
 global struct GamemodeSettings
 {
 	string name = ""
@@ -698,18 +693,6 @@ float function GameMode_GetLoadoutSelectTime()
 {
 	return GetCurrentPlaylistVarFloat( "pick_loadout_time", 5.0 )
 }
-
-#if CLIENT
-bool function GameMode_DoesModeDisplayIconsForAllFriendlyTeams( string mode )
-{
-	return false
-}
-
-bool function GameMode_DoesModeDisplayIconsForAllTeams( string mode )
-{
-	return false
-}
-#endif
 
 // Enhanced gamemode registration system implementation
 void function RegisterExternalGamemode( string gameModeName, string modSource )

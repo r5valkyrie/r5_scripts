@@ -585,6 +585,7 @@ bool function IsLobby()
 	return IsLobbyMapName( mapName )
 }
 
+#if UI || MP_PVEMODE 
 bool function Freelance_IsHubLevel()
 {
 #if UI
@@ -600,6 +601,7 @@ bool function Freelance_IsHubLevel()
 	}
 	return false
 }
+#endif
 
 bool function Is2TeamPvPGame() //Technically this checks if its' 2 teams. Will we have 2 team non-PvP games? Probably not...
 {

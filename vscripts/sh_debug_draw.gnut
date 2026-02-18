@@ -806,16 +806,3 @@ void function DrawLineForPoints( array<vector> points, vector color, float durat
 	for ( int i = 0; i < points.len() - 1; i++ )
 		DebugDrawLine( points[i], points[i+1], color.x, color.y, color.z, true, duration )
 }
-
-// Draws a circle with a consistent FOV size on screen. Useful for representing target view angles to focus on, etc.
-void function DebugDrawFOVCircle( vector targetOrigin, vector viewOrigin, float fovDeg, int r, int g, int b, bool throughGeo, float time, int segments = 32  )
-{
-	vector viewOrgToTarget = targetOrigin - viewOrigin
-	vector viewOrgToTargetDir = Normalize( viewOrgToTarget)
-	float distToTarget = Distance( targetOrigin, viewOrigin )
-
-	float radius = deg_sin( fovDeg ) * distToTarget
-	vector circleAngles = VectorToAngles( viewOrgToTargetDir )
-	circleAngles = AnglesCompose( circleAngles, < 90, 0, 0 > )
-	DebugDrawCircle( targetOrigin, circleAngles, radius, r, g, b, throughGeo, time, segments )
-}
