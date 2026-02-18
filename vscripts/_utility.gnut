@@ -364,7 +364,7 @@ entity function CreateInfoTarget( vector origin = <0, 0, 0>, vector angles = <0,
 }
 
 
-entity function CreateScriptMover_NEW( string scriptName, vector origin = <0, 0, 0>, vector angles = <0, 0, 0>, int solidType = 0 )
+entity function CreateScriptMover_NEW( string scriptName = "", vector origin = <0, 0, 0>, vector angles = <0, 0, 0>, int solidType = 0 )
 {
 	entity script_mover = CreateScriptMover_BASE( origin, angles, solidType, EMPTY_MODEL, -1, "script_mover_lightweight" )
 	script_mover.SetScriptName( scriptName )

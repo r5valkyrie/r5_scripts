@@ -86,7 +86,7 @@ void function EntitiesDidLoad()
 	#if SERVER && DEVELOPER
 		//test_runmapchecks()
 	#endif
-
+	InitPathTTRingTVSystem()
 	// JFS: Create phase runner pings
 }
 

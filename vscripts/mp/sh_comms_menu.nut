@@ -21,6 +21,7 @@ global function CommsMenu_HasValidSelection
 global function CommsMenu_ExecuteSelection
 global function CommsMenu_GetCurrentCommsMenu
 global function SetRuiOptionsForChatPage
+global function PerformQuipAtSlot
 
 global function AddCallback_OnBuildMenuOptions
 #endif
@@ -43,6 +44,8 @@ global enum eCommsMenuStyle
 	ORDNANCE_MENU,
 	SKYDIVE_EMOTE_MENU,
 
+                
+	CRAFTING,
 	_assertion_marker,
 
 	_count
@@ -63,7 +66,7 @@ global enum eOptionType
 	HOLOSPRAY
 }
 
-Assert( eCommsMenuStyle._assertion_marker == 6 )    //
+Assert( eCommsMenuStyle._assertion_marker == 7 )    //
 
 global enum eChatPage
 {
@@ -88,6 +91,7 @@ global enum eChatPage
 
 	SKYDIVE_EMOTES,
 
+	CRAFTING,
 	SND_BUY_MENU,
 
 	_count
@@ -115,6 +119,9 @@ const string WHEEL_SOUND_ON_FOCUS = "menu_focus"
 const string WHEEL_SOUND_ON_EXECUTE = "menu_accept"
 const string WHEEL_SOUND_ON_DENIED = "menu_deny"
 
+                
+	global const string WHEEL_SOUND_ON_FOCUS_CRAFTING = "Crafting_Replicator_Menu_Hover"
+	global const string WHEEL_SOUND_ON_DENIED_CRAFTING = "Crafting_Replicator_Menu_Deny"
 #endif //
 
 global const int WHEEL_HEAL_AUTO = -1
@@ -1580,6 +1587,21 @@ bool function MakeCommMenuSelection( int choice, int wheelInputType )
 
 	return false
 }
+
+void function PerformQuipAtSlot( int index )
+{
+	EHI playerEHI = LocalClientEHI()
+
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_Character() )
+
+	LoadoutEntry entry = Loadout_CharacterQuip( character, index )
+	ItemFlavor quip    = LoadoutSlot_GetItemFlavor( playerEHI, entry )
+	if ( !CharacterQuip_IsTheEmpty( quip ) )
+	{
+		HandleQuipPick( quip, index )
+	}
+}
+
 
 void function HandleQuipPick( ItemFlavor quip, int choice )
 {

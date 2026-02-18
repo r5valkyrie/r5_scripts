@@ -5,6 +5,7 @@ void function ClientCodeCallback_MapInit()
 {
 	Olympus_MapInit_Common()
 	MinimapLabelsOlympus()
+		ClInitPathTTRingTVEntities()
 }
 
 

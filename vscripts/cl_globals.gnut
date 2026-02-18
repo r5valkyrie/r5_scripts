@@ -34,6 +34,8 @@ global struct ClGlobals
 	array<void functionref( entity clientPlayer, entity spectatorTarget )> thirdPersonSpectateStartCallbacks
 	array<void functionref( entity clientPlayer, entity spectatorTarget )> thirdPersonSpectateEndCallbacks
 	array<void functionref( entity localClientPlayer, entity prevSpectatorTarget, entity currentSpectatorTarget )> onSpectatorTargetChangedCallbacks
+	array<void functionref( entity localClientPlayer, int newMode )> onSpectatorPlayerTagModeChangedCallbacks
+	array<void functionref( bool enemiesVisible )> onSpectatorMinimapEnemiesVisibleChangedCallbacks
 	table<string, array<void functionref( entity )> > onDestroyedCallbacks
 	table<string, array<void functionref( entity )> > onDeathOrDestroyCallbacks
 	table<int, array<void functionref( entity )> > onCinematicEventFlagChangedCallback

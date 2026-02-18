@@ -561,8 +561,6 @@ Scripts:
 	sh_apex_screens.nut
 	sh_survival_deathfield.gnut
 	sh_survival_freefall.gnut
-	
-	mp/levels/sh_crypto_tt_common.nut
 
 	mp/sh_lootbin.gnut
 	mp/_sh_tutorial.gnut
@@ -799,6 +797,7 @@ Scripts:
 	client/cl_radial_menu.gnut
 	client/cl_spectator_hud.gnut
 	client/cl_minimap.gnut
+	client/cl_fullmap.gnut
 	client/cl_pilot_speedometer.gnut
 	client/cl_squad_display.gnut
 	client/cl_death_screen.gnut

@@ -1,10 +1,17 @@
 global function ClientCodeCallback_MapInit
+global function CodeCallback_PreMapInit
 global function MinimapLabelsCanyonlandsMU2
 
 struct
 {
 }
 file
+
+void function CodeCallback_PreMapInit()
+{
+	if (GetMapName() == "mp_rr_canyonlands_mu2_tt" )
+		CryptoTT_PreMapInit()
+}
 
 void function ClientCodeCallback_MapInit()
 {
@@ -17,20 +24,9 @@ void function ClientCodeCallback_MapInit()
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2.rpak" )
 	MinimapLabelsCanyonlandsMU2()
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, MU1_OnWinnerDetermined )
-			AddCallback_EntitiesDidLoad( EntitiesDidLoad )
-/*
-
-	ShPrecacheS05Ending()
-
-	ShPrecacheEvacShipAssets()
-	ShPrecacheBreachAndClearAssets()
-	ShPrecacheTreasureExtractionAssets()
-
-
-	InitHatchBunkers()
-
-	ClCanyonlandsStoryEvents_Init()
-	ClCommonStoryEvents_Init()*/
+	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
+	if (GetMapName() == "mp_rr_canyonlands_mu2_tt" ){
+	RegisterCLCryptoCallbacks()}
 }
 
 void function MinimapLabelsCanyonlandsMU2()
@@ -76,6 +72,10 @@ void function MinimapLabelsCanyonlandsMU2()
 
 void function EntitiesDidLoad()
 {
+	if (GetMapName() == "mp_rr_canyonlands_mu2_tt" ){
+		InitCryptoMap()
+		ClCryptoTVsInit()
+	}
 }
 
 void function MU1_OnWinnerDetermined()

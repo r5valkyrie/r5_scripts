@@ -102,12 +102,12 @@ struct
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Assets are blank unless we actually include the precache script in the specific level rson
 /////////////////////////////////////////////////////////////////////////////////////////////
-global asset FX_SKYDIVE_LAUNCHER_LOOP_DEFAULT = $""
-global asset FX_SKYDIVE_LAUNCHER_LOOP_NO_SNOW = $""
+global asset FX_SKYDIVE_LAUNCHER_LOOP_DEFAULT = $"P_launchpad_winter"
+global asset FX_SKYDIVE_LAUNCHER_LOOP_NO_SNOW = $"P_launchpad_winter_AR"
 global asset FX_SKYDIVE_LAUNCHER_GRAVITY_MINI_IDLE = $""
 #if SERVER
-	global asset MODEL_SKYDIVE_LAUNCHER_DEFAULT = $""
-	global asset FX_SKYDIVE_LAUNCHER_LAUNCH = $""
+	global asset MODEL_SKYDIVE_LAUNCHER_DEFAULT = $"mdl/s2s/s2s_hullhatch_tube_lift.rmdl"
+	global asset FX_SKYDIVE_LAUNCHER_LAUNCH = $"P_launchpad_winter_engage"
 	global asset MODEL_SKYDIVE_LAUNCHER_GRAVITY_MINI = $""
 	global asset FX_SKYDIVE_LAUNCHER_GRAVITY_MINI_LAUNCH = $""
 	global asset FX_SKYDIVE_LAUNCHER_GRAVITY_ZIPRAIL_LAUNCH = $""
