@@ -471,7 +471,7 @@ void function OnEchoLocatorPostDamaged( entity echoLocator, var damageInfo )
 		if ( echoLocatorDestroyed )
 			DamageInfo_AddCustomDamageType( damageInfo, DF_CRITICAL )
 		else
-			DamageInfo_AddCustomDamageType( damageInfo, 1 )
+			DamageInfo_AddCustomDamageType( damageInfo, DF_SOUR )
 
 
 		attacker.NotifyDidDamage( echoLocator, 0, DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ),
@@ -1180,7 +1180,6 @@ void function EchoLocatorRUI_Thread( entity echoLocator )
 
 	int lastEnemyCount = -1
 	float endTime = Time() + file.echoLocatorDuration
-	return
 
 	var rui = CreateCockpitRui( $"ui/echo_locator.rpak" )
 	file.echoLocatorRui[echoLocator] <- rui
@@ -1711,6 +1710,12 @@ void function EchoLocatorFootstepVFX_Thread( entity echoLocator )
 								lockFXID[potentialVictim].initialLock = false
 							}
 						}
+					}
+
+
+					if ( !IsValid( minimapMarkerRui[potentialVictim] ) )
+					{
+						minimapMarkerRui[potentialVictim] = Minimap_AddEnemyToMinimap( potentialVictim )
 					}
 
 					float waitTime = FLT_MAX
