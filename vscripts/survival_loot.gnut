@@ -73,6 +73,7 @@ global function Survival_Loot_GetDefaultRealm
 
 global function Loot_AddCallback_OnGiveMainWeapon
 global function Loot_RemoveCallback_OnGiveMainWeapon
+global function Loot_AddCallback_OnWeaponAttachmentChanged
 global function Loot_AddCallback_OnWeaponDrop
 global function Loot_RemoveCallback_OnWeaponDrop
 global function Loot_IsStandardSurvivalLootEnabled
@@ -5986,6 +5987,12 @@ void function Loot_RemoveCallback_OnGiveMainWeapon( void functionref(entity, ent
 {
 	Assert( file.Callbacks_OnGiveMainWeapon.contains( callbackFunc ), "Can't remove callback that wasn't added " + string( callbackFunc ) + " with Loot_RemoveCallback_OnGiveMainWeapon" )
 	file.Callbacks_OnGiveMainWeapon.fastremovebyvalue( callbackFunc )
+}
+
+void function Loot_AddCallback_OnWeaponAttachmentChanged( void functionref(entity, entity, string, string) callbackFunc )
+{
+	Assert( !file.Callbacks_OnPlayerWeaponAttachmentChanged.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Loot_AddCallback_OnWeaponAttachmentChanged" )
+	file.Callbacks_OnPlayerWeaponAttachmentChanged.append( callbackFunc )
 }
 
 #if DEVELOPER

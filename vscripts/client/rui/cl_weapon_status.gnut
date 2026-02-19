@@ -22,13 +22,15 @@ global function NotifyReloadAttemptButNoReserveAmmo
 
 global function UpdateWeaponStatusOnBindingChange
 
+global function GetUltimateWeaponState
 global function GetWeaponRui
+global function GetAmmoStatusHintRui
 global function GetTacticalRui
 global function GetUltimateRui
 
 #if DEVELOPER
 global function DEV_TestUltimateStates
-global function GetUltimateWeaponState
+
 #endif //DEVELOPER
 
 global enum eUltimateState

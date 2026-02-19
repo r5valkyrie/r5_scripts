@@ -365,6 +365,7 @@ Scripts:
 	weapons/mp_weapon_smr.nut
 	weapons/mp_weapon_rocket_launcher.nut
 	weapons/mp_weapon_mgl.nut
+	weapons/mp_weapon_hemlok.nut
 	weapons/mp_weapon_arc_launcher.nut
 	weapons/mp_weapon_proximity_mine.nut
 

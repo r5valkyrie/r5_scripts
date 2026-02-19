@@ -19,6 +19,10 @@ WeaponData
 	"fire_mode"   									"automatic"
 	"is_semi_auto"									"1"
 
+
+    "OnWeaponActivate"                              "OnWeaponActivate_hemlok"
+    "OnWeaponDeactivate"                            "OnWeaponDeactivate_hemlok"
+    "OnWeaponReload"                                "OnWeaponReload_weapon_hemlok"
 	// Menu
 	"menu_category"                                 "ar"
 	"menu_anim_class"                               "medium"
@@ -267,6 +271,9 @@ WeaponData
 	"damage_near_distance"	"1000"
 	"damage_far_distance"	"2500"
 	"damage_very_far_distance"	"5000"
+	
+                     
+    	"smart_reload_overload_ammo_required"           "6"
 	Mods
 	{
 		gold

@@ -86,6 +86,7 @@ global function WeaponHasCosmetics
 global function ServerCallback_SetWeaponPreviewState
 global function GetAmmoColorByType
 global function DisplayCenterDotRui
+global function ServerToClient_Activate_Smart_Reload
 #endif
 
 global function GetRadiusDamageDataFromProjectile
@@ -168,6 +169,31 @@ global function CodeCallback_OnPlayerAddedWeaponMod
 global function CodeCallback_OnPlayerRemovedWeaponMod
 
 global function IsABaseGrenade
+global const string SMART_RELOAD_HOPUP = "hopup_smart_reload"
+global const string LMG_FAST_RELOAD_MOD = "fast_reload_mod"
+global const string LMG_OVERLOADED_AMMO_MOD = "overloaded_ammo"
+global const string END_SMART_RELOAD = "end_smart_reload_functionality"
+
+const vector LOWAMMO_UI_COLOR = <0, 255, 0> / 255.0
+const vector OVERLOADAMMO_UI_COLOR = <0, 200, 200> / 255.0
+const vector OUTOFAMMO_UI_COLOR = <255, 65, 65> / 255.0
+const vector NORMALAMMO_UI_COLOR = <0, 0, 0>
+
+global const string OVERLOAD_AMMO_SETTING = "smart_reload_overload_ammo_required"
+global const string LOW_AMMO_FAC_SETTING = "low_ammo_fraction"
+
+global struct SmartReloadSettings
+{
+	int OverloadedAmmo
+	float LowAmmoFrac
+}
+
+const int MIN_AMMO_REQUIRED = 0
+const int MAX_AMMO_REQUIRED = 11
+
+global function OnWeaponActivate_Smart_Reload
+global function OnWeaponDeactivate_Smart_Reload
+global function OnWeaponReload_Smart_Reload
 
 global const bool PROJECTILE_PREDICTED = true
 global const bool PROJECTILE_NOT_PREDICTED = false
@@ -330,12 +356,19 @@ void function WeaponUtility_Init()
 	RegisterSignal( "OnKnifeStick" )
 	RegisterSignal( "EMP_FX" )
 	RegisterSignal( "ArcStunned" )
+	RegisterSignal( "CleanupPlayerPermanents" )
 	RegisterSignal( "PlayerChangedClass" )
 	RegisterSignal( "OnSustainedDischargeEnd" )
 	RegisterSignal( "EnergyWeapon_ChargeStart" )
 	RegisterSignal( "EnergyWeapon_ChargeReleased" )
 	RegisterSignal( "WeaponSignal_EnemyKilled" )
-
+                      
+	RegisterSignal( "GoldMagPerkEnd" )
+       
+       
+                     
+	RegisterSignal ( END_SMART_RELOAD )
+	Remote_RegisterClientFunction( "ServerToClient_Activate_Smart_Reload", "entity" , "int", 0, 64, "float", 0.0, 1.0, 32 )
 	PrecacheParticleSystem( EMP_GRENADE_BEAM_EFFECT )
 	PrecacheParticleSystem( FX_EMP_BODY_TITAN )
 	PrecacheParticleSystem( FX_EMP_BODY_HUMAN )
@@ -360,6 +393,9 @@ void function WeaponUtility_Init()
 		//AddCallback_OnPlayerKilled( OnPlayerKilled )
 		//AddCallback_OnPlayerRespawned( WeaponAllowLogic_OnPlayerRespawed )
 		//AddCallback_OnPlayerInventoryChanged( WeaponAllowLogic_OnPlayerInventoryChanged )
+		
+		//Loot_AddCallback_OnWeaponAttachmentChanged( OnWeaponAttachmentChanged_CheckForGoldMag )
+		Loot_AddCallback_OnWeaponAttachmentChanged( OnWeaponAttachmentChanged_CheckForSmartReload )
 
 		file.activeThermiteBurnsManagedEnts = CreateScriptManagedEntArray()
 
@@ -5559,6 +5595,27 @@ CrosshairTargetData function GetCrosshairTargetDataAngles( entity player, float 
 	return data
 }
 
+//Boosted Loader Start
+void function OnWeaponActivate_Smart_Reload( entity weapon, SmartReloadSettings settings )
+{
+	if ( !IsValid( weapon ) )
+		return
+
+	entity player = weapon.GetWeaponOwner()
+
+	if ( IsValid( player ) )
+	{
+		#if CLIENT
+		int slot = GetSlotForWeapon( player, weapon )
+		if ( slot >= 0 )
+			weapon.w.activeOptic = SURVIVAL_GetWeaponAttachmentForPoint( player, slot, "sight" )
+		else
+			weapon.w.activeOptic = ""
+		#endif
+		ApplySmartReloadFunctionality ( player, weapon, settings )
+	}
+}
+
 void function Weapon_AddSingleCharge( entity weapon )
 {
 	int ammoReq = weapon.GetAmmoPerShot()
@@ -5625,6 +5682,300 @@ bool function ShouldShowADSScopeView( entity weapon )
 		return false
 
 	return true
+}
+
+void function ApplySmartReloadFunctionality_ClientThink ( entity player, entity weapon, SmartReloadSettings settings )
+{
+	#if(CLIENT)
+		AssertIsNewThread()
+		weapon.EndSignal( "OnDestroy" )
+		weapon.EndSignal( END_SMART_RELOAD )
+
+		if ( !IsValid( player ) || !IsLocalViewPlayer( player ) )
+			return
+		player.EndSignal( "OnDeath" )
+
+		vector LowAmmoColor = SrgbToLinear( LOWAMMO_UI_COLOR )
+		vector NormalAmmoColor = SrgbToLinear( NORMALAMMO_UI_COLOR )
+		vector OverloadAmmoColor = SrgbToLinear( OVERLOADAMMO_UI_COLOR )
+		vector OutofAmmoColor = SrgbToLinear( OUTOFAMMO_UI_COLOR )
+
+		int clipCount
+		int maxClipCount
+		int overloadClipCount
+		int MaxAmmoRequiredCount
+		float clipCountFrac = 1.0
+		float offset = 0.05
+		var rui = ClWeaponStatus_GetWeaponHudRui( player )
+		var reloadRui = GetAmmoStatusHintRui()
+		var crosshairRui = CreateCockpitPostFXRui( $"ui/ammo_status_hint.rpak", HUD_Z_BASE )
+		var chargeBarRui = CreateCockpitPostFXRui( $"ui/crosshair_reload_hopup_bar.rpak" )
+
+		OnThreadEnd(
+			function() : ( player, weapon, rui, reloadRui, crosshairRui, chargeBarRui )
+			{
+				RuiDestroy( crosshairRui )
+				RuiDestroy( chargeBarRui )
+				RuiSetBool( reloadRui, "showHopupReloadIcon", false )
+			}
+		)
+
+		while ( true )
+		{
+			clipCount = weapon.GetWeaponPrimaryClipCount()
+			maxClipCount = weapon.GetWeaponPrimaryClipCountMax()
+			overloadClipCount = maxClipCount - settings.OverloadedAmmo
+			MaxAmmoRequiredCount = int( maxClipCount * settings.LowAmmoFrac)
+			clipCountFrac = float( clipCount) / float( maxClipCount )
+
+			if ( weapon.HasMod( LMG_FAST_RELOAD_MOD ) && weapon.IsReloading() )
+			{
+				RuiSetFloat3( chargeBarRui, "bracketColor", NormalAmmoColor )
+				RuiSetBool( crosshairRui, "showFastReloadText", true )
+				RuiSetBool( crosshairRui, "showHopupReloadBG", true )
+				RuiSetBool( reloadRui, "showHopupReloadIcon", false )
+			}
+			else if ( weapon.HasMod( SMART_RELOAD_HOPUP ) && weapon.HasMod( LMG_OVERLOADED_AMMO_MOD ) && clipCount > overloadClipCount )
+			{
+				RuiSetFloat3( rui, "ammoGlowColor", OverloadAmmoColor )
+				RuiSetFloat3( chargeBarRui, "bracketColor", OverloadAmmoColor )
+				RuiSetBool( crosshairRui, "showFastReloadText", false )
+				RuiSetBool( crosshairRui, "showHopupReloadBG", false )
+				RuiSetBool( reloadRui, "showHopupReloadIcon", false )
+				RuiSetBool( chargeBarRui, "showExtraAmmo", true )
+			}
+			else if ( weapon.HasMod( SMART_RELOAD_HOPUP ) && clipCount > MIN_AMMO_REQUIRED && clipCount <= MaxAmmoRequiredCount )
+			{
+				RuiSetFloat3( rui, "ammoGlowColor", LowAmmoColor )
+				RuiSetFloat3( chargeBarRui, "bracketColor", LowAmmoColor )
+				RuiSetBool( reloadRui, "showHopupReloadIcon", true )
+				RuiSetBool( crosshairRui, "showFastReloadText", false )
+				RuiSetBool( crosshairRui, "showHopupReloadBG", false )
+			}
+			else if ( weapon.HasMod( SMART_RELOAD_HOPUP ) && clipCount == 0 )
+			{
+				RuiSetFloat3( chargeBarRui, "bracketColor", OutofAmmoColor )
+				RuiSetBool( crosshairRui, "showFastReloadText", false )
+				RuiSetBool( reloadRui, "showHopupReloadIcon", false )
+				RuiSetBool( crosshairRui, "showHopupReloadBG", false )
+				RuiSetBool( chargeBarRui, "showExtraAmmo", false )
+			}
+			else
+			{
+				RuiSetFloat3( chargeBarRui, "bracketColor", NormalAmmoColor )
+				RuiSetFloat3( rui, "ammoGlowColor", NormalAmmoColor )
+				RuiSetBool( crosshairRui, "showFastReloadText", false )
+				RuiSetBool( reloadRui, "showHopupReloadIcon", false )
+				RuiSetBool( crosshairRui, "showHopupReloadBG", false )
+				RuiSetBool( chargeBarRui, "showExtraAmmo", false )
+			}
+
+			if ( weapon.HasMod( SMART_RELOAD_HOPUP ) )
+			{
+				RuiSetBool( chargeBarRui, "isActive", true )
+				RuiSetFloat( chargeBarRui, "energizeFrac", clipCountFrac )
+				RuiSetFloat( chargeBarRui, "adsFrac", player.GetZoomFrac() )
+
+				switch ( weapon.w.activeOptic )
+				{
+					case "":	//
+					offset = 0.05
+					break
+					case "optic_cq_hcog_classic":
+						offset = 0.03
+						break
+					case "optic_cq_holosight":
+						offset = 0.055
+						break
+					case "optic_cq_hcog_bruiser":
+						offset = 0.05
+						break
+					case "optic_cq_holosight_variable":
+						offset = 0.05
+						break
+					case "optic_ranged_hcog":
+						offset = 0.1
+						break
+					case "optic_ranged_aog_variable":
+						offset = 0.1
+						break
+				}
+				RuiSetFloat( chargeBarRui, "offset", offset )
+			}
+			WaitFrame()
+		}
+	#endif
+}
+
+void function ApplySmartReloadFunctionality( entity player, entity weapon, SmartReloadSettings settings )
+{
+#if SERVER
+	thread ApplySmartReloadFunctionality_ServerThink ( player, weapon, settings )
+#endif
+#if CLIENT
+	thread ApplySmartReloadFunctionality_ClientThink ( player, weapon, settings )
+#endif
+}
+
+void function OnWeaponReload_Smart_Reload( entity weapon, int milestoneIndex )
+{
+	LootData weaponLootData = SURVIVAL_Loot_GetLootDataByRef( weapon.GetWeaponClassName() )
+
+	SmartReloadSettings settings
+	settings.OverloadedAmmo				 = GetWeaponInfoFileKeyField_GlobalInt( weaponLootData.baseWeapon, OVERLOAD_AMMO_SETTING )
+
+	entity player = weapon.GetWeaponOwner()
+	int clipCount = weapon.GetWeaponPrimaryClipCount()
+	int maxClipCount = weapon.GetWeaponPrimaryClipCountMax ()
+	int maxClipWithoutOverloadedAmmo = maxClipCount - settings.OverloadedAmmo
+	int overFlowAmmo = clipCount - maxClipWithoutOverloadedAmmo
+	string ammoType = AmmoType_GetRefFromIndex( weapon.GetWeaponAmmoPoolType() )
+	int ammoPoolType = eAmmoPoolType[ ammoType ]
+
+
+	if ( !weapon.HasMod( SMART_RELOAD_HOPUP ) )
+	{
+		weapon.RemoveMod( LMG_OVERLOADED_AMMO_MOD )
+		weapon.RemoveMod( LMG_FAST_RELOAD_MOD )
+	}
+
+	if ( weapon.HasMod( LMG_FAST_RELOAD_MOD ) )
+	{
+		#if CLIENT
+		if ( !IsValid( player ) || !IsLocalViewPlayer( player ) )
+			return
+
+		EmitSoundOnEntity( player, "UI_InGame_BoostedLoader_Reload" )
+		#endif
+	}
+	else
+	{
+		#if SERVER
+		if( overFlowAmmo > 0 && weapon.HasMod( LMG_OVERLOADED_AMMO_MOD ) && !GetInfiniteAmmo( weapon ))
+		{
+			int amountAdded = SURVIVAL_AddToPlayerInventory( player, ammoType, overFlowAmmo, false )
+			LootData weaponData 	= SURVIVAL_GetLootDataFromWeapon( weapon )
+			bool isCrateWeap 		= weaponData.baseMods.contains( WEAPON_LOCKEDSET_MOD_CRATE )
+
+			//If inventory is full, drop excess. Otherwise put it in inventory
+			if ( amountAdded == 0 && !isCrateWeap)
+			{
+				entity ammoDrop = SpawnGenericLoot( ammoType, GetThrowOrigin( player ), < -1, -1, -1 >, overFlowAmmo )
+				SetItemSpawnSource( ammoDrop, eSpawnSource.PLAYER_DROP, player )
+
+				vector vel = AnglesToForward( player.EyeAngles() ) * 100
+				FakePhysicsThrow_Retail( player, ammoDrop, vel, true )
+			}
+			else
+			{
+				int ammoPoolCount
+
+				if (isCrateWeap)
+				{
+					//AddRoundsToWeapon( player, weapon,  overFlowAmmo )
+					ammoPoolCount = weapon.GetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE )
+					weapon.SetWeaponPrimaryAmmoCount( AMMOSOURCE_STOCKPILE, ammoPoolCount + overFlowAmmo )
+				}
+				else
+				{
+					ammoPoolCount = player.AmmoPool_GetCount( ammoPoolType )
+					if ( ammoPoolCount < 2000 ) //Fix for a possible dev crash.
+					{
+						player.AmmoPool_SetCount( ammoPoolType, ammoPoolCount + overFlowAmmo )
+					}
+				}
+			}
+		}
+		#endif
+
+		weapon.RemoveMod( LMG_OVERLOADED_AMMO_MOD )
+	}
+}
+
+#if SERVER
+void function OnWeaponAttachmentChanged_CheckForSmartReload( entity player, entity weapon, string modToAdd, string modToRemove )
+{
+	if ( IsValid( player ) && IsValid( weapon ) )
+	{
+			if(weapon.HasMod(SMART_RELOAD_HOPUP))
+			{
+				LootData weaponLootData = SURVIVAL_Loot_GetLootDataByRef(weapon.GetWeaponClassName())
+				SmartReloadSettings settings
+
+				settings.OverloadedAmmo = GetWeaponInfoFileKeyField_GlobalInt( weaponLootData.baseWeapon , OVERLOAD_AMMO_SETTING )
+				settings.LowAmmoFrac = GetWeaponInfoFileKeyField_GlobalFloat( weaponLootData.baseWeapon, LOW_AMMO_FAC_SETTING )
+
+				weapon.Signal( END_SMART_RELOAD )
+
+				OnWeaponActivate_Smart_Reload( weapon, settings )
+				Remote_CallFunction_NonReplay( player, "ServerToClient_Activate_Smart_Reload", weapon, settings.OverloadedAmmo, settings.LowAmmoFrac )
+			}
+		}
+}
+
+#endif
+#if CLIENT
+void function ServerToClient_Activate_Smart_Reload( entity weapon, int overloadAmmo, float lowAmmoFrac )
+{
+	SmartReloadSettings settings
+	settings.OverloadedAmmo = overloadAmmo
+	settings.LowAmmoFrac = lowAmmoFrac
+
+	OnWeaponActivate_Smart_Reload( weapon, settings )
+}
+#endif // CLIENT
+
+
+void function OnWeaponDeactivate_Smart_Reload ( entity weapon )
+{
+	weapon.Signal ( END_SMART_RELOAD )
+	entity player = weapon.GetWeaponOwner()
+
+	if( !IsValid( weapon ) || !IsValid( player) )
+		return
+
+	#if SERVER
+		if ( IsDisconnected( player ) )
+			return
+	#endif
+
+	#if SERVER
+	if ( weapon.HasMod( SMART_RELOAD_HOPUP ) && !weapon.HasMod( LMG_FAST_RELOAD_MOD ) && !weapon.HasMod( LMG_OVERLOADED_AMMO_MOD ))
+	{
+		weapon.RemoveMod( LMG_OVERLOADED_AMMO_MOD )
+		Remote_CallFunction_Replay( player, "ServerCallback_UpdateHudWeaponData", weapon )
+	}
+	#endif
+}
+
+void function ApplySmartReloadFunctionality_ServerThink ( entity player, entity weapon, SmartReloadSettings settings )
+{
+	#if SERVER
+		AssertIsNewThread()
+		weapon.EndSignal( "OnDestroy" )
+		weapon.EndSignal( END_SMART_RELOAD )
+		player.EndSignal( "OnDeath" )
+
+		while ( true )
+		{
+			int clipCount = weapon.GetWeaponPrimaryClipCount()
+			int maxClipCount = weapon.GetWeaponPrimaryClipCountMax ()
+			int MaxAmmoRequiredCount = int( maxClipCount * settings.LowAmmoFrac)
+			int overloadClipCount = maxClipCount - settings.OverloadedAmmo
+
+			if ( weapon.HasMod( SMART_RELOAD_HOPUP ) && clipCount > MIN_AMMO_REQUIRED && clipCount <= MaxAmmoRequiredCount )
+			{
+				weapon.AddMod( LMG_FAST_RELOAD_MOD )
+				weapon.AddMod( LMG_OVERLOADED_AMMO_MOD )
+			}
+			else if ( weapon.HasMod( SMART_RELOAD_HOPUP ) && weapon.HasMod( LMG_OVERLOADED_AMMO_MOD ) && clipCount <= overloadClipCount )
+				weapon.RemoveMod( LMG_OVERLOADED_AMMO_MOD )
+			else
+				weapon.RemoveMod( LMG_FAST_RELOAD_MOD )
+
+			WaitFrame()
+		}
+	#endif
 }
 
 bool function OnWeaponTryEnergize( entity weapon, entity player )
@@ -5712,5 +6063,12 @@ vector function GetAmmoColorByType( string ammoType )
 	int colorID  = ammoColors[ammoType]
 	vector color = GetKeyColor( colorID ) / 255.0
 	return color
+}
+#endif
+
+#if SERVER || CLIENT
+bool function GetInfiniteAmmo( entity weapon )
+{
+	return true
 }
 #endif
