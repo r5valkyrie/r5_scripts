@@ -22,6 +22,7 @@ global function NotifyReloadAttemptButNoReserveAmmo
 
 global function UpdateWeaponStatusOnBindingChange
 
+global function GetWeaponRui
 global function GetTacticalRui
 global function GetUltimateRui
 

@@ -775,7 +775,7 @@ void function CodeCallback_ZiplineMount( entity player, entity zipline )
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "pilot_vine_attach_1p", "pilot_vine_attach_3p", player, player )
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "pilot_vine_swing_1p", "pilot_vine_swing_3p", player, player )
 	}
-	else if ( IsValid( zipline ) && zipline.IsZipline() && zipline.Zipline_IsCurvedZipline() )
+	else if ( IsValid( zipline ) && zipline.IsZipline() )
 	{
 
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "Player_Ziprail_Attach", "3p_Ziprail_Attach", player, player )

@@ -54,6 +54,9 @@ global function Minimap_AddIconAtPosition
 global function MinimapDeathFieldCreated
 global function FS_Scenarios_MinimapDeathFieldCreated
 global function AddMinimapObject
+global function GetMinimapFrameRui
+global function GetMinimapYouRui
+global function GetUnitFramesRui
 
 global function HACK_TrackPlayerPositionOnScript
 global function UpdateEquipmentSlot
@@ -396,6 +399,20 @@ void function ClMinimap_Init()
 	file.FLOWSTATE_ENEMIES_IN_MINIMAP_ENABLED = GetCurrentPlaylistVarBool( "flowstate_see_enemies_in_minimap", false )
 }
 
+var function GetMinimapFrameRui()
+{
+	return file.minimap_frame
+}
+
+var function GetMinimapYouRui()
+{
+	return file.minimap_you
+}
+
+array<var> function GetUnitFramesRui()
+{
+	return file.fullmap_unitframesRui
+}
 
 void function OnSpectateChanged( entity spectatingPlayer, entity spectatorTarget )
 {

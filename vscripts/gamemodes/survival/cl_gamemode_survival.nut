@@ -119,6 +119,7 @@ global function ServerCallback_Scenarios_MatchEndAnnouncement
 global function FS_ForceCompass
 global function FS_DestroyCompass
 global function AddCallback_OnLocalPlayerUnitframeInit
+global function GetDpadMenuRui
 
 global struct NextCircleDisplayCustomData
 {
@@ -4748,6 +4749,12 @@ var function GetCompassRui()
 {
 	return file.compassRui
 }
+
+var function GetDpadMenuRui()
+{
+	return file.dpadMenuRui
+}
+
 
 
 void function AddCallback_ShouldRunCharacterSelection( bool functionref() func )

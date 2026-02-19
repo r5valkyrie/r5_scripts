@@ -16,6 +16,7 @@ global function Freefall_SetDisplaySeaHeightForLevel
 global function Freefall_SetPlaneHeight
 global function CleanupFriendlyEnemySkydiveTrailFXForPlayer
 global function StartFriendlyEnemySkydiveTrailFXForPlayer
+global function GetSeaHeightForDisplay
 #endif //
 
 #if(false)
@@ -60,6 +61,8 @@ global function GetSkydiveSmokeColorForTeam
 
 
 #if SERVER
+	global function Survival_AddCallback_PlayerFreefallBegin
+	global function Survival_AddCallback_PlayerFreefallEnd
 	global function FillSkyWithClouds
 	global function PlayerSkyDive
 	// global function GetSkydiveSmokeColorForTeam
@@ -152,6 +155,11 @@ global function GetSkydiveSmokeColorForTeam
 
 	const float SKYDIVE_THIRD_PERSON_START_DIST   = -50.0
 	const float SKYDIVE_THIRD_PERSON_START_HEIGHT = 30.0
+	
+	const JUMPJET_VALK_SKYDIVE_FRIENDLY = $"P_team_jet_hover_HLD"
+	const JUMPJET_VALK_SKYDIVE_ENEMY = $"P_team_jet_hover_HLD"
+
+	const float SKYDIVE_ENEMY_DETECT_RANGE 		= 2500.0
 
 #if SERVER
 	struct SkydivePlayerData
@@ -178,6 +186,8 @@ global function GetSkydiveSmokeColorForTeam
 		array<entity> skydiveBoundaryVolumes
 		array<string> jumpJetAttachments = [ "vent_left", "vent_right" ]
 		bool freefall_enabled = false
+		array< void functionref(entity) > Callbacks_OnPlayerFreefallBegin
+		array< void functionref(entity) > Callbacks_OnPlayerFreefallEnd
 	} file
 #endif //SERVER
 
@@ -219,6 +229,7 @@ global function GetSkydiveSmokeColorForTeam
 		array<string> contrailAttachments = ["l_hand", "r_hand"]//[ "vent_left", "vent_right" ]
 		table< EHI, array< int > > EHIToFriendlyJumpJetFXHandlesTable
 		table< EHI, array< int > > EHIToEnemyJumpJetFXHandlesTable
+		bool nearbySquadsMinimapEnabled
 	} file
 #endif //CLIENT
 
@@ -233,6 +244,8 @@ void function SurvivalFreefall_Init()
 		PrecacheParticleSystem( SKYDIVE_SMOKE_COLOR_FX )
 		PrecacheParticleSystem( JUMPJET_FRIENDLY_SKYDIVE )
 		PrecacheParticleSystem( JUMPJET_ENEMY_SKYDIVE )
+		PrecacheParticleSystem( JUMPJET_VALK_SKYDIVE_FRIENDLY )
+		PrecacheParticleSystem( JUMPJET_VALK_SKYDIVE_ENEMY )
 		PrecacheParticleSystem( JUMPJET_LAND_FX )
 		PrecacheParticleSystem( $"P_skydive_jumpjet_team_rank_AP" )
 		PrecacheParticleSystem( $"P_skydive_jumpjet_team_rank" )
@@ -269,6 +282,8 @@ void function SurvivalFreefall_Init()
 
 		PrecacheParticleSystem( CONTRAIL_FX )
 		AddCreateCallback( "player", Freefall_OnPlayerCreated  )
+
+		file.nearbySquadsMinimapEnabled = GetCurrentPlaylistVarBool( "freefall_nearby_squads_minimap_enabled", true )
 	#endif
 }
 
@@ -307,6 +322,17 @@ SkyDiveTrailPackage function GetSkyDiveTrailPackageForPlayerWithOverrides( entit
 
 #if SERVER
 
+void function Survival_AddCallback_PlayerFreefallBegin( void functionref(entity) callbackFunc )
+{
+	Assert( !file.Callbacks_OnPlayerFreefallBegin.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_PlayerFreefallBegin" )
+	file.Callbacks_OnPlayerFreefallBegin.append( callbackFunc )
+}
+
+void function Survival_AddCallback_PlayerFreefallEnd( void functionref(entity) callbackFunc )
+{
+	Assert( !file.Callbacks_OnPlayerFreefallEnd.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnPlayerFreefallEnd" )
+	file.Callbacks_OnPlayerFreefallEnd.append( callbackFunc )
+}
 void function AddSkydiveBoundaryVolume( entity ent )
 {
 	file.skydiveBoundaryVolumes.append( ent )
@@ -1741,12 +1767,26 @@ void function PlayerFreefallActiveChanged( entity player, bool oldValue, bool is
 	}
 
 	// Crosshair dot while falling
-	if ( isFreefallActive && (file.skydiveRui == null) )
+	if ( isFreefallActive )
 	{
-		file.skydiveRui = CreatePermanentCockpitRui( $"ui/skydive_ui.rpak" )
+		ItemFlavor flavor = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() );
+		bool isValk = ItemFlavor_GetAsset( flavor ) == $"settings/itemflav/character/valkyrie.rpak"
+		//Get dynamic sky dive Rui from character asset
+		asset skyDiveRuiAsset
+		if( isValk )
+			skyDiveRuiAsset = $"ui/skydive_valk_ui.rpak"
+		else
+			skyDiveRuiAsset = $"ui/skydive_ui.rpak"
+		
+		file.skydiveRui = CreatePermanentCockpitRui( skyDiveRuiAsset )
+
 		RuiTrackFloat3( file.skydiveRui, "playerPos", player, RUI_TRACK_ABSORIGIN_FOLLOW )
 		RuiSetFloat( file.skydiveRui, "minSpeed", GetDisplaySpeed( MOVEMENT_SPEED_MIN * 0.95 ) )
 		RuiSetFloat( file.skydiveRui, "maxSpeed", GetDisplaySpeed( MOVEMENT_SPEED_MAX ) )
+
+		if( isValk )
+			RuiSetBool( file.skydiveRui, "shouldAnimateAltitudeIn", ! DestroyValkLaunchRui() )
+
 		if ( PlayerHasPassive( player, ePassives.PAS_MIRAGE ) )
 			RuiSetBool( file.skydiveRui, "decoysAvailable", true )
 
@@ -1759,6 +1799,9 @@ void function PlayerFreefallActiveChanged( entity player, bool oldValue, bool is
 		file.skydiveRui = null
 	}
 
+	// there is almost certainly some lingering cleanup work required around Valk's HUD UI
+	UpdateValkFlightRui( player, isFreefallActive ) //valk special HUD
+
 	// Screen effects while falling
 	if ( isFreefallActive )
 	{
@@ -1767,7 +1810,11 @@ void function PlayerFreefallActiveChanged( entity player, bool oldValue, bool is
 		thread ScreenEffectsWhileFalling( player )
 		thread UpdateFlightDisplay( player )
 		thread StopFollowExtendedUse( player )
-		if ( player.GetTrackEntityDistanceMode() == "scriptOffsetClientOnly" )
+		
+		if ( GetNV_FreefallIsFromPlane( player ) && file.nearbySquadsMinimapEnabled )
+			thread Freefall_DisplayEnemiesOnMinimap_Thread( player )
+		
+		if ( player.GetTrackEntityDistanceMode() == "scriptOffsetClientOnly" && !player.p.inSkydiveAfterUlt  )
 		{
 			thread LerpCameraDistOverTime( player, SKYDIVE_THIRD_PERSON_NORMAL_DIST, SKYDIVE_VIEW_LERP_DURATION_START, Tween_QuadEaseInOut )
 			thread LerpCameraHeightOverTime( player, SKYDIVE_THIRD_PERSON_NORMAL_HEIGHT, SKYDIVE_VIEW_LERP_DURATION_START * 0.75, Tween_ExpoEaseOut )
@@ -1775,7 +1822,6 @@ void function PlayerFreefallActiveChanged( entity player, bool oldValue, bool is
 	}
 	else
 	{
-		RevertSkydiveStartingConvars()
 		Signal( player, "FreefallEnded" )
 	}
 }
@@ -1917,8 +1963,11 @@ void function UpdateFlightDisplay( entity player )
 			smoothedGroundHeight = min( smoothedGroundHeight + 2500.0 * dt, groundHeight )
 		if ( groundHeight < smoothedGroundHeight )
 			smoothedGroundHeight = max( smoothedGroundHeight - 2500.0 * dt, groundHeight )
-		RuiSetFloat( file.skydiveRui, "groundHeight", smoothedGroundHeight )
-		RuiSetFloat( file.skydiveRui, "seaHeight", GetSeaHeightForDisplay() )
+		if ( file.skydiveRui != null )
+		{
+			RuiSetFloat( file.skydiveRui, "groundHeight", smoothedGroundHeight )
+			RuiSetFloat( file.skydiveRui, "seaHeight", GetSeaHeightForDisplay() )
+		}
 
 		followMode = IsValid( player.GetParent() )
 		if ( followMode )
@@ -1938,7 +1987,11 @@ void function UpdateFlightDisplay( entity player )
 		if ( followMode )
 			smoothedSpeed = GetAverageValueInArray( prevSpeeds )
 
-		RuiSetFloat( file.skydiveRui, "speed", GetDisplaySpeed( smoothedSpeed ) )
+		if ( file.skydiveRui != null )
+		{
+			RuiSetFloat( file.skydiveRui, "speed", GetDisplaySpeed( smoothedSpeed ) )
+			RuiSetFloat3( file.skydiveRui, "cameraAngle", player.CameraAngles() )
+		}
 
 		lastFrameTime = frameTime
 		lastPos = player.GetOrigin()
@@ -2061,6 +2114,73 @@ void function StopFollowExtendedUse( entity player )
 	//waitthread ExtendedUse( player, player, settings )
 	*/
 }
+
+void function Freefall_DisplayEnemiesOnMinimap_Thread( entity skydiver )
+{
+	if ( !IsValid( skydiver ) )
+		return
+
+	const float ENEMY_DISPLAY_TIME = 0.5
+	const float ENEMY_FADE_TIME = 0.7
+	const float ENEMY_REPING_TIME = 1.5
+
+	EndSignal( skydiver, "OnDeath" )
+	EndSignal( skydiver, "FreefallEnded" )
+
+	int skydiverTeam = skydiver.GetTeam()
+
+	array<entity> players
+
+	while ( true )
+	{
+		players = GetPlayerArrayEx( "any", TEAM_ANY, TEAM_ANY, skydiver.GetOrigin(), ( SKYDIVE_ENEMY_DETECT_RANGE * 2.0 ) )
+
+		float timeToStartFade = Time() + ENEMY_DISPLAY_TIME
+		float timeToEndFade = timeToStartFade + ENEMY_FADE_TIME
+
+		foreach( entity player in players )
+		{
+			if ( !player.DoesShareRealms( skydiver ) || player == skydiver || player.IsObserver() )
+				continue
+
+			int playerTeam = player.GetTeam()
+
+			if ( IsFriendlyTeam( skydiverTeam, playerTeam ) )
+				continue
+
+			if ( playerTeam == 0 || playerTeam == 1 )
+				continue
+
+			// Full map
+			var fRui = FullMap_AddEnemyLocation( player )
+			var mRui = Minimap_AddEnemyToMinimap( player )
+
+			thread Freefall_DestroyEnemyFullmapDisplayAfterDelay( fRui, ENEMY_REPING_TIME - 0.25 )
+			thread Freefall_DestroyEnemyMinimapDisplayAfterDelay( mRui, ENEMY_REPING_TIME - 0.25 )
+
+			RuiSetGameTime( mRui, "fadeStartTime", timeToStartFade )
+			RuiSetGameTime( mRui, "fadeEndTime", timeToEndFade )
+		}
+
+		wait ENEMY_REPING_TIME
+	}
+}
+
+void function Freefall_DestroyEnemyMinimapDisplayAfterDelay( var ruiToDestroy, float delay )
+{
+	wait delay
+
+	Minimap_CommonCleanup( ruiToDestroy )
+}
+
+void function Freefall_DestroyEnemyFullmapDisplayAfterDelay( var ruiToDestroy, float delay )
+{
+	wait delay
+
+	Fullmap_RemoveRui( ruiToDestroy )
+	RuiDestroy( ruiToDestroy )
+}
+
 
 #endif
 

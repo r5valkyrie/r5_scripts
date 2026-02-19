@@ -67,13 +67,13 @@ void function MpAbilityValkJets_Init()
 	RegisterNetworkedVariable( "valkTrackingActive", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
 	#if SERVER
-		//Survival_AddCallback_PlayerFreefallBegin( ValkUlt_FreefallBegin )
-		//Survival_AddCallback_PlayerFreefallEnd( ValkUlt_FreefallEnd )
+		Survival_AddCallback_PlayerFreefallBegin( ValkUlt_FreefallBegin )
+		Survival_AddCallback_PlayerFreefallEnd( ValkUlt_FreefallEnd )
 	#endif
 	#if CLIENT
 		//RegisterNetVarBoolChangeCallback( "valkTrackingActive", OnValkTrackingChanged )
-		//AddCallback_CreatePlayerPassiveRui( Valk_CreateJetPackRui )
-		//AddCallback_DestroyPlayerPassiveRui( Valk_DestroyJetPackRui )
+		AddCallback_CreatePlayerPassiveRui( Valk_CreateJetPackRui )
+		AddCallback_DestroyPlayerPassiveRui( Valk_DestroyJetPackRui )
 		file.colorCorrection = ColorCorrection_Register( "materials/correction/launch_hud.raw_hdr" )
 	#endif
 
@@ -361,19 +361,22 @@ void function _ValkFlightReveal( entity victim )
                                
 
 
-	//var fRui = FullMap_AddEnemyLocation( victim )
-	//var mRui = Minimap_AddEnemyToMinimap( victim )
+	var fRui = FullMap_AddEnemyLocation( victim )
+	var mRui = Minimap_AddEnemyToMinimap( victim )
 
 	OnThreadEnd (
-		function() : ( victim, rui )
+		function() : ( victim, rui, fRui, mRui )
 		{
 			RuiDestroy( rui )
+			Fullmap_RemoveRui( fRui )
+			RuiDestroy( fRui )
+			Minimap_CommonCleanup( mRui )
 		}
 	)
                                   
 		while( true )
 		{
-			bool scanBlocked = true//FerroWall_BlockScan( player.EyePosition(), victim.GetWorldSpaceCenter() )
+			bool scanBlocked = false//FerroWall_BlockScan( player.EyePosition(), victim.GetWorldSpaceCenter() )
 			RuiSetBool( rui, "isVisible", !scanBlocked )
 			WaitFrame()
 		}
@@ -759,4 +762,3 @@ void function DestroyValkJumpJetEffects( entity valk )
 	file.valkToJumpJetFXs[valk].clear()
 }
 #endif // SERVER
- 
