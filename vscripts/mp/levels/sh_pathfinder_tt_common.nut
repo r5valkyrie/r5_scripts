@@ -703,7 +703,7 @@ const int NUM_BOTS_TO_TEST = 30//55
 const float TEST_DURATION_RAPID_RING_ENTRY = 30
 void function DEV_TestRapidRingEntryAndDeath()
 {
-	#if DEVELOPER
+	/*#if DEVELOPER
 	ServerCommand( "kick_all_bots" )
 	int startNumPlayers = GetPlayerArray().len()
 	int numBots = NUM_BOTS_TO_TEST - startNumPlayers
@@ -779,7 +779,7 @@ void function DEV_TestRapidRingEntryAndDeath()
 		numBotsRemaining = devTestBots.len()
 		WaitFrame()
 	}
-	#endif
+	#endif*/
 }
 
 void function DEV_FinishOffBotToKill( entity botToKill )

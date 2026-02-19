@@ -298,7 +298,9 @@ struct
 } file
 
 global int HOLO_PILOT_TRAIL_FX
-
+#if DEVELOPER
+	bool DEBUG_DRAW_PLANT_STICKY = false
+#endif
 
 void function WeaponUtility_Init()
 {
@@ -1407,8 +1409,8 @@ bool function PlantStickyEntity_Retail( entity ent, DeployableCollisionParams cp
 		#if DEVELOPER
 		if ( DEBUG_DRAW_PLANT_STICKY )
 		{
-			DebugDrawSphere( cp.pos, 5, COLOR_YELLOW, false, 60 )
-			DebugDrawArrow( cp.pos, cp.pos + cp.normal*20, 10, COLOR_YELLOW, false, 60 )
+			DebugDrawSphere( cp.pos, 5, 204, 255, 229, false, 60 )
+			DebugDrawArrow( cp.pos, cp.pos + cp.normal*20, 10, 204, 255, 229, false, 60 )
 		}
 		#endif
 		vector traceDir    = cp.normal * -1
@@ -1439,7 +1441,7 @@ bool function PlantStickyEntity_Retail( entity ent, DeployableCollisionParams cp
 			#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
-				DebugDrawSphere( plantPosition, 3, COLOR_RED, false, 60 )
+				DebugDrawSphere( plantPosition, 3, 255, 0 ,0 , false, 60 )
 			}
 			#endif
 		}
@@ -1450,7 +1452,7 @@ bool function PlantStickyEntity_Retail( entity ent, DeployableCollisionParams cp
 			#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
-				DebugDrawSphere( plantPosition, 3, COLOR_BLUE, false, 60 )
+				DebugDrawSphere( plantPosition, 3, 0, 0, 255, false, 60 )
 			}
 			#endif
 		}

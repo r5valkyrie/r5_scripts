@@ -1418,7 +1418,7 @@ void function DEV_LootHold_ShowAll( float timeToShow = 30.0 )
 	array< entity > explosiveHolds = _ExplosiveHoldEnts_Get()
 	foreach ( entity explosiveHold in explosiveHolds )
 	{
-		DebugDrawSphere( explosiveHold.GetOrigin(), 256, COLOR_RED, true, timeToShow  )
+		DebugDrawSphere( explosiveHold.GetOrigin(), 256, 255, 0, 0, true, timeToShow  )
 
 		ExplosiveHoldData ornull data = ExplosiveHoldData_Get( explosiveHold )
 		if( data == null )
@@ -1430,7 +1430,7 @@ void function DEV_LootHold_ShowAll( float timeToShow = 30.0 )
 		{
 			foreach( vol in data.noPlaceVolumes )
 			{
-				DebugDrawCylinder( vol.GetOrigin(), < -90, 0, 0 >, EXPLOSIVEHOLD_NOPLACEVOL_RADIUS, EXPLOSIVEHOLD_NOPLACEVOL_HEIGHT, COLOR_YELLOW, true, timeToShow  )
+				DebugDrawCylinder( vol.GetOrigin(), < -90, 0, 0 >, EXPLOSIVEHOLD_NOPLACEVOL_RADIUS, EXPLOSIVEHOLD_NOPLACEVOL_HEIGHT, 255,255,0, true, timeToShow  )
 			}
 		}
 
@@ -1438,7 +1438,7 @@ void function DEV_LootHold_ShowAll( float timeToShow = 30.0 )
 		{
 			foreach( trig in data.breachTriggers )
 			{
-				DebugDrawCylinder( trig.GetOrigin(), < -90, 0, 0 >, EXPLOSIVEHOLD_BREACHTRIGGER_RADIUS, EXPLOSIVEHOLD_BREACHTRIGGER_HEIGHT, COLOR_ORANGE, true, timeToShow  )
+				DebugDrawCylinder( trig.GetOrigin(), < -90, 0, 0 >, EXPLOSIVEHOLD_BREACHTRIGGER_RADIUS, EXPLOSIVEHOLD_BREACHTRIGGER_HEIGHT, 255,128,0, true, timeToShow  )
 			}
 		}
 	}
@@ -1464,7 +1464,7 @@ void function DEV_LootHold_GotoNearest( entity player )
 
 	entity closestHold = ArrayClosest( openHolds, player.GetOrigin() )[ 0 ]
 
-	vector safeSpot = NavMesh_GetClosestPoint( closestHold.GetOrigin() + < 0, 0, 1000 > )
+	vector safeSpot = closestHold.GetOrigin()
 
 	PutPlayerInSafeSpot( player, null, null, safeSpot, safeSpot )
 }
