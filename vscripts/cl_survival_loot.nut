@@ -34,6 +34,7 @@ global function ServerToClient_UpdateItem
 
 global function ApplyEquipmentColorAndFXOverrides
 
+global typedef CustomItemPromptUpdateCB_t void functionref( entity player, var rui, LootData data, int lootContext, LootRef lootRef, bool isInMenu )
 global const string PING_SOUND_DEFAULT = "ui_mapping_item_1p"
 const float LOOT_PING_DISTANCE = 500.0
 
@@ -77,10 +78,15 @@ struct {
 	table<int, var[eLootPromptStyle._COUNT]>    lootTypePromptRui
 
 	float nextHealthAllowTime = 0
+	bool showTeammateUsefulIcon = false
 
 	#if LOOT_GROUND_VERTICAL_LINES
 		array<VerticalLineStruct> verticalLines
 	#endif // #if LOOT_GROUND_VERTICAL_LINES
+	table< entity, int > equipmentFX
+
+	bool greyTierEnabled = false
+	bool checkWeaponDisableForLootPingPrompt = false
 } file
 
 void function Cl_Survival_LootInit()
@@ -156,9 +162,13 @@ void function Cl_Survival_LootInit()
 	file.lootTypePromptRui[eLootType.MAINWEAPON][eLootPromptStyle.COMPACT] = compactWeaponPromptRui
 
 	AddCallback_OnRefreshCustomGamepadBinds( OnRefreshCustomGamepadBinds )
+	file.useAltBind = GetButtonBoundTo( "+use_alt" )
 
 	PrecacheParticleSystem( EVO_ARMOR_FX )
 	PrecacheParticleSystem( EVO_ARMOR_PICKUP_FX )
+	file.showTeammateUsefulIcon = GetCurrentPlaylistVarBool( "enable_teammate_useful_icons", true )
+	file.greyTierEnabled = GetCurrentPlaylistVarBool( "grey_tier_enabled", false )	//
+	file.checkWeaponDisableForLootPingPrompt = GetCurrentPlaylistVarBool( "weapon_disable_disables_loot_prompt", false )
 }
 
 
@@ -799,23 +809,47 @@ table<string, string> function BuildAttachmentMapForPickupPrompt( entity player,
 	return GetCompatibleAttachmentsFromInventory( player, data.ref )
 }
 
+
+table<string, CustomItemPromptUpdateCB_t> s_customItemPromptUpdateCallbacks
+void function RegisterCustomItemPromptUpdate( string lootRef, CustomItemPromptUpdateCB_t func )
+{
+	Assert( !(lootRef in s_customItemPromptUpdateCallbacks) )
+	s_customItemPromptUpdateCallbacks[lootRef] <- func
+}
+
+
 void function UpdateLootRuiWithData( entity player, var rui, LootData data, int lootContext, LootRef lootRef, bool isInMenu )
 {
 	RuiSetVisible( rui, true )
+	RuiDestroyNestedIfAlive( rui, "compatibleWeaponsHandle" )
+	var nestedCompatibleWeaponsRui = RuiCreateNested( rui, "compatibleWeaponsHandle", $"ui/loot_pickup_tag_text.rpak" )
+	RuiSetBool( rui, "teammateNeedsThis", false )
+
+	if ( file.showTeammateUsefulIcon )
+	{
+		foreach ( teammate in GetPlayerArrayOfTeam_Alive( player.GetTeam() ) )
+		{
+			if ( teammate == player )
+				continue
+
+			if ( SURVIVAL_IsLootAnUpgrade( teammate, lootRef.lootEnt, data, lootContext ) )
+			{
+				RuiSetBool( rui, "teammateNeedsThis", true )
+				break
+			}
+		}
+	}
 	RuiSetBool( rui, "isVisible", true )
 	RuiSetBool( rui, "isFocused", true )
 
 	RuiSetImage( rui, "iconImage", data.hudIcon )
 	RuiSetInt( rui, "lootTier", data.tier )
 
-	// if( data.tier > 5 )
-		// RuiSetInt( rui, "lootTier", 5 )
-
 	vector iconScale = data.lootType == eLootType.MAINWEAPON ? <2.0, 1.0, 0.0> : <1.0, 1.0, 0.0>
 	RuiSetFloat2( rui, "iconScale", iconScale )
 
 	RuiSetString( rui, "titleText", Localize( data.pickupString ).toupper() )
-	RuiSetString( rui, "subText", data.desc )
+	RuiSetString( rui, "subText", SURVIVAL_Loot_GetDesc( data, player ) )
 
 	RuiSetBool( rui, "canPing", ShouldShowButtonHints() && !isInMenu && IsPingEnabledForPlayer( player ) )
 
@@ -834,6 +868,9 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 	RuiSetBool( rui, "hasReplace", false )
 	RuiSetInt( rui, "propertyValue", -1 )
 	RuiSetInt( rui, "replacePropertyValue", -1 )
+	RuiSetInt( rui, "extraPropertyValue", -1 )
+	RuiSetInt( rui, "replaceExtraPropertyValue", -1 )
+	RuiSetString( rui, "replaceSlot", Localize("#REPLACE" ) )
 
 		if ( lootRef.lootData.lootType == eLootType.ARMOR )
 		{
@@ -860,24 +897,17 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 		if ( asMain.additionalData.lootType == eLootType.ARMOR )
 		{
 			int replacePropertyValue = int( SURVIVAL_GetPlayerShieldHealthFromArmor( player ) / float(SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, asMain.additionalData )) * 100)
-			//
 
-
-				if ( EvolvingArmor_IsEquipmentEvolvingArmor( asMain.additionalData.ref ) )
-				{
-					//
-
-						replacePropertyValue = int( SURVIVAL_GetPlayerShieldHealthFromArmor( player ) / float(SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, asMain.additionalData )) * 100)
-
-
-
-					RuiSetBool( rui, "isReplaceEvolvingArmor", EvolvingArmor_IsEquipmentEvolvingArmor( asMain.additionalData.ref ) )
-				}
-				else
-				{
-					RuiSetBool( rui, "isReplaceEvolvingArmor", false )
-				}
-
+			if ( EvolvingArmor_IsEquipmentEvolvingArmor( asMain.additionalData.ref ) )
+			{
+				replacePropertyValue = int( SURVIVAL_GetPlayerShieldHealthFromArmor( player ) / float(SURVIVAL_GetCharacterShieldHealthMaxForArmor( player, asMain.additionalData )) * 125)
+				RuiSetBool( rui, "isReplaceEvolvingArmor", EvolvingArmor_IsEquipmentEvolvingArmor( asMain.additionalData.ref ) )
+				RuiSetInt( rui, "replaceExtraPropertyValue", EvolvingArmor_GetEvolutionProgress( player ) )
+			}
+			else
+			{
+				RuiSetBool( rui, "isReplaceEvolvingArmor", false )
+			}
 			RuiSetInt( rui, "replacePropertyValue", replacePropertyValue )
 		}
 	}
@@ -897,10 +927,16 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 			RuiSetBool( rui, "hasReplace", true )
 		}
 	}
-
-	if ( (data.lootType == eLootType.HEALTH || data.lootType == eLootType.AMMO) && lootRef.count > 1 )
+	RuiSetBool( rui, "isSurvivalGadget", false )
+	if ( (data.lootType == eLootType.HEALTH || data.lootType == eLootType.AMMO || data.lootType == eLootType.ORDNANCE) && lootRef.count > 1 )
 	{
 		RuiSetString( rui, "titleText", Localize( "#SURVIVAL_PICKUP_STACK_COUNT", Localize( data.pickupString ).toupper(), lootRef.count ) )
+	}
+	else if ( data.lootType == eLootType.GADGET )
+	{
+		RuiSetBool( rui, "isSurvivalGadget", true )
+		RuiSetInt( rui, "propertyValue", lootRef.count )
+		RuiSetInt( rui, "extraPropertyValue", lootRef.lootData.inventorySlotCount )
 	}
 	else if ( data.lootType == eLootType.ARMOR )
 	{
@@ -921,7 +957,7 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 			{
 				int propertyValue = GetPropSurvivalMainProperty( lootRef.lootProperty )
 
-					RuiSetInt( rui, "propertyValue", int(propertyValue / float(EvolvingArmor_GetEvolvingArmorHealthForTier( data.tier )) * 100) )
+					RuiSetInt( rui, "propertyValue", int(propertyValue / float(EvolvingArmor_GetEvolvingArmorHealthForTier( data.tier )) * 125) )
 
 
 
@@ -943,22 +979,56 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 	RuiSetImage( rui, "attachWeapon1Icon", $"" )
 	RuiSetBool( rui, "hasAttach1", false )
 
-	const int MAX_ATTACHMENT_TAGS = 4
+	for( int weaponIndex = WEAPON_INVENTORY_SLOT_PRIMARY_0; weaponIndex <= WEAPON_INVENTORY_SLOT_PRIMARY_1; ++weaponIndex )
+	{
+		entity weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 + weaponIndex )
+		if ( !IsValid( weapon ) )
+			continue
+
+		string weaponName = weapon.GetWeaponClassName()
+
+		if ( GetWeaponInfoFileKeyField_GlobalInt_WithDefault ( weaponName, "has_energized", 0 ) == 1 )
+		{
+			string energizedConsumableData = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "energized_consumable" )
+			string weaponNameString = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "printname" )
+			string consumableHint = GetWeaponInfoFileKeyField_GlobalString ( weaponName, "energized_consumable_hint" )
+
+			LootData weaponData = SURVIVAL_Loot_GetLootDataByRef ( weaponName )
+			LootData ordanenceData = SURVIVAL_Loot_GetLootDataByRef ( energizedConsumableData )
+
+			if ( lootRef.lootData.baseWeapon == energizedConsumableData )
+			{
+				RuiSetString( rui, "replaceSlot", Localize( weaponNameString ) )
+				RuiSetString( rui, "replaceName", Localize( consumableHint ) )
+				RuiSetImage( rui, "attachWeapon1Icon", weaponData.hudIcon )
+				RuiSetImage( rui, "replaceImage", ordanenceData.hudIcon )
+				RuiSetBool( rui, "hasReplace", true )
+				RuiSetBool( rui, "hasAttach1", true )
+			}
+		}
+
+	}
+       
+
+	const int MAX_ATTACHMENT_TAGS = 6
+	const int NUM_OF_CATEGORIES_TO_BE_CONSIDERED_UNIVERSAL = 5 //
 	for ( int index = 0; index < MAX_ATTACHMENT_TAGS; index++ )
 	{
-		RuiSetString( rui, "tagText" + (index + 1), "" )
+		RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (index + 1), "" )
 	}
-	RuiSetInt( rui, "numTags", 0 )
+	RuiSetInt( nestedCompatibleWeaponsRui, "numTags", 0 )
 	RuiSetString( rui, "typeText", "" )
 	RuiSetString( rui, "typeTextTag", "" )
 
 	string generalType = SURVIVAL_Loot_GetGeneralTypeStringFromType( data.lootType )
 	string detailType  = SURVIVAL_Loot_GetDetailTypeStringFromRef( data.ref )
+	string detailType2  = SURVIVAL_Loot_GetDetailType2String( data )
 	if ( data.lootType == eLootType.MAINWEAPON )
 	{
 		RuiSetString( rui, "skinName", "" )
 		RuiSetInt( rui, "skinTier", 0 )
 
+		RuiSetBool( rui, "isFullyKitted", SURVIVAL_Weapon_IsAttachmentLocked( data.ref ) )
 		if ( lootRef.lootProperty > 0 )
 		{
 			ItemFlavor weaponSkin = GetItemFlavorByNetworkIndex_DEPRECATED( lootRef.lootProperty )
@@ -980,6 +1050,7 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 
 		RuiSetString( rui, "typeText", Localize( "#LOOT_TYPE_WEAPON", Localize( generalType ) ) )
 		RuiSetString( rui, "typeTextTag", detailType )
+		RuiSetString( rui, "typeTextTag2", detailType2 )
 
 
 		int attachmentCount = 0
@@ -1060,51 +1131,74 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 		}
 
 		AttachmentTagData attachmentTagData = AttachmentTags( data.ref )
-		RuiSetInt( rui, "numTags", attachmentTagData.attachmentTags.len() )
+		RuiSetInt( nestedCompatibleWeaponsRui, "numTags", attachmentTagData.attachmentTags.len() )
 
 		if ( attachmentTagData.ammoRef != "" )
 		{
 			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( attachmentTagData.ammoRef )
 
-			bool hasCompatibleWeapon = true//IsAmmoInUse( player, attachmentTagData.ammoRef )
-			if ( hasCompatibleWeapon )
-				RuiSetString( rui, "tagText1", Localize( "#LOOT_FIT_AMMO", ammoData.hudIcon ) )
+			string lootFitTip
+			if ( !AttachesToAllWeaponsOfAmmoType( data.ref ) )
+				lootFitTip = "#LOOT_FIT_MOST_AMMO"
 			else
-				RuiSetString( rui, "tagText1", Localize( "#LOOT_FIT_AMMO_NONE", ammoData.hudIcon ) )
+				lootFitTip = "#LOOT_FIT_AMMO"
+
+			RuiSetString( nestedCompatibleWeaponsRui, "tagText1", Localize( lootFitTip, ammoData.hudIcon ) )
 		}
 		else
 		{
-			int tagIndex = 0
-			foreach ( int tagId in attachmentTagData.attachmentTags )
+			if ( attachmentTagData.attachmentTags.len() >= NUM_OF_CATEGORIES_TO_BE_CONSIDERED_UNIVERSAL && passiveDesc == "" )
 			{
-				if ( tagIndex < MAX_ATTACHMENT_TAGS && passiveDesc == "" )
-				{
-					bool hasWeaponForTag = true//HasWeaponForTag( player, tagId )
-					if ( hasWeaponForTag )
-						RuiSetString( rui, "tagText" + (tagIndex + 1), GetStringForTagId( tagId ) )
-					else
-						RuiSetString( rui, "tagText" + (tagIndex + 1), "`2" + GetStringForTagId( tagId ) + "`0" )
-				}
-
-				tagIndex++
+				RuiSetString( nestedCompatibleWeaponsRui, "tagText1", "#TAG_ALL_WEAPONS" )
 			}
-
-			foreach ( index, weaponRef in attachmentTagData.weaponRefs )
+			else
 			{
-				if ( tagIndex < MAX_ATTACHMENT_TAGS && passiveDesc == "" )
+				int tagIndex = 0
+				foreach ( int tagId in attachmentTagData.attachmentTags )
 				{
-					string weaponName = GetWeaponInfoFileKeyField_GlobalString( weaponRef, "shortprintname" )
-					if ( index < attachmentTagData.weaponRefs.len() - 1 )
-						weaponName += ","
+					if ( tagIndex < MAX_ATTACHMENT_TAGS && passiveDesc == "" )
+					{
+						if ( tagId in attachmentTagData.exceptionToTheRuleForThisWeaponClass )
+							RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), Localize( "#WEAPON_CLASS_HAS_EXCEPTION", Localize( GetStringForTagId( tagId ) ) ) ) //
+						else
+							RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), GetStringForTagId( tagId ) )
 
-					bool hasWeapon = true//HasWeapon( player, weaponRef, [], false )
-					if ( hasWeapon )
-						RuiSetString( rui, "tagText" + (tagIndex + 1), weaponName )
-					else
-						RuiSetString( rui, "tagText" + (tagIndex + 1), "`2" + weaponName + "`0" )
+						tagIndex++
+					}
 				}
 
-				tagIndex++
+				foreach ( index, weaponRef in attachmentTagData.weaponRefs )
+				{
+					if ( tagIndex < MAX_ATTACHMENT_TAGS && passiveDesc == "" )
+					{
+						string weaponName = GetWeaponInfoFileKeyField_GlobalString( weaponRef, "shortprintname" )
+						if ( index < attachmentTagData.weaponRefs.len() - 1 && tagIndex < MAX_ATTACHMENT_TAGS - 1 )
+							weaponName += ","
+
+						RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), weaponName )
+
+						tagIndex++
+					}
+				}
+
+				int exceptionIndex = 0
+				foreach ( int tagId in attachmentTagData.attachmentTags )
+				{
+					if ( tagIndex < MAX_ATTACHMENT_TAGS && passiveDesc == "" )
+					{
+						if ( tagId in attachmentTagData.exceptionToTheRuleForThisWeaponClass )
+						{
+							string exceptionName = GetWeaponInfoFileKeyField_GlobalString( attachmentTagData.exceptionToTheRuleForThisWeaponClass[tagId], "shortprintname" )
+							if ( exceptionIndex < attachmentTagData.exceptionToTheRuleForThisWeaponClass.len() - 1 && tagIndex < MAX_ATTACHMENT_TAGS - 1 )
+								exceptionName += ","
+
+							RuiSetString( nestedCompatibleWeaponsRui, "tagText" + (tagIndex + 1), Localize( "#EXCEPT_WEAPON", exceptionName ) )
+
+							tagIndex++
+							exceptionIndex++
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1127,6 +1221,36 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 			}
 		}
 	}
+
+	if ( data.ref in s_customItemPromptUpdateCallbacks )
+		(s_customItemPromptUpdateCallbacks[data.ref])( player, rui, data, lootContext, lootRef, isInMenu )
+}
+
+
+bool function AttachesToAllWeaponsOfAmmoType( string attachmentRef )
+{
+	Assert( IsValidAttachment( attachmentRef ), "must be valid attachment" )
+
+	AttachmentData aData = GetAttachmentData( attachmentRef )
+	Assert( aData.tagData.ammoRef != "", "attachment tag data must have ammo ref" )
+
+	array<LootData> allWeapons = SURVIVAL_Loot_GetByType( eLootType.MAINWEAPON )
+	foreach ( LootData wData in allWeapons )
+	{
+		if ( wData.ammoType != aData.tagData.ammoRef )
+			continue
+
+		if ( WeaponLootRefIsLockedSet( wData.ref ) )
+			continue
+
+		if ( SURVIVAL_Loot_IsRefDisabled( wData.ref ) )
+			continue
+
+		if ( !aData.compatibleWeapons.contains( wData.ref ) )
+			return false
+	}
+
+	return true
 }
 
 

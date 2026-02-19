@@ -43,6 +43,9 @@ global function AddScoreboardCallback_OnHiding
 global function ScoreboardToggleFocus
 global function ForceScoreboardLoseFocus
 global function ForceScoreboardFocus
+global function Scoreboard_AddRui
+global function Scoreboard_SetVisible
+global function Scoreboard_IsVisible
 
 struct {
 	bool hasFocus = false
@@ -80,6 +83,8 @@ struct {
 
 	var scoreboardRUI
 
+	bool scoreboardVisible = false
+	array<var> scoreboardRuis
 	void functionref(entity,var) scoreboardUpdateCallback
 	array <void functionref()> scoreboardCallbacks_OnShowing
 	array <void functionref()> scoreboardCallbacks_OnHiding
@@ -88,11 +93,35 @@ struct {
 	int max_teams
 } file
 
+
+
 const array<int> IGNORE_SCORE_BOARD_RESET =
 [
 	eGamemodes.SURVIVAL,
 	eGamemodes.fs_aimtrainer
 ]
+
+void function Scoreboard_AddRui( var rui )
+{
+	file.scoreboardRuis.append( rui )
+	RuiSetVisible( rui, file.scoreboardVisible )
+}
+
+void function Scoreboard_SetVisible( bool state )
+{
+	foreach ( rui in file.scoreboardRuis )
+	{
+		RuiSetVisible( rui, state )
+	}
+
+	file.scoreboardVisible = state
+}
+
+bool function Scoreboard_IsVisible()
+{
+	return file.scoreboardVisible
+}
+
 
 void function ClScoreboardMp_Init()
 {

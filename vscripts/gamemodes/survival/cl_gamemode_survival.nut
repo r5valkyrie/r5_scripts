@@ -21,7 +21,6 @@ global function ServerCallback_RefreshDeathBoxHighlight
 
 global function AddCallback_OnUpdateShowButtonHints
 global function AddCallback_OnVictoryCharacterModelSpawned
-global function AddCallback_OnFindFullMapAimEntity
 
 global function OnHealthPickupTypeChanged
 
@@ -485,12 +484,6 @@ void function Survival_EntitiesDidLoad()
 	// RuiSetImage( Hud_GetRui( HudElement( "Overshields_TestFrame" ) ), "basicImage", $"rui/flowstatecustom/overshield_info_box")
 
 	file.toposInitialized = true
-}
-
-void function AddCallback_OnFindFullMapAimEntity( entity functionref( vector, float ) targetCallback, bool functionref( entity ) actionCallback )
-{
-	Assert( !( targetCallback in file.fullMapAimTargetCallbacks ), "Already added " + string( targetCallback ) + " with AddCallback_OnFindFullMapAimEntity" )
-	file.fullMapAimTargetCallbacks[ targetCallback ] <- actionCallback
 }
 
 void function Flowstate_CheckForLaserSightsAndApplyEffect()

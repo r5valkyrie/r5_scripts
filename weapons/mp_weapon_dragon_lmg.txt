@@ -631,8 +631,8 @@ WeaponData
 	"ui1_draw_cloaked"	"1"
 	UiData1
 	{
-		"ui"								"ui/spitfire_crosshair"
-		"mesh"							"models/weapons/attachments/dragon_rui_upper"
+		"ui"						"ui/dragon_reticle"
+		"mesh"						"models/weapons/attachments/dragon_rui_upper"
 		Args
 		{
 			vis							player_zoomfrac
@@ -645,17 +645,41 @@ WeaponData
 	"ui2_enable"		"1"
 	UiData2
 	{
-		"ui"								"ui/peacekeeper_rui_lower"
-		"mesh"							"models/weapons/attachments/dragon_rui_lower"
+		"ui"						"ui/dragon_reticle"
+		"mesh"						"models/weapons/attachments/dragon_rui_lower"
 		Args
 		{
 			vis							player_zoomfrac
 			ammo						weapon_ammo
 			clipSize					weapon_clipSize
-			clipCount					weapon_ammoClipCount
 		}
 	}
 
+		"ui3_enable"		"1"
+    	UiData3
+    	{
+    		"ui"						"ui/dragon_normal_bullet"
+    		"mesh"						"models/weapons/attachments/dragon_rui_lower"
+    		Args
+    		{
+    			vis							player_zoomfrac
+    			ammo						weapon_ammo
+    			clipSize					weapon_clipSize
+    		}
+    	}
+
+        "ui4_enable"		"0"
+        UiData4
+        {
+            "ui"						"ui/dragon_energized_bullet"
+            "mesh"						"models/weapons/attachments/dragon_rui_lower"
+            Args
+            {
+                vis							player_zoomfrac
+                ammo						weapon_ammo
+                clipSize					weapon_clipSize
+            }
+        }
 
 	active_crosshair_count				"1"
 	rui_crosshair_index					"0"

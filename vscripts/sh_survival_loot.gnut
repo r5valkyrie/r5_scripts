@@ -7,6 +7,7 @@ global function CodeCallback_WeaponModCommandCheckMods
 global function Survival_PickupItem
 global function SURVIVAL_Loot_GetGeneralTypeStringFromType
 global function SURVIVAL_Loot_GetDetailTypeStringFromRef
+global function SURVIVAL_Loot_GetDetailType2String
 global function SURVIVAL_Loot_GetHealthPickupTypeFromRef
 global function SURVIVAL_Loot_GetHealthPickupRefFromType
 global function SURVIVAL_Loot_GetHealthKitDataFromStruct
@@ -1225,6 +1226,20 @@ array<LootData> function SURVIVAL_Loot_GetByType_FixedTier( int lootType, int ti
 	return lootOfType
 }
 #endif
+
+string function SURVIVAL_Loot_GetDetailType2String( LootData lootData )
+{
+	switch ( lootData.lootType )
+	{
+		case eLootType.MAINWEAPON:
+			if ( lootData.baseMods.contains( "crate" ) )
+				return "#WPN_CATEGORY_CRATE"
+			else if ( SURVIVAL_Weapon_IsAttachmentLocked( lootData.ref ) )
+				return "#WPN_CATEGORY_FULLY_KITTED"
+			break
+	}
+	return ""
+}
 
 string function SURVIVAL_Loot_GetDetailTypeStringFromRef( string ref )
 {

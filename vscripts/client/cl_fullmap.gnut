@@ -7,6 +7,7 @@ const FULLMAP_ZOOM_SPEED_MOUSE = 0.5
 const FULLMAP_ZOOM_SPEED_CONTROLLER = 0.1
 
 const FULLMAP_SELECT_RANGE = 750
+const float FULLMAP_ENTITY_SELECT_RANGE_NORMALIZED = 0.02
 const float OVERVIEW_MAP_SIZE = 4096 //
 
 global struct MinimapLabelStruct
@@ -27,6 +28,12 @@ global struct GenericFullmapSetupStruct
 	bool friendlyOnly = true
 	bool hudMapOnly = false
 	void functionref( var, entity ) setupFunc
+}
+
+struct AimTargetStruct
+{
+	entity highlightedEntity
+	bool functionref( entity ) actionFunc
 }
 
 struct
@@ -60,9 +67,11 @@ struct
 	entity 						highlightedPlayer
 	int							playerTagMode = OBS_MODE_NONE
 	bool						updatePlayerTags = true
+	AimTargetStruct				mapAimTarget
 
 	table<string, GenericFullmapSetupStruct> customAddToFullMapAndInWorldMapCallbacks
 	table<string, GenericFullmapSetupStruct> genericAddToFullMapAndInWorldMapCallbacks
+	table<entity functionref( vector, float ), bool functionref( entity )> fullMapAimTargetCallbacks
 } file
 
 void function Cl_FullmapInit()
@@ -78,8 +87,8 @@ void function Cl_FullmapInit()
 	float threatDistFar  = Minimap_GetFloatForKey( "threatFarDist" )
 	file.threatMaxDist = Minimap_GetFloatForKey( "threatMaxDist" )
 
-	AddScoreboardShowCallback( Sur_OnScoreboardShow )
-	AddScoreboardHideCallback( Sur_OnScoreboardHide )
+	AddScoreboardShowCallback( ShowFullmap )
+	AddScoreboardHideCallback( HideFullmap )
 
 	AddCallback_MinimapEntSpawned( AddInWorldMinimapObject )
 	AddCallback_OnClientScriptInit( OnClientScriptInit )
@@ -88,6 +97,18 @@ void function Cl_FullmapInit()
 	AddOnSpectatorTagModeChangedCallback( OnSpectatorTagModeChanged )
 }
 
+void function Fullmap_SetupScoreboard()
+{
+	clGlobal.initScoreboardFunc = InitFullmap
+	clGlobal.showScoreboardFunc = ShowFullmap
+	clGlobal.hideScoreboardFunc = HideFullmap
+	//
+}
+
+void function InitFullmap()
+{
+
+}
 void function OnClientScriptInit( entity player )
 {
 	SetBigMapZoomScale( 1.0 )
@@ -330,6 +351,21 @@ var function FullMap_AddEnemyLocation( entity enemy )
 	RuiSetFloat( rui, "objectSize", 5.0 )
 	RuiSetBool( rui, "doAnnounceEffect", true )
 	RuiSetImage( rui, "iconImage", $"rui/hud/minimap/compass_icon_player" )
+
+	Fullmap_AddRui( rui )
+	return rui
+}
+
+var function FullMap_AddIconAtPos( vector position, vector angles, asset icon, float scale, vector iconColor )
+{
+	var rui = FullMap_CommonAdd( $"ui/in_world_minimap_square_simple.rpak" )
+
+	RuiSetFloat3( rui, "objectPos", position )
+	RuiSetFloat3( rui, "objectAngles", angles )
+	RuiSetFloat3( rui, "objColor", iconColor )
+	RuiSetFloat( rui, "objectSize", scale )
+	RuiSetBool( rui, "doAnnounceEffect", true )
+	RuiSetImage( rui, "iconImage", icon )
 
 	Fullmap_AddRui( rui )
 	return rui
@@ -893,7 +929,7 @@ void function ChangeFullMapZoomFactor( float delta )
 }
 
 
-void function Sur_OnScoreboardShow()
+void function ShowFullmap()
 {
 	if ( !GetCurrentPlaylistVarBool( "fullmap_enabled", true ) )
 		return
@@ -904,6 +940,7 @@ void function Sur_OnScoreboardShow()
 	if ( RadialMenu_IsShowing() )
 		RadialMenu_Destroy()
 
+	Scoreboard_SetVisible( true )
 	ShowMapRui()
 	UpdateFullmapRuiTracks()
 
@@ -933,27 +970,30 @@ void function Sur_OnScoreboardShow()
 
 	s_inputDebounceIsActive = true
 	HudInputContext inputContext
-	inputContext.keyInputCallback = Survival_HandleKeyInput
-	inputContext.moveInputCallback = Survival_HandleMoveInput
-	inputContext.viewInputCallback = Survival_HandleViewInput
+	inputContext.keyInputCallback = Fullmap_HandleKeyInput
+	inputContext.moveInputCallback = Fullmap_HandleMoveInput
+	inputContext.viewInputCallback = Fullmap_HandleViewInput
 	inputContext.hudInputFlags = (HIF_ALLOW_AUTOSPRINT_FORWARD)
 	HudInput_PushContext( inputContext )
 	file.mapContextPushed = true
 }
 
 
-void function Sur_OnScoreboardHide()
+void function HideFullmap()
 {
-	Signal( clGlobal.signalDummy, "OnHideScoreboard" )
-
 	if ( !GetCurrentPlaylistVarBool( "fullmap_enabled", true ) )
 		return
 
 	if ( Freelance_IsHubLevel() )
 		return
 
+	Scoreboard_SetVisible( false )
 	HideMapRui()
+	Fullmap_ClearInputContext()
+}
 
+void function Fullmap_ClearInputContext()
+{
 	if ( file.mapContextPushed )
 	{
 		HudInput_PopContext()
@@ -1077,6 +1117,18 @@ void function AddCallback_Targetname_AddToFullMapAndInWorldMapCustom( string tar
 	file.customAddToFullMapAndInWorldMapCallbacks[ targetname ] <- data
 }
 
+void function AddCallback_OnFindFullMapAimEntity( entity functionref( vector, float ) targetCallback, bool functionref( entity ) actionCallback )
+{
+	Assert( !( targetCallback in file.fullMapAimTargetCallbacks ), "Already added " + string( targetCallback ) + " with AddCallback_OnFindFullMapAimEntity" )
+	file.fullMapAimTargetCallbacks[ targetCallback ] <- actionCallback
+}
+
+void function RemoveCallback_OnFindFullMapAimEntity( entity functionref( vector, float ) targetCallback )
+{
+	Assert( targetCallback in file.fullMapAimTargetCallbacks, "Callback " + string( targetCallback ) + "not previously added with AddCallback_OnFindFullMapAimEntity" )
+	delete file.fullMapAimTargetCallbacks[ targetCallback ]
+}
+
 void function AddToFullMapCustom( entity ent, var topo, GenericFullmapSetupStruct data )
 {
 	int drawMode = RUI_DRAW_WORLD
@@ -1142,7 +1194,7 @@ vector function ConvertNormalizedPosToWorldPos( vector normalizedPos, float zoom
 	return pos
 }
 
-bool function Survival_HandleViewInput( float x, float y )
+bool function Fullmap_HandleViewInput( float x, float y )
 {
 	if ( IsControllerModeActive() )
 		return false
@@ -1185,12 +1237,38 @@ bool function Survival_HandleViewInput( float x, float y )
 		file.updatePlayerTags = true
 	}
 
+	float adjustedRange = FULLMAP_ENTITY_SELECT_RANGE_NORMALIZED * max( file.mapScale * OVERVIEW_MAP_SIZE, 1 ) / file.fullmapZoomFactor
+	array< AimTargetStruct > aimTargets
+	foreach( aimTargetCallback, actionCallback in file.fullMapAimTargetCallbacks )
+	{
+
+
+		AimTargetStruct possibleTarget
+		possibleTarget.highlightedEntity = aimTargetCallback( ConvertNormalizedPosToWorldPos( GetMapNormalizedAimCoordinate() ), adjustedRange )
+		if ( IsValid( possibleTarget.highlightedEntity ) )
+		{
+			possibleTarget.actionFunc = actionCallback
+			aimTargets.append( possibleTarget )
+		}
+	}
+
+	//
+	if ( aimTargets.len() > 0 )
+	{
+		file.mapAimTarget.highlightedEntity = aimTargets[0].highlightedEntity
+		file.mapAimTarget.actionFunc = aimTargets[0].actionFunc
+	}
+	else
+	{
+		file.mapAimTarget.highlightedEntity = null
+	}
+
 	return true
 }
 
 
 bool s_inputDebounceIsActive = false
-bool function Survival_HandleMoveInput( float x, float y )
+bool function Fullmap_HandleMoveInput( float x, float y )
 {
 	if ( !IsValid( file.mapAimRui ) )
 		return false
@@ -1223,7 +1301,7 @@ bool function Survival_HandleMoveInput( float x, float y )
 
 
 //
-bool function Survival_HandleKeyInput( int key )
+bool function Fullmap_HandleKeyInput( int key )
 {
 #if DEVELOPER
 	if ( MapDevCheatsAreActive() )
@@ -1313,6 +1391,10 @@ bool function Survival_HandleKeyInput( int key )
 			swallowInput = true
 			break
 
+		case KEY_Y:
+			swallowInput = Fullmap_IsVisible()
+			break
+
 		case BUTTON_B:
 			HideScoreboard()
 			swallowInput = true
@@ -1344,9 +1426,16 @@ bool function Survival_HandleKeyInput( int key )
 
 	if ( (!IsControllerModeActive() && ButtonIsBoundToPing( key )) || pressedPing )
 	{
-		vector worldPos = ConvertNormalizedPosToWorldPos( GetMapNormalizedAimCoordinate() )
-		Ping_SetMapWaypoint( GetLocalClientPlayer(), worldPos )
-		swallowInput = true
+		if ( IsValid( file.mapAimTarget.highlightedEntity ) )
+		{
+			swallowInput = file.mapAimTarget.actionFunc( file.mapAimTarget.highlightedEntity )
+		}
+		else
+		{
+			vector worldPos = ConvertNormalizedPosToWorldPos( GetMapNormalizedAimCoordinate() )
+			Ping_SetMapWaypoint( GetLocalClientPlayer(), worldPos )
+			swallowInput = true
+		}
 	}
 
 	return swallowInput

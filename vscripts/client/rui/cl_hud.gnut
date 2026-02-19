@@ -284,6 +284,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 
 	asset shieldIcon = $""
 	int shieldLevel  = 0
+	bool overshield = false
 	float timeScale = 1.0 	
 	float shieldFrac = -1.0
 	if ( victim.IsPlayer() && (isShieldShot || isShieldBreak || hitType == eHitType.ARMOR) )
@@ -333,6 +334,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	{
 		shieldIcon = GIBRALTAR_PASSIVE_ICON
 		shieldLevel = 1
+		overshield = true
 	}
 
 	if ( victim.IsPlayer() && isStunned )
@@ -367,7 +369,9 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			RuiSetImage( rui, "shieldIcon", $"" )
 			RuiSetInt( rui, "shieldTier", 0 )
 		}
-			RuiSetFloat( rui, "timeScale", timeScale )
+
+		RuiSetFloat( rui, "timeScale", timeScale )
+
 	}
 
 	if ( ShouldShowProjectileHitDot( damageType, weapon ) || GetCurrentPlaylistVarBool( "firingrange_aimtrainerbycolombia", false ) && ENABLE_HIT_DOT )

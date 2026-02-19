@@ -209,6 +209,7 @@ void function ClWeaponStatus_AddClient( entity player )
 		RuiTrackFloat( rui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
 		RuiTrackFloat( rui, "silencedTimeRemaining", player, RUI_TRACK_STATUS_EFFECT_TIME_REMAINING, eStatusEffect.silenced )
 		RuiSetFloat( rui, "silenceEffectDuration", Silence_GetEffectDuration() )
+		RuiSetFloat( rui, "sonicBlastEffectDuration", GetSonicBlastSilenceDuration() )
 		
 		file.ability_center_hud = rui
 	}
@@ -217,7 +218,7 @@ void function ClWeaponStatus_AddClient( entity player )
 		// ultimate ablility
 		var rui
 		if ( GetCurrentPlaylistVarBool( "hud_ultimate_ready_video", false ) )
-			rui = CreateCockpitPostFXRui( $"ui/inventory_ultimate_ability.rpak", HUD_Z_BASE )
+			rui = CreateCockpitPostFXRui( $"ui/ultimate_ability_hud.rpak", HUD_Z_BASE )
 		else
 			rui = CreateCockpitPostFXRui( $"ui/ability_hud.rpak", HUD_Z_BASE )
 
@@ -435,14 +436,9 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 		return
 	}
 
-	if ( !isOffhandUsesAmmoStatus )
-	{
-		RuiSetBool( rui, "noMainWeaponEquiped", false )
-		RuiSetBool( rui, "isMainWeaponSelected", isMainWeapon )
-	}
-
 	// Weapon status:
-
+	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	bool isMainWeaponSelected = isMainWeapon
 	int activeWeaponTab = -1
 
 	if ( isMainWeapon )
@@ -460,11 +456,13 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 		if ( IsValid( weaponInSlot0 ) && file.lastSelectedPrimaryWeapon == weaponInSlot0 )
 		{
 			InitWeaponRuiTracks( rui, player, weaponInSlot0 )
+			isMainWeaponSelected = activeWeapon == weaponInSlot0 && selectedWeapon == null
 			activeWeaponTab = 0
 		}
 		else if ( IsValid( weaponInSlot1 ) && file.lastSelectedPrimaryWeapon == weaponInSlot1  )
 		{
 			InitWeaponRuiTracks( rui, player, weaponInSlot1 )
+			isMainWeaponSelected = activeWeapon == weaponInSlot1 && selectedWeapon == null
 			activeWeaponTab = 1
 		}
 	}
@@ -475,14 +473,22 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 		{
 			InitWeaponRuiTracks( rui, player, weaponInSlot0 )
 			file.lastSelectedPrimaryWeapon = weaponInSlot0
+			isMainWeaponSelected = activeWeapon == weaponInSlot0 && selectedWeapon == null
 			activeWeaponTab = 0
 		}
 		else if ( IsValid( weaponInSlot1 ) )
 		{
 			InitWeaponRuiTracks( rui, player, weaponInSlot1 )
 			file.lastSelectedPrimaryWeapon = weaponInSlot1
+			isMainWeaponSelected = activeWeapon == weaponInSlot1 && selectedWeapon == null
 			activeWeaponTab = 1
 		}
+	}
+
+	if ( !isOffhandUsesAmmoStatus )
+	{
+		RuiSetBool( rui, "noMainWeaponEquiped", false )
+		RuiSetBool( rui, "isMainWeaponSelected", isMainWeaponSelected ) //
 	}
 
 	if (!isTurret)
@@ -934,8 +940,10 @@ void function UpdateModsOnSurvivalWeaponRui( var rui, entity weapon )
 					if ( (attachmentName == "hopup" || attachmentName == "hopupMulti_a" || attachmentName == "hopupMulti_b") && DisplayHopupPopup() )
 					{
 						RuiSetInt( rui, "hopupLootIdx", data.index )
-						RuiSetString( rui, "hopupName", Localize( data.pickupString ).toupper() )
-						RuiSetString( rui, "hopupDesc", Localize( data.hopupPopupDesc ) )
+						RuiSetString( rui, "hopupPopupName", Localize( data.pickupString ).toupper() )
+						RuiSetString( rui, "hopupPopupDesc", Localize( data.hopupPopupDesc ) )
+						RuiSetInt( rui, "hopupPopupTier", data.tier )
+						RuiSetImage( rui, "hopupPopupIcon", data.hudIcon )
 						hopupPopupSet = true
 					}
 				}
@@ -964,10 +972,10 @@ void function UpdateModsOnSurvivalWeaponRui( var rui, entity weapon )
 			{
 				PassiveWeaponBonusData weaponInfo = file.passiveWeaponBonusMods[ modName ]
 
-				RuiSetString( rui, "hopupName", Localize( weaponInfo.nameText ).toupper() )
+				RuiSetString( rui, "hopupPopupName", Localize( weaponInfo.nameText ).toupper() )
 
 				string descText = weaponInfo.shouldShowAltDescTextFunc( weapon ) ? weaponInfo.altDescText : weaponInfo.descText
-				RuiSetString( rui, "hopupDesc", Localize( descText ) )
+				RuiSetString( rui, "hopupPopupDesc", Localize( descText ) )
 
 				string attachPoint = ""
 				if ( SURVIVAL_Loot_IsRefValid( modName ) )
@@ -1196,6 +1204,10 @@ bool function IsModAltfireMod( string mod )
 bool function CanShowWeaponCycleHint( entity selectedWeapon, entity weaponInSlot0, entity weaponInSlot1 )
 {
 	if ( !IsValid( selectedWeapon ) )
+		return false
+
+	entity localViewPlayer = GetLocalViewPlayer()
+	if(localViewPlayer.GetBleedoutState() > 0) //
 		return false
 
 	if ( selectedWeapon.ShouldAutoCycleWhenOutOfAmmo() )
@@ -1510,6 +1522,10 @@ var function GetWeaponRui()
 	return file.weapon_hud_rui
 }
 
+var function GetAmmoStatusHintRui()
+{
+	return file.ammo_status_hint
+}
 var function GetTacticalRui()
 {
 	return file.ability_center_hud
