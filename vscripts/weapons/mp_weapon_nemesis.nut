@@ -103,7 +103,7 @@ struct{
 void function MpWeaponNemesis_Init()
 {
 
-
+RegisterSignal("EndDecayWatcherThread")
 
 
 /*
@@ -134,7 +134,7 @@ void function Nemesis_DecayWatcher( entity weapon )
 
 EndSignal(weapon, "OnDestroy")
 
-// EndSignal(weapon, "EndDecayThread")
+EndSignal(weapon, "EndDecayWatcherThread")
 
 
 NemesisData nemesisData = file.nemesisDataTable[weapon]
@@ -260,9 +260,9 @@ weapon.kv.rendercolor = NewKVString_d
 
 paramValueFromChargeLerpDecay = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 1.0)
 
-// printt("[NEMESIS] Magnet Latch LERP Value (Script Pose Param 0) for charge DECAY is " + paramValueFromChargeLerpDecay)
+printt("[NEMESIS] Magnet Latch LERP Value (Script Pose Param 0) for charge DECAY is " + paramValueFromChargeLerpDecay)
 
-//printt("[NEMESIS] [CLIENT DECAY WATCHER] nemesisData.chargeLevel = " + nemesisData.chargeLevel)
+printt("[NEMESIS] [CLIENT DECAY WATCHER] nemesisData.chargeLevel = " + nemesisData.chargeLevel)
 
 weapon.SetScriptPoseParam0(paramValueFromChargeLerpDecay)
 
@@ -277,11 +277,11 @@ weapon.SetScriptPoseParam0(paramValueFromChargeLerpDecay)
 				nemesisData.chargeLevel-= NEMESIS_DECAY_EPSILON // 0.00008 // NEMESIS_CHARGE_PER_SHOT
 				
 
-				//printt("[NEMESIS] Charge level decayed to " + nemesisData.chargeLevel)
+				printt("[NEMESIS] Charge level decayed to " + nemesisData.chargeLevel)
 
 				file.nemesisDataTable[weapon].chargeLevel = nemesisData.chargeLevel
 
-				//printt("[NEMESIS] Updated global charge level to " + nemesisData.chargeLevel)
+				printt("[NEMESIS] Updated global charge level to " + nemesisData.chargeLevel)
 
 
 wait NEMESIS_DECAY_LERP_TIME // 0.005
@@ -471,6 +471,8 @@ var function OnWeaponPrimaryAttack_weapon_nemesis( entity weapon, WeaponPrimaryA
    // thread Nemesis_DecayWatcher_Client(weapon, nemesisData)
 	#endif
 
+
+    Signal(weapon, "EndDecayWatcherThread") // end then restart the thread
 	thread Nemesis_DecayWatcher(weapon)
 	
 	
