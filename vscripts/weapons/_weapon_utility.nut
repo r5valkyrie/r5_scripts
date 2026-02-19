@@ -1404,7 +1404,7 @@ bool function PlantStickyEntity_Retail( entity ent, DeployableCollisionParams cp
 	}
 	else
 	{
-		#if DEV
+		#if DEVELOPER
 		if ( DEBUG_DRAW_PLANT_STICKY )
 		{
 			DebugDrawSphere( cp.pos, 5, COLOR_YELLOW, false, 60 )
@@ -1436,7 +1436,7 @@ bool function PlantStickyEntity_Retail( entity ent, DeployableCollisionParams cp
 		{
 			plantPosition = trace.endPos
 
-			#if DEV
+			#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
 				DebugDrawSphere( plantPosition, 3, COLOR_RED, false, 60 )
@@ -1447,7 +1447,7 @@ bool function PlantStickyEntity_Retail( entity ent, DeployableCollisionParams cp
 		{
 			plantPosition = cp.pos
 
-			#if DEV
+			#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
 				DebugDrawSphere( plantPosition, 3, COLOR_BLUE, false, 60 )

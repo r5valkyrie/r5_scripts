@@ -68,7 +68,7 @@ const int EXPLOSIVE_HOLD_PANEL_USE_PARAMS = USABLE_CUSTOM_HINTS | USABLE_BY_OWNE
 const vector PANEL_BOUNDING_BOX_MIN = <-10,-10,60>
 const vector PANEL_BOUNDING_BOX_MAX = <10,10,70>
 
-#if DEV
+#if DEVELOPER
 global function DEV_GiveGrenades
 global function DEV_LootHold_ShowAll
 global function DEV_LootHold_GotoNearest
@@ -596,7 +596,7 @@ void function ForcedBreach_OpenPanel_Thread( entity panel )
 	vector explosionPos = panel.GetOrigin() + < 0, 0, 50 >
 
 	//// Uncomment to debug.
-	//#if DEV
+	//#if DEVELOPER
 	//	DebugDrawSphere( explosionPos, 32, COLOR_RED, true, 15 )
 	//#endif // DEV
 
@@ -966,7 +966,7 @@ void function ExplosiveHoldAnimation_Thread( entity panel, entity player, Explos
 				}
 				else if ( e[ "kickedoff_bybreach" ] )
 				{
-					#if DEV
+					#if DEVELOPER
 						printt( FUNC_NAME() + "(): Player kicked off panel animation by a breach: " + player.GetPlayerName() )
 					#endif // DEV
 				}
@@ -1374,7 +1374,7 @@ void function CreateGunRackLootData()
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_GiveGrenades( entity player, int grenadeTypeNDX = 0, int grenadeCount = 3 )
 {
 	table< int, array<string> > lootNamesByType

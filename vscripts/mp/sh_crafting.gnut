@@ -51,7 +51,7 @@ global function Crafting_PossibleWorkbenchLocations_Get
 global function Crafting_SetCrafterGoalCount
 #endif // SERVER
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 global function DEV_PrintUsedHarvesters
 #endif
@@ -94,7 +94,7 @@ global function Crafting_GetCraftingIcon
 global function Crafting_GetSmallCraftingIcon
 global function Crafting_GetCraftingZoneIcon
 
-#if DEV
+#if DEVELOPER
 global function DEV_Crafting_TogglePreMatchRotation
 global function DEV_Crafting_PrintUsedHarvesterEHIs
 #endif // DEV

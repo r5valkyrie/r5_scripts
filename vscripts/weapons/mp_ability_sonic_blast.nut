@@ -48,7 +48,7 @@ const int SONIC_BLAST_RADIUS_FX_SPACING = 200
 //const int ORIGINAL_SONIC_BLAST_TUBE_LENGTH = 850 //Best estimate at how long the tube VFX is by using debug draws.  No easy way to get a length from maya and convert to in game units?
 //const int SONIC_BLAST_DETONATION_AUDIO_CHECK_SEGMENTS = 5
 
-#if DEV
+#if DEVELOPER
 const bool SONIC_BLAST_DEBUG = false
 #endif
 
@@ -917,7 +917,7 @@ void function ServerToClient_ShowHealthRUI_Thread( entity owner, entity victim, 
 	float endTime = Time() + duration
 	bool visible = true
 
-	#if DEV
+	#if DEVELOPER
 	if ( SONIC_BLAST_DEBUG )
 	{
 		printt("ServerToClient_ShowHealthRUI_Thread - Showing HP Bars for " + victim.GetPlayerName())
@@ -985,7 +985,7 @@ void function DoClientSideDetonationSound_Thread( float detonationTime, vector s
 		deltaTime = detonationTime - Time()
 	}
 
-	#if DEV
+	#if DEVELOPER
 	if ( SONIC_BLAST_DEBUG )
 	{
 		printt(FUNC_NAME() + " deltaTime for blast: " + deltaTime )
@@ -994,7 +994,7 @@ void function DoClientSideDetonationSound_Thread( float detonationTime, vector s
 
 	wait deltaTime
 
-	#if DEV
+	#if DEVELOPER
 	if ( SONIC_BLAST_DEBUG )
 	{
 		printt( FUNC_NAME() + " Sonic Blast Detonation at: " + Time() )

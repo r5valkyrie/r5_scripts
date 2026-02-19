@@ -1048,7 +1048,7 @@ void function Caustic_TT_SetLootUsability_Single( entity loot, bool isUsable )
 		loot.SetUsableDistanceOverride( 85 )
 		// *** DEV: Uncomment to debug trigger size.
 		/*
-		#if DEV
+		#if DEVELOPER
 			 DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, COLOR_GREEN, false, 16  )
 		#endif
 		*/
@@ -1061,7 +1061,7 @@ void function Caustic_TT_SetLootUsability_Single( entity loot, bool isUsable )
 		loot.SetUsableDistanceOverride( 0 )
 		// *** DEV: Uncomment to debug trigger size.
 		/*
-		#if DEV
+		#if DEVELOPER
 			 DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, COLOR_RED, false, 16  )
 		#endif
 		*/

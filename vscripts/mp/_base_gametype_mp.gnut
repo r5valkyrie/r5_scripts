@@ -490,7 +490,7 @@ entity function PickBestPlayerOnteamToObserve( array< entity > playerAliveOnTeam
 void function CodeCallback_OnClientConnectionStarted( entity player )
 {
 	// not a real player?
-	#if DEV
+	#if DEVELOPER
 		if ( player.GetPlayerName() == "Replay" )
 			return
 	#endif

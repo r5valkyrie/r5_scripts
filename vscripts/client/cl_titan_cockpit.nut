@@ -749,7 +749,7 @@ entity function CreateCockpitBody( entity cockpit, entity player, entity cockpit
 	#endif
 
 	asset bodyModelName =  CharacterSkin_GetArmsModel( characterSkin )//GetPlayerSettingsAssetForClassName( bodySettings, "armsmodel" )
-	#if DEV
+	#if DEVELOPER
 	if ( bodySettings == "" )
 	{
 		Warning( "Couldn't find armsmodel for set file: " + bodySettings )

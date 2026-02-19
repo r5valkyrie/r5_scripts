@@ -289,8 +289,11 @@ void function HealthHUD_Update( entity player )
 			continue
 
 		if ( IsSpectatingThirdPerson() )
+		{
+			RuiSetFloat( file.healthOverlay, "healthFrac", 1.0 )
+			RuiSetFloat2( file.healthOverlay, "overlayRange", <file.healthDisplayMax * 0.25, file.healthDisplayMax, 0.0> )
 			continue
-
+		}
 		if ( !IsAlive( player ) )
 		{
 			//KillReplayHealthUpdate()
