@@ -262,7 +262,7 @@ paramValueFromChargeLerpDecay = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0
 
 // printt("[NEMESIS] Magnet Latch LERP Value (Script Pose Param 0) for charge DECAY is " + paramValueFromChargeLerpDecay)
 
-printt("[NEMESIS] [CLIENT DECAY WATCHER] nemesisData.chargeLevel = " + nemesisData.chargeLevel)
+//printt("[NEMESIS] [CLIENT DECAY WATCHER] nemesisData.chargeLevel = " + nemesisData.chargeLevel)
 
 weapon.SetScriptPoseParam0(paramValueFromChargeLerpDecay)
 
@@ -277,11 +277,11 @@ weapon.SetScriptPoseParam0(paramValueFromChargeLerpDecay)
 				nemesisData.chargeLevel-= NEMESIS_DECAY_EPSILON // 0.00008 // NEMESIS_CHARGE_PER_SHOT
 				
 
-				printt("[NEMESIS] Charge level decayed to " + nemesisData.chargeLevel)
+				//printt("[NEMESIS] Charge level decayed to " + nemesisData.chargeLevel)
 
 				file.nemesisDataTable[weapon].chargeLevel = nemesisData.chargeLevel
 
-				printt("[NEMESIS] Updated global charge level to " + nemesisData.chargeLevel)
+				//printt("[NEMESIS] Updated global charge level to " + nemesisData.chargeLevel)
 
 
 wait NEMESIS_DECAY_LERP_TIME // 0.005
