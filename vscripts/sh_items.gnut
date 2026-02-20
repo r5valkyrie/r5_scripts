@@ -335,12 +335,9 @@ void function ShItems_LevelInit_Begin()
 
 void function ShItems_LevelInit_Finish()
 {
-	RegisterTags()
-
 	foreach( RegisterItemFlavorsCallbackType cb in fileLevel.registerRootItemFlavorsCallbacks )
 		cb()
 
-	const int CODE_ROOT_RSON_2500_ITEM_SETTINGS_ROOT_TAG_FIELD_COUNT = 5
 	foreach( ItemFlavor flavor in fileLevel.itemFlavorList )
 	{
 		#if(ASSERTING)
@@ -352,16 +349,6 @@ void function ShItems_LevelInit_Finish()
 
 		if ( ItemFlavor_GetAsset( flavor ) == $"" )
 			continue
-		if ( ItemFlavor_GetType( flavor ) == eItemType.music_pack )
-			continue
-		else
-		{
-			foreach( ItemFlavor tag in RegisterReferencedItemFlavorsFromArray( flavor, "tags", "flavor" ) )
-			{
-				flavor._____INTERNAL_tagMap[tag] <- true
-				fileLevel.tagFlavorListMap[tag].append( flavor )
-			}
-		}
 	}
 
 	fileLevel.isItemRegistrationFinished = true
@@ -370,7 +357,7 @@ void function ShItems_LevelInit_Finish()
 		cb()
 
 	#if SERVER || CLIENT
-		// ScriptRemote_RegisterClientFunction( "ServerToClient_ItemFlavorConsistencyCheckFailed", "bool", "int", INT_MIN, INT_MAX ) //(cafe) Not used - 6-5-2025
+		ScriptRemote_RegisterClientFunction( "ServerToClient_ItemFlavorConsistencyCheckFailed", "bool", "int", INT_MIN, INT_MAX ) //(cafe) Not used - 6-5-2025
 	#endif
 	#if ASSERTING
 		DoItemFlavorCrossVMCheck()
