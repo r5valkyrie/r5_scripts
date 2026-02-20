@@ -293,6 +293,9 @@ CharacterMenuLightData function CharacterClass_GetMenuLightData( ItemFlavor flav
 	data.fill_color = GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorFill" )
 	data.rimL_color = GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorRimL" )
 	data.rimR_color = GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorRimR" )
+	data.animSeq = $"animseq/humans/class/char_select_light_default.rseq"
+	//GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "menuLightAnimSeq" )
+	//we dont have menuLightAnimseq in our character flavor, need to add later - kral
 	return data
 }
 

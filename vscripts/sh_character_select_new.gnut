@@ -81,8 +81,7 @@ const string LIGHT_FILL_NAME = "char_sel_light_fill"
 const string LIGHT_RIML_NAME = "char_sel_light_rim_l"
 const string LIGHT_RIMR_NAME = "char_sel_light_rim_r"
 
-const CAMERA_FOV = 50
-const CAMERA_FOV_LEGACY = 35.5
+const CAMERA_FOV = 35.5
 const CAMERA_TRANSITION_DURATION = 0.25
 const MAIN_DOF_NEAR_START = 7.5
 const MAIN_DOF_NEAR_END = 7.7
@@ -174,7 +173,8 @@ struct FileLevelStruct
 
 		table<int, ItemFlavor> buttonIndexCharacterMap
 		array<int>             buttonIndexUsed
-		array<int>             lockedButtonIndexies
+		array<int>             lockedButtonIndexes
+		array<int>             disabledButtonIndexes
 		array<ItemFlavor> characterSkins
 
 		ItemFlavor ornull desiredCharacterOrNull = null
@@ -191,6 +191,7 @@ struct FileLevelStruct
 		table<var, bool> buttonEventHandlersAdded_Focus
 
 		bool menuEntsReady = false
+		bool menuIsOpen = false
 
 		int championEHI = -1
 		int championSquad1EHI = -1
@@ -331,6 +332,10 @@ void function CharacterSelectNewMenu_Init()
 }
 #endif
 
+bool function CharacterSelectSkinSelectionIsEnabled()
+{
+	return GetCurrentPlaylistVarBool( "character_select_do_skin_selection", false )
+}
 
 //	 ██████╗ ██████╗ ███████╗███╗   ██╗     ██████╗██╗      ██████╗ ███████╗███████╗
 //	██╔═══██╗██╔══██╗██╔════╝████╗  ██║    ██╔════╝██║     ██╔═══██╗██╔════╝██╔════╝
@@ -1081,12 +1086,9 @@ void function _OpenCharacterSelectNewMenu( var menu )
 	if ( !fileLevel.isBrowseMode )
 	{
 		thread FlashScreenWhite()
-		if( Playlist() != ePlaylists.fs_scenarios  )
-		{
-			float gameStartTime = GetGlobalNetTime( "pickLoadoutGamestateEndTime" )
-			Assert( gameStartTime > -1 )
-			thread CloseCharacterSelectMenuAtTime( gameStartTime )
-		}
+		float gameStartTime = GetGlobalNetTime( "pickLoadoutGamestateEndTime" )
+		Assert( gameStartTime > -1 )
+		thread CloseCharacterSelectMenuAtTime( gameStartTime )
 	}
 
 	if ( !fileLevel.menuEntsExist )
@@ -1100,6 +1102,7 @@ void function _OpenCharacterSelectNewMenu( var menu )
 		FooterRui()
 
 	fileLevel.menuEntsReady = true
+	fileLevel.menuIsOpen = true
 
 	UpdateMenuButtons()
 	thread UpdateSceneThink()
@@ -1236,8 +1239,10 @@ void function UpdateMenuElementHandles_AimTrainer( var menu )
 
 void function UpdateMenuButtons()
 {
+	fileLevel.lockedButtonIndexes.clear()
+	fileLevel.disabledButtonIndexes.clear()
+
 	array<ItemFlavor> shippingCharacters
-	array<ItemFlavor> devCharacters
 	array<ItemFlavor> lockedCharacters
 	array<ItemFlavor> disabledCharacters
 	array<ItemFlavor> allCharacters
@@ -1250,16 +1255,13 @@ void function UpdateMenuButtons()
 		bool isAvailable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), itemFlav, true )
 		bool isOwned     = GRX_IsItemOwnedByPlayer_AllowOutOfDateData( itemFlav, GetLocalClientPlayer() )
 
-		int playlistOpinion = ItemFlavor_GetPlaylistOpinion( itemFlav )
-		bool opinionLock = playlistOpinion == eItemFlavorPlaylistOpinion.LOCKED
-
-		if ( !isAvailable && !opinionLock )
+		if ( !isAvailable || CharacterSelect_CustomIsCharacterLockedForPlayer( itemFlav, GetLocalClientPlayer() ) )
 		{
 			disabledCharacters.append( itemFlav )
 		}
 		else
 		{
-			if ( !isOwned || opinionLock )
+			if ( !isOwned )
 				lockedCharacters.append( itemFlav )
 			else
 				shippingCharacters.append( itemFlav )
@@ -1269,46 +1271,54 @@ void function UpdateMenuButtons()
 	allCharacters.extend( lockedCharacters )
 	allCharacters.extend( disabledCharacters )
 
-	Assert( allCharacters.len() < NUM_CHARACTER_SELECT_BUTTONS, "Character select doesn't have enough character buttons. Has " + NUM_CHARACTER_SELECT_BUTTONS + " but needs " + allCharacters.len() )
+	if ( CharacterSelectSkinSelectionIsEnabled() && (allCharacters.len() == 1) )
+	{
+		array<ItemFlavor> skins = RegisterReferencedItemFlavorsFromArray( allCharacters[0], "skins", "flavor" )
+		skins.remove( 0 )
+
+		if ( skins.len() > 0 )
+			allCharacters.resize( skins.len(), allCharacters[0] )
+
+		if ( allCharacters.len() > NUM_CHARACTER_SELECT_BUTTONS )
+			allCharacters.resize( NUM_CHARACTER_SELECT_BUTTONS )
+
+		fileLevel.characterSkins = skins
+	}
+	else
+	{
+		fileLevel.characterSkins.clear()
+	}
+
+	Assert( allCharacters.len() <= NUM_CHARACTER_SELECT_BUTTONS, "Character select doesn't have enough character buttons. Has " + NUM_CHARACTER_SELECT_BUTTONS + " but needs " + allCharacters.len() )
 	fileLevel.buttonIndexUsed.clear()
 
-	table<int, ItemFlavor> mappingTable = GetCharacterButtonMapping( allCharacters, NUM_CHARACTER_SELECT_BUTTONS )
-	foreach( int buttonIndex, ItemFlavor itemFlav in mappingTable )
-	{
-		var button    = fileLevel.characterButtons[buttonIndex]
-		var buttonRui = fileLevel.characterButtonRuis[buttonIndex]
+	array<ItemFlavor> orderedCharacters = GetCharacterButtonOrder( allCharacters, NUM_CHARACTER_SELECT_BUTTONS )
+	array<var> characterButtons
 
-		if ( lockedCharacters.contains( itemFlav ) )
-			fileLevel.lockedButtonIndexies.append( buttonIndex )
+	foreach ( index, character in orderedCharacters )
+	{
+		characterButtons.append( fileLevel.characterButtons[index] )
+
+		if ( lockedCharacters.contains( character ) )
+			fileLevel.lockedButtonIndexes.append( index )
+
+		if ( disabledCharacters.contains( character ) )
+			fileLevel.disabledButtonIndexes.append( index )
 
 		//
-		fileLevel.buttonIndexCharacterMap[ buttonIndex ] <- itemFlav
-		fileLevel.buttonIndexUsed.append( buttonIndex )
+		fileLevel.buttonIndexCharacterMap[ index ] <- character
+		fileLevel.buttonIndexUsed.append( index )
 
 		//
-		RuiSetImage( buttonRui, "portraitImage", CharacterClass_GetGalleryPortrait( itemFlav ) )
-		RuiSetImage( buttonRui, "portraitBackground", CharacterClass_GetGalleryPortraitBackground( itemFlav ) )
-		RuiSetString( buttonRui, "portraitName", Localize( ItemFlavor_GetLongName( itemFlav ) ) )
-		RuiSetImage( buttonRui, "roleImage", CharacterClass_GetCharacterRoleImage( itemFlav ) )
+		var buttonRui = fileLevel.characterButtonRuis[index]
+		RuiSetImage( buttonRui, "portraitImage", CharacterClass_GetGalleryPortrait( character ) )
+		RuiSetImage( buttonRui, "portraitBackground", CharacterClass_GetGalleryPortraitBackground( character ) )
+		RuiSetString( buttonRui, "portraitName", Localize( ItemFlavor_GetLongName( character ) ) )
+		RuiSetImage( buttonRui, "roleImage", CharacterClass_GetCharacterRoleImage( character ) )
+		RuiSetColorAlpha( buttonRui, "baseNameBackgroundColor", SrgbToLinear( (fileLevel.characterSkins.len() > 0) ? CharacterSkin_GetCharacterSelectLabelColorOverride( fileLevel.characterSkins[index] ) : <1.0, 1.0, 1.0> ), 1.0 )
 	}
 
-	array<int> rowSizes = GetCharacterButtonRowSizes( allCharacters.len() )
-	array< array<var> > buttonRows
-
-	int buttonIndex = 0
-	foreach ( rowSize in rowSizes )
-	{
-		array<var> buttons
-		int last = buttonIndex + rowSize
-
-		while ( buttonIndex < last )
-		{
-			buttons.append( fileLevel.characterButtons[buttonIndex] )
-			buttonIndex++
-		}
-
-		buttonRows.append( buttons )
-	}
+	array< array<var> > buttonRows = GetCharacterButtonRows( characterButtons )
 	LayoutCharacterButtons( buttonRows )
 	UpdateButtonStates()
 }
@@ -1325,26 +1335,18 @@ void function UI_OnCharacterSelectMenu_NavBack()
 	// Don't close the menu during loadout selection
 	if ( fileLevel.isBrowseMode )
 	{
-		CloseAllMenus()
-		RunClientScript("CloseCharacterSelectNewMenu_AimTrainer" )
-		
-		if( ISAIMTRAINER )
-		{
-			RunClientScript("ServerCallback_OpenFRChallengesSettings")
-			RunClientScript("ServerCallback_CoolCameraOnMenu")
-		}
-		
+		RunClientScript( "CloseCharacterSelectNewMenu" )
 		return
-	} 
-	else 
-		RunClientScript( "Client_TryUnlockCharacter" )
+	}
+
+	RunClientScript( "Client_TryUnlockCharacter" )
 }
 
 void function UI_CloseCharacterSelect()
 {
 	SetBlurEnabled( false )
 	if ( GetActiveMenu() == fileForever.menu )
-		CloseAllMenus() //CloseActiveMenu()
+		CloseActiveMenu()
 	else if ( IsMenuInMenuStack( fileForever.menu ) )
 		RemoveFromMenuStack( fileForever.menu )
 }
@@ -1362,7 +1364,7 @@ void function CloseCharacterSelectMenuAtTime( float closeTimeStamp )
 	while ( Time() < closeTimeStamp - SCREEN_COVER_TRANSITION_OUT_DURATION - 0.1 )
 		WaitFrame()
 
-	wait Playlist() == ePlaylists.fs_scenarios ? CHARACTER_SELECT_CLOSE_TRANSITION_DURATION : ScreenCoverTransition( Time() + CHARACTER_SELECT_CLOSE_TRANSITION_DURATION )
+	waitthread ScreenCoverTransition( Time() + CharSelect_GetOutroTransitionDuration() )
 
 	CloseCharacterSelectNewMenu()
 
@@ -1375,52 +1377,18 @@ void function CloseCharacterSelectNewMenu()
 
 	RunUIScript( "UI_CloseCharacterSelect" )
 
-	foreach( func in file.Callbacks_OnCharacterMenuClosed )
-		func()
 
 	RemoveCallback_OnPlayerDisconnected( OnPlayerDisconnected )
 	RemoveDestroyCallback( "player", OnPlayerDestroyed )
 
-	// Reset camera, DOF, color correction, and fog
-	if ( IsValid( fileLevel.camera ) )
-	{
-		if (FS_ShouldShowCustomCharacterSelect())
-		{
-			fileLevel.camera.SetFOV( CAMERA_FOV )
-		} else 
-		{
-			fileLevel.camera.SetFOV( CAMERA_FOV_LEGACY )
-		}
-	}
-	GetLocalClientPlayer().ClearMenuCameraEntity()
-	DoF_SetNearDepthToDefault()
-	DoF_SetFarDepthToDefault()
-	DoFSetDilateInfocus( false )
-	ColorCorrection_SetWeight( fileLevel.colorCorrection, 0.0 )
-	ColorCorrection_SetExclusive( fileLevel.colorCorrection, false )
-	SetMapSetting_FogEnabled( true )
+	CharacterSelect_RestorePlayerView()
 
-	// Delete menu entities
-	DeleteMenuEntities()
-
-	if ( fileLevel.lightEntsExist )
-	{
-		fileLevel.keyLight.SetTweakLightRealtimeShadows( false )
-		fileLevel.keyLight.SetTweakLightUpdateShadowsEveryFrame( false )
-
-		fileLevel.fillLight.SetTweakLightRealtimeShadows( false )
-		fileLevel.fillLight.SetTweakLightUpdateShadowsEveryFrame( false )
-
-		fileLevel.rimLightL.SetTweakLightRealtimeShadows( false )
-		fileLevel.rimLightL.SetTweakLightUpdateShadowsEveryFrame( false )
-
-		fileLevel.rimLightR.SetTweakLightRealtimeShadows( false )
-		fileLevel.rimLightR.SetTweakLightUpdateShadowsEveryFrame( false )
-	}
-
-	fileLevel.menuEntsReady = false
+	fileLevel.menuIsOpen = false
 
 	OnCharacterSelectNewMenuClosed_RemoveCallbacks()
+
+	foreach( func in file.Callbacks_OnCharacterMenuClosed )
+		func()
 }
 
 void function CloseCharacterSelectNewMenu_AimTrainer()
@@ -1434,15 +1402,7 @@ void function CloseCharacterSelectNewMenu_AimTrainer()
 
 	// Reset camera, DOF, color correction, and fog
 	if ( IsValid( fileLevel.camera ) )
-	{
-		if (FS_ShouldShowCustomCharacterSelect())
-		{
-			fileLevel.camera.SetFOV( CAMERA_FOV )
-		} else
-		{
-			fileLevel.camera.SetFOV( CAMERA_FOV_LEGACY )
-		}
-	}
+		fileLevel.camera.SetFOV( CAMERA_FOV )
 	GetLocalClientPlayer().ClearMenuCameraEntity()
 	DoF_SetNearDepthToDefault()
 	DoF_SetFarDepthToDefault()
@@ -1470,8 +1430,6 @@ void function CloseCharacterSelectNewMenu_AimTrainer()
 	}
 
 	fileLevel.menuEntsReady = false
-
-	OnCharacterSelectNewMenuClosed_RemoveCallbacks()
 }
 void function OnCharacterSelectNewMenuClosed_RemoveCallbacks()
 {
@@ -1518,11 +1476,17 @@ void function CreateCharacterSelectClientEnts()
 		if ( nearestAspectRatio > 2.25 )
 			offset += <0, 25, 0>
 
+		if ( IsValid( fileLevel.backgroundModelGeo ) )
+			fileLevel.backgroundModelGeo.Destroy()
+
 		fileLevel.backgroundModelGeo = CreateClientSidePropDynamic( targetBackground.GetOrigin() - offset, targetBackground.GetAngles(), BACKGROUND_GEO_MODEL )
 		fileLevel.backgroundModelGeo.kv.solid = 0
 		fileLevel.backgroundModelGeo.kv.disableshadows = 1
 		fileLevel.backgroundModelGeo.kv.fadedist = -1
 		fileLevel.backgroundModelGeo.MakeSafeForUIScriptHack()
+
+		if ( IsValid( fileLevel.backgroundModelSmoke ) )
+				fileLevel.backgroundModelSmoke.Destroy()
 
 		fileLevel.backgroundModelSmoke = CreateClientSidePropDynamic( targetBackground.GetOrigin() - offset, targetBackground.GetAngles(), BACKGROUND_SMOKE_MODEL )
 		fileLevel.backgroundModelSmoke.kv.solid = 0
@@ -1667,22 +1631,16 @@ void function UpdateCamera()
 {
 	entity player = GetLocalClientPlayer()
 
+	if ( fileLevel.menuEntsExist )
+	{
+		player.SetMenuCameraEntity( fileLevel.camera )
+		fileLevel.camera.SetTargetFOV( CAMERA_FOV, true, EASING_CUBIC_INOUT, CAMERA_TRANSITION_DURATION )
+	}
+
 	ColorCorrection_SetExclusive( fileLevel.colorCorrection, true )
 	ColorCorrection_SetWeight( fileLevel.colorCorrection, 1.0 )
 	SetMapSetting_FogEnabled( false )
 
-	if ( fileLevel.menuEntsExist )
-	{
-		player.SetMenuCameraEntity( fileLevel.camera )
-		if (FS_ShouldShowCustomCharacterSelect())
-		{
-			fileLevel.camera.SetTargetFOV( CAMERA_FOV, true, EASING_CUBIC_INOUT, CAMERA_TRANSITION_DURATION )
-		} else {
-			fileLevel.camera.SetTargetFOV( CAMERA_FOV_LEGACY, true, EASING_CUBIC_INOUT, CAMERA_TRANSITION_DURATION )
-			DoF_SetNearDepthToDefault()
-			DoF_SetFarDepthToDefault()
-		}
-	}
 }
 
 void function FooterRui()
@@ -1834,6 +1792,15 @@ void function ReloadMenu()
 	OpenCharacterSelectNewMenu()
 }
 
+bool function CharacterSelect_CustomIsCharacterLockedForPlayer( ItemFlavor character, entity player )
+{
+	foreach ( func in file.Callbacks_CustomIsCharacterLocked )
+	{
+		if ( func( character, player ) )
+			return true
+	}
+	return false
+}
 #endif //CLIENT
 
 
@@ -2441,7 +2408,7 @@ void function UpdateButtonStates()
 			RuiSetInt( buttonRui, "localPlayerTeamColorIndex", localPlayer.GetTeamMemberIndex() )
 		}
 
-		bool isLocked = fileLevel.lockedButtonIndexies.contains( i )
+		bool isLocked = fileLevel.lockedButtonIndexes.contains( i )
 		if ( isLocked )
 		{
 			Hud_SetLocked( button, true )
@@ -2804,6 +2771,11 @@ void function TryUpdateLightingRig( ItemFlavor character, ItemFlavor characterSk
 
 	CharacterMenuLightData lightData
 
+	if ( CharacterSkin_HasMenuCustomLighting( characterSkin ) )
+	{
+		lightData = CharacterSkin_GetMenuCustomLightData( characterSkin )
+	}
+	else
 	{
 		lightData = CharacterClass_GetMenuLightData( character )
 	}
@@ -2815,7 +2787,7 @@ void function TryUpdateLightingRig( ItemFlavor character, ItemFlavor characterSk
 	fileLevel.rimLightR.SetTweakLightColor( lightData.rimR_color )
 
 	//
-	//fileLevel.lightRigModel.Anim_Play( lightData.animSeq )
+	fileLevel.lightRigModel.Anim_Play( lightData.animSeq )
 	int attachIdx_fill = fileLevel.lightRigModel.LookupAttachment( "LIGHT_1" )
 	int attachIdx_rimL = fileLevel.lightRigModel.LookupAttachment( "LIGHT_2" )
 	int attachIdx_rimR = fileLevel.lightRigModel.LookupAttachment( "LIGHT_3" )
