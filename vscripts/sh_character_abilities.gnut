@@ -11,6 +11,7 @@ global function CharacterClass_GetUltimateAbility
 global function CharacterClass_GetPassiveAbility
 global function CharacterAbility_GetWeaponClassname
 global function CharacterAbility_GetPassiveIndex
+global function CharacterAbility_GetPassiveWeaponMod
 #endif
 
 
@@ -177,6 +178,14 @@ int function CharacterAbility_GetPassiveIndex( ItemFlavor flavor )
 }
 #endif
 
+#if SERVER || CLIENT || UI 
+string function CharacterAbility_GetPassiveWeaponMod( ItemFlavor flavor )
+{
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.ability )
+
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "passiveWeaponMod" )
+}
+#endif
 
 
 ///////////////////

@@ -1263,6 +1263,10 @@ void function GiveLoadoutRelatedWeapons( entity player )
 
 	GivePassive( player, CharacterAbility_GetPassiveIndex( passive ) )
 
+	string passiveWeaponMod = CharacterAbility_GetPassiveWeaponMod( passive )
+	if ( passiveWeaponMod != "" )
+		GiveExtraWeaponMod( player, passiveWeaponMod )
+
 	if( ItemFlavor_GetHumanReadableRef( character ) == "character_caustic" || ItemFlavor_GetHumanReadableRef( character ) == "character_gibraltar" )
 	{
 		if( !PlayerHasPassive( player, ePassives.PAS_FORTIFIED) )
