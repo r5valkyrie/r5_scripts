@@ -38,6 +38,13 @@ global struct RUIWorldCoordinates // this isn't specific to RUI, it generally re
 	vector down
 }
 
+global struct ScreenSpaceData
+{
+	int   deltaCenterX
+	int   deltaCenterY
+	float degsFromCenter
+}
+
 struct LampData
 {
 	int id
@@ -194,6 +201,11 @@ enum Crosshair_State
 }
 
 ***************************************************/
+
+
+#if DEVELOPER
+const bool SCREEN_SPACE_DATA_DEBUG = false
+#endif
 
 void function TryTrackAIAnimDataFromClient()
 {	
@@ -2048,6 +2060,61 @@ void function DeleteSpawnedClientSideDynamicLightsWithId( int id )
 		file.clientLightsFromServer.remove( i )
 	}
 }
+ScreenSpaceData function GetScreenSpaceData( entity player, vector position )
+{
+	ScreenSpaceData data
+	int screenWidth          = GetScreenSize().width
+	int screenHeight         = GetScreenSize().height
+
+	bool posOnScreen = false
+	int screenPosX   = -1
+	int screenPosY   = -1
+
+	var results = player.GetPositionInScreenSpace( position )
+
+#if DEVELOPER
+		if ( SCREEN_SPACE_DATA_DEBUG )
+		{
+			DebugDrawMark( position, 5, COLOR_RED, true, 1.5 )
+		}
+#endif
+
+	posOnScreen = bool( results[0] )
+	screenPosX = expect int( results[1] )
+	screenPosY = expect int( results[2] )
+
+	screenPosX = ClampInt( screenPosX, 0, screenWidth )
+	screenPosY = ClampInt( screenPosY, 0, screenHeight )
+
+	int centerX = screenWidth / 2
+	int centerY = screenHeight / 2
+
+	int deltaX = screenPosX - centerX
+	int deltaY = centerY - screenPosY 
+
+	float angleRad = atan2( deltaX, deltaY )
+
+	float degs = RadToDeg( angleRad )
+	if ( degs < 0 )
+	{
+		degs += 360
+	}
+
+#if DEVELOPER
+		if ( SCREEN_SPACE_DATA_DEBUG )
+		{
+			printt( "posOnScreen: " + posOnScreen + " screenX: " + screenPosX + " screenY: " + screenPosY + " degrees: " + degs)
+		}
+#endif
+
+	data.deltaCenterX   = deltaX
+	data.deltaCenterY   = deltaY
+	data.degsFromCenter = degs
+
+	return data
+}
+
+
 
 void function DebugSpawnedLightEntities()
 {

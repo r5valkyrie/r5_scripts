@@ -4820,17 +4820,31 @@ void function DebugDrawLineFromEntToPos( entity ent, vector pos, int r, int g, i
 }
 
 
-bool function PlayerIsInADS( entity player )
+bool function PlayerIsInADS( entity player, bool checkMelee = true  )
 {
 	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 
 	if ( !IsValid( activeWeapon ) )
 		return false
 
-	if ( activeWeapon.GetWeaponSettingBool( eWeaponVar.attack_button_presses_melee ) )
-		return false
+	if ( checkMelee )
+	{
+		if ( activeWeapon.GetWeaponSettingBool( eWeaponVar.attack_button_presses_melee ) )
+			return false
+	}
 
 	return activeWeapon.IsWeaponAdsButtonPressed() || activeWeapon.IsWeaponInAds()
+}
+
+float function GetCurrentPlayerFOV( entity player )
+{
+	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	if ( IsValid( weapon ) )
+	{
+		return weapon.GetWeaponZoomFOV()
+	}
+
+	return float( player.GetDefaultFOV() )
 }
 
 //bool function PlayerIsInMeleeBlockingADS( entity player )

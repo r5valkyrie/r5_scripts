@@ -65,11 +65,6 @@ const string SONIC_BLAST_SECOND_CHARGE_3P = "Seer_Tac_Shot_3p"  //3p char shooti
 const string SONIC_BLAST_CYLINDER_FORM_3P = "Seer_Tac_Cylinder_Form_3p"  //3p Tac Cylinder creation before explode. -AK
 const string SONIC_BLAST_TARGET_ACQUIRED_SOUND = "Seer_AcquireTarget_1P"
 
-// Heartbeat sensor constants (from Seer passive)
-global const float HEARTBEAT_SENSOR_NATURAL_RANGE = 50
-global const float HEARTBEAT_SENSOR_NATURAL_RANGE_UPGRADE = 75
-global const float HEARTBEAT_SENSOR_INITIAL_ACTIVATION_DELAY_DEFAULT = 0.4
-
 struct
 {
 	#if SERVER

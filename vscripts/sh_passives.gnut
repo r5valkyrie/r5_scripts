@@ -118,6 +118,7 @@ global enum ePassives
 	PAS_TAC_UPGRADE_TWO,
 	PAS_ULT_UPGRADE_ONE,
 	PAS_ULT_UPGRADE_TWO,
+	PAS_PAS_UPGRADE_ONE,
 	
 	_count,
 }

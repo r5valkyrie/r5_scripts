@@ -485,6 +485,8 @@ void function PassivesAllowed_Init()
 		ePlaylists.survival_duos,
 		ePlaylists.survival_firingrange,
 		ePlaylists.survival_arenas
+		ePlaylists.survival_dev
+		ePlaylists.dev_default
 	]
 
 	bool result = ( allowedPassiveGamemodes.contains( Gamemode() ) && allowedPassivePlaylists.contains( Playlist() ) )

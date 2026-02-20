@@ -61,6 +61,9 @@ global function GetUnitFramesRui
 global function HACK_TrackPlayerPositionOnScript
 global function UpdateEquipmentSlot
 
+global function Minimap_SetVisiblityCone
+global function Minimap_SetVisiblityConeColor
+
 global function RegisterDefaultMinimapPackage
 #if DEVELOPER
 global function DumpMinimapHandles
@@ -2188,6 +2191,23 @@ void function FS_TrackPlayerPositionOnScript_NEW_HaloRadar( var rui, entity play
 
 		wait file.HALO_RADAR_UPDATE_TIME
 	}
+}
+
+void function Minimap_SetVisiblityCone( bool visibility, float range = 2800, asset image = $"", vector color = <0,0,0>, float alpha = 0.1, float lerpTime = 0.2 )
+{
+	RuiSetBool( file.minimap_you, "showVisibilityCone", visibility )
+	RuiSetFloat( file.minimap_you, "visibilityConeRange", range )
+	RuiSetAsset( file.minimap_you, "visibilityConeImage", image )
+	RuiSetFloat3( file.minimap_you, "visibilityConeColor", color )
+	RuiSetFloat( file.minimap_you, "visibilityConeAlpha", alpha )
+	RuiSetFloat( file.minimap_you, "visibilityConeLerpTime", lerpTime )
+}
+
+void function Minimap_SetVisiblityConeColor( vector color = <0,0,0>, float alpha = 0.1, float lerpTime = 0.2  )
+{
+	RuiSetFloat3( file.minimap_you, "visibilityConeColor", color )
+	RuiSetFloat( file.minimap_you, "visibilityConeAlpha", alpha )
+	RuiSetFloat( file.minimap_you, "visibilityConeLerpTime", lerpTime )
 }
 
 

@@ -72,6 +72,7 @@ global struct TraceResults
 	bool startSolid
 	bool allSolid
 	bool hitSky
+	bool hitBackFace
 	int contents
 }
 
@@ -245,6 +246,10 @@ global struct PartyMember
 	string hardware
 	bool ready
 	bool present
+	string eaid
+	int boostCount
+	string unspoofedHardware
+	string unspoofedUID
 }
 
 global struct OpenInvite
@@ -467,7 +472,7 @@ global struct WeaponFireBoltParams
 	int additionalRandomSeed
 	bool dontApplySpread
 	int projectileIndex
-	bool deferred
+	bool deferred // (2019-12-01 dw): This doesn't seem to do anything.
 }
 
 global struct WeaponFireGrenadeParams
@@ -482,6 +487,7 @@ global struct WeaponFireGrenadeParams
 	bool lagCompensated
 	bool useScriptOnDamage
 	bool isZiplineGrenade = false
+	string ziplineGrenadeRopeMaterial = "cable/zipline"
 	int projectileIndex
 }
 
@@ -570,8 +576,8 @@ global struct StaticPropRui
 	//
 	// If you create a StaticPropRui struct from scratch to pass to RuiCreateOnStaticProp, you must initialize "ruiName", but "args" can be left empty.
 
-	asset ruiName               //
-	table<string, string> args  //
+	asset ruiName               // Name of the RUI asset to create
+	table<string, string> args  // Arg overrides.
 
 	//------------------------------
 	// This magic number is how code knows which prop and RUI mesh to use for the topology. Do not remember this across levels, and do not modify it.
@@ -614,6 +620,14 @@ global struct WaypointClusterInfo
 {
 	vector clusterPos
 	int numPointsNear
+}
+
+global struct PlayersInViewInfo
+{
+	entity player
+	bool hasLOS
+	float distanceSqr
+	float dot
 }
 
 global struct NavMesh_FindMeshPath_Result

@@ -16,10 +16,10 @@ WeaponData
 	"menu_icon"										"rui/hud/passive_icons/passive_seer"
 	"hud_icon"										"rui/hud/passive_icons/passive_seer"
 
-	//"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_ability_heartbeat_sensor"
-	//"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_ability_heartbeat_sensor"
-	//"OnWeaponActivate"                          "OnWeaponActivate_ability_heartbeat_sensor"
-    	//"OnWeaponDeactivate"                        "OnWeaponDeactivate_ability_heartbeat_sensor"
+	"OnWeaponPrimaryAttack"							"OnWeaponPrimaryAttack_ability_heartbeat_sensor"
+	"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_ability_heartbeat_sensor"
+	"OnWeaponActivate"                          	"OnWeaponActivate_ability_heartbeat_sensor"
+	"OnWeaponDeactivate"                        	"OnWeaponDeactivate_ability_heartbeat_sensor"
 
 	"clear_fx_on_new_view_model"					"0"
 

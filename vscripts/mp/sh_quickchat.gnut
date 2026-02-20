@@ -1,6 +1,7 @@
 global function ShQuickchat_Init
 #if SERVER || CLIENT
 global function PlayerDeliveryShouldBeUrgent
+global function PlayerDeliveryShouldBeUrgent_Common
 #endif
 #if CLIENT
 global function AddCallback_OnQuickchatEvent
