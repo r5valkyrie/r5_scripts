@@ -84,6 +84,33 @@ global enum eTrackingVisionNetworkedPOITypes
 	PLAYER_ABILITY_TESLA_TRAP,
 	PLAYER_ABILITY_TROPHY_SYSTEM,
 	PLAYER_ABILITY_PHASE_GATE,
+	PLAYER_ABILITY_TRANSLOCATION_TOSS,
+	PLAYER_ABILITY_TRANSLOCATION_TELEPORT,
+	PLAYER_ABILITY_BLACK_MARKET,
+	PLAYER_ABILITY_COVER_WALL,
+	PLAYER_ABILITY_TURRET,
+	PLAYER_ABILITY_BLACK_HOLE,
+	PLAYER_ABILITY_SPACE_ELEVATOR,
+	PLAYER_TRAVERSAL_ELEVATOR_ENTER,
+	PLAYER_TRAVERSAL_ELEVATOR_EXIT,
+	PLAYER_LOOT_PICKUP_GADGET,
+	PLAYER_LOOT_EXCHANGE_GADGET,
+	PLAYER_LOOT_DROP_GADGET,
+	PLAYER_LOOT_ABILITY_VOID_RING,
+	PLAYER_ABILITY_MORTAR_RING_START,
+	PLAYER_ABILITY_MORTAR_RING_END,
+	PLAYER_ABILITY_KNUCKLE_CLUSTER,
+	PLAYER_ABILITY_VALK_PASSIVE_START,
+	PLAYER_ABILITY_VALK_PASSIVE_END,
+	PLAYER_ABILITY_VALK_TACTICAL,
+	PLAYER_ABILITY_VALK_ULTIMATE_START,
+	PLAYER_ABILITY_VALK_ULTIMATE_END,
+              
+	PLAYER_ABILITY_FOCUS_OF_ATTENTION,
+	PLAYER_ABILITY_ECHO_LOCATOR,
+      
+
+	_count,
 }
 
 //CODE enum eTrackingPOIPriority
@@ -113,11 +140,32 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BUBBLE_BUNKER:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TESLA_TRAP:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TROPHY_SYSTEM:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_COVER_WALL:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TURRET:
+               
+                                                                   
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_PHASE_GATE:
+               
+                                                                     
+      
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BLACK_MARKET:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BLACK_HOLE:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_ABILITY_VOID_RING:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_DEATH:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_KILLER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MORTAR_RING_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MORTAR_RING_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_KNUCKLE_CLUSTER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_TACTICAL:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_END:
+              
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_FOCUS_OF_ATTENTION:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ECHO_LOCATOR:
 			return eTrackingPOIPriority.MAX
 
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_SPACE_ELEVATOR:
 		case eTrackingVisionNetworkedPOITypes.DOOR_USE:
 		case eTrackingVisionNetworkedPOITypes.DOOR_DESTROYED:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ZIPLINE_START:
@@ -132,6 +180,8 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_FIRE_WEAPON_GRENADE:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOTBIN_USED:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ELEVATOR_ENTER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ELEVATOR_EXIT:
 			return eTrackingPOIPriority.HIGH
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_ARMOR:
@@ -152,6 +202,8 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HELMET:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_BACKPACK:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_INCAPSHIELD:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_END:
 			return eTrackingPOIPriority.NORMAL
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_MANTLE:
@@ -172,6 +224,12 @@ int function TrackingVision_GetPriorityForPOIType( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_GRENADE:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_HEALTH:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_DATAKNIFE:
+      
+		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_GADGET:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_GADGET:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_GADGET:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TRANSLOCATION_TOSS:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TRANSLOCATION_TELEPORT:
 			return eTrackingPOIPriority.LOW
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_FOOTPRINT:
@@ -257,21 +315,52 @@ vector function TrackingVision_GetOffsetForPOI( int poiEventID )
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_BACKPACK:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_INCAPSHIELD:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_DATAKNIFE:
+      
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TRANSLOCATION_TOSS:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TRANSLOCATION_TELEPORT:
 			return TRACKING_ICON_OFFSET_SHORT
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_DIRTY_BOMB:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BLACK_MARKET:
 			return < 0, 0, 54.0 >
 
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BUBBLE_BUNKER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_COVER_WALL:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TURRET:
+
+               
+                                                                   
+      
+
+		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_ABILITY_VOID_RING:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_PICKUP_GADGET:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_EXCHANGE_GADGET:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_LOOT_DROP_GADGET:
+              
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_ECHO_LOCATOR:
 			return < 0, 0, 24.0 >
 
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BLACK_HOLE:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_SPACE_ELEVATOR:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ELEVATOR_ENTER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_ELEVATOR_EXIT:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_JUMP_PAD:
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_PHASE_GATE:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MORTAR_RING_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_MORTAR_RING_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_KNUCKLE_CLUSTER:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_START:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_END:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_TACTICAL:
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_START:
 			return < 0, 0, 32.0 >
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_ULTIMATE_END:
+			return < 0, 0, 48.0 >
 			
-		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TESLA_TRAP:
-			return < 0, 0, 50 >
-			
+              
+		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_FOCUS_OF_ATTENTION:
+			return < 0, 0, 0.0 >
+      
 		case eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_TROPHY_SYSTEM:
 			return < 0, 0, 8.0 >
 

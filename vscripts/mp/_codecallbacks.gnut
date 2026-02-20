@@ -117,7 +117,11 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 	{
 		if ( IsValid( attacker ) )
 		{
-			if ( IsSpectre( attacker ) )
+			if ( attackerIsTitan )
+			{
+				DamageInfo_SetDamageSourceIdentifier( damageInfo, eDamageSourceId.auto_titan_melee )
+			}
+			else if ( IsSpectre( attacker ) )
 			{
 				DamageInfo_SetDamageSourceIdentifier( damageInfo, eDamageSourceId.spectre_melee )
 			}
@@ -581,6 +585,9 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 	foreach ( callbackFunc in ent.e.entPostDamageCallbacks )
 	{
 		callbackFunc( ent, damageInfo )
+	}
+	if ( attackerIsPlayer )
+	{
 	}
 
 	UpdateLastDamageTime( ent )

@@ -14,11 +14,11 @@ global function DeathBoxListPanel_AddCategory
 global function DeathBoxListPanel_AddItem
 global function DeathBoxListPanel_RemoveItem
 global function DeathBoxListPanel_PerformLayout
-global function NEW_UIToClient_DeathBoxListPanel_HandleAnalogStickScroll
-global function NEW_UIToClient_DeathBoxListPanel_OnMouseWheelScrollUp
-global function NEW_UIToClient_DeathBoxListPanel_OnMouseWheelScrollDown
-global function NEW_UIToClient_DeathBoxListPanel_HandleScrollBarDragPress
-global function NEW_UIToClient_DeathBoxListPanel_HandleScrollBarDragRelease
+global function UIToClient_DeathBoxListPanel_HandleAnalogStickScroll
+global function UIToClient_DeathBoxListPanel_OnMouseWheelScrollUp
+global function UIToClient_DeathBoxListPanel_OnMouseWheelScrollDown
+global function UIToClient_DeathBoxListPanel_HandleScrollBarDragPress
+global function UIToClient_DeathBoxListPanel_HandleScrollBarDragRelease
 
 global function DeathBoxListPanel_ScrollUpdateThread
 
@@ -133,7 +133,7 @@ vector function DeathBoxListPanel_GetCursorPositionSafe()
 #if UI
 vector function DeathBoxListPanel_GetCursorPositionSafe()
 {
-	return GetCursorPosition()
+	return DeathBoxListPanel_GetCursorPositionSafe()
 }
 #endif
 
@@ -483,6 +483,7 @@ void function DeathBoxListPanel_PerformLayout( DeathBoxListPanelData data, Death
 			//
 			//
 			Assert( category.allocatedHeaderPanel == null )
+			Assert( data.availableCategoryHeaders.len() > 0 )
 			if ( data.availableCategoryHeaders.len() > 0 )
 			{
 				category.allocatedHeaderPanel = data.availableCategoryHeaders.pop()
@@ -521,10 +522,13 @@ void function DeathBoxListPanel_PerformLayout( DeathBoxListPanelData data, Death
 		int y = data.edgePadding + visibleCategory.posY - scrollTop
 		if ( data.anchorCategoryHeadersToTop )
 			y = maxint( 0, y )
-		Hud_SetPos( visibleCategory.allocatedHeaderPanel, 0 * contentScaleX, y * contentScaleY )
-		Hud_SetSize( visibleCategory.allocatedHeaderPanel, (data.maxRowWidth + 2 * data.edgePadding) * contentScaleX, visibleCategory.headerHeight * contentScaleY )
-		RuiSetFloat2( Hud_GetRui( visibleCategory.allocatedHeaderPanel ), "categoryPos", <0.0, float(y), 0.0> )
-		HudElem_SetRuiArg( visibleCategory.allocatedHeaderPanel, "categoryHeightRemaining", float(data.edgePadding + visibleCategory.posY + visibleCategory.totalHeight - scrollTop) )
+		if(visibleCategory.allocatedHeaderPanel != null)
+		{
+			Hud_SetPos( visibleCategory.allocatedHeaderPanel, 0 * contentScaleX, y * contentScaleY )
+			Hud_SetSize( visibleCategory.allocatedHeaderPanel, (data.maxRowWidth + 2 * data.edgePadding) * contentScaleX, visibleCategory.headerHeight * contentScaleY )
+			RuiSetFloat2( Hud_GetRui( visibleCategory.allocatedHeaderPanel ), "categoryPos", <0.0, float(y), 0.0> )
+			HudElem_SetRuiArg( visibleCategory.allocatedHeaderPanel, "categoryHeightRemaining", float(data.edgePadding + visibleCategory.posY + visibleCategory.totalHeight - scrollTop) )
+		}
 
 		//
 		int rowSpaceX              = data.edgePadding
@@ -555,6 +559,7 @@ void function DeathBoxListPanel_PerformLayout( DeathBoxListPanelData data, Death
 				//
 				//
 				Assert( item.allocatedButton == null )
+				Assert( data.availableItemButtons.len() > 0 )
 				if ( data.availableItemButtons.len() > 0 )
 				{
 					item.allocatedButton = data.availableItemButtons.pop()
@@ -568,8 +573,13 @@ void function DeathBoxListPanel_PerformLayout( DeathBoxListPanelData data, Death
 			}
 
 			//
-			Hud_SetPos( item.allocatedButton, (rowSpaceX + item.posXInCategorySpace) * contentScaleX, (rowSpaceY + item.posYInCategorySpace - scrollTop) * contentScaleY )
-			Hud_SetSize( item.allocatedButton, visibleCategory.itemWidth * contentScaleX, visibleCategory.itemHeight * contentScaleY )
+			if(item.allocatedButton != null)
+			{
+				Hud_SetPos( item.allocatedButton, (rowSpaceX + item.posXInCategorySpace) * contentScaleX, (rowSpaceY + item.posYInCategorySpace - scrollTop) * contentScaleY )
+				Hud_SetSize( item.allocatedButton, visibleCategory.itemWidth * contentScaleX, visibleCategory.itemHeight * contentScaleY )
+				bool isVisible = ((rowSpaceY + item.posYInCategorySpace - scrollTop) * contentScaleY) > (0 - (visibleCategory.itemHeight * contentScaleY ) + (visibleCategory.headerHeight * contentScaleY))
+				Hud_SetVisible( item.allocatedButton, isVisible )
+			}
 
 			if ( item.posXInCategorySpace <= lastButtonX )
 			{
@@ -591,55 +601,56 @@ void function DeathBoxListPanel_PerformLayout( DeathBoxListPanelData data, Death
 		for ( int itemIdx = 0; itemIdx < items.len(); itemIdx++ )
 		{
 			DeathBoxListPanelItem item = items[itemIdx]
-
-			if ( Hud_IsLocked( item.allocatedButton ) )
-				continue
-
-			//
-			for ( int nextRowIdx = rowIdx + 1; nextRowIdx < visibleElemRows.len(); nextRowIdx++ )
+			if(item.allocatedButton != null)
 			{
-				array<DeathBoxListPanelItem> nextRow = visibleElemRows[nextRowIdx].items
-				bool foundButtonBelow                = false
-				var lastUnlockedButton               = null
-				for ( int rIdx = nextRow.len() - 1; rIdx >= 0; rIdx-- )
+				if ( Hud_IsLocked( item.allocatedButton ) )
+					continue
+
+				//
+				for ( int nextRowIdx = rowIdx + 1; nextRowIdx < visibleElemRows.len(); nextRowIdx++ )
 				{
-					DeathBoxListPanelItem nextItem = nextRow[rIdx]
-					if ( Hud_IsLocked( nextItem.allocatedButton ) )
-						continue
-
-					lastUnlockedButton = nextItem.allocatedButton
-
-					if ( item.posXInCategorySpace <= nextItem.posXInCategorySpace )
+					array<DeathBoxListPanelItem> nextRow = visibleElemRows[nextRowIdx].items
+					bool foundButtonBelow                = false
+					var lastUnlockedButton               = null
+					for ( int rIdx = nextRow.len() - 1; rIdx >= 0; rIdx-- )
 					{
-						Hud_SetNavUp( nextItem.allocatedButton, item.allocatedButton )
-						Hud_SetNavDown( item.allocatedButton, nextItem.allocatedButton )
+						DeathBoxListPanelItem nextItem = nextRow[rIdx]
+						if ( Hud_IsLocked( nextItem.allocatedButton ) )
+							continue
+
+						lastUnlockedButton = nextItem.allocatedButton
+
+						if ( item.posXInCategorySpace <= nextItem.posXInCategorySpace )
+						{
+							Hud_SetNavUp( nextItem.allocatedButton, item.allocatedButton )
+							Hud_SetNavDown( item.allocatedButton, nextItem.allocatedButton )
+							foundButtonBelow = true
+						}
+					}
+
+					if ( !foundButtonBelow && lastUnlockedButton != null )
+					{
+						Hud_SetNavDown( item.allocatedButton, lastUnlockedButton )
 						foundButtonBelow = true
 					}
+
+					if ( foundButtonBelow )
+						break
 				}
 
-				if ( !foundButtonBelow && lastUnlockedButton != null )
+				//
+				//
+				for ( int nextItemIdx = itemIdx + 1; nextItemIdx < items.len(); nextItemIdx++ )
 				{
-					Hud_SetNavDown( item.allocatedButton, lastUnlockedButton )
-					foundButtonBelow = true
-				}
-
-				if ( foundButtonBelow )
-					break
-			}
-
-			//
-			//
-			for ( int nextItemIdx = itemIdx + 1; nextItemIdx < items.len(); nextItemIdx++ )
-			{
-				var nextItemButton = items[nextItemIdx].allocatedButton
-				if ( !Hud_IsLocked( nextItemButton ) )
-				{
-					Hud_SetNavRight( item.allocatedButton, nextItemButton )
-					Hud_SetNavLeft( nextItemButton, item.allocatedButton )
-					break
+					var nextItemButton = items[nextItemIdx].allocatedButton
+					if ( !Hud_IsLocked( nextItemButton ) )
+					{
+						Hud_SetNavRight( item.allocatedButton, nextItemButton )
+						Hud_SetNavLeft( nextItemButton, item.allocatedButton )
+						break
+					}
 				}
 			}
-			//
 		}
 	}
 
@@ -888,7 +899,7 @@ void function DeathBoxListPanel_ScrollUpdateThread()
 
 
 #if(CLIENT)
-void function NEW_UIToClient_DeathBoxListPanel_HandleAnalogStickScroll( entity player, float val )
+void function UIToClient_DeathBoxListPanel_HandleAnalogStickScroll( entity player, float val )
 {
 	file.scrollStickAmount = (fabs( val ) < STICK_DEADZONE ? 0.0 : val)
 }
@@ -896,7 +907,7 @@ void function NEW_UIToClient_DeathBoxListPanel_HandleAnalogStickScroll( entity p
 
 
 #if(CLIENT)
-void function NEW_UIToClient_DeathBoxListPanel_OnMouseWheelScrollUp( var button )
+void function UIToClient_DeathBoxListPanel_OnMouseWheelScrollUp( var button )
 {
 	file.scrollMouseWheelAmount -= 1
 }
@@ -904,7 +915,7 @@ void function NEW_UIToClient_DeathBoxListPanel_OnMouseWheelScrollUp( var button 
 
 
 #if(CLIENT)
-void function NEW_UIToClient_DeathBoxListPanel_OnMouseWheelScrollDown( var button )
+void function UIToClient_DeathBoxListPanel_OnMouseWheelScrollDown( var button )
 {
 	file.scrollMouseWheelAmount += 1
 }
@@ -912,7 +923,7 @@ void function NEW_UIToClient_DeathBoxListPanel_OnMouseWheelScrollDown( var butto
 
 
 #if(CLIENT)
-void function NEW_UIToClient_DeathBoxListPanel_HandleScrollBarDragPress( var button )
+void function UIToClient_DeathBoxListPanel_HandleScrollBarDragPress( var button )
 {
 	vector cursorPos = DeathBoxListPanel_GetCursorPositionSafe()
 	foreach ( DeathBoxListPanelData data in file.deathBoxListPanels )
@@ -957,7 +968,7 @@ bool function PointInBounds( vector point, UIPos pos, UISize size )
 
 
 #if(CLIENT)
-void function NEW_UIToClient_DeathBoxListPanel_HandleScrollBarDragRelease( var button )
+void function UIToClient_DeathBoxListPanel_HandleScrollBarDragRelease( var button )
 {
 	if ( file.scrollGrabState == 1 )
 		file.scrollGrabState = 2

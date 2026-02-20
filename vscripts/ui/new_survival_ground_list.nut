@@ -422,8 +422,8 @@ void function UIToClient_NEW_SurvivalGroundListOpened( var menu )
 		DeathBoxEntryData entryData
 		entryData.lootFlav = SURVIVAL_Loot_GetLootDataByRef( ammoPoolTypeKey )
 		entryData.key = entryData.lootFlav.ref
-		entryData.lootEnts = []
 		fileLevel.deathBoxEntryDataByKey[entryData.key] <- entryData
+		entryData.lootEnts = []
 
 		DeathBoxListPanelItem item
 		item.categoryKey = format( "%02d", 99 - eLootSortCategories.AMMO )

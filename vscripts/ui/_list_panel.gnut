@@ -791,7 +791,7 @@ void function UpdateButtonFocus( ListPanelData data )
 void function ScrollVertical( entity player, float val )
 {
 		if ( CanRunClientScript() )
-			RunClientScript( "NEW_UIToClient_DeathBoxListPanel_HandleAnalogStickScroll", player, val )
+			RunClientScript( "UIToClient_DeathBoxListPanel_HandleAnalogStickScroll", player, val )
 	const float STICK_DEADZONE = 0.15
 	foreach ( ListPanelData data in file.listPanels )
 	{
@@ -817,7 +817,7 @@ void function ScrollVertical( entity player, float val )
 void function MouseWheelUp( var button )
 {
 		if ( CanRunClientScript() )
-			RunClientScript( "NEW_UIToClient_DeathBoxListPanel_OnMouseWheelScrollUp", button )
+			RunClientScript( "UIToClient_DeathBoxListPanel_OnMouseWheelScrollUp", button )
 	foreach ( ListPanelData data in file.listPanels )
 	{
 		if ( !data.isActive )
@@ -834,7 +834,7 @@ void function MouseWheelUp( var button )
 void function MouseWheelDown( var button )
 {
 		if ( CanRunClientScript() )
-			RunClientScript( "NEW_UIToClient_DeathBoxListPanel_OnMouseWheelScrollDown", button )
+			RunClientScript( "UIToClient_DeathBoxListPanel_OnMouseWheelScrollDown", button )
 	foreach ( ListPanelData data in file.listPanels )
 	{
 		if ( !data.isActive )
@@ -929,7 +929,7 @@ void function List_ScrollHandlePress( var button )
 {
                            
 		if ( CanRunClientScript() )
-			RunClientScript( "NEW_UIToClient_DeathBoxListPanel_HandleScrollBarDragPress", button )
+			RunClientScript( "UIToClient_DeathBoxListPanel_HandleScrollBarDragPress", button )
 	foreach ( ListPanelData data in file.listPanels )
 	{
 		if ( !data.isActive )
@@ -961,7 +961,7 @@ void function List_ScrollHandlePress( var button )
 void function List_ScrollHandleRelease( var button )
 {
 		if ( CanRunClientScript() )
-			RunClientScript( "NEW_UIToClient_DeathBoxListPanel_HandleScrollBarDragRelease", button )
+			RunClientScript( "UIToClient_DeathBoxListPanel_HandleScrollBarDragRelease", button )
 	foreach ( ListPanelData data in file.listPanels )
 	{
 		data.isScrollActive = false
