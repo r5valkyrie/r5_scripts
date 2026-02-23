@@ -578,7 +578,6 @@ void function ClearRuiWeaponData( var rui, bool isTitan )
 	RuiSetBool( rui, "hopupMultiAAllowed", false )
 	RuiSetInt( rui, "hopupMultiBTier", 0 )
 	RuiSetBool( rui, "hopupMultiBAllowed", false )
-	RuiSetInt( rui, "hopupLootIdx", -1 )
 	RuiSetBool( rui, "showPassiveBonusPopup", false )
 	RuiSetInt( rui, "weaponTier", 0 )
 
@@ -999,7 +998,6 @@ void function UpdateModsOnSurvivalWeaponRui( var rui, entity weapon )
 
 	if ( !hopupPopupSet )
 	{
-		RuiSetInt( rui, "hopupLootIdx", -1 )
 		RuiSetBool( rui, "showPassiveBonusPopup", false )
 	}
 }

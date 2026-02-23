@@ -181,6 +181,7 @@ void function VideoStopThread( var button )
 
 void function InitGamemodeSelectV2Dialog( var newMenuArg ) //
 {
+	return
 	var menu = GetMenu( "GamemodeSelectV2Dialog" )
 	file.menu = menu
 
