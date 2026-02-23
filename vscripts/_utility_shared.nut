@@ -149,7 +149,8 @@ void function InitWeaponScripts()
 	//		PrecacheProjectileEntity( "crossbow_bolt" )
 	//	#endif
 
-	MpWeaponDoubletake_Init()
+    MpWeaponNemesis_Init() // NEMESIS INIT
+ 	MpWeaponDoubletake_Init()
 	//MpWeaponGrenadeGravity_Init()
 	MpAbilityShifter_Init()
 	MpWeaponDefender_Init()
@@ -3581,14 +3582,8 @@ string function GetPlayerBodyType( entity player )
 	return player.GetPlayerSettingString( "weaponClass" )
 }
 
-table customPlayerVoices
-
 string function GetPlayerVoice( entity player )
 {
-	int playerKey = player.GetEncodedEHandle()
-	if ( playerKey in customPlayerVoices )
-		return expect string( customPlayerVoices[playerKey] )
-
 	if ( player.IsTitan() )
 	{
 		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterClass() )
@@ -3598,12 +3593,6 @@ string function GetPlayerVoice( entity player )
 	}
 
 	return player.GetPlayerSettingString( "voice" )
-}
-
-void function SetPlayerVoiceOverride( entity player, string voice )
-{
-	int playerKey = player.GetEncodedEHandle()
-	customPlayerVoices[playerKey] <- voice
 }
 
 void function SetTeam( entity ent, int team )
