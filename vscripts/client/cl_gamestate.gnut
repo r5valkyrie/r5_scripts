@@ -1169,11 +1169,11 @@ void function UpdateNetGraphThread()
 		if ( file.nestedNetGraphRui != null )
 		{
 			// Update FPS every frame
-			RuiSetInt( file.nestedNetGraphRui, "netGraphFPS", int( GetClientFPS() ) )
-			RuiSetString( file.nestedNetGraphRui, "netGraphServerID", "Object Count: " + GetVisibleObjectCount() + " / " + GetVisibleObjectMax() )
+			int fps = int( GetClientFPS() )
+			RuiSetInt( file.nestedNetGraphRui, "netGraphFPS", fps )
 		}
 		
-		wait 1
+		WaitFrame()
 	}
 }
 //maxPlayerCount
