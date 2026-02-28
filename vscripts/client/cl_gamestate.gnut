@@ -32,6 +32,7 @@ global function GameState_UpdateRuiRoundEndGameTime
 
 global function ClGameState_SetSwitchingSidesSubText
 global function UpdateIsSonyMP
+global function GetServerDebugId
 
 global enum ePlayerStatusType
 {
@@ -1070,6 +1071,15 @@ float function GetGameStartTime()
 	return expect float( level.nv.gameStartTime.tofloat() )
 }
 
+string function GetServerDebugId()
+{
+	int playlistVersion = GetCurrentPlaylistVarInt( "playlist_version", 0 )
+	int timePartial = GetUnixTimestamp()
+	string R5Version = Localize( "#BETA_BUILD_WATERMARK", "#BETA_BUILD_WATERMARK" )
+	
+	return R5Version + ":" + playlistVersion + ":" + timePartial
+}
+
 void function ClGameState_SetSwitchingSidesSubText( string value )
 {
 	file.switchingSidesSubText = value
@@ -1104,20 +1114,18 @@ var function CreateNestedNetGraph( var rui )
 		return
 
 	var nestedGraphRui = RuiCreateNested( rui, "netGraphHandle", $"ui/gamestate_netgraph.rpak" )
-	
-	// Initialize values with RuiSetInt - thread will update FPS every frame
-	RuiSetInt( nestedGraphRui, "netGraphFPS", int( GetClientFPS() + 0.5 ) )
-	RuiSetInt( nestedGraphRui, "netGraphAmortizedLatency", 0 )
-	RuiSetInt( nestedGraphRui, "netGraphBandwidthIn", 0 )
-	RuiSetInt( nestedGraphRui, "netGraphBandwidthOut", 0 )
-	RuiSetInt( nestedGraphRui, "netGraphPacketLoss", 0 )
-	RuiSetInt( nestedGraphRui, "netGraphChoke", 0 )
-	RuiSetString( nestedGraphRui, "netGraphServerID", "R5Valkyrie V3.2" )
+	RuiTrackInt( nestedGraphRui, "netGraphFPS", null, RUI_TRACK_NETGRAPH_FPS )
+	RuiTrackInt( nestedGraphRui, "netGraphAmortizedLatency", null, RUI_TRACK_NETGRAPH_SPING )
+	RuiTrackInt( nestedGraphRui, "netGraphBandwidthIn", null, RUI_TRACK_NETGRAPH_BANDWIDTH_IN )
+	RuiTrackInt( nestedGraphRui, "netGraphBandwidthOut", null, RUI_TRACK_NETGRAPH_BANDWIDTH_OUT )
+	                                                                                       
+	                                                                                        
+	RuiTrackInt( nestedGraphRui, "netGraphPacketLoss", null, RUI_TRACK_NETGRAPH_PACKETLOSS )
+	RuiTrackInt( nestedGraphRui, "netGraphChoke", null, RUI_TRACK_NETGRAPH_PACKETCHOKE )
+	RuiSetString( nestedGraphRui, "netGraphServerID", GetServerDebugId() )
 
 	file.nestedNetGraphRui  = nestedGraphRui
 	file.netGraphRuiCreated = true
-	
-	thread UpdateNetGraphThread()
 }
 
 
@@ -1149,7 +1157,6 @@ void function OnSettingsUpdated()
 		else
 		{
 			RuiDestroyNestedIfAlive( file.gamestateRui, "netGraphHandle" )
-			file.netGraphRuiCreated = false
 		}
 
 		file.isNetGraphEnabled = isNetGraphEnabled
@@ -1162,18 +1169,4 @@ void function UpdateAnonymousModeSetting( entity playerEnt, bool oldVal, bool ne
 	//
 }
 
-void function UpdateNetGraphThread()
-{
-	while ( file.netGraphRuiCreated && file.isNetGraphEnabled )
-	{
-		if ( file.nestedNetGraphRui != null )
-		{
-			// Update FPS every frame
-			RuiSetInt( file.nestedNetGraphRui, "netGraphFPS", int( GetClientFPS() ) )
-			RuiSetString( file.nestedNetGraphRui, "netGraphServerID", "Object Count: " + GetVisibleObjectCount() + " / " + GetVisibleObjectMax() )
-		}
-		
-		wait 1
-	}
-}
 //maxPlayerCount
