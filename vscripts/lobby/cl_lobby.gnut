@@ -21,6 +21,8 @@ void function Lobby_AddLocalPlayer()
 			model.Destroy()
 	}
 
+	S11Lobby_CreateProwler()
+
 }
 
 void function UICallback_ChangeLobbyCameraPosition(int tabIndex)
@@ -47,4 +49,23 @@ void function UICallback_PlayTabLobbyCamera()
 	vector angles = < 1.5, 90, -9.18695e-17 >
 	entity camera = CreateClientSidePointCamera(origin, angles, 17)
 	player.SetMenuCameraEntity( camera )
+}
+
+void function S11Lobby_CreateProwler()
+{
+	array<entity> targetInfos = GetEntArrayByScriptName("lobby_prowler")
+	while ( targetInfos.len() != 0 )
+	{
+		entity targetInfo = targetInfos.pop()
+		if ( !IsValid ( targetInfo ) )
+			return
+
+		entity prowler = CreateClientSidePropDynamic( targetInfo.GetOrigin(),  targetInfo.GetAngles(), $"mdl/creatures/prowler/prowler_apex.rmdl")
+		thread PlayAnim( prowler, "pr_idle_lay" )
+		prowler.SetModelScale( 0.7 )
+		prowler.SetSkin( 2 )
+
+		targetInfo.Destroy()
+	}
+
 }
