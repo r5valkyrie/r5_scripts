@@ -147,7 +147,7 @@ void function Cl_DeathScreen_Init()
 	AddCallback_OnBleedoutEnded( DeathScreen_BleedoutEnded )
 	RegisterServerVarChangeCallback( "gameState", DeathScreen_OnGamestateChanged )
 	AddCallback_GameStateEnter( eGameState.Playing, DeathScreen_OnPlaying )
-	AddCallback_GameStateEnter( eGameState.Epilogue, DeathScreen_OnGamestateChanged )
+	AddCallback_GameStateEnter( eGameState.Resolution, DeathScreen_OnGamestateChanged )
 
 	RegisterNetworkedVariableChangeCallback_int( "spectatorTargetCount", DeathScreen_SpectatorTargetCountChanged )
 
@@ -902,7 +902,7 @@ void function UICallback_HideSquadSummary()
 		//
 	}
 
-	if ( GetGameState() < eGameState.Epilogue )
+	if ( GetGameState() < eGameState.Resolution )
 		clientPlayer.ClearMenuCameraEntity()
 }
 
@@ -1252,7 +1252,7 @@ void function UpdateMenuBackground()
 {
 	entity clientPlayer = GetLocalClientPlayer()
 
-	if ( GetGameState() >= eGameState.Epilogue && !IsShowingVictorySequence() )
+	if ( GetGameState() >= eGameState.Resolution && !IsShowingVictorySequence() )
 	{
 		clientPlayer.SetMenuCameraEntityWithAudio( file.deathScreenMenuCamera )
 		if ( file.deathScreenMenuBackgroundModel != null )
@@ -1475,7 +1475,7 @@ void function UpdateBlackBarRui()
 	if ( ! IsValid ( player ) )
 		return	
 	
-	if ( GetGameState() == eGameState.Epilogue )
+	if ( GetGameState() == eGameState.Resolution )
 	{
 		RuiDestroyIfAlive( file.blackBarRui )
 		file.blackBarRui = null

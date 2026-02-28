@@ -1167,7 +1167,7 @@ void function Sequence_WinnerDetermined()
 
 void function Sequence_Epilogue()
 {
-	SetGameState( eGameState.Epilogue )
+	SetGameState( eGameState.Resolution )
 
 	UpdateMatchSummaryPersistentVars( GetWinningTeam() )
 
@@ -1815,7 +1815,7 @@ void function OnClientConnected( entity player )
 
 	switch ( GetGameState() )
 	{
-		case eGameState.Epilogue:
+		case eGameState.Resolution:
 			Remote_CallFunction_ByRef( player, "ServerCallback_ShowWinningSquadSequence" )
 			break
 	}

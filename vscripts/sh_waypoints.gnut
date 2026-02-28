@@ -390,7 +390,7 @@ bool function ShouldWaypointRuiBeVisible()
 			break
 
 		case eGameState.WinnerDetermined:
-		case eGameState.Epilogue:
+		case eGameState.Resolution:
 		case eGameState.Postmatch:
 			visible = false
 	}

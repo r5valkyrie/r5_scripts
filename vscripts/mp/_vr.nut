@@ -56,7 +56,7 @@ function ShouldDoDissolveDeath( guy, damageInfo )
 
 	// can't dissolve players when they're not playing the game, otherwise when the game starts again they're invisible
 	local gs = GetGameState()
-	if ( gs != eGameState.Playing && gs != eGameState.SuddenDeath && gs != eGameState.Epilogue )
+	if ( gs != eGameState.Playing && gs != eGameState.SuddenDeath && gs != eGameState.Resolution )
 	{
 		printt( "Skipping player dissolve death because game is not active ( player:", guy, ")" )
 		return false

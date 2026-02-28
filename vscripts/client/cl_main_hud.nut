@@ -64,10 +64,10 @@ struct
 	bool adsWatcherRunning = false
 	bool crosshairAdsActive = false
 	float crosshairAdsHideStartTime = -1.0
-	
+
 	bool hideChat = false
-	
-	bool muted = false	
+
+	bool muted = false
 } file
 
 void function ClMainHud_Init()
@@ -100,10 +100,10 @@ void function ClMainHud_Init()
 
 	AddCreateCallback( "titan_cockpit", CockpitHudInit )
 	PrecacheParticleSystem($"P_player_boost_screen")
-	
+
 	RegisterServerVarChangeCallback( "gameState", UpdateMainHudFromGameState )
 	AddCallback_OnPlayerLifeStateChanged( UpdateMainHudFromLifeState )
-	
+
 	RegisterServerVarChangeCallback( "minimapState", UpdateMinimapVisibility )
 
 	AddCinematicEventFlagChangedCallback( CE_FLAG_EMBARK, CinematicEventUpdateDoF )
@@ -426,7 +426,7 @@ void function UpdateMainHudVisibility( entity player, float duration = 0.0 )
 
 	bool isVisible = (mainVGUI.s.enabledState == VGUI_OPEN) || (mainVGUI.s.enabledState == VGUI_OPENING)
 	bool hideHudInstantly = ( (ceFlags & CE_FLAG_HIDE_MAIN_HUD_INSTANT) > 0 ) || !isVisible
-		
+
 	if ( !shouldBeVisible )
 		thread MainHud_TurnOff_RUI( hideHudInstantly )
 	else
@@ -931,7 +931,7 @@ bool function ShouldMainHudBeVisible( entity player )
 
 	if ( ceFlags & CE_FLAG_HIDE_MAIN_HUD )
 		return false
-		
+
 	if ( ceFlags & CE_FLAG_HIDE_MAIN_HUD_INSTANT )
 		return false
 
@@ -974,7 +974,7 @@ bool function ShouldMainHudBeVisible( entity player )
 			break
 
 		case eGameState.WinnerDetermined:
-		case eGameState.Epilogue:
+		case eGameState.Resolution:
 		case eGameState.Postmatch:
 			return false
 	}
@@ -1025,7 +1025,7 @@ bool function ShouldPermanentHudBeVisible( entity player )
 			break
 
 		case eGameState.WinnerDetermined:
-		case eGameState.Epilogue:
+		case eGameState.Resolution:
 		case eGameState.Postmatch:
 			return false
 	}
@@ -1071,7 +1071,7 @@ void function InitChatHUD()
 void function UpdateChatHUDVisibility()
 {
 	local chat = HudElement( "IngameTextChat" )
-	
+
 	//Saves what you typed to a global string
 	//used for all chat if they want to implement it into their gamemode
 	if( !isMuted() )

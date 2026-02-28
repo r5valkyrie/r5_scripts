@@ -115,7 +115,7 @@ void function DeathScreenMenuOnOpen()
 			// AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenSpectate" ), "#DEATH_SCREEN_SPECTATE" )		//
 			AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenRecap" ), "#DEATH_SCREEN_RECAP" )			//
 			// AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenSquadSummary" ), "#DEATH_SCREEN_SUMMARY" )	//
-		} 
+		}
 		else
 		{ */
 			AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenSpectate" ), "#DEATH_SCREEN_SPECTATE" )		//
@@ -138,7 +138,7 @@ void function DeathScreenMenuOnOpen()
 		SetTabDefEnabled( squadSummaryTab, false )
 		SetTabDefEnabled( spectateTab, false )
 		Hud_SetVisible( Hud_GetChild( file.menu, "FlowstateTitle" ), true )
-	} 
+	}
 	else
 	{
 		TabData tabData        = GetTabDataForPanel( file.menu )
@@ -191,11 +191,11 @@ void function UI_OpenDeathScreenMenu( int tabIndex )
 	{
 		AdvanceMenu( file.menu )
 	}
-	
+
 	EnableDeathScreenTab_Internal( tabIndex, true )
 
 	TabData tabData = GetTabDataForPanel( file.menu )
-	
+
 	ActivateTab( tabData, tabIndex )
 }
 
@@ -233,7 +233,7 @@ void function EnableDeathScreenTab_Internal( int tabIndex, bool enable )
 	{
 		return
 	}
-	
+
 	string panelName
 	switch( tabIndex )
 	{
@@ -270,7 +270,7 @@ void function UI_SwitchToDeathScreenTab( int tabIndex )
 {
 	if ( !IsMenuInMenuStack( file.menu ) )
 		return
-	
+
 	EnableDeathScreenTab_Internal( tabIndex, true )
 
 	TabData tabData = GetTabDataForPanel( file.menu )
@@ -413,7 +413,7 @@ void function DeathScreenMenuOnNavBack()
 	TabData tabData = GetTabDataForPanel( file.menu )
 	{
 		int tabIndex = GetMenuActiveTabIndex( file.menu )
-		if ( tabIndex == eDeathScreenPanel.SPECTATE && GetGameState() < eGameState.Epilogue )
+		if ( tabIndex == eDeathScreenPanel.SPECTATE && GetGameState() < eGameState.Resolution )
 		{
 			if ( file.isEliminated && IsTabIndexEnabled( tabData, eDeathScreenPanel.SQUAD_SUMMARY ) )
 			{
@@ -424,7 +424,7 @@ void function DeathScreenMenuOnNavBack()
 				OpenSystemMenu()
 			}
 		}
-		else if ( tabIndex == eDeathScreenPanel.DEATH_RECAP && GetGameState() < eGameState.Epilogue )
+		else if ( tabIndex == eDeathScreenPanel.DEATH_RECAP && GetGameState() < eGameState.Resolution )
 		{
 			if ( file.isEliminated && IsTabIndexEnabled( tabData, eDeathScreenPanel.SQUAD_SUMMARY ) )
 			{
@@ -464,7 +464,7 @@ bool function DeathScreenShowLobbyButton()
 bool function DeathScreenCanLeaveMatch()
 {
 	//
-	if ( GetGameState() >= eGameState.Epilogue )
+	if ( GetGameState() >= eGameState.Resolution )
 		return true
 
 	//
@@ -476,7 +476,7 @@ bool function DeathScreenCanLeaveMatch()
 
 bool function DeathScreenShowNavBack()
 {
-	return !CurrentTabIsDeadEnd() && GetGameState() < eGameState.Epilogue
+	return !CurrentTabIsDeadEnd() && GetGameState() < eGameState.Resolution
 }
 
 bool function DeathScreenShowMenuButton()

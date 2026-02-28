@@ -398,11 +398,15 @@ global const SWITCHING_SIDES_DELAY = 8.0
 global const SWITCHING_SIDES_DELAY_REPLAY = 2.0
 
 global const GAME_WINNER_DETERMINED_WAIT = 12.8 // Changing this will break music timing for champion sequence
-global const GAME_EPILOGUE_PLAYER_RESPAWN_LEEWAY = 10.0
-global const GAME_EPILOGUE_ENDING_LEADUP = 6.0
+global const GAME_RESOLUTION_PLAYER_RESPAWN_LEEWAY = 10.0
+global const GAME_RESOLUTION_ENDING_LEADUP = 6.0
 global const GAME_POSTROUND_CLEANUP_WAIT = 5.0
 global const PREMATCH_COUNTDOWN_SOUND = "Menu_Timer_LobbyCountdown_Tick"
 global const WAITING_FOR_PLAYERS_COUNTDOWN_SOUND = "UI_Survival_Intro_WaitinForPlayers_Countdown"
+
+                       
+global const ARENAS_WAITING_FOR_PLAYERS_COUNTDOWN_SOUND = "ui_arenas_intro_waitinforplayers_countdown"
+
 
 // Must match GAMESTATE_WAITINGFORCUSTOMSTART, etc... in hud_defs.rui
 global enum eGameState	// These must stay in order from beginning of a match till the end
@@ -416,6 +420,7 @@ global enum eGameState	// These must stay in order from beginning of a match til
 	SwitchingSides,
 	WinnerDetermined,
 	Epilogue,
+	Resolution,
 	Postmatch,
 	MapVoting
 

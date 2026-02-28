@@ -2273,7 +2273,7 @@ void function ServerCallback_GameModeAnnouncement()
 
 	AnnouncementData announcement
 
-	if ( GetGameState() == eGameState.Epilogue )
+	if ( GetGameState() == eGameState.Resolution )
 	{
 		// never gets hit??
 		announcement = Announcement_Create( "#GAMEMODE_EPILOGUE" )

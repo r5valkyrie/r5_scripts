@@ -421,7 +421,7 @@ void function WinterExpress_Init()
 
 		AddCallback_GameStateEnter( eGameState.PickLoadout, OnPickLoadout )
 		AddCallback_GameStateEnter( eGameState.Playing, OnPickLoadout )
-		AddCallback_GameStateEnter( eGameState.Epilogue, WinterExpress_OnEpilogue )
+		AddCallback_GameStateEnter( eGameState.Resolution, WinterExpress_OnEpilogue )
 		AddCallback_GameStateEnter( eGameState.WinnerDetermined, Client_OnWinnerDetermined )
 		AddCallback_OnPlayerChangedTeam( Client_OnTeamChanged )
 

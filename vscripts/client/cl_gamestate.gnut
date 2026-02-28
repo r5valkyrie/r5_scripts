@@ -682,7 +682,7 @@ int function GetPilotTitanStatusForPlayer( entity teamPlayer )
 	entity playerParent = teamPlayer.GetParent()
 	bool playerIsInDropship = playerParent != null && IsDropship( playerParent )
 
-	if ( playerIsInDropship && ( GetWaveSpawnType() == eWaveSpawnType.DROPSHIP || GetGameState() == eGameState.Epilogue ) )
+	if ( playerIsInDropship && ( GetWaveSpawnType() == eWaveSpawnType.DROPSHIP || GetGameState() == eGameState.Resolution ) )
 	{
 		statusIndex = ePlayerStatusType.PTS_TYPE_EVAC
 	}
@@ -767,7 +767,7 @@ void function ClGameStateThink_SwitchingSides( entity player )
 bool function IsSonyMP()
 {
 	int gamestate = GetGameState()
-	if ( gamestate != eGameState.Playing && gamestate != eGameState.SuddenDeath && gamestate != eGameState.Epilogue )
+	if ( gamestate != eGameState.Playing && gamestate != eGameState.SuddenDeath && gamestate != eGameState.Resolution )
 		return false
 
 	int playerMatchState = PlayerMatchState_GetFor( GetLocalClientPlayer() )
@@ -856,7 +856,7 @@ void function ClGameState_Changed()
 			player.cv.roundSpawnCount = 0
 			break
 
-		case eGameState.Epilogue:
+		case eGameState.Resolution:
 			//thread MainHud_Outro( level.nv.winningTeam )
 			break
 
