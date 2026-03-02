@@ -170,7 +170,7 @@ WeaponData
 	// Behavior
 	"fire_rate"   						        "18"
 	"burst_fire_count"					        "4"
-    "burst_fire_delay"					        "0.21" // "0.210000"
+    "burst_fire_delay"					        "0.210000"
     //"burst_fire_delay_ramp_max"               "0.1" // Not used in retail anymore
     //"burst_fire_delay_ramp_bursts"            "3" // Not used in retail anymore
 
@@ -320,56 +320,27 @@ WeaponData
 
         nemesis_charge_2
         {
-             "burst_fire_delay"		        "0.280"
+             "burst_fire_delay"		        "0.270"
         }
 
         nemesis_charge_3
         {
-             "burst_fire_delay"		        "0.270"
+             "burst_fire_delay"		        "0.250"
         }
 
         nemesis_charge_4
         {
-             "burst_fire_delay"		        "0.260"
+             "burst_fire_delay"		        "0.230"
         }
 
         nemesis_charge_5
         {
-             "burst_fire_delay"		        "0.250"
-        }
-
-        nemesis_charge_6
-        {
-             "burst_fire_delay"		        "0.240"
-        }
-
-        nemesis_charge_7
-        {
-             "burst_fire_delay"		        "0.230"
-        }
-
-
-        nemesis_charge_8
-        {
-             "burst_fire_delay"		        "0.220"
-        }
-
-
-        nemesis_charge_9
-        {
              "burst_fire_delay"		        "0.210"
         }
 
-
-        nemesis_charge_10
-        {
-             "burst_fire_delay"		        "0.200"
-        }
-
-
         fully_heated
         {
-             "burst_fire_delay"		        "0.19" // "0.19"
+             "burst_fire_delay"		        "0.19"
         }
 		
 		"barrel_stabilizer_l1"
@@ -446,11 +417,6 @@ WeaponData
             "dof_zoom_nearDepthStart"                   "1"
             "dof_zoom_nearDepthEnd"                     "6"
         }
-
-
-
-
-
 	}
 
 
