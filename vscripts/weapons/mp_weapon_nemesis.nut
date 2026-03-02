@@ -4,6 +4,9 @@ global function OnWeaponDeactivate_weapon_nemesis
 
 
 
+
+
+
 // CLIENTSIDED VISUAL FUNCTIONS
 
 #if CLIENT
@@ -12,8 +15,8 @@ global function OnWeaponDeactivate_weapon_nemesis
 global function Nemesis_GetEmissiveRenderColorKVString
 global function UpdateChargeDecay
 global function GetNemesisDataChargeLevel
-global function UpdateFX_Client
 #endif
+
 
 
 
@@ -22,6 +25,14 @@ global function Nemesis_DecayWatcher
 
 
 // this code is fucking dogshit but I give up for now
+
+
+
+
+
+
+
+
 
 
 
@@ -65,18 +76,7 @@ const array<string> NEMESIS_CHARGE_MODS = ["nemesis_charge_1", "nemesis_charge_2
 
 
 
-const asset NEMESIS_FX_IDLE_MAGNET_FP = $"nrg_ice_shot_charge_ramp_1P_linger" // $"P_wpn_nem_idle_magnet_FP"
-const asset NEMESIS_FX_IDLE_MAGNET_02_FP = $"nrg_ice_mflash_base_FP" // $"P_wpn_nem_idle_magnet_02_FP"
-const asset NEMESIS_FX_IDLE_PANEL_FP =$"nrg_ice_shot_charge_ramp_1P_linger"  // $"P_wpn_nem_idle_panel_FP"
-const asset NEMESIS_FX_IDLE_CENTER_FP = $"nrg_ice_shot_charge_ramp_1P_linger" // $"P_wpn_nem_idle_Center_FP"
-const asset NEMESIS_FX_IDLE_LATCH_L_FP = $"nrg_ice_mflash_core_FP" // $"P_wpn_nem_idle_latch_L_FP"
-const asset NEMESIS_FX_IDLE_LATCH_R_FP = $"nrg_ice_mflash_core_FP" // $"P_wpn_nem_idle_latch_R_FP"
-const asset NEMESIS_FX_IDLE_3P = $"P_nrg_ice_idle_3P" // $"P_wpn_nem_idle_3P"
-const asset NEMESIS_FX_IDLE_EMPTY = $"nrg_ice_lvlup_snow_B" // $"P_wpn_nem_empty_FP"
 
-const asset NEMESIS_FX_IDLE_CHARGED_FP = $"nrg_ice_lvlup_snow_B" // $"P_wpn_nem_charged_ribbon_FP"
-
-// const float BARREL_CLOSE_SOUND_HEAT_VALUE = 0.05
 
 
 
@@ -105,140 +105,197 @@ void function MpWeaponNemesis_Init()
 
 RegisterSignal("EndDecayWatcherThread")
 
-	PrecacheParticleSystem( NEMESIS_FX_IDLE_MAGNET_FP )
-	PrecacheParticleSystem( NEMESIS_FX_IDLE_MAGNET_02_FP )
-	PrecacheParticleSystem( NEMESIS_FX_IDLE_PANEL_FP )
-	PrecacheParticleSystem( NEMESIS_FX_IDLE_CENTER_FP )
-	PrecacheParticleSystem( NEMESIS_FX_IDLE_3P )
-	PrecacheParticleSystem( NEMESIS_FX_IDLE_LATCH_L_FP )
-	PrecacheParticleSystem( NEMESIS_FX_IDLE_LATCH_R_FP )
-	PrecacheParticleSystem( NEMESIS_FX_IDLE_EMPTY )
-
-	PrecacheParticleSystem( NEMESIS_FX_IDLE_CHARGED_FP )
-
-//	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_glow" )
-//	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_glow_late" )
-//	PrecacheParticleSystem( $"P_wpn_nem_cyl_elec" )
-//	PrecacheParticleSystem( $"P_wpn_nem_reload_elec_ring" )
-
-//	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_elec_01" )
-//	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_elec_02" )
-//	PrecacheParticleSystem( $"P_wpn_nem_reload_cyl_elec_03" )
-
 
 /*
 	for(int chargeIndex = 0, chargeIndex < NUMBER_OF_MODS, chargeIndex++)
+
+
 // chargeIndex already exists at this scope error??? WTF, it's a local variable...
 
 {
+
 NEMESIS_CHARGE_THRESHOLDS[chargeIndex] = MIN_CHARGE_THRESHOLD + (CHARGE_ADDED_PER_MOD * chargeIndex)
+
+
 }
 */
+
 }
 
+
 ///////// SERVER //////////////////////////////////////////////////////////////////////////////////
+
+
 
 
 void function Nemesis_DecayWatcher( entity weapon )
 
 {
-	EndSignal(weapon, "OnDestroy")
-	EndSignal(weapon, "EndDecayWatcherThread")
-	NemesisData nemesisData = file.nemesisDataTable[weapon]
-	printt("Nemesis_DecayWatcher block 1")
 
-		OnThreadEnd(
-				function() : ( weapon, nemesisData )
-			{
-			//	if ( IsValid( weapon ) && "VisualsThreadActive" in weapon.s )
-			//	{
-			//		delete weapon.s.VisualsThreadActive
-			//	}
-				//#if SERVER
-				if (nemesisData.chargeIsDecaying)
-					nemesisData.chargeIsDecaying = false
-				//#endif
-				}
-			)
+EndSignal(weapon, "OnDestroy")
 
-	entity player = weapon.GetWeaponOwner()
+EndSignal(weapon, "EndDecayWatcherThread")
 
-	if (!IsValid(player))
-	return
 
-	while (IsValid(weapon))
-		{
-		float timeSinceLastFire = Time() - nemesisData.lastFireTime
+NemesisData nemesisData = file.nemesisDataTable[weapon]
 
-		// printt("[NEMESIS] Time since last fire = " + timeSinceLastFire.tostring())	
-		// nemesisData.lastFireTime = Time()
-		float paramValueFromChargeLerpDecay
 
-		if (timeSinceLastFire > NEMESIS_DECAY_DELAY )
-			{
-			while (nemesisData.chargeLevel > 0)
-				{
-				nemesisData = file.nemesisDataTable[weapon] 			
-				//#if SERVER
-				// SERVER-SIDE CHARGE DECAY LOGIC!
-				nemesisData.chargeIsDecaying = true	
+printt("Nemesis_DecayWatcher block 1")
 
-					if (nemesisData.chargeLevel - 0.01 <= 0)
-						{
-							nemesisData.chargeIsDecaying = false
-							nemesisData.chargeLevel = 0.0 // charge reset contingency
-							break
-						}
-					/*
-					nemesisData.chargeLevel-= NEMESIS_DECAY_EPSILON // 0.00008 // NEMESIS_CHARGE_PER_SHOT
-					printt("[NEMESIS] Charge level decayed to " + nemesisData.chargeLevel
-					file.nemesisDataTable[weapon].chargeLevel = nemesisData.chargeLevel
-					printt("[NEMESIS] Updated global charge level to " + nemesisData.chargeLevel)
-					// wait NEMESIS_DECAY_LERP_TIME 
-					*/				
-					//#endif
-	
+OnThreadEnd(
+		function() : ( weapon, nemesisData )
+	{
+	//	if ( IsValid( weapon ) && "VisualsThreadActive" in weapon.s )
+	//	{
+	//		delete weapon.s.VisualsThreadActive
+	//	}
 
-					// These are tied to time instead of the charge level, but they can easily be switched to be tied to charge level
-					float f_RedValue_d = GraphCapped(timeSinceLastFire, NEMESIS_DECAY_DELAY, NEMESIS_DECAY_DELAY + NEMESIS_TIME_TO_FULL_DISCHARGE, 255.0, 0.0) 
-					// GraphCapped(nemesisData.chargeLevel, 0.0, 1.01, 255.0, 0.0) 
-					// set charge max clamp to 1.01 to make sure it surpasses the 1.0 threshold the NEMESIS_CHARGE_THRESHOLDS array
-					float f_GreenValue_d = GraphCapped(timeSinceLastFire, NEMESIS_DECAY_DELAY, NEMESIS_DECAY_DELAY + NEMESIS_TIME_TO_FULL_DISCHARGE, 255.0, 0.0)
-					// GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
-					float f_BlueValue_d = GraphCapped(timeSinceLastFire, NEMESIS_DECAY_DELAY, NEMESIS_DECAY_DELAY + NEMESIS_TIME_TO_FULL_DISCHARGE, 255.0, 0.0) 
-					// GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
 
-					#if CLIENT
-					string NewKVString_d = Nemesis_GetEmissiveRenderColorKVString(f_RedValue_d, f_GreenValue_d, f_BlueValue_d) // , weapon)
-					//if (NewKVString != OldKVString.tostring())
-					//{
-					// printt("[NEMESIS]: New KV String is: " + NewKVString)
-					//}
-					// printt("[NEMESIS] Time since last fire = " + timeSinceLastFire.tostring())	
-					// printt("[NEMESIS] NEW DECAY RGB VALUES ARE: " + NewKVString_d)
-					weapon.kv.rendercolor = NewKVString_d
-					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   //      #if SERVER
 
-					paramValueFromChargeLerpDecay = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 1.0)
-					printt("[NEMESIS] Magnet Latch LERP Value (Script Pose Param 0) for charge DECAY is " + paramValueFromChargeLerpDecay)
-					printt("[NEMESIS] [CLIENT DECAY WATCHER] nemesisData.chargeLevel = " + nemesisData.chargeLevel)
-					weapon.SetScriptPoseParam0(paramValueFromChargeLerpDecay)
-					#endif
+	     if (nemesisData.chargeIsDecaying)
+            nemesisData.chargeIsDecaying = false
 
-					// newCharge = UpdateChargeDecay(weapon)  // need to update the charge level ever code block execution
-					// clientCharge -= NEMESIS_DECAY_EPSILON
+//		#endif
 
-					nemesisData.chargeLevel-= NEMESIS_DECAY_EPSILON // 0.00008 // NEMESIS_CHARGE_PER_SHOT					
-
-					printt("[NEMESIS] Charge level decayed to " + nemesisData.chargeLevel)
-					file.nemesisDataTable[weapon].chargeLevel = nemesisData.chargeLevel
-					printt("[NEMESIS] Updated global charge level to " + nemesisData.chargeLevel)
-
-			wait NEMESIS_DECAY_LERP_TIME // 0.005
-				}
-			}
-	WaitFrame()
 		}
+	)
+
+
+entity player = weapon.GetWeaponOwner()
+
+if (!IsValid(player))
+return
+
+while (IsValid(weapon))
+	{
+
+
+
+float timeSinceLastFire = Time() - nemesisData.lastFireTime
+
+// printt("[NEMESIS] Time since last fire = " + timeSinceLastFire.tostring())	
+
+// nemesisData.lastFireTime = Time()
+
+float paramValueFromChargeLerpDecay
+
+if (timeSinceLastFire > NEMESIS_DECAY_DELAY )
+
+		{
+
+while (nemesisData.chargeLevel > 0)
+
+			{
+
+	nemesisData = file.nemesisDataTable[weapon] 			
+
+//#if SERVER
+
+// SERVER-SIDE CHARGE DECAY LOGIC!
+
+
+	 nemesisData.chargeIsDecaying = true	
+
+
+
+ 	if (nemesisData.chargeLevel - 0.01 <= 0)
+
+					{
+
+						nemesisData.chargeIsDecaying = false
+
+						nemesisData.chargeLevel = 0.0 // charge reset contingency
+ 						break
+
+					}
+
+/*
+				nemesisData.chargeLevel-= NEMESIS_DECAY_EPSILON // 0.00008 // NEMESIS_CHARGE_PER_SHOT
+				
+
+				printt("[NEMESIS] Charge level decayed to " + nemesisData.chargeLevel)
+
+				file.nemesisDataTable[weapon].chargeLevel = nemesisData.chargeLevel
+
+				printt("[NEMESIS] Updated global charge level to " + nemesisData.chargeLevel)
+
+				// wait NEMESIS_DECAY_LERP_TIME 
+*/				
+
+//#endif
+ 
+
+ // These are tied to time instead of the charge level, but they can easily be switched to be tied to charge level
+
+float f_RedValue_d = GraphCapped(timeSinceLastFire, NEMESIS_DECAY_DELAY, NEMESIS_DECAY_DELAY + NEMESIS_TIME_TO_FULL_DISCHARGE, 255.0, 0.0) // GraphCapped(nemesisData.chargeLevel, 0.0, 1.01, 255.0, 0.0) 
+
+// set charge max clamp to 1.01 to make sure it surpasses the 1.0 threshold the NEMESIS_CHARGE_THRESHOLDS array
+
+float f_GreenValue_d = GraphCapped(timeSinceLastFire, NEMESIS_DECAY_DELAY, NEMESIS_DECAY_DELAY + NEMESIS_TIME_TO_FULL_DISCHARGE, 255.0, 0.0)// GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
+
+float f_BlueValue_d = GraphCapped(timeSinceLastFire, NEMESIS_DECAY_DELAY, NEMESIS_DECAY_DELAY + NEMESIS_TIME_TO_FULL_DISCHARGE, 255.0, 0.0) // GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
+
+#if CLIENT
+
+string NewKVString_d = Nemesis_GetEmissiveRenderColorKVString(f_RedValue_d, f_GreenValue_d, f_BlueValue_d) // , weapon)
+
+
+
+//if (NewKVString != OldKVString.tostring())
+
+//{
+// printt("[NEMESIS]: New KV String is: " + NewKVString)
+//}
+
+// printt("[NEMESIS] Time since last fire = " + timeSinceLastFire.tostring())	
+
+
+// printt("[NEMESIS] NEW DECAY RGB VALUES ARE: " + NewKVString_d)
+
+weapon.kv.rendercolor = NewKVString_d
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+paramValueFromChargeLerpDecay = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 1.0)
+
+printt("[NEMESIS] Magnet Latch LERP Value (Script Pose Param 0) for charge DECAY is " + paramValueFromChargeLerpDecay)
+
+printt("[NEMESIS] [CLIENT DECAY WATCHER] nemesisData.chargeLevel = " + nemesisData.chargeLevel)
+
+weapon.SetScriptPoseParam0(paramValueFromChargeLerpDecay)
+
+#endif
+
+// newCharge = UpdateChargeDecay(weapon)  // need to update the charge level ever code block execution
+
+// clientCharge -= NEMESIS_DECAY_EPSILON
+
+
+
+				nemesisData.chargeLevel-= NEMESIS_DECAY_EPSILON // 0.00008 // NEMESIS_CHARGE_PER_SHOT
+				
+
+				printt("[NEMESIS] Charge level decayed to " + nemesisData.chargeLevel)
+
+				file.nemesisDataTable[weapon].chargeLevel = nemesisData.chargeLevel
+
+				printt("[NEMESIS] Updated global charge level to " + nemesisData.chargeLevel)
+
+
+wait NEMESIS_DECAY_LERP_TIME // 0.005
+
+
+
+			}
+
+		}
+
+WaitFrame()
+
+	}
+
 }
 
 #if SERVER
@@ -251,7 +308,7 @@ void function UpdateChargeMod( entity weapon )
 	//Get nemesis data from global table
 	if ( !(weapon in file.nemesisDataTable) )
 		return
-
+	
 	NemesisData nemesisData = file.nemesisDataTable[weapon]
 	int newChargeMod = GetChargeModIndex( nemesisData.chargeLevel )
 	
@@ -266,7 +323,7 @@ void function UpdateChargeMod( entity weapon )
 			{
 				weapon.RemoveMod( oldMod )
 				#if DEVELOPER
-				printt("[NEMESIS] Removed charge mod:", oldMod)
+					printt("[NEMESIS] Removed charge mod:", oldMod)
 				#endif
 			}
 		}
@@ -279,7 +336,7 @@ void function UpdateChargeMod( entity weapon )
 			printt("weapon.Addmod()")
 			
 			#if DEVELOPER
-			printt("[NEMESIS] Applied charge mod:", newMod, "at charge level:", nemesisData.chargeLevel)
+				printt("[NEMESIS] Applied charge mod:", newMod, "at charge level:", nemesisData.chargeLevel)
 			#endif
 		}
 		
@@ -322,7 +379,7 @@ void function RemoveAllChargeMods( entity weapon )
 		{
 			weapon.RemoveMod( mod )
 			#if DEVELOPER
-			printt("[NEMESIS] Removed charge mod during cleanup:", mod)
+				printt("[NEMESIS] Removed charge mod during cleanup:", mod)
 			#endif
 		}
 	}
@@ -334,14 +391,20 @@ void function RemoveAllChargeMods( entity weapon )
 ///////// SERVER //////////////////////////////////////////////////////////////////////////////////
 
 
+
+
 void function OnWeaponActivate_weapon_nemesis( entity weapon )
+
 {
+
+
+
 	#if DEVELOPER
-	printt("[NEMESIS] Weapon activated")
+		printt("[NEMESIS] Weapon activated")
 	#endif
 	
 	//Initialize nemesis data if not already present (preserves charge on re-equip)
-	#if CLIENT || SERVER	
+#if CLIENT || SERVER	
 	if ( !(weapon in file.nemesisDataTable) )
 	{
 		NemesisData nemesisData
@@ -352,11 +415,8 @@ void function OnWeaponActivate_weapon_nemesis( entity weapon )
 		  weapon.kv.rendercolor = "0 0 0"
 		  nemesisData.firstTime = false
 
+
 		}
-		// does this block even execute?
-		#if CLIENT
-		thread UpdateFX_Client( weapon ) 
-		#endif
 	}
 
 #endif
@@ -366,7 +426,7 @@ void function OnWeaponActivate_weapon_nemesis( entity weapon )
 void function OnWeaponDeactivate_weapon_nemesis( entity weapon )
 {
 	#if DEVELOPER
-	printt("[NEMESIS] Weapon deactivated")
+		printt("[NEMESIS] Weapon deactivated")
 	#endif
 	
 	//Shouldn't remove the charges on weapon deactivate, it should be only on decay
@@ -382,6 +442,7 @@ var function OnWeaponPrimaryAttack_weapon_nemesis( entity weapon, WeaponPrimaryA
 {
 	entity owner = weapon.GetOwner()
 	if ( !IsValid(owner) )
+
 		return 0
 	
 	//Get nemesis data from table
@@ -392,8 +453,10 @@ var function OnWeaponPrimaryAttack_weapon_nemesis( entity weapon, WeaponPrimaryA
 
 	
 	//Get burst fire count from weapon (should be 4 for Nemesis)
-	int burstFireCount = weapon.GetWeaponSettingInt( eWeaponVar.burst_fire_count )	
-	weapon.FireWeapon_Default( attackParams.pos, attackParams.dir, 1.0, 1.0, false )	
+	int burstFireCount = weapon.GetWeaponSettingInt( eWeaponVar.burst_fire_count )
+	
+	weapon.FireWeapon_Default( attackParams.pos, attackParams.dir, 1.0, 1.0, false )
+	
 	NemesisChargeDecayCalculate( weapon ) // renamed from NemesisChargeDecayThink to NemesisChargeDecayCalculate because it's not a thinker function executed at regular intervals; it's not threaded off
 	
 	 #if SERVER
@@ -408,8 +471,10 @@ var function OnWeaponPrimaryAttack_weapon_nemesis( entity weapon, WeaponPrimaryA
    // thread Nemesis_DecayWatcher_Client(weapon, nemesisData)
 	#endif
 
+
     Signal(weapon, "EndDecayWatcherThread") // end then restart the thread
 	thread Nemesis_DecayWatcher(weapon)
+	
 	
 	//Use default attack behavior
 	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
@@ -420,11 +485,18 @@ var function OnWeaponPrimaryAttack_weapon_nemesis( entity weapon, WeaponPrimaryA
 void function NemesisChargeDecayCalculate( entity weapon )
 {		
 	NemesisData nemesisData = file.nemesisDataTable[weapon] // TODO: delete on destroy!!! put it in weapon.w or something
-
+	
 	//Check if enough time has passed since last fire for decay to start
 	float oldCharge = nemesisData.chargeLevel
 	float timeSinceLastFire = Time() - nemesisData.lastFireTime
-	nemesisData.lastFireTime = Time()	
+
+	nemesisData.lastFireTime = Time()
+
+
+
+
+
+	
 	
 	if ( nemesisData.chargeLevel >= 0.0 && !nemesisData.chargeIsDecaying )
 	{
@@ -432,36 +504,53 @@ void function NemesisChargeDecayCalculate( entity weapon )
 		//	NEMESIS_DECAY_DELAY, 
 		//	NEMESIS_DECAY_DELAY + (1.0 / NEMESIS_DECAY_RATE * nemesisData.chargeLevel)
 		//	nemesisData.chargeLevel, 0 )
+
 		if (nemesisData.chargeLevel + NEMESIS_CHARGE_PER_SHOT > NEMESIS_MAX_CHARGE) // not optimal implementation, already uses GraphCapped above, should use Max(arg1,arg2)! Shouldn't exceed max charge in the first place...
-			{
-          	nemesisData.chargeLevel = NEMESIS_MAX_CHARGE
-			}
-			else
-			{	
-			nemesisData.chargeLevel += NEMESIS_CHARGE_PER_SHOT
-			}
+		{
+          nemesisData.chargeLevel = NEMESIS_MAX_CHARGE
+		}
+
+		else
+
+		{
+		
+		nemesisData.chargeLevel += NEMESIS_CHARGE_PER_SHOT
+
+		}
+
+
+
 		printt("NEMESIS CHARGE CHANGED")
 		
 		#if DEVELOPER
-		// if ( oldCharge != nemesisData.chargeLevel )
-		printt("[NEMESIS] Charge changed:", oldCharge, "->", nemesisData.chargeLevel) // after reaching 1.0, it's always 1.0, it doesn't decay, wtf?
-		// printt("[NEMESIS] Charge added: ",  nemesisData.chargeLevel - oldCharge)
+			// if ( oldCharge != nemesisData.chargeLevel )
+				printt("[NEMESIS] Charge changed:", oldCharge, "->", nemesisData.chargeLevel) // after reaching 1.0, it's always 1.0, it doesn't decay, wtf?
+			// printt("[NEMESIS] Charge added: ",  nemesisData.chargeLevel - oldCharge)
 		#endif
 		
 		//Update charge mod if charge level changed significantly
 		#if SERVER
 		if ( fabs(oldCharge - nemesisData.chargeLevel) > NEMESIS_CHARGE_EPSILON )
-		UpdateChargeMod( weapon )
+
+			UpdateChargeMod( weapon )
         #endif  
 
 
-		#if CLIENT
-		// CLIENT-SIDE VISUALS CHARGE UP
-		thread Nemesis_VisualsWatcher(weapon)
-		#endif
+	#if CLIENT
+    // CLIENT-SIDE VISUALS CHARGE UP
+	thread Nemesis_VisualsWatcher(weapon)
+    #endif
+
+
+	
+
+	
 	}
 
 /* 	
+
+
+
 	if (nemesisData.chargeLevel >= 0 && nemesisData.chargeIsDecaying)  // Not possible to reach these conditions at this point of execution because you've just fired
 	{
 	
@@ -475,8 +564,13 @@ void function NemesisChargeDecayCalculate( entity weapon )
     thread Nemesis_DecayWatcher_Client(weapon)
 	#endif
 	}
+
 */ 	
+
 }
+
+
+
 // #endif
 
 
@@ -486,30 +580,46 @@ void function NemesisChargeDecayCalculate( entity weapon )
 
 
 #if CLIENT
+
+
+
 float function UpdateChargeDecay(entity weapon)
+
 {
+
 NemesisData nemesisData = file.nemesisDataTable[weapon]
+
 float newCharge = nemesisData.chargeLevel
+
 printt("[NEMESIS] Updated charge = " + newCharge)
+
 return newCharge
+
 }
 
 
 // CLIENTSIDED VISUALS WATCHER
 
+
 void function Nemesis_VisualsWatcher( entity weapon )
+
 {
+
 EndSignal(weapon, "OnDestroy")
 
 //if (!"VisualsThreadActive"in weapon.s) 
+
 //{
+
 //weapon.s.VisualsThreadActive <- true
+
+
 //}
 printt("Nemesis_VisualsWatcher block 1")
 
 OnThreadEnd(
 		function() : ( weapon )
-		{
+	{
 	//	if ( IsValid( weapon ) && "VisualsThreadActive" in weapon.s )
 	//	{
 	//		delete weapon.s.VisualsThreadActive
@@ -520,35 +630,48 @@ OnThreadEnd(
 
 
 while (IsValid(weapon))
-	{
+{
 
-	NemesisData nemesisData = file.nemesisDataTable[weapon] 
-	//var OldKVString = weapon.kv.rendercolor
-	float f_RedValue = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 255.0)
-	// GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
-	// set charge max clamp to 1.01 to make sure it surpasses the 1.0 threshold the NEMESIS_CHARGE_THRESHOLDS array
-	float f_GreenValue = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 255.0) 
-	// GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
-	float f_BlueValue = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 255.0) 
-	// GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
-	string NewKVString = Nemesis_GetEmissiveRenderColorKVString(f_RedValue, f_GreenValue, f_BlueValue) // , weapon)
+NemesisData nemesisData = file.nemesisDataTable[weapon] 
 
-	weapon.kv.rendercolor = NewKVString
-	float paramValueFromChargeLerp = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 1.0)
-	entity vm = weapon.GetWeaponViewmodel()
-	entity player = weapon.GetWeaponOwner()
+//var OldKVString = weapon.kv.rendercolor
 
-	if (!IsValid(player))
-	return
+float f_RedValue = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 255.0)// 0.0, 255.0, 0.0, 1.01) // GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
 
-	weapon.SetScriptPoseParam0(paramValueFromChargeLerp)
+// set charge max clamp to 1.01 to make sure it surpasses the 1.0 threshold the NEMESIS_CHARGE_THRESHOLDS array
 
-	//if (NewKVString != OldKVString.tostring())
-	//{
-	// printt("[NEMESIS]: New KV String is: " + NewKVString)
-	//}
+float f_GreenValue = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 255.0) // GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
+
+float f_BlueValue = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 255.0) // GraphCapped(V, A, B, C, D), where V = current charge level, A = color clamp min, B = color clamp max, C = charge level min, D = charge level max
+
+string NewKVString = Nemesis_GetEmissiveRenderColorKVString(f_RedValue, f_GreenValue, f_BlueValue) // , weapon)
+
+weapon.kv.rendercolor = NewKVString
+
+float paramValueFromChargeLerp = GraphCapped(nemesisData.chargeLevel, 0.0, 1.0, 0.0, 1.0)
+
+entity vm = weapon.GetWeaponViewmodel()
+
+entity player = weapon.GetWeaponOwner()
+
+
+if (!IsValid(player))
+return
+
+weapon.SetScriptPoseParam0(paramValueFromChargeLerp)
+
+
+//if (NewKVString != OldKVString.tostring())
+
+//{
+// printt("[NEMESIS]: New KV String is: " + NewKVString)
+//}
+
+
 WaitFrame()
-	}
+
+}
+
 }
 
 
@@ -559,15 +682,26 @@ WaitFrame()
 
 
 string function Nemesis_GetEmissiveRenderColorKVString(float RedValue = 0, float GreenValue = 0, float BlueValue = 0)
+
 {
+
 //OldKVString = weapon.kv.rendercolor
+
 string KVString = RedValue.tostring() + " " + GreenValue.tostring() + " " + BlueValue.tostring()
+
+
 //if (NewKVString != KVString)
+
 //{
+
 //printt("[NEMESIS]: KV String is: " + KVString)
+
 //}
+
+
 return KVString
 }
+
 
 #endif
 
@@ -576,16 +710,22 @@ return KVString
 
 
 
+
+
 //// SHARED /////////////////////////////////////////////////////////////////////////////
+
 
 #if SERVER || CLIENT
 void function OnWeaponHeatStateChanged_weapon_nemesis( entity weapon, int newHeatState )
 {
 	//This callback is called when the weapon's heat state changes
-	//We could use this for additional effects or logic if needed	
+	//We could use this for additional effects or logic if needed
+	
 	#if DEVELOPER
-	printt("[NEMESIS] Heat state changed to:", newHeatState)
+		printt("[NEMESIS] Heat state changed to:", newHeatState)
 	#endif
+
+
 }
 
 #endif
@@ -593,182 +733,18 @@ void function OnWeaponHeatStateChanged_weapon_nemesis( entity weapon, int newHea
 //// SHARED /////////////////////////////////////////////////////////////////////////////
 
 
+
+
 #if CLIENT
+
 float function GetNemesisDataChargeLevel(entity weapon)
+
 {
+
 NemesisData nemesisData = file.nemesisDataTable[weapon]
+
 return nemesisData.chargeLevel
+
 }
 
-#endif
-
-#if CLIENT
-void function UpdateFX_Client ( entity weapon)
-{
-	//////THREAD
-	AssertIsNewThread()
-	if ( !IsValid( weapon ) )
-		{
-			return
-		}
-	else
-		{
-
-			if ( !(weapon in file.nemesisDataTable) )
-			{
-			NemesisData nemesisData
-			file.nemesisDataTable[weapon] <- nemesisData
-			}	
-		NemesisData nemesisData = file.nemesisDataTable[weapon]
-		}
-
-	weapon.EndSignal( "OnDestroy" )
-	// weapon.EndSignal( "WeaponDeactivate_Nemesis" )
-	// weapon.EndSignal( "UpdateCosmetic" )
-
-	entity player = weapon.GetWeaponOwner()
-	if ( !IsValid( player ) || !IsLocalViewPlayer( player ) )
-		return
-
-	player.EndSignal( "OnDeath" )
-	//player.EndSignal( "PlayerDisconnected" )
-	//////THREAD
-
-	//weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_RIBBON_FP, $"", "fx_ribbon_charge_03", true )
-
-	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_PANEL_FP, $"", "fx_panel_L", true )
-	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_PANEL_FP, $"", "fx_panel_R", true )
-
-	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_FP, $"", "fx_magnet_01", true )
-	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_02_FP, $"", "fx_magnet_02", true )
-	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_FP, $"", "fx_magnet_03", true )
-	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_02_FP, $"", "fx_magnet_04", true )
-	weapon.PlayWeaponEffect( NEMESIS_FX_IDLE_MAGNET_FP, $"", "fx_magnet_05", true )
-
-	int fxHandle_Barrel
-	int fxHandle_Ribbon
-
-	if ( !EffectDoesExist(fxHandle_Barrel))
-		fxHandle_Barrel = weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_CENTER_FP, NEMESIS_FX_IDLE_3P, "fx_barrel_back") //, true )
-	if ( !EffectDoesExist(fxHandle_Ribbon))
-		fxHandle_Ribbon = weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_CHARGED_FP, $"", "fx_ribbon_charge") //, true )
-
-	//Left and right wing tendrils
-	array<int> fxHandlesLeft =
-	[
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_01") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_02") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_03") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_04") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_05") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_L_FP, $"", "fx_mag_latch_L_06") //, true ),
-	]
-	array<int> fxHandlesRight =
-	[
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_01") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_02") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_03") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_04") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_05") //, true ),
-		weapon.PlayWeaponEffectReturnViewEffectHandle( NEMESIS_FX_IDLE_LATCH_R_FP, $"", "fx_mag_latch_R_06") //, true ),
-	]
-
-	//Sleep latch particles after being created
-	for ( int i; i < fxHandlesLeft.len(); i++ )
-	{
-		if ( EffectDoesExist( fxHandlesLeft[i] ) )
-		{
-			EffectSleep( fxHandlesLeft[i])
-		}
-		if ( EffectDoesExist( fxHandlesRight[i]) )
-		{
-			EffectSleep( fxHandlesRight[i])
-		}
-	}
-
-	OnThreadEnd(
-		function() : ( weapon, fxHandlesLeft, fxHandlesRight, fxHandle_Barrel, fxHandle_Ribbon )
-		{
-			for ( int i; i < fxHandlesLeft.len(); i++ )
-			{
-				if ( EffectDoesExist( fxHandlesLeft[i] ) )
-				{
-					EffectStop( fxHandlesLeft[i], true, false )
-				}
-
-				if ( EffectDoesExist( fxHandlesRight[i]) )
-				{
-					EffectStop( fxHandlesRight[i], true, false )
-				}
-			}
-
-			if ( EffectDoesExist( fxHandle_Barrel ) )
-			{
-				EffectStop( fxHandle_Barrel, true, false )
-			}
-
-			if ( EffectDoesExist( fxHandle_Ribbon ) )
-			{
-				EffectStop( fxHandle_Ribbon, true, false )
-			}
-
-			weapon.StopWeaponEffect( $"", NEMESIS_FX_IDLE_3P )
-		}
-
-	)
-
-	float previousHeat = 0.0
-	float length = float( fxHandlesLeft.len() )
-
-	//Loop
-	while( true && IsValid(weapon))
-	{
-
-		
-		float heatValue 		= GetNemesisDataChargeLevel(weapon) // weapon.GetHeatValue()
-		float interp 			= 0.0
-
-		//Activate/Deactivate particles based on heatValue interpolation
-		if (heatValue != previousHeat)
-		{
-
-			if ( EffectDoesExist( fxHandle_Barrel ) )
-				EffectSetControlPointVector( fxHandle_Barrel, 15, <heatValue, heatValue, heatValue> )
-
-			if ( EffectDoesExist( fxHandle_Ribbon ) )
-				EffectSetControlPointVector( fxHandle_Ribbon, 15, <heatValue, heatValue, heatValue> )
-
-			for ( int i; i < fxHandlesLeft.len(); i++ )
-			{
-
-				interp = ( i / length )
-
-				if (heatValue > interp)
-				{
-					if ( EffectDoesExist( fxHandlesLeft[i] ) )
-					{
-						EffectWake( fxHandlesLeft[i] )
-					}
-					if ( EffectDoesExist( fxHandlesRight[i] ))
-					{
-						EffectWake( fxHandlesRight[i] )
-					}
-				}
-				else
-				{
-					if ( EffectDoesExist( fxHandlesLeft[i] ))
-					{
-						EffectSleep( fxHandlesLeft[i] )
-					}
-					if ( EffectDoesExist( fxHandlesRight[i] ))
-					{
-						EffectSleep( fxHandlesRight[i] )
-					}
-				}
-			}
-		}
-		previousHeat = heatValue
-		WaitFrame()
-	}
-}
 #endif
