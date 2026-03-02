@@ -18,7 +18,6 @@ struct
 	var newsButton
 	var socialButton
 	var gameMenuButton
-	var datacenterButton
 	var DcButton
 	var BlogButton
 
@@ -223,13 +222,6 @@ void function InitLobbyMenu( var newMenuArg )
 	HudElem_SetRuiArg( gameMenuButton, "shortcutText", "%[START|ESCAPE]%" )
 	Hud_AddEventHandler( gameMenuButton, UIE_CLICK, GameMenuButton_OnActivate )
 
-	var datacenterButton = Hud_GetChild( menu, "DatacenterButton" )
-	file.datacenterButton = datacenterButton
-	ToolTipData datacenterTooltip
-	datacenterTooltip.descText = "#LOWPOP_DATACENTER_BUTTON"
-	Hud_SetToolTipData( datacenterButton, datacenterTooltip )
-	HudElem_SetRuiArg( datacenterButton, "icon", $"rui/hud/gamestate/net_latency" )
-	Hud_AddEventHandler( datacenterButton, UIE_CLICK, OpenLowPopDialogFromButton )
 }
 
 
@@ -427,17 +419,6 @@ void function UpdateCornerButtons()
 	//	InitButtonRCP( file.socialButton )
 	//}
 
-	{
-		bool datacenterButtonVisible = false
-		if ( Lobby_GetSelectedPlaylist() != "" && IsFullyConnected() )
-		{
-			bool lowPop = IsLowPopPlaylist( Lobby_GetSelectedPlaylist() )
-			bool sameDC = GetCurrentMatchmakingDatacenterETA( Lobby_GetSelectedPlaylist() ).datacenterIdx == GetCurrentRankedMatchmakingDatacenterETA( Lobby_GetSelectedPlaylist() ).datacenterIdx
-			datacenterButtonVisible = isPlayPanelActive && lowPop && !sameDC && !AreWeMatchmaking()
-		}
-
-		Hud_SetVisible( file.datacenterButton, datacenterButtonVisible )
-	}
 }
 
 

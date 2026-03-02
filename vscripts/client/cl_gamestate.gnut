@@ -350,9 +350,10 @@ void function UpdateCommonScoreRuiTracking( var rui, entity player )
 	RuiTrackBool( rui, "hasDeathFieldImmunity", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "hasDeathFieldImmunity" ) )
 	RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "assists" ) )
 
+	RuiTrackFloat( rui, "cameraViewFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.camera_view )
 		if ( Crafting_IsEnabled() )
 		{
-			//RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
+			RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
 		}
 		
 
@@ -1110,18 +1111,18 @@ var function CreateNestedNetGraph( var rui )
 	RuiDestroyNestedIfAlive( rui, "netGraphHandle" )
 	file.netGraphRuiCreated = false
 
-	if ( GetCurrentPlaylistVarInt( "ngOverride", 0 ) == 1 )
-		return
-
 	var nestedGraphRui = RuiCreateNested( rui, "netGraphHandle", $"ui/gamestate_netgraph.rpak" )
 	RuiTrackInt( nestedGraphRui, "netGraphFPS", null, RUI_TRACK_NETGRAPH_FPS )
 	RuiTrackInt( nestedGraphRui, "netGraphAmortizedLatency", null, RUI_TRACK_NETGRAPH_SPING )
 	RuiTrackInt( nestedGraphRui, "netGraphBandwidthIn", null, RUI_TRACK_NETGRAPH_BANDWIDTH_IN )
 	RuiTrackInt( nestedGraphRui, "netGraphBandwidthOut", null, RUI_TRACK_NETGRAPH_BANDWIDTH_OUT )
-	                                                                                       
-	                                                                                        
-	RuiTrackInt( nestedGraphRui, "netGraphPacketLoss", null, RUI_TRACK_NETGRAPH_PACKETLOSS )
-	RuiTrackInt( nestedGraphRui, "netGraphChoke", null, RUI_TRACK_NETGRAPH_PACKETCHOKE )
+	RuiTrackInt( nestedGraphRui, "netGraphPacketLossIn", null, RUI_TRACK_NETGRAPH_PACKETLOSS_IN )
+	RuiTrackInt( nestedGraphRui, "netGraphPacketLossOut", null, RUI_TRACK_NETGRAPH_PACKETLOSS_OUT )
+	RuiTrackInt( nestedGraphRui, "netGraphChokeIn", null, RUI_TRACK_NETGRAPH_PACKETCHOKE_IN )
+	RuiTrackInt( nestedGraphRui, "netGraphChokeOut", null, RUI_TRACK_NETGRAPH_PACKETCHOKE_OUT )
+	RuiTrackInt( nestedGraphRui, "netGraphDataBlockSize", null, RUI_TRACK_NETGRAPH_DATABLOCK_SIZE )
+	RuiTrackInt( nestedGraphRui, "netGraphDataBlockPercentDone", null, RUI_TRACK_NETGRAPH_DATABLOCK_PERCENT_DONE )
+
 	RuiSetString( nestedGraphRui, "netGraphServerID", GetServerDebugId() )
 
 	file.nestedNetGraphRui  = nestedGraphRui
