@@ -916,6 +916,7 @@ Scripts:
 	ui/_embedded_text.nut
 	ui/_promo_data.nut
 	ui/_surveys.nut
+	ui/_season_style.gnut
 	ui/notifications.nut
 	ui/userinfo.nut
 	ui/newness.gnut
@@ -1016,6 +1017,13 @@ Scripts:
 	ui/menu_misc_customize.nut
 	ui/panel_weapon_skins.nut
 	ui/panel_models.nut
+
+	ui/options_color_helpers.nut
+
+	ui/menu_laser_sight_options.nut
+	ui/menu_laser_sight_options_color.nut
+	ui/menu_firstperson_reticle_options_color.nut
+	ui/menu_firstperson_reticle_options.nut
 
 	ui/menu_main.nut
 	ui/panel_mainmenu.nut

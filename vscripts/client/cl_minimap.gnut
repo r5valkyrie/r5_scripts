@@ -1822,7 +1822,7 @@ void function UpdateFullmapRuiTracks()
 	                                               
 
 	var viewPlayerRui = file.fullmap_unitframesRui[0]
-	thread SetUnitFrameDataFromOwner( viewPlayerRui, viewPlayer, true )
+	thread SetUnitFrameDataFromOwner( viewPlayerRui, viewPlayer, viewPlayer, true )
 	UpdateEquipmentSlot( viewPlayer, viewPlayerRui )
 
 	RuiSetInt( viewPlayerRui, "frameSlot", -1 )
@@ -1869,7 +1869,7 @@ void function UpdateFullmapRuiTracks()
 			continue
 		}
 
-		thread SetUnitFrameDataFromOwner( rui, teamMember, true )
+		thread SetUnitFrameDataFromOwner( rui, teamMember, viewPlayer, true )
 		UpdateEquipmentSlot( teamMember, rui )
 
 		RuiSetInt( rui, "frameSlot", slotIndex )

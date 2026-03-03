@@ -26,16 +26,35 @@ global struct TabDef
 	bool                                                   enabled = true
 	bool                                                   new = false
 	bool                                                   wantDividerAfter = false
+	
 	float                                                  tabBarLeftOffsetFracIfVisible = 0.0
 	bool functionref( var panel, int destinationTabIndex ) canNavigateFunc = null
+	int 												   width = 200
+	bool   isBannerLogoSmall = false
+	bool   useCustomColors = false
+	bool   useSeasonalColors = false
 
-	bool   useCustomColors
+	vector customDefaultTextCol = <1.0, 1.0, 1.0>
+
 	vector customDefaultBGCol = <1.0, 1.0, 1.0>
 	vector customDefaultBarCol = <1.0, 1.0, 1.0>
 	vector customFocusedBGCol = <1.0, 1.0, 1.0>
 	vector customFocusedBarCol = <1.0, 1.0, 1.0>
 	vector customSelectedBGCol = <1.0, 1.0, 1.0>
 	vector customSelectedBarCol = <1.0, 1.0, 1.0>
+	vector customSelectedTextCol = <1.0, 1.0, 1.0>
+
+	vector customGlowFocusedCol = <1.0, 1.0, 1.0>
+
+	vector customNewColor = <1.0, 1.0, 1.0>
+
+	asset  leftSideImage = $""
+	asset  rightSideImage = $""
+	asset  centerRuiAsset = $""
+
+	asset  currentCenterRuiAsset = $""
+
+	bool useTapHoldLogic = false
 }
 
 // Footer alignment
@@ -210,6 +229,12 @@ global struct ConfirmDialogData
 	var __menu
 }
 
+global struct HSV
+{
+	float hue
+	float saturation
+	float value
+}
 
 global struct UIGlobals
 {

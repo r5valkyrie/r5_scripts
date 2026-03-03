@@ -42,6 +42,8 @@ global function ActivateTabPrev
 
 global function GetTabForTabButton
 
+global function SetTabDefsToSeasonal
+global function SetTabBackground
 global const int INVALID_TAB_INDEX = -1
 global struct TabData
 {
@@ -59,10 +61,44 @@ global struct TabData
 	table<int, void functionref()> tabNavigationEndCallbacks
 	bool groupNavHints = false
 
+	asset  bannerLogoImage = $""
+	float  bannerLogoScale = 1.0
+	float bannerLogoWidth = 1.0
+	float bannerLogoHeight = 1.0
+	string bannerTitle = ""
+	string bannerHeader = ""
+	string callToActionHeader = ""
+	string callToActionTitle = ""
+
+	vector bannerHeaderTextColor = <1.0, 1.0, 1.0>
+	vector bannerTitleTextColor = <1.0, 1.0, 1.0>
+
+	bool useGRXData  = false
+	var background	 = null
+	void functionref( TabData tabData ) bannerUpdateCallback = null
+
 	int initialFirstTabButtonWidth = -1
 	int initialFirstTabButtonXPos = -1
 	int initialSecondTabButtonXPos = -1
 }
+
+global enum eTabBackground
+{
+	NONE,
+	DEATH,
+	STANDARD,
+	CAPSTONE
+}
+
+struct
+{
+	string header = ""
+	string title = ""
+
+
+	string callToActionHeader = ""
+	string callToActionTitle = ""
+} GRXData
 
 struct
 {
@@ -74,6 +110,7 @@ struct
 } file
 
 const MAX_TABS = 8
+const MAX_SUBTABS = 8
 
 global enum eTabDirection
 {
@@ -154,6 +191,111 @@ array<TabDef> function GetPanelTabs( var panel )
 	return tabData.tabDefs
 }
 
+void function SetTabBackground( TabData tabData, var background, int backgroundEnum )
+{
+	if( backgroundEnum == eTabBackground.CAPSTONE )
+	{
+		tabData.background = background
+		tabData.bannerUpdateCallback = BannerUpdate_Capstone
+	}
+	else if( backgroundEnum == eTabBackground.STANDARD )
+	{
+		tabData.background = background
+		tabData.bannerUpdateCallback = BannerUpdate_Default
+	}
+	else if( backgroundEnum == eTabBackground.DEATH )
+	{
+		tabData.background = background
+		tabData.bannerUpdateCallback = BannerUpdate_Default
+	}
+	else
+	{
+		tabData.bannerUpdateCallback = null
+	}
+}
+
+void function BannerUpdate_Capstone( TabData tabData )
+{
+	SeasonStyleData seasonStyle = GetSeasonStyle()
+	var tabBackgroundRUI = Hud_GetRui( tabData.background )
+	if( tabData.bannerLogoImage == $"" )
+		RuiSetImage( tabBackgroundRUI, "smallLogo", seasonStyle.seasonBannerLogo )
+	else
+		RuiSetImage( tabBackgroundRUI, "smallLogo", tabData.bannerLogoImage )
+
+	RuiSetFloat( tabBackgroundRUI, "smallLogoScale", tabData.bannerLogoScale )
+	RuiSetImage( tabBackgroundRUI, "smallLogoBg", seasonStyle.seasonBannerLogoBg )
+	RuiSetFloat2( tabBackgroundRUI, "smallLogoSize", < tabData.bannerLogoWidth, tabData.bannerLogoHeight, 1.0 > )
+	RuiSetImage( tabBackgroundRUI, "bannerLeftImage", seasonStyle.seasonBannerLeftImage )
+	RuiSetImage( tabBackgroundRUI, "bannerRightImage", seasonStyle.seasonBannerRightImage )
+	RuiSetBool( tabBackgroundRUI, "isLogoSmall", tabData.tabDefs[tabData.activeTabIdx].isBannerLogoSmall )
+	RuiSetColorAlpha( tabBackgroundRUI, "titleTextColor", SrgbToLinear( seasonStyle.titleTextColor ), 1.0 )
+	RuiSetColorAlpha( tabBackgroundRUI, "headerTextColor", SrgbToLinear( seasonStyle.headerTextColor ), 1.0 )
+	RuiSetInt( tabBackgroundRUI, "totalWidth", GetTabsTotalWidth( tabData ) )
+
+	if( tabData.useGRXData )
+	{
+		RuiSetString( tabBackgroundRUI, "title", GRXData.title )
+		RuiSetString( tabBackgroundRUI, "header", GRXData.header )
+		RuiSetString( tabBackgroundRUI, "callToActionHeader", GRXData.callToActionHeader )
+		RuiSetString( tabBackgroundRUI, "callToActionTitle", GRXData.callToActionTitle )
+	}
+	else
+	{
+		RuiSetString( tabBackgroundRUI, "title", tabData.bannerTitle )
+		RuiSetString( tabBackgroundRUI, "header", tabData.bannerHeader  )
+		RuiSetString( tabBackgroundRUI, "callToActionHeader", tabData.callToActionHeader )
+		RuiSetString( tabBackgroundRUI, "callToActionTitle", tabData.callToActionTitle )
+	}
+}
+
+void function BannerUpdate_Default( TabData tabData )
+{
+	SeasonStyleData seasonStyle = GetSeasonStyle()
+	var tabBackgroundRUI = Hud_GetRui( tabData.background )
+
+	RuiSetInt( tabBackgroundRUI, "totalWidth", GetTabsTotalWidth( tabData ) )
+	RuiSetColorAlpha( tabBackgroundRUI, "gradientColor", SrgbToLinear( seasonStyle.seasonColor ), 1.0 )
+
+	RuiSetString( tabBackgroundRUI, "title", tabData.bannerTitle )
+	RuiSetString( tabBackgroundRUI, "header", tabData.bannerHeader  )
+	RuiSetString( tabBackgroundRUI, "callToActionHeader", tabData.callToActionHeader )
+	RuiSetString( tabBackgroundRUI, "callToActionTitle", tabData.callToActionTitle )
+	RuiSetColorAlpha( tabBackgroundRUI, "titleTextColor", SrgbToLinear( seasonStyle.titleTextColor ), 1.0 )
+	RuiSetColorAlpha( tabBackgroundRUI, "headerTextColor", SrgbToLinear( seasonStyle.headerTextColor ), 1.0 )
+}
+
+int function GetTabsTotalWidth( TabData tabData )
+{
+	int totalWidth = 0
+	int numTabs = tabData.tabDefs.len()
+
+	if( numTabs == 1 || !IsControllerModeActive() )
+		totalWidth += 30
+
+	if ( IsControllerModeActive() && numTabs > 1 )
+	{
+		var tabsPanel          = tabData.tabPanel
+		var leftShoulder       = Hud_GetChild( tabsPanel, "LeftNavButton" )
+		var rightShoulder      = Hud_GetChild( tabsPanel, "RightNavButton" )
+		totalWidth += Hud_GetWidth( leftShoulder ) + Hud_GetWidth( leftShoulder )
+	}
+
+	foreach(TabDef tabdef in tabData.tabDefs)
+	{
+		if( tabdef.visible )
+			totalWidth += tabdef.width
+	}
+
+	return totalWidth
+}
+void function SetTabDefsToSeasonal( TabData tabData )
+{
+	foreach( def in tabData.tabDefs )
+	{
+		def.useSeasonalColors = true
+	}
+}
 
 TabDef function AddTab( var parentPanel, var panel, string tabTitle, bool wantDividerAfter = false, float tabBarLeftOffsetFracIfVisible = 0.0 )
 {
@@ -372,6 +514,7 @@ void function ShutdownAllPanels()
 void function UpdateMenuTabs()
 {
 	var menu = GetActiveMenu()
+	SeasonStyleData seasonStyle = GetSeasonStyle()
 	if ( menu == null )
 		return
 

@@ -82,6 +82,12 @@ global function CreateOncePerTickDamageInflictorHelper
 global function WeaponHasCosmetics
 #endif
 
+#if SERVER
+global function ClientCallback_UpdateLaserSightColor
+#endif // #if SERVER
+#if CLIENT
+global function UICallback_UpdateLaserSightColor
+#endif
 #if CLIENT
 global function ServerCallback_SetWeaponPreviewState
 global function GetAmmoColorByType
@@ -367,11 +373,11 @@ void function WeaponUtility_Init()
 	RegisterSignal( "EnergyWeapon_ChargeStart" )
 	RegisterSignal( "EnergyWeapon_ChargeReleased" )
 	RegisterSignal( "WeaponSignal_EnemyKilled" )
-                      
+
 	RegisterSignal( "GoldMagPerkEnd" )
-       
-       
-                     
+
+
+
 	RegisterSignal ( END_SMART_RELOAD )
 	Remote_RegisterClientFunction( "ServerToClient_Activate_Smart_Reload", "entity" , "int", 0, 64, "float", 0.0, 1.0, 32 )
 	PrecacheParticleSystem( EMP_GRENADE_BEAM_EFFECT )
@@ -384,6 +390,8 @@ void function WeaponUtility_Init()
 	PrecacheImpactEffectTable( CLUSTER_ROCKET_FX_TABLE )
 
 	#if SERVER
+		AddClientCommandCallback( "UpdateLaserSightColor", ClientCallback_UpdateLaserSightColor )
+
 		if(!GetCurrentPlaylistVarBool( "firingrange_aimtrainerbycolombia", false ))
 		{
 			AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_grenade_emp, EMP_DamagedPlayerOrNPC )
@@ -398,7 +406,7 @@ void function WeaponUtility_Init()
 		//AddCallback_OnPlayerKilled( OnPlayerKilled )
 		//AddCallback_OnPlayerRespawned( WeaponAllowLogic_OnPlayerRespawed )
 		//AddCallback_OnPlayerInventoryChanged( WeaponAllowLogic_OnPlayerInventoryChanged )
-		
+
 		//Loot_AddCallback_OnWeaponAttachmentChanged( OnWeaponAttachmentChanged_CheckForGoldMag )
 		Loot_AddCallback_OnWeaponAttachmentChanged( OnWeaponAttachmentChanged_CheckForSmartReload )
 
@@ -4651,6 +4659,12 @@ void function CodeCallback_OnPlayerRemovedWeaponMod( entity player, entity weapo
 
 
 #if SERVER
+bool function ClientCallback_UpdateLaserSightColor( entity player, array<string> args )
+{
+	//player.UpdateLaserSightColor()
+	return true
+}
+
 bool function WeaponHasCosmetics( entity weapon )
 {
 	if ( weapon.GetSkin() != 0 )
@@ -5276,6 +5290,15 @@ void function PlayDelayedShellEject( entity weapon, float time, int count = 1, b
 	}
 }
 
+#if CLIENT
+
+void function UICallback_UpdateLaserSightColor()
+{
+	entity player = GetLocalClientPlayer()
+	if ( IsValid( player ) )
+		player.ClientCommand( "UpdateLaserSightColor" )
+}
+#endif
 #if SERVER || CLIENT
 bool function AreAbilitiesSilenced( entity player )
 {

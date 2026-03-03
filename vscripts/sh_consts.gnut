@@ -78,6 +78,8 @@ global const EVAC_SHIP_SHIELD_REGEN_DELAY = 6.0 //Multiply damage done against e
 global const float RUI_BADGAMETIME 	= -1 * pow( 10, 30 )
 #endif
 
+global const bool MEMBER_COLORS = true
+
 global const float DEPLOYABLE_COLLISION_DEFAULT_TRACE_LENGTH = 16
 
 global const STATE_FLAG_NONE 			= 0

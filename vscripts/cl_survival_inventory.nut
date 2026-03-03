@@ -2938,7 +2938,7 @@ void function UICallback_UpdateTeammateInfo( var elem )
 	entity ent = team[teammateIndex]
 
 	if ( GetBugReproNum() == 54268 )
-		thread SetUnitFrameDataFromOwner( rui, ent )
+		thread SetUnitFrameDataFromOwner( rui, ent, player )
 	else
 		thread TEMP_UpdateTeammateRui( rui, ent )
 }

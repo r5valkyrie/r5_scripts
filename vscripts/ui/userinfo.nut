@@ -1,60 +1,6 @@
 global function UserInfoPanels_LevelInit
 //global function UpdateUserInfoWithXP
 
-// Custom number formatting functions
-string function FormatAndLocalizeNumber( string formatStr, float number, bool shouldShorten )
-{
-	if ( number == 0.0 )
-		return "0"
-
-	string lang = GetLanguage()
-	string thousandsSeparator = lang == "english" || lang == "korean" || lang == "schinese" || lang == "tchinese" || lang == "thai" || lang == "japanese" ? "," : "."
-	string decimalSeparator = thousandsSeparator == "," ? "." : ","
-
-	float integral = floor( number )
-	float decimal = number - integral
-	string integralString = ""
-	integralString = format( "%0.0f", integral )
-	string decimalString = ""
-
-	if ( decimal > 0 )
-		decimalString = format( "%s%02f", decimalSeparator, decimal ).slice( 0, 3 )
-
-	if ( shouldShorten )
-	{
-		int digits = int( floor( log10( integral + 1.0 ) ) )
-		if ( digits > 6 )
-		{
-			float displayValue = number / 1000000.0
-			return format( "%.1fM", displayValue )
-		}
-		else if ( digits > 3 )
-		{
-			float displayValue = number / 1000.0
-			return format( "%.1fK", displayValue )
-		}
-	}
-
-	if ( integralString.len() > 3 )
-	{
-		string separatedString = ""
-		int count = 0
-		for ( int i = integralString.len() - 1; i >= 0; i-- )
-		{
-			if ( count == 3 )
-			{
-				separatedString = thousandsSeparator + separatedString
-				count = 0
-			}
-			separatedString = integralString.slice( i, i + 1 ) + separatedString
-			count++
-		}
-		integralString = separatedString
-	}
-
-	return integralString + decimalString
-}
-
 string function LocalizeAndShortenNumber_Int( int number )
 {
 	if ( number == 0 )

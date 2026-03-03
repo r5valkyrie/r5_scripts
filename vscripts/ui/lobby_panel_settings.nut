@@ -4,6 +4,7 @@ global function SettingsPanel_GetDefaultImageForIndex
 
 global function SetupSettingsButton
 global function SetupSettingsSlider
+global function SettingsPanel_SetContentPanelHeight
 
 global function CreateSettingsConVarData
 global function SaveSettingsConVars
@@ -93,6 +94,19 @@ void function InitSettingsPanel( var panel )
 	}
 }
 
+void function SettingsPanel_SetContentPanelHeight( var contentPanel )
+{
+	array<var> rewardButtonArray = GetPanelElementsByClassname( contentPanel, "SettingScrollSizer" )
+	int height = 0
+	foreach( var b in rewardButtonArray )
+	{
+		if( Hud_IsVisible( b ) )
+			height += Hud_GetHeight(b) + Hud_GetBaseY( b )
+
+	}
+
+	Hud_SetHeight(contentPanel, height)
+}
 
 asset function SettingsPanel_GetDefaultImageForIndex( int index )
 {

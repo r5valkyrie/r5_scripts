@@ -236,6 +236,7 @@ global struct ItemFlavor
 	int                      _____INTERNAL_playlistOpinion = eItemFlavorPlaylistOpinion.NONE
 
 	ItemFlavor ornull _____INTERNAL_noCopyCheck = null
+	table<string, string> ornull metaData = null 
 }
 
 global typedef RegisterItemFlavorsCallbackType void functionref()

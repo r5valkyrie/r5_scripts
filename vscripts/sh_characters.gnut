@@ -20,6 +20,7 @@ global function CharacterClass_GetCharacterSelectPortrait
 global function CharacterClass_GetCharacterLockedPortrait
 global function CharacterClass_GetCharacterRoleImage
 global function CharacterClass_GetCharacterSelectSubtitle
+global function CharacterClass_GetCharacterRolePerkDesc
 global function CharacterClass_GetReadyUpVoicelineEventList
 global function CharacterClass_IsAvailable
 global function CharacterClass_GetDamageScale
@@ -53,27 +54,58 @@ global enum eCharacterClassRole
 {
 	UNDECIDED,
 	OFFENSE,
+	RECON,
 	DEFENSE,
 	SUPPORT,
-	RECON,
 	_COUNT,
 }
 
 const table<int, asset> CHARACTER_ROLE_ICONS = {
 	[eCharacterClassRole.UNDECIDED] = $"",
-	[eCharacterClassRole.OFFENSE] = $"rui/menu/character_select/utility/util_role_offense",
-	[eCharacterClassRole.DEFENSE] = $"rui/menu/character_select/utility/util_role_defense",
-	[eCharacterClassRole.SUPPORT] = $"rui/menu/character_select/utility/util_role_support",
-	[eCharacterClassRole.RECON] = $"rui/menu/character_select/utility/util_role_recon",
-	//	[eCharacterClassRole.BUILDER] = $"rui/menu/character_select/utility/util_role_builder",
+	[eCharacterClassRole.OFFENSE]   = $"rui/menu/character_select/utility/util_role_offense",
+	[eCharacterClassRole.DEFENSE]   = $"rui/menu/character_select/utility/util_role_defense",
+	[eCharacterClassRole.SUPPORT]   = $"rui/menu/character_select/utility/util_role_support",
+	[eCharacterClassRole.RECON]     = $"rui/menu/character_select/utility/util_role_recon",
 }
 
 global struct CharacterMenuLightData
 {
 	vector key_color
+	float key_brightness
+	float key_cone
+	float key_innercone
+	float key_distance
+	float key_halfbrightfrac
+	float key_specint
+	bool key_pbrfalloff
+	bool key_castshadows
 	vector fill_color
+	float fill_brightness
+	float fill_cone
+	float fill_innercone
+	float fill_distance
+	float fill_halfbrightfrac
+	float fill_specint
+	bool fill_pbrfalloff
+	bool fill_castshadows
 	vector rimL_color
+	float rimL_brightness
+	float rimL_cone
+	float rimL_innercone
+	float rimL_distance
+	float rimL_halfbrightfrac
+	float rimL_specint
+	bool rimL_pbrfalloff
+	bool rimL_castshadows
 	vector rimR_color
+	float rimR_brightness
+	float rimR_cone
+	float rimR_innercone
+	float rimR_distance
+	float rimR_halfbrightfrac
+	float rimR_specint
+	bool rimR_pbrfalloff
+	bool rimR_castshadows
 	asset  animSeq
 }
 
@@ -81,6 +113,15 @@ global struct CharacterHudUltimateColorData
 {
 	vector ultimateColor
 	vector ultimateColorHighlight
+}
+
+struct CharacterDamageStruct
+{
+	float damageScale = 1.0
+	float damageSlow_amount = 0.10
+	float damageSlow_duration = 0.25
+	float damageSlow_easeOut = 0.25
+	float damageSlow_debounce = 3.0
 }
 
 ///////////////////////
@@ -91,10 +132,20 @@ global struct CharacterHudUltimateColorData
 struct FileStruct_LifetimeLevel
 {
 	LoadoutEntry& characterSelectionSlot
-
+	array< string > charactersWithStatsGUIDStrings                                                                                                                   
+	table<string, ItemFlavor> characterRefMap
 	table<ItemFlavor, int> characterFlavorSortOrdinalMap
 }
 FileStruct_LifetimeLevel& fileLevel
+
+struct
+{
+	table<int, string> characterRolePerkDesc
+	table<string, CharacterDamageStruct> characterDamageData
+                    
+                                              
+       
+} file
 
 table< ItemFlavor, array<int> > legHitBoxOverrides = {}
 
@@ -115,6 +166,13 @@ void function ShCharacters_LevelInit()
 
 	AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
 	AddCallback_OnItemFlavorRegistered( eItemType.character, OnItemFlavorRegistered_Character )
+		file.characterRolePerkDesc = {
+			[eCharacterClassRole.UNDECIDED] = "Undecided Role",
+			[eCharacterClassRole.OFFENSE] = "",
+			[eCharacterClassRole.DEFENSE] = "",
+			[eCharacterClassRole.RECON] = "#RECON_PERK_DESC",
+			[eCharacterClassRole.SUPPORT] = "",
+		}
 }
 #endif
 
@@ -180,6 +238,30 @@ void function OnRegisterRootItemFlavors()
 			} )
 		}
 	#endif
+
+	foreach ( character in characterList )
+	{
+		string characterRef = ItemFlavor_GetCharacterRef( character )
+
+		if ( characterRef == "" )
+		{
+			Warning( "Character " + ItemFlavor_GetAsset( character ) + " has empty character_ref, skipping damage data setup" )
+			continue
+		}
+
+		CharacterDamageStruct data
+		data.damageScale = GetCurrentPlaylistVarFloat( "damage_scale_" + characterRef.tolower(), 1.0 )
+		data.damageSlow_amount = GetCurrentPlaylistVarFloat( "damage_slowdown_" +  characterRef.tolower(), 0.5 )
+		data.damageSlow_duration = GetCurrentPlaylistVarFloat( "damage_slowdown_duration_" +  characterRef.tolower(), 0.5 )
+		data.damageSlow_easeOut = GetCurrentPlaylistVarFloat( "damage_slowdown_easeOut_" +  characterRef.tolower(), 0.3 )
+		data.damageSlow_debounce = GetCurrentPlaylistVarFloat( "damage_slowdown_debounce_" +  characterRef.tolower(), 0.15 )
+		file.characterDamageData[ characterRef ] <- data
+
+		if ( WIP_CharacterClass_ShouldTrackStats( character ) == false )
+			continue
+
+		fileLevel.charactersWithStatsGUIDStrings.append( ItemFlavor_GetGUIDString( character ) )
+	}
 }
 #endif
 
@@ -187,6 +269,14 @@ void function OnRegisterRootItemFlavors()
 #if SERVER || CLIENT || UI
 void function OnItemFlavorRegistered_Character( ItemFlavor character )
 {
+	table<string, string> ornull tmp = character.metaData
+	if ( tmp == null )
+	{
+		Warning( "Character " + ItemFlavor_GetAsset( character ) + " has null metadata, skipping registration in characterRefMap" )
+		return
+	}
+	expect table<string, string>(tmp)
+	fileLevel.characterRefMap[ tmp[ "character_ref" ] ] <- character
 	#if SERVER || CLIENT
 		PrecacheModel( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "bodyModel" ) )
 		PrecacheModel( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "armsModel" ) )
@@ -207,6 +297,24 @@ void function GenerateCharactersPDef()
 #endif
 
 
+#if SERVER || CLIENT || UI
+string function ItemFlavor_GetCharacterRef( ItemFlavor flavor )
+{
+	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( flavor.typeIndex == eItemType.character )
+
+	if ( flavor.metaData == null )
+	{
+		Warning( "Character flavor " + ItemFlavor_GetAsset( flavor ) + " has null metadata, returning empty character_ref" )
+		return ""
+	}
+
+	table<string, string> ornull tmp = flavor.metaData
+	expect table<string, string>(tmp)
+
+	return tmp[ "character_ref" ]
+}
+#endif
 
 //////////////////////////
 //////////////////////////
@@ -374,6 +482,13 @@ asset function CharacterClass_GetCharacterRoleImage( ItemFlavor flavor )
 	return CHARACTER_ROLE_ICONS[role]
 }
 
+string function CharacterClass_GetCharacterRolePerkDesc( ItemFlavor flavor )
+{
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
+
+	int role = CharacterClass_GetRole( flavor )
+	return file.characterRolePerkDesc[role]
+}
 
 string function CharacterClass_GetCharacterSelectSubtitle( ItemFlavor flavor )
 {
@@ -540,6 +655,16 @@ int function GetPlayerSettingBaseShield( entity player )
 	return int( player.GetPlayerSettingFloat( "healthShield" ) )
 }
 #endif
+
+bool function WIP_CharacterClass_ShouldTrackStats( ItemFlavor character )
+{
+	Assert( ItemFlavor_GetType( character ) == eItemType.character )
+
+	if ( CharacterClass_GetIsShippingCharacter( character ) )
+		return true
+
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( character ), "shouldTrackStatsInDev" )
+}
 
 ///////////////////
 ///////////////////
