@@ -56,9 +56,6 @@ void function InitDeathScreenMenu( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, DeathScreenMenuOnNavBack )
 	AddMenuEventHandler( menu, eUIEvent.MENU_INPUT_MODE_CHANGED, OnSurvivalInventory_OnInputModeChange )
 
-	HudElem_SetChildRuiArg( Hud_GetChild( menu, "TabsCommon" ), "Background", "bgColor", <0, 0, 1>, eRuiArgType.VECTOR )
-	HudElem_SetChildRuiArg( Hud_GetChild( menu, "TabsCommon" ), "Background", "bgAlpha", 1.6, eRuiArgType.FLOAT )
-
 	SetTabRightSound( menu, "UI_InGame_InventoryTab_Select" )
 	SetTabLeftSound( menu, "UI_InGame_InventoryTab_Select" )
 }

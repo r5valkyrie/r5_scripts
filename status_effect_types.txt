@@ -19,7 +19,7 @@
 	titan_sword_fuel
 	titan_sword_dash
 	titan_sword_super
-	titan_sword_dash_sickness
+	silenced_seer_visuals
 
 	player_carrying_oddball
 	ring_immunity
@@ -36,7 +36,6 @@
 	enemy_only_threat_vision
 	threat_vision
 	gravity_grenade_visual
-    //slowmo_visual_effect //removed to make room for sonar_pulse_visuals
 	sonar_pulse_visuals
     tracking_vision
     hunt_mode

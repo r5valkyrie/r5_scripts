@@ -162,7 +162,7 @@ void function QueueMessageThink()
 
 	file.pendingEventQueue.sort( SortPendingEvents )
 
-	while ( file.pendingEventQueue.len() > 0 )
+	while ( file.pendingEventQueue.len())
 	{
 		MessageData messageData = file.pendingEventQueue[0]
 		file.pendingEventQueue.remove( 0 )
@@ -185,6 +185,7 @@ void function QueueMessageThink()
 		RuiSetFloat( rui, "duration", messageData.duration )
 		RuiSetString( rui, "messageText", Localize( messageData.messageText ) )
 		RuiSetBool( rui, "isBigText", messageData.messageScale > 1.0 )
+		RuiSetAsset( rui, "messageIcon", messageData.icon)
 
 		messageData.rui = rui
 		thread MessageThink( messageData )
@@ -400,26 +401,6 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 		flyoutData.lastDamageFlyoutDamage = 0
 	}
 
-	vector victimOrigin = victim.GetOrigin()
-	vector offset = <0,0,0>
-	if (Flowstate_Is4DMode())
-	{
-		vector playerPos = GetLocalViewPlayer().GetOrigin()
-		int playerDimension = ((playerPos.x > 0) ? 1 : 0)
-		int victimDimension = ((victimOrigin.x > 0) ? 1 : 0)
-		if (playerDimension != victimDimension)
-		{
-			if (victimDimension == 1)
-			{
-				offset -= <30000,0,0>
-			}
-			else
-			{
-				offset += <30000,0,0>
-			}
-		}
-	}
-
 	float distance = Distance( victim.GetOrigin(), GetLocalViewPlayer().EyePosition() )
 	vector damageFlyoutDisplayPosition = GraphCappedVector( distance, 0, 256, victim.GetWorldSpaceCenter(), victim.GetOrigin() + <0, 0, victim.GetBoundingMaxs().z> )
 
@@ -595,17 +576,6 @@ void function AddScoreEventMessage( ScoreEvent scoreEvent, EHI associatedEHI, in
 	messageData.messageScale = (displayType & eEventDisplayType.BIG) ? 1.01 : 1.0
 	if ( ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilot" || ScoreEvent_GetEventName( scoreEvent ) == "Sur_DownedPilotAssist" )
 		messageData.messageScale = 1.5
-		
-	if( ScoreEvent_GetEventName( scoreEvent ) == "FS_Scenarios_SoloWin" || 
-		ScoreEvent_GetEventName( scoreEvent ) == "FS_Scenarios_TeamWin" ||
-		ScoreEvent_GetEventName( scoreEvent ) == "FS_Scenarios_PenaltyDeath" ||
-		ScoreEvent_GetEventName( scoreEvent ) == "FS_Scenarios_SurvivalTime" || 
-		ScoreEvent_GetEventName( scoreEvent ) == "FS_SND_BombPlanted"
-		)
-	{
-		messageData.messageScale = 1.5
-		messageData.duration = 5
-	}
 
 	if ( !(displayType & eEventDisplayType.BIG) )
 		return

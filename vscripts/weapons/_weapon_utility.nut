@@ -168,6 +168,11 @@ global function AddCallback_OnPlayerRemoveWeaponMod
 global function CodeCallback_OnPlayerAddedWeaponMod
 global function CodeCallback_OnPlayerRemovedWeaponMod
 
+#if SERVER || CLIENT
+global function GetInfiniteAmmo
+global const string MOD_INFINITE_AMMO_CLIPS = "infinite_ammo_clips"
+#endif
+
 global function IsABaseGrenade
 global const string SMART_RELOAD_HOPUP = "hopup_smart_reload"
 global const string LMG_FAST_RELOAD_MOD = "fast_reload_mod"
@@ -6069,6 +6074,6 @@ vector function GetAmmoColorByType( string ammoType )
 #if SERVER || CLIENT
 bool function GetInfiniteAmmo( entity weapon )
 {
-	return true
+	return weapon.HasMod( MOD_INFINITE_AMMO_CLIPS )
 }
 #endif

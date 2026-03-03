@@ -942,7 +942,7 @@ void function SURVIVAL_PopulatePlayerInfoRui( entity player, var rui )
 		RuiSetFloat( rui, "nxPlatformTextOffsetX", -1.5 )
 	OverwriteWithCustomPlayerInfoTreatment( player, rui )
 
-	RuiSetBool( rui, "displayCharacterOverlayPrompt", !IsControllerModeActive() )
+	RuiSetBool( rui, "disconnected", false )
 
 	if(RGB_HUD)
 		thread RGBRui(rui)

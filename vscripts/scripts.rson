@@ -904,7 +904,6 @@ Scripts:
 [
 	ui/ui_vscript.gnut
 	ui/ui_utility.gnut
-	ui/combo_buttons.nut
 	ui/_tabs.nut
 	ui/_footer.nut
 	ui/_grid_menu.gnut

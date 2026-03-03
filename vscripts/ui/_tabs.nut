@@ -160,7 +160,6 @@ TabDef function AddTab( var parentPanel, var panel, string tabTitle, bool wantDi
 	TabData tabData = GetTabDataForPanel( parentPanel )
 
 	TabDef data
-	data.button = tabData.tabButtons[tabData.tabDefs.len()]
 	data.panel = panel
 	data.title = tabTitle
 	data.parentPanel = parentPanel
@@ -168,8 +167,6 @@ TabDef function AddTab( var parentPanel, var panel, string tabTitle, bool wantDi
 	data.tabBarLeftOffsetFracIfVisible = tabBarLeftOffsetFracIfVisible
 
 	file.tabBodyDefMap[data.panel] <- data
-
-	Hud_Show( data.button )
 
 	file.elementTabData[parentPanel].tabDefs.append( data )
 	if ( file.elementTabData[parentPanel].tabDefs.len() == 1 )

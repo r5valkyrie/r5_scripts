@@ -68,39 +68,6 @@ global bool ServerListFetching = false
 
 void function InitServerBrowserPanel( var panel )
 {
-	SetPanelTabTitle( panel, "#SB_SERVERS" )
-	file.panel = panel
-	file.menu = GetParentMenu( file.panel )
-
-	AddMouseMovementCaptureHandler( Hud_GetChild(file.panel, "MouseMovementCapture"), UpdateMouseDeltaBuffer )
-	Hud_AddEventHandler( Hud_GetChild( file.panel, "ConnectButton" ), UIE_CLICK, ServerBrowser_ConnectBtnClicked )
-	Hud_AddEventHandler( Hud_GetChild( file.panel, "RefreshServers" ), UIE_CLICK, ServerBrowser_RefreshBtnClicked )
-	Hud_AddEventHandler( Hud_GetChild( file.panel, "ClearFliters" ), UIE_CLICK, ClearFilterServer_Activate )
-	Hud_AddEventHandler( Hud_GetChild( file.panel, "BtnServerListDownArrow" ), UIE_CLICK, OnScrollDown )
-	Hud_AddEventHandler( Hud_GetChild( file.panel, "BtnServerListUpArrow" ), UIE_CLICK, OnScrollUp )
-	AddButtonEventHandler( Hud_GetChild( file.panel, "BtnServerSearch"), UIE_CHANGE, FilterServer_Activate )
-
-	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, ServerBrowser_OnShow )
-	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, ServerBrowser_OnHide )
-
-	Hud_AddEventHandler( Hud_GetChild( Hud_GetChild( file.panel, "SwtBtnHideEmpty" ), "LeftButton" ), UIE_CLICK, FilterServer_Activate )
-	Hud_AddEventHandler( Hud_GetChild( Hud_GetChild( file.panel, "SwtBtnHideEmpty" ), "RightButton" ), UIE_CLICK, FilterServer_Activate )
-	Hud_AddEventHandler( Hud_GetChild( Hud_GetChild( file.panel, "SwtBtnSelectGamemode" ), "LeftButton" ), UIE_CLICK, FilterServer_Activate )
-	Hud_AddEventHandler( Hud_GetChild( Hud_GetChild( file.panel, "SwtBtnSelectGamemode" ), "RightButton" ), UIE_CLICK, FilterServer_Activate )
-	Hud_AddEventHandler( Hud_GetChild( Hud_GetChild( file.panel, "SwtBtnSelectMap" ), "LeftButton" ), UIE_CLICK, FilterServer_Activate )
-	Hud_AddEventHandler( Hud_GetChild( Hud_GetChild( file.panel, "SwtBtnSelectMap" ), "RightButton" ), UIE_CLICK, FilterServer_Activate )
-
-	foreach ( var elem in GetElementsByClassname( file.menu, "ServBtn" ) ) {
-		RuiSetString( Hud_GetRui( elem ), "buttonText", "")
-		Hud_AddEventHandler( elem, UIE_CLICK, ServerBrowser_ServerBtnClicked )
-		Hud_AddEventHandler( elem, UIE_DOUBLECLICK, ServerBrowser_ServerBtnDoubleClicked )
-	}
-	
-	ServerBrowser_UpdateSelectedServerUI()
-	ServerBrowser_UpdateServerPlayerCount()
-	ServerBrowser_NoServersFound(false)
-	ServerBrowser_UpdateFilterLists()
-	OnBtnFiltersClear()
 }
 
 void function ServerBrowser_OnShow( var panel )
@@ -336,7 +303,7 @@ void function ServerBrowser_FilterServerList()
 
 	if(GetConVarInt( "serverbrowser_mapFilter" ) > (filterArguments.filterMaps.len() - 1) || GetConVarInt( "serverbrowser_gameModeFilter" ) > (filterArguments.filterGamemodes.len() - 1))
 		OnBtnFiltersClear()
-	
+
 	//Must wait for convars to actually set
 	wait 0.1
 
@@ -363,10 +330,10 @@ void function ServerBrowser_FilterServerList()
 
 		if ( filterArguments.filterGamemode != "Any" && filterArguments.filterGamemode != file.m_vServerList[i].svPlaylist )
 			continue;
-		
+
 		// Search
 		if ( filterArguments.useSearch )
-		{	
+		{
 			array<string> sName
 			sName.append( file.m_vServerList[i].svServerName.tolower() )
 			sName.append( file.m_vServerList[i].svMapName.tolower() )
@@ -375,20 +342,20 @@ void function ServerBrowser_FilterServerList()
 			sName.append( GetUIPlaylistName(file.m_vServerList[i].svPlaylist).tolower() )
 
 			string sTerm = filterArguments.searchTerm.tolower()
-			
+
 			bool found = false
 			for( int l = 0, k = sName.len(); l < k; l++ )
 				if ( sName[l].find( sTerm ) >= 0 )
 					found = true
-			
+
 			if ( !found )
 				continue;
 		}
-		
+
 		// Server fits our requirements, add it to the list
 		file.m_vFilteredServerList.append(file.m_vServerList[i])
 	}
-	
+
 	// Get Server Count
 	file.m_vAllServers = file.m_vFilteredServerList.len()
 
@@ -499,7 +466,6 @@ void function UpdateListSliderPosition( int servers )
 {
 	var sliderButton = Hud_GetChild( file.panel , "BtnServerListSlider" )
 	var sliderPanel = Hud_GetChild( file.panel , "BtnServerListSliderPanel" )
-	var movementCapture = Hud_GetChild( file.panel , "MouseMovementCapture" )
 
 	float minYPos = -20.0 * ( GetScreenSize().height / 1080.0 )
 	float useableSpace = (550.0 * ( GetScreenSize().height / 1080.0 ) - Hud_GetHeight( sliderPanel ) )
@@ -510,7 +476,6 @@ void function UpdateListSliderPosition( int servers )
 
 	Hud_SetPos( sliderButton , 2, jump )
 	Hud_SetPos( sliderPanel , 2, jump )
-	Hud_SetPos( movementCapture , 2, jump )
 }
 
 
@@ -518,7 +483,6 @@ void function UpdateListSliderHeight( float servers )
 {
 	var sliderButton = Hud_GetChild( file.panel , "BtnServerListSlider" )
 	var sliderPanel = Hud_GetChild( file.panel , "BtnServerListSliderPanel" )
-	var movementCapture = Hud_GetChild( file.panel , "MouseMovementCapture" )
 
 	float maxHeight = 550.0 * ( GetScreenSize().height / 1080.0 )
 	float minHeight = 80.0 * ( GetScreenSize().height / 1080.0 )
@@ -530,7 +494,6 @@ void function UpdateListSliderHeight( float servers )
 
 	Hud_SetHeight( sliderButton , height )
 	Hud_SetHeight( sliderPanel , height )
-	Hud_SetHeight( movementCapture , height )
 }
 
 void function UpdateMouseDeltaBuffer( int x, int y )
@@ -557,7 +520,6 @@ void function SliderBarUpdate()
 
 	var sliderButton = Hud_GetChild( file.panel , "BtnServerListSlider" )
 	var sliderPanel = Hud_GetChild( file.panel , "BtnServerListSliderPanel" )
-	var movementCapture = Hud_GetChild( file.panel , "MouseMovementCapture" )
 
 	Hud_SetFocused( sliderButton )
 
@@ -578,7 +540,6 @@ void function SliderBarUpdate()
 
 	Hud_SetPos( sliderButton , 2, newPos )
 	Hud_SetPos( sliderPanel , 2, newPos )
-	Hud_SetPos( movementCapture , 2, newPos )
 
 	m_vScroll.Offset = -int( ( ( newPos - minYPos ) / useableSpace ) * ( file.m_vFilteredServerList.len() - SB_MAX_SERVER_PER_PAGE ) )
 	UpdateShownPage()

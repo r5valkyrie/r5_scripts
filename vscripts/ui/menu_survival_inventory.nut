@@ -74,9 +74,6 @@ void function InitSurvivalInventoryMenu( var newMenuArg )
 
 	file.quickInventoryPanel = GetPanel( "SurvivalQuickInventoryPanel" )
 
-	HudElem_SetChildRuiArg( Hud_GetChild( menu, "TabsCommon" ), "Background" , "bgColor", <0,0,0>, eRuiArgType.VECTOR )
-	HudElem_SetChildRuiArg( Hud_GetChild( menu, "TabsCommon" ), "Background" , "bgAlpha", 1.6, eRuiArgType.FLOAT )
-
 	SetTabRightSound( menu, "UI_InGame_InventoryTab_Select" )
 	SetTabLeftSound( menu, "UI_InGame_InventoryTab_Select" )
 }

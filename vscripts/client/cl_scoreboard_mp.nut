@@ -230,11 +230,8 @@ void function InitScoreboardMP()
 
 	Hud_SetText( file.titleCustom, title)
 
-	Hud_SetVisible( file.backgroundCustom, false )
 	Hud_SetVisible( file.titleCustom, false )
 	Hud_SetVisible( file.hintCustom, false )
-
-	RuiSetImage( Hud_GetRui( file.backgroundCustom ), "basicImage", $"rui/flowstate_custom/scoreboard_bg" )
 
 	file.header.gametypeAndMap = HudElement( "ScoreboardGametypeAndMap", scoreboard )
 	RuiSetString( Hud_GetRui( file.header.gametypeAndMap ), "gameType", "" )
