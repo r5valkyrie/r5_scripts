@@ -1732,9 +1732,9 @@ void function InitMenus()
 	var inventoryMenu = AddMenu( "SurvivalInventoryMenu", $"resource/ui/menus/survival_inventory.menu", InitSurvivalInventoryMenu )
 
 	// Arenas
-	AddMenu( "ArenasBuyMenu", $"scripts/resource/ui/menus/arenas_buy.menu", InitArenasBuyMenu )
-	AddMenu( "ArenasPostRoundSummary", $"scripts/resource/ui/menus/arenas_post_round_summary.menu", InitArenasPostRoundSummary )
-	AddMenu( "ArenasSelectOpticDialog", $"scripts/resource/ui/menus/dialogs/arenas_select_optic.menu", InitArenasSelectOpticDialog )
+	//AddMenu( "ArenasBuyMenu", $"scripts/resource/ui/menus/arenas_buy.menu", InitArenasBuyMenu )
+	//AddMenu( "ArenasPostRoundSummary", $"scripts/resource/ui/menus/arenas_post_round_summary.menu", InitArenasPostRoundSummary )
+	//AddMenu( "ArenasSelectOpticDialog", $"scripts/resource/ui/menus/dialogs/arenas_select_optic.menu", InitArenasSelectOpticDialog )
 
 	AddPanel( inventoryMenu, "SurvivalQuickInventoryPanel", InitSurvivalQuickInventoryPanel )
 	AddPanel( inventoryMenu, "SquadPanel", InitSquadPanelInventory )
@@ -1791,8 +1791,8 @@ void function InitMenus()
 
 	var FirstPersonReticlOptionseMenu = AddMenu( "FirstPersonReticleOptionsMenu", $"resource/ui/menus/first_person_reticle_options.menu", InitFirstPersonReticleOptionsMenu )
 	AddPanel( FirstPersonReticlOptionseMenu, "FirstPersonReticleOptionsColorPanel", InitFirstPersonReticleOptionsColorPanel )
-	
-                         
+
+
 	var LaserSightOptionseMenu = AddMenu( "LaserSightOptionsMenu", $"resource/ui/menus/laser_sight_options.menu", InitLaserSightOptionsMenu )
 	AddPanel( LaserSightOptionseMenu, "LaserSightOptionsColorPanel", InitLaserSightOptionsColorPanel )
 	#if PC_PROG

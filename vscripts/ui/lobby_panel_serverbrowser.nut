@@ -72,6 +72,7 @@ void function InitServerBrowserPanel( var panel )
 
 void function ServerBrowser_OnShow( var panel )
 {
+	return
 	UI_SetPresentationType( ePresentationType.SERVER_BROWSER )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
@@ -79,6 +80,7 @@ void function ServerBrowser_OnShow( var panel )
 
 void function ServerBrowser_OnHide( var panel )
 {
+	return
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_UP , OnScrollUp )
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN , OnScrollDown )
 }
@@ -118,6 +120,7 @@ void function ServerBrowser_ConnectBtnClicked(var button)
 
 void function ServerBrowser_ServerBtnClicked(var button)
 {
+	return
 	//Get the button id and add it to the scroll offset to get the correct server id
 	int id = Hud_GetScriptID( button ).tointeger() + m_vScroll.Offset
 	ServerBrowser_SelectServer(file.m_vFilteredServerList[id].svServerID)
@@ -125,6 +128,7 @@ void function ServerBrowser_ServerBtnClicked(var button)
 
 void function ServerBrowser_ServerBtnDoubleClicked(var button)
 {
+	return
 	//Get the button id and add it to the scroll offset to get the correct server id
 	int id = Hud_GetScriptID( button ).tointeger() + m_vScroll.Offset
 	ServerBrowser_SelectServer(file.m_vFilteredServerList[id].svServerID)
@@ -144,6 +148,7 @@ void function ServerBrowser_StartConnection(int id)
 
 void function ServerBrowser_UpdateSelectedServerUI()
 {
+	return
 	Hud_SetText(Hud_GetChild( file.panel, "ServerCurrentPlaylist" ), "Current Playlist" )
 	Hud_SetText(Hud_GetChild( file.panel, "ServerCurrentMap" ), "Current Map" )
 	Hud_SetText(Hud_GetChild( file.panel, "ServerNameInfoEdit" ), file.m_vSelectedServer.svServerName )
@@ -155,6 +160,7 @@ void function ServerBrowser_UpdateSelectedServerUI()
 
 void function ServerBrowser_NoServersLabel(bool show)
 {
+	return
 	//Set no servers found ui based on bool
 	Hud_SetVisible(Hud_GetChild( file.panel, "ServerNameLine" ), !show )
 	Hud_SetVisible(Hud_GetChild( file.panel, "PlayerCountLine" ), !show )
@@ -168,12 +174,14 @@ void function ServerBrowser_NoServersLabel(bool show)
 
 void function ServerBrowser_UpdateServerPlayerCount()
 {
+	return
 	Hud_SetText( Hud_GetChild( file.panel, "PlayersCount"), "Players: " + file.m_vAllPlayers)
 	Hud_SetText( Hud_GetChild( file.panel, "ServersCount"), "Servers: " + file.m_vAllServers)
 }
 
 void function OnBtnFiltersClear()
 {
+	return
 	Hud_SetText( Hud_GetChild( file.panel, "BtnServerSearch" ), "" )
 	filterArguments.useSearch = false
 	filterArguments.searchTerm = ""
@@ -188,6 +196,7 @@ void function OnBtnFiltersClear()
 
 void function ServerBrowser_SelectServer(int id)
 {
+	return
 	if(file.m_vFilteredServerList.len() == 0)
 		id = -1
 
@@ -212,6 +221,7 @@ void function ServerBrowser_SelectServer(int id)
 
 void function ServerBrowser_ResetLabels()
 {
+	return
 	//Hide all server buttons
 	array<var> serverbuttons = GetElementsByClassname( file.menu, "ServBtn" )
 	foreach ( var elem in serverbuttons )
@@ -230,6 +240,7 @@ void function ServerBrowser_ResetLabels()
 
 void function ServerBrowser_NoServersFound(bool showlabel)
 {
+	return
 	ServerBrowser_NoServersLabel(showlabel)
 	ServerBrowser_SelectServer(-1)
 	ServerBrowser_ResetLabels()
@@ -248,6 +259,7 @@ void function ServerBrowser_NoServersFound(bool showlabel)
 ////////////////////////////////////
 void function ServerBrowser_RefreshServerListing()
 {
+	return
 	ServerBrowser_NoServersFound(true)
 
 	//Requests the serverlist

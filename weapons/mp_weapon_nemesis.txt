@@ -424,7 +424,7 @@ WeaponData
 	"ui1_draw_cloaked"	"1"
 	UiData1
 	{
-		"ui"					"ui/charge_rifle_reticle"
+		"ui"					"ui/nemesis_reticle"
 		"mesh"					"models/weapons/attachments/nemesis_rui_upper"
 		Args
 		{
@@ -438,13 +438,14 @@ WeaponData
 	"ui2_enable"		"1"
 	UiData2
 	{
-		"ui"					"ui/hemlok_esaw_ammo_counter"
+		"ui"					"ui/nemesis_ammo_counter"
 		"mesh"					"models/weapons/attachments/nemesis_rui_lower"
 		Args
 		{
 			vis				        player_zoomfrac
 			ammo				    weapon_ammo
 			clipSize			    weapon_clipSize
+           // energizeFrac                weapon_script_float_0
 		}
 	}
 
@@ -472,6 +473,8 @@ WeaponData
 			"base_spread"			"0.0"
 			Args
 			{
+			//isFiring		        weapon_is_firing
+			//	playerFov             player_fov
 			}
 		}
 	}

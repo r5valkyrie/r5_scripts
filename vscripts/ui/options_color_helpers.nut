@@ -23,13 +23,14 @@ vector function OptionsColor_GetCurrentColor( string convar, vector defaultColor
 }
 vector function OptionsColor_GetDefaultColor( int colorID )
 {
-	return <255,0,0>//ColorPalette_GetDefaultColorFromID( colorID )
+	return ColorPalette_GetDefaultColorFromID( colorID )
 }
 
 void function OptionsColor_UpdateColorSliders( var panel, var H_Slider, var SV_Slider, vector currentColor, float H_Progress, float SV_Progress )
 {
 	var rui_H = Hud_GetRui( H_Slider )
 	var rui_SV = Hud_GetRui( SV_Slider )
+
 
 	HSV hueColor
 	hueColor.hue = H_Progress * 360
@@ -44,13 +45,13 @@ void function OptionsColor_UpdateColorSliders( var panel, var H_Slider, var SV_S
 
 
 	RuiSetFloat( rui_H , "progress", H_Progress )
-	RuiSetColorAlpha( rui_H, "hueColor", H_safeRGB, 1.0  )
+	//RuiSetColorAlpha( rui_H, "hueColor", H_safeRGB, 1.0  )
 	Hud_SliderControl_SetCurrentValue( Hud_GetChild( panel, "H_Slider" ), H_Progress )
 
 
 	RuiSetFloat( rui_SV, "progress", SV_Progress )
-	RuiSetColorAlpha( rui_SV, "hueColor", H_safeRGB, 1.0  )
-	RuiSetColorAlpha( rui_SV, "selectedColor", SV_safeRGB, 1.0  )
+	//RuiSetColorAlpha( rui_SV, "hueColor", H_safeRGB, 1.0  )
+	//RuiSetColorAlpha( rui_SV, "selectedColor", SV_safeRGB, 1.0  )
 	Hud_SliderControl_SetCurrentValue( Hud_GetChild( panel, "SV_Slider" ),  SV_Progress )
 }
 

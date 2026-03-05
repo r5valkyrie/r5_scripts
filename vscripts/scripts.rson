@@ -1018,13 +1018,6 @@ Scripts:
 	ui/panel_weapon_skins.nut
 	ui/panel_models.nut
 
-	ui/options_color_helpers.nut
-
-	ui/menu_laser_sight_options.nut
-	ui/menu_laser_sight_options_color.nut
-	ui/menu_firstperson_reticle_options_color.nut
-	ui/menu_firstperson_reticle_options.nut
-
 	ui/menu_main.nut
 	ui/panel_mainmenu.nut
 	ui/panel_establishuser.nut
@@ -1056,6 +1049,13 @@ Scripts:
 	//R5R Main Menu
 	ui/menu_main_v2.nut
 	ui/panel_mainmenu_v2.nut
+
+	ui/options_color_helpers.nut
+	ui/menu_firstperson_reticle_options_color.nut
+	ui/menu_firstperson_reticle_options.nut
+	ui/menu_laser_sight_options.nut
+	ui/menu_laser_sight_options_color.nut
+
 
 	//R5R Lobby
 	ui/lobby_panel_create.nut

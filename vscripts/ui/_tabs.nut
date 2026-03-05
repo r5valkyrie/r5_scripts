@@ -531,11 +531,12 @@ void function UpdateMenuTabs()
 		array<var> availableTabDividers = clone tabData.tabDividers
 		int numTabs                     = tabDefs.len()
 
-		if ( tabData.initialFirstTabButtonWidth == -1 )
+		if ( tabData.initialFirstTabButtonWidth == -1 && tabButtons.len() > 0 )
 		{
 			tabData.initialFirstTabButtonWidth = Hud_GetWidth( tabButtons[0] )
 			tabData.initialFirstTabButtonXPos = Hud_GetX( tabButtons[0] )
-			tabData.initialSecondTabButtonXPos = Hud_GetX( tabButtons[1] )
+			if ( tabButtons.len() > 1 )
+				tabData.initialSecondTabButtonXPos = Hud_GetX( tabButtons[1] )
 		}
 
 		int leftMostVisibleTabIndex  = -1
