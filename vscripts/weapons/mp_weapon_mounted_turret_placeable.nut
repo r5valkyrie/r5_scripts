@@ -24,7 +24,7 @@ global function MountedTurretPlaceable_ClearDriver_ForTurretDestroyed
 global function MountedTurretPlaceable_ClearDriver_ForTurretDisabled
 global function MountedTurretPlaceable_ClearDriver_ForDeployThreadIsFinished
 global function MountedTurretPlaceable_ClearDriver_ForOtherReason
-global function ClientCommand_TryPickupMountedTurret
+global function ClientCallback_TryPickupMountedTurret
 global function MountedTurretPlaceable_GetAllTurretsInPlay
 
 global function MountedTurretPlaceable_Deploy
@@ -134,9 +134,7 @@ void function MpWeaponMountedTurretPlaceable_Init()
 
 	file.maxNumTurretsDeployed = GetCurrentPlaylistVarInt( "rampart_max_turrets_deployed", MOUNTED_TURRET_PLACEABLE_MAX_TURRETS )
 
-	#if SERVER
-		AddClientCommandCallback( "ClientCallback_TryPickupMountedTurret", ClientCommand_TryPickupMountedTurret )
-	#endif
+	Remote_RegisterServerFunction( "ClientCallback_TryPickupMountedTurret", "typed_entity", "turret" )
 
 	RegisterSignal( "EnterMountedTurret" )
 
@@ -1040,35 +1038,29 @@ void function DestroyTurretFX( entity turretProxy, entity attacker )
 		}
 }
 
-bool function ClientCommand_TryPickupMountedTurret( entity player, array<string> args )
+void function ClientCallback_TryPickupMountedTurret( entity player, entity device )
 {
 	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
-		return false
-
-	if ( args.len() < 1 )
-		return false
-
-	int entNum = args[0].tointeger()
-	entity device = GetEntByIndex( entNum )
+		return
 
 	if ( !IsValid( device ) || device.GetScriptName() != MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME )
-		return false
+		return
 
 	if ( device != player.GetUseEntity() )
-		return false
+		return
 
 	if ( GradeFlagsHas( device, eGradeFlags.IS_BUSY ) )
-		return false
+		return
 
 	entity owner = device.GetOwner()
 
 	if ( player != owner )
-		return false
+		return
 
 	entity ultWeapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
 
 	if ( !IsValid( ultWeapon ) || ultWeapon.GetWeaponClassName() != MOBILE_HMG_WEAPON_NAME )
-		return false
+		return
 
 	GradeFlagsSet( device, eGradeFlags.IS_BUSY )
 	device.NotSolid()
@@ -1107,8 +1099,6 @@ bool function ClientCommand_TryPickupMountedTurret( entity player, array<string>
 
 		waitthread PlayAnimOnly( device, "prop_rampart_turret_collapse" )
 	})()
-
-	return true
 }
 
 #endif // SERVER
@@ -1269,7 +1259,7 @@ bool function CanReclaimTurret( entity turret )
 		if ( useEnt.GetOwner() != player )
 			return
 
-		player.ClientCommand( "ClientCallback_TryPickupMountedTurret " + useEnt.GetEntIndex() )
+		Remote_ServerCallFunction( "ClientCallback_TryPickupMountedTurret", useEnt )
 	}
 
 	void function MountedTurretPlaceable_CreateHUDMarker( entity turret )
