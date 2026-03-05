@@ -8,7 +8,8 @@ global function ShCharacterAbilities_LevelInit
 #if SERVER || CLIENT || UI
 global function CharacterClass_GetTacticalAbility
 global function CharacterClass_GetUltimateAbility
-global function CharacterClass_GetPassiveAbility
+global function CharacterClass_GetPassiveAbilities
+global function CharacterAbility_ShouldShowDetails
 global function CharacterAbility_GetWeaponClassname
 global function CharacterAbility_GetPassiveIndex
 global function CharacterAbility_GetPassiveWeaponMod
@@ -25,7 +26,7 @@ struct FileStruct_LifetimeLevel
 {
 	table<ItemFlavor, ItemFlavor> characterTacAbilityMap
 	table<ItemFlavor, ItemFlavor> characterUltAbilityMap
-	table<ItemFlavor, ItemFlavor> characterPasAbilityMap
+	table<ItemFlavor, array<ItemFlavor> > characterPasAbilitiesMap
 }
 FileStruct_LifetimeLevel& fileLevel
 
@@ -88,19 +89,24 @@ void function OnItemFlavorRegistered_Character( ItemFlavor character )
 
 	// passive
 	{
-		asset settingsAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( character ), "passive1" )
-		if ( settingsAsset != $"" )
+		array<ItemFlavor> passives = []
+		foreach ( var passiveBlock in IterateSettingsAssetArray( ItemFlavor_GetAsset( character ), "passives" ) )
 		{
-			ItemFlavor ornull ability = RegisterItemFlavorFromSettingsAsset( settingsAsset )
-			if ( ability != null )
+			asset settingsAsset = GetSettingsBlockAsset( passiveBlock, "flavor" )
+			if ( settingsAsset != $"" )
 			{
-				expect ItemFlavor(ability)
-				Assert( CharacterAbility_GetWeaponClassname( ability ) == "" )
-				Assert( CharacterAbility_GetPassiveIndex( ability ) != ePassives.INVALID )  // no real reason for this other than sanity
-				fileLevel.characterPasAbilityMap[character] <- ability
-				abilityList.append( ability )
+				ItemFlavor ornull ability = RegisterItemFlavorFromSettingsAsset( settingsAsset )
+				if ( ability != null )
+				{
+					expect ItemFlavor(ability)
+					Assert( CharacterAbility_GetWeaponClassname( ability ) == "" )
+					Assert( CharacterAbility_GetPassiveIndex( ability ) != ePassives.INVALID )                                              
+					passives.append( ability )
+					abilityList.append( ability )
+				}
 			}
 		}
+		fileLevel.characterPasAbilitiesMap[character] <- passives
 	}
 
 	foreach ( ItemFlavor ability in abilityList )
@@ -145,11 +151,21 @@ ItemFlavor function CharacterClass_GetUltimateAbility( ItemFlavor character )
 
 
 #if SERVER || CLIENT || UI
-ItemFlavor function CharacterClass_GetPassiveAbility( ItemFlavor character )
+array<ItemFlavor> function CharacterClass_GetPassiveAbilities( ItemFlavor character )
 {
 	Assert( ItemFlavor_GetType( character ) == eItemType.character )
 
-	return fileLevel.characterPasAbilityMap[character]
+	return fileLevel.characterPasAbilitiesMap[character]
+}
+#endif
+
+
+#if SERVER || CLIENT || UI
+bool function CharacterAbility_ShouldShowDetails( ItemFlavor flavor )
+{
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.ability )
+
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "showDetails" )
 }
 #endif
 

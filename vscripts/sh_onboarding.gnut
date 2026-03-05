@@ -1246,7 +1246,7 @@ void function GiveLoadoutRelatedWeapons( entity player )
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	ItemFlavor tactical = CharacterClass_GetTacticalAbility( character )
 	ItemFlavor ultimate = CharacterClass_GetUltimateAbility( character )
-	ItemFlavor passive = CharacterClass_GetPassiveAbility( character )
+	array<ItemFlavor> passives = CharacterClass_GetPassiveAbilities( character )
 	
 	player.GiveOffhandWeapon( CONSUMABLE_WEAPON_NAME, OFFHAND_SLOT_FOR_CONSUMABLES, [] )
 	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( tactical ), OFFHAND_TACTICAL, [] )
@@ -1261,11 +1261,14 @@ void function GiveLoadoutRelatedWeapons( entity player )
 	if( !Flowstate_GivePassive() || !Flowstate_PassivesAllowedForMode() )
 		return
 
-	GivePassive( player, CharacterAbility_GetPassiveIndex( passive ) )
+	foreach ( ItemFlavor passive in passives )
+	{
+		GivePassive( player, CharacterAbility_GetPassiveIndex( passive ) )
 
-	string passiveWeaponMod = CharacterAbility_GetPassiveWeaponMod( passive )
-	if ( passiveWeaponMod != "" )
-		GiveExtraWeaponMod( player, passiveWeaponMod )
+		string passiveWeaponMod = CharacterAbility_GetPassiveWeaponMod( passive )
+		if ( passiveWeaponMod != "" )
+			GiveExtraWeaponMod( player, passiveWeaponMod )
+	}
 
 	if( ItemFlavor_GetHumanReadableRef( character ) == "character_caustic" || ItemFlavor_GetHumanReadableRef( character ) == "character_gibraltar" )
 	{

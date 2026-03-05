@@ -1,10 +1,16 @@
 global function InitLobbyMenu
-
+global function Lobby_IsInputBlocked
 global function GetUIPlaylistName
 global function GetUIMapName
 global function GetUIMapAsset
 global function GetUIVisibilityName
 global function UpdateServerAndPlayerCountButtons
+global struct LobbyPopup
+{
+	bool functionref( int inputID ) checkBlocksInput
+	bool functionref( int inputID ) handleInput
+	void functionref()              onClose
+}
 
 struct
 {
@@ -23,6 +29,8 @@ struct
 
 	var serversButton
 	var playersButton
+	LobbyPopup ornull  activeLobbyPopup = null
+	table< int, bool > isInputBlocked
 } file
 
 // do not change this enum without modifying it in code at gameui/IBrowser.h
@@ -637,6 +645,16 @@ void function OnLobbyMenu_FocusChat( var panel )
 			Hud_SetFocused( Hud_GetChild( textChat, "ChatInputLine" ) )
 		}
 	#endif
+}
+
+bool function Lobby_IsInputBlocked( int inputID )
+{
+	if ( file.activeLobbyPopup == null )
+		return false
+
+	LobbyPopup ornull lobbyPopup = file.activeLobbyPopup
+	expect LobbyPopup( lobbyPopup )
+	return lobbyPopup.checkBlocksInput( inputID )
 }
 
 string function GetUIPlaylistName(string playlist)

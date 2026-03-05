@@ -50,26 +50,26 @@ void function UtilityUI_Init()
 
 float function ContentScaledX( int val )
 {
-	return (val * GetContentScaleFactor( GetMenu( "MainMenu" ) ).x)
+	return (val * GetContentFixedScaleFactor( GetMenu( "MainMenu" ) ).x)
 }
 
 
 float function ContentScaledY( int val )
 {
-	return (val * GetContentScaleFactor( GetMenu( "MainMenu" ) ).y)
+	return (val * GetContentFixedScaleFactor( GetMenu( "MainMenu" ) ).y)
 }
 
 
 int function ContentScaledXAsInt( int val )
 {
-	float fVal = val * GetContentScaleFactor( GetMenu( "MainMenu" ) ).x
+	float fVal = val * GetContentFixedScaleFactor( GetMenu( "MainMenu" ) ).x
 	return int( fVal + 0.5 )
 }
 
 
 int function ContentScaledYAsInt( int val )
 {
-	float fVal = val * GetContentScaleFactor( GetMenu( "MainMenu" ) ).y
+	float fVal = val * GetContentFixedScaleFactor( GetMenu( "MainMenu" ) ).y
 	return int( fVal + 0.5 )
 }
 
@@ -126,7 +126,7 @@ var function GetSingleElementByClassname( var menu, string classname )
 {
 	array<var> elems = GetElementsByClassname( menu, classname )
 
-	if ( elems.len() )
+	if ( elems.len() > 0 )
 	{
 		Assert( elems.len() == 1 )
 		return elems[0]
@@ -286,10 +286,14 @@ var function AddMenu( string blockName, asset resourceFile, void functionref( va
 	if ( initFunc != null )
 		uiGlobal.menuData[ menu ].initFunc = initFunc
 
-	#if HAS_TOOLTIPS
-		ToolTips_AddMenu( menu )
-		ButtonClass_AddMenu( menu )
-	#endif
+	table pin_metadata = {
+		hub_name = blockName
+	}
+
+	uiGlobal.menuData[ menu ].pin_metaData = pin_metadata
+
+	ToolTips_AddMenu( menu )
+	ButtonClass_AddMenu( menu )
 
 	return menu
 }
@@ -305,8 +309,15 @@ var function AddPanel( var menu, string panelName, void functionref( var ) initF
 
 	Hud_Hide( panel )
 
+	table pin_metadata = {
+		hub_name = Hud_GetHudName( menu )
+		tab_name = panelName
+	}
+
 	PanelDef defaultPanelData
 	uiGlobal.panelData[ panel ] <- defaultPanelData
+	uiGlobal.panelData[ panel ].pin_metaData = pin_metadata
+	panel.SetDisplayName( Hud_GetHudName( panel ) )
 
 	if ( initFunc != null )
 		uiGlobal.panelData[ panel ].initFunc = initFunc
@@ -493,6 +504,20 @@ void function RuiSetArg( var rui, string argName, var argVal )
 }
 
 
+void function Hud_Show_UpdateRuiArg( var elem )
+{
+	Hud_Show( elem )
+	RuiSetBool( Hud_GetRui( elem ), "isVisible", true )
+}
+
+
+void function Hud_Hide_UpdateRuiArg( var elem )
+{
+	Hud_Hide( elem )
+	RuiSetBool( Hud_GetRui( elem ), "isVisible", false )
+}
+
+
 void function SetPanelTabTitle( var panel, string title )
 {
 	uiGlobal.panelData[ panel ].tabTitle = title
@@ -627,7 +652,7 @@ string function GetFormattedIntByType( int value, int numericType )
 
 		case eNumericDisplayType.TIME_SECONDS_SHORT:
 			DisplayTime dt = SecondsToDHMS( value )
-			if ( dt.hours )
+			if ( dt.hours != 0 )
 				displayValue = format( "%d:%.2d:%.2d", dt.hours, dt.minutes, dt.seconds )
 			else
 				displayValue = format( "%.2d:%.2d", dt.minutes, dt.seconds )
@@ -635,7 +660,7 @@ string function GetFormattedIntByType( int value, int numericType )
 
 		case eNumericDisplayType.TIME_SECONDS_LONG:
 			DisplayTime dt = SecondsToDHMS( value )
-			if ( dt.hours )
+			if ( dt.hours != 0 )
 				displayValue = format( Localize( "#TIME_FORMAT_HMS" ), dt.hours, dt.minutes, dt.seconds )
 			else
 				displayValue = format( Localize( "#TIME_FORMAT_MS" ), dt.minutes, dt.seconds )
@@ -643,7 +668,7 @@ string function GetFormattedIntByType( int value, int numericType )
 
 		case eNumericDisplayType.TIME_MINUTES_LONG:
 			DisplayTime dt = SecondsToDHMS( value )
-			if ( dt.hours )
+			if ( dt.hours != 0 )
 				displayValue = format( Localize( "#TIME_FORMAT_HM" ), dt.hours, dt.minutes )
 			else
 				displayValue = format( Localize( "#TIME_FORMAT_M" ), dt.minutes )
@@ -676,7 +701,7 @@ string function GetFormattedFloatByType( float value, int numericType )
 
 		case eNumericDisplayType.TIME_SECONDS_SHORT:
 			DisplayTime dt = SecondsToDHMS( int (value / 1000 ) )
-			if ( dt.hours )
+			if ( dt.hours != 0 )
 				displayValue = format( "%d:%.2d:%.2d", dt.hours, dt.minutes, dt.seconds )
 			else
 				displayValue = format( "%.2d:%.2d", dt.minutes, dt.seconds )
@@ -684,7 +709,7 @@ string function GetFormattedFloatByType( float value, int numericType )
 
 		case eNumericDisplayType.TIME_SECONDS_LONG:
 			DisplayTime dt = SecondsToDHMS( int( value / 1000 ) )
-			if ( dt.hours )
+			if ( dt.hours != 0 )
 				displayValue = format( "%dh %.2dm %.2ds", dt.hours, dt.minutes, dt.seconds )
 			else
 				displayValue = format( "%.2dm %.2ds", dt.minutes, dt.seconds )

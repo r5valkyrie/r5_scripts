@@ -21,12 +21,13 @@ global struct TabDef
 	var                                                    button
 	var                                                    panel
 	var                                                    parentPanel
-	string                                                 title
+	string                                                 title = ""
+	asset 												   icon = $""
 	bool                                                   visible = true
 	bool                                                   enabled = true
 	bool                                                   new = false
 	bool                                                   wantDividerAfter = false
-	
+	bool												   isActive = false
 	float                                                  tabBarLeftOffsetFracIfVisible = 0.0
 	bool functionref( var panel, int destinationTabIndex ) canNavigateFunc = null
 	int 												   width = 200
@@ -48,13 +49,19 @@ global struct TabDef
 
 	vector customNewColor = <1.0, 1.0, 1.0>
 
-	asset  leftSideImage = $""
-	asset  rightSideImage = $""
+	asset leftSideImage = $""
+	asset centerImage = $""
+	asset rightSideImage = $""
+
+	float imageUnselectedAlpha = 0.5
+	float imageSelectedAlpha = 1.0
 	asset  centerRuiAsset = $""
 
 	asset  currentCenterRuiAsset = $""
+	var    currentCenterRui = $""
 
 	bool useTapHoldLogic = false
+	bool hideSubtabPips = false
 }
 
 // Footer alignment
@@ -167,6 +174,7 @@ global struct MenuDef
 	bool   clearBlur = true
 	float  enterTime
 	string pin_fromId = ""
+	table  pin_metaData = {}
 }
 
 global struct PanelDef
@@ -194,6 +202,7 @@ global struct PanelDef
 	bool  isCurrentlyShown = false
 	float enterTime
 	bool  panelClearBlur = false
+	table pin_metaData = {}
 }
 
 global struct PieChartEntry

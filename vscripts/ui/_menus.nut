@@ -102,6 +102,8 @@ global function GetTopLevelCustomizeContext
 global function SetTopLevelCustomizeContext
 global function SetGamepadCursorEnabled
 global function IsGamepadCursorEnabled
+global function SetLastMenuNavDirection
+global function GetLastMenuNavDirection
 global function IsCommsMenuOpen
 global function GetCurrentLobbyMenu
 
@@ -179,6 +181,8 @@ struct
 	bool TEMP_circularReferenceCleanupEnabled = true
 
 	table<string, int> t_persistenceAttempts
+	
+	bool lastMenuNavDirection = MENU_NAV_FORWARD
 } file
 
 
@@ -2893,6 +2897,16 @@ void function InitButtonRCP( var button )
 }
 
 
+void function SetLastMenuNavDirection( bool val )
+{
+	file.lastMenuNavDirection = val
+}
+
+
+bool function GetLastMenuNavDirection()
+{
+	return file.lastMenuNavDirection
+}
 void function ClientToUI_SetCommsMenuOpen( bool state )
 {
 	uiGlobal.commsMenuOpen = state

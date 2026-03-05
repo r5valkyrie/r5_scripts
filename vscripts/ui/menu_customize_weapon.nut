@@ -105,7 +105,6 @@ void function CustomizeWeaponMenu_Update( var menu )
 			var tabBodyPanel = file.weaponTabBodyPanelList[weaponIdx]
 
 			float tabBarLeftOffsetFracIfVisible = 0.434
-			AddTab( menu, tabBodyPanel, Localize( ItemFlavor_GetShortName( weapon ) ).toupper(), false, tabBarLeftOffsetFracIfVisible )
 
 			WeaponSkinsPanel_SetWeapon( tabBodyPanel, weapon )
 			//Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.WeaponTab[weapon], OnNewnessQueryChangedUpdatePanelTab, tabBodyPanel )

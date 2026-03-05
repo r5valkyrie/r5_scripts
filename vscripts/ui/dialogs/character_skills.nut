@@ -70,9 +70,10 @@ void function CharacterSkillsDialog_OnOpen()
 		RuiSetString( file.contentRui, "specialPerkDesc", "" )
 	}
 
-	RuiSetImage( file.contentRui, "passiveIcon", ItemFlavor_GetIcon( CharacterClass_GetPassiveAbility( file.character ) ) )
-	RuiSetString( file.contentRui, "passiveName", Localize( ItemFlavor_GetLongName( CharacterClass_GetPassiveAbility( file.character ) ) ) )
-	RuiSetString( file.contentRui, "passiveDesc", Localize( ItemFlavor_GetLongDescription( CharacterClass_GetPassiveAbility( file.character ) ) ) )
+	ItemFlavor passive = CharacterClass_GetPassiveAbilities( file.character )[0]
+	RuiSetImage( file.contentRui, "passiveIcon", ItemFlavor_GetIcon( passive ) )
+	RuiSetString( file.contentRui, "passiveName", Localize( ItemFlavor_GetLongName( passive ) ) )
+	RuiSetString( file.contentRui, "passiveDesc", Localize( ItemFlavor_GetLongDescription( passive ) ) )
 	RuiSetString( file.contentRui, "passiveType", Localize( "#PASSIVE" ) )
 
 	RuiSetImage( file.contentRui, "tacticalIcon", ItemFlavor_GetIcon( CharacterClass_GetTacticalAbility( file.character ) ) )

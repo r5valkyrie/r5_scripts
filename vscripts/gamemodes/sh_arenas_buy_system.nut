@@ -171,7 +171,7 @@ int function GetAvailableWeaponRows( )
 void function ShArenasBuy_RegisterNetworkingV2()
 {
 	printt( "[Arenas BuySystem] RegisterNetworkingV2 called" )
-	
+
 	RegisterNetworkedVariable( "passiveCharges", SNDC_PLAYER_GLOBAL, SNVT_INT, 1 )
 	RegisterNetworkedVariable( "ultimateCooldown", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 1 )
 #if(CLIENT)
@@ -1210,7 +1210,7 @@ void function _Arenas_BindBuyButtonV2( entity player, var button, var rui, int i
 		if( item.ref == "buy_passive" )
 		{
 			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-			ItemFlavor pas = CharacterClass_GetPassiveAbility( character )
+			ItemFlavor pas = CharacterClass_GetPassiveAbilities( character )[0]
 
 			td.titleText = Localize( ItemFlavor_GetShortName( pas ) )
 			td.descText = Localize( ItemFlavor_GetShortDescription( pas ) )
@@ -1320,7 +1320,7 @@ void function _Arenas_BindBuyButtonV2_PopulateInfoOnly( entity player, var butto
 		if( player != null )
 		{
 			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-			ItemFlavor ability   = CharacterClass_GetPassiveAbility( character )
+			ItemFlavor ability   = CharacterClass_GetPassiveAbilities( character )[0]
 
 			RuiSetImage( rui, "iconImage", ItemFlavor_GetIcon( ability ) )
 
@@ -1829,7 +1829,7 @@ int function GetArenasStoreItemPurchaseLimit( entity player, string ref )
 	{
 		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
-		ItemFlavor passive = CharacterClass_GetPassiveAbility( character )
+		ItemFlavor passive = CharacterClass_GetPassiveAbilities( character )[0]
 
 		refToUse = GetGlobalSettingsString( ItemFlavor_GetAsset( passive ), "passiveScriptRef" )
 	}
@@ -1852,7 +1852,7 @@ int function GetArenasStoreItemCost( entity player, string ref )
 	{
 		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
-		ItemFlavor passive = CharacterClass_GetPassiveAbility( character )
+		ItemFlavor passive = CharacterClass_GetPassiveAbilities( character )[0]
 
 		refToUse = GetGlobalSettingsString( ItemFlavor_GetAsset( passive ), "passiveScriptRef" )
 	}
@@ -1875,7 +1875,7 @@ int function Arenas_GetItemCostByRef( entity player, string itemRef )
 	{
 		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
-		ItemFlavor passive = CharacterClass_GetPassiveAbility( character )
+		ItemFlavor passive = CharacterClass_GetPassiveAbilities( character )[0]
 
 		refToUse = GetGlobalSettingsString( ItemFlavor_GetAsset( passive ), "passiveScriptRef" )
 	}
@@ -2002,7 +2002,7 @@ bool function PlayerHasCharacterPassive( entity player )
 
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
-	array<ItemFlavor> passives = [ CharacterClass_GetPassiveAbility( character ) ]
+	array<ItemFlavor> passives = CharacterClass_GetPassiveAbilities( character )
 
 	foreach ( passive in passives )
 	{
@@ -2283,7 +2283,7 @@ void function __UpdatePassiveRui( entity player )
 	player.EndSignal( "UpdatePassiveRui" )
 
 	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
-	array<ItemFlavor> passives = [ CharacterClass_GetPassiveAbility( character ) ]
+	array<ItemFlavor> passives = CharacterClass_GetPassiveAbilities( character )
 	ItemFlavor mainPassive = passives[0]
 
 	string passiveRef = GetGlobalSettingsString( ItemFlavor_GetAsset( mainPassive ), "passiveScriptRef" )

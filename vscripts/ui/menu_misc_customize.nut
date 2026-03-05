@@ -117,9 +117,7 @@ void function MiscCustomizeMenu_Update( var menu )
 */
 
 		float tabBarLeftOffsetFracIfVisible = 0.434
-		AddTab( menu, file.tabBodyPanelList[0], Localize( "#TAB_CUSTOMIZE_LOADSCREEN" ).toupper(), false, tabBarLeftOffsetFracIfVisible )
-		AddTab( menu, file.tabBodyPanelList[1], Localize( "#TAB_CUSTOMIZE_MUSIC_PACK" ).toupper(), false, tabBarLeftOffsetFracIfVisible )
-		AddTab( menu, file.tabBodyPanelList[2], Localize( "#TAB_CUSTOMIZE_SKYDIVE_TRAIL" ).toupper(), false, tabBarLeftOffsetFracIfVisible )
+
 	}
 
 	SetPanelTabNew( GetPanel( "LoadscreenPanel" ), (Newness_ReverseQuery_GetNewCount( NEWNESS_QUERIES.LoadscreenButton ) > 0) )

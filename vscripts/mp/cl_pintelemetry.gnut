@@ -8,7 +8,10 @@ global function PIN_PageView
 global function PIN_Message
 global function PIN_Survey
 global function PIN_Settings
+global function GetLastMenuIDForPIN
+global function SetLastMenuIDForPIN
 #endif
+
 
 struct
 {
@@ -16,6 +19,14 @@ struct
 
 	#if CLIENT
 		entity networkWaypoint
+	#endif
+
+	#if UI
+		string currentHubForPIN = ""
+		string currentTabForPIN = ""
+		string cachedOfferAlias = ""
+		string pin_lastMenuId = ""
+		table matchPinData = {}
 	#endif
 } file
 
@@ -84,10 +95,12 @@ void function PIN_Shutdown()
 #endif //UI
 
 #if UI
-void function PIN_PageView( string menuName, float openDuration, string fromId, bool isDialog )
+void function PIN_PageView( string menuName, float openDuration, string fromId, bool isDialog, table metaData = {} )
 {
 	if ( openDuration < 1.0 )
 		return
+
+	metaData = PIN_GetSpecialMetaData( isDialog, metaData, menuName )
 
 	AddPINTelemetryEvent( "page_view",
 		PIN_StandardHeader(),
@@ -97,11 +110,75 @@ void function PIN_PageView( string menuName, float openDuration, string fromId, 
 			pgid = menuName.tolower()
 			fromid = fromId.tolower()
 			type = isDialog ? "popup" : "menu"
+			meta = metaData
 		}
 	)
 }
 #endif
 
+#if UI
+                                                                                                                           
+                                                                                                                                       
+table function PIN_GetSpecialMetaData( bool isDialog, table metaData, string menuName )
+{
+	if ( isDialog )
+	{
+		if ( "hub_name" in metaData )
+			metaData[ "hub_name" ] = file.currentHubForPIN
+		else
+			metaData[ "hub_name" ] <- file.currentHubForPIN
+		if ( "tab_name" in metaData )
+			metaData[ "tab_name" ] = file.currentTabForPIN
+		else
+			metaData[ "tab_name" ] <- file.currentTabForPIN
+	}
+
+
+	if ( "hub_name" in metaData && ( metaData[ "hub_name" ] == "PassPurchaseMenu" || metaData[ "hub_name" ] == "BattlePassAboutPage1" ) )
+	{
+		if ( "hub_name" in metaData )
+			metaData[ "hub_name" ] = "SeasonPanel"
+		else
+			metaData[ "hub_name" ] <- "SeasonPanel"
+		if ( "tab_name" in metaData )
+			metaData[ "tab_name" ] = "PassPanel"
+		else
+			metaData[ "tab_name" ] <- "PassPanel"
+	}
+	else if ( "hub_name" in metaData && ( metaData[ "hub_name" ] == "ConfirmPurchaseDialog" || metaData[ "hub_name" ] == "StoreInspectMenu" || metaData[ "hub_name" ] == "ConfirmPackBundlePurchaseDialog" ) )
+	{
+		metaData[ "hub_name" ] = file.currentHubForPIN
+		if ( "tab_name" in metaData )
+			metaData[ "tab_name" ] = file.currentTabForPIN
+		else
+			metaData[ "tab_name" ] <- file.currentTabForPIN
+
+		if ( !("item_name" in metaData) )
+			metaData[ "item_name" ] <- file.cachedOfferAlias
+	}
+
+	if ( menuName == "menu_ConfirmPackBundlePurchaseDialog" )
+	{
+		if ( "item_name" in metaData )
+			metaData[ "item_name" ] = file.cachedOfferAlias
+		else
+			metaData[ "item_name" ] <- file.cachedOfferAlias
+
+	}
+
+
+	if ( "tab_name" in metaData && metaData[ "tab_name" ] == "InspectPanel" )
+	{
+		if ( "hub_name" in metaData )
+			metaData[ "hub_name" ] = file.currentHubForPIN
+		else
+			metaData[ "hub_name" ] <- file.currentHubForPIN
+		metaData[ "tab_name" ] = file.currentTabForPIN
+	}
+
+	return metaData
+}
+#endif   
 
 #if UI
 void function PIN_Message( string titleText, string messageText )
@@ -195,6 +272,16 @@ void function PIN_Customization( ItemFlavor ornull context, ItemFlavor itemFlavo
 	string selection2_rarity = "NULL"
 	string selection3 = "NULL"
 	string selection3_rarity = "NULL"
+	string selection4 = "NULL"
+	string selection4_rarity = "NULL"
+	string selection5 = "NULL"
+	string selection5_rarity = "NULL"
+	string selection6 = "NULL"
+	string selection6_rarity = "NULL"
+	string selection7 = "NULL"
+	string selection7_rarity = "NULL"
+	string selection8 = "NULL"
+	string selection8_rarity = "NULL"
 
 	string customizeQuality = ItemFlavor_HasQuality( itemFlavor  ) ? GetPINRarity( ItemFlavor_GetQuality( itemFlavor ) + 1 ) : GetPINRarity( eQuality.COMMON )
 
@@ -314,5 +401,22 @@ void function OnPINWaypointCreated( entity wp )
 	RunUIScript( "UpdateMatchPINData", "mid", wp.GetWaypointString( 0 ) )
 	RunUIScript( "UpdateMatchPINData", "map", GetMapName() )
 	RunUIScript( "UpdateMatchPINData", "match_type", GetCurrentPlaylistVarString( "pin_match_type", "survival" ) )
+}
+#endif
+
+#if UI
+string function GetLastMenuIDForPIN()
+{
+	return file.pin_lastMenuId
+}
+
+void function SetLastMenuIDForPIN( string val )
+{
+	file.pin_lastMenuId = val
+}
+
+table function GetMatchPINData()
+{
+	return file.matchPinData
 }
 #endif

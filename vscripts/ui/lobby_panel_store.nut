@@ -158,15 +158,13 @@ void function InitStorePanel( var panel )
 		var tabBody                         = Hud_GetChild( panel, "CollectionEventPanel" )
 		bool wantDividerAfter               = true
 		float tabBarLeftOffsetFracIfVisible = 0.4
-		AddTab( panel, tabBody, "#MENU_STORE_PANEL_COLLECTION", wantDividerAfter, tabBarLeftOffsetFracIfVisible )
 	}
-	
+
 	// Shop
 	{
 		var tabBody                         = Hud_GetChild( panel, "ThemedShopPanel" )
 		bool wantDividerAfter               = true
 		float tabBarLeftOffsetFracIfVisible = 0.4
-		AddTab( panel, tabBody, "BUG THIS", wantDividerAfter, tabBarLeftOffsetFracIfVisible )
 	}
 
 	// Offers

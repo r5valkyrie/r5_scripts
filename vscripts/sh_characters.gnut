@@ -3,6 +3,7 @@ global function ShCharacters_LevelInit
 global function Loadout_Character
 global function GetAllCharacters
 global function GetLaunchCharacters
+global function Character_IsCharacterOwnedByPlayer
 global function CharacterClass_GetSetFile
 global function CharacterClass_GetIsShippingCharacter
 global function CharacterClass_GetRole
@@ -21,6 +22,15 @@ global function CharacterClass_GetCharacterLockedPortrait
 global function CharacterClass_GetCharacterRoleImage
 global function CharacterClass_GetCharacterSelectSubtitle
 global function CharacterClass_GetCharacterRolePerkDesc
+global function CharacterClass_GetGalleryRoleBackground
+global function CharacterClass_GetCharacterPerkDescription
+global function CharacterClass_GetRolePerkDescriptionAtIndex
+global function CharacterClass_GetRolePerkShortDescriptionAtIndex
+global function CharacterClass_GetRoleTitle
+global function CharacterClass_GetRoleSubtitle
+global function CharacterClass_GetRolePerkIconAtIndex
+global function CharacterClass_GetRoleIcon
+global function CharacterClass_GetRoleColor
 global function CharacterClass_GetReadyUpVoicelineEventList
 global function CharacterClass_IsAvailable
 global function CharacterClass_GetDamageScale
@@ -34,6 +44,7 @@ global function CharacterClass_GetMenuZoomOffset
 #if CLIENT || UI 
 global function GetCharacterButtonMapping
 global function GetCharacterButtonOrder
+global function GetCharactersByRole
 #endif
 
 #if SERVER || CLIENT
@@ -54,20 +65,109 @@ global enum eCharacterClassRole
 {
 	UNDECIDED,
 	OFFENSE,
+	SKIRMISHER,
 	RECON,
 	DEFENSE,
 	SUPPORT,
 	_COUNT,
 }
 
+global struct ClassRoleSettingsInfo
+{
+	array<int> perks
+
+	                                                                                                                              
+	                                                                
+	string name
+	string fullDescription
+	string shortDescription
+	vector uiColor
+	asset icon
+}
+
+
 const table<int, asset> CHARACTER_ROLE_ICONS = {
 	[eCharacterClassRole.UNDECIDED] = $"",
 	[eCharacterClassRole.OFFENSE]   = $"rui/menu/character_select/utility/util_role_offense",
+	[eCharacterClassRole.SKIRMISHER]   = $"rui/hud/tactical_icons/tactical_mirage_in_world",
 	[eCharacterClassRole.DEFENSE]   = $"rui/menu/character_select/utility/util_role_defense",
 	[eCharacterClassRole.SUPPORT]   = $"rui/menu/character_select/utility/util_role_support",
 	[eCharacterClassRole.RECON]     = $"rui/menu/character_select/utility/util_role_recon",
 }
 
+                   
+const table<int, asset> CHARACTER_ROLE_ICONS_NEW = {
+	[eCharacterClassRole.UNDECIDED]		= $"",
+	[eCharacterClassRole.OFFENSE]   	= $"rui/menu/character_select/utility/role_offense",
+	[eCharacterClassRole.SKIRMISHER] 	= $"rui/menu/character_select/utility/role_skirmisher",
+	[eCharacterClassRole.DEFENSE]   	= $"rui/menu/character_select/utility/role_defense",
+	[eCharacterClassRole.SUPPORT]   	= $"rui/menu/character_select/utility/role_support",
+	[eCharacterClassRole.RECON]     	= $"rui/menu/character_select/utility/role_recon",
+}
+
+const table<int, string> CHARACTER_ROLE_DESCRIPTIONS = {
+	[eCharacterClassRole.UNDECIDED]  = "",
+	[eCharacterClassRole.OFFENSE]    = "#CARE_PACKAGE_INSIGHT_PERK_DESC",
+	[eCharacterClassRole.SKIRMISHER] = "#MUNITIONS_DROP_PERK_DESC",
+	[eCharacterClassRole.DEFENSE]    = "#BEACON_CIRCLE_SCAN_PERK_DESC",
+	[eCharacterClassRole.SUPPORT]    = "#EXTRA_BIN_LOOT_PERK_DESC",
+	[eCharacterClassRole.RECON]      = "#BEACON_ENEMY_SCAN_PERK_DESC",
+}
+
+const table<int, string> CHARACTER_ROLE_SHORT_DESC_1 = {
+	[eCharacterClassRole.UNDECIDED]  = "",
+	[eCharacterClassRole.OFFENSE]    = "#ROLE_ASSAULT_SHORT_DESC_1",
+	[eCharacterClassRole.SKIRMISHER] = "#ROLE_SKIRMISHER_SHORT_DESC_1",
+	[eCharacterClassRole.DEFENSE]    = "#ROLE_CONTROLLER_SHORT_DESC_1",
+	[eCharacterClassRole.SUPPORT]    = "#ROLE_SUPPORT_SHORT_DESC_1",
+	[eCharacterClassRole.RECON]      = "#ROLE_RECON_SHORT_DESC_1",
+}
+
+const table<int, string> CHARACTER_ROLE_SHORT_DESC_2 = {
+	[eCharacterClassRole.UNDECIDED]  = "",
+	[eCharacterClassRole.OFFENSE]    = "#ROLE_ASSAULT_SHORT_DESC_2",
+	[eCharacterClassRole.SKIRMISHER] = "#ROLE_SKIRMISHER_SHORT_DESC_2",
+	[eCharacterClassRole.DEFENSE]    = "#ROLE_CONTROLLER_SHORT_DESC_2",
+	[eCharacterClassRole.SUPPORT]    = "#ROLE_SUPPORT_SHORT_DESC_2",
+	[eCharacterClassRole.RECON]      = "#ROLE_RECON_SHORT_DESC_2",
+}
+
+const table<int, string> CHARACTER_ROLE_SHORT_DESC_3 = {
+	[eCharacterClassRole.UNDECIDED]  = "",
+	[eCharacterClassRole.OFFENSE]    = "#ROLE_ASSAULT_SHORT_DESC_3",
+	[eCharacterClassRole.SKIRMISHER] = "#ROLE_SKIRMISHER_SHORT_DESC_3",
+	[eCharacterClassRole.DEFENSE]    = "#ROLE_CONTROLLER_SHORT_DESC_3",
+	[eCharacterClassRole.SUPPORT]    = "#ROLE_SUPPORT_SHORT_DESC_3",
+	[eCharacterClassRole.RECON]      = "#ROLE_RECON_SHORT_DESC_3",
+}
+
+const table<int, string> CHARACTER_ROLE_TITLES = {
+	[eCharacterClassRole.UNDECIDED]  = "",
+	[eCharacterClassRole.OFFENSE]    = "#ROLE_ASSAULT",
+	[eCharacterClassRole.SKIRMISHER] = "#ROLE_SKIRMISHER",
+	[eCharacterClassRole.DEFENSE]    = "#ROLE_CONTROLLER",
+	[eCharacterClassRole.SUPPORT]    = "#ROLE_SUPPORT",
+	[eCharacterClassRole.RECON]      = "#ROLE_RECON",
+}
+
+const table<int, string> CHARACTER_ROLE_SUBTITLES = {
+	[eCharacterClassRole.UNDECIDED]  = "",
+	[eCharacterClassRole.OFFENSE]    = "#ROLE_ASSAULT_SUBTITLE",
+	[eCharacterClassRole.SKIRMISHER] = "#ROLE_SKIRMISHER_SUBTITLE",
+	[eCharacterClassRole.DEFENSE]    = "#ROLE_CONTROLLER_SUBTITLE",
+	[eCharacterClassRole.SUPPORT]    = "#ROLE_SUPPORT_SUBTITLE",
+	[eCharacterClassRole.RECON]      = "#ROLE_RECON_SUBTITLE",
+}
+
+const table<int, vector> CHARACTER_ROLE_COLORS = {
+	[eCharacterClassRole.UNDECIDED]  = <0,0,0>,
+	[eCharacterClassRole.OFFENSE]    = < 0.95, 0.52, 0.007 >,
+	[eCharacterClassRole.SKIRMISHER] = < 0.7, 0.68, 0.21 >,
+	[eCharacterClassRole.DEFENSE]    = < 0.27, 0.54, 0.73 >,
+	[eCharacterClassRole.SUPPORT]    = < 0.36, 0.68, 0.28 >,
+	[eCharacterClassRole.RECON]      = < 0.82, 0.4, 0.95 >,
+}
+      
 global struct CharacterMenuLightData
 {
 	vector key_color
@@ -132,9 +232,10 @@ struct CharacterDamageStruct
 struct FileStruct_LifetimeLevel
 {
 	LoadoutEntry& characterSelectionSlot
-	array< string > charactersWithStatsGUIDStrings                                                                                                                   
+	array< string > charactersWithStatsGUIDStrings // in Prod, excludes Dummie & Random; in DEV, excludes WIP legends unless Bakery flag to track stats is set.                                                                                                                  
 	table<string, ItemFlavor> characterRefMap
 	table<ItemFlavor, int> characterFlavorSortOrdinalMap
+	array< ItemFlavor > nonGRXCharacters
 }
 FileStruct_LifetimeLevel& fileLevel
 
@@ -143,7 +244,7 @@ struct
 	table<int, string> characterRolePerkDesc
 	table<string, CharacterDamageStruct> characterDamageData
                     
-                                              
+		table<ItemFlavor, int>	characterRoleOverride
        
 } file
 
@@ -166,13 +267,7 @@ void function ShCharacters_LevelInit()
 
 	AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
 	AddCallback_OnItemFlavorRegistered( eItemType.character, OnItemFlavorRegistered_Character )
-		file.characterRolePerkDesc = {
-			[eCharacterClassRole.UNDECIDED] = "Undecided Role",
-			[eCharacterClassRole.OFFENSE] = "",
-			[eCharacterClassRole.DEFENSE] = "",
-			[eCharacterClassRole.RECON] = "#RECON_PERK_DESC",
-			[eCharacterClassRole.SUPPORT] = "",
-		}
+
 }
 #endif
 
@@ -228,7 +323,20 @@ void function OnRegisterRootItemFlavors()
 	MakeItemFlavorSet( characterList, fileLevel.characterFlavorSortOrdinalMap )
 
 	entry.validItemFlavorList = characterList
-	entry.defaultItemFlavor = characterList.getrandom()
+
+	fileLevel.nonGRXCharacters = clone characterList
+	foreach ( ItemFlavor character in characterList )
+	{
+		if ( ItemFlavor_GetGRXMode( character ) != eItemFlavorGRXMode.NONE )
+			fileLevel.nonGRXCharacters.fastremovebyvalue( character )
+
+		if ( !CharacterClass_GetIsShippingCharacter( character ) )
+			fileLevel.nonGRXCharacters.fastremovebyvalue( character )
+
+		if ( !ItemFlavor_IsAvailableInPlaylist( character ) )
+			fileLevel.nonGRXCharacters.fastremovebyvalue( character )
+	}
+	entry.defaultItemFlavor = fileLevel.nonGRXCharacters.getrandom()
 
 	#if CLIENT
 		if ( IsLobby() )
@@ -243,18 +351,14 @@ void function OnRegisterRootItemFlavors()
 	{
 		string characterRef = ItemFlavor_GetCharacterRef( character )
 
-		if ( characterRef == "" )
-		{
-			Warning( "Character " + ItemFlavor_GetAsset( character ) + " has empty character_ref, skipping damage data setup" )
-			continue
-		}
+
 
 		CharacterDamageStruct data
-		data.damageScale = GetCurrentPlaylistVarFloat( "damage_scale_" + characterRef.tolower(), 1.0 )
-		data.damageSlow_amount = GetCurrentPlaylistVarFloat( "damage_slowdown_" +  characterRef.tolower(), 0.5 )
-		data.damageSlow_duration = GetCurrentPlaylistVarFloat( "damage_slowdown_duration_" +  characterRef.tolower(), 0.5 )
-		data.damageSlow_easeOut = GetCurrentPlaylistVarFloat( "damage_slowdown_easeOut_" +  characterRef.tolower(), 0.3 )
-		data.damageSlow_debounce = GetCurrentPlaylistVarFloat( "damage_slowdown_debounce_" +  characterRef.tolower(), 0.15 )
+		data.damageScale = GetCurrentPlaylistVarFloat( "damage_scale_" + characterRef.tolower(), GetGlobalSettingsFloat( ItemFlavor_GetAsset( character ), "damageScale" ) )
+		data.damageSlow_amount = GetCurrentPlaylistVarFloat( "damage_slowdown_" +  characterRef.tolower(), GetGlobalSettingsFloat( ItemFlavor_GetAsset( character ), "damageSlowdown_amount" ) )
+		data.damageSlow_duration = GetCurrentPlaylistVarFloat( "damage_slowdown_duration_" +  characterRef.tolower(), GetGlobalSettingsFloat( ItemFlavor_GetAsset( character ), "damageSlowdown_duration" ) )
+		data.damageSlow_easeOut = GetCurrentPlaylistVarFloat( "damage_slowdown_easeOut_" +  characterRef.tolower(), GetGlobalSettingsFloat( ItemFlavor_GetAsset( character ), "damageSlowdown_easeOut" ) )
+		data.damageSlow_debounce = GetCurrentPlaylistVarFloat( "damage_slowdown_debounce_" +  characterRef.tolower(), GetGlobalSettingsFloat( ItemFlavor_GetAsset( character ), "damageSlowdown_debounce" ) )
 		file.characterDamageData[ characterRef ] <- data
 
 		if ( WIP_CharacterClass_ShouldTrackStats( character ) == false )
@@ -270,17 +374,33 @@ void function OnRegisterRootItemFlavors()
 void function OnItemFlavorRegistered_Character( ItemFlavor character )
 {
 	table<string, string> ornull tmp = character.metaData
-	if ( tmp == null )
-	{
-		Warning( "Character " + ItemFlavor_GetAsset( character ) + " has null metadata, skipping registration in characterRefMap" )
-		return
-	}
 	expect table<string, string>(tmp)
 	fileLevel.characterRefMap[ tmp[ "character_ref" ] ] <- character
 	#if SERVER || CLIENT
 		PrecacheModel( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "bodyModel" ) )
 		PrecacheModel( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "armsModel" ) )
 	#endif
+		string characterName = ItemFlavor_GetCharacterRef( character )
+
+		string overrideString = GetCurrentPlaylistVarString( "role_override_recon", "" )
+		if ( overrideString.find( characterName ) >= 0 )
+			file.characterRoleOverride[ character ] <- eCharacterClassRole.RECON
+
+		overrideString = GetCurrentPlaylistVarString( "role_override_controller", "" )
+		if ( overrideString.find( characterName ) >= 0 )
+			file.characterRoleOverride[ character ] <- eCharacterClassRole.DEFENSE
+
+		overrideString = GetCurrentPlaylistVarString( "role_override_assault", "" )
+		if ( overrideString.find( characterName ) >= 0 )
+			file.characterRoleOverride[ character ] <- eCharacterClassRole.OFFENSE
+
+		overrideString = GetCurrentPlaylistVarString( "role_override_skirmisher", "" )
+		if ( overrideString.find( characterName ) >= 0 )
+			file.characterRoleOverride[ character ] <- eCharacterClassRole.SKIRMISHER
+
+		overrideString = GetCurrentPlaylistVarString( "role_override_support", "" )
+		if ( overrideString.find( characterName ) >= 0 )
+			file.characterRoleOverride[ character ] <- eCharacterClassRole.SUPPORT
 }
 #endif
 
@@ -300,14 +420,9 @@ void function GenerateCharactersPDef()
 #if SERVER || CLIENT || UI
 string function ItemFlavor_GetCharacterRef( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	Assert( flavor.typeIndex == eItemType.character )
-
-	if ( flavor.metaData == null )
-	{
-		Warning( "Character flavor " + ItemFlavor_GetAsset( flavor ) + " has null metadata, returning empty character_ref" )
-		return ""
-	}
+	Assert( flavor.metaData != null )
 
 	table<string, string> ornull tmp = flavor.metaData
 	expect table<string, string>(tmp)
@@ -339,6 +454,34 @@ array<ItemFlavor> function GetLaunchCharacters()
 }
 
 
+bool function Character_IsCharacterOwnedByPlayer( ItemFlavor character, entity player = null )
+{
+	Assert( ItemFlavor_GetType( character ) == eItemType.character )
+
+	#if SERVER
+		                                             
+	#elseif CLIENT
+		if ( player == null )
+			player = GetLocalClientPlayer()
+	#elseif UI
+		if ( player == null )
+			player = GetLocalClientPlayer()
+	#endif
+
+	if( GRX_HasInventoryEverBeenReady( player ) )
+	{
+		return GRX_IsItemOwnedByPlayer_AllowOutOfDateData( character, player )
+	}
+
+	bool alwaysOwnsChar = ( ItemFlavor_GetGRXMode( character ) == eItemFlavorGRXMode.NONE )
+	if( alwaysOwnsChar )
+	{
+		return true
+	}
+
+	return true//expect bool ( player.GetPersistentVar( "cachedCharacterOwnership[" + ItemFlavor_GetGUIDString( character ) + "]" ) )
+}
+
 asset function CharacterClass_GetSetFile( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
@@ -346,18 +489,31 @@ asset function CharacterClass_GetSetFile( ItemFlavor flavor )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "setFile" )
 }
 
+int function CharacterClass_GetShippingStatus( ItemFlavor flavor )
+{
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
+
+	return eItemFlavorShippingStatus[GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "shippingStatus" )]
+}
+
 
 bool function CharacterClass_GetIsShippingCharacter( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
 
-	return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "shippingCharacter" )
+	return CharacterClass_GetShippingStatus( flavor ) == eItemFlavorShippingStatus.SHIPPED
 }
 
 
 int function CharacterClass_GetRole( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
+
+	                   
+		// Temporary way to change the character's role without going through bakery (no easy way to change that via DFS flags)
+		if ( flavor in file.characterRoleOverride )
+			return file.characterRoleOverride[ flavor ]
+       
 
 	return eCharacterClassRole[GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "role" )]
 }
@@ -393,17 +549,58 @@ int function CharacterClass_GetMenuButtonIndex( ItemFlavor flavor )
 	return GetGlobalSettingsInt( ItemFlavor_GetAsset( flavor ), "characterMenuButtonIndex" )
 }
 
+asset ornull function CharacterClass_GetLore( ItemFlavor flavor )
+{
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
+
+	asset lore = GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "loreFlav" )
+
+	if ( lore == "" )
+		return null
+
+	return lore
+}
 CharacterMenuLightData function CharacterClass_GetMenuLightData( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
 	CharacterMenuLightData data
-	data.key_color = GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorKey" )
-	data.fill_color = GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorFill" )
-	data.rimL_color = GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorRimL" )
-	data.rimR_color = GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorRimR" )
-	data.animSeq = $"animseq/humans/class/char_select_light_default.rseq"
-	//GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "menuLightAnimSeq" )
-	//we dont have menuLightAnimseq in our character flavor, need to add later - kral
+	data.key_color =          GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorKey" )
+	data.key_brightness =     GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightBrightnessKey" )
+	data.key_cone =           GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightConeKey" )
+	data.key_innercone =      GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightInnerConeKey" )
+	data.key_distance =       GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightDistanceKey" )
+	data.key_halfbrightfrac = GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightHalfBrightFracKey" )
+	data.key_specint =        GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightSpecIntKey" )
+	data.key_pbrfalloff =     GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "menuLightPbrFalloffKey" )
+	data.key_castshadows =    GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "menuLightCastShadowsKey" )
+	data.fill_color =         GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorFill" )
+	data.fill_brightness =    GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightBrightnessFill" )
+	data.fill_cone =          GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightConeFill" )
+	data.fill_innercone =     GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightInnerConeFill" )
+	data.fill_distance =      GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightDistanceFill" )
+	data.fill_halfbrightfrac =GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightHalfBrightFracFill" )
+	data.fill_specint =       GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightSpecIntFill" )
+	data.fill_pbrfalloff =    GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "menuLightPbrFalloffFill" )
+	data.fill_castshadows =   GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "menuLightCastShadowsFill" )
+	data.rimL_color =         GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorRimL" )
+	data.rimL_brightness =    GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightBrightnessRimL" )
+	data.rimL_cone =          GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightConeRimL" )
+	data.rimL_innercone =     GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightInnerConeRimL" )
+	data.rimL_distance =      GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightDistanceRimL" )
+	data.rimL_halfbrightfrac =GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightHalfBrightFracRimL" )
+	data.rimL_specint =       GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightSpecIntRimL" )
+	data.rimL_pbrfalloff =    GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "menuLightPbrFalloffRimL" )
+	data.rimL_castshadows =   GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "menuLightCastShadowsRimL" )
+	data.rimR_color =         GetGlobalSettingsVector( ItemFlavor_GetAsset( flavor ), "menuLightColorRimR" )
+	data.rimR_brightness =    GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightBrightnessRimR" )
+	data.rimR_cone =          GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightConeRimR" )
+	data.rimR_innercone =     GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightInnerConeRimR" )
+	data.rimR_distance =      GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightDistanceRimR" )
+	data.rimR_halfbrightfrac =GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightHalfBrightFracRimR" )
+	data.rimR_specint =       GetGlobalSettingsFloat( ItemFlavor_GetAsset( flavor ), "menuLightSpecIntRimR" )
+	data.rimR_pbrfalloff =    GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "menuLightPbrFalloffRimR" )
+	data.rimR_castshadows =   GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "menuLightCastShadowsRimR" )
+	data.animSeq =            GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "menuLightAnimSeq" )
 	return data
 }
 
@@ -438,9 +635,6 @@ vector function CharacterClass_GetGalleryModelOffset( ItemFlavor flavor )
 
 asset function CharacterClass_GetGalleryPortrait( ItemFlavor flavor )
 {
-	if( GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) )
-		return $"rui/portrait/masterchief_test"
-	
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
 
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "galleryPortrait" )
@@ -449,14 +643,46 @@ asset function CharacterClass_GetGalleryPortrait( ItemFlavor flavor )
 
 asset function CharacterClass_GetGalleryPortraitBackground( ItemFlavor flavor )
 {
-	if( GetCurrentPlaylistVarBool( "is_halo_gamemode", false ) )
-		return $"rui/portrait/masterchief_test"
-
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
 
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "galleryPortraitBackground" )
 }
 
+                   
+asset function CharacterClass_GetGalleryRoleBackground ( ItemFlavor flavor )
+{
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
+
+	int role
+
+	if ( flavor in file.characterRoleOverride )
+		role = file.characterRoleOverride[ flavor ]
+	else
+		role = eCharacterClassRole[GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "role" )]
+
+	if (role == 1)
+	{
+		return $"rui/menu/buttons/lobby_character_select/offense_bg"
+	}
+	else if (role == 2)
+	{
+		return $"rui/menu/buttons/lobby_character_select/skirmisher_bg"
+	}
+	else if (role == 3)
+	{
+		return $"rui/menu/buttons/lobby_character_select/recon_bg"
+	}
+	else if (role == 4)
+	{
+		return $"rui/menu/buttons/lobby_character_select/defense_bg"
+	}
+	else if (role == 5)
+	{
+		return $"rui/menu/buttons/lobby_character_select/support_bg"
+	}
+
+	return $"rui/menu/buttons/lobby_character_select/offense_bg"
+}
 
 asset function CharacterClass_GetCharacterSelectPortrait( ItemFlavor flavor )
 {
@@ -481,6 +707,69 @@ asset function CharacterClass_GetCharacterRoleImage( ItemFlavor flavor )
 	int role = CharacterClass_GetRole( flavor )
 	return CHARACTER_ROLE_ICONS[role]
 }
+
+string function CharacterClass_GetCharacterPerkDescription( ItemFlavor flavor )
+{
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
+
+	//int role                   = CharacterClass_GetRole( flavor )
+	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+
+	return ""//info.fullDescription
+}
+
+string function CharacterClass_GetRolePerkDescriptionAtIndex( int role, int index = 0 )
+{
+	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	//if( index >= info.perks.len() )
+		return ""
+	//PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
+	//return perkInfo.description
+}
+
+string function CharacterClass_GetRolePerkShortDescriptionAtIndex( int role, int index = 0 )
+{
+	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	//if( index >= info.perks.len() )
+		return ""
+//	PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
+	//return perkInfo.shortDescription
+}
+
+string function CharacterClass_GetRoleTitle( int role )
+{
+	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	return ""//info.name
+}
+
+string function CharacterClass_GetRoleSubtitle( int role )
+{
+//	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	return ""//info.shortDescription
+}
+
+vector function CharacterClass_GetRoleColor( int role )
+{
+	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	return <255,255,255>//info.uiColor
+}
+
+asset function CharacterClass_GetRoleIcon( int role )
+{
+	Assert( role in CHARACTER_ROLE_ICONS_NEW )
+	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	return $""//info.icon
+}
+
+asset function CharacterClass_GetRolePerkIconAtIndex( int role, int index = 0 )
+{
+	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	//if( index >= info.perks.len() )
+		return $""
+	//PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
+	//return perkInfo.icon
+}
+   
 
 string function CharacterClass_GetCharacterRolePerkDesc( ItemFlavor flavor )
 {
@@ -624,6 +913,18 @@ array<ItemFlavor> function GetCharacterButtonOrder( array<ItemFlavor> allCharact
 	return sortedCharacters
 }
 
+array<ItemFlavor> function GetCharactersByRole( array<ItemFlavor> allCharacters, int role )
+{
+	array<ItemFlavor> toReturn
+
+	foreach ( character in allCharacters )
+	{
+		if (CharacterClass_GetRole( character ) == role)
+			toReturn.append(character)
+	}
+
+	return toReturn
+}
 int function SortByMenuButtonIndex( ItemFlavor a, ItemFlavor b )
 {
 	int aIndex = CharacterClass_GetMenuButtonIndex( a )

@@ -51,9 +51,10 @@ void function PopulateSkillElem( var elem, ItemFlavor character )
 	switch ( skillType )
 	{
 		case "passive":
-			RuiSetImage( rui, "skillIcon", ItemFlavor_GetIcon( CharacterClass_GetPassiveAbility( character ) ) )
-			RuiSetString( rui, "skillName", Localize( ItemFlavor_GetLongName( CharacterClass_GetPassiveAbility( character ) ) ) )
-			RuiSetString( rui, "skillDesc", Localize( ItemFlavor_GetLongDescription( CharacterClass_GetPassiveAbility( character ) ) ) )
+			ItemFlavor passive = CharacterClass_GetPassiveAbilities( character )[0]
+			RuiSetImage( rui, "skillIcon", ItemFlavor_GetIcon( passive ) )
+			RuiSetString( rui, "skillName", Localize( ItemFlavor_GetLongName( passive ) ) )
+			RuiSetString( rui, "skillDesc", Localize( ItemFlavor_GetLongDescription( passive ) ) )
 			RuiSetString( rui, "skillType", Localize( "#PASSIVE" ) )
 			RuiSetColorAlpha( rui, "tintColor", <1,1,1>, 1 )
 			RuiSetColorAlpha( rui, "tintColorHighlight", <1,1,1>, 1 )

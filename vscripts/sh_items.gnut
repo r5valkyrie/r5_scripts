@@ -222,6 +222,13 @@ global enum eItemFlavorPlaylistOpinion
 	FORCE_UNLOCK_FOR_SPECIAL_EVENT, // this item should be usable even if the player doesn't own it
 }
 
+global enum eItemFlavorShippingStatus
+{
+	SHIPPED,
+	WIP_SHOW,
+	WIP_HIDE,
+}
+
 global struct ItemFlavor
 {
 	SettingsAssetGUID        _____INTERNAL_guid = -1 // the GUID is the canonical ref
@@ -1249,6 +1256,15 @@ ItemFlavor ornull function RegisterItemFlavorFromSettingsAsset( asset settingsAs
 	string itemType = GetGlobalSettingsString( settingsAsset, "itemType" )
 	Assert( itemType in eItemType, "Unknown item type: " + itemType + " (check eItemType matches code_root.rson)" )
 	flavor._____INTERNAL_typeIndex = eItemType[itemType]
+
+	// BEGIN ITEMS WITH REQUIRED REF META DATA - used for *specialized* GetHumanReadableRef functions for frameworks that still require it
+	if ( flavor._____INTERNAL_typeIndex == eItemType.character )
+	{
+		table<string, string> tmp = {}
+		tmp[ "character_ref" ] <- humanReadableRef
+		flavor.metaData = tmp
+	}
+	// END ITEMS WITH REQUIRED REF META DATA
 
 	flavor._____INTERNAL_tagMap = {} // deferred to after loading all assets
 
