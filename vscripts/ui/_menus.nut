@@ -1672,7 +1672,6 @@ void function InitMenus()
 	//AddPanel( storePanel, "VCPanel", InitStoreVCPanel )
 
 	var systemMenu = AddMenu( "SystemMenu", $"resource/ui/menus/system.menu", InitSystemMenu )
-	AddPanel( systemMenu, "SystemPanel", InitSystemPanelMain )
 
 	var miscMenu      = AddMenu( "MiscMenu", $"resource/ui/menus/misc.menu", InitMiscMenu )
 	var settingsPanel = AddPanel( miscMenu, "SettingsPanel", InitSettingsPanel )

@@ -148,7 +148,7 @@ Scripts:
 	mp/sh_gladiator_cards.nut
 	mp/sh_player_stats_cards.nut
 	sh_loot_ceremony.gnut
-
+	sh_perks.nut
 	sh_xp.gnut
 	sh_ranked.gnut
 ]

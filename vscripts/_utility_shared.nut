@@ -4615,7 +4615,7 @@ float function GetClosestDistanceBetweenLineSegments( vector line1Point1, vector
 	return Distance( seg.start, seg.end )
 }
 
-bool function PlayerCanSee( entity player, entity ent, bool doTrace, float degrees )
+bool function PlayerCanSee( entity player, entity ent, bool doTrace, float degrees, bool passIfChildHit = false )
 {
 	float minDot = deg_cos( degrees )
 
@@ -4629,6 +4629,8 @@ bool function PlayerCanSee( entity player, entity ent, bool doTrace, float degre
 	{
 		TraceResults trace = TraceLine( player.EyePosition(), ent.GetWorldSpaceCenter(), null, TRACE_MASK_BLOCKLOS, TRACE_COLLISION_GROUP_NONE )
 		if ( trace.hitEnt == ent || trace.fraction >= 0.99 )
+			return true
+		else if( passIfChildHit && trace.hitEnt != null && trace.hitEnt.GetParent() == ent )
 			return true
 		else
 			return false

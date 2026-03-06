@@ -134,12 +134,8 @@ global enum eItemType
 	skydive_trail,
 	weapon_category,
 	character,
-	//pilot_ability,
-	//pilot_passive,
-
-	//player_stat,
-
-	// MP account items
+	character_class
+	character_perk
 	grx_sentinel,
 	account_currency,
 	account_currency_bundle,
@@ -150,15 +146,10 @@ global enum eItemType
 	challenge_reroll,
 	character_skin,
 	character_execution,
-	#if(false)
 
-#endif
 	weapon_charm,
 	weapon_skin,
 	melee_skin,
-	#if(false)
-
-#endif
 
 	gladiator_card_stance,
 	gladiator_card_frame,

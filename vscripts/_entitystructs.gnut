@@ -586,7 +586,7 @@ global struct ServerPlayerStruct
 	// bool 						fastballActivatePressed
 	// float 						nextATShieldRegenTime
 	bool 						demigod
-	// bool						partyMember
+	array<int> activePerks
 
 	int         bubbleBunkerStatusEffectId = -1
 

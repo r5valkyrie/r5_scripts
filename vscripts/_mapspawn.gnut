@@ -175,6 +175,7 @@ global struct SvGlobals
 	array<void functionref(entity, entity)> onPilotEmbarkingTitanCallbacks
 	array<void functionref(entity, entity)> onPlayerUsedOffhandCallbacks
 	array< void functionref( entity, entity, string, int, vector, vector ) > onWeaponAttackCallbacks
+	array<void functionref( entity )> onPlayerClassActuallyChangedCallbacks
 	array< void functionref( entity ) > onPreClientDisconnectedCallbacks
 	array< void functionref( entity, entity, int ) > onDeathBoxSpawnedCallbacks
 	

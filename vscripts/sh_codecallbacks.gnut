@@ -29,6 +29,7 @@ global function AddCallback_PlayerClassChanged
 global function AddCallback_PlayerCanUseZipline
 
 global function CodeCallback_CanPlayerReload
+global function AddCallback_PlayerClassActuallyChanged
 
 #if CLIENT
 global function CodeCallback_OnTurretCancelPressed
@@ -39,7 +40,6 @@ global function ClientCodeCallback_PartyMemberRemoved
 global function ClientCodeCallback_UserInfoUpdated
 global function AddCallback_OnPartyUpdated
 global function RemoveCallback_OnPartyUpdated
-global function AddCallback_PlayerClassActuallyChanged
 #endif
 
 #if SERVER
@@ -366,10 +366,14 @@ void function AddCallback_PlayerClassChanged( void functionref( entity ) callbac
 	#endif
 }
 
-#if CLIENT
+#if SERVER || CLIENT
 void function AddCallback_PlayerClassActuallyChanged( void functionref( entity ) callbackFunc )
 {
+	#if SERVER
+	svGlobal.onPlayerClassActuallyChangedCallbacks.append( callbackFunc )
+	#else
 	clGlobal.onPlayerClassActuallyChangedCallbacks.append( callbackFunc )
+	#endif
 }
 #endif
 

@@ -162,7 +162,7 @@ void function QueueMessageThink()
 
 	file.pendingEventQueue.sort( SortPendingEvents )
 
-	while ( file.pendingEventQueue.len())
+	while ( file.pendingEventQueue.len() > 0 )
 	{
 		MessageData messageData = file.pendingEventQueue[0]
 		file.pendingEventQueue.remove( 0 )
@@ -269,16 +269,16 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	bool showStackingDamageText = (styleSetting == DAMAGE_TEXT_STYLE_STACKING_ONLY || styleSetting == DAMAGE_TEXT_STYLE_BOTH)
 	bool showFloatingDamageText = (styleSetting == DAMAGE_TEXT_STYLE_FLOATING_ONLY || styleSetting == DAMAGE_TEXT_STYLE_BOTH)
 
-	bool isShieldShot    	= (damageType & DF_SHIELD_DAMAGE) ? true : false
-	bool isCritShot      	= (damageType & DF_CRITICAL) ? true : false
-	bool isHeadShot      	= (damageType & DF_HEADSHOT) ? true : false
-	bool isKillShot      	= (damageType & DF_KILLSHOT) ? true : false
-	bool isKOShieldShot  	= (damageType & DAMAGEFLAG_VICTIM_HAS_VORTEX) ? true : false
-	bool isKnockdownShot 	= (damageType & DF_KNOCKDOWN) ? true : false
-	bool isShieldBreak   	= (damageType & DF_SHIELD_BREAK) ? true : false
-	bool isShadowShot    	= (damageType & DF_SHADOW_DAMAGE) ? true: false
-	bool isOvershieldShot	= (damageType & DF_OVERSHIELD) ? true : false
-	bool isSourShot 	  	= (damageType & DF_SOUR) ? true : false
+	bool isShieldShot     = bool(damageType & DF_SHIELD_DAMAGE) ? true : false
+	bool isCritShot       = bool(damageType & DF_CRITICAL) ? true : false
+	bool isHeadShot       = bool(damageType & DF_HEADSHOT) ? true : false
+	bool isKillShot       = bool(damageType & DF_KILLSHOT) ? true : false
+	bool isKOShieldShot   = bool(damageType & DAMAGEFLAG_VICTIM_HAS_VORTEX) ? true : false
+	bool isKnockdownShot  = bool(damageType & DF_KNOCKDOWN) ? true : false
+	bool isShieldBreak    = bool(damageType & DF_SHIELD_BREAK) ? true : false
+	bool isShadowShot     = bool(damageType & DF_SHADOW_DAMAGE) ? true: false
+	bool isOvershieldShot = bool(damageType & DF_OVERSHIELD) ? true : false
+	bool isSourShot 	  = bool(damageType & DF_SOUR) ? true : false
 	bool isStunned        = false //
 		
 	int sortKey = (file.lastSortKey++) % 100

@@ -182,6 +182,7 @@ global struct ClientPlayerStruct
 	entity TEMP_lastMeleeInputWeapon = null
 
 	int mapPingTicketID = -1
+	array<int> activePerks
 
 	array<int> freefallContrailFXHandles
 	int freefallWindEffectHandle = -1

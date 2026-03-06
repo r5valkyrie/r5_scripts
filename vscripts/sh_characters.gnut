@@ -73,20 +73,6 @@ global enum eCharacterClassRole
 	_COUNT,
 }
 
-global struct ClassRoleSettingsInfo
-{
-	array<int> perks
-
-	                                                                                                                              
-	                                                                
-	string name
-	string fullDescription
-	string shortDescription
-	vector uiColor
-	asset icon
-}
-
-
 const table<int, asset> CHARACTER_ROLE_ICONS = {
 	[eCharacterClassRole.UNDECIDED] = $"",
 	[eCharacterClassRole.OFFENSE]   = $"rui/menu/character_select/utility/util_role_offense",
@@ -713,62 +699,62 @@ string function CharacterClass_GetCharacterPerkDescription( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.character )
 
-	//int role                   = CharacterClass_GetRole( flavor )
-	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	int role                   = CharacterClass_GetRole( flavor )
+	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
 
-	return ""//info.fullDescription
+	return info.fullDescription
 }
 
 string function CharacterClass_GetRolePerkDescriptionAtIndex( int role, int index = 0 )
 {
-	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
-	//if( index >= info.perks.len() )
+	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	if( index >= info.perks.len() )
 		return ""
-	//PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
-	//return perkInfo.description
+	PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
+	return perkInfo.description
 }
 
 string function CharacterClass_GetRolePerkShortDescriptionAtIndex( int role, int index = 0 )
 {
-	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
-	//if( index >= info.perks.len() )
+	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	if( index >= info.perks.len() )
 		return ""
-//	PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
-	//return perkInfo.shortDescription
+	PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
+	return perkInfo.shortDescription
 }
 
 string function CharacterClass_GetRoleTitle( int role )
 {
-	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
-	return ""//info.name
+	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	return info.name
 }
 
 string function CharacterClass_GetRoleSubtitle( int role )
 {
-//	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
-	return ""//info.shortDescription
+	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	return info.shortDescription
 }
 
 vector function CharacterClass_GetRoleColor( int role )
 {
-	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
-	return <255,255,255>//info.uiColor
+	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	return info.uiColor
 }
 
 asset function CharacterClass_GetRoleIcon( int role )
 {
 	Assert( role in CHARACTER_ROLE_ICONS_NEW )
-	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
-	return $""//info.icon
+	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	return info.icon
 }
 
 asset function CharacterClass_GetRolePerkIconAtIndex( int role, int index = 0 )
 {
-	//ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
-	//if( index >= info.perks.len() )
+	ClassRoleSettingsInfo info = Perks_GetSettingsInfoForClassRole( role )
+	if( index >= info.perks.len() )
 		return $""
-	//PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
-	//return perkInfo.icon
+	PerkSettingsInfo perkInfo = Perks_GetSettingsInfoForPerk( info.perks[index] )
+	return perkInfo.icon
 }
    
 

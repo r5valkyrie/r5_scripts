@@ -4,6 +4,7 @@ global function GetDeathfieldFinalCenter
 global function SURVIVAL_GetDeathField
 global function Survival_GetNumDeathfieldStages
 global function GetRingTuningOverrideVar
+global function HasActiveSurveyZone
 
 #if SERVER && DEVELOPER
 global function DEV_DrawCircleLocations
