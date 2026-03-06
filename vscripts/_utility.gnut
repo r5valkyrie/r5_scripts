@@ -2669,6 +2669,29 @@ vector function RandomVecInDome( vector dir )
 	return endPos
 }
 
+// RandomVecInDome with FOV-constrained spread
+vector function RandomVecInDomeWithFOV( vector dir, float fov )
+{
+	float fovScalar = -deg_sin( fov / 2 )
+
+	vector angles  = VectorToAngles( dir )
+	vector forward = AnglesToForward( angles )
+	vector right   = AnglesToRight( angles )
+	vector up      = AnglesToUp( angles )
+
+	float offsetRight   = RandomFloatRange( -fovScalar, fovScalar )
+	float offsetUp      = RandomFloatRange( -fovScalar, fovScalar )
+	float offsetForward = RandomFloat( 1.0 )
+
+	vector endPos = <0, 0, 0>
+	endPos += forward * offsetForward
+	endPos += up * offsetUp
+	endPos += right * offsetRight
+	endPos.Norm()
+
+	return endPos
+}
+
 float function GetAnimEventTime( asset modelname, string anim, string event )
 {
 	entity dummy = CreatePropDynamic( modelname )

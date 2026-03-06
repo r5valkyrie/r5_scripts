@@ -162,7 +162,8 @@ invalid =             -1,
 	FS_SND_ID =            10,
 	FS_APEXKART_ID =       11,
 	WINTEREXPRESS_ID =	   12,
-	ARENAS_ID =            13
+	ARENAS_ID =            13,
+	FREEDM =               14
 }
 
 const table<string, int> gameModesStringToIdMap = {
@@ -181,7 +182,10 @@ const table<string, int> gameModesStringToIdMap = {
 	[ fs_snd ]            = eGameModes.FS_SND_ID,
 	[ fs_apexkart ]            = eGameModes.FS_APEXKART_ID,
 	[ WINTEREXPRESS ]            = eGameModes.WINTEREXPRESS_ID,
-	[ ARENAS ]                   = eGameModes.ARENAS_ID
+	[ ARENAS ]                   = eGameModes.ARENAS_ID,
+	[ FREEDM ]                   = eGameModes.FREEDM,
+	[ FREEDM_TDM ]               = eGameModes.FREEDM,
+	[ FREEDM_GUNGAME ]           = eGameModes.FREEDM
 }
 
 struct
@@ -286,7 +290,28 @@ void function GameModes_Init()
 	#if CLIENT
 		GameMode_AddClientInit( gameMode, Arenas_ClientInit )
 	#endif
-	
+
+	gameMode = FREEDM
+	GameMode_Create( gameMode )
+	GameMode_SetName( gameMode, "Free For All" )
+	GameMode_SetDesc( gameMode, "Every player for themselves" )
+	GameMode_SetIcon( gameMode, $"ui/menu/playlist/tdm" )
+	GameMode_SetDefaultScoreLimits( gameMode, 30, 0 )
+	GameMode_SetDefaultTimeLimits( gameMode, 15, 0.0 )
+	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_KILLS", PGS_PILOT_KILLS, 2 )
+	GameMode_AddScoreboardColumnData( gameMode, "#SCOREBOARD_DEATHS", PGS_DEATHS, 2 )
+	GameMode_SetColor( gameMode, [255, 87, 51, 255] )
+	GameMode_SetEvacEnabled( gameMode, false )
+	#if SERVER || CLIENT
+		GameMode_AddSharedInit( gameMode, FreeDM_GamemodeInitShared )
+	#endif
+	#if SERVER
+		GameMode_AddServerInit( gameMode, FreeDM_GamemodeInitServer )
+	#endif
+	#if CLIENT
+		GameMode_AddClientInit( gameMode, FreeDM_GamemodeInitClient )
+	#endif
+
 	#if DEVSCRIPTS
 	DevGameModes_Init()
 	#endif

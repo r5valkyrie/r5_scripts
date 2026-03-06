@@ -360,6 +360,13 @@ void function RemoteFunctions_Init_Begin()
 			ScriptRegisterNetworkedVariable( "arenas_buyMenuStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
 			break
 
+		case eGamemodes.freedm:
+		case eGamemodes.freedm_tdm:
+		case eGamemodes.freedm_gungame:
+			// FreeDM network vars
+			ScriptRegisterNetworkedVariable( "isMapZoneDisplayTextDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
+			break
+
 		case eGamemodes.CUSTOM_CTF:
 			// CTF: Server to Client
 			
@@ -565,7 +572,8 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "latency", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "damage", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
 
-	ScriptRegisterNetworkedVariable( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	// "deaths" registered by GamemodeUtility_RegisterNetworking() for non-elimination modes
+	//ScriptRegisterNetworkedVariable( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "assists", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
 	ScriptRegisterNetworkedVariable( "isHealing", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )

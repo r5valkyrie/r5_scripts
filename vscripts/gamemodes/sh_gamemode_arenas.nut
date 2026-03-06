@@ -337,6 +337,8 @@ void function ShGamemodeArenas_Init()
 
 #endif
 
+	ShApexScreens_Init()
+
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
 	PrecacheParticleSystem( ARENAS_ASH )

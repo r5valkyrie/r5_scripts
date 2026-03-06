@@ -36,6 +36,7 @@ struct
 	bool functionref( entity, entity, var ) isProtectedFromFriendlyFire
 	table< entity, OutOfBoundsDataStruct > outOfBoundsTable
 	bool flowstate_allow_friendly_damage
+	string gameModeSpawnPointOverride = ""
 } file
 
 function BaseGametype_Init()
@@ -2257,7 +2258,47 @@ bool function ShouldShowLossProtectionOnEOG( entity player )
 	return true
 }
 
-// bool function GameModeRemove( entity ent )
+bool function GameModeRemove( entity ent )
+{
+	string gameMode = GetGameModeUsedForEntityRemoval()
+
+	string gamemodeKey = "gamemode_" + gameMode
+	if ( ent.HasKey( gamemodeKey ) && (ent.kv[gamemodeKey] == "0" || ent.kv[gamemodeKey] == "") )
+	{
+		foreach ( entLinked in ent.GetLinkEntArray() )
+		{
+			if ( GetEditorClass( entLinked ) == "func_brush_navmesh_separator" )
+			{
+				ToggleNPCPathsForEntity( entLinked, true )
+				entLinked.Hide()
+				entLinked.NotSolid()
+			}
+			else
+			{
+				entLinked.Destroy()
+			}
+		}
+
+		ent.Destroy()
+		return true
+	}
+
+	return false
+}
+
+void function OverrideGameModeUsedForEntityRemoval( string override )
+{
+	file.gameModeSpawnPointOverride = override
+}
+
+string function GetGameModeUsedForEntityRemoval()
+{
+	if ( file.gameModeSpawnPointOverride != "" )
+		return file.gameModeSpawnPointOverride
+	return GameRules_GetGameMode()
+}
+
+// bool function GameModeRemove( entity ent ) // Original S3 commented-out version below:
 // {
 // 	string gameMode = GameRules_GetGameMode()
 // 	switch ( gameMode )

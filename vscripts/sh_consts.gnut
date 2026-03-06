@@ -201,6 +201,9 @@ global const flowstate_pkknockback			= "flowstate_pkknockback"
 global const WINTEREXPRESS					= "winterexpress"
 global const ARENAS							= "arenas"
 global const GAMEMODE_ARENAS				= "arenas"
+global const FREEDM						= "freedm"
+global const FREEDM_TDM					= "freedm_tdm"
+global const FREEDM_GUNGAME				= "freedm_gungame"
 
 //////////////////////////////
 

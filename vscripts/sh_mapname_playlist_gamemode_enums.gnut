@@ -110,7 +110,10 @@ global enum ePlaylists
 	fs_nextbots, //52
 	Movement_Recorder,
 	survival_arenas,
-	
+	freedm,
+	freedm_tdm,
+	freedm_gungame,
+
 	_PLAYLISTS_COUNT //LAST
 }
 
@@ -134,6 +137,9 @@ global enum eGamemodes
 	fs_spieslegends, //15
 	fs_1v1,
 	ARENAS, //17
+	freedm, //18
+	freedm_tdm, //19
+	freedm_gungame, //20
 
 	_GAMEMODES_COUNT //LAST
 }

@@ -1,5 +1,5 @@
 global function GamemodeSurvival_Init
-global function RateSpawnpoints_Directional
+// RateSpawnpoints_Directional now lives in mp/spawn.nut
 global function Survival_SetFriendlyOwnerHighlight
 global function SURVIVAL_AddSpawnPointGroup
 global function SURVIVAL_IsCharacterClassLocked
@@ -996,6 +996,10 @@ void function Sequence_Playing()
 		return
 	}
 
+	// FreeDM has its own game flow (FreeDM_OnGameStatePlayingEnter) — skip survival sequence
+	if ( GameMode_IsActive( eGameModes.FREEDM ) )
+		return
+
 	FlagSet( "GamePlaying" )
 
 	if( !GetCurrentPlaylistVarBool( "deathfield_starts_in_prematch", false ) )
@@ -1966,10 +1970,7 @@ void function SURVIVAL_AddSpawnPointGroup( string ref )
 
 }
 
-void function RateSpawnpoints_Directional( int checkClass, array<entity> spawnpoints, int team, entity player )
-{
-
-}
+// RateSpawnpoints_Directional implementation moved to mp/spawn.nut
 
 bool function SURVIVAL_IsCharacterClassLocked( entity player )
 {

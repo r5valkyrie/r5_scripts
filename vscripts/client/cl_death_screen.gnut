@@ -55,6 +55,7 @@ global function DeathScreen_SpectatorTargetChanged
 
 global function UpdateRespawnStatus
 global function DeathScreen_UpdateRespawnTime
+global function DeathScreen_SetSkipDeathRecapAnimation
 
 global function ServerCallback_SendDeathRecapData
 global function ServerCallback_DeathRecapDataUpdated

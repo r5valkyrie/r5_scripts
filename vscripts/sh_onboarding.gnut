@@ -870,7 +870,7 @@ void function SV_CL_Onboarding_Init()
 		foreach ( character in GetAllCharacters() )
 			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterSkin( character ), OnCharacterSkinChanged )
 
-		//SetGameState( eGameState.WaitingForPlayers )
+		SetGameState( eGameState.WaitingForPlayers )
 
 		if ( OnboardingEnabled() )
 			thread Sequence_WaitingForPlayers()
@@ -896,6 +896,8 @@ void function Sequence_WaitingForPlayers()
 {
 	// Wait the absolute minimum delay, if required (0 by default)
 	wait PreGame_GetWaitingForPlayersDelayMin()
+
+	SetGlobalNetInt( "gameState", eGameState.WaitingForPlayers )
 
 	// Start to wait for players.
 	// Countdown will be reached when the minimum amount of players join, or when the maximum delay is reached (if enabled).
@@ -1137,9 +1139,14 @@ void function Sequence_Prematch()
 
 	if( Gamemode() == eGamemodes.fs_snd || Gamemode() == eGamemodes.fs_spieslegends )
 		return
-	
+
+	// Arenas manages its own Prematch->Playing transitions via the round loop
+	if ( Gamemode() == eGamemodes.ARENAS )
+		return
+
 	// The gamemode handles everything past this point
 	SetGameState( eGameState.Playing )
+	SetGlobalNetInt( "gameState", eGameState.Playing )
 }
 
 // Custom logic for sequence orchestration
@@ -1843,6 +1850,23 @@ void function OnClientConnected( entity player )
 		else
 		{
 			DecideRespawnPlayer_Retail( player )
+		}
+	}
+	else if ( Gamemode() == eGamemodes.ARENAS )
+	{
+		replaceOrigin = true
+		player.p.survivalLandedOnGround = true
+		player.p.respawnPodLanded = true
+		DecideRespawnPlayer( player )
+
+		// During WaitingForPlayers, park the player safely above the map center.
+		// Kill triggers and out-of-bounds volumes don't exist at high altitude.
+		// Freeze controls to prevent movement. BuyPhase unfreezes on round start.
+		if ( GetGameState() <= eGameState.WaitingForPlayers )
+		{
+			player.SetOrigin( <0, 0, 20000> )
+			player.SetAngles( <0, 0, 0> )
+			player.FreezeControlsOnServer()
 		}
 	}
 

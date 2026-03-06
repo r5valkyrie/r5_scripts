@@ -1,16 +1,11 @@
 // stub script
 global function GamemodeTdm_Init
-global function RateSpawnpoints_Generic
+// RateSpawnpoints_Generic now lives in mp/spawn.nut
 
 // these comes from gamemode recruit
 global function UpdateSquadDataForTeamChange
 
 void function GamemodeTdm_Init()
-{
-
-}
-
-void function RateSpawnpoints_Generic( int checkClass, array<entity> spawnpoints, int team, entity player )
 {
 
 }

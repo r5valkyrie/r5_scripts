@@ -113,32 +113,7 @@ FileStruct_LifetimeLevel fileLevel
 FileStruct_LifetimeLevel& fileLevel
 #endif
 
-struct {
-	array < int > allAlliances
-	array < int > allAllianceTeams
-
-	table< int, int > teamToAllianceTable
-	table< int, array< int > > allianceToTeamsTable
-	array<void functionref( int, int )> callbacks_AllianceProximity_OnTeamPutIntoAlliance
-
-	#if SERVER || CLIENT
-		table< EHI, int > playerEHIToOriginalTeamTable // Match the player EHI to their team before we do a team change at the end of the match
-		bool isMinimapDisabled
-		array < int > priorityPingTypes
-	#endif // SERVER || CLIENT
-
-	#if SERVER
-		bool hasFinalizedTeamReassignments = false
-		table < int, int > allianceToReassignedTeamTable // teams from alliances get re-assigned to a single team at the end of the match, this keeps track of which team each alliance got assigned to
-		table < int, array< int > > originalTeamIDToCurrentTeamMemberIndexesTable // store the current indexes of all the team members that were on the same team before the end of match team change
-	#endif // SERVER
-
-	#if DEV && SERVER
-		array < int > teamsSetToAllianceThroughDevCommand_Dev // teams that have been put on an alliance through a dev command
-		array < int > alliancesThatHaveBeenPopulatedWithTeams // A list of alliances that have at some point ended up with any team assigned to it ( for debugging purposes )
-	#endif // DEV && SERVER
-
-} file
+// Alliance data struct moved to mp/sh_alliance_proximity.gnut
 
 /////////////////////////
 /////////////////////////
@@ -856,19 +831,7 @@ string function GetDisplayablePlayerNameFromEHI( EHI playerEHI )
 	return ( playerTag == "" )? playerName : playerTag + " " + playerName
 }
 
-// Is this gamemode using alliances
-// Alliances are a team of players made up of multiple squads ( squads are referred to as teams in our script )
-bool function AllianceProximity_IsUsingAlliances()
-{
-	return AllianceProximity_GetMaxNumAlliances() > 0 && !IsLobby()
-}
-
-// How many alliances are there in this gamemode
-int function AllianceProximity_GetMaxNumAlliances()
-{
-	return GetCurrentPlaylistVarInt( "max_alliances", 0 )
-}
-
+// AllianceProximity_IsUsingAlliances and AllianceProximity_GetMaxNumAlliances moved to mp/sh_alliance_proximity.gnut
 
 string function GetPlayerName( EHI playerEHI )
 {
@@ -893,25 +856,7 @@ bool function IsPrivateMatchLobby()
 	return false
 }
 
-#if SERVER || CLIENT
-// Return the player's team prior to end of match team switch if it is available otherwise return their current team number
-int function AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI( EHI playerEHI )
-{
-	#if DEVELOPER
-		Assert(  EHIHasValidScriptStruct( playerEHI ), "ALLIANCE PROXIMITY: Attempted to run " + FUNC_NAME() + " on an Invalid playerEHI" )
-	#endif // DEV
-
-	int team = EHI_GetTeam( playerEHI )
-
-	if ( playerEHI in file.playerEHIToOriginalTeamTable )
-	{
-		team = file.playerEHIToOriginalTeamTable[ playerEHI ]
-	}
-
-	return team
-}
-#endif // SERVER || CLIENT
-
+// AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI moved to mp/sh_alliance_proximity.gnut
 
 #if CLIENT
 void function EHI_GameStatePlaying()

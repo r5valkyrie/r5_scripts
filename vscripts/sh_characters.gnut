@@ -34,6 +34,7 @@ global function CharacterClass_GetRoleColor
 global function CharacterClass_GetReadyUpVoicelineEventList
 global function CharacterClass_IsAvailable
 global function CharacterClass_GetDamageScale
+global function ItemFlavor_GetCharacterRef
 
 #if SERVER
 global function GetStringArrayAvailableClassesForPlayer

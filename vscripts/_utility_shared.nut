@@ -2789,28 +2789,28 @@ float function GetAverageValueInArray( array<float> values )
 	return ( sum / values.len() )
 }
 
-int function GetWinningTeam()
+int function GetWinningTeam( bool shouldReturnInvalidInCaseOfTie = true )
 {
 	if ( level.nv.winningTeam != null )
 		return expect int( level.nv.winningTeam )
 
-	int maxScore = 0
-	int playerTeam
+	int maxScore = -1
 	int currentScore
 	int winningTeam = TEAM_UNASSIGNED
+	array < int > allTeamsArray = GetAllValidPlayerTeams()
 
-	foreach ( player in GetPlayerArray() )
+	foreach ( playerTeam in allTeamsArray )
 	{
-		playerTeam = player.GetTeam()
 		if ( IsRoundBased() )
 			currentScore = GameRules_GetTeamScore2( playerTeam )
 		else
 			currentScore = GameRules_GetTeamScore( playerTeam )
 
-		if ( currentScore == maxScore) //Treat multiple teams as having the same score as no team winning
+		if ( shouldReturnInvalidInCaseOfTie && currentScore == maxScore && winningTeam != playerTeam ) //Treat multiple teams as having the same score as no team winning
+		{
 			winningTeam = TEAM_UNASSIGNED
-
-		if ( currentScore > maxScore )
+		}
+		else if ( currentScore > maxScore )
 		{
 			maxScore = currentScore
 			winningTeam = playerTeam

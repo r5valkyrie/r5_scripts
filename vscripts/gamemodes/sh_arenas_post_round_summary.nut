@@ -112,7 +112,8 @@ void function ShowScore( int leftTeam, int rightTeam )
 	{
 		array<entity> teamPlayers = GetPlayerArrayOfTeam( leftTeam )
 		Arenas_PopulateTeamRuis( file.score, leftTeam, teamPlayers, "L" )
-		for( int i = 0; i < teamPlayers.len(); ++i )
+		int maxPortraits = minint( teamPlayers.len(), 3 )
+		for( int i = 0; i < maxPortraits; ++i )
 		{
 			RuiSetInt( file.score, "portraitTeamMemberIndex_L" + (i+1), teamPlayers[i].GetTeamMemberIndex() )
 		}

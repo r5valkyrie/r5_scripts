@@ -34,7 +34,7 @@ global function Arenas_ServerGamemode_Init
 // ARENAS_MAX_CASH, ARENAS_KILL_REWARD, ARENAS_CANISTER_REWARD, ARENAS_ROUND_PER_LOSE_CASH
 
 // Dev mode: skip buy phase, give default loadout, jump straight to combat
-const bool ARENAS_DEV_MODE = true
+const bool ARENAS_DEV_MODE = false
 
 // Timing constants
 const float ARENAS_BUY_PHASE_DURATION = 30.0
@@ -234,12 +234,23 @@ void function Arenas_OnPrematch()
 	if ( !file.deathfieldOverridesSet )
 	{
 		file.deathfieldOverridesSet = true
+
 		foreach ( entity endLoc in file.circleEndLocations )
 		{
 			if ( IsValid( endLoc ) )
 				SURVIVAL_AddOverrideCircleLocation( endLoc.GetOrigin(), 250.0 )
 		}
-		printt( "[Arenas] Deathfield circle overrides set:", file.circleEndLocations.len() )
+
+		SURVIVAL_SetDeathFieldOverrideStartRadius( file.mapRadius )
+
+		if ( file.deathfieldStagesRadius.len() > 0 )
+			SURVIVAL_SetDeathFieldStagesOverrideRadius( file.deathfieldStagesRadius )
+
+		// Reinitialize deathfield data now that overrides are set
+		RoundBased_ResetDeathfield()
+
+		printt( "[Arenas] Deathfield overrides set. Locations:",
+			file.circleEndLocations.len(), "radius:", file.mapRadius )
 	}
 
 	// Start the main game loop on first Prematch from onboarding.
@@ -619,6 +630,16 @@ void function Arenas_BuyPhase()
 	SetGlobalNetInt( "roundsPlayed", file.roundNumber )
 	level.nv.roundsPlayed = file.roundNumber
 
+	// Start deathfield paused — ring visible at full size during buy phase
+	FlagSet( "DeathCircleActive" )
+	FlagSet( "DeathFieldPaused" )
+	thread SURVIVAL_RunArenaDeathField()
+
+	// Static ring netvars until combat activates shrinking
+	SetGlobalNetInt( "currentDeathFieldStage", GetDeathFieldStartStage() )
+	SetGlobalNetTime( "nextCircleStartTime", Time() + 99999.0 )
+	SetGlobalNetTime( "circleCloseTime", Time() + 199999.0 )
+
 	if ( ARENAS_DEV_MODE )
 	{
 		Arenas_DevMode_SetupPlayers()
@@ -811,7 +832,7 @@ void function Arenas_DevMode_SetupPlayers()
 		{
 			DecideRespawnPlayer( player, false )
 			wait 0.1
-			if ( !IsValid( player ) )
+			if ( !IsValid( player ) || !IsAlive( player ) )
 				continue
 		}
 
@@ -1004,32 +1025,49 @@ void function Arenas_CleanupLootBins()
 // ============================================================================
 // DEATHFIELD / RING MANAGEMENT
 // ============================================================================
-void function Arenas_DeathfieldTimer()
+void function Arenas_ActivateRing()
 {
+	svGlobal.levelEnt.EndSignal( "GenerateDeathFieldData" )
+
 	wait ARENAS_RING_ACTIVATION_DELAY
 
 	if ( file.matchOver || file.currentPhase != eArenaPhase.COMBAT )
 		return
 
-	FlagSet( "DeathCircleActive" )
 	FlagClear( "DeathFieldPaused" )
 }
 
 void function Arenas_FreezeDeathfield()
 {
-	// Stop the ring movement thread but keep entities alive so the ring stays visible.
-	// DeathFieldKeepCodeUpdated_THREAD continues calling SetDeathFieldParams, freezing the
-	// ring at its current position and radius until entities are destroyed.
+	// Stop the deathfield stage loop, keep entities alive
 	svGlobal.levelEnt.Signal( "GenerateDeathFieldData" )
 	FlagClear( "SUR_DeathFieldShrinking" )
 	FlagClear( "DeathCircleActive" )
+	FlagSet( "DeathFieldPaused" )
+
+	// Freeze ring at current interpolated radius
+	int realm = Survival_Loot_GetDefaultRealm()
+	DeathFieldData data = SURVIVAL_GetDeathFieldData( realm )
+
+	float now = Time()
+	float totalTime = data.endTime - data.startTime
+	float frac = 0.0
+	if ( totalTime > 0.0 )
+		frac = clamp( (now - data.startTime) / totalTime, 0.0, 1.0 )
+	float frozenRadius = data.startRadius + (data.endRadius - data.startRadius) * frac
+
+	data.startRadius = frozenRadius
+	data.endRadius = frozenRadius
+	data.currentRadius = frozenRadius
+	data.startTime = now
+	data.endTime = now + 99999.0
+
+	SetGlobalNetTime( "nextCircleStartTime", now + 99999.0 )
+	SetGlobalNetTime( "circleCloseTime", now + 199999.0 )
 }
 
 void function Arenas_StopDeathfield()
 {
-	// Full deathfield reset: destroys all entities (deathField, safeZone),
-	// resets per-realm DeathFieldData tables, clears flags, resets netvars and native params.
-	// This ensures the next round starts with a completely clean deathfield state.
 	RoundBased_ResetDeathfield()
 }
 
@@ -1038,6 +1076,8 @@ void function Arenas_StopDeathfield()
 // ============================================================================
 void function Arenas_AirdropTimer()
 {
+	svGlobal.levelEnt.EndSignal( "GenerateDeathFieldData" )
+
 	wait ARENAS_AIRDROP_DELAY
 
 	if ( file.matchOver || file.currentPhase != eArenaPhase.COMBAT )
@@ -1800,11 +1840,8 @@ void function Arenas_CombatPhase()
 	// Round start battle chatter
 	thread SurvivalCommentary_HostAnnounce( GetRoundCommentaryBucket( file.roundNumber ), ARENAS_ROUNDSTART_BC_DELAY )
 
-	// Start deathfield for this round. Thread SURVIVAL_RunArenaDeathField which blocks
-	// on FlagWait("DeathCircleActive") until the timer activates it.
-	// The thread is killed at round end when the deathfield entity is destroyed.
-	thread SURVIVAL_RunArenaDeathField()
-	thread Arenas_DeathfieldTimer()
+	// Activate ring shrink after delay
+	thread Arenas_ActivateRing()
 
 	// Care package airdrop timer
 	if ( file.airdropLocations.len() > 0 )
@@ -1961,10 +1998,12 @@ void function Arenas_RoundEnd( int winningTeam )
 			ScreenFadeToBlack( player, 1.0, ARENAS_ROUND_RESTART_DELAY + 1.0 )
 	}
 
-	// Destroy ring during black screen before players are teleported
+	// Wait for fade before destroying ring
+	wait 1.0
+
 	Arenas_StopDeathfield()
 
-	wait ARENAS_ROUND_RESTART_DELAY
+	wait ARENAS_ROUND_RESTART_DELAY - 1.0
 }
 
 int function Arenas_GetRoundWonDescriptor( int winningTeam )

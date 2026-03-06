@@ -40,7 +40,8 @@ global struct GameSummarySquadData
 	int survivalTime
 	int revivesGiven
 	int respawnsGiven
-	int deaths 
+	int deaths
+	table<int, int> modeMetaData // S22+ gun game demotion/promotion tracking
 }
 
 void function PIN_Init()

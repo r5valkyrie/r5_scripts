@@ -17,7 +17,6 @@ void function CodeCallback_MapInit()
 	//Clean up unused ents
 	AddCallback_EntitiesDidLoad( KCMU3_OnEntitiesDidLoad )
 
-	AddSpawnCallback( "info_spawnpoint_human", CleanupEnt )
 	AddCallback_OnPlayerRespawned( OnPlayerCreated )
 	Canyonlands_MapInit_Common()
 }

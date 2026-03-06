@@ -23,6 +23,7 @@ global function AddCallback_OnTeammateUnitframeInit
 global function OverwriteWithCustomUnitFrameInfo
 
 global function RefreshUnitframesForPlayer
+global function SquadMemberIndexSort
 
 #if DEVELOPER
 global function PrintUnitFrames

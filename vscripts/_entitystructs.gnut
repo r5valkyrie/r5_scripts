@@ -224,6 +224,8 @@ global struct ServerEntityStruct
 	array<DamageHistoryStruct> recentDamageHistory
 	array<DamageHistoryStruct> recentDealtDamageHistory
 
+	array<entity> previousKillers // Revenge kill tracking for FreeDM
+
 	float lastTakeDamageTime_thermite // meteor thermite does an extra burst of damage on first contact
 	float lastTakeDamageTime_laser_cannon
 
@@ -552,6 +554,7 @@ global struct ServerPlayerStruct
 	int winStreak = 0
 	int bestStreak = 0
 	//End 1v1 Settings
+	entity						decoy // Mirage decoy tracking for FreeDM reset
 	bool 						fastballActivatePressed
 	bool isPlayerInVent = false
 	asset lastGroundEntityName

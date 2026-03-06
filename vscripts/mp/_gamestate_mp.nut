@@ -11,6 +11,7 @@ global function GiveTitanToPlayer
 global function GetTimeLimit_ForGameMode
 global function SetGameState
 global function GameState_EntitiesDidLoad
+global function WaittillGameStateOrHigher
 
 float function GameState_GetTimeLimitOverride()
 {
@@ -108,4 +109,15 @@ void function SetGameState( int newState )
 void function GameState_EntitiesDidLoad()
 {
 
+}
+
+void function WaittillGameStateOrHigher( int state )
+{
+	for ( ;; )
+	{
+		if ( GetGameState() >= state )
+			return
+
+		svGlobal.levelEnt.WaitSignal( "GameStateChanged" )
+	}
 }

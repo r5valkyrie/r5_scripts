@@ -29,6 +29,9 @@ global function SpawnArmor
 global function SpawnNothing
 global function SpawnAllOptics
 global function SURVIVAL_DropMainWeapon
+global function SURVIVAL_DropWeapon
+global function SURVIVAL_DropPlayerEquipment
+global function GetSafeLocation
 global function SURVIVAL_DropBackpackItem
 global function Loot_AddCallback_OnPlayerLootPickup
 global function Loot_AddCallback_OnPlayerLootPickupRetail
@@ -4324,6 +4327,76 @@ entity function SURVIVAL_DropWeapon( entity player, entity dropWeapon, vector or
 	return drop
 }
 
+// Drop equipment from a specific slot programmatically
+// Uses existing drop patterns from ClientCommand_Sur_DropEquipment
+entity function SURVIVAL_DropPlayerEquipment( entity player, string equipmentSlot, bool droppedThroughUpgrade = false, bool onlyAllowOnLivingPlayers = true )
+{
+	if ( onlyAllowOnLivingPlayers && !IsAlive( player ) )
+		return null
+
+	if ( !PositionIsInMapBounds( player.GetOrigin() ) )
+		return null
+
+	if ( !EquipmentSlot_IsValidEquipmentSlot( equipmentSlot ) )
+		return null
+
+	LootData data = EquipmentSlot_GetEquippedLootDataForSlot( player, equipmentSlot )
+	if ( SURVIVAL_EquipmentPretendsToBeBlank( data.ref ) )
+		return null
+
+	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	if ( activeWeapon != null && activeWeapon.IsWeaponOffhand() && droppedThroughUpgrade == false )
+	{
+		var offhandAllowsInteract = activeWeapon.GetWeaponInfoFileKeyField( "offhand_allow_player_interact" )
+		if ( !offhandAllowsInteract || offhandAllowsInteract <= 0 )
+			return null
+	}
+
+	entity droppedItem = null
+
+	EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( equipmentSlot )
+
+	vector fwd    = RotateVector( player.GetViewVector(), <-10.0, GetThrowYawOffsetFromPlayer( player ), 0> )
+	vector vel    = fwd * 100
+	vector origin = GetThrowOrigin( player )
+
+	if ( es.specialCaseDropFunc != null )
+	{
+		droppedItem = es.specialCaseDropFunc( player, equipmentSlot, origin, vel )
+	}
+	else
+	{
+		LootData itemData = EquipmentSlot_GetEquippedLootDataForSlot( player, equipmentSlot )
+
+		if ( itemData.ref == "" )
+			return null
+
+		entity item = SpawnGenericLoot( itemData.ref, origin )
+		SetItemSpawnSource( item, eSpawnSource.PLAYER_DROP, player )
+		BroadcastItemDrop_Retail( player, itemData.ref, item )
+
+		FakePhysicsThrow_Retail( player, item, vel, true )
+		TrackingVision_CreatePOI( es.trackingVisionDropPOI, item, item.GetOrigin(), player.GetTeam(), player )
+
+		if ( itemData.lootType == eLootType.ARMOR )
+		{
+			item.SetSurvivalProperty( player.GetShieldHealth() )
+			item.e.extraSurvivalProperty = player.GetShieldHealthMax()
+		}
+
+		Inventory_SetPlayerEquipment( player, "", equipmentSlot )
+		droppedItem = item
+	}
+
+	if ( droppedItem != null )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, player, SOUND_THROW_ITEM )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_RefreshInventory" )
+	}
+
+	return droppedItem
+}
+
 const array<string> fs_snd_drop_exclusions_array = [
 
 	"health_pickup_ultimate",
@@ -6112,5 +6185,12 @@ entity function DEV_AddToDeathBox( entity deathBox, table<string, int> contents 
 	UpdateDeathBoxHighlight( deathBox, true )
 
 	return deathBox
+}
+
+// Find a safe grounded position near the given origin
+// S3 doesn't have NavMesh_GetClosestPoint, use ground trace directly
+vector function GetSafeLocation( vector origin )
+{
+	return GetGroundPosition( origin, origin - <0, 0, 5000> ).endPos
 }
 #endif

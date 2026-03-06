@@ -198,6 +198,11 @@ struct WaitingForPlayersCameraLocPair
     vector angles = <0, 0, 0>
 }
 
+global struct SummaryDataEntry
+{
+	string displayString = ""
+}
+
 global struct SquadSummaryPlayerData
 {
 	int eHandle
@@ -207,6 +212,7 @@ global struct SquadSummaryPlayerData
 	int revivesGiven
 	int respawnsGiven
 	int prophuntModelIndex
+	array<SummaryDataEntry> modeSpecificSummaryData // FreeDM port
 }
 
 global struct SquadSummaryData

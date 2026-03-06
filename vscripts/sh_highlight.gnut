@@ -843,6 +843,38 @@ void function Highlight_Init()
 	HighlightContext_SetAfterPostProcess( highlight, false )
 	HighlightContext_SetFarFadeDistance( highlight, CAUSTIC_GAS_THREAT_DIST )
 
+	// Snake minigame highlights
+	highlight = RegisterHighlight( "snake_green" )
+	HighlightContext_SetOutline( highlight, HIGHLIGHT_OUTLINE_CUSTOM_COLOR )
+	HighlightContext_SetFill( highlight, HIGHLIGHT_FILL_CUSTOM_COLOR )
+	HighlightContext_SetRadius( highlight, 5 )
+	HighlightContext_SetParam( highlight, 0, <0.2, 0.9, 0.2> )
+	HighlightContext_SetDrawFunc( highlight, eHighlightDrawFunc.ALWAYS )
+	HighlightContext_SetADSFade( highlight, false )
+
+	highlight = RegisterHighlight( "snake_apple" )
+	HighlightContext_SetOutline( highlight, HIGHLIGHT_OUTLINE_CUSTOM_COLOR )
+	HighlightContext_SetFill( highlight, HIGHLIGHT_FILL_CUSTOM_COLOR )
+	HighlightContext_SetRadius( highlight, 5 )
+	HighlightContext_SetParam( highlight, 0, <0.9, 0.1, 0.1> )
+	HighlightContext_SetDrawFunc( highlight, eHighlightDrawFunc.ALWAYS )
+	HighlightContext_SetADSFade( highlight, false )
+
+	highlight = RegisterHighlight( "snake_gameover" )
+	HighlightContext_SetOutline( highlight, HIGHLIGHT_OUTLINE_CUSTOM_COLOR )
+	HighlightContext_SetFill( highlight, HIGHLIGHT_FILL_CUSTOM_COLOR )
+	HighlightContext_SetRadius( highlight, 5 )
+	HighlightContext_SetParam( highlight, 0, <0.9, 0.9, 0.1> )
+	HighlightContext_SetDrawFunc( highlight, eHighlightDrawFunc.ALWAYS )
+	HighlightContext_SetADSFade( highlight, false )
+
+	highlight = RegisterHighlight( "snake_border" )
+	HighlightContext_SetOutline( highlight, HIGHLIGHT_OUTLINE_CUSTOM_COLOR )
+	HighlightContext_SetRadius( highlight, 3 )
+	HighlightContext_SetParam( highlight, 0, <0.7, 0.7, 0.7> )
+	HighlightContext_SetDrawFunc( highlight, eHighlightDrawFunc.ALWAYS )
+	HighlightContext_SetADSFade( highlight, false )
+
 	Highlight_EndRegisteringHighlights()
 
 	#if CLIENT

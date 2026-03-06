@@ -231,6 +231,15 @@ void function Deathfield_OnPlayingGameStateEnter()
 	if ( Playlist() == ePlaylists.survival_firingrange || Playlist() == ePlaylists.survival_training )
 		return
 
+	// If the deathfield system is already running (arenas pre-stages it during
+	// buy phase), skip reinitialization. GenerateDeathFieldData() fires the
+	// "GenerateDeathFieldData" signal which would kill the active
+	// SURVIVAL_RunArenaDeathField thread and destroy the ring entity.
+	#if SERVER
+		if ( Flag( "DeathCircleActive" ) )
+			return
+	#endif
+
 	InitDeathFieldDataAndStageData()
 
 	#if SERVER
@@ -717,7 +726,9 @@ void function SURVIVAL_RunArenaDeathField()
 
 	FlagWait( "DeathCircleActive" )
 
-	if ( file.deathFieldStartStage == 0 )
+	// Skip the initial delay when DeathFieldPaused is set (arenas pre-stages
+	// the deathfield during buy phase and needs entities created immediately).
+	if ( file.deathFieldStartStage == 0 && !Flag( "DeathFieldPaused" ) )
 		waitthread DeathFieldCircleWait( START_WAIT_TIME )
 
 	FlagClear( "AllowDeathFieldUpdate" )
@@ -787,7 +798,23 @@ void function SURVIVAL_RunArenaDeathField()
 		}
 	}
 
-	bool spawnedDeathfield = false
+	// Dispatch entities immediately so the ring visual is available before
+	// the stage loop starts the shrink sequence. Data is set to a static ring
+	// at full start radius. The stage loop later overwrites these values with
+	// actual shrink parameters, and the per-frame SetDeathFieldParams thread
+	// picks them up automatically.
+	foreach ( realm, deathField in deathFields )
+	{
+		DeathFieldData data = file.deathFieldData[ realm ]
+		float fullRadius = SURVIVAL_Deathfield_GetStartRadius()
+		data.startRadius = fullRadius
+		data.endRadius = fullRadius
+		data.currentRadius = fullRadius
+		data.startTime = Time()
+		data.endTime = Time() + 99999.0
+		FinalizeDeathfieldSpawn( data, deathField, realm )
+	}
+	bool spawnedDeathfield = true
 
 	foreach ( realm, deathField in deathFields )
 	{
@@ -2611,6 +2638,13 @@ void function Cl_DeathFieldThink( entity deathField )
 		entity clientPlayer = GetLocalClientPlayer()
 		int stage       = SURVIVAL_GetCurrentDeathFieldStage()
 		float startTime = GetGlobalNetTime( "nextCircleStartTime" ) + MARGIN_WAIT_TIME
+
+		// Stage netvar defaults to -1 before the server sets it. Wait until valid.
+		if ( stage < 0 || stage >= file.deathFieldStageData.len() )
+		{
+			WaitFrame()
+			continue
+		}
 
 		if ( currentDeathFieldStage != stage )
 		{

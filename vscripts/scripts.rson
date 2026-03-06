@@ -71,6 +71,7 @@ Scripts:
 	sh_gamepad_utility.gnut
 	sh_thirdperson.gnut
 	sh_pak_requests.gnut
+	mp/sh_alliance_proximity.gnut
 	sh_ehi.gnut
 ]
 
@@ -881,6 +882,7 @@ Scripts:
 
 	client/_cl_model_viewer.nut
 	client/cl_passives.gnut
+	client/cl_snake.nut
 
 	// leave this last so it can contain any struct
 	cl_globals.gnut
@@ -1073,6 +1075,9 @@ Scripts:
 	ui/CTFMenus/menu_ctf_vote.nut
 
 	ui/menu_weaponmods.nut
+
+	//FreeDM
+	ui/freedm_menus.nut
 ]
 
 When: "SERVER || UI "
@@ -1252,4 +1257,24 @@ When: "CLIENT"
 Scripts:
 [
 	gamemodes/arenas/cl_gamemode_arenas.nut
+]
+
+// FreeDM Gamemodes (DM, Gun Game, TDM)
+// Load stubs + utility for all VMs so UI VM has access to shared functions
+// so UI VM has access to GamemodeUtility_GetIsTeamIndexValidPlayerTeam etc.
+When: "SERVER || CLIENT || UI"
+Scripts:
+[
+	sh_armordata.gnut
+	gamemodes/freedm/sh_freedm_stubs.nut
+	gamemodes/freedm/sh_gamemode_utility.nut
+	gamemodes/freedm/sh_loadout_selection_system.nut
+]
+
+When: "SERVER || CLIENT"
+Scripts:
+[
+	gamemodes/freedm/sh_gamemode_freedm.nut
+	gamemodes/freedm/sh_freedm_gun_game.nut
+	gamemodes/freedm/sh_freedm_tdm.nut
 ]

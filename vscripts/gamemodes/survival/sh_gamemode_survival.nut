@@ -160,7 +160,7 @@ void function GamemodeSurvivalShared_Init()
 	RegisterSignal("GameStateChanged")
 
 	#if SERVER || CLIENT
-		ShApexScreens_Init()
+		// ShApexScreens_Init()
 		AddCallback_PlayerCanUseZipline( Sur_CanUseZipline )
 		AddCallback_CanStartCustomWeaponActivity( ACT_VM_WEAPON_INSPECT, CanWeaponInspect )
 
