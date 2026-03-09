@@ -78,7 +78,7 @@ global enum eDamageSourceId
 	mp_weapon_grenade_decoyaudio
 	mp_weapon_grenade_cryonade
 
-	// Pilot Weapons - S3 Defaults. Cafe
+	// Pilot Weapons - Defaults
 	mp_weapon_hemlok
 	mp_weapon_lmg
 	mp_weapon_rspn101
@@ -110,7 +110,7 @@ global enum eDamageSourceId
 	mp_ability_mobile_respawn_beacon
 	mp_ability_sniper_ult
 	mp_weapon_cluster_bomb_launcher
-	// End S3 Defaults
+	// End Defaults
 
 	// Crate Weapons
 	mp_weapon_energy_ar_crate
@@ -737,7 +737,7 @@ void function DamageTypes_Init()
 		[ eDamageSourceId.mp_weapon_shadow_squad_hands_primary ] 	= "#DEATH_MELEE_SHADOWSQUAD_HANDS",
 		[ eDamageSourceId.mp_ability_mobile_respawn_beacon ] 	= "#DEATH_MELEE_SHADOWSQUAD_HANDS",
 
-		//r5r
+		// Custom melee weapons
 		[ eDamageSourceId.melee_bolo_sword ] 						= "Bolo Sword Melee",
 		[ eDamageSourceId.mp_weapon_bolo_sword_primary ] 			= "Bolo Sword Melee",
 		[ eDamageSourceId.melee_boxing_ring ] 						= "Boxing Hands",
@@ -777,7 +777,7 @@ void function DamageTypes_Init()
 	}
 
 	#if DEVELOPER
-		//development, with retail versions incase a rare bug happens we dont want to show developer text
+		//development debug entries, hidden in release builds
 		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknownBugIt ] 			= "UNKNOWN! BUG IT!"
 		file.damageSourceIDToName[ eDamageSourceId.damagedef_unknown ] 				= "Unknown"
 		file.damageSourceIDToName[ eDamageSourceId.weapon_cubemap ] 					= "Cubemap"

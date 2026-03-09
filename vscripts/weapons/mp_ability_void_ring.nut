@@ -1151,7 +1151,7 @@ void function VoidRing_UpdateVisibleFXDome_Thread( entity projectile, entity shi
 				}
 			}
 
-			//#if DEV
+			//#if DEVELOPER
 			//if( isInFissure )
 			//{
 			//	DebugDrawSphere( projectile.GetOrigin(), vRadius-20, <150, 0, 0>, true, 0.1 )

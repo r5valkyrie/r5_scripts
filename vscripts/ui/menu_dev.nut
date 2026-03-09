@@ -3,6 +3,11 @@ untyped
 global function InitDevMenu
 global function DEV_InitLoadoutDevSubMenu
 
+#if !DEVELOPER
+void function InitDevMenu( var newMenuArg ) {}
+void function DEV_InitLoadoutDevSubMenu( var panel ) {}
+#else // DEVELOPER
+
 global function SetupDevCommand // for dev
 global function SetupDevFunc // for dev
 global function SetupDevMenu
@@ -547,6 +552,8 @@ void function SetupAlterLoadout_CategoryScreenForCharacter( string category, str
 string function GetCharacterNameFromDEV_name( string DEV_name )
 {
 	string prefix = "character_"
+	if ( DEV_name.len() <= prefix.len() || DEV_name.find( prefix ) != 0 )
+		return DEV_name
 	return split( DEV_name.slice( prefix.len() ), " " )[ 0 ]
 }
 
@@ -566,10 +573,12 @@ void function SetupAlterLoadout_SlotScreen( LoadoutEntry entry )
 		string textB = Localize( ItemFlavor_GetLongName( b ) )
 
 		//
-		if ( textA.slice( 0, 1 ) == "[" && textB.slice( 0, 1 ) != "[" )
+		bool aStartsBracket = textA.len() > 0 && textA.slice( 0, 1 ) == "["
+		bool bStartsBracket = textB.len() > 0 && textB.slice( 0, 1 ) == "["
+		if ( aStartsBracket && !bStartsBracket )
 			return -1
 
-		if ( textA.slice( 0, 1 ) != "[" && textB.slice( 0, 1 ) == "[" )
+		if ( !aStartsBracket && bStartsBracket )
 			return 1
 
 		if ( textA < textB )
@@ -1785,10 +1794,12 @@ void function SetupCustomCosmetics_SlotScreen( LoadoutEntry entry )
 		string textB = Localize( ItemFlavor_GetLongName( b ) )
 
 		//
-		if ( textA.slice( 0, 1 ) == "[" && textB.slice( 0, 1 ) != "[" )
+		bool aStartsBracket = textA.len() > 0 && textA.slice( 0, 1 ) == "["
+		bool bStartsBracket = textB.len() > 0 && textB.slice( 0, 1 ) == "["
+		if ( aStartsBracket && !bStartsBracket )
 			return -1
 
-		if ( textA.slice( 0, 1 ) != "[" && textB.slice( 0, 1 ) == "[" )
+		if ( !aStartsBracket && bStartsBracket )
 			return 1
 
 		if ( textA < textB )
@@ -1819,3 +1830,4 @@ void function UI_OpenSurvivalLootGroupPage( var groupName )
 		RunClientScript( "PopulateSurvivalLootGroup", gName )
 	}, groupName )
 }
+#endif // DEVELOPER

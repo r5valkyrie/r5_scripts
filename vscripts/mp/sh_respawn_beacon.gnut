@@ -303,8 +303,8 @@ void function RespawnStatusChanged( entity player, int old, int new, bool actual
 		}
 	}
 
-	                                                                                                          
-	DeathScreen_RespawnStatusChanged( player, old, new, actuallyChanged )
+	// DeathScreen_RespawnStatusChanged takes 2 params (player, new)
+	DeathScreen_RespawnStatusChanged( player, new )
 }
 
 void function UpdateRespawnChamberRuis( var rui, bool waitingToBeRespawned )

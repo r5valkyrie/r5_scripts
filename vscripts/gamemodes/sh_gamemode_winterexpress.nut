@@ -715,7 +715,7 @@ string function WinterExpress_DeathScreenHeaderOverride()
 
 void function WinterExpress_OnWinnerDetermined()
 {
-	CloseCharacterSelectNewMenu()
+	CloseCharacterSelectMenu()
 }
 
 
@@ -3346,7 +3346,7 @@ void function UI_UpdateOpenMenuButtonCallbacks_Spectate( int newLifeState, bool 
 	if ( newLifeState == LIFE_ALIVE )
 	{
 		if ( shouldCloseMenu )
-			RunClientScript( "CloseCharacterSelectNewMenu" )
+			RunClientScript( "CloseCharacterSelectMenu" )
 
 		// if ( shouldCloseMenu )
 			// CloseFRChallengesSettingsWpnSelector()
@@ -3414,7 +3414,7 @@ void function WinterExpress_UpdateOpenMenuButtonCallbacks_Gameplay( bool isLegen
 	if ( !isLegendSelectAvailable && file.OpenMenuGameplayButtonCallbackRegistered )
 	{
 		DeregisterConCommandTriggeredCallback( "+offhand1", WinterExpress_CL_TryOpenCharacterSelect )
-		CloseCharacterSelectNewMenu()
+		CloseCharacterSelectMenu()
 
 		if ( file.legendSelectMenuPromptRui != null )
 		{
@@ -3599,7 +3599,7 @@ void function WinterExpress_OnPlayerLifeStateChanged( entity player, int oldStat
 		case LIFE_ALIVE:
 			RunUIScript( "UI_UpdateaButtonCallbacks", newState )
 			if ( GetGameState() == eGameState.Playing )
-				CloseCharacterSelectNewMenu()
+				CloseCharacterSelectMenu()
 			StopSoundOnEntity( GetLocalClientPlayer(), "Music_LTM32_SpectateCam" )
 			break
 
@@ -3702,7 +3702,7 @@ void function UICallback_WinterExpress_OpenCharacterSelect()
 	const bool browseMode = true
 	const bool showLockedCharacters = true
 	HideScoreboard()
-	OpenCharacterSelectNewMenu( browseMode )
+	OpenCharacterSelectMenu( browseMode )
 }
 
 bool function WinterExpress_ShouldShowDeathScreen()
@@ -4029,7 +4029,7 @@ void function ServerCallback_CL_ObjectiveStateChanged( int newState, int team )
 
 void function ServerCallback_CL_WinnerDetermined( int team )
 {
-	CloseCharacterSelectNewMenu()
+	CloseCharacterSelectMenu()
 	RunUIScript( "UI_UpdateaButtonCallbacks", LIFE_ALIVE )
 	StopSoundOnEntity( GetLocalClientPlayer(), "Music_LTM32_SpectateCam" )
 }

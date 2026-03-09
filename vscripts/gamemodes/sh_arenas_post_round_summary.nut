@@ -3,7 +3,7 @@ global function ShArenasPostRoundSummary_Init
 #if(CLIENT)
 global function Arenas_OpenPostRoundSummary
 
-#if(DEV)
+#if(DEVELOPER)
 global function Arenas_DevSetScoreSettings
 #endif
 
@@ -22,7 +22,7 @@ struct {
 	var materialsSummary = null
 	var score = null
 
-	#if(DEV)
+	#if(DEVELOPER)
 	bool isDevMode = false
 	ArenasPostRoundDetails& devScoreDetails
 	#endif
@@ -57,7 +57,7 @@ void function _OpenPostRoundSummary( int leftTeam, int rightTeam, float endTime 
 	CleanupScore()
 }
 
-#if(DEV)
+#if(DEVELOPER)
 void function Arenas_DevSetScoreSettings( int roundNum, int leftTeamScore, int rightTeamScore, int numTies, bool won )
 {
 	file.isDevMode = true
@@ -89,7 +89,7 @@ void function ShowScore( int leftTeam, int rightTeam )
 	RuiSetInt( file.score, "maxTies", GameMode_GetWinBy2MaxTies( GameRules_GetGameMode() ) )
 	RuiSetBool( file.score, "roundWon", roundWon )
 
-	#if(DEV)
+	#if(DEVELOPER)
 		if ( file.isDevMode )
 		{
 			ArenasPostRoundDetails d = file.devScoreDetails

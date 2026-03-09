@@ -2,9 +2,9 @@
 global function ArmorData_Get
 global function ArmorData_Set
 
-#if DEV
+#if DEVELOPER
 global function DEV_GiveEvoPoints
-#endif // DEV
+#endif // DEVELOPER
 
 #endif // SERVER
 
@@ -58,7 +58,7 @@ void function ArmorData_Set( entity player, ArmorData armorData, bool resetEvo =
 	EvolvingArmor_SetEvolutionProgress( player, evoPointsToGive )
 }
 
-#if DEV
+#if DEVELOPER
 
 void function DEV_GiveEvoPoints( entity player, int evoToGive = 10 )
 {

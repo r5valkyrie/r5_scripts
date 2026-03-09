@@ -14,7 +14,7 @@ global function Arenas_ClientInit
 #endif
 
 
-#if(DEV)
+#if(DEVELOPER)
 
 //
 #if(CLIENT)
@@ -46,7 +46,7 @@ global function Arenas_OnBuyMenuClose
 //global function Arenas_GetArenaSquadClubName // clubs not available in R5V
 global function UICallback_Arenas_UpdateCash
 
-#if(DEV)
+#if(DEVELOPER)
 global function PupulateGamestatePlayerData //
 global function TriggerShrinkAnim
 #endif
@@ -239,7 +239,7 @@ struct {
 		bool hasEnteredBuyPhase = false
 		bool charSelectMenuClosed = false
 		int ashParticle = -1
-	#if(DEV)
+	#if(DEVELOPER)
 		bool devBuyMenu = false
 	#endif
 
@@ -2077,7 +2077,7 @@ void function CLSurvivalArenas_OnPrematch()
 	if ( !file.charSelectMenuClosed && Survival_CharacterSelectEnabled() )
 	{
 		file.charSelectMenuClosed = true
-		CloseCharacterSelectNewMenu()
+		CloseCharacterSelectMenu()
 	}
 
 	entity viewPlayer = GetLocalViewPlayer()
@@ -2207,7 +2207,7 @@ void function Arenas_ShowBuyMenu( int leftTeam, int rightTeam, bool playIntroTra
 	float endTime = GetGameStartTime()
 	printt( "[Arenas Client] ShowBuyMenu - endTime from GetGameStartTime():", endTime, "currentTime:", Time() )
 
-	#if(DEV)
+	#if(DEVELOPER)
 	if ( file.devBuyMenu )
 	{
 		endTime = Time() + 6.0
@@ -2298,7 +2298,7 @@ void function Arenas_ShowPostRoundSummary( int leftTeam, int rightTeam, bool rou
 
 	float endTime = GetGameStartTime() - GetShopDuration()
 
-	#if(DEV)
+	#if(DEVELOPER)
 	if ( file.devBuyMenu )
 	{
 		endTime = Time() + 5.0
@@ -2653,7 +2653,7 @@ void function ClSurvivalArenas_OnScoreboardCreated()
 	PupulateGamestatePlayerData()
 }
 
-#if(DEV)
+#if(DEVELOPER)
 void function TriggerShrinkAnim()
 {
 	RuiSetFloat( file.arenasScoreRui, "triggerAnimTime", Time() )
@@ -2694,7 +2694,7 @@ void function PupulateGamestatePlayerData()
 	if ( GetLocalClientPlayer() == null )
 		return //
 
-	#if(DEV)
+	#if(DEVELOPER)
 		//
 		RuiTrackInt( file.arenasScoreRui, "gamestate", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "gameState" ) )
 		RuiTrackInt( file.arenasScoreRui, "numTies", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "arenas_numties" ) )
@@ -3135,7 +3135,7 @@ void function UpdateMenuBackground( entity backgroundModel, entity smokeModel, v
 	}
 }
 
-#if(DEV)
+#if(DEVELOPER)
 void function TestApexLogo()
 {
 	entity backgroundModel = GetEntByScriptName( "target_char_sel_bg_new" )
@@ -3273,7 +3273,7 @@ void function OnCharacterSelectUpdateLights( entity lightRig, entity key, entity
 
 #endif
 
-#if(DEV)
+#if(DEVELOPER)
 #if(false)
 
 
@@ -3304,7 +3304,7 @@ void function Arenas_DevPostRoundSummary( bool won = true, int leftTeamScore = 1
 #if(CLIENT)
 void function OnCharacterSelectMenuClosed()
 {
-	// Do NOT call SetupAshRoom() here. CloseCharacterSelectNewMenu() fires this
+	// Do NOT call SetupAshRoom() here. CloseCharacterSelectMenu() fires this
 	// callback BEFORE DeleteMenuEntities(), so any entities created by SetupAshRoom
 	// would be immediately destroyed while file.inAshRoom stays true.
 	// The ash room is set up in Arenas_ShowBuyMenu() instead.

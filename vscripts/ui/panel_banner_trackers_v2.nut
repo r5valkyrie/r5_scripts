@@ -13,23 +13,26 @@ void function InitCardTrackersPanel( var panel )
 	file.panel = panel
 	file.listPanel = Hud_GetChild( panel, "TrackerList" )
 
+	SetPanelTabTitle( panel, "#TRACKERS" )
+
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, CardTrackersPanel_OnShow )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, CardTrackersPanel_OnHide )
 	AddPanelEventHandler_FocusChanged( panel, CardTrackersPanel_OnFocusChanged )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
-	AddPanelFooterOption( panel, LEFT, BUTTON_A, false, "#A_BUTTON_SELECT", "", null, CustomizeMenus_IsFocusedItem )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK_LEGEND", "#X_BUTTON_UNLOCK_LEGEND", null, CustomizeMenus_IsFocusedItemParentItemLocked )
+	                                                            
+	                                                                                                                  
+	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK_LEGEND", "#X_BUTTON_UNLOCK_LEGEND", null, CustomizeMenus_IsFocusedItemParentItemLocked )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_CLEAR", "#X_BUTTON_CLEAR", null, bool function () : ()
 	{
 		return ( CustomizeMenus_IsFocusedItemUnlocked() && !CustomizeMenus_IsFocusedItemEquippable() )
 	} )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
-	//
-	//
-	//
-	//
+	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
+	                                                                                                                                           
+	                                                                                                                     
+	                                                                                                                       
+	                                                                                                                        
 }
 
 
@@ -54,7 +57,7 @@ void function CardTrackersPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	//
+	          
 	foreach ( int flavIdx, ItemFlavor unused in file.cardTrackerList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -65,7 +68,7 @@ void function CardTrackersPanel_Update( var panel )
 	for ( int trackerIndex = 0; trackerIndex < GLADIATOR_CARDS_NUM_TRACKERS; trackerIndex++ )
 		SendMenuGladCardPreviewCommand( eGladCardPreviewCommandType.TRACKER, trackerIndex, null )
 
-	//
+	                                  
 	if ( IsPanelActive( file.panel ) )
 	{
 		ItemFlavor character = GetTopLevelCustomizeContext()
@@ -88,7 +91,7 @@ void function CardTrackersPanel_Update( var panel )
 			CustomizeButton_UpdateAndMarkForUpdating( button, entries, flav, PreviewCardTracker, CanEquipCanBuyCharacterItemCheck, true )
 
 			var rui = Hud_GetRui( button )
-			RuiSetString( rui, "trackerValue", GladiatorCardStatTracker_GetFormattedValueText( GetUIPlayer(), character, flav ) )
+			RuiSetString( rui, "trackerValue", GladiatorCardStatTracker_GetFormattedValueText( GetLocalClientPlayer(), character, flav ) )
 		}
 	}
 }
@@ -96,7 +99,7 @@ void function CardTrackersPanel_Update( var panel )
 
 void function CardTrackersPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) ) //
+	if ( !IsValid( panel ) )                  
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return

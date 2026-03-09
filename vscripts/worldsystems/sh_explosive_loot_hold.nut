@@ -72,7 +72,7 @@ const vector PANEL_BOUNDING_BOX_MAX = <10,10,70>
 global function DEV_GiveGrenades
 global function DEV_LootHold_ShowAll
 global function DEV_LootHold_GotoNearest
-#endif // DEV
+#endif // DEVELOPER
 
 #endif // SERVER
 
@@ -598,7 +598,7 @@ void function ForcedBreach_OpenPanel_Thread( entity panel )
 	//// Uncomment to debug.
 	//#if DEVELOPER
 	//	DebugDrawSphere( explosionPos, 32, COLOR_RED, true, 15 )
-	//#endif // DEV
+	//#endif // DEVELOPER
 
 	PlayFX( EXPLOSIVE_HOLD_EXPLOSION_FX, explosionPos, panel.GetAngles(), null)
 
@@ -968,7 +968,7 @@ void function ExplosiveHoldAnimation_Thread( entity panel, entity player, Explos
 				{
 					#if DEVELOPER
 						printt( FUNC_NAME() + "(): Player kicked off panel animation by a breach: " + player.GetPlayerName() )
-					#endif // DEV
+					#endif // DEVELOPER
 				}
 				else
 				{
@@ -1469,7 +1469,7 @@ void function DEV_LootHold_GotoNearest( entity player )
 	PutPlayerInSafeSpot( player, null, null, safeSpot, safeSpot )
 }
 
-#endif // DEV
+#endif // DEVELOPER
 #endif //SERVER
 
 bool function ExplosiveHold_PlayerHasGrenadeInInventory( entity player )

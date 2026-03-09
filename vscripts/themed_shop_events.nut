@@ -5,73 +5,90 @@ global function ThemedShopEvents_Init
 #endif
 
 
-#if CLIENT || UI
+#if SERVER || CLIENT || UI
 global function GetActiveThemedShopEvent
 global function ThemedShopEvent_GetChallenges
 global function ThemedShopEvent_GetHeaderIcon
+global function ThemedShopEvent_HasWhatsNew
+global function ThemedShopEvent_GetAssociatedPack
+global function ThemedShopEvent_HasThemedShopTab
+global function ThemedShopEvent_HasSpecialsTab
 #endif
 
 #if UI
+global function ThemedShopEvent_IsItemInStore
 global function ThemedShopEvent_GetTabText
 global function ThemedShopEvent_GetGRXOfferLocation
+global function ThemedShopEvent_GetTabTextDefaultCol
 global function ThemedShopEvent_GetTabBGDefaultCol
 global function ThemedShopEvent_GetTabBarDefaultCol
 global function ThemedShopEvent_GetTabBGFocusedCol
 global function ThemedShopEvent_GetTabBarFocusedCol
 global function ThemedShopEvent_GetTabBGSelectedCol
 global function ThemedShopEvent_GetTabBarSelectedCol
+global function ThemedShopEvent_GetTabTextSelectedCol
+global function ThemedShopEvent_GetTabGlowFocusedCol
+global function ThemedShopEvent_GetTabLeftSideImage
+global function ThemedShopEvent_GetTabCenterImage
+global function ThemedShopEvent_GetTabRightSideImage
+global function ThemedShopEvent_GetTabImageSelectedAlpha
+global function ThemedShopEvent_GetTabImageUnselectedAlpha
+global function ThemedShopEvent_GetTabCenterRui
 global function ThemedShopEvent_GetItemButtonBGImage
-global function ThemedShopEvent_GetItemButtonFrameImage
-global function ThemedShopEvent_GetItemButtonLowerBGDecoImage
-global function ThemedShopEvent_GetItemButtonBorderCol
-global function ThemedShopEvent_GetItemButtonSpecialIcon
 global function ThemedShopEvent_GetItemGroupHeaderImage
 global function ThemedShopEvent_GetItemGroupHeaderText
 global function ThemedShopEvent_GetItemGroupHeaderTextColor
 global function ThemedShopEvent_GetItemGroupBackgroundImage
+global function ThemedShopEvent_GetSubtitleTextColor
+global function ThemedShopEvent_GetLobbyButtonImage
+global function ThemedShopEvent_GetTitleTextColor
+global function ThemedShopEvent_HasLobbyTheme
+global function ThemedShopEvent_GetPackOffer
+global function ThemedShopEvent_GetAboutText
+global function ThemedShopEvent_GetAboutPageSpecialTextColor
 #endif
 
 
-//
-//
-//
-//
-//
+//////////////////////
+//////////////////////
+//// Global Types ////
+//////////////////////
+//////////////////////
 
 
 
-//
-//
-//
-//
-//
+///////////////////////
+///////////////////////
+//// Private Types ////
+///////////////////////
+///////////////////////
 
-#if SERVER || CLIENT || UI 
+#if SERVER || CLIENT || UI
 struct FileStruct_LifetimeLevel
 {
 	table<ItemFlavor, array<ItemFlavor> > eventChallengesMap
 }
 #endif
 #if SERVER || CLIENT
-FileStruct_LifetimeLevel fileLevel //
+FileStruct_LifetimeLevel fileLevel // resets every level change
 #elseif UI
-FileStruct_LifetimeLevel& fileLevel //
+FileStruct_LifetimeLevel& fileLevel // resets every level change
 
 struct {
 	//
-} fileVM //
+} fileVM // resets every UI VM reset
 #endif
 
 
 
 
-//
-//
-//
-//
-//
+/////////////////////////
+/////////////////////////
+//// Initialiszation ////
+/////////////////////////
+/////////////////////////
 
-#if SERVER || CLIENT || UI 
+#if SERVER || CLIENT || UI
 void function ThemedShopEvents_Init()
 {
 	#if UI
@@ -89,13 +106,13 @@ void function ThemedShopEvents_Init()
 
 
 
-//
-//
-//
-//
-//
+//////////////////////////
+//////////////////////////
+//// Global functions ////
+//////////////////////////
+//////////////////////////
 
-#if CLIENT || UI 
+#if SERVER || CLIENT || UI
 ItemFlavor ornull function GetActiveThemedShopEvent( int t )
 {
 	Assert( IsItemFlavorRegistrationFinished() )
@@ -105,15 +122,24 @@ ItemFlavor ornull function GetActiveThemedShopEvent( int t )
 		if ( !CalEvent_IsActive( ev, t ) )
 			continue
 
-		Assert( event == null, format( "Multiple themedshop events are active!! (%s, %s)", ItemFlavor_GetHumanReadableRef( expect ItemFlavor(event) ), ItemFlavor_GetHumanReadableRef( ev ) ) )
+		Assert( event == null, format( "Multiple themedshop events are active!! (%s, %s)", string(ItemFlavor_GetAsset( expect ItemFlavor(event) )), string(ItemFlavor_GetAsset( ev )) ) )
 		event = ev
 	}
 	return event
 }
 #endif
 
+#if UI
+bool function ThemedShopEvent_IsItemInStore( ItemFlavor event, ItemFlavor itemFlav )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
 
-#if CLIENT || UI 
+	array<GRXScriptOffer> offers = GRX_GetItemDedicatedStoreOffers( itemFlav, ThemedShopEvent_GetGRXOfferLocation( event ) )
+	return offers.len() > 0
+}
+#endif
+
+#if SERVER || CLIENT || UI
 array<ItemFlavor> function ThemedShopEvent_GetChallenges( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
@@ -140,6 +166,14 @@ string function ThemedShopEvent_GetGRXOfferLocation( ItemFlavor event )
 }
 #endif
 
+
+#if UI
+vector function ThemedShopEvent_GetTabTextDefaultCol( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "tabTextDefaultCol" )
+}
+#endif
 
 #if UI
 vector function ThemedShopEvent_GetTabBGDefaultCol( ItemFlavor event )
@@ -194,48 +228,76 @@ vector function ThemedShopEvent_GetTabBarSelectedCol( ItemFlavor event )
 }
 #endif
 
+#if UI
+vector function ThemedShopEvent_GetTabTextSelectedCol( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "tabTextSelectedCol" )
+}
+#endif
+
+#if UI
+vector function ThemedShopEvent_GetTabGlowFocusedCol( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "tabGlowFocusedCol" )
+}
+#endif
+
+#if UI
+asset function ThemedShopEvent_GetTabLeftSideImage( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "leftSideImage" )
+}
+#endif
+
+#if UI
+asset function ThemedShopEvent_GetTabCenterImage( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "centerImage" )
+}
+#endif
+
+#if UI
+asset function ThemedShopEvent_GetTabRightSideImage( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "rightSideImage" )
+}
+#endif
+
+
+#if UI
+float function ThemedShopEvent_GetTabImageSelectedAlpha( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsFloat( ItemFlavor_GetAsset( event ), "imageSelectedAlpha" )
+}
+#endif
+
+#if UI
+float function ThemedShopEvent_GetTabImageUnselectedAlpha( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsFloat( ItemFlavor_GetAsset( event ), "imageUnselectedAlpha" )
+}
+#endif
+
+#if UI
+asset function ThemedShopEvent_GetTabCenterRui( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsStringAsAsset( ItemFlavor_GetAsset( event ), "centerRuiAsset" )
+}
+#endif
 
 #if UI
 asset function ThemedShopEvent_GetItemButtonBGImage( ItemFlavor event, bool isHighlighted )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
 	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), isHighlighted ? "itemBtnHighlightedBGImage" : "itemBtnRegularBGImage" )
-}
-#endif
-
-
-#if UI
-asset function ThemedShopEvent_GetItemButtonFrameImage( ItemFlavor event, bool isHighlighted )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), isHighlighted ? "itemBtnHighlightedFrameImage" : "itemBtnRegularFrameImage" )
-}
-#endif
-
-
-#if UI
-asset function ThemedShopEvent_GetItemButtonLowerBGDecoImage( ItemFlavor event, bool isHighlighted )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), isHighlighted ? "itemBtnHighlightedLowerBGDecoImage" : "itemBtnRegularLowerBGDecoImage" )
-}
-#endif
-
-
-#if UI
-vector function ThemedShopEvent_GetItemButtonBorderCol( ItemFlavor event, bool isHighlighted )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
-	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), isHighlighted ? "itemBtnHighlightedBorderCol" : "itemBtnRegularBorderCol" )
-}
-#endif
-
-
-#if UI
-asset function ThemedShopEvent_GetItemButtonSpecialIcon( ItemFlavor event, bool isHighlighted )
-{
-	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), isHighlighted ? "itemBtnHighlightedSpecialIcon" : "itemBtnRegularSpecialIcon" )
 }
 #endif
 
@@ -257,6 +319,18 @@ string function ThemedShopEvent_GetItemGroupHeaderText( ItemFlavor event, int gr
 }
 #endif
 
+#if UI
+array<string> function ThemedShopEvent_GetAboutText( ItemFlavor event, bool restricted )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+
+	array<string> aboutText = []
+	string key = (restricted ? "aboutTextRestricted" : "aboutTextStandard")
+	foreach ( var aboutBlock in IterateSettingsAssetArray( ItemFlavor_GetAsset( event ), key ) )
+		aboutText.append( GetSettingsBlockString( aboutBlock, "text" ) )
+	return aboutText
+}
+#endif
 
 #if UI
 vector function ThemedShopEvent_GetItemGroupHeaderTextColor( ItemFlavor event, int group )
@@ -276,7 +350,81 @@ asset function ThemedShopEvent_GetItemGroupBackgroundImage( ItemFlavor event, in
 #endif
 
 
-#if CLIENT || UI 
+#if UI
+bool function ThemedShopEvent_HasLobbyTheme( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( event ), "themeLobby" )
+}
+#endif
+
+#if SERVER || CLIENT || UI
+bool function ThemedShopEvent_HasWhatsNew( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( event ), "whatsNewTab" )
+}
+#endif
+
+#if SERVER || CLIENT || UI
+asset function ThemedShopEvent_GetAssociatedPack( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "associatedPackFlav" )
+}
+#endif
+
+#if SERVER || CLIENT || UI
+bool function ThemedShopEvent_HasThemedShopTab( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( event ), "themedShopTab" )
+}
+#endif
+
+#if SERVER || CLIENT || UI
+bool function ThemedShopEvent_HasSpecialsTab( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( event ), "specialsTab" )
+}
+#endif
+
+#if UI
+asset function ThemedShopEvent_GetLobbyButtonImage( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "lobbyButtonImage" )
+}
+#endif
+
+
+#if UI
+vector function ThemedShopEvent_GetTitleTextColor( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "seasonTitleColor" )
+}
+#endif
+
+
+#if UI
+vector function ThemedShopEvent_GetSubtitleTextColor( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "seasonSubtitleColor" )
+}
+#endif
+
+#if UI
+vector function ThemedShopEvent_GetAboutPageSpecialTextColor( ItemFlavor event )
+{
+	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
+	return GetGlobalSettingsVector( ItemFlavor_GetAsset( event ), "aboutPageSpecialTextColor" )
+}
+#endif
+
+#if SERVER || CLIENT || UI
 asset function ThemedShopEvent_GetHeaderIcon( ItemFlavor event )
 {
 	Assert( ItemFlavor_GetType( event ) == eItemType.calevent_themedshop )
@@ -284,21 +432,41 @@ asset function ThemedShopEvent_GetHeaderIcon( ItemFlavor event )
 }
 #endif
 
+#if UI
+GRXScriptOffer ornull function ThemedShopEvent_GetPackOffer( ItemFlavor event )
+{
+	if ( GRX_IsOfferRestricted() )
+		return null
+
+	ItemFlavor packFlav          = GetItemFlavorByAsset( ThemedShopEvent_GetAssociatedPack( event ) )
+	string offerLocation         = ThemedShopEvent_GetGRXOfferLocation( event )
+	array<GRXScriptOffer> offers = GRX_GetItemDedicatedStoreOffers( packFlav, offerLocation )
+	foreach( GRXScriptOffer offer in offers )
+	{
+		if ( offer.output.flavors.len() > 1 )
+			continue
+		if ( GRXOffer_ContainsEventThematicPack( offer ) )
+			return offer
+	}
+	return null
+}
+#endif
+
+
+///////////////////////
+///////////////////////
+//// Dev functions ////
+///////////////////////
+///////////////////////
 
 //
-//
-//
-//
-//
-
-//
 
 
 
-//
-//
-//
-//
-//
+///////////////////
+///////////////////
+//// Internals ////
+///////////////////
+///////////////////
 
 

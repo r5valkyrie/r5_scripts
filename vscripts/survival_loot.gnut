@@ -57,6 +57,7 @@ global function SURVIVAL_DropLoot_IncrementThrowAngle
 global function SURVIVAL_Loot_GetRandomLootOfSpecifiedTierAndType
 global function Survival_Loot_RegisterLootGroupRemap
 global function Survival_Loot_CheckLootGroupRemap
+global function SURVIVAL_TryGivePlayerDefaultMeleeWeapons
 
 global function ShouldForceUseSafeSpotForDeathBox_AddPlayer
 global function ShouldForceUseSafeSpotForDeathBox_RemovePlayer
@@ -146,7 +147,7 @@ struct LootGroup
 	float                   totalDistribution
 	bool                    finalized = false
 
-	//#if DEV
+	//#if DEVELOPER
 	string DEV_definitionSource
 	//#endif
 }
@@ -1081,7 +1082,7 @@ string function GetRandomLootItem( int mapZone = -1 )
 	int maxLootTier = ( mapZone != -1 ) ? MapZones_GetTierForZone( mapZone ) : eLootTier.LEGENDARY
 
 	if ( maxLootTier == eLootTier.NONE )
-		maxLootTier = eLootTier.COMMON // TEMP, I don't actually know how it works in retail
+		maxLootTier = eLootTier.COMMON // TEMP, fallback for unknown tier behavior
 
 	if ( mapZone != -1 && maxLootTier > eLootTier.EPIC )
 		minLootTier = maxLootTier
@@ -1874,7 +1875,7 @@ void function EquipAttachments_Internal( entity player, entity weapon, string mo
 	string weaponName = weapon.GetWeaponClassName()
 
 	bool isActiveWeapon 	= player.GetActiveWeapon( eActiveInventorySlot.mainHand  ) == weapon
-	bool isEnabledWeapon	= true //player.IsWeaponEnabled ( weapon ). It does not exist in s3, Café
+	bool isEnabledWeapon	= true //player.IsWeaponEnabled( weapon ) not available
 
 	if( isActiveWeapon && isEnabledWeapon )
 		weapon.Deploy()
@@ -6188,7 +6189,7 @@ entity function DEV_AddToDeathBox( entity deathBox, table<string, int> contents 
 }
 
 // Find a safe grounded position near the given origin
-// S3 doesn't have NavMesh_GetClosestPoint, use ground trace directly
+// NavMesh_GetClosestPoint not available, use ground trace directly
 vector function GetSafeLocation( vector origin )
 {
 	return GetGroundPosition( origin, origin - <0, 0, 5000> ).endPos

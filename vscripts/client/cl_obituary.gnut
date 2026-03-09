@@ -599,7 +599,7 @@ void function BuildFakeObituary()
 	ObitEntityInfo victimInfo
 	victimInfo.displayName = victim
 
-	int damageSourceId = RandomIntRangeInclusive( 40, 65 ) //s3 default apex weapons
+	int damageSourceId = RandomIntRangeInclusive( 40, 65 ) // default apex weapons
 
 	bool isMainWeapon = false
 	string damageRef = GetRefFromDamageSourceID( damageSourceId )

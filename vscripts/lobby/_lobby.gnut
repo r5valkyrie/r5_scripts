@@ -1,6 +1,13 @@
 global function Lobby_Init
+global function Lobby_OnClientConnectionCompleted
 
 void function Lobby_Init()
 {
   RegisterSignal( "GameStateChanged" )
+}
+
+void function Lobby_OnClientConnectionCompleted( entity player )
+{
+	player.FreezeControlsOnServer()
+	player.hasConnected = true
 }

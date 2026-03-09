@@ -5,6 +5,8 @@ global function ClMainHud_Init
 global function InitChatHUD
 global function UpdateChatHUDVisibility
 
+global function MainHud_TurnOff_RUI
+
 global function MainHud_AddClient
 global function SetCrosshairPriorityState
 global function ClearCrosshairPriority
@@ -18,6 +20,8 @@ global function InitCrosshair
 global function GetHudStatus
 global function HideChat
 global function ShowChat
+global function ShouldOnlyShowMinimap
+global function SetAllHudVisExceptMinimap
 
 global function IsWatchingReplay
 
@@ -68,6 +72,7 @@ struct
 	bool hideChat = false
 
 	bool muted = false
+	bool onlyShowMinimap = false
 } file
 
 void function ClMainHud_Init()
@@ -1119,4 +1124,21 @@ void function mute( bool set )
 bool function isMuted()
 {
 	return file.muted
+}
+
+
+// ============================================================================
+// Additions
+// ============================================================================
+
+// MainHud_TurnOff_RUI already defined above at line 561
+
+bool function ShouldOnlyShowMinimap()
+{
+	return file.onlyShowMinimap
+}
+
+void function SetAllHudVisExceptMinimap( bool value )
+{
+	file.onlyShowMinimap = value
 }

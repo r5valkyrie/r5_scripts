@@ -254,9 +254,8 @@ void function Deathfield_OnPlayingGameStateEnter()
 
 float function GetRingTuningOverrideVar( string varName, float defaultValue )
 {
-	// S3 does not have GetPlaylistVarFloat (cross-playlist version),
-	// so we use GetCurrentPlaylistVarFloat directly. This wrapper
-	// preserves API compatibility with newer seasons.
+	// GetPlaylistVarFloat (cross-playlist version) not available,
+	// so we use GetCurrentPlaylistVarFloat directly.
 	return GetCurrentPlaylistVarFloat( varName, defaultValue )
 }
 
@@ -2285,7 +2284,7 @@ void function Pathfinder_AddSurveyBeacon( entity surveyBeacon )
 }
 
 // =========================================================================
-// GetPreviousCircleDirection - uses S22 edgeFrac signature
+// GetPreviousCircleDirection - uses edgeFrac signature
 // =========================================================================
 
 vector function GetPreviousCircleDirection( vector currentPoint, float edgeFrac )

@@ -186,7 +186,7 @@ void function UpdateFooter_Internal( bool shouldUpdateInputCallbacks )
 	if ( shouldUpdateInputCallbacks )
 	{
 		ClearRegisteredInputs()
-		Signal( uiGlobal.signalDummy, "EndFooterUpdateFuncs" )
+		try { Signal( uiGlobal.signalDummy, "EndFooterUpdateFuncs" ) } catch(e) {}
 	}
 
 	if ( !Hud_HasChild( menu, "FooterButtons" ) ) //

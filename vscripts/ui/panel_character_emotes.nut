@@ -1,13 +1,14 @@
-#if(true)
-
 global function InitCharacterEmotesPanel
-global function SetEmotePropertyIndex
-global function GetEmotePropertyIndex
+global function CharacterEmotesPanel_SetHintSub
+
+global function EmotesPanel_CreateTabs
+global function EmotesPanel_DestroyTabs
 
 struct SectionDef
 {
 	var button
 	var panel
+	var listPanel
 	int index
 }
 
@@ -18,14 +19,18 @@ struct
 
 	array<SectionDef> sections
 	int               activeSectionIndex = 0
-	int               propertyIndex = 0
+	table<int, array<int> > sectionToFilters
+	table<int, bool functionref() > sectionIsValidFunc
+
+
+	TabDef& emotesTabDef
+	TabDef& holoSpraysTabDef
+	TabDef& quipsTabDef
+	TabDef& skyDiveTabDef
+
+	bool addedSkydiveNewness = false
 
 	ItemFlavor ornull lastNewnessCharacter
-
-	//
-	//
-	//
-	//
 } file
 
 void function InitCharacterEmotesPanel( var panel )
@@ -33,7 +38,7 @@ void function InitCharacterEmotesPanel( var panel )
 	file.panel = panel
 	file.headerRui = Hud_GetRui( Hud_GetChild( panel, "Header" ) )
 
-	SetPanelTabTitle( panel, "#CHAT_WHEEL" )
+	SetPanelTabTitle( panel, "#SOCIAL_WHEEL" )
 	RuiSetString( file.headerRui, "title", "" )
 	RuiSetString( file.headerRui, "collected", "" )
 
@@ -42,79 +47,36 @@ void function InitCharacterEmotesPanel( var panel )
 
 	AddCallback_OnTopLevelCustomizeContextChanged( panel, EmotesPanel_OnCustomizeContextChanged )
 
-	int buttonNum = 0
-
-	for ( int i=0; i<MAX_QUIPS_EQUIPPED; i++ )
-	{
-		SectionDef section
-		section.button = Hud_GetChild( panel, "SectionButton" + buttonNum )
-		Hud_SetEnabled( section.button, false )
-		HudElem_SetRuiArg( section.button, "buttonText", Localize( "#QUIP_N", buttonNum+1 ) )
-		section.panel = Hud_GetChild( panel, "QuipsPanel" )
-		section.index = buttonNum
-		file.sections.append( section )
-		buttonNum++
-	}
-
-	foreach ( sectionDef in file.sections )
-	{
-		Hud_SetVisible( sectionDef.button, true )
-		Hud_SetSelected( sectionDef.button, false )
-		Hud_SetVisible( sectionDef.panel, false )
-		Hud_AddEventHandler( sectionDef.button, UIE_CLICK, SectionButton_Activate )
-	}
-
-	Hud_EnableKeyBindingIcons( Hud_GetChild( file.panel, "HintMKB" ) )
-	Hud_EnableKeyBindingIcons( Hud_GetChild( file.panel, "HintGamepad" ) )
 	HudElem_SetRuiArg( Hud_GetChild( file.panel, "HintMKB" ), "textBreakWidth", 400.0 )
 	HudElem_SetRuiArg( Hud_GetChild( file.panel, "HintGamepad" ), "textBreakWidth", 400.0 )
 }
 
-void function SectionButton_Activate( var button )
+void function EmotesPanel_CreateTabs()
 {
-	//
+	file.emotesTabDef = AddTab( file.panel, Hud_GetChild( file.panel, "EmotesPanel" ), "#EMOTES" )
+	SetTabBaseWidth( file.emotesTabDef, 160 )
 
-	var panel
+	file.holoSpraysTabDef = AddTab( file.panel, Hud_GetChild( file.panel, "HoloSpraysPanel" ), "#HOLOS" )
+	SetTabBaseWidth( file.holoSpraysTabDef, 210 )
 
-	foreach ( sectionIndex, sectionDef in file.sections )
-	{
-		bool isActivated = sectionDef.button == button
-		if ( isActivated )
-		{
-			panel = sectionDef.panel
-			file.activeSectionIndex = sectionIndex
-			SetEmotePropertyIndex( sectionDef.index )
-		}
+	file.quipsTabDef = AddTab( file.panel, Hud_GetChild( file.panel, "LinePanel" ), "#QUIPS" )
+	SetTabBaseWidth( file.quipsTabDef, 140 )
 
-		//
-	}
+	file.skyDiveTabDef = AddTab( file.panel, Hud_GetChild( file.panel, "SkydiveEmotesPanel" ), "#SKYDIVE_EMOTES" )
+	SetTabBaseWidth( file.skyDiveTabDef, 240 )
+	file.skyDiveTabDef.visible = HasEquippableSkydiveEmotes()
+	file.skyDiveTabDef.enabled = HasEquippableSkydiveEmotes()
 
-	ActivatePanel( panel )
+	TabData tabData = GetTabDataForPanel( file.panel )
+	tabData.centerTabs = true
+	SetTabBackground( tabData, Hud_GetChild( file.panel, "TabsBackground" ), eTabBackground.STANDARD )
+	SetTabDefsToSeasonal(tabData)
 }
 
-
-void function ActivatePanel( var panel )
+void function EmotesPanel_DestroyTabs()
 {
-	HideVisibleSectionPanels()
-
-	if ( panel )
-		ShowPanel( panel )
+	ClearTabs( file.panel )
 }
-
-
-void function HideVisibleSectionPanels()
-{
-	array<var> panels
-	foreach ( sectionDef in file.sections )
-		panels.append( sectionDef.panel )
-
-	foreach ( panel in panels )
-	{
-		if ( Hud_IsVisible( panel ) )
-			HidePanel( panel )
-	}
-}
-
 
 void function EmotesPanel_OnShow( var panel )
 {
@@ -124,38 +86,78 @@ void function EmotesPanel_OnShow( var panel )
 
 	CharacterEmotesPanel_Update()
 
-	for ( int i=0; i<MAX_QUIPS_EQUIPPED; i++ )
-		AddCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( LocalClientEHI(), Loadout_CharacterQuip( GetTopLevelCustomizeContext(), i ), OnEmoteChanged )
+	for ( int i = 0; i < MAX_FAVORED_QUIPS; i++ )
+		AddCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( LocalClientEHI(), Loadout_FavoredQuip( GetTopLevelCustomizeContext(), i ), OnFavoredQuipChanged )
 
-	RunClientScript( "SetHintTextOnHudElem", Hud_GetChild( panel, "HintMKB" ), "#HINT_QUIP_WHEEL_MKB" )
-	RunClientScript( "SetHintTextOnHudElem", Hud_GetChild( panel, "HintGamepad" ), "#HINT_QUIP_WHEEL_GAMEPAD" )
-}
+	CharacterEmotesPanel_SetHintSub( "#HINT_SOCIAL_ANTI_PEEK" )
 
-void function OnEmoteChanged( EHI playerEHI, ItemFlavor flavor )
-{
-	UpdateSectionTitles()
-}
-
-void function UpdateSectionTitles()
-{
-	for ( int i=0; i<MAX_QUIPS_EQUIPPED; i++ )
+	foreach ( sectionIndex, sectionDef in file.sections )
 	{
-		var button = file.sections[i].button
+		bool functionref() isValidFunc = file.sectionIsValidFunc[ sectionIndex ]
 
-		ItemFlavor character = GetTopLevelCustomizeContext()
-		LoadoutEntry entry = Loadout_CharacterQuip( character, i )
-		ItemFlavor flav = LoadoutSlot_GetItemFlavor( LocalClientEHI(), entry )
+		if ( isValidFunc != null )
+			Hud_SetVisible( sectionDef.button, isValidFunc() )
+	}
 
-		if ( CharacterQuip_IsTheEmpty( flav ) )
-		{
-			HudElem_SetRuiArg( button, "buttonText", Localize( "#QUIP_N", i + 1 ) )
-		}
-		else
-		{
-			HudElem_SetRuiArg( button, "buttonText", Localize( "#QUIP_ITEM", Localize( ItemFlavor_GetLongName( flav ) ) ) )
-		}
+	TabData tabData = GetTabDataForPanel( file.panel )
+
+	SetTabNavigationCallback( tabData,  Tabs_OnChanged )
+
+	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
+	{
+		ActivateTab( tabData, 0 )
+		thread AnimateInSmallTabBar( tabData )
 	}
 }
+
+
+void function EmotesPanel_OnHide( var panel )
+{
+	ClearNewnessCallbacks()
+	TabData tabData = GetTabDataForPanel( panel )
+	HideVisibleTabBodies( tabData )
+
+	RunClientScript( "ClearBattlePassItem" )
+
+	for ( int i = 0; i < MAX_FAVORED_QUIPS; i++ )
+		RemoveCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( LocalClientEHI(), Loadout_FavoredQuip( GetTopLevelCustomizeContext(), i ), OnFavoredQuipChanged )
+}
+
+void function Tabs_OnChanged( TabDef tabDef )
+{
+	if( tabDef == file.emotesTabDef )
+	{
+		QuipPanel_SetItemTypeFilter( [ eItemType.character_emote ] )
+	}
+	else if( tabDef == file.holoSpraysTabDef )
+	{
+		QuipPanel_SetItemTypeFilter( [ eItemType.emote_icon ] )
+	}
+	else if( tabDef == file.quipsTabDef )
+	{
+		QuipPanel_SetItemTypeFilter( [ eItemType.gladiator_card_kill_quip, eItemType.gladiator_card_intro_quip ] )
+	}
+	else if( tabDef == file.skyDiveTabDef )
+	{
+		QuipPanel_SetItemTypeFilter( [ eItemType.skydive_emote ] )
+	}
+}
+
+void function CharacterEmotesPanel_SetHintSub( string hintSub )
+{
+	if ( hintSub != "" )
+		hintSub = "\n\n" + Localize( hintSub )
+
+	RunClientScript( "SetHintTextOnHudElem", Hud_GetChild( file.panel, "HintMKB" ), "#HINT_SOCIAL_WHEEL_MKB", hintSub )
+	RunClientScript( "SetHintTextOnHudElem", Hud_GetChild( file.panel, "HintGamepad" ), "#HINT_SOCIAL_WHEEL_GAMEPAD", hintSub )
+}
+
+
+void function OnFavoredQuipChanged( EHI playerEHI, ItemFlavor flavor )
+{
+	UpdateFooterOptions()
+}
+
 
 void function EmotesPanel_OnCustomizeContextChanged( var panel )
 {
@@ -168,34 +170,11 @@ void function EmotesPanel_OnCustomizeContextChanged( var panel )
 
 void function CharacterEmotesPanel_Update()
 {
-	SectionButton_Activate( file.sections[file.activeSectionIndex].button )
 	UpdateNewnessCallbacks()
-	UpdateSectionTitles()
+
 	ItemFlavor character = GetTopLevelCustomizeContext()
 	ItemFlavor characterSkin = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterSkin( character ) )
 	RunClientScript( "UIToClient_PreviewCharacterSkin", ItemFlavor_GetGUID( characterSkin ), ItemFlavor_GetGUID( character ) )
-}
-
-
-void function EmotesPanel_OnHide( var panel )
-{
-	ClearNewnessCallbacks()
-	HideVisibleSectionPanels()
-
-	for ( int i=0; i<MAX_QUIPS_EQUIPPED; i++ )
-		RemoveCallback_ItemFlavorLoadoutSlotDidChange_SpecificPlayer( LocalClientEHI(), Loadout_CharacterQuip( GetTopLevelCustomizeContext(), i ), OnEmoteChanged )
-}
-
-
-void function SetEmotePropertyIndex( int propertyIndex )
-{
-	file.propertyIndex = propertyIndex
-}
-
-
-int function GetEmotePropertyIndex()
-{
-	return file.propertyIndex
 }
 
 
@@ -207,7 +186,20 @@ void function UpdateNewnessCallbacks()
 	ClearNewnessCallbacks()
 
 	ItemFlavor character = GetTopLevelCustomizeContext()
-	//
+
+	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterEmotesStandingEmotesSectionButton[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "EmotesPanel" ) )
+	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterEmotesHolospraySectionButton[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "HoloSpraysPanel" ) )
+	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterKillQuipSectionButton[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "LinePanel" ) )
+
+	bool hasEquippableSkydiveEmotes = HasEquippableSkydiveEmotes()
+	if( hasEquippableSkydiveEmotes )
+	{
+		file.skyDiveTabDef.visible = hasEquippableSkydiveEmotes
+		file.skyDiveTabDef.enabled = hasEquippableSkydiveEmotes
+		file.addedSkydiveNewness = true
+		Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterEmotesSkydiveEmotesSectionButton[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "SkydiveEmotesPanel" ) )
+	}
+
 	file.lastNewnessCharacter = character
 }
 
@@ -217,8 +209,16 @@ void function ClearNewnessCallbacks()
 	if ( file.lastNewnessCharacter == null )
 		return
 
-	//
+	ItemFlavor character = expect ItemFlavor( file.lastNewnessCharacter )
+
+	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterEmotesStandingEmotesSectionButton[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "EmotesPanel" ) )
+	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterEmotesHolospraySectionButton[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "HoloSpraysPanel" ) )
+	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterKillQuipSectionButton[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "LinePanel" ) )
+	if( file.addedSkydiveNewness )
+	{
+		Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.CharacterEmotesSkydiveEmotesSectionButton[character], OnNewnessQueryChangedUpdatePanelTab, GetPanel( "SkydiveEmotesPanel" ) )
+		file.addedSkydiveNewness = false
+	}
+
 	file.lastNewnessCharacter = null
 }
-
-#endif

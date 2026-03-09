@@ -40,6 +40,18 @@ struct SelectedServerInfo
 	bool svHasPassword = false
 }
 
+global struct ServerListing
+{
+	int svServerID = -1
+	string svServerName = ""
+	string svPlaylist = ""
+	string svMapName = ""
+	string svDescription = ""
+	int svMaxPlayers = 0
+	int svCurrentPlayers = 0
+	bool svHasPassword = false
+}
+
 struct {
 	bool hideEmpty = false
 	bool useSearch = false
@@ -68,6 +80,7 @@ global bool ServerListFetching = false
 
 void function InitServerBrowserPanel( var panel )
 {
+	SetPanelTabTitle( panel, "#SB_SERVER_BROWSER" )
 }
 
 void function ServerBrowser_OnShow( var panel )

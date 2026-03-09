@@ -15,7 +15,7 @@ struct
 	int selectedGroundItemEntIndex = -1
 } file
 
-void function InitQuickSwapMenu( var newMenuArg )
+void function InitQuickSwapMenu( var newMenuArg )                                               
 {
 	RegisterSignal( "Delayed_SetCursorToObject" )
 
@@ -54,7 +54,7 @@ void function OnSurvivalQuickSwapMenu_Open()
 	UpdateSwapButton()
 	GridPanel_Refresh( file.quickSwapGrid )
 	Hud_Show( file.quickSwapGrid )
-	RunClientScript( "UICallback_GroundlistOpened" )
+	RunClientScript( "UIToClient_GroundlistOpened" )
 }
 
 
@@ -84,7 +84,7 @@ void function OnSurvivalQuickSwapMenu_Close()
 {
 	SetBlurEnabled( false )
 	file.selectedGroundItemEntIndex = -1
-	RunClientScript( "UICallback_GroundlistClosed" )
+	RunClientScript( "UIToClient_GroundlistClosed" )
 }
 
 void function OnSurvivalQuickSwapMenu_NavBack()
@@ -151,16 +151,10 @@ void function SurvivalQuickSwapMenu_DoQuickSwap( int backpackSlot, int deathBoxE
 	if ( file.selectedGroundItemEntIndex == -1 )
 		return
 
-	string boxString = ""
-	if ( deathBoxEntIndex > -1 )
-	{
-		boxString = " " + deathBoxEntIndex
-	}
-
 	if ( backpackSlot >= 0 )
-		ClientCommand( "SwapSurvivalItem " + backpackSlot + " " + file.selectedGroundItemEntIndex + boxString )
+		Remote_ServerCallFunction( "ClientCallback_SwapSurvivalItem_UI", backpackSlot, file.selectedGroundItemEntIndex, deathBoxEntIndex )
 	else
-		ClientCommand( "PickupSurvivalItem " + file.selectedGroundItemEntIndex + " 0 " + boxString )
+		Remote_ServerCallFunction( "ClientCallback_PickupSurvivalItem_UI", file.selectedGroundItemEntIndex, 0, deathBoxEntIndex )
 
 	CloseAllMenus()
 }

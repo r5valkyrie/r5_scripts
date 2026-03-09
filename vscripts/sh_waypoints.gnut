@@ -5,6 +5,7 @@ global function PlayerWaypoints_Init
 global function CreateWaypointRui
 global function Waypoint_LootItemIsBeingPingedByAnyone
 global function Waypoint_GetWaypointForLootItemPingedBy
+global function Waypoint_GetWaypointForLootItemPingedByPlayer  // variant with indirectMode
 global function Waypoint_GetWaypointsForLootItemPingedByTeam
 global function Waypoint_AnyEnemySpottedNearPoint
 global function Waypoint_FindPingByTicketID
@@ -539,6 +540,26 @@ entity function Waypoint_GetWaypointForLootItemPingedBy( entity item, entity pla
 
 		entity thisLootItem = Waypoint_GetItemEntForLootWaypoint( lootWp )
 		if ( thisLootItem == item )
+			return lootWp
+	}
+
+	return null
+}
+
+// Variant with indirectMode parameter
+entity function Waypoint_GetWaypointForLootItemPingedByPlayer( entity item, entity player, bool indirectMode = false )
+{
+	Assert( IsValid( item ) )
+	Assert( IsValid( player ) )
+
+	foreach ( entity lootWp in s_activeLootPings )
+	{
+		entity owner = lootWp.GetOwner()
+		if ( owner != player )
+			continue
+
+		entity thisLootItem = Waypoint_GetItemEntForLootWaypoint( lootWp )
+		if ( thisLootItem == item && ((lootWp.GetParent() == thisLootItem) != indirectMode) )
 			return lootWp
 	}
 
@@ -2201,7 +2222,7 @@ bool function IsRepingablePingType( int pingType )
 	return true
 }
 
-const float DOT_10DEGREE = 0.9848077530122
+// DOT_10DEGREE moved to sh_utility_all.gnut
 entity function GetAnyValidLocPingForReuse( entity player, int pingType, entity pingEnt, vector position )
 {
 	const float PING_REUSE_TIME = 5.0

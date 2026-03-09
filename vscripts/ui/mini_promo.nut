@@ -2,9 +2,9 @@ global function InitMiniPromo
 global function MiniPromo_Start
 global function MiniPromo_Stop
 
-//
-//
-//
+         
+                                       
+        
 
 const int MINIPROMO_MAX_PAGES = 5
 const float MINIPROMO_PAGE_CHANGE_DELAY = 7.0
@@ -12,6 +12,7 @@ const bool MINIPROMO_NAV_RIGHT = true
 const bool MINIPROMO_NAV_LEFT = false
 const bool MINIPROMO_PAGE_FORMAT_DEFAULT = true
 const bool MINIPROMO_PAGE_FORMAT_OPENPACK = false
+const string PIN_MESSAGE_TYPE_MINIPROMO = "minipromo"
 
 struct MiniPromoPageData
 {
@@ -22,6 +23,7 @@ struct MiniPromoPageData
 	string        text1 = ""
 	string        text2 = ""
 	string        linkType = ""
+	string        trackingId = ""
 	array<string> linkData
 }
 
@@ -39,7 +41,7 @@ struct
 	float stickDeflection = 0
 	int   lastStickState = eStickState.NEUTRAL
 
-	//
+	                              
 } file
 
 
@@ -57,15 +59,9 @@ void function InitMiniPromo( var button )
 
 void function MiniPromo_Start()
 {
-	//
+	                                                               
 
-	Signal( file.signalDummy, "EndAutoAdvancePages" ) //
-	//
-
-	UpdatePromoData()
-
-	//if ( !IsPromoDataProtocolValid() )
-	//	return
+	Signal( file.signalDummy, "EndAutoAdvancePages" )                               
 
 	file.allPages = InitPages()
 
@@ -80,7 +76,7 @@ void function MiniPromo_Start()
 
 void function MiniPromo_Stop()
 {
-	//
+	                                                              
 
 	MiniPromo_Reset()
 
@@ -93,18 +89,21 @@ void function MiniPromo_Stop()
 }
 
 
-//
-//
-//
-//
-//
-//
-//
-//
+         
+                                                  
+   
+  	                                
+  
+  	                   
+   
+        
 
 
 void function OnGRXStateChanged()
 {
+	if ( !GRX_IsInventoryReady() || !GRX_AreOffersReady() )
+		return
+
 	UpdateValidityOfPages( file.allPages )
 
 	int validPageCount = GetValidPageCount()
@@ -153,45 +152,40 @@ void function MiniPromo_Reset()
 
 void function UpdateValidityOfPages( array<MiniPromoPageData> pages )
 {
+	                                          
+	   
+	  	                                        
+	  		                    
+	  	    
+	  		                             
+	   
+
 	foreach ( page in pages )
 	{
 		switch ( page.linkType )
 		{
 			case "openpack":
-				page.isValid = true
+				page.isValid = GRX_IsInventoryReady() && GRX_GetTotalPackCount() > 0
 				break
 
-			case "custom":
-				page.isValid = true
-				break
-
+			case "openmotd":
 			case "battlepass":
 			case "storecharacter":
-				page.isValid = true
-				break
-
-			case "storeskin":
-				ItemFlavor item = GetItemFlavorByHumanReadableRef( page.linkData[0] )
-				page.isValid = GRX_GetStoreOfferItems().contains( item ) && !GRX_IsItemOwnedByPlayer( item )
-				break
-
 			case "themedstoreskin":
-				array<ItemFlavor> themedShopItems
-				ItemFlavor ornull themedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
-				if ( themedShopEvent != null )
-				{
-					expect ItemFlavor( themedShopEvent )
-
-					string location = ThemedShopEvent_GetGRXOfferLocation( themedShopEvent )
-					themedShopItems = GRX_GetLocationOfferItems( location )
-				}
-
-				ItemFlavor item = GetItemFlavorByHumanReadableRef( page.linkData[0] )
-				page.isValid = themedShopItems.contains( item ) && !GRX_IsItemOwnedByPlayer( item )
+			case "collectionevent":
+			case "storeoffer":
+			case "whatsnew":
+			case "storespecials":
+			case "playapex":
+			case "challenges":
+			case "heirloom":
+			case "prestigeskin":
+			case "monthlystoreoffer":
+				page.isValid = true
 				break
 
 			case "url":
-				page.isValid = true
+				page.isValid = true                                      
 				break
 		}
 	}
@@ -231,78 +225,76 @@ int function GetActivePageIndexForRui()
 	return index
 }
 
-//<m|ASSET STRING|TEXT 1|TEXT 2|Link Type>
-//Link type can be custom, openpack, or url:linkhere
-//there is also battlepass, storecharacter, storeskin, and themedstoreskin but we wont really use these
-//promos will display in the order you place them here
-array<string> miniPromosData = [
-	"<m|rui/menu/maps/mp_rr_olympus_big_icon|Welcome to|Valkyrie|custom>",
-	"<m|rui/menu/maps/mp_rr_canyonlands_mu2_tt_big_icon|Join the Discord|Click me to join|url:https://discord.gg/8nYYzSvf>",
-	"<m|m_openpack|OPEN PACK||openpack>"
-]
 
 array<MiniPromoPageData> function InitPages()
 {
-	string content = miniPromosData.join("")
-
-	array< array<string> > matches = RegexpFindAll( content, "<m\\|([^>\\|]*)\\|([^>\\|]*)\\|([^>\\|]*)\\|([^>\\|]+)>" )
-	if ( matches.len() > MINIPROMO_MAX_PAGES )
-	{
-		Warning( "Ignoring extra mini promo pages! Found " + matches.len() + " pages and only " + MINIPROMO_MAX_PAGES + " are supported." )
-		matches.resize( MINIPROMO_MAX_PAGES )
-	}
-
 	array<MiniPromoPageData> pages
+	UMData um = EADP_UM_GetPromoData()
 
-	foreach ( idx, vals in matches )
+	                                  
+	MiniPromoPageData openPackPage
+	openPackPage.text1 = "OPEN PACK"
+	openPackPage.linkType = "openpack"
+	openPackPage.imageName = "m_openpack"
+	openPackPage.image = GetPromoImage( openPackPage.imageName )
+	openPackPage.format = MINIPROMO_PAGE_FORMAT_OPENPACK
+	pages.append( openPackPage )
+
+	foreach ( int i, UMAction action in um.actions )
 	{
 		MiniPromoPageData newPage
-		newPage.imageName = vals[1]
-		newPage.text1 = vals[2]
-		newPage.text2 = vals[3]
-
-		if ( vals[4].slice( 0, 4 ).tolower() == "url:" ) //
+		newPage.trackingId = action.trackingId
+		foreach ( int j, UMItem item in action.items )
 		{
-			newPage.linkType = "url"
-			newPage.linkData.append( vals[4].slice( 4, vals[4].len() ) )
-		}
-		else
-		{
-			array<string> linkVals = split( vals[4], ":" )
-			if ( linkVals.len() > 0 )
+			if ( item.name == "MiniPromoText" )
 			{
-				newPage.linkType = linkVals[0]
-				linkVals.remove( 0 )
-				newPage.linkData = linkVals
+				newPage.text1 = item.value
+			}
+			else if ( item.name == "MiniPromoExtraText" )
+			{
+				newPage.text2 = item.value
+			}
+			else if ( item.name == "Link" )
+			{
+				newPage.linkData.append( item.value )
+				foreach ( attr in item.attributes )
+				{
+					if ( attr.key == "LinkType" )
+						newPage.linkType = attr.value
+				}
+			}
+			else if ( item.name == "ImageRef" )
+			{
+				newPage.imageName = item.value
+				if ( !GetConVarBool( "assetdownloads_enabled" ) )
+					newPage.image = GetPromoImage( newPage.imageName )
 			}
 		}
 
-		newPage.image = GetPromoImage( newPage.imageName, newPage.linkType != "openpack"  )
+		if ( newPage.linkType == "" )
+			newPage.linkType = "openmotd"
 
-		if ( IsLinkFormatValid( newPage.linkType, newPage.linkData ) )
-		{
-			newPage.format = newPage.linkType == "openpack" ? MINIPROMO_PAGE_FORMAT_OPENPACK : MINIPROMO_PAGE_FORMAT_DEFAULT
-			pages.append( newPage )
-		}
-		else
-		{
-			Warning( "Ignoring invalid mini promo link format (" + vals[4] + ")!" )
-		}
+		newPage.format = MINIPROMO_PAGE_FORMAT_DEFAULT
+		pages.append( newPage )
+
+		if( pages.len() >= MINIPROMO_MAX_PAGES )
+			break
 	}
-
 	return pages
 }
-
 
 bool function IsLinkFormatValid( string linkType, array<string> linkData )
 {
 	if ( linkType == "openpack" && linkData.len() == 0 )
 		return true
-	else if ( (linkType == "battlepass" || linkType == "storecharacter" || linkType == "storeskin" || linkType == "themedstoreskin") && linkData.len() == 1 && IsValidItemFlavorHumanReadableRef( linkData[0] ) )
+	else if ( linkType == "openmotd" && linkData.len() == 0 )
 		return true
-	else if ( linkType == "url" && linkData.len() == 1 ) //
+	else if ( ( linkType == "battlepass" || linkType == "storecharacter" || linkType == "themedstoreskin" || linkType == "collectionevent" ) &&
+			  ( linkData.len() == 1 && ( IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID ( linkData[0] ) ) || IsValidItemFlavorCharacterRef( linkData[0] ) ) ) )
 		return true
-	else if ( linkType == "custom" )
+	else if ( linkType == "url" && linkData.len() == 1 )                                      
+		return true
+	else if ( linkType == "storeoffer" && linkData.len() == 1 )
 		return true
 
 	return false
@@ -311,6 +303,7 @@ bool function IsLinkFormatValid( string linkType, array<string> linkData )
 
 void function AutoAdvancePages()
 {
+	                                                                 
 	Signal( uiGlobal.signalDummy, "EndAutoAdvancePages" )
 	EndSignal( uiGlobal.signalDummy, "EndAutoAdvancePages" )
 
@@ -338,82 +331,83 @@ void function ChangePage( bool direction )
 	for ( int i = 1; i < numPages; i++ )
 	{
 		int candidatePageIndex          = direction == MINIPROMO_NAV_RIGHT ? (file.activePageIndex + i) % numPages : (file.activePageIndex - i + numPages) % numPages
-
+		                                                                                                                                                                      
 		MiniPromoPageData candidatePage = file.allPages[candidatePageIndex]
 		if ( IsPageValidToShow( candidatePage ) )
 		{
 			nextPageIndex = candidatePageIndex
 			break
 		}
+		      
+		   
+		  	                                                                                                        
+		   
 	}
 
 	if ( nextPageIndex != file.activePageIndex )
 		SetPage( nextPageIndex )
+	      
+	  	                                                                                                               
 }
 
 
 void function SetPage( int pageIndex, bool instant = false )
 {
+	                                                                       
+
 	var rui = Hud_GetRui( file.button )
 
-	float time = instant ? Time() - 10 : Time()
+	float time = instant ? ClientTime() - 10 : ClientTime()
 	RuiSetGameTime( rui, "initTime", time )
 
 	int lastActivePage = file.activePageIndex
 	file.activePageIndex = pageIndex
 
-	MiniPromoPageData lastPage = file.allPages[lastActivePage]
-
-	RuiSetImage( rui, "lastImageAsset", lastPage.image )
-
-	if(lastPage.linkType == "openpack")
-	{
-		RuiSetBool( rui, "lastFormat", true )
-		RuiSetString( rui, "lastText1", "APEX PACK SIMULATOR" )
-		RuiSetString( rui, "lastText2", "OPEN PACKS" )
-	}
-	else
-	{
-		RuiSetBool( rui, "lastFormat", lastPage.format )
-		RuiSetString( rui, "lastText1", lastPage.text1 )
-		RuiSetString( rui, "lastText2", lastPage.text2 )
-	}
-
 	MiniPromoPageData page = file.allPages[file.activePageIndex]
-
-	RuiSetImage( rui, "imageAsset", page.image )
-
-	if(page.linkType == "openpack")
-	{
-		RuiSetBool( rui, "format", true )
-		RuiSetString( rui, "text1", "APEX PACK SIMULATOR" )
-		RuiSetString( rui, "text2", "OPEN PACKS" )
-	}
+	if( GetConVarBool( "assetdownloads_enabled" ) && file.activePageIndex > 0 )
+		RuiSetImage( rui, "imageAsset", GetDownloadedImageAsset( page.imageName, page.imageName, ePakType.DL_MINI_PROMO, file.button ) )
 	else
-	{
-		RuiSetBool( rui, "format", page.format )
-		RuiSetString( rui, "text1", page.text1 )
-		RuiSetString( rui, "text2", page.text2 )
-	}
+		RuiSetImage( rui, "imageAsset", page.image )
+	RuiSetBool( rui, "format", page.format )
+	RuiSetString( rui, "text1", page.text1 )
+	RuiSetString( rui, "text2", page.text2 )
+
+	MiniPromoPageData lastPage = file.allPages[lastActivePage]
+	if( GetConVarBool( "assetdownloads_enabled" ) && lastActivePage > 0 )
+		RuiSetImage( rui, "lastImageAsset", GetDownloadedImageAsset( lastPage.imageName, lastPage.imageName, ePakType.DL_MINI_PROMO ) )
+	else
+		RuiSetImage( rui, "lastImageAsset", lastPage.image )
+	RuiSetBool( rui, "lastFormat", lastPage.format )
+	RuiSetString( rui, "lastText1", lastPage.text1 )
+	RuiSetString( rui, "lastText2", lastPage.text2 )
+	RuiSetBool( rui, "largeImageMode", true )
 
 	RuiSetInt( rui, "activePageIndex", GetActivePageIndexForRui() )
 
-	int ownedPacks = GRX_GetTotalPackCount()
+	int ownedPacks = GRX_IsInventoryReady() ? GRX_GetTotalPackCount() : 0
+	Hud_ClearToolTipData( file.button )
 	if ( ownedPacks > 0 )
 	{
-		RuiSetInt( rui, "ownedPacks", 999 )
-
 		ItemFlavor ornull pack = GetNextLootBox()
 		expect ItemFlavor( pack )
+		int nextPacks = GRX_GetPackCount( ItemFlavor_GetGRXIndex( pack ) )
+		RuiSetInt( rui, "nextPacks",  nextPacks )
+		if ( nextPacks < ownedPacks )
+		{
+			RuiSetInt( rui, "ownedPacks", ownedPacks )
+			ToolTipData toolTipData = GetPackInfoToolTip( ownedPacks )
+			Hud_SetToolTipData( file.button, toolTipData )
+		}
 
 		asset packIcon            = GRXPack_GetOpenButtonIcon( pack )
 		int packRarity            = ItemFlavor_GetQuality( pack )
 		vector ornull customColor = GRXPack_GetCustomColor( pack, 0 )
+		bool isRegularApexPack    = packIcon == "" && packRarity == 1
 
 		vector packColor = <1, 1, 1>
 		if ( customColor != null )
 			packColor = expect vector( customColor )
-		else
+		else if ( !isRegularApexPack )
 			packColor = GetKeyColor( COLORID_TEXT_LOOT_TIER0, packRarity + 1 ) / 255.0
 
 		vector countTextCol              = <255, 78, 29> * 1.0 / 255.0
@@ -427,62 +421,183 @@ void function SetPage( int pageIndex, bool instant = false )
 		RuiSetColorAlpha( rui, "packColor", SrgbToLinear( packColor ), 1.0 )
 		RuiSetColorAlpha( rui, "packCountTextCol", SrgbToLinear( countTextCol ), 1.0 )
 		RuiSetColorAlpha( rui, "rarityColor", SrgbToLinear( rarityColor ), 1.0 )
+		string nextPackDescription = "#APEX"
+
+		if ( ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.EVENT )
+		{
+			nextPackDescription = "#PACK_BUNDLE_EVENT_TEXT"
+		}
+		else if ( ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.EVENT_THEMATIC )
+		{
+			nextPackDescription = "#PACK_BUNDLE_THEMATIC_TEXT"
+		}
+		else if ( ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.THEMATIC )
+		{
+			nextPackDescription = ItemFlavor_GetShortName( pack )                                                                                   
+		}
+		else if ( packIcon != "" && ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.APEX )
+		{
+			nextPackDescription = ItemFlavor_GetQualityName( pack )                                                                                          
+		}
+
+		RuiSetString( rui, "packDescription", nextPackDescription )
 	}
+	else
+	{
+		RuiSetInt( rui, "ownedPacks", 0 )
+	}
+
+	if ( page.linkType != "openpack" )
+		Hud_ClearToolTipData( file.button )
+}
+
+ToolTipData function GetPackInfoToolTip( int ownedPacks )
+{
+	ToolTipData toolTipData
+	toolTipData.tooltipStyle = eTooltipStyle.MINI_PROMO_APEX_PACK
+	toolTipData.titleText    = Localize( "#UNOPENED_PACKS_CNT", string(ownedPacks) )
+
+	int numDifferentLowerTierPacks = 0
+	int legPackCnt = 0
+	int epcPackCnt = 0
+	int rarPackCnt = 0
+	int evtPackCnt = 0
+	int thmPackCnt = 0
+	int apxPackCnt = 0
+	string hint3 = "", hint2 = "", hint1 = ""
+
+	foreach ( ItemFlavor counterPack in GRX_GetAllPackFlavors() )
+	{
+		if ( ItemFlavor_GetAccountPackType( counterPack ) == eAccountPackType.EVENT )
+		{
+			evtPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
+		}
+		else if ( ItemFlavor_GetAccountPackType( counterPack ) == eAccountPackType.THEMATIC || ItemFlavor_GetAccountPackType( counterPack ) == eAccountPackType.EVENT_THEMATIC )
+		{
+			thmPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
+		}
+		else                                                                      
+		{
+			int packRarity = ItemFlavor_GetQuality( counterPack )
+			if ( packRarity == 3 )             
+				legPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
+			else if ( packRarity == 2 )        
+				epcPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
+			else if ( packRarity == 1 )                      
+				apxPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
+		}
+	}
+
+	                                                                                                                                 
+	if ( legPackCnt > 0 )
+	{
+		hint3 = Localize( "#CNT_LEGENDARY_PACKS", string( legPackCnt ) )
+	}
+	if ( evtPackCnt > 0 )
+	{
+		if ( hint3 == "" )
+			hint3 = Localize( "#CNT_EVENT_PACKS", string( evtPackCnt ) )
+		else
+			hint2 = Localize( "#CNT_EVENT_PACKS", string( evtPackCnt ) )
+	}
+	if ( epcPackCnt > 0 )
+	{
+		if ( hint3 == "" )
+		{
+			hint3 = Localize( "#CNT_EPIC_PACKS", string( epcPackCnt ) )
+		}
+		else if ( hint2 == "" )
+		{
+			hint2 = Localize( "#CNT_EPIC_PACKS", string( epcPackCnt ) )
+		}
+		else
+		{
+			hint1 = Localize( "#CNT_EPIC_PACKS", string( epcPackCnt ) )
+			numDifferentLowerTierPacks = numDifferentLowerTierPacks | 2
+		}
+	}
+	if ( thmPackCnt > 0 )
+	{
+		if ( hint3 == "" )
+		{
+			hint3 = Localize( "#CNT_THEMATIC_PACKS", string( thmPackCnt ) )
+		}
+		else if ( hint2 == "" )
+		{
+			hint2 = Localize( "#CNT_THEMATIC_PACKS", string( thmPackCnt ) )
+		}
+		else if ( hint1 == "" )
+		{
+			hint1 = Localize( "#CNT_THEMATIC_PACKS", string( thmPackCnt ) )
+			numDifferentLowerTierPacks = numDifferentLowerTierPacks | 1
+		}
+		else
+		{
+			hint1 = Localize( "#CNT_ADDITIONAL_PACKS", string( thmPackCnt + epcPackCnt + apxPackCnt ) )
+			numDifferentLowerTierPacks = numDifferentLowerTierPacks | 1
+		}
+	}
+	if ( apxPackCnt > 0 )
+	{
+		if ( hint3 == "" )
+			hint3 = Localize( "#CNT_RARE_PACKS", string( apxPackCnt ) )
+		else if ( hint2 == "" )
+			hint2 = Localize( "#CNT_RARE_PACKS", string( apxPackCnt ) )
+		else if ( hint1 == "" )
+			hint1 = Localize( "#CNT_RARE_PACKS", string( apxPackCnt ) )
+		else if ( IsBitFlagSet( numDifferentLowerTierPacks, 2 ) )
+			hint1 = Localize( "#CNT_ADDITIONAL_PACKS", string( thmPackCnt + epcPackCnt + apxPackCnt ) )
+		else if ( IsBitFlagSet( numDifferentLowerTierPacks, 1 ) )
+			hint1 = Localize( "#CNT_ADDITIONAL_PACKS", string( thmPackCnt + apxPackCnt ) )
+
+	}
+
+	toolTipData.actionHint3  = hint3
+	toolTipData.actionHint2  = hint2
+	toolTipData.actionHint1  = hint1
+
+	toolTipData.tooltipFlags = toolTipData.tooltipFlags | eToolTipFlag.INSTANT_FADE_IN
+
+	return toolTipData
 }
 
 
+                                                                                                                      
+int function GetCorrespondingMOTDPageIndex()
+{
+	MiniPromoPageData firstPage = file.allPages[0]
+	if ( firstPage.linkType == "openpack" )
+		return file.activePageIndex - 1
+
+	return file.activePageIndex
+}
+
+
+                                                                      
 void function MiniPromoButton_OnActivate( var button )
 {
+	                                                
+
 	MiniPromoPageData page = file.allPages[file.activePageIndex]
+	int motdIndex = GetCorrespondingMOTDPageIndex()
 
 	if ( page.linkType == "openpack" )
 	{
-		if ( GRX_GetTotalPackCount() > 0 )
+		if ( GRX_IsInventoryReady() && GRX_GetTotalPackCount() > 0 )
 		{
 			EmitUISound( "UI_Menu_OpenLootBox" )
 			OnLobbyOpenLootBoxMenu_ButtonPress()
 		}
 	}
-	else if ( page.linkType == "battlepass" )
+	else if ( page.linkType == "openmotd" )
 	{
-		EmitUISound( "UI_Menu_Accept" )
-
-		string panelName = "PassPanelV2"
-
-		TabData lobbyTabData = GetTabDataForPanel( GetMenu( "LobbyMenu" ) )
-		ActivateTab( lobbyTabData, Tab_GetTabIndexByBodyName( lobbyTabData, panelName ) )
+		PIN_UM_Message( page.text1, page.trackingId, PIN_MESSAGE_TYPE_MINIPROMO, ePINPromoMessageStatus.CLICK, motdIndex )
+		PromoDialog_OpenToPage( motdIndex )
 	}
-	else if ( page.linkType == "storecharacter" )
+	else
 	{
-		ItemFlavor character = GetItemFlavorByHumanReadableRef( page.linkData[0] )
-		if ( GRX_IsItemOwnedByPlayer( character ) )
-			return
-
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToStoreCharacter( character )
-	}
-	else if ( page.linkType == "storeskin" )
-	{
-		ItemFlavor skin = GetItemFlavorByHumanReadableRef( page.linkData[0] )
-		if ( GRX_IsItemOwnedByPlayer( skin ) )
-			return
-
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToStoreSkin( skin )
-	}
-	else if ( page.linkType == "themedstoreskin" )
-	{
-		ItemFlavor skin = GetItemFlavorByHumanReadableRef( page.linkData[0] )
-		if ( GRX_IsItemOwnedByPlayer( skin ) )
-			return
-
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToThemedShop()
-	}
-	else if ( page.linkType == "url" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		LaunchExternalWebBrowser( page.linkData[0], WEBBROWSER_FLAG_NONE )
+		PIN_UM_Message( page.text1, page.trackingId, PIN_MESSAGE_TYPE_MINIPROMO, ePINPromoMessageStatus.CLICK, motdIndex )
+		OpenPromoLink( page.linkType, page.linkData[0] )
 	}
 }
 
@@ -515,6 +630,7 @@ void function MiniPromoButton_OnLoseFocus( var button )
 void function OnStickMoved( ... )
 {
 	float stickDeflection = expect float( vargv[1] )
+	                                                
 
 	int stickState = eStickState.NEUTRAL
 	if ( stickDeflection > 0.25 )
@@ -526,11 +642,13 @@ void function OnStickMoved( ... )
 	{
 		if ( stickState == eStickState.RIGHT )
 		{
+			                        
 			ChangePage( MINIPROMO_NAV_RIGHT )
 			thread AutoAdvancePages()
 		}
 		else if ( stickState == eStickState.LEFT )
 		{
+			                       
 			ChangePage( MINIPROMO_NAV_LEFT )
 			thread AutoAdvancePages()
 		}

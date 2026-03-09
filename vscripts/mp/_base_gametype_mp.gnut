@@ -524,7 +524,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 	printl( "Player connect started: " + player )
 
-	// PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED ) // R5R Intro Cameras work different
+	// PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED ) // Intro Cameras work differently
 	player.StopPhysics()
 }
 

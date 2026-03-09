@@ -27,6 +27,10 @@ global function StopLocal1PDeathSound
 
 global function ServerCallback_HideNextSpawnMessage
 
+global function ClientCodeCallback_GetPlayerDebugStateInfo
+global function ClientCodeCallback_GetPlayerDebugStateDynamicFields
+global function AddPlayerDebugStateDynamicField
+
 global function ClientCodeCallback_OnHealthChanged
 global function ClientCodeCallback_OnCrosshairCurrentTargetChanged
 //global function Pressed_TitanNextMode
@@ -88,9 +92,10 @@ struct
 	int enable_healthbar = -1
 
 	table<entity, entity> healthBars
-	table<entity, float> onPlayerDamagedTimes	
+	table<entity, float> onPlayerDamagedTimes
 	table< string, MuteData > mutedPlayers
-	
+
+	array< string > playerDebugStateDynamicFields
 } file
 
 struct BloodDecalParams
@@ -2422,11 +2427,33 @@ void function FS_Silence( bool toggle, int eHandle )
 }
 
 void function FS_RegisterAdmin()
-{	
-	entity player = GetLocalClientPlayer() 
-	
+{
+	entity player = GetLocalClientPlayer()
+
 	if( !IsValid( player ) || !player.IsPlayer() )
-		return 
-	
-	RunUIScript( "UICallback_AdminStatus", Gamemode() == eGamemodes.WINTEREXPRESS ? false : player.GetPlayerNetBool("IsAdmin") )	
+		return
+
+	RunUIScript( "UICallback_AdminStatus", Gamemode() == eGamemodes.WINTEREXPRESS ? false : player.GetPlayerNetBool("IsAdmin") )
+}
+
+
+// ============================================================================
+// Player Debug State Functions
+// ============================================================================
+
+string function ClientCodeCallback_GetPlayerDebugStateInfo( entity player )
+{
+	// stub
+	return ""
+}
+
+array<string> function ClientCodeCallback_GetPlayerDebugStateDynamicFields()
+{
+	return file.playerDebugStateDynamicFields
+}
+
+void function AddPlayerDebugStateDynamicField( string fieldName )
+{
+	if ( !file.playerDebugStateDynamicFields.contains( fieldName ) )
+		file.playerDebugStateDynamicFields.append( fieldName )
 }

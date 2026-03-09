@@ -46,7 +46,7 @@ void function TDM_Init()
 	#endif
 
 	#if CLIENT
-		PakHandle pakHandle = RequestPakFile( "ui_arenas" ) // TRACK_FEATURE_UI not in S3
+		PakHandle pakHandle = RequestPakFile( "ui_arenas" ) // TRACK_FEATURE_UI not available
 		FreeDM_SetScoreboardSetupFunc( TDM_ScoreboardSetup() )
 	#endif
 

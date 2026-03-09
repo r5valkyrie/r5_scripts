@@ -50,6 +50,7 @@ global function EEHHasValidScriptStruct
 global function IsLocalClientEHIValid
 global function LocalClientEHI
 global function WaitForLocalClientEHI
+global function EHI_GetPlatformID
 #endif
 
 #if SERVER || CLIENT
@@ -74,9 +75,13 @@ global function UIToClient_UIVMIsShuttingDown
 global function UIToClient_UIVMJustStarted
 global function GetPlayerName
 global function GetKillerName
+global function GetKillerNameFromEHI
 global function GetDisplayablePlayerNameFromEHI
+global function GetPlayerNameUnlessAnonymized
 global function GetPlayerRankScoreFromEHI
 global function GetPlayerLadderPosFromEHI
+global function GetPlayerRankScorePrevSeasonFromEHI
+global function GetPlayerLadderPosPrevSeasonFromEHI
 #endif
 #if UI
 global function ShEHI_VMShutdown
@@ -495,6 +500,12 @@ EHI function WaitForLocalClientEHI()
 	}
 	return fileLevel.localClientEHI
 }
+
+// stub: platformID not tracked in EHIScriptStruct
+int function EHI_GetPlatformID( EHI ent )
+{
+	return HARDWARE_PC
+}
 #endif
 
 
@@ -785,6 +796,12 @@ string function GetKillerName( EHI playerEHI )
 
 	return playerName
 }
+
+// Alias for GetKillerName
+string function GetKillerNameFromEHI( EHI playerEHI )
+{
+	return GetKillerName( playerEHI )
+}
 #endif
 
 
@@ -868,6 +885,14 @@ bool function ShouldPlayerNameBeAnonymized( EHI playerEHI )
 {
 	return false
 }
+
+// Get player name, obfuscated if anonymized
+string function GetPlayerNameUnlessAnonymized( EHI playerEHI )
+{
+	if ( ShouldPlayerNameBeAnonymized( playerEHI ) )
+		return GetObsfuscatedName( playerEHI )
+	return EHI_GetName( playerEHI )
+}
 #endif
 
 #if SERVER || CLIENT
@@ -885,5 +910,16 @@ int function GetPlayerLadderPosFromEHI( EHI playerEHI )
 	int rankScore = EHI_GetRankedLadderPos( playerEHI )
 
 	return rankScore
+}
+
+// Stubs: Previous season rank data not tracked
+int function GetPlayerRankScorePrevSeasonFromEHI( EHI playerEHI )
+{
+	return SHARED_RANKED_INVALID_RANK_SCORE
+}
+
+int function GetPlayerLadderPosPrevSeasonFromEHI( EHI playerEHI )
+{
+	return SHARED_RANKED_INVALID_LADDER_POSITION
 }
 #endif

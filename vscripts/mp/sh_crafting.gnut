@@ -97,5 +97,5 @@ global function Crafting_GetCraftingZoneIcon
 #if DEVELOPER
 global function DEV_Crafting_TogglePreMatchRotation
 global function DEV_Crafting_PrintUsedHarvesterEHIs
-#endif // DEV
+#endif // DEVELOPER
 #endif // CLIENT

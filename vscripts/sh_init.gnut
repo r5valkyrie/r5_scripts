@@ -207,7 +207,7 @@ void function SV_CL_Init()
 	Sh_EvacShip_Init()
 	ShLootRollers_Init()
 
-	CharacterSelectNewMenu_Init()
+	CharacterSelectMenu_Init()
 
 	Sh_FS_MovementRecorder_Init()
 	Sh_SkydiveLaunchers_Init()
@@ -523,7 +523,7 @@ void function Client_Init()
 	CLChroma_Init()
 	ClPhantomFighter_Init()
 	
-	//R5R.DEV
+	// Tracker system
 	Tracker_ClientStats_Init()
 
 	ClSnake_Init()
@@ -598,7 +598,7 @@ void function Shared_Lobby_Init()
 
 	#if SERVER
 		Server_Lobby_Init()
-		LootBoxCeremony_Init()
+		// LootBoxCeremony_Init() -- not present
 		SvXP_Init()
 		Achievements_Init()
 	#elseif CLIENT

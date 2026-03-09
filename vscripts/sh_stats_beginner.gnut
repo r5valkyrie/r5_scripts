@@ -1,0 +1,620 @@
+global function ShStats_Beginner_LevelInit
+global function StatsRegister_Beginner
+
+#if SERVER
+                            
+global function CalculateAndUpdatePlayerGraduationStat
+global function GetBotQueueGraduationStatRef
+global function GetBotQueueGradStatValues
+global function NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated
+
+global function StatHook_NewPlayerBotQueue_OnRecordPlacementStats
+global function StatHook_NewPlayerBotQueue_OnPlayerOrNPCTookDamage
+global function StatHook_NewPlayerBotQueue_OnPlayerEquippedAttachment
+global function StatHook_NewPlayerBotQueue_OnEntityHealResourceFinished
+global function StatHook_NewPlayerBotQueue_OnEntityShieldResourceFinished
+global function StatHook_NewPlayerBotQueue_OnDeathFieldStateChanged
+global function StatsHook_NewPlayerBotQueue_RecordTop10Placement
+                                  
+
+                           
+global function StatsHook_OnArmorSwapped
+global function StatsHook_OnCodeDoorBroken
+
+global function StatsHook_BeginnerChallenges_OnPlayerConnected
+global function StatsHook_BeginnerChallenges_OnDoomingDamage
+                                 
+
+                                  
+                                       
+                                                
+
+                                                              
+                                                                 
+                                                                     
+                                        
+#endif // SERVER
+
+struct FileStruct_FileLevel
+{
+	                            
+		table< string, int > botQueueGraduationRequirements
+                                   
+}
+FileStruct_FileLevel& fileLevel
+
+void function ShStats_Beginner_LevelInit()
+{
+	FileStruct_FileLevel newFileLevel
+	fileLevel = newFileLevel
+
+	#if SERVER
+	                            
+		BotsQueueGraduationStatsInit()
+                                   
+
+	                                                          
+		Consumable_AddCallback_OnPlayerHealingEnded( StatsHook_OnPlayerHealingEnded )
+                                                                     
+
+	                           
+		AddCallback_OnCodeDoorBroken( StatsHook_OnCodeDoorBroken )
+                                  
+
+                                                                  
+                                                                        
+                                                                            
+
+                                   
+                                                                          
+                                                               
+                                         
+
+	                            
+		AddCallback_OnPlayerConnectedForStats( LobbyCallback_CalculateAndUpdatePlayerGraduationStat )
+                                   
+	#endif // SERVER
+}
+
+void function StatsRegister_Beginner()
+{
+	                           
+		CAREER_STATS.slide_count = RegisterAccumulatedStat_Int( null, "slide_count", eChallengeGameMode.ANY, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.armor_upgaraded_count = RegisterAccumulatedStat_Int( null, "armor_upgaraded_count", eChallengeGameMode.ANY, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.doors_broken_by_melee = RegisterAccumulatedStat_Int( null, "doors_broken_by_melee", eChallengeGameMode.ANY, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.phoenix_kits_used = RegisterAccumulatedStat_Int( null, "phoenix_kits_used", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.beginner_distance_kill = RegisterAccumulatedStat_Int( null, "beginner_distance_kill", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+                                  
+
+                                                                  
+                                                                                                                                            
+                                                                                                                                            
+                                                                                                                                                                
+                                                                                                                                                                
+                                                                            
+
+                                   
+                                                                                                                                              
+                                                                                                                                    
+                                                                                                                                
+                                                                                                                                                  
+                                                                                                                                                  
+                                                                                                                                    
+                                                                                                                              
+                                                                                                                            
+                                                                                                                                                
+                                                                                                                                        
+                                                                                                                                                                  
+                                         
+
+	                            
+		CAREER_STATS.graduated_bot_queue = RegisterExpensiveCalculatedStat_Int( null, "graduated_bot_queue", TRACKERS_NEED, SetupGraduatedBotQueueStat, [], eChallengeGameMode.NON_MODE )
+
+		CAREER_STATS.ftue_damage_done = RegisterAccumulatedStat_Int( null, "ftue_damage_done", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.ftue_ring_closings_survived = RegisterAccumulatedStat_Int( null, "ftue_ring_closings_survived", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.ftue_placements_top_10 = RegisterAccumulatedStat_Int( null, "ftue_placements_top_10", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.ftue_equipped_attachment = RegisterAccumulatedStat_Int( null, "ftue_equipped_attachment", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.ftue_health_restored_any_mode = RegisterAccumulatedStat_Int( null, "ftue_health_restored_any_mode", eChallengeGameMode.ANY, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.ftue_shield_restored = RegisterAccumulatedStat_Int( null, "ftue_shield_restored", eChallengeGameMode.BATTLE_ROYALE, CHALLENGES_CALC_DEPENDS )
+		CAREER_STATS.ftue_slide_count = RegisterAccumulatedStat_Int( null, "ftue_slide_count", eChallengeGameMode.ANY, CHALLENGES_CALC_DEPENDS )
+                                   
+}
+
+#if SERVER
+
+void function BotsQueueGraduationStatsInit()
+{
+	// new_player_graduation_requirements datatable doesn't exist
+	return
+
+	// load the spreadsheet
+	var gradReqsTable = GetDataTable( $"datatable/new_player_graduation_requirements.rpak" )
+	int rowCount      = GetDataTableRowCount( gradReqsTable )
+
+	// get the column indexes
+	int col_StatRef = GetDataTableColumnByName( gradReqsTable, "statRef" )
+	int col_gradValue = GetDataTableColumnByName( gradReqsTable, "graduationValue" )
+
+	for( int i = 0; i < rowCount; ++i )
+	{
+		string statRef = GetDataTableString( gradReqsTable, i, col_StatRef )
+		fileLevel.botQueueGraduationRequirements[ statRef ] <- GetDataTableInt( gradReqsTable, i, col_gradValue )
+	}
+}
+
+string function GetBotQueueGraduationStatRef( entity player )
+{
+	foreach ( string statRef, int value in GetBotQueueGradStatValues() )
+	{
+		Assert( IsValidStatEntryRef(statRef) )
+		if ( GetStat_Int( player, GetStatEntryByRef( statRef ), eStatGetWhen.CURRENT ) >= value )
+			return statRef
+	}
+	return ""
+}
+
+void function CalculateAndUpdatePlayerGraduationStat( entity player )
+{
+	if(!IsValid( player ) || !player.IsPlayer() || player.IsNPC()  )
+		return
+
+	int graduationState = 1
+	int currentState = player.GetPersistentVarAsInt( "botGraduationState" )
+
+	if( !GetConVarBool( "orientation_matches_disabled" ) )
+	{
+		// This could get expensive if we use a lot of calculated stats to graduate from bot queue.
+		StatEntry GradBotQueueStat =  ResolveStatEntry( CAREER_STATS.graduated_bot_queue )
+		currentState = GetStat_Int( player, GradBotQueueStat, eStatGetWhen.START_OF_CURRENT_MATCH )
+		graduationState = GetStat_Int( player, GradBotQueueStat, eStatGetWhen.CURRENT )
+	}
+
+	if ( currentState == 0 && graduationState == 1 )
+	{
+		player.SetPersistentVar( "botGraduationState", true )
+		player.SetPersistentVar( "showOrientationMatchGraduationDialog", true )
+		SetPlayerBotQueueGraduation( player, graduationState )
+	}
+}
+
+void function LobbyCallback_CalculateAndUpdatePlayerGraduationStat( entity player )
+{
+	if ( !IsLobby() )
+		return // in matches, this runs in post-match
+
+	CalculateAndUpdatePlayerGraduationStat( player )
+}
+
+void function StatHook_NewPlayerBotQueue_OnRecordPlacementStats( entity player )
+{
+	int rank = Survival_GetCurrentRank( player )
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+	string characterRef  = ItemFlavor_GetGUIDString( character )
+	string ornull currentSeasonRefOrNull = GetCurrentStatSeasonRefOrNull()
+
+	Assert( NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( player ), "found a graduated player past the point where they should have returned." )
+	// these stats must be ticked to properly handle graudation state.
+	// there is duplicate logic from below, but it's cleanest to just implement these on their own and then early exit
+	if ( GetGameState() >= eGameState.WinnerDetermined )
+	{
+		int winningTeam = GetWinningTeam()
+		if ( player.GetTeam() == winningTeam && rank == 1 )
+		{
+			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_win ), 1 )
+			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_placements_win, characterRef ), 1 )
+
+			if ( currentSeasonRefOrNull != null )
+			{
+				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_placements_win, expect string( currentSeasonRefOrNull ) ), 1 )
+				__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_character_placements_win, expect string(currentSeasonRefOrNull), characterRef ), 1 )
+			}
+		}
+	}
+
+	if ( rank <= 5 )
+	{
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.placements_top_5 ), 1 )
+		if ( currentSeasonRefOrNull != null )
+			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_character_placements_top_5, expect string(currentSeasonRefOrNull), characterRef ), 1 )
+	}
+
+	// this doesn't double increment with StatsHook_NewPlayerBotQueue_RecordTop10Placement() because if we're in this func, the next is a return in StatsHook_RecordPlacementStats()
+	// this just allows orientation matches to also increment the top10 placement ftue stat since this func is ONLY called for orientation matches
+	if ( rank <= 10 )
+	{
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.ftue_placements_top_10 ), 1 )
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.games_played ), 1 )
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.character_games_played, characterRef ), 1 )
+
+	if ( currentSeasonRefOrNull != null )
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.season_games_played, expect string( currentSeasonRefOrNull ) ), 1 )
+}
+
+void function StatsHook_NewPlayerBotQueue_RecordTop10Placement( entity player )
+{
+	bool isNewPlayerWhoHasNotGraduated = false
+	isNewPlayerWhoHasNotGraduated = NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( player )
+
+	if ( !Stats_PlayerIsValidForStats( player ) && !isNewPlayerWhoHasNotGraduated )
+	{
+		return
+	}
+
+	int rank = Survival_GetCurrentRank( player )
+	if ( rank <= 10 )
+	{
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.ftue_placements_top_10 ), 1 )
+	}
+}
+
+bool function NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( entity player )
+{
+	return ( IsOrientationMatch() && player.GetPersistentVarAsInt( "botGraduationState" ) == 0 )
+}
+#endif // SERVER
+
+table< string, int > function GetBotQueueGradStatValues()
+{
+	//Grab overrides from Playlist var and override values
+	string botQueueGradOverrides = GetPlaylistVarString( PLAYLIST_NEW_PLAYER_ORIENTATION, "botQueueGraduationOverrides", "" )
+	foreach ( string pair in split( botQueueGradOverrides, WHITESPACE_CHARACTERS ) )
+	{
+		array<string> splitPair = split( pair, ":" )
+		Assert ( splitPair.len() == 2 && splitPair[1].len() > 0, "Playlist Var \"botQueueGraduationOverrides\" has invalid pair ("+pair+") should be in the format: <StatRef>:<Value>" )
+		fileLevel.botQueueGraduationRequirements[ splitPair[0] ] <- int( splitPair[1] )
+	}
+
+	return fileLevel.botQueueGraduationRequirements
+}
+
+StatCalcFuncInfo function SetupGraduatedBotQueueStat( StatEntry calcEntry, array<StatTemplate> sourceTemplates )
+{
+	StatCalcFuncInfo info
+
+	info.calcFunc_Int = ( int function ( entity player, array<StatEntry> sourceEntries, int when ) : ( calcEntry ) {
+		foreach ( string statRef, int value in GetBotQueueGradStatValues() )
+		{
+			Assert( IsValidStatEntryRef(statRef) )
+			StatEntry statEntry = GetStatEntryByRef( statRef )
+			Assert( statEntry != calcEntry, "Trying to use this stat as a requirement for it's own value ("+statRef+")" )
+			if ( GetStat_Int( player, statEntry, when ) >= value )
+				return 1
+		}
+		return 0
+	} )
+
+	return info
+}
+                                  
+
+#if SERVER
+                           
+void function StatsHook_BeginnerChallenges_OnDoomingDamage( entity victim, entity attacker, var damageInfo )
+{
+	bool validAttacker = IsValid( attacker ) && attacker.IsPlayer() && victim != attacker
+
+	float distance = DamageInfo_GetDistFromAttackOrigin( damageInfo )
+	distance             = distance / 12
+	distance *= 0.3048 // Convert to meters
+	int distanceInMeters = int( distance )
+
+	if( validAttacker && Stats_PlayerIsValidForStats( attacker ) && GameMode_IsActive( eGameModes.SURVIVAL ) )
+	{
+		Stats_UpdateDistanceKillStatEntry( attacker, ResolveStatEntry( CAREER_STATS.beginner_distance_kill ), distanceInMeters )
+	}
+}
+
+void function StatsHook_BeginnerChallenges_OnPlayerConnected( entity player )
+{
+	if ( !HasPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_SLIDE, StatsHook_BeginnerChallenges_OnPlayerBegunSlide ) )
+	{
+		AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_SLIDE, StatsHook_BeginnerChallenges_OnPlayerBegunSlide )
+	}
+
+	                            
+	if ( !HasPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_SLIDE, StatsHook_NewPlayerBotQueue_OnPlayerBegunSlide ) )
+	{
+		AddPlayerMovementEventCallback( player, ePlayerMovementEvents.BEGIN_SLIDE, StatsHook_NewPlayerBotQueue_OnPlayerBegunSlide )
+	}
+                                   
+}
+
+void function StatsHook_BeginnerChallenges_OnPlayerBegunSlide( entity player )
+{
+	if ( IsLowCostBot( player ) || !Stats_PlayerIsValidForStats( player ) )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.slide_count ), 1 )
+}
+                                     
+
+                            
+void function StatsHook_NewPlayerBotQueue_OnPlayerBegunSlide( entity player )
+{
+	bool isNewPlayerWhoHasNotGraduated = false
+	isNewPlayerWhoHasNotGraduated = NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( player )
+
+	if ( !Stats_PlayerIsValidForStats( player ) && !isNewPlayerWhoHasNotGraduated )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.ftue_slide_count ), 1 )
+}
+                                  
+
+                                                          
+void function StatsHook_OnPlayerHealingEnded(entity player, string consumable, bool success)
+{
+	Assert( IsValid( player ) )
+
+	if( !player.IsPlayer() || !Stats_PlayerIsValidForStats( player ) )
+		return
+
+	if ( !success )
+		return
+
+	switch ( consumable )
+	{
+		case "health_pickup_combo_full":
+			__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.phoenix_kits_used ), 1 )
+                                                                 
+                                                                                       
+                                                                                       
+        
+                                    
+                                    
+                                                                                       
+        
+                                   
+                                   
+                                                                                       
+                                                                           
+			break
+
+		default:
+			break
+	}
+}
+                                                                    
+
+                           
+void function StatsHook_OnCodeDoorBroken( entity door, entity attacker, vector direction, var damageInfo )
+{
+	if ( !attacker.IsPlayer() )
+		return
+
+	if( !Stats_PlayerIsValidForStats( attacker ) )
+		return
+
+	if ( (bool(DamageInfo_GetCustomDamageType( damageInfo ) & DF_MELEE)) == true )
+		__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.doors_broken_by_melee ), 1 )
+}
+
+void function StatsHook_OnArmorSwapped( entity player, LootData newArmorData, LootData oldArmorData )
+{
+	if( !Stats_PlayerIsValidForStats( player ) )
+		return
+	if ( newArmorData.tier > oldArmorData.tier )
+		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.armor_upgaraded_count ), 1 )
+}
+                                 
+
+                                  
+                                                                                  
+ 
+                                                                               
+ 
+
+                                                                                                   
+ 
+                                                
+  
+                                                                                  
+  
+ 
+
+                                                                             
+ 
+                                                            
+                          
+
+                                                                               
+
+                              
+  
+          
+
+                      
+   
+                                            
+                                                                                                  
+    
+                                                                                                    
+                       
+    
+   
+  
+
+                                                          
+                                                       
+                                       
+                                                                                    
+
+                                                                                             
+ 
+
+                                                                                               
+ 
+                            
+
+                                                                   
+        
+
+                                                                           
+ 
+
+                                                                                            
+ 
+                            
+
+                                                                   
+        
+
+                                                                        
+ 
+
+                                                                                           
+ 
+                            
+
+                                                                   
+        
+
+                                                                       
+
+                                                                    
+                                                
+                             
+  
+                                                                                  
+  
+ 
+                                            
+
+                                                                 
+                                                                                  
+ 
+                                                        
+
+                                                                    
+        
+
+                                                       
+                                                                     
+                                                                     
+
+                                                                                        
+  
+                                                                                                
+  
+                                                                                             
+  
+                                                                                                
+  
+ 
+                                                                           
+
+                                  
+                                                                                
+ 
+                                              
+        
+
+                                              
+  
+                                                                                    
+  
+ 
+                                        
+
+                            
+void function StatHook_NewPlayerBotQueue_OnPlayerOrNPCTookDamage( entity attacker, entity victim, int amount )
+{
+	bool isNewPlayerWhoHasNotGraduated = false
+	isNewPlayerWhoHasNotGraduated = NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( attacker )
+
+	if ( !Stats_PlayerIsValidForStats( attacker ) && !isNewPlayerWhoHasNotGraduated )
+	{
+		return
+	}
+
+	if ( victim.IsNPC() || !victim.IsPlayer() )
+	{
+		return
+	}
+
+	__IncrementStat_Int( attacker, ResolveStatEntry( CAREER_STATS.ftue_damage_done ), amount )
+}
+      
+
+                            
+void function StatHook_NewPlayerBotQueue_OnPlayerEquippedAttachment( entity player )
+{
+	bool isNewPlayerWhoHasNotGraduated = false
+	isNewPlayerWhoHasNotGraduated = NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( player )
+
+	if ( !Stats_PlayerIsValidForStats( player ) && !isNewPlayerWhoHasNotGraduated )
+	{
+		return
+	}
+
+	if ( !Stats_CurrentModeIsSurvival() )
+		return
+
+	if ( player.p.hasTickedEquipItemStat )
+		return
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.ftue_equipped_attachment ), 1 )
+}
+                                  
+
+                            
+void function StatHook_NewPlayerBotQueue_OnEntityHealResourceFinished( entity receiver, int amount )
+{
+	if ( !receiver.IsPlayer() )
+	{
+		return
+	}
+
+	bool isNewPlayerWhoHasNotGraduated = false
+	isNewPlayerWhoHasNotGraduated = NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( receiver )
+
+	if ( !Stats_PlayerIsValidForStats( receiver ) && !isNewPlayerWhoHasNotGraduated )
+	{
+		return
+	}
+
+	__IncrementStat_Int( receiver, ResolveStatEntry( CAREER_STATS.ftue_health_restored_any_mode ), amount )
+}
+                                  
+
+                            
+void function StatHook_NewPlayerBotQueue_OnEntityShieldResourceFinished( entity receiver, int amount )
+{
+	if ( !receiver.IsPlayer() )
+	{
+		return
+	}
+
+	bool isNewPlayerWhoHasNotGraduated = false
+	isNewPlayerWhoHasNotGraduated = NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( receiver )
+
+	if ( !Stats_PlayerIsValidForStats( receiver ) && !isNewPlayerWhoHasNotGraduated )
+	{
+		return
+	}
+
+	__IncrementStat_Int( receiver, ResolveStatEntry( CAREER_STATS.ftue_shield_restored ), amount )
+}
+                                  
+
+                            
+void function StatHook_NewPlayerBotQueue_OnDeathFieldStateChanged( entity player )
+{
+	bool isNewPlayerWhoHasNotGraduated = false
+	isNewPlayerWhoHasNotGraduated = NewPlayerBotQueue_IsNewPlayerWhoHasNotGraduated( player )
+
+	if ( !Stats_PlayerIsValidForStats( player ) && !isNewPlayerWhoHasNotGraduated )
+	{
+		return
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.ftue_ring_closings_survived ), 1 )
+}
+                                  
+#endif // SERVER

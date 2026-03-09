@@ -83,11 +83,11 @@ global function GamemodeUtility_ServerCallback_TriggerScanOfVictimTeam // Server
 global function GamemodeUtility_GetPlaylist	// Return the current playlist name, adjusted for modes to take into account being in the mode or in the lobby ( usually used to get values for the About screen )
 #endif // UI
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Dev Commands for Testing
 global function GamemodeUtility_DebugDrawCullingCircle_Dev	// Dev testing function that draws an in world red circle that shows the boundaries of the entity culling circle
 global function GamemodeUtility_DisableMatchTimeLimit_Dev	// Dev testing function that disables the match time limit so matches can go on until score limit is reached
-#endif // DEV && SERVER
+#endif // DEVELOPER && SERVER
 
 const float UNSET_PLAYLIST_VAR_FLOAT = -1
 const int UNSET_PLAYLIST_VAR_INT = -1
@@ -170,9 +170,9 @@ struct {
 
 void function GamemodeUtility_Init()
 {
-	#if DEV && SERVER
+	#if DEVELOPER && SERVER
 		AddCallback_GeneratePDef( GenerateMixtapeAbandon_PDef )
-	#endif // DEV && SERVER
+	#endif // DEVELOPER && SERVER
 
 	#if SERVER
 		if ( GamemodeUtility_GetIsUsingCullCircleEnts() )
@@ -228,9 +228,9 @@ void function GamemodeUtility_Init()
 		RegisterSignal( "StartedVictimSquadMapScan" )
 	#endif
 
-	#if DEV && SERVER
+	#if DEVELOPER && SERVER
 		RegisterSignal( "GamemodeUtility_DisableMatchTimeLimit" )
-	#endif // DEV && SERVER
+	#endif // DEVELOPER && SERVER
 }
 
 void function GamemodeUtility_RegisterNetworking()
@@ -377,9 +377,9 @@ float function GamemodeUtility_GetMatchTimeLimit()
 {
 	float matchTimeLimit = GetCurrentPlaylistVarFloat( "match_time_limit", UNSET_PLAYLIST_VAR_FLOAT ) // match time limit disabled by default
 
-	#if DEV
+	#if DEVELOPER
 		printt( "GAMEMODE UTILITY: Grabbing the match time limit playlist var: match_time_limit. It is returning: " + matchTimeLimit )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	return matchTimeLimit
 }
@@ -392,7 +392,7 @@ float function GamemodeUtility_GetMatchTimeLimitWarning()
 
 int function GamemodeUtility_GetMaxPlayersToShowOnPodium()
 {
-	return GetCurrentPlaylistVarInt( "podium_max_players_to_show", 3 ) // S22: GetExpectedSquadSize() takes no args, S3 requires player param
+	return GetCurrentPlaylistVarInt( "podium_max_players_to_show", 3 )
 }
 
 bool function GamemodeUtility_IsSpectatorEnabled()
@@ -730,7 +730,7 @@ void function GamemodeUtility_StopKnockdownInvulnerabilityFX( entity player )
 #if CLIENT
 // Client function that triggers when the mixtape_NoPenaltyForLeaving NetVarBool changes.
 // Currently used to display an Obituary message when the leaver penalty is no longer active for a match
-void function GamemodeUtility_OnLeaverPenaltyStatusChanged( entity player, bool newValue, bool oldValue, bool didChange )
+void function GamemodeUtility_OnLeaverPenaltyStatusChanged( entity player, bool newValue )
 {
 	if ( !newValue )
 		Obituary_Print_Localized( Localize( "#GAMEMODES_LEAVER_PENALTY_DEACTIVATED" ).toupper() )
@@ -804,9 +804,9 @@ const float POST_PULSE_WAIT = 1.0 // First we show a pulse on the map, then we w
 const float SCAN_FADE_DURATION = 1.5
 void function RunVictimSquadMapScan_Thread( int victimTeam )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	if ( IsValid( clGlobal.levelEnt ) )
 		EndSignal( clGlobal.levelEnt, "OnDestroy" )
@@ -941,9 +941,9 @@ const UNSET_LOOT_TIER = -1
 const BASE_LOOT_TIER = 0
 void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	if ( GetGameState() != eGameState.Playing )
 		return
@@ -973,7 +973,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 			currentWeapons.append( weapon )
 	}
 
-	#if DEV
+	#if DEVELOPER
 		{
 			printt( "--------Loot Upgrade---------" )
 			printt( "Min Weapons: " + GamemodeUtility_GetMinGuaranteedWeaponLoadoutStringForRingStage( currentRingStage ) )
@@ -993,7 +993,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 				++weaponNumber
 			}
 		}
-	#endif // DEV
+	#endif // DEVELOPER
 
 	// Populate Current Equipment Data
 	LootData currentHelmet = EquipmentSlot_GetEquippedLootDataForSlot( player, "helmet" )
@@ -1022,14 +1022,14 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 					healingItemToNumToGiveTable[ guaranteedConsumable ] <- 1
 				break
 			case eLootType.AMMO:
-				#if DEV
+				#if DEVELOPER
 					Assert( false, "GAMEMODE UTILITY: " + FUNC_NAME() + " an ammo type: " + guaranteedConsumable + " was added to the guaranteed consumables list using the min_guaranteed_consumableloadout_ring_ playlist var.\n This is not supported, to guarantee ammo for the players weapon use the min_guaranteed_ammocount_ring_ playlist var" )
-				#endif // DEV
+				#endif // DEVELOPER
 				break
 			default:
-				#if DEV
+				#if DEVELOPER
 					Warning( "GAMEMODE UTILITY: ", FUNC_NAME(), " encountered unsupported loot type: ", GetEnumString( "eLootType", guaranteedConsumableData.lootType ) , " when parsing through the guaranteed consumable list"  )
-				#endif // DEV
+				#endif // DEVELOPER
 				break
 		}
 	}
@@ -1187,7 +1187,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 			player.TakeWeaponNow( weaponToRemove )
 		}
 
-		#if DEV
+		#if DEVELOPER
 			{
 				int weaponNumber = 0
 				foreach ( weapon in weaponsToGive )
@@ -1205,7 +1205,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 				}
 				printt( "--------Loot Upgrade END---------" )
 			}
-		#endif // DEV
+		#endif // DEVELOPER
 
 		// Give the player their updated weapons
 		for ( int i = 0; i < weaponsToGive.len(); i++ )
@@ -1255,9 +1255,9 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 			case eLootType.ATTACHMENT:
 				inventoryItemsToRemove.append( consumableRef )
 			default:
-				#if DEV
+				#if DEVELOPER
 					Warning( "GAMEMODE UTILITY: ", FUNC_NAME(), " encountered unsupported loot type: ", GetEnumString( "eLootType", consumableData.lootType ) , " when generating players current loot list"  )
-				#endif // DEV
+				#endif // DEVELOPER
 				break
 		}
 	}
@@ -1329,9 +1329,9 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 					}
 				break
 			default:
-				#if DEV
+				#if DEVELOPER
 					Warning( "GAMEMODE UTILITY: ", FUNC_NAME(), " encountered unsupported loot type: ", GetEnumString( "eLootType", guaranteedEquipmentData.lootType ) , " when determining if the guaranteed equipment is better than current equipment."  )
-				#endif // DEV
+				#endif // DEVELOPER
 				break
 		}
 
@@ -1432,8 +1432,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 	}
 
 	// Deploy weapons
-	// S22+ uses player.IsWeaponTypeEnabled( WPT_PRIMARY ) — not available in S3.
-	// Primary weapons are always enabled in FreeDM, so check for a valid weapon instead.
+	// IsWeaponTypeEnabled not available. Primary weapons always enabled in FreeDM, check for valid weapon instead.
 	entity primaryWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
 	if ( IsValid( primaryWeapon ) )
 	{
@@ -1444,7 +1443,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 #endif //SERVER
 
 #if CLIENT
-void function GamemodeUtility_OnMatchStartTimeChanged( entity player, float newValue, float oldValue, bool didChange )
+void function GamemodeUtility_OnMatchStartTimeChanged( entity player, float newValue )
 {
 	float time = newValue
 	var rui = ClGameState_GetRui()
@@ -1459,7 +1458,7 @@ void function GamemodeUtility_OnMatchStartTimeChanged( entity player, float newV
 #endif // CLIENT
 
 #if CLIENT
-void function GamemodeUtility_OnMatchEndTimeChanged( entity player, float newValue, float oldValue, bool didChange )
+void function GamemodeUtility_OnMatchEndTimeChanged( entity player, float newValue )
 {
 	float time = newValue
 	var rui = ClGameState_GetRui()
@@ -1525,13 +1524,13 @@ void function GamemodeUtility_SetCircleCullEnts()
 // Wait the specified time and then end the game when the match time limit is reached
 void function GamemodeUtility_MatchTimeLimit_Thread( float matchTimeLimit  )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	EndSignal( svGlobal.levelEnt, "GameEnd", GAMEMODE_WINNER_DETERMINED_SIGNAL_NAME )
 
-	#if DEV
+	#if DEVELOPER
 		// Signal from Dev Command to turn off the Match Time Limit
 		EndSignal( svGlobal.levelEnt, "GamemodeUtility_DisableMatchTimeLimit" )
 
@@ -1542,7 +1541,7 @@ void function GamemodeUtility_MatchTimeLimit_Thread( float matchTimeLimit  )
 		// Make sure we have a Set Winner function defined
 		string currentGamemode = GameRules_GetGameMode()
 		Assert( file.gamemodeSetWinnerFunction != null, "GAMEMODE UTILITY: Current Gamemode doesn't have a SetWinner function defined in file.gamemodeSetWinnerFunction, use the GamemodeUtility_AddCallback_SetGamemodeWinnerFunction function to set one for: " + currentGamemode )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	printt( "GAMEMODE UTILITY: Starting GamemodeUtility_MatchTimeLimit_Thread at " + Time() + " Match Time Limit is set to " + matchTimeLimit )
 
@@ -1591,14 +1590,14 @@ void function GamemodeUtility_MatchTimeLimit_Thread( float matchTimeLimit  )
 	wait GAMEMODEUTILITY_DEFAULT_MESSAGE_DURATION
 
 	// End the match because the time limit was reached
-	#if DEV
+	#if DEVELOPER
 		if ( GetConVarInt( "mp_enablematchending" ) == 0 )
 		{
 			printt( "GAMEMODE UTILITY: Match time limit reached but ignoring because mp_enablematchending is set to false" )
 			return
 		}
 		else
-	#endif // DEV
+	#endif // DEVELOPER
 		{
 			printt( "GAMEMODE UTILITY: Match Ending due to time limit reached at " + Time() + " Match time limit was set to " + matchTimeLimit )
 		}
@@ -1693,9 +1692,9 @@ void function GamemodeUtility_ServerCallback_PlayMatchEndingCountdownAudio_Threa
 // Manage how long after gamestate playing before we consider newly connected players as join in progress players
 void function GamemodeUtility_SetMatchJIPState_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	EndSignal( svGlobal.levelEnt, "GameEnd", GAMEMODE_WINNER_DETERMINED_SIGNAL_NAME )
 
@@ -1727,9 +1726,9 @@ void function GamemodeUtility_SetMatchJIPState_Thread()
 const float JIP_CRITERIA_CHECK_INTERVAL = 1.0
 void function GamemodeUtility_ManageJIPAvailability_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	printt( "GAMEMODE UTILITY: Setting Allow Join In Progress to True for Match Start" )
 	GamemodeUtility_SetJIPEnabled( true )
@@ -1826,9 +1825,9 @@ void function GamemodeUtility_ManageJIPAvailability_Thread()
 #if SERVER
 void function GamemodeUtility_SetJIPEnabled( bool enabled )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( !enabled || GamemodeUtility_IsJIPEnabledInPlaylist(), "GAMEMODE UTILITY: Attempting to enable JIP while the match_jip playlist variable is set to false, it needs to be set to true" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	SetConVarBool( "match_jip", enabled )
 }
@@ -1861,9 +1860,9 @@ void function GamemodeUtility_SetJIPPlayerIsWaitingForSpawnBonus( entity player,
 {
 	if ( IsValid( player ) && GamemodeUtility_IsJIPEnabledInPlaylist() )
 	{
-		#if DEV
+		#if DEVELOPER
 			printt( "GAMEMODE UTILITY: Setting GamemodeUtility_HasJIPPlayerReceivedSpawnBonus to : " + hasJIPPlayerReceivedBonus + " for : " + player )
-		#endif // DEV
+		#endif // DEVELOPER
 
 		player.SetPlayerNetBool( "GamemodeUtility_HasJIPPlayerReceivedSpawnBonus", hasJIPPlayerReceivedBonus )
 	}
@@ -2122,9 +2121,9 @@ void function GamemodeUtility_GamemodeSetWinnerCommon( int winningTeamOrAlliance
 #if SERVER
 void function GamemodeUtility_GamemodeSetWinnerCommon_Thread( int winningTeamOrAlliance, int victoryCondition, void functionref( int ) modeSpecificSetWinnerFunctionality )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	// Don't allow dialogue between Legends ( don't want this once game is over anyways but could also cause issues with players all being on the same team)
 	SetCommentaryEnabled( false )
@@ -2214,7 +2213,7 @@ void function GamemodeUtility_GamemodeSetWinnerCommon_Thread( int winningTeamOrA
 						MatchBehaviorPlayer_Ended( player, false )
                                 
 
-				// S22+ match participation tracking — player.p fields not in S3 ServerPlayerStruct
+				// Match participation tracking — player.p fields not in ServerPlayerStruct
 				// if ( player.p.hasMatchParticipationStarted && !player.p.hasMatchParticipationEnded )
 				// 	OnPlayerMatchParticipationEnded( player, false )
 			}
@@ -2317,7 +2316,7 @@ int function GamemodeUtility_GetAbandonPenaltyLength( entity player )
 #endif // CLIENT || SERVER
 
 //TODO: Rename these to mixtape instead of control
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 void function GenerateMixtapeAbandon_PDef()
 {
 	DEV_PDefGen_BeginFieldGroup( "Control Vars" )
@@ -2328,7 +2327,7 @@ void function GenerateMixtapeAbandon_PDef()
 
 	DEV_PDefGen_EndFieldGroup()
 }
-#endif // DEV && SERVER
+#endif // DEVELOPER && SERVER
 
 #if CLIENT
 // Display a warning message announcement in the top center of the screen
@@ -2642,7 +2641,7 @@ bool function GamemodeUtility_WasRevengeKill( entity victim, entity killer )
 	if ( IsValid( victim ) && !victim.IsPlayer() )
 		return false
 
-	if ( killer.Player_IsFreefalling() ) // S3: Player_IsSkydiving() renamed to Player_IsFreefalling()
+	if ( killer.Player_IsFreefalling() ) // Player_IsSkydiving() renamed to Player_IsFreefalling()
 		return false //don't do delayed revenge
 
 	if ( killer.e.previousKillers.len() == 0 )
@@ -3027,9 +3026,9 @@ void function GamemodeUtility_SpawnBonusLootOnPlayer(entity player, float throwS
 // It must be triggered after the skydive state because the skydive state has its own DVS settings and they conflict and cause and error if both are enabled at the same time
 void function GamemodeUtility_ManageDVSTweakOnPlayer_Thread()
 {
-	#if DEV
+	#if DEVELOPER
 		Assert( IsNewThread(), "Must be threaded off" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	entity localPlayer = GetLocalClientPlayer()
 	if ( !IsValid( localPlayer ) )
@@ -3166,13 +3165,13 @@ void function GamemodeUtility_ResetPlayer_Thread( entity player )
 		}
        
 
-	if ( player.Player_IsFreefalling() ) // S3: Player_IsSkydiving() renamed to Player_IsFreefalling()
+	if ( player.Player_IsFreefalling() ) // Player_IsSkydiving() renamed to Player_IsFreefalling()
 	{
 		Signal( player, "PlayerSkyDive" )
 		WaitFrame()
 	}
 
-	// S22+ player.GetTurret() entity method not available in S3
+	// player.GetTurret() entity method not available
 	// if ( IsValid( player.GetTurret() ) )
 	// {
 	// 	MountedTurretPlaceable_ClearDriver_ForOtherReason( player.GetTurret() )
@@ -3193,7 +3192,7 @@ void function GamemodeUtility_ResetPlayer_Thread( entity player )
 
 
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Do an in world debug draw of the culling circle used in gamemodes to cull gameplay objects/triggers/doors etc that are outside of the circle
 void function GamemodeUtility_DebugDrawCullingCircle_Dev()
 {
@@ -3218,11 +3217,11 @@ void function GamemodeUtility_DebugDrawCullingCircle_Dev()
 			float circleRadius = circleValuesArray[ 3 ]
 
 			printt( "GAMEMODE UTILITY: Going to debug draw the culling circle with the position: " + circlePos + " and the radius: " + circleRadius )
-			DebugDrawCylinder( circlePos, < -90, 0, 0 >, circleRadius, 128, COLOR_RED, true, 999999 )
+			DebugDrawCylinder( circlePos, < -90, 0, 0 >, circleRadius, 128, 255, 0, 0, true, 999999 )
 		}
 	}
 }
-#endif // DEV && SERVER
+#endif // DEVELOPER && SERVER
 
 array< vector > function GamemodeUtility_ParseStringOfVectors( string positionsRawString )
 {
@@ -3289,11 +3288,11 @@ string function GamemodeUtility_GetParsedStringForCircleValues( array< string > 
 	return parsedPlaylistString
 }
 
-#if DEV && SERVER
+#if DEVELOPER && SERVER
 // Disable Match Time Limit
 void function GamemodeUtility_DisableMatchTimeLimit_Dev()
 {
 	printt( "GAMEMODE UTILITY: Disabling Match Time Limit through Debug Command" )
 	svGlobal.levelEnt.Signal( "GamemodeUtility_DisableMatchTimeLimit" )
 }
-#endif // DEV && SERVER
+#endif // DEVELOPER && SERVER

@@ -39,7 +39,7 @@ global struct EHIScriptStruct
 
 	// loadouts
 	#if SERVER
-		bool hasBeenValidated = false
+		bool isValidated = false
 		bool HACK_wasJustValidated = false
 		bool shouldConsiderAsUpgrading = false
 	#endif
@@ -59,11 +59,22 @@ global struct EHIScriptStruct
 	#endif
 
 	int rankScore            = 0
+	int rankScorePrevSeason  = 0
 	int rankedLadderPosition = 9999
+	int rankedLadderPositionPrevSeason = 9999
+
+	// Stats tracking
+	bool noWitnessess = true
+	int gaveFinisherCount = 0
+	int gotDownedCount = 0
 
 	//CTF Stuff
 	int CTFCaptures = 0
 	int CTFKills = 0
+
+	#if SERVER || CLIENT || UI
+		array<ItemFlavor> legendaryItemsOwnedByPlayer
+	#endif
 }
 #endif
 

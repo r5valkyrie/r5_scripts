@@ -4,7 +4,7 @@ global function OnWeaponDeactivate_weapon_phase_breach
 global function OnWeaponPrimaryAttack_ability_phase_breach
 global function OnWeaponPrimaryAttackAnimEvent_ability_phase_breach
 global function OnWeaponAttemptOffhandSwitch_weapon_phase_breach
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function DEV_PhaseBreach_DestroyAll
 #endif
 #if CLIENT
@@ -13,7 +13,7 @@ global function ServerToClient_PhaseBreachPortalCancelled
     global function ServerToClient_NotifyAshCooldownReduction
 
 
-#if DEV
+#if DEVELOPER
 global function DEV_ClearTargetingData
 global function DEV_ToggleAshValidation
 #endif
@@ -131,7 +131,7 @@ struct
 
 	bool breachPersistsWhenAshDies
 
-	#if DEV
+	#if DEVELOPER
 		int numTargetingRuns
 		int newTargetingHits
 		int oldTargetingHits
@@ -601,7 +601,7 @@ void function CreateTunnelAndWaitForExpiration( entity player, PhaseTunnelData t
 	waitthread PhaseTunnel_WaitForPhaseTunnelExpiration( player, tunnelData, PHASE_BREACH_PORTAL_LIFETIME )
 }
 
-#if DEV
+#if DEVELOPER
 void function DEV_PhaseBreach_DestroyAll()
 {
 	foreach ( ent, portal in file.tunnelData )
@@ -784,7 +784,7 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 	// Step 1: Basic eye trace looking forward for solid ground
 	PhaseBreachTraceResults eyeTrace = DoEyeTrace( eyePos, eyeDir, rangeEffective, ignoredEnts, mins, maxs )
 
-	#if DEV
+	#if DEVELOPER
 	if ( DEBUG_DRAW_TARGETING )
 	{
 		vector debugColor = eyeTrace.results.fraction < 1.0 ? COLOR_GREEN : COLOR_RED
@@ -819,7 +819,7 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 	{
 		vector lowerEyeDir = VectorRotateAxis( eyeDir, player.GetRightVector(), -1 )
 		PhaseBreachTraceResults lowerEyeTrace = DoEyeTrace( eyePos, lowerEyeDir, rangeEffective, ignoredEnts, mins, maxs )
-		#if DEV
+		#if DEVELOPER
 			if ( DEBUG_DRAW_TARGETING )
 			{
 				DebugDrawText( eyeTrace.results.endPos, "Lower", false, 0.1 )
@@ -1369,7 +1369,7 @@ void function PhaseBreachCrosshair_Thread( entity weapon )
 
 void function DrawDebugSphereIfDebugging( vector origin, int r, int g, int b )
 {
-	#if DEV
+	#if DEVELOPER
 		if ( DEBUG_DRAW_PLACEMENT_TRACES )
 			DebugDrawSphere( origin, 5.0, <r, g, b>, false, 0.1 )
 	#endif
@@ -1534,7 +1534,7 @@ void function PhaseBreachPlacement_Thread( entity weapon )
 
 
 
-#if DEV
+#if DEVELOPER
 #if CLIENT
 void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetInfo info )
 {

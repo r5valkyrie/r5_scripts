@@ -1,5 +1,5 @@
 // add jumppad creation limit, max 4 / player
-// values are not 1:1 the retail ones, can be improved
+// values are not 1:1 accurate, can be improved
 
 global function JumpPad_Init
 global function JumpPad_CreatedCallback
@@ -303,7 +303,7 @@ void function OnJumpPadAreaEnter( entity trigger, entity ent )
 		return
 
 	if( !GetCurrentPlaylistVarBool( "flowstate_disable_doublejump_jumppad", false ) )
-		ent.kv.gravity = 0.75 //seems to be a thing in retail
+		ent.kv.gravity = 0.75 //matches expected behavior
 	
 	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_TRAVERSAL_LAUNCH_PAD, ent, ent.GetOrigin(), ent.GetTeam(), ent )
 

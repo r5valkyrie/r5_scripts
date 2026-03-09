@@ -5,6 +5,7 @@ global function RegisterDoomProtectionHintDamage
 global function UpdateScreenFade
 
 global function ScreenCoverTransition
+global function ScreenCoverEndTransition
 global function ServerToClient_ScreenCoverTransition
 global function SetCustomScreenFadeAsset
 
@@ -49,7 +50,7 @@ void function SetCustomScreenFadeAsset( asset fade )
 	file.ruiAssetName = fade
 }
 
-void function ScreenCoverTransition( float endTime )
+void function ScreenCoverTransition( float endTime, bool continueHoldOver = false )
 {
 	// #if DEVELOPER
 		// DumpStack()
@@ -107,6 +108,18 @@ void function ScreenCoverTransition( float endTime )
 	Chroma_EndBannerTransition()
 }
 
+// End screen cover transition after optional delay
+float function ScreenCoverEndTransition( float delay = 0.0 )
+{
+	float endTime = Time() + delay + SCREEN_COVER_TRANSITION_OUT_DURATION
+	if ( file.screenCoverEndTime > Time() )
+	{
+		// There's an active cover, end it
+		file.screenCoverEndTime = endTime
+		RuiSetGameTime( file.screenFade, "coverEndTime", endTime )
+	}
+	return delay
+}
 
 void function ServerToClient_ScreenCoverTransition( float endTime )
 {

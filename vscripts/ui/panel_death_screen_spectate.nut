@@ -21,28 +21,29 @@ void function InitDeathScreenSpectatePanel( var panel )
 
 void function SpectateOnOpenPanel( var panel )
 {
-	//
+	                                                        
 
 	var menu = GetParentMenu( panel )
 	var headerElement = Hud_GetChild( menu, "Header" )
+	RunClientScript( "UICallback_ShowSpectateTab", headerElement )
 
 	RegisterButtonPressedCallback( KEY_LSHIFT, DeathScreenTryToggleGladCard )
 	RegisterButtonPressedCallback( KEY_RSHIFT, DeathScreenTryToggleGladCard )
 	RegisterButtonPressedCallback( KEY_SPACE, DeathScreenPingRespawn )
-	//RegisterButtonPressedCallback( KEY_R, DeathScreenOnReportButtonClick )
+	RegisterButtonPressedCallback( GetPCReportKey(), DeathScreenOnReportButtonClick )
+	                                                                                 
+	RegisterButtonPressedCallback( MOUSE_MIDDLE, DeathScreenSpectateNext )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, DeathScreenSpectateNext )
-	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, DeathScreenSpectatePrev )
+	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, DeathScreenSpectateNext )
 	RegisterButtonPressedCallback( KEY_TAB, DeathScreenSkipDeathCam )
 
 	DeathScreenUpdateCursor()
-	
-	RunClientScript( "UICallback_ShowSpectateTab", headerElement )
 }
 
 
 void function UI_UpdateDeathScreenSpectatePanel()
 {
-	//
+	                                                   
 
 	var menu = GetParentMenu( file.panel )
 	var headerElement = Hud_GetChild( menu, "Header" )
@@ -55,8 +56,10 @@ void function SpectateOnClosePanel( var panel )
 	DeregisterButtonPressedCallback( KEY_LSHIFT, DeathScreenTryToggleGladCard )
 	DeregisterButtonPressedCallback( KEY_RSHIFT, DeathScreenTryToggleGladCard )
 	DeregisterButtonPressedCallback( KEY_SPACE, DeathScreenPingRespawn )
-	//DeregisterButtonPressedCallback( KEY_R, DeathScreenOnReportButtonClick )
+	DeregisterButtonPressedCallback( GetPCReportKey(), DeathScreenOnReportButtonClick )
+	                                                                                   
+	DeregisterButtonPressedCallback( MOUSE_MIDDLE, DeathScreenSpectateNext )
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, DeathScreenSpectateNext )
-	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, DeathScreenSpectatePrev )
+	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, DeathScreenSpectateNext )
 	DeregisterButtonPressedCallback( KEY_TAB, DeathScreenSkipDeathCam )
 }

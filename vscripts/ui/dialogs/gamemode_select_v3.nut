@@ -1,6 +1,5 @@
 global function InitR5RGamemodeSelectDialog
 
-const int MAX_DISPLAYED_MODES = 5
 const int MAX_TOP_SERVERS = 3
 const int MAX_FREEROAM_MAPS = 6
 

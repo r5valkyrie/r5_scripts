@@ -4,7 +4,7 @@ global function FreeDM_GamemodeInitShared
 global function FreeDM_GetOtherTeam
 global function FreeDM_SetAudioEvent
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 global function DEV_FreeDM_IncrementScore
 global function DEV_FreeDM_EndMatch
@@ -1120,7 +1120,7 @@ const int FramesToWait = 60 // server so 20fps * 3 seconds = 60 frames
 #if SERVER
 void function FreeDM_CheckWinConditions_Thread()
 {
-#if DEV
+#if DEVELOPER
 	if ( GetConVarInt( "mp_enablematchending" ) == 0 )
 		return
 
@@ -1658,7 +1658,7 @@ void function FreeDM_LaunchAirdrop_Thread( vector pointLocation, array<string> a
 		Remote_CallFunction_NonReplay( player, "ServerCallback_SUR_PingMinimap", pointLocation, pingDuration, spreadRadius, ringRadius, COLORID_AIRDROP_DEFAULT_COLOR, frequency, freqVariation, eAirdropType.STANDARD )
 	}
 
-	// S3 AirdropItems takes flat array<string> + individual params instead of S22's array<array<string>> + struct
+	// AirdropItems takes flat array<string> + individual params
 	array<string> flatContents = [airdropContents[0], airdropContents[1], airdropContents[2]]
 
 	thread AirdropItems( pointLocation, <0, RandomFloatRange(-180, 180), 0>, flatContents, null, FREEDM_AIRDROP_ANIMATION, null, CHEVREX_AIRDROP_SKIN_INDEX, "" )
@@ -2533,7 +2533,7 @@ int function FreeDM_GetRampUpMusicStartScoreValue()
 }
 #endif // SERVER
 
-#if DEV
+#if DEVELOPER
 #if SERVER
 void function DEV_FreeDM_IncrementScore(entity player, int amount = 1)
 {
@@ -2549,7 +2549,7 @@ void function DEV_FreeDM_EndMatch( int winningTeam )
 #endif
 #endif
 
-#if DEV
+#if DEVELOPER
 #if CLIENT
 void function DEV_ScoreTrackAnimateIn()
 {

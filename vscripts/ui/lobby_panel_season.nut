@@ -52,14 +52,18 @@ void function SeasonPanel_OnShow( var panel )
 		AddCallbackAndCallNow_OnGRXOffersRefreshed( OnGRXSeasonUpdate )
 		file.callbacksAdded = true
 	}
-	thread AnimateSmallTabBar( tabData )
 
 	entity player = GetLocalClientPlayer()
 
 	if ( !IsValid( player ) )
 		return
 
-	ItemFlavor currentSeason = GetLatestSeason( GetUnixTimestamp() )
+	// No calendar event data, so GetLatestSeason will return null
+	ItemFlavor ornull currentSeasonOrNull = GetActiveSeason( GetUnixTimestamp() )
+	if ( currentSeasonOrNull == null )
+		return
+
+	ItemFlavor currentSeason = expect ItemFlavor( currentSeasonOrNull )
 	string seasonString = ItemFlavor_GetCalEventRef( currentSeason )
 	bool isNewSeason = player.GetPersistentVar( "lastHubResetSeason" ) != seasonString
 	if( isNewSeason )
@@ -67,6 +71,9 @@ void function SeasonPanel_OnShow( var panel )
 		AdvanceMenu( GetMenu("BattlePassAboutPage1") )
 		Remote_ServerCallFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason", seasonString )
 	}
+
+	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
+		thread AnimateInSmallTabBar( tabData )
 }
 
 
@@ -98,6 +105,7 @@ array<var> function GetAllMenuPanelsSorted( var menu )
 
 int function SortMenuPanelsByPlaylist( var a, var b )
 {
+	                                                                                                                                                       
 	string playlistVal = GetCurrentPlaylistVarString( "season_panel_order", "CollectionEventPanel|ThemedShopPanel|PassPanel|QuestPanel|ChallengesPanel" )
 	if ( playlistVal == "" )
 		return 0
@@ -147,9 +155,6 @@ void function OnGRXSeasonUpdate()
 			array<var> nestedPanels = GetAllMenuPanelsSorted( file.panel )
 			foreach ( nestedPanel in nestedPanels )
 			{
-				bool wantDividerAfter               = false
-				float tabBarLeftOffsetFracIfVisible = 0.0
-
 				if ( Hud_GetHudName( nestedPanel ) == "CollectionEventPanel" && !haveActiveCollectionEvent )
 					continue
 
@@ -163,10 +168,12 @@ void function OnGRXSeasonUpdate()
 				{
 					case "ThemedShopPanel":
 					case "CollectionEventPanel":
+						                                       
+						                                    
 						break
 				}
 
-				AddTab( file.panel, nestedPanel, GetPanelTabTitle( nestedPanel ), wantDividerAfter, tabBarLeftOffsetFracIfVisible )
+				AddTab( file.panel, nestedPanel, GetPanelTabTitle( nestedPanel ) )
 			}
 
 			file.wasCollectionEventActive = haveActiveCollectionEvent
@@ -181,6 +188,7 @@ void function OnGRXSeasonUpdate()
 		SetTabDefsToSeasonal(tabData)
 		SetTabBackground( tabData, Hud_GetChild( file.panel, "TabsBackground" ), eTabBackground.STANDARD )
 
+		                                                                                            
 		foreach ( TabDef tabDef in GetPanelTabs( file.panel ) )
 		{
 			bool showTab   = true
@@ -195,7 +203,14 @@ void function OnGRXSeasonUpdate()
 				if ( haveActiveCollectionEvent )
 				{
 					expect ItemFlavor(activeCollectionEvent)
-					tabDef.title = "#MENU_STORE_PANEL_COLLECTION"
+
+					tabDef.title = "#MENU_STORE_PANEL_COLLECTION"                                                           
+
+					                               
+					                                                                                         
+					                                                                                           
+					                                                                                           
+					                                                                                             
 				}
 			}
 			else if ( Hud_GetHudName( tabDef.panel ) == "ThemedShopPanel" )
@@ -203,7 +218,21 @@ void function OnGRXSeasonUpdate()
 				showTab = haveActiveThemedShopEvent
 				if ( haveActiveThemedShopEvent )
 				{
-					tabDef.title = "#EVENT_EXCLUSIVE_OFFERS"
+					                                          
+
+					tabDef.title = "#EVENT_EXCLUSIVE_OFFERS"                                                       
+
+					                               
+					                                                                 
+					                                                                   
+					                                                                   
+					                                                                     
+					                                                                                         
+					                                                                                         
+					                                                                                       
+					                                                                                         
+					                                                                                         
+					                                                                                             
 				}
 			}
 
@@ -250,8 +279,13 @@ void function JumpToSeasonTab( string activateSubPanel = "" )
 	while ( GetActiveMenu() != GetMenu( "LobbyMenu" ) )
 		CloseActiveMenu()
 
+	// Season tab removed from lobby — early out if tab doesn't exist
 	TabData lobbyTabData = GetTabDataForPanel( GetMenu( "LobbyMenu" ) )
-	ActivateTab( lobbyTabData, Tab_GetTabIndexByBodyName( lobbyTabData, "SeasonPanel" ) )
+	int seasonTabIndex = Tab_GetTabIndexByBodyName( lobbyTabData, "SeasonPanel" )
+	if ( seasonTabIndex == -1 )
+		return
+
+	ActivateTab( lobbyTabData, seasonTabIndex )
 
 	if ( activateSubPanel == "" )
 		return
@@ -283,6 +317,9 @@ void function InitSeasonWelcomeMenu( var menu )
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, SeasonWelcome_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, SeasonWelcome_OnClose )
 
+	                                                                           
+	                                                                           
+
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 }
 
@@ -290,6 +327,16 @@ void function InitSeasonWelcomeMenu( var menu )
 void function SeasonWelcome_OnOpen()
 {
 	ItemFlavor season = GetLatestSeason( GetUnixTimestamp() )
+	                                                                                          
+	                                                                                        
+	                                                                                               
+	                                                                                                         
+	                                                                                                                  
+	  
+	                                                                                                                   
+	                                                                                                                     
+	                                                                                                                                   
+
 	HudElem_SetRuiArg( s_welcomeMenu.welcomeHeader, "logo", Season_GetSmallLogo( season ), eRuiArgType.IMAGE )
 }
 
@@ -298,3 +345,4 @@ void function SeasonWelcome_OnClose()
 {
 
 }
+

@@ -460,6 +460,18 @@ void function AddThirdPersonSpectateEndedCallback( void functionref( entity spec
 	clGlobal.thirdPersonSpectateEndCallbacks.append( callbackFunc )
 }
 
+void function AddFreeCamSpectateStartedCallback( void functionref( entity spectatingPlayer ) callbackFunc )
+{
+	Assert( !clGlobal.freeCamSpectateStartCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddFreeCamSpectateStartedCallback" )
+	clGlobal.freeCamSpectateStartCallbacks.append( callbackFunc )
+}
+
+void function AddFreeCamSpectateEndedCallback( void functionref( entity spectatingPlayer ) callbackFunc )
+{
+	Assert( !clGlobal.freeCamSpectateEndCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddFreeCamSpectateEndedCallback" )
+	clGlobal.freeCamSpectateEndCallbacks.append( callbackFunc )
+}
+
 void function AddOnSpectatorTargetChangedCallback( void functionref( entity spectatingPlayer, entity prevSpectatorTarget, entity newSpectatorTarget ) callbackFunc )
 {
 	Assert( !clGlobal.onSpectatorTargetChangedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddOnSpectatorTargetChangedCallback" )

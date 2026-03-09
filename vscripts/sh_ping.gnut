@@ -920,7 +920,7 @@ void function OnBleedoutEnded( entity victim )
 	Ping_Interrupt()
 }
 
-const float DOT_45DEGREE = 0.707106781187
+// DOT_45DEGREE moved to sh_utility_all.gnut
 entity function GetZiplineUseEntity( entity player )
 {
 	entity useEnt = player.GetUsePromptEntity()

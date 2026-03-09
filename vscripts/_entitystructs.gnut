@@ -332,6 +332,7 @@ global struct ServerEntityStruct
 	string lootRef
 	int __itemFlavorNetworkId
 	int spawnSource
+	bool eyeForQuality_everPinged = false
 	string sourceWeaponClassname
 	table<entity,bool> stats_usersSet
 	int repeatSpawnCount = 0
@@ -559,6 +560,7 @@ global struct ServerPlayerStruct
 	bool isPlayerInVent = false
 	asset lastGroundEntityName
 	bool isInLobby = false
+	bool grxInitialized = false
 	bool isGameStart = false
 	
 	bool canChangeGadgets
@@ -628,6 +630,16 @@ global struct ServerPlayerStruct
 	vector						rematchOrigin
 
 	entity						lastKiller
+	array<entity>				scannedEnemies
+	bool						hasTickedEquipItemStat = false
+	table<int, array<entity> >	doomedEnemies
+	bool						hasMatchParticipationEnded = false
+	bool						hasTickedThanksStatThisGame = false
+	bool						updatedPersistenceOnDisconnect = false
+	bool						DEV_hasDevRespawned = false
+	float						nextAllowPlaneEmoteTime = 0.0
+	bool						skydiveEmotesDisabled = false
+	ArtifactConfig ornull		artifactConfig = null
 	array<float>				recentPlayerKilledTimes
 	array<float>				recentAllKilledTimes
 	bool						seekingRevenge
@@ -847,7 +859,7 @@ global struct ServerPlayerStruct
 	
 	
 	////////////////////////////////////////////////////////////////
-	//mkos /or/ r5r stats /r5r.dev Todo: clean this up and remove the need for most
+	// TODO: clean this up and remove the need for most
 	
 	int handle 					= -1
 	string UID 					= ""
@@ -1107,7 +1119,6 @@ global struct ServerPlayerStruct
 	//Custom models
 	int assignedCustomModel
 	
-	//R5R Sword
 	array<VisibleEntityInCone> targetsForAoeDamage
 	bool isRunningFuelThread
 	float lastFuelRemainingTime = -1

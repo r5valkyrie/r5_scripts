@@ -437,7 +437,7 @@ void function BeginBombletFire( entity owner, entity projectile, entity projecti
 
 	foreach ( segment in segmentsArray )
 	{
-		#if DEV && MORTAR_RING_MISSILE_DEBUG
+		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
 			DebugDrawSphere( segment.startPos + <0, 0, 10> , 10, COLOR_RED, true, 25.0 )
 			DebugDrawArrow( segment.startPos, segment.endPos, 25, COLOR_BLUE, true, 25.0)
 			DebugDrawSphere( segment.endPos, 10, COLOR_GREEN, true, 25.0 )
@@ -496,7 +496,7 @@ vector function FindValidEndPosForFireSegment( vector startPos, vector dir, floa
 		{
 			endTraces = true
 		}
-		#if DEV && MORTAR_RING_MISSILE_DEBUG
+		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
 			DebugDrawLine( traceStart, forwardTrace.endPos, COLOR_GREEN, true, 25.0 )
 		#endif
 
@@ -513,7 +513,7 @@ vector function FindValidEndPosForFireSegment( vector startPos, vector dir, floa
 			lastGoodEndPos = downTrace.endPos
 			traceStart = downTrace.endPos + < 0, 0, MORTAR_RING_MISSILE_FIRE_FWD_TRACE_HEIGHT >
 		}
-		#if DEV && MORTAR_RING_MISSILE_DEBUG
+		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
 			DebugDrawLine( forwardTrace.endPos, downTrace.endPos, COLOR_BLUE, true, 25.0 )
 		#endif
 
@@ -649,7 +649,7 @@ void function MortarRingFireSegmentTriggerThread( entity effect, entity controlP
 
 	while ( true )
 	{
-		#if DEV && MORTAR_RING_MISSILE_DEBUG
+		#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
 			DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, radius, height + MORTAR_RING_FIRE_SEGMENT_HEIGHT, COLOR_WHITE, true, 0.1 )
 			DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, radius, -height, COLOR_WHITE, true, 0.1 )
 			DebugDrawSphere( effect.GetOrigin(), 10, COLOR_GREEN, true, 0.1 )
@@ -964,7 +964,7 @@ void function MortarRingAirburst( entity player, entity projectile, int numBombs
 
 
 	array<vector> orderedTargetPoints = GetTargetPointsAroundOrigin( projectileOrigin, numBombs, 420.0, -750.0, radiusModMin, radiusModMax )
-	#if DEV && MORTAR_RING_MISSILE_DEBUG
+	#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
 		DebugDrawSphere( projectileOrigin, 10, COLOR_BLUE, true, 10.0 )
 	#endif
 
@@ -1017,7 +1017,7 @@ void function LaunchBomblet( entity player, entity weapon, vector origin, vector
 	vector dirFromCenter = FlattenNormalizeVec( target - origin )
 	ArcSolution as = SolveBallisticArc( origin, launchSpeed, target, GetConVarFloat( "sv_gravity" ) )
 	vector velocity = ( as.valid ) ? as.fire_velocity : dirFromCenter * launchSpeed
-#if DEV && MORTAR_RING_MISSILE_DEBUG
+#if DEVELOPER && MORTAR_RING_MISSILE_DEBUG
 	if( !as.valid )
 		DebugDrawSphere( target, 10, COLOR_RED, true, 10.0 )
 	else

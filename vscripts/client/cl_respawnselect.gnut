@@ -40,7 +40,7 @@ struct
 
 void function ClRespawnselect_MP_Init()
 {
-	return //disabled for R5R
+	return //disabled
 	
     //PrecacheHUDMaterial( IMAGE_SELECT_TITAN )
     //PrecacheHUDMaterial( IMAGE_SELECT_PILOT )

@@ -257,6 +257,8 @@ void function PrecacheSDKWeapons()
 	PrecacheWeapon( $"mp_ability_wrecking_ball" )
 	PrecacheWeapon( $"mp_weapon_grenade_gravity" )
 
+	PrecacheWeapon( $"mp_weapon_melee_survival" )
+	PrecacheWeapon( $"melee_pilot_emptyhanded" )
 	PrecacheWeapon( $"mp_weapon_melee_boxing_ring" )
 	PrecacheWeapon( $"melee_boxing_ring" ) // Olympus ring
 	

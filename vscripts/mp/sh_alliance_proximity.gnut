@@ -7,8 +7,7 @@
 // This logic is currently being used in Control Mode.
 
 // ============================================================================
-// S3 Engine Native Stubs — global declarations
-// These functions exist as engine natives in S22+ but not in S3.
+// Engine Native Stubs — global declarations
 // ============================================================================
 #if SERVER || CLIENT
 global function IsPositionWithinRadius
@@ -112,13 +111,13 @@ struct {
 // Init Alliance Proximity logic
 void function AllianceProximity_Init()
 {
-	#if DEV
+	#if DEVELOPER
 		printt( "ALLIANCE PROXIMITY: Running ", FUNC_NAME() )
-	#endif // DEV
+	#endif // DEVELOPER
 
-	#if DEV
+	#if DEVELOPER
 		Assert( AllianceProximity_GetMaxNumAlliances() <= 0 || AllianceProximity_GetMaxNumAlliances() <= GetCurrentPlaylistVarInt( "max_teams", 0 ), "ALLIANCE PROXIMITY: Trying to use Alliances but have set more alliances ( " + AllianceProximity_GetMaxNumAlliances() + " ) than squads ( " + GetCurrentPlaylistVarInt( "max_teams", 0 ) + " )" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	// Logic below should only be needed when using Alliances
 	if ( !AllianceProximity_IsUsingAlliances() )
@@ -193,10 +192,10 @@ void function AllianceProximity_SetPriorityPingsForAlliance( array < int > prior
 	Assert( AllianceProximity_ShouldOnlyDisplayPriorityPingsForAlliance(), "ALLIANCE PROXIMITY: Setting priority pings using " + FUNC_NAME() + " for a mode that doesn't have priority pings enabled." )
 
 
-	#if DEV
+	#if DEVELOPER
 		if ( file.priorityPingTypes.len() > 0 )
 			Warning( "ALLIANCE PROXIMITY: Setting priority pings for alliance when we already have defined priority pings, the old pings will be overridden" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 
 	file.priorityPingTypes = priorityPingTypes
@@ -211,10 +210,10 @@ bool function AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( bool is
 	if ( !AllianceProximity_IsUsingAllianceProximity() )
 		return false
 
-	#if DEV
+	#if DEVELOPER
 		if ( AllianceProximity_ShouldOnlyDisplayPriorityPingsForAlliance() && file.priorityPingTypes.len() < 1 )
 			Warning( "ALLIANCE PROXIMITY: AllianceProximity_ShouldOnlyDisplayPriorityPingsForAlliance is set to true but there are no priority pings defined, use AllianceProximity_SetPriorityPingsForAlliance to set them" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	// We don't want to transmit anything if we only transmit priority pings and this is not a ping or not a priority ping
 	if ( AllianceProximity_ShouldOnlyDisplayPriorityPingsForAlliance() && ( !isPing || pingType == -1 || !file.priorityPingTypes.contains( pingType ) ) )
@@ -275,9 +274,9 @@ void function AllianceProximity_RegisterNonPlayerTeamToAlliances( int team )
 {
 	if ( !AllianceProximity_GetAllTeamsInAlliances( false ).contains( team ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			printt( "ALLIANCE PROXIMITY: ", FUNC_NAME(), " adding team: ", team, " to file.allAllianceTeams and putting them on alliance: ", ALLIANCE_A )
-		#endif // DEV
+		#endif // DEVELOPER
 		file.allAllianceTeams.append( team )
 		// Put on temp alliance, script should set this team to an alliance manually
 		AllianceProximity_SetTeamToAlliance_Internal( team, ALLIANCE_A )
@@ -407,9 +406,9 @@ int function AllianceProximity_GetOtherAlliance( int alliance )
 // Return the player's team prior to end of match team switch if it is available otherwise return their current team number
 int function AllianceProximity_GetOriginalPlayerTeam_FromPlayerEHI( EHI playerEHI )
 {
-	#if DEV
+	#if DEVELOPER
 		Assert(  EHIHasValidScriptStruct( playerEHI ), "ALLIANCE PROXIMITY: Attempted to run " + FUNC_NAME() + " on an Invalid playerEHI" )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	int team = EHI_GetTeam( playerEHI )
 
@@ -844,7 +843,7 @@ void function AllianceProximity_OnPlayerConnected( entity player )
 			file.originalTeamIDToCurrentTeamMemberIndexesTable[ team ] <- [ teamMemberIndex ]
 
 		// If we can change alliances mid match, make sure we update the data on the client if the player joins late
-		// S3: eGameState.PickLoadout doesn't exist — use Prematch as equivalent
+		// eGameState.PickLoadout not available — use Prematch as equivalent
 		if ( AllianceProximity_IsMidMatchAllianceSwitchingEnabled() && GetGameState() > eGameState.Prematch )
 			AllianceProximity_UpdateAllianceDataOnClientForPlayer( player )
 	}
@@ -928,17 +927,17 @@ void function AllianceProximity_SetTeamToAlliance_Internal( int team, int allian
 
 	if ( !allTeams.contains( team ) )
 	{
-		#if DEV
+		#if DEVELOPER
 				Assert( false, "ALLIANCE PROXIMITY: " + FUNC_NAME() + " is trying to change the alliance for a team that doesn't exist: " + team + " if this is intentional try the AllianceProximity_RegisterNonPlayerTeamToAlliances function" )
-		#endif // DEV
+		#endif // DEVELOPER
 		return
 	}
 
 	if ( alliance >= AllianceProximity_GetMaxNumAlliances() )
 	{
-		#if DEV
+		#if DEVELOPER
 			Assert( false, "ALLIANCE PROXIMITY: " + FUNC_NAME() + " is trying to put team: " + team + " into an invalid alliance: " + alliance )
-		#endif // DEV
+		#endif // DEVELOPER
 		return
 	}
 
@@ -950,13 +949,13 @@ void function AllianceProximity_SetTeamToAlliance_Internal( int team, int allian
 	}
 
 
-	#if DEV
+	#if DEVELOPER
 		printt( "ALLIANCE PROXIMITY: Putting team ", team, " on Alliance ", alliance )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	#if SERVER
 		// Need to take the team out of the old alliance otherwise it will be treated as friendly even though the player is put on a new alliace.
-		// S3 engine lacks SetTeamIsInAlliance — alliance team relationships are managed at script level only
+		// SetTeamIsInAlliance not available — alliance team relationships are managed at script level only
 		// SetTeamIsInAlliance( team, currentAlliance, false )
 		// SetTeamIsInAlliance( team, alliance, true )
 	#endif // SERVER
@@ -1126,7 +1125,7 @@ void function AllianceProximity_SetOnlyTransmitWaypointToFriendlyTeams( entity w
 
 	if ( AllianceProximity_IsUsingAllianceProximity() )
 	{
-		// S3 engine lacks SetOnlyTransmitToTeamAndFriendlyAlliance — fall back to single team
+		// SetOnlyTransmitToTeamAndFriendlyAlliance not available — fall back to single team
 		wp.SetOnlyTransmitToSingleTeam( team )
 	}
 	else
@@ -1171,10 +1170,9 @@ int function AllianceProximity_GetAllianceScoreDifference()
 #endif // CLIENT || SERVER
 
 // ============================================================================
-// S3 Engine Native Stub Implementations
+// Engine Native Stub Implementations
 // ============================================================================
 
-// S22+ engine native: check if a position is within a radius of another position
 #if SERVER || CLIENT
 bool function IsPositionWithinRadius( float radius, vector pos1, vector pos2 )
 {
@@ -1182,18 +1180,18 @@ bool function IsPositionWithinRadius( float radius, vector pos1, vector pos2 )
 }
 #endif // SERVER || CLIENT
 
-// S22+ client function: temporarily mute a player (used during end-of-match alliance team reassignment)
+// stub — temp mute system not available
 #if CLIENT
 void function SetPlayerTempMuted( entity player )
 {
-	// S3 has no temp mute system — no-op
+	// no-op
 }
 #endif // CLIENT
 
-// S22+ server callback: fires when a disconnected client reconnects
+// stub — reconnection callback not available
 #if SERVER
 void function AddCallback_OnClientConnectionRestored( void functionref( entity ) callback )
 {
-	// S3 has no reconnection callback system — no-op
+	// no-op
 }
 #endif // SERVER

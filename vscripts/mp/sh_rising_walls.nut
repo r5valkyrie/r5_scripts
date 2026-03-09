@@ -93,7 +93,7 @@ struct
 
 	#if SERVER && DEVELOPER
 		bool debugEnabled = false
-	#endif // SERVER && DEV
+	#endif // SERVER && DEVELOPER
 } file
 
 
@@ -420,10 +420,10 @@ void function OnRisableWallPanelActivate( RisableWallData data, entity helper, e
 		//CleanUpPermanentsInInvalidAreas()
 	#endif // SERVER
 
-	#if SERVER && DEV
+	#if SERVER && DEVELOPER
 		if ( file.debugEnabled )
 			Debug_OnRisableWallPanelActivate( data )
-	#endif // SERVER && DEV
+	#endif // SERVER && DEVELOPER
 
 	#if SERVER
 		OnThreadEnd(
@@ -621,4 +621,4 @@ void function Debug_ShowFlapAndTopRotationPivots_Thread( RisableWallData data, f
 		WaitFrame()
 	}*/
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER

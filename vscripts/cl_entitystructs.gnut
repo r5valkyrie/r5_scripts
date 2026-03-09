@@ -227,7 +227,6 @@ global struct ClientPlayerStruct
 	string snd_knifecolor = "255, 255, 255"
 	int holosprayChoice
 
-	//R5R Sword
 	array<VisibleEntityInCone> targetsForAoeDamage
 	bool isSecondaryMeleeAttack = false
 
@@ -247,6 +246,9 @@ global struct ClientPlayerStruct
 	bool isInAdsCustom
 
 	float  lastTimeDeactivatedJetpack
+
+	// Artifact configuration
+	ArtifactConfig ornull artifactConfig = null
 }
 
 

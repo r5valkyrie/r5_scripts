@@ -4,6 +4,12 @@
 //  !!!NOTE: Reference script only; changes made to this script will not work in game.
 //=============================================================================
 
+// Platform defines not present in PC engine
+global const bool NX_PROG = false
+global const bool PLAYSTATION_PROG = false
+global const bool XBOX_PROG = false
+global const bool PC_PROG_NX_UI = false
+
 global function printl
 global function CodeCallback_Precompile
 
@@ -127,6 +133,54 @@ global struct BackendError
 	string errorString
 }
 
+global struct CupsMatchStatInformation
+{
+	string statRef
+	int statChange
+	int pointsGained
+}
+
+global struct CupsPlayerMatchSummary
+{
+	int									playerPlacement
+	string								playerLegendName
+	string								playerUID
+	string								playerHardware
+	int 								playerCalculatedScore
+	array< CupsMatchStatInformation > 	statInformation
+}
+
+global struct CupMatchSummary
+{
+	int								squadCalculatedScore
+	array< CupsPlayerMatchSummary >	playerSummaries
+}
+
+global struct CupEntry
+{
+	int cupID
+	string squadID
+	int currSquadPosition
+	int leaderboardCount
+	float positionPercentage
+	int currSquadScore
+	int reRollCount
+	array< CupMatchSummary > matchSummaryData
+	array< int > tierScoreBounds
+}
+
+global struct CupPlayerMMRBucket
+{
+	int cupID
+	int bucket
+}
+
+global struct UserFullCupData
+{
+	array< CupEntry > enteredCups
+	array< CupPlayerMMRBucket > cupPlayerMMRData
+}
+
 global struct BrowseFilters
 {
 	string name
@@ -226,10 +280,14 @@ global struct CommunityUserInfo
 	int rankLadderPos
 	int rankedLadderPos
 	string rankedPeriodName
+	int arenaScore
+	string arenaPeriodName
+	int arenaLadderPos
 	int lastCharIdx
 	bool isLivestreaming
 	bool isOnline
 	bool isJoinable
+	bool hasGraduatedBotsQueue
 	bool partyFull
 	bool partyInMatch
 	float lastServerChangeTime
@@ -247,6 +305,7 @@ global struct PartyMember
 	bool ready
 	bool present
 	string eaid
+	string clubTag
 	int boostCount
 	string unspoofedHardware
 	string unspoofedUID
@@ -361,17 +420,66 @@ global struct GRXCraftingOffer
 	int craftingPrice
 }
 
+global struct GRXStoreOfferItem
+{
+	int itemIdx
+	int itemQuantity
+	int itemType
+}
+
+global struct GRXStoreOfferPrice
+{
+	string priceAlias
+	array< int > currencies
+}
+
 global struct GRXStoreOffer
 {
-	array< int > items
-	array< array< int > > prices
+	array< int > items                  // engine populates as array<int>, not array<GRXStoreOfferItem>
+	array< array< int > > prices       // engine populates as array<array<int>>, not array<GRXStoreOfferPrice>
 	table< string, string > attrs
+	int offerType
+	string offerAlias
+	bool isSparkable
+	int purchaseCount
+	int ineligibilityCode
+}
+
+global struct GRXScriptInboxMessage
+{
+	array<int> itemIndex
+	array<int> itemCount
+	bool       isNew
+	int        timestamp
+	string     senderNucleusPid
+	string     gifterName
 }
 #endif // #if SERVER || UI
+
+global struct GRXContainerInfo
+{
+	int type
+	string containerId
+	array< int > itemIndices
+	array< int > itemCounts
+	bool isNew
+	int timestamp
+	string senderNucleusPid
+	string senderName
+}
+
+global struct GRXUserInfoBalances
+{
+	int balance
+	int nextCurrencyExpirationAmt
+	int nextCurrencyExpirationTime
+}
 
 global struct GRXUserInfo
 {
 	int inventoryState
+
+	array<GRXUserInfoBalances> currencies
 
 	int queryGoal
 	int queryOwner
@@ -379,10 +487,16 @@ global struct GRXUserInfo
 	int querySeqNum
 
 	array< int > balances
+	int nextCurrencyExpirationAmt
+	int nextCurrencyExpirationTime
+
+	int sparkleLimitCounter
+	int sparkleLimitResetDate
 
 	int marketplaceEdition
 
 	bool isOfferRestricted
+	bool hasUpToDateBundleOffers
 }
 
 global struct VortexBulletHit
@@ -638,6 +752,377 @@ global struct NavMesh_FindMeshPath_Result
 	bool pathFound
 	array<vector> points
 }
+
+global struct PrivateMatchStatsStruct
+{
+	string playerName
+	string teamName
+	string characterName
+	string platformUid
+	string hardware
+	int survivalTime
+	int kills
+	int assists
+	int knockdowns
+	int damageDealt
+	int shots
+	int hits
+	int headshots
+	int revivesGiven
+	int respawnsGiven
+	int teamNum
+	int teamPlacement
+	bool alive
+}
+
+global struct PrivateMatchAdminChatConfigStruct
+{
+	int		chatMode
+	int		targetIndex
+	bool	spectatorChat
+}
+
+global struct PrivateMatchChatConfigStruct
+{
+	bool	adminOnly
+}
+
+global struct GrenadeIndicatorData
+{
+	vector hitPos
+	vector hitNormal
+	entity hitEnt
+}
+
+global struct NetTraceRouteResults
+{
+	string address
+	int sent
+	int received
+	int bestRttMs
+	int worstRttMs
+	int lastRttMs
+	int averageRttMs
+}
+
+#if UI || CLIENT
+global struct GRXGetOfferInfo
+{
+	bool isEligible
+	array< array< int > > prices
+}
+
+global struct GRXBundleOffer
+{
+	array< array<int> >bundlePrices
+	int purchaseCount
+	string ineligibleReason
+}
+
+global struct ClubHeader
+{
+	string clubID
+	string name
+	string tag
+	string logoString
+	string creatorID
+	string dataCenter
+	int memberCount
+	int privacySetting
+	int minLevel
+	int minRating
+	int searchTags
+	int hardware
+	bool allowCrossplay
+	int lastActive
+}
+
+global struct ClubMember
+{
+	string memberID
+	string memberName
+	string platformUserID
+	int memberHardware
+	int rank
+}
+
+global struct ClubJoinRequest
+{
+	string userID
+	string userName
+	int userHardware
+	string platformUid
+	int expireTime
+}
+
+global struct ClubEvent
+{
+	int eventTime
+	int eventType
+	int eventParam
+	string eventText
+	string memberName
+	string memberID
+}
+
+global struct ClubData
+{
+	array< ClubMember > members
+	array< ClubJoinRequest > joinRequests
+	array< ClubEvent > eventLog
+	array< ClubEvent > chatLog
+}
+
+global struct ClubInvite
+{
+	string clubID
+	string name
+}
+
+global struct ClubDisplay
+{
+	string clubID
+	string name
+	string tag
+	string logoString
+	string dataCenter
+	int lastActive
+	int numMembers
+	int maxMembers
+	float activityMetric
+}
+
+global struct OutsourceViewer_SkinDetails
+{
+	string skinName
+	int skinTier
+}
+#endif
+
+#if CLIENT || UI
+global enum eRichPresenceSubstitutionMode
+{
+	NONE,
+	MODE_MAP,
+	MODE_MAP_SQUADSLEFT,
+	MODE_MAP_FRIENDLYSCORE_ENEMYSCORE,
+	MODE_MAP_FRIENDLYSCORE_ENEMYSCORE_PERCENTAGE,
+	PARTYSLOTSUSED_PARTYSLOTSMAX,
+}
+
+global struct PresenceState
+{
+	string 			layout
+	int				substitutionMode
+	string 			mapName
+	string 			gamemode
+	int				matchStartTime
+	int 			party_slotsUsed
+	int 			party_slotsMax
+	int 			survival_squadsRemaining
+	int				teams_friendlyScore
+	int				teams_enemyScore
+}
+
+global struct CustomMatch_LobbyPlayer
+{
+	string uid
+	string uidHashed
+	string hardware
+	string name
+	string clubTag
+	bool isAdmin = false
+	int team = 1
+	int flags = 0
+}
+
+global struct CustomMatch_MatchHistory
+{
+	int matchNumber
+	int endTime
+}
+
+global struct CustomMatch_LobbyState
+{
+	int maxTeams = 20
+	int maxPlayers = 60
+	int maxSpectators = 20
+	int matchState = 0
+	int tokenVer = 1
+	int selfIdx = -1
+	string playlist
+	bool adminChat = false
+	bool teamRename = false
+	bool selfAssign = true
+	bool aimAssist = true
+	bool anonMode = false
+	array<CustomMatch_LobbyPlayer> players
+	array<CustomMatch_MatchHistory> matches
+	table<int, string> teamNames
+}
+
+global struct CustomMatch_MatchPlayer
+{
+	string uid
+	string hardware
+	string name
+	string clubTag
+	string character
+	int status
+	int kills
+	int damageDealt
+}
+
+global struct CustomMatch_MatchTeam
+{
+	int index
+	string name
+	int placement
+	int killCount
+	array<CustomMatch_MatchPlayer> players
+}
+
+global struct CustomMatch_MatchSummary
+{
+	string gamemode
+	bool inProgress
+	array<CustomMatch_MatchTeam> teams
+}
+
+global struct CustomMatch_LobbyHistory
+{
+	array<CustomMatch_MatchHistory> matches
+}
+#endif
+
+#if UI || CLIENT
+global struct CustomMatch_SettingsForUpdate
+{
+	string playlist
+	bool adminChat
+	bool teamRename
+	bool selfAssign
+	bool aimAssist
+	bool anonMode
+}
+
+global struct EadpPresenceData
+{
+	int			hardware
+	PresenceState ornull 	presence
+	bool		partyInMatch
+	bool		partyIsFull
+	string		privacySetting
+	string		name
+	bool		online
+	bool		ingame
+	bool		away
+	string      firstPartyId
+	bool        isJoinable
+}
+
+global struct EadpPeopleData
+{
+	string eaid
+	string name
+	string platformName
+	string platformHardware
+	string ea_pid
+	string psn_pid
+	string xbox_pid
+	string steam_pid
+	string switch_pid
+	int ea_has_played
+	int psn_has_played
+	int xbox_has_played
+	int steam_has_played
+	int switch_has_played
+	int friendCreationTime
+	array< EadpPresenceData > presences
+}
+
+global struct EadpPeopleList
+{
+	bool   isValid
+	array< EadpPeopleData > people
+}
+
+global struct EadpQuerryPlayerData
+{
+	string	eaid
+	string	name
+	int		hardware
+}
+
+global struct EadpQuerryPlayerDataList
+{
+	bool   isValid
+	array< EadpQuerryPlayerData > players
+}
+
+global struct EadpInviteToPlayData
+{
+	string	eaid
+	string	name
+	int		hardware
+	int		reason
+	EadpPresenceData ornull eadpPresence
+}
+
+global struct EadpInviteToPlayList
+{
+	bool   isValid
+	array< EadpInviteToPlayData > invitations
+}
+
+global const string DISCOVERABLE_EVERYONE = "EVERYONE"
+global const string DISCOVERABLE_NOONE = "NO_ONE"
+
+global struct EadpPrivacySetting
+{
+	bool	isValid
+	string	psnIdDiscoverable
+	string	xboxTagDiscoverable
+	string	displayNameDiscoverable
+	string	steamNameDiscoverable
+	string	nintendoNameDiscoverable
+}
+
+global struct CodeRedemptionGrant
+{
+	string alias
+	int qty
+	int type
+}
+
+global struct UMAttribute
+{
+	string key
+	string value
+}
+
+global struct UMItem
+{
+	string type
+	string name
+	string value
+	array<UMAttribute> attributes
+}
+
+global struct UMAction
+{
+	string name
+	string trackingId
+	array<UMItem> items
+}
+
+global struct UMData
+{
+	string triggerId
+	string triggerName
+	array<UMAction> actions
+}
+#endif
 
 global typedef SettingsAssetGUID int
 

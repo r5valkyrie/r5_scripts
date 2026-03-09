@@ -782,6 +782,16 @@ bool function MeetsAgeRequirements()
 	return !GetConVarBool( "cl_isUnderAge" )
 }
 
+int function GetPCReportKey()
+{
+	return KEY_R
+}
+
+int function GetPCBlockKey()
+{
+	return KEY_B
+}
+
 
 bool function IsElitePlaylist( string playlist )
 {

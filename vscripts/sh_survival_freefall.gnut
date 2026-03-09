@@ -57,9 +57,6 @@ const array<vector> skydiveSmokeColors = [
 	//<3, 113, 34>, // Green 8
 	<0, 116, 88> // Green 9
 ]
-global function GetSkydiveSmokeColorForTeam
-
-
 #if SERVER
 	global function Survival_AddCallback_PlayerFreefallBegin
 	global function Survival_AddCallback_PlayerFreefallEnd
@@ -293,11 +290,6 @@ void function SurvivalFreefall_Init()
 		return file.freefall_enabled
 	}
 #endif
-
-vector function GetSkydiveSmokeColorForTeam( int team )
-{
-		return skydiveSmokeColors[ team % skydiveSmokeColors.len() ]
-}
 
 SkyDiveTrailPackage function GetSkyDiveTrailPackageForPlayerWithOverrides( entity player ) //
 {
@@ -1463,7 +1455,7 @@ bool function ClientCommand_SkydiveEmoteNext( entity player, array<string> args 
 	player.SetPlayerNetBool( "freefallEmoteAvailable", false )
 	thread function() : ( player, selectedEmote )
 	{
-		asset animSeq = CharacterSkydiveEmote_GetAnimSeq( selectedEmote )
+		asset animSeq = SkydiveEmote_GetAnimSeq( selectedEmote )
 
 		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_skydive" )
 		
@@ -1496,7 +1488,7 @@ bool function ClientCommand_SkydiveEmote( entity player, array<string> args )
 	player.SetPlayerNetBool( "freefallEmoteAvailable", false )
 	thread function() : ( player, selectedEmote )
 	{
-		asset animSeq = CharacterSkydiveEmote_GetAnimSeq( selectedEmote )
+		asset animSeq = SkydiveEmote_GetAnimSeq( selectedEmote )
 
 		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_skydive" )
 		

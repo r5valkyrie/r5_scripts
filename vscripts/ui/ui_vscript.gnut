@@ -167,9 +167,11 @@ global struct MenuDef
 
 	bool        isDialog = false
 	bool        isPopup = false
+	bool        allowControllerFooterClick = false
 	DialogData& dialogData
 	bool        isDynamicHeight = false
 	bool        gamepadCursorEnabled = true
+	bool        isSelfClosing = false
 
 	bool   clearBlur = true
 	float  enterTime
@@ -236,6 +238,12 @@ global struct ConfirmDialogData
 
 	int dialogType
 	var __menu
+	bool extendedUseYes = false
+	float timePenaltyWarning = 0.0
+
+	float dialogConfirmDelay = -1.0
+
+	string onOpenAudio = ""
 }
 
 global struct HSV
@@ -260,6 +268,7 @@ global struct UIGlobals
 	bool              lobbyFromLoadingScreen = false
 	bool              eventHandlersAdded = false
 	bool              loadoutsInitialized = false
+	bool              isLevelShuttingDown = false
 	bool              matchmaking = false
 	var               dialogCloseCallback = null
 	table             signalDummy = {}

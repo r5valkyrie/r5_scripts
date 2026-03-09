@@ -1,18 +1,18 @@
-/*
-Todo:
--Make clients see the picking player skin, not their own skin
--Don't interrupt ready-up anims unless we have to (it's your turn to pick, or the next player locked in)
-*/
+  
+     
+                                                             
+                                                                                                        
+  
 
 #if SERVER
-const bool DEBUG_LOCK_STEP_PICK = true //Todo: switch off in print/debug nuke before release
+                                       
 #endif
 #if CLIENT
 const bool DEBUG_CHARACTER_SELECT = false
 #endif
 
-const asset BACKGROUND_SMOKE_MODEL = $"mdl/levels_terrain/mp_lobby/mp_character_select_smoke.rmdl" //
-const asset BACKGROUND_GEO_MODEL = $"mdl/levels_terrain/mp_lobby/mp_character_select_geo.rmdl" //
+const asset BACKGROUND_SMOKE_MODEL = $"mdl/levels_terrain/mp_lobby/mp_character_select_smoke.rmdl"       
+const asset BACKGROUND_GEO_MODEL = $"mdl/levels_terrain/mp_lobby/mp_character_select_geo.rmdl"       
 const asset LIGHT_RIG_MDL = $"mdl/empty/lights/empty_lights.rmdl"
 
 global const string CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX = "characterSelectLockstepIndex"
@@ -29,8 +29,9 @@ const string REMOTE_SERVERCALL_ON_RESELECT_MENU_CLOSE = "ClientToServer_OnCharac
 
 
 #if SERVER
-global function AssignLockStepOrder
-global function CharacterSelect_AssignCharacter
+                                   
+                                             
+                                                         
 #endif
 
 #if UI
@@ -42,46 +43,56 @@ global function UI_ResetRoleTabs
 global function UI_ClearUIShelves
 #endif
 
+global function CharacterSelectSkinSelectionIsEnabled
+
 #if SERVER || CLIENT
-global function GetPlayerWithLockedCharacter
+global function AddCallback_CustomIsCharacterLockedForPlayer
+global function CharacterSelect_CustomIsCharacterLockedForPlayer
 #endif
 
 global const int NUM_CHARACTER_SELECT_BUTTONS = 30
+
 #if CLIENT
 global function OpenCharacterSelectNewMenu
+                    
+global function PickMVP
+global function DoAllSquadsCardsPresentation
+global function DoMVPSquadCardsPresentation
+      
 global function DoSquadCardsPresentation
-global function DoAnimatedSquadCardsPresentation
 global function DoChampionSquadCardsPresentation
-global function DoAnimatedChampionSquadCardsPresentation
 global function _OpenCharacterSelectNewMenu
 global function CloseCharacterSelectNewMenu
 global function OnCharacterSelectNewMenuClosed_RemoveCallbacks
 global function UpdateMenuElementHandles
 global function Client_TryUnlockCharacter
 global function ServerCallback_CharacterLockRejected
+global function ServerCallback_ForceCharacterLockFeedback
 global function OnLoadoutButton_RightClick
 global function UpdateCharacterDetailsMenu
 global function GetOtherTeammates
 global function SquadMuteLegendSelectEnabled
-
+global function CharacterSelect_GetIsBrowseMode
+global function CharacterSelect_SetIsBrowseMode
+global function CharacterSelect_MenuIsOpen
+global function CharacterSelect_SetTooltipUpdateFunc
 global function AddCallback_OnCharacterSelectMenuOpened
 global function AddCallback_OnCharacterSelectMenuClosed
 global function AddCallback_CharacterSelectMenu_OnCharacterFocused
 global function AddCallback_CharacterSelectMenu_OnCharacterLocked
-
-global function CharacterSelect_SetMenuState
-global function IsShowingChampionPresentation
-global function AddCallback_OnCharacterSelectBackgroundCreated
 global function AddCallback_OnCharacterSelectDetailsToggled
+global function AddCallback_OnCharacterSelectBackgroundCreated
 global function AddCallback_OnCharacterSelectModelChanged
 global function AddCallback_OnCharacterSelectUpdateLights
+global function CharacterSelect_UpdateMenuButtons
 global function CharacterSelect_UpdateFilterState
-global function UpdateBackgroundViaFunc
-global function CreateCharacterSelectClientEnts
-global function CharacterSelect_EnsureMenuEntsReady
-global function SetCharacterSelectSceneForChampionSquad
-global function UpdateCamera
 global function CharacterSelect_RestorePlayerView
+global function CharacterSelect_ClearMenuAndRestoreView
+global function UpdateBackgroundViaFunc
+global function OverrideCharacterSelectCamera
+global function RestoreCharacterSelectCamera
+global function PanAwayCharacterSelect
+global function FadeInOut
 global function CharacterSelect_UpdateFilterIndex
 
 const string CAMERA_ENT_NAME = "target_char_sel_camera_new"
@@ -105,7 +116,9 @@ const int MAX_TEAM_FOCUS_INDEX = 3
 const float READY_ANIM_MIN_DURATION = 4.0
 global const int CHAMPION_SQAUD_SMOKE_SKIN_INDEX = 9
 global const int CHAMPION_SQAUD_BACKGROUND_SKIN_INDEX = 9
-
+                             
+                                               
+      
 
 global enum eNewCharacterSelectMenuState
 {
@@ -118,10 +131,56 @@ global enum eNewCharacterSelectMenuState
 
 #if SERVER || CLIENT
 global function CharacterSelectNewMenu_Init
+global function IsCharacterReselectEnabled
+#endif
+
+#if SERVER
+                                                        
+                                                   
+                                            
+                                                          
+                                                           
+#endif
+
+                
+#if SERVER
+                                               
+                                                       
+#endif
+
+#if CLIENT
+global function ServerToClient_SetClubPartyBool
+global function UIToClient_SetClubName
+global function ServerToClient_SetChampionClubSquadName
+global function GetIsFullClubSquad
 #endif
 
 #if UI
+global function ClientToUI_GetClubName
+#endif
 
+                
+const string FUNCNAME_CLUB_SETCLUBSQUADBOOL_SV = "ClientToServer_SetClubSquadBool"
+const string FUNCNAME_CLUB_SETCLUBSQUADBOOL_CL = "ServerToClient_SetClubPartyBool"
+const string FUNCNAME_CLUB_SETCLUBNAME_CL = "UIToClient_SetClubName"
+const string FUNCNAME_CLUB_SETCHAMPIONCLUBNAME_SV = "ClientToServer_SetChampionClubSquadName"
+const string FUNCNAME_CLUB_SETCHAMPIONCLUBNAME_CL = "ServerToClient_SetChampionClubSquadName"
+const string FUNCNAME_CLUB_GETCLUBNAME = "ClientToUI_GetClubName"
+global const string CLUB_NAME_EMPTY = "?Club!Name?"
+
+#if CLIENT && DEV
+global function Dev_CharacterSelectClearCamera
+global function Dev_CharacterSelectRefreshLighting
+#endif
+
+#if CLIENT
+                                                             
+global function CreateCharacterSelectClientEnts
+global function UpdateCamera
+global function SetCharacterSelectSceneForChampionSquad
+#endif
+
+#if UI
 struct FileForeverStruct
 {
 	var menu
@@ -131,15 +190,20 @@ FileForeverStruct& fileForever
 
 struct FileLevelStruct
 {
-	bool isBrowseMode = false
-	float isBrowseModeStartTime
+	#if (UI || CLIENT)
+		bool isBrowseMode = false
+		bool isJiP = false
+		bool browseModeShowLockedCharacters = false
+		float isBrowseModeStartTime
+	#endif                  
 
 	#if SERVER || CLIENT
 		bool menuEntsExist = false
 	#endif
 
 	#if SERVER
-		bool assignedLockStepOrder = false
+		                                  
+		                                      
 	#endif
 
 	#if CLIENT
@@ -188,6 +252,7 @@ struct FileLevelStruct
 		int localClientLockstepIndex
 
 		entity camera
+		entity cameraToRestore
 		entity characterModel
 		entity characterNode
 		entity characterNodeMover
@@ -196,12 +261,18 @@ struct FileLevelStruct
 		entity fillLight
 		entity rimLightL
 		entity rimLightR
+#if NX_PROG || PC_PROG_NX_UI
+		int  buttonIdxToUpdate
+		bool operationModeChanged
+#endif
+
 		int currentCharacterIndex
 		entity backgroundModelSmoke
 		entity backgroundModelGeo
 
 		var                              backgroundRuiTopo
 		var                              backgroundRui
+                   
 		var								 scrollingBGRui
       
 		var                              countdownRui
@@ -217,14 +288,19 @@ struct FileLevelStruct
 		array<int>				lockedButtonIndexes
 		array<int>				disabledButtonIndexes
 		array<int>				tempEnabledButtonIndexes
+
 		array<ItemFlavor> characterSkins
 
 		ItemFlavor ornull desiredCharacterOrNull = null
 		ItemFlavor ornull desiredSkinOrNull = null
+
 		entity            lastLockedPlayer
 		int               desiredMenuState = eNewCharacterSelectMenuState.PICKING
 		table             signalDummy
 		float             lockSequenceAnimTime = 0.0
+                               
+                                                      
+        
 
 		table<int, string> connectedPlayerNames
 
@@ -240,18 +316,11 @@ struct FileLevelStruct
 		int championSquad2EHI = -1
 
 		bool isUpdatePlayerModelRunning = false
-		bool isShowingChampionPresentation = false
+
+		void functionref( ItemFlavor, ToolTipData, bool, bool ) tooltipUpdateFunc
 	#endif
 }
 FileLevelStruct& fileLevel
-
-struct SquadIntroCameraPackage
-{
-	vector camera_offset_start
-	vector camera_offset_end
-	vector camera_focus_offset
-	float camera_fov
-}
 
 struct {
 	array< void functionref() > Callbacks_OnCharacterMenuOpened
@@ -260,8 +329,6 @@ struct {
 	array< void functionref(ItemFlavor) > Callbacks_OnCharacterLocked
 	array< void functionref(bool) > Callbacks_OnCharacterDetailsToggled
 
-	array<entity> cleanupEnts
-	array<var> overHeadRuis
 	#if SERVER || CLIENT
 	array< bool functionref( ItemFlavor, entity ) > Callbacks_CustomIsCharacterLocked
 	#endif
@@ -271,28 +338,32 @@ struct {
 		array< void functionref(ItemFlavor, entity, entity, entity, var) > Callbacks_OnCharacterModelChanged
 		array< void functionref( entity, entity, entity, entity, entity ) > Callbacks_CustomUpdateLights
 		bool isFullClubSquad = false
+		string clubName = CLUB_NAME_EMPTY
+		string championClubName = CLUB_NAME_EMPTY
 	#endif
 } file
 
-//  ██╗███╗   ██╗██╗████████╗
-//  ██║████╗  ██║██║╚══██╔══╝
-//  ██║██╔██╗ ██║██║   ██║
-//  ██║██║╚██╗██║██║   ██║
-//  ██║██║ ╚████║██║   ██║
-//  ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝
+
+                                                                         
+                                                                           
+                                                              
+                                                                
+                                                              
+                                                            
 
 #if UI
 void function UI_InitCharacterSelectNewMenu( var newMenuArg )
+                                              
 {
 	fileForever.menu = GetMenu( "CharacterSelectMenuNew" )
 
 	AddMenuEventHandler( fileForever.menu, eUIEvent.MENU_NAVIGATE_BACK, UI_OnCharacterSelectMenu_NavBack )
 
-	AddMenuFooterOption( fileForever.menu, RIGHT, BUTTON_X, true, "", "", UI_OnLoadoutButton_RightClick ) //
-	AddMenuFooterOption( fileForever.menu, RIGHT, MOUSE_RIGHT, true, "", "", UI_OnLoadoutButton_RightClick ) //
+	AddMenuFooterOption( fileForever.menu, RIGHT, BUTTON_X, true, "", "", UI_OnLoadoutButton_RightClick )           
+	AddMenuFooterOption( fileForever.menu, RIGHT, MOUSE_RIGHT, true, "", "", UI_OnLoadoutButton_RightClick )      
 
-	AddMenuFooterOption( fileForever.menu, RIGHT, BUTTON_Y, true, "", "", UI_OnToggleMuteButtonClick, UI_ShouldShowToggleMuteFooter ) //
-	AddMenuFooterOption( fileForever.menu, RIGHT, KEY_F, true, "", "", UI_OnToggleMuteButtonClick, UI_ShouldShowToggleMuteFooter ) //
+	AddMenuFooterOption( fileForever.menu, RIGHT, BUTTON_Y, true, "", "", UI_OnToggleMuteButtonClick, UI_ShouldShowToggleMuteFooter )           
+	AddMenuFooterOption( fileForever.menu, RIGHT, KEY_F, true, "", "", UI_OnToggleMuteButtonClick, UI_ShouldShowToggleMuteFooter )      
 
 	AddMenuEventHandler( fileForever.menu, eUIEvent.MENU_CLOSE, void function() {
 		RunClientScript( "OnCharacterSelectNewMenuClosed_RemoveCallbacks" )
@@ -332,11 +403,18 @@ void function UI_InitCharacterSelectNewMenu( var newMenuArg )
 		SetTabDefsToSeasonal(tabData)
 		SetTabBackground( tabData, Hud_GetChild( fileForever.menu, "TabsBackground" ), eTabBackground.STANDARD )
 		AddCallback_OnTabChanged( Characters_OnTabChanged )
-
+       
 
 	#if PC_PROG
 		AddMenuFooterOption( fileForever.menu, RIGHT, KEY_ENTER, true, "", "", UI_OnLoadoutButton_Enter )
 	#endif
+
+	                      
+	  	                                                       
+	  	                                                                            
+	  	                                                                          
+	  	                                                                       
+	        
 }
 
 bool function UI_ShouldShowToggleMuteFooter()
@@ -385,6 +463,7 @@ void function Characters_OnTabChanged()
 	                                                
 }
       
+
 #endif
 
 #if SERVER || CLIENT
@@ -394,10 +473,13 @@ void function CharacterSelectNewMenu_Init()
 	PrecacheModel( BACKGROUND_SMOKE_MODEL )
 	PrecacheModel( LIGHT_RIG_MDL )
 
+	Remote_RegisterServerFunction( "ClientCallback_UpdateCharacterSelectFocus", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
+	Remote_RegisterServerFunction( REMOTE_SERVERCALL_ON_RESELECT_MENU_OPEN )
+	Remote_RegisterServerFunction( REMOTE_SERVERCALL_ON_RESELECT_MENU_CLOSE )
+
 	#if SERVER
-		AddCallback_OnClientConnected( CharacterSelect_OnClientConnected )
-		AddClientCommandCallback( "UpdateCharacterSelectFocus", ClientCommand_UpdateCharacterSelectFocus )
-		AddClientCommandCallback( "Sur_UpdateCharacterLock", ClientCommand_UpdateCharacterLock )
+		                                                                  
+		                                                                                             
 	#endif
 
 	#if CLIENT
@@ -409,11 +491,14 @@ void function CharacterSelectNewMenu_Init()
 		RegisterSignal( "LocalPlayerPickingSounds" )
 		RegisterSignal( "CloseCharacterSelectMenuAtTime" )
 
-		RegisterNetworkedVariableChangeCallback_int( "characterSelectLockstepIndex", OnLockStepPickIndexChanged )
-		RegisterNetworkedVariableChangeCallback_time( "characterSelectLockstepStartTime", OnLockStepPickStartTimeChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "hasLockedInCharacter", OnPlayerUpdatedCharacterLock )
-		RegisterNetworkedVariableChangeCallback_int( "characterSelectLockstepPlayerIndex", OnLockStepPlayerIndexChanged )
-		RegisterNetworkedVariableChangeCallback_int( "characterSelectFocusIndex", OnPlayerUpdatedCharacterFocus )
+		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, OnLockStepPickIndexChanged )
+		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, OnLockStepPickTimeChanged )
+		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, OnLockStepPickTimeChanged )
+		RegisterNetVarBoolChangeCallback( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, OnPlayerUpdatedCharacterLock )
+		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCKED_IN_CHARACTER_TIME, OnPlayerUpdatedCharacterLockTime )
+
+		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX, OnLockStepPlayerIndexChanged )
+		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, OnPlayerUpdatedCharacterFocus )
 
 		AddCallback_FullUpdate( Client_FullUpdate )
 		AddCallback_UIScriptReset( Client_UIScriptReset )
@@ -421,6 +506,17 @@ void function CharacterSelectNewMenu_Init()
 			AddCallback_OnSquadMuteChanged( Client_MuteChanged )
 
 		fileLevel.colorCorrection = ColorCorrection_Register( COLOR_CORRECTION )
+	#endif
+
+	                        
+	#if SERVER || CLIENT
+		                                                         
+		Remote_RegisterServerFunction( FUNCNAME_CLUB_SETCLUBSQUADBOOL_SV )
+		Remote_RegisterClientFunction( FUNCNAME_CLUB_SETCLUBSQUADBOOL_CL, "bool" )
+		Remote_RegisterClientFunction( FUNCNAME_CLUB_SETCLUBNAME_CL, "string" )
+
+		Remote_RegisterServerFunction( FUNCNAME_CLUB_SETCHAMPIONCLUBNAME_SV, "string" )
+		Remote_RegisterClientFunction( FUNCNAME_CLUB_SETCHAMPIONCLUBNAME_CL, "string" )
 	#endif
 }
 #endif
@@ -430,27 +526,43 @@ bool function CharacterSelectSkinSelectionIsEnabled()
 	return GetCurrentPlaylistVarBool( "character_select_do_skin_selection", false )
 }
 
-//	 ██████╗ ██████╗ ███████╗███╗   ██╗     ██████╗██╗      ██████╗ ███████╗███████╗
-//	██╔═══██╗██╔══██╗██╔════╝████╗  ██║    ██╔════╝██║     ██╔═══██╗██╔════╝██╔════╝
-//	██║   ██║██████╔╝█████╗  ██╔██╗ ██║    ██║     ██║     ██║   ██║███████╗█████╗
-//	██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║    ██║     ██║     ██║   ██║╚════██║██╔══╝
-//	╚██████╔╝██║     ███████╗██║ ╚████║    ╚██████╗███████╗╚██████╔╝███████║███████╗
-//	 ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝     ╚═════╝╚══════╝ ╚═════╝ ╚══════╝╚══════╝
+  	                                                                                                                                                                                                            
+  	                                                                                                                                                                                                                          
+  	                                                                                                                                                                                            
+  	                                                                                                                                                                                            
+  	                                                                                                                                                                                                                            
+  	                                                                                                                                                                                                                
 
 #if CLIENT
-void function OpenCharacterSelectNewMenu( bool isBrowseMode = false )
+void function OpenCharacterSelectNewMenu( bool isBrowseMode = false, bool browseModeShowLockedCharacters = false, bool isJiP = false )
 {
 	fileLevel.isBrowseMode = isBrowseMode
+	fileLevel.isJiP = isJiP
 	fileLevel.isBrowseModeStartTime = Time()
+	fileLevel.browseModeShowLockedCharacters = browseModeShowLockedCharacters
 
 	fileLevel.menuEntsExist = DoMenuEntsExist()
 	fileLevel.lightEntsExist = DoMenuLightsExist()
+	                                                                                 
+
+	foreach( func in file.Callbacks_OnCharacterDetailsToggled )
+		func( isBrowseMode && !browseModeShowLockedCharacters )
 
 	NotifyCharacterSelectBeginEnd( true )
 	RunUIScript( "UI_RunCharacterSelect", fileLevel.isBrowseMode, fileLevel.menuEntsExist )
 
 	foreach ( func in file.Callbacks_OnCharacterMenuOpened )
 		func()
+}
+
+bool function CharacterSelect_MenuIsOpen()
+{
+	return fileLevel.menuIsOpen
+}
+
+void function CharacterSelect_SetTooltipUpdateFunc( void functionref( ItemFlavor, ToolTipData, bool, bool ) func )
+{
+	fileLevel.tooltipUpdateFunc = func
 }
 
 void function AddCallback_OnCharacterSelectMenuOpened( void functionref() callbackFunc )
@@ -492,6 +604,7 @@ void function AddCallback_OnCharacterSelectUpdateLights( void functionref( entit
 {
 	file.Callbacks_CustomUpdateLights.append( callbackFunc )
 }
+
 void function UpdateBackgroundViaFunc( void functionref( entity, entity, var ) callbackFunc )
 {
 	callbackFunc( fileLevel.backgroundModelGeo, fileLevel.backgroundModelSmoke, fileLevel.backgroundRui )
@@ -501,24 +614,46 @@ void function PanAwayCharacterSelect()
 {
 	RunUIScript( "UI_CloseCharacterSelect" )
 
+	if ( !IsValid( fileLevel.camera ) )
+		return
+
 	fileLevel.nestedGladiatorCardHandles.clear()
 	fileLevel.gCardRuiHandles.clear()
+                        
+	fileLevel.squadLineupRuiHandles.clear()
+      
 
 	RuiSetFloat( fileLevel.backgroundRui, "gcardsStartTime", Time() )
+                   
+	RuiSetFloat( fileLevel.scrollingBGRui, "gcardsStartTime", Time() )
+      
+	RuiSetFloat( fileLevel.mapModeDetailsRui, "gcardsStartTime", Time() )
+
+	foreach( func in file.Callbacks_OnCharacterDetailsToggled )
+		func(false)
+
 	UpdateButtonStates()
 
 	float outroSceneChangeDuration = CharSelect_GetOutroSceneChangeDuration()
-	fileLevel.characterNodeMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", fileLevel.camera.GetOrigin(), fileLevel.camera.GetAngles() )
-	fileLevel.characterNode.SetParent( fileLevel.characterNodeMover, "", true )
-	fileLevel.characterNodeMover.NonPhysicsRotateTo( fileLevel.characterNodeMover.GetAngles() + <0, 135, 0>, outroSceneChangeDuration, 1.0, 1.0 )
+	fileLevel.characterNodeMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", GetEntByScriptName( CAMERA_ENT_NAME ).GetOrigin(), GetEntByScriptName( CAMERA_ENT_NAME ).GetAngles() )
+
+	entity charNode = fileLevel.characterNode
+
+	charNode.SetParent( fileLevel.characterNodeMover, "", true )
+
+
+	ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, 0.5, 0, FFADE_OUT | FFADE_PURGE )
+	wait 0.5
+
+	fileLevel.characterNodeMover.NonPhysicsRotateTo( fileLevel.characterNodeMover.GetAngles() + <0, 135, 0>, 0.1, 0, 0 )
 
 	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_LegendPanLeft" )
 
+	ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, outroSceneChangeDuration, 0, FFADE_IN | FFADE_PURGE )
+
 	wait (outroSceneChangeDuration / 3.0)
 
-	if( IsValid( fileLevel.characterModel ) ) //Temp hack, why pan away stopped working? Cafe
-		fileLevel.characterModel.Hide()
-
+	                                                                                                         
 	NotifyCharacterSelectBeginEnd( false )
 }
 
@@ -527,20 +662,200 @@ void function Client_MuteChanged()
 	UpdateButtonStates()
 }
 
-void function DoSquadCardsPresentation( string endTime = "", bool showTitleFrame = false )
+                    
+
+entity function PickMVP( array<entity> players )
+{
+	entity champion   = null
+	                                                 
+	int bestPlacement = 9999999
+	int mostKills     = 0
+	int mostDamage    = 0
+
+	foreach ( entity player in players )
+	{
+		bool better = false
+
+		int matchResultsCurrMatchIndex = modint( player.GetPersistentVarAsInt( "matchResults_nextIndex" ), PersistenceGetArrayCount( "matchResults" ) )                                                     
+		int matchResultsPrevMatchIndex = modint( matchResultsCurrMatchIndex - 1, PersistenceGetArrayCount( "matchResults" ) )
+		int placement                  = player.GetPersistentVarAsInt( format( "matchResults[%d].placement", matchResultsPrevMatchIndex ) )
+		int kills                      = player.GetPersistentVarAsInt( format( "matchResults[%d].playersKilled", matchResultsPrevMatchIndex ) )
+		int damage                     = player.GetPersistentVarAsInt( format( "matchResults[%d].damageDealt", matchResultsPrevMatchIndex ) )
+
+		if ( placement < bestPlacement )
+		{
+			better = true
+		}
+		else if ( placement == bestPlacement )
+		{
+			if ( kills > mostKills )
+			{
+				better = true
+			}
+			else if ( kills == mostKills )
+			{
+				if ( damage > mostDamage )
+				{
+					better = true
+				}
+				else if ( damage == mostDamage )
+				{
+					better = CoinFlip()
+				}
+			}
+		}
+
+		if ( better )
+		{
+			champion = player
+			bestPlacement = placement
+			mostKills = kills
+			mostDamage = damage
+		}
+	}
+
+	return champion
+}
+
+void function DoAllSquadsCardsPresentation( string endTime )
 {
 	foreach( func in file.Callbacks_OnCharacterMenuClosed )
 		func()
 
-	#if DEVELOPER
-		printt( "CHARACTER SELECT: DoSquadCardsPresentation" )
-	#endif
+	                                               
+	Remote_ServerCallFunction( FUNCNAME_CLUB_SETCLUBSQUADBOOL_SV )
 
-	if ( !IsValid( fileLevel.camera ) )
-		return
+	                                                                   
+	if ( file.isFullClubSquad )
+	{
+		RunUIScript( FUNCNAME_CLUB_GETCLUBNAME )
+	}
 
-	// Pan away character select menu and model
-	waitthread PanAwayCharacterSelect()
+	FadeInOut(0.5, 0.5, 0.5)
+	bool shouldHideCharacterSelectRoom = GetCurrentPlaylistVarBool( "survival_hide_character_select_room", false )
+
+	if ( shouldHideCharacterSelectRoom )
+		CharacterSelect_RestorePlayerView()
+
+	int totalSquads = GetCurrentPlaylistVarInt( "max_teams", 4 )
+	int maxSquadSize = GetCurrentPlaylistVarInt( "max_players" , 4) / totalSquads
+	float squadElementWidth = 420
+	float paddingWidth = (1920 - (squadElementWidth * totalSquads))/ (totalSquads+1)
+
+	for (int i = 0; i < totalSquads; i++)
+	{
+		int squadIndex = i + TEAM_IMC
+		int uiSquadIndex = Squads_GetSquadUIIndex(squadIndex)
+		int reorderedIndex    = Squads_GetReorderedTeamsUIId( squadIndex )
+
+		array<entity> players = GetPlayerArrayOfTeam( squadIndex )
+		ArrayRemoveInvalid( players )
+
+		var squadLineupsRui = CreateFullscreenPostFXRui($"ui/all_squads_lineup_start_flow.rpak", 3)
+
+		fileLevel.squadLineupRuiHandles.append(squadLineupsRui)
+
+		RuiSetImage( squadLineupsRui, "squadIcon", Squads_GetSquadIcon(uiSquadIndex ))
+		RuiSetString(squadLineupsRui, "squadName", Squads_GetSquadNameLong(uiSquadIndex ))
+		RuiSetColorAlpha( squadLineupsRui, "squadColor", Squads_GetSquadColor(uiSquadIndex), 1.0 )
+
+		if ( reorderedIndex < 1 && !IsLocalPlayerOnTeamSpectator() )
+			RuiSetBool(squadLineupsRui, "isPlayerSquad", true)
+
+		RuiSetInt(squadLineupsRui, "totalSquads" , totalSquads)
+		RuiSetInt(squadLineupsRui, "currentSquadIndex" , reorderedIndex )
+
+		foreach (int playerIndex, entity player in players )
+		{
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+			var NestedRui = RuiCreateNested( squadLineupsRui, "uihandleTeammate" + playerIndex, $"ui/squad_lineup_start_flow.rpak" )
+
+			RuiSetImage( NestedRui, "characterPortrait", CharacterClass_GetGalleryPortrait( character ) )
+			RuiSetString( NestedRui, "characterName", player.GetPlayerName() )
+			RuiSetColorAlpha( NestedRui, "elementColor", Squads_GetSquadColor(uiSquadIndex), 1.0 )
+			string platformString = CrossplayUserOptIn() ? PlatformIDToIconString( GetHardwareFromName( player.GetHardwareName() ) ) : ""
+			RuiSetString( NestedRui, "platformIcon", platformString )
+		}
+
+		int missingPlayersSize = maxSquadSize - players.len()
+
+		if (missingPlayersSize > 0)
+		{
+			for (int j = 0; j < missingPlayersSize; j++)
+			{
+				int ruiIndex = players.len() + j
+				var NestedRui = RuiCreateNested( squadLineupsRui, "uihandleTeammate" + ruiIndex, $"ui/squad_lineup_start_flow.rpak" )
+
+				RuiSetBool( NestedRui, "isDisconnected", true )
+				RuiSetString( NestedRui, "platformIcon", "" )
+			}
+		}
+	}
+
+	                       
+	array<entity> teammates = GetPlayerSquad()
+	ArrayRemoveInvalid( teammates )
+
+	var borderRui = CreateFullscreenPostFXRui( $"ui/round_end_squads_border.rpak", 3 )
+
+	RuiSetString( borderRui, "gameModeString", GetCurrentPlaylistVarString( "name", "#PLAYLIST_UNAVAILABLE" ) )
+	RuiSetString( borderRui, "mapNameString", GetCurrentPlaylistVarString( "map_name", "#PLAYLIST_UNAVAILABLE" ) )
+	RuiSetImage( borderRui , "gameModeIcon", GetGamemodeLogoFromImageMap( GetCurrentPlaylistVarString( "gamemode_logo", "BATTLE_ROYALE" )) )
+	RuiSetBool( borderRui, "compactTitles", false )
+
+	for ( int index = 0 ; index < 4 ; index++ )
+	{
+		if ( index < teammates.len() )
+		{
+			RuiSetString( borderRui, "playerName" + (index + 1), teammates[index].GetPlayerName() )
+			RuiTrackInt( borderRui, "playerMic" + (index + 1), teammates[index], RUI_TRACK_MIC_STATUS )
+			RuiSetBool( borderRui, "playerAvailable" + (index + 1), true )
+		}
+		else
+		{
+			RuiSetString( borderRui, "playerName" + (index + 1), "" )
+			RuiSetInt( borderRui, "playerMic" + (index + 1), -1 )
+			RuiSetBool( borderRui, "playerAvailable" + (index + 1), false )
+		}
+	}
+
+	                                                                                       
+
+	fileLevel.squadLineupRuiHandles.append( borderRui )
+
+	OnThreadEnd(
+		void function() : ( borderRui )
+		{
+			foreach( var rui in fileLevel.squadLineupRuiHandles )
+				RuiDestroyIfAlive( rui )
+
+			RuiDestroyIfAlive( borderRui )
+		}
+	)
+
+	while( Time() < GetGlobalNetTime( endTime ) )
+		WaitFrame()
+}
+      
+
+void function DoSquadCardsPresentation( string endTime, bool showTitleFrame )
+{
+	foreach( func in file.Callbacks_OnCharacterMenuClosed )
+		func()
+
+	                                               
+	Remote_ServerCallFunction( FUNCNAME_CLUB_SETCLUBSQUADBOOL_SV )
+
+	                                                                   
+	if ( file.isFullClubSquad )
+	{
+		RunUIScript( FUNCNAME_CLUB_GETCLUBNAME )
+	}
+
+	bool shouldHideCharacterSelectRoom = GetCurrentPlaylistVarBool( "survival_hide_character_select_room", false )
+
+	if ( shouldHideCharacterSelectRoom )
+		CharacterSelect_RestorePlayerView()
 
 	array<float> offsets = [-1.0, 0.0, 1.0]
 	if ( MAX_TEAM_PLAYERS == 1 )
@@ -552,14 +867,14 @@ void function DoSquadCardsPresentation( string endTime = "", bool showTitleFrame
 	ArrayRemoveInvalid( teammates )
 	foreach( entity teammate in teammates )
 	{
-		int index = teammate.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" )
+		int index = teammate.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
 		if ( index < 0 )
 			continue
 
 		if ( index >= offsets.len() )
 			break
 
-		// Gladiator Card
+		                 
 		var gladCardsRui = CreateFullscreenRui( $"ui/round_end_squad_member_gcard.rpak", -100 )
 		fileLevel.gCardRuiHandles.append( gladCardsRui )
 		NestedGladiatorCardHandle nestedGCHandle = CreateNestedGladiatorCard( gladCardsRui, "card", eGladCardDisplaySituation.GAME_INTRO_MY_SQUAD_ANIMATED, eGladCardPresentation.FULL_BOX )
@@ -577,7 +892,8 @@ void function DoSquadCardsPresentation( string endTime = "", bool showTitleFrame
 			RuiSetColorAlpha( nestedGCHandle.cardRui, "squadModeColor", Squads_GetSquadColor(uiSquadIndex), 1.0)
 		}
 
-		// Name
+
+		       
 		var playerStatsRui = CreateFullscreenPostFXRui( $"ui/round_end_squad_member_stats.rpak", 2 )
 		fileLevel.gCardRuiHandles.append( playerStatsRui )
 		RuiSetFloat( playerStatsRui, "offset", offsets[index] )
@@ -595,7 +911,7 @@ void function DoSquadCardsPresentation( string endTime = "", bool showTitleFrame
 		}
 	}
 
-	// Border around screen
+	                       
 	var borderRui = CreateFullscreenPostFXRui( $"ui/round_end_squads_border.rpak", 3 )
 	if ( IsSoloMode() )
 	{
@@ -603,7 +919,14 @@ void function DoSquadCardsPresentation( string endTime = "", bool showTitleFrame
 	}
 	else
 	{
-		RuiSetString( borderRui, "headerText", "#SQUAD_HEADER_YOUR_SQUAD" )
+		if ( file.clubName != "" && file.clubName != CLUB_NAME_EMPTY )
+			RuiSetString( borderRui, "headerText", file.clubName )
+                                
+		else if (IsValentinesS15())
+			RuiSetString( borderRui, "headerText", "#SQUAD_HEADER_YOUR_SQUAD_DATE_NIGHT" )
+                                     
+		else
+			RuiSetString( borderRui, "headerText", "#SQUAD_HEADER_YOUR_SQUAD" )
 	}
 
 	RuiSetString( borderRui, "gameModeString", GetCurrentPlaylistVarString( "name", "#PLAYLIST_UNAVAILABLE" ) )
@@ -623,7 +946,8 @@ void function DoSquadCardsPresentation( string endTime = "", bool showTitleFrame
 		RuiSetImage( borderRui, "squadIcon", Squads_GetSquadIcon(uiSquadIndex ))
 		RuiSetString(borderRui, "squadName", Squads_GetSquadNameLong(uiSquadIndex ))
 		RuiSetColorAlpha( borderRui, "squadColor", squadColor, 1.0)
-		RuiSetColorAlpha( borderRui, "headerColor", squadColor, 1.0 )	}
+		RuiSetColorAlpha( borderRui, "headerColor", squadColor, 1.0 )
+	}
 
 	for ( int index = 0 ; index < 4 ; index++ )
 	{
@@ -663,362 +987,242 @@ void function DoSquadCardsPresentation( string endTime = "", bool showTitleFrame
 		WaitFrame()
 }
 
-// Animated Team Introduction
-//
-void function DoAnimatedSquadCardsPresentation()
+                    
+void function DoMVPSquadCardsPresentation( string endTime )
 {
-	foreach( func in file.Callbacks_OnCharacterMenuClosed )
-		func()
+	printt( "CHARACTER SELECT: DoMVPSquadCardsPresentation" )
 
-	#if DEVELOPER
-		printt( "CHARACTER SELECT: DoAnimatedSquadCardsPresentation" )
-	#endif
+	bool shouldHideCharacterSelectRoom = GetCurrentPlaylistVarBool( "survival_hide_character_select_room", false )
 
-	if ( !IsValid( fileLevel.camera ) )
-		return
+	if ( shouldHideCharacterSelectRoom )
+		CharacterSelect_RestorePlayerView()
 
-	waitthread function() : ()
+	PauseMainDialogueQueue()
+
+	int totalSquads = GetCurrentPlaylistVarInt( "max_teams", 4 )
+
+	array<int> MVPPlayerHandle
+	array<entity> MVPPlayer
+
+	for (int k = 0; k < totalSquads; k++)
 	{
-		RunUIScript( "UI_CloseCharacterSelect" )
+		bool skipPlayerTeam = false
+		int squadIndex = k + 2
 
-		fileLevel.nestedGladiatorCardHandles.clear()
-		fileLevel.gCardRuiHandles.clear()
+		array<entity> players = GetPlayerArrayOfTeam( squadIndex )
+		ArrayRemoveInvalid( players )
 
-		RuiSetFloat( fileLevel.backgroundRui, "gcardsStartTime", Time() )
-		UpdateButtonStates()
+		if (totalSquads == 4)
+		{
+			foreach( entity player in players )
+			{
+				if (player == GetLocalClientPlayer())
+					skipPlayerTeam = true
+			}
+		}
 
-		float outroSceneChangeDuration = CharSelect_GetOutroSceneChangeDuration()
+		if (skipPlayerTeam)
+			continue
 
-		EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_LegendPanLeft" )
+		entity mvp
+		mvp = PickMVP(players)
 
-		wait (outroSceneChangeDuration / 3.0)
+		if (mvp != null)
+		{
+			MVPPlayer.append(mvp)
+			MVPPlayerHandle.append(mvp.GetEncodedEHandle())
+		}
 
-		NotifyCharacterSelectBeginEnd( false )
-	}()
+	}
 
-	thread IntroSquadSequence( GetLocalClientPlayer().GetTeam() )
+	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Appear" )
 
-	// Border around screen
+	             
+	var rui = CreateFullscreenRui( $"ui/mvp_card_intro_screen.rpak", RUI_SORT_SCREENFADE - 1 )
+
 	var borderRui = CreateFullscreenPostFXRui( $"ui/round_end_squads_border.rpak", 3 )
-	RuiSetInt( borderRui, "placementNum", -1 )
-	RuiSetInt( borderRui, "placementOutOf", -1 )
-	RuiSetInt( borderRui, "squadKills", -1 )
-	if ( IsSoloMode() )
-		RuiSetString( borderRui, "headerText", "#SOLO_HEADER_YOU_SELECTION" )
-	else
-		RuiSetString( borderRui, "headerText", "#SQUAD_HEADER_YOUR_SQUAD" )
 
-	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Appear" )
-
-	fileLevel.gCardRuiHandles.append( borderRui )
-}
-
-void function IntroSquadSequence( int team, bool animOnlyChampion = false, float camera_move_duration = 3.0 )
-{
-	DestorySquadIntroRuisAndEnts()
-
-	int gameState = GetGameState()
-
-	vector squadIntroSequencePosition = < 0, 0, 10000 >
-	vector squadIntroSequenceAngles = < 0, 0, 0 >
-	
-	entity clientPlayer = GetLocalClientPlayer()
-
-	asset defaultModel                = GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
-	LoadoutEntry loadoutSlotCharacter = Loadout_Character()
-	vector characterAngles            = < squadIntroSequenceAngles.x / 2.0, squadIntroSequenceAngles.y, squadIntroSequenceAngles.z >
-
-	VictoryPlatformModelData victoryPlatformModelData = GetVictorySequencePlatformModel()
-	entity platformModel
-	int maxPlayersToShow = -1
-	if ( victoryPlatformModelData.isSet )
-	{
-		platformModel = CreateClientSidePropDynamic( squadIntroSequencePosition + victoryPlatformModelData.originOffset, victoryPlatformModelData.modelAngles, victoryPlatformModelData.modelAsset )
-
-		file.cleanupEnts.append( platformModel )
-		int playersOnPodium = 0
-
-		array<entity> teamPlayers = GetPlayerArrayOfTeam( team )
-		if( animOnlyChampion ) // To make the center
-		{
-			array<entity> teamMates = GetPlayerArrayOfTeam( team )
-			entity champion = GetEntityFromEncodedEHandle( GetGlobalNetInt( "championEEH" ) )
-			teamMates.fastremovebyvalue( champion )
-
-			teamPlayers = [ champion ]
-			foreach( player in teamMates )
-				teamPlayers.append( player )
-		}
-
-		foreach( int i, entity player in teamPlayers )
-		{
-			if ( maxPlayersToShow > 0 && i > maxPlayersToShow )
-				break
-
-			string playerName = ""
-			if ( EHIHasValidScriptStruct( player.GetEncodedEHandle() ) )
-				playerName = EHI_GetName( player.GetEncodedEHandle() )
-
-			if ( !LoadoutSlot_IsReady( player.GetEncodedEHandle(), loadoutSlotCharacter ) )
-				continue
-
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( player.GetEncodedEHandle(), loadoutSlotCharacter )
-
-			if ( !LoadoutSlot_IsReady( player.GetEncodedEHandle(), Loadout_CharacterSkin( character ) ) )
-				continue
-
-			ItemFlavor characterSkin = LoadoutSlot_GetItemFlavor( player.GetEncodedEHandle(), Loadout_CharacterSkin( character ) )
-
-			vector pos = GetSquadIntroSquadFormationPosition( squadIntroSequencePosition, squadIntroSequenceAngles, i )
-
-			entity characterNode = CreateScriptRef( pos, characterAngles )
-			characterNode.SetParent( platformModel, "", true )
-			entity characterModel = CreateClientSidePropDynamic( pos, characterAngles, defaultModel )
-			SetForceDrawWhileParented( characterModel, true )
-			characterModel.MakeSafeForUIScriptHack()
-			CharacterSkin_Apply( characterModel, characterSkin )
-			file.cleanupEnts.append( characterModel )
-
-			characterModel.SetParent( characterNode, "", false )
-			string victoryAnim = "ACT_MP_MENU_LOBBY_SELECT_IDLE"
-			if( player == GetEntityFromEncodedEHandle( GetGlobalNetInt( "championEEH" ) ) && animOnlyChampion )
-				victoryAnim = "ACT_MP_MENU_READYUP_INTRO"
-
-			characterModel.Anim_Play( victoryAnim )
-			characterModel.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
-
-			bool createOverheadRui = true
-
-			int offset = 78
-
-			entity overheadEnt = CreateClientSidePropDynamic( pos + (AnglesToUp( squadIntroSequenceAngles ) * offset), <0, 0, 0>, $"mdl/dev/empty_model.rmdl" )
-			overheadEnt.Hide()
-			var overheadRui = RuiCreate( $"ui/winning_squad_member_overhead_name.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
-			RuiSetString( overheadRui, "playerName", playerName )
-			RuiTrackFloat3( overheadRui, "position", overheadEnt, RUI_TRACK_ABSORIGIN_FOLLOW )
-			file.overHeadRuis.append( overheadRui )
-
-			playersOnPodium++
-		}
-
-		SquadIntroCameraPackage squadIntroCameraPackage = GetSquadIntroCameraPackage()
-
-		vector camera_offset_start = squadIntroCameraPackage.camera_offset_start
-		vector camera_offset_end   = squadIntroCameraPackage.camera_offset_end
-		vector camera_focus_offset = squadIntroCameraPackage.camera_focus_offset
-		float camera_fov           = squadIntroCameraPackage.camera_fov
-
-		vector camera_start_pos = OffsetPointRelativeToVector( squadIntroSequencePosition, camera_offset_start, AnglesToForward( squadIntroSequenceAngles ) )
-		vector camera_end_pos   = OffsetPointRelativeToVector( squadIntroSequencePosition, camera_offset_end, AnglesToForward( squadIntroSequenceAngles ) )
-		vector camera_focus_pos = OffsetPointRelativeToVector( squadIntroSequencePosition, camera_focus_offset, AnglesToForward( squadIntroSequenceAngles ) )
-
-		vector camera_start_angles = VectorToAngles( camera_focus_pos - camera_start_pos )
-		vector camera_end_angles   = VectorToAngles( camera_focus_pos - camera_end_pos )
-
-		entity cameraMover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", camera_start_pos, camera_start_angles )
-		fileLevel.camera.SetParent( cameraMover, "", false )
-
-		cameraMover.NonPhysicsMoveTo( camera_end_pos, camera_move_duration, 0.0, camera_move_duration / 2.0 )
-		cameraMover.NonPhysicsRotateTo( camera_end_angles, camera_move_duration, 0.0, camera_move_duration / 2.0 )
-		file.cleanupEnts.append( cameraMover )
-	}
-}
-
-void function DestorySquadIntroRuisAndEnts()
-{
-	foreach( rui in file.overHeadRuis )
-	{
-		RuiDestroyIfAlive( rui )
-	}
-		
-	foreach( entity ent in file.cleanupEnts )
-	{
-		if( IsValid( ent ) )
-			ent.Destroy()
-	}
-}
-
-SquadIntroCameraPackage function GetSquadIntroCameraPackage()
-{
-	SquadIntroCameraPackage squadIntroCameraPackage
-
-	squadIntroCameraPackage.camera_offset_start = <0, 320, 68>
-	squadIntroCameraPackage.camera_offset_end = <0, 200, 48>
-	squadIntroCameraPackage.camera_focus_offset = <0, 0, 36>
-	squadIntroCameraPackage.camera_fov = 35.5
-
-	return squadIntroCameraPackage
-}
-
-vector function GetSquadIntroSquadFormationPosition( vector mainPosition, vector angles, int index )
-{
-	if ( index == 0 )
-		return mainPosition - <0, 0, 8>
-
-	float offset_side = 48.0
-	float offset_back = -28.0
-
-	int countBack = (index + 1) / 2
-	vector offset = < offset_side, offset_back, 0 > * countBack
-
-	if ( index % 2 == 0 )
-		offset.x *= -1
-
-	vector point = OffsetPointRelativeToVector( mainPosition, offset, AnglesToForward( angles ) )
-	return point - <0, 0, 8>
-}
-
-void function DoAnimatedChampionSquadCardsPresentation()
-{
-	#if DEVELOPER
-		printt( "CHARACTER SELECT: DoAnimatedChampionSquadCardsPresentation" )
-	#endif
-
-	string voLine               = GetAnyDialogueAliasFromName( PickCommentaryLineFromBucket( eSurvivalCommentaryBucket.INTRO_CHAMPION_CARD ) )
-	float fadeToBlackDuration   = 0.5
-	float fadeFromBlackDuration = 0.5
-	float blackDuration         = max( GetSoundDuration( voLine ) * 0.5, 2.0 )
-
-	// Announcer VO
-	EmitSoundOnEntity( GetLocalClientPlayer(), voLine )
-
-	{
-		int championEHI       = GetGlobalNetInt( "championEEH" )
-		int championSquad1EHI = GetGlobalNetInt( "championSquad1EEH" )
-		int championSquad2EHI = GetGlobalNetInt( "championSquad2EEH" )
-
-		int me = GetLocalViewPlayer().GetEncodedEHandle()
-		if ( me == championEHI || me == championSquad1EHI || me == championSquad2EHI )
-			Chroma_SetBaseLayer( CHROMALOOP_SMOKE, CHROMATRANS_BLEND, {[0.0] = <1, .75, 0>, [1.0] = <.75, .3, 0>}, 2.0 ) //
-		else
-			Chroma_SetBaseLayer( CHROMALOOP_SMOKE, CHROMATRANS_BLEND, {[0.0] = <0, 0, 0>, [1.0] = <.5, .5, .5>}, 2.0 ) //
-	}
-
-	// Fade to black and change the scene to black smoke
-	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Disappear" )
-	ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeToBlackDuration, blackDuration, FFADE_OUT | FFADE_PURGE )
-	wait fadeToBlackDuration
-	SetCharacterSelectSceneForChampionSquad()
-	DestorySquadIntroRuisAndEnts()
-	wait blackDuration
-	ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeFromBlackDuration, 0.0, FFADE_IN | FFADE_PURGE )
-
-	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Appear" )
-
-	// Show cards
-	var rui = CreateFullscreenRui( $"ui/gladiator_card_intro_screen.rpak", RUI_SORT_SCREENFADE - 1 )
-	string topHeader
-	if ( IsSoloMode() )
-		topHeader = "#GLADIATOR_CARD_INTRO_CHAMPION_SOLO"
-	else
-		topHeader = "#GLADIATOR_CARD_INTRO_CHAMPION_SQUAD"
-
-
-	RuiSetString( rui, "topHeader", topHeader )
 	RuiSetGameTime( rui, "transitionInAt", Time() )
-	RuiSetGameTime( rui, "transitionOutAt", GetGlobalNetTime( "pickLoadoutGamestateEndTime" ) )
-	RuiSetFloat( rui, "xpBonusAmount", XpEventTypeData_GetAmount( XP_TYPE.KILL_CHAMPION_MEMBER ) )
+	RuiSetGameTime( rui, "transitionOutAt", GetGlobalNetTime( endTime ) )
 	RuiSetBool( rui, "isDuoMode", GetExpectedSquadSize( GetLocalClientPlayer() ) == 2 )
 
-	RuiSetBool( rui, "showBottomText", !IsRankedGame() )
+	string title = ( totalSquads <=3 )?"#MVP_ALT_SCREEN_HEADER" : "#MVP_SCREEN_HEADER"
+	RuiSetString( borderRui, "headerText", title )
+	RuiSetString( borderRui, "gameModeString", GetCurrentPlaylistVarString( "name", "#PLAYLIST_UNAVAILABLE" ) )
+	RuiSetString( borderRui, "mapNameString", GetCurrentPlaylistVarString( "map_name", "#PLAYLIST_UNAVAILABLE" ) )
+	RuiSetColorAlpha( borderRui, "headerColor", SrgbToLinear( GetKeyColor( COLORID_ENEMY ) / 255.0 ), 1.0 )
+	RuiSetBool( borderRui, "compactTitles", true )
+	RuiSetBool( borderRui, "showTitleFrame", true )
 
-	int championEEH = GetGlobalNetInt( "championEEH" )
-	
-	thread IntroSquadSequence( GetEntityFromEncodedEHandle( championEEH ).GetTeam(), true )
+	array<entity> teammates = GetPlayerSquad()
+	ArrayRemoveInvalid( teammates )
+	for ( int index = 0 ; index < 4 ; index++ )
+	{
+		if ( index < teammates.len() )
+		{
+			string displayName = GetPlayerNameUnlessAnonymized( ToEHI( teammates[index] ) )
+			RuiSetString( borderRui, "playerName" + (index + 1), displayName )
+			RuiTrackInt( borderRui, "playerMic" + (index + 1), teammates[index], RUI_TRACK_MIC_STATUS )
+			RuiSetBool( borderRui, "playerAvailable" + (index + 1), true )
+		}
+		else
+		{
+			RuiSetString( borderRui, "playerName" + (index + 1), "" )
+			RuiSetInt( borderRui, "playerMic" + (index + 1), -1 )
+			RuiSetBool( borderRui, "playerAvailable" + (index + 1), false )
+		}
+	}
+
+	array<NestedGladiatorCardHandle> nestedGCHandles
+
+	for (int i = 0 ; i < MVPPlayer.len(); i++)
+	{
+		if( i > 2 )                                                 
+			break
+
+		int playerTeam   = MVPPlayer[i].GetTeam()
+		int uiSquadIndex = Squads_GetSquadUIIndex( playerTeam )
+
+
+		RuiSetImage( rui, "squadIcon" + i, Squads_GetSquadIcon(uiSquadIndex ))
+		RuiSetString(rui, "squadName" + i, Squads_GetSquadNameLong(uiSquadIndex ))
+		RuiSetColorAlpha( rui, "squadColor" + i, Squads_GetSquadColor(uiSquadIndex), 1.0)
+
+		NestedGladiatorCardHandle handle = CreateNestedGladiatorCard( rui, "cardBox" + i, eGladCardDisplaySituation.GAME_INTRO_CHAMPION_SQUAD_STILL, eGladCardPresentation.FULL_BOX )
+		ChangeNestedGladiatorCardOwner( handle, MVPPlayerHandle[i], Time(), eGladCardLifestateOverride.ALIVE )
+		nestedGCHandles.append( handle )
+
+		RuiSetBool( handle.cardRui, "isSquadMode", true )
+		RuiSetColorAlpha( handle.cardRui, "squadModeColor", Squads_GetSquadColor(uiSquadIndex), 1.0)
+
+	}
 
 	OnThreadEnd(
-		void function() : ( rui )
+		void function() : ( rui, nestedGCHandles, borderRui )
 		{
+			ResumeMainDialogueQueue()
+			foreach ( NestedGladiatorCardHandle ngch in nestedGCHandles )
+				CleanupNestedGladiatorCard( ngch )
 			RuiDestroyIfAlive( rui )
-			DestorySquadIntroRuisAndEnts()
 			EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Disappear" )
 
 			Chroma_EndCharacterSelect()
+			RuiDestroyIfAlive( borderRui )
 		}
 	)
-
-	PlayCharacterReadyUpLine( LoadoutSlot_GetItemFlavor( ToEHI( GetEntityFromEncodedEHandle( championEEH ) ), Loadout_Character() ) )
 
 	wait 1.5
 
 	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_BannerChampion" )
 
-	while( Time() < GetGlobalNetTime( "pickLoadoutGamestateEndTime" ) )
+	while( Time() < GetGlobalNetTime( endTime ) )
 		WaitFrame()
 }
-//
-// End
+      
 
-bool function IsShowingChampionPresentation()
+void function DoChampionSquadCardsPresentation( string endTime )
 {
-	return fileLevel.isShowingChampionPresentation
-}
+                       
+                                                                                                                                     
+        
+      
+	printt( "CHARACTER SELECT: DoChampionSquadCardsPresentation" )
 
-void function DoChampionSquadCardsPresentation( bool bActivatedFromMenu = false )
-{
-	fileLevel.isShowingChampionPresentation = true
-	
-	#if DEVELOPER
-		printt( "CHARACTER SELECT: DoChampionSquadCardsPresentation" )
-	#endif
+	bool shouldHideCharacterSelectRoom = GetCurrentPlaylistVarBool( "survival_hide_character_select_room", false )
+
+	if ( shouldHideCharacterSelectRoom )
+		CharacterSelect_RestorePlayerView()
 
 	PauseMainDialogueQueue()
 
-	string voLine               = GetAnyDialogueAliasFromName( PickCommentaryLineFromBucket( eSurvivalCommentaryBucket.INTRO_CHAMPION_CARD ) )
+	int championEHI       = EHI_null
+	int championSquad1EHI = EHI_null
+	int championSquad2EHI = EHI_null
+
+                       
+                    
+  
+                                                                
+                                                                                                  
+                                                                 
+                                                                     
+                                                                     
+  
+     
+      
+	{
+		championEHI			= GetGlobalNetInt( "championEEH" )
+		championSquad1EHI	= GetGlobalNetInt( "championSquad1EEH" )
+		championSquad2EHI	= GetGlobalNetInt( "championSquad2EEH" )
+	}
 	float fadeToBlackDuration   = 0.5
 	float fadeFromBlackDuration = 0.5
-	float blackDuration         = max( GetSoundDuration( voLine ) * 0.5, 2.0 )
+	float blackDuration         = 0.25
 
-	// Announcer VO
-	if( !bActivatedFromMenu )
+	bool shouldPlayChampionVO = true
+                       
+                    
+                              
+      
+                                                                                 
+                                              
+                         
+  
+                              
+  
+                                
+
+	               
+	if( shouldPlayChampionVO )
+	{
+		string voLine = GetAnyDialogueAliasFromName( PickCommentaryLineFromBucket( eSurvivalCommentaryBucket.INTRO_CHAMPION_CARD ) )
+		blackDuration = max( GetSoundDuration( voLine ) * 0.5, 2.0 )
 		EmitSoundOnEntity( GetLocalClientPlayer(), voLine )
-
-	{
-		int championEHI       = GetGlobalNetInt( "championEEH" )
-		int championSquad1EHI = GetGlobalNetInt( "championSquad1EEH" )
-		int championSquad2EHI = GetGlobalNetInt( "championSquad2EEH" )
-
-		int me = GetLocalViewPlayer().GetEncodedEHandle()
-		if ( me == championEHI || me == championSquad1EHI || me == championSquad2EHI )
-			Chroma_SetBaseLayer( CHROMALOOP_SMOKE, CHROMATRANS_BLEND, {[0.0] = <1, .75, 0>, [1.0] = <.75, .3, 0>}, 2.0 ) //
-		else
-			Chroma_SetBaseLayer( CHROMALOOP_SMOKE, CHROMATRANS_BLEND, {[0.0] = <0, 0, 0>, [1.0] = <.5, .5, .5>}, 2.0 ) //
 	}
 
-	if( !bActivatedFromMenu )
-	{
-		// Fade to black and change the scene to black smoke
-		EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Disappear" )
-		ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeToBlackDuration, blackDuration, FFADE_OUT | FFADE_PURGE )
-		wait fadeToBlackDuration
-		SetCharacterSelectSceneForChampionSquad()
-		wait blackDuration
-		ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeFromBlackDuration, 0.0, FFADE_IN | FFADE_PURGE )
-	}
+	int me = GetLocalViewPlayer().GetEncodedEHandle()
+	if ( me == championEHI || me == championSquad1EHI || me == championSquad2EHI )
+		Chroma_SetBaseLayer( CHROMALOOP_SMOKE, CHROMATRANS_BLEND, {[0.0] = <1, .75, 0>, [1.0] = <.75, .3, 0>}, 2.0 )        
+	else
+		Chroma_SetBaseLayer( CHROMALOOP_SMOKE, CHROMATRANS_BLEND, {[0.0] = <0, 0, 0>, [1.0] = <.5, .5, .5>}, 2.0 )        
+
+	if ( me == championEHI && file.isFullClubSquad )
+		Remote_ServerCallFunction( FUNCNAME_CLUB_SETCHAMPIONCLUBNAME_SV, file.clubName )
+
+	                                                    
+	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Disappear" )
+	ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeToBlackDuration, blackDuration, FFADE_OUT | FFADE_PURGE )
+	wait fadeToBlackDuration
+	SetCharacterSelectSceneForChampionSquad()
+	wait blackDuration
+	ScreenFade( GetLocalClientPlayer(), 0, 0, 0, 255, fadeFromBlackDuration, 0.0, FFADE_IN | FFADE_PURGE )
 
 	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Appear" )
 
-	// Show cards
+	             
 	var rui = CreateFullscreenRui( $"ui/gladiator_card_intro_screen.rpak", RUI_SORT_SCREENFADE - 1 )
 	string topHeader
 	if ( IsSoloMode() )
 		topHeader = "#GLADIATOR_CARD_INTRO_CHAMPION_SOLO"
+	else if ( file.championClubName != CLUB_NAME_EMPTY )
+		topHeader = file.championClubName
+                       
+                         
+                               
+      
+
+                               
+	else if (IsValentinesS15())
+		topHeader = "#GLADIATOR_CARD_INTRO_CHAMPION_SQUAD_DATE_NIGHT"
+      
 	else
 		topHeader = "#GLADIATOR_CARD_INTRO_CHAMPION_SQUAD"
 
-	float stopShowingCardAt
-	
-	if( Gamemode() == eGamemodes.fs_dm )
-		stopShowingCardAt = GetGlobalNetTime( "championDisplayEndTime" )
-	else stopShowingCardAt = GetGlobalNetTime( "pickLoadoutGamestateEndTime" )
-		
-	if( bActivatedFromMenu )
-		stopShowingCardAt = Time() + 6.5
 
 	RuiSetString( rui, "topHeader", topHeader )
 	RuiSetGameTime( rui, "transitionInAt", Time() )
-	RuiSetGameTime( rui, "transitionOutAt", stopShowingCardAt )
-	RuiSetFloat( rui, "xpBonusAmount", 420 ) //XpEventTypeData_GetAmount( XP_TYPE.KILL_CHAMPION_MEMBER )
+	RuiSetGameTime( rui, "transitionOutAt", GetGlobalNetTime( endTime ) )
+	RuiSetFloat( rui, "xpBonusAmount", XpEventTypeData_GetAmount( eXPType.KILL_CHAMPION_MEMBER ) )
 	RuiSetBool( rui, "isDuoMode", GetExpectedSquadSize( GetLocalClientPlayer() ) == 2 )
 	RuiSetString( rui, "gameModeString", GetCurrentPlaylistVarString( "name", "#PLAYLIST_UNAVAILABLE" ) )
 	RuiSetString( rui, "mapNameString", GetCurrentPlaylistVarString( "map_name", "#PLAYLIST_UNAVAILABLE" ) )
@@ -1029,7 +1233,8 @@ void function DoChampionSquadCardsPresentation( bool bActivatedFromMenu = false 
 	{
 		if ( index < teammates.len() )
 		{
-			RuiSetString( rui, "playerName" + (index + 1), teammates[index].GetPlayerName() )
+			string displayName = GetPlayerNameUnlessAnonymized( ToEHI( teammates[index] ) )
+			RuiSetString( rui, "playerName" + (index + 1), displayName )
 			RuiTrackInt( rui, "playerMic" + (index + 1), teammates[index], RUI_TRACK_MIC_STATUS )
 			RuiSetBool( rui, "playerAvailable" + (index + 1), true )
 		}
@@ -1042,42 +1247,37 @@ void function DoChampionSquadCardsPresentation( bool bActivatedFromMenu = false 
 	}
 
 	bool showBottomText = !IsRankedGame()
-
-	if( IsArenaMode() )
-		showBottomText = false                                                                             
+                       
+                    
+                                                                                                     
       
 
 	RuiSetBool( rui, "showBottomText", showBottomText )
 
 	array<NestedGladiatorCardHandle> nestedGCHandles
 
-	int championEHI = GetGlobalNetInt( "championEEH" )
-	int championSquad1EHI = GetGlobalNetInt( "championSquad1EEH" )
-	int championSquad2EHI = GetGlobalNetInt( "championSquad2EEH" )
-
-	if ( championSquad1EHI != EHI_null && !g_bSinglePlayerChampion() )
+	if ( championSquad1EHI != EHI_null && EHIHasValidScriptStruct( championSquad1EHI ) )
 	{
 		NestedGladiatorCardHandle handle = CreateNestedGladiatorCard( rui, "cardBoxLeft", eGladCardDisplaySituation.GAME_INTRO_CHAMPION_SQUAD_STILL, eGladCardPresentation.FULL_BOX )
 		ChangeNestedGladiatorCardOwner( handle, championSquad1EHI, Time(), eGladCardLifestateOverride.ALIVE )
 		nestedGCHandles.append( handle )
 	}
-	if ( championEHI != EHI_null )
+	if ( championEHI != EHI_null && EHIHasValidScriptStruct( championEHI ) )
 	{
 		NestedGladiatorCardHandle handle = CreateNestedGladiatorCard( rui, "cardBoxMiddle", eGladCardDisplaySituation.GAME_INTRO_CHAMPION_SQUAD_ANIMATED, eGladCardPresentation.FULL_BOX )
 		ChangeNestedGladiatorCardOwner( handle, championEHI, Time() + 0.2, eGladCardLifestateOverride.ALIVE )
 		nestedGCHandles.append( handle )
 	}
-	if ( championSquad2EHI != EHI_null && !g_bSinglePlayerChampion() )
+	if ( championSquad2EHI != EHI_null && EHIHasValidScriptStruct( championSquad2EHI ) )
 	{
 		NestedGladiatorCardHandle handle = CreateNestedGladiatorCard( rui, "cardBoxRight", eGladCardDisplaySituation.GAME_INTRO_CHAMPION_SQUAD_STILL, eGladCardPresentation.FULL_BOX )
 		ChangeNestedGladiatorCardOwner( handle, championSquad2EHI, Time() + 0.4, eGladCardLifestateOverride.ALIVE )
 		nestedGCHandles.append( handle )
 	}
 
-	OnThreadEnd
-	(
+	OnThreadEnd(
 		void function() : ( rui, nestedGCHandles )
-		{		
+		{
 			ResumeMainDialogueQueue()
 			foreach ( NestedGladiatorCardHandle ngch in nestedGCHandles )
 				CleanupNestedGladiatorCard( ngch )
@@ -1085,33 +1285,41 @@ void function DoChampionSquadCardsPresentation( bool bActivatedFromMenu = false 
 			EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_GladiatorCard_Disappear" )
 
 			Chroma_EndCharacterSelect()
-			
-			fileLevel.isShowingChampionPresentation = false
 		}
 	)
 
-	if ( ShouldPlayIntroQuip() && !bActivatedFromMenu )
+	if ( ShouldPlayIntroQuip() && championEHI != EHI_null )
+	{
 		thread PlayIntroQuipThread( GetLocalClientPlayer(), championEHI )
+	}
 
 	wait 1.5
 
-	if( !bActivatedFromMenu )
-		EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_BannerChampion" )
-		
-	string timeToWait = Gamemode() == eGamemodes.fs_dm ? "championDisplayEndTime" : "pickLoadoutGamestateEndTime"
-	{
-		while( Time() < GetGlobalNetTime( timeToWait ) )
-			WaitFrame()
-	}
-	
-	if( bActivatedFromMenu )
-		wait 5
+	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_BannerChampion" )
+
+	while( Time() < GetGlobalNetTime( endTime ) )
+		WaitFrame()
 }
 
 bool function ShouldPlayIntroQuip()
 {
-	if ( IsFallLTM() )
-		return false
+                  
+		                                          
+		if ( IsFallLTM() )
+			return false
+       
+
+                               
+	                                          
+		if ( IsShadowRoyaleMode() )
+			return false
+       
+
+                                                                                  
+                                          
+                          
+               
+       
 
 	return true
 }
@@ -1123,16 +1331,14 @@ void function UI_RunCharacterSelect( bool isBrowseMode, bool menuEntsExist )
 	if ( !isBrowseMode )
 		CloseAllMenus()
 
-
 	fileLevel.isBrowseMode = isBrowseMode
-	fileLevel.isBrowseModeStartTime = Time()
+	fileLevel.isBrowseModeStartTime = UITime()
 
 	if ( !CanRunClientScript() )
 		return
 
 	if ( !menuEntsExist )
 		SetBlurEnabled( true )
-
 
 	var portraitsPanel = Hud_GetChild( fileForever.menu, "PortraitsPanel" )
 	                                                          
@@ -1180,13 +1386,14 @@ void function _OpenCharacterSelectNewMenu( var menu )
 	if ( !fileLevel.menuEntsExist )
 		printt( "CHARACTER SELECT MAP INSTANCE NOT IN THIS BSP" )
 
-	fileLevel.localClientLockstepIndex = GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepPlayerIndex" )
+	fileLevel.localClientLockstepIndex = GetLocalClientPlayer().GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
 
 	CreateCharacterSelectClientEnts()
 	UpdateCamera()
 	if ( !fileLevel.isBrowseMode )
 		FooterRui()
 
+	                                   
 	if (fileLevel.mapModeDetailsRui == null)
 	{
 		var mapModeNameRui = CreateFullscreenRui( $"ui/character_select_map_mode_details.rpak", 300 )
@@ -1194,14 +1401,22 @@ void function _OpenCharacterSelectNewMenu( var menu )
 		RuiSetString( mapModeNameRui, "mapNameString", GetCurrentPlaylistVarString( "map_name", "#PLAYLIST_UNAVAILABLE" ) )
 		fileLevel.mapModeDetailsRui = mapModeNameRui
 	}
+
 	fileLevel.menuEntsReady = true
 	fileLevel.menuIsOpen = true
+
+	if( IsCharacterReselectEnabled() )
+		Remote_ServerCallFunction( REMOTE_SERVERCALL_ON_RESELECT_MENU_OPEN )
+
+                             
+                                                
+      
 
 	UpdateMenuButtons()
 	thread UpdateSceneThink()
 
 	#if DEBUG_CHARACTER_SELECT
-		thread DebugMenuThink()
+		                       
 	#endif
 
 	if ( !fileLevel.isBrowseMode )
@@ -1210,8 +1425,8 @@ void function _OpenCharacterSelectNewMenu( var menu )
 
 		foreach( entity player in GetPlayerSquad() )
 		{
-			// Assert that we all have picking order assigned and no duplicates
-			int teammatePickingIndex = player.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" )
+			                                                                   
+			int teammatePickingIndex = player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
 			if ( teammatePickingIndex >= 0 && player != GetLocalClientPlayer() )
 				Assert( teammatePickingIndex != fileLevel.localClientLockstepIndex )
 		}
@@ -1234,6 +1449,16 @@ void function _OpenCharacterSelectNewMenu( var menu )
 			EmitSoundOnEntity( GetLocalClientPlayer(), "ui_menu_focus_legendselectscreen" )
 			UpdateForFocusOnButtonIndex( buttonIndex )
 		}
+
+		if ( fileLevel.browseModeShowLockedCharacters )
+		{
+			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnTeammateLoadoutSelectionChanged, false )
+			foreach( ItemFlavor character in GetAllCharacters() )
+			{
+				LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
+				AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( skinSlot, OnTeammateLoadoutSelectionChanged, false )
+			}
+		}
 	}
 }
 
@@ -1249,11 +1474,11 @@ void function UpdateMenuElementHandles( var menu )
 	fileLevel.characterButtonRuis = []
 	fileLevel.allCharacters = []
 	fileLevel.buttonHintRui = Hud_GetRui( fileLevel.buttonHintPanel )
-	fileLevel.roleButtons_Assault = GetElementsByClassname( menu, "AssaultCharacterRoleButtonClass" )
-	fileLevel.roleButtons_Skirmisher = GetElementsByClassname( menu, "SkirmisherCharacterRoleButtonClass" )
-	fileLevel.roleButtons_Recon = GetElementsByClassname( menu, "ReconCharacterRoleButtonClass" )
-	fileLevel.roleButtons_Defense = GetElementsByClassname( menu, "DefenseCharacterRoleButtonClass" )
-	fileLevel.roleButtons_Support = GetElementsByClassname( menu, "SupportCharacterRoleButtonClass" )
+	fileLevel.roleButtons_Assault = Client_GetPanelElementsByClassname( fileLevel.portraitsPanel, "AssaultCharacterRoleButtonClass" )
+	fileLevel.roleButtons_Skirmisher = Client_GetPanelElementsByClassname( fileLevel.portraitsPanel, "SkirmisherCharacterRoleButtonClass" )
+	fileLevel.roleButtons_Recon = Client_GetPanelElementsByClassname( fileLevel.portraitsPanel, "ReconCharacterRoleButtonClass" )
+	fileLevel.roleButtons_Defense = Client_GetPanelElementsByClassname( fileLevel.portraitsPanel, "DefenseCharacterRoleButtonClass" )
+	fileLevel.roleButtons_Support = Client_GetPanelElementsByClassname( fileLevel.portraitsPanel, "SupportCharacterRoleButtonClass" )
 	fileLevel.topLegendRowAnchor = Hud_GetChild( fileLevel.portraitsPanel, "Top_List_Anchor" )
 	fileLevel.botLegendRowAnchor =  Hud_GetChild( fileLevel.portraitsPanel, "Bot_List_Anchor" )
 	fileLevel.assaultShelf = Hud_GetChild( fileLevel.portraitsPanel, "assaultShelf" )
@@ -1278,27 +1503,15 @@ void function UpdateMenuElementHandles( var menu )
 
 	bool allCharactersUnlocked = GetCurrentPlaylistVarBool( "all_characters_unlocked", false )
 
-	array<ItemFlavor> allChars = GetAllCharacters()
-	printt( "CHAR_SELECT: GetAllCharacters returned " + allChars.len() + " characters" )
-
-	foreach( ItemFlavor itemFlav in allChars )
+	foreach( ItemFlavor itemFlav in GetAllCharacters() )
 	{
-		string charRef = ItemFlavor_GetHumanReadableRef( itemFlav )
-		bool shouldBeVisible = ItemFlavor_ShouldBeVisible( itemFlav, null, GetConVarInt( "mtx_svEdition" ) )
-		
-		if ( !shouldBeVisible )
-		{
-			printt( "CHAR_SELECT: " + charRef + " is not visible, skipping" )
+		if ( !ItemFlavor_ShouldBeVisible( itemFlav, null, GetConVarInt( "mtx_svEdition" ) ) )
 			continue
-		}
 
 		bool isAvailable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), itemFlav, true )
 		bool isOwned     = Character_IsCharacterOwnedByPlayer( itemFlav, GetLocalClientPlayer() )
-		bool isLocked    = CharacterSelect_CustomIsCharacterLockedForPlayer( itemFlav, GetLocalClientPlayer() )
-		
-		printt( "CHAR_SELECT: " + charRef + " - available:" + isAvailable + " owned:" + isOwned + " locked:" + isLocked )
 
-		if ( !isAvailable || isLocked )
+		if ( !isAvailable || CharacterSelect_CustomIsCharacterLockedForPlayer( itemFlav, GetLocalClientPlayer() ) )
 		{
 			disabledCharacters.append( itemFlav )
 		}
@@ -1312,8 +1525,6 @@ void function UpdateMenuElementHandles( var menu )
 				lockedCharacters.append( itemFlav )
 		}
 	}
-	
-	printt( "CHAR_SELECT: shipping:" + shippingCharacters.len() + " unlocked:" + unlockedCharacters.len() + " locked:" + lockedCharacters.len() + " disabled:" + disabledCharacters.len() )
 	fileLevel.allCharacters.extend( shippingCharacters )
 	fileLevel.allCharacters.extend( unlockedCharacters )
 	fileLevel.allCharacters.extend( lockedCharacters )
@@ -1356,8 +1567,6 @@ void function UpdateMenuElementHandles( var menu )
      
 
 	array<ItemFlavor> orderedCharacters = GetCharacterButtonOrder( fileLevel.allCharacters, NUM_CHARACTER_SELECT_BUTTONS )
-	
-	printt( "CHAR_SELECT: orderedCharacters has " + orderedCharacters.len() + " characters" )
 
 	foreach ( index, character in GetCharactersByRole( orderedCharacters, eCharacterClassRole.OFFENSE ) )
 	{
@@ -1460,6 +1669,10 @@ void function UpdateMenuElementHandles( var menu )
 void function CharacterSelect_UpdateMenuButtons()
 {
     UpdateMenuButtons()
+#if NX_PROG || PC_PROG_NX_UI
+	fileLevel.operationModeChanged = true
+	UpdateForFocusOnButtonIndex( fileLevel.buttonIdxToUpdate )
+#endif
 }
 
                    
@@ -1556,27 +1769,28 @@ void function CharacterSelect_UpdateFilterState()
 	RuiSetBool(fileLevel.controllerShelfRUI, "isFiltered", controlerFiltered)
 
 }
+      
 
 void function UpdateMenuButtons()
 {
-	printt( "CHAR_SELECT: UpdateMenuButtons() called" )
-	
 	fileLevel.lockedButtonIndexes.clear()
 	fileLevel.disabledButtonIndexes.clear()
 
 	array<ItemFlavor> shippingCharacters
+	array<ItemFlavor> unlockedCharacters
 	array<ItemFlavor> lockedCharacters
 	array<ItemFlavor> disabledCharacters
 	array<ItemFlavor> allCharacters
 
 	bool allCharactersUnlocked = GetCurrentPlaylistVarBool( "all_characters_unlocked", false )
+
 	foreach( ItemFlavor itemFlav in GetAllCharacters() )
 	{
 		if ( !ItemFlavor_ShouldBeVisible( itemFlav, null, GetConVarInt( "mtx_svEdition" ) ) )
 			continue
 
 		bool isAvailable = IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), Loadout_Character(), itemFlav, true )
-		bool isOwned     = GRX_IsItemOwnedByPlayer_AllowOutOfDateData( itemFlav, GetLocalClientPlayer() )
+		bool isOwned     = Character_IsCharacterOwnedByPlayer( itemFlav, GetLocalClientPlayer() )
 
 		if ( !isAvailable || CharacterSelect_CustomIsCharacterLockedForPlayer( itemFlav, GetLocalClientPlayer() ) )
 		{
@@ -1584,17 +1798,18 @@ void function UpdateMenuButtons()
 		}
 		else
 		{
-			if ( !isOwned )
-				lockedCharacters.append( itemFlav )
-			else
+			if ( isOwned )
 				shippingCharacters.append( itemFlav )
+			else if( allCharactersUnlocked )
+				unlockedCharacters.append( itemFlav )
+			else
+				lockedCharacters.append( itemFlav )
 		}
 	}
 	allCharacters.extend( shippingCharacters )
+	allCharacters.extend( unlockedCharacters )
 	allCharacters.extend( lockedCharacters )
 	allCharacters.extend( disabledCharacters )
-	
-	printt( "CHAR_SELECT: UpdateMenuButtons - shipping:" + shippingCharacters.len() + " locked:" + lockedCharacters.len() + " disabled:" + disabledCharacters.len() )
 
 	if ( CharacterSelectSkinSelectionIsEnabled() && (allCharacters.len() == 1) )
 	{
@@ -1622,9 +1837,6 @@ void function UpdateMenuButtons()
 
 	foreach ( index, character in orderedCharacters )
 	{
-		if ( index >= fileLevel.characterButtons.len() )
-			continue
-		
 		characterButtons.append( fileLevel.characterButtons[index] )
 
 		if ( lockedCharacters.contains( character ) )
@@ -1633,11 +1845,22 @@ void function UpdateMenuButtons()
 		if ( disabledCharacters.contains( character ) )
 			fileLevel.disabledButtonIndexes.append( index )
 
-		//
+		if( unlockedCharacters.contains(character) )
+			fileLevel.tempEnabledButtonIndexes.append( index )
+
+		                                                     
 		fileLevel.buttonIndexCharacterMap[ index ] <- character
 		fileLevel.buttonIndexUsed.append( index )
 
-		//
+                    
+                                
+                                                      
+                                                                                           
+                                                                                                          
+                                                                                            
+                                                                                          
+                                                                                                                                                                                                                               
+      
 	}
 
                    
@@ -1659,7 +1882,7 @@ void function UpdateMenuButtons()
 	int supportLegendsAmount = GetCharactersByRole( orderedCharacters, eCharacterClassRole.SUPPORT ).len()
 	int defenderLegendsAmount = GetCharactersByRole( orderedCharacters, eCharacterClassRole.DEFENSE ).len()
 
-	//Char select new layout
+	                        
 	foreach ( index, character in GetCharactersByRole( orderedCharacters, eCharacterClassRole.OFFENSE ) )
 	{
 		var button = fileLevel.roleButtons_Assault[index]
@@ -1745,6 +1968,16 @@ void function UpdateMenuButtons()
 
 	CharacterSelect_UpdateFilterState()
 	SetPerkLayoutNav (orderedCharacters)
+
+	                   
+     
+
+                                                                          
+                               
+                                                        
+
+                                     
+      
 	UpdateButtonStates()
 }
 
@@ -1867,11 +2100,12 @@ void function SetPerkLayoutNav (array<ItemFlavor> orderedCharacters)
 			Hud_SetNavLeft(button, fileLevel.roleButtons_Support[supportLegendsAmount -1])
 	}
 }
+
 void function CharacterSelect_UpdateFilterIndex(int newIndex)
 {
 	fileLevel.filterTabIndex = newIndex
 }
-#endif //CLIENT
+#endif         
 
 #if UI
 void function UI_ClearUIShelves()
@@ -1906,7 +2140,7 @@ void function UI_ResetRoleTabs()
 
 void function UI_OnCharacterSelectMenu_NavBack()
 {
-	// Don't close the menu during loadout selection
+	                                                
 	if ( fileLevel.isBrowseMode )
 	{
 		RunClientScript( "CloseCharacterSelectNewMenu" )
@@ -1921,11 +2155,10 @@ void function UI_CloseCharacterSelect()
 	SetBlurEnabled( false )
 	if ( GetActiveMenu() == fileForever.menu )
 		CloseActiveMenu()
-	else if ( IsMenuInMenuStack( fileForever.menu ) )
-		RemoveFromMenuStack( fileForever.menu )
+	else if ( MenuStack_Contains( fileForever.menu ) )
+		MenuStack_Remove( fileForever.menu )
 }
-#endif //UI
-
+#endif     
 #if CLIENT
 
 const float CHARACTER_SELECT_FADE_HOLD_TIME = 1.0
@@ -1947,34 +2180,39 @@ void function CloseCharacterSelectMenuAtTime( float closeTimeStamp )
 
 void function CloseCharacterSelectNewMenu()
 {
+	if( !fileLevel.menuIsOpen )
+		return
+
 	Signal( fileLevel.signalDummy, "CharacterSelectClosing" )
 
 	RunUIScript( "UI_CloseCharacterSelect" )
 
-
 	RemoveCallback_OnPlayerDisconnected( OnPlayerDisconnected )
 	RemoveDestroyCallback( "player", OnPlayerDestroyed )
 
-	CharacterSelect_RestorePlayerView()
+	CharacterSelect_ClearMenuAndRestoreView()
 
 	fileLevel.menuIsOpen = false
+	if( IsCharacterReselectEnabled() )
+		Remote_ServerCallFunction( REMOTE_SERVERCALL_ON_RESELECT_MENU_CLOSE )
 
 	OnCharacterSelectNewMenuClosed_RemoveCallbacks()
 
 	foreach( func in file.Callbacks_OnCharacterMenuClosed )
 		func()
+
+	NotifyCharacterSelectBeginEnd( false )
 }
 
-void function CloseCharacterSelectNewMenu_AimTrainer()
+void function CharacterSelect_ClearMenuAndRestoreView()
 {
-	Signal( fileLevel.signalDummy, "CharacterSelectClosing" )
+	CharacterSelect_RestorePlayerView()
+	DeleteMenuEntities()
+}
 
-	RunUIScript( "UI_CloseCharacterSelect" )
-
-	// foreach( func in file.Callbacks_OnCharacterMenuClosed )
-		// func()
-
-	// Reset camera, DOF, color correction, and fog
+void function CharacterSelect_RestorePlayerView()
+{
+	                                               
 	if ( IsValid( fileLevel.camera ) )
 		fileLevel.camera.SetFOV( CAMERA_FOV )
 	GetLocalClientPlayer().ClearMenuCameraEntity()
@@ -1984,9 +2222,6 @@ void function CloseCharacterSelectNewMenu_AimTrainer()
 	ColorCorrection_SetWeight( fileLevel.colorCorrection, 0.0 )
 	ColorCorrection_SetExclusive( fileLevel.colorCorrection, false )
 	SetMapSetting_FogEnabled( true )
-
-	// Delete menu entities
-	DeleteMenuEntities()
 
 	if ( fileLevel.lightEntsExist )
 	{
@@ -2002,9 +2237,8 @@ void function CloseCharacterSelectNewMenu_AimTrainer()
 		fileLevel.rimLightR.SetTweakLightRealtimeShadows( false )
 		fileLevel.rimLightR.SetTweakLightUpdateShadowsEveryFrame( false )
 	}
-
-	fileLevel.menuEntsReady = false
 }
+
 void function OnCharacterSelectNewMenuClosed_RemoveCallbacks()
 {
 	RemoveCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnTeammateLoadoutSelectionChanged, false )
@@ -2013,6 +2247,30 @@ void function OnCharacterSelectNewMenuClosed_RemoveCallbacks()
 		LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
 		RemoveCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( skinSlot, OnTeammateLoadoutSelectionChanged, false )
 	}
+}
+
+void function OverrideCharacterSelectCamera( entity ent )
+{
+	fileLevel.cameraToRestore = fileLevel.camera
+
+	int attachIndex       = ent.LookupAttachment( "VDU" )
+	entity overrideCamera = CreateClientSidePointCamera( ent.GetAttachmentOrigin( attachIndex ), ent.GetAttachmentAngles( attachIndex ), CAMERA_FOV )
+	overrideCamera.SetParent( ent )
+
+	fileLevel.camera = overrideCamera
+	GetLocalClientPlayer().SetMenuCameraEntity( fileLevel.camera )
+}
+
+void function RestoreCharacterSelectCamera()
+{
+	Assert( IsValid( fileLevel.cameraToRestore ) )
+
+	entity cameraToDestroy = fileLevel.camera
+
+	fileLevel.camera = fileLevel.cameraToRestore
+	GetLocalClientPlayer().SetMenuCameraEntity( fileLevel.camera )
+
+	cameraToDestroy.Destroy()
 }
 
 void function CreateCharacterSelectClientEnts()
@@ -2037,14 +2295,14 @@ void function CreateCharacterSelectClientEnts()
                                                                                                      
       
 
-	fileLevel.characterNode = CreateScriptRef( targetPilot.GetOrigin(), targetPilot.GetAngles()  )     
+	fileLevel.characterNode = CreateScriptRef( targetPilot.GetOrigin(), targetPilot.GetAngles()  )                                              
 
 	asset defaultModel = GetGlobalSettingsAsset( DEFAULT_PILOT_SETTINGS, "bodyModel" )
 	CreateNewCharacterModel( defaultModel )
 
 	if ( DoesBackgroundEntExist() )
 	{
-		//
+		                                 
 
 		entity targetBackground = GetEntByScriptName( BACKGROUND_ENT_NAME )
 
@@ -2060,7 +2318,7 @@ void function CreateCharacterSelectClientEnts()
 		vector targetBackgroundAngles = targetBackground.GetAngles()
                    
 		targetBackgroundAngles = targetBackgroundAngles + <0, 17.502, 0>
-
+      
 
 		fileLevel.backgroundModelGeo = CreateClientSidePropDynamic( targetBackground.GetOrigin() - offset, targetBackgroundAngles, BACKGROUND_GEO_MODEL )
 		fileLevel.backgroundModelGeo.kv.solid = 0
@@ -2098,11 +2356,16 @@ void function CreateCharacterSelectClientEnts()
 		fileLevel.rimLightR.SetTweakLightUpdateShadowsEveryFrame( true )
 	}
 
-	//
+	                        
 	vector backgroundRuiOrigin = cameraOrigin + (targetCamera.GetForwardVector() * 200)
-	vector backgroundRuiAngles = targetPilot.GetAngles() + <0, -8.751, 0> 
+                   
+	vector backgroundRuiAngles = targetPilot.GetAngles() + <0, -8.751, 0>                                                                                                                                                   
+     
+                                                     
+      
 
 	fileLevel.backgroundRuiTopo = CreateRUITopology_Worldspace( backgroundRuiOrigin, backgroundRuiAngles * -1, RUI_NAME_PLATE_WIDTH, RUI_NAME_PLATE_HEIGHT )
+                   
 	fileLevel.scrollingBGRui = RuiCreate( $"ui/character_select_scrolling_bg.rpak", fileLevel.backgroundRuiTopo, RUI_DRAW_WORLD, 0 )
 	fileLevel.backgroundRui = CreateFullscreenRui( $"ui/character_select_class_name_plate.rpak", 300 )
 	fileLevel.assaultShelfRUI = Hud_GetRui(Hud_GetChild( fileLevel.portraitsPanel, "assaultShelf" ))
@@ -2110,6 +2373,9 @@ void function CreateCharacterSelectClientEnts()
 	fileLevel.reconShelfRUI = Hud_GetRui(Hud_GetChild( fileLevel.portraitsPanel, "reconShelf" ))
 	fileLevel.supportShelfRUI = Hud_GetRui(Hud_GetChild( fileLevel.portraitsPanel, "supportShelf" ))
 	fileLevel.controllerShelfRUI = Hud_GetRui(Hud_GetChild( fileLevel.portraitsPanel, "controllerShelf" ))
+     
+                                                                                                                                  
+      
 
 	foreach ( func in file.Callbacks_CustomizeBackgroundRui )
 		func( fileLevel.backgroundRui )
@@ -2128,68 +2394,6 @@ void function CreateCharacterSelectClientEnts()
 	}
 }
 
-LocPair function FS_ReturnRandomCameraPosForMap()
-{
-	array<LocPair> locs
-	
-	switch(GetMapName())
-	{
-		case "mp_rr_desertlands_holiday":
-		case "mp_rr_desertlands_64k_x_64k":
-		case "mp_rr_desertlands_64k_x_64k_nx":
-		case "mp_rr_desertlands_64k_x_64k_mv":
-		case "mp_rr_desertlands_64k_x_64k_tt":
-		case "mp_rr_desertlands_mu1":
-		case "mp_rr_desertlands_mu1_tt":
-		case "mp_rr_desertlands_mu2":
-			locs.append( NewCameraPair( <-24658.5098, -20805.4355, -4072.05835>, <0, -61.8279648, 0> ) )
-			locs.append( NewCameraPair( <-13089.8877, 29345.084, -3618.15674>, <0, -50.455925, 0> ) )
-			locs.append( NewCameraPair( <-26440.9238, 8800.14844, -2643.43994>, <0, 138.625336, 0> ) )
-			locs.append( NewCameraPair( <20361.3906, 2127.68311, -4068.20752>, <0, 8.24257946, 0> ) )
-			locs.append( NewCameraPair( <5565.78125, -23571.5742, -3481.78052>, <0, 43.9160843, 0> ) )
-		break
-		
-		case "mp_rr_canyonlands_mu2":
-		case "mp_rr_canyonlands_mu2_tt":
-		case "mp_rr_canyonlands_mu1":
-		case "mp_rr_canyonlands_mu1_night":
-		case "mp_rr_canyonlands_64k_x_64k":
-		case "mp_rr_canyonlands_staging":
-			locs.append( NewCameraPair( <-7570, -29658, 18553>, <32, 69, 0> ) )
-		break
-		
-	}
-	
-	if( locs.len() == 0 )
-	{
-		LocPair loc
-		return loc
-	}
-	
-	return locs.getrandom()
-}
-
-LocPair function NewCameraPair(vector origin, vector angles)
-{
-	LocPair locPair
-	locPair.origin = origin
-	locPair.angles = angles
-
-	return locPair
-}
-
-// Initializes the menu entity state so CreateCharacterSelectClientEnts() works
-// even when the full character select menu was never opened (e.g., charselect_enabled = 0).
-// Called by gamemodes that need the background scene without running character selection.
-void function CharacterSelect_EnsureMenuEntsReady()
-{
-	if ( fileLevel.menuEntsExist )
-		return
-
-	fileLevel.menuEntsExist = DoMenuEntsExist()
-	fileLevel.lightEntsExist = DoMenuLightsExist()
-}
-
 void function CountdownTimerSounds()
 {
 	entity player = GetLocalClientPlayer()
@@ -2197,8 +2401,7 @@ void function CountdownTimerSounds()
 
 	wait max( 0.0, SCREEN_COVER_TRANSITION_IN_DURATION + SCREEN_COVER_TRANSITION_OUT_DURATION - 1.0 )
 
-	float pickStartTime = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetTime( "pickLoadoutGamestateStartTime" ) : GetGlobalNetTime( "pickLoadoutGamestateStartTime" )
-	float timeRemaining = pickStartTime - Time()
+	float timeRemaining = GetGlobalNetTime( "pickLoadoutGamestateStartTime" ) - Time()
 
 	if ( timeRemaining <= 1.0 )
 		return
@@ -2206,22 +2409,19 @@ void function CountdownTimerSounds()
 	wait max( 0.0, timeRemaining % 1.0 )
 	wait 0.5
 
-	while( Time() < pickStartTime )
+	while( Time() < GetGlobalNetTime( "pickLoadoutGamestateStartTime" ) )
 	{
-		timeRemaining = pickStartTime - Time()
+		timeRemaining = GetGlobalNetTime( "pickLoadoutGamestateStartTime" ) - Time()
 		EmitSoundOnEntity( player, "UI_Survival_Intro_PreLegendSelect_Countdown" )
 		wait 1.0
 	}
-	Flowstate_ForceRemoveAllObituaries()
 }
-
 
 void function UpdateCamera()
 {
-	entity player = GetLocalClientPlayer()
-
 	if ( fileLevel.menuEntsExist )
 	{
+		entity player = GetLocalClientPlayer()
 		player.SetMenuCameraEntity( fileLevel.camera )
 		fileLevel.camera.SetTargetFOV( CAMERA_FOV, true, EASING_CUBIC_INOUT, CAMERA_TRANSITION_DURATION )
 	}
@@ -2230,6 +2430,9 @@ void function UpdateCamera()
 	ColorCorrection_SetWeight( fileLevel.colorCorrection, 1.0 )
 	SetMapSetting_FogEnabled( false )
 
+	                                                            
+	                                                         
+	                                                                                                
 }
 
 void function FooterRui()
@@ -2250,7 +2453,12 @@ void function FooterRui()
 
 	for ( int i = 0 ; i < NUM_PLAYERS ; i++ )
 	{
-		var rui = CreateFullscreenRui( $"ui/character_select_footer_bars.rpak", 300 )
+
+                   
+		var rui = CreateFullscreenRui( $"ui/character_select_perk_footer_bars.rpak", 300 )
+     
+                                                                               
+      
 
 		UISize screenSize = GetScreenSize()
 		float aspectRatio = float( screenSize.width ) / float( screenSize.height )
@@ -2265,9 +2473,14 @@ void function FooterRui()
 		RuiSetString( rui, "playerName", "" )
 		RuiSetBool( rui, "isJumpmaster", false )
 
-		UISize virtualSize = GetScreenSize()//GetCurrentVirtualScreenSize( false )
+		UISize virtualSize = GetScreenSize()                                      
 		RuiSetFloat2( rui, "virtualRes", <1080.0 * aspectRatio, 1080.0, 0> )
-
+		
+		#if NX_PROG
+			RuiSetFloat( rui, "footerBarsProgressBarHeight", 32 )
+			RuiSetFloat( rui, "footerBarDiagSize", 43 )
+		#endif
+		
 		entity ornull playerForSlot = GetTeammateForPickingIndex( i )
 		if ( playerForSlot != null )
 		{
@@ -2278,21 +2491,9 @@ void function FooterRui()
 
 		fileLevel.ruiPlayerBarRuis.append( rui )
 	}
-}
 
-void function CharacterSelect_RestorePlayerView()
-{
-	if ( IsValid( fileLevel.camera ) )
-		fileLevel.camera.SetFOV( CAMERA_FOV )
-	GetLocalClientPlayer().ClearMenuCameraEntity()
-	DoF_SetNearDepthToDefault()
-	DoF_SetFarDepthToDefault()
-	DoFSetDilateInfocus( false )
-	ColorCorrection_SetWeight( fileLevel.colorCorrection, 0.0 )
-	ColorCorrection_SetExclusive( fileLevel.colorCorrection, false )
-	SetMapSetting_FogEnabled( true )
-
-	DeleteMenuEntities()
+	if ( refreshedRui )
+		UpdateButtonStates()
 }
 
 void function DeleteMenuEntities()
@@ -2311,7 +2512,8 @@ void function DeleteMenuEntities()
 		fileLevel.backgroundModelGeo.Destroy()
 	if ( IsValid( fileLevel.lightRigModel ) )
 		fileLevel.lightRigModel.Destroy()
-	// Fullscreen Ruis
+
+	                  
 	foreach( var rui in fileLevel.ruiPlayerBarRuis )
 		RuiDestroyIfAlive( rui )
 	fileLevel.ruiPlayerBarRuis = []
@@ -2322,13 +2524,45 @@ void function DeleteMenuEntities()
 		fileLevel.mapModeDetailsRui = null
 	}
 
-	// In-World RUI
+	               
 	if ( fileLevel.backgroundRui != null )
 	{
 		RuiDestroyIfAlive( fileLevel.backgroundRui )
 		fileLevel.backgroundRui = null
 	}
+                   
+	if ( fileLevel.scrollingBGRui != null )
+	{
+		RuiDestroyIfAlive( fileLevel.scrollingBGRui )
+		fileLevel.scrollingBGRui = null
+	}
+
 	RunUIScript("UI_ClearUIShelves")
+	                                       
+	   
+	  	                                                
+	   
+	  
+	                                          
+	   
+	  	                                                   
+	   
+	  
+	                                     
+	   
+	  	                                              
+	   
+	  
+	                                       
+	   
+	  	                                                
+	   
+	  
+	                                          
+	   
+	  	                                                   
+	   
+      
 	if ( fileLevel.backgroundRuiTopo != null )
 	{
 		RuiTopology_Destroy( fileLevel.backgroundRuiTopo )
@@ -2348,33 +2582,40 @@ void function DeleteMenuEntities()
 	fileLevel.nestedGladiatorCardHandles.clear()
 
 	fileLevel.menuEntsReady = false
+
+	          
+	                                                   
+	  	                                                  
 }
 
 void function Client_FullUpdate()
 {
-	//printt( "#################" )
-	//printt( "Client_FullUpdate" )
-	//printt( "#################" )
+	                               
+	printt( "Client_FullUpdate" )
+	                               
 
 	thread FixMenuCamera()
 }
 
 void function FixMenuCamera()
 {
-	// We shouldn't have to do a wait R5DEV-53800
+	if ( !fileLevel.menuEntsExist )
+		return
+
+	                                             
 	wait 0.1
 	entity localClientPlayer = GetLocalClientPlayer()
-	if ( fileLevel.menuEntsExist && IsValid( localClientPlayer ) && IsValid( fileLevel.camera ) )
+	if ( IsValid( localClientPlayer ) && IsValid( fileLevel.camera ) )
 		localClientPlayer.SetMenuCameraEntity( fileLevel.camera )
 }
 
 void function Client_UIScriptReset()
 {
-	printt( "###############" )
+	                             
 	printt( "UI Script Reset" )
-	printt( "###############" )
+	                             
 
-	if ( GetGameState() == eGameState.PickLoadout  || GetCurrentPlaylistVarBool( "character_reselect_enabled", false ))
+	if ( GetGameState() == eGameState.PickLoadout  || IsCharacterReselectEnabled() )
 		thread ReloadMenu()
 }
 
@@ -2382,16 +2623,25 @@ void function ReloadMenu()
 {
 	WaitFrame()
 
-	if ( GetGameState() != eGameState.PickLoadout || GetCurrentPlaylistVarBool( "character_reselect_enabled", false ))
+	if ( GetGameState() != eGameState.PickLoadout || IsCharacterReselectEnabled() )
 		return
 
 	CloseCharacterSelectNewMenu()
 	WaitFrame()
 
-	if ( GetGameState() != eGameState.PickLoadout || GetCurrentPlaylistVarBool( "character_reselect_enabled", false ))
+	if ( GetGameState() != eGameState.PickLoadout || IsCharacterReselectEnabled() )
 		return
 
 	OpenCharacterSelectNewMenu()
+}
+
+#endif         
+
+#if SERVER || CLIENT
+void function AddCallback_CustomIsCharacterLockedForPlayer( bool functionref( ItemFlavor, entity ) func )
+{
+	Assert( !file.Callbacks_CustomIsCharacterLocked.contains(func) )
+	file.Callbacks_CustomIsCharacterLocked.append( func )
 }
 
 bool function CharacterSelect_CustomIsCharacterLockedForPlayer( ItemFlavor character, entity player )
@@ -2403,17 +2653,17 @@ bool function CharacterSelect_CustomIsCharacterLockedForPlayer( ItemFlavor chara
 	}
 	return false
 }
-#endif //CLIENT
+#endif
 
-
-//	██████╗ ██╗   ██╗████████╗████████╗ ██████╗ ███╗   ██╗     █████╗  ██████╗████████╗██╗ ██████╗ ███╗   ██╗
-//	██╔══██╗██║   ██║╚══██╔══╝╚══██╔══╝██╔═══██╗████╗  ██║    ██╔══██╗██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║
-//	██████╔╝██║   ██║   ██║      ██║   ██║   ██║██╔██╗ ██║    ███████║██║        ██║   ██║██║   ██║██╔██╗ ██║
-//	██╔══██╗██║   ██║   ██║      ██║   ██║   ██║██║╚██╗██║    ██╔══██║██║        ██║   ██║██║   ██║██║╚██╗██║
-//	██████╔╝╚██████╔╝   ██║      ██║   ╚██████╔╝██║ ╚████║    ██║  ██║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║
-//	╚═════╝  ╚═════╝    ╚═╝      ╚═╝    ╚═════╝ ╚═╝  ╚═══╝    ╚═╝  ╚═╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+  	                                                                                                                                                                                                                                                                                 
+  	                                                                                                                                                                                                                                                                                                     
+  	                                                                                                                                                                                                                                               
+  	                                                                                                                                                                                                                                                   
+  	                                                                                                                                                                                                                                                                       
+  	                                                                                                                                                                                                                                                   
 
 #if CLIENT
+
 ItemFlavor ornull function GetCharacterSkinOrNullForButtonIndex( int index )
 {
 	if ( index < fileLevel.characterSkins.len() )
@@ -2424,39 +2674,34 @@ ItemFlavor ornull function GetCharacterSkinOrNullForButtonIndex( int index )
 
 void function UpdateForFocusOnButtonIndex( int buttonIndex )
 {
-	ItemFlavor itemFlav = fileLevel.buttonIndexCharacterMap[buttonIndex]
+#if NX_PROG || PC_PROG_NX_UI
+	fileLevel.buttonIdxToUpdate = buttonIndex
+#endif
 	ItemFlavor character = fileLevel.buttonIndexCharacterMap[buttonIndex]
 	ItemFlavor ornull skin = GetCharacterSkinOrNullForButtonIndex( buttonIndex )
 
+	foreach( func in file.Callbacks_OnCharacterFocused )
+		func( character )
 
-	// Update our selection to other players if we haven't gotten turn yet, or during our turn
-	if ( !fileLevel.isBrowseMode && !GetLocalClientPlayer().GetPlayerNetBool( "hasLockedInCharacter" ) )
+	                                                                                          
+	if ( !fileLevel.isBrowseMode && !GetLocalClientPlayer().GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) )
 	{
-		//(mk): this is not a good solution
-		//if( CheckRate( player, false, 0.05 ) )//(mk): limit commands to prevent being kicked temp fix. (if needed)
-			GetLocalClientPlayer().ClientCommand( "UpdateCharacterSelectFocus " + ItemFlavor_GetGUID( itemFlav ) )
+		int characterGUID = ItemFlavor_GetGUID( character )
+		int skinGUID = ((skin == null) ? -1 : ItemFlavor_GetGUID( expect ItemFlavor( skin ) ))
+		Remote_ServerCallFunction("ClientCallback_UpdateCharacterSelectFocus", characterGUID, skinGUID)
 	}
 
-	int stepIndex = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" )
-	// We aren't in browse mode and it's not our turn to pick
-	if ( !fileLevel.isBrowseMode && stepIndex != fileLevel.localClientLockstepIndex )
+	                                                         
+	if ( !fileLevel.isBrowseMode && GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != fileLevel.localClientLockstepIndex )
 		return
 
-	// Skip focus feedback only during lockstep picks; browse mode should always preview
-	if ( !fileLevel.isBrowseMode && GetLocalClientPlayer().GetPlayerNetBool( "hasLockedInCharacter" ) )
+	                                                                                                                          
+	if ( !( fileLevel.isBrowseMode && fileLevel.browseModeShowLockedCharacters ) && GetLocalClientPlayer().GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) )
 		return
 
-	if ( Gamemode() == eGamemodes.WINTEREXPRESS )
-		return
-
-	foreach( func in file.Callbacks_OnCharacterFocused )
-		func( itemFlav )
-
-	// Update Scene
+	               
 	fileLevel.desiredCharacterOrNull = character
 	fileLevel.desiredSkinOrNull = skin
-	
-	fileLevel.desiredCharacterOrNull = itemFlav
 	Signal( fileLevel.signalDummy, "UpdateScene" )
 }
 
@@ -2466,9 +2711,33 @@ void function OnLoadoutButton_Focused( var button )
 		return
 
 	int index = fileLevel.characterButtons.find( button )
-	UpdateForFocusOnButtonIndex( index )
+	if ( index >= 0 && index != fileLevel.currentCharacterIndex )
+	{
+		fileLevel.currentCharacterIndex = index
+		UpdateForFocusOnButtonIndex( index )
+	}
+                   
+	if (!GetLocalClientPlayer().GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ))
+	{
+#if NX_PROG || PC_PROG_NX_UI		
+		if ( IsNxHandheldMode() )
+		{
+			Hud_SetZ( button, 700 )
+			Hud_ScaleOverTime( button, 1.85, 1.85,0.1, INTERPOLATOR_DEACCEL )
+		}
+		else
+		{
+			Hud_ScaleOverTime( button, 1.15, 1.15,0.1, INTERPOLATOR_DEACCEL )
+		}
+#else
+		Hud_ScaleOverTime( button, 1.15, 1.15,0.1, INTERPOLATOR_DEACCEL )
+#endif
+	}
+		
+      
 }
 
+                   
 void function OnLoadoutButton_LostFocus( var button )
 {
 	if ( fileLevel.isBrowseMode && ((Time() - fileLevel.isBrowseModeStartTime) < 0.1) )
@@ -2476,13 +2745,21 @@ void function OnLoadoutButton_LostFocus( var button )
 
 	                            
 		Hud_ReturnToBaseScaleOverTime( button, 0.1, INTERPOLATOR_DEACCEL )
+#if NX_PROG || PC_PROG_NX_UI
+		if ( IsNxHandheldMode() )	
+		{
+			Hud_SetZ( button, 1 )
+		}
+#endif
 }
+      
 
 void function DoBrowseModeCharacterSelectEffects()
 {
+	  
 	ScreenFlash( 0.0, 0.0, 0.0, 0.25, 2.0 )
 
-	//
+	  
 	thread function() : ()
 	{
 		wait(0.5)
@@ -2492,68 +2769,17 @@ void function DoBrowseModeCharacterSelectEffects()
 	}()
 }
 
-void function OnLoadoutButton_Activate_AimTrainer( var button )
-{
-	int buttonIndex      = fileLevel.characterButtons.find( button )
-	ItemFlavor character = fileLevel.buttonIndexCharacterMap[ buttonIndex ]
-
-	if( Gamemode() == eGamemodes.WINTEREXPRESS )
-	{
-		if ( fileLevel.isBrowseMode )
-		{
-			entity player = GetLocalClientPlayer()
-			ItemFlavor currentCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-			if ( character == currentCharacter )
-			{
-				EmitSoundOnEntity( player, "ui_menu_back" )
-				CloseCharacterSelectNewMenu()
-				return
-			}
-		}
-
-		// Someone already locked this character
-		entity ornull playerWithThisCharacterLocked = GetPlayerWithLockedCharacter( character, GetPlayerSquad() )
-		if ( playerWithThisCharacterLocked != null )
-			return
-
-	}
-
-	// // Request this character
-	RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_Character(), character )
-
-	// Close the menu if we are in browse mode
-	// if ( fileLevel.isBrowseMode )
-	// {
-		// printt(FUNC_NAME() + " isBrowseMode")
-		// CloseCharacterSelectNewMenu()
-		// DoBrowseModeCharacterSelectEffects()
-		// return
-	// }
-
-	// Tell the server you want to lock this class
-	LockCharacter()
-
-	foreach( func in file.Callbacks_OnCharacterLocked )
-		func( character )
-
-	// Update Scene
-	fileLevel.desiredCharacterOrNull = character
-	SetMenuState( eNewCharacterSelectMenuState.LOCKED )
-	
-}
-
 void function OnLoadoutButton_Activate( var button )
 {
 	if ( Hud_IsLocked( button ) )
 		return
 
-	int stepIndex = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" )
-	// We aren't in browse mode and it's not our turn to pick
-	if ( !fileLevel.isBrowseMode && stepIndex != fileLevel.localClientLockstepIndex )
+	                                                         
+	if ( !fileLevel.isBrowseMode && GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != fileLevel.localClientLockstepIndex )
 		return
 
-	// We already have a character locked
-	if ( !fileLevel.isBrowseMode && GetLocalClientPlayer().GetPlayerNetBool( "hasLockedInCharacter" ) )
+	                                                                   
+	if ( GetLocalClientPlayer().GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) && !fileLevel.isBrowseMode )
 		return
 
 	int buttonIndex      = fileLevel.characterButtons.find( button )
@@ -2567,36 +2793,53 @@ void function OnLoadoutButton_Activate( var button )
 		ItemFlavor currentSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterSkin( currentCharacter ) )
 		if ( (character == currentCharacter) && ((skinOrNull == null) || (skinOrNull == currentSkin)) )
 		{
+			if ( IsFiringRangeGameMode() )
+				Remote_ServerCallFunction( "ClientToServer_FiringRange_ResetHealthOnSameCharacterSelect" )
 			EmitSoundOnEntity( player, "ui_menu_back" )
 			CloseCharacterSelectNewMenu()
 			return
 		}
 	}
 
-	// Someone already locked this character
-	entity ornull playerWithThisCharacterLocked = GetPlayerWithLockedCharacter( character, GetPlayerSquad() )
+	                                        
+	entity ornull playerWithThisCharacterLocked = GetPlayerWithLockedCharacter( character, skinOrNull, GetPlayerSquad() )
 	if ( playerWithThisCharacterLocked != null )
 		return
 
-	// Request this character
+
+                             
+                                                        
+        
+      
+
+	                         
+	if ( skinOrNull != null )
+		RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_CharacterSkin( character ), expect ItemFlavor( skinOrNull ) )
 	RequestSetItemFlavorLoadoutSlot( LocalClientEHI(), Loadout_Character(), character )
 
-	// Close the menu if we are in browse mode
+	                                          
 	if ( fileLevel.isBrowseMode )
 	{
-		printt(FUNC_NAME() + " isBrowseMode")
+		if ( fileLevel.browseModeShowLockedCharacters )
+		{
+			LockCharacter()
+
+			foreach( func in file.Callbacks_OnCharacterLocked )
+				func( character )
+		}
+
 		CloseCharacterSelectNewMenu()
 		DoBrowseModeCharacterSelectEffects()
 		return
 	}
 
-	// Tell the server you want to lock this class
+	                                              
 	LockCharacter()
 
 	foreach( func in file.Callbacks_OnCharacterLocked )
 		func( character )
 
-	// Update Scene
+	               
 	fileLevel.desiredCharacterOrNull = character
 	fileLevel.desiredSkinOrNull = skinOrNull
 	SetMenuState( eNewCharacterSelectMenuState.LOCKED )
@@ -2608,69 +2851,79 @@ void function LockCharacter()
 	if ( !IsValid( localClientPlayer ) )
 		return
 
+	Remote_ServerCallFunction( "ClientCallback_Sur_UpdateCharacterLock", true )
+
 	EmitSoundOnEntity( localClientPlayer, "UI_Survival_Intro_LegendSelect" )
+
 	thread FlashScreenWhite( 0.1, 0.3 )
 
-	if(!fileLevel.isBrowseMode)
-	{
-		localClientPlayer.ClientCommand( "Sur_UpdateCharacterLock 1" )
-		if( Playlist() != ePlaylists.fs_scenarios )
-			localClientPlayer.ClientCommand( "Sur_MakeEligibleForJumpMaster" )
-	}
+	                                                                    
+	Remote_ServerCallFunction( "ClientCommand_Sur_MakeEligibleForJumpMaster" )
 }
 
 void function Client_TryUnlockCharacter()
 {
-	// Don't have a character locked in to unlock
-	if ( !GetLocalClientPlayer().GetPlayerNetBool( "hasLockedInCharacter" ) )
+	                                             
+	if ( !GetLocalClientPlayer().GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) )
+	{
+		RunUIScript( "OpenSystemMenu" )
+		return
+	}
+
+	                                  
+	if ( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != fileLevel.localClientLockstepIndex )
+	{
+		RunUIScript( "OpenSystemMenu" )
+		return
+	}
+
+	                                                    
+	float timeRemaining = GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) - Time()
+	if ( timeRemaining <= 0.0 )                                                                                                                                    
 		return
 
-	int stepIndex = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" )
-	// It's not our turn, can't unlock
-	if ( stepIndex != fileLevel.localClientLockstepIndex )
-		return
-
-	// Too late to unlock, character selection is ending
-	float timeRemaining = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetTime( "characterSelectLockstepEndTime" ) : GetGlobalNetTime( "characterSelectLockstepEndTime" )
-	if ( timeRemaining <= 0.0 ) // may want to make this like 1 second, but pro players may be able to swap characters very quickly close to 0.0 so lets try it out
-		return
+                              
+                         
+                                                                                
+       
 
 	UnlockCharacter()
 }
 
 void function UnlockCharacter()
 {
-	GetLocalClientPlayer().ClientCommand( "Sur_UpdateCharacterLock 0" )
+	Remote_ServerCallFunction( "ClientCallback_Sur_UpdateCharacterLock", false )
 	StopSoundOnEntity( GetLocalClientPlayer(), "UI_InGame_FD_TitanSelected" )
 	SetMenuState( eNewCharacterSelectMenuState.PICKING )
 }
 
 void function OnLoadoutButton_RightClick()
 {
-	if ( fileLevel.isBrowseMode )
+	if ( !GetCurrentPlaylistVarBool( "all_characters_unlocked", false ) )
 	{
 		UpdateButtonStates()
 		return
 	}
-	
-	int stepIndex = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" )
-	if ( stepIndex < 0 )
-		return
 
-	if ( Playlist() != ePlaylists.fs_scenarios && Time() >= GetGlobalNetTime( "squadPresentationStartTime" ) + 1.0 )
+	if( fileLevel.desiredCharacterOrNull == null )
 		return
+	ItemFlavor ornull character = fileLevel.desiredCharacterOrNull
+
+	expect ItemFlavor( character )
+	RunUIScript( "ClientToUI_OpenCharacterSkillsDialog", ItemFlavor_GetGUID( character )  )
 
 	UpdateButtonStates()
+
 }
-#endif //CLIENT
+#endif         
 
 
-//	██╗███╗   ██╗ ██████╗ ██████╗ ███╗   ███╗███╗   ███╗██╗███╗   ██╗ ██████╗
-//	██║████╗  ██║██╔════╝██╔═══██╗████╗ ████║████╗ ████║██║████╗  ██║██╔════╝
-//	██║██╔██╗ ██║██║     ██║   ██║██╔████╔██║██╔████╔██║██║██╔██╗ ██║██║  ███╗
-//	██║██║╚██╗██║██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██║██║╚██╗██║██║   ██║
-//	██║██║ ╚████║╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║██║██║ ╚████║╚██████╔╝
-//	╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝
+  	                                                                                                                                                                                           
+  	                                                                                                                                                                                                               
+  	                                                                                                                                                                                                      
+  	                                                                                                                                                                                                        
+  	                                                                                                                                                                                                                  
+  	                                                                                                                                                                                       
 
 #if CLIENT
 
@@ -2691,23 +2944,15 @@ void function PlayerLeftTeam()
 		UpdateButtonStates()
 }
 
-void function OnLockStepPickIndexChanged( entity player, int old, int new, bool actuallyChanged )
+void function OnLockStepPickIndexChanged( entity player, int new )
 {
-	if ( !actuallyChanged )
-		return
-
-	if( Playlist() == ePlaylists.fs_scenarios && player != GetLocalClientPlayer() )
-		return
-
-	int lockstepIndex = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" )
-
-	if ( lockstepIndex == fileLevel.localClientLockstepIndex )
+	if ( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) == fileLevel.localClientLockstepIndex )
 	{
 		thread LocalPlayerPickingSounds()
 		FlashGameWindow()
 	}
 
-	entity ornull pickingPlayer = GetTeammateForPickingIndex( lockstepIndex )
+	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 	if ( pickingPlayer != null )
 	{
 		expect entity( pickingPlayer )
@@ -2726,23 +2971,61 @@ void function OnLockStepPickIndexChanged( entity player, int old, int new, bool 
 	UpdateButtonStates()
 }
 
-void function OnLockStepPickStartTimeChanged( entity player, float old, float new, bool actuallyChanged )
+void function OnLockStepPickTimeChanged( entity player, float new )
 {
-	if ( !actuallyChanged )
-		return
-
-	if( Playlist() == ePlaylists.fs_scenarios && player != GetLocalClientPlayer() )
-		return
-
 	UpdateButtonStates()
 }
 
-void function OnPlayerUpdatedCharacterLock( entity player, bool wasLocked, bool isLocked, bool actuallyChanged )
+void function ServerCallback_ForceCharacterLockFeedback( entity player, bool isLocked )
 {
-	if ( !fileLevel.menuEntsReady )
+	entity localPlayer = GetLocalClientPlayer()
+	if ( !IsValid( localPlayer ) )
 		return
 
-	if ( !actuallyChanged )
+	EHI playerEHI     = ToEHI( player )
+
+	if ( isLocked )
+	{
+		                            
+
+		                       
+		LoadoutEntry characterSlot = Loadout_Character()
+		if ( !LoadoutSlot_IsReady( playerEHI, characterSlot ) )
+			return
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
+
+		bool doFlash = (player != localPlayer)
+		if ( doFlash )
+		{
+			                                                                                                                                             
+			EmitSoundOnEntity( localPlayer, "UI_InGame_FD_TitanSelected" )
+			thread FlashScreenWhite( 0.1, 0.3 )
+		}
+
+		               
+		fileLevel.desiredCharacterOrNull = character
+		fileLevel.desiredSkinOrNull = null
+		                                                 
+		fileLevel.lastLockedPlayer = player
+		SetMenuState( eNewCharacterSelectMenuState.LOCKED )
+	}
+	else
+	{
+		                                  
+
+		               
+		fileLevel.desiredCharacterOrNull = null
+		fileLevel.desiredSkinOrNull = null
+		SetMenuState( eNewCharacterSelectMenuState.PICKING )
+	}
+
+	                       
+	UpdateButtonStates()
+}
+
+void function OnPlayerUpdatedCharacterLock( entity player, bool isLocked )
+{
+	if ( !fileLevel.menuEntsReady )
 		return
 
 	if ( !IsValid( player ) )
@@ -2753,7 +3036,7 @@ void function OnPlayerUpdatedCharacterLock( entity player, bool wasLocked, bool 
 		return
 
 	EHI playerEHI     = ToEHI( player )
-	int lockstepIndex = player.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" )
+	int lockstepIndex = player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
 	if ( lockstepIndex < 0 )
 		return
 
@@ -2763,51 +3046,12 @@ void function OnPlayerUpdatedCharacterLock( entity player, bool wasLocked, bool 
 		return
 	}
 
-	if ( isLocked )
-	{
-		// Player locked a character
-
-		// Get locked character
-		LoadoutEntry characterSlot = Loadout_Character()
-		if ( !LoadoutSlot_IsReady( playerEHI, characterSlot ) )
-			return
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
-
-		bool doFlash = player != localPlayer
-		//if ( fileLevel.lastLockedCharacterOrNull == fileLevel.desiredCharacterOrNull && fileLevel.lastLockedPlayer == player )
-		//	doFlash = false
-		if ( doFlash )
-		{
-			// Only do flash and sound for new locks. If it's the same lock as before, for the same player, we don't do it again. This prevents griefing.
-			EmitSoundOnEntity( localPlayer, "UI_InGame_FD_TitanSelected" )
-			thread FlashScreenWhite( 0.1, 0.3 )
-		}
-
-		// Update Scene
-		fileLevel.desiredCharacterOrNull = character
-		fileLevel.desiredSkinOrNull = null
-		fileLevel.lastLockedPlayer = player
-		SetMenuState( eNewCharacterSelectMenuState.LOCKED )
-	}
-	else
-	{
-		// Player unlocked their character
-
-		// Update Scene
-		fileLevel.desiredCharacterOrNull = null
-		SetMenuState( eNewCharacterSelectMenuState.PICKING )
-	}
-
-	// Update Button States
-	UpdateButtonStates()
+	ServerCallback_ForceCharacterLockFeedback( player, isLocked )
 }
 
-void function OnPlayerUpdatedCharacterFocus( entity player, int oldFocusIndex, int newFocusIndex, bool actuallyChanged )
+void function OnPlayerUpdatedCharacterFocus( entity player, int newCharacterGUID )
 {
 	if ( !fileLevel.menuEntsReady )
-		return
-
-	if ( !actuallyChanged )
 		return
 
 	if ( !IsValid( player ) )
@@ -2817,79 +3061,66 @@ void function OnPlayerUpdatedCharacterFocus( entity player, int oldFocusIndex, i
 	if ( !IsValid( localPlayer ) )
 		return
 
-	// Not a teammate so ignore it
+	                              
 	if ( player.GetTeam() != localPlayer.GetTeam() )
 		return
 
-	// Don't do anything if it's me, I'm handled right away on client in the button focus callback
+	                                                                                              
 	if ( player == localPlayer )
 		return
 
-	// Update Button States
+	                       
 	UpdateButtonStates()
 
-	// If this focus change was from the active picking player we need to update the scene too
-
-	entity ornull playerForSlot = GetTeammateForPickingIndex( Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" ) )
+	                                                                                          
+	entity ornull playerForSlot = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 	if ( playerForSlot == null || expect entity( playerForSlot )  != player )
 		return
 
-	/*
-	// Get character
-	EHI playerEHI = ToEHI( player )
-	LoadoutEntry characterSlot = Loadout_Character()
-	if ( !LoadoutSlot_IsReady( playerEHI, characterSlot ) )
-		return
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
-	// Get skin
-	LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
-	if ( !LoadoutSlot_IsReady( playerEHI, skinSlot ) )
-		return
-	//ItemFlavor skin = LoadoutSlot_GetItemFlavor( playerEHI, skinSlot )
-	*/
+	  
+	                
+	                               
+	                                                     
+	                                                       
+		      
+	                                                                            
+	           
+	                                                          
+	                                                  
+		      
+	                                                                    
+	  
 
-	if ( !IsValidItemFlavorGUID( newFocusIndex ) )
+	if ( !IsValidItemFlavorGUID( newCharacterGUID ) )
 		return
 
-	ItemFlavor character = GetItemFlavorByGUID( newFocusIndex )
+	ItemFlavor character = GetItemFlavorByGUID( newCharacterGUID )
 
-	// Update Scene
+	               
 	fileLevel.desiredCharacterOrNull = character
+	fileLevel.desiredSkinOrNull = null
 	Signal( fileLevel.signalDummy, "UpdateScene" )
 }
 
-void function OnLockStepPlayerIndexChanged( entity player, int oldValue, int newValue, bool actuallyChanged )
+void function OnLockStepPlayerIndexChanged( entity player, int newValue )
 {
-	if ( !actuallyChanged )
-		return
-
 	if ( player == GetLocalClientPlayer() )
 	{
 		if ( fileLevel.countdownRui != null )
-		{
-			try{
-				RuiSetInt( fileLevel.countdownRui, "yourPick", newValue + 1 )
-			} catch( e420 )
-			{
-				Warning( "[BUG THIS] UI character_select_name_plate_new doesn't expose argument yourPick as an int" )
-			}
-		}
+			RuiSetInt( fileLevel.countdownRui, "yourPick", newValue + 1 )
 	}
 
-	// Update Button States
+	                       
 	UpdateButtonStates()
 }
 
 void function OnTeammateLoadoutSelectionChanged( EHI playerEHI, ItemFlavor unused )
 {
-	if( Gamemode() == eGamemodes.WINTEREXPRESS )
-		UpdateButtonStates()
-
-	// Don't do anything if it's me, I'm handled right away on client in the button focus callback
+	                                                                                              
 	if ( playerEHI == LocalClientEHI() )
 		return
 
-	// If not on my team we don't do anything
+	                                         
 	entity player = FromEHI( playerEHI )
 	if ( player == null || !IsValid( player ) )
 		return
@@ -2901,28 +3132,29 @@ void function OnTeammateLoadoutSelectionChanged( EHI playerEHI, ItemFlavor unuse
 	if ( player.GetTeam() != localClientPlayer.GetTeam() )
 		return
 
-	// The picking player and the local player might be out of sync, so only allow the change if we think it's their turn
-	entity ornull playerForSlot = GetTeammateForPickingIndex( Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" ) )
+	                                                                                                                     
+	entity ornull playerForSlot = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 	if ( playerForSlot == null || ToEHI( expect entity( playerForSlot ) ) != playerEHI )
 		return
 
-	// Get character
+	                
 	LoadoutEntry characterSlot = Loadout_Character()
 	if ( !LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 		return
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
 
-	// Get skin
+	           
 	LoadoutEntry skinSlot = Loadout_CharacterSkin( character )
 	if ( !LoadoutSlot_IsReady( playerEHI, skinSlot ) )
 		return
-	//ItemFlavor skin = LoadoutSlot_GetItemFlavor( playerEHI, skinSlot )
+	                                                                    
 
-	// Update Scene
+	               
 	fileLevel.desiredCharacterOrNull = character
+	fileLevel.desiredSkinOrNull = null
 	Signal( fileLevel.signalDummy, "UpdateScene" )
 
-	// Update Button States
+	                       
 	UpdateButtonStates()
 }
 
@@ -2931,15 +3163,36 @@ void function ServerCallback_CharacterLockRejected()
 	UnlockCharacter()
 	EmitSoundOnEntity( GetLocalClientPlayer(), "ui_ingame_fd_armoryclose" )
 }
-#endif //CLIENT
+
+void function OnPlayerUpdatedCharacterLockTime( entity player, float newTime )
+{
+	if ( fileLevel.isBrowseMode && fileLevel.browseModeShowLockedCharacters )
+		UpdateButtonStates()
+}
+#endif         
 
 
-//	██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗    ███████╗ ██████╗███████╗███╗   ██╗███████╗
-//	██║   ██║██╔══██╗██╔══██╗██╔══██╗╚══██╔══╝██╔════╝    ██╔════╝██╔════╝██╔════╝████╗  ██║██╔════╝
-//	██║   ██║██████╔╝██║  ██║███████║   ██║   █████╗      ███████╗██║     █████╗  ██╔██╗ ██║█████╗
-//	██║   ██║██╔═══╝ ██║  ██║██╔══██║   ██║   ██╔══╝      ╚════██║██║     ██╔══╝  ██║╚██╗██║██╔══╝
-//	╚██████╔╝██║     ██████╔╝██║  ██║   ██║   ███████╗    ███████║╚██████╗███████╗██║ ╚████║███████╗
-//	 ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝    ╚══════╝ ╚═════╝╚══════╝╚═╝  ╚═══╝╚══════╝
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  	                                                                                                                                                                                                                                                                  
+  	                                                                                                                                                                                                                                                                              
+  	                                                                                                                                                                                                                                        
+  	                                                                                                                                                                                                                                        
+  	                                                                                                                                                                                                                                                            
+  	                                                                                                                                                                                                                                                  
 
 #if CLIENT
 
@@ -2953,45 +3206,43 @@ void function UpdateButtonStates()
 	entity localPlayer    = GetLocalClientPlayer()
 	array<entity> players = GetPlayerSquad()
 
-	int currentLockStepIndex = Playlist() == ePlaylists.fs_scenarios ? localPlayer.GetPlayerNetInt( "characterSelectLockstepIndex" ) : GetGlobalNetInt( "characterSelectLockstepIndex" )
-	float selectStartTime = Playlist() == ePlaylists.fs_scenarios ? localPlayer.GetPlayerNetTime( "characterSelectLockstepStartTime" ) : GetGlobalNetTime( "characterSelectLockstepStartTime" )
-	float selectEndTime = Playlist() == ePlaylists.fs_scenarios ? localPlayer.GetPlayerNetTime( "characterSelectLockstepEndTime" ) : GetGlobalNetTime( "characterSelectLockstepEndTime" )
-	bool localPlayerIsLockedIn = localPlayer.GetPlayerNetBool( "hasLockedInCharacter" )
+	int currentLockStepIndex   = GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
+	bool localPlayerIsLockedIn = localPlayer.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER )
 
 	for ( int i = 0 ; i < fileLevel.characterButtons.len() ; i++ )
 	{
 		var button = fileLevel.characterButtons[i]
 
-		// menu was closed or ui reset happened
+		                                       
 		if ( !IsValid( button ) )
 			return
 
-		if ( (!fileLevel.isBrowseMode && (currentLockStepIndex < 0 || currentLockStepIndex >= MAX_TEAM_PLAYERS)) || !fileLevel.buttonIndexUsed.contains( i ) )
+		if ( (!fileLevel.isBrowseMode && (currentLockStepIndex < -1 || currentLockStepIndex >= MAX_TEAM_PLAYERS)) || !fileLevel.buttonIndexUsed.contains( i ) )
 		{
-			// Lockstep index is -1, meaning the countdown is showing, so hide all buttons
-			// OR
-			// Lockstep index is = MAX_TEAM_PLAYERS, meaning all players have got their turn, but we want to leave the buttons visible
-			// Button not used, make sure it's hidden and disabled
+			                                                                              
+			     
+			                                                                                                                          
+			                                                      
 
-			if ( currentLockStepIndex < 0 || Playlist() != ePlaylists.fs_scenarios && Time() >= GetGlobalNetTime( "squadPresentationStartTime" ) )
+			if ( (currentLockStepIndex < -1) || (Time() >= GetGlobalNetTime( "allSquadsPresentationStartTime" )) )
 				Hud_SetVisible( button, false )
 
 			Hud_SetEnabled( button, false )
-
 			continue
 		}
 
 		var buttonRui        = fileLevel.characterButtonRuis[i]
 		ItemFlavor character = fileLevel.buttonIndexCharacterMap[ i ]
+		ItemFlavor ornull skin = GetCharacterSkinOrNullForButtonIndex( i )
 
-		// Button is used. Set defaults
+		                               
 		Hud_SetVisible( button, true )
 		Hud_SetLocked( button, false )
 		Hud_SetEnabled( button, true )
 		RuiSetBool( buttonRui, "isDisabledCharacter", false )
 		RuiSetBool( buttonRui, "isFakeDisabled", false )
 		RuiSetBool( buttonRui, "isTempUnlocked", false )
-		RuiSetBool( buttonRui, "isSelecting", currentLockStepIndex == localPlayer.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" ) )
+		RuiSetBool( buttonRui, "isSelecting", currentLockStepIndex == localPlayer.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX ) )
 
 		RuiSetInt( buttonRui, "teamSelectedIndex", -1 )
 		RuiSetInt( buttonRui, "teamSelectedTeamColorIndex", -1 )
@@ -3001,31 +3252,53 @@ void function UpdateButtonStates()
 
 		if ( IsValid( localPlayer ) )
 		{
-			RuiSetInt( buttonRui, "localPlayerLockstepIndex", localPlayer.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" ) )
+			RuiSetInt( buttonRui, "localPlayerLockstepIndex", localPlayer.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX ) )
 			RuiSetInt( buttonRui, "localPlayerTeamColorIndex", localPlayer.GetTeamMemberIndex() )
 		}
 
-		bool isLocked = fileLevel.lockedButtonIndexes.contains( i )
-		if ( isLocked )
+		Hud_ClearToolTipData( button )
+		ToolTipData td
+		td.tooltipFlags = eToolTipFlag.HIDDEN
+		td.tooltipStyle = eTooltipStyle.DEFAULT
+		Hud_SetToolTipData( button, td )
+
+		if ( fileLevel.tooltipUpdateFunc != null )
+		{
+			fileLevel.tooltipUpdateFunc( character, td, fileLevel.lockedButtonIndexes.contains( i ), fileLevel.disabledButtonIndexes.contains( i ) )
+		}
+
+		if ( fileLevel.lockedButtonIndexes.contains( i ) )
 		{
 			Hud_SetLocked( button, true )
 			Hud_SetEnabled( button, false )
+			                                                                                                            
+		}
+
+		if ( fileLevel.tempEnabledButtonIndexes.contains( i ) )
+		{
+			RuiSetBool( buttonRui, "isTempUnlocked", true )
+		}
+
+		if ( fileLevel.disabledButtonIndexes.contains( i ) )
+		{
+			                               
+			Hud_SetEnabled( button, false )
+			RuiSetBool( buttonRui, "isDisabledCharacter", true )
 			continue
 		}
 
-		// Browse mode we don't need to show locked-in characters, teammate selctions, or disable buttons, etc.
-		// Unless is winter express, or any other mode.
-		if ( fileLevel.isBrowseMode && Gamemode() != eGamemodes.WINTEREXPRESS )
+		                                                                                                       
+		                                                                          
+		if ( fileLevel.isBrowseMode && !fileLevel.browseModeShowLockedCharacters )
 			continue
 
-		// Team Focused - Focused logic don't work for more than three players, disable if there are more than three players to avoid rui crash
-		// buttonRui don't have more than 3 slots
+		               
 		foreach( entity player in players )
 		{
-			if ( PlayerHasCharacterLockedInOrFocused( player, character ) && Gamemode() != eGamemodes.WINTEREXPRESS )
+			if ( PlayerHasCharacterLockedInOrFocused( player, character, skin ) )
 			{
-				int playerPickIndex = player.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" )
-				if ( playerPickIndex <= MAX_TEAM_FOCUS_INDEX && playerPickIndex > -1 )
+				int playerPickIndex = player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
+				if ( playerPickIndex <= MAX_TEAM_FOCUS_INDEX && playerPickIndex >= 0 )
 				{
 					RuiSetBool( buttonRui, "teamFocused" + playerPickIndex, true )
 					RuiSetInt( buttonRui, "teamColorIndex" + playerPickIndex, player.GetTeamMemberIndex() )
@@ -3033,43 +3306,41 @@ void function UpdateButtonStates()
 			}
 		}
 
-		// Locked in character?
-		entity ornull playerWithThisCharacterLocked = GetPlayerWithLockedCharacter( character, players )
-		bool isLockedInCharacter                    = playerWithThisCharacterLocked != null
-		if ( isLockedInCharacter )
+		                       
+		entity ornull playerWithThisCharacterLocked = GetPlayerWithLockedCharacter( character, skin, players )
+		if ( playerWithThisCharacterLocked != null )
 		{
-			int playerPickIndex = expect entity( playerWithThisCharacterLocked ).GetPlayerNetInt( "characterSelectLockstepPlayerIndex" )
-
+			int playerPickIndex = expect entity( playerWithThisCharacterLocked ).GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX )
 			RuiSetInt( buttonRui, "teamSelectedIndex", playerPickIndex )
 			RuiSetInt( buttonRui, "teamSelectedTeamColorIndex", expect entity( playerWithThisCharacterLocked ).GetTeamMemberIndex() )
 		}
 
-		// If the local client player has a character locked in, we 'disable' all buttons
-		if ( localPlayerIsLockedIn )
+		                                                                                 
+		if ( localPlayerIsLockedIn && !fileLevel.isBrowseMode )
 		{
-			//Hud_SetEnabled( button, false )
+			                                 
 			RuiSetBool( buttonRui, "isFakeDisabled", true )
 		}
 	}
 
-	// Update player footer RUIs
+	                            
 	LoadoutEntry characterSlot = Loadout_Character()
 	for ( int i = 0 ; i < fileLevel.ruiPlayerBarRuis.len() ; i++ )
 	{
 		var playerRui = fileLevel.ruiPlayerBarRuis[i]
 
-		float pickStartTime = Playlist() == ePlaylists.fs_scenarios ? GetLocalClientPlayer().GetPlayerNetTime( "pickLoadoutGamestateStartTime" ) : GetGlobalNetTime( "pickLoadoutGamestateStartTime" )
+		float pickStartTime = GetGlobalNetTime( "pickLoadoutGamestateStartTime" )
 		RuiSetGameTime( playerRui, "countdownEndTime", pickStartTime )
 		RuiSetInt( playerRui, "yourPick", fileLevel.localClientLockstepIndex + 1 )
 
-		// Update selecting status
+		                          
 		RuiSetBool( playerRui, "isSelecting", currentLockStepIndex == i )
-		RuiSetFloat( playerRui, "gcardsStartTime", Playlist() == ePlaylists.fs_scenarios ? selectEndTime : GetGlobalNetTime( "squadPresentationStartTime" ) )
+		RuiSetFloat( playerRui, "gcardsStartTime", GetGlobalNetTime( "allSquadsPresentationStartTime" ) )
 
 		if ( i == currentLockStepIndex )
 		{
-			RuiSetGameTime( playerRui, "selectingStartTime", selectStartTime )
-			RuiSetGameTime( playerRui, "selectingEndTime", selectEndTime )
+			RuiSetGameTime( playerRui, "selectingStartTime", GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME ) )
+			RuiSetGameTime( playerRui, "selectingEndTime", GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) )
 		}
 		else if ( i < currentLockStepIndex )
 		{
@@ -3080,22 +3351,22 @@ void function UpdateButtonStates()
 		entity ornull playerOrNull = GetTeammateForPickingIndex( i )
 		if ( IsValid( playerOrNull ) )
 		{
-			// Update player info
+			                     
 			entity player = expect entity( playerOrNull )
 			EHI playerEHI = ToEHI( player )
 
 			RuiSetInt( playerRui, "playerTeamColorIndex", player.GetTeamMemberIndex() )
 
-			bool isJumpmaster = player == GetLastPickingPlayer()
+			bool isJumpmaster = IsPlayerJumpMaster( player )
 
 			if ( !(i in fileLevel.connectedPlayerNames) )
-				fileLevel.connectedPlayerNames[ i ] <- player.GetPlayerName()
+				fileLevel.connectedPlayerNames[ i ] <- player.GetPlayerNameWithClanTag()
 			else
-				fileLevel.connectedPlayerNames[ i ] = player.GetPlayerName()
+				fileLevel.connectedPlayerNames[ i ] = player.GetPlayerNameWithClanTag()
 
-			if ( player.GetPlayerNetBool( "hasLockedInCharacter" ) && LoadoutSlot_IsReady( playerEHI, characterSlot ) )
+			if ( player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) && LoadoutSlot_IsReady( playerEHI, characterSlot ) )
 			{
-				// Has Locked-In Character
+				                          
 				ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
 				asset lockedPortrait = CharacterClass_GetCharacterLockedPortrait( character )
 				if ( lockedPortrait == $"" )
@@ -3104,7 +3375,7 @@ void function UpdateButtonStates()
 
 				RuiSetBool( playerRui, "lockedCharacter", true )
 				RuiSetString( playerRui, "characterName", ItemFlavor_GetLongName( character ) )
-				RuiSetString( playerRui, "playerName", player.GetPlayerName() )
+				RuiSetString( playerRui, "playerName", player.GetPlayerNameWithClanTag() )
 				RuiTrackInt( playerRui, "micStatus", player, RUI_TRACK_MIC_STATUS )
 				RuiSetImage( playerRui, "lockedPortraitImage", lockedPortrait )
 				RuiSetImage( playerRui, "lockedClassIcon", lockedClassIcon )
@@ -3114,12 +3385,13 @@ void function UpdateButtonStates()
 			}
 			else
 			{
-				// No Locked-In Character
+				                         
 				RuiSetBool( playerRui, "lockedCharacter", false )
 				RuiSetString( playerRui, "characterName", "" )
-				RuiSetString( playerRui, "playerName", player.GetPlayerName() )
+				RuiSetString( playerRui, "playerName", player.GetPlayerNameWithClanTag() )
 				RuiTrackInt( playerRui, "micStatus", player, RUI_TRACK_MIC_STATUS )
 				RuiSetImage( playerRui, "lockedPortraitImage", $"" )
+				RuiSetImage( playerRui, "lockedClassIcon", $"" )
 				RuiSetBool( playerRui, "statusTextVisible", true )
 				RuiSetBool( playerRui, "isDisconnected", false )
 				RuiSetBool( playerRui, "isJumpmaster", isJumpmaster )
@@ -3127,7 +3399,7 @@ void function UpdateButtonStates()
 		}
 		else
 		{
-			// Player disconnected or never existed
+			                                       
 			RuiSetBool( playerRui, "lockedCharacter", false )
 			RuiSetImage( playerRui, "lockedPortraitImage", $"" )
 			RuiSetImage( playerRui, "lockedClassIcon", $"" )
@@ -3135,7 +3407,7 @@ void function UpdateButtonStates()
 
 			if ( i in fileLevel.connectedPlayerNames )
 			{
-				// Disconnected player
+				                      
 				string playerName = fileLevel.connectedPlayerNames[ i ]
 				RuiSetString( playerRui, "characterName", "Disconnected" )
 				RuiSetString( playerRui, "playerName", playerName )
@@ -3146,7 +3418,7 @@ void function UpdateButtonStates()
 			}
 			else
 			{
-				// Never had a player
+				                     
 				RuiSetString( playerRui, "characterName", "" )
 				RuiSetString( playerRui, "playerName", "" )
 				RuiSetInt( playerRui, "micStatus", 3 )
@@ -3157,12 +3429,17 @@ void function UpdateButtonStates()
 		}
 	}
 
-	bool isTempUnlocked = GetCurrentPlaylistVarBool( "all_characters_unlocked", true )
+	bool isTempUnlocked = GetCurrentPlaylistVarBool( "all_characters_unlocked", false )
 
-	Hud_SetVisible( fileLevel.calloutRuiPanel, isTempUnlocked )
+	Hud_SetVisible( fileLevel.calloutRuiPanel, isTempUnlocked || fileLevel.isJiP )
 	var calloutRui = Hud_GetRui( fileLevel.calloutRuiPanel )
 
-	if( isTempUnlocked )
+	if( fileLevel.isJiP )
+	{
+		RuiSetString( calloutRui, "title", "#CONTROL_RESPAWN_LATE_JOIN_PLAYER_TITLE" )
+		RuiSetString( calloutRui, "desc", "#CONTROL_RESPAWN_LATE_JOIN_PLAYER_DESC" )
+	}
+	else if( isTempUnlocked )
 	{
 		RuiSetString( calloutRui, "title", "#ALL_LEGENDS_AVAILABLE_FIRING_RANGE" )
 		RuiSetString( calloutRui, "desc", "" )
@@ -3173,6 +3450,7 @@ void function UpdateButtonStates()
 		RuiSetString( calloutRui, "desc", "" )
 	}
 
+	                     
 
 	string topString    = ""
 	string bottomString = ""
@@ -3188,21 +3466,28 @@ void function UpdateButtonStates()
 			else
 				bottomString = Localize( "#CHAR_SEL_BUTTON_HINT_SELECT_DETAILS" )
 		}
-		else
-		{
-			bottomString = Localize( "#CHAR_SEL_BUTTON_HINT_DETAILS" )
-		}
 	}
 	else if ( SquadMuteLegendSelectEnabled() )
 	{
-		if ( WinterExpress_IsModeEnabled() && GetGameState() == eGameState.Playing )
+                        
+			if ( WinterExpress_IsModeEnabled() && GetGameState() == eGameState.Playing )
 			{
 				bottomString = Localize( "#CHAR_SEL_BUTTON_HINT_SELECT_DETAILS" )
 			}
-		else if ( !IsSoloMode() )
-			bottomString = Localize( IsSquadMuted() ? "#CHAR_SEL_BUTTON_UNMUTE" : "#CHAR_SEL_BUTTON_MUTE" )
-		else
-			bottomString = ""
+			else if ( !IsSoloMode() )
+			{
+				bottomString = Localize( IsSquadMuted() ? "#CHAR_SEL_BUTTON_UNMUTE" : "#CHAR_SEL_BUTTON_MUTE" )
+			}
+			else
+			{
+				bottomString = ""
+			}
+       
+                       
+                                                                                                   
+       
+                     
+        
 	}
 	else if( isTempUnlocked )
 	{
@@ -3227,13 +3512,12 @@ void function LocalPlayerPickingSounds()
 	EndSignal( player, "LocalPlayerPickingSounds" )
 	EndSignal( player, "OnDestroy" )
 
-	// Start of turn sound
+	                      
 	EmitSoundOnEntity( player, "pilot_collectible_pickup" )
 
-	float lockstepEndTime = Playlist() == ePlaylists.fs_scenarios ? player.GetPlayerNetTime( "characterSelectLockstepEndTime" ) : GetGlobalNetTime( "characterSelectLockstepEndTime" )
-	while( Time() < lockstepEndTime )
+	while( Time() < GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) )
 	{
-		float timeRemaining = lockstepEndTime - Time()
+		float timeRemaining = GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) - Time()
 		EmitSoundOnEntity( player, "UI_Survival_Intro_LegendSelectCountDown" )
 		wait 1.0
 	}
@@ -3243,11 +3527,6 @@ void function SetMenuState( int state )
 {
 	fileLevel.desiredMenuState = state
 	Signal( fileLevel.signalDummy, "UpdateScene" )
-}
-
-void function CharacterSelect_SetMenuState( int state )
-{
-	SetMenuState( state )
 }
 
 void function UpdateSceneThink()
@@ -3263,20 +3542,20 @@ void function UpdateSceneThink()
 	while( true )
 	{
 		WaitSignal( fileLevel.signalDummy, "UpdateScene" )
-	
+
 		if ( fileLevel.desiredMenuState == -1 || fileLevel.desiredCharacterOrNull == null )
 			continue
 
 		bool shouldUpdateModel = false
 		bool shouldUpdateAnim  = false
-		int currentPickIndex   = GetGlobalNetInt( "characterSelectLockstepIndex" )
+		int currentPickIndex   = GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
 
 		bool menuStateChanged = fileLevel.desiredMenuState != currentMenuState
 		if ( menuStateChanged )
 			currentMenuState = fileLevel.desiredMenuState
 
-		// New character was selected, we want to update the model and animation
-		if ( (fileLevel.desiredCharacterOrNull != currentCharacterOrNull ) || (fileLevel.desiredSkinOrNull != currentSkinOrNull) )
+		                                                                        
+		if ( (fileLevel.desiredCharacterOrNull != currentCharacterOrNull) || (fileLevel.desiredSkinOrNull != currentSkinOrNull) )
 		{
 			shouldUpdateModel = true
 			shouldUpdateAnim = true
@@ -3284,7 +3563,7 @@ void function UpdateSceneThink()
 			currentSkinOrNull = fileLevel.desiredSkinOrNull
 		}
 
-		// Don't update the model or animation if we are seeing a lock-in sequence
+		                                                                          
 		if ( currentPickIndex != fileLevel.localClientLockstepIndex && fileLevel.lastLockedPlayer != GetTeammateForPickingIndex( currentPickIndex ) && Time() - fileLevel.lockSequenceAnimTime < READY_ANIM_MIN_DURATION )
 		{
 			shouldUpdateAnim = false
@@ -3292,39 +3571,57 @@ void function UpdateSceneThink()
 		}
 
 
-		// A character was just locked in
+		                                 
 		if ( menuStateChanged && currentMenuState == eNewCharacterSelectMenuState.LOCKED )
 		{
 			shouldUpdateAnim = true
 			shouldUpdateModel = true
 		}
 
+		                                                                              
 		if ( currentMenuState == eNewCharacterSelectMenuState.PICKING && playedReadyAnimForCharacter )
 		{
 			shouldUpdateAnim = false
 		}
 
-		#if DEVELOPER
-			printt( "| -------- UpdateScene --------" )
-			printt( "| shouldUpdateModel:", shouldUpdateModel )
-			printt( "| shouldUpdateAnim:", shouldUpdateAnim )
-			printt( "| -----------------------------" )
-		#endif
+#if NX_PROG || PC_PROG_NX_UI
+		if( fileLevel.operationModeChanged )
+		{
+			fileLevel.operationModeChanged = false
+			shouldUpdateModel = true
+			shouldUpdateAnim = true
+                   
+			RunUIScript("UI_ResetRoleTabs")
+      
+		}
+#endif
+
+		                                                            
+		                                                                                                    
+		if ( shouldUpdateModel )
+			shouldUpdateAnim = true
+
+		printt( "| -------- UpdateScene --------" )
+		printt( "| shouldUpdateModel:", shouldUpdateModel )
+		printt( "| shouldUpdateAnim:", shouldUpdateAnim )
+		printt( "| -----------------------------" )
 
 		if ( shouldUpdateModel )
 		{
-			// if we change the model we need to update the anim as well
+			                                                            
 			shouldUpdateAnim = true
 			playedPickingAnimForCharacter = false
 			playedReadyAnimForCharacter = false
 
-			// Update the model
-			thread UpdatePlayerModel( expect ItemFlavor(currentCharacterOrNull), currentSkinOrNull  )
+			                   
+			thread UpdatePlayerModel( expect ItemFlavor(currentCharacterOrNull), currentSkinOrNull )
 		}
 
 		if ( shouldUpdateAnim )
 		{
-			// Update the anim
+			                  
+
+			                                                                     
 
 			if ( currentMenuState == eNewCharacterSelectMenuState.PICKING )
 				playedPickingAnimForCharacter = true
@@ -3335,7 +3632,6 @@ void function UpdateSceneThink()
 		}
 	}
 }
-
 
 void function TryUpdateLightingRig( ItemFlavor character, ItemFlavor characterSkin )
 {
@@ -3356,7 +3652,7 @@ void function TryUpdateLightingRig( ItemFlavor character, ItemFlavor characterSk
 		lightData = CharacterClass_GetMenuLightData( character )
 	}
 
-	//
+	        
 	fileLevel.keyLight.SetTweakLightColor( lightData.key_color )
 	fileLevel.keyLight.SetTweakLightBrightness( lightData.key_brightness )
 	fileLevel.keyLight.SetTweakLightCone( lightData.key_cone )
@@ -3394,7 +3690,7 @@ void function TryUpdateLightingRig( ItemFlavor character, ItemFlavor characterSk
 	fileLevel.rimLightR.SetTweakLightPBRFalloff( lightData.rimR_pbrfalloff )
 	fileLevel.rimLightR.SetTweakLightRealtimeShadows( lightData.rimR_castshadows )
 
-	//
+	           
 	fileLevel.lightRigModel.Anim_Play( lightData.animSeq )
 	int attachIdx_fill = fileLevel.lightRigModel.LookupAttachment( "LIGHT_1" )
 	int attachIdx_rimL = fileLevel.lightRigModel.LookupAttachment( "LIGHT_2" )
@@ -3432,7 +3728,6 @@ ItemFlavor function GetCharacterSkinForPlayerSelection( EHI pickingPlayerEHI, It
 	return LoadoutSlot_WaitForItemFlavor( pickingPlayerEHI, Loadout_CharacterSkin( character ) )
 }
 
-
 void function UpdatePlayerModel( ItemFlavor character, ItemFlavor ornull characterSkinOverride )
 {
 	Signal( fileLevel.signalDummy, "UpdatingModel" )
@@ -3449,44 +3744,37 @@ void function UpdatePlayerModel( ItemFlavor character, ItemFlavor ornull charact
 	if ( !IsValid( fileLevel.characterModel ) )
 		return
 
-	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( "characterSelectLockstepIndex" ) )
-	if ( fileLevel.isBrowseMode ) //
+	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
+	if ( fileLevel.isBrowseMode )                                               
 		pickingPlayer = GetLocalClientPlayer()
 	if ( pickingPlayer == null )
-			return //
+			return                                                               
 
 	expect entity( pickingPlayer )
 
-	//
-	//
+	                       
+	                                                                                                              
 	ItemFlavor characterSkin = GetCharacterSkinForPlayerSelection( ToEHI( pickingPlayer ), character, characterSkinOverride )
 	if ( !IsValid( fileLevel.characterModel ) )
 		return
 
 	CreateNewCharacterModel( CharacterSkin_GetBodyModel( characterSkin ) )
 	CharacterSkin_Apply( fileLevel.characterModel, characterSkin )
-	//
+	                                                                                                                                                                                  
 	fileLevel.characterModel.Show()
 
 	Signal( fileLevel.signalDummy, "PlayerModelUpdated" )
 
-	//
-	vector rarityColor           = ItemFlavor_GetQualityColor( characterSkin )
-	float fillIntensityScalar    = 10
-	float outlineIntensityScalar = 300
-	float fadeInTime             = 0.01
-	float fadeOutTime            = 0.25
-	float lifeTime               = 0.1
-	float ditherDelay            = 0.1
-	float ditherDuration         = 0.1
-	thread PROTO_HighlightTest( fileLevel.characterModel, rarityColor / 255, fillIntensityScalar, outlineIntensityScalar, fadeInTime, fadeOutTime, lifeTime, ditherDelay, ditherDuration, false )
+	                    
+	vector flashColor = ItemFlavor_GetQualityColor( characterSkin ) / 255
+	thread FlashMenuModel( fileLevel.characterModel, eMenuModelFlashType.CHARACTER_SELECT, flashColor )
 
-	//
+	             
 	int backgroundSkinIndex = CharacterClass_GetMenuBackgroundSkinIndex( character )
 	if ( IsValid( fileLevel.backgroundModelGeo ) )
 		fileLevel.backgroundModelGeo.SetSkin( backgroundSkinIndex )
 
-	//
+	                   
 	int smokeSkinIndex = CharacterClass_GetMenuSmokeSkinIndex( character )
 	if ( IsValid( fileLevel.backgroundModelSmoke ) )
 		fileLevel.backgroundModelSmoke.SetSkin( smokeSkinIndex )
@@ -3495,11 +3783,11 @@ void function UpdatePlayerModel( ItemFlavor character, ItemFlavor ornull charact
 
 	SetChromaCharacter( character )
 
-	//
+	                 
 	RuiSetString( fileLevel.backgroundRui, "nameString", Localize( ItemFlavor_GetLongName( character ) ) )
 	RuiSetString( fileLevel.backgroundRui, "footnoteString", Localize( ItemFlavor_GetShortDescription( character ) ) )
 	RuiSetFloat( fileLevel.backgroundRui, "startTime", Time() )
-
+                   
 	RuiSetString( fileLevel.scrollingBGRui, "nameString", Localize( ItemFlavor_GetLongName( character ) ) )
 	RuiSetString( fileLevel.scrollingBGRui, "footnoteString", Localize( ItemFlavor_GetShortDescription( character ) ) )
 	RuiSetFloat( fileLevel.scrollingBGRui, "startTime", Time() )
@@ -3513,7 +3801,7 @@ void function UpdatePlayerModel( ItemFlavor character, ItemFlavor ornull charact
 	RuiSetImage( fileLevel.backgroundRui, "classIconImage", CharacterClass_GetRoleIcon(CharacterClass_GetRole( character ) ) )
 	RuiSetImage( fileLevel.backgroundRui, "perkIconImage1", CharacterClass_GetRolePerkIconAtIndex(CharacterClass_GetRole( character ), 0 ) )
 	RuiSetImage( fileLevel.backgroundRui, "perkIconImage2", CharacterClass_GetRolePerkIconAtIndex(CharacterClass_GetRole( character ), 1 ) )
-
+      
 
 	foreach ( func in file.Callbacks_OnCharacterModelChanged )
 	{
@@ -3521,44 +3809,105 @@ void function UpdatePlayerModel( ItemFlavor character, ItemFlavor ornull charact
 	}
 }
 
-
 void function UpdatePlayerAnim( ItemFlavor character, int currentMenuState )
 {
+	if ( !fileLevel.menuEntsExist )
+		return
+
+	Signal( fileLevel.signalDummy, "UpdatingAnim" )
+	EndSignal( fileLevel.signalDummy, "UpdatingAnim" )
+	EndSignal( fileLevel.signalDummy, "CharacterSelectClosing" )
+
+	if ( fileLevel.isUpdatePlayerModelRunning )
 	{
-		if ( !fileLevel.menuEntsExist )
-			return
+		WaitSignal( fileLevel.signalDummy, "PlayerModelUpdated" )
+	}
 
-		Signal( fileLevel.signalDummy, "UpdatingAnim" )
-		EndSignal( fileLevel.signalDummy, "UpdatingAnim" )
-		EndSignal( fileLevel.signalDummy, "CharacterSelectClosing" )
+	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 
-		if ( currentMenuState == eNewCharacterSelectMenuState.PICKING )
+	if ( fileLevel.isBrowseMode )
+		pickingPlayer = GetLocalClientPlayer()
+
+	if ( pickingPlayer == null )
+		return
+
+	expect entity( pickingPlayer )
+
+	                       
+	ItemFlavor characterSkin = LoadoutSlot_WaitForItemFlavor( ToEHI( pickingPlayer ), Loadout_CharacterSkin( character ) )
+
+	if ( currentMenuState == eNewCharacterSelectMenuState.PICKING )
+	{
+		printt( "| PICKING ANIM", string(fileLevel.characterModel.GetModelName()) )
+
+		asset customIntroAnim = CharacterSkin_GetCustomCharSelectIntroAnim( characterSkin )
+		asset customIdleAnim  = CharacterSkin_GetCustomCharSelectIdleAnim( characterSkin )
+		Assert( (customIntroAnim == $"") == (customIdleAnim == $""), format( "Char skin '%s' has only one char select custom anim set!", string(ItemFlavor_GetAsset( characterSkin )) ) )
+		if ( (customIntroAnim != $"") && ShipHackCheckForAnim( customIntroAnim, fileLevel.characterModel, characterSkin ) && ShipHackCheckForAnim( customIdleAnim, fileLevel.characterModel, characterSkin ) )
 		{
-			#if DEVELOPER
-				printt( "| PICKING ANIM", fileLevel.characterModel.GetModelName() )
-			#endif 
-			
-			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_MAIN_INTRO", fileLevel.characterNode )
-			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_MAIN_IDLE", fileLevel.characterNode )
+			                                                                                                                                                                         
+			fileLevel.characterModel.Anim_Play( customIntroAnim )
+			WaittillAnimDone( fileLevel.characterModel )
+			                                                                                                                                                                         
+			fileLevel.characterModel.Anim_Play( customIdleAnim )
+			WaittillAnimDone( fileLevel.characterModel )
 		}
-		else if ( currentMenuState == eNewCharacterSelectMenuState.LOCKED )
+		else
 		{
-			#if DEVELOPER
-				printt( "| LOCKED ANIM", string(fileLevel.characterModel.GetModelName()) )
-			#endif
-			
-			Chroma_AddOverlay( CHROMALOOP_SMOKE, CHROMAWAVE_FLASH, {[0.0] = <1, 1, 1>}, 2.0 )
-			thread PlayCharacterReadyUpLine( character )
-			fileLevel.lockSequenceAnimTime = Time()
-			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_READYUP_INTRO", fileLevel.characterNode )
-			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_READYUP_IDLE", fileLevel.characterNode )
+			entity charNode = fileLevel.characterNode
+
+			                                                                                                                                                                    
+			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_MAIN_INTRO", charNode )
+			                                                                                                                                                                   
+			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_MAIN_IDLE", charNode )
+		}
+	}
+	else if ( currentMenuState == eNewCharacterSelectMenuState.LOCKED )
+	{
+		printt( "| LOCKED ANIM", string(fileLevel.characterModel.GetModelName()) )
+		Chroma_AddOverlay( CHROMALOOP_SMOKE, CHROMAWAVE_FLASH, {[0.0] = <1, 1, 1>}, 2.0 )
+		thread PlayCharacterReadyUpLine( character )
+		fileLevel.lockSequenceAnimTime = Time()
+
+		asset customReadyIntroAnim = CharacterSkin_GetCustomCharSelectReadyIntroAnim( characterSkin )
+		asset customReadyIdleAnim  = CharacterSkin_GetCustomCharSelectReadyIdleAnim( characterSkin )
+		Assert( (customReadyIntroAnim == $"") == (customReadyIdleAnim == $""), format( "Char skin '%s' has only one char select custom anim set!", string(ItemFlavor_GetAsset( characterSkin )) ) )
+
+		if ( (customReadyIntroAnim != $"") && ShipHackCheckForAnim( customReadyIntroAnim, fileLevel.characterModel, characterSkin ) && ShipHackCheckForAnim( customReadyIdleAnim, fileLevel.characterModel, characterSkin ) )
+		{
+			                                                                                                                                                                              
+			fileLevel.characterModel.Anim_Play( customReadyIntroAnim )
+			WaittillAnimDone( fileLevel.characterModel )
+			                                                                                                                                                                             
+			fileLevel.characterModel.Anim_Play( customReadyIdleAnim )
+			WaittillAnimDone( fileLevel.characterModel )
+		}
+		else
+		{
+			entity charNode = fileLevel.characterNode
+
+			                                                                                                                                                                       
+			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_READYUP_INTRO", charNode )
+			                                                                                                                                                                    
+			PlayAnim( fileLevel.characterModel, "ACT_MP_MENU_READYUP_IDLE", charNode )
 		}
 	}
 }
 
+bool function ShipHackCheckForAnim( asset reqAnim, entity characterModel, ItemFlavor characterSkin )
+{
+	if ( !characterModel.Anim_HasSequence( reqAnim ) )
+	{
+		Warning( "%s() - Character model '%s' is missing expected animation '%s'. Character skin being referenced is '%s'.", FUNC_NAME(), string( characterModel.GetModelName() ), string( reqAnim ), string(ItemFlavor_GetAsset( characterSkin )) )
+		return false
+	}
+
+	return true
+}
+
 void function PlayCharacterReadyUpLine( ItemFlavor character )
 {
-	//EndSignal( fileLevel.signalDummy, "UpdatingAnim" )
+	                                                    
 	EndSignal( fileLevel.signalDummy, "CharacterSelectClosing" )
 
 	array<string> readyUpLines = CharacterClass_GetReadyUpVoicelineEventList( character )
@@ -3575,15 +3924,15 @@ void function PlayCharacterReadyUpLine( ItemFlavor character )
 void function DebugMenuThink()
 {
 	EndSignal( fileLevel.signalDummy, "CharacterSelectClosing" )
-	for( ; ; )
+	while( true )
 	{
 		string desiredCharacter = "null"
 		if ( fileLevel.desiredCharacterOrNull != null )
-			desiredCharacter = ItemFlavor_GetHumanReadableRef( expect ItemFlavor( fileLevel.desiredCharacterOrNull ) )
+			desiredCharacter = ItemFlavor_GetCharacterRef( expect ItemFlavor( fileLevel.desiredCharacterOrNull ) )
 
 		string debugString = "-- Menu State --"
 		debugString += "\n" + format( "My Turn: %i", fileLevel.localClientLockstepIndex )
-		debugString += "\n" + format( "Current Turn: %i", GetGlobalNetInt( "characterSelectLockstepIndex" ) )
+		debugString += "\n" + format( "Current Turn: %i", GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 		debugString += "\n" + format( "Browse Mode: %s", fileLevel.isBrowseMode ? "true" : "false" )
 		debugString += "\n" + format( "Desired Character: %s", desiredCharacter )
 		debugString += "\n" + format( "Desired Menu State: %s", DEV_GetEnumStringSafe( "eNewCharacterSelectMenuState", fileLevel.desiredMenuState ) )
@@ -3594,400 +3943,407 @@ void function DebugMenuThink()
 	}
 }
 
-#endif //CLIENT
+#endif         
+                                   
+  
+                                                                
+                                          
+                                                          
+                                              
+                                                                              
+  
+                                   
+
 
 #if SERVER
-bool function CharacterSelect_AssignCharacter( entity player, ItemFlavor character, bool updateLoadoutSlot = true )
-{
-	TakeAllPassives( player )
-	
-	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-	
-	if ( updateLoadoutSlot && ItemFlavor_GetHumanReadableRef( playerCharacter ) != ItemFlavor_GetHumanReadableRef( character ) )
-	{
-		SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), character )
-		#if DEVELOPER
-			printt( "AssignCharacter: player", player, "is now", ItemFlavor_GetHumanReadableRef( character ) )
-		#endif
-	}
+                                                              
+ 
+	                         
+		      
 
-	if( Gamemode() != eGamemodes.WINTEREXPRESS )
-		player.SetPlayerNetBool( "hasLockedInCharacter", true )
-	
-	if( ItemFlavor_GetHumanReadableRef( character ) == "character_wattson" )
-		player.SetArmsModelOverride( $"mdl/Weapons/arms/pov_pilot_light_wattson.rmdl" )
-	else
-		player.SetArmsModelOverride( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "armsModel" ) )
+	                                   
+		      
 
-	if ( LiveAPI_IsValidToRun() )
-	{
-		LiveAPI_WriteLogUsingDefinedFields( eLiveAPI_EventTypes.characterSelected, 
-			[ LiveAPI_GetPlayerIdentityTable( player ) ], 
-			[ 3/*player*/ ]
-		)
-	}
+	                                                           
 
-	return true
-}
+  	                  
+  		                                                                       
+  	    
+  		                                                                         
 
-bool function ClientCommand_UpdateCharacterLock( entity player, array<string> args )
-{
-	if ( args.len() != 1 )
-		return true
+	                                                                                    
+ 
 
-	if ( !IsValid( player ) )
-		return true
+                                                                                       
+ 
+	                                           
+	                                        
+	 
+		                         
+		 
+			                                                                                     
+		 
+	 
+ 
+#endif
 
-	bool setLocked = args[0] == "1"
-	player.SetPlayerNetBool( "hasLockedInCharacter", setLocked )
-
-	return true
-}
-#endif //SERVER
-
-//  ██╗   ██╗████████╗██╗██╗     ██╗████████╗██╗   ██╗
-//  ██║   ██║╚══██╔══╝██║██║     ██║╚══██╔══╝╚██╗ ██╔╝
-//  ██║   ██║   ██║   ██║██║     ██║   ██║    ╚████╔╝
-//  ██║   ██║   ██║   ██║██║     ██║   ██║     ╚██╔╝
-//  ╚██████╔╝   ██║   ██║███████╗██║   ██║      ██║
-//   ╚═════╝    ╚═╝   ╚═╝╚══════╝╚═╝   ╚═╝      ╚═╝
-
-#if SERVER
-void function AssignLockStepOrder()
-{
-	#if DEBUG_LOCK_STEP_PICK
-		printt( "Lockstep: -------------------------" )
-		printt( "Lockstep: ASSIGNING LOCK STEP ORDER" )
-		printt( "Lockstep: -------------------------" )
-	#endif
-
-	table< int, array<entity> > groupedPlayers = GetAllPlayersSortedByTeam()
-
-	foreach( int team, array<entity> players in groupedPlayers )
-	{
-		if ( players.len() == 0 )
-			continue
-
-		#if DEBUG_LOCK_STEP_PICK
-			printt( "Lockstep:   Team", team, "Pick Order:" )
-		#endif
-
-		ArrayRemoveInvalid( players )
-		players.randomize()
-		int i = 0
-		foreach( entity player in players )
-		{
-			#if DEBUG_LOCK_STEP_PICK
-				printt( "Lockstep:    ", i + ":", player, player.GetPlayerName() )
-			#endif
-
-			player.SetPlayerNetInt( "characterSelectLockstepPlayerIndex", i )
-			i++
-		}
-	}
-
-	fileLevel.assignedLockStepOrder = true
-
-	#if DEBUG_LOCK_STEP_PICK
-		printt( "Lockstep: -------------------------" )
-		printt( "Lockstep: -------------------------" )
-	#endif
-}
-
-/*
-void function AssignLockStepOrderForTeam( array<entity> players, int team )
-{
-	#if DEBUG_LOCK_STEP_PICK
-		string debugPrintLine = "  Team " + team + " Pick History: "
-	#endif
-
-	table< entity, array< int > > pickHistoryData
-	foreach( int i, entity player in players )
-	{
-		array<int> counts = GetPickOrderCountForPlayer( player )
-
-		pickHistoryData[ player ] <- counts
-
-		#if DEBUG_LOCK_STEP_PICK
-			if ( i != 0 )
-				debugPrintLine += ", "
-			debugPrintLine += player.GetPlayerName() + " ["
-			foreach( int k, int count in counts )
-			{
-				if ( k > 0 )
-					debugPrintLine += ","
-				debugPrintLine += counts[k].tostring()
-			}
-			debugPrintLine += "]"
-		#endif
-	}
-
-	#if DEBUG_LOCK_STEP_PICK
-		printt( debugPrintLine )
-	#endif
-
-	for ( int i = 0 ; i < MAX_TEAM_PLAYERS ; i++ )
-	{
-		if ( pickHistoryData.len() == 0 )
-			return
-
-		entity player = GetBestPlayerForLockStepPick( pickHistoryData, i )
-
-		Assert( IsValid( player ) )
-		Assert( player in pickHistoryData )
-		delete pickHistoryData[ player ]
-
-		player.SetPlayerNetInt( "characterSelectLockstepPlayerIndex", i )
-		#if DEBUG_LOCK_STEP_PICK
-			printt( "   ", i + ":", player.GetPlayerName() )
-		#endif
-		//UpdatePlayerPickOrderHistory( player, i )
-	}
-}
-
-entity function GetBestPlayerForLockStepPick( table< entity, array< int > > pickHistoryData, int pick )
-{
-	// Put players into an array so we can randomize the order so that a tie will result in a random tie breaker based on randomize order
-	array<entity> players
-	foreach( entity player, array<int> data in pickHistoryData )
-		players.append( player )
-	players.randomize()
-
-	#if DEBUG_LOCK_STEP_PICK
-		printt( "      determining best player for pick", pick )
-	#endif
-
-	entity pickedPlayer
-	int pickedCount = -1
-	foreach( entity player in players )
-	{
-		Assert( player in pickHistoryData )
-		Assert( pick in pickHistoryData[ player ] )
-
-		int count = pickHistoryData[ player ][ pick ]
-		#if DEBUG_LOCK_STEP_PICK
-			printt( "       ", player.GetPlayerName(), "count:", count )
-		#endif
-
-		if ( pickedCount < 0 || count < pickedCount )
-		{
-			pickedPlayer = player
-			pickedCount = count
-		}
-	}
-
-	Assert( IsValid( pickedPlayer ) )
-
-	return pickedPlayer
-}
-
-array<int> function GetPickOrderCountForPlayer( entity player )
-{
-	array<int> pickHistory = GetPersistentIntArray( player, "characterPickOrderHistory" )
-
-	array<int> counts
-	counts.resize( MAX_TEAM_PLAYERS )
-
-	foreach( int i, int pick in pickHistory )
-	{
-		if ( pick == 0.0 )
-			continue
-		if ( pick > MAX_TEAM_PLAYERS )
-			continue
-		counts[ pick - 1 ]++
-	}
-
-	return counts
-}
-
-void function UpdatePlayerPickOrderHistory( entity player, int pick )
-{
-	array<int> pickHistory = GetPersistentIntArray( player, "characterPickOrderHistory" )
-	pickHistory.insert( 0, pick + 1 )
-	pickHistory.resize( PersistenceGetArrayCount( "characterPickOrderHistory" ) )
-	SetPersistentIntArray( player, "characterPickOrderHistory", pickHistory )
-}
-*/
-void function CharacterSelect_OnClientConnected( entity player )
-{
-	// Need this to catch late connecting players, ie player connects during character selection they wont have a lock step index set because AssignLockStepOrder was already called
-	if ( GetGameState() >= eGameState.Playing )
-		return
-
-	if ( !fileLevel.assignedLockStepOrder )
-		return
-
-	#if DEVELOPER
-		printt( "LATE CONNECTING PLAYER", player, "MISSED LOCK STEP ASSIGNMENT! TRYING TO ASSIGN A NEW ONE..." )
-	#endif
-	
-	int team                   = player.GetTeam()
-	array<entity> squadPlayers = GetPlayerArrayOfTeam( team )
-	squadPlayers.fastremovebyvalue( player )
-
-	// Make array of all valid lock step indexies someone could have
-	array<int> validLockstepIndexies = []
-	for ( int i = 0 ; i < MAX_TEAM_PLAYERS ; i++ )
-		validLockstepIndexies.append( i )
-
-	// Remove lock step indexies used by teammates already
-	foreach( entity squadPlayer in squadPlayers )
-	{
-		int squadPlayerIndex = squadPlayer.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" )
-		if ( validLockstepIndexies.contains( squadPlayerIndex ) )
-			validLockstepIndexies.removebyvalue( squadPlayerIndex )
-	}
-	
-	// Player joined lock-step late, and the team was full. Couldn't assign the late player a lockstep index
-	if( validLockstepIndexies.len() == 0 ) //fix crash spamming sv_addbot with same team
-		return
-	
-	// Give the player the last available lockstep index that isn't used. We want to give them the last one possible in hopes they will get to pick a character. If we give them the FIRST available they're more likely to miss their turn.
-	int pickIndex = validLockstepIndexies.pop()
-	printt( "team", team, "player", player, "pick:", pickIndex )
-
-	// Assert that our pick index isn't used yet
-	foreach( entity squadPlayer in squadPlayers )
-	{
-		if( squadPlayer.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" ) == pickIndex )
-			return
-	}
-
-	#if DEVELOPER
-		printt( "LATE CONNECTING PLAYER", player, "NEW LOCK STEP ASSIGNED!", pickIndex )
-	#endif
-	
-	// Assign lockstep index
-	player.SetPlayerNetInt( "characterSelectLockstepPlayerIndex", pickIndex )
-}
-
-bool function ClientCommand_UpdateCharacterSelectFocus( entity player, array<string> args )
-{
-	if ( args.len() != 1 )
-		return true
-
-	if ( !IsValid( player ) )
-		return true
-
-	int focusIndex = int( args[0] )
-	if ( !IsValidItemFlavorGUID( focusIndex ) )
-	{
-		//printt( "GOT INVALID GUID FOCUS", focusIndex )
-		focusIndex = -1
-	}
-	//printt( "GOT GUID FOCUS", focusIndex )
-
-	if ( player.GetPlayerNetBool( "hasLockedInCharacter" ) == true )
-	{
-		LoadoutEntry characterSlot = Loadout_Character()
-		EHI playerEHI              = ToEHI( player )
-		if ( LoadoutSlot_IsReady( playerEHI, characterSlot ) )
-		{
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
-			focusIndex = ItemFlavor_GetGUID( character )
-		}
-	}
-
-	player.SetPlayerNetInt( "characterSelectFocusIndex", focusIndex )
-
-	return true
-}
-
-#endif //SERVER
 
 #if CLIENT
-
-array<int> function GetButtonUseOrder( int count )
+void function ServerToClient_SetClubPartyBool( bool isClubSquad )
 {
-	if ( count == 4 )
-	{
-		return [    -1, 0, 1, -1, -1, -1,
-			-1, 2, 3, -1, -1, -1,
-			-1, -1, -1, -1, -1, -1,
-			-1, -1, -1, -1, -1, -1,
-			-1, -1, -1, -1, -1, -1
-		]
-	}
+	if ( !IsConnected() )
+		return
 
-	if ( count <= 6 )
-	{
-		return [    -1, 0, 1, 2, -1, -1,
-			-1, 3, 4, 5, -1, -1,
-			-1, -1, -1, -1, -1, -1,
-			-1, -1, -1, -1, -1, -1,
-			-1, -1, -1, -1, -1, -1
-		]
-	}
+  	                  
+  		                                                                                               
+  	    
+  		                                                                                                
 
-	if ( count <= 8 )
-	{
-		return [    -1, 0, 1, 2, 3, -1,
-			 4,  5,  6,  7, -1, -1,
-			-1, -1, -1, -1, -1, -1,
-			-1, -1, -1, -1, -1, -1,
-			-1, -1, -1, -1, -1, -1
-		]
-	}
-
-	if ( count <= 9 )
-	{
-		return [    -1, 0, 1, 2, -1, -1,
-			-1, 3, 4, 5, -1, -1,
-			-1, 6, 7, 8, -1, -1,
-			-1, -1, -1, -1, -1, -1,
-			-1, -1, -1, -1, -1, -1
-		]
-	}
-
-	if ( count <= 12 )
-	{
-		return [    -1, 0, 1, 2, 3, -1,
-			-1, 4, 5, 6, 7, -1,
-			-1, 8, 9, 10, 11, -1,
-			-1, -1, -1, -1, -1, -1,
-			-1, -1, -1, -1, -1, -1
-		]
-	}
-
-	if ( count <= 25 )
-	{
-		return [    -1, 0, 1, 2, 3, 4,
-			-1, 5, 6, 7, 8, 9,
-			-1, 10, 11, 12, 13, 14,
-			-1, 15, 16, 17, 18, 19,
-			-1, 20, 21, 22, 23, 24
-		]
-	}
-
-	if ( count <= 28 )
-	{
-		return [     0, 1, 2, 3, 4, 5,
-			6, 7, 8, 9, 10, 11,
-			12, 13, 14, 15, 16, 17,
-			18, 19, 20, 21, 22, 23,
-			-1, 24, 25, 26, 27, -1
-		]
-	}
-
-	//if ( count <= 30 )
-	//{
-	return [     0, 1, 2, 3, 4, 5,
-		6, 7, 8, 9, 10, 11,
-		12, 13, 14, 15, 16, 17,
-		18, 19, 20, 21, 22, 23,
-		24, 25, 26, 27, 28, 29
-	]
-	//}
-
-	/*
-	return [ 	20,  0,  1,  2,  6, 16,
-		21,  3,  4,  5,  7, 17,
-		22,  8,  9, 10, 11, 18,
-		23, 12, 13, 14, 15, 19,
-		28, 24, 25, 26, 27, 29
-	]
-	*/
+	file.isFullClubSquad = isClubSquad
 }
+
+
+bool function GetIsFullClubSquad()
+{
+	return file.isFullClubSquad
+}
+
+void function UIToClient_SetClubName( string clubName )
+{
+  	                                                                                                    
+	if ( clubName != "" )
+	{
+		file.clubName = clubName
+		Clubs_SetMyStoredClubName( clubName )
+	}
+}
+
+
+void function ServerToClient_SetChampionClubSquadName( string clubName )
+{
+  	                                                                                                                   
+	if ( clubName != "" )
+		file.championClubName = clubName
+}
+#endif
+
+#if UI
+void function ClientToUI_GetClubName()
+{
+	string clubName = CLUB_NAME_EMPTY
+
+	if ( Clubs_IsEnabled() && ClubIsValid() )
+		clubName = ClubGetHeader().name
+
+  	                                                                                                                                   
+	RunClientScript( FUNCNAME_CLUB_SETCLUBNAME_CL, clubName )
+}
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                    
+                                                                                                                                        
+                                                                                                             
+                                                                                                        
+                                                                                                                   
+                                                                                                               
+
+#if SERVER
+                                   
+ 
+	                        
+		                                               
+		                                               
+		                                               
+	      
+
+	                                                                        
+
+	                                                            
+	 
+		                         
+			        
+
+		                        
+			                                                 
+		      
+
+		                             
+		                   
+
+                        
+			                                                                         
+			 
+				                              
+				                       
+				                       
+			 
+        
+
+		                     
+		                                   
+		 
+			                        
+				                                                                              
+			      
+
+			                                                                                       
+			               
+		 
+	 
+
+	                                      
+
+	                        
+		                                               
+		                                               
+	      
+ 
+
+  
+                                                                           
+ 
+	                        
+		                                                            
+	      
+
+	                                             
+	                                          
+	 
+		                                                        
+
+		                                   
+
+		                        
+			             
+				                      
+			                                               
+			                                     
+			 
+				            
+					                     
+				                                      
+			 
+			                     
+		      
+	 
+
+	                        
+		                        
+	      
+
+	                                              
+	 
+		                                 
+			      
+
+		                                                                  
+
+		                           
+		                                   
+		                                
+
+		                                                                           
+		                        
+			                                                
+		      
+		                                           
+	 
+ 
+
+                                                                                                       
+ 
+	                                                                                                                                     
+	                     
+	                                                            
+		                        
+	                   
+
+	                        
+		                                                        
+	      
+
+	                   
+	                    
+	                                   
+	 
+		                                   
+		                                           
+
+		                                             
+		                        
+			                                                            
+		      
+
+		                                             
+		 
+			                     
+			                   
+		 
+	 
+
+	                                 
+
+	                   
+ 
+
+                                                               
+ 
+	                                                                                     
+
+	                 
+	                                 
+
+	                                         
+	 
+		                  
+			        
+		                              
+			        
+		                    
+	 
+
+	             
+ 
+
+                                                                     
+ 
+	                                                                                     
+	                                 
+	                                                                             
+	                                                                         
+ 
+  
+                                                  
+ 
+	                                                                                                                                                                                                       
+	 
+		                              
+		 
+			                                      
+				                                                                                 
+		 
+	 
+ 
+
+                                                                
+ 
+	                                                                                                                                                                                
+	                                           
+		      
+
+	                                       
+		      
+
+	                                                                          
+
+	                                             
+	                                                         
+	
+	                                       
+
+	                                             
+	 
+		                                                                                                                  
+	 
+
+	                                        
+
+	                                                                
+	                                     
+	                                              
+		                                 
+
+	                                                      
+	                                             
+	 
+		                                                                                                    
+		                                                         
+			                                                       
+	 
+	                                                                                                                                                  
+
+	                                       
+	 
+		                     
+
+		                                                                    
+		 
+			                                                                                          
+		 
+
+		                                                                                                                                                                             
+		                                                                                                                                                                                                                                                                                                                                                                         
+		                                                                                                                                                                                                                                                                                                                                      
+	 
+
+	                                                                                                                                                                                                                                        
+	                                           
+	                                                            
+
+	                                            
+	                                             
+	 
+		                                                                                                    
+	 
+
+	                                                                                   
+ 
+
+                                                                                                        
+ 
+	                         
+		      
+
+	                                              
+	 
+		                                                                                                            
+		                  
+	 
+
+	                                                                  
+	 
+		                                                                                                  
+		             
+	 
+
+	                                                                                         
+	 
+		                                                
+		                                            
+		                                                      
+		 
+			                                                                            
+			                                               
+
+			                                                                                         
+			                                     
+		 
+	 
+
+	                                                                                     
+	                                                                  
+
+	      
+ 
+
+#endif         
+
+#if CLIENT
 
 void function CreateNewCharacterModel( asset model )
 {
@@ -4001,8 +4357,10 @@ void function CreateNewCharacterModel( asset model )
 	fileLevel.characterModel = CreateClientSidePropDynamic( charNode.GetOrigin(), charNode.GetAngles(), model )
 	fileLevel.characterModel.MakeSafeForUIScriptHack()
 	fileLevel.characterModel.SetParent( charNode ) 
+	
 	fileLevel.characterModel.Hide()
 }
+
 void function CreateNewLightRigModel()
 {
 	Assert( DoesBackgroundEntExist() )
@@ -4022,30 +4380,47 @@ void function CreateNewLightRigModel()
 	fileLevel.lightRigModel.SetParent( targetBackground )
 	fileLevel.lightRigModel.Hide()
 }
+  
+                                                                               
+ 
+	                                   
+	 
+		                                                                                                                                             
+			           
+	 
+	            
+ 
+  
 
-bool function PlayerHasCharacterLockedInOrFocused( entity player, ItemFlavor character )
+bool function PlayerHasCharacterLockedInOrFocused( entity player, ItemFlavor character, ItemFlavor ornull skin )
 {
-	// Player has character locked in
-	if ( PlayerHasCharacterLockedIn( player, character ) )
+	                                 
+	if ( PlayerHasCharacterLockedIn( player, character, skin ) )
 		return true
 
-	// Don't do hover focus if they have a locked character
-	if ( player.GetPlayerNetBool( "hasLockedInCharacter" ) )
+	                                                       
+	if ( player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) )
 		return false
 
-	// Player has focus on this character
-	if ( player.GetPlayerNetInt( "characterSelectFocusIndex" ) == ItemFlavor_GetGUID( character ) )
-		return true
+	                                     
+	if ( player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID ) != ItemFlavor_GetGUID( character ) )
+		return false
 
-	return false
+	if ( skin != null )
+	{
+		expect ItemFlavor( skin )
+		if ( player.GetPlayerNetInt( "characterSelectFocusSkinGUID" ) != ItemFlavor_GetGUID( skin ) )
+			return false
+		}
+
+	return true
 }
 
-bool function PlayerHasCharacterLockedIn( entity player, ItemFlavor character )
+bool function PlayerHasCharacterLockedIn( entity player, ItemFlavor character, ItemFlavor ornull skin )
 {
 	LoadoutEntry characterSlot = Loadout_Character()
 
-	// player doens't have any character locked in
-	if ( !player.GetPlayerNetBool( "hasLockedInCharacter" ) && Gamemode() != eGamemodes.WINTEREXPRESS )
+	if ( !player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) )
 		return false
 
 	EHI playerEHI = ToEHI( player )
@@ -4053,9 +4428,32 @@ bool function PlayerHasCharacterLockedIn( entity player, ItemFlavor character )
 		return false
 
 	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
-	return playerCharacter == character
+	if ( playerCharacter != character )
+		return false
+
+	if ( skin != null )
+	{
+		expect ItemFlavor( skin )
+		ItemFlavor playerSkin = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterSkin( playerCharacter ) )
+		if ( skin != playerSkin )
+			return false
+	}
+
+	return true
 }
 
+entity ornull function GetPlayerWithLockedCharacter( ItemFlavor character, ItemFlavor ornull skin, array<entity> players )
+{
+	                                                                           
+	LoadoutEntry characterSlot = Loadout_Character()
+	foreach( entity player in players )
+	{
+		if ( PlayerHasCharacterLockedIn( player, character, skin ) )
+			return player
+	}
+
+	return null
+}
 
 int function GetButtonIndexForCharacter( ItemFlavor character )
 {
@@ -4091,16 +4489,48 @@ array<entity> function GetOtherTeammates()
 	return teammates
 }
 
+void function CharacterSelect_SetIsBrowseMode( bool isBrowseMode )
+{
+	fileLevel.isBrowseMode = isBrowseMode
+}
+
+bool function CharacterSelect_GetIsBrowseMode()
+{
+	return fileLevel.isBrowseMode
+}
+
+bool function IsPlayerJumpMaster( entity player )
+{
+	if( GameRules_GetGameMode() == SURVIVAL )
+		return player == GetLastPickingPlayer()
+
+	return false
+}
+
 entity ornull function GetLastPickingPlayer()
 {
+	entity ornull validPlayer
 	for ( int i = MAX_TEAM_PLAYERS - 1 ; i >= 0 ; i-- )
 	{
 		entity ornull player = GetTeammateForPickingIndex( i )
-		if ( IsValid( player ) )
-			return player
+		if ( !IsValid( player ) )
+			continue
+
+		                                                                   
+		if ( validPlayer == null )
+			validPlayer = player
+
+		                                                                                 
+		                                                       
+		  	        
+
+		return player
 	}
 
-	Assert( 0, "GetLastPickingPlayer wasn't able to get the last picking player on local client team" )
+	if ( validPlayer != null )
+		return validPlayer
+
+	Assert( false, "GetLastPickingPlayer wasn't able to get the last picking player on local client team" )
 
 	entity invalidPlayer
 	return invalidPlayer
@@ -4115,7 +4545,7 @@ entity ornull function GetTeammateForPickingIndex( int index )
 
 	foreach( entity player in squadPlayers )
 	{
-		if ( player.GetPlayerNetInt( "characterSelectLockstepPlayerIndex" ) == index )
+		if ( player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX ) == index )
 			return player
 	}
 
@@ -4130,7 +4560,7 @@ bool function DoMenuEntsExist()
 		CHARACTER_ENT_NAME,
 	]
 
-	//BACKGROUND_ENT_NAME
+	                     
 
 	foreach ( name in entNames )
 	{
@@ -4162,7 +4592,7 @@ bool function DoMenuLightsExist()
 
 bool function DoesBackgroundEntExist()
 {
-	// Temp until the maps get recompiled
+	                                     
 	return GetEntArrayByScriptName( BACKGROUND_ENT_NAME ).len() > 0
 }
 
@@ -4182,6 +4612,7 @@ void function FlashScreenWhite( float holdTime = 0.5, float fadeOutDuration = 2.
 			Hud_Hide( fileLevel.whiteFlash )
 		}
 	)
+
 	Hud_SetEnabled( fileLevel.whiteFlash, false )
 	Hud_SetAlpha( fileLevel.whiteFlash, 255 )
 	Hud_Show( fileLevel.whiteFlash )
@@ -4260,10 +4691,9 @@ void function UpdateCharacterDetailsMenu( var detailsRui, ItemFlavor character, 
 
 
                     
-                                                             
-                                                                           
+		string roleDesc = CharacterClass_GetCharacterPerkDescription( character )
       
-		string roleDesc = CharacterClass_GetCharacterRolePerkDesc( character )
+                                                                        
        
 	if ( roleDesc == "" )
 	{
@@ -4278,6 +4708,7 @@ void function UpdateCharacterDetailsMenu( var detailsRui, ItemFlavor character, 
 	RuiSetString( detailsRui, "rolePerkDesc", roleDesc )
 
 	RuiSetBool( detailsRui, "isTempUnlocked", GetCurrentPlaylistVarBool( "all_characters_unlocked", false ) )
+	RuiSetBool( detailsRui, "isJiP", fileLevel.isJiP )
 }
 
 void function FadeInOut (float fadeOutDuration , float blackoutDuration, float fadeInDuration)
@@ -4289,8 +4720,7 @@ void function FadeInOut (float fadeOutDuration , float blackoutDuration, float f
 
 void function SetCharacterSelectSceneForChampionSquad()
 {
-	// Remove "Your Squad" banners
-
+	                              
 	foreach( var rui in fileLevel.gCardRuiHandles )
 		RuiDestroyIfAlive( rui )
 
@@ -4298,15 +4728,16 @@ void function SetCharacterSelectSceneForChampionSquad()
 		CleanupNestedGladiatorCard( handle, true )
 	fileLevel.nestedGladiatorCardHandles.clear()
 
-	// Background Black
+	                   
 
 	if ( IsValid( fileLevel.backgroundModelGeo ) )
-		fileLevel.backgroundModelGeo.SetSkin( CHAMPION_SQAUD_BACKGROUND_SKIN_INDEX )
+		fileLevel.backgroundModelGeo.SetSkin( GetCurrentPlaylistVarInt( "champion_screen_bgModel_skin_override", CHAMPION_SQAUD_BACKGROUND_SKIN_INDEX ) )
 
 	if ( IsValid( fileLevel.backgroundModelSmoke ) )
-		fileLevel.backgroundModelSmoke.SetSkin( CHAMPION_SQAUD_SMOKE_SKIN_INDEX )
+		fileLevel.backgroundModelSmoke.SetSkin( GetCurrentPlaylistVarInt( "champion_screen_smokeModel_skin_override", CHAMPION_SQAUD_SMOKE_SKIN_INDEX ) )
 
-	if ( fileLevel.lightEntsExist )
+	fileLevel.lightEntsExist = DoMenuLightsExist()
+	if ( fileLevel.lightEntsExist && IsValid( fileLevel.lightRigModel ) )
 	{
 		fileLevel.keyLight.SetTweakLightColor( < 0.5, 0.5, 0.5 > )
 		fileLevel.keyLight.SetTweakLightBrightness( 4.0 )
@@ -4345,7 +4776,7 @@ void function SetCharacterSelectSceneForChampionSquad()
 		fileLevel.rimLightR.SetTweakLightPBRFalloff( false )
 		fileLevel.rimLightR.SetTweakLightRealtimeShadows( true )
 
-		//
+		           
 		fileLevel.lightRigModel.Anim_Play( $"animseq/humans/class/char_select_light_default.rseq" )
 		int attachIdx_fill = fileLevel.lightRigModel.LookupAttachment( "LIGHT_1" )
 		int attachIdx_rimL = fileLevel.lightRigModel.LookupAttachment( "LIGHT_2" )
@@ -4366,45 +4797,132 @@ void function SetCharacterSelectSceneForChampionSquad()
 	}
 	else
 	{
-		#if DEVELOPER
-			printt( "Map doesn't have menu lights compiled in. Make sure the latest menu box instance is in the level and recompile the map." )
-		#endif
+		printt( "Map doesn't have menu lights compiled in. Make sure the latest menu box instance is in the level and recompile the map." )
 	}
 }
 #endif
+
+
+#if SERVER
+                                                                           
+ 
+	                                                         
+	                                            
+		                                                        
+
+	                                        
+	 
+		                                                                                        
+			             
+	 
+
+	           
+ 
+#endif
+
+#if SERVER
+                                                           
+ 
+	                                                                           
+		            
+
+	                                               
+		            
+
+	                                           
+ 
+
+                                                                         
+ 
+	                                            
+ 
+
+                                                                          
+ 
+	                                             
+ 
+#endif         
+
+bool function IsCharacterReselectEnabled()
+{
+	return GetCurrentPlaylistVarBool( "character_reselect_enabled", false )
+}
+
+#if SERVER
+                                                                       
+ 
+	                                                                                                                                                
+ 
+
+                                                                  
+ 
+	                                                       
+ 
+#endif          
 
 bool function SquadMuteLegendSelectEnabled()
 {
 	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
 }
 
-bool function FS_ShouldShowCustomCharacterSelect()
+#if CLIENT && DEV
+void function Dev_CharacterSelectClearCamera()
 {
-	if( Playlist() == ePlaylists.fs_scenarios || Gamemode() == eGamemodes.WINTEREXPRESS )
-		return true
+	vector nodeOrigin = fileLevel.characterNode.GetOrigin() + fileLevel.characterNode.GetForwardVector() * 128 + <0,0,64>
+	vector nodeAngles = VectorToAngles( fileLevel.characterNode.GetForwardVector() * -1 )
 
-	return GetCurrentPlaylistVarBool( "r5reloaded_AnimatedCharacterSelect", false )
+	                          
+	RunUIScript( "UI_CloseCharacterSelect" )
+	GetLocalClientPlayer().ClearMenuCameraEntity()
+
+	                       
+	foreach( var rui in fileLevel.ruiPlayerBarRuis )
+		RuiDestroyIfAlive( rui )
+	fileLevel.ruiPlayerBarRuis = []
+
+	             
+	GetLocalClientPlayer().ClientCommand( "setpos " + nodeOrigin.x + " " + nodeOrigin.y + " " + nodeOrigin.z + ";setang " + nodeAngles.x + " " + nodeAngles.y + " " + nodeAngles.z)
+
+	                             
+	int attachIdx_fill = fileLevel.lightRigModel.LookupAttachment( "LIGHT_1" )
+	int attachIdx_rimL = fileLevel.lightRigModel.LookupAttachment( "LIGHT_2" )
+	int attachIdx_rimR = fileLevel.lightRigModel.LookupAttachment( "LIGHT_3" )
+	int attachIdx_key = fileLevel.lightRigModel.LookupAttachment( "LIGHT_4" )
+	DebugDrawAngles( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_fill ), fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_fill ), 15.0 )
+	DebugDrawAngles( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_rimL ), fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_rimL ), 15.0 )
+	DebugDrawAngles( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_rimR ), fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_rimR ), 15.0 )
+	DebugDrawAngles( fileLevel.lightRigModel.GetAttachmentOrigin( attachIdx_key ), fileLevel.lightRigModel.GetAttachmentAngles( attachIdx_key  ), 15.0 )
 }
 
-#if SERVER || CLIENT
-entity ornull function GetPlayerWithLockedCharacter( ItemFlavor character, array<entity> players )
+void function Dev_CharacterSelectRefreshLighting()
 {
-	// Return what player has the specified character locked, or null if nobody
-	LoadoutEntry characterSlot = Loadout_Character()
-	foreach( entity player in players )
-	{
-		// player doesn't have a character locked in
-		if ( !player.GetPlayerNetBool( "hasLockedInCharacter" ) && Gamemode() != eGamemodes.WINTEREXPRESS )
-			continue
+	if( fileLevel.desiredCharacterOrNull != null )
+		thread Dev_CharacterSelectRefreshLighting_Thread()
+}
 
-		EHI playerEHI = ToEHI( player )
-		if ( !LoadoutSlot_IsReady( playerEHI, characterSlot ) )
-			continue
 
-		ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( playerEHI, characterSlot )
-		if ( playerCharacter == character )
-			return player
-	}
-	return null
+void function Dev_CharacterSelectRefreshLighting_Thread()
+{
+	ItemFlavor character = expect ItemFlavor( fileLevel.desiredCharacterOrNull )
+	ItemFlavor ornull characterSkinOverride = fileLevel.desiredSkinOrNull
+
+	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
+	if ( fileLevel.isBrowseMode )                                               
+		pickingPlayer = GetLocalClientPlayer()
+	if ( pickingPlayer == null )
+		return                                                               
+
+	expect entity( pickingPlayer )
+
+	ItemFlavor characterSkin = GetCharacterSkinForPlayerSelection( ToEHI( pickingPlayer ), character, characterSkinOverride )
+
+	TryUpdateLightingRig( character, characterSkin )
+}
+#endif
+
+#if CLIENT
+void function TestBGupdate( int skin )
+{
+	fileLevel.backgroundModelGeo.Destroy()
 }
 #endif

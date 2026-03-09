@@ -13,7 +13,8 @@ void function Lobby_AddLocalPlayer()
 	player.SetMenuCameraEntity( camera )
 
 	SetStandardAbilityBindingsForPilot( player )
-	RefreshPresentationType()
+	// Don't call RefreshPresentationType() here — it defaults to INACTIVE and clears the camera.
+	// UI will call UI_SetPresentationType(PLAY) when PlayPanel_OnShow fires.
 	
 	foreach ( model in GetEntArrayByScriptName( "lobby_background_character" ) )
 	{

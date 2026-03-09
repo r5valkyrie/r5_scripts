@@ -3,9 +3,12 @@ untyped
 global function ClGameState_Init
 global function ClGameState_Think
 global function ClGameState_GetRui
+global function CLGameState_GetNetGraphRui
 global function ClGameState_SetInfoStatusText
+global function ClGameState_SetHasScreenBorder
 
 global function AddCallback_OnScoreboardCreated
+// AddCallback_OnGameStateChanged defined in cl_utility_mp.gnut (globalize_all_functions)
 
 global function ShowRoundScoresInAnnouncement
 
@@ -19,6 +22,9 @@ global function SetGameModeScoreBarUpdateRulesWithFlags
 global function SetGameModeSuddenDeathAnnouncementSubtext
 
 global function GetGameStartTime
+
+global function KillLeaderChangeCallback
+global function UpdateKillLeaderOnGameStateRui
 
 global function CreateScoreRUI
 global function SetCommonScoreRUIVars
@@ -91,6 +97,9 @@ struct
 	var  nestedNetGraphRui
 	bool netGraphRuiCreated = false
 	bool isNetGraphEnabled
+
+	int cachedGameState = -1
+	array< void functionref( int ) > onGameStateChangedFuncs
 } file
 
 const DEV_COUNTDOWNTIMER = 0//turn on to see the countdown timer to match starts - helps with lining up intros
@@ -794,6 +803,11 @@ void function ClGameState_Changed()
 		callbackFunc()
 	}
 
+	foreach ( callbackFunc in clGlobal.gameStateChangedCallbacks )
+	{
+		callbackFunc( GetGameState() )
+	}
+
 	switch ( GetGameState() )
 	{
 		case eGameState.WaitingForCustomStart:
@@ -1168,6 +1182,39 @@ void function OnSettingsUpdated()
 void function UpdateAnonymousModeSetting( entity playerEnt, bool oldVal, bool newVal, bool actuallyChanged )
 {
 	//
+}
+
+
+// ============================================================================
+// Additions
+// ============================================================================
+
+// CLGameState_GetNetGraphRui already defined above
+// AddCallback_OnGameStateChanged defined in cl_utility_mp.gnut
+
+void function KillLeaderChangeCallback( entity player, entity new )
+{
+	UpdateKillLeaderOnGameStateRui( ClGameState_GetRui() )
+	UpdateKillLeaderOnGameStateRui( GetFullmapGamestateRui() )
+}
+
+void function UpdateKillLeaderOnGameStateRui( var rui )
+{
+	if ( rui == null )
+		return
+
+	entity killLeader = GetGlobalNetEnt( "killLeader" )
+
+	RuiSetBool( rui, "isPlayerKillLeader", GetLocalViewPlayer() == killLeader )
+}
+
+void function ClGameState_SetHasScreenBorder( bool value )
+{
+	var rui = ClGameState_GetRui()
+	if ( IsValid( rui ) )
+	{
+		RuiSetBool( rui, "hasScreenBorder", value )
+	}
 }
 
 //maxPlayerCount

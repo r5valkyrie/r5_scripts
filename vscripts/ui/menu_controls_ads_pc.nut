@@ -7,22 +7,19 @@ struct
 {
 	var                menu
 	var                panel
-	
 	table<var, string> buttonTitles
 	table<var, string> buttonDescriptions
-	table <string, table<string, var > > textEntryFields
-	
 	var                detailsPanel
 	var                contentPanel
 
 	array<ConVarData> conVarDataList
-	
+
 	array<var> customItems
 	array<var> defaultItems
 } file
 
 
-void function InitADSControlsMenuPC( var menu ) //
+void function InitADSControlsMenuPC( var menu )                                               
 {
 	file.menu = menu
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnOpenControlsADSMenuPC )
@@ -49,11 +46,11 @@ void function InitADSControlsPanelPC( var panel )
 	file.defaultItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed" ) )
 
 	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity0" ), "#PEROPTICADS_0", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" ) )
-	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity1" ), "#PEROPTICADS_1", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" ) )
-	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity2" ), "#PEROPTICADS_2", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" ) )
+	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity1" ), "#PEROPTICADS_1", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC_2x", $"rui/menu/settings/settings_pc" ) )
+	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity2" ), "#PEROPTICADS_2", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC_3x", $"rui/menu/settings/settings_pc" ) )
 	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity3" ), "#PEROPTICADS_3", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" ) )
 	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity4" ), "#PEROPTICADS_4", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" ) )
-	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity5" ), "#PEROPTICADS_5", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" ) )
+	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity5" ), "#PEROPTICADS_5", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC_8x", $"rui/menu/settings/settings_pc" ) )
 	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity6" ), "#PEROPTICADS_6", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" ) )
 
 	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed0" ) )
@@ -63,17 +60,6 @@ void function InitADSControlsPanelPC( var panel )
 	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed4" ) )
 	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed5" ) )
 	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed6" ) )
-	
-	SetupTextField( "mouse_sensitivity", "TextEntryMouseSensitivity" ) 
-	SetupTextField( "mouse_zoomed_sensitivity_scalar_0", "TextEntryMouseSensitivityZoomed" )
-	SetupTextField( "mouse_zoomed_sensitivity_scalar_0", "TextEntryMouseSensitivityZoomed0" )
-	SetupTextField( "mouse_zoomed_sensitivity_scalar_1", "TextEntryMouseSensitivityZoomed1" )
-	SetupTextField( "mouse_zoomed_sensitivity_scalar_2", "TextEntryMouseSensitivityZoomed2" )
-	SetupTextField( "mouse_zoomed_sensitivity_scalar_3", "TextEntryMouseSensitivityZoomed3" )
-	SetupTextField( "mouse_zoomed_sensitivity_scalar_4", "TextEntryMouseSensitivityZoomed4" )
-	SetupTextField( "mouse_zoomed_sensitivity_scalar_5", "TextEntryMouseSensitivityZoomed5" )
-	SetupTextField( "mouse_zoomed_sensitivity_scalar_6", "TextEntryMouseSensitivityZoomed6" )
-	SetupTextField( "mouse_zoomed_sensitivity_scalar_7", "TextEntryMouseSensitivityZoomed7" )
 
 	ScrollPanel_InitPanel( panel )
 	ScrollPanel_InitScrollBar( panel, Hud_GetChild( panel, "ScrollBar" ) )
@@ -87,7 +73,6 @@ void function InitADSControlsPanelPC( var panel )
 void function OnADSControlsPanel_Show( var panel )
 {
 	ScrollPanel_SetActive( panel, true )
-	ScrollPanel_Refresh( panel )
 }
 
 
@@ -104,44 +89,14 @@ void function OnOpenControlsADSMenuPC()
 		UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
 	SetBlurEnabled( true )
 
-	LoadPrecision()
-
-	ShowPanel( Hud_GetChild( file.menu, "ADSControlsPanel" ) )//
+	ShowPanel( Hud_GetChild( file.menu, "ADSControlsPanel" ) )  
 	Button_Toggle_ADSEnabled( null )
-}
-
-void function LoadPrecision()
-{
-	foreach( string textField, table<string,var> conVarTbl in file.textEntryFields )
-	{
-		foreach( string convarName, var element in conVarTbl )
-		{
-			//Warning( "" + GetConVarFloat( convarName ) )
-			string value = truncate( string( GetConVarFloat( convarName ) ), 10 )
-			//printw( "setting element for convar", convarName, "to:", value )
-			Hud_SetText( element, value )
-		}
-	}
-}
-
-void function SetupTextField( string convarName, string textField )
-{
-	if( convarName == "" || textField == "" )
-		mAssert( 0, "Missing entry in %s()", FUNC_NAME() )	
-	
-	if( !( textField in file.textEntryFields ) )
-		file.textEntryFields[ textField ] <- {}
-		
-	if( convarName in file.textEntryFields[ textField ] )
-		mAssert( 0, "file.textEntryFields already contains \"%s\"", convarName )
-		
-	file.textEntryFields[ textField ][ convarName ] <- Hud_GetChild( file.contentPanel, textField )
 }
 
 void function Button_Toggle_ADSEnabled( var button )
 {
 	bool isEnabled = GetConVarBool( "mouse_use_per_scope_sensitivity_scalars" )
-	
+
 	foreach ( var item in file.customItems )
 		Hud_SetVisible( item, isEnabled )
 

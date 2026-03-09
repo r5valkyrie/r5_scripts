@@ -1361,7 +1361,7 @@ int function DistanceCompareClosestSpeaker( EnvironmentSpeaker a, EnvironmentSpe
 }
 
 
-void function SCB_PlayDialogueOnCustomSpeakers( int aliasID, int dialogueFlags, int customQueueIdx ) //custom queue is not implemented. Cafe EvaluateSoundSelector is not in s3
+void function SCB_PlayDialogueOnCustomSpeakers( int aliasID, int dialogueFlags, int customQueueIdx ) //custom queue is not implemented. EvaluateSoundSelector not available
 {
 	if ( file.customSpeakers1.len() == 0 )
 	{

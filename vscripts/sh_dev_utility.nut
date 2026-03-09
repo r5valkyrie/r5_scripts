@@ -375,7 +375,7 @@ void function ClientsideExecutionTestInspiration( vector refPoint, entity attack
 	}
 	if ( victimInspiration == null )
 	{
-		victimCharacter = GetLaunchCharacters().getrandom()
+		victimCharacter = GetAllCharacters().getrandom()
 		victimSkin = GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterSkin( victimCharacter ) ).getrandom()
 	}
 	else
@@ -443,7 +443,7 @@ void function ClientsideExecutionTest(
 	string victimRigWeight       = GetGlobalSettingsString( victimPlayerSettings, "bodyModelRigWeight" )
 
 	string attackerAnimSeq = string(CharacterExecution_GetAttackerAnimSeq( attackerExecution ))
-	string victimAnimSeq   = string(CharacterExecution_GetVictimAnimSeq( attackerExecution, victimRigWeight ))
+	string victimAnimSeq   = string(CharacterExecution_GetVictimAnimSeq( attackerExecution, victimCharacter, victimRigWeight ))
 
 	float attackerAnimDuration = attacker.GetSequenceDuration( attackerAnimSeq )
 	float victimAnimDuration   = victim.GetSequenceDuration( victimAnimSeq )

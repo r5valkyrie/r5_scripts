@@ -23,6 +23,7 @@ global function UIToClient_DeathBoxListPanel_HandleScrollBarDragRelease
 global function DeathBoxListPanel_ScrollUpdateThread
 
 	global function DeathBoxListPanel_GetCursorPositionSafe
+	global function PointInBounds  // global for survival_ground_list.nut access
 
 global struct DeathBoxListPanelItem
 {

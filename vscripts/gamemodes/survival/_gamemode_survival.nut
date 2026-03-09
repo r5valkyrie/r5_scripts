@@ -2760,7 +2760,7 @@ void function SurvivalPlayerRespawnedInit( entity player )
 		}
 		else
 		{
-			// The following should be allowed only in dev modes, but those are handled in a different way in r5r, which allows us to completely disable this.
+			// The following should be allowed only in dev modes, but those are handled differently here, which allows us to completely disable this.
 			// The fixed behavior for this part has been moved to OnClientConnected callback in sh_onboarding, where we do the pertinent checks before respawning the player.
 
 			// Bad

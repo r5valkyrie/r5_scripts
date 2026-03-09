@@ -1,13 +1,6 @@
 global function UserInfoPanels_LevelInit
+global function UpdateActiveUserInfoPanels
 //global function UpdateUserInfoWithXP
-
-string function LocalizeAndShortenNumber_Int( int number )
-{
-	if ( number == 0 )
-		return "0"
-
-	return FormatAndLocalizeNumber( "1", float( number ), true )
-}
 
 struct SingleCurrencyBalanceElement
 {
@@ -118,39 +111,27 @@ void function SetupUserInfoPanels()
 
 void function UpdateActiveUserInfoPanels()
 {
-	bool isReady = GRX_IsInventoryReady() && GRX_AreOffersReady()
-	int premiumBalance, creditsBalance, craftingBalance
-	if ( isReady )
-	{
-		premiumBalance = GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
-		creditsBalance = GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CREDITS] )
-		craftingBalance = GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] )
-	}
+	// NOTE: GRX backend is not functional, so GRX_IsInventoryReady()
+	// and GRX_AreOffersReady() will never return true. Hardcode currency
+	// display values so the lobby shows "6969" instead of a loading spinner.
+	int premiumBalance  = 999999
+	int creditsBalance  = 1
+	int craftingBalance = 1
 
 	foreach( var elem, bool unused in fileLevel.activeUserInfoPanelSet )
 	{
 		var rui = Hud_GetRui( elem )
-		//RuiSetString( rui, "userName", GetPlayerName() )
-		RuiSetBool( rui, "isQuerying", !isReady )
-
-		if ( isReady )
-		{
-			#if DEVELOPER
-				RuiSetBool( rui, "hasUnknownItems", GetConVarBool( "grx_hasUnknownItems" ) )
-			#endif
-			RuiSetString( rui, "count1",  FormatAndLocalizeNumber( "1", float( premiumBalance ), true ) )
-			RuiSetString( rui, "count2", LocalizeAndShortenNumber_Int( creditsBalance ) )
-			RuiSetString( rui, "count3", LocalizeAndShortenNumber_Int( craftingBalance ) )
-		}
+		RuiSetBool( rui, "isQuerying", false )
+		RuiSetString( rui, "count1", FormatAndLocalizeNumber( "1", float( premiumBalance ), true ) )
+		RuiSetString( rui, "count2", LocalizeAndShortenNumber_Int( creditsBalance ) )
+		RuiSetString( rui, "count3", LocalizeAndShortenNumber_Int( craftingBalance ) )
 	}
 
 	foreach( SingleCurrencyBalanceElement scbe in fileLevel.singleCurrencyBalanceElementList )
 	{
 		var rui = Hud_GetRui( scbe.element )
-		RuiSetBool( rui, "isQuerying", !isReady )
-
-		if ( isReady )
-			RuiSetInt( rui, "count", GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), scbe.currency ) )
+		RuiSetBool( rui, "isQuerying", false )
+		RuiSetInt( rui, "count", 420 )
 	}
 }
 

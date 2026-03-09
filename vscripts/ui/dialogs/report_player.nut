@@ -38,8 +38,9 @@ void function InitReportPlayerDialog( var newMenuArg )
 	file.reportCheatButton = Hud_GetChild( menu, "ReportCheatButton" )
 	Hud_AddEventHandler( file.reportCheatButton, UIE_CLICK, ReportCheatButton_OnActivate )
 
-	file.reportOtherButton = Hud_GetChild( menu, "ReportOtherButton" )
-	Hud_AddEventHandler( file.reportOtherButton, UIE_CLICK, ReportOtherButton_OnActivate )
+	// "ReportOtherButton" doesn't exist in VGUI layout
+	//file.reportOtherButton = Hud_GetChild( menu, "ReportOtherButton" )
+	//Hud_AddEventHandler( file.reportOtherButton, UIE_CLICK, ReportOtherButton_OnActivate )
 
 	var panel = Hud_GetChild( file.menu, "FooterButtons" )
 

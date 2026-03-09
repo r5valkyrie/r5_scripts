@@ -20,8 +20,8 @@ struct
 
 void function HealthRegen_Init()
 {
-	file.healthRegenRate = 1.85 //values that seems to fit with retail
-	file.healthRegenTickTime = 0.60 //values that seems to fit with retail
+	file.healthRegenRate = 1.85 //tuned to match expected behavior
+	file.healthRegenTickTime = 0.60 //tuned to match expected behavior
 	file.healthRegenStartDelay = 5.0
 	AddCallback_OnPassiveChanged( ePassives.PAS_OCTANE, HealthRegen_OnPassiveChanged )
 	RegisterSignal( "PilotHealthRegenThink" )

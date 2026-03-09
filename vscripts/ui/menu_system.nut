@@ -13,6 +13,7 @@ global function OpenMOTD
 global function OpenChampionCard
 
 global function ShouldDisplayOptInOptions
+global function IsOptInEnabled
 global function OpenWeaponSelector
 
 global string PlayerKillsForChallengesUI = ""
@@ -91,35 +92,43 @@ void function InitSystemMenu( var newMenuArg ) //
 			file.motdText = ""
 		}
 	)
+
+	// Initialize buttons directly on menu (.menu has no SystemPanel child)
+	InitSystemPanelMain( menu )
 }
 
 void function InitSystemPanelMain( var panel )
 {
 	InitSystemPanel( panel )
 
-	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
-	AddPanelFooterOption( panel, LEFT, BUTTON_Y, true, "#Y_BUTTON_DEV_MENU", "#DEV_MENU", OpenDevMenu, ShouldShowDevMenu )
+	// panel is actually the menu (no SystemPanel child), use menu footer options
+	var menu = file.menu
+	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
+	AddMenuFooterOption( menu, LEFT, BUTTON_Y, true, "#Y_BUTTON_DEV_MENU", "#DEV_MENU", OpenDevMenu, ShouldShowDevMenu )
 
 	if ( Dev_CommandLineHasParm( "-showoptinmenu" ) )
-		file.qaFooter = AddPanelFooterOption( panel, LEFT, BUTTON_X, true, "#X_BUTTON_QA", "QA", ToggleOptIn, ShouldDisplayOptInOptions )
+		file.qaFooter = AddMenuFooterOption( menu, LEFT, BUTTON_X, true, "#X_BUTTON_QA", "QA", ToggleOptIn, ShouldDisplayOptInOptions )
 
 	#if CONSOLE_PROG
-		AddPanelFooterOption( panel, RIGHT, BUTTON_STICK_RIGHT, true, "#BUTTON_VIEW_CINEMATIC", "", ViewCinematic, IsLobby )
-		AddPanelFooterOption( panel, RIGHT, BUTTON_BACK, true, "#BUTTON_RETURN_TO_MAIN", "", ReturnToMain_OnActivate, IsLobby )
+		AddMenuFooterOption( menu, RIGHT, BUTTON_STICK_RIGHT, true, "#BUTTON_VIEW_CINEMATIC", "", ViewCinematic, IsLobby )
+		AddMenuFooterOption( menu, RIGHT, BUTTON_BACK, true, "#BUTTON_RETURN_TO_MAIN", "", ReturnToMain_OnActivate, IsLobby )
 	#endif
-	AddPanelFooterOption( panel, RIGHT, KEY_V, true, "", "#VIEW_CINEMATIC", ViewCinematic, IsLobby )
-	AddPanelFooterOption( panel, RIGHT, KEY_R, true, "", "#BUTTON_RETURN_TO_MAIN", ReturnToMain_OnActivate, IsLobby )
+	AddMenuFooterOption( menu, RIGHT, KEY_V, true, "", "#VIEW_CINEMATIC", ViewCinematic, IsLobby )
+	AddMenuFooterOption( menu, RIGHT, KEY_R, true, "", "#BUTTON_RETURN_TO_MAIN", ReturnToMain_OnActivate, IsLobby )
 }
 
 void function ViewCinematic( var button )
 {
 	CloseActiveMenu()
-	thread PlayVideoMenu( false, "intro", "", eVideoSkipRule.INSTANT )
+	VideoPlaySettings settings
+	settings.video = "intro"
+	settings.skipRule = eVideoSkipRule.INSTANT
+	thread PlayVideoMenu( false, settings )
 }
 
 void function TryChangeCharacters()
 {
-	RunClientScript( "UICallback_OpenCharacterSelectNewMenu" )
+	RunClientScript( "UICallback_OpenCharacterSelectMenu" )
 }
 
 void function ToggleFriendlyFire()
@@ -159,8 +168,8 @@ void function OpenRecordingsMenu()
 }
 
 void function InitSystemPanel( var panel )
-{	
-	var menu = Hud_GetParent( panel )
+{
+	var menu = file.menu
 	file.buttons[ panel ] <- GetElementsByClassname( menu, "SystemButtonClass" )
 	file.buttonDatas[ panel ] <- []
 	file.buttonDatas[ panel ].resize( file.buttons[ panel ].len() )
@@ -304,7 +313,7 @@ void function InitSystemPanel( var panel )
 	file.CoachingStop[ panel ].label = "STOP RECORDING"
 	file.CoachingStop[ panel ].activateFunc = OpenCoachingStop
 	
-	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, SystemPanelShow )
+	// No SystemPanel child in .menu - menu open handler already calls UpdateSystemPanel
 }
 
 void function SystemPanelShow( var panel )
@@ -315,7 +324,7 @@ void function SystemPanelShow( var panel )
 void function OnSystemMenu_Open()
 {
 	SetBlurEnabled( true )
-	ShowPanel( Hud_GetChild( file.menu, "SystemPanel" ) )
+	UpdateSystemPanel( file.menu )
 	UpdateOptInFooter()
 }
 
@@ -708,6 +717,11 @@ bool function ShouldDisplayOptInOptions()
 		return true
 
 	return GetGlobalNetBool( "isOptInServer" )
+}
+
+bool function IsOptInEnabled()
+{
+	return uiGlobal.isOptInEnabled
 }
 
 void function UI_Callback_MOTD()

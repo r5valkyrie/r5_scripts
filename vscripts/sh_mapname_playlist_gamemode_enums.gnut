@@ -245,10 +245,10 @@ void function PlayLists_Mapnames_Gamemodes_Init()
 			
 			string currentPlaylistName = GetCurrentPlaylistName()
 			{
+				// Allow launching without playlist — use survival as default
 				if( currentPlaylistName == "can_launch" )
 				{
-					mAssert( false, "Please specify a playlist file when launching. You \"can_launch\", but chose not to." )
-					return
+					currentPlaylistName = "survival"
 				}
 			}
 			

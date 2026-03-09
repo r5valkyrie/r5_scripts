@@ -16,6 +16,7 @@ global function IsInParty
 global function GetOnlineFriendCount
 global function GetInGameFriendCount
 global function HasCommunityUserPlayedApex
+global function SortFriendGroupStatus
 #endif
 
 #if UI && DEVELOPER

@@ -18,7 +18,7 @@ struct
 } file
 
 
-void function InitADSAdvancedControlsMenuConsole( var menu ) 
+void function InitADSAdvancedControlsMenuConsole( var menu )                                               
 {
 	file.menu = menu
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnOpenControlsADSAdvancedMenuConsole )
@@ -34,13 +34,13 @@ void function InitADSAdvancedControlsPanelConsole( var panel )
 
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, OnADSAdvancedControlsPanel_Show )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, OnADSAdvancedControlsPanel_Hide )
-
 	
+	                         
 	var adsSensitivitybutton = Hud_GetChild( contentPanel, "SwchCustomADSEnabled" )
 	SetupSettingsButton( adsSensitivitybutton, "#PEROPTICADS_ENABLED", "#PEROPTICADS_ENABLED_DESC", $"" )
 	AddButtonEventHandler( adsSensitivitybutton, UIE_CHANGE, Button_Toggle_ADSAdvancedEnabled )
-
 	
+	                            
 	file.adsSensitivityItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldADSAdvancedSensitivity0" ), "#PEROPTICADS_0", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC", $"" ) )
 	file.adsSensitivityItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldADSAdvancedSensitivity1" ), "#PEROPTICADS_1", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC_2x", $"" ) )
 	file.adsSensitivityItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldADSAdvancedSensitivity2" ), "#PEROPTICADS_2", "#GAMEPAD_MENU_SENSITIVITY_ZOOM_DESC_3x", $"" ) )
@@ -68,7 +68,6 @@ void function InitADSAdvancedControlsPanelConsole( var panel )
 void function OnADSAdvancedControlsPanel_Show( var panel )
 {
 	ScrollPanel_SetActive( panel, true )
-	ScrollPanel_Refresh( panel )
 }
 
 void function OnADSAdvancedControlsPanel_Hide( var panel )
@@ -93,9 +92,9 @@ void function Button_Toggle_ADSAdvancedEnabled( var button )
 
 	foreach ( var item in file.adsSensitivityItems )
 		Hud_SetVisible( item, isEnabled )
-
+		
 	var adsSensitivitybutton = Hud_GetChild( file.contentPanel, "SwchCustomADSEnabled" )
-
+		
 	if ( isEnabled )
 		Hud_SetNavDown( adsSensitivitybutton, Hud_GetChild( file.contentPanel, "SldADSAdvancedSensitivity0" ) )
 	else

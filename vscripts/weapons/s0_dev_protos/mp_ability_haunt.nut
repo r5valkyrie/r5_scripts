@@ -8,7 +8,7 @@ global function OnWeaponAttemptOffhandSwitch_Haunt
 global function OnWeaponTossPrep_Haunt
 global function OnWeaponTossReleaseAnimEvent_Haunt
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 global function Haunt
 global function DEV_GiveHauntUltimate
 #endif
@@ -882,7 +882,7 @@ void function HauntDecoyBehaviourThread( entity decoy, entity target, array<enti
 #endif
 
 
-#if SERVER && DEV
+#if SERVER && DEVELOPER
 void function DEV_GiveHauntUltimate( entity player )
 {
 	player.TakeOffhandWeapon( OFFHAND_ULTIMATE )

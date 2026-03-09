@@ -19,7 +19,7 @@ struct
 
 void function InitDeathScreenSquadSummaryPanel( var panel )
 {
-	AddUICallback_UIShutdown( SquadSummaryMenu_Shutdown )    //
+	AddUICallback_UIShutdown( SquadSummaryMenu_Shutdown )                             
 
 	file.panel = panel
 
@@ -54,20 +54,6 @@ void function InitDeathScreenSquadSummaryPanel( var panel )
 			}
 
 			{
-				button = Hud_GetChild( panel, "TeammateMuteChat" + i )
-				AddButtonEventHandler( button, UIE_CLICK, OnMuteChatButtonClick )
-				RuiSetImage( Hud_GetRui( button ), "unmuteIcon", $"rui/menu/lobby/icon_textchat" )
-				RuiSetImage( Hud_GetRui( button ), "muteIcon", $"rui/menu/lobby/icon_textchat_muted" )
-				ToolTipData d3
-				d3.tooltipFlags = d3.tooltipFlags | eToolTipFlag.CLIENT_UPDATE
-				d3.tooltipStyle = eTooltipStyle.DEFAULT
-				Hud_SetToolTipData( button, d3 )
-				file.buttons.append( button )
-				AddButtonEventHandler( button, UIE_GET_FOCUS, OnButtonFocus )
-				AddButtonEventHandler( button, UIE_LOSE_FOCUS, OnButtonFocus )
-			}
-
-			{
 				button = Hud_GetChild( panel, "TeammateInvite" + i )
 				AddButtonEventHandler( button, UIE_CLICK, OnInviteButtonClick )
 				ToolTipData d4
@@ -94,6 +80,20 @@ void function InitDeathScreenSquadSummaryPanel( var panel )
 			}
 
 			{
+				button = Hud_GetChild( panel, "TeammateBlock" + i )
+				AddButtonEventHandler( button, UIE_CLICK, OnBlockButtonClick )
+				RuiSetImage( Hud_GetRui( button ), "unmuteIcon", $"rui/menu/crossplatform/blocked" )                                       
+				RuiSetImage( Hud_GetRui( button ), "muteIcon", $"rui/menu/crossplatform/blocked" )
+				ToolTipData d6
+				d6.tooltipFlags = d6.tooltipFlags | eToolTipFlag.CLIENT_UPDATE
+				d6.tooltipStyle = eTooltipStyle.DEFAULT
+				Hud_SetToolTipData( button, d6 )
+				file.buttons.append( button )
+				AddButtonEventHandler( button, UIE_GET_FOCUS, OnButtonFocus )
+				AddButtonEventHandler( button, UIE_LOSE_FOCUS, OnButtonFocus )
+			}
+
+			{
 				button = Hud_GetChild( panel, "GCardOverlay" + i )
 				AddButtonEventHandler( button, UIE_GET_FOCUS, OnButtonFocus )
 				AddButtonEventHandler( button, UIE_LOSE_FOCUS, OnButtonFocus )
@@ -113,7 +113,7 @@ void function InitDeathScreenSquadSummaryPanel( var panel )
 
 void function SquadSummaryOnOpenPanel( var panel )
 {
-	//
+	                                                
 
 	var menu = GetParentMenu( panel )
 	var headerElement = Hud_GetChild( menu, "Header" )
@@ -124,38 +124,44 @@ void function SquadSummaryOnOpenPanel( var panel )
 	foreach ( cardElem in file.panelData[ panel ].gCards )
 	{
 		var muteButton
-		var mutePingButton
-		var muteChatButton
+		var nullMutePingButton = null
 		var inviteButton
+		var nullInviteButton = null
 		var reportButton
 		var overlayButton
-		var disconnectedElem
+		var nullOverlayButton = null
+		var nullDisconnectedElem = null
+		var blockButton
+		var obfuscatedID
 
 		if ( i > 0 )
 		{
 			muteButton = Hud_GetChild( panel, "TeammateMute" + i )
-			muteChatButton = Hud_GetChild( panel, "TeammateMuteChat" + i )
 			inviteButton = Hud_GetChild( panel, "TeammateInvite" + i )
 			reportButton = Hud_GetChild( panel, "TeammateReport" + i )
 			overlayButton = Hud_GetChild( panel, "GCardOverlay" + i )
+			blockButton = Hud_GetChild( panel, "TeammateBlock"+i )
+			obfuscatedID = Hud_GetChild( panel, "TeammateObfuscatedID"+i )
 
 			Hud_ClearToolTipData( overlayButton )
 		}
 
-		//
+		                                                         
 
 		RunClientScript( "UICallback_PopulatePlayerStatsRui", cardElem, i )
 
-		int presentation = eGladCardPresentation.FRONT_CLEAN //
-		RunClientScript( "UICallback_PopulateClientGladCard", panel, cardElem, muteButton, mutePingButton, muteChatButton, reportButton, null, overlayButton, disconnectedElem, i, Time(), presentation )
+		int presentation = eGladCardPresentation.FRONT_CLEAN                        
+		RunClientScript( "UICallback_PopulateClientGladCard", panel, cardElem, muteButton, nullMutePingButton, reportButton, blockButton, nullInviteButton, overlayButton, nullDisconnectedElem, obfuscatedID, i, ClientTime(), presentation )
 		RunClientScript( "UICallback_UpdateGladCardVisibility", panel, cardElem, i )
-		RunClientScript( "UICallback_PlayerStatusUpdateThread", panel, cardElem, muteButton, mutePingButton, muteChatButton, reportButton, inviteButton, null, null, i )
+		RunClientScript( "UICallback_PlayerStatusUpdateThread", panel, cardElem, muteButton, nullMutePingButton, reportButton, inviteButton, nullOverlayButton, nullDisconnectedElem, i )
 
 		file.panelData[panel].cardsInitialized[cardElem] = true
 
-		if ( Hud_GetHudName( cardElem ) == "GCard0" && GetExpectedSquadSize( GetLocalClientPlayer() ) == 2 )
+		if ( Hud_GetHudName( cardElem ) == "GCard0" )
 		{
-			Hud_SetX( cardElem, 201 )
+			Hud_SetX( cardElem, 0 )
+			if ( GetExpectedSquadSize( GetLocalClientPlayer() ) == 2 )
+				Hud_SetX( cardElem, 201 )
 		}
 
 		i++
@@ -206,12 +212,6 @@ void function OnMutePingButtonClick( var button )
 }
 
 
-void function OnMuteChatButtonClick( var button )
-{
-	RunClientScript( "UICallback_ToggleMuteChat", button )
-}
-
-
 void function OnInviteButtonClick( var button )
 {
 	if ( Hud_IsSelected( button ) )
@@ -224,6 +224,13 @@ void function OnInviteButtonClick( var button )
 void function OnReportButtonClick( var button )
 {
 	RunClientScript( "UICallback_ReportSquadMate", button )
+}
+
+
+void function OnBlockButtonClick( var button )
+{
+	printt( "#EADP OnBlockButtonClick" )
+	RunClientScript( "UICallback_BlockSquadMate", button )
 }
 
 

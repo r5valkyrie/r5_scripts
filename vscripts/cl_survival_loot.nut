@@ -30,7 +30,8 @@ global function CreateDeathBoxRui
 global function GetHighlightFillAlphaForLoot
 global function HideLootPrompts
 
-global function ServerToClient_UpdateItem
+// Moved to ui/survival_ground_list.nut
+//global function ServerToClient_UpdateItem
 
 global function ApplyEquipmentColorAndFXOverrides
 
@@ -263,7 +264,8 @@ void function OnPlayerLifeStateChanged( entity player, int oldState, int newStat
 	}
 }
 
-void function ServerToClient_UpdateItem( entity lootEnt )
+// Moved to ui/survival_ground_list.nut
+/*void function ServerToClient_UpdateItem( entity lootEnt )
 {
 	if ( IsValid( lootEnt ) )
 	{
@@ -272,16 +274,16 @@ void function ServerToClient_UpdateItem( entity lootEnt )
 		bool hasSpecialAmmo = (lootFlavor.lootType == eLootType.MAINWEAPON && !GetWeaponInfoFileKeyField_GlobalBool( lootFlavor.baseWeapon, "uses_ammo_pool" ))
 		string itemKey = (hasSpecialAmmo ? format( "specialammo%d", lootEnt.GetEncodedEHandle() ) : lootFlavor.ref)
 
-		/*if ( fileLevel.listPanel != null )
+		if ( fileLevel.listPanel != null )
 		{
 			DeathBoxListPanelItem ornull item = DeathBoxListPanel_GetItemByKey( fileLevel.listPanel, itemKey )
 			if ( item != null )
 			{
 				UpdateItem( expect DeathBoxListPanelItem(item) )
 			}
-		}*/
+		}
 	}
-}
+}*/
 
 
 void function Survival_Health_SetSelectedHealthPickupType( int pickup )
@@ -1351,7 +1353,7 @@ void function ManageDeathBoxLoot()
 
 		if ( !player.IsPhaseShifted() )
 		{
-			bool isNewGroundListVisible = ("NEW_IsGroundListMenuOpen" in getroottable() && NEW_IsGroundListMenuOpen())
+			bool isNewGroundListVisible = ("IsGroundListMenuOpen" in getroottable() && IsGroundListMenuOpen())
 			if ( Survival_IsGroundlistOpen() || isNewGroundListVisible )
 			{
 				bool isBlackMarket = false
@@ -1387,14 +1389,14 @@ void function ManageDeathBoxLoot()
 					loot = GetSurvivalLootNearbyPlayer( player, SURVIVAL_PICKUP_ALL_MAX_RANGE, true, false )
 				}
 
-				if ( "NEW_UpdateSurvivalGroundList" in getroottable() )
+				if ( "UpdateSurvivalGroundList" in getroottable() )
 				{
-					NEW_SurvivalGroundListUpdateParams params
+					SurvivalGroundListUpdateParams params
 					params.player = player
 					params.currentLootEnts = loot
 					params.isBlackMarket = isBlackMarket
 					params.blackMarketUseCount = -1
-					NEW_UpdateSurvivalGroundList( params )
+					UpdateSurvivalGroundList( params )
 				}
 
 				GroundItemUpdate( player, loot )

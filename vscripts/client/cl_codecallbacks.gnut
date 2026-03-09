@@ -7,6 +7,9 @@ global function ClientCodeCallback_GetUseEntOverrideText
 global function AddCallback_OnPlayerConsumableInventoryChanged
 global function ClientCodeCallback_OnPlayerConsumableInventoryChanged
 
+global function ClientCodeCallback_OnPlayerConnectionStateChanged
+global function AddCallback_ClientOnPlayerConnectionStateChanged
+
 global function AddEntityCallback_GetUseEntOverrideText
 
 global function AddCallback_OnPetTitanChanged
@@ -41,6 +44,8 @@ struct
 	table<string, asset>               modImages
 	void functionref( entity, string ) pingCallback = null
 	void functionref( entity, string ) useConsumableCallback = null
+
+	array< void functionref( entity ) > onConnectionStateChanged_Callbacks
 } file
 
 void function ClientCodeCallback_PingSpecificType( entity player, string pingType )
@@ -293,4 +298,28 @@ void function AmdAntiLag_SetValues()
 void function AmdAntiLag_SetSettingsValue()
 {
 	SetConVarInt( "settings_antilag", GetConVarBool( "gfx_ffxUseLowLatency" ) ? 1 : 0 )
+}
+
+
+// ============================================================================
+// Player Connection State Changed Callbacks
+// ============================================================================
+
+void function ClientCodeCallback_OnPlayerConnectionStateChanged( entity player )
+{
+	entity localViewPlayer = GetLocalViewPlayer()
+
+	if ( player.GetTeam() == localViewPlayer.GetTeam() && !IsLobby() )
+	{
+		UpdateFullmapRuiTracks()
+		RefreshUnitframesForPlayer( localViewPlayer )
+	}
+
+	foreach( func in file.onConnectionStateChanged_Callbacks )
+		func( player )
+}
+
+void function AddCallback_ClientOnPlayerConnectionStateChanged( void functionref( entity ) ref )
+{
+	file.onConnectionStateChanged_Callbacks.append( ref )
 }

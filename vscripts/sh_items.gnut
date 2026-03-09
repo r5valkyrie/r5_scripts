@@ -5,68 +5,91 @@ global function GetBaseItemFlavorsFromArray
 
 global function AddCallback_RegisterRootItemFlavors
 global function AddCallback_OnItemFlavorRegistered
+global function AddCallback_OnPreAllItemFlavorsRegistered
 global function AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered
 global function IsValidItemFlavorGUID
+global function GetItemFlavorByNetworkIndex_DEPRECATED
 global function GetItemFlavorByGUID
 global function ConvertItemFlavorGUIDStringToGUID
+global function ConvertAssetIDToGUIDString
 global function GetItemFlavorOrNullByGUID
-global function IsValidItemFlavorHumanReadableRef
-global function GetItemFlavorByHumanReadableRef
-global function IsValidItemFlavorNetworkIndex_DEPRECATED
-global function GetItemFlavorByNetworkIndex_DEPRECATED
 global function IsValidItemFlavorSettingsAsset
 global function GetItemFlavorByAsset
 global function IsValidItemFlavorType
+global function DescribeItemFlavorType
+#if DEVELOPER
 global function GetAllItemFlavors
+global function DEV_IsValidItemFlavorHumanReadableRef_Slow
+global function DEV_GetItemFlavorByHumanReadableRef_Slow
+global function GetItemFlavorByHumanReadableRef
+#endif
+global function GetAllItemFlavorsCosmetic
+global function GetAllLegendaryItems
 global function GetAllItemFlavorsOfType
-global function GetItemFlavorsWithTags
 global function GetItemFlavorAssociatedCharacterOrWeapon
-global function IsItemFlavorStructValid
 global function ItemFlavor_GetGUID
 global function ItemFlavor_GetGUIDString
-global function ItemFlavor_GetHumanReadableRef
-global function ItemFlavor_GetNetworkIndex_DEPRECATED
+#if DEVELOPER
+global function DEV_ItemFlavor_GetCleanedAssetPath
+#endif
+global function ItemFlavor_GetHumanReadableRefForPIN_Slow
+global function ItemFlavor_GetCleanDownloadAssetPath_Slow
 global function ItemFlavor_GetType
 global function ItemFlavor_GetAsset
+global function ItemFlavor_GetAssetString
+global function ItemFlavor_GetAssetName
+global function ItemFlavor_GetAssetShortName
 global function ItemFlavor_GetSettingsBlock
+global function ItemFlavor_SortByTier
+global function ItemFlavor_GetSourceIcon // SERVER doesn't have icon, but may use asset name
 #if CLIENT || UI
 global function ItemFlavor_GetTypeName
 global function ItemFlavor_GetLongName
 global function ItemFlavor_GetShortName
 global function ItemFlavor_GetLongDescription
 global function ItemFlavor_GetShortDescription
+global function ItemFlavor_GetRewardShortDescription
 global function ItemFlavor_GetIcon
-global function ItemFlavor_HasSourceTag
-global function ItemFlavor_GetSourceIcon
-global function TEMP_IsItemFlavorEquippable
+global function IsItemFlavorTypeEquippable
+global function ItemFlavor_GetTypeUICategory
 #endif
-global function ItemFlavor_GetPlaylistOpinion
+global function ItemFlavor_GetPlaylistAvailability
 global function ItemFlavor_IsAvailableInPlaylist
+global function ItemFlavor_IsItemDisabledForGRX
 global function ItemFlavor_ShouldBeVisible
 global function ItemFlavor_IsActiveForEdition
 global function ItemFlavor_IsTheFavoriteSentinel
-global function ItemFlavor_GetTags
-global function ItemFlavor_HasTag
 global function ItemFlavor_CheckType
 global function ItemFlavor_HasQuality
 global function ItemFlavor_GetQuality
 global function ItemFlavor_GetQualityColor
 global function ItemFlavor_GetQualityName
+global function ItemFlavor_IsThematic
+global function ItemQuality_GetBattlePassQualityName
+global function ItemFlavor_IsCurrency
+global function ItemFlavor_IsBattlepass
+global function ItemFlavor_GetAccountPackType
 global function IterateSettingsAssetArray
 global function IterateSettingsArray
 global function RegisterReferencedItemFlavorsFromArray
 global function MakeItemFlavorSet
 global function RegisterItemFlavorFromSettingsAsset
 
+global function MakeItemFlavorStack
 global function IsItemFlavorBagValid
 global function MakeItemFlavorBag
 global function ItemFlavorBag_ClearZeroQuantityFlavors
 global function ItemFlavorBag_GetSingleOutputItemFlavor_Assert
-//
+global function ItemFlavorBag_GetMeleeSkinItem
+global function ItemFlavorBag_GetMythicSkinItem
+global function ItemFlavorBag_ToQuantityMap
+global function ItemFlavorBag_HasSameContents
+//#if DEVELOPER || ASSERTS
 global function DEV_DescribeItemFlavorBag
-//
+//#endif
 
-
+global function ItemFlavor_HasExclusiveFunc
+global function ItemFlavor_PassesExclusiveFunc
 global function ItemFlavor_HasUnlockFunc
 global function ItemFlavor_PassesUnlockFunc
 global function ItemFlavor_GetUnlockFuncKey
@@ -74,8 +97,10 @@ global function ItemFlavor_IsTheDefault
 global function ItemFlavor_IsTheRandom
 global function ItemTypeHasDefault
 global function ItemTypeHasRandom
+global function ItemTypeAlphabetizable
 global function ItemFlavor_HasEntitlement
 global function ItemFlavor_GetEntitlement
+global function ItemFlavor_HasFeatures
 
 global function ItemQuality_GetQualityName
 
@@ -88,24 +113,57 @@ global function IsItemFlavorRegistrationFinished
 global function PlayerHasFoundersPack
 global function PlayerHasStarterPack
 global function PlayerHadEAAccess
-global function PlayerHadPSPlus
 
-global function DEV_AreAnyItemflavorsDisabledByPlaylist
+global function FilterItemFlavorsByType
+
+global function ItemFlavor_ChallengesHaveMetaData
+global function ItemFlavor_CalEventsHaveTimeStampMetaData
+global function ItemFlavor_GetMetaData
+global function IsCalEvent
+global function Sticker_GetSortOrdinal
+global function Sticker_IsTheEmpty
+global function Sticker_HasStoryBlurb
+global function Sticker_GetStoryBlurbBodyText
+global function CreateNestedRuiForSticker
 
 global function DEV_DescItemFlavor
 
-#if CLIENT
-global function ServerToClient_ItemFlavorConsistencyCheckFailed
-#endif
-#if ASSERTING && UI 
-global function ClientToUI_ItemFlavorConsistencyCheckFailed
+#if DEVELOPER
+global function DEV_GetAllItemFlavors
 #endif
 
-global function GetItemFlavorPlaylistOpinion
+#if SERVER && DEVELOPER
+global function DEV_ItemFlavor_StressTest
+#endif
 
 global const bool DEBUG_ITEM_FLAVOR_REGISTRATION = false
 
+global const string BULLET_AMMO = "bullet"
+global const string HIGHCAL_AMMO = "highcal"
+global const string SHOTGUN_AMMO = "shotgun"
+global const string SPECIAL_AMMO = "special"
+                     
+                                           
+      
+global const string ARROWS_AMMO = "arrows"
+global const string SNIPER_AMMO = "sniper"
 
+// Arrays that don't exist in base_itemflavors.rpak — skip to avoid crash
+global const array<string> S3_MISSING_ITEMFLAVOR_ARRAYS = [
+	"beginnerChallenges",
+	"exoticShards",
+	"mythicSuperCores",
+	"meleeWeapons",
+	"weaponCategories",
+	"stickers",
+	"packs",
+	"currencyBundles",
+	"entitlements",
+	"apexCoinAmounts",
+	"classes",
+	"ranked2Pt0Periods",
+	"vouchers"
+]
 
 //////////////////////
 //////////////////////
@@ -117,100 +175,232 @@ global enum eItemType
 	// These should be one-to-one mapped with bakery settings asset schemas (code_root.rson)
 	INVALID,
 
-	// General & gamerules items
-	tagonly,
-	entitlement,
-	ability,
-	_CALEVENT_RANGE_START,
-	calevent_season,
-	calevent_collection,
-	calevent_themedshop,
-	calevent_rankedperiod,
-	_CALEVENT_RANGE_END,
-	challenge,
-	music_pack,
-	loadscreen,
-	skydive_emote,
-	skydive_trail,
-	weapon_category,
-	character,
-	character_class
-	character_perk
-	grx_sentinel,
-	account_currency,
-	account_currency_bundle,
-	account_pack,
-	battlepass,
-	battlepass_purchased_xp,
-	xp_boost,
-	challenge_reroll,
-	character_skin,
-	character_execution,
+	// General utility
+	entitlement
 
-	weapon_charm,
-	weapon_skin,
-	melee_skin,
+	// General gameplay
+	ability
 
-	gladiator_card_stance,
-	gladiator_card_frame,
-	gladiator_card_intro_quip,
-	gladiator_card_kill_quip,
-	gladiator_card_stat_tracker,
-	gladiator_card_badge,
+	// Calevents
+	_CALEVENT_RANGE_START
+	calevent_season
+	calevent_rankedperiod
 
-	ping,
+	calevent_arenas_ranked_period
 
-	// MP loot items
-	__loot_start,
-	//loot, // This is not just a base class. It can be used for generic loot that doesn't need special bakery parameters.
-	//loot_ordnance,
-	loot_main_weapon,
-	//loot_weapon_mod,
-	//loot_ammo,
-	//loot_armor,
-	//loot_backpack,
-	//loot_healthpack,
-	//loot_jumpkit,
-	//loot_recharge,
-	__loot_end,
+	_CALEVENT_LIMITED_TIME // the following events are not "durable," unlike Seasons & Ranked Periods
+	// we want to be able to cull them once they expire, but we often still need to load them for assets they reference
+	calevent_collection
+	calevent_themedshop
+
+		calevent_milestone
+
+	calevent_base_event
+	calevent_buffet
+	calevent_login
+	calevent_story_challenges
+	calevent_skustore
+	calevent_event_shop
+	calevent_apex_cup_container
+	calevent_boost_event
+	calevent_temp_unlock
+	calevent_challenge_collection
+	calevent_challenge_set
+	calevent_reward_campaign
+	calevent_challenge_tile
+	_CALEVENT_RANGE_END
+
+	// Challenges
+	challenge
+
+	//
+	quest
+	quest_mission
+
+		quest_comic
+
+	// GRX stuff
+	grx_sentinel
+	account_currency
+	account_pack
+	account_currency_bundle
+	apex_coins
+	battlepass
+	battlepass_purchased_xp
+	voucher
+	xp_boost
+	challenge_reroll
+	character
+	character_skin
+	character_execution
+	character_emote
+	weapon_skin
+	weapon_charm
+	emote_icon
+	melee_skin
+	gladiator_card_stance
+	gladiator_card_frame
+	gladiator_card_intro_quip
+	gladiator_card_kill_quip
+	gladiator_card_badge
+	gladiator_card_stat_tracker
+	music_pack
+	loadscreen
+	skydive_emote
+	skydive_trail
+	radio_play
+                       
+	event_ability
+      
+	sticker
+                       
+               
+       
+	image_2d
+	battlepass_presale_voucher
+	reward_set_tracker
+
+	                   
+		character_class
+		character_perk
+       
+
+	artifact_component_START
+	// N.B.: Artifact weapons are, themselves, melee weapons
+	// BUT their components are comprised of cosmetic elements
+	artifact_component_deathbox
+	artifact_component_blade // see eArtifactComponentType
+	artifact_component_activation_emote
+	artifact_component_power_source
+	artifact_component_theme
+	artifact_component_END
+
+	// Game loot
+	__loot_start
+	loot_main_weapon
+	melee_weapon
+	__loot_end
+
+	// Misc
+	ping
+	weapon_category
+
+	// Clubs
+	club_logo_element
+	club_search_tag
+
+	kepler_scenario
+
+	mythic_bundle // 3-tiers of skins, challenges, & finisher
+	lore
+	ranked_2pt0_period
+	boost_type
+	ranked_trial
+	apex_cup
 
 	COUNT
 }
 
-table<int, string> itemTypeNameMap = {
+global enum eItemTypeUICategory
+{
+	NONE,
+	CHARACTER,
+	WEAPON_LOADOUT,
+	MISC_LOADOUT,
+	NON_EQUIPPABLE,
+	CAL_EVENT,
+}
+
+table<int, int> itemTypeUICategoryMap = {
+	[eItemType.character] = eItemTypeUICategory.CHARACTER,
+	[eItemType.account_currency] = eItemTypeUICategory.NONE,
+	[eItemType.account_currency_bundle] = eItemTypeUICategory.NONE,
+	[eItemType.account_pack] = eItemTypeUICategory.NONE,
+	[eItemType.battlepass] = eItemTypeUICategory.NON_EQUIPPABLE,
+	[eItemType.character_skin] = eItemTypeUICategory.CHARACTER,
+	[eItemType.weapon_skin] = eItemTypeUICategory.WEAPON_LOADOUT,
+	[eItemType.character_execution] = eItemTypeUICategory.CHARACTER,
+	[eItemType.music_pack] = eItemTypeUICategory.MISC_LOADOUT,
+	[eItemType.loadscreen] = eItemTypeUICategory.MISC_LOADOUT,
+	[eItemType.skydive_trail] = eItemTypeUICategory.MISC_LOADOUT,
+	[eItemType.weapon_charm] = eItemTypeUICategory.WEAPON_LOADOUT,
+	[eItemType.melee_skin] = eItemTypeUICategory.CHARACTER,
+	[eItemType.gladiator_card_stance] = eItemTypeUICategory.CHARACTER,
+	[eItemType.gladiator_card_frame] = eItemTypeUICategory.CHARACTER,
+	[eItemType.gladiator_card_intro_quip] = eItemTypeUICategory.CHARACTER,
+	[eItemType.gladiator_card_kill_quip] = eItemTypeUICategory.CHARACTER,
+	[eItemType.gladiator_card_stat_tracker] = eItemTypeUICategory.CHARACTER,
+	[eItemType.gladiator_card_badge] = eItemTypeUICategory.CHARACTER,
+	[eItemType.loot_main_weapon] = eItemTypeUICategory.NONE,
+	[eItemType.melee_weapon] = eItemTypeUICategory.NONE,
+	[eItemType.artifact_component_deathbox] = eItemTypeUICategory.CHARACTER,
+	[eItemType.artifact_component_blade] = eItemTypeUICategory.CHARACTER,
+	[eItemType.artifact_component_theme] = eItemTypeUICategory.CHARACTER,
+	[eItemType.artifact_component_activation_emote] = eItemTypeUICategory.CHARACTER,
+	[eItemType.artifact_component_power_source] = eItemTypeUICategory.CHARACTER,
+	[eItemType.battlepass_purchased_xp] = eItemTypeUICategory.NONE,
+	[eItemType.skydive_emote] = eItemTypeUICategory.CHARACTER,
+	[eItemType.calevent_season] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.calevent_buffet] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.calevent_rankedperiod] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.calevent_story_challenges] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.calevent_collection] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.calevent_themedshop] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.calevent_event_shop] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.calevent_login] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.calevent_skustore] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.challenge] = eItemTypeUICategory.CAL_EVENT,
+	[eItemType.emote_icon] = eItemTypeUICategory.CHARACTER,
+	[eItemType.character_emote] = eItemTypeUICategory.CHARACTER,
+	[eItemType.sticker] = eItemTypeUICategory.MISC_LOADOUT,
+	                       
+		[eItemType.quest_comic] =eItemTypeUICategory.NON_EQUIPPABLE,
+       
+}
+
+global table<int, string> itemTypeNameMap = {
 	[eItemType.character] = "#itemtype_character_NAME",
 	[eItemType.account_currency] = "#itemtype_account_currency_NAME",
 	[eItemType.account_currency_bundle] = "#itemtype_account_currency_bundle_NAME",
 	[eItemType.account_pack] = "#itemtype_account_pack_NAME",
 	[eItemType.battlepass] = "#itemtype_battlepass_NAME",
-	[eItemType.xp_boost] = "#itemtype_xp_boost_NAME",
+	[eItemType.voucher] = "#itemtype_voucher_NAME",
+	//[eItemType.xp_boost] = "#itemtype_xp_boost_NAME",
 	[eItemType.character_skin] = "#itemtype_character_skin_NAME",
+	[eItemType.weapon_skin] = "#itemtype_weapon_skin_NAME",
 	[eItemType.character_execution] = "#itemtype_character_execution_NAME",
 	[eItemType.music_pack] = "#itemtype_music_pack_NAME",
-	[eItemType.loadscreen] = "#itemtype_loadscreen_NAME"
-#if(false)
-
-#endif
-, [eItemType.weapon_skin] = "#itemtype_weapon_skin_NAME"
-, [eItemType.weapon_charm] = "#itemtype_weapon_charm_NAME"
-, [eItemType.melee_skin] = "#itemtype_melee_skin_NAME",
-[eItemType.gladiator_card_stance] = "#itemtype_gladiator_card_stance_NAME",
-[eItemType.gladiator_card_frame] = "#itemtype_gladiator_card_frame_NAME",
-[eItemType.gladiator_card_intro_quip] = "#itemtype_gladiator_card_intro_quip_NAME",
-[eItemType.gladiator_card_kill_quip] = "#itemtype_gladiator_card_kill_quip_NAME",
-[eItemType.gladiator_card_stat_tracker] = "#itemtype_gladiator_card_stat_tracker_NAME",
-[eItemType.gladiator_card_badge] = "#itemtype_gladiator_card_badge_NAME",
-[eItemType.loot_main_weapon] = "#itemtype_loot_main_weapon_NAME",
-[eItemType.battlepass_purchased_xp] = "#itemtype_battlepass_purchased_xp_NAME",
-}
-
-global enum eItemFlavorPlaylistOpinion
-{
-	NONE, // nothing special -- the item should be unlocked and selectable (unless locked for some other reason)
-	LOCKED, // the buttons for the item should be visible but not clickable (server should prevent selection)
-	HIDDEN, // the buttons for the item should NOT be visible (server should prevent selection)
-	DISABLED, // DEV-ONLY!!! (not for ship, this is for rescuing broken playtest builds)
-	FORCE_UNLOCK_FOR_SPECIAL_EVENT, // this item should be usable even if the player doesn't own it
+	[eItemType.loadscreen] = "#itemtype_loadscreen_NAME",
+	[eItemType.weapon_charm] = "#itemtype_weapon_charm_NAME",
+	[eItemType.melee_skin] = "#itemtype_melee_skin_NAME",
+	[eItemType.gladiator_card_stance] = "#itemtype_gladiator_card_stance_NAME",
+	[eItemType.gladiator_card_frame] = "#itemtype_gladiator_card_frame_NAME",
+	[eItemType.gladiator_card_intro_quip] = "#itemtype_gladiator_card_intro_quip_NAME",
+	[eItemType.gladiator_card_kill_quip] = "#itemtype_gladiator_card_kill_quip_NAME",
+	[eItemType.gladiator_card_stat_tracker] = "#itemtype_gladiator_card_stat_tracker_NAME",
+	[eItemType.gladiator_card_badge] = "#itemtype_gladiator_card_badge_NAME",
+	[eItemType.loot_main_weapon] = "#itemtype_loot_main_weapon_NAME",
+	[eItemType.melee_weapon] = "#itemtype_melee_weapon_NAME",
+	[eItemType.artifact_component_deathbox] = "#itemtype_artifact_component_deathbox_NAME",
+	[eItemType.artifact_component_blade] = "#itemtype_artifact_component_blade_NAME",
+	[eItemType.artifact_component_theme] = "#itemtype_artifact_component_theme_NAME",
+	[eItemType.artifact_component_activation_emote] = "#itemtype_artifact_component_activation_emote_NAME",
+	[eItemType.artifact_component_power_source] = "#itemtype_artifact_component_power_source_NAME",
+	[eItemType.battlepass_purchased_xp] = "#itemtype_battlepass_purchased_xp_NAME",
+	[eItemType.skydive_emote] = "#itemtype_skydive_emote_NAME",
+	[eItemType.radio_play] = "#itemtype_radio_play_NAME",
+	                       
+	[eItemType.event_ability] = "#itemtype_event_ability_NAME",
+       
+	[eItemType.emote_icon] = "#itemtype_character_emote_icon_NAME",
+	[eItemType.character_emote] = "#itemtype_character_emote_NAME",
+	[eItemType.sticker] = "#itemtype_sticker_NAME",
+	                       
+		[eItemType.quest_comic] = "#itemtype_quest_comic_NAME",
+       
+	                    
+	[eItemType.reward_set_tracker] = "#itemtype_reward_set_tracker_NAME",
+       
 }
 
 global enum eItemFlavorShippingStatus
@@ -220,34 +410,74 @@ global enum eItemFlavorShippingStatus
 	WIP_HIDE,
 }
 
+// keep in sync with itemtype_account_pack.rson
+global enum eAccountPackType
+{
+	APEX, // default in RSON
+	EVENT,
+	THEMATIC,
+	MYTHIC,
+	EVENT_THEMATIC,
+	SIRNGE,
+}
+
+global enum eItemFlavorPlaylistAvailability
+{
+	NONE, // nothing special -- the item should be unlocked and selectable (unless locked for some other reason)
+	LOCKED, // the buttons for the item should be visible but not clickable (server should prevent selection)
+	HIDDEN, // the buttons for the item should NOT be visible (server should prevent selection)
+	DISABLED, // DEV-ONLY!!! (not for ship, this is for rescuing broken playtest builds)
+	FORCE_UNLOCK_FOR_SPECIAL_EVENT, // this item should be usable even if the player doesn't own it
+	GRX_DISABLED, // this will keep the item in-game for UIUX purposes, but disables any GRX ops (purchases/unlocks/etc) related to it.
+}
+
 global struct ItemFlavor
 {
-	SettingsAssetGUID        _____INTERNAL_guid = -1 // the GUID is the canonical ref
-	int                      _____INTERNAL_index = -1 // use ItemFlavor_GetNetworkIndex( flavor ) (zero is never used)
-	int                      _____INTERNAL_typeIndex = -1 // use ItemFlavor_GetType( flavor )
-	string                   _____INTERNAL_humanReadableRef = "~INVALID~" // use ItemFlavor_GetRef( flavor )
-	asset                    _____INTERNAL_settingsAsset // use ItemFlavor_GetAsset( flavor )
-	table<ItemFlavor, bool>  _____INTERNAL_tagMap // use ItemFlavor_HasTag, or GetItemFlavorsWithTags, or IsValidItemStackForContainer
-	int                      _____INTERNAL_grxMode = -1 // used by sh_grx.gnut
-	array<int> ornull        _____INTERNAL_grxOwnershipTargettedBy = null // used by sh_grx.gnut
-	int                      _____INTERNAL_grxIndex = -1 // used by sh_grx.gnut
-	int                      _____INTERNAL_playlistOpinion = eItemFlavorPlaylistOpinion.NONE
+	SettingsAssetGUID guid      = ASSET_SETTINGS_UNIQUE_ID_INVALID // the GUID is the unique Bakery ID. This is the "primary key" for ItemFlavors
+	int               typeIndex = -1 // use ItemFlavor_GetType( flavor ) | REFACTOR: keep
+	int               grxMode   = -1 // used by sh_grx.gnut | REFACTOR: keep
+	int               grxIndex  = -1 // used by sh_grx.gnut | REFACTOR: move to code -> get by GUID
 
-	ItemFlavor ornull _____INTERNAL_noCopyCheck = null
-	table<string, string> ornull metaData = null 
+	#if UI
+		int 		  loadoutSortPriority = 0 // used by menus for efficient sorting - Loadouts_SetSortPriorityForItemFlavor
+	#endif
+
+	array<int> ornull grxOwnershipTargettedBy = null // used by sh_grx.gnut --> when ownership depends on ownership of another item | REFACTOR: keep
+	table<string, string> ornull metaData = null // used to store type-specific info - e.g. challenge wildcard stat refs or calevent unix times | REFACTOR: keep. move required refs - like character string - into here for characters. move string keys to enums
 }
 
 global typedef RegisterItemFlavorsCallbackType void functionref()
 global typedef OnItemFlavorRegisteredCallbackType void functionref( ItemFlavor flavor )
+global typedef OnPreAllItemFlavorsRegisteredCallbackType void functionref()
 global typedef OnAllItemFlavorsRegisteredCallbackType void functionref()
+
+global struct ItemFlavorStack
+{
+	ItemFlavor& flav
+	int         qty
+}
 
 global struct ItemFlavorBag
 {
 	array<ItemFlavor>     flavors
 	array<int>            quantities
-	int                   associatedError = -1
+	int                   associatedError = GRX_INVENTORYERROR_NONE
 }
 
+global typedef ItemFlavorSet table< ItemFlavor, void >
+
+// Meta Data Format Strings
+global const string CHALLENGE_TIER_COUNT = "tierCount"
+global const string CHALLENGE_TIER_STAT_COUNT = "tier%d_statCount"
+global const string CHALLENGE_TIER_STAT_REF = "tier%d_stat%d"
+global const string CHALLENGE_TIER_STAT_ALT_REF = "tier%d_stat_alt%d"
+
+global const string HAS_MYTHIC_PREREQ = "has_mythic_prereq"
+
+global const string	ITEM_FLAV_PREFIX		= "settings/itemflav/"
+global const string	ITEM_FLAV_SUFFIX		= ".rpak"
+global const int	ITEM_FLAV_PREFIX_LEN	= 18
+global const int	ITEM_FLAV_SUFFIX_LEN	= 5
 
 ///////////////////////
 ///////////////////////
@@ -263,36 +493,40 @@ struct ItemTypeInfo
 struct FileStruct_LifetimeLevel
 {
 	array<ItemTypeInfo>                   itemTypeInfoList
-	table<string, ItemFlavor>             refItemFlavorMap
-	table<string, ItemFlavor>             assetPathItemFlavorMap
-	array<ItemFlavor>                     itemFlavorList // order must match between server/client/ui
+	#if DEVELOPER
+	array<ItemFlavor>                     itemFlavorListAll // REFACTOR: replace with GUID map | order must match between server/client/ui --> BAD!
+	#endif
+	array<ItemFlavor>					  itemFlavorListCosmetic
 	table<SettingsAssetGUID, ItemFlavor>  guidItemFlavorMap
-	table<ItemFlavor, array<ItemFlavor> > tagFlavorListMap
-	bool                                  DEV_areAnyItemflavorsDisabledByPlaylist = false
+
+	table<ItemFlavor, int>                  entitlementRewardXboxGoldMap
+	table<ItemFlavor, int>                  entitlementRewardPSPlusMap
 
 	array<RegisterItemFlavorsCallbackType>                 registerRootItemFlavorsCallbacks
 	table<int, array<OnItemFlavorRegisteredCallbackType> > itemTypeOnItemFlavorRegisteredCallbackListMap
+	array<OnPreAllItemFlavorsRegisteredCallbackType>       OnPreAllItemFlavorsRegisteredCallbacks
 	array<OnAllItemFlavorsRegisteredCallbackType>          onAllItemFlavorsRegisteredCallbacks
 
 	bool isItemRegistrationFinished = false
+	bool hasChallengeMetaData = true
+	bool hasTimestampMetaData = false // calevent RPaks don't have defaultStartTime
 
 	#if DEVELOPER
 		bool DEV_hasItemRegistrationStarted = false
 	#endif
 
-	#if(ASSERTING)
-		array<string> ASSERTING_crossVMCheckStringArr = []
-		int           ASSERTING_crossVMCheckHash = 0
-	#endif
+	array< ItemFlavor > legendaryItemFlavors
+	bool hasGRXBadgeStatsOptimizations = false
 }
 FileStruct_LifetimeLevel& fileLevel
 
 struct
 {
 	table<string, bool functionref(entity player)> unlockFuncs
+	table<string, bool functionref(entity player, ItemFlavor flav)> exclusiveFuncs
 } file
 
-//global const array< string > HIDDEN_CHARACTER_REFS = [ "character_dummie", "character_random", "SAID01897196488", "SAID00996325304" ]
+global const array< string > HIDDEN_CHARACTER_REFS = [ "character_dummie", "character_random", "SAID01897196488", "SAID00996325304" ]
 
 global const string GUID_SAMPLE_STRING = "SAID00000000123"
 const string GUID_FORMAT_STRING = "SAID%011d"
@@ -310,6 +544,9 @@ void function ShItems_LevelInit_Begin()
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
+	Assert( ITEM_FLAV_PREFIX.len() == ITEM_FLAV_PREFIX_LEN )
+	Assert( ITEM_FLAV_SUFFIX.len() == ITEM_FLAV_SUFFIX_LEN )
+
 	#if DEVELOPER
 		#if SERVER
 			AddClientCommandCallback( "itemflavors_dump", ClientCommand_itemflavors_dump ) // dev
@@ -324,140 +561,181 @@ void function ShItems_LevelInit_Begin()
 
 	file.unlockFuncs["founders_pack"] <- PlayerHasFoundersPack
 	file.unlockFuncs["starters_pack"] <- PlayerHasStarterPack
-	file.unlockFuncs["ps_plus"] <- PlayerHadPSPlus
-	file.unlockFuncs["psplus02"] <- PlayerHasEntitlement_PSPLUS_PACK_02
-	file.unlockFuncs["psplus03"] <- PlayerHasEntitlement_PSPLUS_PACK_03
-	file.unlockFuncs["psplus04"] <- PlayerHasEntitlement_PSPLUS_PACK_04
 	file.unlockFuncs["origin_access_on_pc"] <- PlayerHadOriginAccessOnPC
 	file.unlockFuncs["ea_access_on_xbox"] <- PlayerHadEAAccessOnXbox
+
+	file.exclusiveFuncs["psplus_or_xbgold"] <- PlayerHasEntitlementForPSPlusOrXBGold
+	file.exclusiveFuncs["switch_platform"] <- PlayerIsOnSwitch
+	file.exclusiveFuncs["ea_play"] <- PlayerHasEAPlay
+
+	fileLevel.hasChallengeMetaData = GetCurrentPlaylistVarBool( "has_challenge_meta_data", true )
+	fileLevel.hasTimestampMetaData = GetCurrentPlaylistVarBool( "has_timestamp_meta_data", false )
+	fileLevel.hasGRXBadgeStatsOptimizations = GetCurrentPlaylistVarBool( "has_grx_badge_stats_opts", true )
 }
+
+
+void function ShItems_CacheEntitlementForPSPlusAndXBGold()
+{
+	foreach ( ItemFlavor entitlementFlav in GetAllItemFlavorsOfType( eItemType.entitlement ) )
+	{
+		int entitlementType = Entitlement_GetEntitlementType( entitlementFlav )
+
+		if ( entitlementType == eEntitlementType.FIRSTPARTY )
+		{
+			string enumString = Entitlement_GetEntitlementEnumValAsString( entitlementFlav )
+			int enumVal       = Entitlement_GetEntitlementEnumVal( entitlementFlav )
+
+			int firstPartyRewardType = -1
+
+			if ( enumString.find( "PSPLUS" ) == 0 )
+			{
+				firstPartyRewardType = eFirstPartyRewardType.PS_PLUS
+			}
+			else if ( enumString.find( "XBOX_GOLD" ) == 0 )
+			{
+				firstPartyRewardType = eFirstPartyRewardType.XBOX_GOLD
+			}
+
+			if ( firstPartyRewardType == eFirstPartyRewardType.PS_PLUS || firstPartyRewardType == eFirstPartyRewardType.XBOX_GOLD )
+			{
+				foreach ( var block in IterateSettingsAssetArray( ItemFlavor_GetAsset( entitlementFlav ), "list" ) )
+				{
+					ItemFlavor rewardFlav = GetItemFlavorByAsset( GetSettingsBlockAsset( block, "flavor" ) )
+
+					if ( firstPartyRewardType == eFirstPartyRewardType.PS_PLUS )
+					{
+						#if DEVELOPER
+							Assert( ItemFlavor_HasExclusiveFunc( rewardFlav ), "PSPLUS reward " + string( ItemFlavor_GetAsset( rewardFlav )) + " must select the exclusive checkbox" )
+							string exclusiveFuncString = GetGlobalSettingsString( ItemFlavor_GetAsset( rewardFlav ), "exclusiveFunc" )
+							Assert( exclusiveFuncString == "psplus_or_xbgold", "PSPLUS reward " + string( ItemFlavor_GetAsset( rewardFlav )) + " must set the exclusiveFunc to psplus_or_xbgold " )
+						#endif
+
+						fileLevel.entitlementRewardPSPlusMap[rewardFlav] <- enumVal
+					}
+					else if ( firstPartyRewardType == eFirstPartyRewardType.XBOX_GOLD )
+					{
+						#if DEVELOPER
+							Assert( ItemFlavor_HasExclusiveFunc( rewardFlav ), "XBOX_GOLD reward " + string( ItemFlavor_GetAsset( rewardFlav )) + " must select the exclusive checkbox" )
+							string exclusiveFuncString = GetGlobalSettingsString( ItemFlavor_GetAsset( rewardFlav ), "exclusiveFunc" )
+							Assert( exclusiveFuncString == "psplus_or_xbgold", "XBOX_GOLD reward " + string( ItemFlavor_GetAsset( rewardFlav )) + " must set the exclusiveFunc to psplus_or_xbgold " )
+						#endif
+
+						fileLevel.entitlementRewardXboxGoldMap[rewardFlav] <- enumVal
+					}
+				}
+			}
+		}
+	}
+}
+
 
 void function ShItems_LevelInit_Finish()
 {
-	foreach( RegisterItemFlavorsCallbackType cb in fileLevel.registerRootItemFlavorsCallbacks )
+	foreach ( RegisterItemFlavorsCallbackType cb in fileLevel.registerRootItemFlavorsCallbacks )
 		cb()
 
-	foreach( ItemFlavor flavor in fileLevel.itemFlavorList )
-	{
-		#if(ASSERTING)
-			fileLevel.ASSERTING_crossVMCheckStringArr.append( string(flavor._____INTERNAL_settingsAsset) )
-		#endif
-
-		if ( ItemFlavor_GetType( flavor ) == eItemType.tagonly )
-			continue
-
-		if ( ItemFlavor_GetAsset( flavor ) == $"" )
-			continue
-	}
-
+	foreach ( OnPreAllItemFlavorsRegisteredCallbackType cb in fileLevel.OnPreAllItemFlavorsRegisteredCallbacks )
+		cb()
+	
 	fileLevel.isItemRegistrationFinished = true
 
-	foreach( OnAllItemFlavorsRegisteredCallbackType cb in fileLevel.onAllItemFlavorsRegisteredCallbacks )
+	foreach ( OnAllItemFlavorsRegisteredCallbackType cb in fileLevel.onAllItemFlavorsRegisteredCallbacks )
 		cb()
 
-	#if SERVER || CLIENT
-		ScriptRemote_RegisterClientFunction( "ServerToClient_ItemFlavorConsistencyCheckFailed", "bool", "int", INT_MIN, INT_MAX ) //(cafe) Not used - 6-5-2025
-	#endif
-	#if ASSERTING
-		DoItemFlavorCrossVMCheck()
-	#endif
+	ShItems_CacheEntitlementForPSPlusAndXBGold()
 }
-
-
-#if ASSERTING
-void function DoItemFlavorCrossVMCheck()
-{
-	//
-	//
-
-	string crossVMCheckString = fileLevel.ASSERTING_crossVMCheckStringArr.join( ", " )
-	//
-	int crossVMCheckHash = StringHash( crossVMCheckString )
-	fileLevel.ASSERTING_crossVMCheckHash = crossVMCheckHash
-
-	#if SERVER
-
-	#elseif CLIENT
-		thread (void function() {
-			WaitForLocalClientEHI()
-			GetLocalClientPlayer().ClientCommand( format( "itemflavors_consistency CL %d", fileLevel.ASSERTING_crossVMCheckHash ) )
-		})()
-	#elseif UI
-		ClientCommand( format( "itemflavors_consistency UI %d", fileLevel.ASSERTING_crossVMCheckHash ) )
-	#endif
-}
-#endif
-
-#if CLIENT
-void function ServerToClient_ItemFlavorConsistencyCheckFailed( bool isUI, int serverHash )
-{
-	#if ASSERTING
-		if ( isUI )
-		{
-			RunUIScript( "ClientToUI_ItemFlavorConsistencyCheckFailed", serverHash )
-			return
-		}
-
-		//
-		//
-
-		Assert( false, format( "Item flavor consistency check failed: SV=%d, CL=%d", serverHash, fileLevel.ASSERTING_crossVMCheckHash ) )
-	#endif
-}
-#endif
-
-#if ASSERTING && UI 
-void function ClientToUI_ItemFlavorConsistencyCheckFailed( int serverHash )
-{
-	//
-	//
-
-	Assert( false, format( "Item flavor consistency check failed: SV=%d, UI=%d", serverHash, fileLevel.ASSERTING_crossVMCheckHash ) )
-}
-#endif
-
 
 bool function IsItemFlavorRegistrationFinished()
 {
 	return fileLevel.isItemRegistrationFinished
 }
 
-const table<asset, asset> sourceTagToIcon = {
-	[ $"settings/itemflav/tag/source_origin_access.rpak" ] = $"rui/menu/buttons/source_origin_access",
-	[ $"settings/itemflav/tag/source_ea_access.rpak" ] = $"rui/menu/buttons/source_ea_access",
-	[ $"settings/itemflav/tag/source_playstation_plus.rpak" ] = $"rui/menu/buttons/source_playstation_plus",
-	[ $"settings/itemflav/tag/source_valentines_day.rpak" ] = $"rui/menu/buttons/source_valentines_day",
-	[ $"settings/itemflav/tag/source_battlepass_season01.rpak" ] = $"rui/menu/buttons/source_battlepass_season01",
-	[ $"settings/itemflav/tag/source_battlepass_season02.rpak" ] = $"rui/menu/buttons/source_battlepass_season02",
-	[ $"settings/itemflav/tag/source_battlepass_season03.rpak" ] = $"rui/menu/buttons/source_battlepass_season03",
-	[ $"settings/itemflav/tag/source_beasthunter_event.rpak" ] = $"rui/menu/buttons/source_beasthunter_event",
-	[ $"settings/itemflav/tag/source_season02_event01.rpak" ] = $"rui/menu/buttons/source_season02_event01",
-	[ $"settings/itemflav/tag/source_season02_event02.rpak" ] = $"rui/menu/buttons/source_season02_event02",
-	[ $"settings/itemflav/tag/source_s03e01.rpak" ] = $"rui/events/s03e01/item_source_icon",
-	[ $"settings/itemflav/tag/source_s03e01a.rpak" ] = $"rui/events/s03e01a/item_source_icon",
-	[ $"settings/itemflav/tag/source_s03e02.rpak" ] = $"rui/events/s03e02/item_source_icon",
-	[ $"settings/itemflav/tag/source_s03e03.rpak" ] = $"rui/events/s03e02/item_source_icon",
-	[ $"settings/itemflav/tag/source_s04e01.rpak" ] = $"rui/events/s04e01/item_source_icon",
-	[ $"settings/itemflav/tag/source_s04e02.rpak" ] = $"rui/events/s04e02/item_source_icon",
-	[ $"settings/itemflav/tag/source_battlepass_season04.rpak" ] = $"rui/events/s04bp/item_source_icon",
-	[ $"settings/itemflav/tag/source_r5reloaded_custom.rpak" ] = $"rui/custom/sdk/item_source_icon",
-	//
-	[ $"settings/itemflav/tag/source_retail01.rpak" ] = $"rui/menu/buttons/source_retail01",
-	[ $"settings/itemflav/tag/source_retail02.rpak" ] = $"rui/menu/buttons/source_retail02",
-	[ $"settings/itemflav/tag/source_credits.rpak" ] = $"rui/menu/buttons/source_credits"
+//////////////////////////
+//////////////////////////
+//// Global functions ////
+//////////////////////////
+//////////////////////////
+string function GetCleanAssetPathForItemFlavor( ItemFlavor flavor )
+{
+	// This is the old HumanReadableRef. Still used by:
+	// - PIN
+	// - Downloaded Assets
+	// - GladiatorCards (which uses a workaround to access Frame assets via their "downloaded" path)
+	// - DEV Loadout Set
+	// There are 3 distinct functions that all access the same string-replace-and-regex below, because it would make it easier to refactor each distinctly
+	// since the calls to the wrapper function are appropriately sandboxed according to need
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	string assetPath = string(ItemFlavor_GetAsset( flavor ))
+	assetPath = assetPath.slice( ITEM_FLAV_PREFIX.len(), assetPath.len() - ITEM_FLAV_SUFFIX.len() )
+	assetPath = replace( assetPath, "/", "_" )
+	return assetPath
 }
 
-void function RegisterTags()
+#if DEVELOPER
+array<ItemFlavor> function DEV_GetAllItemFlavors()
 {
-	foreach ( sourceTag, icon in sourceTagToIcon )
-		RegisterItemFlavorFromSettingsAsset( sourceTag )
+	Assert( IsItemFlavorRegistrationFinished(), "Can't ask for all itemflavors before they are all registered" )
+	return fileLevel.itemFlavorListAll
+}
+
+// the trio of functions below preserves the established DEV command workflow for animation and live art to quickly equip skins, etc
+string function DEV_ItemFlavor_GetCleanedAssetPath( ItemFlavor flavor )
+{
+	return GetCleanAssetPathForItemFlavor( flavor )
+}
+
+bool function DEV_IsValidItemFlavorHumanReadableRef_Slow( string ref )
+{
+	foreach ( ItemFlavor flav in DEV_GetAllItemFlavors() )
+	{
+		if ( ref == DEV_ItemFlavor_GetCleanedAssetPath( flav ) )
+			return true
+	}
+
+	return false
+}
+
+ItemFlavor function DEV_GetItemFlavorByHumanReadableRef_Slow( string ref )
+{
+	foreach ( ItemFlavor flav in DEV_GetAllItemFlavors() )
+	{
+		if ( ref == DEV_ItemFlavor_GetCleanedAssetPath( flav ) )
+			return flav
+	}
+	Assert( false, "Invalid ref " + ref )
+
+	unreachable
+}
+
+ItemFlavor function GetItemFlavorByHumanReadableRef( string ref )
+{
+	return DEV_GetItemFlavorByHumanReadableRef_Slow( ref )
+}
+#endif
+
+// PIN still uses the "Human Readable Ref" for a LOT of analytics
+string function ItemFlavor_GetHumanReadableRefForPIN_Slow( ItemFlavor flavor )
+{
+	return GetCleanAssetPathForItemFlavor( flavor )
+}
+
+// Code maintains an array of *all* PAK handles based on the truncated-and-regexed "path" to fetch downloaded assets which come with that path
+// this is used as a "workaround" to load/unload required PAKs for the Gladiator Card rendering. Specifically, the frames.
+string function ItemFlavor_GetCleanDownloadAssetPath_Slow( ItemFlavor flavor )
+{
+	return GetCleanAssetPathForItemFlavor( flavor )
 }
 
 array<asset> function GetBaseItemFlavorsFromArray( string arrayFieldName )
 {
+	array<asset> validAssets
+
+	// Some arrays don't exist in base_itemflavors — return empty
+	if ( S3_MISSING_ITEMFLAVOR_ARRAYS.contains( arrayFieldName ) )
+		return validAssets
+
 	var parentBlock = GetSettingsBlockForAsset( $"settings/base_itemflavors.rpak" )
 	var arrField    = GetSettingsBlockArray( parentBlock, arrayFieldName )
-	array<asset> validAssets
 
 	foreach ( var entryBlock in IterateSettingsArray( arrField ) )
 	{
@@ -470,16 +748,11 @@ array<asset> function GetBaseItemFlavorsFromArray( string arrayFieldName )
 }
 
 
-//////////////////////////
-//////////////////////////
-//// Global functions ////
-//////////////////////////
-//////////////////////////
 void function AddCallback_RegisterRootItemFlavors( RegisterItemFlavorsCallbackType cb )
 {
-	#if DEVELOPER
+#if DEVELOPER
 	Assert( !fileLevel.DEV_hasItemRegistrationStarted )
-	#endif
+#endif //DEV
 	Assert( !fileLevel.registerRootItemFlavorsCallbacks.contains( cb ), "Callback already registered" )
 	fileLevel.registerRootItemFlavorsCallbacks.append( cb )
 }
@@ -487,9 +760,9 @@ void function AddCallback_RegisterRootItemFlavors( RegisterItemFlavorsCallbackTy
 
 void function AddCallback_OnItemFlavorRegistered( int itemType, OnItemFlavorRegisteredCallbackType cb )
 {
-	#if DEVELOPER
+#if DEVELOPER
 	Assert( !fileLevel.DEV_hasItemRegistrationStarted )
-	#endif
+#endif //DEV
 
 	if ( !(itemType in fileLevel.itemTypeOnItemFlavorRegisteredCallbackListMap) )
 		fileLevel.itemTypeOnItemFlavorRegisteredCallbackListMap[itemType] <- []
@@ -498,6 +771,13 @@ void function AddCallback_OnItemFlavorRegistered( int itemType, OnItemFlavorRegi
 	fileLevel.itemTypeOnItemFlavorRegisteredCallbackListMap[itemType].append( cb )
 }
 
+void function AddCallback_OnPreAllItemFlavorsRegistered( OnPreAllItemFlavorsRegisteredCallbackType cb )
+{
+	Assert( !fileLevel.OnPreAllItemFlavorsRegisteredCallbacks.contains( cb ), "Callback already registered" )
+	fileLevel.OnPreAllItemFlavorsRegisteredCallbacks.append( cb )
+
+	Assert( !fileLevel.isItemRegistrationFinished, "Item Registration has already finished, it's now too late to add a callback" )
+}
 
 void function AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( OnAllItemFlavorsRegisteredCallbackType cb )
 {
@@ -510,10 +790,20 @@ void function AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( OnAllItemFla
 		cb()
 }
 
+const array<int> DELETED_GUIDS_LIST = [
+	1352760251
+]
 
 bool function IsValidItemFlavorGUID( SettingsAssetGUID guid, int validationBehavior = eValidation.DONT_ASSERT )
 {
 	bool good = (guid in fileLevel.guidItemFlavorMap)
+
+	#if DEVELOPER
+		if ( DELETED_GUIDS_LIST.contains( guid ) )
+		{
+			return false
+		}
+	#endif
 
 	Assert( good || validationBehavior != eValidation.ASSERT, "Unknown item flavor guid: " + guid )
 	return good
@@ -530,10 +820,10 @@ ItemFlavor function GetItemFlavorByGUID( SettingsAssetGUID guid )
 
 SettingsAssetGUID function ConvertItemFlavorGUIDStringToGUID( string guidString )
 {
-	if ( guidString.len() != ("SAID00000000123").len() )
+	if ( guidString.len() != (GUID_SAMPLE_STRING).len() )
 		return 0
 
-	if ( guidString.slice( 0, 4 ).toupper() != "SAID" )
+	if ( guidString.slice( 0, 4 ).toupper() != GUID_PREFIX )
 		return 0
 
 	return int(guidString.slice( 4 ))
@@ -547,53 +837,33 @@ ItemFlavor ornull function GetItemFlavorOrNullByGUID( SettingsAssetGUID guid, in
 		return null
 
 	ItemFlavor flav = fileLevel.guidItemFlavorMap[ guid ]
-	if ( expectedItemType != eItemType.INVALID && flav._____INTERNAL_typeIndex != expectedItemType )
+	if ( expectedItemType != eItemType.INVALID && flav.typeIndex != expectedItemType )
 		return null
 
 	return flav
 }
 
 
-bool function IsValidItemFlavorHumanReadableRef( string ref, int validationBehavior = eValidation.DONT_ASSERT )
-{
-	bool good = (ref in fileLevel.refItemFlavorMap)
-
-	Assert( good || validationBehavior != eValidation.ASSERT, "Unknown item flavor ref: " + ref )
-	return good
-}
-
-
-ItemFlavor function GetItemFlavorByHumanReadableRef( string ref )
-{
-	Assert( IsValidItemFlavorHumanReadableRef( ref, eValidation.ASSERT ) )
-
-	return fileLevel.refItemFlavorMap[ ref ]
-}
-
-
-bool function IsValidItemFlavorNetworkIndex_DEPRECATED( int index, int validationBehavior = eValidation.DONT_ASSERT )
-{
-	bool good = ((index - 1) in fileLevel.itemFlavorList)
-
-	Assert( good || validationBehavior != eValidation.ASSERT, "Unknown item flavor network index: " + index + " (valid range is 1-" + fileLevel.itemFlavorList.len() + ")" )
-	return good
-}
-
-
-ItemFlavor function GetItemFlavorByNetworkIndex_DEPRECATED( int index )
-{
-	Assert( IsValidItemFlavorNetworkIndex_DEPRECATED( index, eValidation.ASSERT ) )
-
-	return fileLevel.itemFlavorList[ index - 1 ]
-}
-
-
 bool function IsValidItemFlavorSettingsAsset( asset itemAsset, int validationBehavior = eValidation.DONT_ASSERT )
 {
-	bool good = (string(itemAsset) in fileLevel.assetPathItemFlavorMap)
+	if ( itemAsset == $"" )
+	{
+		Assert( false || validationBehavior != eValidation.ASSERT, "Blank item settings asset passed" )
+		return false
+	}
 
-	Assert( good || validationBehavior != eValidation.ASSERT, "Bad item settings asset: " + itemAsset )
-	return good
+	// GetUniqueIdForSettingsAsset crashes on assets that don't exist
+	try
+	{
+		int guid = GetUniqueIdForSettingsAsset( itemAsset )
+		bool good = ( guid in fileLevel.guidItemFlavorMap )
+		Assert( good || validationBehavior != eValidation.ASSERT, "Bad item settings asset: " + itemAsset )
+		return good
+	}
+	catch ( ex )
+	{
+		return false
+	}
 }
 
 
@@ -601,7 +871,9 @@ ItemFlavor function GetItemFlavorByAsset( asset itemAsset )
 {
 	Assert( IsValidItemFlavorSettingsAsset( itemAsset, eValidation.ASSERT ) )
 
-	return fileLevel.assetPathItemFlavorMap[ string(itemAsset) ]
+	int guid = GetUniqueIdForSettingsAsset( itemAsset )
+
+	return fileLevel.guidItemFlavorMap[ guid ]
 }
 
 
@@ -614,17 +886,36 @@ bool function IsValidItemFlavorType( int typeIndex, int validationBehavior = eVa
 }
 
 
-//array<ItemFlavor> function GetItemFlavorListByType( int typeIndex )
-//{
-//	IsValidItemFlavorType( typeIndex, eValidation.ASSERT )
-//
-//	return fileLevel.itemTypeInfoList[flavor._____INTERNAL_typeIndex].itemFlavorList
-//}
+string function DescribeItemFlavorType( int itemType )
+{
+	if ( IsValidItemFlavorType( itemType, eValidation.ASSERT ) )
+	{
+		return GetEnumString( "eItemType", itemType )
+	}
 
+	return "InvalidItemType"
+}
+
+
+array< ItemFlavor > function GetAllLegendaryItems()
+{
+	return fileLevel.legendaryItemFlavors
+}
+
+
+#if DEVELOPER
 array<ItemFlavor> function GetAllItemFlavors()
 {
 	Assert( fileLevel.isItemRegistrationFinished )
-	return fileLevel.itemFlavorList // todo(dw): we really need const as part of the type in our language!
+	return fileLevel.itemFlavorListAll
+}
+#endif
+
+
+array<ItemFlavor> function GetAllItemFlavorsCosmetic()
+{
+	Assert( fileLevel.isItemRegistrationFinished )
+	return fileLevel.itemFlavorListCosmetic
 }
 
 
@@ -637,90 +928,111 @@ array<ItemFlavor> function GetAllItemFlavorsOfType( int typeIndex )
 }
 
 
-array<ItemFlavor> function GetItemFlavorsWithTags( array<ItemFlavor> tagList )
+ItemFlavor function GetItemFlavorByNetworkIndex_DEPRECATED( int index )
 {
-	Assert( fileLevel.isItemRegistrationFinished )
-	array<ItemFlavor> itemFlavorList = []
-	foreach( ItemFlavor tagFlavor in tagList )
-	{
-		Assert( ItemFlavor_GetType( tagFlavor ) == eItemType.tagonly )
-
-		foreach( ItemFlavor itemFlavor in fileLevel.tagFlavorListMap[tagFlavor] )
-		{
-			itemFlavorList.append( itemFlavor )
-		}
-	}
-
-	return itemFlavorList
+	ItemFlavor empty
+	return empty // deprecated
 }
-
-
-bool function IsItemFlavorStructValid( ItemFlavor flavor, int validationBehavior = eValidation.DONT_ASSERT )
-{
-	Assert( validationBehavior != eValidation.ASSERT || flavor._____INTERNAL_index != -1, "ItemFlavor struct was not initialized!" )
-	Assert( validationBehavior != eValidation.ASSERT || flavor._____INTERNAL_noCopyCheck == flavor, "ItemFlavor struct was copied!" )
-	return (flavor._____INTERNAL_index != -1 && flavor._____INTERNAL_noCopyCheck == flavor)
-}
-
 
 SettingsAssetGUID function ItemFlavor_GetGUID( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	return flavor._____INTERNAL_guid
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	return flavor.guid
 }
 
 
 string function ItemFlavor_GetGUIDString( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	// SAID00000000123
-	return format( "SAID%011d", flavor._____INTERNAL_guid )
+	return ConvertAssetIDToGUIDString( flavor.guid )
 }
 
 
-string function ItemFlavor_GetHumanReadableRef( ItemFlavor flavor )
+string function ConvertAssetIDToGUIDString( int assetID )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	return flavor._____INTERNAL_humanReadableRef
-}
-
-
-int function ItemFlavor_GetNetworkIndex_DEPRECATED( ItemFlavor flavor )
-{
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	return flavor._____INTERNAL_index
+	return format( GUID_FORMAT_STRING, assetID )
 }
 
 
 int function ItemFlavor_GetType( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	return flavor._____INTERNAL_typeIndex
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	return flavor.typeIndex
 }
 
 
 asset function ItemFlavor_GetAsset( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	return flavor._____INTERNAL_settingsAsset
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	return GetSettingsAssetForUniqueId( flavor.guid )
 }
+
+
+string function ItemFlavor_GetAssetString( ItemFlavor flavor )
+{
+	// eg. "settings/itemflav/character_skin/bangalore/rare_08.rpak"
+
+	asset flavAsset = ItemFlavor_GetAsset( flavor )
+	return string( flavAsset )
+}
+
+
+string function ItemFlavor_GetAssetName( ItemFlavor flavor )
+{
+	// eg. "settings/itemflav/character_skin/bangalore/rare_08.rpak" -> "character_skin/bangalore/rare_08"
+
+	string fullAsset = ItemFlavor_GetAssetString( flavor )
+
+	// Assert for correct prefix
+	Assert( fullAsset.slice( 0, ITEM_FLAV_PREFIX_LEN ) == ITEM_FLAV_PREFIX )
+
+	// Assert for correct suffix
+	Assert( fullAsset.slice( -ITEM_FLAV_SUFFIX_LEN ) == ITEM_FLAV_SUFFIX )
+
+	string rv = fullAsset.slice( ITEM_FLAV_PREFIX_LEN, -ITEM_FLAV_SUFFIX_LEN )
+	return rv
+}
+
+
+string function ItemFlavor_GetAssetShortName( ItemFlavor flavor )
+{
+	// eg. "settings/itemflav/character_skin/bangalore/rare_08.rpak" -> "rare_08"
+
+	array< string > splitStrings = split( string( ItemFlavor_GetAsset( flavor ) ), "/." )
+	return splitStrings[splitStrings.len() - 2]
+}
+
 
 var function ItemFlavor_GetSettingsBlock( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	return GetSettingsBlockForAsset( flavor._____INTERNAL_settingsAsset )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	return GetSettingsBlockForAsset( ItemFlavor_GetAsset( flavor ) )
 }
+
+
+#if CLIENT || UI
+int function ItemFlavor_GetTypeUICategory( ItemFlavor flavor )
+{
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	if ( flavor.typeIndex in itemTypeUICategoryMap )
+		return itemTypeUICategoryMap[flavor.typeIndex]
+
+	return eItemTypeUICategory.NONE
+}
+#endif
+
 
 #if CLIENT || UI
 string function ItemFlavor_GetTypeName( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
-	//
-	if ( !(flavor._____INTERNAL_typeIndex in itemTypeNameMap) )
-		return format( "%s !UNLOCALIZED!", DEV_GetEnumStringSafe( "eItemType", flavor._____INTERNAL_typeIndex ) )
-	return itemTypeNameMap[flavor._____INTERNAL_typeIndex]
+	//Assert( flavor._____INTERNAL_typeIndex in itemTypeNameMap, "Item flavor type \"" + GetGlobalSettingsString( flavor._____INTERNAL_settingsAsset, "itemType" ) + "\" does not have a localization key yet." )
+	if ( !(flavor.typeIndex in itemTypeNameMap) )
+		return format( "%s !UNLOCALIZED!", DEV_GetEnumStringSafe( "eItemType", flavor.typeIndex ) )
+	return itemTypeNameMap[flavor.typeIndex]
 }
 #endif
 
@@ -728,13 +1040,11 @@ string function ItemFlavor_GetTypeName( ItemFlavor flavor )
 #if CLIENT || UI
 string function ItemFlavor_GetLongName( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
-	string localizationKey = GetGlobalSettingsString( flavor._____INTERNAL_settingsAsset, "localizationKey_NAME" )
+	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_NAME" )
 	#if DEVELOPER
-		if ( localizationKey == "" )
-			localizationKey = format( "%s !UNLOCALIZED!", ItemFlavor_GetHumanReadableRef( flavor ) )
-		else if ( localizationKey.slice( 0, 1 ) != "#" )
+		if ( localizationKey != "" && localizationKey.slice( 0, 1 ) != "#" )
 			localizationKey = format( "%s !UNLOCALIZED!", localizationKey )
 	#endif
 	return localizationKey
@@ -745,13 +1055,11 @@ string function ItemFlavor_GetLongName( ItemFlavor flavor )
 #if CLIENT || UI
 string function ItemFlavor_GetShortName( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
-	string localizationKey = GetGlobalSettingsString( flavor._____INTERNAL_settingsAsset, "localizationKey_NAME_SHORT" )
+	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_NAME_SHORT" )
 	#if DEVELOPER
-		if ( localizationKey == "" )
-			localizationKey = format( "%s !UNLOCALIZED!", ItemFlavor_GetHumanReadableRef( flavor ) )
-		else if ( localizationKey.slice( 0, 1 ) != "#" )
+		if ( localizationKey != "" && localizationKey.slice( 0, 1 ) != "#" )
 			localizationKey = format( "%s !UNLOCALIZED!", localizationKey )
 	#endif
 	return localizationKey
@@ -762,13 +1070,12 @@ string function ItemFlavor_GetShortName( ItemFlavor flavor )
 #if CLIENT || UI
 string function ItemFlavor_GetLongDescription( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
-	string localizationKey = GetGlobalSettingsString( flavor._____INTERNAL_settingsAsset, "localizationKey_DESCRIPTION_LONG" )
+	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_DESCRIPTION_LONG" )
+
 	#if DEVELOPER
-		if ( localizationKey == "" )
-			localizationKey = format( "%s !UNLOCALIZED!", ItemFlavor_GetHumanReadableRef( flavor ) )
-		else if ( localizationKey.slice( 0, 1 ) != "#" )
+		if ( localizationKey != "" && localizationKey.slice( 0, 1 ) != "#" )
 			localizationKey = format( "%s !UNLOCALIZED!", localizationKey )
 	#endif
 	return localizationKey
@@ -779,16 +1086,114 @@ string function ItemFlavor_GetLongDescription( ItemFlavor flavor )
 #if CLIENT || UI
 string function ItemFlavor_GetShortDescription( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
-	string localizationKey = GetGlobalSettingsString( flavor._____INTERNAL_settingsAsset, "localizationKey_DESCRIPTION_SHORT" )
+	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_DESCRIPTION_SHORT" )
+
 	#if DEVELOPER
-		if ( localizationKey == "" )
-			localizationKey = format( "%s !UNLOCALIZED!", ItemFlavor_GetHumanReadableRef( flavor ) )
-		else if ( localizationKey.slice( 0, 1 ) != "#" )
+		if ( localizationKey != "" && localizationKey.slice( 0, 1 ) != "#" )
 			localizationKey = format( "%s !UNLOCALIZED!", localizationKey )
 	#endif
 	return localizationKey
+}
+#endif
+
+#if CLIENT || UI
+string function ItemFlavor_GetRewardShortDescription( ItemFlavor flav )
+{
+	switch( ItemFlavor_GetType( flav ) )
+	{
+		case eItemType.weapon_skin:
+			ItemFlavor ref = WeaponSkin_GetWeaponFlavor( flav )
+			return Localize( "#REWARD_SKIN_WEAPON", Localize( ItemFlavor_GetShortName( ref ) ) )
+
+		case eItemType.character:
+			return Localize( itemTypeNameMap[eItemType.character] )
+
+		case eItemType.character_skin:
+			ItemFlavor ref = CharacterSkin_GetCharacterFlavor( flav )
+			return Localize( "#REWARD_SKIN_CHARACTER", Localize( ItemFlavor_GetLongName( ref ) ) )
+
+		case eItemType.character_execution:
+			ItemFlavor ref = CharacterExecution_GetCharacterFlavor( flav )
+			return Localize( "#REWARD_FINISHER", Localize( ItemFlavor_GetLongName( ref ) ) )
+
+		case eItemType.character_emote:
+			ItemFlavor ornull ref = CharacterQuip_GetCharacterFlavor( flav )
+			if ( ref == null )
+				return Localize( "#REWARD_EMOTE_GENERIC" )
+
+			expect ItemFlavor( ref )
+
+			return Localize( "#REWARD_EMOTE", Localize( ItemFlavor_GetLongName( ref ) ) )
+
+		// Stat tracker rewards CAN BE generic OR character-specific since Apex Rumble Update
+		case eItemType.gladiator_card_stat_tracker:
+			ItemFlavor ornull ref = GladiatorCardStatTracker_GetCharacterFlavor( flav )
+			if ( ref == null )
+				return Localize( "#REWARD_TRACKER_GENERIC" )
+
+			expect ItemFlavor( ref )
+
+			return Localize( "#REWARD_TRACKER", Localize( ItemFlavor_GetLongName( ref ) ) )
+
+		case eItemType.gladiator_card_intro_quip:
+			ItemFlavor ref = CharacterIntroQuip_GetCharacterFlavor( flav )
+			return Localize( "#REWARD_INTRO_QUIP", Localize( ItemFlavor_GetLongName( ref ) ) )
+
+		case eItemType.gladiator_card_kill_quip:
+			ItemFlavor ref = CharacterKillQuip_GetCharacterFlavor( flav )
+			return Localize( "#REWARD_KILL_QUIP", Localize( ItemFlavor_GetLongName( ref ) ) )
+
+		case eItemType.gladiator_card_frame:
+			ItemFlavor ornull ref = GladiatorCardFrame_GetCharacterFlavor( flav )
+			if ( ref == null )
+				return Localize( "#REWARD_FRAME_GENERIC" )
+
+			expect ItemFlavor( ref )
+
+			return Localize( "#REWARD_FRAME", Localize( ItemFlavor_GetLongName( ref ) ) )
+
+		case eItemType.gladiator_card_stance:
+			ItemFlavor ref = GladiatorCardStance_GetCharacterFlavor( flav )
+			return Localize( "#REWARD_STANCE", Localize( ItemFlavor_GetLongName( ref ) ) )
+
+		case eItemType.gladiator_card_badge:
+			return Localize( "#REWARD_BADGE" )
+
+		case eItemType.music_pack:
+			return Localize( "#itemtype_music_pack_NAME" )
+
+		case eItemType.loadscreen:
+			return Localize( "#itemtype_loadscreen_NAME" )
+
+		case eItemType.skydive_emote:
+			ItemFlavor ref = SkydiveEmote_GetCharacterFlavor( flav )
+			return Localize( "#REWARD_SKYDIVE_EMOTE", Localize( ItemFlavor_GetLongName( ref ) ) )
+
+		case eItemType.weapon_charm:
+		case eItemType.sticker:
+			return Localize( ItemFlavor_GetTypeName( flav ) )
+
+		// Holospray rewards CAN BE generic OR character-specific
+		case eItemType.emote_icon:
+			ItemFlavor ornull ref = CharacterEmoteIcon_GetCharacterFlavor( flav )
+			if ( ref == null )
+				return Localize( "#REWARD_EMOTE_ICON_GENERIC" )
+
+			return Localize( "#REWARD_EMOTE_ICON", Localize( ItemFlavor_GetLongName( expect ItemFlavor( ref ) ) ) )
+
+		case eItemType.quest_comic:
+			return Localize( ItemFlavor_GetTypeName( flav ) )
+
+		case eItemType.melee_skin:
+			return Localize( "#itemtype_melee_skin_NAME" )
+
+		case eItemType.battlepass:
+			return Localize( "#itemtype_battlepass_NAME" )
+	}
+
+	return ""
 }
 #endif
 
@@ -796,63 +1201,138 @@ string function ItemFlavor_GetShortDescription( ItemFlavor flavor )
 #if CLIENT || UI
 asset function ItemFlavor_GetIcon( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	return GetGlobalSettingsAsset( flavor._____INTERNAL_settingsAsset, "icon" )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "icon" )
 }
 #endif
 
 
-#if CLIENT || UI 
-bool function ItemFlavor_HasSourceTag( ItemFlavor flavor )
-{
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-
-	bool found = false
-	foreach ( sourceTag, icon in sourceTagToIcon )
-	{
-		if ( ItemFlavor_HasTag( flavor, GetItemFlavorByAsset( sourceTag ) ) )
-		{
-			Assert( !found )
-			found = true
-		}
-	}
-
-	return found
-}
-
+// SERVER doesn't have image asset, but may use asset name for grouping
 asset function ItemFlavor_GetSourceIcon( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	Assert( ItemFlavor_HasSourceTag( flavor ) )
-
-	foreach ( sourceTag, icon in sourceTagToIcon )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	// tagIcon may not exist in ping assets
+	try
 	{
-		if ( ItemFlavor_HasTag( flavor, GetItemFlavorByAsset( sourceTag ) ) )
-			return icon
+		return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "tagIcon" )
+	}
+	catch ( ex )
+	{
+		return $""
+	}
+}
+
+
+int function ItemFlavor_GetAccountPackType( ItemFlavor pack )
+{
+	Assert( IsItemFlavorStructValid( pack, eValidation.ASSERT ) )
+	Assert( ItemFlavor_GetType( pack ) == eItemType.account_pack )
+
+	asset itemAsset = ItemFlavor_GetAsset( pack )
+	string settingsString = GetGlobalSettingsString( itemAsset, "packType" )
+	int accountPackType
+
+	switch ( settingsString )
+	{
+		case "EVENT_PACK":
+			accountPackType = eAccountPackType.EVENT
+			break
+		case "EVENT_THEMATIC_PACK":
+			accountPackType = eAccountPackType.EVENT_THEMATIC
+			break
+		case "THEMATIC_PACK":
+			accountPackType = eAccountPackType.THEMATIC
+			break
+		case "MYTHIC_PACK":
+			accountPackType = eAccountPackType.MYTHIC
+			break
+		case "SIRNGE_PACK":
+			accountPackType = eAccountPackType.SIRNGE
+			break
+		default:
+			accountPackType = eAccountPackType.APEX // default in RSON file
+			break
 	}
 
-	Assert( false )
-	return $""
+	return accountPackType
 }
-#endif
 
-
-int function ItemFlavor_GetPlaylistOpinion( ItemFlavor flavor )
+int function GetPlaylistAvailabilityByRef( array< string > refs )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	return flavor._____INTERNAL_playlistOpinion
+	// called early during registration as a (hopefully) DEV-only (during playtest) kill switch for items
+	foreach ( ref in refs )
+	{
+		if ( HIDDEN_CHARACTER_REFS.len() > 0 && HIDDEN_CHARACTER_REFS.contains( ref ) )
+			return eItemFlavorPlaylistAvailability.HIDDEN
+
+		string playlistVar = GetCurrentPlaylistVarString( ref, "none" ).tolower()
+
+		// for legacy reasons, we keep the characters working by ref (for now), and check ref & GUID string for characters ONLY
+		if ( refs.len() == 1 && playlistVar == "none" )
+			return eItemFlavorPlaylistAvailability.NONE
+
+		else if ( playlistVar == "enable" )
+			return eItemFlavorPlaylistAvailability.NONE
+
+		else if ( playlistVar == "disable_grx_ops" )
+			return eItemFlavorPlaylistAvailability.GRX_DISABLED
+
+		else if ( playlistVar == "lock" )
+			return eItemFlavorPlaylistAvailability.LOCKED
+
+		else if ( playlistVar == "hide" )
+			return eItemFlavorPlaylistAvailability.HIDDEN
+
+		else if ( playlistVar == "disable" )
+			return eItemFlavorPlaylistAvailability.DISABLED
+
+		else if ( playlistVar == "force_unlock_for_special_event" )
+			return eItemFlavorPlaylistAvailability.FORCE_UNLOCK_FOR_SPECIAL_EVENT
+
+		#if ASSERTS
+			else if ( playlistVar != "none" )
+				Assert( false, "Bad value for playlist var \"" + ref + "\": \"" + playlistVar + "\" (must be \"lock\", \"hide\", \"disable_grx_ops\", \"enable\", \"force_unlock_for_special_event\", or \"disable\")" )
+		#endif
+	}
+
+	return eItemFlavorPlaylistAvailability.NONE
+}
+
+
+int function ItemFlavor_GetPlaylistAvailability( ItemFlavor flavor )
+{
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+
+	if ( flavor.metaData == null )
+		return eItemFlavorPlaylistAvailability.NONE
+
+	table<string, string> ornull metaData = flavor.metaData
+	expect table<string, string>(metaData)
+
+	if ( PLAYLIST_AVAILABILITY_META_DATA_KEY in metaData )
+		return int(metaData[ PLAYLIST_AVAILABILITY_META_DATA_KEY ])
+
+	return eItemFlavorPlaylistAvailability.NONE
 }
 
 
 bool function ItemFlavor_IsAvailableInPlaylist( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	int op = flavor._____INTERNAL_playlistOpinion
+	int op = ItemFlavor_GetPlaylistAvailability( flavor )
 
-	if ( op == eItemFlavorPlaylistOpinion.NONE )
+	if ( op == eItemFlavorPlaylistAvailability.NONE )
 		return true
 
-	if ( op == eItemFlavorPlaylistOpinion.FORCE_UNLOCK_FOR_SPECIAL_EVENT )
+	if ( op == eItemFlavorPlaylistAvailability.FORCE_UNLOCK_FOR_SPECIAL_EVENT )
+		return true
+
+	return false
+}
+
+
+bool function ItemFlavor_IsItemDisabledForGRX( ItemFlavor flavor )
+{
+	if ( ItemFlavor_GetPlaylistAvailability( flavor ) == eItemFlavorPlaylistAvailability.GRX_DISABLED )
 		return true
 
 	return false
@@ -861,10 +1341,10 @@ bool function ItemFlavor_IsAvailableInPlaylist( ItemFlavor flavor )
 
 bool function ItemFlavor_ShouldBeVisible( ItemFlavor flavor, entity player, int ornull overrideEditionOrNull = null )
 {
-	int availableState = ItemFlavor_GetPlaylistOpinion( flavor )
-	if ( availableState == eItemFlavorPlaylistOpinion.HIDDEN )
+	int availableState = ItemFlavor_GetPlaylistAvailability( flavor )
+	if ( availableState == eItemFlavorPlaylistAvailability.HIDDEN )
 		return false
-	else if ( availableState == eItemFlavorPlaylistOpinion.DISABLED )
+	else if ( availableState == eItemFlavorPlaylistAvailability.DISABLED )
 		return false
 
 	int edition
@@ -882,10 +1362,20 @@ bool function ItemFlavor_ShouldBeVisible( ItemFlavor flavor, entity player, int 
 	return ItemFlavor_IsActiveForEdition( flavor, edition )
 }
 
+
 bool function ItemFlavor_IsTheFavoriteSentinel( ItemFlavor flavor )
 {
-	return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheFavoriteSentinel" )
+	// isTheFavoriteSentinel may not exist in ping assets
+	try
+	{
+		return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheFavoriteSentinel" )
+	}
+	catch ( ex )
+	{
+		return false
+	}
 }
+
 
 bool function ItemFlavor_IsActiveForEdition( ItemFlavor flavor, int edition )
 {
@@ -910,35 +1400,15 @@ bool function ItemFlavor_IsActiveForEdition( ItemFlavor flavor, int edition )
 }
 
 
-array<ItemFlavor> function ItemFlavor_GetTags( ItemFlavor flavor )
-{
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
-	array<ItemFlavor> tags = []
-
-	foreach( ItemFlavor tagFlavor, bool unused in flavor._____INTERNAL_tagMap)
-		tags.append( tagFlavor )
-
-	return tags
-}
-
-
-bool function ItemFlavor_HasTag( ItemFlavor itemFlavor, ItemFlavor tagFlavor )
-{
-	Assert( IsItemFlavorStructValid( itemFlavor, eValidation.ASSERT ) )
-	Assert( IsItemFlavorStructValid( tagFlavor, eValidation.ASSERT ) )
-	return (tagFlavor in itemFlavor._____INTERNAL_tagMap)
-}
-
-
 bool function ItemFlavor_CheckType( ItemFlavor flavor, int expectedTypeIndex, int validationBehavior = eValidation.DONT_ASSERT )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	int typeIndex = ItemFlavor_GetType( flavor )
 	bool good     = (typeIndex == expectedTypeIndex)
 
 	Assert( good || validationBehavior != eValidation.ASSERT, "Item flavor type validation failed."
-			+ " Expected type " + GetEnumString( "eItemType", expectedTypeIndex ) + " but got "
-			+ DEV_GetEnumStringSafe( "eItemType", typeIndex ) + "."
+	+ " Expected type " + GetEnumString( "eItemType", expectedTypeIndex ) + " but got "
+	+ DEV_GetEnumStringSafe( "eItemType", typeIndex ) + "."
 	)
 	return good
 }
@@ -946,7 +1416,7 @@ bool function ItemFlavor_CheckType( ItemFlavor flavor, int expectedTypeIndex, in
 
 bool function ItemFlavor_HasQuality( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	string enumKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "quality" )
 	return enumKey != "NONE"
 }
@@ -954,40 +1424,90 @@ bool function ItemFlavor_HasQuality( ItemFlavor flavor )
 
 int function ItemFlavor_GetQuality( ItemFlavor flavor, int ornull fallbackValue = null )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	string enumKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "quality" )
 	if ( enumKey == "NONE" )
 	{
 		if ( fallbackValue != null )
 			return expect int(fallbackValue)
 		else
-			Assert( false, format( "Item flavor %s has no quality.", ItemFlavor_GetHumanReadableRef( flavor ) ) )
+		{
+			printf( "Item flavor %s has no quality.", string(ItemFlavor_GetAsset( flavor )) )
+			return eRarityTier.NONE
+		}
 	}
-	Assert( enumKey in eQuality, "Invalid eQuality enum value: " + enumKey )
+	Assert( enumKey in eRarityTier, "Invalid eQuality enum value: " + enumKey )
 
-	return eQuality[enumKey]
+	return eRarityTier[enumKey]
 }
 
 
 vector function ItemFlavor_GetQualityColor( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	return GetFXRarityColorForUnlockable( ItemFlavor_GetQuality( flavor ) )
 }
 
+
 string function ItemFlavor_GetQualityName( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	return ItemQuality_GetQualityName( ItemFlavor_GetQuality( flavor ) )
+}
+
+bool function ItemFlavor_IsThematic( ItemFlavor flavor )
+{
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+
+	if ( ItemFlavor_GetType( flavor ) != eItemType.account_pack )
+		return false
+
+	var packType = ItemFlavor_GetAccountPackType( flavor )
+	return packType == eAccountPackType.THEMATIC || packType == eAccountPackType.EVENT_THEMATIC
+}
+
+bool function ItemFlavor_IsCurrency( ItemFlavor flavor )
+{
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+
+	switch ( ItemFlavor_GetType( flavor ) )
+	{
+		case eItemType.account_currency:
+		case eItemType.account_currency_bundle:
+		case eItemType.apex_coins:
+			return true
+	}
+
+	return false
+}
+
+bool function ItemFlavor_IsBattlepass( ItemFlavor flavor )
+{
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+
+	ItemFlavor ornull activeBattlePass = GetActiveBattlePass()
+
+	if ( activeBattlePass == null )
+		return false
+
+	expect ItemFlavor( activeBattlePass )
+
+	if ( flavor == BattlePass_GetBundlePurchasePack( activeBattlePass ) ||
+			flavor == BattlePass_GetBasicPurchasePack( activeBattlePass ) )
+	{
+		return true
+	}
+
+	return false
 }
 
 string function ItemQuality_GetQualityName( int quality )
 {
 	switch ( quality )
 	{
-		case 6:
-			return "#QUALITY_FANMADE"
-			
+		case 5:
+			return "#LOOT_TIER6"
+
 		case 4:
 			return "#LOOT_TIER5"
 
@@ -1006,77 +1526,54 @@ string function ItemQuality_GetQualityName( int quality )
 	unreachable
 }
 
+string function ItemQuality_GetBattlePassQualityName( ItemFlavor flav )
+{
+	Assert( ItemFlavor_IsBattlepass( flav ), "Item was not a Battlepass Pack Purchase Flavor" )
+	ItemFlavor ornull activeBattlePass = GetActiveBattlePass()
+	expect ItemFlavor( activeBattlePass )
+	ItemFlavor basicPurchaseFlav = BattlePass_GetBasicPurchasePack( activeBattlePass )
+	ItemFlavor bundlePurchaseFlav = BattlePass_GetBundlePurchasePack( activeBattlePass )
 
-//array<ItemFlavor> function ItemFlavorTags( ... )
-//{
-//	array<ItemFlavor> tags = []
-//	for ( int argI = 0; argI < vargc; argI++ )
-//	{
-//		ItemFlavor tagFlavor = GetItemFlavorByAsset( expect asset( vargv[argI] ) )
-//		Assert( ItemFlavor_GetType( tagFlavor ) == eItemType.tagonly )
-//		tags.append( tagFlavor )
-//	}
-//	return tags
-//}
+	if ( flav == basicPurchaseFlav )
+		return "#BP_MILESTONE_TOGGLE_PREMIUM"
+	else if ( flav == bundlePurchaseFlav )
+		return "#BP_MILESTONE_TOGGLE_BUNDLE"
 
+	unreachable
+}
 
 ///////////////////////
 ///////////////////////
 //// Dev functions ////
 ///////////////////////
 ///////////////////////
-#if 1
-string function DEV_DescItemFlavor( ItemFlavor ornull flav )
+#if true
+string function DEV_DescItemFlavor( ItemFlavor ornull flav, bool short = false )
 {
 	if ( flav == null )
 		return "~~null~~"
-
 	expect ItemFlavor( flav )
 
-	return format( "~~%s:%s:%s~~", DEV_GetEnumStringSafe( "eItemType", ItemFlavor_GetType( flav ) ), ItemFlavor_GetHumanReadableRef( flav ), ItemFlavor_GetGUIDString( flav ) )
+	if ( !IsItemFlavorStructValid( flav.guid, eValidation.DONT_ASSERT ) )
+		return "~~invalid~~"
+
+	if ( short )
+		return string(ItemFlavor_GetAsset( flav ))
+
+	return format( "~~%s:%s:%s~~", DEV_GetEnumStringSafe( "eItemType", ItemFlavor_GetType( flav ) ), string(ItemFlavor_GetAsset( flav )), ItemFlavor_GetGUIDString( flav ) )
 }
 #endif
 
 
-int function GetItemFlavorPlaylistOpinion( string ref )
-{
-	string playlistVar = GetCurrentPlaylistVarString( ref, "~none~" ).tolower()
-
-	if ( playlistVar == "~none~" || playlistVar == "enable" )
-		return eItemFlavorPlaylistOpinion.NONE
-
-	if ( playlistVar == "lock" )
-		return eItemFlavorPlaylistOpinion.LOCKED
-
-	if ( playlistVar == "hide" )
-		return eItemFlavorPlaylistOpinion.HIDDEN
-
-	if ( playlistVar == "disable" )
-		return eItemFlavorPlaylistOpinion.DISABLED
-
-	if ( playlistVar == "force_unlock_for_special_event" )
-		return eItemFlavorPlaylistOpinion.FORCE_UNLOCK_FOR_SPECIAL_EVENT
-
-	Assert( false, "Bad value for playlist var \"" + ref + "\": \"" + playlistVar + "\" (must be \"lock\" \"hide\" or \"disable\")" )
-	return eItemFlavorPlaylistOpinion.DISABLED
-}
-
-
 int function GetItemFlavorPlaylistEdition( ItemFlavor flavor )
 {
-	string ref = ItemFlavor_GetHumanReadableRef( flavor )
+	string ref      = ItemFlavor_GetGUIDString( flavor )
 	int playlistVar = GetCurrentPlaylistVarInt( ref + "_edition", -1 )
 
 	if ( playlistVar <= 0 )
 		return 99999
 
 	return playlistVar
-}
-
-
-bool function DEV_AreAnyItemflavorsDisabledByPlaylist()
-{
-	return fileLevel.DEV_areAnyItemflavorsDisabledByPlaylist
 }
 
 
@@ -1109,12 +1606,12 @@ array<var> function IterateSettingsArray( var arr )
 }
 
 
-array<ItemFlavor> function RegisterReferencedItemFlavorsFromArray( ItemFlavor parentFlavor, string arrayFieldName, string refFieldName, string ornull featureFlagFieldNameOrNull = null )
+array<ItemFlavor> function RegisterReferencedItemFlavorsFromArray( ItemFlavor parentFlavor, string arrayFieldName, string refFieldName )
 {
 	array<ItemFlavor> loaded = []
 	var parentBlock          = ItemFlavor_GetSettingsBlock( parentFlavor )
 	var arrField             = GetSettingsBlockArray( parentBlock, arrayFieldName )
-	foreach( var entryBlock in IterateSettingsArray( arrField ) )
+	foreach ( var entryBlock in IterateSettingsArray( arrField ) )
 	{
 		asset entryAsset = GetSettingsBlockAsset( entryBlock, refFieldName )
 		if ( entryAsset == $"" )
@@ -1122,78 +1619,63 @@ array<ItemFlavor> function RegisterReferencedItemFlavorsFromArray( ItemFlavor pa
 			Warning( "Warning: Asset \"" + ItemFlavor_GetAsset( parentFlavor ) + "\" has an empty entry in array \"" + arrayFieldName + "\"" )
 			continue
 		}
-		if ( featureFlagFieldNameOrNull != null )
-		{
-			string featureFlagRef = GetSettingsBlockString( entryBlock, expect string(featureFlagFieldNameOrNull) )
-			if ( featureFlagRef != "" )
-			{
-				#if ASSERTING
-				Assert( ForAssertingOnly_IsValidFeatureFlagString( featureFlagRef ),
-					format( "Reference to '%s' in '%s' is gated by unknown feature flag: %s", string(entryAsset), string(ItemFlavor_GetAsset( parentFlavor )), featureFlagRef ) )
-				#endif
-				if ( !GetFeatureFlagByString( featureFlagRef ) )
-				{
-					//printf( "Skipping reference to '%s' in '%s' because feature flag %s is off.", string(entryAsset), string(ItemFlavor_GetAsset( parentFlavor )), featureFlagRef )
-					continue
-				}
-			}
-		}
 		ItemFlavor ornull childFlavorOrNull = RegisterItemFlavorFromSettingsAsset( entryAsset )
 		if ( childFlavorOrNull != null )
-			loaded.append( expect ItemFlavor(childFlavorOrNull) )
+		{
+			ItemFlavor childFlavor =  expect ItemFlavor(childFlavorOrNull)
+			loaded.append( childFlavor )
+		}
 	}
 	return loaded
 }
 
-
-
-table<ItemFlavor, bool> function MakeItemFlavorSet( array<ItemFlavor> list, table<ItemFlavor, int> sortOrdinalMap = {} )
+void function MakeItemFlavorSet( array<ItemFlavor> list, table<ItemFlavor, int> sortOrdinalMap, bool validateHasNonGRX = false )
 {
-	table<ItemFlavor, bool> out
-	foreach( int index, ItemFlavor flavor in list )
+	// Empty lists can occur when assets are missing — return early
+	if ( list.len() == 0 )
+		return
+
+	/* character-agnostic ItemFlavors are most easily added to all characters by adding them to _base_character
+     * however, this means that they end up first on the list of ItemFlavors when grabbing all ItemFlavors from Bakery
+     * this results in an unknowned (and perhaps un-purchasable) GRX item taking the default slot. This does post
+     * processing to make sure that *if* we have a non-GRX item that we find the first (and probably only) non-GRX item
+     * in the list of assets and set that as the default. If more complexity is required, could add a Bakery flag for
+     * `isDefault`, but this feels unnecessary versus the simple run-time sort.
+     * KNOWN EXCEPTIONS:
+     * - Holosprays: there's no default (non-GRX), but this is fine, because they are part of the larger "quip" system
+	 */
+	if ( validateHasNonGRX )
 	{
-		out[flavor] <- true
-		sortOrdinalMap[flavor] <- index // todo(dw): don't populate sortOrdinalMap if we don't have to
+		ItemFlavor defaultFlavor = list[0]
+		if ( ItemFlavor_GetGRXMode( defaultFlavor ) != eItemFlavorGRXMode.NONE )
+		{
+			bool found = false
+			foreach ( ItemFlavor flav in list )
+			{
+				if ( ItemFlavor_GetGRXMode( flav ) == eItemFlavorGRXMode.NONE )
+				{
+					defaultFlavor = flav
+					found         = true
+					break
+				}
+			}
+			Assert( found )
+			list.fastremovebyvalue( defaultFlavor )
+			list.insert( 0, defaultFlavor )
+		}
+		Assert( ItemFlavor_GetGRXMode( list[0] ) == eItemFlavorGRXMode.NONE )
 	}
-	return out
+
+	foreach ( int index, ItemFlavor flavor in list )
+	{
+		sortOrdinalMap[flavor] <- index
+	}
 }
 
-#if SERVER || CLIENT || UI
-string function DEV_DescribeItemFlavorBag( ItemFlavorBag bag )
-{
-	string out = ""
-	if ( bag.associatedError != -1 )
-	{
-		out += format( "(ERROR:%d) ", bag.associatedError )
-	}
-	for ( int itemIdx = 0; itemIdx < maxint( bag.flavors.len(), bag.quantities.len() ); itemIdx++ )
-	{
-		string itemFlavStr
-		if ( itemIdx < bag.flavors.len() )
-		{
-			ItemFlavor itemFlav = bag.flavors[itemIdx]
-			if ( IsItemFlavorStructValid( itemFlav ) )
-				itemFlavStr = ItemFlavor_GetHumanReadableRef( itemFlav )
-			else itemFlavStr = "INVALID"
-		}
-		else itemFlavStr = "MISSING"
 
-		string quantityStr
-		if ( itemIdx < bag.quantities.len() )
-		{
-			quantityStr = string(bag.quantities[itemIdx])
-		}
-		else quantityStr = "MISSING"
-
-		out += format( "%s%s*%s", (itemIdx == 0 ? "" : ", "), itemFlavStr, quantityStr )
-	}
-	return out
-}
-#endif
-
-const string itemSettingsPathPattern = "^settings/itemflav/([^.]+)\\.rpak$"
 ItemFlavor ornull function RegisterItemFlavorFromSettingsAsset( asset settingsAsset )
 {
+	Assert( settingsAsset != $"" )
 	#if DEVELOPER
 		fileLevel.DEV_hasItemRegistrationStarted = true
 	#endif
@@ -1202,35 +1684,40 @@ ItemFlavor ornull function RegisterItemFlavorFromSettingsAsset( asset settingsAs
 		printt( "DEBUG_ITEM_FLAVOR_REGISTRATION", FUNC_NAME(), settingsAsset, "Registering..." )
 	#endif
 
-	ItemFlavor flavor
-	flavor._____INTERNAL_noCopyCheck = flavor
-	flavor._____INTERNAL_settingsAsset = settingsAsset
-
-	string assetPath = string( settingsAsset ).tolower()
-	if ( assetPath in fileLevel.assetPathItemFlavorMap )
+	int guid = GetUniqueIdForSettingsAsset( settingsAsset )
+	if ( guid in fileLevel.guidItemFlavorMap )
 	{
 		// already registered!
-		return fileLevel.assetPathItemFlavorMap[ assetPath ]
+		return fileLevel.guidItemFlavorMap[ guid ]
 	}
+
+	string assetPath = string( settingsAsset )
 	Assert( !fileLevel.isItemRegistrationFinished, "Attempted to register item flavor after registration period ended (" + assetPath + ")" )
 
-	// ensure we're loading only assets in settings/item/
-	Assert( DoesMatchRegexp( assetPath, itemSettingsPathPattern ) )
+	// ensure we're loading only assets in settings/itemflav/
+	Assert( assetPath.find( ITEM_FLAV_PREFIX ) == 0 )
 
-	// Use asset path as ref ("settings/item/pilot_ability/cloak" -> "item_pilot_ability_cloak")
-	string humanReadableRef = StringReplace( RegexpReplace( assetPath, itemSettingsPathPattern, "$1" ), "/", "_" )
-	//humanReadableRef = "itemflav_" + humanReadableRef
+	// Use asset path as ref ("settings/itemflav/pilot_ability/cloak.rpak" -> "item_pilot_ability_cloak")
+	string humanReadableRef = assetPath.slice( ITEM_FLAV_PREFIX.len(), assetPath.len() - ITEM_FLAV_SUFFIX.len() )
+	humanReadableRef = replace( humanReadableRef, "/", "_" )
 
-	Assert( RegexpFindAll( humanReadableRef, "\\W" ).len() == 0, "Weird characters in item flavor human readable ref: " + humanReadableRef + " (only alphanumeric and underscore allowed)" )
+	string guidString = ConvertAssetIDToGUIDString( GetUniqueIdForSettingsAsset( settingsAsset ) )
 
-	flavor._____INTERNAL_playlistOpinion = GetItemFlavorPlaylistOpinion( humanReadableRef )
-	if ( flavor._____INTERNAL_playlistOpinion == eItemFlavorPlaylistOpinion.DISABLED )
+	Assert( humanReadableRef == sanitize( humanReadableRef ), "Weird characters in item flavor human readable ref: " + humanReadableRef + " (only alphanumeric and underscore allowed)" )
+
+	ItemFlavor flavor
+
+	string itemType = GetGlobalSettingsString( settingsAsset, "itemType" )
+	Assert( itemType in eItemType, "Unknown item type: " + itemType + " (check eItemType matches code_root.rson)" )
+	flavor.typeIndex = eItemType[itemType]
+
+	int availability = flavor.typeIndex == eItemType.character ? GetPlaylistAvailabilityByRef( [ humanReadableRef, guidString ] ) : GetPlaylistAvailabilityByRef( [ guidString ] )
+	if ( availability == eItemFlavorPlaylistAvailability.DISABLED )
 	{
-		fileLevel.DEV_areAnyItemflavorsDisabledByPlaylist = true
-		
-		#if DEVELOPER //will fill logs for normal players
-			Warning( "Item flavor disabled by dev-only playlist vars: " + humanReadableRef )
-			Warning( "!!WARNING!! Item flavor disabled by playlist, this is dev-only and should not remain: " + humanReadableRef )
+		#if DEVELOPER
+			printt( "Item flavor disabled by dev-only playlist vars: " + humanReadableRef + " | " + guidString )
+		#else
+			Warning( "Item flavor disabled by dev-only playlist vars: " + humanReadableRef + " | " + guidString )
 		#endif
 
 		#if DEBUG_ITEM_FLAVOR_REGISTRATION
@@ -1239,58 +1726,110 @@ ItemFlavor ornull function RegisterItemFlavorFromSettingsAsset( asset settingsAs
 		return null
 	}
 
-	Assert( !(humanReadableRef in fileLevel.refItemFlavorMap), "Duplicate item ref: " + humanReadableRef )
-	flavor._____INTERNAL_humanReadableRef = humanReadableRef
+	if ( fileLevel.hasChallengeMetaData && eItemType[itemType] == eItemType.challenge )
+		flavor.metaData = GetChallengeMetaDataFromAsset( settingsAsset )
 
-	//GetGlobalSettingsAsset( settingsAsset, "icon" )
-
-	string itemType = GetGlobalSettingsString( settingsAsset, "itemType" )
-	Assert( itemType in eItemType, "Unknown item type: " + itemType + " (check eItemType matches code_root.rson)" )
-	flavor._____INTERNAL_typeIndex = eItemType[itemType]
+	if ( fileLevel.hasTimestampMetaData && IsCalEvent( eItemType[itemType] ) )
+		flavor.metaData = GetTimestampMetaDataFromAsset( settingsAsset )
 
 	// BEGIN ITEMS WITH REQUIRED REF META DATA - used for *specialized* GetHumanReadableRef functions for frameworks that still require it
-	if ( flavor._____INTERNAL_typeIndex == eItemType.character )
+	if ( flavor.typeIndex == eItemType.character )
 	{
 		table<string, string> tmp = {}
 		tmp[ "character_ref" ] <- humanReadableRef
 		flavor.metaData = tmp
 	}
+	else if ( flavor.typeIndex == eItemType.calevent_season )
+	{
+		table<string, string> tmp
+		if ( flavor.metaData != null )
+			tmp = expect table<string, string>(flavor.metaData)
+		tmp[ "season_ref" ] <- humanReadableRef
+		flavor.metaData = tmp
+	}
+	else if ( flavor.typeIndex == eItemType.calevent_rankedperiod )
+	{
+		table<string, string> tmp
+		if ( flavor.metaData != null )
+			tmp = expect table<string, string>(flavor.metaData)
+		tmp[ "rankedperiod_ref" ] <- humanReadableRef
+		flavor.metaData = tmp
+	}
+	else if ( flavor.typeIndex == eItemType.calevent_arenas_ranked_period )
+	{
+		table<string, string> tmp
+		if ( flavor.metaData != null )
+			tmp = expect table<string, string>(flavor.metaData)
+		tmp[ "arenas_ranked_period_ref" ] <- humanReadableRef
+		flavor.metaData = tmp
+	}
 	// END ITEMS WITH REQUIRED REF META DATA
 
-	flavor._____INTERNAL_tagMap = {} // deferred to after loading all assets
+	// in the RARE case we have playlist availability set, save it as meta data
+	if ( availability != eItemFlavorPlaylistAvailability.NONE )
+	{
+		table<string, string> ornull tmp = flavor.metaData
+		bool needsMetaDataInit
+		if ( tmp == null )
+		{
+			tmp = {}
+			needsMetaDataInit = true
+		}
 
-	flavor._____INTERNAL_guid = GetUniqueIdForSettingsAsset( settingsAsset )
-	Assert( !(flavor._____INTERNAL_guid in fileLevel.guidItemFlavorMap),
-		format( "Duplicate item GUID: %d (%s and %s)", flavor._____INTERNAL_guid, fileLevel.guidItemFlavorMap[flavor._____INTERNAL_guid]._____INTERNAL_humanReadableRef, humanReadableRef ) )
-	fileLevel.guidItemFlavorMap[flavor._____INTERNAL_guid] <- flavor
+		expect table<string, string>(tmp)
+		tmp[ PLAYLIST_AVAILABILITY_META_DATA_KEY ] <- string( availability )
 
-	flavor._____INTERNAL_index = (1 + fileLevel.itemFlavorList.len())
-	fileLevel.itemFlavorList.append( flavor )
+		if ( needsMetaDataInit )
+			flavor.metaData = tmp
+	}
 
-	//Assert( fileLevel.itemFlavorList.len() < MAX_ITEM_FLAVORS, "Too many items. We need to reconsider our approach to item network index assignment." )
+	flavor.guid = GetUniqueIdForSettingsAsset( settingsAsset )
+	Assert( !(flavor.guid in fileLevel.guidItemFlavorMap),
+		format( "Duplicate item GUID: %d (%s and %s)", flavor.guid, string(ItemFlavor_GetAsset( fileLevel.guidItemFlavorMap[flavor.guid] )), string(settingsAsset) ) )
+	fileLevel.guidItemFlavorMap[flavor.guid] <- flavor
 
-	fileLevel.refItemFlavorMap[ humanReadableRef ] <- flavor
+	#if DEVELOPER
+		fileLevel.itemFlavorListAll.append( flavor )
+	#endif
 
-	fileLevel.assetPathItemFlavorMap[ assetPath ] <- flavor
+	// don't cache expired Events except for Seasons & Ranked Periods
+	if ( flavor.typeIndex > eItemType._CALEVENT_LIMITED_TIME && flavor.typeIndex < eItemType._CALEVENT_RANGE_END )
+	{
+		bool expired = false
+		#if CLIENT || UI
+		if ( IsConnected() )
+		#endif // SERVER always has access to clock time; scoping brackets for readability here...
+		{
+			expired = CalEvent_GetFinishUnixTime( flavor ) < GetUnixTimestamp()
+		}
 
-	fileLevel.itemTypeInfoList[flavor._____INTERNAL_typeIndex].itemFlavorList.append( flavor )
-
-	//if ( flavor._____INTERNAL_typeIndex == eItemType.tagonly )
-	fileLevel.tagFlavorListMap[flavor] <- []
+		if ( !expired )
+			fileLevel.itemTypeInfoList[flavor.typeIndex].itemFlavorList.append( flavor )
+	}
+	else // Seasons, Ranked Periods, and *ALL* other ItemFlavors
+	{
+		fileLevel.itemTypeInfoList[flavor.typeIndex].itemFlavorList.append( flavor )
+	}
 
 	// GRX stuff
 	ShGRX_RegisterItemFlavor( flavor )
 
-	if ( flavor._____INTERNAL_typeIndex in fileLevel.itemTypeOnItemFlavorRegisteredCallbackListMap )
+	#if UI
+		Loadouts_SetSortPriorityForItemFlavor( flavor )
+	#endif
+
+	if ( IsItemFlavorTypeCosmetic( flavor.typeIndex ) )
 	{
-		foreach ( OnItemFlavorRegisteredCallbackType cb in fileLevel.itemTypeOnItemFlavorRegisteredCallbackListMap[flavor._____INTERNAL_typeIndex] )
-			cb( flavor )
+		fileLevel.itemFlavorListCosmetic.append( flavor )
+		if ( fileLevel.hasGRXBadgeStatsOptimizations && ItemFlavor_GetGRXMode( flavor ) == eItemFlavorGRXMode.REGULAR && ItemFlavor_HasQuality( flavor ) && ItemFlavor_GetQuality( flavor ) >= eRarityTier.LEGENDARY )
+			fileLevel.legendaryItemFlavors.append( flavor )
 	}
 
-	//Assert( ItemFlavor_GetLongName( flavor ) != "", "Item flavor settings asset \"" + string(settingsAsset) + "\" does not have required key \"localizationKey_NAME\"." )
-	//Assert( ItemFlavor_GetShortName( flavor ) != "", "Item flavor settings asset \"" + string(settingsAsset) + "\" does not have required key \"localizationKey_NAME_SHORT\"." )
-	//Assert( ItemFlavor_GetLongDescription( flavor ) != "", "Item flavor settings asset \"" + string(settingsAsset) + "\" does not have required key \"localizationKey_DESCRIPTION_LONG\"." )
-	//Assert( ItemFlavor_GetShortDescription( flavor ) != "", "Item flavor settings asset \"" + string(settingsAsset) + "\" does not have required key \"localizationKey_DESCRIPTION_SHORT\"." )
+	if ( flavor.typeIndex in fileLevel.itemTypeOnItemFlavorRegisteredCallbackListMap )
+	{
+		foreach ( OnItemFlavorRegisteredCallbackType cb in fileLevel.itemTypeOnItemFlavorRegisteredCallbackListMap[flavor.typeIndex] )
+			cb( flavor )
+	}
 
 	#if DEBUG_ITEM_FLAVOR_REGISTRATION
 		printt( "DEBUG_ITEM_FLAVOR_REGISTRATION", FUNC_NAME(), settingsAsset, "Done!" )
@@ -1299,7 +1838,18 @@ ItemFlavor ornull function RegisterItemFlavorFromSettingsAsset( asset settingsAs
 }
 
 
-#if SERVER || CLIENT || UI 
+#if SERVER || CLIENT || UI
+ItemFlavorStack function MakeItemFlavorStack( ItemFlavor flav, int qty )
+{
+	ItemFlavorStack result
+	result.flav = flav
+	result.qty = qty
+	return result
+}
+#endif
+
+
+#if SERVER || CLIENT || UI
 bool function IsItemFlavorBagValid( ItemFlavorBag bag, bool allowEmpty, int assertBehavior = eValidation.DONT_ASSERT )
 {
 	if ( bag.flavors.len() == 0 )
@@ -1334,7 +1884,9 @@ bool function IsItemFlavorBagValid( ItemFlavorBag bag, bool allowEmpty, int asse
 	return true
 }
 #endif
-#if SERVER || CLIENT || UI 
+
+
+#if SERVER || CLIENT || UI
 ItemFlavorBag function MakeItemFlavorBag( table<ItemFlavor, int> contents )
 {
 	ItemFlavorBag result
@@ -1349,7 +1901,7 @@ ItemFlavorBag function MakeItemFlavorBag( table<ItemFlavor, int> contents )
 #endif
 
 
-#if SERVER || CLIENT || UI 
+#if SERVER || CLIENT || UI
 void function ItemFlavorBag_ClearZeroQuantityFlavors( ItemFlavorBag bag )
 {
 	for ( int itemIdx = bag.flavors.len() - 1; itemIdx >= 0; itemIdx-- )
@@ -1364,12 +1916,124 @@ void function ItemFlavorBag_ClearZeroQuantityFlavors( ItemFlavorBag bag )
 #endif
 
 
-#if SERVER || CLIENT || UI 
+#if SERVER || CLIENT || UI
 ItemFlavor function ItemFlavorBag_GetSingleOutputItemFlavor_Assert( ItemFlavorBag bag )
 {
 	Assert( bag.flavors.len() == 1 )
-	Assert( IsItemFlavorStructValid( bag.flavors[0] ) )
+	Assert( IsItemFlavorStructValid( bag.flavors[0].guid, eValidation.DONT_ASSERT ) )
 	return bag.flavors[0]
+}
+#endif
+
+
+#if SERVER || CLIENT || UI
+ItemFlavor function ItemFlavorBag_GetMeleeSkinItem( ItemFlavorBag bag )
+{
+	Assert( bag.flavors.len() >= 1 )
+
+	array<ItemFlavor> meleeSkinItems
+	foreach ( item in bag.flavors )
+	{
+		if ( ItemFlavor_GetType( item ) == eItemType.melee_skin )
+			meleeSkinItems.append( item )
+	}
+
+	Assert( meleeSkinItems.len() == 1, "Offer expected to contain 1 melee skin but found " + meleeSkinItems.len() + "." )
+	Assert( IsItemFlavorStructValid( meleeSkinItems[0].guid, eValidation.DONT_ASSERT ) )
+
+	return meleeSkinItems[0]
+}
+#endif
+
+#if SERVER || CLIENT || UI
+ItemFlavor function ItemFlavorBag_GetMythicSkinItem( ItemFlavorBag bag )
+{
+	Assert( bag.flavors.len() >= 1 )
+
+	bool foundMythicSkin = false
+	ItemFlavor mythicSkin
+	foreach ( item in bag.flavors )
+	{
+		if ( Mythics_IsItemFlavorMythicSkin( item ) )
+		{
+			Assert( !foundMythicSkin, "Offer contains more than one mythic skin" )
+			foundMythicSkin = true
+			mythicSkin = item
+		}
+	}
+
+	Assert( IsItemFlavorStructValid( mythicSkin.guid, eValidation.DONT_ASSERT ) )
+
+	return mythicSkin
+}
+#endif
+
+#if SERVER || CLIENT || UI
+table<ItemFlavor, int> function ItemFlavorBag_ToQuantityMap( ItemFlavorBag bag )
+{
+	table<ItemFlavor, int> out = {}
+	foreach ( int idx, ItemFlavor flav in bag.flavors )
+		out[flav] <- bag.quantities[idx]
+	return out
+}
+#endif
+
+#if SERVER || CLIENT || UI
+bool function ItemFlavorBag_HasSameContents( ItemFlavorBag first, ItemFlavorBag second )
+{
+	if ( first.flavors.len() != second.flavors.len() )
+	{
+		return false
+	}
+
+	for ( int i = 0; i < first.flavors.len(); ++i )
+	{
+		if ( first.flavors[i] != second.flavors[i] )
+		{
+			return false
+		}
+
+		if ( first.quantities[i] != second.quantities[i] )
+		{
+			return false
+		}
+	}
+
+	return true
+}
+
+#endif // SERVER || CLIENT || UI
+
+#if SERVER || CLIENT || UI
+string function DEV_DescribeItemFlavorBag( ItemFlavorBag bag )
+{
+	string out = ""
+	if ( bag.associatedError != GRX_INVENTORYERROR_NONE )
+	{
+		out += format( "(ERROR:%d) ", bag.associatedError )
+	}
+	for ( int itemIdx = 0; itemIdx < maxint( bag.flavors.len(), bag.quantities.len() ); itemIdx++ )
+	{
+		string itemFlavStr
+		if ( itemIdx < bag.flavors.len() )
+		{
+			ItemFlavor itemFlav = bag.flavors[itemIdx]
+			if ( IsItemFlavorStructValid( itemFlav.guid, eValidation.DONT_ASSERT ) )
+				itemFlavStr = string(ItemFlavor_GetAsset( itemFlav ))
+			else itemFlavStr = "INVALID"
+		}
+		else itemFlavStr = "MISSING"
+
+		string quantityStr
+		if ( itemIdx < bag.quantities.len() )
+		{
+			quantityStr = string(bag.quantities[itemIdx])
+		}
+		else quantityStr = "MISSING"
+
+		out += format( "%s%s*%s", (itemIdx == 0 ? "" : ", "), itemFlavStr, quantityStr )
+	}
+	return out
 }
 #endif
 
@@ -1381,58 +2045,29 @@ ItemFlavor function ItemFlavorBag_GetSingleOutputItemFlavor_Assert( ItemFlavorBa
 ///////////////////
 ///////////////////
 
-#if SERVER && DEVELOPER
-bool function ClientCommand_itemflavors_dump( entity player, array<string> args )
-{
-	// inv_dump
-
-	const int EXPECTED_ARG_COUNT = 0
-	if ( args.len() != EXPECTED_ARG_COUNT )
-	{
-		Assert( false, "Incorrect number of arguments to client command 'itemflavors_dump' (got \"" + DEV_ArrayConcat( args, " " ) + "\", expected " + EXPECTED_ARG_COUNT + ")" )
-		return true
-	}
-
-	foreach( int typeIndex in eItemType )
-	{
-		if ( !IsValidItemFlavorType( typeIndex ) )
-			continue
-
-		ItemTypeInfo typeInfo = fileLevel.itemTypeInfoList[typeIndex]
-		foreach( ItemFlavor flavor in typeInfo.itemFlavorList )
-		{
-			printt(
-				GetEnumString( "eItemType", typeIndex ),
-				ItemFlavor_GetNetworkIndex_DEPRECATED( flavor ),
-				DEV_DescItemFlavor( flavor )
-			)
-		}
-	}
-
-	return true
-}
-#endif
-
 //Unlock Funcs
-bool function ItemFlavor_HasUnlockFunc( ItemFlavor flavor )
-{
-	switch ( ItemFlavor_GetType( flavor ) )
-	{
-		case eItemType.character_skin:
-		case eItemType.weapon_skin:
-		case eItemType.gladiator_card_frame:
-			return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "unlockFuncKey" ) != ""
-			break
-	}
 
+
+bool function ItemFlavor_HasExclusiveFunc( ItemFlavor flavor )
+{
+	// RPaks don't have "exclusive" setting
 	return false
 }
+
+
+bool function ItemFlavor_HasUnlockFunc( ItemFlavor flavor )
+{
+	// RPaks don't have "unlockFuncKey" setting
+	return false
+}
+
 
 string function ItemFlavor_GetUnlockFuncKey( ItemFlavor flavor )
 {
 	string unlockFuncString = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "unlockFuncKey" )
 	return unlockFuncString
 }
+
 
 bool function ItemFlavor_PassesUnlockFunc( ItemFlavor flavor, entity player )
 {
@@ -1442,6 +2077,17 @@ bool function ItemFlavor_PassesUnlockFunc( ItemFlavor flavor, entity player )
 	string unlockFuncString = ItemFlavor_GetUnlockFuncKey( flavor )
 	Assert( unlockFuncString in file.unlockFuncs, "unlockFuncKey from bakery isn't mapped to a function" )
 	return file.unlockFuncs[unlockFuncString]( player )
+}
+
+
+bool function ItemFlavor_PassesExclusiveFunc( ItemFlavor flavor, entity player )
+{
+	if ( IsEverythingUnlocked() )
+		return true
+
+	string exclusiveFuncString = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "exclusiveFunc" )
+	Assert( exclusiveFuncString in file.exclusiveFuncs, "exclusiveFuncKey from bakery isn't mapped to a function" )
+	return file.exclusiveFuncs[exclusiveFuncString]( player, flavor )
 }
 
 
@@ -1467,6 +2113,19 @@ string function ItemFlavor_GetEntitlement( ItemFlavor flavor )
 }
 
 
+bool function ItemFlavor_HasFeatures( ItemFlavor flavor )
+{
+	switch ( ItemFlavor_GetType( flavor ) )
+	{
+		case eItemType.character_skin:
+			return CharacterSkin_HasCustomCharSelectAnims( flavor )
+			break
+	}
+
+	return false
+}
+
+
 bool function PlayerHadOriginAccessOnPC( entity player )
 {
 	return (PlayerIsOnPC( player ) && PlayerHadEAAccess( player ))
@@ -1481,57 +2140,93 @@ bool function PlayerHadEAAccessOnXbox( entity player )
 
 bool function PlayerHadEAAccess( entity player )
 {
-	return true//player.GetPersistentVarAsInt( "accessAcknowledged" ) > 0
+	return player.GetPersistentVarAsInt( "accessAcknowledged" ) > 0
 }
 
 
 bool function PlayerIsOnPC( entity player )
 {
-		#if SERVER
-			return ( player.GetPlayerPlatformName().tolower() == "pc" || player.GetPlayerPlatformName().tolower() == "pc_origin" )
-		#endif
-		#if ( UI || CLIENT )
-			#if PC_PROG
+	#if SERVER
+		return ( player.GetPlayerPlatformName().tolower() == "pc" || player.GetPlayerPlatformName().tolower() == "pc_steam" )
+	#endif
+	#if ( UI || CLIENT )
+		#if PC_PROG
 			return true
-			#else
+		#else
 			return false
-			#endif
 		#endif
+	#endif
 }
+
 
 bool function PlayerIsOnXbox( entity player )
 {
-		#if SERVER
-			return player.GetPlayerPlatformName().tolower() == "x1"
-		#endif
-		#if UI || CLIENT 
-			#if DURANGO_PROG
-				return true
-			#else
-				return false
-			#endif
-		#endif
-}
-bool function PlayerHasTwitchPrimeRewards( entity player, string rewardName )
-{
-	#if !UI
-		return player.DoesUserHaveTwitchPrimeReward( rewardName ) ? true : false
+	#if SERVER
+		return (player.GetPlayerPlatformName().tolower() == "x1" || player.GetPlayerPlatformName().tolower() == "xb5")
 	#endif
-	return false
+
+	#if ( UI || CLIENT )
+		#if XBOX_PROG
+			return true
+		#else
+			return false
+		#endif
+	#endif
 }
 
-bool function PlayerHasEAAccess( entity player )
+
+bool function PlayerIsOnPlayStation( entity player )
 {
-		#if SERVER
-			return IsEAAccessMember( player ) ? true : false
-		#endif
-		#if UI
-			return Script_UserHasEAAccess() ? true : false
-		#endif
-		#if CLIENT
+	#if SERVER
+		return (player.GetPlayerPlatformName().tolower() == "ps4" || player.GetPlayerPlatformName().tolower() == "ps5")
+	#endif
+
+	#if ( UI || CLIENT )
+		#if PLAYSTATION_PROG
 			return true
+		#else
+			return false
 		#endif
+	#endif
 }
+
+
+bool function PlayerIsOnSwitch( entity player, ItemFlavor flav )
+{
+	#if SERVER
+		return player.GetPlayerPlatformName().tolower() == "switch"
+	#endif
+
+	#if ( UI || CLIENT )
+		#if NX_PROG
+			return true
+		#else
+			return false
+		#endif
+	#endif
+}
+
+
+bool function PlayerHasTwitchPrimeRewards( entity player, string rewardName )
+{
+	#if SERVER || CLIENT
+		return player.DoesUserHaveTwitchPrimeReward( rewardName ) ? true : false
+	#else
+		return DoesUserHaveTwitchPrimeReward( rewardName )
+	#endif
+}
+
+
+bool function PlayerHasEAPlay( entity player, ItemFlavor flav )
+{
+	#if SERVER
+		return IsEAAccessMember( player ) ? true : false
+	#endif
+	#if ( UI || CLIENT )
+		return Script_UserHasEAAccess() ? true : false
+	#endif
+}
+
 
 bool function PlayerHasStarterPack( entity player )
 {
@@ -1543,6 +2238,7 @@ bool function PlayerHasStarterPack( entity player )
 		return LocalPlayerHasEntitlement( STARTER_PACK ) || LocalPlayerHasEntitlement( STARTER_PACK_DURABLE )
 	#endif
 }
+
 
 bool function PlayerHasFoundersPack( entity player )
 {
@@ -1556,39 +2252,48 @@ bool function PlayerHasFoundersPack( entity player )
 }
 
 
-bool function PlayerHadPSPlus( entity player )
-{
-	return true//player.GetPersistentVarAsInt( "plusAcknowledged" ) > 0
-}
-
-
-bool function PlayerHasEntitlement_PSPLUS_PACK_02( entity player )
-{
-	return PlayerHasEntitlement( player, PSPLUS_PACK_02 )
-}
-
-
-bool function PlayerHasEntitlement_PSPLUS_PACK_03( entity player )
-{
-	return PlayerHasEntitlement( player, PSPLUS_PACK_03 )
-}
-
-
-bool function PlayerHasEntitlement_PSPLUS_PACK_04( entity player )
-{
-	return PlayerHasEntitlement( player, PSPLUS_PACK_04 )
-}
-
-
 bool function PlayerHasEntitlement( entity player, int entitlement )
 {
 	#if SERVER
-	return player.HasEntitlement( entitlement ) ? true : false
+		return player.HasEntitlement( entitlement ) ? true : false
 	#endif
-	#if UI || CLIENT 
+	#if ( UI || CLIENT )
 		return LocalPlayerHasEntitlement( entitlement ) ? true : false
 	#endif
 }
+
+
+bool function PlayerHasEntitlementForPSPlusOrXBGold( entity player, ItemFlavor flav )
+{
+	int entitlement = -1
+
+	if ( PlayerIsOnPlayStation( player ) )
+	{
+		if ( flav in fileLevel.entitlementRewardPSPlusMap )
+		{
+			entitlement = fileLevel.entitlementRewardPSPlusMap[flav]
+		}
+	}
+	else if ( PlayerIsOnXbox( player ) )
+	{
+		if ( flav in fileLevel.entitlementRewardXboxGoldMap )
+		{
+			entitlement = fileLevel.entitlementRewardXboxGoldMap[flav]
+		}
+	}
+
+	bool ret = false
+
+	if ( entitlement != -1 )
+	{
+		ret = PlayerHasEntitlement( player, entitlement )
+	}
+
+	return ret
+}
+//End Unlock Funcs
+
+
 
 ItemFlavor ornull function GetItemFlavorAssociatedCharacterOrWeapon( ItemFlavor itemFlav )
 {
@@ -1606,6 +2311,9 @@ ItemFlavor ornull function GetItemFlavorAssociatedCharacterOrWeapon( ItemFlavor 
 		case eItemType.character_execution:
 			return CharacterExecution_GetCharacterFlavor( itemFlav )
 
+		case eItemType.emote_icon:
+			return CharacterEmoteIcon_GetCharacterFlavor( itemFlav )
+
 		case eItemType.gladiator_card_intro_quip:
 			return CharacterIntroQuip_GetCharacterFlavor( itemFlav )
 
@@ -1616,10 +2324,26 @@ ItemFlavor ornull function GetItemFlavorAssociatedCharacterOrWeapon( ItemFlavor 
 			return GladiatorCardStatTracker_GetCharacterFlavor( itemFlav )
 
 		case eItemType.melee_skin:
-			return MeleeSkin_GetCharacterFlavor( itemFlav )
+		{
+			                           
+			if ( MeleeSkin_HasSpecificCharacterFlavor( itemFlav ) )
+                                        
+			{
+				return MeleeSkin_GetCharacterFlavor( itemFlav )
+			}
+			                           
+			else
+			{
+				return null
+			}
+                                        
+		}
+
+		case eItemType.character_emote:
+			return CharacterQuip_GetCharacterFlavor( itemFlav )
 
 		case eItemType.skydive_emote:
-			return CharacterSkydiveEmote_GetCharacterFlavor( itemFlav )
+			return SkydiveEmote_GetCharacterFlavor( itemFlav )
 
 		case eItemType.weapon_skin:
 			return WeaponSkin_GetWeaponFlavor( itemFlav )
@@ -1628,10 +2352,9 @@ ItemFlavor ornull function GetItemFlavorAssociatedCharacterOrWeapon( ItemFlavor 
 	return null
 }
 
-//End Unlock Funcs
-#if CLIENT || UI 
-//
-bool function TEMP_IsItemFlavorEquippable( ItemFlavor item )
+
+#if CLIENT || UI
+bool function IsItemFlavorTypeEquippable( ItemFlavor item )
 {
 	int itemType = ItemFlavor_GetType( item )
 
@@ -1639,11 +2362,8 @@ bool function TEMP_IsItemFlavorEquippable( ItemFlavor item )
 	{
 		case eItemType.character_skin:
 		case eItemType.character_execution:
-#if(false)
-
-
-#endif
-
+		case eItemType.character_emote:
+		case eItemType.emote_icon:
 		case eItemType.weapon_skin:
 		case eItemType.weapon_charm:
 		case eItemType.gladiator_card_frame:
@@ -1655,8 +2375,9 @@ bool function TEMP_IsItemFlavorEquippable( ItemFlavor item )
 		case eItemType.melee_skin:
 		case eItemType.music_pack:
 		case eItemType.loadscreen:
-		case eItemType.skydive_emote:
 		case eItemType.skydive_trail:
+		case eItemType.skydive_emote:
+		case eItemType.sticker:
 			return true
 	}
 
@@ -1689,6 +2410,26 @@ bool function ItemTypeHasRandom( int itemType )
 	return false
 }
 
+bool function ItemTypeAlphabetizable( int itemType )
+{
+	// avoid alphabetizing if possible; it's slow
+	switch ( itemType )
+	{
+		case eItemType.gladiator_card_intro_quip:
+		case eItemType.gladiator_card_kill_quip:
+		case eItemType.weapon_charm:
+		case eItemType.character_skin:
+		case eItemType.music_pack:
+		case eItemType.loadscreen:
+		case eItemType.gladiator_card_stance:
+		case eItemType.gladiator_card_frame:
+		case eItemType.weapon_skin:
+		case eItemType.sticker:
+			return true
+	}
+
+	return false
+}
 
 bool function ItemFlavor_IsTheDefault( ItemFlavor flavor )
 {
@@ -1699,4 +2440,249 @@ bool function ItemFlavor_IsTheDefault( ItemFlavor flavor )
 bool function ItemFlavor_IsTheRandom( ItemFlavor flavor )
 {
 	return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheRandom" )
+}
+
+int function ItemFlavor_SortByTier( ItemFlavor a, ItemFlavor b )
+{
+	int aTier = ItemFlavor_GetQuality( a, 0 )
+	int bTier = ItemFlavor_GetQuality( b, 0 )
+
+	if ( aTier > bTier )
+		return -1
+
+	if ( aTier < bTier )
+		return 1
+
+	return 0
+}
+
+array<ItemFlavor> function FilterItemFlavorsByType( array<ItemFlavor> list, int typeFilter )
+{
+	array<ItemFlavor> results
+
+	foreach ( item in list )
+	{
+		if ( ItemFlavor_GetType( item ) == typeFilter )
+			results.append( item )
+	}
+
+	return results
+}
+
+bool function IsItemFlavorTypeCosmetic( int typeFilter )
+{
+	// we could also add this as a property on the settings asset RSON
+	return typeFilter > eItemType.grx_sentinel && typeFilter < eItemType.__loot_start
+}
+
+table<string, string> function GetChallengeMetaDataFromAsset( asset settingsAsset )
+{
+	table<string, string> metaData = {}
+
+	var settingsBlock = GetSettingsBlockForAsset( settingsAsset )
+	var tierDataArray = GetSettingsBlockArray( settingsBlock, "tiers" )
+	int tierCount     = GetSettingsArraySize( tierDataArray )
+
+	metaData[ CHALLENGE_TIER_COUNT ] <- string(tierCount)
+	for ( int i = 0; i < tierCount; i++ )
+	{
+		var tierBlock       	= GetSettingsArrayElem( tierDataArray, i )
+
+		string specifiedStatRef = GetSettingsBlockString( tierBlock, "statRef" )
+
+		string specifiedStatRefAlt = GetSettingsBlockString( tierBlock, "statRefAlt" )
+		//<string> statRefs = [] // FOR DEBUGGING
+		int statCount = 0
+		string tempKey = ""
+
+		if ( specifiedStatRef.find( "%char%" ) > -1 )
+		{
+			var charactersArray = GetSettingsBlockArray( tierBlock, "characters" )
+			foreach ( var characterBlock in IterateSettingsArray( charactersArray ) )
+			{
+				asset characterAsset = GetSettingsBlockAsset( characterBlock, "flavor" )
+				string tempStat = replace( specifiedStatRef, "%char%", ConvertAssetIDToGUIDString( GetUniqueIdForSettingsAsset( characterAsset ) ) )
+				string tempStatAlt = replace( specifiedStatRefAlt, "%char%", ConvertAssetIDToGUIDString( GetUniqueIdForSettingsAsset( characterAsset ) ) )
+				//statRefs.append( tempStat )
+				tempKey = format( CHALLENGE_TIER_STAT_REF, i, statCount )
+				metaData[tempKey] <- tempStat
+				tempKey = format( CHALLENGE_TIER_STAT_ALT_REF, i, statCount )
+				metaData[tempKey] <- tempStatAlt
+				statCount++
+			}
+			tempKey = format( CHALLENGE_TIER_STAT_COUNT, i )
+			metaData[tempKey] <- string(statCount)
+		}
+		else
+		{
+			//statRefs.append( specifiedStatRef )
+			tempKey = format( CHALLENGE_TIER_STAT_REF, i, statCount )
+			metaData[tempKey] <- specifiedStatRef
+			tempKey = format( CHALLENGE_TIER_STAT_ALT_REF, i, statCount )
+			metaData[tempKey] <- specifiedStatRefAlt
+			statCount++
+			tempKey = format( CHALLENGE_TIER_STAT_COUNT, i )
+			metaData[tempKey] <- string(statCount)
+		}
+	}
+
+	return metaData
+}
+
+
+/*
+UNIX_TIME_FALLBACK_2038 --> start time default
+UNIX_TIME_FALLBACK_1970 --> end time default
+	defaultStartTime
+	defaultFinishTime
+*/
+table<string, string> function GetTimestampMetaDataFromAsset( asset settingsAsset, bool showWarning = true )
+{
+	table<string, string> metaData = {}
+
+	int tempTimeStamp
+	int defaultUnixTime = UNIX_TIME_FALLBACK_2038
+	string tempKey = "defaultStartTime"
+	string str = GetGlobalSettingsString( settingsAsset, tempKey )
+	if ( str != "" )
+	{
+		int ornull t = DateTimeStringToUnixTimestamp( str )
+		if ( t != null )
+		{
+			tempTimeStamp = expect int(t)
+		}
+		else
+		{
+			tempTimeStamp = defaultUnixTime
+			if ( showWarning )
+				Warning( "Calendar event '%s' default '%s' time is not a valid datetime or Unix timestamp: \"%s\"", string(settingsAsset), tempKey, str )
+		}
+
+		metaData[ tempKey ] <- string(tempTimeStamp)
+	}
+	else if ( showWarning )
+	{
+		Warning( "CalEvent %s '%s' time is unset. Using %d (%s).", string(settingsAsset), tempKey, defaultUnixTime, GetDateTimeString( defaultUnixTime ) )
+	}
+
+	defaultUnixTime = UNIX_TIME_FALLBACK_1970
+	tempKey = "defaultFinishTime"
+	str = GetGlobalSettingsString( settingsAsset, tempKey )
+	if ( str != "" )
+	{
+		int ornull t = DateTimeStringToUnixTimestamp( str )
+		if ( t != null )
+		{
+			tempTimeStamp = expect int(t)
+		}
+		else
+		{
+			tempTimeStamp = defaultUnixTime
+			if ( showWarning )
+				Warning( "Calendar event '%s' default '%s' time is not a valid datetime or Unix timestamp: \"%s\"", string(settingsAsset), tempKey, str )
+		}
+
+		metaData[ tempKey ] <- string(tempTimeStamp)
+	}
+	else if ( showWarning )
+	{
+		Warning( "CalEvent %s '%s' time is unset. Using %d (%s).", string(settingsAsset), tempKey, defaultUnixTime, GetDateTimeString( defaultUnixTime ) )
+	}
+
+	return metaData
+}
+
+bool function ItemFlavor_ChallengesHaveMetaData()
+{
+	return fileLevel.hasChallengeMetaData
+}
+
+bool function ItemFlavor_CalEventsHaveTimeStampMetaData()
+{
+	return fileLevel.hasTimestampMetaData
+}
+
+table< string, string > ornull function ItemFlavor_GetMetaData( ItemFlavor flavor )
+{
+	Assert( flavor.metaData != null )
+	return flavor.metaData
+}
+
+bool function IsCalEvent( int itemType )
+{
+	if ( itemType > eItemType._CALEVENT_RANGE_START && itemType < eItemType._CALEVENT_RANGE_END )
+		return true
+
+	return false
+}
+
+/****************************************
+ ********** DEV HELPER FUNCTION *********
+ ****************************************/
+#if SERVER && DEVELOPER
+bool function ClientCommand_itemflavors_dump( entity player, array<string> args )
+{
+	// inv_dump
+
+	const int EXPECTED_ARG_COUNT = 0
+	if ( args.len() != EXPECTED_ARG_COUNT )
+	{
+		Assert( false, "Incorrect number of arguments to client command 'itemflavors_dump' (got \"" + DEV_ArrayConcat( args, " " ) + "\", expected " + EXPECTED_ARG_COUNT + ")" )
+		return true
+	}
+
+	foreach ( int typeIndex in eItemType )
+	{
+		if ( !IsValidItemFlavorType( typeIndex ) )
+			continue
+
+		ItemTypeInfo typeInfo = fileLevel.itemTypeInfoList[typeIndex]
+		foreach ( ItemFlavor flavor in typeInfo.itemFlavorList )
+		{
+			printt(
+				GetEnumString( "eItemType", typeIndex ),
+				DEV_DescItemFlavor( flavor )
+			)
+		}
+	}
+	return true
+}
+#endif
+
+#if SERVER && DEVELOPER
+void function DEV_ItemFlavor_StressTest( int opt )
+{
+	foreach ( ItemFlavor flav in GetAllItemFlavors() )
+	{
+		if ( flav.grxOwnershipTargettedBy != null )
+			printt("DEV_ItemFlavor_StressTest: ", DEV_ItemFlavor_GetCleanedAssetPath( flav ) )
+	}
+
+	//ServerCommand( "rprof_dump_server" )
+}
+#endif
+
+int function Sticker_GetSortOrdinal( ItemFlavor flav )
+{
+	return 0
+}
+
+bool function Sticker_IsTheEmpty( ItemFlavor flav )
+{
+	return true
+}
+
+bool function Sticker_HasStoryBlurb( ItemFlavor flav )
+{
+	return false
+}
+
+string function Sticker_GetStoryBlurbBodyText( ItemFlavor flav )
+{
+	return ""
+}
+
+var function CreateNestedRuiForSticker( var rui, ItemFlavor stickerItem )
+{
+	return null
 }

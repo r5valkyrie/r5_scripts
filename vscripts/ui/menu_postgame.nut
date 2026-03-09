@@ -299,7 +299,7 @@ var function DisplayPostGameSummary( bool isFirstTime )
 		character = GetItemFlavorByGUID( characterGUID )
 		expect ItemFlavor( character )
 
-		RunMenuClientFunction( "UpdateMenuCharacterModel", ItemFlavor_GetNetworkIndex_DEPRECATED( character ) )
+		RunMenuClientFunction( "UpdateMenuCharacterModel", ItemFlavor_GetGUID( character ) )
 
 		SetupMenuGladCard( file.combinedCard, "card", true )
 		SendMenuGladCardPreviewCommand( eGladCardPreviewCommandType.CHARACTER, 0, character )

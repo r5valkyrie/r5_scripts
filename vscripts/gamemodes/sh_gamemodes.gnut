@@ -148,11 +148,13 @@ global enum eGameModes
 invalid =             -1,
 
 	SURVIVAL_ID =          0,
+	SURVIVAL =             0, // alias used by sh_stats scripts
 	TEAM_DEATHMATCH_ID =   1,
 	GAMEMODE_SP_ID =       2,
 
 	MENUFALL_ID =          3,
 	CUSTOM_CTF_ID =        4,
+	CONTROL =              4, // alias used by sh_stats_gamemode_control
 
 	FS_DM_ID =             5,
 	FS_AIMTRAINER_ID =     6,

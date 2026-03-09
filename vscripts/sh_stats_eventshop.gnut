@@ -1,0 +1,61 @@
+global function StatsRegister_EventShopStats
+global function EventShopStats_GetCurrencyTotal
+
+#if SERVER
+global function EventShopStatsHook_IncrementCurrencyTotal
+#endif // SERVER
+
+void function StatsRegister_EventShopStats()
+{
+	CAREER_STATS.eventshop_currency_total = RegisterAccumulatedStat_Int( null, "eventshop_currency_total", eChallengeGameMode.NON_MODE, CHALLENGES_CALC_DEPENDS )
+	CAREER_STATS.eventshop_current_guid   = RegisterVariableStat_Int( null, "eventshop_current_guid", eChallengeGameMode.NON_MODE, CHALLENGES_CALC_DEPENDS )
+}
+
+int function EventShopStats_GetCurrencyTotal( entity player )
+{
+	ItemFlavor ornull currentEventShop = EventShop_GetCurrentActiveEventShop()
+	if ( currentEventShop == null )
+	{
+		return 0
+	}
+
+	expect ItemFlavor( currentEventShop )
+	int currentEventShopGUID = ItemFlavor_GetGUID( currentEventShop )
+	int lastEventShopGUID = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.eventshop_current_guid ) )
+
+	if ( currentEventShopGUID != lastEventShopGUID )
+	{
+		return 0
+	}
+
+	return GetStat_Int( player, ResolveStatEntry ( CAREER_STATS.eventshop_currency_total ) )
+}
+
+#if SERVER
+void function EventShopStatsHook_IncrementCurrencyTotal( entity player, int amount )
+{
+	if ( amount <= 0 )
+	{
+		return
+	}
+
+	ItemFlavor ornull currentEventShop = EventShop_GetCurrentActiveEventShop()
+	if ( currentEventShop == null )
+	{
+		return
+	}
+
+	expect ItemFlavor( currentEventShop )
+	int currentEventShopGUID = ItemFlavor_GetGUID( currentEventShop )
+	int lastEventShopGUID = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.eventshop_current_guid ) )
+
+	if ( currentEventShopGUID != lastEventShopGUID )
+	{
+		printt( format( "Last event shop guid (%d) expired or doesn't match current (%d): resetting currency total to zero.", lastEventShopGUID, currentEventShopGUID ) )
+		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.eventshop_current_guid ), currentEventShopGUID )
+		__SetStat_Int( player, ResolveStatEntry( CAREER_STATS.eventshop_currency_total ), 0 )
+	}
+
+	__IncrementStat_Int( player, ResolveStatEntry(CAREER_STATS.eventshop_currency_total ), amount )
+}
+#endif // SERVER

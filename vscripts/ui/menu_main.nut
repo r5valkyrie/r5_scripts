@@ -3,21 +3,39 @@ global function LaunchMP
 global function AttemptLaunch
 global function GetUserSignInState
 global function UpdateSignedInState
+global function SetLaunchingState
+global function GetLaunchingState
+global function CanAutoRetryConnect
+global function EnableAutoRetryConnect
+
+#if DEVELOPER
+global function Dev_ResetFirstTimeUserState
+#endif      
 
 struct
 {
 	var menu
 	var titleArt
-	var subtitle
 	var versionDisplay
 	var signedInDisplay
-	#if PS4_PROG
+	bool canAutoRetryConnect = true
+	#if PLAYSTATION_PROG
 		bool chatRestrictionNoticeJustHandled = false
-	#endif // PS4_PROG
+	#endif                    
+	#if NX_PROG
+		var LangAOCNeeded
+	#endif
+	int launching = eLaunching.FALSE
 } file
 
+#if DEVELOPER
+void function Dev_ResetFirstTimeUserState()
+{
+	SetFirstTimePlayerState( eNewPlayerState.NEVER_PLAYED )
+}
+#endif      
 
-void function InitMainMenu( var newMenuArg )
+void function InitMainMenu( var newMenuArg )                                               
 {
 	var menu = GetMenu( "MainMenu" )
 	file.menu = menu
@@ -32,22 +50,27 @@ void function InitMainMenu( var newMenuArg )
 	var titleArtRui = Hud_GetRui( file.titleArt )
 	RuiSetImage( titleArtRui, "basicImage", $"ui/menu/title_screen/title_art" )
 
-	file.subtitle = Hud_GetChild( file.menu, "Subtitle" )
-	var subtitleRui = Hud_GetRui( file.subtitle )
+	var subtitleRui = Hud_GetRui( Hud_GetChild( file.menu, "Subtitle" ) )
 	RuiSetString( subtitleRui, "subtitleText", "R5Valkyrie".toupper() )
 
 	file.versionDisplay = Hud_GetChild( menu, "VersionDisplay" )
 	file.signedInDisplay = Hud_GetChild( menu, "SignInDisplay" )
+	
+	#if NX_PROG
+		file.LangAOCNeeded = GetConVarInt( "AoCLanguageNeeded" )
+	#endif
+
+	file.canAutoRetryConnect = true
 }
 
 
 void function OnMainMenu_Show()
 {
-	//
-	float aspectRatio = 2.4 //
+	                             
+	                                        
+	float aspectRatio = 2.4             
 	int width = int( Hud_GetHeight( file.titleArt ) * aspectRatio )
 	Hud_SetWidth( file.titleArt, width )
-	Hud_SetWidth( file.subtitle, width )
 
 	Hud_SetText( file.versionDisplay, GetPublicGameVersion() )
 	Hud_Show( file.versionDisplay )
@@ -55,12 +78,25 @@ void function OnMainMenu_Show()
 	ActivatePanel( GetPanel( "MainMenuPanel" ) )
 
 	Chroma_MainMenu()
+	
+	#if NX_PROG
+		if ( file.LangAOCNeeded > 0 )
+		{
+			if ( GetActiveMenu() == GetMenu( "EULADialog" ) )
+				return
+			
+			OpenLangAoCDialog(false)
+		}
+	#endif
+
+	SetMenuNavigationDisabled( true )
 }
 
 
 void function OnMainMenu_Close()
 {
 	HidePanel( GetPanel( "MainMenuPanel" ) )
+	SetMenuNavigationDisabled( false )
 }
 
 
@@ -89,7 +125,7 @@ void function OnMainMenu_NavigateBack()
 
 	#if PC_PROG
 		OpenConfirmExitToDesktopDialog()
-	#endif // PC_PROG
+	#endif           
 }
 
 
@@ -106,7 +142,7 @@ int function GetUserSignInState()
 		}
 		else if ( !Console_IsSignedIn() && !Console_SkippedSignIn() )
 		{
-			//printt( "Console_IsSignedIn():", Console_IsSignedIn(), "Console_SkippedSignIn:", Console_SkippedSignIn() )
+			                                                                                                            
 			return userSignInState.SIGNED_OUT
 		}
 
@@ -117,29 +153,129 @@ int function GetUserSignInState()
 
 
 void function UpdateSignedInState()
-{
-	#if DURANGO_PROG
+{	
+	#if XBOX_PROG
 		if ( Console_IsSignedIn() )
-		{
-			Hud_SetText( file.signedInDisplay, Localize( "#SIGNED_IN_AS_N", Durango_GetGameDisplayName() ) )
+		{		
+			Hud_SetText( file.signedInDisplay, Localize( "#SIGNED_IN_AS_N", Xbox_GetGameDisplayName() ) )
 			return
 		}
 	#endif
 	Hud_SetText( file.signedInDisplay, "" )
 }
 
-void function LaunchMP()
+
+void function SetLaunchingState( int val )
 {
-	uiGlobal.launching = eLaunching.MULTIPLAYER
-	AttemptLaunch()
+	file.launching = val
 }
 
 
+int function GetLaunchingState()
+{
+	return file.launching
+}
+
+
+void function LaunchMP()
+{
+	SetLaunchingState( eLaunching.MULTIPLAYER )
+	AttemptLaunch()
+}
+
+void function UpdateMessageSuppressionFlags()
+{
+                     
+	if ( !GetConVarBool( "ftue_flow_enabled" ) )
+	{
+		SetFeatureSuppressed( eFeatureSuppressionFlags.ALL, false )                                                                                                
+		return
+	}
+
+	string playerHardware = GetPlayerHardware()
+	string userID = GetConVarString( "platform_user_id" )
+	int retrieveAttempts = 0
+	CommunityUserInfo ornull userInfo = GetUserInfo( playerHardware, userID )
+	while (userInfo == null)
+	{
+		retrieveAttempts++
+		if( retrieveAttempts > 999 )
+		{
+			Warning( "Timed out when attempting to retrieve User Info for first time player detection" )
+			return
+		}
+
+		WaitFrame()
+		userInfo = GetUserInfo( playerHardware, userID )
+	}
+
+	expect CommunityUserInfo( userInfo )
+	if ( userInfo.matches <= 0 )
+	{
+		SetFeatureSuppressed( eFeatureSuppressionFlags.ALL, true )
+	}
+	else if( GetFirstTimePlayerState() < eNewPlayerState.FIRST_MATCH_PLAYED )
+	{
+		SetFeatureSuppressed( eFeatureSuppressionFlags.ALL, false )                                                                                                
+		SetFirstTimePlayerState( eNewPlayerState.FIRST_MATCH_PLAYED )
+	}
+                          
+}
+
+bool function TryPlayIntroVideo()
+{
+	if ( GetActiveMenu() == GetMenu( "PlayVideoMenu" ) )
+		return false
+
+	const int CURRENT_INTRO_VIDEO_VERSION = 16
+
+	VideoPlaySettings settings
+	settings.videoCompleteFunc = PrelaunchValidateAndLaunch
+	settings.forceSubtitles = true
+
+	if( ShouldShowFirstPlayIntro() )
+	{
+		if ( GetLanguage() == "english" )
+			settings.video = WELCOME_VIDEO
+		else
+			settings.video = WELCOME_INT_VIDEO
+
+		settings.milesAudio = WELCOME_AUDIO_EVENT
+		settings.skipRule = eVideoSkipRule.NO_SKIP
+
+		SetFirstTimePlayerState( eNewPlayerState.SEEN_INTRO )
+	}
+	else if ( ShouldShowIntro( CURRENT_INTRO_VIDEO_VERSION ) )
+	{
+		settings.video = INTRO_VIDEO
+		settings.milesAudio = INTRO_AUDIO_EVENT
+		settings.skipRule = eVideoSkipRule.HOLD
+
+		SetIntroViewedVersion( CURRENT_INTRO_VIDEO_VERSION )
+	}
+	else
+	{
+		return false
+	}
+
+	Assert(settings.video.len() > 0)
+
+	if ( IsDialog( GetActiveMenu() ) )
+		CloseActiveMenu()
+
+	PlayVideoMenu( true, settings )
+	return true
+}
+
 void function AttemptLaunch()
 {
-	if ( uiGlobal.launching == eLaunching.FALSE )
+	int launching = GetLaunchingState()
+	if ( launching == eLaunching.FALSE )
 		return
-	Assert( uiGlobal.launching == eLaunching.MULTIPLAYER ||	uiGlobal.launching == eLaunching.MULTIPLAYER_INVITE )
+
+	UpdateMessageSuppressionFlags()
+
+	Assert( launching == eLaunching.MULTIPLAYER || launching == eLaunching.MULTIPLAYER_INVITE )
 
 	#if CONSOLE_PROG
 		if ( !IsEULAAccepted() )
@@ -148,50 +284,125 @@ void function AttemptLaunch()
 				return
 
 			if ( IsDialog( GetActiveMenu() ) )
-				CloseActiveMenu( true )
+				CloseActiveMenu()
 
 			if ( GetUserSignInState() != userSignInState.SIGNED_IN )
 				return
 
-			OpenEULADialog( false )
+			var mmp = GetPanel( "MainMenuPanel" )
+            var launchButton = Hud_GetChild( mmp, "LaunchButton" )
+			OpenEULADialog( false, null, launchButton )
+
 			return
 		}
-	#endif // CONSOLE_PROG
+	#endif                
 
-	#if PS4_PROG
-		// If profile has chat restriction enabled show notice
-		// TODO: The implementation of this would be much better if we could check for the need to show it separately from actually showing it.
+	#if PLAYSTATION_PROG
+		                                                      
+		                                                                                                                                       
 		if ( !file.chatRestrictionNoticeJustHandled )
 		{
 			thread PS4_ChatRestrictionNotice()
 			return
 		}
-	#endif // PS4_PROG
+	#endif                    
 
-	const int CURRENT_INTRO_VIDEO_VERSION = 12
-	if ( (GetIntroViewedVersion() < CURRENT_INTRO_VIDEO_VERSION) || (InputIsButtonDown( KEY_LSHIFT ) && InputIsButtonDown( KEY_LCONTROL ))  || (InputIsButtonDown( BUTTON_TRIGGER_LEFT_FULL ) && InputIsButtonDown( BUTTON_TRIGGER_RIGHT_FULL )) )
-	{
-		if ( GetActiveMenu() == GetMenu( "PlayVideoMenu" ) )
-			return
-
-		if ( IsDialog( GetActiveMenu() ) )
-			CloseActiveMenu( true )
-
-		SetIntroViewedVersion( CURRENT_INTRO_VIDEO_VERSION )
-		PlayVideoMenu( true, "intro", "", eVideoSkipRule.HOLD, PrelaunchValidateAndLaunch )
+	if( TryPlayIntroVideo() )
 		return
+
+	if ( TryLoadSpectateParameters() || ( CanAutoRetryConnect() && TryLoadReconnectFromLocalStorage() ) )
+	{
+		DisableAutoRetryConnect()
+		thread DelayedReconnect()
+	}
+	else
+	{
+		StartSearchForPartyServer()
 	}
 
-	StartSearchForPartyServer()
+	SetLaunchingState( eLaunching.FALSE )
 
-	uiGlobal.launching = eLaunching.FALSE
-	#if PS4_PROG
+	#if PLAYSTATION_PROG
 		file.chatRestrictionNoticeJustHandled = false
-	#endif // PS4_PROG
+	#endif                    
 }
 
+void function EnableAutoRetryConnect()
+{
+	file.canAutoRetryConnect = true
+}
 
-#if PS4_PROG
+void function DisableAutoRetryConnect()
+{
+	file.canAutoRetryConnect = false
+}
+
+bool function CanAutoRetryConnect()
+{
+	return file.canAutoRetryConnect
+}
+
+void function DelayedReconnect()
+{
+	float delay = float( GetReconnectDelay() )
+	printt( FUNC_NAME(), delay )
+
+	Wait( delay )
+
+	if ( Reconnect_IsLiveSpectateLoaded() )
+		EmitUISound( "diag_mp_crypto_bc_droneviewstart_calm_1p" )
+
+	if( StartReconnectFromParameters() )
+		EnableAutoRetryConnect()
+}
+
+bool function ShouldShowFirstPlayIntro()
+{
+	if ( !GetConVarBool( "ftue_flow_enabled" ) )
+		return false
+
+	if ( GetConVarBool( "autoConnect" ) )
+		return false
+
+#if DEVELOPER
+	if ( GetConVarBool( "skipIntroVideos" ) )
+		return false
+#endif      
+
+                     
+	return GetFirstTimePlayerState() < eNewPlayerState.SEEN_INTRO
+     
+             
+                          
+
+}
+
+bool function ShouldShowIntro( int introVersion )
+{
+	if ( GetConVarBool( "autoConnect" ) )
+		return false
+
+#if DEVELOPER
+	if ( GetConVarBool( "skipIntroVideos" ) )
+		return false
+#endif      
+
+                     
+	if ( GetConVarBool( "ftue_flow_enabled" ) && GetFirstTimePlayerState() < eNewPlayerState.FIRST_MATCH_PLAYED )
+		return false
+                          
+
+	if ( GetIntroViewedVersion() < introVersion )
+		return true
+	if ( InputIsButtonDown( KEY_LSHIFT ) && InputIsButtonDown( KEY_LCONTROL ) )
+		return true
+	if ( InputIsButtonDown( BUTTON_TRIGGER_LEFT_FULL ) && InputIsButtonDown( BUTTON_TRIGGER_RIGHT_FULL ) )
+		return true
+
+	return false
+}
+
+#if PLAYSTATION_PROG
 void function PS4_ChatRestrictionNotice()
 {
 	Plat_ShowChatRestrictionNotice()
@@ -201,4 +412,4 @@ void function PS4_ChatRestrictionNotice()
 	file.chatRestrictionNoticeJustHandled = true
 	PrelaunchValidateAndLaunch()
 }
-#endif // PS4_PROG
+#endif                    

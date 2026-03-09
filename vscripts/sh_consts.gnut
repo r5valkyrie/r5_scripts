@@ -1,4 +1,87 @@
 //custom
+global const bool ASSERTS = false // not available as native preprocessor define
+global const bool RTK = false // RTK UI system not available
+global const bool CHALLENGE_DEBUG = false
+global const int ASSET_SETTINGS_UNIQUE_ID_INVALID = -1
+global const int GRX_CURRENCY_HEIRLOOM = 3
+global const int GRX_CURRENCY_EXOTIC = 4
+global const int GRX_CURRENCY_ESCROW = 5
+global const int GRX_CURRENCY_EVENT = 6
+global const int GRX_INVALID_SEQUENCE_NUMBER = -1
+global const int MATCHRANKEDMODE_RANKED_ARENA = 2
+
+global enum eBoostModifierType
+{
+	BP_STARS,
+	MYTHIC_PROGRESS,
+	XP_MATCH,
+	XP_CHALLENGE,
+	_COUNT
+}
+
+global const int WEAPON_ARTIFACT_BLADE_CHANGED = 1
+global const int WEAPON_ARTIFACT_POWERSOURCE_CHANGED = 2
+
+// Weapon Custom Activity Flags (not in native engine)
+global const int WCAF_INTERRUPTIBLE_ALLOW_START_WHILE_SPRINTING = 0x10
+
+global const int GRX_OFFERTYPE_DEFAULT = 0
+global const int GRX_OFFERTYPE_BUNDLE = 1
+global const int GRX_OFFERTYPE_PYS = 2
+global const int GRX_OFFERITEMTYPE_CORE = 0
+
+global enum XP_TYPE
+{
+	WIN_MATCH = 0
+	TOP_FIVE = 1
+	SURVIVAL_DURATION = 2
+	KILL = 3
+	DOWN = 4
+	DAMAGE_DEALT = 5
+	KILL_LEADER = 6
+	KILL_CHAMPION_MEMBER = 7
+	REVIVE_ALLY = 8
+	RESPAWN_ALLY = 9
+	BONUS_FIRST_KILL = 10
+	BONUS_FIRST_KILL_AS = 11
+	BONUS_FIRST_TOP_FIVE = 12
+	BONUS_FIRST_GAME = 13
+	BONUS_CHAMPION = 14
+	BONUS_FRIEND = 15
+	BONUS_FRIEND_BOOST = 16
+	CHALLENGE_COMPLETED = 17
+	TOTAL_MATCH = 18
+}
+
+// GRX_HTTPQUERYGOAL_* — additional goals not in native engine
+global const int GRX_ITEM_INDEX_INVALID = -1
+global const int GRX_CONTAINERTYPE_GIFT = 99
+
+global const int GRX_HTTPQUERYGOAL_PURCHASE_BUNDLE_OFFER = 100
+global const int GRX_HTTPQUERYGOAL_DELETE_ITEMS = 101
+global const int GRX_HTTPQUERYGOAL_UPDATE_ITEMS = 102
+global const int GRX_HTTPQUERYGOAL_GIVE_MASTERY_SEQUENCE_REWARD = 103
+global const int GRX_HTTPQUERYGOAL_GIVE_RANKED_SEQUENCE_REWARD = 104
+global const int GRX_HTTPQUERYGOAL_GIVE_QUEST_SEQUENCE_REWARD = 105
+global const int GRX_HTTPQUERYGOAL_GIVE_EVENT_SEQUENCE_REWARD = 106
+global const int GRX_HTTPQUERYGOAL_GIVE_HEIRLOOM_SEQUENCE_REWARD = 107
+global const int GRX_HTTPQUERYGOAL_GIFT_OFFER = 108
+global const int GRX_HTTPQUERYGOAL_GIVE_AMAZON_PRIME_SEQUENCE_REWARD = 109
+global const int GRX_HTTPQUERYGOAL_GIVE_TWITCH_DROP_SEQUENCE_REWARD = 110
+global const int GRX_HTTPQUERYGOAL_GIVE_SEQUENCE_REWARD = 111
+
+global const int GRX_MAX_STORE_SECTIONS = 10
+global const int GRX_SMART_MERCHANDISING_DATA_NUM_INTS = 11
+
+global enum eEventsPanelPage
+{
+	LANDING = 0
+	COLLECTION_EVENT = 1
+	MILESTONES = 2
+	COLLECTION = 3
+	EVENT_SHOP = 4
+}
+
 global const float METERS_TO_INCHES = 39.3701
 global const float INCHES_TO_METERS = 0.0254
 global const float KILOMETERS_TO_INCHES = 39370.1
@@ -14,13 +97,25 @@ global bool HAS_FLOWSTATE_MOD = false
 global int gCurrentSpyTeam = TEAM_IMC
 global int gCurrentMercTeam = TEAM_MILITIA
 
-//r5r.dev
+// Tracker system
 global const bool TRACKER 					= false
 global const bool HAS_TRACKER_DLL 			= false
 
 //
 global const bool MULTIPLAYER_DEBUG_PRINTS 	= false // Toggles print console message to all players where used (printm).
 
+global const string PLAYLIST_TRAINING = "survival_training"
+global const string PLAYLIST_FIRING_RANGE = "survival_firingrange"
+global const string PLAYLIST_NEW_PLAYER_ORIENTATION = "survival_bots_vs_humanteams"
+
+global enum eNewPlayerState
+{
+	NEVER_PLAYED = 0
+	SEEN_INTRO
+	TRAINING_COMPLETED
+	FIRING_RANGE_COMPLETED
+	FIRST_MATCH_PLAYED
+}
 global const string DEFAULT_RATE_KEY 		= "default"
 global const bool NOTIFY_RATELIMIT_FAILED	= false
 global const float COMMAND_RATE_LIMIT 		= 0.200 //default value unless manually specified with CheckRate()
@@ -63,12 +158,7 @@ global const DIFFICULTY_NORMAL 		= 1
 global const DIFFICULTY_HARD 		= 2
 global const DIFFICULTY_MASTER 		= 3
 
-global const string BULLET_AMMO = "bullet"
-global const string HIGHCAL_AMMO = "highcal"
-global const string SHOTGUN_AMMO = "shotgun"
-global const string SPECIAL_AMMO = "special"
-global const string ARROWS_AMMO = "arrows"
-global const string SNIPER_AMMO = "sniper"
+// Ammo consts moved to sh_items.gnut
 
 global const EVAC_SHIP_DAMAGE_MULTIPLIER_AGAINST_NUCLEAR_CORE = 0.5 //Multiply damage done against evac ship from nuclear core
 global const EVAC_SHIP_SHIELD_REGEN_TIME = 2.0 //Multiply damage done against evac ship from nuclear core
@@ -201,6 +291,7 @@ global const flowstate_pkknockback			= "flowstate_pkknockback"
 global const WINTEREXPRESS					= "winterexpress"
 global const ARENAS							= "arenas"
 global const GAMEMODE_ARENAS				= "arenas"
+global const GAMEMODE_FREEDM			= "freedm"
 global const FREEDM						= "freedm"
 global const FREEDM_TDM					= "freedm_tdm"
 global const FREEDM_GUNGAME				= "freedm_gungame"
@@ -503,6 +594,20 @@ global enum eCodeDialogueID
 	DANGEROUS_AREA_DISPLACE // 11
 	REACT_SURPRISED 		// 12
 	DIALOGUE_COUNT
+}
+
+global enum eMenuModelFlashType
+{
+	DEFAULT,
+	CHARACTER_SELECT,
+	VICTORY_SEQUENCE,
+	LOOT_CEREMONY_LOW_RARITY,
+	LOOT_CEREMONY_HIGH_RARITY,
+	LOOT_CEREMONY_QUICK,
+	BATTLEPASS,
+	QUEST_MODEL_PIECE,
+
+	COUNT
 }
 
 global enum eTitanVO
@@ -1198,65 +1303,7 @@ global const FD_HOT_STREAK_MULTIPLIER 		= 1.5
 // 					CHALLENGES
 //--------------------------------------------------
 
-global enum eChallengeCategory
-{
-	ROOT,				// Only used by challenges menu
-
-	GENERAL,
-	TIME,
-	DISTANCE,
-	KILLS,
-	MOBILITY_KILLS,
-	MELEE_KILLS,
-
-	TITAN_PRIMARY,		// Only used by challenges menu
-
-	WEAPON_40MM,
-	WEAPON_XO16,
-	WEAPON_TITAN_SNIPER,
-	WEAPON_ARC_CANNON,
-	WEAPON_ROCKET_LAUNCHER,
-	//WEAPON_TRIPLE_THREAT,
-
-	TITAN_ORDNANCE,
-
-	WEAPON_SALVO_ROCKETS,
-	WEAPON_HOMING_ROCKETS,
-	WEAPON_DUMBFIRE_ROCKETS,
-	//WEAPON_SHOULDER_ROCKETS,
-
-	PILOT_PRIMARY,		// Only used by challenges menu
-
-	WEAPON_SMART_PISTOL,
-	WEAPON_SHOTGUN,
-	WEAPON_R97,
-	WEAPON_CAR,
-	WEAPON_LMG,
-	WEAPON_RSPN101,
-	WEAPON_HEMLOK,
-	WEAPON_G2,
-	WEAPON_DMR,
-	WEAPON_SNIPER,
-
-	PILOT_SECONDARY,	// Only used by challenges menu
-
-	WEAPON_SMR,
-	WEAPON_MGL,
-	WEAPON_ARCHER,
-	WEAPON_DEFENDER,
-
-	PILOT_ORDNANCE,
-
-	WEAPON_FRAG_GRENADE,
-	WEAPON_EMP_GRENADE,
-	//WEAPON_PROXIMITY_MINE,
-	WEAPON_SATCHEL,
-
-	COOP,
-	DAILY,
-
-	CATEGORY_COUNT,
-}
+// eChallengeCategory removed — now defined in sh_challenges.gnut
 
 //--------------------------------------------------
 // 				DAILIES / TIME FUNCTIONS
@@ -1736,32 +1783,38 @@ global enum eLaunching
 	COUNT
 }
 
-global struct Friend
-{
-	string id
-	string hardware
-	string name
-	string presence
-	int status
-	bool ingame
-	bool inparty
-	bool away
-}
-
-global struct FriendsData
-{
-	array<Friend> friends
-	bool isValid
-}
-
 global enum eFriendStatus
 {
 	ONLINE_INGAME,
 	ONLINE,
 	ONLINE_AWAY,
 	OFFLINE,
+	REQUEST,
 	COUNT
 }
+
+#if UI
+global struct Friend
+{
+	string id
+	string unspoofedid = ""
+	string hardware
+	string name = "Unknown"
+	string presence = ""
+	int    status = eFriendStatus.OFFLINE
+	bool   ingame = false
+	bool   inparty = false
+	bool   away = false
+	EadpPeopleData ornull eadpData
+	EadpPresenceData ornull eadpPresenceData
+}
+
+global struct FriendsData
+{
+	array<Friend> friends
+	bool          isValid
+}
+#endif // UI
 
 #if UI
 global const bool MENU_NAV_FORWARD = true
@@ -2634,6 +2687,22 @@ global struct LootTooltipData
 	array<string> mods
 }
 
+global struct CustomMatchTooltipData
+{
+	bool isAdmin
+	bool isTeamFull
+	int adminActions
+	int actionEnabledMask
+}
+
+global struct ClubMemberTooltipData
+{
+	int memberRank
+	bool isOnline
+	bool isInGame
+	bool isInMatch
+}
+
 global struct ToolTipData
 {
 	asset image
@@ -2654,6 +2723,8 @@ global struct ToolTipData
 	int rarity
 
 	LootTooltipData & lootPromptData
+	CustomMatchTooltipData customMatchData
+	ClubMemberTooltipData clubMemberData
 }
 
 
@@ -2757,6 +2828,20 @@ global enum eQuality
 	HEIRLOOM,
 	COLLAB,
 	FANMADE,
+	_COUNT,
+}
+
+global enum eRarityTier
+{
+	NONE = -1,
+	COMMON = 0,
+	RARE = 1,
+	EPIC = 2,
+	LEGENDARY = 3,
+	MYTHIC = 4,
+	HEIRLOOM = 5,
+	ICONIC = 6,
+	FANMADE = 7,
 	_COUNT,
 }
 
@@ -2910,6 +2995,70 @@ global enum eRuiArgType
 	BOOL
 	COLOR
 }
+
+global const int CONTROL_OBJECTIVE_B_INDEX = 1
+global const int CONTROL_WAYPOINT_BASE0_INDEX = 0
+global const int CONTROL_WAYPOINT_BASE1_INDEX = 1
+global const int CONTROL_WAYPOINT_PLAYER_INDEX = 2
+global const int CONTROL_WAYPOINT_POINT_INDEX = 3
+global const int CONTROL_WAYPOINT_MRB_INDEX = 4
+global const asset CONTROL_WAYPOINT_BASE_ICON = $"rui/hud/gametype_icons/survival/sur_hovertank_minimap"
+global const asset CONTROL_WAYPOINT_PLAYER_ICON = $"rui/hud/gamestate/player_count_icon"
+
+global enum eControlSpawnWaypointUsage
+{
+	ENEMY_TEAM,
+	NOT_USABLE,
+	FRIENDLY_TEAM
+}
+
+global enum eDummieBehaviorType
+{
+	STAYINPLACE,
+	STRAFE,
+	CANSTAND,
+	CANCROUCH,
+	RANDINTERVALS,
+	COUNT_
+}
+
+global enum eFRSettingType
+{
+	SHOWRUI,
+	SHOWDYNSTATS,
+	SHOWDYNTIMER,
+	LEGENDUPGRADES_RESET,
+	INFINITEMAGS,
+	SHOWHITMARKS,
+	SHOW3RDPERSON,
+	LEGENDUPGRADESENABLED,
+	FRIENDLYFIRE,
+	FRDUMMIEHELMETMATCHSHIELDS,
+	DYNAMICDUMMIESON,
+	DUMMIEHIGHLIGHTSON,
+	TARGETSPEED,
+	FRDUMMIESHIELDLVL,
+	FRDUMMIESPEED,
+	FRDUMMIEMOVEMENT,
+	FRDUMMIESTANCE,
+	FRDUMMIESHOOTING,
+	FRDUMMIESPAWNDISTS,
+	COUNT_
+}
+
+global enum eRSALabels
+{
+	NonItemFlavorLoadoutSet,
+	CC_CalledDEVOnlyRPC,
+}
+
+global const int ODL_SKINS = 0
+global const int ACM_TEAM = 0
+global const int ACM_PLAYER = 1
+global const int ACM_SPECTATORS = 2
+global const int ACM_ALL_PLAYERS = 3
+global const int ACM_COUNT = 4
+global const int CAMO_SKIN_COUNT = 3
 
 // ===============================================================================
 // Don't add any constants below here. Add constants that don't reference variables

@@ -32,16 +32,22 @@ global function PIN_PlayerLandedOnGround
 global function PIN_PlayerJumpedFromPlane
 global function PIN_Training
 
-global struct GameSummarySquadData 
+global struct GameSummarySquadData
 {
+	int eHandle = -1
 	string uid
 	int kills
+	int knockdowns
+	int assists
 	int damageDealt
 	int survivalTime
 	int revivesGiven
 	int respawnsGiven
 	int deaths
-	table<int, int> modeMetaData // S22+ gun game demotion/promotion tracking
+	int headshots
+	int hits
+	int shots
+	table<int, int> modeMetaData // gun game demotion/promotion tracking
 }
 
 void function PIN_Init()

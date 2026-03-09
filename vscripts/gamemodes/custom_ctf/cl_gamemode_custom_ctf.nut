@@ -784,7 +784,7 @@ void function UI_To_Client_UpdateSelectedClass(int selectedclass)
 	RunUIScript("UpdateSelectedClass", file.ClassID, file.ctfclasses[file.ClassID].primary, file.ctfclasses[file.ClassID].secondary, file.ctfclasses[file.ClassID].tactical, file.ctfclasses[file.ClassID].ult, USE_LEGEND_ABILITYS)
 
 	entity player = GetLocalClientPlayer()
-	// why does s3 not have remote server functions..?
+	// remote server functions not available, using ClientCommand
 	player.ClientCommand("SetPlayerClass " + selectedclass)
 }
 
@@ -1014,7 +1014,7 @@ void function UI_To_Client_VoteForMap(int mapid)
 
 	entity player = GetLocalClientPlayer()
 
-	// why does s3 not have remote server functions..?
+	// remote server functions not available, using ClientCommand
 	player.ClientCommand("VoteForMap " + mapid)
 	RunUIScript("UpdateVotedFor", mapid + 1)
 

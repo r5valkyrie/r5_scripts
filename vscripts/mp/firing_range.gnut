@@ -83,49 +83,6 @@ global enum eGunRangeTargetTypes
 	FOLDING,
 }
 
-global enum eFRSettingType
-{
-	// ----- Personal FR Bool Settings.
-	// To add new Personal Settings, add to the end of this section.
-	SHOWRUI,				// Show the Settings RUI Overlay?
-	SHOWDYNSTATS,			// Show Dynamic Stats?
-	SHOWDYNTIMER,			// Show Dynamic Stats Timer?
-	LEGENDUPGRADES_RESET,	// Reset Legend Upgrades.
-	INFINITEMAGS,			// Infinite Reloads: ON/OFF
-	SHOWHITMARKS,			// Hit Markers: ON/OFF
-	SHOW3RDPERSON,			// 3rd-Person Mode: ON/OFF
-	                    
-		LEGENDUPGRADESENABLED,
-                           
-
-	// ----- Shared FR bool Settings.
-	// To add new Shared Settings, add to the end of this section.
-	FRIENDLYFIRE,			// Friendly Fire: ON/OFF
-	FRDUMMIEHELMETMATCHSHIELDS,	// Dummie Helmets Match Shield Levels.
-	                   
-	DYNAMICDUMMIESON,	// Dynamic Dummies Enabled/Disabled
-	DUMMIEHIGHLIGHTSON,	// Whether or not to highlight dummies.
-       
-	//	// ----- Shared Int Settings.
-	// To add new Shared Int Setting:
-	//		- add to the end of this section
-	//		- register a new NetVar and PVar.
-	//		- follow the function patterns established by targetspeed and frdummieshieldlvl.
-	//			- UCB_SV_FRSetting_<SettingName>_Change(): called from UI.
-	//			- FRSetting_<SettingName>_Set_OnPlayer(): called from above to set the data.
-	//			- SCB_Broadcast_FRSettings_<SettingName>_Change(): Remote called from above to notify players of change.
-	TARGETSPEED,			// TARGET SPEED: < number >
-	FRDUMMIESHIELDLVL,		// FIRING RANGE DUMMIE SHIELD LEVEL: < number >
-	FRDUMMIESPEED,
-	FRDUMMIEMOVEMENT,
-	FRDUMMIESTANCE,
-                   
-	FRDUMMIESHOOTING,
-	FRDUMMIESPAWNDISTS,
-      
-	COUNT_
-}
-
 struct {
 	table<string, array<LootData> > weaponsPerAmmoType
 	table<string, array<string> > attachmentsPerAmmoType

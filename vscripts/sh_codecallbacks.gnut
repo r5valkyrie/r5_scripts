@@ -40,6 +40,7 @@ global function ClientCodeCallback_PartyMemberRemoved
 global function ClientCodeCallback_UserInfoUpdated
 global function AddCallback_OnPartyUpdated
 global function RemoveCallback_OnPartyUpdated
+// Duplicate declaration removed - already declared above
 #endif
 
 #if SERVER

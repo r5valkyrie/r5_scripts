@@ -100,6 +100,7 @@ global function ServerCallback_Play3PEvoShieldUpgradeFX
 
 #if SERVER
 global function EvolvingArmor_SetEvolutionProgress
+global function EvolvingArmor_ApplyEvoPoints
 global function PropSurvivalFlagsClear
 global function PropSurvivalFlagsSet
 global function SetPlayerInventory
@@ -1084,7 +1085,7 @@ string function GetWeaponClassNameWithLockedSet( entity weapon )
 		lockedSet = expect int( GetEntityVar( weapon, "weaponLockedSet" ) )
 	}
 	
-	switch( lockedSet ) //Retail implementation uses weapon.GetWeaponLockedSet() code funct which we don't have in s3.
+	switch( lockedSet ) // weapon.GetWeaponLockedSet() not available, using entity var
 	{
 		case eWeaponLockedSet.WHITESET:
 			result += WEAPON_LOCKEDSET_SUFFIX_WHITESET

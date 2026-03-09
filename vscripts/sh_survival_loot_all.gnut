@@ -16,6 +16,11 @@ global function SURVIVAL_Loot_GetSortedStringArrayFromSupportedAttachmentsString
 global function SURVIVAL_Loot_RegFromDataTable
 
 global function SURVIVAL_Loot_IsUniqueAmmoWeapon
+#if SERVER || CLIENT
+global function SURVIVAL_Loot_GetRestrictedPanel
+global function SURVIVAL_Loot_GetRestrictedLootType
+global function SURVIVAL_Loot_IsRestrictedPanelLocked
+#endif
 global function GetCustomHopupArray
 global function IsNewLootEnabled
 global function IsEnabledForGroundLoot
@@ -575,13 +580,13 @@ void function SURVIVAL_Loot_RegFromDataTable(var dt)
 				{
 					expect ItemFlavor( weaponFlavor )
 
-					int availableState = ItemFlavor_GetPlaylistOpinion( weaponFlavor )
+					int availableState = ItemFlavor_GetPlaylistAvailability( weaponFlavor )
 					bool shouldBeEnabled
-					if ( availableState == eItemFlavorPlaylistOpinion.FORCE_UNLOCK_FOR_SPECIAL_EVENT )
+					if ( availableState == eItemFlavorPlaylistAvailability.FORCE_UNLOCK_FOR_SPECIAL_EVENT )
 						shouldBeEnabled = true
-					else if ( availableState == eItemFlavorPlaylistOpinion.HIDDEN )
+					else if ( availableState == eItemFlavorPlaylistAvailability.HIDDEN )
 						shouldBeEnabled = false
-					else if ( availableState == eItemFlavorPlaylistOpinion.DISABLED )
+					else if ( availableState == eItemFlavorPlaylistAvailability.DISABLED )
 						shouldBeEnabled = false
 					else
 						shouldBeEnabled = ItemFlavor_IsActiveForEdition( weaponFlavor, GetConVarInt( "mtx_svEdition" ) )

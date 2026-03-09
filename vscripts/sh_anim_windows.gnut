@@ -39,7 +39,7 @@ int LIFELINE_DRONE_EYEGLOW_FX_IDX = -1
 const int LIFELINE_DRONE_OFFLINE_SKIN = 0
 const int LIFELINE_DRONE_ONLINE_SKIN = 1
 
-const asset BLOODHOUND_BIRD_MDL = $"mdl/creatures/bird/bird.rmdl"
+global const asset BLOODHOUND_BIRD_MDL = $"mdl/creatures/bird/bird.rmdl"
 
 //
 struct {
@@ -1076,7 +1076,9 @@ void function CodeCallback_AnimWindowPrecache( asset windowSettingsAsset )
 	var block = GetSettingsBlockForAsset( windowSettingsAsset )
 
 	string windowType = GetSettingsBlockString( block, "type" )
-	Assert( windowType in fileLevel.animWindowTypeNameInfoMap, "Unknown script anim window type on \"" + string(windowSettingsAsset) + "\": " + windowType )
+	// Some window types (PlayFX, CreateProp) don't exist — skip silently
+	if ( !(windowType in fileLevel.animWindowTypeNameInfoMap) )
+		return
 
 	#if SCRIPT_ANIM_WINDOWS_DEBUG
 		printt ( "><><><><><><>" + FUNC_NAME() + ": asset :" + string(windowSettingsAsset) + "; type: " + windowType )
@@ -1092,7 +1094,9 @@ void function ClientCodeCallback_AnimWindowPrecache( asset windowSettingsAsset )
 	var block = GetSettingsBlockForAsset( windowSettingsAsset )
 
 	string windowType = GetSettingsBlockString( block, "type" )
-	Assert( windowType in fileLevel.animWindowTypeNameInfoMap, "Unknown script anim window type on \"" + string(windowSettingsAsset) + "\": " + windowType )
+	// Some window types (PlayFX, CreateProp) don't exist — skip silently
+	if ( !(windowType in fileLevel.animWindowTypeNameInfoMap) )
+		return
 
 	#if SCRIPT_ANIM_WINDOWS_DEBUG
 		printt ( "><><><><><><>" + FUNC_NAME() + ": asset :" + string(windowSettingsAsset) + "; type: " + windowType )

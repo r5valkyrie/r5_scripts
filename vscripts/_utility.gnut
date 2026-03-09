@@ -16,6 +16,10 @@ global const C_PLAYFX_SINGLE	= 0
 global const C_PLAYFX_MULTIPLE	= 1
 global const C_PLAYFX_LOOP		= 2
 
+#if DEVELOPER
+const bool AvoidCrushedByPlainDoorDebug = false
+#endif
+
 global const MUTEALLFADEIN 		= 2
 global const GAMEMODE_SP 		= "solo"
 
@@ -186,17 +190,6 @@ bool function ClientCommand_ToggleConsole( entity player, array<string> args )
 // 	return true
 // }
 #endif
-
-void function PrintPlaylists()
-{
-	printt( "=== PLAYLIST NAMES: ===" )
-
-	int count = GetPlaylistCount()
-	for ( int i = 0; i < count; i++ )
-	{
-		printt( "--", GetPlaylistName( i ) )
-	}
-}
 
 entity function CreateEntity( string name )
 {
@@ -6008,7 +6001,7 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 		switch ( GetDoorType( door ) )
 		{
 			case eDoorType.PLAIN:
-				#if DEV
+				#if DEVELOPER
 				if ( AvoidCrushedByPlainDoorDebug )
 				{
 					DebugDrawMark( door.GetOrigin(), 15, COLOR_RED, true, 15.0 )
@@ -6019,7 +6012,7 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 				vector doorToPushed = Normalize( pushed.GetOrigin() - door.GetOrigin() )
 				float doorToPushedDotDoorForward = DotProduct( door.GetForwardVector(), doorToPushed )
 
-				#if DEV
+				#if DEVELOPER
 				if ( AvoidCrushedByPlainDoorDebug )
 				{
 					printt( FUNC_NAME() + " entToDoorToForwardDot: " + doorToPushedDotDoorForward )
@@ -6048,7 +6041,7 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 
 				TraceResults trace = TraceHull( startPos, targetPos, mins, maxs, ignoreList, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 
-				#if DEV
+				#if DEVELOPER
 				if ( AvoidCrushedByPlainDoorDebug )
 					DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
 				#endif
@@ -6060,7 +6053,7 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 					startPos = targetPos
 					targetPos = startPos + ( pushDir * maxMaxsXY )
 
-					#if DEV
+					#if DEVELOPER
 					if ( AvoidCrushedByPlainDoorDebug )
 						DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
 					#endif
@@ -6068,7 +6061,7 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 					//check for ground so that our hullTrace doesn't just keep getting caught on the ground as we move along pushDir.
 					trace = TraceHull( startPos + zOffSet, targetPos, mins, maxs, ignoreList, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
 
-					#if DEV
+					#if DEVELOPER
 						if ( AvoidCrushedByPlainDoorDebug )
 						{
 							DebugDrawArrow( startPos, targetPos, 10, COLOR_DARK_BLUE, false, 15.0)
@@ -6082,7 +6075,7 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 						startPos.z = trace.endPos.z
 						targetPos.z = trace.endPos.z
 
-						#if DEV
+						#if DEVELOPER
 						if ( AvoidCrushedByPlainDoorDebug )
 							DebugDrawMark( trace.endPos, 10, COLOR_GREEN, true, 15.0 )
 						#endif
@@ -6800,3 +6793,416 @@ void function SetupInfiniteAmmoForWeapon( entity player, entity weapon )
 		player.AmmoPool_SetCount( ammoType, 65535 )
 	}
 }
+
+#if SERVER
+bool function IsLowCostBot( entity player )
+{
+	return false
+}
+
+void function RecordServerAbuseForAntiCheat( entity player, ... )
+{
+}
+
+void function PIN_GRXInventoryNotReady( ... )
+{
+}
+
+void function PIN_SendDataMismatch( ... )
+{
+}
+
+void function GRX_GiveCosmetic( entity player, int opID, int grxIndex )
+{
+}
+
+int function GRX_GetConsumableCount( int grxIndex )
+{
+	return 0
+}
+
+int function GRX_GetSequenceNumber( entity player, string seqName )
+{
+	return 0
+}
+
+void function GRX_OpenNPacks( entity player, int opID, int grxIndex, int count )
+{
+}
+
+void function GRX_ForcePackResults( entity player, array<int> results )
+{
+}
+
+void function GRX_DEV_GiveItem( entity player, int grxIndex )
+{
+}
+
+void function GRX_QueuedRewardsGiven( entity player, int opID )
+{
+}
+
+void function GRX_SetItemTier( entity player, int opID, int grxIndex, int tier )
+{
+}
+
+void function DisconnectWithMessage( entity player, string message )
+{
+	ClientCommand( player, "disconnect" )
+}
+
+void function PIN_TwitchDropItemRemoved( ... )
+{
+}
+
+void function PIN_EntitlementGranted( ... )
+{
+}
+
+void function GRX_RemoveCosmetics( entity player, int opID, array<int> grxIndices )
+{
+}
+
+array<entity> function GetPlayersInParty( entity player )
+{
+	return [ player ]
+}
+
+void function PIN_XPBonus( ... )
+{
+}
+
+void function PIN_PlayerLeveledUp( ... )
+{
+}
+
+void function PIN_BattlepassPriorSeasonReward( ... )
+{
+}
+
+void function PIN_PlayerRankedPlayDivisionChange( ... )
+{
+}
+
+void function PIN_Challenge( ... )
+{
+}
+
+void function PIN_IsPlayerAdded( ... )
+{
+}
+
+void function PIN_GRXPlayerGotCollectionLogin( ... )
+{
+}
+
+void function PIN_GRXPlayerGotCollectionHeirloom( ... )
+{
+}
+
+void function PIN_DynamicDialogue( ... )
+{
+}
+
+void function PIN_GameError( ... )
+{
+}
+
+void function PIN_KillreplayFinished( ... )
+{
+}
+
+void function PIN_PlayerItemDestruction( ... )
+{
+}
+
+void function PIN_RoundStart( ... )
+{
+}
+
+void function PIN_UIInteraction_OnChallengeTracked( ... )
+{
+}
+
+int function PIN_GetSessionDuration()
+{
+	return 0
+}
+
+string function PIN_GetSessionId()
+{
+	return ""
+}
+
+void function PIN_PageView_Think( ... )
+{
+}
+
+void function GRX_LevelInit( ... )
+{
+}
+
+void function GRX_LevelShutdown( ... )
+{
+}
+
+void function GRX_OnClientConnectionCompleted( ... )
+{
+}
+
+void function GRX_UIScriptResetComplete( ... )
+{
+}
+
+void function GRX_PreviewStoreItem( ... )
+{
+}
+
+void function GRX_TestGrantRewards( ... )
+{
+}
+
+void function GRX_TestOpenPack( ... )
+{
+}
+
+void function GRX_TestPurchase( ... )
+{
+}
+
+void function GRX_PrintContainers( ... )
+{
+}
+
+void function GRX_PrintNextCurrencyExpirationInfo( ... )
+{
+}
+
+void function GRX_PrintStoreOfferLocations( ... )
+{
+}
+
+void function GRX_DescribeOffer( ... )
+{
+}
+
+float function GetSoundDuration( string soundAlias )
+{
+	return 1.0
+}
+
+void function PrecacheOnDemandLoadModel( int odlType, string pak, asset model, asset loadingModel )
+{
+}
+
+int function ODL_FindAsset( int odlType, asset model )
+{
+	return -1
+}
+
+bool function ODL_IsLoaded( int odlType, int handle )
+{
+	return true
+}
+
+void function PrecacheSkinName( string skinName )
+{
+}
+
+void function GameRules_SetTeamName( int teamIndex, string name )
+{
+}
+
+void function LaunchPrivateMatchPlaylist( string playlist )
+{
+}
+
+void function PrivateMatchSetChatConfig( int entindex, PrivateMatchAdminChatConfigStruct adminConfig )
+{
+}
+
+void function PrivateMatchKickPlayer( entity player )
+{
+}
+
+void function FinalizePrivateMatchStats()
+{
+}
+
+void function ShowTeamNameInHud()
+{
+}
+
+var function GameSummary_GetTeamDataOrNull( int teamIndex )
+{
+	return null
+}
+
+bool function ForcedSpawn_UseForcedSpawning()
+{
+	return false
+}
+
+void function ForcedSpawn_TrySetTeamSpawnFromLocationIndex( int teamIndex, int locationIndex )
+{
+}
+
+void function HideTeamNameInHud()
+{
+}
+
+void function Highlight_RefreshObserverHighlights( entity player )
+{
+}
+
+bool function IsGunGameActive()
+{
+	return false
+}
+
+void function OBSERVER_ToggleSurveyRingEnabled( entity observer )
+{
+}
+
+void function OBSERVER_RefreshSurveryRing( entity observer )
+{
+}
+
+bool function IsSpawnOnSquadMode()
+{
+	return false
+}
+
+bool function IsOrientationMatch()
+{
+	return false
+}
+
+bool function IsBallisticUltActive( entity player )
+{
+	return false
+}
+
+void function AddCallback_OnCodeDoorBroken( void functionref( entity, entity, vector, var ) callbackFunc )
+{
+}
+
+void function SetPlayerBotQueueGraduation( entity player, int state )
+{
+}
+
+bool function BigTDM_IsModeEnabled()
+{
+	return false
+}
+
+void function AddCallback_OnTeammatesRespawned( void functionref( entity, entity, array< entity > ) callbackFunc )
+{
+}
+
+bool function PrestigeBadgeIsAllowed()
+{
+	return false
+}
+
+void function Boost_ApplyBoostEnabledChallengeBoost( entity player )
+{
+}
+
+bool function Boost_IsBoostModifierTypeActive( entity player, int modifierType )
+{
+	return false
+}
+
+int function Boost_GetBonus( entity player, int baseValue, int modifierType, int category = 0 )
+{
+	return 0
+}
+
+int function Boost_GetChallengeCategory( ItemFlavor challengeFlav )
+{
+	return 0
+}
+
+void function Boost_Sv_AddToPostGameChallengeBonus( entity player, int guid, int bonus )
+{
+}
+
+void function AddBPStars( entity player, int stars )
+{
+}
+
+void function RegisterArtifactBladeControlPoints( int guid, array<vector> controlPoints )
+{
+}
+
+array<string> function GetSkinImpactTableAliases( int guid )
+{
+	array<string> empty
+	return empty
+}
+
+bool function AutoPlayer_IsAutoPlayer( entity player )
+{
+	return false
+}
+
+void function AddUICallback_InputModeChanged( void functionref( bool ) callbackFunc )
+{
+}
+
+void function AddCallback_Lobby_OnClientConnected( void functionref( entity ) callbackFunc )
+{
+}
+
+int function GetNetWinningTeam()
+{
+	return GetWinningTeam()
+}
+
+bool function IsGoldRushMode()
+{
+	return false
+}
+
+bool function IsStormPoint()
+{
+	return false
+}
+
+bool function IsMatchmakingFromMatchEnabled()
+{
+	return false
+}
+
+bool function AreEmotesEnabled()
+{
+	return false
+}
+
+void function RequestPlayerPerformEmote( entity player, ItemFlavor quip )
+{
+}
+
+void function AssignGUIDToHoloProjector( entity player, int quipGUID )
+{
+}
+
+
+
+table< int, PrivateMatchStatsStruct > _privateMatchStatsStore
+
+void function SetPrivateMatchStats( int teamIndex, PrivateMatchStatsStruct stats )
+{
+	_privateMatchStatsStore[teamIndex] <- stats
+}
+
+PrivateMatchStatsStruct function GetPrivateMatchStats( int teamIndex )
+{
+	if ( teamIndex in _privateMatchStatsStore )
+		return _privateMatchStatsStore[teamIndex]
+	PrivateMatchStatsStruct empty
+	return empty
+}
+
+#endif

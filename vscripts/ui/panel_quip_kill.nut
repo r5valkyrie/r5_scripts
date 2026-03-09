@@ -15,19 +15,21 @@ void function InitKillQuipsPanel( var panel )
 	file.panel = panel
 	file.listPanel = Hud_GetChild( panel, "QuipList" )
 
+	SetPanelTabTitle( panel, "#KILL_QUIP" )
+
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, KillQuipsPanel_OnShow )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, KillQuipsPanel_OnHide )
 	AddPanelEventHandler_FocusChanged( panel, KillQuipsPanel_OnFocusChanged )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddPanelFooterOption( panel, LEFT, BUTTON_A, false, "#A_BUTTON_SELECT", "", null, CustomizeMenus_IsFocusedItem )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK_LEGEND", "#X_BUTTON_UNLOCK_LEGEND", null, CustomizeMenus_IsFocusedItemParentItemLocked )
+	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK_LEGEND", "#X_BUTTON_UNLOCK_LEGEND", null, CustomizeMenus_IsFocusedItemParentItemLocked )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_DPAD_LEFT, false, "#TRIGGERS_CHANGE_LEGEND", "", CustomizeCharacterMenu_PrevButton_OnActivate )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_DPAD_RIGHT, false, "", "", CustomizeCharacterMenu_NextButton_OnActivate )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_TRIGGER_LEFT, false, "", "", CustomizeCharacterMenu_PrevButton_OnActivate )
-	//AddPanelFooterOption( panel, LEFT, BUTTON_TRIGGER_RIGHT, false, "", "", CustomizeCharacterMenu_NextButton_OnActivate )
+	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
+	                                                                                                                                           
+	                                                                                                                     
+	                                                                                                                       
+	                                                                                                                        
 }
 
 
@@ -51,7 +53,7 @@ void function KillQuipsPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	// cleanup
+	          
 	foreach ( int flavIdx, ItemFlavor unused in file.quipList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -61,13 +63,11 @@ void function KillQuipsPanel_Update( var panel )
 
 	StopLastPlayedQuip()
 
-	// setup, but only if we're active
+	                                  
 	if ( IsPanelActive( file.panel ) )
 	{
 		LoadoutEntry entry = Loadout_CharacterKillQuip( GetTopLevelCustomizeContext() )
 		file.quipList = GetLoadoutItemsSortedForMenu( entry, CharacterIntroQuip_GetSortOrdinal )
-
-		file.quipList = [file.quipList[0]]
 
 		Hud_InitGridButtons( file.listPanel, file.quipList.len() )
 		foreach ( int flavIdx, ItemFlavor flav in file.quipList )
@@ -81,7 +81,7 @@ void function KillQuipsPanel_Update( var panel )
 
 void function KillQuipsPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) ) // uiscript_reset
+	if ( !IsValid( panel ) )                  
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -92,7 +92,7 @@ void function KillQuipsPanel_OnFocusChanged( var panel, var oldFocus, var newFoc
 
 void function PreviewQuip( ItemFlavor flav )
 {
-	printt( ItemFlavor_GetHumanReadableRef( flav ) )
+	printt( string(ItemFlavor_GetAsset( flav )) )
 
 	StopLastPlayedQuip()
 

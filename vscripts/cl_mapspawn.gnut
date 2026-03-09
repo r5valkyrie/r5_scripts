@@ -8,6 +8,8 @@ untyped
 global const float COCKPIT_RUI_RADIUS = 350
 global const float COCKPIT_RUI_SUBDIV = 3.5
 
+global int ATTACHMENTID_INVALID = -1  // CLIENT needs this (SERVER has in _mapspawn.gnut)
+
 global function ClientCodeCallback_MapSpawn
 global function ClientCodeCallback_RunClientConnectScripts
 global function ClientCodeCallback_FullUpdate
@@ -526,7 +528,7 @@ void function FinisherTestIdk(
 	string victimRigWeight       = GetGlobalSettingsString( victimPlayerSettings, "bodyModelRigWeight" )
 
 	string attackerAnimSeq = string(CharacterExecution_GetAttackerAnimSeq( attackerExecution ))
-	string victimAnimSeq   = string(CharacterExecution_GetVictimAnimSeq( attackerExecution, victimRigWeight ))
+	string victimAnimSeq   = string(CharacterExecution_GetVictimAnimSeq( attackerExecution, victimCharacter, victimRigWeight ))
 
 	float attackerAnimDuration = attacker.GetSequenceDuration( attackerAnimSeq )
 	float victimAnimDuration   = victim.GetSequenceDuration( victimAnimSeq )

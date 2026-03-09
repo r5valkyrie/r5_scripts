@@ -9,6 +9,38 @@ global const float FLOAT_NAN = -FLOAT_INDETERMINATE
 global const float DEG_TO_RAD = 0.01745329251994  // PI / 180.0
 global const float RAD_TO_DEG = 57.29577951308232 // 180.0 / PI
 
+global const float DOT_1DEGREE =	0.9998476951564
+global const float DOT_2DEGREE =	0.9993908270191
+global const float DOT_3DEGREE =	0.9986295347546
+global const float DOT_4DEGREE =	0.9975640502598
+global const float DOT_5DEGREE =	0.9961946980917
+global const float DOT_6DEGREE =	0.9945218953683
+global const float DOT_7DEGREE =	0.9925461516413
+global const float DOT_8DEGREE =	0.9902680687416
+global const float DOT_9DEGREE =	0.9876883405951
+global const float DOT_10DEGREE =	0.9848077530122
+global const float DOT_15DEGREE =	0.9659258262891
+global const float DOT_20DEGREE =	0.9396926207859
+global const float DOT_25DEGREE =	0.9063077870367
+global const float DOT_30DEGREE =	0.866025403784
+global const float DOT_45DEGREE =	0.707106781187
+global const float DOT_60DEGREE =	0.5
+global const float DOT_80DEGREE =	0.17364817766
+global const float DOT_85DEGREE =	0.0871557427477
+
+global enum ePINPromoMessageStatus
+{
+	IMPRESSION,
+	CLICK,
+}
+
+global enum eFeatureSuppressionFlags
+{
+	PROMO_USER_MESSAGES_DIALOG,
+}
+
+// SHOW_UNKNOWN_ARTIFACTS + eQuestMissionStatus moved to sh_season_quest.gnut
+
 global array<asset> LEGAL_PLAYER_TITAN_SETTINGS
 
 //
@@ -50,6 +82,21 @@ global typedef FXHandle entity
 #elseif CLIENT
 global typedef FXHandle int
 #endif
+
+global const array<string> MONTH_NAMES = [
+	"#MONTH_JAN",
+	"#MONTH_FEB",
+	"#MONTH_MAR",
+	"#MONTH_APR",
+	"#MONTH_MAY",
+	"#MONTH_JUN",
+	"#MONTH_JUL",
+	"#MONTH_AUG",
+	"#MONTH_SEP",
+	"#MONTH_OCT",
+	"#MONTH_NOV",
+	"#MONTH_DEC",
+]
 
 global struct TimeParts
 {
@@ -2273,14 +2320,11 @@ int function Shuffle_GetCount( ShuffleData sd )
 	return sd._indices.len()
 }
 //////
-#if CLIENT
-string function PlatformIDToIconString( bool platformISController )
+#if CLIENT || UI
+string function PlatformIDToIconString( ... )
 {
-	if ( platformISController )
-		return Localize( "#CROSSPLAY_ICON_PC" )
-	else
-		return Localize( "#CROSSPLAY_ICON_CONTROLLER" )
-	return ""
+	// Accepts int/string hardware ID
+	return "#CROSSPLAY_ICON_PC"
 }
 #endif
 
@@ -2369,6 +2413,11 @@ bool function IsFiringRangeGameMode()
 bool function FiringRangeHasFriendlyFire()
 {
 	return GetCurrentPlaylistVarBool( "firingrange_has_friendlyfire", true )
+}
+
+bool function FiringRangeHasHitIndictators()
+{
+	return GetCurrentPlaylistVarBool( "hud_training_hit_dots", true )
 }
 
 string function GetTitanCharacterNameFromSetFile( string setFile )
@@ -2833,16 +2882,6 @@ int function GetCurrentEliteStreak( entity player )
 int function GetMaxEliteStreak( entity player )
 {
 	int maxStreak = 0
-
-	#if UI
-		if ( !IsFullyConnected() )
-			return 0
-	#endif
-
-	if ( !IsValid( player ) )
-		return 0
-
-	maxStreak = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.season_elite_max_streak, "SAID01769158912" ) )
 
 	return maxStreak
 }
@@ -3358,7 +3397,7 @@ FXHandle function CleanupFXHandle( FXHandle fxHandle, bool doRemoveAllParticlesN
 
 #if CLIENT || UI 
 void functionref( bool success ) MenuExtendedUse_callback = null
-void function StartMenuExtendedUse( var focusElem, var holdToUseElem, float duration, void functionref( bool success ) callback,
+void function StartMenuExtendedUse( var focusElem, var holdToUseElem, float duration, bool requireControllerFocus, void functionref( bool success ) callback,
 string loopSound = "survival_titan_linking_loop", string successSound = "ui_menu_store_purchase_success" )
 {
 	//
@@ -3367,7 +3406,7 @@ string loopSound = "survival_titan_linking_loop", string successSound = "ui_menu
 
 	MenuExtendedUse_callback = callback
 	#if UI
-		thread _MenuExtendedUse_InternalThread( focusElem, holdToUseElem, duration, loopSound, successSound, false )
+		thread _MenuExtendedUse_InternalThread( focusElem, holdToUseElem, duration, loopSound, successSound, requireControllerFocus )
 	#elseif CLIENT
 		RunUIScript( "_ClientToUI_MenuExtendedUseBegin", focusElem, holdToUseElem, duration, loopSound, successSound )
 	#endif
@@ -3586,7 +3625,7 @@ string function truncate( string str, int limit )
 #if SERVER || CLIENT || UI 
 bool function IsInfiniteAmmoEnabled()
 {
-	#if(DEV)
+	#if(DEVELOPER)
 		if ( GetConVarBool( "sv_infinite_ammo" ) )
 			return true
 	#endif
@@ -4123,4 +4162,133 @@ bool function IsTitanfall2Map()
 	#endif
 	return false
 
+}
+
+// TEMP workaround: native not available, using admin playlist vars
+#if CLIENT
+bool function HasMatchAdminRole()
+{
+	string playerName = GetLocalClientPlayer().GetPlayerName()
+	return ( playerName == GetCurrentPlaylistVarString( "flowstateAdmin1", "" )
+		|| playerName == GetCurrentPlaylistVarString( "flowstateAdmin2", "" )
+		|| playerName == GetCurrentPlaylistVarString( "flowstateAdmin3", "" )
+		|| playerName == GetCurrentPlaylistVarString( "flowstateAdmin4", "" ) )
+}
+#elseif UI
+bool function HasMatchAdminRole()
+{
+	return false  // stub
+}
+#elseif SERVER
+bool function HasMatchAdminRole()
+{
+	return false
+}
+#endif
+
+// Stub — no active season system
+int function GetActiveSeasonNumber()
+{
+	return 16
+}
+
+#if UI
+// Stub — EADP User Messaging not available
+UMData function EADP_UM_GetPromoData()
+{
+	UMData data
+	return data
+}
+
+// Stub — PIN telemetry
+void function PIN_UM_Message( string title, string trackingId, string messageType, int status, int pageIndex )
+{
+}
+#endif // UI
+
+// Stub — themed shop panel not fully ported yet
+bool function IsFeatureSuppressed( int flag )
+{
+	return false
+}
+
+void function SetFeatureSuppressed( int flag, bool suppressed )
+{
+}
+
+// Stubs — gifting/inbox natives (moved to sh_grx.gnut for typed scope)
+
+string function GetDateTimeStringDayMonthYear( int timestamp, int offset )
+{
+	return ""
+}
+
+
+
+#if CLIENT || UI
+void function RuiSetWallTimeWithNow( var rui, string argName )
+{
+	// Approximate wall time with game time
+	RuiSetGameTime( rui, argName, Time() )
+}
+
+void function Hud_SetTextEntryTitle( var elem, string title )
+{
+	// stub
+}
+#endif // CLIENT || UI
+
+#if UI
+ToolTipData function CreateSimpleToolTip( string titleText, string descText, string actionHint1 = "", string actionHint2 = "", string actionHint3 = "" )
+{
+	ToolTipData toolTipData
+	toolTipData.titleText = titleText
+	toolTipData.descText = descText
+	toolTipData.actionHint1 = actionHint1
+	toolTipData.actionHint2 = actionHint2
+	toolTipData.actionHint3 = actionHint3
+
+	return toolTipData
+}
+#endif // UI
+
+// Playlist rotation stubs
+bool function IsPlaylistInActiveRotation( string playlistName )
+{
+	return true
+}
+
+bool function IsPlaylistBeingRotated( string playlistName )
+{
+	return false
+}
+
+string function GetDefaultPlaylistRotationGroup()
+{
+	return ""
+}
+
+int function GetNamedPlaylistRotationNextTime( string rotationName = "" )
+{
+	return 0
+}
+
+string function GetCurrentPlaylistFromRotationAndUISlot( string rotationGroup, string uiSlot )
+{
+	return ""
+}
+
+int function GetPlaylistActiveMapRotationIndex( string playlistName )
+{
+	return 0
+}
+
+string function GetPlaylistMapVarString( string playlistName, int mapIdx, string varName, string defaultVal )
+{
+	return defaultVal
+}
+
+int function GetSoonestPlaylistRotationTime()
+{
+	return 0
 }

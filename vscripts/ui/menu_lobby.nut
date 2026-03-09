@@ -1,49 +1,26 @@
 global function InitLobbyMenu
+
 global function Lobby_IsInputBlocked
+global function SetActiveLobbyPopup
+global function ClearActiveLobbyPopup
+global function HasActiveLobbyPopup
+global function SetNewsButtonTooltip
+
+global function Lobby_UpdateSelectedPlaylistUsingUISlot
+
 global function GetUIPlaylistName
 global function GetUIMapName
 global function GetUIMapAsset
 global function GetUIVisibilityName
 global function UpdateServerAndPlayerCountButtons
-global struct LobbyPopup
-{
-	bool functionref( int inputID ) checkBlocksInput
-	bool functionref( int inputID ) handleInput
-	void functionref()              onClose
-}
 
-struct
-{
-	var  menu
-	bool updatingLobbyUI = false
-	bool inputsRegistered = false
-	bool tabsInitialized = false
-	bool newnessInitialized = false
 
-	var postGameButton
-	var newsButton
-	var socialButton
-	var gameMenuButton
-	var DcButton
-	var BlogButton
+global function Lobby_EnableMinimapCoordsOnConnect
 
-	var serversButton
-	var playersButton
-	LobbyPopup ornull  activeLobbyPopup = null
-	table< int, bool > isInputBlocked
-} file
 
-// do not change this enum without modifying it in code at gameui/IBrowser.h
-global enum eServerVisibility
-{
-	OFFLINE,
-	HIDDEN,
-	PUBLIC
-}
 
 global int CurrentPresentationType = ePresentationType.PLAY
 
-//Map to asset
 global table<string, asset> MapAssets = {
 	[ "mp_rr_canyonlands_staging" ] = $"rui/menu/maps/mp_rr_canyonlands_staging_big_icon",
 	[ "mp_rr_canyonlands_64k_x_64k" ] = $"rui/menu/maps/mp_rr_canyonlands_64k_x_64k_big_icon",
@@ -51,8 +28,8 @@ global table<string, asset> MapAssets = {
 	[ "mp_rr_canyonlands_mu1" ] = $"rui/menu/maps/mp_rr_canyonlands_mu1_big_icon",
 	[ "mp_rr_canyonlands_mu2" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_big_icon",
 	[ "mp_rr_canyonlands_mu2_tt" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_tt_big_icon",
-	[ "mp_rr_canyonlands_mu2_mv" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_mv_big_icon",
 	[ "mp_rr_canyonlands_mu2_ufo" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_ufo_big_icon",
+	[ "mp_rr_canyonlands_mu2_mv" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_mv_big_icon",
 	[ "mp_rr_canyonlands_mu1_night" ] = $"rui/menu/maps/mp_rr_canyonlands_mu1_night_big_icon",
 	[ "mp_rr_desertlands_64k_x_64k" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_big_icon",
 	[ "mp_rr_desertlands_64k_x_64k_nx" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_nx_big_icon",
@@ -102,7 +79,6 @@ global table<string, asset> MapAssetsSquare = {
 	[ "mp_lobby" ] = $"rui/menu/maps/mp_lobby"
 }
 
-//Map to readable name
 global table<string, string> MapNames = {
 	[ "mp_rr_canyonlands_staging" ] = "Firing Range",
 	[ "mp_rr_canyonlands_64k_x_64k_ps4" ] = "King's Canyon Beta",
@@ -133,21 +109,107 @@ global table<string, string> MapNames = {
 	[ "mp_lobby" ] = "Lobby"
 }
 
-//Vis to readable name
 global table<int, string> VisibilityNames = {
 	[ eServerVisibility.OFFLINE ] = "Offline",
 	[ eServerVisibility.HIDDEN ] = "Hidden",
 	[ eServerVisibility.PUBLIC ] = "Public"
 }
 
+global struct LobbyPopup
+{
+	bool functionref( int inputID ) checkBlocksInput
+	bool functionref( int inputID ) handleInput
+	void functionref()              onClose
+}
+
+struct
+{
+	var  menu
+	bool updatingLobbyUI = false
+	bool inputsRegistered = false
+	bool tabsInitialized = false
+	bool newnessInitialized = false
+	bool hasFocusedNews = false
+
+	var postGameButton
+	var newsButton
+	var newsButtonStatusIcon
+	var socialButton
+	var gameMenuButton
+	var bonusXp
+	var socialEventPopup
+	var serverDebugID
+	var dx12BetaText
+
+	// Custom buttons
+	var DcButton
+	var BlogButton
+	var serversButton
+	var playersButton
+
+	int previousRotationTime = -1
+
+	bool hasNewGifts = false
+
+	bool firstSessionEntry = true
+	string lastPlayedAudioPlaylist = ""
+
+	LobbyPopup ornull  activeLobbyPopup = null
+	table< int, bool > isInputBlocked
+} file
+
+                 
+void function Lobby_EnableMinimapCoordsOnConnect( string name )
+{
+	int forceWatermarkInLobby = GetCurrentPlaylistVarInt( "force_watermark_in_lobby", 0 )                               
+	int forceHiddenWatermarkInLobby = GetCurrentPlaylistVarInt( "force_hidden_watermark_in_lobby", 0 )                               
+	if ( (forceWatermarkInLobby == 0 && IsTakeHomeBuild()) || forceWatermarkInLobby == 1 )
+	{
+		var minimapCoords = Hud_GetChild( file.menu, "MinimapCoords" )
+		Hud_SetVisible( minimapCoords, true )
+		Hud_SetEnabled( minimapCoords, true )
+
+		var minimapCoordsRui = Hud_GetRui( minimapCoords )
+		InitializeMinimapCoords( minimapCoordsRui, true )
+		RuiSetString( minimapCoordsRui, "name", name )
+
+		float watermarkTextScale = GetCurrentPlaylistVarFloat( "watermark_text_scale", 0.5 )
+		float watermarkAlphaScale = GetCurrentPlaylistVarFloat( "watermark_alpha_scale", 0.2 )
+		RuiSetFloat( minimapCoordsRui, "watermarkTextScale", watermarkTextScale )
+		RuiSetFloat( minimapCoordsRui, "watermarkAlphaScale", watermarkAlphaScale )
+	}
+	if ( (forceHiddenWatermarkInLobby == 0 && IsTakeHomeBuild()) || forceHiddenWatermarkInLobby == 1 )
+	{
+		var minimapID = Hud_GetChild( file.menu, "MinimapID" )
+		Hud_SetVisible( minimapID, true )
+		Hud_SetEnabled( minimapID, true )
+
+		var minimapIDRui = Hud_GetRui( minimapID )
+		RuiSetString( minimapIDRui, "name", GetPlayerName() )
+		RuiSetString( minimapIDRui, "uid", GetUIDHex() )
+	}
+}
+
+void function Lobby_RefreshMinimapCoords()
+{
+	if ( IsLobby() && IsFullyConnected() )
+	{
+		Lobby_EnableMinimapCoordsOnConnect( GetPlayerName() )
+	}
+}
+      
+
 void function InitLobbyMenu( var newMenuArg )
+                                              
 {
 	var menu = GetMenu( "LobbyMenu" )
 	file.menu = menu
 
 	RegisterSignal( "LobbyMenuUpdate" )
-
-	RuiSetImage( Hud_GetRui( Hud_GetChild( file.menu, "Logo" ) ), "basicImage", $"rui/menu/lobby/logo" )
+	
+                 
+	AddUICallback_OnResolutionChanged( Lobby_RefreshMinimapCoords )
+      
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnLobbyMenu_Open )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, OnLobbyMenu_Close )
@@ -156,19 +218,22 @@ void function InitLobbyMenu( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_HIDE, OnLobbyMenu_Hide )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_GET_TOP_LEVEL, OnLobbyMenu_GetTopLevel )
+	                                                                                     
+
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, OnLobbyMenu_NavigateBack )
 
 	AddMenuVarChangeHandler( "isFullyConnected", UpdateFooterOptions )
 	AddMenuVarChangeHandler( "isPartyLeader", UpdateFooterOptions )
-
 	#if DURANGO_PROG
 		AddMenuVarChangeHandler( "DURANGO_canInviteFriends", UpdateFooterOptions )
 		AddMenuVarChangeHandler( "DURANGO_isJoinable", UpdateFooterOptions )
-	#elseif PS4_PROG
+	#elseif PLAYSTATION_PROG
 		AddMenuVarChangeHandler( "PS4_canInviteFriends", UpdateFooterOptions )
 	#elseif PC_PROG
 		AddMenuVarChangeHandler( "ORIGIN_isEnabled", UpdateFooterOptions )
 		AddMenuVarChangeHandler( "ORIGIN_isJoinable", UpdateFooterOptions )
+	#elseif NX_PROG
+		AddMenuVarChangeHandler( "NX_canInviteFriends", UpdateFooterOptions )
 	#endif
 
 	var postGameButton = Hud_GetChild( menu, "PostGameButton" )
@@ -182,13 +247,38 @@ void function InitLobbyMenu( var newMenuArg )
 
 	var newsButton = Hud_GetChild( menu, "NewsButton" )
 	file.newsButton = newsButton
+	file.newsButtonStatusIcon = Hud_GetChild( menu, "NewsButtonStatusIcon" )
 	ToolTipData newsToolTip
 	newsToolTip.descText = "#NEWS"
 	Hud_SetToolTipData( newsButton, newsToolTip )
-	HudElem_SetRuiArg( newsButton, "icon", $"rui/menu/lobby/news_icon" )
+               
+	HudElem_SetRuiArg( newsButton, "icon", $"rui/menu/lobby/news_inbox_icon" )
+     
+                                                                     
+      
 	HudElem_SetRuiArg( newsButton, "shortcutText", "%[R_TRIGGER|ESCAPE]%" )
 	Hud_AddEventHandler( newsButton, UIE_CLICK, NewsButton_OnActivate )
+	Hud_AddEventHandler( newsButton, UIE_GET_FOCUS, NewsButton_OnHover )
+	UpdatePromoToast()
+	var socialButton = Hud_GetChild( menu, "SocialButton" )
+	file.socialButton = socialButton
+	ToolTipData socialToolTip
+	socialToolTip.descText = "#MENU_TITLE_FRIENDS"
+	Hud_SetToolTipData( socialButton, socialToolTip )
+	HudElem_SetRuiArg( socialButton, "icon", $"rui/menu/lobby/friends_icon" )
+	HudElem_SetRuiArg( socialButton, "shortcutText", "%[STICK2|]%" )
+	Hud_AddEventHandler( socialButton, UIE_CLICK, SocialButton_OnActivate )
 
+	var gameMenuButton = Hud_GetChild( menu, "GameMenuButton" )
+	file.gameMenuButton = gameMenuButton
+	ToolTipData gameMenuToolTip
+	gameMenuToolTip.descText = "#GAME_MENU"
+	Hud_SetToolTipData( gameMenuButton, gameMenuToolTip )
+	HudElem_SetRuiArg( gameMenuButton, "icon", $"rui/menu/lobby/settings_icon" )
+	HudElem_SetRuiArg( gameMenuButton, "shortcutText", "%[START|ESCAPE]%" )
+	Hud_AddEventHandler( gameMenuButton, UIE_CLICK, GameMenuButton_OnActivate )
+
+	// Custom buttons
 	var DcButton = Hud_GetChild( menu, "DcButton" )
 	file.DcButton = DcButton
 	ToolTipData dcToolTip
@@ -221,15 +311,30 @@ void function InitLobbyMenu( var newMenuArg )
 	Hud_SetToolTipData( serversButton, serversToolTip )
 	HudElem_SetRuiArg( serversButton, "icon", $"rui/hud/gamestate/net_latency" )
 
-	var gameMenuButton = Hud_GetChild( menu, "GameMenuButton" )
-	file.gameMenuButton = gameMenuButton
-	ToolTipData gameMenuToolTip
-	gameMenuToolTip.descText = "#GAME_MENU"
-	Hud_SetToolTipData( gameMenuButton, gameMenuToolTip )
-	HudElem_SetRuiArg( gameMenuButton, "icon", $"rui/menu/lobby/settings_icon" )
-	HudElem_SetRuiArg( gameMenuButton, "shortcutText", "%[START|ESCAPE]%" )
-	Hud_AddEventHandler( gameMenuButton, UIE_CLICK, GameMenuButton_OnActivate )
+	RuiSetImage( Hud_GetRui( Hud_GetChild( menu, "Logo" ) ), "basicImage", $"rui/menu/lobby/logo" )
 
+	var bonusXp = Hud_GetChild( menu, "BonusXp" )
+	file.bonusXp = bonusXp
+
+	var socialEventPopup = Hud_GetChild( menu, "SocialPopupPanel" )
+	file.socialEventPopup = socialEventPopup
+
+	var serverDebugID = Hud_GetChild( menu, "LobbyServerIDText" )
+	file.serverDebugID = serverDebugID
+
+	var dx12BetaText = Hud_GetChild( menu, "DirectX12BetaText" )
+	file.dx12BetaText = dx12BetaText
+
+	InitSocialEventPopup( socialEventPopup )
+
+	UpdatePromoToast()
+
+	PerfInitLabel( 1, "1" )
+	PerfInitLabel( 2, "2" )
+	PerfInitLabel( 3, "3" )
+	PerfInitLabel( 4, "4" )
+	PerfInitLabel( 5, "5" )
+	PerfInitLabel( 6, "6" )
 }
 
 
@@ -237,21 +342,62 @@ void function OnLobbyMenu_Open()
 {
 	thread ServerBrowser_RefreshServerListing()
 
-	//ClientCommand( "gameCursor_ModeActive 1" )
-
 	if ( !file.tabsInitialized )
 	{
-		array<var> panels = GetAllMenuPanels( file.menu )
-		foreach ( panel in panels )
-			AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+		{
+			var panel = Hud_GetChild( file.menu, "PlayPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = false
+			SetTabBaseWidth( tab, 145 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "CharactersPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = true
+			tab.hideSubtabPips = true
+			SetTabBaseWidth( tab, 205 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "ArmoryPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 205 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "ServerBrowserPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 205 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "CreatePanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 180 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "CreditsPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 180 )
+		}
 
+		TabData tabData = GetTabDataForPanel( file.menu )
+
+		tabData.customFirstTabButton = false
+		tabData.activeTabIdx = GetLobbyDefaultTabIndex()
+		tabData.centerTabs = true
+		tabData.useGRXData = true
+		tabData.initialFirstTabButtonXPos = 80
+		SetTabBackground( tabData, Hud_GetChild( file.menu, "TabsBackground" ), eTabBackground.CAPSTONE )
+		AddCallback_OnTabChanged( Lobby_OnTabChanged )
 		file.tabsInitialized = true
 	}
 
-	if ( uiGlobal.lastMenuNavDirection == MENU_NAV_FORWARD )
+	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
 	{
 		TabData tabData = GetTabDataForPanel( file.menu )
-		ActivateTab( tabData, 0 )
+		ActivateTab( tabData, GetLobbyDefaultTabIndex() )
 	}
 	else
 	{
@@ -263,21 +409,46 @@ void function OnLobbyMenu_Open()
 
 	thread UpdateLobbyUI()
 
+	Lobby_ResetAreLobbyButtonsUpdating()
 	Lobby_UpdatePlayPanelPlaylists()
 
 	AddCallbackAndCallNow_OnGRXOffersRefreshed( OnGRXStateChanged )
 	AddCallbackAndCallNow_OnGRXInventoryStateChanged( OnGRXStateChanged )
-}
 
+	file.hasFocusedNews = false
+}
 
 void function OnLobbyMenu_Show()
 {
 	thread LobbyMenuUpdate()
+	SocialEventUpdate()
 	RegisterInputs()
-
 	Chroma_Lobby()
+
+               
+	if ( GetCurrentPlaylistVarBool( "grx_inbox_enabled", true ) )
+	{
+		HudElem_SetRuiArg( file.newsButton, "icon", $"rui/menu/lobby/news_inbox_icon" )
+	}
+	else
+	{
+		HudElem_SetRuiArg( file.newsButton, "icon", $"rui/menu/lobby/news_icon" )
+	}
+     
+                                                                          
+
+                            
+      
 }
 
+void function Lobby_OnTabChanged()
+{
+	if ( GetActiveMenu() != file.menu )
+		return
+
+	UpdateCornerButtons()
+	UpdateBonusXP()
+}
 
 void function OnLobbyMenu_GetTopLevel()
 {
@@ -288,12 +459,14 @@ void function OnLobbyMenu_GetTopLevel()
 void function OnLobbyMenu_Hide()
 {
 	Signal( uiGlobal.signalDummy, "LobbyMenuUpdate" )
+	ClearActiveLobbyPopup()
 	DeregisterInputs()
 }
 
 
 void function OnLobbyMenu_Close()
 {
+	ClearActiveLobbyPopup()
 	ClearNewnessCallbacks()
 	DeregisterInputs()
 
@@ -304,50 +477,21 @@ void function OnLobbyMenu_Close()
 
 void function OnGRXStateChanged()
 {
-	bool ready = true //GRX_IsInventoryReady() && GRX_AreOffersReady()
-
-	string bpPanel = "PassPanelV2"
-
-	array<var> panels = [
-		GetPanel( "CharactersPanel" ),
-		GetPanel( "ArmoryPanel" ),
-		//GetPanel( bpPanel ),
-		//GetPanel( "StorePanel" ),
-	]
-
-	foreach ( var panel in panels )
-	{
-		SetPanelTabEnabled( panel, ready )
-	}
-
-	//if ( ready )
-	//{
-	//	if ( ShouldShowPremiumCurrencyDialog() )
-	//		ShowPremiumCurrencyDialog( false )
-	//}
+	// No GRX store — just refresh seasonal tab styling
+	TabData tabData = GetTabDataForPanel( file.menu )
+	SetTabDefsToSeasonal(tabData)
+	RefreshTabsSeasonalData()
+	LobbyTheme_LoadSavedColor()
 }
-
 
 void function UpdateNewnessCallbacks()
 {
-	ClearNewnessCallbacks()
-
-	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.GladiatorTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharactersPanel" ) )
-	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.ArmoryTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "ArmoryPanel" ) )
-	//Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.StoreTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "StorePanel" ) )
-	file.newnessInitialized = true
+	// Newness system disabled — requires GRX/store infrastructure
 }
 
 
 void function ClearNewnessCallbacks()
 {
-	if ( !file.newnessInitialized )
-		return
-
-	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.GladiatorTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "CharactersPanel" ) )
-	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.ArmoryTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "ArmoryPanel" ) )
-	//Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.StoreTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "StorePanel" ) )
-	file.newnessInitialized = false
 }
 
 
@@ -371,73 +515,276 @@ void function LobbyMenuUpdate()
 	EndSignal( uiGlobal.signalDummy, "LobbyMenuUpdate" )
 	EndSignal( uiGlobal.signalDummy, "CleanupInGameMenus" )
 
+	thread LobbyMenuUpdateLowFrequencyElements()
+
 	while ( true )
 	{
 		PlayPanelUpdate()
-		UpdateCornerButtons()
-		UpdateTabs()
+		// No playlist rotation system, disabled to prevent per-frame spam
+		//TrackPlaylistRotation()
+		HandleCrossplayPartyInvalid()
+
 		WaitFrame()
 	}
 }
 
-void function UpdateServerAndPlayerCountButtons()
+  
+                                                                
+                                                                           
+  
+void function LobbyMenuUpdateLowFrequencyElements()
 {
-	HudElem_SetRuiArg( file.playersButton, "buttonText", "" + MS_GetPlayerCount() )
-	Hud_SetWidth( file.playersButton, Hud_GetBaseWidth( file.playersButton ) * 2 )
+	EndSignal( uiGlobal.signalDummy, "LobbyMenuUpdate" )
+	EndSignal( uiGlobal.signalDummy, "CleanupInGameMenus" )
 
-	HudElem_SetRuiArg( file.serversButton, "buttonText", "" + MS_GetServerCount() )
-	Hud_SetWidth( file.serversButton, Hud_GetBaseWidth( file.serversButton ) * 2 )
+	while ( true )
+	{
+		UpdateCornerButtons()
+                 
+			UpdatePromoToast()
+        
+		UpdateBonusXP()
+
+		wait 1.0
+	}
+}
+
+void function UpdateBonusXP()
+{
+
+	float boostCount = 0.0
+	Party party = GetParty()
+
+	foreach ( member in party.members )
+	{
+		boostCount += Clamp(member.boostCount * 0.1, 0.0, 3.0)
+	}
+
+	int rarity = 3
+	int boostPercentage =  int(boostCount * 100)
+	bool isVisible = boostCount > 0
+
+	if ( isVisible )
+	{
+		ToolTipData bonusXpTooltip
+		bonusXpTooltip.titleText = Localize( "#BONUS_XP_TITLE" )
+		bonusXpTooltip.rarity    = 3
+		bonusXpTooltip.descText  = Localize( "#BONUS_XP_DESC", boostPercentage )
+		Hud_SetToolTipData( file.bonusXp, bonusXpTooltip )
+	}
+	else
+	{
+		Hud_ClearToolTipData(file.bonusXp)
+	}
+
+
+	var rui = Hud_GetRui( file.bonusXp )
+	RuiSetBool(rui, "isVisible", isVisible)
+
+                
+		if ( !file.hasFocusedNews && file.hasNewGifts )
+		{
+			Hud_SetVisible( file.bonusXp, false )
+			RuiSetBool(rui, "hasPromoPopup", true )
+		}
+		else
+		{
+			RuiSetBool(rui, "hasPromoPopup", false )
+			RuiSetInt(rui, "rarity", rarity)
+			RuiSetInt(rui, "boostPercentage", boostPercentage)
+		}
+       
+
+
+	var playPanel           = GetPanel( "PlayPanel" )
+	bool isPlayPanelActive  = IsTabPanelActive( playPanel )
+
+	Hud_SetVisible( file.bonusXp, isVisible && isPlayPanelActive )
+}
+
+               
+
+void function UpdatePromoToast()
+{
+	array<GRXScriptInboxMessage> inboxMessages = GetGiftingInboxMessages()
+	var rui = Hud_GetRui( file.newsButton )
+	file.hasNewGifts = false
+
+	if ( inboxMessages.len() > 0 )
+		file.hasNewGifts = true
+
+	RuiSetBool( rui, "isNew", file.hasNewGifts )
+
+	if ( !file.hasNewGifts )
+	{
+		RuiSetBool( rui, "isVisible", false )
+		RuiSetBool( rui, "hasNeverFocused", false )
+		RuiSetBool( rui, "hasGifts", false )
+		return
+	}
+
+	if ( file.hasFocusedNews )
+	{
+		RuiSetBool( rui, "hasNeverFocused", false )
+		return
+	}
+	else
+	{
+		RuiSetBool( rui, "hasNeverFocused", true )
+	}
+
+	var playPanel           = GetPanel( "PlayPanel" )
+	bool isPlayPanelActive  = IsTabPanelActive( playPanel )
+
+	if ( !isPlayPanelActive )
+	{
+		RuiSetBool( rui, "isVisible", true )
+		return
+	}
+
+	RuiSetBool( rui, "hasGifts", file.hasNewGifts && isPlayPanelActive )
+	RuiSetColorAlpha( rui, "seasonColor", GetSeasonStyle().seasonColor, 1 )
+}
+
+      
+
+void function HandleCrossplayPartyInvalid()
+{
+	                                                                             
+	if ( GetPersistentVar( "showGameSummary" ) && IsPostGameMenuValid( true ) )
+		return
+
+	if ( CrossplayUserOptIn() || GetPartySize() == 1 )
+		return
+
+	if( IsDialog( GetActiveMenu() ) )
+		return
+
+	                                                                                            
+	string hardware   = GetUnspoofedPlayerHardware()
+	Party myParty     = GetParty()
+	foreach ( p in myParty.members )
+	{
+		if ( hardware != p.hardware )
+		{
+			LeaveParty()
+
+			ConfirmDialogData data
+			data.headerText = "#CROSSPLAY_DIALOG_INVALID_PARTY_HEADER"
+			data.messageText = Localize( "#CROSSPLAY_DIALOG_INVALID_PARTY_MSG" )
+
+			OpenOKDialogFromData( data )
+			break
+		}
+	}
+}
+
+void function Lobby_UpdateSelectedPlaylistUsingUISlot( string previousPlaylist )
+{
+	                                             
+	                                                                           
+	string uiSlot      = GetPlaylistVarString( previousPlaylist, "ui_slot", "" )
+	string newPlaylist = GetCurrentPlaylistInUiSlot( uiSlot )
+	printf("Found new playlist '%s' for ui_slot %s", newPlaylist, uiSlot)
+	if ( newPlaylist == "" || !Lobby_IsPlaylistAvailable( newPlaylist ) )
+		newPlaylist = GetDefaultPlaylist()
+
+	string mapChangeAlias = GetPlaylistVarString( newPlaylist, "map_change_VO_alias", "" )
+	if ( mapChangeAlias != "" && file.lastPlayedAudioPlaylist != mapChangeAlias )
+	{
+		file.lastPlayedAudioPlaylist = mapChangeAlias
+		PlayLobbyCharacterDialogue( mapChangeAlias )
+	}
+
+	Lobby_SetSelectedPlaylist( newPlaylist )
+	printf("Changed selected playlist from '%s' to '%s'", previousPlaylist, newPlaylist)
+}
+
+void function TrackPlaylistRotation()
+{
+	if ( file.previousRotationTime == -1 )
+		file.previousRotationTime = GetSoonestPlaylistRotationTime()
+
+                       
+                                             
+                                                                                          
+      
+
+                       
+                                                                                                                                                                
+     
+	if ( file.previousRotationTime < GetSoonestPlaylistRotationTime() )
+      
+	{
+		file.previousRotationTime = GetSoonestPlaylistRotationTime()
+                         
+                                                                                           
+        
+		if ( IsModeSelectMenuOpen() )
+		{
+			                            
+			                              
+			if ( PrivateMatchMapSelect_IsEnabled() )
+				UpdatePrivateMatchMapSelectDialog()
+			else if ( GamemodeSelect_IsEnabled() )
+				UpdateOpenModeSelectDialog()
+		}
+	}
+
+	string selectedPlaylist = Lobby_GetSelectedPlaylist()
+	if ( !Lobby_IsPlaylistAvailable( selectedPlaylist ) && !AreWeMatchmaking() && !uiGlobal.isLevelShuttingDown )
+	{
+		Lobby_UpdateSelectedPlaylistUsingUISlot( selectedPlaylist )
+	}
 }
 
 void function UpdateCornerButtons()
 {
-	var playPanel = GetPanel( "PlayPanel" )
-	bool isPlayPanelActive  = IsTabPanelActive( playPanel )
-	var postGameButton      = Hud_GetChild( file.menu, "PostGameButton" )
+	var playPanel           = GetPanel( "PlayPanel" )
+	bool isPlayPanelActive  = GetMenuActiveTabIndex(file.menu) == 0
 	bool showPostGameButton = isPlayPanelActive && IsPostGameMenuValid()
-	Hud_SetVisible( postGameButton, showPostGameButton )
-	if ( showPostGameButton )
-		Hud_SetX( postGameButton, Hud_GetBaseX( postGameButton ) )
-	else
-		Hud_SetX( postGameButton, Hud_GetBaseX( postGameButton ) - Hud_GetWidth( postGameButton ) - Hud_GetBaseX( postGameButton ) )
 
+	if ( showPostGameButton )
+		Hud_SetX( file.postGameButton, Hud_GetBaseX( file.postGameButton ) )
+	else
+		Hud_SetX( file.postGameButton, Hud_GetBaseX( file.postGameButton ) - Hud_GetWidth( file.postGameButton ) - Hud_GetBaseX( file.postGameButton ) )
+
+	Hud_SetVisible( file.postGameButton, showPostGameButton )
 	Hud_SetVisible( file.newsButton, isPlayPanelActive )
+	Hud_SetVisible( file.newsButtonStatusIcon, isPlayPanelActive )
+	Hud_SetVisible( file.socialButton, isPlayPanelActive )
+	Hud_SetVisible( file.gameMenuButton, isPlayPanelActive )
 	Hud_SetVisible( file.playersButton, isPlayPanelActive )
 	Hud_SetVisible( file.serversButton, isPlayPanelActive )
-	Hud_SetVisible( file.gameMenuButton, isPlayPanelActive )
 	Hud_SetVisible( file.DcButton, isPlayPanelActive )
 	Hud_SetVisible( file.BlogButton, isPlayPanelActive )
 
 	var accessibilityHint = Hud_GetChild( playPanel, "AccessibilityHint" )
-	Hud_SetVisible( accessibilityHint, isPlayPanelActive && IsAccessibilityChatHintEnabled() )
+	Hud_SetVisible( accessibilityHint, isPlayPanelActive && IsAccessibilityChatHintEnabled() && !VoiceIsRestricted() && (GetPartySize() > 1) )
 
 	Hud_SetEnabled( file.gameMenuButton, !IsDialog( GetActiveMenu() ) )
 
-	//int count = GetOnlineFriendCount( false )
-	//if ( count > 0 )
-	//{
-	//	HudElem_SetRuiArg( file.socialButton, "buttonText", "" + count )
-	//	Hud_SetWidth( file.socialButton, Hud_GetBaseWidth( file.socialButton ) * 2 )
-	//	InitButtonRCP( file.socialButton )
-	//}
-	//else
-	//{
-	//	HudElem_SetRuiArg( file.socialButton, "buttonText", "" )
-	//	Hud_ReturnToBaseSize( file.socialButton )
-	//	InitButtonRCP( file.socialButton )
-	//}
-
-}
-
-
-void function UpdateTabs()
-{
-	if ( IsFullyConnected() )
+	int count = GetOnlineFriendCount( )
+	if ( count > 0 )
 	{
-		//
-	} // todo(dw)
-}
+		HudElem_SetRuiArg( file.socialButton, "buttonText", "" + count )
+		Hud_SetWidth( file.socialButton, Hud_GetBaseWidth( file.socialButton ) * 2 )
+		InitButtonRCP( file.socialButton )
+	}
+	else
+	{
+		HudElem_SetRuiArg( file.socialButton, "buttonText", "" )
+		Hud_ReturnToBaseSize( file.socialButton )
+		InitButtonRCP( file.socialButton )
+	}
 
+	Hud_SetPinSibling(file.bonusXp, "PostGameButton")
+
+	string str = (( IsNetGraphEnabled() && isPlayPanelActive ) ? Localize( "#NETGRAPH_SERVERID", GetServerDebugId() ) : "")
+	Hud_SetText( file.serverDebugID, str )
+
+	Hud_SetText( file.dx12BetaText, IsDirectX12Beta() ? Localize( "#DIRECTX12_BETA" ) : "" )
+}
 
 void function RegisterInputs()
 {
@@ -446,10 +793,16 @@ void function RegisterInputs()
 
 	RegisterButtonPressedCallback( BUTTON_START, GameMenuButton_OnActivate )
 	RegisterButtonPressedCallback( BUTTON_BACK, PostGameButton_OnActivate )
-	RegisterButtonPressedCallback( KEY_TAB, PostGameButton_OnActivate )
+	RegisterButtonPressedCallback( BUTTON_X, ButtonX_OnActivate )
+	RegisterButtonPressedCallback( BUTTON_Y, ButtonY_OnActivate )
+	RegisterButtonPressedCallback( BUTTON_STICK_LEFT, ButtonStickL_OnActivate )
+	RegisterButtonPressedCallback( KEY_Y, KeyY_OnActivate )
+	RegisterButtonPressedCallback( KEY_N, KeyN_OnActivate )
+	RegisterButtonPressedCallback( KEY_B, KeyB_OnActivate )
+
 	RegisterButtonPressedCallback( KEY_ENTER, OnLobbyMenu_FocusChat )
 	RegisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT, NewsButton_OnActivate )
-	//RegisterButtonPressedCallback( BUTTON_STICK_RIGHT, SocialButton_OnActivate )
+	RegisterButtonPressedCallback( BUTTON_STICK_RIGHT, SocialButton_OnActivate )
 	file.inputsRegistered = true
 }
 
@@ -461,25 +814,37 @@ void function DeregisterInputs()
 
 	DeregisterButtonPressedCallback( BUTTON_START, GameMenuButton_OnActivate )
 	DeregisterButtonPressedCallback( BUTTON_BACK, PostGameButton_OnActivate )
-	DeregisterButtonPressedCallback( KEY_TAB, PostGameButton_OnActivate )
+	DeregisterButtonPressedCallback( BUTTON_X, ButtonX_OnActivate )
+	DeregisterButtonPressedCallback( BUTTON_Y, ButtonY_OnActivate )
+	DeregisterButtonPressedCallback( BUTTON_STICK_LEFT, ButtonStickL_OnActivate )
+	DeregisterButtonPressedCallback( KEY_Y, KeyY_OnActivate )
+	DeregisterButtonPressedCallback( KEY_N, KeyN_OnActivate )
+	DeregisterButtonPressedCallback( KEY_B, KeyB_OnActivate )
+
 	DeregisterButtonPressedCallback( KEY_ENTER, OnLobbyMenu_FocusChat )
 	DeregisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT, NewsButton_OnActivate )
-	//DeregisterButtonPressedCallback( BUTTON_STICK_RIGHT, SocialButton_OnActivate )
+	DeregisterButtonPressedCallback( BUTTON_STICK_RIGHT, SocialButton_OnActivate )
 	file.inputsRegistered = false
 }
 
 
+void function SeasonTab_OnActivate( var button )
+{
+	// Season tab removed from lobby
+	return
+}
+
 void function NewsButton_OnActivate( var button )
 {
-	if ( !IsPromoDialogAllowed() )
-		return
-
 	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
 		return
 
 	LaunchExternalWebBrowser( "https://blog.playvalkyrie.org/", WEBBROWSER_FLAG_NONE )
+}
 
-	//AdvanceMenu( GetMenu( "R5RNews" ) )
+void function NewsButton_OnHover( var button )
+{
+	file.hasFocusedNews = true
 }
 
 
@@ -507,31 +872,10 @@ void function SocialButton_OnActivate( var button )
 	AdvanceMenu( GetMenu( "SocialMenu" ) )
 }
 
-void function DCButton_OnActivate( var button )
-{
-	if ( IsDialog( GetActiveMenu() ) )
-		return
-
-	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
-		return
-
-	LaunchExternalWebBrowser( "https://discord.gg/ujHfvc5Ehv", WEBBROWSER_FLAG_NONE )
-}
-
-void function BlogButton_OnActivate( var button )
-{
-	if ( IsDialog( GetActiveMenu() ) )
-		return
-
-	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
-		return
-
-	LaunchExternalWebBrowser( "https://blog.playvalkyrie.org", WEBBROWSER_FLAG_NONE )
-}
 
 void function GameMenuButton_OnActivate( var button )
 {
-	if ( InputIsButtonDown( BUTTON_STICK_LEFT ) ) // Avoid bug report shortcut
+	if ( InputIsButtonDown( BUTTON_STICK_LEFT ) )                             
 		return
 
 	if ( IsDialog( GetActiveMenu() ) )
@@ -555,6 +899,13 @@ void function PostGameButton_OnActivate( var button )
 
 void function OnLobbyMenu_NavigateBack()
 {
+	                                                                     
+	                                                                               
+	   
+	  	                       
+	  	      
+	   
+
 	if ( GetMenuActiveTabIndex( file.menu ) == 0 )
 	{
 		if ( !IsControllerModeActive() )
@@ -562,12 +913,17 @@ void function OnLobbyMenu_NavigateBack()
 	}
 	else
 	{
-		if(pmatch_MenuOpen)
-			return
-
 		TabData tabData = GetTabDataForPanel( file.menu )
-		ActivateTab( tabData, 0 )
+		ActivateTab( tabData, GetLobbyDefaultTabIndex() )
+		UpdateMenuTabs()
 	}
+}
+
+
+int function GetLobbyDefaultTabIndex()
+{
+	TabData lobbyTabData = GetTabDataForPanel( GetMenu( "LobbyMenu" ) )
+	return Tab_GetTabIndexByBodyName( lobbyTabData, "PlayPanel" )
 }
 
 
@@ -577,10 +933,10 @@ void function OnLobbyMenu_PostGameOrChat( var button )
 
 	#if CONSOLE_PROG
 		const float HOLD_FOR_CHAT_DELAY = 1.0
-		float startTime = Time()
-		while ( InputIsButtonDown( BUTTON_BACK ) || InputIsButtonDown( KEY_TAB ) && GetConVarInt( "hud_setting_accessibleChat" ) != 0 )
+		float startTime = UITime()
+		while ( !VoiceIsRestricted() && (InputIsButtonDown( BUTTON_BACK ) || InputIsButtonDown( KEY_TAB ) && GetConVarInt( "hud_setting_accessibleChat" ) != 0) )
 		{
-			if ( Time() - startTime > HOLD_FOR_CHAT_DELAY )
+			if ( UITime() - startTime > HOLD_FOR_CHAT_DELAY )
 			{
 				if ( GetPartySize() > 1 )
 				{
@@ -605,15 +961,16 @@ void function OnLobbyMenu_PostGameOrChat( var button )
 
 	if ( IsPostGameMenuValid() && savedMenu == GetActiveMenu() )
 	{
-		{
-			thread PostGameFlow()
-		}
+		thread PostGameFlow()
 	}
 }
 
 
 void function PostGameFlow()
 {
+                        
+                                                                                        
+       
 	bool showRankedSummary = GetPersistentVarAsInt( "showRankedSummary" ) != 0
 	bool isFirstTime       = GetPersistentVarAsInt( "showGameSummary" ) != 0
 
@@ -625,7 +982,17 @@ void function PostGameFlow()
 	}
 
 	if ( showRankedSummary )
+	{
 		OpenRankedSummary( isFirstTime )
+	}
+
+                        
+                                
+   
+                                                                                                                                                                      
+                                  
+   
+       
 }
 
 
@@ -647,6 +1014,7 @@ void function OnLobbyMenu_FocusChat( var panel )
 	#endif
 }
 
+
 bool function Lobby_IsInputBlocked( int inputID )
 {
 	if ( file.activeLobbyPopup == null )
@@ -657,39 +1025,186 @@ bool function Lobby_IsInputBlocked( int inputID )
 	return lobbyPopup.checkBlocksInput( inputID )
 }
 
-string function GetUIPlaylistName(string playlist)
+
+void function ButtonB_OnActivate( var button )
 {
-	if(!IsLobby() || !IsConnected())
+	DispatchLobbyPopupInput( BUTTON_B )
+}
+
+
+void function KeyEscape_OnActivate( var button )
+{
+	DispatchLobbyPopupInput( KEY_ESCAPE )
+}
+
+
+void function ButtonX_OnActivate( var button )
+{
+	DispatchLobbyPopupInput( BUTTON_X )
+}
+
+
+void function ButtonY_OnActivate( var button )
+{
+	DispatchLobbyPopupInput( BUTTON_Y )
+}
+
+
+void function ButtonStickL_OnActivate( var button )
+{
+	DispatchLobbyPopupInput( BUTTON_STICK_RIGHT )
+}
+
+
+void function KeyY_OnActivate( var button )
+{
+	DispatchLobbyPopupInput( KEY_Y )
+}
+
+
+void function KeyN_OnActivate( var button )
+{
+	DispatchLobbyPopupInput( KEY_N )
+}
+
+
+void function KeyB_OnActivate( var button )
+{
+	DispatchLobbyPopupInput( KEY_B )
+}
+
+
+void function DispatchLobbyPopupInput( int inputID )
+{
+	if ( file.activeLobbyPopup == null )
+		return
+
+	if ( IsDialog( GetActiveMenu() ) )
+		return
+
+	LobbyPopup ornull lobbyPopup = file.activeLobbyPopup
+	expect LobbyPopup( lobbyPopup )
+	lobbyPopup.handleInput( inputID )
+}
+
+
+void function SetActiveLobbyPopup( LobbyPopup popup )
+{
+	Assert( file.activeLobbyPopup == null )
+
+	file.activeLobbyPopup = popup
+}
+
+
+bool function HasActiveLobbyPopup()
+{
+	return file.activeLobbyPopup != null
+}
+
+
+void function ClearActiveLobbyPopup()
+{
+	if ( file.activeLobbyPopup != null )
+	{
+		LobbyPopup ornull lobbyPopup = file.activeLobbyPopup
+		expect LobbyPopup( lobbyPopup )
+
+		file.activeLobbyPopup = null
+
+		lobbyPopup.onClose()
+	}
+}
+
+
+void function SetNewsButtonTooltip( int status )
+{
+	ToolTipData newsToolTip
+	switch( status )
+	{
+		case UM_RESULT_HIGH_LATENCY:
+			newsToolTip.descText = "#UM_TOOLTIP_STATUS_HIGH_LATENCY"
+			HudElem_SetRuiArg( file.newsButtonStatusIcon, "icon", $"rui/menu/lobby/um_icon_high_latency" )
+			break;
+		case UM_RESULT_FAILURE:
+			newsToolTip.descText = "#UM_TOOLTIP_STATUS_FAILURE"
+			HudElem_SetRuiArg( file.newsButtonStatusIcon, "icon", $"rui/menu/lobby/um_icon_failure" )
+			break;
+		default:
+			newsToolTip.descText = "#NEWS"
+			HudElem_SetRuiArg( file.newsButtonStatusIcon, "icon", $"" )
+			Hud_SetVisible( file.newsButtonStatusIcon, false )
+			break;
+
+	}
+	Hud_SetToolTipData( file.newsButton, newsToolTip )
+}
+
+// Custom button callbacks
+void function DCButton_OnActivate( var button )
+{
+	if ( IsDialog( GetActiveMenu() ) )
+		return
+
+	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
+		return
+
+	LaunchExternalWebBrowser( "https://discord.gg/ujHfvc5Ehv", WEBBROWSER_FLAG_NONE )
+}
+
+void function BlogButton_OnActivate( var button )
+{
+	if ( IsDialog( GetActiveMenu() ) )
+		return
+
+	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
+		return
+
+	LaunchExternalWebBrowser( "https://blog.playvalkyrie.org", WEBBROWSER_FLAG_NONE )
+}
+
+void function UpdateServerAndPlayerCountButtons()
+{
+	HudElem_SetRuiArg( file.playersButton, "buttonText", "" + MS_GetPlayerCount() )
+	Hud_SetWidth( file.playersButton, Hud_GetBaseWidth( file.playersButton ) * 2 )
+
+	HudElem_SetRuiArg( file.serversButton, "buttonText", "" + MS_GetServerCount() )
+	Hud_SetWidth( file.serversButton, Hud_GetBaseWidth( file.serversButton ) * 2 )
+}
+
+// Utility functions
+string function GetUIPlaylistName( string playlist )
+{
+	if ( !IsLobby() || !IsConnected() )
 		return ""
 
 	return GetPlaylistVarString( playlist, "name", playlist )
 }
 
-string function GetUIMapName(string map)
+string function GetUIMapName( string map )
 {
-	if(map in MapNames)
+	if ( map in MapNames )
 		return MapNames[map]
 
 	return map
 }
 
-string function GetUIVisibilityName(int vis)
+string function GetUIVisibilityName( int vis )
 {
-	if(vis in VisibilityNames)
+	if ( vis in VisibilityNames )
 		return VisibilityNames[vis]
 
 	return ""
 }
 
-asset function GetUIMapAsset(string map, bool gamemode_assets = false)
+asset function GetUIMapAsset( string map, bool gamemode_assets = false )
 {
-	if(map in MapAssets && !gamemode_assets)
+	if ( map in MapAssets && !gamemode_assets )
 		return MapAssets[map]
 
-	if(map in MapAssetsSquare && gamemode_assets)
+	if ( map in MapAssetsSquare && gamemode_assets )
 		return MapAssetsSquare[map]
 
-	if(gamemode_assets)
+	if ( gamemode_assets )
 		return $"rui/menu/maps/map_not_found_square_icon"
 
 	return $"rui/menu/maps/map_not_found_big_icon"

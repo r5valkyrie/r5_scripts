@@ -6,42 +6,42 @@ global function GetSeasonStyle
 
 global struct SeasonStyleData
 {
-	bool  hasRefreshedOnce = false
+	bool  hasRefreshedOnce = true
 	asset seasonBannerLeftImage = $""
-	asset seasonBannerLogo = $""
+	asset seasonBannerLogo = $"ui/tab_logo.rpak"
 	asset seasonBannerLogoBg = $""
 	asset seasonBannerRightImage = $""
 
 	vector titleTextColor = <1.0, 1.0, 1.0>
-	vector headerTextColor = <1.0, 1.0, 1.0>
-	vector seasonColor = <1.0, 1.0, 1.0>
-	vector seasonNewColor = <1.0, 1.0, 1.0>
+	vector headerTextColor = <0.85, 0.85, 0.85>
+	vector seasonColor = <0.78, 0.082, 0.043>
+	vector seasonNewColor = <0.82, 0.18, 0.14>
 
-	           
-	vector tabDefaultTextCol = <1.0, 1.0, 1.0>
+	// Tab colors - "Meltdown" red theme
+	vector tabDefaultTextCol = <0.75, 0.75, 0.75>
 	vector tabFocusedTextCol = <1.0, 1.0, 1.0>
 	vector tabSelectedTextCol = <1.0, 1.0, 1.0>
 
-	vector tabFocusedBGCol = <1.0, 1.0, 1.0>
-	vector tabSelectedBGCol = <1.0, 1.0, 1.0>
+	vector tabFocusedBGCol = <0.55, 0.08, 0.05>
+	vector tabSelectedBGCol = <0.78, 0.082, 0.043>
 
-	vector tabFocusedBarCol = <1.0, 1.0, 1.0>
-	vector tabSelectedBarCol = <1.0, 1.0, 1.0>
+	vector tabFocusedBarCol = <0.90, 0.20, 0.12>
+	vector tabSelectedBarCol = <0.90, 0.20, 0.12>
 
-	vector tabGlowFocusedCol = <1.0, 1.0, 1.0>
+	vector tabGlowFocusedCol = <0.95, 0.25, 0.15>
 
-	         
-	vector subtabDefaultTextCol = <1.0, 1.0, 1.0>
+	// Subtab colors
+	vector subtabDefaultTextCol = <0.65, 0.65, 0.65>
 	vector subtabFocusedTextCol = <1.0, 1.0, 1.0>
 	vector subtabSelectedTextCol = <1.0, 1.0, 1.0>
 
-	vector subtabFocusedBGCol = <1.0, 1.0, 1.0>
-	vector subtabSelectedBGCol = <1.0, 1.0, 1.0>
+	vector subtabFocusedBGCol = <0.45, 0.06, 0.04>
+	vector subtabSelectedBGCol = <0.65, 0.07, 0.04>
 
-	vector subtabFocusedBarCol = <1.0, 1.0, 1.0>
-	vector subtabSelectedBarCol = <1.0, 1.0, 1.0>
+	vector subtabFocusedBarCol = <0.90, 0.20, 0.12>
+	vector subtabSelectedBarCol = <0.90, 0.20, 0.12>
 
-	vector subtabGlowFocusedCol = <1.0, 1.0, 1.0>
+	vector subtabGlowFocusedCol = <0.95, 0.25, 0.15>
 }
 
 struct

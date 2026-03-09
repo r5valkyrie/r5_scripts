@@ -431,9 +431,9 @@ void function LoadoutSelection_RegisterLoadoutData()
 		bool isSlotDisabled = GetCurrentPlaylistVarBool( "loadoutselection_dt_override_" + item.loadoutSlot + "_disable", false )
 		if ( isSlotDisabled )
 		{
-			#if DEV
+			#if DEVELOPER
 				printt( "LOADOUT SELECTION: RegisterLoadoutData skipping " + item.loadoutSlot + " because it is disabled through playlist vars" )
-			#endif // DEV
+			#endif // DEVELOPER
 
 			continue
 		}
@@ -442,9 +442,9 @@ void function LoadoutSelection_RegisterLoadoutData()
 		string loadoutSlotToUseAsOverride = GetCurrentPlaylistVarString( "loadoutselection_dt_override_" + item.loadoutSlot + "_loadouts", "" )
 		if ( loadoutSlotToUseAsOverride != "" )
 		{
-			#if DEV
+			#if DEVELOPER
 				printt( "LOADOUT SELECTION: Overriding Loadout Slot: " + item.loadoutSlot + " with " + loadoutSlotToUseAsOverride )
-			#endif // DEV
+			#endif // DEVELOPER
 
 			row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "loadoutSlot" ), loadoutSlotToUseAsOverride )
 			Assert( row > -1, "Attempted to override a Loadout Slot through playlist vars using an invalid Loadout Slot or a Slot that is not in the Rotations Datatable" )
@@ -466,9 +466,9 @@ void function LoadoutSelection_RegisterLoadoutData()
 			string loadoutToUseAsOverride = GetCurrentPlaylistVarString( "loadoutselection_dt_override_loadout_" + loadout, "" )
 			if ( loadoutToUseAsOverride != "" )
 			{
-				#if DEV
+				#if DEVELOPER
 					printt( "LOADOUT SELECTION: Overriding Loadout: " + loadout + " with " + loadoutToUseAsOverride )
-				#endif // DEV
+				#endif // DEVELOPER
 
 				loadout = loadoutToUseAsOverride
 			}
@@ -485,9 +485,9 @@ void function LoadoutSelection_RegisterLoadoutData()
 		index++
 	}
 
-	#if DEV
+	#if DEVELOPER
 		printt( "LOADOUT SELECTION: RegisterLoadoutData Completed" )
-	#endif // DEV
+	#endif // DEVELOPER
 }
 #endif // CLIENT || SERVER
 
@@ -502,9 +502,9 @@ void function LoadoutSelection_RegisterLoadoutDistribution()
 
 	foreach ( item in file.loadoutCategories )
 	{
-		#if DEV
+		#if DEVELOPER
 			printt( "LOADOUT SELECTION: Getting datatable for loadout " + item.loadoutSlot )
-		#endif // DEV
+		#endif // DEVELOPER
 
 		foreach ( name, loadout in item.loadoutContentsByNameTable )
 		{
@@ -783,9 +783,9 @@ void function LoadoutSelection_InitWeaponData()
 				supportedAttachmentOverrides = GetCurrentPlaylistVarString( "loadoutselection_" + weaponRef + "_supported_attachment_override", supportedAttachmentOverrides )
 				if ( supportedAttachmentOverrides != "" )
 				{
-					#if DEV
+					#if DEVELOPER
 						printt( "LOADOUT SELECTION: Overriding supported attachments for " + weaponRef )
-					#endif // DEV
+					#endif // DEVELOPER
 					LoadoutSelection_OverrideSupportedWeaponAttachmentsForWeaponRef( weaponRef, supportedAttachmentOverrides )
 				}
 
@@ -955,9 +955,9 @@ void function LoadoutSelection_HandleItemExclusivity()
 	string activeLoadoutName
 	foreach ( item in file.loadoutCategories )
 	{
-		#if DEV
+		#if DEVELOPER
 			printt( "LOADOUT SELECTION: Getting datatable for loadout " + item.loadoutSlot )
-		#endif // DEV
+		#endif // DEVELOPER
 
 		// Only disable loot items for loadouts actually in use
 		activeLoadoutName = item.activeLoadoutName
@@ -1026,9 +1026,9 @@ void function LoadoutSelection_HandleItemExclusivity()
 	// Take all the items we want to disable and set them to be disabled
 	foreach( item in itemsToDisable )
 	{
-		#if DEV
+		#if DEVELOPER
 			printt( "LOADOUT SELECTION: Adding the following to the Disabled Loot List because it is available in a Loadout: " + item )
-		#endif // DEV
+		#endif // DEVELOPER
 
 		SURVIVAL_Loot_AddDisabledRef( item )
 	}
@@ -1376,9 +1376,9 @@ string function LoadoutSelection_GetActiveLoadoutForCategory( LoadoutSelectionCa
 		if ( LoadoutSelection_ShouldAvoidDuplicateWeaponsInLoadoutRotation() )
 			indexToUse = LoadoutSelection_GetLoadoutForCategoryWithoutDupeWeapons( indexToUse, loadoutCategory )
 
-		#if DEV
+		#if DEVELOPER
 			printt( "LOADOUT SELECTION: loadout rotation is set to manual, using loadout index: " + indexToUse + " for category: " + loadoutCategory.loadoutSlot )
-		#endif // DEV
+		#endif // DEVELOPER
 
 		return loadoutCategory.loadoutContentNames[ indexToUse ]
 	}
@@ -1394,9 +1394,9 @@ string function LoadoutSelection_GetActiveLoadoutForCategory( LoadoutSelectionCa
 		if ( loadoutCategory.loadoutContentNames.len() > 1 && LoadoutSelection_ShouldAvoidDuplicateWeaponsInLoadoutRotation() )
 			rotationIndex = LoadoutSelection_GetLoadoutForCategoryWithoutDupeWeapons( rotationIndex, loadoutCategory )
 
-		#if DEV
+		#if DEVELOPER
 			printt( "LOADOUT SELECTION: loadout rotation is set to permanent, using loadout index: " + rotationIndex + " for category: " + loadoutCategory.loadoutSlot )
-		#endif // DEV
+		#endif // DEVELOPER
 
 		return loadoutCategory.loadoutContentNames[ rotationIndex ]
 	}
@@ -1432,9 +1432,9 @@ string function LoadoutSelection_GetActiveLoadoutForCategory( LoadoutSelectionCa
 	if ( LoadoutSelection_ShouldAvoidDuplicateWeaponsInLoadoutRotation() )
 		rotationIndex = LoadoutSelection_GetLoadoutForCategoryWithoutDupeWeapons( rotationIndex, loadoutCategory )
 
-	#if DEV
+	#if DEVELOPER
 		printt( "LOADOUT SELECTION: loadouts using a rotation, loadout index: " + rotationIndex + " for category: " + loadoutCategory.loadoutSlot )
-	#endif // DEV
+	#endif // DEVELOPER
 
 	return loadoutCategory.loadoutContentNames[ rotationIndex ]
 }

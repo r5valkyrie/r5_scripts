@@ -66,7 +66,7 @@ const asset FX_HEARTBEAT_SENSOR_EYEGLOW_FOE = $"p_heart_sensor_eye_foe"
 const asset FX_HEARTBEAT_SENSOR_SONAR_PULSE = $"P_heart_sensor_pulse_1p"
 const asset FX_HEARTBEAT_SENSOR_SONAR_PULSE_NO_INTRO = $"P_heart_sensor_on_1p"
 
-#if DEV
+#if DEVELOPER
 const bool HEARTBEAT_SENSOR_DEBUG = false
 const bool HEARTBEAT_SENSOR_DEBUG_VERBOSE = false
 const bool HEARTBEAT_SENSOR_WEAPON_MODS_DEBUG = false
@@ -387,14 +387,14 @@ void function DelayedActivateHeartbeatSensor_Thread( entity player, bool fromTac
 		float raiseTime = viewWeapon.GetWeaponSettingFloat( eWeaponVar.raise_time )
 		if ( raiseTime > 0.0 )
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( DEBUG_HEARTBEAT_SENSOR_DELAY )
 					printt( FUNC_NAME() + "Setting delay to: " + ( raiseTime * 0.5 ) )
 			#endif
 			delayTime = Time() + ( raiseTime * 0.5 )
 		}
 	}
-	#if DEV
+	#if DEVELOPER
 	else
 	{
 		if ( DEBUG_HEARTBEAT_SENSOR_DELAY )
@@ -523,7 +523,7 @@ void function AddMoveSpeedWeaponModForMelee( entity player )
 
 		if ( !mods.contains( modName ) )
 		{
-			#if DEV
+			#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_WEAPON_MODS_DEBUG )
 			{
 				printt( FUNC_NAME() + " Adding " + modName + " weapon mod." )
@@ -550,7 +550,7 @@ void function RemoveMoveSpeedWeaponModForMelee( entity player )
 
 		if( modToRemove != "" )
 		{
-			#if DEV
+			#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_WEAPON_MODS_DEBUG )
 			{
 				printt( FUNC_NAME() + " Removing " + modToRemove + " weapon mod." )
@@ -604,7 +604,7 @@ bool function ClientCallback_UpdateHeartbeatsHeardStat( entity player, array<str
 		int maxPossibleVal = int( activationTime / HEARTBEAT_SENSOR_PING_INTERVAL_MIN )
 		int cappedVal = minint( count, maxPossibleVal )
 
-		#if DEV
+		#if DEVELOPER
 		if ( HEARTBEAT_SENSOR_STAT_TRACKING_DEBUG )
 		{
 			printt("Client reported hearing " + count + " heartbeats, server says max possible would have been " + maxPossibleVal + ", incrementing stat by " + cappedVal + ". Sensor was active for: " + activationTime )
@@ -685,7 +685,7 @@ void function ActivateHeartbeatSensor( entity player, bool fromTac )
 	#if SERVER
 		if ( player in file.lastHeartbeatSensorActivationTime )
 		{
-			#if DEV
+			#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_STAT_TRACKING_DEBUG )
 			{
 				printt( "Setting last activation time on Server to " + Time() )
@@ -769,7 +769,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 	{
 		if ( !PlayerDeliveryShouldBeUrgent_Common( player ) )
 		{
-			#if DEV
+			#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 				printt(FUNC_NAME() + " Out of Combat")
 			#endif //DEV
@@ -784,7 +784,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 
 			if ( file.heartbeatSensorVictims.len() > 0 && deltaHeardHeartbeat <= HEARTBEAT_SENSOR_REPORT_LISTEN_DELAY )
 			{
-				#if DEV
+				#if DEVELOPER
 				if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 					printt(FUNC_NAME() + " Has enemeis")
 				#endif //DEV
@@ -801,7 +801,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 
 				if ( !onGlobalCooldown )
 				{
-					#if DEV
+					#if DEVELOPER
 					if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 						printt(FUNC_NAME() + " Off Cooldown")
 					#endif //DEV
@@ -812,7 +812,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 
 					if ( ( deltaTimeEnemies > HEARTBEAT_SENSOR_COMMS_COOLDOWN || distanceFromLastReport > file.commsResetRange ) && ( deltaTimeSinceHadClear > HEARTBEAT_SENSOR_STATE_COOLDOWN ) )
 					{
-						#if DEV
+						#if DEVELOPER
 						if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 							printt(FUNC_NAME() + " Adding enemy prompt" )
 						#endif //DEV
@@ -825,7 +825,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 			}
 			else
 			{
-				#if DEV
+				#if DEVELOPER
 				if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 					printt(FUNC_NAME() + " No enemeis")
 				#endif //DEV
@@ -834,7 +834,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 
 				if ( !onGlobalCooldown )
 				{
-					#if DEV
+					#if DEVELOPER
 					if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 						printt(FUNC_NAME() + " Off Cooldown")
 					#endif //DEV
@@ -844,7 +844,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 					float deltaTimeEnemies = Time() - file.lastCommsTimeEnemies
 					float deltaTimeSinceHadEnemies = Time() - lastTimeHadEnemies
 
-					#if DEV
+					#if DEVELOPER
 					if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 						printt(FUNC_NAME() + "distanceFromLastReport: " + distanceFromLastReport + " deltaTimeClear: " + deltaTimeClear + " deltaTimeEnemies: " + deltaTimeEnemies + " deltaTimeSinceHadEnemies: " + deltaTimeSinceHadEnemies)
 					#endif //DEV
@@ -852,7 +852,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 					//There's an additional check for the all clear comms to not follow too closely after a enemies comms.  Can easily have the situation where you may have indicated enemies nearby, and then move your aim such that you have no enemies on heartbeat anymore.  Immediatly communicating no heartbeats after feels weird becuse chances are those enemies are still around.
 					if ( ( ( deltaTimeClear > HEARTBEAT_SENSOR_COMMS_COOLDOWN && deltaTimeEnemies > HEARTBEAT_SENSOR_COMMS_COOLDOWN_CLEAR_AFTER_ENEMIES ) || distanceFromLastReport > file.commsResetRange ) && ( deltaTimeSinceHadEnemies > HEARTBEAT_SENSOR_STATE_COOLDOWN ) )
 					{
-						#if DEV
+						#if DEVELOPER
 						if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 							printt( FUNC_NAME() + " Adding clear prompt" )
 						#endif //DEV
@@ -866,7 +866,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 		}
 		else //even if we're in combat by that check (under 30s since we took or did damage), let's see if our nearby enemies are all dead or too far away to care, in that case probably want to be able to give an all clear comms.
 		{
-			#if DEV
+			#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 				printt( FUNC_NAME() + " In Combat")
 			#endif //DEV
@@ -876,7 +876,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 			{
 				if ( !IsValid( file.lastHeardEnemies[i] ) || !IsAlive( file.lastHeardEnemies[i] ) )
 				{
-					#if DEV
+					#if DEVELOPER
 					if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 						printt( FUNC_NAME() + " found dead or invalid enemy in list from last comms, removing" )
 					#endif //DEV
@@ -886,7 +886,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 				}
 				else if ( Length( player.EyePosition() - file.lastHeardEnemies[i].EyePosition() ) > file.commsEnemyRemovalRange )
 				{
-					#if DEV
+					#if DEVELOPER
 						if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 							printt( FUNC_NAME() + " enemy is far enoughaway from Seer that we no longer want to track them, removing." )
 					#endif //DEV
@@ -896,7 +896,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 				}
 				else if ( IsAlive( file.lastHeardEnemies[i] ) )
 				{
-					#if DEV
+					#if DEVELOPER
 					if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 						printt( FUNC_NAME() + " found alive enemy from last group seen" )
 					#endif //DEV
@@ -910,7 +910,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 			//we didn't find anyone alive from our last ping, and we have no one on the sensor
 			if ( !foundAliveEnemy && ( file.heartbeatSensorVictims.len() == 0 ) )
 			{
-				#if DEV
+				#if DEVELOPER
 				if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 					printt( FUNC_NAME() + " !foundAliveEnemy && ( file.heartbeatSensorVictims.len() == 0 )")
 				#endif //DEV
@@ -919,7 +919,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 				float deltaTimeEither = Time() - file.lastCommsTimeEither
 				float deltaTimeHadEnemies = Time() - lastTimeHadEnemies
 
-				#if DEV
+				#if DEVELOPER
 				if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 					printt(FUNC_NAME() + "deltaTimeEither: " + deltaTimeEither + " deltaTimeClear: " + deltaTimeClear + " deltaTimeHadEnemies: " + deltaTimeHadEnemies)
 				#endif //DEV
@@ -933,7 +933,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 					file.lastCommsTimeEither = Time()
 				}
 			}
-			#if DEV
+			#if DEVELOPER
 			else if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
 			{
 				printt(FUNC_NAME() + " found alive enemy from last ping")
@@ -1076,7 +1076,7 @@ void function ManageVictims_Thread( entity player )
 
 	while ( true )
 	{
-		#if DEV
+		#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_DEBUG_VERBOSE )
 			{
 				DebugDrawSphere( player.EyePosition(), GetHeartbeatSensorRange( player ), COLOR_RED, true, 0.1 )
@@ -1089,7 +1089,7 @@ void function ManageVictims_Thread( entity player )
 		//The idea here is to scale how far we actually look for enemies based on zoom fov (scope).  Previously we just had a big value to cover all cases (IE if they have a 10x zoom) but that can lead to weirdness where you can hit some LOS hits on someone really far away from you with a 1x scope.
 		float watchRange = GraphCapped( viewportFOV, HEARTBEAT_SENSOR_MIN_ZOOM_FOV, HEARTBEAT_SENSOR_MAX_ZOOM_FOV, HEARTBEAT_SENSOR_MIN_WATCH_RANGE, HEARTBEAT_SENSOR_MAX_WATCH_RANGE )
 
-		#if DEV
+		#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_DEBUG )
 			{
 				printt("viewportFOV: " + viewportFOV + " watchRange: " + watchRange)
@@ -1172,7 +1172,7 @@ void function ManageVictims_Thread( entity player )
 				bestVictimForAudio = victimInfo.player
 			}
 
-			#if DEV
+			#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_DEBUG )
 			{
 				DebugDrawMark( victimInfo.player.GetWorldSpaceCenter(), 15, COLOR_RED, true, 0.1 )
@@ -1180,7 +1180,7 @@ void function ManageVictims_Thread( entity player )
 			#endif //DEV
 		}
 
-		#if DEV
+		#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_DEBUG )
 			{
 				if ( IsValid( bestVictimForAudio ) )
@@ -1462,7 +1462,7 @@ void function CL_HeartSeekerRUIThread( entity player, entity weapon )
 	UISize screenSize = GetScreenSize()
 	float offset = GetHeartbeatSensorUISizeForWeapon( player, weapon, screenSize )
 
-	#if DEV
+	#if DEVELOPER
 	if ( HEARTBEAT_SENSOR_DEBUG )
 	{
 		printt( "Weapon name: " + weapon.GetWeaponClassName() + "optic: " + weapon.w.activeOptic + " FOV - " + weapon.GetWeaponZoomFOV() + " Offset: " + offset )
@@ -1568,7 +1568,7 @@ float function GetHeartbeatSensorUISizeForWeapon( entity player, entity weapon, 
 	else
 		weapon.w.activeOptic = ""
 
-	#if DEV
+	#if DEVELOPER
 		if ( HEARTBEAT_SENSOR_DEBUG )
 		{
 			printt(FUNC_NAME() + ": looking up offset value for optic: " + weapon.w.activeOptic )
@@ -1584,7 +1584,7 @@ float function GetHeartbeatSensorUISizeForWeapon( entity player, entity weapon, 
 	//fix for ultrawide, if ultrawide we'll want to scale down a bit more to keep the width relatively the same across ARs
 	float scaledAR = defaultAR/currentAR
 
-	#if DEV
+	#if DEVELOPER
 		if ( HEARTBEAT_SENSOR_DEBUG )
 		{
 			printt( FUNC_NAME() + " - ScaledAR: " + scaledAR )

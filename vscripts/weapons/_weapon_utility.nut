@@ -235,7 +235,7 @@ const EMP_GRENADE_BEAM_EFFECT 				= $"wpn_arc_cannon_beam"
 const DRONE_REBOOT_TIME 					= 5.0
 const GUNSHIP_REBOOT_TIME 					= 5.0
 const vector UP_VECTOR = <0, 0, 1>
-const float DOT_60DEGREE =	0.5
+// DOT_60DEGREE moved to sh_utility_all.gnut
 
 const bool DEBUG_BURN_DAMAGE 				= false
 

@@ -1,7 +1,7 @@
 global function InitSoundPanel
 global function RestoreSoundDefaults
 global function SoundPanel_GetConVarData
-global function DiscardAudioSettingsDialog
+
 global function InitProcessingDialog
 
 struct
@@ -25,6 +25,27 @@ struct
 	var processingDialog
 } file
 
+void function SoundPanelSetButtonVisible( var contentPanel, string buttonName, string prevButtonName, string nextButtonName, bool visible )
+{
+	var button = Hud_GetChild( contentPanel, buttonName )
+	var prevElem = Hud_GetChild( contentPanel, prevButtonName )
+	var nextElem = Hud_GetChild( contentPanel, nextButtonName )
+
+	if ( visible )
+	{
+		Hud_Show( button )
+		Hud_SetPinSibling( nextElem, buttonName )
+		Hud_SetNavUp( nextElem, button )
+		Hud_SetNavDown( prevElem, button )
+	}
+	else
+	{
+		Hud_Hide( button )
+		Hud_SetPinSibling( nextElem, prevButtonName )
+		Hud_SetNavUp( nextElem, prevElem )
+		Hud_SetNavDown( prevElem, nextElem )
+	}
+}
 
 void function InitSoundPanel( var panel )
 {
@@ -49,101 +70,59 @@ void function InitSoundPanel( var panel )
 	SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSFXVolume" ), "#MENU_SFX_VOLUME_CLASSIC", "#OPTIONS_MENU_SFX_VOLUME_DESC", $"rui/menu/settings/settings_audio" )
 	SetupSettingsSlider( Hud_GetChild( contentPanel, "SldMusicVolume" ), "#MENU_MUSIC_VOLUME_CLASSIC", "#OPTIONS_MENU_MUSIC_VOLUME_DESC", $"rui/menu/settings/settings_audio" )
 	SetupSettingsSlider( Hud_GetChild( contentPanel, "SldLobbyMusicVolume" ), "#MENU_LOBBY_MUSIC_VOLUME", "#OPTIONS_MENU_LOBBY_MUSIC_VOLUME_DESC", $"rui/menu/settings/settings_audio" )
-	SetupSettingsButton( Hud_GetChild( contentPanel, "SwchChatSpeechToText" ), "#MENU_CHAT_SPEECH_TO_TEXT", "#OPTIONS_MENU_CHAT_SPEECH_TO_TEXT_DESC", $"rui/menu/settings/settings_audio" )
-	Hud_SetVisible( Hud_GetChild( contentPanel, "SwchChatSpeechToText" ), IsAccessibilityAvailable() )
 	#if PC_PROG
-		SetupSettingsButton( Hud_GetChild( contentPanel, "SwchChatTextToSpeech" ), "#MENU_CHAT_TEXT_TO_SPEECH", "#OPTIONS_MENU_CHAT_TEXT_TO_SPEECH_DESC", $"rui/menu/settings/settings_audio" )
-		Hud_SetVisible( Hud_GetChild( contentPanel, "SwchChatTextToSpeech" ), IsAccessibilityAvailable() )
-
 		file.voiceSensitivityButton = Hud_GetChild( contentPanel, "SldOpenMicSensitivity" )
 		file.voiceSensitivitySliderRui = Hud_GetRui( Hud_GetChild( file.voiceSensitivityButton, "PrgValue" ) )
 
 		HudElem_SetRuiArg( Hud_GetChild( file.voiceSensitivityButton, "PnlDefaultMark" ), "heightScale", 0.7 )
 
+		var button = Hud_GetChild( contentPanel, "SwchInputDevice" )
+		SetupSettingsButton( button, "#VOICECHAT_INPUT_DEVICE", "#VOICECHAT_INPUT_DEVICE_DESC", $"rui/menu/settings/settings_audio" )
+		
+		button = Hud_GetChild( contentPanel, "SwchOutputDevice" )
+		SetupSettingsButton( button, "#AUDIO_OUTPUT_DEVICE", "#AUDIO_OUTPUT_DEVICE_DESC", $"rui/menu/settings/settings_audio" )
+
 		SetupSettingsSlider( Hud_GetChild( contentPanel, "SldOpenMicSensitivity" ), "#OPEN_MIC_SENS", "#OPEN_MIC_SENS_DESC", $"rui/menu/settings/settings_audio" )
 		SetupSettingsButton( Hud_GetChild( contentPanel, "SwchPushToTalk" ), "#OPTIONS_MENU_VOICE_CHAT_MIC", "#OPTIONS_MENU_VOICE_CHAT_MIC_DESC", $"rui/menu/settings/settings_audio" )
 		var slider = Hud_GetChild( contentPanel, "SldVoiceChatVolume" )
 		SetupSettingsSlider( slider, "#VOICE_CHAT_VOLUME", "#OPTIONS_MENU_VOICE_CHAT_DESC", $"rui/menu/settings/settings_audio" )
-		AddButtonEventHandler( slider, UIE_CHANGE, OnVoiceChatVolumeSettingChanged )
 		SetupSettingsButton( Hud_GetChild( contentPanel, "SwchSoundWithoutFocus" ), "#SOUND_WITHOUT_FOCUS", "#OPTIONS_MENU_SOUND_WITHOUT_FOCUS", $"rui/menu/settings/settings_audio" )
-		SetupSettingsButton( Hud_GetChild( contentPanel, "SwchSpeakerConfig" ), "#WINDOWS_AUDIO_CONFIGURATION", "", $"rui/menu/settings/settings_audio" )
-	#elseif(CONSOLE_PROG)
-		var button = Hud_GetChild( contentPanel, "SwchMuteVoiceChat" )
-		SetupSettingsButton( button, "#OPTIONS_MENU_VOICE_CHAT_DISABLE", "#OPTIONS_MENU_VOICE_CHAT_DISABLE_DESC", $"rui/menu/settings/settings_audio" )
-		AddButtonEventHandler( button, UIE_CHANGE, OnDisableVoiceChatSettingChanged )
+		SetupSettingsButton( Hud_GetChild( contentPanel, "SwchSpeakerConfig" ), "#AUDIO_CHANNEL_CONFIGURATION", "#AUDIO_CHANNEL_CONFIGURATION_DESC", $"rui/menu/settings/settings_audio" )
+		
+		AddButtonEventHandler( Hud_GetChild( contentPanel, "SwchOutputDevice" ), UIE_CHANGE, OnOutputDeviceChanged )
 	#endif
 
-	//AddEventHandlerToButtonClass( menu, "LeftRuiFooterButtonClass", UIE_GET_FOCUS, FooterButton_Focused )
-
+	SettingsPanel_SetContentPanelHeight( contentPanel )
 	ScrollPanel_InitPanel( panel )
 	ScrollPanel_InitScrollBar( panel, Hud_GetChild( panel, "ScrollBar" ) )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddPanelFooterOption( panel, LEFT, BUTTON_BACK, true, "#BACKBUTTON_RESTORE_DEFAULTS", "#RESTORE_DEFAULTS", OpenConfirmRestoreSoundDefaultsDialog )
 	AddPanelFooterOption( panel, LEFT, -1, false, "#FOOTER_CHOICE_HINT", "" )
-	//#if DURANGO_PROG
-	//AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_XBOX_HELP", "", OpenXboxHelp )
-	//#endif // DURANGO_PROG
+	                  
+	                                                                                               
+	                        
 
 	file.conVarDataList.append( CreateSettingsConVarData( "TalkIsStream", eConVarType.INT ) )
 	file.conVarDataList.append( CreateSettingsConVarData( "miles_occlusion", eConVarType.INT ) )
 	file.conVarDataList.append( CreateSettingsConVarData( "closecaption", eConVarType.INT ) )
 	file.conVarDataList.append( CreateSettingsConVarData( "speechtotext_enabled", eConVarType.INT ) )
 	#if PC_PROG
+		file.conVarDataList.append( CreateSettingsConVarData( "voice_input_device", eConVarType.STRING ) )
 		file.conVarDataList.append( CreateSettingsConVarData( "hudchat_play_text_to_speech", eConVarType.INT ) )
+		file.conVarDataList.append( CreateSettingsConVarData( "miles_output_device", eConVarType.STRING ) )
+		file.conVarDataList.append( CreateSettingsConVarData( "miles_channels", eConVarType.INT ) )
 	#endif
-	AddPanelFooterOption( panel, LEFT, BUTTON_Y, true, "#Y_BUTTON_APPLY", "#APPLY", ApplySoundSettingsButton_Activate, AreSoundSettingsChanged )
 }
 
-
-bool function AreSoundSettingsChanged()
+#if PC_PROG
+void function SoundPanel_UpdateDriverOptions()
 {
-	#if DEVELOPER 
-		printt( "uiGlobal.SoundSettingsChanged:", uiGlobal.SoundSettingsChanged )
-	#endif
-		
-	return uiGlobal.SoundSettingsChanged
+	int numChannelOptions = SoundOptions_SetupChannelConfigOptions( file.contentPanel, "SwchSpeakerConfig" )
+	bool presentChannelOption = GetConVarBool( "miles_channels_menuoption") && numChannelOptions > 2
+	SoundPanelSetButtonVisible( file.contentPanel, "SwchSpeakerConfig", "SwchOutputDevice", "VoiceChatHeader", presentChannelOption )
 }
-
-void function ApplySoundSettingsButton_Activate( var button )
-{
-	#if DEVELOPER
-		print( "Sound Settings Changed\nRestarting Miles\n" )
-	#endif
-	uiGlobal.SoundSettingsChanged = false
-	thread RebootMiles()
-	UpdateFooterOptions()
-}
-
-void function DiscardAudioSettingsDialog( var panel, int desiredTabIndex = -1 )
-{
-	ConfirmDialogData dialogData
-	dialogData.headerText = "#APPLY_CHANGES_AUDIO"
-	dialogData.messageText = "#APPLY_CHANGES_AUDIO_DESC"
-	dialogData.yesText = ["#A_BUTTON_DISCARD", "#DISCARD"]
-
-	dialogData.resultCallback = void function ( int result ) : ( panel, desiredTabIndex )
-	{
-		if ( result == eDialogResult.YES )
-		{
-			thread (void function() : ( panel, desiredTabIndex )
-			{
-				uiGlobal.SoundSettingsChanged = false
-				if ( desiredTabIndex <= 0 )
-				{
-					if ( GetActiveMenu() == GetMenu( "MiscMenu" ) )
-
-					return
-				}
-
-				TabData tabData = GetTabDataForPanel( panel )
-				ActivateTab( tabData, desiredTabIndex )
-			})()
-		}
-	}
-
-	OpenConfirmDialogFromData( dialogData )
-}
+#endif
 
 void function OnSoundPanel_Show( var panel )
 {
@@ -151,8 +130,14 @@ void function OnSoundPanel_Show( var panel )
 	Hud_SetEnabled( file.audioLanguageButton, IsAudioLanguageChangeAllowed() )
 
 	#if PC_PROG
-	OnVoiceChatVolumeSettingChanged( panel )
 	thread UpdateVoiceMeter()
+
+	SoundOptions_SetupVoiceInputDeviceOptions( file.contentPanel, "SwchInputDevice" )
+	SoundOptions_SetupOutputDeviceOptions( file.contentPanel, "SwchOutputDevice" )
+
+	SoundPanelSetButtonVisible( file.contentPanel, "SwchOutputDevice", "SldMasterVolume", "SwchSpeakerConfig", SoundOptions_DeviceSwitchingAvailable() )
+
+	SoundPanel_UpdateDriverOptions()
 	#endif
 }
 
@@ -170,8 +155,8 @@ void function OnSoundPanel_Hide( var panel )
 
 void function OnAudioLanguageControlChanged( var button )
 {
-	uiGlobal.SoundSettingsChanged = true
-	UpdateFooterOptions()
+	if ( IsAudioLanguageChanged() )
+		thread RebootMiles()
 }
 
 
@@ -193,7 +178,8 @@ void function RebootMiles()
 	EndSignal( uiGlobal.signalDummy, "EndRebootMiles" )
 
 	AdvanceMenu( file.processingDialog )
-	WaitFrame()
+	                                                                                                                                                    
+	WaitFrame()                                              
 
 	ClientCommand( "miles_reboot" )
 	ResetKeyRepeater()
@@ -201,7 +187,8 @@ void function RebootMiles()
 	string checkSound = "Music_Lobby"
 	var handle = null
 
-	while ( handle == null || !IsUISoundStillPlaying( handle ) )
+	                                            
+	while ( handle == null || !IsSoundStillPlaying( handle ) )
 	{
 		WaitFrame()
 		handle = EmitUISound( checkSound )
@@ -212,7 +199,6 @@ void function RebootMiles()
 	CloseActiveMenu()
 
 	UIMusicUpdate()
-	EmitUISound( "UI_Menu_Top5_Equip_Badge" )
 }
 
 
@@ -240,6 +226,12 @@ void function UpdateVoiceMeter()
 		WaitFrame()
 	}
 }
+
+
+void function OnOutputDeviceChanged( var option )
+{
+	SoundPanel_UpdateDriverOptions()
+}
 #endif
 
 void function OpenConfirmRestoreSoundDefaultsDialog( var button )
@@ -262,31 +254,6 @@ void function OnConfirmDialogResult( int result )
 	}
 }
 
-#if PC_PROG
-void function OnVoiceChatVolumeSettingChanged( var slider )
-{
-	bool isVoiceVolumeZero = GetConVarFloat( "sound_volume_voice" ) == 0.0
-	LockSpeechToText( isVoiceVolumeZero )
-}
-#endif
-
-#if CONSOLE_PROG
-void function OnDisableVoiceChatSettingChanged( var button )
-{
-	bool isVoiceChatDisabled = !GetConVarBool( "voice_enabled" )
-	var speechToTextButton = Hud_GetChild( file.contentPanel, "SwchChatSpeechToText" )
-	LockSpeechToText( isVoiceChatDisabled )
-}
-#endif
-
-void function LockSpeechToText( bool shouldLock )
-{
-	var speechToTextButton = Hud_GetChild( file.contentPanel, "SwchChatSpeechToText" )
-	Hud_SetLocked( speechToTextButton, shouldLock )
-	if( shouldLock )
-		SetConVarBool( "speechtotext_enabled", false )
-}
-
 void function RestoreSoundDefaults()
 {
 	SetConVarToDefault( "speechtotext_enabled" )
@@ -298,13 +265,19 @@ void function RestoreSoundDefaults()
 	SetConVarToDefault( "closecaption" )
 	if ( IsAudioLanguageChangeAllowed() )
 		SetConVarToDefault( "miles_language" )
+	#if PC_PROG
+		SetConVarToDefault( "miles_output_device" )
 		SetConVarToDefault( "miles_channels" )
+		SetConVarToDefault( "voice_input_device" )
 		SetConVarToDefault( "TalkIsStream" )
 		SetConVarToDefault( "hudchat_play_text_to_speech" )
 		SetConVarToDefault( "sound_volume_voice" )
 		SetConVarToDefault( "miles_occlusion" )
 		SetConVarToDefault( "sound_without_focus" )
 		SetConVarToDefault( "speex_quiet_threshold" )
+	#elseif ( NX_PROG )
+		SetConVarToDefault( "voice_enabled" )
+	#endif
 
 	SaveSettingsConVars( file.conVarDataList )
 	SavePlayerSettings()
@@ -317,9 +290,10 @@ void function RestoreSoundDefaults()
 
 bool function IsAudioLanguageChangeAllowed()
 {
-	return Hud_IsVisible( file.audioLanguageButton )
+	return Hud_IsVisible( file.audioLanguageButton ) && IsLobby()
 }
 
+                                                                      
 void function InitProcessingDialog( var menu )
 {
 	file.processingDialog = menu

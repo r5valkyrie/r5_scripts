@@ -1,41 +1,33 @@
 global function InitSelectSlotDialog
 global function OpenSelectSlotDialog
 
-const int MAX_PURCHASE_BUTTONS = 8
+global function SelectSlot_GetCursorPos
+global function SelectSlot_GetItem
+global function SelectSlot_GetCharacter
+global function SelectSlot_GetLoadoutEntries
+global function SelectSlot_GetEquipFunc
+
+global function SelectSlot_CancelButton_Activate
+global function SelectSlot_Common_AdjustButtons
 
 struct
 {
 	var menu
-	array<var> buttonList
-	var cancelButton
-	var displayItem
-	var swapIcon
+	table<string,var> panels
 
 	bool badgeMode
 
+	vector 			cursorPos
 	ItemFlavor& 	item
 	ItemFlavor ornull 	character
 	array< LoadoutEntry > loadoutEntries
 	void functionref( int ) equipFunc
-
 } file
 
 void function InitSelectSlotDialog( var newMenuArg )
 {
 	var menu = newMenuArg
 	file.menu = menu
-
-	for ( int purchaseButtonIdx = 0; purchaseButtonIdx < MAX_PURCHASE_BUTTONS; purchaseButtonIdx++ )
-	{
-		var button = Hud_GetChild( menu, "PurchaseButton" + purchaseButtonIdx )
-
-		Hud_AddEventHandler( button, UIE_CLICK, PurchaseButton_Activate )
-		Hud_AddEventHandler( button, UIE_CLICKRIGHT, PurchaseButton_Activate )
-		Hud_AddEventHandler( button, UIE_GET_FOCUS, PurchaseButton_OnFocus )
-		Hud_AddEventHandler( button, UIE_LOSE_FOCUS, PurchaseButton_LoseFocus )
-
-		file.buttonList.append( button )
-	}
 
 	SetDialog( menu, true )
 	SetClearBlur( menu, false )
@@ -46,13 +38,8 @@ void function InitSelectSlotDialog( var newMenuArg )
 	AddMenuFooterOption( menu, LEFT, BUTTON_A, true, "#A_BUTTON_SELECT" )
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#CLOSE" )
 
-	file.cancelButton = Hud_GetChild( menu, "DarkenBackground" )
-	Hud_AddEventHandler( file.cancelButton, UIE_CLICK, CancelButton_Activate )
-
-	file.displayItem = Hud_GetChild( menu, "DisplayItem" )
-
-	file.swapIcon = Hud_GetChild( menu, "SwapIcon" )
-	RuiSetImage( Hud_GetRui( file.swapIcon ), "basicImage", $"rui/hud/loot/loot_swap_icon" )
+	file.panels[ "default" ] <- Hud_GetChild( menu, "SelectSlotDefault" )
+	file.panels[ "emotes" ] <- Hud_GetChild( menu, "SelectSlotEmotes" )
 
 	RegisterSignal( "TryOpenSelectSlotDialog" )
 }
@@ -84,24 +71,85 @@ void function __TryOpenSelectSlotDialog()
 		waited = true
 	}
 
-	vector cp = GetCursorPosition()
+	file.cursorPos = GetCursorPosition()
 
 	if ( waited )
+		file.cursorPos = < 1920.0 / 2.0 , 1080.0 / 2.0, 0 >
+
+	string panelName = "default"
+	if ( file.loadoutEntries.len() > 0 && file.character != null )
 	{
-		cp = < 1920.0 / 2.0 , 1080.0 / 2.0, 0 >
+		LoadoutEntry slot1 = file.loadoutEntries[0]
+		ItemFlavor character = expect ItemFlavor( file.character )
+
+		if ( slot1 == Loadout_CharacterQuip( character, 0 ) || slot1 == Loadout_SkydiveEmote( character, 0 ) )
+			panelName = "emotes"
 	}
 
 	AdvanceMenu( file.menu )
 
-	var bg        = Hud_GetChild( file.menu, "DarkenBackground" )
+	foreach ( key, panel in file.panels )
+	{
+		if ( key == panelName )
+			ShowPanel( panel )
+		else
+			HidePanel( panel )
+	}
+}
+
+void function SelectSlot_CancelButton_Activate( var button )
+{
+	UICodeCallback_NavigateBack()
+}
+
+void function SelectSlotDialog_OnOpen()
+{
+}
+
+void function SelectSlotDialog_OnClose()
+{
+
+}
+
+vector function SelectSlot_GetCursorPos()
+{
+	return file.cursorPos
+}
+
+ItemFlavor function SelectSlot_GetItem()
+{
+	return file.item
+}
+
+ItemFlavor ornull function SelectSlot_GetCharacter()
+{
+	return file.character
+}
+
+array< LoadoutEntry > function SelectSlot_GetLoadoutEntries()
+{
+	return file.loadoutEntries
+}
+
+void functionref( int ) function SelectSlot_GetEquipFunc()
+{
+	return file.equipFunc
+}
+
+void function SelectSlot_Common_AdjustButtons( var panel, array<var> buttonList, var displayItem, var swapIcon )
+{
+	vector cp = SelectSlot_GetCursorPos()
+
+	array< LoadoutEntry > loadoutEntries = SelectSlot_GetLoadoutEntries()
+
 	UISize screen = GetScreenSize()
 
 	float xScale       = screen.width / 1920.0
 	float yScale       = screen.height / 1080.0
-	float heightAdjust = (( Hud_GetHeight( file.buttonList[ 0 ] ) + Hud_GetY( file.buttonList[ 1 ] ) ) * float( file.loadoutEntries.len() ) * 0.5) - ( Hud_GetHeight( file.buttonList[ 0 ] ) * 0.5 )
+	float heightAdjust = (( Hud_GetHeight( buttonList[ 0 ] ) + Hud_GetY( buttonList[ 1 ] ) ) * float( loadoutEntries.len() ) * 0.5) - ( Hud_GetHeight( buttonList[ 0 ] ) * 0.5 )
 
-	float xMargin = (Hud_GetWidth( file.buttonList[ 0 ] ) * 1.2) / xScale
-	float yMargin = (Hud_GetHeight( file.buttonList[ 0 ] ) * float( file.loadoutEntries.len() ) * 0.5 * 1.2) / yScale
+	float xMargin = (Hud_GetWidth( buttonList[ 0 ] ) * 1.2) / xScale
+	float yMargin = (Hud_GetHeight( buttonList[ 0 ] ) * float( loadoutEntries.len() ) * 0.5 * 1.2) / yScale
 
 	vector cpAdjusted = <
 	Clamp( cp.x, xMargin, 1920.0 - xMargin ),
@@ -112,168 +160,12 @@ void function __TryOpenSelectSlotDialog()
 	int xp = int(-xScale * cpAdjusted.x)
 	int yp = int(-yScale * cpAdjusted.y)
 
-	Hud_SetX( file.buttonList[ 0 ], xp - 0.0 - Hud_GetWidth( file.swapIcon ) )
-	Hud_SetY( file.buttonList[ 0 ], yp + int( heightAdjust ) )
+	Hud_SetX( buttonList[ 0 ], xp - 0.0 - Hud_GetWidth( swapIcon ) )
+	Hud_SetY( buttonList[ 0 ], yp + int( heightAdjust ) )
 
-	Hud_SetX( file.displayItem, xp + 0.0 + Hud_GetWidth( file.swapIcon ) )
-	Hud_SetY( file.displayItem, yp )
+	Hud_SetX( displayItem, xp + 0.0 + Hud_GetWidth( swapIcon ) )
+	Hud_SetY( displayItem, yp )
 
-	Hud_SetX( file.swapIcon, xp )
-	Hud_SetY( file.swapIcon, yp )
-
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-}
-
-void function CancelButton_Activate( var button )
-{
-	UICodeCallback_NavigateBack()
-}
-
-void function PurchaseButton_Activate( var button )
-{
-	int index = int(Hud_GetScriptID( button ))
-	file.equipFunc( index )
-	CloseActiveMenu()
-}
-
-void function SelectSlotDialog_OnOpen()
-{
-	file.badgeMode = false
-
-	bool useShortButtons = false
-	if ( file.loadoutEntries.len() > 0 )
-	{
-		ItemFlavor flavor = LoadoutSlot_GetItemFlavor( LocalClientEHI(), file.loadoutEntries[ 0 ] )
-
-		int type = ItemFlavor_GetType( flavor )
-
-		if ( type == eItemType.gladiator_card_badge )
-			file.badgeMode = true
-		else if ( type == eItemType.gladiator_card_kill_quip || type == eItemType.gladiator_card_intro_quip )
-			useShortButtons = true
-	}
-
-	foreach ( button in file.buttonList )
-	{
-		if ( file.badgeMode )
-			Hud_SetWidth( button, Hud_GetHeight( button ) )
-		else
-		{
-			Hud_SetWidth( button, Hud_GetBaseWidth( button ) )
-
-			if ( useShortButtons )
-				Hud_SetHeight( button, Hud_GetBaseHeight( button ) * 0.7 )
-			else
-				Hud_SetHeight( button, Hud_GetBaseHeight( button ) )
-		}
-	}
-
-	if ( file.badgeMode )
-	{
-		Hud_SetWidth( file.displayItem, Hud_GetBaseHeight( file.displayItem ) * 2 )
-		Hud_SetHeight( file.displayItem, Hud_GetBaseHeight( file.displayItem ) * 2 )
-	}
-	else
-	{
-		Hud_SetWidth( file.displayItem, Hud_GetBaseWidth( file.displayItem ) )
-
-		if ( useShortButtons )
-			Hud_SetHeight( file.displayItem, Hud_GetBaseHeight( file.displayItem ) * 0.7 )
-		else
-			Hud_SetHeight( file.displayItem, Hud_GetBaseHeight( file.displayItem ) )
-	}
-
-	for ( int i=0; i<file.buttonList.len(); i++ )
-	{
-		var button = file.buttonList[ i ]
-		UpdateFocusButton( button )
-	}
-
-	RuiDestroyNestedIfAlive( Hud_GetRui( file.displayItem ), "badgeUIHandle" )
-
-	ApplyItemToButton( file.displayItem, file.item )
-
-	HudElem_SetRuiArg( file.displayItem, "bgVisible", !file.badgeMode )
-}
-
-void function SelectSlotDialog_OnClose()
-{
-
-}
-
-void function PurchaseButton_OnFocus( var button )
-{
-	ApplyItemToButton( button, file.item )
-
-	int index = int(Hud_GetScriptID( button ))
-	ItemFlavor itemInButton = LoadoutSlot_GetItemFlavor( LocalClientEHI(), file.loadoutEntries[ index ] )
-
-	for ( int i=0; i<file.loadoutEntries.len(); i++ )
-	{
-		var bt = file.buttonList[ i ]
-		if ( bt == button )
-			continue
-
-		ItemFlavor flav = LoadoutSlot_GetItemFlavor( LocalClientEHI(), file.loadoutEntries[i] )
-		if ( flav == file.item )
-		{
-			ApplyItemToButton( bt, itemInButton )
-		}
-	}
-}
-
-void function PurchaseButton_LoseFocus( var button )
-{
-	foreach ( bt in file.buttonList )
-	{
-		UpdateFocusButton( bt )
-	}
-}
-
-void function UpdateFocusButton( var button )
-{
-	int index = int(Hud_GetScriptID( button ))
-
-	if ( index < file.loadoutEntries.len() )
-	{
-		Hud_Show( button )
-
-		ItemFlavor flavor = LoadoutSlot_GetItemFlavor( LocalClientEHI(), file.loadoutEntries[ index ] )
-
-		ApplyItemToButton( button, flavor )
-	}
-	else
-	{
-		Hud_Hide( button )
-	}
-}
-
-void function ApplyItemToButton( var button, ItemFlavor flavor )
-{
-	int index = int(Hud_GetScriptID( button ))
-
-	RuiDestroyNestedIfAlive( Hud_GetRui( button ), "badgeUIHandle" )
-
-	if ( file.badgeMode )
-	{
-		ItemFlavor character = expect ItemFlavor( file.character )
-		HudElem_SetRuiArg( button, "buttonText", "" )
-		CreateNestedGladiatorCardBadge( Hud_GetRui( button ), "badgeUIHandle", LocalClientEHI(), flavor, index, character )
-	}
-	else
-	{
-		string name = ItemFlavor_GetShortName( flavor )
-		int type = ItemFlavor_GetType( flavor )
-		if ( type == eItemType.gladiator_card_kill_quip || type == eItemType.gladiator_card_intro_quip )
-			name  = ItemFlavor_GetLongName( flavor )
-
-		HudElem_SetRuiArg( button, "buttonText", name )
-	}
+	Hud_SetX( swapIcon, xp )
+	Hud_SetY( swapIcon, yp )
 }

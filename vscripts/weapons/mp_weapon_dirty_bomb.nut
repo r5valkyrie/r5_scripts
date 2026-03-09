@@ -729,7 +729,7 @@ void function DetonateDirtyBombCanister( entity canisterProxy )
 		return
 
 	if ( IsValid( owner ) )
-		StatsHook_DirtyBomb_OnDetonate( owner, attacker )
+		StatsHook_DirtyBomb_OnDetonate( owner, attacker, canisterProxy )
 
 	EmitSoundOnEntity( canisterProxy, "GasTrap_Activate" )
 	EmitSoundOnEntity( canisterProxy, "GasTrap_TrapLoop" ) // Sweetener for gas trap -- cloud has its own sound in sh_gas.gnut

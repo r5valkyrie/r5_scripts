@@ -26,9 +26,9 @@ void function InitEstablishUserPanel( var panel )
 	file.signInStatus = Hud_GetChild( file.panel, "SignInStatus" )
 	Hud_EnableKeyBindingIcons( file.signInStatus )
 
-	//AddPanelFooterOption( file.panel, LEFT, BUTTON_A, false, "#A_BUTTON_SELECT" )
-	//AddPanelFooterOption( file.panel, LEFT, BUTTON_B, false, "#B_BUTTON_CLOSE", "#CLOSE" )
-	//AddPanelFooterOption( file.panel, LEFT, BUTTON_BACK, false, "", "", ClosePostGameMenu )
+	                                                                               
+	                                                                                        
+	                                                                                         
 }
 
 void function OnShowEstablishUserPanel( var panel )
@@ -42,15 +42,15 @@ void function EstablishUserPanelThink( var panel )
 	Signal( uiGlobal.signalDummy, "EndShowEstablishUserPanel" )
 	EndSignal( uiGlobal.signalDummy, "EndShowEstablishUserPanel" )
 
-	string sig = string( Time() )
+	string sig = string( UITime() )
 	printt( sig + "Hud_IsVisible for register panel:", Hud_IsVisible( file.panel ) )
 
 	int state
 	int lastState = -1
 
-	//ShowError( "Example error string!" )
-	//ShowSignInStatus( "#A_BUTTON_START" )
-	//return
+	                                      
+	                                       
+	        
 
 	while ( Hud_IsVisible( file.panel ) )
 	{
@@ -63,8 +63,8 @@ void function EstablishUserPanelThink( var panel )
 			else
 				printt( sig + "userSignInState changed from:", GetEnumString( "userSignInState", lastState ), "to:", GetEnumString( "userSignInState", state ) )
 
-			//if ( state == userSignInState.SIGNED_IN && lastState != -1 )
-			//	wait 0.1 // wait an extra frame so that old input from the newly activated controller doesn't activate the play button.
+			                                                              
+			  	                                                                                                                       
 
 			if ( state == userSignInState.ERROR )
 			{
@@ -72,8 +72,8 @@ void function EstablishUserPanelThink( var panel )
 			}
 			else if ( state == userSignInState.SIGNED_OUT )
 			{
-				if ( IsDialog( GetActiveMenu() ) ) // Close data center dialog if it's open
-					CloseActiveMenu( true )
+				if ( IsDialog( GetActiveMenu() ) )                                         
+					CloseActiveMenu()
 
 				ShowSignInStatus( "#A_BUTTON_START" )
 			}

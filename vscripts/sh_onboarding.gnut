@@ -1119,8 +1119,8 @@ void function Flowstate_AssignUniqueCharacterForPlayer(entity player, bool lock)
 	else
 		initialCharacter = characters.getrandom()
 	
-	player.SetPlayerNetInt( "characterSelectFocusIndex", ConvertItemFlavorToLoadoutSlotContentsIndex( Loadout_Character(), initialCharacter ) )
-	
+	player.SetPlayerNetInt( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, ItemFlavor_GetGUID( initialCharacter ) )
+
 	CharacterSelect_AssignCharacter( player, initialCharacter )
 	
 	if( !lock || IsDevGamemode() || Gamemode() == eGamemodes.WINTEREXPRESS )

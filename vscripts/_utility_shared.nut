@@ -3208,6 +3208,12 @@ float function GetDeathCamLength( )
 	return DEATHCAM_TIME
 }
 
+// Returns minimum death cam spectate length from playlist
+float function GetDeathCamSpectateLength()
+{
+	return GetCurrentPlaylistVarFloat( "min_deathcam_spectate_length", 0.0 )
+}
+
 float function GetRespawnButtonCamTime( entity player )
 {
 	return DEATHCAM_TIME + RESPAWN_BUTTON_BUFFER

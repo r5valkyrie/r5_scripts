@@ -15,7 +15,7 @@ global function DEV_TropicsWildlife_DestroyAllSkits
 global function DEV_TropicsWildlife_CreateAllSkits
 global function DEV_TropicsWildlife_HardResetAllSkits
 global function DEV_TropicsWildlife_GetCampDetailsAllString
-#endif // DEV && SERVER
+#endif // DEVELOPER && SERVER
 
 #if SERVER
 global function Wildlife_ClientToServer_PingWildlifeFromMap
@@ -28,7 +28,7 @@ global function ServerCallback_CL_CampClearedNoMaterialRewards
 
 #if DEVELOPER
 const bool TROPICS_WILDLIFE_AI_DEBUG = false
-#endif // DEV
+#endif // DEVELOPER
 
 #if CLIENT
 const asset PROWLER_PIT_CAMP_ICON = $"rui/hud/gametype_icons/survival/prowler_pit_icon"
@@ -2320,7 +2320,7 @@ void function BroadcastTestMsg( string messageText, string subText )
 {
 	BroadcastHudSplashToRadius( messageText, subText, <0,0,0>, -1.0, 4.0 )
 }
-#endif // DEV && SERVER
+#endif // DEVELOPER && SERVER
 
 #if CLIENT
 void function Wildlife_ServerToClient_SetWildlifeClientEnt( entity targetEnt, bool active, int campType )

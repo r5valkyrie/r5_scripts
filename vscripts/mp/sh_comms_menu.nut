@@ -529,7 +529,7 @@ array<CommsMenuOptionData> function BuildMenuOptions( int chatPage )
 			table<int,ItemFlavor> emotes = GetValidPlayerSkydiveEmotes( player )
 			foreach ( index,emote in emotes )
 			{
-				if ( !CharacterSkydiveEmote_IsTheEmpty( emote ) )
+				if ( !SkydiveEmote_IsTheEmpty( emote ) )
 					results.append( MakeOption_SkydiveEmote( emote, index ) )
 			}
 			break
@@ -729,9 +729,8 @@ var function GetRuiForMenuOption( var mainRui, int index )
 	{
 		case eOptionType.QUIP:
 			ItemFlavor data = expect ItemFlavor( op.emote )
-			LoadoutEntry characterSlot = Loadout_Character()
-			ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), characterSlot )
-			return CreateNestedRuiForQuip( mainRui, "iconHandle"+index, LocalClientEHI(), data, character )
+			// CreateNestedRuiForQuip only takes 3 params
+			return CreateNestedRuiForQuip( mainRui, "iconHandle"+index, data )
 	}
 
 	return RuiCreateNested( mainRui, "iconHandle"+index, ruiAsset )

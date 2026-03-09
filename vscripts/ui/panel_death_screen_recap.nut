@@ -28,7 +28,7 @@ void function InitDeathScreenRecapPanel( var panel )
 	foreach( button in file.blockArray )
 	{
 		AddButtonEventHandler( button, UIE_CLICK, DamageBlockButtonClick )
-		//
+		                                                                        
 	}
 
 	InitDeathScreenPanelFooter( panel, eDeathScreenPanel.DEATH_RECAP)
@@ -36,7 +36,7 @@ void function InitDeathScreenRecapPanel( var panel )
 
 void function OnOpenPanel( var panel )
 {
-	//
+	                                                     
 
 	var menu = GetParentMenu( panel )
 	var headerElement = Hud_GetChild( menu, "Header" )
@@ -46,8 +46,10 @@ void function OnOpenPanel( var panel )
 	RegisterButtonPressedCallback( BUTTON_DPAD_DOWN, DeathScreenNextDamageLog )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, DeathScreenPrevDamageLog )
 	RegisterButtonPressedCallback( BUTTON_DPAD_UP, DeathScreenPrevDamageLog )
-	//RegisterButtonPressedCallback( KEY_R, DeathScreenOnReportButtonClick )
-
+	RegisterButtonPressedCallback( GetPCReportKey(), DeathScreenOnReportButtonClick )
+	RegisterButtonPressedCallback( GetPCBlockKey(), DeathScreenOnBlockButtonClick )
+	RegisterButtonPressedCallback( KEY_TAB, DeathScreenSkipRecap )
+	RegisterButtonPressedCallback( KEY_SPACE, DeathScreenSkipRecap )
 	DeathScreenUpdateCursor()
 
 	array<var> b = file.blockArray
@@ -57,13 +59,16 @@ void function OnOpenPanel( var panel )
 
 void function OnClosePanel( var panel )
 {
-	//
+	                                                      
 
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, DeathScreenNextDamageLog )
 	DeregisterButtonPressedCallback( BUTTON_DPAD_DOWN, DeathScreenNextDamageLog )
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, DeathScreenPrevDamageLog )
 	DeregisterButtonPressedCallback( BUTTON_DPAD_UP, DeathScreenPrevDamageLog )
-	//DeregisterButtonPressedCallback( KEY_R, DeathScreenOnReportButtonClick )
+	DeregisterButtonPressedCallback( GetPCReportKey(), DeathScreenOnReportButtonClick )
+	DeregisterButtonPressedCallback( GetPCBlockKey(), DeathScreenOnBlockButtonClick )
+	DeregisterButtonPressedCallback( KEY_TAB, DeathScreenSkipRecap )
+	DeregisterButtonPressedCallback( KEY_SPACE, DeathScreenSkipRecap )
 
 	RunClientScript( "UICallback_CloseDeathRecap" )
 }
@@ -79,22 +84,22 @@ void function UI_UpdateRespawnStatus( int respawnStatus )
 void function DamageBlockButtonClick( var button )
 {
 	string scriptID = Hud_GetScriptID( button )
-	//
+	                                                  
 
-	//
+	                                                                    
 	RunClientScript( "UICallback_SelectRecapBlock", int( scriptID ) )
 }
 
 void function DeathScreenNextDamageLog( var button )
 {
-	//
+	                                                  
 
 	RunClientScript( "UICallback_NextRecapBlock" )
 }
 
 void function DeathScreenPrevDamageLog( var button  )
 {
-	//
+	                                                  
 
 	RunClientScript( "UICallback_PrevRecapBlock" )
 }
@@ -102,7 +107,7 @@ void function DeathScreenPrevDamageLog( var button  )
 bool isEnabled
 void function OnDevButtonClick( var button )
 {
-	//
+	                                  
 	var menu = Hud_GetParent( file.panel )
 	TabData tabData = GetTabDataForPanel( menu )
 	TabDef squadSummaryTab = Tab_GetTabDefByBodyName( tabData, "DeathScreenSquadSummary" )

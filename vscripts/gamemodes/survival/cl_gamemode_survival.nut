@@ -49,7 +49,7 @@ global function PROTO_ServerCallback_Sur_HoldForUltimate
 global function PROTO_OpenInventoryOrSpecifiedMenu
 
 global function UICallback_UpdateCharacterDetailsPanel
-global function UICallback_OpenCharacterSelectNewMenu
+global function UICallback_OpenCharacterSelectMenu
 global function UICallback_QueryPlayerCanBeRespawned
 
 global function HealthkitWheelToggleEnabled
@@ -201,18 +201,22 @@ struct WaitingForPlayersCameraLocPair
 global struct SummaryDataEntry
 {
 	string displayString = ""
+	int displayValue = 0
 }
 
 global struct SquadSummaryPlayerData
 {
 	int eHandle
 	int kills
+	int assists = 0
+	int knockdowns = 0
 	int damageDealt
 	int survivalTime
 	int revivesGiven
 	int respawnsGiven
 	int prophuntModelIndex
 	array<SummaryDataEntry> modeSpecificSummaryData // FreeDM port
+	bool summary3IsTime = false  // time formatting flag
 }
 
 global struct SquadSummaryData
@@ -2955,9 +2959,9 @@ void function Survival_RunCharacterSelection_Thread()
 	HideMapRui()
 
 	//
-	CloseCharacterSelectNewMenu()
+	CloseCharacterSelectMenu()
 	WaitFrame()
-	OpenCharacterSelectNewMenu()
+	OpenCharacterSelectMenu()
 
 	while( Time() < GetGlobalNetTime( "squadPresentationStartTime" ) )
 		WaitFrame()
@@ -2970,7 +2974,7 @@ void function Survival_RunCharacterSelection_Thread()
 			thread DoSquadCardsPresentation()
 	}
 	else
-		CloseCharacterSelectNewMenu()
+		CloseCharacterSelectMenu()
 
 	while( Time() < GetGlobalNetTime( "championSquadPresentationStartTime" ) )
 		WaitFrame()
@@ -3603,9 +3607,9 @@ void function ServerCallback_ShowWinningSquadSequence()
 }
 
 
-bool function IsSquadDataPersistenceEmpty()
+bool function IsSquadDataPersistenceEmpty( entity playerOrNull = null )
 {
-	entity player = GetLocalClientPlayer()
+	entity player = playerOrNull != null ? playerOrNull : GetLocalClientPlayer()
 
 	int maxTrackedSquadMembers = PersistenceGetArrayCount( "lastGameSquadStats" )
 	for ( int i = 0 ; i < maxTrackedSquadMembers ; i++ )
@@ -3697,7 +3701,7 @@ void function VictorySequenceOrderLocalPlayerFirst( entity player )
 
 void function ShowVictorySequence( bool placementMode = false )
 {
-	#if(!DEV)
+	#if(!DEVELOPER)
 		placementMode = false
 	#endif
 
@@ -4451,7 +4455,7 @@ void function UICallback_UpdateCharacterDetailsPanel( var ruiPanel )
 }
 
 
-void function UICallback_OpenCharacterSelectNewMenu()
+void function UICallback_OpenCharacterSelectMenu()
 {
 	entity player = GetLocalClientPlayer()
 	if ( IsAlive( player ) && player.ContextAction_IsMeleeExecution() )
@@ -4459,7 +4463,7 @@ void function UICallback_OpenCharacterSelectNewMenu()
 
 	if ( ( GetGameState() < eGameState.PickLoadout && !IsSurvivalTraining() ) || GetCurrentPlaylistVarBool( "character_reselect_enabled", false ) )
 	{
-		OpenCharacterSelectNewMenu( true )
+		OpenCharacterSelectMenu( true )
 	}
 }
 

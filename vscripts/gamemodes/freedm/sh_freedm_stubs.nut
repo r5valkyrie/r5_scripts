@@ -1,5 +1,5 @@
 // ============================================================================
-// FreeDM Stubs - Functions not yet implemented in s3
+// FreeDM Stubs - Functions not yet implemented
 // Loaded BEFORE all other FreeDM scripts to provide missing symbols.
 // These stubs allow the FreeDM scripts to compile and run.
 // ============================================================================
@@ -21,9 +21,20 @@ global enum eGameModeVariants
 {
 	FREEDM_TDM = 0
 	FREEDM_LOCKDOWN = 1
+	FREEDM_GUNGAME = 2
 	SURVIVAL_WINTEREXPRESS = 100
 	SURVIVAL_BATTLE_RUSH = 101
 	SURVIVAL_SHADOW_ARMY = 102
+	SURVIVAL_RANKED = 103
+	SURVIVAL_SOLOS = 104
+	SURVIVAL_FIRING_RANGE = 105
+	SURVIVAL_VALENTINES_S15 = 106
+	SURVIVAL_RECRUIT = 107
+	SURVIVAL_EXPLORE = 108
+	SURVIVAL_QUADS = 109
+	SURVIVAL_SHADOW_ROYALE = 110
+	SURVIVAL_STRIKEOUT = 111
+	SURVIVAL_TRAINING = 112
 }
 
 global enum eCrowdNoiseMeterModifiers
@@ -39,11 +50,7 @@ global enum eCrowdNoiseMeterModifiers
 	WIN_BY_SMALL_MARGIN_POSITIVE
 }
 
-global enum eXPType
-{
-	OBJECTIVE_CAPTURE_DURATION = 200
-	BONUS_FINAL_KILL = 201
-}
+// eXPType: already defined in sh_xp.gnut with OBJECTIVE_CAPTURE_DURATION=22, BONUS_FINAL_KILL=14
 
 global enum eUpgradeXPActions
 {
@@ -198,11 +205,8 @@ global function SetWinner
 global function GetHasGameTimedOut
 global function SetInfiniteAmmoForWeapon
 global function SetInfiniteAmmoForGameMode
-global function ClientToServer_OnCharacterReselectMenuOpen
-global function IsPlayerReselectingCharacter
-global function IsCharacterReselectEnabled
 global function DoCommonRespawnForPlayer
-global function GetPlayerArrayIncludingSpectators
+// GetPlayerArrayIncludingSpectators moved to SERVER || CLIENT scope below
 // GameRules_GetTeamScore2 is engine-native
 global function AbilityCarePackage_SetContentOverrideCallback
 global function DetermineAirdropContents
@@ -219,15 +223,16 @@ global function GetGameStartTime
 #if CLIENT
 global function HudTargetInfo_Enable
 global function SetShowUnitFrameAmmoTypeIcons
-global function CharacterSelectMenu_SetCustomJIPDescription
-global function OpenCharacterSelectMenu
+// Already in sh_character_select.gnut
+//global function CharacterSelectMenu_SetCustomJIPDescription
+//global function OpenCharacterSelectMenu
 global function SetVictoryScreenTeamName
 global function SetSummaryDataDisplayStringsCallback
 global function CircleBannerAnnouncementsEnable
 global function EmitSoundOnEntity_NoTimeScale
 global function EmitUISound
 global function IsLocalPlayerOnTeamSpectator
-global function CloseCharacterSelectMenu
+//global function CloseCharacterSelectMenu  // Already in sh_character_select.gnut
 global function GameRules_IsTeamIndexValid
 global function SetPlayThroughPOVTransitions
 // IsRevTakeover moved to shared scope (used by both SERVER and CLIENT)
@@ -240,8 +245,8 @@ global function ClWaittillGameStateOrHigher
 // --- Utility script dependencies ---
 global function SetAbandonCheckFunc
 global function IsEliminationBased
-global function RegisterNetVarBoolChangeCallback
-global function RegisterNetVarTimeChangeCallback
+// RegisterNetVarBoolChangeCallback - moved to sh_netvar_callbacks.gnut
+// RegisterNetVarTimeChangeCallback - moved to sh_netvar_callbacks.gnut
 global function ParseWeaponLoadoutText
 global function ParseEquipmentLoadoutText
 global function ParseConsumableLoadoutText
@@ -272,6 +277,7 @@ global function CancelPlayerStates
 #if SERVER || CLIENT
 // These use SERVER/CLIENT-only natives (GetPlayerArray, IsAlive, etc.)
 global function GetNearbyPlayers
+global function GetPlayerArrayIncludingSpectators
 #endif
 #if SERVER
 // These use SERVER-only entity methods (SetHealth, SetShieldHealth, etc.)
@@ -463,9 +469,6 @@ bool function SetInfiniteAmmoForWeapon( entity player, entity weapon, bool ornul
 	return true
 }
 void function SetInfiniteAmmoForGameMode( entity player, bool enabled, array<string> excluded = [] ) {}
-void function ClientToServer_OnCharacterReselectMenuOpen( entity player ) {}
-bool function IsPlayerReselectingCharacter( entity player ) { return false }
-bool function IsCharacterReselectEnabled() { return false }
 void function DoCommonRespawnForPlayer( entity player ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
 void function AbilityCarePackage_SetContentOverrideCallback( array< array<string> > functionref( entity ) callback ) {}
@@ -493,15 +496,17 @@ float function GetGameStartTime()
 #if CLIENT
 void function HudTargetInfo_Enable( bool enabled ) {}
 void function SetShowUnitFrameAmmoTypeIcons( bool show ) {}
-void function CharacterSelectMenu_SetCustomJIPDescription( string desc ) {}
-void function OpenCharacterSelectMenu( bool browseMode = false, bool showLocked = false, bool isJIP = false ) {}
+array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
+// Already in sh_character_select.gnut
+//void function CharacterSelectMenu_SetCustomJIPDescription( string desc ) {}
+//void function OpenCharacterSelectMenu( bool browseMode = false, bool showLocked = false, bool isJIP = false ) {}
 void function SetVictoryScreenTeamName( string name ) {}
 void function SetSummaryDataDisplayStringsCallback( void functionref( SquadSummaryPlayerData ) callback ) {}
 void function CircleBannerAnnouncementsEnable( bool enabled ) {}
 var function EmitSoundOnEntity_NoTimeScale( entity ent, string sound ) { EmitSoundOnEntity( ent, sound ); return null }
 void function EmitUISound( string sound ) { EmitSoundOnEntity( GetLocalClientPlayer(), sound ) }
 bool function IsLocalPlayerOnTeamSpectator() { return GetLocalClientPlayer().GetTeam() == TEAM_SPECTATOR }
-void function CloseCharacterSelectMenu() {}
+//void function CloseCharacterSelectMenu() {}  // Already in sh_character_select.gnut
 bool function GameRules_IsTeamIndexValid( int teamIndex ) { return teamIndex >= 0 && teamIndex < GetCurrentPlaylistVarInt( "max_teams", 20 ) + 2 }
 void function SetPlayThroughPOVTransitions( var soundHandle ) {} // Sound persistence through POV transitions
 bool function BigTDM_IsModeEnabled() { return false }
@@ -583,8 +588,8 @@ void function CharacterLoadouts_GiveEquipmentLoadoutToPlayer( entity player, arr
 #endif
 
 
-void function RegisterNetVarBoolChangeCallback( string varName, int context, void functionref( entity, bool, bool, bool ) callback ) {}
-void function RegisterNetVarTimeChangeCallback( string varName, int context, void functionref( entity, float, float, bool ) callback ) {}
+// RegisterNetVarBoolChangeCallback - moved to sh_netvar_callbacks.gnut
+// RegisterNetVarTimeChangeCallback - moved to sh_netvar_callbacks.gnut
 
 #if CLIENT
 bool function RuiHasGameTimeArg( var rui, string argName ) { return false }

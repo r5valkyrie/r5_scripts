@@ -20,6 +20,7 @@ global function GridPanel_SetNavUp
 global function GridPanelInit
 
 global function GridPanel_SetCommandHandler
+global function GridPanel_SetFillDirection
 
 global function GridPanel_InitStatic
 
@@ -275,6 +276,12 @@ void function GridPanel_SetEnabled( var panel, bool state )
 	data.isEnabled = state
 
 	UpdateTileElements( data )
+}
+
+void function GridPanel_SetFillDirection( var panel, int direction )
+{
+	GridPanelData data = GetDataForPanel( panel )
+	data.pageFillDirection = direction
 }
 
 

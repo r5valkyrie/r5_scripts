@@ -4,8 +4,6 @@ global function GroundItem_OpenQuickSwap
 
 global function SurvivalQuickInventory_DoQuickSwap
 
-global function OpenSurvivalGroundListMenu
-
 global function SurvivalGroundItem_BeginUpdate
 global function SurvivalGroundItem_EndUpdate
 
@@ -513,18 +511,6 @@ void function HideInventoryGridPanel( bool isClosingTopPanel = false )
 
 
 	file.groundListSelected = null
-}
-
-void function OpenSurvivalGroundListMenu( bool playerIsTitan = false )
-{
-	if ( "NEW_OpenSurvivalGroundListMenu" in getroottable() )
-	{
-		NEW_OpenSurvivalGroundListMenu()
-		return
-	}
-
-	CloseAllMenus()
-	AdvanceMenu( file.menu )
 }
 
 void function SurvivalQuickInventory_DoQuickSwap( int backpackSlot, int deathBoxEntIndex )

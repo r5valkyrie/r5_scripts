@@ -106,7 +106,7 @@ function BaseGametype_Init()
 		SetConVarBool("sv_overrideTeamChatRestriction", false)
 		SetConVarBool("sv_forceChatToTeamOnly", true)
 	}
-	//AddCallback_OnTitanBecomesPilot( OnTitanBecomesPilot_OutOfBoundsCheck ) //disabled for r5r
+	//AddCallback_OnTitanBecomesPilot( OnTitanBecomesPilot_OutOfBoundsCheck ) //disabled
 }
 
 void function BaseGametypeEntitiesDidLoad()
@@ -2298,7 +2298,7 @@ string function GetGameModeUsedForEntityRemoval()
 	return GameRules_GetGameMode()
 }
 
-// bool function GameModeRemove( entity ent ) // Original S3 commented-out version below:
+// bool function GameModeRemove( entity ent ) // Original commented-out version below:
 // {
 // 	string gameMode = GameRules_GetGameMode()
 // 	switch ( gameMode )

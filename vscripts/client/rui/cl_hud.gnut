@@ -15,6 +15,16 @@ global function DEV_DamageFlyout
 global function Flowstate_AddCustomScoreEventMessage
 global function FS_GetScoreEventTopo
 
+// Control/FreeDM score events
+global function ServerCallback_ControlScoreEvent
+global function ServerCallback_FreeDMScoreEvent
+
+// Training hit indicators
+bool showTrainingHitIndicators = false
+global function UICallback_ToggleTrainingHitIndicators
+global function SCB_ShowHitMarks_Set_ByNetvar
+global function ShouldShowTrainingHitIndicators
+
 const bool RUI_ENABLED = true
 global bool ENABLE_HIT_DOT = false
 
@@ -56,6 +66,16 @@ struct MessageData
 
 const int NUM_OFFSETS = 4
 const int[NUM_OFFSETS] DAMAGE_OFFSETS = [0, 1, 0, -1]
+
+// Shield Icons
+const DUMMY_SHIELD_ICON = $"rui/hud/loot/loot_armor_1"
+const STUN_GRENADE_ICON = $"rui/hud/character_abilities/fuse_stun_indicator"
+const float STUN_GRENADE_ICON_TIMESCALE = 0.3
+
+// Ability entity checks (stubs)
+bool function IsMobileShieldEnt( entity ent ) { return false }
+bool function IsCastleWallEnt( entity ent ) { return false }
+bool function IsResinShard( entity ent ) { return false }
 
 struct DamageData
 {
@@ -245,9 +265,7 @@ void function DEV_DamageFlyout( entity victim )
 
 const GIBRALTAR_PASSIVE_ICON = $"rui/hud/character_abilities/gibraltar_passive_transparent"
 const RAMPART_AMPED_WALL_ICON = $"rui/hud/character_abilities/rampart_amped_wall_transparent"
-            
-const STUN_GRENADE_ICON = $"rui/hud/character_abilities/fuse_stun_indicator" 
-const float STUN_GRENADE_ICON_TIMESCALE = 0.3
+
 void function DamageFlyout( float damageAmount, vector damagePosition, entity victim, int hitType, int damageFlags = 0, int damageType = 0, entity weapon = null )
 {
 	if ( !file.damageFlyoutEnabled )
@@ -288,11 +306,20 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	bool overshield = false
 	float timeScale = 1.0 	
 	float shieldFrac = -1.0
-	if ( victim.IsPlayer() && (isShieldShot || isShieldBreak || hitType == eHitType.ARMOR) )
+	if ( isShieldShot || isShieldBreak || hitType == eHitType.ARMOR )
 	{
-		LootData shieldData = EquipmentSlot_GetEquippedLootDataForSlot( victim, "armor" )
-		shieldIcon = shieldData.hudIcon
-		shieldLevel = shieldData.tier//
+		if ( victim.IsPlayer() )
+		{
+			LootData shieldData = EquipmentSlot_GetEquippedLootDataForSlot( victim, "armor" )
+			shieldIcon = shieldData.hudIcon
+			shieldLevel = shieldData.tier
+		}
+		// Training dummie shield support
+		else if ( victim.IsNPC() && IsTrainingDummie( victim ) )
+		{
+			shieldIcon = DUMMY_SHIELD_ICON
+			shieldLevel = victim.GetGrade() + 1
+		}
 	}
 	
 	if ( victim.IsPlayer() && isShadowShot )
@@ -304,15 +331,35 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	if ( !victim.IsPlayer() && (isKOShieldShot || hitType == eHitType.VORTEX) )
 	{
 		entity shieldOwner = victim.GetOwner()
-                 
+
 		if ( IsAmpedWallEnt( victim ) )
 		{
 			shieldIcon = $""
 			shieldLevel = 1
 			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
 		}
+		// Mobile shield (Madmaggie)
+		else if ( IsMobileShieldEnt( victim ) )
+		{
+			shieldIcon = $""
+			shieldLevel = 1
+			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
+		}
+		// Castle wall (Newcastle)
+		else if ( IsCastleWallEnt( victim ) )
+		{
+			shieldIcon = $""
+			shieldLevel = 1
+			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
+		}
+		// Resin shard (Catalyst)
+		else if ( IsResinShard( victim ) )
+		{
+			shieldIcon = $""
+			shieldLevel = 1
+			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
+		}
 		else
-           
 		{
 			if ( IsValid( shieldOwner ) && shieldOwner.IsPlayer() )
 			{
@@ -658,5 +705,51 @@ string function GetFormattedEventText( ScoreEvent scoreEvent, int pointValue, EH
 void function ScoreEvents_SetEnabled( bool state )
 {
 	file.scoreEventsEnabled = state
+}
+
+
+// ============================================================================
+// Training Hit Indicators
+// ============================================================================
+
+bool function ShouldShowTrainingHitIndicators()
+{
+	if ( !IsFiringRangeGameMode() )
+		return false
+
+	if ( !showTrainingHitIndicators )
+		return false
+
+	if ( !FiringRangeHasHitIndictators() )
+		return false
+
+	return true
+}
+
+void function UICallback_ToggleTrainingHitIndicators()
+{
+	// Simplified toggle without netvar system
+	showTrainingHitIndicators = !showTrainingHitIndicators
+}
+
+void function SCB_ShowHitMarks_Set_ByNetvar()
+{
+	// Enable by default when called
+	showTrainingHitIndicators = true
+}
+
+
+// ============================================================================
+// Control/FreeDM Score Events (stubs)
+// ============================================================================
+
+void function ServerCallback_ControlScoreEvent( int scoreEventId, bool isExpEvent, int pointsValue, int associatedEntityHandle )
+{
+	// stub
+}
+
+void function ServerCallback_FreeDMScoreEvent( int scoreEventId )
+{
+	// stub
 }
 

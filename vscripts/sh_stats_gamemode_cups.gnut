@@ -1,0 +1,88 @@
+// SEE https://jiratf.rspn.ad.ea.com/browse/R5DEV-576187 FOR CLEANUP TASK
+
+// cups rewards are currently tied to _trackers_ and unfortunately need to live on indefinitely to have those
+// trackers continue to function in the future -- these trackers should match the stat names here for ease of search
+                                     
+
+global function StatsRegister_ApexCups
+
+#if SERVER
+global function StatsHook_S20AC01A_TopTracker
+global function StatsHook_S20AC01A_MidTracker
+global function StatsHook_S20AC01A_BotTracker
+#endif // SERVER
+
+const SettingsAssetGUID APEX_CUPS_SAID_S20AC01A = 850794391
+
+void function StatsRegister_ApexCups()
+{
+	//CAREER_STATS.s20ac01a_top = RegisterAccumulatedStat_Int( null, "s20ac01a_top", eChallengeGameMode.THREE_STRIKES, CHALLENGES_CALC_DEPENDS )
+	//CAREER_STATS.s20ac01a_mid = RegisterAccumulatedStat_Int( null, "s20ac01a_mid", eChallengeGameMode.THREE_STRIKES, CHALLENGES_CALC_DEPENDS )
+	//CAREER_STATS.s20ac01a_bot = RegisterAccumulatedStat_Int( null, "s20ac01a_bot", eChallengeGameMode.THREE_STRIKES, CHALLENGES_CALC_DEPENDS )
+}
+
+#if SERVER
+// 3 strikes damage during s20ac01a
+void function StatsHook_S20AC01A_TopTracker( entity player, int amount )
+{
+	//if ( !IsValid( player ) || amount <= 0 )
+	//{
+	//	return
+	//}
+	//
+	//if ( !Stats_PlayerIsValidForStats( player ) )
+	//{
+	//	return
+	//}
+	//
+	//if ( !Cups_IsCupActive( APEX_CUPS_SAID_S20AC01A ) )
+	//{
+	//	return
+	//}
+	//
+	//__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.s20ac01a_top ), amount )
+}
+
+// 3 strikes kills during s20ac01a
+void function StatsHook_S20AC01A_MidTracker( entity player )
+{
+	//if ( !IsValid( player ) )
+	//{
+	//	return
+	//}
+	//
+	//if ( !Stats_PlayerIsValidForStats( player ) )
+	//{
+	//	return
+	//}
+	//
+	//if ( !Cups_IsCupActive( APEX_CUPS_SAID_S20AC01A ) )
+	//{
+	//	return
+	//}
+	//
+	//__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.s20ac01a_mid ), 1 )
+}
+
+// 3 strikes assists during s20ac01a
+void function StatsHook_S20AC01A_BotTracker( entity player )
+{
+	//if ( !IsValid( player ) )
+	//{
+	//	return
+	//}
+	//
+	//if ( !Stats_PlayerIsValidForStats( player ) )
+	//{
+	//	return
+	//}
+	//
+	//if ( !Cups_IsCupActive( APEX_CUPS_SAID_S20AC01A ) )
+	//{
+	//	return
+	//}
+	//
+	//__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.s20ac01a_bot ), 1 )
+}
+#endif // SERVER
+                                           

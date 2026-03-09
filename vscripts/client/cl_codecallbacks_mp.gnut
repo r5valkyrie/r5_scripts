@@ -457,6 +457,11 @@ void function ClientCodeCallback_SpectatorModeStarted( entity player, int observ
 				callbackFunc( player, observerTarget )
 			break
 
+		case OBS_MODE_ROAMING:
+			foreach ( callbackFunc in clGlobal.freeCamSpectateStartCallbacks )
+				callbackFunc( player )
+			break
+
 		default:
 			break
 	}
@@ -477,6 +482,11 @@ void function ClientCodeCallback_SpectatorModeEnded( entity player, int oldObsMo
 		case OBS_MODE_CHASE:
 			foreach ( callbackFunc in clGlobal.thirdPersonSpectateEndCallbacks )
 				callbackFunc( player, oldTarget )
+			break
+
+		case OBS_MODE_ROAMING:
+			foreach ( callbackFunc in clGlobal.freeCamSpectateEndCallbacks )
+				callbackFunc( player )
 			break
 
 		default:

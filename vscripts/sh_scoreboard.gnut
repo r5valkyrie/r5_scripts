@@ -134,7 +134,7 @@ void function ClientToUI_ToggleScoreboard()
 		printf( "%s() - Showing character select because we're in Firing Range.", FUNC_NAME() )
 		RunUIScript( "TryCloseSurvivalInventory", null )
 		EmitSoundOnEntity( GetLocalViewPlayer(), "UI_Menu_accept" )
-		OpenCharacterSelectNewMenu( true )
+		OpenCharacterSelectMenu( true )
 		return
 	}
 
@@ -148,7 +148,7 @@ void function ClientToUI_ToggleSelectScreen()
 		printf( "%s() - Showing character select because we're in Dev gamemode.", FUNC_NAME() )
 		RunUIScript( "TryCloseSurvivalInventory", null )
 		EmitSoundOnEntity( GetLocalViewPlayer(), "UI_Menu_accept" )
-		OpenCharacterSelectNewMenu( true )
+		OpenCharacterSelectMenu( true )
 	}
 }
 

@@ -64,7 +64,7 @@ void function SetUpPanicRandoms()
 
 int function RollForPanicType()
 {
-	#if DEV
+	#if DEVELOPER
 	{
 		int reproNum = GetBugReproNum()
 		switch( reproNum )
@@ -75,7 +75,7 @@ int function RollForPanicType()
 			case -4:	return ePanicButton.DANCEPARTY
 		}
 	}
-	#endif // DEV
+	#endif // DEVELOPER
 
 	SetUpPanicRandoms()
 	if ( s_randomPanics.len() == 0 )

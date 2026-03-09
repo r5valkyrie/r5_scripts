@@ -1,0 +1,1150 @@
+global function ShStatsDefs_Init
+
+global function StatsDefs_GetCharacterGUIDToBitmaskMap
+
+struct FileLevel_Lifetime
+{
+	table< string, int > characterGUIDToBitmask
+}
+FileLevel_Lifetime& file
+
+global struct CareerStats
+{
+	StatTemplate& account_level
+	StatTemplate& total_legendary_items
+	StatTemplate& num_characters_with_banners_once_filled
+	StatTemplate& respawn_dev
+	StatTemplate& ea_access_member
+	StatTemplate& fashionista
+	StatTemplate& weapons_with_legendary_skin
+	StatTemplate& well_rounded
+	StatTemplate& times_fully_kitted
+	StatTemplate& distance_kill
+	StatTemplate& placements_win_with_friends
+	StatTemplate& placements_win_with_no_witnessess
+	StatTemplate& placements_win_with_min_executions_per_person
+	StatTemplate& team_work_kill_count
+	StatTemplate& max_placement_win_streak_with_premade_squad
+	StatTemplate& looted_all_launch_loot_once
+	StatTemplate& master_of_all
+	StatTemplate& starter_pack
+	StatTemplate& founder_pack
+	StatTemplate& twitch_pack
+	StatTemplate& daily_challenges_completed
+	StatTemplate& challenge_xp_earned
+	StatTemplate& challenge_stars_earned
+
+	//StatTemplate& owns_all_launch_legenedary_cosmetics
+	//StatTemplate& owns_legendary_skin_and_finisher_for_all_launch_characters
+	//StatTemplate& equipped_something_in_all_slots_of_all_launch_characters
+	StatTemplate& looted_all_nongold_weapons_in_1_match
+
+	StatTemplate& looted_epic_item
+	StatTemplate& looted_legendary_item
+	StatTemplate& looted_legendary_helmet
+	StatTemplate& looted_legendary_armor
+
+	StatTemplate& thanks
+	StatTemplate& dooms
+	StatTemplate& kills
+	StatTemplate& times_got_doomed
+	StatTemplate& deaths
+	StatTemplate& assists
+	StatTemplate& kills_or_assists
+	//StatTemplate& times_got_respawned
+	//StatTemplate& times_recovered_ally_dna
+	StatTemplate& times_respawned_ally
+	StatTemplate& winning_kills
+	StatTemplate& kills_while_killleader
+	StatTemplate& kills_max_single_game
+	StatTemplate& damage_done
+	StatTemplate& damage_done_midair
+	StatTemplate& damage_taken
+	StatTemplate& shots
+	StatTemplate& hits
+	StatTemplate& headshots
+	StatTemplate& executions
+	StatTemplate& revived_ally
+	StatTemplate& respawned_ally
+
+	// AI Wildlife
+	StatTemplate& damage_done_to_prowler_on_storm_point
+	StatTemplate& damage_done_to_spider_on_storm_point
+
+	StatTemplate& modes_games_played
+	StatTemplate& modes_damage_done
+	StatTemplate& modes_placements_win
+	StatTemplate& modes_kills
+	StatTemplate& modes_assists
+	StatTemplate& modes_kills_or_assists
+	StatTemplate& modes_deaths
+	StatTemplate& modes_dooms
+	StatTemplate& modes_executions
+	StatTemplate& modes_headshots
+	//Added for stats screen
+	StatTemplate& modes_kills_max_single_game
+	StatTemplate& modes_damage_done_max_single_game
+	StatTemplate& modes_win_streak_current
+	StatTemplate& modes_win_streak_longest
+	StatTemplate& modes_revived_ally
+
+	StatTemplate& modes_season_games_played
+	StatTemplate& modes_season_damage_done
+	StatTemplate& modes_season_placements_win
+	StatTemplate& modes_season_kills
+	StatTemplate& modes_season_assists
+	StatTemplate& modes_season_deaths
+	StatTemplate& modes_season_dooms
+	//Added for stats screen
+	StatTemplate& modes_season_kills_max_single_game
+	StatTemplate& modes_season_damage_done_max_single_game
+	StatTemplate& modes_season_win_streak_current
+	StatTemplate& modes_season_win_streak_longest
+	StatTemplate& modes_season_revived_ally
+
+	StatTemplate& modes_character_games_played
+	StatTemplate& modes_character_damage_done
+	StatTemplate& modes_character_kills
+	StatTemplate& modes_character_dooms
+	StatTemplate& modes_character_deaths
+	StatTemplate& modes_character_placements_win
+	//StatTemplate& modes_character_weapon_damage_done
+	//StatTemplate& modes_character_weaponcategory_damage_done
+	StatTemplate& modes_weapon_damage_done
+	StatTemplate& modes_weapon_dooms
+	StatTemplate& modes_weaponcategory_damage_done
+	StatTemplate& modes_weaponcategory_dooms
+
+	StatTemplate& modes_weapon_headshots
+	StatTemplate& modes_weapon_kills
+
+	StatTemplate& weapon_damage_done_all_modes
+	StatTemplate& weapon_dooms_all_modes
+	StatTemplate& weapon_kills_all_modes
+	StatTemplate& weapon_headshots_all_modes
+
+	StatTemplate& all_modes_games_played
+	StatTemplate& all_modes_damage_done
+	StatTemplate& all_modes_placements_win
+	StatTemplate& all_modes_kills
+	StatTemplate& all_modes_assists
+	StatTemplate& all_modes_kills_or_assists
+	StatTemplate& all_modes_deaths
+	StatTemplate& all_modes_dooms
+	StatTemplate& all_modes_executions
+	StatTemplate& all_modes_headshots
+	StatTemplate& all_modes_kills_max_single_game
+	StatTemplate& all_modes_damage_done_max_single_game
+	StatTemplate& all_modes_revived_ally
+	StatTemplate& all_modes_weaponcategory_damage_done
+	StatTemplate& all_modes_weaponcategory_dooms
+	StatTemplate& all_modes_character_games_played
+	StatTemplate& all_modes_character_damage_done
+	StatTemplate& all_modes_character_kills
+	StatTemplate& all_modes_character_dooms
+	StatTemplate& all_modes_character_placements_win
+
+	// Arenas Stats
+	StatTemplate& arenas_badge_perfect_game // Win an Arenas game where you don’t lose a round
+	StatTemplate& arenas_badge_no_down_win // Win an Arenas game without getting downed
+
+	StatTemplate& arenas_cash_stations_captured
+	StatTemplate& arenas_rounds_won
+
+	//StatTemplate& arenas_character_win_streak_current // deprecated 2021-08-17 because of improper setup - wasn't being zero'ed
+	//StatTemplate& arenas_character_win_streak_longest // deprecated 2021-08-17 because of improper setup - wasn't being zero'ed
+	StatTemplate& arenas_character_win_streak_current_new
+	StatTemplate& arenas_character_win_streak_longest_new
+	StatTemplate& arenas_character_kills_max_single_game
+	StatTemplate& arenas_character_damage_done_max_single_game
+	StatTemplate& arenas_character_rounds_won
+
+	StatTemplate& arenas_skills_purchased
+	StatTemplate& arenas_ordnance_purchased
+	StatTemplate& arenas_heals_purchased
+	StatTemplate& arenas_weapons_upgraded
+
+	// Any mode stats
+	StatTemplate& games_played_any_mode
+	StatTemplate& character_games_played_any_mode
+	StatTemplate& dooms_any_mode
+	StatTemplate& wins_any_mode
+
+	// Seasonal BattlePass Specific.
+	StatTemplate& ring_closings_survived
+	StatTemplate& br_top_10_or_arena_win
+	StatTemplate& melee_damage_any_mode
+	StatTemplate& kills_with_red_weapons_any_mode
+	StatTemplate& damage_with_red_weapons_any_mode
+	StatTemplate& kills_or_assists_any_mode
+	// new for S11
+	StatTemplate& self_revives
+	StatTemplate& executions_any_mode
+	StatTemplate& health_restored_any_mode
+	StatTemplate& weaponcategory_damage_done_any_mode
+	StatTemplate& damage_done_any_mode
+	StatTemplate& top_3_with_3_kill_ko_assist
+	StatTemplate& headshots_any_mode
+	// new for S12
+	StatTemplate& damage_done_first_ring_round_br
+	StatTemplate& damage_done_hipfire_any_mode
+	StatTemplate& damage_done_ordnance_any_mode
+	StatTemplate& evoarmor_evolves_to_red
+	StatTemplate& arenas_win_with_5_kill_ko_assist
+	// new for S14
+	StatTemplate& kills_with_throwing_knife_gungame // specific to Gun Run. We don't really do weapon-specific challenges anymore, so making a unique stat here because it's cheapest
+	// new for S15
+	StatTemplate& shield_restored
+	StatTemplate& mirror_legend_kills_any_mode
+	StatTemplate& equipped_attachment
+	StatTemplate& character_placements_top_10
+	// End BattlePass Specific
+
+	StatTemplate& games_played
+	StatTemplate& placements_win
+	StatTemplate& placements_win_with_squad_alive
+	StatTemplate& placements_top_3
+	StatTemplate& placements_top_5
+	StatTemplate& placements_top_10
+	StatTemplate& win_streak_current
+	StatTemplate& win_streak_longest
+	StatTemplate& win_streak_account_badge_current
+	StatTemplate& win_streak_account_badge_longest
+	StatTemplate& neutral_airdrops_looted
+	//StatTemplate& distance_traveled
+	StatTemplate& weapon_kills
+	StatTemplate& weapon_dooms
+	StatTemplate& weapon_damage_done
+	StatTemplate& weapon_shots
+	StatTemplate& weapon_hits
+	StatTemplate& weapon_headshots
+	StatTemplate& character_kills
+	StatTemplate& character_dooms
+	StatTemplate& character_deaths
+	StatTemplate& character_winning_kills
+	StatTemplate& character_kills_while_killleader
+	StatTemplate& character_damage_done
+	StatTemplate& character_damage_done_any_mode
+	StatTemplate& character_damage_done_max_single_game// only for unlocking wrath badge, for general purpose, use season_character_damage_done_max_single_game instead
+	StatTemplate& character_shots
+	StatTemplate& character_hits
+	StatTemplate& character_headshots
+	StatTemplate& character_executions
+	StatTemplate& character_revived_ally
+	StatTemplate& character_games_played
+	StatTemplate& character_games_with_5_kills
+	StatTemplate& character_games_with_20_kills// only for unlocking wake badge
+	StatTemplate& character_most_squad_squad_kills_in_1_game
+	StatTemplate& character_placements_win
+	StatTemplate& character_placements_win_with_squad_alive
+	StatTemplate& character_placements_top_3
+	StatTemplate& character_placements_win_with_friends
+	StatTemplate& character_placements_win_as_jumpmaster
+	StatTemplate& character_placements_win_as_killleader
+	StatTemplate& character_placements_win_as_killleader_and_champion
+	StatTemplate& character_placements_win_flawless_1
+	StatTemplate& character_placements_win_flawless_2
+	StatTemplate& character_placements_win_with_5_headshots
+	StatTemplate& character_ring_closings_survived
+	StatTemplate& character_looted_legendary_item
+	StatTemplate& character_thanks
+
+	StatTemplate& character_won_last_game
+	StatTemplate& character_hot_streaks
+	StatTemplate& character_games_with_respawning_both_teammates
+	StatTemplate& character_rapid_eliminations
+	StatTemplate& character_reinforcement_recalls
+	StatTemplate& character_banner_once_filled
+
+	StatTemplate& character_most_wins_in_24h
+	StatTemplate& character_neutral_airdrops_looted
+	//StatTemplate& character_distance_traveled
+	StatTemplate& character_weaponcategory_kills
+	StatTemplate& character_weaponcategory_dooms
+	StatTemplate& character_weaponcategory_damage_done
+	StatTemplate& character_weaponcategory_shots
+	StatTemplate& character_weaponcategory_hits
+	StatTemplate& character_weaponcategory_headshots
+
+	StatTemplate& weaponcategory_kills
+	StatTemplate& weaponcategory_dooms
+	StatTemplate& weaponcategory_damage_done
+	StatTemplate& weaponcategory_headshots
+
+	StatTemplate& evoarmor_evolves
+	StatTemplate& evoarmor_evolves_to_purple
+
+	StatTemplate& voidring_damage_prevented
+
+	//Crafting
+	StatTemplate& crafting_items_crafted
+	StatTemplate& crafting_materials_collected
+	StatTemplate& crafting_harvester_used_any_mode // Arenas & BR. Any others?
+	StatTemplate& crafting_items_crafted_any_mode
+	// Achievements
+	StatTemplate& times_jumpmaster
+	StatTemplate& times_jumpmaster_post_fix //bug with tracking wins as jumpmaster. We want to have a valid ratio.
+	StatTemplate& valentines_revives_and_respawns
+
+	// Recon Characters Beacons Scanned
+	StatTemplate& recon_passive_beacons_scanned
+
+	// Bangalore
+	StatTemplate& bangalore_passive_distance
+	StatTemplate& bangalore_tactical_smoke_hits
+	StatTemplate& bangalore_ultimate_damage_done
+
+	// Bloodhound
+	StatTemplate& bloodhound_tactical_enemies_detected
+	StatTemplate& bloodhound_tactical_traps_detected
+	StatTemplate& bloodhound_ultimate_kills_while_active
+
+	// Caustic
+	StatTemplate& caustic_tactical_barrels_traps_detonated
+	StatTemplate& caustic_gas_damage_dealt
+	StatTemplate& caustic_passive_enemies_in_gas_killed
+
+	// Crypto
+	StatTemplate& crypto_passive_enemies_scanned
+	StatTemplate& crypto_ultimate_shield_damage
+	StatTemplate& crypto_ultimate_traps_destroyed
+
+	// Gibraltar
+	StatTemplate& gibraltar_tactical_bubble_enemy_damage_absorbed
+	StatTemplate& gibraltar_ultimate_bombardment_kills
+	StatTemplate& gibraltar_passive_gunshield_enemy_damage_absorbed
+
+	// Lifeline
+	StatTemplate& lifeline_tactical_drone_healing_given
+	StatTemplate& lifeline_ultimate_droppod_items_grabbed_by_allies
+	StatTemplate& lifeline_passive_enemy_damage_absorbed
+	StatTemplate& lifeline_passive_allies_revived
+
+	// Loba
+	StatTemplate& loba_tactical_meters_teleported
+	StatTemplate& loba_ultimate_loot_taken_by_allies
+	StatTemplate& loba_passive_loot_pinged_through_walls
+
+	// Mirage
+	StatTemplate& mirage_decoys_created
+	StatTemplate& mirage_successful_bamboozles
+	StatTemplate& mirage_successful_revives
+
+	// Octane
+	StatTemplate& octane_stim_distance_traveled
+	StatTemplate& octane_jump_pad_allies_launched
+	StatTemplate& octane_passive_health_regenerated
+
+	// Pathfinder
+	StatTemplate& pathfinder_tactical_meters_moved_by_grapple
+	StatTemplate& pathfinder_ultimate_ziplines_used_by_allies
+	StatTemplate& pathfinder_passive_beacons_scanned
+
+	// Rampart
+	StatTemplate& rampart_tactical_bullets_amped
+	StatTemplate& rampart_tactical_damage_blocked
+	StatTemplate& rampart_ultimate_bullets_fired
+
+	// Revenant
+	StatTemplate& revenant_silenced_target
+	StatTemplate& revenant_silenced_target_knockdowns
+	StatTemplate& revenant_death_totem_activates
+
+	// Wattson
+	StatTemplate& wattson_breaches_detected
+	StatTemplate& wattson_friendly_shields_charged
+	StatTemplate& wattson_enemy_ordnance_intercepted
+
+	// Wraith
+	StatTemplate& wraith_ultimate_phase_tunnel_ally_uses
+	StatTemplate& wraith_passive_voices_heard
+	StatTemplate& wraith_tactical_time_spent_in_phase
+
+	// Horizon
+	StatTemplate& horizon_hard_landings_avoided
+	StatTemplate& horizon_teammates_gravity_lifted
+	StatTemplate& horizon_blackhole_damage_done
+
+	// FUSE
+	StatTemplate& fuse_grenade_distance_thrown
+	StatTemplate& fuse_cluster_bomb_hits
+	StatTemplate& fuse_motherlode_enemies_captured
+	StatTemplate& fuse_grenade_barrage_thrown
+
+	// VALK
+	StatTemplate& valk_distance_travelled_passive
+	StatTemplate& valk_enemies_hit_tactical
+	StatTemplate& valk_teammates_carried_ult
+
+	// SEER
+	StatTemplate& seer_enemy_heartbeats_heard
+	StatTemplate& seer_focus_of_attention_hits
+	StatTemplate& seer_exhibit_enemies_inside
+
+	// ASH
+	StatTemplate& ash_enemies_marked
+	StatTemplate& ash_enemies_tethered
+	StatTemplate& ash_players_portaled
+
+	StatTemplate& maggie_riot_drill_drill_distance
+	StatTemplate& maggie_wrecking_ball_boost_distance
+	StatTemplate& maggie_warlords_ire_highlight_time
+
+	// NEWCASTLE
+	StatTemplate& newcastle_revive_distance
+	StatTemplate& newcastle_mobile_shield_damage
+	StatTemplate& newcastle_allies_rescued
+
+	StatTemplate& vantage_tactical_distance
+	StatTemplate& vantage_ultimate_damage
+	StatTemplate& vantage_passive_enemies_pinged
+	StatTemplate& vantage_ultimate_marked_hits // todo: TEMP S14 BP
+
+	               
+		StatTemplate& conduit_boosted_distance
+		StatTemplate& conduit_temp_shields_applied
+		StatTemplate& conduit_ult_damage
+                      
+
+	StatTemplate& ballistic_passive_sling_kills
+	StatTemplate& ballistic_tactical_enemies_overheated
+	StatTemplate& ballistic_ultimate_damage
+	StatTemplate& ballistic_tactical_enemies_hit
+
+	StatTemplate& catalyst_doors_barricaded
+	StatTemplate& catalyst_spikes_damage
+	StatTemplate& catalyst_dark_veil_enemies_crossed
+
+	// Special Unlock Challenges
+	StatTemplate& revenant_unlock_passive_marked_enemies
+	StatTemplate& revenant_unlock_tactical_distance
+	StatTemplate& revenant_unlock_ultimate_knocks_kills
+
+	// Normal Challenges/Stat Trackers
+	StatTemplate& revenant_passive_marked_enemies
+	StatTemplate& revenant_tactical_distance
+	StatTemplate& revenant_ultimate_knocks_kills
+
+	             
+		StatTemplate& alter_surfaces_breached
+		StatTemplate& alter_allies_regrouped
+		StatTemplate& alter_deathbox_items_seized
+		StatTemplate& alter_breach_killer
+		StatTemplate& alter_breaches_used
+       
+
+	                   
+		StatTemplate& assault_games_played
+		StatTemplate& skirmisher_games_played
+		StatTemplate& recon_games_played
+		StatTemplate& controller_games_played
+		StatTemplate& support_games_played
+
+		StatTemplate& weapon_supply_bins_looted
+		StatTemplate& care_packages_revealed
+		StatTemplate& ring_consoles_used
+		StatTemplate& extended_supply_bins_looted
+
+		StatTemplate& weapon_supply_bin_epics_looted
+		StatTemplate& revealed_care_packages_looted
+		StatTemplate& beacon_scanned_squads_killed
+		StatTemplate& scanned_ring_locations_reached
+		StatTemplate& respawn_banners_crafted
+                          
+
+	                    
+		StatTemplate& legend_upgrades_selected
+                           
+
+	// Seasons
+	StatTemplate& season_battlepass_level
+	StatTemplate& season_character_damage_done
+	StatTemplate& season_character_kills
+	StatTemplate& season_character_placements_win
+	StatTemplate& season_character_placements_top_5
+	StatTemplate& season_kills_with_7_characters
+	StatTemplate& season_placements_wins_with_7_characters
+	StatTemplate& season_placements_top_5_with_7_characters
+	StatTemplate& season_battlepass_bonus_xp_with_7_characters
+	StatTemplate& season_games_played
+	StatTemplate& season_damage_done
+	StatTemplate& season_character_damage_done_max_single_game
+	StatTemplate& season_kills
+	StatTemplate& season_deaths
+	StatTemplate& season_dooms
+	StatTemplate& season_assists
+	StatTemplate& season_team_work_kill_count
+	StatTemplate& season_revived_ally
+	StatTemplate& season_times_respawned_ally
+	StatTemplate& season_win_streak_current
+	StatTemplate& season_win_streak_longest
+	StatTemplate& season_kills_max_single_game
+	StatTemplate& season_placements_win
+
+	// Top 5
+	StatTemplate& elite_badge_unlock
+	StatTemplate& elite_888_badge_unlock
+	StatTemplate& character_elite_game_wins
+	StatTemplate& character_elite_game_8kill_wins
+	StatTemplate& season_elite_current_streak
+	StatTemplate& season_elite_max_streak
+	StatTemplate& season_character_elite_game_wins
+	StatTemplate& season_character_elite_games_played
+	StatTemplate& season_character_elite_kills
+	//
+
+	// Zone
+	StatTemplate& zone_kills
+	StatTemplate& zone_damage_done
+	StatTemplate& zone_dooms
+	StatTemplate& zone_executions
+	StatTemplate& zone_landings
+	StatTemplate& zone_loot_bins
+	StatTemplate& loot_bins
+	StatTemplate& opponents_outlived
+	StatTemplate& survival_time_seconds
+
+	// Ranked
+	StatTemplate& rankedperiod_games_played_base
+	StatTemplate& rankedperiod_placements_win_base
+	StatTemplate& rankedperiod_placements_top_5_base
+	StatTemplate& rankedperiod_placements_top_10_base
+	StatTemplate& rankedperiod_damage_done_base
+	StatTemplate& rankedperiod_kills_base
+	StatTemplate& rankedperiod_deaths_base
+	StatTemplate& rankedperiod_kills_max_single_game_base
+	StatTemplate& rankedperiod_dooms_base
+	StatTemplate& rankedperiod_assists_base
+	StatTemplate& rankedperiod_win_streak_longest_base
+	StatTemplate& rankedperiod_revived_ally_base
+	StatTemplate& rankedperiod_times_respawned_ally_base
+
+	StatTemplate& rankedperiod_games_played
+	StatTemplate& rankedperiod_placements_win
+	StatTemplate& rankedperiod_placements_top_5
+	StatTemplate& rankedperiod_placements_top_10
+	StatTemplate& rankedperiod_damage_done
+	StatTemplate& rankedperiod_kills
+	StatTemplate& rankedperiod_deaths
+	StatTemplate& rankedperiod_kills_max_single_game
+	StatTemplate& rankedperiod_dooms
+	StatTemplate& rankedperiod_assists
+	StatTemplate& rankedperiod_win_streak_current
+	StatTemplate& rankedperiod_win_streak_longest
+	StatTemplate& rankedperiod_revived_ally
+	StatTemplate& rankedperiod_times_respawned_ally
+	StatTemplate& rankedperiod_current_rank_score
+	StatTemplate& rankedperiod_gained_rank_score_only
+	StatTemplate& rankedperiod_badge_award_level
+
+	StatTemplate& rankedperiod_character_damage_done_max_single_game_base
+	StatTemplate& rankedperiod_character_damage_done_max_single_game
+
+	// Arenas Ranked
+	StatTemplate& arenas_rankedperiod_games_played
+	StatTemplate& arenas_rankedperiod_current_rank_score
+	StatTemplate& arenas_rankedperiod_gained_rank_score_only
+	StatTemplate& arenas_rankedperiod_badge_award_level
+	//Added for stats screen
+	StatTemplate& arenas_rankedperiod_placements_win
+	StatTemplate& arenas_rankedperiod_damage_done
+	StatTemplate& arenas_rankedperiod_damage_done_max_single_game
+	StatTemplate& arenas_rankedperiod_kills_max_single_game
+	StatTemplate& arenas_rankedperiod_kills
+	StatTemplate& arenas_rankedperiod_deaths
+	StatTemplate& arenas_rankedperiod_dooms
+	StatTemplate& arenas_rankedperiod_assists
+	// StatTemplate& arenas_rankedperiod_win_streak_current // deprecated 2021-08-17 because of improper setup - wasn't being zero'ed
+	//StatTemplate& arenas_rankedperiod_win_streak_longest // deprecated 2021-08-17
+	StatTemplate& arenas_rankedperiod_win_streak_current_new
+	StatTemplate& arenas_rankedperiod_win_streak_longest_new
+	StatTemplate& arenas_rankedperiod_revived_ally
+
+	StatTemplate& arenas_rankedcareer_games_played
+	StatTemplate& arenas_rankedcareer_placements_win
+	StatTemplate& arenas_rankedcareer_damage_done
+	StatTemplate& arenas_rankedcareer_damage_done_max_single_game
+	StatTemplate& arenas_rankedcareer_kills
+	StatTemplate& arenas_rankedcareer_deaths
+	StatTemplate& arenas_rankedcareer_kills_max_single_game
+	StatTemplate& arenas_rankedcareer_dooms
+	StatTemplate& arenas_rankedcareer_assists
+	StatTemplate& arenas_rankedcareer_win_streak_longest
+	StatTemplate& arenas_rankedcareer_revived_ally
+
+	// Solo
+	StatTemplate& character_solo_dooms
+	StatTemplate& character_solo_placements_top_5
+	StatTemplate& character_solo_wins
+	StatTemplate& solo_placements_top_5
+	StatTemplate& solo_dooms
+
+	// season01_event
+	StatTemplate& season01_event_placements_top_5
+
+	// season02_event01
+	StatTemplate& season02_event01_top5s_badge
+	StatTemplate& season02_event01_character_solo_wins
+	StatTemplate& season02_event01_num_characters_with_solo_win
+
+	// season02_event02
+
+	// s03e01
+	StatTemplate& s03e01_badge
+
+	// s03e02
+	StatTemplate& s03e02_winter_express_captures
+
+	//s03_duos
+	StatTemplate& s03_duos_badge_play
+	StatTemplate& s03_duos_badge_win
+	StatTemplate& s03_duos_tiers_earned
+
+	//s03e03
+	StatTemplate& s03e03_buffet_points
+	StatTemplate& s03e03_play_each_game_mode
+	StatTemplate& s03e03_placement_top_5
+
+	//s04e01
+	StatTemplate& s04e01_buffet_points
+	StatTemplate& s04e01_loot_lock_placements_top_10
+
+	//s04e02
+	StatTemplate& s04e02_buffet_points
+
+	//s05e01
+	StatTemplate& s05e01_buffet_points
+	StatTemplate& s05e01_armed_and_dangerous_evolved_kills
+	StatTemplate& s05e01_armed_and_dangerous_evolved_wins
+	StatTemplate& s05e01_armed_and_dangerous_evolved_times_respawned_ally
+	StatTemplate& s05e01_armed_and_dangerous_evolved_combined_badge_earned
+
+	//s06e01
+	StatTemplate& s06e01_buffet_points
+	StatTemplate& s06e01_campfire_damage_dealt_in_zone
+	StatTemplate& s06e01_campfire_players_killed_in_zone
+	StatTemplate& s06e01_campfire_wins
+	StatTemplate& s06e01_campfire_combined_badge_earned
+
+	//s06e02
+	StatTemplate& s06e02_buffet_points
+	StatTemplate& s06e02_shadow_royale_kills
+	StatTemplate& s06e02_shadow_royale_revives
+	StatTemplate& s06e02_shadow_royale_wins
+	StatTemplate& s06e02_shadow_royale_combined_badge_earned
+
+	//s07e01
+	StatTemplate& s07e01_buffet_points
+	StatTemplate& s07e01_winter_express_captures
+	StatTemplate& s07e01_winter_express_kills
+	StatTemplate& s07e01_winter_express_damage
+	StatTemplate& s07e01_winter_express_combined_badge_earned
+
+	//s07e02
+	StatTemplate& s07e02_buffet_points
+	StatTemplate& s07e02_airdropkitted_damage_dealt
+	StatTemplate& s07e02_airdropkitted_knockdowns
+	StatTemplate& s07e02_airdropkitted_wins
+	StatTemplate& s07e02_airdropkitted_combined_badge_earned
+
+	//s08ace
+	StatTemplate& s08ace_buffet_points
+
+	//s08seasonal
+	StatTemplate& s08seasonal_nessie_dailies
+	StatTemplate& s08seasonal_weapon_damage
+	StatTemplate& s08seasonal_character_wins
+	StatTemplate& s08seasonal_combined_badge_earned
+
+	//s08e01
+	StatTemplate& s08e01_buffet_points
+	StatTemplate& s08e01_ringfury_challenge_2 //hs
+	StatTemplate& s08e01_ringfury_challenge_3 //d
+	StatTemplate& s08e01_ringfury_challenge_4 //k
+	StatTemplate& s08e01_ringfury_combined_badge_earned
+
+	//s08e02
+	StatTemplate& s08e02_buffet_points
+	StatTemplate& s08e02_wargames_challenge_2 //d
+	StatTemplate& s08e02_wargames_challenge_3 //w
+	StatTemplate& s08e02_wargames_challenge_4 //k
+	StatTemplate& s08e02_wargames_combined_badge_earned
+
+	//s09
+	/*StatTemplate& s09_flash_01_buffet_points
+	StatTemplate& s09_flash_02_buffet_points
+	StatTemplate& s09_flash_03_buffet_points*/
+
+	StatTemplate& arenas_test_buffet_points
+
+	//s08e04
+	StatTemplate& s08e04_finale_completed
+	StatTemplate& s08e04_finale_not_completed
+
+	StatTemplate& first_played_unixtime
+
+	//s09e01 - Genesis
+	/*Deal 10,000 damage to enemy players in Battle Royale
+	Win 50 Arena Games
+	Knockdown 100 players in BR
+	Earn all other Genesis Badges*/
+	StatTemplate& s09e01_buffet_points
+	StatTemplate& s09e01_br_damage_done
+	StatTemplate& s09e01_arenas_placements_win
+	StatTemplate& s09e01_br_dooms
+	StatTemplate& s09e01_combined_badge_earned
+
+	//s09e02 - Thrill Seekers
+	/*Play 20 Arenas Games during Week 1 of the Arenas Thrill Seekers Event
+	Get 100 Knockdowns in Arenas during Week 2 of the Arenas Thrill Seekers Event
+	Deal 12000 Damage in Arenas during Week 3 of the Arenas Thrill Seekers Event*/
+	StatTemplate& s09e02_01_buffet_points
+	StatTemplate& s09e02_02_buffet_points
+	StatTemplate& s09e02_03_buffet_points
+	StatTemplate& s09e02_01_arenas_matches_played
+	StatTemplate& s09e02_02_arenas_dooms
+	StatTemplate& s09e02_03_arenas_damage_done
+
+	//s11e01 - Raiders
+	/*combined badge (all 3 other badges)
+	10,000 damage in Winter Express
+	25,000 damage in Arenas
+	100 knockdowns in BR*/
+	StatTemplate& s11e01_buffet_points
+	StatTemplate& s11e01_winter_express_damage_done
+	StatTemplate& s11e01_arenas_damage_done
+	StatTemplate& s11e01_br_dooms
+	StatTemplate& s11e01_combined_badge_earned // calculated stat
+
+	//s11e02 - Dark Depths
+	/*Week 1 - 50 BR dooms
+	Week 2 - 20 Arena games played
+	Week 3 - 5000 BR damage done*/
+	StatTemplate& s11e02_01_buffet_points
+	StatTemplate& s11e02_02_buffet_points
+	StatTemplate& s11e02_03_buffet_points
+	StatTemplate& s11e02_01_br_dooms
+	StatTemplate& s11e02_02_arenas_games_played
+	StatTemplate& s11e02_03_br_damage_done
+
+	//s12ace - Anniversary
+	/*combined badge (all 3 other badges)
+	[TEMP]10,000 damage in Winter Express[TEMP]
+	[TEMP]25,000 damage in Arenas[TEMP]
+	[TEMP]100 knockdowns in BR[TEMP]F*/
+	StatTemplate& s12ace_buffet_points
+	StatTemplate& s12ace_br_damage_done
+	StatTemplate& s12ace_control_captures
+	StatTemplate& s12ace_br_dooms
+	StatTemplate& s12ace_combined_badge_earned // calculated stat
+
+	//s12e01 - Warriors
+	/*Capture 100 Objectives in Control
+	Knock down 100 players in BR
+	Deal 10,000 damage in BR
+	Earn all other Warriors Badges*/
+	StatTemplate& s12e01_buffet_points
+	StatTemplate& s12e01_br_damage_done
+	StatTemplate& s12e01_control_captures
+	StatTemplate& s12e01_br_dooms
+	StatTemplate& s12e01_combined_badge_earned
+
+	//s12e02 - Unshackled Thematic Event
+	StatTemplate& s12e02_01_buffet_points
+	StatTemplate& s12e02_02_buffet_points
+	StatTemplate& s12e02_01_br_dooms
+	StatTemplate& s12e02_02_br_damage_done
+
+	//s13 - Flash Event
+	StatTemplate& s13_flash_01_buffet_points
+
+	// TODO: cleanup once S22.1 is ready to roll - https://jiratf.rspn.ad.ea.com/browse/R5DEV-584004
+	                    
+		StatTemplate& s21alter_complete_all_challenges
+
+		StatTemplate& s21exp_play_game_x_legends_any_mode
+
+		// 21.1 - Legend Swap CE aka "Double Take"
+		StatTemplate& s21ce01_buffet_points
+
+		// 21.1 knights of the void
+		StatTemplate& s21me02_event_currency_total
+       
+
+	// S21 solo mode stats
+	// TODO: cleanup once S22.1 is ready to roll - https://jiratf.rspn.ad.ea.com/browse/R5DEV-584004
+	                               
+		StatTemplate& gamemode_solo_games_played
+		StatTemplate& gamemode_solo_kills
+		StatTemplate& gamemode_solo_damage_done
+		StatTemplate& gamemode_solo_placement_top_10_with_10_legends
+		StatTemplate& gamemode_solo_games_wins
+		StatTemplate& gamemode_solo_complete_all_challenges
+       
+
+	// s21 quad mode stats
+	                               
+		StatTemplate& gamemode_quad_games_played
+		StatTemplate& gamemode_quad_damage_done
+		StatTemplate& gamemode_quad_kills
+		StatTemplate& gamemode_quad_placement_top_5
+		StatTemplate& gamemode_quad_premade_win
+		StatTemplate& gamemode_quad_placement_top_5_with_10_legends
+		StatTemplate& gamemode_quad_knockdowns
+		StatTemplate& gamemode_quad_damage_done_max_in_one_game
+		StatTemplate& gamemode_quad_complete_all_challenges
+                                      
+
+	                       
+		StatTemplate& gamemode_bigtdm_games_played
+                              
+
+                          
+                                     
+                                     
+                                    
+                                    
+                                      
+                                     
+                                     
+                                      
+                                      
+                                        
+                                       
+                                       
+                                                      
+                                
+                                    
+                                
+                                       
+                                    
+                                  
+                                          
+                                  
+                                
+                                
+                                       
+                               
+                                           
+                                               
+                                
+
+                   
+                                 
+       
+
+	// Hovercar
+	                     
+		StatTemplate& hovervehicle_occupant_meters_traveled
+                            
+
+	StatTemplate& s12e04_challenge_1
+	StatTemplate& s12e04_challenge_2
+	StatTemplate& s12e04_challenge_3
+
+	//Clubs
+	StatTemplate& clubs_games_played_with_club
+	StatTemplate& clubs_placements_win_with_club
+	StatTemplate& clubs_placements_win_with_club_squad_alive
+	StatTemplate& clubs_placements_win_with_club_streak
+	StatTemplate& clubs_placements_win_with_club_no_deaths
+	StatTemplate& clubs_placements_win_with_club_no_deaths_or_knockouts
+	StatTemplate& clubs_kills_with_club_squad
+	//StatTemplate& rankedperiod_clubs_games_played_with_club
+	//StatTemplate& rankedperiod_clubs_placements_win_with_club
+
+	// Control Mode Stats
+	StatTemplate& gamemode_control_objectives_captured
+	StatTemplate& gamemode_control_personal_exp_points_earned
+	StatTemplate& gamemode_control_capture_bonuses_claimed_by_team
+	StatTemplate& gamemode_control_killed_enemy_1_tier_higher
+	StatTemplate& gamemode_control_killed_enemy_2_tier_higher
+	StatTemplate& gamemode_control_killed_objective_attacker
+	StatTemplate& gamemode_control_killed_objective_defender
+	StatTemplate& gamemode_control_became_expleader
+	StatTemplate& gamemode_control_killed_expleader
+	StatTemplate& gamemode_control_highest_exp_as_expleader
+	StatTemplate& gamemode_control_time_on_objective
+
+	// Welcome To Apex Challenges
+	                           
+		StatTemplate& slide_count
+		StatTemplate& armor_upgaraded_count
+		StatTemplate& doors_broken_by_melee
+		StatTemplate& phoenix_kits_used
+		StatTemplate& beginner_distance_kill
+                                  
+
+                                                                  
+                                 
+                                 
+                                           
+                                           
+       
+
+                                   
+                             
+                             
+                           
+                               
+                               
+                             
+                          
+                         
+                                   
+                               
+                                            
+                                        
+
+	                            
+		StatTemplate& graduated_bot_queue
+
+		StatTemplate& ftue_damage_done
+		StatTemplate& ftue_ring_closings_survived
+		StatTemplate& ftue_placements_top_10
+		StatTemplate& ftue_equipped_attachment
+		StatTemplate& ftue_health_restored_any_mode
+		StatTemplate& ftue_shield_restored
+		StatTemplate& ftue_slide_count
+
+                                   
+
+	                             
+		StatTemplate& gamemode_treasurehunt_objectives_captured
+                                    
+
+	table< int, StatTemplate > meta_challenge_stats
+
+	StatTemplate& autogen_challenges
+
+	// event shop auto-tracking currency total
+	StatTemplate& eventshop_currency_total
+	StatTemplate& eventshop_current_guid
+
+	StatTemplate& lastGameParticipationScore
+} // CareerStats struct
+
+global CareerStats CAREER_STATS
+
+global const bool WRITE_TO_PERSISTENCE_IMMEDIATELY = true // TODO: R5DEV-545195 - deprecate current stat storage on player.p
+global const bool DELAY_WRITE_BACK_UNTIL_MATCH_END = false // TODO: R5DEV-545195 - deprecate current stat storage on player.p
+global const bool CHALLENGES_CALC_DEPENDS = WRITE_TO_PERSISTENCE_IMMEDIATELY
+global const bool BADGES_UNLOCK_NEED = DELAY_WRITE_BACK_UNTIL_MATCH_END
+global const bool TRACKERS_NEED = DELAY_WRITE_BACK_UNTIL_MATCH_END
+
+global const array<string> STATS_ALTERNATE_MODE_REFS = [
+	"arenas",
+	"winter_express",
+	"shadowroyale",
+	"control",
+	"gungame",
+	"ftdm",
+	"hardcore_survival",
+	"date_night",
+	"heatwave",
+	"armeddangerous",
+	"swat",
+	"aprilfools_s16",
+	"shadowarmy",
+	"threestrikes",
+
+                    
+          
+                          
+
+	                          
+		"treasurehunt",
+                                 
+
+                                 
+                   
+       
+
+                                    
+                 
+                                          
+]
+
+global const string STATS_MATCH_TYPE_NONE = "none"
+global const array<string> STATS_MATCH_TYPES = [
+	"survival", // DEFAULT inherited by other playlists
+	"arenas",
+	"winter_express",
+	"shadowroyale",
+	"control",
+	"gungame",
+	"ftdm",
+	"hardcore_survival",
+	"date_night",
+	"heatwave",
+	"swat",
+	STATS_MATCH_TYPE_NONE,
+	"aprilfools_s16",
+	"armeddangerous",
+	"shadowarmy",
+	"threestrikes",
+
+                    
+          
+                          
+
+	                          
+		"treasurehunt",
+                                 
+
+                                 
+                   
+       
+
+                                    
+                 
+                                          
+
+	// TODO: what is this empty string entry for?
+	""
+]
+
+// TODO: reconcile with eGameModes enum
+// TODO: when adding a value here, make sure to update the corresponding const arrays in sh_challenges
+global const int MODE_SPECIFIC = -1 // used by sh_stats_internal to pick from below when registering
+global enum eChallengeGameMode
+{
+	INVALID = -1,
+	ANY,
+	BATTLE_ROYALE,
+	ARENAS,
+	NON_MODE,
+	CONTROL,
+	EXCEPT_BR,
+	GUNGAME,
+	WINTER_EXPRESS,
+	SHADOW_ROYALE,
+	FTDM,
+	HARDCORE_BR,
+	DATE_NIGHT,
+	HEATWAVE,
+	ARMED_AND_DANGEROUS,
+	SWAT,
+	EXPIRED, // used by sh_stats to indicate a stat is no longer "active"
+	APRILFOOLS_S16,
+	SHADOWARMY,
+	THREE_STRIKES,
+
+                   
+       
+                         
+
+                          
+	TREASURE_HUNT,
+                                
+
+                                
+                
+      
+
+                                   
+              
+                                         
+}
+
+// REQUIRED by sh_stats_internal.gnut - BuildStatTemplateEnumKeyResolversRecursive - to link modes-to-enum
+// N.B. - *only* used by modes[mode]. stats that are in STATS_MATCH_TYPES
+// TODO: maybe this should be moved into sh_stats_internal.gnut -- it's not really a global, it's just used there; but has to be updated as modes get updated
+global const table<int, string> GAME_MODE_TO_STAT_REF_MAP =
+{
+	[eChallengeGameMode.ARENAS] = "arenas",
+	[eChallengeGameMode.CONTROL] = "control",
+	[eChallengeGameMode.GUNGAME] = "gungame",
+	[eChallengeGameMode.WINTER_EXPRESS] = "winter_express",
+	[eChallengeGameMode.SHADOW_ROYALE] = "shadowroyale",
+	[eChallengeGameMode.FTDM] = "ftdm",
+	[eChallengeGameMode.HARDCORE_BR] = "hardcore_survival",
+	[eChallengeGameMode.DATE_NIGHT] = "date_night",
+	[eChallengeGameMode.HEATWAVE] = "heatwave",
+	[eChallengeGameMode.ARMED_AND_DANGEROUS] = "armeddangerous",
+	[eChallengeGameMode.SWAT] = "swat",
+	[eChallengeGameMode.APRILFOOLS_S16] = "aprilfools_s16",
+	[eChallengeGameMode.SHADOWARMY] = "shadowarmy",
+	[eChallengeGameMode.THREE_STRIKES] = "threestrikes",
+
+                    
+                                       
+                          
+
+	                          
+		[eChallengeGameMode.TREASURE_HUNT] = "treasurehunt",
+                                 
+
+                                 
+                                                         
+                                 
+
+                                    
+                                                     
+                                          
+}
+
+// TODO: is this used at all - remove if not used
+global struct MatchStats
+{
+	//StatTemplate& kills
+}
+
+// keep this in sync with sh_arenas_buy_system.nut ArenasPurchaseData
+global enum eArenasPurchaseData
+{
+	HEAL,
+	SKILL,
+	UPGRADE,
+	WEAPON,
+	ORDNANCE,
+}
+
+// keep this in sync with sh_gun_shop.nut GunShopPurchaseData
+global enum eGunShopPurchaseData
+{
+	UPGRADE,
+	WEAPON,
+	ORDNANCE,
+	QUICK_UPGRADE
+}
+
+global int MAX_BIT_FIELD_SIZE = 32
+const int BITFIELD_SAFETY_WARNING_THRESHOLD = 3
+
+void function ShStatsDefs_Init()
+{
+	FileLevel_Lifetime fileStruct
+	file = fileStruct
+
+	// TODO: the biggest we can go right now is 1 << 31 since code supports 32-bit numbers for script right now
+	// TODO: we will ABSOLUTELY need to address this when we expand the roster https://jiratf.rspn.ad.ea.com/browse/R5DEV-587155
+
+	foreach ( int index, string guid in GetAllCharacterGUIDStringsForStats() )
+	{
+		Assert( !( guid in file.characterGUIDToBitmask ), printf("Duplicate character GUID found: %s", guid) )
+		Assert( index < MAX_BIT_FIELD_SIZE, "Bitfield requested is too big! -- Please see Jira: https://jiratf.rspn.ad.ea.com/browse/R5DEV-587155" )
+		Assert( index < MAX_BIT_FIELD_SIZE - BITFIELD_SAFETY_WARNING_THRESHOLD, "Bitfield is nearing maximum supported size!! -- Please see Jira: https://jiratf.rspn.ad.ea.com/browse/R5DEV-587155")
+
+		#if DEVELOPER
+			printf("adding character guid %s to bitmask index %d", guid, index)
+		#endif
+
+		file.characterGUIDToBitmask[ guid ] <- 1 << index
+	}
+
+	#if DEVELOPER
+		// debug printing for checking base assumptions about the struct setup
+		print("CHARACTER_GUID_TO_BITMASK_MAP contents:\n")
+		foreach ( string guid, int bitmask in file.characterGUIDToBitmask )
+		{
+			printf("guid: %s | bitmask: %d\n", guid, bitmask)
+		}
+		printf("total entries: %d/%d\n", file.characterGUIDToBitmask.len(), MAX_BIT_FIELD_SIZE)
+	#endif
+}
+
+table< string, int > function StatsDefs_GetCharacterGUIDToBitmaskMap()
+{
+	return file.characterGUIDToBitmask
+}

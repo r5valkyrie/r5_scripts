@@ -504,8 +504,10 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "displayMapzoneText", SNDC_GLOBAL, SNVT_BOOL, true )
 
 	ScriptRegisterNetworkedVariable( "hasLockedInCharacter", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	ScriptRegisterNetworkedVariable( "lockedInCharacterTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
 	ScriptRegisterNetworkedVariable( "characterSelectLockstepPlayerIndex", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "characterSelectFocusIndex", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
+	ScriptRegisterNetworkedVariable( "characterSelectFocusCharacterGUID", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
+	ScriptRegisterNetworkedVariable( "characterSelectFocusSkinGUID", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
 	
 
 	if( Playlist() != ePlaylists.fs_scenarios )
@@ -514,7 +516,10 @@ void function RemoteFunctions_Init_Begin()
 		ScriptRegisterNetworkedVariable( "characterSelectLockstepIndex", SNDC_GLOBAL, SNVT_INT, -1 )
 		ScriptRegisterNetworkedVariable( "characterSelectLockstepStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 		ScriptRegisterNetworkedVariable( "characterSelectLockstepEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+		ScriptRegisterNetworkedVariable( "characterSelectPicksEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+		ScriptRegisterNetworkedVariable( "allSquadsPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 		ScriptRegisterNetworkedVariable( "squadPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+		ScriptRegisterNetworkedVariable( "mvpPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 		ScriptRegisterNetworkedVariable( "championSquadPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 		ScriptRegisterNetworkedVariable( "pickLoadoutGamestateEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 		ScriptRegisterNetworkedVariable( "pickLoadoutGamestateStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
@@ -523,6 +528,8 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "championEEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
 	ScriptRegisterNetworkedVariable( "championSquad1EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
 	ScriptRegisterNetworkedVariable( "championSquad2EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_CharacterLockRejected" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ForceCharacterLockFeedback", "entity", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Mirage_DecoysDeployed", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_MatchEndAnnouncement", "bool", "int", TEAM_INVALID, 127 ) //Audit 2-22-2025
 	
@@ -816,7 +823,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "IsAdmin", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
 	ScriptRemote_RegisterUIFunction( "UICallback_AdminStatus", "bool" )
 	
-	//r5r.dev player stats
+	// Player stats tracker - todo(cafe): clean up legacy tracker related code
 	ScriptRemote_RegisterClientFunction( "Tracker_SetPlayerStatBool", "entity", "bool" )
 	ScriptRemote_RegisterClientFunction( "Tracker_SetPlayerStatInt", "entity", "int", INT_MIN, INT_MAX )
 	ScriptRemote_RegisterClientFunction( "Tracker_SetPlayerStatFloat", "entity", "float", -999999.0, 999999.0, 32 )

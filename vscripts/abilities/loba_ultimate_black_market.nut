@@ -641,7 +641,7 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 			blackMarket.Minimap_Hide( player.GetTeam(), null )
 		blackMarket.Minimap_AlwaysShow( owner.GetTeam(), null )
 
-		// AllianceProximity_SetMinimapAlwaysShow_ForAlliance( owner.GetTeam(), blackMarket, null )  // TODO: Port from retail if needed
+		// AllianceProximity_SetMinimapAlwaysShow_ForAlliance( owner.GetTeam(), blackMarket, null )  // TODO: Port if needed
 
 		blackMarket.Minimap_SetObjectScale( lootGrabDist / 16384.0 )
 		blackMarket.Minimap_SetAlignUpright( true )
@@ -883,7 +883,7 @@ void function DoBlackMarketPostPickupLogic( entity player, entity blackMarket, e
 	entity blackMarketOwner = blackMarket.GetOwner()
 	if ( IsValid( blackMarketOwner ) )
 	{
-		// StatsHook_BlackMarket_OnUsed( blackMarket, blackMarketOwner, player )  // TODO: Port from retail if needed
+		// StatsHook_BlackMarket_OnUsed( blackMarket, blackMarketOwner, player )  // TODO: Port if needed
 	}
 
 	entity lootEntParent = lootEnt.GetParent()
@@ -893,13 +893,13 @@ void function DoBlackMarketPostPickupLogic( entity player, entity blackMarket, e
 		{
 			bool shouldOpenRegularCompartment = true
 			bool shouldOpenSecretCompartment  = lootEnt.e.isSecretLoot
-			// thread LootBin_ForceOpen_Thread( lootEntParent, shouldOpenRegularCompartment, shouldOpenSecretCompartment )  // TODO: Port from retail if needed
+			// thread LootBin_ForceOpen_Thread( lootEntParent, shouldOpenRegularCompartment, shouldOpenSecretCompartment )  // TODO: Port if needed
 		}
 		else if ( lootEntParent.GetScriptName() == CARE_PACKAGE_SCRIPTNAME )
 		{
 			if ( lootEntParent.DoesShareRealms( player ) )
 			{
-				// thread RemoteOpenAirdrop( lootEntParent, null )  // TODO: Port from retail if needed
+				// thread RemoteOpenAirdrop( lootEntParent, null )  // TODO: Port if needed
 			}
 		}
 	}
@@ -1427,14 +1427,14 @@ float function GetBlackMarketNearbyLootRadius( entity owner = null )
 
 
 #if SERVER || CLIENT || UI
-int function GetBlackMarketUseLimit( entity blackMarket, entity player )
+int function GetBlackMarketUseLimit( entity blackMarket = null, entity player = null )
 {
 	if ( IsInfiniteAmmoEnabled() )
 		return 99
 	int result = GetCurrentPlaylistVarInt( "loba_ultimate_use_limit", 2 )
 
 	#if SERVER || CLIENT
-		if( !IsValid( blackMarket ) )
+		if( !IsValid( blackMarket ) || !IsValid( player ) )
 			return result
 		if( player.HasPassive( ePassives.PAS_ULT_UPGRADE_ONE ) && player.HasPassive( ePassives.PAS_LOBA_EYE_FOR_QUALITY ) )
 		{

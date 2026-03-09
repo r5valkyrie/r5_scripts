@@ -316,7 +316,7 @@ void function CreateMarvin_Loot( bool hasDetachableArm = false )
 
 	CreateMarvin( traceResults.endPos, <0, 0, 0>, null, false, hasDetachableArm )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 
 #if SERVER && DEVELOPER
@@ -329,7 +329,7 @@ void function CreateMarvin_Story()
 
 	CreateMarvin( traceResults.endPos, <0, RandomFloat( 360.0 ), 0>, null, true, false )
 }
-#endif // SERVER && DEV
+#endif // SERVER && DEVELOPER
 
 
 #if SERVER && DEVELOPER
@@ -1305,7 +1305,7 @@ void function InstanceMarvinScreenCreatedWP( entity wp )
 	entity marvin = wp.GetWaypointEntity( 0 )
 	while( !IsValid( marvin ) )
 	{
-		#if DEV
+		#if DEVELOPER
 			printf( "Loot Marvin has not yet replicated" )
 		#endif
 		marvin = wp.GetWaypointEntity( 0 )

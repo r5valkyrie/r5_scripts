@@ -1,0 +1,2380 @@
+// ============================================================================
+// workarounds.gnut - Stub functions for features not present in this build
+// Organized by system/feature within each preprocessor block
+// ============================================================================
+
+// ============================================================================
+//  GLOBAL SCOPE - Constants, Enums, Structs (all VMs)
+// ============================================================================
+
+// === Constants ===
+global const string XPROG_PERSISTENCE_MERGED_PLAT_STRUCT_NAME = "xMergedPlat"
+global const int PLAYER_MELEE_STATE_KICK_ATTACK = 1
+global const int PLAYER_ARMORED_LEAP_PHASE_NONE = 0
+global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_HOLD_DURATION = 0.0
+global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_FADE_DURATION = 0.0
+global const int CODE_REDEMPTION_RESULT_SUCCESS = 0
+global const int PREMIUM_CURRENCY_05 = 0
+global const int playedApexFalse = 0
+global const GAMEMODE_SHADOW_ROYALE = "shadow_royale"
+
+// Asset download status constants (used by image_pak_load.nut)
+global const int ASSET_DOWNLOAD_STATUS_UP_TO_DATE = 0
+global const int ASSET_DOWNLOAD_STATUS_FAILED = 1
+global const int ASSET_DOWNLOAD_STATUS_PENDING = 2
+
+// === Enums ===
+
+// Playlist opinion enum for character filtering
+global enum eItemFlavorPlaylistOpinion
+{
+	UNLOCKED = 0,
+	LOCKED = 1
+}
+
+global enum eServerVisibility
+{
+	OFFLINE,
+	HIDDEN,
+	PUBLIC
+}
+
+global const int UM_RESULT_HIGH_LATENCY = 1
+global const int UM_RESULT_FAILURE = 2
+
+// === Hardware/Platform Constants ===
+global const int HARDWARE_PC = 0
+global const int HARDWARE_PC_STEAM = 1
+global const int HARDWARE_PS4 = 2
+global const int HARDWARE_PS5 = 5
+global const int HARDWARE_XBOXONE = 3
+global const int HARDWARE_XB5 = 6
+global const int HARDWARE_NX = 4
+global const int HARDWARE_SWITCH = 4
+
+// Cross-platform merged platform mapping for XProg
+global table<int, string> HARDWARE_TO_MERGED_PLATFORM = {
+	[HARDWARE_PC] = "pc",
+	[HARDWARE_PC_STEAM] = "pc",
+	[HARDWARE_PS4] = "psn",
+	[HARDWARE_PS5] = "psn",
+	[HARDWARE_XBOXONE] = "xbl",
+	[HARDWARE_XB5] = "xbl",
+	[HARDWARE_NX] = "nx",
+}
+
+// === GRX/Store Constants ===
+global const int GRX_OFFERITEMTYPE_DEFAULT = 0
+global const int GRX_OFFERITEMTYPE_BONUS = 1
+
+// ============================================================================
+//  GLOBAL SCOPE - Function Declarations (all VMs)
+// ============================================================================
+
+// === Ranked/Rumble ===
+global function RankedRumble_IsRunningRankedRumble
+global function Ranked_GetCurrentPeriodGUIDString
+
+// === Character/Playlist ===
+global function GetItemFlavorPlaylistOpinion
+global function MatchBehaviorPlayer_CanBeFirst
+
+// === Item Flavor ===
+global function IsItemFlavorStructValid
+global function IsValidItemFlavorNetworkIndex_DEPRECATED
+
+// === Utilities ===
+global function replace
+global function WORKAROUND_AssetAppend
+global function DebugDrawScreenText
+global function DebugDrawScreenTextWithColor
+
+// === Platform/Hardware ===
+global function GetHardwareFromName
+global function GetNameFromHardware
+global function GetMergedPlatformIdForPlayer
+global function IsDirectX12Beta
+global function IsTakeHomeBuild
+global function GetUIDHex
+
+// === Social/Party ===
+global function CanPromptUserToSpectatePartyInGame
+global function CanPromptUserToJoinPartyInFiringRange
+global function LocalizePresenceState
+global function HasFriendshipTenureBeenLongEnough
+
+// === Lobby/Audio ===
+global function PlayLobbyCharacterDialogue
+global function InitializeMinimapCoords
+global function SquadMuteLegendSelectEnabled
+
+// === Gifting ===
+global function CanLocalPlayerGift
+global function GetGiftOfferEligibility
+
+// === Challenges ===
+global function RefreshChallenges
+
+// === Automation ===
+global function AutomateUi
+
+// ============================================================================
+//  #if UI - Struct Definitions & Declarations
+// ============================================================================
+#if UI
+// === Server/Debug ===
+global function GetServerDebugId
+
+// Struct definitions needed for sh_ranked.gnut UI code (defined in feature_tutorial.gnut which loads later)
+global struct featureTutorialTableData
+{
+	string leftString
+	string rightString
+}
+
+global struct featureTutorialData
+{
+	string          title
+	string		 	description
+	asset			image
+	array< string >	descArgs
+	array< featureTutorialTableData > tableData
+	bool 			hasImage
+}
+
+global struct featureTutorialTab
+{
+	string                       tabName
+	array< featureTutorialData > rules
+}
+#endif
+
+// ============================================================================
+//  #if CLIENT - Declarations
+// ============================================================================
+#if CLIENT
+// === Asset Loading/Precaching ===
+global function PrecacheOnDemandLoadModel
+global function PrecacheSkinName
+global function ODL_FindAsset
+global function ODL_IsLoaded
+global function GetFileDownloadStatus
+
+// === Audio ===
+global function StopUISoundByName
+
+// === Props/Models ===
+global function CreateClientSidePropDynamicCharm
+global function FlashMenuModel
+
+// === Game Mode Checks ===
+global function IsGunGameActive
+global function IsShadowRoyaleMode
+global function BattleRush_StopCharSelectMusic
+global function BattleRush_ServerCallback_PlayJumpMusic
+
+// === Shadow Army ===
+global function ShadowArmy_IsPlayerOnShadowArmy
+global function ShadowArmy_GetEnemySquadPlayersForAllianceIntro
+global function ShadowArmy_PlayIntroBannerSoundForLegends_Thread
+
+// === HUD/UI Display ===
+global function ShowTeamNameInHud
+global function HideTeamNameInHud
+global function GetScreenScaleFrac
+global function ForceDestroyBlackBarRui
+global function InitButtonRCP
+// GetFocus, GetMouseFocus, SetCursorPosition, GetCursorPosition are now native functions in SDK
+
+// === Input ===
+global function AddUICallback_InputModeChanged
+
+// === Player Info ===
+global function Script_UserHasEAAccess
+global function GetPlayerUID
+global function GetPlayerNameFromEHI
+global function GetObfuscatedIdFromPlayer
+global function IsLocalPlayerAlive_NonReplay
+global function IsInBleedoutOrRevive
+
+// === Character Abilities ===
+global function GetCurrentArmoredLeapPhase
+global function GetAllResinShards
+
+// === Ranked ===
+global function ShRanked_RegisterNetworkFunctions
+global function IsRankedGame
+global function IsArenasRankedGame
+
+// === Network ===
+global function GetGlobalNonRewindNetBool
+
+// === Mute/Communication ===
+global function TogglePlayerVoiceAndTextMute
+
+// === Perks ===
+global function Perk_CanTeammateCraftPlayerBanner
+
+// === Game Mode Features ===
+global function Control_IsModeEnabled
+global function MissionCheckpoints_GetRespawnsLeftForPlayer
+global function UpgradeCore_ShowUpgradeTree_CharacterSelect
+global function TryStartIntroPodiumSequence
+
+// === Crossplay ===
+global function IsUserOnSamePlatform
+
+// === Squad Cards ===
+global function DoAnimatedSquadCardsPresentation
+global function DoAnimatedChampionSquadCardsPresentation
+#endif
+
+// ============================================================================
+//  #if SERVER || CLIENT - Declarations
+// ============================================================================
+#if SERVER || CLIENT
+// === Melee/Combat ===
+global function SetObjectCanBeMeleed
+global function IsRebuiltDoor
+global function TitanSword_TryMultiAttack
+global function TitanSword_VictimHitOverride
+
+// === Ranked/Rumble ===
+global function RankedRumble_IsLatestGameRankedRumble
+global function RankedRumble_IsRunningRankedRumbleCached
+global function DEV_script_ranked_debug
+global function IsServerNetworkAlertTriggered
+global function PrepareGameSummaryForPointCalculation
+global function Ranked_ConstructSingleRankBadgeForStatsCard
+global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
+global function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2
+global function Ranked_ConstructDoubleRankBadgeForStatsCard
+global function ArenasRanked_ConstructDoubleRankBadgeForStatsCard
+
+// === Persistence ===
+#if SERVER
+global function SafeGetPersistentVarAsInt
+global function SafeSetPersistentVar
+#elseif CLIENT
+global function SafeGetPersistentVarAsInt
+global function SafeSetPersistentVar
+#endif
+
+// === Audio ===
+global function EmitUIMusic
+
+// === Time ===
+global function WaitForUnixTime
+
+// === GRX/Store ===
+global function GRX_SetEventCurrency
+global function GRX_GetItemTier
+
+// === Persistence/Lobby ===
+global function PersistenceGetVarHandle
+global function HasCallback_OnPartyMemberRemoved
+global function LobbyPlaylist_GetSelectedPlaylist
+
+// === Stats/Mastery ===
+global function StatsRegister_MetaChallenges
+global function Mastery_GetStatValue
+global function Mastery_DoesStatSatisfyValue
+global function Mastery_IsValidStatRef
+#endif
+
+// ============================================================================
+//  #if CLIENT || UI - Declarations & Implementations
+// ============================================================================
+
+// Declarations visible in ALL VMs - implementations per-VM below
+
+// Ranked badge functions needed in CLIENT and UI
+#if CLIENT || UI
+global function PopulateRuiWithRankedBadgeDetails
+global function PopulateRuiWithPreviousSeasonRankedBadgeDetails
+#endif
+
+// ============================================================================
+//  #if UI - Declarations (large UI block)
+// ============================================================================
+#if UI
+// === Workarounds/Utilities ===
+global function WORKAROUND_AnimAssetToAnimString
+global function WORKAROUND_PreventScriptErrors
+global function LocalizeNumber
+global function GetDaysHoursRemainingLoc
+global function FormatNumber
+global function GetFakeTimeInSeconds
+global function IsLoadScreenFinished
+
+// === RUI/Time ===
+global function RuiSetWallTimeBad
+global function RuiSetWallTimeWithOffset
+
+// === Server/Connection ===
+global function IsConnectedServerInfo
+global function ResetReconnectParameters
+
+// === Playlist/Map Rotation ===
+global function GetPlaylistActiveMapRotationTimeLeft
+global function GetPlaylistRotationNameFromPlaylist
+global function GetNextPlaylistFromRotationAndUISlotAndSkip
+global function IsRankedPlaylist
+
+// === Platform/Hardware ===
+global function GetUnspoofedPlayerHardware
+global function PCPlat_IsSteam
+global function PCPlat_IsOrigin
+global function PCPlat_IsOverlayAvailable
+global function PCPlat_IsEnabled
+global function PCPlat_IsOnline
+global function PCPlat_IsUpToDate
+global function PCPlat_IsReady
+global function PCPlat_RegisterEAAccount
+global function PCPlat_IsWaitingForEARegistration
+global function PCPlat_GetEALinkErrorLevel
+global function IsPlayerLoggedInToMultipleMachines
+global function GetPlayerUnSpoofedUID
+global function IsUserOnSamePlatform
+
+// === Custom Match ===
+global function CustomMatch_CreateLobby
+global function CustomMatch_JoinLobby
+global function CustomMatch_HasHiddenPlaylistAccess
+global function CustomMatch_HasSpecialAccess
+global function CustomMatch_UpdateSettings
+global function CustomMatch_SetTeam
+global function CustomMatch_KickPlayer
+global function CustomMatch_LeaveLobby
+global function CustomMatch_SetReady
+global function CustomMatch_SetMatchmaking
+global function CustomMatch_IsInCustomMatch
+global function CustomMatch_LiveAPI_SendPlayers
+global function CustomMatch_GetMatchStats
+global function CustomMatch_SetTeamName
+
+// === Menu/UI ===
+global function MenuStack_Remove
+global function MenuStack_GetLength
+global function IsSelfClosingMenu
+global function ToolTips_SetMenuTooltipVisible
+global function SpectatorNextTarget
+global function ShowBlockPlayerDialog
+global function OpenClubLeaveDialog
+global function Hud_ClearAllToolTips
+
+// === Gifting ===
+global function Gifting_GetRemainingDailyGifts
+global function IsPlayerLeveledForGifting
+global function IsGiftingEnabled
+global function IsPlayerWithinGifingLimit
+global function GetGiftingMaxLimitPerResetPeriod
+global function IsTwoFactorAuthenticationEnabled
+global function RefreshTwoFactorAuthenticationStatus
+
+// === EADP Social ===
+global function EADP_SocialEnabled
+global function EADP_SocialCanRun
+global function EADP_SearchByName
+global function EADP_IsBlockedByEAID
+global function EADP_IsFriendByEAID
+global function EADP_InviteFriendByEAID
+global function EADP_UnBlockByEAID
+global function EADP_UnFriendByEAID
+global function EADP_IsCodeRedemptionEnabled
+global function EADP_RedeemCode
+global function EADP_GetPresenceForAccount
+global function EADP_GetFriendRequestList
+global function EADP_GetEadpIdFromFirstPartyID
+global function EADP_FriendsDoQuery
+global function EADP_GetFriendsList
+global function EADP_GetFriendsListWithOffline
+global function EADP_GetPresenceForUser
+global function EADP_RejectFriendRequestByEAID
+global function EADP_AcceptFriendRequestByEAID
+global function EADP_BlockByEAID
+global function EADP_GetInviteToPlayList
+global function EADP_AcceptInvitToPlay
+global function EADP_RejectInviteToPlay
+global function EADP_InviteToPlayByEAID
+global function EADP_InvitationAllowed
+
+// === Audio ===
+global function EmitUIMusic
+global function IsSoundStillPlaying
+
+// === GRX/Store ===
+global function GRX_SetEventCurrency
+global function GRX_GetItemTier
+global function GRX_PurchaseOfferV2
+global function GRX_UpdateSmartMerchandisingData
+global function GRX_MarkGiftItemsAsSeen
+global function GRX_MarkContainerAsSeen_Internal
+global function GRX_GetCurrencyBalances
+global function GRX_HasUpToDateBundleOffers
+global function AddCallback_OnGRXBundlesRefreshed
+global function RemoveCallback_OnGRXBundlesRefreshed
+global function IsStoreEmpty
+global function IsInvalidTypeForRewardCeremony
+
+// === Persistence ===
+global function PersistenceGetVarHandle
+global function HasCallback_OnPartyMemberRemoved
+global function LobbyPlaylist_GetSelectedPlaylist
+
+// === Stats/Mastery ===
+global function StatsRegister_MetaChallenges
+global function Mastery_GetStatValue
+global function Mastery_DoesStatSatisfyValue
+global function Mastery_IsValidStatRef
+
+// === Ranked ===
+global function Ranked_ConstructSingleRankBadgeForStatsCard
+global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
+global function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2
+global function Ranked_ConstructDoubleRankBadgeForStatsCard
+global function ArenasRanked_ConstructDoubleRankBadgeForStatsCard
+global function Ranked_SetupMenuGladCardForUIPlayer
+global function ArenasRanked_SetupMenuGladCardForUIPlayer
+global function Ranked_SetupMenuGladCardFromCommunityUserInfo
+global function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo
+global function Ranked_SetupMenuGladCard
+global function Ranked_ShouldUpdateWithComnunityUserInfo
+global function Ranked_GetDisplayNumberForRuiBadge
+global function Ranked_PartyMeetsRankedDifferenceRequirements
+global function Ranked_HasBeenInitialized
+global function SharedRanked_PartyHasRankedLevelAccess
+global function SharedRanked_GetMaxPartyMatchmakingDelay
+global function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo
+global function PopulateMatchRank
+
+// === Party/Social ===
+global function Party_JoinUserPartyGame
+global function Party_LeaveParty
+global function AddCallback_PartySpectateSlotAvailable
+global function Eadp_GetPrivacyData
+global function CreateEADPDataFromEAID
+global function IsPartyAllowedCrossplay
+
+// === Cross Progression ===
+global function CrossProgression_IsRequestingUserMigrateStatus
+global function CrossProgression_QueryUserMigrateStatusIfNeeded
+
+// === PIN/Analytics ===
+global function PIN_QuestTextView
+global function PIN_BattlepassMilestonePageView
+global function PIN_BattlepassPurchase
+global function PIN_ComicPageView
+global function PIN_Slow
+global function PIN_UIInteraction_Select
+global function PIN_LobbyPopUp_Event
+global function PIN_Store_EventButton
+global function PIN_Club_DeclineInvite
+global function SetCurrentHubForPIN
+
+// === Clubs ===
+global function AreClubInvitesEnabled
+global function ClubGetInvitedClubsList
+global function ClubInviteDecline
+global function ClubGetChatLog
+global function ClubGetEventLog
+global function ClubGetJoinRequests
+global function ClubGetMemberNameByID
+global function ClubGetMemberRankByID
+global function ClubGetSearchResults
+global function ClubGetStickyNote
+global function ClubInviteQueryClubsList
+global function ClubIsAllowedTag
+global function ClubIsMemberOnDifferentHardware
+global function ClubIsValidName
+global function ClubIsValidTag
+global function ClubJoinRequestsCount
+global function ClubChatSend
+global function ClubChatStickyNote
+
+// === Dialog Flow ===
+global function GetDialogFlowTablesValueOrPersistence
+global function SetDialogFlowPersistenceTables
+global function IncrementNumDialogFlowDialogsDisplayed
+global function DataDialog_AddCallback_OnClose
+
+// === Events ===
+global function EventsPanel_SetOpenPageIndex
+global function JumpToEventTab
+global function DoesUserHaveTwitchDrops
+
+// === Squads ===
+global function Squads_GetMax
+global function Squads_GetSquadColor
+global function Squads_GetSquadName
+
+// === Communication/Mute ===
+global function CommunicationBlockGetBlockTime
+global function IsPlayerVoiceAndTextMutedForUID
+global function TogglePlayerVoiceAndTextMuteForUID
+global function GetCommunicationBlockWarningText
+global function GetCommunicationBlockStateID
+
+// === Time ===
+global function WaitForUnixTime
+global function GetIsDSTActive
+global function GetUnixTimePDT
+global function RLocalDateTime
+global function RLocalTime
+
+// === Game Mode ===
+global function Control_IsModeEnabled
+global function Control_IsSpawningOnObjectiveBAllowed
+
+// === Datacenter ===
+global function GetDatacenterRealName
+
+// === First Time Player ===
+global function GetFirstTimePlayerState
+global function SetFirstTimePlayerState
+global function StoryChallengeEvent_GetHasChallengesPopupBeenSeenVarNameOrNull
+
+// === Settings/Options ===
+global function GamepadCustomSettingsAreEnabled
+global function VideoOptions_SpotShadowDetailChanged
+global function SoundOptions_SetupChannelConfigOptions
+global function SoundOptions_SetupOutputDeviceOptions
+global function SoundOptions_SetupVoiceInputDeviceOptions
+global function SoundOptions_DeviceSwitchingAvailable
+
+// === Stickers ===
+// GetAllStickerObjectTypes, GetStickerObjectName, GetStickerPresentationType moved to mp/sh_stickers.nut
+global function StickersPanel_InitPreviewStyle
+global function StickersPanel_SetConsumable
+global function StickersPanel_Update
+global function StickersPanel_OnShow
+global function StickersPanel_OnHide
+global function StickersPanel_OnFocusChanged
+global function StickersPanel_TogglePreviewStyle
+global function StickersPanel_GetCurrentConsumable
+
+// === Reconnect/Spectate ===
+global function TryLoadSpectateParameters
+global function TryLoadReconnectFromLocalStorage
+global function StartReconnectFromParameters
+global function GetReconnectDelay
+global function Reconnect_IsLiveSpectateLoaded
+
+// === Misc ===
+global function OpenLangAoCDialog
+
+// === Nested #if UI ===
+#if UI
+global function GetKeyValueAsAsset
+#endif
+#if UI
+global function UISafeGetPersistentVarAsInt
+global function GetGiftingInboxMessages
+global function RemoveGiftCacheMessage
+#endif
+#endif
+
+// ============================================================================
+//  #if CLIENT || UI - Implementations
+// ============================================================================
+#if CLIENT || UI
+void function PopulateRuiWithRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
+{
+}
+
+void function PopulateRuiWithPreviousSeasonRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
+{
+}
+#endif
+
+// ============================================================================
+//  #if UI - Implementations
+// ============================================================================
+#if UI
+
+// === Workarounds/Utilities ===
+
+string function WORKAROUND_AnimAssetToAnimString( asset animAsset )
+{
+	string assetAsString = string( animAsset )
+	return assetAsString.slice( 2, assetAsString.len() - 1 )
+}
+
+void function WORKAROUND_PreventScriptErrors()
+{
+}
+
+string function LocalizeNumber( ... )
+{
+	if ( vargc > 0 )
+		return "" + vargv[0]
+	return "0"
+}
+
+string function FormatNumber( string format, var number )
+{
+	return FormatAndLocalizeNumber( format, number, false )
+}
+
+int function GetFakeTimeInSeconds()
+{
+	return 0
+}
+
+bool function IsLoadScreenFinished()
+{
+	return true
+}
+
+bool function AutomateUi( float delayFactor = 1.0 )
+{
+	return false
+}
+
+// === RUI/Time ===
+
+void function RuiSetWallTimeBad( var rui, string argName, float time = 0.0 )
+{
+	RuiSetGameTime( rui, argName, time )
+}
+
+void function RuiSetWallTimeWithOffset( var rui, string argName, float time )
+{
+	RuiSetGameTime( rui, argName, time )
+}
+
+string function GetDaysHoursRemainingLoc( int days, int hours )
+{
+	string dateFormat = "#DAYS_HOURS_REMAINING"
+
+	if ( hours == 1 )
+	{
+		dateFormat = "#DAYS_HOUR_REMAINING"
+	}
+	if ( days == 1 )
+	{
+		if ( hours == 1 )
+		{
+			dateFormat = "#DAY_HOUR_REMAINING"
+		}
+		else
+		{
+			dateFormat = "#DAY_HOURS_REMAINING"
+		}
+	}
+
+	return dateFormat
+}
+
+// === Server/Connection ===
+
+bool function IsConnectedServerInfo()
+{
+	return false
+}
+
+void function ResetReconnectParameters()
+{
+}
+
+// === Playlist/Map Rotation ===
+
+int function GetPlaylistActiveMapRotationTimeLeft( string playlist )
+{
+	return 0
+}
+
+string function GetPlaylistRotationNameFromPlaylist( string playlist )
+{
+	return ""
+}
+
+string function GetNextPlaylistFromRotationAndUISlotAndSkip( string playlist, string slot, int skip )
+{
+	return ""
+}
+
+bool function IsRankedPlaylist( string playlist )
+{
+	return GetPlaylistVarBool( playlist, "is_ranked_game", false )
+}
+
+// === Platform/Hardware ===
+
+string function GetUnspoofedPlayerHardware()
+{
+	return "PC"
+}
+
+int function GetHardwareFromName( string name )
+{
+	switch ( name )
+	{
+		case "PC":
+			return HARDWARE_PC
+		case "PC_STEAM":
+			return HARDWARE_PC_STEAM
+		case "PS4":
+			return HARDWARE_PS4
+		case "PS5":
+			return HARDWARE_PS5
+		case "X1":
+			return HARDWARE_XBOXONE
+		case "XB5":
+			return HARDWARE_XB5
+		case "NX":
+			return HARDWARE_NX
+	}
+	return HARDWARE_PC
+}
+
+string function GetNameFromHardware( int hardware )
+{
+	switch ( hardware )
+	{
+		case HARDWARE_PC:
+			return "PC"
+		case HARDWARE_PC_STEAM:
+			return "PC_STEAM"
+		case HARDWARE_PS4:
+			return "PS4"
+		case HARDWARE_PS5:
+			return "PS5"
+		case HARDWARE_XBOXONE:
+			return "X1"
+		case HARDWARE_XB5:
+			return "XB5"
+		case HARDWARE_NX:
+			return "NX"
+	}
+	return "PC"
+}
+
+string function GetMergedPlatformIdForPlayer( entity player )
+{
+	return "pc"
+}
+
+bool function IsDirectX12Beta()
+{
+	return false
+}
+
+bool function IsTakeHomeBuild()
+{
+	return true
+}
+
+string function GetUIDHex( entity player = null )
+{
+	if ( player == null )
+		player = GetLocalClientPlayer()
+	if ( player == null )
+		return "0"
+	return format( "%X", player.GetPINNucleusPid() )
+}
+
+bool function PCPlat_IsSteam()
+{
+	return false
+}
+
+bool function PCPlat_IsOrigin()
+{
+	return true
+}
+
+bool function PCPlat_IsOverlayAvailable()
+{
+	return false
+}
+
+bool function PCPlat_IsEnabled()
+{
+	return true
+}
+
+bool function PCPlat_IsOnline()
+{
+	return true
+}
+
+bool function PCPlat_IsUpToDate()
+{
+	return true
+}
+
+void function PCPlat_RegisterEAAccount()
+{
+}
+
+bool function PCPlat_IsReady()
+{
+	return true
+}
+
+bool function PCPlat_IsWaitingForEARegistration()
+{
+	return false
+}
+
+int function PCPlat_GetEALinkErrorLevel()
+{
+	return 0
+}
+
+bool function IsPlayerLoggedInToMultipleMachines()
+{
+	return false
+}
+
+string function GetPlayerUnSpoofedUID()
+{
+	return GetPlayerUID()
+}
+
+bool function IsUserOnSamePlatform( string hardware )
+{
+	return hardware == "PC"
+}
+
+// === Custom Match ===
+
+void function CustomMatch_CreateLobby()
+{
+}
+
+void function CustomMatch_JoinLobby( string code )
+{
+}
+
+bool function CustomMatch_HasHiddenPlaylistAccess()
+{
+	return false
+}
+
+bool function CustomMatch_HasSpecialAccess()
+{
+	return false
+}
+
+void function CustomMatch_UpdateSettings( CustomMatch_SettingsForUpdate update )
+{
+}
+
+void function CustomMatch_SetTeam( int teamIndex, string hardware, string uid )
+{
+}
+
+void function CustomMatch_KickPlayer( string hardware, string uid )
+{
+}
+
+void function CustomMatch_LeaveLobby()
+{
+}
+
+void function CustomMatch_SetReady( bool ready )
+{
+}
+
+void function CustomMatch_SetMatchmaking( bool matchmaking )
+{
+}
+
+bool function CustomMatch_IsInCustomMatch()
+{
+	return false
+}
+
+void function CustomMatch_LiveAPI_SendPlayers( array<CustomMatch_LobbyPlayer> players )
+{
+}
+
+void function CustomMatch_GetMatchStats( int endTime )
+{
+}
+
+void function CustomMatch_SetTeamName( int teamIndex, string name )
+{
+}
+
+// === Menu/UI ===
+
+void function MenuStack_Remove( var menu )
+{
+}
+
+int function MenuStack_GetLength()
+{
+	return 0
+}
+
+bool function IsSelfClosingMenu( var menu )
+{
+	return false
+}
+
+void function ToolTips_SetMenuTooltipVisible( var panel, bool visible )
+{
+}
+
+void function SpectatorNextTarget()
+{
+}
+
+void function ShowBlockPlayerDialog( string name, string eaid, void functionref( int, string ) callback )
+{
+}
+
+void function OpenClubLeaveDialog()
+{
+}
+
+void function Hud_ClearAllToolTips() {}
+
+void function InitializeMinimapCoords( ... )
+{
+}
+
+// === Gifting ===
+
+int function Gifting_GetRemainingDailyGifts()
+{
+	return 0
+}
+
+bool function IsPlayerLeveledForGifting()
+{
+	return false
+}
+
+bool function IsGiftingEnabled()
+{
+	return false
+}
+
+bool function IsPlayerWithinGifingLimit()
+{
+	return false
+}
+
+int function GetGiftingMaxLimitPerResetPeriod()
+{
+	return 0
+}
+
+bool function IsTwoFactorAuthenticationEnabled()
+{
+	return false
+}
+
+void function RefreshTwoFactorAuthenticationStatus()
+{
+}
+
+bool function CanLocalPlayerGift()
+{
+	return false
+}
+
+void function GetGiftOfferEligibility( ... )
+{
+}
+
+bool function HasFriendshipTenureBeenLongEnough( int friendCreationTime )
+{
+	return true
+}
+
+// === EADP Social ===
+
+bool function EADP_SocialEnabled()
+{
+	return false
+}
+
+bool function EADP_SocialCanRun()
+{
+	return false
+}
+
+void function EADP_SearchByName( string name )
+{
+}
+
+bool function EADP_IsBlockedByEAID( string eaid )
+{
+	return false
+}
+
+bool function EADP_IsFriendByEAID( string eaid )
+{
+	return false
+}
+
+void function EADP_InviteFriendByEAID( string eaid )
+{
+}
+
+void function EADP_UnBlockByEAID( string eaid )
+{
+}
+
+void function EADP_UnFriendByEAID( string eaid )
+{
+}
+
+bool function EADP_IsCodeRedemptionEnabled()
+{
+	return false
+}
+
+void function EADP_RedeemCode( string code )
+{
+}
+
+array<EadpPresenceData> function EADP_GetPresenceForAccount( string eaid )
+{
+	array<EadpPresenceData> list
+	return list
+}
+
+EadpPeopleList function EADP_GetFriendRequestList()
+{
+	EadpPeopleList list
+	return list
+}
+
+string function EADP_GetEadpIdFromFirstPartyID( string id, int hardware )
+{
+	return ""
+}
+
+bool function EADP_FriendsDoQuery()
+{
+	return false
+}
+
+EadpPeopleList function EADP_GetFriendsList()
+{
+	EadpPeopleList list
+	return list
+}
+
+EadpPeopleList function EADP_GetFriendsListWithOffline()
+{
+	EadpPeopleList list
+	return list
+}
+
+EadpPresenceData function EADP_GetPresenceForUser( string memberID, int memberHardware )
+{
+	EadpPresenceData data
+	return data
+}
+
+void function EADP_RejectFriendRequestByEAID( string eaid )
+{
+}
+
+void function EADP_AcceptFriendRequestByEAID( string eaid )
+{
+}
+
+void function EADP_BlockByEAID( string eaid )
+{
+}
+
+EadpInviteToPlayList function EADP_GetInviteToPlayList()
+{
+	EadpInviteToPlayList list
+	return list
+}
+
+void function EADP_AcceptInvitToPlay( string eventID )
+{
+}
+
+void function EADP_RejectInviteToPlay( string eventID )
+{
+}
+
+void function EADP_InviteToPlayByEAID( string eaid, int reason )
+{
+}
+
+bool function EADP_InvitationAllowed()
+{
+	return false
+}
+
+// === Audio ===
+
+void function EmitUIMusic( string musicName )
+{
+	EmitUISound( musicName )
+}
+
+bool function IsSoundStillPlaying( var handle ) { return false }
+
+void function PlayLobbyCharacterDialogue( ... )
+{
+}
+
+// === GRX/Store ===
+
+void function GRX_SetEventCurrency( string grxAlias )
+{
+	// stub
+}
+
+int function GRX_GetItemTier( ... )
+{
+	return 0
+}
+
+void function GRX_PurchaseOfferV2( int opId, int queryGoal, string offerAlias, int craftingItemIdx, int quantity, string priceAlias, array<int> price )
+{
+	// stub
+}
+
+void function GRX_UpdateSmartMerchandisingData( array<int> smartMerchInts )
+{
+}
+
+void function GRX_MarkGiftItemsAsSeen( int timestamp, array<int> itemIndices )
+{
+}
+
+void function GRX_MarkContainerAsSeen_Internal( string containerId )
+{
+}
+
+void function GRX_GetCurrencyBalances()
+{
+}
+
+bool function GRX_HasUpToDateBundleOffers()
+{
+	return false
+}
+
+void function AddCallback_OnGRXBundlesRefreshed( void functionref() callback )
+{
+}
+
+void function RemoveCallback_OnGRXBundlesRefreshed( void functionref() callback )
+{
+}
+
+bool function IsStoreEmpty()
+{
+	return true
+}
+
+bool function IsInvalidTypeForRewardCeremony( int type )
+{
+	return type == eItemType.INVALID
+}
+
+// === Persistence ===
+
+int function PersistenceGetVarHandle( string key )
+{
+	return -1 // no persistence var handle caching
+}
+
+bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc )
+{
+	return false
+}
+
+string function LobbyPlaylist_GetSelectedPlaylist()
+{
+	return GetCurrentPlaylistName()
+}
+
+var function GetDialogFlowTablesValueOrPersistence( string persistenceVar, bool useScriptTable = false, float timeBeforeDialogFlowTableValuesAreOutdated = 5.0 )
+{
+	if ( !IsPersistenceAvailable() )
+		return 0
+	return GetPersistentVar( persistenceVar )
+}
+
+void function SetDialogFlowPersistenceTables( string persistenceVar, var value )
+{
+}
+
+void function IncrementNumDialogFlowDialogsDisplayed()
+{
+}
+
+void function DataDialog_AddCallback_OnClose( void functionref() callback )
+{
+}
+
+// === Stats/Mastery ===
+
+void function StatsRegister_MetaChallenges()
+{
+}
+
+int function Mastery_GetStatValue( entity player, string statRef )
+{
+	return 0
+}
+
+bool function Mastery_DoesStatSatisfyValue( entity player, string statRef, float checkValue )
+{
+	return false
+}
+
+bool function Mastery_IsValidStatRef( string statRef )
+{
+	return false
+}
+
+// === Ranked ===
+
+void function Ranked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
+{
+}
+
+void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
+{
+}
+
+void function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( var rui1, var rui2, entity player, string rankedPeriodRef )
+{
+}
+
+void function Ranked_ConstructDoubleRankBadgeForStatsCard( var rui1, var rui2, entity player, string rankedPeriodRef )
+{
+}
+
+void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui1, var rui2, entity player, string rankedPeriodRef )
+{
+}
+
+void function Ranked_SetupMenuGladCardForUIPlayer()
+{
+}
+
+void function ArenasRanked_SetupMenuGladCardForUIPlayer()
+{
+}
+
+void function Ranked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo )
+{
+}
+
+void function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo )
+{
+}
+
+void function Ranked_SetupMenuGladCard( entity player )
+{
+}
+
+bool function Ranked_ShouldUpdateWithComnunityUserInfo( int score, int ladderPosition )
+{
+	return false
+}
+
+int function Ranked_GetDisplayNumberForRuiBadge( entity player )
+{
+	return 0
+}
+
+bool function Ranked_PartyMeetsRankedDifferenceRequirements()
+{
+	return true
+}
+
+bool function Ranked_HasBeenInitialized()
+{
+	return true
+}
+
+bool function SharedRanked_PartyHasRankedLevelAccess()
+{
+	return true
+}
+
+int function SharedRanked_GetMaxPartyMatchmakingDelay()
+{
+	return 0
+}
+
+int function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo( CommunityUserInfo userInfo )
+{
+	return 0
+}
+
+void function PopulateMatchRank( ... )
+{
+}
+
+// === Party/Social ===
+
+void function Party_JoinUserPartyGame()
+{
+}
+
+void function Party_LeaveParty()
+{
+}
+
+void function AddCallback_PartySpectateSlotAvailable( void functionref() callbackFunc )
+{
+}
+
+EadpPrivacySetting function Eadp_GetPrivacyData()
+{
+	EadpPrivacySetting settings
+	return settings
+}
+
+EadpPeopleData function CreateEADPDataFromEAID( string eaid )
+{
+	EadpPeopleData eadpData
+	eadpData.eaid = eaid
+	return eadpData
+}
+
+bool function IsPartyAllowedCrossplay()
+{
+	return true
+}
+
+bool function CanPromptUserToSpectatePartyInGame()
+{
+	return false
+}
+
+bool function CanPromptUserToJoinPartyInFiringRange()
+{
+	return false
+}
+
+string function LocalizePresenceState( PresenceState presenceState )
+{
+	return ""
+}
+
+// === Cross Progression ===
+
+bool function CrossProgression_IsRequestingUserMigrateStatus()
+{
+	return false // stub
+}
+
+bool function CrossProgression_QueryUserMigrateStatusIfNeeded( string nucleusId )
+{
+	return false // stub
+}
+
+// === PIN/Analytics ===
+
+void function PIN_QuestTextView( ... )
+{
+}
+
+void function PIN_BattlepassMilestonePageView( string lastMenuId, float timeOnPage, int milestone, bool hasPurchased, array<string> rewards )
+{
+}
+
+void function PIN_BattlepassPurchase( ... )
+{
+}
+
+void function PIN_ComicPageView( ... )
+{
+}
+
+void function PIN_Slow( ... )
+{
+}
+
+void function PIN_UIInteraction_Select( string menuName, string elementName, var jsonTable )
+{
+}
+
+void function PIN_LobbyPopUp_Event( string popupName, int status )
+{
+}
+
+void function PIN_Store_EventButton( string panelName )
+{
+}
+
+void function PIN_Club_DeclineInvite( ClubHeader clubHeader )
+{
+}
+
+void function SetCurrentHubForPIN( string hubName )
+{
+}
+
+// === Clubs ===
+
+bool function AreClubInvitesEnabled()
+{
+	return false
+}
+
+array<ClubInvite> function ClubGetInvitedClubsList()
+{
+	array<ClubInvite> list
+	return list
+}
+
+void function ClubInviteDecline( string eventID )
+{
+}
+
+array<ClubEvent> function ClubGetChatLog()
+{
+	array<ClubEvent> log
+	return log
+}
+
+array<ClubEvent> function ClubGetEventLog()
+{
+	array<ClubEvent> log
+	return log
+}
+
+array<ClubJoinRequest> function ClubGetJoinRequests()
+{
+	array<ClubJoinRequest> list
+	return list
+}
+
+string function ClubGetMemberNameByID( string memberID )
+{
+	return ""
+}
+
+int function ClubGetMemberRankByID( string memberID )
+{
+	return 0
+}
+
+array<ClubHeader> function ClubGetSearchResults()
+{
+	array<ClubHeader> list
+	return list
+}
+
+ClubEvent function ClubGetStickyNote()
+{
+	ClubEvent note
+	return note
+}
+
+void function ClubInviteQueryClubsList( int offset, int count )
+{
+}
+
+bool function ClubIsAllowedTag( string tag )
+{
+	return true
+}
+
+bool function ClubIsMemberOnDifferentHardware()
+{
+	return false
+}
+
+bool function ClubIsValidName( string name )
+{
+	return true
+}
+
+bool function ClubIsValidTag( string tag )
+{
+	return true
+}
+
+int function ClubJoinRequestsCount()
+{
+	return 0
+}
+
+bool function ClubChatSend( string message )
+{
+	return false
+}
+
+void function ClubChatStickyNote( string message )
+{
+}
+
+// === Events ===
+
+void function EventsPanel_SetOpenPageIndex( int pageIndex )
+{
+}
+
+void function JumpToEventTab( string tabName )
+{
+}
+
+bool function DoesUserHaveTwitchDrops( string ref )
+{
+	return false
+}
+
+// === Squads ===
+
+int function Squads_GetMax()
+{
+	return 20
+}
+
+vector function Squads_GetSquadColor( int squadIndex, bool isWinterExpress = false )
+{
+	return <1.0, 1.0, 1.0>
+}
+
+string function Squads_GetSquadName( int squadIndex, bool isWinterExpress = false )
+{
+	return "Squad " + squadIndex
+}
+
+// === Communication/Mute ===
+
+int function CommunicationBlockGetBlockTime()
+{
+	return 0
+}
+
+bool function IsPlayerVoiceAndTextMutedForUID( string uid, string hardware )
+{
+	return false
+}
+
+void function TogglePlayerVoiceAndTextMuteForUID( string uid, string hardware, string eadpid )
+{
+}
+
+string function GetCommunicationBlockWarningText( int warningId )
+{
+	return ""
+}
+
+int function GetCommunicationBlockStateID()
+{
+	return 0
+}
+
+// === Time ===
+
+void function WaitForUnixTime( int unixTime )
+{
+	while ( true )
+	{
+		float delay = float(unixTime - GetUnixTimestamp())
+		if ( delay <= 0.0 )
+			break
+		wait min( 1.0, delay )
+	}
+}
+
+bool function GetIsDSTActive()
+{
+	return false
+}
+
+int function GetUnixTimePDT()
+{
+	return GetUnixTimestamp() + (-7 * SECONDS_PER_HOUR)
+}
+
+string function RLocalDateTime( int unixTime )
+{
+	return GetDateTimeString( unixTime )
+}
+
+string function RLocalTime( int unixTime )
+{
+	return GetDateTimeString( unixTime )
+}
+
+// === Game Mode ===
+
+bool function Control_IsModeEnabled()
+{
+	return false
+}
+
+bool function Control_IsSpawningOnObjectiveBAllowed()
+{
+	return true
+}
+
+// === Datacenter ===
+
+string function GetDatacenterRealName()
+{
+	return ""
+}
+
+// === First Time Player ===
+
+int function GetFirstTimePlayerState()
+{
+	return eNewPlayerState.FIRST_MATCH_PLAYED
+}
+
+void function SetFirstTimePlayerState( int state )
+{
+}
+
+string ornull function StoryChallengeEvent_GetHasChallengesPopupBeenSeenVarNameOrNull( ... )
+{
+	return null
+}
+
+// === Lobby/Misc ===
+
+bool function SquadMuteLegendSelectEnabled()
+{
+	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
+}
+
+void function RefreshChallenges()
+{
+}
+
+// === Settings/Options ===
+
+bool function GamepadCustomSettingsAreEnabled()
+{
+	return false
+}
+
+void function VideoOptions_SpotShadowDetailChanged( var panel ) {}
+int function SoundOptions_SetupChannelConfigOptions( var panel, string childName ) { return 0 }
+int function SoundOptions_SetupOutputDeviceOptions( var panel, string childName ) { return 0 }
+int function SoundOptions_SetupVoiceInputDeviceOptions( var panel, string childName ) { return 0 }
+bool function SoundOptions_DeviceSwitchingAvailable() { return false }
+
+// === Stickers ===
+// GetAllStickerObjectTypes, GetStickerObjectName, GetStickerPresentationType implementations in mp/sh_stickers.nut
+void function StickersPanel_InitPreviewStyle( var panel ) {}
+void function StickersPanel_SetConsumable( var panel, int consumable ) {}
+void function StickersPanel_Update( var panel ) {}
+void function StickersPanel_OnShow( var panel ) {}
+void function StickersPanel_OnHide( var panel ) {}
+void function StickersPanel_OnFocusChanged( var panel, var oldFocus, var newFocus ) {}
+void function StickersPanel_TogglePreviewStyle( var panel ) {}
+int function StickersPanel_GetCurrentConsumable( var panel ) { return 0 }
+
+// === Reconnect/Spectate ===
+bool function TryLoadSpectateParameters() { return false }
+bool function TryLoadReconnectFromLocalStorage() { return false }
+void function StartReconnectFromParameters() {}
+int function GetReconnectDelay() { return 0 }
+bool function Reconnect_IsLiveSpectateLoaded() { return false }
+
+// === Misc ===
+void function OpenLangAoCDialog() {}
+
+// === Nested #if UI - KeyValue/Persistence/Gifting ===
+#if UI
+asset function GetKeyValueAsAsset( table kvTable, string key )
+{
+	return $""
+}
+#endif
+
+#if UI
+string function GetServerDebugId()
+{
+	return ""
+}
+
+int function UISafeGetPersistentVarAsInt( string key )
+{
+	if ( IsConnected() )
+		return GetPersistentVarAsInt( key )
+	return 0
+}
+
+void function RemoveGiftCacheMessage( int timestamp, string senderNucleusPid )
+{
+}
+
+array<GRXScriptInboxMessage> function GetGiftingInboxMessages()
+{
+	array<GRXScriptInboxMessage> emptyList
+	return emptyList
+}
+#endif
+
+#endif // UI
+
+// ============================================================================
+//  #if CLIENT - Implementations
+// ============================================================================
+#if CLIENT
+
+// === Asset Loading/Precaching ===
+
+// ODL (On Demand Loading) not available, stub
+void function PrecacheOnDemandLoadModel( int odlType, string pak, asset model, asset loadingModel )
+{
+}
+
+// stub
+void function PrecacheSkinName( string skinName )
+{
+}
+
+// ODL (On-Demand Loading) not available, stubs
+int function ODL_FindAsset( int odlType, asset model )
+{
+	return -1  // -1 = not found, skips ODL wait loops
+}
+
+bool function ODL_IsLoaded( int odlType, int handle )
+{
+	return true  // Always report as loaded
+}
+
+int function GetFileDownloadStatus( string rpakName )
+{
+	// no asset streaming, always up to date
+	return ASSET_DOWNLOAD_STATUS_UP_TO_DATE
+}
+
+// === Audio ===
+
+// stub
+void function StopUISoundByName( string soundName )
+{
+}
+
+// === Props/Models ===
+
+// CreateClientSidePropDynamicCharm not available, use regular prop dynamic
+entity function CreateClientSidePropDynamicCharm( vector origin, vector angles, asset model )
+{
+	return CreateClientSidePropDynamic( origin, angles, model )
+}
+
+// stub - would need menuModelFlashData infrastructure
+void function FlashMenuModel( entity model, int flashType, vector flashColor, bool includeChildren = true, bool depthDiscard = false )
+{
+}
+
+// === Game Mode Checks ===
+
+// stub
+bool function IsGunGameActive()
+{
+	return false
+}
+
+// stub
+bool function IsShadowRoyaleMode()
+{
+	return false
+}
+
+// Battle Rush stubs
+void function BattleRush_StopCharSelectMusic()
+{
+}
+
+void function BattleRush_ServerCallback_PlayJumpMusic()
+{
+}
+
+// === Shadow Army ===
+
+// Shadow Army stubs - game mode not loaded
+bool function ShadowArmy_IsPlayerOnShadowArmy( entity player )
+{
+	return false
+}
+
+array<entity> function ShadowArmy_GetEnemySquadPlayersForAllianceIntro( int alliance )
+{
+	return []
+}
+
+void function ShadowArmy_PlayIntroBannerSoundForLegends_Thread()
+{
+}
+
+// === HUD/UI Display ===
+
+// stubs
+void function ShowTeamNameInHud()
+{
+}
+
+void function HideTeamNameInHud()
+{
+}
+
+// stub
+float function GetScreenScaleFrac()
+{
+	return 1.0  // Default scale
+}
+
+// stub
+void function ForceDestroyBlackBarRui()
+{
+}
+
+void function InitButtonRCP( var button )
+{
+	// UI-only init function - no-op stub for CLIENT VM
+}
+// GetFocus, GetMouseFocus, SetCursorPosition, GetCursorPosition are now native SDK functions
+
+// === Input ===
+
+// stub - accepts callback but never fires
+void function AddUICallback_InputModeChanged( void functionref( bool ) callbackFunc )
+{
+}
+
+// === Player Info ===
+
+// stub
+bool function Script_UserHasEAAccess()
+{
+	return false
+}
+
+// GetPlayerUID is UI-only native, CLIENT uses GetPlatformUID on entity
+string function GetPlayerUID()
+{
+	entity player = GetLocalClientPlayer()
+	if ( IsValid( player ) )
+		return player.GetPlatformUID()
+	return ""
+}
+
+// Wraps existing function
+// Note: Using int instead of EHI because EHI typedef isn't defined yet at load time
+string function GetPlayerNameFromEHI( int ehi )
+{
+	return GetDisplayablePlayerNameFromEHI( ehi )
+}
+
+// stub - privacy/anonymization not available
+string function GetObfuscatedIdFromPlayer( entity player )
+{
+	return ""
+}
+
+// Checks if local player is alive and not in replay
+bool function IsLocalPlayerAlive_NonReplay()
+{
+	if ( IsWatchingReplay() )
+		return false
+	entity player = GetLocalClientPlayer()
+	return IsValid( player ) && IsAlive( player )
+}
+
+// Checks if player is in bleedout or being revived
+bool function IsInBleedoutOrRevive( entity player )
+{
+	if ( !IsValid( player ) )
+		return false
+	if ( Bleedout_IsBleedingOut( player ) )
+		return true
+	if ( player.ContextAction_IsReviving() || player.ContextAction_IsBeingRevived() )
+		return true
+	return false
+}
+
+// === Character Abilities ===
+
+// Ballistic's armored leap ability - character not available
+int function GetCurrentArmoredLeapPhase( entity player )
+{
+	return PLAYER_ARMORED_LEAP_PHASE_NONE
+}
+
+// GetAllResinShards used by cl_damage_indicator.gnut for trace ignore
+// Catalyst character ability not available - return empty array
+array<entity> function GetAllResinShards()
+{
+	array<entity> empty
+	return empty
+}
+
+// === Ranked ===
+
+// stub
+void function ShRanked_RegisterNetworkFunctions()
+{
+}
+
+// Ranked game checks
+bool function IsRankedGame()
+{
+	return GetCurrentPlaylistVarBool( "ranked_game", false )
+}
+
+bool function IsArenasRankedGame()
+{
+	return false
+}
+
+// === Network ===
+
+// stub
+bool function GetGlobalNonRewindNetBool( string varName )
+{
+	return false
+}
+
+// === Mute/Communication ===
+
+// stub
+void function TogglePlayerVoiceAndTextMute( entity player )
+{
+}
+
+// === Perks ===
+
+// stub - banner crafting not available
+bool function Perk_CanTeammateCraftPlayerBanner( entity player )
+{
+	return false
+}
+
+// === Game Mode Features ===
+
+// stub
+bool function Control_IsModeEnabled()
+{
+	return false
+}
+
+// stub
+int function MissionCheckpoints_GetRespawnsLeftForPlayer( entity player )
+{
+	return 0
+}
+
+// stub
+bool function UpgradeCore_ShowUpgradeTree_CharacterSelect()
+{
+	return false
+}
+
+// stub
+void function TryStartIntroPodiumSequence()
+{
+}
+
+// === Crossplay ===
+
+// stub - no crossplay
+bool function IsUserOnSamePlatform( string hardware )
+{
+	return true
+}
+
+// === Squad Cards ===
+
+// Wraps standard function with defaults
+void function DoAnimatedSquadCardsPresentation()
+{
+	DoSquadCardsPresentation()  // Uses default params
+}
+
+// Wraps standard function with defaults
+void function DoAnimatedChampionSquadCardsPresentation()
+{
+	DoChampionSquadCardsPresentation()  // Uses default params
+}
+
+#endif
+
+// ============================================================================
+//  #if SERVER || CLIENT - Implementations
+// ============================================================================
+#if SERVER || CLIENT
+
+// === Melee/Combat ===
+
+void function SetObjectCanBeMeleed( entity ent, bool value )
+{
+	Assert( !ent.IsPlayer(), ent + " should not be a player. This is for non-player, non-NPC entities." )
+	Assert( !ent.IsNPC(), ent + " should not be an NPC. This is for non-player, non-NPC entities." )
+
+	ent.e.canBeMeleed = value
+}
+
+// stub
+bool function IsRebuiltDoor( entity ent )
+{
+	return false
+}
+
+// stub
+bool function TitanSword_TryMultiAttack( entity attacker, entity meleeWeapon, int impactTableOverride )
+{
+	return false // Normal melee attack path
+}
+
+bool function TitanSword_VictimHitOverride( entity meleeWeapon, entity attacker, entity target, vector pushBackVelocity )
+{
+	return false // No override
+}
+
+// === Ranked/Rumble ===
+
+// RankedRumble stubs
+bool function RankedRumble_IsLatestGameRankedRumble( entity player )
+{
+	return false
+}
+
+bool function RankedRumble_IsRunningRankedRumbleCached( entity player )
+{
+	return false
+}
+
+// stub
+bool function IsServerNetworkAlertTriggered()
+{
+	return false
+}
+
+// stub
+void function PrepareGameSummaryForPointCalculation( entity player )
+{
+}
+
+// Debug print wrapper
+void function DEV_script_ranked_debug( string msg )
+{
+	#if DEVELOPER
+	printt( "[RANKED_DEBUG] " + msg )
+	#endif
+}
+
+void function Ranked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
+{
+}
+
+void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
+{
+}
+
+void function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2, bool isActive )
+{
+}
+
+void function Ranked_ConstructDoubleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2 )
+{
+}
+
+void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2 )
+{
+}
+
+// === Persistence ===
+
+// Safe persistence wrappers
+#if SERVER
+int function SafeGetPersistentVarAsInt( entity player, string key )
+{
+	return player.GetPersistentVarAsInt( key )
+}
+
+void function SafeSetPersistentVar( entity player, string key, var value )
+{
+	player.SetPersistentVar( key, value )
+}
+#elseif CLIENT
+int function SafeGetPersistentVarAsInt( entity player, string key )
+{
+	return player.GetPersistentVarAsInt( key )
+}
+
+void function SafeSetPersistentVar( entity player, string key, var value )
+{
+	// CLIENT cannot set persistence - no-op
+}
+#endif
+
+// === Audio ===
+
+void function EmitUIMusic( string musicName )
+{
+}
+
+// === Time ===
+
+void function WaitForUnixTime( int unixTime )
+{
+	wait 1.0
+}
+
+// === GRX/Store ===
+
+void function GRX_SetEventCurrency( string grxAlias )
+{
+}
+
+int function GRX_GetItemTier( ... )
+{
+	return 0
+}
+
+// === Persistence/Lobby ===
+
+int function PersistenceGetVarHandle( string key )
+{
+	return -1
+}
+
+bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc )
+{
+	return false
+}
+
+string function LobbyPlaylist_GetSelectedPlaylist()
+{
+	return GetCurrentPlaylistName()
+}
+
+// === Stats/Mastery ===
+
+void function StatsRegister_MetaChallenges()
+{
+}
+
+int function Mastery_GetStatValue( entity player, string statRef )
+{
+	return 0
+}
+
+bool function Mastery_DoesStatSatisfyValue( entity player, string statRef, float checkValue )
+{
+	return false
+}
+
+bool function Mastery_IsValidStatRef( string statRef )
+{
+	return false
+}
+
+// === Platform/Hardware (SERVER || CLIENT implementations for global-scope declarations) ===
+
+int function GetHardwareFromName( string name )
+{
+	switch ( name )
+	{
+		case "PC":
+			return HARDWARE_PC
+		case "PC_STEAM":
+			return HARDWARE_PC_STEAM
+		case "PS4":
+			return HARDWARE_PS4
+		case "PS5":
+			return HARDWARE_PS5
+		case "X1":
+			return HARDWARE_XBOXONE
+		case "XB5":
+			return HARDWARE_XB5
+		case "NX":
+			return HARDWARE_NX
+	}
+	return HARDWARE_PC
+}
+
+string function GetMergedPlatformIdForPlayer( entity player )
+{
+	return "pc"
+}
+
+bool function CanPromptUserToSpectatePartyInGame()
+{
+	return false
+}
+
+bool function CanPromptUserToJoinPartyInFiringRange()
+{
+	return false
+}
+
+string function LocalizePresenceState( ... )
+{
+	return ""
+}
+
+string function GetNameFromHardware( int hardware )
+{
+	switch ( hardware )
+	{
+		case HARDWARE_PC:
+			return "PC"
+		case HARDWARE_PC_STEAM:
+			return "PC_STEAM"
+		case HARDWARE_PS4:
+			return "PS4"
+		case HARDWARE_PS5:
+			return "PS5"
+		case HARDWARE_XBOXONE:
+			return "X1"
+		case HARDWARE_XB5:
+			return "XB5"
+		case HARDWARE_NX:
+			return "NX"
+	}
+	return "PC"
+}
+
+bool function IsDirectX12Beta()
+{
+	return false
+}
+
+void function PlayLobbyCharacterDialogue( ... )
+{
+}
+
+string function GetUIDHex( entity player = null )
+{
+	if ( player == null )
+		return "0"
+	return format( "%X", player.GetPINNucleusPid() )
+}
+
+void function InitializeMinimapCoords( ... )
+{
+}
+
+bool function IsTakeHomeBuild()
+{
+	return true
+}
+
+// === Gifting ===
+
+bool function CanLocalPlayerGift()
+{
+	return false
+}
+
+void function GetGiftOfferEligibility( ... )
+{
+}
+
+bool function HasFriendshipTenureBeenLongEnough( int friendCreationTime )
+{
+	return true
+}
+
+// === Lobby/Misc ===
+
+bool function SquadMuteLegendSelectEnabled()
+{
+	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
+}
+
+void function RefreshChallenges()
+{
+}
+
+bool function AutomateUi( float delayFactor = 1.0 )
+{
+	return false
+}
+#endif
+
+// ============================================================================
+//  GLOBAL SCOPE - Implementations (all VMs)
+// ============================================================================
+
+// === Ranked/Rumble ===
+
+bool function RankedRumble_IsRunningRankedRumble()
+{
+	return false
+}
+
+// === Character/Playlist ===
+
+// Return UNLOCKED for all characters - no playlist restrictions
+int function GetItemFlavorPlaylistOpinion( string humanReadableRef )
+{
+	return eItemFlavorPlaylistOpinion.UNLOCKED
+}
+
+// Stub - any player can be first in character select
+bool function MatchBehaviorPlayer_CanBeFirst( entity player )
+{
+	return true
+}
+
+// === Item Flavor ===
+
+bool function IsItemFlavorStructValid( int guid, int validation = 0 )
+{
+	return IsValidItemFlavorGUID( guid )
+}
+
+bool function IsValidItemFlavorNetworkIndex_DEPRECATED( int index, int validation = 0 )
+{
+	return false // deprecated
+}
+
+// === Utilities ===
+
+// Debug screen text stubs
+void function DebugDrawScreenText( float x, float y, string text )
+{
+	// No-op - debug function
+}
+
+void function DebugDrawScreenTextWithColor( float x, float y, string text, vector color )
+{
+	// No-op - debug function
+}
+
+string function replace( string original, string search, string replacement )
+{
+	string result = ""
+	int searchLen = search.len()
+	int i = 0
+	while ( i < original.len() )
+	{
+		if ( i + searchLen <= original.len() && original.slice( i, i + searchLen ) == search )
+		{
+			result += replacement
+			i += searchLen
+		}
+		else
+		{
+			result += original.slice( i, i + 1 )
+			i++
+		}
+	}
+	return result
+}
+
+string function Ranked_GetCurrentPeriodGUIDString()
+{
+	return ""
+}
+
+asset function WORKAROUND_AssetAppend( string s1, string s2 )
+{
+	return $""
+}

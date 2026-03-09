@@ -20,7 +20,7 @@ void function NewScriptInit_Level()
 	//Realms_LevelInit()
                            
 	#if CLIENT || UI 
-		NEW_SurvivalGroundList_LevelInit()
+		SurvivalGroundList_LevelInit()
 	#endif
 	#if UI 
 	LobaUltimateBlackMarket_LevelInit()				// Loba Ultimate

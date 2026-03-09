@@ -719,7 +719,7 @@ void function SendDeathRecapDataToPlayer( entity player )
 			numSentBlock 
 		)
 
-		//(mk): Retail native function, R5R does not have. 
+		// Native function not available
 		
 		// stack a block to the client
 		// player.PushDeathRecapBlock(

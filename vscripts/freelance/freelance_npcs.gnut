@@ -15,7 +15,7 @@ global function NpcShadowDeath
 global function DEV_CrosshairSpawn
 global function DEV_NPC_ToggleOverlay
 global function NPCDebugOverlayIsActive
-#endif // DEV
+#endif // DEVELOPER
 
 global function PVE_TestDropPod
 global function DropCandy               
@@ -156,7 +156,7 @@ void function EntitiesDidLoad()
 
 #if DEVELOPER
 	thread DebugFrameThread()
-#endif // DEV
+#endif // DEVELOPER
 }
 
 void function OnPlayerDamaged( entity player, var di )
@@ -512,7 +512,7 @@ void function DebugFrameThread()
 		WaitFrame()
 	}
 }
-#endif // DEV
+#endif // DEVELOPER
 
 
 /*

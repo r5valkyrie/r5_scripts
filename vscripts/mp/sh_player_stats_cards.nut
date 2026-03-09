@@ -5,39 +5,56 @@ global function StatCard_ConstructStatCardProgressBar
 global function StatCard_ChangeCardDisplayType
 global function StatCard_ConstructAccountProgressBar
 global function StatCard_ConstructBattlePassLevelBadge
-global function StatCard_ConstructRankedBadge
+global function StatCard_ConstructRankedBadges
 global function StatCard_UpdateAndDisplayStats
-global function StatCard_ConstructTopLegendStatCard
-global function StatCard_ConstructTopWeaponStatCard
 global function StatCard_SetStatValueDisplay
 global function StatCard_InitToolTipStringTables
 global function StatCard_ClearToolTipStringTables
 global function StatCard_AddStatToolTipString
 global function StatCard_SetStatToolTip
 global function StatsScreen_SetPanelRui
-
+global function StatsCard_OnSeasonRegistered
+global function StatsCard_OnRankedPeriodRegistered
+global function StatsCard_GetNameOfGameMode
+global function StatsCard_GetApprovedModesCount
+global function StatsCard_IsSeasonOrRankedRefValidForMode
+                     
+global function StatsCard_OnArenasRankedPeriodRegistered
+      
 #endif // UI
+           
+// #if UI
+// global function GetStatsData // RTK - disabled
+// #endif // UI
+                 
 
 global function StatCard_GetAvailableSeasons
+global function StatCard_ClearAvailableSeasonsCache
+global function StatCard_GetAvailableRankedPeriods
+global function StatCard_ClearAvailableRankedPeriodsCache
 global function StatCard_GetAvailableSeasonsAndRankedPeriods
+global function StatCard_ClearAvailableSeasonsAndRankedPeriodsCache
 
+//global function RTKStatCard_GetCurrentAndLastUnrankedAndRankedSeasons
+//global function RTKStatCard_ClearCurrentAndLastUnrankedAndRankedSeasonsCache
+
+global enum eStatCardGameMode
+{
+	BATTLE_ROYALE,
+	ARENAS,
+	_count
+	UNKNOWN,
+}
 
 global enum eStatCardType
 {
 	CAREER,
 	SEASON,
 	RANKEDPERIOD,
-	WEAPON,
-	LEGEND,
-	GRAPHS,
-}
+	RANKEDCAREER,
+	UNKNOWN,
 
-global enum eStatDisplayType
-{
-	STATS,
-	WEAPONS,
-	LEGENDS,
-	GRAPHS
+	_count
 }
 
 enum eStatCardSection
@@ -46,8 +63,8 @@ enum eStatCardSection
 	HEADERTOOLTIP,
 	BODY,
 	BODYTOOLTIP,
-	WEAPONS,
-	LEGENDS,
+
+	_count
 }
 
 enum eStatCalcMethod
@@ -62,10 +79,14 @@ enum eStatCalcMethod
 	MATH_MULTIPLY,
 	MATH_DIVIDE,
 	MATH_WINRATE,
+	SEASON_CHARACTER_HIGHEST,
+
+	_count
 }
 
 struct StatCardEntry
 {
+	int	   gameMode
 	int    cardType
 	int    section
 	int    calcMethod
@@ -108,13 +129,19 @@ struct
 	StatCardStruct seasonStatCard
 	StatCardStruct rankedPeriodStatCard
 
-	array< LegendStatStruct > bestLegendStats
-	array< WeaponStatStruct > bestWeaponStats
+	int selectedMode
+	//< Mode, <Type, Struct> >
+	table< int, table< int, StatCardStruct > > statCards
 
 	table<string, array<string> > toolTipStrings
 
 	table<string, int> GUIDToSeasonNumber
 	int currentGUIDToSeasonNumber = 1
+
+	table< int, array<ItemFlavor> > availableSeasonsCache
+	table< int, array<ItemFlavor> > availableRankedPeriodsCache
+	table< int, array<ItemFlavor> > availableSeasonsAndRankedPeriods
+	table< int, array<ItemFlavor> > currentAndLastUnrankedAndRankedSeasons
 } file
 
 const string NO_DATA_REF = "000"
@@ -130,59 +157,112 @@ const STAT_TOOLTIP_RCIRCLE_SEASON = "seasonRightCircle"
 const STAT_TOOLTIP_COLUMNA_SEASON = "seasonColumnA"
 const STAT_TOOLTIP_COLUMNB_SEASON = "seasonColumnB"
 
+const int MAX_STATS_HEADER = 3
+const int MAX_STATS_BODY = 12
+
+const bool STAT_CARD_V2_DEBUG = false
+
 #if UI
 void function ShPlayerStatCards_Init()
 {
-	file.GUIDToSeasonNumber[ "SAID01769158912" ] <- 1
-	file.GUIDToSeasonNumber[ "SAID01774506873" ] <- 2
-	file.GUIDToSeasonNumber[ "SAID00724938940" ] <- 3
-
-	//
-	file.GUIDToSeasonNumber[ "SAID00747315762" ] <- 0
-	file.GUIDToSeasonNumber[ "SAID00091805734" ] <- 0
+	for( int i = 0; i < eStatCardGameMode._count; i++ )
+	{
+		#if STAT_CARD_V2_DEBUG
+			printf( "StatCardV2Debug: Initializing stat card table for game mode %i", i )
+		#endif
+		table<int, StatCardStruct > statCards
+		for ( int y = 0; y < eStatCardType._count; y++ )
+		{
+			#if STAT_CARD_V2_DEBUG
+				printf( "StatCardV2Debug: Initializing stat card table for game mode %i, card type %i", i, y )
+			#endif
+			StatCardStruct emptyStatCard
+			statCards[y] <- emptyStatCard
+		}
+		file.statCards[i] <- statCards
+	}
+	#if STAT_CARD_V2_DEBUG
+		printf( "StatCardV2Debug: file.statCards intialized with %i tables", file.statCards.len() )
+	#endif
 
 	var dataTable = GetDataTable( $"datatable/player_stat_cards.rpak" )
-
-	int numRows = GetDatatableRowCount( dataTable )
+	int numRows = GetDataTableRowCount( dataTable )
+	int gameModeCol = GetDataTableColumnByName( dataTable, "gameMode" )
+	if ( gameModeCol < 0 )
+		return // datatable doesn't have expected columns
 	for ( int i = 0; i < numRows; i++ )
 	{
 		StatCardEntry entry
-		string cardTypeString = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "cardType" ) )
-		if ( cardTypeString.toupper() == "CAREER" )
+		string gameModeString = GetDataTableString( dataTable, i, gameModeCol ).toupper()
+		switch ( gameModeString )
 		{
-			entry.cardType = eStatCardType.CAREER
+			case "BATTLEROYALE":
+				entry.gameMode = eStatCardGameMode.BATTLE_ROYALE
+				break
+			case "ARENAS":
+				entry.gameMode = eStatCardGameMode.ARENAS
+				break
+			default:
+				entry.gameMode = eStatCardGameMode.UNKNOWN
+				break
 		}
-		else if ( cardTypeString.toupper() == "SEASON" )
-		{
-			entry.cardType = eStatCardType.SEASON
-		}
-		else if ( cardTypeString.toupper() == "RANKEDPERIOD" )
-		{
-			entry.cardType = eStatCardType.RANKEDPERIOD
-		}
+		#if STAT_CARD_V2_DEBUG
+			printf( "StatCardV2Debug: Initializing Stat Entry as Game Mode %i", entry.gameMode )
+		#endif
 
-		string cardSection = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "section" ) )
-		if ( cardSection.toupper() == "HEADER" )
+		string cardTypeString = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "cardType" ) ).toupper()
+		switch( cardTypeString.toupper() )
 		{
-			entry.section = eStatCardSection.HEADER
+			case "CAREER":
+				entry.cardType = eStatCardType.CAREER
+				break
+			case "SEASON":
+				entry.cardType = eStatCardType.SEASON
+				break
+			case "RANKEDPERIOD":
+				entry.cardType = eStatCardType.RANKEDPERIOD
+				break
+			case "RANKEDCAREER":
+				entry.cardType = eStatCardType.RANKEDCAREER
+				break
+			default:
+				entry.cardType = eStatCardType.UNKNOWN
+				break
 		}
-		else if ( cardSection.toupper() == "HEADERTOOLTIP" )
+		#if STAT_CARD_V2_DEBUG
+			printf( "StatCardV2Debug: Initializing Stat Entry as Card Type %i", entry.cardType )
+		#endif
+
+		string cardSectionString = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "section" ) ).toupper()
+		switch ( cardSectionString.toupper() )
 		{
-			entry.section = eStatCardSection.HEADERTOOLTIP
+			case "HEADER":
+				entry.section = eStatCardSection.HEADER
+				break
+			case "HEADERTOOLTIP":
+				entry.section = eStatCardSection.HEADERTOOLTIP
+				break
+			case "BODYTOOLTIP":
+				entry.section = eStatCardSection.BODYTOOLTIP
+				break
+			default:
+				entry.section = eStatCardSection.BODY
+				break
 		}
-		else if ( cardSection.toupper() == "BODYTOOLTIP" )
-		{
-			entry.section = eStatCardSection.BODYTOOLTIP
-		}
-		else
-		{
-			entry.section = eStatCardSection.BODY
-		}
+		#if STAT_CARD_V2_DEBUG
+			printf( "StatCardV2Debug: Initializing Stat Entry as Card Section %i", entry.section )
+		#endif
 
 		entry.calcMethod = SetStatCalcMethodFromDataTable( GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "calcMethod" ) ) )
 		entry.label = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "label" ) )
 		entry.statRef = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "statRef" ) )
 		entry.mathRef = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "mathRef" ) )
+
+		if ( entry.cardType == eStatCardType.UNKNOWN )
+		{
+			printf( "StatCardDebug: Skipping stat entry %i because unknown or empty cardType is defined", i )
+			continue
+		}
 
 		if ( entry.label == "" )
 		{
@@ -194,50 +274,26 @@ void function ShPlayerStatCards_Init()
 			entry.statRef = NO_DATA_REF
 		}
 
-		if ( entry.cardType != eStatCardType.CAREER && entry.cardType != eStatCardType.SEASON && entry.cardType != eStatCardType.RANKEDPERIOD )
+		#if STAT_CARD_V2_DEBUG
+			printf( "StatCardV2Debug: Adding %s: Game Mode: %s, Card Type: %s, Section: %s", entry.statRef, GetGameModeName( entry.gameMode ), GetCardTypeName( entry.cardType ), GetSectionName( entry.section ) )
+		#endif
+
+		switch ( entry.section )
 		{
-			continue
-		}
-		else if ( entry.cardType == eStatCardType.CAREER )
-		{
-			if ( entry.section == eStatCardSection.HEADER )
-				file.careerStatCard.headerStats.append( entry )
-			else if ( entry.section == eStatCardSection.HEADERTOOLTIP )
-				file.careerStatCard.headerToolTipStats.append( entry )
-			else if ( entry.section == eStatCardSection.BODYTOOLTIP )
-				file.careerStatCard.bodyToolTipStats.append( entry )
-			else
-				file.careerStatCard.bodyStats.append( entry )
-		}
-		else if ( entry.cardType == eStatCardType.SEASON )
-		{
-			if ( entry.section == eStatCardSection.HEADER )
-				file.seasonStatCard.headerStats.append( entry )
-			else if ( entry.section == eStatCardSection.HEADERTOOLTIP )
-				file.seasonStatCard.headerToolTipStats.append( entry )
-			else if ( entry.section == eStatCardSection.BODYTOOLTIP )
-				file.seasonStatCard.bodyToolTipStats.append( entry )
-			else
-				file.seasonStatCard.bodyStats.append( entry )
-		}
-		else if ( entry.cardType == eStatCardType.RANKEDPERIOD )
-		{
-			if ( entry.section == eStatCardSection.HEADER )
-				file.rankedPeriodStatCard.headerStats.append( entry )
-			else if ( entry.section == eStatCardSection.HEADERTOOLTIP )
-				file.rankedPeriodStatCard.headerToolTipStats.append( entry )
-			else if ( entry.section == eStatCardSection.BODYTOOLTIP )
-				file.rankedPeriodStatCard.bodyToolTipStats.append( entry )
-			else
-				file.rankedPeriodStatCard.bodyStats.append( entry )
+			case eStatCardSection.HEADER:
+				file.statCards[entry.gameMode][entry.cardType].headerStats.append( entry )
+				break
+			case eStatCardSection.HEADERTOOLTIP:
+				file.statCards[entry.gameMode][entry.cardType].headerToolTipStats.append( entry )
+				break
+			case eStatCardSection.BODYTOOLTIP:
+				file.statCards[entry.gameMode][entry.cardType].bodyToolTipStats.append( entry )
+				break
+			default:
+				file.statCards[entry.gameMode][entry.cardType].bodyStats.append( entry )
+				break
 		}
 	}
-
-	int totalCareerStats = file.careerStatCard.headerStats.len() + file.careerStatCard.bodyStats.len()
-	int totalSeasonStats = file.seasonStatCard.headerStats.len() + file.seasonStatCard.bodyStats.len()
-	int totalRankedPeriodStats = file.rankedPeriodStatCard.headerStats.len() + file.rankedPeriodStatCard.bodyStats.len()
-
-	//printf( "StatCardDebug: Stat Card Entry Table Completed with %i Career stats, %i Season Stats and %i Ranked Period Stats", totalCareerStats, totalSeasonStats, totalRankedPeriodStats )
 
 	StatCard_InitToolTipStringTables()
 }
@@ -267,6 +323,8 @@ int function SetStatCalcMethodFromDataTable( string method )
 			return eStatCalcMethod.MATH_DIVIDE
 		case "MATH_WINRATE":
 			return eStatCalcMethod.MATH_WINRATE
+		case "SEASON_CHARACTER_HIGHEST":
+			return eStatCalcMethod.SEASON_CHARACTER_HIGHEST
 		default:
 			Assert( false, format("Stat Card: Unknown Stat Card Calc Type Provided (%s)", method) )
 	}
@@ -275,14 +333,18 @@ int function SetStatCalcMethodFromDataTable( string method )
 }
 
 #if UI
-void function StatCard_UpdateAndDisplayStats( var panel, entity player, string seasonRef = "" )
+void function StatCard_UpdateAndDisplayStats( var panel, entity player, int gameMode = eStatCardGameMode.BATTLE_ROYALE, string seasonRef = "" )
 {
+	#if STAT_CARD_V2_DEBUG
+		printf( "StatCardV2Debug: Constructing Stats Displays for %s, seasonRef %s", GetGameModeName( gameMode ), seasonRef )
+	#endif
+
 	StatCard_ClearToolTipStringTables()
 
-	StatCard_ConstructCareerStatsDisplay( panel, player )
+	StatCard_ConstructCareerStatsDisplay( panel, player, gameMode )
 
 	if ( seasonRef != "" )
-		StatCard_ConstructSeasonOrRankedPeriodStatsDisplay( panel, player, seasonRef )
+		StatCard_ConstructSeasonOrRankedPeriodStatsDisplay( panel, player, gameMode, seasonRef )
 }
 #endif // UI
 
@@ -300,15 +362,18 @@ const string STATCARD_SEASON_STAT_LABEL = "seasonStatLabel"
 const string STATCARD_SEASON_STAT_DISPLAY = "seasonStatDisplay"
 
 #if UI
-void function StatCard_ConstructCareerStatsDisplay( var panel, entity player )
+void function StatCard_ConstructCareerStatsDisplay( var panel, entity player, int gameMode )
 {
+	//printf( "StatCardDebug: Constructing Career Stats Display" )
 	var rui = Hud_GetRui( panel )
 
 	array<StatCardEntry> statEntries
-	string toolTipField
 
-	statEntries = clone( file.careerStatCard.headerStats )
+	statEntries = clone( file.statCards[gameMode][eStatCardType.CAREER].headerStats )
 
+	string modeRef = StatsCard_GetRefOfGameMode( gameMode )
+
+	//Header Entries
 	if ( statEntries.len() > 0 )
 	{
 		for ( int i; i < statEntries.len(); i++ )
@@ -319,10 +384,9 @@ void function StatCard_ConstructCareerStatsDisplay( var panel, entity player )
 			string headerLabel = statEntries[i].label
 
 			string headerDisplayIDString = STATCARD_VAR_FORMAT_HEADER_DISPLAY + headerIndex
-			float headerDisplayFloat = GetDataForStat_Float( player, file.careerStatCard.headerStats[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod )
+			float headerDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod, modeRef )
 
-
-			RuiSetString( rui, (STATCARD_VAR_FORMAT_HEADER_LABEL + headerIndex), headerLabel )
+			RuiSetString( rui, headerLabelIDString, headerLabel )
 
 			StatCard_SetStatValueDisplay( headerDisplayIDString, headerDisplayFloat )
 			StatCard_AddStatToolTipString( STAT_TOOLTIP_HEADER_CAREER, statEntries[i].label, headerDisplayFloat, statEntries[i].calcMethod )
@@ -330,13 +394,16 @@ void function StatCard_ConstructCareerStatsDisplay( var panel, entity player )
 	}
 
 	statEntries.clear()
-	statEntries = clone( file.careerStatCard.headerToolTipStats )
+	statEntries = clone( file.statCards[gameMode][eStatCardType.CAREER].headerToolTipStats )
 
+	//Header Tooltips
 	if ( statEntries.len() > 0 )
 	{
+		//printf( "StatToolTipDebug: Parsing Career Header Tool Tips" )
 		for ( int i = 0; i < statEntries.len(); i++ )
 		{
-			float headerToolTipDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod )
+			float headerToolTipDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod, modeRef )
+
 			StatCard_AddStatToolTipString( STAT_TOOLTIP_HEADER_CAREER, statEntries[i].label, headerToolTipDisplayFloat, statEntries[i].calcMethod, i )
 		}
 	}
@@ -344,26 +411,37 @@ void function StatCard_ConstructCareerStatsDisplay( var panel, entity player )
 	StatCard_SetStatToolTip( STAT_TOOLTIP_HEADER_CAREER )
 
 	statEntries.clear()
-	statEntries = clone( file.careerStatCard.bodyStats )
+	statEntries = clone( file.statCards[gameMode][eStatCardType.CAREER].bodyStats )
 
-	if ( statEntries.len() > 0 )
+	int bodyEntries = statEntries.len()
+	int openBodyFields = MAX_STATS_BODY - statEntries.len()
+	#if STAT_CARD_V2_DEBUG
+		printf( "StatCardV2Debug: %s(): %i/%i body stats to display (%i empty fields)", FUNC_NAME(), bodyEntries, MAX_STATS_BODY, openBodyFields )
+	#endif
+	//Body Entries
+	for ( int i; i < (bodyEntries+openBodyFields); i++ )
 	{
-		for ( int i; i < statEntries.len(); i++ )
-		{
-			string bodyIndex = format( "%02d", i )
+		string bodyIndex = format( "%02d", i )
+		string bodyLabelIDString = STATCARD_CAREER_STAT_LABEL + bodyIndex
 
-			string bodyLabelIDString = STATCARD_CAREER_STAT_LABEL + bodyIndex
+		if ( i < bodyEntries )
+		{
+
 			string bodyLabel = statEntries[i].label
 
 			string bodyDisplayIDString = STATCARD_CAREER_STAT_DISPLAY + bodyIndex
-			float bodyDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod )
+			float bodyDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod, modeRef )
 
-			toolTipField = StatCard_GetToolTipFieldFromIndex( i, eStatCardType.CAREER, eStatCardSection.BODY )
+			string toolTipField = StatCard_GetToolTipFieldFromIndex( i, eStatCardType.CAREER, eStatCardSection.BODY )
 
 			RuiSetString( rui, bodyLabelIDString, bodyLabel )
 
 			StatCard_SetStatValueDisplay( bodyDisplayIDString, bodyDisplayFloat, 7, 2 )
 			StatCard_AddStatToolTipString( toolTipField, statEntries[i].label, bodyDisplayFloat, statEntries[i].calcMethod )
+		}
+		else
+		{
+			RuiSetString( rui, bodyLabelIDString, "" )
 		}
 	}
 
@@ -373,11 +451,12 @@ void function StatCard_ConstructCareerStatsDisplay( var panel, entity player )
 	StatCard_SetStatToolTip( STAT_TOOLTIP_COLUMNB_CAREER )
 }
 
-void function StatCard_ConstructSeasonOrRankedPeriodStatsDisplay( var panel, entity player, string seasonOrRankedPeriodRef )
+void function StatCard_ConstructSeasonOrRankedPeriodStatsDisplay( var panel, entity player, int gameMode, string seasonOrRankedPeriodRef )
 {
 	var rui = Hud_GetRui( panel )
 	string toolTipField
 
+	//HACK: Hard coded color table
 	RuiSetInt( rui, "seasonColorHack", file.GUIDToSeasonNumber[seasonOrRankedPeriodRef] )
 
 	array<StatCardEntry> statEntries = []
@@ -386,13 +465,20 @@ void function StatCard_ConstructSeasonOrRankedPeriodStatsDisplay( var panel, ent
 	ItemFlavor refFlavor = GetItemFlavorByGUID( refGUID )
 	bool isSeasonStats = IsSeasonFlavor( refFlavor )
 
+	string modeRef = StatsCard_GetRefOfGameMode( gameMode )
+
 	if ( isSeasonStats )
-		statEntries = clone( file.seasonStatCard.headerStats )
+	{
+		statEntries = clone( file.statCards[ gameMode ][ eStatCardType.SEASON ].headerStats )
+	}
 	else
-		statEntries = clone( file.rankedPeriodStatCard.headerStats )
+	{
+		statEntries = clone( file.statCards[ gameMode ][ eStatCardType.RANKEDPERIOD ].headerStats )
+	}
 
 	if ( statEntries.len() > 0 )
 	{
+		//printf( "StatCardDebug: Constructing Seasonal Header Stats" )
 		for ( int i; i < statEntries.len(); i++ )
 		{
 			string headerIndex = format( "%02d", i )
@@ -402,7 +488,7 @@ void function StatCard_ConstructSeasonOrRankedPeriodStatsDisplay( var panel, ent
 
 			string headerDisplayIDString = STATCARD_VAR_FORMAT_HEADER_DISPLAY_SEASON + headerIndex
 
-			float headerDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod, seasonOrRankedPeriodRef )
+			float headerDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod, modeRef, seasonOrRankedPeriodRef )
 
 			RuiSetString( rui, headerLabelIDString, headerLabel )
 
@@ -413,16 +499,18 @@ void function StatCard_ConstructSeasonOrRankedPeriodStatsDisplay( var panel, ent
 
 	statEntries.clear()
 	if ( isSeasonStats )
-		statEntries = clone( file.seasonStatCard.headerToolTipStats )
+		statEntries = clone( file.statCards[ gameMode ][ eStatCardType.SEASON ].headerToolTipStats )
 	else
-		statEntries = clone( file.rankedPeriodStatCard.headerToolTipStats )
+		statEntries = clone( file.statCards[ gameMode ][ eStatCardType.RANKEDPERIOD ].headerToolTipStats )
 
 	if ( statEntries.len() > 0 )
 	{
+		//printf( "StatToolTipDebug: Parsing Season Header Tool Tips" )
 		for ( int i = 0; i < statEntries.len(); i++ )
 		{
-			float headerToolTipDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod, seasonOrRankedPeriodRef )
+			float headerToolTipDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod, modeRef, seasonOrRankedPeriodRef )
 
+			//printf( "StatToolTipDebug: Adding career header stat %s (%i) to the array", statEntries[i].label, headerToolTipDisplayFloat )
 			StatCard_AddStatToolTipString( STAT_TOOLTIP_HEADER_SEASON, statEntries[i].label, headerToolTipDisplayFloat, statEntries[i].calcMethod, i )
 		}
 	}
@@ -431,28 +519,33 @@ void function StatCard_ConstructSeasonOrRankedPeriodStatsDisplay( var panel, ent
 
 	statEntries.clear()
 	if ( isSeasonStats )
-		statEntries = clone( file.seasonStatCard.bodyStats )
+		statEntries = clone( file.statCards[ gameMode ][ eStatCardType.SEASON ].bodyStats )
 	else
-		statEntries = clone( file.rankedPeriodStatCard.bodyStats )
+		statEntries = clone( file.statCards[ gameMode ][ eStatCardType.RANKEDPERIOD ].bodyStats )
 
-	if ( statEntries.len() > 0 )
+	int bodyEntries = statEntries.len()
+	int openBodyFields = MAX_STATS_BODY - statEntries.len()
+	for ( int i; i < (bodyEntries+openBodyFields); i++ )
 	{
+		string bodyIndex = format( "%02d", i )
+		string bodyLabelIDString = STATCARD_SEASON_STAT_LABEL + bodyIndex
 
-		for ( int i; i < statEntries.len(); i++ )
+		if ( i < bodyEntries )
 		{
-			string bodyIndex = format( "%02d", i )
-
-			string bodyLabelIDString = STATCARD_SEASON_STAT_LABEL + bodyIndex
 			string bodyLabel = statEntries[i].label
 
 			string bodyDisplayIDString = STATCARD_SEASON_STAT_DISPLAY + bodyIndex
-			float bodyDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod, seasonOrRankedPeriodRef )
+			float bodyDisplayFloat = GetDataForStat_Float( player, statEntries[i].statRef, statEntries[i].mathRef, statEntries[i].calcMethod, modeRef, seasonOrRankedPeriodRef )
 
 			toolTipField = StatCard_GetToolTipFieldFromIndex( i, eStatCardType.SEASON, eStatCardSection.BODY )
 
 			RuiSetString( rui, bodyLabelIDString, bodyLabel )
 			StatCard_SetStatValueDisplay( bodyDisplayIDString, bodyDisplayFloat, 7, 2 )
 			StatCard_AddStatToolTipString( toolTipField, statEntries[i].label, bodyDisplayFloat, statEntries[i].calcMethod )
+		}
+		else
+		{
+			RuiSetString( rui, bodyLabelIDString, "" )
 		}
 	}
 
@@ -485,9 +578,11 @@ void function StatCard_ConstructStatCardProgressBar( var panel, int totalXP, int
 	{
 		//RuiSetString( progressBarRui, "currentDisplayLevel", GetAccountDisplayLevel( start_accountLevel ) )
 		//RuiSetString( progressBarRui, "nextDisplayLevel", GetAccountDisplayLevel( start_accountLevel + 1 ) )
-
+		//
 		//RuiSetImage( progressBarRui, "currentDisplayBadge", GetAccountDisplayBadge( start_accountLevel ) )
 		//RuiSetImage( progressBarRui, "nextDisplayBadge", GetAccountDisplayBadge( start_accountLevel + 1 ) )
+
+
 	}
 
 	if ( cardType == eStatCardType.SEASON )
@@ -539,8 +634,14 @@ void function StatCard_ConstructAccountProgressBar( var panel, int start_account
 	RuiSetFloat( progressBarRui, "progressBarFillTime", 2.0 )
 	RuiSetInt( progressBarRui, format( "displayLevel1XP", start_accountLevel + 1 ), GetTotalXPToCompleteAccountLevel( start_accountLevel ) - GetTotalXPToCompleteAccountLevel( start_accountLevel - 1 ) )
 
+
 	var nestedCurrentLevelBadge = CreateNestedAccountDisplayBadge( progressBarRui, "currentBadgeHandle", start_accountLevel )
 	var nestedNextLevelBadge = CreateNestedAccountDisplayBadge( progressBarRui, "nextBadgeHandle", start_accountLevel + 1 )
+	//RuiSetString( progressBarRui, "currentDisplayLevel", GetAccountDisplayLevel( start_accountLevel ) )
+	//RuiSetString( progressBarRui, "nextDisplayLevel", GetAccountDisplayLevel( start_accountLevel + 1 ) )
+	//
+	//RuiSetImage( progressBarRui, "currentDisplayBadge", GetAccountDisplayBadge( start_accountLevel ) )
+	//RuiSetImage( progressBarRui, "nextDisplayBadge", GetAccountDisplayBadge( start_accountLevel + 1 ) )
 }
 
 void function StatCard_ConstructBattlePassLevelBadge( var panel, entity player, int battlePassLevel, string seasonRef )
@@ -552,6 +653,9 @@ void function StatCard_ConstructBattlePassLevelBadge( var panel, entity player, 
 	RuiSetString( rui, "rankedSplitTextLabel2", ""  )
 	RuiSetBool( rui, "twoBadgeMode", false  )
 
+	//ItemFlavor ornull activeBattlePass = GetPlayerActiveBattlePass( ToEHI( player ) )
+	//expect ItemFlavor( activeBattlePass )
+
 	SettingsAssetGUID seasonGUID = ConvertItemFlavorGUIDStringToGUID( seasonRef )
 	ItemFlavor season = GetItemFlavorByGUID( seasonGUID )
 	ItemFlavor battlePass = Season_GetBattlePass( season )
@@ -562,7 +666,7 @@ void function StatCard_ConstructBattlePassLevelBadge( var panel, entity player, 
 	CreateNestedGladiatorCardBadge( rui, "battlePassLevelBadge", ToEHI( player ), bpLevelBadge, 0, dummy, battlePassLevel + 1 )
 }
 
-void function StatCard_ConstructRankedBadge( var panel, entity player, string rankedPeriodRef )
+void function StatCard_ConstructRankedBadges( var panel, entity player, string rankedPeriodRef )
 {
 	var rui = Hud_GetRui( panel )
 	RuiDestroyNestedIfAlive( rui, "battlePassLevelBadge" )
@@ -572,29 +676,63 @@ void function StatCard_ConstructRankedBadge( var panel, entity player, string ra
 	RuiSetBool( rui, "twoBadgeMode", false  )
 
 	ItemFlavor rankedPeriodItemFlavor = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( rankedPeriodRef ) )
+	int itemType = ItemFlavor_GetType( rankedPeriodItemFlavor )
+	                     
+		Assert( itemType == eItemType.calevent_rankedperiod || itemType == eItemType.calevent_arenas_ranked_period || itemType == eItemType.ranked_2pt0_period, "tried to construct ranked badges with non ranked ref" )
+       
 
+	if ( SharedRankedPeriod_HasSplits( rankedPeriodItemFlavor )  )
 	{
-		StatsCard_ConstructRankBadgesForSingleBadge( rui, player, rankedPeriodRef )
-
+		if ( rankedPeriodRef == GetCurrentStatRankedPeriodRefOrNullByType( itemType ) && SharedRankedPeriod_IsFirstSplitActive( rankedPeriodItemFlavor ) )
+			StatsCard_ConstructRankBadgesForSingleBadgeShared( rui, player, rankedPeriodRef )
+		else
+			StatsCard_ConstructRankBadgesForDoubleBadgeShared( rui, player, rankedPeriodRef )
+	}
+	else
+	{
+		if ( Ranked_IsRankedV2FirstSplit( rankedPeriodItemFlavor ) && Ranked_GetCurrentActiveRankedPeriod() != rankedPeriodItemFlavor && GetCurrentPlaylistVarBool( "rankv2_show_single_season", true ) )//is passed rankV2 first split
+			StatsCard_ConstructRankBadgesForDoubleBadgeShared( rui, player, rankedPeriodRef )
+		else
+			StatsCard_ConstructRankBadgesForSingleBadgeShared( rui, player, rankedPeriodRef )
 	}
 }
 
-void function StatsCard_ConstructRankBadgesForSingleBadge( var rui, entity player,  string rankedPeriodRef  )
+void function StatsCard_ConstructRankBadgesForSingleBadgeShared( var rui, entity player,  string rankedPeriodRef  )
 {
-	var badgeRui            = CreateNestedRankedBadge( rui, "battlePassLevelBadge" )
-	int score               = Ranked_GetHistoricalRankScore( player, rankedPeriodRef )
-	RankedDivisionData data = Ranked_GetHistoricalRankedDivisionFromScore( score, rankedPeriodRef )
+	ItemFlavor rankedPeriodItemFlavor = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( rankedPeriodRef ) )
+	int itemType                      = ItemFlavor_GetType( rankedPeriodItemFlavor )
 
-	if ( rankedPeriodRef == GetCurrentStatRankedPeriodRefOrNull() )
-		PopulateRuiWithRankedBadgeDetails( badgeRui, score, Ranked_GetDisplayNumberForRuiBadge( GetUIPlayer() ) )
-	else
-		PopulateRuiWithHistoricalRankedBadgeDetails( badgeRui, score, score, rankedPeriodRef  ) //
+	var badgeRui = CreateNestedRankedBadge( rui, "battlePassLevelBadge" )
 
-	RuiSetBool( badgeRui, "showScore", false )
-	RuiSetInt( badgeRui, "score", score )
-	RuiSetInt( badgeRui, "scoreMax", 0 )
-	RuiSetFloat( badgeRui, "scoreFrac", 1.0 )
-	RuiSetString( badgeRui, "rankName", data.divisionName )
+	if ( itemType == eItemType.calevent_rankedperiod || itemType == eItemType.ranked_2pt0_period )
+		Ranked_ConstructSingleRankBadgeForStatsCard( badgeRui, player, rankedPeriodRef )
+	                     
+		else
+			ArenasRanked_ConstructSingleRankBadgeForStatsCard( badgeRui, player, rankedPeriodRef )
+       
+}
+
+
+void function StatsCard_ConstructRankBadgesForDoubleBadgeShared( var rui, entity player,  string rankedPeriodRef  )
+{
+	ItemFlavor rankedPeriodItemFlavor = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( rankedPeriodRef ) )
+	int itemType                      = ItemFlavor_GetType( rankedPeriodItemFlavor )
+
+	RuiSetBool( rui, "twoBadgeMode", true )
+	RuiSetString( rui, "rankedSplitTextLabel", Localize( "#RANKED_SPLIT_1" ) )
+	RuiSetString( rui, "rankedSplitTextLabel2", Localize( "#RANKED_SPLIT_2" ) )
+
+	var firstSplitBadgeRui  = CreateNestedRankedBadge( rui, "battlePassLevelBadge" )
+	var secondSplitBadgeRui = CreateNestedRankedBadge( rui, "battlePassLevelBadge2" )
+
+	if ( itemType == eItemType.ranked_2pt0_period )
+		Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( firstSplitBadgeRui, secondSplitBadgeRui, player, rankedPeriodRef )
+	else if ( itemType == eItemType.calevent_rankedperiod )
+		Ranked_ConstructDoubleRankBadgeForStatsCard( firstSplitBadgeRui, secondSplitBadgeRui, player, rankedPeriodRef )
+	                     
+		else
+			ArenasRanked_ConstructDoubleRankBadgeForStatsCard( firstSplitBadgeRui, secondSplitBadgeRui, player, rankedPeriodRef )
+       
 }
 
 void function StatCard_ChangeCardDisplayType( var panel, int displayType )
@@ -602,9 +740,9 @@ void function StatCard_ChangeCardDisplayType( var panel, int displayType )
 	var rui = Hud_GetRui( panel )
 	RuiSetInt( rui, "displayType", displayType )
 }
-#endif // UI
+#endif //UI
 
-string function GetDataForStat( entity player, string statRef, string mathRef, int calcMethod, string seasonRef = "" )
+string function GetDataForStat( entity player, string statRef, string mathRef, int calcMethod, string modeRef = "", string seasonOrRankedRef = "" )
 {
 	if( statRef == NO_DATA_REF )
 	{
@@ -614,27 +752,37 @@ string function GetDataForStat( entity player, string statRef, string mathRef, i
 	{
 		StatTemplate stat = GetStatTemplateFromString( statRef )
 
-		bool statComesFromAggregate = (calcMethod == eStatCalcMethod.CHARACTER_AGGREGATE) || (calcMethod == eStatCalcMethod.CHARACTER_HIGHEST) || (calcMethod == eStatCalcMethod.WEAPON_AGGREGATE) || (calcMethod == eStatCalcMethod.WEAPON_HIGHEST)
+		bool statComesFromAggregate = (calcMethod == eStatCalcMethod.CHARACTER_AGGREGATE) || (calcMethod == eStatCalcMethod.CHARACTER_HIGHEST) || (calcMethod == eStatCalcMethod.WEAPON_AGGREGATE) || (calcMethod == eStatCalcMethod.WEAPON_HIGHEST) || (calcMethod == eStatCalcMethod.SEASON_CHARACTER_HIGHEST)
 		bool statComesFromMath = (calcMethod == eStatCalcMethod.MATH_DIVIDE) || (calcMethod == eStatCalcMethod.MATH_MULTIPLY) || (calcMethod == eStatCalcMethod.MATH_SUB) || (calcMethod == eStatCalcMethod.MATH_ADD) || (calcMethod == eStatCalcMethod.MATH_WINRATE)
 
 		int data
 		if ( calcMethod == eStatCalcMethod.SIMPLE )
 		{
-			if ( seasonRef == "" )
-				data = GetStat_Int( player, ResolveStatEntry( stat ), eStatGetWhen.CURRENT )
+			if( modeRef == "" )
+			{
+				if ( seasonOrRankedRef == "" )
+					data = GetStat_Int( player, ResolveStatEntry( stat ), eStatGetWhen.CURRENT )
+				else
+					data = GetStat_Int( player, ResolveStatEntry( stat, seasonOrRankedRef ), eStatGetWhen.CURRENT )
+			}
 			else
-				data = GetStat_Int( player, ResolveStatEntry( stat, seasonRef ), eStatGetWhen.CURRENT )
+			{
+				if ( seasonOrRankedRef == "" )
+					data = GetStat_Int( player, ResolveStatEntry( stat, modeRef ), eStatGetWhen.CURRENT )
+				else
+					data = GetStat_Int( player, ResolveStatEntry( stat, modeRef, seasonOrRankedRef ), eStatGetWhen.CURRENT )
+			}
 		}
 		else if ( statComesFromAggregate )
 		{
-			data = AggregateStat( player, stat, calcMethod, seasonRef )
+			data = AggregateStat( player, stat, calcMethod, seasonOrRankedRef )
 		}
 		else if ( statComesFromMath )
 		{
 			Assert( (mathRef != ""), format( "Stat Cards: Attempted to calculate a stat value without providing two stats to calculate from (%s)", mathRef) )
 
 			StatTemplate mathStat = GetStatTemplateFromString( mathRef )
-			float calcData = CalculateStat( player, stat, mathStat, calcMethod, seasonRef, "" )
+			float calcData = CalculateStat( player, stat, mathStat, calcMethod, seasonOrRankedRef, "" )
 			float modValue = (calcData % 1) * 100.0
 
 			string result
@@ -651,37 +799,52 @@ string function GetDataForStat( entity player, string statRef, string mathRef, i
 	unreachable
 }
 
-float function GetDataForStat_Float( entity player, string statRef, string mathRef, int calcMethod, string ref = "" )
+float function GetDataForStat_Float( entity player, string statRef, string mathRef, int calcMethod, string modeRef, string seasonOrRankedRef = "" )
 {
 	if( statRef == NO_DATA_REF )
 	{
+		//printf( "StatCardDebug: Requested Data for null data reference. Returning -1" )
 		return -1
 	}
 	else
 	{
+		#if STAT_CARD_V2_DEBUG
+			printf( "StatCardV2Debug: Collecting Data for %s", statRef )
+		#endif
+
 		StatTemplate stat = GetStatTemplateFromString( statRef )
 
-		bool statComesFromAggregate = (calcMethod == eStatCalcMethod.CHARACTER_AGGREGATE) || (calcMethod == eStatCalcMethod.CHARACTER_HIGHEST) || (calcMethod == eStatCalcMethod.WEAPON_AGGREGATE) || (calcMethod == eStatCalcMethod.WEAPON_HIGHEST)
+		bool statComesFromAggregate = (calcMethod == eStatCalcMethod.CHARACTER_AGGREGATE) || (calcMethod == eStatCalcMethod.CHARACTER_HIGHEST) || (calcMethod == eStatCalcMethod.WEAPON_AGGREGATE) || (calcMethod == eStatCalcMethod.WEAPON_HIGHEST) || (calcMethod == eStatCalcMethod.SEASON_CHARACTER_HIGHEST)
 		bool statComesFromMath = (calcMethod == eStatCalcMethod.MATH_DIVIDE) || (calcMethod == eStatCalcMethod.MATH_MULTIPLY) || (calcMethod == eStatCalcMethod.MATH_SUB) || (calcMethod == eStatCalcMethod.MATH_ADD) || (calcMethod == eStatCalcMethod.MATH_WINRATE)
 
 		int data
 		if ( calcMethod == eStatCalcMethod.SIMPLE )
 		{
-			if ( ref == "" )
-				data = GetStat_Int( player, ResolveStatEntry( stat ), eStatGetWhen.CURRENT )
+			if( modeRef == "" || !ShouldIncludeModeRef( modeRef, seasonOrRankedRef ) )
+			{
+				if ( seasonOrRankedRef == "" )
+					data = GetStat_Int( player, ResolveStatEntry( stat ), eStatGetWhen.CURRENT )
+				else
+					data = GetStat_Int( player, ResolveStatEntry( stat, seasonOrRankedRef ), eStatGetWhen.CURRENT )
+			}
 			else
-				data = GetStat_Int( player, ResolveStatEntry( stat, ref ), eStatGetWhen.CURRENT )
+			{
+				if ( seasonOrRankedRef == "" )
+					data = GetStat_Int( player, ResolveStatEntry( stat, modeRef ), eStatGetWhen.CURRENT )
+				else
+					data = GetStat_Int( player, ResolveStatEntry( stat, modeRef, seasonOrRankedRef ), eStatGetWhen.CURRENT )
+			}
 		}
 		else if ( statComesFromAggregate )
 		{
-			data = AggregateStat( player, stat, calcMethod, ref )
+			data = AggregateStat( player, stat, calcMethod, modeRef, seasonOrRankedRef )
 		}
 		else if ( statComesFromMath )
 		{
 			Assert( (mathRef != ""), format( "Stat Cards: Attempted to calculate a stat value without providing two stats to calculate from (%s)", mathRef) )
 
 			StatTemplate mathStat = GetStatTemplateFromString( mathRef )
-			float calcData = CalculateStat( player, stat, mathStat, calcMethod, ref, "" )
+			float calcData = CalculateStat( player, stat, mathStat, calcMethod, modeRef, seasonOrRankedRef, "" )
 
 			return calcData
 		}
@@ -696,6 +859,7 @@ StatTemplate function GetStatTemplateFromString( string statRef )
 {
 	switch ( statRef )
 	{
+		//Battle Royale Stats (Lifetime)
 		case "CAREER_STATS.games_played":
 			return CAREER_STATS.games_played
 		case "CAREER_STATS.placements_win":
@@ -742,6 +906,8 @@ StatTemplate function GetStatTemplateFromString( string statRef )
 			return CAREER_STATS.character_placements_win
 		case "CAREER_STATS.times_respawned_ally":
 			return CAREER_STATS.times_respawned_ally
+
+		//Battle Royale Stats (Seasonal)
 		case "CAREER_STATS.season_games_played":
 			return CAREER_STATS.season_games_played
 		case "CAREER_STATS.season_damage_done":
@@ -778,6 +944,8 @@ StatTemplate function GetStatTemplateFromString( string statRef )
 			return CAREER_STATS.placements_top_5
 		case "CAREER_STATS.placements_top_10":
 			return CAREER_STATS.placements_top_10
+
+		//Battle Royale Stats (Ranked)
 		case "CAREER_STATS.rankedperiod_assists":
 			return CAREER_STATS.rankedperiod_assists
 		case "CAREER_STATS.rankedperiod_character_damage_done_max_single_game":
@@ -804,6 +972,114 @@ StatTemplate function GetStatTemplateFromString( string statRef )
 			return CAREER_STATS.rankedperiod_times_respawned_ally
 		case "CAREER_STATS.rankedperiod_win_streak_longest":
 			return CAREER_STATS.rankedperiod_win_streak_longest
+
+		//Arenas Stats (Lifetime)
+		case "CAREER_STATS.modes_games_played":
+			return CAREER_STATS.modes_games_played
+		case "CAREER_STATS.modes_placements_win":
+			return CAREER_STATS.modes_placements_win
+		case "CAREER_STATS.modes_damage_done":
+			return CAREER_STATS.modes_damage_done
+		case "CAREER_STATS.modes_damage_done_max_single_game":
+			return CAREER_STATS.modes_damage_done_max_single_game
+		case "CAREER_STATS.modes_kills":
+			return CAREER_STATS.modes_kills
+		case "CAREER_STATS.modes_deaths":
+			return CAREER_STATS.modes_deaths
+		case "CAREER_STATS.modes_kills_max_single_game":
+			return CAREER_STATS.modes_kills_max_single_game
+		case "CAREER_STATS.modes_dooms":
+			return CAREER_STATS.modes_dooms
+		case "CAREER_STATS.modes_assists":
+			return CAREER_STATS.modes_assists
+		case "CAREER_STATS.modes_win_streak_longest":
+			return CAREER_STATS.modes_win_streak_longest
+		case "CAREER_STATS.modes_revived_ally":
+			return CAREER_STATS.modes_revived_ally
+
+		//Arenas Stats (Seasonal)
+		case "CAREER_STATS.modes_season_games_played":
+			return CAREER_STATS.modes_season_games_played
+		case "CAREER_STATS.modes_season_placements_win":
+			return CAREER_STATS.modes_season_placements_win
+		case "CAREER_STATS.modes_season_damage_done":
+			return CAREER_STATS.modes_season_damage_done
+		case "CAREER_STATS.modes_season_damage_done_max_single_game":
+			return CAREER_STATS.modes_season_damage_done_max_single_game
+		case "CAREER_STATS.modes_season_kills":
+			return CAREER_STATS.modes_season_kills
+		case "CAREER_STATS.modes_season_kills_max_single_game":
+			return CAREER_STATS.modes_season_kills_max_single_game
+		case "CAREER_STATS.modes_season_deaths":
+			return CAREER_STATS.modes_season_deaths
+		case "CAREER_STATS.modes_season_dooms":
+			return CAREER_STATS.modes_season_dooms
+		case "CAREER_STATS.modes_season_assists":
+			return CAREER_STATS.modes_season_assists
+		case "CAREER_STATS.modes_season_win_streak_current":
+			return CAREER_STATS.modes_season_win_streak_current
+		case "CAREER_STATS.modes_season_win_streak_longest":
+			return CAREER_STATS.modes_season_win_streak_longest
+		case "CAREER_STATS.modes_season_revived_ally":
+			return CAREER_STATS.modes_season_revived_ally
+
+		//Arenas Stats (Ranked)
+		case "CAREER_STATS.arenas_rankedperiod_games_played":
+			return CAREER_STATS.arenas_rankedperiod_games_played
+		case "CAREER_STATS.arenas_rankedperiod_placements_win":
+			return CAREER_STATS.arenas_rankedperiod_placements_win
+		case "CAREER_STATS.arenas_rankedperiod_damage_done":
+			return CAREER_STATS.arenas_rankedperiod_damage_done
+		case "CAREER_STATS.arenas_rankedperiod_damage_done_max_single_game":
+			return CAREER_STATS.arenas_rankedperiod_damage_done_max_single_game
+		case "CAREER_STATS.arenas_rankedperiod_damage_done":
+			return CAREER_STATS.arenas_rankedperiod_damage_done
+		case "CAREER_STATS.arenas_rankedperiod_kills":
+			return CAREER_STATS.arenas_rankedperiod_kills
+		case "CAREER_STATS.arenas_rankedperiod_kills_max_single_game":
+			return CAREER_STATS.arenas_rankedperiod_kills_max_single_game
+		case "CAREER_STATS.arenas_rankedperiod_deaths":
+			return CAREER_STATS.arenas_rankedperiod_deaths
+		case "CAREER_STATS.arenas_rankedperiod_dooms":
+			return CAREER_STATS.arenas_rankedperiod_dooms
+		case "CAREER_STATS.arenas_rankedperiod_assists":
+			return CAREER_STATS.arenas_rankedperiod_assists
+		case "CAREER_STATS.arenas_rankedperiod_win_streak_current_new":
+			return CAREER_STATS.arenas_rankedperiod_win_streak_current_new
+		case "CAREER_STATS.arenas_rankedperiod_win_streak_longest_new":
+			return CAREER_STATS.arenas_rankedperiod_win_streak_longest_new
+		case "CAREER_STATS.arenas_rankedperiod_revived_ally":
+			return CAREER_STATS.arenas_rankedperiod_revived_ally
+
+		case "CAREER_STATS.arenas_rankedcareer_games_played":
+			return CAREER_STATS.arenas_rankedcareer_games_played
+		case "CAREER_STATS.arenas_rankedcareer_placements_win":
+			return CAREER_STATS.arenas_rankedcareer_placements_win
+		case "CAREER_STATS.arenas_rankedcareer_placements_win":
+			return CAREER_STATS.arenas_rankedcareer_placements_win
+		case "CAREER_STATS.arenas_rankedcareer_damage_done":
+			return CAREER_STATS.arenas_rankedcareer_damage_done
+		case "CAREER_STATS.arenas_rankedcareer_damage_done_max_single_game":
+			return CAREER_STATS.arenas_rankedcareer_damage_done_max_single_game
+		case "CAREER_STATS.arenas_rankedcareer_damage_done":
+			return CAREER_STATS.arenas_rankedcareer_damage_done
+		case "CAREER_STATS.arenas_rankedcareer_kills":
+			return CAREER_STATS.arenas_rankedcareer_kills
+		case "CAREER_STATS.arenas_rankedcareer_deaths":
+			return CAREER_STATS.arenas_rankedcareer_deaths
+		case "CAREER_STATS.arenas_rankedcareer_kills":
+			return CAREER_STATS.arenas_rankedcareer_kills
+		case "CAREER_STATS.arenas_rankedcareer_kills_max_single_game":
+			return CAREER_STATS.arenas_rankedcareer_kills_max_single_game
+		case "CAREER_STATS.arenas_rankedcareer_dooms":
+			return CAREER_STATS.arenas_rankedcareer_dooms
+		case "CAREER_STATS.arenas_rankedcareer_assists":
+			return CAREER_STATS.arenas_rankedcareer_assists
+		case "CAREER_STATS.arenas_rankedcareer_win_streak_longest":
+			return CAREER_STATS.arenas_rankedcareer_win_streak_longest
+		case "CAREER_STATS.arenas_rankedcareer_revived_ally":
+			return CAREER_STATS.arenas_rankedcareer_revived_ally
+
 		default:
 			Assert( false, format( "Stat Card attempted to look up an unknown StatTemplate: %s", statRef) )
 	}
@@ -811,68 +1087,94 @@ StatTemplate function GetStatTemplateFromString( string statRef )
 	unreachable
 }
 
-int function AggregateStat( entity player, StatTemplate stat, int calcMethod, string seasonRef = "" )
+int function AggregateStat( entity player, StatTemplate stat, int calcMethod, string modeRef, string seasonOrRankedRef = "" )
 {
 	int total
 
 	if ( calcMethod == eStatCalcMethod.CHARACTER_HIGHEST || calcMethod == eStatCalcMethod.CHARACTER_AGGREGATE )
 	{
-		foreach( ItemFlavor character in GetAllCharacters() )
-		{
-			string characterRef = ItemFlavor_GetGUIDString( character )
-			int statValue
-			if ( seasonRef == "" )
-				statValue = GetStat_Int( player, ResolveStatEntry( stat, characterRef ), eStatGetWhen.CURRENT )
-			else
-				statValue = GetStat_Int( player, ResolveStatEntry( stat, seasonRef, characterRef ), eStatGetWhen.CURRENT )
-
-			if ( (calcMethod == eStatCalcMethod.CHARACTER_HIGHEST) && (statValue > total) )
-				total = statValue
-			if ( calcMethod == eStatCalcMethod.CHARACTER_AGGREGATE )
-				total += statValue
-		}
+		foreach( characterRef in GetAllCharacterGUIDStringsForStats() )
+			total = AggregateStatInternal( total, characterRef, player, stat, calcMethod, modeRef, seasonOrRankedRef )
 	}
-
-	if ( calcMethod == eStatCalcMethod.WEAPON_HIGHEST || calcMethod == eStatCalcMethod.WEAPON_AGGREGATE )
+	else if ( calcMethod == eStatCalcMethod.SEASON_CHARACTER_HIGHEST )
 	{
-		foreach( ItemFlavor weapon in GetAllWeaponItemFlavors() )
-		{
-			string weaponRef = ItemFlavor_GetGUIDString( weapon )
-			int statValue
-			if ( seasonRef == "" )
-				statValue = GetStat_Int( player, ResolveStatEntry( stat, weaponRef ), eStatGetWhen.CURRENT )
-			else
-				statValue = GetStat_Int( player, ResolveStatEntry( stat, seasonRef, weaponRef ), eStatGetWhen.CURRENT )
-
-			if ( (calcMethod == eStatCalcMethod.WEAPON_HIGHEST) && (statValue > total) )
-				total = statValue
-			if ( calcMethod == eStatCalcMethod.WEAPON_AGGREGATE )
-				total += statValue
-		}
+		foreach ( ItemFlavor season in GetAllSeasonFlavors() )
+			foreach( characterRef in GetAllCharacterGUIDStringsForStats() )
+				total = AggregateStatInternal( total, characterRef, player, stat, calcMethod, modeRef, ItemFlavor_GetGUIDString( season ) )
 	}
 
 	return total
 }
 
-float function CalculateStat( entity player, StatTemplate stat1, StatTemplate stat2, int calcMethod, string seasonRef = "", string ref = "" )
+int function AggregateStatInternal( int total, string characterRef, entity player, StatTemplate stat, int calcMethod, string modeRef, string seasonOrRankedRef = "" )
+{
+	//printf( "StatCardDebug: Attempting to pull stat for character ID %s, for season %s", characterRef, seasonRef )
+	int statValue
+	if ( modeRef == "" || !ShouldIncludeModeRef( modeRef, seasonOrRankedRef ) )
+	{
+		if ( seasonOrRankedRef == "" )
+			statValue = GetStat_Int( player, ResolveStatEntry( stat, characterRef ), eStatGetWhen.CURRENT )
+		else
+			statValue = GetStat_Int( player, ResolveStatEntry( stat, seasonOrRankedRef, characterRef ), eStatGetWhen.CURRENT )
+	}
+	else
+	{
+		if ( seasonOrRankedRef == "" )
+			statValue = GetStat_Int( player, ResolveStatEntry( stat, modeRef, characterRef ), eStatGetWhen.CURRENT )
+		else
+			statValue = GetStat_Int( player, ResolveStatEntry( stat, modeRef, seasonOrRankedRef, characterRef ), eStatGetWhen.CURRENT )
+	}
+
+	if ( (calcMethod == eStatCalcMethod.CHARACTER_HIGHEST || calcMethod == eStatCalcMethod.SEASON_CHARACTER_HIGHEST) && (statValue > total) )
+		total = statValue
+	if ( calcMethod == eStatCalcMethod.CHARACTER_AGGREGATE )
+		total += statValue
+	return total
+}
+
+float function CalculateStat( entity player, StatTemplate stat1, StatTemplate stat2, int calcMethod, string modeRef, string seasonOrRankedRef = "", string ref = "" )
 {
 	int stat1Int
 	int stat2Int
 
-	if ( seasonRef == "" )
+	if ( seasonOrRankedRef == "" )
 	{
-		stat1Int = GetStat_Int( player, ResolveStatEntry( stat1 ), eStatGetWhen.CURRENT )
-		stat2Int = GetStat_Int( player, ResolveStatEntry( stat2 ), eStatGetWhen.CURRENT )
+		if ( modeRef == "" || !ShouldIncludeModeRef( modeRef, seasonOrRankedRef ) )
+		{
+			stat1Int = GetStat_Int( player, ResolveStatEntry( stat1 ), eStatGetWhen.CURRENT )
+			stat2Int = GetStat_Int( player, ResolveStatEntry( stat2 ), eStatGetWhen.CURRENT )
+		}
+		else
+		{
+			stat1Int = GetStat_Int( player, ResolveStatEntry( stat1, modeRef ), eStatGetWhen.CURRENT )
+			stat2Int = GetStat_Int( player, ResolveStatEntry( stat2, modeRef ), eStatGetWhen.CURRENT )
+		}
 	}
 	else if ( ref != "" )
 	{
-		stat1Int = GetStat_Int( player, ResolveStatEntry( stat1, ref ), eStatGetWhen.CURRENT )
-		stat2Int = GetStat_Int( player, ResolveStatEntry( stat2, ref ), eStatGetWhen.CURRENT )
+		if ( modeRef == "" || !ShouldIncludeModeRef( modeRef, seasonOrRankedRef ) )
+		{
+			stat1Int = GetStat_Int( player, ResolveStatEntry( stat1, ref ), eStatGetWhen.CURRENT )
+			stat2Int = GetStat_Int( player, ResolveStatEntry( stat2, ref ), eStatGetWhen.CURRENT )
+		}
+		else
+		{
+			stat1Int = GetStat_Int( player, ResolveStatEntry( stat1, modeRef, ref ), eStatGetWhen.CURRENT )
+			stat2Int = GetStat_Int( player, ResolveStatEntry( stat2, modeRef, ref ), eStatGetWhen.CURRENT )
+		}
 	}
 	else
 	{
-		stat1Int = GetStat_Int( player, ResolveStatEntry( stat1, seasonRef ), eStatGetWhen.CURRENT )
-		stat2Int = GetStat_Int( player, ResolveStatEntry( stat2, seasonRef ), eStatGetWhen.CURRENT )
+		if ( modeRef == "" || !ShouldIncludeModeRef( modeRef, seasonOrRankedRef ) )
+		{
+			stat1Int = GetStat_Int( player, ResolveStatEntry( stat1, seasonOrRankedRef ), eStatGetWhen.CURRENT )
+			stat2Int = GetStat_Int( player, ResolveStatEntry( stat2, seasonOrRankedRef ), eStatGetWhen.CURRENT )
+		}
+		else
+		{
+			stat1Int = GetStat_Int( player, ResolveStatEntry( stat1, modeRef, seasonOrRankedRef ), eStatGetWhen.CURRENT )
+			stat2Int = GetStat_Int( player, ResolveStatEntry( stat2, modeRef, seasonOrRankedRef ), eStatGetWhen.CURRENT )
+		}
 	}
 
 	switch ( calcMethod )
@@ -887,8 +1189,8 @@ float function CalculateStat( entity player, StatTemplate stat1, StatTemplate st
 
 	if ( calcMethod == eStatCalcMethod.MATH_DIVIDE )
 	{
-		//if ( stat2Int != 0 )
-			//printf( "StatMathDebug: %i / %i = %f", stat1Int, stat2Int, (float(stat1Int)/float(stat2Int)) )
+		if ( stat2Int != 0 )
+			printf( "StatMathDebug: %i / %i = %f", stat1Int, stat2Int, (float(stat1Int)/float(stat2Int)) )
 
 		if ( stat2Int != 0 )
 			return float( stat1Int ) / float( stat2Int )
@@ -907,152 +1209,19 @@ float function CalculateStat( entity player, StatTemplate stat1, StatTemplate st
 	unreachable
 }
 
-const string STATCARD_LEGENDSTAT_NAME = "legendName"
-const string STATCARD_LEGENDSTAT_PORTRAIT = "legendPortrait"
-const string STATCARD_LEGENDSTAT_GAMESPLAYED = "legendGamesPlayed"
-const string STATCARD_LEGENDSTAT_WINRATE = "legendWinRate"
-const string STATCARD_LEGENDSTAT_KDR = "legendKDR"
-
-#if UI
-void function StatCard_ConstructTopLegendStatCard( var panel, entity player )
+void function StatCard_ClearAvailableSeasonsCache( int gameMode )
 {
-	//
-
-	ConstructLegendStatStructArray( player )
-
-	var rui = Hud_GetRui( panel )
-	RuiSetInt( rui, "displayType", 3 )
-
-	for( int i = 0; i < file.bestLegendStats.len(); i++ )
-	{
-		string legendIndex = format( "%02d", i )
-
-		string legendName = STATCARD_LEGENDSTAT_NAME + legendIndex
-		string legendPortrait = STATCARD_LEGENDSTAT_PORTRAIT + legendIndex
-		string legendGamesPlayed = STATCARD_LEGENDSTAT_GAMESPLAYED + legendIndex
-		string legendGamesWinRate = STATCARD_LEGENDSTAT_WINRATE + legendIndex
-		string legendGamesKDR = STATCARD_LEGENDSTAT_KDR + legendIndex
-
-		//
-
-		RuiSetString( rui, legendName, file.bestLegendStats[i].legendName )
-		RuiSetImage( rui, legendPortrait, file.bestLegendStats[i].portrait )
-		RuiSetInt( rui, legendGamesPlayed, file.bestLegendStats[i].gamesPlayed )
-		RuiSetFloat( rui, legendGamesWinRate, file.bestLegendStats[i].winRate )
-		RuiSetFloat( rui, legendGamesKDR, file.bestLegendStats[i].kdr )
-	}
+	if ( gameMode in file.availableSeasonsCache )
+		delete file.availableSeasonsCache[gameMode]
 }
 
-void function ConstructLegendStatStructArray( entity player )
+array<ItemFlavor> function StatCard_GetAvailableSeasons( int gameMode = eStatCardGameMode.BATTLE_ROYALE )
 {
-	if ( file.bestLegendStats.len() == 5 )
-		return
+	if ( gameMode in file.availableSeasonsCache )
+		return clone file.availableSeasonsCache[gameMode]
 
-	array< LegendStatStruct > legendsArray
-
-	foreach( ItemFlavor character in GetAllCharacters() )
-	{
-		string characterRef = ItemFlavor_GetGUIDString( character )
-		LegendStatStruct newLegend
-
-		newLegend.legendName = ItemFlavor_GetLongName( character )
-		newLegend.portrait = CharacterClass_GetGalleryPortrait( character )
-		newLegend.gamesPlayed = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_games_played, characterRef ), eStatGetWhen.CURRENT )
-		newLegend.winRate = CalculateStat( player, CAREER_STATS.character_placements_win, CAREER_STATS.character_games_played, eStatCalcMethod.MATH_WINRATE, "", characterRef )
-		newLegend.kdr = CalculateStat( player, CAREER_STATS.character_kills, CAREER_STATS.character_deaths, eStatCalcMethod.MATH_DIVIDE, "", characterRef )
-
-		legendsArray.append( newLegend )
-	}
-
-	legendsArray.sort( SortTopLegends )
-	legendsArray.resize( 5 )
-
-	file.bestLegendStats.extend( legendsArray )
-
-	if ( file.bestLegendStats.len() > 5 )
-		file.bestLegendStats.resize( 5 )
-}
-#endif
-
-const string STATCARD_WEAPONSTAT_NAME = "weaponName"
-const string STATCARD_WEAPONSTAT_PORTRAIT = "weaponPortrait"
-const string STATCARD_WEAPONSTAT_KILLS = "weaponKills"
-const string STATCARD_WEAPONSTAT_ACCURACY = "weaponAccuracy"
-const string STATCARD_WEAPONSTAT_HEADSHOTS = "weaponHeadshots"
-
-#if UI
-void function StatCard_ConstructTopWeaponStatCard( var panel, entity player )
-{
-	//
-
-	ConstructWeaponStatStructArray( player )
-
-	var rui = Hud_GetRui( panel )
-	RuiSetInt( rui, "displayType", 2 )
-
-	for( int i = 0; i < file.bestWeaponStats.len(); i++ )
-	{
-
-		string wpnIdx = format( "%02d", i )
-
-		string weaponName      = STATCARD_WEAPONSTAT_NAME + wpnIdx
-		string weaponPortrait  = STATCARD_WEAPONSTAT_PORTRAIT + wpnIdx
-		string weaponKills     = STATCARD_WEAPONSTAT_KILLS + wpnIdx
-		string weaponAccuracy  = STATCARD_WEAPONSTAT_ACCURACY + wpnIdx
-		string weaponHeadshots = STATCARD_WEAPONSTAT_HEADSHOTS + wpnIdx
-
-		//
-
-		RuiSetString( rui, weaponName, file.bestWeaponStats[i].weaponName )
-		RuiSetImage( rui, weaponPortrait, file.bestWeaponStats[i].portrait )
-		RuiSetInt( rui, weaponKills, file.bestWeaponStats[i].kills )
-		RuiSetFloat( rui, weaponAccuracy, file.bestWeaponStats[i].accuracy )
-		RuiSetFloat( rui, weaponHeadshots, file.bestWeaponStats[i].headshotRatio )
-	}
-}
-
-void function ConstructWeaponStatStructArray( entity player )
-{
-	if ( file.bestWeaponStats.len() == 5 )
-		return
-
-	array< WeaponStatStruct  > weaponsArray
-
-	foreach( ItemFlavor weapon in GetAllWeaponItemFlavors() )
-	{
-		string weaponRef = ItemFlavor_GetGUIDString( weapon )
-		WeaponStatStruct newWeapon
-
-		//printf( "WeaponAssetName: %s", WeaponItemFlavor_GetClassname( weapon ) )
-
-		newWeapon.weaponName = ItemFlavor_GetShortName( weapon )
-		newWeapon.portrait = GetWeaponHudIcon( weapon )
-		newWeapon.kills = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.weapon_kills, weaponRef ), eStatGetWhen.CURRENT )
-		newWeapon.accuracy = CalculateStat( player, CAREER_STATS.weapon_hits, CAREER_STATS.weapon_shots, eStatCalcMethod.MATH_DIVIDE, "", weaponRef ) * 100
-		newWeapon.headshotRatio = CalculateStat( player, CAREER_STATS.weapon_headshots, CAREER_STATS.weapon_hits, eStatCalcMethod.MATH_DIVIDE, "", weaponRef ) * 100
-		newWeapon.damage = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.weapon_damage_done, weaponRef ), eStatGetWhen.CURRENT )
-
-		weaponsArray.append( newWeapon )
-	}
-
-	weaponsArray.sort( SortTopWeapons )
-	weaponsArray.resize( 5 )
-
-	file.bestWeaponStats.extend( weaponsArray )
-}
-
-asset function GetWeaponHudIcon( ItemFlavor weapon )
-{
-	string weaponName = WeaponItemFlavor_GetClassname( weapon )
-
-	return GetWeaponInfoFileKeyFieldAsset_Global( weaponName, "hud_icon" )
-
-}
-#endif //
-
-array< ItemFlavor > function StatCard_GetAvailableSeasons()
-{
-	array< ItemFlavor > seasons = GetAllSeasonFlavors()
+	// No Arenas mode, no season09/season15 assets — simplified logic
+	array<ItemFlavor> seasons = clone GetAllSeasonFlavors()
 
 	foreach( ItemFlavor season in seasons )
 	{
@@ -1060,11 +1229,49 @@ array< ItemFlavor > function StatCard_GetAvailableSeasons()
 			seasons.removebyvalue( season )
 	}
 
+	file.availableSeasonsCache[gameMode] <- seasons
 	return seasons
 }
 
-array< ItemFlavor > function StatCard_GetAvailableSeasonsAndRankedPeriods()
+void function StatCard_ClearAvailableRankedPeriodsCache( int gameMode )
 {
+	if ( gameMode in file.availableRankedPeriodsCache )
+		delete file.availableRankedPeriodsCache[gameMode]
+}
+
+array<ItemFlavor> function StatCard_GetAvailableRankedPeriods( int gameMode = eStatCardGameMode.BATTLE_ROYALE )
+{
+	if ( gameMode in file.availableRankedPeriodsCache )
+		return clone file.availableRankedPeriodsCache[gameMode]
+
+	// No Arenas, no season09 asset — simplified to BR ranked periods only
+	array<ItemFlavor> rankedPeriods = GetAllRankedPeriodCalEventFlavorsByType( eItemType.calevent_rankedperiod )
+
+	foreach ( ItemFlavor period in rankedPeriods )
+	{
+		if ( !CalEvent_IsRevealed( period, GetUnixTimestamp() ) )
+			rankedPeriods.removebyvalue( period )
+	}
+
+	rankedPeriods.extend( Ranked_GetAllRanked2Pt0Periods() )
+	rankedPeriods.sort( SortSeasonAndRankedStats )
+
+	file.availableRankedPeriodsCache[gameMode] <- rankedPeriods
+	return rankedPeriods
+}
+
+void function StatCard_ClearAvailableSeasonsAndRankedPeriodsCache( int gameMode )
+{
+	if ( gameMode in file.availableSeasonsAndRankedPeriods )
+		delete file.availableSeasonsAndRankedPeriods[gameMode]
+}
+
+array< ItemFlavor > function StatCard_GetAvailableSeasonsAndRankedPeriods( int gameMode = eStatCardGameMode.BATTLE_ROYALE )
+{
+	if ( gameMode in file.availableSeasonsAndRankedPeriods )
+		return clone file.availableSeasonsAndRankedPeriods[gameMode]
+
+	// No Arenas, no season09/season15 asset lookups — simplified logic
 	array< ItemFlavor > seasons = GetAllSeasonFlavors()
 
 	foreach( ItemFlavor season in seasons )
@@ -1073,7 +1280,7 @@ array< ItemFlavor > function StatCard_GetAvailableSeasonsAndRankedPeriods()
 			seasons.removebyvalue( season )
 	}
 
-	array< ItemFlavor > rankedPeriods = GetAllRankedPeriodFlavors()
+	array< ItemFlavor > rankedPeriods = GetAllRankedPeriodCalEventFlavorsByType( eItemType.calevent_rankedperiod )
 	foreach( ItemFlavor period in rankedPeriods )
 	{
 		if ( !CalEvent_IsRevealed( period, GetUnixTimestamp() ) )
@@ -1083,67 +1290,38 @@ array< ItemFlavor > function StatCard_GetAvailableSeasonsAndRankedPeriods()
 	array< ItemFlavor > seasonsAndPeriods = []
 	seasonsAndPeriods.extend( seasons )
 	seasonsAndPeriods.extend( rankedPeriods )
+	seasonsAndPeriods.extend( Ranked_GetAllRanked2Pt0Periods() )
 	seasonsAndPeriods.sort( SortSeasonAndRankedStats )
+
+	file.availableSeasonsAndRankedPeriods[gameMode] <- seasonsAndPeriods
 	return seasonsAndPeriods
 }
 
 int function SortSeasonAndRankedStats( ItemFlavor a, ItemFlavor b )
 {
-	int aTime = CalEvent_GetStartUnixTime( a )
-	int bTime = CalEvent_GetStartUnixTime( b )
+	ItemFlavor compA = a
+	ItemFlavor compB = b
+
+	if ( ItemFlavor_GetType( a ) == eItemType.ranked_2pt0_period )
+		compA = Ranked_GetSeasonForRanked2Pt0Period( a )
+
+	if ( ItemFlavor_GetType( b ) == eItemType.ranked_2pt0_period )
+		compB = Ranked_GetSeasonForRanked2Pt0Period( b )
+
+	int aTime = CalEvent_GetStartUnixTime( compA )
+	int bTime = CalEvent_GetStartUnixTime( compB )
 
 	if ( aTime < bTime )
 		return -1
 	else if ( aTime > bTime )
 		return 1
-	else if ( IsSeasonFlavor( a ) )
-		return -1
-	else if ( !IsSeasonFlavor( a ) )
-		return 1
-	else
-		return 0
 
-	unreachable
-}
+	if ( IsSeasonFlavor( a ) && !IsSeasonFlavor( b )  )
+		return -1
+	else if ( !IsSeasonFlavor( a ) && IsSeasonFlavor( b ) )
+		return 1
 
-int function SortTopLegends( LegendStatStruct legendA, LegendStatStruct legendB )
-{
-	if ( legendA.gamesPlayed > legendB.gamesPlayed )
-		return -1
-	else if ( legendA.gamesPlayed < legendB.gamesPlayed )
-		return 1
-	else if ( legendA.winRate > legendB.winRate )
-		return -1
-	else if ( legendA.winRate < legendB.winRate )
-		return 1
-	else if ( legendA.kdr > legendB.kdr )
-		return -1
-	else if ( legendA.kdr < legendB.kdr )
-		return 1
-	else
-		return 0
-
-	unreachable
-}
-
-int function SortTopWeapons( WeaponStatStruct weaponA, WeaponStatStruct weaponB )
-{
-	if ( weaponA.kills > weaponB.kills )
-		return -1
-	else if ( weaponA.kills < weaponB.kills )
-		return 1
-	else if ( weaponA.accuracy > weaponB.accuracy )
-		return -1
-	else if ( weaponA.accuracy < weaponB.accuracy )
-		return 1
-	else if ( weaponA.headshotRatio > weaponB.headshotRatio )
-		return -1
-	else if ( weaponA.headshotRatio < weaponB.headshotRatio )
-		return 1
-	else
-		return 0
-
-	unreachable
+	return 0
 }
 
 string function StatCard_GetToolTipFieldFromIndex( int index, int statCardType, int statCardSection )
@@ -1188,6 +1366,34 @@ string function StatCard_GetToolTipFieldFromIndex( int index, int statCardType, 
 	return ""
 }
 
+
+bool function ShouldIncludeModeRef( string modeRef, string seasonOrRankedRef )
+{
+	bool shouldInclude = true
+
+	                     
+		if ( modeRef.toupper() == "ARENAS" )
+		{
+			if ( seasonOrRankedRef != "" )
+			{
+				//Arenas ranked stats are not part of the modes stat struct. So if the player trying to view ranked arenas stats, we need to treat them like regular ranked stats.
+				array<ItemFlavor> allRankedArenaPeriods = GetAllRankedPeriodCalEventFlavorsByType( eItemType.calevent_arenas_ranked_period )
+				foreach ( ItemFlavor rankedArenaPeriod in allRankedArenaPeriods )
+				{
+					if ( ItemFlavor_GetGUIDString( rankedArenaPeriod ) == seasonOrRankedRef )
+					{
+						shouldInclude = false
+						break
+					}
+				}
+			}
+		}
+       
+
+	return shouldInclude
+}
+
+
 #if UI
 void function StatsScreen_SetPanelRui()
 {
@@ -1209,6 +1415,8 @@ void function StatCard_SetStatValueDisplay( string argName, float value, int max
 	else
 		valueString = NO_DATA_REF
 
+	//printf( "StatCardDebug: Setting Stat Value Display %s to %s in rui %s", argName, valueString, string( file.statsRui ) )
+
 	RuiSetString( file.statsRui, argName, valueString )
 }
 
@@ -1229,6 +1437,13 @@ void function StatCard_InitToolTipStringTables()
 
 void function StatCard_ClearToolTipStringTables()
 {
+	// Tables may not be initialized yet if UpdateAndDisplayStats is called before Init
+	if ( !( "careerHeader" in file.toolTipStrings ) )
+	{
+		StatCard_InitToolTipStringTables()
+		return
+	}
+
 	file.toolTipStrings[ "careerHeader" ].clear()
 	file.toolTipStrings[ "careerLeftCircle" ].clear()
 	file.toolTipStrings[ "careerRightCircle" ].clear()
@@ -1259,6 +1474,8 @@ void function StatCard_AddStatToolTipString( string category, string label, floa
 		file.toolTipStrings[ category ].insert( forcePos, toolTipString )
 	else
 		file.toolTipStrings[ category ].append( toolTipString )
+
+	//printf( "StatToolTipDebug: Set Tool Tip for %s to %s", category, file.toolTipStrings[ category ][ file.toolTipStrings[ category ].len() - 1 ] )
 }
 
 void function StatCard_SetStatToolTip( string category )
@@ -1267,9 +1484,14 @@ void function StatCard_SetStatToolTip( string category )
 	var menuPanel = Hud_GetChild( menu, "StatsSummaryPanel" )
 
 	string toolTipString = ""
+
+	//printf( "StatToolTipDebug: Constructing tool tip display for %s", category )
+
 	for( int i = 0; i < file.toolTipStrings[ category ].len(); i++ )
 	{
 		toolTipString += file.toolTipStrings[ category ][i]
+
+		//printf( "StatToolTipDebug: Adding %s to tooltip display category %s", toolTipString, category )
 
 		if( i != file.toolTipStrings[ category ].len() - 1 )
 			toolTipString += "\n"
@@ -1339,17 +1561,307 @@ var function CreateNestedRankedBadge( var parentRui, string argName )
 	return nestedRui
 }
 
-
 void function StatsCard_OnRankedPeriodRegistered( ItemFlavor rp )
 {
 	string seasonGUIDString = ItemFlavor_GetGUIDString( rp )
 	file.GUIDToSeasonNumber[ seasonGUIDString ] <- 0
 }
 
-void function StatsCard_OnSeasonRegistered( ItemFlavor rp ) //
+                     
+void function StatsCard_OnArenasRankedPeriodRegistered( ItemFlavor calEventArenasRanked )
+{
+	string seasonGUIDString = ItemFlavor_GetGUIDString( calEventArenasRanked )
+	file.GUIDToSeasonNumber[ seasonGUIDString ] <- 0
+}
+      
+
+void function StatsCard_OnSeasonRegistered( ItemFlavor rp ) //HACK: Mapping season flavors to int that determine what color to make the season/ranked side of the stats screen
 {
 	string seasonGUIDString = ItemFlavor_GetGUIDString( rp )
 	file.GUIDToSeasonNumber[ seasonGUIDString ] <- file.currentGUIDToSeasonNumber++
 }
 
+
+string function StatsCard_GetNameOfGameMode( int gameMode )
+{
+	switch( gameMode )
+	{
+		case eStatCardGameMode.ARENAS:
+			return "#STATS_CARD_MODE_ARENAS"
+		default:
+			return "#STATS_CARD_MODE_BR"
+	}
+
+	unreachable
+}
+
+
+string function StatsCard_GetRefOfGameMode( int gameMode )
+{
+	string mode
+	switch( gameMode )
+	{
+		case eStatCardGameMode.ARENAS:
+			mode = "arenas"
+			break
+	}
+
+	if ( STATS_ALTERNATE_MODE_REFS.contains( mode ) )
+	{
+		return mode
+	}
+
+	return ""
+}
+
+
+//Debug Utility Functions
+string function GetGameModeName( int gameMode )
+{
+	switch ( gameMode )
+	{
+		case eStatCardGameMode.BATTLE_ROYALE:
+			return "BATTLE ROYALE"
+		case eStatCardGameMode.ARENAS:
+			return "ARENAS"
+		default:
+			return "UNKNOWN"
+	}
+
+	unreachable
+}
+
+
+string function GetCardTypeName( int cardType )
+{
+	switch ( cardType )
+	{
+		case eStatCardType.CAREER:
+			return "CAREER"
+		case eStatCardType.SEASON:
+			return "SEASON"
+		case eStatCardType.RANKEDPERIOD:
+			return "RANKEDPERIOD"
+		case eStatCardType.RANKEDCAREER:
+			return "RANKEDCAREER"
+		default:
+			return "UNKNOWN"
+	}
+
+	unreachable
+}
+
+
+string function GetSectionName( int section )
+{
+	switch ( section )
+	{
+		case eStatCardSection.HEADER:
+			return "HEADER"
+		case eStatCardSection.HEADERTOOLTIP:
+			return "HEADERTOOLTIP"
+		case eStatCardSection.BODY:
+			return "BODY"
+		case eStatCardSection.BODYTOOLTIP:
+			return "BODYTOOLTIP"
+		default:
+			return "UNKNOWN"
+	}
+
+	unreachable
+}
+
+int function StatsCard_GetApprovedModesCount()
+{
+	int finalCount
+
+	for ( int i=0; i < eStatCardGameMode._count; i++ )
+	{
+		if ( i >= eStatCardGameMode.UNKNOWN )
+			break
+		else
+			finalCount = i
+	}
+
+	return finalCount
+}
+
+bool function StatsCard_IsSeasonOrRankedRefValidForMode( int gameMode, string rankedRef )
+{
+	if ( gameMode == eStatCardGameMode.UNKNOWN )
+		return false
+
+	bool isMatch
+	array<ItemFlavor> seasonAndRankedPeriods = StatCard_GetAvailableSeasonsAndRankedPeriods( gameMode )
+
+	foreach ( rankedPeriod in seasonAndRankedPeriods )
+	{
+		string guid = ItemFlavor_GetGUIDString( rankedPeriod )
+		if ( guid == rankedRef )
+		{
+			isMatch = true
+			break
+		}
+	}
+
+	return isMatch
+}
 #endif // UI
+
+
+#if false // RTK types not available
+RTKStatsPanelModel function GetStatsData( int gameMode, string seasonOrRankedPeriodGUID )
+{
+	entity player = GetLocalClientPlayer()
+	string modeRef = StatsCard_GetRefOfGameMode( gameMode )
+	RTKStatsPanelModel statsData
+	array<StatCardEntry> statEntries
+
+	StatCardStruct statCard
+	if ( seasonOrRankedPeriodGUID == "" )
+	{
+		statCard = file.statCards[gameMode][eStatCardType.CAREER]
+	}
+	else
+	{
+		ItemFlavor seasonOrRankedPeriod = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( seasonOrRankedPeriodGUID ) )
+		if ( IsSeasonFlavor( seasonOrRankedPeriod ) )
+			statCard = file.statCards[gameMode][eStatCardType.SEASON]
+		else
+			statCard = file.statCards[gameMode][eStatCardType.RANKEDPERIOD]
+	}
+
+	array<StatCardEntry> headerStats = clone statCard.headerStats
+	array<StatCardEntry> headerToolTipStats = clone statCard.headerToolTipStats
+	array<StatCardEntry> bodyStats = clone statCard.bodyStats
+
+	foreach ( stat in headerToolTipStats )
+	{
+		float headerToolTipDisplayFloat = GetDataForStat_Float( player, stat.statRef, stat.mathRef, stat.calcMethod, modeRef, seasonOrRankedPeriodGUID )
+
+		string tooltipText = GetStatTooltipString( stat.label, headerToolTipDisplayFloat, stat.calcMethod )
+		if ( statsData.headerTooltipText != "" )
+			tooltipText = "\n" + tooltipText
+		statsData.headerTooltipText += tooltipText
+	}
+
+	foreach ( stat in headerStats )
+	{
+		string headerLabel = stat.label
+		float headerDisplayFloat = GetDataForStat_Float( player, stat.statRef, stat.mathRef, stat.calcMethod, modeRef, seasonOrRankedPeriodGUID )
+		//headerDisplayFloat += float( RandomInt( 30000.0 ) ) // TODO: Remove after testing
+
+		string valueString = ""
+		if ( headerDisplayFloat != -1 )
+		{
+			int maxIntegers = 3
+			int maxDecimals = 0
+			valueString = LocalizeAndShortenNumber_Float( headerDisplayFloat, maxIntegers, maxDecimals )
+		}
+		else
+		{
+			valueString = NO_DATA_REF
+		}
+
+		RTKLabelValueModel data
+		data.label = headerLabel
+		data.value = valueString
+		statsData.headerStats.append( data )
+
+		string tooltipText = GetStatTooltipString( headerLabel, headerDisplayFloat, stat.calcMethod )
+		if ( statsData.headerTooltipText != "" )
+			tooltipText = "\n" + tooltipText
+		statsData.headerTooltipText += tooltipText
+	}
+
+	int bodyEntries = bodyStats.len()
+	int openBodyFields = MAX_STATS_BODY - bodyEntries
+
+	for ( int i; i < (bodyEntries + openBodyFields); i++ )
+	{
+		RTKLabelValueModel data
+
+		if ( i < bodyEntries )
+		{
+			StatCardEntry stat = bodyStats[i]
+
+			string bodyLabel = stat.label
+			float bodyDisplayFloat = GetDataForStat_Float( player, stat.statRef, stat.mathRef, stat.calcMethod, modeRef, seasonOrRankedPeriodGUID )
+			//bodyDisplayFloat += float( RandomInt( 30000.0 ) ) // TODO: Remove after testing
+
+			string valueString = ""
+			if ( bodyDisplayFloat != -1 )
+			{
+				int maxIntegers = 7
+				int maxDecimals = 2
+				valueString = LocalizeAndShortenNumber_Float( bodyDisplayFloat, maxIntegers, maxDecimals )
+			}
+			else
+			{
+				valueString = NO_DATA_REF
+			}
+
+			data.label = bodyLabel
+			data.value = valueString
+
+			string tooltipText = GetStatTooltipString( bodyLabel, bodyDisplayFloat, stat.calcMethod )
+			if ( i < 3 )
+			{
+				if ( statsData.leftCircleTooltipText != "" )
+					tooltipText = "\n" + tooltipText
+				statsData.leftCircleTooltipText += tooltipText
+			}
+			else if ( i < 6 )
+			{
+				if ( statsData.rightCircleTooltipText != "" )
+					tooltipText = "\n" + tooltipText
+				statsData.rightCircleTooltipText += tooltipText
+			}
+			else if ( i < 9 )
+			{
+				if ( statsData.leftFooterTooltipText != "" )
+					tooltipText = "\n" + tooltipText
+				statsData.leftFooterTooltipText += tooltipText
+			}
+			else
+			{
+				if ( statsData.rightFooterTooltipText != "" )
+					tooltipText = "\n" + tooltipText
+				statsData.rightFooterTooltipText += tooltipText
+			}
+		}
+		else
+		{
+			data.label = ""
+			data.value = ""
+		}
+
+		if ( i < 3 )
+			statsData.leftCircleStats.append( data )
+		else if ( i < 6 )
+			statsData.rightCircleStats.append( data )
+		else
+			statsData.footerStats.append( data )
+	}
+
+	return statsData
+}
+
+string function GetStatTooltipString( string label, float value, int calcMethod )
+{
+	string valueString = LocalizeAndShortenNumber_Float( value, 9, 2 )
+
+	if ( calcMethod == eStatCalcMethod.MATH_WINRATE )
+		valueString += Localize( "#STATS_VALUE_PERCENT" )
+
+	string tooltipString = label
+	if ( tooltipString.find( "_TOOLTIP" ) == -1 )
+		tooltipString += "_TOOLTIP"
+	tooltipString = Localize( tooltipString )
+	tooltipString += valueString
+
+	return tooltipString
+}
+#endif // UI
+                 
+

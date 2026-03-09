@@ -48,6 +48,7 @@ global function ActivateTabPrev
 
 global function GetTabForTabButton
 
+global function RefreshTabsGRXData
 global function SetTabDefsToSeasonal
 global function SetTabBackground
 
@@ -57,7 +58,6 @@ global struct TabData
 	var             parentPanel
 	var             tabPanel
 	array<var>      tabButtons
-	array<var>      tabDividers
 	array<TabDef>   tabDefs
 
 	int             activeTabIdx = INVALID_TAB_INDEX
@@ -144,7 +144,7 @@ global enum eTabDirection
 	NEXT
 }
 
-//
+                                                                                                                                    
 void function InitTabs()
 {
 	foreach ( menu in uiGlobal.allMenus )
@@ -185,6 +185,8 @@ void function InitTabs()
 		}
 	}
 
+	AddCallback_OnSeasonalDataUpdated( UpdateMenuTabs )
+	AddUICallback_OnResolutionChanged( Tabs_OnResolutionChanged )
 	AddMenuVarChangeHandler( "isFullyConnected", UpdateMenuTabs )
 	AddMenuVarChangeHandler( "isGamepadActive", UpdateMenuTabs )
 }
@@ -328,6 +330,94 @@ int function GetTabsTotalWidth( TabData tabData )
 	}
 	return totalWidth
 }
+
+void function RefreshTabsGRXData( TabData tabData )
+{
+	bool ready = GRX_IsInventoryReady() && GRX_AreOffersReady()
+
+	ItemFlavor season = GetLatestSeason( GetUnixTimestamp() )
+
+	GRXData.title = Season_GetShortName( season )
+	GRXData.header = "#MENU_BADGE_SEASON"
+	GRXData.callToActionHeader = "#SEASON_ENDS_IN"
+	GRXData.callToActionTitle = Season_GetTimeRemainingText( season )
+	if ( ready )
+	{
+		TabDef seasonTabDef = Tab_GetTabDefByBodyName( tabData, "SeasonPanel" )
+
+		if ( ShouldShowPremiumCurrencyDialog() )
+			ShowPremiumCurrencyDialog( false )
+
+		ItemFlavor ornull activeCollectionEvent = GetActiveCollectionEvent( GetUnixTimestamp() )
+		bool haveActiveCollectionEvent          = (activeCollectionEvent != null)
+		ItemFlavor ornull activeThemedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
+		bool haveActiveThemedShopEvent          = (activeThemedShopEvent != null)
+
+		if ( haveActiveCollectionEvent )
+		{
+			expect ItemFlavor( activeCollectionEvent )
+			if ( CollectionEvent_HasLobbyTheme( activeCollectionEvent ) )
+			{
+				seasonTabDef.useSeasonalColors = false
+				seasonTabDef.useCustomColors = true
+
+				seasonTabDef.customDefaultTextCol = CollectionEvent_GetTabTextDefaultCol( activeCollectionEvent )
+
+				seasonTabDef.customFocusedBGCol = CollectionEvent_GetTabBGFocusedCol( activeCollectionEvent )
+				seasonTabDef.customFocusedBarCol = CollectionEvent_GetTabBarFocusedCol( activeCollectionEvent )
+
+				seasonTabDef.customSelectedBGCol = CollectionEvent_GetTabBGSelectedCol( activeCollectionEvent )
+				seasonTabDef.customSelectedBarCol = CollectionEvent_GetTabBarSelectedCol( activeCollectionEvent )
+				seasonTabDef.customSelectedTextCol = CollectionEvent_GetTabTextSelectedCol( activeCollectionEvent )
+
+				seasonTabDef.customGlowFocusedCol = CollectionEvent_GetTabGlowFocusedCol( activeCollectionEvent )
+				seasonTabDef.leftSideImage = CollectionEvent_GetTabLeftSideImage( activeCollectionEvent )
+				seasonTabDef.centerImage = CollectionEvent_GetTabCenterImage( activeCollectionEvent )
+				seasonTabDef.rightSideImage = CollectionEvent_GetTabRightSideImage( activeCollectionEvent )
+
+				seasonTabDef.imageSelectedAlpha = CollectionEvent_GetTabImageSelectedAlpha( activeCollectionEvent )
+				seasonTabDef.imageUnselectedAlpha = CollectionEvent_GetTabImageUnselectedAlpha( activeCollectionEvent )
+
+				seasonTabDef.centerRuiAsset = CollectionEvent_GetTabCenterRui( activeCollectionEvent )
+			}
+		}
+		else if ( haveActiveThemedShopEvent )
+		{
+			expect ItemFlavor( activeThemedShopEvent )
+			if ( ThemedShopEvent_HasLobbyTheme( activeThemedShopEvent ) )
+			{
+				seasonTabDef.useSeasonalColors = false
+				seasonTabDef.useCustomColors = true
+
+				seasonTabDef.customDefaultTextCol = ThemedShopEvent_GetTabTextDefaultCol( activeThemedShopEvent )
+
+				seasonTabDef.customFocusedBGCol = ThemedShopEvent_GetTabBGFocusedCol( activeThemedShopEvent )
+				seasonTabDef.customFocusedBarCol = ThemedShopEvent_GetTabBarFocusedCol( activeThemedShopEvent )
+
+				seasonTabDef.customSelectedBGCol = ThemedShopEvent_GetTabBGSelectedCol( activeThemedShopEvent )
+				seasonTabDef.customSelectedBarCol = ThemedShopEvent_GetTabBarSelectedCol( activeThemedShopEvent )
+				seasonTabDef.customSelectedTextCol = ThemedShopEvent_GetTabTextSelectedCol( activeThemedShopEvent )
+
+				seasonTabDef.customGlowFocusedCol = ThemedShopEvent_GetTabGlowFocusedCol( activeThemedShopEvent )
+				seasonTabDef.leftSideImage = ThemedShopEvent_GetTabLeftSideImage( activeThemedShopEvent )
+				seasonTabDef.centerImage = ThemedShopEvent_GetTabCenterImage( activeThemedShopEvent )
+				seasonTabDef.rightSideImage = ThemedShopEvent_GetTabRightSideImage( activeThemedShopEvent )
+
+				seasonTabDef.imageSelectedAlpha = ThemedShopEvent_GetTabImageSelectedAlpha( activeThemedShopEvent )
+				seasonTabDef.imageUnselectedAlpha = ThemedShopEvent_GetTabImageUnselectedAlpha( activeThemedShopEvent )
+
+				seasonTabDef.centerRuiAsset = ThemedShopEvent_GetTabCenterRui( activeThemedShopEvent )
+			}
+		}
+		else       
+		{
+			seasonTabDef.leftSideImage = $""
+			seasonTabDef.rightSideImage = $""
+			seasonTabDef.centerRuiAsset = $""
+		}
+	}
+}
+
 void function SetTabDefsToSeasonal( TabData tabData )
 {
 	foreach( def in tabData.tabDefs )
@@ -441,11 +531,20 @@ bool function IsTabActive( TabData tabData )
 	return uiGlobal.panelData[panel].isActive
 }
 
-//
-//
-//
-void function ActivateTab( TabData tabData, int tabIndex )
+                                                        
+                                                                                     
+                                                                                                                                                                              
+void function ActivateTab( TabData tabData, var tabIndexVar )
 {
+	// typeof returns "int" not "integer" — accept both
+	if ( typeof tabIndexVar != "integer" && typeof tabIndexVar != "int" )
+		return
+
+	int tabIndex = expect int( tabIndexVar )
+
+	if ( tabIndex < 0 || tabIndex >= tabData.tabDefs.len() )
+		return
+
 	if ( !CanNavigateFromActiveTab( tabData, tabIndex ) )
 		return
 
@@ -533,7 +632,7 @@ void function ShowPanelInternal( var panel )
 
 	Assert( !uiGlobal.panelData[ panel ].isCurrentlyShown )
 	uiGlobal.panelData[ panel ].isCurrentlyShown = true
-	uiGlobal.panelData[ panel ].enterTime = Time()
+	uiGlobal.panelData[ panel ].enterTime = UITime()
 
 	foreach ( showFunc in uiGlobal.panelData[ panel ].showFuncs )
 		showFunc( panel )
@@ -587,7 +686,7 @@ void function HidePanelInternal( var panel )
 	SetLastMenuIDForPIN( Hud_GetHudName( panel ) )
 
 	bool isMenu = false
-	PIN_PageView( Hud_GetHudName( panel ), Time() - uiGlobal.panelData[ panel ].enterTime, GetLastMenuIDForPIN(), isMenu, uiGlobal.panelData[ panel ].pin_metaData )
+	PIN_PageView( Hud_GetHudName( panel ), UITime() - uiGlobal.panelData[ panel ].enterTime, GetLastMenuIDForPIN(), isMenu, uiGlobal.panelData[ panel ].pin_metaData )                                                                                                      
 
 	foreach ( hideFunc in uiGlobal.panelData[ panel ].hideFuncs )
 		hideFunc( panel )
@@ -596,7 +695,7 @@ void function HidePanelInternal( var panel )
 
 void function ShutdownAllPanels()
 {
-	uiGlobal.activePanels.clear() //
+	uiGlobal.activePanels.clear()                         
 
 	foreach ( var panel, PanelDef panelDef in uiGlobal.panelData )
 		HidePanel( panel )
@@ -611,7 +710,7 @@ void function UpdateMenuTabs()
 	if ( menu == null )
 		return
 
-	if( !seasonStyle.hasRefreshedOnce && IsConnected() )
+	if( !seasonStyle.hasRefreshedOnce && IsConnected() )                                                  
 	{
 		RefreshTabsSeasonalData()
 		seasonStyle = GetSeasonStyle()
@@ -759,7 +858,7 @@ void function UpdateMenuTabs()
 			}
 
 
-
+			                       
 
 			RuiSetColorAlpha( tabButtonRUI, "customNewCol", SrgbToLinear( seasonStyle.seasonNewColor ), 1.0 )
 			RuiSetAsset( tabButtonRUI, "leftSideImage", tabDef.leftSideImage )
@@ -775,7 +874,7 @@ void function UpdateMenuTabs()
 
 				if( ( isActiveTab && !tabDef.isActive ) && tabDef.currentCenterRui != null )
 				{
-					RuiSetGameTime( tabDef.currentCenterRui, "startTime", Time() )
+					RuiSetGameTime( tabDef.currentCenterRui, "startTime", ClientTime() )
 				}
 
 				tabDef.currentCenterRuiAsset = tabDef.centerRuiAsset
@@ -817,7 +916,7 @@ void function UpdateMenuTabs()
 				}
 			}
 
-
+			                                                                       
 			if( tabDef.useCustomColors )
 			{
 				RuiSetColorAlpha( tabButtonRUI, "customDefaultTextCol", SrgbToLinear( tabDef.customDefaultTextCol ), 1.0 )
@@ -993,13 +1092,13 @@ void function OnTab_Activate( var button )
 	else if ( tabIndex > tabData.activeTabIdx )
 		animPrefix = "MoveLeft_"
 	else
-		return //
+		return                       
 
-	//
+	                                                                                            
 
 	ActivateTab( tabData, tabIndex )
 
-	//
+	                                                                                            
 }
 
 
@@ -1012,14 +1111,14 @@ void function OnMenuTab_NavLeft( var unusedNull )
 
 	TabData ornull tabData = Tab_GetActiveNestedTabData( menu )
 
-	if ( tabData == null )
+	if ( tabData == null )              
 	{
 		if ( !IsPanelTabbed( menu ) )
 			return
 
 		tabData = GetTabDataForPanel( menu )
 	}
-	else
+	else                  
 	{
 		expect TabData( tabData )
 
@@ -1031,7 +1130,7 @@ void function OnMenuTab_NavLeft( var unusedNull )
 
 	if ( tabData.tabNavigationDisabled )
 	{
-		//
+		                                                   
 		if ( tabData.tabNavigationEndCallbacks[eTabDirection.PREV] != null )
 			tabData.tabNavigationEndCallbacks[eTabDirection.PREV]()
 
@@ -1104,13 +1203,13 @@ void function OnMenuTab_NavRight( var unusedNull )
 		return
 
 	TabData ornull tabData = Tab_GetActiveNestedTabData( menu )
-	if ( tabData == null )
+	if ( tabData == null )                       
 	{
 		if ( !IsPanelTabbed( menu ) )
 			return
 
 		tabData = GetTabDataForPanel( menu )
-	}else
+	}else                  
 	{
 		expect TabData( tabData )
 
@@ -1177,7 +1276,7 @@ void function OnNestedTab_NavLeftOnPressed( var unusedNull )
 	if( useTapHoldLogic )
 	{
 		RunClientScript( "LockCameraZoomModel", Tab_GetHoldTimeToIgnoreTap() )
-		tabData.lastTapLeftTime = Time()
+		tabData.lastTapLeftTime = UITime()
 	}
 }
 
@@ -1195,7 +1294,7 @@ void function OnNestedTab_NavLeftOnReleased( var unusedNull )
 	int tabIndex = tabData.activeTabIdx
 
 
-	if( tabData.tabDefs[tabIndex].useTapHoldLogic && tabData.lastTapLeftTime + Tab_GetHoldTimeToIgnoreTap() < Time() )
+	if( tabData.tabDefs[tabIndex].useTapHoldLogic && tabData.lastTapLeftTime + Tab_GetHoldTimeToIgnoreTap() < UITime() )
 		return
 
 	if ( tabData.tabNavigationDisabled || tabData.forcePrimaryNav )
@@ -1245,7 +1344,7 @@ void function OnNestedTab_NavRightOnPressed( var unusedNull )
 	if( useTapHoldLogic )
 	{
 		RunClientScript( "LockCameraZoomModel", Tab_GetHoldTimeToIgnoreTap() )
-		tabData.lastTapRightTime = Time()
+		tabData.lastTapRightTime = UITime()
 	}
 }
 
@@ -1264,7 +1363,7 @@ void function OnNestedTab_NavRightOnReleased( var unusedNull )
 	int tabIndex = tabData.activeTabIdx
 
 
-	if( tabData.tabDefs[tabIndex].useTapHoldLogic && tabData.lastTapRightTime + Tab_GetHoldTimeToIgnoreTap() < Time() )
+	if( tabData.tabDefs[tabIndex].useTapHoldLogic && tabData.lastTapRightTime + Tab_GetHoldTimeToIgnoreTap() < UITime() )
 		return
 
 	if ( tabData.tabNavigationDisabled || tabData.forcePrimaryNav )
@@ -1409,33 +1508,33 @@ void function SetTabDefVisible( TabDef tabDef, bool state )
 
 	tabDef.visible = state
 
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
+	               
+	   
+	  	                                                  
+	  	                                                                                                   
+	  	 
+	  		                                                                                                           
+	  		 
+	  			                                                       
+	  			                                                         
+	  				        
+	  
+	  			                                      
+	  			                                                   
+	  		 
+	  		                                                                                        
+	  		 
+	  			                                                       
+	  			                                                         
+	  				        
+	  
+	  			                                      
+	  			                                                   
+	  		 
+	  
+	  		                                                                                                                                       
+	  	 
+	   
 
 	UpdateMenuTabs()
 }
@@ -1486,7 +1585,6 @@ bool function IsTabPanelActive( var tabPanel )
 	return _GetActiveTabPanel( GetActiveMenu() ) == tabPanel
 }
 
-
 void function RegisterTabNavigationInput()
 {
 	if ( !file.tabButtonsRegistered )
@@ -1499,11 +1597,11 @@ void function RegisterTabNavigationInput()
 		RegisterButtonReleasedCallback( BUTTON_TRIGGER_LEFT, OnNestedTab_NavLeftOnReleased )
 		RegisterButtonReleasedCallback( BUTTON_TRIGGER_RIGHT, OnNestedTab_NavRightOnReleased )
 
+		                                                               
+		                                                                   
 
-
-
-		RegisterButtonPressedCallback( BUTTON_Y, OnTab_ButtonY )
-		RegisterButtonPressedCallback( BUTTON_X, OnTab_ButtonX )
+		RegisterButtonPressedCallback( BUTTON_Y, OnTab_ButtonY )                                                                           
+		RegisterButtonPressedCallback( BUTTON_X, OnTab_ButtonX )                                                                           
 		file.tabButtonsRegistered = true
 	}
 }
@@ -1521,8 +1619,8 @@ void function DeregisterTabNavigationInput()
 		DeregisterButtonReleasedCallback( BUTTON_TRIGGER_LEFT, OnNestedTab_NavLeftOnReleased )
 		DeregisterButtonReleasedCallback( BUTTON_TRIGGER_RIGHT, OnNestedTab_NavRightOnReleased )
 
-
-
+		                                                                 
+		                                                                     
 
 		DeregisterButtonPressedCallback( BUTTON_Y, OnTab_ButtonY )
 		DeregisterButtonPressedCallback( BUTTON_X, OnTab_ButtonX )

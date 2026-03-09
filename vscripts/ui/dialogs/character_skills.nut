@@ -16,15 +16,11 @@ void function InitCharacterSkillsDialog( var newMenuArg )
 	SetDialog( menu, true )
 	SetGamepadCursorEnabled( menu, false )
 
-	file.contentRui = Hud_GetRui( Hud_GetChild( file.menu, "ContentRui" ) )
-
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, CharacterSkillsDialog_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, CharacterSkillsDialog_OnClose )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, CharacterSkillsDialog_OnNavigateBack )
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#OK" )
-
-	HudElem_SetChildRuiArg( menu, "BG", "basicImage", $"rui/menu/character_skills/background", eRuiArgType.IMAGE )
 }
 
 

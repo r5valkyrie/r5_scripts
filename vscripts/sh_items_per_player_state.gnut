@@ -2,10 +2,13 @@ global function ShItemPerPlayerState_LevelInit
 
 #if SERVER
 global function Newness_MarkItemFlavorsAsNewForPlayer
+global function Newness_MarkItemFlavorGUIDAsNotNewForPlayer
+global function ClientCallback_newness_clear
+global function ClientCallback_temp_newness_mark
 #endif
 
 #if CLIENT
-global function ServerToClient_OnItemFlavorBecameNew
+global function ServerToClient_OnItemFlavorNewnessChanged
 #endif
 
 #if UI
@@ -16,7 +19,9 @@ global function Newness_ReverseQuery_GetNewCount
 global function Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated
 global function Newness_RemoveCallback_OnRerverseQueryUpdated
 
-global function ClientToUI_OnItemFlavorBecameNew
+global function ClientToUI_OnItemFlavorNewnessChanged
+global function MarkAllItemsAsViewed
+global function MarkAllItemsOfTypeAsViewed
 #endif
 
 #if CLIENT || UI
@@ -25,6 +30,7 @@ global function Newness_TEMP_MarkItemAsNewAndInformServer
 
 #if UI && DEVELOPER
 global function DEV_Newness_ReverseQueryTest
+global function DEV_Newness_DumpSparseList
 #endif
 
 
@@ -40,11 +46,11 @@ global struct OnNewnessReverseQueryUpdatedCallbackStruct
 
 global struct Newness_ReverseQuery
 {
-	//
+	// setup stuff
 	array<Newness_ReverseQuery> queryDependencies
 	array<ItemFlavor>           itemFlavDependencies
 
-	//
+	// stateful stuff
 	bool                                              isSetUp = false
 	array<Newness_ReverseQuery>                       dependentsList
 	int                                               newCount
@@ -83,8 +89,6 @@ void function ShItemPerPlayerState_LevelInit()
 		#if DEVELOPER
 			AddCallback_GeneratePDef( GenerateItemStatePDef )
 		#endif
-		AddClientCommandCallback( "newness_clear", ClientCommand_newness_clear )
-		AddClientCommandCallback( "temp_newness_mark", TEMP_ClientCommand_temp_newness_mark )
 	#endif
 
 	#if UI
@@ -92,7 +96,7 @@ void function ShItemPerPlayerState_LevelInit()
 	#endif
 
 	#if SERVER || CLIENT
-		// ScriptRemote_RegisterClientFunction( "ServerToClient_OnItemFlavorBecameNew", "int", -INT_MAX, INT_MAX, "bool" ) //(cafe) Not used - 6-5-2025
+		Remote_RegisterClientFunction( "ServerToClient_OnItemFlavorNewnessChanged", "int", -INT_MAX, INT_MAX, "bool" )
 	#endif
 }
 
@@ -106,6 +110,34 @@ void function ShItemPerPlayerState_LevelInit()
 #if SERVER
 void function Newness_MarkItemFlavorsAsNewForPlayer( entity player, array<ItemFlavor> newFlavorList, bool DEV_ignoreWarnings = false )
 {
+	foreach ( ItemFlavor newFlavor in newFlavorList )
+	{
+		foreach ( ItemFlavor newFlavorTargeter in ItemFlavor_GetGRXOwnershipTargettedBy( newFlavor ) )
+		{
+			newFlavorList.append( newFlavorTargeter )
+		}
+
+		ItemFlavor ornull grxMultipleTarget = ItemFlavor_GetGRXMultipleOwnershipTarget( newFlavor )
+		if ( grxMultipleTarget != null )
+		{
+			expect ItemFlavor( grxMultipleTarget )
+
+			// for grx multiple_mode items, GRX_IsItemOwnedByPlayer can determine their ownership by checking required items in the flav
+			// on the backend it will read as "player already owns this", so on this side we're marking it as new for them so it's visible
+
+			// aka, we check if we now own the linked item that requires us to own [ a, b, c ] because we just gained ownership of 'a'
+			// on the backend it would tell us we now own the linked item if we now owned the requirement set and thus we mark it as new for the player
+			if ( GRX_IsItemOwnedByPlayer( grxMultipleTarget, player ) )
+			{
+				// don't duplicate target in case we get 'a' AND 'b' in one pass etc.
+				if ( !newFlavorList.contains( grxMultipleTarget ) )
+				{
+					newFlavorList.append( grxMultipleTarget )
+				}
+			}
+		}
+	}
+
 	array<SettingsAssetGUID> guidList = []
 	foreach( ItemFlavor newFlavor in newFlavorList )
 		guidList.append( ItemFlavor_GetGUID( newFlavor ) ) // put new item flavors at the head of the list
@@ -118,17 +150,29 @@ void function Newness_MarkItemFlavorsAsNewForPlayer( entity player, array<ItemFl
 		if ( storedGuid == 0 )
 			continue // empty slot
 
-		#if DEVELOPER
-			foreach( SettingsAssetGUID otherGuid in guidList )
+		if ( IsValidItemFlavorGUID( storedGuid ) == false )
+		{
+			player.SetPersistentVar( "newItemFlavorSparseList[" + sparseListSlotIndex + "]", 0 )
+			continue
+		}
+
+		bool skipAsset = false
+		foreach( SettingsAssetGUID otherGuid in guidList )
+		{
+			if ( storedGuid == otherGuid )
 			{
-				if ( storedGuid == otherGuid )
-				{
+				skipAsset = true
+				#if DEVELOPER
 					if ( DEV_ignoreWarnings )
 						continue
 					Warning( "Duplicate entry in player's persistent newness sparse list: %s (%s)", DEV_DescItemFlavor( GetItemFlavorOrNullByGUID( storedGuid ) ), string(player) )
-				}
+				#endif
 			}
-		#endif
+
+		}
+
+		if ( skipAsset )
+			continue
 
 		guidList.append( storedGuid )
 	}
@@ -137,7 +181,7 @@ void function Newness_MarkItemFlavorsAsNewForPlayer( entity player, array<ItemFl
 	{
 		// todo(dw): PIN telemetry?
 		if ( !DEV_ignoreWarnings )
-			Warning( "Had to drop %d entries in a player's persistence newness sparse list (%s)", (guidList.len() - sparseListSize), string(player) )
+			printf( "Had to drop %d entries in a player's persistence newness sparse list (%s)\n", (guidList.len() - sparseListSize), string(player) )
 	}
 
 	for ( int sparseListSlotIndex = 0; sparseListSlotIndex < sparseListSize; sparseListSlotIndex++ )
@@ -151,11 +195,27 @@ void function Newness_MarkItemFlavorsAsNewForPlayer( entity player, array<ItemFl
 		player.SetPersistentVar( "newItemFlavorSparseList[" + sparseListSlotIndex + "]", guidToStore )
 	}
 
-	// foreach( ItemFlavor newFlavor in newFlavorList )
-	// {
-		// SettingsAssetGUID guid = ItemFlavor_GetGUID( newFlavor )
-		// Remote_CallFunction_NonReplay( player, "ServerToClient_OnItemFlavorBecameNew", guid )
-	// }
+	foreach( ItemFlavor newFlavor in newFlavorList )
+	{
+		SettingsAssetGUID guid = ItemFlavor_GetGUID( newFlavor )
+		Remote_CallFunction_NonReplay( player, "ServerToClient_OnItemFlavorNewnessChanged", guid, true )
+	}
+}
+#endif
+#if SERVER
+void function Newness_MarkItemFlavorGUIDAsNotNewForPlayer( entity player, SettingsAssetGUID guid )
+{
+	int sparseListSize = PersistenceGetArrayCount( "newItemFlavorSparseList" )
+	for ( int sparseListSlotIndex = 0; sparseListSlotIndex < sparseListSize; sparseListSlotIndex++ )
+	{
+		SettingsAssetGUID storedGuid = player.GetPersistentVarAsInt( "newItemFlavorSparseList[" + sparseListSlotIndex + "]" )
+		if ( storedGuid == guid )
+		{
+			player.SetPersistentVar( "newItemFlavorSparseList[" + sparseListSlotIndex + "]", 0 )
+			Remote_CallFunction_NonReplay( player, "ServerToClient_OnItemFlavorNewnessChanged", guid, false )
+			break
+		}
+	}
 }
 #endif
 
@@ -163,7 +223,7 @@ void function Newness_MarkItemFlavorsAsNewForPlayer( entity player, array<ItemFl
 #if UI
 bool function Newness_IsItemFlavorNew( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	return (flavor in fileLevel.newItemFlavorSet)
 }
@@ -173,10 +233,13 @@ bool function Newness_IsItemFlavorNew( ItemFlavor flavor )
 #if UI
 void function Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	Assert( Remote_ServerCallFunctionAllowed() )
 
-	//Assert( flavor in fileLevel.newItemFlavorSet, "item flavor was not marked as new (" + ItemFlavor_GetRef( flavor ) + ")" )
 	if ( !(flavor in fileLevel.newItemFlavorSet) )
+		return
+
+	if ( !Remote_ServerCallFunctionAllowed() ) // TODO: defensive fix to address R5DEV-513089 pending RTK rewrites
 		return
 
 	delete fileLevel.newItemFlavorSet[flavor]
@@ -195,7 +258,40 @@ void function Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( Ite
 	}
 
 	SettingsAssetGUID guid = ItemFlavor_GetGUID( flavor )
-	ClientCommand( format( "newness_clear %d", guid ) )
+	Remote_ServerCallFunction( "ClientCallback_newness_clear", guid )
+}
+
+array<ItemFlavor> function Newness_GetNewItemFlavorSet()
+{
+	array<ItemFlavor> itemFlavorArray
+	foreach (ItemFlavor flav, bool b in fileLevel.newItemFlavorSet)
+		itemFlavorArray.append( flav )
+
+	return itemFlavorArray
+}
+
+// marks EVERYTHING as viewed
+void function MarkAllItemsAsViewed( var button )
+{
+	array<ItemFlavor> itemFlavorArray = Newness_GetNewItemFlavorSet()
+	foreach ( ItemFlavor iFlavor in itemFlavorArray )
+		Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( iFlavor )
+}
+
+bool function MarkAllItemsOfTypeAsViewed( int categoryType )
+{
+	bool itemsMarkedAsViewed = false
+	array<ItemFlavor> itemFlavorArray = Newness_GetNewItemFlavorSet()
+	foreach ( ItemFlavor iFlavor in itemFlavorArray )
+	{
+		int flavorCategoryType = ItemFlavor_GetTypeUICategory( iFlavor )
+		if ( ( flavorCategoryType != eItemTypeUICategory.NONE ) && ( flavorCategoryType == categoryType ) )
+		{
+			Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( iFlavor )
+			itemsMarkedAsViewed = true
+		}
+	}
+	return itemsMarkedAsViewed
 }
 #endif
 
@@ -203,15 +299,12 @@ void function Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( Ite
 #if CLIENT || UI
 void function Newness_TEMP_MarkItemAsNewAndInformServer( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
-	// todo(dw): temp
+	// todo(dw): forever temp
 	SettingsAssetGUID guid = ItemFlavor_GetGUID( flavor )
-	#if CLIENT
-		GetLocalClientPlayer().ClientCommand( format( "temp_newness_mark %d", guid ) )
-	#elseif UI
-		ClientCommand( format( "temp_newness_mark %d", guid ) )
-	#endif
+
+	Remote_ServerCallFunction( "ClientCallback_temp_newness_mark", guid )
 }
 #endif
 
@@ -266,10 +359,29 @@ void function Newness_ReverseQuery_Setup(
 #endif
 
 
+//#if UI
+//void function Newness_ReverseQuery_Destroy( Newness_ReverseQuery rq )
+//{
+//	Assert( rq.isSetUp, "Called Newness_ReverseQuery_Destroy on a Newness_ReverseQuery struct that was no set up." )
+//	Assert( rq.dependentsList.len() == 0, "Tried to call Newness_ReverseQuery_Destroy on a Newness_ReverseQuery struct that other Newness_ReverseQuery structs still depend on." )
+//	rq.isSetUp = false
+//
+//	foreach ( Newness_ReverseQuery dependency in rq.queryDependencies )
+//		dependency.dependentsList.removebyvalue( rq )
+//
+//	foreach ( ItemFlavor dependency in rq.itemFlavDependencies )
+//	{
+//		array<Newness_ReverseQuery> itemFlavorShallowDependentList = fileLevel.itemFlavorReverseQueryShallowDependentListMap[dependency]
+//		itemFlavorShallowDependentList.removebyvalue( rq )
+//	}
+//}
+//#endif
+
+
 #if UI
 void function Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( Newness_ReverseQuery rq, OnNewnessReverseQueryUpdatedCallbackType cb, var optionalArg = null )
 {
-	#if DEVELOPER
+	#if ASSERTS
 		int foundIndex = -1
 		foreach ( int index, OnNewnessReverseQueryUpdatedCallbackStruct cbs in rq.onChangeCallbackList )
 		{
@@ -304,7 +416,9 @@ void function Newness_RemoveCallback_OnRerverseQueryUpdated( Newness_ReverseQuer
 		}
 	}
 	Assert( foundIndex != -1, "Tried to remove a callback that was not added" )
-	rq.onChangeCallbackList.fastremove( foundIndex )
+
+	if ( foundIndex >= 0 )
+		rq.onChangeCallbackList.fastremove( foundIndex )
 }
 #endif
 
@@ -316,70 +430,42 @@ void function Newness_RemoveCallback_OnRerverseQueryUpdated( Newness_ReverseQuer
 ///////////////////
 ///////////////////
 #if SERVER
-bool function ClientCommand_newness_clear( entity player, array<string> argList )
+void function ClientCallback_newness_clear( entity player, int guid )
 {
-	if ( argList.len() != 1 )
-	{
-		Assert( false, "Incorrect number of arguments to client command 'newness_clear' (got \"" + DEV_ArrayConcat( argList, " " ) + "\", expected 2 arguments)." )
-		return true
-	}
-
-	int guid = int(argList[0]) // todo(dw): test to see if this causes an error if the param is not a valid integer
 	if ( !IsValidItemFlavorGUID( guid ) )
 	{
-		Assert( false, "'newness_clear' received invalid item flavor GUID: \"" + DEV_ArrayConcat( argList, " " ) + "\"" )
-		return true
+		Assert( false, "'newness_clear' received invalid item flavor GUID: " + guid )
+		return
 	}
 
-	int sparseListSize = PersistenceGetArrayCount( "newItemFlavorSparseList" )
-	for ( int sparseListSlotIndex = 0; sparseListSlotIndex < sparseListSize; sparseListSlotIndex++ )
-	{
-		SettingsAssetGUID storedGuid = player.GetPersistentVarAsInt( "newItemFlavorSparseList[" + sparseListSlotIndex + "]" )
-		if ( storedGuid == guid )
-		{
-			player.SetPersistentVar( "newItemFlavorSparseList[" + sparseListSlotIndex + "]", 0 )
-			break
-		}
-	}
-
-	return true
+	Newness_MarkItemFlavorGUIDAsNotNewForPlayer( player, guid )
 }
 #endif
 
 
 #if SERVER
-bool function TEMP_ClientCommand_temp_newness_mark( entity player, array<string> argList )
+void function ClientCallback_temp_newness_mark( entity player, int guid )
 {
-	// todo(dw): this is temp until script has a server-side callback when a pack is opened
-
-	if ( argList.len() != 1 )
-	{
-		Assert( false, "Incorrect number of arguments to client command 'temp_newness_mark' (got \"" + DEV_ArrayConcat( argList, " " ) + "\", expected 1 arguments)." )
-		return true
-	}
-
-	int guid = int(argList[0]) // todo(dw): test to see if this causes an error if the param is not a valid integer
+	// todo(dw): this is a forever temp until script has a server-side callback when a pack is opened
 	if ( !IsValidItemFlavorGUID( guid ) )
 	{
-		Assert( false, "'newness_clear' received invalid item flavor GUID: \"" + DEV_ArrayConcat( argList, " " ) + "\"" )
-		return true
+		Assert( false, "'newness_clear' received invalid item flavor GUID: " + guid )
+		return
 	}
 
 	ItemFlavor flav = GetItemFlavorByGUID( guid )
 	Newness_MarkItemFlavorsAsNewForPlayer( player, [flav], true )
-
-	return true
 }
 #endif
 
 
 #if UI
-array<Newness_ReverseQuery> function OnItemFlavorBecameNew( ItemFlavor flavor, bool isNew, bool shouldRunCallbacks )
+array<Newness_ReverseQuery> function OnItemFlavorNewnessChanged( ItemFlavor flavor, bool isNew, bool shouldRunCallbacks )
 {
-	//Assert( !(flavor in fileLevel.newItemFlavorSet), "item flavor was already marked as new (" + ItemFlavor_GetRef( flavor ) + ")" )
+	//Assert( isNew != (flavor in fileLevel.newItemFlavorSet), "item flavor was already marked as " + (isNew ? "new" : "not new") + " (" + ItemFlavor_GetRef( flavor ) + ")" )
 	if ( isNew == (flavor in fileLevel.newItemFlavorSet) )
 	{
-		//Warning( "item flavor was already marked as new (%s)", ItemFlavor_GetRef( flavor ) )
+		//Warning( "item flavor was already marked as a%s (%s)", isNew ? "new" : "not new", ItemFlavor_GetRef( flavor ) )
 		return []
 	}
 
@@ -439,14 +525,11 @@ void function OnPersistentDataReady( entity _unused )
 			continue
 
 		if ( !IsValidItemFlavorGUID( guid ) )
-		{
-			Warning( "Player had invalid item flavor GUID in their persistent sparse newness set: " + guid )
 			continue
-		}
 
 		ItemFlavor flav                                              = GetItemFlavorByGUID( guid )
 		array<Newness_ReverseQuery> affectedQueriesListForThisFlavor = []
-		affectedQueriesListForThisFlavor = OnItemFlavorBecameNew( flav, true, false )
+		affectedQueriesListForThisFlavor = OnItemFlavorNewnessChanged( flav, true, false )
 		foreach ( Newness_ReverseQuery affectedQuery in affectedQueriesListForThisFlavor )
 		{
 			if ( (affectedQuery in affectedQueriesSet) )
@@ -467,18 +550,22 @@ void function OnPersistentDataReady( entity _unused )
 
 
 #if CLIENT
-void function ServerToClient_OnItemFlavorBecameNew( int guid, bool isNew )
+void function ServerToClient_OnItemFlavorNewnessChanged( int guid, bool isNew )
 {
-	RunUIScript( "ClientToUI_OnItemFlavorBecameNew", guid, isNew )
+	RunUIScript( "ClientToUI_OnItemFlavorNewnessChanged", guid, isNew )
 }
 #endif
 
 
 #if UI
-void function ClientToUI_OnItemFlavorBecameNew( int guid, bool isNew )
+void function ClientToUI_OnItemFlavorNewnessChanged( int guid, bool isNew )
 {
+	// the server may have *older* assets (challenges) that are not loaded on Client/UI
+	if ( IsValidItemFlavorGUID( guid, eValidation.DONT_ASSERT ) == false )
+		return
+
 	ItemFlavor flavor = GetItemFlavorByGUID( guid )
-	OnItemFlavorBecameNew( flavor, isNew, true )
+	OnItemFlavorNewnessChanged( flavor, isNew, true )
 }
 #endif
 
@@ -487,7 +574,7 @@ void function ClientToUI_OnItemFlavorBecameNew( int guid, bool isNew )
 void function GenerateItemStatePDef()
 {
 	DEV_PDefGen_BeginFieldGroup( "item state" )
-	DEV_PDefGen_AddField_IntArray_IntKey( "newItemFlavorSparseList", NUM_NEW_ITEM_FLAVORS_TO_PERSIST )
+	DEV_PDefGen_AddField_GUIDArray_IntKey( "newItemFlavorSparseList", NUM_NEW_ITEM_FLAVORS_TO_PERSIST )
 	DEV_PDefGen_EndFieldGroup()
 }
 #endif
@@ -503,7 +590,7 @@ void function DEV_Newness_ReverseQueryTest()
 	Newness_ReverseQuery combinedRQ
 	Newness_ReverseQuery_Setup( combinedRQ, [charactersRQ, weaponSkinsRQ], [] )
 	Newness_ReverseQuery superCombinedRQ
-	Newness_ReverseQuery_Setup( superCombinedRQ, [combinedRQ], [ GetItemFlavorByHumanReadableRef( "character_skin_lifeline_common_05" ) ] )
+	Newness_ReverseQuery_Setup( superCombinedRQ, [combinedRQ], [ DEV_GetItemFlavorByGRXRef( "character_skin_lifeline_common_05" ) ] )
 
 	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( charactersRQ, void function( int newCount, var unused ) {
 		printf( "NEWNESS TEST: charactersRQ    = %d", newCount )
@@ -517,6 +604,32 @@ void function DEV_Newness_ReverseQueryTest()
 	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( superCombinedRQ, void function( int newCount, var unused ) {
 		printf( "NEWNESS TEST: superCombinedRQ = %d", newCount )
 	} )
+}
+
+void function DEV_Newness_DumpSparseList( entity player )
+{
+	int sparseListSize = PersistenceGetArrayCount( "newItemFlavorSparseList" )
+	for ( int sparseListSlotIndex = 0; sparseListSlotIndex < sparseListSize; sparseListSlotIndex++ )
+	{
+		SettingsAssetGUID storedGuid = player.GetPersistentVarAsInt( "newItemFlavorSparseList[" + sparseListSlotIndex + "]" )
+
+		if ( storedGuid == 0 )
+			continue // empty slot
+
+		ItemFlavor ornull flavor = GetItemFlavorOrNullByGUID( storedGuid )
+
+		printt( "entry in player's persistent newness sparse list:", DEV_DescItemFlavor( GetItemFlavorOrNullByGUID( storedGuid ), false ) )
+		if ( flavor != null )
+		{
+			expect ItemFlavor( flavor )
+
+			array<LoadoutEntry> slots = GetAppropriateLoadoutSlotsForItemFlavor( flavor )
+			foreach( slot in slots )
+			{
+				printt( "\tIsItemFlavorUnlockedForLoadoutSlot", IsItemFlavorUnlockedForLoadoutSlot( ToEHI(player), slot, flavor ) )
+			}
+		}
+	}
 }
 #endif
 

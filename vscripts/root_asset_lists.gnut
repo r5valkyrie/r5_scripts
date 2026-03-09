@@ -139,7 +139,7 @@ global const array<asset> ENTITLEMENT_ASSETS = [
 
 global const array<asset> SHARED_BANNERFRAMES_ASSET_LIST = [$""]
 
-global array<asset> WEAPON_ASSETS = [$""]
+global array<asset> WEAPON_ASSETS = []
 void function ShLoadWeaponAssetsInit()
 {
     WEAPON_ASSETS.clear()

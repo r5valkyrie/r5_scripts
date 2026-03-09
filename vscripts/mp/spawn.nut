@@ -34,7 +34,7 @@ global function SetFrontlineDistanceFalloffStart
 global function SetFrontlineDistanceFalloffEnd
 
 global function CodeCallback_SpawnpointDebugText
-#if DEV
+#if DEVELOPER
 global function randomspawnzone
 global function DebugSpawnZone
 global function SpawnZone_GetById
@@ -335,7 +335,7 @@ void function InitSpawnsVisibleToTurret()
 	}
 }
 
-#if DEV
+#if DEVELOPER
 void function DebugSpawnsVisibleToTurret()
 {
 	for ( ;; )
@@ -344,7 +344,7 @@ void function DebugSpawnsVisibleToTurret()
 		{
 			foreach ( turret in spawnpoint.sp.visibleToTurret )
 			{
-				DebugDrawLine( spawnpoint.GetOrigin(), turret.GetOrigin(), COLOR_WHITE, true, 0.2 )
+				DebugDrawLine( spawnpoint.GetOrigin(), turret.GetOrigin(), 255, 255, 255, true, 0.2 )
 			}
 		}
 		WaitFrame()
@@ -434,7 +434,7 @@ entity function FindSpawnPoint( entity player )
 
 	if ( !spawnpoint )
 	{
-		#if DEV
+		#if DEVELOPER
 			PrintNoValidSpawnpoint( spawnpoints, player, team )
 		#endif
 		spawnpoint = spawnpoints[ 0 ]
@@ -887,7 +887,7 @@ bool function IsSpawnpointValidDrop( entity spawnpoint, int team )
 	return true
 }
 
-#if DEV
+#if DEVELOPER
 void function PrintNoValidSpawnpoint( array<entity> spawnpoints, entity player, int team )
 {
 	Assert( spawnpoints.len() > 0 )
@@ -960,7 +960,7 @@ void function SpawnZoneTriggerInit( entity trigger )
 	file.spawnZones.append( spawnZone )
 }
 
-#if DEV
+#if DEVELOPER
 void function randomspawnzone( int index )
 {
 	entity player = gp()[0]
@@ -1518,7 +1518,7 @@ void function LinkZonesAt( vector a, vector b )
 	zoneb.linkedZones.append( zonea.id )
 }
 
-#if DEV
+#if DEVELOPER
 void function DebugSpawnZones()
 {
 	for ( ;; )
@@ -1528,21 +1528,21 @@ void function DebugSpawnZones()
 
 		foreach ( spawnpoint in zoneA.spawnPoints )
 		{
-			DebugDrawLine( zoneA.origin, spawnpoint.GetOrigin(), COLOR_BLUE, true, 0.5 )
+			DebugDrawLine( zoneA.origin, spawnpoint.GetOrigin(), 0, 0, 255, true, 0.5 )
 		}
 		foreach ( spawnpoint in zoneB.spawnPoints )
 		{
-			DebugDrawLine( zoneB.origin, spawnpoint.GetOrigin(), COLOR_RED, true, 0.5 )
+			DebugDrawLine( zoneB.origin, spawnpoint.GetOrigin(), 255, 0, 0, true, 0.5 )
 		}
 
 		foreach ( player in GetPlayerArray() )
 		{
 			if ( player.GetTeam() == TEAM_MILITIA )
-				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + <0,0,82>, COLOR_BLUE, true, 0.1 )
+				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + <0,0,82>, 0, 0, 255, true, 0.1 )
 			else if ( player.GetTeam() == TEAM_IMC )
-				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + <0,0,82>, COLOR_RED, true, 0.1 )
+				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + <0,0,82>, 255, 0, 0, true, 0.1 )
 			else
-				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + <0,0,82>, <128,128,128>, true, 0.1 )
+				DebugDrawLine( player.GetOrigin(), player.GetOrigin() + <0,0,82>, 128, 128, 128, true, 0.1 )
 		}
 
 		WaitFrame()
@@ -1751,7 +1751,7 @@ void function DrawSpawnPointRating( entity spawnPoint, table ratingData )
 		wait 1.0
 	}
 }
-#endif // DEV
+#endif // DEVELOPER
 
 const BAD_SPAWN_TIME_MIN = 2.0
 const BAD_SPAWN_TIME_MAX = 10.0

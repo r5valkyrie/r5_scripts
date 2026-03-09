@@ -9,6 +9,13 @@
 #endif
 
 global function Sh_FS_MovementRecorder_Init
+#if SERVER || CLIENT
+global function MeleeSkin_GetMainWeaponClassname
+global function MeleeSkin_GetOffhandWeaponClassname
+#endif
+#if SERVER
+global function CharacterSelect_AssignCharacter
+#endif
 
 struct RecordingAnimation
 {
@@ -1048,10 +1055,60 @@ void function CheckDummyDestroyed( entity dummy )
 	mAssert( !IsValid(dummy), "Dummy was not destroyed!!" )
 }
 
+// Melee skin weapon classname functions - return defaults
+// Note: These are inside #if SERVER block but declared as SERVER || CLIENT
+// The CLIENT implementation is below the #endif
+#endif // SERVER - temporarily close for these functions
+
+#if SERVER || CLIENT
+string function MeleeSkin_GetMainWeaponClassname( ItemFlavor meleeSkin )
+{
+	return "mp_weapon_melee_survival"
+}
+
+string function MeleeSkin_GetOffhandWeaponClassname( ItemFlavor meleeSkin )
+{
+	return "melee_survival"
+}
+#endif // SERVER || CLIENT
+
+#if SERVER // reopen SERVER block
+
+// From sh_character_select_new.gnut (commented out in scripts.rson)
+bool function CharacterSelect_AssignCharacter( entity player, ItemFlavor character, bool updateLoadoutSlot = true )
+{
+	TakeAllPassives( player )
+
+	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+
+	if ( updateLoadoutSlot && ItemFlavor_GetHumanReadableRef( playerCharacter ) != ItemFlavor_GetHumanReadableRef( character ) )
+	{
+		SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), character )
+	}
+
+	if( Gamemode() != eGamemodes.WINTEREXPRESS )
+		player.SetPlayerNetBool( "hasLockedInCharacter", true )
+
+	if( ItemFlavor_GetHumanReadableRef( character ) == "character_wattson" )
+		player.SetArmsModelOverride( $"mdl/Weapons/arms/pov_pilot_light_wattson.rmdl" )
+	else
+		player.SetArmsModelOverride( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "armsModel" ) )
+
+	if ( LiveAPI_IsValidToRun() )
+	{
+		LiveAPI_WriteLogUsingDefinedFields( eLiveAPI_EventTypes.characterSelected,
+			[ LiveAPI_GetPlayerIdentityTable( player ) ],
+			[ 3 ]
+		)
+	}
+
+	return true
+}
+
 void function AssignCharacter( entity player, int index )
 {
 	ItemFlavor Character = GetAllCharacters()[ index ]
-	CharacterSelect_AssignCharacter( ToEHI( player ), Character )
+	CharacterSelect_AssignCharacter( player, Character )
 
 	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )

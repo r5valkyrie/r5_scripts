@@ -2,6 +2,10 @@
 //	sh_gamemode_survival.nut
 //=========================================================
 
+#if UI
+global function GamemodeSurvivalShared_UI_Init
+#endif
+
 #if SERVER || CLIENT
 global function GamemodeSurvivalShared_Init
 
@@ -759,4 +763,15 @@ bool function ShouldModeDisableCharacterComms()
 
 	return false
 }
+
+#if UI
+void function GamemodeSurvivalShared_UI_Init()
+{
+	AddUICallback_InputModeChanged( UIInputChanged )
+}
+
+void function UIInputChanged( bool controllerModeActive )
+{
+}
+#endif
 

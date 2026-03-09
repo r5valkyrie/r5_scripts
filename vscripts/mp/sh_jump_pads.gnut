@@ -378,7 +378,7 @@ void function JumpPad_CreateTriggerEntity( entity jumpPad, entity owner )
 
 void function JumpPad_OnTouchTrigger_Server( entity trigger, entity ent )
 {
-	#if !DEV
+	#if !DEVELOPER
 	if ( !IsValid( trigger ) )
 		return
 	#endif

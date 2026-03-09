@@ -33,6 +33,8 @@ global struct ClGlobals
 	array<void functionref( entity clientPlayer, entity spectatorTarget )> firstPersonSpectateEndCallbacks
 	array<void functionref( entity clientPlayer, entity spectatorTarget )> thirdPersonSpectateStartCallbacks
 	array<void functionref( entity clientPlayer, entity spectatorTarget )> thirdPersonSpectateEndCallbacks
+	array<void functionref( entity clientPlayer )> freeCamSpectateStartCallbacks
+	array<void functionref( entity clientPlayer )> freeCamSpectateEndCallbacks
 	array<void functionref( entity localClientPlayer, entity prevSpectatorTarget, entity currentSpectatorTarget )> onSpectatorTargetChangedCallbacks
 	array<void functionref( entity localClientPlayer, int newMode )> onSpectatorPlayerTagModeChangedCallbacks
 	array<void functionref( bool enemiesVisible )> onSpectatorMinimapEnemiesVisibleChangedCallbacks
@@ -52,6 +54,7 @@ global struct ClGlobals
 	array<bool functionref( entity player, entity zipline, vector ziplineClosestPoint )> canUseZiplineCallbacks
 
 	array<void functionref()>[ eGameState._count_ ] gameStateEnterCallbacks
+	array<void functionref( int )> gameStateChangedCallbacks
 	DamageHistoryStruct &lastDamageHistory
 
 	VisGroup menuVisGroup

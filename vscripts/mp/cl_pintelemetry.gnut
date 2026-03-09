@@ -10,6 +10,15 @@ global function PIN_Survey
 global function PIN_Settings
 global function GetLastMenuIDForPIN
 global function SetLastMenuIDForPIN
+global function SetCurrentTabForPIN
+global function SetCachedOfferAlias
+global function PIN_Store_Message
+global function PIN_StoryTrackerPageView
+global function PIN_Club_Promote
+global function PIN_Club_Demote
+global function PIN_Club_Invite
+global function PIN_Club_Search
+global function PIN_Club_RequestToJoin
 #endif
 
 
@@ -260,7 +269,7 @@ void function PIN_Settings( table settingsTable )
 #endif
 
 
-void function PIN_Customization( ItemFlavor ornull context, ItemFlavor itemFlavor, int index = 0 )
+void function PIN_Customization( ItemFlavor ornull context, ItemFlavor itemFlavor, string customizeAction = "", int index = 0 )
 {
 	string customizeTarget
 	string customizeType
@@ -418,5 +427,41 @@ void function SetLastMenuIDForPIN( string val )
 table function GetMatchPINData()
 {
 	return file.matchPinData
+}
+
+void function SetCurrentTabForPIN( string val )
+{
+}
+
+void function SetCachedOfferAlias( string val )
+{
+}
+
+void function PIN_Store_Message( ... )
+{
+}
+
+void function PIN_StoryTrackerPageView( ... )
+{
+}
+
+void function PIN_Club_Promote( ClubHeader clubHeader, string memberID, string rankString )
+{
+}
+
+void function PIN_Club_Demote( ClubHeader clubHeader, string memberID, string rankString )
+{
+}
+
+void function PIN_Club_Invite( ClubHeader clubHeader, string source, string memberID )
+{
+}
+
+void function PIN_Club_Search( string searchTerms, string searchFilters )
+{
+}
+
+void function PIN_Club_RequestToJoin( ClubHeader clubHeader )
+{
 }
 #endif

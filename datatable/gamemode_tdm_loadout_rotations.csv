@@ -1,0 +1,7 @@
+"loadoutSlot","rotationStyle","loadoutSlotType","loadoutContentsList"
+"blitz","MANUAL","REGULAR","blitz_loadout_1 blitz_loadout_2 blitz_loadout_3 blitz_loadout_4 blitz_loadout_5 blitz_loadout_6 blitz_loadout_7"
+"heavy","MANUAL","REGULAR","heavy_loadout_1 heavy_loadout_2 heavy_loadout_3 heavy_loadout_4 heavy_loadout_5 heavy_loadout_6 heavy_loadout_7"
+"assault","MANUAL","REGULAR","assault_loadout_1 assault_loadout_2 assault_loadout_3 assault_loadout_4 assault_loadout_5 assault_loadout_6 assault_loadout_7"
+"specialist","MANUAL","REGULAR","specialist_loadout_1 specialist_loadout_2 specialist_loadout_3 specialist_loadout_4 specialist_loadout_5 specialist_loadout_6 specialist_loadout_7"
+"longrange","MANUAL","REGULAR","longrange_loadout_1 longrange_loadout_2 longrange_loadout_3 longrange_loadout_4 longrange_loadout_5 longrange_loadout_6 longrange_loadout_7"
+"string","string","string","string"

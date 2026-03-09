@@ -76,6 +76,9 @@ void function SmartAmmo_ClearStatusWarning( float duration = 0.0 )
 
 void function SmartAmmo_LockedOntoWarningHUD_Update()
 {
+	if ( file.lockon_hud == null )
+		return
+
 	entity player = GetLocalViewPlayer()
 
 	float previousLockedFraction = player.SmartAmmo_GetPreviousHighestLockOnMeFraction()

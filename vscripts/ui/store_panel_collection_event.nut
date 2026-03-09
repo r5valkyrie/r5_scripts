@@ -1,4 +1,6 @@
 global function CollectionEventPanel_Init
+global function StorePanelCollectionEvent_LevelInit
+global function StorePanelCollectionEvent_LevelShutdown
 
 struct {
 	var panel
@@ -6,8 +8,8 @@ struct {
 	var aboutButton
 	var purchaseSinglePackButton
 	var purchaseMultiplePacksButton
-	var heirloomBox
-	//
+	var completionRewardBox
+	                            
 	var rewardBarPanel
 	var rewardBarBacker
 	var itemDetailsBox
@@ -21,12 +23,20 @@ struct {
 
 	var WORKAROUND_currentlyFocusedRewardButtonForFooters = null
 	int WORKAROUND_purchaseMultiplePacksButton_currentQty = -1
+
+	array<var>			   	 mythicIndicatorButtons
+	int                      activeMythicTier = 0
+	bool                     focusedButtonIsntMythic = true
+	bool                     autoRunning = false
 } file
 
 const REWARD_BUTTONS_ROW_COUNT = 2
 const REWARD_BUTTONS_COL_COUNT = 12
 
 const PACK_BULK_PURCHASE_COUNT = 10
+
+const MYTHIC_INIDICATOR_COUNT = 3
+const MYTHIC_INDICATOR_NAME = "MythicIndicatorButton"
 
 void function CollectionEventPanel_Init( var panel )
 {
@@ -38,12 +48,19 @@ void function CollectionEventPanel_Init( var panel )
 	file.aboutButton = Hud_GetChild( panel, "AboutButton" )
 	file.purchaseSinglePackButton = Hud_GetChild( panel, "Purchase1PackButton" )
 	file.purchaseMultiplePacksButton = Hud_GetChild( panel, "PurchaseNPacksButton" )
-	file.heirloomBox = Hud_GetChild( panel, "HeirloomBox" )
-	//
+	file.completionRewardBox = Hud_GetChild( panel, "CompletionRewardBox" )
+	                                                                               
 	file.rewardBarPanel = Hud_GetChild( panel, "RewardBarPanel" )
 	file.rewardBarBacker = Hud_GetChild( file.rewardBarPanel, "RewardBarBacker" )
 	file.itemDetailsBox = Hud_GetChild( panel, "ItemDetailsBox" )
 	file.openPackButton = Hud_GetChild( panel, "OpenPackButton" )
+
+                    
+                                                                                             
+                                                                                             
+                                                                                      
+                                                                                 
+      
 
 	for ( int rewardButtonRowIdx = 0; rewardButtonRowIdx < REWARD_BUTTONS_ROW_COUNT; rewardButtonRowIdx++ )
 	{
@@ -71,30 +88,66 @@ void function CollectionEventPanel_Init( var panel )
 		PurchasePackButton_OnClick( button, file.WORKAROUND_purchaseMultiplePacksButton_currentQty )
 	} )
 
-	//
-	//
-	//
+	Hud_AddEventHandler( file.purchaseSinglePackButton, UIE_GET_FOCUS, RewardButton_OnGetFocus )
+	Hud_AddEventHandler( file.purchaseSinglePackButton, UIE_LOSE_FOCUS, RewardButton_OnLoseFocus )
+	Hud_AddEventHandler( file.purchaseMultiplePacksButton, UIE_GET_FOCUS, RewardButton_OnGetFocus )
+	Hud_AddEventHandler( file.purchaseMultiplePacksButton, UIE_LOSE_FOCUS, RewardButton_OnLoseFocus )
 
-	Hud_AddEventHandler( file.heirloomBox, UIE_GET_FOCUS, HeirloomBox_OnGetFocus )
-	Hud_AddEventHandler( file.heirloomBox, UIE_LOSE_FOCUS, HeirloomBox_OnLoseFocus )
-	Hud_AddEventHandler( file.heirloomBox, UIE_CLICK, HeirloomBox_OnClick )
+	                                                                                                      
+	                                                                                                        
+	                                                                                               
+
+	Hud_AddEventHandler( file.completionRewardBox, UIE_GET_FOCUS, CompletionRewardBox_OnGetFocus )
+	Hud_AddEventHandler( file.completionRewardBox, UIE_LOSE_FOCUS, CompletionRewardBox_OnLoseFocus )
+	Hud_AddEventHandler( file.completionRewardBox, UIE_CLICK, CompletionRewardBox_OnClick )
 
 	Hud_AddEventHandler( file.openPackButton, UIE_CLICK, OpenPackButton_OnClick )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
+                    
+                                                                                                                 
+      
 	AddPanelFooterOption( panel, LEFT, BUTTON_A, false, "#A_BUTTON_INSPECT_BUY", "#A_BUTTON_INSPECT_BUY", null, IsFocusedItemInspectableAndBuyable )
 	AddPanelFooterOption( panel, LEFT, BUTTON_A, false, "#A_BUTTON_INSPECT", "#A_BUTTON_INSPECT", null, IsFocusedItemInspectableButNotBuyable )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, IsFocusedItemEquippable )
-	AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_PREVIEW_QUIPS", "", TryPreviewIncludedQuipForFocusedItem, ShouldShowIncludedQuipPreviewPromptFooter )
+
+	RegisterSignal( "OnCollectionEventPanelMenu_Hide" )
+
+	for ( int indicatorIndex = 0; indicatorIndex < MYTHIC_INIDICATOR_COUNT; indicatorIndex++ )
+	{
+		var button = Hud_GetChild( panel, MYTHIC_INDICATOR_NAME + string( indicatorIndex ) )
+		HudElem_SetRuiArg( button, "buttonTier", indicatorIndex + 1 )
+		file.mythicIndicatorButtons.append( button )
+		Hud_Hide( button )
+		Hud_AddEventHandler( button, UIE_GET_FOCUS, MythicInidicatorButton_OnGetFocus )
+		Hud_AddEventHandler( button, UIE_LOSE_FOCUS, MythicInidicatorButton_OnLoseFocus )
+	}
 }
 
+void function StorePanelCollectionEvent_LevelInit()
+{
+}
+
+void function StorePanelCollectionEvent_LevelShutdown()
+{
+	file.WORKAROUND_currentlyFocusedRewardButtonForFooters = null
+	file.rewardButtonToRewardFlavMap.clear()
+	file.focusedButtonIsntMythic = true
+	Signal( uiGlobal.signalDummy, "OnCollectionEventPanelMenu_Hide" )
+}
 
 void function CollectionEventPanel_OnPanelShow( var panel )
 {
 	UI_SetPresentationType( ePresentationType.COLLECTION_EVENT )
 
+	if ( GetCurrentPlaylistVarBool( "collection_event_panel_clear", true  ) )                                  
+		file.rewardButtonToRewardFlavMap.clear()
+
 	AddCallbackAndCallNow_OnGRXInventoryStateChanged( CollectionEventPanel_UpdateGRXDependantElements )
 	AddCallbackAndCallNow_OnGRXOffersRefreshed( CollectionEventPanel_UpdateGRXDependantElements )
+
+	if ( !GetCurrentPlaylistVarBool( "disableCollectionEventAutoAward", false ) )
+		thread TryOpenLootCeremonyAndCompletionRewardPack()
 }
 
 
@@ -108,6 +161,8 @@ void function CollectionEventPanel_OnPanelHide( var panel )
 	RemoveCallback_OnGRXOffersRefreshed( CollectionEventPanel_UpdateGRXDependantElements )
 
 	RunClientScript( "UIToClient_StopTempBattlePassPresentationBackground" )
+
+	Signal( uiGlobal.signalDummy, "OnCollectionEventPanelMenu_Hide" )
 }
 
 
@@ -123,13 +178,16 @@ void function CollectionEventPanel_UpdateGRXDependantElements()
 	file.activeCollectionEvent = activeCollectionEvent
 	file.rewardButtonToRewardFlavMap.clear()
 
+	file.focusedButtonIsntMythic = true
+	file.activeMythicTier = 0
+
 	if ( haveActiveCollectionEvent )
 	{
 		expect ItemFlavor( activeCollectionEvent )
 		Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( activeCollectionEvent )
 
 		array<CollectionEventRewardGroup> rewardGroups = CollectionEvent_GetRewardGroups( activeCollectionEvent )
-		Assert( rewardGroups.len() == 2, format( "Only collection events with two reward groups are supported right now. (%s)", ItemFlavor_GetHumanReadableRef( activeCollectionEvent ) ) )
+		Assert( rewardGroups.len() == 2, format( "Only collection events with two reward groups are supported right now. (%s)", string(ItemFlavor_GetAsset( activeCollectionEvent )) ) )
 
 		HudElem_SetRuiArg( file.bigInfoBox, "title", ItemFlavor_GetShortName( activeCollectionEvent ) )
 		HudElem_SetRuiArg( file.bigInfoBox, "isOfferRestricted", GRX_IsOfferRestricted() )
@@ -145,30 +203,36 @@ void function CollectionEventPanel_UpdateGRXDependantElements()
 		HudElem_SetRuiArg( file.bigInfoBox, "bgPatternImage", CollectionEvent_GetBGPatternImage( activeCollectionEvent ) )
 		HudElem_SetRuiArg( file.bigInfoBox, "headerIcon", CollectionEvent_GetHeaderIcon( activeCollectionEvent ) )
 
-		//
-		//
-		//
-		//
+		ItemFlavor completeReward = HeirloomEvent_GetPrimaryCompletionRewardItem( activeCollectionEvent )
+		HudElem_SetRuiArg( file.completionRewardBox, "rarity", ItemFlavor_GetQuality( completeReward ) )
 
-		HudElem_SetRuiArg( file.heirloomBox, "bgPatternImage", CollectionEvent_GetBGPatternImage( activeCollectionEvent ) )
-		HudElem_SetRuiArg( file.heirloomBox, "itemImage", CollectionEvent_GetHeirloomButtonImage( activeCollectionEvent ) )
-		HudElem_SetRuiArg( file.heirloomBox, "itemsOwnedCount", CollectionEvent_GetItemCount( activeCollectionEvent, true, GetUIPlayer() ) )
-		HudElem_SetRuiArg( file.heirloomBox, "totalItemsCount", CollectionEvent_GetItemCount( activeCollectionEvent, false, GetUIPlayer() ) )
+		                                                                                    
+		                                                                                               
+		                                                                                          
+		                                                                                                                                      
+
+		HudElem_SetRuiArg( file.completionRewardBox, "isOwned", HeirloomEvent_IsCompletionRewardOwned( activeCollectionEvent, isInventoryReady ) );
+		HudElem_SetRuiArg( file.completionRewardBox, "bgPatternImage", CollectionEvent_GetBGTabPatternImage( activeCollectionEvent ) )
+		HudElem_SetRuiArg( file.completionRewardBox, "itemImage", HeirloomEvent_GetHeirloomButtonImage( activeCollectionEvent ) )
+		HudElem_SetRuiArg( file.completionRewardBox, "itemsOwnedCount", HeirloomEvent_GetItemCount( activeCollectionEvent, true, GetLocalClientPlayer() ) )
+		HudElem_SetRuiArg( file.completionRewardBox, "totalItemsCount", HeirloomEvent_GetItemCount( activeCollectionEvent, false, GetLocalClientPlayer() ) )
+		HudElem_SetRuiArg( file.completionRewardBox, "headerText", HeirloomEvent_GetHeirloomHeaderText( activeCollectionEvent ) )
+		HudElem_SetRuiArg( file.completionRewardBox, "unlockDesc", HeirloomEvent_GetHeirloomUnlockDesc( activeCollectionEvent ) )
 
 		HudElem_SetRuiArg( file.rewardBarBacker, "title", CollectionEvent_GetFrontPageRewardBoxTitle( activeCollectionEvent ) )
-		HudElem_SetRuiArg( file.rewardBarBacker, "bgPatternImage", CollectionEvent_GetBGPatternImage( activeCollectionEvent ) )
-		HudElem_SetRuiArg( file.rewardBarBacker, "itemsOwnedNum", CollectionEvent_GetItemCount( activeCollectionEvent, true, GetUIPlayer() ) )
-		HudElem_SetRuiArg( file.rewardBarBacker, "totalItemsNum", CollectionEvent_GetItemCount( activeCollectionEvent, false, GetUIPlayer() ) )
+		HudElem_SetRuiArg( file.rewardBarBacker, "bgPatternImage", CollectionEvent_GetBGTabPatternImage( activeCollectionEvent ) )
+		HudElem_SetRuiArg( file.rewardBarBacker, "itemsOwnedNum", HeirloomEvent_GetItemCount( activeCollectionEvent, true, GetLocalClientPlayer() ) )
+		HudElem_SetRuiArg( file.rewardBarBacker, "totalItemsNum", HeirloomEvent_GetItemCount( activeCollectionEvent, false, GetLocalClientPlayer() ) )
 
 		foreach ( int rewardButtonRowIdx, array<var> rewardButtonRow in file.rewardButtonRows )
 		{
 			int rewardGroupIdx                     = rewardButtonRowIdx
 			CollectionEventRewardGroup rewardGroup = rewardGroups[rewardButtonRowIdx]
-			Assert( rewardGroup.rewards.len() <= rewardButtonRow.len(), format( "Collection event reward group has too many rewards. (%s)", ItemFlavor_GetHumanReadableRef( activeCollectionEvent ) ) )
+			Assert( rewardGroup.rewards.len() <= rewardButtonRow.len(), format( "Collection event reward group has too many rewards. (%s)", string(ItemFlavor_GetAsset( activeCollectionEvent )) ) )
 
-			//
-			//
-			//
+			                                                                                                             
+			                                                                                                                   
+			                                                                                                           
 
 			foreach ( int rewardButtonColIdx, var rewardButton in rewardButtonRow )
 			{
@@ -179,7 +243,7 @@ void function CollectionEventPanel_UpdateGRXDependantElements()
 				HudElem_SetRuiArg( rewardButton, "isOwned", isOwned )
 
 				int quality = ItemFlavor_HasQuality( rewardFlav ) ? ItemFlavor_GetQuality( rewardFlav ) : 0
-				Assert( quality == rewardGroup.quality, format( "Reward quality does not match collection event reward group quality. (%s, %s)", ItemFlavor_GetHumanReadableRef( activeCollectionEvent ), ItemFlavor_GetHumanReadableRef( rewardFlav ) ) )
+				Assert( quality == rewardGroup.quality, format( "Reward quality does not match collection event reward group quality. (%s, %s)", string(ItemFlavor_GetAsset( activeCollectionEvent )), string(ItemFlavor_GetAsset( rewardFlav ) )) )
 				HudElem_SetRuiArg( rewardButton, "rarity", quality )
 				RuiSetImage( Hud_GetRui( rewardButton ), "buttonImage", CustomizeMenu_GetRewardButtonImage( rewardFlav ) )
 			}
@@ -187,104 +251,155 @@ void function CollectionEventPanel_UpdateGRXDependantElements()
 
 		if ( offersReady )
 		{
-			currentMaxEventPackPurchaseCount = CollectionEvent_GetCurrentMaxEventPackPurchaseCount( activeCollectionEvent, GetUIPlayer() )
+			currentMaxEventPackPurchaseCount = CollectionEvent_GetCurrentMaxEventPackPurchaseCount( activeCollectionEvent, GetLocalClientPlayer() )
 
-			//
-			//
-			//
-			//
-			//
-			//
-			//
-			//
+			                                                                                                               
+			                                            
+			   
+			  	                                                  
+			  	                                                       
+			  	                                                                                 
+			  	                                                                                                                     
+			   
 		}
+		UpdateMythicElements( activeCollectionEvent )
 	}
 
 	if ( !menuIsUsable )
 	{
 		foreach ( var rewardButton in file.allRewardButtons )
 			Hud_SetEnabled( rewardButton, false )
+
+		foreach( var but in file.mythicIndicatorButtons )
+			Hud_SetVisible( but, false )
+
+		HudElem_SetRuiArg( file.completionRewardBox, "activeMythicTier", 0 )
 	}
 
 	var focus = GetFocus()
-	if ( !file.allRewardButtons.contains( GetFocus() ) && focus != file.heirloomBox )
+	if ( !file.allRewardButtons.contains( GetFocus() ) && focus != file.completionRewardBox )
 		focus = null
 	UpdateFocusStuff( focus )
 
 	Hud_SetVisible( file.purchaseSinglePackButton, !GRX_IsOfferRestricted() )
 	Hud_SetLocked( file.purchaseSinglePackButton, currentMaxEventPackPurchaseCount < 1 )
-	HudElem_SetRuiArg( file.purchaseSinglePackButton, "numPacks", 1 )
 	int packBulkPurchaseCount = (currentMaxEventPackPurchaseCount < 2 ? PACK_BULK_PURCHASE_COUNT : ClampInt( currentMaxEventPackPurchaseCount, 2, PACK_BULK_PURCHASE_COUNT ))
 	Hud_SetVisible( file.purchaseMultiplePacksButton, !GRX_IsOfferRestricted() )
 	Hud_SetLocked( file.purchaseMultiplePacksButton, currentMaxEventPackPurchaseCount < packBulkPurchaseCount )
-	HudElem_SetRuiArg( file.purchaseMultiplePacksButton, "numPacks", packBulkPurchaseCount )
 	file.WORKAROUND_purchaseMultiplePacksButton_currentQty = packBulkPurchaseCount
 
-	if ( isInventoryReady && GRX_IsOfferRestricted() )
-		Hud_SetY( file.aboutButton, ContentScaledY( -500 ) )
+                      
+		HudElem_SetRuiArg( file.purchaseSinglePackButton, "numPacks", 1 )
+		HudElem_SetRuiArg( file.purchaseMultiplePacksButton, "numPacks", packBulkPurchaseCount )
+       
 
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
+	if ( isInventoryReady && GRX_IsOfferRestricted() )
+		Hud_SetY( file.aboutButton, ContentScaledY( -480 ) )
+
+	                                                       
+	                    
+	   
+	  	                                                       
+	  	                                
+	  	 
+	  		                                                                                                                           
+	  		                                                     
+	  		 
+	  			                                             
+	  			                                                                   
+	  		 
+	  		    
+	  		 
+	  			                                                                                                                                                              
+	  		 
+	  	 
+	  	                                                                                                    
+	   
+	                                                                                         
 }
 
-//
-string playingQuipEventName = ""
-table<asset, int> nextQuipIdxMap = {}
-//
+
+void function UpdateMythicElements( ItemFlavor activeCollectionEvent )
+{
+	bool awardMythic = HeirloomEvent_IsRewardMythicSkin( activeCollectionEvent )
+
+	HudElem_SetRuiArg( file.completionRewardBox, "isMythicActive", awardMythic )
+
+	if ( !awardMythic )
+		return
+
+	HudElem_SetRuiArg( file.completionRewardBox, "activeMythicTier", file.activeMythicTier + 1 )
+
+	ItemFlavor charFlav = expect ItemFlavor( GetItemFlavorAssociatedCharacterOrWeapon( HeirloomEvent_GetPrimaryCompletionRewardItem( activeCollectionEvent ) ) )
+
+	for( int i = 0; i < file.mythicIndicatorButtons.len(); i++ )
+	{
+		var button = file.mythicIndicatorButtons[i]
+
+		Hud_SetVisible( button, true )
+
+		ItemFlavor mythicSkin = expect ItemFlavor( Mythics_GetSkinTierForCharacter( charFlav, i ) )
+		HudElem_SetRuiArg( button, "skinIcon", ItemFlavor_GetIcon( mythicSkin ), eRuiArgType.IMAGE )
+
+		bool isOwned = false
+
+		if ( ItemFlavor_GetGRXMode( mythicSkin ) == eItemFlavorGRXMode.REGULAR )
+			isOwned = GRX_IsItemOwnedByPlayer( mythicSkin )
+		else
+			isOwned = false
+
+		HudElem_SetRuiArg( button, "isOwned", isOwned )
+	}
+}
 
 void function UpdateFocusStuff( var focusedRewardButtonOrNull )
 {
-	//
-	if ( playingQuipEventName != "" )
-	{
-		StopUISoundByName( playingQuipEventName )
-		playingQuipEventName = ""
-	}
-	//
-
-	file.WORKAROUND_currentlyFocusedRewardButtonForFooters = focusedRewardButtonOrNull
-
 	ItemFlavor ornull activeCollectionEvent = file.activeCollectionEvent
 	if ( activeCollectionEvent == null )
 		return
 	expect ItemFlavor(activeCollectionEvent)
 
-	bool isHeirloom = false
+	                                                                                 
+	                                                                                                                     
+	if ( focusedRewardButtonOrNull == null && HeirloomEvent_IsRewardMythicSkin( activeCollectionEvent ) && file.WORKAROUND_currentlyFocusedRewardButtonForFooters == file.completionRewardBox )
+	{
+		focusedRewardButtonOrNull = file.WORKAROUND_currentlyFocusedRewardButtonForFooters
+	}
+	else
+	{
+		file.WORKAROUND_currentlyFocusedRewardButtonForFooters = focusedRewardButtonOrNull
+	}
+
+	bool isCompletionReward = false
 
 	ItemFlavor focusFlav
 	if ( focusedRewardButtonOrNull == null || !GRX_IsInventoryReady() )
 	{
 		if ( !GRX_IsOfferRestricted() )
+		{
 			focusFlav = CollectionEvent_GetMainPackFlav( activeCollectionEvent )
+		}
 		else
-			focusFlav = CollectionEvent_GetHeirloomPrimaryItemFlav( activeCollectionEvent )
+		{
+			focusFlav = HeirloomEvent_GetPrimaryCompletionRewardItem( activeCollectionEvent )
+			isCompletionReward = true
+		}
 	}
 	else if ( focusedRewardButtonOrNull in file.rewardButtonToRewardFlavMap )
 	{
 		focusFlav = file.rewardButtonToRewardFlavMap[focusedRewardButtonOrNull]
 	}
-	else if ( focusedRewardButtonOrNull == file.heirloomBox )
+	else if ( focusedRewardButtonOrNull == file.completionRewardBox )
 	{
-		focusFlav = CollectionEvent_GetHeirloomPrimaryItemFlav( activeCollectionEvent )
-		isHeirloom = true
+		focusFlav = HeirloomEvent_GetPrimaryCompletionRewardItem( activeCollectionEvent )
+		isCompletionReward = true
+	}
+	else if ( focusedRewardButtonOrNull == file.purchaseSinglePackButton || focusedRewardButtonOrNull == file.purchaseMultiplePacksButton )
+	{
+		if ( !GRX_IsOfferRestricted() )
+		{
+			focusFlav = CollectionEvent_GetMainPackFlav( activeCollectionEvent )
+		}
 	}
 	else
 	{
@@ -303,6 +418,7 @@ void function UpdateFocusStuff( var focusedRewardButtonOrNull )
 
 	bool isPack = (ItemFlavor_GetType( focusFlav ) == eItemType.account_pack)
 	Hud_SetVisible( file.openPackButton, isPack )
+	bool isMythicSkin = false
 
 	if ( isPack )
 	{
@@ -311,24 +427,48 @@ void function UpdateFocusStuff( var focusedRewardButtonOrNull )
 		rarityText = "#PACK"
 		descText = "#COLLECTION_EVENT_PACK_DESCRIPTION"
 
-		ItemFlavor heirloomPackFlav = CollectionEvent_GetHeirloomPackFlav( activeCollectionEvent )
-		UpdateLootBoxButton( file.openPackButton, [ focusFlav, heirloomPackFlav ] )
+		ItemFlavor completionRewardPack = HeirloomEvent_GetCompletionRewardPack( activeCollectionEvent )
+		UpdateLootBoxButton( file.openPackButton, [ focusFlav, completionRewardPack ] )
 	}
-	else
+	else if ( isCompletionReward )
 	{
+		isMythicSkin = Mythics_IsItemFlavorMythicSkin( focusFlav )
+		rarityCol = SrgbToLinear( GetKeyColor( COLORID_TEXT_LOOT_TIER0, ItemFlavor_GetQuality( focusFlav ) + 1 ) / 255.0 )
+
+		if ( HeirloomEvent_AwardHeirloomShards( activeCollectionEvent ) )
+		{
+			nameText = Localize( "#N_HEIRLOOM_SHARDS", 150 )
+			rarityText = ItemFlavor_GetQualityName( focusFlav )
+		}
+		else if( isMythicSkin )
+		{
+			focusFlav = expect ItemFlavor( Mythics_GetItemTierForSkin( focusFlav, file.activeMythicTier ) )
+			nameText = Localize( "#TIER", file.activeMythicTier + 1 )
+			descText = GetLocalizedItemFlavorDescriptionForOfferButton( focusFlav, false )
+			descText += " - "
+			descText += Localize( GRX_IsInventoryReady() ? ( GRX_IsItemOwnedByPlayer( focusFlav ) ? "#OWNED" : "#LOCKED" ) : "" )
+			rarityText = "#MYTHIC_SKIN"
+		}
+		else
+		{
+			nameText = ItemFlavor_GetLongName( focusFlav )
+			descText = GetLocalizedItemFlavorDescriptionForOfferButton( focusFlav, false )
+			descText += " - "
+			descText += Localize( GRX_IsInventoryReady() ? ( GRX_IsItemOwnedByPlayer( focusFlav ) ? "#OWNED" : "#LOCKED" ) : "" )
+			rarityText = ItemFlavor_GetQualityName( focusFlav )
+		}
+
+		HudElem_SetRuiArg( file.completionRewardBox, "rarity", ItemFlavor_GetQuality( focusFlav ) )
+	}
+	else                   
+	{
+		file.focusedButtonIsntMythic = true
 		nameText = ItemFlavor_GetLongName( focusFlav )
 		rarityCol = SrgbToLinear( GetKeyColor( COLORID_TEXT_LOOT_TIER0, ItemFlavor_GetQuality( focusFlav ) + 1 ) / 255.0 )
 		rarityText = ItemFlavor_GetQualityName( focusFlav )
-		descText += GetLocalizedItemFlavorDescriptionForOfferButton( focusFlav, false )
-		descText += " — "
+		descText = GetLocalizedItemFlavorDescriptionForOfferButton( focusFlav, false )
+		descText += " - "
 		descText += Localize( GRX_IsInventoryReady() ? (GRX_IsItemOwnedByPlayer( focusFlav ) ? "#OWNED" : "#LOCKED") : "" )
-
-		//
-		int numQuips = GetIncludedQuips( focusFlav ).len()
-		hasBonus = (numQuips > 0)
-		bonusString = Localize( "#S03E01_BONUS_QUIPS_DESC", numQuips )
-		TryPreviewIncludedQuip( focusFlav )
-		//
 
 		if ( !GRX_IsItemOwnedByPlayer( focusFlav ) )
 		{
@@ -343,131 +483,72 @@ void function UpdateFocusStuff( var focusedRewardButtonOrNull )
 					Assert( offer.prices.len() == 2 )
 					foreach ( ItemFlavorBag price in offer.prices )
 					{
-						Assert( price.flavors.len() == 1 )
+						Assert( price.flavors.len() == 1, "No price given for ItemFlavor bag in GRX offer." )
 						if ( price.flavors[0] == GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
 						{
-							Assert( premiumPrice == -1 )
+							Assert( premiumPrice == -1, "Inherited existing (NOT -1) Premium Currency price for ItemFlavor bag in GRX offer." )
 							premiumPrice = price.quantities[0]
 						}
 						else if ( price.flavors[0] == GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] )
 						{
-							Assert( craftingPrice == -1 )
+							Assert( craftingPrice == -1, "Inherited existing (NOT -1) Crafting Materials price for ItemFlavor bag in GRX offer." )
 							craftingPrice = price.quantities[0]
 						}
-						else Assert( false )
+						else
+						{
+							Assert( false, "Invalid currency - something that is *NOT* AC or CM - price for ItemFlavor bag in GRX offer." )
+						}
 					}
 				}
 			}
-
-			if ( !isHeirloom && CollectionEvent_GetPackOffer( activeCollectionEvent ) != null )
+                    
+                                                                        
+                             
+     
+			if ( CollectionEvent_GetPackOffer( activeCollectionEvent ) != null )
 				showUnlockWithPack = true
+      
 		}
 	}
 
 	if ( GRX_IsInventoryReady() && GRX_IsOfferRestricted()
-			&& focusFlav == CollectionEvent_GetHeirloomPrimaryItemFlav( activeCollectionEvent )
-			&& GRX_GetPackCount( ItemFlavor_GetGRXIndex( CollectionEvent_GetHeirloomPackFlav( activeCollectionEvent ) ) ) > 0 )
+			&& focusFlav == HeirloomEvent_GetPrimaryCompletionRewardItem( activeCollectionEvent )
+			&& GRX_GetPackCount( ItemFlavor_GetGRXIndex( HeirloomEvent_GetCompletionRewardPack( activeCollectionEvent ) ) ) > 0 )
 	{
 		Hud_SetVisible( file.openPackButton, true )
-		ItemFlavor heirloomPackFlav = CollectionEvent_GetHeirloomPackFlav( activeCollectionEvent )
-		UpdateLootBoxButton( file.openPackButton, [ heirloomPackFlav ] )
+		ItemFlavor completionRewardPack = HeirloomEvent_GetCompletionRewardPack( activeCollectionEvent )
+		UpdateLootBoxButton( file.openPackButton, [ completionRewardPack ] )
 		isPack = true
 	}
 
-	RuiSetColorAlpha( Hud_GetRui( file.itemDetailsBox ), "rarityCol", rarityCol, 1.0 )
-	HudElem_SetRuiArg( file.itemDetailsBox, "itemRarityText", rarityText )
-	HudElem_SetRuiArg( file.itemDetailsBox, "itemNameText", nameText )
-	HudElem_SetRuiArg( file.itemDetailsBox, "itemDescText", descText )
-	HudElem_SetRuiArg( file.itemDetailsBox, "isPack", isPack )
-	HudElem_SetRuiArg( file.itemDetailsBox, "showUnlockWithPack", showUnlockWithPack )
-	HudElem_SetRuiArg( file.itemDetailsBox, "premiumPrice", premiumPrice )
-	HudElem_SetRuiArg( file.itemDetailsBox, "craftingPrice", craftingPrice )
-	HudElem_SetRuiArg( file.itemDetailsBox, "packName", CollectionEvent_GetMainPackShortPluralName( activeCollectionEvent ) )
-	HudElem_SetRuiArg( file.itemDetailsBox, "packImage", CollectionEvent_GetMainPackImage( activeCollectionEvent ), eRuiArgType.IMAGE )
-
-	//
-	HudElem_SetRuiArg( file.itemDetailsBox, "hasBonus", hasBonus )
-	HudElem_SetRuiArg( file.itemDetailsBox, "bonusString", bonusString )
-	//
+	var rui = Hud_GetRui( file.itemDetailsBox )
+	RuiSetColorAlpha( rui, "rarityCol", rarityCol, 1.0 )
+	RuiSetString( rui, "itemRarityText", rarityText )
+	RuiSetString( rui, "itemNameText", nameText )
+	RuiSetString( rui, "itemDescText", descText )
+	RuiSetBool( rui, "isPack", isPack )
+	RuiSetBool( rui, "showUnlockWithPack", showUnlockWithPack )
+	RuiSetInt( rui, "premiumPrice", premiumPrice )
+	RuiSetInt( rui, "craftingPrice", craftingPrice )
+	RuiSetString( rui, "packName", CollectionEvent_GetMainPackShortPluralName( activeCollectionEvent ) )
+	RuiSetImage( rui, "packImage", CollectionEvent_GetMainPackImage( activeCollectionEvent ) )
 
 	bool shouldPlayAudioPreview = true
-	RunClientScript( "UIToClient_ItemPresentation", ItemFlavor_GetGUID( focusFlav ), -1, 1.21, false, null, shouldPlayAudioPreview, "collection_event_ref" )
 
-	UpdateFooterOptions() //
+	UpdateMythicUI( isMythicSkin )
+
+	bool isNxHH = false
+#if NX_PROG || PC_PROG_NX_UI
+	isNxHH = IsNxHandheldMode()
+#endif
+	RunClientScript( "UIToClient_ItemPresentation", ItemFlavor_GetGUID( focusFlav ), -1, 1.19, false, null, shouldPlayAudioPreview, "collection_event_ref", isNxHH, false, false, false )
+	UpdateFooterOptions()                             
 }
-
-
-//
-array<asset> function GetIncludedQuips( ItemFlavor rewardFlav )
-{
-	asset rewardFlavAsset = ItemFlavor_GetAsset( rewardFlav )
-	if ( !(rewardFlavAsset in S03E01_HARD_CODED_BONUS_QUIPS) )
-		return []
-
-	return S03E01_HARD_CODED_BONUS_QUIPS[rewardFlavAsset]
-}
-//
-bool function ShouldShowIncludedQuipPreviewPromptFooter()
-{
-	var focus = file.WORKAROUND_currentlyFocusedRewardButtonForFooters //
-	if ( !(focus in file.rewardButtonToRewardFlavMap) )
-		return false
-	ItemFlavor focusFlav = file.rewardButtonToRewardFlavMap[focus]
-
-	return GetIncludedQuips( focusFlav ).len() > 0
-}
-//
-void function TryPreviewIncludedQuipForFocusedItem( var btn )
-{
-	var focus = file.WORKAROUND_currentlyFocusedRewardButtonForFooters //
-	if ( !(focus in file.rewardButtonToRewardFlavMap) )
-		return
-	ItemFlavor focusFlav = file.rewardButtonToRewardFlavMap[focus]
-
-	TryPreviewIncludedQuip( focusFlav )
-}
-//
-void function TryPreviewIncludedQuip( ItemFlavor rewardFlav )
-{
-	if ( playingQuipEventName != "" )
-	{
-		StopUISoundByName( playingQuipEventName )
-		playingQuipEventName = ""
-	}
-
-	array<asset> includedQuips = GetIncludedQuips( rewardFlav )
-	if ( includedQuips.len() == 0 )
-		return
-
-	asset rewardFlavAsset = ItemFlavor_GetAsset( rewardFlav )
-	if ( !(rewardFlavAsset in nextQuipIdxMap) )
-		nextQuipIdxMap[rewardFlavAsset] <- RandomInt( includedQuips.len() )
-	else
-		nextQuipIdxMap[rewardFlavAsset] += 1
-
-	ItemFlavor quipToPlay = GetItemFlavorByAsset( includedQuips[nextQuipIdxMap[rewardFlavAsset] % includedQuips.len()] )
-
-	string quipAlias = ""
-	if ( ItemFlavor_GetType( quipToPlay ) == eItemType.gladiator_card_intro_quip )
-	{
-		quipAlias = CharacterIntroQuip_GetVoiceSoundEvent( quipToPlay )
-	}
-	else if ( ItemFlavor_GetType( quipToPlay ) == eItemType.gladiator_card_kill_quip )
-	{
-		quipAlias = CharacterKillQuip_GetVictimVoiceSoundEvent( quipToPlay )
-	}
-
-	if ( quipAlias != "" )
-	{
-		EmitUISound( quipAlias )
-		playingQuipEventName = quipAlias
-	}
-}
-//
 
 
 void function RewardButton_OnGetFocus( var btn )
 {
+	file.focusedButtonIsntMythic = true
 	UpdateFocusStuff( btn )
 }
 
@@ -487,20 +568,20 @@ void function RewardButton_OnActivate( var btn )
 	if ( !IsItemFlavorInspectable( rewardFlav ) )
 		return
 
-	ItemFlavor activeCollectionEvent = expect ItemFlavor(file.activeCollectionEvent)
+	if ( !GRX_AreOffersReady() )
+		return
 
-	GRXScriptOffer ornull offer
-	if ( GRX_AreOffersReady() )
+	ItemFlavor activeCollectionEvent = expect ItemFlavor( file.activeCollectionEvent )
+	string offerLocation             = CollectionEvent_GetFrontPageGRXOfferLocation( activeCollectionEvent )
+	array<GRXScriptOffer> offers     = GRX_GetItemDedicatedStoreOffers( rewardFlav, offerLocation )
+
+	if ( offers.len() > 0 )
 	{
-		string offerLocation         = CollectionEvent_GetFrontPageGRXOfferLocation( activeCollectionEvent )
-		array<GRXScriptOffer> offers = GRX_GetItemDedicatedStoreOffers( rewardFlav, offerLocation )
-		offer = (offers.len() > 0 ? offers[0] : null)
+		if ( Mythics_IsItemFlavorMythicSkin( rewardFlav ) )
+			StoreMythicInspectMenu_AttemptOpenWithOffer( offers[0] )
+		else
+			StoreInspectMenu_AttemptOpenWithOffer( offers[0] )
 	}
-	SetCollectionEventItemPresentationModeActive(
-		rewardFlav,
-		offer,
-		GRX_IsOfferRestricted() ? null : CollectionEvent_GetMainPackShortPluralName( activeCollectionEvent ),
-		GRX_IsOfferRestricted() ? null : CollectionEvent_GetMainPackImage( activeCollectionEvent ) )
 }
 
 
@@ -544,7 +625,7 @@ bool function CheckInspectableBuyable( ItemFlavor flav, bool wantBuyable )
 
 bool function IsFocusedItemInspectableButNotBuyable()
 {
-	var focus = file.WORKAROUND_currentlyFocusedRewardButtonForFooters //
+	var focus = file.WORKAROUND_currentlyFocusedRewardButtonForFooters                                                                            
 	if ( !(focus in file.rewardButtonToRewardFlavMap) )
 		return false
 	ItemFlavor focusFlav = file.rewardButtonToRewardFlavMap[focus]
@@ -555,7 +636,7 @@ bool function IsFocusedItemInspectableButNotBuyable()
 
 bool function IsFocusedItemInspectableAndBuyable()
 {
-	var focus = file.WORKAROUND_currentlyFocusedRewardButtonForFooters //
+	var focus = file.WORKAROUND_currentlyFocusedRewardButtonForFooters                                                                            
 	if ( !(focus in file.rewardButtonToRewardFlavMap) )
 		return false
 	ItemFlavor focusFlav = file.rewardButtonToRewardFlavMap[focus]
@@ -566,7 +647,7 @@ bool function IsFocusedItemInspectableAndBuyable()
 
 bool function IsFocusedItemEquippable()
 {
-	var focus = file.WORKAROUND_currentlyFocusedRewardButtonForFooters //
+	var focus = file.WORKAROUND_currentlyFocusedRewardButtonForFooters                                                                            
 	if ( !(focus in file.rewardButtonToRewardFlavMap) )
 		return false
 	ItemFlavor focusFlav = file.rewardButtonToRewardFlavMap[focus]
@@ -586,95 +667,139 @@ void function PurchasePackButton_OnClick( var btn, int count )
 		return
 	}
 
-	//
+	                                                                                                   
 	ItemFlavor activeCollectionEvent = expect ItemFlavor(file.activeCollectionEvent)
 	ItemFlavor packFlav              = CollectionEvent_GetMainPackFlav( activeCollectionEvent )
 
 	PurchaseDialogConfig pdc
-	pdc.flav = packFlav
 	pdc.quantity = count
 	pdc.markAsNew = false
+                     
+                                                                                                                   
+                   
+      
+		pdc.flav = packFlav
+       
 	PurchaseDialog( pdc )
 }
 
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+                                                            
+   
+  	                       
+   
+  
+  
+                                                             
+   
+  	                        
+   
 
 
-void function HeirloomBox_OnGetFocus( var btn )
+void function CompletionRewardBox_OnGetFocus( var btn )
 {
+	file.focusedButtonIsntMythic = false
 	UpdateFocusStuff( btn )
 }
 
 
-void function HeirloomBox_OnLoseFocus( var btn )
+void function CompletionRewardBox_OnLoseFocus( var btn )
 {
 	UpdateFocusStuff( null )
 }
 
 
-void function HeirloomBox_OnClick( var btn )
+void function CompletionRewardBox_OnClick( var btn )
 {
 	ItemFlavor activeCollectionEvent = expect ItemFlavor(file.activeCollectionEvent)
-
-	ItemFlavor heirloomPrimaryFlav = CollectionEvent_GetHeirloomPrimaryItemFlav( activeCollectionEvent )
-	if ( !IsItemFlavorInspectable( heirloomPrimaryFlav ) )
+	if ( HeirloomEvent_AwardHeirloomShards( activeCollectionEvent ) )
+	{
+		JumpToHeirloomShop()                                              
 		return
+	}
 
-	SetCollectionEventItemPresentationModeActive( heirloomPrimaryFlav, null, null, null )
+	                                                                                                             
+	ItemFlavor completionRewardPack = HeirloomEvent_GetCompletionRewardPack( activeCollectionEvent )
+	array<ItemFlavor> packContents = GRXPack_GetPackContents( completionRewardPack )
+
+	                                                                                            
+	GRXScriptOffer fakeOffer
+	fakeOffer.titleText = ItemFlavor_GetLongName( completionRewardPack )
+	fakeOffer.descText = ""
+	fakeOffer.prereq = activeCollectionEvent
+
+	ItemFlavorBag priceBag
+	priceBag.flavors.append( GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] )
+	priceBag.quantities.append( 999999999 )
+	fakeOffer.prices.append( priceBag )
+
+	foreach ( item in packContents )
+		AddItemToFakeOffer( fakeOffer, item )
+
+	if ( HeirloomEvent_IsRewardMythicSkin( activeCollectionEvent ) )
+		StoreMythicInspectMenu_AttemptOpenWithOffer( fakeOffer )
+	else
+		StoreInspectMenu_AttemptOpenWithOffer( fakeOffer )
 }
 
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+                                                         
+   
+  	                          
+  	 
+  		                          
+  		      
+  	 
+  
+  	                                                                                                               
+  	                                                                                
+  	                                                                                                       
+  	                                                                                                                      
+  		                    
+  		 
+  			                                                    
+  				              
+  				 
+  					                                
+  					                              
+  					 
+  						           
+  					 
+  					                                                            
+  					 
+  						           
+  					 
+  					                                                     
+  					 
+  						                                                          
+  						     
+  					 
+  					    
+  					 
+  						              
+  					 
+  				 
+  			    
+  		 
+  	   
+   
 
+void function TryOpenLootCeremonyAndCompletionRewardPack()
+{
+	WaitFrame()
+
+	bool grxReady = GRX_IsInventoryReady() && GRX_AreOffersReady()
+	if ( !grxReady )
+		return
+
+	if ( file.activeCollectionEvent == null )
+		return
+
+	ItemFlavor activeCollectionEvent = expect ItemFlavor(file.activeCollectionEvent)
+	ItemFlavor completionRewardPack  = HeirloomEvent_GetCompletionRewardPack( activeCollectionEvent )
+	if ( GRX_GetPackCount( ItemFlavor_GetGRXIndex( completionRewardPack ) ) > 0 )
+		OnLobbyOpenLootBoxMenu_ButtonPress( completionRewardPack )
+}
 
 void function OpenPackButton_OnClick( var btn )
 {
@@ -686,9 +811,90 @@ void function OpenPackButton_OnClick( var btn )
 	if ( GRX_GetPackCount( ItemFlavor_GetGRXIndex( packFlav ) ) > 0 )
 		OnLobbyOpenLootBoxMenu_ButtonPress( packFlav )
 
-	ItemFlavor heirloomPackFlav = CollectionEvent_GetHeirloomPackFlav( activeCollectionEvent )
-	if ( GRX_GetPackCount( ItemFlavor_GetGRXIndex( heirloomPackFlav ) ) > 0 )
-		OnLobbyOpenLootBoxMenu_ButtonPress( heirloomPackFlav )
+	ItemFlavor completionRewardPack = HeirloomEvent_GetCompletionRewardPack( activeCollectionEvent )
+	if ( GRX_GetPackCount( ItemFlavor_GetGRXIndex( completionRewardPack ) ) > 0 )
+		OnLobbyOpenLootBoxMenu_ButtonPress( completionRewardPack )
+}
+
+
+void function MythicInidicatorButton_OnGetFocus( var button )
+{
+	file.focusedButtonIsntMythic = true
+	file.activeMythicTier = int( Hud_GetScriptID( button ) )
+	UpdateMythicUI( true )
+	UpdateFocusStuff( file.completionRewardBox )
+}
+
+void function MythicInidicatorButton_OnLoseFocus( var button )
+{
+	UpdateFocusStuff( null )
+	file.focusedButtonIsntMythic = false
+	thread MythicInspect_AutoAdvance()
+}
+
+void function MythicInspect_AutoAdvance()
+{
+	if ( !IsLobby() )
+		return
+
+	if( file.autoRunning )
+		return
+
+	file.autoRunning = true
+
+	while( !file.focusedButtonIsntMythic )
+	{
+		wait 3.0
+
+		if( file.focusedButtonIsntMythic )
+		{
+			break
+		}
+
+		if ( !IsConnected() )
+			return
+
+		if ( !IsLobby() )
+			return
+
+		if( file.activeMythicTier < MYTHIC_INIDICATOR_COUNT - 1 )
+			file.activeMythicTier++
+		else
+			file.activeMythicTier = 0
+
+		UpdateMythicUI( true )
+		UpdateFocusStuff( file.completionRewardBox )
+	}
+	file.autoRunning = false
+}
+
+void function UpdateMythicUI( bool isMythicActive )
+{
+	if ( file.activeCollectionEvent != null )
+		HudElem_SetRuiArg( file.completionRewardBox, "itemImage", HeirloomEvent_GetMythicButtonImage( expect ItemFlavor( file.activeCollectionEvent ), file.activeMythicTier ) )
+	HudElem_SetRuiArg( file.completionRewardBox, "activeMythicTier", file.activeMythicTier + 1 )
+	HudElem_SetRuiArg( file.itemDetailsBox, "isMythic", isMythicActive )
+	HudElem_SetRuiArg( file.itemDetailsBox, "mythicDescText", "#S12ACE_MYTHIC_COLLECTION_UNLOCK" )
+
+	for( int index; index < file.mythicIndicatorButtons.len(); index++ )
+	{
+		var button = file.mythicIndicatorButtons[index]
+		if( !IsValid( button ) )
+			continue
+
+		Hud_SetVisible( button, isMythicActive )
+
+		if( !isMythicActive )
+			continue
+		var rui = Hud_GetRui( button )
+
+		RuiSetInt( rui, "activeTier", file.activeMythicTier + 1 )
+	}
+
+	if( isMythicActive )
+	{
+		thread MythicInspect_AutoAdvance()
+	}
 }
 
 

@@ -2,8 +2,22 @@
 global function InitPlayVideoMenu
 global function PlayVideoMenu
 global function SetVideoCompleteFunc
+global function TriggerVideoEnd
+global function IsPlayVideoMenuPlayingVideo
 
-const string INTRO_VIDEO = "intro"
+
+
+
+
+
+	global const string INTRO_VIDEO = "intro"
+	global const string WELCOME_VIDEO = "ftu_intro"
+	global const string WELCOME_INT_VIDEO = "ftu_intro_int"
+
+
+global const string INTRO_AUDIO_EVENT = "Apex_Opening_Movie"
+global const string WELCOME_AUDIO_EVENT =  "Apex_Opening_Tutorial"
+
 
 global enum eVideoSkipRule
 {
@@ -12,18 +26,26 @@ global enum eVideoSkipRule
 	NO_SKIP
 }
 
+global struct VideoPlaySettings
+{
+	string video = ""
+	string milesAudio = ""
+	bool forceSubtitles = false
+	int skipRule = eVideoSkipRule.INSTANT
+	void functionref() videoCompleteFunc = null
+}
+
+
 struct
 {
-	var menu
-	string video
-	string milesAudio
-	int skipRule = eVideoSkipRule.INSTANT
-	var ruiSkipLabel
-	bool holdInProgress = false
-	void functionref() videoCompleteFunc
+	var               menu
+	VideoPlaySettings videoSettings
+	var               ruiSkipLabel
+	bool              holdInProgress = false
+	bool              playingVideo = false
 } file
 
-void function InitPlayVideoMenu( var newMenuArg )
+void function InitPlayVideoMenu( var newMenuArg ) 
 {
 	RegisterSignal( "PlayVideoMenuClosed" )
 	RegisterSignal( "SkipVideoHoldReleased" )
@@ -42,41 +64,38 @@ void function InitPlayVideoMenu( var newMenuArg )
 	file.ruiSkipLabel = Hud_GetRui( vguiSkipLabel )
 }
 
-void function PlayVideoMenu( bool isDialog, string video, string milesAudio = "", int skipRule = eVideoSkipRule.INSTANT, void functionref() func = null )
+void function PlayVideoMenu( bool isDialog, VideoPlaySettings settings )
 {
-	Assert( video != "" )
+	Assert( file.videoSettings.video == "" )
 
-	SetDialog( file.menu, isDialog ) //
-	file.video = video
-	file.milesAudio = milesAudio
-	file.skipRule = skipRule
-	file.videoCompleteFunc = func
+	SetDialog( file.menu, isDialog ) 
+	file.videoSettings.video = settings.video
+	file.videoSettings.milesAudio = settings.milesAudio
+	file.videoSettings.forceSubtitles = settings.forceSubtitles
+	file.videoSettings.skipRule = settings.skipRule
+	file.videoSettings.videoCompleteFunc = settings.videoCompleteFunc
 	AdvanceMenu( file.menu )
 }
 
 void function SetVideoCompleteFunc( void functionref() func )
 {
-	file.videoCompleteFunc = func
+	file.videoSettings.videoCompleteFunc = func
 }
 
 void function OnPlayVideoMenu_Open()
 {
 	EndSignal( uiGlobal.signalDummy, "PlayVideoMenuClosed" )
 
-	Assert( file.video != "" )
-
-	bool forceUseCaptioning = false
-	if ( GetLanguage() != "english" && file.video != INTRO_VIDEO )
-		forceUseCaptioning = true
+	Assert( file.videoSettings.video != "" )
 
 	DisableBackgroundMovie()
 	SetMouseCursorVisible( false )
 	StopVideos( eVideoPanelContext.UI )
-	uiGlobal.playingVideo = true
+	file.playingVideo = true
 	UIMusicUpdate()
-	PlayVideoFullScreen( file.video, file.milesAudio, forceUseCaptioning )
+	PlayVideoFullScreen( file.videoSettings.video, file.videoSettings.milesAudio, file.videoSettings.forceSubtitles )
 
-	if ( file.skipRule == eVideoSkipRule.HOLD )
+	if ( file.videoSettings.skipRule == eVideoSkipRule.HOLD )
 		thread WaitForSkipInput()
 
 	WaitSignal( uiGlobal.signalDummy, "PlayVideoEnded" )
@@ -90,22 +109,23 @@ void function OnPlayVideoMenu_Close()
 	Signal( uiGlobal.signalDummy, "PlayVideoMenuClosed" )
 
 	StopVideos( eVideoPanelContext.UI )
-	if ( file.milesAudio != "" )
-		StopUISoundByName( file.milesAudio )
-	file.video = ""
-	file.milesAudio = ""
+	if ( file.videoSettings.milesAudio != "" )
+		StopUISoundByName( file.videoSettings.milesAudio )
+
+	file.videoSettings.video = ""
+	file.videoSettings.milesAudio = ""
 	EnableBackgroundMovie()
 	SetMouseCursorVisible( true )
-	uiGlobal.playingVideo = false
+	file.playingVideo = false
 	UIMusicUpdate()
 
-	if ( file.videoCompleteFunc != null )
-		thread file.videoCompleteFunc()
+	if ( file.videoSettings.videoCompleteFunc != null )
+		thread file.videoSettings.videoCompleteFunc()
 }
 
 void function OnPlayVideoMenu_NavigateBack()
 {
-	if ( file.skipRule == eVideoSkipRule.INSTANT )
+	if ( file.videoSettings.skipRule == eVideoSkipRule.INSTANT )
 		CloseActiveMenu()
 }
 
@@ -115,7 +135,7 @@ void function WaitForSkipInput()
 
 	array<int> inputs
 
-	// Gamepad
+	
 	inputs.append( BUTTON_A )
 	inputs.append( BUTTON_B )
 	inputs.append( BUTTON_X )
@@ -127,13 +147,13 @@ void function WaitForSkipInput()
 	inputs.append( BUTTON_BACK )
 	inputs.append( BUTTON_START )
 
-	// Keyboard/Mouse
+	
 	inputs.append( KEY_SPACE )
 	inputs.append( KEY_ESCAPE )
 	inputs.append( KEY_ENTER )
 	inputs.append( KEY_PAD_ENTER )
 
-	WaitFrame() // Without this the skip message would show instantly if you chose the main menu intro option with BUTTON_A or KEY_SPACE
+	WaitFrame() 
 	foreach ( input in inputs )
 	{
 		if ( input == BUTTON_A || input == KEY_SPACE )
@@ -185,8 +205,8 @@ void function SkipButton_Press()
 
 	file.holdInProgress = true
 
-	float holdStartTime = Time()
-	table hold // Table is needed to pass by reference
+	float holdStartTime = UITime()
+	table hold 
 	hold.completed <- false
 
 	EndSignal( uiGlobal.signalDummy, "SkipVideoHoldReleased" )
@@ -208,10 +228,23 @@ void function SkipButton_Press()
 	while ( holdDuration < 1.5 )
 	{
 		WaitFrame()
-		holdDuration = Time() - holdStartTime
+		holdDuration = UITime() - holdStartTime
 	}
 
 	hold.completed = true
+}
+
+void function TriggerVideoEnd()
+{
+
+	Signal( uiGlobal.signalDummy, "PlayVideoEnded" )
+
+
+
+
+
+
+
 }
 
 void function SkipButton_Release( var button )
@@ -221,6 +254,14 @@ void function SkipButton_Release( var button )
 
 void function ShowAndFadeSkipLabel()
 {
-	RuiSetGameTime( file.ruiSkipLabel, "initTime", Time() )
-	RuiSetGameTime( file.ruiSkipLabel, "startTime", Time() )
+	if ( GetBugReproNum() == 5555 )
+		printt( "IsControllerModeActive():", IsControllerModeActive() )
+
+	RuiSetGameTime( file.ruiSkipLabel, "initTime", UITime() )
+	RuiSetGameTime( file.ruiSkipLabel, "startTime", UITime() )
+}
+
+bool function IsPlayVideoMenuPlayingVideo()
+{
+	return file.playingVideo
 }

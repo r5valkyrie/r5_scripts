@@ -29,6 +29,8 @@ global function UICallback_BackpackClosed
 
 global function UICallback_GroundlistOpened
 global function UICallback_GroundlistClosed
+global function UIToClient_GroundlistOpened
+global function UIToClient_GroundlistClosed
 
 global function UICallback_UpdateInventoryButton
 global function UICallback_OnInventoryButtonAction
@@ -550,6 +552,17 @@ void function UICallback_GroundlistClosed()
 		player.ClientCommand( "BackpackClosed" )
 }
 
+// Aliases for UI compatibility
+void function UIToClient_GroundlistOpened()
+{
+	UICallback_GroundlistOpened()
+}
+
+void function UIToClient_GroundlistClosed()
+{
+	UICallback_GroundlistClosed()
+}
+
 
 void function Survival_UnequipAttachment( string ref, int weaponSlot, bool removeToGround )
 {
@@ -781,12 +794,12 @@ void function TrackDistanceFromDeathBox( entity player, entity deathBox )
 
 void function OpenSurvivalGroundList( entity player, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS )
 {
-	SurvivalMenu_Internal( player, "NEW_OpenSurvivalGroundListMenu", deathBox, groundListBehavior )
+	SurvivalMenu_Internal( player, "OpenSurvivalGroundListMenu", deathBox, groundListBehavior )
 }
 
 void function OpenSurvivalGroundListRetail( entity player, entity deathBox = null, int groundListBehavior = eGroundListBehavior.CONTENTS, int groundListType = eGroundListType.DEATH_BOX )
 {
-	string funcName = "NEW_OpenSurvivalGroundListMenu"
+	string funcName = "OpenSurvivalGroundListMenu"
 	SurvivalMenu_Internal_Retail( player, funcName, deathBox, groundListBehavior, groundListType )
 }
 
