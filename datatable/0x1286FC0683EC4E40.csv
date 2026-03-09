@@ -1,0 +1,7 @@
+"loadoutSlot","rotationStyle","loadoutSlotType","loadoutContentsList"
+"specialist","HOURLY","REGULAR","specialist_loadout_1 specialist_loadout_2 specialist_loadout_3 specialist_loadout_4"
+"blitz","HOURLY","REGULAR","blitz_loadout_1 blitz_loadout_2 blitz_loadout_3 blitz_loadout_4"
+"assault","HOURLY","REGULAR","assault_loadout_1 assault_loadout_2 assault_loadout_3 assault_loadout_4"
+"heavy","HOURLY","REGULAR","heavy_loadout_1 heavy_loadout_2 heavy_loadout_3 heavy_loadout_4"
+"longrange","HOURLY","REGULAR","longrange_loadout_1 longrange_loadout_2 longrange_loadout_3 longrange_loadout_4 longrange_loadout_5"
+"string","string","string","string"

@@ -43,11 +43,7 @@ void function ArmoryWeaponsPanel_OnShow( var panel )
 	array<ItemFlavor> categories = GetAllWeaponCategories()
 
 	foreach ( index, button in file.weaponCategoryButtons )
-	{
-		if ( index >= categories.len() )
-			break
 		CategoryButton_Init( button, categories[index] )
-	}
 }
 
 void function ArmoryWeaponsPanel_OnHide( var panel )

@@ -91,7 +91,7 @@ struct FileStruct_LifetimeLevel
 
 	table<ItemFlavor, LoadoutEntry>             loadoutWeaponSkinSlotMap
 
-	table<ItemFlavor, LoadoutEntry>             loadoutWeaponCharmSlotMap
+	table<int, LoadoutEntry>             loadoutWeaponCharmSlotMap
 
 	table<ItemFlavor, int> cosmeticFlavorSortOrdinalMap
 
@@ -236,7 +236,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 			#endif
 		} )
 
-		fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor] <- charmEntry
+		fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor.guid] <- charmEntry
 	}
 }
 
@@ -264,7 +264,7 @@ void function SetupWeaponSkin( ItemFlavor skin, ItemFlavor ornull parentWeapon =
 		if ( viewModel != $"" )
 			PrecacheModel( viewModel )
 
-		// parentItemFlavor doesn't exist in RPaks, use passed-in parent weapon
+		// Use passed parent weapon if available, otherwise read from settings
 		ItemFlavor weaponFlavor
 		if ( parentWeapon != null )
 			weaponFlavor = expect ItemFlavor( parentWeapon )
@@ -361,7 +361,13 @@ asset ornull function Loadout_GetLore( ItemFlavor flavor )
 
 LoadoutEntry function Loadout_WeaponCharm( ItemFlavor weaponFlavor )
 {
-	return fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor]
+	if ( !(weaponFlavor.guid in fileLevel.loadoutWeaponCharmSlotMap) )
+	{
+		Warning( "Loadout_WeaponCharm: weaponFlavor GUID not found in map: " + weaponFlavor.guid )
+		LoadoutEntry emptyEntry
+		return emptyEntry
+	}
+	return fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor.guid]
 }
 
 
@@ -375,8 +381,16 @@ bool function WeaponCharm_IsTheEmpty( ItemFlavor flavor )
 asset function WeaponCharm_GetCharmModel( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.weapon_charm )
-
-	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "charmModel" )
+	asset assetVal = ItemFlavor_GetAsset( flavor )
+	if ( assetVal == $"" )
+	{
+		Warning("WeaponCharm_GetCharmModel: Invalid ItemFlavor asset")
+		return $""
+	}
+	asset charmName = GetGlobalSettingsAsset( assetVal, "charmModel" )
+	if ( charmName == $"" )
+		return $""
+	return charmName
 }
 
 bool function WeaponCharm_HasStoryBlurb( ItemFlavor flavor )
@@ -389,8 +403,23 @@ bool function WeaponCharm_HasStoryBlurb( ItemFlavor flavor )
 string function WeaponCharm_GetStoryBlurbBodyText( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.weapon_charm )
-
-	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "customSkinMenuBlurb" )
+	asset assetVal = ItemFlavor_GetAsset( flavor )
+	string blurb = ""
+	try
+	{
+		blurb = GetGlobalSettingsString( assetVal, "customSkinMenuBlurb" )
+	}
+	catch ( ex )
+	{
+		Warning("WeaponCharm_GetStoryBlurbBodyText: Exception retrieving customSkinMenuBlurb for " + string(assetVal) + ": " + string(ex))
+		return ""
+	}
+	if ( blurb == "" )
+	{
+		Warning("WeaponCharm_GetStoryBlurbBodyText: customSkinMenuBlurb does not exist for " + string(assetVal))
+		return ""
+	}
+	return blurb
 }
 
 string function WeaponCharm_GetAttachmentName( ItemFlavor flavor )
@@ -549,9 +578,15 @@ ItemFlavor function WeaponSkin_GetWeaponFlavor( ItemFlavor skin )
 {
 	Assert( ItemFlavor_GetType( skin ) == eItemType.weapon_skin )
 
-	Assert( GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "parentItemFlavor" ) != "", "No parentItemFlavor for skin "+ string(ItemFlavor_GetAsset( skin )) )
+	asset parentAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "parentItemFlavor" )
+	if ( parentAsset == $"" )
+	{
+		Warning( "Weapon skin has no parentItemFlavor: " + string(ItemFlavor_GetAsset( skin )) )
+		ItemFlavor empty
+		return empty
+	}
 
-	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "parentItemFlavor" ) )
+	return GetItemFlavorByAsset( parentAsset )
 }
 
 
@@ -771,14 +806,14 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 
 				fileLevel.menuWeaponCharmEntityMap[ent] <- charmEnt
 
-				AddEntityDestroyedCallback( charmEnt, 
-					void function ( entity charmEnt ) : ( ent ) 
+				AddEntityDestroyedCallback( charmEnt,
+					void function ( entity charmEnt ) : ( ent )
 					{
 						if ( ent in fileLevel.menuWeaponCharmEntityMap )
 						{
 							delete fileLevel.menuWeaponCharmEntityMap[ent]
 						}
-					} 
+					}
 				)
 			}
 		#endif
@@ -794,22 +829,22 @@ void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
 
 	asset weaponModel = WeaponSkin_GetWorldModel( skin )
 
-               
-                                                       
-   
-                                                                          
-                                            
-                                                                  
-                                                                                    
-                        
-    
-                                    
-    
-   
-       
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	ent.SetModel( weaponModel ) // in the world, we want to show the worldmodel
-	//ent.SetItemFlavorGUID( ent.e.skinItemFlavorGUID )
+	ent.SetItemFlavorGUID( ent.e.skinItemFlavorGUID )
 	// ent.SetLegendaryModelIndex *must* be called *after* ent.SetModel(...) as it also makes a SetModel call itself from within Code.
 	if ( ent.GetNetworkedClassName() == "weaponx" )
 		ent.SetLegendaryModelIndex( fileLevel.weaponSkinLegendaryIndexMap[skin] )
