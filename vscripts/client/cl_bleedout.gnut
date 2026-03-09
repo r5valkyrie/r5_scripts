@@ -215,7 +215,7 @@ void function BleedoutEndTimeChanged( entity player, float oldVal, float newVal,
 {
 	player.Signal( SIGNAL_BLEEDOUT_STATE_CHANGED )
 
-	if ( newVal <= 0.0 )
+	if ( newVal < 1.0 ) // network encoding may produce tiny epsilon for 0.0 default
 		thread HideWoundedMarker( player )
 	else
 	{

@@ -2882,8 +2882,8 @@ void function UICodeCallback_UserInfoUpdated( string hardware, string uid )
 void function UICodeCallback_UIScriptResetComplete()
 {
 	printf( "UICodeCallback_UIScriptResetComplete()" )
-	ShGRX_UIScriptResetComplete()
-	RefreshChallenges()
+	// ShGRX_UIScriptResetComplete() -- disabled: GRX not available offline, currencies array is null causing crash in array.join()
+	// RefreshChallenges() -- disabled: no challenge system offline
 }
 
 
