@@ -453,6 +453,10 @@ void function RuiSetArgByType( var rui, string argName, var argVal, int ruiArgTy
 			break
 
 		case eRuiArgType.WALLTIME:
+			expect float( argVal )
+			RuiSetWallTimeWithOffset( rui, argName, argVal )
+			break
+
 		case eRuiArgType.GAMETIME:
 			expect float( argVal )
 			RuiSetGameTime( rui, argName, argVal )

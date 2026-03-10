@@ -70,6 +70,13 @@ void function InitCreatePanel( var panel )
 	file.panels.append(Hud_GetChild(file.panel, "R5RNamePanel"))
 	file.panels.append(Hud_GetChild(file.panel, "R5RDescPanel"))
 
+	//Initialize sub-panels
+	InitR5RPlaylistPanel(Hud_GetChild(file.panel, "R5RPlaylistPanel"))
+	InitR5RMapPanel(Hud_GetChild(file.panel, "R5RMapPanel"))
+	InitR5RVisPanel(Hud_GetChild(file.panel, "R5RVisPanel"))
+	InitR5RNamePanel(Hud_GetChild(file.panel, "R5RNamePanel"))
+	InitR5RDescPanel(Hud_GetChild(file.panel, "R5RDescPanel"))
+
 	//Setup Default Server Config
 	ServerSettings.svServerName = "My custom server"
 	ServerSettings.svServerDesc = "A Valkyrie server"

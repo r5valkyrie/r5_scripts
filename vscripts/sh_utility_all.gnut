@@ -4226,12 +4226,6 @@ string function GetDateTimeStringDayMonthYear( int timestamp, int offset )
 
 
 #if CLIENT || UI
-void function RuiSetWallTimeWithNow( var rui, string argName )
-{
-	// Approximate wall time with game time
-	RuiSetGameTime( rui, argName, Time() )
-}
-
 void function Hud_SetTextEntryTitle( var elem, string title )
 {
 	// stub

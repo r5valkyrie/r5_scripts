@@ -307,10 +307,6 @@ global function FormatNumber
 global function GetFakeTimeInSeconds
 global function IsLoadScreenFinished
 
-// === RUI/Time ===
-global function RuiSetWallTimeBad
-global function RuiSetWallTimeWithOffset
-
 // === Server/Connection ===
 global function IsConnectedServerInfo
 global function ResetReconnectParameters
@@ -631,18 +627,6 @@ bool function AutomateUi( float delayFactor = 1.0 )
 	return false
 }
 
-// === RUI/Time ===
-
-void function RuiSetWallTimeBad( var rui, string argName, float time = 0.0 )
-{
-	RuiSetGameTime( rui, argName, time )
-}
-
-void function RuiSetWallTimeWithOffset( var rui, string argName, float time )
-{
-	RuiSetGameTime( rui, argName, time )
-}
-
 string function GetDaysHoursRemainingLoc( int days, int hours )
 {
 	string dateFormat = "#DAYS_HOURS_REMAINING"
@@ -670,7 +654,7 @@ string function GetDaysHoursRemainingLoc( int days, int hours )
 
 bool function IsConnectedServerInfo()
 {
-	return false
+	return true
 }
 
 void function ResetReconnectParameters()

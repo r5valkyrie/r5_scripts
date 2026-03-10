@@ -555,6 +555,9 @@ void function ReturnToInbox()
                
 void function Inbox_SetVisible( bool isVisible )
 {
+	if ( inbox.inboxNestedPanel == null )
+		return
+
 	if ( isVisible )
 		ShowPanel( inbox.inboxNestedPanel )
 
@@ -589,6 +592,9 @@ void function Inbox_OnShow( var panel )
                
 void function Inbox_OnHide( var panel )
 {
+	if ( inbox.inboxNestedPanel == null )
+		return
+
 	var scrollPanel = Hud_GetChild( inbox.listPanel, "ScrollPanel" )
 
 	for ( int indicatorIndex = 0; indicatorIndex < inbox.inboxItemButtons.len(); indicatorIndex++ )

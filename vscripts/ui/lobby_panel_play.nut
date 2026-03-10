@@ -487,13 +487,7 @@ void function UpdateLastPlayedPlayerInfo()
 
 bool function InviteLastPlayedPanelShouldBeVisible()
 {
-	if ( GetUnixTimestamp() - GetPersistentVarAsInt( "lastGameTime" ) > INVITE_LAST_PANEL_EXPIRATION )
-		return false
-
-	if ( GetPersistentVarAsInt( "lastGamePlayers" ) == 0 && GetPersistentVarAsInt( "lastGameSquads" ) == 0 )
-		return false
-
-	return true
+	return false
 }
 
 
@@ -547,6 +541,8 @@ void function WatchForLTMModeExpiring( string plName )
 
 var function GetModeSelectButton()
 {
+	if ( GamemodeSelect_IsEnabled() )
+		return file.gamemodeSelectButton
 	return file.modeButton
 }
 
@@ -566,10 +562,9 @@ void function PlayPanel_OnShow( var panel )
 	CreateNestedAccountDisplayBadge( selfRui, "accountBadgeHandle", 499 )
 
 	if ( IsFullyConnected() )
-	{
 		AccessibilityHint( eAccessibilityHint.LOBBY_CHAT )
-		Lobby_UpdatePlayPanelPlaylists()
-	}
+
+	Lobby_UpdatePlayPanelPlaylists()
 	UpdateLobbyButtons()
 
 	if ( file.chatroomMenu )
@@ -906,6 +901,13 @@ void function Lobby_SetSelectedPlaylist( string playlistName )
 {
 	printt( "Lobby_SetSelectedPlaylist " + playlistName )
 	file.selectedPlaylist = playlistName
+
+	// Sync to ServerSettings for CreateServer()
+	ServerSettings.svPlaylist = playlistName
+	array<string> maps = GetPlaylistMaps( playlistName )
+	if ( maps.len() > 0 && !maps.contains( ServerSettings.svMapName ) )
+		ServerSettings.svMapName = maps[0]
+
 	UpdateLobbyButtons()
 	Lobby_UpdateLoadscreenFromPlaylist()
 
@@ -1937,17 +1939,6 @@ bool function CanActivateModeButton()
 
 bool function HasNewModes()
 {
-	if ( !IsFullyConnected() )
-		return false
-
-	if ( Playlist_GetNewModeVersion() > GetPersistentVarAsInt( "newModeVersion" ) )
-		return true
-
-	string currentLTM = Playlist_GetLTMSlotPlaylist()
-	                                                                                                                                                                                             
-	if ( ( currentLTM != "" ) && !IsPlaylistBeingRotated( currentLTM ) && ( currentLTM != GetPersistentVar( "lastSeenLobbyLTM" ) ) && Lobby_IsPlaylistAvailable( currentLTM ) )
-		return true
-
 	return false
 }
 
@@ -2181,9 +2172,6 @@ void function UpdateModeButton()
 		Lobby_UpdateLoadscreenFromPlaylist()
 	}
 
-	if ( CanRunClientScript() )
-		RunClientScript( "Lobby_SetBannerSkin", playlistName )
-
 	file.lastPlaylistDisplayed = playlistName
 }
 
@@ -2255,9 +2243,14 @@ void function ResetFillButton()
 
 void function UpdateFillButton()
 {
+	// Hide fill button — not relevant for custom servers
+	Hud_SetVisible( file.fillButton, false )
+	Hud_SetEnabled( file.fillButton, false )
+	return
+
 	Hud_ClearToolTipData( file.fillButton )
 
-	                                                                                                                         
+
 	bool shouldShowFillButton = DoesPlaylistSupportNoFill( Lobby_GetSelectedPlaylist() ) && IsPartyLeader()
 	bool shouldLockFillButton = false
 
@@ -2333,7 +2326,6 @@ void function ModeButton_OnActivate( var button )
 	if ( Hud_IsLocked( button ) || !CanActivateModeButton() )
 		return
 
-	Remote_ServerCallFunction( "ClientCallback_ViewedModes" )
 	file.newModesAcknowledged = true
 
 	AdvanceMenu( GetMenu( "ModeSelectDialog" ) )
@@ -2347,31 +2339,6 @@ void function GamemodeSelectButton_OnActivate( var button )
 
 	Hud_SetVisible( file.gamemodeSelectButton, false )
 	Hud_SetVisible( file.readyButton, false )
-
-	string currentLTM = Playlist_GetLTMSlotPlaylist()
-	bool resetMode = Lobby_IsPlaylistAvailable( currentLTM )
-	if ( (currentLTM != "") && (currentLTM != GetPersistentVar( "lastSeenLobbyLTM" )) && Lobby_IsPlaylistAvailable( currentLTM ) )
-	{
-		GamemodeSelect_SetFeaturedSlot( "ltm", "#HEADER_NEW_MODE" )
-	}
-	else
-	{
-		array<ItemFlavor> currentEvents = GetActiveBuffetEventArray( GetUnixTimestamp() )
-		foreach ( event in currentEvents )
-		{
-			var sBlock         = ItemFlavor_GetSettingsBlock( event )
-			string highlight = GetSettingsBlockString( sBlock, "highlightGamemodeSelectorSlot" )
-			if ( highlight != "" && highlight != GetPersistentVar( "lastSeenLobbyLTM" ) )
-			{
-				GamemodeSelect_SetFeaturedSlot( highlight, "#HEADER_NEW_EVENT" )
-				resetMode = true
-				break
-			}
-		}
-	}
-
-	if ( resetMode )
-		Remote_ServerCallFunction( "ClientCallback_ViewedModes" )
 
 	AdvanceMenu( GetMenu( "GamemodeSelectDialog" ) )
 }
@@ -2556,13 +2523,24 @@ void function ReadyButtonActivate()
 	else
 	{
 		EmitUISound( SOUND_START_MATCHMAKING_1P )
-		Lobby_StartMatchmaking()
 
-                       
-		if ( CanRunClientScript() )
-			RunClientScript("Lobby_AnniversaryConfettiOnReady")
-      
+		// Sync selected playlist to ServerSettings and launch custom server
+		string playlist = file.selectedPlaylist
+		if ( playlist == "" )
+			playlist = "survival_dev"
 
+		ServerSettings.svPlaylist = playlist
+
+		// Auto-select first compatible map if current map is not in the playlist
+		array<string> maps = GetPlaylistMaps( playlist )
+		if ( maps.len() > 0 && !maps.contains( ServerSettings.svMapName ) )
+			ServerSettings.svMapName = maps[0]
+
+		#if LISTEN_SERVER
+		CreateServer( ServerSettings.svServerName, ServerSettings.svServerDesc,
+		              ServerSettings.svMapName, ServerSettings.svPlaylist,
+		              ServerSettings.svVisibility )
+		#endif
 	}
 }
 
@@ -3242,24 +3220,7 @@ bool function CanInvite()
 
 bool function IsLocalPlayerExemptFromTraining()
 {
-	if ( !IsFullyConnected() || !IsPersistenceAvailable() )
-		return false
-
-                           
-		if ( IsTournamentMatchmaking() )
-			return true
-       
-
-	if ( file.isLocalPlayerExemptFromTraining == eTrainingExemptionState.UNINITIALIZED )
-	{
-		bool isLevelHighEnough = ( GetAccountLevelForXP( GetPersistentVarAsInt( "xp" ) ) >= TRAINING_REQUIRED_BELOW_LEVEL_0_BASE )
-		if ( isLevelHighEnough )
-			file.isLocalPlayerExemptFromTraining = eTrainingExemptionState.TRUE
-		else
-			file.isLocalPlayerExemptFromTraining = eTrainingExemptionState.FALSE
-	}
-
-	return ( file.isLocalPlayerExemptFromTraining == eTrainingExemptionState.TRUE )
+	return true
 }
 
 
@@ -3283,23 +3244,6 @@ bool function DoesPlaylistRequireTraining( string playlist )
 
 bool function HasLocalPlayerCompletedTraining()
 {
-	if ( !IsFullyConnected() || !IsPersistenceAvailable() )
-		return false
-
-	if ( !GetVisiblePlaylistNames().contains( PLAYLIST_TRAINING ) )
-		return true
-
-	#if DEVELOPER
-		if ( GetBugReproNum() == 5000005 )
-			return true
-
-		if ( GetConVarBool( "skip_training" ) )
-			return true
-	#endif       
-
-	if ( GetCurrentPlaylistVarBool( "require_training", true ) )
-		return GetPersistentVarAsInt( "trainingCompleted" ) > 0
-
 	return true
 }
 
@@ -3307,27 +3251,7 @@ bool function HasLocalPlayerCompletedTraining()
                                
 bool function IsLocalPlayerExemptFromNewPlayerOrientation()
 {
-	if( GetConVarBool( "orientation_matches_disabled" ) )
-		return true
-
-	if ( !IsFullyConnected() )
-		return false
-
-	#if CONSOLE_PROG
-	if( !Console_IsSignedIn() || Console_SkippedSignIn() )
-		return false
-	#endif               
-
-	CommunityUserInfo ornull userInfo = GetUserInfo( GetPlayerHardware(), GetPlayerUID() )
-	if ( userInfo == null )
-		return false
-
-                           
-		if ( IsTournamentMatchmaking() )
-			return true
-       
-
-	return false
+	return true
 }
 
 
@@ -3351,31 +3275,7 @@ bool function DoesPlaylistRequireNewPlayerOrientation( string playlist )
 
 bool function HasLocalPlayerCompletedNewPlayerOrientation()
 {
-	if( GetConVarBool( "orientation_matches_disabled" ) )
-		return true
-
-	if ( !IsFullyConnected() )
-		return false
-
-	#if CONSOLE_PROG
-	if( !Console_IsSignedIn() || Console_SkippedSignIn() )
-		return false
-	#endif               
-
-	CommunityUserInfo ornull userInfo = GetUserInfo( GetPlayerHardware(), GetPlayerUID() )
-	if ( userInfo == null )
-		return false
-	expect CommunityUserInfo( userInfo )
-
-	if ( !GetVisiblePlaylistNames().contains( PLAYLIST_NEW_PLAYER_ORIENTATION ) )
-		return true
-
-	#if DEVELOPER
-		if ( GetConVarBool( "skip_training" ) )
-			return true                                                                                                         
-	#endif       
-
-	return userInfo.hasGraduatedBotsQueue
+	return true
 }
 
 
@@ -3594,9 +3494,8 @@ void function Lobby_UpdatePlayPanelPlaylists()
 {
 	file.playlistMods = GetPlaylistModNames()
 	file.playlists = GetVisiblePlaylistNames()
-	Assert( file.playlists.len() > 0 )
 
-	if ( !IsFullyConnected() )
+	if ( file.playlists.len() == 0 )
 		return
 
 	if ( AreWeMatchmaking() )
@@ -3606,26 +3505,6 @@ void function Lobby_UpdatePlayPanelPlaylists()
 		return
 
 	bool isPartyLeader = IsPartyLeader()
-
-	if ( isPartyLeader )
-	{
-		if ( GetPartySize() == 1 && !IsLocalPlayerExemptFromTraining() && !HasLocalPlayerCompletedTraining() )
-		{
-			Lobby_SetSelectedPlaylist( PLAYLIST_TRAINING )
-				return
-		}
-
-                               
-		if ( (!IsLocalPlayerExemptFromNewPlayerOrientation() && !HasLocalPlayerCompletedNewPlayerOrientation()) || DoNonlocalPlayerPartyMembersNeedToCompleteNewPlayerOrientation() )
-		{
-			string currentSelectedPlaylist = Lobby_GetSelectedPlaylist()
-			if ( currentSelectedPlaylist != PLAYLIST_TRAINING && currentSelectedPlaylist != PLAYLIST_FIRING_RANGE )
-				Lobby_SetSelectedPlaylist( PLAYLIST_NEW_PLAYER_ORIENTATION )
-
-			return
-		}
-                                     
-	}
 
 	if ( file.playlists.contains( file.selectedPlaylist ) && file.selectedPlaylist != PLAYLIST_NEW_PLAYER_ORIENTATION )
 	{
@@ -4779,7 +4658,6 @@ void function OpenGameModeSelectDialog()
 	TabData lobbyTabData = GetTabDataForPanel( GetMenu( "LobbyMenu" ) )
 	ActivateTab( lobbyTabData, Tab_GetTabIndexByBodyName( lobbyTabData, "PlayPanel" ) )
 
-	Remote_ServerCallFunction( "ClientCallback_ViewedModes" )
 	file.newModesAcknowledged = true
 
 	AdvanceMenu( GetMenu( "GamemodeSelectDialog" ) )

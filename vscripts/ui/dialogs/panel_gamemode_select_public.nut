@@ -416,14 +416,6 @@ void function ShippingPlaylistCheck()
 
 void function UpdateCrafting()
 {
-                 
-		                        
-		if ( GetCurrentPlaylistVarBool( "crafting_enabled", true ) )
-		{
-			         
-			RunClientScript( "UICallback_PopulateCraftingPanel", file.craftingPreview )
-		}
-       
 }
 
 const float startBuffer = 0.05
@@ -580,19 +572,28 @@ void function GamemodeSelect_UpdateSelectButton( var button, string playlistName
 	int mapIdx = playlistName != "" ? GetPlaylistActiveMapRotationIndex( playlistName ) : -1
 
 	bool doDebug = (InputIsButtonDown( KEY_LSHIFT ) && InputIsButtonDown( KEY_LCONTROL )) || (InputIsButtonDown( BUTTON_TRIGGER_LEFT_FULL ) && InputIsButtonDown( BUTTON_B ))
-	RuiSetString( rui, "modeNameText", GetPlaylistMapVarString( playlistName, mapIdx, "name", "#PLAYLIST_UNAVAILABLE" ) )
+
+	// Use playlist-level name/description/image as fallback when map-level vars are stubbed
+	string modeName = GetPlaylistMapVarString( playlistName, mapIdx, "name", "" )
+	if ( modeName == "" )
+		modeName = GetPlaylistVarString( playlistName, "name", "#PLAYLIST_UNAVAILABLE" )
+	RuiSetString( rui, "modeNameText", modeName )
 	RuiSetString( rui, "playlistName", playlistName )
 
 	RuiSetBool( rui, "doDebug", doDebug )
 
-	string descText = GetPlaylistMapVarString( playlistName, mapIdx, "description", "#HUD_UNKNOWN" )
+	string descText = GetPlaylistMapVarString( playlistName, mapIdx, "description", "" )
+	if ( descText == "" )
+		descText = GetPlaylistVarString( playlistName, "description", "" )
 	RuiSetString( rui, "modeDescText", descText )
 	RuiSetString( rui, "modeLockedReason", "" )
 	RuiSetBool( rui, "alwaysShowDesc", false )
 	RuiSetBool( rui, "isPartyLeader", false )
 	RuiSetBool( rui, "showLockedIcon", true )
 
-	string imageKey  = GetPlaylistMapVarString( playlistName, mapIdx, "image", "" )
+	string imageKey = GetPlaylistMapVarString( playlistName, mapIdx, "image", "" )
+	if ( imageKey == "" )
+		imageKey = GetPlaylistVarString( playlistName, "image", "" )
 	asset imageAsset = GetImageFromImageMap( imageKey )
 	asset thumbnailAsset = GetThumbnailImageFromImageMap( imageKey )
 	string iconKey = GetPlaylistMapVarString( playlistName, mapIdx, "lobby_mini_icon", "" )

@@ -1180,30 +1180,14 @@ string function GetCurrentPlaylistInUiSlot( string uiSlot )
 #if UI
 string function GetDefaultPlaylist()
 {
-                               
-	if ( GetPartySize() == 1 )
-	{
-		if ( !IsLocalPlayerExemptFromTraining() && !HasLocalPlayerCompletedTraining() )
-			return PLAYLIST_TRAINING
-
-		if ( !IsLocalPlayerExemptFromNewPlayerOrientation() && !HasLocalPlayerCompletedNewPlayerOrientation() )
-			return PLAYLIST_NEW_PLAYER_ORIENTATION
-	}
-	else if ( DoNonlocalPlayerPartyMembersNeedToCompleteNewPlayerOrientation() )
-	{
-		return PLAYLIST_NEW_PLAYER_ORIENTATION
-	}
-     
-                                                                                                       
-                          
-      
-
 	array<string> list = GetVisiblePlaylistNames()
-	Assert( list.len() > 0 )
+
+	if ( list.len() == 0 )
+		return "survival_dev"
 
 	foreach ( playlist in list )
 	{
-		if (  PrivateMatchMapSelect_PlaylistIsDefaultSlot( playlist ) || GamemodeSelect_PlaylistIsDefaultSlot( playlist ) && Lobby_IsPlaylistAvailable( playlist ) )
+		if ( PrivateMatchMapSelect_PlaylistIsDefaultSlot( playlist ) || GamemodeSelect_PlaylistIsDefaultSlot( playlist ) && Lobby_IsPlaylistAvailable( playlist ) )
 		{
 			return playlist
 			break
@@ -1212,17 +1196,12 @@ string function GetDefaultPlaylist()
 
 	foreach ( playlist in list )
 	{
-                               
 		if ( playlist == PLAYLIST_TRAINING || playlist == PLAYLIST_NEW_PLAYER_ORIENTATION )
-     
-                                      
-      
 			continue
 		return playlist
 	}
 
-	Assert( false, "Script is unable to find a default playlist. This should only be possible if 'survival_training' is the only playlist available. Check visible, opt_in_only, and private_match vars on playlists to figure what is wrong." )
-	unreachable
+	return list[0]
 }
 #endif
 #if UI

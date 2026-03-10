@@ -44,15 +44,6 @@ void function GamemodeSelect_Open()
 		TabDef tabDef = AddTab( file.menu, Hud_GetChild( file.menu, "GamemodeSelectDialogPublicPanel" ), "#GAMEMODE_CATEGORY_PUBLIC_MATCH" )
 		SetTabBaseWidth( tabDef, 300 )
 	}
-                           
-
-		{
-			TabDef tabDef = AddTab( file.menu, Hud_GetChild( file.menu, "GamemodeSelectDialogPrivatePanel" ), "#GAMEMODE_CATEGORY_PRIVATE_MATCH" )
-			SetTabBaseWidth( tabDef, 300 )
-
-			GamemodeSelect_SetPrivateMatchEnabled()
-		}
-       
 
 	TabData tabData = GetTabDataForPanel( file.menu )
 	tabData.centerTabs = true
@@ -107,36 +98,10 @@ void function SetElementAnimations( var element, float delay, float duration )
 
 void function OnPartyChanged()
 {
-	if( !file.isOpen )
-		return
-
-	GamemodeSelect_SetPrivateMatchEnabled()
 }
 
 void function GamemodeSelect_SetPrivateMatchEnabled()
 {
-	if( !file.isOpen )
-		return
-
-	TabData tabData = GetTabDataForPanel( file.menu )
-	TabDef tabDef   = Tab_GetTabDefByBodyName( tabData, "GamemodeSelectDialogPrivatePanel" )
-
-	bool isEnabled = GetPartySize() <= PRIVATE_MATCH_MAX_PARTY_SIZE
-	tabDef.enabled = isEnabled
-
-	Hud_ClearToolTipData( tabDef.button )
-
-	if(!isEnabled )
-	{
-		ToolTipData tooltip
-		tooltip.descText = "#CUSTOMMATCH_TOOLTIP_UNAVILIABLE"
-
-		Hud_SetToolTipData( tabDef.button, tooltip )
-		if( GetMenuActiveTabIndex(file.menu ) > 0 )
-			ActivateTab( tabData, 0 )
-	}
-
-	UpdateMenuTabs()
 }
 
   
