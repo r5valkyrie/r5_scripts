@@ -59,6 +59,10 @@ struct FileStruct_LifetimeLevel
 }
 FileStruct_LifetimeLevel& fileLevel
 
+// Bakery Data Keys
+const string ANIM_3P_KEY = "anim3p" // also used for the override anim
+const string OVERRIDE_ANIMS_ARRAY_KEY = "overrideAnims"
+const string OVERRIDE_CHARACTER_KEY = "character"
 
 void function ShQuips_LevelInit()
 {
@@ -97,7 +101,7 @@ void function RegisterEquippableQuipsForCharacter( ItemFlavor characterClass, ar
 		#if DEVELOPER
 			entry.pdefSectionKey = "character " + ItemFlavor_GetGUIDString( characterClass )
 			entry.DEV_name       = ItemFlavor_GetCharacterRef( characterClass ) + " Quip " + quipIndex
-		#endif      
+		#endif
 		entry.validItemFlavorList = quipList
 		entry.defaultItemFlavor   = (quipIndex == 0 && characterEmotesList.len() > 0) ? characterEmotesList[0] : entry.validItemFlavorList[0]
 		entry.isSlotLocked        = bool function( EHI playerEHI ) {
@@ -142,13 +146,13 @@ void function RegisterEquippableQuipsForCharacter( ItemFlavor characterClass, ar
 
 		entry.associatedCharacterOrNull = characterClass
 		entry.networkTo                 = eLoadoutNetworking.PLAYER_EXCLUSIVE
-		                                                   
+
 		fileLevel.loadoutCharacterQuipsSlotListMap[characterClass].append( entry )
 	}
 
 	fileLevel.loadoutCharacterFavoredQuipMap[characterClass] <- []
 
-	                                                                            
+
 	for ( int favQuipIndex = 0; favQuipIndex < MAX_FAVORED_QUIPS; favQuipIndex++ )
 	{
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "favoredQuip_" + favQuipIndex + "_for_" + ItemFlavor_GetGUIDString( characterClass ), eLoadoutEntryClass.CHARACTER )
@@ -220,7 +224,18 @@ bool function CharacterQuip_IsTheEmpty( ItemFlavor flavor )
 {
 	AssertEmoteIsValid( flavor )
 
-	return ( GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheEmpty" ) )
+	if ( ItemFlavor_GetType( flavor ) == eItemType.character_emote )
+		return false // Character Emotes have a default, rather than an "empty"
+
+	try
+	{
+		return ( GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheEmpty" ) )
+	}
+	catch ( e )
+	{
+		Warning( "Warning: Asset \"" + ItemFlavor_GetAsset( flavor ) + "\" does not have setting var  \"" + "isTheEmpty" + "\"" )
+		return false  // Return empty asset if isTheEmpty setting doesn't exist
+	}
 }
 
 #if CLIENT || UI
@@ -243,7 +258,7 @@ array<ItemFlavor> function ItemFlavor_GetQuipArrayForCharacter( ItemFlavor chara
 
 	return quips
 }
-#endif                
+#endif
 
 #if CLIENT || UI
 array<ItemFlavor> function ItemFlavor_GetFavoredQuipArrayForCharacter( ItemFlavor characterClass, bool characterEmotesOnly = false )
@@ -265,13 +280,28 @@ array<ItemFlavor> function ItemFlavor_GetFavoredQuipArrayForCharacter( ItemFlavo
 
 	return favoredQuips
 }
-#endif                
+#endif
 
-string function CharacterQuip_GetAnim3p( ItemFlavor flavor )
+string function CharacterQuip_GetAnim3p( ItemFlavor quip, ItemFlavor character )
 {
-	AssertEmoteIsValid( flavor )
+	AssertEmoteIsValid( quip )
 
-	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "anim3p" )
+	if ( ItemFlavor_GetType( quip ) != eItemType.character_emote )
+		return ""
+
+	string anim3p = GetGlobalSettingsString( ItemFlavor_GetAsset( quip ), ANIM_3P_KEY )
+
+	foreach ( var overridePair in IterateSettingsAssetArray( ItemFlavor_GetAsset( quip ), OVERRIDE_ANIMS_ARRAY_KEY ) )
+	{
+		asset overrideCharacter = GetSettingsBlockAsset( overridePair, OVERRIDE_CHARACTER_KEY )
+		if ( IsValidItemFlavorSettingsAsset( overrideCharacter ) && character == GetItemFlavorByAsset( overrideCharacter ) )
+		{
+			anim3p = GetSettingsBlockString( overridePair, ANIM_3P_KEY )
+			break
+		}
+	}
+
+	return anim3p
 }
 
 string function CharacterQuip_GetAnimLoop3p( ItemFlavor flavor )
@@ -350,7 +380,7 @@ void function AssertEmoteIsValid( ItemFlavor flavor )
 
 	Assert( allowedList.contains( ItemFlavor_GetType( flavor ) ) )
 }
-#endif                          
+#endif
 
 
 #if SERVER
@@ -407,8 +437,7 @@ void function BroadcastQuip( entity player, ItemFlavor quip )
 	if ( quipGUID < 0 )
 		return
 
-	// CharacterQuip_GetAnim3p only takes 1 param
-	if ( AreEmotesEnabled() && CharacterQuip_GetAnim3p( quip ) != "" )
+	if ( AreEmotesEnabled() && CharacterQuip_GetAnim3p( quip, character ) != "" )
 		RequestPlayerPerformEmote( player, quip )
 
 	if ( GetGameState() >= eGameState.Resolution )
@@ -503,7 +532,7 @@ void function EmoteIcon_PopulateNestedRui( var rui, ItemFlavor item, int ornull 
 	RuiSetInt( rui, "tier", ItemFlavor_GetQuality( item, 0 ) + 1 )
 	RuiSetImage( nested, "basicImage", icon )
 }
-#endif                
+#endif
 
 
 asset function CharacterQuip_GetModelAsset( ItemFlavor item )

@@ -52,7 +52,6 @@ Scripts:
 	sh_mapname_playlist_gamemode_enums.gnut //(mk): init this early
 	sh_assert.nut
 	feature_flags_script.gnut
-	root_asset_lists.gnut
 	workarounds.gnut
 ]
 

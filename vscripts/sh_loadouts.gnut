@@ -1547,21 +1547,17 @@ int function IsItemFlavorGRXUnlockedForLoadoutSlotHelper( EHI playerEHI, ItemFla
 
 bool function IsItemFlavorGRXUnlockedForLoadoutSlot( EHI playerEHI, ItemFlavor itemFlavor, bool shouldIgnoreGRX = false, bool shouldIgnoreOtherSlots = false )
 {
-	switch( IsItemFlavorGRXUnlockedForLoadoutSlotHelper( playerEHI, itemFlavor, shouldIgnoreGRX, shouldIgnoreOtherSlots ) )
+	// UNLOCK ALL COSMETICS - Return true for all cosmetic items when GRX ownership is UNKNOWN
+	int helperResult = IsItemFlavorGRXUnlockedForLoadoutSlotHelper( playerEHI, itemFlavor, shouldIgnoreGRX, shouldIgnoreOtherSlots )
+	switch( helperResult )
 	{
 		case eTristate.TRUE:
 			return true
 		case eTristate.FALSE:
 			return false
 		default:
-			if ( ItemFlavor_GetType( itemFlavor ) == eItemType.character )
-			{
-				return Character_IsCharacterUnlockedForCalevent( itemFlavor ) || GRX_IsItemOwnedByPlayer_AllowOutOfDateData( itemFlavor, FromEHI( playerEHI ) )
-			}
-			else
-			{
-				return GRX_IsItemOwnedByPlayer_AllowOutOfDateData( itemFlavor, FromEHI( playerEHI ) )
-			}
+			// Instead of checking GRX ownership, just return true to unlock all cosmetics
+			return true
 	}
 	unreachable
 }
@@ -2714,6 +2710,10 @@ void function ClientToUI_RefreshLoadoutSlot( EHI playerEHI, int entryIndex, int 
 
 array<ItemFlavor> function TEMP_FilterItemsForGRX( EHI playerEHI, array<ItemFlavor> items )
 {
+	// UNLOCK ALL COSMETICS - Don't filter out any GRX items
+	return items
+
+	/*
 	array<ItemFlavor> filteredItems
 
 	foreach ( itemFlavor in items )
@@ -2760,6 +2760,7 @@ array<ItemFlavor> function TEMP_FilterItemsForGRX( EHI playerEHI, array<ItemFlav
 	}
 
 	return filteredItems
+	*/
 }
 
 

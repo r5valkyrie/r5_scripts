@@ -145,9 +145,17 @@ void function CardBadgesPanel_Update( var panel )
 					else
 						cat = Localize( CARD_BADGE_CATEGORY_NAMES[ catIndex ] )
 
-					var category = Hud_GetChild( scrollPanel, "GridCategory" + i )
-					HudElem_SetRuiArg( category, "label", cat )
-					HudElem_SetRuiArg( category, "display", lockUnlock )
+					string categoryName = "GridCategory" + i
+					if ( Hud_HasChild( scrollPanel, categoryName ) )
+					{
+						var category = Hud_GetChild( scrollPanel, categoryName )
+						HudElem_SetRuiArg( category, "label", cat )
+						HudElem_SetRuiArg( category, "display", lockUnlock )
+					}
+					else if ( i == 0 )
+					{
+						Warning( "CardBadgesPanel: GridCategory elements not found in menu file. Badge categories will not be displayed. Update the menu file to include GridCategory elements." )
+					}
 				}
 			}
 		}

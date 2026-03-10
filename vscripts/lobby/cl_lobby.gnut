@@ -1,5 +1,36 @@
 globalize_all_functions
 
+      
+
+
+                                                                      
+const int LOBBY_BANNER_DEFAULT_SKIN_INDEX = 0
+const int LOBBY_BANNER_ARENAS_SKIN_INDEX = 1
+const int LOBBY_BANNER_CONTROL_SKIN_INDEX = 2
+const int LOBBY_BANNER_LTM_SKIN_INDEX = 3
+const int LOBBY_BANNER_FREEDM_SKIN_INDEX = 4
+                       
+const int LOBBY_BANNER_BG_DEFAULT_SKIN_INDEX = 5
+      
+
+
+struct
+{
+	array<void functionref( entity )> onPlayerAddedToLobbyCallbacks
+
+	array<entity> lobbyBanners
+	#if DEVELOPER
+		bool overrideLobbyBanner = false
+	#endif
+
+                        
+	array <entity> confettiNodes
+	float confettiCooldown = 0
+	bool balloonCreated = false
+	int conffettiFxParticleIndex = -1
+       
+} file
+
 void function Lobby_AddLocalPlayer()
 {
 	entity player = GetLocalClientPlayer()
@@ -17,12 +48,36 @@ void function Lobby_AddLocalPlayer()
 	// UI will call UI_SetPresentationType(PLAY) when PlayPanel_OnShow fires.
 	
 	foreach ( model in GetEntArrayByScriptName( "lobby_background_character" ) )
+	CacheAnniversaryConfettiEnt()
+	if ( !file.balloonCreated )
 	{
-		if ( !IsLobbyFallLTM() )
-			model.Destroy()
+		array< entity > balloonNodes = GetEntArrayByScriptName( "anniversary_lobby_balloon" )
+		if ( balloonNodes.len() == 1 )
+		{
+			asset balloon = LOBBY_ANNIVERSARY_BALLOON_MDLS.getrandom()
+			entity balloonEnt = CreateClientSidePropDynamic( balloonNodes[0].GetOrigin(), balloonNodes[0].GetAngles(), balloon )
+			balloonEnt.SetModelScale(0.16)
+			balloonEnt.SetSkin(1)
+		}
+
+
+
+		array< entity > apexBalloonNodes = GetEntArrayByScriptName( "anniversary_lobby_apexballoon" )
+		if ( apexBalloonNodes.len()== 1 )
+		{
+			entity apexBalloonEnt = CreateClientSidePropDynamic( apexBalloonNodes[0].GetOrigin(), <0, 0, 0>, $"mdl/celebration/float_balloons/apexlogo_float_balloon_01.rmdl" )
+			apexBalloonEnt.SetModelScale(0.40)
+
+
+
+			{
+				apexBalloonEnt.SetSkin( 2 )
+			}
+		}
+
+		file.balloonCreated = true
 	}
 
-	S11Lobby_CreateProwler()
 
 }
 
@@ -52,21 +107,122 @@ void function UICallback_PlayTabLobbyCamera()
 	player.SetMenuCameraEntity( camera )
 }
 
-void function S11Lobby_CreateProwler()
+void function AddCallback_OnPlayerAddedToLobby( void functionref( entity ) onPlayerAddedToLobbyCallback )
 {
-	array<entity> targetInfos = GetEntArrayByScriptName("lobby_prowler")
-	while ( targetInfos.len() != 0 )
+	Assert( ! ( file.onPlayerAddedToLobbyCallbacks.contains( onPlayerAddedToLobbyCallback ) ), "Attempted to add same callback to onPlayerAddedToLobbyCallbacks twice." )
+
+	file.onPlayerAddedToLobbyCallbacks.append( onPlayerAddedToLobbyCallback )
+}
+
+void function CacheLobbyBannerEnt()
+{
+	file.lobbyBanners = GetEntArrayByScriptName( "lobby_banner" )
+	PrecacheParticleSystem( $"P_s14_HW_eye" )
+}
+
+void function Lobby_SetBannerSkin( string playlist )
+{
+	if( file.lobbyBanners.len() == 0 )
 	{
-		entity targetInfo = targetInfos.pop()
-		if ( !IsValid ( targetInfo ) )
+		                                        
+		CacheLobbyBannerEnt()
+
+		if( file.lobbyBanners.len() == 0 )
+		{
+			Warning( "Lobby_SetBannerSkin - No lobby_banner entity found!" )
 			return
-
-		entity prowler = CreateClientSidePropDynamic( targetInfo.GetOrigin(),  targetInfo.GetAngles(), $"mdl/creatures/prowler/prowler_apex.rmdl")
-		thread PlayAnim( prowler, "pr_idle_lay" )
-		prowler.SetModelScale( 0.7 )
-		prowler.SetSkin( 2 )
-
-		targetInfo.Destroy()
+		}
 	}
 
+	string playlistName = GetParty().playlistName
+
+                        
+	int skinIndex = ( false ) ? LOBBY_BANNER_BG_DEFAULT_SKIN_INDEX : LOBBY_BANNER_DEFAULT_SKIN_INDEX
+      
+                                                
+       
+	if ( GetPlaylistVarBool( playlistName, "is_limited_mode", false ) )
+		skinIndex = LOBBY_BANNER_LTM_SKIN_INDEX
+                        
+                                                                                          
+                                            
+
+
+	#if DEVELOPER
+		if ( file.overrideLobbyBanner )
+			return
+	#endif
+
+	Lobby_SetBannerSkinInternal ( skinIndex )
+}
+
+void function Lobby_SetBannerSkinInternal( int skinIndex )
+{
+	foreach ( lobbyBanner in file.lobbyBanners )
+	{
+		if ( IsValid(lobbyBanner) )
+			lobbyBanner.SetSkin( skinIndex )
+	}
+}
+
+#if DEVELOPER
+void function DEV_SetLobbyBannerSkin( int i )
+{
+	if ( i == -1 )
+	{
+		file.overrideLobbyBanner = false
+		return
+	}
+
+	Lobby_SetBannerSkinInternal( i )
+	file.overrideLobbyBanner = true
+}
+#endif
+
+                       
+void function CacheAnniversaryConfettiEnt()
+{
+	asset confettiFx = ( false ) ? $"P_S16_lobby_confetti_bg" : $"P_S16_lobby_confetti"
+	PrecacheParticleSystem( confettiFx )
+	file.conffettiFxParticleIndex = GetParticleSystemIndex( confettiFx )
+	file.confettiNodes = GetEntArrayByScriptName( "anniversary_lobby_fx" )
+}
+
+void function Lobby_AnniversaryConfettiOnReady()
+{
+	if (  file.confettiNodes.len() == 0 )
+		return
+
+	float now = ClientTime()
+
+	if ( now < (file.confettiCooldown + 3.0))
+		return
+
+	file.confettiCooldown = now
+
+	thread function() : ()
+	{
+		array<int> effectHandles
+		OnThreadEnd(
+			function() : ( effectHandles )
+			{
+				foreach ( effectHandle in effectHandles )
+				{
+					if ( EffectDoesExist( effectHandle ) )
+						EffectStop ( effectHandle, true, true )
+				}
+
+			}
+		)
+
+		foreach ( node in file.confettiNodes)
+		{
+			if ( IsValid ( node ) )
+			{
+				effectHandles.append( StartParticleEffectOnEntity( node, file.conffettiFxParticleIndex, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID ) )
+			}
+		}
+
+		wait 6.0
+	}()
 }

@@ -1,6 +1,7 @@
 global function ScrollPanelInit
 
 global function ScrollPanel_InitPanel
+global function ScrollPanel_DestroyPanel
 global function ScrollPanel_SetActive
 global function ScrollPanel_InitScrollBar
 global function ScrollPanel_Refresh
@@ -58,6 +59,7 @@ struct ScrollPanelData
 	var navDownElement
 
 	bool cursorMustBeOver = false
+	string debugName = ""
 }
 
 struct
@@ -153,6 +155,7 @@ void function ScrollPanel_InitPanel( var panel )
 	ScrollPanelData data
 
 	data.panel = panel
+	data.debugName = Hud_GetHudName( panel )
 
 	if ( !(string(panel) in file.scrollPanels) )
 		file.scrollPanels[string(panel)] <- data
@@ -186,10 +189,31 @@ void function ScrollPanel_InitPanel( var panel )
 
 	UpdatePanelElements( data )
 
+	// Auto-cleanup when panel is hidden to prevent stale references
 	if ( !data.isInitialized )
 	{
-
+		try
+		{
+			AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, void function( var p ) {
+				ScrollPanel_DestroyPanel( p )
+			} )
+		}
+		catch ( e )
+		{
+			// Panel might not be registered in menu system yet, skip event handler
+			Warning( "ScrollPanel: Could not add auto-cleanup handler for '" + data.debugName + "': " + e )
+		}
 	}
+
+	data.isInitialized = true
+}
+
+
+void function ScrollPanel_DestroyPanel( var panel )
+{
+	string key = string(panel)
+	if ( key in file.scrollPanels )
+		delete file.scrollPanels[key]
 }
 
 
@@ -264,28 +288,66 @@ void function ScrollVertical( entity player, float val )
 
 void function MouseWheelUp( var button )
 {
-	foreach ( ScrollPanelData data in file.scrollPanels )
+	array<string> keysToRemove
+	foreach ( string key, ScrollPanelData data in file.scrollPanels )
 	{
-		if ( !data.isActive || ( !Hud_IsCursorOver( data.panel ) && data.cursorMustBeOver ) )
-			continue
+		try
+		{
+			if ( !data.isActive || ( !Hud_IsCursorOver( data.panel ) && data.cursorMustBeOver ) )
+				continue
 
-		data.scrollValue = (60.0 / SCROLL_SPEED) * -1
-		UpdatePanelElements( data )
-		data.scrollValue = 0.0
+			data.scrollValue = (60.0 / SCROLL_SPEED) * -1
+			UpdatePanelElements( data )
+			data.scrollValue = 0.0
+		}
+		catch ( e )
+		{
+			string nameInfo = data.debugName != "" ? data.debugName : "(unknown)"
+			Warning( "ScrollPanel: Error with panel '" + nameInfo + "' (key: " + key + ") - " + e )
+			keysToRemove.append( key )
+		}
+	}
+
+	// Clean up invalid panels
+	foreach ( string key in keysToRemove )
+	{
+		ScrollPanelData data = file.scrollPanels[key]
+		string nameInfo = data.debugName != "" ? data.debugName : "(unknown)"
+		Warning( "ScrollPanel: Removing invalid panel '" + nameInfo + "'" )
+		delete file.scrollPanels[key]
 	}
 }
 
 
 void function MouseWheelDown( var button )
 {
-	foreach ( ScrollPanelData data in file.scrollPanels )
+	array<string> keysToRemove
+	foreach ( string key, ScrollPanelData data in file.scrollPanels )
 	{
-		if ( !data.isActive || ( !Hud_IsCursorOver( data.panel ) && data.cursorMustBeOver ) )
-			continue
+		try
+		{
+			if ( !data.isActive || ( !Hud_IsCursorOver( data.panel ) && data.cursorMustBeOver ) )
+				continue
 
-		data.scrollValue = 60.0 / SCROLL_SPEED
-		UpdatePanelElements( data )
-		data.scrollValue = 0.0
+			data.scrollValue = 60.0 / SCROLL_SPEED
+			UpdatePanelElements( data )
+			data.scrollValue = 0.0
+		}
+		catch ( e )
+		{
+			string nameInfo = data.debugName != "" ? data.debugName : "(unknown)"
+			Warning( "ScrollPanel: Error with panel '" + nameInfo + "' (key: " + key + ") - " + e )
+			keysToRemove.append( key )
+		}
+	}
+
+	// Clean up invalid panels
+	foreach ( string key in keysToRemove )
+	{
+		ScrollPanelData data = file.scrollPanels[key]
+		string nameInfo = data.debugName != "" ? data.debugName : "(unknown)"
+		Warning( "ScrollPanel: Removing invalid panel '" + nameInfo + "'" )
+		delete file.scrollPanels[key]
 	}
 }
 
@@ -341,6 +403,9 @@ void function ScrollHandleRelease( var button )
 
 void function ScrollToFocusedPanel( var panel, ScrollPanelData data )
 {
+	if ( !data.panel )
+		return
+
 	var focusElement = GetFocus()
 	if ( focusElement != null && IsScrollPanelParent( data, focusElement ) )
 	{

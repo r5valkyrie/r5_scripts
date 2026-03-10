@@ -122,11 +122,11 @@ void function ShMusic_LevelInit()
 }
 #endif
 
-#if (SERVER || CLIENT || UI)
+#if SERVER || CLIENT || UI
 void function OnRegisterRootItemFlavors()
 {
 	array<ItemFlavor> musicPackList = []
-	foreach ( asset musicPackAsset in MUSIC_PACK_ASSET_LIST )
+	foreach ( asset musicPackAsset in GetBaseItemFlavorsFromArray( "musicPacks" ) )
 	{
 		if ( musicPackAsset == $"" )
 			continue
@@ -180,17 +180,8 @@ void function OnRegisterRootItemFlavors()
 	#endif
 	fileLevel.musicPackSelectionSlot = entry
 	entry.validItemFlavorList = musicPackList
-	// Guard against empty or insufficient music pack list
-	if ( musicPackList.len() > 1 )
-	{
-		entry.defaultItemFlavor = musicPackList[1]
-		entry.favoriteItemFlavor = musicPackList[0]
-	}
-	else if ( musicPackList.len() > 0 )
-	{
-		entry.defaultItemFlavor = musicPackList[0]
-		entry.favoriteItemFlavor = musicPackList[0]
-	}
+	entry.defaultItemFlavor = musicPackList[1]
+	entry.favoriteItemFlavor = musicPackList[0]
 	entry.maxFavoriteCount = 8
 
 	#if UI

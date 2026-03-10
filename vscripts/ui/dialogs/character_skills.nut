@@ -1,28 +1,43 @@
 global function InitCharacterSkillsDialog
 global function OpenCharacterSkillsDialog
+global function ClientToUI_OpenCharacterSkillsDialog
 
 struct
 {
 	var         menu
-	var         contentRui
 	ItemFlavor& character
 } file
 
 void function InitCharacterSkillsDialog( var newMenuArg )
+                                              
 {
 	var menu = GetMenu( "CharacterSkillsDialog" )
 	file.menu = menu
 
 	SetDialog( menu, true )
-	SetGamepadCursorEnabled( menu, false )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, CharacterSkillsDialog_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, CharacterSkillsDialog_OnClose )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, CharacterSkillsDialog_OnNavigateBack )
 
-	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#OK" )
-}
+	{
+		TabDef tabDef = AddTab( menu, Hud_GetChild( menu, "CharacterAbilitiesPanel" ), "#ABILITIES" )
+		SetTabBaseWidth( tabDef,  220 )
+	}
+	{
+		TabDef tabDef = AddTab( menu, Hud_GetChild( menu, "CharacterRolesPanel" ), "#ALL_CLASSES" )
+		SetTabBaseWidth( tabDef,  260 )
+	}
 
+	TabData tabData = GetTabDataForPanel( file.menu )
+
+	tabData.centerTabs = true
+	SetTabDefsToSeasonal(tabData)
+	SetTabBackground( tabData, Hud_GetChild( file.menu, "TabsBackground" ), eTabBackground.STANDARD )
+
+	HudElem_SetChildRuiArg( menu, "BG", "basicImage", $"rui/menu/character_skills/background", eRuiArgType.IMAGE )
+
+}
 
 void function OpenCharacterSkillsDialog( ItemFlavor character )
 {
@@ -30,59 +45,27 @@ void function OpenCharacterSkillsDialog( ItemFlavor character )
 	AdvanceMenu( file.menu )
 }
 
+void function ClientToUI_OpenCharacterSkillsDialog( int characterGUID )
+{
+	if ( !IsValidItemFlavorGUID( characterGUID ) )
+		return
+	GetItemFlavorByGUID( characterGUID )
+	ItemFlavor character = GetItemFlavorByGUID( characterGUID )
+
+	file.character = character
+
+	AdvanceMenu( file.menu )
+}
 
 void function CharacterSkillsDialog_OnOpen()
 {
-	//printt( Time() )
-	EmitUISound( "UI_Menu_Legend_Details" )
+	SetCharacterSkillsPanelLegend( file.character )
+	TabData tabData = GetTabDataForPanel( file.menu )
 
-	if ( LoadoutSlot_IsReady( ToEHI( GetUIPlayer() ), Loadout_Character() ) )
+	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
 	{
-		CharacterHudUltimateColorData colorData = CharacterClass_GetHudUltimateColorData( file.character )
-		RuiSetColorAlpha( file.contentRui, "ultimateColor", SrgbToLinear( colorData.ultimateColor ), 1 )
-		RuiSetColorAlpha( file.contentRui, "ultimateColorHighlight", SrgbToLinear( colorData.ultimateColorHighlight ), 1 )
+		ActivateTab( tabData, 0 )
 	}
-
-	string character = ItemFlavor_GetHumanReadableRef( file.character )
-	float damageScale = CharacterClass_GetDamageScale( file.character )
-
-	if ( damageScale < 1.0 )
-	{
-		int percent = int( ((1.0 - damageScale)*100) + 0.5 )
-		string finalString = Localize( "#SPECIAL_PERK_N_N", Localize( "#PAS_FORTIFIED" ), Localize( "#PAS_FORTIFIED_DESC", percent ) )
-		RuiSetImage( file.contentRui, "specialPerkIcon", $"rui/hud/passive_icons/juggernaut" )
-		RuiSetString( file.contentRui, "specialPerkDesc", finalString )
-	}
-	else if ( damageScale > 1.0 )
-	{
-		int percent = int( (fabs( 1.0 - damageScale ) * 100) + 0.5 )
-		string finalString = Localize( "#SPECIAL_PERK_N_N", Localize( "#PAS_LOW_PROFILE" ), Localize( "#PAS_LOW_PROFILE_DESC", percent ) )
-		RuiSetImage( file.contentRui, "specialPerkIcon", $"rui/hud/passive_icons/low_profile" )
-		RuiSetString( file.contentRui, "specialPerkDesc", finalString )
-	}
-	else
-	{
-		RuiSetImage( file.contentRui, "specialPerkIcon", $"" )
-		RuiSetString( file.contentRui, "specialPerkDesc", "" )
-	}
-
-	ItemFlavor passive = CharacterClass_GetPassiveAbilities( file.character )[0]
-	RuiSetImage( file.contentRui, "passiveIcon", ItemFlavor_GetIcon( passive ) )
-	RuiSetString( file.contentRui, "passiveName", Localize( ItemFlavor_GetLongName( passive ) ) )
-	RuiSetString( file.contentRui, "passiveDesc", Localize( ItemFlavor_GetLongDescription( passive ) ) )
-	RuiSetString( file.contentRui, "passiveType", Localize( "#PASSIVE" ) )
-
-	RuiSetImage( file.contentRui, "tacticalIcon", ItemFlavor_GetIcon( CharacterClass_GetTacticalAbility( file.character ) ) )
-	RuiSetString( file.contentRui, "tacticalName", Localize( ItemFlavor_GetLongName( CharacterClass_GetTacticalAbility( file.character ) ) ) )
-	RuiSetString( file.contentRui, "tacticalDesc", Localize( ItemFlavor_GetLongDescription( CharacterClass_GetTacticalAbility( file.character ) ) ) )
-	RuiSetString( file.contentRui, "tacticalType", Localize( "#TACTICAL" ) )
-
-	RuiSetImage( file.contentRui, "ultimateIcon", ItemFlavor_GetIcon( CharacterClass_GetUltimateAbility( file.character ) ) )
-	RuiSetString( file.contentRui, "ultimateName", Localize( ItemFlavor_GetLongName( CharacterClass_GetUltimateAbility( file.character ) ) ) )
-	RuiSetString( file.contentRui, "ultimateDesc", Localize( ItemFlavor_GetLongDescription( CharacterClass_GetUltimateAbility( file.character ) ) ) )
-	RuiSetString( file.contentRui, "ultimateType", Localize( "#ULTIMATE" ) )
-
-	RuiSetGameTime( file.contentRui, "initTime", Time() )
 }
 
 

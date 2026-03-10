@@ -148,7 +148,7 @@ void function ShCalEvent_LevelInit()
 	#endif
 
 	AddCallback_RegisterRootItemFlavors( void function() {
-		foreach ( asset eventAsset in CAL_EVENT_ASSET_LIST )
+		foreach ( asset eventAsset in GetBaseItemFlavorsFromArray( "calevents" ) )
 		{
 			ItemFlavor ornull eventOrNull = RegisterItemFlavorFromSettingsAsset( eventAsset )
 			if ( eventOrNull != null )

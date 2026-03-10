@@ -1412,11 +1412,26 @@ var function GetPanel( string panelName )
 array<var> function GetAllMenuPanels( var menu )
 {
 	array<var> menuPanels
+	array<var> stalePanels
 
 	foreach ( panel in uiGlobal.allPanels )
 	{
-		if ( Hud_GetParent( panel ) == menu )
-			menuPanels.append( panel )
+		try
+		{
+			if ( Hud_GetParent( panel ) == menu )
+				menuPanels.append( panel )
+		}
+		catch ( e )
+		{
+			// Panel is stale/destroyed, mark for cleanup
+			stalePanels.append( panel )
+		}
+	}
+
+	// Clean up stale panel references
+	foreach ( stalePanel in stalePanels )
+	{
+		uiGlobal.allPanels.removebyvalue( stalePanel )
 	}
 
 	return menuPanels
@@ -1426,11 +1441,26 @@ array<var> function GetAllMenuPanels( var menu )
 array<var> function GetMenuTabBodyPanels( var menu )
 {
 	array<var> panels
+	array<var> stalePanels
 
 	foreach ( panel in uiGlobal.allPanels )
 	{
-		if ( Hud_GetParent( panel ) == menu )
-			panels.append( panel )
+		try
+		{
+			if ( Hud_GetParent( panel ) == menu )
+				panels.append( panel )
+		}
+		catch ( e )
+		{
+			// Panel is stale/destroyed, mark for cleanup
+			stalePanels.append( panel )
+		}
+	}
+
+	// Clean up stale panel references
+	foreach ( stalePanel in stalePanels )
+	{
+		uiGlobal.allPanels.removebyvalue( stalePanel )
 	}
 
 	return panels

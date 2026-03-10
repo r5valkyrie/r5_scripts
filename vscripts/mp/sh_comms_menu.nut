@@ -1867,9 +1867,9 @@ void function ClientCommand_Quip( entity player, array<string> args )
 }
 #endif
 #if CLIENT
-void function SetHintTextOnHudElem( var hudElem, string text )
+void function SetHintTextOnHudElem( var hudElem, string text, string subtext )
 {
-	RuiSetString( Hud_GetRui( hudElem ), "buttonText", Localize( text ) )
+	RuiSetString( Hud_GetRui( hudElem ), "buttonText", Localize( text, Localize( subtext ) ) )
 }
 #endif
 void function PlayQuip( entity player, int commsAction )

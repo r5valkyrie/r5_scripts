@@ -392,6 +392,13 @@ void function CLLootBoxCeremony_Init()
 	RegisterSignal( "LootCeremonyAnimShowLootOrSkip" )
 	RegisterSignal( "LootCeremonyTickCancelAnim" )
 
+
+	RegisterSignal( "EndAntiPeekAfterDelay" )
+	RegisterSignal( "StopEmote" )
+	RegisterSignal( "StartingEmote" )
+	RegisterSignal( "EmoteEnded" )
+	RegisterSignal( "EmoteFlourish" )
+
 	LootCeremonyLightingRigPreCache()
 
 	AddCallback_FullUpdate( LootCeremonyOnFullUpdate )
@@ -6225,7 +6232,110 @@ void function ClientToUI_LootCeremonyMarkItemAsNoLongerNew( SettingsAssetGUID it
 #if CLIENT
 void function ModelPerformEmote( entity model, ItemFlavor item, entity mover, bool oneShot = true, bool autoFlourish = false )
 {
-	// Stub: emote animation system not implemented (missing sh_emotes.nut infrastructure)
+	EndSignal( model, "OnDestroy" )
+	EndSignal( mover, "OnDestroy" )
+
+	Signal( model, "StartingEmote" )
+	EndSignal( model, "StartingEmote" )
+
+	OnThreadEnd(
+		function() : ( model )
+		{
+			if ( IsValid( model ) )
+			{
+				Signal( model, "EmoteEnded" )
+			}
+		}
+	)
+
+	int flashType = false ? eMenuModelFlashType.VICTORY_SEQUENCE : eMenuModelFlashType.DEFAULT
+	vector flashColor = <102, 120, 242> / 255
+	thread FlashMenuModel( model, flashType, flashColor )
+
+
+	bool isLocalPlayerModel = true
+
+	string anim3p     = CharacterQuip_GetAnim3p( item, LoadoutSlot_GetItemFlavor( ToEHI( GetLocalClientPlayer() ), Loadout_Character() ))
+	string loopAnim3p = CharacterQuip_GetAnimLoop3p( item )
+
+	bool usesLoop = loopAnim3p != ""
+
+	waitthread PlayAnim( model, anim3p, mover )
+
+	float BASE_WAIT = 0.2
+	float LOOP_WAIT = 0.3
+
+	wait BASE_WAIT                                                                               
+
+	if ( usesLoop )
+	{
+		float loopTime = 0
+
+		loopTime = DEV_CharacterEmote_GetCustomAnimSequenceTime( loopAnim3p )
+		if ( loopTime < 0 )
+			loopTime = model.GetSequenceDuration( loopAnim3p )
+
+		while ( true )
+		{
+			string flourishSeq = ""
+			var flourishBlock = CharacterQuip_SelectWeightedAnimFlourish3p( item )
+
+			if ( flourishBlock )
+				flourishSeq = GetSettingsBlockString( flourishBlock, "sequence" )
+
+			if ( flourishSeq == "" )
+			{
+				                                             
+				waitthread PlayAnim( model, loopAnim3p, mover )
+				break
+			}
+
+			float flourishTime = DEV_CharacterEmote_GetCustomAnimSequenceTime( flourishSeq )
+			if ( flourishTime < 0 )
+				flourishTime = model.GetSequenceDuration( flourishSeq )
+
+			thread PlayAnim( model, loopAnim3p, mover )
+
+			if ( autoFlourish )
+			{
+				wait loopTime
+			}
+
+			thread PlayAnim( model, flourishSeq, mover )
+			wait flourishTime
+
+			if ( !autoFlourish && GetSettingsBlockBool( flourishBlock, "flourishEndsLoop" ) )
+				break
+		}
+	}
+	else if ( !oneShot )
+	{
+		wait LOOP_WAIT - BASE_WAIT
+
+		while ( true )
+		{
+			waitthread PlayAnim( model, anim3p, mover )
+			wait LOOP_WAIT
+		}
+	}
+}
+
+
+const table< string, int > DEV_CUSTOM_ANIM_DURATIONS = 	{	  [ "bangalore_menu_select_ready_up" ] 	= 70
+															, [ "mirage_menu_select_ready_up" ]	 	= 100
+															, [ "caustic_menu_ready_up" ]		 	= 124
+															, [ "wattson_menu_select_ready_up" ] 	= 60
+															, [ "octane_menu_select_ready_up" ] 	= 133
+														}
+float function DEV_CharacterEmote_GetCustomAnimSequenceTime( string animName )
+{
+	const float FRAMERATE = 30.0
+	if ( animName in DEV_CUSTOM_ANIM_DURATIONS )
+		return DEV_CUSTOM_ANIM_DURATIONS[ animName ] / FRAMERATE
+	else
+		return -1
+
+	unreachable
 }
 #endif
 

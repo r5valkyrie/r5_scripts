@@ -99,6 +99,10 @@ void function CustomMatchSettings_OnOpen( var panel )
 
 void function CustomMatchSettings_OnClose( var panel )
 {
+	// Clean up scroll panel data to prevent stale references
+	if ( file.selectOptionsPanel != null )
+		ScrollPanel_DestroyPanel( file.selectOptionsPanel )
+
 	CustomMatch_RestoreSettings()
 	CustomMatch_LockLocalSettings( false )
 	RemoveCallback_OnCustomMatchSettingChanged( CUSTOM_MATCH_SETTING_PLAYLIST, Callback_OnPlaylistChanged )

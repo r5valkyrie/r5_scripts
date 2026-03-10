@@ -256,11 +256,18 @@ void function WhatsNewPanel_Update( var panel )
 					int rarity = ItemFlavor_GetQuality( flav )
 					string rarityName = ItemFlavor_GetQualityName( flav )
 					string unlockedItemsRatio = " "+file.itemCategoryUnlockCount[rarity]+" / "+file.itemCategoryCount[rarity]
-					var category = Hud_GetChild( scrollPanel, "GridCategory" + i )
-
-					HudElem_SetRuiArg( category, "label", rarityName )
-					HudElem_SetRuiArg( category, "display", unlockedItemsRatio )
-					HudElem_SetRuiArg( category, "darkColorOverride", <1,1,1> )
+					string categoryName = "GridCategory" + i
+					if ( Hud_HasChild( scrollPanel, categoryName ) )
+					{
+						var category = Hud_GetChild( scrollPanel, categoryName )
+						HudElem_SetRuiArg( category, "label", rarityName )
+						HudElem_SetRuiArg( category, "display", unlockedItemsRatio )
+						HudElem_SetRuiArg( category, "darkColorOverride", <1,1,1> )
+					}
+					else if ( i == 0 )
+					{
+						Warning( "WhatsNewPanel: GridCategory elements not found in menu file. Item categories will not be displayed. Update the menu file to include GridCategory elements." )
+					}
 				}
 			}
 		}

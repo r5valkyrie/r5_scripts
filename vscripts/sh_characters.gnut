@@ -331,7 +331,7 @@ void function OnRegisterRootItemFlavors()
 	fileLevel.characterSelectionSlot = entry
 
 	array<ItemFlavor> characterList = []
-	foreach ( asset characterAsset in CHARACTER_ASSETS )
+	foreach ( asset characterAsset in GetBaseItemFlavorsFromArray( "characters" ) )
 	{
 		if ( characterAsset == $"" )
 			continue
@@ -358,9 +358,7 @@ void function OnRegisterRootItemFlavors()
 		if ( !ItemFlavor_IsAvailableInPlaylist( character ) )
 			fileLevel.nonGRXCharacters.fastremovebyvalue( character )
 	}
-	// Avoid crash when no characters are registered
-	if ( fileLevel.nonGRXCharacters.len() > 0 )
-		entry.defaultItemFlavor = fileLevel.nonGRXCharacters.getrandom()
+	entry.defaultItemFlavor = fileLevel.nonGRXCharacters.getrandom()
 
 	#if CLIENT
 		if ( IsLobby() )

@@ -508,7 +508,9 @@ void function ShArtifacts_LevelInit()
 	fileLevel = newFileLevel
 
 	// N.B.: ItemFlavor registration of the Melee Weapons themselves is in sh_melee.nut - MeleeShared_Init()
+	#if false
 	AddCallback_OnPreAllItemFlavorsRegistered( OnAllItemFlavorsRegistered_Artifact_Weapon )
+	#endif
 
 	// FX callback? --> probably not; put in weapon script
 
@@ -735,6 +737,10 @@ void function RegisterArtifactBladeControlPoints( int guid, array<vector> contro
 
 void function RegisterBladesControlPoints()
 {
+	// Artifacts disabled - no blades to register
+	if ( fileLevel.componentListsByType.len() == 0 )
+		return
+
 	array< ItemFlavor > blades = fileLevel.componentListsByType[ eArtifactComponentType.BLADE ]
 
 	foreach ( ItemFlavor blade in blades )
@@ -826,6 +832,10 @@ int function Artifacts_Loadouts_GetMeleeSkinNetVarOverrideType( bool getComponen
 
 bool function Artifacts_Loadouts_IsAnyArtifactUnlocked( EHI playerEHI, bool shouldIgnoreGRX )
 {
+	// Artifacts disabled - no artifacts unlocked
+	if ( fileLevel.componentListsByType.len() == 0 )
+		return false
+
 	foreach ( ItemFlavor blade in fileLevel.componentListsByType[ eArtifactComponentType.BLADE ] )
 	{
 		if ( ItemFlavor_GetGRXMode( blade ) == eItemFlavorGRXMode.NONE )
@@ -872,6 +882,10 @@ int function Artifacts_Loadouts_GetConfigIndex( ItemFlavor configPtr )
 
 bool function Artifacts_Loadouts_CheckAndFixMisconfigurations( EHI playerEHI, ItemFlavor character )
 {
+	// Artifacts disabled - return early
+	if ( fileLevel.loadoutConfigurationEntriesByIndexAndType.len() == 0 )
+		return false
+
 	bool isMisconfigured = false
 	// check if character has pointer in melee skin
 	// if so, check if blade is valid && - if NOT dev - check if owned
@@ -928,6 +942,10 @@ LoadoutEntry function Artifacts_Loadouts_ComponentChangeSlot()
 #if CLIENT
 void function Artifacts_Loadouts_StorePreviewDataOnPlayerEntityStruct( int componentGUID )
 {
+	// Artifacts disabled - skip
+	if ( fileLevel.loadoutConfigurationEntriesByIndexAndType.len() == 0 )
+		return
+
 	Assert( IsLobby() )
 	Assert( IsValidItemFlavorGUID( componentGUID ) )
 	ItemFlavor component = GetItemFlavorByGUID( componentGUID )
@@ -977,6 +995,10 @@ void function Artifacts_Loadouts_StorePreviewDataOnPlayerEntityStruct( int compo
 #if SERVER || CLIENT
 void function Artifacts_StoreLoadoutDataOnPlayerEntityStruct( entity player, entity weapon, bool forceClear )
 {
+	// Artifacts disabled - skip
+	if ( fileLevel.loadoutConfigurationEntriesByIndexAndType.len() == 0 )
+		return
+
 	#if CLIENT
 		if ( player == null ) // called from UIVM
 		{
@@ -1334,6 +1356,10 @@ void function Artifacts_Loadouts_ClearComponentChange( entity player )
 
 void function Artifacts_Loadouts_RegisterComponentChange( EHI playerEHI, ItemFlavor component )
 {
+	// Artifacts disabled - skip
+	if ( fileLevel.componentSets.len() == 0 )
+		return
+
 	Assert( ItemFlavor_GetType( component ) == eItemType.artifact_component_power_source || ItemFlavor_GetType( component) == eItemType.artifact_component_blade )
 	// if we have a power source saved and saving blade, store empty
 	// if we have a blade saved and saving power source, store empty
@@ -1349,6 +1375,10 @@ void function Artifacts_Loadouts_RegisterComponentChange( EHI playerEHI, ItemFla
 
 void function Artifacts_Loadouts_AutoEquipActivationEmoteAndPowerSourcePair( EHI playerEHI, LoadoutEntry componentSlot, ItemFlavor component )
 {
+	// Artifacts disabled - skip
+	if ( fileLevel.loadoutConfigurationEntriesByIndexAndType.len() == 0 )
+		return
+
 	int configIdx          = Artifacts_Loadouts_GetConfigIndexForLoadoutSlot( componentSlot )
 	int otherType          = Artifacts_GetComponentType( component ) == eArtifactComponentType.POWER_SOURCE ? eArtifactComponentType.ACTIVATION_EMOTE : eArtifactComponentType.POWER_SOURCE
 	LoadoutEntry otherSlot = Artifacts_Loadouts_GetEntryForConfigIndexAndType( configIdx, otherType )
@@ -1363,6 +1393,8 @@ void function Artifacts_Loadouts_AutoEquipActivationEmoteAndPowerSourcePair( EHI
 
 LoadoutEntry function Artifacts_Loadouts_GetEntryForConfigIndexAndType( int configIdx, int componentType )
 {
+	Assert( configIdx < fileLevel.loadoutConfigurationEntriesByIndexAndType.len(), "Artifact configIdx out of bounds - artifacts not initialized" )
+	Assert( componentType < fileLevel.loadoutConfigurationEntriesByIndexAndType[ configIdx ].len(), "Artifact componentType out of bounds - artifacts not initialized" )
 	return fileLevel.loadoutConfigurationEntriesByIndexAndType[ configIdx ][ componentType ]
 }
 
@@ -1867,6 +1899,10 @@ void function Artifact_SetupDecoyFakeWeapon( entity player, entity weapon, entit
 void function Artifacts_GRX_CheckAndRewardUltimateSetComponents( entity player )
 {
 	// run via AddCallback_QueueServersideScriptGRXOperations
+	// Artifacts disabled - skip
+	if ( fileLevel.componentListsByType.len() == 0 )
+		return
+
 	bool playerIsInGrantTable = ( player in fileLevel.grxUltimateSetGrants )
 	for ( int componentType = 0; componentType < eArtifactComponentType.COUNT; componentType++ )
 	{
@@ -2207,7 +2243,7 @@ void function Artifacts_DEV_SetupDaggerForLoadouts( EHI playerEHI, LoadoutEntry 
 	}
 	else
 	{
-		// SURVIVAL_TryGivePlayerDefaultMeleeWeapons not available in S3 - artifact system is stubbed
+		SURVIVAL_TryGivePlayerDefaultMeleeWeapons( FromEHI( playerEHI ) )
 	}
 }
 

@@ -62,7 +62,7 @@ void function OnRegisterRootItemFlavors()
 	fileLevel.loadoutSelectionSlot = entry
 
 	array<ItemFlavor> loadscreenList = []
-	foreach ( asset loadscreenAsset in LOADSCREEN_ASSET_LIST )
+	foreach ( asset loadscreenAsset in GetBaseItemFlavorsFromArray( "loadscreens" ) )
 	{
 		if ( loadscreenAsset == $"" )
 			continue
@@ -76,17 +76,8 @@ void function OnRegisterRootItemFlavors()
 	MakeItemFlavorSet( loadscreenList, fileLevel.loadscreenFlavorSortOrdinalMap, true )
 
 	entry.validItemFlavorList = loadscreenList
-	// Guard against empty or insufficient loadscreen list
-	if ( loadscreenList.len() > 1 )
-	{
-		entry.defaultItemFlavor = loadscreenList[1]
-		entry.favoriteItemFlavor = loadscreenList[0]
-	}
-	else if ( loadscreenList.len() > 0 )
-	{
-		entry.defaultItemFlavor = loadscreenList[0]
-		entry.favoriteItemFlavor = loadscreenList[0]
-	}
+	entry.defaultItemFlavor = loadscreenList[1]
+	entry.favoriteItemFlavor = loadscreenList[0]
 	entry.maxFavoriteCount = 8
 }
 #endif

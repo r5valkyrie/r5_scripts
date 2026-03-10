@@ -114,9 +114,9 @@ void function UpdateActiveUserInfoPanels()
 	// NOTE: GRX backend is not functional, so GRX_IsInventoryReady()
 	// and GRX_AreOffersReady() will never return true. Hardcode currency
 	// display values so the lobby shows "6969" instead of a loading spinner.
-	int premiumBalance  = 999999
-	int creditsBalance  = 1
-	int craftingBalance = 1
+	int premiumBalance  = 0
+	int creditsBalance  = 0
+	int craftingBalance = 0
 
 	foreach( var elem, bool unused in fileLevel.activeUserInfoPanelSet )
 	{

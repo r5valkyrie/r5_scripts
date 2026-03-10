@@ -213,6 +213,13 @@ void function CodeCallback_MapSpawn() // original script entry point
 	PrecacheModel( $"mdl/dev/editor_ref.rmdl" )
 	PrecacheModel( $"mdl/dev/empty_model.rmdl" )
 	PrecacheModel( $"mdl/error.rmdl" ) // model used when no model is provided
+	
+	if ( IsLobby() ){
+		foreach ( asset model in LOBBY_ANNIVERSARY_BALLOON_MDLS )
+		{
+			PrecacheModel( model )
+			PrecacheModel( $"mdl/celebration/float_balloons/apexlogo_float_balloon_01.rmdl" )
+		}}
 
 	#if DEVELOPER
 		ModelViewer_Init()

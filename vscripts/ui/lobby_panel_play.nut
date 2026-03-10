@@ -541,8 +541,6 @@ void function WatchForLTMModeExpiring( string plName )
 
 var function GetModeSelectButton()
 {
-	if ( GamemodeSelect_IsEnabled() )
-		return file.gamemodeSelectButton
 	return file.modeButton
 }
 
@@ -2243,11 +2241,6 @@ void function ResetFillButton()
 
 void function UpdateFillButton()
 {
-	// Hide fill button — not relevant for custom servers
-	Hud_SetVisible( file.fillButton, false )
-	Hud_SetEnabled( file.fillButton, false )
-	return
-
 	Hud_ClearToolTipData( file.fillButton )
 
 
@@ -2340,6 +2333,30 @@ void function GamemodeSelectButton_OnActivate( var button )
 	Hud_SetVisible( file.gamemodeSelectButton, false )
 	Hud_SetVisible( file.readyButton, false )
 
+	string currentLTM = Playlist_GetLTMSlotPlaylist()
+	bool resetMode = Lobby_IsPlaylistAvailable( currentLTM )
+	if ( (currentLTM != "") && (currentLTM != GetPersistentVar( "lastSeenLobbyLTM" )) && Lobby_IsPlaylistAvailable( currentLTM ) )
+	{
+		GamemodeSelect_SetFeaturedSlot( "ltm", "#HEADER_NEW_MODE" )
+	}
+	else
+	{
+		array<ItemFlavor> currentEvents = GetActiveBuffetEventArray( GetUnixTimestamp() )
+		foreach ( event in currentEvents )
+		{
+			var sBlock         = ItemFlavor_GetSettingsBlock( event )
+			string highlight = GetSettingsBlockString( sBlock, "highlightGamemodeSelectorSlot" )
+			if ( highlight != "" && highlight != GetPersistentVar( "lastSeenLobbyLTM" ) )
+			{
+				GamemodeSelect_SetFeaturedSlot( highlight, "#HEADER_NEW_EVENT" )
+				resetMode = true
+				break
+			}
+		}
+	}
+
+	if ( resetMode )
+		Remote_ServerCallFunction( "ClientCallback_ViewedModes" )
 	AdvanceMenu( GetMenu( "GamemodeSelectDialog" ) )
 }
 
@@ -2390,8 +2407,14 @@ void function ReadyShortcut_OnActivate( var panel )
 
 bool function SeasonShortcut_OnActivate( var panel )
 {
-	// Season tab removed from lobby
-	return false
+	TabData lobbyTabData = GetTabDataForPanel( GetMenu( "LobbyMenu" ) )
+
+	if ( Hud_IsFocused( file.friendButton0 ) || Hud_IsFocused( file.friendButton1 ) )
+		return false                                                                                         
+
+	ActivateTab( lobbyTabData, Tab_GetTabIndexByBodyName( lobbyTabData, "SeasonPanel" ) )
+	EmitUISound( "UI_Menu_ApexTab_Select" )
+	return true
 }
 
 

@@ -1,5 +1,18 @@
 globalize_all_functions
 
+global const array< asset > LOBBY_ANNIVERSARY_BALLOON_MDLS =
+[
+	$"mdl/celebration/float_balloons/wraith_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/wattson_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/revenant_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/octane_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/mirage_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/loba_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/ash_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/bloodhound_float_balloon_01.rmdl",
+ 	$"mdl/celebration/float_balloons/lifeline_float_balloon_01.rmdl"
+]
+
 global const string PRIVATE_MATCH_PLAYLIST = "private_match"
 global const int    PRIVATE_MATCH_MAX_PARTY_SIZE = 1
 

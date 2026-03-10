@@ -48,7 +48,6 @@ global function UI_ClearUIShelves
 global function ClientToUI_UpdateHighlightedCharacter
 global function CharacterSelectSetRUI
 global function CharacterSelectDeleteRUIEntities
-global function ClientToUI_OpenCharacterSkillsDialog
 
 global function ServerToUI_CharacterLockRejected
 
@@ -2198,15 +2197,6 @@ void function CharacterSelectSetRUI()
 
 void function CharacterSelectDeleteRUIEntities()
 {
-}
-
-void function ClientToUI_OpenCharacterSkillsDialog( int characterGUID )
-{
-	if ( !IsValidItemFlavorGUID( characterGUID ) )
-		return
-
-	ItemFlavor character = GetItemFlavorByGUID( characterGUID )
-	OpenCharacterSkillsDialog( character )
 }
 
 void function UI_OnCharacterSelectMenu_NavBack()

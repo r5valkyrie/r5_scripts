@@ -7177,7 +7177,7 @@ bool function IsMatchmakingFromMatchEnabled()
 
 bool function AreEmotesEnabled()
 {
-	return false
+	return GetCurrentPlaylistVarBool( "emotes_enable", true )
 }
 
 void function RequestPlayerPerformEmote( entity player, ItemFlavor quip )
