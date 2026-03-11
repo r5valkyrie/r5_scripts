@@ -391,12 +391,12 @@ bool function CustomizeMenus_IsFocusedItemFavorite()
 {
 	foreach ( var button, CustomizeButtonContext cbc in fileLevel.activeCustomizeButtons )
 	{
+		Assert( cbc.loadoutEntries.len() == 1 )
+		LoadoutEntry entry     = cbc.loadoutEntries[0]
+		array<ItemFlavor> favs = LoadoutSlot_GetFavorites( LocalClientEHI(), entry )
+
 		if ( Hud_IsFocused( button ) )
 		{
-			Assert( cbc.loadoutEntries.len() == 1 )
-			LoadoutEntry entry     = cbc.loadoutEntries[0]
-			array<ItemFlavor> favs = LoadoutSlot_GetFavorites( LocalClientEHI(), entry )
-
 			if ( favs.contains( cbc.itemFlavor ) )
 				return true
 		}
@@ -548,7 +548,7 @@ bool function CustomizeMenus_IsFocusedItemUnlocked()
 	{
 		if ( Hud_IsFocused( button ) )
 		{
-			//bool isOwned = GRX_IsItemOwnedByPlayer( cbc.itemFlavor )
+			                                                          
 			bool isEquippable = false
 			foreach ( loadoutEntry in cbc.loadoutEntries )
 			{

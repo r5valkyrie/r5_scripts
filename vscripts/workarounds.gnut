@@ -8,6 +8,7 @@
 // ============================================================================
 
 // === Constants ===
+global const asset FIRINGRANGE_ITEM_RESPAWN_PARTICLE = $"P_impact_shieldbreaker_sparks"
 global const string XPROG_PERSISTENCE_MERGED_PLAT_STRUCT_NAME = "xMergedPlat"
 global const int PLAYER_MELEE_STATE_KICK_ATTACK = 1
 global const int PLAYER_ARMORED_LEAP_PHASE_NONE = 0
@@ -88,6 +89,11 @@ global function replace
 global function WORKAROUND_AssetAppend
 global function DebugDrawScreenText
 global function DebugDrawScreenTextWithColor
+global function MetersToInches
+global function MetersToInchesSqr
+global function GetRandomPointInCircle
+global function OutOfBoundsEnable
+global function IsEventFinale
 
 // === Platform/Hardware ===
 global function GetHardwareFromName
@@ -209,6 +215,24 @@ global function IsArenasRankedGame
 // === Network ===
 global function GetGlobalNonRewindNetBool
 
+// === Squad Cards ===
+global function DoAnimatedSquadCardsPresentation
+global function DoAnimatedChampionSquadCardsPresentation
+
+// === First Time Player (also in UI) ===
+global function GetFirstTimePlayerState
+global function SetFirstTimePlayerState
+#endif
+
+// ============================================================================
+//  #if SERVER || CLIENT - Declarations
+// ============================================================================
+// === S22 Natives not in S3 ===
+global function PrecacheScriptString
+global function LootBin_ForceOpen_Thread
+global function FiringRangeHasDynamicStats
+
+#if SERVER || CLIENT
 // === Mute/Communication ===
 global function TogglePlayerVoiceAndTextMute
 
@@ -219,20 +243,43 @@ global function Perk_CanTeammateCraftPlayerBanner
 global function Control_IsModeEnabled
 global function MissionCheckpoints_GetRespawnsLeftForPlayer
 global function UpgradeCore_ShowUpgradeTree_CharacterSelect
+global function UpgradeCore_ArmorTiedToUpgrades
+global function UpgradeCore_IsEnabled
+global function UpgradeCore_ProgressionLocked_ForPlayer_Set
+global function UpgradeCore_ProgressionLocked_ForPlayer_Get
+global function UpgradeCore_ShowHudUpgradeSelection
+global function UpgradeCore_RuiThread
+global function UpgradeCore_Set_Level
+global function PIN_FiringRange_Settings
+global function PIN_FiringRange_SessionDuration
+global function PIN_FiringRange_DynamicStats_TimeBetweenResets
+global function PIN_FiringRange_Loot_Pickup_Source
+global function PIN_FiringRangeChallengeCompleted
+// PIN_Record_CustomizeRangeSettings, PIN_Record_CustomizeRangeSettings_ForMenuClose,
+// PIN_CCB_Record_DynamicStats_TimeBetweenResets — declared and implemented in firing_range.gnut
 global function TryStartIntroPodiumSequence
+global const string TITAN_SWORD_WEAPON_REF = "mp_weapon_titan_sword"
+global function IsGoldenHorse_FR
+global function TitanSword_WeaponRefIsTitanSword
+global function IsFacing
+global function IsFacingPoint
+global function IsInvalidButMemberVarsStillValid
 
 // === Crossplay ===
 global function IsUserOnSamePlatform
 
-// === Squad Cards ===
-global function DoAnimatedSquadCardsPresentation
-global function DoAnimatedChampionSquadCardsPresentation
-#endif
+// === Player Cleanup ===
+global function DoCleanupPlayerPermanents
 
-// ============================================================================
-//  #if SERVER || CLIENT - Declarations
-// ============================================================================
-#if SERVER || CLIENT
+// === Doors ===
+global function SURVIVAL_ResetAllDoorsInRealm
+
+// === NavMesh ===
+global function NavMesh_GetClosestPoint
+
+// === Spawn Safety ===
+global function CanPutPlayerInSafeSpot
+
 // === Melee/Combat ===
 global function SetObjectCanBeMeleed
 global function IsRebuiltDoor
@@ -1923,6 +1970,37 @@ bool function GetGlobalNonRewindNetBool( string varName )
 	return false
 }
 
+// === Squad Cards ===
+
+// Wraps standard function with defaults
+void function DoAnimatedSquadCardsPresentation()
+{
+	DoSquadCardsPresentation()  // Uses default params
+}
+
+// Wraps standard function with defaults
+void function DoAnimatedChampionSquadCardsPresentation()
+{
+	DoChampionSquadCardsPresentation()  // Uses default params
+}
+
+// === First Time Player (also defined in UI block) ===
+int function GetFirstTimePlayerState()
+{
+	return eNewPlayerState.FIRST_MATCH_PLAYED
+}
+
+void function SetFirstTimePlayerState( int state )
+{
+}
+
+#endif
+
+// ============================================================================
+//  #if SERVER || CLIENT - Implementations
+// ============================================================================
+#if SERVER || CLIENT
+
 // === Mute/Communication ===
 
 // stub
@@ -1958,6 +2036,74 @@ bool function UpgradeCore_ShowUpgradeTree_CharacterSelect()
 	return false
 }
 
+// stubs - UpgradeCore (S22 feature, not in S3)
+bool function UpgradeCore_ArmorTiedToUpgrades()
+{
+	return false
+}
+
+bool function UpgradeCore_IsEnabled()
+{
+	return false
+}
+
+void function UpgradeCore_ProgressionLocked_ForPlayer_Set( entity player, bool locked )
+{
+}
+
+bool function UpgradeCore_ProgressionLocked_ForPlayer_Get( entity player )
+{
+	return false
+}
+
+bool function UpgradeCore_ShowHudUpgradeSelection()
+{
+	return false
+}
+
+void function UpgradeCore_RuiThread( entity player )
+{
+}
+
+void function UpgradeCore_Set_Level( entity player, int level )
+{
+}
+
+// stubs - PIN Telemetry (no telemetry in r5reloaded)
+void function PIN_FiringRange_Settings( entity player, int contextID, bool dynStatsOn, bool dynTimerOn, bool infReloadsOn, bool hitMarksOn, bool show3rdPerson, bool legendUpgradesEnabled, bool friendlyFireOn, int targetSpeed, ... )
+{
+}
+
+void function PIN_FiringRange_SessionDuration( entity player, float duration )
+{
+}
+
+void function PIN_FiringRange_DynamicStats_TimeBetweenResets( entity player, int timeDelta )
+{
+}
+
+void function PIN_FiringRange_Loot_Pickup_Source( entity player, string ref, int lootSrc, string lootSrcStr, vector origin )
+{
+}
+
+void function PIN_FiringRangeChallengeCompleted( entity player, ... )
+{
+}
+
+// PIN_Record_CustomizeRangeSettings*, PIN_CCB_Record_DynamicStats_TimeBetweenResets
+// implemented in firing_range.gnut
+
+// stubs - Golden Horse / Titan Sword (S22 feature, not in S3)
+bool function IsGoldenHorse_FR()
+{
+	return false
+}
+
+bool function TitanSword_WeaponRefIsTitanSword( string ref )
+{
+	return false
+}
+
 // stub
 void function TryStartIntroPodiumSequence()
 {
@@ -1971,26 +2117,36 @@ bool function IsUserOnSamePlatform( string hardware )
 	return true
 }
 
-// === Squad Cards ===
+// === Spawn Safety ===
 
-// Wraps standard function with defaults
-void function DoAnimatedSquadCardsPresentation()
+vector ornull function CanPutPlayerInSafeSpot( entity player, entity ornull ent1, entity ornull ent2, bool b1, bool b2, vector pos1, vector pos2 )
 {
-	DoSquadCardsPresentation()  // Uses default params
+	// S22 native — return position as-is in S3
+	return pos1
 }
 
-// Wraps standard function with defaults
-void function DoAnimatedChampionSquadCardsPresentation()
+// === NavMesh ===
+
+vector function NavMesh_GetClosestPoint( vector point )
 {
-	DoChampionSquadCardsPresentation()  // Uses default params
+	// S22 navmesh native — passthrough in S3
+	return point
 }
 
-#endif
+// === Doors ===
 
-// ============================================================================
-//  #if SERVER || CLIENT - Implementations
-// ============================================================================
-#if SERVER || CLIENT
+void function SURVIVAL_ResetAllDoorsInRealm( int realm )
+{
+	// S22 door reset — not implemented in S3
+}
+
+// === Player Cleanup ===
+
+void function DoCleanupPlayerPermanents( entity player )
+{
+	player.Signal( "CleanupPlayerPermanents" )
+	// PROTO_CleanupTrackedProjectiles( player ) // S3: defined in _weapon_utility.nut, load order issue on CLIENT VM
+}
 
 // === Melee/Combat ===
 
@@ -2084,6 +2240,7 @@ void function SafeSetPersistentVar( entity player, string key, var value )
 {
 	player.SetPersistentVar( key, value )
 }
+
 #elseif CLIENT
 int function SafeGetPersistentVarAsInt( entity player, string key )
 {
@@ -2280,11 +2437,76 @@ bool function AutomateUi( float delayFactor = 1.0 )
 {
 	return false
 }
+
+// === S22 Entity Validity ===
+
+bool function IsInvalidButMemberVarsStillValid( entity ent )
+{
+	return false // S3: no support for this S22 entity state
+}
+
+// === Facing Utilities (S22 _utility.gnut) ===
+
+bool function IsFacing( entity observer, entity target, int viewAngle = 75, bool exactLook = true, bool do2D = false )
+{
+	if( !IsValid( observer ) )
+		return false
+
+	if( !IsValid( target ) )
+		return false
+
+	return( IsFacingPoint( observer, target.GetOrigin(), viewAngle, exactLook, do2D ) )
+}
+
+bool function IsFacingPoint( entity observer, vector targetLoc, int viewAngle = 75, bool exactLook = true, bool do2D = false )
+{
+	vector dir = targetLoc - observer.GetOrigin()
+	dir = Normalize( dir )
+
+	vector observerCheckVector
+
+	if( exactLook )
+	{
+		observerCheckVector = observer.GetPlayerOrNPCViewVector()
+	}
+	else
+	{
+		observerCheckVector = observer.GetForwardVector()
+	}
+
+	if( do2D )
+	{
+		observerCheckVector.z = 0
+		dir.z = 0
+	}
+
+	float dot = DotProduct( observerCheckVector, dir )
+	float yaw = DotToAngle( dot )
+
+	return (yaw < viewAngle)
+}
+
 #endif
 
 // ============================================================================
 //  GLOBAL SCOPE - Implementations (all VMs)
 // ============================================================================
+
+// === S22 Natives not in S3 ===
+void function PrecacheScriptString( string scriptString )
+{
+	// No-op: S3 engine doesn't need explicit script string precaching
+}
+
+void function LootBin_ForceOpen_Thread( entity lootBin, bool doRegular, bool doSecret )
+{
+	// S22 function not in S3 — no-op
+}
+
+bool function FiringRangeHasDynamicStats()
+{
+	return GetCurrentPlaylistVarBool( "has_fr_dynamic_stats", true )
+}
 
 // === Ranked/Rumble ===
 
@@ -2330,6 +2552,37 @@ void function DebugDrawScreenText( float x, float y, string text )
 void function DebugDrawScreenTextWithColor( float x, float y, string text, vector color )
 {
 	// No-op - debug function
+}
+
+float function MetersToInches( float meters )
+{
+	return( meters * METERS_TO_INCHES )
+}
+
+float function MetersToInchesSqr( float meters )
+{
+	float inches = MetersToInches( meters )
+	return( inches * inches )
+}
+
+vector function GetRandomPointInCircle( vector origin, float radius )
+{
+	float t  = 2 * PI * RandomFloat( 1 )
+	float r  = sqrt( RandomFloat( 1.0 ) ) * radius
+	float x  = r * cos( t )
+	float y  = r * sin( t )
+	vector p = <x, y, 0> + origin
+	return p
+}
+
+void function OutOfBoundsEnable()
+{
+	// S3: stub — out of bounds system managed differently
+}
+
+bool function IsEventFinale()
+{
+	return GetCurrentPlaylistVarBool( "is_event_finale", false )
 }
 
 string function replace( string original, string search, string replacement )

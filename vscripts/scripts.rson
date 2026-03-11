@@ -104,6 +104,7 @@ Scripts:
 	sh_pak_requests.gnut
 	mp/sh_alliance_proximity.gnut
 	sh_ehi.gnut
+	realms.gnut
 ]
 
 When: "SERVER || CLIENT || UI"
@@ -647,6 +648,8 @@ Scripts:
 	mp/_sh_tutorial.gnut
 	mp/sh_survival_training.gnut
 	mp/firing_range.gnut
+	mp/sh_combatrange_spawning.nut
+	mp/sh_firing_range_story_events.nut
 	mp/sh_airdrops.gnut
   mp/sh_supply_ship.gnut
 
@@ -698,6 +701,7 @@ Scripts:
 	ai/_ai_chatter.gnut
 	ai/_ai_goliath.gnut
 	ai/_ai_stationary_firing_positions.gnut // DEVSCRIPTS remove
+	ai/_ai_dummie.gnut
 	ai/_ai_drone.gnut
 	ai/_ai_personal_shield.gnut
 	ai/_ai_gunship.gnut
@@ -749,6 +753,11 @@ Scripts:
 	pilot/_zipline.gnut
 	pilot/class_wallrun.gnut
 	superbar/smokescreen.nut
+
+	mp/sh_firing_range_challenges.nut
+	mp/sh_firing_range_g7scout_challenge.nut
+	mp/sh_firing_range_bow_challenge.nut
+	mp/sh_firing_range_p2020_challenge.nut
 
 	titan/_replacement_titans_drop.gnut
 	titan/_titan_commands.gnut

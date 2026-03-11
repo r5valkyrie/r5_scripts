@@ -150,7 +150,19 @@ global const string SNIPER_AMMO = "sniper"
 
 // Arrays that don't exist in base_itemflavors.rpak — skip to avoid crash
 global const array<string> S3_MISSING_ITEMFLAVOR_ARRAYS = [
-
+	"beginnerChallenges",
+	"exoticShards",
+	"mythicSuperCores",
+	"meleeWeapons",
+	"weaponCategories",
+	"stickers",
+	"packs",
+	"currencyBundles",
+	"entitlements",
+	"apexCoinAmounts",
+	"classes",
+	"ranked2Pt0Periods",
+	"vouchers"
 ]
 
 //////////////////////
@@ -800,13 +812,8 @@ bool function IsValidItemFlavorGUID( SettingsAssetGUID guid, int validationBehav
 
 ItemFlavor function GetItemFlavorByGUID( SettingsAssetGUID guid )
 {
-	if ( guid == -1 || guid == 0 )
-	{
-		Warning("GetItemFlavorByGUID: Invalid GUID " + guid)
-		ItemFlavor empty
-		return empty
-	}
 	Assert( IsValidItemFlavorGUID( guid, eValidation.ASSERT ) )
+
 	return fileLevel.guidItemFlavorMap[ guid ]
 }
 
@@ -845,11 +852,18 @@ bool function IsValidItemFlavorSettingsAsset( asset itemAsset, int validationBeh
 		return false
 	}
 
-	int guid = GetUniqueIdForSettingsAsset( itemAsset )
-	bool good = ( guid in fileLevel.guidItemFlavorMap )
-
-	Assert( good || validationBehavior != eValidation.ASSERT, "Bad item settings asset: " + itemAsset )
-	return good
+	// GetUniqueIdForSettingsAsset crashes on assets that don't exist
+	try
+	{
+		int guid = GetUniqueIdForSettingsAsset( itemAsset )
+		bool good = ( guid in fileLevel.guidItemFlavorMap )
+		Assert( good || validationBehavior != eValidation.ASSERT, "Bad item settings asset: " + itemAsset )
+		return good
+	}
+	catch ( ex )
+	{
+		return false
+	}
 }
 
 
@@ -1188,15 +1202,7 @@ string function ItemFlavor_GetRewardShortDescription( ItemFlavor flav )
 asset function ItemFlavor_GetIcon( ItemFlavor flavor )
 {
 	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
-	try
-	{
-		return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "icon" )
-	}
-	catch ( e )
-	{
-		Warning( "Warning: Asset \"" + ItemFlavor_GetAsset( flavor ) + "\" does not have setting var  \"" + "icon" + "\"" )
-		return $""  // Return empty asset if icon setting doesn't exist
-	}
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "icon" )
 }
 #endif
 
@@ -1205,14 +1211,14 @@ asset function ItemFlavor_GetIcon( ItemFlavor flavor )
 asset function ItemFlavor_GetSourceIcon( ItemFlavor flavor )
 {
 	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	// tagIcon may not exist in ping assets
 	try
 	{
 		return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "tagIcon" )
 	}
-	catch ( e )
+	catch ( ex )
 	{
-		Warning( "Warning: Asset \"" + ItemFlavor_GetAsset( flavor ) + "\" does not have setting var  \"" + "tagIcon" + "\"" )
-		return $""  // Return empty asset if tagIcon setting doesn't exist
+		return $""
 	}
 }
 
@@ -1359,7 +1365,15 @@ bool function ItemFlavor_ShouldBeVisible( ItemFlavor flavor, entity player, int 
 
 bool function ItemFlavor_IsTheFavoriteSentinel( ItemFlavor flavor )
 {
-	return false//GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheFavoriteSentinel" )
+	// isTheFavoriteSentinel may not exist in ping assets
+	try
+	{
+		return GetGlobalSettingsBool( ItemFlavor_GetAsset( flavor ), "isTheFavoriteSentinel" )
+	}
+	catch ( ex )
+	{
+		return false
+	}
 }
 
 

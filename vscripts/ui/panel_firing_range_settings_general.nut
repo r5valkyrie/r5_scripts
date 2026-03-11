@@ -3,6 +3,12 @@ global function InitFiringRangeSettingsGeneralPanel
 global function Firing_Range_SetIsRangeMaster
 global function Firing_Range_SetGeneralSetting
 global function Firing_Range_SetDummieSetting
+global function SettingsButton_SetShieldDescription
+global function EnableCharacterChangeInFiringRange
+global function Firing_Range_SetRangeState
+global function Firing_Range_SetFriendlyFire
+global function Firing_Range_SetDynStatsState
+global function Firing_Range_SetDynTimerState
                    
                                                   
       
@@ -27,10 +33,9 @@ struct
 	table< int, float > dummieBehaviorSettings
 
 	bool isRangeMaster = false
-                    
-                                         
-                                            
-       
+	int rangeState = 0
+	bool friendlyFireOn = false
+	bool isDynamicStatsEnabled = false
 
 	bool isOpened = false
 } file
@@ -438,6 +443,45 @@ void function SetUpOptionsButton( var button, FiringRangeOption option )
  
 
       
+
+void function EnableCharacterChangeInFiringRange( bool enable )
+{
+	// S3: stub — character change button managed differently
+}
+
+void function Firing_Range_SetRangeState( int value )
+{
+	file.rangeState = value
+	UpdateDetails()
+}
+
+void function Firing_Range_SetFriendlyFire( bool value )
+{
+	file.friendlyFireOn = value
+	UpdateDetails()
+}
+
+void function Firing_Range_SetDynStatsState( bool value )
+{
+	file.isDynamicStatsEnabled = value
+	UpdateDetails()
+}
+
+void function Firing_Range_SetDynTimerState( bool value )
+{
+	UpdateDetails()
+}
+
+void function SettingsButton_SetShieldDescription( string descText )
+{
+	if ( eFRSettingType.FRDUMMIESHIELDLVL in file.generalSettingsToHud )
+	{
+		var button = file.generalSettingsToHud[ eFRSettingType.FRDUMMIESHIELDLVL ]
+		ToolTipData toolTipData
+		toolTipData.descText = descText
+		Hud_SetToolTipData( button, toolTipData )
+	}
+}
 
 void function TryOpenSystemMenu( var panel )
 {

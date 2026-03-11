@@ -204,6 +204,7 @@ global struct ServerEntityStruct
 
 	bool spawnPointInUse
 	entity lastAttacker
+	float lastDamagedTime = 0.0 // S22: used by combat range dummies
 	bool blocksThermite = false
 	bool preventStickyEnts = false
 	bool   isSecretLoot = false
@@ -1282,6 +1283,7 @@ global struct ServerAIStruct
 	bool invulnerableToNPC = false
 	bool buddhaMode
 	bool killShotSound = false
+	bool pauseScriptedFaceTarget = false // S22: used by combat range dummies
 
 	table<int,int> stalkerHitgroupDamageAccumulated // used to decide when to blow off limbs
 	table<int,float> stalkerHitgroupLastHitTime // used to decide when to blow off limbs

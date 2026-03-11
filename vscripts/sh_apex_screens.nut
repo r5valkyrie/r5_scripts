@@ -130,8 +130,26 @@ global enum eApexScreenDisplayGroup
 	DISPLAY_PLAYER_SQUAD,
 	DISPLAY_LOGOS,
 	DISPLAY_CENTER_LOGO_ONLY,
-	DISPLAY_RANDOM_PLAYERS
+	DISPLAY_RANDOM_PLAYERS,
+	DISPLAY_PLAYER_SQUAD_CENTERED,
+	DISPLAY_LOCALPLAYER,
+	DISPLAY_RANDOM_LOCALTEAMMATE
 }
+
+#if SERVER
+global struct ApexScreenSettingsGroup
+{
+	float duration = 20.0
+	int displayMode = eApexScreenDisplayGroup.DISPLAY_LOGOS
+	//EncodedEHandle functionref() getFocusPlayerFunc // S22 function ref, not used in FR
+	int overrideScreen_L = -1
+	int overrideScreen_C = -1
+	int overrideScreen_R = -1
+}
+
+global function SvApexScreens_SetScreenSequenceForGameState
+global function SvApexScreens_RefreshScreenSequence
+#endif // SERVER
 
 #if CLIENT
 global struct ScreenOverrideInfo
@@ -1742,3 +1760,15 @@ void function ServerToClient_ApexScreenRefreshAll()
 //	// logo
 //}
 //#endif
+
+#if SERVER
+void function SvApexScreens_SetScreenSequenceForGameState( int gameState, array< ApexScreenSettingsGroup > settings )
+{
+	// S22 screen sequence system — not implemented in S3
+}
+
+void function SvApexScreens_RefreshScreenSequence()
+{
+	// S22 screen sequence system — not implemented in S3
+}
+#endif // SERVER

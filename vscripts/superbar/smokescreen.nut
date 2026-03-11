@@ -50,6 +50,7 @@ global struct SmokescreenStruct
 	float damageTickRate
 	bool fxPointCP1toCenter
 	entity smokeSource
+	entity smokeTrigger
 }
 
 vector function GetFXCenterFromSmokescreen( SmokescreenStruct smokescreen )

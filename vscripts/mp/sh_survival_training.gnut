@@ -431,7 +431,7 @@ void function PlayerStartsTraining( entity player )
 		data.lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 		data.lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 		CreateWeaponRacksForRealm( GetPlayerStagingSquadRealm( player ) )
-		CreateGunRangeTargetsForRealm()
+		CreateGunRangeTargetsForRealm( GetPlayerStagingSquadRealm( player ) )
 	}
 
 	if ( !data.completed_ping && !skipToPathfinder )
@@ -1032,8 +1032,8 @@ void function StartTraining_Weapons( entity player )
 	file.playerTrainingData[ player ].lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 	file.playerTrainingData[ player ].lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 	RemoveStagingAreaEntsForRealm( GetPlayerStagingSquadRealm( player ) )
-	CreateGunRangeTargetsForRealm()
-	thread FiringRangeProps()
+	CreateGunRangeTargetsForRealm( GetPlayerStagingSquadRealm( player ) )
+	// thread FiringRangeProps() // r5reloaded custom function, no longer exists
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 	data.gun_range_enabled = true
 

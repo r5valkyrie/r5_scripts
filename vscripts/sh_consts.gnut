@@ -106,6 +106,13 @@ global const bool MULTIPLAYER_DEBUG_PRINTS 	= false // Toggles print console mes
 
 global const string PLAYLIST_TRAINING = "survival_training"
 global const string PLAYLIST_FIRING_RANGE = "survival_firingrange"
+global const string FIRING_RANGE_DUMMIE_SCRIPT_NAME = "npc_dummie"
+global const string FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME = "npc_dummie_combat"
+global const string FIRING_RANGE_TARGET_FOLD_SCRIPTNAME = "fr_target_fold"
+global const int FIRING_RANGE_AI_BUDGET_MAX = 190
+global const asset FIRINGRANGE_DOOR_ASSET = $"mdl/door/canyonlands_door_single_02.rmdl"
+global const int WPT_ALL_EXCEPT_VIEWHANDS = 0xFF // S22: all weapon types except viewhands
+global const int WPT_SURVIVAL = 0 // S22 weapon type flag, not in S3 — 0 means bitflag check always false
 global const string PLAYLIST_NEW_PLAYER_ORIENTATION = "survival_bots_vs_humanteams"
 
 global enum eNewPlayerState
@@ -1108,6 +1115,17 @@ global const OFFHAND_COUNT			= 6
 global const OFFHAND_ORDNANCE		= OFFHAND_RIGHT
 global const OFFHAND_SPECIAL		= OFFHAND_LEFT
 global const int SLING_WEAPON_SLOT = -1 //WEAPON_INVENTORY_SLOT_PRIMARY_4
+global const int WEAPON_INVENTORY_SLOT_GADGET = 4 // S22 gadget slot
+global const int SOLID_NONE = 0 // SolidType_e: not solid
+global const string FIRING_RANGE_TARGET_FLIP_SCRIPTNAME = "fr_target_flip"
+global const string JUMP_PAD_NEUTRAL_SCRIPTNAME = "jump_pad_neutral"
+
+global enum eShatterRoundsTypes
+{
+	STANDARD,
+	SHATTER_TRI,
+	_count
+}
 
 global const SHIELD_REGEN_TICK_TIME 					= 0.1
 global const TITAN_DOOMED_REGEN_DELAY					= 0.5
@@ -1875,6 +1893,7 @@ global const int DAMAGEFLAG_ARMOR1 = 64
 global const int DAMAGEFLAG_ARMOR2 = 128
 global const int DAMAGEFLAG_ARMOR3 = 256
 global const int DAMAGEFLAG_ARMOR4 = 512
+global const int DAMAGEFLAG_ARMOR5 = 1024 // S22: red/heirloom shield tier
 
 global enum eCommsAction
 {
@@ -3031,6 +3050,8 @@ global enum eDummieBehaviorType
 	COUNT_
 }
 
+global const string COMBATRANGE_DUMMIE_HIGHLIGHT = "enemy_sonar"
+
 global enum eFRSettingType
 {
 	SHOWRUI,
@@ -3052,6 +3073,159 @@ global enum eFRSettingType
 	FRDUMMIESTANCE,
 	FRDUMMIESHOOTING,
 	FRDUMMIESPAWNDISTS,
+	COUNT_
+}
+
+global enum eTarget_Selector_Speeds
+{
+	CROUCHWALK 	= 1,
+	WALK		= 2,
+	RUN			= 3,
+	ZIPLINE		= 4,
+	COUNT_
+}
+
+global const int FR_RANDOM_SHIELD_SETTING = 10
+
+global enum eDummie_Selector_Shields
+{
+	WHITE 	= 1,
+	BLUE 	= 2,
+	PURPLE 	= 3,
+	RED 	= 4,
+	RANDOM 	= 10,
+	COUNT_	= 11
+}
+
+global enum eDummie_Selector_Movements
+{
+	STAYINPLACE,
+	STRAFECONST,
+	STRAFERANDOM,
+	RANDOM,
+	COUNT_
+}
+
+global enum eDummie_Selector_States
+{
+	STAND,
+	CROUCH,
+	RANDOM,
+	COUNT_
+}
+
+global enum eDummie_Selector_Speeds
+{
+	WALK 	= 1,
+	RUN		= 2,
+	RANDOM 	= 3,
+	COUNT_
+}
+
+global const int FRINTSETTINGS_MAXSELECTIONS = 20
+
+global struct sFRS_PackedBools
+{
+	int frSS_PackedBools = 0
+	int frPS_PackedBools = 0
+}
+
+global enum eFRPSettingType
+{
+	SHOW_RUI,
+	SHOW_DYNSTATS,
+	INFINITERELOADS,
+	SHOW_HITMARKS,
+	COUNT_
+}
+
+global enum eDummieOptions
+{
+	DYNSPAWNS_ON,
+	COUNT_
+}
+
+global enum eDummieSettingChangeType
+{
+	NONE,
+	DECREASED,
+	INCREASED,
+	TOGGLED,
+	COUNT_
+}
+
+global enum eFiringRangeSettingsPINRecordContext
+{
+	MENUCLOSE,
+	DUMMIEKILLED,
+	PLAYERDEATHBYCRUSH,
+	PLAYERDEATHBYFALL,
+	PLAYERDEATHBYNONPLAYER,
+	PLAYERDEATHBYOOB,
+	PLAYERDEATHBYPLAYER,
+	PLAYERDEATHBYPLAYEREXECUTION,
+	PLAYERDEATHBYUNKNOWN,
+	COUNT_
+}
+
+global enum eFRLootSource
+{
+	GROUND,
+	BLACKMARKET,
+	SUPPLYBOX,
+	OTHERSOURCE,
+	COUNT_
+}
+
+global enum eFiringRangeChallengeState
+{
+	FR_CHALLENGE_INACTIVE,
+	FR_CHALLENGE_PENDING,
+	FR_CHALLENGE_ACTIVE,
+	FR_CHALLENGE_POST
+}
+
+global enum eCRng_SettingTypes
+{
+	INFINITESPAWNSON,
+	COUNT_
+}
+
+global enum eCRng_SpawnDistances
+{
+	CQB,
+	MID,
+	FAR,
+	VFAR,
+	COUNT_
+}
+
+global enum eDummie_Selector_Shooting
+{
+	OFF,
+	EASY,
+	MEDIUM,
+	HARD,
+	FULLCOMBAT,
+	COUNT_
+}
+
+global enum eDummie_Selector_SpawnDists
+{
+	CQB,
+	MID,
+	FAR,
+	VFAR,
+	RANDOM,
+	COUNT_
+}
+
+global enum eDummieShooting_ParameterTypes
+{
+	SHOTDELAY,
+	SHOTACCURACY,
+	MAXTIMEONONETARGET,
+	MAXDUMMIESPERPLAYER,
 	COUNT_
 }
 

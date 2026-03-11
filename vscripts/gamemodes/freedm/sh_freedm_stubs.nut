@@ -134,6 +134,8 @@ global struct CancelPlayerStatesData
 	bool cancelCryptoDrone = false
 	bool cancelTotem = false
 	bool cancelMainOrAltHandAbility = false
+	bool cancelHuntMode = false // S22: used by firing range challenges
+	bool cancelBleedOut = false // S22: used by firing range challenges
 }
 
 // ======================== GLOBAL FUNCTION DECLARATIONS ========================
@@ -468,7 +470,7 @@ bool function SetInfiniteAmmoForWeapon( entity player, entity weapon, bool ornul
 		SetupInfiniteAmmoForWeapon( player, weapon )
 	return true
 }
-void function SetInfiniteAmmoForGameMode( entity player, bool enabled, array<string> excluded = [] ) {}
+void function SetInfiniteAmmoForGameMode( entity player, bool enabled, array<string> excluded = [], bool infiniteClip = false, bool infiniteStock = false ) {}
 void function DoCommonRespawnForPlayer( entity player ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
 void function AbilityCarePackage_SetContentOverrideCallback( array< array<string> > functionref( entity ) callback ) {}

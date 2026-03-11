@@ -249,6 +249,12 @@ global struct ClientPlayerStruct
 
 	// Artifact configuration
 	ArtifactConfig ornull artifactConfig = null
+
+	// Firing Range S22 settings
+	string frSettings_AllStrs = ""
+	table< int, int > FRSettings_Ints
+	table< int, bool > FRSettings_Bools
+	table< int, string > FRSettings_Strs
 }
 
 
