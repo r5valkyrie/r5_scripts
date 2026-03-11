@@ -3,6 +3,8 @@ global function InitGameModeRulesPanel
 
 global function OpenGameModeRulesDialog
 global function GameModeHasRules
+global function GetPlaylist_UIRules
+
 global function UI_OpenGameModeRulesDialog
 global function UI_CloseGameModeRulesDialog
 global function AddCallback_UI_GameModeRulesDialog_PopulateTabsForMode
@@ -172,6 +174,11 @@ string function GetPlaylist()
 		return GetCurrentPlaylistName()
 
 	unreachable
+}
+
+string function GetPlaylist_UIRules()
+{
+	return GetPlaylistVarString( GetPlaylist(), "ui_rules", "" )
 }
 
 bool function GameModeHasRules()

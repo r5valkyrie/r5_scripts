@@ -497,14 +497,13 @@ void function FiringRangeGameMode_Init()
 		AddCallback_OnCharacterSelectMenuOpened( FiringRange_CharacterMenuOpened )
 		AddCallback_OnCharacterSelectMenuClosed( FiringRange_CharacterMenuClosed )
 
-		Obituary_SetVerticalOffset( 80 )
+		                         
+			Obituary_SetVerticalOffset( 80 )
 
-		#if SERVER
 			AddCallback_OnWeaponAttack( DynStats_OnWeaponFired )
-		#endif
-			AddLocalPlayerDidDamageCallback( OnPlayerDidDamage_S3Wrapper )
+			AddLocalPlayerDidDamageCallback( OnPlayerDidDamage )
 			RegisterSignal ("OnShotFired")
-
+                                 
 
 		IntroDisplayThread()
 
@@ -3978,13 +3977,6 @@ void function DynStats_OnWeaponFired( entity player, entity weapon, string weapo
 	)
 }
 
-// S3: AddLocalPlayerDidDamageCallback uses 4-param signature (no damageAmount float)
-// Dynamic stats damage tracking won't work without damageAmount from engine
-void function OnPlayerDidDamage_S3Wrapper( entity attacker, entity victim, vector damagePosition, int damageType )
-{
-	OnPlayerDidDamage( attacker, victim, damagePosition, damageType, -1.0 )
-}
-
 void function OnPlayerDidDamage ( entity attacker, entity victim, vector damagePosition, int damageType, float damageAmount )
 {
 	if (!IsValid( attacker ) || !IsValid( victim ) || !attacker.IsPlayer() || !( FiringRangeHasDynamicStats() ) )
@@ -4199,10 +4191,6 @@ void function DynStats_UpdateStats_RUI(  int shotsFired, float damageDone, int s
 	if (!(FiringRangeHasDynamicStats()))
 		return
 
-	// S3: FRC_GetState is in sh_firing_range_challenges.nut which loads after this file
-	// Skip challenge state check — dynamic stats will still show during challenges (cosmetic only)
-	// if( FRC_GetState() != eFiringRangeChallengeState.FR_CHALLENGE_INACTIVE ) return
-
 	if ( file.dynamicStatsRui == null )
 		return
 
@@ -4219,7 +4207,7 @@ void function DynStats_UpdateStats_RUI(  int shotsFired, float damageDone, int s
 	}
 
 	RuiSetFloat( file.dynamicStatsRui, "accuracy" , accuracy )
-	RuiSetString( file.dynamicStatsRui, "damageDone" , FR_FormatFloat( damageDone, 5, 2 ) )
+	//RuiSetString( file.dynamicStatsRui, "damageDone" , FR_FormatFloat( damageDone, 5, 2 ) )
 	RuiSetString( file.dynamicStatsRui, "critShots" , FR_FormatInt( critShotsHit, 5, 2 ) )
 	RuiSetString(file.dynamicStatsRui, "shotsFired", FR_FormatInt( shotsFired, 5, 2 ) )
 	RuiSetString(file.dynamicStatsRui, "kills", FR_FormatInt( kills, 5, 2 ) )
@@ -4326,20 +4314,10 @@ void function FR_DynStats_Show_RUI()
 	if (file.dynamicStatsIsVisible)
 		return
 
-	if ( file.dynamicStatsRui == null )
-		file.dynamicStatsRui = CreateFullscreenPostFXRui( $"ui/dynamic_stats_rui.rpak" )
-
-	RuiSetGameTime( file.dynamicStatsRui, "animateInTime" , ClientTime() )
-	RuiSetBool( file.dynamicStatsRui, "animateInOut" , true )
-	file.dynamicStatsIsVisible = true
-
-	RegisterButtonPressedCallback( file.resetStatsButton, FR_DymicStats_OnReloadHoldResetStatsController )
-	RegisterConCommandTriggeredCallback( "+reload", FR_DymicStats_OnReloadHoldResetStatsPC )
+	file.dynamicStatsRui = CreateFullscreenPostFXRui( $"ui/dynamic_stats_rui.rpak" )
 
 	entity player = GetLocalViewPlayer()
-	bool isDynTimerEnabled = FRS_PVar_Get_Bool( player, eFRSettingType.SHOWDYNTIMER )
-	if ( isDynTimerEnabled )
-		SCB_ShowDynTimer_ByPVar()
+	thread DS_WaitForNewDamage_Thread( player )
 }
 
 bool function FR_DynStats_Hide_RUI()
@@ -4347,15 +4325,74 @@ bool function FR_DynStats_Hide_RUI()
 	if (!file.dynamicStatsIsVisible)
 		return false
 
-	RuiSetGameTime( file.dynamicStatsRui, "animateOutTime" , ClientTime() )
-	RuiSetBool( file.dynamicStatsRui, "animateInOut" , false )
-	file.dynamicStatsIsVisible = false
-
-	DeregisterButtonPressedCallback( file.resetStatsButton, FR_DymicStats_OnReloadHoldResetStatsController )
-	DeregisterConCommandTriggeredCallback( "+reload", FR_DymicStats_OnReloadHoldResetStatsPC )
+	RuiSetGameTime( file.dynamicStatsRui, "animateOutTime" , Time() )
+	file.dynamicStatsRui = null
 
 	return true
 }
+
+
+void function DS_WaitForNewDamage_Thread(entity player)
+{
+	Signal( player, "OnShotFired" )
+	EndSignal( player, "OnShotFired" )
+
+	EndSignal( player, "OnDestroy" )
+
+	wait 7.0
+
+	DS_ResetStats( player )
+	FR_DynStats_Hide_RUI( )
+}
+
+void function DS_ResetStats( entity player )
+{
+	if (!IsValid( player ))
+		return
+
+	file.shotsFired = 0
+	file.damage = 0
+	file.shotsHit = 0
+	file.critShotsHit = 0
+	file.kills = 0
+
+	if ( file.dynamicStatsRui == null )
+		return
+
+	DS_UpdateStats_RUI (
+		file.shotsFired,
+		file.damage,
+		file.shotsHit,
+		file.critShotsHit,
+		file.kills
+	)
+}
+
+void function DS_UpdateStats_RUI(  int shotsFired, float damageDone, int shotsHit, int critShotsHit, int kills )
+{
+	if (!(FiringRangeHasDynamicStats()))
+		return
+
+	bool showDynStats = FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.SHOWDYNSTATS )
+	if( showDynStats && file.dynamicStatsRui == null )
+		FR_DynStats_Show_RUI()
+
+	if ( file.dynamicStatsRui == null )
+		return
+
+	float accuracy                                                         
+	if ( shotsFired != 0 )
+		accuracy = (float (shotsHit) / float(shotsFired) ) * 100.0
+	else
+		accuracy = 100
+
+	RuiSetFloat( file.dynamicStatsRui, "accuracy" , accuracy )
+	RuiSetFloat( file.dynamicStatsRui, "damageDone" , damageDone )
+	RuiSetInt( file.dynamicStatsRui, "critShots" , critShotsHit )
+	RuiSetInt (file.dynamicStatsRui, "shotsFired", shotsFired )
+	RuiSetInt (file.dynamicStatsRui, "kills", kills )
+}
+
 
 void function FR_DynTimer_Show_RUI()
 {

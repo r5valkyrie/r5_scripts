@@ -102,6 +102,7 @@ global struct SvGlobals
 	array<void functionref( entity victim, entity attacker, var damageInfo )> onPlayerKilledCallbacks
 	array<void functionref( entity victim, entity attacker, var damageInfo )> onNPCKilledCallbacks
 
+	array<void functionref( entity player, entity weapon, string weaponName, int ammoUsed, vector attackOrigin, vector attackDir )> onWeaponAttackCallbacks
 	array<void functionref( entity victim, var damageInfo )> onTitanDoomedCallbacks
 	array<void functionref( entity victim, entity attacker )> onTitanHealthSegmentLostCallbacks
 	array<void functionref( entity player )> onClientConnectingCallbacks
@@ -174,7 +175,6 @@ global struct SvGlobals
 	// r5 stuff
 	array<void functionref(entity, entity)> onPilotEmbarkingTitanCallbacks
 	array<void functionref(entity, entity)> onPlayerUsedOffhandCallbacks
-	array< void functionref( entity, entity, string, int, vector, vector ) > onWeaponAttackCallbacks
 	array<void functionref( entity )> onPlayerClassActuallyChangedCallbacks
 	array< void functionref( entity ) > onPreClientDisconnectedCallbacks
 	array< void functionref( entity, entity, int ) > onDeathBoxSpawnedCallbacks

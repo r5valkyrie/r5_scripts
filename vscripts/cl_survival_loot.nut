@@ -1010,7 +1010,7 @@ void function UpdateLootRuiWithData( entity player, var rui, LootData data, int 
 		}
 
 	}
-       
+
 
 	const int MAX_ATTACHMENT_TAGS = 6
 	const int NUM_OF_CATEGORIES_TO_BE_CONSIDERED_UNIVERSAL = 5 //
@@ -1334,7 +1334,7 @@ bool function IsBlackMarketDeathBoxEntity( entity ent )
 	if ( ent.GetScriptName() == "black_market" )
 		return true
 
-	return ent.GetNetworkedClassName() == "prop_loot_grabber"
+	return ent.GetNetworkedClassName() == "prop_death_box"
 }
 
 void function ManageDeathBoxLoot()

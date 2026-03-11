@@ -57,7 +57,7 @@ struct {
 #if SERVER || CLIENT || UI
 void function VendingMachine_LevelInit()
 {
-	
+
 	#if SERVER || CLIENT
 		PrecacheScriptString( VENDING_MACHINE_SCRIPTNAME )
 		// S3: Remote_RegisterServerFunction doesn't support "entity" or "typed_entity" param types
@@ -72,7 +72,7 @@ void function VendingMachine_LevelInit()
 	#endif // SERVER
 
 	#if CLIENT
-		AddCreateCallback( "prop_loot_grabber", OnPropScriptCreated )
+		AddCreateCallback( "prop_death_box", OnPropScriptCreated )
 		AddCallback_ClientOnPlayerConnectionStateChanged( CL_VendingMachineHighlight_Init )
 	#endif //CLIENT
 
@@ -93,7 +93,7 @@ void function VendingMachineDeployThread( vector origin, vector angles, entity s
 
 	entity vendingMachine
 	{
-		vendingMachine = CreateEntity( "prop_loot_grabber" )
+		vendingMachine = CreateEntity( "prop_death_box" )
 		// vendingMachine.SetIsVendingMachine() // S22 entity method, not in S3
 		vendingMachine.SetScriptName( VENDING_MACHINE_SCRIPTNAME )
 		SetTargetName( vendingMachine, VENDING_MACHINE_SCRIPTNAME )
@@ -306,14 +306,14 @@ void function WarpBeamFXThread( entity player, vector startPos, vector endPos )
 #if SERVER
 void function ClientCallback_OpenVendingMachine( entity player, entity grabber )
 {
-	if ( !IsValid( grabber ) || grabber.GetNetworkedClassName() != "prop_loot_grabber" || !IsValid( player ) || !player.IsPlayer() )
+	if ( !IsValid( grabber ) || grabber.GetNetworkedClassName() != "prop_death_box" || !IsValid( player ) || !player.IsPlayer() )
 		return
 
 	// grabber.IncrementPlayersGrabbingLoot() // S22 entity method
 	EmitSoundOnEntityOnlyToPlayer( grabber, player, SUPPLYBOX_SOUND_OPEN )
 
 	// FR_Nessie_OnUseVendingMachine — S22 easter egg, not in S3
-       
+
 }
 #endif // SERVER
 
@@ -321,7 +321,7 @@ void function ClientCallback_OpenVendingMachine( entity player, entity grabber )
 #if SERVER
 void function ClientCallback_CloseVendingMachine( entity player, entity grabber )
 {
-	if ( !IsValid( grabber ) || grabber.GetNetworkedClassName() != "prop_loot_grabber" || !IsValid( player ) || !player.IsPlayer() )
+	if ( !IsValid( grabber ) || grabber.GetNetworkedClassName() != "prop_death_box" || !IsValid( player ) || !player.IsPlayer() )
 		return
 
 	// grabber.DecrementPlayersGrabbingLoot() // S22 entity method
@@ -367,7 +367,7 @@ bool function CanUseVendingMachine( entity player, entity ent )
 #if SERVER || CLIENT
 bool function IsVendingMachine( entity ent )
 {
-	if ( IsValid(ent) && ent.GetNetworkedClassName() == "prop_loot_grabber" )
+	if ( IsValid(ent) && ent.GetNetworkedClassName() == "prop_death_box" )
 	{
 		// ent.IsVendingMachine() // S22 entity method, not in S3
 		return ent.GetScriptName() == VENDING_MACHINE_SCRIPTNAME
@@ -376,7 +376,7 @@ bool function IsVendingMachine( entity ent )
 	return false
 }
 
-//faster if you already know that the ent is valid and is a prop_loot_grabber
+//faster if you already know that the ent is valid and is a prop_death_box
 bool function IsVendingMachineUnsafe( entity ent )
 {
 	// ent.IsVendingMachine() // S22 entity method, not in S3

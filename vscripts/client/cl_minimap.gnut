@@ -200,7 +200,7 @@ void function RegisterMinimapPackage( string entityClassname, int customStateInd
 
 		case "prop_control_panel":
 		case "prop_script":
-		case "prop_loot_grabber":
+		case "prop_deat_box":
 		case "item_flag":
 			Assert( customStateIndex > 0 && customStateIndex < eMinimapObject_prop_script.COUNT )
 			minimapAssetMap[entityClassname].resize( eMinimapObject_prop_script.COUNT )

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//f/R5V/PTU/cfg/server/**)",
+      "Read(//f/R5V/PTU/**)",
+      "Bash(grep -E \"^\\\\s{4,8}\\(survival|freedm|control|ranked|private\\)\\\\w*\\\\s*\\\\{\" \"f:\\\\R5V\\\\PTU\\\\platform\\\\playlists_r5_patch.txt\")"
+    ],
+    "additionalDirectories": [
+      "f:\\R5V\\PTU\\cfg\\server"
+    ]
+  }
+}

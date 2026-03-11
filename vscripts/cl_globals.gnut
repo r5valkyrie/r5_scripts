@@ -20,7 +20,7 @@ global struct ClGlobals
 	array<void functionref( StaticPropRui, var )> onStaticPropRUICreatedCallbacks
 	array<void functionref( float, vector, int, int, entity )> onLocalPlayerTookDamageCallback
 	table< int, array<void functionref( float, vector, int, int, entity )> > onLocalPlayerTookDamageTypeCallback
-	array<void functionref( entity, entity, vector, int ) > onLocalPlayerDidDamageCallback
+	array<void functionref( entity, entity, vector, int, float ) > onLocalPlayerDidDamageCallback
 	array<void functionref( entity, int, int ) > onPlayerLifeStateChangedCallbacks
 	table<string, array<void functionref( entity )> > onCreateCallbacks
 	table<string, array<void functionref( entity )> > onTargetNameCreateCallbacks
@@ -86,6 +86,7 @@ global struct ClGlobals
 
 	array<void functionref( entity )> onPlayerDisconnectedFuncs
 	array<void functionref( entity )> onWeaponChangedCallbacks
+	array<void functionref( entity player, entity weapon, string weaponName, int ammoUsed, vector attackOrigin, vector attackDir )> onWeaponAttackCallbacks
 
 	void functionref() scoreEventOverrideFunc
 

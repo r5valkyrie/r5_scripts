@@ -278,7 +278,7 @@ bool function IsBlackMarketDeathBox( entity deathBox )
 	if ( deathBox.GetScriptName() == "black_market" )
 		return true
 
-	return deathBox.GetNetworkedClassName() == "prop_loot_grabber"
+	return deathBox.GetNetworkedClassName() == "prop_death_box"
 }
 
 array<entity> function GetLootEntsForCurrentGroundList( entity player, entity deathBox )
@@ -292,7 +292,7 @@ array<entity> function GetLootEntsForCurrentGroundList( entity player, entity de
 		string scriptName = deathBox.GetScriptName()
 		string ornull className = deathBox.GetNetworkedClassName()
 
-		if ( scriptName == "black_market" || scriptName == "vending_machine" || (className != null && expect string( className ) == "prop_loot_grabber") )
+		if ( scriptName == "black_market" || scriptName == "vending_machine" || (className != null && expect string( className ) == "prop_death_box") )
 			shouldUseNearby = true
 	}
 
@@ -533,7 +533,7 @@ void function UIToClient_NEW_SurvivalGroundListOpened( var menu )
 
 	UICallback_GroundlistOpened()
 
-	//if ( deathBox.GetNetworkedClassName() == "prop_loot_grabber" )
+	//if ( deathBox.GetNetworkedClassName() == "prop_death_box" )
 		//BlackMarket_OnDeathBoxMenuOpened( deathBox ) - todo: fix this for black market - kral
 
 	WeaponStatusSetDeathBoxMenuOpen( true )

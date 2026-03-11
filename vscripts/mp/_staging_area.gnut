@@ -1597,6 +1597,7 @@ array< LootData > function LootRefs_To_LootDatas( array< string > lootRefs )
 void function TurnOnStagingEffectsDelayed()
 {
 	wait 0.1 // Have to wait here so effects ents can be listening for the flag?
+	return
 	if ( GetGameState() == eGameState.WaitingForPlayers )
 		FlagSet( "staging_fx_enabled" )
 }
@@ -3611,7 +3612,7 @@ void function OnPlayerLootPickedUp( entity player, entity ent, string ref, int u
 
 			switch( deathBoxType )
 			{
-				case "prop_loot_grabber":
+				case "prop_death_box":
 					lootSrc = eFRLootSource.BLACKMARKET
 					lootSrcStr = "BLACKMARKET"
 					break

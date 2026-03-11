@@ -38,7 +38,7 @@ global const string BLACK_MARKET_CLOSE_CMD = "ClientCallback_CloseBlackMarket"
 const string BLACK_MARKET_OPEN_CMD = "ClientCallback_OpenBlackMarket"
 const string BLACK_MARKET_TRY_PICKUP_CMD = "ClientCallback_TryPickupBlackMarket"
 const string BLACK_MARKET_ENTITY_CLASS = "prop_death_box"
-const string BLACK_MARKET_LEGACY_ENTITY_CLASS = "prop_loot_grabber"
+const string BLACK_MARKET_LEGACY_ENTITY_CLASS = "prop_death_box"
 
 const asset BLACK_MARKET_MODEL = $"mdl/props/loba_loot_stick/loba_loot_stick.rmdl"
 const asset BLACK_MARKET_PROXY_MODEL = $"mdl/fx/loba_staff_holo_stand.rmdl"

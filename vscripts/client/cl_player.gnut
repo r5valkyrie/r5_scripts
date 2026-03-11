@@ -862,20 +862,20 @@ void function ClientCodeCallback_PlayerDidDamage( PlayerDidDamageParams params )
 	bool hitIneffective            = false
 	bool victimIsHeavyArmor        = victim.GetArmorType() == ARMOR_TYPE_HEAVY
 	bool victimHasShieldRemaining  = victim.GetShieldHealth() - damageAmount > 0
-	bool isShieldShot              = (damageType & DF_SHIELD_DAMAGE) && victimHasShieldRemaining ? true : false
-	bool isCritShot                = (damageType & DF_CRITICAL) ? true : false
-	bool isHeadShot                = (damageType & DF_HEADSHOT) ? true : false
-	bool isKillShot                = (damageType & DF_KILLSHOT) ? true : false
-	bool isMelee                   = (damageType & DF_MELEE) ? true : false
-	bool isExplosion               = (damageType & DF_EXPLOSION) ? true : false
-	bool isBullet                  = (damageType & DF_BULLET) ? true : false
-	bool isShotgun                 = (damageType & DF_SHOTGUN) ? true : false
-	bool isArmorShot               = (damageFlags & DAMAGEFLAG_VICTIM_ARMORED) && victimHasShieldRemaining ? true : false
-	bool isVortexHit               = (damageFlags & DAMAGEFLAG_VICTIM_HAS_VORTEX) ? true : false
-	bool isKnockdownShot           = (damageType & DF_KNOCKDOWN) ? true : false
-	bool isShieldBreak             = (damageType & DF_SHIELD_BREAK) ? true : false
-	bool isShadowShot              = (damageType & DF_SHADOW_DAMAGE) ? true : false
-	bool isOvershieldShot		   = (damageType & DF_OVERSHIELD ) ? true : false
+	bool isShieldShot              = bool(damageType & DF_SHIELD_DAMAGE) && victimHasShieldRemaining ? true : false
+	bool isCritShot                = bool(damageType & DF_CRITICAL) ? true : false
+	bool isHeadShot                = bool(damageType & DF_HEADSHOT) ? true : false
+	bool isKillShot                = bool(damageType & DF_KILLSHOT) ? true : false
+	bool isMelee                   = bool(damageType & DF_MELEE) ? true : false
+	bool isExplosion               = bool(damageType & DF_EXPLOSION) ? true : false
+	bool isBullet                  = bool(damageType & DF_BULLET) ? true : false
+	bool isShotgun                 = bool(damageType & DF_SHOTGUN) ? true : false
+	bool isArmorShot               = bool(damageFlags & DAMAGEFLAG_VICTIM_ARMORED) && victimHasShieldRemaining ? true : false
+	bool isVortexHit               = bool(damageFlags & DAMAGEFLAG_VICTIM_HAS_VORTEX) ? true : false
+	bool isKnockdownShot           = bool(damageType & DF_KNOCKDOWN) ? true : false
+	bool isShieldBreak             = bool(damageType & DF_SHIELD_BREAK) ? true : false
+	bool isShadowShot              = bool(damageType & DF_SHADOW_DAMAGE) ? true : false
+	bool isOvershieldShot          = bool(damageType & DF_OVERSHIELD) ? true : false
 	
 	// if( victim.IsPlayer() )
 	// {
@@ -1058,7 +1058,7 @@ void function ClientCodeCallback_PlayerDidDamage( PlayerDidDamageParams params )
 
 	foreach ( callback in clGlobal.onLocalPlayerDidDamageCallback )
 	{
-		callback( attacker, victim, damagePosition, damageType )
+		callback( attacker, victim, damagePosition, damageType, damageAmount )
 	}
 }
 

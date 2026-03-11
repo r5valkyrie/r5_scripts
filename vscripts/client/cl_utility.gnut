@@ -328,7 +328,7 @@ void function AddLocalPlayerTookDamageTypeCallback( int damageSourceId, void fun
 	clGlobal.onLocalPlayerTookDamageTypeCallback[ damageSourceId ].append( callbackFunc )
 }
 
-void function AddLocalPlayerDidDamageCallback( void functionref( entity, entity, vector, int ) callbackFunc )
+void function AddLocalPlayerDidDamageCallback( void functionref( entity, entity, vector, int, float ) callbackFunc )
 {
 	Assert( !( clGlobal.onLocalPlayerDidDamageCallback.contains( callbackFunc ) ) )
 	clGlobal.onLocalPlayerDidDamageCallback.append( callbackFunc )

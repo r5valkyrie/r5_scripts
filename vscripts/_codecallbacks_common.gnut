@@ -45,7 +45,6 @@ global function AddPlayerDropScriptedItemsCallback
 global function AddCallback_OnPlayerInventoryChanged
 
 // r5 stuff
-global function AddCallback_OnWeaponAttack
 
 global function AddClientCommandCallbackVoid
 global function RemoveClientCommandCallbackVoid
@@ -105,7 +104,6 @@ global function CodeCallback_OnPlayerBeginWallhang
 global function CodeCallback_OnPlayerEndWallhang
 
 global function CodeCallback_GetBestObserverTarget
-global function CodeCallback_OnWeaponAttack
 global function CodeCallback_OnServerAnimEvent
 global function CodeCallback_OnNavMeshHotSwapBegin
 global function CodeCallback_OnNavMeshHotSwapEnd
@@ -325,12 +323,6 @@ void function CodeCallback_DamageEntity( entity ent, var damageInfo )
 	AddFlinch( ent, damageInfo )
 
 	UpdateAttackerInfo( ent, DamageInfo_GetAttacker( damageInfo ), DamageInfo_GetDamage( damageInfo ) )
-}
-
-void function CodeCallback_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed, vector origin, vector dir )
-{
-	foreach ( callbackFunc in svGlobal.onWeaponAttackCallbacks )
-		callbackFunc( player, weapon, weaponName, ammoUsed, origin, dir )
 }
 
 void function CodeCallback_OnNavMeshHotSwapBegin()
@@ -730,12 +722,6 @@ void function AddPlayerDropScriptedItemsCallback( void functionref(entity player
 {
 	Assert( !( svGlobal.onPlayerDropsScriptedItemsCallbacks.contains( callbackFunc ) ), "Already added " + string( callbackFunc ) + " with AddPlayerDropScriptedItemsCallback" )
 	svGlobal.onPlayerDropsScriptedItemsCallbacks.append( callbackFunc )
-}
-
-void function AddCallback_OnWeaponAttack( void functionref( entity, entity, string, int, vector, vector ) callbackFunc )
-{
-	Assert( !svGlobal.onWeaponAttackCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnWeaponAttack" )
-	svGlobal.onWeaponAttackCallbacks.append( callbackFunc )
 }
 
 void function AddClientCommandCallbackVoid( string commandString, void functionref( entity player, array<string> args ) callbackFunc )

@@ -3,7 +3,6 @@ global function InitFeatureTutorialDialog
 global function OpenFeatureTutorialDialog
 global function FeatureHasTutorialTabs
 global function FeatureTutorial_GetGameModeName
-global function GetPlaylist_UIRules
 
 global function UI_OpenFeatureTutorialDialog
 global function UI_CloseFeatureTutorialDialog
@@ -189,13 +188,6 @@ void function FeatureTutorialDialog_Cancel( var button )
 	CloseActiveMenu()
 }
 
-string function GetPlaylist_UIRules()
-{
-	if( !IsFullyConnected() )
-		return ""
-
-	return GetPlaylistVarString( GamemodeUtility_GetPlaylist(), "ui_rules", "" )
-}
 
 bool function FeatureHasTutorialTabs( string feature )
 {

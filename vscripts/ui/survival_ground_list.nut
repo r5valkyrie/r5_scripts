@@ -1,4 +1,4 @@
-  
+
 
 #if CLIENT || UI
 global function SurvivalGroundList_LevelInit
@@ -46,7 +46,7 @@ struct DeathBoxEntryData
 {
 	string        key
 	LootData&     lootFlav
-	array<entity> lootEnts                              
+	array<entity> lootEnts
 	bool          isClickable
 	bool          isUsable
 	bool          isRelevant
@@ -73,11 +73,11 @@ struct PredictedLootActionData
 	int   type
 	float time
 
-	                                               
-	string lootFlavRef
-	int    count                          
 
-	                                                                     
+	string lootFlavRef
+	int    count
+
+
 	EncodedEHandle bestLootEntEEH
 
 	int        expectedInventoryContribution = 0
@@ -125,9 +125,9 @@ struct FileStruct_LifetimeLevel
 }
 #endif
 #if CLIENT
-FileStruct_LifetimeLevel fileLevel                             
+FileStruct_LifetimeLevel fileLevel
 #elseif UI
-FileStruct_LifetimeLevel& fileLevel                             
+FileStruct_LifetimeLevel& fileLevel
 
 struct {
 	var menu
@@ -136,7 +136,7 @@ struct {
 	var quickSwapGrid
 	var quickSwapHeader
 	var inventorySwapIcon
-} fileVM                            
+} fileVM
 #endif
 
 
@@ -183,12 +183,12 @@ void function InitSurvivalGroundList( var menu )
 	Survival_AddPassthroughCommandsToMenu( menu )
 	AddMenuFooterOption( menu, LEFT, KEY_TAB, true, "", "", TryCloseSurvivalInventory, PROTO_ShouldInventoryFooterHack )
 	AddMenuFooterOption( menu, RIGHT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#B_BUTTON_CLOSE" )
-    
+
 #if NX_PROG
-                                                                                                                                                 
+
 	AddMenuFooterOption( menu, LEFT, BUTTON_X, true, "", "", SurvivalMenuSwapWeapon )
 #endif
-    
+
 	fileVM.quickSwapBacker = Hud_GetChild( menu, "QuickSwapBacker" )
 	fileVM.inventorySwapIcon = Hud_GetChild( menu, "SwapIcon" )
 	fileVM.quickSwapHeader = Hud_GetChild( menu, "QuickSwapHeader" )
@@ -318,15 +318,15 @@ void function UIToClient_SurvivalGroundListOpened( var menu )
 	fileLevel.categoryHeaderTextCol = SrgbToLinear( <240, 240, 240> / 255.0 * 0.85 )
 	DeathBoxListPanel_SetScrollBarColorAlpha( fileLevel.listPanel, <1.0, 1.0, 1.0>, 1.0 )
 
-	bool isBlackMarket = (deathBox.GetNetworkedClassName() == "prop_loot_grabber")
-                    
-                               
-                      
-   
-                                                  
-                                    
-   
-       
+	bool isBlackMarket = (deathBox.GetNetworkedClassName() == "prop_death_box")
+
+
+
+
+
+
+
+
 	if ( isBlackMarket )
 	{
 		EmitUISound( "Loba_Ultimate_BlackMarket_Open" )
@@ -352,7 +352,7 @@ void function UIToClient_SurvivalGroundListOpened( var menu )
 		}
 		else if ( enumVal == eLootSortCategories.AMMO )
 		{
-			category.itemWidth = 100    
+			category.itemWidth = 100
 			category.itemHeight = 100
 			category.itemPadding = 4
 		}
@@ -366,7 +366,7 @@ void function UIToClient_SurvivalGroundListOpened( var menu )
 		DeathBoxListPanel_AddCategory( fileLevel.listPanel, category )
 	}
 
-	                             
+
 	foreach ( string ammoPoolTypeKey, int ammoPoolTypeVal in eAmmoPoolType )
 	{
 		if ( !ArrowsCanBePickedUp() && ammoPoolTypeVal == eAmmoPoolType.arrows )
@@ -404,13 +404,13 @@ void function UIToClient_SurvivalGroundListOpened( var menu )
 			headerOwnerText = Localize( "#DEATHBOX_OWNER_SUFFIX", deathBoxOwner.GetPlayerName() )
 		}
 	}
-                    
-                             
-  
-                                                             
-                                                               
-  
-       
+
+
+
+
+
+
+
 	else
 	{
 		string customOwnerName = deathBox.GetCustomOwnerName()
@@ -445,7 +445,7 @@ void function UIToClient_SurvivalGroundListOpened( var menu )
 		}
 	}
 
-	                                                                          
+
 	HudElem_SetRuiArg( fileLevel.backer, "headerMainText", headerMainText )
 	HudElem_SetRuiArg( fileLevel.backer, "headerOwnerText", headerOwnerText )
 	HudElem_SetRuiArg( fileLevel.backer, "headerRightText", headerRightText )
@@ -455,7 +455,7 @@ void function UIToClient_SurvivalGroundListOpened( var menu )
 
 	UIToClient_GroundlistOpened()
 
-	if ( deathBox.GetNetworkedClassName() == "prop_loot_grabber" )
+	if ( deathBox.GetNetworkedClassName() == "prop_death_box" )
 	{
 		// TODO: fix this for black market - kral
 		// BlackMarket_OnDeathBoxMenuOpened( deathBox )
@@ -472,11 +472,11 @@ void function UIToClient_SurvivalGroundListClosed()
 	Signal( fileLevel.signalDummy, "SurvivalGroundList_Closed" )
 
 	entity deathBox = Survival_GetDeathBox()
-	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_loot_grabber" )
+	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_death_box" )
 	{
-                     
-                                            
-        
+
+
+
 		{
 			EmitUISound( "Loba_Ultimate_BlackMarket_Close" )
 		}
@@ -497,7 +497,7 @@ void function OnPlayerEquipmentChanged( entity player, string equipSlot, int idx
 	if ( player != GetLocalViewPlayer() )
 		return
 
-	fileLevel.specialStateSamenessKey = "haha ur equipment changed"                                         
+	fileLevel.specialStateSamenessKey = "haha ur equipment changed"
 }
 #endif
 
@@ -522,7 +522,7 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 			entity ent = GetEntityFromEncodedEHandle( plad.bestLootEntEEH )
 			Warning( "Mispredicted loot action for %s x%d (%s)", plad.lootFlavRef, plad.count, IsValid( ent ) ? string(ent) : ("invalid: " + plad.bestLootEntEEH) )
 			fileLevel.predictedActions.remove( predictedPickupIdx )
-			predictedPickupIdx--                                             
+			predictedPickupIdx--
 			fileLevel.predictedActionsDirty = true
 			RefreshQuickSwapIfOpen()
 		}
@@ -541,7 +541,7 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 
 	table<DeathBoxEntryData, void> entriesToUpdateSet = {}
 
-	                               
+
 	foreach ( entity lootEnt in params.currentLootEnts )
 	{
 		Assert( IsValid( lootEnt ) )
@@ -549,11 +549,11 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 		if ( !IsValid( lootEnt ) || lootEnt.GetNetworkedClassName() != "prop_survival" )
 			continue
 
-		                                                                    
+
 		if ( lootEnt in fileLevel.deathBoxEntryDataByLootEnt )
 		{
 			Assert( lootEnt in previousDeathBoxEntryDataByLootEnt )
-			delete previousDeathBoxEntryDataByLootEnt[lootEnt]                                      
+			delete previousDeathBoxEntryDataByLootEnt[lootEnt]
 
 			if ( lootEnt.GetClipCount() != lootEnt.e.deathBoxMenu_lastSeenClipCount )
 			{
@@ -564,7 +564,7 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 			continue
 		}
 
-		                  
+
 
 		DeathBoxEntryData entryData
 
@@ -575,27 +575,27 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 		string itemKey = (hasSpecialAmmo ? format( "specialammo%d", lootEnt.GetEncodedEHandle() ) : lootFlavor.ref)
 		if ( itemKey in fileLevel.deathBoxEntryDataByKey )
 		{
-			                                       
+
 			entryData = fileLevel.deathBoxEntryDataByKey[itemKey]
 		}
 		else
 		{
-			                                              
+
 			fileLevel.deathBoxEntryDataByKey[itemKey] <- entryData
 			entryData.key = itemKey
 			entryData.lootFlav = lootFlavor
 		}
 
-		                                                                   
-		                                    
+
+
 		int otherLootEntIdx = 0
-		bool closerIsBetter = GetCurrentPlaylistVarBool( "loba_ult_prefer_closer_loot", false )                                                                                                                 
+		bool closerIsBetter = GetCurrentPlaylistVarBool( "loba_ult_prefer_closer_loot", false )
 		for ( ; otherLootEntIdx < entryData.lootEnts.len(); otherLootEntIdx++ )
 		{
 			entity otherLootEnt = entryData.lootEnts[otherLootEntIdx]
 
 			if ( !IsValid( otherLootEnt ) )
-				continue                                                                                                  
+				continue
 
 			bool continueForRestricted = false
 			foreach ( int restrictedLootType in eRestrictedLootTypes )
@@ -606,12 +606,12 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 				bool otherLootEntIsRestrictedItem  = ( IsValid( otherLootEntRestrictedPanel ) && SURVIVAL_Loot_IsRestrictedPanelLocked( restrictedLootType, otherLootEntRestrictedPanel ) )
 				if ( lootEntIsRestrictedItem && !otherLootEntIsRestrictedItem )
 				{
-					continueForRestricted = true                                          
+					continueForRestricted = true
 					break
 				}
 				else if ( !lootEntIsRestrictedItem && otherLootEntIsRestrictedItem )
 				{
-					break                                                
+					break
 				}
 			}
 			if ( continueForRestricted )
@@ -620,21 +620,21 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 			{
 				if(isArmor)
 				{
-					                                                                                                                             
+
 					if ( GetPropSurvivalMainPropertyFromEnt( lootEnt ) < GetPropSurvivalMainPropertyFromEnt( otherLootEnt ) )
-						continue                             
+						continue
 
 					else if ( GetPropSurvivalMainPropertyFromEnt( lootEnt ) <= GetPropSurvivalMainPropertyFromEnt( otherLootEnt ) && SURVIVAL_CreateLootRef(lootFlavor, lootEnt).lootExtraProperty > SURVIVAL_CreateLootRef(lootFlavor, otherLootEnt).lootExtraProperty )
-						continue                       
+						continue
 				}
 				break
 			}
 
 			if ( hasSpecialAmmo && lootEnt.GetClipCount() < otherLootEnt.GetClipCount() )
-				break                             
+				break
 
 			if ( isArmor && GetPropSurvivalMainPropertyFromEnt( lootEnt ) > GetPropSurvivalMainPropertyFromEnt( otherLootEnt ) )
-				break                             
+				break
 
 			if ( closerIsBetter == (DistanceSqr( lootEnt.GetOrigin(), params.player.EyePosition() ) < DistanceSqr( otherLootEnt.GetOrigin(), params.player.EyePosition() )) )
 				break
@@ -649,25 +649,25 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 		entriesToUpdateSet[entryData] <- IN_SET
 	}
 
-	                                                                                                                
+
 	foreach ( entity deletedLootEnt, DeathBoxEntryData entryData in previousDeathBoxEntryDataByLootEnt )
 	{
-		entryData.lootEnts.removebyvalue( deletedLootEnt )                 
+		entryData.lootEnts.removebyvalue( deletedLootEnt )
 		entriesToUpdateSet[entryData] <- IN_SET
 
 		delete fileLevel.deathBoxEntryDataByLootEnt[deletedLootEnt]
 	}
 
-	bool isBlackMarket = (deathBox.GetNetworkedClassName() == "prop_loot_grabber")
-                    
-                               
-                      
-   
-                                                        
-                                    
-   
-       
-	                                                              
+	bool isBlackMarket = (deathBox.GetNetworkedClassName() == "prop_death_box")
+
+
+
+
+
+
+
+
+
 	bool deathBoxBlocked = false
 	{
 		string specialStateSamenessKey = ""
@@ -685,13 +685,13 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 			fileLevel.specialStateSamenessKey = specialStateSamenessKey
 			fileLevel.predictedActionsDirty = false
 
-			                                                                                  
+
 			foreach ( string entryDataKey, DeathBoxEntryData entryData in fileLevel.deathBoxEntryDataByKey )
 				entriesToUpdateSet[entryData] <- IN_SET
 		}
 	}
 
-	                                             
+
 	string removeMode = GetCurrentPlaylistVarString( "death_box_menu_remove_on_taken", "mine" )
 	foreach ( DeathBoxEntryData entryData, void _ in entriesToUpdateSet )
 	{
@@ -728,7 +728,7 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 			{
 				amountDelta -= plad.count
 				fileLevel.predictedActions.remove( predictedPickupIdx )
-				predictedPickupIdx--                                             
+				predictedPickupIdx--
 			}
 			else
 			{
@@ -760,11 +760,11 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 		bool shouldBeVisible = true
 		if ( entryData.lootFlav.lootType == eLootType.AMMO )
 		{
-			                                   
+
 		}
 		if ( entryData.lootFlav.lootType == eLootType.GADGET )
 		{
-			                                     
+
 		}
 		else if ( removeMode == "all" )
 		{
@@ -774,12 +774,12 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 		{
 			shouldBeVisible = (entryData.totalCount > 0 || !entryData.wasLastLootPickedUpByLocalPlayer)
 		}
-                   
-                                                                     
-   
-                          
-   
-      
+
+
+
+
+
+
 
 		DeathBoxListPanelItem ornull item = DeathBoxListPanel_GetItemByKey( fileLevel.listPanel, entryData.key )
 		if ( shouldBeVisible )
@@ -813,16 +813,16 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 	var widgetRui             = Hud_GetRui( fileLevel.blackMarketWidget )
 	if ( params.isBlackMarket )
 	{
-                     
-                                          
-        
+
+
+
 
 		Hud_Show( fileLevel.blackMarketWidget )
 
 		int localPlayerUseCount = GetBlackMarketUseCount( deathBox, GetLocalViewPlayer() )
 		int useCountMax         = GetBlackMarketUseLimit()
 		RuiSetInt( widgetRui, "useCountMax", useCountMax )
-		isMyTeamsBlackMarket = (deathBox.GetTeam() == params.player.GetTeam())                                                     
+		isMyTeamsBlackMarket = (deathBox.GetTeam() == params.player.GetTeam())
 		RuiSetBool( widgetRui, "isMyTeamsBlackMarket", isMyTeamsBlackMarket )
 
 		HudElem_SetRuiArg( fileLevel.backer, "blackMarketStage", localPlayerUseCount == useCountMax ? 2 : localPlayerUseCount == useCountMax - 1 ? 1 : 0 )
@@ -844,7 +844,7 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 	{
 		entity player = (playerIdx < teammates.len() && IsValid( teammates[playerIdx] ) ? teammates[playerIdx] : null)
 		if ( !isMyTeamsBlackMarket && playerIdx > 0 )
-			player = null                                                         
+			player = null
 
 		RuiSetString( widgetRui, format( "player%dName", playerIdx ), player != null ? GetPlayerNameFromEHI( ToEHI( player ) ) : "" )
 		RuiSetInt( widgetRui, format( "player%dUseCount", playerIdx ), player != null ? GetBlackMarketUseCount( deathBox, player ) : -1 )
@@ -922,7 +922,7 @@ void function UpdateSurvivalGroundList( SurvivalGroundListUpdateParams params )
 			ToolTipData toolTipData
 			toolTipData.titleText = lootFlavor.pickupString
 			toolTipData.descText = SURVIVAL_Loot_GetPickupString( lootFlavor, params.player )
-			                                               
+
 			toolTipData.tooltipFlags = toolTipData.tooltipFlags | eToolTipFlag.PING_DISSABLED
 			Hud_SetToolTipData( itemButton, toolTipData )
 			RunUIScript( "ClientToUI_Tooltip_MarkForClientUpdate", itemButton, eTooltipStyle.DEFAULT )
@@ -968,7 +968,7 @@ void function UpdateItem( DeathBoxListPanelItem item )
 	bool pingsAreIndirect = false
 	bool isBlackMarket    = false
 	entity deathBox       = GetEntityFromEncodedEHandle( fileLevel.currentDeathBoxEEH )
-	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_loot_grabber" )
+	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_death_box" )
 	{
 		isBlackMarket = true
 		pingsAreIndirect = true
@@ -1071,7 +1071,7 @@ void function UpdateItem( DeathBoxListPanelItem item )
 
 	if(bestLootEnt != null && isArmor)
 	{
-		                 
+
 		bool isEvolving = EvolvingArmor_IsEquipmentEvolvingArmor( lootFlavor.ref )
 		entity localPlayer = GetLocalClientPlayer()
 		int armorTier = EquipmentSlot_GetEquipmentTier( localPlayer, "armor" )
@@ -1083,18 +1083,18 @@ void function UpdateItem( DeathBoxListPanelItem item )
 		RuiSetInt( rui, "lootTierReplace", armorTier )
 	}
 
-                    
-                                          
-  
-                                                                                                       
-                                                                                                               
-                                                 
-  
-     
-  
-                                                  
-  
-       
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	entryData.isRestrictedItem = false
@@ -1129,7 +1129,7 @@ void function UpdateItem( DeathBoxListPanelItem item )
 			dt.lootPromptData.isPingedByUs = isPingedByUs
 			dt.lootPromptData.isInDeathBox = true
 			dt.tooltipFlags = dt.tooltipFlags | (IsPingEnabledForPlayer( viewPlayer ) ? eToolTipFlag.PING_DISSABLED : 0)
-			                               
+
 			{
 				dt.lootPromptData.guid = bestLootEnt.GetEncodedEHandle()
 				dt.lootPromptData.property = GetPropSurvivalMainPropertyFromEnt( bestLootEnt )
@@ -1211,8 +1211,8 @@ void function ItemPingUpdateThread( DeathBoxListPanelItem item, DeathBoxEntryDat
 
 	entryData.pingCounter = 0
 
-	thread UpdateItem( item )                                                                                                                       
-	             
+	thread UpdateItem( item )
+
 }
 #endif
 
@@ -1240,11 +1240,11 @@ void function OnCategoryHeaderBind( DeathBoxListPanelData listPanelData, DeathBo
 
 	entity deathBox    = GetEntityFromEncodedEHandle( fileLevel.currentDeathBoxEEH )
 	bool isBlackMarket = false
-	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_loot_grabber")
+	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_death_box")
 	{
-                     
-                                            
-        
+
+
+
 		{
 			isBlackMarket = true
 		}
@@ -1258,7 +1258,7 @@ void function OnCategoryHeaderBind( DeathBoxListPanelData listPanelData, DeathBo
 #if CLIENT
 void function OnCategoryHeaderUnbind( DeathBoxListPanelData listPanelData, DeathBoxListPanelCategory category )
 {
-	  
+
 }
 #endif
 
@@ -1321,22 +1321,22 @@ void function PerformItemAction( DeathBoxListPanelItem item, bool isAltAction, b
 		return
 	LootData lootFlavor = entryData.lootFlav
 	entity bestLootEnt  = (entryData.lootEnts.len() > 0 && IsValid( entryData.lootEnts[0] ) ? entryData.lootEnts[0] : null)
-	                                
-	  	      
+
+
 
 	entity deathBox    = GetEntityFromEncodedEHandle( fileLevel.currentDeathBoxEEH )
 	bool isBlackMarket = false
 	bool needExtendedUse = false
-	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_loot_grabber")
+	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_death_box")
 	{
 		isBlackMarket = true
-                     
-                                           
-   
-                          
-   
-      
-        
+
+
+
+
+
+
+
 		{
 			needExtendedUse = true
 		}
@@ -1347,23 +1347,23 @@ void function PerformItemAction( DeathBoxListPanelItem item, bool isAltAction, b
 	{
 		int countToFillStack = SURVIVAL_GetCountToFillStack( player, entryData.lootFlav.ref )
 		if ( countToFillStack < count )
-			count += countToFillStack                                                       
+			count += countToFillStack
 	}
 
 	array<ConsumableInventoryItem> predictedInventory = GetPredictedInventory()
 	int inventoryLimit                                = SURVIVAL_GetInventoryLimit( player )
 	int amountThatWouldBePickedUp                     = SURVIVAL_AddToInventory( predictedInventory, inventoryLimit, lootFlavor, count, SURVIVAL_GetInventorySlotCountForPlayer( player, lootFlavor ), true )
-	bool isInventoryFull                              = (amountThatWouldBePickedUp == 0)                                       
+	bool isInventoryFull                              = (amountThatWouldBePickedUp == 0)
 
 	LootRef lootRef  = SURVIVAL_CreateLootRef( lootFlavor, bestLootEnt )
 	int groundAction = SURVIVAL_GetActionForGroundItem( player, lootRef, isAltAction ).action
 
 	bool showUseHighlight     = false
 	bool shouldCloseQuickSwap = true
-	
+
 	if ( groundAction == eLootAction.NONE || groundAction == eLootAction.IGNORE )
 	{
-		  
+
 	}
 	else if ( !fromExtendedUse && !isFromQuickSwap && (groundAction == eLootAction.SWAP || needExtendedUse) )
 	{
@@ -1418,11 +1418,11 @@ void function ClientToUI_RestrictedLootConfirmDialog_Open( bool isBlackMarketOwn
 	array<string> dialogArray = SURVIVAL_Loot_GetRestrictedDialogArray( restrictedLootType )
 	data.headerText = Localize( dialogArray[0] )
 
-                      
+
 	if ( isBlackMarketOwner && restrictedLootType != eRestrictedLootTypes.SPECTRE_SHACK )
-     
-                          
-      
+
+
+
 	{
 		data.messageText = Localize( dialogArray[1] )
 
@@ -1484,8 +1484,8 @@ void function SendItemActionCommand( DeathBoxEntryData entryData, int count, ent
 	if ( actionType == eLootAction.ATTACH_TO_STOWED )
 		pickupFlags = pickupFlags | PICKUP_FLAG_ATTACH_STOWED_ONLY
 
-	                                                                                                              
-	  	        
+
+
 	Remote_ServerCallFunction("ClientCallback_PickupSurvivalLootFromDeathbox",
 		entryData.lootFlav.index,
 		count,
@@ -1494,7 +1494,7 @@ void function SendItemActionCommand( DeathBoxEntryData entryData, int count, ent
 		pickupFlags,
 		(backpackSwapSlot != null ? expect int(backpackSwapSlot) : -1)
 	)
-	      
+
 
 	PredictedLootActionData plad
 	plad.type = actionType
@@ -1508,12 +1508,12 @@ void function SendItemActionCommand( DeathBoxEntryData entryData, int count, ent
 	{
 		array<ConsumableInventoryItem> predictedInventory = GetPredictedInventory()
 
-		                                 
-		   
-		  	                            
-		  	                                                                          
-		  	                                                                                                                                        
-		   
+
+
+
+
+
+
 
 		int inventoryLimit = SURVIVAL_GetInventoryLimit( localPlayer )
 		int numAdded       = SURVIVAL_AddToInventory( predictedInventory, inventoryLimit, entryData.lootFlav, plad.count, SURVIVAL_GetInventorySlotCountForPlayer( localPlayer, entryData.lootFlav ), true )
@@ -1554,12 +1554,12 @@ bool function OnItemKeyEvent( DeathBoxListPanelData listPanelData, DeathBoxListP
 		return true
 	}
 
-	                                                                                                       
-	                                                                    
-	   
-	  	                                  
-	  	           
-	   
+
+
+
+
+
+
 
 	return false
 }
@@ -1587,7 +1587,7 @@ void function PingItem( DeathBoxListPanelItem item )
 	entity deathBox = GetEntityFromEncodedEHandle( fileLevel.currentDeathBoxEEH )
 
 	bool pingsAreIndirect = false
-	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_loot_grabber" )
+	if ( IsValid( deathBox ) && deathBox.GetNetworkedClassName() == "prop_death_box" )
 		pingsAreIndirect = true
 
 	entity localPlayer       = GetLocalClientPlayer()
@@ -1603,13 +1603,13 @@ void function PingItem( DeathBoxListPanelItem item )
 
 	if ( IsValid( lootEntPingedByUs ) )
 	{
-		                      
+
 		PingGroundLoot( lootEntPingedByUs, deathBox )
 		entryData.pingCounter = 0
 	}
 	else
 	{
-		                   
+
 		PingGroundLoot( bestLootEnt, deathBox )
 		entryData.pingCounter += 1
 	}
@@ -1849,15 +1849,15 @@ void function UIToClient_SurvivalGroundList_OnQuickSwapItemClick( var button, in
 
 	array<ConsumableInventoryItem> predictedInventory = GetPredictedInventory()
 	if ( !(backpackSwapSlot >= 0 && backpackSwapSlot < predictedInventory.len()) )
-		return         
+		return
 
 	ConsumableInventoryItem inventoryEntry = predictedInventory[backpackSwapSlot]
 	LootData dropLootFlav                  = SURVIVAL_Loot_GetLootDataByIndex( inventoryEntry.type )
 
-                
+
 	if ( dropLootFlav.noDrop )
 		return
-       
+
 
 	PredictedLootActionData plad
 	plad.type = eLootAction.DROP_ALL
@@ -1880,7 +1880,7 @@ void function UIToClient_SurvivalGroundList_OnQuickSwapItemClick( var button, in
 
 	if ( isRightClick )
 	{
-		                                                                    
+
 		Remote_ServerCallFunction( "ClientCallback_Sur_DropBackpackItem_UI", dropLootFlav.index, inventoryEntry.count, fileLevel.currentDeathBoxEEH )
 		RefreshQuickSwapIfOpen()
 	}
@@ -1968,7 +1968,7 @@ void function Delayed_SetCursorToObject( var obj )
 	Signal( clGlobal.signalDummy, "Delayed_SetCursorToObject" )
 	EndSignal( clGlobal.signalDummy, "Delayed_SetCursorToObject" )
 
-	wait 0.1                              
+	wait 0.1
 
 	float width  = 1920
 	float height = 1080

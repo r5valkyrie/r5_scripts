@@ -114,9 +114,9 @@ void function CharacterAbilitiesPanel_OnShow( var panel )
 				RuiSetString( contentRui, "rolePerkName", roleTitle )
 
 				               
-				RuiSetString( contentRui, "perk1Name", StringReplace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 0 ) ), "\n", "" ) )
-				RuiSetString( contentRui, "perk2Name", StringReplace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 1 ) ), "\n", "" ) )
-				RuiSetString( contentRui, "perk3Name", StringReplace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 2 ) ), "\n", "" ) )
+				RuiSetString( contentRui, "perk1Name", replace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 0 ) ), "\n", "" ) )
+				RuiSetString( contentRui, "perk2Name", replace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 1 ) ), "\n", "" ) )
+				RuiSetString( contentRui, "perk3Name", replace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 2 ) ), "\n", "" ) )
 
 				RuiSetString( contentRui, "perk1Desc", CharacterClass_GetRolePerkDescriptionAtIndex( characterRole, 0 ) )
 				RuiSetString( contentRui, "perk2Desc", CharacterClass_GetRolePerkDescriptionAtIndex( characterRole, 1 ) )
