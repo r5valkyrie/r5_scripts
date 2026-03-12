@@ -191,6 +191,10 @@ void function CharacterSkinsPanel_Update( var panel )
 		{
 			RuiSetInt( rui, "highestMythicTier", Mythics_GetNumTiersUnlockedForSkin( GetLocalClientPlayer(), itemFlav ) )
 		}
+		else
+		{
+			RuiSetInt( rui, "highestMythicTier", 0 )
+		}
 		RuiSetBool( rui, "showMythicIcons", isMythic )
 	})
 

@@ -370,16 +370,10 @@ void function OnLobbyMenu_Open()
 			SetTabBaseWidth( tab, 205 )
 		}
 		{
-			var panel = Hud_GetChild( file.menu, "ServerBrowserPanel" )
+			var panel = Hud_GetChild( file.menu, "CreateJoinPanel" )
 			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
 			tab.isBannerLogoSmall = true
 			SetTabBaseWidth( tab, 205 )
-		}
-		{
-			var panel = Hud_GetChild( file.menu, "CreatePanel" )
-			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
-			tab.isBannerLogoSmall = true
-			SetTabBaseWidth( tab, 180 )
 		}
 		{
 			var panel = Hud_GetChild( file.menu, "CreditsPanel" )

@@ -87,7 +87,7 @@ void function InitCreatePanel( var panel )
 
 void function CreatePanel_OnShow( var panel )
 {
-	UI_SetPresentationType( ePresentationType.CHARACTER_SELECT )
+	UI_SetPresentationType( ePresentationType.SERVER_BROWSER )
 	RefreshUIPlaylists()
 	RefreshUIMaps()
 

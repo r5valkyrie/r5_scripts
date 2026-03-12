@@ -1601,8 +1601,9 @@ void function InitMenus()
 	AddPanel( armoryPanel, "ArmoryMorePanel", InitArmoryMorePanel )
 
 	// r5sdk custom panels
-	AddPanel( lobbyMenu, "ServerBrowserPanel", InitServerBrowserPanel )
-	AddPanel( lobbyMenu, "CreatePanel", InitCreatePanel )
+	var createJoinPanel = AddPanel( lobbyMenu, "CreateJoinPanel", InitCreateJoinPanel )
+	AddPanel( createJoinPanel, "CreatePanel", InitCreatePanel )
+	AddPanel( createJoinPanel, "ServerBrowserPanel", InitServerBrowserPanel )
 	AddPanel( lobbyMenu, "CreditsPanel", InitCreditPanel )
 
 	var storePanel = AddPanel( lobbyMenu, "StorePanel", InitStorePanel )

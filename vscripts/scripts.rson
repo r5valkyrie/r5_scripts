@@ -52,7 +52,6 @@ Scripts:
 	sh_mapname_playlist_gamemode_enums.gnut //(mk): init this early
 	sh_assert.nut
 	feature_flags_script.gnut
-	workarounds.gnut
 ]
 
 When: "CLIENT || UI "
@@ -209,6 +208,7 @@ Scripts:
 	mp/sh_gladiator_cards.nut
 	mp/sh_player_stats_cards.nut
 	mp/sh_mythics.nut
+	workarounds.gnut
 	customize_common.gnut
 ]
 
@@ -1089,6 +1089,7 @@ Scripts:
 	ui/create_panel_visibility.nut
 	ui/lobby_panel_create.nut
 	ui/lobby_panel_serverbrowser.nut
+	ui/lobby_panel_create_join.nut
 	ui/lobby_panel_credits.nut
 
 	ui/menu_lobby.nut
