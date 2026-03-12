@@ -18,7 +18,7 @@ struct
 	var          mythicExecutionButton
 
 	int activeTierIndex
-	int lastTierIndex                                                                         
+	int lastTierIndex
 } file
 
 StoreInspectOfferData s_inspectOffers
@@ -191,7 +191,7 @@ void function SetupInspectButton( var button, int index )
 	if ( index == 0 )
 	{
 		bool isOwned = GRX_IsItemOwnedByPlayer( itemFlav )
-		Hud_SetVisible( file.ownedIndicator, isOwned )                                         
+		Hud_SetVisible( file.ownedIndicator, isOwned )
 		RuiSetBool( rui, "isOwned", isOwned )
 	}
 	else
@@ -273,7 +273,7 @@ void function MythicInspectButtonHover( var button )
 	RuiSetString( rui, "rarityText", rarityText )
 	RuiSetString( rui, "descText", descText )
 
-	if( IsItemFlavorStructValid( itemFlav.guid ) )
+	if( IsItemFlavorStructValid( itemFlav ) )
 		RunClientScript( "UIToClient_PreviewStoreItem", ItemFlavor_GetGUID( itemFlav ) )
 
 	if( index == 0 )

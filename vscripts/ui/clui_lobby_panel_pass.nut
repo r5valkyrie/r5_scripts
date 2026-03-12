@@ -3364,7 +3364,7 @@ void function ShowBattlePassItem_Emote( ItemFlavor item, float scale, bool showB
 		EffectSetControlPointVector( fx, 1, ItemFlavor_GetQualityColor( item ) )
 	}
 
-	thread ModelPerformEmote( model, item, mover, false )
+	//thread ModelPerformEmote( model, item, mover, false )
 
 	fileLevel.mover = mover
 	fileLevel.models.append( model )

@@ -15,7 +15,8 @@ global function GetPlaylistModNames
 global function GetPlaylistIndexForName
 global function Playlist_GetLTMSlotPlaylist
 global function Playlist_GetNewModeVersion
-global function Playlist_GetScheduleData
+global function Playlist_GetPlaylistScheduledTimeRange
+global function Playlist_GetScheduleData_Deprecated
 global function Playlist_ShouldBeHiddenForScheduleBlocks
 global function ShPlaylist_Init
 global function GetPlaylistRotationGroup
@@ -368,14 +369,14 @@ const table<string, asset> GAMEMODE_BINK_MAP = {
 	campfire = $"media/gamemodes/campfire.bik",
        
 }
-#endif               
+#endif //CLIENT || UI
 
 
-                      
-                      
-                      
-                      
-                      
+//////////////////////
+//////////////////////
+//// Global Types ////
+//////////////////////
+//////////////////////
 
 global typedef PlaylistName string
 global typedef PlaylistVarName string
@@ -383,8 +384,8 @@ global typedef PlaylistVarName string
 #if SERVER || CLIENT || UI
 global struct TimestampRange
 {
-	int startUnixTime             
-	int endUnixTime             
+	int startUnixTime // inclusive
+	int endUnixTime // exclusive
 }
 global struct PlaylistScheduleData
 {
@@ -396,11 +397,11 @@ global struct PlaylistScheduleData
 
 
 
-                       
-                       
-                       
-                       
-                       
+///////////////////////
+///////////////////////
+//// Private Types ////
+///////////////////////
+///////////////////////
 
 struct CachedPlaylistData
 {
@@ -422,11 +423,11 @@ struct
 
 
 
-                         
-                         
-                         
-                         
-                         
+/////////////////////////
+/////////////////////////
+//// Initialiszation ////
+/////////////////////////
+/////////////////////////
 
 #if SERVER || CLIENT || UI
 int ornull function GetCurrentPlaylistVarTimestamp( string varName, int defaultVal )
@@ -452,7 +453,7 @@ int function GetMaxTeamSizeForPlaylist( PlaylistName playlistName )
 #endif
 
 
-#if CLIENT || UI
+#if SERVER || CLIENT || UI
 array<string> function GetPlaylistMaps( PlaylistName playlistName )
 {
 	array<string> mapsArray
@@ -523,7 +524,7 @@ asset function GetImageFromImageMap( string keyName )
 		{
 			#if DEVELOPER
 				if ( GetConVarBool( "ui_automation_enabled" ) )
-					return imageAsset                    
+					return imageAsset // skip the warning
 			#endif       
 
 			Warning( "Invalid playlist value for 'image': %s", keyName )
@@ -543,7 +544,7 @@ asset function GetThumbnailImageFromImageMap( string keyName )
 		{
 			#if DEVELOPER
 				if ( GetConVarBool( "ui_automation_enabled" ) )
-					return imageAsset                    
+					return imageAsset // skip the warning
 			#endif       
 
 			Warning( "Invalid playlist value for 'image': %s", keyName )
@@ -577,7 +578,7 @@ asset function GetGamemodeLogoFromImageMap( string keyName )
 		{
 			#if DEVELOPER
 				if ( GetConVarBool( "ui_automation_enabled" ) )
-					return imageAsset                    
+					return imageAsset // skip the warning
 			#endif       
 
 			Warning( "Invalid playlist value for 'image': %s", keyName )
@@ -614,32 +615,50 @@ int function GetPlaylistIndexForName( PlaylistName playlistName )
 
 
 #if SERVER || CLIENT || UI
-PlaylistScheduleData function Playlist_GetScheduleData( string plName )
+bool function Playlist_PlaylistHasSchedule( string playlistName )
+{
+	PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( playlistName )
+	return scheduleData.blocks.len() > 0
+    
+	return false
+}
+
+TimestampRange ornull function Playlist_GetPlaylistScheduledTimeRange( string playlistName )
+{
+	PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( playlistName )
+	return scheduleData.currentBlock
+       
+	return null
+}
+
+// Deprecated: Will be removed once work on https://jiratf.rspn.ad.ea.com/browse/R5DEV-579256 is complete
+// Prefer using Playlist_GetPlaylistScheduleEndTime in the meantime and reach out to @bmenke with any questions
+PlaylistScheduleData function Playlist_GetScheduleData_Deprecated( string plName )
 {
 	if ( plName in file.cachedPlaylistMap )
 	{
-		                                                                   
+		// if we don't have a schedule there is no need to update the cache
 		if ( file.cachedPlaylistMap[plName].playlistSchedule.currentBlock == null && file.cachedPlaylistMap[plName].playlistSchedule.nextBlock == null )
 			return file.cachedPlaylistMap[plName].playlistSchedule
 
 		if ( file.cachedPlaylistMap[plName].playlistSchedule.currentBlock != null )
 		{
-			                                                                        
+			// if we have a current block update the cache if it's no longer current
 			TimestampRange currentBlock = expect TimestampRange( file.cachedPlaylistMap[plName].playlistSchedule.currentBlock )
 			if ( currentBlock.endUnixTime > GetUnixTimestamp() )
-				return file.cachedPlaylistMap[plName].playlistSchedule	                                                                   
+				return file.cachedPlaylistMap[plName].playlistSchedule	// we are still in the current block so no need to update the cache
 		}
 
 		if ( file.cachedPlaylistMap[plName].playlistSchedule.nextBlock != null )
 		{
-			                                                           
+			// if we have a next block update the cache if it's current
 			TimestampRange nextBlock = expect TimestampRange( file.cachedPlaylistMap[plName].playlistSchedule.nextBlock )
 			if ( nextBlock.startUnixTime > GetUnixTimestamp() )
-				return file.cachedPlaylistMap[plName].playlistSchedule	                                                               
+				return file.cachedPlaylistMap[plName].playlistSchedule	// we are not yet the next block so no need to update the cache
 		}
 
 		file.cachedPlaylistMap[plName].playlistSchedule = Playlist_GetNonCachedScheduleData( plName )
-		return file.cachedPlaylistMap[plName].playlistSchedule	                                
+		return file.cachedPlaylistMap[plName].playlistSchedule	// return the newly chached data
 	}
 
 	return Playlist_GetNonCachedScheduleData( plName )
@@ -653,7 +672,7 @@ PlaylistScheduleData function Playlist_GetNonCachedScheduleData( string plName )
 	const int MAX_SCHEDULE_BLOCKS_PER_PLAYLIST = 5
 	for ( int blockIdx = 0; blockIdx < MAX_SCHEDULE_BLOCKS_PER_PLAYLIST + 1; ++blockIdx )
 	{
-		                             
+		// "visible_schedule_block_0"
 		string varName = format( "visible_schedule_block_%d", blockIdx )
 		string varVal  = GetPlaylistVarString( plName, varName, "" )
 		if ( varVal.len() == 0 )
@@ -722,7 +741,7 @@ PlaylistScheduleData function Playlist_GetNonCachedScheduleData( string plName )
 #if SERVER || CLIENT || UI
 bool function Playlist_ShouldBeHiddenForScheduleBlocks( string plName )
 {
-	PlaylistScheduleData scheduleData = Playlist_GetScheduleData( plName )
+	PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( plName )
 	if ( scheduleData.blocks.len() > 0 )
 	{
 		if ( scheduleData.currentBlock == null )
@@ -731,6 +750,59 @@ bool function Playlist_ShouldBeHiddenForScheduleBlocks( string plName )
 		TimestampRange currentBlock = expect TimestampRange( scheduleData.currentBlock )
 		if ( currentBlock.startUnixTime > GetUnixTimestamp() || currentBlock.endUnixTime < GetUnixTimestamp() )
 			return true
+	}
+
+	return false
+}
+
+bool function Playlist_HasRankedSeasonEndDate()
+{
+	return Playlist_GetRankedSeasonEndDate() != null
+}
+
+int ornull function Playlist_GetRankedSeasonEndDate()
+{
+	string varVal = GetCurrentPlaylistVarString( "ranked_season_end_date", "" )
+	if ( varVal.len() > 0 )
+	{
+		return DateTimeStringToUnixTimestamp( varVal )
+	}
+
+	return null
+}
+
+bool function Playlist_ShouldLockRankedPlaylistForPatch( string plName )
+{
+	if ( !Playlist_HasRankedSeasonEndDate() )
+		return false
+
+	if ( Playlist_PlaylistHasSchedule( plName ) )
+	{
+		TimestampRange ornull currentBlockOrNull = Playlist_GetPlaylistScheduledTimeRange( plName )
+		if ( currentBlockOrNull == null )
+			return true
+
+		TimestampRange currentBlock = expect TimestampRange( currentBlockOrNull )
+
+		bool outsideCurrentBlock = currentBlock.startUnixTime > GetUnixTimestamp() || currentBlock.endUnixTime < GetUnixTimestamp()
+		bool pastEndDate = Playlist_IsPastRankedSeasonEndDate()
+
+		// We only lock for patch if we're not past the end date, otherwise we'd just lock for end of season
+		if ( outsideCurrentBlock && !pastEndDate )
+			return true
+	}
+
+	return false
+}
+
+bool function Playlist_IsPastRankedSeasonEndDate()
+{
+	int ornull seasonEndTime = Playlist_GetRankedSeasonEndDate()
+	if ( seasonEndTime != null )
+	{
+		expect int( seasonEndTime )
+		int current = GetUnixTimestamp()
+		return GetUnixTimestamp() >= seasonEndTime
 	}
 
 	return false
@@ -769,31 +841,32 @@ void function ShPlaylist_CacheData()
 		playlistData.name = name
 		playlistData.index = index
 
-		playlistData.playlistSchedule = Playlist_GetScheduleData( name )
+		playlistData.playlistSchedule = Playlist_GetScheduleData_Deprecated( name )
 
 		file.cachedPlaylistArray[index] = playlistData
 		file.cachedPlaylistMap[name] <- playlistData
 		print( "DEBUG: Cached playlist [" + index + "] = " + name )
 	}
+//	Boost_OnPlaylistsRegistered()
 }
 
 #if SERVER
-                                                                 
- 
-	           
-	                                       
-	                                                                                                                                                     
-	 
-		                      
-	 
+void function ShPlaylist_Lobby_OnClientConnected( entity player )
+{
+	PrintFunc()
+	int numPlayers = GetPlayerArray().len()
+	if ( numPlayers == 1 ) //Server only updates playlist when there are no players connected, so when the first player connects let's rebuild the cache.
+	{
+		ShPlaylist_CacheData()
+	}
 
- 
+}
 #endif
 
 array<string> function GetPlaylistModNames()
 {
 	array<string> list = []
-	int numMods = GetPlaylistModCount()
+	int numMods = 4//GetPlaylistModCount()
 
 	list.resize( numMods )
 	for ( int modIter = 0; modIter != numMods; modIter++ )
@@ -816,7 +889,7 @@ array<string> function GetVisiblePlaylistNames( bool isPrivateMatchQuery = false
 		shouldCache = false
 	#endif
 
-	                                                          
+	// Be aware of moving time when connecting to new servers!
 	int timeSinceLastChecked = ( GetUnixTimestamp() - file.lastCheckedTime )
 	int checkInterval = GetCurrentPlaylistVarInt( "visible_playlist_refresh_time_sec", shouldCache ? 10 : 1 )
 	if ( timeSinceLastChecked >= 0 && file.isOptInEnabled == shouldDisplayOptInOptions && timeSinceLastChecked < checkInterval )
@@ -851,7 +924,7 @@ array<string> function GetVisiblePlaylistNames( bool isPrivateMatchQuery = false
 			continue
 		if ( GetPlaylistVarBool( playlistData.name, "hub_only", false ) )
 			continue
-		if ( GetPlaylistVarBool( playlistData.name, "pve_only", false ) )                             
+		if ( GetPlaylistVarBool( playlistData.name, "pve_only", false ) )    // IsPvELoadingForcedOn()
 			continue
 		if ( GetPlaylistVarBool( playlistData.name, "private_match", false )  != isPrivateMatchQuery )
 			continue
@@ -972,6 +1045,17 @@ const table<string, asset> GAMEMODE_EMBLEM_MAP = {
 }
 #endif
 
+#if CLIENT || UI
+const table<string, asset> GAMEMODE_BANNER_LOGO_MAP = {
+	freedm = $"rui/rui_screens/apex_logo_tdm",
+	                             
+		logo_treasure_hunt = $"rui/hud/gametype_icons/ltm/treasure_hunt/logo_treasure_hunt",
+       
+	                       
+		logo_bigtdm = $"rui/rui_screens/apex_logo_tdm_big",
+       
+}
+#endif // CLIENT || UI
 
 #if CLIENT || UI
 asset function GetModeEmblemImage( string playlistName )
@@ -1062,6 +1146,36 @@ asset function GetModeEmblemImage( string playlistName )
 }
 #endif
 
+#if CLIENT || UI
+asset function GetModeBannerLogo( string playlistName )
+{
+	string logoKey	  = GetPlaylistVarString( playlistName, "banner_logo", "" )
+	asset logoImage	  = $""
+
+	if ( logoKey != "" )
+	{
+		if ( logoKey in GAMEMODE_BANNER_LOGO_MAP )
+			logoImage = GAMEMODE_BANNER_LOGO_MAP[logoKey]
+		else
+			Warning( "Playlist '%s' has invalid value for 'banner_logo': %s", playlistName, logoKey )
+	}
+
+	return logoImage
+}
+#endif
+
+#if CLIENT || UI
+asset function GetModeBannerLogoOrModeEmblemFallback( string playlistName )
+{
+	asset image = GetModeBannerLogo( playlistName )
+	if ( image == $"" )
+	{
+		image = GetModeEmblemImage( playlistName )
+	}
+	return image
+}
+#endif
+
 
 #if UI
 array<int> function GetEmblemColor( string playlistName )
@@ -1072,7 +1186,7 @@ array<int> function GetEmblemColor( string playlistName )
 #endif
 
 #if DEVELOPER
-                                                                   
+// this is only needed until rotation groups work on listen servers
 const DEV_SecondsPerRotation = 3600
 #endif
 
@@ -1083,8 +1197,8 @@ string function GetPlaylistRotationGroup()
 	#if DEVELOPER
 		if ( rotationGroup == "" )
 		{
-			                            
-			                                                               
+			//different map every minute
+			//if ( GetUnixTimeParts( GetUnixTimestamp() ).minute % 2 == 0 )
 			if ( GetUnixTimestamp() % (DEV_SecondsPerRotation * 2) < DEV_SecondsPerRotation )
 				rotationGroup = "kings_canyon"
 			else
@@ -1101,7 +1215,7 @@ int function GetPlaylistRotationNextTime( string rotationName = "" )
 
 	#if DEVELOPER
 		if ( nextTime == 0 )
-			nextTime = (GetUnixTimestamp() / DEV_SecondsPerRotation ) * DEV_SecondsPerRotation + DEV_SecondsPerRotation                             
+			nextTime = (GetUnixTimestamp() / DEV_SecondsPerRotation ) * DEV_SecondsPerRotation + DEV_SecondsPerRotation //fake switch every so often
 	#endif
 
 	return nextTime
@@ -1126,19 +1240,19 @@ string function GetPlaylistRotationNextTimeFormatedString( int seconds = -1, str
 	string formatString
 
 	if( isDays && !isHours ){
-		    
+		//5d
 		formatString = Localize( "#TIME_REMAINING_DAYS", string( dt.days ))
 	}else if ( isDays && isHours ){
-		       
+		//5d 3h
 		formatString = Localize( "#TIME_REMAINING_DAYS_HOURS", string( dt.days ), string( dt.hours ) )
 	}else if( !isDays && isHours && isMinutes ){
-		        
+		//3h 33m
 		formatString = Localize( "#TIME_REMAINING_HOURS_MINUTES", string( dt.hours ), string( dt.minutes ) )
 	}else if( !isDays && !isHours && isMinutes ){
-		        
+		//3m 55s
 		formatString = Localize( "#TIME_REMAINING_MINUTES_SECONDS", string( dt.minutes ), string( dt.seconds ) )
 	}else if( !isDays && !isHours && !isMinutes){
-		     
+		//55s
 		formatString = Localize( "#TIME_REMAINING_SECONDS", string( dt.seconds ) )
 	}
 
@@ -1199,8 +1313,81 @@ string function GetCurrentPlaylistInUiSlot( string uiSlot )
 }
 #endif
 #if UI
+void function UpdateMatchmakeFromMatchPlaylist_Thread()
+{
+	Signal( uiGlobal.signalDummy, "UpdateMatchmakeFromMatchPlaylist" )
+	EndSignal( uiGlobal.signalDummy, "UpdateMatchmakeFromMatchPlaylist" )
+	EndSignal( uiGlobal.signalDummy, "LevelShutdown" )
+
+	string uiSlot = GetCurrentPlaylistVarString( "ui_slot", "" )
+	string currentPlaylistName = GetCurrentPlaylistName()
+	string lastMatchmakingPlaylist = ""
+	int emptyPlaylistFrameCount = 0
+	bool isCurrentPlaylistUsingRotation = IsPlaylistBeingRotated( currentPlaylistName )
+
+	while ( true )
+	{
+		string currentMatchmakingPlaylist = currentPlaylistName
+		bool hasMatchmakeFromMatch = true
+
+		if ( isCurrentPlaylistUsingRotation )
+		{
+			string currentUiSlotPlaylist =  GetCurrentPlaylistInUiSlot( uiSlot )
+			if ( GetPlaylistVarBool( currentUiSlotPlaylist, "matchmake_from_match", false ) )
+				currentMatchmakingPlaylist = currentUiSlotPlaylist
+		}
+
+		if ( !GetVisiblePlaylistNames().contains( currentMatchmakingPlaylist ) )
+			currentMatchmakingPlaylist = ""
+
+		if ( currentMatchmakingPlaylist != lastMatchmakingPlaylist )
+		{
+			lastMatchmakingPlaylist = currentMatchmakingPlaylist
+
+			if ( currentMatchmakingPlaylist == "" )
+			{
+				emptyPlaylistFrameCount = 0
+			}
+			else
+			{
+				emptyPlaylistFrameCount = -1
+				if ( hasMatchmakeFromMatch )
+				{
+					CancelMatchmaking()
+					WaitFrame()
+					StartMatchmaking( currentMatchmakingPlaylist )
+				}
+				else
+				{
+					MatchRequeueCancel()
+				}
+			}
+		}
+
+		// Bug? Rotations seem to leave the current ui_slot's playlist empty for a few seconds.
+		if ( emptyPlaylistFrameCount != -1 )
+		{
+			emptyPlaylistFrameCount++
+
+			if ( emptyPlaylistFrameCount > 10 )
+				MatchRequeueCancel()
+		}
+
+		wait 1.0
+	}
+}
+void function MatchRequeueCancel()
+{
+	if ( AreWeMatchmaking() ) //LeaveMatch_WasInitiate
+		CancelMatchmaking()
+
+	Signal( uiGlobal.signalDummy, "UpdateMatchmakeFromMatchPlaylist" )
+}
+#endif
+#if UI
 string function GetDefaultPlaylist()
 {
+                               
 	if ( GetPartySize() == 1 )
 	{
 		if ( !IsLocalPlayerExemptFromTraining() && !HasLocalPlayerCompletedTraining() )
@@ -1213,11 +1400,17 @@ string function GetDefaultPlaylist()
 	{
 		return PLAYLIST_NEW_PLAYER_ORIENTATION
 	}
+     
+                                                                                                       
+                          
+      
+
 	array<string> list = GetVisiblePlaylistNames()
 	Assert( list.len() > 0 )
+
 	foreach ( playlist in list )
 	{
-		if ( PrivateMatchMapSelect_PlaylistIsDefaultSlot( playlist ) || GamemodeSelect_PlaylistIsDefaultSlot( playlist ) && Lobby_IsPlaylistAvailable( playlist ) )
+		if (  PrivateMatchMapSelect_PlaylistIsDefaultSlot( playlist ) || GamemodeSelect_PlaylistIsDefaultSlot( playlist ) && Lobby_IsPlaylistAvailable( playlist ) )
 		{
 			return playlist
 			break
@@ -1226,7 +1419,11 @@ string function GetDefaultPlaylist()
 
 	foreach ( playlist in list )
 	{
+                               
 		if ( playlist == PLAYLIST_TRAINING || playlist == PLAYLIST_NEW_PLAYER_ORIENTATION )
+     
+                                      
+      
 			continue
 		return playlist
 	}
@@ -1238,12 +1435,12 @@ string function GetDefaultPlaylist()
 #if UI
 bool function PartyHasPlaylistAccountLevelRequired( string playlistName )
 {
-	                                                                         
+	// checks to see if any player in the party has the accout level required
 
 	if ( !IsFullyConnected() )
 		return false
 
-	int accountLevelRequired = GetPlaylistVarInt( playlistName, "account_level_required", 0 ) - 1                                                     
+	int accountLevelRequired = GetPlaylistVarInt( playlistName, "account_level_required", 0 ) - 1 // -1 since account level starts from 0 instead of 1
 	if ( accountLevelRequired < 0 )
 		return true
 
@@ -1279,11 +1476,11 @@ bool function PartyHasPlaylistAccountLevelRequired( string playlistName )
 #endif
 
 
-                       
-                       
-                       
-                       
-                       
+///////////////////////
+///////////////////////
+//// Dev functions ////
+///////////////////////
+///////////////////////
 #if (SERVER || CLIENT || UI) && DEVELOPER
 void function PrintPlaylists()
 {

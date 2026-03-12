@@ -233,7 +233,7 @@ array< ItemFlavor > function ChallengeCollection_GetAllMainChallenges( Challenge
 array< ItemFlavor > function ChallengeCollection_GetAllChallenges( ChallengeCollection challengeCollection )
 {
 	array<ItemFlavor> challenges
-	if ( IsItemFlavorStructValid( challengeCollection.itemFlav.guid, eValidation.DONT_ASSERT ) && IsItemFlavorStructValid( challengeCollection.mainChallenge.guid, eValidation.DONT_ASSERT ) )
+	if ( IsItemFlavorStructValid( challengeCollection.itemFlav, eValidation.DONT_ASSERT ) && IsItemFlavorStructValid( challengeCollection.mainChallenge, eValidation.DONT_ASSERT ) )
 	{
 		challenges.append( challengeCollection.mainChallenge )
 		foreach ( ChallengeSet set in challengeCollection.challengeSets )

@@ -40,9 +40,6 @@ global const string PING_SOUND_DEFAULT = "ui_mapping_item_1p"
 const float LOOT_PING_DISTANCE = 500.0
 
 const bool LINE_COLORS = true
-
-const float DEFAULT_FOV = 70.0
-
 const float MAGIC_DEATHBOX_Z_OFFSET = 1.25
 
 const bool HAS_ITEM_PICKUP_FEEDACK_FX = false

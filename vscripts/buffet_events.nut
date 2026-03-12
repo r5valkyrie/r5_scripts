@@ -1,4 +1,4 @@
-  
+
 
 #if SERVER || CLIENT || UI
 global function BuffetEvents_Init
@@ -55,11 +55,11 @@ global function BuffetEvent_OnLobbyPlayPanelSpecialChallengeClicked
 #endif
 
 
-                      
-                      
-                      
-                      
-                      
+
+
+
+
+
 
 #if SERVER || CLIENT || UI
 global struct BuffetEventBadgeData
@@ -84,11 +84,11 @@ global struct BuffetEventModesAndChallengesData
 
 
 
-                       
-                       
-                       
-                       
-                       
+
+
+
+
+
 
 #if SERVER || CLIENT || UI
 struct FileStruct_LifetimeLevel
@@ -97,23 +97,23 @@ struct FileStruct_LifetimeLevel
 }
 #endif
 #if SERVER || CLIENT
-FileStruct_LifetimeLevel fileLevel                             
+FileStruct_LifetimeLevel fileLevel
 #elseif UI
-FileStruct_LifetimeLevel& fileLevel                             
+FileStruct_LifetimeLevel& fileLevel
 
 struct {
-	  
-} fileVM                            
+
+} fileVM
 #endif
 
 
 
 
-                         
-                         
-                         
-                         
-                         
+
+
+
+
+
 
 #if SERVER || CLIENT || UI
 void function BuffetEvents_Init()
@@ -131,7 +131,7 @@ void function BuffetEvents_Init()
 		#if CLIENT || UI
 			Assert( IsConnected(), "We're not connected to a server. This will result in excess challenges being loaded. This won't break anything, but it also shouldn't happen." )
 			if ( IsConnected() )
-		#endif                                                                                    
+		#endif
 			{
 				expired = CalEvent_GetFinishUnixTime( ev ) < GetUnixTimestamp()
 			}
@@ -243,11 +243,11 @@ void function BuffetEvents_Init()
 
 
 
-                          
-                          
-                          
-                          
-                          
+
+
+
+
+
 
 #if SERVER || CLIENT || UI
 array<ItemFlavor> function GetActiveStoryEventArray( int t )
@@ -336,7 +336,7 @@ array<ItemFlavor> function BuffetEvent_GetCurrentChallenges_EXCLUDING_DAILIES( I
 
 	foreach ( string modeName in bemacd.modes )
 	{
-		PlaylistScheduleData scheduleData = Playlist_GetScheduleData( modeName )
+		PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( modeName )
 		if ( scheduleData.currentBlock != null )
 		{
 			result.extend( bemacd.modeToChallengesMap[modeName] )
@@ -637,20 +637,20 @@ void function BuffetEvent_OnLobbyPlayPanelSpecialChallengeClicked( ItemFlavor ev
 
 
 
-                       
-                       
-                       
-                       
-                       
-
-  
 
 
 
-                   
-                   
-                   
-                   
-                   
+
+
+
+
+
+
+
+
+
+
+
+
 
 

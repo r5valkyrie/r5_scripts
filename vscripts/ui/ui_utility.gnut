@@ -210,7 +210,7 @@ string function GetGameModeDisplayHint( string mode )
 
 array<int> function ColorStringToArray( string colorString )
 {
-	array<string> tokens = split( colorString, " " )
+	array<string> tokens = split( colorString, WHITESPACE_CHARACTERS )
 
 	Assert( tokens.len() >= 3 && tokens.len() <= 4 )
 

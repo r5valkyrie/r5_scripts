@@ -137,6 +137,8 @@ global const HIGHLIGHT_FILL_OBJECTIVE = 126 // inside_objective
 
 global const HIGHLIGHT_OUTLINE_MENU_MODEL_REVEAL = 75 // outline_menu_model_reveal
 global const HIGHLIGHT_FILL_MENU_MODEL_REVEAL = 75 // inside_menu_model_reveal
+global const HIGHLIGHT_OUTLINE_MENU_MODEL_REVEAL_DEPTH_DISCARD = 77 
+global const HIGHLIGHT_FILL_MENU_MODEL_REVEAL_DEPTH_DISCARD = 77 
 
 global const MAP_SCAN_FADE_DISTANCE = 16000 //Really just an arbitrarily large number
 

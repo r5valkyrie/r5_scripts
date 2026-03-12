@@ -29,10 +29,6 @@ global function GamemodeIs
 global function IsCurrentPlaylistExternal
 global function IsCurrentGamemodeExternal
 
-#if SERVER 
-	global function GetPlaylistMaps //client has a copy already
-#endif
-
 //mode functions:
 global function g_bIs1v1GameType
 global function g_bSinglePlayerChampion
@@ -404,28 +400,6 @@ void function _printstringarray( array<string> arr, string title = "???" )
 	printl( prnt )
 }
 
-#if SERVER 
-	array<string> function GetPlaylistMaps( string playlistName )
-	{
-		array<string> mapsArray
-
-		int numModes = GetPlaylistGamemodesCount( playlistName )
-		for ( int modeIndex = 0; modeIndex < numModes; modeIndex++ )
-		{
-			int numMaps = GetPlaylistGamemodeByIndexMapsCount( playlistName, modeIndex )
-			for ( int mapIndex = 0; mapIndex < numMaps; mapIndex++ )
-			{
-				string mapName = GetPlaylistGamemodeByIndexMapByIndex( playlistName, modeIndex, mapIndex )
-				if ( mapsArray.contains( mapName ) )
-					continue
-
-				mapsArray.append( mapName )
-			}
-		}
-
-		return mapsArray
-	}
-#endif 
 
 //////////////////////////////////////////
 //	gamemode conditional INIT functions	//

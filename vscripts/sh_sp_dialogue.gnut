@@ -362,17 +362,26 @@ void function OnCharacterRegistered( ItemFlavor flavor )
 {
 	var block    = GetSettingsBlockForAsset( CharacterClass_GetSetFile( flavor ) )
 	string voice = GetSettingsBlockString( block, "voice" ).tolower()
-
-	if ( !file.validVoices.contains( voice ) )
-	{
+	if ( !file.validVoices.contains( voice ) && (voice != SILENT_PLAYER_VOICE) )
 		file.validVoices.append( voice )
-		#if CLIENT
+
+	#if CLIENT
+		string voiceCCD = voice
+		if ( voiceCCD == "playerm1" )
+		{
+			const string MY_PREFIX = "character_"
+			string flavorStr = ItemFlavor_GetCharacterRef( flavor )
+			if ( flavorStr.find( MY_PREFIX ) == 0 )
+				voiceCCD = flavorStr.slice( MY_PREFIX.len() )
+		}
+		if ( !(voiceCCD in file.voiceToCachedCharDataMap) )
+		{
 			CachedCharacterData ccd
 			ccd.longName = ItemFlavor_GetLongName( flavor )
 			ccd.portraitImage = CharacterClass_GetCharacterLockedPortrait( flavor )
-			file.voiceToCachedCharDataMap[voice] <- ccd
-		#endif //
-	}
+			file.voiceToCachedCharDataMap[voiceCCD] <- ccd
+		}
+	#endif    
 }
 #endif
 

@@ -1,4 +1,4 @@
-               
+
 global function InitGiftingDialog
 global function OpenGiftingDialog
 global function GiftingDialog_UpdateEligibilityInformation
@@ -143,7 +143,7 @@ void function Gifting_MenuUpdate()
 		return
 
 	var scrollPanel = Hud_GetChild( file.friendListPanel, "ScrollPanel" )
-	         
+
 	foreach ( int friendIdx, GiftingFriend unused in file.giftingFriendList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + friendIdx )
@@ -224,7 +224,7 @@ string function GetOfferDiscountPct( GRXScriptOffer offer )
 		int originalPrice = originalPriceFlavBag.quantities[0]
 		int displayedPrice = offer.prices[0].quantities[0]
 		float discount = 100 - ( offer.prices[0].quantities[0] / (originalPrice * 1.0) * 100 )
-		discountPct = int( floor( discount ) )                                                      
+		discountPct = int( floor( discount ) )
 	}
 	return string(discountPct)
 }
@@ -236,13 +236,13 @@ int function Gifting_GetTotalFriendCount()
 
 void function Gifting_SortFriendsOnline()
 {
-	                                             
+
 	file.giftingFriendList.sort( SortGiftFriendGroupStatus )
 }
 
 void function Gifting_AlphabetizeFriends()
 {
-	                           
+
 	file.giftingFriendList.sort( SortGiftFriendAlphabetize )
 }
 
@@ -481,12 +481,12 @@ array<GiftingFriend> function CreateNewFriendlistWithAllEntries()
 
 	foreach ( EadpPeopleData person in eadFriendlist.people )
 	{
-		bool wasXbox = false                             
+		bool wasXbox = false
 		bool wasPSN = false
 		array<GiftingFriend> pcFriend
 
-		if ( !HasFriendshipTenureBeenLongEnough( person.friendCreationTime ) )
-			continue
+		//if ( !HasFriendshipTenureBeenLongEnough( person.friendCreationTime ) )
+		//	continue
 
 		foreach ( EadpPresenceData presence in person.presences )
 		{
@@ -635,7 +635,6 @@ string function GetPremiumPriceString( GRXScriptOffer offer )
 void function Delayed_UpdateCurrency()
 {
 	wait CURRENCY_UPDATE_DELAY_TIME
-	GRX_GetCurrencyBalances()                   
+	GRX_GetCurrencyBalances()
 	UpdateActiveUserInfoPanels()
 }
-                     

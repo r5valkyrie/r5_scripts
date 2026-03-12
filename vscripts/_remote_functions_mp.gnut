@@ -613,6 +613,8 @@ void function RemoteFunctions_Init_Begin()
 	Ultimates_RegisterNetworking() //1 func
 	ClientMusic_RegisterNetworking() ////Audit 2-22-2025 3 funcs, was 4, 1 is now a toggle.
 
+	SeasonQuest_RegisterNetworking()//quest
+
 	ScriptRegisterNetworkedVariable( "currentDeathFieldStage", SNDC_GLOBAL, SNVT_INT, -1 )
 	ScriptRegisterNetworkedVariable( "nextCircleStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 	ScriptRegisterNetworkedVariable( "circleCloseTime", SNDC_GLOBAL, SNVT_TIME, -1 )
@@ -830,13 +832,9 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "Tracker_ResyncAllForPlayer", "entity" )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "Tracker_ResyncStatForPlayer" )	
 		
-	//Todo(mk): Move to client fetch( for cards ), remove networked vars
-	//ScriptRegisterNetworkedVariable( "SeasonScore", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0 )
-	//ScriptRegisterNetworkedVariable( "SeasonKills", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	//ScriptRegisterNetworkedVariable( "SeasonDeaths", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	//ScriptRegisterNetworkedVariable( "SeasonPlaytime", SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	//ScriptRegisterNetworkedVariable( "SeasonGamesplayed", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0, 0.0, FLT_MAX )
-	//ScriptRegisterNetworkedVariable( "stats_loaded", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	//Lobby
+	Remote_RegisterServerFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason", "string" )
+	Remote_RegisterServerFunction( "ClientCallback_ViewingMainLobbyPage" )
 	
 	
 	if( Gamemode() == eGamemodes.WINTEREXPRESS )

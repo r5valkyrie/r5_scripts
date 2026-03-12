@@ -1,7 +1,7 @@
 global function InitMiniPromo
 global function MiniPromo_Start
 global function MiniPromo_Stop
-
+global function GetPackInfoToolTip
          
                                        
         

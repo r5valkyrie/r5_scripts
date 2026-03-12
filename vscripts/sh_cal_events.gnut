@@ -171,15 +171,28 @@ void function ShCalEvent_LevelInit()
 				fileLevel.seasonBattlePassMap[event] <- expect ItemFlavor(passOrNull)
 				fileLevel.battlePassSeasonMap[expect ItemFlavor(passOrNull)] <- event
 
-				// RPaks don't have "seasonquestFlav" setting
-			// asset seasonQuestAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "seasonquestFlav" )
-				// if ( seasonQuestAsset != $"" )
-				// {
-				// 	ItemFlavor ornull questOrNull = RegisterItemFlavorFromSettingsAsset( seasonQuestAsset )
-				// 	expect ItemFlavor( questOrNull )
-				// 	fileLevel.seasonToQuestMap[event] <- questOrNull
-				// 	fileLevel.questToSeasonMap[questOrNull] <- event
-				// }
+				asset seasonQuestAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( event ), "seasonquestFlav" )
+				printt( "DEBUG: Season quest asset:", string( seasonQuestAsset ) )
+				if ( seasonQuestAsset != $"" )
+				{
+					printt( "DEBUG: Attempting to register quest from:", string( seasonQuestAsset ) )
+					ItemFlavor ornull questOrNull = RegisterItemFlavorFromSettingsAsset( seasonQuestAsset )
+					if ( questOrNull == null )
+					{
+						printt( "DEBUG: WARNING - questOrNull is null for:", string( seasonQuestAsset ) )
+					}
+					else
+					{
+						expect ItemFlavor( questOrNull )
+						fileLevel.seasonToQuestMap[event] <- questOrNull
+						fileLevel.questToSeasonMap[questOrNull] <- event
+						printt( "DEBUG: Registered quest for season:", string( event ), "quest:", string( questOrNull ) )
+					}
+				}
+				else
+				{
+					printt( "DEBUG: seasonQuestAsset is empty string for season:", string( event ) )
+				}
 
 				//Assert( (bool function() : ( event ) {
 				foreach ( ItemFlavor otherEvent in fileLevel.allSeasons )
@@ -283,23 +296,30 @@ ItemFlavor function GetLatestSeason( int t )
 // If there is a current season, get that. Otherwise, return the most recent season that was active.
 ItemFlavor ornull function GetActiveSeason( int t )
 {
-	if ( fileLevel.currentActiveSeason != null )
-	{
-		ItemFlavor season = expect ItemFlavor( fileLevel.currentActiveSeason )
-		if ( t < CalEvent_GetFinishUnixTime( season ) && t > CalEvent_GetStartUnixTime( season ) )
-			return season
-	}
+	ItemFlavor ornull seasonOrNull = RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/calevent/season16.rpak" )
+	if ( seasonOrNull == null )
+		return null
 
-	//return GetItemFlavorByAsset( $"settings/itemflav/calevent/season01.rpak" )
-	foreach ( ItemFlavor season in fileLevel.allSeasons )
+	ItemFlavor season = expect ItemFlavor( seasonOrNull )
+
+	// Ensure the battlepass map is populated for this season
+	if ( !(season in fileLevel.seasonBattlePassMap) )
 	{
-		if ( CalEvent_IsActive( season, t ) )
+		asset bpAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( season ), "battlepassFlav" )
+		printt( "DEBUG: GetActiveSeason() - battlepassFlav asset:", string( bpAsset ) )
+		if ( bpAsset != $"" )
 		{
-			fileLevel.currentActiveSeason = season
-			return season
+			ItemFlavor ornull passOrNull = RegisterItemFlavorFromSettingsAsset( bpAsset )
+			if ( passOrNull != null )
+			{
+				ItemFlavor pass = expect ItemFlavor( passOrNull )
+				fileLevel.seasonBattlePassMap[season] <- pass
+				fileLevel.battlePassSeasonMap[pass] <- season
+			}
 		}
 	}
-	return null
+
+	return season
 }
 #endif
 
@@ -427,17 +447,7 @@ bool function CalEvent_IsActive( ItemFlavor event, int t )
 {
 	Assert( IsItemFlavorRegistrationFinished() )
 	int finishUnixTime = CalEvent_GetFinishUnixTime( event )
-
-	bool hasStarted = CalEvent_HasStarted( event, t )
-	bool hasNotFinished = ( t < finishUnixTime )
-
-	#if ASSERTS && SERVER
-		if ( ItemFlavor_GetType( event ) > eItemType._CALEVENT_LIMITED_TIME &&
-				GetCurrentPlaylistVarBool( "check_for_dead_cal_events", true ) )
-			Assert( GetUnixTimestamp() - finishUnixTime < TWO_SEASONS_IN_SECONDS, format( "MTX Events: Script is checking if a non-Season/Ranked Period Cal Event - GUID %d - that is now over 2 seasons old is active.", ItemFlavor_GetGUID( event ) ) )
-	#endif
-
-	return hasStarted && hasNotFinished
+	return CalEvent_HasStarted( event, t ) && (t < finishUnixTime)
 }
 #endif
 
@@ -451,8 +461,7 @@ int function CalEvent_GetRevealUnixTime( ItemFlavor flav )
 	if ( revealTime != null )
 		return expect int( revealTime )
 
-	// "revealUnixTime" setting not in RPaks — fallback
-	return UNIX_TIME_FALLBACK_1970
+	return CalEvent_GetUnixTimeBySettingString( flav, "revealUnixTime", UNIX_TIME_FALLBACK_1970, false )
 }
 #endif
 
@@ -466,8 +475,7 @@ int function CalEvent_GetHideUnixTime( ItemFlavor flav )
 	if ( hideTime != null )
 		return expect int( hideTime )
 
-	// "hideUnixTime" setting not in RPaks — fallback
-	return UNIX_TIME_FALLBACK_2038
+	return CalEvent_GetUnixTimeBySettingString( flav, "hideUnixTime", UNIX_TIME_FALLBACK_2038, false )
 }
 #endif
 
@@ -488,8 +496,7 @@ int function CalEvent_GetStartUnixTime( ItemFlavor flav )
 		return int(metaData[ "defaultStartTime" ])
 	}
 
-	// "defaultStartTime" setting not in RPaks — fallback
-	return UNIX_TIME_FALLBACK_2038
+	return CalEvent_GetUnixTimeBySettingString( flav, "defaultStartTime", UNIX_TIME_FALLBACK_2038 )
 }
 #endif
 
@@ -510,8 +517,7 @@ int function CalEvent_GetFinishUnixTime( ItemFlavor flav )
 		return int(metaData[ "defaultFinishTime" ])
 	}
 
-	// "defaultFinishTime" setting not in RPaks — fallback
-	return UNIX_TIME_FALLBACK_1970
+	return CalEvent_GetUnixTimeBySettingString( flav, "defaultFinishTime", UNIX_TIME_FALLBACK_1970 )
 }
 #endif
 
@@ -530,6 +536,7 @@ int function CalEvent_GetUnixTimeBySettingString( ItemFlavor flav, string settin
 	catch ( ex )
 	{
 		return defaultUnixTime
+		Warning("CalEvent_GetUnixTimeBySettingString missing for the asset" + GetGlobalSettingsString( ItemFlavor_GetAsset( flav ), settingString ))
 	}
 
 	if ( str != "" )
@@ -589,7 +596,7 @@ string function CalEvent_GetTimeRemainingText( ItemFlavor season )
 		return Localize( "#BATTLE_PASS_SEASON_ENDED" )
 
 	DisplayTime dt = SecondsToDHMS( remainingSeasonTime )
-	return Localize( GetDaysHoursRemainingLoc( dt.days, dt.hours ), dt.days, dt.hours )
+	return Localize( "#DAYS_REMAINING", string( dt.days ), string( dt.hours ) )
 }
 #endif
 
@@ -701,7 +708,7 @@ ItemFlavor function GetItemFlavorByCalEventRef( string ref, int eventType )
 #if SERVER || CLIENT || UI
 string function ItemFlavor_GetCalEventRef( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
 	Assert( flavor.metaData != null )
 	int eventType = flavor.typeIndex
 

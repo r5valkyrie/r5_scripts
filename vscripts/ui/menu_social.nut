@@ -1,10 +1,10 @@
 global function InitSocialMenu
 global function InitInspectMenu
-           
-       
-                                  
-             
-                 
+
+
+
+
+
 global function InspectFriend
 global function InspectFriendForceEADP
 
@@ -22,27 +22,27 @@ global function ClientToUI_InviteToPlayByEAID
 
 global function GetProfileString
 
-           
-       
-                             
-                                  
-                                
-                                  
-                                         
-                                        
-                            
-                             
-                                
-                                 
-             
-                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 global function JoinMatchAsPartySpectatorDialog
 
 
 #if DEVELOPER
 global function DebugDiscoverability
-#endif      
+#endif
 
 const UPDATE_RATE = 1.0
 
@@ -165,7 +165,7 @@ struct
 	float selfPresenceUpdateTime
 	bool  canInviteSelf
 
-    
+
 	float    SocialMenuUpdateTime = 0
 } s_socialFile
 
@@ -174,16 +174,16 @@ const float SOCIALMENUUPDATE_INTERVAL  = 1.0
 struct
 {
 	var menu
-           
-       
-            
-             
-                 
+
+
+
+
+
 	var combinedCard
 
 	var                      statsSummaryRui
 
-	                    
+
 	var                      statsModeButton
 	var                      statsModeCloseButton
 	var                      statsModePopUpMenu
@@ -193,7 +193,7 @@ struct
 	string					 selectedModeName
 	int                      selectedGameMode
 
-	                        
+
 	var                      statsSeasonButton
 	var                      statsSeasonCloseButton
 	var                      statsSeasonPopUpMenu
@@ -234,7 +234,7 @@ const int FRIEND_GRID_COLUMNS = 3
 
 
 void function InitSocialMenu( var newMenuArg )
-                                              
+
 {
 	RegisterSignal( "HaltPreviewFriendCosmetics" )
 
@@ -288,7 +288,7 @@ void function InitSocialMenu( var newMenuArg )
 	s_socialFile.decorationRui = Hud_GetRui( Hud_GetChild( s_socialFile.menu, "Decoration" ) )
 	s_socialFile.friendGrid    = Hud_GetChild( menu, "FriendGrid" )
 
-	#if NX_PROG 
+	#if NX_PROG
 		UpdatePanelRowsAndColumns()
 	#endif
 
@@ -299,7 +299,7 @@ void function InitSocialMenu( var newMenuArg )
 
 	int baseWidth = Hud_GetBaseWidth( buttonSizer )
 
-	GridPanel_InitStatic( s_socialFile.friendGrid, baseWidth, int( baseWidth * 0.2 ) )                                                                                 
+	GridPanel_InitStatic( s_socialFile.friendGrid, baseWidth, int( baseWidth * 0.2 ) )
 
 	GridPanel_SetButtonHandler( s_socialFile.friendGrid, UIE_CLICK, void function( var panel, var button, int index ) : ()
 	{
@@ -347,7 +347,7 @@ void function InitSocialMenu( var newMenuArg )
 	}
 
 
-	               
+
 	{
 		FriendListCallbacks friendsCallbacks
 		friendsCallbacks.isValid      = FriendData_IsValid
@@ -363,7 +363,7 @@ void function InitSocialMenu( var newMenuArg )
 		s_socialFile.friendListCallbacksMap[eSocialMenuState.FRIENDS] <- friendsCallbacks
 	}
 
-	                     
+
 	{
 		FriendListCallbacks friendsOtherCallbacks
 		friendsOtherCallbacks.isValid      = FriendOtherData_IsValid
@@ -379,7 +379,7 @@ void function InitSocialMenu( var newMenuArg )
 		s_socialFile.friendListCallbacksMap[eSocialMenuState.FRIENDS_OTHER] <- friendsOtherCallbacks
 	}
 
-	                      
+
 	{
 		FriendListCallbacks friendRequestCallbacks
 		friendRequestCallbacks.isValid      = FriendRequestData_IsValid
@@ -507,8 +507,8 @@ void function UpdateMyFriendButton()
 	float timeSinceUpdate = UITime() - s_socialFile.selfPresenceUpdateTime
 	if ( timeSinceUpdate > 20 )
 	{
-		                                                                                            
-		                                                          
+
+
 		UpdateCanInviteSelf()
 		s_socialFile.selfPresenceUpdateTime = UITime()
 	}
@@ -585,7 +585,7 @@ void function UpdateEADPQueryData( int queryType )
 	}
 	else if ( queryState == eEADPQueryState.INVALID )
 	{
-		                                                                                                                        
+
 		s_socialFile.eadpQueryDataMap[queryType].queryState = eEADPQueryState.RUNNING
 	}
 	else if ( queryState == eEADPQueryState.RUNNING )
@@ -607,13 +607,13 @@ void function UpdateEADPQueryData( int queryType )
 							if ( presence.hardware == HARDWARE_PC && GetHardwareFromName( GetUnspoofedPlayerHardware() ) == HARDWARE_PC )
 								continue
 
-							                                                                                                                           
-							  	        
+
+
 						#endif
 
-						                              
+
 						Friend friend
-						friend.name     = presence.name                                                                                      
+						friend.name     = presence.name
 						friend.eadpData = person;
 
 						if ( presence.hardware == HARDWARE_PC_STEAM )
@@ -649,11 +649,11 @@ void function UpdateEADPQueryData( int queryType )
 				}
 				else
 				{
-					                                                                                                                                          
-					                                                                          
-					                                                                                           
-					                                                                                          
-					                                                                                                     
+
+
+
+
+
 					Friend friend
 					friend.name     = person.name
 					friend.id       = person.eaid
@@ -661,7 +661,7 @@ void function UpdateEADPQueryData( int queryType )
 					friend.status   = eFriendStatus.OFFLINE
 					friend.away     = false
 					friend.ingame   = false
-					                                                                   
+
 				}
 			}
 		}
@@ -686,7 +686,7 @@ void function SocialMenu_OnOpen()
 
 	if ( !_IsMenuThinkActive() )
 	{
-		                                              
+
 		thread UpdateActiveMenuThink()
 	}
 
@@ -708,14 +708,14 @@ void function SocialMenu_OnOpen()
 				} )
 			}
 
-			break                  
+			break
 		}
 
 		s_socialFile.tabsInitialized = true
 	}
 
 	TabData tabData = GetTabDataForPanel( s_socialFile.menu )
-	                           
+
 	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
 	{
 		ActivateTab( tabData, 0 )
@@ -827,7 +827,7 @@ void function InitCachedMatchPreferenceFlags()
 void function SocialMenu_OnShow()
 {
 	UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
-	s_socialFile.selfPresenceUpdateTime = 0                                
+	s_socialFile.selfPresenceUpdateTime = 0
 }
 
 
@@ -843,40 +843,40 @@ void  function SocialMenu_ManagePageIndexes()
 	if ( !(SocialMenu_GetState() in s_socialFile.friendListCallbacksMap) )
 	     return;
 
-                                                                                                        
 
-	int numPanelPages = GetNumPanePages(); 
+
+	int numPanelPages = GetNumPanePages();
 	if( s_socialFile.panePageIndex  >= numPanelPages )
-		 s_socialFile.panePageIndex = maxint( 0, numPanelPages - 1 )  
-	
-	                                      
-	                              
-	                                                      
-	                                                              
-	   
-	
-	                                                  
-	                                                                                                   
-	                          
-	                                                                                             
-	                                       
-	                                                                                            
-	                                                  
-	                                                                                                
-	                                                         
-	         
-	                                                                                               
+		 s_socialFile.panePageIndex = maxint( 0, numPanelPages - 1 )
 
-	int numButtons = s_socialFile.pageButtons.len() 
-	int numDisplayedValuesForRegularPage = numButtons - 2     
 
-	                                                                             
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	int numButtons = s_socialFile.pageButtons.len()
+	int numDisplayedValuesForRegularPage = numButtons - 2
+
+
 	Assert( numDisplayedValuesForRegularPage >= 1 )
-	                                                
+
 	int numPagerPages = int(ceil( float(numPanelPages - 2) / float(numDisplayedValuesForRegularPage) ))
 
-	if( s_socialFile.pagerPageIndex  >= numPagerPages )  
-		 s_socialFile.pagerPageIndex = maxint( 0, numPagerPages - 1 )  
+	if( s_socialFile.pagerPageIndex  >= numPagerPages )
+		 s_socialFile.pagerPageIndex = maxint( 0, numPagerPages - 1 )
 }
 
 void function SocialMenu_Update()
@@ -884,7 +884,7 @@ void function SocialMenu_Update()
 	if ( !(SocialMenu_GetState() in s_socialFile.friendListCallbacksMap) )
 		return
 
-	if(  s_socialFile.SocialMenuUpdateTime  >= UITime() )                                
+	if(  s_socialFile.SocialMenuUpdateTime  >= UITime() )
 		return
 	s_socialFile.SocialMenuUpdateTime  = UITime() + SOCIALMENUUPDATE_INTERVAL
 
@@ -896,7 +896,7 @@ void function SocialMenu_Update()
 
 	SocialMenu_ClearFriends()
 	array<Friend> mergedfriends  =  MergeFriendsListsDedup( s_socialFile.eadpQueryDataMap[eEADPQuery.FRIENDS].friends, s_socialFile.friendsData.friends)
-	SocialMenu_AddFriends( mergedfriends ) 
+	SocialMenu_AddFriends( mergedfriends )
 	SocialMenu_SortFriends()
 
 	RuiSetArg( s_socialFile.menuHeaderRui, "ingameCount", SocialMenu_GetInGameFriendCount() )
@@ -982,7 +982,7 @@ void function DebugDiscoverability()
 	printf( "%s() PSN Name Discoverable to: %s", FUNC_NAME(), myPrivacySettings.psnIdDiscoverable )
 	printf( "%s() XBL Name Discoverable to: %s", FUNC_NAME(), myPrivacySettings.xboxTagDiscoverable )
 }
-#endif      
+#endif
 
 void function RemoveDuplicateFriends( array<Friend> eadpFriends, array<Friend> nativFriends )
 {
@@ -1017,28 +1017,28 @@ array<Friend> function MergeFriendsListsDedup( array<Friend> eadpFriends, array<
         string friendKey = nativFriend.id + "_" + Dedup_Hardware(nativFriend.hardware)
         uniqueFriends[ friendKey ] <- nativFriend
     }
-	
+
     foreach ( eadpFriend in eadpFriends )
     {
-		                                
-		                                                      
+
+
 		if ( FriendHasEAPDData( eadpFriend ) )
-		{			
+		{
 	        string friendKey = GetFirstPartyIdFromPresence( eadpFriend ) + "_" + Dedup_Hardware(eadpFriend.hardware)
-			if ( friendKey in uniqueFriends ) 
+			if ( friendKey in uniqueFriends )
 			{
 				uniqueFriends[ friendKey ] <- eadpFriend
 				continue;
 			}
 		}
-		
+
 		string friendKey = eadpFriend.id + "_" + Dedup_Hardware(eadpFriend.hardware)
-		uniqueFriends[ friendKey ] <- eadpFriend		
+		uniqueFriends[ friendKey ] <- eadpFriend
     }
 
 
 	array<Friend> mergedfriends
-	foreach (key, value in uniqueFriends) 
+	foreach (key, value in uniqueFriends)
 	{
 		mergedfriends.push( value)
 	}
@@ -1057,7 +1057,7 @@ bool function IsSameFriend( Friend eadpFriend, Friend nativFriend )
 		firstPartyId  = GetFirstPartyIdFromPresence( eadpFriend )
 	}
 
-	                                                                                                                                          
+
 	bool sameID = eadpFriend.id == nativFriend.id || firstPartyId == nativFriend.id
 
 	return sameID && sameHardware
@@ -1083,7 +1083,7 @@ string function GetFirstPartyIdFromPresence( Friend eadpFriend )
 
 int function CalculateFriendListChecksum( array<Friend> friends )
 {
-	                                                                                  
+
 	int checksum
 
 	foreach ( Friend friend in friends )
@@ -1235,13 +1235,13 @@ void function BindPageButtons( int numItems, int currentPageIdx )
 	int numButtons = s_socialFile.pageButtons.len()
 
 	int numItemsForRegularPage = numButtons - 2
-	                                                                               
 
-	                                           
+
+
 
 	int pageCount = int(ceil( float(numItems - 2) / float(numItemsForRegularPage) ))
-	                                                     
-	                                                    
+
+
 
 	int firstNonArrowButtonIdx
 	int firstItemIdx
@@ -1251,7 +1251,7 @@ void function BindPageButtons( int numItems, int currentPageIdx )
 	{
 		firstNonArrowButtonIdx = 0
 		firstItemIdx           = currentPageIdx * numItemsForRegularPage
-		lastItemIdx            = firstItemIdx + numItemsForRegularPage + 1                                       
+		lastItemIdx            = firstItemIdx + numItemsForRegularPage + 1
 		if ( pageCount == 1 )
 			lastIdxShift = 0
 	}
@@ -1265,7 +1265,7 @@ void function BindPageButtons( int numItems, int currentPageIdx )
 	else
 	{
 		firstNonArrowButtonIdx = 1
-		firstItemIdx           = currentPageIdx * numItemsForRegularPage + 1                                                   
+		firstItemIdx           = currentPageIdx * numItemsForRegularPage + 1
 		lastItemIdx            = firstItemIdx + numItemsForRegularPage
 	}
 
@@ -1428,13 +1428,13 @@ void function FriendButton_Init( var button, Friend friend )
 	toolTipData.actionHint1  = "#Y_BUTTON_INSPECT"
 
 
-	                                                  
-	                                                                                     
+
+
 	string friendNucleusID = GetFriendNucleusID( friend )
 	if ( ClubIsValid() && friendNucleusID != "" && !Clubs_IsUserAClubmate( friendNucleusID ) )
 	{
 		string clubInviteTooltip = (ClubGetMyMemberRank() >= CLUB_RANK_CAPTAIN) ? Localize( "#FRIEND_BUTTON_CLUB_INVITE" ) : Localize( "#FRIEND_BUTTON_CLUB_INVITE_UNDERRANK" )
-		                                                                                                                                                             
+
 		toolTipData.actionHint1 = Localize( "#Y_BUTTON_INSPECT" ) + "   " + clubInviteTooltip
 	}
 
@@ -1443,10 +1443,10 @@ void function FriendButton_Init( var button, Friend friend )
 	{
 		string uid = GetPlayerUID()
 
-		                                                                                                      
+
 		bool hideInvite = (friend.id == uid && !s_socialFile.canInviteSelf)
 
-		                                         
+
 		bool hideJoin = friend.id == uid
 
 		bool canInvite = !hideInvite && !friend.inparty && GetParty().numFreeSlots > 0 && !(friend.id == "0" || friend.id == "")
@@ -1610,13 +1610,13 @@ bool function FriendButton_OnKeyPress( var panel, var button, int index, int key
 
 	switch ( keyId )
 	{
-		case KEY_F:                  
+		case KEY_F:
 
-		case BUTTON_Y:             
+		case BUTTON_Y:
 
-		case KEY_R:                      
+		case KEY_R:
 
-		case BUTTON_SHOULDER_RIGHT:                           
+		case BUTTON_SHOULDER_RIGHT:
 		break
 
 		default:
@@ -1835,7 +1835,7 @@ void function FriendsList_OnBindFriendRequest( var panel, var button, int index 
 	#endif
 
 	int friendOffset = s_socialFile.panePageIndex * FRIEND_GRID_ROWS * FRIEND_GRID_COLUMNS
-	                                                                         
+
 
 	EadpPeopleData friend = EADP_GetFriendRequestList().people[friendOffset + index]
 
@@ -1851,104 +1851,104 @@ void function FriendsList_OnBindFriendRequest( var panel, var button, int index 
 	RuiSetString( rui, "platformString", "" )
 	RuiSetInt( rui, "status", eFriendStatus.REQUEST )
 
-	  
-		                      
-		                      
-		                        
-		                                             
-		                     
-		                          
-		                         
-		                        
-		                   
-		                   
 
-		              
 
-		                                     
-		                        
 
-		                          
-	  
-	  
-		                        
-		 
-			                                 
-				                                                      
-				     
 
-			                          
-				                                                     
-				     
 
-			                               
-				                                                   
-				     
 
-			                           
-				                                                      
-				     
-		 
 
-		                                                    
-		                                            
-		                                                  
-		                                         
-		                                                                                           
 
-		                                                       
-		                                   
 
-		                       
-		                                                      
-		                                             
 
-		                        
-		                 
-		 
-			                                                               
 
-			                                                             
 
-			                                                                
-			 
-				                                                                             
-				                       
-				 
-					                                    
-					                                                                      
-					                                                                             
-					 
-						                                             
-						                                                                              
-						                  
-						                                                                  
-						                                                                
-						                                                                 
 
-					 
-					    
-					 
-						                                                                    
-						                  
-						                                                        
-						                                                    
-						                                                       
-						                                                                                                                                       
-					 
-				 
-			 
-		 
 
-		                   
-		 
-			                                        
-			                                       
-			                                        
-			                                  
-		 
 
-		                                           
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -1987,15 +1987,15 @@ void function InspectFriend( Friend friend, bool attemptRTKMenu )
 	printt( "Inspect", friend.name, friend.id, friend.hardware )
 	EmitUISound( "UI_Menu_FriendInspect" )
 
-           
-       
-                                                                  
-  
-                                            
-        
-  
-             
-                 
+
+
+
+
+
+
+
+
+
 
 	AdvanceMenu( GetMenu( "InspectMenu" ) )
 }
@@ -2106,12 +2106,12 @@ void function OnPartyPrivacyButton_Activate( var button )
 
 	if ( GetConVarString( "party_privacy" ) == "open" )
 	{
-		                                                                                                                                  
+
 		SetConVarString( "party_privacy", "invite" )
 	}
 	else
 	{
-		                                                                                                                                
+
 		SetConVarString( "party_privacy", "open" )
 	}
 }
@@ -2180,14 +2180,14 @@ void function UpdateSteamButton()
 	}
 	else if ( linkStatus == 0 )
 	{
-		                                                      
+
 		Hud_SetLocked( button, false )
 		Hud_Show( button )
 		HudElem_SetRuiArg( s_socialFile.steamButton, "buttonText", "LINK_STEAM_BUTTON" )
 	}
 	else if ( linkStatus == 1 )
 	{
-		                                                                                                               
+
 		Hud_SetLocked( button, false )
 		Hud_Show( button )
 		HudElem_SetRuiArg( s_socialFile.steamButton, "buttonText", Localize( "#STEAM_ACCOUNT_LINKED", GetConVarString( "steam_name" ) ) )
@@ -2251,11 +2251,11 @@ void function PreviewFriendCosmetics( bool isForLocalPlayer, CommunityUserInfo o
 			}
 		}
 
-		                                                                                              
+
 		Ranked_SetupMenuGladCardForUIPlayer()
-                      
+
 		ArenasRanked_SetupMenuGladCardForUIPlayer()
-       
+
 	}
 	else
 	{
@@ -2302,9 +2302,9 @@ void function PreviewFriendCosmetics( bool isForLocalPlayer, CommunityUserInfo o
 
 		Ranked_SetupMenuGladCardFromCommunityUserInfo( userInfo )
 
-                      
+
 		ArenasRanked_SetupMenuGladCardFromCommunityUserInfo( userInfo )
-       
+
 	}
 
 	OnThreadEnd( void function() : ( introQuipSoundEventName ) {
@@ -2348,7 +2348,7 @@ void function InitInspectMenu( var menu )
 
 	var statTabs           = Hud_GetChild( menu, "TabsCommon" )
 	var summaryPanel       = Hud_GetChild( menu, "StatsSummaryPanel" )
-	                                                                      
+
 	var seasonSelectButton = Hud_GetChild( menu, "SelectSeasonButton" )
 
 	ShPlayerStatCards_Init()
@@ -2393,28 +2393,28 @@ void function InitInspectMenu( var menu )
 }
 
 
-           
-       
-                                            
- 
-                             
 
-                                                                       
-                                                                           
- 
 
-                                     
- 
-                                                            
 
-                                       
- 
 
-                                        
-   
-   
-             
-                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void function InspectMenu_OnOpen()
@@ -2445,7 +2445,7 @@ void function OnUserInfoUpdated( string hardware, string id )
 	{
 		userInfoOrNull = GetUserInfo( s_socialFile.actionFriend.hardware, s_socialFile.actionFriend.id )
 		if ( userInfoOrNull == null )
-			return                             
+			return
 	}
 
 	thread PreviewFriendCosmetics( isForLocalPlayer, userInfoOrNull )
@@ -2481,7 +2481,7 @@ void function InspectMenu_OnClose()
 
 void function UpdatePlayerAltNames( bool isForLocalPlayer )
 {
-	const MAX_ALT_NAMES = 8                                                                                                                               
+	const MAX_ALT_NAMES = 8
 
 	array<string> altNameList = GetAltNamesForEADPAccount()
 
@@ -2527,26 +2527,26 @@ array<EadpPresenceData> function GetFrindPresenceWithOffline( Friend friend )
 {
 	int hardwareId = GetHardwareFromName( friend.hardware )
 
-	                                                                               
+
 
 	array<EadpPresenceData> emptyPresence
 
 	EadpPeopleList peopleList = EADP_GetFriendsListWithOffline()
 	foreach ( EadpPeopleData person in peopleList.people )
 	{
-		                                                                     
+
 
 		if ( friend.id == person.eaid )
 			return person.presences
 
 		foreach ( EadpPresenceData presence in person.presences )
 		{
-			                                                                                   
-			                                                                                                        
+
+
 			if ( hardwareId == presence.hardware && friend.id == presence.firstPartyId )
 				return person.presences
 
-			                                                                                                             
+
 			if ( hardwareId == presence.hardware && friend.name == presence.name )
 				return person.presences
 		}
@@ -2564,7 +2564,7 @@ bool function IsPlayerEADPFriend()
 	int hardwareID = GetHardwareFromName( GetUnspoofedPlayerHardware() )
 	if ( hardwareID == HARDWARE_PC && GetHardwareFromName( s_socialFile.actionFriend.hardware ) == HARDWARE_PC )
 	{
-		                                                                                                                               
+
 		return false
 	}
 
@@ -2575,7 +2575,7 @@ bool function IsPlayerEADPFriend()
 
 bool function CanReportUser()
 {
-	                             
+
 	if( s_socialFile.actionFriend.id == GetPlayerUID() )
 		return false
 	return true
@@ -2587,7 +2587,7 @@ void function OnUserReport(var button)
 	if( friendNucleusID != "" )
 	{
 		ClientToUI_ShowReportPlayerDialog( s_socialFile.actionFriend.name, s_socialFile.actionFriend.hardware,
-			s_socialFile.actionFriend.id, "friendly" )                                                                                         
+			s_socialFile.actionFriend.id, "friendly" )
 	}
 }
 
@@ -2601,8 +2601,8 @@ void function OnClubSendInvite(var button)
 		{
 			if ( ClubGetMyMemberRank() >= CLUB_RANK_CAPTAIN )
 			{
-				                                                                                   
-				                                                                     
+
+
 				ClubInviteUser( friendNucleusID )
 			}
 			else
@@ -2638,12 +2638,12 @@ void function OnPlayerUnfriend( var button )
 
 			if ( GetActiveMenu() == s_inspectFile.menu )
 				CloseActiveMenuNoParms()
-           
-       
-                                                       
-                            
-             
-                 
+
+
+
+
+
+
 		}
 	}
 
@@ -2657,13 +2657,13 @@ void function OnPlayerSendFriendRequest( var button )
 
 	if ( IsUserOnSamePlatform( friend.hardware ) && !s_socialFile.actionFriendForceEADP )
 	{
-		                                       
+
 		printt( "#EADP - OnPlayerSendFriendRequest - NATIVE" )
 		DoInviteToBeFriend( friend.id )
 	}
 	else if ( FriendHasEAPDData( friend ) )
 	{
-		                               
+
 		printt( "#EADP - OnPlayerSendFriendRequest - EADP" )
 		EadpPeopleData ornull peopleData = friend.eadpData
 		expect EadpPeopleData( peopleData )
@@ -2676,12 +2676,12 @@ void function OnPlayerSendFriendRequest( var button )
 	data.resultCallback = void function( int dialogResult ) {
 		if ( GetActiveMenu() == s_inspectFile.menu )
 			CloseActiveMenuNoParms()
-           
-       
-                                                      
-                           
-             
-                 
+
+
+
+
+
+
 	}
 
 	OpenOKDialogFromData( data )
@@ -2723,7 +2723,7 @@ bool function CanSendEADPFriendRequest()
 	}
 
 
-	return true                      
+	return true
 }
 
 
@@ -2741,7 +2741,7 @@ bool function ViewProfileAllowed()
 	{
 		if( hardware == "PS4" || hardware == "PS5" )
 		{
-			                             
+
 			if( friendHardware != "PS4" && friendHardware != "PS5" )
 			{
 				return false
@@ -2749,7 +2749,7 @@ bool function ViewProfileAllowed()
 		}
 		else if( hardware == "X1" || hardware == "XB5" )
 		{
-			                               
+
 			if( friendHardware != "X1" && friendHardware != "XB5" )
 			{
 				return false
@@ -2769,7 +2769,7 @@ void function OnViewProfile( var button )
 {
 	#if PC_PROG
 
-		if ( !PCPlat_IsOverlayAvailable() )
+		//if ( !PCPlat_IsOverlayAvailable() )
 		{
 			string platname = PCPlat_IsOrigin() ? "ORIGIN" : "STEAM"
 			ConfirmDialogData dialogData
@@ -2813,7 +2813,7 @@ void function InitModeSelectPopUp( var newMenuArg )
 
 
 void function InitSeasonSelectPopUp( var newMenuArg )
-                                              
+
 {
 	var selectSeasonPopUpMenu = GetMenu( "StatsSeasonSelectPopUp" )
 	s_inspectFile.statsSeasonPopUpMenu = selectSeasonPopUpMenu

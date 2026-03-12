@@ -26,7 +26,14 @@ void function RerollDialog_OnClickRerollButton( int challengeType )
 		return
 
 	expect ItemFlavor( activeBattlePass )
-	ItemFlavor rerollFlav = BattlePass_GetRerollFlav( activeBattlePass )
+	ItemFlavor ornull rerollFlavOrNull = BattlePass_GetRerollFlavOrNull( activeBattlePass )
+	if ( rerollFlavOrNull == null )
+	{
+		Warning( "RerollDialog_OnClickRerollButton: No reroll flavor set for battlepass " + string( ItemFlavor_GetAsset( activeBattlePass ) ) )
+		return
+	}
+
+	ItemFlavor rerollFlav = expect ItemFlavor( rerollFlavOrNull )
 
 	if ( ItemFlavor_IsItemDisabledForGRX( rerollFlav ) )
 		return

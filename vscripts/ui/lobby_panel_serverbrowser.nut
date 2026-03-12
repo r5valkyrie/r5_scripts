@@ -84,7 +84,7 @@ void function InitServerBrowserPanel( var panel )
 	file.panel = panel
 	file.menu = GetParentMenu( file.panel )
 
-	AddMouseMovementCaptureHandler( Hud_GetChild(file.panel, "MouseMovementCapture"), UpdateMouseDeltaBuffer )
+	//AddMouseMovementCaptureHandler( Hud_GetChild(file.panel, "MouseMovementCapture"), UpdateMouseDeltaBuffer )
 	Hud_AddEventHandler( Hud_GetChild( file.panel, "ConnectButton" ), UIE_CLICK, ServerBrowser_ConnectBtnClicked )
 	Hud_AddEventHandler( Hud_GetChild( file.panel, "RefreshServers" ), UIE_CLICK, ServerBrowser_RefreshBtnClicked )
 	Hud_AddEventHandler( Hud_GetChild( file.panel, "ClearFliters" ), UIE_CLICK, ClearFilterServer_Activate )

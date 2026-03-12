@@ -612,7 +612,7 @@ void function GamemodeSelect_UpdateSelectButton( var button, string playlistName
 	bool hideCountDown = GetPlaylistVarBool( playlistName, "force_hide_schedule_block_countdown", false )
 	if (!hideCountDown)
 	{
-		PlaylistScheduleData scheduleData = Playlist_GetScheduleData( playlistName )
+		PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( playlistName )
 		if ( scheduleData.currentBlock != null )
 		{
 			TimestampRange currentBlock = expect TimestampRange(scheduleData.currentBlock)

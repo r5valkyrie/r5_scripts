@@ -5,7 +5,7 @@ global function LoadLorePagesFromDataTable
 global function LoreReader_GetLastOpenedDataAsset
 #if DEVELOPER
 global function LoreReaderMenu_TestOpen
-#endif       
+#endif
 
 enum eSlot
 {
@@ -76,9 +76,9 @@ global struct LorePage
 struct
 {
 	#if UI
-		                
+
 		float pin_viewStartTime
-	#endif     
+	#endif
 
 } file
 
@@ -92,7 +92,7 @@ void function InitLoreReaderMenu( var newMenuArg )
 	Hud_SetAboveBlur( menu, true )
 	s_menu = menu
 
-	               
+
 
 	SetGamepadCursorEnabled( menu, false )
 
@@ -164,7 +164,7 @@ void function LoreReaderMenu_TestOpen( string seqPathName )
 	string assetPath = format( "datatable/lore_sequence/%s.rpak", seqPathName )
 	LoreReaderMenu_OpenTo( CastStringToAsset( assetPath ) , 0 )
 }
-#endif       
+#endif
 
 
 void function OnMenuClose()
@@ -366,6 +366,7 @@ array<LorePage> function LoadLorePagesFromDataTable( asset dtAsset )
 		asset portrait
 
 		printt("speaker", speaker)
+		Warning(GetDataTableString( dt, rowIdx, columnEmotion ))
 		if ( speaker == "yoko" || speaker == "????"  || speaker == "newscaster")
 		{
 			portrait = $"rui/menu/quest/lore_page/lore_page_portrait_waveform"
@@ -537,7 +538,7 @@ void function InitPagesForMenuOpen()
 	++s_screenOpenNumber
 	file.pin_viewStartTime = UITime()
 	RuiSetInt( rui, "screenOpenNumber", s_screenOpenNumber )
-  
+
 }
 
 asset function LoreReader_GetLastOpenedDataAsset()
@@ -558,7 +559,7 @@ void function UpdateBackgroundLoadscreen( string backgroundRef, bool backgroundI
 	float finalDarkeningAlpha = (backgroundIsFull)? 0.0: 0.57
 	float dotsAlpha = (backgroundIsFull)? 0.0: 1.0
 
-	                 
+
 	switch( backgroundRef )
 	{
 		case "":
@@ -763,7 +764,7 @@ void function SetUpNewPage( int pageIndex )
 	if ( page.backgroundRef.len() > 0 )
 		UpdateBackgroundLoadscreen( page.backgroundRef, page.backgroundIsFull )
 
-	          
+
 	{
 		foreach ( sound in page.sounds.stopSounds )
 			StopUISound( sound )
@@ -789,7 +790,7 @@ void function SetUpNewPage( int pageIndex )
 	RuiSetInt( rui, "pageNumber", pageIndex )
 	RuiSetInt( rui, "pageNumberCount", s_pages.len() )
 
-	                                                                                                                          
+
 	{
 		string topCharacter = page.speakers[0].character
 		string bottomCharacter = page.speakers[2].character
@@ -862,10 +863,10 @@ void function OnClickedToAdvance( bool isForward )
 
 
 	{
-		                
+
 		if ( wantPageIndex == s_pages.len() - 1 )
 		{
-			                                                       
+
 			AddQuestTextPinEvent( -1, -1, currentPanelIndex, currentVisStep )
 		}
 		else
@@ -948,9 +949,42 @@ LoreCharacterInfo function GetLoreCharacterInfoForName( string nameRaw )
 		info.nameText = "#QUEST14_STORY_NPC_MILA"
 		info.isNPC = true
 	}
+	else if ( name == "michael" )
+	{
+		info.portraitImage = $"rui/menu/quest/lore_page/lore_page_portrait_waveform"
+		info.nameText = "#QUEST16_STORY_NPC_MICHAEL"
+		info.isNPC = true
+	}
 	else if ( name == "jaime" )
 	{
 		info.nameText = "#QUEST14_STORY_NPC_JAIME"
+		info.isNPC = true
+	}
+	else if ( name == "echo" )
+	{
+		info.nameText = "#QUEST16_STORY_NPC_ECHO"
+		info.isNPC = true
+	}
+	else if ( name == "person" )
+	{
+		info.portraitImage = $"rui/menu/quest/lore_page/lore_page_portrait_waveform"
+		info.nameText = "#QUEST16_STORY_NPC_PERSON"
+		info.isNPC = true
+	}
+	else if ( name == "zookeeper" )
+	{
+		info.portraitImage = $"rui/menu/quest/lore_page/lore_page_portrait_waveform"
+		info.nameText = "#QUEST16_STORY_NPC_ZOOKEEPER"
+		info.isNPC = true
+	}
+	else if ( name == "drreid" )
+	{
+		info.nameText = "#QUEST16_STORY_NPC_DRREID"
+		info.isNPC = true
+	}
+	else if ( name == "newton" )
+	{
+		info.nameText = "#QUEST16_STORY_NPC_NEWTON"
 		info.isNPC = true
 	}
 	else if ( name == "headmercenary" )
@@ -969,6 +1003,12 @@ LoreCharacterInfo function GetLoreCharacterInfoForName( string nameRaw )
 		info.portraitImage = $"rui/menu/quest/lore_page/lore_page_portrait_waveform"
 		info.nameText = "#QUEST13_STORY_NPC_VENDOR"
 		info.isNPC = true
+	}
+	else if ( name == "vantage" )
+	{
+		info.portraitImage = $"rui/menu/character_select/lockstep/locked_portraits/locked_portrait_vantage"
+		info.nameText = "VANTAGE"
+		info.isNPC = false
 	}
 	else if ( name == "lamont" )
 	{

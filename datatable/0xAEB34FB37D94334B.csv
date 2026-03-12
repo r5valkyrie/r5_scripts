@@ -1,3 +1,0 @@
-"featureFlag","name","alias","priority","perspective","canPlayIfSolo","legendFlavors","radioDisplayName","team","radioIntercept","vduVideo","dialogue"
-"HAS_LOOT_MARVIN","path_story_marvin_reaction","diag_mp_pathfinder_bc_mAudioReaction_%perspective%",15,"",true,"","","",false,"",""
-"string","string","string","int","string","bool","string","string","string","bool","asset_noprecache","string"

@@ -685,7 +685,7 @@ string function GetXPEventValueDisplay( entity player, int xpType )
 asset function GetImageForReward( RewardData reward )
 {
 	asset icon = $""
-	if ( IsItemFlavorStructValid( reward.item.guid, eValidation.DONT_ASSERT ) )
+	if ( IsItemFlavorStructValid( reward.item, eValidation.DONT_ASSERT ) )
 	{
 		if ( ItemFlavor_GetType( reward.item ) == eItemType.account_currency )
 			icon = GRXCurrency_GetRewardIcon( reward.item )
@@ -699,7 +699,7 @@ asset function GetImageForReward( RewardData reward )
 asset function GetImageForRewardItemFlavor( ItemFlavor flav )
 {
 	asset icon = $""
-	if ( IsItemFlavorStructValid( flav.guid, eValidation.DONT_ASSERT ) )
+	if ( IsItemFlavorStructValid( flav, eValidation.DONT_ASSERT ) )
 	{
 		if ( ItemFlavor_GetType( flav ) == eItemType.account_currency )
 			icon = GRXCurrency_GetRewardIcon( flav )

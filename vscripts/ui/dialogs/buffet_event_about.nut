@@ -23,7 +23,7 @@ const int BADGE_BUTTON_COUNT = 4
 void function InitBuffetEventAboutDialog( var menu )
 {
 	file.menu = menu
-	                         
+
 	file.mainLayer = Hud_GetChild( file.menu, "MainLayer" )
 	InitButtonRCP( file.mainLayer )
 
@@ -101,7 +101,7 @@ void function OnOpen()
 	array<string> scheduledModes
 	foreach ( string modeName in bemacd.modes )
 	{
-		PlaylistScheduleData scheduleData = Playlist_GetScheduleData( modeName )
+		PlaylistScheduleData scheduleData = Playlist_GetScheduleData_Deprecated( modeName )
 		TimestampRange ornull block
 		if ( scheduleData.currentBlock != null )
 			block = scheduleData.currentBlock
@@ -143,8 +143,8 @@ void function OnOpen()
 		asset imageAsset
 		if ( imageKey == "" )
 			imageAsset = $"white"
-		                                                    
-		  	                                                 
+
+
 		else Warning( "Playlist '%s' has invalid value for 'image': %s", modeName, imageKey )
 		HudElem_SetRuiArg( modeBtn, "modeIcon", imageAsset, eRuiArgType.IMAGE )
 
@@ -153,15 +153,15 @@ void function OnOpen()
 		TimeParts availabilityTimeParts     = GetUnixTimeParts( scheduleBlock.startUnixTime - utNow + SECONDS_PER_HOUR )
 
 		TimeParts startTimeParts = GetUnixTimeParts( scheduleBlock.startUnixTime )
-		                                                                                               
-		                                                                             
-		TimeParts endTimeParts   = GetUnixTimeParts( scheduleBlock.endUnixTime )
-		                                                                                           
-		                                                                         
 
-		int state = (utNow < scheduleBlock.startUnixTime ? 1            
-		: utNow < scheduleBlock.endUnixTime ? 0           
-		: -1        
+
+		TimeParts endTimeParts   = GetUnixTimeParts( scheduleBlock.endUnixTime )
+
+
+
+		int state = (utNow < scheduleBlock.startUnixTime ? 1
+		: utNow < scheduleBlock.endUnixTime ? 0
+		: -1
 		)
 		HudElem_SetRuiArg( modeBtn, "scheduleState", state )
 
@@ -169,7 +169,7 @@ void function OnOpen()
 		string nameString        = GetPlaylistVarString( modeName, "name", "" )
 		string aboutString       = GetPlaylistVarString( modeName, "about_text", "" )
 		bool doesHideFutureModes = GetCurrentPlaylistVarBool( "hide_future_buffet_modes", false )
-		if ( state == 1 )            
+		if ( state == 1 )
 		{
 			HudElem_SetRuiArg( modeBtn, "doesHideFutureModes", doesHideFutureModes )
 
@@ -184,7 +184,7 @@ void function OnOpen()
 			toolTipData.descText = doesHideFutureModes ? "#S03E03_DETAILS_SOON" : aboutString
 			toolTipData.actionHint1 = Localize( "#CHALLENGE_UNLOCKS_IN_DAYS_HOURS", availabilityDisplayTime.days, availabilityDisplayTime.hours )
 		}
-		else if ( state == 0 )           
+		else if ( state == 0 )
 		{
 			HudElem_SetRuiArg( modeBtn, "scheduleAvailability", Localize( "#S03E03_AVAILABLE_NOW" ) )
 
@@ -192,7 +192,7 @@ void function OnOpen()
 			toolTipData.descText = aboutString
 			toolTipData.actionHint1 = "#MODE_SEARCH_TOOLTIP_HINT"
 		}
-		else if ( state == -1 )        
+		else if ( state == -1 )
 		{
 			HudElem_SetRuiArg( modeBtn, "scheduleAvailability", Localize( "#S03E03_UNAVAILABLE_BUTTON" ) )
 
@@ -211,7 +211,7 @@ void function Update_Layout()
 {
 	ItemFlavor event = file.event
 	BuffetEventModesAndChallengesData bemacd = BuffetEvent_GetModesAndChallengesData( event )
-	bool showModes = BuffetEvent_GetAboutPageShowsModes( event )	
+	bool showModes = BuffetEvent_GetAboutPageShowsModes( event )
 
 	int numBadges = bemacd.badges.len()
 	if ( numBadges > BADGE_BUTTON_COUNT )
@@ -309,12 +309,12 @@ void function Update_Layout()
 				HudElem_SetRuiArg( rewardBtn, "ownedRewardBorderImage", BuffetEvent_GetAboutPageOwnedRewardBorderImage( event ), eRuiArgType.IMAGE )
 				HudElem_SetRuiArg( rewardBtn, "lineImage", BuffetEvent_GetAboutPageLineImage( event ), eRuiArgType.IMAGE )
 				HudElem_SetRuiArg( rewardBtn, "checkMarkCol", SrgbToLinear( BuffetEvent_GetAboutPageCheckMarkCol( event ) ) )
-				                                                                                                       
-				                                                                                                        
+
+
 
 				Hud_Show( rewardBtn )
 
-				const int PROGRESS_BAR_X_OFFSET = 60                                                                                                        
+				const int PROGRESS_BAR_X_OFFSET = 60
 				const int PROGRESS_BAR_Y_OFFSET = 144 + 560
 				const int PROGRESS_BAR_WIDTH = 1808
 				const int BUTTON_SIZE = 74
@@ -327,8 +327,8 @@ void function Update_Layout()
 
 				SetRuiArgsForChallengeReward( Hud_GetRui( rewardBtn ), "reward", crdd )
 
-				                                         
-				                                                                                                                                  
+
+
 				if ( ItemFlavor_GetType( crdd.flav ) == eItemType.account_pack )
 				{
 					asset icon = ItemFlavor_GetIcon( crdd.flav )
@@ -350,7 +350,7 @@ void function Update_Layout()
 					toolTipData.titleText = Localize( ItemFlavor_GetLongName( crdd.flav ) )
 
 				string itemDesc = ItemFlavor_GetShortDescription( crdd.flav )
-				                                                                                                                                                 
+
 				if ( ItemFlavor_GetType( crdd.flav ) == eItemType.voucher )
 				{
 					itemDesc = Localize( itemDesc, int( BATTLEPASS_XP_BOOST_AMOUNT * 100 ) )
@@ -365,7 +365,7 @@ void function Update_Layout()
 				{
 					toolTipData.actionHint1 = Localize( "#INSPECT_TOOLTIP" )
 				}
-				                                    
+
 				toolTipData.tooltipFlags = toolTipData.tooltipFlags | eToolTipFlag.INSTANT_FADE_IN
 				Hud_SetToolTipData( rewardBtn, toolTipData )
 			}
@@ -416,6 +416,6 @@ bool function ShouldShowInspectFooter()
 
 void function OnInspectFooterActivated( var button )
 {
-	  
+
 }
 

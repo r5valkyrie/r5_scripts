@@ -1,3 +1,6 @@
+
+global const float DEFAULT_FOV = 70.0
+
 //custom
 global const bool ASSERTS = false // not available as native preprocessor define
 global const bool RTK = false // RTK UI system not available

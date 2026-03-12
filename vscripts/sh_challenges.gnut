@@ -3256,8 +3256,14 @@ void function _ChallengeReRoll( entity player, int guid )
 	while ( !GRX_IsInventoryReady( player ) )
 		WaitFrame()
 
-	ItemFlavor rerollFlav = BattlePass_GetRerollFlav( activeBattlePass )
+	ItemFlavor ornull rerollFlavOrNull = BattlePass_GetRerollFlavOrNull( activeBattlePass )
+	if ( rerollFlavOrNull == null )
+	{
+		Warning( "ServerCodeCallback_RerollDailyChallenge: No reroll flavor set for battlepass " + string( ItemFlavor_GetAsset( activeBattlePass ) ) )
+		return
+	}
 
+	ItemFlavor rerollFlav = expect ItemFlavor( rerollFlavOrNull )
 	int numTokens         = GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( rerollFlav ) )
 	string persistenceKey = "challengeRerollsUsed"
 	int tokensUsed        = player.GetPersistentVarAsInt( persistenceKey )
@@ -6088,7 +6094,12 @@ void function MaybeAddChallengeClickEventToButton( var menu, var button, ItemFla
 			fileLevel.lastRerollTime = UITime()
 
 			expect ItemFlavor( activeBattlePass )
-			ItemFlavor rerollFlav = BattlePass_GetRerollFlav( activeBattlePass )
+			ItemFlavor ornull rerollFlavOrNull = BattlePass_GetRerollFlavOrNull( activeBattlePass )
+			if ( rerollFlavOrNull == null )
+			{
+				Warning( "TryRerollDailyChallenge: No reroll flavor set for battlepass " + string( ItemFlavor_GetAsset( activeBattlePass ) ) )
+				return
+			}
 
 			if ( !IsDialog( GetActiveMenu() ) )
 			{

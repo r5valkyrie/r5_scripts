@@ -992,25 +992,6 @@ void function ShGRX_RegisterItemFlavor( ItemFlavor flavor )
 			targettedBy.append( flavor.guid )
 		}
 	}
-	else if ( flavor.grxMode == eItemFlavorGRXMode.MULTIPLE_OWNERSHIP_TARGET )
-	{
-		array< ItemFlavor > ownershipRequirementsList = ItemFlavor_GetGRXMultipleOwnershipRequirementsList( flavor )
-		if ( ownershipRequirementsList.len() == 0 )
-		{
-			Assert( false, "Item had GRX mode MULTIPLE_OWNERSHIP_TARGET but list was empty: " + string( ItemFlavor_GetAsset( flavor ) ) )
-			return
-		}
-
-		foreach ( reqFlav in ownershipRequirementsList )
-		{
-			#if DEVELOPER
-				bool duplicateGRXRefFoundInMultiple = reqFlav.guid in fileLevel.multiOwnershipUnlockMap
-				Assert( !duplicateGRXRefFoundInMultiple, "Duplicate GRX ref in multiple unlock mapping found. Already used by " + string( ItemFlavor_GetAsset( GetItemFlavorByGUID( fileLevel.multiOwnershipUnlockMap[ reqFlav.guid ] ) ) ) )
-			#endif
-
-			fileLevel.multiOwnershipUnlockMap[ reqFlav.guid ] <- flavor.guid
-		}
-	}
 
 	#if UI
 		ItemFlavorPurchasabilityInfo ifpi
@@ -1251,7 +1232,8 @@ bool function GRX_IsInventoryReady( entity player = null )
 	#elseif UI
 		player = GetLocalClientPlayer()
 	#endif
-	return GetPlayerGRXScriptState( player ).isInventoryReady
+	return true
+	//return GetPlayerGRXScriptState( player ).isInventoryReady
 }
 #endif
 
@@ -2615,8 +2597,9 @@ array<ItemFlavor> function GRX_GetLocationOfferItems( string location )
 #if UI
 bool function GRX_AreOffersReady()
 {
-	PlayerGRXScriptState scriptState = GetPlayerGRXScriptState( GetLocalClientPlayer() )
-	return scriptState.isInventoryReady && scriptState.areOffersReady && !GRX_QueuedOperationMayDirtyOffers()
+	//PlayerGRXScriptState scriptState = GetPlayerGRXScriptState( GetLocalClientPlayer() )
+	//return scriptState.isInventoryReady && scriptState.areOffersReady
+	return true // force enable grx
 }
 #endif
 

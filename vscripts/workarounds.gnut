@@ -81,7 +81,6 @@ global function GetItemFlavorPlaylistOpinion
 global function MatchBehaviorPlayer_CanBeFirst
 
 // === Item Flavor ===
-global function IsItemFlavorStructValid
 global function IsValidItemFlavorNetworkIndex_DEPRECATED
 
 // === Utilities ===
@@ -101,17 +100,13 @@ global function GetNameFromHardware
 global function GetMergedPlatformIdForPlayer
 global function IsDirectX12Beta
 global function IsTakeHomeBuild
-global function GetUIDHex
-
 // === Social/Party ===
 global function CanPromptUserToSpectatePartyInGame
 global function CanPromptUserToJoinPartyInFiringRange
 global function LocalizePresenceState
-global function HasFriendshipTenureBeenLongEnough
 
 // === Lobby/Audio ===
 global function PlayLobbyCharacterDialogue
-global function InitializeMinimapCoords
 global function SquadMuteLegendSelectEnabled
 
 // === Gifting ===
@@ -193,7 +188,6 @@ global function StopUISoundByName
 
 // === Props/Models ===
 global function CreateClientSidePropDynamicCharm
-global function FlashMenuModel
 
 // === Game Mode Checks ===
 global function IsGunGameActive
@@ -426,8 +420,6 @@ global function CustomMatch_GetMatchStats
 global function CustomMatch_SetTeamName
 
 // === Menu/UI ===
-global function MenuStack_Remove
-global function MenuStack_GetLength
 global function IsSelfClosingMenu
 global function ToolTips_SetMenuTooltipVisible
 global function SpectatorNextTarget
@@ -487,7 +479,6 @@ global function GRX_HasUpToDateBundleOffers
 global function AddCallback_OnGRXBundlesRefreshed
 global function RemoveCallback_OnGRXBundlesRefreshed
 global function IsStoreEmpty
-global function IsInvalidTypeForRewardCeremony
 
 // === Persistence ===
 global function PersistenceGetVarHandle
@@ -604,7 +595,6 @@ global function GetDatacenterRealName
 // === First Time Player ===
 global function GetFirstTimePlayerState
 global function SetFirstTimePlayerState
-global function StoryChallengeEvent_GetHasChallengesPopupBeenSeenVarNameOrNull
 
 // === Settings/Options ===
 global function GamepadCustomSettingsAreEnabled
@@ -636,9 +626,7 @@ global function Reconnect_IsLiveSpectateLoaded
 global function OpenLangAoCDialog
 
 // === Nested #if UI ===
-#if UI
 global function GetKeyValueAsAsset
-#endif
 #if UI
 global function UISafeGetPersistentVarAsInt
 global function GetGiftingInboxMessages
@@ -748,22 +736,26 @@ bool function IsConnectedServerInfo()
 
 void function ResetReconnectParameters()
 {
+	Warning( "WORKAROUND: ResetReconnectParameters() called - not implemented" )
 }
 
 // === Playlist/Map Rotation ===
 
 int function GetPlaylistActiveMapRotationTimeLeft( string playlist )
 {
+	Warning( "WORKAROUND: GetPlaylistActiveMapRotationTimeLeft() called - not implemented" )
 	return 0
 }
 
 string function GetPlaylistRotationNameFromPlaylist( string playlist )
 {
+	Warning( "WORKAROUND: GetPlaylistRotationNameFromPlaylist() called - not implemented" )
 	return ""
 }
 
 string function GetNextPlaylistFromRotationAndUISlotAndSkip( string playlist, string slot, int skip )
 {
+	Warning( "WORKAROUND: GetNextPlaylistFromRotationAndUISlotAndSkip() called - not implemented" )
 	return ""
 }
 
@@ -830,6 +822,7 @@ string function GetMergedPlatformIdForPlayer( entity player )
 
 bool function IsDirectX12Beta()
 {
+	Warning( "WORKAROUND: IsDirectX12Beta() called - not implemented" )
 	return false
 }
 
@@ -838,17 +831,9 @@ bool function IsTakeHomeBuild()
 	return true
 }
 
-string function GetUIDHex( entity player = null )
-{
-	if ( player == null )
-		player = GetLocalClientPlayer()
-	if ( player == null )
-		return "0"
-	return format( "%X", player.GetPINNucleusPid() )
-}
-
 bool function PCPlat_IsSteam()
 {
+	Warning( "WORKAROUND: PCPlat_IsSteam() called - not implemented" )
 	return false
 }
 
@@ -859,6 +844,7 @@ bool function PCPlat_IsOrigin()
 
 bool function PCPlat_IsOverlayAvailable()
 {
+	Warning( "WORKAROUND: PCPlat_IsOverlayAvailable() called - not implemented" )
 	return false
 }
 
@@ -879,6 +865,7 @@ bool function PCPlat_IsUpToDate()
 
 void function PCPlat_RegisterEAAccount()
 {
+	Warning( "WORKAROUND: PCPlat_RegisterEAAccount() called - not implemented" )
 }
 
 bool function PCPlat_IsReady()
@@ -888,16 +875,19 @@ bool function PCPlat_IsReady()
 
 bool function PCPlat_IsWaitingForEARegistration()
 {
+	Warning( "WORKAROUND: PCPlat_IsWaitingForEARegistration() called - not implemented" )
 	return false
 }
 
 int function PCPlat_GetEALinkErrorLevel()
 {
+	Warning( "WORKAROUND: PCPlat_GetEALinkErrorLevel() called - not implemented" )
 	return 0
 }
 
 bool function IsPlayerLoggedInToMultipleMachines()
 {
+	Warning( "WORKAROUND: IsPlayerLoggedInToMultipleMachines() called - not implemented" )
 	return false
 }
 
@@ -915,160 +905,177 @@ bool function IsUserOnSamePlatform( string hardware )
 
 void function CustomMatch_CreateLobby()
 {
+	Warning( "WORKAROUND: CustomMatch_CreateLobby() called - not implemented" )
 }
 
 void function CustomMatch_JoinLobby( string code )
 {
+	Warning( "WORKAROUND: CustomMatch_JoinLobby() called - not implemented" )
 }
 
 bool function CustomMatch_HasHiddenPlaylistAccess()
 {
+	Warning( "WORKAROUND: CustomMatch_HasHiddenPlaylistAccess() called - not implemented" )
 	return false
 }
 
 bool function CustomMatch_HasSpecialAccess()
 {
+	Warning( "WORKAROUND: CustomMatch_HasSpecialAccess() called - not implemented" )
 	return false
 }
 
 void function CustomMatch_UpdateSettings( CustomMatch_SettingsForUpdate update )
 {
+	Warning( "WORKAROUND: CustomMatch_UpdateSettings() called - not implemented" )
 }
 
 void function CustomMatch_SetTeam( int teamIndex, string hardware, string uid )
 {
+	Warning( "WORKAROUND: CustomMatch_SetTeam() called - not implemented" )
 }
 
 void function CustomMatch_KickPlayer( string hardware, string uid )
 {
+	Warning( "WORKAROUND: CustomMatch_KickPlayer() called - not implemented" )
 }
 
 void function CustomMatch_LeaveLobby()
 {
+	Warning( "WORKAROUND: CustomMatch_LeaveLobby() called - not implemented" )
 }
 
 void function CustomMatch_SetReady( bool ready )
 {
+	Warning( "WORKAROUND: CustomMatch_SetReady() called - not implemented" )
 }
 
 void function CustomMatch_SetMatchmaking( bool matchmaking )
 {
+	Warning( "WORKAROUND: CustomMatch_SetMatchmaking() called - not implemented" )
 }
 
 bool function CustomMatch_IsInCustomMatch()
 {
+	Warning( "WORKAROUND: CustomMatch_IsInCustomMatch() called - not implemented" )
 	return false
 }
 
 void function CustomMatch_LiveAPI_SendPlayers( array<CustomMatch_LobbyPlayer> players )
 {
+	Warning( "WORKAROUND: CustomMatch_LiveAPI_SendPlayers() called - not implemented" )
 }
 
 void function CustomMatch_GetMatchStats( int endTime )
 {
+	Warning( "WORKAROUND: CustomMatch_GetMatchStats() called - not implemented" )
 }
 
 void function CustomMatch_SetTeamName( int teamIndex, string name )
 {
+	Warning( "WORKAROUND: CustomMatch_SetTeamName() called - not implemented" )
 }
 
 // === Menu/UI ===
 
-void function MenuStack_Remove( var menu )
-{
-}
-
-int function MenuStack_GetLength()
-{
-	return 0
-}
 
 bool function IsSelfClosingMenu( var menu )
 {
+	Warning( "WORKAROUND: IsSelfClosingMenu() called - not implemented" )
 	return false
 }
 
 void function ToolTips_SetMenuTooltipVisible( var panel, bool visible )
 {
+	Warning( "WORKAROUND: ToolTips_SetMenuTooltipVisible() called - not implemented" )
 }
 
 void function SpectatorNextTarget()
 {
+	Warning( "WORKAROUND: SpectatorNextTarget() called - not implemented" )
 }
 
 void function ShowBlockPlayerDialog( string name, string eaid, void functionref( int, string ) callback )
 {
+	Warning( "WORKAROUND: ShowBlockPlayerDialog() called - not implemented" )
 }
 
 void function OpenClubLeaveDialog()
 {
+	Warning( "WORKAROUND: OpenClubLeaveDialog() called - not implemented" )
 }
 
-void function Hud_ClearAllToolTips() {}
-
-void function InitializeMinimapCoords( ... )
+void function Hud_ClearAllToolTips()
 {
+	Warning( "WORKAROUND: Hud_ClearAllToolTips() called - not implemented" )
 }
+
 
 // === Gifting ===
 
 int function Gifting_GetRemainingDailyGifts()
 {
+	Warning( "WORKAROUND: Gifting_GetRemainingDailyGifts() called - not implemented" )
 	return 0
 }
 
 bool function IsPlayerLeveledForGifting()
 {
+	Warning( "WORKAROUND: IsPlayerLeveledForGifting() called - not implemented" )
 	return false
 }
 
 bool function IsGiftingEnabled()
 {
+	Warning( "WORKAROUND: IsGiftingEnabled() called - not implemented" )
 	return false
 }
 
 bool function IsPlayerWithinGifingLimit()
 {
+	Warning( "WORKAROUND: IsPlayerWithinGifingLimit() called - not implemented" )
 	return false
 }
 
 int function GetGiftingMaxLimitPerResetPeriod()
 {
+	Warning( "WORKAROUND: GetGiftingMaxLimitPerResetPeriod() called - not implemented" )
 	return 0
 }
 
 bool function IsTwoFactorAuthenticationEnabled()
 {
+	Warning( "WORKAROUND: IsTwoFactorAuthenticationEnabled() called - not implemented" )
 	return false
 }
 
 void function RefreshTwoFactorAuthenticationStatus()
 {
+	Warning( "WORKAROUND: RefreshTwoFactorAuthenticationStatus() called - not implemented" )
 }
 
 bool function CanLocalPlayerGift()
 {
+	Warning( "WORKAROUND: CanLocalPlayerGift() called - not implemented" )
 	return false
 }
 
 void function GetGiftOfferEligibility( ... )
 {
-}
-
-bool function HasFriendshipTenureBeenLongEnough( int friendCreationTime )
-{
-	return true
+	Warning( "WORKAROUND: GetGiftOfferEligibility() called - not implemented" )
 }
 
 // === EADP Social ===
 
 bool function EADP_SocialEnabled()
 {
+	Warning( "WORKAROUND: EADP_SocialEnabled() called - not implemented" )
 	return false
 }
 
 bool function EADP_SocialCanRun()
 {
+	Warning( "WORKAROUND: EADP_SocialCanRun() called - not implemented" )
 	return false
 }
 
@@ -1083,98 +1090,118 @@ bool function EADP_IsBlockedByEAID( string eaid )
 
 bool function EADP_IsFriendByEAID( string eaid )
 {
+	Warning( "WORKAROUND: EADP_IsFriendByEAID() called - not implemented" )
 	return false
 }
 
 void function EADP_InviteFriendByEAID( string eaid )
 {
+	Warning( "WORKAROUND: EADP_InviteFriendByEAID() called - not implemented" )
 }
 
 void function EADP_UnBlockByEAID( string eaid )
 {
+	Warning( "WORKAROUND: EADP_UnBlockByEAID() called - not implemented" )
 }
 
 void function EADP_UnFriendByEAID( string eaid )
 {
+	Warning( "WORKAROUND: EADP_UnFriendByEAID() called - not implemented" )
 }
 
 bool function EADP_IsCodeRedemptionEnabled()
 {
+	Warning( "WORKAROUND: EADP_IsCodeRedemptionEnabled() called - not implemented" )
 	return false
 }
 
 void function EADP_RedeemCode( string code )
 {
+	Warning( "WORKAROUND: EADP_RedeemCode() called - not implemented" )
 }
 
 array<EadpPresenceData> function EADP_GetPresenceForAccount( string eaid )
 {
+	Warning( "WORKAROUND: EADP_GetPresenceForAccount() called - not implemented" )
 	array<EadpPresenceData> list
 	return list
 }
 
 EadpPeopleList function EADP_GetFriendRequestList()
 {
+	Warning( "WORKAROUND: EADP_GetFriendRequestList() called - not implemented" )
 	EadpPeopleList list
 	return list
 }
 
 string function EADP_GetEadpIdFromFirstPartyID( string id, int hardware )
 {
+	Warning( "WORKAROUND: EADP_GetEadpIdFromFirstPartyID() called - not implemented" )
 	return ""
 }
 
 bool function EADP_FriendsDoQuery()
 {
+	Warning( "WORKAROUND: EADP_FriendsDoQuery() called - not implemented" )
 	return false
 }
 
 EadpPeopleList function EADP_GetFriendsList()
 {
+	Warning( "WORKAROUND: EADP_GetFriendsList() called - not implemented" )
 	EadpPeopleList list
 	return list
 }
 
 EadpPeopleList function EADP_GetFriendsListWithOffline()
 {
+	Warning( "WORKAROUND: EADP_GetFriendsListWithOffline() called - not implemented" )
 	EadpPeopleList list
 	return list
 }
 
 EadpPresenceData function EADP_GetPresenceForUser( string memberID, int memberHardware )
 {
+	Warning( "WORKAROUND: EADP_GetPresenceForUser() called - not implemented" )
 	EadpPresenceData data
 	return data
 }
 
 void function EADP_RejectFriendRequestByEAID( string eaid )
 {
+	Warning( "WORKAROUND: EADP_RejectFriendRequestByEAID() called - not implemented" )
 }
 
 void function EADP_AcceptFriendRequestByEAID( string eaid )
 {
+	Warning( "WORKAROUND: EADP_AcceptFriendRequestByEAID() called - not implemented" )
 }
 
 void function EADP_BlockByEAID( string eaid )
 {
+	Warning( "WORKAROUND: EADP_BlockByEAID() called - not implemented" )
 }
 
 EadpInviteToPlayList function EADP_GetInviteToPlayList()
 {
+	Warning( "WORKAROUND: EADP_GetInviteToPlayList() called - not implemented" )
 	EadpInviteToPlayList list
 	return list
 }
 
 void function EADP_AcceptInvitToPlay( string eventID )
 {
+	Warning( "WORKAROUND: EADP_AcceptInvitToPlay() called - not implemented" )
 }
 
 void function EADP_RejectInviteToPlay( string eventID )
 {
+	Warning( "WORKAROUND: EADP_RejectInviteToPlay() called - not implemented" )
 }
 
 void function EADP_InviteToPlayByEAID( string eaid, int reason )
 {
+	Warning( "WORKAROUND: EADP_InviteToPlayByEAID() called - not implemented" )
 }
 
 bool function EADP_InvitationAllowed()
@@ -1189,7 +1216,11 @@ void function EmitUIMusic( string musicName )
 	EmitUISound( musicName )
 }
 
-bool function IsSoundStillPlaying( var handle ) { return false }
+bool function IsSoundStillPlaying( var handle )
+{
+	Warning( "WORKAROUND: IsSoundStillPlaying() called - not implemented" )
+	return false
+}
 
 void function PlayLobbyCharacterDialogue( ... )
 {
@@ -1244,11 +1275,6 @@ void function RemoveCallback_OnGRXBundlesRefreshed( void functionref() callback 
 bool function IsStoreEmpty()
 {
 	return true
-}
-
-bool function IsInvalidTypeForRewardCeremony( int type )
-{
-	return type == eItemType.INVALID
 }
 
 // === Persistence ===
@@ -1706,11 +1732,6 @@ void function SetFirstTimePlayerState( int state )
 {
 }
 
-string ornull function StoryChallengeEvent_GetHasChallengesPopupBeenSeenVarNameOrNull( ... )
-{
-	return null
-}
-
 // === Lobby/Misc ===
 
 bool function SquadMuteLegendSelectEnabled()
@@ -1726,47 +1747,131 @@ void function RefreshChallenges()
 
 bool function GamepadCustomSettingsAreEnabled()
 {
+	Warning( "WORKAROUND: GamepadCustomSettingsAreEnabled() called - not implemented" )
 	return false
 }
 
-void function VideoOptions_SpotShadowDetailChanged( var panel ) {}
-int function SoundOptions_SetupChannelConfigOptions( var panel, string childName ) { return 0 }
-int function SoundOptions_SetupOutputDeviceOptions( var panel, string childName ) { return 0 }
-int function SoundOptions_SetupVoiceInputDeviceOptions( var panel, string childName ) { return 0 }
-bool function SoundOptions_DeviceSwitchingAvailable() { return false }
+void function VideoOptions_SpotShadowDetailChanged( var panel )
+{
+	Warning( "WORKAROUND: VideoOptions_SpotShadowDetailChanged() called - not implemented" )
+}
+
+int function SoundOptions_SetupChannelConfigOptions( var panel, string childName )
+{
+	Warning( "WORKAROUND: SoundOptions_SetupChannelConfigOptions() called - not implemented" )
+	return 0
+}
+
+int function SoundOptions_SetupOutputDeviceOptions( var panel, string childName )
+{
+	Warning( "WORKAROUND: SoundOptions_SetupOutputDeviceOptions() called - not implemented" )
+	return 0
+}
+
+int function SoundOptions_SetupVoiceInputDeviceOptions( var panel, string childName )
+{
+	Warning( "WORKAROUND: SoundOptions_SetupVoiceInputDeviceOptions() called - not implemented" )
+	return 0
+}
+
+bool function SoundOptions_DeviceSwitchingAvailable()
+{
+	Warning( "WORKAROUND: SoundOptions_DeviceSwitchingAvailable() called - not implemented" )
+	return false
+}
 
 // === Stickers ===
 // GetAllStickerObjectTypes, GetStickerObjectName, GetStickerPresentationType implementations in mp/sh_stickers.nut
-void function StickersPanel_InitPreviewStyle( var panel ) {}
-void function StickersPanel_SetConsumable( var panel, int consumable ) {}
-void function StickersPanel_Update( var panel ) {}
-void function StickersPanel_OnShow( var panel ) {}
-void function StickersPanel_OnHide( var panel ) {}
-void function StickersPanel_OnFocusChanged( var panel, var oldFocus, var newFocus ) {}
-void function StickersPanel_TogglePreviewStyle( var panel ) {}
-int function StickersPanel_GetCurrentConsumable( var panel ) { return 0 }
+void function StickersPanel_InitPreviewStyle( var panel )
+{
+	Warning( "WORKAROUND: StickersPanel_InitPreviewStyle() called - not implemented" )
+}
+
+void function StickersPanel_SetConsumable( var panel, int consumable )
+{
+	Warning( "WORKAROUND: StickersPanel_SetConsumable() called - not implemented" )
+}
+
+void function StickersPanel_Update( var panel )
+{
+	Warning( "WORKAROUND: StickersPanel_Update() called - not implemented" )
+}
+
+void function StickersPanel_OnShow( var panel )
+{
+	Warning( "WORKAROUND: StickersPanel_OnShow() called - not implemented" )
+}
+
+void function StickersPanel_OnHide( var panel )
+{
+	Warning( "WORKAROUND: StickersPanel_OnHide() called - not implemented" )
+}
+
+void function StickersPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
+{
+	Warning( "WORKAROUND: StickersPanel_OnFocusChanged() called - not implemented" )
+}
+
+void function StickersPanel_TogglePreviewStyle( var panel )
+{
+	Warning( "WORKAROUND: StickersPanel_TogglePreviewStyle() called - not implemented" )
+}
+
+int function StickersPanel_GetCurrentConsumable( var panel )
+{
+	Warning( "WORKAROUND: StickersPanel_GetCurrentConsumable() called - not implemented" )
+	return 0
+}
 
 // === Reconnect/Spectate ===
-bool function TryLoadSpectateParameters() { return false }
-bool function TryLoadReconnectFromLocalStorage() { return false }
-void function StartReconnectFromParameters() {}
-int function GetReconnectDelay() { return 0 }
-bool function Reconnect_IsLiveSpectateLoaded() { return false }
+bool function TryLoadSpectateParameters()
+{
+	Warning( "WORKAROUND: TryLoadSpectateParameters() called - not implemented" )
+	return false
+}
+
+bool function TryLoadReconnectFromLocalStorage()
+{
+	Warning( "WORKAROUND: TryLoadReconnectFromLocalStorage() called - not implemented" )
+	return false
+}
+
+void function StartReconnectFromParameters()
+{
+	Warning( "WORKAROUND: StartReconnectFromParameters() called - not implemented" )
+}
+
+int function GetReconnectDelay()
+{
+	Warning( "WORKAROUND: GetReconnectDelay() called - not implemented" )
+	return 0
+}
+
+bool function Reconnect_IsLiveSpectateLoaded()
+{
+	Warning( "WORKAROUND: Reconnect_IsLiveSpectateLoaded() called - not implemented" )
+	return false
+}
 
 // === Misc ===
-void function OpenLangAoCDialog() {}
+void function OpenLangAoCDialog()
+{
+	Warning( "WORKAROUND: OpenLangAoCDialog() called - not implemented" )
+}
 
-// === Nested #if UI - KeyValue/Persistence/Gifting ===
-#if UI
+// === GetKeyValueAsAsset ===
 asset function GetKeyValueAsAsset( table kvTable, string key )
 {
+	Warning( "WORKAROUND: GetKeyValueAsAsset() called - not implemented, using custom script version" )
+	if ( key in kvTable )
+		return GetAssetFromString( string( kvTable[key] ) )
 	return $""
 }
-#endif
 
 #if UI
 string function GetServerDebugId()
 {
+	Warning( "WORKAROUND: GetServerDebugId() called - not implemented" )
 	return ""
 }
 
@@ -1837,11 +1942,6 @@ void function StopUISoundByName( string soundName )
 entity function CreateClientSidePropDynamicCharm( vector origin, vector angles, asset model )
 {
 	return CreateClientSidePropDynamic( origin, angles, model )
-}
-
-// stub - would need menuModelFlashData infrastructure
-void function FlashMenuModel( entity model, int flashType, vector flashColor, bool includeChildren = true, bool depthDiscard = false )
-{
 }
 
 // === Game Mode Checks ===
@@ -2425,6 +2525,7 @@ string function GetNameFromHardware( int hardware )
 
 bool function IsDirectX12Beta()
 {
+	Warning( "WORKAROUND: IsDirectX12Beta() called - not implemented" )
 	return false
 }
 
@@ -2432,16 +2533,6 @@ void function PlayLobbyCharacterDialogue( ... )
 {
 }
 
-string function GetUIDHex( entity player = null )
-{
-	if ( player == null )
-		return "0"
-	return format( "%X", player.GetPINNucleusPid() )
-}
-
-void function InitializeMinimapCoords( ... )
-{
-}
 
 bool function IsTakeHomeBuild()
 {
@@ -2457,11 +2548,6 @@ bool function CanLocalPlayerGift()
 
 void function GetGiftOfferEligibility( ... )
 {
-}
-
-bool function HasFriendshipTenureBeenLongEnough( int friendCreationTime )
-{
-	return true
 }
 
 // === Lobby/Misc ===
@@ -2572,11 +2658,6 @@ bool function MatchBehaviorPlayer_CanBeFirst( entity player )
 }
 
 // === Item Flavor ===
-
-bool function IsItemFlavorStructValid( int guid, int validation = 0 )
-{
-	return IsValidItemFlavorGUID( guid )
-}
 
 bool function IsValidItemFlavorNetworkIndex_DEPRECATED( int index, int validation = 0 )
 {

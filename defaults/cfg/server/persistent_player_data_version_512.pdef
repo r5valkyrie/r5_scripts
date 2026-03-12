@@ -50,6 +50,7 @@ $ENUM_START eBattlePass
 	SAID01440294075
 	SAID01727937125
 	SAID01838736969
+	SAID01851062701
 	SAID01914132855
 $ENUM_END
 
@@ -653,3 +654,4 @@ $STRUCT_END
 sBattlePassData battlePasses[eBattlePass]
 
 string{32} lastPlaylist
+string{32} lastHubResetSeason

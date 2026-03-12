@@ -158,11 +158,11 @@ struct
 	table< int, bool > isInputBlocked
 } file
 
-                 
+
 void function Lobby_EnableMinimapCoordsOnConnect( string name )
 {
-	int forceWatermarkInLobby = GetCurrentPlaylistVarInt( "force_watermark_in_lobby", 0 )                               
-	int forceHiddenWatermarkInLobby = GetCurrentPlaylistVarInt( "force_hidden_watermark_in_lobby", 0 )                               
+	int forceWatermarkInLobby = GetCurrentPlaylistVarInt( "force_watermark_in_lobby", 0 )
+	int forceHiddenWatermarkInLobby = GetCurrentPlaylistVarInt( "force_hidden_watermark_in_lobby", 0 )
 	if ( (forceWatermarkInLobby == 0 && IsTakeHomeBuild()) || forceWatermarkInLobby == 1 )
 	{
 		var minimapCoords = Hud_GetChild( file.menu, "MinimapCoords" )
@@ -197,19 +197,19 @@ void function Lobby_RefreshMinimapCoords()
 		Lobby_EnableMinimapCoordsOnConnect( GetPlayerName() )
 	}
 }
-      
+
 
 void function InitLobbyMenu( var newMenuArg )
-                                              
+
 {
 	var menu = GetMenu( "LobbyMenu" )
 	file.menu = menu
 
 	RegisterSignal( "LobbyMenuUpdate" )
-	
-                 
+
+
 	AddUICallback_OnResolutionChanged( Lobby_RefreshMinimapCoords )
-      
+
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnLobbyMenu_Open )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, OnLobbyMenu_Close )
@@ -218,7 +218,7 @@ void function InitLobbyMenu( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_HIDE, OnLobbyMenu_Hide )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_GET_TOP_LEVEL, OnLobbyMenu_GetTopLevel )
-	                                                                                     
+
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, OnLobbyMenu_NavigateBack )
 
@@ -251,11 +251,11 @@ void function InitLobbyMenu( var newMenuArg )
 	ToolTipData newsToolTip
 	newsToolTip.descText = "#NEWS"
 	Hud_SetToolTipData( newsButton, newsToolTip )
-               
+
 	HudElem_SetRuiArg( newsButton, "icon", $"rui/menu/lobby/news_inbox_icon" )
-     
-                                                                     
-      
+
+
+
 	HudElem_SetRuiArg( newsButton, "shortcutText", "%[R_TRIGGER|ESCAPE]%" )
 	Hud_AddEventHandler( newsButton, UIE_CLICK, NewsButton_OnActivate )
 	Hud_AddEventHandler( newsButton, UIE_GET_FOCUS, NewsButton_OnHover )
@@ -351,6 +351,12 @@ void function OnLobbyMenu_Open()
 			SetTabBaseWidth( tab, 145 )
 		}
 		{
+			var panel = Hud_GetChild( file.menu, "SeasonPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			tab.isBannerLogoSmall = false
+			SetTabBaseWidth( tab, 235 )
+		}
+		{
 			var panel = Hud_GetChild( file.menu, "CharactersPanel" )
 			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
 			tab.isBannerLogoSmall = true
@@ -425,7 +431,7 @@ void function OnLobbyMenu_Show()
 	RegisterInputs()
 	Chroma_Lobby()
 
-               
+
 	if ( GetCurrentPlaylistVarBool( "grx_inbox_enabled", true ) )
 	{
 		HudElem_SetRuiArg( file.newsButton, "icon", $"rui/menu/lobby/news_inbox_icon" )
@@ -434,11 +440,11 @@ void function OnLobbyMenu_Show()
 	{
 		HudElem_SetRuiArg( file.newsButton, "icon", $"rui/menu/lobby/news_icon" )
 	}
-     
-                                                                          
 
-                            
-      
+
+
+
+
 }
 
 void function Lobby_OnTabChanged()
@@ -477,10 +483,25 @@ void function OnLobbyMenu_Close()
 
 void function OnGRXStateChanged()
 {
-	// No GRX store — just refresh seasonal tab styling
+	bool ready = GRX_IsInventoryReady() && GRX_AreOffersReady()
+
+	array<var> panels = [
+		GetPanel( "SeasonPanel" ),
+		GetPanel( "CharactersPanel" ),
+		GetPanel( "ArmoryPanel" )
+		//GetPanel( "StorePanel" )  // StorePanel not registered as a tab - disabled
+	]
+
+	foreach ( var panel in panels )
+	{
+		SetPanelTabEnabled( panel, ready )
+	}
 	TabData tabData = GetTabDataForPanel( file.menu )
 	SetTabDefsToSeasonal(tabData)
 	RefreshTabsSeasonalData()
+	RefreshTabsGRXData( tabData )
+	OnGRXStoreUpdate()
+	OnGRXSeasonUpdate()
 	LobbyTheme_LoadSavedColor()
 }
 
@@ -528,10 +549,10 @@ void function LobbyMenuUpdate()
 	}
 }
 
-  
-                                                                
-                                                                           
-  
+
+
+
+
 void function LobbyMenuUpdateLowFrequencyElements()
 {
 	EndSignal( uiGlobal.signalDummy, "LobbyMenuUpdate" )
@@ -540,9 +561,9 @@ void function LobbyMenuUpdateLowFrequencyElements()
 	while ( true )
 	{
 		UpdateCornerButtons()
-                 
+
 			UpdatePromoToast()
-        
+
 		UpdateBonusXP()
 
 		wait 1.0
@@ -581,7 +602,7 @@ void function UpdateBonusXP()
 	var rui = Hud_GetRui( file.bonusXp )
 	RuiSetBool(rui, "isVisible", isVisible)
 
-                
+
 		if ( !file.hasFocusedNews && file.hasNewGifts )
 		{
 			Hud_SetVisible( file.bonusXp, false )
@@ -593,7 +614,7 @@ void function UpdateBonusXP()
 			RuiSetInt(rui, "rarity", rarity)
 			RuiSetInt(rui, "boostPercentage", boostPercentage)
 		}
-       
+
 
 
 	var playPanel           = GetPanel( "PlayPanel" )
@@ -602,7 +623,7 @@ void function UpdateBonusXP()
 	Hud_SetVisible( file.bonusXp, isVisible && isPlayPanelActive )
 }
 
-               
+
 
 void function UpdatePromoToast()
 {
@@ -646,11 +667,11 @@ void function UpdatePromoToast()
 	RuiSetColorAlpha( rui, "seasonColor", GetSeasonStyle().seasonColor, 1 )
 }
 
-      
+
 
 void function HandleCrossplayPartyInvalid()
 {
-	                                                                             
+
 	if ( GetPersistentVar( "showGameSummary" ) && IsPostGameMenuValid( true ) )
 		return
 
@@ -660,7 +681,7 @@ void function HandleCrossplayPartyInvalid()
 	if( IsDialog( GetActiveMenu() ) )
 		return
 
-	                                                                                            
+
 	string hardware   = GetUnspoofedPlayerHardware()
 	Party myParty     = GetParty()
 	foreach ( p in myParty.members )
@@ -681,8 +702,8 @@ void function HandleCrossplayPartyInvalid()
 
 void function Lobby_UpdateSelectedPlaylistUsingUISlot( string previousPlaylist )
 {
-	                                             
-	                                                                           
+
+
 	string uiSlot      = GetPlaylistVarString( previousPlaylist, "ui_slot", "" )
 	string newPlaylist = GetCurrentPlaylistInUiSlot( uiSlot )
 	printf("Found new playlist '%s' for ui_slot %s", newPlaylist, uiSlot)
@@ -705,25 +726,25 @@ void function TrackPlaylistRotation()
 	if ( file.previousRotationTime == -1 )
 		file.previousRotationTime = GetSoonestPlaylistRotationTime()
 
-                       
-                                             
-                                                                                          
-      
 
-                       
-                                                                                                                                                                
-     
+
+
+
+
+
+
+
 	if ( file.previousRotationTime < GetSoonestPlaylistRotationTime() )
-      
+
 	{
 		file.previousRotationTime = GetSoonestPlaylistRotationTime()
-                         
-                                                                                           
-        
+
+
+
 		if ( IsModeSelectMenuOpen() )
 		{
-			                            
-			                              
+
+
 			if ( PrivateMatchMapSelect_IsEnabled() )
 				UpdatePrivateMatchMapSelectDialog()
 			else if ( GamemodeSelect_IsEnabled() )
@@ -783,7 +804,7 @@ void function UpdateCornerButtons()
 	string str = (( IsNetGraphEnabled() && isPlayPanelActive ) ? Localize( "#NETGRAPH_SERVERID", GetServerDebugId() ) : "")
 	Hud_SetText( file.serverDebugID, str )
 
-	Hud_SetText( file.dx12BetaText, IsDirectX12Beta() ? Localize( "#DIRECTX12_BETA" ) : "" )
+	Hud_SetText( file.dx12BetaText, false ? Localize( "#DIRECTX12_BETA" ) : "" )
 }
 
 void function RegisterInputs()
@@ -830,8 +851,18 @@ void function DeregisterInputs()
 
 void function SeasonTab_OnActivate( var button )
 {
-	// Season tab removed from lobby
-	return
+	TabData tabData = GetTabDataForPanel( file.menu )
+
+	if ( !IsTabIndexEnabled( tabData, Tab_GetTabIndexByBodyName( tabData, "SeasonPanel" ) ) )
+		return
+
+	if ( IsDialog( GetActiveMenu() ) )
+		return
+
+	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
+		return
+
+	JumpToSeasonTab()
 }
 
 void function NewsButton_OnActivate( var button )
@@ -875,7 +906,7 @@ void function SocialButton_OnActivate( var button )
 
 void function GameMenuButton_OnActivate( var button )
 {
-	if ( InputIsButtonDown( BUTTON_STICK_LEFT ) )                             
+	if ( InputIsButtonDown( BUTTON_STICK_LEFT ) )
 		return
 
 	if ( IsDialog( GetActiveMenu() ) )
@@ -899,12 +930,12 @@ void function PostGameButton_OnActivate( var button )
 
 void function OnLobbyMenu_NavigateBack()
 {
-	                                                                     
-	                                                                               
-	   
-	  	                       
-	  	      
-	   
+
+
+
+
+
+
 
 	if ( GetMenuActiveTabIndex( file.menu ) == 0 )
 	{
@@ -968,9 +999,9 @@ void function OnLobbyMenu_PostGameOrChat( var button )
 
 void function PostGameFlow()
 {
-                        
-                                                                                        
-       
+
+
+
 	bool showRankedSummary = GetPersistentVarAsInt( "showRankedSummary" ) != 0
 	bool isFirstTime       = GetPersistentVarAsInt( "showGameSummary" ) != 0
 
@@ -986,13 +1017,13 @@ void function PostGameFlow()
 		OpenRankedSummary( isFirstTime )
 	}
 
-                        
-                                
-   
-                                                                                                                                                                      
-                                  
-   
-       
+
+
+
+
+
+
+
 }
 
 

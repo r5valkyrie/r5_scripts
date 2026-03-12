@@ -163,6 +163,7 @@ Scripts:
 	sh_dev_menu.nut
 	sh_weapon_cosmetics.nut
 	sh_ability_cosmetics.nut
+	sh_perks.gnut
 	private_matches.nut
 	clubs.nut
 	sh_movement_rc.nut
@@ -220,7 +221,6 @@ When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	sh_loot_ceremony.gnut
-	sh_perks.nut
 	sh_season_quest.gnut
 	vouchers.gnut
 
@@ -846,7 +846,6 @@ When: "CLIENT || UI"
 Scripts:
 [
 	class/CClientScriptHudElement.nut
-	sh_menu_models.gnut
 	sh_matchmaking_status.gnut
 	mp/cl_pintelemetry.gnut
 	clui_video.gnut
@@ -855,6 +854,7 @@ Scripts:
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
+	sh_menu_models.gnut
 	sh_matchmaking_util.gnut
 	sh_character_select.gnut
 	//sh_character_select_new.gnut // Merged into sh_character_select.gnut (S22)
@@ -987,6 +987,7 @@ Scripts:
 	ui/survival_ground_list.nut
 	image_pak_load.nut
 	ui/panel_loadscreens.nut
+	ui/clui_minimap_coords.nut
 	ui/panel_private_match_team_rosters.nut
 	ui/menu_postgame_private_match.nut
 	ui/menu_gamestatus_private_match.nut

@@ -27,9 +27,13 @@ global function GetTotalXPToCompletePassLevel
 global function BattlePass_GetBasicPurchasePack
 global function BattlePass_GetBundlePurchasePack
 global function BattlePass_GetXPPurchaseFlav
+global function BattlePass_GetXPPurchaseFlavOrNull
 global function BattlePass_GetXPPurchaseLegendTokenFlav
+global function BattlePass_GetXPPurchaseLegendTokenFlavOrNull
 global function BattlePass_GetXPBoostFlav
+global function BattlePass_GetXPBoostFlavOrNull
 global function BattlePass_GetRerollFlav
+global function BattlePass_GetRerollFlavOrNull
 global function BattlePass_GetScheduleDatatable
 global function BattlePass_GetMilestoneDatatable
 global function BattlePass_GetBulletText
@@ -38,6 +42,7 @@ global function BattlePass_UseStarsToProgress
 global function BattlePass_WeeklyRecurringResetsEveryWeek
 global function GetBattlePassDisplayLevel
 global function GetBattlePassDisplayBadge
+global function GetBattlePassProgressBadgeOrNull
 global function GetBattlePassMaxLevelIndex
 global function GetBattlePassMaxPurchaseLevels
 global function GetPlayerBattlePassPurchasableLevels
@@ -198,8 +203,6 @@ void function ShBattlePass_LevelInit()
 	fileLevel = newFileLevel
 
 	fileLevel.battlePassIsEnabled = GetCurrentPlaylistVarBool( "enable_battlepass", true )
-
-	RefreshCachedSeasonInfo()
 
 #if SERVER || CLIENT
 	Remote_RegisterServerFunction( "ClientCallback_UpdateBattlePassLastInfo", "int", INT_MIN, INT_MAX )
@@ -387,6 +390,8 @@ void function ShBattlePass_LevelInit()
 
 		fileLevel.battlePassMap[pass] <- passData
 	} )
+
+	RefreshCachedSeasonInfo()
 }
 
 int function GetMaxBattlePassLevelIndex( var passDataTable )
@@ -709,9 +714,13 @@ int function GetPlayerBattlePassPurchasedLevels( EHI playerEHI, ItemFlavor pass 
 			return 0
 	#endif
 
-	ItemFlavor xpPurchaseFlav = BattlePass_GetXPPurchaseFlav( pass )
-
-	int numPurchasedLevels = GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( xpPurchaseFlav ) )
+	ItemFlavor ornull xpPurchaseFlavOrNull = BattlePass_GetXPPurchaseFlavOrNull( pass )
+	int numPurchasedLevels = 0
+	if ( xpPurchaseFlavOrNull != null )
+	{
+		ItemFlavor xpPurchaseFlav = expect ItemFlavor( xpPurchaseFlavOrNull )
+		numPurchasedLevels = GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( xpPurchaseFlav ) )
+	}
 
 	numPurchasedLevels += GetPlayerBattlePassPurchasedLevelsWithLegendTokens( playerEHI, pass )
 
@@ -743,8 +752,11 @@ int function GetPlayerBattlePassPurchasedLevelsWithLegendTokens( EHI playerEHI, 
 		return 0
 	}
 
-	ItemFlavor xpPurchaseLegendTokenFlav = BattlePass_GetXPPurchaseLegendTokenFlav( pass )
+	ItemFlavor ornull xpPurchaseLegendTokenFlavOrNull = BattlePass_GetXPPurchaseLegendTokenFlavOrNull( pass )
+	if ( xpPurchaseLegendTokenFlavOrNull == null )
+		return 0
 
+	ItemFlavor xpPurchaseLegendTokenFlav = expect ItemFlavor( xpPurchaseLegendTokenFlavOrNull )
 	int numPurchasedLevels = GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( xpPurchaseLegendTokenFlav ) )
 
 	return numPurchasedLevels
@@ -765,7 +777,11 @@ float function GetPlayerBattlePassBoost( entity player )
 		return 1.0
 	expect ItemFlavor( activeBattlePass )
 
-	ItemFlavor xpBoostFlav = BattlePass_GetXPBoostFlav( activeBattlePass )
+	ItemFlavor ornull xpBoostFlavOrNull = BattlePass_GetXPBoostFlavOrNull( activeBattlePass )
+	if ( xpBoostFlavOrNull == null )
+		return 1.0  // No boost available
+
+	ItemFlavor xpBoostFlav = expect ItemFlavor( xpBoostFlavOrNull )
 	int boostCount = 0
 	array<entity> partyPlayers = GetPlayersInParty( player )
 	foreach( entity _player in partyPlayers )
@@ -1223,38 +1239,99 @@ ItemFlavor function BattlePass_GetBundlePurchasePack( ItemFlavor pass )
 
 
 #if SERVER || CLIENT || UI
+ItemFlavor ornull function BattlePass_GetXPPurchaseFlavOrNull( ItemFlavor pass )
+{
+	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
+
+	asset xpPurchaseAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "xpPurchaseFlav" )
+	if ( xpPurchaseAsset == $"" )
+		return null
+
+	return GetItemFlavorByAsset( xpPurchaseAsset )
+}
+
 ItemFlavor function BattlePass_GetXPPurchaseFlav( ItemFlavor pass )
 {
-	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
-
-	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "xpPurchaseFlav" ) )
+	ItemFlavor ornull result = BattlePass_GetXPPurchaseFlavOrNull( pass )
+	if ( result == null )
+	{
+		Warning( "BattlePass_GetXPPurchaseFlav: xpPurchaseFlav not set for battlepass " + string( ItemFlavor_GetAsset( pass ) ) )
+		// Return a dummy valid item flavor as fallback
+		return pass  // Fallback to pass itself to prevent crashes
+	}
+	return expect ItemFlavor( result )
 }
 #endif
 
 #if SERVER || CLIENT || UI
+ItemFlavor ornull function BattlePass_GetXPPurchaseLegendTokenFlavOrNull( ItemFlavor pass )
+{
+	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
+
+	asset bubblePurchaseAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "bubblePurchaseFlav" )
+	if ( bubblePurchaseAsset == $"" )
+		return null
+
+	return GetItemFlavorByAsset( bubblePurchaseAsset )
+}
+
 ItemFlavor function BattlePass_GetXPPurchaseLegendTokenFlav( ItemFlavor pass )
 {
-	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
-
-	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "bubblePurchaseFlav" ) )
+	ItemFlavor ornull result = BattlePass_GetXPPurchaseLegendTokenFlavOrNull( pass )
+	if ( result == null )
+	{
+		Warning( "BattlePass_GetXPPurchaseLegendTokenFlav: bubblePurchaseFlav not set for battlepass " + string( ItemFlavor_GetAsset( pass ) ) )
+		return pass  // Fallback to pass itself to prevent crashes
+	}
+	return expect ItemFlavor( result )
 }
 #endif
 
 #if SERVER || CLIENT || UI
+ItemFlavor ornull function BattlePass_GetXPBoostFlavOrNull( ItemFlavor pass )
+{
+	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
+
+	asset xpBoostAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "xpBoostFlav" )
+	if ( xpBoostAsset == $"" )
+		return null
+
+	return GetItemFlavorByAsset( xpBoostAsset )
+}
+
 ItemFlavor function BattlePass_GetXPBoostFlav( ItemFlavor pass )
 {
-	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
-
-	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "xpBoostFlav" ) )
+	ItemFlavor ornull result = BattlePass_GetXPBoostFlavOrNull( pass )
+	if ( result == null )
+	{
+		Warning( "BattlePass_GetXPBoostFlav: xpBoostFlav not set for battlepass " + string( ItemFlavor_GetAsset( pass ) ) )
+		return pass  // Fallback to pass itself to prevent crashes
+	}
+	return expect ItemFlavor( result )
 }
 #endif
 
 #if SERVER || CLIENT || UI
-ItemFlavor function BattlePass_GetRerollFlav( ItemFlavor pass )
+ItemFlavor ornull function BattlePass_GetRerollFlavOrNull( ItemFlavor pass )
 {
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 
-	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "challengeRerollFlav" ) )
+	asset rerollAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "challengeRerollFlav" )
+	if ( rerollAsset == $"" )
+		return null
+
+	return GetItemFlavorByAsset( rerollAsset )
+}
+
+ItemFlavor function BattlePass_GetRerollFlav( ItemFlavor pass )
+{
+	ItemFlavor ornull result = BattlePass_GetRerollFlavOrNull( pass )
+	if ( result == null )
+	{
+		Warning( "BattlePass_GetRerollFlav: challengeRerollFlav not set for battlepass " + string( ItemFlavor_GetAsset( pass ) ) )
+		return pass  // Fallback to pass itself to prevent crashes
+	}
+	return expect ItemFlavor( result )
 }
 #endif
 
@@ -2164,14 +2241,40 @@ int function GetCurrentBattlePassWeekExpirationTime()
 
 
 #if SERVER || CLIENT || UI
-ItemFlavor function GetBattlePassProgressBadge( ItemFlavor pass )
+ItemFlavor ornull function GetBattlePassProgressBadgeOrNull( ItemFlavor pass )
 {
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 
 	asset passAsset  = ItemFlavor_GetAsset( pass )
 	asset badgeAsset = GetGlobalSettingsAsset( passAsset, "progressBadge" )
 
-	return GetItemFlavorByAsset( badgeAsset )
+	if ( badgeAsset == $"" )
+	{
+		Warning( "GetBattlePassProgressBadge: progressBadge not set for battlepass " + string( passAsset ) )
+		return null
+	}
+
+	try
+	{
+		return GetItemFlavorByAsset( badgeAsset )
+	}
+	catch ( e )
+	{
+		Warning( "GetBattlePassProgressBadge: Failed to get badge asset " + string( badgeAsset ) + " for battlepass " + string( passAsset ) + " - " + e )
+		return null
+	}
+}
+
+ItemFlavor function GetBattlePassProgressBadge( ItemFlavor pass )
+{
+	ItemFlavor ornull result = GetBattlePassProgressBadgeOrNull( pass )
+	if ( result == null )
+	{
+		// Return a fallback badge - use pass itself or a default badge
+		// For now, return pass to prevent crashes, though it may not display correctly
+		return pass
+	}
+	return expect ItemFlavor( result )
 }
 #endif
 

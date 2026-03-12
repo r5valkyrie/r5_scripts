@@ -18,7 +18,6 @@ global const float EMOTE_ICON_ROTATE_SPEED = 15.0
 global const int HOLO_PROJECTOR_INDEX = 6
 global const string HOLO_PROJECTOR_WEAPON_NAME = "mp_ability_emote_projector"
 
-const float DEFAULT_FOV = 70.0  // local const for FOV calculations
 const string PING_CENTER_OFFSET = "0.4 0.55 0"  // from sh_waypoints.gnut
 
 const vector EMOTE_ICON_TEXT_OFFSET = <0,0,60>

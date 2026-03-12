@@ -3146,8 +3146,8 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 	clGlobal.levelEnt.EndSignal( "BackpackClosed" )
 
 	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
-	asset classIcon      = CharacterClass_GetGalleryPortrait( character )
-	RuiSetImage( rui, "playerIcon", classIcon )
+	asset legendIcon      = CharacterClass_GetGalleryPortrait( character )
+	RuiSetImage( rui, "playerIcon", legendIcon )
 
 	RuiSetInt( rui, "micStatus", player.HasMic() ? 3 : -1 ) //
 
@@ -3203,14 +3203,20 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 
 		RuiSetColorAlpha( rui, "shieldFrac", shieldFrac, float( SURVIVAL_GetArmorShieldCapacity( 3 ) ) )
 
-		RuiSetFloat( rui, "playerTargetShieldFrac", StatusEffect_GetSeverity( player, eStatusEffect.target_shields ) )
-		RuiSetFloat( rui, "playerTargetHealthFrac", StatusEffect_GetSeverity( player, eStatusEffect.target_health ) )
+		RuiSetFloat( rui, "playerTargetShieldFrac", StatusEffect_GetTotalSeverity( player, eStatusEffect.target_shields ) )
+		RuiSetFloat( rui, "playerTargetHealthFrac", StatusEffect_GetTotalSeverity( player, eStatusEffect.target_health ) )
 		RuiSetFloat( rui, "cameraViewFrac", StatusEffect_GetSeverity( player, eStatusEffect.camera_view ) )
 		RuiSetBool( rui, "useShadowFormFrame", player.IsShadowForm() )
 
 		RuiSetInt( rui, "micStatus", GetPlayerMicStatus( player ) )
 
 		//
+                     
+			asset classIcon = CharacterClass_GetCharacterRoleImage( character )
+			RuiSetAsset( rui, "customSmallIcon", classIcon )
+        
+
+	//	SquadLeader_UpdateUnitFrameRui( player, rui )
 		OverwriteWithCustomPlayerInfoTreatment( player, rui )
 
 		WaitFrame()
@@ -3299,8 +3305,8 @@ void function TEMP_UpdateTeammateRui( var elem, bool isCompact )
 			RuiSetString( rui, "name", ent.GetPlayerName() )
 			RuiSetFloat( rui, "healthFrac", GetHealthFrac( ent ) )
 			RuiSetFloat( rui, "shieldFrac", GetShieldHealthFrac( ent ) )
-			RuiSetFloat( rui, "targetHealthFrac", StatusEffect_GetSeverity( ent, eStatusEffect.target_health ) )
-			RuiSetFloat( rui, "targetShieldFrac", StatusEffect_GetSeverity( ent, eStatusEffect.target_shields ) )
+			RuiSetFloat( rui, "targetHealthFrac", StatusEffect_GetTotalSeverity( ent, eStatusEffect.target_health ) )
+			RuiSetFloat( rui, "targetShieldFrac", StatusEffect_GetTotalSeverity( ent, eStatusEffect.target_shields ) )
 			RuiSetFloat( rui, "cameraViewFrac", StatusEffect_GetSeverity( ent, eStatusEffect.camera_view ) )
 			RuiSetInt( rui, "teamMemberIndex", ent.GetTeamMemberIndex() )
 			RuiSetInt( rui, "squadID", ent.GetSquadID() )
