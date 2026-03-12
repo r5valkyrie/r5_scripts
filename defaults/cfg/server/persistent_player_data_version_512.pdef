@@ -14,6 +14,7 @@ int tutorialActionCount[100]
 int lastGameRank
 int lastGamePlayers
 int lastGameSquads
+int lastGameCharacter
 int lastAbandonTime
 string{32} characterForXP
 
@@ -40,6 +41,7 @@ $ENUM_START eSeasonFlavor
 	SAID01774506873
 	SAID00724938940
 	SAID01092263930
+	SAID00801928788
 $ENUM_END
 
 $ENUM_START eBattlePass
@@ -52,6 +54,10 @@ $ENUM_START eBattlePass
 	SAID01838736969
 	SAID01851062701
 	SAID01914132855
+$ENUM_END
+
+$ENUM_START eQuestFlavor
+	SAID00070721943
 $ENUM_END
 
 $ENUM_START eMapZones
@@ -147,7 +153,9 @@ $ENUM_START eCharacterFlavor
 	SAID00088599337//character_horizon
 	SAID00405279270//character_fuse
 	SAID00435256162//character_valkyrie
+	SAID01399802246//character_seer
 	SAID00216194192//character_ash
+	SAID00496516687//character_madmaggie
 $ENUM_END
 
 // All the weapon item flavors from Bakery that are registered in the game.
@@ -176,6 +184,7 @@ $ENUM_START eWeaponFlavor
 	SAID00107352658
 	SAID00947460272
 	SAID00342631558
+	SAID01580685432
 $ENUM_END
 
 // All the weapon stats categories.
@@ -251,6 +260,8 @@ $STRUCT_START sLoadoutsData
 	int weapon_charm_for_SAID02050922236
 	int weapon_skin_for_SAID01981891556
 	int weapon_charm_for_SAID01981891556
+	int weapon_skin_for_SAID01580685432
+	int weapon_charm_for_SAID01580685432
 	int loadscreen_selection
 	int music_pack_selection
 $STRUCT_END
@@ -291,6 +302,10 @@ $STRUCT_START sCharacterLoadoutsData
 	int gcard_tracker_1_value
 	int gcard_tracker_2
 	int gcard_tracker_2_value
+	int favoredQuip_0
+	int favoredQuip_1
+	int favoredQuip_2
+	int favoredQuip_3
 	int meleeskin
 $STRUCT_END
 
@@ -316,8 +331,14 @@ $STRUCT_START sStatEnumStruct_characters_weapons
 	int headshots
 $STRUCT_END
 
-// 
+//
 $STRUCT_START sStatEnumStruct_characters_weaponcategories
+	int kills
+	int damage_done
+	int shots
+	int hits
+	int headshots
+	int dooms
 $STRUCT_END
 
 // 
@@ -366,8 +387,13 @@ $STRUCT_START sStatEnumStruct_characters
 	int character_elite_game_8kill_wins
 $STRUCT_END
 
-// 
+//
 $STRUCT_START sStatEnumStruct_weaponcategories
+	int kills
+	int damage_done
+	int shots
+	int hits
+	int headshots
 $STRUCT_END
 
 // 
@@ -608,6 +634,43 @@ sRankedData ranked
 sRankedData offSeasonRankedData
 sRankedData allRankedData[eRankedPeriodFlavor]
 
+//#########################
+// CROSS-PROGRESSION RANKED DATA
+//#########################
+
+$ENUM_START eMergedPlatform
+	pc
+$ENUM_END
+
+$STRUCT_START sXProgRanked
+	int currentRankedScore
+	int rankedProvisionalMatchesCompleted
+	int rankedHasProgressedOutOfProvisional
+	int showRankedSummary
+	int rankedTop5StreakCount
+	int rankedProvisionalMatchScores[10]
+$STRUCT_END
+
+$STRUCT_START sXMergedPlat
+	sXProgRanked xProgRanked
+$STRUCT_END
+
+sXMergedPlat xMergedPlat[eMergedPlatform]
+
+$STRUCT_START sRankedGameData
+	int lastGameStartingScore
+	int lastGameKillScore
+	int lastGamePlacementScore
+	int lastGamePenaltyPointsForAbandoning
+	int lastGameLossProtectionAdjustment
+	int lastGameTierDerankingProtectionAdjustment
+	bool lastGameRankedForgiveness
+	bool lastGameAbandonForgiveness
+	bool lastGameRankedAbandon
+$STRUCT_END
+
+sRankedGameData rankedGameData
+
 $STRUCT_START sChallengeData
 	int currentTier
 	int guid
@@ -647,11 +710,78 @@ $STRUCT_START sBattlePassData
 	int lastPopupLevel
 	int lastSeenEarnedXP
 	bool lastSeenPremiumState
+	bool lastSeenEliteState
 	int lastSeenPurchasedXP
 	int previousEarnedXP
 $STRUCT_END
 
 sBattlePassData battlePasses[eBattlePass]
+
+//#########################
+// SEASON QUEST DATA
+//#########################
+
+$STRUCT_START sSeasonQuestData
+	int treasureBox_lastPickupTime
+	int treasureBox_totalPickups
+	int treasureBox_displayStartNum
+	int treasureBox_displayCount
+	bool comicPanel_displayFinalRewards
+	int missionProgress
+	int treasureBox_lastSeenPurchased
+	int lastMissionUnlockTime
+	int comicPagesRead
+	bool haveStartedQuest
+$STRUCT_END
+
+sSeasonQuestData questDatas[eQuestFlavor]
+
+//#########################
+// S16+ FIELDS
+//#########################
+
+int weeklyGroupOrder[13]
+int dailyExpirationTime
+bool lastGameAbandonForgiveness
+int numUsedForgivenessAbandons
+int heirloomShopLastSeen
+int legendTokensPopupLastSeen
+int questPopupLastSeen
+int currencyExpPopupLastExpTime
+int storyEventDialoguePopupLastSeen
+string{64} lastSeenLobbyLTM
+
+$STRUCT_START sQueuedRewardData
+	int sourceGUID
+	int sourceGUID_extraData
+	int rewardGUIDs[1]
+	int rewardQuantities[1]
+	bool rewardGiven
+	bool rewardAcknowledged
+$STRUCT_END
+
+sQueuedRewardData grxQueuedRewards[12]
+
+//#########################
+// FIRING RANGE SETTINGS
+//#########################
+
+$STRUCT_START sFRSettingsData
+	int persistenceready
+	int frps_packedbools
+	int frss_packedbools
+	int frdb_modifiers_packedbools
+	int frdb_spawnsettings_packedbools
+	int targetspeed
+	int dummieshieldlvl
+	int dummiespeed
+	int dummiemovement
+	int dummiestate
+	int dummiespawndists
+	int dummiesshoot
+$STRUCT_END
+
+sFRSettingsData FRSettingsPVars
 
 string{32} lastPlaylist
 string{32} lastHubResetSeason
