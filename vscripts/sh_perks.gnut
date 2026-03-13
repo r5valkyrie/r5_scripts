@@ -160,7 +160,7 @@ struct
 	table< int, ClassRoleSettingsInfo >  classRoleToSettingsTable
 	table< int, PerkSettingsInfo  >		 perkToPerkSettingsTable
 	table< int, PerkInfo > 				 perkInfoTable
-	table< ItemFlavor, int > 		 	 characterToRoleTable
+	table< string, int > 		 	 characterToRoleTable
 	#if CLIENT
 	table< entity, bool > 			  	 worldspacePerkIconVisibility
 	table< entity, var >				 entityToWorldSpaceicon
@@ -209,6 +209,22 @@ void function Perks_Init()
 		AddCallback_OnFindFullMapAimEntity( GetPerkPropUnderAim, PingPerkPropUnderAim )
 	#endif
 
+	// AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( InitializePerkTables )
+	thread DelayedInitializePerkTables()
+}
+
+bool function Perks_TablesInitialized()
+{
+	return file.characterToRoleTable.len() > 0
+}
+
+void function DelayedInitializePerkTables()
+{
+	// Wait a few frames for all item flavors to be registered
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	InitializePerkTables()
 	AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( InitializePerkTables )
 }
 
@@ -378,7 +394,9 @@ void function InitializePerkTables()
 	{
 		int characterRole = CharacterClass_GetRole( character )
 		// TODO support multiple perks per character
-		file.characterToRoleTable[character] <- characterRole
+		string characterRef = ItemFlavor_GetHumanReadableRef( character )
+		Warning( "PERKS: Registering character " + characterRef + " with role " + characterRole )
+		file.characterToRoleTable[characterRef] <- characterRole
 	}
 }
 
@@ -466,15 +484,29 @@ void function ApplyPerkWhenCharacterFlavorIsKnown( entity player, EHI playerEHI,
 	if ( !IsValid( player ) )
 		return
 
-	if ( !(characterItemFlavor in file.characterToRoleTable) )
-		return
-
+	Assert( characterItemFlavor in file.characterToRoleTable, "Trying to activate perks but character " + ItemFlavor_GetCharacterRef( characterItemFlavor ) + " wasn't in perk table\nNeed to run pdef_autogen" )
 	string characterName = ItemFlavor_GetCharacterRef( characterItemFlavor )
 	array<string> nameSplit = split( characterName, "_" )
 	if ( nameSplit.len() >= 2 )
 		characterName = nameSplit[ 1 ]
 
-	int roleIndex = file.characterToRoleTable[ characterItemFlavor ]
+	string characterRef = ItemFlavor_GetHumanReadableRef( characterItemFlavor )
+
+	// Wait for perk tables to be initialized
+	while ( !Perks_TablesInitialized() )
+	{
+		WaitFrame()
+		if ( !IsValid( player ) )
+			return
+	}
+
+	if ( !(characterRef in file.characterToRoleTable) )
+	{
+		Warning( "Trying to activate perks but character " + characterName + " wasn't in perk table (ref: " + characterRef + ")" )
+		return
+	}
+
+	int roleIndex = file.characterToRoleTable[ characterRef ]
 	if( roleIndex in file.classRoleToSettingsTable )
 	{
 		array<int> perks = file.classRoleToSettingsTable[roleIndex].perks
@@ -747,8 +779,9 @@ int function Perks_GetRoleForPlayer( entity player )
 	#elseif CLIENT
 		ItemFlavor characterItemFlavor = LoadoutSlot_GetItemFlavor( ToEHI( player ), loadoutCharacter )
 	#endif
-	if( characterItemFlavor in file.characterToRoleTable )
-		return file.characterToRoleTable[characterItemFlavor]
+	string characterRef = ItemFlavor_GetHumanReadableRef( characterItemFlavor )
+	if( characterRef in file.characterToRoleTable )
+		return file.characterToRoleTable[characterRef]
 	return eCharacterClassRole.UNDECIDED
 }
 #endif // SERVER || CLIENT
@@ -1142,12 +1175,13 @@ array<int> function Perks_GetActivePerksFromPlayerLoadout( entity player )
 	LoadoutEntry loadoutCharacter = Loadout_Character()
 	ItemFlavor characterItemFlavor = LoadoutSlot_WaitForItemFlavor( playerEHI, loadoutCharacter )
 
-	if( !(characterItemFlavor in file.characterToRoleTable) )
+	string characterRef = ItemFlavor_GetHumanReadableRef( characterItemFlavor )
+	if( !(characterRef in file.characterToRoleTable) )
 	{
 		return []
 	}
 
-	int roleIndex = file.characterToRoleTable[characterItemFlavor]
+	int roleIndex = file.characterToRoleTable[characterRef]
 	return file.classRoleToSettingsTable[roleIndex].perks
 }
 
