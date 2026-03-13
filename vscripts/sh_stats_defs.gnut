@@ -1134,6 +1134,7 @@ void function ShStatsDefs_Init()
 	}
 
 	#if DEVELOPER
+		return//no need to print right now
 		// debug printing for checking base assumptions about the struct setup
 		print("CHARACTER_GUID_TO_BITMASK_MAP contents:\n")
 		foreach ( string guid, int bitmask in file.characterGUIDToBitmask )
