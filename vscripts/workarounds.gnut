@@ -323,8 +323,6 @@ global function SafeGetPersistentVarAsInt
 global function SafeSetPersistentVar
 #endif
 
-global function GetPlaylistModCount
-
 // === Audio ===
 global function EmitUIMusic
 
@@ -359,7 +357,9 @@ global function PopulateRuiWithRankedBadgeDetails
 global function PopulateRuiWithPreviousSeasonRankedBadgeDetails
 #endif
 
+global function GetPlaylistModCount
 global function GetPlaylistModName
+global function EffectSetEmitSound
 
 // ============================================================================
 //  #if UI - Declarations (large UI block)
@@ -647,17 +647,19 @@ void function PopulateRuiWithPreviousSeasonRankedBadgeDetails( var rui, int rank
 }
 #endif
 
-
 int function GetPlaylistModCount()
 {
 	return 0  // No playlist mods in this environment
 }
 
-
-
 string function GetPlaylistModName( int index )
 {
 	return ""  // No playlist mods in this environment
+}
+
+void function EffectSetEmitSound( int effectHandle, string soundName )
+{
+	// Not available in this environment
 }
 
 // ============================================================================
@@ -977,8 +979,6 @@ void function CustomMatch_SetTeamName( int teamIndex, string name )
 }
 
 // === Menu/UI ===
-
-
 bool function IsSelfClosingMenu( var menu )
 {
 	Warning( "WORKAROUND: IsSelfClosingMenu() called - not implemented" )
