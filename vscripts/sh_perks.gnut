@@ -466,7 +466,9 @@ void function ApplyPerkWhenCharacterFlavorIsKnown( entity player, EHI playerEHI,
 	if ( !IsValid( player ) )
 		return
 
-	Assert( characterItemFlavor in file.characterToRoleTable, "Trying to activate perks but character " + ItemFlavor_GetCharacterRef( characterItemFlavor ) + " wasn't in perk table\nNeed to run pdef_autogen" )
+	if ( !(characterItemFlavor in file.characterToRoleTable) )
+		return
+
 	string characterName = ItemFlavor_GetCharacterRef( characterItemFlavor )
 	array<string> nameSplit = split( characterName, "_" )
 	if ( nameSplit.len() >= 2 )
