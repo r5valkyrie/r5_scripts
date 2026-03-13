@@ -395,7 +395,7 @@ void function InitializePerkTables()
 		int characterRole = CharacterClass_GetRole( character )
 		// TODO support multiple perks per character
 		string characterRef = ItemFlavor_GetHumanReadableRef( character )
-		Warning( "PERKS: Registering character " + characterRef + " with role " + characterRole )
+		Printt( "PERKS: Registering character " + characterRef + " with role " + characterRole )
 		file.characterToRoleTable[characterRef] <- characterRole
 	}
 }

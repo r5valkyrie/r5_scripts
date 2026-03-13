@@ -809,10 +809,6 @@ void function Menu_InitPresentationDataFromCameraSettings()
 
 		string targetEntName = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "targetEntName" ) )
 
-		#if DEVELOPER
-			printt( "CAMERA DT: " + camName + " posOffset = " + string( pd.positionOffset ) + " targetEnt = " + targetEntName )
-		#endif
-
 		foreach ( string scriptName, int eNumIdx in eCameraTargetNames )
 		{
 			if ( targetEntName == scriptName )
