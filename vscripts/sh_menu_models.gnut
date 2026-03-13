@@ -437,7 +437,6 @@ void function ClMenuModels_Init()
 
 	AddCallback_OnClientScriptInit( OnClientScriptInit )
 	AddCallback_FullUpdate( OnFullUpdate )
-	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 }
 
 void function OnClientScriptInit( entity player )
@@ -809,7 +808,11 @@ void function Menu_InitPresentationDataFromCameraSettings()
 		}
 
 		string targetEntName = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "targetEntName" ) )
-		
+
+		#if DEVELOPER
+			printt( "CAMERA DT: " + camName + " posOffset = " + string( pd.positionOffset ) + " targetEnt = " + targetEntName )
+		#endif
+
 		foreach ( string scriptName, int eNumIdx in eCameraTargetNames )
 		{
 			if ( targetEntName == scriptName )
@@ -1016,7 +1019,7 @@ void function InitPresentationData()
 		pd.lights = []
 		pd.cameraTargetName = eCameraTargetNames.customize_weapon_camera_target
 	}
-	
+
 	Menu_InitPresentationDataFromCameraSettings()
 }
 
@@ -1123,7 +1126,7 @@ void function EndPresentation_PLAY()
 
 void function StartPresentation_CHARACTER_SELECT()
 {
-	ModelData_SetPoseEntity( file.customizeCharacter, GetEntByScriptName( "customize_character_ref" ) ) //
+	ModelData_SetPoseEntity( file.customizeCharacter, GetEntByScriptName( "customize_character_ref" ) ) // needed by useCharacterOffsets logic which updates position after the character is known
 	ModelData_SetAnim( file.customizeCharacter, "ACT_MP_MENU_LOBBY_SELECT_IDLE" )
 	UpdateMenuCharacterModel( GetLocalClientPlayer(), -1 )
 }
@@ -1215,15 +1218,15 @@ void function EndPresentation_WEAPON_SKIN()
 
 	if ( !desireWeaponCharmPresentation )
 	{
-		//
+		// stop the camera zoom
 		Signal( level, "EndGunCharmCameraZoom" )
 
 		CameraZoomThreadEnd()
 
-		//
+		// reset the mover
 		weaponMover.SetOrigin( ModelData_GetBaseOrigin( file.customizeWeapon ) )
 
-		//
+		// reset the camera
 		int cameraTargetIndex    = eCameraTargetNames.customize_weapon_camera_target
 		entity cameraTarget      = file.cameraTargets[ cameraTargetIndex ]
 		vector cameraStartOrigin = file.cameraStartOriginsAngles[ cameraTargetIndex ]["origin"]
@@ -1254,6 +1257,10 @@ void function StartPresentation_WEAPON_CHARMS()
 
 void function EndPresentation_WEAPON_CHARMS()
 {
+	//in case of R5DEV-397867 (that can also be reproduced on other platforms) 
+	//On disconnect/reconnect (or huge internet lag on players end) calls a RefreshPresentationType that calls a SetPresentationType
+	//that maybe should hit that return statement in between but doesn't due to bool presentationTypeInitialized getting reset
+	//so for now charms shouldn't reset camera stuff as we are still presenting the same thing
 	if( file.currentPresentationType == file.desiredPresentationType )
 	{
 		return
@@ -1276,7 +1283,7 @@ void function EndPresentation_WEAPON_CHARMS()
 		vector cameraStartOrigin = file.cameraStartOriginsAngles[ cameraTargetIndex ]["origin"]
 		vector cameraStartAngles = file.cameraStartOriginsAngles[ cameraTargetIndex ]["angles"]
 
-		                                                                                                                  
+		// reset the gun's pivot/mover to the 'MENU_ROTATE' attachment location, which is what the weapon skins panel uses
 		string attachmentName = "MENU_ROTATE"
 		int attachID          = weaponModel.LookupAttachment( attachmentName )
 		vector attachOrigin   = weaponModel.GetAttachmentOrigin( attachID )
@@ -1285,7 +1292,7 @@ void function EndPresentation_WEAPON_CHARMS()
 		weaponMover.SetOrigin( ModelData_GetBaseOrigin( file.customizeWeapon ) )
 		weaponModel.SetParent( weaponMover )
 
-		                                                                                              
+		// stop all movers when the thread ends, in case someone zooms back in midway through zoom out
 		file.cameraZoomData.lastVal = 0.0
 		file.cameraZoomData.mover.NonPhysicsStop()
 		weaponMover.NonPhysicsStop()
@@ -1326,6 +1333,9 @@ void function EndPresentation_STORE_INSPECT()
 	CameraZoomThreadEnd()
 }
 
+//"club_landing_discovery_ref"
+//"club_landing_lobby_ref"
+//"club_landing_marvin"
 void function StartPresentation_CLUBS_DISCOVERY()
 {
 	printf( "ClubBackgroundDebug: Marvin should be up close" )
@@ -1333,7 +1343,7 @@ void function StartPresentation_CLUBS_DISCOVERY()
 	entity ref = GetEntByScriptName( "club_landing_discovery_ref" )
 	mrvn.SetOrigin( ref.GetOrigin() )
 	mrvn.SetAngles( ref.GetAngles() )
-	                                 
+	//mrvn.Anim_Play( "mrvn_salute" )
 	mrvn.Anim_Play( "mrvn_underworld_idle" )
 }
 
@@ -1357,7 +1367,7 @@ void function StartPresentation_CLUBS_LANDING()
 
 void function StartPresentation_APPLIED_STICKER()
 {
-	                                                                                      
+	// Reusing an existing environment so move the normal customizeWeapon model to hide it
 	ModelData_GetMover( file.customizeWeapon ).SetOrigin( GetEntByScriptName( "customize_weapon_ref" ).GetOrigin() + <0, 0, -500> )
 
 	entity objectModel = ModelData_GetModel( file.appliedStickerModelData )
@@ -1371,7 +1381,7 @@ void function EndPresentation_APPLIED_STICKER()
 	if ( IsValid( objectModel ) )
 		objectModel.Hide()
 
-	                                                                                            
+	// Reusing an existing environment so move the normal customizeWeapon model to show it again
 	ModelData_GetMover( file.customizeWeapon ).SetOrigin( GetEntByScriptName( "customize_weapon_ref" ).GetOrigin() )
 }
 
@@ -1408,7 +1418,7 @@ void function EnableLobbyMenuCameraZoom()
 
 	EndSignal( level, "EndCameraZoom" )
 
-	//
+	// wait for the model's skins to actually be applied
 	while( !file.cameraZoomModelInitialized )
 		WaitFrame()
 
@@ -1453,6 +1463,11 @@ void function EnableLobbyMenuCameraZoom()
 		int itemType        = ItemFlavor_GetType( itemFlav )
 		switch ( itemType )
 		{
+			case eItemType.character:
+				ItemFlavor characterFlavor = CharacterSkin_GetCharacterFlavor( CharacterClass_GetDefaultSkin( itemFlav ) )
+				focalPoint = model.GetAttachmentOrigin( model.LookupAttachment( "HEADFOCUS" ) )
+				maxZoomDistance = ZOOM_DISTANCE_INSPECT_CHARACTER_SKIN
+				break
 			case eItemType.character_skin:
 				ItemFlavor characterFlavor = CharacterSkin_GetCharacterFlavor( itemFlav )
 				focalPoint = model.GetAttachmentOrigin( model.LookupAttachment( "HEADFOCUS" ) )
@@ -1462,8 +1477,8 @@ void function EnableLobbyMenuCameraZoom()
 			case eItemType.weapon_skin:
 				ItemFlavor weaponFlavor = WeaponSkin_GetWeaponFlavor( itemFlav )
 				ItemFlavor categoryFlavor = WeaponItemFlavor_GetCategory( weaponFlavor )
-				focalPoint = model.GetAttachmentOrigin( model.LookupAttachment( "MENU_ROTATE" ) )
-				maxZoomDistance = ZOOM_DISTANCE_INSPECT_WEAPON_SKIN
+				if( model != null && IsValid( model ) )
+					focalPoint = model.GetAttachmentOrigin( model.LookupAttachment( "MENU_ROTATE" ) )
 				break
 
 			case eItemType.weapon_charm:
@@ -1476,7 +1491,7 @@ void function EnableLobbyMenuCameraZoom()
 				maxZoomDistance = ZOOM_DISTANCE_INSPECT_MELEE_SKIN
 				break
 
-			default:                                      
+			default: // item types that don't support zoom
 				return
 		}
 		cameraTargetIndex = eCameraTargetNames.store_inspect_camera_target
@@ -1545,6 +1560,9 @@ void function InitMenuEntities()
 		entity targetEnt = GetEntByScriptName( scriptName )
 		file.cameraTargets[ eNumIdx ] <- targetEnt
 		file.cameraStartOriginsAngles[ eNumIdx ] <- { origin = targetEnt.GetOrigin(), angles = targetEnt.GetAngles() }
+		#if DEVELOPER
+			printt( "CAMERA DEBUG: " + scriptName + " origin = " + string( targetEnt.GetOrigin() ) )
+		#endif
 	}
 
 	clGlobal.menuCamera = CreateClientSidePointCamera( <0, 0, 0>, <0, 0, 0>, DEFAULT_FOV )
@@ -1554,13 +1572,13 @@ void function InitMenuEntities()
 	if ( IsSpectator( GetLocalClientPlayer() ) && !IsPrivateMatchLobby() )
 	{
 		printf( "InitMenuEntitiesDebug: InitMenuEntities() Return: Local Client is Spectator" )
-		return               
+		return // server demo
 	}
 
 	if ( IsLobby() || IsPrivateMatchLobby() )
 	{
 		entity localPlayer = GetLocalClientPlayer()
-		localPlayer.SetMenuCameraEntityWithAudio( clGlobal.menuCamera ) //
+		localPlayer.SetMenuCameraEntityWithAudio( clGlobal.menuCamera ) // (dw): see R5DEV-86674
 	}
 
 	entity refEnt
@@ -1594,7 +1612,7 @@ void function InitMenuEntities()
 	ModelData_SetBaseAngles( file.customizeWeapon, WEAPON_BASE_ANGLES )
 	ModelData_SetBaseRotationDelta( file.customizeWeapon, WEAPON_BASE_ROTATION_DELTA )
 	model = CreateMenuModel( file.customizeWeapon, $"mdl/dev/empty_model.rmdl" )
-	model.kv.rendercolor = "0 0 0 255" //
+	model.kv.rendercolor = "0 0 0 255" // Force charge and heat materials hidden
 	ModelData_CreateMover( file.customizeWeapon )
 	ItemFlavor weapon     = GetAllWeaponItemFlavors()[0]
 	ItemFlavor weaponSkin = LoadoutSlot_GetItemFlavor( localPlayerEHI, Loadout_WeaponSkin( weapon ) )
@@ -1608,15 +1626,15 @@ void function InitMenuEntities()
 	model = CreateMenuModel( file.storeInspectModelData, $"mdl/dev/empty_model.rmdl" )
 	ModelData_CreateMover( file.storeInspectModelData )
 
-	                
-	refEnt = GetEntByScriptName( "battlepass_right_ref" )                     
+	// quest version
+	refEnt = GetEntByScriptName( "battlepass_right_ref" )    // reuse this ref
 	ModelData_SetBaseOrigin( file.questGoalModelData, refEnt.GetOrigin() )
 	ModelData_SetBaseAngles( file.questGoalModelData, <0, -115, 0> )
 	model = CreateMenuModel( file.questGoalModelData, $"mdl/dev/empty_model.rmdl" )
 	CreateMenuSubModel( file.questGoalModelData, $"mdl/dev/empty_model.rmdl" )
 	ModelData_CreateMover( file.questGoalModelData )
 
-	refEnt = GetEntByScriptName( "customize_weapon_ref" )                                                 
+	refEnt = GetEntByScriptName( "customize_weapon_ref" ) // Reusing "customize_weapon_ref" with an offset
 	ModelData_SetBaseOrigin( file.appliedStickerModelData, refEnt.GetOrigin() + <3.25, 0, 2.5> )
 	ModelData_SetBaseAngles( file.appliedStickerModelData, <0, 0, 0> )
 	model = CreateMenuModel( file.appliedStickerModelData, $"mdl/dev/empty_model.rmdl" )
@@ -1629,12 +1647,13 @@ void function InitMenuEntities()
 	
 	InitBattlePassLights()
 	InitLightingConfigs()
+	InitBackgroundModels()
 
 	file.initializedMenuModels = true
 	printf( "InitMenuEntitiesDebug: InitMenuEntities() END" )
 }
 
-void function EntitiesDidLoad()
+void function InitBackgroundModels()
 {
 	#if CLIENT
 		entity targetBackground = GetEntByScriptName( STORE_BACKGROUND_ENT_NAME )
@@ -1909,7 +1928,7 @@ void function TransitionStoreBackgroundFX( ItemFlavor itemFlav )
 {
 	EndSignal( level, "EndSetPresentationType" )
 
-	int rarityIdx      = 0                            
+	int rarityIdx      = 0 // default to common rarity
 	vector rarityColor = MENU_MODELS_DEFAULT_HIGHLIGHT_COLOR
 
 	if ( ItemFlavor_HasQuality( itemFlav ) )
@@ -1918,7 +1937,7 @@ void function TransitionStoreBackgroundFX( ItemFlavor itemFlav )
 		rarityColor = GetFXRarityColorForUnlockable( rarityIdx )
 	}
 
-	    
+	//fx
 	Assert( rarityIdx < STORE_BACKGROUND_FX_TIERS.len(), "Couldn't find particle beam asset based on rarity: " + rarityIdx )
 	asset particleAssetRarity = STORE_BACKGROUND_FX_TIERS[rarityIdx]
 	entity targetBackground   = GetEntByScriptName( STORE_BACKGROUND_ENT_NAME )
@@ -1995,7 +2014,6 @@ void function UpdateCharacterModelDisplay( MenuModelData modelData, bool doTrans
 		thread FlashMenuModel( model, eMenuModelFlashType.DEFAULT, flashColor )
 	}
 }
-
 
 void function UIToClient_PartyMemberGetFocus( string partyMemberUID )
 {
@@ -2097,7 +2115,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 				if ( userInfoOrNull != null )
 					partyMemberDisplayThreadData.userInfo = expect CommunityUserInfo( userInfoOrNull )
 			}
-			partyMemberDisplayThreadData.userInfo.charData.resize( ePlayerStryderCharDataArraySlots.COUNT, 0 )                                                   
+			partyMemberDisplayThreadData.userInfo.charData.resize( ePlayerStryderCharDataArraySlots.COUNT, 0 ) // (dw): charData is sometimes empty (R5DEV-48722)
 
 			partyMemberDisplayThreadData.partyMemberSeenThisUpdate = true
 			if ( partyMemberDisplayThreadData.partyMemberFirstSeenTime == null )
@@ -2108,7 +2126,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 		foreach ( string partyMemberUid, PartyMemberDisplayThreadData partyMemberDisplayThreadData in file.partyMemberUidCharacterDataMap )
 		{
 			bool shouldDestroyModel = false
-			bool shouldModelBeShown = false                                                                                                             
+			bool shouldModelBeShown = false // will only create if model doesn't exist (because new party member or because shouldDestroyModel was true)
 
 			if ( partyMemberDisplayThreadData.partyMemberSeenThisUpdate )
 			{
@@ -2142,7 +2160,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 					}
 				}
 
-				// Pass GUID to IsItemFlavorStructValid since var can't take ItemFlavor&
+				// If we don't get their data from Stryder within a second or so, just show a random launch character for them
 				if ( characterOrNull == null && partyMemberDisplayThreadData.character == null
 				&& partyMemberDisplayThreadData.partyMemberFirstSeenTime != null && Time() > expect float(partyMemberDisplayThreadData.partyMemberFirstSeenTime) + 1.5 )
 				{
@@ -2203,7 +2221,7 @@ void function TrackPartyMembersAndDisplayModelsThread()
 				foreach ( entity candidateRefEnt in file.teammateRefEnts )
 				{
 					if ( file.teammateRefEntsUsedMap[candidateRefEnt] )
-						continue                
+						continue // spot is used
 
 					file.teammateRefEntsUsedMap[candidateRefEnt] = true // spot is free, reserve it!
 					refEnt = candidateRefEnt
