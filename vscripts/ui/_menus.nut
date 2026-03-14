@@ -145,8 +145,6 @@ global function RemoveCallback_UserInfoUpdated
 global function AddCallbackAndCallNow_RemoteMatchInfoUpdated
 global function RemoveCallback_RemoteMatchInfoUpdated
 
-global function UpdateMatchPINData
-
 global function _IsMenuThinkActive
 global function UpdateActiveMenuThink
 
@@ -166,6 +164,12 @@ global function OpenModelMenu
 global function UILevelLoadCallback
 
 global function CloseAllMenusExcept
+
+
+#if DEVELOPER
+global function AutomateUi
+global function AutomateUiWaitForPostmatch
+#endif
 
 struct
 {
@@ -187,9 +191,17 @@ struct
 	bool TEMP_circularReferenceCleanupEnabled = true
 
 	table<string, int> t_persistenceAttempts
-	
+
 	bool lastMenuNavDirection = MENU_NAV_FORWARD
 	bool modeSelectMenuOpen = false
+
+#if DEVELOPER
+	float uiAutomationLastTime = 0
+	float uiAutomationExpiredTime = 0
+	var uiAutomationCurrentMenu = null
+	var uiAutomationTopActivePanel = null
+	var uiAutomationCount = 0
+#endif
 } file
 
 
@@ -627,7 +639,7 @@ void function UICodeCallback_FullyConnected( string levelname )
 	Assert( gameModeString == GetConVarString( "mp_gamemode" ) )
 	Assert( gameModeString != "" )
 
-	int gameModeId        = GameMode_GetGameModeId( gameModeString )
+	int gameModeId        = 1
 	int mapId             = -1
 	int difficultyLevelId = 0
 	int roundId           = 0
@@ -2092,6 +2104,11 @@ void function AddMenuEventHandler( var menu, int event, void functionref() func 
 		Assert( uiGlobal.menuData[ menu ].openFunc == null )
 		uiGlobal.menuData[ menu ].openFunc = func
 	}
+	else if ( event == eUIEvent.MENU_PRECLOSE )
+	{
+		Assert( uiGlobal.menuData[ menu ].preCloseFunc == null )
+		uiGlobal.menuData[ menu ].preCloseFunc = func
+	}
 	else if ( event == eUIEvent.MENU_CLOSE )
 	{
 		Assert( uiGlobal.menuData[ menu ].closeFunc == null )
@@ -2207,6 +2224,12 @@ void function OpenMenuWrapper( var menu, bool isFirstOpen )
 
 void function CloseMenuWrapper( var menu )
 {
+	if ( uiGlobal.menuData[ menu ].preCloseFunc != null )
+	{
+		uiGlobal.menuData[ menu ].preCloseFunc()
+
+	}
+
 	bool wasVisible = Hud_IsVisible( menu )
 	CloseMenu( menu )
 	ClearMenuBlur( menu )
@@ -2221,8 +2244,8 @@ void function CloseMenuWrapper( var menu )
 		if ( uiGlobal.menuData[ menu ].hideFunc != null )
 			uiGlobal.menuData[ menu ].hideFunc()
 
-		PIN_PageView( Hud_GetHudName( menu ), Time() - uiGlobal.menuData[ menu ].enterTime, uiGlobal.pin_lastMenuId, IsDialog( menu ) )
-		uiGlobal.pin_lastMenuId = Hud_GetHudName( menu )
+		PIN_PageView( Hud_GetHudName( menu ), UITime() - uiGlobal.menuData[ menu ].enterTime, GetLastMenuIDForPIN(), IsDialog( menu ), uiGlobal.menuData[ menu ].pin_metaData )
+		SetLastMenuIDForPIN( Hud_GetHudName( menu ) )
 
 		foreach ( var panel in GetAllMenuPanels( menu ) )
 		{
@@ -3112,12 +3135,6 @@ void function UICodeCallback_RemoteMatchInfoUpdated()
 }
 
 
-void function UpdateMatchPINData( string pinKey, string pinValue )
-{
-	uiGlobal.matchPinData[pinKey] <- pinValue
-}
-
-
 void function EnterLobbySurveyReset()
 {
 	file.numDialogFlowDialogsDisplayed = 0
@@ -3131,3 +3148,56 @@ void function TEMP_CircularReferenceCleanup()
 
 	collectgarbage()
 }
+
+#if DEVELOPER
+bool function AutomateUi(float delayFactor = 1)
+{
+	if ( !GetConVarBool( "ui_automation_enabled" ) )
+	{
+		return false
+	}
+
+	float timeNow = UITime()
+	if ( file.uiAutomationLastTime == 0 )
+	{
+		file.uiAutomationLastTime = timeNow
+	}
+	file.uiAutomationExpiredTime += (timeNow - file.uiAutomationLastTime);
+	file.uiAutomationLastTime = timeNow
+
+	file.uiAutomationCount++
+
+	var currentActiveMenu = GetActiveMenu()
+	var currentTopActivePanel = null
+	if ( uiGlobal.activePanels.len() > 0 )
+	{
+		currentTopActivePanel = uiGlobal.activePanels.top()
+	}
+
+	if (( file.uiAutomationCurrentMenu != currentActiveMenu ) || ( file.uiAutomationTopActivePanel != currentTopActivePanel ))
+	{
+		file.uiAutomationCurrentMenu = currentActiveMenu
+		file.uiAutomationTopActivePanel = currentTopActivePanel
+		file.uiAutomationExpiredTime = 0
+	}
+
+	if ( IsConnected() && AreWeMatchmaking() )
+	{
+		file.uiAutomationExpiredTime = 0
+		return false
+	}
+
+	if ( file.uiAutomationExpiredTime > delayFactor * GetConVarFloat( "ui_automation_delay_s" ) )
+	{
+		file.uiAutomationExpiredTime = 0
+		return true
+	}
+
+	return false
+}
+
+bool function AutomateUiWaitForPostmatch()
+{
+	return GetConVarBool( "ui_automation_wait_for_postmatch" )
+}
+#endif

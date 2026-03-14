@@ -66,7 +66,6 @@ void function SV_CL_Init()
 	//(cafe) Proper order of loading remote functions, mods, and gamemodes
 	RemoteFunctions_Init_Begin()
 	ModSystem_RunCallbacks()// MOD SYSTEM CALLBACKS, has to run as soon as remote functions start registering
-	GameMode_VerifyModes() // Has to run after mod system callbacks
 	Settings_Init() // Should run after gamemodes are verified
 	
 	ShHoverVehicle_Init()
@@ -193,7 +192,6 @@ void function SV_CL_Init()
     SURVIVAL_LootDistribution_InitShared()
 	Sh_PersistentDamageLayer_Init()
 	ShSurvivalTraining_Init()
-	FiringRangeGameMode_Init()
 	ShGas_Init()
 	ShShellShock_Init()
 	ShCarePackage_Init()
@@ -356,6 +354,7 @@ void function Server_Init()
 	TriggerFunctions_Init()
 	SpawnFunctions_Init()
 	GoblinDropship_Init()
+	MatchBehavior_Init()
 	AiPersonalShield()
 	ATTurrets_Init()
 	HoverTank_Init()
@@ -502,7 +501,7 @@ void function Client_Init()
 	#endif
 
 	CLHud_Init()
-	ClGamemodeSurvival_Init()
+	//ClGamemodeSurvival_Init()
 	GameMode_RunClientInits()
 	ClRespawnselect_MP_Init()
 	ClObituary_Init()
@@ -606,6 +605,7 @@ void function Shared_Lobby_Init()
 		LootBoxCeremony_Init()
 		SvXP_Init()
 		Achievements_Init()
+		MatchBehavior_Init()
 	#elseif CLIENT
 		Client_Lobby_Init()
 		NewScriptInit_VM()

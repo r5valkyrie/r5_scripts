@@ -2,74 +2,260 @@ untyped
 
 globalize_all_functions
 
+global struct IntroCameraSettings
+{
+	vector origin = ZERO_VECTOR
+	vector angles = ZERO_VECTOR
+	float fov = 70.0
+}
+
+global typedef CustomIntroCameraSettingsFunc void functionref( entity, IntroCameraSettings )
 global typedef ExtendedPostDeathLogic		 void functionref( entity )
 global typedef ShouldSpawnPlayerOnConnect	 bool functionref( entity )
 global typedef OnPostDeathLogicEnd			 void functionref( entity )
+
 const float THIRD_PERSON_KILL_REPLAY_PROJECTILES_MINTIME = 0.3
 
 struct
 {
-	// PostMatchSurveySettings surveySettings
+	IntroCameraSettings ornull introCamSettings
+	void functionref(entity player ) ObserverThreadOverrideCallback = null
+	PostMatchSurveySettings surveySettings
 	ExtendedPostDeathLogic extendedDeathLogic
 	array<OnPostDeathLogicEnd> onPostDeathLogicEndFuncs
 } file
 
 int s_randomViewpointBaseInt = -1
-void function BaseGametype_Init_MPSP()
+void function BaseGametype_Init_MP()
 {
+	AddSpawnCallback( "info_intermission", OnInfoIntermissionSpawn )
+
+	AddCallback_OnPlayerKilled( OnPlayerKilled_DeathNotify )
 	SetDefaultObserverBehavior( GetBestObserverTarget_MP )
-	
+	AddCallback_OnUpdatingPlayerStryderCharDataArray( Stryder_UpdatePlayerInMatchState )
+	AddCallback_OnClientConnected( MP_OnClientConnected )
+
+	RegisterSignal( "StopPostDeathLogic" )
+	RegisterSignal( "OnPostDeathLogicEnd" )
 	RegisterSignal( "SkipDeathCam" )
 	RegisterSignal( "OnConnectionLost" )
-	RegisterSignal( "KillreplayFinished" )
+
+	s_randomViewpointBaseInt = RandomInt( INT_MAX )
+
+	RegisterSignal( "HaltPlayerCharacterThread" )
 }
 
+void function BaseGametype_Init_MP_SurveySettings( PostMatchSurveySettings surveySettings )
+{
+	file.surveySettings.matchId = surveySettings.matchId
+	file.surveySettings.sampleRateLowerBound = surveySettings.sampleRateLowerBound
+}
+
+int function GetLowestUnusedMemberIndexForTeam( int teamIndex )
+{
+	int indexIter             = 0
+	array<entity> teamPlayers = GetPlayerArrayOfTeam( teamIndex )
+	for ( ; ; )
+	{
+		bool found = false
+		foreach ( entity player in teamPlayers )
+		{
+			int thisIdx = player.GetTeamMemberIndex()
+			if ( thisIdx == indexIter )
+				found = true
+		}
+
+		if ( !found )
+			return indexIter
+		indexIter++
+	}
+
+	unreachable
+}
+
+bool function HaveSquadBasedUI()
+{
+	return IsPVEMode() && IsMultiTeamMission() || GetCurrentPlaylistVarBool("has_squad_based_ui", false)
+}
+
+void function AssignTeamIndexToPlayer( entity player )
+{
+	int newTeamMemberIndex = GetLowestUnusedMemberIndexForTeam( player.GetTeam() )
+	player.SetTeamMemberIndex( newTeamMemberIndex )
+	//if ( HaveSquadBasedUI() && player.GetTeam() != TEAM_SPECTATOR )
+	//	player.SetSquadID( GetSquadID( player.GetTeam() ) )
+}
+
+// playerconnected
 void function CodeCallback_OnClientConnectionCompleted( entity player )
 {
-	#if TRACKER && HAS_TRACKER_DLL //TODO(mk): server messages
-		if( IsBotEnt( player ) )
-			return
-	#endif
-		
-	player.p.activeGladiatorCardStatTrackerEntries = [0,0,0]
+	// samy: this was originaly an optimization for demo replay, the intent is completely different now and needs revisit
+	if ( player.GetTeam() == TEAM_SPECTATOR && !IsLobby() )
+	{
+		FinishClientScriptInitialization( player )
+
+		AssignTeamIndexToPlayer( player )
+
+		PutPlayerInObserverMode( player, OBS_MODE_IN_EYE )
+
+		player.p.connectTime = Time()
+		player.hasConnected = true
+
+		foreach ( callbackFunc in svGlobal.onObserverConnectedCallbacks )
+		{
+			callbackFunc( player )
+		}
+
+		return
+	}
+
+	// This must be called before anything else accesses the player's persistent data.
+	SvPersistentData_OnClientConnectionCompleted( player )
+
+	StatsHook_OnPlayerConnected( player )
 
 	ShGRX_OnClientConnectionCompleted( player )
 
-	if ( !DEV_ShouldIgnorePersistence() )
-	{
-		SvPersistentData_OnClientConnectionCompleted( player )
-		ShEHI_OnClientConnectionCompleted( player )
-	}
-	
+	// Active boosts must be refreshed/registered before challenge logic
+	//Boost_RefreshPlayerBoosts( player )
+
+	bool isReconnecting = false
+	thread Challenges_OnPlayerConnectedThread( player, isReconnecting )
+
 	UpdatePlayerCounts()
+
 	player.p.connectTime = Time()
-	
-	ZiplineInit( player )
-	
+
+	if ( IsLobby() )
+	{
+		                               
+			//SelectPlayerForFTUETrainingTestCohort( player )
+			//SelectPlayerForFTUEOrientationTestCohort( player )
+        
+
+		                 
+			//Cups_OnClientConnectedToLobby( player )
+        
+
+		ShEHI_OnClientConnectionCompleted( player )
+		FinishClientScriptInitialization( player )
+
+		if ( GetCurrentPlaylistVarBool( "set_player_has_connected_pre_loadout", true ) )
+			player.hasConnected = true // ensures disconnect callbacks run as expected
+
+		if ( !(GetCurrentPlaylistVarBool( "has_sv_op_v1_loadouts", true )) || player.IsBot() )
+			Lobby_OnClientConnectionCompleted( player )
+
+		return
+	}
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
+		RankedTrials_OnPlayerConnected( player, false )
+
+	if ( GetGameState() >= eGameState.Prematch )
+		ScreenFade( player, 0, 0, 0, 255, 0.5, 0.0, FFADE_IN | FFADE_PURGE )
+
 	AssignTeamIndexToPlayer( player )
+
 	player.hasConnected = true
 
-	foreach ( cb in svGlobal.onClientConnectedCallbacks )	
-	{
-		// #if DEVELOPER
-		// printw( "Player connected callback executing", string( cb ) )
-		// #endif
-		cb( player )
-	}
+	ZiplineInit( player )
 
-	NotifyClientsOfConnection( player, 1 )
-	
+	//if ( player.GetTeam() != TEAM_SPECTATOR )
+	//	AssignEnemyFaction( player, GetFactionChoice( player ) )
+	InitXP( player )
+	InitBattlePassXP( player )
+	//InitPlayerStats( player )
+	//InitPlayerChallenges( player )
+	//ValidateLoadouts( player )
+	SaveDateLoggedIn( player )
+
+	//UpdateMinimapStatus( player )
+	//UpdateMinimapStatusToOtherPlayers( player )
+
+	if ( ShouldPlayerBeEliminated( player ) )
+		SetPlayerEliminated( player )
+	else if ( GetGameState() == eGameState.SwitchingSides )
+		SetPlayerEliminated( player )
+
+	// below here is NOT BOT ONLY, but only randomly. Should fix to be consistent for bots.
+	//MinimapPlayerConnected( player )
+
+	ClearAllPersistentLastGameTypeFlags( player )
+	CheckForEmptyTeamVictory()
+
 	FinishClientScriptInitialization( player )
 
-	// if( Gamemode() == eGamemodes.fs_snd )
-		// _OnPlayerConnectedSND( player )
+	if ( ShouldPlayerHaveLossProtection( player ) )
+	{
+		player.p.hasMatchLossProtection = true
+		Remote_CallFunction_NonReplay( player, "ServerCallback_GiveMatchLossProtection" )
+	}
+
+	UpdateBadRepPresent()
+
+	player.SetPersistentVar( "lastPlaylist", GetCurrentPlaylistName() )
+	player.SetPersistentVar( "lastPartySize", player.GetPartySize() )
+
+	// we're in the match
+	player.SetPersistentVar( "postMatchSurveyMatchId", file.surveySettings.matchId )
+	player.SetPersistentVar( "postMatchSurveySampleRateLowerBound", file.surveySettings.sampleRateLowerBound )
+
+	SetPersistentLastGameTypeFlag( player, eGameType.SQUADS )
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
+		SetPersistentLastGameTypeFlag( player, eGameType.RANKED )
+
+                                            
+                                                                                                                                                                                      
+                                                           
+      
+
+	ShEHI_OnClientConnectionCompleted( player )
+	// Added via AddCallback_OnClientConnected
+	foreach ( callbackFunc in svGlobal.onClientConnectedCallbacks )
+	{
+		callbackFunc( player )
+	}
+
+	if ( s_shouldSpawnPlayerOnConnect == null || s_shouldSpawnPlayerOnConnect( player ) )
+	{
+		if ( !Flag( "PlayerDidSpawn" ) )
+			__PlayerDidSpawn( player )
+
+		svGlobal.levelEnt.Signal( "PlayerDidSpawn", { player = player } )
+		DecideRespawnPlayer( player, false )
+	}
+
+	#if DEV
+	if ( GetConVarBool( "persistence_run_pdef_autogen_on_connect" ) )
+		DEV_SaveDevPersistentPlayerDataDefinitionAutogenSection()
+	#endif
+}
+
+
+ShouldSpawnPlayerOnConnect s_shouldSpawnPlayerOnConnect = null
+void function SetShouldSpawnPlayerOnConnect( ShouldSpawnPlayerOnConnect func )
+{
+	Assert( (s_shouldSpawnPlayerOnConnect == null), format( "Function was already set to: '%s'", string( s_shouldSpawnPlayerOnConnect ) ) )
+	s_shouldSpawnPlayerOnConnect = func
 }
 
 
 void function CodeCallback_OnClientDisconnected( entity player, string reason )
 {
-	printt( "CodeCallback_OnClientDisconnected", player, reason )
-	player.Signal( "OnDisconnected" )
+	Signal( player, "OnDisconnecting" )
+
+	if ( IsLobby() )
+	{
+		if ( IsPrivateMatch() && player.entindex() == 1 )
+			SendAllPlayersBackToPartyScreen()
+
+		player.Signal( "_disconnectedInternal" )
+		UpdateBadRepPresent()
+	}
+
+	if ( IsMatchmakingServer() && GetGameState() < eGameState.Postmatch )
+		thread WaitForDisconnectCompleted( player )
 
 	if ( !player.hasConnected || player.GetTeam() == TEAM_SPECTATOR )
 		return
@@ -88,25 +274,101 @@ void function CodeCallback_OnClientDisconnected( entity player, string reason )
 		callbackFunc( player )
 	}
 
-	if( GetGameState() == eGameState.Playing && Gamemode() == eGamemodes.SURVIVAL && !IsDevGamemode() && reason != "#DISCONNECT_GAMESHUTTINGDOWN" )
-		SetPlayerEliminated( player )
+	bool canReconnect = false
+	StatsHook_OnPlayerLeft( player, reason, canReconnect )
+
+	UpdatePersistenceOnDisconnect( player )
+
+	// Added via AddCallback_OnPersistenceUpdateCompleted
+	foreach ( callbackFunc in svGlobal.onPersistenceUpdateCompletedCallbacks )
+	{
+		callbackFunc( player )
+	}
+
+	player.Disconnected()
+}
+
+void function CodeCallback_OnClientConnectionLost( entity player, string reason )
+{
+	// This is called when a player disconnects but we're keeping their entity around in case they reconnect. This is the only indication that server script gets that this has happened.
+	player.Signal("OnConnectionLost")
+
+	foreach ( callbackFunc in svGlobal.onClientConnectionLostCallbacks )
+	{
+		callbackFunc( player )
+	}
+
+	bool canReconnect = true
+	StatsHook_OnPlayerLeft( player, reason, canReconnect )
+}
+
+void function CodeCallback_OnClientConnectionRestored( entity player )
+{
+	// This is called when a player that has disconnected reconnects and reattaches to the player entity. Its timing is the same as CodeCallback_OnClientConnectionCompleted.
+
+	FinishClientScriptInitialization( player )
+
+	if ( !IsPrivateMatch() && !IsPrivateMatchLobby() )
+	{
+		Challenges_OnPlayerReconnected( player )
+	}
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
+		RankedTrials_OnPlayerConnected( player, true )
+
+	                    
+		//GoldenHorse_OnPlayerReconnected( player )
+       
+
+	if ( !IsAlive( player ) && player.GetTeam() != TEAM_SPECTATOR && GetGameState() > eGameState.Prematch )
+	{
+		thread SendDeathRecapDataToPlayer( player )
+
+		if ( Survival_IsPlayerSquadEliminated( player ) )
+		{
+                 
+                                                                                                                                      
+                                                                                                                                          
+      
+			thread InformPlayerSquadEliminated( player )
+		}
+
+		thread ConnectionRestored_ShowDeathScreen( player )
+	}
+
+	if ( IsPrivateMatch() && player.GetTeam() == TEAM_SPECTATOR )
+	{
+		if ( PlayerMatchState_GetFor( player ) >= ePlayerMatchState.SKYDIVE_PRELAUNCH )
+		{
+			Remote_CallFunction_Replay( player, "ServerCallback_EnableGameStatusMenu", true )
+		}
+	}
+
+	foreach ( callbackFunc in svGlobal.onClientConnectionRestoredCallbacks )
+		callbackFunc( player )
+}
+
+void function ConnectionRestored_ShowDeathScreen( entity player )
+{
+	player.EndSignal( "OnDestroy" )
+	WaitEndFrame()
+	printt( "CodeCallback_OnClientConnectionRestored: ServerCallback_ShowDeathScreen (" + player + ")" )
+	Remote_CallFunction_NonReplay( player, "ServerCallback_ShowDeathScreen" )
 }
 
 
 void function CodeCallback_OnPlayerRespawned( entity player )
 {
-	#if DEVELOPER
-		Warning( "CodeCallback_OnPlayerRespawned: " + string( player ) )
-	#endif
-
 	Assert( !IsPlayerEliminated( player ), "An eliminated player respawned." )
+
+	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
 
 	SetHumanRagdollImpactTable( player )
 
 	player.p.respawnCount++
-	// player.s.respawnTime = Time()
+	player.s.respawnTime = Time()
 	ClearRecentDamageHistory( player )
-	// ClearRespawnAvailable( player )
+	ClearRespawnAvailable( player )
 
 	player.p.killerToSpectate = null
 	player.p.playerToTimeThatAssistCreditLastsTable.clear()
@@ -117,29 +379,21 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 
 	player.Signal( "OnRespawned" )
 
-	Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
-
 	// Added via AddCallback_OnPlayerRespawned
 	foreach ( callbackFunc in svGlobal.onPlayerRespawnedCallbacks )
 	{
 		callbackFunc( player )
 	}
 
-	// // Added via AddCallback_OnPlayerPostRespawned
-	// foreach ( callbackFunc in svGlobal.onPlayerPostRespawnedCallbacks )
-	// {
-		// callbackFunc( player )
-	// }
+	// Added via AddCallback_OnPlayerPostRespawned
+	foreach ( callbackFunc in svGlobal.onPlayerPostRespawnedCallbacks )
+	{
+		callbackFunc( player )
+	}
 
-	// Added via AddEntityCallback_OnPlayerRespawned
 	foreach ( func in player.p.playerSpawnedCallbacks )
-		func( player )
-		
-	// Added via AddEntityCallback_OnPlayerRespawned_FireOnce
-	foreach ( func in player.p.playerSpawnedCallbacks_FireOnce )
 	{
 		func( player )
-		RemoveEntityCallback_OnPlayerRespawned_FireOnce( player, func )
 	}
 
 	player.e.lastAttacker = null
@@ -147,8 +401,8 @@ void function CodeCallback_OnPlayerRespawned( entity player )
 	player.e.canBeDamagedFromGas = true
 
 	thread PlayerLifeThread( player )
-	thread RedishHighlight_Thread( player )
 }
+
 
 void function PlayerLifeThread( entity player )
 {
@@ -224,19 +478,17 @@ void function PlayerCharacterThread( entity player, ItemFlavor character )
 	WaitForever()
 }
 
+
 void function ApplyPlayerCharacterSkin( entity player, ItemFlavor skin )
 {
 	//see Declan as to why this needed to change from CharacterSkin_Apply()
-	// ApplyAppropriateCharacterSkin( player )
-	
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-
-	if ( !LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterSkin( character ) ) )
-		return
-		
-	CharacterSkin_Apply( player, skin )
+	ApplyAppropriateCharacterSkin( player )
 }
 
+void function ClientCallback_ClientStatus( entity player, bool partyMember )
+{
+	player.p.partyMember = partyMember
+}
 
 entity function GetBestObserverTarget_MP( entity observer, bool reverse )
 {
@@ -249,10 +501,16 @@ entity function GetBestObserverTarget_MP( entity observer, bool reverse )
 	return PickBestObserverTarget( observer, (reverse ? -1 : 1) )
 }
 
+#if SERVER
+void function SetCallback_ObserverThreadOverride( void functionref( entity player ) func  )
+{
+	file.ObserverThreadOverrideCallback = func
+}
+
 void function ObserverThread( entity player )
 {
-	#if DEVELOPER
-		printw( "DS: ObserverThread", player )
+	#if DEV
+		//printt( "DS: ObserverThread", player )
 	#endif
 
 	player.EndSignal( "OnDestroy" )
@@ -278,8 +536,8 @@ void function ObserverThread( entity player )
 		}
 	)
 
-	#if DEVELOPER
-		printw( "DS: ObserverThread - after wait", player, player.IsWatchingSpecReplay() )
+	#if DEV
+		//printt( "DS: ObserverThread - after wait", player, player.IsWatchingSpecReplay() )
 	#endif
 
 	bool allowSpectatingEnemySquad = GetCurrentPlaylistVarBool( "allowSpectatingEnemySquad", true )
@@ -308,6 +566,7 @@ void function ObserverThread( entity player )
 		}
 	}
 }
+#endif
 
 entity function PickBestObserverTarget( entity player, int cycleDirection = 0 )
 {
@@ -347,12 +606,21 @@ entity function PickBestObserverTarget( entity player, int cycleDirection = 0 )
 		}
 	}
 
-	//Don't allow player switch to other player if it's being respawned from beacon
-	if( IsValid( player.p.respawnPod ) )
-		return player.p.respawnPod
-	
 	if ( observeablePlayers.len() == 0 )
 		return null
+
+
+
+               
+                                                         
+   
+                                                                                      
+                                        
+    
+                                                  
+    
+   
+       
 
 	if ( GetCurrentPlaylistVarBool( "allowSpectatingEnemySquad", true ) )
 	{
@@ -487,10 +755,124 @@ entity function PickBestPlayerOnteamToObserve( array< entity > playerAliveOnTeam
 	return playerAliveOnTeam[indexToObserve]
 }
 
+bool function DecideRespawnPlayer( entity player, bool allowSpawnAsObserver )
+{
+	Assert( IsValid( player ), player + " is invalid!!" )
+	Assert( !IsAlive( player ), player + " is already alive" )
+
+	if ( !player.hasConnected || player.GetTeam() == TEAM_SPECTATOR )
+	{
+		printf( "%s() - player.hasConnected was false: %s", FUNC_NAME(), string( player ) )
+		return false
+	}
+
+	if ( IsPVEMode() && (player.p.respawnCount == 0) )
+		return false
+
+	if ( (GetGameState() <= eGameState.WaitingForPlayers) && !PreGame_GetWaitingForPlayersSpawningEnabled() )
+	{
+		printf( "%s() - No spawning when waiting for players: %s", FUNC_NAME(), string( player ) )
+		return false
+	}
+
+	if ( PlayerShouldObserve( player ) )
+	{
+		printf( "%s() - PlayerShouldObserve() was true: %s", FUNC_NAME(), string( player ) )
+		if ( GamemodeUtility_IsSpectatorEnabled() )
+		{
+			if ( IsPlayerEliminated( player ) && (GetGameState() == eGameState.Playing) && IsRoundBased() )
+				SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 1.0, 6.0, 1.0 )
+#if SERVER
+			if ( file.ObserverThreadOverrideCallback != null )
+				file.ObserverThreadOverrideCallback(player)
+			else
+				thread ObserverThread( player )
+#endif
+		}
+
+		return false
+	}
+
+	if ( allowSpawnAsObserver )
+		player.AllowSpawnAsObserverOnce()
+
+	printf( "%s() - Attempting to spawn: %s", FUNC_NAME(), string( player ) )
+	bool didSpawn = RespawnTitanPilot( player )
+	printf( "%s() - Spawn %s: %s", FUNC_NAME(), (didSpawn ? "success" : "failed"), string( player ) )
+
+	return didSpawn
+}
+
+bool function RespawnTitanPilot( entity player )
+{
+	Assert( PlayerCanSpawn( player ), player + " cant spawn now" )
+
+	if ( IsLobby() )
+		return false
+
+	// clear respawn countdown message
+	ClearRespawnAvailable( player )
+
+	entity spawnPoint = SetupPilotSpawnOnSpawnPoint( player )
+	SetPlayerSettings( player, SPECTATOR_SETTINGS )
+	DoRespawnPlayer( player, spawnPoint )
+	return true
+}
+
+
+entity function SetupPilotSpawnOnSpawnPoint( entity player )
+{
+	// start recording the spawn data for this player
+	//RecordSpawnData( player )
+
+	entity spawnPoint
+
+	PerfStart( PerfIndexServer.RespawnTitanPilot )
+
+	if ( ShouldStartSpawn( player ) )
+		spawnPoint = FindStartSpawnPoint( player )
+	else
+		spawnPoint = FindSpawnPoint( player )
+
+	PerfEnd( PerfIndexServer.RespawnTitanPilot )
+
+	// stop recording spawn data
+	//StoreSpawnData( player, spawnPoint )
+
+	return spawnPoint
+}
+
+
+bool function ShouldEntTakeDamage_SPMP( entity ent, var damageInfo )
+{
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( HasGameStateProtection( ent ) )
+	{
+		DamageInfo_Print( damageInfo, "gamestate protection" )
+		return false // can't die in current gamestate
+	}
+
+	return true
+}
+
+
+bool function ShouldUseReplacementSpawn( entity player )
+{
+	return false
+}
+
+void function OnInfoIntermissionSpawn( entity ent )
+{
+	printf( "%s() - %s - %s", FUNC_NAME(), string( ent ), string( ent.GetOrigin() ) )
+	svSpawnGlobals.infoIntermissions.append( ent )
+}
+
+
 void function CodeCallback_OnClientConnectionStarted( entity player )
 {
 	// not a real player?
-	#if DEVELOPER
+	#if DEV
 		if ( player.GetPlayerName() == "Replay" )
 			return
 	#endif
@@ -499,7 +881,7 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 	if ( IsLobby() )
 	{
-		// Lobby_OnClientConnectionStarted( player )
+		Lobby_OnClientConnectionStarted( player )
 		return
 	}
 
@@ -524,14 +906,16 @@ void function CodeCallback_OnClientConnectionStarted( entity player )
 
 	printl( "Player connect started: " + player )
 
-	// PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED ) // Intro Cameras work differently
+	PutPlayerInObserverMode( player, OBS_MODE_STATIC_LOCKED )
 	player.StopPhysics()
 }
+
 
 bool function HasPlayerDiedAtLeastOnce( entity player )
 {
 	return player.p.lastDeathTime != -1
 }
+
 
 void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 {
@@ -563,6 +947,14 @@ void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 			CreateNoSpawnArea( team, TEAM_INVALID, player.GetOrigin(), DEATHCAM_TIME + 0.5, 256 )
 	}
 
+	// ResetBurnCardStashTimeForActiveCardSlot( player )
+	// player.Signal( "RefreshDice" )
+
+	if ( ShouldPlayerBeEliminated( player ) )
+	{
+		SetPlayerEliminated( player )
+	}
+
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	if ( damageSourceId != eDamageSourceId.round_end )
 	{
@@ -573,11 +965,7 @@ void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 		}
 	}
 
-	PlayerOrNPCKilled( player, damageInfo ) //Fire OnPlayerKilled Callbacks
-	
-	if( Gamemode() != eGamemodes.SURVIVAL ) //Keep this away from flowstate gamemodes for now.
-		return
-	
+	PlayerOrNPCKilled( player, damageInfo )
 	entity killer = Bleedout_GetBleedoutAttacker( player )
 	player.p.killerToSpectate = ( IsValid( killer ) && killer.IsPlayer() ) ? killer : null
 
@@ -605,12 +993,80 @@ void function CodeCallback_OnPlayerKilled( entity player, var damageInfo )
 
 		if ( soundAlias != "" )
 		{
-			// EmitSoundOnEntityExceptToPlayers( player, [player, attacker], soundAlias )
+			//EmitSoundOnEntityExceptToPlayers( player, [player, attacker], soundAlias )
 		}
 	}
 
 	svGlobal.levelEnt.Signal( "PlayerKilled", { player = player } )
 }
+
+CustomIntroCameraSettingsFunc s_cameraSettingsFunc = null
+void function SetCustomIntroCameraSettingsFunction( CustomIntroCameraSettingsFunc func )
+{
+	Assert( (s_cameraSettingsFunc == null), format( "Function was already set to: '%s'", string( s_cameraSettingsFunc ) ) )
+	s_cameraSettingsFunc = func
+}
+
+void function SetPlayerToDefaultViewPoint( entity player )
+{
+	IntroCameraSettings view
+
+	entity viewPoint = FindViewPoint( player )
+	if ( IsValid( viewPoint ) )
+	{
+		view.origin = viewPoint.GetOrigin()
+
+		player.SetOrigin( view.origin )
+		view.angles = viewPoint.GetAngles()
+
+		entity viewTarget = GetEnt( expect string( viewPoint.kv.target ) )
+		if ( IsValid( viewTarget ) )
+			view.angles = VectorToAngles( viewTarget.GetOrigin() - view.origin )
+	}
+
+	if ( file.introCamSettings != null )
+	{
+		view = expect IntroCameraSettings( file.introCamSettings )
+	}
+
+	if ( s_cameraSettingsFunc != null )
+		s_cameraSettingsFunc( player, view )
+
+	const string FORCE_INTRO_CAM_VARNAME = "force_intro_camera"
+	string forceStr = GetCurrentPlaylistVarString( FORCE_INTRO_CAM_VARNAME, "" )
+	if ( forceStr.len() > 0 )
+	{
+		array<string> arr = split( forceStr, ", " )
+		if ( arr.len() >= 6 )
+		{
+			printf( "%s() - Using playlist var '%s' with value '%s'.", FUNC_NAME(), FORCE_INTRO_CAM_VARNAME, forceStr )
+			view.origin = <float( arr[0] ), float( arr[1] ), float( arr[2] )>
+			view.angles = <float( arr[3] ), float( arr[4] ), float( arr[5] )>
+			view.fov = ((arr.len() >= 7) ? float( arr[6] ) : 70.0)
+		}
+	}
+
+	if ( view.origin == ZERO_VECTOR  && !IsTestMap() )
+		Warning( "%s() - View Origin not set.", FUNC_NAME() )
+
+	player.SetOrigin( view.origin )
+	player.SetObserverModeStaticPosition( view.origin )
+	player.SetObserverModeStaticAngles( view.angles )
+	player.SetObserverModeStaticFOVOverride( view.fov )
+}
+
+void function AddCallback_OnPostDeathLogicEnd( OnPostDeathLogicEnd func )
+{
+	Assert( !file.onPostDeathLogicEndFuncs.contains( func ) )
+	file.onPostDeathLogicEndFuncs.append( func )
+}
+
+void function SetExtendedPostDeathLogic( ExtendedPostDeathLogic func )
+{
+	Assert( (file.extendedDeathLogic == null), format( "Function was already set to: '%s'", string( file.extendedDeathLogic ) ) )
+	file.extendedDeathLogic = func
+}
+
 
 void function PostDeathThread( entity player, var damageInfo )
 {
@@ -671,7 +1127,20 @@ void function PostDeathThread( entity player, var damageInfo )
 
 	if ( !IsPVEMode() )
 	{
-		ShowDeathHintMP( player, damageInfo )
+		bool showDeathHint = true
+                                
+                                                                              
+    
+                         
+    
+        
+
+
+
+		if ( showDeathHint )
+		{
+			ShowDeathHintMP( player, damageInfo )
+		}
 	}
 
 	// put player in deathcam, looking at their own body
@@ -702,19 +1171,19 @@ void function PostDeathThread( entity player, var damageInfo )
 	if( sdic.damageSourceIdentifier == eDamageSourceId.human_execution )
 		player.BecomeRagdoll( <0, 0, 0>, false )
 
+
+	                  
 	float timeBeforeKillreplay = min( GetCurrentPlaylistVarFloat( "killreplay_deathcam_wait", 1.85 ), attackerTimeSinceSpawning )
 	float replayMaxLength = timeBeforeKillreplay + CalculateLengthOfKillReplay( attackerTimeSinceSpawning )
-	
 	//Calculating how long the death menu should stay up
-	float deathScreenWaitTime = player.p.postDeathThreadStartTime + GetDeathCamLength( ) - DEATHCAM_MIN_TIME
-	
+	float deathScreenWaitTime = player.p.postDeathThreadStartTime + GetDeathCamLength( player ) - DEATHCAM_MIN_TIME
 	bool shouldDoReplay = ShouldDoReplay( player, attacker, replayMaxLength, methodOfDeath )
 	if ( shouldDoReplay )
 	{
 		// wait on deathcam for a few seconds before killreplay
 		wait timeBeforeKillreplay - 0.5
 		// should play 0.5 seconds before killreplay
-		//Remote_CallFunction_NonReplay( player, "ServerCallback_PreKillReplaySounds" )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_PreKillReplaySounds" )
 		wait 0.5
 
 		// some gamestate changes can make the replay invalid at this point even though they were valid in ShouldDoReplay which can cause weird race-y behaviour (e.g. R5DEV-551094)
@@ -722,7 +1191,8 @@ void function PostDeathThread( entity player, var damageInfo )
 		if ( IsValid( attacker ) && ShouldDoReplayForGameState() )
 		{
 			printt( "PostDeathThread(): Starting kill replay for ", player )
-			
+			Remote_CallFunction_NonReplay( player, "ServerCallback_ShowDeathScreen" )
+
 			// it might seem weird that we pass in the inflictor's ehandle here rather than just the inflictor
 			// this is done because often (for lots of bullets and projectiles), the inflictor is actually destroyed when it does damage (i.e. on collision)
 			// because of this, the entity is only valid the frame that PostDeathThreadStarts, after our timing waits the inflictor is very invalid and so just passing in the ent here is bad
@@ -749,15 +1219,16 @@ void function PostDeathThread( entity player, var damageInfo )
 						exitReason = ePINKillreplayExitReason.SKIPPED
 					}
 
-					//PIN_KillreplayFinished( player, attacker, Time() - replayBeginTime, replayLength, exitReason, false )
+					PIN_KillreplayFinished( player, attacker, Time() - replayBeginTime, replayLength, exitReason, false )
 
 					player.ClearReplayDelay()
 					player.ClearViewEntity()
-					
+
 					player.Signal( "KillreplayFinished" )
 				} )
 
 				player.EndSignal( "SkipDeathCam" )
+				player.EndSignal( "OnConnectionLost" )
 
 				float replayDelay = CalculateReplayDelay( replayBeginTime, player.p.postDeathThreadStartTime, attackerTimeSinceSpawning )
 
@@ -778,29 +1249,38 @@ void function PostDeathThread( entity player, var damageInfo )
 
 				wait replayLength - replayUsingFutureDataDelay
 			}()
-			
-			Remote_CallFunction_ByRef( player, "ServerCallback_ShowDeathScreen" )
-			
+
 			printt( "PostDeathThread(): Kill replay finished for ", player )
 
-			//if( GamemodeUtility_IsSpectatorEnabled() )
-			//	DecideRespawnPlayer( player, false ) // spawn the player as a spectator as soon as killreplay is over
+			if( GamemodeUtility_IsSpectatorEnabled() )
+				DecideRespawnPlayer( player, false ) // spawn the player as a spectator as soon as killreplay is over
 		}
 		
 		wait deathScreenWaitTime - Time()
 	}
 	else
+                            
 	{
-		Remote_CallFunction_ByRef( player, "ServerCallback_ShowDeathScreen" )
-		waitthread WaitForDeathCamFadeOrAbort( player, GetDeathCamLength( ) - DEATHCAM_MIN_TIME )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_ShowDeathScreen" )
+		waitthread WaitForDeathCamFadeOrAbort( player, GetDeathCamLength( player ) - DEATHCAM_MIN_TIME )
 	}
+
+	bool switchTab = true
+	if ( GetRespawnStatus( player ) == eRespawnStatus.WAITING_FOR_DROPPOD )
+		switchTab = false
+                       
+                                                                                      
+                    
+       
+	if ( switchTab )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_DeathScreenSwitchTab" )
 
 	wait DEATHCAM_MIN_TIME
 
 	player.BecomeRagdoll( <0, 0, 0>, false )
 
-	//SetPlayerSettings( player, SPECTATOR_SETTINGS )
-	//SetRespawnAvailable( player )
+	SetPlayerSettings( player, SPECTATOR_SETTINGS )
+	SetRespawnAvailable( player )
 
 	if ( file.extendedDeathLogic != null )
 		file.extendedDeathLogic( player )
@@ -810,10 +1290,8 @@ void function PostDeathThread( entity player, var damageInfo )
 		func( player )
 	Signal( player, "OnPostDeathLogicEnd" )
 
-	//if( GamemodeUtility_IsSpectatorEnabled() )
-		//DecideRespawnPlayer( player, false )
-	
-	thread ObserverThread( player )
+	if( GamemodeUtility_IsSpectatorEnabled() )
+		DecideRespawnPlayer( player, false )
 }
 
 void function WaitForDeathCamFadeOrAbort( entity player, float deathCamBeforeFadeDuration )
@@ -833,6 +1311,17 @@ void function ClientCallback_SkipDeathCam( entity player )
 }
 
 
+entity function FindViewPoint( entity player )
+{
+	int spotCount = svSpawnGlobals.infoIntermissions.len()
+	if ( spotCount == 0 )
+		return null
+
+	int index = (s_randomViewpointBaseInt % spotCount)
+	return svSpawnGlobals.infoIntermissions[index]
+}
+
+
 void function WaitForDisconnectCompleted( entity player )
 {
 	if ( IsValid( player ) )
@@ -843,7 +1332,7 @@ void function WaitForDisconnectCompleted( entity player )
 
 	UpdateBadRepPresent()
 
-	//CheckForEmptyTeamVictory()
+	CheckForEmptyTeamVictory()
 }
 
 
@@ -867,8 +1356,8 @@ bool function CheckForEmptyTeamVictory()
 	if ( !IsRoundBased() && (GetGameState() >= eGameState.WinnerDetermined) )
 		return false
 
-	//if ( IsRoundBased() && GetGameEndTime() >= 0.0 )
-		//return false
+	if ( IsRoundBased() && GetGameEndTime() >= 0.0 )
+		return false
 
 	if ( !GamePlayingOrSuddenDeath() )
 		return false
@@ -885,7 +1374,7 @@ bool function CheckForEmptyTeamVictory()
 		array<entity> enemies = GetPlayerArrayOfEnemies( player.GetTeam() )
 		if ( enemies.len() == 0 ) //if i have no enemies, then i win
 		{
-			//SetWinner( player.GetTeam(), eWinReason.DEFAULT, "#ENEMY_TEAM_DISCONNECTED_WIN_ANNOUNCEMENT", "#ENEMY_TEAM_DISCONNECTED_LOSS_ANNOUNCEMENT" )
+			SetWinner( player.GetTeam(), eWinReason.DEFAULT, "#ENEMY_TEAM_DISCONNECTED_WIN_ANNOUNCEMENT", "#ENEMY_TEAM_DISCONNECTED_LOSS_ANNOUNCEMENT" )
 			return true
 		}
 	}
@@ -905,8 +1394,8 @@ bool function PlayerShouldObserve( entity player )
 		return true
 	if ( IsPrivateMatchSpectator( player ) )
 		return true
-	//if ( !InitialPlayerSpawnOccurred() )
-		//return true
+	if ( !InitialPlayerSpawnOccurred() )
+		return true
 	if ( IsPlayerEliminated( player ) )
 		return true
 
@@ -930,15 +1419,6 @@ bool function CodeCallback_IsSaveGameSafeToCommit()
 }
 
 
-// entity function FindViewPoint( entity player )
-// {
-	// int spotCount = svSpawnGlobals.infoIntermissions.len()
-	// if ( spotCount == 0 )
-		// return null
-
-	// int index = (s_randomViewpointBaseInt % spotCount)
-	// return svSpawnGlobals.infoIntermissions[index]
-// }
 void function PutPlayerInObserverMode_( entity player, int observerMode, bool doSpecifyOriginAngles, vector specificOrigin, vector specificAngles )
 {
 	// clearing weapons or particles attached here can cause other errors
@@ -949,6 +1429,10 @@ void function PutPlayerInObserverMode_( entity player, int observerMode, bool do
 		player.SetObserverModeStaticPosition( specificOrigin )
 		player.SetObserverModeStaticAngles( specificAngles )
 		player.SetObserverModeStaticFOVOverride( 0.0 )
+	}
+	else
+	{
+		SetPlayerToDefaultViewPoint( player )
 	}
 
 	switch ( observerMode )
@@ -972,7 +1456,6 @@ void function PutPlayerInObserverMode_( entity player, int observerMode, bool do
 			break
 	}
 }
-
 void function PutPlayerInObserverMode( entity player, int observerMode )
 {
 	PutPlayerInObserverMode_( player, observerMode, false, <0,0,0>, <0,0,0> )
@@ -983,37 +1466,184 @@ void function PutPlayerInObserverModeWithOriginAngles( entity player, int observ
 }
 
 
-int function GetLowestUnusedMemberIndexForTeam( int teamIndex )
+void function CodeCallback_PlayerHasBeenConnectedForDuration( entity player, float durationInSeconds )
 {
-	int indexIter             = 0
-	array<entity> teamPlayers = GetPlayerArrayOfTeam( teamIndex )
-	for ( ; ; )
-	{
-		bool found = false
-		foreach ( entity player in teamPlayers )
-		{
-			int thisIdx = player.GetTeamMemberIndex()
-			if ( thisIdx == indexIter )
-				found = true
-		}
+	printf( "%s() - Called for player: %s", FUNC_NAME(), string( player ) )
+}
 
-		if ( !found )
-			return indexIter
-		indexIter++
+
+void function OnPlayerKilled_DeathNotify( entity player, entity attacker, var damageInfo )
+{
+	entity originalAttacker = DamageInfo_GetAttacker( damageInfo )
+	Assert( IsValid( originalAttacker ) || IsValid( attacker ) )
+
+	entity creditedAttacker = attacker
+	if ( IsValid( originalAttacker ) && (originalAttacker.IsPlayer() || originalAttacker.IsNPC()) )
+		creditedAttacker = originalAttacker
+
+	int scriptDamageType = DamageInfo_GetCustomDamageType( damageInfo )
+	int damageSourceId   = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+
+	if ( IsBitFlagSet( scriptDamageType, DF_VORTEX_REFIRE ) )
+		damageSourceId = eDamageSourceId.damagedef_unknownBugIt
+
+	entity attackerEnt       = null
+	float attackerHealth     = 0.0
+	float recentHealthDamage = 0.0
+	if ( creditedAttacker.IsPlayer() || creditedAttacker.IsNPC() )
+	{
+		attackerEnt = creditedAttacker
+		attackerHealth = GetHealthFrac( creditedAttacker )
+		recentHealthDamage = DamageHistory_GetDamageFromEntity( creditedAttacker, player )
 	}
 
-	unreachable
+	if ( attackerEnt != null )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_YouDied", attackerEnt, attackerHealth, damageSourceId, recentHealthDamage )
+	else
+		Remote_CallFunction_NonReplay( player, "ServerCallback_YouDiedNoAttacker", attackerHealth, damageSourceId, recentHealthDamage )
 }
 
-void function AssignTeamIndexToPlayer( entity player )
+
+bool functionref( entity ) s_playerEliminationCheck = null
+void function SetPlayerEliminationCheck( bool functionref( entity player ) func )
 {
-	int newTeamMemberIndex = GetLowestUnusedMemberIndexForTeam( player.GetTeam() )
-	player.SetTeamMemberIndex( newTeamMemberIndex )
-	if ( HaveSquadBasedUI() && player.GetTeam() != TEAM_SPECTATOR )
-		player.SetSquadID( (player.GetTeam() - TEAM_MULTITEAM_FIRST) )
+	s_playerEliminationCheck = func
 }
 
-bool function HaveSquadBasedUI()
+
+bool function ShouldPlayerBeEliminated( entity player )
 {
-	return GetCurrentPlaylistVarBool("has_squad_based_ui", false)
+	#if DEV
+		bool ornull devRespawnOverride = DevRespawnGetPlayerEliminationOverride( player )
+		if ( devRespawnOverride != null )
+		{
+			return expect bool( devRespawnOverride )
+		}
+	#endif
+
+	if ( s_playerEliminationCheck != null )
+	{
+		return s_playerEliminationCheck( player )
+	}
+	return DefaultEliminationCheck( player )
+}
+
+
+bool function DefaultEliminationCheck( entity player )
+{
+	if ( IsPilotEliminationBased() )
+	{
+		if ( player.p.respawnCount != 0 )
+			return true
+
+		if ( GameTime_PlayingTime() >= ELIM_FIRST_SPAWN_GRACE_PERIOD )
+			return true
+	}
+
+	int currentGameState = GetGameState()
+	if ( currentGameState > eGameState.Resolution )
+		return true
+
+	if ( currentGameState == eGameState.Resolution )
+	{
+		float resolutionRespawnTimeLimit = GetGameEndTime() + GAME_RESOLUTION_PLAYER_RESPAWN_LEEWAY
+		if ( Time() > resolutionRespawnTimeLimit )
+		{
+			if ( IsAlive( player ) )
+				return true
+
+			if ( player.p.postDeathThreadStartTime == 0 )
+				//Player is not alive and hasn't died yet, i.e. is just connecting. Set him as eliminated in this case
+				return true
+
+			if ( player.p.postDeathThreadStartTime >= resolutionRespawnTimeLimit )
+				// allow players who died before the game ended and may still be watching kill replay a chance to respawn
+				return true
+
+			return false
+		}
+	}
+
+	return false
+}
+
+
+bool function Player_WouldAbandonMatch( entity player )
+{
+	if ( IsPrivateMatch() )
+		return false
+
+	if ( svGlobal.gameModeAbandonPenaltyApplies == null )
+		return false
+
+	if ( !svGlobal.gameModeAbandonPenaltyApplies( player ) )
+		return false
+
+	return true
+}
+
+
+bool function Player_DidAbandonLastMatch( entity player )
+{
+                       
+		return MatchBehaviorPlayer_DidAbandonLastMatch( player )
+      
+              
+       
+}
+
+float function CodeCallback_GetNPCChanceToHit( entity npc, entity target )
+{
+	Assert( false, "Defunct." )
+	return 1.0
+}
+
+
+void function Stryder_UpdatePlayerInMatchState( entity player )
+{
+	player.p.stryderArrayData[ePlayerStryderCharDataArraySlots.PLAYER_IN_MATCH] = IsLobby() ? 0 : 1
+}
+
+
+void function MP_OnClientConnected( entity player )
+{
+	// Report Stryder
+	QueueUpdateStryderWithPlayersStryderCharDataArray( player )
+}
+
+void function CodeCallback_OnPlayerForfeit( entity player )
+{
+	// Happens when the player leaves the match, either intentionally via player.Forfeit() or reconnect times out
+	if ( player.GetTeam() == TEAM_SPECTATOR )
+	{
+		printt( FUNC_NAME(), "Skip for Spectator", player )
+		return
+	}
+
+	printt( FUNC_NAME(), player )
+
+	// Prevent players reconnecting to the game and exploiting game state
+	//ConnectionTempBanPlayer( player )
+
+	if ( !player.hasConnected )
+		return
+
+	                      
+		if ( MatchBehaviorPlayer_HasStarted( player ) && !MatchBehaviorPlayer_HasEnded( player ) )
+			MatchBehaviorPlayer_Ended( player, false )
+       
+
+	if ( player.p.hasMatchParticipationStarted && !player.p.hasMatchParticipationEnded )
+		OnPlayerMatchParticipationEnded( player, false )
+
+	if ( player.IsConnectionActive() )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_ResetReconnectParametersAsync" )
+
+	player.SetPersistentVar( "reconnectTime", 0 )
+	player.SetPersistentVar( "reconnectParams", "" )
+}
+
+void function SetIntroCameraSettings( IntroCameraSettings viewSettings )
+{
+	file.introCamSettings = viewSettings
 }

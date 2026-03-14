@@ -563,7 +563,7 @@ global struct ServerPlayerStruct
 	bool isInLobby = false
 	bool grxInitialized = false
 	bool isGameStart = false
-	
+	bool   partyMember
 	bool canChangeGadgets
 	int selectedGadget1 = 0
 	int selectedGadget2 = 1
@@ -634,7 +634,6 @@ global struct ServerPlayerStruct
 	array<entity>				scannedEnemies
 	bool						hasTickedEquipItemStat = false
 	table<int, array<entity> >	doomedEnemies
-	bool						hasMatchParticipationEnded = false
 	bool						hasTickedThanksStatThisGame = false
 	bool						updatedPersistenceOnDisconnect = false
 	bool						DEV_hasDevRespawned = false
@@ -841,6 +840,7 @@ global struct ServerPlayerStruct
 	int revivesGiven
 
 	table<int, float> attackedTeam
+	int savedSecondsAlive = 0
 
 	int killedEnemy
 	float lastDownedEnemyTime
@@ -1171,6 +1171,8 @@ global struct ServerPlayerStruct
 	bool   survivalLandedOnGround
 	entity killerToSpectate
 	bool   hasSpectatedKillerOnce
+	bool  hasMatchParticipationStarted = false
+	bool  hasMatchParticipationEnded = false
 
 	// Player was jumpmaster at any point in the current game.
 	bool wasJumpmaster = false

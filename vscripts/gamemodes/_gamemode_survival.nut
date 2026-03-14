@@ -58,6 +58,8 @@ global function Survival_GetPlayerData
 global function Survival_OnClientConnected
 
 global function Survival_GetPlaneJumpPointOverMap
+global function InformPlayerSquadEliminated
+global function Survival_IsPlayerSquadEliminated
 
 global function CodeCallback_KillDamagePlayerOrNPC
 global function Survival_AddCallback_OnPlayerKillDamage
@@ -146,6 +148,7 @@ void function GamemodeSurvival_Init()
 	else
 		SetConVarBool("sv_forceChatToTeamOnly", true)
 
+	Spawn_SetSpawnpointRatingFunc( RateSpawnpoints_Generic )
 	SurvivalFreefall_Init()
 	Sh_ArenaDeathField_Init()
 	SurvivalShip_Init()
@@ -1014,7 +1017,7 @@ void function Sequence_Playing()
 		Survival_ClearPrematchSettings( player )
 
 		if( !IsAlive( player ) )
-			DecideRespawnPlayer_Retail( player )
+			DecideRespawnPlayer( player, false )
 	}
 
 	// Set settings for the drop-in
@@ -1716,13 +1719,13 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	{
 		thread function() : ( victim )
 		{
-			wait GetDeathCamLength()
+			wait GetDeathCamLength(victim)
 
 			if( !IsValid(victim) )
 				return
 
 			//SetRandomStagingPositionForPlayer( victim )
-			DecideRespawnPlayer( victim )
+			DecideRespawnPlayer( victim, false )
 		}()
 
 		return
@@ -1808,7 +1811,7 @@ void function OnClientConnected( entity player )
 	if ( IsFiringRangeGameMode() )
 	{
 		SetRandomStagingPositionForPlayer( player )
-		DecideRespawnPlayer( player )
+		DecideRespawnPlayer( player, false )
 		GiveBasicSurvivalItems( player )
 		return
 	}
@@ -1946,6 +1949,65 @@ void function OnPlayerPressedUseLong( entity player )
 {
 	thread TEMP_PlayerZiplineTryUse( player, IN_USE_LONG, true )
 }
+
+bool function Survival_IsPlayerSquadEliminated( entity player )
+{
+	int team = player.GetTeam()
+
+
+
+// TODO: Is this causing the post-disable lockup bug?
+//%if HAS_FREERESPAWNS
+//	if( FreeRespawns_Feature_Exists() && FreeRespawns_IsPlayerRespawnDisabled( player )  )
+//		return true
+//%endif // HAS_FREERESPAWNS
+
+
+
+
+
+
+
+
+
+	array <entity> teamArray = GetPlayerArrayOfTeam( team )
+
+
+
+
+
+
+
+
+
+
+
+
+	if ( teamArray.len() == 0 )
+		return true
+
+	if ( GetPlayerArrayOfTeam_Alive( player.GetTeam() ).len() == 0 )
+		return true
+
+	return false
+}
+
+void function InformPlayerSquadEliminated( entity victim )
+{
+	victim.EndSignal( "OnDestroy" )
+	victim.EndSignal( "OnRespawned" )
+
+	if ( GetCurrentPlaylistVarBool( "play_match_end_music_on_squad_eliminated", true ) && ( GetGameState() < eGameState.WinnerDetermined ))
+	{
+		// Can't use PlayMusicToPlayer(), because on the client, the music is played on the viewPlayer, so you to hear the wrong music if you are specating.
+		StopAllMusicOnPlayer( victim )
+		Remote_CallFunction_NonReplay( victim, "ServerCallback_PlayMatchEndMusic" )
+	}
+
+	Remote_CallFunction_NonReplay( victim, "ServerCallback_SquadEliminated", victim.GetTeam() )
+	return
+}
+
 
 void function TEMP_PlayerZiplineTryUse( entity player, int heldCommand, bool groundCheck = false )
 {

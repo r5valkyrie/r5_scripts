@@ -63,8 +63,10 @@ global struct SvGlobals
 	array<pilotEliminationDialogueCallbackType> pilotEliminationDialogueCallbacks
 	table<string, array<bool functionref( entity player, entity healthpack)> > onTouchHealthKitCallbacks
 	array<void functionref( entity )> onClientConnectedCallbacks
+	array<void functionref( entity )> onObserverConnectedCallbacks
 	array<void functionref( entity )> onClientReloadConnectedCallbacks
 	array<void functionref( entity )> onPlayerRespawnedCallbacks
+	array<void functionref( entity )> onPlayerPostRespawnedCallbacks
 	array<void functionref( entity player, entity npc_titan )> onPilotBecomesTitanCallbacks
 	array<void functionref( entity player, entity npc_titan )> onTitanBecomesPilotCallbacks
 	array<void functionref( entity, entity, entity) > soulTransferFuncs
@@ -107,6 +109,9 @@ global struct SvGlobals
 	array<void functionref( entity victim, entity attacker )> onTitanHealthSegmentLostCallbacks
 	array<void functionref( entity player )> onClientConnectingCallbacks
 	array<void functionref( entity player )> onClientDisconnectedCallbacks
+	array<void functionref( entity player )> onPersistenceUpdateCompletedCallbacks
+	array<void functionref( entity player )> onClientConnectionLostCallbacks
+	array<void functionref( entity player )> onClientConnectionRestoredCallbacks
 	array<void functionref( entity attacker, entity victim )> onPlayerAssistCallbacks
 
 	array<void functionref( entity player )> onPlayerDropsScriptedItemsCallbacks
@@ -119,7 +124,8 @@ global struct SvGlobals
 	table<string, bool functionref( entity player, array<string>args )> clientCommandCallbacks
 	table<string, array< void functionref( entity player, array<string>args ) > > clientCommandCallbacksVoid
 	array<void functionref()>[ eGameState._count_ ] gameStateEnterCallbacks
-
+	array<void functionref()>[ eGameState._count_ ] gameStateEnteredCallbacks
+	array<void functionref()> onSetPreGameStartTimeCallbacks
 	bool allowPointsOverLimit = false
 
 	bool bubbleShieldEnabled = true

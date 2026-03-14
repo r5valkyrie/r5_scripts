@@ -48,6 +48,7 @@ global function Scoreboard_SetVisible
 global function Scoreboard_IsVisible
 
 struct {
+	table<string, GamemodeSettings> gameModeDefs
 	bool hasFocus = false
 	entity selectedPlayer
 	entity prevPlayer
@@ -485,7 +486,6 @@ void function ShowScoreboardMP()
 	teamsSortedByScore.extend( enemyTeams )
 
 	int winningTeam
-	IntFromEntityCompare compareFunc = GetScoreboardCompareFunc()
 
 	file.scoreboard.Show()
 
@@ -509,72 +509,6 @@ void function ShowScoreboardMP()
 		else
 			Hud_SetVisible( file.hintCustom, false )
 
-		if ( UseOnlyMyTeamScoreboard() )
-		{
-			teamPlayers[myTeam] = GetSortedPlayers( compareFunc, myTeam )
-
-			winningTeam = myTeam
-
-			if ( teamPlayers[myTeam].len() > 0 )
-				RuiSetBool( Hud_GetRui( file.header.scoreHeader ), "winningTeamIsFriendly", teamPlayers[myTeam][0] == GetLocalClientPlayer() )
-		}
-		else if ( UseSingleTeamScoreboard() )
-		{
-			teamPlayers[myTeam] = GetSortedPlayers_FFA( compareFunc )
-			foreach ( enemyTeam in enemyTeams )
-			{
-				teamPlayers[enemyTeam] = []
-			}
-
-			winningTeam = myTeam
-
-			if ( teamPlayers[myTeam].len() > 0 )
-				RuiSetBool( Hud_GetRui( file.header.scoreHeader ), "winningTeamIsFriendly", teamPlayers[myTeam][ 0 ] == GetLocalClientPlayer() )
-		}
-		else
-		{
-			teamPlayers[myTeam] = GetSortedPlayers( compareFunc, myTeam )
-			foreach ( enemyTeam in enemyTeams )
-			{
-				teamPlayers[enemyTeam] = GetSortedPlayers( compareFunc, enemyTeam )
-			}
-
-			teamsSortedByScore.sort( CompareTeamScore )
-			Assert( teamsSortedByScore.len() > 0 )
-			winningTeam = teamsSortedByScore[ 0 ]
-			if ( teamsSortedByScore[ 0 ] == myTeam )
-			{
-				RuiSetBool( Hud_GetRui( file.header.scoreHeader ), "winningTeamIsFriendly", true )
-			}
-			else
-			{
-				RuiSetBool( Hud_GetRui( file.header.scoreHeader ), "winningTeamIsFriendly", false )
-			}
-		}
-
-		if ( UseOnlyMyTeamScoreboard() || UseSingleTeamScoreboard() )
-		{
-			file.header.gametypeAndMap.SetY( scoreboardYOffset )
-			if( winningTeam in file.teamElems )
-				file.teamElems[winningTeam].logo.SetY( winningTeamYOffset )
-			file.footer.SetY( footerYOffset )
-		}
-		else
-		{
-			RuiSetInt( Hud_GetRui( file.teamElems[ winningTeam ].score ), "score", GameRules_GetTeamScore( winningTeam ) )
-			file.teamElems[ winningTeam ].logo.SetY( winningTeamYOffset )
-
-			for ( int i = 1; i < teamsSortedByScore.len(); ++i )
-			{
-				int losingTeam = teamsSortedByScore[ i ]
-				RuiSetInt( Hud_GetRui( file.teamElems[losingTeam].score ), "score", GameRules_GetTeamScore( losingTeam ) )
-				int calculatedOffSet = winningTeamYOffset + ( i * teamHeightMultiplied ) + losingTeamYOffset
-				file.teamElems[losingTeam].logo.SetY(  calculatedOffSet  )
-			}
-
-			file.header.gametypeAndMap.SetY( scoreboardYOffset )
-			file.footer.SetY( footerYOffset )
-		}
 
 		array<entity> allPlayers = []
 		int selectedPlayerIndex = 0
@@ -733,105 +667,12 @@ void function ShowScoreboardMP()
 	}
 }
 
+
+
 //Todo: create standalone version for each mode and init for the mode.
 void function UpdateScoreboardForGamemode( entity player, var rowRui, var scoreHeaderRui )
 {
-	array<string> headers = GameMode_GetScoreboardColumnTitles( GAMETYPE )
-	array<int> playerGameStats = GameMode_GetScoreboardColumnScoreTypes( GAMETYPE )
-	array<int> numDigits = GameMode_GetScoreboardColumnNumDigits( GAMETYPE )
 
-	Assert( headers.len() > 0 && headers.len() == playerGameStats.len() && headers.len() == numDigits.len() )
-
-	//int scoreboardWidth = 570
-	int playerScore1 = 0
-	int playerScore2 = 0
-	int playerScore3 = 0
-	int playerScore4 = 0
-	int playerScore1NumDigits = 2
-	int playerScore2NumDigits = 2
-	int playerScore3NumDigits = 2
-	int playerScore4NumDigits = 2
-	string playerScore1Header
-	string playerScore2Header
-	string playerScore3Header
-	string playerScore4Header
-
-	int numScoreColumns = headers.len()
-
-	switch ( numScoreColumns )
-	{
-		case 4:
-			playerScore4Header = headers[ 3 ]
-			if (IsValid( player ))
-			{
-				playerScore4 = player.GetPlayerNetInt( "latency" )
-			}
-			playerScore4NumDigits = numDigits[ 3 ]
-
-		case 3:
-			playerScore3Header = headers[ 2 ]
-			if (IsValid( player ))
-			{
-				if( Playlist() == ePlaylists.fs_dm_oddball || Playlist() == ePlaylists.fs_haloMod_oddball )
-					playerScore3 = player.GetPlayerNetInt( "oddball_ballHeldTime" )
-				else if( Gamemode() == eGamemodes.fs_snd )
-					playerScore3 = player.GetPlayerNetInt( "defused" )
-				else if( Playlist() == ePlaylists.fs_scenarios )
-					playerScore3 = player.GetPlayerNetInt( "FS_Scenarios_PlayerScore" )
-				else
-					playerScore3 = player.GetPlayerNetInt( "damage" )
-			}
-			playerScore3NumDigits = numDigits[ 2 ]
-
-		case 2:
-			playerScore2Header = headers[ 1 ]
-			if (IsValid( player ))
-			{
-				if( Gamemode() == eGamemodes.CUSTOM_CTF )
-					playerScore2 = player.GetPlayerNetInt( "returns" )
-				else if( Playlist() == ePlaylists.fs_lgduels_1v1 )
-					playerScore2 = player.GetPlayerNetInt( "accuracy" )
-				else if( Gamemode() == eGamemodes.fs_snd )
-					playerScore2 = player.GetPlayerNetInt( "planted" )
-				else if( Playlist() == ePlaylists.fs_scenarios )
-					playerScore2 = player.GetPlayerNetInt( "FS_Scenarios_MatchesWins")
-				else
-					playerScore2 = player.GetPlayerNetInt( "deaths" )
-			}
-			playerScore2NumDigits = numDigits[ 1 ]
-
-		case 1:
-			playerScore1Header = headers[ 0 ]
-			if (IsValid( player ))
-			{
-				if( Gamemode() == eGamemodes.CUSTOM_CTF )
-					playerScore1 = player.GetPlayerNetInt( "captures" )
-				else if( Playlist() == ePlaylists.fs_scenarios )
-					playerScore1 = player.GetPlayerNetInt( "kills" ) //?
-				else
-					playerScore1 = player.GetPlayerNetInt( "kills" )
-			}
-			playerScore1NumDigits = numDigits[ 0 ]
-	}
-
-	RuiSetInt( rowRui, "numScoreColumns", numScoreColumns )
-	RuiSetInt( rowRui, "playerScore1", playerScore1 )
-	RuiSetInt( rowRui, "playerScore2", playerScore2 )
-	RuiSetInt( rowRui, "playerScore3", playerScore3 )
-	RuiSetInt( rowRui, "playerScore4", playerScore4 )
-	RuiSetInt( rowRui, "playerScore1NumDigits", playerScore1NumDigits )
-	RuiSetInt( rowRui, "playerScore2NumDigits", playerScore2NumDigits )
-	RuiSetInt( rowRui, "playerScore3NumDigits", playerScore3NumDigits )
-	RuiSetInt( rowRui, "playerScore4NumDigits", playerScore4NumDigits )
-	RuiSetInt( scoreHeaderRui, "numScoreColumns", numScoreColumns )
-	RuiSetString( scoreHeaderRui, "playerScore1Header", playerScore1Header )
-	RuiSetString( scoreHeaderRui, "playerScore2Header", playerScore2Header )
-	RuiSetString( scoreHeaderRui, "playerScore3Header", playerScore3Header )
-	RuiSetString( scoreHeaderRui, "playerScore4Header", playerScore4Header )
-	RuiSetInt( scoreHeaderRui, "playerScore1NumDigits", playerScore1NumDigits )
-	RuiSetInt( scoreHeaderRui, "playerScore2NumDigits", playerScore2NumDigits )
-	RuiSetInt( scoreHeaderRui, "playerScore3NumDigits", playerScore3NumDigits )
-	RuiSetInt( scoreHeaderRui, "playerScore4NumDigits", playerScore4NumDigits )
 }
 
 void function HideScoreboardMP()

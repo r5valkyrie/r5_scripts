@@ -1238,7 +1238,7 @@ void function RespawnBeacon_PutPlayerInDropship( entity player, entity ship, int
 	player.StopObserverMode()
 	ClearPlayerEliminated( player )
 	player.p.respawnPodLanded = true
-	DecideRespawnPlayer_Retail( player )
+	DecideRespawnPlayer( player, false )
 	ResetPlayerInventory( player )
 	player.SetOrigin( ship.GetOrigin() )
 

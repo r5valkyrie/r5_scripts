@@ -264,7 +264,7 @@ void function Training_OnPlayerRespawned( entity player )
 	RemoveStagingAreaEntsForRealm( GetPlayerStagingSquadRealm( player ) )
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 	data.gun_range_enabled = false
-	DecideRespawnPlayer( player )
+	DecideRespawnPlayer( player, false )
 	thread PlayerStartsTraining( player )
 }
 

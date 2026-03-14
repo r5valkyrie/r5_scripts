@@ -45,9 +45,6 @@ global function SV_CL_Onboarding_Init
 	global function TakeLoadoutRelatedWeapons
 	global function GiveLoadoutRelatedWeapons
 	global function GiveLoadoutRelatedWeapons_HaloMod
-	
-	global function DecideRespawnPlayer
-	global function DecideRespawnPlayer_Retail
 
 	global function PlayerStopSpectating
 
@@ -55,9 +52,6 @@ global function SV_CL_Onboarding_Init
 	global function Flowstate_AssignUniqueCharacterForPlayer
 	global function Flowstate_SetAssignedCustomModelToPlayer
 
-	global function SetCallback_ObserverThreadOverride
-
-	global function SetPlayerSettings
 	global function Flowstate_ApplyModifiedMovementToPlayer
 	
 	#if DEVELOPER 
@@ -858,23 +852,24 @@ void function SV_CL_Onboarding_Init()
 		SetAutoReloadState( false ) //(mk): let native know
 		RegisterSignal( "Flowstate_RestartLv4MagazinesThread" )
 		FlagInit( "MinPlayersReached", false )
-		
+
 		RespawnBehavior_Init()
 		AddCallback_OnPlayerKilled( OnPlayerKilled )
 		AddCallback_OnClientConnected( OnClientConnected )
 		AddCallback_OnClientConnecting( OnClientConnectionStarted )
-		
+
 		AddCallback_OnClientDisconnected( OnClientDisconnected )
 
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnCharacterClassChanged )
 		foreach ( character in GetAllCharacters() )
 			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_CharacterSkin( character ), OnCharacterSkinChanged )
 
-		SetGameState( eGameState.WaitingForPlayers )
+		AddCallback_EntitiesDidLoad( void function() {
+			SetGameState( eGameState.WaitingForPlayers )
+			if ( OnboardingEnabled() )
+				thread Sequence_WaitingForPlayers()
+		} )
 
-		if ( OnboardingEnabled() )
-			thread Sequence_WaitingForPlayers()
-		
 		if( Gamemode() == eGamemodes.SURVIVAL )
 			AddCallback_GameStateEnter( eGameState.Postmatch, void function() : (){ SetAutoReloadState( true ) } ) //(mk): check for native reload
 	#endif
@@ -1352,149 +1347,6 @@ void function RespawnBehavior_Init()
 	script_bRespawnInitComplete = true
 }
 
-void function DecideRespawnPlayer( entity player, bool giveLoadoutWeapons = true )
-{
-	#if DEVELOPER
-		// Warning( "DecideRespawnPlayer: " + string( player ) )
-		// DumpStack()
-		mAssert( script_bRespawnInitComplete, "RespawnBehavior_Init() --- wasn't ready in DecideRespawnPlayer()" )
-	#endif
-	
-	if ( !IsValid( player ) ) 
-		return
-	
-	if ( IsAlive( player ) )
-	 	TakeLoadoutRelatedWeapons( player )
-		
-	//(mk): This calls the definitive native code to respawn player, which will first fire "OnRespawnPlayer", and then fire signal "OnSpawned" in CodeCallback_OnPlayerRespawned
-	DoRespawnPlayer( player, null )
-
-	player.p.lastRespawnTime = Time()
-	
-	ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-	asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
-	player.SetPlayerSettingsWithMods( characterSetFile, enabledMods )
-
-	// Already executed in CodeCallback_OnPlayerRespawned
-	// Remote_CallFunction_NonReplay( player, "ServerCallback_YouRespawned" )
-
-	PlayerStopSpectating( player )
-
-	// ItemFlavor playerCharacterSkin = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterSkin( playerCharacter ) )
-	// CharacterSkin_Apply( player, playerCharacterSkin )
-	player.AmmoPool_SetCapacity( 65535 )
-
-	if ( giveLoadoutWeapons || Gamemode() == eGamemodes.map_editor_deprecated )
-		GiveBasicSurvivalItems( player )
-
-	Survival_SetInventoryEnabled( player, giveLoadoutWeapons )
-
-	player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.NONE )
-
-	player.SetPlayerNetBool( "pingEnabled", true )
-	player.SetHealth( player.GetMaxHealth() )
-
-	UpdatePlayerCounts()
-	
-	if( Gamemode() == eGamemodes.map_editor_deprecated ) //todo move to mode specific callback
-		thread (void function() : ( player )
-		{
-			if(IsValid(player.GetOffhandWeapon( OFFHAND_TACTICAL )))
-			{
-				player.TakeOffhandWeapon( OFFHAND_TACTICAL )
-				player.GiveOffhandWeapon( "mp_weapon_editor", OFFHAND_TACTICAL, [] )
-				player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, "mp_weapon_editor" )
-			}
-			if(IsValid(player.GetOffhandWeapon( OFFHAND_ULTIMATE )))
-				player.TakeOffhandWeapon( OFFHAND_ULTIMATE )
-			
-			wait 1
-			Message(player, "PROP DYNAMIC MAP EDITOR", "Made by Sal, Fireproof, Pebbers & JustANormalUser. Misc fixes by CaféFPS.", 8)
-		})()
-		
-	if( player.IsThirdPersonShoulderModeOn() )
-		player.SetThirdPersonShoulderModeOn() // If you respawn in third person, it will automatically revert to first person, so turn it on again
-
-	#if DEVELOPER
-	SetSkydiveEmotesForAllCharacters( player )
-	#endif
-
-	//Set highlight to mantain retail behavior
-	if( script_bHighlight )
-	{
-		Highlight_SetFriendlyHighlight( player, "sp_friendly_hero" )
-	}
-	
-	Flowstate_ApplyModifiedMovementToPlayer( player ) //(mk)todo: check, shouldn't need to reapply every spawn.
-
-	if( Playlist() == ePlaylists.fs_scenarios )
-		return
-
-	//if( player.p.assignedCustomModel != -1 )//Custom models cause engine issues, disabling for now til models are updated. - Kral
-	{
-		//Flowstate_SetAssignedCustomModelToPlayer( player, player.p.assignedCustomModel )
-	}
-	//(mk): commented, already signaled in code callback after DoRespawnPlayer fires
-	
-	// if( Gamemode() != eGamemodes.SURVIVAL && Gamemode() != eGamemodes.WINTEREXPRESS )
-		// player.Signal("OnRespawned")		
-}
-
-// clean up and move to main when completely debugged. Cafe
-bool function DecideRespawnPlayer_Retail( entity player, bool allowSpawnAsObserver = false )
-{
-	// #if DEVELOPER
-	// DumpStack()
-	// #endif
-
-	Assert( IsValid( player ), player + " is invalid!!" )
-	Assert( !IsAlive( player ), player + " is already alive" )
-
-	if ( !player.hasConnected || player.GetTeam() == TEAM_SPECTATOR )
-	{
-		printf( "%s() - player.hasConnected was false: %s", FUNC_NAME(), string( player ) )
-		return false
-	}
-
-	if ( IsPVEMode() && (player.p.respawnCount == 0) )
-		return false
-
-	if ( (GetGameState() <= eGameState.WaitingForPlayers) && !PreGame_GetWaitingForPlayersSpawningEnabled() )
-	{
-		printf( "%s() - No spawning when waiting for players: %s", FUNC_NAME(), string( player ) )
-		return false
-	}
-
-	if ( PlayerShouldObserve( player ) )
-	{
-		printf( "%s() - PlayerShouldObserve() was true: %s", FUNC_NAME(), string( player ) )
-		if ( true ) //GamemodeUtility_IsSpectatorEnabled() ) review. Cafe
-		{
-			if ( IsPlayerEliminated( player ) && (GetGameState() == eGameState.Playing) && IsRoundBased() )
-				SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 1.0, 6.0, 1.0 )
-
-			#if SERVER
-				if ( file.ObserverThreadOverrideCallback != null )
-					file.ObserverThreadOverrideCallback(player)
-				else
-					thread ObserverThread( player )
-			#endif
-		}
-
-		return false
-	}
-
-	// if ( allowSpawnAsObserver )
-		// player.AllowSpawnAsObserverOnce()
-
-	printf( "%s() - Attempting to spawn: %s", FUNC_NAME(), string( player ) )
-	bool didSpawn = RespawnTitanPilot( player )
-	printf( "%s() - Spawn %s: %s", FUNC_NAME(), (didSpawn ? "success" : "failed"), string( player ) )
-
-	return didSpawn
-}
-
-
 bool function RespawnTitanPilot( entity player )
 {
 	Assert( PlayerCanSpawn( player ), player + " cant spawn now" )
@@ -1525,11 +1377,6 @@ bool function RespawnTitanPilot( entity player )
 	}
 	
 	return true
-}
-
-void function SetCallback_ObserverThreadOverride( void functionref( entity player ) func  )
-{
-	file.ObserverThreadOverrideCallback = func
 }
 
 void function Flowstate_SetAssignedCustomModelToPlayer( entity player, int index )
@@ -1669,7 +1516,9 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 	victim.SetPlayerGameStat( PGS_DEATHS, victim.GetPlayerGameStat( PGS_DEATHS ) + 1 )
 	if( Gamemode() != eGamemodes.CUSTOM_CTF && Gamemode() != eGamemodes.fs_snd )
+	{
 		__IncrementPlayerNetInt( victim, "deaths" )
+	}
 
 	victim.ClearParent()	
 	victim.FreezeControlsOnServer()
@@ -1769,7 +1618,7 @@ void function OnClientConnected( entity player )
 		player.p.survivalLandedOnGround = true
 		player.p.respawnPodLanded = true
 		
-		DecideRespawnPlayer( player )
+		DecideRespawnPlayer( player, false )
 	} 
 	else if( Gamemode() == eGamemodes.SURVIVAL && ( !IsDevGamemode() && !GetCurrentPlaylistVarBool( "is_practice_map", false ) && Playlist() != ePlaylists.fs_movementrecorder ) )
 	{
@@ -1822,7 +1671,7 @@ void function OnClientConnected( entity player )
 				bool __spectateLateJoin = GetCurrentPlaylistVarBool( "midgame_join_spectate", false )
 				if ( !__spectateLateJoin )
 				{
-					DecideRespawnPlayer_Retail( player )
+					DecideRespawnPlayer( player, false )
 					GiveBasicSurvivalItems( player )
 					return
 				}
@@ -1843,13 +1692,13 @@ void function OnClientConnected( entity player )
 			} 
 			else
 			{
-				DecideRespawnPlayer_Retail( player )
+				DecideRespawnPlayer( player, false )
 				GiveBasicSurvivalItems( player ) //If player is put in skydive mode and attached to its team mid-flight, we need to give them basic survival items here otherwise it will spawn without melee and basic items. Cafe
 			}
 		} 
 		else
 		{
-			DecideRespawnPlayer_Retail( player )
+			DecideRespawnPlayer( player, false )
 		}
 	}
 	else if ( Gamemode() == eGamemodes.ARENAS )
@@ -1857,7 +1706,7 @@ void function OnClientConnected( entity player )
 		replaceOrigin = true
 		player.p.survivalLandedOnGround = true
 		player.p.respawnPodLanded = true
-		DecideRespawnPlayer( player )
+		DecideRespawnPlayer( player, false )
 
 		// During WaitingForPlayers, park the player safely above the map center.
 		// Kill triggers and out-of-bounds volumes don't exist at high altitude.
@@ -2236,15 +2085,6 @@ void function OnboardingPlaylistSettings_Init()
 }
 
 #if SERVER
-void function SetPlayerSettings( entity player, table settings )
-{
-	foreach( k,v in settings )
-	{
-		//Thanks amos for this implementation <3. Cafe
-		player.SetClassVar( expect string( k ), expect float( v ).tostring() )
-	}
-}
-
 void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool resetOnly = false )
 {
 	if( file.flowstate_modified_movement == eMovementType.DISABLED )
@@ -2258,7 +2098,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 		case eMovementType.TRUE_TF2_SETTINGS: //1
 		{
 			player.SetMoveSpeedScale( 0.87 )		
-			SetPlayerSettings( player, TRUE_TF2_SETTINGS )
+			//SetPlayerSettings( player, TRUE_TF2_SETTINGS )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to Titanfall 2 " + player )
@@ -2269,7 +2109,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 		{
 			player.SetMoveSpeedScale( 0.87 )
 			player.DisableMantle()
-			SetPlayerSettings( player, TRUE_TF2_SETTINGS_HIGH_AIRACCEL )
+			//SetPlayerSettings( player, TRUE_TF2_SETTINGS_HIGH_AIRACCEL )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to Titanfall 2 High Air Accel " + player )
@@ -2279,7 +2119,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 		case eMovementType.TRUE_TF2_SETTINGS_LOW_GRAV: //3
 		{
 			player.SetMoveSpeedScale( 0.87 )	
-			SetPlayerSettings( player, TRUE_TF2_SETTINGS_LOW_GRAV )
+			//SetPlayerSettings( player, TRUE_TF2_SETTINGS_LOW_GRAV )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to Titanfall 2 Low Gravity " + player )
@@ -2292,7 +2132,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			player.SetMoveSpeedScale( 1.38854974986041364747 )
 			player.DisableMantle()
 			player.SetGroundFrictionScale( 1.03125 )
-			SetPlayerSettings( player, CSGO_MOVEMENT )
+			//SetPlayerSettings( player, CSGO_MOVEMENT )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to CSGO " + player )
@@ -2305,7 +2145,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			player.SetMoveSpeedScale( 1.38854974986041364747 )
 			player.DisableMantle()
 			player.SetGroundFrictionScale( 1.03125 )
-			SetPlayerSettings( player, CSGO_MOVEMENT_HIGH_AIRACCEL )
+			//SetPlayerSettings( player, CSGO_MOVEMENT_HIGH_AIRACCEL )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to CSGO High Air Accel " + player )
@@ -2314,7 +2154,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 		}
 		case eMovementType.SURF_SETTINGS: //6
 		{
-			SetPlayerSettings( player, SURF_SETTINGS )
+			//SetPlayerSettings( player, SURF_SETTINGS )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to (Apex) Surf " + player )
@@ -2326,7 +2166,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.1 )
 			player.SetMoveSpeedScale( 1.77840093365762835808 )
 			player.DisableMantle()	
-			SetPlayerSettings( player, HL1_MOVEMENT )
+			//SetPlayerSettings( player, HL1_MOVEMENT )
 			
 			#if DEVELOPER
 				printw( "Player movement changed to Half-Life 1 " + player )
@@ -2338,7 +2178,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.1 )
 			player.SetMoveSpeedScale( 1.1 )
 			player.DisableMantle()
-			SetPlayerSettings( player, HALO_MOVEMENT )
+			//SetPlayerSettings( player, HALO_MOVEMENT )
 
 			#if DEVELOPER
 				printw( "Player movement changed to Halo " + player )
@@ -2347,7 +2187,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 		}
 		case eMovementType.SUPERGLIDE_BOOST_SETTINGS: //9
 		{
-			SetPlayerSettings( player, SUPERGLIDE_BOOST_SETTINGS )
+			//SetPlayerSettings( player, SUPERGLIDE_BOOST_SETTINGS )
 			
 			#if DEVELOPER
 				printw( "Superglide modified for all players " + player )
@@ -2356,7 +2196,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 		}
 		case eMovementType.INSTAGIB_PLAYER_SETTINGS: //10
 		{
-			SetPlayerSettings( player, INSTAGIB_PLAYER_SETTINGS )
+			//SetPlayerSettings( player, INSTAGIB_PLAYER_SETTINGS )
 			//Disable players collision
 			player.kv.contents = CONTENTS_BULLETCLIP | CONTENTS_MONSTERCLIP | CONTENTS_HITBOX | CONTENTS_BLOCKLOS | CONTENTS_PHYSICSCLIP; //CONTENTS_PLAYERCLIP
 			#if DEVELOPER
@@ -2366,7 +2206,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 		}
 		case eMovementType.HAVEFUN_PLAYER_SETTINGS: //11
 		{
-			SetPlayerSettings( player, HAVEFUN_PLAYER_SETTINGS )
+			//SetPlayerSettings( player, HAVEFUN_PLAYER_SETTINGS )
 			
 			#if DEVELOPER
 				printt( "Player movement changed to Have Fun Settings " + player )
@@ -2375,7 +2215,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 		}
 		case eMovementType.HALO_MOVEMENT_NEW: //HALO BETTER
 		{
-			SetPlayerSettings( player, HALO_MOVEMENT_NEW )
+			//SetPlayerSettings( player, HALO_MOVEMENT_NEW )
 			player.SetMoveSpeedScale( 1.1 )
 			player.DisableMantle()
 			
@@ -2428,7 +2268,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			{
 				ItemFlavor playerCharacter = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 				asset characterSetFile = CharacterClass_GetSetFile( playerCharacter )
-				player.SetPlayerSettingsWithMods( characterSetFile, [] )
+				//player.SetPlayerSettingsWithMods( characterSetFile, [] )
 			}
 			
 			return
@@ -2438,7 +2278,7 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player, bool reset
 			DEV_BuildMovementLookupTable()
 		
 		foreach( player in players )
-			SetPlayerSettings( player, movementLookupTable[ enumVal ] )
+			//SetPlayerSettings( player, movementLookupTable[ enumVal ] )
 			
 		file.flowstate_modified_movement = enumVal
 		string eMovementType = GetEnumString( "eMovementType", enumVal )

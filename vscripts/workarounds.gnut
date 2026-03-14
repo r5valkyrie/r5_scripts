@@ -17,7 +17,6 @@ global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_FADE_DURATION = 0.0
 global const int CODE_REDEMPTION_RESULT_SUCCESS = 0
 global const int PREMIUM_CURRENCY_05 = 0
 global const int playedApexFalse = 0
-global const GAMEMODE_SHADOW_ROYALE = "shadow_royale"
 
 // Asset download status constants (used by image_pak_load.nut)
 global const int ASSET_DOWNLOAD_STATUS_UP_TO_DATE = 0
@@ -78,7 +77,6 @@ global function Ranked_GetCurrentPeriodGUIDString
 
 // === Character/Playlist ===
 global function GetItemFlavorPlaylistOpinion
-global function MatchBehaviorPlayer_CanBeFirst
 
 // === Item Flavor ===
 global function IsValidItemFlavorNetworkIndex_DEPRECATED
@@ -92,7 +90,6 @@ global function MetersToInches
 global function MetersToInchesSqr
 global function GetRandomPointInCircle
 global function OutOfBoundsEnable
-global function IsEventFinale
 
 // === Platform/Hardware ===
 global function GetHardwareFromName
@@ -109,16 +106,9 @@ global function LocalizePresenceState
 global function PlayLobbyCharacterDialogue
 global function SquadMuteLegendSelectEnabled
 
-// === Gifting ===
-global function CanLocalPlayerGift
-global function GetGiftOfferEligibility
 
 // === Challenges ===
 global function RefreshChallenges
-
-// === Automation ===
-global function AutomateUi
-
 // ============================================================================
 //  #if UI - Struct Definitions & Declarations
 // ============================================================================
@@ -364,6 +354,8 @@ global function GetPlaylistModName
 // ============================================================================
 //  #if UI - Declarations (large UI block)
 // ============================================================================
+
+global function PCPlat_IsSteam
 #if UI
 // === Workarounds/Utilities ===
 global function WORKAROUND_AnimAssetToAnimString
@@ -389,7 +381,6 @@ global function IsRankedPlaylist
 
 // === Platform/Hardware ===
 global function GetUnspoofedPlayerHardware
-global function PCPlat_IsSteam
 global function PCPlat_IsOrigin
 global function PCPlat_IsOverlayAvailable
 global function PCPlat_IsEnabled
@@ -426,18 +417,11 @@ global function SpectatorNextTarget
 global function ShowBlockPlayerDialog
 global function OpenClubLeaveDialog
 global function Hud_ClearAllToolTips
-
-// === Gifting ===
-global function Gifting_GetRemainingDailyGifts
-global function IsPlayerLeveledForGifting
-global function IsGiftingEnabled
-global function IsPlayerWithinGifingLimit
-global function GetGiftingMaxLimitPerResetPeriod
-global function IsTwoFactorAuthenticationEnabled
-global function RefreshTwoFactorAuthenticationStatus
+global function RefreshEaTwoFactorAuthenticationStatus
 
 // === EADP Social ===
 global function EADP_SocialEnabled
+global function EADP_IsTfaEnabled
 global function EADP_SocialCanRun
 global function EADP_SearchByName
 global function EADP_IsBlockedByEAID
@@ -479,6 +463,7 @@ global function GRX_HasUpToDateBundleOffers
 global function AddCallback_OnGRXBundlesRefreshed
 global function RemoveCallback_OnGRXBundlesRefreshed
 global function IsStoreEmpty
+global function GRX_GetOffer
 
 // === Persistence ===
 global function PersistenceGetVarHandle
@@ -522,18 +507,6 @@ global function IsPartyAllowedCrossplay
 // === Cross Progression ===
 global function CrossProgression_IsRequestingUserMigrateStatus
 global function CrossProgression_QueryUserMigrateStatusIfNeeded
-
-// === PIN/Analytics ===
-global function PIN_QuestTextView
-global function PIN_BattlepassMilestonePageView
-global function PIN_BattlepassPurchase
-global function PIN_ComicPageView
-global function PIN_Slow
-global function PIN_UIInteraction_Select
-global function PIN_LobbyPopUp_Event
-global function PIN_Store_EventButton
-global function PIN_Club_DeclineInvite
-global function SetCurrentHubForPIN
 
 // === Clubs ===
 global function AreClubInvitesEnabled
@@ -629,8 +602,6 @@ global function OpenLangAoCDialog
 global function GetKeyValueAsAsset
 #if UI
 global function UISafeGetPersistentVarAsInt
-global function GetGiftingInboxMessages
-global function RemoveGiftCacheMessage
 #endif
 #endif
 
@@ -640,12 +611,22 @@ global function RemoveGiftCacheMessage
 #if CLIENT || UI
 void function PopulateRuiWithRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
 {
+	Warning( "WORKAROUND: PopulateRuiWithRankedBadgeDetails() called - not implemented" )
 }
 
 void function PopulateRuiWithPreviousSeasonRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
 {
+	Warning( "WORKAROUND: PopulateRuiWithPreviousSeasonRankedBadgeDetails() called - not implemented" )
 }
+
 #endif
+
+
+bool function PCPlat_IsSteam()
+{
+	Warning( "WORKAROUND: PCPlat_IsSteam() called - not implemented, returning true" )
+	return true
+}
 
 
 int function GetPlaylistModCount()
@@ -691,17 +672,14 @@ string function FormatNumber( string format, var number )
 
 int function GetFakeTimeInSeconds()
 {
+	Warning( "WORKAROUND: GetFakeTimeInSeconds() called - not implemented" )
 	return 0
 }
 
 bool function IsLoadScreenFinished()
 {
+	Warning( "WORKAROUND: IsLoadScreenFinished() called - not implemented" )
 	return true
-}
-
-bool function AutomateUi( float delayFactor = 1.0 )
-{
-	return false
 }
 
 string function GetDaysHoursRemainingLoc( int days, int hours )
@@ -731,6 +709,7 @@ string function GetDaysHoursRemainingLoc( int days, int hours )
 
 bool function IsConnectedServerInfo()
 {
+	//Warning( "WORKAROUND: IsConnectedServerInfo() called - not implemented" )
 	return true
 }
 
@@ -831,15 +810,10 @@ bool function IsTakeHomeBuild()
 	return true
 }
 
-bool function PCPlat_IsSteam()
-{
-	Warning( "WORKAROUND: PCPlat_IsSteam() called - not implemented" )
-	return false
-}
-
 bool function PCPlat_IsOrigin()
 {
-	return true
+	Warning( "WORKAROUND: PCPlat_IsSteam() called - not implemented, returning false" )
+	return false
 }
 
 bool function PCPlat_IsOverlayAvailable()
@@ -1010,62 +984,17 @@ void function Hud_ClearAllToolTips()
 	Warning( "WORKAROUND: Hud_ClearAllToolTips() called - not implemented" )
 }
 
-
-// === Gifting ===
-
-int function Gifting_GetRemainingDailyGifts()
+void function RefreshEaTwoFactorAuthenticationStatus()
 {
-	Warning( "WORKAROUND: Gifting_GetRemainingDailyGifts() called - not implemented" )
-	return 0
-}
-
-bool function IsPlayerLeveledForGifting()
-{
-	Warning( "WORKAROUND: IsPlayerLeveledForGifting() called - not implemented" )
-	return false
-}
-
-bool function IsGiftingEnabled()
-{
-	Warning( "WORKAROUND: IsGiftingEnabled() called - not implemented" )
-	return false
-}
-
-bool function IsPlayerWithinGifingLimit()
-{
-	Warning( "WORKAROUND: IsPlayerWithinGifingLimit() called - not implemented" )
-	return false
-}
-
-int function GetGiftingMaxLimitPerResetPeriod()
-{
-	Warning( "WORKAROUND: GetGiftingMaxLimitPerResetPeriod() called - not implemented" )
-	return 0
-}
-
-bool function IsTwoFactorAuthenticationEnabled()
-{
-	Warning( "WORKAROUND: IsTwoFactorAuthenticationEnabled() called - not implemented" )
-	return false
-}
-
-void function RefreshTwoFactorAuthenticationStatus()
-{
-	Warning( "WORKAROUND: RefreshTwoFactorAuthenticationStatus() called - not implemented" )
-}
-
-bool function CanLocalPlayerGift()
-{
-	Warning( "WORKAROUND: CanLocalPlayerGift() called - not implemented" )
-	return false
-}
-
-void function GetGiftOfferEligibility( ... )
-{
-	Warning( "WORKAROUND: GetGiftOfferEligibility() called - not implemented" )
+	Warning( "WORKAROUND: Hud_ClearAllToolTips() called - not implemented" )
 }
 
 // === EADP Social ===
+bool function EADP_IsTfaEnabled()
+{
+	Warning( "WORKAROUND: EADP_IsTfaEnabled() called - not implemented" )
+	return false
+}
 
 bool function EADP_SocialEnabled()
 {
@@ -1081,6 +1010,7 @@ bool function EADP_SocialCanRun()
 
 void function EADP_SearchByName( string name )
 {
+	Warning( "WORKAROUND: EADP_SearchByName() called - not implemented" )
 }
 
 bool function EADP_IsBlockedByEAID( string eaid )
@@ -1224,39 +1154,50 @@ bool function IsSoundStillPlaying( var handle )
 
 void function PlayLobbyCharacterDialogue( ... )
 {
+	Warning( "WORKAROUND: PlayLobbyCharacterDialogue() called - not implemented" )
 }
 
 // === GRX/Store ===
 
 void function GRX_SetEventCurrency( string grxAlias )
 {
-	// stub
+	Warning( "WORKAROUND: GRX_SetEventCurrency() called - not implemented" )
 }
 
 int function GRX_GetItemTier( ... )
 {
+	Warning( "WORKAROUND: GRX_GetItemTier() called - not implemented" )
 	return 0
 }
 
 void function GRX_PurchaseOfferV2( int opId, int queryGoal, string offerAlias, int craftingItemIdx, int quantity, string priceAlias, array<int> price )
 {
-	// stub
+	Warning( "WORKAROUND: GRX_PurchaseOfferV2() called - not implemented" )
 }
 
 void function GRX_UpdateSmartMerchandisingData( array<int> smartMerchInts )
 {
+	Warning( "WORKAROUND: GRX_UpdateSmartMerchandisingData() called - not implemented" )
 }
 
 void function GRX_MarkGiftItemsAsSeen( int timestamp, array<int> itemIndices )
 {
+	Warning( "WORKAROUND: GRX_MarkGiftItemsAsSeen() called - not implemented" )
 }
 
 void function GRX_MarkContainerAsSeen_Internal( string containerId )
 {
+	Warning( "WORKAROUND: GRX_MarkContainerAsSeen_Internal() called - not implemented" )
+}
+
+void function GRX_GetOffer( string offerAlias, int hardwareId, string nucleus_pid )
+{
+	Warning( "WORKAROUND: GRX_GetOffer() called - not implemented" )
 }
 
 void function GRX_GetCurrencyBalances()
 {
+	Warning( "WORKAROUND: GRX_GetCurrencyBalances() called - not implemented" )
 }
 
 bool function GRX_HasUpToDateBundleOffers()
@@ -1266,10 +1207,12 @@ bool function GRX_HasUpToDateBundleOffers()
 
 void function AddCallback_OnGRXBundlesRefreshed( void functionref() callback )
 {
+	Warning( "WORKAROUND: AddCallback_OnGRXBundlesRefreshed() called - not implemented" )
 }
 
 void function RemoveCallback_OnGRXBundlesRefreshed( void functionref() callback )
 {
+	Warning( "WORKAROUND: RemoveCallback_OnGRXBundlesRefreshed() called - not implemented" )
 }
 
 bool function IsStoreEmpty()
@@ -1303,20 +1246,24 @@ var function GetDialogFlowTablesValueOrPersistence( string persistenceVar, bool 
 
 void function SetDialogFlowPersistenceTables( string persistenceVar, var value )
 {
+	Warning( "WORKAROUND: SetDialogFlowPersistenceTables() called - not implemented" )
 }
 
 void function IncrementNumDialogFlowDialogsDisplayed()
 {
+	Warning( "WORKAROUND: IncrementNumDialogFlowDialogsDisplayed() called - not implemented" )
 }
 
 void function DataDialog_AddCallback_OnClose( void functionref() callback )
 {
+	Warning( "WORKAROUND: DataDialog_AddCallback_OnClose() called - not implemented" )
 }
 
 // === Stats/Mastery ===
 
 void function StatsRegister_MetaChallenges()
 {
+	Warning( "WORKAROUND: StatsRegister_MetaChallenges() called - not implemented" )
 }
 
 int function Mastery_GetStatValue( entity player, string statRef )
@@ -1338,42 +1285,52 @@ bool function Mastery_IsValidStatRef( string statRef )
 
 void function Ranked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
 {
+	Warning( "WORKAROUND: Ranked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
 }
 
 void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
 {
+	Warning( "WORKAROUND: ArenasRanked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
 }
 
 void function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( var rui1, var rui2, entity player, string rankedPeriodRef )
 {
+	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2() called - not implemented" )
 }
 
 void function Ranked_ConstructDoubleRankBadgeForStatsCard( var rui1, var rui2, entity player, string rankedPeriodRef )
 {
+	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
 }
 
 void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui1, var rui2, entity player, string rankedPeriodRef )
 {
+	Warning( "WORKAROUND: ArenasRanked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
 }
 
 void function Ranked_SetupMenuGladCardForUIPlayer()
 {
+	Warning( "WORKAROUND: Ranked_SetupMenuGladCardForUIPlayer() called - not implemented" )
 }
 
 void function ArenasRanked_SetupMenuGladCardForUIPlayer()
 {
+	Warning( "WORKAROUND: ArenasRanked_SetupMenuGladCardForUIPlayer() called - not implemented" )
 }
 
 void function Ranked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo )
 {
+	Warning( "WORKAROUND: Ranked_SetupMenuGladCardFromCommunityUserInfo() called - not implemented" )
 }
 
 void function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo )
 {
+	Warning( "WORKAROUND: ArenasRanked_SetupMenuGladCardFromCommunityUserInfo() called - not implemented" )
 }
 
 void function Ranked_SetupMenuGladCard( entity player )
 {
+	Warning( "WORKAROUND: Ranked_SetupMenuGladCard() called - not implemented" )
 }
 
 bool function Ranked_ShouldUpdateWithComnunityUserInfo( int score, int ladderPosition )
@@ -1413,20 +1370,24 @@ int function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo( CommunityUse
 
 void function PopulateMatchRank( ... )
 {
+	Warning( "WORKAROUND: PopulateMatchRank() called - not implemented" )
 }
 
 // === Party/Social ===
 
 void function Party_JoinUserPartyGame()
 {
+	Warning( "WORKAROUND: Party_JoinUserPartyGame() called - not implemented" )
 }
 
 void function Party_LeaveParty()
 {
+	Warning( "WORKAROUND: Party_LeaveParty() called - not implemented" )
 }
 
 void function AddCallback_PartySpectateSlotAvailable( void functionref() callbackFunc )
 {
+	Warning( "WORKAROUND: AddCallback_PartySpectateSlotAvailable() called - not implemented" )
 }
 
 EadpPrivacySetting function Eadp_GetPrivacyData()
@@ -1466,54 +1427,14 @@ string function LocalizePresenceState( PresenceState presenceState )
 
 bool function CrossProgression_IsRequestingUserMigrateStatus()
 {
+	Warning( "WORKAROUND: CrossProgression_IsRequestingUserMigrateStatus() called - not implemented" )
 	return false // stub
 }
 
 bool function CrossProgression_QueryUserMigrateStatusIfNeeded( string nucleusId )
 {
+	Warning( "WORKAROUND: CrossProgression_QueryUserMigrateStatusIfNeeded() called - not implemented" )
 	return false // stub
-}
-
-// === PIN/Analytics ===
-
-void function PIN_QuestTextView( ... )
-{
-}
-
-void function PIN_BattlepassMilestonePageView( string lastMenuId, float timeOnPage, int milestone, bool hasPurchased, array<string> rewards )
-{
-}
-
-void function PIN_BattlepassPurchase( ... )
-{
-}
-
-void function PIN_ComicPageView( ... )
-{
-}
-
-void function PIN_Slow( ... )
-{
-}
-
-void function PIN_UIInteraction_Select( string menuName, string elementName, var jsonTable )
-{
-}
-
-void function PIN_LobbyPopUp_Event( string popupName, int status )
-{
-}
-
-void function PIN_Store_EventButton( string panelName )
-{
-}
-
-void function PIN_Club_DeclineInvite( ClubHeader clubHeader )
-{
-}
-
-void function SetCurrentHubForPIN( string hubName )
-{
 }
 
 // === Clubs ===
@@ -1531,6 +1452,7 @@ array<ClubInvite> function ClubGetInvitedClubsList()
 
 void function ClubInviteDecline( string eventID )
 {
+	Warning( "WORKAROUND: ClubInviteDecline() called - not implemented" )
 }
 
 array<ClubEvent> function ClubGetChatLog()
@@ -1575,6 +1497,7 @@ ClubEvent function ClubGetStickyNote()
 
 void function ClubInviteQueryClubsList( int offset, int count )
 {
+	Warning( "WORKAROUND: ClubInviteQueryClubsList() called - not implemented" )
 }
 
 bool function ClubIsAllowedTag( string tag )
@@ -1609,16 +1532,19 @@ bool function ClubChatSend( string message )
 
 void function ClubChatStickyNote( string message )
 {
+	Warning( "WORKAROUND: ClubChatStickyNote() called - not implemented" )
 }
 
 // === Events ===
 
 void function EventsPanel_SetOpenPageIndex( int pageIndex )
 {
+	Warning( "WORKAROUND: EventsPanel_SetOpenPageIndex() called - not implemented" )
 }
 
 void function JumpToEventTab( string tabName )
 {
+	Warning( "WORKAROUND: JumpToEventTab() called - not implemented" )
 }
 
 bool function DoesUserHaveTwitchDrops( string ref )
@@ -1657,6 +1583,7 @@ bool function IsPlayerVoiceAndTextMutedForUID( string uid, string hardware )
 
 void function TogglePlayerVoiceAndTextMuteForUID( string uid, string hardware, string eadpid )
 {
+	Warning( "WORKAROUND: TogglePlayerVoiceAndTextMuteForUID() called - not implemented" )
 }
 
 string function GetCommunicationBlockWarningText( int warningId )
@@ -1706,11 +1633,13 @@ string function RLocalTime( int unixTime )
 
 bool function Control_IsModeEnabled()
 {
+	Warning( "WORKAROUND: Control_IsModeEnabled() called - not implemented" )
 	return false
 }
 
 bool function Control_IsSpawningOnObjectiveBAllowed()
 {
+	Warning( "WORKAROUND: Control_IsSpawningOnObjectiveBAllowed() called - not implemented" )
 	return true
 }
 
@@ -1718,6 +1647,7 @@ bool function Control_IsSpawningOnObjectiveBAllowed()
 
 string function GetDatacenterRealName()
 {
+	Warning( "WORKAROUND: GetDatacenterRealName() called - not implemented" )
 	return ""
 }
 
@@ -1725,11 +1655,13 @@ string function GetDatacenterRealName()
 
 int function GetFirstTimePlayerState()
 {
+	Warning( "WORKAROUND: GetFirstTimePlayerState() called - not implemented" )
 	return eNewPlayerState.FIRST_MATCH_PLAYED
 }
 
 void function SetFirstTimePlayerState( int state )
 {
+	Warning( "WORKAROUND: SetFirstTimePlayerState() called - not implemented" )
 }
 
 // === Lobby/Misc ===
@@ -1741,6 +1673,7 @@ bool function SquadMuteLegendSelectEnabled()
 
 void function RefreshChallenges()
 {
+	Warning( "WORKAROUND: RefreshChallenges() called - not implemented" )
 }
 
 // === Settings/Options ===
@@ -1881,16 +1814,6 @@ int function UISafeGetPersistentVarAsInt( string key )
 		return GetPersistentVarAsInt( key )
 	return 0
 }
-
-void function RemoveGiftCacheMessage( int timestamp, string senderNucleusPid )
-{
-}
-
-array<GRXScriptInboxMessage> function GetGiftingInboxMessages()
-{
-	array<GRXScriptInboxMessage> emptyList
-	return emptyList
-}
 #endif
 
 #endif // UI
@@ -1905,11 +1828,13 @@ array<GRXScriptInboxMessage> function GetGiftingInboxMessages()
 // ODL (On Demand Loading) not available, stub
 void function PrecacheOnDemandLoadModel( int odlType, string pak, asset model, asset loadingModel )
 {
+	Warning( "WORKAROUND: PrecacheOnDemandLoadModel() called - not implemented" )
 }
 
 // stub
 void function PrecacheSkinName( string skinName )
 {
+	Warning( "WORKAROUND: PrecacheSkinName() called - not implemented" )
 }
 
 // ODL (On-Demand Loading) not available, stubs
@@ -1934,6 +1859,7 @@ int function GetFileDownloadStatus( string rpakName )
 // stub
 void function StopUISoundByName( string soundName )
 {
+	Warning( "WORKAROUND: StopUISoundByName() called - not implemented" )
 }
 
 // === Props/Models ===
@@ -1949,22 +1875,26 @@ entity function CreateClientSidePropDynamicCharm( vector origin, vector angles, 
 // stub
 bool function IsGunGameActive()
 {
+	Warning( "WORKAROUND: IsGunGameActive() called - not implemented" )
 	return false
 }
 
 // stub
 bool function IsShadowRoyaleMode()
 {
+	Warning( "WORKAROUND: IsShadowRoyaleMode() called - not implemented" )
 	return false
 }
 
 // Battle Rush stubs
 void function BattleRush_StopCharSelectMusic()
 {
+	Warning( "WORKAROUND: BattleRush_StopCharSelectMusic() called - not implemented" )
 }
 
 void function BattleRush_ServerCallback_PlayJumpMusic()
 {
+	Warning( "WORKAROUND: BattleRush_ServerCallback_PlayJumpMusic() called - not implemented" )
 }
 
 // === Shadow Army ===
@@ -1972,16 +1902,19 @@ void function BattleRush_ServerCallback_PlayJumpMusic()
 // Shadow Army stubs - game mode not loaded
 bool function ShadowArmy_IsPlayerOnShadowArmy( entity player )
 {
+	Warning( "WORKAROUND: ShadowArmy_IsPlayerOnShadowArmy() called - not implemented" )
 	return false
 }
 
 array<entity> function ShadowArmy_GetEnemySquadPlayersForAllianceIntro( int alliance )
 {
+	Warning( "WORKAROUND: ShadowArmy_GetEnemySquadPlayersForAllianceIntro() called - not implemented" )
 	return []
 }
 
 void function ShadowArmy_PlayIntroBannerSoundForLegends_Thread()
 {
+	Warning( "WORKAROUND: ShadowArmy_PlayIntroBannerSoundForLegends_Thread() called - not implemented" )
 }
 
 // === HUD/UI Display ===
@@ -1989,21 +1922,25 @@ void function ShadowArmy_PlayIntroBannerSoundForLegends_Thread()
 // stubs
 void function ShowTeamNameInHud()
 {
+	Warning( "WORKAROUND: ShowTeamNameInHud() called - not implemented" )
 }
 
 void function HideTeamNameInHud()
 {
+	Warning( "WORKAROUND: HideTeamNameInHud() called - not implemented" )
 }
 
 // stub
 float function GetScreenScaleFrac()
 {
+	Warning( "WORKAROUND: GetScreenScaleFrac() called - not implemented" )
 	return 1.0  // Default scale
 }
 
 // stub
 void function ForceDestroyBlackBarRui()
 {
+	Warning( "WORKAROUND: ForceDestroyBlackBarRui() called - not implemented" )
 }
 
 void function InitButtonRCP( var button )
@@ -2017,6 +1954,7 @@ void function InitButtonRCP( var button )
 // stub - accepts callback but never fires
 void function AddUICallback_InputModeChanged( void functionref( bool ) callbackFunc )
 {
+	Warning( "WORKAROUND: AddUICallback_InputModeChanged() called - not implemented" )
 }
 
 // === Player Info ===
@@ -2024,6 +1962,7 @@ void function AddUICallback_InputModeChanged( void functionref( bool ) callbackF
 // stub
 bool function Script_UserHasEAAccess()
 {
+	Warning( "WORKAROUND: Script_UserHasEAAccess() called - not implemented" )
 	return false
 }
 
@@ -2046,6 +1985,7 @@ string function GetPlayerNameFromEHI( int ehi )
 // stub - privacy/anonymization not available
 string function GetObfuscatedIdFromPlayer( entity player )
 {
+	Warning( "WORKAROUND: GetObfuscatedIdFromPlayer() called - not implemented" )
 	return ""
 }
 
@@ -2075,6 +2015,7 @@ bool function IsInBleedoutOrRevive( entity player )
 // Ballistic's armored leap ability - character not available
 int function GetCurrentArmoredLeapPhase( entity player )
 {
+	Warning( "WORKAROUND: GetCurrentArmoredLeapPhase() called - not implemented" )
 	return PLAYER_ARMORED_LEAP_PHASE_NONE
 }
 
@@ -2091,6 +2032,7 @@ array<entity> function GetAllResinShards()
 // stub
 void function ShRanked_RegisterNetworkFunctions()
 {
+	Warning( "WORKAROUND: ShRanked_RegisterNetworkFunctions() called - not implemented" )
 }
 
 // Ranked game checks
@@ -2101,6 +2043,7 @@ bool function IsRankedGame()
 
 bool function IsArenasRankedGame()
 {
+	Warning( "WORKAROUND: IsArenasRankedGame() called - not implemented" )
 	return false
 }
 
@@ -2109,6 +2052,7 @@ bool function IsArenasRankedGame()
 // stub
 bool function GetGlobalNonRewindNetBool( string varName )
 {
+	Warning( "WORKAROUND: GetGlobalNonRewindNetBool() called - not implemented" )
 	return false
 }
 
@@ -2129,11 +2073,13 @@ void function DoAnimatedChampionSquadCardsPresentation()
 // === First Time Player (also defined in UI block) ===
 int function GetFirstTimePlayerState()
 {
+	Warning( "WORKAROUND: GetFirstTimePlayerState() called - not implemented" )
 	return eNewPlayerState.FIRST_MATCH_PLAYED
 }
 
 void function SetFirstTimePlayerState( int state )
 {
+	Warning( "WORKAROUND: SetFirstTimePlayerState() called - not implemented" )
 }
 
 #endif
@@ -2148,6 +2094,7 @@ void function SetFirstTimePlayerState( int state )
 // stub
 void function TogglePlayerVoiceAndTextMute( entity player )
 {
+	Warning( "WORKAROUND: TogglePlayerVoiceAndTextMute() called - not implemented" )
 }
 
 // === Perks ===
@@ -2155,6 +2102,7 @@ void function TogglePlayerVoiceAndTextMute( entity player )
 // stub - banner crafting not available
 bool function Perk_CanTeammateCraftPlayerBanner( entity player )
 {
+	Warning( "WORKAROUND: Perk_CanTeammateCraftPlayerBanner() called - not implemented" )
 	return false
 }
 
@@ -2163,73 +2111,88 @@ bool function Perk_CanTeammateCraftPlayerBanner( entity player )
 // stub
 bool function Control_IsModeEnabled()
 {
+	Warning( "WORKAROUND: Control_IsModeEnabled() called - not implemented" )
 	return false
 }
 
 // stub
 int function MissionCheckpoints_GetRespawnsLeftForPlayer( entity player )
 {
+	Warning( "WORKAROUND: MissionCheckpoints_GetRespawnsLeftForPlayer() called - not implemented" )
 	return 0
 }
 
 // stub
 bool function UpgradeCore_ShowUpgradeTree_CharacterSelect()
 {
+	Warning( "WORKAROUND: UpgradeCore_ShowUpgradeTree_CharacterSelect() called - not implemented" )
 	return false
 }
 
 // stubs - UpgradeCore (S22 feature, not in S3)
 bool function UpgradeCore_ArmorTiedToUpgrades()
 {
+	Warning( "WORKAROUND: UpgradeCore_ArmorTiedToUpgrades() called - not implemented" )
 	return false
 }
 
 bool function UpgradeCore_IsEnabled()
 {
+	Warning( "WORKAROUND: UpgradeCore_IsEnabled() called - not implemented" )
 	return false
 }
 
 void function UpgradeCore_ProgressionLocked_ForPlayer_Set( entity player, bool locked )
 {
+	Warning( "WORKAROUND: UpgradeCore_ProgressionLocked_ForPlayer_Set() called - not implemented" )
 }
 
 bool function UpgradeCore_ProgressionLocked_ForPlayer_Get( entity player )
 {
+	Warning( "WORKAROUND: UpgradeCore_ProgressionLocked_ForPlayer_Get() called - not implemented" )
 	return false
 }
 
 bool function UpgradeCore_ShowHudUpgradeSelection()
 {
+	Warning( "WORKAROUND: UpgradeCore_ShowHudUpgradeSelection() called - not implemented" )
 	return false
 }
 
 void function UpgradeCore_RuiThread( entity player )
 {
+	Warning( "WORKAROUND: UpgradeCore_RuiThread() called - not implemented" )
 }
 
 void function UpgradeCore_Set_Level( entity player, int level )
 {
+	Warning( "WORKAROUND: UpgradeCore_Set_Level() called - not implemented" )
 }
 
 // stubs - PIN Telemetry (no telemetry in r5reloaded)
 void function PIN_FiringRange_Settings( entity player, int contextID, bool dynStatsOn, bool dynTimerOn, bool infReloadsOn, bool hitMarksOn, bool show3rdPerson, bool legendUpgradesEnabled, bool friendlyFireOn, int targetSpeed, ... )
 {
+	Warning( "WORKAROUND: PIN_FiringRange_Settings() called - not implemented" )
 }
 
 void function PIN_FiringRange_SessionDuration( entity player, float duration )
 {
+	Warning( "WORKAROUND: PIN_FiringRange_SessionDuration() called - not implemented" )
 }
 
 void function PIN_FiringRange_DynamicStats_TimeBetweenResets( entity player, int timeDelta )
 {
+	Warning( "WORKAROUND: PIN_FiringRange_DynamicStats_TimeBetweenResets() called - not implemented" )
 }
 
 void function PIN_FiringRange_Loot_Pickup_Source( entity player, string ref, int lootSrc, string lootSrcStr, vector origin )
 {
+	Warning( "WORKAROUND: PIN_FiringRange_Loot_Pickup_Source() called - not implemented" )
 }
 
 void function PIN_FiringRangeChallengeCompleted( entity player, ... )
 {
+	Warning( "WORKAROUND: PIN_FiringRangeChallengeCompleted() called - not implemented" )
 }
 
 // PIN_Record_CustomizeRangeSettings*, PIN_CCB_Record_DynamicStats_TimeBetweenResets
@@ -2238,17 +2201,20 @@ void function PIN_FiringRangeChallengeCompleted( entity player, ... )
 // stubs - Golden Horse / Titan Sword (S22 feature, not in S3)
 bool function IsGoldenHorse_FR()
 {
+	Warning( "WORKAROUND: IsGoldenHorse_FR() called - not implemented" )
 	return false
 }
 
 bool function TitanSword_WeaponRefIsTitanSword( string ref )
 {
+	Warning( "WORKAROUND: TitanSword_WeaponRefIsTitanSword() called - not implemented" )
 	return false
 }
 
 // stub
 void function TryStartIntroPodiumSequence()
 {
+	Warning( "WORKAROUND: TryStartIntroPodiumSequence() called - not implemented" )
 }
 
 // === Crossplay ===
@@ -2279,7 +2245,7 @@ vector function NavMesh_GetClosestPoint( vector point )
 
 void function SURVIVAL_ResetAllDoorsInRealm( int realm )
 {
-	// S22 door reset — not implemented in S3
+	Warning( "WORKAROUND: SURVIVAL_ResetAllDoorsInRealm() called - not implemented" )
 }
 
 // === Player Cleanup ===
@@ -2303,17 +2269,20 @@ void function SetObjectCanBeMeleed( entity ent, bool value )
 // stub
 bool function IsRebuiltDoor( entity ent )
 {
+	Warning( "WORKAROUND: IsRebuiltDoor() called - not implemented" )
 	return false
 }
 
 // stub
 bool function TitanSword_TryMultiAttack( entity attacker, entity meleeWeapon, int impactTableOverride )
 {
+	Warning( "WORKAROUND: TitanSword_TryMultiAttack() called - not implemented" )
 	return false // Normal melee attack path
 }
 
 bool function TitanSword_VictimHitOverride( entity meleeWeapon, entity attacker, entity target, vector pushBackVelocity )
 {
+	Warning( "WORKAROUND: TitanSword_VictimHitOverride() called - not implemented" )
 	return false // No override
 }
 
@@ -2322,23 +2291,27 @@ bool function TitanSword_VictimHitOverride( entity meleeWeapon, entity attacker,
 // RankedRumble stubs
 bool function RankedRumble_IsLatestGameRankedRumble( entity player )
 {
+	Warning( "WORKAROUND: RankedRumble_IsLatestGameRankedRumble() called - not implemented" )
 	return false
 }
 
 bool function RankedRumble_IsRunningRankedRumbleCached( entity player )
 {
+	Warning( "WORKAROUND: RankedRumble_IsRunningRankedRumbleCached() called - not implemented" )
 	return false
 }
 
 // stub
 bool function IsServerNetworkAlertTriggered()
 {
+	Warning( "WORKAROUND: IsServerNetworkAlertTriggered() called - not implemented" )
 	return false
 }
 
 // stub
 void function PrepareGameSummaryForPointCalculation( entity player )
 {
+	Warning( "WORKAROUND: PrepareGameSummaryForPointCalculation() called - not implemented" )
 }
 
 // Debug print wrapper
@@ -2351,22 +2324,27 @@ void function DEV_script_ranked_debug( string msg )
 
 void function Ranked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
 {
+	Warning( "WORKAROUND: Ranked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
 }
 
 void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
 {
+	Warning( "WORKAROUND: ArenasRanked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
 }
 
 void function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2, bool isActive )
 {
+	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2() called - not implemented" )
 }
 
 void function Ranked_ConstructDoubleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2 )
 {
+	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
 }
 
 void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2 )
 {
+	Warning( "WORKAROUND: ArenasRanked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
 }
 
 // === Persistence ===
@@ -2399,6 +2377,7 @@ void function SafeSetPersistentVar( entity player, string key, var value )
 
 void function EmitUIMusic( string musicName )
 {
+	Warning( "WORKAROUND: EmitUIMusic() called - not implemented" )
 }
 
 // === Time ===
@@ -2416,6 +2395,7 @@ void function GRX_SetEventCurrency( string grxAlias )
 
 int function GRX_GetItemTier( ... )
 {
+	Warning( "WORKAROUND: GRX_GetItemTier() called - not implemented" )
 	return 0
 }
 
@@ -2440,6 +2420,7 @@ string function LobbyPlaylist_GetSelectedPlaylist()
 
 void function StatsRegister_MetaChallenges()
 {
+	Warning( "WORKAROUND: StatsRegister_MetaChallenges() called - not implemented" )
 }
 
 int function Mastery_GetStatValue( entity player, string statRef )
@@ -2531,6 +2512,7 @@ bool function IsDirectX12Beta()
 
 void function PlayLobbyCharacterDialogue( ... )
 {
+	Warning( "WORKAROUND: PlayLobbyCharacterDialogue() called - not implemented" )
 }
 
 
@@ -2548,6 +2530,7 @@ bool function CanLocalPlayerGift()
 
 void function GetGiftOfferEligibility( ... )
 {
+	Warning( "WORKAROUND: GetGiftOfferEligibility() called - not implemented" )
 }
 
 // === Lobby/Misc ===
@@ -2559,11 +2542,7 @@ bool function SquadMuteLegendSelectEnabled()
 
 void function RefreshChallenges()
 {
-}
-
-bool function AutomateUi( float delayFactor = 1.0 )
-{
-	return false
+	Warning( "WORKAROUND: RefreshChallenges() called - not implemented" )
 }
 
 // === S22 Entity Validity ===
@@ -2651,12 +2630,6 @@ int function GetItemFlavorPlaylistOpinion( string humanReadableRef )
 	return eItemFlavorPlaylistOpinion.UNLOCKED
 }
 
-// Stub - any player can be first in character select
-bool function MatchBehaviorPlayer_CanBeFirst( entity player )
-{
-	return true
-}
-
 // === Item Flavor ===
 
 bool function IsValidItemFlavorNetworkIndex_DEPRECATED( int index, int validation = 0 )
@@ -2701,11 +2674,6 @@ vector function GetRandomPointInCircle( vector origin, float radius )
 void function OutOfBoundsEnable()
 {
 	// S3: stub — out of bounds system managed differently
-}
-
-bool function IsEventFinale()
-{
-	return GetCurrentPlaylistVarBool( "is_event_finale", false )
 }
 
 string function replace( string original, string search, string replacement )

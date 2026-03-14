@@ -64,7 +64,7 @@ void function SeasonPanel_OnShow( var panel )
 	if( isNewSeason )
 	{
 		AdvanceMenu( GetMenu("BattlePassAboutPage1") )
-		Remote_ServerCallFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason", seasonString )
+		Remote_ServerCallFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason" )
 	}
 
 	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
@@ -103,7 +103,7 @@ array<var> function GetAllMenuPanelsSorted( var menu )
 
 int function SortMenuPanelsByPlaylist( var a, var b )
 {
-	                                                                                                                                                       
+
 	string playlistVal = GetCurrentPlaylistVarString( "season_panel_order", "CollectionEventPanel|ThemedShopPanel|PassPanel|QuestPanel|ChallengesPanel" )
 	if ( playlistVal == "" )
 		return 0
@@ -223,7 +223,7 @@ void function OnGRXSeasonUpdate()
 		SetTabDefsToSeasonal(tabData)
 		SetTabBackground( tabData, Hud_GetChild( file.panel, "TabsBackground" ), eTabBackground.STANDARD )
 
-		                                                                                            
+
 		foreach ( TabDef tabDef in GetPanelTabs( file.panel ) )
 		{
 			bool showTab   = true
@@ -239,13 +239,13 @@ void function OnGRXSeasonUpdate()
 				{
 					expect ItemFlavor(activeCollectionEvent)
 
-					tabDef.title = "#MENU_STORE_PANEL_COLLECTION"                                                           
+					tabDef.title = "#MENU_STORE_PANEL_COLLECTION"
 
-					                               
-					                                                                                         
-					                                                                                           
-					                                                                                           
-					                                                                                             
+
+
+
+
+
 				}
 			}
 			else if ( Hud_GetHudName( tabDef.panel ) == "ThemedShopPanel" )
@@ -253,21 +253,21 @@ void function OnGRXSeasonUpdate()
 				showTab = haveActiveThemedShopEvent
 				if ( haveActiveThemedShopEvent )
 				{
-					                                          
 
-					tabDef.title = "#EVENT_EXCLUSIVE_OFFERS"                                                       
 
-					                               
-					                                                                 
-					                                                                   
-					                                                                   
-					                                                                     
-					                                                                                         
-					                                                                                         
-					                                                                                       
-					                                                                                         
-					                                                                                         
-					                                                                                             
+					tabDef.title = "#EVENT_EXCLUSIVE_OFFERS"
+
+
+
+
+
+
+
+
+
+
+
+
 				}
 			}
 
@@ -347,8 +347,8 @@ void function InitSeasonWelcomeMenu( var menu )
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, SeasonWelcome_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, SeasonWelcome_OnClose )
 
-	                                                                           
-	                                                                           
+
+
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 }
@@ -357,15 +357,15 @@ void function InitSeasonWelcomeMenu( var menu )
 void function SeasonWelcome_OnOpen()
 {
 	ItemFlavor season = GetLatestSeason( GetUnixTimestamp() )
-	                                                                                          
-	                                                                                        
-	                                                                                               
-	                                                                                                         
-	                                                                                                                  
-	  
-	                                                                                                                   
-	                                                                                                                     
-	                                                                                                                                   
+
+
+
+
+
+
+
+
+
 
 	HudElem_SetRuiArg( s_welcomeMenu.welcomeHeader, "logo", Season_GetSmallLogo( season ), eRuiArgType.IMAGE )
 }

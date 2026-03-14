@@ -495,7 +495,7 @@ void function StartRound()
 
 		RemoveCinematicFlag(player, CE_FLAG_HIDE_MAIN_HUD | CE_FLAG_HIDE_PERMANENT_HUD )
 		if( !IsAlive( player ) )
-			DecideRespawnPlayer(player)
+			DecideRespawnPlayer(player, false)
 
 		MakeInvincible(player)
 		player.HolsterWeapon()

@@ -107,8 +107,6 @@ global const bool HAS_TRACKER_DLL 			= false
 //
 global const bool MULTIPLAYER_DEBUG_PRINTS 	= false // Toggles print console message to all players where used (printm).
 
-global const string PLAYLIST_TRAINING = "survival_training"
-global const string PLAYLIST_FIRING_RANGE = "survival_firingrange"
 global const string FIRING_RANGE_DUMMIE_SCRIPT_NAME = "npc_dummie"
 global const string FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME = "npc_dummie_combat"
 global const string FIRING_RANGE_TARGET_FOLD_SCRIPTNAME = "fr_target_fold"
@@ -116,7 +114,6 @@ global const int FIRING_RANGE_AI_BUDGET_MAX = 190
 global const asset FIRINGRANGE_DOOR_ASSET = $"mdl/door/canyonlands_door_single_02.rmdl"
 global const int WPT_ALL_EXCEPT_VIEWHANDS = 0xFF // S22: all weapon types except viewhands
 global const int WPT_SURVIVAL = 0 // S22 weapon type flag, not in S3 — 0 means bitflag check always false
-global const string PLAYLIST_NEW_PLAYER_ORIENTATION = "survival_bots_vs_humanteams"
 
 global enum eNewPlayerState
 {
@@ -269,7 +266,44 @@ global struct UIScaleFactor
 	float y = 1.0
 }
 
-global const SPECTATOR_SETTINGS 			= $"settings/player/mp/spectator.rpak"
+global const SPECTATOR_SETTINGS = $"settings/player/mp/spectator.rpak"
+global const DEFAULT_PILOT_SETTINGS = $"settings/player/mp/pilot_survival_gunner.rpak"
+
+global const TEAM_DEATHMATCH = "tdm"
+global const TDM_SWAT = "swat"
+global const SURVIVAL = "survival"
+global const GAMEMODE_SURVIVAL_RANKED = "survival_ranked"
+global const GAMEMODE_CONTROL = "control"
+global const GAMEMODE_FREELANCE = "freelance"
+global const GAMEMODE_FREEDM = "freedm"      
+global const GAMEMODE_SHADOW_ROYALE = "shadow_royale"
+global const GAMEMODE_WINTER_EXPRESS = "winter_express"
+global const GAMEMODE_HEATWAVE = "survival_heatwave"
+global const GAMEMODE_SURVIVAL_HARDCORE = "survival_hardcore"
+global const GAMEMODE_DATE_NIGHT = "date_night_duos"
+global const GAMEMODE_HALLOWEEN_18_1 = "halloween_18_1_trios"
+global const GAMEMODE_HALLOWEEN_18_1_HARBINGER = "halloween_18_1_harbinger_trios"
+global const GAMEMODE_GOLDEN_HORSE = "golden_horse_trios"
+global const GAMEMODE_STRIKEOUT = "strikeout"
+global const GAMEMODE_BANNERBOMB = "bannerbomb"
+global const GAMEMODE_TREASURE_HUNT = "treasure_hunt"
+global const GAMEMODE_THE_HUNT_20 = "the_hunt_20"
+global const GAMEMODE_ARMED_AND_DANGEROUS = "armed_and_dangerous"
+global const GAMEMODE_SHADOW_ARMY = "shadow_army"
+global const EVENT_ABILITIES = "event_abilities"
+global const GAMEMODE_QUICK_MATCH = "quick_match"
+global const GAMEMODE_SURVIVAL_SOLOS = "survival_solos"
+global const GAMEMODE_SURVIVAL_QUADS = "survival_quads"
+global const GAMEMODE_BIGTEAM_DEATHMATCH = "freedm_bigtdm"
+global const string PLAYLIST_TRAINING = "survival_training"
+global const string PLAYLIST_NEW_PLAYER_ORIENTATION = "survival_bots_vs_humanteams"
+global const string PLAYLIST_FIRING_RANGE = "survival_firingrange"
+global const int PLAYLIST_ID_SURVIVAL = 0
+global const int PLAYLIST_ID_NEW_PLAYER_ORIENTATION = 1
+                                  
+
+                   
+global const string COMBATRANGE = "combatrange"
 
 global const NPC_TITAN_PILOT_PROTOTYPE  	= 0
 
@@ -277,34 +311,6 @@ global const HAS_TASKLIST_SYSTEM        	= false
 global const HAS_MISSIONINFO_SYSTEM     	= false
 
 
-//////////////////////////////
-//		GAME MODE CONST		//
-//////////////////////////////
-
-global const MENUFALL						= "menufall"
-global const TEAM_DEATHMATCH				= "tdm"
-global const SURVIVAL						= "survival"
-global const FREELANCE						= "freelance"
-global const CUSTOM_CTF						= "custom_ctf"
-
-global const fs_dm							= "fs_dm"
-global const fs_aimtrainer					= "fs_aimtrainer"
-global const fs_prophunt					= "fs_prophunt"
-global const fs_duckhunt					= "fs_duckhunt"
-global const fs_infected					= "fs_infected"
-global const fs_snd							= "fs_snd"
-global const fs_apexkart					= "fs_apexkart"
-global const fs_spieslegends				= "fs_spieslegends"
-global const flowstate_pkknockback			= "flowstate_pkknockback"
-
-//Respawn modes
-global const WINTEREXPRESS					= "winterexpress"
-global const ARENAS							= "arenas"
-global const GAMEMODE_ARENAS				= "arenas"
-global const GAMEMODE_FREEDM			= "freedm"
-global const FREEDM						= "freedm"
-global const FREEDM_TDM					= "freedm_tdm"
-global const FREEDM_GUNGAME				= "freedm_gungame"
 
 //////////////////////////////
 
@@ -796,11 +802,6 @@ global enum eStickState
 	RIGHT = 2,
 	_count,
 }
-
-//Max Time spent after death before respawning again is DEATHCAM_TIME + KILL_REPLAY_BEFORE_KILL_TIME_TITAN + KILL_REPLAY_AFTER_KILL_TIME
-global const DEATHCAM_TIME 								= 8.0 // the amount of time spent watching the you-are-dead death cam (not kill replay)
-global const DEATHCAM_TIME_SHORT = 3.0
-global const DEATHCAM_MIN_TIME = 0.1
 
 global const KILL_REPLAY_BEFORE_KILL_TIME_PILOT 		= 3.5
 global const KILL_REPLAY_BEFORE_KILL_TIME_TITAN 		= 6.8
@@ -1544,7 +1545,9 @@ global enum ePlayerMovementEvents
 	BEGIN_WALLRUN,
 	END_WALLRUN,
 	BEGIN_WALLHANG,
-	END_WALLHANG
+	END_WALLHANG,
+	BEGIN_SLIDE,
+	END_SLIDE
 }
 
 /*
@@ -1584,6 +1587,7 @@ IN_OFFHAND2
 global enum eUIEvent
 {
 	MENU_OPEN,
+	MENU_PRECLOSE,
 	MENU_CLOSE,
 	MENU_SHOW,
 	MENU_HIDE,
@@ -3245,6 +3249,8 @@ global const int ACM_SPECTATORS = 2
 global const int ACM_ALL_PLAYERS = 3
 global const int ACM_COUNT = 4
 global const int CAMO_SKIN_COUNT = 3
+global const int GAMEMODE_MAX_SEEN_INDEX = 9
+global const int GAMEMODE_INVALID_INDEX = -1
 
 // ===============================================================================
 // Don't add any constants below here. Add constants that don't reference variables

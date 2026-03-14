@@ -116,7 +116,6 @@ When: "SERVER || CLIENT"
 Scripts:
 [
 	gamemodes/sh_dev_gamemodes_mp.gnut // DEVSCRIPTS REMOVE
-	gamemodes/sh_gamemodes_mp.gnut
 	sh_ability_shadow_zombie.nut
 
 	pilot/sh_pilot_tracking_vision.gnut
@@ -137,6 +136,7 @@ Scripts:
 	sh_consts_mp.gnut
 	sh_loadouts.gnut
 	sh_grx.gnut
+	sh_gifting.gnut
 	entitlements.gnut
 	sh_cal_events.gnut
 	sh_battlepass.gnut
@@ -178,7 +178,7 @@ When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	sh_scene_capture.gnut
-
+	workarounds.gnut
 	sh_persistent_data.gnut
 	gamemodes/sh_gamemodes.gnut
 	gamemodes/sh_dev_gamemodes.gnut // DEVSCRIPTS REMOVE
@@ -208,7 +208,6 @@ Scripts:
 	mp/sh_gladiator_cards.nut
 	mp/sh_player_stats_cards.nut
 	mp/sh_mythics.nut
-	workarounds.gnut
 	customize_common.gnut
 ]
 
@@ -841,6 +840,13 @@ Scripts:
 [
 	mp/_match_preferences.gnut
 ]
+
+When: "SERVER"
+Scripts:
+[
+	mp/_match_behavior.gnut
+]
+
 
 When: "CLIENT || UI"
 Scripts:

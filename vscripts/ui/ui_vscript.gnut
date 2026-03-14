@@ -147,6 +147,7 @@ global struct MenuDef
 
 	void functionref( var )        initFunc
 	void functionref()             openFunc
+	void functionref()			   preCloseFunc
 	void functionref()             closeFunc
 	void functionref()             showFunc
 	void functionref()             hideFunc

@@ -1,6 +1,6 @@
 global function InitDeathScreenMenu
 
-               
+
 global function UI_OpenDeathScreenMenu
 global function UI_CloseDeathScreenMenu
 global function UI_EnableDeathScreenTab
@@ -9,9 +9,11 @@ global function UI_SetDeathScreenTabTitle
 global function UI_DeathScreenUpdateHeader
 global function UI_DeathScreenHideTabs
 global function UI_DeathScreenSetRespawnStatus
-                   
+global function UI_RequeueStatusChanged
+global function UI_IsReadyForRequeue
+global function UI_IsFullPartyConnectedForRequeue
 global function UI_DeathScreenSetBannerCraftingStatus
-      
+
 global function UI_DeathScreenSetSpectateTargetCount
 global function UI_DeathScreenSetCanReportRecapPlayer
 global function UI_DeathScreenSetObserverMode
@@ -44,8 +46,8 @@ struct
 	var       menu
 	bool      tabsInitialized
 	float     menuOpenTime
-	bool      isGladCardShowing = true	                            
-	bool      canShowGladCard = true	                   
+	bool      isGladCardShowing = true
+	bool      canShowGladCard = true
 	bool      canReportRecapPlayer
 	int       observerMode
 	string    blockEAID
@@ -53,23 +55,25 @@ struct
 	bool      shouldShowSkip
 	bool      isEliminated
 	int       respawnStatus
+	bool	  fullPartyConnectedForRequeue
+	bool	  canRequeue
 	int       spectateTargetCount
 	bool      allowGladCard = true
 	InputDef& gladCardToggleInputData
-                   
+
 	bool	  bannerCanBeCrafted = false
-      
+
 
 } file
 
 
-void function InitDeathScreenMenu( var newMenuArg )                                               
+void function InitDeathScreenMenu( var newMenuArg )
 {
 	var menu = GetMenu( "DeathScreenMenu" )
 	file.menu = menu
 
 	SetMenuReceivesCommands( file.menu, true )
-	DeathScreen_AddPassthroughCommandsToMenu( menu )                                            
+	DeathScreen_AddPassthroughCommandsToMenu( menu )
 
 	AddUICallback_UIShutdown( DeathScreenMenu_Shutdown )
 	AddUICallback_OnResolutionChanged( DeathScreenMenu_OnResolutionChanged )
@@ -88,39 +92,39 @@ void function InitDeathScreenMenu( var newMenuArg )
 
 void function InitDeathScreenPanelFooter( var panel, int panelID )
 {
-	                   
+
 	AddPanelFooterOption( panel, RIGHT, BUTTON_START, true, "#BUTTON_OPEN_MENU", "#BUTTON_OPEN_MENU", DeathScreenTryOpenSystemMenu, DeathScreenShowMenuButton )
 	AddPanelFooterOption( panel, RIGHT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK", null, DeathScreenShowNavBack )
 
 
-	                  
+
 	AddPanelFooterOption( panel, RIGHT, KEY_SPACE, true, "#BUTTON_LOBBY_RETURN", "#BUTTON_LOBBY_RETURN", DeathScreenLeaveGameDialog, DeathScreenShowLobbyButton )
 	AddPanelFooterOption( panel, RIGHT, KEY_SPACE, true, "", "#SPACE_LOBBY_RETURN", DeathScreenLeaveGameDialog, DeathScreenShowLobbySpace )
 
 	#if PC_PROG
-		                                                  
+
 		AddPanelFooterOption( panel, RIGHT, KEY_ENTER, false, "", "", UI_OnLoadoutButton_Enter )
 	#endif
 
-	                            
+
 	switch( panelID )
 	{
 		case eDeathScreenPanel.DEATH_RECAP:
 			AddPanelFooterOption( panel, RIGHT, BUTTON_STICK_RIGHT, true, "#BUTTON_REPORT_PLAYER", "#BUTTON_REPORT_PLAYER", DeathScreenOnReportButtonClick, DeathRecapCanReportPlayer )
 			AddPanelFooterOption( panel, RIGHT, BUTTON_STICK_LEFT, true, "#BUTTON_BLOCK_PLAYER", "#BUTTON_BLOCK_PLAYER", DeathScreenOnBlockButtonClick, CanBlockPlayer )
-                           
+
 				AddPanelFooterOption( panel, LEFT, BUTTON_X, true, "#X_BUTTON_SKIP", "#X_BUTTON_SKIP", DeathScreenSkipRecap, CanSkipRecap )
-         
+
 			break
 
 		case eDeathScreenPanel.SPECTATE:
 			AddPanelFooterOption( panel, RIGHT, BUTTON_STICK_RIGHT, true, "#BUTTON_REPORT_PLAYER", "#BUTTON_REPORT_PLAYER", DeathScreenOnReportButtonClick, CanReportPlayer )
-			                                                                                                                                              
-			                                                                                                                                                              
-			                
+
+
+
 			AddPanelFooterOption( panel, LEFT, BUTTON_X, true, "#DEATH_SCREEN_NEXT_SPECTATE", "#DEATH_SCREEN_NEXT_SPECTATE", DeathScreenSpectateNext, DeathScreenCanChangeSpectateTarget )
 
-			                      
+
 			string gladCardMessageString = "#SPECTATE_HIDE_BANNER"
 			if ( !IsGladCardShowing() )
 				gladCardMessageString = "#SPECTATE_SHOW_BANNER"
@@ -132,18 +136,18 @@ void function InitDeathScreenPanelFooter( var panel, int panelID )
 			AddPanelFooterOption( panel, LEFT, BUTTON_A, true, "#HINT_PING_GLADIATOR_CARD", "#HINT_PING_GLADIATOR_CARD", DeathScreenPingRespawn, DeathScreenRespawnWaitingForPickup )
 			AddPanelFooterOption( panel, LEFT, BUTTON_A, true, "#HINT_PING_RESPAWN_BEACON", "#HINT_PING_RESPAWN_BEACON", DeathScreenPingRespawn, DeathScreenRespawnWaitingForDelivery )
 
-                      
+
 				AddPanelFooterOption( panel, LEFT, BUTTON_A, true, "#HINT_PING_NEAREST_REPLICATOR", "#HINT_PING_NEAREST_REPLICATOR", DeathScreenPingReplicator, DeathScreenRespawnWaitingForBannerCraft )
-         
+
 
 			break
 
 		case eDeathScreenPanel.SQUAD_SUMMARY:
 			break
 		case eDeathScreenPanel.SCOREBOARD:
-                           
+
 				AddPanelFooterOption( panel, LEFT, BUTTON_X, true, "#X_BUTTON_SKIP", "#X_BUTTON_SKIP", DeathScreenSkipRecap, CanSkipRecap )
-         
+
 			break
 
 		default:
@@ -152,10 +156,10 @@ void function InitDeathScreenPanelFooter( var panel, int panelID )
 
 #if DEVELOPER
 	AddMenuThinkFunc( Hud_GetParent( panel ), DeathScreenPanelFooterAutomationThink )
-#endif       
+#endif
 
 #if NX_PROG || PC_PROG_NX_UI
-	                                                                                  
+
 	if( panelID !=  eDeathScreenPanel.SCOREBOARD )
 	{
 		UISize screenSize   = GetScreenSize()
@@ -183,10 +187,10 @@ void function DeathScreenMenuOnOpen()
 		TabData tabData = GetTabDataForPanel( file.menu )
 		tabData.centerTabs = true
 
-		spectateTab = AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenSpectate" ), "#DEATH_SCREEN_SPECTATE" )		    
-		recapTab = AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenRecap" ), "#DEATH_SCREEN_RECAP" )			    
+		spectateTab = AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenSpectate" ), "#DEATH_SCREEN_SPECTATE" )
+		recapTab = AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenRecap" ), "#DEATH_SCREEN_RECAP" )
 		scoreboardTab = AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenGenericScoreboardPanel" ), "#TAB_SCOREBOARD" )
-		squadSummaryTab = AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenSquadSummary" ), "#DEATH_SCREEN_SUMMARY" )	    
+		squadSummaryTab = AddTab( file.menu, Hud_GetChild( file.menu, "DeathScreenSquadSummary" ), "#DEATH_SCREEN_SUMMARY" )
 
 		SetTabBaseWidth( recapTab, 245 )
 		SetTabBaseWidth( spectateTab, 200 )
@@ -223,20 +227,20 @@ void function DeathScreenMenuOnOpen()
 	SetTabNavigationEnabled( file.menu, true )
 
 	var screenBlur = Hud_GetChild( file.menu, "ScreenBlur" )
-	HudElem_SetRuiArg( screenBlur, "startTime", ClientTime(), eRuiArgType.GAMETIME )                                                                                           
+	HudElem_SetRuiArg( screenBlur, "startTime", ClientTime(), eRuiArgType.GAMETIME )
 
-  	                                         
+
 
 	file.menuOpenTime = UITime()
-	                               
+
 	file.respawnStatus = 0
 	file.spectateTargetCount = 0
-	file.shouldShowSkip = true                                                   
+	file.shouldShowSkip = true
 
 	UISize screenSize = GetScreenSize()
 	SetCursorPosition( <1920.0 * 0.5, 1080.0 * 0.5, 0> )
 
-	                                                                                                                                                                                          
+
 	RunClientScript( "UICallback_ToggleGladCard", file.isGladCardShowing )
 
 	RunClientScript( "UICallback_SetChangeLegendButton", DeathScreenGetChangeLegendButton() )
@@ -296,19 +300,19 @@ void function DeathScreenMenuOnClose()
 
 void function UI_OpenDeathScreenMenu( int tabIndex )
 {
-	                                                                  
-	                                                                                                              
+
+
 	CloseAllMenus()
 
 	if ( !MenuStack_Contains( file.menu ) )
 	{
 		AdvanceMenu( file.menu )
-		                                               
+
 	}
 
 	EnableDeathScreenTab_Internal( tabIndex, true )
 
-	                                                                 
+
 	TabData tabData = GetTabDataForPanel( file.menu )
 	ActivateTab( tabData, tabIndex )
 }
@@ -316,7 +320,7 @@ void function UI_OpenDeathScreenMenu( int tabIndex )
 
 void function UI_CloseDeathScreenMenu()
 {
-	                                           
+
 
 	if ( GetActiveMenu() == file.menu )
 	{
@@ -326,12 +330,12 @@ void function UI_CloseDeathScreenMenu()
 	{
 		if( IsDialog( GetActiveMenu() ) )
 		{
-			                                                                                                  
+
 			CloseAllMenus()
 		}
 		else
 		{
-			                                                                                                                                                
+
 			MenuStack_Remove( file.menu )
 			DeathScreenMenuOnClose()
 		}
@@ -341,7 +345,7 @@ void function UI_CloseDeathScreenMenu()
 
 void function UI_EnableDeathScreenTab( int tabIndex, bool enable )
 {
-	                                                           
+
 	EnableDeathScreenTab_Internal( tabIndex, enable )
 }
 
@@ -375,7 +379,7 @@ void function EnableDeathScreenTab_Internal( int tabIndex, bool enable )
 			break
 	}
 
-	                                                                            
+
 
 
 	TabData tabData = GetTabDataForPanel( file.menu )
@@ -386,7 +390,7 @@ void function EnableDeathScreenTab_Internal( int tabIndex, bool enable )
 
 	if ( !enable && tabData.activeTabIdx == tabIndex )
 	{
-		                                                                                   
+
 		DeactivateTab( tabData )
 	}
 }
@@ -394,7 +398,7 @@ void function EnableDeathScreenTab_Internal( int tabIndex, bool enable )
 
 void function UI_SwitchToDeathScreenTab( int tabIndex )
 {
-	                                                     
+
 
 	if ( !MenuStack_Contains( file.menu ) )
 		return
@@ -403,12 +407,12 @@ void function UI_SwitchToDeathScreenTab( int tabIndex )
 
 	TabData tabData = GetTabDataForPanel( file.menu )
 
-	                                                                           
+
 
 	if ( tabData.activeTabIdx != tabIndex )
 		ActivateTab( tabData, tabIndex )
-	      
-	  	                                   
+
+
 }
 
 
@@ -416,7 +420,7 @@ void function UI_DeathScreenFadeInBlur( bool fadeInBlur )
 {
 	float startTime = fadeInBlur ? ClientTime() : 0.0
 
-	                                                                           
+
 
 	var screenBlur = Hud_GetChild( file.menu, "ScreenBlur" )
 	HudElem_SetRuiArg( screenBlur, "startTime", startTime, eRuiArgType.GAMETIME )
@@ -425,10 +429,10 @@ void function UI_DeathScreenFadeInBlur( bool fadeInBlur )
 
 void function UI_SetDeathScreenTabTitle( int tabIndex, string title )
 {
-	                                           
+
 	if ( !MenuStack_Contains( file.menu ) )
 	{
-		                                 
+
 		return
 	}
 
@@ -462,7 +466,7 @@ void function UI_SetDeathScreenTabTitle( int tabIndex, string title )
 
 void function UI_SetCanShowGladCard( bool canShowGladCard )
 {
-	                                                        
+
 
 	if ( file.canShowGladCard == canShowGladCard )
 		return
@@ -474,7 +478,7 @@ void function UI_SetCanShowGladCard( bool canShowGladCard )
 
 void function UI_SetAllowGladCard( bool allowGladCard )
 {
-	                                                      
+
 
 
 	if ( file.allowGladCard == allowGladCard )
@@ -487,7 +491,7 @@ void function UI_SetAllowGladCard( bool allowGladCard )
 
 void function UI_SetShouldShowSkip( bool shouldShowSkip )
 {
-	                                                      
+
 	file.shouldShowSkip = shouldShowSkip
 	UpdateFooterOptions()
 }
@@ -495,7 +499,7 @@ void function UI_SetShouldShowSkip( bool shouldShowSkip )
 
 void function UI_SetIsEliminiated( bool isEliminated)
 {
-	                                                   
+
 	file.isEliminated = isEliminated
 	UpdateFooterOptions()
 }
@@ -507,17 +511,42 @@ void function UI_DeathScreenSetRespawnStatus( int respawnStatus )
 	UpdateFooterOptions()
 }
 
-                   
+void function UI_RequeueStatusChanged( bool canRequeue, bool fullPartyConnected )
+{
+	if ( file.canRequeue && !canRequeue )
+		MatchRequeueCancel()
+
+	file.canRequeue = canRequeue
+	file.fullPartyConnectedForRequeue = fullPartyConnected
+}
+
+bool function UI_IsReadyForRequeue()
+{
+	if( GameModeVariant_IsActiveForPlaylist( GetCurrentPlaylistName(), eGameModeVariants.SURVIVAL_RANKED ) )
+	{
+		return false
+	}
+
+	return ( file.isEliminated || GetGameState() >= eGameState.WinnerDetermined ) &&
+		IsMatchmakingFromMatchAllowed( GetLocalClientPlayer() ) &&
+		!LeaveMatch_WasInitiated()
+}
+
+bool function UI_IsFullPartyConnectedForRequeue()
+{
+	return file.fullPartyConnectedForRequeue
+}
+
 void function UI_DeathScreenSetBannerCraftingStatus( bool bannerCanBeCrafter )
 {
 	file.bannerCanBeCrafted = bannerCanBeCrafter
 }
-      
+
 
 
 void function UI_DeathScreenSetSpectateTargetCount( int targetCount )
 {
-	                                                                   
+
 	file.spectateTargetCount = targetCount
 	UpdateFooterOptions()
 }
@@ -548,7 +577,7 @@ void function UI_DeathScreenSetBlockPlayer( string eaid, string hardware )
 
 void function UI_DeathScreenUpdateHeader()
 {
-	                                            
+
 
 	var headerElement = Hud_GetChild( file.menu, "Header" )
 	RunClientScript( "UICallback_UpdateHeader", headerElement )
@@ -562,7 +591,7 @@ void function UI_DeathScreenHideTabs( bool hide )
 
 void function UI_OnLoadoutButton_Enter( var button )
 {
-	                                 
+
 
 	var panel   = _GetActiveTabPanel( file.menu )
 	var chatbox = Hud_GetChild( panel, "LobbyChatBox" )
@@ -641,7 +670,7 @@ void function DeathScreenMenuOnNavBack()
 			}
 			else
 			{
-				if( GetGameState() < eGameState.Playing )                                   
+				if( GetGameState() < eGameState.Playing )
 					UI_CloseDeathScreenMenu()
 				else
 					ActivateTab( tabData, eDeathScreenPanel.SPECTATE )
@@ -678,11 +707,11 @@ bool function DeathScreenShowLobbyButton()
 
 bool function DeathScreenCanLeaveMatch()
 {
-	                                         
+
 	if ( GetGameState() >= eGameState.Resolution )
 		return true
 
-	                                                     
+
 	if ( GetGameState() >= eGameState.WinnerDetermined )
 		return false
 
@@ -724,7 +753,7 @@ bool function DeathScreenRespawnWaitingForDelivery()
 	return file.respawnStatus == eRespawnStatus.WAITING_FOR_DELIVERY
 }
 
-                   
+
 bool function DeathScreenRespawnWaitingForBannerCraft()
 {
 	if( file.respawnStatus == eRespawnStatus.PICKUP_DESTROYED && file.bannerCanBeCrafted )
@@ -732,7 +761,7 @@ bool function DeathScreenRespawnWaitingForBannerCraft()
 
 	return false
 }
-      
+
 
 bool function DeathScreenCanChangeSpectateTarget()
 {
@@ -757,12 +786,12 @@ void function DeathScreenPingRespawn( var button )
 	RunClientScript( "UICallback_TryPingRespawn" )
 }
 
-                   
+
 void function DeathScreenPingReplicator( var button )
 {
 	RunClientScript( "UICallback_TryPingReplicator" )
 }
-      
+
 
 void function DeathScreenLeaveGameDialog( var button )
 {
@@ -796,20 +825,20 @@ bool function CanSkipDeathCam()
 	if ( GetGameState() > eGameState.Playing )
 		return false
 
-                         
+
 	if ( IsFullyConnected() && Control_IsModeEnabled() )
 		return false
-       
 
-                         
+
+
 	if ( IsFullyConnected() && GetCurrentPlaylistVarBool( "freedm_gun_game_active", false ) )
 		return false
-       
 
-                           
-                                                       
-               
-       
+
+
+
+
+
 
 	return file.shouldShowSkip
 }
@@ -822,10 +851,10 @@ bool function CanSkipRecap()
 	if( !IsConnected() )
 		return false
 
-                         
+
 	if ( Control_IsModeEnabled() )
 		return true
-       
+
 
 
 	return false
@@ -843,7 +872,7 @@ bool function CanBlockPlayer()
 	if ( !CrossplayUserOptIn() )
 		return false
 
-	if ( IsUserOnSamePlatform( file.blockHardware ) )  
+	if ( IsUserOnSamePlatform( file.blockHardware ) )
 		return false
 
 	if ( file.blockEAID == "" )
@@ -869,7 +898,7 @@ void function DeathScreenOnBlockButtonClick( var button )
 	}
 	else
 	{
-		                                    
+
 		RunClientScript( "UICallback_BlockPlayer" )
 	}
 }
@@ -884,7 +913,7 @@ void function DeathScreenOnReportButtonClick( var button )
 	}
 	else
 	{
-		                                    
+
 		RunClientScript( "UICallback_ReportPlayer" )
 	}
 }
@@ -922,7 +951,7 @@ void function DeathScreenUpdateCursor()
 	}
 	else if ( !IsGamepadCursorEnabled( file.menu ) )
 	{
-		                                                                              
+
 		ShowGameCursor()
 		SetCursorPosition( <1920.0 * 0.5, 1080.0 * 0.5, 0> )
 		SetGamepadCursorEnabled( file.menu, true )
@@ -932,16 +961,16 @@ void function DeathScreenUpdateCursor()
 
 void function DeathScreenSkipDeathCam( var button )
 {
-	                                         
 
-	                                                                                              
+
+
 	if ( CanSkipDeathCam () )
 		Remote_ServerCallFunction( "ClientCallback_SkipDeathCam" )
 }
 
 void function DeathScreenSkipRecap( var button )
 {
-	                                         
+
 	if ( CanSkipRecap () )
 	{
 		Remote_ServerCallFunction( "ClientCallback_SkipDeathCam" )
@@ -1013,7 +1042,7 @@ void function DevExit( var button )
 
 void function ShowBanner()
 {
-	                        
+
 
 	var headerElement = Hud_GetChild( file.menu, "Header" )
 	RunClientScript( "DEV_UICallback_UpdateHeader", headerElement )
@@ -1030,4 +1059,4 @@ void function DeathScreenPanelFooterAutomationThink( var menu )
 		DeathScreenLeaveGameDialog( null )
 	}
 }
-#endif       
+#endif

@@ -193,7 +193,7 @@ void function GamemodeUtility_Init()
 
 		if ( Bleedout_GetIsBleedoutDamageBlocked() )
 			BleedoutState_AddCallback_OnPlayerBleedoutStateChanged( GamemodeUtility_OnBleedoutStateChanged )
-		
+
 		// If we are going to be overriding healing for finishers or revives we need to precache the vfx that will be used
 		if ( GamemodeUtility_ShouldOverrideHealingOnFinisher() || GamemodeUtility_ShouldOverrideHealingOnRevived() )
 		{
@@ -201,13 +201,13 @@ void function GamemodeUtility_Init()
 			PrecacheParticleSystem( FX_HEAL_HEALED_FP )
 			file.didPrecacheHealFX = true
 		}
-	                      
+
 		if ( GamemodeUtility_GetMixtapeAbandonPenaltyActive() )
 		{
 			SetAbandonCheckFunc( GamemodeUtility_IsPlayerAbandoning )
 			MatchBehaviorPlayer_AddEndedCallback( GamemodeUtility_OnMatchBehaviorEndHandlePlayerAbandon)
 		}
-                                 
+
 
 		if ( GamemodeUtility_ShouldPingVictimSquadLocationOnDown() )
 			Bleedout_AddCallback_OnPlayerStartBleedout( GamemodeUtility_PingVictimSquadMapLocationOnPlayerDowned )
@@ -870,10 +870,10 @@ void function RunVictimSquadMapScan_Thread( int victimTeam )
 		// Show the markers on the map
 		foreach( entity victim in scanEntsArray )
 		{
-                        
-                                       
-             
-         
+
+
+
+
 
 			// Full map
 			var fRui = FullMap_AddEnemyLocation( victim )
@@ -1313,7 +1313,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 				break
 			case eLootType.ARMOR:
 					currentEquipmentRef = ""
-				                    
+
 					{
 						string currentArmor = ArmorData_Get( player ).armorLevel
 						// Use the armor level if the player has armor, otherwise set the level to 0
@@ -1340,7 +1340,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 		{
 			continue
 		}
-	                    
+
 		else if ( guaranteedEquipmentTier > currentEquipmentTier ) // If the guaranteed equipment is better, add it to an array to give to the player
 		{
 		 	equipmentToGive.append( guaranteedEquipmentData.ref )
@@ -1508,9 +1508,9 @@ void function GamemodeUtility_SetCircleCullEnts()
 	// World's Edge Vault Panels are linked to some prop_door's
 	CircleCullScriptName( "LootVaultPanel" )
 
-	                  
+
 		CircleCullScriptName( "ShipVaultPanel" )
-                         
+
 
 	// Big memory users, but difficult to remove easily
 	// Lots of level script requires these entities:
@@ -1545,8 +1545,8 @@ void function GamemodeUtility_MatchTimeLimit_Thread( float matchTimeLimit  )
 
 	printt( "GAMEMODE UTILITY: Starting GamemodeUtility_MatchTimeLimit_Thread at " + Time() + " Match Time Limit is set to " + matchTimeLimit )
 
-	SetGlobalNonRewindNetTime( GAMEMODEUTILITY_NETVAR_MATCH_START, Time() )
-	SetGlobalNonRewindNetTime( GAMEMODEUTILITY_NETVAR_MATCH_END, Time() + matchTimeLimit )
+	SetGlobalNetTime( GAMEMODEUTILITY_NETVAR_MATCH_START, Time() )
+	SetGlobalNetTime( GAMEMODEUTILITY_NETVAR_MATCH_END, Time() + matchTimeLimit )
 
 	float timeToWaitForMatchLimitWarningMessage = matchTimeLimit - GamemodeUtility_GetMatchTimeLimitWarning()
 
@@ -1675,7 +1675,7 @@ void function GamemodeUtility_ServerCallback_PlayMatchEndingCountdownAudio_Threa
 {
 	if ( IsValid( clGlobal.levelEnt ) )
 		EndSignal( clGlobal.levelEnt, "OnDestroy" )
-	
+
 	int secondsElapsed = 0
 	while ( secondsElapsed < GAMEMODEUTILITY_FINAL_COUNTDOWN_DURATION )
 	{
@@ -2132,12 +2132,12 @@ void function GamemodeUtility_GamemodeSetWinnerCommon_Thread( int winningTeamOrA
 	{
 		if ( IsValid( player ) )
 		{
-			                  
+
 			if ( IsNessieEEActive() )
 			{
 				Wattson_TT_Check_Victory( player )
 			}
-         
+
 
 			player.SetInvulnerable()
 			StopDialogueForPlayer( player )
@@ -2208,10 +2208,10 @@ void function GamemodeUtility_GamemodeSetWinnerCommon_Thread( int winningTeamOrA
 			// The next functions need a valid player
 			if ( player.GetTeam() != TEAM_SPECTATOR )
 			{
-				                      
+
 					if ( MatchBehaviorPlayer_HasStarted( player ) && !MatchBehaviorPlayer_HasEnded( player ) )
 						MatchBehaviorPlayer_Ended( player, false )
-                                
+
 
 				// Match participation tracking — player.p fields not in ServerPlayerStruct
 				// if ( player.p.hasMatchParticipationStarted && !player.p.hasMatchParticipationEnded )
@@ -2238,7 +2238,7 @@ bool function GamemodeUtility_IsWinnerBeingDetermined()
 }
 #endif // SERVER
 
-                      
+
 #if SERVER
 void function GamemodeUtility_OnMatchBehaviorEndHandlePlayerAbandon(entity  player, bool wasUnexpectedDisconnect )
 {
@@ -2274,9 +2274,9 @@ void function GamemodeUtility_OnMatchBehaviorEndHandlePlayerAbandon(entity  play
 
 }
 #endif // SERVER
-                            
 
-                      
+
+
 #if CLIENT || SERVER
 bool function GamemodeUtility_IsPlayerAbandoning( entity player )
 {
@@ -2295,7 +2295,7 @@ bool function GamemodeUtility_IsPlayerAbandoning( entity player )
 	return true
 }
 #endif // CLIENT || SERVER
-                            
+
 
 #if CLIENT || SERVER
 int function GamemodeUtility_GetAbandonPenaltyLength( entity player )
@@ -2840,7 +2840,7 @@ LootData function GamemodeUtility_GetPlayerArmorData( entity player )
 		{
 			shieldsContainedInArmor = EvolvingArmor_GetEvolvingArmorHealthForTier( armorData.tier )
 		}
-		                    
+
 		armorData.extraData[ eExtraDataType.INT_ARMOR_SHIELDS ] <- shieldsContainedInArmor
 	}
 
@@ -3157,13 +3157,13 @@ void function GamemodeUtility_ResetPlayer_Thread( entity player )
 
 	WaitFrame()
 
-	                     
+
 		if ( HoverVehicle_IsPlayerInAnyVehicle( player ) )
 		{
 			Vehicle_KickPlayer_ForOtherReason( player )
 			WaitFrame()
 		}
-       
+
 
 	if ( player.Player_IsFreefalling() ) // Player_IsSkydiving() renamed to Player_IsFreefalling()
 	{

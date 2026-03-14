@@ -4,7 +4,6 @@ global function GameState_Init
 global function InitGameState
 
 global function SetRoundBased
-global function SetCustomIntroLength
 
 global function SetGetDifficultyFunc
 global function GetDifficultyLevel
@@ -27,16 +26,7 @@ struct
 	int functionref() difficultyFunc
 } file
 
-global enum eWinReason
-{
-	DEFAULT,
-	SCORE_LIMIT,
-	TIME_LIMIT,
-	ELIMINATION
-}
-
-
-function GameState_Init()
+void function GameState_Init()
 {
 	FlagInit( "GamePlaying" )
 	FlagInit( "DisableTimeLimit" )
@@ -98,11 +88,16 @@ function GameState_Init()
 
 	file.difficultyFunc = DefaultDifficultyFunc
 
-	#if MP
+	GameState_Init_MP()
 	AddCallback_EntitiesDidLoad( GameState_EntitiesDidLoad )
-	#endif
+	AddCallback_OnClientConnected( OnPlayerConnected )
+	AddCallback_OnPlayerChangedTeam( GameState_OnPlayerChangedTeam )
 }
 
+void function OnPlayerConnected(entity player)
+{
+	player.SetPersistentVar( "lastGameWasHeadToHead", GameModeVariant_IsActive( eGameModeVariants.FREEDM_TDM ) )
+}
 
 int function DefaultDifficultyFunc()
 {
@@ -119,21 +114,14 @@ void function SetGetDifficultyFunc( int functionref() difficultyFunc )
 
 // This function is meant to init stuff that _gamestate uses, as opposed
 // to stuff that any particular gamestate like Playing uses
-function InitGameState()
+void function InitGameState()
 {
-	#if MP
-		PIN_GameStart()
-	#endif
+	//
 }
 
-function SetRoundBased( state )
+void function SetRoundBased( state )
 {
 	level.nv.roundBased = state
-}
-
-function SetCustomIntroLength( time )
-{
-	level.customIntroLength = time
 }
 
 int function GetDifficultyLevel()

@@ -3035,6 +3035,8 @@ void function UpdateDailyChallenges( entity player, bool forceNew = false )
 	Assert( dailyChallengePool.len() >= numDailiesToAssign, "Not enough daily challenges in the pool to assign new unique daily challenges" )
 	dailyChallengePool.randomize()
 
+	return // -fix this for challenges - kral
+	
 	// User doesn't have enough dailies assigned, fill the open slots
 	while( currentDailies.len() < numDailiesToAssign )
 	{
@@ -3645,7 +3647,7 @@ void function UpdateWeeklyRecurringChallenges( entity player, bool reinitialize 
 		AssignChallengeToPlayer( player, challenge )
 		assignedRecurringChallenges.append( challenge )
 	}
-
+	return // fix this for challenges -kral
 	if ( activePass != null )
 	{
 		expect ItemFlavor( activePass ) // expect is scoped

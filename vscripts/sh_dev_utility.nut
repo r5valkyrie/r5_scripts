@@ -600,7 +600,7 @@ void function DevRespawnPlayer( entity player, bool shouldForce, void functionre
 		//player.p.hasMatchParticipationEnded = false // they're still going!
 		//player.p.lastDeathTime = -1.0
 		ClearPlayerEliminated( player )
-		DecideRespawnPlayer( player )
+		DecideRespawnPlayer( player, false )
 	}
 	if ( devCallbackFunc != null )
 	{

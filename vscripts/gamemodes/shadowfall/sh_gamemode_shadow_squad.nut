@@ -318,7 +318,7 @@ void function ServerCallback_PlayerLandedNOCAudio( bool legendalive )
 		entity clientPlayer = GetLocalClientPlayer()
 		if ( !IsValid( clientPlayer ) )
 			return
-			
+
 		if ( legendalive )
 		{
 			array <string> legendlandedsafely
@@ -338,15 +338,15 @@ void function ServerCallback_PlayerLandedNOCAudio( bool legendalive )
 			dialogueChoices2.randomize()
 			thread EmitSoundOnEntity( clientPlayer, dialogueChoices2.getrandom())
 		}
-		
+
 }
 void function ServerCallback_MoreNOCAudio( int index )
 {
 	entity clientPlayer = GetLocalClientPlayer()
-	
+
 	if ( !IsValid( clientPlayer ) )
 		return
-	
+
 	switch(index)
 	{
 		case 0:
@@ -356,15 +356,15 @@ void function ServerCallback_MoreNOCAudio( int index )
 		dialogueChoices.append( "diag_ap_nocNotify_legendWin_03_3p" )
 		thread EmitSoundOnEntity( clientPlayer, dialogueChoices.getrandom())
 		break
-		
+
 		case 1:
 		array <string> dialogueChoices
 		dialogueChoices.append( "diag_ap_nocNotify_shadowSquadWin_01_3p" )
 		dialogueChoices.append( "diag_ap_nocNotify_shadowSquadWin_02_3p" )
 		dialogueChoices.append( "diag_ap_nocNotify_shadowSquadWin_03_3p" )
 		thread EmitSoundOnEntity( clientPlayer, dialogueChoices.getrandom())
-		break	
-	
+		break
+
 	// 4390,diag_ap_nocNotify_revengeKill_01_01_3p
 // 4391,diag_ap_nocNotify_revengeKill_01_02_3p
 // 4392,diag_ap_nocNotify_revengeKill_01_03_3p
@@ -443,7 +443,7 @@ void function ServerCallback_ShadowClientEffectsEnable( entity player, bool enab
 void function GivePlayerShadowSkin(entity player)
 {
 	wait 0.01
-	
+
 	if ( !IsValid( player ) )
 		return
 
@@ -455,7 +455,7 @@ void function LegendIsDied( entity player, entity enemy )
 {
 	wait 0.01
 	if(!IsValid(player)) return
-	
+
 	if ( IsValid(enemy) && IsPlayerShadowSquad( enemy ) )
 		enemy.SetHealth( 30 )
 	else if ( IsPlayerShadowSquad( player ) )
@@ -464,25 +464,25 @@ void function LegendIsDied( entity player, entity enemy )
 	player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_DELIVERY )
 	//Remote_CallFunction_NonReplay( player, "ServerCallback_ShowDeathScreen" )
 	Remote_CallFunction_ByRef( player, "ServerCallback_ShowDeathScreen" )
-	
+
 	EmitSoundOnEntityOnlyToPlayer( player, player, "Music_LTM_31_RespawnAndDrop" )
 
 	wait 5.0
 	if(!IsValid(player)) return
-	
-	DecideRespawnPlayer( player )
+
+	DecideRespawnPlayer( player, false )
 	thread GivePlayerShadowSkin( player )
 	thread GivePlayerShadowPowers( player )
 	player.SetOrigin( <RandomIntRange( -26000, 26000 ), RandomIntRange( -26000, 26000 ), 26000> )
 	player.SetAngles( <24, RandomIntRange( -180, 180 ), 0> )
 	thread PlayerSkydiveFromCurrentPosition( player )
 	thread StartShadowFx( player )
-	
+
 	Remote_CallFunction_NonReplay( player, "ServerCallback_ShadowClientEffectsEnable", player, true )
 
 	wait 0.3
 	if(!IsValid(player)) return
-	
+
 	Remote_CallFunction_NonReplay( player, "ServerCallback_PlaySpectatorAudio", true )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_ModeShadowSquad_AnnouncementSplash", eShadowSquadMessage.RESPAWNING_AS_SHADOW, 10 )
 }
@@ -493,7 +493,7 @@ void function GivePlayerShadowPowers( entity player )
 		return
 
 	player.SetPlayerNetBool( "isPlayerShadowZombie", true )
-	
+
 	TakeAllPassives( player )
 	player.TakeOffhandWeapon(OFFHAND_MELEE)
 	player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
@@ -529,7 +529,7 @@ void function StartShadowFx( entity player )
 	player.p.shadowAttachedEntities.append(bodyFX)
 	bodyFX.SetOwner( player )
 	bodyFX.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) // Don't show the effects to owner
-	
+
 	//Find a way to disable ragdolls and death anims on shadows
 }
 
@@ -680,7 +680,7 @@ bool function IsPlayerShadowSquad( entity player )
 
 	if ( !player.IsPlayer() )
 		return false
-	
+
 	if( Gamemode() != eGamemodes.fs_infected )
 		return false
 
@@ -878,7 +878,7 @@ void function ServerCallback_ModeShadowSquad_AnnouncementSplash( int messageInde
 			messageText = "#SHADOW_SQUAD_RULES_TITLE2"
 			subText = "#SHADOW_SQUAD_RULES_SUB2"
 			break
-		
+
 		case eShadowSquadMessage.ALPHA_ZOMBIE_START:
 			array <string> dialogueChoices
 			dialogueChoices.append( "THE FIRST INFECTED" )
@@ -886,11 +886,11 @@ void function ServerCallback_ModeShadowSquad_AnnouncementSplash( int messageInde
 			dialogueChoices.append( "CHOSEN TO LEAD THE HORDE" )
 			dialogueChoices.append( "INFECTED LEGION RISES" )
 			dialogueChoices.randomize()
-			
+
 			messageText = dialogueChoices.getrandom()
 			subText = "Use your unique powers to lead the infected team to the victory"
 			leftIcon = ANNOUNCEMENT_SHADOW_ICON
-			rightIcon = ANNOUNCEMENT_SHADOW_ICON	
+			rightIcon = ANNOUNCEMENT_SHADOW_ICON
 		break
 
 		case eShadowSquadMessage.LAST_MAN_STANDING:
@@ -900,20 +900,20 @@ void function ServerCallback_ModeShadowSquad_AnnouncementSplash( int messageInde
 			dialogueChoices.append( "AGAINST ALL ODDS" )
 			dialogueChoices.append( "OUTLASTING THE INFECTED" )
 			dialogueChoices.randomize()
-			
+
 			messageText = dialogueChoices.getrandom()
 			subText = "You're the Last Survivor Standing, don't die!"
 		break
-		
+
 		case eShadowSquadMessage.RESPAWNING_AS_SHADOW:
-			
+
 			if( Gamemode() == eGamemodes.fs_infected )
 			{
 				if(GetPlayerArrayOfTeam_Alive(TEAM_IMC).len() == 1)
 					subText = "Infect the last Survivor"
 				else if(GetPlayerArrayOfTeam_Alive(TEAM_IMC).len() > 1)
 					subText = "Infect the Survivors"
-				
+
 				messageText = "RESPAWNED ON THE INFECTED SQUAD"
 			}
 			else
@@ -943,7 +943,7 @@ void function ServerCallback_ModeShadowSquad_AnnouncementSplash( int messageInde
 		case eShadowSquadMessage.INFECTION_HAS_STARTED:
 			messageText = "AN INFECTION IS EMERGING"
 			subText = "Remain as survivor to win"
-			
+
 			if( Gamemode() == eGamemodes.fs_infected )
 				subText = "              Choosing Alpha Infected.\nSurvive and take the EVAC ship to win."
 
@@ -958,7 +958,7 @@ void function ServerCallback_ModeShadowSquad_AnnouncementSplash( int messageInde
 			dialogueChoices.randomize()
 			messageText = "YOU SURVIVED THIS TIME"
 			subText = ""
-			
+
 			soundAlias = dialogueChoices.getrandom()
 			break
 		case eShadowSquadMessage.LEGENDS_WIN_INFECTION2:
@@ -972,9 +972,9 @@ void function ServerCallback_ModeShadowSquad_AnnouncementSplash( int messageInde
 				subText = "You failed to infect the last Survivor"
 			else if(GetPlayerArrayOfTeam_Alive(TEAM_IMC).len() > 1)
 				subText = "You failed to infect the Survivors"
-			
+
 			soundAlias = dialogueChoices.getrandom()
-			break			
+			break
 		case eShadowSquadMessage.EVAC_ARRIVED_LEGEND:
 			messageText = "#SHADOW_SQUAD_EVAC_HERE_TITLE"
 			subText = "#SHADOW_SQUAD_EVAC_HERE_SUB_LEGENDS"
@@ -1011,7 +1011,7 @@ void function ServerCallback_ModeShadowSquad_AnnouncementSplash( int messageInde
 			soundAlias = ""
 			if( Gamemode() == eGamemodes.fs_infected )
 			{
-				messageText = "INFECTED WIN"			
+				messageText = "INFECTED WIN"
 			}
 			leftIcon = ANNOUNCEMENT_SHADOW_ICON
 			rightIcon = ANNOUNCEMENT_SHADOW_ICON

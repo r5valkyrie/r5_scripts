@@ -40,6 +40,8 @@ global function GetPlaylistsInRotation
 global function GetPanelImageKeyForUISlot
 global function GetMapDisplayNameForUISlot
 global function GetCurrentPlaylistInUiSlot
+global function UpdateMatchmakeFromMatchPlaylist_Thread
+global function MatchRequeueCancel
 global function GetDefaultPlaylist
 global function PartyHasPlaylistAccountLevelRequired
 
@@ -556,6 +558,7 @@ asset function GetThumbnailImageFromImageMap( string keyName )
 asset function GetGamemodeLogoFromImageMap( string keyName )
 {
 	asset imageAsset = $"white"
+	keyName = ""
 	if ( keyName != "" )
 	{
 		bool foundLogo = false
@@ -576,9 +579,9 @@ asset function GetGamemodeLogoFromImageMap( string keyName )
 
 		if ( !foundLogo )
 		{
-			#if DEVELOPER
+			#if DEV
 				if ( GetConVarBool( "ui_automation_enabled" ) )
-					return imageAsset // skip the warning
+					return imageAsset                    
 			#endif       
 
 			Warning( "Invalid playlist value for 'image': %s", keyName )

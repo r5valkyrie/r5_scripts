@@ -18,6 +18,13 @@ global struct EliminatedPlayerData
 	int team
 }
 
+
+global struct PostMatchSurveySettings
+{
+	string matchId = ""
+	float sampleRateLowerBound = 1.0 // Don't post survey by default
+}
+
 table< string, EliminatedPlayerData > EliminatedPlayers = {}
 
 global struct OutOfBoundsDataStruct //Have to globalize it because all functions are globalized in this file :/
@@ -37,14 +44,21 @@ struct
 	table< entity, OutOfBoundsDataStruct > outOfBoundsTable
 	bool flowstate_allow_friendly_damage
 	string gameModeSpawnPointOverride = ""
+	PostMatchSurveySettings        	      surveySettings
 } file
 
 function BaseGametype_Init()
 {
 	file.flowstate_allow_friendly_damage = GetCurrentPlaylistVarBool( "flowstate_allow_friendly_damage", false )
-	
+
 	FlagInit( "APlayerHasSpawned" )
 	FlagInit( "PilotBot" )
+	FlagInit( "PlayerDidSpawn" )
+	FlagInit( "ReadyToStartMatch" )
+	FlagInit( "ForceStartSpawn" )
+	FlagInit( "devForcedTimeLimit" )
+	FlagSet( "ForceStartSpawn" )
+	FlagSet( "devForcedTimeLimit" )
 
 	if ( !reloadingScripts )
 	{
@@ -94,7 +108,7 @@ function BaseGametype_Init()
 
 	AddCallback_EntitiesDidLoad( BaseGametypeEntitiesDidLoad )
 
-	BaseGametype_Init_MPSP()
+	BaseGametype_Init_MP()
 	
 	if(GetCurrentPlaylistVarBool("enable_global_chat", true))
 	{
@@ -196,7 +210,9 @@ void function CodeCallback_OnPrecache()
 
 	if ( !IsMenuLevel() )
 	{
-		SetGameState( eGameState.WaitingForPlayers )
+		AddCallback_EntitiesDidLoad( void function() {
+			SetGameState( eGameState.WaitingForPlayers )
+		} )
 	}
 }
 
@@ -1139,7 +1155,7 @@ bool function ClientCommand_RespawnPlayer( entity player, array<string>args )
 		player.SetPersistentVar( "spawnAsTitan", false )
 	}
 
-	float deathCamLength = GetDeathCamLength()
+	float deathCamLength = GetDeathCamLength(player)
 	float skipBufferTime = 0.5
 	if ( Time() > (player.p.postDeathThreadStartTime + deathCamLength) - skipBufferTime )
 	{
@@ -1571,7 +1587,7 @@ function OnPlayerCloseClassMenu( entity player )
 	if ( IsValid( player.isSpawning ) )
 		return
 
-	thread DecideRespawnPlayer( player )	// there is a wait that happens later when using rematch burncard in Frontier Defense.
+	thread DecideRespawnPlayer( player, false )	// there is a wait that happens later when using rematch burncard in Frontier Defense.
 }
 
 //  playerconnected Reload
@@ -1589,9 +1605,6 @@ void function CodeCallback_OnClientReloadConnectionCompleted( entity player )
 
 bool function ShouldPlayerHaveLossProtection( entity player )
 {
-	if ( level.nv.matchProgress < GetCurrentPlaylistVarInt( "matchLossProtectionThreshold", 10 ) )
-		return false
-
 	if ( IsPrivateMatch() )
 		return false
 

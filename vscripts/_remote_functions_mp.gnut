@@ -7,6 +7,12 @@ global function AddCallback_OnNetworkRegistration
 global function GetNV_PreGameStartTime
 global function GetNV_FreefallIsFromPlane
 
+#if SERVER
+global function SetNV_PreGameStartTime
+global function SetNV_FreefallIsFromPlane
+#endif // SERVER
+
+
 global function FindFuncName_ByID
 global function FindFuncID_ByRef
 
@@ -447,6 +453,12 @@ void function RemoteFunctions_Init_Begin()
 	bool isOptInServer = Dev_CommandLineHasParm( "-optinserver" )
 	ScriptRegisterNetworkedVariable( "isOptInServer", SNDC_GLOBAL, SNVT_BOOL, isOptInServer )
 
+	ScriptRegisterNetworkedVariable( "gameStateChangeTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	ScriptRegisterNetworkedVariable( "gameStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	ScriptRegisterNetworkedVariable( "gameEndTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+	ScriptRegisterNetworkedVariable( "switchedSides", SNDC_GLOBAL, SNVT_INT, -1 )                                                                     
+	ScriptRegisterNetworkedVariable( "replayDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
+
 	// GAME STATE
 	RegisterServerVar( "gameStateChangeTime", null )
 	RegisterServerVar( "gameState", -1 )
@@ -455,6 +467,12 @@ void function RemoteFunctions_Init_Begin()
 	RegisterServerVar( "gameEndTime", 0.0 )
 	RegisterServerVar( "switchedSides", null )
 	RegisterServerVar( "replayDisabled", false )
+
+	//Round Winning Kill replay related
+	ScriptRegisterNetworkedVariable( "roundWinningKillReplayEnabled", SNDC_GLOBAL, SNVT_BOOL, false )
+	ScriptRegisterNetworkedVariable( "roundWinningKillReplayPlaying", SNDC_GLOBAL, SNVT_BOOL, false )
+	ScriptRegisterNetworkedVariable( "roundScoreLimitComplete", SNDC_GLOBAL, SNVT_BOOL, false )
+
 
 	// KILL REPLAY
 	RegisterServerVar( "roundWinningKillReplayEnabled", false )
@@ -579,8 +597,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "latency", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "damage", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
 
-	// "deaths" registered by GamemodeUtility_RegisterNetworking() for non-elimination modes
-	//ScriptRegisterNetworkedVariable( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	ScriptRegisterNetworkedVariable( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "assists", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
 	ScriptRegisterNetworkedVariable( "isHealing", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
@@ -763,6 +780,11 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayConversation", "int", 0, 2000 ) //Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlaySquadConversation", "int", 0, 2000, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025
 
+	ScriptRemote_RegisterClientFunction( "ServerCallback_GiveMatchLossProtection" )
+
+	Remote_RegisterClientFunction( "SCB_FiringRange_EnableCharacterChange", "bool" )
+	Remote_RegisterClientFunction( "SCB_FiringRange_SetPlayerInFinale", "bool" )
+
 	#if MODEL_VIEWER_ENABLED //todo revisit.
 		// Model Viewer
 		ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_MVUpdateModelBounds" )
@@ -833,7 +855,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterUntypedFunction_deprecated( "Tracker_ResyncStatForPlayer" )	
 		
 	//Lobby
-	Remote_RegisterServerFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason", "string" )
+	Remote_RegisterServerFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason" )
 	Remote_RegisterServerFunction( "ClientCallback_ViewingMainLobbyPage" )
 	
 	
@@ -945,6 +967,18 @@ bool function GetNV_FreefallIsFromPlane( entity player )
 {
 	return player.GetPlayerNetBool( "freefallIsFromPlane" )
 }
+
+#if SERVER
+void function SetNV_PreGameStartTime( float newVal )
+{
+	SetGlobalNetTime( "PreGameStartTime", newVal )
+}
+
+void function SetNV_FreefallIsFromPlane( entity player, bool newVal )
+{
+	return player.SetPlayerNetBool( "freefallIsFromPlane", newVal )
+}
+#endif // SERVER
 
 void function ByRef_ConsistencyCheck()
 {

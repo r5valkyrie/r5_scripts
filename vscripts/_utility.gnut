@@ -103,10 +103,6 @@ void function GiveAllTitans()
 	array<entity> players = GetPlayerArray()
 	foreach ( player in players )
 	{
-		#if MP
-		GiveTitanToPlayer( player )
-		#endif
-
 		if ( player.IsTitan() )
 		{
 			entity soul = player.GetTitanSoul()
@@ -821,9 +817,62 @@ void function TimeOut( float time )
 	delaythread( time ) Signal( Table, "OnDeath" )
 }
 
-string function GetActiveWeaponClass( entity player )
+void function SetReplayDisabled( bool disabled )
 {
-	entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	SetGlobalNetBool("replayDisabled", disabled)
+}
+
+void function SetSwitchedSides( int value )
+{
+	SetGlobalNetInt( "switchedSides", value )
+}
+
+void function SetGameStateChangeTime(float time)
+{
+	SetGlobalNetTime( "gameStateChangeTime", time )
+}
+
+void function SetGameStartTime(float time)
+{
+	SetGlobalNetTime( "gameStartTime", time )
+}
+
+void function SetGameEndTime( float time  )
+{
+	SetGlobalNetTime( "gameEndTime", time )
+}
+
+void function SetRoundStartTime( float time )
+{
+	SetGlobalNetTime( "roundStartTime", time )
+}
+
+void function SetRoundEndTime( float time )
+{
+	SetGlobalNetTime( "roundEndTime", time )
+}
+
+void function SetRoundsPlayed( int round )
+{
+	SetGlobalNetInt("roundsPlayed", round)
+}
+
+void function SetWinningTeam(int team)
+{
+	//
+	// Debug for series of bugs where the winning team is not a valid team - eg: R5DEV-507314
+	if( GameMode_IsActive( eGameModes.FREEDM ) && team >= TEAM_MULTITEAM_FIRST + MAX_TEAMS )
+	{
+		ForceScriptError( "Invalid TEAM was selected as winning team. team = " + team + ". MAX_TEAMS = " + MAX_TEAMS )
+	}
+	// End Debug
+
+	SetGlobalNetInt("winningTeam", team)
+}
+
+string function GetActiveWeaponClass( entity player, int activeSlot )
+{
+	entity weapon = player.GetActiveWeapon( activeSlot )
 	Assert( weapon != null )
 
 	string weaponclass = weapon.GetWeaponClassName()
@@ -1322,6 +1371,13 @@ void function AddCallback_GameStateEnter( int gameState, void functionref() call
 
 	svGlobal.gameStateEnterCallbacks[ gameState ].append( callbackFunc )
 }
+
+void function ExecuteSetPreGameStartTimeCallback()
+{
+	foreach ( void functionref() func in svGlobal.onSetPreGameStartTimeCallbacks )
+		func()
+}
+
 
 void function GM_SetObserverFunc( void functionref( entity ) callbackFunc )
 {
@@ -5488,6 +5544,23 @@ void function AddToUltimateRealm( entity player, entity offhandWeapon )
 	offhandWeapon.AddToOtherEntitysRealms( ultimateAbility )
 }
 
+void function SetPlayerSettings( entity player, asset settings, array<string> mods = [] )
+{
+	player.SetPlayerSettingsWithMods( settings, mods )
+	RunSettingsChangedFuncs( player, settings )
+}
+
+void function RunSettingsChangedFuncs( entity player, asset settings )
+{
+	if ( IsAlive( player ) && GetCurrentPlaylistVarInt( "pilot_health", 0 ) != 0 )
+	{
+		int pilotHealth = GetCurrentPlaylistVarInt( "pilot_health", 0 )
+
+		player.SetMaxHealth( pilotHealth )
+		player.SetHealth( pilotHealth )
+	}
+}
+
 void function UpdateDamageState( entity ent, var damageInfo )
 {
 	//stub
@@ -5663,21 +5736,6 @@ array<entity> function GetAllPlayersOfLockstepIndex( int index )
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-table< int, array<entity> > function GetAllPlayersSortedByTeam()
-{
-	table< int, array<entity> > groupedPlayers
-	
-	foreach ( player in GetPlayerArray() )
-	{
-		if ( !( player.GetTeam() in groupedPlayers ) )
-			groupedPlayers[player.GetTeam()] <- []
-		
-		groupedPlayers[player.GetTeam()].append( player )
-	}
-
-	return groupedPlayers
-}
-
 bool function IsMultiplayer()
 {
 	#if UI
@@ -6098,29 +6156,6 @@ void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 			default:
 				break
 		}
-	}
-}
-
-void function summonplayers()
-{
-	entity player0 = GetPlayerArray()[0]
-
-	vector pos = player0.GetOrigin()
-	pos.z += 5
-
-	int i = 0
-	foreach ( player in GetPlayerArray() )
-	{
-		if ( player == player0 )
-			continue
-
-		// circle
-		float r = float(i) / float(GetPlayerArray().len()) * 2 * PI
-		player.SetOrigin( pos + 500.0 * <sin( r ), cos( r ), 0.0> )
-
-		DecideRespawnPlayer( player )
-
-		i++
 	}
 }
 
@@ -7151,10 +7186,6 @@ void function AddUICallback_InputModeChanged( void functionref( bool ) callbackF
 {
 }
 
-void function AddCallback_Lobby_OnClientConnected( void functionref( entity ) callbackFunc )
-{
-}
-
 int function GetNetWinningTeam()
 {
 	return GetWinningTeam()
@@ -7166,11 +7197,6 @@ bool function IsGoldRushMode()
 }
 
 bool function IsStormPoint()
-{
-	return false
-}
-
-bool function IsMatchmakingFromMatchEnabled()
 {
 	return false
 }

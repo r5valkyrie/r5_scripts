@@ -2,9 +2,6 @@ global function Sh_Arenas_ItemRegistrationInit
 global function ShGamemodeArenas_Init
 global function ShArenas_RegisterNetworking
 
-global function GameMode_GetWinBy2MinScore
-global function GameMode_GetWinBy2MaxTies
-
 global function Arenas_SharedInit
 #if SERVER
 global function Arenas_ServerInit
@@ -591,16 +588,6 @@ void function Arenas_ClientInit()
 // Arenas needs 3 round wins, win-by-2 until 2 ties, then sudden death
 const int ARENAS_WIN_BY_2_MIN_SCORE = 3
 const int ARENAS_WIN_BY_2_MAX_TIES  = 2
-
-int function GameMode_GetWinBy2MinScore( string gameMode )
-{
-	return ARENAS_WIN_BY_2_MIN_SCORE
-}
-
-int function GameMode_GetWinBy2MaxTies( string gameMode )
-{
-	return ARENAS_WIN_BY_2_MAX_TIES
-}
 
 void function EntitiesDidLoad()
 {
@@ -3175,10 +3162,10 @@ void function SpawnAsh( vector ashColor, float heightOffset, float sideOffset, f
 
 	float forwardOffset = -20.0
 	float forwardOffsetNX = 35.0
-	
+
 	vector origin = backgroundModel.GetOrigin() + ( heightOffset * up) + ( forwardOffset * fwd ) + ( sideOffset * side )
 	vector newFwd = VectorRotateAxis( fwd, up, zRotation )
-	
+
 	int pIndex = GetParticleSystemIndex( ARENAS_ASH )
 	EffectStop( file.ashParticle, true, true )
 	file.ashParticle = StartParticleEffectInWorldWithHandle( pIndex, origin, AnglesCompose( VectorToAngles( newFwd ), <0,0,0> ) )

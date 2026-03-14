@@ -27,8 +27,9 @@ int lastSeenPremiumCurrency
 int xp
 int previousXP
 int credits
-int xp_match[20]
-int xp_count[20]
+int xp_match[25]
+int xp_count[25]
+int xp_bonus[25]
 int gen
 int netWorth
 
@@ -58,6 +59,7 @@ $ENUM_END
 
 $ENUM_START eQuestFlavor
 	SAID00070721943
+	SAID01527750958
 $ENUM_END
 
 $ENUM_START eMapZones
@@ -675,9 +677,10 @@ $STRUCT_START sChallengeData
 	int currentTier
 	int guid
 	int statMarker
+	int statMarkerAlt
 $STRUCT_END
 
-sChallengeData challenges[142]
+sChallengeData challenges[230]
 
 $STRUCT_START trackedSquadStats
 	string{32} playerName
@@ -704,8 +707,8 @@ $STRUCT_START sBattlePassData
 	int cachedPurchasedXP
 	int challengeRerollsUsed
 	int characterXP[eCharacterFlavor]
-	int xp_match[20]
-	int xp_count[20]
+	int xp_match[25]
+	int xp_count[25]
 	int earnedXP
 	int lastPopupLevel
 	int lastSeenEarnedXP
@@ -785,3 +788,36 @@ sFRSettingsData FRSettingsPVars
 
 string{32} lastPlaylist
 string{32} lastHubResetSeason
+int gamemodeSelectorInitializedSeasonGUID
+bool gamemodeSelectorSeenIndex[10]
+int installUnixTime
+int botGraduationState
+int lastTimePlayed
+int lastTimeLoggedIn
+int privateMatchState
+int behaviorHistory_nextIndex
+int currentBattlePassChallengeSeason
+int favoriteChallengeGUID[5]
+int weeklyRecurringLastResetWeek
+int lastGameTypeFlags
+int lastPartySize
+string{64} postMatchSurveyMatchId
+int postMatchSurveySampleRateLowerBound
+bool lastGameWasHeadToHead
+
+$STRUCT_START sPostGameChallengeData
+	int guid
+	int tierMatchStart
+	int progressMatchStart
+	int bonus
+	int mythicProgressBonus
+$STRUCT_END
+
+sPostGameChallengeData postGameChallengesProgress[230]
+
+$STRUCT_START sMatchBehaviorData
+	int behaviorFlags
+	int character
+$STRUCT_END
+
+sMatchBehaviorData behaviorHistory[20]
