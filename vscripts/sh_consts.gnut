@@ -218,7 +218,12 @@ global enum eDeathScreenPanel
 	NONE = -1,
 	SPECTATE,
 	DEATH_RECAP,
-	SQUAD_SUMMARY
+	SCOREBOARD,
+	SQUAD_SUMMARY,
+	SQUAD,
+	RANK,
+	CUP,
+	KILLREPLAY
 }
 
 global struct Cylinder
