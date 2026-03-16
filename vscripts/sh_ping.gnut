@@ -404,10 +404,8 @@ string function Ping_GetSoundForItemPing( int pingType, bool isOurs )
 void function ShPing_Init()
 {
 	AddCallback_RegisterRootItemFlavors( void function() {
-		foreach( var block in IterateSettingsAssetArray( $"settings/itemflavlist/pings.rpak", "list" ) )
-		{
-			ItemFlavor ornull pingOrNull = RegisterItemFlavorFromSettingsAsset( GetSettingsBlockAsset( block, "flavor" ) )
-		}
+		foreach ( asset pingAsset in GetBaseItemFlavorsFromArray( "pings" ) )
+			RegisterItemFlavorFromSettingsAsset( pingAsset )
 	} )
 	#if CLIENT
 		RegisterSignal( "UpdatePingBlockingHintAfterDelay" )
@@ -432,18 +430,6 @@ void function ShPing_Init()
 		AddClientCommandCallbackVoid( CMDNAME_PING_NEW_LOOT, ClientCommand_PingNewLoot )
 		AddClientCommandCallbackVoid( CMDNAME_PING_REPLY, ClientCommand_PingReply )
 		AddClientCommandCallbackVoid( CMDNAME_CANCEL_PING_BY_TICKETID, ClientCommand_CancelPingByTicketID )
-	#endif
-
-	#if CLIENT
-	AddCallback_RegisterRootItemFlavors( void function() {
-		foreach( var block in IterateSettingsAssetArray( $"settings/itemflavlist/pings.rpak", "list" ) )
-		{
-			ItemFlavor ornull pingOrNull = RegisterItemFlavorFromSettingsAsset( GetSettingsBlockAsset( block, "flavor" ) )
-			//if ( pingOrNull == null )
-			//	continue
-			//pingList.append( expect ItemFlavor(pingOrNull) )
-		}
-	} )
 	#endif
 }
 
