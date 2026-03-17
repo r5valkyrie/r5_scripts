@@ -34,7 +34,6 @@ global function ClientCallback_WeaponCosmeticsApply
 #if SERVER || CLIENT
 global function WeaponCosmetics_Apply
 global function WeaponCosmetics_ApplyModelAndSkin
-global function FS_ReturnLegendaryModelMapForWeaponFlavor
 #endif
 #if DEVELOPER && CLIENT
 global function DEV_TestWeaponSkinData
@@ -141,7 +140,7 @@ void function OnItemFlavorRegistered_LootMainWeapon( ItemFlavor weaponFlavor )
 		MakeItemFlavorSet( skinList, fileLevel.cosmeticFlavorSortOrdinalMap, true )
 		foreach( ItemFlavor skin in skinList )
 		{
-			SetupWeaponSkin( skin, weaponFlavor )
+			SetupWeaponSkin( skin )
 		}
 
 		LoadoutEntry entry = RegisterLoadoutSlot( eLoadoutEntryType.ITEM_FLAVOR, "weapon_skin_for_" + ItemFlavor_GetGUIDString( weaponFlavor ), eLoadoutEntryClass.WEAPON )
@@ -244,13 +243,13 @@ void function SetupWeaponCharm( ItemFlavor charm )
 {
 	asset charmModel = WeaponCharm_GetCharmModel( charm )
 
-	#if CLIENT
-		if ( charmModel != $"" )
+	#if SERVER || CLIENT
+		if ( charmModel != "" )
 			PrecacheModel( charmModel )
 	#endif
 }
 
-void function SetupWeaponSkin( ItemFlavor skin, ItemFlavor ornull parentWeapon = null )
+void function SetupWeaponSkin( ItemFlavor skin )
 {
 	if ( ItemFlavor_IsTheFavoriteSentinel( skin ) )
 		return
@@ -264,12 +263,7 @@ void function SetupWeaponSkin( ItemFlavor skin, ItemFlavor ornull parentWeapon =
 		if ( viewModel != $"" )
 			PrecacheModel( viewModel )
 
-		// Use passed parent weapon if available, otherwise read from settings
-		ItemFlavor weaponFlavor
-		if ( parentWeapon != null )
-			weaponFlavor = expect ItemFlavor( parentWeapon )
-		else
-			weaponFlavor = WeaponSkin_GetWeaponFlavor( skin )
+		ItemFlavor weaponFlavor = WeaponSkin_GetWeaponFlavor( skin )
 
 		if ( !(weaponFlavor in fileLevel.weaponModelLegendaryIndexMapMap) )
 			fileLevel.weaponModelLegendaryIndexMapMap[weaponFlavor] <- {}
@@ -290,13 +284,6 @@ void function SetupWeaponSkin( ItemFlavor skin, ItemFlavor ornull parentWeapon =
 		}
 
 		fileLevel.weaponSkinLegendaryIndexMap[skin] <- weaponLegendaryIndexMap[worldModel]
-
-		// Populate legendary weapon skins map for FS
-		if ( !( ItemFlavor_GetHumanReadableRef( weaponFlavor ) in fileLevel.legendaryWeaponSkinsMap_FS ) )
-		{
-			fileLevel.legendaryWeaponSkinsMap_FS[ ItemFlavor_GetHumanReadableRef( weaponFlavor ) ] <- []
-		}
-		fileLevel.legendaryWeaponSkinsMap_FS[ ItemFlavor_GetHumanReadableRef( weaponFlavor ) ].append( ItemFlavor_GetGUID( skin ) )
 
 		// fx precaching for react to kills feature
 		if ( WeaponSkin_DoesReactToKills( skin ) )
@@ -324,18 +311,6 @@ void function SetupWeaponSkin( ItemFlavor skin, ItemFlavor ornull parentWeapon =
 	#endif
 }
 
-#if SERVER || CLIENT
-array<int> function FS_ReturnLegendaryModelMapForWeaponFlavor( ItemFlavor weaponFlavor )
-{
-	if( ItemFlavor_GetHumanReadableRef( weaponFlavor ) in fileLevel.legendaryWeaponSkinsMap_FS )
-		return fileLevel.legendaryWeaponSkinsMap_FS[ ItemFlavor_GetHumanReadableRef( weaponFlavor ) ]
-	else
-		return []
-
-	unreachable
-}
-#endif
-
 
 //////////////////////////
 //////////////////////////
@@ -361,12 +336,6 @@ asset ornull function Loadout_GetLore( ItemFlavor flavor )
 
 LoadoutEntry function Loadout_WeaponCharm( ItemFlavor weaponFlavor )
 {
-	if ( !(weaponFlavor.guid in fileLevel.loadoutWeaponCharmSlotMap) )
-	{
-		Warning( "Loadout_WeaponCharm: weaponFlavor GUID not found in map: " + weaponFlavor.guid )
-		LoadoutEntry emptyEntry
-		return emptyEntry
-	}
 	return fileLevel.loadoutWeaponCharmSlotMap[weaponFlavor.guid]
 }
 
@@ -403,23 +372,8 @@ bool function WeaponCharm_HasStoryBlurb( ItemFlavor flavor )
 string function WeaponCharm_GetStoryBlurbBodyText( ItemFlavor flavor )
 {
 	Assert( ItemFlavor_GetType( flavor ) == eItemType.weapon_charm )
-	asset assetVal = ItemFlavor_GetAsset( flavor )
-	string blurb = ""
-	try
-	{
-		blurb = GetGlobalSettingsString( assetVal, "customSkinMenuBlurb" )
-	}
-	catch ( ex )
-	{
-		Warning("WeaponCharm_GetStoryBlurbBodyText: Exception retrieving customSkinMenuBlurb for " + string(assetVal) + ": " + string(ex))
-		return ""
-	}
-	if ( blurb == "" )
-	{
-		Warning("WeaponCharm_GetStoryBlurbBodyText: customSkinMenuBlurb does not exist for " + string(assetVal))
-		return ""
-	}
-	return blurb
+
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "customSkinMenuBlurb" )
 }
 
 string function WeaponCharm_GetAttachmentName( ItemFlavor flavor )
@@ -578,15 +532,9 @@ ItemFlavor function WeaponSkin_GetWeaponFlavor( ItemFlavor skin )
 {
 	Assert( ItemFlavor_GetType( skin ) == eItemType.weapon_skin )
 
-	asset parentAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "parentItemFlavor" )
-	if ( parentAsset == $"" )
-	{
-		Warning( "Weapon skin has no parentItemFlavor: " + string(ItemFlavor_GetAsset( skin )) )
-		ItemFlavor empty
-		return empty
-	}
+	Assert( GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "parentItemFlavor" ) != "", "No parentItemFlavor for skin "+ string(ItemFlavor_GetAsset( skin )) )
 
-	return GetItemFlavorByAsset( parentAsset )
+	return GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( skin ), "parentItemFlavor" ) )
 }
 
 
@@ -776,8 +724,8 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 				if ( CHARM_DEBUG )
 					printt( "CHARM_DEBUG: Setting weapon charm " + string(ItemFlavor_GetAsset( charm )) + " for weapon " + ent + "( " + ent.GetModelName() + ") owned by player " + ent.GetWeaponOwner() + "(server)" )
 
-				//ent.SetWeaponCharmOrArtifactBladeGUID( ent.e.charmItemFlavorGUID )
-				if ( charmModel != $"" )
+				ent.SetWeaponCharmIndex( ent.e.charmItemFlavorGUID )
+				if ( charmModel != "" )
 					ent.SetWeaponCharm( charmModel, attachmentName )
 				else
 					ent.ClearWeaponCharm()
@@ -794,7 +742,7 @@ void function WeaponCosmetics_Apply( entity ent, ItemFlavor ornull skinOrNull, I
 				printt( "CHARM_DEBUG: Setting weapon charm " + string(ItemFlavor_GetAsset( charm )) + " for weapon " + ent + " ( " + ent.GetModelName() + " ) (client)" )
 
 			DestroyCharmForWeaponEntity( ent )
-			if ( charmModel != $"" )
+			if ( charmModel != "" )
 			{
 				entity charmEnt = CreateClientSidePropDynamicCharm( ent.GetOrigin(), ent.GetAngles(), charmModel )
 				charmEnt.MakeSafeForUIScriptHack()
@@ -864,9 +812,9 @@ void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
 		camoIndex = 0
 	}
 
-	if ( camoIndex >= 3 ) //CAMO_SKIN_COUNT
+	if ( camoIndex >= CAMO_SKIN_COUNT )
 	{
-		Assert ( false, "Tried to set camoIndex of " + string(camoIndex) + " but the maximum index is 3" )
+		Assert ( false, "Tried to set camoIndex of " + string(camoIndex) + " but the maximum index is " + string(CAMO_SKIN_COUNT) )
 		camoIndex = 0
 	}
 
