@@ -558,7 +558,6 @@ asset function GetThumbnailImageFromImageMap( string keyName )
 asset function GetGamemodeLogoFromImageMap( string keyName )
 {
 	asset imageAsset = $"white"
-	keyName = ""
 	if ( keyName != "" )
 	{
 		bool foundLogo = false
@@ -817,10 +816,10 @@ bool function Playlist_IsPastRankedSeasonEndDate()
 void function ShPlaylist_Init()
 {
 	#if SERVER
-		               
-		 
-			                                                                          
-		 
+		if( IsLobby() )
+		{
+			AddCallback_Lobby_OnClientConnected( ShPlaylist_Lobby_OnClientConnected  )
+		}
 	#endif
 
 	ShPlaylist_CacheData()
@@ -873,7 +872,7 @@ array<string> function GetPlaylistModNames()
 
 	list.resize( numMods )
 	for ( int modIter = 0; modIter != numMods; modIter++ )
-		list[modIter] =  GetPlaylistModName( modIter )
+		list[modIter] = GetPlaylistModName( modIter )
 
 	return list
 }
@@ -946,12 +945,8 @@ array<string> function GetVisiblePlaylistNames( bool isPrivateMatchQuery = false
 			continue
 		}
 
-		// TEMPORARILY DISABLED FOR DEBUG
-		//if ( Playlist_ShouldBeHiddenForScheduleBlocks( playlistData.name ) )
-		//{
-		//	print( "DEBUG: " + playlistData.name + " - filtered (schedule blocks)" )
-		//	continue
-		//}
+		if ( Playlist_ShouldBeHiddenForScheduleBlocks( playlistData.name ) )
+			continue
 
 		print( "DEBUG: " + playlistData.name + " - ADDED TO LIST" )
 		list.append( playlistData.name )
@@ -1286,9 +1281,7 @@ string function GetPanelImageKeyForUISlot( string uiSlot )
 	if ( playlist == "" )
 		return ""
 
-	int mapIdx = GetPlaylistActiveMapRotationIndex( playlist )
-	string panelImageKey = GetPlaylistMapVarString( playlist, mapIdx, "panel_image", "" )
-	return panelImageKey
+	return GetPlaylistVarString( playlist, "image", "" )
 }
 #endif
 #if UI
@@ -1298,8 +1291,7 @@ string function GetMapDisplayNameForUISlot( string uiSlot )
 	if ( playlist == "" )
 		return ""
 
-	int mapIdx = GetPlaylistActiveMapRotationIndex( playlist )
-	return GetPlaylistMapVarString( playlist, mapIdx, "map_name", "bug this!" )
+	return GetPlaylistVarString( playlist, "map_name", "" )
 }
 #endif
 #if UI

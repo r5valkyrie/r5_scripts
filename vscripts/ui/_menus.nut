@@ -591,6 +591,7 @@ void function UICodeCallback_FullyConnected( string levelname )
 	UiNewnessQueries_LevelInit()
 	ShStatsInternals_LevelInit()
 	ShStats_LevelInit()
+	ShPlaylist_Init()
 	ShChallenges_LevelInit_PostStats()
 
 	ShPersistentData_LevelInit_Finish()

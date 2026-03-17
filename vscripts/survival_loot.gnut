@@ -5718,26 +5718,6 @@ void function SURVIVAL_RefreshWeaponSkinAndModel( entity weapon, entity player )
 			WeaponCosmetics_ApplyModelAndSkin( weapon, skin )
 		}
 	} 
-	else
-	{
-		ItemFlavor ornull weaponFlavor = GetWeaponItemFlavorByClass( weapon.GetWeaponClassName() )
-		
-		if( weaponFlavor != null )
-		{
-			array<int> weaponLegendaryIndexMap = FS_ReturnLegendaryModelMapForWeaponFlavor( expect ItemFlavor( weaponFlavor ) )
-
-			if( weaponLegendaryIndexMap.len() == 0 )
-				return
-
-			ItemFlavor ornull skinOrNull = GetItemFlavorByGUID( weaponLegendaryIndexMap[0] ) //default skin
-			if ( skinOrNull != null )
-			{
-				ItemFlavor skin = expect ItemFlavor( skinOrNull )
-				Assert( ItemFlavor_GetType( skin ) == eItemType.weapon_skin )
-				WeaponCosmetics_ApplyModelAndSkin( weapon, skin )
-			}
-		}
-	}
 }
 
 void function SurvivalLoot_OnPhysicsDisabled( entity physicsEnt )

@@ -39,6 +39,8 @@ global function AddCallback_OnYouDied
 global function AddEntityDestroyedCallback
 global function ClientCodeCallback_UIScriptResetComplete
 
+global const string PLAYER_CLASSNAME = "player"
+
 void function ClientCodeCallbacks_Init()
 {
     RegisterSignal( "HardpointStateChanged" )
@@ -194,25 +196,28 @@ void function ClientCodeCallback_OnEntityCreation( entity ent )
 
 	if ( ent.IsPlayer() )
 		ShEHI_OnPlayerCreated( ent )
-	else if( ent.GetScriptName() == "flowstate_holo_spray" )
-		ShEHI_OnHoloSprayCreated( ent )
-	else if( ent.GetNetworkedClassName() == "prop_survival" )
-		ShEHI_OnPropSurvivalCreated( ent )
 
+	string className = expect string( ent.GetNetworkedClassName() )
 	if ( IsLobby() )
 	{
-		if ( ent.GetNetworkedClassName() != "player" )
+		if ( className == PLAYER_WAYPOINT_CLASSNAME || className == PLAYER_CLASSNAME ) 
+		{
+			foreach ( callbackFunc in clGlobal.onCreateCallbacks[ className ] )
+			{
+				callbackFunc( ent )
+			}
+		}
+
+		if ( ent.GetNetworkedClassName() != PLAYER_CLASSNAME )
 			return
 
 		if ( ent == GetLocalClientPlayer() )
 			Lobby_AddLocalPlayer()
-
         return
 	}
 
 	PerfStart( PerfIndexClient.OnEntityCreation )
 
-	string className = expect string( ent.GetNetworkedClassName() )
 	string targetName = ent.GetTargetName()
 
 	if ( className in _entityClassVars )

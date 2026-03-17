@@ -336,6 +336,8 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariable( "coreExpireFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE_OVER_TIME, 0.0, 0.0, 1.0 )
 	RegisterNetworkedVariable( "upgradeCount", SNDC_TITAN_SOUL, SNVT_INT, 0 )
 
+	Remote_RegisterServerFunction( "ClientCallback_ViewedModes" )
+
 	//Custom gamemodes
 	switch ( Gamemode() )
 	{

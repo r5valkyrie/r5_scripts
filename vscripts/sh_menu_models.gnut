@@ -980,42 +980,6 @@ void function InitPresentationData()
 		pd.endFunc = EndPresentation_FLAT_STICKER
 	}
 
-	{
-		PresentationDef pd = file.presentationData[ePresentationType.SERVER_BROWSER]
-		pd.modelData = null
-		pd.useCharacterOffsets = false
-		pd.maxYawDegrees = 0
-		pd.maxPitchDegrees = 0
-		pd.fov = 15.5
-		pd.dofNearStart = 3.5
-		pd.dofNearEnd = 5.0
-		pd.dofFarStart = 20.0
-		pd.dofFarEnd = 30.0
-		pd.csmTexelScale1 = 0.22
-		pd.csmTexelScale2 = 0.55
-		pd.csmStartDistance = 70.0
-		pd.lights = []
-		pd.cameraTargetName = eCameraTargetNames.collection_event_camera_target
-	}
-
-	{
-		PresentationDef pd = file.presentationData[ePresentationType.CREDITS]
-		pd.modelData = null
-		pd.useCharacterOffsets = false
-		pd.maxYawDegrees = 90
-		pd.maxPitchDegrees = 60
-		pd.fov = 50
-		pd.dofNearStart = 3.5
-		pd.dofNearEnd = 5.0
-		pd.dofFarStart = 20.0
-		pd.dofFarEnd = 30.0
-		pd.csmTexelScale1 = 1.0
-		pd.csmTexelScale2 = 1.0
-		pd.csmStartDistance = 0.0
-		pd.lights = []
-		pd.cameraTargetName = eCameraTargetNames.customize_weapon_camera_target
-	}
-
 	Menu_InitPresentationDataFromCameraSettings()
 }
 
