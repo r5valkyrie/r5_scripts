@@ -829,6 +829,12 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "tutorialContext", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
 	ScriptRegisterNetworkedVariable( "spectatorTargetCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
+	// survival_ship.gnut
+	Remote_RegisterServerFunction( "ClientCommand_Sur_MakeEligibleForJumpMaster" )
+	Remote_RegisterServerFunction( "ClientCommand_Sur_RelinquishJumpMaster" )
+	Remote_RegisterServerFunction( "ClientCommand_Sur_RemoveFromSquad" )
+	Remote_RegisterServerFunction( "ClientCommand_Sur_ReturnToSquad" )
+
 	if( Playlist() == ePlaylists.survival_training )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_ActionCountUpdated", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 

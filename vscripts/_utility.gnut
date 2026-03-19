@@ -5091,14 +5091,14 @@ int function GameTime_TimeLimitSeconds()
 {
 	if ( IsRoundBased() )
 	{
-		return ( GetRoundTimeLimit_ForGameMode() * 60.0 ).tointeger()
+		return int( GetRoundTimeLimit_ForGameMode() * 60.0 )
 	}
 	else
 	{
 		if ( IsSuddenDeathGameMode() && GetGameState() == eGameState.SuddenDeath )
-			return ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger() + ( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 ).tointeger()
+			return int( GetTimeLimit_ForGameMode() * 60.0 ) + int( GetSuddenDeathTimeLimit_ForGameMode() * 60.0 )
 		else
-			return ( GetTimeLimit_ForGameMode() * 60.0 ).tointeger()
+			return int( GetTimeLimit_ForGameMode() * 60.0 )
 	}
 	unreachable
 }
@@ -5114,9 +5114,9 @@ int function GetSuddenDeathTimeLimit_ForGameMode()
 int function GameTime_TimeLimitMinutes()
 {
 	if ( IsRoundBased() )
-		return floor( GetRoundTimeLimit_ForGameMode() ).tointeger()
+		return int( floor( GetRoundTimeLimit_ForGameMode() ) )
 	else
-		return floor( GetTimeLimit_ForGameMode() ).tointeger()
+		return int( floor( GetTimeLimit_ForGameMode() ) )
 	unreachable
 }
 
@@ -5125,22 +5125,22 @@ int function GameTime_TimeLeftMinutes()
 	if ( GetGameState() == eGameState.WaitingForPlayers )
 		return 0
 	if ( GetGameState() == eGameState.Prematch )
-		return int( ( expect float( GetServerVar( "gameStartTime" ) ) - Time()) / 60.0 )
+		return int(( GetGameStartTime() - Time() ) / 60.0)
 
-	return floor( GameTime_TimeLimitMinutes() - GameTime_PlayingTime() / 60 ).tointeger()
+	return int( floor( GameTime_TimeLimitMinutes() - GameTime_PlayingTime() / 60 ) )
 }
 
 int function GameTime_TimeLeftSeconds()
 {
 	if ( GetGameState() == eGameState.Prematch )
-		return int( expect float( GetServerVar( "gameStartTime" ) ) - Time() )
+		return int( GetGameStartTime() - Time() )
 
-	return floor( GameTime_TimeLimitSeconds() - GameTime_PlayingTime() ).tointeger()
+	return int( floor( GameTime_TimeLimitSeconds() - GameTime_PlayingTime() ) )
 }
 
 int function GameTime_Seconds()
 {
-	return floor( Time() ).tointeger()
+	return int( floor( Time() ) )
 }
 
 int function GameTime_Minutes()
@@ -5163,17 +5163,18 @@ float function GameTime_PlayingTimeSince( float sinceTime )
 	if ( IsRoundBased() )
 	{
 		if ( gameState > eGameState.SuddenDeath )
-			return (expect float( GetServerVar( "roundEndTime" ) ) - expect float( GetServerVar( "roundStartTime" ) ) )
+			return GetRoundEndTime() - GetRoundStartTime()
 		else
-			return sinceTime - expect float( GetServerVar( "roundStartTime" ) )
-
+			return sinceTime - GetRoundStartTime()
 	}
 	else
 	{
+		float gameStartTime = GetGameStartTime()
+
 		if ( gameState > eGameState.SuddenDeath )
-			return (expect float( GetServerVar( "gameEndTime" ) ) - expect float( GetServerVar( "gameStartTime" ) ) )
+			return GetGameEndTime() - gameStartTime
 		else
-			return sinceTime - expect float( GetServerVar( "gameStartTime" ) )
+			return sinceTime - gameStartTime
 	}
 
 	unreachable
@@ -5181,7 +5182,7 @@ float function GameTime_PlayingTimeSince( float sinceTime )
 
 float function GameTime_TimeSpentInCurrentState()
 {
-	return Time() - expect float( GetServerVar( "gameStateChangeTime" ) )
+	return Time() - GetGameStateChangeTime()
 }
 
 int function GameScore_GetFirstToScoreLimit()

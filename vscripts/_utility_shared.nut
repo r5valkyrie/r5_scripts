@@ -1435,9 +1435,13 @@ bool function IsCloaked( entity ent )
 	return ent.IsCloaked( true ) //pass true to ignore flicker time -
 }
 
+float function GetGameStateChangeTime()
+{
+	return GetGlobalNetTime( "gameStateChangeTime" )
+}
 float function TimeSpentInCurrentState()
 {
-	return Time() - expect float( level.nv.gameStateChangeTime )
+	return Time() - GetGameStateChangeTime()
 }
 
 float function DotToAngle( float dot )
@@ -1452,16 +1456,18 @@ float function AngleToDot( float angle )
 
 int function GetGameState()
 {
-	return expect int( GetServerVar( "gameState" ) )
+	return GetGlobalNetInt( "gameState" )
 }
 
 bool function GamePlaying()
 {
-	// Allow firing range to count as playing for equipping gadgets and testing
-	if ( Playlist() == ePlaylists.survival_firingrange )
-		return true
-
 	return GetGameState() == eGameState.Playing
+}
+
+
+bool function GameEpilogue()
+{
+	return GetGameState() == eGameState.Epilogue
 }
 
 bool function GamePlayingOrSuddenDeath()
@@ -4802,7 +4808,7 @@ float function GetRoundTimeLimit_ForGameMode()
 	if ( GameState_GetTimeLimitOverride() >= 0 )
 		return GameState_GetTimeLimitOverride()
 
-	unreachable
+	return GetCurrentPlaylistVarFloat( "roundtimelimit", 10.0 )
 }
 #endif // SERVER
 
