@@ -411,21 +411,6 @@ void function RegisterAllStats()
 // TODO - R5DEV-413766: DEPRECATE once we have ability to edit persistence offline and can migrate data without players logging in.
 void function UpgradePlayerStatsPersistentData( entity player, int oldVersion, int newVersion )
 {
-	// for VERY old accounts, this will properly migrate their grapple distance from the original "inches" measure to the new "meters" measurement.
-	if ( oldVersion < 10005 )
-	{
-		// convert Pathfinder grapple distance from inches to meters
-		float grappleDistance = expect float(player.GetPersistentVar( "stats.pathfinder_tactical_meters_moved_by_grapple" ))
-		grappleDistance *= 0.3048
-		player.SetPersistentVar( "stats.pathfinder_tactical_meters_moved_by_grapple", int(grappleDistance) )
-	}
-	if ( oldVersion < 202003300 )
-	{
-		// (dw): I f***ed up the first conversion...
-		float grappleDistance = expect float(player.GetPersistentVar( "stats.pathfinder_tactical_meters_moved_by_grapple" ))
-		grappleDistance /= 12.0
-		player.SetPersistentVar( "stats.pathfinder_tactical_meters_moved_by_grapple", int(grappleDistance) )
-	}
 }
 #endif
 
