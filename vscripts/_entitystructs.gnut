@@ -1164,15 +1164,16 @@ global struct ServerPlayerStruct
 	entity        cryptoActiveCamera
 	bool          completedEMP
 
-	// float  survivalMatchStartTime
-	// float  survivalAliveStartTime
-	// float  survivalAliveEndTime
+	float  survivalMatchStartTime
+	float  survivalAliveStartTime
+	float  survivalAliveEndTime
 	float  survivalLandedStartTime
 	bool   survivalLandedOnGround
 	entity killerToSpectate
 	bool   hasSpectatedKillerOnce
 	bool  hasMatchParticipationStarted = false
 	bool  hasMatchParticipationEnded = false
+	float    battlePassBoost = 0
 
 	// Player was jumpmaster at any point in the current game.
 	bool wasJumpmaster = false

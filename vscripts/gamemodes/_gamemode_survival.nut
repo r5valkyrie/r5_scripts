@@ -66,6 +66,17 @@ global function Survival_AddCallback_OnPlayerKillDamage
 global function Survival_AddCallback_OnAttackerSquadWipe
 global function Survival_AddCallback_OnAttackerSoloRatEliminated
 
+global function Survival_OnEnterPickLoadout
+global function OnPlayerMatchParticipationStarted
+global function Survival_OnPrematch
+global function Survival_GameStartedPlaying
+global function Survival_GameStartedPlaying_Thread
+global function Survival_RunCharacterSelection
+global function Survival_RunCharacterSelectionNew_Thread
+global function GetAppropriateCharacterSelectMusicTrack
+global function PlayCharacterSelectMusicToAllPlayersIfNeeded
+global function CharacterSelect_OnPlayerConnected
+
 //updated. Cafe
 global const float REALBIG_CIRCLE_GRID_RADIUS = 52500
 const float PLANE_HEIGHT_REALBIG = 17000.0
@@ -121,11 +132,39 @@ global struct SurvivalPlayerData
 	int    pickedUpLootCount = 0
 	vector landingOrigin = <0, 0, 0>
 	float  landingTime = 0
+	bool   hasMatchParticipationStarted = false
+	bool   hasMatchParticipationEnded = false
+}
+
+// Cache origin/angles when changing class in Firinge Range, to be reapplied after respawning
+struct PlayerChangeClassData
+{
+	vector respawnPos = <0, 0, 0>
+	vector respawnAngles = <0, 0, 0>
+	bool   respawnIn3P = false
 }
 
 struct
 {
+	table< int, table< int, GameSummarySquadData > >  squadData
+	table< int, int >                                 squadRespawnChances
+	int gameStartUnixTime = -1
+	int numPlayerAtStart
+	int numSquadsAtStart
+
+	int gameResultFlags
+	int gameScoreFlags
+
+	int functionref() getRemainingSquadsFunction = null
     void functionref( entity, float, float ) leviathanConsiderLookAtEntCallback = null
+
+	#if DEVELOPER
+		ItemFlavor ornull DEV_overrideSpawnCharacterOrNull = null
+		bool			  DEV_overrideSpawnCharacterSimpleEquip = false
+		bool              DEV_overrideSpawnCharacterWithLaunchCharacters = false
+	#endif
+
+	table<EncodedEHandle, PlayerChangeClassData>	 playerChangeClassData
 
 	//updated
 	vector mapCenter = <0, 0, 0>
@@ -139,6 +178,15 @@ struct
 	array<void functionref(entity, var, int) >    Callbacks_OnPlayerKillDamage
 	array<void functionref(entity, entity) >    Callbacks_OnAttackerSquadWipe
 	array<void functionref(entity, entity) >    Callbacks_OnAttackerSoloRatEliminated
+
+	// Character selection
+	bool characterLocksLocked = false
+	bool characterLocksFinished = false
+	bool forceRandomOnNoSelect = false
+	array< entity > playersWhoNeedSetupPrematch = []
+	array< void functionref(entity, ItemFlavor) > Callbacks_OnPlayerLockedInCharacterCallbacks
+	array< void functionref(entity, ItemFlavor) > Callbacks_OnGameAutoSelectedCharacterCallbacks
+	bool functionref() Callback_ModeShouldSpawnPlayersDuringCharacterSelect = null
 } file
 
 void function GamemodeSurvival_Init()
@@ -200,6 +248,11 @@ void function GamemodeSurvival_Init()
 			thread Sequence_Playing()
 		}
 	)
+
+	AddCallback_GameStatePostEnter( eGameState.PickLoadout, Survival_RunCharacterSelection )
+	AddCallback_GameStatePostEnter( eGameState.Prematch, Survival_OnPrematch )
+	AddCallback_GameStateEnter( eGameState.Playing, Survival_GameStartedPlaying )
+	AddCallback_GameStateEnter( eGameState.PickLoadout, Survival_OnEnterPickLoadout )
 
 	if( GetCurrentPlaylistVarBool( "deathfield_starts_in_prematch", false ) )
 		thread SURVIVAL_RunArenaDeathField()
@@ -987,6 +1040,816 @@ void function Leviathan_ConsiderLookAtEnt( entity ent, float duration, float car
 {
 	if ( file.leviathanConsiderLookAtEntCallback != null )
 		thread file.leviathanConsiderLookAtEntCallback( ent, duration, careChance )
+}
+
+void function OnPlayerMatchParticipationStarted( entity player )
+{
+	Assert( !player.p.hasMatchParticipationStarted )
+	Assert( !player.p.hasMatchParticipationEnded )
+
+	printt( "OnPlayerMatchParticipationStarted " + player )
+
+	if ( player.p.battlePassBoost < GetPlayerBattlePassBoost( player ) )
+		player.p.battlePassBoost = GetPlayerBattlePassBoost( player )
+
+	player.p.hasMatchParticipationStarted = true
+}
+
+void function Survival_OnEnterPickLoadout()
+{
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( !player.p.hasMatchParticipationStarted )
+			OnPlayerMatchParticipationStarted( player )
+	}
+}
+
+void function Survival_OnPrematch()
+{
+	SetCommentaryEnabled( true )
+
+	GameRules_MarkGameStatePrematchEnding()
+	printt( "startTime: " + GetGameStartTime() + " - " + Time() )
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( !IsValid( player ) || !IsAlive( player ) )
+			continue
+
+		Survival_PlayerCharacterSetup( player, Survival_ValidateAndGetCharacterClass( player ) )
+		SURVIVAL_SetDefaultPlayerSettings( player )
+	}
+
+	if ( IsRoundBased() )
+	{
+		if( GetRoundsPlayed() > 0 )
+		{
+			foreach ( entity player in GetPlayerArray() )
+			{
+				player.SetInvulnerable()
+				player.p.doomedEnemies.clear()
+			}
+
+			SURVIVAL_RoundStartLootCleanup()
+			//DestroyAllLootBins()
+			//CleanupAllPlayerPermanents()
+			//SURVIVAL_ResetAllDoors()
+			//SURVIVAL_PopulateSpecialZones()
+
+			//SURVIVAL_ChooseLootLocations()
+		}
+		else
+		{
+			foreach ( entity player in GetPlayerArray() )
+			{
+				player.StopObserverMode()
+			}
+		}
+	}
+
+	if( GetCurrentPlaylistVarBool( "deathfield_starts_in_prematch", false ) )
+		thread SURVIVAL_RunArenaDeathField()
+}
+
+void function Survival_GameStartedPlaying()
+{
+	thread Survival_GameStartedPlaying_Thread()
+}
+
+void function Survival_GameStartedPlaying_Thread()
+{
+	file.gameStartUnixTime = GetUnixTimestamp() // todo(dw): GMT?
+
+	if( !GetCurrentPlaylistVarBool( "deathfield_starts_in_prematch", false ) )
+		thread SURVIVAL_RunArenaDeathField()
+
+	if( Survival_AirdroppedCarePackagesEnabled() )
+		thread AirdropLogic()
+
+	FlagClear( "staging_fx_enabled" )
+
+
+	// Set settings for the drop-in
+	foreach ( entity player in GetPlayerArray() )
+	{
+		player.StopObserverMode()
+		Survival_ClearPrematchSettings( player )
+
+		bool shouldSetDropSettings = true
+
+			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
+				shouldSetDropSettings = false
+
+
+			if ( GameMode_IsActive( eGameModes.CONTROL ) )
+				shouldSetDropSettings = false
+
+		if ( shouldSetDropSettings )
+				SetPlayerIntroDropSettings( player )
+	}
+
+	if ( GetCurrentPlaylistVarBool( "bots_skydive_to_safezone_center", false ) )
+		BotsSetSkydiveTargetPos( GetDeathfieldFinalCenter( Survival_Loot_GetDefaultRealm() ) )
+
+	// Do drop-in of choice, or spawn on ground by default
+	//--------------------------------------------------------
+
+	if ( Survival_IsPlaneEnabled() )
+	{
+		waitthread Survival_PutPlayersInPlane()
+
+		FlagSet( "PlaneStartMoving" )
+	}
+	else if ( ( GetCurrentPlaylistVarBool( "poiplayerspawning_exists", false )) )
+	{
+		//POIPlayerSpawning_SpawnPlayers()
+	}
+
+	else if ( ForcedSpawn_UseForcedSpawning() )
+	{
+		//waitthread ForcedSpawn_SpawnAllPlayers()
+	}
+
+	else if ( GetCurrentPlaylistVarInt( "survival_squad_spawn_near_loot", 0 ) == 1 )
+	{
+		//thread SpawnPlayersOnGroundWithSquadNearLoot()
+	}
+	else if ( GetCurrentPlaylistVarBool( "survival_custom_mode_jump_plane_override", false ) )
+	{
+		FlagSet( "DeathCircleActive" )
+	}
+	else
+	{
+		// If a mode is setting when the deathfield starts manually, don't set the flag here but still clear drop settings (since plane is not enabled )
+		//if ( !Deathfield_GetHasCustomStart() )
+		//	FlagSet( "DeathCircleActive" )
+
+		foreach ( entity player in GetPlayerArray() )
+			ClearPlayerIntroDropSettings( player )
+	}
+
+	UpdatePlayerCounts()
+	if ( IsPVEMode() )
+	{
+		file.numPlayerAtStart = GetPlayerArray().len()
+		file.numSquadsAtStart = GetNumTeamsExisting()
+	}
+	else
+	{
+		file.numPlayerAtStart = GetGlobalNetInt( "livingPlayerCount" )
+		file.numSquadsAtStart = Survival_GetRemainingSquadsCount()
+	}
+
+	int count = 0
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( !IsValid( player ) || player == null )
+			continue
+
+		count++
+		player.p.survivalAliveStartTime = Time()
+
+		if ( ! IsRoundBased() || GetRoundsPlayed() == 0 )
+		{
+			player.p.survivalMatchStartTime = Time()
+			GameSummary_MatchStart( player )
+			// run this again now that we have player character locked in
+			if ( !player.IsBot() )
+			{
+				string characterName = ItemFlavor_GetCharacterRef( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) )
+				TelemetryEvent( "charSel.pick." + characterName, 1 )
+			}
+		}
+		if ( count % 15 == 0 ) // spread this out over a few frames when there are a lot of players
+			WaitFrame()
+	}
+
+	FlagSet( "PlayersSpawnedInArena" )
+}
+
+void function GameSummary_MatchStart( entity player )
+{
+	// Don't run this if you've just connected to a server and haven't started playing yet.
+	// This is needed because this is called on client connect in dev when we add bots mid-game, or connect a client for testing
+	//if ( GetGameState() < eGameState.Playing )
+	//	return
+
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+
+	// Player's squad data for EOG
+	GameSummarySquadData data
+	data.playerName               = player.GetPlayerNameOriginal()
+	data.character                = character
+	data.eHandle                  = player.GetEncodedEHandle()
+	data.survivalTime             = 0
+	data.kills                    = 0
+	data.playerKills              = {}
+	data.assists				  = 0
+	data.knockdowns				  = 0
+	data.damageDealt              = 0
+	data.revivesGiven             = 0
+	data.platformUid          	  = player.GetPINNucleusId()
+	data.pid                      = player.GetPINNucleusPid()
+	data.nucleus                  = player.GetPINNucleusId()
+	data.hardware                 = player.GetHardware()
+	data.isUsingSteam             = true
+	data.optOutOfSendingSquadInfo = player.IsBot() || (player.GetPersistentVarAsInt( "matchPreferences" ) & eMatchPreferenceFlags.LAST_SQUAD_INVITE_OPT_OUT) == 1
+	data.displayData3IsTime		  = true
+
+	// this block could be improved and made more generic / mode-agnostic, but it's a challenge to know when to reliably set some of these values
+	// possibly could have a generic "match start" callback function that handles this...
+
+
+
+
+
+
+
+
+		if ( GameMode_IsActive( eGameModes.CONTROL ) )
+		{
+			data.displayData3IsTime = false
+			UpdatePlayerCounts()
+			// do this here because we don't spawn players until match start.
+			file.numPlayerAtStart = GetGlobalNetInt( "livingPlayerCount" )
+		}
+
+
+	// For alliance modes, treat the alliances as starting squads for squad count
+	if ( AllianceProximity_IsUsingAlliances() )
+		file.numSquadsAtStart = AllianceProximity_GetMaxNumAlliances()
+
+	// end refactor block
+
+	int teamIndex       = player.GetTeam()
+	int teamMemberIndex = player.GetTeamMemberIndex()
+	if ( !(teamIndex in file.squadData) )
+		file.squadData[ teamIndex ] <- {}
+
+	if ( !(teamIndex in file.squadRespawnChances) )
+		file.squadRespawnChances[ teamIndex ] <- GetCurrentPlaylistVarInt( "squad_respawn_chances", 3 )
+
+	file.squadData[ teamIndex ][ teamMemberIndex ] <- data
+
+	player.p.survivalAliveStartTime = Time() // initialize this here to catch late connecting players
+	player.p.survivalMatchStartTime = Time() // initialize this here to catch late connecting players
+
+	//TODO convert to callback later
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
+	{
+		Sh_Rank_GameSummary_MatchStart ( player )
+	}
+
+	// Clear all game summary data from previous match
+	player.SetPersistentVar( "lastGameRank", 0 )
+	player.SetPersistentVar( "lastGamePlayers", file.numPlayerAtStart )
+	player.SetPersistentVar( "lastGameSquads", file.numSquadsAtStart )
+	player.SetPersistentVar( "lastGameResultFlags", file.gameResultFlags )
+	player.SetPersistentVar( "lastGameScoreFlags", file.gameScoreFlags )
+
+	#if DEVELOPER
+		printt( "PD: lastGameRank", 0 )
+		printt( "PD: lastGamePlayers", file.numPlayerAtStart )
+		printt( "PD: lastGameSquads", file.numSquadsAtStart )
+		printt( "PD: lastGameResultFlags", file.gameResultFlags )
+		printt( "PD: lastGameScoreFlags", file.gameScoreFlags )
+	#endif
+
+	int maxTrackedSquadMembers = PersistenceGetArrayCount( "lastGameSquadStats" )
+	for ( int i = 0 ; i < maxTrackedSquadMembers ; i++ )
+	{
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].playerName", "" )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].eHandle", -1 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].survivalTime", 0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].kills", 0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].assists", 0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].knockdowns", 0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].damageDealt", 0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].revivesGiven", 0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].respawnsGiven", 0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].platformUid", "" )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].nucleusId", "" )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].hardwareID", HARDWARE_PC ) // there is no good "no hardware" id so we default to PC.
+
+		// mode-specific
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].displayData3IsTime", true )
+		// shows on line N: displayData2 - line 2 of summary screen
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].displayData2",  0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].displayData3",  0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].displayData4",  0 )
+		player.SetPersistentVar( "lastGameSquadStats[" + i + "].displayData5",  0 )
+
+		player.SetPersistentVar( "lastGameResultFlags", 0 )
+		player.SetPersistentVar( "lastGameScoreFlags", 0 )
+		// end mode-specific
+
+	}
+
+	#if DEVELOPER
+		printt( "PD: Cleared Match Sumnmary Persistent Vars for", player, "and", maxTrackedSquadMembers, "maxTrackedSquadMembers" )
+	#endif
+
+	if ( !player.p.hasMatchParticipationStarted )
+		OnPlayerMatchParticipationStarted( player )
+}
+
+// Function used by Survival to determine how many squads are remaining in the match
+// Takes into account when the functionality is overridden by different modes
+int function Survival_GetRemainingSquadsCount()
+{
+	int squadsCount
+
+	if ( file.getRemainingSquadsFunction != null )
+		squadsCount = file.getRemainingSquadsFunction()
+	else
+		squadsCount = GetNumTeamsRemaining()
+
+	return squadsCount
+}
+
+bool function Survival_IsPlaneEnabled()
+{
+	if ( !GetCurrentPlaylistVarBool( "jump_from_plane_enabled", true ) )
+		return false
+
+	if ( IsTestMap() )
+		return false
+
+	return true
+}
+
+
+bool function Survival_AirdroppedCarePackagesEnabled()
+{
+	return GetCurrentPlaylistVarBool( "survival_airdropped_carepackages_enabled", true )
+}
+
+
+ItemFlavor function Survival_ValidateAndGetCharacterClass( entity player )
+{
+	EHI playerEHI = ToEHI( player )
+	LoadoutEntry loadoutCharacter = Loadout_Character()
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, loadoutCharacter )
+	bool isItemFlavorUnlockedForLoadoutSlot = IsItemFlavorUnlockedForLoadoutSlot( playerEHI, loadoutCharacter, LoadoutSlot_GetItemFlavor( playerEHI, loadoutCharacter ) )
+
+	// We assign all alliance players to the same team at the end of modes that use alliances. With a lot of players on one team and the game ending we don't care if duplicate Legends are used
+	if ( AllianceProximity_IsUsingAlliances() && GetGameState() >= eGameState.WinnerDetermined )
+			isItemFlavorUnlockedForLoadoutSlot = true
+
+	// if their selection is invalid (character is taken by a squadmate), assign them a random character
+	if ( !isItemFlavorUnlockedForLoadoutSlot )
+	{
+		#if DEVELOPER
+			if ( file.DEV_overrideSpawnCharacterOrNull == null )
+				SetItemFlavorLoadoutSlot( playerEHI, loadoutCharacter, GetRandomGoodItemFlavorForLoadoutSlot( playerEHI, loadoutCharacter ) )
+		#else
+			SetItemFlavorLoadoutSlot( playerEHI, loadoutCharacter, GetRandomGoodItemFlavorForLoadoutSlot( playerEHI, loadoutCharacter ) )
+		#endif
+	}
+
+	return LoadoutSlot_GetItemFlavor( playerEHI, loadoutCharacter )
+}
+
+void function Survival_RunCharacterSelection()
+{
+	array<entity> rankedPlayersToLookUpLeaderBoard
+	// Clear settings for capital ship
+	foreach ( entity player in GetPlayerArray() )
+	{
+		if ( IsAlive( player ) )
+			thread Survival_ClearStagingAreaSettings( player )
+
+		// Set invulnerable for character select so left behind DOT ents wont do damage screen effects during the menu
+		if ( !player.IsInvulnerable() )
+			player.SetInvulnerable()
+	}
+
+	// Non-round based OR first round only
+	if ( !IsRoundBased() || GetRoundsPlayed() == 0 )
+	{
+		//CleanupAllPlayerPermanents()
+		//SURVIVAL_ChooseLootLocations()
+	}
+
+	bool modePicksChampion = GetCurrentPlaylistVarBool( "enable_champion", true ) && !IsPVEMode()
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_EXPLORE ) )
+		modePicksChampion = false
+
+	if ( modePicksChampion )
+	{
+		bool pickChampion = true
+
+		if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_GUNGAME ) )
+			pickChampion = false
+
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
+			pickChampion = false
+
+		if ( pickChampion )
+		{
+			//SurvivalCommentary_PickChampion()
+		}
+	}
+
+	//thread IntroAirdropThink()
+
+	thread Survival_RunCharacterSelectionNew_Thread()
+}
+
+float s_characterSelectMusicStartTime = 0.0
+
+string function GetAppropriateCharacterSelectMusicTrack( entity player )
+{
+	string override = GetCurrentPlaylistVarString( "music_override_charselect", "" )
+	if ( override.len() > 0 )
+		return override
+
+	// Uses different music tracks depending on which Alliance players are in so I can't use the playlist override
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+	{
+		int playerAlliance = AllianceProximity_GetAllianceFromTeam( player.GetTeam() )
+		//if ( playerAlliance == SHADOWARMY_LEGEND_ALLIANCE )
+		//	return "Music_RevArmy_CharacterSelect_Legends"
+		//else
+			return "Music_RevArmy_CharacterSelect_Revenants"
+	}
+
+	string track
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
+		track = MusicPack_GetCharacterSelectMusic_Solo( GetMusicPackForPlayer( player ) )
+	else if ( IsDuoMode() )
+		track = MusicPack_GetCharacterSelectMusic_Duo( GetMusicPackForPlayer( player ) )
+	else if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_QUADS ) )
+		track = MusicPack_GetCharacterSelectMusic_Quad( GetMusicPackForPlayer( player ) )
+	else
+		track = MusicPack_GetCharacterSelectMusic_Squad( GetMusicPackForPlayer( player ) )
+	return track
+}
+
+void function PlayCharacterSelectMusicToAllPlayersIfNeeded()
+{
+	if ( s_characterSelectMusicStartTime != 0.0 )
+		return
+
+	s_characterSelectMusicStartTime = Time()
+
+	// Try to play the character select music on late joiners
+	AddCallback_OnClientConnected( CharacterSelect_OnPlayerConnected )
+
+	foreach ( entity player in GetPlayerArray() )
+	{
+		string musicTrack = GetAppropriateCharacterSelectMusicTrack( player )
+
+		if ( !IsMusicPlayingToPlayer( player, musicTrack ) )
+			PlayMusicToPlayer( player, musicTrack, Time() - s_characterSelectMusicStartTime )
+	}
+}
+
+void function CharacterSelect_OnPlayerConnected( entity player )
+{
+	Assert( IsValid( player ), "ClientConnected callback called with invalid player" )
+	if ( !IsValid( player ) )
+		return
+
+	string musicTrack = GetAppropriateCharacterSelectMusicTrack( player )
+
+	if ( !IsMusicPlayingToPlayer( player, musicTrack ) )
+		PlayMusicToPlayer( player, musicTrack, Time() - s_characterSelectMusicStartTime )
+}
+
+void function Survival_RunCharacterSelectionNew_Thread()
+{
+	if ( Survival_CharacterSelectEnabled() )
+	{
+
+			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+				FlagWait( "AllianceAssignmentComplete" )
+
+
+		AssignLockStepOrder()
+		SetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, -2 )
+
+		// PIN event data
+		table<entity, array<string> > PIN_ClassesOffered
+		foreach ( entity player in GetPlayerArray() )
+			PIN_ClassesOffered[player] <- GetStringArrayAvailableClassesForPlayer( player )
+
+		// Picks Start Time
+		float characterSelectPicksStartTime = (Time() + CharSelect_GetIntroCountdownDuration())
+
+		// Picks End Time
+		float characterSelectPicksEndTime
+		{
+			float dur = 0.0
+
+			dur += CharSelect_GetPickingDelayBeforeAll()
+			for ( int idx = 0 ; idx < MAX_TEAM_PLAYERS ; ++idx )
+			{
+				if ( idx == 0 )
+					dur += CharSelect_GetPickingDelayOnFirst()
+				dur += Survival_GetCharacterSelectDuration( idx )
+				dur += CharSelect_GetPickingDelayAfterEachLock()
+			}
+			dur += CharSelect_GetPickingDelayAfterAll()
+
+			characterSelectPicksEndTime = (characterSelectPicksStartTime + dur)
+		}
+
+		// Squad Cards Start Time
+		float outroSceneChangeDuration   = CharSelect_GetOutroSceneChangeDuration()
+
+		// look at all squads and add the 0 + (outroSceneChangeDuration * 0.5)
+		float allSquadsPresentationStartTime = ( characterSelectPicksEndTime + (outroSceneChangeDuration * 0.5) )
+
+		float squadPresentationStartTime = ( allSquadsPresentationStartTime + GetCurrentPlaylistVarFloat( "charselect_outro_all_squads_present_duration", 0.0 ) )
+
+		float mvpPresentationStartTime = squadPresentationStartTime +  GetCurrentPlaylistVarFloat( "charselect_outro_squad_present_duration", 6.0  )
+
+		// Champion Squad Cards Start Time
+		float championSquadPresentationStartTime = ( mvpPresentationStartTime + GetCurrentPlaylistVarFloat( "charselect_outro_mvp_present_duration", 0.0 ) )
+
+		bool showChampionSquad = GetCurrentPlaylistVarInt( "survival_enable_gladiator_intros", 1 ) == 1
+
+		// Final End Time
+		float finalEndTime = championSquadPresentationStartTime
+		if ( showChampionSquad)
+			finalEndTime += GetCurrentPlaylistVarFloat( "charselect_outro_champion_present_duration", 8.0 )
+
+
+		SetGlobalNetTime( "pickLoadoutGamestateStartTime", characterSelectPicksStartTime )
+		SetGlobalNetTime( "characterSelectPicksEndTime", characterSelectPicksEndTime )
+		SetGlobalNetTime( "allSquadsPresentationStartTime", allSquadsPresentationStartTime )
+		SetGlobalNetTime( "squadPresentationStartTime", squadPresentationStartTime )
+		SetGlobalNetTime( "mvpPresentationStartTime", mvpPresentationStartTime )
+		SetGlobalNetTime( "championSquadPresentationStartTime", championSquadPresentationStartTime )
+		SetGlobalNetTime( "pickLoadoutGamestateEndTime", finalEndTime )
+		SetGlobalNetBool( "characterSelectionReady", true )
+
+		WaitFrame()
+
+		foreach ( entity player in GetPlayerArray() )
+		{
+			player.FreezeControlsOnServer()
+			//if ( !IsAlive( player ) )
+			//	DecideRespawnPlayer( player )
+		}
+
+		float musicStartTime = CharSelect_GetIntroMusicStartTime()
+		if ( musicStartTime >= 0.0 )
+		{
+			thread function() : (musicStartTime)
+			{
+				wait musicStartTime
+				PlayCharacterSelectMusicToAllPlayersIfNeeded()
+			}()
+		}
+
+		while( Time() < characterSelectPicksStartTime )
+			WaitFrame()
+
+		SetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, -1 )
+		wait CharSelect_GetPickingDelayBeforeAll()
+
+		// Identify who each players default character will be
+		foreach ( player in GetPlayerArray() )
+		{
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+			int characterGUID = ItemFlavor_GetGUID( character )
+			player.SetPlayerNetInt( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, characterGUID )
+			Remote_CallFunction_NonReplay( player, "ServerToClient_SetInitialSelection", characterGUID )
+		}
+
+		int pickIndex = 0
+		for ( pickIndex = 0 ; pickIndex < MAX_TEAM_PLAYERS ; pickIndex++ )
+		{
+			float preSelectDelay          = ((pickIndex == 0) ? CharSelect_GetPickingDelayOnFirst() : 0.0)
+			float characterSelectDuration = Survival_GetCharacterSelectDuration( pickIndex )
+
+			SetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, pickIndex )
+			SetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, Time() + preSelectDelay )
+			SetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, Time() + preSelectDelay + characterSelectDuration )
+
+			wait (preSelectDelay + characterSelectDuration)
+
+			table < int, array<ItemFlavor> > takenCharactersByTeam
+
+			foreach ( entity player in GetPlayerArray() )
+			{
+				if ( !(player.GetTeam() in takenCharactersByTeam) )
+				{
+					takenCharactersByTeam[ player.GetTeam() ] <- []
+
+					if ( CharacterClass_GetRandomCharacterSentinel() != null )
+						takenCharactersByTeam[ player.GetTeam() ].append( expect ItemFlavor( CharacterClass_GetRandomCharacterSentinel() ) )
+				}
+
+
+				if ( player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX ) < pickIndex )
+				{
+					ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+
+					takenCharactersByTeam[ player.GetTeam() ].append( character )
+				}
+			}
+
+			// Finalize:
+			foreach ( entity player in GetPlayerArray() )
+			{
+				if ( player.GetPlayerNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX ) != pickIndex )
+					continue
+
+				bool hadLockedIn = player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER )
+
+				ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+				bool forcedSelection = false
+
+
+				if ( !forcedSelection &&  ( ItemFlavor_GetAsset( character ) == CHARACTER_RANDOM || player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) != true || CharacterSelect_CustomIsCharacterLockedForPlayer( character, player ) ) )
+				{
+					// They didn't lock anyone in, pick for them
+					if ( ItemFlavor_GetAsset( character ) == CHARACTER_RANDOM || file.forceRandomOnNoSelect || !IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_Character(), character ) || CharacterSelect_CustomIsCharacterLockedForPlayer( character, player ) )
+					{
+						// if their selection is invalid (character is taken by a squadmate), assign them a random character
+						array<ItemFlavor> charactersThatCannotBeSelected = takenCharactersByTeam[ player.GetTeam() ]
+						if ( CharacterClass_AllowDuplicateCharacterPicksInTeam() )
+							charactersThatCannotBeSelected = []
+
+						const bool isAutoPlayer = false
+
+						if ( !isAutoPlayer && GetPlaylistVarBool( GetCurrentPlaylistName(), "forced_select_gets_most_played", true ) )
+							character = GetMostPlayedCharacterItemFlavor( ToEHI( player ), Loadout_Character(), false, charactersThatCannotBeSelected )
+						else
+							character = GetRandomGoodItemFlavorForLoadoutSlot( ToEHI( player ), Loadout_Character(), false, charactersThatCannotBeSelected )
+
+						SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), character )
+
+						foreach ( func in file.Callbacks_OnGameAutoSelectedCharacterCallbacks )
+						{
+							func( player, character )
+						}
+					}
+					player.SetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, true )
+
+					if ( hadLockedIn )
+					{
+						foreach ( teammate in GetPlayerArrayOfTeam( player.GetTeam() ) )
+						{
+							Remote_CallFunction_NonReplay( teammate, "ServerCallback_ForceCharacterLockFeedback", player, true )
+						}
+					}
+				}
+
+				// Report Stryder
+				QueueUpdateStryderWithPlayersStryderCharDataArray( player )
+
+
+			}
+
+			wait CharSelect_GetPickingDelayAfterEachLock()
+		}
+
+		table < int, array<ItemFlavor> > takenCharactersByTeam
+
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( !(player.GetTeam() in takenCharactersByTeam) )
+			{
+				takenCharactersByTeam[ player.GetTeam() ] <- []
+
+				if ( CharacterClass_GetRandomCharacterSentinel() != null )
+					takenCharactersByTeam[ player.GetTeam() ].append( expect ItemFlavor( CharacterClass_GetRandomCharacterSentinel() ) )
+			}
+
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+
+			if ( ItemFlavor_GetAsset( character ) != CHARACTER_RANDOM && player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) == true )
+			{
+				takenCharactersByTeam[ player.GetTeam() ].append( character )
+			}
+		}
+
+		//TODO(chin): This is super screwed up, we're essentially copy pasting a bunch of script again instead of trying to fix the root problem (HOW COME WE HAVE 4 PLAYERS?!)
+		// Make sure all players have a character. This is a failsafe for having too many players on your team. If teamsize is 3 but you have 4 players (happens in dev) the last player wont get handled above
+		foreach ( entity player in GetPlayerArray() )
+		{
+			ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+
+			if ( ItemFlavor_GetAsset( character ) != CHARACTER_RANDOM && player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) == true )
+			{
+
+					MatchBehaviorPlayer_RecordPickInfo( player, character )
+
+				continue
+			}
+
+			bool hadLockedIn = player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER )
+
+			bool forcedSelection = false
+
+
+
+			// They didn't lock anyone in, pick for them
+			if ( !forcedSelection && ( ItemFlavor_GetAsset( character ) == CHARACTER_RANDOM || file.forceRandomOnNoSelect || !IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_Character(), character ) || CharacterSelect_CustomIsCharacterLockedForPlayer( character, player ) ) )
+			{
+				// if their selection is invalid (character is taken by a squadmate), assign them a random character asd
+				array<ItemFlavor> charactersThatCannotBeSelected = takenCharactersByTeam[ player.GetTeam() ]
+				if ( CharacterClass_AllowDuplicateCharacterPicksInTeam() )
+					charactersThatCannotBeSelected = []
+
+				if ( GetPlaylistVarBool( GetCurrentPlaylistName(), "forced_select_gets_most_played", true ) )
+					character = GetMostPlayedCharacterItemFlavor( ToEHI( player ), Loadout_Character(), false, charactersThatCannotBeSelected )
+				else
+					character = GetRandomGoodItemFlavorForLoadoutSlot( ToEHI( player ), Loadout_Character(), false, charactersThatCannotBeSelected )
+
+				SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), character )
+
+				takenCharactersByTeam[ player.GetTeam() ].append( character )
+			}
+			player.SetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, true )
+
+			if ( hadLockedIn )
+			{
+				foreach ( teammate in GetPlayerArrayOfTeam( player.GetTeam() ) )
+				{
+					Remote_CallFunction_NonReplay( teammate, "ServerCallback_ForceCharacterLockFeedback", player, true )
+				}
+			}
+		}
+
+		// for progress bar only
+		SetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, MAX_TEAM_PLAYERS )
+
+		file.characterLocksFinished = true
+
+		// Gamemodes like Control have a podium sequence in the intro that displays right after Character Select.
+		// We want to start playing the drop music earlier so it plays during the podium. So we only do this first wait for modes without the intro podium.
+		int introPodiumSequenceCount = GetCurrentPlaylistVarInt( "podium_intro_screen_count", 0 )
+		if ( introPodiumSequenceCount <= 0 )
+		{
+			wait max( 0, ( squadPresentationStartTime - Time() ) ) + ( outroSceneChangeDuration / 3.0 )
+		}
+		else
+		{
+			// Modes with an intro podium need a custom wait before music triggers that doesn't interfere with the other timings.
+			// We can't just edit charselect_outro_scene_change_duration or charselect_outro_all_squads_present_duration because causes the char select screen to remain too long or the whole sequence to end early
+			wait GetCurrentPlaylistVarFloat( "podium_intro_post_charselect_wait", 5.0 )
+		}
+
+		if ( GetRoundsPlayed() == 0 )
+		{
+			// Stop trying to play the character select music on late joiners
+			RemoveCallback_OnClientConnected( CharacterSelect_OnPlayerConnected )
+		}
+
+		foreach ( entity player in GetPlayerArray() )
+		{
+			string music = GetMusicForJump( player )
+			if ( music.len() > 0 )
+				PlayMusicToPlayer( player, music )
+		}
+	}
+	else
+	{
+		SetGlobalNetTime( "pickLoadoutGamestateEndTime", Time() )
+	}
+
+	file.characterLocksLocked = true
+
+	thread function() : ()
+	{
+		// Spawning players causes hitching due to managing highlights on loot objects around where the player spawns in on the ground.
+		// hiding it under the black screen before displaying the champion squad.
+		// If we don't spawn players here, it will happen when entering gamestate prematch. GameStateEnter_Prematch(). The hitch there causes the transition banner to play twice.
+		float waitTime = GetGlobalNetTime( "championSquadPresentationStartTime" ) - Time()
+		if ( waitTime > 0 )
+		{
+			wait waitTime
+			wait 0.6 // the time until the screen is completely black is 0.5 but waiting a bit more seemed to make it match up better.
+		}
+
+		//check if we should spawn players here based on mode
+		if ( file.Callback_ModeShouldSpawnPlayersDuringCharacterSelect != null )
+		{
+			bool shouldSpawn = file.Callback_ModeShouldSpawnPlayersDuringCharacterSelect()
+			if ( !shouldSpawn )
+				return
+		}
+
+		foreach ( entity player in GetPlayerArray() )
+		{
+			if ( IsValid( player ) && !IsAlive( player ) )
+			{
+				//printf( "%s() - Spawning player: %s", FUNC_NAME(), string( player ) )
+				DecideRespawnPlayer( player, true )
+			}
+			else
+			{
+				//if ( IsAlive( player ) )
+				//	printf( "%s() - Already alive: %s", FUNC_NAME(), string( player ) )
+			}
+		}
+	}()
 }
 
 void function Sequence_Playing()
@@ -2718,14 +3581,7 @@ void function Survival_OnPlayerRespawned( entity player )
 
 void function SurvivalPlayerRespawnedInit( entity player )
 {
-	if( Gamemode() != eGamemodes.SURVIVAL && Gamemode() != eGamemodes.WINTEREXPRESS )
-		return //keep this away from flowstate gamemodes for now. Cafe
-
-	// #if DEVELOPER
-	// DumpStack()
-	// #endif
-
-	bool resetPlayerInventoryOnRespawn = true //Survival_ShouldResetInventoryOnRespawn( player )
+	bool resetPlayerInventoryOnRespawn = Survival_ShouldResetInventoryOnRespawn( player )
 
 	UpdatePlayerCounts()
 
@@ -2733,9 +3589,30 @@ void function SurvivalPlayerRespawnedInit( entity player )
 	player.TurnLowHealthEffectsOff()
 	player.AmmoPool_SetCapacity( SURVIVAL_MAX_AMMO_PICKUPS )
 
-	Survival_PlayerCharacterSetup( player, LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) )
+	#if DEVELOPER
+		if ( file.DEV_overrideSpawnCharacterOrNull != null )
+		{
+			SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), expect ItemFlavor(file.DEV_overrideSpawnCharacterOrNull) )
 
-	// SURVIVAL_SetDefaultPlayerSettings( player )
+			if ( file.DEV_overrideSpawnCharacterSimpleEquip )
+			{
+				LoadoutEntry meleeSkinSlot = Loadout_MeleeSkin( expect ItemFlavor(file.DEV_overrideSpawnCharacterOrNull) )
+				// ensure no special weapons
+				DEV_RequestSetItemFlavorLoadoutSlot( ToEHI( player ), meleeSkinSlot, meleeSkinSlot.defaultItemFlavor )
+				// if Dummie, ensure black skin
+				if ( file.DEV_overrideSpawnCharacterOrNull == GetItemFlavorByAsset( CHARACTER_DUMMIE ) )
+				{
+					const int DUMMIE_BLACK_SKIN = 1524874502
+					if ( IsValidItemFlavorGUID( DUMMIE_BLACK_SKIN ) )
+						DEV_RequestSetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( GetItemFlavorByAsset( CHARACTER_DUMMIE ) ), GetItemFlavorByGUID( DUMMIE_BLACK_SKIN ) )
+				}
+			}
+		}
+	#endif
+
+	Survival_PlayerCharacterSetup( player, Survival_ValidateAndGetCharacterClass( player ) )
+
+	SURVIVAL_SetDefaultPlayerSettings( player )
 
 	if ( WeaponDrivenConsumablesEnabled() )
 	{
@@ -2746,39 +3623,48 @@ void function SurvivalPlayerRespawnedInit( entity player )
 	if ( resetPlayerInventoryOnRespawn && player.p.survivalLandedOnGround ) // Only take ammo on a respawn and not on first drop
 		TakeAmmoFromPlayer( player )
 
-	// Ultimates_OnPlayerRespawned( player )
+	Ultimates_OnPlayerRespawned( player )
 
-	// player.GiveOffhandWeapon( HOLO_PROJECTOR_WEAPON_NAME, HOLO_PROJECTOR_INDEX )
-	// player.GiveOffhandWeapon( GENERIC_OFFHAND_WEAPON_NAME, GENERIC_OFFHAND_INDEX )
+	//player.GiveOffhandWeapon( HOLO_PROJECTOR_WEAPON_NAME, HOLO_PROJECTOR_INDEX )
+	//player.GiveOffhandWeapon( "mp_ability_generic_offhand", 7 )
 
-	player.DisableIdLights()
-	player.DisableAutoReloadNoAmmo()
 
-	// if ( GetGameState() == eGameState.WaitingForPlayers )
-	// {
-		// if( EHIToEncodedEHandle( player ) in file.playerChangeClassData )
-		// {
-			// EncodedEHandle handle = EHIToEncodedEHandle( player )
-			// player.SetOrigin( file.playerChangeClassData[handle].respawnPos )
-			// player.SetAngles( file.playerChangeClassData[handle].respawnAngles )
-			// if ( file.playerChangeClassData[handle].respawnIn3P )
-				// player.SetThirdPersonShoulderModeOn()
-			// else
-				// player.SetThirdPersonShoulderModeOff()
-		// }
+	//player.DisableIdLights()
+	//player.DisableAutoReloadNoAmmo()
 
-		// // thread Survival_SetStagingAreaSettings( player )
-	// }
-	// else
-	if ( GetGameState() < eGameState.Playing )
+	if ( GetGameState() == eGameState.WaitingForPlayers )
 	{
+		if( EHIToEncodedEHandle( player ) in file.playerChangeClassData )
+		{
+			EncodedEHandle handle = EHIToEncodedEHandle( player )
+			player.SetOrigin( file.playerChangeClassData[handle].respawnPos )
+			player.SetAngles( file.playerChangeClassData[handle].respawnAngles )
+			if ( file.playerChangeClassData[handle].respawnIn3P )
+				player.SetThirdPersonShoulderModeOn()
+			else
+				player.SetThirdPersonShoulderModeOff()
+		}
+
+		thread Survival_SetStagingAreaSettings( player )
+	}
+	else if ( GetGameState() < eGameState.Playing )
+	{
+		if ( GetGameState() == eGameState.Prematch )
+		{
+			if ( !player.p.hasMatchParticipationStarted )
+				OnPlayerMatchParticipationStarted( player )
+		}
+
 		Survival_SetPrematchSettings( player )
 	}
 	else if ( !player.p.respawnPodLanded )
 	{
 		// respawnPodLanded will be set during a respawn from a respawn beacon, so we don't want to do anything special there. This only runs if it's not a respawn beacon
+
 		// This shouldn't be allowed, but it's happening, either in DEV through manual connect or slow loading and server wait for player timeout
 
+		if ( !player.p.hasMatchParticipationStarted )
+			OnPlayerMatchParticipationStarted( player )
 		SetPlayerIntroDropSettings( player )
 
 		array<entity> teammates = GetPlayerArrayOfTeam_Alive( player.GetTeam() )
@@ -2822,22 +3708,106 @@ void function SurvivalPlayerRespawnedInit( entity player )
 		}
 		else
 		{
-			// The following should be allowed only in dev modes, but those are handled differently here, which allows us to completely disable this.
-			// The fixed behavior for this part has been moved to OnClientConnected callback in sh_onboarding, where we do the pertinent checks before respawning the player.
-
-			// Bad
 			// if a player is on the ground already, just spawn them near that player
-			// ClearPlayerIntroDropSettings( player )
-			// if ( IsValid( groundPlayer ) )
-				// player.SetOrigin( groundPlayer.GetOrigin() )
+			ClearPlayerIntroDropSettings( player )
+			if ( IsValid( groundPlayer ) )
+				player.SetOrigin( groundPlayer.GetOrigin() )
 		}
 	}
+
+	// Player has respawned, remove change class data
+	if( EHIToEncodedEHandle( player ) in file.playerChangeClassData )
+		delete file.playerChangeClassData[ EHIToEncodedEHandle( player ) ]
+
+	#if !HAS_ENEMY_NAMES_OVERHEAD
+		player.SetNameVisibleToEnemy( false )
+	#endif
 
 	thread Survival_ResetPlayerHighlights()
 
 	if ( GetCurrentPlaylistVarBool( "thirdperson_match", false ) )
 		player.SetThirdPersonShoulderModeOn()
 }
+
+bool function Survival_ShouldResetInventoryOnRespawn( entity player )
+{
+	if( !IsValid( player ) )
+	{
+		Warning( "Survival_ShouldResetInventoryOnRespawn called with invalid player!" )
+		return true
+	}
+
+	bool resetPlayerInventoryOnRespawn = true
+	if( GetCurrentPlaylistVarBool( "reset_player_inventory_on_respawn", true ) == false && player.p.respawnCount > 1 )
+		resetPlayerInventoryOnRespawn = false
+
+	if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING ) )
+		resetPlayerInventoryOnRespawn = true
+
+	if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && !FRC_IsPlayerActiveForChallenge ( player ) )
+		resetPlayerInventoryOnRespawn = false
+
+	if ( IsEventFinale() )
+		resetPlayerInventoryOnRespawn = false
+
+
+
+
+
+
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
+		resetPlayerInventoryOnRespawn = false
+
+
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT )  )
+		resetPlayerInventoryOnRespawn = false
+
+
+//%if HAS_FREERESPAWNS
+//	if( FreeRespawns_DontResetInventory() )
+//		resetPlayerInventoryOnRespawn = false
+//%endif // HAS_FREERESPAWNS
+
+	if( RespawnEquipped_DontResetInventory() )
+		resetPlayerInventoryOnRespawn = false
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	return resetPlayerInventoryOnRespawn
+}
+
+
+void function SURVIVAL_SetDefaultPlayerSettings( entity player )
+{
+	if ( player.GetTeam() == TEAM_SPECTATOR )
+		return
+
+	asset settings = player.GetPlayerSettings()
+	if ( settings == SPECTATOR_SETTINGS )
+		return
+
+	if ( GetCurrentPlaylistVarInt( "survival_jumpkit_enabled", 0 ) > 0 )
+		GivePlayerSettingsMods( player, ["enable_doublejump"] )
+
+	if ( GetCurrentPlaylistVarInt( "survival_wallrun_enabled", 0 ) > 0 )
+		GivePlayerSettingsMods( player, ["enable_wallrun"] )
+}
+
 
 void function Survival_SetPrematchSettings( entity player )
 {

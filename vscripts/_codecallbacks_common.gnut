@@ -29,6 +29,7 @@ global function AddCallback_OnTitanDoomed
 global function AddCallback_OnTitanHealthSegmentLost
 global function AddCallback_OnClientConnecting
 global function AddCallback_OnClientConnected
+global function RemoveCallback_OnClientConnected
 global function AddCallback_OnClientDisconnected
 global function AddCallback_OnPilotBecomesTitan
 global function AddCallback_OnTitanBecomesPilot
@@ -654,6 +655,14 @@ void function AddCallback_OnPilotBecomesTitan( void functionref( entity pilot, e
 {
 	Assert( !svGlobal.onPilotBecomesTitanCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnPilotBecomesTitan" )
 	svGlobal.onPilotBecomesTitanCallbacks.append( callbackFunc )
+}
+
+void function RemoveCallback_OnClientConnected( void functionref( entity player ) callbackFunc )
+{
+	int index = svGlobal.onClientConnectedCallbacks.find( callbackFunc )
+
+	Assert( index != -1, "Requested OnClientConnected " + string( callbackFunc ) + " to be removed not found! " )
+	svGlobal.onClientConnectedCallbacks.fastremove( index )
 }
 
 void function AddCallback_OnTitanBecomesPilot( void functionref( entity pilot, entity npc_titan ) callbackFunc )

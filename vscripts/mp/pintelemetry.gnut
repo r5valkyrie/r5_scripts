@@ -32,22 +32,47 @@ global function PIN_PlayerLandedOnGround
 global function PIN_PlayerJumpedFromPlane
 global function PIN_Training
 
+global const int NUMBER_OF_SUMMARY_DISPLAY_VALUES = 7 // 1 - 1a - 1b / 2 / 3 (time) / 4 / 5
+global const array< int > SUMMARY_DISPLAY_EMPTY_SET = [ 0, 0, 0, 0, 0, 0, 0 ]
+
 global struct GameSummarySquadData
 {
-	int eHandle = -1
-	string uid
-	int kills
-	int knockdowns
-	int assists
-	int damageDealt
-	int survivalTime
-	int revivesGiven
-	int respawnsGiven
-	int deaths
-	int headshots
-	int hits
-	int shots
-	table<int, int> modeMetaData // gun game demotion/promotion tracking
+	// We store this off because we need the data even if the player disconnects.
+	// Also it's cheaper to just store it here globally than to update teammates persistence seperately each time one of these values changes
+	string                      playerName
+	ItemFlavor&                 character
+	int                         eHandle
+	int                         survivalTime
+	int                         kills
+	int                         assists
+	int							knockdowns
+	int							knockdownAssists
+	table<EncodedEHandle, int > playerKills
+	int                         damageDealt
+	int                         shots
+	int                         hits
+	int                         headshots
+	int                         revivesGiven
+	int                         respawnsGiven
+	int                         deaths
+	string                      platformUid
+	string                      hardware
+	string                      pid
+	string                      nucleus
+	bool                        optOutOfSendingSquadInfo
+	bool                        dealtDamageLateInTheGame
+	bool                        lootedLateInTheGame
+	bool                        isUsingSteam
+
+	/* the idea here is to provide a flex table for mode-specific information
+	 * and then each mode should have a new set of *global* enum keys for specific stats
+	 * the stat enums should correspond to where on the normal death screen UI we want info displayed
+	 * table< DISPLAY_ARRAY_IDX, VALUE >
+	 */
+	table< int, int > modeMetaData
+
+	array< int > displayData = SUMMARY_DISPLAY_EMPTY_SET
+	bool displayData3IsTime
 }
 
 void function PIN_Init()

@@ -99,46 +99,7 @@ void function LoadPlaylistSettings()
 
 void function _CustomCTF_Init()
 {
-	LoadPlaylistSettings()
 
-	PrecacheParticleSystem($"P_survival_radius_CP_1x100")
-	PrecacheModel( CTF_FLAG_MODEL )
-	PrecacheModel( CTF_FLAG_MODEL_RED )
-	PrecacheModel( CTF_FLAG_BASE_MODEL )
-	PrecacheModel($"mdl/props/pathfinder_zipline/pathfinder_zipline.rmdl")
-	RegisterSignal( "FS_WaitForBlackScreen" )
-	RegisterSignal( "FlagReturnEnded" )
-	RegisterSignal( "ResetDropTimeout" )
-	RegisterSignal( "EndScriptedPropsThread" )
-	RegisterSignal( "FlagPhysicsEnd" )
-
-	// BannerAssets_Init()
-
-	AddCallback_OnClientConnected( void function(entity player) { thread _OnPlayerConnected(player) } )
-	AddCallback_OnClientDisconnected( void function(entity player) { thread _OnPlayerDisconnected(player) } )
-	AddCallback_OnPlayerKilled(void function(entity victim, entity attacker, var damageInfo) {thread _OnPlayerDied(victim, attacker, damageInfo)})
-    // AddCallback_EntitiesDidLoad( DM__OnEntitiesDidLoad )
-	AddSpawnCallback( "prop_survival", DissolveItem )
-	#if DEVELOPER
-	AddClientCommandCallback("next_round", ClientCommand_NextRound)
-	#endif
-	// Used for telling the server the player wants to drop the flag
-	AddClientCommandCallback("DropFlag", ClientCommand_DropFlag)
-
-	// if( Flowstate_IsHaloMode() )
-	// {
-		// AddClientCommandCallback("VoteTeam_AskForTeam", ClientCommand_AskForTeam)
-		// PrecacheCyberdyne()
-		// PrecacheLockout()
-		// PrecacheChill()
-	// } else
-	// {
-		AddClientCommandCallback("VoteForMap", ClientCommand_VoteForMap)
-		// Used for setting players class
-		AddClientCommandCallback("SetPlayerClass", ClientCommand_SetPlayerClass)
-	// }
-
-	thread RUNCTF()
 }
 
 void function DissolveItem( entity prop )
@@ -1549,8 +1510,8 @@ void function GiveBackWeapons(entity player)
 	player.SetActiveWeaponBySlot(eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0)
 
 	//give flowstate holo sprays
-	player.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
-	player.GiveOffhandWeapon( "mp_ability_emote_projector", OFFHAND_EQUIPMENT )
+	//player.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
+	//player.GiveOffhandWeapon( "mp_ability_emote_projector", OFFHAND_EQUIPMENT )
 
 	if( file.bHeals)
 	{

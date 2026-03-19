@@ -2,6 +2,7 @@ global function Sh_Airdrops_Init
 
 #if SERVER
 global function AirdropSpawnThink
+global function AirdropLogic
 global function AirdropForRound
 #endif
 
@@ -113,6 +114,11 @@ void function AirdropSpawnThink()
 
         WaitFrame()
     }
+}
+
+void function AirdropLogic()
+{
+
 }
 #endif
 

@@ -55,7 +55,7 @@ void function GameState_Init()
 	level._swapGameStateOnNextFrame <- false
 	level.clearedPlayers <- false
 
-	level.customEpilogueDuration <- null
+	level.customResolutionDuration <- -1.0
 
 	level.lastTeamTitans <- {}
 	level.lastTeamTitans[TEAM_IMC] <- null

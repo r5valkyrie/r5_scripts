@@ -447,6 +447,7 @@ Scripts:
 	weapons/mp_weapon_hemlok.nut
 	weapons/mp_weapon_arc_launcher.nut
 	weapons/mp_weapon_proximity_mine.nut
+	weapons/mp_ability_generic_offhand.nut
 
 	weapons/sh_deployable.gnut
 	weapons/sh_deployable_wall.gnut

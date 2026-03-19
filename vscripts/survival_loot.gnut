@@ -48,6 +48,7 @@ global function CodeCallback_WeaponLoadoutPickup
 global function SURVIVAL_ThrowLootFromPointEx
 global function CreateLootForFlyerDeathBox
 global function SURVIVAL_AutoEquipOrdnanceFromInventory
+global function SURVIVAL_RoundStartLootCleanup
 global function SURVIVAL_EquipOrdnanceFromInventory
 global function SURVIVAL_Death_DropLoot
 global function SURVIVAL_IsFallDeath
@@ -171,6 +172,13 @@ const array<int> nonLootMoveModes = [
 	ePlaylists.fs_haloMod
 ]
 
+global struct BinOrSpawnPoint
+{
+	entity bin
+	//bool   bin_isSecret
+	vector pos
+}
+
 struct {
 	array<LootZone> lootZones
 	LootZone hotZone
@@ -201,6 +209,7 @@ struct {
 	array<int>                     realmsToPopulate = [ eRealms.DEFAULT ]
 
 	array<entity> playersThatShouldForceUseSafeSpotForDeathBox
+	table< string, array<BinOrSpawnPoint> > groupedSpawnpoints
 	
 	array<void functionref( entity, entity, string, string )> Callbacks_OnPlayerWeaponAttachmentChanged
 	
@@ -6173,5 +6182,11 @@ entity function DEV_AddToDeathBox( entity deathBox, table<string, int> contents 
 vector function GetSafeLocation( vector origin )
 {
 	return GetGroundPosition( origin, origin - <0, 0, 5000> ).endPos
+}
+
+void function SURVIVAL_RoundStartLootCleanup()
+{
+	foreach ( groupName, spawnPoints in file.groupedSpawnpoints )
+		spawnPoints.clear()
 }
 #endif
