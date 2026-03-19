@@ -832,7 +832,6 @@ void function ShPlaylist_CacheData()
 	file.cachedPlaylistMap = {}
 
 	int numPlaylists = GetPlaylistCount()
-	print( "DEBUG: ShPlaylist_CacheData - GetPlaylistCount() = " + numPlaylists )
 	file.cachedPlaylistArray.resize( numPlaylists )
 
 	for ( int index = 0; index < numPlaylists; index++ )
