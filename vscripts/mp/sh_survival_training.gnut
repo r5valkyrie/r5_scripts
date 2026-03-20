@@ -261,7 +261,7 @@ void function Training_OnPlayerRespawned( entity player )
 
 	printt( "Training: Training_OnPlayerRespawned", player )
 
-	RemoveStagingAreaEntsForRealm( GetPlayerStagingSquadRealm( player ) )
+	RemoveStagingAreaEntsForRealm( GetPlayerSquadRealm( player ) )
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 	data.gun_range_enabled = false
 	DecideRespawnPlayer( player, false )
@@ -430,8 +430,8 @@ void function PlayerStartsTraining( entity player )
 	{
 		data.lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 		data.lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
-		CreateWeaponRacksForRealm( GetPlayerStagingSquadRealm( player ) )
-		CreateGunRangeTargetsForRealm( GetPlayerStagingSquadRealm( player ) )
+		CreateWeaponRacksForRealm( GetPlayerSquadRealm( player ) )
+		CreateGunRangeTargetsForRealm( GetPlayerSquadRealm( player ) )
 	}
 
 	if ( !data.completed_ping && !skipToPathfinder )
@@ -465,7 +465,7 @@ entity function SpawnTrainingLootBin( entity player, vector origin, vector angle
 {
 	entity lootBin = CreateCustomLootBin( origin, angles, lootRefs )
 	lootBin.RemoveFromAllRealms()
-	lootBin.AddToRealm( GetPlayerStagingSquadRealm( player ) )
+	lootBin.AddToRealm( GetPlayerSquadRealm( player ) )
 	lootBin.UnsetUsable()
 	Highlight_SetFriendlyHighlight( lootBin, "sp_objective_entity" )
 	Highlight_SetNeutralHighlight( lootBin, "sp_objective_entity" )
@@ -534,7 +534,7 @@ entity function GetTrainingNPCForPlayer( entity player, asset characterSettingsA
 	else if ( characterSettingsAsset == CHARACTER_PATHFINDER )
 		npc.SetFootstepType( "pathfinder" )
 
-	int squadRealm = GetPlayerStagingSquadRealm( player )
+	int squadRealm = GetPlayerSquadRealm( player )
 	npc.RemoveFromAllRealms()
 	npc.AddToRealm( squadRealm )
 
@@ -562,7 +562,7 @@ entity function GetTrainingDummyForPlayer( entity player )
 	dummy.SetScriptName( "survival_training_target_dummy" )
 	dummy.SetFootstepType( "bloodhound" )
 
-	int squadRealm = GetPlayerStagingSquadRealm( player )
+	int squadRealm = GetPlayerSquadRealm( player )
 	dummy.RemoveFromAllRealms()
 	dummy.AddToRealm( squadRealm )
 
@@ -1031,8 +1031,8 @@ void function StartTraining_Weapons( entity player )
 	// Enable whole range
 	file.playerTrainingData[ player ].lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
 	file.playerTrainingData[ player ].lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
-	RemoveStagingAreaEntsForRealm( GetPlayerStagingSquadRealm( player ) )
-	CreateGunRangeTargetsForRealm( GetPlayerStagingSquadRealm( player ) )
+	RemoveStagingAreaEntsForRealm( GetPlayerSquadRealm( player ) )
+	CreateGunRangeTargetsForRealm( GetPlayerSquadRealm( player ) )
 	// thread FiringRangeProps() // r5reloaded custom function, no longer exists
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 	data.gun_range_enabled = true
@@ -1680,14 +1680,14 @@ void function StartTraining_Respawn( entity player )
 	respawnChamber.EnableRenderAlways()
 	SetTargetName( respawnChamber, RESPAWN_CHAMBER_TARGET_NAME )
 	respawnChamber.RemoveFromAllRealms()
-	respawnChamber.AddToRealm( GetPlayerStagingSquadRealm( player ) )
+	respawnChamber.AddToRealm( GetPlayerSquadRealm( player ) )
 	respawnChamber.Solid()
 	AddCallback_OnUseEntity( respawnChamber, RespawnChamberOnUse )
 	file.playerTrainingData[ player ].respawnChamber = respawnChamber
 
 	respawnChamberRadar = StartParticleEffectOnEntityWithPos_ReturnEntity( respawnChamber, GetParticleSystemIndex( RESPAWN_BEACON_EMITTER_FX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, respawnChamber.LookupAttachment( "FX_EMITTER" ), <0,0,0>, <-90,0,0> )
 	respawnChamberRadar.RemoveFromAllRealms()
-	respawnChamberRadar.AddToRealm( GetPlayerStagingSquadRealm( player ) )
+	respawnChamberRadar.AddToRealm( GetPlayerSquadRealm( player ) )
 	file.playerTrainingData[ player ].respawnChamberRadar = respawnChamberRadar
 
 	Highlight_SetNeutralHighlight( respawnChamber, "staging_gun_range_target_appear" )
@@ -1758,7 +1758,7 @@ void function DropshipBringDummyBack( entity player )
 	dropship.SetInvulnerable()
 	dropship.DisableHibernation()
 	dropship.RemoveFromAllRealms()
-	dropship.AddToRealm( GetPlayerStagingSquadRealm( player ) )
+	dropship.AddToRealm( GetPlayerSquadRealm( player ) )
 	EmitSoundOnEntity( dropship, "goblin_imc_evac_hover" )
 	dropship.DisableGrappleAttachment()
 	file.playerTrainingData[ player ].dropship = dropship
@@ -1790,7 +1790,7 @@ entity function Training_CreateDeathBox( entity player, entity dummy, bool hasCa
 	entity box = CreateDeathBox( dummy.GetOrigin(), <0, 45, 0>, targetName )
 
 	box.RemoveFromAllRealms()
-	box.AddToRealm( GetPlayerStagingSquadRealm( player ) )
+	box.AddToRealm( GetPlayerSquadRealm( player ) )
 
 	box.Solid()
 	box.EnableRenderAlways()

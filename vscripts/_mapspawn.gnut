@@ -67,6 +67,7 @@ global struct SvGlobals
 	array<void functionref( entity )> onClientReloadConnectedCallbacks
 	array<void functionref( entity )> onPlayerRespawnedCallbacks
 	array<void functionref( entity )> onPlayerPostRespawnedCallbacks
+	array<void functionref()> onTooManyNPCsCallbacks
 	array<void functionref( entity player, entity npc_titan )> onPilotBecomesTitanCallbacks
 	array<void functionref( entity player, entity npc_titan )> onTitanBecomesPilotCallbacks
 	array<void functionref( entity, entity, entity) > soulTransferFuncs

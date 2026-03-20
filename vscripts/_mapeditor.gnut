@@ -186,9 +186,7 @@ void function WallTriggerEnter( entity trigger , entity ent )
                 ent.TakeDamage(ent.GetMaxHealth() + 1, null, null, { damageSourceId=damagedef_suicide, scriptType=DF_BYPASS_SHIELD })
             break
 
-            case "WallTrigger_oob_timer":
-                EntityOutOfBounds( trigger, ent, null, null )
-            break
+
 
             default: //if (GetCurrentPlaylistVarBool( "patch_for_dropoff", false )) return; //(mk): this shouldn't have been here anyway
                 vector lookDir = ent.GetSmoothedVelocity()
@@ -219,7 +217,7 @@ void function WallTriggerEnter( entity trigger , entity ent )
 
             if( IsValid(ent) )
             {
-                EntityBackInBounds( trigger, ent, null, null )
+
                 ent.EnableWeapon()
 
                 StatusEffect_StopAllOfType( ent, eStatusEffect.hunt_mode_visuals)

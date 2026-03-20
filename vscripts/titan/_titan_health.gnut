@@ -367,7 +367,7 @@ bool function IsKillshot( entity ent, var damageInfo, entity titanSoul )
 	float damage = DamageInfo_GetDamage( damageInfo )
 	int health = ent.GetHealth()
 
-	if ( health - damage > DOOMED_MIN_HEALTH )
+	if ( health - damage > 1 )
 		return false
 
 	return true

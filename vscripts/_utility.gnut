@@ -5534,17 +5534,6 @@ void function DestroyAfterDelay( entity ent, float delay )
 	ent.Destroy()
 }
 
-void function AddToUltimateRealm( entity player, entity offhandWeapon )
-{
-	entity ultimateAbility = player.GetOffhandWeapon( OFFHAND_INVENTORY )
-
-	if( !IsValid( ultimateAbility ) )
-		return
-
-	offhandWeapon.RemoveFromAllRealms()
-	offhandWeapon.AddToOtherEntitysRealms( ultimateAbility )
-}
-
 void function SetPlayerSettings( entity player, asset settings, array<string> mods = [] )
 {
 	player.SetPlayerSettingsWithMods( settings, mods )
@@ -5706,11 +5695,6 @@ entity function CreateTraceBlockerVolume_CustomBox( vector origin, vector angles
 	}
 
 	return tbl
-}
-
-void function SetOutOfBoundsTimeLimit( float maxtime )
-{
-	//stub
 }
 
 // Screen cover transition functions

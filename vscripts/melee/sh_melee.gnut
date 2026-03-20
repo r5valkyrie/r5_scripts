@@ -878,18 +878,7 @@ void function OnDeathboxSpawned( entity deathbox, entity attacker, int damageSou
 
 		if ( attackerIsNPC )
 		{
-			if ( CanNPCDoDamageOnBehalfOfPlayer( attacker ) )
-			{
-				entity boss = attacker.GetBossPlayer()
-				if ( IsValid( boss ) && boss.IsPlayer() )
-					attacker = boss
-				else // can't get loadout from a nonvalid boss
-					return
-			}
-			else // NPC can't do damage on behalf of player
-			{
-				return
-			}
+			return
 		}
 
 

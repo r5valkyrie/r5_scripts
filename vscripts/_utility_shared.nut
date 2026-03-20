@@ -4457,6 +4457,25 @@ bool function IsNPCTitan( entity ent )
 }
 #endif
 
+bool function CanNPCDoDamageOnBehalfOfPlayer( entity ent )
+{
+	if (!IsValid(ent))
+		return false
+                                
+                                                     
+             
+      
+              
+                                                  
+             
+      
+
+                                  
+                                 
+              
+       
+	return false
+}
 RaySphereIntersectStruct function IntersectRayWithSphere( vector rayStart, vector rayEnd, vector sphereOrigin, float sphereRadius )
 {
 	RaySphereIntersectStruct intersection

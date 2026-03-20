@@ -42,6 +42,7 @@ global function SURVIVAL_SetPlaneHeight
 global function Survival_RunPlaneLogic_Thread
 global function Survival_GenerateSingleRandomPlanePath
 global function Survival_RunSinglePlanePath_Thread
+global function Survival_PlayerDealtDamage
 global function Survival_GetPlayerRealm
 
 global function SetPlayerIntroDropSettings
@@ -219,9 +220,6 @@ void function GamemodeSurvival_Init()
 
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad_Survival )
 	AddCallback_OnPlayerRespawned( Survival_OnPlayerRespawned )
-	AddDamageCallbackSourceID( eDamageSourceId.deathField, RingDamagePunch )
-
-	AddClientCommandCallback("Flowstate_AssignCustomCharacterFromMenu", ClientCommand_Flowstate_AssignCustomCharacterFromMenu)
 
 	#if DEVELOPER //uncommented dev defines
 		AddClientCommandCallback("forceBleedout", ClientCommand_bleedout)
@@ -2460,6 +2458,24 @@ void function TakingFireDialogue( entity attacker, entity victim, entity weapon 
 			PlayBattleChatterLineToSpeakerAndTeam( victim, "bc_takingFire" )
 }
 
+void function Survival_PlayerDealtDamage( entity player, entity victim, entity weapon, int healthDamage, int shieldDamage, int absorbedDamage, int damageType = -1 )
+{
+
+	EvolvingArmor_PlayerDealtDamage( player, victim, weapon, healthDamage, shieldDamage, absorbedDamage, damageType )
+
+
+
+
+	//Lifesteal_PlayerDealtDamage( player, victim, weapon, healthDamage, shieldDamage, absorbedDamage, damageType )
+
+	if ( player.GetTeam() != victim.GetTeam() )
+	{
+		//int reason = victim.IsPlayer() ? eDeadPeriodEndReason.DEALT_DAMAGE_TO_PLAYER : ( victim.IsNPC() ? eDeadPeriodEndReason.DEALT_DAMAGE_TO_NPC : eDeadPeriodEndReason.UNKNOWN_REASON )
+		//DeadPeriodChecker_PlayerDeadPeriodEnd( player, reason )
+	}
+}
+
+
 array<ConsumableInventoryItem> function GetAllDroppableItems( entity player )
 {
 	array<ConsumableInventoryItem> final = []
@@ -2548,18 +2564,6 @@ void function OnPlayerKilled_DropLoot( entity player, entity attacker, var damag
 		thread SURVIVAL_Death_DropLoot( player, damageInfo )
 }
 
-
-void function Flowstate_TryUpgradeEvoOnKill( entity victim, entity attacker, var damageInfo )
-{
-	if( !GetCurrentPlaylistVarBool( "flowstate_evo_shields", false ) )
-		return
-
-	if( !IsAlive( attacker ) )
-		return
-
-	EvoCurrentShieldToNextTier( damageInfo, attacker )
-}
-
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
 	if ( !IsValid( victim ) || !IsValid( attacker ) || !victim.IsPlayer() )
@@ -2572,8 +2576,6 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	{
 		attackerEHandle = attacker ? attacker.GetEncodedEHandle() : -1
 		victimEHandle = victim ? victim.GetEncodedEHandle() : -1
-
-		Flowstate_TryUpgradeEvoOnKill( victim, attacker, damageInfo )
 	}
 
 	SetPlayerEliminated( victim )

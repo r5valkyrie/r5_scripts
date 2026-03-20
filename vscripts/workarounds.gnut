@@ -89,7 +89,6 @@ global function DebugDrawScreenTextWithColor
 global function MetersToInches
 global function MetersToInchesSqr
 global function GetRandomPointInCircle
-global function OutOfBoundsEnable
 
 // === Platform/Hardware ===
 global function GetHardwareFromName
@@ -2669,11 +2668,6 @@ vector function GetRandomPointInCircle( vector origin, float radius )
 	float y  = r * sin( t )
 	vector p = <x, y, 0> + origin
 	return p
-}
-
-void function OutOfBoundsEnable()
-{
-	// S3: stub — out of bounds system managed differently
 }
 
 string function replace( string original, string search, string replacement )

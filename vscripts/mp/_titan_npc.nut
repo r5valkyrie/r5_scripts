@@ -416,9 +416,6 @@ void function SetPlayerPetTitan( entity player, entity npcTitan )
 	// HACK: not really a hack, but this could be optimized to only render always for a given client
 	npcTitan.EnableRenderAlways()
 	player.SetPetTitan( npcTitan )
-	#if HAS_TITAN_EARNING
-		ClearTitanAvailable( player )
-	#endif
 	SetTeam( npcTitan, player.GetTeam() )
 	entity soul = npcTitan.GetTitanSoul()
 	if ( soul == null )

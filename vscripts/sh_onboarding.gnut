@@ -1508,17 +1508,11 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	
 	UpdatePlayerCounts()
 		
-	if ( attacker.IsPlayer() && victim.IsPlayer() && attacker != victim )
-		__IncrementPlayerNetInt( attacker, "kills" )
 		
 	if( Gamemode() == eGamemodes.SURVIVAL )
 		Remote_CallFunction_NonReplay( victim, "ServerCallback_YouDied", attacker, GetHealthFrac( victim ), DamageInfo_GetDamageSourceIdentifier( damageInfo ), DamageInfo_GetDamage( damageInfo ) )
 
 	victim.SetPlayerGameStat( PGS_DEATHS, victim.GetPlayerGameStat( PGS_DEATHS ) + 1 )
-	if( Gamemode() != eGamemodes.CUSTOM_CTF && Gamemode() != eGamemodes.fs_snd )
-	{
-		__IncrementPlayerNetInt( victim, "deaths" )
-	}
 
 	victim.ClearParent()	
 	victim.FreezeControlsOnServer()
@@ -1818,18 +1812,7 @@ entity function GetAltSpawn()
 
 void function GiveInitialTeamToPlayer( entity player )
 {
-	if( IsPlayerEliminated( player ) )
-	{
-		EliminatedPlayerData data = GetPlayerEliminatedData( player )
-		SetTeam( player, data.team ) // Assign the player to their pre-death team.
-		
-		#if DEVELOPER
-			printw( "TEAMING - Player was eliminated, assigning old team", data.team )
-		#endif
 
-		return
-	}
-	
 	int maxTeamSize = GetCurrentPlaylistVarInt( "max_team_size", 1 )
 	maxTeamSize = maxTeamSize > 0 ? maxTeamSize : 1
 

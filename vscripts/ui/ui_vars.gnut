@@ -9,16 +9,20 @@ global function GetUIVar
 
 global function ServerCallback_SetUIVar
 global function RegisterUIVarChangeCallback
-
-#if SERVER
-	global function SyncUIVars
-#endif
-
+table<string, void functionref(string, var)> _uiVarsSetters = {}
+table _uiVarChangeCallbacks = {}
 table _uiVars = {}
 table _uiEntityVars = {}
 table _uiVarHandles = {}
 int _nextUIVarIndex = 0
-table _uiVarChangeCallbacks = {}
+#if SERVER
+	global function SyncUIVars
+void function UIVars_SetterBool(string varName, value)
+{
+	//SetGlobalNetBool(varName, expect bool( value ) )
+}
+#endif
+
 
 void function UIVars_Init()
 {
@@ -40,6 +44,16 @@ void function UIVars_Init()
 	RegisterUIVar( "forceLoadoutEnabled", false )
 	RegisterUIVar( "survivorTitanfallTime", 0 )
 	RegisterUIVar( "putPlayerInMatchmakingAfterDelay", false )
+	RegisterUIVarBool( "uiDisableDev", true )
+}
+
+void function RegisterUIVarBool(string varName, bool value)
+{
+	RegisterUIVar(varName, value)
+
+#if SERVER
+	_uiVarsSetters[varName] <- UIVars_SetterBool
+#endif
 }
 
 void function RegisterUIVar( string varName, value )
@@ -69,12 +83,14 @@ function GetUIVar( obj, string varName )
 void function SetUIVar( table<string,var> obj, string varName, value )
 {
 	Assert( varName in _uiVars )
+	Assert( varName in _uiVarsSetters )
 	Assert( typeof value != "string" )
 
 	if ( _uiVars[varName] == value )
 		return
 
 	_uiVars[varName] = value
+	_uiVarsSetters[varName](varName, value)
 
 	// Run change callback if one exists
 	thread UIVarChangedCallbacks( varName )

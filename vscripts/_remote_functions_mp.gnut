@@ -582,6 +582,7 @@ void function RemoteFunctions_Init_Begin()
 
 	//ScriptRegisterNetworkedVariable( "hasDataKnife", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
+	ScriptRegisterNetworkedVariable( "isEliminated", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "isJumpmaster", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "isJumpingWithSquad", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "playerInPlane", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
@@ -820,6 +821,11 @@ void function RemoteFunctions_Init_Begin()
 	RegisterServerVar( "respawnAvailableBits2", 0 )
 	RegisterServerVar( "respawnAvailableBits3", 0 )
 
+	RegisterNetworkedVariable( "respawnAvailableBits0", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariable( "respawnAvailableBits1", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariable( "respawnAvailableBits2", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariable( "respawnAvailableBits3", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+
 	ScriptRegisterNetworkedVariable( "hackStartTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRegisterNetworkedVariable( "bleedoutEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRegisterNetworkedVariable( "bleedoutType", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
@@ -920,7 +926,13 @@ void function RemoteFunctions_Init_Begin()
 
 	ScriptRegisterNetworkedVariable( "cameraNearbyEnemySquads", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ToggleDisabledWeaponType", "int", INT_MIN, INT_MAX, "bool" )
+	RegisterNetworkedVariable( "uiDisableDev", SNDC_GLOBAL, SNVT_BOOL, true )
 
+	// register callbacks, could be wrapped in a neat framework but it is not worth the effort yet
+	#if CLIENT
+
+
+	#endif
 	s_callbackRegistrationIsClosed = true
 	ExecuteSetupCallbacks()
 }

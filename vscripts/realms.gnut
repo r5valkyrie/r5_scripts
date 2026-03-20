@@ -1,3 +1,7 @@
+#if SERVER || CLIENT
+global function CopyRealmsFromTo
+#endif
+
 #if CLIENT
 global function CL_RealmsInit
 #endif
@@ -12,6 +16,7 @@ global function PutPlayerInRealms
 global function GetAllPlayersInRealm_ByPlayer
 global function GetAllPlayersInRealm
 global function GetAllPlayersByTeamOrRealm
+global function AddToUltimateRealm
 global function AddRealmToDefaultsForPlayer
 global function RemoveRealmFromDefaultsForPlayer
 global function PutPlayerInDefaultRealms
@@ -24,7 +29,31 @@ global function RemoveCallback_OnPlayerAddedToRealm
 #endif
 
 
-// REALM_COUNT and eRealms already defined in sh_consts.gnut
+#if SERVER || CLIENT
+global const int REALM_COUNT = 64
+global enum eRealms
+{
+	// Default realm for players in the match
+	DEFAULT = 0,
+	PROTO_ABILITY_HAUNT = 1,
+
+	//----------------------
+	// STAGING AREA REALMS
+	//----------------------O
+
+	// We need to reserve realms for players in the staging area. Each player is in 2 player realms, one for just your squad so things like ultimates are
+	// only seen by your squad, and also in one of a few common realms with other squads on the server so we see some of the other players running around.
+	// In a 60 man, 3 player squads game we need the following number of slots:
+	// 60 players / 15 players per common realm = 4 common slots
+	// 60 players / 3 players per squad = 20 squad slots
+	//   24 realm slots total needed
+	//   more realms may be needed for playlists with smaller squads
+	STAGING_REALM_PLAYERS_START = 2,
+	STAGING_REALM_PLAYERS_END = (REALM_COUNT - 1),
+
+	_count = REALM_COUNT
+}
+#endif
 
 int MAX_SQUADS_IN_STAGING = 0
 
@@ -388,7 +417,22 @@ array<int> function GetRealmsForUltimateAbility( entity player )
 	return player.GetRealms()
 }
 
-// AddToUltimateRealm already defined in _utility.gnut
+void function AddToUltimateRealm( entity player, entity ent )
+{
+	if ( !IsValid( player ) || !IsValid( ent ) )
+		return
+
+	array<int> ultimateRealms = GetRealmsForUltimateAbility( player )
+	if ( ultimateRealms.len() == 0 )
+		return
+
+	ent.RemoveFromAllRealms()
+	foreach( int realm in ultimateRealms )
+	{
+		ent.AddToRealm( realm )
+	}
+}
+
 
 void function OnPlayerConnectedRealms( entity player )
 {
@@ -494,6 +538,15 @@ void function RealmInfoEntity_EndSignal( int realm, string signal )
 }
 
 #endif
+
+#if SERVER || CLIENT
+void function CopyRealmsFromTo( entity source, entity target )
+{
+	target.RemoveFromAllRealms()
+	target.AddToOtherEntitysRealms( source )
+}
+#endif
+
 
 #if SERVER
 void function SetRealms( entity ent, array<int> realms )

@@ -272,7 +272,8 @@ global struct ServerEntityStruct
 	array<void functionref( entity ent, var damageInfo )> entPostDamageCallbacks
 	array<void functionref( entity titan, entity attacker )> entSegmentLostCallbacks
 	array<void functionref( entity ent, var damageInfo, float actualShieldDamage )> entPostShieldDamageCallbacks
-	array<bool functionref( entity player )>                                                                               entOnShadowHealthExhaustedCallbacks
+	array<bool functionref( entity player )>  entOnShadowHealthExhaustedCallbacks
+	array<void functionref( entity ent, var damageInfo )>  onShieldBreakFuncs
 
 	// Used for weapons and abilities that have multiple ticks, but we only want a single tick to hit each player
 	array<entity> damagedEntities
@@ -299,16 +300,7 @@ global struct ServerEntityStruct
 	bool isDisabled = false
 
 	int gameModeId
-
-	// PVE //
-	// int roamerSpawnType = -1
-	// int pveSpawnType = -1
-	// int pveSpawnFlags = 0
-	// bool roamerIsAggro = false
-	//
-	// int objectiveGoalVersion = 0
-	// int objectiveGoalFlags = 0		// eObjectiveTracking.*
-	/////////
+	array<void functionref( entity ent, var damageInfo )>     entFriendlyFireCallbacks
 
 	array<entity> sonarTriggers
 
@@ -613,13 +605,9 @@ global struct ServerPlayerStruct
 	// float 						lastSelectSPTitanLoadoutTime
 	bool  						inPostDeath = false
 
-	// float lastNpcSyncedMeleeVsPlayerTime = -99
-
-	// bool 						watchingPetTitanKillReplay
-
-	// bool						hasSniperWeapon = false
-
-	// int 						controllableProjectiles_scriptManagedID = -1
+	bool isOutOfBoundsHolsterCheck = false
+	entity outOfBoundsActiveWeapon
+	bool inThirdPersonTransition
 
 	float 						lastDroneShieldStunPushTime
 

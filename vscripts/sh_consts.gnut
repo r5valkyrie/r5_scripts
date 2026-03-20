@@ -509,14 +509,15 @@ global const CONNECT_TIME_DEFAULT = 23
 global const OUT_OF_BOUNDS_TIME_LIMIT = 15.0
 global const OUT_OF_BOUNDS_DECAY_TIME = 15.0
 global const OUT_OF_BOUNDS_DECAY_DELAY = 1.0
-
+global const OUT_OF_BOUNDS_GRACE_PERIOD = 5.0
+global const OUT_OF_BOUNDS_GRACE_PERIOD_DELAY = 5.0
 global const MAX_TRACKED_CHALLENGES = 3
 
 // OFFICIAL
-global const int FRIENDLY_R = 87
-global const int FRIENDLY_G = 151
-global const int FRIENDLY_B = 219
-// 5797DB
+global const int FRIENDLY_R = 161
+global const int FRIENDLY_G = 196
+global const int FRIENDLY_B = 255
+// A1C4FF
 
 global const int ENEMY_R = 255
 global const int ENEMY_G = 120
@@ -528,6 +529,15 @@ global const int LOCAL_G = 184
 global const int LOCAL_B = 0
 // FFB800
 
+global const int FRIENDLY_FX_R = 87
+global const int FRIENDLY_FX_G = 151
+global const int FRIENDLY_FX_B = 219
+// 5797DB
+
+global const int ENEMY_FX_R = 255
+global const int ENEMY_FX_G = 120
+global const int ENEMY_FX_B = 32
+// FF7820
 global const int PARTY_R = 91
 global const int PARTY_G = 255
 global const int PARTY_B = 31
@@ -563,6 +573,7 @@ global const ENEMY_COLOR 				= TEAM_COLOR_ENEMY
 
 //FOR RUI HUD -> make sure any changes here line up with global_defs.rui
 global const int WP_STYLE_OBJECTIVE = 0
+global const int WP_STYLE_PVEQUEST = 1
 global const int WP_STYLE_DEATHBOX_NORMAL = 2
 global const int WP_STYLE_DEATHBOX_CORPSERUN = 3
 global const int WP_STYLE_LOOT_DROPOFF = 4
@@ -1100,7 +1111,6 @@ global const TITAN_DAMAGE_STAGE_1 			= 0.75
 global const TITAN_DAMAGE_STAGE_2 			= 0.5
 global const TITAN_DAMAGE_STAGE_3 			= 0.25
 global const TITAN_DAMAGE_STAGE_DOOMED 		= 0.0
-global const int DOOMED_MIN_HEALTH 			= 1
 
 global const float AREA_SONAR_SCAN_PULSE_DURATION 	= 6.0
 
@@ -2795,30 +2805,6 @@ global enum eValidation
 {
 	DONT_ASSERT,
 	ASSERT,
-}
-
-global const int REALM_COUNT = 32
-global enum eRealms
-{
-	// Default realm for players in the match
-	DEFAULT 					= 0,
-	PROTO_ABILITY_HAUNT = 1,
-
-	//----------------------
-	// STAGING AREA REALMS
-	//----------------------
-
-	// We need to reserve realms for players in the staging area. Each player is in 2 player realms, one for just your squad so things like ultimates are
-	// only seen by your squad, and also in one of a few common realms with other squads on the server so we see some of the other players running around.
-	// In a 60 man, 3 player squads game we need the following number of slots:
-	// 60 players / 15 players per common realm = 4 common slots
-	// 60 players / 3 players per squad = 20 squad slots
-	//   24 realm slots total needed
-	//   more realms may be needed for playlists with smaller squads
-	STAGING_REALM_PLAYERS_START = 2,
-	STAGING_REALM_PLAYERS_END	= 63,
-
-	_count = REALM_COUNT
 }
 
 global const bool HAS_AUTOPICKUP_STACKABLE_ITEMS = false
