@@ -31,12 +31,6 @@ global enum eCrowdNoiseMeterModifiers
 	WIN_BY_SMALL_MARGIN_POSITIVE
 }
 
-// eXPType: already defined in sh_xp.gnut with OBJECTIVE_CAPTURE_DURATION=22, BONUS_FINAL_KILL=14
-
-global enum eUpgradeXPActions
-{
-	MINGUARANTEEDLOOT_RESPAWN = 0
-}
 
 // ======================== CONSTANTS ========================
 // NOTE: Only define constants NOT already provided by the engine or other scripts.

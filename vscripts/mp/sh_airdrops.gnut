@@ -6,8 +6,6 @@ global function OnAirdropUse
 #if SERVER
 global function SURVIVAL_CalculateAirdropPositions
 global function AirdropSpawnThink
-global function AirdropLogic
-global function AirdropForRound
 #endif
 
 global function Survival_GetPregameAirdropDatas
@@ -58,8 +56,6 @@ global function DEV_DeleteAirdropEntities
 global function CodeCallback_GetAirdropPointNavNodeIndex
 global function CodeCallback_IsAirdropPointValid
 #endif // DEVELOPER
-
-#endif // SERVER
 
 const bool DEBUG_DROP_POINTS = false
 
@@ -260,11 +256,6 @@ void function AirdropSpawnThink()
 
 		WaitFrame()
 	}
-}
-
-void function AirdropLogic()
-{
-
 }
 #endif
 

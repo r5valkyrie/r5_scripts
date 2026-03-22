@@ -3146,9 +3146,6 @@ global enum eStatNames
 }
 
 global const string RAMPART_VOICE = "rampart"
-global const string GENERIC_OFFHAND_WEAPON_NAME = "mp_ability_generic_offhand"
-global const int GENERIC_OFFHAND_INDEX = 7
-global const int OFFHAND_GENERIC = 7
 // SIGNAL_STARTING_EMOTE — now in sh_emotes.nut
 global const vector ECHO_INITIAL_DEPLOY_OFFSET = <30, -15, 80>
 global const string MYSTERY_BOX_SCRIPT_NAME = "mystery_box"

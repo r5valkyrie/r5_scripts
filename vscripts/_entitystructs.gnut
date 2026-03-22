@@ -378,7 +378,6 @@ global struct ServerEntityStruct
 	int deathfieldDamageTicks
 	array< array< string > > airDropContents
 	bool playerPickedUpItem = false
-	array<void functionref(entity, var)> onShieldBreakFuncs
 	array<entity> arrowsInBody
 	int infiniteAmmoState = 0
 	bool burnmeter_wasPreviouslyDeployed
@@ -564,16 +563,11 @@ global struct ServerPlayerStruct
 	float freefallLastGroundFXTime = 0.0
 	int lootBinsOpenedCount = 0
 	array<entity> realmLinkedEntities = []
-	float survivalAliveEndTime = 0.0
-	float survivalAliveStartTime = 0.0
-	float survivalMatchStartTime = 0.0
-	float battlePassBoost = 0.0
 	array<float> recentPlayerKnockedEnemyTimes = []
 	bool isAllowedToUseTP = true
 	float timeLastCalledEnemyDown = 0.0
 	bool DEV_preventAddBackAmmo = false
 	entity ornull PIN_VictimWeapon
-	bool hasMatchParticipationStarted = false
 
 	//1v1 settings
 	float IBMM_grace_period 	= -1 // <= 0 is disabled
@@ -647,7 +641,6 @@ global struct ServerPlayerStruct
 
 	bool isOutOfBoundsHolsterCheck = false
 	entity outOfBoundsActiveWeapon
-	bool inThirdPersonTransition
 
 	float 						lastDroneShieldStunPushTime
 
