@@ -47,7 +47,6 @@ global function SV_CL_Onboarding_Init
 	global function GiveLoadoutRelatedWeapons_HaloMod
 	
 	global function DecideRespawnPlayer
-	global function DecideRespawnPlayer_Retail
 
 	global function PlayerStopSpectating
 
@@ -65,30 +64,6 @@ global function SV_CL_Onboarding_Init
 	#endif
 #endif
 
-global function PreGame_GetWaitingForPlayersHasBlackScreen
-global function PreGame_GetWaitingForPlayersSpawningEnabled
-global function PreGame_GetWaitingForPlayersDelayMin
-global function PreGame_GetWaitingForPlayersDelayMax
-global function PreGame_GetWaitingForPlayersCountdown
-
-global function CharSelect_GetIntroMusicStartTime
-global function CharSelect_GetIntroTransitionDuration
-global function CharSelect_GetIntroCountdownDuration
-
-global function CharSelect_GetPickingDelayBeforeAll
-global function CharSelect_GetPickingDelayOnFirst
-global function CharSelect_GetPickingSingleDurationMax
-global function CharSelect_GetPickingSingleDurationMin
-global function CharSelect_GetPickingDelayAfterEachLock
-global function CharSelect_GetPickingDelayAfterAll
-
-global function CharSelect_GetOutroSceneChangeDuration
-global function CharSelect_GetOutroSquadPresentDuration
-global function CharSelect_GetOutroChampionPresentDuration
-global function CharSelect_GetOutroTransitionDuration
-
-global function Survival_GetCharacterSelectDuration
-global function Survival_CharacterSelectEnabled
 //So ideally, don't change this if you don't want prediction to be fucked. Open a PR on Flowstate repo if you have feedback for these vars <3 Cafe
 global const table TRUE_TF2_SETTINGS = 
 {
@@ -1441,58 +1416,6 @@ void function DecideRespawnPlayer( entity player, bool giveLoadoutWeapons = true
 }
 
 // clean up and move to main when completely debugged. Cafe
-bool function DecideRespawnPlayer_Retail( entity player, bool allowSpawnAsObserver = false )
-{
-	// #if DEVELOPER
-	// DumpStack()
-	// #endif
-
-	Assert( IsValid( player ), player + " is invalid!!" )
-	Assert( !IsAlive( player ), player + " is already alive" )
-
-	if ( !player.hasConnected || player.GetTeam() == TEAM_SPECTATOR )
-	{
-		printf( "%s() - player.hasConnected was false: %s", FUNC_NAME(), string( player ) )
-		return false
-	}
-
-	if ( IsPVEMode() && (player.p.respawnCount == 0) )
-		return false
-
-	if ( (GetGameState() <= eGameState.WaitingForPlayers) && !PreGame_GetWaitingForPlayersSpawningEnabled() )
-	{
-		printf( "%s() - No spawning when waiting for players: %s", FUNC_NAME(), string( player ) )
-		return false
-	}
-
-	if ( PlayerShouldObserve( player ) )
-	{
-		printf( "%s() - PlayerShouldObserve() was true: %s", FUNC_NAME(), string( player ) )
-		if ( true ) //GamemodeUtility_IsSpectatorEnabled() ) review. Cafe
-		{
-			if ( IsPlayerEliminated( player ) && (GetGameState() == eGameState.Playing) && IsRoundBased() )
-				SendHudMessage( player, "#GAMEMODE_RESPAWN_NEXT_ROUND", -1, 0.4, 255, 255, 255, 255, 1.0, 6.0, 1.0 )
-
-			#if SERVER
-				if ( file.ObserverThreadOverrideCallback != null )
-					file.ObserverThreadOverrideCallback(player)
-				else
-					thread ObserverThread( player )
-			#endif
-		}
-
-		return false
-	}
-
-	// if ( allowSpawnAsObserver )
-		// player.AllowSpawnAsObserverOnce()
-
-	printf( "%s() - Attempting to spawn: %s", FUNC_NAME(), string( player ) )
-	bool didSpawn = RespawnTitanPilot( player )
-	printf( "%s() - Spawn %s: %s", FUNC_NAME(), (didSpawn ? "success" : "failed"), string( player ) )
-
-	return didSpawn
-}
 
 
 bool function RespawnTitanPilot( entity player )
@@ -1822,7 +1745,7 @@ void function OnClientConnected( entity player )
 				bool __spectateLateJoin = GetCurrentPlaylistVarBool( "midgame_join_spectate", false )
 				if ( !__spectateLateJoin )
 				{
-					DecideRespawnPlayer_Retail( player )
+					DecideRespawnPlayer( player )
 					GiveBasicSurvivalItems( player )
 					return
 				}
@@ -1843,13 +1766,13 @@ void function OnClientConnected( entity player )
 			} 
 			else
 			{
-				DecideRespawnPlayer_Retail( player )
+				DecideRespawnPlayer( player )
 				GiveBasicSurvivalItems( player ) //If player is put in skydive mode and attached to its team mid-flight, we need to give them basic survival items here otherwise it will spawn without melee and basic items. Cafe
 			}
 		} 
 		else
 		{
-			DecideRespawnPlayer_Retail( player )
+			DecideRespawnPlayer( player )
 		}
 	}
 	else if ( Gamemode() == eGamemodes.ARENAS )
@@ -2168,50 +2091,13 @@ void function UpdatePlayerCounts()
 bool function OnboardingEnabled() 								{ return !GetCurrentPlaylistVarBool( "custom_onboarding", false ) }
 
 // Waiting for players
-bool function PreGame_GetWaitingForPlayersHasBlackScreen()		{ return GetCurrentPlaylistVarBool( "waiting_for_players_has_black_screen", false ) }
-bool function PreGame_GetWaitingForPlayersSpawningEnabled()		{ return GetCurrentPlaylistVarBool( "waiting_for_players_spawning_enabled", false ) }
 bool function PreGame_GetWaitingForPlayersWaitForeverEnabled() 	{ return GetCurrentPlaylistVarBool( "wait_for_players_forever", false ) }
-float function PreGame_GetWaitingForPlayersDelayMin()			{ return GetCurrentPlaylistVarFloat( "waiting_for_players_min_wait", 0.0 ) }
-float function PreGame_GetWaitingForPlayersDelayMax()			{ return GetCurrentPlaylistVarFloat( "waiting_for_players_timeout_seconds", 20.0 ) }
-float function PreGame_GetWaitingForPlayersCountdown()			{ return GetCurrentPlaylistVarFloat( "waiting_for_players_countdown_seconds", 8.0 ) }
-
-// Waiting for players -> character selection
-float function CharSelect_GetIntroMusicStartTime()		 		{ return GetCurrentPlaylistVarFloat( "charselect_intro_music_start_time", -0.8 ) }
-float function CharSelect_GetIntroTransitionDuration()			{ return GetCurrentPlaylistVarFloat( "charselect_intro_transition_duration", 3.0 ) }
-float function CharSelect_GetIntroCountdownDuration()			{ return GetCurrentPlaylistVarFloat( "charselect_intro_countdown_duration", 0.0 ) }
-
-// Character selection
-float function CharSelect_GetPickingDelayBeforeAll()			{ return GetCurrentPlaylistVarFloat( "charselect_picking_delay_before_all", 0.0 ) }
-float function CharSelect_GetPickingDelayOnFirst()				{ return GetCurrentPlaylistVarFloat( "charselect_picking_delay_on_first", 1.5 ) }
-float function CharSelect_GetPickingSingleDurationMax()			{ return GetCurrentPlaylistVarFloat( "character_select_time_max", 8.0 ) }
-float function CharSelect_GetPickingSingleDurationMin()			{ return GetCurrentPlaylistVarFloat( "character_select_time_min", 6.0 ) }
-float function CharSelect_GetPickingDelayAfterEachLock()		{ return GetCurrentPlaylistVarFloat( "charselect_picking_delay_after_each_lock", 0.5 ) }
-float function CharSelect_GetPickingDelayAfterAll()				{ return GetCurrentPlaylistVarFloat( "charselect_picking_delay_after_all", 1.5 ) }
 
 // Character selection -> player squad -> champion squad -> outro
 bool function CharSelect_PostSelectionMusicEnabled()			{ return GetCurrentPlaylistVarBool( "survival_enable_squad_intro_music", true ) }
 bool function CharSelect_PlayerSquadIntroEnabled()				{ return GetCurrentPlaylistVarBool( "survival_enable_squad_intro", true ) }
 bool function CharSelect_ChampionSquadIntroEnabled()			{ return GetCurrentPlaylistVarBool( "survival_enable_gladiator_intros", true ) }
-float function CharSelect_GetOutroSceneChangeDuration()			{ return GetCurrentPlaylistVarFloat( "charselect_outro_scene_change_duration", 4.0 ) }
-float function CharSelect_GetOutroSquadPresentDuration()		{ return GetCurrentPlaylistVarFloat( "charselect_outro_squad_present_duration", 6.0  ) }
-float function CharSelect_GetOutroChampionPresentDuration()		{ return GetCurrentPlaylistVarFloat( "charselect_outro_champion_present_duration", 8.0 ) }
-float function CharSelect_GetOutroTransitionDuration()			{ return GetCurrentPlaylistVarFloat( "charselect_outro_transition_duration", 3.0 ) }
 
-// Custom logic
-float function Survival_GetCharacterSelectDuration( int pickIndex )
-{
-	float min = CharSelect_GetPickingSingleDurationMin()
-	float max = CharSelect_GetPickingSingleDurationMax()
-	return GraphCapped( pickIndex, 0, MAX_TEAM_PLAYERS - 1, max, min )
-}
-
-bool function Survival_CharacterSelectEnabled()
-{
-	if ( Survival_GetCharacterSelectDuration( 0 ) <= 0.0 )
-		return false
-
-	return GetCurrentPlaylistVarBool( "charselect_enabled", true )
-}
 #endif
 
 void function OnboardingPlaylistSettings_Init()

@@ -23,6 +23,9 @@ global const int ANNOUNCEMENT_STYLE_ROUND_WON = 13
 global const int ANNOUNCEMENT_STYLE_RATING_LEADER = 14
 global const int ANNOUNCEMENT_STYLE_TDM_ROUND_WON = 15
 global const int ANNOUNCEMENT_STYLE_WAVE = 16
+global const int ANNOUNCEMENT_STYLE_MILESTONE_SMALL = 17
+global const int ANNOUNCEMENT_STYLE_LEVEL_UP = 19
+global const int ANNOUNCEMENT_STYLE_EVO_STATIONS_SPAWNED = 20
 
 const float ANNOUNCEMENT_DURATION =  16.0
 const ASSET_ANNOUNCEMENT_ICON = $"rui/hud/gametype_icons/ltm/ltm_logo"

@@ -122,6 +122,7 @@ global struct ClientEntityStruct
 	EncodedEHandle ornull gladCardPropOwnerPlayerEEH = null
 	ItemFlavor ornull     animWindowCosmeticItemFlavor = null
 	ItemFlavor ornull     animWindowSkinItemFlavor = null
+	ItemFlavor ornull     animWindowMeleeSkinItemFlavor = null
 }
 
 
@@ -167,6 +168,7 @@ global struct ClientPlayerStruct
 	int lastSaidCommsAction
 	int lastCanceledCommsAction
 	table<int,float> commActionFlavorDebounceTimes
+	float nextTraceCheckTime = 0.0
 	float commActionFlavorGlobalDebounceTime = -30.0
 	bool inSkydiveAfterUlt
 	float  nextAllowUseValkUltTime
@@ -255,6 +257,10 @@ global struct ClientPlayerStruct
 	table< int, int > FRSettings_Ints
 	table< int, bool > FRSettings_Bools
 	table< int, string > FRSettings_Strs
+
+	// Highlight recon scan tracking
+	table<entity, int> reconScannedByThisPlayerRefCount
+	table<entity, var> reconScanRUIs
 }
 
 
@@ -365,6 +371,12 @@ global struct ClientPlayerWaypoint
 	bool haveConfirmed
 
 	entity highlightEnt
+
+	int                           objectiveGroupIndex = -1
+	string                        objectiveGroupName
+	bool                          objectiveGroup_thisWasVisible = false
+	void functionref( entity wp ) objectiveGroupOnVisibleTrueFunc = null
+	void functionref( entity wp ) objectiveGroupOnVisibleFalseFunc = null
 
 #if(false)
 

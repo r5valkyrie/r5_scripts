@@ -475,7 +475,7 @@ void function ServerCallback_PlayPassiveVoice( int catId )
 		return
 
 	file.warnTeammatesCatId = catId
-	AddPingBlockingFunction( "quickchat", TryWraithWarnTeammates, WARN_TEAMMATES_DELAY,"#WRAITH_WARN_TEAMMATES", 100 )
+	AddOnscreenPromptFunction( "quickchat", TryWraithWarnTeammates, WARN_TEAMMATES_DELAY, "#WRAITH_WARN_TEAMMATES", 100 )
 }
 
 void function TryWraithWarnTeammates( entity player )
@@ -483,7 +483,7 @@ void function TryWraithWarnTeammates( entity player )
 	string category = passiveEnumToStringMap[ file.warnTeammatesCatId ]
 	VoiceData data = file.voiceData[ category ]
 	int quickChatId = data.responseId
-	Quickchat( player, quickChatId )
+	Quickchat( quickChatId, null )
 	EmitSoundOnEntity( player, AUDIO_WARN_TEAMMATES_BEEP )
 }
 #endif

@@ -822,7 +822,7 @@ void function CryptoTTScan_UseSuccess_Thread( entity button, entity player )
 
 	// Next deathfield
 	DeathFieldStageData deathField
-	int currentDeathFieldStageValue               = int( max( 0, SURVIVAL_GetCurrentDeathFieldStage() ) )
+	int currentDeathFieldStageValue               = int( max( 0, SURVIVAL_GetCurrentDeathFieldStage( 0 ) ) )
 	int realm                                     = Survival_Loot_GetDefaultRealm()
 	array< DeathFieldStageData > deathfieldStages = SURVIVAL_GetDeathFieldStages( realm )
 	deathField 									  = deathfieldStages[ int( min( currentDeathFieldStageValue + 1, deathfieldStages.len() - 1 ) ) ]
@@ -850,7 +850,7 @@ void function DrawDeathFieldOnCryptoTTMap()
 {
 	FlagWait( "DeathFieldCalculationComplete" )
 
-	DeathFieldData dfData = SURVIVAL_GetDeathFieldData()
+	DeathFieldData dfData = SURVIVAL_GetDeathFieldData( 0 )
 	float radius = DeathField_GetRadiusForTime( Time() )
 
 	// Don't draw deathfield until it's within a more reasonable size
@@ -864,7 +864,7 @@ void function DrawDeathFieldOnCryptoTTMap()
 
 	while ( true )
 	{
-		dfData = SURVIVAL_GetDeathFieldData()
+		dfData = SURVIVAL_GetDeathFieldData( 0 )
 		radius = DeathField_GetRadiusForTime( Time() )
 
 		UpdateWorldCircleOnCryptoMap( fxCircleData, dfData.center, radius )

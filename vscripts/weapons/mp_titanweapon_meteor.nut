@@ -427,7 +427,7 @@ entity function CreateThermiteTrailOnMovingGeo( entity movingGeo, vector origin,
 {
 	Assert( IsValid( owner ) )
 
-	entity script_mover = CreateScriptMover( origin, angles )
+	entity script_mover = CreateScriptMover( "", origin, angles )
 	script_mover.SetParent( movingGeo, "", true, 0 )
 
 	int attachIdx 		= script_mover.LookupAttachment( "REF" )

@@ -590,4 +590,4 @@ array<Mythic_ChallengeProgress> function Mythics_GetBoostEnabledChallengeProgres
 
 	return progressedBoostEnabledChallenges
 }
-#endif // SERVER 
+#endif // SERVER

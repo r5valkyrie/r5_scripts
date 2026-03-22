@@ -141,13 +141,16 @@ void function OnProjectileCollision_weapon_proximity_mine( entity projectile, ve
 {
 	// Old version, but that rotation/position offset stuff is bunk and if this weapon comes back, we fix the asset.
 	//bool result = PlantStickyEntity( projectile, collisionParams, Vector( 90, 0, 0 ), false, Vector( 0, 0, -3.9 ) )
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+	collisionParams.pos = pos
+
+	collisionParams.normal = normal
+
+	collisionParams.hitEnt = hitEnt
+
+	collisionParams.hitBox = hitbox
+
 	bool result = PlantStickyEntity( projectile, collisionParams, Vector( 90, 0, 0 ) )
 
 	#if SERVER

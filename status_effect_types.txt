@@ -143,5 +143,12 @@
 	in_void_ring
 	inside_echo_locator
 	is_boxing
+	ring_lethality_warning
+	ring_lethality_increase
+	golden_horse_red
+	golden_horse_green
+	perk_survey_beacon_scanned_visual
+	perk_survey_beacon_enemies_scanned_visual
+	has_overheat_debuff
 /////////////////////////////
 //}

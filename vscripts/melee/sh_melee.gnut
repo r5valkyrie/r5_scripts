@@ -1691,8 +1691,8 @@ void function Melee_Attack( entity attacker, entity meleeAttackWeapon, int impac
 			if ( DEBUG_MELEE_KNOCKBACK )
 			{
 				DebugDrawSphere( <endPosition.x, endPosition.y, endPosition.z - GroundOffset>, 2, <0, 100, 255>, false, 5.0 )
-				DebugDrawSphere( endPosition, 3, COLOR_RED, false, 5.0 )
-				DebugDrawSphere( attacker.GetOrigin(), 4, COLOR_GREEN, false, 5.0 )
+				//DebugDrawSphere( endPosition, 3, <255, 0, 0>, false, 5.0 )
+				//DebugDrawSphere( attacker.GetOrigin(), 4, <0, 255, 0>, false, 5.0 )
 				DebugDrawArrow( attacker.GetOrigin(), endPosition, 3, <100, 255, 0>, false, 5.0 )
 
 				if( currentVelDotInKnockbackDir <= 0.0 )

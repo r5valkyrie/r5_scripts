@@ -56,7 +56,7 @@ void function InitMainMenuPanel( var panel )
 	file.panel = GetPanel( "MainMenuPanel" )
 	file.menu = GetParentMenu( file.panel )
 
-#if DEV
+#if DEVELOPER
 	AddMenuThinkFunc( file.menu, MainMenuPanelAutomationThink )
 #endif       
 
@@ -74,7 +74,7 @@ void function InitMainMenuPanel( var panel )
 
 	                                                                                                                     
 
-	#if DEV
+	#if DEVELOPER
 		if ( GetBugReproNum() == 233677 )
 		{
 			AddPanelFooterOption( panel, LEFT, BUTTON_Y, true, "", "" )
@@ -101,7 +101,7 @@ void function InitMainMenuPanel( var panel )
 
 }
 
-#if DEV
+#if DEVELOPER
 void function MainMenuPanelAutomationThink( var menu )
 {
 	if (AutomateUi())
@@ -150,7 +150,7 @@ bool function IsDataCenterFooterVisible()
 
 bool function IsDataCenterFooterClickable()
 {
-#if DEV
+#if DEVELOPER
 	bool hideDurationElapsed = true
 #else           
 	bool hideDurationElapsed = UITime() - file.startTime > 10.0
@@ -211,7 +211,7 @@ void function MainMenu_Think()
 	while ( true )
 	{
 		                        
-	    #if DEV
+	    #if DEVELOPER
 		    if ( GetBugReproNum() != 233677 )
 	    #endif       
 		UpdateFooterOptions()
@@ -248,7 +248,7 @@ void function PrelaunchValidation( bool autoContinue = false )
 		PrintLaunchDebugVal( "isPCPlatEnabled", isPCPlatEnabled )
 		if ( !isPCPlatEnabled )
 		{
-			#if DEV
+			#if DEVELOPER
 				if ( autoContinue )
 					LaunchMP()
 				else
@@ -657,7 +657,7 @@ void function OnConfirmDialogResult( int result )
 
 void function PrintLaunchDebugVal( string name, bool val )
 {
-	#if DEV
+	#if DEVELOPER
 		printt( "*** PrelaunchValidation *** " + name + ": " + val )
 	#endif       
 }
@@ -684,7 +684,7 @@ bool function IsPTUGame()
 }
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestFooterTextWidths( var elem )
 {
 	while ( true )

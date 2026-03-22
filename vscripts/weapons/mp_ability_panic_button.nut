@@ -223,13 +223,14 @@ void function DoPanicButtonSkydive( entity player )
 		BroadcastPanicNotifyToTarget( target, player, ePanicButton.SKYDIVE, skydiveCount )
 }
 
-void function Control_PrintSkydiveDebug( entity player, string message )
-{
-	if ( IsValid( player ) )
-		printt( "R5DEV-429111: ", player, message )
-	else
-		printt( "R5DEV-429111: PlayerInvalid", message )
-}
+// Moved to workarounds.gnut for load order
+//void function Control_PrintSkydiveDebug( entity player, string message )
+//{
+//	if ( IsValid( player ) )
+//		printt( "R5DEV-429111: ", player, message )
+//	else
+//		printt( "R5DEV-429111: PlayerInvalid", message )
+//}
 
 void function DoPanicButtonLootFountain( entity player )
 {
@@ -407,4 +408,3 @@ void function SCB_DoPanicSkydiveFeedback()
 	EmitSoundOnEntity( GetLocalViewPlayer(), "dropship_mp_epilogue_warpout" )
 }
 #endif // CLIENT
- 

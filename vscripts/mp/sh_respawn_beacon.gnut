@@ -1238,7 +1238,7 @@ void function RespawnBeacon_PutPlayerInDropship( entity player, entity ship, int
 	player.StopObserverMode()
 	ClearPlayerEliminated( player )
 	player.p.respawnPodLanded = true
-	DecideRespawnPlayer_Retail( player )
+	DecideRespawnPlayer( player )
 	ResetPlayerInventory( player )
 	player.SetOrigin( ship.GetOrigin() )
 
@@ -1297,10 +1297,10 @@ entity function GetClosestValidStation( vector origin )
 	{
 		entity station = allResults[i].ent
 
-		if ( !SURVIVAL_DeathFieldIsValid() )
+		if ( !SURVIVAL_DeathFieldIsValid( 0 ) )
 			return station
 
-		if ( SURVIVAL_PosInSafeZone( station.GetOrigin() ) )
+		if ( SURVIVAL_PosInSafeZone( 0, station.GetOrigin( ) ) )
 			return station
 	}
 

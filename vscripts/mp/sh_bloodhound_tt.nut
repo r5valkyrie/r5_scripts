@@ -1621,7 +1621,7 @@ void function LoudSpeaker_PlaySingle( string dialogueAlias, float delay = 0.0 )
 
 	foreach ( entity player in GetPlayerArray() )
 	{
-		thread PlayDialogueForPlayer_Retail( dialogueAlias, player, null, delay, dialogueFlags, "", null, file.customDialogueQueue )
+		thread PlayDialogueForPlayer( dialogueAlias, player, null, delay, dialogueFlags, "", null, file.customDialogueQueue )
 	}
 }
 #endif

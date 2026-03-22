@@ -1,686 +1,215 @@
-untyped
-
 global function DropPod_Init
-
 global function CreateDropPod
+global function InitFireteamDropPod
 global function LaunchAnimDropPod
 global function GetDropPodAnimDuration
-global function CreateDropPodSmokeTrail
-
+global function NPCsDeployFromDroppod
+global function IsDroppodSpawner
+global function SpawnDroppodSpawner
+global function DroppodActivate
+global function TryOpenDroppodDoor
+global function Spawn_DropPodSquadCustom
+global function CleanupDroppod
+global function AnimateAirdropPod
+global function DropPodOnImpactFXAndShake
+global function JetwashFX
 global function DropPod_ClearLandingZone
 
-global function ReturnCarePackagesNewArray
-
-global function DropPod_OnUse
-//const droppod_fireteam_collision = $"models/vehicle/droppod_fireteam/droppod_fireteam_collision.mdl"
 global const DROPPOD_MODEL = $"mdl/vehicle/droppod_fireteam/droppod_fireteam.rmdl"
-global const DP_COLL_MODEL = $"mdl/vehicle/droppod_loot/droppod_loot_animated.rmdl"
+const DROPPOD_DOOR_MODEL = $"mdl/vehicle/droppod_fireteam/droppod_fireteam_door.rmdl"
+const DROPPOD_IMPACT_EFFECT = $"P_impact_dpod_default"
 
-// r5 stuff
-global const int AIR_DROP_BAD_PLACE_RADIUS = 1
-const FAR_SPAWN_FX = $"P_ar_loot_drop_point_far"
-global function AirdropItems
-global function AirdropItems_Lifeline
-global function AirDropFireteam
-global function BeaconDrop
-global function CreateBeacondrop
+const string SOUND_CARE_PACKAGE_DROP = "survival_intro_pod_launch_3P"
+const string SOUND_CARE_PACKAGE_AIRBURST = "survival_droppod_airburst_3p"
+const string SOUND_CARE_PACKAGE_HOVER_START = "hovertank_mvmt_thrusterstart"
+const string SOUND_CARE_PACKAGE_HOVER_LOOP = "hovertank_mvmt_thrusters"
+const string SOUND_CARE_PACKAGE_HOVER_STOP = "hovertank_mvmt_thrusterstop"
+const string SOUND_CARE_PACKAGE_LAND = "survival_droppod_landing_3p"
+
+const DROPPOD_MOVER_SCRIPTNAME = "droppod_mover"
+
+global enum eDropPodFlag
+{
+	NONE =							0,
+	DISSOLVE_AFTER_DISEMBARKS =		(1<<0),
+	SHOULD_PUSH_PLAYERS = 			(1<<1),
+	SHOULD_DAMAGE_PLAYERS = 		(1<<2),
+	SHOULD_ALWAYS_EXPLODE_DOOR =	(1<<3),
+	TAKES_DAMAGE = 					(1<<4),
+}
+
+global struct DroppodStruct
+{
+	entity door
+	bool openDoor = false
+	int numGuys = 0
+	int flags = 0
+}
 
 struct
 {
-	bool                          lootBinsInfinite = false
-	table<entity, array<entity> > lootBinsSpawnedLootMap
-	table<entity, array<string> > dropPodsLootInside
-    #if SERVER
-    table<entity, entity>         dropPodsBeamTable
-    #endif
-	array<entity>                 lootBinList
-	int                           numLootBins
-	array<entity>                 carePackagesNew
+	table<entity, DroppodStruct> droppodTable
+	float dropPodAnimDuration = 0.0
 } file
 
-void function CreateBeacondrop( vector origin, vector angles, entity fxToStop = null, string animationName = "droppod_loot_drop", entity owner = null, string sourceWeaponClassName = "" )
+void function DropPod_Init()
 {
-	thread BeaconDrop( origin, angles, fxToStop, animationName, owner, sourceWeaponClassName )
-}
-
-void function BeaconDrop( vector origin, vector angles, entity fxToStop, string animationName, entity owner, string sourceWeaponClassName )
-{
-	entity BeaconPod = CreateMobileBeaconForVisualDrop( Vector( origin.x, origin.y, origin.z + 5000 ), angles, sourceWeaponClassName )
-	BeaconPod.Hide()
-	
-    entity threatProxy = CreateMobileBeaconThreatIndicator(origin, angles)
-
-	waitthread Flowstate_LaunchAnimMobileBeacon( BeaconPod, OriginToGround( origin ), angles, fxToStop, threatProxy)
-
-	BeaconPod.Destroy()
-	
-	thread SpawnBeacon( owner, origin, angles )
-}
-
-var function SpawnBeacon( entity ownerPlayer, vector origin, vector angles )
-{
-	entity respawn = CreatePropDynamic_NoDispatchSpawn( MOBILE_RESPAWN_BEACON_MODEL, origin, angles, 6)
-	respawn.SetOwner(ownerPlayer)
-	SetTargetName(respawn, MOBILE_RESPAWN_BEACON_TARGETNAME)
-	DispatchSpawn(respawn)	
-	OnMobileRespawnChamberSpawned(respawn)
-}
-
-void function AirDropPingMinimap( entity dropPod, vector origin, string animationName )
-{
-	// Show up for twice as long so there's enough time for everyone to find
-	// it on the minimap after it has landed.
-	float pingDuration = dropPod.GetSequenceDuration( animationName ) * 2
-
-	foreach( entity player in GetPlayerArray_Alive() )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_SUR_PingMinimap", origin, pingDuration, 500.0, 50.0, 2 )
-}
-
-void function AirdropItems( vector origin, vector angles, array<string> contents, entity fxToStop, string animationName, entity owner, int skin, string sourceWeaponClassName )
-{
-	// if(ReturnSelectedLocationName() == "Shipment")
-	// {
-		// origin = <11224.8115, 24494.2285, 247.695862>
-	// }
-	
-	entity dropPod = CreateDropPod( origin, angles, sourceWeaponClassName )
-	dropPod.SetSkin( skin )
-    
-    file.carePackagesNew.append(dropPod)
-	
-	EndSignal(dropPod, "OnDestroy")
-    entity threatProxy = CreateDropPodThreatIndicator(origin, angles)
-
-	OnThreadEnd(
-	function() : ( threatProxy, fxToStop )
-		{
-			if( IsValid( threatProxy ) )
-				threatProxy.Destroy()
-
-			if( IsValid( fxToStop ) )
-				fxToStop.Destroy()
-		}
-	)
-
-	AirDropPingMinimap( dropPod, origin, animationName )
-
-    thread DropPodBeamWaitForUse( dropPod, origin, angles )
-    thread WaitForDropFX( dropPod, animationName, origin, angles, false )
-	
-	waitthread LaunchAnimDropPod( dropPod, animationName, OriginToGround( origin ), angles )
-
-	InitDropPod( dropPod )
-	AddMultipleLootItemsToDropPod(dropPod, contents)
-}
-
-void function AirdropItems_Lifeline( vector origin, vector angles, array<string> contents, entity fxToStop, string animationName, entity owner, int skin, string sourceWeaponClassName )
-{
-	EndSignal( owner, "CleanUpPlayerAbilities" )
-
-	entity dropPod = CreateDropPod( origin, angles, sourceWeaponClassName )
-	dropPod.RemoveFromAllRealms()
-	dropPod.AddToOtherEntitysRealms( owner )
-	AddToTrackedEnts( owner, dropPod )
-
-	entity threatProxy = CreateDropPodThreatIndicator(origin, angles)
-	threatProxy.RemoveFromAllRealms()
-	threatProxy.AddToOtherEntitysRealms( owner )
-
-	OnThreadEnd(
-		function() : ( threatProxy, fxToStop )
-			{
-				if( IsValid( threatProxy ) )
-					threatProxy.Destroy()
-
-				if( IsValid( fxToStop ) )
-					fxToStop.Destroy()
-			}
-	)
-
-	dropPod.SetSkin( skin )
-    dropPod.SetScriptName( "lifeline_care_package" )
-
-    thread DropPodBeamWaitForUse(dropPod, origin, angles)
-    thread WaitForDropFX( dropPod, animationName, origin, angles, true )
-	
-	waitthread LaunchAnimDropPod( dropPod, animationName, OriginToGround( origin ), angles )
-
-	InitDropPod( dropPod )
-	AddMultipleLootItemsToDropPod_Lifeline(dropPod, contents)
-}
-
-array<entity> function ReturnCarePackagesNewArray()
-{
-	return file.carePackagesNew
-}
-
-void function AirDropFireteam( vector origin, vector angles, string animationName, int skin, string sourceWeaponClassName, entity player )
-{
-	entity dropPod = CreateDropPod( origin, angles, sourceWeaponClassName )
-	dropPod.SetSkin( skin )
-    
-    entity threatProxy = CreateDropPodThreatIndicator(origin, angles)
-
-	waitthread LaunchAnimDropPod2( dropPod, animationName, OriginToGround( origin ), angles, player )
-	
-	//thread WaitForDropFX(dropPod, animationName, OriginToGround( origin ), angles) 
-
-    if(IsValid(threatProxy))
-        threatProxy.Destroy()
-
-	//InitDropPod( dropPod )
-	wait 5
-	if(IsValidPlayer(player)){
-	player.p.isPlayerSpawningInDroppod = false
-	}
-}
-
-void function WaitForDropFX( entity dropPod, string animationName, vector origin, vector angles, bool isLifeLine )
-{ 
-	EndSignal( dropPod, "OnDestroy" )
-
-	float scalar = isLifeLine ? 0.945 : 0.965 // todo(kawe): rework this entire thing with AddAnimEvent( "OnImpact" ).
-    float scaledTime = dropPod.GetSequenceDuration( animationName ) * scalar
-
-	wait scaledTime 
-	
-	if( !IsValid( dropPod ) )
-		return
-
-    DropPodOnImpactFXAndShake(dropPod, origin, angles)
-}
-
-void function SpawnLootInDropPod_Lifeline( entity dropPod, string ref, int lootI, int lootCount )
-{
-	Point p = GetDropPodSpawnLocation( dropPod, lootI, lootCount )
-
-	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
-    string attachment
-    string pos
-	float offset = 0
-	
-	if( lootCount == 5 )
-	{
-		switch(lootI)
-		{
-			case 0:
-				attachment = "LOOT_R_MID"
-				break
-			case 1:
-				attachment = "LOOT_C_AMMO_1"
-				offset = 10
-				break
-			case 2:
-				attachment = "LOOT_C_AMMO_2"
-				offset = -10
-				break
-			case 3:
-				attachment = "LOOT_L_AMMO_1"
-				offset = 10
-				break
-			case 4:
-				attachment = "LOOT_L_AMMO_2"
-				offset = -10
-				break
-		}
-	} else if( lootCount == 6 ) 
-	{
-		switch(lootI)
-		{
-			case 0:
-				attachment = "LOOT_R_AMMO_1"
-				offset = 10
-				break
-			case 1:
-				attachment = "LOOT_R_AMMO_2"
-				offset = -10
-				break
-			case 2:
-				attachment = "LOOT_C_AMMO_1"
-				offset = 10
-				break
-			case 3:
-				attachment = "LOOT_C_AMMO_2"
-				offset = -10
-				break
-			case 4:
-				attachment = "LOOT_L_AMMO_1"
-				offset = 10
-				break
-			case 5:
-				attachment = "LOOT_L_AMMO_2"
-				offset = -10
-				break
-		}
-	}
-	
-    int attachmentIndex = dropPod.LookupAttachment( attachment )
-	vector origin = dropPod.GetAttachmentOrigin( attachmentIndex )
-	
-	origin.z += offset // fix me
-	
-    vector angles = dropPod.GetAttachmentAngles( attachmentIndex )
-
-    entity loot = SpawnGenericLoot( ref, origin, angles, data.countPerDrop )
-	loot.RemoveFromAllRealms()
-	loot.AddToOtherEntitysRealms( dropPod )
-	SetItemSpawnSource( loot, eSpawnSource.DROPPOD, dropPod )
-
-    loot.SetParent(dropPod, attachment, true)
-	
-    if(data.lootType == eLootType.ATTACHMENT && data.attachmentStyle != "sight" || data.lootType == eLootType.BACKPACK || data.lootType == eLootType.INCAPSHIELD || ref == "health_pickup_health_large" || ref == "health_pickup_health_small" )
-    {
-		angles = angles + <90, 0, 0>
-		loot.SetAbsAngles( angles )
-	}
-
-	file.lootBinsSpawnedLootMap[dropPod].append( loot )
-}
-
-void function SpawnLootInDropPod( entity dropPod, string ref, int lootI, int lootCount )
-{
-	Point p = GetDropPodSpawnLocation( dropPod, lootI, lootCount )
-
-	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
-    string attachment
-    string pos
-    switch(data.lootType)
-    {
-        case eLootType.MAINWEAPON:
-            pos = "TOP"
-            break
-        default:
-            pos = "MID"
-            break
-    }
-
-    switch(lootI)
-    {
-        case 0:
-            attachment = "LOOT_L_%s"
-            break
-        case 1:
-            attachment = "LOOT_C_%s"
-            break
-        case 2:
-            attachment = "LOOT_R_%s"
-            break
-        default:
-            attachment = "LOOT_C_%s"
-            break
-    }
-    attachment = format(attachment, pos)
-    int attachmentIndex = dropPod.LookupAttachment( attachment )
-  
-    vector angles = dropPod.GetAttachmentAngles( attachmentIndex )
-    if(data.lootType == eLootType.ATTACHMENT && data.attachmentStyle != "sight" || data.lootType == eLootType.BACKPACK || data.lootType == eLootType.INCAPSHIELD || ref == "health_pickup_health_large" || ref == "health_pickup_health_small" )
-        angles = angles + <90, 0, 0>
-
-    entity loot = SpawnGenericLoot( ref, dropPod.GetAttachmentOrigin( attachmentIndex ), angles, data.countPerDrop )
-
-	loot.RemoveFromAllRealms()
-	loot.AddToOtherEntitysRealms( dropPod )
-	SetItemSpawnSource( loot, eSpawnSource.DROPPOD, dropPod )
-
-    loot.SetParent(dropPod, attachment, true)
-	loot.SetAbsAngles( angles )
-    
-	file.lootBinsSpawnedLootMap[dropPod].append( loot )
-}
-
-#if SERVER
-void function AddMultipleLootItemsToDropPod( entity dropPod, array<string> refs )
-{
-	int numRefs = refs.len()
-	for ( int i; i < numRefs; i++ )
-		AddLootTodropPod( dropPod, SURVIVAL_GetWeightedItemFromGroup(refs[ i ]) )
-}
-
-void function AddMultipleLootItemsToDropPod_Lifeline( entity dropPod, array<string> refs )
-{
-	int numRefs = refs.len()
-	for ( int i; i < numRefs; i++ )
-		AddLootTodropPod( dropPod, refs[ i ] )
-}
-
-void function AddLootTodropPod( entity dropPod, string ref )
-{
-	file.dropPodsLootInside[ dropPod ].append( ref )
-}
-
-array<string> function GetdropPodContents( entity dropPod )
-{
-	for ( int i = file.dropPodsLootInside[ dropPod ].len() - 1; i >= 0; i-- )
-	{
-		if ( file.dropPodsLootInside[ dropPod ][i] == "blank" )
-			file.dropPodsLootInside[ dropPod ].remove( i )
-	}
-
-	return file.dropPodsLootInside[ dropPod ]
-}
-#endif
-
-void function InitDropPod( entity dropPod )
-{
-
-	var dataTable = GetDataTable( $"datatable/survival_loot.rpak" )
-	int numRows = GetDatatableRowCount( dataTable )
-
-	dropPod.e.isOpen = false
-	dropPod.e.isBusy = false
-	dropPod.e.hasBeenOpened = false
-	dropPod.AllowMantle()
-	dropPod.SetForceVisibleInPhaseShift( true )
-	dropPod.SetUsable()
-	dropPod.SetFadeDistance( 100000 )
-	dropPod.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	//dropPod.AddUsableValue( USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
-	dropPod.SetUsablePriority( USABLE_PRIORITY_LOW )
-    dropPod.SetUsePrompts( "#SURVIVAL_DROPPOD_USE", "#SURVIVAL_DROPPOD_USE" )
-	AddCallback_OnUseEntity( dropPod, OnDropPodUse )
-	file.lootBinsSpawnedLootMap[dropPod] <- []
-	file.dropPodsLootInside[dropPod] <- []
-	file.numLootBins++
-	//float waitTime = file.numLootBins / NUM_LOOT_BIN_SOUND_INITS_PER_SEC
-	file.lootBinList.append( dropPod )
-    
-	SetCallback_CanUseEntityCallback( dropPod, DropPod_CanUse )
-
-	// if ( SURVIVAL_DEBUG_LOOT_BINS )
-	//{
-	// 	DebugDrawLine( dropPod.GetOrigin(), dropPod.GetOrigin() + <90, 90, 2000>, 255, 255, 255, true, 100.0 )
-	//}
-}
-
-#if CLIENT
-void function DropPodThreatIndicator(entity dropPod)
-{
-    entity player = GetLocalViewPlayer()
-    ShowGrenadeArrow( player, dropPod, 350, 0.0 )
-}
-#endif
-void function DropPodBeamWaitForUse(entity dropPod, vector origin, vector angles)
-{
-	dropPod.EndSignal( "OnDestroy" )	
-	dropPod.EndSignal( "OnUse" )
-	
-    entity trailFXHandle = StartParticleEffectInWorld_ReturnEntity(GetParticleSystemIndex( FAR_SPAWN_FX ), origin, angles)
-    
-    OnThreadEnd(
-		function() : ( trailFXHandle )
-		{
-			if ( IsValid( trailFXHandle ) )
-				EffectStop( trailFXHandle )
-		}    
-	)
-    
-    WaitForever()
-    
-}
-
-bool function DropPod_OnUse( entity dropPod, entity player, int useInputFlags )
-{
-	if ( (useInputFlags & USE_INPUT_DEFAULT) == 0 )
-		return false
-
-	if ( dropPod.Anim_IsActive() || DropPod_IsOpen( dropPod ) )
-		return false
-
-	dropPod.Signal("OnUse")
-	dropPod.SetUsePrompts("","")
-	thread HandleDropPodUse( dropPod, player )
-
-	return true
-}
-
-
-void function OnDropPodUse( entity dropPod, entity player, int useInputFlags )
-{
-	if ( (useInputFlags & USE_INPUT_DEFAULT) == 0 )
-		return
-        
-    dropPod.Signal("OnUse")
-    dropPod.SetUsePrompts("","")
-	thread HandleDropPodUse( dropPod, player )
-}
-void function HandleDropPodUse( entity dropPod, entity player )
-{
-	dropPod.EndSignal( "OnDestroy" )
-
-	if ( dropPod.Anim_IsActive() )
-		return
-
-	EmitSoundOnEntity( dropPod, SOUND_LOOT_BIN_OPEN )
-
-	if ( !DropPod_IsOpen( dropPod ) )
-		thread DropPod_PlayOpenSequence( dropPod, player )
-
-	//if ( IsValid( player ) )
-	//	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.DROPPOD, dropPod, dropPod.GetWorldSpaceCenter(), player.GetTeam(), player )
-}
-
-void function DropPod_PlayOpenSequence( entity dropPod, entity player )
-{
-	dropPod.EndSignal( "OnDestroy" )
-
-	// CleanUpPermanentsParentedToLootbin( lootbin )
-
-	GradeFlagsSet( dropPod, eGradeFlags.IS_BUSY )
-
-	if ( !dropPod.e.hasBeenOpened )
-	{
-		dropPod.e.hasBeenOpened = true
-
-		StopSoundOnEntity( dropPod, SOUND_LOOT_BIN_IDLE )
-
-		int lootIndex             = 0
-
-		// todo: use this instead of setting loot when droppod lands
-		array<string> lootToSpawn = GetdropPodContents( dropPod )
-
-		foreach ( ref in lootToSpawn )
-		{
-			if( dropPod.GetScriptName() != "lifeline_care_package" )
-				SpawnLootInDropPod( dropPod, ref, lootIndex, lootToSpawn.len() )
-			else
-				SpawnLootInDropPod_Lifeline( dropPod, ref, lootIndex, lootToSpawn.len() )
-			
-			lootIndex++
-		}
-
-		lootToSpawn.clear()
-	}
-
-	GradeFlagsSet( dropPod, eGradeFlags.IS_OPEN )
-
-	entity dropPodParent = dropPod.GetParent()
-	if ( IsValid( dropPodParent ) )
-		waitthread PlayAnim( dropPod, "droppod_loot_opening", dropPodParent, "ref" )
-	else
-		waitthread PlayAnim( dropPod, "droppod_loot_opening" )
-
-	GradeFlagsClear( dropPod, eGradeFlags.IS_BUSY )
-}
-
-bool function DropPod_IsOpen( entity dropPod )
-{
-	if ( GradeFlagsHas( dropPod, eGradeFlags.IS_OPEN ) )
-		return true
-	return false
-}
-
-bool function DropPod_CanUse( entity player, entity dropPod )
-{
-	if ( player.GetWeaponDisableFlags() == WEAPON_DISABLE_FLAGS_ALL )
-		return false
-
-	if ( Bleedout_IsBleedingOut( player ) )
-		return false
-
-	// if ( LootBin_IsBusy( dropPod ) )
-	// 	return false
-
-	if ( DropPod_IsOpen( dropPod ) )
-		return false
-
-	return true
-}
-
-
-
-Point function GetDropPodSpawnLocation( entity dropPod, int lootI, int lootCount )
-{
-	float y    = Graph( lootI + 1, 0, lootCount + 1, -51, 51 )
-	//vector pos = dropPod.GetOrigin() + RotateVector( <14, y, 33>, dropPod.GetAngles() )
-	vector pos = dropPod.GetOrigin() + RotateVector( <30, y, 60>, dropPod.GetAngles() )
-	vector ang = AnglesCompose( dropPod.GetAngles(), <90, 0, 0> )
-
-	Point p
-	p.origin = pos
-	p.angles = ang
-	return p
-}
-
-function DropPod_Init()
-{
-    
 	PrecacheModel( DROPPOD_MODEL )
+	PrecacheModel( DROPPOD_DOOR_MODEL )
+	PrecacheScriptString( DROPPOD_MOVER_SCRIPTNAME )
 
-	RegisterSignal( "OnLaunch" )
+	//RegisterSignal( "OnLaunch" )
 	RegisterSignal( "OnImpact" )
-    RegisterSignal( "OnUse" )
-    
-	PrecacheModel( DP_COLL_MODEL )
+	RegisterSignal( "npc_deployed" )
+	RegisterSignal( "OpenDoor" )
+	RegisterSignal( "DroppodLanded" )
+	RegisterSignal( "StopBraking" )
 
+	PrecacheEffect( DROPPOD_IMPACT_EFFECT )
 	PrecacheEffect( $"droppod_trail" )
-	PrecacheEffect( $"droppod_impact" )
-    PrecacheParticleSystem( FAR_SPAWN_FX )
-}
+	PrecacheEffect( $"droppod_airburst" )
 
-
-function GetDropPodAnimDuration()
-{
-	// hack seems bad to spawn an ent to get this info
+	// Get and store the anim length for droppod drop sequence
 	entity dropPod = CreateDropPod()
-
-	local animDuration = dropPod.GetSequenceDuration( "pod_testpath" )
+	file.dropPodAnimDuration = dropPod.GetSequenceDuration( "pod_testpath" )
 	dropPod.Destroy()
 
-	return animDuration
+	AddDamageCallbackSourceID( eDamageSourceId.landing_zone, DropPod_OnLandingZoneDamage )
 }
 
-void function Flowstate_LaunchAnimMobileBeacon( entity mobileBeacon, vector targetOrigin, vector targetAngles, entity fxToStop, entity threatProxy)
+entity function CreateDropPod( vector origin = <0,0,0>, vector angles = <0,0,0> )
 {
-	mobileBeacon.EndSignal( "OnDestroy" )
-	mobileBeacon.EnableRenderAlways()
+	entity prop_dynamic = CreateEntity( "prop_dynamic" )
 
-	mobileBeacon.Anim_PlayOnly( $"mobile_respawn_beacon_closed" )
-	
-	wait 4
-	
-	if( !IsValid( mobileBeacon) )
-		return
-		
-	EmitSoundOnEntity( mobileBeacon, "spectre_drop_pod" ) // ?? find a better sound
-	
-	wait 2
-	
-	if( !IsValid( mobileBeacon) )
-		return
-		
-	StartParticleEffectInWorld( GetParticleSystemIndex( $"P_phase_shift_out" ), mobileBeacon.GetOrigin(), mobileBeacon.GetAngles() )
-	
-	mobileBeacon.Show()
+	PrepareDroppodModel( prop_dynamic )
 
-	array<entity> sideEffects
-	
-	for( int i = 1; i <= 4; i++ )
-	{
-		entity fx = StartParticleEffectOnEntity_ReturnEntity(mobileBeacon, GetParticleSystemIndex( $"P_fire_jet_med_nomdl" ), FX_PATTACH_ABSORIGIN_FOLLOW, mobileBeacon.LookupAttachment( "THRUSTER_" + i ) )
-		fx.SetParent( mobileBeacon )
-		fx.SetAngles( Vector( 90,0,0 ) )
-		sideEffects.append( fx )
-	}
-	
-	thread Flowstate_JetWashFX( mobileBeacon ) 
-	
-	mobileBeacon.NonPhysicsMoveTo( targetOrigin + Vector (0,0,25) , 3, 3, 0 )
-	
-	wait 2
-	
-	if( !IsValid( mobileBeacon) )
-		return
-	
-	wait 1
-	
-	if( !IsValid( mobileBeacon) )
-		return
+	if ( origin != <0,0,0> )
+		prop_dynamic.SetOrigin( origin )
 
-	foreach( sideFx in sideEffects )
-	{
-		if(IsValid(sideFx))
-			sideFx.Destroy()
-	}
-	
-	mobileBeacon.Anim_PlayOnly( "mobile_respawn_beacon_land" )
-	mobileBeacon.Anim_SetPlaybackRate( 1 )
-	mobileBeacon.NonPhysicsMoveTo( targetOrigin, mobileBeacon.GetSequenceDuration( "mobile_respawn_beacon_land" ) / 2, mobileBeacon.GetSequenceDuration( "mobile_respawn_beacon_land" ) / 2, 0 )
-	
-	wait (mobileBeacon.GetSequenceDuration( "mobile_respawn_beacon_land" ) / 2) - 0.1
-	
-    if( IsValid(fxToStop) )
-        fxToStop.Destroy()
-	
-	Signal( mobileBeacon, "ForceEndJetWashFX" )
-	
-	if( !IsValid( mobileBeacon) )
-		return
-	
-	if(IsValid(threatProxy))
-		threatProxy.Destroy()
-	
-	EmitSoundOnEntity( mobileBeacon, "Survival_LootPod_Impact" )
-	
-	MobileBeaconOnImpactFXAndShake( mobileBeacon, targetOrigin, targetAngles)
-	
-	wait (mobileBeacon.GetSequenceDuration( "mobile_respawn_beacon_land" ) / 2) + 0.1
-	
-	if( !IsValid( mobileBeacon) )
-		return
-	
-	mobileBeacon.Anim_PlayOnly( "mobile_respawn_beacon_idle" )
+	if ( angles != <0,0,0> )
+		prop_dynamic.SetAngles( angles )
+
+	DispatchSpawn( prop_dynamic )
+
+	return prop_dynamic
 }
 
-void function Flowstate_JetWashFX(entity evac)
+void function PrepareDroppodModel( entity droppod )
 {
-	EndSignal( evac, "ForceEndJetWashFX" )
-	
-	while(IsValid(evac))
+	droppod.SetValueForModelKey( DROPPOD_MODEL )
+	droppod.kv.contents = int( droppod.kv.contents ) & ~CONTENTS_TITANCLIP
+	droppod.kv.fadedist = -1
+	droppod.kv.renderamt = 255
+	droppod.kv.rendercolor = "255 255 255"
+	droppod.kv.solid = 6 // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
+}
+
+DroppodStruct function InitFireteamDropPod( entity pod, int flags = 0, int team = TEAM_NPC_HOSTILE_TO_ALL )
+{
+	if ( IsBitFlagSet( flags, eDropPodFlag.TAKES_DAMAGE ) )
 	{
-		vector start = evac.GetOrigin() - < 0, 0, 10 >
-		vector end = start - < 0, 0, 500 >
-		TraceResults downTraceResult = TraceLine( start, end, [evac], TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
-		if ( downTraceResult.fraction < 1.0 )
+		pod.SetMaxHealth( 100 )
+		pod.SetHealth( 100 )
+		pod.SetDamageNotifications( true )
+		pod.SetTakeDamageType( DAMAGE_YES )
+		SetTeam( pod, team )
+		AddEntityCallback_OnDamaged( pod, OnDropPodDamaged )
+		AddEntityCallback_OnPostDamaged( pod, OnDropPodPostDamaged )
+	}
+
+	pod.NotSolid()
+
+	DroppodStruct droppodData
+	droppodData.flags = flags
+	droppodData.door = CreateDropPodDoor( pod )
+	file.droppodTable[ pod ] <- droppodData
+
+	pod.Anim_Play( "idle" )
+
+	return droppodData
+}
+
+void function OnDropPodDamaged( entity pod, var damageInfo )
+{
+	if ( DamageInfo_GetDamage( damageInfo ) <= 0 )
+		return
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( IsValid( attacker )  )
+	{
+		if ( IsFriendlyTeam(attacker.GetTeam(), pod.GetTeam() ) )
 		{
-			PlayImpactFXTable( downTraceResult.endPos, evac, "human_land_jetwash" )
+			DamageInfo_SetDamage( damageInfo, 0.0 )
 		}
-		
-		wait 0.5
 	}
 }
 
-function LaunchAnimDropPod( entity dropPod, string anim, vector targetOrigin, vector targetAngles )
+void function OnDropPodPostDamaged( entity pod, var damageInfo )
 {
-	dropPod.EndSignal( "OnDestroy" )
+	if ( DamageInfo_GetDamage( damageInfo ) <= 0 )
+		return
+
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( IsValid( attacker ) && attacker.IsPlayer() )
+	{
+		// make the numbers % of device health
+		//float damageToDisplay = 100.0 * DamageInfo_GetDamage( damageInfo ) / pod.GetMaxHealth()
+		float damageToDisplay = DamageInfo_GetDamage( damageInfo )
+		//if ( damageToDisplay > 0 )
+		//	damageToDisplay = max( damageToDisplay, 1.0 )
+
+		attacker.NotifyDidDamage(
+			pod, DamageInfo_GetHitBox( damageInfo ),
+			DamageInfo_GetDamagePosition( damageInfo ), DamageInfo_GetCustomDamageType( damageInfo ),
+			damageToDisplay,
+			DamageInfo_GetDamageFlags( damageInfo ), DamageInfo_GetHitGroup( damageInfo ),
+			DamageInfo_GetWeapon( damageInfo ), DamageInfo_GetDistFromAttackOrigin( damageInfo )
+		)
+	}
+}
+
+entity function CreateDropPodDoor( entity pod )
+{
+	string attachment = "hatch"
+	int attachIndex = pod.LookupAttachment( attachment )
+	vector origin = pod.GetAttachmentOrigin( attachIndex )
+	vector angles = pod.GetAttachmentAngles( attachIndex )
+
+	entity prop_physics = CreateEntity( "prop_physics" )
+	SetTargetName( prop_physics, "door" + UniqueString() )
+	prop_physics.SetValueForModelKey( DROPPOD_DOOR_MODEL )
+	// Start Asleep
+	// Debris - Don't collide with the player or other debris
+	// Generate output on +USE
+	prop_physics.kv.spawnflags = 261 // non solid for now
+	prop_physics.kv.fadedist = -1
+	prop_physics.kv.physdamagescale = 0.1
+	prop_physics.kv.inertiaScale = 1.0
+	prop_physics.kv.renderamt = 0
+	prop_physics.kv.rendercolor = "255 255 255"
+
+	DispatchSpawn( prop_physics )
+
+	prop_physics.SetOrigin( origin )
+	prop_physics.SetAngles( angles )
+	prop_physics.SetParent( pod, "HATCH", false )
+	prop_physics.MarkAsNonMovingAttachment()
+
+	return prop_physics
+}
+
+void function LaunchAnimDropPod( entity dropPod, vector targetOrigin, vector targetAngles, entity animRef = null )
+{
+	EndSignal( dropPod, "OnDestroy" )
 	dropPod.EnableRenderAlways()
 
-	dropPod.s.launchAnim <- anim
-
-	int team = dropPod.GetTeam()
-
-	entity ref = CreateOwnedScriptMover( dropPod )
-    ref.SetOrigin( targetOrigin )
-    ref.SetAngles( targetAngles )
+	entity ref = animRef
+	if ( ref == null )
+	{
+		ref = CreateOwnedScriptMover( dropPod )
+		ref.SetOrigin( targetOrigin )
+		ref.SetAngles( targetAngles )
+	}
 
 	OnThreadEnd(
 		function () : ( dropPod, ref )
@@ -691,203 +220,459 @@ function LaunchAnimDropPod( entity dropPod, string anim, vector targetOrigin, ve
 			}
 
 			if ( IsValid( ref ) )
-				ref.Kill_Deprecated_UseDestroyInstead()
+				ref.Destroy()
 		}
 	)
 
-	local e = {}
-	e.targetOrigin <- targetOrigin
-	e.targetAngles <- targetAngles
+	AddAnimEvent( dropPod, "OnImpact", DropPodOnImpactFXAndShake )
 
-	EmitSoundOnEntity( dropPod, "spectre_drop_pod" )
+	bool warpFall = dropPod.HasKey( "script_hotdrop" ) && dropPod.kv.script_hotdrop == "Warpfall"
 
 	FirstPersonSequenceStruct sequence
-	sequence.thirdPersonAnim 		= anim
-
-	sequence.blendTime 			= 0.0
-	sequence.attachment 		= "ref"
-	sequence.useAnimatedRefAttachment		= false
-	//DrawArrow( ref.GetOrigin(), ref.GetAngles(), 5, 100 )
-	waitthread FirstPersonSequence( sequence, dropPod, ref )
-	dropPod.DisableRenderAlways()
-	WaitFrame()
-}
-
-function LaunchAnimDropPod2( entity dropPod, string anim, vector targetOrigin, vector targetAngles, entity player )
-{
-	dropPod.EndSignal( "OnDestroy" )
-	dropPod.s.launchAnim <- anim
-	int team = dropPod.GetTeam()
-	entity ref = CreateOwnedScriptMover( dropPod )
-	dropPod.SetParent(ref)
-    ref.SetAngles( targetAngles )
-	if(IsValid(player)){
-	player.SetParent(dropPod)
-	player.SetOrigin(dropPod.GetOrigin())
-	//ScreenFadeFromBlack(player, 3, 3)
-	EmitSoundOnEntity( dropPod, "spectre_drop_pod" )}
-	ref.Hide()
-	WaitFrame()
-	ref.Show()
-	thread __WarpInDropPodEffectShared( dropPod.GetOrigin(), <0,0,90>, "droppod_warpin", 0.0 )
-	ref.MoveTo( targetOrigin, 2, 0, 0 )
-
-	OnThreadEnd(
-		function () : ( dropPod, player, ref )
-		{
-			if(IsValid(player)) player.ClearParent()
-			if(IsValid(dropPod))
-			{
-				dropPod.ClearParent()	
-				dropPod.Destroy()
-			}
-			if(IsValid(ref)) ref.Destroy()
-		}
-	)
-
-	local e = {}
-	e.targetOrigin <- targetOrigin
-	e.targetAngles <- targetAngles
-
-	FirstPersonSequenceStruct sequence
-	sequence.thirdPersonAnim 		= "Aim_body"
-
+	sequence.thirdPersonAnim = "pod_testpath"
 	sequence.blendTime 			= 0.0
 	sequence.attachment 		= "ref"
 	sequence.useAnimatedRefAttachment		= true
 
-	wait 2
-	thread __WarpInDropPodEffectShared( dropPod.GetOrigin() + <0,0,100>, <90,0,0>, "droppod_warpin", 0.0 )
-	wait 1
-}
-
-function CheckPlayersIntersectingPod( pod, targetOrigin )
-{
-	array<entity> playerList = GetPlayerArray()
-	playerList.extend( GetNPCArray() )
-	
-	// Multiplying the bounds by 1.42 to ensure this encloses the droppod when it's rotated 45 degrees
-	local mins = pod.GetBoundingMins() * 1.42 + targetOrigin
-	local maxs = pod.GetBoundingMaxs() * 1.42 + targetOrigin
-	local safeRadiusSqr = 192 * 192
-
-	foreach ( player in playerList )
+	if ( warpFall )
 	{
-		if(!IsValid(player)) continue
-		
-		local playerOrigin = player.GetOrigin()
-		if ( DistanceSqr( targetOrigin, playerOrigin ) > safeRadiusSqr )
-        {
-			continue
-        }
+		DroppodStruct droppodData = file.droppodTable[ dropPod ]
 
-		local playerMins = player.GetBoundingMins() + playerOrigin
-		local playerMaxs = player.GetBoundingMaxs() + playerOrigin
-        
-		if ( DistanceSqr( targetOrigin, playerOrigin ) < (safeRadiusSqr / 8) && IsAlive(player))
-		{   
-			if( GetCurrentPlaylistVarBool( "ketchup_mod8", false ) )
-			{
-				player.Die( null, null, { damageSourceId = eDamageSourceId.droppod_impact } )
-			} else
-			{
-				vector dif = Normalize( player.GetOrigin() - targetOrigin )
-				dif *= 300
-				dif.z = 0
-				player.SetVelocity( dif )
-			}
-			
-            return true
-       }
-	}
+		dropPod.Hide()
+		droppodData.door.Hide()
 
-	return false
-}
+		EmitSoundOnEntity( dropPod, "spectre_drop_pod_warpfall" )
 
-entity function CreateDropPodThreatIndicator(vector origin, vector angles)
-{
-    entity prop_dynamic = CreateEntity( "prop_dynamic" )
-    prop_dynamic.SetValueForModelKey( $"mdl/dev/empty_model.rmdl" )
-    
-    SetTargetName(prop_dynamic, CARE_PACKAGE_PROXY)
-	prop_dynamic.SetOrigin( origin )
-	prop_dynamic.SetAngles( angles )
+		PlayFX( TURBO_WARP_FX, dropPod.GetOrigin() + <0,0,5888>, dropPod.GetAngles() )
+		wait WARPFALL_FX_DELAY
 
-	DispatchSpawn( prop_dynamic )
-    EmitSoundOnEntity( prop_dynamic, "Survival_LootPod_Beacon_Marker" )
-    return prop_dynamic 
-}
+		dropPod.Show()
+		droppodData.door.Show()
 
-entity function CreateMobileBeaconThreatIndicator(vector origin, vector angles)
-{
-    entity prop_dynamic = CreateEntity( "prop_dynamic" )
-    prop_dynamic.SetValueForModelKey( $"mdl/dev/empty_model.rmdl" )
-    
-    SetTargetName(prop_dynamic, CARE_PACKAGE_PROXY)
-	prop_dynamic.SetOrigin( origin )
-	prop_dynamic.SetAngles( angles )
-
-	DispatchSpawn( prop_dynamic )
-	EmitSoundOnEntity( prop_dynamic, "Survival_LootPod_Beacon_Incoming" )
-    return prop_dynamic 
-}
-
-entity function CreateDropPod( vector ornull origin = null, vector ornull angles = null, string sourceWeaponClassName = "" )
-{
-	entity prop_dynamic = CreateEntity( "prop_dynamic" )
-	prop_dynamic.SetValueForModelKey( CARE_PACKAGE_AIRDROP_MODEL )
-
-	if( sourceWeaponClassName == "mp_ability_care_package" )
-	{
-        SetTargetName(prop_dynamic, CARE_PACKAGE_LIFELINE_TARGETNAME)
+		sequence.setInitialTime 	= 4.0
 	}
 	else
 	{
-		SetTargetName(prop_dynamic, CARE_PACKAGE_TARGETNAME)
+		EmitSoundOnEntity( dropPod, "spectre_drop_pod" )
 	}
 
-	prop_dynamic.SetScriptName( CARE_PACKAGE_SCRIPTNAME )
-	prop_dynamic.kv.contents = int( prop_dynamic.kv.contents ) & ~CONTENTS_TITANCLIP
-	prop_dynamic.kv.fadedist = -1
-	prop_dynamic.kv.renderamt = 255
-	prop_dynamic.kv.rendermode = 0
-	prop_dynamic.kv.rendercolor = "255 255 255"
-	prop_dynamic.kv.solid = 6 // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
-
-	if ( origin )
-	{
-		prop_dynamic.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			prop_dynamic.SetAngles( expect vector( angles ) )
-	}
-
-	DispatchSpawn( prop_dynamic )
-
-	return prop_dynamic
+	waitthread FirstPersonSequence( sequence, dropPod, ref )
+	dropPod.DisableRenderAlways()
 }
 
-entity function CreateMobileBeaconForVisualDrop( vector ornull origin = null, vector ornull angles = null, string sourceWeaponClassName = "" )
+void function DropPodOnImpactFXAndShake( entity droppod )
 {
-	entity prop_dynamic = CreateEntity( "script_mover" )
-	prop_dynamic.kv.SpawnAsPhysicsMover = 0
-	prop_dynamic.kv.contents = int( prop_dynamic.kv.contents ) & ~CONTENTS_TITANCLIP
-	prop_dynamic.kv.fadedist = -1
-	prop_dynamic.kv.renderamt = 255
-	prop_dynamic.kv.rendermode = 0
-	prop_dynamic.kv.rendercolor = "255 255 255"
-	prop_dynamic.kv.solid = 0 // 0 = no collision, 2 = bounding box, 6 = use vPhysics, 8 = hitboxes only
-	prop_dynamic.SetValueForModelKey( MOBILE_RESPAWN_BEACON_MODEL )
-	
-	if ( origin )
+	DroppodStruct data = file.droppodTable[ droppod ]
+	bool shouldPushPlayers = bool(data.flags & eDropPodFlag.SHOULD_PUSH_PLAYERS)
+	bool shouldDamagePlayers = bool(data.flags & eDropPodFlag.SHOULD_DAMAGE_PLAYERS)
+
+	vector origin = droppod.GetOrigin()
+	vector angles = droppod.GetAngles()
+
+	//PlayImpactFXTable( origin, droppod, HOTDROP_IMPACT_FX_TABLE ) //todo: sometimes this attaches to the player viewmodel
+	CreateShake( origin, 7, 0.15, 1.75, 768 )
+	//PlayFX( DROPPOD_IMPACT_EFFECT, origin, angles )
+
+	//if ( !shouldDamagePlayers )
+	//	droppod.SetNeverCrush( true ) // S3: entity method not available
+
+	droppod.Solid()
+
+	if ( shouldPushPlayers )
+		thread PushPlayerAndCreateDropPodCollision( droppod, origin )
+	if ( shouldDamagePlayers )
+		RadiusDamage_DamageDef( damagedef_crush, origin, droppod, droppod, 300, 2000, 12, 128, 0 )
+}
+
+void function PushPlayerAndCreateDropPodCollision( entity pod, vector origin )
+{
+	EndSignal( pod, "OnDestroy" )
+
+	entity point_push = CreateEntity( "point_push" )
+	point_push.kv.spawnflags = 8
+	point_push.kv.enabled = 1
+	point_push.kv.magnitude = 140.0 * 0.75 //Compensate for reduced player gravity to match R1
+	point_push.kv.radius = 192.0
+	point_push.SetOrigin( origin + <0,0,32> )
+	DispatchSpawn( point_push )
+
+	OnThreadEnd(
+		function() : ( point_push )
+		{
+			point_push.Destroy()
+		}
+	)
+
+	while ( CheckPlayersIntersectingEntity( pod, 250 ) )
+		wait 0.1
+}
+
+float function GetDropPodAnimDuration()
+{
+	Assert( file.dropPodAnimDuration > 0.0 )
+	return file.dropPodAnimDuration
+}
+
+void function NPCsDeployFromDroppod( entity pod, array<entity> guys )
+{
+	DroppodStruct droppodData = file.droppodTable[ pod ]
+	droppodData.openDoor = true
+	pod.Signal( "OpenDoor" )
+
+	if ( guys.len() >= 1 )
 	{
-		prop_dynamic.SetOrigin( expect vector( origin ) )
-		if ( angles )
-			prop_dynamic.SetAngles( expect vector( angles ) )
+		SetAnim( guys[0], "drop_pod_exit_anim", "pt_dp_exit_a" )
+		SetAnim( guys[0], "drop_pod_idle_anim", "pt_dp_idle_a" )
 	}
 
-	DispatchSpawn( prop_dynamic )
+	if ( guys.len() >= 2 )
+	{
+		SetAnim( guys[1], "drop_pod_exit_anim", "pt_dp_exit_b" )
+		SetAnim( guys[1], "drop_pod_idle_anim", "pt_dp_idle_b" )
+	}
 
-	return prop_dynamic
+	if ( guys.len() >= 3 )
+	{
+		SetAnim( guys[2], "drop_pod_exit_anim", "pt_dp_exit_c" )
+		SetAnim( guys[2], "drop_pod_idle_anim", "pt_dp_idle_c" )
+	}
+
+	if ( guys.len() >= 4 )
+	{
+		SetAnim( guys[3], "drop_pod_exit_anim", "pt_dp_exit_d" )
+		SetAnim( guys[3], "drop_pod_idle_anim", "pt_dp_idle_d" )
+	}
+
+	foreach ( guy in guys )
+	{
+		if ( IsAlive( guy ) )
+		{
+			guy.SetDeathNotifications( true )
+			thread NPCExitDroppod( guy, pod )
+		}
+	}
+
+	thread DroppodActivate( pod )
+}
+
+void function NPCExitDroppod( entity guy, entity pod )
+{
+	DroppodStruct droppodData = file.droppodTable[ pod ]
+
+	EndSignal( guy, "OnDeath" )
+	EndSignal( guy, "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( droppodData )
+		{
+			droppodData.numGuys--
+		}
+	)
+
+	droppodData.numGuys++
+
+	string idleAnim
+	string exitAnim
+
+	if ( !droppodData.openDoor )
+	{
+		guy.SetEfficientMode( true )
+
+		guy.SetParent( pod, "ATTACH", false )
+
+		idleAnim = string( GetAnim( guy, "drop_pod_idle_anim" ) )
+		if ( guy.LookupSequence( idleAnim ) != -1 )
+			guy.Anim_ScriptedPlay( idleAnim )
+
+		pod.WaitSignal( "OpenDoor" )
+
+		guy.SetEfficientMode( false )
+	}
+
+
+	guy.SetParent( pod, "ATTACH", false )
+
+	exitAnim = string( GetAnim( guy, "drop_pod_exit_anim" ) )
+	bool exitAnimExists = guy.LookupSequence( exitAnim ) != -1
+	if ( exitAnimExists )
+		guy.Anim_ScriptedPlay( exitAnim )
+
+	guy.ClearParent()
+
+	if ( exitAnimExists )
+		WaittillAnimDone( guy )
+	guy.Signal( "npc_deployed" )
+}
+
+void function DroppodActivate( entity pod )
+{
+	DroppodStruct droppodData = file.droppodTable[ pod ]
+
+	OnThreadEnd(
+		function() : ( pod )
+		{
+			DroppodStruct droppodData = file.droppodTable[pod]
+			float delay = ( IsBitFlagSet( droppodData.flags, eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS ) ? 0.0 : 10.0)
+			thread CleanupDroppod( pod, delay )
+		}
+	)
+
+	EndSignal( pod, "OnDestroy" )
+
+	TryOpenDroppodDoor( pod )
+
+	while ( droppodData.numGuys > 0 )
+		WaitFrame()
+}
+
+void function TryOpenDroppodDoor( entity pod )
+{
+	DroppodStruct droppodData = file.droppodTable[ pod ]
+	bool shouldExplodeDoor = bool(droppodData.flags & eDropPodFlag.SHOULD_ALWAYS_EXPLODE_DOOR)
+
+	if ( !shouldExplodeDoor && DropPodDoorInGround( pod ) )
+		droppodData.door.Destroy()
+	else
+		DropPodOpenDoor( pod, droppodData.door )
+}
+
+bool function DropPodDoorInGround( entity pod )
+{
+	string attachment = "hatch"
+	int attachIndex = pod.LookupAttachment( attachment )
+	vector end = pod.GetAttachmentOrigin( attachIndex )
+
+	string originAttachment = "origin"
+	int originAttachIndex = pod.LookupAttachment( originAttachment )
+	vector start = pod.GetAttachmentOrigin( originAttachIndex )
+
+	TraceResults result = TraceLine( start, end, pod, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+
+	return result.fraction < 1.0
+}
+
+void function DropPodOpenDoor( entity pod, entity door )
+{
+	door.ClearParent()
+	door.SetOrigin( door.GetOrigin() + (door.GetForwardVector() * 5) )
+	door.SetVelocity( door.GetForwardVector() * 500 )
+	EmitSoundOnEntity( pod, "droppod_door_open" )
+}
+
+void function CleanupDroppod( entity pod, float delay )
+{
+	if ( delay > 0 )
+		wait delay
+
+	if ( !IsValid( pod ) )
+		return
+
+	if ( !( pod in file.droppodTable ) )
+		return
+
+	DroppodStruct droppodData = file.droppodTable[ pod ]
+
+	if ( IsValid( droppodData.door ) )
+		droppodData.door.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
+
+	EmitSoundAtPosition( TEAM_UNASSIGNED, pod.GetOrigin(), "droppod_dissolve", pod )
+
+	delete file.droppodTable[ pod ]
+
+	bool dissolvePod = true
+	if ( pod.HasKey( "dissolve" ) && pod.kv.dissolve == "0" )
+		dissolvePod = false
+
+	foreach ( ent in pod.e.attachedEnts )
+		ent.NotSolid()
+
+	if ( dissolvePod )
+	{
+		pod.NotSolid()
+		pod.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
+	}
+}
+
+array<entity> function CreateNPCSFromSpawnFuncsCustom( array<entity functionref( int, vector, vector, table )> spawnFuncsWithDispatch, array<table> customData, int team, vector spawnOrigin, vector spawnAngles )
+{
+	array<entity> dropEnts = []
+
+	for ( int idx = 0; idx < spawnFuncsWithDispatch.len(); idx++ )
+	{
+		entity functionref( int, vector, vector, table ) spawnFuncWithDispatch = spawnFuncsWithDispatch[idx]
+		entity ent = spawnFuncWithDispatch( team, spawnOrigin, spawnAngles, customData[idx] )
+
+		dropEnts.append( ent )
+	}
+
+	ArrayRemoveDead( dropEnts )
+	return dropEnts
+}
+
+void function Spawn_DropPodSquadCustom( array<entity functionref( int, vector, vector, table )> spawnfuncs, array<table> customData, array<entity> npcsToReturn, int team, entity spawnPoint, int dropPodFlags, float doorOpenDelay )
+{
+	vector spawnOrigin = spawnPoint.GetOrigin()
+	vector spawnAngles = spawnPoint.GetAngles()
+	spawnPoint.e.spawnPointInUse = true
+
+	entity dropPod = CreateDropPod()
+	InitFireteamDropPod( dropPod, dropPodFlags, team )
+	waitthread LaunchAnimDropPod( dropPod, spawnOrigin, spawnAngles )
+
+	if ( Flag( "disable_npcs" ) )
+		return
+
+	wait doorOpenDelay
+
+	if ( !IsValid( dropPod ) )
+		return
+
+	npcsToReturn = CreateNPCSFromSpawnFuncsCustom( spawnfuncs, customData, team, spawnOrigin, spawnAngles )
+	NPCsDeployFromDroppod( dropPod, npcsToReturn )
+	spawnPoint.e.spawnPointInUse = false
+
+	return
+}
+
+bool function IsDroppodSpawner( entity ent )
+{
+	if ( !IsSpawner( ent ) )
+		return false
+
+	table spawnerKeyValues = ent.GetSpawnEntityKeyValues()
+
+	if ( !( "editorclass" in spawnerKeyValues ) )
+		return false
+
+	return spawnerKeyValues.editorclass == "script_droppod"
+}
+
+void function SpawnDroppodSpawner( entity dropPodSpawner )
+{
+	table spawnerKeyValues = dropPodSpawner.GetSpawnEntityKeyValues()
+
+	entity dropPod = dropPodSpawner.SpawnEntity()
+	PrepareDroppodModel( dropPod )
+	DispatchSpawn( dropPod )
+
+	InitFireteamDropPod( dropPod )
+
+	vector origin = StringToVector( string( spawnerKeyValues.origin ) )
+	vector angles = StringToVector( string( spawnerKeyValues.angles ) )
+	int npcType = int( spawnerKeyValues.npcType )
+	int team = int( spawnerKeyValues.teamnumber )
+
+	waitthread LaunchAnimDropPod( dropPod, origin, angles )
+
+	array<entity> linkedEnts = dropPod.GetLinkEntArray()
+	entity moveTarget
+	array<entity> npcSpawners
+	foreach ( entity linkedEnt in linkedEnts )
+	{
+		if ( GetEditorClass( linkedEnt ) == "info_move_target" )
+			moveTarget = linkedEnt
+		else if ( IsSpawner( linkedEnt ) )
+			npcSpawners.append( linkedEnt )
+	}
+
+	Assert( npcSpawners.len() <= 4, "Droppod at " + origin + " has too many spawners linked. Max is 4" )
+
+	array<entity> npcs
+	if ( npcSpawners.len() > 0 )
+	{
+		// Use linked spawners
+		foreach ( entity npcSpawner in npcSpawners )
+		{
+			entity npc = npcSpawner.SpawnEntity()
+			DispatchSpawn( npc )
+			npcs.append( npc )
+		}
+	}
+	else
+	{
+		// Create NPCs based on the selected type
+		entity functionref( int, vector, vector ) spawnFunc
+
+		switch ( npcType )
+		{
+			default:
+				Assert( false, "Unhandled NPCType on droppod spawner" )
+				return
+		}
+
+		for ( int i = 0; i < 4; i++ )
+		{
+			entity npc = spawnFunc( team, origin, angles )
+			DispatchSpawn( npc )
+			npcs.append( npc )
+		}
+	}
+
+	ArrayRemoveDead( npcs )
+	Assert( npcs.len() > 0, "Spawned DropPod with no NPCs" )
+
+	foreach ( entity npc in npcs )
+	{
+		if ( IsValid( moveTarget ) )
+			thread AssaultMoveTarget( npc, moveTarget )
+
+		// If the NPC spawner linked to a move target directly then use that instead
+		thread AssaultLinkedMoveTarget( npc )
+	}
+
+	NPCsDeployFromDroppod( dropPod, npcs )
+}
+
+
+
+void function AnimateAirdropPod( entity dropPod, vector origin, vector angles, string animationName )
+{
+	dropPod.EndSignal( "OnDestroy" )
+
+	thread JetwashFX( dropPod )
+
+	AddAnimEvent( dropPod, "DroppodLanded", OnDroppodLanded )
+	AddAnimEvent( dropPod, "DroppodPushAway", OnDroppodPushAway )
+
+	entity mover = CreateScriptMover( DROPPOD_MOVER_SCRIPTNAME, dropPod.GetOrigin(), dropPod.GetAngles() )
+	dropPod.SetParent( mover )
+
+	OnThreadEnd(
+		function() : ( dropPod, mover )
+		{
+			if ( IsValid( dropPod ) )
+			{
+				dropPod.ClearParent()
+			}
+			if ( IsValid( mover ) )
+			{
+				mover.Destroy()
+			}
+		}
+	)
+
+	waitthread PlayAnim( dropPod, animationName )
+
+	dropPod.Signal( "StopBraking" )
+}
+
+void function OnDroppodLanded( entity dropPod )
+{
+	Signal( dropPod, "DroppodLanded" )
+
+	TraceResults results = TraceLine( dropPod.GetOrigin() + <0,0,64>, dropPod.GetOrigin() - <0,0,256>, dropPod, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE )
+
+	entity shake = CreateShake( results.endPos, 16, 150, 1.0, 4000 )
+	shake.kv.spawnflags = 4 // SF_SHAKE_INAIR
+	if( IsValid( dropPod ) )
+	{
+		shake.RemoveFromAllRealms()
+		shake.AddToOtherEntitysRealms( dropPod )
+	}
+	PlayImpactFXTable( results.endPos, dropPod, "droppod_impact" )
+
+	float triggerRadius = 72
+	DropPod_ClearLandingZone( results.endPos, dropPod, triggerRadius, triggerRadius )
 }
 
 void function DropPod_ClearLandingZone( vector pos, entity inflictor, float innerRadius, float outerRadius, bool debugDraw = false )
@@ -904,105 +689,107 @@ void function DropPod_ClearLandingZone( vector pos, entity inflictor, float inne
 		0, 										// distanceFromAttacker
 		0, 										// explosionForce
 		DF_SKIPS_DOOMED_STATE,					// damage flags
-		eDamageSourceId.mp_ability_mobile_respawn_beacon					// damage source id
+		eDamageSourceId.landing_zone					// damage source id
 	)
 
-	//HoverVehicle_WakeVehiclesIntersectingEntity( inflictor )
+	HoverVehicle_WakeVehiclesIntersectingEntity( inflictor )
 
 	#if DEVELOPER
 		if ( debugDraw )
 		{
-			 //DebugDrawCylinder( pos, <270.0, 0.0, 0.0>, innerRadius, 20.0, COLOR_RED, true, 5.0 )
-			 //DebugDrawCylinder( pos, <270.0, 0.0, 0.0>, outerRadius, 20.0, COLOR_RED, true, 5.0 )
+			 //DebugDrawCylinder( pos, <270.0, 0.0, 0.0>, innerRadius, 20.0, <255, 0, 0>, true, 5.0 )
+			 //DebugDrawCylinder( pos, <270.0, 0.0, 0.0>, outerRadius, 20.0, <255, 0, 0>, true, 5.0 )
 		}
 	#endif
 }
 
-void function PushPlayerAndCreateDropPodCollision( entity pod, vector targetOrigin )
+void function DropPod_OnLandingZoneDamage( entity target, var damageInfo )
 {
-	pod.EndSignal( "OnDestroy" )
+	if ( !target.IsPlayer() )
+		return
 
-	entity point_push = CreateEntity( "point_push" )
-	point_push.kv.spawnflags = 2
-	point_push.kv.enabled = 1
-	point_push.kv.magnitude = 840.0 * 0.75 //Compensate for reduced player gravity to match R1
-	point_push.kv.radius = 192.0
-	point_push.kv.solid = SOLID_VPHYSICS
-	point_push.SetOrigin( targetOrigin + Vector( 0.0, 0.0, 10.0 ) )
-	DispatchSpawn( point_push )
+	DamageInfo_ScaleDamage( damageInfo, 0.0 )
+}
+
+void function OnDroppodPushAway( entity dropPod )
+{
+	thread OnDroppodPushAwayThread( dropPod )
+}
+
+void function OnDroppodPushAwayThread( entity dropPod )
+{
+	entity trigger = CreateEntity( "trigger_cylinder" )
+	trigger.RemoveFromAllRealms()
+	trigger.AddToOtherEntitysRealms( dropPod )
+	trigger.SetRadius( 100 ) // S3: SetCylinderRadius → SetRadius
+	trigger.SetAboveHeight( 256 )
+	trigger.SetBelowHeight( 32 )
+	trigger.SetOrigin( dropPod.GetOrigin() )
+	trigger.SetEnterCallback( PushAway )
+	trigger.kv.triggerFilterNpc = "all"
+	trigger.kv.triggerFilterPlayer = "all"
+	trigger.kv.triggerFilterNonCharacter = 0
+	DispatchSpawn( trigger )
+
+	trigger.SetParent( dropPod, "REF", false, 0.0 )
+	trigger.SearchForNewTouchingEntity()  // set this to catch an entity in the trigger right away
+
+	EndSignal( dropPod, "OnDestroy" )
+	EndSignal( trigger, "OnDestroy" )
 
 	OnThreadEnd(
-		function() : ( point_push )
+		function () : ( trigger )
 		{
-			point_push.Fire( "Kill", "", 0.0 )
+			if ( IsValid( trigger ) )
+				trigger.Destroy()
 		}
 	)
 
-	while ( IsValid(pod) && CheckPlayersIntersectingPod( pod, targetOrigin ) )
-		WaitFrame()
-	
-	if(IsValid(pod))
-	pod.Solid()
+	dropPod.WaitSignal( "DroppodLanded" )
 }
 
-void function PushPlayerAndCreateMobileBeaconCollision( entity pod, vector targetOrigin )
+void function PushAway( entity trigger, entity ent )
 {
-	pod.EndSignal( "OnDestroy" )
+	if ( ent.DoesShareRealms( trigger ) )
+		thread PushAwayThread( trigger, ent )
+}
 
-	entity point_push = CreateEntity( "point_push" )
-	point_push.kv.spawnflags = 2
-	point_push.kv.enabled = 1
-	point_push.kv.magnitude = 840.0 * 0.75 //Compensate for reduced player gravity to match R1
-	point_push.kv.radius = 128.0
-	point_push.kv.solid = SOLID_VPHYSICS
-	point_push.SetOrigin( targetOrigin + Vector( 0.0, 0.0, 10.0 ) )
-	DispatchSpawn( point_push )
+void function PushAwayThread( entity trigger, entity ent )
+{
+	EndSignal( trigger, "OnDestroy" )
+	EndSignal( ent, "OnDestroy" )
 
-	OnThreadEnd(
-		function() : ( point_push )
+	while( trigger.IsTouching( ent ) )
+	{
+		vector v = Normalize( ent.GetOrigin() - trigger.GetOrigin() )
+
+		v = Normalize( <v.x,v.y,0> )
+
+		if ( Length( v ) < 0.5 )
+			v = <1,0,0>
+
+		ent.SetVelocity( v*350 )
+		WaitFrame()
+	}
+}
+
+void function JetwashFX( entity vehicle )
+{
+	vehicle.EndSignal( "StopBraking" )
+
+	while ( IsValid( vehicle ) )
+	{
+		int attach = vehicle.LookupAttachment( "ORIGIN" )
+
+		vector origin = vehicle.GetOrigin()
+
+		if ( attach != 0 )
+			origin = vehicle.GetAttachmentOrigin( attach )
+		TraceResults result = TraceLine( origin - <0,0,60>, origin - <0,0,2000>, vehicle, TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+		if ( result.fraction < 1.0 )
 		{
-			point_push.Fire( "Kill", "", 0.0 )
+			PlayImpactFXTable( result.endPos, vehicle, "dropship_dust" )
 		}
-	)
-
-	while ( IsValid(pod) && CheckPlayersIntersectingPod( pod, targetOrigin ) )
-		WaitFrame()
-	
-	if(IsValid(pod))
-	pod.Solid()
+		wait 0.2
+	}
 }
-
-function DropPodOnImpactFX( droppod, origin )
-{
-	PlayImpactFXTable( expect vector(origin), expect entity( droppod ), HOTDROP_IMPACT_FX_TABLE )
-}
-
-void function DropPodOnImpactFXAndShake( entity droppod, vector origin, vector angles )
-{
-	DropPodOnImpactFX(droppod, origin)
-	CreateShake( origin, 7, 0.15, 1.75, 768 )
-
-	thread PushPlayerAndCreateDropPodCollision( droppod, origin )
-}
-
-void function MobileBeaconOnImpactFXAndShake( entity mobileBeacon, vector origin, vector angles )
-{
-	DropPodOnImpactFX( mobileBeacon, origin)
-	CreateShake( origin, 7, 0.15, 1.75, 300 )
-
-	thread PushPlayerAndCreateMobileBeaconCollision( mobileBeacon, origin )
-}
-
-function CreateDropPodSmokeTrail( pod )
-{
-	entity smokeTrail = CreateEntity( "info_particle_system" )
-	smokeTrail.SetValueForEffectNameKey( $"droppod_trail" )
-	smokeTrail.kv.start_active = 0
-	DispatchSpawn( smokeTrail )
-
-	smokeTrail.SetOrigin( pod.GetOrigin() + Vector( 0, 0, 152 ) )
-	smokeTrail.SetParent( pod )
-
-	return smokeTrail
-}
-

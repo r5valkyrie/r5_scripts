@@ -59,12 +59,9 @@ void function SpotterSight_StartVisualEffect( entity ent, int statusEffect, bool
 		return
 
 	int team = ent.GetTeam()
-	HighlightContext highlight = GetHighlight( "caustic_gas_threat" )
-	HighlightContext_SetAfterPostProcess( highlight, true )
+	int highlight = GetHighlightId( "caustic_gas_threat" )
 	HighlightContext_SetFarFadeDistance( highlight, 999999.0 )
-	HighlightContext_SetNearFadeDistance( highlight, 0.0 )
 	HighlightContext_SetDrawFunc( highlight, eHighlightDrawFunc.ALWAYS )
-	HighlightContext_SetFill( highlight, HIGHLIGHT_FILL_INTERACT_BUTTON )
 
 	foreach ( player in GetPlayerArray() )
 	{

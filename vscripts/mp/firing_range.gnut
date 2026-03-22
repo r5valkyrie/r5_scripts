@@ -735,15 +735,15 @@ void function FR_Init_NetVars_And_PVars()
 	#if CLIENT
 		// ----- NetVar Change Callbacks
 		// Range Leader Change
-		RegisterNetVarIntChangeCallback( NETVAR_FR_RANGEMASTER_EHI, SNDC_PLAYER_EXCLUSIVE, NetVarCallback_Changed_Int )
+		RegisterNetVarIntChangeCallback( NETVAR_FR_RANGEMASTER_EHI, NetVarCallback_Changed_Int, SNDC_PLAYER_EXCLUSIVE )
 		// Settings PackedBools
-		RegisterNetVarIntChangeCallback( NETVAR_FRPS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, NetVarCallback_Changed_Int )
-		RegisterNetVarIntChangeCallback( NETVAR_FRSS_PACKEDBOOLS, SNDC_PLAYER_EXCLUSIVE, NetVarCallback_Changed_Int )
+		RegisterNetVarIntChangeCallback( NETVAR_FRPS_PACKEDBOOLS, NetVarCallback_Changed_Int, SNDC_PLAYER_EXCLUSIVE )
+		RegisterNetVarIntChangeCallback( NETVAR_FRSS_PACKEDBOOLS, NetVarCallback_Changed_Int, SNDC_PLAYER_EXCLUSIVE )
 
 		// Shared INT Settings
 		for( int settingNDX = frIntSettings_NDX_Start; settingNDX < frIntSettings_NDX_End; settingNDX++ )
 		{
-			RegisterNetVarIntChangeCallback( frIntSettings_NetVars[ settingNDX ], SNDC_PLAYER_EXCLUSIVE, NetVarCallback_Changed_Int )
+			RegisterNetVarIntChangeCallback( frIntSettings_NetVars[ settingNDX ], NetVarCallback_Changed_Int, SNDC_PLAYER_EXCLUSIVE )
 		}
 	#endif // CLIENT
 

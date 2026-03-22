@@ -720,4 +720,3 @@ float function GetMaxRefundPercentage()
 {
 	return GetCurrentPlaylistVarFloat( "mobile_hmg_max_refund_percentage", MAX_REFUND_PERCENTAGE )
 }
- 

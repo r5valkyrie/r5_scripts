@@ -214,7 +214,7 @@ void function SpawnLootTickLoot( entity tick, string ref )
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
 
 	entity loot = SpawnGenericLoot( ref, tick.GetOrigin() + <0, 0, 10>, tick.GetAngles(), data.countPerDrop )
-    FakePhysicsThrow( null, loot, <RandomFloatRange(0, 360), RandomFloatRange(0, 360), RandomFloatRange(0, 360)>, 5 )
+    FakePhysicsThrow( null, loot, <RandomFloatRange(0, 360), RandomFloatRange(0, 360), RandomFloatRange(0, 360)>, false )
 }
 
 void function AddMultipleLootItemsToLootTick( entity tick, array<string> refs )

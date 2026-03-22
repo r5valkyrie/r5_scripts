@@ -2137,7 +2137,7 @@ void function DEV_CombatRange_IndicateTargets()
 	{
 		if( IsValid( enemy ) )
 		{
-			DEV_debugDrawSpawnPoint( enemy.GetOrigin(), 50, COLOR_RED, true, 20 )
+			DEV_debugDrawSpawnPoint( enemy.GetOrigin(), 50, <255, 0, 0>, true, 20 )
 		}
 		else
 		{

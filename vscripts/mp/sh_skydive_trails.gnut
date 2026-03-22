@@ -99,7 +99,8 @@ void function ShSkydiveTrails_LevelInit()
 	AddCallback_RegisterRootItemFlavors( RegisterSkydiveTrails )
 
 	#if CLIENT
-		RegisterScriptAnimWindowCallbacks( "SkydiveTrailFX", CleanupFriendlyEnemySkydiveTrailFXForPlayer, StartFriendlyEnemySkydiveTrailFXForPlayer )
+		// Skydive trail FX callbacks not implemented
+		//RegisterScriptAnimWindowCallbacks( "SkydiveTrailFX", CleanupFriendlyEnemySkydiveTrailFXForPlayer, StartFriendlyEnemySkydiveTrailFXForPlayer )
 		RegisterSignal( "Skydivetrail_DestroyProp" )
 	#endif
 }

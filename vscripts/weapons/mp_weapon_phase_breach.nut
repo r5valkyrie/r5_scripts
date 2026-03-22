@@ -787,10 +787,10 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 	#if DEVELOPER
 	if ( DEBUG_DRAW_TARGETING )
 	{
-		vector debugColor = eyeTrace.results.fraction < 1.0 ? COLOR_GREEN : COLOR_RED
+		vector debugColor = eyeTrace.results.fraction < 1.0 ? <0, 255, 0> : <255, 0, 0>
 		DebugDrawSphere(  eyeTrace.results.endPos, 10,debugColor, false,0.1 )
 
-		vector adjustedColor = eyeTrace.foundValidEnd ? COLOR_GREEN : COLOR_ORANGE
+		vector adjustedColor = eyeTrace.foundValidEnd ? <0, 255, 0> : COLOR_ORANGE
 		DebugDrawSphere(  eyeTrace.adjustedEndPos,5, adjustedColor, false,0.1 )
 
 		float distMeters = Distance( eyeTrace.results.endPos, player.GetOrigin() ) * INCHES_TO_METERS
@@ -823,10 +823,10 @@ PhaseBreachTargetInfo function GetPhaseBreachTargetInfo( entity player )
 			if ( DEBUG_DRAW_TARGETING )
 			{
 				DebugDrawText( eyeTrace.results.endPos, "Lower", false, 0.1 )
-				vector debugColor = eyeTrace.results.fraction < 1.0 ? COLOR_GREEN : COLOR_RED
+				vector debugColor = eyeTrace.results.fraction < 1.0 ? <0, 255, 0> : <255, 0, 0>
 				DebugDrawSphere(  eyeTrace.results.endPos, 10,debugColor, false,0.1 )
 
-				vector adjustedColor = eyeTrace.foundValidEnd ? COLOR_GREEN : COLOR_ORANGE
+				vector adjustedColor = eyeTrace.foundValidEnd ? <0, 255, 0> : COLOR_ORANGE
 				DebugDrawSphere(  eyeTrace.adjustedEndPos,5, adjustedColor, false,0.1 )
 			}
 		#endif
@@ -1558,7 +1558,7 @@ void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetI
 			if ( DEBUG_DRAW_VALIDATION )
 			{
 				Warning("Ash Ult: Old algorithm found a point and the new one failed to at all.")
-				DebugDrawSphere( oldInfo.finalPos, 20, COLOR_RED, false, 0.1 )
+				//DebugDrawSphere( oldInfo.finalPos, 20, <255, 0, 0>, false, 0.1 )
 			}
 			if ( DEV_LogValidationCase( player, file.oldTargetingWins ) )
 			{
@@ -1597,7 +1597,7 @@ void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetI
 					if ( DEBUG_DRAW_VALIDATION )
 					{
 						Warning( "Ash Ult: Old algorithm found a point which scored better than the new one. Distance between them is " + newOldDistance + ". Dot between " + newOldDot + ". newDotScore: " + newScore + " oldDotScore: " + oldScore )
-						DebugDrawSphere( oldInfo.finalPos, 20, COLOR_RED, false, 0.1 )
+						//DebugDrawSphere( oldInfo.finalPos, 20, <255, 0, 0>, false, 0.1 )
 					}
 					DEV_LogValidationCase( player, file.oldTargetingBetter )
 				}
@@ -1624,7 +1624,7 @@ void function DEV_ValidateAgainstOldTargeting( entity player, PhaseBreachTargetI
 
 
 			DebugDrawScreenText( 0.1, 0.3, debugText )
-			DebugDrawScreenTextWithColor( 0.1, 0.28, "ASH VALIDATION ON", COLOR_LIGHT_RED )
+			//DebugDrawScreenTextWithColor( 0.1, 0.28, "ASH VALIDATION ON", COLOR_LIGHT_RED )
 		}
 	}
 }
@@ -1668,4 +1668,4 @@ void function DEV_ClearTargetingData()
 }
 #endif
 
-#endif 
+#endif

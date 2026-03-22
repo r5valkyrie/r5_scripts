@@ -1,38 +1,54 @@
-//=========================================================
-//	sh_sp_dialogue.gnut
-//=========================================================
+//
+
+#if CLIENT
+global function PlayClientDialogue_Internal
+global function PauseDialogueQueue
+global function ResumeDialogueQueue
+#endif
+
+global table<string, bool> FORBIDDEN_DIALOGUE_EVENT_NAMES = {
+	// only use this in case of emergencies!
+	// diag_mp_pathfinder_ping_helpcall_1p = true, // example
+}
 
 #if CLIENT
 const bool DEBUG_QUEUE_PRINTS = false
-global function PlayClientDialogue_Internal
 
-global table<string, bool> FORBIDDEN_DIALOGUE_EVENT_NAMES = {
-		// only use this in case of emergencies!
-		// diag_mp_pathfinder_ping_helpcall_1p = true, // example
-}
+                  
+                                            
+                            
 #endif
+
+       
+                                                                                     
+             
 
 
 global function RegisterCSVDialogue
 global function SPDialogueInit
 global function Dialog_RegisterNetworking
+global function GetValidVoices
 
+global function GetBattleChatterAlias1P3P
+global function GetBattleChatterAlias1P3PWithTempVoice
 
 #if SERVER
 global function PlayDialogue
-global function PlayDialogue_AllConnectedPlayers
-global function PlayDialogue_NoWait
 global function PlayDialogueForAnimEvent
-global function PlayBTDialogue
-global function PlayGabbyDialogue
-global function StopDialogue
 global function StopDialogueForPlayer
+global function StopAllQueuedAndCurrentDialogueForPlayer
 global function PlayDialogueForPlayer_NoWait
+global function PlayDialogueIdForPlayer_NoWait
 global function PlayDialogueForPlayer
-global function PlayDialogueForPlayer_Retail
 global function PlayRadioDialogueToAll
 global function PlayRadioDialogueToTeam
 global function PlayRadioDialogueToPlayer
+global function PlayRadioDialogueToPlayers
+global function PlayCharacterOrRadioDialogueToSetsOfPlayers
+global function PlayCharacterOrRadioDialogueToPlayer
+global function IsValidDialogueAlias
+global function ClientCallback_DialogueFinishedForID
+global function ClientCallback_AllDialogueFinished
 global function RequestCustomDialogueQueueIndex
 #endif //SERVER
 
@@ -42,16 +58,21 @@ global function SCB_PlayDialogueOnEntity
 global function SCB_PlayDialogueAtPosition
 global function SCB_PlayDialogueOnEnvironmentSpeakers
 global function SCB_PlayDialogueOnEnvironmentSpeakersNoResponse
-global function SCB_PlayDialogueOnCustomSpeakers
 global function SCB_AbortCurrentDialogue
+global function SCB_AbortAllMainQueuedAndCurrentDialogue
+
+global function PlayDialogueOnCustomSpeakers
+global function SCB_PlayDialogueOnCustomSpeakers
+global function SCB_AbortAllCustomSpeakersQueuedAndCurrentDialogue
+
 global function SetUseDialogueVDU
 global function PlayAnyClientSelfDialogueByName
 global function GetAnyDialogueAliasFromName
 global function GetAnyAliasIdForName
 global function PlayClientDialogueOnEntity
+global function PrintDummieTeamChat
+global function GetSoundDurationForName
 
-global function PauseDialogueQueue
-global function ResumeDialogueQueue
 
 global function ResumeMainDialogueQueue
 global function PauseMainDialogueQueue
@@ -61,101 +82,22 @@ global function RemovePlayerDialogueEventsFromMainDialogueQueue
 
 global function RegisterEnvironmentSpeaker
 global function DeregisterEnvironmentSpeaker
-global function CustomSpeakers1ListInit
+
 global function RegisterCustomDialogueQueueSpeakerEntities
+
 global function AddCallback_OnAbortDialogue
+global function AddCallback_OnDialoguePopupCreated
+global function AddCallback_OnDialoguePopupDestroyed
+
+global function DevDialogueWithoutSoundAlias
 #endif //CLIENT
 
 
 #if DEVELOPER
 global function ShouldTryToReplaceMissingVoiceWithTempVoice
-#endif // #if DEVELOPER
+#endif //DEVELOPER
 
 
-//////////////////////
-//////////////////////
-//// Global Types ////
-//////////////////////
-//////////////////////
-global struct QueueItem
-{
-	int    priority
-	int    entHandle   = -1
-	float  timeAdded   = -1
-	bool   active      = false
-	string debugRef    = ""
-	bool   success     = true
-	int    serialNum   = -1
-}
-
-
-enum eDialogueQueues
-{
-	main,
-	custom1,
-
-	_COUNT
-}
-
-global struct EnvironmentSpeaker
-{
-	vector origin
-	string crowdQuietAlias             = ""
-	string crowdActiveAlias            = ""
-	string crowdCheerAlias             = ""
-	string crowdRoarAlias              = ""
-	string crowdOvationAlias           = ""
-	string crowdChantAlias             = ""
-	string crowdEndMatchChantAlias     = ""
-	string activeVOLine                = ""
-	float  quietLoopSecondsToTimeout   = 0
-	float  activeLoopSecondsToTimeout  = 0
-	float  cheerLoopSecondsToTimeout   = 0
-	float  oneShotDelayBetweenReuse    = 0
-	float  ovationLoopSecondsToTimeout = 0
-	entity speakerEnt
-	float  distanceSqr
-}
-
-
-global enum eDialogueFlags
-{
-	SHORT_DELAY_AFTER_PLAYING = (1 << 0),
-	SURVIVAL_HOST_ALL_SPEAKERS = (1 << 1),
-	NO_ON_FINISHED_NOTIFY = (1 << 2),
-	MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION = (1 << 3),
-	MUTE_PLAYER_PING_CHIMES_FOR_DURATION = (1 << 4),
-	BLOCK_LOWER_PRIORITY_QUEUE_ITEMS = (1 << 5),
-	STOMP_CON_ALT = (1 << 6),
-	AMBIENT_DIALOGUE = (1 << 7),
-	USE_CUSTOM_QUEUE = (1 << 8 ),
-	USE_CUSTOM_SPEAKERS = ( 1 << 9 ),
-	BLOCK_ANNOUNCER = ( 1 << 10 ),
-	EMIT_FROM_FIXED_POSITION = ( 1 << 11 ),
-}
-
-// Speakers
-global const string ENVIRONMENT_SPEAKER_SCRIPT_NAME = "info_survival_speaker_location"
-global const string SILENT_PLAYER_VOICE = "_silent"
-
-// Play priorities
-global const PRIORITY_NO_QUEUE  = 0     // Plays the dialogue right away, avoiding the queue.
-global const PRIORITY_HIGH      = 20    // Enters the queue with the highest of priorities, only other items in queue of same priority will play first
-global const PRIORITY_NORMAL    = 10
-global const PRIORITY_LOW       = 5
-global const PRIORITY_LOWEST    = 1
-
-
-#if DEVELOPER
-global const string TEMP_VOICE  = "playerM1"
-#endif // #if DEVELOPER
-
-
-///////////////////////
-///////////////////////
-//// Private Types ////
-///////////////////////
-///////////////////////
 struct DialogueEntryGroup
 {
 	string     groupName
@@ -178,13 +120,27 @@ struct DialogueData
 	string radioDisplayName
 	string voice
 	bool   radioIntercept
-	string DEV_DialogueText
+	string dialogueText
+	float  dialogueTextDuration
 	asset  vduVideo
 
 	DialogueEntryGroup& group
 	int                 indexInGroup
 }
 
+
+global struct QueueItem
+{
+	int    priority
+	int    entHandle = -1
+	float  timeAdded = -1
+	bool   active = false
+	string milesAlias = ""
+	bool   success = true
+	int    serialNum = -1
+	bool   shouldBlockLowerPriorityItems = false
+	int	   groupID = -1 // Shared group ID = removed together
+}
 
 struct QueueData
 {
@@ -197,8 +153,47 @@ struct QueueData
 }
 
 const int QUEUE_MAIN = 0
+// JFS quick + dirty. Incrementing this. More thorough fix for after 7.2 --> Custom queues starts at 1 and goes to num queues. All checks handle this (> goes to >=, etc)
 const int NUM_CUSTOM_QUEUES = 6
 global const int NUM_TOTAL_DIALOGUE_QUEUES = NUM_CUSTOM_QUEUES + 1
+
+global struct EnvironmentSpeaker
+{
+	vector origin
+	string crowdQuietAlias = ""
+	string crowdActiveAlias = ""
+	string crowdCheerAlias = ""
+	string crowdRoarAlias = ""
+	string crowdOvationAlias = ""
+	string crowdChantAlias = ""
+	string crowdEndMatchChantAlias = ""
+	string activeVOLine = ""
+	float  quietLoopSecondsToTimeout = 0
+	float  activeLoopSecondsToTimeout = 0
+	float  cheerLoopSecondsToTimeout = 0
+	float  oneShotDelayBetweenReuse = 0
+	float  ovationLoopSecondsToTimeout = 0
+	entity speakerEnt
+	float  distanceSqr
+}
+
+
+global enum eDialogueFlags
+{
+	SHORT_DELAY_AFTER_PLAYING = (1 << 0),
+	SURVIVAL_HOST_ALL_SPEAKERS = (1 << 1),
+	NO_ON_FINISHED_NOTIFY = (1 << 2),
+	MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION = (1 << 3),
+	MUTE_PLAYER_PING_CHIMES_FOR_DURATION = (1 << 4),
+	BLOCK_LOWER_PRIORITY_QUEUE_ITEMS = (1 << 5),
+	STOMP_CON_ALT = (1 << 6),
+	AMBIENT_DIALOGUE = (1 << 7),
+	USE_CUSTOM_QUEUE = (1 << 8 ),
+	USE_CUSTOM_SPEAKERS = ( 1 << 9 ),
+	BLOCK_ANNOUNCER = ( 1 << 10 ),
+	EMIT_FROM_FIXED_POSITION = ( 1 << 11 ),
+}
+
 
 #if CLIENT
 struct CachedCharacterData
@@ -206,19 +201,20 @@ struct CachedCharacterData
 	string longName
 	asset  portraitImage
 }
-#endif //CLIENT
+#endif // CLIENT
 
 
 struct
 {
-	var                   currentDialoguePlayingHandle
-	string                currentDialoguePlayingName
 	array<DialogueData>               registeredDialog
 	table<string, DialogueEntryGroup> nameToGroupMap
 
 	bool                  dialoguePlaying = false
+
 	QueueData[ NUM_TOTAL_DIALOGUE_QUEUES ] allQueues
 
+	var                   currentDialoguePlayingHandle
+	string                currentDialoguePlayingName
 	table<string, asset>  callerIDs
 	table<int, bool>      waitingOnDialogue
 	bool                  useVDU = false
@@ -234,31 +230,41 @@ struct
 		// solo_flav means that only some legends have a "solo" perspective, specified in the .csv
 		// radio means forced radio processing
 		array<string> validPerspectives = ["", "solo", "solo_flav", "radio"]
-	#endif // DEVELOPER
+
+
+	#endif //DEVELOPER
 	array<string> registeredDataTableNames
 
 	#if CLIENT
-		var                                devTextDialogueRUI
-		int                                videoChannel = -1
-		array<EnvironmentSpeaker>          environmentSpeakers
-		array<entity>                      customSpeakers1
-		table<string, CachedCharacterData> voiceToCachedCharDataMap
+		var                                                   devTextDialogueRUI
+		int                                                   videoChannel = -1
+		array< EnvironmentSpeaker >[ NUM_TOTAL_DIALOGUE_QUEUES ]		  allSpeakersList
+		table<string, CachedCharacterData>                    voiceToCachedCharDataMap
 		array<void functionref( string abortedDialogueLine )> abortDialogueCallbacks
 
 		float                                                 dialogueChangeTime = -1
 		array<void functionref()>                             dialoguePopupCreatedCallbacks
 		array<void functionref()>                             dialoguePopupDestroyedCallbacks
 		bool blockAnnouncer = false
-		array< EnvironmentSpeaker >[ NUM_TOTAL_DIALOGUE_QUEUES ]		  allSpeakersList
 	#endif //CLIENT
 } file
 
 
-/////////////////////////
-/////////////////////////
-//// Initialiszation ////
-/////////////////////////
-/////////////////////////
+// Asset identifiers
+global const string ENVIRONMENT_SPEAKER_SCRIPT_NAME = "info_survival_speaker_location"
+
+
+// Play priorities
+global const PRIORITY_NO_QUEUE = 0        // Plays the dialogue right away, avoiding the queue.
+global const PRIORITY_HIGH = 20            // Enters the queue with the highest of priorities, only other items in queue of same priority will play first
+global const PRIORITY_NORMAL = 10
+global const PRIORITY_LOW = 5
+global const PRIORITY_LOWEST = 1
+
+
+global const string TEMP_VOICE = "playerM1"
+
+
 void function SPDialogueInit()
 {
 	// set up queue data
@@ -269,21 +275,22 @@ void function SPDialogueInit()
 		#endif
 	}
 
-	#if SERVER
-	RegisterSignal( "DialogueFinishedForID" )
-	RegisterSignal( "AllDialogueFinished" )
-	RegisterSignal( "fireSalvo" )
-	AddClientCommandCallback( "DialogueFinishedForID", ClientCommand_DialogueFinishedForID )
-	AddClientCommandCallback( "AllDialogueFinished", ClientCommand_AllDialogueFinished )
+	Remote_RegisterServerFunction( "ClientCallback_DialogueFinishedForID", "int", INT_MIN, INT_MAX )
+	Remote_RegisterServerFunction( "ClientCallback_AllDialogueFinished" )
 
-	#if DEVELOPER
-		// When a character is loaded from bakery, add their currently registered voice value
-		// to the list of voices to be verified by VerifyExistenceOfNongenericAliases
-		AddCallback_OnItemFlavorRegistered( eItemType.character, OnCharacterRegistered )
-	#endif //DEVELOPER
-#endif //SERVER
+	#if SERVER
+		RegisterSignal( "DialogueFinishedForID" )
+		RegisterSignal( "AllDialogueFinished" )
+		RegisterSignal( "fireSalvo" )
+	#endif //SERVER
 
 	AddCallback_OnItemFlavorRegistered( eItemType.character, OnCharacterRegistered )
+
+                   
+           
+                                                                                        
+       
+                             
 
 	#if CLIENT
 		AddCallback_OnClientScriptInit( ClientScriptInitForPlayer )
@@ -304,9 +311,11 @@ void function SPDialogueInit()
 			thread QueueThink( queueData )
 		}
 
-		foreach( string eventName, bool unused in FORBIDDEN_DIALOGUE_EVENT_NAMES )
+		foreach ( string eventName, bool unused in FORBIDDEN_DIALOGUE_EVENT_NAMES )
 			printf( "Dialogue sound event '%s' has been disabled in script.", eventName )
-	#endif //
+
+		SetupManualCharacterDatas()
+	#endif //CLIENT
 }
 
 
@@ -314,20 +323,29 @@ const string FUNCNAME_PlayDialogueOnEntity = "SCB_PlayDialogueOnEntity"
 const string FUNCNAME_PlayDialogueAtPosition = "SCB_PlayDialogueAtPosition"
 const string FUNCNAME_PlayDialogueOnEnvironmentSpeakers = "SCB_PlayDialogueOnEnvironmentSpeakers"
 const string FUNCNAME_PlayDialogueOnEnvironmentSpeakersNoResponse = "SCB_PlayDialogueOnEnvironmentSpeakersNoResponse"
-const string FUNCNAME_PlayDialogueOnCustomSpeakers = "SCB_PlayDialogueOnCustomSpeakers"
 const string FUNCNAME_AbortCurrentDialogue = "SCB_AbortCurrentDialogue"
+const string FUNCNAME_AbortAllMainQueuedAndCurrentDialogue = "SCB_AbortAllMainQueuedAndCurrentDialogue"
+
+const string FUNCNAME_AbortAllCustomSpeakersQueuedAndCurrentDialogue = "SCB_AbortAllCustomSpeakersQueuedAndCurrentDialogue"
+const string FUNCNAME_PlayDialogueOnCustomSpeakers = "SCB_PlayDialogueOnCustomSpeakers"
 
 
 void function Dialog_RegisterNetworking()
 {
-	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEntity, "int", -1, INT_MAX, "int", INT_MIN, INT_MAX, "entity" )
-	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueAtPosition, "int", -1, INT_MAX, "int", INT_MIN, INT_MAX, "vector", -MAX_WORLD_COORD, MAX_WORLD_COORD, 32 )
-	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEnvironmentSpeakers, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, INT_MAX, "entity", "int", -1, NUM_TOTAL_DIALOGUE_QUEUES )
-	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEnvironmentSpeakersNoResponse, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, INT_MAX, "int", -1, NUM_TOTAL_DIALOGUE_QUEUES )
-	ScriptRemote_RegisterClientFunction( FUNCNAME_PlayDialogueOnCustomSpeakers, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, NUM_CUSTOM_QUEUES )
-	//ScriptRemote_RegisterClientFunction( FUNCNAME_AbortCurrentDialogue ) //(mk): moved to byRef
-}
+	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEntity, "int", -1, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", 0, INVALID_SOUND_SELECTOR )
+	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueAtPosition, "int", -1, INT_MAX, "int", INT_MIN, INT_MAX, "vector", -MAX_WORLD_COORD, MAX_WORLD_COORD, 32 )
+	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEnvironmentSpeakers, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, INT_MAX, "entity", "int", -1, NUM_TOTAL_DIALOGUE_QUEUES )
+	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueOnEnvironmentSpeakersNoResponse, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, INT_MAX, "int", -1, NUM_TOTAL_DIALOGUE_QUEUES )
+	Remote_RegisterClientFunction( FUNCNAME_AbortCurrentDialogue )
+	Remote_RegisterClientFunction( FUNCNAME_AbortAllMainQueuedAndCurrentDialogue )
 
+	Remote_RegisterClientFunction( FUNCNAME_PlayDialogueOnCustomSpeakers, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", -1, NUM_CUSTOM_QUEUES )
+	Remote_RegisterClientFunction( FUNCNAME_AbortAllCustomSpeakersQueuedAndCurrentDialogue, "int", -1, NUM_CUSTOM_QUEUES )
+
+                   
+                                                                                   
+                             
+}
 
 DialogueData function GetDataForAliasId( int index )
 {
@@ -335,16 +353,22 @@ DialogueData function GetDataForAliasId( int index )
 }
 
 
-#if SERVER && DEVELOPER
-void function OnCharacterRegistered( ItemFlavor flavor )
+#if SERVER
+int function GetNextAliasIdForName( string dialogueName )
 {
-	var block    = GetSettingsBlockForAsset( CharacterClass_GetSetFile( flavor ) )
-	string voice = GetSettingsBlockString( block, "voice" )
+	if ( !(dialogueName in file.nameToGroupMap) )
+		return -1
 
-	if ( !file.validVoices.contains( voice ) )
-		file.validVoices.append( voice )
+	DialogueEntryGroup group = file.nameToGroupMap[dialogueName]
+
+	int aliasCount = group.aliasIds.len()
+	if ( Shuffle_GetCount( group.shuffleData ) != aliasCount )
+		Shuffle_Init( group.shuffleData, aliasCount )
+
+	int index = Shuffle_GetNextIndex( group.shuffleData )
+	return group.aliasIds[index]
 }
-#endif //SERVER && DEVELOPER
+#endif // SERVER
 
 
 #if CLIENT
@@ -355,9 +379,36 @@ int function GetAnyAliasIdForName( string dialogueName )
 	DialogueEntryGroup group = file.nameToGroupMap[dialogueName]
 	return group.aliasIds.getrandom()
 }
-#endif //
 
-#if CLIENT || !DEVELOPER
+void function SetupManualCharacterDatas()
+{
+	// Shadow Revenant
+	{
+		CachedCharacterData ccd
+		ccd.longName = "#CHARACTER_CCD_NAME_SHADOW_REVENANT"
+		ccd.portraitImage = $"rui/menu/character_select/lockstep/locked_portraits/locked_portrait_revenant_shadow"
+		file.voiceToCachedCharDataMap["revenant_shadow"] <- ccd
+	}
+}
+
+float function GetSoundDurationForName ( string dialogueName )
+{
+	int aliasID = GetAnyAliasIdForName( dialogueName )
+	if ( aliasID == -1 )
+		return -1
+
+	DialogueData data = GetDataForAliasId( aliasID )
+	string milesAlias = data.alias
+	entity player = GetLocalClientPlayer()
+	if ( IsValid( player ) )
+	{
+		milesAlias = SpecifyAliasFromGeneric( data, milesAlias, player )
+	}
+
+	return GetSoundDuration ( milesAlias )
+}
+#endif // CLIENT
+
 void function OnCharacterRegistered( ItemFlavor flavor )
 {
 	var block    = GetSettingsBlockForAsset( CharacterClass_GetSetFile( flavor ) )
@@ -381,22 +432,27 @@ void function OnCharacterRegistered( ItemFlavor flavor )
 			ccd.portraitImage = CharacterClass_GetCharacterLockedPortrait( flavor )
 			file.voiceToCachedCharDataMap[voiceCCD] <- ccd
 		}
-	#endif    
+	#endif // CLIENT
+}
+
+
+array<string> function GetValidVoices()
+{
+	return file.validVoices
+}
+
+#if CLIENT
+void function EnvironmentSpeakerListInit()
+{
+	array<entity> speakerEnts = GetEntArrayByScriptName( ENVIRONMENT_SPEAKER_SCRIPT_NAME )
+
+	foreach ( speaker in speakerEnts )
+	{
+		RegisterEnvironmentSpeaker( speaker )
+	}
 }
 #endif
 
-
-void function EnvironmentSpeakerListInit()
-{
-	#if CLIENT
-		array<entity> speakerEnts = GetEntArrayByScriptName( ENVIRONMENT_SPEAKER_SCRIPT_NAME )
-
-		foreach( speaker in speakerEnts )
-		{
-			RegisterEnvironmentSpeaker( speaker )
-		}
-	#endif //
-}
 #if SERVER
 int function RequestCustomDialogueQueueIndex()
 {
@@ -413,27 +469,44 @@ int function RequestCustomDialogueQueueIndex()
 #endif
 
 #if CLIENT
-void function CustomSpeakers1ListInit( array<entity> customSpeakers1 )
+// You need to know the queue as the client. Request a queue on server, send that info to your client.
+//void function RegisterCustomDialogueQueueSpeakerEntities( int queueIdx, array<entity> customSpeakers )
+void function RegisterCustomDialogueQueueSpeakerEntities( int queueIdx, array<entity> customSpeakers )
 {
-	if ( file.customSpeakers1.len() > 0 )
-		printt( "Dialogue system custom speakers 1 already are set up, they are now being overwritten." )
-
-	file.customSpeakers1 = customSpeakers1
+	Assert( queueIdx < NUM_CUSTOM_QUEUES, "Tried to register entities for custom speaker with invalid queueIdx!" )
+	foreach ( entity speaker in customSpeakers )
+	{
+		RegisterSpeaker_Internal( speaker, queueIdx )
+	}
 }
-#endif //
+#endif
 
+#if CLIENT
+EnvironmentSpeaker function RegisterEnvironmentSpeaker( entity speakerEnt )
+{
+	return RegisterSpeaker_Internal( speakerEnt, QUEUE_MAIN )
+}
+#endif
 
-// #if CLIENT
-// EnvironmentSpeaker function RegisterEnvironmentSpeaker( entity speakerEnt )
-// {
-	// EnvironmentSpeaker speaker
-	// speaker.origin = speakerEnt.GetOrigin()
-	// speaker.speakerEnt = speakerEnt
+#if CLIENT
+EnvironmentSpeaker function RegisterSpeaker_Internal( entity speakerEnt, int queue )
+{
+	EnvironmentSpeaker speaker
+	speaker.origin = speakerEnt.GetOrigin()
+	speaker.speakerEnt = speakerEnt
 
-	// file.environmentSpeakers.append( speaker )
-	// return speaker
-// }
-// #endif
+	file.allSpeakersList[ queue ].append( speaker )
+	return speaker
+}
+#endif
+
+#if CLIENT
+void function DeregisterEnvironmentSpeaker( EnvironmentSpeaker speaker )
+{
+	file.allSpeakersList[ QUEUE_MAIN ].fastremovebyvalue( speaker )
+}
+#endif
+
 
 #if CLIENT
 void function AddCallback_OnAbortDialogue( void functionref( string abortedDialogueLine ) cb )
@@ -455,13 +528,6 @@ void function AddCallback_OnDialoguePopupDestroyed( void functionref() cb )
 }
 #endif
 
-// #if CLIENT
-// void function DeregisterEnvironmentSpeaker( EnvironmentSpeaker speaker )
-// {
-	// file.environmentSpeakers.fastremovebyvalue( speaker )
-// }
-// #endif
-
 
 void function RegisterCSVDialogue( asset dt )
 {
@@ -478,72 +544,75 @@ void function RegisterCSVDialogue( asset dt )
 	int columnRadioIntercept      = GetDataTableColumnByName( dataTable, "radioIntercept" )
 	int columnVDUVideo            = GetDataTableColumnByName( dataTable, "vduVideo" )
 	int columnDevDialogueText     = GetDataTableColumnByName( dataTable, "dialogue" )
+	int columnDevTextDuration     = GetDataTableColumnByName( dataTable, "textDuration" )
 	int optionalColumnPerspective = GetDataTableColumnByName( dataTable, "perspective" )
 	int optionalCanPlayIfSolo     = GetDataTableColumnByName( dataTable, "canPlayIfSolo" )
+	int optionalSoloLegendFlavors = GetDataTableColumnByName( dataTable, "legendFlavors" )
 
-	int numRows = GetDatatableRowCount( dataTable )
-	for ( int i = 0; i < numRows; i++ )
+	int numRows = GetDataTableRowCount( dataTable )
+	for ( int rowIdx = 0; rowIdx < numRows; rowIdx++ )
 	{
-		string name = GetDataTableString( dataTable, i, columnName )
+		string name = GetDataTableString( dataTable, rowIdx, columnName )
 
-		//
+		// Allow empty rows
 		if ( name == "" )
 			continue
 
-		//
+		// Allow comments
 		if ( name.slice( 0, 2 ) == "//" )
 			continue
 
-		string alias = GetDataTableString( dataTable, i, columnAlias )
-		int priority = GetDataTableInt( dataTable, i, columnPriority )
+		string alias = GetDataTableString( dataTable, rowIdx, columnAlias )
+		int priority = GetDataTableInt( dataTable, rowIdx, columnPriority )
 		Assert( priority >= 0, "Dialogue alias " + alias + " has invalid priority in the dialogue csv. Must be >= 0" )
 
-		string extraPerspective = ((optionalColumnPerspective > -1) ? GetDataTableString( dataTable, i, optionalColumnPerspective ) : "")
-
+		string extraPerspective = ((optionalColumnPerspective > -1) ? GetDataTableString( dataTable, rowIdx, optionalColumnPerspective ) : "")
 		#if SERVER && DEVELOPER
-		Assert( file.validPerspectives.contains( extraPerspective ), "Dialogue name " + name + " has a perspective field, but an invalid perspective. Check the perspective column in the CSV against file.validPerspectives in sh_sp_dialogue.gnut" )
+			Assert( file.validPerspectives.contains( extraPerspective ), "Dialogue name '" + name + "' has a perspective field, but an invalid perspective. Check the perspective column in the CSV against file.validPerspectives in sh_sp_dialogue.gnut" )
 		#endif
 
-		bool canPlayIfSolo      = ((optionalCanPlayIfSolo > -1) ? GetDataTableBool( dataTable, i, optionalCanPlayIfSolo ) : true)
-		string radioDisplayName = GetDataTableString( dataTable, i, columnRadioDisplayName )
-		string voice            = ((columnVoice > -1) ? GetDataTableString( dataTable, i, columnVoice ).tolower() : "")
-		bool radioIntercept     = ((columnRadioIntercept > -1) ? GetDataTableBool( dataTable, i, columnRadioIntercept ) : false)
-		asset vduVideo          = ((columnVDUVideo > -1) ? GetDataTableAsset( dataTable, i, columnVDUVideo ) : $"")
-		string DEV_DialogueText = GetDataTableString( dataTable, i, columnDevDialogueText )
+		bool canPlayIfSolo       = ((optionalCanPlayIfSolo > -1) ? GetDataTableBool( dataTable, rowIdx, optionalCanPlayIfSolo ) : true)
+		string radioDisplayName  = ((columnRadioDisplayName > -1) ? GetDataTableString( dataTable, rowIdx, columnRadioDisplayName ) : "")
+		string voice             = ((columnVoice > -1) ? GetDataTableString( dataTable, rowIdx, columnVoice ).tolower() : "")
+		bool radioIntercept      = ((columnRadioIntercept > -1) ? GetDataTableBool( dataTable, rowIdx, columnRadioIntercept ) : false)
+		asset vduVideo           = ((columnVDUVideo > -1) ? GetDataTableAsset( dataTable, rowIdx, columnVDUVideo ) : $"")
+		string dialogueText      = ((columnDevDialogueText > -1) ? GetDataTableString( dataTable, rowIdx, columnDevDialogueText ) : "")
+		float dialogueTextDur    = ((columnDevTextDuration > -1) ? GetDataTableFloat( dataTable, rowIdx, columnDevTextDuration ) : 0.0)
+		string soloLegendFlavors = ((optionalSoloLegendFlavors > -1) ? GetDataTableString( dataTable, rowIdx, optionalSoloLegendFlavors ) : "")
 
-		if ( (voice.len() > 0) && (!file.validVoices.contains( voice )) )
+		if ( (voice.len() > 0) && (!file.validVoices.contains( voice )) && (extraPerspective != "radio") )
 			Warning( "Dialogue '%s' in source '%s' specifies unknown voice '%s'.", name, string( dt ), voice )
 
-		if ( (voice.len() > 0) && (radioDisplayName.len() > 0) )
-		{
-			Warning( "Dialogue '%s' has both voice '%s' and radioDisplay '%s'. Will only use voice.", name, voice, radioDisplayName )
-			radioDisplayName = ""
-		}
-
-		RegisterDialogueLine( name, alias, priority, radioDisplayName, voice, radioIntercept, vduVideo, DEV_DialogueText, extraPerspective, canPlayIfSolo, dt )
+		RegisterDialogueLine( name, alias, priority, radioDisplayName, voice, radioIntercept, vduVideo, dialogueText, dialogueTextDur, extraPerspective, canPlayIfSolo, dt, soloLegendFlavors )
 	}
+	#if CLIENT
+
+	#endif
 }
 
 
 string s_prevNameRegistered
-void function RegisterDialogueLine( string name, string alias, int priority, string radioDisplayName, string voice, bool radioIntercept, asset vduVideo, string DEV_DialogueText, string extraPerspective, bool canPlayIfSolo, asset dt )
+void function RegisterDialogueLine( string name, string alias, int priority, string radioDisplayName, string voice, bool radioIntercept, asset vduVideo, string dialogueText, float dialogueTextDuration, string extraPerspective, bool canPlayIfSolo, asset dt, string soloLegendFlavors )
 {
 	Assert( name != "", "Can't register a line of dialogue with no name" )
 	Assert( priority >= 0, "Can't register a line of dialogue with a negative priority" )
-	Assert( alias != "" || DEV_DialogueText != "", "Dialogue alias " + name + " doesn't have a miles event listed or dev text. You need one or the other." )
+	Assert( alias != "" || dialogueText != "", "Dialogue alias " + name + " doesn't have a miles event listed or dev text. You need one or the other." )
 
 	if ( vduVideo != $"" )
 		Assert( radioDisplayName != "", "Dialogue alias " + name + " specifies a vdu bink without setting radioDisplayName as well." )
 
-// #if SERVER && DEVELOPER
-	// if ( alias != "" && !DoesAliasExist( alias ) )
-	// {
-		// if ( alias.find( "%" ) >= 0 )
-			// VerifyExistenceOfNongenericAliases( alias, extraPerspective )
-		// else
-			// Warning( "Error: Dialogue '" + name + "': alias '" + alias + "' can't be registered because the alias does not exist" )
-	// }
-// #endif // SERVER && DEVELOPER
+	#if SERVER && DEVELOPER
+		if ( alias != "" && !DoesAliasExist( alias ) )
+		{
+			if ( alias.find( "%" ) >= 0 )
+				VerifyExistenceOfNongenericAliases( alias, extraPerspective, soloLegendFlavors, dt )
+			else
+				Warning( "Error: Dialogue '" + name + "': alias '" + alias + "' can't be registered by " + string( dt ) + " because the alias does not exist" )
+		}
+	#endif // SERVER && DEVELOPER
+
+	if ( extraPerspective == "solo_flav" )
+		extraPerspective = "solo"
 
 	DialogueData data
 	data.name = name
@@ -555,7 +624,8 @@ void function RegisterDialogueLine( string name, string alias, int priority, str
 	data.voice = voice
 	data.radioIntercept = radioIntercept
 	data.vduVideo = vduVideo
-	data.DEV_DialogueText = DEV_DialogueText
+	data.dialogueText = dialogueText
+	data.dialogueTextDuration = dialogueTextDuration
 
 	int aliasId = file.registeredDialog.len()
 	file.registeredDialog.append( data )
@@ -575,157 +645,139 @@ void function RegisterDialogueLine( string name, string alias, int priority, str
 	data.group = group
 	group.aliasIds.append( aliasId )
 
-	// printt( "DIALOGUE", name )
-
 	s_prevNameRegistered = name
 }
 
+
 #if SERVER && DEVELOPER
-void function VerifyExistenceOfNongenericAliases( string alias, string extraPerspective )
+void function VerifyExistenceOfNongenericAliases( string alias, string extraPerspective, string soloLegendFlavors, asset dt )
 {
 	array<string> specifiedPerspectiveAliases = []
+	bool soloFlavFound                        = false
 
 	if ( alias.find( "%perspective%" ) >= 0 )
 	{
-		specifiedPerspectiveAliases.append( StringReplace( alias, "%perspective%", "1p" ) )
-		specifiedPerspectiveAliases.append( StringReplace( alias, "%perspective%", "3p" ) )
+		specifiedPerspectiveAliases.append( replace( alias, "%perspective%", "1p" ) )
+		specifiedPerspectiveAliases.append( replace( alias, "%perspective%", "3p" ) )
+
+		if ( extraPerspective == "solo_flav" )
+		{
+			extraPerspective = "solo"
+			soloFlavFound = true
+		}
 
 		if ( extraPerspective != "" )
 		{
-			specifiedPerspectiveAliases.append( StringReplace( alias, "%perspective%", extraPerspective ) )
+			specifiedPerspectiveAliases.append( replace( alias, "%perspective%", extraPerspective ) )
 		}
-
 	}
 	else
 	{
 		specifiedPerspectiveAliases.append( alias )
 	}
 
-	foreach( string specifiedAlias in specifiedPerspectiveAliases )
+	array<string> specifiedSoloLegendFlavors = []
+	if ( soloLegendFlavors != "" )
+	{
+		specifiedSoloLegendFlavors = split( soloLegendFlavors, ";" )
+	}
+
+	foreach ( string specifiedAlias in specifiedPerspectiveAliases )
 	{
 		if ( specifiedAlias.find( "%voice%" ) >= 0 )
 		{
-			foreach ( string voice in file.validVoices )
+			if ( ShouldTryToReplaceMissingVoiceWithTempVoice() )
 			{
-				IssueWarningIfAliasMissing( StringReplace( specifiedAlias, "%voice%", voice ) )
+				IssueWarningIfAliasMissing( replace( specifiedAlias, "%voice%", TEMP_VOICE ), dt )
+			}
+			else
+			{
+				bool isCheckingSoloFlavPerspective = (soloFlavFound && specifiedAlias.find( "solo" ) != -1)
+				foreach ( string voice in file.validVoices )
+				{
+					if ( isCheckingSoloFlavPerspective && !specifiedSoloLegendFlavors.contains( voice ) )
+						continue
+
+					IssueWarningIfAliasMissing( replace( specifiedAlias, "%voice%", voice ), dt )
+				}
 			}
 		}
 		else
 		{
-			IssueWarningIfAliasMissing( specifiedAlias )
+			IssueWarningIfAliasMissing( specifiedAlias, dt )
 		}
 	}
 }
 
-void function IssueWarningIfAliasMissing( string alias )
+
+void function IssueWarningIfAliasMissing( string alias, asset dt )
 {
-	if( !DoesAliasExist( alias ) )
-		Warning( "Error: Dialogue alias '" + alias + "' can't be registered because the alias does not exist. Most likely missing a Miles event." )
+	if ( !DoesAliasExist( alias ) )
+		Warning( "Error: Dialogue alias '" + alias + "' can't be registered by " + string( dt ) + " because the alias does not exist. Most likely missing a Miles event." )
 }
 #endif // SERVER && DEVELOPER
 
-int function GetLinePriority( int aliasID )
-{
-	if ( aliasID == -1 )
-		return -1
 
-	DialogueData data = file.registeredDialog[aliasID]
-	return data.priority
-}
-
-#if SERVER // TODO: This all needs to be fixed in the future!!!!
+#if SERVER
 void function PlayDialogueForAnimEvent( entity ent, string dialogueName )
 {
-	if ( !( dialogueName in file.nameToGroupMap ) )
-	{
-		printt(  ( "Dialogue line " + dialogueName + " is not registered" ) )
-		return
-	}
-
-	DialogueEntryGroup group = file.nameToGroupMap[dialogueName]
-	int aliasID = group.aliasIds.getrandom()
-	DialogueData data = file.registeredDialog[aliasID]
-	Assert( data.priority == PRIORITY_NO_QUEUE, ("Dialogue " + dialogueName + " triggered via qc must use PRIORITY_NO_QUEUE") )
 	thread PlayDialogue( dialogueName, ent )
 }
 
-void function PlayDialogue( string name, entity speaker, float delay = 0, int dialogueFlags = 0 )
+bool function IsValidDialogueAlias( string name )
 {
+	int aliasID = GetNextAliasIdForName( name )
+	if ( aliasID < 0 )
+		return false
+
+	return true
+}
+
+void function PlayDialogue( string name, entity speaker, bool requireNoQueue = false )
+{
+	int aliasID = GetNextAliasIdForName( name )
+	if ( aliasID < 0 )
+	{
+		Warning( "%s() - Dialogue line '%s' is not registered", name )
+		return
+	}
+
+	if ( requireNoQueue )
+	{
+		Assert( GetDataForAliasId( aliasID ).priority == PRIORITY_NO_QUEUE )
+	}
+
 	array<entity> players = GetPlayerArray_Alive()
 	for ( int i = players.len() - 1; i >= 0; i-- )
 	{
-		if ( i > 0 )
-			thread PlayDialogueForPlayer( name, players[i], speaker, delay, dialogueFlags )
+		if ( i == 0 )
+			waitthread PlayAliasIdForPlayer( aliasID, players[i], speaker )
 		else
-			waitthread PlayDialogueForPlayer( name, players[i], speaker, delay, dialogueFlags )
+			thread PlayAliasIdForPlayer( aliasID, players[i], speaker )
 	}
 }
 
-void function PlayDialogue_AllConnectedPlayers( string name, entity speaker, float delay = 0, int dialogueFlags = 0 )
-{
-	array<entity> players = GetPlayerArray()
-	for ( int i = players.len() - 1; i >= 0; i-- )
-	{
-		if ( i > 0 )
-			thread PlayDialogueForPlayer( name, players[i], speaker, delay, dialogueFlags )
-		else
-			waitthread PlayDialogueForPlayer( name, players[i], speaker, delay, dialogueFlags )
-	}
-}
-
-void function PlayDialogue_NoWait( string name, entity speaker )
-{
-	array<entity> players = GetPlayerArray_Alive()
-	for ( int i = players.len() - 1; i >= 0; i-- )
-		PlayDialogueForPlayer_NoWait( name, players[i], speaker )
-}
-
-void function PlayBTDialogue( string name, float delay = 0, int dialogueFlags = 0 )
-{
-	/*array<entity> players = GetPlayerArray_Alive()
-	for ( int i = players.len() - 1; i >= 0; i-- )
-	{
-		entity speaker
-		entity petTitan = players[i].GetPetTitan()
-		if ( IsValid( petTitan ) )
-			speaker = GetBuddyTitanDialogueEnt( petTitan )
-		else
-			speaker = GetBuddyTitanDialogueEnt( players[i] )
-
-		// Catch issues like BT is not created yet so the dialogue ent doesn't exist yet. In this case we just use the player for sound position, which gives us the same result anyhow.
-		if ( !IsValid( speaker ) )
-			speaker = players[i]
-
-		if ( i > 0 )
-			thread PlayDialogueForPlayer( name, players[i], speaker, delay, dialogueFlags )
-		else
-			waitthread PlayDialogueForPlayer( name, players[i], speaker, delay, dialogueFlags )
-	}*/
-}
-
-void function PlayGabbyDialogue( string name, entity speaker, string anim = "face_generic_talker_flat" )
-{
-	speaker.EndSignal( "OnDestroy" )
-
-	//for the next game we shouldn't have variants of dialogue and functionality should be done through a CSV - Chad
-	speaker.Anim_ScriptedAddGestureSequence( anim, false )
-	PlayDialogue( name, speaker )
-	speaker.Anim_ScriptedRemoveAllGestures()
-}
-
-void function StopDialogue()
-{
-	array<entity> players = GetPlayerArray_Alive()
-	foreach ( player in players )
-		Remote_CallFunction_ByRef( player, "SCB_AbortCurrentDialogue" )
-		//Remote_CallFunction_NonReplay( player, "SCB_AbortCurrentDialogue" )
-}
 
 void function StopDialogueForPlayer( entity player )
 {
-	//Remote_CallFunction_NonReplay( player, "SCB_AbortCurrentDialogue" )
-	Remote_CallFunction_ByRef( player, "SCB_AbortCurrentDialogue" )
+	Remote_CallFunction_NonReplay( player, FUNCNAME_AbortCurrentDialogue )
 }
+
+
+void function StopAllQueuedAndCurrentDialogueForPlayer( entity player, int dialogueFlags, int customQueueIdx = -1 )
+{
+	if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.USE_CUSTOM_QUEUE ) )
+	{
+		// Idx -1 is invalid, idx 0 is main
+		Assert( customQueueIdx > QUEUE_MAIN, "Trying to stop all queued and current dialogue for invalid queue! " + customQueueIdx )
+		Remote_CallFunction_NonReplay( player, FUNCNAME_AbortAllCustomSpeakersQueuedAndCurrentDialogue, customQueueIdx )
+	}
+	else
+	{
+		Remote_CallFunction_NonReplay( player, FUNCNAME_AbortAllMainQueuedAndCurrentDialogue )
+	}
+}
+
 
 void function PlayDialogue_Internal( int aliasID, int dialogueFlags, entity player, entity speaker, int responseID = -1, entity responseSpeaker = null, int customQueueIdx = -1 )
 {
@@ -736,14 +788,14 @@ void function PlayDialogue_Internal( int aliasID, int dialogueFlags, entity play
 		Assert( true, data.name)
 	}
 
-	if ( dialogueFlags & eDialogueFlags.SURVIVAL_HOST_ALL_SPEAKERS )
+	if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.SURVIVAL_HOST_ALL_SPEAKERS ) )
 	{
 		if ( IsValid( responseSpeaker ) )
 			Remote_CallFunction_NonReplay( player, FUNCNAME_PlayDialogueOnEnvironmentSpeakers, aliasID, NUM_NEARBY_SPEAKERS_TO_PLAY_FROM, dialogueFlags, responseID, responseSpeaker, customQueueIdx )
 		else
 			Remote_CallFunction_NonReplay( player, FUNCNAME_PlayDialogueOnEnvironmentSpeakersNoResponse, aliasID, NUM_NEARBY_SPEAKERS_TO_PLAY_FROM, dialogueFlags, responseID, customQueueIdx )
 	}
-	else if ( dialogueFlags & eDialogueFlags.USE_CUSTOM_SPEAKERS )
+	else if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.USE_CUSTOM_SPEAKERS ) )
 	{
 		// Idx -1 is invalid, idx 0 is main
 		Assert( customQueueIdx < NUM_CUSTOM_QUEUES, "Custom speakers requested with invalid index! " + customQueueIdx )
@@ -754,25 +806,25 @@ void function PlayDialogue_Internal( int aliasID, int dialogueFlags, entity play
 		string milesAlias = GetDataForAliasId( aliasID ).alias
 		string voice = GetPlayerVoice( speaker )
 		if ( milesAlias.find( "%voice%" ) >= 0 )
-			milesAlias = StringReplace( milesAlias, "%voice%", voice )
+			milesAlias = replace( milesAlias, "%voice%", voice )
 
-		// #if DEVELOPER
-			// if ( ShouldTryToReplaceMissingVoiceWithTempVoice() )
-			// {
-				// if ( !DoesAliasExist( milesAlias ) )
-				// {
-					// if ( milesAlias.find( "%voice%" ) >= 0 )
-					// {
-						// milesAlias = StringReplace( milesAlias, "%voice%", TEMP_VOICE )
-					// }
-				// }
-			// }
-		// #endif // DEVELOPER
+		#if DEVELOPER
+			if ( ShouldTryToReplaceMissingVoiceWithTempVoice() )
+			{
+				if ( !DoesAliasExist( milesAlias ) )
+				{
+					if ( milesAlias.find( "%voice%" ) >= 0 )
+					{
+						milesAlias = replace( milesAlias, "%voice%", TEMP_VOICE )
+					}
+				}
+			}
+		#endif // DEVELOPER
 
 		if ( milesAlias.find( "%perspective%" ) >= 0 )
-			milesAlias = StringReplace( milesAlias, "%perspective%", "3p" )
+			milesAlias = replace( milesAlias, "%perspective%", "3p" )
 
-		Remote_CallFunction_NonReplay( player, FUNCNAME_PlayDialogueOnEntity, aliasID, dialogueFlags, speaker ) //EvaluateSoundSelector( milesAlias )
+		Remote_CallFunction_NonReplay( player, FUNCNAME_PlayDialogueOnEntity, aliasID, dialogueFlags, speaker.GetEncodedEHandle(), EvaluateSoundSelector( milesAlias ) )
 	}
 	else
 	{
@@ -780,6 +832,7 @@ void function PlayDialogue_Internal( int aliasID, int dialogueFlags, entity play
 		Remote_CallFunction_NonReplay( player, FUNCNAME_PlayDialogueAtPosition, aliasID, dialogueFlags, pos )
 	}
 }
+
 
 void function PlayDialogueForPlayer_NoWait( string name, entity player, entity speaker, int dialogueFlags = 0, int customQueueIdx = -1 )
 {
@@ -792,12 +845,13 @@ void function PlayDialogueForPlayer_NoWait( string name, entity player, entity s
 	int aliasID = GetNextAliasIdForName( name )
 	if ( aliasID < 0 )
 	{
-		printt( "Dialogue line " + name + " is not registered" )
+		Warning( "Dialogue line " + name + " is not registered" )
 		return
 	}
 
 	PlayDialogueIdForPlayer_NoWait( aliasID, player, speaker, dialogueFlags, customQueueIdx )
 }
+
 
 void function PlayDialogueIdForPlayer_NoWait( int aliasId, entity player, entity speaker, int dialogueFlags = 0, int customQueueIdx = -1 )
 {
@@ -806,38 +860,58 @@ void function PlayDialogueIdForPlayer_NoWait( int aliasId, entity player, entity
 	PlayDialogue_Internal( aliasId, dialogueFlags | eDialogueFlags.NO_ON_FINISHED_NOTIFY, player, speaker )
 }
 
-void function PlayRadioDialogueTo_Internal( string alias, array<entity> players )
-{
-	/*int dialogueFlags = 0
 
-	int aliasID = file.registeredDialog.find( alias )
+void function PlayRadioDialogueTo_Internal( string alias, array<entity> players, int dialogueFlags = 0 )
+{
+	int aliasID = GetNextAliasIdForName( alias )
 	Assert( aliasID >= 0, "Given dialogue alias not registered." )
-	foreach( entity player in players )
+	foreach ( entity player in players )
 	{
 		if ( !IsValid( player ) )
 			continue
 		PlayDialogue_Internal( aliasID, (dialogueFlags | eDialogueFlags.NO_ON_FINISHED_NOTIFY | eDialogueFlags.SHORT_DELAY_AFTER_PLAYING), player, svGlobal.worldspawn )
-	}*/
+	}
 }
 
-void function PlayRadioDialogueToAll( string alias )
+
+void function PlayRadioDialogueIDToPlayers( int aliasID, array<entity> players, int dialogueFlags = 0 )
+{
+	foreach ( entity player in players )
+	{
+		if ( !IsValid( player ) )
+			continue
+		PlayDialogue_Internal( aliasID, (dialogueFlags | eDialogueFlags.NO_ON_FINISHED_NOTIFY | eDialogueFlags.SHORT_DELAY_AFTER_PLAYING), player, svGlobal.worldspawn )
+	}
+}
+
+
+void function PlayRadioDialogueToAll( string alias, int dialogueFlags = 0 )
 {
 	array<entity> players = GetPlayerArray()
-	PlayRadioDialogueTo_Internal( alias, players )
+	PlayRadioDialogueTo_Internal( alias, players, dialogueFlags )
 }
 
-void function PlayRadioDialogueToTeam( string alias, int teamNum )
+
+void function PlayRadioDialogueToTeam( string alias, int teamNum, int dialogueFlags = 0 )
 {
 	array<entity> players = GetPlayerArrayOfTeam( teamNum )
-	PlayRadioDialogueTo_Internal( alias, players )
+	PlayRadioDialogueTo_Internal( alias, players, dialogueFlags )
 }
 
-void function PlayRadioDialogueToPlayer( string alias, entity player )
+
+void function PlayRadioDialogueToPlayer( string alias, entity player, int dialogueFlags = 0 )
 {
-	PlayRadioDialogueTo_Internal( alias, [player] )
+	PlayRadioDialogueTo_Internal( alias, [player], dialogueFlags )
 }
 
-void function PlayDialogueForPlayer_Retail( string name, entity player, entity speaker, float delay = 0, int dialogueFlags = 0, string responseName = "", entity responseSpeaker = null, int customQueueIdx = -1 )
+
+void function PlayRadioDialogueToPlayers( string alias, array<entity> players, int dialogueFlags = 0 )
+{
+	PlayRadioDialogueTo_Internal( alias, players, dialogueFlags )
+}
+
+
+void function PlayDialogueForPlayer( string name, entity player, entity speaker, float delay = 0, int dialogueFlags = 0, string responseName = "", entity responseSpeaker = null, int customQueueIdx = -1 )
 {
 	if ( !IsValid( player ) )
 		return
@@ -856,7 +930,7 @@ void function PlayDialogueForPlayer_Retail( string name, entity player, entity s
 	int aliasID = GetNextAliasIdForName( name )
 	if ( aliasID < 0 )
 	{
-		printt( "Dialogue line " + name + " is not registered" )
+		Warning( "Dialogue line " + name + " is not registered" )
 		return
 	}
 
@@ -866,7 +940,7 @@ void function PlayDialogueForPlayer_Retail( string name, entity player, entity s
 		responseID = GetNextAliasIdForName( responseName )
 		if ( responseID < 0 )
 		{
-			printt( "Dialogue line " + responseName + " is not registered" )
+			Warning( "Dialogue line " + responseName + " is not registered" )
 		}
 		else
 		{
@@ -878,6 +952,7 @@ void function PlayDialogueForPlayer_Retail( string name, entity player, entity s
 	PlayAliasIdForPlayer( aliasID, player, speaker, delay, dialogueFlags, responseID, responseSpeaker, customQueueIdx )
 }
 
+
 void function PlayAliasIdForPlayer( int aliasID, entity player, entity speaker, float delay = 0, int dialogueFlags = 0, int responseID = -1, entity responseSpeaker = null, int customQueueIdx = -1 )
 {
 	EndSignal( player, "OnDestroy" )
@@ -886,6 +961,9 @@ void function PlayAliasIdForPlayer( int aliasID, entity player, entity speaker, 
 
 	if ( delay > 0 )
 		wait delay
+
+	if ( !ShouldPlayDialogueIfSolo( GetDataForAliasId( aliasID ), speaker ) )
+		return
 
 	file.dialoguePlaying = true
 	file.lastLineRequestPriority = GetLinePriorityForAliasId( aliasID )
@@ -916,113 +994,64 @@ void function PlayAliasIdForPlayer( int aliasID, entity player, entity speaker, 
 	}
 }
 
-void function PlayDialogueForPlayer( string name, entity player, entity speaker, float delay = 0, int dialogueFlags = 0, string responseName = "", entity responseSpeaker = null )
+
+void function ClientCallback_DialogueFinishedForID( entity player, int aliasID )
 {
-	if ( !IsBattleChatterEnabled() )
-		return
-
-	if ( !IsValid( player ) )
-		return
-
-	if ( !IsValid( speaker )  && ( !( dialogueFlags & eDialogueFlags.SURVIVAL_HOST_ALL_SPEAKERS ) ) )
-		return
-
-	EndSignal( player, "OnDestroy" )
-
-	if ( !( dialogueFlags & eDialogueFlags.SURVIVAL_HOST_ALL_SPEAKERS ) )
-		EndSignal( speaker, "OnDestroy" )
-
-	if ( !( name in file.nameToGroupMap ) )
-	{
-		printt( "Dialogue line " + name + " is not registered" )
-		return
-	}
-
-	DialogueEntryGroup group = file.nameToGroupMap[name]
-	int aliasID = group.aliasIds.getrandom()
-
-	int responseID = -1
-	if ( responseName != "" )
-	{
-		if ( !( responseName in file.nameToGroupMap ) )
-		{
-			printt( "Dialogue line " + responseName + " is not registered" )
-		}
-		else
-		{
-			DialogueEntryGroup responseGroup = file.nameToGroupMap[responseName]
-			responseID = responseGroup.aliasIds.getrandom()
-
-			Assert( GetLinePriority( responseID ) == PRIORITY_NO_QUEUE, "Can only pass responseName as param if primary dialogue line has 0 priority. Response should be queued instead." )
-
-			if ( ! ShouldPlayDialogueIfSolo( file.registeredDialog[responseID], responseSpeaker ) )
-			{
-				responseID = -1
-			}
-		}
-	}
-
-	Assert( player.IsPlayer(), "Tried to play dialogue " + name + " to a non-player" )
-
-	if ( delay > 0 )
-		wait delay
-
-	if( !IsValid( player ) )
-		return
-
-	if ( ! ShouldPlayDialogueIfSolo( file.registeredDialog[aliasID], speaker ) )
-	{
-		return
-	}
-
-	file.dialoguePlaying = true
-	file.lastLineRequestPriority = GetLinePriority( aliasID )
-
-	OnThreadEnd(
-	function() : ( aliasID )
-		{
-			file.dialoguePlaying = false
-			if ( aliasID in file.waitingOnDialogue )
-				delete file.waitingOnDialogue[aliasID]
-		}
-	)
-
-	if ( !(aliasID in file.waitingOnDialogue) )
-		file.waitingOnDialogue[aliasID] <- true
-
-	PlayDialogue_Internal( aliasID, dialogueFlags, player, speaker, responseID, responseSpeaker )
-
-	while ( true )
-	{
-		table signalData = WaitSignal( level, "DialogueFinishedForID", "AllDialogueFinished" )
-		if ( string( signalData.signal ) == "AllDialogueFinished" )
-			break
-		if ( int( signalData.aliasID ) == aliasID )
-			break
-		if ( !(aliasID in file.waitingOnDialogue) )
-			break
-	}
-}
-
-bool function ClientCommand_DialogueFinishedForID( entity player, array<string> args )
-{
-	if ( !args.len() ) // exploit patch
-		return false
-
-	string aliasID = args[ 0 ]
 	table signalData = { aliasID = aliasID }
-	if ( int( aliasID ) in file.waitingOnDialogue )
-		delete file.waitingOnDialogue[int( aliasID )]
-	Signal( level, "DialogueFinishedForID", signalData )
-	return true
+	if ( aliasID in file.waitingOnDialogue )
+		delete file.waitingOnDialogue[ aliasID ]
+	Signal( player, "DialogueFinishedForID", signalData )
 }
 
-bool function ClientCommand_AllDialogueFinished( entity player, array<string> args )
+
+void function ClientCallback_AllDialogueFinished( entity player )
 {
 	// This happens when a save is loaded. Server will be waiting to hear back from client that a dialogue alias is finished but client was reset, so we tell the server the line has stopped playing
-	Signal( level, "AllDialogueFinished" )
-	return true
+	Signal( player, "AllDialogueFinished" )
 }
+
+
+void function PlayCharacterOrRadioDialogueToSetsOfPlayers( string alias, array<array<entity> > playerSets, int dialogueFlags = 0 )
+{
+	int aliasID = GetNextAliasIdForName( alias )
+	if ( aliasID < 0 )
+	{
+		Warning( "%s() - Dialogue line '%s' is not registered.", FUNC_NAME(), alias )
+		return
+	}
+
+	DialogueData data = GetDataForAliasId( aliasID )
+	foreach ( array<entity> players in playerSets )
+	{
+		entity speaker = null
+		foreach ( entity player in players )
+		{
+			if ( GetPlayerVoice( player ) == data.voice )
+			{
+				speaker = player
+				break
+			}
+		}
+
+		if ( speaker == null )
+			PlayRadioDialogueIDToPlayers( aliasID, players, dialogueFlags )
+		else
+			PlayBattleChatterAliasIdToSpeakerAndPlayers( speaker, aliasID, players, dialogueFlags )
+	}
+}
+
+void function PlayCharacterOrRadioDialogueToPlayer( string alias, entity player, int dialogueFlags = 0 )
+{
+	int aliasID = GetNextAliasIdForName( alias )
+	if ( aliasID < 0 )
+	{
+		Warning( "%s() - Dialogue line '%s' is not registered.", FUNC_NAME(), alias )
+		return
+	}
+
+	PlayRadioDialogueIDToPlayers( aliasID, [player], dialogueFlags )
+}
+
 
 #endif //SERVER
 
@@ -1037,7 +1066,6 @@ string function GetAnyDialogueAliasFromName( string name )
 }
 
 
-
 int s_queueItemNextNum = 0
 QueueItem function QueueAndWait( int priority, QueueData queueData, int dialogueFlags, int entHandle, string milesAlias )
 {
@@ -1048,9 +1076,14 @@ QueueItem function QueueAndWait( int priority, QueueData queueData, int dialogue
 	queueItem.priority = priority
 	queueItem.timeAdded = Time()
 	queueItem.entHandle = entHandle
-	queueItem.debugRef = milesAlias
+	queueItem.milesAlias = milesAlias
 	queueItem.serialNum = s_queueItemNextNum
+	queueItem.shouldBlockLowerPriorityItems = IsBitFlagSet( dialogueFlags, eDialogueFlags.BLOCK_LOWER_PRIORITY_QUEUE_ITEMS ) ? true : false
 
+	if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.AMBIENT_DIALOGUE ) )
+		queueItem.groupID = 1
+
+	//
 	s_queueItemNextNum += 1
 
 	// Instant priority items don't use the queue. This may changed based on our needs though, if we need this line to cut off whatever is playing
@@ -1062,7 +1095,13 @@ QueueItem function QueueAndWait( int priority, QueueData queueData, int dialogue
 	{
 		foreach ( QueueItem alreadyAddedItem in queueData.queue )
 		{
-			if ( !GetCurrentPlaylistVarBool( "requeue_identical_vo", false ) && alreadyAddedItem.debugRef == milesAlias && alreadyAddedItem.entHandle == entHandle )
+			if ( !GetCurrentPlaylistVarBool( "requeue_identical_vo", false ) && alreadyAddedItem.milesAlias == milesAlias && alreadyAddedItem.entHandle == entHandle )
+			{
+				queueItem.success = false
+				return queueItem
+			}
+
+			if ( alreadyAddedItem.shouldBlockLowerPriorityItems && alreadyAddedItem.priority > queueItem.priority )
 			{
 				queueItem.success = false
 				return queueItem
@@ -1084,6 +1123,7 @@ QueueItem function QueueAndWait( int priority, QueueData queueData, int dialogue
 	return queueItem
 }
 
+
 void function _AddToQueue( QueueItem queueItem, QueueData queueData )
 {
 	Assert( !queueData.queue.contains( queueItem ) )
@@ -1091,7 +1131,7 @@ void function _AddToQueue( QueueItem queueItem, QueueData queueData )
 	queueData.queue.append( queueItem )
 	queueData.queue.sort( QueueSort )
 
-	//
+	// Remove anything in the queue that is lower priority
 	if ( queueData.queue.len() > 1 )
 	{
 		for ( int i = queueData.queue.len() - 1; i >= 0; i-- )
@@ -1099,14 +1139,14 @@ void function _AddToQueue( QueueItem queueItem, QueueData queueData )
 			if ( queueData.queue[i].priority >= queueItem.priority )
 				continue
 
-			RemoveFromQueue( queueData.queue[i], queueData.queue )
+			RemoveItemFromQueue( queueData.queue[i], queueData.queue )
 
 			if ( i == 0 )
 				AbortCurrentDialogue()
 		}
 	}
 
-	//
+	// Tell the queue think function that we have added something in case it was sleeping
 	Signal( queueData.signalDummy, "QueueUpdated" )
 }
 
@@ -1124,12 +1164,17 @@ void function RemovePlayerDialogueEventsFromMainDialogueQueue( entity player )
 	{
 		for ( int i = queue.len() - 1; i >= 0; i-- )
 		{
+			// needed because RemoveItemAndGroupFromQueue can remove multiple items in one swoop, which
+			// messes up your index
+			if ( i >= queue.len() )
+				continue
+
 			if ( queue[i].entHandle == -1 )
 				continue
 
 			if ( queue[i].entHandle == playerEntHandle )
 			{
-				RemoveFromQueue( queue[i], queue )
+				RemoveItemAndGroupFromQueue( queue[i], queue )
 
 				if ( i == 0 )
 					AbortCurrentDialogue()
@@ -1139,12 +1184,31 @@ void function RemovePlayerDialogueEventsFromMainDialogueQueue( entity player )
 }
 
 
-void function RemoveFromQueue( QueueItem queueItem, array<QueueItem> queue )
+void function RemoveItemFromQueue( QueueItem queueItem, array<QueueItem> queue )
 {
-	//
+	// Call this to tell the queue that you are done with the current item and it should move onto the next
 	Signal( queueItem, "RemovedFromQueue" )
 	if ( queue.contains( queueItem ) )
 		queue.removebyvalue( queueItem )
+}
+
+void function RemoveItemAndGroupFromQueue( QueueItem queueItem, array<QueueItem> queue )
+{
+	// Call this when you want to remove a queue item AND its item group from the queue.
+	// Used with ambient dialogue. If one is removed, all should be removed.
+	RemoveItemFromQueue( queueItem, queue )
+
+	if ( queueItem.groupID != -1 )
+	{
+		for ( int i = queue.len() - 1; i >= 0; i-- )
+		{
+			if ( queue[i].groupID == queueItem.groupID )
+			{
+				Signal( queue[i], "RemovedFromQueue" )
+				queue.removebyvalue( queue[i] )
+			}
+		}
+	}
 }
 
 
@@ -1208,9 +1272,9 @@ void function QueueThink( QueueData queueData )
 				foreach ( int i, QueueItem queueItem in queue )
 				{
 					if ( queueItem.active )
-						printt( "  ", i, queueItem.timeAdded, "PRIORITY", queueItem.priority, queueItem.debugRef, "ACTIVE!" )
+						printt( "  ", i, queueItem.timeAdded, "PRIORITY", queueItem.priority, queueItem.milesAlias, "ACTIVE!" )
 					else
-						printt( "  ", i, queueItem.timeAdded, "PRIORITY", queueItem.priority, queueItem.debugRef )
+						printt( "  ", i, queueItem.timeAdded, "PRIORITY", queueItem.priority, queueItem.milesAlias )
 				}
 			}
 			WaitFrame()
@@ -1221,13 +1285,13 @@ void function QueueThink( QueueData queueData )
 
 void function PauseMainDialogueQueue()
 {
-	PauseDialogueQueue( eDialogueQueues.main )
+	PauseDialogueQueue( QUEUE_MAIN )
 }
 
 
 void function PauseDialogueQueue( int queueIdx )
 {
-	Assert( queueIdx < eDialogueQueues._COUNT, "Unknown enum index for eDialogueQueues: " + queueIdx )
+	Assert( queueIdx < NUM_TOTAL_DIALOGUE_QUEUES, "Invalid index provided for dialogue queue: " + queueIdx )
 
 	QueueData data = file.allQueues[ queueIdx ]
 
@@ -1238,13 +1302,13 @@ void function PauseDialogueQueue( int queueIdx )
 
 void function ResumeMainDialogueQueue()
 {
-	ResumeDialogueQueue( eDialogueQueues.main )
+	ResumeDialogueQueue( QUEUE_MAIN )
 }
 
 
 void function ResumeDialogueQueue( int queueIdx )
 {
-	Assert( queueIdx < eDialogueQueues._COUNT, "Unknown enum index for eDialogueQueues: " + queueIdx )
+	Assert( queueIdx < NUM_TOTAL_DIALOGUE_QUEUES, "Invalid index provided for dialogue queue: " + queueIdx )
 
 	QueueData data = file.allQueues[ queueIdx ]
 
@@ -1272,10 +1336,10 @@ void function SuspendMainDialogueQueueForDurationOfSound( entity player, var sou
 }
 
 
-void function SCB_PlayDialogueOnEntity( int aliasID, int dialogueFlags, entity speaker )
+void function SCB_PlayDialogueOnEntity( int aliasID, int dialogueFlags, int speakerEHandle, int selector )
 {
-	//entity speaker = GetEntityFromEncodedEHandle( speakerEHandle )
-	thread PlayClientDialogueOnEntity( aliasID, dialogueFlags, speaker )
+	entity speaker = GetEntityFromEncodedEHandle( speakerEHandle )
+	thread PlayClientDialogueOnEntity( aliasID, dialogueFlags, speaker, -1, selector )
 }
 
 
@@ -1285,9 +1349,14 @@ void function SCB_PlayDialogueAtPosition( int aliasID, int dialogueFlags, vector
 }
 
 
+void function SCB_PlayDialogueOnEnvironmentSpeakersNoResponse( int aliasID, int numSpeakers, int dialogueFlags, int responseID, int customQueueIdx )
+{
+	SCB_PlayDialogueOnEnvironmentSpeakers( aliasID, numSpeakers, dialogueFlags, responseID, null, customQueueIdx )
+}
+
 void function SCB_PlayDialogueOnEnvironmentSpeakers( int aliasID, int numSpeakers, int dialogueFlags, int responseID, entity responseSpeaker, int customQueueIdx )
 {
-	Assert( !( dialogueFlags & eDialogueFlags.USE_CUSTOM_QUEUE ) , "Environment speaker dialogue must NOT be called using the custom queue." )
+	Assert( !IsBitFlagSet( dialogueFlags, eDialogueFlags.USE_CUSTOM_QUEUE ) , "Environment speaker dialogue must NOT be called using the custom queue." )
 
 	if ( file.blockAnnouncer )
 		return
@@ -1313,28 +1382,6 @@ void function SCB_PlayDialogueOnEnvironmentSpeakers( int aliasID, int numSpeaker
 		thread PlayClientDialogueInCustomQueueWithMainQueuedResponse( aliasID, responseID, dialogueFlags, speakerEnts, responseSpeaker, customQueueIdx )
 }
 
-void function PlayClientDialogueInCustomQueueWithMainQueuedResponse( int aliasID, int responseID, int dialogueFlags, array<entity> speakers, entity responseSpeaker, int customQueueIdx )
-{
-	DialogueData leadingLineData  = GetDataForAliasId( aliasID )
-	DialogueData responseLineData = GetDataForAliasId( responseID )
-
-	string leadingMilesAlias  = leadingLineData.alias
-	string responseMilesAlias = responseLineData.alias
-
-	waitthread PlayClientDialogueOnSpeakers( aliasID, dialogueFlags, speakers, customQueueIdx )
-
-	if ( IsValid( responseSpeaker ) )
-	{
-		// Clear custom queue flag
-		int responseDialogueFlags = dialogueFlags & ~( eDialogueFlags.USE_CUSTOM_QUEUE )
-		thread PlayClientDialogueOnEntity( responseID, responseDialogueFlags, responseSpeaker )
-	}
-}
-
-void function SCB_PlayDialogueOnEnvironmentSpeakersNoResponse( int aliasID, int numSpeakers, int dialogueFlags, int responseID, int customQueueIdx )
-{
-	SCB_PlayDialogueOnEnvironmentSpeakers( aliasID, numSpeakers, dialogueFlags, responseID, null, customQueueIdx )
-}
 
 array<EnvironmentSpeaker> function SortEnvironmentSpeakersByClosest()
 {
@@ -1358,7 +1405,6 @@ array<EnvironmentSpeaker> function SortEnvironmentSpeakersByClosest()
 	return nearbySpeakers
 }
 
-
 int function DistanceCompareClosestSpeaker( EnvironmentSpeaker a, EnvironmentSpeaker b )
 {
 	if ( a.distanceSqr > b.distanceSqr )
@@ -1369,44 +1415,104 @@ int function DistanceCompareClosestSpeaker( EnvironmentSpeaker a, EnvironmentSpe
 	return 0
 }
 
-
-void function SCB_PlayDialogueOnCustomSpeakers( int aliasID, int dialogueFlags, int customQueueIdx ) //custom queue is not implemented. EvaluateSoundSelector not available
+void function SCB_PlayDialogueOnCustomSpeakers( int aliasID, int dialogueFlags, int customQueueIdx )
 {
-	if ( file.customSpeakers1.len() == 0 )
+	PlayDialogueOnCustomSpeakers( aliasID, dialogueFlags, customQueueIdx )
+}
+
+void function PlayDialogueOnCustomSpeakers( int aliasID, int dialogueFlags, int customQueueIdx )
+{
+	PlayDialogueOnCustomSpeakers_Common( aliasID, dialogueFlags, customQueueIdx )
+}
+
+void function PlayDialogueOnCustomSpeakers_Common( int aliasID, int dialogueFlags, int customQueueIdx )
+{
+	Assert( customQueueIdx < NUM_TOTAL_DIALOGUE_QUEUES, "Invalid index for custom speakers " + customQueueIdx )
+	array<EnvironmentSpeaker> customSpeakers = file.allSpeakersList[ customQueueIdx ]
+	array<entity> customSpeakerEntities
+	foreach( EnvironmentSpeaker customSpeaker in customSpeakers )
+		customSpeakerEntities.append( customSpeaker.speakerEnt )
+
+	if ( customSpeakers.len() == 0 )
 	{
 		if ( Flag( "EntitiesDidLoad" ) )
-			printt( "Custom Speakers 1 debug: Entities have loaded." )
+			printf( "Custom Speakers %i debug: Entities have loaded.", customQueueIdx )
 		else
-			printt( "Custom Speakers 1 debug: Entities have NOT loaded." )
+			printf( "Custom Speakers %i debug: Entities have NOT loaded.", customQueueIdx )
 
-		Assert( 0, "Custom Speakers 1 haven't been registered. Use the function CustomSpeakers1ListInit to create the array of speakers to be used." )
+		Assert( false, "Custom Speakers " + customQueueIdx + " haven't been registered. Use the function CustomSpeakers" + customQueueIdx + "ListInit to create the array of speakers to be used." )
 	}
 
-	const float maxDistSqr = 2000.0 * 2000.0
+	const float maxDistSqr = 10000.0 * 10000.0
 
-	//
+	// is player within X distance from any speaker?
 	entity player           = GetLocalClientPlayer()
 	vector playerPos        = player.GetOrigin()
 	bool playerNearSpeakers = false
 
-	foreach ( entity speaker in file.customSpeakers1 )
+	int numSpeakers = customSpeakerEntities.len()
+	int closestSpeakerIdx = 0
+	float closestSpeakerDistSqr = FLT_MAX
+
+	for( int i; i < numSpeakers; i++ )
 	{
+		entity speaker = customSpeakerEntities[ i ]
 		if ( !IsValid( speaker ) )
 			continue
 
-		if ( Distance2DSqr( playerPos, speaker.GetOrigin() ) <= maxDistSqr )
+		float speakerDistSqr =  Distance2DSqr( playerPos, speaker.GetOrigin() )
+		if ( speakerDistSqr > maxDistSqr )
+			continue
+
+		else if ( speakerDistSqr < closestSpeakerDistSqr )
 		{
+			closestSpeakerDistSqr = speakerDistSqr
+			closestSpeakerIdx = i
+
+			// This will happen at least once if there's a speaker
 			playerNearSpeakers = true
-			break
 		}
 	}
 
 	if ( playerNearSpeakers )
-		thread PlayClientDialogueOnSpeakers( aliasID, dialogueFlags, file.customSpeakers1 )
+	{
+		// Swap closest speaker with idx 0 (chosen as the speaker to use
+		if ( closestSpeakerIdx != 0 )
+		{
+
+			entity closestSpeaker = customSpeakerEntities[ closestSpeakerIdx ]
+			customSpeakerEntities[ closestSpeakerIdx ] = customSpeakerEntities[ 0 ]
+			customSpeakerEntities[ 0 ] = closestSpeaker
+		}
+
+		thread PlayClientDialogueOnSpeakers( aliasID, dialogueFlags, customSpeakerEntities, customQueueIdx )
+	}
 }
 
 
-void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array<entity> speakers, vector pos, int customQueueIdx = -1, int selector = -1 )
+void function PrintDummieTeamChat( entity player, string text )
+{
+	if ( GetCurrentPlaylistVarBool( "dummie_chatter_enabled", true ) == false )
+		return
+	if ( text.len() == 0 )
+		return
+
+	string decorationFormat = GetCurrentPlaylistVarString( "dummie_chatter_format", " [ %s ]" )
+	PrintTeamChatMessageLocally( player, format( decorationFormat, text ) )
+}
+
+void function DisplaySilentPlayerVoiceDialogue( entity player, DialogueData data )
+{
+	string loc = Localize( format( "#dummie_%s", data.group.groupName ) )
+	if ( loc.len() == 0 )
+		return
+	if ( loc.slice( 0, 1 ) == "#" )
+		return
+
+	PrintDummieTeamChat( player, loc )
+}
+
+void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array<entity> speakers, vector pos, int customQueueIdx = -1, int selector = INVALID_SOUND_SELECTOR )
 {
 	DialogueData data = GetDataForAliasId( aliasID )
 
@@ -1414,17 +1520,17 @@ void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array
 
 	if ( speakers.len() == 1 && !ShouldPlayDialogueIfSolo( data, speakers[0] ) )
 		return
-	// if ( speakers.len() == 1 && IsValid( speakers[0] ) && speakers[0].IsPlayer() && (GetPlayerVoice( speakers[0] ) == SILENT_PLAYER_VOICE) )
-	// {
-		// DisplaySilentPlayerVoiceDialogue( speakers[0], data )
-		// return
-	// }
+	if ( speakers.len() == 1 && IsValid( speakers[0] ) && speakers[0].IsPlayer() && (GetPlayerVoice( speakers[0] ) == SILENT_PLAYER_VOICE) )
+	{
+		DisplaySilentPlayerVoiceDialogue( speakers[0], data )
+		return
+	}
 
 	string radioDisplayName = data.radioDisplayName
 	asset specificImage     = $""
 
 	                                
-		if ( speakers.len() == 1 && IsValid( speakers[0] ) && speakers[0].IsPlayer() && (dialogueFlags & eDialogueFlags.STOMP_CON_ALT ) )
+		if ( speakers.len() == 1 && IsValid( speakers[0] ) && speakers[0].IsPlayer() && !IsBitFlagSet( dialogueFlags, eDialogueFlags.STOMP_CON_ALT ) )
 		{
 			array<string> condAltDialogueAliases
 			array<entity> squadmates = GetPlayerArrayOfTeam_Alive( speakers[0].GetTeam() )
@@ -1434,29 +1540,29 @@ void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array
 				if ( squadmate == speakers[0] )
 					continue
 
-				string condAltAlias = ""//GetConditionalAltDialogue( data.name, speakers[0], squadmate )
+				string condAltAlias = GetConditionalAltDialogue( data.name, speakers[0], squadmate )
 				if ( condAltAlias != "" )
 				{
-					// if ( ShouldForcePlayConditionalAlt( condAltAlias ) )
-					// {
-						// condAltDialogueAliases = [ condAltAlias ]
-						// break
-					// }
+					if ( ShouldForcePlayConditionalAlt( condAltAlias ) )
+					{
+						condAltDialogueAliases = [ condAltAlias ]
+						break
+					}
 					condAltDialogueAliases.append( condAltAlias )
 				}
 			}
 
-			string condWildCardAltAlias = ""//GetConditionalAltMapOnlyDialogue( data.name, speakers[0] )
+			string condWildCardAltAlias = GetConditionalAltMapOnlyDialogue( data.name, speakers[0] )
 			if ( condWildCardAltAlias != "" )
 			{
-				// if ( ShouldForcePlayConditionalAlt( condWildCardAltAlias ) )
-				// {
-					// condAltDialogueAliases = [ condWildCardAltAlias ]
-				// }
-				// else
-				// {
+				if ( ShouldForcePlayConditionalAlt( condWildCardAltAlias ) )
+				{
+					condAltDialogueAliases = [ condWildCardAltAlias ]
+				}
+				else
+				{
 					condAltDialogueAliases.append( condWildCardAltAlias )
-				// }
+				}
 			}
 
 			if ( condAltDialogueAliases.len() > 0 )
@@ -1512,45 +1618,42 @@ void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array
 		printt( "  name:", data.group.groupName )
 	}
 
-	bool isDevText = ((data.alias == "") && (data.DEV_DialogueText != ""))
-	
-	#if DEVELOPER
-		printf( "Playing Dialogue - '%s'#%d -> '%s', priority:%d, from:'%s'  %s", data.group.groupName, data.indexInGroup, milesAlias, data.priority, string( data.group.sourceDataTable ), (isDevText ? " (dev text)" : "") )
-	#endif
+	bool isDevText = ((data.alias == "") && (data.dialogueText != ""))
+	printf( "Playing Dialogue - '%s'#%d -> '%s', priority:%d, from:'%s'  %s", data.group.groupName, data.indexInGroup, milesAlias, data.priority, string( data.group.sourceDataTable ), (isDevText ? " (dev text)" : "") )
 
-	// if ( milesAlias.find( "_cond" ) >= 0 || milesAlias.find( "_flavor" ) >= 0 )  {
-		// PIN_DynamicDialogue( milesAlias )
-	// }
+	if ( milesAlias.find( "_cond" ) >= 0 || milesAlias.find( "_flavor" ) >= 0 )  {
+		PIN_DynamicDialogue( milesAlias )
+	}
 
 	float duration
 	float extraWait = 0.0
 	string speakerName
-	// if ( isDevText )
-	// {
-		// duration = data.dialogueTextDuration
-		// if ( duration < FLT_EPSILON )
-			// duration = max( data.dialogueText.len() * 0.07, 1.5 )
-		// printt( "len, duration", data.dialogueText.len(), duration )
-		// if ( speakers.len() == 0 || !IsValid( speakers[0] ) )
-			// speakerName = ((radioDisplayName.len() > 0) ? Localize( radioDisplayName ) : "non_NPC")
-		// else
-			// speakerName = speakers[0].GetScriptName()
-	// }
-	// else
-	// {
+	if ( isDevText )
+	{
+		duration = data.dialogueTextDuration
+		if ( duration < FLT_EPSILON )
+			duration = max( data.dialogueText.len() * 0.07, 1.5 )
+		printt( "len, duration", data.dialogueText.len(), duration )
+		if ( speakers.len() == 0 || !IsValid( speakers[0] ) )
+			speakerName = ((radioDisplayName.len() > 0) ? Localize( radioDisplayName ) : "non_NPC")
+		else
+			speakerName = speakers[0].GetScriptName()
+	}
+	else
+	{
 		duration = GetSoundDuration( milesAlias )
-	// }
+	}
 
-	if ( ( dialogueFlags & eDialogueFlags.SHORT_DELAY_AFTER_PLAYING ) )
+	if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.SHORT_DELAY_AFTER_PLAYING ) )
 		extraWait = 0.40
 
 	var waveformRUI = null
 	if ( (radioDisplayName != "") && (specificImage != $"") && file.useVDU )
 	{
-		// waveformRUI = CreateDialogPopup( radioDisplayName, duration + extraWait, specificImage, data.dialogueText )
+		waveformRUI = CreateDialogPopup( radioDisplayName, duration + extraWait, specificImage, data.dialogueText )
 
-		// foreach ( void functionref() cb in file.dialoguePopupCreatedCallbacks )
-			// cb()
+		foreach ( void functionref() cb in file.dialoguePopupCreatedCallbacks )
+			cb()
 
 		if ( data.vduVideo != $"" )
 			StartVideoOnChannel( file.videoChannel, data.vduVideo, false, 0.0 )
@@ -1571,24 +1674,24 @@ void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array
 	OnThreadEnd(
 		function() : ( player, aliasID, waveformRUI, queueItem, queueData, dialogueFlags )
 		{
-			if ( ( dialogueFlags & eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION ) )
+			if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION ) )
 				SetCommsDialogueEnabled( true )
 
-			// if ( ( dialogueFlags & eDialogueFlags.MUTE_PLAYER_PING_CHIMES_FOR_DURATION ) )
-				// SetCommsWaypointSoundsEnabled( true )
+			if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.MUTE_PLAYER_PING_CHIMES_FOR_DURATION ) )
+				SetCommsWaypointSoundsEnabled( true )
 
-			if ( ( dialogueFlags & eDialogueFlags.BLOCK_ANNOUNCER ) )
+			if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.BLOCK_ANNOUNCER ) )
 				file.blockAnnouncer = false
 
 			// Notify the server that the alias finished playing
-			if ( IsValid( player ) && !( dialogueFlags & eDialogueFlags.NO_ON_FINISHED_NOTIFY ) )
-				player.ClientCommand( "DialogueFinishedForID " + aliasID )
+			if ( IsValid( player ) && !IsBitFlagSet( dialogueFlags, eDialogueFlags.NO_ON_FINISHED_NOTIFY ) )
+				Remote_ServerCallFunction( "ClientCallback_DialogueFinishedForID", aliasID )
 			if ( IsValid ( waveformRUI ) )
 			{
 				thread DestroyWaveform( waveformRUI )
 
-				// foreach ( void functionref() cb in file.dialoguePopupDestroyedCallbacks )
-					// cb()
+				foreach ( void functionref() cb in file.dialoguePopupDestroyedCallbacks )
+					cb()
 			}
 
 			file.currentDialoguePlayingHandle = null
@@ -1599,13 +1702,13 @@ void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array
 		}
 	)
 
-	if ( ( dialogueFlags & eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION ) )
+	if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.MUTE_PLAYER_PING_DIALOGUE_FOR_DURATION ) )
 		SetCommsDialogueEnabled( false )
 
-	// if ( ( dialogueFlags & eDialogueFlags.MUTE_PLAYER_PING_CHIMES_FOR_DURATION ) )
-		// SetCommsWaypointSoundsEnabled( false )
+	if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.MUTE_PLAYER_PING_CHIMES_FOR_DURATION ) )
+		SetCommsWaypointSoundsEnabled( false )
 
-	if ( ( dialogueFlags & eDialogueFlags.BLOCK_ANNOUNCER ) )
+	if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.BLOCK_ANNOUNCER ) )
 		file.blockAnnouncer = true
 
 	if ( !(milesAlias in FORBIDDEN_DIALOGUE_EVENT_NAMES) && !IsWatchingKillReplay() )
@@ -1614,37 +1717,36 @@ void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array
 		{
 			if ( IsValid( speaker ) )
 			{
-				// if ( isDevText )
-				// {
-					// if ( waveformRUI == null )
-						// thread DevDialogueWithoutSoundAlias( speakerName, data.dialogueText, duration )
-				// }
-				// else 
-				if ( ( dialogueFlags & eDialogueFlags.EMIT_FROM_FIXED_POSITION ) )
+				if ( isDevText )
+				{
+					if ( waveformRUI == null )
+						thread DevDialogueWithoutSoundAlias( speakerName, data.dialogueText, duration )
+				}
+				else if ( IsBitFlagSet( dialogueFlags, eDialogueFlags.EMIT_FROM_FIXED_POSITION ) )
 				{
 					file.currentDialoguePlayingHandle = EmitSoundAtPosition( speaker.GetTeam(), speaker.GetOrigin(), milesAlias )
 					file.currentDialoguePlayingName = data.name
 				}
 				else
 				{
-					file.currentDialoguePlayingHandle = EmitSoundOnEntity( speaker, milesAlias ) //EmitSoundOnEntityWithSelector( speaker, milesAlias, selector )
+					file.currentDialoguePlayingHandle = EmitSoundOnEntityWithSelector( speaker, milesAlias, selector )
 					file.currentDialoguePlayingName = data.name
 
-					// SetPlayThroughPOVTransitions( file.currentDialoguePlayingHandle )
+					SetPlayThroughPOVTransitions( file.currentDialoguePlayingHandle )
 				}
 			}
 			else if ( pos != <0, 0, 0> )
 			{
-				// if ( isDevText )
-				// {
-					// if ( waveformRUI == null )
-						// thread DevDialogueWithoutSoundAlias( speakerName, data.dialogueText, duration )
-				// }
-				// else
-				// {
+				if ( isDevText )
+				{
+					if ( waveformRUI == null )
+						thread DevDialogueWithoutSoundAlias( speakerName, data.dialogueText, duration )
+				}
+				else
+				{
 					file.currentDialoguePlayingHandle = EmitSoundAtPosition( TEAM_UNASSIGNED, pos, milesAlias )
 					file.currentDialoguePlayingName = data.name
-				// }
+				}
 			}
 		}
 	}
@@ -1667,13 +1769,6 @@ void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array
 		SurvivalCommentary_ClearCurrentSpeakerPrefix()
 }
 
-void function RemoveItemFromQueue( QueueItem queueItem, array<QueueItem> queue )
-{
-	// Call this to tell the queue that you are done with the current item and it should move onto the next
-	Signal( queueItem, "RemovedFromQueue" )
-	if ( queue.contains( queueItem ) )
-		queue.removebyvalue( queueItem )
-}
 
 void function PlayAnyClientSelfDialogueByName( entity self, string name )
 {
@@ -1689,7 +1784,7 @@ void function PlayAnyClientSelfDialogueByName( entity self, string name )
 }
 
 
-void function PlayClientDialogueOnEntity( int aliasID, int dialogueFlags, entity ent, int customQueueIdx = -1, int selector = -1 )
+void function PlayClientDialogueOnEntity( int aliasID, int dialogueFlags, entity ent, int customQueueIdx = -1, int selector = INVALID_SOUND_SELECTOR )
 {
 	PlayClientDialogue_Internal( aliasID, dialogueFlags, [ent], <0, 0, 0>, customQueueIdx, selector )
 }
@@ -1706,8 +1801,7 @@ void function PlayClientDialogueOnPos( int aliasID, int dialogueFlags, vector po
 	PlayClientDialogue_Internal( aliasID, dialogueFlags, [null], pos, customQueueIdx )
 }
 
-
-void function PlayClientDialogueInCustomQueue1WithMainQueuedResponse( int aliasID, int responseID, int dialogueFlags, array<entity> speakers, entity responseSpeaker, float x, float y, float z )
+void function PlayClientDialogueInCustomQueueWithMainQueuedResponse( int aliasID, int responseID, int dialogueFlags, array<entity> speakers, entity responseSpeaker, int customQueueIdx )
 {
 	DialogueData leadingLineData  = GetDataForAliasId( aliasID )
 	DialogueData responseLineData = GetDataForAliasId( responseID )
@@ -1715,12 +1809,15 @@ void function PlayClientDialogueInCustomQueue1WithMainQueuedResponse( int aliasI
 	string leadingMilesAlias  = leadingLineData.alias
 	string responseMilesAlias = responseLineData.alias
 
-	waitthread PlayClientDialogueOnSpeakers( aliasID, dialogueFlags, speakers )
+	waitthread PlayClientDialogueOnSpeakers( aliasID, dialogueFlags, speakers, customQueueIdx )
 
 	if ( IsValid( responseSpeaker ) )
-		thread PlayClientDialogueOnEntity( responseID, dialogueFlags & ~eDialogueFlags.USE_CUSTOM_QUEUE1, responseSpeaker )
+	{
+		// Clear custom queue flag
+		int responseDialogueFlags = dialogueFlags & ~( eDialogueFlags.USE_CUSTOM_QUEUE )
+		thread PlayClientDialogueOnEntity( responseID, responseDialogueFlags, responseSpeaker )
+	}
 }
-
 
 string function SpecifyAliasFromGeneric( DialogueData data, string alias, entity speaker )
 {
@@ -1738,49 +1835,48 @@ string function SpecifyAliasFromGeneric( DialogueData data, string alias, entity
 
 	if ( milesAlias.find( "%perspective%" ) >= 0 )
 	{
-		// #if DEVELOPER
-			// Assert( specifiedPerspective != "", "Dialogue with generic perspective specified in CSV alias without specifying intended perspective!" )
-		// #endif // DEVELOPER
+		#if DEVELOPER
+			Assert( specifiedPerspective != "", "Dialogue with generic perspective specified in CSV alias without specifying intended perspective!" )
+		#endif // DEVELOPER
 
-		milesAlias = StringReplace( milesAlias, "%perspective%", specifiedPerspective )
+		milesAlias = replace( milesAlias, "%perspective%", specifiedPerspective )
 	}
 
 	string aliasWithGenericVoice = milesAlias
 
 	string voice = GetPlayerVoice( speaker )
 	if ( milesAlias.find( "%voice%" ) >= 0 )
-		milesAlias = StringReplace( milesAlias, "%voice%", voice )
+		milesAlias = replace( milesAlias, "%voice%", voice )
 
-	// #if DEVELOPER
-		// if ( ShouldTryToReplaceMissingVoiceWithTempVoice() )
-		// {
-			// if ( !DoesAliasExist( milesAlias ) )
-			// {
-				// if ( aliasWithGenericVoice.find( "%voice%" ) >= 0 )
-				// {
-					// milesAlias = StringReplace( aliasWithGenericVoice, "%voice%", TEMP_VOICE )
+	#if DEVELOPER
+		if ( ShouldTryToReplaceMissingVoiceWithTempVoice() )
+		{
+			if ( !DoesAliasExist( milesAlias ) )
+			{
+				if ( aliasWithGenericVoice.find( "%voice%" ) >= 0 )
+				{
+					milesAlias = replace( aliasWithGenericVoice, "%voice%", TEMP_VOICE )
 
-					// if ( !DoesAliasExist( milesAlias ) )
-						// Warning( "Attempted to fall back to temp voice \"" + TEMP_VOICE + "\", but resulting alias \"" + milesAlias + "\" does not exist in miles." )
-				// }
-				// else
-				// {
-					// Warning( "Alias \"" + aliasWithGenericVoice + "\" does not exist, and since there is no generic voice field, we can't fall back to \"" + TEMP_VOICE + "\"." )
-				// }
-			// }
-		// }
-	// #endif // DEVELOPER
+					if ( !DoesAliasExist( milesAlias ) )
+						Warning( "Attempted to fall back to temp voice \"" + TEMP_VOICE + "\", but resulting alias \"" + milesAlias + "\" does not exist in miles." )
+				}
+				else
+				{
+					Warning( "Alias \"" + aliasWithGenericVoice + "\" does not exist, and since there is no generic voice field, we can't fall back to \"" + TEMP_VOICE + "\"." )
+				}
+			}
+		}
+	#endif // DEVELOPER
 
 	if ( specifiedPerspective == "solo" && !DoesAliasExist( milesAlias ) )
 	{
 		//if a line per spective is listed as solo, but we can't find it and we did not receive a warning in registration - we know it is solo_flav
 		//if it is solo_flav, but missing, we will fallback to their 1p lines, since we would have done that if canPlayIfSolo was true and they did not have solo lines anyway
-		milesAlias = StringReplace( milesAlias, "solo", "1p" )
+		milesAlias = replace( milesAlias, "solo", "1p" )
 	}
 
 	return milesAlias
 }
-
 
 string function SpecifyRadioDialoguePerspective( DialogueData data )
 {
@@ -1788,11 +1884,11 @@ string function SpecifyRadioDialoguePerspective( DialogueData data )
 	if ( data.perspective != "radio" )
 		return data.alias
 
-	string radioAlias = StringReplace( milesAlias, "%perspective%", data.perspective )
+	string radioAlias = replace( milesAlias, "%perspective%", data.perspective )
 
-	//
+	// Intended as temp hack to get radio dialogue working until radio aliases come in:
 	if ( !DoesAliasExist( radioAlias ) )
-		return StringReplace( milesAlias, "%perspective%", "3p" )
+		return replace( milesAlias, "%perspective%", "3p" )
 
 	return radioAlias
 }
@@ -1818,11 +1914,11 @@ void function AbortCurrentDialogue()
 {
 	if ( file.currentDialoguePlayingHandle != null )
 	{
-		// if ( file.currentDialoguePlayingName != "" )
-		// {
-			// foreach ( void functionref( string abortedDialogueLine ) cb in file.abortDialogueCallbacks )
-				// cb( file.currentDialoguePlayingName )
-		// }
+		if ( file.currentDialoguePlayingName != "" )
+		{
+			foreach ( void functionref( string abortedDialogueLine ) cb in file.abortDialogueCallbacks )
+				cb( file.currentDialoguePlayingName )
+		}
 
 		StopSound( file.currentDialoguePlayingHandle )
 		Signal( GetLocalClientPlayer(), "AbortCurrentDialogue" )
@@ -1851,8 +1947,8 @@ void function AbortAllQueuedAndCurrentDialogue( QueueData queueData )
 
 void function ClientScriptInitForPlayer( entity player )
 {
-	//
-	player.ClientCommand( "AllDialogueFinished" )
+	// This is needed to fix save/load issues because server script will wait to hear from the client that dialogue has finished playing, but client script is reinitialized and no longer knows to respond
+	Remote_ServerCallFunction( "ClientCallback_AllDialogueFinished" )
 }
 
 
@@ -1873,15 +1969,14 @@ void function SetUseDialogueVDU( bool useVDU )
 {
 	file.useVDU = useVDU
 }
-#endif //
-
+#endif // CLIENT
 
 #if DEVELOPER
 bool function ShouldTryToReplaceMissingVoiceWithTempVoice()
 {
 	return (GetCurrentPlaylistVarInt( "vo_fallback_to_temp", 0 ) == 1)
 }
-#endif //
+#endif // DEVELOPER
 
 
 int function GetLinePriorityForAliasId( int aliasId )
@@ -1893,10 +1988,10 @@ int function GetLinePriorityForAliasId( int aliasId )
 
 bool function ShouldPlayDialogueIfSolo( DialogueData data, entity speaker )
 {
-	if ( data.canPlayIfSolo || AllowPlayersToTalkToThemselves() )
+	if ( data.canPlayIfSolo )
 		return true
 
-	if ( !IsValid( speaker ) ) //
+	if ( !IsValid( speaker ) ) //this function only makes solo-based decisions
 		return true
 
 	if ( !speaker.IsPlayer() )
@@ -1905,59 +2000,71 @@ bool function ShouldPlayDialogueIfSolo( DialogueData data, entity speaker )
 	return GetPlayerArrayOfTeam_Alive( speaker.GetTeam() ).len() > 1
 }
 
-#if SERVER
-int function GetNextAliasIdForName( string dialogueName )
+                  
+          
+                                                    
+ 
+                                                            
+
+                                                           
+                                       
+                                                                                       
+ 
+      
+
+          
+                                                                 
+ 
+                                                            
+                                                               
+                                                                                                               
+                                          
+ 
+      
+
+                                                     
+ 
+                 
+                                                          
+  
+                                                            
+                                                                                           
+                                                   
+                                                             
+                                             
+                                               
+  
+                       
+ 
+                            
+
+string function GetBattleChatterAlias1P3P( entity player, string aliasSubname, bool firstPerson )
 {
-	if ( !(dialogueName in file.nameToGroupMap) )
-		return -1
+	string voice = GetPlayerVoice( player )
+	if ( voice == SILENT_PLAYER_VOICE )
+		return ""
 
-	DialogueEntryGroup group = file.nameToGroupMap[dialogueName]
-
-	int aliasCount = group.aliasIds.len()
-	if ( Shuffle_GetCount( group.shuffleData ) != aliasCount )
-		Shuffle_Init( group.shuffleData, aliasCount )
-
-	int index = Shuffle_GetNextIndex( group.shuffleData )
-	return group.aliasIds[index]
-}
-#endif // SERVER
-
-
-#if CLIENT
-// You need to know the queue as the client. Request a queue on server, send that info to your client.
-//void function ( int queueIdx, array<entity> customSpeakers )
-void function RegisterCustomDialogueQueueSpeakerEntities( int queueIdx, array<entity> customSpeakers )
-{
-	Assert( queueIdx < NUM_CUSTOM_QUEUES, "Tried to register entities for custom speaker with invalid queueIdx!" )
-	foreach ( entity speaker in customSpeakers )
+	                    
+	// hack to get other characters to be able to call out nearby squads
+	if( aliasSubname.find( "droneAlertSquads" ) >= 0 )
 	{
-		RegisterSpeaker_Internal( speaker, queueIdx )
+		voice = "crypto"
 	}
-}
-#endif
+       
 
-#if CLIENT
-EnvironmentSpeaker function RegisterEnvironmentSpeaker( entity speakerEnt )
+	string perspective = firstPerson ? "1p" : "3p"
+	string result = "diag_mp_" + voice + "_" + aliasSubname + "_" + perspective
+	if ( result in FORBIDDEN_DIALOGUE_EVENT_NAMES )
+		return ""
+	return result
+}
+
+string function GetBattleChatterAlias1P3PWithTempVoice( string aliasSubname, bool firstPerson )
 {
-	return RegisterSpeaker_Internal( speakerEnt, QUEUE_MAIN )
+	string voice = TEMP_VOICE
+	string perspective = firstPerson ? "1p" : "3p"
+	string result = "diag_mp_" + voice + "_" + aliasSubname + "_" + perspective
+	if ( result in FORBIDDEN_DIALOGUE_EVENT_NAMES )
+		return ""
+	return result
 }
-#endif
-
-#if CLIENT
-EnvironmentSpeaker function RegisterSpeaker_Internal( entity speakerEnt, int queue )
-{
-	EnvironmentSpeaker speaker
-	speaker.origin = speakerEnt.GetOrigin()
-	speaker.speakerEnt = speakerEnt
-
-	file.allSpeakersList[ queue ].append( speaker )
-	return speaker
-}
-#endif
-
-#if CLIENT
-void function DeregisterEnvironmentSpeaker( EnvironmentSpeaker speaker )
-{
-	file.allSpeakersList[ QUEUE_MAIN ].fastremovebyvalue( speaker )
-}
-#endif

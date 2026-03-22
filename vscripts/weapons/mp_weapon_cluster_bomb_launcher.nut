@@ -130,7 +130,7 @@ void function OnProjectileCollision_weapon_cluster_bomb_launcher( entity project
 	}
 	else
 	{
-		PlantStickyEntity_Retail( projectile, collisionParams, ZERO_VECTOR, false, ( hitEnt.IsPlayer() || hitEnt.IsNPC() ) )
+		PlantStickyEntity( projectile, collisionParams, ZERO_VECTOR, false, ( hitEnt.IsPlayer() || hitEnt.IsNPC() ) )
 	}
 
 #if SERVER
@@ -563,4 +563,4 @@ void function TakeClusterBombWeapon( entity player )
 }
 
 
-#endif //SERVER 
+#endif //SERVER

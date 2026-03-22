@@ -1702,7 +1702,7 @@ void function PlayerDriven_DummieTargeting_Thread( entity player )
 					{
 						//// uncomment to Debug
 						//#if DEVELOPER
-						//	DebugDrawSphere( dummie.GetOrigin(), 25, COLOR_RED, true, waitTime * 0.9 )
+						//	DebugDrawSphere( dummie.GetOrigin(), 25, <255, 0, 0>, true, waitTime * 0.9 )
 						//#endif // DEVELOPER
 
 						if( DummieShooting_Player_Has_MaxDummies( player ) )
@@ -1713,7 +1713,7 @@ void function PlayerDriven_DummieTargeting_Thread( entity player )
 				{
 					// uncomment to Debug
 					//#if DEVELOPER
-					//	DebugDrawCube( dummie.GetOrigin(), 20, COLOR_GREEN, true, waitTime * 0.9)
+					//	DebugDrawCube( dummie.GetOrigin(), 20, <0, 255, 0>, true, waitTime * 0.9)
 					//#endif // DEVELOPER
 					DummieTargeting_UnTargetCurrent( dummie )
 				}
@@ -1722,7 +1722,7 @@ void function PlayerDriven_DummieTargeting_Thread( entity player )
 			{
 				// uncomment to Debug
 				//#if DEVELOPER
-				//	DebugDrawCube( dummie.GetOrigin(), 20, COLOR_BLUE, true, waitTime * 0.9)
+				//	DebugDrawCube( dummie.GetOrigin(), 20, <0, 0, 255>, true, waitTime * 0.9)
 				//#endif // DEVELOPER
 				DummieTargeting_UntargetPlayer( dummie, player )
 			}

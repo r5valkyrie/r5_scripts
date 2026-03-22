@@ -3917,7 +3917,7 @@ void function ShowBattlePassItem_Sticker( ItemFlavor item )
 	entity mover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", origin, angles )
 	mover.MakeSafeForUIScriptHack()
 
-	entity model = CreateClientSidePropDynamic( origin, angles, FLAT_STICKER_MODEL )
+	entity model = CreateClientSidePropDynamic( origin, angles, UNAPPLIED_STICKER_MODEL )
 	model.MakeSafeForUIScriptHack()
 	model.SetModelScale( 1.5 )
 	model.SetParent( mover )

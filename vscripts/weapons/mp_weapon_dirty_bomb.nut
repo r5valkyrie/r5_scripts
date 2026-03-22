@@ -285,7 +285,7 @@ void function DeployCausticTrap( entity owner, DirtyBombPlacementInfo placementI
 
 	if ( IsValid( placementInfo.parentTo ) )
 	{
-		mover = CreateScriptMover( origin, angles )
+		mover = CreateScriptMover( "", origin, angles )
 		mover.SetParent( placementInfo.parentTo )
 		canisterProxy.SetParent( mover )
 	}
@@ -407,12 +407,15 @@ void function Mitosis(vector attackPos, vector dir, entity weapon, entity owner)
 
 #if SERVER
 //some reason using the global OnProjectilePlanted wasn't working so
-void function OnProjectilePlanted( entity projectile, void functionref(entity) deployFunc )
+void function OnProjectilePlanted( entity projectile, void functionref(entity, DeployableCollisionParams) deployFunc )
 {
 	projectile.EndSignal( "OnDestroy" )
 	projectile.WaitSignal( "Planted" )
 	projectile.proj.isPlanted = true
-	thread deployFunc( projectile )
+	DeployableCollisionParams collisionParams
+	collisionParams.pos = projectile.GetOrigin()
+	collisionParams.normal = projectile.GetUpVector()
+	thread deployFunc( projectile, collisionParams )
 }
 #endif
 
@@ -1187,7 +1190,7 @@ void function OnWeaponTossPrep_weapon_dirty_bomb( entity weapon, WeaponTossPrepP
 	weapon.EmitWeaponSound_1p3p( GetGrenadeDeploySound_1p( weapon ), GetGrenadeDeploySound_3p( weapon ) )
 }
 
-void function OnDirtyBombPlanted( entity projectile )
+void function OnDirtyBombPlanted( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 		DirtyBombPlacementInfo placementInfo

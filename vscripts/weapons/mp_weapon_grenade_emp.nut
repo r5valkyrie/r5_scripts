@@ -9,13 +9,20 @@ void function OnProjectileCollision_weapon_grenade_emp( entity projectile, vecto
 	if ( hitEnt == player )
 		return
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 
 	bool result = PlantStickyEntity( projectile, collisionParams )
 	
@@ -35,13 +42,20 @@ void function OnProjectileCollision_weapon_grenade_decoy( entity projectile, vec
 	if ( hitEnt == player )
 		return
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 
 	bool result = PlantStickyEntity( projectile, collisionParams )
 

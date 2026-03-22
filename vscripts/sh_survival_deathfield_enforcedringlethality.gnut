@@ -1,0 +1,889 @@
+global function Sh_DeathField_EnforcedRingLethality_Init
+
+global function Deathfield_EnforcedRingLethality_Enabled
+global function Deathfield_EnforcedRingLethality_FirstTimeThreshold
+global function Deathfield_EnforcedRingLethality_SecondTimeThreshold
+global function Deathfield_EnforcedRingLethality_LethalityEffectDuration
+global function Deathfield_EnforcedRingLethality_LowerIconEnabled
+
+global function SimplifiedRingLethality_Enabled
+global function SimplifiedRingLethality_RingoutTime
+global function SimplifiedRingLethality_Ringout_WarningTime
+global function SimplifiedRingLethality_ResetTime
+global function SimplifiedRingLethality_ShouldShowWarning
+
+global function RingLethality_Is_Player_InDeathfield
+global function RingLethality_Is_Player_InRingOutWarning
+
+#if SERVER
+global function Deathfield_EnforcedRingLethality_DeathFieldDamage
+global function RingLethality_StatusEffect_Apply
+global function SimplifiedRingLethality_InstaDeath
+#endif // SERVER
+
+const string DEATHFIELD_RING_LETHALITY_1P_ACTIVATION_SOUND 	= "ui_revshellseeker_aggressor_targetlock_1p"
+const string SIMPLIFIEDRINGLETHALITY_SOUND_RINGOUT_LOOP 	= "Boundary_Warning_Loop"
+const string SIMPLIFIEDRINGLETHALITY_SOUND_RINGOUT_WARNING 	= "Survival_Circle_Ringout_Warning_Stinger"
+
+global const float DEATHFIELD_RING_LETHALITY_STATUS_DURATION = 45 // seconds
+global const float DEATHFIELD_RING_LETHALITY_WARNING_DURATION = 90 // seconds
+
+const int ID_INVALID = -1
+
+struct PlayerDeathfieldTracker
+{
+	bool playerInDeathField
+	float timeInDeathField_All
+	float timeInDeathfield_Continuous
+	float lastTimeInField
+	float timeExitedField
+	int damageSustainedFromRing
+
+	// --- Simplified Ringout Timer
+	float timeInRing_Continuous
+	table< int, bool > soundIsPlaying // Bools for which sound is playing indexed by sound type.
+}
+
+enum eRingLethality_StatusEffectType
+{
+	WARNING,
+	LETHAL,
+	COUNT_
+}
+
+enum eRingLethality_SoundTypes
+{
+	RINGOUT_WARNING,
+	LETHAL,
+	COUNT_
+}
+
+struct sRingLethality_StatusIDs
+{
+	int statusID_Warning = ID_INVALID
+	int statusID_Lethal = ID_INVALID
+}
+
+struct
+{
+	#if SERVER
+		table< entity, PlayerDeathfieldTracker > 	deathFieldTrackingAllPlayers
+		table< entity, sRingLethality_StatusIDs > ringLethality_StatusIDs
+	#endif // SERVER
+
+	#if CLIENT
+		bool snd_RingWarnLoopPlaying = false
+	#endif
+} file
+
+void function Sh_DeathField_EnforcedRingLethality_Init()
+{
+	#if SERVER
+		RegisterSignal( "OnDeathfieldLethalityWarningStop" )
+		AddCallback_OnPlayerKilled( RingLethality_OnPlayerKilled )
+		AddCallback_GameStateEnter( eGameState.Playing, EnforcedRingLethality_StartPlayerTracking )
+	#endif // SERVER
+
+	#if CLIENT
+		RegisterSignal( "RingoutLoop_Sound_Stop" )
+		AddCreateCallback( "player", CL_Manage_RingOutLoopSound )
+	#endif // CLIENT
+}
+
+bool function Deathfield_EnforcedRingLethality_Enabled()
+{
+	return GetCurrentPlaylistVarBool( "deathfield_enforced_ring_lethality_enabled", true )
+}
+
+bool function Deathfield_EnforcedRingLethality_TrackByTotalRingDamage()
+{
+	return GetCurrentPlaylistVarBool( "deathfield_enforced_ring_lethality_trackby_totalringdamage", false )
+}
+
+int function Deathfield_EnforcedRingLethality_First_DamageThreshold()
+{
+	return GetCurrentPlaylistVarInt( "deathfield_enforced_ring_lethality_first_damage_threshold", 200 )
+}
+
+int function Deathfield_EnforcedRingLethality_Second_DamageThreshold()
+{
+	return GetCurrentPlaylistVarInt( "deathfield_enforced_ring_lethality_second_damage_threshold", 500 )
+}
+
+float function Deathfield_EnforcedRingLethality_DamagePercent()
+{
+	return GetCurrentPlaylistVarFloat( "deathfield_enforced_ring_lethality_damage_percent", 0.5 )
+}
+
+float function Deathfield_EnforcedRingLethality_FirstTimeThreshold()
+{
+	return SimplifiedRingLethality_Enabled() ? 0.0 : GetCurrentPlaylistVarFloat( "deathfield_enforced_ring_lethality_first_threshold", 120.0 )
+}
+
+float function Deathfield_EnforcedRingLethality_SecondTimeThreshold()
+{
+	return SimplifiedRingLethality_Enabled() ? SimplifiedRingLethality_RingoutTime() : GetCurrentPlaylistVarFloat( "deathfield_enforced_ring_lethality_second_threshold", 90.0 )
+}
+
+float function Deathfield_EnforcedRingLethality_LethalityEffectDuration()
+{
+	return GetCurrentPlaylistVarFloat( "deathfield_enforced_ring_lethality_effect_duration", 45.0 )
+}
+
+bool function Deathfield_EnforcedRingLethality_LowerIconEnabled()
+{
+	return GetCurrentPlaylistVarBool( "deathfield_enforcedringlethality_lowericon_enabled", false )
+}
+
+// --- Simplified Ring Lethality
+
+bool function SimplifiedRingLethality_Enabled()
+{
+	// Determines whether the Simplified version is ON.
+	return GetCurrentPlaylistVarBool( "simplifiedringlethality_enabled", true )
+}
+
+float function SimplifiedRingLethality_RingoutTime()
+{
+	// Total time player is allowed to be outside the Ring before death.
+	return GetCurrentPlaylistVarFloat( "simplifiedringlethality_ringouttime", 240 ) // 4 minutes total. Will be tuned and reduced as time goes by.
+}
+
+float function SimplifiedRingLethality_Ringout_WarningTime()
+{
+	// Time passed threshold at which the warning timer is shown.
+	return GetCurrentPlaylistVarFloat( "simplifiedringlethality_warningtime", 180.0 ) // Warn when 3 minutes have passed and there's 1 minute left.
+}
+
+float function SimplifiedRingLethality_ResetTime()
+{
+	// Total continuous time that the player needs to spend inside the Ring to reset their Ringout Timer.
+	return GetCurrentPlaylistVarFloat( "simplifiedringlethality_resettime", 45.0 )
+}
+
+bool function SimplifiedRingLethality_ShouldSkipRound1()
+{
+	// Time passed threshold at which the warning timer is shown.
+	return GetCurrentPlaylistVarBool( "simplifiedringlethality_shouldskipround1", true )
+}
+
+// If true, don't reset the player's Ring Lethality timers on death.
+bool function SimplifiedRingLethality_Respawn_Continues_RingOutTimer()
+{
+	return GetCurrentPlaylistVarBool( "simplifiedringlethality_respawn_continues_ringouttimer", true )
+}
+
+// If above is true, respawned players get this much RingOut timer time if they had depleted it so they don't die immediately on respawn.
+float function SimplifiedRingLethality_Respawn_RingOutAllowanceTime_Given()
+{
+	return GetCurrentPlaylistVarFloat( "simplifiedringlethality_respawn_ringoutallowancetime_given", 30.0 )
+}
+
+bool function SimplifiedRingLethality_ShouldShowWarning( entity player )
+{
+	if ( !IsValid( player ) )
+		return false
+
+	bool simplifiedLethality = SimplifiedRingLethality_Enabled()
+	bool shouldWarn = false
+	if ( simplifiedLethality )
+	{
+		if( !StatusEffect_HasSeverity( player, eStatusEffect.ring_lethality_warning ) )
+			return false
+
+		float ringOutTime = SimplifiedRingLethality_RingoutTime()
+		float warningTime = SimplifiedRingLethality_Ringout_WarningTime()
+		float threshold = ringOutTime - warningTime
+		float timeRemaining = StatusEffect_GetTimeRemaining( player, eStatusEffect.ring_lethality_warning )
+		shouldWarn = timeRemaining <= threshold
+	}
+	else
+	{
+		shouldWarn = true
+	}
+
+	return shouldWarn
+}
+
+#if SERVER
+void function SimplifiedRingLethality_InstaDeath( entity player )
+{
+	if ( !IsValidPlayer( player ) )
+		return
+
+	#if DEVELOPER
+		printt( format( "%s(): Player %s Died from Ringout.", FUNC_NAME(), player.GetPlayerName() ) )
+	#endif // DEVELOPER
+
+	KillPlayer( player, eDamageSourceId.deathField )
+}
+#endif // SERVER
+
+
+#if SERVER
+void function Deathfield_EnforcedRingLethality_DeathFieldDamage( entity player, DeathFieldData data, entity deathField )
+{
+	if ( Deathfield_EnforcedRingLethality_Enabled() && StatusEffect_HasSeverity( player, eStatusEffect.ring_lethality_increase ) )
+	{
+		int damageToDeal = int( Deathfield_EnforcedRingLethality_DamagePercent() * float( player.GetMaxHealth() ) )
+		player.TakeDamage( damageToDeal , null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.deathField } )
+
+		//Log damage for tabulation later and possible use case for Lethality Status Effect
+		Deathfield_LogRingDamageOnPlayer( player, damageToDeal )
+
+		//Refresh the DeathField Lethality Status Effect as you take damage so it cannot expire.
+		RingLethality_StatusEffect_Apply( player )
+	}
+	else
+	{
+		player.TakeDamage( int( data.percentDamagePerTick * float( player.GetMaxHealth() ) ), null, null, { scriptType = DF_BYPASS_SHIELD | DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.deathField } )
+		if ( Deathfield_EnforcedRingLethality_Enabled() )
+		{
+			Deathfield_LogRingDamageOnPlayer( player, int( data.percentDamagePerTick * float( player.GetMaxHealth() ) ) )
+		}
+	}
+}
+
+void function EnforcedRingLethality_InitPlayerData( entity player )
+{
+	#if DEVELOPER
+		printt( format( "%s(): ***** Enforced Ring Lethality Data Initialized for %s", FUNC_NAME(), player.GetPlayerName() ) )
+	#endif // DEVELOPER
+
+	PlayerDeathfieldTracker trackerData
+
+	trackerData.playerInDeathField = false
+	trackerData.timeInDeathField_All = 0
+	trackerData.timeInDeathfield_Continuous = 0
+	trackerData.damageSustainedFromRing = 0
+
+	trackerData.timeInRing_Continuous = 0
+
+	file.deathFieldTrackingAllPlayers[ player ] <- trackerData
+}
+
+void function EnforcedRingLethality_StartPlayerTracking()
+{
+	#if DEVELOPER
+		printt( format( "%s(): ***** Enforced Ring Lethality ON!", FUNC_NAME() ) )
+	#endif // DEVELOPER
+
+	thread EnforcedRingLethality_TrackPlayers_Thread()
+}
+
+void function EnforcedRingLethality_TrackPlayers_Thread()
+{
+	while ( GetGameState() <= eGameState.Playing  )
+	{
+		if( GetGameState() != eGameState.Playing )
+		{
+			WaitFrame()
+			continue
+		}
+
+		bool dontSkipRound1ForMode = false
+
+			dontSkipRound1ForMode = dontSkipRound1ForMode || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_BATTLE_RUSH )
+
+
+		if( !dontSkipRound1ForMode && SimplifiedRingLethality_ShouldSkipRound1() && ( SURVIVAL_GetCurrentDeathFieldStage( 0 ) < 1 ) )
+		{
+			WaitFrame()
+			continue
+		}
+
+		array< entity > allPlayers = GetPlayerArray()
+		foreach( player in allPlayers )
+		{
+			if ( !IsValidPlayer( player ) ||  player.IsObserver() )
+				continue
+
+			if( !IsAlive( player ) )
+				continue
+
+			if ( !( player in file.deathFieldTrackingAllPlayers ) )
+			{
+				EnforcedRingLethality_InitPlayerData( player )
+			}
+
+			EnforcedRingLethality_CheckPlayer( player )
+		}
+		WaitFrame()
+	}
+}
+
+void function EnforcedRingLethality_CheckPlayer( entity player )
+{
+	if ( player in  file.deathFieldTrackingAllPlayers )
+	{
+		PlayerDeathfieldTracker trackingData = file.deathFieldTrackingAllPlayers[ player ]
+
+		int respawnStatus = player.GetPlayerNetInt( "respawnStatus" )
+		bool playerIsNotInRespawn = ( respawnStatus == 0 )
+		playerIsNotInRespawn = playerIsNotInRespawn || ( respawnStatus != eRespawnStatus.WAITING_FOR_DROPPOD  )
+		playerIsNotInRespawn = playerIsNotInRespawn && ( respawnStatus != eRespawnStatus.WAITING_FOR_RESPAWN  )
+
+		if( RingLethality_Is_Player_InDeathfield( player ) && IsAlive( player ) && playerIsNotInRespawn )
+		{
+			if ( file.deathFieldTrackingAllPlayers[ player ].playerInDeathField )
+			{
+				file.deathFieldTrackingAllPlayers[ player ].timeInDeathField_All += Time() - file.deathFieldTrackingAllPlayers[ player ].lastTimeInField
+
+				file.deathFieldTrackingAllPlayers[ player ].timeInDeathfield_Continuous += Time() - file.deathFieldTrackingAllPlayers[ player ].lastTimeInField // TIME DELTA FROM LAST SAVED MOMENT IN RING
+
+				if ( !Deathfield_EnforcedRingLethality_TrackByTotalRingDamage() ) // This logic uses time to track the player presence in ring, after arbitrary maximums it imposes the warnings and penalty (lethality)
+				{
+					if ( DeathFieldTime_Reached_Threshold1( player ) )
+					{
+						//APPLY WARNING EFFECT / SIGNAL TO PLAYER
+						RingLethality_StatusEffect_Apply( player, true )
+					}
+
+					if ( DeathFieldTime_Reached_Threshold2( player ) )
+					{
+						//#if DEVELOPER
+						//	printt( format( "Player %s Time in Ring: ", player.GetPlayerName(), string( file.deathFieldTrackingAllPlayers[ player ].timeInDeathfield_Continuous ) ) )
+						//#endif
+
+						if ( SimplifiedRingLethality_Enabled() )
+						{
+							SimplifiedRingLethality_InstaDeath( player )
+						}
+						else
+						{
+							//APPLY DEBUFF TO PLAYER
+							RingLethality_StatusEffect_Apply( player )
+						}
+					}
+				}
+				else // This logic instead of using time to track the player presence in ring, it tracks damage dealt by the ring to the player, after arbitrary maximums it imposes the warnings and penalty (lethality)
+				{
+					if ( file.deathFieldTrackingAllPlayers[ player ].damageSustainedFromRing > Deathfield_EnforcedRingLethality_First_DamageThreshold() )
+					{
+						//APPLY WARNING EFFECT / SIGNAL TO PLAYER
+						RingLethality_StatusEffect_Apply( player, true )
+					}
+
+					if ( file.deathFieldTrackingAllPlayers[ player ].damageSustainedFromRing > Deathfield_EnforcedRingLethality_Second_DamageThreshold() )
+					{
+						//APPLY DEBUFF TO PLAYER
+						if ( SimplifiedRingLethality_Enabled() )
+						{
+							SimplifiedRingLethality_InstaDeath( player )
+						}
+						else
+						{
+							//APPLY DEBUFF TO PLAYER
+							RingLethality_StatusEffect_Apply( player )
+						}
+					}
+				}
+
+				file.deathFieldTrackingAllPlayers[ player ].lastTimeInField = Time()
+			}
+			else
+			{
+				file.deathFieldTrackingAllPlayers[ player ].playerInDeathField = true
+
+				file.deathFieldTrackingAllPlayers[ player ].timeInDeathfield_Continuous = 0
+
+				file.deathFieldTrackingAllPlayers[ player ].lastTimeInField = Time()
+
+				file.deathFieldTrackingAllPlayers[ player ].timeInRing_Continuous = 0
+			}
+		}
+		else // Not in Death Field.
+		{
+			if ( file.deathFieldTrackingAllPlayers[ player ].playerInDeathField )
+			{
+				file.deathFieldTrackingAllPlayers[ player ].playerInDeathField = false
+
+				file.deathFieldTrackingAllPlayers[ player ].timeExitedField = Time()
+			}
+
+			file.deathFieldTrackingAllPlayers[ player ].timeInRing_Continuous = Time() - file.deathFieldTrackingAllPlayers[ player ].timeExitedField
+
+			if ( SimplifiedRingLethality_Enabled() )
+			{
+				RingLethality_Sound_Status_Apply( player, eRingLethality_StatusEffectType.WARNING, false )
+
+				if ( file.deathFieldTrackingAllPlayers[ player ].timeInRing_Continuous >= SimplifiedRingLethality_ResetTime() )
+				{
+					RingLethality_Reset( player )
+				}
+				else
+				{
+					// If the player is outside the deathfield and has the Warning Status Effect, pause the status effect.
+					if ( player in file.ringLethality_StatusIDs )
+					{
+						RingLethality_StatusEffect_Warning_PauseUnpause( player, true )
+					}
+				}
+			}
+			else
+			{
+				player.Signal( "OnDeathfieldLethalityWarningStop" )
+			}
+		}
+	}
+}
+
+void function RingLethality_OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	RingLethality_CheckAndApplyBuffer( victim )
+}
+
+void function RingLethality_CheckAndApplyBuffer( entity player )
+{
+	#if DEVELOPER
+		printt( FUNC_NAME() + "(): Applying RingOut Time Buffer For Player: " + player.GetPlayerName() )
+	#endif // DEVELOPER
+
+	if( SimplifiedRingLethality_Respawn_Continues_RingOutTimer() )
+	{
+		// ( Used for cases where player dies in-ring and is respawned in-ring )
+		// Give the player at least SimplifiedRingLethality_Respawn_RingOutAllowanceTime_Given() time to survive the Ring after being respawned.
+		if( !( player in file.deathFieldTrackingAllPlayers ) )
+			return
+
+		PlayerDeathfieldTracker trackerData = file.deathFieldTrackingAllPlayers[ player ]
+
+		float ringOutTimeTotal = SimplifiedRingLethality_RingoutTime()
+		float respawnTimeAllowance = SimplifiedRingLethality_Respawn_RingOutAllowanceTime_Given()
+		float respawnTimeAllowanceThreshold = ringOutTimeTotal - respawnTimeAllowance
+
+		if( trackerData.timeInDeathField_All > ringOutTimeTotal )
+		{
+			trackerData.timeInDeathField_All = ringOutTimeTotal
+		}
+
+		if( trackerData.timeInDeathField_All > respawnTimeAllowanceThreshold  )
+		{
+			trackerData.timeInDeathField_All = respawnTimeAllowanceThreshold
+		}
+		file.deathFieldTrackingAllPlayers[ player ].lastTimeInField = Time()
+		file.deathFieldTrackingAllPlayers[ player ].timeExitedField = Time()
+
+		// Set the duration for the statusEffect.
+		RingLethality_StatusEffect_SetWarning( player )
+		#if DEVELOPER
+			printt( format( "%s(): Applied time buffer to player %s : %s", FUNC_NAME(), player.GetPlayerName(), string( respawnTimeAllowanceThreshold )) )
+		#endif // DEVELOPER
+	}
+	else
+	{
+		// Reset Ring Lethality upon death.
+		RingLethality_Reset( player )
+	}
+}
+
+void function RingLethality_Reset( entity player )
+{
+	if ( !IsValidPlayer( player ) )
+		return
+
+	player.Signal( "OnDeathfieldLethalityWarningStop" )
+
+	if( !( player in file.deathFieldTrackingAllPlayers ) )
+		return
+
+	PlayerDeathfieldTracker trackerData = file.deathFieldTrackingAllPlayers[ player ]
+
+	trackerData.playerInDeathField = false
+	trackerData.timeInDeathField_All = 0
+	trackerData.timeInDeathfield_Continuous = 0
+	trackerData.damageSustainedFromRing = 0
+
+	trackerData.timeInRing_Continuous = 0
+}
+
+bool function DeathFieldTime_Reached_Threshold1( entity player )
+{
+	if ( SimplifiedRingLethality_Enabled() )
+	{
+		return( file.deathFieldTrackingAllPlayers[ player ].timeInDeathField_All > Deathfield_EnforcedRingLethality_FirstTimeThreshold() )
+	}
+
+	return( file.deathFieldTrackingAllPlayers[ player ].timeInDeathfield_Continuous > Deathfield_EnforcedRingLethality_FirstTimeThreshold() )
+
+}
+
+bool function DeathFieldTime_Reached_Threshold2( entity player )
+{
+
+	if ( SimplifiedRingLethality_Enabled() )
+	{
+		return( file.deathFieldTrackingAllPlayers[ player ].timeInDeathField_All > Deathfield_EnforcedRingLethality_SecondTimeThreshold() + Deathfield_EnforcedRingLethality_FirstTimeThreshold() )
+	}
+
+	return( file.deathFieldTrackingAllPlayers[ player ].timeInDeathfield_Continuous > Deathfield_EnforcedRingLethality_SecondTimeThreshold() + Deathfield_EnforcedRingLethality_FirstTimeThreshold() )
+}
+
+void function RingLethality_Sound_Status_Apply( entity player, int statusEffectType, bool playOn, bool forceSound = false )
+{
+	if ( !IsValidPlayer( player ) )
+		return
+
+	switch ( statusEffectType )
+	{
+		case eRingLethality_StatusEffectType.WARNING:
+			if ( playOn )
+			{
+				bool shouldWarn = SimplifiedRingLethality_ShouldShowWarning( player ) || forceSound
+				if ( SimplifiedRingLethality_Enabled() && shouldWarn )
+				{
+					RingLethality_Sound_Play( player, eRingLethality_SoundTypes.RINGOUT_WARNING, true )
+				}
+			}
+			else // Turn it all off.
+			{
+				RingLethality_Sound_Play( player, eRingLethality_SoundTypes.RINGOUT_WARNING, false )
+			}
+			break
+		case eRingLethality_StatusEffectType.LETHAL:
+			if ( playOn )
+			{
+				if ( !DeathField_StatusEffect_Sound_Get( player, eRingLethality_SoundTypes.LETHAL ) )
+				{
+					RingLethality_Sound_Play( player, eRingLethality_SoundTypes.LETHAL, true  )
+				}
+			}
+			else
+			{
+				if ( DeathField_StatusEffect_Sound_Get( player, eRingLethality_SoundTypes.LETHAL ) )
+				{
+					RingLethality_Sound_Play( player, eRingLethality_SoundTypes.LETHAL, false )
+				}
+			}
+			break
+		default:
+			Warning( FUNC_NAME() + "(): Invalid Status Effect Type Given." )
+			break
+	}
+}
+
+void function RingLethality_Sound_Play( entity player, int soundType, bool playSound )
+{
+	table< int, string > statusSounds
+	statusSounds[ eRingLethality_SoundTypes.LETHAL ] 			<- DEATHFIELD_RING_LETHALITY_1P_ACTIVATION_SOUND
+	statusSounds[ eRingLethality_SoundTypes.RINGOUT_WARNING ] 	<- SIMPLIFIEDRINGLETHALITY_SOUND_RINGOUT_WARNING
+
+	string selectedSound = statusSounds[ soundType ]
+
+	if( !( soundType in file.deathFieldTrackingAllPlayers[ player ].soundIsPlaying ) )
+	{
+		file.deathFieldTrackingAllPlayers[ player ].soundIsPlaying[ soundType ] <- false
+	}
+
+	if( playSound && !file.deathFieldTrackingAllPlayers[ player ].soundIsPlaying[ soundType ] )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, player, selectedSound )
+		file.deathFieldTrackingAllPlayers[ player ].soundIsPlaying[ soundType ] <- true
+	}
+	else if( !playSound && file.deathFieldTrackingAllPlayers[ player ].soundIsPlaying[ soundType ] )
+	{
+		StopSoundOnEntity( player, selectedSound )
+		file.deathFieldTrackingAllPlayers[ player ].soundIsPlaying[ soundType ] <- false
+	}
+}
+
+bool function DeathField_StatusEffect_Sound_Get( entity player, int soundType )
+{
+	if ( !( soundType in file.deathFieldTrackingAllPlayers[ player ].soundIsPlaying ) )
+	{
+		file.deathFieldTrackingAllPlayers[ player ].soundIsPlaying[ soundType ] <- false
+	}
+	return file.deathFieldTrackingAllPlayers[ player ].soundIsPlaying[ soundType ]
+}
+
+void function RingLethality_StatusEffect_Apply( entity player, bool warningOnly = false )
+{
+	if ( !IsValid( player ) || !IsAlive( player ) )
+		return
+
+	PlayerDeathfieldTracker playerDeathFieldTrackingData
+
+	if ( player in  file.deathFieldTrackingAllPlayers )
+	{
+		playerDeathFieldTrackingData = file.deathFieldTrackingAllPlayers[ player ]
+
+		if ( !warningOnly ) // Heavy damage or outright death.
+		{
+			if ( !StatusEffect_HasSeverity( player, eStatusEffect.ring_lethality_increase ) )
+			{
+				thread RingLethality_StatusEffect_Lethal_Thread( player, playerDeathFieldTrackingData )
+			}
+		}
+		else
+		{
+			if ( !RingLethality_StatusEffect_Warning_PauseUnpause( player, false ) )
+			{
+				if ( !StatusEffect_HasSeverity( player, eStatusEffect.ring_lethality_warning ) && !StatusEffect_HasSeverity( player, eStatusEffect.ring_lethality_increase ) )
+				{
+					thread RingLethality_StatusEffect_Warning_Thread( player, playerDeathFieldTrackingData )
+				}
+			}
+		}
+	}
+}
+
+// Returns true if the player has the warning status effect and the pause state was set successfully.
+bool function RingLethality_StatusEffect_Warning_PauseUnpause( entity player, bool pauseState )
+{
+	if ( !StatusEffect_HasSeverity( player, eStatusEffect.ring_lethality_warning ) )
+		return false
+
+	bool setOk = false
+	int effectID = RingLethality_StatusEffectID_Get( player, eRingLethality_StatusEffectType.WARNING )
+	if ( effectID != ID_INVALID )
+	{
+		StatusEffect_SetPauseState( player, effectID, pauseState )
+		setOk = true
+	}
+	return setOk
+}
+
+void function RingLethality_StatusEffect_Lethal_Thread( entity player, PlayerDeathfieldTracker trackingData )
+{
+	player.Signal( "OnDeathfieldLethalityWarningStop" )
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	int effectHandle
+
+	if ( !IsValidPlayer( player ) )
+		return
+
+	if ( !IsAlive( player ) )
+		return
+
+	effectHandle = StatusEffect_AddTimed( player, eStatusEffect.ring_lethality_increase, 1.0, Deathfield_EnforcedRingLethality_LethalityEffectDuration(), 0.0 )
+	RingLethality_StatusEffectID_Set( player, eRingLethality_StatusEffectType.LETHAL, effectHandle )
+	RingLethality_Sound_Status_Apply( player, eRingLethality_StatusEffectType.LETHAL, true )
+
+	OnThreadEnd(
+		function() : ( player, effectHandle )
+		{
+			if ( IsValid( player ) )
+			{
+				StatusEffect_Stop( player, effectHandle )
+				RingLethality_Sound_Status_Apply( player, eRingLethality_StatusEffectType.LETHAL, false )
+				RingLethality_StatusEffectID_Set( player, eRingLethality_StatusEffectType.WARNING, ID_INVALID )
+			}
+		}
+	)
+	WaitForever()
+}
+
+void function RingLethality_StatusEffect_Warning_Thread( entity player, PlayerDeathfieldTracker trackingData )
+{
+	EndSignal( player, "OnDeathfieldLethalityWarningStop" )
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	if ( !IsValidPlayer( player ) )
+		return
+
+	if ( !IsAlive( player ) )
+		return
+
+	int effectHandle = RingLethality_StatusEffect_SetWarning( player )
+
+	OnThreadEnd(
+		function() : ( player, effectHandle )
+		{
+			if ( IsValid( player ) )
+			{
+				RingLethality_Sound_Status_Apply( player, eRingLethality_StatusEffectType.WARNING, false )
+				RingLethality_StatusEffectID_Set( player, eRingLethality_StatusEffectType.WARNING, ID_INVALID )
+				StatusEffect_Stop( player, effectHandle )
+			}
+		}
+	)
+
+	bool simplifiedLethality = SimplifiedRingLethality_Enabled()
+	while ( IsValidPlayer( player ) && GetGameState() < eGameState.WinnerDetermined )
+	{
+		if ( simplifiedLethality )
+		{
+			// Written this way to debug.
+			bool shouldWarn = RingLethality_Is_Player_InRingOutWarning( player )
+			if ( shouldWarn )
+			{
+				RingLethality_Sound_Status_Apply( player, eRingLethality_StatusEffectType.WARNING, true )
+			}
+			else
+			{
+				RingLethality_Sound_Status_Apply( player, eRingLethality_StatusEffectType.WARNING, false )
+			}
+		}
+		WaitFrame()
+	}
+}
+
+int function RingLethality_StatusEffect_SetWarning( entity player )
+{
+	float timeTotal = Deathfield_EnforcedRingLethality_SecondTimeThreshold()
+	int statusEffectHandle = StatusEffect_AddTimed( player, eStatusEffect.ring_lethality_warning , 1.0, timeTotal, 0.0 )
+
+	// If continue on respawn, set the timer to be remaining time.
+	if( SimplifiedRingLethality_Enabled() && SimplifiedRingLethality_Respawn_Continues_RingOutTimer() && ( player in file.deathFieldTrackingAllPlayers ) )
+	{
+		PlayerDeathfieldTracker trackerData = file.deathFieldTrackingAllPlayers[ player ]
+
+		float timeRemaining = timeTotal - trackerData.timeInDeathField_All
+		StatusEffect_SetDuration( player, statusEffectHandle, timeRemaining )
+	}
+	return statusEffectHandle
+}
+
+void function RingLethality_StatusEffectID_Set( entity player, int statusEffectType, int value = ID_INVALID )
+{
+	if ( !( player in file.ringLethality_StatusIDs ) )
+	{
+		sRingLethality_StatusIDs statIDs
+		file.ringLethality_StatusIDs[ player ] <- statIDs
+	}
+
+	switch ( statusEffectType )
+	{
+		case eRingLethality_StatusEffectType.WARNING:
+			file.ringLethality_StatusIDs[ player ].statusID_Warning = value
+			break
+		case eRingLethality_StatusEffectType.LETHAL:
+			file.ringLethality_StatusIDs[ player ].statusID_Lethal = value
+			break
+		default:
+			Warning( FUNC_NAME() + "(): INVALID Deathfield StatusEffect Type Given: " + statusEffectType )
+			break
+	}
+}
+
+int function RingLethality_StatusEffectID_Get( entity player, int statusEffectType)
+{
+	if ( !( player in file.ringLethality_StatusIDs ) )
+	{
+		sRingLethality_StatusIDs statIDs
+		file.ringLethality_StatusIDs[ player ] <- statIDs
+	}
+
+	int result = ID_INVALID
+	switch ( statusEffectType )
+	{
+		case eRingLethality_StatusEffectType.WARNING:
+			result = file.ringLethality_StatusIDs[ player ].statusID_Warning
+			break
+		case eRingLethality_StatusEffectType.LETHAL:
+			result = file.ringLethality_StatusIDs[ player ].statusID_Lethal
+			break
+		default:
+			Warning( FUNC_NAME() + "(): INVALID Deathfield StatusEffect Type Given: " + statusEffectType )
+			break
+	}
+
+	return result
+}
+
+void function Deathfield_LogRingDamageOnPlayer( entity player, int damageDealt )
+{
+	if ( !IsValid( player ) || !IsAlive( player ) )
+		return
+
+	PlayerDeathfieldTracker playerDeathFieldTrackingData
+
+	if ( player in  file.deathFieldTrackingAllPlayers )
+	{
+		if ( damageDealt >= 0  )
+			file.deathFieldTrackingAllPlayers[ player ].damageSustainedFromRing += damageDealt
+	}
+}
+#endif // SERVER
+
+bool function RingLethality_Is_Player_InDeathfield( entity player )
+{
+	if( !IsValid( player ) )
+		return false
+
+	if( !IsAlive( player ) )
+		return false
+
+	float distanceFromDeathfieldFrontier = DeathField_PointDistanceFromFrontier( player.GetOrigin() )
+	return( distanceFromDeathfieldFrontier <= 0 )
+}
+
+bool function RingLethality_Is_Player_InRingOutWarning( entity player )
+{
+	if ( !RingLethality_Is_Player_InDeathfield( player ) )
+		return false
+
+	return SimplifiedRingLethality_ShouldShowWarning( player )
+}
+
+#if CLIENT
+void function CL_Manage_RingOutLoopSound( entity player )
+{
+	if ( player.IsBot() )
+		return
+
+	thread CL_Manage_RingOutLoopSound_Thread()
+}
+
+// The RingOut Loop sound is shared with the OOB sound, so we need to manage it in the Client to effective turn it off.
+void function CL_Manage_RingOutLoopSound_Thread()
+{
+	entity player = GetLocalViewPlayer()
+
+	if( !IsValid( player ) )
+		return
+
+	player.Signal( "RingoutLoop_Sound_Stop" )
+	EndSignal( player, "RingoutLoop_Sound_Stop" )
+
+	bool simplifiedLethality = SimplifiedRingLethality_Enabled()
+	if( !simplifiedLethality )
+		return
+
+	#if DEVELOPER
+		string playerName = player.GetPlayerName()
+		string debugStr_Play = format( "%s(): RingOut Loop Playing for Player: %s", FUNC_NAME(), playerName )
+		string debugStr_Stop = format( "%s(): RingOut Loop Stopping for Player: %s", FUNC_NAME(), playerName )
+	#endif // DEVELOPER
+
+	while ( GetGameState() <= eGameState.Playing && IsValid( player )  )
+	{
+		if ( GetGameState() != eGameState.Playing )
+		{
+			WaitFrame()
+			continue
+		}
+
+		// Check if player is in state to play RingOut Warn Loop.
+		bool shouldWarn = RingLethality_Is_Player_InRingOutWarning( player )
+		if ( shouldWarn && !file.snd_RingWarnLoopPlaying )
+		{
+			file.snd_RingWarnLoopPlaying = true
+			wait 0.5 // Wait for the Warning Sting Sound to start playing from the server.
+			if( IsValid( player ) )
+				EmitSoundOnEntity( player, SIMPLIFIEDRINGLETHALITY_SOUND_RINGOUT_LOOP )
+
+			// Uncomment to debug.
+			//#if DEVELOPER
+			//	printt( debugStr_Play )
+			//#endif // DEVELOPER
+		}
+		else if ( !shouldWarn && file.snd_RingWarnLoopPlaying )
+		{
+			file.snd_RingWarnLoopPlaying = false
+
+			if( IsValid( player ) )
+				StopSoundOnEntity( player, SIMPLIFIEDRINGLETHALITY_SOUND_RINGOUT_LOOP )
+
+			// Uncomment to debug.
+			//#if DEVELOPER
+			//	printt( debugStr_Stop )
+			//#endif // DEVELOPER
+		}
+		wait 0.1
+	}
+}
+#endif // CLIENT

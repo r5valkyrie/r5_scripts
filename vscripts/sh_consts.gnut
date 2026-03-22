@@ -1,12 +1,103 @@
 
 global const float DEFAULT_FOV = 70.0
+global typedef StringSet table<string, void>
+
+global enum eArcFlashState
+{
+	NONE,
+	CHARGE,
+	ACTIVE,
+	DECAY,
+	COUNT
+}
+
+// eCanEmoteCheckReults — now in sh_emotes.nut
+
+// eHighlightGenericType — now in sh_highlight.gnut (S22)
+global const int HIGHLIGHT_INVALID_ID = -1
+
+// XP Cache constants (defined in mp_pickup_xp_cache.nut SERVER-only, needed in shared code)
+global const string XPCACHE_BASIC_NAME = "mp_pickup_xp_cache"
+global const string XPCACHE_ENHANCED_NAME = "mp_pickup_xp_cache_dynamic"
+global const string XPCACHE_LARGE_NAME = "mp_pickup_xp_cache_large"
+
+// Shadow Army constant (from sh_gamemode_shadow_army.nut)
+global const string SHADOWARMY_MAP_EVAC_AREA = "shadowarmy_evac_area"
+global const string SHADOWARMY_LEGEND_START_AREA = "shadowarmy_legend_start_area"
+global const vector POISPAWN_LANDINGMARKER_COLOR = < 19, 255, 190 >
+global const vector POISPAWN_LANDINGMARKER_ENEMY_COLOR = < 255, 19, 19 >
+
+// Minimap flags (engine constants not in S3)
+global const int MINIMAP_FLAG_VISIBILITY_SHOW = 0x1
+
+// Munitions box constant (from perk_munitions_box.nut SERVER-only, needed in shared code)
+global const string MUNITIONS_BOX_LOOT_BIN_SKIN_NAME = "MunitionsBox"
+
+// Crafting 2.0 color
+global const vector CRAFTING_2PT0_COLOR = <183, 135, 255>
+
+// Golden Horse constants (from sh_gamemode_golden_horse.nut)
+global const int GOLDEN_HORSE_SPECIAL_EVENT_LOOT_TIER = 107
+global const string GOLDEN_HORSE_LOOT_TICK_SCRIPT_NAME = "loot_tick_golden_horse"
+
+// Generic ping panel constants (from S22 sh_consts)
+global const string GENERIC_PING_PANEL_SCRIPTNAME = "generic_panel"
+global const string GENERIC_PING_PANEL_SCRIPTNAME_COOLDOWN = "generic_panel_cooldown"
+global const string GENERIC_PING_PANEL_SCRIPTNAME_INACTIVE = "generic_panel_inactive"
+global const string PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME = "rebuilt_door"
+global const string SPIKE_STRIP_CORE_SPIKE_NAME = "core_spike_target_name"
+global const string ARMORED_LEAP_SHIELD_ANCHOR_SCRIPTNAME = "al_shield_anchor"
+global const string FERRO_WALL_SEGMENT_TARGET_NAME = "ferro_wall_segment"
+global const string CONTROL_OBJECTIVE_SCRIPTNAME = "control_objective"
+global const string HUNT_DATAPAD_TARGETNAME = "Hunt"
+global const string MEDBAY_PING_SCRIPT_NAME = "medical_bay_ping"
+global const string PHASE_DOOR_ROOT_ENT_SCRIPTNAME = "phase_door_root_ent"
+global const string PHASE_DOOR_WARMUP_ENT_SCRIPTNAME = "phase_door_warmup_ent"
+global const string REV_SHELL_TARGETNAME = "Rev_shell"
+global const string SHIELD_MINE_PROP_SCRIPTNAME = "conduit_shield_mine"
+global const string SHIELD_THROW_SCRIPTNAME = "shield_throw"
+global const string TRACKING_VISION_BIRD_PING_SCRIPTNAME = "bloodhound_tracking_white_raven_ping_blocker"
+global const string TRANSPORT_PORTAL_ALLY_PORTAL_SCRIPTNAME = "alter_ult_ally_portal"
+global const string TRANSPORT_PORTAL_RECEIVER_SCRIPTNAME = "alter_ult_receiver"
+global const string TRANSPORT_PORTAL_TRANSLOCATOR_TRACE_BLOCKER_SCRIPTNAME = "alter_ult_translocator_trace_blocker"
+global const string TREASUREHUNT_OBJECTIVE_SCRIPTNAME = "treasurehunt_objective"
+global const int CONTROL_INT_OBJ_ALLIANCE_OWNER = 0
+global const string CRAFTED_BANNER_MODEL_NAME = "mdl/props/ultimate_accelerant/ultimate_accelerant_banner_crafting.rmdl"
+global const string SURVIVAL_HUD_SQUADTAG_PVAR = "use_dynamic_squad_tag"
+global const asset SURVIVAL_HUD_SQUADTAG = $"ui/squad_tag.rpak"
+#if CLIENT
+global const string PROWLER_DEN_SCRIPT_NAME = "prop_prowler_den"
+#endif
+
+// WT_GADGET now registered in engine
+
+// Missing engine color constant - aliased to gold tier
+global const int COLORID_HUD_LOOT_TIER_GH = 30
 
 //custom
 global const bool ASSERTS = false // not available as native preprocessor define
 global const bool RTK = false // RTK UI system not available
+global const bool NAVMESH_ALL_SUPPORTED = false
+global const bool AUTO_PLAYER = false
 global const bool CHALLENGE_DEBUG = false
 global const int ASSET_SETTINGS_UNIQUE_ID_INVALID = -1
 global const int GRX_CURRENCY_HEIRLOOM = 3
+global const string DEATH_BOX_TARGETNAME = "player_death_box"
+global const string MRB_WEAPON_REF_NAME = "mp_ability_mobile_respawn_beacon"
+global const string VOID_RING_WEAPON_REF = "mp_ability_void_ring"
+global const string REDEPLOY_BALLOON_WEAPON_REF = "mp_ability_redeploy_balloon"
+global const string CRAFTED_BANNER_REF = "expired_banners"
+global const string COPYCAT_NAME = "mp_ability_copycat_kit"
+global const string BUBBLE_BUNKER_WEAPON_NAME = "mp_weapon_bubble_bunker"
+global const string CAUSTIC_DIRTY_BOMB_WEAPON_CLASS_NAME = "mp_weapon_dirty_bomb"
+global const string SPIKE_STRIP_WEAPON_NAME = "mp_ability_spike_strip"
+global const string TRANSPORT_PORTAL_WEAPON_NAME = "mp_ability_transport_portal"
+global const string DEATH_BOX_BANNER_EXPIRED_NETVAR = "DeathBoxBannerExpired"
+global const string PICKING_UP_RESPAWN_BANNER_ANIM = "ptpov_burn_card_activate_seq_gladcard"
+global const int WAT_INVALID = -1
+global const int WAT_BARREL = 0
+global const int WAT_LASER_SIGHT = 1
+global const int WAT_OPTIC = 2
 global const int GRX_CURRENCY_EXOTIC = 4
 global const int GRX_CURRENCY_ESCROW = 5
 global const int GRX_CURRENCY_EVENT = 6
@@ -114,6 +205,12 @@ global const string FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME = "npc_dummie_combat"
 global const string FIRING_RANGE_TARGET_FOLD_SCRIPTNAME = "fr_target_fold"
 global const int FIRING_RANGE_AI_BUDGET_MAX = 190
 global const asset FIRINGRANGE_DOOR_ASSET = $"mdl/door/canyonlands_door_single_02.rmdl"
+global const int WPT_VIEWHANDS = 0x100
+global const string KRABER_WEAPON_NAME = "mp_weapon_sniper"
+global const string MIRAGE_DECOY_DROP_SCRIPTNAME = "mirage_decoy_drop"
+global const string VANTAGE_RECALL_WEAPON_NAME = "mp_weapon_vantage_recall"
+global const float SNIPERULT_HEALINGDENIED_DURATION = 15
+global const float REV_SHELL_GIVE_UP_TIME = 30
 global const int WPT_ALL_EXCEPT_VIEWHANDS = 0xFF // S22: all weapon types except viewhands
 global const int WPT_SURVIVAL = 0 // S22 weapon type flag, not in S3 — 0 means bitflag check always false
 global const string PLAYLIST_NEW_PLAYER_ORIENTATION = "survival_bots_vs_humanteams"
@@ -1052,6 +1149,7 @@ global enum PerfIndexServer
 	HoverTankThink,
 
 	AddToInventory,
+	LeftoverLootWeightingFix,
 }
 
 global const SharedPerfIndexStart = 100
@@ -1117,18 +1215,74 @@ global const OFFHAND_COUNT			= 6
 
 global const OFFHAND_ORDNANCE		= OFFHAND_RIGHT
 global const OFFHAND_SPECIAL		= OFFHAND_LEFT
-global const int SLING_WEAPON_SLOT = -1 //WEAPON_INVENTORY_SLOT_PRIMARY_4
-global const int WEAPON_INVENTORY_SLOT_GADGET = 4 // S22 gadget slot
-global const int SOLID_NONE = 0 // SolidType_e: not solid
+global const int WEAPON_INVENTORY_SLOT_PRIMARY_4 = 4
+global const int WEAPON_INVENTORY_SLOT_PRIMARY_COUNT_MAIN = 2
+global const int WEAPON_INVENTORY_SLOT_GADGET = 4
+global const int TRACE_COLLISION_GROUP_PLAYER_MOVEMENT = 9
+global const int USE_INPUT_AUTO = 8
+global const int USE_FLAG_AUTO = 8
+global const int USABLE_FROM_EXTENDED_RANGE = 16
+global const int TRACE_MASK_ABILITY = 0x40083003
+global const int GSF_PLANTED = 0x80
+global const int ENERGIZE_NONE = 0
+global const int ENERGIZE_ENERGIZING = 1
+global const int ENERGIZE_ENERGIZED = 2
+global const int INFINITEAMMO_NONE = 0
+global const int INFINITEAMMO_CLIP = 1
+global const int INFINITEAMMO_CLIPS = 1
+global const int INFINITEAMMO_STOCKPILE = 2
+global const int INVALID_SOUND_SELECTOR = 128
+global const string SILENT_PLAYER_VOICE = ""
+global const string PHASE_DOOR_TELEPORT_SIGNAL = "PhaseDoor_Teleport"
+global const string MOBILE_SHIELD_SCRIPTNAME = "mobile_shield"
+global const string NESSIE_SPIDER_SCRIPT_NAME = "nessie_spider"
+global const int SOLID_NONE = 0
+
+global struct ePropPlacementTypeStruct
+{
+	string NO_TYPE_SPECIFIED = "none"
+	string CRAFTER = "crafter"
+	string RING_CONSOLE = "ring_console"
+	string ENEMY_SCAN_BEACON = "enemy_scan_beacon"
+}
+global ePropPlacementTypeStruct ePropPlacementType
+
+global enum eDeployableFlags
+{
+	VEHICLES_NO_STICK			= (1 << 0),
+	VEHICLES_LARGE_DEPLOYABLE	= (1 << 1),
+	_count				= 2
+}
+
+global enum ePathfindingBailCondition
+{
+	NONE,
+	TIME_ONLY,
+	RATIO_ONLY,
+	TIME_AND_RATIO,
+	TIME_OR_RATIO,
+}
+
+global enum eCompanionState
+{
+	UNKNOWN,
+	PERCHED,
+	RECALLING,
+	ORDERED_TO_POSITION,
+	ORDERED_TO_TARGET,
+	AT_POSITION,
+	COUNT,
+}
+
+global enum ePlayerLaunchState
+{
+	NONE,
+	PRELAUNCHING,
+	LAUNCHING,
+	COUNT,
+}
 global const string FIRING_RANGE_TARGET_FLIP_SCRIPTNAME = "fr_target_flip"
 global const string JUMP_PAD_NEUTRAL_SCRIPTNAME = "jump_pad_neutral"
-
-global enum eShatterRoundsTypes
-{
-	STANDARD,
-	SHATTER_TRI,
-	_count
-}
 
 global const SHIELD_REGEN_TICK_TIME 					= 0.1
 global const TITAN_DOOMED_REGEN_DELAY					= 0.5
@@ -1503,6 +1657,11 @@ global enum ePresentationType
 	APPLIED_STICKER_SMALL_CELL,
 	APPLIED_STICKER_LARGE_CELL,
 	FLAT_STICKER,
+	WEAPON_OVERVIEW,
+	MELEE_INSPECT,
+	PLAY_QUADS,
+	UNAPPLIED_STICKER,
+	WEAPON_TRIAL_CELEBRATIONS,
 	COUNT
 }
 
@@ -2225,6 +2384,9 @@ global enum eCommsAction
 	REPLY_REVIVE_WELCOME,
 	REPLY_WELCOME_ALT,
 	REPLY_REVIVE_WELCOME_ALT,
+	REPLY_LOVE_YOU,
+	REPLY_LOVE_YOU_MORE,
+	REPLY_NO_I_LOVE_YOU_MORE,
 	REPLY_I_CANNOT,
 	REPLY_COMING_TO_HELP,
 	REPLY_LOOT_DIBS,
@@ -2286,6 +2448,7 @@ global enum eCommsAction
 	INVENTORY_NEED_HEALTH,
 	INVENTORY_NEED_SHIELDS,
 	INVENTORY_NEED_INCAPSHIELD,
+	INVENTORY_NEED_SHIELD_CORE,
 	INVENTORY_NEED_THERMITE,
 
 	INVENTORY_NEED_ATTACHMENT_MAG_BULLET,
@@ -2661,6 +2824,72 @@ global enum eCommsAction
 
 	PING_CAREPACKAGE_INCOMING,
 
+	// S22 additions
+	INVENTORY_NEED_ARCSTAR,
+	INVENTORY_NEED_FRAG,
+	MARK_MY_LAST_DEATH_LOCATION,
+	PING_AREA_THE_HUNT_HUNTER,
+	PING_AREA_THE_HUNT_PREY,
+	PING_BARRICADED_DOOR,
+	PING_BARRICADED_DOOR_OPEN,
+	PING_BLEEDOUT_DONT_REVIVE,
+	PING_BLOODHOUND_WHITE_RAVEN,
+	PING_BLOODHOUND_WHITE_RAVEN_TARGET_LOC,
+	PING_CHASE_PORTAL_ENEMY,
+	PING_CHASE_PORTAL_FRIENDLY,
+	PING_DARK_VEIL,
+	PING_DARK_VEIL_ENEMY,
+	PING_ENCRYPTED_CONSOLE,
+	PING_ENEMY_AUDIO,
+	PING_ENEMY_FIGHTING,
+	PING_ENEMY_POI,
+	PING_ENEMY_SPOTTED_HEALING_HEALTH,
+	PING_ENEMY_SPOTTED_HEALING_SHIELD,
+	PING_EVAC_AREA,
+	PING_ITEM_REV_SHELL_INAIR,
+	PING_I_ULTIMATE,
+	PING_LEGEND_START_AREA,
+	PING_MULTI_ENEMY_POI,
+	PING_MUNITIONS_BOX,
+	PING_NPC_LOOT_TICK_GH,
+	PING_OPENED_MUNITIONS_BOX,
+	PING_OPENED_SUPPORT_BOX,
+	PING_PHASE_DOOR,
+	PING_PIERCING_SPIKES,
+	PING_PIERCING_SPIKES_ENEMY,
+	PING_RAMPART_TT_VENDING,
+	PING_REDEPLOY_BALLOON,
+	PING_REDEYED_REV,
+	PING_REPLICATOR_ALL_USED,
+	PING_REPLICATOR_DISPENSER_INCOMING,
+	PING_REPLICATOR_NOONE_USED,
+	PING_REPLICATOR_PLAYER_USED,
+	PING_REPLICATOR_TEAMMATE_USED,
+	PING_SHIELD_MINE,
+	PING_STATION,
+	PING_SUPPORT_BOX,
+	PING_TRAINOBJECTIVE,
+	PING_TRANSPORT_PORTAL_ENEMY,
+	PING_TRANSPORT_PORTAL_FRIENDLY,
+	PING_TREASUREHUNT_OBJ_ATTACK,
+	PING_UPGRADE_STATION,
+	PING_WE_ABILITY,
+	PING_WE_ATTACK,
+	PING_WE_AVOID,
+	PING_WE_DEFEND,
+	PING_WE_FALLBACK,
+	PING_WE_REGROUP,
+	PING_ZIPRAIL,
+	REPLY_CAREPACKAGE_INSIGHT,
+	REPLY_CAREPACKAGE_INSIGHT_FUTURE,
+	REPLY_CAREPACKAGE_INSIGHT_LOOTED,
+	SHADOWARMY_PING_RESPAWN_STATION,
+	FIRING_RANGE_TARGET_SPEED_CHANGE,
+	PING_XP_LEVEL_UP_ABILITY,
+	PING_XP_LEVEL_UP_ARMOR,
+	QUICKCHAT_SKYDIVE_REV_NEARBY,
+	QUICKCHAT_SKYDIVE_SKINBAG_NEARBY,
+
 	_count
 }
 
@@ -2744,6 +2973,7 @@ global struct ToolTipData
 	string actionHint1
 	string actionHint2
 	string actionHint3
+	string actionHint4
 
 	string commsPromptDefault
 	int    commsAction = eCommsAction.BLANK
@@ -2760,6 +2990,23 @@ global struct ToolTipData
 
 
 global const bool HAS_TOOLTIPS = true
+
+global struct DeathFieldData
+{
+	vector center = <0, 0, 0>
+	vector nextCenter = <0, 0, 0>
+
+	float currentRadius = 40000.0
+	float startRadius = 40000.0
+	float endRadius = 40000.0
+	float startTime = 10.0
+	float endTime = 30.0
+
+	int codeIndex = 0
+	float percentDamagePerTick = 0.2
+	bool s_deathFieldSynchronized = false
+}
+
 
 global const MINIMAP_UID_COORDS_RUI		= $"ui/minimap_square_coords.rpak"					// north facing implemented
 global const MINIMAP_ID_RUI 			= $"ui/minimap_id.rpak"       						// north facing implemented             
@@ -2832,6 +3079,7 @@ global enum eLootPromptStyle
 	_COUNT
 }
 
+global const asset LOOT_DATATABLE = $"datatable/survival_loot.rpak"
 global const asset LOOT_PICKUP_HINT_DEFAULT_RUI		= $"ui/loot_pickup_hint_v2.rpak"
 global const asset LOOT_PICKUP_HINT_COMPACT_RUI		= $"ui/loot_pickup_hint_compact.rpak"
 global const asset WEAPON_PICKUP_HINT_DEFAULT_RUI	= $"ui/loot_pickup_hint_weapon.rpak"
@@ -2884,6 +3132,35 @@ global const int OBIT_FLAG_DOWNED = 1 << 1
 //	global const vector AMMO_ENERGY_COLOR = <132, 160, 61> / 255.0
 //	global const vector AMMO_SMALL_COLOR = <137, 99, 63> / 255.0
 //	global const vector AMMO_LARGE_COLOR = <76, 120, 105> / 255.0
+
+// S22 color IDs not present in S3 engine - fallback to 0 (default)
+global const int COLORID_CRAFTING_DISPENSER = 0
+
+// S22 beacon scriptnames
+global const string ENEMY_SURVEY_BEACON_SCRIPTNAME = "enemy_survey_beacon"
+global const string NEXT_ZONE_SURVEY_BEACON_SCRIPTNAME = "next_zone_survey_beacon"
+global const string REDEPLOY_BALLOON_SKYDIVE_TRIGGER_SCRIPT_NAME = "redeploy_balloon_skydive_trigger"
+global const asset SKYDIVE_TRAIL_DEFAULT = $"settings/itemflav/skydive_trail/default.rpak"
+global enum eStatNames
+{
+	respawnsGiven,
+	kills,
+	assists,
+	knockdowns,
+	knockdownAssists,
+	revivesGiven,
+	_Count
+}
+
+global const string RAMPART_VOICE = "rampart"
+global const string GENERIC_OFFHAND_WEAPON_NAME = "mp_ability_generic_offhand"
+global const int GENERIC_OFFHAND_INDEX = 7
+global const int OFFHAND_GENERIC = 7
+// SIGNAL_STARTING_EMOTE — now in sh_emotes.nut
+global const vector ECHO_INITIAL_DEPLOY_OFFSET = <30, -15, 80>
+global const string MYSTERY_BOX_SCRIPT_NAME = "mystery_box"
+global const asset DROPPOD_SPAWN_FX = $"P_droppod_arrival"
+global const string GUNNER_MOD_NAME = "rampart_gunner"
 
 #if !UI
 global const table<string, int> ammoColors = {

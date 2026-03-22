@@ -273,7 +273,7 @@ void function MythicInspectButtonHover( var button )
 	RuiSetString( rui, "rarityText", rarityText )
 	RuiSetString( rui, "descText", descText )
 
-	if( IsItemFlavorStructValid( itemFlav ) )
+	if( IsItemFlavorStructValid( itemFlav.guid ) )
 		RunClientScript( "UIToClient_PreviewStoreItem", ItemFlavor_GetGUID( itemFlav ) )
 
 	if( index == 0 )

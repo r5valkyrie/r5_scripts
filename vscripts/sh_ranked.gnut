@@ -1505,10 +1505,11 @@ int function GetPlayerRankScore( entity player )
 
 #if SERVER
 // Stubs for functions not available
-bool function Ranked_HasFinishedProvisionalMatches( entity player )
-{
-	return true // Assume player has finished provisionals
-}
+// Moved to workarounds.gnut for load order
+//bool function Ranked_HasFinishedProvisionalMatches( entity player )
+//{
+//	return true
+//}
 
 void function KickMatchmakingCheater( entity player )
 {

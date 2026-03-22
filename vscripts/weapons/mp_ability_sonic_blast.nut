@@ -645,7 +645,7 @@ void function SonicBlast_Highlight_Thread( entity victim, int team, float durati
 		{
 			if ( IsValid( victim ) )
 			{
-				DecrementHighlightEnableForTeam( victim, team )
+				DecrementHighlightEnableForTeam( victim, GetHighlightId( HIGHLIGHT_NOVA_BLACKHOLE_THREAT ), team )
 			}
 		}
 	)
@@ -653,7 +653,7 @@ void function SonicBlast_Highlight_Thread( entity victim, int team, float durati
 	if( IsValid( victim ) )
 	{
 		StatusEffect_AddTimed( victim, eStatusEffect.seer_highlight_target, 1.0, duration, 0.5 )
-		IncrementHighlightEnableForTeam( victim, team )
+		IncrementHighlightEnableForTeam( victim, GetHighlightId( HIGHLIGHT_NOVA_BLACKHOLE_THREAT ), team )
 	}
 
 	wait duration

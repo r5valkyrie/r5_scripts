@@ -210,7 +210,7 @@ void function SonarStart( entity ent, vector position, int sonarTeam, entity son
 	if ( !(ent in file.entitySonarFXs) )
 		file.entitySonarFXs[ent] <- []
 
-	ent.HighlightEnableForTeam( sonarTeam )
+	ent.HighlightEnableForTeam( GetHighlightId( HIGHLIGHT_BLOODHOUND_SONAR ), sonarTeam )
 
 	if( file.teamSonarDiamondsCount[sonarTeam][ent] == 1 )
 	{
@@ -284,7 +284,7 @@ void function SonarEnd_EndHighlight( entity ent, int team, entity sonarOwner )
 			if( IsValid( ent ) )
 			{
 				if ( (ent.e.inSonarTriggerCount < file.teamSonarCount[team][ent]) || (ent.e.inSonarTriggerCount <= 0) || (file.teamSonarCount[team][ent] <= 0) )
-					ent.HighlightDisableForTeam( team )
+					ent.HighlightDisableForTeam( GetHighlightId( HIGHLIGHT_BLOODHOUND_SONAR ), team )
 			}
 		}
 	}

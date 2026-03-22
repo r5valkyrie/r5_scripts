@@ -90,6 +90,12 @@ global struct RaySphereIntersectStruct
 	float leaveFrac
 }
 
+global struct PotentialTargetData
+{
+	entity target
+	float score
+}
+
 global enum eGradeFlags
 {
 	IS_OPEN = (1 << 0),
@@ -6127,3 +6133,21 @@ bool function StatusEffect_HasSeverity( entity player, int statuseffect )
 		// printt( "boom" )
 	// }
 // #endif
+
+float function GetEffectiveDeltaSince( float timeThen )
+{
+	if ( timeThen <= 0.0001 )
+		return 999999.0
+
+	return (Time() - timeThen)
+}
+
+int function SortByScore( PotentialTargetData a, PotentialTargetData b )
+{
+	if ( a.score > b.score )
+		return -1
+	else if ( a.score < b.score )
+		return 1
+
+	return 0
+}

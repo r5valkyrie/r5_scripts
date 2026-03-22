@@ -58,7 +58,7 @@ global function ClearHeaderBannerOverrideFunc
 
 global function ReportPlayer
 
-#if DEV
+#if DEVELOPER
 global function GetRecapPlayerEHIArray
 global function DEV_TestDeathScreenMenu
 global function GetKeyFromEnum
@@ -402,7 +402,7 @@ void function DeathScreen_BleedoutEnded( entity player )
 
 void function DeathScreen_SpectatorTargetChanged( entity player, entity previousTarget, entity currentTarget )
 {
-	#if DEV
+	#if DEVELOPER
 		                                                                                                                                                                            
 	#endif
 	Assert( player == GetLocalClientPlayer() )
@@ -731,7 +731,7 @@ void function DeathScreenUpdateHeader( var headerElem )
 			break
 	}
 
-	#if DEV
+	#if DEVELOPER
 		                                             
 		                                                                           
 		                                                                                             
@@ -2502,7 +2502,7 @@ asset function GetGladCardReplacementImageForDamageSourceID( int damageSourceID 
 
 	}
 
-	#if DEV
+	#if DEVELOPER
 		Warning( "GetGladCardReplacementImageForDamageSourceID doesn't handle damageSourceID: " + damageSourceID )
 	#endif
 
@@ -2567,7 +2567,7 @@ void function ClientCodeCallback_OnDeathRecapUpdated( int killerEHandle )
 	                                                                 
 	  	                
 
-	#if DEV
+	#if DEVELOPER
 		  
 			                 
 			                                                       
@@ -2655,7 +2655,7 @@ EncodedEHandle function GetKillerEnum()
 }
 
 
-#if DEV
+#if DEVELOPER
 void function DEV_TestDeathScreenMenu()
 {
 	array<entity> playerArray = GetPlayerArray_Alive()

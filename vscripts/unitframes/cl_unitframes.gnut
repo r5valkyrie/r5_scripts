@@ -5,6 +5,7 @@ global function GetUnitFrame
 global function OnInUseHealingKitTypeChanged
 global function OnPlayerEquippedWeaponChanged
 
+global function GetTeamUnitFrames
 global function UnitFrame_GetOwnerByIndex
 global function UnitFrame_SetConsumableIconForPlayer
 

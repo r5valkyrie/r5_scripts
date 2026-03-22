@@ -2087,7 +2087,7 @@ ScreenSpaceData function GetScreenSpaceData( entity player, vector position )
 #if DEVELOPER
 		if ( SCREEN_SPACE_DATA_DEBUG )
 		{
-			DebugDrawMark( position, 5, COLOR_RED, true, 1.5 )
+			//DebugDrawMark( position, 5, <255, 0, 0>, true, 1.5 )
 		}
 #endif
 
@@ -2373,4 +2373,15 @@ array<var> function Client_GetPanelElementsByClassname( var panel, string classN
 	}
 
 	return allElements
+}
+
+float function GetFovScalar( entity player )
+{
+	float fov = DEFAULT_FOV
+
+	entity weapon = player.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
+	if ( IsValid( weapon ) )
+		fov = weapon.GetWeaponZoomFOV()
+
+	return DEFAULT_FOV / fov
 }

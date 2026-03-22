@@ -1,6 +1,7 @@
 untyped //required for CPlayer class functions
 
 global function WeaponDrivenConsumablesEnabled
+global function Consumable_CanUseUltAccel
 
 global function OnWeaponAttemptOffhandSwitch_Consumable
 global function OnWeaponActivate_Consumable
@@ -2801,4 +2802,31 @@ bool function ShouldPlayUltimateSuperchargedFX( entity player )
 		return true
 
 	return false
+}
+
+bool function Consumable_CanUseUltAccel( entity player, bool checkMinToFire = true )
+{
+	entity ult = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+	if ( !IsValid( ult ) )
+		return false
+
+	if ( checkMinToFire )
+	{
+		int minToFire = ult.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire )
+		int burstCount = ult.GetWeaponSettingInt( eWeaponVar.burst_fire_count )
+		if ( burstCount > 0 )
+			minToFire *= burstCount
+
+		if ( ult.GetWeaponPrimaryClipCount() >= minToFire )
+			return false
+	}
+
+	int maxClipCount = ult.GetWeaponPrimaryClipCountMax()
+	if ( ult.GetWeaponPrimaryClipCount() == maxClipCount )
+		return false
+
+	if( ult.HasMod( MOBILE_HMG_ACTIVE_MOD ) )
+		return false
+
+	return true
 }

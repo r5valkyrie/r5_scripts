@@ -185,7 +185,7 @@ void function ShFiringRangeChallenges_Init()
 		RegisterSignal("FRChallengedEndMemoriesEffect")
 		PrecacheParticleSystem( $"P_adrenaline_screen_CP" )
 
-		RegisterNetVarIntChangeCallback( FRC_SCORE_NETWORK_VAR, SNDC_PLAYER_EXCLUSIVE, FiringRangeChallengeScoreUpdated )
+		RegisterNetVarIntChangeCallback( FRC_SCORE_NETWORK_VAR, FiringRangeChallengeScoreUpdated, SNDC_PLAYER_EXCLUSIVE )
 	#endif
 
 	RegisterSignal("FRC_BackInBounds")

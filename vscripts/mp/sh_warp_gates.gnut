@@ -864,7 +864,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 				// Defensive Fix for R5DEV-515474
 				//TODO (caobrien): More elegant solution for preventing this exploit, possibly disabling phase runner when both sides are outside of the ring?
 
-				//if ( isOlympus && ( DeathField_PointDistanceFromFrontier( player.GetOrigin(), player.DeathFieldIndex() ) <= 0 ))
+				//if ( isOlympus && ( DeathField_PointDistanceFromFrontier( player.GetOrigin() ) <= 0 ))
 				//{
 				//	if ( player.IsPhaseShifted() )
 				//		CancelPhaseShift ( player )

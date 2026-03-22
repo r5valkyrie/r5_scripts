@@ -18,6 +18,7 @@ global function AddCallback_OnPetTitanModeChanged
 global function ClientCodeCallback_OnPetTitanChanged
 
 global function IsCurrentlyFocusedWeapon
+global function IsCurrentlyFocusedUseEnt
 
 global function ClientCodeCallback_PingSpecificType
 global function SetCallback_PingSpecificType
@@ -175,6 +176,11 @@ void function AddEntityCallback_GetUseEntOverrideText( entity ent, string functi
 
 
 bool function IsCurrentlyFocusedWeapon( entity ent )
+{
+	return file.focusedEnt == ent
+}
+
+bool function IsCurrentlyFocusedUseEnt( entity ent )
 {
 	return file.focusedEnt == ent
 }

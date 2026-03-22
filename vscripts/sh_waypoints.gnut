@@ -1,11 +1,11 @@
-const string PING_CENTER_OFFSET = "0.4 0.55 0"
+global const string PING_CENTER_OFFSET = "0.4 0.55 0"
+
 global function PlayerWaypoints_Init
 
 #if CLIENT
 global function CreateWaypointRui
 global function Waypoint_LootItemIsBeingPingedByAnyone
-global function Waypoint_GetWaypointForLootItemPingedBy
-global function Waypoint_GetWaypointForLootItemPingedByPlayer  // variant with indirectMode
+global function Waypoint_GetWaypointForLootItemPingedByPlayer
 global function Waypoint_GetWaypointsForLootItemPingedByTeam
 global function Waypoint_AnyEnemySpottedNearPoint
 global function Waypoint_FindPingByTicketID
@@ -29,21 +29,31 @@ global function AddLocationPingToFullmap
 global function ShouldWaypointRuiBeVisible
 global function SetCommsWaypointSoundsEnabled
 global function GetCommsWaypointSoundsEnabled
-#endif //
+global function UpdateResponseIcons
+global function ShutdownWaypointRuis
+#endif // CLIENT
 global function Waypoint_IsPOI
+global function Waypoint_ShowPingWheel
 global function GetPingedEntForLocWaypoint
 
-
 #if SERVER
+global function CreatePlayerWaypoint_Wrapper
+
 global function CreateWaypoint_Custom
-global function CreateWaypoint_Test
+
 global function CreateWaypoint_BasicEnt
 global function CreateWaypoint_BasicPos
 global function CreateWaypoint_BasicArea
 global function CreateWaypoint_BasicLocation
 global function CreateWaypoint_BasicEntLocation
 global function CreateWaypoint_ObjectiveEntLocation
+
+
 global function DEV_WaypointConfirm
+
+global function CreateWaypoint_Button
+global function CreateWaypoint_ObjectivePos
+global function CreateWaypoint_ObjectiveEnt
 //
 global function CreateWaypoint_BreadcrumbTrail
 //
@@ -55,8 +65,25 @@ global function CreateWaypoint_Ping_POI
 global function CreateWaypoint_Bleedout
 global function CreateWaypoint_SelfRevive
 global function CreateWaypoint_RespawnBanner
+                     
+global function CreateWaypoint_TrackEnt
+      
+                       
+                                                
+      
 
+                  
+global function CreateWaypoint_The_Hunt_PreyArea
+global function CreateWaypoint_The_Hunt_HunterArea
+      
+
+                          
+                                                
+      
+
+global function DestroyAllLocationWaypointsForPlayer
 global function DeleteWaypoint_Safe
+global function DeleteWaypointsForLootItem
 global function PlayerConfirmWaypoint
 
 global function PlayerAttemptDibsOnLootWaypoint
@@ -66,6 +93,9 @@ global function DeleteWaypointByPingTicketID
 
 global function Waypoint_BumpAnnounceEffect
 global function Waypoint_GetWaypointAge
+global function Waypoint_GetWaypointsForEntity
+global function Waypoint_GetFriendlyThatPingedEnt
+global function Waypoint_DestroyAfterDuration_THREAD
 
 global function Waypoints_DestroyPingsForSkydiveEnding
 
@@ -73,10 +103,19 @@ global function Waypoint_SetPingResponseForSquadMember
 global function Waypoint_ClearPlayerSimilarPingsForReply
 
 global function Waypoint_AnyEnemySpottedNearPointForPlayer
+
 global function CreateBasicPOI
+global function CreateBasicPOIAndReturnEntity
 global function AddPingCallbackForType
+global function AddEntityCallback_OnPinged
+global function CreateWaypoint_Objective_StarterPing
+global function Waypoint_SetQuantityForWaypoint
 #endif // #if SERVER
 
+global function Waypoint_GetQuantityForWaypoint
+                  
+                                                       
+      
 global function Waypoint_GetLootPingDibsPlayer
 global function Waypoint_GetPingTypeForWaypoint
 global function Waypoint_GetItemEntForLootWaypoint
@@ -85,6 +124,7 @@ global function Waypoint_TriggerTargetHighlightForPing
 global function Waypoint_NetNotify
 
 global function Waypoints_RegisterNetworking
+global function Waypoint_ShouldPlayCreationEffectWaypoint
 //
 
 global enum eWaypoint
@@ -106,15 +146,91 @@ global enum eWaypoint
 	//
 
 	BASIC_POI,
+
 	BUTTON,
 	OBJECTIVE_ENT,
 	OBJECTIVE_POS,
-	TRACK_ENT,
-	TRAIN,
-	OBJECTIVE,
+
+	                     
+		TRACK_ENT,
+       
+
+                       
+        
+       
+
+	                      
+		TRAIN,
+       
+		OBJECTIVE,
+
+	EMOTE_ICON,
+
+	DEVICE_DISABLED,
 
 	WATTSON_TROPHY_TIMER,
 	WATTSON_TROPHY_LIFE,
+
+                                 
+                    
+       
+
+                        
+                  
+       
+
+              
+                    
+       
+
+	VOID_RING_TROPHY_TIMER,
+	VOID_RING_TROPHY_LIFE,
+
+	NEWCASTLE_MOBILE_SHIELD_LOCATOR,
+
+               
+                    
+       
+	DEATHBOX_NETWORK,
+	                      
+		SPECTRE_SHACK_TIMER,
+       
+
+	                        
+		CONTROL_OBJECTIVE,
+       
+
+	                   
+		MEDBAY_STATE,
+       
+
+	                             
+		REDEPLOY_BALLOON_LIFE,
+       
+
+                   
+               
+       
+
+	ABILITY_ECHO_LOCATOR,
+
+	SKYDIVE_EMOTE_ICON,
+
+	                             
+		TREASUREHUNT_OBJECTIVE,
+       
+
+                           
+                  
+       
+
+                                        
+                         
+       
+
+                                  
+                   
+       
 
 	_count
 }
@@ -137,8 +253,6 @@ global const asset WAYPOINT_ICON_TARGET = $"rui/hud/common/objective_marker"
 global const asset WAYPOINT_ICON_BATTERY_NEEDED = $"rui/menu/dpad_comms/emoji/battery_need"
 global const asset WAYPOINT_ICON_WAYPOINT = $"rui/hud/common/map_waypoint"
 
-global float BOOSTZONE_ALIVE_TIME = 15.0
-
 #if CLIENT
 //global const asset SQUAD_PING_FX = $"P_ar_ping_ground_CP"
 //global const asset SQUAD_PING_FAR_FX = $"P_ar_ping_ground_far_CP"
@@ -146,8 +260,8 @@ global float BOOSTZONE_ALIVE_TIME = 15.0
 
 struct
 {
-	table<int, array<void functionref( entity, entity, entity, int ) > > pingCallbackFunctions
-	table<entity, bool>                                                  mutedPlayers
+	table<int, array<void functionref( entity, entity, entity, int ) > >	pingCallbackFunctions
+	table<entity, bool>                                                  	mutedPlayers
 	table< int, float >                                                  	waypointCreation
 	#if CLIENT
 		bool commsWaypointSoundsEnabled = true
@@ -174,11 +288,12 @@ void function PlayerWaypoints_Init()
 		RegisterSignal( SIGNAL_WAYPOINT_RUI_SET )
 
 		if( !IsLobby() )
-			RegisterServerVarChangeCallback( "gameState", UpdateWaypointRuiVisibility )
-			//AddCallback_OnGameStateChanged( OnGameStateChanged )
+			AddCallback_OnGameStateChanged( OnGameStateChanged )
 
 		//PrecacheParticleSystem( SQUAD_PING_FX )
 		//PrecacheParticleSystem( SQUAD_PING_FAR_FX )
+
+		thread UpdateGroups_THREAD()
 	#endif // CLIENT
 }
 
@@ -186,8 +301,8 @@ const string FUNCNAME_TRIGGERTARGETHIGHLIGHTSFORPING = "Waypoint_TriggerTargetHi
 const string FUNCNAME_NETNOTIFY = "Waypoint_NetNotify"
 void function Waypoints_RegisterNetworking()
 {
-	ScriptRemote_RegisterClientFunction( FUNCNAME_TRIGGERTARGETHIGHLIGHTSFORPING, "entity" )
-	ScriptRemote_RegisterClientFunction( FUNCNAME_NETNOTIFY, "entity", "int", 0, eWaypointNotifyType._count )
+	Remote_RegisterClientFunction( FUNCNAME_TRIGGERTARGETHIGHLIGHTSFORPING, "entity" )
+	Remote_RegisterClientFunction( FUNCNAME_NETNOTIFY, "entity", "int", 0, eWaypointNotifyType._count )
 }
 
 
@@ -196,7 +311,7 @@ void function Waypoint_TriggerTargetHighlightForPing( entity wp )
 	#if SERVER
 		int wpTeam            = wp.GetTeam()
 		array<entity> players = (wpTeam == TEAM_UNASSIGNED) ? GetPlayerArray() : GetPlayerArrayOfTeam( wpTeam )
-		foreach( entity player in players )
+		foreach ( entity player in players )
 			Remote_CallFunction_Replay( player, FUNCNAME_TRIGGERTARGETHIGHLIGHTSFORPING, wp )
 
 	#else //
@@ -216,7 +331,20 @@ void function Waypoint_NetNotify( entity wp, int waypointNotifyType )
 	#if SERVER
 		int wpTeam            = wp.GetTeam()
 		array<entity> players = (wpTeam == TEAM_UNASSIGNED) ? GetPlayerArray() : GetPlayerArrayOfTeam( wpTeam )
-		foreach( entity player in players )
+
+		// Special Logic for Alliances
+		if ( AllianceProximity_IsUsingAlliances() && wpTeam != TEAM_UNASSIGNED )
+		{
+			players.clear()
+			foreach( player in GetPlayerArray() )
+			{
+				if ( IsValid( player ) && AllianceProximity_GetAllianceFromTeam( player.GetTeam() ) == AllianceProximity_GetAllianceFromTeam( wpTeam ) )
+					players.append( player )
+			}
+		}
+
+
+		foreach ( entity player in players )
 			Remote_CallFunction_Replay( player, FUNCNAME_NETNOTIFY, wp, waypointNotifyType )
 
 	#else
@@ -229,7 +357,7 @@ void function Waypoint_NetNotify( entity wp, int waypointNotifyType )
 				break
 
 			default:
-				Assert( 0, ("Unhandled waypointNotifyType #" + waypointNotifyType) )
+				Assert( false, ("Unhandled waypointNotifyType #" + waypointNotifyType) )
 		}
 	#endif
 }
@@ -238,7 +366,7 @@ void function Waypoint_NetNotify( entity wp, int waypointNotifyType )
 #if CLIENT
 void function PlayerWaypoint_CreateCallback( entity wp )
 {
-	if ( !IsValid(wp) || wp.IsPlayer() && wp.GetTeam() == TEAM_SPECTATOR && !IsLobby() )
+	if ( wp.IsPlayer() && wp.GetTeam() == TEAM_SPECTATOR && !IsLobby() )
 		return
 
 	int wpType = wp.GetWaypointType()
@@ -280,15 +408,75 @@ void function PlayerWaypoint_CreateCallback( entity wp )
 		case eWaypoint.PING_LOOT:
 			if ( WaypointOwnerIsMuted( wp ) )
 				return
+
+			if ( !IsPingEnabledForPlayer( GetLocalClientPlayer() ) )
+				return
+
+			if ( !IsPingDibsEnabledForPlayer( GetLocalClientPlayer() ) )
+			{
+				//players who can't dibs can still ping loot, they just can't reply to other ppls pings
+				entity owner = wp.GetOwner()
+				if ( IsValid( owner ) && owner != GetLocalClientPlayer() )
+					return
+			}
+
 			InstanceLootPing( wp )
 			break
 
 		case eWaypoint.BASIC_POI:
 			break
 
+		case eWaypoint.BUTTON:
+			InstanceWP_Button( wp )
+			break
+
+		case eWaypoint.OBJECTIVE_ENT:
+		case eWaypoint.OBJECTIVE_POS:
+			InstanceWP_Objective( wp )
+			break
+		case eWaypoint.TRACK_ENT:
+			InstanceWP_TrackEnt( wp )
+			break
+
+                      
+                       
+                                       
+        
+      
+
+                      
 		case eWaypoint.TRAIN:
 			InstanceWP_WinterExpress_Train( wp )
 			break
+      
+		case eWaypoint.OBJECTIVE:
+			InstanceObjectivePing( wp )
+			break
+
+                        
+		case eWaypoint.CONTROL_OBJECTIVE:
+			thread Control_InstanceObjectivePing_Thread( wp )
+			break
+      
+
+                             
+		case eWaypoint.TREASUREHUNT_OBJECTIVE:
+			TreasureHunt_InstanceObjectivePing( wp )
+			break
+      
+
+                                       
+                                        
+                                                       
+        
+      
+
+                          
+                                 
+                                          
+        
+      
+
 	}
 }
 
@@ -350,6 +538,8 @@ void function PlayerWaypoint_DestroyCallback( entity wp )
 	if ( wpType == eWaypoint.PING_LOCATION || wpType == eWaypoint.BASIC_LOCATION || isWaypointObjective )
 		s_activeLocationPings.fastremovebyvalue( wp )
 
+	Grouping_RemoveForDelete( wp )
+
 	ClearTargetHighlight( wp )
 }
 
@@ -364,7 +554,7 @@ void function HidePingsOnWinnerDetermined()
 {
 	array<entity> waypointArray = clone s_activeLootPings
 	waypointArray.extend( s_activeLocationPings )
-	foreach( wp in waypointArray )
+	foreach ( wp in waypointArray )
 	{
 		Waypoint_HideOnLocalHud( wp )
 	}
@@ -383,11 +573,13 @@ bool function ShouldWaypointRuiBeVisible()
 
 		case eGameState.PickLoadout:
 		case eGameState.Prematch:
-			visible = false
+			visible = GetCurrentPlaylistVarBool( "show_waypoint_in_prematch", false )
+			break
 
 		case eGameState.Playing:
 		case eGameState.SuddenDeath:
 		case eGameState.SwitchingSides:
+		case eGameState.Epilogue:
 			break
 
 		case eGameState.WinnerDetermined:
@@ -414,7 +606,7 @@ void function UpdateWaypointRuiVisibility()
 	array<entity> waypointArray = clone s_activeLootPings
 	waypointArray.extend( s_activeLocationPings )
 
-	foreach( wp in waypointArray )
+	foreach ( wp in waypointArray )
 	{
 		if ( wp.wp.ruiHud != null )
 			RuiSetVisible( wp.wp.ruiHud, visible )
@@ -435,11 +627,8 @@ bool function ShouldHighlightForPing( entity wp, entity pingedEnt )
 		return false
 	if ( pingedEnt.IsPlayerDecoy() )
 		return false
-	
-	if ( pingedEnt.GetTargetName() == "MapEditorProp" )
-		return false
-	
-	if ( pingedEnt.GetScriptName() == "editor_placed_prop" )
+
+	if( pingedEnt.GetTargetName() == FERRO_WALL_SEGMENT_TARGET_NAME || pingedEnt.GetTargetName() == SPIKE_STRIP_CORE_SPIKE_NAME )
 		return false
 
 	int pingType = Waypoint_GetPingTypeForWaypoint( wp )
@@ -447,9 +636,23 @@ bool function ShouldHighlightForPing( entity wp, entity pingedEnt )
 	{
 		case ePingType.ABILITY_DRONEMEDIC:
 		case ePingType.ABILITY_DOMESHIELD:
-		return true
+		case ePingType.ABILITY_ECHO_LOCATOR:
+                       
+                                         
+      
+                     
+                              
+      
+		case ePingType.ABILITY_PIERCING_SPIKES:
+		case ePingType.ABILITY_DARK_VEIL:
+                       
+                                            
+      
+
+			return false
+
 	}
-	
+
 	return true
 }
 
@@ -489,13 +692,15 @@ var function CreateWaypointRui( asset ruiAsset, int sortKey )
 void function Waypoint_HideOnLocalHud( entity wp )
 {
 	wp.WaypointFocusTracking_Deregister()
+	wp.wp.isHiddenOnLocalHUD = true
 	if ( wp.wp.ruiHud != null )
 		RuiSetBool( wp.wp.ruiHud, "isHidden", true )
 }
 
-void function Waypoint_ShowOnLocalHud ( entity wp )
+void function Waypoint_ShowOnLocalHud( entity wp )
 {
 	wp.WaypointFocusTracking_Register()
+	wp.wp.isHiddenOnLocalHUD = false
 	if ( wp.wp.ruiHud != null )
 		RuiSetBool( wp.wp.ruiHud, "isHidden", false )
 }
@@ -504,49 +709,28 @@ bool function Waypoint_IsHiddenFromLocalHud( entity wp )
 {
 	return wp.wp.isHiddenOnLocalHUD
 }
+
 void function Waypoint_MarkAsAcknowledgedLocally( entity wp )
 {
-	//wp.WaypointFocusTracking_Deregister()
 	wp.wp.haveConfirmed = true
 	if ( wp.wp.ruiHud != null )
 		RuiSetBool( wp.wp.ruiHud, "viewPlayerHasConfirmed", true )
 }
 
-bool function Waypoint_LootItemIsBeingPingedByAnyone( entity item )
+bool function Waypoint_LootItemIsBeingPingedByAnyone( entity item, bool indirectMode = false )
 {
 	Assert( IsValid( item ) )
 
 	foreach ( entity lootWp in s_activeLootPings )
 	{
 		entity thisLootItem = Waypoint_GetItemEntForLootWaypoint( lootWp )
-		if ( thisLootItem == item )
+		if ( thisLootItem == item && ((lootWp.GetParent() == thisLootItem) != indirectMode) )
 			return true
 	}
 
 	return false
 }
 
-//Waypoint_LootItemIsBeingPingedBy
-entity function Waypoint_GetWaypointForLootItemPingedBy( entity item, entity player )
-{
-	Assert( IsValid( item ) )
-	Assert( IsValid( player ) )
-
-	foreach ( entity lootWp in s_activeLootPings )
-	{
-		entity owner = lootWp.GetOwner()
-		if ( owner != player )
-			continue
-
-		entity thisLootItem = Waypoint_GetItemEntForLootWaypoint( lootWp )
-		if ( thisLootItem == item )
-			return lootWp
-	}
-
-	return null
-}
-
-// Variant with indirectMode parameter
 entity function Waypoint_GetWaypointForLootItemPingedByPlayer( entity item, entity player, bool indirectMode = false )
 {
 	Assert( IsValid( item ) )
@@ -581,12 +765,17 @@ array<entity> function Waypoint_GetWaypointsForLootItemPingedByTeam( entity item
 	}
 	return out
 }
+
 bool function Waypoint_AnyEnemySpottedNearPoint( vector origin, float range )
 {
 	foreach ( entity wp in s_activeLocationPings )
 	{
 		int pingType = Waypoint_GetPingTypeForWaypoint( wp )
-		if ( pingType != ePingType.ENEMY_SPECIFIC )
+                           
+		if ( pingType != ePingType.ENEMY_SPECIFIC && pingType != ePingType.ENEMY_REVIVING && pingType != ePingType.ENEMY_HEALING_HEALTH && pingType != ePingType.ENEMY_HEALING_SHIELD )
+     
+                                                                                     
+      
 			continue
 
 		float dist = Distance( wp.GetOrigin(), origin )
@@ -627,23 +816,33 @@ bool function Waypoint_AnyEnemySpottedNearPointForPlayer( vector origin, float r
 }
 #endif
 
+bool function Waypoint_ShowPingWheel( entity wp )
+{
+#if CLIENT
+	entity player = GetLocalViewPlayer()
+
+	if ( ( wp.GetWaypointType() == eWaypoint.EMOTE_ICON || wp.GetWaypointType() == eWaypoint.SKYDIVE_EMOTE_ICON )&& Distance( player.GetOrigin(), wp.GetOrigin() ) < PING_EMOTE_REPLY_CULL_DISTANCE )
+#else
+	if( wp.GetWaypointType() == eWaypoint.EMOTE_ICON || wp.GetWaypointType() == eWaypoint.SKYDIVE_EMOTE_ICON )
+#endif
+		return false
+
+	return true
+}
 
 bool function Waypoint_IsPOI( entity wp )
 {
 	return wp.GetWaypointType() == eWaypoint.BASIC_POI
 }
 
+
 entity function Waypoint_FindPingByTicketID( entity owner, int ticketID )
 {
-	#if SERVER
-	array<entity> locationPings = owner.p.pings.locations
-	array<entity> lootPings = owner.p.pings.loots
-	#else
-	array<entity> locationPings = s_activeLocationPings
-	array<entity> lootPings = s_activeLootPings
-	#endif
-
-	foreach ( entity wp in locationPings )
+#if SERVER
+	foreach ( entity wp in owner.p.pings.locations )
+#else
+	foreach ( entity wp in s_activeLocationPings )
+#endif
 	{
 		if ( !IsValid( wp ) )
 			continue
@@ -653,7 +852,11 @@ entity function Waypoint_FindPingByTicketID( entity owner, int ticketID )
 			return wp
 	}
 
-	foreach ( entity wp in lootPings )
+#if SERVER
+	foreach ( entity wp in owner.p.pings.loots )
+#else
+	foreach ( entity wp in s_activeLootPings )
+#endif
 	{
 		if ( owner != wp.GetOwner() )
 			continue
@@ -679,6 +882,9 @@ void function InstanceWP_Basic( entity wp )
 
 	RuiTrackString( newRui, "promptText", wp, RUI_TRACK_WAYPOINT_STRING, 0 )
 	RuiTrackImage( newRui, "iconImage", wp, RUI_TRACK_WAYPOINT_IMAGE, 0 )
+
+	RuiSetBool( newRui, "showStatusTextWhenNotClamped", true )
+
 
 	int wpType = wp.GetWaypointType()
 	if ( wpType == eWaypoint.BASIC_ENTITY )
@@ -720,12 +926,427 @@ void function InstanceWP_Basic( entity wp )
 
 				wp.wp.ruiFullmap = rui
 				Fullmap_AddRui( rui )
+
+				//This is temp until we get a code function that can handle only transmitting to Alliance Members for Control Mode or other non survival modes.
+				// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad); show the ping to nearby teammates
+				if ( AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, Waypoint_GetPingTypeForWaypoint( wp ) ) )
+				{
+					thread AllianceProximity_ManageIconVisibility_Thread( wp, wp.wp.ruiFullmap, true, false ) // with just this, see in world icon all the time, map icon only at right distances
+				}
 			}
 		}
 	}
+}
+
+void function HookUpWaypointRuiForObjectiveRelevanceIfPVE( entity wp, var rui )
+{
+	if ( !IsPVEMode() )
+		return
+
+	HookUpWaypointRuiForObjectiveRelevance( wp, rui )
+}
+
+//
+void function CreateRUIsForObjectiveWP( entity wp )
+{
+	int sortKey = 250
+	int style   = WP_STYLE_OBJECTIVE
+	int wpType  = wp.GetWaypointType()
+
+	Assert( wp.wp.ruiMinimap == null )
+	Assert( wp.wp.ruiFullmap == null )
+	Assert( wp.wp.ruiHud == null )
+
+	//var newRui = CreateWaypointRui( $"ui/waypoint_generic_pve.rpak", sortKey )
+	var newRui = CreateWaypointRui( $"ui/waypoint_generic_pve_new.rpak", sortKey )
+	asset image = wp.GetWaypointAsset( 0 )
+
+	{	// NEW META STUFF
+		// These vars determine what the icon looks like using the new rui meta.
+		// For the pings this data is found in bakery,
+		// but I don't have time to make that work with this :-(
+		RuiSetImage( newRui, "innerIcon", $"rui/hud/ping/icon_ping_any_inner" )
+		RuiSetImage( newRui, "innerShadowIcon", $"rui/hud/ping/icon_ping_any_shadow" )
+		RuiSetImage( newRui, "outerIcon", image )
+		RuiSetImage( newRui, "shadowIcon", $"rui/hud/ping/icon_ping_quest_shadow" )
+		RuiSetImage( newRui, "animIcon", $"rui/hud/ping/icon_ping_quest_outline" )
+		RuiSetBool( newRui, "drawHeightLine", false )
+		RuiSetBool( newRui, "doCenterOffset", true )
+		vector iconColor = SrgbToLinear( <242, 224, 0> / 255.0 )
+		RuiSetFloat3( newRui, "iconColor", iconColor )
+	}
+
+	RuiSetInt( newRui, "waypointStyle", style )
+	RuiTrackString( newRui, "promptText", wp, RUI_TRACK_WAYPOINT_STRING, 0 )
+	RuiTrackImage( newRui, "iconImage", wp, RUI_TRACK_WAYPOINT_IMAGE, 0 )
+	float countdownTimer = wp.GetWaypointFloat( 0 )
+	if ( countdownTimer != -1 )
+		RuiSetGameTime( newRui, "countdownGoalTime", Time() + countdownTimer )
+
+	vector iconScale        = <1, 1, 0>
+	bool noCreateForMinimap = ((wp.GetWaypointGroupFlags() & WPGF_NO_CREATE_MINIMAP_ICONS) != 0)
+
+	if ( wpType == eWaypoint.OBJECTIVE_ENT )
+	{
+		entity targ0 = wp.GetWaypointEntity( 0 )
+
+		// Tracking OVERHEAD_FOLLOW causes the aim focus be under the waypoint.
+		// Better to track the absolut origin of the wp, and offset the entity on the server at creation.
+		RuiTrackFloat3( newRui, "targetPos", wp, RUI_TRACK_ABSORIGIN_FOLLOW )
+
+		RuiSetFloat( newRui, "xPixelOffset", wp.GetWaypointVector( 0 ).x )
+		RuiSetFloat( newRui, "yPixelOffset", wp.GetWaypointVector( 0 ).y )
+
+		if ( !noCreateForMinimap )
+		{
+			Assert( wp.wp.ruiMinimap == null )
+			wp.wp.ruiMinimap = AddLocationPingToMinimapNoClamp( targ0, image, MINIMAP_SIZE_BIG, iconScale )
+			HookUpWaypointRuiForObjectiveRelevanceIfPVE( wp, wp.wp.ruiMinimap )
+
+			Assert( wp.wp.ruiFullmap == null )
+			wp.wp.ruiFullmap = AddLocationPingToFullmap( targ0, image, FULLMAP_SIZE_BIG, iconScale )
+			Fullmap_AddRui( wp.wp.ruiFullmap )
+			HookUpWaypointRuiForObjectiveRelevanceIfPVE( wp, wp.wp.ruiFullmap )
+		}
+	}
+	else //OR Tracking a POS?
+	{
+		Assert( wpType == eWaypoint.OBJECTIVE_POS )
+
+		RuiSetFloat3( newRui, "targetPos", wp.GetWaypointVector( 0 ) )
+		RuiSetFloat( newRui, "xPixelOffset", wp.GetWaypointVector( 1 ).x )
+		RuiSetFloat( newRui, "yPixelOffset", wp.GetWaypointVector( 1 ).y )
+
+		if ( !noCreateForMinimap )
+		{
+			Assert( wp.wp.ruiMinimap == null )
+			wp.wp.ruiMinimap = AddWaypointPosToMiniMapNoClamp( wp, image, MINIMAP_SIZE_BIG, iconScale )
+			HookUpWaypointRuiForObjectiveRelevanceIfPVE( wp, wp.wp.ruiMinimap )
+
+			Assert( wp.wp.ruiFullmap == null )
+			wp.wp.ruiFullmap = AddWaypointPosToFullmap( wp, image, FULLMAP_SIZE_BIG, iconScale )
+			Fullmap_AddRui( wp.wp.ruiFullmap )
+			HookUpWaypointRuiForObjectiveRelevanceIfPVE( wp, wp.wp.ruiFullmap )
+		}
+	}
+
+	// SetupWaypointForPingInteraction
+	{
+		RuiTrackBool( newRui, "hasFocus", wp, RUI_TRACK_WAYPOINT_FOCUS_ENT_IS_FOCUSED )
+		RuiTrackInt( newRui, "confirmationCount", wp, RUI_TRACK_WAYPOINT_INT, INT_INDEX_PING_LOC_CONFIRMCOUNTER )
+	}
+
+	bool visible = ShouldWaypointRuiBeVisible()
+	RuiSetVisible( newRui, visible )
+
+	SetWaypointRui_HUD( wp, newRui )
+
+	HookUpWaypointRuiForObjectiveRelevanceIfPVE( wp, newRui )
+}
+
+void function InstanceWP_Objective( entity wp )
+{
+	if ( !IsWatchingReplay() )
+	{
+		wp.WaypointFocusTracking_Register()
+		wp.WaypointFocusTracking_TrackPos( wp, RUI_TRACK_ABSORIGIN_FOLLOW, 0 );
+	}
+
+	bool wasGrouped = Grouping_AddIfValid( wp )
+	if ( wasGrouped )
+	{
+		wp.wp.objectiveGroupOnVisibleTrueFunc = CreateRUIsForObjectiveWP
+		wp.wp.objectiveGroupOnVisibleFalseFunc = ShutdownWaypointRuis
+	}
+	else
+	{
+		CreateRUIsForObjectiveWP( wp )
+	}
+}
+
+
+///////////////////////////////////
+// Waypoint Grouping:
+
+const string GROUP_HIDE_ARG = "hiddenForWaypointGroup"
+
+struct ClObjGroup
+{
+	bool isDirty = true
+	int  visFlagsPrev
+
+	array<entity> waypoints
+}
+
+//table<string, array<entity> >[4] s_objectiveGroupMaps
+table<int, table<string, ClObjGroup> > s_objectiveGroupMaps
+
+const int ONE_SINGLE_OBJECTIVE_INDEX = 999
+
+bool function Grouping_AddIfValid( entity wp )
+{
+	string groupName = wp.GetWaypointGroupName()
+	if ( groupName.len() == 0 )
+		return false
+
+	int objectiveIndex = ONE_SINGLE_OBJECTIVE_INDEX
+	if ( IsPVEMode() )
+	{
+		objectiveIndex = Waypoints_GetObjectiveIndexFor( wp )
+		if ( objectiveIndex < 0 )
+		{
+			Warning( "%s() - Waypoint (%s) w/ groupName '%s' has no associated objective. This is not currently supported.", FUNC_NAME(), string( wp ), groupName )
+			return false
+		}
+	}
+
+	int groupFlags = wp.GetWaypointGroupFlags()
+	Assert( (groupFlags & WPGF_ONLY_DRAW_CLOSEST_ON_HUD) != 0 )
+
+	//printf( "%s() - Waypoint (%s) for objective #%d w/ groupName '%s' is being added.", FUNC_NAME(), string( wp ), objectiveIndex, groupName )
+	if ( !(objectiveIndex in s_objectiveGroupMaps) )
+		s_objectiveGroupMaps[objectiveIndex] <- {}
+	table<string, ClObjGroup> objTable = s_objectiveGroupMaps[objectiveIndex]
+	if ( !(groupName in objTable) )
+	{
+		ClObjGroup newGroup
+		objTable[groupName] <- newGroup
+	}
+
+	ClObjGroup group = objTable[groupName]
+	Assert( wp.wp.objectiveGroupIndex < 0 )
+	wp.wp.objectiveGroupIndex = objectiveIndex
+	wp.wp.objectiveGroupName = groupName
+	group.waypoints.append( wp )
+	group.isDirty = true
+
+	wp.WaypointFocusTracking_SetDisabled( true )
+	return true
+}
+
+void function Grouping_RemoveForDelete( entity wp )
+{
+	if ( wp.wp.objectiveGroupIndex < 0 )
+		return
+	if ( !(wp.wp.objectiveGroupIndex in s_objectiveGroupMaps) )
+		return
+
+	table<string, ClObjGroup > objTable = s_objectiveGroupMaps[wp.wp.objectiveGroupIndex]
+	ClObjGroup group                    = objTable[wp.wp.objectiveGroupName]
+	group.waypoints.removebyvalue( wp )
+	group.isDirty = true
+	if ( group.waypoints.len() == 0 )
+		delete objTable[wp.wp.objectiveGroupName]
+}
+
+bool function PlayerIsMarkedAsInsideObjectiveIndexWrapper( entity player, int index )
+{
+	if ( IsPVEMode() )
+		return PlayerIsMarkedAsInsideObjectiveIndex( player, index )
+
+	return (index == ONE_SINGLE_OBJECTIVE_INDEX)
+}
+
+void function UpdateGroups_THREAD()
+{
+	WaitQuotaItem wq = WaitFrameQuota_Init( 4 )
+
+	for ( ; ; )
+	{
+		entity player = GetLocalViewPlayer()
+		if ( !IsValid( player ) )
+		{
+			WaitFrame()
+			continue
+		}
+
+		vector org = player.GetOrigin()
+
+		table<int, bool> mapObjectiveIndexToPlayerIsInside
+		foreach ( int objectiveIndex, objTableLive in s_objectiveGroupMaps )
+			mapObjectiveIndexToPlayerIsInside[objectiveIndex] <- PlayerIsMarkedAsInsideObjectiveIndexWrapper( player, objectiveIndex )
+
+		table<int, table<string, ClObjGroup > > clone_objectiveGroupMaps = clone(s_objectiveGroupMaps)
+		foreach ( int objectiveIndex, table<string, ClObjGroup > objTableLive in clone_objectiveGroupMaps )
+		{
+			if ( objTableLive.len() == 0 )
+				continue
+
+			table<string, ClObjGroup > objTable = clone(objTableLive)
+			foreach ( string groupName, ClObjGroup groupLive in objTable )
+			{
+				entity bestWp     = null
+				float bestDistSqr = (999999.0 * 999999.0)
+				int bestIndex     = -1
+
+				bool playerIsInObjective = mapObjectiveIndexToPlayerIsInside[objectiveIndex]
+
+				bool wasDirty = groupLive.isDirty
+				groupLive.isDirty = false
+				array<entity> arr = clone(groupLive.waypoints)
+				int groupFlags
+
+				if ( playerIsInObjective )
+				{
+					foreach ( int wpIndex, entity wp in arr )
+					{
+						WaitFrameQuota( wq )
+						if ( !IsValid( wp ) )
+							continue
+
+						groupFlags = wp.GetWaypointGroupFlags()
+						float distSqr = DistanceSqr( wp.GetOrigin(), org )
+						if ( distSqr >= bestDistSqr )
+							continue
+						bestDistSqr = distSqr
+						bestWp = wp
+						bestIndex = wpIndex
+					}
+				}
+				int visFlags = bestIndex    // (1 << bestIndex)
+
+				if ( wasDirty || (groupLive.visFlagsPrev != visFlags) )
+				{
+					array<entity> visibleWaypoints
+					foreach ( entity wp in arr )
+					{
+						if ( !IsValid( wp ) )
+							continue
+
+						bool shouldBeVisible = (wp == bestWp)
+
+						if ( !shouldBeVisible && wp.wp.objectiveGroup_thisWasVisible )
+						{
+							wp.WaypointFocusTracking_SetDisabled( true )
+							wp.wp.objectiveGroupOnVisibleFalseFunc( wp )
+							wp.wp.objectiveGroup_thisWasVisible = false
+						}
+						else if ( shouldBeVisible && !wp.wp.objectiveGroup_thisWasVisible )
+						{
+							wp.WaypointFocusTracking_SetDisabled( false )
+							wp.wp.objectiveGroupOnVisibleTrueFunc( wp )
+							wp.wp.objectiveGroup_thisWasVisible = true
+						}
+					}
+				}
+				groupLive.visFlagsPrev = visFlags
+			}
+		}
+
+		//
+		WaitFrameQuota_Reset( wq )
+		WaitFrame()
+	}
+}
+///////////////////////////////////
+///////////////////////////////////
+
+void function InstanceWP_Button( entity wp )
+{
+	var newRui = CreateWaypointRui( $"ui/waypoint_button_pos.rpak", 200 )
+	SetWaypointRui_HUD( wp, newRui )
+
+	RuiTrackString( newRui, "promptText", wp, RUI_TRACK_WAYPOINT_STRING, 0 )
+	RuiTrackImage( newRui, "iconImage", wp, RUI_TRACK_WAYPOINT_IMAGE, 0 )
+
+	entity targ0 = wp.GetWaypointEntity( 0 )
+	RuiTrackFloat3( newRui, "targetPos", targ0, RUI_TRACK_OVERHEAD_FOLLOW )
+
+	vector offset = wp.GetWaypointVector( 0 )
+	RuiSetFloat3( newRui, "offset", offset )
+}
+
+void function InstanceWP_TrackEnt( entity wp )
+{
+	var newRui = CreateWaypointRui( $"ui/waypoint_basic_entpos.rpak", 200 )
+	SetWaypointRui_HUD( wp, newRui )
+
+	RuiKeepSortKeyUpdated( newRui, true, "targetPos" )
+
+	RuiSetBool( newRui, "completeADSFade", false )
+
+	RuiTrackFloat3( newRui, "playerAngles", GetLocalViewPlayer(), RUI_TRACK_CAMANGLES_FOLLOW )
+
+	RuiTrackString( newRui, "promptText", wp, RUI_TRACK_WAYPOINT_STRING, 0 )
+	RuiTrackImage( newRui, "iconImage", wp, RUI_TRACK_WAYPOINT_IMAGE, 0 )
+
+	entity targ0 = wp.GetWaypointEntity( 0 )
+	RuiTrackFloat3( newRui, "targetPos", targ0, RUI_TRACK_OVERHEAD_FOLLOW )
+
+	vector offset = wp.GetWaypointVector( 0 )
+	RuiSetFloat3( newRui, "targetOffset", offset )
+
+	bool ignoreCenterFade = wp.GetWaypointInt( 0 ) > 0 ? true : false
+	RuiSetBool( newRui, "ignoreCenterFade", ignoreCenterFade )
+
+	float minDistance  = wp.GetWaypointFloat( 0 )
+	if ( minDistance > 0 )
+		thread Update_TrackEnt_THREAD( wp, newRui )
 
 }
 
+void function Update_TrackEnt_THREAD( entity wp, var rui )
+{
+	wp.EndSignal( "OnDestroy" )
+
+
+	while( true )
+	{
+		WaitFrame()
+
+		entity player = GetLocalViewPlayer()
+		if ( !IsValid( player ) )
+			continue
+
+		float minDistance  = wp.GetWaypointFloat( 0 )
+		if ( minDistance <= 0.0 )
+			break
+
+		float distanceSqr = DistanceSqr( player.GetOrigin(), wp.GetOrigin() )
+		float minDistanceSqr = minDistance * minDistance
+		bool shouldHide = distanceSqr < minDistanceSqr
+		RuiSetBool( rui, "isHidden", shouldHide )
+
+	}
+}
+
+                      
+                                                         
+ 
+                              
+                         
+        
+
+                                                                      
+                               
+                                                 
+                                      
+                                            
+                                               
+                                            
+                                           
+                                          
+                                                                                         
+                                                 
+
+                                                                          
+                        
+                       
+                                                      
+                                             
+
+                                                                      
+                                                                      
+
+                                                                        
+                                                                        
+
+                                                                               
+                                                                               
+ 
+      
+
+                      
 void function InstanceWP_WinterExpress_Train( entity wp )
 {
 	entity train = wp.GetParent()
@@ -757,6 +1378,8 @@ void function InstanceWP_WinterExpress_Train( entity wp )
 	RuiTrackGameTime( wRui, "fadeOutEndTime", wp, RUI_TRACK_WAYPOINT_GAMETIME, 0 )
 	RuiTrackGameTime( fRui, "fadeOutEndTime", wp, RUI_TRACK_WAYPOINT_GAMETIME, 0 )
 }
+      
+
 #endif // CLIENT
 
 #if SERVER
@@ -805,6 +1428,7 @@ entity function CreateWaypoint_BasicPos( vector position, string promptText, ass
 	return wp
 }
 
+
 entity function CreateWaypoint_BasicLocation( vector position, int pingType )
 {
 	entity wp = CreatePlayerWaypoint_Wrapper( eWaypoint.BASIC_LOCATION )
@@ -836,6 +1460,7 @@ entity function CreateWaypoint_ObjectiveEntLocation( entity ent, int pingType )
 
 	return wp
 }
+
 entity function CreateWaypoint_ObjectivePos( vector position, string promptText, vector pixelOffset = <0, 0, 0>, asset iconImage = WAYPOINT_ICON_TARGET, float countdownTimer = -1 )
 {
 	entity wp = CreatePlayerWaypoint_Wrapper( eWaypoint.OBJECTIVE_POS )
@@ -890,6 +1515,8 @@ entity function CreateWaypoint_TrackEnt( entity target, string promptText, asset
 
 	return wp
 }
+                           
+
 #endif // SERVER
 
 
@@ -906,7 +1533,6 @@ void function InstanceWP_BasicArea( entity wp )
 	RuiTrackImage( newRui, "iconImage", wp, RUI_TRACK_WAYPOINT_IMAGE, 0 )
 	RuiTrackString( newRui, "outOfAreaText", wp, RUI_TRACK_WAYPOINT_STRING, 0 )
 	RuiTrackString( newRui, "inAreaText", wp, RUI_TRACK_WAYPOINT_STRING, 1 )
-
 }
 #endif // CLIENT
 
@@ -994,7 +1620,7 @@ void function TriggerUpdateTouchingPlayers_THREAD( entity trigger, entity wp )
 			playerBits[chunk] = (playerBits[chunk] | (1 << bit))
 		}
 
-		foreach( int index, int bits in playerBits)
+		foreach ( int index, int bits in playerBits )
 			wp.SetWaypointInt( index, bits )
 
 		WaitFrame()
@@ -1192,6 +1818,14 @@ void function SetDibsPlayerForLootWaypoint( entity wp, entity itemEnt )
 {
 	wp.SetWaypointEntity( ENTITY_INDEX_PING_LOOT_DIBSPLAYER, itemEnt )
 }
+
+                  
+                                                                  
+ 
+                                                              
+ 
+      
+
 #endif // SERVER
 
 int function Waypoint_GetPingTypeForWaypoint( entity wp )
@@ -1216,6 +1850,13 @@ int function Waypoint_GetQuantityForWaypoint( entity wp )
 {
 	return wp.GetWaypointInt( INT_INDEX_PING_COMMON_QUANTITY )
 }
+
+                  
+                                                                 
+ 
+                                                          
+ 
+      
 
 entity function GetPingedEntForLocWaypoint( entity wp )
 {
@@ -1313,7 +1954,7 @@ void function Waypoint_SetPingResponseForSquadMember( entity wp, int squadIdx, i
 
 		default:
 			// (allowing for 4-man squads)
-			//Assert( 0, "Unhandled squad index #" + squadIdx )
+			//Assert( false, "Unhandled squad index #" + squadIdx )
 			break
 	}
 
@@ -1453,6 +2094,213 @@ var function AddLocationPingToFullmapInternal( asset icon, float iconSize, vecto
 	return rui
 }
 
+                   
+void function PingPerkEnt( entity wp )
+{
+	int pingType = Waypoint_GetPingTypeForWaypoint( wp )
+	entity viewPlayer = GetLocalViewPlayer()
+	if ( !IsValid( viewPlayer ) )
+	{
+		Warning( "PING_LOOT: no view-player." )
+		return
+	}
+
+	entity owner = wp.GetOwner()
+	int ticketID = GetTicketIDForWaypoint( wp )
+	if ( (owner == viewPlayer) && Ping_TicketIDIsLocallyCanceled( ticketID ) )
+	{
+		printt( format( "New ping #%d has already been canceled locally.", ticketID ) )
+		return
+	}
+
+	entity pingedEnt = GetPingedEntForLocWaypoint( wp )
+	if ( !IsValid( pingedEnt ) )
+	{
+		Warning( "PING_LOOT: Invalid loot entity." )
+		return
+	}
+
+	// For now, we assume this isn't being transmitted to enemies unless we are in a PVE mode ( current implementation of server function ShouldTransmitToAllTeams)
+	if ( AllianceProximity_IsUsingAllianceProximity() && !IsPVEMode() )
+	{
+		if ( !IsValid( wp ) )
+			return
+
+		int waypointTeam = wp.GetTeam()
+		int viewPlayerTeam = viewPlayer.GetTeam()
+
+		if ( AllianceProximity_IsTeamInAnAlliance( waypointTeam ) && waypointTeam != viewPlayerTeam )
+		{
+			if ( !AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) )
+				return
+
+			if ( AllianceProximity_GetAllianceFromTeam( viewPlayerTeam ) != AllianceProximity_GetAllianceFromTeam( waypointTeam ) )
+				return
+		}
+	}
+
+
+	bool isDirectlyOnItem = (wp.GetParent() == pingedEnt)
+
+	var rui = CreateWaypointRui( $"ui/waypoint_loot_entpos.rpak", 200 )
+	RuiKeepSortKeyUpdated( rui, true, "targetPos" )
+
+	RuiTrackInt( rui, "viewPlayerTeamMemberIndex", viewPlayer, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
+	RuiTrackBool( rui, "hasFocus", wp, RUI_TRACK_WAYPOINT_FOCUS_ENT_IS_FOCUSED )
+	RuiTrackFloat3( rui, "targetPos", wp, RUI_TRACK_ABSORIGIN_FOLLOW )
+	RuiTrackBool( rui, "usePromptHasFocus", (isDirectlyOnItem ? pingedEnt : wp), RUI_TRACK_ENT_HAS_USE_PROMPT_FOCUS )
+
+	RuiTrackFloat3( rui, "playerAngles", viewPlayer, RUI_TRACK_CAMANGLES_FOLLOW ) //RUI_TRACK_EYEANGLES_FOLLOW
+
+
+	string promptText = Ping_GetPromptForPing( viewPlayer, wp, pingType )
+	RuiSetString( rui, "pingPrompt", promptText )
+	RuiSetString( rui, "pingPromptForOwner", promptText )
+	RuiSetString( rui, "promptText", promptText )
+
+	string shortPrompt  = Ping_GetShortTextForPing( pingType )
+	RuiSetString( rui, "shortPromptText", shortPrompt )
+
+	RuiSetFloat( rui, "pingOpacity", GetConVarFloat( "hud_setting_pingAlpha" ) )
+
+
+	asset iconImage
+	int lootTier = 0
+	vector iconColor = <1,1,1>
+	bool isWeapon = false
+	if( pingType == ePingType.CAREPACKAGE_INSIGHT || pingType == ePingType.CAREPACKAGE_INSIGHT_LOOTED )
+	{
+		string lootString = wp.GetWaypointString( 0 )
+		LootData ld = SURVIVAL_Loot_GetLootDataByRef( lootString )
+		iconImage = ld.hudIcon
+		isWeapon = ld.lootType == eLootType.MAINWEAPON
+		lootTier = ld.tier
+
+		if( pingType == ePingType.CAREPACKAGE_INSIGHT_LOOTED )
+		{
+			lootTier = 1
+			iconColor = <.1,.1,.1>
+		}
+	}
+	else
+	{
+		iconImage = Perks_PingTypeToPingIcon( pingType )
+	}
+	RuiSetFloat3( rui, "innerIconColor", iconColor )
+	RuiSetInt( rui, "lootTier", lootTier )
+	RuiSetImage( rui, "iconImage",  iconImage )
+	RuiSetBool( rui, "drawHeightLine", true )
+
+	RuiSetFloat( rui, "iconSize", 64.0 )
+	RuiSetFloat( rui, "iconSizePinned", 64.0 )
+	//RuiSetFloat( rui, "drawOffsetScale", 1.0 )
+
+	RuiTrackBool( rui, "viewPlayerIsOwner", wp, RUI_TRACK_ENT_IS_OWNED_BY_VIEWPLAYER )
+	RuiTrackBool( rui, "viewPlayerHasDibs", wp, RUI_TRACK_WAYPOINT_ENTITY_IS_VIEWPLAYER, ENTITY_INDEX_PING_LOOT_DIBSPLAYER )
+	RuiTrackBool( rui, "anyPlayerHasDibs", wp, RUI_TRACK_WAYPOINT_ENTITY_IS_SET, ENTITY_INDEX_PING_LOOT_DIBSPLAYER )
+	RuiTrackString( rui, "dibsPlayerName", wp, RUI_TRACK_WAYPOINT_ENTITY_PLAYERNAME, ENTITY_INDEX_PING_LOOT_DIBSPLAYER )
+	//
+	RuiSetBool( rui, "viewPlayerHasConfirmed", false )
+	RuiSetImage( rui, "innerIcon", $"rui/hud/ping/icon_ping_loot_inner" )
+	RuiSetImage( rui, "innerShadowIcon", $"rui/hud/ping/icon_ping_loot_inner_shadow" )
+	RuiSetImage( rui, "outerIcon", $"" )
+	RuiSetImage( rui, "shadowIcon", $"" )
+	RuiSetImage( rui, "animIcon", $"rui/hud/ping/icon_ping_loot_outline" )
+
+	if( isWeapon )
+	{
+		RuiSetFloat2( rui, "iconScale", <2.0, 1.0, 0.0> )
+		RuiSetImage( rui, "innerIcon", $"rui/hud/ping/icon_ping_weapon_inner" )
+		RuiSetImage( rui, "innerShadowIcon", $"rui/hud/ping/icon_ping_weapon_inner_shadow" )
+		RuiSetImage( rui, "outerIcon", $"" )
+		RuiSetImage( rui, "shadowIcon", $"" )
+		RuiSetImage( rui, "animIcon", $"rui/hud/ping/icon_ping_weapon_outline" )
+	}
+
+	if ( GetCurrentPlaylistVarString( "ping_center_offset", PING_CENTER_OFFSET ) != "" )
+	{
+		vector centerOffset = StringToVector( GetCurrentPlaylistVarString( "ping_center_offset", PING_CENTER_OFFSET ) )
+		RuiSetFloat2( rui, "staticScreenPos", centerOffset )
+		RuiSetBool( rui, "doCenterOffset", true )
+	}
+
+	bool shouldPlayCommsSound = true
+
+	// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad);
+	// don't play ping sfx unless the player will be seeing the ping
+	if ( AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) )
+	{
+		if ( !IsValid( owner ) )
+		{
+			shouldPlayCommsSound = false
+		}
+		else if ( viewPlayer.GetTeam() != owner.GetTeam() )
+		{
+			float maxProximity = AllianceProximity_GetMaxDistForProximity()
+			if ( !IsPositionWithinRadius( maxProximity, viewPlayer.GetOrigin(), owner.GetOrigin() ) && !IsPositionWithinRadius( maxProximity, viewPlayer.GetOrigin(), wp.GetOrigin() ) )
+				shouldPlayCommsSound = false
+		}
+	}
+
+	if ( file.commsWaypointSoundsEnabled && shouldPlayCommsSound )
+		EmitSoundOnEntity( wp, Ping_GetSoundForItemPing( pingType, (viewPlayer == owner) ) )
+
+	PlayerMatchState_RuiTrackInt( rui, "matchStateCurrent", viewPlayer )
+	int ms = PlayerMatchState_GetFor( viewPlayer )
+	if ( ms == ePlayerMatchState.STAGING_AREA )
+	{
+		if ( pingType == ePingType.MAP_WAYPOINT )
+			RuiSetInt( rui, "matchStateMinimum", ePlayerMatchState.SKYDIVE_PRELAUNCH )
+		else
+			RuiSetInt( rui, "matchStateMaximum", ePlayerMatchState.STAGING_AREA )
+	}
+
+	if ( !IsWatchingReplay() )
+	{
+		wp.WaypointFocusTracking_Register()
+		wp.WaypointFocusTracking_TrackPos( (wp), RUI_TRACK_ABSORIGIN_FOLLOW, 0 );
+	}
+
+	if( pingedEnt != null )
+	{
+		thread Perks_PerkPropPinged( pingedEnt, wp )
+	}
+
+	//SetupTargetHighlightForNewPing( wp, lootItem )
+
+	//
+	//s_activeLootPings.append( wp )
+
+	//
+	bool visible = ShouldWaypointRuiBeVisible()
+	RuiSetVisible( rui, visible )
+
+	bool noCreateForMinimap = ((wp.GetWaypointGroupFlags() & WPGF_NO_CREATE_MINIMAP_ICONS) != 0)
+	if ( !noCreateForMinimap && ((ms > ePlayerMatchState.STAGING_AREA) || (pingType == ePingType.MAP_WAYPOINT)) )
+	{
+		asset minimapIcon   = Ping_IconForPing_Minimap( viewPlayer, pingType, pingedEnt, owner )
+		asset fullmapIcon   = Ping_IconForPing_Bigmap( viewPlayer, pingType, pingedEnt, owner )
+		vector iconScale    = Ping_IconScaleForPing( viewPlayer, pingType, pingedEnt, owner )
+		bool iconIsAdditive = Ping_IconForPing_IsAdditive( viewPlayer, pingType, pingedEnt, owner )
+		Assert( wp.wp.ruiMinimap == null )
+		wp.wp.ruiMinimap = AddLocationPingToMinimapNoClamp( wp, minimapIcon, MINIMAP_SIZE_BIG, iconScale )
+		RuiSetBool( wp.wp.ruiMinimap, "additive", iconIsAdditive )
+		if ( iconIsAdditive )
+			RuiSetInt( wp.wp.ruiMinimap, "lootTier", 1 )
+
+		Assert( wp.wp.ruiFullmap == null )
+		wp.wp.ruiFullmap = AddLocationPingToFullmap( wp, fullmapIcon, FULLMAP_SIZE_BIG, iconScale )
+		RuiSetBool( wp.wp.ruiFullmap, "additive", iconIsAdditive )
+		if ( iconIsAdditive )
+			RuiSetInt( wp.wp.ruiFullmap, "lootTier", 1 )
+		Fullmap_AddRui( wp.wp.ruiFullmap )
+	}
+
+	SetWaypointRui_HUD( wp, rui )
+	ExecuteCallbacks_OnPingCreatedByAnyPlayer( wp.GetOwner(), pingType, pingedEnt, pingedEnt.GetOrigin(), wp )
+}
+      
+
 void function InstanceLocationPing_Thread( entity wp )
 {
 	Assert( IsNewThread(), "Must be threaded off" )
@@ -1461,6 +2309,7 @@ void function InstanceLocationPing_Thread( entity wp )
 		return
 
 	EndSignal( wp, "OnDestroy" )
+
 	int wpType = wp.GetWaypointType()
 	Assert( wpType == eWaypoint.PING_LOCATION || wpType == eWaypoint.BASIC_LOCATION )
 
@@ -1471,10 +2320,10 @@ void function InstanceLocationPing_Thread( entity wp )
 		return
 	}
 
-	#if DEVELOPER
+	#if DEV
 		if ( viewPlayer.GetTeamMemberIndex() < 0 )
 			Warning( "%s(): team member index was invalid.", FUNC_NAME() )
-	#endif // DEVELOPER
+	#endif // DEV
 
 	// This can happen through reconnect or late join, the teammember index is not valid, need to wait until it is before instancing the waypoint on the Client
 	while ( IsValid( viewPlayer ) && viewPlayer.GetTeamMemberIndex() < 0 )
@@ -1490,19 +2339,60 @@ void function InstanceLocationPing_Thread( entity wp )
 	}
 
 	int pingType    = Waypoint_GetPingTypeForWaypoint( wp )
+
+	                   
+	switch( pingType )
+	{
+                                 
+                                  
+                                       
+      
+		case ePingType.SURVEYBEACON:
+		case ePingType.MUNITIONS_BOX:
+		case ePingType.ENCRYPTED_CONSOLE:
+		case ePingType.SUPPORT_BOX:
+		case ePingType.CAREPACKAGE_INSIGHT:
+		case ePingType.CAREPACKAGE_INSIGHT_LOOTED:
+			PingPerkEnt( wp )
+			return
+	}
+       
+
+	//This is temp until we get a code function that can handle only transmitting to Alliance Members for Control Mode or other non survival modes.
+	// For now, we assume this isn't being transmitted to enemies unless we are in a PVE mode ( current implementation of server function ShouldTransmitToAllTeams)
+	// Then we set visibility based on player team or alliance member proximity to the ping (bottom of this function)
+	if ( AllianceProximity_IsUsingAllianceProximity() && !IsPVEMode() )
+	{
+		int waypointTeam = wp.GetTeam()
+		int viewPlayerTeam = viewPlayer.GetTeam()
+		bool isSpecialCasePingType = false
+
+		                        
+			// Control mode has a special case where we want to show objective waypoints to players even if the alliances don't match because of how the objectives are setup
+			isSpecialCasePingType = pingType == ePingType.NON_PINGABLE_SPAWN_LOCATION && GameMode_IsActive( eGameModes.CONTROL )
+                                
+
+		if ( AllianceProximity_IsTeamInAnAlliance( waypointTeam ) && !isSpecialCasePingType && waypointTeam != viewPlayerTeam )
+		{
+			if ( !AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) )
+				return
+
+			if ( AllianceProximity_GetAllianceFromTeam( viewPlayerTeam ) != AllianceProximity_GetAllianceFromTeam( waypointTeam ) )
+				return
+		}
+	}
+
 	entity wpParent = wp.GetParent()
 	if ( viewPlayer == wpParent && pingType == ePingType.BLEEDOUT )
 	{
-		//printf( "Ping: Skipping drawing bleedout ping %s for parent entity %s", string( wp ), string( wpParent ) )
+		printf( "Ping: Skipping drawing bleedout ping %s for parent entity %s", string( wp ), string( wpParent ) )
 		return
 	}
 
 	int ticketID     = GetTicketIDForWaypoint( wp )
 	entity pingedEnt = GetPingedEntForLocWaypoint( wp )
 
-	#if DEVELOPER
-		printt( format( "New loc ping  -  wpent #%d, pingType #%d, ticketID #%d, target: '%s'", wp.GetEntIndex(), pingType, ticketID, string( pingedEnt ) ) )
-	#endif
+	printt( format( "New loc ping  -  wpent #%d, pingType #%d, ticketID #%d, target: '%s'", wp.GetEntIndex(), pingType, ticketID, string( pingedEnt ) ) )
 
 	entity owner = wp.GetOwner()
 
@@ -1517,7 +2407,11 @@ void function InstanceLocationPing_Thread( entity wp )
 	if ( (owner == viewPlayer) && Ping_TicketIDIsLocallyCanceled( ticketID ) )
 	{
 		printt( format( "New ping #%d has already been canceled locally.", ticketID ) )
-		if ( (pingType == ePingType.ENEMY_GENERAL) || (pingType == ePingType.ENEMY_SPECIFIC) )
+                           
+		if ( (pingType == ePingType.ENEMY_GENERAL) || (pingType == ePingType.ENEMY_SPECIFIC) || (pingType == ePingType.ENEMY_REVIVING) || ( pingType == ePingType.ENEMY_HEALING_HEALTH ) || ( pingType == ePingType.ENEMY_HEALING_SHIELD ) )
+     
+                                                                                                                                  
+      
 			printt( "  ...not hiding locally canceled ping, because it is an 'enemy spotted' type." )
 		else
 			return
@@ -1547,31 +2441,36 @@ void function InstanceLocationPing_Thread( entity wp )
 	string shortPrompt  = Ping_GetShortTextForPing( pingType )
 	vector lineColor    = SrgbToLinear( Ping_LineColorForPing_Hud( pingType ) )
 	bool isSameTeam     = (owner.GetTeam() == viewPlayer.GetTeam())
+
+	// Some modes use alliances that are considered friendly. Need to test against those here as well instead of just squads.
+	if ( !isSameTeam && AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) )
+	{
+		int viewPlayerAlliance = AllianceProximity_GetAllianceFromTeam( viewPlayer.GetTeam() )
+		if ( viewPlayerAlliance != -1 )
+			isSameTeam = IsTeamInAlliance( owner.GetTeam(), viewPlayerAlliance )
+	}
+
 	int sortKeyAdd      = Ping_GetSortModifier( pingType, isSameTeam )
-	
-	// printt( "Ping assets debug: " + ruiAsset, hudIcon, iconScale, prompt, shortPrompt, lineColor, isSameTeam, sortKeyAdd )
+
 	var rui = CreateWaypointRui( ruiAsset, 200 + sortKeyAdd )
 	RuiKeepSortKeyUpdated( rui, true, "targetPos" )
-	
+
 	RuiTrackInt( rui, "viewPlayerTeamMemberIndex", viewPlayer, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
 	RuiTrackBool( rui, "hasFocus", wp, RUI_TRACK_WAYPOINT_FOCUS_ENT_IS_FOCUSED )
 	RuiTrackFloat3( rui, "targetPos", wp, RUI_TRACK_ABSORIGIN_FOLLOW )
 	RuiTrackInt( rui, "confirmationCount", wp, RUI_TRACK_WAYPOINT_INT, INT_INDEX_PING_LOC_CONFIRMCOUNTER )
 
-	RuiTrackFloat3( rui, "playerAngles", viewPlayer, RUI_TRACK_CAMANGLES_FOLLOW ) //
+	RuiTrackFloat3( rui, "playerAngles", viewPlayer, RUI_TRACK_CAMANGLES_FOLLOW ) //RUI_TRACK_EYEANGLES_FOLLOW
 	//
 	RuiSetFloat( rui, "pingOpacity", GetConVarFloat( "hud_setting_pingAlpha" ) )
 
-	RuiSetString( rui, "promptText", prompt )
-	RuiSetString( rui, "shortPromptText", shortPrompt )
+	if( Waypoint_ShouldPlayCreationEffectWaypoint( wp ) )
+	{
+		RuiSetString( rui, "promptText", prompt )
+		RuiSetString( rui, "shortPromptText", shortPrompt )
+	}
 
 	vector iconColor
-
-	RuiSetBool( rui, "additive", iconIsAdditive )
-	RuiSetFloat( rui, "iconSize", 80.0 )
-	RuiSetFloat2( rui, "iconScale", iconScale )
-	RuiSetFloat( rui, "iconSizePinned", 100.0 )
-
 	if ( pingFlavor != null )
 	{
 		expect ItemFlavor( pingFlavor )
@@ -1583,58 +2482,7 @@ void function InstanceLocationPing_Thread( entity wp )
 		RuiSetImage( rui, "animIcon", PingFlavor_GetAnimIcon( pingFlavor ) )
 
 		RuiSetBool( rui, "drawHeightLine", PingFlavor_GetDrawHeightLine( pingFlavor ) )
-		
-		if(pingType == ePingType.SHADOWFALL_LEGEND_DEATH || 
-			pingType == ePingType.SHADOWFALL_SHADOW_DEATH || 
-			pingType == ePingType.SHADOWFALL_NEMESIS || 
-			pingType == ePingType.SND_BOMB  ||
-			pingType == ePingType.SPIESLEGENDS_STATION_A  ||
-			pingType == ePingType.SPIESLEGENDS_STATION_B  ||
-			pingType == ePingType.SPIESLEGENDS_STATION_C ||
-			pingType == ePingType.SPIESLEGENDS_STATION_A_ATTACK  ||
-			pingType == ePingType.SPIESLEGENDS_STATION_B_ATTACK  ||
-			pingType == ePingType.SPIESLEGENDS_STATION_C_ATTACK 
-		)
-		{
-			RuiSetImage( rui, "innerIcon", PingFlavor_GetOuterIcon( pingFlavor ) )
-			RuiSetImage( rui, "innerShadowIcon", PingFlavor_GetOuterShadowIcon( pingFlavor ) )
-			RuiSetImage( rui, "outerIcon", PingFlavor_GetOuterIcon( pingFlavor ) )
-			RuiSetImage( rui, "shadowIcon", PingFlavor_GetOuterShadowIcon( pingFlavor ) )
-			RuiSetImage( rui, "animIcon", PingFlavor_GetAnimIcon( pingFlavor ) )
-			RuiSetBool( rui, "drawHeightLine", false )
-			RuiSetImage( rui, "animIcon", $"rui/hud/unitframes/frame_status_fill" )
-			RuiSetBool( rui, "additive", false )
-			RuiSetFloat( rui, "iconSize", 120.0 )
-			//RuiSetFloat2( rui, "iconScale", iconScale )
-			RuiSetFloat( rui, "iconSizePinned", 120.0 )
-		}
-		
-		if(pingType == ePingType.SHADOWFALL_NEMESIS)
-		{
-			RuiSetString( rui, "promptText", "Last Survivor Standing" )
-			RuiSetString( rui, "shortPromptText", "Last Survivor Standing" )
-		}
-		
-		if(pingType == ePingType.SND_BOMB)
-		{
-			RuiSetString( rui, "promptText", "Bomb" )
-			RuiSetString( rui, "shortPromptText", "" )
-		}
-		
-		if( pingType == ePingType.SPIESLEGENDS_STATION_A )
-		{
-			RuiSetString( rui, "promptText", "Station A" )
-			RuiSetString( rui, "shortPromptText", "" )
-		} else if( pingType == ePingType.SPIESLEGENDS_STATION_B )
-		{
-			RuiSetString( rui, "promptText", "Station B" )
-			RuiSetString( rui, "shortPromptText", "" )
-		} else if( pingType == ePingType.SPIESLEGENDS_STATION_C )
-		{
-			RuiSetString( rui, "promptText", "Station C" )
-			RuiSetString( rui, "shortPromptText", "" )
-		}
-		
+
 		iconColor = SrgbToLinear( PingFlavor_GetColor( pingFlavor, owner.GetTeamMemberIndex() ) )
 		RuiSetFloat3( rui, "iconColor", iconColor )
 	}
@@ -1643,87 +2491,12 @@ void function InstanceLocationPing_Thread( entity wp )
 		iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
 		RuiSetImage( rui, "iconImage", hudIcon )
 		RuiSetFloat3( rui, "iconColor", iconColor )
-		
-		if(pingType == ePingType.SND_BOMB)
-		{
-			RuiSetString( rui, "promptText", "Plant the Bomb" )
-			RuiSetString( rui, "shortPromptText", "" )
-
-			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
-			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/bombicon" )
-			RuiSetFloat3( rui, "iconColor", iconColor )
-		}
-	
-		if( pingType == ePingType.SPIESLEGENDS_STATION_A )
-		{
-			RuiSetString( rui, "promptText", "Station A" )
-			RuiSetString( rui, "shortPromptText", "" )
-
-			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
-			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/A_Defend" )
-			RuiSetFloat3( rui, "iconColor", iconColor )
-
-			RuiSetFloat( rui, "iconSize", 50.0 )
-			RuiSetFloat( rui, "iconSizePinned", 50.0 )
-		} else if( pingType == ePingType.SPIESLEGENDS_STATION_B )
-		{
-			RuiSetString( rui, "promptText", "Station B" )
-			RuiSetString( rui, "shortPromptText", "" )
-
-			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
-			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/B_Defend" )
-			RuiSetFloat3( rui, "iconColor", iconColor )
-
-			RuiSetFloat( rui, "iconSize", 50.0 )
-			RuiSetFloat( rui, "iconSizePinned", 50.0 )
-		} else if( pingType == ePingType.SPIESLEGENDS_STATION_C )
-		{
-			RuiSetString( rui, "promptText", "Station C" )
-			RuiSetString( rui, "shortPromptText", "Test" )
-
-			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
-			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/C_Defend" )
-			RuiSetFloat3( rui, "iconColor", iconColor )
-
-			RuiSetFloat( rui, "iconSize", 50.0 )
-			RuiSetFloat( rui, "iconSizePinned", 50.0 )
-		}
-
-		if( pingType == ePingType.SPIESLEGENDS_STATION_A_ATTACK )
-		{
-			RuiSetString( rui, "promptText", "Station A" )
-			RuiSetString( rui, "shortPromptText", "" )
-
-			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
-			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/A_Attack" )
-			RuiSetFloat3( rui, "iconColor", iconColor )
-
-			RuiSetFloat( rui, "iconSize", 50.0 )
-			RuiSetFloat( rui, "iconSizePinned", 50.0 )
-		} else if( pingType == ePingType.SPIESLEGENDS_STATION_B_ATTACK )
-		{
-			RuiSetString( rui, "promptText", "Station B" )
-			RuiSetString( rui, "shortPromptText", "" )
-
-			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
-			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/B_Attack" )
-			RuiSetFloat3( rui, "iconColor", iconColor )
-
-			RuiSetFloat( rui, "iconSize", 50.0 )
-			RuiSetFloat( rui, "iconSizePinned", 50.0 )
-		} else if( pingType == ePingType.SPIESLEGENDS_STATION_C_ATTACK )
-		{
-			RuiSetString( rui, "promptText", "Station C" )
-			RuiSetString( rui, "shortPromptText", "Test" )
-
-			iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
-			RuiSetImage( rui, "iconImage", $"rui/flowstatecustom/C_Attack" )
-			RuiSetFloat3( rui, "iconColor", iconColor )
-
-			RuiSetFloat( rui, "iconSize", 50.0 )
-			RuiSetFloat( rui, "iconSizePinned", 50.0 )
-		}
 	}
+
+	RuiSetBool( rui, "additive", iconIsAdditive )
+	RuiSetFloat( rui, "iconSize", 80.0 )
+	RuiSetFloat2( rui, "iconScale", iconScale  )
+	RuiSetFloat( rui, "iconSizePinned", 100.0 )
 
 	RuiSetFloat3( rui, "lineColor", lineColor )
 	if ( GetCurrentPlaylistVarString( "ping_center_offset", PING_CENTER_OFFSET ) != "" )
@@ -1733,6 +2506,7 @@ void function InstanceLocationPing_Thread( entity wp )
 		RuiSetBool( rui, "doCenterOffset", true )
 	}
 
+	bool shouldPlayPingSound = true
 	float endTime = 0.0
 	switch ( pingType )
 	{
@@ -1752,9 +2526,23 @@ void function InstanceLocationPing_Thread( entity wp )
 				completeAdsFade = false
 			}
 
-			endTime = wp.GetWaypointGametime( GAMETIME_INDEX_PING_COMMON_COUNTDOWN )
-			RuiSetGameTime( rui, "startTime", endTime - Bleedout_GetBleedoutTime( owner ) )
+			// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad); show a ping to nearby teammates that closer resembles a squad ping
+			if ( AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) )
+			{
+				completeAdsFade = true
+				RuiSetImage( rui, "animImage", $"rui/hud/unitframes/frame_status_fill" )
+				RuiSetString( rui, "topLabelText", Localize( "#REVIVE" ).toupper() )
+			}
 
+			endTime = wp.GetWaypointGametime( GAMETIME_INDEX_PING_COMMON_COUNTDOWN )
+
+			bool isCountdownInfinite = false
+			                          
+				isCountdownInfinite = GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT )
+         
+
+			RuiSetBool( rui, "isCountdownInfinite", isCountdownInfinite )
+			RuiSetGameTime( rui, "startTime", endTime - Bleedout_GetBleedoutTime( owner ) )
 			RuiSetFloat( rui, "iconSize", iconSize )
 			RuiSetFloat( rui, "iconSizePinned", iconSizePinned )
 			RuiSetBool( rui, "completeADSFade", completeAdsFade )
@@ -1762,58 +2550,35 @@ void function InstanceLocationPing_Thread( entity wp )
 
 			iconScale = <0.5, 0.5, 0>
 			break
-		
-		case ePingType.BOOSTZONE:
-			RuiSetString( rui, "topLabelText", "DAMAGE BUFF" )
 
-			endTime = wp.GetWaypointGametime( GAMETIME_INDEX_PING_COMMON_COUNTDOWN )
-			RuiSetGameTime( rui, "startTime", endTime - BOOSTZONE_ALIVE_TIME )
-
-			RuiSetFloat( rui, "iconSize", 25 )
-			RuiSetFloat( rui, "iconSizePinned", 25 )
-			RuiSetBool( rui, "completeADSFade", true )
-			RuiSetBool( rui, "useInactiveScalar", false )
+                            
+		case ePingType.MARK_MY_LAST_DEATH_BOX:
+			RuiSetString( rui, "topLabelText", Localize( "" ).toupper() )
+			RuiSetString( rui, "promptText", Localize( "#PROMPT_MARK_MY_LAST_DEATHBOX_SHORT").toupper() )
+			RuiSetFloat( rui, "iconSize", 56.0 )
+			RuiSetFloat( rui, "iconSizePinned", 72.0 )
+			RuiSetBool( rui, "completeADSFade", false )
+			RuiSetBool( rui, "useInactiveScalar", true )
 			RuiSetImage( rui, "animImage", $"" )
-
-			RuiSetString( rui, "promptText", "Amped Damage Boost" )
-			RuiSetString( rui, "shortPromptText", "Amped Damage Boost" )
+			RuiSetBool( rui, "hideIcon", false )
 			iconScale = <0.5, 0.5, 0>
 			break
-			
-		case ePingType.SPEEDZONE:
-			RuiSetString( rui, "topLabelText", "SPEED BUFF" )
+      
 
-			endTime = wp.GetWaypointGametime( GAMETIME_INDEX_PING_COMMON_COUNTDOWN )
-			RuiSetGameTime( rui, "startTime", endTime - BOOSTZONE_ALIVE_TIME )
-
-			RuiSetFloat( rui, "iconSize", 25 )
-			RuiSetFloat( rui, "iconSizePinned", 25 )
-			RuiSetBool( rui, "completeADSFade", true )
-			RuiSetBool( rui, "useInactiveScalar", false )
+                               
+		case ePingType.MARK_MY_LAST_DEATH_LOCATION:
+			RuiSetString( rui, "topLabelText", Localize( "" ).toupper() )
+			RuiSetString( rui, "promptText", Localize( "#PROMPT_MARK_MY_LAST_DEATH_LOCATION_SHORT" ).toupper() )
+			RuiSetFloat( rui, "iconSize", 56.0 )
+			RuiSetFloat( rui, "iconSizePinned", 72.0 )
+			RuiSetBool( rui, "completeADSFade", false )
+			RuiSetBool( rui, "useInactiveScalar", true )
 			RuiSetImage( rui, "animImage", $"" )
-
-			RuiSetString( rui, "promptText", "Movement Speed Boost" )
-			RuiSetString( rui, "shortPromptText", "Movement Speed Boost" )
+			RuiSetBool( rui, "hideIcon", false )
 			iconScale = <0.5, 0.5, 0>
 			break
-			
-		case ePingType.RAPIDFIREZONE:
-			RuiSetString( rui, "topLabelText", "FIRE BUFF" )
+      
 
-			endTime = wp.GetWaypointGametime( GAMETIME_INDEX_PING_COMMON_COUNTDOWN )
-			RuiSetGameTime( rui, "startTime", endTime - BOOSTZONE_ALIVE_TIME )
-
-			RuiSetFloat( rui, "iconSize", 25 )
-			RuiSetFloat( rui, "iconSizePinned", 25 )
-			RuiSetBool( rui, "completeADSFade", true )
-			RuiSetBool( rui, "useInactiveScalar", false )
-			RuiSetImage( rui, "animImage", $"" )
-
-			RuiSetString( rui, "promptText", "Amped Damage Boost" )
-			RuiSetString( rui, "shortPromptText", "Amped Damage Boost" )
-			iconScale = <0.5, 0.5, 0>
-			break
-			
 		case ePingType.RESPAWN_BANNER:
 			RuiSetString( rui, "topLabelText", Localize( "#BANNER_RECOVER" ).toupper() )
 
@@ -1827,6 +2592,92 @@ void function InstanceLocationPing_Thread( entity wp )
 			RuiSetImage( rui, "animImage", $"" )
 			iconScale = <0.5, 0.5, 0>
 			break
+
+                   
+		case ePingType.CAREPACKAGE_INSIGHT_FUTURE:
+			RuiSetString( rui, "promptText", Localize( "#PROMPT_CAREPACKAGE_INSIGHT" ) )
+			RuiSetGameTime( rui, "startTime", Time() )
+			RuiSetFloat( rui, "iconSize", 56.0 )
+			RuiSetFloat( rui, "iconSizePinned", 72.0 )
+			RuiSetBool( rui, "completeADSFade", true )
+			RuiSetBool( rui, "useInactiveScalar", false )
+			RuiSetImage( rui, "animImage", $"" )
+			string lootRef = wp.GetWaypointString( 0 )
+			asset lootIcon = $""
+			if( lootRef != "" )
+			{	LootData ld = SURVIVAL_Loot_GetLootDataByRef( lootRef )
+				lootIcon = ld.hudIcon
+				RuiSetFloat3( rui, "iconColor", SrgbToLinear( GetKeyColor( COLORID_TEXT_LOOT_TIER0, ld.tier ) / 255.0 ) )
+				RuiSetImage( rui, "iconImage", lootIcon )
+			}
+
+			thread SetMaxDrawDistanceOnRuiAfterDelay( rui, wp, 10, 500 )
+			break
+
+		case ePingType.CAREPACKAGE_INSIGHT:
+			RuiSetFloat( rui, "iconSize", 56.0 )
+			RuiSetFloat( rui, "iconSizePinned", 72.0 )
+			RuiSetBool( rui, "completeADSFade", true )
+			RuiSetBool( rui, "useInactiveScalar", false )
+			string lootRef = wp.GetWaypointString( 0 )
+			asset lootIcon = $""
+			if( lootRef != "" )
+			{	LootData ld = SURVIVAL_Loot_GetLootDataByRef( lootRef )
+				lootIcon = ld.hudIcon
+				RuiSetFloat3( rui, "iconColor", SrgbToLinear( GetKeyColor( COLORID_TEXT_LOOT_TIER0, ld.tier ) / 255.0 ) )
+				RuiSetImage( rui, "iconImage", lootIcon )
+				RuiSetString( rui, "promptText", ld.pickupString )
+			}
+
+			thread SetMaxDrawDistanceOnRuiAfterDelay( rui, wp, 10, 500 )
+			break
+      
+                       
+                                            
+                                       
+                                             
+                                             
+                                                
+                                                    
+                                                  
+                                                                                   
+
+                                                                                            
+        
+      
+		case ePingType.HOLOSPRAY_LIKE:
+			RuiSetFloat( rui, "iconSize", 56.0 )
+			RuiSetFloat( rui, "iconSizePinned", 72.0 )
+			RuiSetBool( rui, "completeADSFade", true )
+			RuiSetBool( rui, "useInactiveScalar", false )
+			RuiSetImage( rui, "animImage", $"" )
+			iconScale = <0.5, 0.5, 0>
+			break
+
+                      
+		case ePingType.STATION:
+			RuiSetFloat( rui, "iconSize", 56.0 )
+			RuiSetFloat( rui, "iconSizePinned", 72.0 )
+			break
+      
+
+		case ePingType.PING_CAPTURE_OBJECTIVE_DEFEND:
+		case ePingType.PING_CAPTURE_OBJECTIVE_ATTACK:
+			shouldPlayPingSound = false // The original ping for objective pings is created by script, we don't want them playing to players
+			RuiSetBool( rui, "displayDistance", false )
+			RuiSetBool( rui, "hideIcon", true )
+			RuiSetBool( rui, "doClamp", false )
+			break
+
+                    
+		case ePingType.UPGRADE_STATION:
+			if( IsValid( pingedEnt ) )
+			{
+				entity pingedParent = pingedEnt.GetParent()
+				thread UpgradeCore_HarvesterPinged( pingedParent == null ? pingedEnt : pingedParent, wp )
+			}
+			break
+      
 	}
 
 	if ( IsValid( owner ) && owner.IsPlayer() )
@@ -1841,20 +2692,22 @@ void function InstanceLocationPing_Thread( entity wp )
 	RuiTrackGameTime( rui, "countdownGoalTime", wp, RUI_TRACK_WAYPOINT_GAMETIME, GAMETIME_INDEX_PING_COMMON_COUNTDOWN )
 
 	RuiSetString( rui, "ownerPlayerName", (((owner != null) && owner.IsPlayer()) ? owner.GetPlayerName() : "") )
-	
-	if(pingType == ePingType.SHADOWFALL_NEMESIS)
+
+	// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad);
+	// don't play ping sfx unless the player will be seeing the ping
+	if ( AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) && viewPlayer.GetTeam() != owner.GetTeam() )
 	{
-		RuiSetString( rui, "ownerPlayerName", "" )
+		float maxProximity = AllianceProximity_GetMaxDistForProximity()
+		if ( !IsPositionWithinRadius( maxProximity, viewPlayer.GetOrigin(), owner.GetOrigin() ) && !IsPositionWithinRadius( maxProximity, viewPlayer.GetOrigin(), wp.GetOrigin() ) )
+			shouldPlayPingSound = false
 	}
-	
-	if(pingType == ePingType.SND_BOMB)
+
+	if( Waypoint_ShouldPlayCreationEffectWaypoint( wp ) && file.commsWaypointSoundsEnabled && shouldPlayPingSound )
 	{
-		RuiSetString( rui, "ownerPlayerName", "" )
-	}	
-	
-	string pingSound = Ping_GetSoundForLocationPing( pingType, (viewPlayer == owner), isSameTeam )
-	if ( pingSound != "" && pingType != ePingType.SHADOWFALL_LEGEND_DEATH && pingType != ePingType.SHADOWFALL_SHADOW_DEATH && pingType != ePingType.SHADOWFALL_NEMESIS && pingType != ePingType.SND_BOMB )
-		EmitSoundOnEntity( wp, pingSound )
+		string pingSound = Ping_GetSoundForLocationPing( wp, pingType, (viewPlayer == owner), isSameTeam )
+		if ( pingSound != "" )
+			EmitSoundOnEntity( wp, pingSound )
+	}
 
 	PlayerMatchState_RuiTrackInt( rui, "matchStateCurrent", viewPlayer )
 	int ms = PlayerMatchState_GetFor( viewPlayer )
@@ -1866,7 +2719,12 @@ void function InstanceLocationPing_Thread( entity wp )
 			RuiSetInt( rui, "matchStateMaximum", ePlayerMatchState.STAGING_AREA )
 	}
 
-	if ( (ms > ePlayerMatchState.STAGING_AREA) || (pingType == ePingType.MAP_WAYPOINT) )
+	bool doSimpleMaxdistCheck = ((wp.GetWaypointGroupFlags() & WPGF_DO_SIMPLE_MAXDRAWDIST_CHECK) != 0)
+	if ( doSimpleMaxdistCheck )
+		RuiSetFloat( rui, "maxDrawDistance", GetCurrentPlaylistVarFloat( "waypoint_max_dist_check_default", 2000.0 ) )
+
+	bool noCreateForMinimap = ((wp.GetWaypointGroupFlags() & WPGF_NO_CREATE_MINIMAP_ICONS) != 0)
+	if ( !noCreateForMinimap && ((ms > ePlayerMatchState.STAGING_AREA) || (pingType == ePingType.MAP_WAYPOINT)) )
 	{
 		Assert( wp.wp.ruiMinimap == null )
 		wp.wp.ruiMinimap = AddLocationPingToMinimapNoClamp( wp, minimapIcon, MINIMAP_SIZE_BIG, iconScale )
@@ -1903,25 +2761,28 @@ void function InstanceLocationPing_Thread( entity wp )
 	UpdateResponseIcons( wp )
 	ExecuteCallbacks_OnPingCreatedByAnyPlayer( wp.GetOwner(), pingType, pingedEnt, wp.GetOrigin(), wp )
 
-	string promptText = Ping_GetPromptForPing( viewPlayer, wp, pingType )
-
-	//
-	if ( promptText == "" )
-		promptText = prompt
-
-	RuiSetString( rui, "pingPrompt", promptText )
-	RuiSetString( rui, "pingPromptForOwner", promptText )
-	
-	if(pingType == ePingType.SHADOWFALL_NEMESIS)
+	if( Waypoint_ShouldPlayCreationEffectWaypoint( wp ) )
 	{
-		RuiSetString( rui, "pingPrompt", "" )
-		RuiSetString( rui, "pingPromptForOwner", "" )
+		string promptText = Ping_GetPromptForPing( viewPlayer, wp, pingType )
+
+		// this is ugly but the way we get the promt is also ugly so this will have to do for now.
+		if ( promptText == "" )
+			promptText = prompt
+
+		RuiSetString( rui, "pingPrompt", promptText )
+		RuiSetString( rui, "pingPromptForOwner", promptText )
 	}
-	
-	if(pingType == ePingType.SND_BOMB)
+
+	// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad); show the ping to nearby teammates.
+	if ( AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) )
 	{
-		RuiSetString( rui, "pingPrompt", "" )
-		RuiSetString( rui, "pingPromptForOwner", "" )
+		// Allow Objective Pings to appear for all members of the team and ignore team proximity
+		if ( pingType != ePingType.PING_CAPTURE_OBJECTIVE_DEFEND && pingType != ePingType.PING_CAPTURE_OBJECTIVE_ATTACK )
+		{
+			thread AllianceProximity_ManageIconVisibility_Thread( wp, rui, false, true )
+			thread AllianceProximity_ManageIconVisibility_Thread( wp, wp.wp.ruiMinimap, false, false )
+			thread AllianceProximity_ManageIconVisibility_Thread( wp, wp.wp.ruiFullmap, true, false )
+		}
 	}
 }
 
@@ -1935,11 +2796,152 @@ bool function GetCommsWaypointSoundsEnabled()
 	return file.commsWaypointSoundsEnabled
 }
 
+void function InstanceObjectivePing( entity wp )
+{
+	//this is ugly but the ping has been gutted to allow winter express to control it from script
+	int wpType = wp.GetWaypointType()
+	Assert( wpType == eWaypoint.OBJECTIVE )
+
+	entity viewPlayer = GetLocalViewPlayer()
+	if ( !IsValid( viewPlayer ) )
+	{
+		Warning( "%s(): no view-player.", FUNC_NAME() )
+		return
+	}
+
+	if ( viewPlayer.GetTeamMemberIndex() < 0 )
+	{
+		Warning( "%s(): team member index was invalid.", FUNC_NAME() )
+		return
+	}
+
+	int pingType     = Waypoint_GetPingTypeForWaypoint( wp )
+	entity wpParent  = wp.GetParent()
+	int ticketID     = GetTicketIDForWaypoint( wp )
+	entity pingedEnt = GetPingedEntForLocWaypoint( wp )
+
+	printt( format( "New objective ping  -  wpent #%d, pingType #%d, ticketID #%d, target: '%s'", wp.GetEntIndex(), pingType, ticketID, string( pingedEnt ) ) )
+
+	entity owner = wp.GetOwner()
+	if ( (owner == viewPlayer) && Ping_TicketIDIsLocallyCanceled( ticketID ) )
+	{
+		printt( format( "New ping #%d has already been canceled locally.", ticketID ) )
+		return
+	}
+
+	if ( !IsValid( owner ) )
+	{
+		printt( format( "New ping #%d has no owner.", ticketID ) )
+		return
+	}
+
+	ItemFlavor ornull pingFlavor = Ping_ItemFlavorForPing( viewPlayer, pingType, pingedEnt )
+
+	asset hudIcon       = Ping_IconForPing_Hud( viewPlayer, pingType, pingedEnt, owner )
+	bool iconIsAdditive = Ping_IconForPing_IsAdditive( viewPlayer, pingType, pingedEnt, owner )
+	vector iconScale    = Ping_IconScaleForPing( viewPlayer, pingType, pingedEnt, owner )
+	string prompt       = Ping_GetLabelForPingType( pingType )
+	string shortPrompt  = Ping_GetShortTextForPing( pingType )
+	vector lineColor    = SrgbToLinear( Ping_LineColorForPing_Hud( pingType ) )
+	bool isSameTeam     = (owner.GetTeam() == viewPlayer.GetTeam())
+
+	// Some modes use alliances that are considered friendly. Need to test against those here as well instead of just squads.
+	if ( !isSameTeam && AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) )
+	{
+		int viewPlayerAlliance = AllianceProximity_GetAllianceFromTeam( viewPlayer.GetTeam() )
+		if ( viewPlayerAlliance != -1 )
+			isSameTeam = IsTeamInAlliance( owner.GetTeam(), viewPlayerAlliance )
+	}
+
+	int sortKeyAdd      = Ping_GetSortModifier( pingType, isSameTeam )
+
+	var rui = CreateWaypointRui( $"ui/waypoint_ping_objective.rpak", 200 + sortKeyAdd )
+	RuiKeepSortKeyUpdated( rui, true, "targetPos" )
+
+	RuiTrackInt( rui, "viewPlayerTeamMemberIndex", viewPlayer, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
+	RuiTrackFloat3( rui, "targetPos", wp, RUI_TRACK_ABSORIGIN_FOLLOW )
+	RuiTrackInt( rui, "confirmationCount", wp, RUI_TRACK_WAYPOINT_INT, INT_INDEX_PING_LOC_CONFIRMCOUNTER )
+
+	RuiTrackFloat3( rui, "playerAngles", viewPlayer, RUI_TRACK_CAMANGLES_FOLLOW ) //RUI_TRACK_EYEANGLES_FOLLOW
+	RuiSetFloat( rui, "pingOpacity", GetConVarFloat( "hud_setting_pingAlpha" ) )
+
+	vector iconColor
+	if ( pingFlavor != null )
+	{
+		expect ItemFlavor( pingFlavor )
+		RuiSetImage( rui, "outerIcon", PingFlavor_GetOuterIcon( pingFlavor ) )
+		RuiSetImage( rui, "innerIcon", PingFlavor_GetInnerIcon( pingFlavor ) )
+
+		RuiSetBool( rui, "drawHeightLine", PingFlavor_GetDrawHeightLine( pingFlavor ) )
+
+		iconColor = SrgbToLinear( PingFlavor_GetColor( pingFlavor, owner.GetTeamMemberIndex() ) )
+		RuiSetFloat3( rui, "iconColor", iconColor )
+	}
+	else
+	{
+		iconColor = SrgbToLinear( Ping_IconColorForPing_Hud( pingType, isSameTeam ) )
+		RuiSetImage( rui, "iconImage", hudIcon )
+		RuiSetFloat3( rui, "iconColor", iconColor )
+	}
+
+	RuiSetBool( rui, "additive", iconIsAdditive )
+	RuiSetFloat( rui, "iconSize", 80.0 )
+	RuiSetFloat2( rui, "iconScale", iconScale )
+	RuiSetFloat( rui, "iconSizePinned", 100.0 )
+
+	RuiSetFloat3( rui, "lineColor", lineColor )
+	if ( GetCurrentPlaylistVarString( "ping_center_offset", PING_CENTER_OFFSET ) != "" )
+	{
+		vector centerOffset = StringToVector( GetCurrentPlaylistVarString( "ping_center_offset", PING_CENTER_OFFSET ) )
+		RuiSetFloat2( rui, "staticScreenPos", centerOffset )
+		RuiSetBool( rui, "doCenterOffset", true )
+	}
+
+	if ( IsValid( owner ) && owner.IsPlayer() )
+	{
+		RuiTrackBool( rui, "ownerIsJumpmaster", owner, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "isJumpmaster" ) )
+		RuiTrackInt( rui, "ownerTeamMemberIndex", owner, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
+	}
+
+	RuiTrackBool( rui, "viewPlayerIsOwner", wp, RUI_TRACK_ENT_IS_OWNED_BY_VIEWPLAYER )
+	RuiSetBool( rui, "viewPlayerHasConfirmed", false )
+
+	RuiTrackGameTime( rui, "countdownGoalTime", wp, RUI_TRACK_WAYPOINT_GAMETIME, GAMETIME_INDEX_PING_COMMON_COUNTDOWN )
+	RuiSetString( rui, "ownerPlayerName", (((owner != null) && owner.IsPlayer()) ? owner.GetPlayerName() : "") )
+
+	PlayerMatchState_RuiTrackInt( rui, "matchStateCurrent", viewPlayer )
+
+	if ( !IsWatchingReplay() )
+	{
+		wp.WaypointFocusTracking_Register()
+		wp.WaypointFocusTracking_TrackPos( wp, RUI_TRACK_ABSORIGIN_FOLLOW, 0 );
+	}
+
+	SetupTargetHighlightForNewPing( wp, pingedEnt )
+
+	//
+	s_activeLocationPings.append( wp )
+
+	//
+	bool visible = ShouldWaypointRuiBeVisible()
+	RuiSetVisible( rui, visible )
+
+	SetWaypointRui_HUD( wp, rui )
+	UpdateResponseIcons( wp )
+	ExecuteCallbacks_OnPingCreatedByAnyPlayer( wp.GetOwner(), pingType, pingedEnt, wp.GetOrigin(), wp )
+
+	string promptText = Ping_GetPromptForPing( viewPlayer, wp, pingType )
+
+	// this is ugly but the way we get the promt is also ugly so this will have to do for now.
+	if ( promptText == "" )
+		promptText = prompt
+
+	RuiSetString( rui, "pingPrompt", promptText )
+	RuiSetString( rui, "pingPromptForOwner", promptText )
+}
+
 void function InstanceLootPing( entity wp )
 {
-	if ( !IsValid( wp ) )
-		return
-
 	int wpType = wp.GetWaypointType()
 	Assert( wpType == eWaypoint.PING_LOOT )
 	int pingType = Waypoint_GetPingTypeForWaypoint( wp )
@@ -1967,6 +2969,35 @@ void function InstanceLootPing( entity wp )
 		return
 	}
 
+	// For now, we assume this isn't being transmitted to enemies unless we are in a PVE mode ( current implementation of server function ShouldTransmitToAllTeams)
+	if ( AllianceProximity_IsUsingAllianceProximity() && !IsPVEMode() )
+	{
+		if ( !IsValid( wp ) )
+			return
+
+		int waypointTeam = wp.GetTeam()
+		int viewPlayerTeam = viewPlayer.GetTeam()
+
+		if ( AllianceProximity_IsTeamInAnAlliance( waypointTeam ) && waypointTeam != viewPlayerTeam )
+		{
+			if ( !AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) )
+				return
+
+			if ( AllianceProximity_GetAllianceFromTeam( viewPlayerTeam ) != AllianceProximity_GetAllianceFromTeam( waypointTeam ) )
+				return
+		}
+	}
+
+	bool isDirectlyOnItem = (wp.GetParent() == lootItem)
+
+	vector mins = <0, 0, 0>
+	vector maxs = <0, 0, 0>
+	if ( isDirectlyOnItem )
+	{
+		mins = lootItem.GetBoundingMins()
+		maxs = lootItem.GetBoundingMaxs()
+	}
+
 	LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( lootItem.GetSurvivalInt() )
 
 	var rui = CreateWaypointRui( $"ui/waypoint_loot_entpos.rpak", 200 )
@@ -1974,21 +3005,23 @@ void function InstanceLootPing( entity wp )
 
 	RuiTrackInt( rui, "viewPlayerTeamMemberIndex", viewPlayer, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
 	RuiTrackBool( rui, "hasFocus", wp, RUI_TRACK_WAYPOINT_FOCUS_ENT_IS_FOCUSED )
-	RuiTrackFloat3( rui, "targetPos", lootItem, RUI_TRACK_ABSORIGIN_FOLLOW )
-	RuiTrackBool( rui, "usePromptHasFocus", lootItem, RUI_TRACK_ENT_HAS_USE_PROMPT_FOCUS )
+	RuiTrackFloat3( rui, "targetPos", wp, RUI_TRACK_ABSORIGIN_FOLLOW )
+	RuiTrackBool( rui, "usePromptHasFocus", (isDirectlyOnItem ? lootItem : wp), RUI_TRACK_ENT_HAS_USE_PROMPT_FOCUS )
 
-	RuiTrackFloat3( rui, "playerAngles", viewPlayer, RUI_TRACK_CAMANGLES_FOLLOW ) //
+	RuiTrackFloat3( rui, "playerAngles", viewPlayer, RUI_TRACK_CAMANGLES_FOLLOW ) //RUI_TRACK_EYEANGLES_FOLLOW
 
 	RuiSetString( rui, "promptText", lootData.pickupString )
 	RuiSetString( rui, "shortPromptText", lootData.pickupString )
-	// printt( "promptText", lootData.pickupString )
-	// printt( "iconImage", lootData.pickupString )
-	// printt( "lootTier", lootData.tier )
-
-	vector mins = lootItem.GetBoundingMins()
-	vector maxs = lootItem.GetBoundingMaxs()
+	printt( "promptText", lootData.pickupString )
+	printt( "iconImage", lootData.pickupString )
+	printt( "lootTier", lootData.tier )
 
 	RuiSetFloat3( rui, "targetOffset", <0, 0, maxs.z - mins.z> + <0, 0, 4> )
+
+	                          
+		if ( TitanSword_WeaponRefIsTitanSword( lootData.ref ) )
+			RuiSetFloat3( rui, "targetOffset", <0, 0, 10> + <0, 0, 4> )
+       
 
 	RuiSetFloat( rui, "pingOpacity", GetConVarFloat( "hud_setting_pingAlpha" ) )
 
@@ -2041,7 +3074,26 @@ void function InstanceLootPing( entity wp )
 		RuiSetBool( rui, "doCenterOffset", true )
 	}
 
-	EmitSoundOnEntity( wp, Ping_GetSoundForItemPing( pingType, (viewPlayer == owner) ) )
+	bool shouldPlayCommsSound = true
+
+	// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad);
+	// don't play ping sfx unless the player will be seeing the ping
+	if ( AllianceProximity_ShouldTryToTransmitPingOrIconToAlliance( true, pingType ) )
+	{
+		if ( !IsValid( owner ) )
+		{
+			shouldPlayCommsSound = false
+		}
+		else if ( viewPlayer.GetTeam() != owner.GetTeam() )
+		{
+			float maxProximity = AllianceProximity_GetMaxDistForProximity()
+			if ( !IsPositionWithinRadius( maxProximity, viewPlayer.GetOrigin(), owner.GetOrigin() ) && !IsPositionWithinRadius( maxProximity, viewPlayer.GetOrigin(), wp.GetOrigin() ) )
+				shouldPlayCommsSound = false
+		}
+	}
+
+	if ( file.commsWaypointSoundsEnabled && shouldPlayCommsSound )
+		EmitSoundOnEntity( wp, Ping_GetSoundForItemPing( pingType, (viewPlayer == owner) ) )
 
 	PlayerMatchState_RuiTrackInt( rui, "matchStateCurrent", viewPlayer )
 	int ms = PlayerMatchState_GetFor( viewPlayer )
@@ -2053,14 +3105,16 @@ void function InstanceLootPing( entity wp )
 			RuiSetInt( rui, "matchStateMaximum", ePlayerMatchState.STAGING_AREA )
 	}
 
-	if ( ms >= ePlayerMatchState.NORMAL )
+	if ( isDirectlyOnItem && ms >= ePlayerMatchState.NORMAL )
 	{
+		vector iconScale = lootData.lootType == eLootType.MAINWEAPON ? <2, 1, 0> : <1, 1, 0>
+
 		Assert( wp.wp.ruiMinimap == null )
-		wp.wp.ruiMinimap = AddLocationPingToMinimapNoClamp( lootItem, lootData.hudIcon, MINIMAP_SIZE_SMALL, <1, 1, 0> )
+		wp.wp.ruiMinimap = AddLocationPingToMinimapNoClamp( lootItem, lootData.hudIcon, MINIMAP_SIZE_SMALL, iconScale )
 		RuiSetInt( wp.wp.ruiMinimap, "lootTier", lootData.tier )
 
 		Assert( wp.wp.ruiFullmap == null )
-		wp.wp.ruiFullmap = AddLocationPingToFullmap( lootItem, lootData.hudIcon, FULLMAP_SIZE_SMALL, <1, 1, 0> )
+		wp.wp.ruiFullmap = AddLocationPingToFullmap( lootItem, lootData.hudIcon, FULLMAP_SIZE_SMALL, iconScale )
 		Fullmap_AddRui( wp.wp.ruiFullmap )
 		RuiSetInt( wp.wp.ruiFullmap, "lootTier", lootData.tier )
 	}
@@ -2068,7 +3122,7 @@ void function InstanceLootPing( entity wp )
 	if ( !IsWatchingReplay() )
 	{
 		wp.WaypointFocusTracking_Register()
-		wp.WaypointFocusTracking_TrackPos( lootItem, RUI_TRACK_ABSORIGIN_FOLLOW, 0 );
+		wp.WaypointFocusTracking_TrackPos( (isDirectlyOnItem ? lootItem : wp), RUI_TRACK_ABSORIGIN_FOLLOW, 0 );
 	}
 
 	//SetupTargetHighlightForNewPing( wp, lootItem )
@@ -2100,7 +3154,7 @@ entity function CreatePlayerWaypoint_Wrapper( int waypointType )
 	entity wp = CreatePlayerWaypoint( waypointType )
 	Waypoint_ResetCreatedTime( wp )
 
-	AddEntityDestroyedCallback( wp, OnPlayerWaypointDestroyed ) //Works now
+	AddEntityDestroyedCallback( wp, OnPlayerWaypointDestroyed )
 
 	return wp
 }
@@ -2115,10 +3169,13 @@ void function OnPlayerWaypointDestroyed( entity wp )
 	}
 }
 
-void function WaypointTimeout_THREAD( entity wp, float duration )
+void function Waypoint_DestroyAfterDuration_THREAD( entity wp, float duration )
 {
+	AssertIsNewThread()
+
 	if ( !IsValid( wp ) )
 		return
+
 	wp.EndSignal( "OnDestroy" )
 	wp.Signal( SIGNAL_WAYPOINT_TIMEOUT_BEGIN )
 	wp.EndSignal( SIGNAL_WAYPOINT_TIMEOUT_BEGIN )
@@ -2126,6 +3183,7 @@ void function WaypointTimeout_THREAD( entity wp, float duration )
 	wait duration
 	if ( !IsValid( wp ) )
 		return
+
 	wp.Destroy()
 }
 
@@ -2195,18 +3253,15 @@ float function Waypoint_GetWaypointAge( entity wp )
 	return (Time() - wp.wp.waypointCreatedTime)
 }
 
-entity function CreateBasicPOI( int poiType, vector pos, entity ent, int teamNum, int priority, entity realmsEntity )
+entity function CreateBasicPOIAndReturnEntity( int poiType, vector pos, entity ent, int teamNum, int priority, entity realmsEntity )
 {
-	entity poiEntity = CreatePlayerPOI( eWaypoint.BASIC_POI, poiType, pos, ent, teamNum, priority, realmsEntity )
-
-	Assert( IsValid( realmsEntity ) )
-	if ( IsValid( poiEntity ) )
-	{
-		poiEntity.RemoveFromAllRealms()
-		poiEntity.AddToOtherEntitysRealms( realmsEntity )
-	}
-
+	entity poiEntity = CreatePlayerPOIAndReturnEntity( eWaypoint.BASIC_POI, poiType, pos, ent, teamNum, priority, realmsEntity )
 	return poiEntity
+}
+
+void function CreateBasicPOI( int poiType, vector pos, entity ent, int teamNum, int priority, entity realmsEntity )
+{
+	CreatePlayerPOI( eWaypoint.BASIC_POI, poiType, pos, ent, teamNum, priority, realmsEntity )
 }
 
 bool function IsRepingablePingType( int pingType )
@@ -2215,14 +3270,32 @@ bool function IsRepingablePingType( int pingType )
 	{
 		//case ePingType.MAP_WAYPOINT:
 		case ePingType.ENEMY_SPECIFIC:
+                           
+		case ePingType.ENEMY_HEALING_HEALTH:
+		case ePingType.ENEMY_HEALING_SHIELD:
+      
+		case ePingType.ENEMY_REVIVING:
 		case ePingType.ENEMY_GENERAL:
+		case ePingType.ASH_PASSIVE_ID_ATTACKER:
+                        
+                                            
+                                               
+      
+                                  
+                                     
+        
+		case ePingType.ABILITY_ECHO_LOCATOR:
 			return false
+
+		                     
+		case ePingType.HOVERVEHICLE_ENEMY:
+			return false
+           
 	}
 
 	return true
 }
 
-// DOT_10DEGREE moved to sh_utility_all.gnut
 entity function GetAnyValidLocPingForReuse( entity player, int pingType, entity pingEnt, vector position )
 {
 	const float PING_REUSE_TIME = 5.0
@@ -2280,6 +3353,12 @@ bool function MultiplePingsAllowed( int pingType )
 {
 	switch ( pingType )
 	{
+                
+		case ePingType.CRAFTING_GENERIC:
+      
+#if DEV
+		case ePingType.MULTILOCATION:
+#endif
 		case ePingType.LOOT_BIN:
 		case ePingType.CAREPACKAGE:
 		case ePingType.SURVEYBEACON:
@@ -2289,6 +3368,12 @@ bool function MultiplePingsAllowed( int pingType )
 		case ePingType.ABILITY_DRONEMEDIC:
 		case ePingType.ABILITY_DOMESHIELD:
 		case ePingType.ABILITY_WORMHOLE:
+                     
+                              
+      
+                         
+		case ePingType.MULTI_ENEMY_POI:
+      
 			return true
 	}
 
@@ -2317,9 +3402,9 @@ void function DoAnyCleanupForIncomingLocationPing( entity player, int pingType, 
 		}
 	}
 
-	if ( pingType == ePingType.ENEMY_SPECIFIC )
+	if ( IsSpecificEnemyPing( pingType ) )
 	{
-		// Go through everyone on our team (us included), and kill any .ENEMY_SPECIFIC pings that are about this entity
+		// Go through everyone on our team (us included), and kill any enemy-specific pings that are about this entity
 		int team                  = player.GetTeam()
 		array<entity> teamPlayers = GetPlayerArrayOfTeam_Alive( team )
 		foreach ( entity teamPlayer in teamPlayers )
@@ -2351,24 +3436,29 @@ void function DoAnyCleanupForIncomingLocationPing( entity player, int pingType, 
 				continue
 
 			int wpPingType = Waypoint_GetPingTypeForWaypoint( wp )
-			if ( ( wpPingType == pingType ) )
+			if ( (wpPingType == pingType) )
 			{
 				if ( !MultiplePingsAllowed( pingType ) )
 				{
+					                   
+					//Because we're using the same ping type when we add the Expired Banner ping, it is considered a MultiplePing which normally is not allowed for this type
+					//However, this behavior is desired when we apply a new ping when the Banner Expires.
+					if( !( pingType == ePingType.RESPAWN_BANNER && Perk_CanExpiredBannerBeRecovered( player ) ) )
+           
 					deadPings.append( wp )
 					continue
 				}
 
-				//still clean it up if we're re-pinging the same ent:
+				// still clean it up if we're re-pinging the same ent:
 				entity target = GetPingedEntForLocWaypoint( wp )
-				if ( IsValid( target ) && ( target == pingEnt ) )
+				if ( IsValid( target ) && (target == pingEnt) )
 				{
 					deadPings.append( wp )
 					continue
 				}
 			}
 
-			if ( (( wpPingType == ePingType.WE_GO) || ( wpPingType == ePingType.MAP_WAYPOINT )) && (( pingType == ePingType.WE_GO) || ( pingType == ePingType.MAP_WAYPOINT )) )
+			if ( ((wpPingType == ePingType.WE_GO) || (wpPingType == ePingType.MAP_WAYPOINT)) && ((pingType == ePingType.WE_GO) || (pingType == ePingType.MAP_WAYPOINT)) )
 			{
 				deadPings.append( wp )
 				continue
@@ -2382,7 +3472,7 @@ void function DoAnyCleanupForIncomingLocationPing( entity player, int pingType, 
 		}
 	}
 
-	foreach( entity deadPing in deadPings )
+	foreach ( entity deadPing in deadPings )
 	{
 		if ( IsValid( deadPing ) )
 			deadPing.Destroy()
@@ -2392,19 +3482,31 @@ void function DoAnyCleanupForIncomingLocationPing( entity player, int pingType, 
 bool function IsSpecificEnemyPing( int pingType )
 {
                            
-	if ( pingType == ePingType.ENEMY_SPECIFIC ) //|| pingType == ePingType.ENEMY_REVIVING || pingType == ePingType.ENEMY_HEALING_HEALTH || pingType == ePingType.ENEMY_HEALING_SHIELD )
+	if ( pingType == ePingType.ENEMY_SPECIFIC || pingType == ePingType.ENEMY_REVIVING || pingType == ePingType.ENEMY_HEALING_HEALTH || pingType == ePingType.ENEMY_HEALING_SHIELD )
+     
+                                                                                    
+      
 		return true
 
-	//if ( pingType == ePingType.ASH_PASSIVE_ID_ATTACKER )
-		//return true
+	if ( pingType == ePingType.ASH_PASSIVE_ID_ATTACKER )
+		return true
+
+                         
+                                                                                     
+                                                                                                               
+             
+       
+
+                                 
+                                                 
+             
+       
 
 	return false
 }
+
 void function Waypoints_DestroyPingsForSkydiveEnding( entity player )
 {
-	if( Gamemode() == eGamemodes.flowstate_pkknockback ) 
-		return
-	
 	array<entity> deadPings
 
 	foreach ( entity wp in player.p.pings.locations )
@@ -2433,109 +3535,159 @@ float function GetDefaultTimeoutForPingType( entity player, int pingType )
 {
 	switch( pingType )
 	{
-		case ePingType.SHADOWFALL_LEGEND_DEATH:
-			return 6.0
-		case ePingType.SHADOWFALL_SHADOW_DEATH:
-			return 2.5
-		
 		case ePingType.ABILITY_DRONEMEDIC:
 		case ePingType.ABILITY_DOMESHIELD:
 		case ePingType.ABILITY_WORMHOLE:
+                       
+                                         
+      
+		case ePingType.OPENED_PHASE_BREACH:
 			return 3600.0
 
 		case ePingType.MAP_WAYPOINT:
 			return 3600.0
 
+		case ePingType.ABILITY_ECHO_LOCATOR:
+			return GetWeaponInfoFileKeyField_GlobalFloat( ECHO_LOCATOR_WEAPON_NAME, "fire_duration" ) //to match echo_locator duration.
+
 		case ePingType.ENEMY_SPECIFIC:
+                           
+		case ePingType.ENEMY_HEALING_HEALTH:
+		case ePingType.ENEMY_HEALING_SHIELD:
+      
+		case ePingType.ENEMY_REVIVING:
+                     
+		case ePingType.HOVERVEHICLE_ENEMY:
+                           
+		case ePingType.ASH_PASSIVE_ID_ATTACKER:
+		case ePingType.ENEMY_TETHERED:
 			return 8.0
 
+                
+		case ePingType.CRAFTING_GENERIC:
+			return 40.0
+      
 		case ePingType.ENEMY_TRAP:
+		case ePingType.ENEMY_TESLA_TRAP:
+		case ePingType.ENEMY_TROPHY_SYSTEM:
 		case ePingType.ENEMY_SMOKE:
+		case ePingType.TOXIC_GAS:
 		case ePingType.ENEMY_SHIELD:
 		case ePingType.ENEMY_TELEPORTER:
 			return 10.0
 
+		case ePingType.ABILITY_JUMPPAD:
 		case ePingType.BLEEDOUT:
 		case ePingType.SELF_REVIVE:
 		case ePingType.LOCATION_TRAINING:
 		case ePingType.RESPAWN_BANNER: // has its own destroy threat with a callback
+		case ePingType.ABILITY_SPACE_ELEVATOR:
+		case ePingType.SKYDIVE_LAUNCHER:
+                        
+                                            
+                                               
+      
+                       
+                                            
+      
+                                 
+                                  
+                                       
+      
 			return 99999.0
 
 		case ePingType.RESPAWN_CARD:
 			return 1.0
-			
-		case ePingType.BOOSTZONE:
-		case ePingType.SPEEDZONE:
-		case ePingType.RAPIDFIREZONE:
-			return BOOSTZONE_ALIVE_TIME
-		case ePingType.SND_BOMB:
-			return 3
-			
+
+                      
+		case ePingType.TRAIN_OBJECTIVE:
+			return 99999.0
+
+		case ePingType.STATION:
+			return 99999.0
+      
+
+                       
+		case ePingType.SPAWN_REGION:
+			return 99999.0
+      
+
+		case ePingType.HOLOSPRAY_LIKE:
+			return 1.0
+
+                   
 		case ePingType.STORY_MARVIN:
 		case ePingType.LOOT_MARVIN:
 			return 30.0
+      
+
+                            
+		case ePingType.MARK_MY_LAST_DEATH_BOX:
+			return 30.0
+
+		case ePingType.PING_MY_LAST_DEATH_BOX:
+			return 99999.0
+      
+
+                               
+		case ePingType.MARK_MY_LAST_DEATH_LOCATION:
+			return 30.0
+      
+
+		case ePingType.PING_CAPTURE_OBJECTIVE_DEFEND:
+			return 99999.0
+
+		case ePingType.PING_CAPTURE_OBJECTIVE_ATTACK:
+			return 99999.0
+
+                         
+		case ePingType.MULTI_ENEMY_POI:
+			return ForcedSpawn_GetEnemyPingDisplayTime()
+                               
 	}
-	
-	if(IsValid(player))
-	{
-		int ms = PlayerMatchState_GetFor( player )
-		if ( (ms == ePlayerMatchState.SKYDIVE_PRELAUNCH) || (ms == ePlayerMatchState.SKYDIVE_FALLING) )
-			return 60.0
-	}
+
+	int ms = PlayerMatchState_GetFor( player )
+	if ( (ms == ePlayerMatchState.SKYDIVE_PRELAUNCH) || (ms == ePlayerMatchState.SKYDIVE_FALLING) )
+		return 60.0
 
 	return 15.0
 }
 
-entity function CreateWaypoint_Test( entity player, int pingType, vector position, int ticketID, bool toteam = false)
+bool function ShouldTransmitToAllTeams( int pingType )
 {
-	if(!IsValid(player) || IsValid(player) && !player.IsPlayer() ) return null
-	
-	position = ClampToWorldspace( position )
-
-	entity wp = CreatePlayerWaypoint_Wrapper( eWaypoint.PING_LOCATION )
-	
-	player.p.pings.locations.append( wp )	
-	int team = player.GetTeam()
-	entity pingEnt = null
-	// One time inits:
-	wp.SetOwner( player )
-	
-	if(toteam)
-		wp.SetOnlyTransmitToSingleTeam( team )
-	
-	SetPingTypeForWaypoint( wp, pingType )
-	SetConfirmCounterForLocWaypoint( wp, 0 )
-	SetPingedEntForLocWaypoint( wp, pingEnt )
-
-	Waypoint_ResetCreatedTime( wp )
-	SetTicketIDForWaypoint( wp, ticketID )
-	wp.SetAbsOrigin( position )
-	
-	Waypoint_ParentToPingEnt( wp, pingEnt, pingType )
-
-	player.p.pings.latestPing = wp
-
-	if ( pingType in file.pingCallbackFunctions )
+	if ( IsPVEMode() )
 	{
-		foreach( func in file.pingCallbackFunctions[ pingType ] )
-			func( player, wp, pingEnt, pingType )
+		switch( pingType )
+		{
+			case ePingType.ABILITY_DRONEMEDIC:
+			case ePingType.ABILITY_DOMESHIELD:
+			case ePingType.ABILITY_WORMHOLE:
+			case ePingType.ABILITY_JUMPPAD:
+			case ePingType.BLEEDOUT:
+			case ePingType.SELF_REVIVE:
+                     
+                               
+      
+				return true
+		}
 	}
-	
-	SetTeam( wp, team )
 
-	float timeOut = GetDefaultTimeoutForPingType( null, pingType )
-	thread WaypointTimeout_THREAD( wp, timeOut )
-	return wp
+
+	return false
 }
 
-entity function CreateWaypoint_Ping_Location( entity player, int pingType, entity pingEnt, vector position, int ticketID, bool forceNew )
+entity function CreateWaypoint_Ping_Location( entity player, int pingType, entity pingEnt, vector position, int ticketID, bool forceNew, bool forceOnlyVisibleToPlayer = false, int pingWheelIndex = -1)
 {
-	position = ClampToWorldspace( position )
+	Assert( pingType < ePingType._count, "Invalid ping type passed: " + pingType )
+
+	if ( pingType >= ePingType._count )
+	{
+		RecordServerAbuseForAntiCheat( player, eRSALabels.CreateWaypointPingType )
+		return null
+	}
 
 	if ( GetCurrentPlaylistVarBool( "use_new_ping", true ) )
 		position += <0, 0, 72>
-
-	forceNew = true
 
 	if ( !LegalOrigin( position ) )
 		return null
@@ -2550,7 +3702,16 @@ entity function CreateWaypoint_Ping_Location( entity player, int pingType, entit
 
 		// One time inits:
 		wp.SetOwner( player )
-		wp.SetOnlyTransmitToSingleTeam( player.GetTeam() )
+		if ( !ShouldTransmitToAllTeams( pingType ) )
+		{
+			// Transmit to single team. If using Alliances also show to friendly alliance players
+			AllianceProximity_SetOnlyTransmitWaypointToFriendlyTeams( wp, player.GetTeam() )
+		}
+		if ( forceOnlyVisibleToPlayer )
+		{
+			wp.SetOnlyTransmitToSingleTeam( TEAM_ANY )
+			wp.SetOnlyTransmitToOnePlayer( player )
+		}
 		SetPingTypeForWaypoint( wp, pingType )
 		SetConfirmCounterForLocWaypoint( wp, 0 )
 		SetPingedEntForLocWaypoint( wp, pingEnt )
@@ -2563,13 +3724,14 @@ entity function CreateWaypoint_Ping_Location( entity player, int pingType, entit
 	Waypoint_ResetCreatedTime( wp )
 	SetTicketIDForWaypoint( wp, ticketID )
 	wp.SetAbsOrigin( position )
+
 	Waypoint_ParentToPingEnt( wp, pingEnt, pingType )
 
 	player.p.pings.latestPing = wp
 
 	if ( pingType in file.pingCallbackFunctions )
 	{
-		foreach( func in file.pingCallbackFunctions[ pingType ] )
+		foreach ( func in file.pingCallbackFunctions[ pingType ] )
 			func( player, wp, pingEnt, pingType )
 	}
 
@@ -2582,10 +3744,94 @@ entity function CreateWaypoint_Ping_Location( entity player, int pingType, entit
 	int team = player.GetTeam()
 	SetTeam( wp, team )
 
-	PIN_Ping( player, GetEnumString( "ePingType", pingType ).tolower(), pingEnt, position )
+	#if SERVER
+		switch ( pingType )
+		{
+			case ePingType.ENEMY_GENERAL:
+			case ePingType.ENEMY_SPECIFIC:
+			                           
+			case ePingType.ENEMY_HEALING_HEALTH:
+			case ePingType.ENEMY_HEALING_SHIELD:
+         
+			case ePingType.ENEMY_REVIVING:
+			case ePingType.ENEMY_TRAP:
+			case ePingType.ENEMY_TESLA_TRAP:
+			case ePingType.ENEMY_TROPHY_SYSTEM:
+			case ePingType.ENEMY_SMOKE:
+			case ePingType.TOXIC_GAS:
+			case ePingType.ENEMY_TELEPORTER:
+			case ePingType.ENEMY_SHIELD:
+			case ePingType.VANTAGE_SPOTS_ENEMY:
+			                     
+			case ePingType.HOVERVEHICLE_ENEMY:
+            
+			case ePingType.ASH_PASSIVE_ID_ATTACKER:
+				player.TrackPlayerEnemyPing()
+				DeadPeriodChecker_PlayerDeadPeriodEnd( player, eDeadPeriodEndReason.PINGED_ENEMY )
+				break
+                                   
+                                      
+         
+			case ePingType.LOCATION:
+			case ePingType.MAP_WAYPOINT:
+			case ePingType.WE_GO:
+				player.TrackPlayerLocationPing()
+                                  
+                                                            
+                                       
+				break
+                        
+                                             
+                                                
+      
+			case ePingType.VANTAGE_COMPANION:
+			case ePingType.ENEMY_VANTAGE_COMPANION:
+				thread Waypoint_DestroyOnPingEntSignal_THREAD( wp, pingEnt )
+				break
+                                 
+                                   
+                                        
+                             
+     
+                                           
+     
+         
+                               
+                             
+                                           
+                                   
+         
+                              
+                             
+                                         
+                                   
+         
+                                
+                             
+                                         
+                                   
+         
+                                    
+                             
+                                                
+                                   
+         
+                                  
+                             
+                                         
+                                   
+         
+
+      
+			default:
+				player.TrackPlayerPing()
+		}
+	#endif // SERVER
+
+	PIN_Ping( player, GetEnumString( "ePingType", pingType ).tolower(), pingEnt, position, pingWheelIndex )
 
 	float timeOut = GetDefaultTimeoutForPingType( player, pingType )
-	thread WaypointTimeout_THREAD( wp, timeOut )
+	thread Waypoint_DestroyAfterDuration_THREAD( wp, timeOut )
 	return wp
 }
 
@@ -2594,19 +3840,20 @@ int function GetQuantityForLocationPingEnt( entity pingEnt )
 	if ( !IsValid( pingEnt ) )
 		return 0
 
-	//if ( pingEnt.GetScriptName() == TROPHY_SYSTEM_NAME )
-	//{
-	//	return Trophy_GetShieldsPercentRemaining( pingEnt )
-	//}
+	if ( pingEnt.GetScriptName() == TROPHY_SYSTEM_NAME )
+	{
+		return Trophy_GetShieldsPercentRemaining( pingEnt )
+	}
 	                   
-	//	else if ( pingEnt.GetScriptName() == MEDBAY_PING_SCRIPT_NAME )
-	//	{
-	//		return MedBay_GetHealsPercentRemaining( pingEnt )
-	//	}
+		else if ( pingEnt.GetScriptName() == MEDBAY_PING_SCRIPT_NAME )
+		{
+			return MedBay_GetHealsPercentRemaining( pingEnt )
+		}
        
 
 	return 0
 }
+
 entity function CreateWaypoint_Ping_POI( entity player, int pingType, entity pingEnt, vector position, int ticketID, bool forceNew )
 {
 	entity wp = CreateWaypoint_Ping_Location( player, pingType, null, position, ticketID, forceNew )
@@ -2630,19 +3877,27 @@ void function Waypoint_ParentToPingEnt( entity wp, entity pingEnt, int pingType 
 	if ( pingEnt.IsPlayer() || ( pingEnt.IsNPC() && !IsDropship( pingEnt ) ) )
 		return
 
-	if ( pingEnt.GetClassName() == "crossbow_bolt" )
-		return
+	//Defensive fix for R5DEV-128295 (Pinging projectiles shouldn't be possible)
+	#if DEV
+		Assert( pingEnt.GetClassName() != "crossbow_bolt", "Attempted to parent a waypoint to a projectile!" )
+	#else
+		if ( pingEnt.GetClassName() == "crossbow_bolt" )
+			return
+	#endif
+
 	wp.SetParent( pingEnt )
 }
 
 entity function CreateWaypoint_Bleedout( entity player, float bleedoutEndTime )
 {
+	if ( IsTeamRabid( player.GetTeam() ) )
+		return null
+
 	entity wp = CreateWaypoint_Ping_Location( player, ePingType.BLEEDOUT, player, player.GetOrigin(), -1, false )
 	//wp.SetAbsOrigin( player.EyePosition() + <0,0,15> )
 	//wp.SetParent( player, "HEADSHOT", true, 0.0 )
 	wp.SetAbsOrigin( player.GetOrigin() + <0, 0, 45> )
 	wp.SetParent( player, "ORIGIN", true, 0.0 )
-
 	wp.SetWaypointGametime( GAMETIME_INDEX_PING_COMMON_COUNTDOWN, bleedoutEndTime )
 
 	return wp
@@ -2650,10 +3905,12 @@ entity function CreateWaypoint_Bleedout( entity player, float bleedoutEndTime )
 
 entity function CreateWaypoint_SelfRevive( entity player, float selfReviveTime )
 {
+	if ( IsTeamRabid( player.GetTeam() ) )
+		return null
+
 	entity wp = CreateWaypoint_Ping_Location( player, ePingType.SELF_REVIVE, player, player.GetOrigin(), -1, false )
 	wp.SetAbsOrigin( player.GetOrigin() + <0, 0, 45> )
 	wp.SetParent( player, "ORIGIN", true, 0.0 )
-
 	wp.SetWaypointGametime( GAMETIME_INDEX_PING_COMMON_COUNTDOWN, selfReviveTime )
 
 	return wp
@@ -2661,7 +3918,11 @@ entity function CreateWaypoint_SelfRevive( entity player, float selfReviveTime )
 
 entity function CreateWaypoint_RespawnBanner( entity player, entity deathbox )
 {
-	entity respawnBeacon = CreateWaypoint_Ping_Location( player, ePingType.RESPAWN_BANNER, null, deathbox.GetOrigin(), -1, false )
+	bool bannersEnabled = Player_Banners_Enabled()
+
+	int pingType = bannersEnabled ? ePingType.RESPAWN_BANNER : ePingType.DEATH_BOX
+
+	entity respawnBeacon = CreateWaypoint_Ping_Location( player, pingType, deathbox, deathbox.GetOrigin(), -1, false )
 	SetTeam( respawnBeacon, player.GetTeam() )
 	SetTeam( deathbox, player.GetTeam() )
 	SetTargetName( respawnBeacon, RESPAWN_DNA_TARGETNAME )
@@ -2672,25 +3933,39 @@ entity function CreateWaypoint_RespawnBanner( entity player, entity deathbox )
 	return respawnBeacon
 }
 
-void function WaypointDestroyOnItemPickup_THREAD( entity wp, entity lootItem )
-{
-	wp.EndSignal( "OnDestroy" )
+                       
+                                                                                           
+ 
+                                                             
 
-	lootItem.WaitSignal( "OnDestroy" )
-	if ( IsValid( wp ) )
-		wp.Destroy()
-}
+                                                                                                                                                        
+                                                        
+                                             
+                                                   
+                                                         
 
-entity function CreateWaypoint_Ping_Loot( entity player, entity lootItem, int ticketID )
+                                 
+ 
+                             
+
+
+entity function CreateWaypoint_Ping_Loot( entity player, entity lootItem, vector ornull wpOverridePos, int ticketID, entity deathBox = null)
 {
 	const int MAX_LOOT_PINGS_PER_PLAYER = 3
+
+
+	bool indirectMode = (wpOverridePos != null)
 
 	// Don't re-ping:
 	foreach ( entity lootWp in player.p.pings.loots )
 	{
 		entity item = Waypoint_GetItemEntForLootWaypoint( lootWp )
 		if ( item == lootItem )
+		{
+			bool isIndirectPing = (lootWp.GetParent() != item)
+			if ( isIndirectPing == indirectMode )
 			return lootWp
+	}
 	}
 
 	// Make room:
@@ -2715,11 +3990,14 @@ entity function CreateWaypoint_Ping_Loot( entity player, entity lootItem, int ti
 	PIN_Ping( player, GetEnumString( "ePingType", ePingType.LOOT ).tolower(), lootItem, lootItem.GetOrigin() )
 
 	wp.SetOwner( player )
-	wp.SetOnlyTransmitToSingleTeam( team )
+
+	// Transmit to single team. If using Alliances also show to friendly alliance players
+	AllianceProximity_SetOnlyTransmitWaypointToFriendlyTeams( wp, team )
+
 	SetPingTypeForWaypoint( wp, ePingType.LOOT )
 	SetTicketIDForWaypoint( wp, ticketID )
 	SetItemEntForLootWaypoint( wp, lootItem )
-	//Waypoint_SetQuantityForWaypoint( wp, SURVIVAL_GetProximateAmmoCount( player, lootItem ) )
+	Waypoint_SetQuantityForWaypoint( wp, SURVIVAL_GetProximateAmmoCount( player, lootItem ) )
 
 	// Ensure this entity is not network culled and every client knows about the entity
 	if ( lootItem.GetClassName() == "prop_survival" )
@@ -2727,17 +4005,21 @@ entity function CreateWaypoint_Ping_Loot( entity player, entity lootItem, int ti
 
 	if ( ePingType.LOOT in file.pingCallbackFunctions )
 	{
-		foreach( func in file.pingCallbackFunctions[ ePingType.LOOT ] )
+		foreach ( func in file.pingCallbackFunctions[ ePingType.LOOT ] )
 			func( player, wp, lootItem, ePingType.LOOT )
 	}
 
-	wp.SetParent( lootItem, "", false )
+	if ( wpOverridePos == null )
+		wp.SetParent( lootItem, "", false )
+	else
+		wp.SetAbsOrigin( expect vector(wpOverridePos) )
+
 	AppendToWaypointList( lootItem, wp )
 
-	thread WaypointTimeout_THREAD( wp, 15.0 )
-	thread WaypointDestroyOnItemPickup_THREAD( wp, lootItem )
-	//if ( IsValid( deathBox ) )
-		//thread Waypoint_DestroyOnLootGrabberDestroyed_THREAD( wp, deathBox )
+	thread Waypoint_DestroyAfterDuration_THREAD( wp, 15.0 )
+	thread Waypoint_DestroyOnItemPickup_THREAD( wp, lootItem )
+	if ( IsValid( deathBox ) )
+		thread Waypoint_DestroyOnLootGrabberDestroyed_THREAD( wp, deathBox )
 	return wp
 }
 
@@ -2807,7 +4089,7 @@ bool function PlayerAttemptDibsOnLootWaypoint( entity player, entity wpEnt )
 	}
 
 	SetDibsPlayerForLootWaypoint( wpEnt, player )
-	thread WaypointTimeout_THREAD( wpEnt, 240.0 )
+	thread Waypoint_DestroyAfterDuration_THREAD( wpEnt, 120 )
 	thread WaypointDestroyOnPlayerDestroyed( wpEnt, player )
 	return true
 }
@@ -2819,7 +4101,7 @@ bool function PlayerAttemptDibsOnLootWaypointUndo( entity player, entity wpEnt )
 		return false
 
 	SetDibsPlayerForLootWaypoint( wpEnt, null )
-	thread WaypointTimeout_THREAD( wpEnt, 7.0 )
+	thread Waypoint_DestroyAfterDuration_THREAD( wpEnt, 4.0 )
 	return true
 }
 
@@ -2845,6 +4127,8 @@ void function Waypoint_ClearPlayerSimilarPingsForReply( entity player, entity wp
 	{
 		case ePingReply.JOIN:
 		case ePingReply.OK:
+		case ePingReply.CAPTURE_OBJECTIVE_PING_DEFEND:
+		case ePingReply.CAPTURE_OBJECTIVE_PING_ATTACK:
 			break
 
 		default:
@@ -2860,6 +4144,8 @@ void function Waypoint_ClearPlayerSimilarPingsForReply( entity player, entity wp
 		case ePingType.LOCATION:
 		case ePingType.WE_GO:
 		case ePingType.MAP_WAYPOINT:
+		case ePingType.PING_CAPTURE_OBJECTIVE_DEFEND:
+		case ePingType.PING_CAPTURE_OBJECTIVE_ATTACK:
 			break
 
 		default:
@@ -2992,7 +4278,100 @@ entity function Waypoint_GetFriendlyThatPingedEnt( entity ent, entity player )
 	return null
 }
 
-#endif
+// Create an initial ping on objectives that can be pinged by players. This way players can't clear off a whole ping with ping counts on it and can ping objectives through geo
+// Used in modes like Control
+entity function CreateWaypoint_Objective_StarterPing( int pingType, entity pingEnt, vector position, int team )
+{
+	entity wp = CreatePlayerWaypoint_Wrapper( eWaypoint.PING_LOCATION )
+	
+	// One time inits:
+	wp.SetOwner( pingEnt.GetOwner() )
+	if ( !ShouldTransmitToAllTeams( pingType ) )
+	{
+		// Transmit to single team. If using Alliances also show to friendly alliance players
+		AllianceProximity_SetOnlyTransmitWaypointToFriendlyTeams( wp, team )
+	}
+
+	SetPingTypeForWaypoint( wp, pingType )
+	SetConfirmCounterForLocWaypoint( wp, 0 )
+	SetPingedEntForLocWaypoint( wp, pingEnt )
+                   
+                                                                    
+       
+
+	Waypoint_ResetCreatedTime( wp )
+	SetTicketIDForWaypoint( wp, -1 )
+	wp.SetAbsOrigin( position )
+
+	Waypoint_ParentToPingEnt( wp, pingEnt, pingType )
+	SetTeam( wp, team )
+
+	return wp
+}
+
+                  
+entity function CreateWaypoint_The_Hunt_PreyArea( entity attacker, entity victim )
+{
+	entity wp = CreatePlayerWaypoint_Wrapper( eWaypoint.PING_LOCATION )
+
+	if ( IsValid( wp ) )
+	{
+		wp.SetOwner( wp )
+		SetTeam( wp, attacker.GetTeam() )
+		SetPingTypeForWaypoint( wp, ePingType.THE_HUNT_AREA_HUNTER )
+		wp.SetOnlyTransmitToSingleTeam( attacker.GetTeam() )
+		wp.SetAbsOrigin( victim.GetOrigin() + <0, 0, 138> )
+		thread Waypoint_DestroyAfterDuration_THREAD( wp, 10.0 )
+	}
+
+	return wp
+}
+
+entity function CreateWaypoint_The_Hunt_HunterArea( entity attacker, entity victim )
+{
+	entity wp = CreatePlayerWaypoint_Wrapper( eWaypoint.PING_LOCATION )
+
+	if ( IsValid( wp ) )
+	{
+		wp.SetOwner( wp )
+		SetTeam( wp, attacker.GetTeam() )
+		SetPingTypeForWaypoint( wp, ePingType.THE_HUNT_AREA_PREY )
+		wp.SetOnlyTransmitToSingleTeam( attacker.GetTeam() )
+		wp.SetAbsOrigin( victim.GetOrigin() + <0, 0, 138> )
+		thread Waypoint_DestroyAfterDuration_THREAD( wp, 10.0 )
+	}
+
+	return wp
+}
+
+                 
+
+                          
+                                                   
+                                                                                                                                                                                      
+ 
+                                                                      
+
+                                    
+                                      
+                                    
+                                    
+
+                                 
+  
+                                                                                  
+  
+
+                       
+  
+                                                                                                                                                              
+  
+
+          
+ 
+                                
+
+#endif // #if SERVER
 
 #if CLIENT
 void function SetMaxDrawDistanceOnRuiAfterDelay( var rui, entity wp, float delay, float maxDrawDistance )

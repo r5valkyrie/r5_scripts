@@ -538,7 +538,7 @@ bool function NodeLinkHullTracePassed( array<vector> traceOffsets, vector start,
 		TraceResults result = TraceHull( p0, p1, HOVER_TANK_HULL_TRACE_MINS, HOVER_TANK_HULL_TRACE_MAXS, [], TRACE_MASK_NPCSOLID, TRACE_COLLISION_GROUP_PLAYER )
 		if ( result.allSolid || result.startSolid || result.fraction < 1.0 )
 		{
-			// DebugDrawCylinder( p0, VectorToAngles( p1 - p0 ), HOVER_TANK_HULL_TRACE_RADIUS, Distance( p0, p1 ), COLOR_RED, false, 30.0 )
+			// DebugDrawCylinder( p0, VectorToAngles( p1 - p0 ), HOVER_TANK_HULL_TRACE_RADIUS, Distance( p0, p1 ), <255, 0, 0>, false, 30.0 )
 			return false
 		}
 	}
@@ -548,7 +548,7 @@ bool function NodeLinkHullTracePassed( array<vector> traceOffsets, vector start,
 	{
 		vector p0 = start + traceOffset
 		vector p1 = end + traceOffset
-		 DebugDrawCylinder( p0, VectorToAngles( p1 - p0 ), HOVER_TANK_HULL_TRACE_RADIUS, Distance( p0, p1 ), COLOR_GREEN, false, 30.0 )
+		 //DebugDrawCylinder( p0, VectorToAngles( p1 - p0 ), HOVER_TANK_HULL_TRACE_RADIUS, Distance( p0, p1 ), <0, 255, 0>, false, 30.0 )
 	}
 	*/
 
@@ -593,11 +593,17 @@ void function DebugDrawPathConnections()
 				if ( DEBUG_DRAW_NODES )
 				{
 					if ( waypoint.isCrashNode )
-						DebugDrawRotatedBox( waypoint.origin, HOVER_TANK_MINS, HOVER_TANK_MAXS, waypoint.angles, COLOR_RED, false, duration )
+					{
+						//DebugDrawRotatedBox( waypoint.origin, HOVER_TANK_MINS, HOVER_TANK_MAXS, waypoint.angles, <255, 0, 0>, false, duration )
+					}
 					else if ( IsValid( waypoint.node ) )
-						DebugDrawRotatedBox( waypoint.origin, HOVER_TANK_MINS, HOVER_TANK_MAXS, waypoint.angles, COLOR_YELLOW, false, duration )
+					{
+						//DebugDrawRotatedBox( waypoint.origin, HOVER_TANK_MINS, HOVER_TANK_MAXS, waypoint.angles, <255, 255, 0>, false, duration )
+					}
 					else
-						DebugDrawCircle( waypoint.origin, <0,0,0>, HOVER_TANK_RADIUS, COLOR_YELLOW, false, duration, 6 )
+					{
+						//DebugDrawCircle( waypoint.origin, <0,0,0>, HOVER_TANK_RADIUS, <255, 255, 0>, false, duration, 6 )
+					}
 				}
 
 				if ( DEBUG_DRAW_NODE_CONNECTIONS )
@@ -679,7 +685,7 @@ HoverTank function SpawnHoverTankFromScript( string instanceName, string assigne
 	// const asset HOVER_TANK_TURRET_MODEL 			= $"mdl/vehicle/hovership/hovership_turret.rmdl"
 
 	// Script_mover in LevelEd instance is used for bob addative movement
-	entity flightMover = CreateScriptMover( <0,0,0>, <0,0,0> ) //GetEntByScriptNameInInstance( "_hover_tank_mover", instanceName )
+	entity flightMover = CreateScriptMover( "", <0,0,0>, <0,0,0> ) //GetEntByScriptNameInInstance( "_hover_tank_mover", instanceName )
 	Assert( IsValid( flightMover ), "SpawnHoverTank: Can't find the mover in the Hover Tank instance " + instanceName )
 	flightMover.SetPusher( true )
 	// flightMover.SetPusherMovesNearbyVehicles( true )
@@ -1375,7 +1381,7 @@ void function HoverTankPlayAnim( HoverTank hoverTank, string anim, entity node )
 	//int attachID = dummyModel.LookupAttachment( "body" )
 	//vector absOrigin = dummyModel.GetAttachmentOrigin( attachID )
 	//vector absAngles = dummyModel.GetAttachmentAngles( attachID )
-	//DebugDrawSphere( absOrigin, 128.0, COLOR_YELLOW, true, 30.0 )
+	//DebugDrawSphere( absOrigin, 128.0, <255, 255, 0>, true, 30.0 )
 	//hoverTank.flightMover.SetAbsOrigin( absOrigin )
 	//hoverTank.flightMover.SetAbsAngles( absAngles )
 
@@ -1409,7 +1415,7 @@ void function HoverTankFlyToNode( HoverTank hoverTank, entity node, bool ignoreS
 	Waypoint startWaypoint = GetClosestWaypoint( hoverTank.flightMover.GetOrigin(), hoverTank.assignedPathGroup )
 	//Assert( IsValid( startWaypoint.node ) )
 	if ( DEBUG_PATHING )
-		DebugDrawLine( startWaypoint.origin, hoverTank.flightMover.GetOrigin(), COLOR_WHITE, true, 2.0 )
+		//DebugDrawLine( startWaypoint.origin, hoverTank.flightMover.GetOrigin(), <255, 255, 255>, true, 2.0 )
 
 	float d = Distance( startWaypoint.origin, hoverTank.flightMover.GetOrigin() )
 	if ( !ignoreStartNodeTolerance )
@@ -1989,7 +1995,7 @@ void function HoverTankFlyPath( HoverTank hoverTank, FlyPathData flyPathData )
 		lookaheadPosition = GetPointAtDistanceAlongPath( flyPathData.lookaheadPath, lookaheadDistanceAlongPath )
 
 		// if ( DEBUG_PATHING )
-			// DebugDrawSphere( lookaheadPosition, 32.0, COLOR_RED, true, 0.1 )
+			// DebugDrawSphere( lookaheadPosition, 32.0, <255, 0, 0>, true, 0.1 )
 
 		float accelDecelModifier = 1.0
 
@@ -2129,11 +2135,13 @@ void function HoverTankFlyPath( HoverTank hoverTank, FlyPathData flyPathData )
 			foreach ( int i, vector p in flyPathData.smoothPath )
 			{
 				if ( i > 0 )
-					DebugDrawLine( flyPathData.smoothPath[i-1], p, COLOR_ORANGE, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
+				{
+					//DebugDrawLine( flyPathData.smoothPath[i-1], p, COLOR_ORANGE, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
+				}
 			}
 
 			// Draw goal waypoint in YELLOW
-			DebugDrawRotatedBox( flyPathData.smoothPath[flyPathData.smoothPath.len()-1], < -1100, -1100, -250 >, < 1100, 1100, 250 >, < 0, flyPathData.goalYaw, 0 >, COLOR_YELLOW, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
+			//DebugDrawRotatedBox( flyPathData.smoothPath[flyPathData.smoothPath.len()-1], < -1100, -1100, -250 >, < 1100, 1100, 250 >, < 0, flyPathData.goalYaw, 0 >, <255, 255, 0>, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
 
 			// Draw waypoint path in GREEN
 			float arrowSize = 128.0
@@ -2148,7 +2156,9 @@ void function HoverTankFlyPath( HoverTank hoverTank, FlyPathData flyPathData )
 			foreach ( int i, vector p in actualPathTaken )
 			{
 				if ( i > 0 )
-					DebugDrawLine( actualPathTaken[i-1], p, COLOR_BLUE, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
+				{
+					//DebugDrawLine( actualPathTaken[i-1], p, <0, 0, 255>, true, HOVER_TANK_FLY_FRAME_UPDATE_TIME )
+				}
 			}
 		}
 
@@ -2170,7 +2180,7 @@ void function DebugDrawEntity( entity ent, float radius = 32.0 )
 	EndSignal( ent, "OnDestroy" )
 	while( true )
 	{
-		// DebugDrawSphere( ent.GetOrigin(), radius, COLOR_RED, true, 0.15 )
+		// DebugDrawSphere( ent.GetOrigin(), radius, <255, 0, 0>, true, 0.15 )
 		wait 0.1
 	}
 }

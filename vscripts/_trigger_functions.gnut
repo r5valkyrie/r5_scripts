@@ -359,7 +359,7 @@ void function DeadlyFogVisuals( entity trigger )
 	vector triggerOrigin = trigger.GetOrigin()
 	if ( DEBUG_DEADLY_FOG )
 	{
-		DebugDrawBox( triggerOrigin, triggerMins, triggerMaxs, COLOR_YELLOW, 1, 60.0 )
+		//DebugDrawBox( triggerOrigin, triggerMins, triggerMaxs, <255, 255, 0>, 1, 60.0 )
 		DebugDrawSphere( triggerOrigin, 25.0, <255, 200, 0>, true, 60.0 )
 	}
 
@@ -415,7 +415,7 @@ void function DeadlyFogEffect( vector origin, vector segmentSize )
 	vector maxs = origin + (segmentSize * 0.5)
 	if ( DEBUG_DEADLY_FOG )
 	{
-		DebugDrawBox( origin, mins - origin, maxs - origin, COLOR_YELLOW, 1, 60.0 )
+		//DebugDrawBox( origin, mins - origin, maxs - origin, <255, 255, 0>, 1, 60.0 )
 		DebugDrawSphere( origin, 25.0, <255, 200, 0>, true, 60.0 )
 	}
 
@@ -426,7 +426,7 @@ void function DeadlyFogEffect( vector origin, vector segmentSize )
 		vector org = <RandomFloatRange( mins.x, maxs.x ), RandomFloatRange( mins.y, maxs.y ), RandomFloatRange( mins.z, maxs.z )>
 
 		if ( DEBUG_DEADLY_FOG )
-			DebugDrawLine( origin, org, COLOR_RED, true, 2.0 )
+			//DebugDrawLine( origin, org, <255, 0, 0>, true, 2.0 )
 
 		effect.SetOrigin( org )
 		//effect.Fire( "Start" )

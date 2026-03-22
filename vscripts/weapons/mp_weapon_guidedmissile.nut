@@ -111,7 +111,7 @@ void function OnProjectileCollision_gasluncher( entity projectile, vector pos, v
 			// projectile.proj.projectileBounceCount++
 			
 	vector origin = projectile.GetOrigin()
-	entity mover = CreateScriptMover( origin )
+	entity mover = CreateScriptMover( "", origin )
 	mover.SetOwner( owner )
 	if(owner)
 	{

@@ -1,6 +1,20 @@
+global enum eSpawnSource
+{
+	GAME,
+	LOOTBIN,
+	DROPPOD,
+	PLAYER_ABILITY,
+	PLAYER_DEATH,
+	PLAYER_DROP,
+	CRAFTING,
+	PURCHASING,
+	NPC_DEATH,
+	EVOLUTION,
+}
+
 global struct KillHistory
 {
-	entity victim 
+	entity victim
 	float killTime
 }
 
@@ -78,15 +92,6 @@ global struct PingTableStruct // TODO: fix shared waypoints script, look at Burn
 	entity latestPing
 }
 
-global struct LootZone
-{
-	vector origin
-    float radius
-    float height
-	int zoneClass
-    string ref
-}
-
 global enum eStatUpdateTime
 {
 	DISTANCE,
@@ -135,6 +140,8 @@ global struct StoredWeapon
 	float nextAttackTime
 	int skinIndex
 	int camoIndex
+	int skinGUID = -1
+	int charmGUID = -1
 	bool isProScreenOwner
 	#if MP
 	string burnReward
@@ -142,6 +149,7 @@ global struct StoredWeapon
 	int scriptFlags0
 	int scriptTime0
 	int lockedSet = eWeaponLockedSet.INVALID
+	int lifetimeShots = -1
 }
 
 global struct ScriptTriggerData
@@ -374,6 +382,13 @@ global struct ServerEntityStruct
 	bool canBeMeleed = true
 	entity syncedMeleeTarget
 	bool hasBeenOpened
+	bool hasSecretBeenOpened
+	int deathfieldDamageTicks
+	array< array< string > > airDropContents
+	bool playerPickedUpItem = false
+	array<void functionref(entity, var)> onShieldBreakFuncs
+	array<entity> arrowsInBody
+	int infiniteAmmoState = 0
 	bool burnmeter_wasPreviouslyDeployed
 	int sonarConeDetections
 	vector sonarConeDirection
@@ -522,17 +537,6 @@ global struct MeritData
 	int happyHourMeritState
 }
 
-global struct DropWeaponData
-{
-	string        name
-	array<string> mods
-	int           stockpile
-	int           ammo
-	entity        originalOwner
-	int           charmItemFlavorGUID = -1
-	int 		  skinItemFlavorGUID  = -1
-}
-
 global struct CringeReport
 {
 	string cringedOID
@@ -540,9 +544,45 @@ global struct CringeReport
 	string reason
 }
 
+global struct RecoveryHealingFXRequest
+{
+	int type
+	bool requestShieldFX = false
+	bool requestHealthFX = false
+	bool decoyHealthFXIfValidatorPasses = false
+	bool decoyShieldFXIfValidatorPasses = false
+}
+
 // This struct is hooked up to entity.p in code
 global struct ServerPlayerStruct
 {
+	entity carriedLoot
+	int movementDisabledCount = 0
+	bool infiniteGameModeAmmo = false
+	bool infiniteAmmo = false
+	array<string> infiniteAmmoExceptTags = []
+	array<string> infiniteGameModeAmmoExceptTags = []
+	bool enableSkydiveDetection = true
+	bool freefallEnabled = false
+	bool inThirdPersonTransition = false
+	int lastSkydiveEmote = -1
+	bool inSkydiveAfterUlt = false
+	array<entity> freefallSmokeFX = []
+	array<entity> freefallLandingFX = []
+	float freefallLastGroundFXTime = 0.0
+	int lootBinsOpenedCount = 0
+	array<entity> realmLinkedEntities = []
+	float survivalAliveEndTime = 0.0
+	float survivalAliveStartTime = 0.0
+	float survivalMatchStartTime = 0.0
+	float battlePassBoost = 0.0
+	array<float> recentPlayerKnockedEnemyTimes = []
+	bool isAllowedToUseTP = true
+	float timeLastCalledEnemyDown = 0.0
+	bool DEV_preventAddBackAmmo = false
+	entity ornull PIN_VictimWeapon
+	bool hasMatchParticipationStarted = false
+
 	//1v1 settings
 	float IBMM_grace_period 	= -1 // <= 0 is disabled
 	bool lock1v1_setting 		= true
@@ -825,7 +865,7 @@ global struct ServerPlayerStruct
 	// ThrottleData playerStryderDataUpdateThrottle
 	PingTableStruct pings
 	int zoneNoTouchStack
-	int currentZoneId
+	int currentZoneId = -1
 	entity DEV_lastDroppedSurvivalWeaponProp
 	bool hasStagingAreaDamageProtection = false
 	
@@ -1376,6 +1416,10 @@ global struct ServerAIStruct
 // hooked up to entity.w in code
 global struct ServerWeaponStruct
 {
+	float autoReloadStartTime = -1.0
+	bool infiniteAmmoSaveStateOnDrop = false
+	bool isGreen = false
+
 	// clearable
 	entity        translocate_initialProjectile = null
 	entity        translocate_redirectedProjectile = null
@@ -1486,6 +1530,7 @@ global struct ServerRemoteTurretStruct
 // hooked up to entity.proj in code
 global struct ServerProjectileStruct
 {
+	bool          useHighDetailCollisionTraceForPlaceStickyEnt = false
 	vector ornull projectileFirstProperBouncePos = null
 	float         projectileForceBounceWithinDist = -1.0
 

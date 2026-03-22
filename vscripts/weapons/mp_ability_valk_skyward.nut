@@ -1152,7 +1152,7 @@ bool function ValkUlt_CanUseAlly( entity ally, entity proxy, int useFlags )
 
 	/*if ( !ally.Player_IsSkywardLaunching() )
 	{
-		if ( ally.Player_IsSkydiving() )
+		if ( ally.IsSkydiving() )
 			return false
 
 		if ( !ally.IsOnGround() )
@@ -1878,4 +1878,3 @@ void function ValkUlt_EnterGameStateResolution()
 		}
 	#endif
 }
- 

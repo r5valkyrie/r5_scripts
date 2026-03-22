@@ -31,10 +31,14 @@ void function ServerCallback_EventNotification( int eventID, int eHandle, var ev
 	if ( eHandle )
 		ent = GetEntityFromEncodedEHandle( eHandle )
 
-	EventNotification( eventID, ent, eventVal )
+	entity eventEntity
+	if ( eventVal != null && typeof eventVal == "entity" )
+		eventEntity = expect entity( eventVal )
+
+	EventNotification( eventID, ent, eventEntity )
 }
 
-void function EventNotification( int eventID, entity ent, var eventVal )
+void function EventNotification( int eventID, entity ent, entity eventVal )
 {
 	entity player = GetLocalClientPlayer()
 
@@ -246,7 +250,7 @@ void function EmitCountdownSound( float endCountdownTime, string soundAlias = "U
 	}
 }
 
-void function AddEventNotificationCallback( int eventNotificationID, void functionref( entity, var ) callbackFunc )
+void function AddEventNotificationCallback( int eventNotificationID, void functionref( entity, entity ) callbackFunc )
 {
 	Assert( !(eventNotificationID in clGlobal.eventNotificationCallbacks), "Already have callbackFunc : " + string( clGlobal.eventNotificationCallbacks[ eventNotificationID ] ) + " associated with eEventNotificationID: " + eventNotificationID )
 	clGlobal.eventNotificationCallbacks[ eventNotificationID ] <- callbackFunc

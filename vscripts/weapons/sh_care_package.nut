@@ -47,7 +47,13 @@ var function OnWeaponPrimaryAttack_care_package( entity weapon, WeaponPrimaryAtt
 		vector origin = placementInfo.origin
 		vector angles = placementInfo.angles
 
-		thread CreateCarePackageAirdrop( origin, angles, ["medic_super", "medic_super_side", "top_tier_inventory" ], null, "droppod_loot_drop_lifeline", ownerPlayer )
+		AirdropItemsOptionalInfo optionInfo
+		optionInfo.animationName = "droppod_loot_drop_lifeline"
+		optionInfo.owner = ownerPlayer
+		optionInfo.skin = GetSkinForCarePackageModel( optionInfo.owner )
+		optionInfo.sourceWeaponClassname = weapon.GetWeaponClassName()
+
+		thread CreateCarePackageAirdrop( origin, angles, [["medic_super", "medic_super_side", "top_tier_inventory"]], optionInfo )
 	#else
 		SetCarePackageDeployed( true )
 		ownerPlayer.Signal( "DeployableCarePackagePlacement" )
@@ -81,12 +87,10 @@ void function MpAbilityCarePackage_ClientConnected( entity player )
 {
 }
 
-void function CreateCarePackageAirdrop( vector origin, vector angles, array<string> contents, entity fxToStop = null, string animationName = "droppod_loot_drop", entity owner = null, string sourceWeaponClassName = "" )
+void function CreateCarePackageAirdrop( vector origin, vector angles, array< array<string> > contents, AirdropItemsOptionalInfo optionInfo )
 {
-	if( animationName == "droppod_loot_drop_lifeline" )
-		thread AirdropItems_Lifeline( origin, angles, contents, fxToStop, animationName, owner, 1, sourceWeaponClassName )
-	else
-		thread AirdropItems( origin, angles, contents, fxToStop, animationName, owner, GetSkinForCarePackageModel( owner ), sourceWeaponClassName )
+	array< array<string> > podContents = DetermineAirdropContents( contents )
+	thread AirdropItems( origin, angles, podContents, optionInfo )
 }
 #endif // SERVER
 

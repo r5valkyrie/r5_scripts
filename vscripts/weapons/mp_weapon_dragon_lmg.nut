@@ -545,4 +545,4 @@ void function SetEnableEmission( entity weapon, bool enable )
 		weapon.kv.rendercolor = "0 0 0"
 }
 
-#endif //CLIENT 
+#endif //CLIENT

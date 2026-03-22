@@ -414,7 +414,7 @@ void function SpawnAndThrowItemFromNPC( entity npc, array<string> lootToSpawn )
 		vector throwDir = <sin( throwData.throwAngle ), cos( throwData.throwAngle ), 0>
 		float speed     = throwData.throwScale * sqrt( RandomFloatRange( 0.75, 1.0 ) ) * 150
 		vector vel      = throwDir * speed
-		thread FakePhysicsThrow_Retail( npc, itemEnt, <vel.x, vel.y, 200>, true )
+		thread FakePhysicsThrow( npc, itemEnt, <vel.x, vel.y, 200>, true )
 		throwData = SURVIVAL_DropLoot_IncrementThrowAngle( throwData )
 	}
 }

@@ -86,7 +86,7 @@ var function OnWeaponTossReleaseAnimEvent_Haunt( entity weapon, WeaponPrimaryAtt
 }
 
 
-void function OnHauntTrapPlantedThread( entity projectile )
+void function OnHauntTrapPlantedThread( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 		Assert( IsValid( projectile ) )
@@ -560,7 +560,7 @@ void function Haunt( entity owner, entity weapon, array<entity> victimList )
 		//
 		//	if ( DotProduct( Normalize( candidatePos - victimEyePos ), victimViewForward ) < 0 )
 		//	{
-		//		DebugDrawAxis( randomPos, <0, 0, 0>, 5.0, 20, <255, 0, 255> )
+		//		DebugDrawAxis( randomPos, <0, 0, 0>, 5.0, 20, COLOR_MAGENTA )
 		//		decoyPos = candidatePos
 		//		break
 		//	}
@@ -625,7 +625,7 @@ void function Haunt( entity owner, entity weapon, array<entity> victimList )
 
 				if ( DotProduct( Normalize( point - victimEyePos ), victimViewForward ) < 0 )
 				{
-					if ( HAUNT_DEBUG_LEVEL >= 2 ) DebugDrawAxis( randomPos, <0, 0, 0>, 5.0, 20, <255, 0, 255> )
+					if ( HAUNT_DEBUG_LEVEL >= 2 ) DebugDrawAxis( randomPos, <0, 0, 0>, 5.0, 20, COLOR_MAGENTA )
 					decoyPos = point
 					printt( "HAUNT -- ATTEMPTS (FoV): ", attempts )
 					break

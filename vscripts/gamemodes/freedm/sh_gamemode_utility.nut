@@ -245,9 +245,9 @@ void function GamemodeUtility_RegisterNetworking()
 	RegisterNetworkedVariable( "mixtape_isLeaverPenaltyEnabledForMatch", SNDC_GLOBAL, SNVT_BOOL, true )
 
 	#if CLIENT
-		RegisterNetVarBoolChangeCallback( "mixtape_isLeaverPenaltyEnabledForMatch", SNDC_GLOBAL, GamemodeUtility_OnLeaverPenaltyStatusChanged )
-		RegisterNetVarTimeChangeCallback( GAMEMODEUTILITY_NETVAR_MATCH_START, SNDC_GLOBAL, GamemodeUtility_OnMatchStartTimeChanged )
-		RegisterNetVarTimeChangeCallback( GAMEMODEUTILITY_NETVAR_MATCH_END, SNDC_GLOBAL, GamemodeUtility_OnMatchEndTimeChanged )
+		RegisterNetVarBoolChangeCallback( "mixtape_isLeaverPenaltyEnabledForMatch", GamemodeUtility_OnLeaverPenaltyStatusChanged, SNDC_GLOBAL )
+		RegisterNetVarTimeChangeCallback( GAMEMODEUTILITY_NETVAR_MATCH_START, GamemodeUtility_OnMatchStartTimeChanged, SNDC_GLOBAL )
+		RegisterNetVarTimeChangeCallback( GAMEMODEUTILITY_NETVAR_MATCH_END, GamemodeUtility_OnMatchEndTimeChanged, SNDC_GLOBAL )
 	#endif // CLIENT
 
 #if CLIENT || SERVER
@@ -955,7 +955,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 
 	WaitFrame() // Need to wait for Survival respawn logic to finish up, it resets inventory and sets the player up to be in a good state to give weapons
 
-	int currentRingStage = maxint( SURVIVAL_GetCurrentDeathFieldStage(), 0 ) // If the ring hasn't started moving, treat it as the first ring
+	int currentRingStage = maxint( SURVIVAL_GetCurrentDeathFieldStage( 0 ), 0 ) // If the ring hasn't started moving, treat it as the first ring
 
 	// Populate the min guaranteed loadouts for this ring stage
 	WeaponLoadout minGuaranteedWeapons = ParseWeaponLoadoutText( GamemodeUtility_GetMinGuaranteedWeaponLoadoutStringForRingStage( currentRingStage ), false )

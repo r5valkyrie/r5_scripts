@@ -969,13 +969,13 @@ void function AttemptPingNearestValidMarvinForPlayer( entity player )
 	{
 		entity marvin = allResults[i].ent
 
-		if ( !SURVIVAL_DeathFieldIsValid() )
+		if ( !SURVIVAL_DeathFieldIsValid( 0 ) )
 		{
 			nearestMarvin = marvin
 			break
 		}
 
-		if ( SURVIVAL_PosInSafeZone( marvin.GetOrigin() ) )
+		if ( SURVIVAL_PosInSafeZone( 0, marvin.GetOrigin( ) ) )
 		{
 			nearestMarvin = marvin
 			break
@@ -1534,4 +1534,4 @@ void function SetTopPriorityLootMarvin( entity player )
 		wait 0.2
 	}
 }
-#endif 
+#endif

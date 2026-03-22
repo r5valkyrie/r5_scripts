@@ -73,13 +73,20 @@ void function OnProjectileCollision_weapon_thermite_grenade( entity projectile, 
 	//if ( !forceExplode )
 	//	printt( "projectileIsOnGround with Dot:", normal.Dot( <0,0,1> ) )
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 
 	vector dir = projectile.proj.savedDir
 	dir.z = 0
@@ -170,13 +177,20 @@ void function OnProjectileCollision_weapon_thermite_gun( entity projectile, vect
 	//if ( !forceExplode )
 	//	printt( "projectileIsOnGround with Dot:", normal.Dot( <0,0,1> ) )
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 
 	vector dir = normal
 	dir.z = 0

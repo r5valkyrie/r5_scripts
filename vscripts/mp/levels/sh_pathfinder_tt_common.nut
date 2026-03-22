@@ -1422,8 +1422,8 @@ void function DEV_SimulateThermiteTrace()
 	TraceResults traceResults = TraceLine( traceStart, traceEnd, ignoreArray, TRACE_MASK_SHOT, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
 	float traceFrac = traceResults.fraction
 	vector hitPos = traceStart + ( traceVec * traceFrac )
-	//DebugDrawSphere( hitPos, 16, COLOR_YELLOW, true, 10.0 )
-	//DebugDrawLine( traceStart, traceEnd, COLOR_GREEN, true, 10.0 )
+	//DebugDrawSphere( hitPos, 16, <255, 255, 0>, true, 10.0 )
+	//DebugDrawLine( traceStart, traceEnd, <0, 255, 0>, true, 10.0 )
 }
 #endif
 

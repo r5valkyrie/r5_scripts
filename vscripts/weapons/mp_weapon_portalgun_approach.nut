@@ -86,19 +86,26 @@ void function OnProjectileCollision_portalgun( entity projectile, vector pos, ve
 	bool issecondportal = file.weapon.w.issecondportalshot
 	entity player = projectile.GetOwner()
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 
 	// Stick with perfect angles
 	vector GoodAngles = AnglesOnSurface(normal, -AnglesToRight(player.EyeAngles())) //this is hacky by Colombia
 	//printt("AnglestoRight(GoodAnglsCalc): " + AnglesToRight(player.EyeAngles()))
 	vector fixedPos = projectile.GetOrigin() + (Normalize(normal) * 2)	
-	entity root = CreateScriptMover( fixedPos, GoodAngles )
+	entity root = CreateScriptMover( "", fixedPos, GoodAngles )
 	
 	// Cool glow fx
 	int fxid2 = GetParticleSystemIndex( $"P_ar_ping_ground_CP" )

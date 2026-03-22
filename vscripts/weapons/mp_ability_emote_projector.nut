@@ -42,21 +42,7 @@ struct
 
 } file
 
-// Local copy of GetFovScalar (defined in cl_survival_loot.nut but not globalized)
-#if CLIENT
-float function GetFovScalar( entity player )
-{
-	float fov     = DEFAULT_FOV
-	float adsFrac = player.GetAdsFraction()
-	if ( adsFrac == 1.0 )
-	{
-		entity weapon = player.GetLatestPrimaryWeapon( eActiveInventorySlot.mainHand )
-		if ( IsValid( weapon ) )
-			fov = weapon.GetWeaponZoomFOV()
-	}
-	return DEFAULT_FOV / fov
-}
-#endif
+// GetFovScalar now in cl_utility.gnut
 
 void function MpWeaponEmoteProjector_Init()
 {
@@ -112,8 +98,8 @@ var function OnWeaponTossReleaseAnimEvent_WeaponEmoteProjector( entity weapon, W
 {
 	int ammoReq = weapon.GetAmmoPerShot()
 
-	// ThrowDeployable_Retail takes 6 params instead of ThrowDeployable's 7
-	entity deployable = ThrowDeployable_Retail( weapon, attackParams, DEPLOYABLE_THROW_POWER, OnEmoteProjectorPlanted, null, <0,0,0> )
+	// ThrowDeployable takes 6 params instead of ThrowDeployable's 7
+	entity deployable = ThrowDeployable( weapon, attackParams, DEPLOYABLE_THROW_POWER, OnEmoteProjectorPlanted, null )
 	entity player = weapon.GetWeaponOwner()
 
 	if ( deployable )

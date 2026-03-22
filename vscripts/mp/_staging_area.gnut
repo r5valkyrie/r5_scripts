@@ -293,7 +293,7 @@ int function StagingArea_PrePlayerChangedCharacterSetup( entity player, ItemFlav
 
 void function Survival_OnEnterWaitingForPlayers()
 {
-	Loot_AddCallback_OnPlayerLootPickupRetail( OnPlayerLootPickedUp )
+	Loot_AddCallback_OnPlayerLootPickup( OnPlayerLootPickedUp )
 	thread TurnOnStagingEffectsDelayed()
 	thread CreateStagingAreaGunRange()
 }

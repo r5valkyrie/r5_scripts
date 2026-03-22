@@ -1110,7 +1110,9 @@ void function Arenas_SpawnAirdrops()
 		entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( DROPPOD_SPAWN_FX ), origin, angles )
 
 		// Spawn the airdrop
-		thread AirdropItems( origin, angles, contents, fx, ARENAS_AIRDROP_ANIMATION, null, 0, "" )
+		AirdropItemsOptionalInfo optionInfo
+		optionInfo.animationName = ARENAS_AIRDROP_ANIMATION
+		thread AirdropItems( origin, angles, [contents], optionInfo )
 
 		printt( "[Arenas] Care package airdrop spawned at", origin )
 	}

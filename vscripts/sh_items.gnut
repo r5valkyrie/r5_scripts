@@ -121,11 +121,7 @@ global function ItemFlavor_ChallengesHaveMetaData
 global function ItemFlavor_CalEventsHaveTimeStampMetaData
 global function ItemFlavor_GetMetaData
 global function IsCalEvent
-global function Sticker_GetSortOrdinal
-global function Sticker_IsTheEmpty
-global function Sticker_HasStoryBlurb
-global function Sticker_GetStoryBlurbBodyText
-global function CreateNestedRuiForSticker
+// Sticker functions now in mp/sh_stickers.nut
 
 global function DEV_DescItemFlavor
 
@@ -653,7 +649,7 @@ string function GetCleanAssetPathForItemFlavor( ItemFlavor flavor )
 	// - DEV Loadout Set
 	// There are 3 distinct functions that all access the same string-replace-and-regex below, because it would make it easier to refactor each distinctly
 	// since the calls to the wrapper function are appropriately sandboxed according to need
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	string assetPath = string(ItemFlavor_GetAsset( flavor ))
 	assetPath = assetPath.slice( ITEM_FLAV_PREFIX.len(), assetPath.len() - ITEM_FLAV_SUFFIX.len() )
 	assetPath = replace( assetPath, "/", "_" )
@@ -914,11 +910,11 @@ array<ItemFlavor> function GetAllItemFlavorsOfType( int typeIndex )
 	return fileLevel.itemTypeInfoList[typeIndex].itemFlavorList
 }
 
-bool function IsItemFlavorStructValid( ItemFlavor flavor, int validationBehavior = eValidation.DONT_ASSERT )
+bool function IsItemFlavorStructValid( SettingsAssetGUID guid, int validationBehavior = eValidation.DONT_ASSERT )
 {
-	Assert( validationBehavior != eValidation.ASSERT || flavor.guid != ASSET_SETTINGS_UNIQUE_ID_INVALID, "ItemFlavor struct was not initialized!" )
-	Assert( validationBehavior != eValidation.ASSERT || GetSettingsAssetForUniqueId( flavor.guid ) != $"", "ItemFlavor struct does not point to a valid Settings asset" )
-	return ( flavor.guid != ASSET_SETTINGS_UNIQUE_ID_INVALID && GetSettingsAssetForUniqueId( flavor.guid ) != $"" )
+	Assert( validationBehavior != eValidation.ASSERT || guid != ASSET_SETTINGS_UNIQUE_ID_INVALID, "ItemFlavor struct was not initialized!" )
+	Assert( validationBehavior != eValidation.ASSERT || GetSettingsAssetForUniqueId( guid ) != $"", "ItemFlavor struct does not point to a valid Settings asset" )
+	return ( guid != ASSET_SETTINGS_UNIQUE_ID_INVALID && GetSettingsAssetForUniqueId( guid ) != $"" )
 }
 
 
@@ -930,14 +926,14 @@ ItemFlavor function GetItemFlavorByNetworkIndex_DEPRECATED( int index )
 
 SettingsAssetGUID function ItemFlavor_GetGUID( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	return flavor.guid
 }
 
 
 string function ItemFlavor_GetGUIDString( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	// SAID00000000123
 	return ConvertAssetIDToGUIDString( flavor.guid )
@@ -952,14 +948,14 @@ string function ConvertAssetIDToGUIDString( int assetID )
 
 int function ItemFlavor_GetType( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	return flavor.typeIndex
 }
 
 
 asset function ItemFlavor_GetAsset( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	return GetSettingsAssetForUniqueId( flavor.guid )
 }
 
@@ -1009,7 +1005,7 @@ var function ItemFlavor_GetSettingsBlock( ItemFlavor flavor )
 #if CLIENT || UI
 int function ItemFlavor_GetTypeUICategory( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	if ( flavor.typeIndex in itemTypeUICategoryMap )
 		return itemTypeUICategoryMap[flavor.typeIndex]
 
@@ -1021,7 +1017,7 @@ int function ItemFlavor_GetTypeUICategory( ItemFlavor flavor )
 #if CLIENT || UI
 string function ItemFlavor_GetTypeName( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	//Assert( flavor._____INTERNAL_typeIndex in itemTypeNameMap, "Item flavor type \"" + GetGlobalSettingsString( flavor._____INTERNAL_settingsAsset, "itemType" ) + "\" does not have a localization key yet." )
 	if ( !(flavor.typeIndex in itemTypeNameMap) )
@@ -1034,7 +1030,7 @@ string function ItemFlavor_GetTypeName( ItemFlavor flavor )
 #if CLIENT || UI
 string function ItemFlavor_GetLongName( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_NAME" )
 	#if DEVELOPER
@@ -1049,7 +1045,7 @@ string function ItemFlavor_GetLongName( ItemFlavor flavor )
 #if CLIENT || UI
 string function ItemFlavor_GetShortName( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_NAME_SHORT" )
 	#if DEVELOPER
@@ -1064,7 +1060,7 @@ string function ItemFlavor_GetShortName( ItemFlavor flavor )
 #if CLIENT || UI
 string function ItemFlavor_GetLongDescription( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_DESCRIPTION_LONG" )
 
@@ -1080,7 +1076,7 @@ string function ItemFlavor_GetLongDescription( ItemFlavor flavor )
 #if CLIENT || UI
 string function ItemFlavor_GetShortDescription( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	string localizationKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_DESCRIPTION_SHORT" )
 
@@ -1195,7 +1191,7 @@ string function ItemFlavor_GetRewardShortDescription( ItemFlavor flav )
 #if CLIENT || UI
 asset function ItemFlavor_GetIcon( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	try
 	{
 		return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "icon" )
@@ -1212,7 +1208,7 @@ asset function ItemFlavor_GetIcon( ItemFlavor flavor )
 // SERVER doesn't have image asset, but may use asset name for grouping
 asset function ItemFlavor_GetSourceIcon( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	try
 	{
 		return GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "tagIcon" )
@@ -1305,7 +1301,7 @@ int function GetPlaylistAvailabilityByRef( array< string > refs )
 
 int function ItemFlavor_GetPlaylistAvailability( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	if ( flavor.metaData == null )
 		return eItemFlavorPlaylistAvailability.NONE
@@ -1398,7 +1394,7 @@ bool function ItemFlavor_IsActiveForEdition( ItemFlavor flavor, int edition )
 
 bool function ItemFlavor_CheckType( ItemFlavor flavor, int expectedTypeIndex, int validationBehavior = eValidation.DONT_ASSERT )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	int typeIndex = ItemFlavor_GetType( flavor )
 	bool good     = (typeIndex == expectedTypeIndex)
 
@@ -1412,7 +1408,7 @@ bool function ItemFlavor_CheckType( ItemFlavor flavor, int expectedTypeIndex, in
 
 bool function ItemFlavor_HasQuality( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	string enumKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "quality" )
 	return enumKey != "NONE"
 }
@@ -1420,7 +1416,7 @@ bool function ItemFlavor_HasQuality( ItemFlavor flavor )
 
 int function ItemFlavor_GetQuality( ItemFlavor flavor, int ornull fallbackValue = null )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	string enumKey = GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "quality" )
 	if ( enumKey == "NONE" )
 	{
@@ -1440,20 +1436,20 @@ int function ItemFlavor_GetQuality( ItemFlavor flavor, int ornull fallbackValue 
 
 vector function ItemFlavor_GetQualityColor( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	return GetFXRarityColorForUnlockable( ItemFlavor_GetQuality( flavor ) )
 }
 
 
 string function ItemFlavor_GetQualityName( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	return ItemQuality_GetQualityName( ItemFlavor_GetQuality( flavor ) )
 }
 
 bool function ItemFlavor_IsThematic( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	if ( ItemFlavor_GetType( flavor ) != eItemType.account_pack )
 		return false
@@ -1464,7 +1460,7 @@ bool function ItemFlavor_IsThematic( ItemFlavor flavor )
 
 bool function ItemFlavor_IsCurrency( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	switch ( ItemFlavor_GetType( flavor ) )
 	{
@@ -1479,7 +1475,7 @@ bool function ItemFlavor_IsCurrency( ItemFlavor flavor )
 
 bool function ItemFlavor_IsBattlepass( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	ItemFlavor ornull activeBattlePass = GetActiveBattlePass()
 
@@ -1550,7 +1546,7 @@ string function DEV_DescItemFlavor( ItemFlavor ornull flav, bool short = false )
 		return "~~null~~"
 	expect ItemFlavor( flav )
 
-	if ( !IsItemFlavorStructValid( flav ) )
+	if ( !IsItemFlavorStructValid( flav.guid ) )
 		return "~~invalid~~"
 
 	if ( short )
@@ -1916,7 +1912,7 @@ void function ItemFlavorBag_ClearZeroQuantityFlavors( ItemFlavorBag bag )
 ItemFlavor function ItemFlavorBag_GetSingleOutputItemFlavor_Assert( ItemFlavorBag bag )
 {
 	Assert( bag.flavors.len() == 1 )
-	Assert( IsItemFlavorStructValid( bag.flavors[0] ) )
+	Assert( IsItemFlavorStructValid( bag.flavors[0].guid ) )
 	return bag.flavors[0]
 }
 #endif
@@ -1935,7 +1931,7 @@ ItemFlavor function ItemFlavorBag_GetMeleeSkinItem( ItemFlavorBag bag )
 	}
 
 	Assert( meleeSkinItems.len() == 1, "Offer expected to contain 1 melee skin but found " + meleeSkinItems.len() + "." )
-	Assert( IsItemFlavorStructValid( meleeSkinItems[0] ) )
+	Assert( IsItemFlavorStructValid( meleeSkinItems[0].guid ) )
 
 	return meleeSkinItems[0]
 }
@@ -1958,7 +1954,7 @@ ItemFlavor function ItemFlavorBag_GetMythicSkinItem( ItemFlavorBag bag )
 		}
 	}
 
-	Assert( IsItemFlavorStructValid( mythicSkin ) )
+	Assert( IsItemFlavorStructValid( mythicSkin.guid ) )
 
 	return mythicSkin
 }
@@ -2014,7 +2010,7 @@ string function DEV_DescribeItemFlavorBag( ItemFlavorBag bag )
 		if ( itemIdx < bag.flavors.len() )
 		{
 			ItemFlavor itemFlav = bag.flavors[itemIdx]
-			if ( IsItemFlavorStructValid( itemFlav ) )
+			if ( IsItemFlavorStructValid( itemFlav.guid ) )
 				itemFlavStr = string(ItemFlavor_GetAsset( itemFlav ))
 			else itemFlavStr = "INVALID"
 		}
@@ -2658,27 +2654,4 @@ void function DEV_ItemFlavor_StressTest( int opt )
 }
 #endif
 
-int function Sticker_GetSortOrdinal( ItemFlavor flav )
-{
-	return 0
-}
-
-bool function Sticker_IsTheEmpty( ItemFlavor flav )
-{
-	return true
-}
-
-bool function Sticker_HasStoryBlurb( ItemFlavor flav )
-{
-	return false
-}
-
-string function Sticker_GetStoryBlurbBodyText( ItemFlavor flav )
-{
-	return ""
-}
-
-var function CreateNestedRuiForSticker( var rui, ItemFlavor stickerItem )
-{
-	return null
-}
+// Sticker function bodies now in mp/sh_stickers.nut

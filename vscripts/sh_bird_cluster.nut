@@ -291,7 +291,7 @@ void function BirdScareThread( entity player, entity bird, int order )
 	//printt( order, delay, CLUSTER_MAX_TAKEOFF_DELAY * order )
 	wait delay
 
-	entity mover = CreateScriptMover( bird.GetOrigin(), bird.GetAngles() )
+	entity mover = CreateScriptMover( "", bird.GetOrigin(), bird.GetAngles() )
 	mover.EndSignal( "OnDestroy" )
 
 	OnThreadEnd(

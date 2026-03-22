@@ -64,7 +64,7 @@ void function SeasonPanel_OnShow( var panel )
 	if( isNewSeason )
 	{
 		AdvanceMenu( GetMenu("BattlePassAboutPage1") )
-		Remote_ServerCallFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason", seasonString )
+		Remote_ServerCallFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason" )
 	}
 
 	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )

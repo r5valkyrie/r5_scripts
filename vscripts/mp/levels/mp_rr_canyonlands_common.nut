@@ -961,7 +961,7 @@ array<entity> function GetHoverTankEndNodes( int count, int endNodeType, array<e
 
 		deathFieldStageIndexSmall = SURVIVAL_GetDeathFieldStages().len() - 1
 	}
-	DeathFieldStageData deathFieldStageDataSmall = GetDeathFieldStage(  deathFieldStageIndexSmall )
+	DeathFieldStageData deathFieldStageDataSmall = GetDeathFieldStage( 0, deathFieldStageIndexSmall )
 	float invalidRadius = deathFieldStageDataSmall.endRadius + HOVER_TANK_RADIUS
 	for ( int i = potentialEndNodes.len() - 1; i >= 0; i-- )
 	{
@@ -981,7 +981,7 @@ array<entity> function GetHoverTankEndNodes( int count, int endNodeType, array<e
 
 			deathFieldStageIndexLarge = SURVIVAL_GetDeathFieldStages().len() - 1
 		}
-		DeathFieldStageData deathFieldStageDataLarge = GetDeathFieldStage(  deathFieldStageIndexLarge )
+		DeathFieldStageData deathFieldStageDataLarge = GetDeathFieldStage( 0, deathFieldStageIndexLarge )
 		for ( int i = potentialEndNodes.len() - 1; i >= 0; i-- )
 		{
 			if ( Distance2D( deathFieldStageDataLarge.endPos, potentialEndNodes[i].GetOrigin() ) >= deathFieldStageDataLarge.endRadius )

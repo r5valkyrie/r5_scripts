@@ -1,0 +1,679 @@
+global function ShPassiveSling_Init
+global function DoesPlayerHaveWeaponSling
+global function GetPlayerSlingWeapon
+global function CanPlayerEquipLootEntToSling
+global function CanPlayerEquipWeaponRefToSling
+global function IsPlayerWeaponSlingEmpty
+global function IsPlayerHoldingSlingWeapon
+global function IsPlayerSwitchingToSlingWeapon
+                               
+	global function GetSlingWeaponRefForPlayerUpgradeLevel
+      
+
+#if SERVER
+global function GivePlayerSlingWeaponByRef
+global function DropSlingWeapon
+global function UpdateWeaponSlingEquipmentSlot
+global function ClientCallback_Sur_SlingToMainWeaponSlot
+global function SetWeaponLockedSetForSlingWeapon
+global function GetStoredPreSlingWeaponRefForPlayer
+global function SetStoredPreSlingWeaponRefForPlayer
+#endif
+
+#if CLIENT
+global function GetSlingPassiveRui
+global function CreateSlingPassiveRui_Internal
+global function DestroySlingPassiveRui
+global function ServerCallback_UpdateSlingWeaponIcon
+global function SlingSetIsGroundListMenuOpen
+global function UpdateSlingPassiveRui
+global function AttemptWeaponSlingSwap
+#endif
+
+global const int SLING_WEAPON_SLOT = WEAPON_INVENTORY_SLOT_PRIMARY_4
+global const string SLING_EQUIPMENT_SLOT_NAME = "sling_weapon"
+
+global const string BALLISTIC_SLING_WEAPON_EQIPPED_1P = "Ballistic_Passive_EquipToSling_1P"
+const string BALLISTIC_SLING_EQUIPPING_SLING_WEAPON_1P = "Ballistic_Passive_EquipSling_1P"
+
+struct
+{
+	#if SERVER
+		table <entity, string> storedPreSlingWeaponRefs
+	#endif
+
+	#if CLIENT
+		var slingPassiveRui
+	#endif
+} file
+
+void function ShPassiveSling_Init()
+{
+	#if SERVER
+		AddCallback_OnPlayerKilled( SlingWeapon_EnemyKilled )
+		                               
+			AddCallback_OnPassiveChanged( ePassives.PAS_PAS_UPGRADE_ONE, PassiveSlingUpgrade_OnPassiveChanged )
+			AddCallback_OnPassiveChanged( ePassives.PAS_TAC_UPGRADE_THREE, PassiveSlingUpgrade_OnPassiveChanged )
+			AddCallback_OnPassiveChanged( ePassives.PAS_MOD_UPGRADE_ONLY, PassiveSlingUpgrade_OnPassiveChanged )
+
+			//UpgradeCore_AddCallback_OnPlayerLevelUp( Callback_Sling_PlayerLeveledUp )
+        
+	#endif
+
+	#if CLIENT
+		RegisterConCommandTriggeredCallback( "+scriptCommand5", AttemptWeaponSlingSwapFromCharacterActionButton )
+
+		AddCallback_CreatePlayerPassiveRui( CreateSlingPassiveRui_Internal )
+		AddCallback_DestroyPlayerPassiveRui( DestroySlingPassiveRui )
+	#endif
+
+	AddCallback_OnPassiveChanged( ePassives.PAS_WEAPON_SLING, PassiveSling_OnPassiveChanged )
+	Remote_RegisterServerFunction( "ClientCallback_Sur_SlingToMainWeaponSlot", "int", 0, WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+}
+
+bool function DoesPlayerHaveWeaponSling( entity player )
+{
+	return PlayerHasPassive( player, ePassives.PAS_WEAPON_SLING )
+}
+
+entity function GetPlayerSlingWeapon( entity player )
+{
+	return player.GetNormalWeapon( SLING_WEAPON_SLOT )
+}
+
+bool function CanPlayerEquipLootEntToSling( entity player, entity lootEnt, bool doPlayerChecks = true )
+{
+	if( doPlayerChecks )
+	{
+		if ( IsBallisticUltActive( player ) && !IsPlayerWeaponSlingEmpty( player ) )
+			return false
+	}
+
+	if( !IsValid( lootEnt ) )
+		return false
+
+	if ( lootEnt.GetNetworkedClassName() != "prop_survival" )
+		return false
+
+	return CanPlayerEquipWeaponRefToSling( player,  SURVIVAL_Loot_GetLootDataByIndex( lootEnt.GetSurvivalInt() ).ref, false )
+}
+
+bool function CanPlayerEquipWeaponRefToSling( entity player, string ref, bool doPlayerChecks = true )
+{
+	if( doPlayerChecks )
+	{
+		if( IsBallisticUltActive( player ) && !IsPlayerWeaponSlingEmpty( player ) )
+			return false
+	}
+
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( ref )
+
+	if( !IsValid( data ) )
+		return false
+
+	if ( data.lootType != eLootType.MAINWEAPON )
+		return false
+
+	if( data.tier > 4 )
+		return false
+
+	return true
+}
+
+bool function IsPlayerWeaponSlingEmpty( entity player )
+{
+	if( IsValid( GetPlayerSlingWeapon( player ) ) )
+		return false
+
+	return true
+}
+
+bool function IsPlayerHoldingSlingWeapon( entity player )
+{
+	entity slingWeapon = GetPlayerSlingWeapon( player )
+	if( !IsValid( slingWeapon ) )
+		return false
+
+	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+
+	return activeWeapon == slingWeapon
+}
+
+bool function IsPlayerSwitchingToSlingWeapon( entity player )
+{
+	return player.IsSwitching( eActiveInventorySlot.mainHand ) && !IsPlayerWeaponSlingEmpty( player ) && player.GetSelectedWeapon( eActiveInventorySlot.mainHand ) == GetPlayerSlingWeapon( player )
+}
+
+                               
+string function GetSlingWeaponRefForPlayerUpgradeLevel( entity player, string baseWeaponRef )
+{
+	if( !IsValid( player ) )
+		return baseWeaponRef
+
+	string retString = baseWeaponRef
+
+	if( PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) )
+ 	{
+		int curLevel = UpgradeCore_GetPlayerLevel( player )
+	 	if( curLevel >= 2 && SURVIVAL_Loot_IsRefValid( baseWeaponRef + WEAPON_LOCKEDSET_SUFFIX_PURPLESET ) )
+	 	{
+			retString = baseWeaponRef + WEAPON_LOCKEDSET_SUFFIX_PURPLESET
+	 	}
+	 	else if( curLevel == 1 )
+	 	{
+			retString = baseWeaponRef + WEAPON_LOCKEDSET_SUFFIX_BLUESET
+	 	}
+ 	}
+	return retString
+}
+      
+
+void function PassiveSling_OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
+{
+	if( didHave )
+	{
+		player.Signal( "AutoLoaderEnded" )
+		player.Signal( "EndLockon" )
+
+		#if SERVER
+			entity slingWeapon = GetPlayerSlingWeapon( player )
+
+			if( IsValid( slingWeapon ) )
+			{
+				player.TakeWeaponByEntNow( slingWeapon )
+				UpdateWeaponSlingEquipmentSlot( player )
+			}
+
+			delete file.storedPreSlingWeaponRefs[player]
+		#endif
+	}
+	#if SERVER
+		else if( nowHas )
+		{
+			if( !( player in file.storedPreSlingWeaponRefs ) )
+			{
+				file.storedPreSlingWeaponRefs[player] <- ""
+			}
+		}
+	#endif
+}
+
+#if SERVER
+void function GivePlayerSlingWeaponByRef( entity player, string ref, bool shouldSwitchToSling = true, int ammoToGive = -1, bool hasAltAmmoMod = false, bool stopAmmoFill = false )
+{
+	entity weapon = SpawnGenericLoot( ref, player.GetOrigin(), < 0, 0, 0>, 1 )
+	LootData weaponData = SURVIVAL_Loot_GetLootDataByIndex( weapon.GetSurvivalInt() )
+	array<string> lootTags = weaponData.lootTags
+
+	array<string> mods = weapon.GetWeaponMods()
+	ReplaceOpticInMods( mods, "" )
+	weapon.SetWeaponMods( mods )
+
+	SURVIVAL_GiveMainWeapon( player, weapon, lootTags, weapon, false, null, false, !shouldSwitchToSling, [], false, true, stopAmmoFill )
+
+	weapon.Destroy()
+
+	entity slingWeapon = GetPlayerSlingWeapon( player )
+
+	if( hasAltAmmoMod )
+	{
+		slingWeapon.AddMod( "alt_ammo" )
+
+		if( slingWeapon.HasMod( "ammo_type_swap" ) )
+			slingWeapon.RemoveMod( "ammo_type_swap" )
+	}
+
+	if( ammoToGive >= 0 && slingWeapon.UsesClipsForAmmo() )
+		slingWeapon.SetWeaponPrimaryClipCount( minint( ammoToGive, slingWeapon.GetWeaponPrimaryClipCountMax() ) )
+
+	UpdateWeaponSlingEquipmentSlot( player )
+}
+
+entity function DropSlingWeapon( entity player, string equipSlot, vector dropOrigin, vector dropVel )
+{
+	if( IsBallisticUltActive( player ) )
+		return null
+
+	entity droppedWeapon = SURVIVAL_DropMainWeapon( player, equipSlot, dropOrigin, dropVel )
+	UpdateWeaponSlingEquipmentSlot( player )
+
+	return droppedWeapon
+}
+
+void function UpdateWeaponSlingEquipmentSlot( entity player )
+{
+	entity slingWeapon = GetPlayerSlingWeapon( player )
+
+	if ( IsValid( slingWeapon ) )
+	{
+		LootData lData = SURVIVAL_GetLootDataFromWeapon( slingWeapon )
+		Inventory_SetPlayerEquipment( player, lData.ref, SLING_EQUIPMENT_SLOT_NAME, 0, null )
+	}
+	else
+	{
+		Inventory_SetPlayerEquipment( player, "", SLING_EQUIPMENT_SLOT_NAME, 0, null )
+	}
+}
+
+void function ClientCallback_Sur_SlingToMainWeaponSlot( entity player, int slot )
+{
+	if( !IsValid( player ) || !player.IsPlayer() || !DoesPlayerHaveWeaponSling( player ) )
+		return
+
+	entity slotWeapon = player.GetNormalWeapon( slot )
+	bool playerHasWeaponInSlot = IsValid( slotWeapon )
+
+	LootData Data = SURVIVAL_GetLootDataFromWeapon( slotWeapon )
+
+	if( playerHasWeaponInSlot && !CanPlayerEquipWeaponRefToSling( player, Data.ref ) )
+		return
+
+	entity slingWeapon = GetPlayerSlingWeapon( player )
+	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand  )
+	bool isSlingWeaponActive = activeWeapon == slingWeapon
+	bool isPrimaryWeaponInSlotActive = activeWeapon == slotWeapon
+	int slingWeaponAmmo = -1
+	int slotWeaponAmmo = -1
+
+	if( IsValid( slingWeapon ) )
+		slingWeaponAmmo = slingWeapon.GetWeaponPrimaryClipCount()
+
+	if( IsValid( slotWeapon ) )
+		slotWeaponAmmo = slotWeapon.GetWeaponPrimaryClipCount()
+
+	//player.SwapPrimaryWeaponsInSlots( SLING_WEAPON_SLOT, slot )
+              
+                                                                                                                    
+      
+
+
+	slingWeapon = GetPlayerSlingWeapon( player )
+	slotWeapon = player.GetNormalWeapon( slot )
+
+	if ( IsValid( slotWeapon ) )
+	{
+		string weaponRef = GetStoredPreSlingWeaponRefForPlayer( player )
+		if( !SURVIVAL_Loot_IsRefValid( weaponRef ) )
+		{
+			LootData slotWeaponData = SURVIVAL_GetLootDataFromWeapon( slotWeapon )
+			weaponRef = slotWeaponData.baseWeapon
+		}
+
+		player.TakeWeaponByEntNow( slotWeapon )
+
+		entity weapon = SpawnGenericLoot( weaponRef, player.GetOrigin(), < 0, 0, 0>, 1 )
+
+		LootData weaponData = SURVIVAL_Loot_GetLootDataByIndex( weapon.GetSurvivalInt() )
+		array<string> lootTags = weaponData.lootTags
+
+		array<string> mods = weapon.GetWeaponMods()
+		ReplaceOpticInMods( mods, "" )
+		weapon.SetWeaponMods( mods )
+
+		weapon.SetClipCount( slingWeaponAmmo )
+
+		SURVIVAL_GiveMainWeapon( player, weapon, lootTags, weapon, false, null, false, !isSlingWeaponActive, [], false, false, true )
+		weapon.Destroy()
+	}
+
+	if ( IsValid( slingWeapon ) )
+	{
+		LootData weaponData = SURVIVAL_GetLootDataFromWeapon( slingWeapon )
+
+		SURVIVAL_TransferBetterModsToOtherWeapon( player, slingWeapon, ( slot + 1 ) % WEAPON_INVENTORY_SLOT_PRIMARY_COUNT_MAIN )
+		SURVIVAL_TransferBetterModsToOtherWeapon( player, slingWeapon, slot )
+		SURVIVAL_RemoveAllAttachmentsFromWeapon( player, SLING_WEAPON_SLOT, true )
+
+		player.TakeWeaponByEntNow( slingWeapon )
+
+		GivePlayerSlingWeaponByRef( player, weaponData.ref, isPrimaryWeaponInSlotActive, slotWeaponAmmo, false, true )
+	}
+
+	SURVIVAL_TransferModsFromInventoryToWeapon( player, slot )
+
+	slingWeapon = GetPlayerSlingWeapon( player )
+	if( IsValid( slingWeapon ) )
+	{
+		ItemFlavor ornull weaponItemOrNull = GetWeaponItemFlavorByClass( slingWeapon.GetWeaponClassName() )
+		ItemFlavor ornull weaponSkinOrNull = null
+		ItemFlavor ornull weaponCharmOrNull = null
+
+		if ( weaponItemOrNull != null )
+		{
+			weaponSkinOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponSkin( expect ItemFlavor( weaponItemOrNull ) ) )
+			weaponCharmOrNull = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_WeaponCharm( expect ItemFlavor( weaponItemOrNull ) ) )
+		}
+
+		WeaponCosmetics_Apply( slingWeapon, weaponSkinOrNull, weaponCharmOrNull )
+	}
+
+	Remote_CallFunction_NonReplay( player, "ServerCallback_RefreshInventory" )
+	UpdateWeaponSlingEquipmentSlot( player )
+}
+
+void function SetWeaponLockedSetForSlingWeapon( entity player, entity weapon )
+{
+	if( !IsValid( player ) || !IsValid( weapon ) )
+		return
+
+	if( IsBallisticUltActive( player ) )
+	{
+		//weapon.SetWeaponLockedSet( eWeaponLockedSet.GOLD )
+	}
+	else
+	{
+                                 
+			if( PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) )
+			{
+				int curUpgradeLevel = UpgradeCore_GetPlayerLevel( player )
+				if ( curUpgradeLevel >= 2 )
+				{} //SetWeaponLockedSet not in S3
+				else if ( curUpgradeLevel == 1 )
+				{} //SetWeaponLockedSet not in S3
+			}
+			else
+			{
+				//SetWeaponLockedSet not in S3
+			}
+       
+                                                         
+        
+	}
+}
+
+string function GetStoredPreSlingWeaponRefForPlayer( entity player )
+{
+	string ref = ""
+	if( player in file.storedPreSlingWeaponRefs )
+		ref = file.storedPreSlingWeaponRefs[ player ]
+
+	return ref
+}
+
+void function SetStoredPreSlingWeaponRefForPlayer( entity player, string ref )
+{
+	if( player in file.storedPreSlingWeaponRefs )
+	{
+		file.storedPreSlingWeaponRefs[player] = ref
+	}
+}
+
+void function SlingWeapon_EnemyKilled( entity victim, entity attacker, var damageInfo )
+{
+	if( !attacker.IsPlayer() )
+		return
+
+	if ( !IsValid( attacker ) || !PlayerHasPassive( attacker, ePassives.PAS_WEAPON_SLING ) )
+		return
+
+	if( IsPlayerHoldingSlingWeapon( attacker ) )
+		StatsHook_BallisticPassiveSlingKills( attacker )
+}
+
+void function OnClientConnectionRestored( entity player )
+{
+	if( !IsValid( player ) || !DoesPlayerHaveWeaponSling( player ) || player.GetTeam() == TEAM_SPECTATOR )
+		return
+
+	UpdateWeaponSlingEquipmentSlot( player )
+}
+
+                               
+void function PassiveSlingUpgrade_OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
+{
+	if( !DoesPlayerHaveWeaponSling( player ) )
+		return
+
+	if ( !PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) )
+		return
+
+	if( nowHas )
+	{
+		if ( !IsPlayerWeaponSlingEmpty( player ) )
+		{
+			bool playerIsHoldingSling = IsPlayerHoldingSlingWeapon( player )
+
+			string weaponRefToGive = GetStoredPreSlingWeaponRefForPlayer( player )
+			entity slingWeapon = GetPlayerSlingWeapon( player )
+			if( weaponRefToGive == "" )
+				SetStoredPreSlingWeaponRefForPlayer( player, slingWeapon.GetWeaponClassName() )
+
+			player.TakeWeaponByEntNow( slingWeapon )
+
+			GivePlayerSlingWeaponByRef( player, GetStoredPreSlingWeaponRefForPlayer( player ), playerIsHoldingSling )
+		}
+	}
+}
+
+void function Callback_Sling_PlayerLeveledUp( entity player, int newLevel )
+{
+	if( !DoesPlayerHaveWeaponSling( player ) )
+		return
+
+	if ( PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) )
+	{
+		bool holdingSlingWeapon = IsPlayerHoldingSlingWeapon( player )
+		if ( !IsPlayerWeaponSlingEmpty( player ) )
+		{
+			player.TakeWeaponByEntNow( GetPlayerSlingWeapon( player ) )
+			GivePlayerSlingWeaponByRef( player, GetStoredPreSlingWeaponRefForPlayer( player ), holdingSlingWeapon )
+		}
+	}
+}
+      
+#endif //SERVER
+
+#if CLIENT
+void function AttemptWeaponSlingSwapFromCharacterActionButton( entity player )
+{
+	if ( !TryCharacterButtonCommonReadyChecks( player ) )
+		return
+
+	AttemptWeaponSlingSwap( player )
+}
+
+void function AttemptWeaponSlingSwap( entity player )
+{
+	if ( !DoesPlayerHaveWeaponSling( player ) )
+		return
+
+	if( IsPlayerHoldingSlingWeapon( player ) )
+	{
+		int slot = player.GetLastCycleSlot()
+		if( IsValid( player.GetNormalWeapon( slot ) ) )
+			player.ClientCommand( "weaponSelectPrimary" + slot )
+		return
+	}
+
+	if ( !IsPlayerWeaponSlingEmpty( player ) )
+	{
+		player.ClientCommand( "weaponSelectSlingWeapon" )
+		EmitSoundOnEntity( player, BALLISTIC_SLING_EQUIPPING_SLING_WEAPON_1P )
+
+		var slingPassiveRui = GetSlingPassiveRui()
+		if ( slingPassiveRui != null )
+		{
+			RuiSetBool( slingPassiveRui, "hasMainWeapon", true )
+			RuiSetBool( slingPassiveRui, "hasSlingWeapon", true )
+		}
+	}
+}
+
+var function GetSlingPassiveRui()
+{
+	return file.slingPassiveRui
+}
+
+void function CreateSlingPassiveRui_Internal( entity player )
+{
+	if( !DoesPlayerHaveWeaponSling( player ) )
+		return
+
+	if( file.slingPassiveRui == null )
+		file.slingPassiveRui = CreateCockpitPostFXRui( $"ui/gunzerker_tactical.rpak", HUD_Z_BASE )
+
+	InitSlingPassiveRui( player )
+	UpdateSlingPassiveRui( player )
+
+	thread TrackSlingRui( player )
+}
+
+void function DestroySlingPassiveRui( entity player )
+{
+	if ( !DoesPlayerHaveWeaponSling( player ) )
+	{
+		if ( file.slingPassiveRui != null )
+		{
+			RuiDestroyIfAlive( file.slingPassiveRui )
+			file.slingPassiveRui = null
+		}
+	}
+}
+
+void function TrackSlingRui( entity player )
+{
+	if( !IsValid( player ) )
+		return
+
+	player.EndSignal( "OnDeath", "OnDestroy" )
+
+	entity cachedSlingWeapon = GetPlayerSlingWeapon( player )
+	while ( file.slingPassiveRui != null && IsValid( player ) )
+	{
+		entity slingWeapon = GetPlayerSlingWeapon( player )
+		if ( slingWeapon != cachedSlingWeapon )
+		{
+			UpdateSlingPassiveRui( player )
+			cachedSlingWeapon = slingWeapon
+		}
+
+		WaitFrame()
+	}
+}
+
+void function UpdateSlingPassiveRui( entity player )
+{
+	if ( file.slingPassiveRui == null )
+	{
+		return
+	}
+
+	entity slingWeapon = GetPlayerSlingWeapon( player )
+
+	if ( IsValid( slingWeapon ) )
+	{
+		string weaponRef = slingWeapon.GetWeaponClassName()
+		LootData data = SURVIVAL_Loot_GetLootDataByRef( weaponRef )
+		string ammoTypeRef = GetWeaponAmmoType( weaponRef )
+		asset ammoIcon = $""
+		vector ammoColor = < 1.0, 1.0, 1.0 >
+		vector weaponIconColor = < 1.0, 1.0, 1.0 >
+		vector backgroundColor =  < 0.5, 0.5, 0.5 >
+
+		if( data.secondaryAmmoType != "" )
+		{
+			ammoTypeRef = AmmoType_GetRefFromIndex( slingWeapon.GetWeaponAmmoPoolType() )
+
+			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoTypeRef )
+			ammoColor = GetAmmoColorByType( ammoTypeRef )
+			ammoIcon = ammoData.hudIcon
+			backgroundColor = ammoColor
+		}
+
+		if( SURVIVAL_Loot_IsRefValid( ammoTypeRef ) && data.secondaryAmmoType == "")
+		{
+			LootData ammoData = SURVIVAL_Loot_GetLootDataByRef( ammoTypeRef )
+			ammoIcon = ammoData.hudIcon
+			ammoColor = GetAmmoColorByType( GetWeaponAmmoType( data.ref ) )
+			backgroundColor = ammoColor
+		}
+		else if ( data.tier == eLootTier.MYTHIC )
+		{
+			ammoColor = GetAmmoColorByType( "supply_drop" )
+			ammoIcon = data.fakeAmmoIcon == $"" ? $"rui/hud/gametype_icons/survival/sur_ammo_unique" : data.fakeAmmoIcon
+			backgroundColor = ammoColor
+		}
+
+		if ( data.tier > 2 )
+		{
+			ammoColor = SrgbToLinear( <1, 0.91765, 0.15294> )
+			backgroundColor = <1, 0.91765, 0.15294>
+		}
+
+		RuiSetBool( file.slingPassiveRui, "isInUlt", IsBallisticUltActive( player ) )
+		RuiSetImage( file.slingPassiveRui, "weaponIcon", data.hudIcon )
+		RuiSetFloat3( file.slingPassiveRui, "ammoColor", SrgbToLinear( ammoColor ) )
+		RuiSetFloat3( file.slingPassiveRui, "weaponIconColor", weaponIconColor )
+		RuiSetImage( file.slingPassiveRui, "ammoIcon", ammoIcon )
+		RuiSetFloat3( file.slingPassiveRui, "backgroundColor", backgroundColor )
+
+		RuiTrackFloat( file.slingPassiveRui, "stockAmmoFrac", slingWeapon, RUI_TRACK_WEAPON_REMAINING_AMMO_FRACTION )
+		RuiTrackFloat( file.slingPassiveRui, "clipAmmoFrac", slingWeapon, RUI_TRACK_WEAPON_CLIP_AMMO_FRACTION )
+		RuiTrackFloat( file.slingPassiveRui, "maxMagAmmo", slingWeapon, RUI_TRACK_WEAPON_CLIP_AMMO_MAX )
+		RuiTrackFloat( file.slingPassiveRui, "maxAmmo", slingWeapon, RUI_TRACK_WEAPON_AMMO_MAX )
+
+		int maxAmmoReady  = slingWeapon.GetWeaponSettingInt( eWeaponVar.ammo_clip_size )
+		int ammoPerShot   = slingWeapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
+		int ammoMinToFire = slingWeapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire )
+
+		RuiTrackFloat( file.slingPassiveRui, "chargeFrac", slingWeapon, RUI_TRACK_WEAPON_CLIP_AMMO_FRACTION )
+		RuiTrackFloat( file.slingPassiveRui, "readyFrac", slingWeapon, RUI_TRACK_WEAPON_READY_TO_FIRE_FRACTION )
+		RuiTrackFloat( file.slingPassiveRui, "refillRate", slingWeapon, RUI_TRACK_WEAPON_AMMO_REGEN_RATE )
+		RuiSetInt( file.slingPassiveRui, "ammoMinToFire", ammoMinToFire )
+
+		LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( slingWeapon.GetWeaponClassName() )
+		string weaponName = GetWeaponInfoFileKeyField_GlobalString( weaponData.baseWeapon, "shortprintname" )
+
+		RuiSetString(  file.slingPassiveRui, "weaponName", weaponName )
+
+		WeaponRuiUpdateMastery( file.slingPassiveRui, slingWeapon, "hudIconMastered", "isMastered", "moreSparksMastered")
+	}
+	else
+	{
+		RuiSetImage( file.slingPassiveRui, "weaponIcon", $"" )
+		RuiSetFloat3( file.slingPassiveRui, "ammoColor", ( < 1.0, 1.0, 1.0 > ) )
+		RuiSetImage( file.slingPassiveRui, "ammoIcon", $"rui/hud/gametype_icons/survival/sur_ammo_blank" )
+		RuiSetFloat( file.slingPassiveRui, "imageSaturation", 0.0 )
+
+		RuiSetFloat( file.slingPassiveRui, "stockAmmoFrac", 0.0 )
+		RuiSetFloat( file.slingPassiveRui, "clipAmmoFrac", 0.0 )
+		RuiSetFloat( file.slingPassiveRui, "maxMagAmmo", 0.0 )
+		RuiSetFloat( file.slingPassiveRui, "maxAmmo", 0.0 )
+		RuiSetBool( file.slingPassiveRui, "slingEmptyAimingAtWeapon", false )
+		RuiSetBool( file.slingPassiveRui, "isMastered", false )
+	}
+
+	if( SURVIVAL_GetPrimaryWeapons( player ).len() <= 0 )
+		RuiSetBool( file.slingPassiveRui, "hasMainWeapon", false )
+
+	RuiSetBool( file.slingPassiveRui, "hasSlingWeapon", !IsPlayerWeaponSlingEmpty( player ) )
+	RunUIScript( "SurvivalInventoryMenu_SetSpaceForSling", true )
+}
+
+void function InitSlingPassiveRui( entity player )
+{
+	bool isVisible = true
+	                        
+		isVisible = !GameModeVariant_IsActive( eGameModeVariants.FREEDM_GUNGAME )
+       
+	RuiSetBool( file.slingPassiveRui, "isVisible", isVisible )
+	RuiSetBool( file.slingPassiveRui, "isGroundListOpen", Survival_IsGroundlistOpen() )
+	RuiTrackFloat( file.slingPassiveRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+	RuiTrackFloat( file.slingPassiveRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+}
+
+void function SlingSetIsGroundListMenuOpen()
+{
+	if ( file.slingPassiveRui != null )
+		RuiSetBool( file.slingPassiveRui, "isGroundListOpen", Survival_IsGroundlistOpen() )
+}
+
+void function ServerCallback_UpdateSlingWeaponIcon()
+{
+	entity player = GetLocalViewPlayer()
+	if( !IsValid( player ) )
+		return
+
+	UpdateSlingPassiveRui( player )
+}
+#endif //CLIENT

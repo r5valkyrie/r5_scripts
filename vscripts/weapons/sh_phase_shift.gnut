@@ -542,7 +542,7 @@ void function ServerPhaseShiftPlayerThread( entity ent, float warmupTime, float 
 			PlayPhaseShiftAppearFX( ent, SHIFTER_DASH_APPEAR_FX )
 			break
 		case eShiftStyle.PHASETYPE_BREACH:
-			PlayPhaseShiftAppearFX_Retail( ent, SHIFTER_DASH_APPEAR_FX, SHIFTER_END_SOUND_3P_BREACH, SHIFTER_END_SOUND_1P_BREACH )
+			PlayPhaseShiftAppearFX( ent, SHIFTER_DASH_APPEAR_FX, SHIFTER_END_SOUND_3P_BREACH, SHIFTER_END_SOUND_1P_BREACH )
 			break
 		default:
 			PlayPhaseShiftAppearFX( ent )
@@ -589,7 +589,7 @@ void function PhaseShiftDisappearEffectCleanup( entity ent, entity fx, float dur
 	wait max( duration - bufferTime, 0.0 )
 }
 
-entity function PlayPhaseShiftAppearFX_Retail( entity ent, asset effectOverride = $"", string soundOverride3p = "", string soundOverride1p = "" )
+entity function PlayPhaseShiftAppearFX( entity ent, asset effectOverride = $"", string soundOverride3p = "", string soundOverride1p = "" )
 {
 	asset effect
 	if ( effectOverride != $"" )
@@ -627,38 +627,6 @@ entity function PlayPhaseShiftAppearFX_Retail( entity ent, asset effectOverride 
 	unreachable
 }
 
-entity function PlayPhaseShiftAppearFX( entity ent, asset effectOverride = $"" )
-{
-	asset effect
-	if ( effectOverride != $"" )
-		effect = effectOverride
-	else if ( !IsHumanSized( ent ) )
-		effect = SHIFTER_APPEAR_FX_TITAN
-	else
-		effect = SHIFTER_APPEAR_FX
-
-	if ( ent.IsPlayer() )
-	{
-		if ( ent.IsTitan() )
-			EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_END_SOUND_3P_TITAN )
-		else if ( StatusEffect_GetSeverity( ent, eStatusEffect.phase_gate_tracking ) )
-			EmitSoundOnEntityExceptToPlayer( ent, ent, GATE_END_SOUND_3P )
-		else
-			EmitSoundOnEntityExceptToPlayer( ent, ent, SHIFTER_END_SOUND_3P )
-
-		return PlayFXOnEntityForEveryoneExceptPlayer( effect, ent, ent )
-	}
-	else
-	{
-		if ( ent.IsTitan() )
-			EmitSoundOnEntity( ent, SHIFTER_END_SOUND_3P_TITAN )
-		else
-			EmitSoundOnEntity( ent, SHIFTER_END_SOUND_3P )
-		return PlayFXOnEntity( effect, ent )
-	}
-
-	unreachable
-}
 
 entity function PlayPhaseShiftDisappearFX( entity ent, asset fxAsset = SHIFTER_DISAPPEAR_FX, bool useMover = false, string attachment = "ORIGIN" )
 {
@@ -676,7 +644,7 @@ entity function PlayPhaseShiftDisappearFX( entity ent, asset fxAsset = SHIFTER_D
 		dashFX.RemoveFromAllRealms()
 		dashFX.AddToOtherEntitysRealms( ent )
 		dashFX.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) //owner cant see
-		entity mover = CreateScriptMover( ent.GetAttachmentOrigin( attachId ), VectorToAngles( ent.GetVelocity() ) )
+		entity mover = CreateScriptMover( "", ent.GetAttachmentOrigin( attachId ), VectorToAngles( ent.GetVelocity() ) )
 		mover.RemoveFromAllRealms()
 		mover.AddToOtherEntitysRealms( ent )
 		mover.SetParent( ent )

@@ -55,7 +55,7 @@ void function OnWeaponTossPrep_weapon_jump_pad( entity weapon, WeaponTossPrepPar
 	weapon.EmitWeaponSound_1p3p( GetGrenadeDeploySound_1p( weapon ), GetGrenadeDeploySound_3p( weapon ) )
 }
 
-void function OnJumpPadPlanted( entity projectile )
+void function OnJumpPadPlanted( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 	//string gameMode = GameRules_GetGameMode()

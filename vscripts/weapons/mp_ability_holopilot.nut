@@ -468,7 +468,7 @@ void function Test_ForceDecoysOnGround( entity player, entity decoy )
 		// endpos = OriginToGround( decoy.GetOrigin() )
 		// if( Distance( decoy.GetOrigin(), endpos ) > 150 )
 		// {
-			// entity mover = CreateScriptMover( decoy.GetOrigin() )
+			// entity mover = CreateScriptMover( "", decoy.GetOrigin() )
 			// decoy.SetParent( mover )
 			// endpos = OriginToGround( decoy.GetOrigin() )
 			// mover.NonPhysicsMoveTo( endpos, 1, 0, 0 )

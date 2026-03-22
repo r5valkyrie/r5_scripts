@@ -140,7 +140,7 @@ void function OnOpen()
 {
 	file.isOpen = true
 	ItemFlavor event = file.event
-	Assert( IsItemFlavorStructValid( event ), "Must call StoryEventAboutDialog_SetEvent before opening the StoryEventAboutDialog menu!" )
+	Assert( IsItemFlavorStructValid( event.guid ), "Must call StoryEventAboutDialog_SetEvent before opening the StoryEventAboutDialog menu!" )
 
 	RegisterInput()
 
@@ -477,7 +477,7 @@ void function PopulateData( entity player )
 void function OnUpdateChallengesRui( entity player )
 {
 	ItemFlavor event = file.event
-	Assert( IsItemFlavorStructValid( event ), "Must call StoryEventAboutDialog_SetEvent before opening the StoryEventAboutDialog menu!" )
+	Assert( IsItemFlavorStructValid( event.guid ), "Must call StoryEventAboutDialog_SetEvent before opening the StoryEventAboutDialog menu!" )
 
 	file.rewardButtonToRewardFlavMap.clear()
 	file.rvButtonToRadioVignetteMap.clear()
@@ -634,7 +634,7 @@ void function OnUpdateArrowsRui()
 void function OnUpdateHeaderRui( entity player )
 {
 	ItemFlavor event = file.event
-	Assert( IsItemFlavorStructValid( event ), "Must call StoryEventAboutDialog_SetEvent before opening the StoryEventAboutDialog menu!" )
+	Assert( IsItemFlavorStructValid( event.guid ), "Must call StoryEventAboutDialog_SetEvent before opening the StoryEventAboutDialog menu!" )
 
 	HudElem_SetRuiArg( file.mainLayer, "bgImage", StoryEvent_GetChapterAboutBgImage( event ), eRuiArgType.IMAGE )
 	HudElem_SetRuiArg( file.overlayLayer, "bgImage", StoryEvent_GetChapterAboutBgImage( event ), eRuiArgType.IMAGE )
@@ -692,7 +692,7 @@ bool function IsChapterIndexLocked( int idx ) {
 void function UpdateCurrentObjectiveIndex()
 {
 	ItemFlavor event = file.event
-	Assert( IsItemFlavorStructValid( event ), "Must call StoryEventAboutDialog_SetEvent before opening the StoryEventAboutDialog menu!" )
+	Assert( IsItemFlavorStructValid( event.guid ), "Must call StoryEventAboutDialog_SetEvent before opening the StoryEventAboutDialog menu!" )
 
 	entity player = GetLocalClientPlayer()
 	file.currentObjectiveIndex = StoryEvent_GetActiveChapter( player, event )

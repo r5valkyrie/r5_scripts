@@ -459,7 +459,7 @@ void function OnRisableWallPanelActivate( RisableWallData data, entity helper, e
 			if ( child.GetClassName() == "prop_survival" )
 			{
 				child.ClearParent()
-				thread FakePhysicsThrow_Retail( null, child, throwLootVelocity, true )
+				thread FakePhysicsThrow( null, child, throwLootVelocity, true )
 			}
 		}
 	#endif // SERVER
@@ -592,7 +592,7 @@ void function Debug_RisingWalls()
 void function Debug_OnRisableWallPanelActivate( RisableWallData data )
 {
 	/*float debugDrawTime = WALL_RAISE_SEQ_DURATION + 10.0
-	DebugDrawSphere( data.moverBase.GetOrigin(), 8, COLOR_RED, true, debugDrawTime, true, 16 )
+	//DebugDrawSphere( data.moverBase.GetOrigin(), 8, <255, 0, 0>, true, debugDrawTime, true, 16 )
 
 
 	foreach ( Point point in data.FXTransition )
@@ -615,8 +615,8 @@ void function Debug_ShowFlapAndTopRotationPivots_Thread( RisableWallData data, f
 		if ( Time() > curTime + duration || !file.debugEnabled )
 			return
 
-		DebugDrawSphere( data.moverTop.GetOrigin(), 8, COLOR_GREEN, true, 0.1 )
-		DebugDrawSphere( data.moverFlap.GetOrigin(), 8, COLOR_BLUE, true, 0.1 )
+		//DebugDrawSphere( data.moverTop.GetOrigin(), 8, <0, 255, 0>, true, 0.1 )
+		//DebugDrawSphere( data.moverFlap.GetOrigin(), 8, <0, 0, 255>, true, 0.1 )
 
 		WaitFrame()
 	}*/

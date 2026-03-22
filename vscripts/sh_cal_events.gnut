@@ -708,7 +708,7 @@ ItemFlavor function GetItemFlavorByCalEventRef( string ref, int eventType )
 #if SERVER || CLIENT || UI
 string function ItemFlavor_GetCalEventRef( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	Assert( flavor.metaData != null )
 	int eventType = flavor.typeIndex
 

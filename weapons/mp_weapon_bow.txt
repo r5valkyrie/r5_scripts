@@ -108,15 +108,15 @@
 
 	"charge_time" 								"0.350000"
 	"charge_require_input"						"1"
-	"charge_allow_hold_when_full"               "1"
+	"charge_end_forces_fire"                    "0"
 	"charge_remain_full_when_fired"             "1"
-	"charge_attack_min_charge_required"         "0.15"
+	"charge_attack_requires_full_charge"        "0"
+	"charge_allow_midway_charge"                "1"
 	"charge_cooldown_time"						"0.300000"
-	"charge_cooldown_delay"   					"0.1"   //---
+	"charge_cooldown_delay"   					"0.1"
 	"charge_levels"                             "6"
 	"charge_level_base"                         "1"
-    "charge_curve_coefficients"                 "1.4205 -1.1607 .7338"
-	//"charge_allow_midway_charge"                "0"
+	"charge_curve_coefficients"                 "1.4205 -1.1607 .7338"
 
     "red_crosshair_range" 						"0"
 

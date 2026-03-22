@@ -109,6 +109,9 @@ Scripts:
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
+	perk_support_lootbin.nut
+	pilot/sh_pilot_passive_upgrade_core.gnut
+	extra_shields.nut
 	sh_survival_loot_all.gnut
 ]
 
@@ -124,6 +127,8 @@ Scripts:
 	sh_bird_cluster.nut
 
 	sh_extended_use.gnut
+	sh_companion_pathfinding.gnut
+	pilot/sh_pilot_passive_sling.gnut
 	sh_survival_loot.gnut
 	sh_survival_loot_actions.gnut
 	sh_survival_loot_types.gnut
@@ -164,6 +169,8 @@ Scripts:
 	sh_ability_cosmetics.nut
 	sh_perks.gnut
 	private_matches.nut
+	sh_image_2d.gnut
+	sh_battlepass_presale_voucher.gnut
 	clubs.nut
 	sh_movement_rc.nut
 ]
@@ -359,6 +366,7 @@ Scripts:
 	weapons/mp_ability_cloak.nut
 	weapons/mp_ability_grapple.nut
 	weapons/mp_ability_holopilot.nut
+	// weapons/hopup_golden_horse.nut -- too many S22 dependencies, Golden Horse mode not available
 	weapons/mp_ability_silence.nut
 	weapons/mp_ability_revenant_death_totem.nut
 	weapons/mp_ability_item_spawner.nut
@@ -593,6 +601,7 @@ Scripts:
 	npc/npc_precache_spider_jungle.nut
 	weapons/npc_weapon_spider_jungle.nut
 	mp/sh_game_state_dialog.nut
+	mp/sh_emotes.nut
 	mp/sh_comms_menu.nut
 	mp/sh_loot_marvin.nut
 	mp/sh_space_elevator.gnut
@@ -607,6 +616,7 @@ Scripts:
 	mp/sh_canyonlands_caustic_lore.nut
 	mp/sh_sniper_tower.nut
 	sh_mp_utility.gnut
+	mp/sh_crafting.gnut
 	sh_score.gnut
 	sh_elite_streak.gnut
 	worldsystems/sh_explosive_loot_hold.nut
@@ -619,13 +629,15 @@ When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	mp/sh_quickchat.gnut
-	
+
 	melee/sh_melee.gnut
 	melee/sh_melee_synced.gnut
 	gamemodes/sh_gamemode_survival.nut
+	gamemodes/sh_gamemode_survival_solos.nut
 	mp/sh_firing_range_vending_machine.nut
 
 	sh_ping.gnut
+	mp/sh_upgrade_selection_menu.nut
 ]
 
 When: "SERVER || CLIENT"
@@ -642,6 +654,7 @@ Scripts:
 
 	sh_apex_screens.nut
 	sh_survival_deathfield.gnut
+	sh_survival_deathfield_enforcedringlethality.gnut
 	sh_survival_freefall.gnut
 
 	mp/sh_lootbin.gnut
@@ -664,6 +677,9 @@ Scripts:
 
 	_ultimates.gnut
 	sh_survival_persistentdamagelayer.gnut
+	gamemodes/sh_gamemode_survival_heatwave.gnut
+	gamemodes/sh_gamemode_survival_hardcore.gnut
+	survival_locked_rng.nut
 	gamemodes/shadowfall/sh_gamemode_shadow_squad.nut
 	gamemodes/shadowfall/sh_gamemode_shadow_squad_precache.nut
 ]
@@ -687,6 +703,20 @@ Scripts:
 	_clientcommands.gnut
 	_codecallbacks_player_input.gnut
 	_control_panel.gnut
+]
+
+When: "SERVER || CLIENT"
+Scripts:
+[
+	perk_beacon_scan.nut
+	perk_next_zone_beacon_scan.nut
+	perk_enemies_beacon_scan.nut
+	perk_munitions_box.nut
+]
+
+When: "SERVER"
+Scripts:
+[
 	_script_movers.gnut
 	_script_toys.gnut
 	_global_entities.gnut
@@ -808,6 +838,7 @@ Scripts:
 
 	ai/_ai_mortar_spectres.gnut
 	survival_loot.gnut
+	mp_pickup_xp_cache.nut
 	survival_ship.gnut
 	mp/_loot_ticks.nut
 	pilot/_pilot_tracking_vision.gnut
@@ -824,6 +855,8 @@ Scripts:
 	
 	pilot/_pilot_passive_medic.gnut //Should be shared. Cafe
 	pilot/sh_pilot_passive_voices.gnut
+	pilot/sh_pilot_passive_warlords_ire.gnut
+	pilot/_pilot_passive_sniper.gnut
 	pilot/sh_pilot_passive_adrenaline.gnut
 	pilot/sh_pilot_passive_dash.gnut
 	pilot/_pilot_passive_grenadier.gnut
@@ -1263,6 +1296,9 @@ Scripts:
 	weapons/mp_ability_crypto_drone.nut
 	weapons/mp_ability_crypto_drone_emp.nut
 	weapons/mp_ability_titanfall.nut
+	weapons/sh_vantage_companion.nut
+	weapons/sniper_range_auto_set.nut
+	weapons/sniper_recon_info.nut
 	weapons/sh_care_package.nut
 	
 	// abilities/loba_tactical_translocation.nut

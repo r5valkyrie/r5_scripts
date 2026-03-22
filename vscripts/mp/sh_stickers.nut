@@ -11,13 +11,15 @@ global function GetMaxStickersForObjectType
 global function GetAllStickerObjectTypes
 global function GetStickerObjectName
 global function GetStickerPresentationType
-// CreateNestedRuiForSticker already in sh_items.gnut
+global function CreateNestedRuiForSticker
 #endif // UI
 
-// Sticker_IsTheEmpty, Sticker_GetStoryBlurbBodyText, Sticker_HasStoryBlurb already in sh_items.gnut
+global function Sticker_IsTheEmpty
+global function Sticker_GetStoryBlurbBodyText
+global function Sticker_HasStoryBlurb
 global function Sticker_GetDecalMaterialAsset
 global function Sticker_GetReplacementMaterialAsset
-// Sticker_GetSortOrdinal already in sh_items.gnut
+global function Sticker_GetSortOrdinal
 global function Sticker_GetDecalScale
 
 #if SERVER
@@ -32,20 +34,20 @@ global function Sticker_CreateFlashData
 global function Sticker_FlashOnLoadComplete
 #endif
 
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 global function DEV_StickerTestSetup
-#endif // SERVER && DEVELOPER
+#endif // SERVER && DEV
 
-#if CLIENT && DEVELOPER
+#if CLIENT && DEV
 global function DEV_TestCreateStickerMesh
 global function DEV_TestCreateStickerDecal
 global function DEV_StickerTestSetupForLocalPlayer
 global function DEV_ReturnRandomStickerFlavs
 #endif
 
-#if UI && DEVELOPER
+#if UI && DEV
 global function DEV_PrintStickerLoadout
-#endif // UI && DEVELOPER
+#endif // UI && DEV
 
 global enum eStickerObjectType
 {
@@ -57,7 +59,6 @@ global enum eStickerObjectType
 
 #if CLIENT || SERVER
 global const asset UNAPPLIED_STICKER_MODEL = $"mdl/props/stickers/flat_sticker.rmdl"
-global const asset FLAT_STICKER_MODEL = $"mdl/props/stickers/flat_sticker.rmdl"
 
 const asset SHIELD_CELL_MODEL = $"mdl/weapons/shield_battery/ptpov_shield_battery_small_held.rmdl"
 const asset SHIELD_BATTERY_MODEL = $"mdl/weapons/shield_battery/ptpov_shield_battery_held.rmdl"
@@ -100,10 +101,9 @@ void function ShStickers_LevelInit()
 		DEV_SetupStickerNetworking()
 	#endif
 
-// GetStickerSlot not available
-// #if CLIENT
-// 	thread AutoLoadViewPlayerStickers()
-// #endif
+#if CLIENT
+	thread AutoLoadViewPlayerStickers()
+#endif
 }
 
 
@@ -123,7 +123,7 @@ void function RegisterStickers()
 		stickerItemList.append( stickerItem )
 	}
 
-	MakeItemFlavorSet( stickerItemList, fileLevel.stickerSortOrdinalMap )
+	MakeItemFlavorSet( stickerItemList, fileLevel.stickerSortOrdinalMap, true )
 
 	foreach ( int stickerObjectType in eStickerObjectType )
 	{
@@ -146,17 +146,16 @@ void function RegisterStickers()
 
 			// Server pushes sticker loadouts to players through a specific data table. When the loadout changes fill up this table to be propegated
 			// to other players.
-			// SetStickerSlot/GetStickerSlot entity functions not available
-			// #if SERVER
-			// AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( entry,
-			// 	void function ( EHI playerEHI, ItemFlavor flavor ) : ( i, stickerObjectType )
-			// 	{
-			// 		entity player = FromEHI( playerEHI )
-			// 		SettingsAssetGUID guid = ItemFlavor_GetGUID( flavor )
-			// 		player.SetStickerSlot( stickerObjectType * GetMaxStickersForObjectType( stickerObjectType ) + i, guid )
-			// 	}
-			// );
-			// #endif
+#if SERVER
+			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( entry, 
+				void function ( EHI playerEHI, ItemFlavor flavor ) : ( i, stickerObjectType )
+				{
+					entity player = FromEHI( playerEHI )
+					SettingsAssetGUID guid = ItemFlavor_GetGUID( flavor )
+					Warning( "SetStickerSlot not available in S3 - sticker slot %d not set\n", stickerObjectType * GetMaxStickersForObjectType( stickerObjectType ) + i )
+				} 
+			);
+#endif
 		}
 	}
 
@@ -183,51 +182,49 @@ void function OnStickerLocalPlayerItemLoadoutChanged( EHI playerEHI, ItemFlavor 
 
 	if ( !Sticker_IsTheEmpty( flavor ) )
 	{
-		// RequestLoadStickerPak not available
-		// asset stickerAsset = Sticker_GetDecalMaterialAsset( flavor )
-		// RequestLoadStickerPak( stickerAsset )
+		asset stickerAsset = Sticker_GetDecalMaterialAsset( flavor )
+		RequestLoadStickerPak( stickerAsset )
 	}
 }
 
-// GetStickerSlot not available
 // Function runs a check per frame to detect when the viewing player has changed. When the viewing player has changed
 // load the stickers for that player.
-// void function AutoLoadViewPlayerStickers()
-// {
-// 	entity currentPlayer = GetLocalViewPlayer()
-//
-// 	while(true)
-// 	{
-// 		// Check if the viewing player has changed.
-// 		if ( currentPlayer != GetLocalViewPlayer() )
-// 		{
-// 			currentPlayer = GetLocalViewPlayer()
-//
-// 			foreach ( int stickerObjectType in eStickerObjectType )
-// 			{
-// 				int maxStickersForObjectType = GetMaxStickersForObjectType( stickerObjectType )
-//
-// 				for ( int i = 0; i < maxStickersForObjectType; i++ )
-// 				{
-// 					int stickerSlot = stickerObjectType * maxStickersForObjectType + i
-//
-// 					SettingsAssetGUID stickerLoadoutSlotGuid = currentPlayer.GetStickerSlot( stickerSlot )
-// 					ItemFlavor ornull stickerItemOrNull = GetItemFlavorOrNullByGUID( stickerLoadoutSlotGuid )
-//
-// 					if (stickerItemOrNull == null)
-// 						continue
-//
-// 					ItemFlavor stickerItem = expect ItemFlavor( stickerItemOrNull )
-//
-// 					if ( !Sticker_IsTheEmpty( stickerItem ) )
-// 						RequestLoadStickerPak( Sticker_GetDecalMaterialAsset( stickerItem ) )
-// 				}
-// 			}
-// 		}
-//
-// 		WaitFrame()
-// 	}
-// }
+void function AutoLoadViewPlayerStickers()
+{
+	entity currentPlayer = GetLocalViewPlayer()
+
+	while(true)
+	{
+		// Check if the viewing player has changed.
+		if ( currentPlayer != GetLocalViewPlayer() )
+		{
+			currentPlayer = GetLocalViewPlayer()
+
+			foreach ( int stickerObjectType in eStickerObjectType )
+			{
+				int maxStickersForObjectType = GetMaxStickersForObjectType( stickerObjectType )
+
+				for ( int i = 0; i < maxStickersForObjectType; i++ )
+				{
+					int stickerSlot = stickerObjectType * maxStickersForObjectType + i
+					
+					SettingsAssetGUID stickerLoadoutSlotGuid = ASSET_SETTINGS_UNIQUE_ID_INVALID // GetStickerSlot not in S3
+					ItemFlavor ornull stickerItemOrNull = GetItemFlavorOrNullByGUID( stickerLoadoutSlotGuid )
+
+					if (stickerItemOrNull == null)
+						continue
+
+					ItemFlavor stickerItem = expect ItemFlavor( stickerItemOrNull )
+
+					if ( !Sticker_IsTheEmpty( stickerItem ) )
+						RequestLoadStickerPak( Sticker_GetDecalMaterialAsset( stickerItem ) )
+				}
+			}
+		}
+
+		WaitFrame()
+	}
+}
 #endif
 
 #if CLIENT || SERVER
@@ -332,7 +329,15 @@ int function GetStickerPresentationType( int stickerObjectType )
 	Assert( false, "Unsupported stickerObjectType value " + stickerObjectType + " passed to GetStickerPresentationType()" )
 	unreachable
 }
-// CreateNestedRuiForSticker implementation in sh_items.gnut
+
+
+var function CreateNestedRuiForSticker( var baseRui, string argName, ItemFlavor stickerItem )
+{
+	var nestedRui = RuiCreateNested( baseRui, argName, $"ui/basic_image.rpak" )
+	RuiSetImage( nestedRui, "basicImage", ItemFlavor_GetIcon( stickerItem ) )	
+
+	return nestedRui
+}
 #endif // UI
 
 
@@ -341,7 +346,26 @@ LoadoutEntry function Loadout_Sticker( int stickerObjectType, int index )
 	return fileLevel.stickerSlotMap[stickerObjectType][index]
 }
 
-// Sticker_HasStoryBlurb, Sticker_GetStoryBlurbBodyText, Sticker_IsTheEmpty implementations in sh_items.gnut
+bool function Sticker_HasStoryBlurb( ItemFlavor flavor )
+{
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.sticker )
+
+	return ( Sticker_GetStoryBlurbBodyText( flavor ) != "" )
+}
+
+string function Sticker_GetStoryBlurbBodyText( ItemFlavor flavor )
+{
+	Assert( ItemFlavor_GetType( flavor ) == eItemType.sticker )
+
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "customSkinMenuBlurb" )
+}
+
+bool function Sticker_IsTheEmpty( ItemFlavor stickerItem )
+{
+	Assert( ItemFlavor_GetType( stickerItem ) == eItemType.sticker )
+
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( stickerItem ), "isTheEmpty" )
+}
 
 // Gets the material asset to use for a given sticker item flavor.
 asset function Sticker_GetDecalMaterialAsset( ItemFlavor stickerItem )
@@ -359,29 +383,55 @@ asset function Sticker_GetReplacementMaterialAsset( ItemFlavor stickerItem )
 	return GetKeyValueAsAsset( { kn = GetGlobalSettingsAsset( ItemFlavor_GetAsset( stickerItem ), "nonDecalStickerMaterial" ) + "_rgdp.rpak" }, "kn" );
 }
 
-// Sticker_GetSortOrdinal implementation in sh_items.gnut
-
-// 2-param signature (targetSlot not available)
-float function Sticker_GetDecalScale( ItemFlavor stickerItem, int stickerObjectType )
+int function Sticker_GetSortOrdinal( ItemFlavor stickerItem )
 {
 	Assert( ItemFlavor_GetType( stickerItem ) == eItemType.sticker )
 
+	return fileLevel.stickerSortOrdinalMap[stickerItem]
+}
+
+float function Sticker_GetDecalScale( ItemFlavor stickerItem, int stickerObjectType, int targetSlot )
+{
+	Assert( ItemFlavor_GetType( stickerItem ) == eItemType.sticker )
+
+	string defaultKey = ""
+	string arrayKey = ""
 	switch ( stickerObjectType )
 	{
 		case eStickerObjectType.shield_cell:
-			return GetGlobalSettingsFloat( ItemFlavor_GetAsset( stickerItem ), "shieldCellScale" )
+			defaultKey = "shieldCellScale"
+			arrayKey = "shieldCellScales"
+			break
 
 		case eStickerObjectType.shield_battery:
-			return GetGlobalSettingsFloat( ItemFlavor_GetAsset( stickerItem ), "shieldBatteryScale" )
+			defaultKey = "shieldBatteryScale"
+			arrayKey = "shieldBatteryScales"
+			break
 
 		case eStickerObjectType.phoenix_kit:
-			return GetGlobalSettingsFloat( ItemFlavor_GetAsset( stickerItem ), "phoenixKitScale" )
+			defaultKey = "phoenixKitScale"
+			arrayKey = "phoenixKitScales"
+			break
 
 		case eStickerObjectType.injector:
-			return GetGlobalSettingsFloat( ItemFlavor_GetAsset( stickerItem ), "injectorScale" )
+			defaultKey = "injectorScale"
+			arrayKey = "injectorScales"
+			break
+
+		default:
+			return 0
 	}
 
-	return 0
+	asset stickerAsset = ItemFlavor_GetAsset( stickerItem )
+
+	foreach ( var block in IterateSettingsAssetArray( stickerAsset, arrayKey ) )
+	{
+		int slot = GetSettingsBlockInt( block, "slot" )
+		if ( slot == targetSlot )
+			return GetSettingsBlockFloat( block , "scale" )
+	}
+
+	return GetGlobalSettingsFloat( stickerAsset, defaultKey )
 }
 
 #if SERVER
@@ -406,13 +456,13 @@ void function DEV_StickerTestSetupForPlayer( entity player )
 #if (SERVER || CLIENT)
 // This function is not in a dev block because its illegal to place Remote_RegisterServerFunction in a dev block, but we need to have
 // server functions for doing the test. When calling this function only call from in a DEV block.
-void function DEV_SetupStickerNetworking()
+void function DEV_SetupStickerNetworking() 
 {
 	Remote_RegisterServerFunction( "DEV_StickerTestSetupForPlayer" )
 }
 #endif
 
-#if SERVER && DEVELOPER
+#if SERVER && DEV
 void function DEV_StickerTestSetup()
 {
 	entity player = GP()
@@ -426,9 +476,9 @@ void function DEV_StickerTestSetup()
 	SpawnGenericLoot( "health_pickup_health_small", origin )
 	SpawnGenericLoot( "health_pickup_health_large", origin )
 }
-#endif // SERVER && DEVELOPER
+#endif // SERVER && DEV
 
-#if CLIENT && DEVELOPER
+#if CLIENT && DEV
 void function DEV_TestCreateStickerMesh( asset stickerMat )
 {
 	entity player = GP()
@@ -457,38 +507,94 @@ void function DEV_StickerTestSetupForLocalPlayer()
 }
 #endif
 
-// Sticker CLIENT function stubs — core sticker natives not available
 #if CLIENT
+// Requests loading the given sticker material asset on the local player, and replaces the entities material with that sticker material on the local player.
+// This change will not go to other players.
 int function Sticker_SetMaterialModForLocalPlayer( entity ent, asset stickerMat )
 {
-	// stub
-	return -1
+	int stickerInstance = SetEntMaterialToSticker( stickerMat, ent )
+	// Destroyed callback not needed as entity will handle removing automatically when release is called.
+
+	return stickerInstance
 }
 
+// Requests loading the given sticker material asset on the local player, and adds a decal of that sticker to the given entity on the local player.
+// This change will not go to other players.
 int function Sticker_PlaceDecalForLocalPlayer( entity ent, asset stickerMat, string attachment, float scale )
 {
-	// stub
-	return -1
+	int stickerInstance = AddStickerDecalToEntity( ent, stickerMat, attachment, scale )
+	// Destroyed callback not needed as entity will handle removing automatically when release is called.
+
+	return stickerInstance
 }
 
+// Registers a callback to be called when a sticker is loaded and placed.
 void function Sticker_OnPlaced( int stickerInstance, void functionref( int ) callbackFunc )
 {
-	// stub — immediately call callback
-	callbackFunc( stickerInstance )
+	thread function() : ( stickerInstance, callbackFunc )
+	{
+		while ( IsValidStickerInstance( stickerInstance ) && !IsStickerInstancePlaced( stickerInstance ) )
+			WaitFrame()
+
+		if ( IsValidStickerInstance( stickerInstance ) )
+			callbackFunc( stickerInstance )
+	}()
 }
 
 void function Sticker_CreateFlashData( int stickerInstance, entity flashEnt, int flashType, vector flashColor )
 {
-	// stub
+	Sticker_CleanUpFlashData()
+
+	// TODO?: Need to handle collisions if instance being added is already defined? Not sure how this could occur, but it may be possible.
+	Assert( !( stickerInstance in fileLevel.stickerFlashData ) )
+
+	if ( !( stickerInstance in fileLevel.stickerFlashData ) )
+	{
+		StickerFlashData sfd
+		sfd.flashEnt = flashEnt
+		sfd.flashType = flashType
+		sfd.flashColor = flashColor
+
+		//printt( "Adding stickerInstance:", stickerInstance, "to stickerFlashData" )
+		fileLevel.stickerFlashData[ stickerInstance ] <- sfd
+	}
+}
+
+void function Sticker_CleanUpFlashData()
+{
+	array<int> deleteList
+	foreach ( int stickerInstance, StickerFlashData sdf in fileLevel.stickerFlashData )
+	{
+		if ( !IsValid( sdf.flashEnt ) || !IsValidStickerInstance( stickerInstance ) )
+			deleteList.append( stickerInstance )
+	}
+
+	foreach ( int stickerInstance in deleteList )
+	{
+		//printt( "Removing stickerInstance:", stickerInstance, "from stickerFlashData" )
+		delete fileLevel.stickerFlashData[ stickerInstance ]
+	}
 }
 
 void function Sticker_FlashOnLoadComplete( int stickerInstance )
 {
-	// stub
+	if ( !( stickerInstance in fileLevel.stickerFlashData ) )
+		return
+
+	entity flashEnt = fileLevel.stickerFlashData[ stickerInstance ].flashEnt
+
+	if ( IsValid( flashEnt ) && IsValidStickerInstance( stickerInstance ) && IsStickerInstancePlaced( stickerInstance ) )
+	{
+		int flashType        = fileLevel.stickerFlashData[ stickerInstance ].flashType
+		vector flashColor    = fileLevel.stickerFlashData[ stickerInstance ].flashColor
+		bool includeChildren = false
+		bool depthDiscard    = true
+		thread FlashMenuModel( flashEnt, flashType, flashColor, includeChildren, depthDiscard )
+	}
 }
 #endif
 
-#if UI && DEVELOPER
+#if UI && DEV
 void function DEV_PrintStickerLoadout()
 {
 	EHI playerEHI = ToEHI( GetLocalClientPlayer() )
@@ -509,9 +615,9 @@ void function DEV_PrintStickerLoadout()
 	ItemFlavor phoenixKitSticker = LoadoutSlot_GetItemFlavor( playerEHI, phoenixKitStickerSlot )
 	printt( "phoenixKitStickerSlot contains:   ", string(ItemFlavor_GetAsset( phoenixKitSticker )) )
 }
-#endif // UI && DEVELOPER
+#endif // UI && DEV
 
-#if CLIENT && DEVELOPER
+#if CLIENT && DEV
 array<ItemFlavor>function DEV_ReturnRandomStickerFlavs( int numRandomStickers )
 {
 	array<ItemFlavor> stickers = GetAllItemFlavorsOfType( eItemType.sticker )
@@ -519,4 +625,4 @@ array<ItemFlavor>function DEV_ReturnRandomStickerFlavs( int numRandomStickers )
 	stickers.randomize()
 	return stickers.slice( 0, numRandomStickers )
 }
-#endif // CLIENT && DEVELOPER
+#endif // CLIENT && DEV

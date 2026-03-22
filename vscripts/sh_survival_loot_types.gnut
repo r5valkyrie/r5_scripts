@@ -5,6 +5,10 @@ global function GetLootTypeData
 
 global function RegisterCustomItemGroundAction
 
+                                     
+                                                   
+                                           
+
 global const bool AUTOEQUIP_ATTACHMENTS = true
 
 global struct LootTypeData
@@ -13,18 +17,21 @@ global struct LootTypeData
 
 	int equipmentAction = eLootAction.NONE
 	int equipmentAltAction = eLootAction.DROP
-	int functionref( entity player ) equipmentCharacterActionFunc
+	int functionref( entity player ) equipmentPrimarySwapFunc
+	int functionref( entity player ) equipmentCharacterAction1Func
+	int functionref( entity player ) equipmentCharacterAction2Func
+
 
 	int backpackAction = eLootAction.NONE
 	int backpackAltAction = eLootAction.DROP
+	int functionref( entity player ) backpackCharacterAction1Func
+	int functionref( entity player ) backpackCharacterAction2Func
 
 	#if SERVER
-		entity functionref(string, vector, int) specialCaseSpawnFunction
-		entity functionref(string, vector) specialCaseSpawnFunctionRetail
+		entity functionref(string, vector) specialCaseSpawnFunction
 	#endif
 
 	LootActionStruct functionref( entity player, LootRef lootRef ) groundActionFunc
-	LootActionStruct functionref( entity player, LootRef lootRef ) groundUseLongActionFunc
 	LootActionStruct functionref( entity player, LootRef lootRef ) groundAltActionFunc
 
 	int priority
@@ -48,8 +55,10 @@ void function SURVIVAL_LootTypes_InitShared()
 	lt.equipmentAction = eLootAction.EQUIP
 	lt.equipmentSlot = ""
 	lt.groundActionFunc = GroundAction_ForWeapons
-	lt.groundUseLongActionFunc = GroundLongAction_ForWeapons
-	lt.groundAltActionFunc = GroundAltAction_None//
+	lt.equipmentPrimarySwapFunc = EquipmentPrimarySwapAction_ForWeapons
+	lt.groundAltActionFunc = GroundAltAction_ForWeapons
+	lt.equipmentCharacterAction1Func = EquipmentCharacterAction1_ForWeapons
+	lt.equipmentCharacterAction2Func = EquipmentCharacterAction2_ForWeapons
 	#if SERVER
 		lt.specialCaseSpawnFunction = SpawnWeaponAndAmmo
 	#endif
@@ -59,8 +68,10 @@ void function SURVIVAL_LootTypes_InitShared()
 	lt.backpackAction = eLootAction.DROP
 	lt.backpackAltAction = eLootAction.DROP_ALL
 	lt.groundActionFunc = GroundAction_ForBackpackItem
-	lt.groundUseLongActionFunc = GroundLongAction_ForBackpackItem
 	lt.groundAltActionFunc = GroundAltAction_ForAmmo
+                 
+                                                                    
+       
 
 	lt = RegisterLootType( eLootType.ARMOR )
 	lt.equipmentSlot = "armor"
@@ -85,6 +96,21 @@ void function SURVIVAL_LootTypes_InitShared()
 	lt.groundActionFunc = GroundAction_ForEquipment
 	lt.groundAltActionFunc = GroundAltAction_ForEquipment
 
+                   
+                                              
+                                
+                                                 
+                                                       
+       
+
+                             
+                                                    
+                                     
+                                       
+                                                
+                                                      
+       
+
 	lt = RegisterLootType( eLootType.HELMET )
 	lt.equipmentSlot = "helmet"
 	lt.groundActionFunc = GroundAction_ForEquipment
@@ -96,73 +122,161 @@ void function SURVIVAL_LootTypes_InitShared()
 	lt.equipmentAltAction = eLootAction.WEAPON_TRANSFER
 	lt.backpackAction = eLootAction.ATTACH_TO_ACTIVE
 	lt.groundActionFunc = GroundAction_ForAttachments
-	lt.groundUseLongActionFunc = GroundLongAction_ForAttachments
 	lt.groundAltActionFunc = GroundAltAction_ForAttachments
 
 	lt = RegisterLootType( eLootType.ORDNANCE )
 	lt.equipmentSlot = ""
 	lt.backpackAction = eLootAction.EQUIP
 	lt.groundActionFunc = GroundAction_ForBackpackItem
-	lt.groundUseLongActionFunc = GroundLongAction_ForBackpackItem
-	lt.groundAltActionFunc = GroundAltAction_None
+	lt.groundAltActionFunc = GroundAltAction_ForOrdnance
+                 
+                                                                        
+       
 
 	lt = RegisterLootType( eLootType.HEALTH )
 	lt.equipmentSlot = ""
 	lt.equipmentAction = eLootAction.EQUIP
 	lt.backpackAction = eLootAction.USE
 	lt.groundActionFunc = GroundAction_ForBackpackItem
-	lt.groundUseLongActionFunc = GroundLongAction_ForBackpackItem
-	lt.groundAltActionFunc = GroundAltAction_None
+	lt.groundAltActionFunc = GroundAltAction_ForHealth
+                 
+                                                                      
+       
 
 
 	lt = RegisterLootType( eLootType.BLANK )
 	lt.equipmentSlot = ""
 	lt.groundActionFunc = GroundAltAction_None
 	lt.groundAltActionFunc = GroundAltAction_None
+	#if SERVER
+		lt.specialCaseSpawnFunction = SpawnNothing
+	#endif
 
-	lt = RegisterLootType( eLootType.DATAKNIFE )
-	lt.equipmentSlot = ""
-	lt.groundActionFunc = GroundAction_ForBackpackItem
-	lt.groundAltActionFunc = GroundAltAction_None
-	#if SERVER
-		lt.specialCaseSpawnFunctionRetail = SpawnVaultKey
-	#endif
-	
-	lt = RegisterLootType( eLootType.SHIPKEYCARD )
-	lt.equipmentSlot = ""
-	lt.groundActionFunc = GroundAction_ForBackpackItem
-	lt.groundAltActionFunc = GroundAltAction_None
-	#if SERVER
-		lt.specialCaseSpawnFunctionRetail = SpawnVaultKey
-	#endif
+	                      
+		lt = RegisterLootType( eLootType.DATAKNIFE )
+		lt.equipmentSlot = ""
+		lt.groundActionFunc = GroundAction_ForBackpackItem
+		lt.groundAltActionFunc = GroundAltAction_None
+		#if SERVER
+			lt.specialCaseSpawnFunction = SpawnVaultKey
+		#endif
+                                 
+
+	                  
+		lt = RegisterLootType( eLootType.SHIPKEYCARD )
+		lt.equipmentSlot = ""
+		lt.groundActionFunc = GroundAction_ForBackpackItem
+		lt.groundAltActionFunc = GroundAltAction_None
+		#if SERVER
+			lt.specialCaseSpawnFunction = SpawnVaultKey
+		#endif
+                             
 
 	lt = RegisterLootType( eLootType.CUSTOMPICKUP )
 	lt.equipmentSlot = ""
-	lt.groundActionFunc = GroundAction_ForBackpackItem
-	lt.groundUseLongActionFunc = GroundLongAction_ForBackpackItem
-	lt.groundAltActionFunc = GroundAltAction_None
-	lt.backpackAction = eLootAction.USE
-	
-	lt = RegisterLootType( eLootType.MARVIN_ARM )
-	lt.equipmentSlot = ""
 	lt.groundActionFunc = GroundAction_ForCustomItem
 	lt.groundAltActionFunc = GroundAltAction_None
-	lt.backpackAction = eLootAction.NONE
+	lt.backpackAction = eLootAction.USE
 
-	lt = RegisterLootType( eLootType.RESOURCE )
+	                   
+		lt = RegisterLootType( eLootType.MARVIN_ARM )
+		lt.equipmentSlot = ""
+		lt.groundActionFunc = GroundAction_ForCustomItem
+		lt.groundAltActionFunc = GroundAltAction_None
+		lt.backpackAction = eLootAction.NONE
+       
+
+                        
+                                               
+                       
+                                                    
+                                               
+                                     
+                                  
+
+	lt = RegisterLootType( eLootType.RESOURCE ) // (2019-02-19 dw): was used for old "run over to heal shield" items on ground, not used anymore
 	lt.equipmentSlot = ""
 	lt.equipmentAction = eLootAction.EQUIP
 	lt.backpackAction = eLootAction.NONE
 	lt.groundActionFunc = GroundAction_ForResource
 	lt.groundAltActionFunc = GroundAltAction_None
-	
-	lt = RegisterLootType( eLootType.SURVIVAL )
+
+	lt = RegisterLootType( eLootType.LOCKBOX )
 	lt.equipmentSlot = ""
-	lt.backpackAction = eLootAction.EQUIP
 	lt.groundActionFunc = GroundAction_ForBackpackItem
-	lt.groundUseLongActionFunc = GroundLongAction_ForBackpackItem
 	lt.groundAltActionFunc = GroundAltAction_None
+
+                     
+                                                
+                       
+                                      
+                                         
+                                                   
+                                               
+                               
+
+	lt = RegisterLootType( eLootType.GADGET )
+	lt.equipmentSlot = "gadgetslot"
+	lt.equipmentAction = eLootAction.EQUIP
+	lt.groundActionFunc = GroundAction_ForEquipment
+	lt.groundAltActionFunc = GroundAltAction_ForEquipment
+
+                        
+                                                    
+                       
+                                      
+                                         
+                                                      
+                                               
+                              
+
+                    
+                                                
+                       
+                                      
+                                                    
+                                               
+
+                                               
+                       
+                                      
+                                                    
+                                               
+                          
+
+	                  
+		lt = RegisterLootType( eLootType.COLLECTABLE_NESSIE )
+		lt.equipmentSlot = ""
+		lt.backpackAction = eLootAction.NONE
+		lt.groundActionFunc = GroundAction_ForBackpackItem
+		lt.groundAltActionFunc = GroundAltAction_None
+                         
+
+	                      
+		lt = RegisterLootType( eLootType.CANDY_PICKUP )
+		lt.equipmentSlot = ""
+		lt.groundActionFunc = GroundAction_ForCustomItem
+		lt.groundAltActionFunc = GroundAltAction_None
+		lt.backpackAction = eLootAction.USE
+                            
+
+	                    
+		lt = RegisterLootType( eLootType.EVO_CACHE )
+		lt.equipmentSlot = ""
+		lt.groundActionFunc = GroundAction_ForCustomItem
+		lt.groundAltActionFunc = GroundAltAction_None
+		lt.backpackAction = eLootAction.USE
+                          
+
+                          
+                                                  
+                       
+                                      
+                                                    
+                                               
+                                
 }
+
 
 LootTypeData function RegisterLootType( int lootType )
 {
@@ -174,10 +288,12 @@ LootTypeData function RegisterLootType( int lootType )
 	return lt
 }
 
+
 bool function IsLootTypeValid( int lootType )
 {
 	return (lootType in file.lootTypeData)
 }
+
 
 LootTypeData function GetLootTypeData( int lootType )
 {
@@ -207,19 +323,23 @@ LootActionStruct function GroundAction_ForBackpackItem( entity player, LootRef l
 
 	as.action = eLootAction.PICKUP
 
+	                    
+		//Legends can't get Evo when they are at Max Level. Stop pickup of the kit with error.
+		if ( lootData.ref.find( XPCACHE_BASIC_NAME ) == 0 )
+		{
+			if( UpgradeCore_IsPlayerAtMaxLevel( player ) )
+			{
+				as.action = eLootAction.NONE
+				#if CLIENT
+					as.displayString = Localize( "#LEGEND_UPGRADE_EVO_CACHE_PICKUP_MAX_LEVEL_DENY" )
+				#endif
+			}
+		}
+       
+
 	return as
 }
 
-LootActionStruct function GroundLongAction_ForBackpackItem( entity player, LootRef lootRef )
-{
-	LootData lootData = lootRef.lootData
-	LootActionStruct as
-
-	if ( SURVIVAL_AddToPlayerInventory( player, lootRef.lootData.ref, 1, false ) == 0 )
-		as.action = eLootAction.PICKUP
-
-	return as
-}
 
 LootActionStruct function GroundAction_ForResource( entity player, LootRef lootRef )
 {
@@ -243,6 +363,7 @@ LootActionStruct function GroundAction_ForResource( entity player, LootRef lootR
 	return as
 }
 
+
 LootActionStruct function GroundAction_ForEquipment( entity player, LootRef lootRef )
 {
 	LootActionStruct as
@@ -260,21 +381,29 @@ LootActionStruct function GroundAction_ForEquipment( entity player, LootRef loot
 	{
 		as.action = eLootAction.EQUIP
 	}
-	    if  ( lootData.lootType == eLootType.SURVIVAL )
-		{
-		if ( tier == 0 )                         
+
+                  
+                                                                                                                          
+  
+                              
+  
+           
+      
+	/*else*/if  ( lootData.lootType == eLootType.GADGET )
+	{
+		if ( tier == 0 ) //Don't have one = Equip
 		{
 			as.action = eLootAction.EQUIP
 		}
-		else if ( lootData.ref != equippedData.ref )                         
+		else if ( lootData.ref != equippedData.ref ) //Different Items = Swap
 		{
 			as.action = eLootAction.SWAP
 		}
-		else                                           
+		else //same item type. Add to stack if possible
 		{
-			                                                                              
-			                                                                                                                                              
-			                                                                                                                                                                                 
+			//I've added an "irrelevant case" for the GADGET slot in sh_survival_loot.gnut
+			//to prevent this section from being looked at for the test for teammateNeedsThis - which Carlos found was facilitating the crash R5DEV-233977
+			//Carlos would like this guard removed, but I've left it in temporarily to ensure elements are safe for this quick 8.1 patch. Should remove this and test once things are stable.
 			#if CLIENT
 			if ( player != GetLocalClientPlayer() )
 			{
@@ -283,21 +412,21 @@ LootActionStruct function GroundAction_ForEquipment( entity player, LootRef loot
 			}
 			#endif
 
-			// entity gadgetWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_GADGET )
-			// if( IsValid( gadgetWeapon ) )
-			// {
-				// int ammo = gadgetWeapon.GetWeaponPrimaryClipCount()
-				// int maxAmmo = gadgetWeapon.GetWeaponPrimaryClipCountMax()
-				// if( ammo == 0 )                 
-				// {
-					// as.action = eLootAction.NONE
-					// return as
-				// }
-				// if( ammo < maxAmmo )            
-				// {
-					// as.action = eLootAction.PICKUP
-				// }
-			// }
+			entity gadgetWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_GADGET )
+			if( IsValid( gadgetWeapon ) )
+			{
+				int ammo = gadgetWeapon.GetWeaponPrimaryClipCount()
+				int maxAmmo = gadgetWeapon.GetWeaponPrimaryClipCountMax()
+				if( ammo == 0 ) //Not Stackable.
+				{
+					as.action = eLootAction.NONE
+					return as
+				}
+				if( ammo < maxAmmo ) //Stackable
+				{
+					as.action = eLootAction.PICKUP
+				}
+			}
 		}
 	}
 	else if ( lootData.tier > tier || (lootData.ref != equippedData.ref && lootData.tier == tier && hasPerk) )
@@ -311,46 +440,63 @@ LootActionStruct function GroundAction_ForEquipment( entity player, LootRef loot
 			int currentShields = SURVIVAL_GetPlayerShieldHealthFromArmor( player )
 			int lootShields    = GetPropSurvivalMainProperty( lootRef.lootProperty )
 
-                         
-				if ( EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref ) )
+			if ( EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref ) )
+			{
+				//Armor on ground is Evo, equipped armor is not
+				if ( !EvolvingArmor_IsEquipmentEvolvingArmor( equippedData.ref ) )
 				{
-					//
-					if ( !EvolvingArmor_IsEquipmentEvolvingArmor( equippedData.ref ) )
+					if ( currentShields < lootShields )
 					{
-						if ( currentShields < lootShields )
-						{
-							as.action = eLootAction.EQUIP
-							return as
-						}
-						else
-						{
-							as.action = eLootAction.SWAP
-							return as
-						}
+						as.action = eLootAction.EQUIP
+						return as
 					}
+					else
+					{
+						as.action = eLootAction.SWAP
+						return as
+					}
+				}
 
-					//
-					if ( EvolvingArmor_IsEquipmentEvolvingArmor( equippedData.ref ) )
-					{
-						if ( lootData.tier > equippedData.tier || currentShields < lootShields )
-						{
-							as.action = eLootAction.EQUIP
-							return as
-						}
-					}
-				}
-				else
+				//Both armor on ground and equipped armor are evo
+				if ( EvolvingArmor_IsEquipmentEvolvingArmor( equippedData.ref ) )
 				{
-					//
-					if ( EvolvingArmor_IsEquipmentEvolvingArmor( equippedData.ref ) )
+					int currentEvoProgress = EvolvingArmor_GetEvolutionProgress( player )
+					int lootEvoProgress = lootRef.lootExtraProperty
+
+					if ( lootData.tier > equippedData.tier || currentShields < lootShields )
 					{
-						if ( lootData.tier >= equippedData.tier )
-						{
+						as.action = eLootAction.EQUIP
+						return as
+					}
+					else if ( lootData.tier == equippedData.tier && currentEvoProgress > lootEvoProgress )
+					{
+						if ( currentShields == lootShields )
+							as.action = eLootAction.EQUIP
+						else
 							as.action = eLootAction.SWAP
-							return as
-						}
+						return as
 					}
 				}
+			}
+			else
+			{
+				//Armor on ground is normal, equipped armor is Evo
+				if ( EvolvingArmor_IsEquipmentEvolvingArmor( equippedData.ref ) )
+				{
+					if ( currentShields >= lootShields )
+					{
+						as.action = eLootAction.SWAP
+						return as
+					}
+				}
+			}
+
+			                    
+			if ( lootData.lootType == eLootType.ARMOR && UpgradeCore_IsEquipmentArmorCore( lootData.ref ) )
+			{
+				currentShields += GetPlayerExtraShields( player )
+			}
+         
 
 			if ( currentShields < lootShields )
 			{
@@ -362,6 +508,10 @@ LootActionStruct function GroundAction_ForEquipment( entity player, LootRef loot
 		as.action = eLootAction.NONE
 		if ( lootData.ref == equippedData.ref )
 			as.displayString = "#REASON_YOU_HAVE_THIS"
+		                    
+		else if ( es.ref == "armor" && UpgradeCore_IsEquipmentArmorCore( lootData.ref ) )
+			as.displayString = "#REASON_YOU_HAVE_A_BETTER"
+        
 		else if ( es.ref == "armor" )
 			as.displayString = "#REASON_YOU_HAVE_BETTER"
 		else
@@ -371,6 +521,60 @@ LootActionStruct function GroundAction_ForEquipment( entity player, LootRef loot
 		#endif
 	}
 
+	                    
+		if ( lootData.lootType == eLootType.ARMOR && UpgradeCore_IsEquipmentArmorCore( lootData.ref ) )
+		{
+			int currentShields = SURVIVAL_GetPlayerShieldHealthFromArmor( player ) + GetPlayerExtraShields( player )
+			if( currentShields != 0 )
+			{
+				int lootShields    = GetPropSurvivalMainProperty( lootRef.lootProperty )
+				as.action = currentShields < lootShields ? eLootAction.EQUIP : eLootAction.NONE
+				return as
+			}
+			else if ( equippedData.ref == "" )
+			{
+				as.action = eLootAction.EQUIP
+				return as
+			}
+		}
+       
+
+	                      
+		//Legends can't wear a costume of themselves. Stop pickup of the kit with error.
+		if ( lootData.ref.find( COPYCAT_NAME ) == 0 )
+		{
+			array<entity> offhandWeapons = player.GetOffhandWeapons()
+			string kitAbilityRef = GetWeaponInfoFileKeyField_GlobalString ( lootData.ref, "disguise_ability" )
+
+			if ( kitAbilityRef != "" )
+			{
+				foreach ( offhand in offhandWeapons )
+				{
+					if ( kitAbilityRef == offhand.GetWeaponClassName() )
+					{
+						as.action = eLootAction.NONE
+						#if CLIENT
+						as.displayString = Localize( "#SURVIVAL_PICKUP_COPYCAT_KIT_DUPE_LEGEND_ERROR" )
+						#endif
+					}
+				}
+			}
+		}
+       
+
+	                    
+		//Legends can't get Evo when they are at Max Level. Stop pickup of the kit with error.
+		if ( lootData.ref.find( XPCACHE_BASIC_NAME ) == 0 || lootData.ref.find( XPCACHE_LARGE_NAME ) == 0 || lootData.ref.find( XPCACHE_ENHANCED_NAME ) == 0 ) //lootData.ref.find( XPCACHE_BASIC_NAME )
+		{
+			if( UpgradeCore_IsPlayerAtMaxLevel( player ) )
+			{
+				as.action = eLootAction.NONE
+				#if CLIENT
+					as.displayString = Localize( "#SURVIVAL_PICKUP_COPYCAT_KIT_DUPE_LEGEND_ERROR" )
+				#endif
+			}
+		}
+       
 
 	return as
 }
@@ -380,46 +584,64 @@ LootActionStruct function GroundAction_ForWeapons( entity player, LootRef lootRe
 	LootActionStruct as
 	as.displayString = ""
 
-	int action
-	if ( SURVIVAL_AltUseSwapsWeapon() && SURVIVAL_CountPrimaryWeapons( player ) > 1 )
+              
+                                                                                                                           
+     
+	if ( SURVIVAL_CountPrimaryWeapons( player ) <= 1 )
+      
 	{
-		action = eLootAction.SWAP
+		as.action = eLootAction.EQUIP
+		return as
+	}
 
-		array<entity> weapons = SURVIVAL_GetPrimaryWeaponsSorted( player )
-		if ( SURVIVAL_Loot_IsRefValid( weapons[0].GetWeaponClassName() ) )
+	do
+	{
+		if ( DoesPlayerHaveWeaponSling( player ) )
 		{
-			LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weapons[0].GetWeaponClassName() )
-			as.additionalData = weaponData
+			if ( player.IsSwitching( eActiveInventorySlot.mainHand ) )
+			{
+				if ( player.GetSelectedWeapon( eActiveInventorySlot.mainHand ) != GetPlayerSlingWeapon( player ) )
+					break
+			}
+			else if ( !IsPlayerHoldingSlingWeapon( player ) )
+			{
+				break
+			}
+
+			if ( !CanPlayerEquipLootEntToSling( player, lootRef.lootEnt, false ) )
+			{
+				as.action = eLootAction.NONE
+				as.displayString = "#REASON_NO_TRANSFER_SLING_BASE_WEAPON"
+				#if CLIENT
+					as.displayString = Localize( as.displayString )
+				#endif
+
+				return as
+			}
+			else if ( IsBallisticUltActive( player ) && !IsPlayerWeaponSlingEmpty( player ) )
+			{
+				as.action = eLootAction.NONE
+				as.displayString = "#REASON_NO_TRANSFER_TO_SLING_ULT"
+				#if CLIENT
+					as.displayString = Localize( as.displayString )
+				#endif
+
+				return as
+			}
 		}
-	}
-	else
+
+		break
+
+	} while( true )
+
+	as.action = eLootAction.SWAP
+	array<entity> weapons = SURVIVAL_GetPrimaryWeaponsIncludingSling( player, true )
+
+	if ( SURVIVAL_Loot_IsRefValid( weapons[0].GetWeaponClassName() ) )
 	{
-		action = eLootAction.EQUIP
+		LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weapons[0].GetWeaponClassName() )
+		as.additionalData = weaponData
 	}
-
-	as.action = action
-	return as
-}
-
-LootActionStruct function GroundLongAction_ForWeapons( entity player, LootRef lootRef )
-{
-	LootActionStruct as
-	as.displayString = ""
-
-	int action
-	if ( SURVIVAL_CountPrimaryWeapons( player ) > 1 )
-	{
-		action = eLootAction.SWAP
-
-		array<entity> weapons = SURVIVAL_GetPrimaryWeaponsSorted( player )
-		if ( SURVIVAL_Loot_IsRefValid( weapons[0].GetWeaponClassName() ) )
-		{
-			LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weapons[0].GetWeaponClassName() )
-			as.additionalData = weaponData
-		}
-	}
-
-	as.action = action
 	return as
 }
 
@@ -438,23 +660,6 @@ LootActionStruct function GroundAction_ForAttachments( entity player, LootRef lo
 	return as
 }
 
-LootActionStruct function GroundLongAction_ForAttachments( entity player, LootRef lootRef )
-{
-	LootData lootData = lootRef.lootData
-
-	LootTypeData lt = GetLootTypeData( lootData.lootType )
-
-	LootActionStruct as = SURVIVAL_GetActionForAttachment( player, lootData, false, true, true )
-
-	// regular pick up
-	if ( as.action == eLootAction.NONE )
-		return GroundLongAction_ForBackpackItem( player, lootRef )
-
-	LootActionStruct asNone
-	asNone.action = eLootAction.NONE
-	return asNone
-}
-
 LootActionStruct function GroundAltAction_ForAttachments( entity player, LootRef lootRef )
 {
 	if ( GroundAction_ForAttachments( player, lootRef ).action != eLootAction.PICKUP )
@@ -463,11 +668,99 @@ LootActionStruct function GroundAltAction_ForAttachments( entity player, LootRef
 	return GroundAltAction_None( player, lootRef )
 }
 
+
 LootActionStruct function GroundAltAction_ForEquipment( entity player, LootRef lootRef )
 {
 	LootActionStruct as
 	as.action = eLootAction.NONE
 	as.displayString = ""
+	return as
+}
+
+LootActionStruct function GroundAltAction_ForAmmo( entity player, LootRef lootRef )
+{
+	LootActionStruct as
+	as.displayString = ""
+	as.action = eLootAction.NONE
+
+                
+                                       
+  
+                                              
+                                   
+  
+      
+
+	return as
+}
+
+LootActionStruct function GroundAltAction_ForWeapons( entity player, LootRef lootRef )
+{
+	LootActionStruct as
+	as.displayString = ""
+	as.action = eLootAction.NONE
+
+	if( DoesPlayerHaveWeaponSling( player ) )
+	{
+		if( CanPlayerEquipLootEntToSling( player, lootRef.lootEnt, false ) )
+		{
+			if( IsBallisticUltActive( player ) && !IsPlayerWeaponSlingEmpty( player ) )
+			{
+				as.displayString = "#REASON_NO_TRANSFER_TO_SLING_ULT"
+				#if CLIENT
+					as.displayString = Localize( as.displayString )
+				#endif
+			}
+			else
+			{
+				if ( IsPlayerWeaponSlingEmpty( player ) )
+					as.action = eLootAction.EQUIP_TO_SLING
+				else
+					as.action = eLootAction.SWAP_TO_SLING
+			}
+		}
+		else
+		{
+			as.displayString = "#REASON_NO_TRANSFER_SLING_BASE_WEAPON"
+			#if CLIENT
+				as.displayString = Localize( as.displayString )
+			#endif
+		}
+	}
+
+	return as
+}
+
+LootActionStruct function GroundAltAction_ForOrdnance( entity player, LootRef lootRef )
+{
+	LootActionStruct as
+	as.displayString = ""
+	as.action = eLootAction.NONE
+
+                
+                                       
+  
+                                              
+                                   
+  
+      
+	return as
+}
+
+LootActionStruct function GroundAltAction_ForHealth( entity player, LootRef lootRef )
+{
+	LootActionStruct as
+	as.displayString = ""
+	as.action = eLootAction.NONE
+
+                
+                                       
+  
+                                              
+                                   
+  
+      
+
 	return as
 }
 
@@ -479,54 +772,133 @@ LootActionStruct function GroundAltAction_None( entity player, LootRef lootRef )
 	return as
 }
 
-LootActionStruct function GroundAltAction_ForWeapons( entity player, LootRef lootRef )
+int function EquipmentPrimarySwapAction_ForWeapons( entity player )
 {
-	LootActionStruct as
-	as.displayString = ""
-
-	int action
-                  
-                                                               
-   
-                                           
-                                       
-       
-                                      
-   
-      
-       
-		{
-			action = eLootAction.NONE
-		}
-
-
-	as.action = action
-	return as
+	return eLootAction.PRIMARY_SWAP
 }
 
-int function EquipmentCharacterAction_ForWeapons( entity player )
+int function EquipmentCharacterAction1_ForWeapons( entity player )
 {
-                  
-                                           
-                                    
-       
+	if( DoesPlayerHaveWeaponSling( player ) )
+	{
+		return eLootAction.TRANSFER_SLING_MAIN
+	}
 
 	return eLootAction.NONE
 }
 
+                
+                                                              
+ 
+                                       
+  
+                              
+  
 
-LootActionStruct function GroundAltAction_ForAmmo( entity player, LootRef lootRef )
+                        
+ 
+
+                                                                  
+ 
+                                       
+  
+                              
+  
+
+                        
+ 
+
+                                                                
+ 
+                                       
+  
+                              
+  
+
+                        
+ 
+      
+
+int function EquipmentCharacterAction2_ForWeapons( entity player )
 {
-	LootActionStruct as
-	as.displayString = ""
-	as.action = eLootAction.NONE
-	return as
+	if( DoesPlayerHaveWeaponSling( player ) )
+	{
+		if( IsBallisticUltActive( player ) )
+		{
+			return eLootAction.NONE
+		}
+
+		return eLootAction.TRANSFER_SLING_ALT
+	}
+
+	return eLootAction.NONE
 }
+
+                    
+                                                                                       
+ 
+                    
+
+                     
+                                                                                  
+                                 
+      
+                               
+       
+
+          
+ 
+                              
+
+                       
+                                                                                          
+ 
+                    
+
+                     
+                                                                                        
+   
+                               
+   
+                                                                                                                   
+   
+                               
+   
+      
+   
+                                 
+   
+                           
+
+          
+ 
+                             
+
+                                     
+                                                                                                  
+ 
+                
+                                                                                                                                                                   
+  
+                       
+                                      
+                                             
+                                               
+                                                       
+                  
+                                                                     
+        
+           
+  
+            
+ 
+                                           
 
 bool function AlwaysTrue( entity player, entity prop )
 {
 	return true
 }
+
 
 bool function MainActionIsNotPickup( entity player, entity ent )
 {
@@ -534,29 +906,7 @@ bool function MainActionIsNotPickup( entity player, entity ent )
 	LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( lootIndex )
 	LootRef lootRef   = SURVIVAL_CreateLootRef( lootData, ent )
 
-	LootActionStruct asMain = SURVIVAL_GetActionForGroundItem( player, lootRef, false )
-
-	// Register custom ground actions for special gadgets
-	RegisterCustomItemGroundAction("mp_ability_void_ring", GroundAction_UseVoidRing)
-	RegisterCustomItemGroundAction("mp_ability_mobile_respawn_beacon", GroundAction_UseMobileRespawnBeacon)
+	LootActionStruct asMain = SURVIVAL_GetActionForGroundItem( player, lootRef, eLootActionType.ALT_ACTION )
 
 	return asMain.action != eLootAction.PICKUP
-}
-
-// Custom ground action for Void Ring
-LootActionStruct function GroundAction_UseVoidRing(entity player, LootRef lootRef)
-{
-	LootActionStruct as
-	as.action = eLootAction.USE
-	as.displayString = "#USE_VOID_RING"
-	return as
-}
-
-// Custom ground action for Mobile Respawn Beacon
-LootActionStruct function GroundAction_UseMobileRespawnBeacon(entity player, LootRef lootRef)
-{
-	LootActionStruct as
-	as.action = eLootAction.USE
-	as.displayString = "#USE_MOBILE_RESPAWN_BEACON"
-	return as
 }

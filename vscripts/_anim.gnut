@@ -1660,8 +1660,7 @@ void function AnimEvent_mriPulseEvent( entity ent )
 
 	Highlight_ClearEnemyHighlight( ent )
 	headShotAttachmentIndex = ent.LookupAttachment( "HEADSHOT" )
-	//Highlight_SetEnemyHighlightWithParam1( ent, "enemy_sonar_execution", ent.GetAttachmentOrigin( headShotAttachmentIndex ) )
-	Highlight_SetEnemyHighlightWithParams( ent, "enemy_sonar_execution", <startTime, Time(), 0>, ent.GetAttachmentOrigin( headShotAttachmentIndex ) )
+	Highlight_SetEnemyHighlight( ent, "enemy_sonar" )
 
 	ent.EndSignal( "OnDestroy" )
 
@@ -1675,7 +1674,7 @@ void function AnimEvent_mriPulseEvent( entity ent )
 		2. Set time as the parameter manually because it looks like i.time in the highlight is not the same as Time(). It's server tick rate so not as smooth though :/
 		*/
 
-		Highlight_SetSonarExecutionHighlightOrigin( ent, ent.GetAttachmentOrigin( headShotAttachmentIndex ), <startTime, Time(), Time() - startTime> )
+		// Highlight_SetSonarExecutionHighlightOrigin( ent, ent.GetAttachmentOrigin( headShotAttachmentIndex ), <startTime, Time(), Time() - startTime> ) // Flowstate custom, not in S22
 		WaitFrame()
 	}
 }

@@ -1312,7 +1312,7 @@ bool function Leviathan_CanLookAtEnt( entity leviathan, vector pos, float careCh
 	if ( chance > careChance )
 	{
 		// if ( DEBUG )
-			// DebugDrawLine( center, pos, COLOR_YELLOW, true, 5 )
+			// DebugDrawLine( center, pos, <255, 255, 0>, true, 5 )
 		return false
 	}
 
@@ -1321,7 +1321,7 @@ bool function Leviathan_CanLookAtEnt( entity leviathan, vector pos, float careCh
 	if ( distSqr < MinLookAtDist * MinLookAtDist )
 	{
 		// if ( DEBUG )
-			// DebugDrawLine( center, pos, COLOR_RED, true, 5 )
+			// DebugDrawLine( center, pos, <255, 0, 0>, true, 5 )
 		return false
 	}
 
@@ -1329,7 +1329,7 @@ bool function Leviathan_CanLookAtEnt( entity leviathan, vector pos, float careCh
 	if ( distSqr >= MaxCareDist * MaxCareDist )
 	{
 		// if ( DEBUG )
-			// DebugDrawLine( center, pos, COLOR_RED, true, 5 )
+			// DebugDrawLine( center, pos, <255, 0, 0>, true, 5 )
 		return false
 	}
 
@@ -1339,7 +1339,7 @@ bool function Leviathan_CanLookAtEnt( entity leviathan, vector pos, float careCh
 		if ( chance > distCareChance )
 		{
 			// if ( DEBUG )
-				// DebugDrawLine( center, pos, COLOR_YELLOW, true, 5 )
+				// DebugDrawLine( center, pos, <255, 255, 0>, true, 5 )
 			return false
 		}
 	}
@@ -1361,7 +1361,7 @@ bool function Leviathan_CanLookAtEnt( entity leviathan, vector pos, float careCh
 	}
 
 	// if ( DEBUG )
-		// DebugDrawLine( center, pos, COLOR_GREEN, true, 5 )
+		// DebugDrawLine( center, pos, <0, 255, 0>, true, 5 )
 
 	return true
 }

@@ -3,7 +3,7 @@ global struct ClGlobals
 	table signalDummy
 
 	float pilotRedDamageWarningScalar = 1.0
-	table<int, void functionref( entity, var )> eventNotificationCallbacks
+	table<int, void functionref( entity, entity )> eventNotificationCallbacks
 
 	array<void functionref( entity, entity )> pilotHudCallbacks
 	array<void functionref( entity, entity )> titanHudCallbacks

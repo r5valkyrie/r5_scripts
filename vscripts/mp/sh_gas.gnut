@@ -216,8 +216,8 @@ void function OnEntSpawned( entity ent )
 	ent.e.gasEnterTime = -1.0
 	ent.e.gasLastExpoTime = -1.0
 	ent.e.gasLastDamageTime = -1.0
-			
-	Highlight_SetCausticThreatHighlight( ent, "caustic_gas_threat" )
+
+	Highlight_SetEnemyHighlight( ent, "enemy_sonar" )
 }
 
 bool function IsEntInGas( entity ent )

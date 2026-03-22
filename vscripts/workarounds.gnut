@@ -3,6 +3,12 @@
 // Organized by system/feature within each preprocessor block
 // ============================================================================
 
+global struct DeathBoxPingInfo
+{
+	entity deathbox
+	entity loot
+}
+
 // ============================================================================
 //  GLOBAL SCOPE - Constants, Enums, Structs (all VMs)
 // ============================================================================
@@ -11,6 +17,17 @@
 global const asset FIRINGRANGE_ITEM_RESPAWN_PARTICLE = $"P_impact_shieldbreaker_sparks"
 global const string XPROG_PERSISTENCE_MERGED_PLAT_STRUCT_NAME = "xMergedPlat"
 global const int PLAYER_MELEE_STATE_KICK_ATTACK = 1
+global const int PLAYER_MELEE_STATE_SLAM_ATTACK = 2
+global const int SHADOWARMY_VICTORY_FLAGS_EVAC = 4
+global const int SHADOWARMY_LEGEND_ALLIANCE = 0
+global const int PHASETYPE_DOOR = 1
+global const int PHASETYPE_BALANCE = 2
+global const int PHASETYPE_GATE = 3
+global const int PLAYLIST_ID_SURVIVAL = 0
+global const int PLAYLIST_ID_NEW_PLAYER_ORIENTATION = 1
+global const int TT_GRAVITY_LIFT = 0
+global const int TT_BLACKHOLE = 0
+global const int PLAYER_MELEE_STATE_EXECUTION = 3
 global const int PLAYER_ARMORED_LEAP_PHASE_NONE = 0
 global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_HOLD_DURATION = 0.0
 global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_FADE_DURATION = 0.0
@@ -18,6 +35,15 @@ global const int CODE_REDEMPTION_RESULT_SUCCESS = 0
 global const int PREMIUM_CURRENCY_05 = 0
 global const int playedApexFalse = 0
 global const GAMEMODE_SHADOW_ROYALE = "shadow_royale"
+
+global enum eCanLaunchResult
+{
+	SUCCESS,
+	INVALID,
+	PLAYER_STATE,
+	NO_OFF_SCREEN,
+	NO_LOS_FAIL
+}
 
 // Asset download status constants (used by image_pak_load.nut)
 global const int ASSET_DOWNLOAD_STATUS_UP_TO_DATE = 0
@@ -86,6 +112,95 @@ global function IsValidItemFlavorNetworkIndex_DEPRECATED
 // === Utilities ===
 global function replace
 global function WORKAROUND_AssetAppend
+
+// === Gamestate ===
+global function MarkEntForCleanupOnRoundEnd
+global function MarkEntForCleanupOnWinnerDetermined
+global function DoesCurrentModeHaveMapSetup
+global function DoesCurrentModeHaveDeathfield
+global function SetIsPermanentEntity
+global function AddCallback_OnWouldOtherwiseCrushEntity
+global function GetRespawnBeaconLocations
+global function GetCustomIntroLength
+
+// === Emotes ===
+// GetPlayerIsEmoting — now in sh_emotes.nut (S22)
+
+// === Banner Crafting ===
+global function GetCraftableTeamBanners
+
+// === Shadow Army Gamemode ===
+global function ShadowArmy_IsPlayerInShadowForm
+
+// === Freelance Systems ===
+global function FreelanceSystemsAreEnabled
+
+// === Freelance/PVE Systems ===
+global function SkitSystem_Init
+global function ObjectiveSystem_Init
+global function EncounterSystem_Init
+global function NPCGarbageCollection_InitForGameMode
+global function PVELoot_InitForGameMode
+global function LTM_AnnouncementSplash
+global function Control_GetCurrentRank
+global function ShadowArmy_GetCurrentRank
+global function UseLTMPodiumBanner
+global function UseMixtapePodiumBanner
+global function VectorWithinBounds
+global function GiveBasicSurvivalItems
+global function SortLowestInt
+global function SPL_GetRandomEndRingPosition_Slow
+// BroadcastCommsActionToTeam — now in sh_quickchat.gnut (S22)
+global function RedeployBalloon_GetSkydiveVelOverride
+global function Control_PrintSkydiveDebug
+global function SetNV_FreefallIsFromPlane
+global function MatchBehaviorPlayer_RecordDropInfo
+global function PutEntityInSomewhatSafeSpot
+global function StopAllSkydiveSounds
+global function CalcWorldToLocalOrigin_Entity
+global function ShGameModeExplore_GetPlanePassNumber
+global function IsValidArrayIndex
+global function SkydiveEmoteProjector_CancelProjector
+global function HoverVehicle_CreateAndAddPlayers
+global function DropPod_OnUse
+global function isFreefallEnabled
+// PlayerIsInCombat — now in sh_quickchat.gnut (S22)
+global function DeregisterNavMesh_EntityMemory
+global function RegisterNavMesh_EntityMemory
+global function FR_Nessie_EnterZone
+global function OnProjectileCollision_weapon_deployable_crypto
+global function FakePhysicsThrow_NewTest
+global function ClientCommand_Flowstate_AssignCustomCharacterFromMenu
+global function ReturnCarePackagesNewArray
+global function SurvivalCommentary_HostAnnounce
+global function GetRoundCommentaryBucket
+global function SurvivalCommentary_KilledPlayerAnnounce
+global function GoldenHorse_ModifyCarePackageSpawnDistance
+global function GoldenHorse_SwordCarePackageEnabled
+global function DeleteCarepackagePerkLinks
+global function SetChampion
+global function Flowstate_CheckForLv4MagazinesAndRefillAmmo
+global function GenericOffhand_AddSunglasses
+global function ActivateGenericOffhand
+global function FS_GetWeaponsThatUseThisAmmo
+global function GrantPathfinderCooldownReduction
+global function CheckPlayersIntersectingEntity
+global function HoverVehicle_WakeVehiclesIntersectingEntity
+global function Octane_GetPassiveRegenRate
+global function Octane_GetPassiveRegenDelay
+global function Campfire_IsEnabled
+global function Campfire_IsPlayerInCampfire
+global function BeginAOEHeal
+global function EndAOEHeal
+global function EmitSoundOnEntityExceptToPlayers
+global function ShortenDamageCallbackName
+global function ShAmbientDialogue_Init
+global function AddCallback_OnPlayerReload
+global function Respawn_Token_IsPlayerEliminated
+global function ShuffleVectorArray
+global function AirdropExtravaganza_GetClusterEntities
+global function AirdropExtravaganza_GetTrackedAirdropPods
+global function AirdropExtravaganazaCleanupPod
 global function DebugDrawScreenText
 global function DebugDrawScreenTextWithColor
 global function MetersToInches
@@ -118,6 +233,250 @@ global function RefreshChallenges
 
 // === Automation ===
 global function AutomateUi
+
+// === Shared scope declarations (visible to all VMs) ===
+global function ShadowArmy_IsPlayerOnShadowArmy
+global function ForcedSpawn_Init
+global function SetPlayerEliminationCheck
+global function SetPlayThreeMinuteMusic
+global function SetTimelimitCompleteFunc
+global function ObjectiveResourceSystem_Init
+global function SetCustomResolutionDuration
+global function Sh_Rank_InitGameSummary
+global function AddCallback_OnPlayerReloadPressed
+global function SetEndRoundPlayerState
+global function AddCallback_BotRecordStart
+global function AddCallback_BotPlaybackStart
+global function AddCallback_OnClientConnectionLost
+// SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)
+global function ShadowArmy_ShouldEnterBleedout
+global function ShadowArmy_StorePlayersOriginalCharacterSelection
+global function ShadowArmy_GetShouldLegendsSpawnOnGround_MatchStart
+global function ShadowArmy_GetNumRevSquadsForMatchStart
+global function ShadowArmy_GetLegendSpawnGroupsNumber
+global function ShadowArmy_GetLegendMatchStartSpawnLocations
+global function ShadowArmy_GetLegendMatchStartSpawnRadius
+global function ShadowArmy_IsSquadReallyEliminated
+global function Ranked_UpdateRankedScoreProgressForPlayer
+global function WeaponStatsHook_OnAssistCredited
+global function WeaponStatsHook_OnDownEnemy
+global function Bleedout_GetShouldAlliancePlayerBleedout
+global function CharacterSelect_CustomIsCharacterLockedForPlayer
+global function MatchBehaviorPlayer_RecordPickInfo
+global function RemoveCallback_OnClientConnected
+#if CLIENT
+global function ClearCustomPlayerInfoTreatment
+global function ClearCustomPlayerInfoCharacterIcon
+global function IsBallisticUltActive
+global function GetWeaponTypeFlags_Safe
+global function GetTeamJIPUnitFrames
+global function GetConduitShieldRui
+global function TitanSword_GetFuelRui
+// WPT_* constants are engine-registered — do NOT redefine here
+// GetMaxStickersForObjectType now in sh_stickers.nut
+
+#if SERVER
+global function WeaponRuiUpdateMastery
+global function ClWeaponStatus_OverrideReloadHintText
+#endif
+global function PrintTeamChatMessageLocally
+global function PIN_DynamicDialogue
+global function CreateDialogPopup
+global function EmitSoundOnEntityWithSelector
+global function ForcedSpawn_UseForcedSpawning
+global function Respawn_Token_CanLocalPlayerRespawnOrIsRespawning
+global function OpenSurvivalGroundListRetail
+global function LootBin_IsOpen
+global function Announcements_SetVisible
+global function IsObserverInPrivateGame
+global function UpdatePlayerSkydiveTrailFriendlyEnemyFX
+global function IsVDUDialogueEnabled
+global function Teams_RegisterSignals
+global function ClGameState_HasRegisteredGameStateAsset
+global function ClRingWarning_GetRui
+global function GameEpilogue
+// IsEmoteEnabledForPodiumScreen — now in sh_emotes.nut (S22)
+global function WillCelebrateNEEVictory
+global function DoNEECelebration_Thread
+global function TryEnableDeathScreenRequeue
+global function Control_OpenCharacterSelect
+// PerformFavoredQuipAtSlot — now in sh_comms_menu.nut (S22)
+// Waypoint_ShowPingWheel — now in sh_waypoints.gnut (S22)
+#endif
+global function Perks_CarePackageInsight_CreateCarePackageInsightPing
+global function ForcedSpawn_GetEnemyPingDisplayTime
+// Grouping_AddIfValid/RemoveForDelete — now in sh_waypoints.gnut (S22)
+// AddPingBlockingFunction removed — callers updated to AddOnscreenPromptFunction
+global function HoverVehicle_GetVehicleOccupiedByPlayer
+global function DoesTeammateHaveBannerCraftingPerk
+global function PIN_UltimateReadyPing
+global function PIN_EmoteUse
+// CommsMenu_GetMenuForNewPing — now in sh_comms_menu.nut (S22)
+global function HasWaitingGameStateArtHud
+global function Valentines_S15_ILoveYouEasterEggEnabled
+global function GetRemoteDeathboxHighlight
+global function RuiIsAlive
+global function Teams_GetTeamIcon
+global function Teams_GetTeamName
+global function Teams_GetTeamColor
+global function TransportPortal_CancelUse
+global function DeathboxNetwork_CanPlayerUse
+global function DeathboxNetwork_UntrackIfTracking
+global function DeathboxNetwork_TrackBoxTargets
+global function DeathboxNetwork_UntrackBoxTargets
+global function DeathBoxInsight_UpdateLookatPing
+global function PassiveReinforce_BlockControllerHolster
+global function TitanSword_WeaponIsTitanSword
+global function GetArcFlashState
+global function SetUnitFrameConsumableData
+global function GetPlayerNameByEntIndex
+global function GetCachedObsfuscatedNameByName
+global function Obituary_Print_Control_ObjectivePing
+global function Obituary_Print_Control_Ping
+global function SkydiveEmoteProjector_ActivateEmoteProjector
+global function ContextAction_IsBeingRevived
+global function ContextAction_IsInVehicle
+global function ContextAction_IsReviving
+global function Control_GetStarterPingFromTraceBlockerPing
+global function HoverVehicle_IsHostileToTeam
+global function HoverVehicle_IsVehicleEmpty
+global function MedBay_IsDisabled
+global function MedBay_IsOnCooldown
+global function PassiveAssassinsInstinct_EntityShouldBeHighlighted
+global function CastleWall_EntityShouldBeHighlighted
+global function ArmoredLeap_TargetEntityShouldBeHighlighted
+global function Nessie_GetHighlightDist
+global function VoidVision_GetHighlightModeForPlayer
+global function IsLobbyEvent1Active
+global function IsLobbyEvent2Active
+global function IsValidStickerInstance
+global function DestroyStickerInstance
+global function RequestLoadStickerPak
+global function SetEntMaterialToSticker
+global function AddStickerDecalToEntity
+global function IsStickerInstancePlaced
+#if SERVER || CLIENT
+global function GetPlayerHardware
+#endif
+#if SERVER
+global function GetFovScalar
+#endif
+
+global enum eVoidVisionHighlightMode
+{
+	none,
+	self,
+	structure
+}
+
+// Dummy struct for SERVER/UI — real definition is #if CLIENT in sh_gladiator_cards.nut
+#if SERVER || UI
+global struct NestedGladiatorCardHandle { }
+global struct PakHandle { string rpakPath = "" }
+#endif
+// Sticker enums/functions now properly in mp/sh_stickers.nut (s22-server version)
+
+global function FerroWall_BlockScan
+global function SniperUlt_GetMarkedDuration
+global function DebuffZone_GetOverheatDuration
+global function TryPingBlockingFunction
+global function CanLaunchToCompanion
+global function HookUpWaypointRuiForObjectiveRelevance
+global function PlayerIsMarkedAsInsideObjectiveIndex
+global function Survival_SetPilotHudVisible
+global function AddCallback_OnLootDatatablesLoaded
+global function ServerCallback_DestroyEndAnnouncement
+global function ServerCallback_RefreshDeathBoxHighlight
+global function ServerCallback_RefreshLootbinHighlight
+global function UpdateDpadHud_Copy
+global function ServerCallback_Scenarios_MatchEndAnnouncement
+global function FS_ForceCompass
+global function FS_DestroyCompass
+global function ServerCallback_ShowWinningSquadSequence
+global function ServerCallback_SkydiveTrailStart
+global function ServerCallback_SkydiveTrailEnd
+global function ServerCallback_Survival_PathfinderSurveyNotifications
+global function ServerCallback_Survival_CreateBeaconWorldIcon
+global function ServerCallback_PromptWelcome
+global function TransportPortal_GetReceiverPlayerIsLookingAt
+global function TreasureHunt_GetStarterPingFromTraceBlockerPing
+global function Ziprail_GetSkyDiveLauncherForHitEnt
+global function Zipline_IsCurvedZipline
+global function GetRedeployBalloonForHitEnt
+global function GetWhiteRavenPingTarget
+global function GetZiplinePingEntity
+global function GetZiplinePingPosition
+global function HasZiplinePingInRange
+global function IsPlayerDecoy
+global function IsRopeZipline
+global function IsZiprail
+global function DeathBoxInsight_GetCurrentPingInfo
+global function Player_IsSkywardLaunching
+// GetFocusedWaypointEnt — now in sh_waypoints.gnut (S22)
+global function IsTeamInAlliance
+global function GetGroundPositionOpenToSky
+global function EmoteIcon_Waypoint_LinkPlayer
+// Remote_CallFunction_NonReplay — native
+global function ShadowArmy_RespawnBeacon_CanBeaconBeUsedByPlayer
+global function Perk_CanExpiredBannerBeRecovered
+global function Trophy_GetShieldsPercentRemaining
+global function Control_InstanceObjectivePing_Thread
+global function MedBay_GetHealsPercentRemaining
+global function TreasureHunt_InstanceObjectivePing
+global function Waypoints_GetObjectiveIndexFor
+#if SERVER
+// These are CLIENT natives — only need stubs on SERVER
+global function Highlight_PopPingedState
+global function Highlight_PushPingedState
+global function WaypointFocusTracking_Deregister
+global function WaypointFocusTracking_Register
+global function WaypointFocusTracking_SetDisabled
+global function WaypointFocusTracking_TrackPos
+#endif
+#if SERVER
+global function GetGameStartTime
+#endif
+global function SURVIVAL_ResetAllDoors
+global function POIPlayerSpawning_Exists
+global function POIPlayerSpawning_SpawnPlayers
+global function ForcedSpawn_SpawnAllPlayers
+global function NavMesh_GetClosestPoints
+// Highlight_SetGameModeEnemyHighlight — now in sh_highlight.gnut (S22)
+global function Lifesteal_PlayerDealtDamage
+global function RespawnEquipped_DontResetInventory
+global function StopAllSoundsOnEntity
+global function Strikeout_IsPlayerRespawnDisabled
+global function Sh_Respawn_Token_IsPlayerRespawnDisabled
+global function SpawnGroupSkydive_IsSquadEliminated
+global function Ranked_UpdateRankedScoreProgressForAllPlayers
+global function IsTeamAlive
+global function Achievements_OnPlayerMatchParticipationEnded
+global function Cups_OnPlayerMatchParticipationEnded
+global function Ranked_HasFinishedProvisionalMatches
+global function RankedTrials_PlayerHasIncompleteTrial
+global function RankedTrials_GetAssignedTrial
+global function MMR_GetInteractionsForPlayer
+global function SendPlayerMatchResult
+global function GetPlayerGameDuration
+global function SmokeTest_IsActive
+// Waypoint_GetFriendlyThatPingedEnt — now in sh_waypoints.gnut (S22)
+global function TitanSword_ActiveWeaponIsTitanSword
+global function IsLootRoundBased
+global function ArrayRandomizeSeeded
+global function ArrayGetRandomSeeded
+global function LiveAPI_SendInventoryAction
+global function TrackingVision_CreatePOIForDroppedLoot
+global function WeaponStatsHook_OnPlayerDropMainWeapon
+global function LiveAPI_SendAmmoChangedEvent
+global function GetCryptoTTAssetsToPrecache
+global function GetLifelineTTAssetsToPrecache
+global function RemoteDeathboxInteractAllowTakingArmor
+global function TitanSword_Super_IsActive
+global function TitanSword_DamageSourceIsTitanSword
+global function TitanSword_Slam_DeathboxOverride
+global array<string> SQUAD_TEAM_HIGHLIGHTS = ["PVE_multisquad_0", "PVE_multisquad_1", "PVE_multisquad_2", "PVE_multisquad_3"]
+global function SurvivalRank_ProcessParticiation
+global function CheckForAndTrySetEliminationModeWinner
 
 // ============================================================================
 //  #if UI - Struct Definitions & Declarations
@@ -195,8 +554,7 @@ global function IsShadowRoyaleMode
 global function BattleRush_StopCharSelectMusic
 global function BattleRush_ServerCallback_PlayJumpMusic
 
-// === Shadow Army ===
-global function ShadowArmy_IsPlayerOnShadowArmy
+// === Shadow Army (CLIENT-only declarations) ===
 global function ShadowArmy_GetEnemySquadPlayersForAllianceIntro
 global function ShadowArmy_PlayIntroBannerSoundForLegends_Thread
 
@@ -229,7 +587,7 @@ global function IsRankedGame
 global function IsArenasRankedGame
 
 // === Network ===
-global function GetGlobalNonRewindNetBool
+// GetGlobalNonRewindNetBool - now a native function, removed stub
 
 // === Squad Cards ===
 global function DoAnimatedSquadCardsPresentation
@@ -245,7 +603,6 @@ global function SetFirstTimePlayerState
 // ============================================================================
 // === S22 Natives not in S3 ===
 global function PrecacheScriptString
-global function LootBin_ForceOpen_Thread
 global function FiringRangeHasDynamicStats
 
 #if SERVER || CLIENT
@@ -258,14 +615,6 @@ global function Perk_CanTeammateCraftPlayerBanner
 // === Game Mode Features ===
 global function Control_IsModeEnabled
 global function MissionCheckpoints_GetRespawnsLeftForPlayer
-global function UpgradeCore_ShowUpgradeTree_CharacterSelect
-global function UpgradeCore_ArmorTiedToUpgrades
-global function UpgradeCore_IsEnabled
-global function UpgradeCore_ProgressionLocked_ForPlayer_Set
-global function UpgradeCore_ProgressionLocked_ForPlayer_Get
-global function UpgradeCore_ShowHudUpgradeSelection
-global function UpgradeCore_RuiThread
-global function UpgradeCore_Set_Level
 global function PIN_FiringRange_Settings
 global function PIN_FiringRange_SessionDuration
 global function PIN_FiringRange_DynamicStats_TimeBetweenResets
@@ -273,7 +622,9 @@ global function PIN_FiringRange_Loot_Pickup_Source
 global function PIN_FiringRangeChallengeCompleted
 // PIN_Record_CustomizeRangeSettings, PIN_Record_CustomizeRangeSettings_ForMenuClose,
 // PIN_CCB_Record_DynamicStats_TimeBetweenResets — declared and implemented in firing_range.gnut
+#if SERVER
 global function TryStartIntroPodiumSequence
+#endif
 global const string TITAN_SWORD_WEAPON_REF = "mp_weapon_titan_sword"
 global function IsGoldenHorse_FR
 global function TitanSword_WeaponRefIsTitanSword
@@ -284,14 +635,71 @@ global function IsInvalidButMemberVarsStillValid
 // === Crossplay ===
 global function IsUserOnSamePlatform
 
-// === Player Cleanup ===
-global function DoCleanupPlayerPermanents
-
 // === Doors ===
 global function SURVIVAL_ResetAllDoorsInRealm
 
 // === NavMesh ===
 global function NavMesh_GetClosestPoint
+global function NavMesh_SearchForOpenAreas
+
+// === Weapon Stubs ===
+global function TitanSword_ForceStopLootAnim
+
+// === Gamemode Stubs ===
+global function Control_OnItemDropped
+global function PassiveAxiom_OnItemDropped
+global function Perk_WeaponInfusion_OnItemDropped
+global function CopycatKit_LootDropped
+global function ControlGunRacks_GetPickupGracePeriodDuration
+global function FR_Nessie_CheckCurrentWeapons
+global function GoldenHorse_UpdateLootHighlight
+global function HasInterruptableBannerPickup
+global function Perk_CanPickUpExpiredBanners
+global function RemoteDeathboxInteractAllowGrabbingBanners
+global function GetRemoteDeathboxInteractSqrRangeForAlter
+global function Pas_GetWattsonUltAccelExtraCount
+global function PIN_ItemGrantedByScript
+global function Armor_ShieldRegen_IsUsingShieldRegen
+global function Armor_ShieldRegen_RechargePlayerShields_Thread
+global function CanPlayerRemoteInteractWithDeathbox
+global function TrackingVision_CreatePOIForPickedUpLoot
+global function GetTriggersByClassesInRealms_HullSize
+global function GetTriggersByClassesInRealms
+global function HasBoundaryWall
+global function IsReinforced
+global function HoverVehicle_AttachEntToNearestAbilityAttachment
+global function DebuffZone_GetAllowableStickyEnts
+global function IsForgedShadowsShield
+global function Nessie_SpawnNPC
+global function ClearFollowBehavior
+global function ShadowShield_IsAllowedStickyEnt
+global function MobileShield_IsAllowedStickyEnt
+global function StunWhenInterruptable
+global function IsNessie
+global function GetEffectiveTeamNumForVehicle
+global function DoesPlayerHaveAutoLoaderBuff
+global function PlantSuperStickyGrenade
+global function Player_DetonateSatchels
+global function AllowPlayersToTalkToThemselves
+global function EvaluateSoundSelector
+global function GetLockedSetsDisabledByCrafting
+global function GetIsUnifiedRandomizerEnabled
+global function GoldenHorse_TicksEnabled
+global function HopupGoldenHorse_Switcheroo
+global function HopupGoldenHorse_Switcheroo_LockedSets
+global function HopupGoldenHorse_SwapLootTier
+global function HopupGoldenHorse_TryDisplayLootHint
+global function Perk_CanBuyBanners
+global function Perk_Get_CraftedBannerTimeoutDuration
+global function Player_Banners_Enabled
+global function TeslaTrap_MakeEntityRealTimeObstructor
+global function TitanSword_Super_BlockAction
+// global function UpgradeSelectionMenu_TryClose -- now in sh_upgrade_selection_menu.nut
+global function GiveBounty
+global function IsBountyHuntEnabled
+global function RandomizeNodeLocations
+// CommsMenu_RefreshData, CommsMenu_SetCurrentChoiceForCrafting, HasWaitingGameStateArtHud — now in sh_comms_menu.nut (S22)
+// AddOnscreenPromptFunction — now in sh_ping.gnut (S22 deployed)
 
 // === Spawn Safety ===
 global function CanPutPlayerInSafeSpot
@@ -1967,13 +2375,7 @@ void function BattleRush_ServerCallback_PlayJumpMusic()
 {
 }
 
-// === Shadow Army ===
-
-// Shadow Army stubs - game mode not loaded
-bool function ShadowArmy_IsPlayerOnShadowArmy( entity player )
-{
-	return false
-}
+// Shadow Army stubs moved to shared scope below
 
 array<entity> function ShadowArmy_GetEnemySquadPlayersForAllianceIntro( int alliance )
 {
@@ -2105,12 +2507,178 @@ bool function IsArenasRankedGame()
 }
 
 // === Network ===
+// GetGlobalNonRewindNetBool - now a native function, removed stub
 
-// stub
-bool function GetGlobalNonRewindNetBool( string varName )
+// === Custom Player Info ===
+void function ClearCustomPlayerInfoTreatment( entity player )
 {
+	Warning( "STUB: ClearCustomPlayerInfoTreatment" )
+}
+
+void function ClearCustomPlayerInfoCharacterIcon( entity player )
+{
+	Warning( "STUB: ClearCustomPlayerInfoCharacterIcon" )
+}
+
+bool function IsBallisticUltActive( entity player )
+{
+	Warning( "STUB: IsBallisticUltActive" )
 	return false
 }
+
+int function GetWeaponTypeFlags_Safe( entity weapon )
+{
+	Warning( "STUB: GetWeaponTypeFlags_Safe" )
+	return 0
+}
+
+table function GetTeamJIPUnitFrames()
+{
+	return {}
+}
+
+var function GetConduitShieldRui()
+{
+	return null
+}
+
+// PrecacheModel stub not needed — handled differently
+
+var function TitanSword_GetFuelRui()
+{
+	return null
+}
+
+#if SERVER
+void function WeaponRuiUpdateMastery( var rui, entity weapon, string ruiHudIconMastered = "hudIconMastered", string ruiIsMastered = "isMastered", string ruiHasMoreSparks = "moreSparksMastered" )
+{
+	Warning( "STUB: WeaponRuiUpdateMastery" )
+}
+
+void function ClWeaponStatus_OverrideReloadHintText( string text )
+{
+	Warning( "STUB: ClWeaponStatus_OverrideReloadHintText" )
+}
+#endif
+
+void function PrintTeamChatMessageLocally( entity player, string text )
+{
+	Warning( "STUB: PrintTeamChatMessageLocally: " + text )
+}
+
+void function PIN_DynamicDialogue( ... )
+{
+	Warning( "STUB: PIN_DynamicDialogue" )
+}
+
+var function CreateDialogPopup( string title, float duration, asset portraitImage, string displayText )
+{
+	Warning( "STUB: CreateDialogPopup" )
+	return null
+}
+
+int function EmitSoundOnEntityWithSelector( entity ent, string soundAlias, int selector )
+{
+	Warning( "STUB: EmitSoundOnEntityWithSelector - falling back to EmitSoundOnEntity" )
+	EmitSoundOnEntity( ent, soundAlias )
+	return 0
+}
+
+// PushLockFOV / PopLockFOV — native CLIENT functions, no stub needed
+
+bool function ForcedSpawn_UseForcedSpawning()
+{
+	Warning( "STUB: ForcedSpawn_UseForcedSpawning" )
+	return false
+}
+
+bool function Respawn_Token_CanLocalPlayerRespawnOrIsRespawning()
+{
+	Warning( "STUB: Respawn_Token_CanLocalPlayerRespawnOrIsRespawning" )
+	return false
+}
+
+void function OpenSurvivalGroundListRetail( entity player, entity vendingMachine, int groundListBehavior = 0, int groundListType = 0 )
+{
+	Warning( "STUB: OpenSurvivalGroundListRetail -> OpenSurvivalGroundList" )
+	OpenSurvivalGroundList( player, vendingMachine, groundListBehavior, groundListType )
+}
+
+bool function LootBin_IsOpen( entity lootBin )
+{
+	Warning( "STUB: LootBin_IsOpen -> LootBin_IsOpenAtAll" )
+	return LootBin_IsOpenAtAll( lootBin )
+}
+
+void function Announcements_SetVisible( bool visible )
+{
+	Warning( "STUB: Announcements_SetVisible" )
+}
+
+bool function IsObserverInPrivateGame()
+{
+	Warning( "STUB: IsObserverInPrivateGame" )
+	return false
+}
+
+void function UpdatePlayerSkydiveTrailFriendlyEnemyFX( entity player )
+{
+	Warning( "STUB: UpdatePlayerSkydiveTrailFriendlyEnemyFX" )
+}
+
+bool function IsVDUDialogueEnabled()
+{
+	Warning( "STUB: IsVDUDialogueEnabled" )
+	return false
+}
+
+void function Teams_RegisterSignals()
+{
+	Warning( "STUB: Teams_RegisterSignals" )
+}
+
+bool function ClGameState_HasRegisteredGameStateAsset()
+{
+	Warning( "STUB: ClGameState_HasRegisteredGameStateAsset" )
+	return false
+}
+
+var function ClRingWarning_GetRui()
+{
+	Warning( "STUB: ClRingWarning_GetRui" )
+	return null
+}
+
+bool function GameEpilogue()
+{
+	Warning( "STUB: GameEpilogue" )
+	return false
+}
+
+// IsEmoteEnabledForPodiumScreen — now in sh_emotes.nut (S22)
+
+bool function WillCelebrateNEEVictory()
+{
+	Warning( "STUB: WillCelebrateNEEVictory" )
+	return false
+}
+
+void function DoNEECelebration_Thread( vector pos, vector angles )
+{
+	Warning( "STUB: DoNEECelebration_Thread" )
+}
+
+void function TryEnableDeathScreenRequeue()
+{
+	Warning( "STUB: TryEnableDeathScreenRequeue" )
+}
+
+void function Control_OpenCharacterSelect()
+{
+	Warning( "STUB: Control_OpenCharacterSelect" )
+}
+
+// PerformFavoredQuipAtSlot — now in sh_comms_menu.nut (S22)
 
 // === Squad Cards ===
 
@@ -2137,6 +2705,344 @@ void function SetFirstTimePlayerState( int state )
 }
 
 #endif
+
+// === Shadow Army (shared scope) ===
+bool function ShadowArmy_IsPlayerOnShadowArmy( entity player )
+{
+	return false
+}
+
+// === Shared stubs (ping/waypoint systems) ===
+void function Perks_CarePackageInsight_CreateCarePackageInsightPing( entity player, entity pingEnt, vector pingOrigin, int userTicketId )
+{
+	Warning( "STUB: Perks_CarePackageInsight_CreateCarePackageInsightPing" )
+}
+
+// Waypoint_ShowPingWheel — now in sh_waypoints.gnut (S22)
+
+float function ForcedSpawn_GetEnemyPingDisplayTime()
+{
+	Warning( "STUB: ForcedSpawn_GetEnemyPingDisplayTime" )
+	return 6.0
+}
+
+// AddPingBlockingFunction removed — callers updated to AddOnscreenPromptFunction
+
+bool function DoesTeammateHaveBannerCraftingPerk( entity player ) { return false }
+void function PIN_UltimateReadyPing( entity player, string pingType, bool fromQuickchat ) { Warning( "STUB: PIN_UltimateReadyPing" ) }
+void function SkydiveEmoteProjector_ActivateEmoteProjector( entity player, ItemFlavor quip ) { Warning( "STUB: SkydiveEmoteProjector_ActivateEmoteProjector" ) }
+bool function HasWaitingGameStateArtHud() { return false }
+bool function Valentines_S15_ILoveYouEasterEggEnabled() { return false }
+string function GetRemoteDeathboxHighlight( entity deathbox, int lootTier ) { return "" }
+bool function RuiIsAlive( var rui ) { return rui != null }
+asset function Teams_GetTeamIcon( int team ) { return $"" }
+string function Teams_GetTeamName( int team ) { return "" }
+vector function Teams_GetTeamColor( int team ) { return <255, 255, 255> }
+void function TransportPortal_CancelUse() { Warning( "STUB: TransportPortal_CancelUse" ) }
+bool function DeathboxNetwork_CanPlayerUse( entity player, entity ent ) { return false }
+void function DeathboxNetwork_UntrackIfTracking() { }
+void function DeathboxNetwork_TrackBoxTargets( entity box ) { }
+void function DeathboxNetwork_UntrackBoxTargets( entity box ) { }
+bool function DeathBoxInsight_UpdateLookatPing() { return false }
+bool function PassiveReinforce_BlockControllerHolster( entity player, entity useEnt ) { return false }
+bool function TitanSword_WeaponIsTitanSword( entity weapon ) { return false }
+int function GetArcFlashState( entity player ) { return 0 }
+void function SetUnitFrameConsumableData( var rui, entity player ) { }
+string function GetPlayerNameByEntIndex( int entIdx ) { return "" }
+string function GetCachedObsfuscatedNameByName( string name ) { return name }
+void function Obituary_Print_Control_ObjectivePing( entity subjectEnt, string locText, vector playerColor, vector subjectColor = <255,255,255>, vector secondaryColor = <255,255,255>, vector bgColor = <0,0,0>, float bgAlpha = 0.0 ) { Warning( "STUB: Obituary_Print_Control_ObjectivePing" ) }
+void function Obituary_Print_Control_Ping( string locText, bool isAlliancePing = false, vector altColor1 = <255,255,255>, vector altColor2 = <255,255,255>, vector altColor3 = <255,255,255>, vector bgColor = <255,255,255>, float bgAlpha = 0.0 ) { Warning( "STUB: Obituary_Print_Control_Ping" ) }
+// CheckPlayerCanEmote, GetPlayerIs3pEmoting, HudInput_*, Hud_GetRui — native CLIENT functions
+
+// Grouping stubs removed — now in sh_waypoints.gnut (S22)
+
+entity function HoverVehicle_GetVehicleOccupiedByPlayer( entity player )
+{
+	Warning( "STUB: HoverVehicle_GetVehicleOccupiedByPlayer" )
+	return null
+}
+
+// CommsMenu_GetMenuForNewPing — now in sh_comms_menu.nut (S22)
+
+bool function ContextAction_IsBeingRevived( entity player ) { return false }
+bool function ContextAction_IsInVehicle( entity player ) { return false }
+bool function ContextAction_IsReviving( entity player ) { return false }
+
+entity function Control_GetStarterPingFromTraceBlockerPing( entity pingedEnt, int playerTeam )
+{
+	Warning( "STUB: Control_GetStarterPingFromTraceBlockerPing" )
+	return null
+}
+
+bool function HoverVehicle_IsHostileToTeam( entity vehicle, int team ) { return false }
+bool function HoverVehicle_IsVehicleEmpty( entity vehicle ) { return true }
+bool function MedBay_IsDisabled( entity ent = null ) { return false }
+bool function MedBay_IsOnCooldown( entity ent = null ) { return false }
+
+
+bool function PassiveAssassinsInstinct_EntityShouldBeHighlighted( entity viewPlayer, entity target )
+{
+	Warning( "STUB: PassiveAssassinsInstinct_EntityShouldBeHighlighted" )
+	return false
+}
+
+bool function CastleWall_EntityShouldBeHighlighted( entity ent )
+{
+	Warning( "STUB: CastleWall_EntityShouldBeHighlighted" )
+	return false
+}
+
+bool function ArmoredLeap_TargetEntityShouldBeHighlighted( entity ent )
+{
+	Warning( "STUB: ArmoredLeap_TargetEntityShouldBeHighlighted" )
+	return false
+}
+
+bool function IsLobbyEvent1Active()
+{
+	return false
+}
+
+bool function IsLobbyEvent2Active()
+{
+	return false
+}
+
+bool function IsValidStickerInstance( int instance )
+{
+	Warning( "STUB: IsValidStickerInstance" )
+	return false
+}
+
+void function DestroyStickerInstance( int instance )
+{
+	Warning( "STUB: DestroyStickerInstance" )
+}
+
+void function RequestLoadStickerPak( asset stickerAsset )
+{
+	Warning( "STUB: RequestLoadStickerPak" )
+}
+
+int function SetEntMaterialToSticker( asset stickerMat, entity ent )
+{
+	Warning( "STUB: SetEntMaterialToSticker" )
+	return -1
+}
+
+int function AddStickerDecalToEntity( entity ent, asset stickerMat, string attachment, float scale )
+{
+	Warning( "STUB: AddStickerDecalToEntity" )
+	return -1
+}
+
+bool function IsStickerInstancePlaced( int instance )
+{
+	Warning( "STUB: IsStickerInstancePlaced" )
+	return false
+}
+
+#if SERVER || CLIENT
+string function GetPlayerHardware()
+{
+	return "PC"
+}
+#endif
+
+#if SERVER
+float function GetFovScalar( entity player )
+{
+	return 1.0
+}
+#endif
+
+float function Nessie_GetHighlightDist()
+{
+	return GetCurrentPlaylistVarFloat( "nessie_highlight_distance", 2000 )
+}
+
+int function VoidVision_GetHighlightModeForPlayer( entity player, entity otherPlayer )
+{
+	Warning( "STUB: VoidVision_GetHighlightModeForPlayer" )
+	return eVoidVisionHighlightMode.none
+}
+
+
+bool function FerroWall_BlockScan( vector startPos, vector endPos )
+{
+	Warning( "STUB: FerroWall_BlockScan\n" )
+	return false
+}
+
+float function SniperUlt_GetMarkedDuration()
+{
+	Warning( "STUB: SniperUlt_GetMarkedDuration\n" )
+	return 10.0
+}
+
+float function DebuffZone_GetOverheatDuration()
+{
+	Warning( "STUB: DebuffZone_GetOverheatDuration\n" )
+	return 12.0
+}
+
+bool function TryPingBlockingFunction( entity player, string context )
+{
+	Warning( "STUB: TryPingBlockingFunction\n" )
+	return false
+}
+
+int function CanLaunchToCompanion( entity player, entity companion )
+{
+	Warning( "STUB: CanLaunchToCompanion\n" )
+	return eCanLaunchResult.INVALID
+}
+
+void function HookUpWaypointRuiForObjectiveRelevance( entity wp, var rui )
+{
+	Warning( "STUB: HookUpWaypointRuiForObjectiveRelevance\n" )
+}
+
+bool function PlayerIsMarkedAsInsideObjectiveIndex( entity player, int index )
+{
+	Warning( "STUB: PlayerIsMarkedAsInsideObjectiveIndex\n" )
+	return false
+}
+
+void function Survival_SetPilotHudVisible( bool visible )
+{
+	Warning( "STUB: Survival_SetPilotHudVisible\n" )
+}
+
+void function AddCallback_OnLootDatatablesLoaded( void functionref() func )
+{
+	Warning( "STUB: AddCallback_OnLootDatatablesLoaded\n" )
+}
+
+void function ServerCallback_DestroyEndAnnouncement()
+{
+	Warning( "STUB: ServerCallback_DestroyEndAnnouncement\n" )
+}
+
+
+
+void function ServerCallback_RefreshDeathBoxHighlight()
+{
+	Warning( "STUB: ServerCallback_RefreshDeathBoxHighlight\n" )
+}
+
+void function ServerCallback_RefreshLootbinHighlight()
+{
+	Warning( "STUB: ServerCallback_RefreshLootbinHighlight\n" )
+}
+
+void function UpdateDpadHud_Copy()
+{
+	Warning( "STUB: UpdateDpadHud_Copy\n" )
+}
+
+void function ServerCallback_Scenarios_MatchEndAnnouncement()
+{
+	Warning( "STUB: ServerCallback_Scenarios_MatchEndAnnouncement\n" )
+}
+
+void function FS_ForceCompass()
+{
+	Warning( "STUB: FS_ForceCompass\n" )
+}
+
+void function FS_DestroyCompass()
+{
+	Warning( "STUB: FS_DestroyCompass\n" )
+}
+
+void function ServerCallback_ShowWinningSquadSequence()
+{
+	Warning( "STUB: ServerCallback_ShowWinningSquadSequence\n" )
+}
+
+void function ServerCallback_SkydiveTrailStart( entity player )
+{
+	Warning( "STUB: ServerCallback_SkydiveTrailStart\n" )
+}
+
+void function ServerCallback_SkydiveTrailEnd( entity player )
+{
+	Warning( "STUB: ServerCallback_SkydiveTrailEnd\n" )
+}
+
+void function ServerCallback_Survival_PathfinderSurveyNotifications( entity player, int notifType )
+{
+	Warning( "STUB: ServerCallback_Survival_PathfinderSurveyNotifications\n" )
+}
+
+void function ServerCallback_Survival_CreateBeaconWorldIcon( entity beacon, entity player )
+{
+	Warning( "STUB: ServerCallback_Survival_CreateBeaconWorldIcon\n" )
+}
+
+void function ServerCallback_PromptWelcome()
+{
+	Warning( "STUB: ServerCallback_PromptWelcome\n" )
+}
+
+entity function TransportPortal_GetReceiverPlayerIsLookingAt( entity player )
+{
+	Warning( "STUB: TransportPortal_GetReceiverPlayerIsLookingAt" )
+	return null
+}
+
+entity function TreasureHunt_GetStarterPingFromTraceBlockerPing( entity pingedEnt, int playerTeam )
+{
+	Warning( "STUB: TreasureHunt_GetStarterPingFromTraceBlockerPing" )
+	return null
+}
+
+bool function Zipline_IsCurvedZipline( entity zipline ) { return false }
+
+entity function Ziprail_GetSkyDiveLauncherForHitEnt( entity hitEnt )
+{
+	Warning( "STUB: Ziprail_GetSkyDiveLauncherForHitEnt" )
+	return null
+}
+
+entity function GetRedeployBalloonForHitEnt( entity hitEnt ) { return null }
+entity function GetWhiteRavenPingTarget( entity player ) { return null }
+entity function GetZiplinePingEntity( entity player, entity hitEnt, vector hitPos ) { return null }
+vector function GetZiplinePingPosition( entity player, entity hitEnt, vector hitPos ) { return hitPos }
+bool function HasZiplinePingInRange( entity player, entity hitEnt, vector hitPos ) { return false }
+bool function IsPlayerDecoy( entity ent ) { return false }
+bool function IsRopeZipline( entity ent ) { return false }
+bool function IsZiprail( entity ent ) { return false }
+bool function Player_IsSkywardLaunching( entity player ) { return false }
+// GetFocusedWaypointEnt — now in sh_waypoints.gnut (S22)
+
+DeathBoxPingInfo function DeathBoxInsight_GetCurrentPingInfo()
+{
+	DeathBoxPingInfo info
+	return info
+}
+
+bool function IsTeamInAlliance( int team, int alliance ) { return false }
+vector function GetGroundPositionOpenToSky( vector origin ) { return origin }
+void function EmoteIcon_Waypoint_LinkPlayer( entity wp, entity player ) { Warning( "STUB: EmoteIcon_Waypoint_LinkPlayer" ) }
+// Remote_CallFunction_NonReplay — native
+bool function ShadowArmy_RespawnBeacon_CanBeaconBeUsedByPlayer( entity beacon, entity player ) { return true }
+bool function Perk_CanExpiredBannerBeRecovered( entity player ) { return false }
+int function Trophy_GetShieldsPercentRemaining( entity ent ) { return 100 }
+void function Control_InstanceObjectivePing_Thread( entity wp ) { Warning( "STUB: Control_InstanceObjectivePing_Thread" ) }
+int function MedBay_GetHealsPercentRemaining( entity ent = null ) { return 100 }
+void function TreasureHunt_InstanceObjectivePing( entity wp ) { Warning( "STUB: TreasureHunt_InstanceObjectivePing" ) }
+#if SERVER
+// CLIENT natives — stubs only needed on SERVER
+void function Highlight_PopPingedState( entity ent ) {}
+void function Highlight_PushPingedState( entity ent ) {}
+void function WaypointFocusTracking_Deregister( entity wp ) {}
+void function WaypointFocusTracking_Register( entity wp, entity ent = null ) {}
+void function WaypointFocusTracking_SetDisabled( entity wp, bool disabled ) {}
+void function WaypointFocusTracking_TrackPos( entity wp, vector pos ) {}
+#endif
+int function Waypoints_GetObjectiveIndexFor( entity wp ) { return -1 }
 
 // ============================================================================
 //  #if SERVER || CLIENT - Implementations
@@ -2170,45 +3076,6 @@ bool function Control_IsModeEnabled()
 int function MissionCheckpoints_GetRespawnsLeftForPlayer( entity player )
 {
 	return 0
-}
-
-// stub
-bool function UpgradeCore_ShowUpgradeTree_CharacterSelect()
-{
-	return false
-}
-
-// stubs - UpgradeCore (S22 feature, not in S3)
-bool function UpgradeCore_ArmorTiedToUpgrades()
-{
-	return false
-}
-
-bool function UpgradeCore_IsEnabled()
-{
-	return false
-}
-
-void function UpgradeCore_ProgressionLocked_ForPlayer_Set( entity player, bool locked )
-{
-}
-
-bool function UpgradeCore_ProgressionLocked_ForPlayer_Get( entity player )
-{
-	return false
-}
-
-bool function UpgradeCore_ShowHudUpgradeSelection()
-{
-	return false
-}
-
-void function UpgradeCore_RuiThread( entity player )
-{
-}
-
-void function UpgradeCore_Set_Level( entity player, int level )
-{
 }
 
 // stubs - PIN Telemetry (no telemetry in r5reloaded)
@@ -2246,10 +3113,12 @@ bool function TitanSword_WeaponRefIsTitanSword( string ref )
 	return false
 }
 
+#if SERVER
 // stub
 void function TryStartIntroPodiumSequence()
 {
 }
+#endif
 
 // === Crossplay ===
 
@@ -2271,23 +3140,104 @@ vector ornull function CanPutPlayerInSafeSpot( entity player, entity ornull ent1
 
 vector function NavMesh_GetClosestPoint( vector point )
 {
-	// S22 navmesh native — passthrough in S3
 	return point
 }
+
+array<vector> function NavMesh_SearchForOpenAreas( int hullType, float idealTileArea, float minTileSize, float minSurroundingArea, float maxSurroundingArea, float maxPathCost, int minNumAdjacentTiles )
+{
+	Warning( "STUB: NavMesh_SearchForOpenAreas" )
+	return []
+}
+
+void function TitanSword_ForceStopLootAnim( entity ent )
+{
+	Warning( "STUB: TitanSword_ForceStopLootAnim" )
+}
+
+void function Control_OnItemDropped( entity dropEnt )
+{
+	Warning( "STUB: Control_OnItemDropped" )
+}
+
+void function PassiveAxiom_OnItemDropped( entity player, string ref, entity dropEnt )
+{
+	Warning( "STUB: PassiveAxiom_OnItemDropped" )
+}
+
+void function Perk_WeaponInfusion_OnItemDropped( entity player, string ref, string weaponClassName, entity dropEnt )
+{
+	Warning( "STUB: Perk_WeaponInfusion_OnItemDropped" )
+}
+
+void function CopycatKit_LootDropped( entity player, string equipSlot, string equipRef, entity droppedEnt )
+{
+	Warning( "STUB: CopycatKit_LootDropped" )
+}
+
+float function ControlGunRacks_GetPickupGracePeriodDuration()
+{
+	return 0.0
+}
+
+void function FR_Nessie_CheckCurrentWeapons( entity player ) { Warning("STUB: FR_Nessie_CheckCurrentWeapons") }
+string function GoldenHorse_UpdateLootHighlight( entity prop, string ref, int tier, string highlight )
+{
+	Warning( "STUB: GoldenHorse_UpdateLootHighlight" )
+	return highlight
+}
+bool function HasInterruptableBannerPickup( entity player = null ) { Warning("STUB: HasInterruptableBannerPickup"); return false }
+bool function Perk_CanPickUpExpiredBanners( entity player, entity ent = null ) { Warning("STUB: Perk_CanPickUpExpiredBanners"); return false }
+bool function RemoteDeathboxInteractAllowGrabbingBanners( entity player = null ) { Warning("STUB: RemoteDeathboxInteractAllowGrabbingBanners"); return false }
+float function GetRemoteDeathboxInteractSqrRangeForAlter( entity player ) { Warning("STUB: GetRemoteDeathboxInteractSqrRangeForAlter"); return 0.0 }
+int function Pas_GetWattsonUltAccelExtraCount( entity player = null ) { Warning("STUB: Pas_GetWattsonUltAccelExtraCount"); return 0 }
+void function PIN_ItemGrantedByScript( entity player, ... ) { Warning("STUB: PIN_ItemGrantedByScript") }
+bool function Armor_ShieldRegen_IsUsingShieldRegen() { Warning("STUB: Armor_ShieldRegen_IsUsingShieldRegen"); return false }
+void function Armor_ShieldRegen_RechargePlayerShields_Thread( entity player, bool fullRecharge = true ) { Warning( "STUB: Armor_ShieldRegen_RechargePlayerShields_Thread" ) }
+bool function CanPlayerRemoteInteractWithDeathbox( entity player, entity deathBox = null ) { Warning("STUB: CanPlayerRemoteInteractWithDeathbox"); return false }
+void function TrackingVision_CreatePOIForPickedUpLoot( entity player, int lootType, string ref, vector pos, int team, entity source ) { Warning("STUB: TrackingVision_CreatePOIForPickedUpLoot") }
+array<entity> function GetTriggersByClassesInRealms_HullSize( ... ) { return [] }
+array<entity> function GetTriggersByClassesInRealms( ... ) { return [] }
+bool function HasBoundaryWall() { Warning("STUB: HasBoundaryWall"); return false }
+bool function IsReinforced( entity ent ) { Warning("STUB: IsReinforced"); return false }
+bool function HoverVehicle_AttachEntToNearestAbilityAttachment( entity ent, entity vehicle, bool a, bool b, vector offset ) { Warning( "STUB: HoverVehicle_AttachEntToNearestAbilityAttachment" ); return false }
+bool function DebuffZone_GetAllowableStickyEnts( entity ent ) { Warning("STUB: DebuffZone_GetAllowableStickyEnts"); return false }
+bool function IsForgedShadowsShield( entity ent ) { Warning("STUB: IsForgedShadowsShield"); return false }
+entity function Nessie_SpawnNPC( int team, entity owner, vector origin, vector angles ) { Warning( "STUB: Nessie_SpawnNPC" ); return null }
+void function ClearFollowBehavior( entity npc ) { Warning("STUB: ClearFollowBehavior") }
+bool function ShadowShield_IsAllowedStickyEnt( entity ent, entity stickyEnt, string weaponClassName ) { Warning("STUB: ShadowShield_IsAllowedStickyEnt"); return true }
+bool function MobileShield_IsAllowedStickyEnt( entity ent, entity stickyEnt, string weaponClassName ) { Warning("STUB: MobileShield_IsAllowedStickyEnt"); return true }
+void function StunWhenInterruptable( entity ent, var damageInfo ) { Warning( "STUB: StunWhenInterruptable" ) }
+bool function IsNessie( entity ent ) { Warning("STUB: IsNessie"); return false }
+int function GetEffectiveTeamNumForVehicle( entity ent ) { return ent.GetTeam() }
+bool function DoesPlayerHaveAutoLoaderBuff( entity player ) { Warning("STUB: DoesPlayerHaveAutoLoaderBuff"); return false }
+bool function PlantSuperStickyGrenade( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox ) { Warning("STUB: PlantSuperStickyGrenade"); return false }
+void function Player_DetonateSatchels( entity player ) { Warning("STUB: Player_DetonateSatchels") }
+bool function AllowPlayersToTalkToThemselves() { return false }
+int function EvaluateSoundSelector( string alias ) { Warning("STUB: EvaluateSoundSelector"); return 0 }
+array<string> function GetLockedSetsDisabledByCrafting() { Warning("STUB: GetLockedSetsDisabledByCrafting"); return [] }
+bool function GetIsUnifiedRandomizerEnabled() { return false }
+bool function GoldenHorse_TicksEnabled() { return false }
+void function HopupGoldenHorse_Switcheroo( LootData wData ) { Warning( "STUB: HopupGoldenHorse_Switcheroo" ) }
+void function HopupGoldenHorse_Switcheroo_LockedSets( LootData wData ) { Warning( "STUB: HopupGoldenHorse_Switcheroo_LockedSets" ) }
+void function HopupGoldenHorse_SwapLootTier( var rui, string ref, int tier, string ruiVar ) { Warning( "STUB: HopupGoldenHorse_SwapLootTier" ) }
+void function HopupGoldenHorse_TryDisplayLootHint( entity weapon ) { Warning( "STUB: HopupGoldenHorse_TryDisplayLootHint" ) }
+bool function Perk_CanBuyBanners( entity player ) { Warning("STUB: Perk_CanBuyBanners"); return false }
+float function Perk_Get_CraftedBannerTimeoutDuration() { return 0.0 }
+bool function Player_Banners_Enabled() { return true }
+void function TeslaTrap_MakeEntityRealTimeObstructor( entity ent ) { Warning("STUB: TeslaTrap_MakeEntityRealTimeObstructor") }
+bool function TitanSword_Super_BlockAction( entity player, string action = "" ) { Warning("STUB: TitanSword_Super_BlockAction"); return false }
+// UpgradeSelectionMenu_TryClose -- now in sh_upgrade_selection_menu.nut
+void function GiveBounty( entity player, int amount ) { Warning("STUB: GiveBounty") }
+bool function IsBountyHuntEnabled() { return false }
+array<entity> function RandomizeNodeLocations( array<entity> nodes, float exclusionDist, int goal = -1, bool useGoal = false, string placementType = "none", vector debugColor = <0,0,0> ) { Warning("STUB: RandomizeNodeLocations"); return nodes }
+// CommsMenu stubs removed — now in sh_comms_menu.nut (S22)
+// AddOnscreenPromptFunction — now in sh_ping.gnut (S22 deployed)
 
 // === Doors ===
 
 void function SURVIVAL_ResetAllDoorsInRealm( int realm )
 {
 	// S22 door reset — not implemented in S3
-}
-
-// === Player Cleanup ===
-
-void function DoCleanupPlayerPermanents( entity player )
-{
-	player.Signal( "CleanupPlayerPermanents" )
-	// PROTO_CleanupTrackedProjectiles( player ) // S3: defined in _weapon_utility.nut, load order issue on CLIENT VM
 }
 
 // === Melee/Combat ===
@@ -2382,6 +3332,7 @@ void function SafeSetPersistentVar( entity player, string key, var value )
 {
 	player.SetPersistentVar( key, value )
 }
+
 
 #elseif CLIENT
 int function SafeGetPersistentVarAsInt( entity player, string key )
@@ -2626,11 +3577,6 @@ void function PrecacheScriptString( string scriptString )
 	// No-op: S3 engine doesn't need explicit script string precaching
 }
 
-void function LootBin_ForceOpen_Thread( entity lootBin, bool doRegular, bool doSecret )
-{
-	// S22 function not in S3 — no-op
-}
-
 bool function FiringRangeHasDynamicStats()
 {
 	return GetCurrentPlaylistVarBool( "has_fr_dynamic_stats", true )
@@ -2738,3 +3684,841 @@ asset function WORKAROUND_AssetAppend( string s1, string s2 )
 {
 	return $""
 }
+
+// === Gamestate round cleanup stubs ===
+void function MarkEntForCleanupOnRoundEnd( entity ent )
+{
+	Warning( "MarkEntForCleanupOnRoundEnd stub called" )
+}
+
+void function MarkEntForCleanupOnWinnerDetermined( entity ent )
+{
+	Warning( "MarkEntForCleanupOnWinnerDetermined stub called" )
+}
+
+bool function DoesCurrentModeHaveMapSetup()
+{
+	return GetCurrentPlaylistVarBool( "has_map_setup", true )
+}
+
+bool function DoesCurrentModeHaveDeathfield()
+{
+	return GetCurrentPlaylistVarBool( "has_deathfield", true )
+}
+
+void function SetIsPermanentEntity( entity ent, bool isPermanent )
+{
+	Warning( "STUB: SetIsPermanentEntity" )
+}
+
+void function AddCallback_OnWouldOtherwiseCrushEntity( entity ent, void functionref(entity, entity) callback )
+{
+	Warning( "STUB: AddCallback_OnWouldOtherwiseCrushEntity" )
+}
+
+array<vector> function GetRespawnBeaconLocations()
+{
+	Warning( "STUB: GetRespawnBeaconLocations" )
+	array<vector> result
+	return result
+}
+
+float function GetCustomIntroLength()
+{
+	return 0.0
+}
+
+
+// GetPlayerIsEmoting — now in sh_emotes.nut (S22)
+
+// === Banner Crafting ===
+array<entity> function GetCraftableTeamBanners( entity player )
+{
+	Warning( "STUB: GetCraftableTeamBanners" )
+	array<entity> bannerPlayers
+	return bannerPlayers
+}
+
+// === Shadow Army Gamemode ===
+bool function ShadowArmy_IsPlayerInShadowForm( entity player )
+{
+	Warning( "STUB: ShadowArmy_IsPlayerInShadowForm" )
+	return false
+}
+
+// === Freelance Systems ===
+bool function FreelanceSystemsAreEnabled()
+{
+	return GetCurrentPlaylistVarBool( "freelance_systems_enabled", false )
+}
+
+// === Freelance/PVE Systems ===
+void function SkitSystem_Init()
+{
+	Warning( "STUB: SkitSystem_Init" )
+}
+
+void function ObjectiveSystem_Init()
+{
+	Warning( "STUB: ObjectiveSystem_Init" )
+}
+
+void function EncounterSystem_Init()
+{
+	Warning( "STUB: EncounterSystem_Init" )
+}
+
+void function NPCGarbageCollection_InitForGameMode()
+{
+	Warning( "STUB: NPCGarbageCollection_InitForGameMode" )
+}
+
+void function PVELoot_InitForGameMode()
+{
+	Warning( "STUB: PVELoot_InitForGameMode" )
+}
+
+void function LTM_AnnouncementSplash( entity player )
+{
+	Warning( "STUB: LTM_AnnouncementSplash" )
+}
+
+int function Control_GetCurrentRank( entity player )
+{
+	Warning( "STUB: Control_GetCurrentRank" )
+	return 0
+}
+
+int function ShadowArmy_GetCurrentRank( entity player )
+{
+	Warning( "STUB: ShadowArmy_GetCurrentRank" )
+	return 0
+}
+
+bool function UseLTMPodiumBanner()
+{
+	return ( GetCurrentPlaylistVarString( "gamemode_logo", "BATTLE_ROYALE" ) == "LTM" )
+}
+
+bool function UseMixtapePodiumBanner()
+{
+	return ( GetCurrentPlaylistVarString( "gamemode_logo", "BATTLE_ROYALE" ) == "MIXTAPE" )
+}
+
+bool function VectorWithinBounds( vector v, float maxValue )
+{
+	return (fabs( v.x ) < maxValue && fabs( v.y ) < maxValue && fabs( v.z ) < maxValue)
+}
+
+void function GiveBasicSurvivalItems( entity player )
+{
+	Warning( "STUB: GiveBasicSurvivalItems" )
+}
+
+int function SortLowestInt( int a, int b )
+{
+	if ( a > b )
+		return 1
+	if ( a < b )
+		return -1
+	return 0
+}
+
+vector function SPL_GetRandomEndRingPosition_Slow()
+{
+	Warning( "STUB: SPL_GetRandomEndRingPosition_Slow" )
+	return <0, 0, 0>
+}
+
+// BroadcastCommsActionToTeam — now in sh_quickchat.gnut (S22)
+
+float function RedeployBalloon_GetSkydiveVelOverride()
+{
+	return GetCurrentPlaylistVarFloat( "redeploy_balloon_skydive_vel_override", 0.0 )
+}
+
+void function Control_PrintSkydiveDebug( entity player, string message )
+{
+	if ( IsValid( player ) )
+		printt( "R5DEV-429111: ", player, message )
+	else
+		printt( "R5DEV-429111: PlayerInvalid", message )
+}
+
+void function SetNV_FreefallIsFromPlane( entity player, bool newVal )
+{
+	Warning( "STUB: SetNV_FreefallIsFromPlane" )
+}
+
+void function MatchBehaviorPlayer_RecordDropInfo( entity player )
+{
+	Warning( "STUB: MatchBehaviorPlayer_RecordDropInfo" )
+}
+
+void function PutEntityInSomewhatSafeSpot( entity ent, entity referenceEnt1OrNull, entity referenceEnt2OrNull, vector targetOrigin, vector fallbackOrigin )
+{
+	#if SERVER
+	Warning( "STUB: PutEntityInSomewhatSafeSpot" )
+	if ( IsValid( ent ) )
+		ent.SetOrigin( targetOrigin )
+	#endif
+}
+
+void function StopAllSkydiveSounds( entity player )
+{
+	Warning( "STUB: StopAllSkydiveSounds" )
+}
+
+vector function CalcWorldToLocalOrigin_Entity( entity moveParent, vector worldPos )
+{
+	#if SERVER || CLIENT
+	if ( !IsValid( moveParent ) )
+		return worldPos
+
+	vector offset = worldPos - moveParent.GetOrigin()
+	vector forward = AnglesToForward( moveParent.GetAngles() )
+	vector right = AnglesToRight( moveParent.GetAngles() )
+	vector up = AnglesToUp( moveParent.GetAngles() )
+	return < offset.Dot( forward ), offset.Dot( right ), offset.Dot( up ) >
+	#else
+	return worldPos
+	#endif
+}
+
+int function ShGameModeExplore_GetPlanePassNumber()
+{
+	Warning( "STUB: ShGameModeExplore_GetPlanePassNumber" )
+	return 1
+}
+
+bool function IsValidArrayIndex( int index, int arrayLen )
+{
+	return index >= 0 && index < arrayLen
+}
+
+entity function HoverVehicle_CreateAndAddPlayers( vector pos, array<entity> players )
+{
+	#if SERVER
+	Warning( "STUB: HoverVehicle_CreateAndAddPlayers" )
+	entity mover = CreateScriptMover( "hover_vehicle_stub", pos )
+	return mover
+	#else
+	return players[0]
+	#endif
+}
+
+bool function DropPod_OnUse( entity airdrop, entity player, int useFlags )
+{
+	Warning( "STUB: DropPod_OnUse" )
+	return false
+}
+
+bool function isFreefallEnabled()
+{
+	return true
+}
+
+// PlayerIsInCombat — now in sh_quickchat.gnut (S22)
+
+void function DeregisterNavMesh_EntityMemory( entity ent )
+{
+	Warning( "STUB: DeregisterNavMesh_EntityMemory" )
+}
+
+void function RegisterNavMesh_EntityMemory( entity ent, int hullType )
+{
+	Warning( "STUB: RegisterNavMesh_EntityMemory" )
+}
+
+void function FR_Nessie_EnterZone( entity player, int zoneId )
+{
+	Warning( "STUB: FR_Nessie_EnterZone" )
+}
+
+void function OnProjectileCollision_weapon_deployable_crypto( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical )
+{
+	#if SERVER
+	OnProjectileCollision_weapon_deployable( projectile, pos, normal, hitEnt, hitBox, isCritical )
+	#endif
+}
+
+void function FakePhysicsThrow_NewTest( entity victim, entity obj1, entity obj2, vector vel )
+{
+	Warning( "STUB: FakePhysicsThrow_NewTest" )
+}
+
+bool function ClientCommand_Flowstate_AssignCustomCharacterFromMenu( entity player, array<string> args )
+{
+	Warning( "STUB: ClientCommand_Flowstate_AssignCustomCharacterFromMenu" )
+	return true
+}
+
+array<entity> function ReturnCarePackagesNewArray()
+{
+	Warning( "STUB: ReturnCarePackagesNewArray" )
+	array<entity> result
+	return result
+}
+
+void function SurvivalCommentary_HostAnnounce( int bucket, float delay = 0.0 )
+{
+	Warning( "STUB: SurvivalCommentary_HostAnnounce" )
+}
+
+int function GetRoundCommentaryBucket( int roundNumber )
+{
+	Warning( "STUB: GetRoundCommentaryBucket" )
+	return 0
+}
+
+void function SurvivalCommentary_KilledPlayerAnnounce( int bucket, entity player, float delay, string alias1, string alias2 )
+{
+	Warning( "STUB: SurvivalCommentary_KilledPlayerAnnounce" )
+}
+
+
+
+void function SkydiveEmoteProjector_CancelProjector( entity player )
+{
+	Warning( "STUB: SkydiveEmoteProjector_CancelProjector" )
+}
+
+
+bool function GoldenHorse_ModifyCarePackageSpawnDistance()
+{
+	Warning( "STUB: GoldenHorse_ModifyCarePackageSpawnDistance" )
+	return false
+}
+
+bool function GoldenHorse_SwordCarePackageEnabled()
+{
+	Warning( "STUB: GoldenHorse_SwordCarePackageEnabled" )
+	return false
+}
+
+void function DeleteCarepackagePerkLinks()
+{
+	Warning( "STUB: DeleteCarepackagePerkLinks" )
+}
+
+void function SetChampion( entity player )
+{
+	Warning( "STUB: SetChampion" )
+}
+
+void function Flowstate_CheckForLv4MagazinesAndRefillAmmo( entity player )
+{
+	Warning( "STUB: Flowstate_CheckForLv4MagazinesAndRefillAmmo" )
+}
+
+void function GenericOffhand_AddSunglasses( entity player )
+{
+	Warning( "STUB: GenericOffhand_AddSunglasses" )
+}
+
+void function ActivateGenericOffhand( entity player )
+{
+	Warning( "STUB: ActivateGenericOffhand" )
+}
+
+array<entity> function FS_GetWeaponsThatUseThisAmmo( entity player, string ammoRef )
+{
+	Warning( "STUB: FS_GetWeaponsThatUseThisAmmo" )
+	array<entity> result
+	return result
+}
+
+void function GrantPathfinderCooldownReduction( entity player )
+{
+	Warning( "STUB: GrantPathfinderCooldownReduction" )
+}
+
+bool function CheckPlayersIntersectingEntity( entity ent, float radius )
+{
+	Warning( "STUB: CheckPlayersIntersectingEntity" )
+	return false
+}
+
+void function HoverVehicle_WakeVehiclesIntersectingEntity( entity ent )
+{
+	Warning( "STUB: HoverVehicle_WakeVehiclesIntersectingEntity" )
+}
+
+float function Octane_GetPassiveRegenRate()
+{
+	return GetCurrentPlaylistVarFloat( "octane_health_regen_amount", 1.5 )
+}
+
+float function Octane_GetPassiveRegenDelay()
+{
+	return GetCurrentPlaylistVarFloat( "octane_health_regen_delay", 6.0 )
+}
+
+bool function Campfire_IsEnabled()
+{
+	return false
+}
+
+bool function Campfire_IsPlayerInCampfire( entity player )
+{
+	return false
+}
+
+void function BeginAOEHeal( entity player )
+{
+	Warning( "STUB: BeginAOEHeal" )
+}
+
+void function EndAOEHeal( entity player )
+{
+	Warning( "STUB: EndAOEHeal" )
+}
+
+void function EmitSoundOnEntityExceptToPlayers( entity soundEnt, array<entity> excludePlayers, string soundName )
+{
+	#if SERVER
+	Warning( "STUB: EmitSoundOnEntityExceptToPlayers" )
+	if ( excludePlayers.len() > 0 && IsValid( excludePlayers[0] ) )
+		EmitSoundOnEntityExceptToPlayer( soundEnt, excludePlayers[0], soundName )
+	#endif
+}
+
+string function ShortenDamageCallbackName( string name )
+{
+	return name
+}
+
+void function ShAmbientDialogue_Init()
+{
+	Warning( "STUB: ShAmbientDialogue_Init" )
+}
+
+void function AddCallback_OnPlayerReload( void functionref(entity) callback )
+{
+	Warning( "STUB: AddCallback_OnPlayerReload" )
+}
+
+bool function Respawn_Token_IsPlayerEliminated( entity player )
+{
+	Warning( "STUB: Respawn_Token_IsPlayerEliminated" )
+	return false
+}
+
+void function ForcedSpawn_Init()
+{
+	Warning( "STUB: ForcedSpawn_Init" )
+}
+
+void function SetPlayerEliminationCheck( bool functionref(entity) checkFunc )
+{
+	Warning( "STUB: SetPlayerEliminationCheck" )
+}
+
+void function SetPlayThreeMinuteMusic( bool shouldPlay )
+{
+	Warning( "STUB: SetPlayThreeMinuteMusic" )
+}
+
+void function SetTimelimitCompleteFunc( bool functionref() func )
+{
+	Warning( "STUB: SetTimelimitCompleteFunc" )
+}
+
+void function ObjectiveResourceSystem_Init()
+{
+	Warning( "STUB: ObjectiveResourceSystem_Init" )
+}
+
+void function SetCustomResolutionDuration( float duration )
+{
+	Warning( "STUB: SetCustomResolutionDuration" )
+}
+
+void function Sh_Rank_InitGameSummary()
+{
+	Warning( "STUB: Sh_Rank_InitGameSummary" )
+}
+
+void function AddCallback_OnPlayerReloadPressed( void functionref(entity) callback )
+{
+	Warning( "STUB: AddCallback_OnPlayerReloadPressed" )
+}
+
+void function SetEndRoundPlayerState( int state )
+{
+	Warning( "STUB: SetEndRoundPlayerState" )
+}
+
+void function AddCallback_BotRecordStart( void functionref(entity) callback )
+{
+	Warning( "STUB: AddCallback_BotRecordStart" )
+}
+
+void function AddCallback_BotPlaybackStart( void functionref(entity) callback )
+{
+	Warning( "STUB: AddCallback_BotPlaybackStart" )
+}
+
+void function AddCallback_OnClientConnectionLost( void functionref(entity) callback )
+{
+	Warning( "STUB: AddCallback_OnClientConnectionLost" )
+}
+
+// SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)
+void function PIN_EmoteUse( entity player, string emoteRef, vector pos, string action, ... ) { Warning( "STUB: PIN_EmoteUse" ) }
+
+bool function ShadowArmy_ShouldEnterBleedout( entity player )
+{
+	return true
+}
+
+void function ShadowArmy_StorePlayersOriginalCharacterSelection( entity player, ItemFlavor character )
+{
+	Warning( "STUB: ShadowArmy_StorePlayersOriginalCharacterSelection" )
+}
+
+bool function ShadowArmy_GetShouldLegendsSpawnOnGround_MatchStart()
+{
+	return false
+}
+
+int function ShadowArmy_GetNumRevSquadsForMatchStart()
+{
+	return 0
+}
+
+int function ShadowArmy_GetLegendSpawnGroupsNumber()
+{
+	return 1
+}
+
+array<vector> function ShadowArmy_GetLegendMatchStartSpawnLocations( int groupsNum )
+{
+	Warning( "STUB: ShadowArmy_GetLegendMatchStartSpawnLocations" )
+	array<vector> result
+	return result
+}
+
+float function ShadowArmy_GetLegendMatchStartSpawnRadius()
+{
+	return 0.0
+}
+
+bool function ShadowArmy_IsSquadReallyEliminated( int team )
+{
+	Warning( "STUB: ShadowArmy_IsSquadReallyEliminated" )
+	return false
+}
+
+void function Ranked_UpdateRankedScoreProgressForPlayer( entity player )
+{
+	Warning( "STUB: Ranked_UpdateRankedScoreProgressForPlayer" )
+}
+
+void function WeaponStatsHook_OnAssistCredited( entity player )
+{
+	Warning( "STUB: WeaponStatsHook_OnAssistCredited" )
+}
+
+void function WeaponStatsHook_OnDownEnemy( entity victim, entity attacker, var damageInfo )
+{
+	Warning( "STUB: WeaponStatsHook_OnDownEnemy" )
+}
+
+bool function Bleedout_GetShouldAlliancePlayerBleedout( entity player )
+{
+	return true
+}
+
+bool function CharacterSelect_CustomIsCharacterLockedForPlayer( ItemFlavor character, entity player )
+{
+	Warning( "WORKAROUND: CharacterSelect_CustomIsCharacterLockedForPlayer() called - not implemented" )
+	return false
+}
+
+void function MatchBehaviorPlayer_RecordPickInfo( entity player, ItemFlavor character )
+{
+	Warning( "STUB: MatchBehaviorPlayer_RecordPickInfo" )
+}
+
+void function RemoveCallback_OnClientConnected( void functionref(entity) callback )
+{
+	Warning( "STUB: RemoveCallback_OnClientConnected" )
+}
+
+#if SERVER
+float function GetGameStartTime()
+{
+	return 0.0
+}
+#endif
+
+void function SURVIVAL_ResetAllDoors()
+{
+	Warning( "STUB: SURVIVAL_ResetAllDoors" )
+}
+
+bool function POIPlayerSpawning_Exists()
+{
+	return false
+}
+
+void function POIPlayerSpawning_SpawnPlayers()
+{
+	Warning( "STUB: POIPlayerSpawning_SpawnPlayers" )
+}
+
+void function ForcedSpawn_SpawnAllPlayers()
+{
+	Warning( "STUB: ForcedSpawn_SpawnAllPlayers" )
+}
+
+array<vector> function NavMesh_GetClosestPoints( vector origin, int numPoints )
+{
+	Warning( "STUB: NavMesh_GetClosestPoints" )
+	array<vector> result
+	result.append( origin )
+	return result
+}
+
+// Highlight_SetGameModeEnemyHighlight — now in sh_highlight.gnut (S22)
+
+void function Lifesteal_PlayerDealtDamage( entity player, entity victim, entity weapon, int healthDamage, int shieldDamage, int absorbedDamage, int damageType )
+{
+	Warning( "STUB: Lifesteal_PlayerDealtDamage" )
+}
+
+bool function RespawnEquipped_DontResetInventory()
+{
+	return GetCurrentPlaylistVarBool( "respawn_equipped_dont_reset_inventory", false )
+}
+
+void function StopAllSoundsOnEntity( entity ent )
+{
+	Warning( "STUB: StopAllSoundsOnEntity" )
+}
+
+bool function Strikeout_IsPlayerRespawnDisabled( entity player )
+{
+	return false
+}
+
+bool function Sh_Respawn_Token_IsPlayerRespawnDisabled( entity player )
+{
+	return false
+}
+
+bool function SpawnGroupSkydive_IsSquadEliminated( int team )
+{
+	return false
+}
+
+void function Ranked_UpdateRankedScoreProgressForAllPlayers()
+{
+	Warning( "STUB: Ranked_UpdateRankedScoreProgressForAllPlayers" )
+}
+
+bool function IsTeamAlive( int team )
+{
+	#if SERVER
+	return GetPlayerArrayOfTeam_Alive( team ).len() > 0
+	#else
+	return false
+	#endif
+}
+
+void function Achievements_OnPlayerMatchParticipationEnded( entity player )
+{
+	Warning( "STUB: Achievements_OnPlayerMatchParticipationEnded" )
+}
+
+void function Cups_OnPlayerMatchParticipationEnded( entity player )
+{
+	Warning( "STUB: Cups_OnPlayerMatchParticipationEnded" )
+}
+
+bool function Ranked_HasFinishedProvisionalMatches( entity player )
+{
+	return true
+}
+
+bool function RankedTrials_PlayerHasIncompleteTrial( entity player )
+{
+	return false
+}
+
+ItemFlavor function RankedTrials_GetAssignedTrial( entity player )
+{
+	Warning( "STUB: RankedTrials_GetAssignedTrial" )
+	ItemFlavor dummy
+	return dummy
+}
+
+var function MMR_GetInteractionsForPlayer( entity player, int functionref(entity) rankFunc )
+{
+	Warning( "STUB: MMR_GetInteractionsForPlayer" )
+	return null
+}
+
+void function SendPlayerMatchResult( entity player )
+{
+	Warning( "STUB: SendPlayerMatchResult" )
+}
+
+int function GetPlayerGameDuration( entity player )
+{
+	return int( Time() )
+}
+
+bool function SmokeTest_IsActive()
+{
+	return false
+}
+
+// Waypoint_GetFriendlyThatPingedEnt — now in sh_waypoints.gnut (S22)
+
+bool function TitanSword_ActiveWeaponIsTitanSword( entity player )
+{
+	Warning( "STUB: TitanSword_ActiveWeaponIsTitanSword" )
+	return false
+}
+
+bool function IsLootRoundBased()
+{
+	Warning( "STUB: IsLootRoundBased" )
+	return false
+}
+
+// Seeded Fisher-Yates shuffle using SDK's seeded random functions
+void function LiveAPI_SendInventoryAction( int eventType, entity player, string ref, entity ornull weapon = null, int count = 0 )
+{
+	Warning( "STUB: LiveAPI_SendInventoryAction" )
+}
+
+void function TrackingVision_CreatePOIForDroppedLoot( entity pickup, int lootType, string ref, vector origin, int team, entity player )
+{
+	Warning( "STUB: TrackingVision_CreatePOIForDroppedLoot" )
+}
+
+void function WeaponStatsHook_OnPlayerDropMainWeapon( entity player, entity weapon )
+{
+	Warning( "STUB: WeaponStatsHook_OnPlayerDropMainWeapon" )
+}
+
+void function LiveAPI_SendAmmoChangedEvent( entity player, int type, int count, int oldCount )
+{
+	Warning( "STUB: LiveAPI_SendAmmoChangedEvent" )
+}
+
+bool function GetCryptoTTAssetsToPrecache( array<string> models, array<string> particles )
+{
+	Warning( "STUB: GetCryptoTTAssetsToPrecache" )
+	return false
+}
+
+bool function GetLifelineTTAssetsToPrecache( array<string> models, array<string> particles )
+{
+	Warning( "STUB: GetLifelineTTAssetsToPrecache" )
+	return false
+}
+
+bool function RemoteDeathboxInteractAllowTakingArmor()
+{
+	Warning( "STUB: RemoteDeathboxInteractAllowTakingArmor" )
+	return true
+}
+
+bool function TitanSword_Super_IsActive( entity player )
+{
+	Warning( "STUB: TitanSword_Super_IsActive" )
+	return false
+}
+
+bool function TitanSword_DamageSourceIsTitanSword( int damageSourceId )
+{
+	Warning( "STUB: TitanSword_DamageSourceIsTitanSword" )
+	return false
+}
+
+bool function TitanSword_Slam_DeathboxOverride( entity box, entity attacker, entity playerOwner )
+{
+	Warning( "STUB: TitanSword_Slam_DeathboxOverride" )
+	return false
+}
+
+// Get a random element from an array using a seeded RNG
+var function ArrayGetRandomSeeded( array arr, int seed )
+{
+	var rngSeed = CreateRandomSeed( seed )
+	int idx = RandomIntRangeSeeded( rngSeed, 0, arr.len() )
+	return arr[idx]
+}
+
+void function ArrayRandomizeSeeded( array arr, int seed )
+{
+	var rngSeed = CreateRandomSeed( seed )
+	for ( int i = arr.len() - 1; i > 0; i-- )
+	{
+		int j = RandomIntRangeInclusiveSeeded( rngSeed, 0, i )
+		var temp = arr[i]
+		arr[i] = arr[j]
+		arr[j] = temp
+	}
+}
+
+
+
+
+void function SurvivalRank_ProcessParticiation( entity killer, entity victim )
+{
+	Warning( "STUB: SurvivalRank_ProcessParticiation" )
+}
+
+void function CheckForAndTrySetEliminationModeWinner()
+{
+	Warning( "STUB: CheckForAndTrySetEliminationModeWinner" )
+}
+
+
+
+
+
+
+
+array<vector> function ShuffleVectorArray( array<vector> arr )
+{
+	array<vector> result = clone arr
+	for ( int i = result.len() - 1; i > 0; i-- )
+	{
+		int j = RandomInt( i + 1 )
+		vector temp = result[i]
+		result[i] = result[j]
+		result[j] = temp
+	}
+	return result
+}
+
+
+
+
+
+array<entity> function AirdropExtravaganza_GetClusterEntities()
+{
+	Warning( "STUB: AirdropExtravaganza_GetClusterEntities" )
+	array<entity> result
+	return result
+}
+
+array<entity> function AirdropExtravaganza_GetTrackedAirdropPods()
+{
+	Warning( "STUB: AirdropExtravaganza_GetTrackedAirdropPods" )
+	array<entity> result
+	return result
+}
+
+void function AirdropExtravaganazaCleanupPod( entity pod, float delay = 0.0 )
+{
+	Warning( "STUB: AirdropExtravaganazaCleanupPod" )
+}
+
+

@@ -367,7 +367,7 @@ void function OnWeaponModChange_Car( entity weapon, string mod, bool modAdded )
 			SetItemSpawnSource( ammoDrop, eSpawnSource.PLAYER_DROP, player )
 
 			vector vel = AnglesToForward( player.EyeAngles() ) * 100
-			FakePhysicsThrow_Retail( player, ammoDrop, vel, true )
+			FakePhysicsThrow( player, ammoDrop, vel, true )
 		}
 
 		if ( modAdded )

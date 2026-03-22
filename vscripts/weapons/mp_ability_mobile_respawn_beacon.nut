@@ -764,7 +764,7 @@ void function RespawnUserTeam_Mobile( entity ent, entity playerUser, ExtendedUse
 	foreach ( child in childrenToDrop )
 	{
 		if ( IsValid( child ) )
-			FakePhysicsThrow_Retail( child.GetOwner(), child, <0, 0, 0>, false )
+			FakePhysicsThrow( child.GetOwner(), child, <0, 0, 0>, false )
 	}
 
 

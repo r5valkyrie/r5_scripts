@@ -645,7 +645,7 @@ function MakeDroneShield( drone, owner )
 	vortexSphere.e.shieldWallFX = shieldWallFX
 	SetVortexSphereShieldWallCPoint( vortexSphere, cpoint )
 
-	entity mover = CreateScriptMover()
+	entity mover = CreateScriptMover("")
 	mover.SetOrigin( owner.GetOrigin() )
 	mover.SetAngles( owner.GetAngles() )
 

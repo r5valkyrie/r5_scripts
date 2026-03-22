@@ -414,6 +414,8 @@ void function RemoteFunctions_Init_Begin()
 	// ScriptRegisterNetworkedVariable( "skyDiveTrailOverrideIndex", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_EventNotification" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateHudWeaponData", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateHudWeaponDataNoEntity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayMatchEndMusic" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateOffhandRuis" )
 	
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_BLEEDOUT_ShowWoundedMarker" ) //Audit 2-22-2025 unused
@@ -540,7 +542,7 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariable( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
 
 	if( Gamemode() == eGamemodes.SURVIVAL || Gamemode() == eGamemodes.ARENAS )
-		ScriptRemote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", -1, 127, "int", EHANDLE_MIN, EHANDLE_MAX, "int", 0, 5001, "int", 0, INT_MAX, "int", -1, 5001, "int", 0, 9999, "int", 0, 9999 )
+		ScriptRemote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", -1, 127, "int", EHANDLE_MIN, EHANDLE_MAX, "int", 0, 5001, "int", 0, INT_MAX, "int", -1, 5001, "int", 0, 9999, "int", 0, 9999, "int", 0, 9999, "int", 0, 9999, "bool", "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX )
 
 	if ( IsCausticTTEnabled() == true )
 		ScriptRemote_RegisterClientFunction( "ServerToClient_UpdateItem", "entity" )
@@ -642,13 +644,15 @@ void function RemoteFunctions_Init_Begin()
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SurvivalHint", "int", 0, 11 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_NewKillLeader", "entity", "int", 0, 999 )
+	ScriptRegisterNetworkedVariable( "killLeader", SNDC_GLOBAL, SNVT_ENTITY )
+	ScriptRegisterNetworkedVariable( "anonymizePlayerName", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_HighlightedPlayerKilled", "entity", "entity", "int", 0, 17 )
 	
 	if( Gamemode() == eGamemodes.SURVIVAL || Gamemode() == eGamemodes.ARENAS )
 	{
 		ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_PathfinderSurveyNotifications", "entity", "int", 0, 9 )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_CreateBeaconWorldIcon", "entity", "entity" )
-		ScriptRemote_RegisterClientFunction( "ServerCallback_SUR_PingMinimap", "vector", -1.0, 1.0, 32, "float", 0.0, 300.0, 8, "float", 1.0, 5000.0, 8, "float", 1.0, 5000.0, 8, "int", 0, 2047 )
+		ScriptRemote_RegisterClientFunction( "ServerCallback_SUR_PingMinimap", "vector", -1.0, 1.0, 32, "float", 0.0, 300.0, 8, "float", 1.0, 5000.0, 8, "float", 1.0, 5000.0, 8, "int", 0, 2047, "float", 0.0, 10.0, 8, "float", 0.0, 10.0, 8, "int", 0, 15 )
 	}
 
 	//Seer
@@ -680,15 +684,15 @@ void function RemoteFunctions_Init_Begin()
 			RegisterNetworkedVariableChangeCallback_int( "FSDM_GameState", FSCTF_GameStateChanged )
 		}
 
-		RegisterNetworkedVariableChangeCallback_bool( "playerInPlane", PlayerPlaneStatusChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "isJumpmaster", JumpmasterStatusChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "isJumpingWithSquad", PlayerPlaneStatusChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "freefallActive", PlayerFreefallActiveChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "freefallEmoteAvailable", PlayerFreefallEmoteAvailableChanged )
-		RegisterNetworkedVariableChangeCallback_bool( "skydiveFreelookActive", SkydiveFreelookActiveChanged )
-		RegisterNetworkedVariableChangeCallback_ent( "skydiveFollowPlayer", SkydiveFollowPlayerChanged )
+		RegisterNetVarBoolChangeCallback( "playerInPlane", PlayerPlaneStatusChanged )
+		RegisterNetVarBoolChangeCallback( "isJumpmaster", JumpmasterStatusChanged )
+		RegisterNetVarBoolChangeCallback( "isJumpingWithSquad", PlayerPlaneStatusChanged )
+		RegisterNetVarBoolChangeCallback( "freefallActive", PlayerFreefallActiveChanged )
+		RegisterNetVarBoolChangeCallback( "freefallEmoteAvailable", PlayerFreefallEmoteAvailableChanged )
+		RegisterNetVarBoolChangeCallback( "skydiveFreelookActive", SkydiveFreelookActiveChanged )
+		RegisterNetVarEntChangeCallback( "skydiveFollowPlayer", SkydiveFollowPlayerChanged )
 		RegisterNetworkedVariableChangeCallback_int( "healingKitTypeCurrentlyBeingUsed", OnInUseHealingKitTypeChanged )
-		RegisterNetworkedVariableChangeCallback_int( "selectedHealthPickupType", OnHealthPickupTypeChanged )
+		RegisterNetVarIntChangeCallback( "selectedHealthPickupType", OnHealthPickupTypeChanged )
 		RegisterNetworkedVariableChangeCallback_int( "playerPrimaryWeapon0", OnPlayerEquippedWeaponChanged )
 		RegisterNetworkedVariableChangeCallback_int( "playerPrimaryWeapon1", OnPlayerEquippedWeaponChanged )
 	#endif
@@ -726,7 +730,7 @@ void function RemoteFunctions_Init_Begin()
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_ScreenShake", "float", 0.0, 20.0, "float", 0.001, 255.0, 16, "vector", -32000.0, 32000, 32 )  //Audit 2-22-2025 , not currently called.
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateOverheadIconForNPC", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 not currently used
 	
-	ScriptRemote_RegisterClientFunction( "HandleBroadcastCommsAction", "entity", "int", 0, eCommsAction._count, "entity", "vector", -32000.0, 32000.0, 32, "int", 0, (1 << eCommsFlags._flagCount) )
+	ScriptRemote_RegisterClientFunction( "HandleBroadcastCommsAction", "entity", "int", 0, eCommsAction._count, "entity", "vector", -32000.0, 32000.0, 32, "int", 0, (1 << eCommsFlags._flagCount), "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "float", 0.0, FLT_MAX, 32, "int", -1, INT_MAX )
 	ScriptRemote_RegisterClientFunction( "PerformQuip", "entity", "int", 0, INT_MAX ) //Audit 2-22-2025 todo, revisit max quip
 
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_TitanEmbark" ) // used purely to play a single line of dialog
@@ -833,7 +837,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterUntypedFunction_deprecated( "Tracker_ResyncStatForPlayer" )	
 		
 	//Lobby
-	Remote_RegisterServerFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason", "string" )
+	Remote_RegisterServerFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason" )
 	Remote_RegisterServerFunction( "ClientCallback_ViewingMainLobbyPage" )
 	
 	

@@ -128,7 +128,7 @@ void function GuyZiplinesToGround( entity guy, table Table )
 
 	expect vector( dropPos )
 
-	//DebugDrawLine( guy.GetOrigin(), dropPos, COLOR_RED, true, 8.0 )
+	//DebugDrawLine( guy.GetOrigin(), dropPos, <255, 0, 0>, true, 8.0 )
 
 	vector attachOrigin = ship.GetAttachmentOrigin( Table.attachIndex )
 	vector nodeOrigin = dropPos
@@ -319,7 +319,7 @@ void function GuyRidesZiplineToGround( entity guy, table zipline, table e, vecto
 		if ( Time() >= endTime )
 			return
 
-		DebugDrawLine( guy.GetOrigin(), nodeOrigin, COLOR_RED, true, 0.15 )
+		//DebugDrawLine( guy.GetOrigin(), nodeOrigin, <255, 0, 0>, true, 0.15 )
 		DebugDrawText( nodeOrigin, ( endTime - Time() ) + "", true, 0.15 )
 		WaitFrame()
 	}*/
@@ -399,7 +399,7 @@ void function WaitUntilZiplinerNearsGround( entity guy, table zipline )
 		end += forward * dropDist
 		//TraceResults result = TraceLine( start, end, guy )
 		result = TraceHull( start, end, mins, maxs, guy, TRACE_MASK_NPCSOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
-		//DebugDrawLine( start, end, COLOR_RED, true, 0.2 )
+		//DebugDrawLine( start, end, <255, 0, 0>, true, 0.2 )
 
 		if ( result.fraction < 1.0 )
 			break
@@ -412,7 +412,7 @@ void function WaitUntilZiplinerNearsGround( entity guy, table zipline )
 		zipForward *= 250
 
 		end = start + zipForward
-		//DebugDrawLine( start, end, COLOR_RED, true, 0.1 )
+		//DebugDrawLine( start, end, <255, 0, 0>, true, 0.1 )
 
 		//result = TraceLine( start, end, guy )
 		//DebugDrawLine( start, end, <255, 150, 0>, true, 0.2 )
@@ -507,7 +507,7 @@ void function ZiplineRetracts( table zipline )
 		newMidPoint = mid * ( 1 - midRetractProgress ) + newMidPoint * midRetractProgress
 		//addOffset = mid_z_offset * ( 1 - midRetractProgress )
 		//newMidPoint.z -= addOffset
-		//DebugDrawLine( zipline.mid.GetOrigin(), newMidPoint, COLOR_RED, true, 0.2 )
+		//DebugDrawLine( zipline.mid.GetOrigin(), newMidPoint, <255, 0, 0>, true, 0.2 )
 
 		if ( !IsValid( zipline.mid ) )
 		{
@@ -648,13 +648,13 @@ function GetHookOriginFromNode( vector origin, vector nodeOrigin, vector attachO
 	vector attachEnd = attachOrigin + dropVec * ( dropDist + 1500 ) // some buffer
 	TraceResults zipTrace = TraceLine( attachOrigin, attachEnd, null, TRACE_MASK_NPCWORLDSTATIC )
 
-	//DebugDrawLine( attachOrigin, zipTrace.endPos, COLOR_GREEN, true, 5.0 )
-	//DebugDrawLine( zipTrace.endPos, attachEnd, COLOR_RED, true, 5.0 )
+	//DebugDrawLine( attachOrigin, zipTrace.endPos, <0, 255, 0>, true, 5.0 )
+	//DebugDrawLine( zipTrace.endPos, attachEnd, <255, 0, 0>, true, 5.0 )
 
 	// zipline didn't connect with anything
 	if ( zipTrace.fraction == 1.0 )
 	{
-		//DebugDrawLine( attachOrigin, attachEnd, COLOR_YELLOW, true, 5.0 )
+		//DebugDrawLine( attachOrigin, attachEnd, <255, 255, 0>, true, 5.0 )
 		return null
 	}
 

@@ -229,7 +229,7 @@ var function OnWeaponPrimaryAttack_weapon_3030( entity weapon, WeaponPrimaryAtta
 	return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
 }
 
-void function OnProjectileCollision_weapon_3030( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical, bool isPassthrough )
+void function OnProjectileCollision_weapon_3030( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical )
 {
 
 

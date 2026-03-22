@@ -27,13 +27,20 @@ void function OnProjectileCollision_weapon_grenade_electric_smoke( entity projec
 	if ( projectile.GrenadeHasIgnited() )
 		return
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 	
 	projectile.SetModel( $"mdl/dev/empty_model.rmdl" )
 	bool result = PlantStickyEntity( projectile, collisionParams, <90.0, 0.0, 0.0> )

@@ -551,7 +551,7 @@ void function TropicsWildlife_OnDeathFieldStartShrink( table<int,DeathFieldData>
 
 	s_externalWildlifeCampDatas.clear()
 	array<WildlifeCampData> campDatas = clone s_activeWildlifeCampDatas
-	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter()
+	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter( 0 )
 	float roundEndRadius = SURVIVAL_Server_GetNextDeathFieldEndRadius()
 	foreach ( WildlifeCampData campData in s_activeWildlifeCampDatas )
 	{
@@ -642,7 +642,7 @@ void function TropicsWildlife_OnSurvivalDeathFieldStageChanged(int stage, float 
 	}
 
 	array<WildlifeCampData> campDatas = clone s_activeWildlifeCampDatas
-	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter()
+	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter( 0 )
 	float roundRadius = SURVIVAL_GetDeathFieldCurrentRadius()
 	foreach ( WildlifeCampData campData in s_activeWildlifeCampDatas )
 	{
@@ -1088,7 +1088,7 @@ int function ProwlerDenOnAdditionalSpawnCheckCallback( ProwlerDenData denData, b
 			// if the Prowler Den is covered by the ring and its not "red" i.e.: has an extended assault radius
 			if ( !isForced && campData.limitProwlerAssaultRadius )
 			{
-				vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter()
+				vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter( 0 )
 				float curDeathFieldRadius = SURVIVAL_GetDeathFieldCurrentRadius()
 				float distance = Distance2D( denData.denEntity.GetOrigin(), nextCircleCenter )
 				if ( distance > curDeathFieldRadius )

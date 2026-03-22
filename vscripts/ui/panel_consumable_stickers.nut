@@ -127,7 +127,7 @@ void function ConsumableStickersPanel_Update( var panel )
 			RuiDestroyNestedIfAlive( rui, "badge" )
 			RuiSetBool( rui, "displayQuality", true )
 
-			var nestedRui = CreateNestedRuiForSticker( rui, stickerItem )
+			var nestedRui = CreateNestedRuiForSticker( rui, "badge", stickerItem )
 
 			ToolTipData toolTipData
 			toolTipData.titleText = Localize( ItemFlavor_GetLongName( stickerItem ) )

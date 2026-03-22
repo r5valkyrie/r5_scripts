@@ -73,7 +73,7 @@ entity function AttachBallLightningToProp( entity prop, entity owner, int damage
 
 entity function CreateBallLightning( entity owner, int damageSourceId, vector origin, vector angles )
 {
-	entity ballLightning = CreateScriptMover( origin, angles )
+	entity ballLightning = CreateScriptMover( "", origin, angles )
 	ballLightning.SetOwner( owner )
 	SetTeam( ballLightning, owner.GetTeam() )
 

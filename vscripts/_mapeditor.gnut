@@ -1185,7 +1185,7 @@ void function ReMapCreateSpeedBoost( vector spawnPos, vector color, float respaw
     instance.boostDuration = duration
     instance.fadeTime = fadeTime
 
-    instance.boost = CreateScriptMover( instance.spawnPos, ZERO_VECTOR )
+    instance.boost = CreateScriptMover( "", instance.spawnPos, ZERO_VECTOR )
 
     // Boost
     for ( int j = 0; j < 5; j++ )
@@ -1279,7 +1279,7 @@ void function PlayFxOnPlayer( entity player, float time )
 // Animated Camera
 entity function ReMapCreateCamera( vector origin, vector angles, float angleOffset, float maxLeft, float maxRight, float rotationTime, float transitionTime, bool addToArray = false )
 {
-    entity script_mover = CreateScriptMover( origin, ZERO_VECTOR )
+    entity script_mover = CreateScriptMover( "", origin, ZERO_VECTOR )
     entity camera_base = MapEditor_CreateProp( CAMERA_BASE_MDL, origin, ZERO_VECTOR )
     entity camera_mover = CreateScriptMoverModel( CAMERA_MDL, origin + < 16, 0, 8 >, ZERO_VECTOR + < angleOffset, 0, 0 >, 6 )
 

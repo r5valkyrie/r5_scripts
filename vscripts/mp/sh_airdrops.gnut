@@ -1,46 +1,199 @@
 global function Sh_Airdrops_Init
+global function GetAirdropPingColorIDFromRarityTier
+global function GetAirdropForHitEnt
+global function OnAirdropUse
 
 #if SERVER
-global function AirdropSpawnThink
-global function AirdropForRound
-#endif
+global function SURVIVAL_CalculateAirdropPositions
 
-global function GetAirdropForHitEnt
+global function Survival_GetPregameAirdropDatas
+global function Survival_GetAirdropDatas
+global function Survival_GetPreviousAirdrops
+global function Survival_CreateAirDropData
+global function Survival_CreatePregameAirDropData
+global function Survival_ClearAirDropData
+global function Survival_LaunchAirdropsFromAirdropData
+global function DetermineAirdropContents
+global function AirdropItems
+global function AirdropForRound
+global function GetContentsForRound
+global function AirdropLogic
+global function AirdropPodRemoveLocationMarker
+global function DropPodLocationMarker
+global function DropPodLocationBeam
+
+global function Survival_AddCallback_OnAirdropOpened
+global function Survival_AddCallback_OnAirdropLanded
+global function Survival_AddCallback_OnAirdropLaunched
+global function Survival_AddCallback_OnAirdropRoundMessaging
+global function Survival_AddCallback_OnAirdropRoundLaunchRequest
+global function Survival_AddCallback_OnAirdropPositionsDetermined
+
+global function SpawnLootInDropPod
+global function DroppodDoorThink
+global function IssueAirdropPing
+global function DetermineAirdropTier
+
+global function RemoteOpenAirdrop
+
+global function DEV_AirdropPrint // cleans up extra #if DEVs
+
+#if DEVELOPER
+global function DEV_DrawAirdropLocations
+global function DEV_DrawAirdropLocationsNearPlayer_Thread
+global function DEV_CallAirdropAtCrosshairLocation
+global function DEV_CallAirdropNearPlayer
+global function DEV_LaunchAirdropsForRound
+global function DEV_LaunchAirdropsForAllRounds
+global function DEV_LaunchCraftersForRound
+global function DEV_LaunchCraftersForAllRounds_Thread
+global function DEV_AirdropPrintOn
+global function DEV_SimulateMultipleAirdrops
+global function DEV_AddAirdropEntity
+global function DEV_DeleteAirdropEntities
+global function CodeCallback_GetAirdropPointNavNodeIndex
+global function CodeCallback_IsAirdropPointValid
+#endif // DEVELOPER
+
+#endif // SERVER
 
 const bool DEBUG_DROP_POINTS = false
 
 const string SOUND_CARE_PACKAGE_MARKER = "Survival_LootPod_Beacon_Marker"
 const string SOUND_CARE_PACKAGE_STEAM = "Survival_LootPod_SteamSizzle"
 
-const string CARE_PACKAGE_ANIMATION = "droppod_loot_drop"
-global const asset DROPPOD_SPAWN_FX = $"P_ar_loot_drop_point"
+global const string CARE_PACKAGE_ANIMATION = "droppod_loot_drop"
+global const float TIME_BEFORE_DROPPING_AIRDROPS = 3.0
+global const float MIN_AIRDROP_DISPLACEMENT = 5000.0
 
 const float CARE_PACKAGE_OPEN_TIME = 6.0
 const float CARE_PACKAGE_LIFELINE_OPEN_TIME = 1.0
 
-global const float AIRDROP_ANGLE_DEVIATION = 180.0
+const int AIRDROP_LARGE_DROP_COUNT = 4 //for high counts of airdrops in a round, some airdrop rules need to be changed
+const float AIRDROP_IGNORE_RING_MAX_DROP_RADIUS = 58000.0
+const float AIRDROP_IGNORE_RING_STD_DROP_RADIUS = 40000.0
+const float AIRDROP_IGNORE_RING_MIN_DROP_RADIUS = 20000.0
 
-global struct AirdropData
+const vector AIRDROP_LOOT_OFFSET_HELMET 		= <-5, 0, 0>
+const vector AIRDROP_LOOT_OFFSET_BACKPACK 		= <-10, 0, 0>
+const vector AIRDROP_LOOT_OFFSET_HEALING 		= <-10, 0, 0>
+const vector AIRDROP_LOOT_OFFSET_ARMOR 			= <-13, 0, 0>
+const vector AIRDROP_LOOT_OFFSET_INCAPSHIELD 	= <-5, 0, 0>
+const vector AIRDROP_LOOT_OFFSET_AMMO 			= <-3, 0, 0>
+const vector AIRDROP_LOOT_OFFSET_WEAPON 		= <-4, 8, -8>
+const vector AIRDROP_LOOT_OFFSET_GADGET			= <-5, 0, 0>
+const vector AIRDROP_LOOT_OFFSET_ATTACHMENT		= < 0, 0, 0>
+
+const string AIRDROP_MOVER_SCRIPTNAME = "airdrop_mover"
+
+// Special Chevrex skin for Care Packages, will also display a custom holo effect on top of the package when used
+global const int CHEVREX_AIRDROP_SKIN_INDEX = 2
+const CHEVREX_AIRDROP_HOLOGRAM_VFX = $"P_workbench_chev"
+const vector CHEVREX_AIRDROP_HOLOGRAM_VFX_COL = <0, 255, 198>
+
+global enum eAirdropRingArea
 {
-	int           dropCircle
-	int           dropCount
-	float         preWait
-	array<vector> originArray
-	array<vector> anglesArray
-	string        type = "titan"
-	array< array<string> > contents
-	array< array<string> > functionref(int) optionalGetContentsFunc
-	float minDelayBetweenPods = 3.0
-	float maxDelayBetweenPods = 5.0
-	string animation = CARE_PACKAGE_ANIMATION
+	IGNORE_RING, 			//ring location and size is completely ignored when placing airdrops
+	PREVIOUS_RING, 			//airdrops can spawn anywhere in the previous round's ring center/radius
+	CURRENT_RING,	 		//airdrops can spawn only in this round's ring center/radius (default behavior)
+
+	_count
 }
 
-global array<AirdropData> calculatedAirdropData
+global enum eAirdropSpeed
+{
+	INSTANT, 	//airdrop spawns immediately on the ground - should only be used before the game begins, or in debug
+	FAST, 		//airdrop drops without delays as defined in playlist
+	STANDARD 	//airdrop uses delays as defined in playlist
+}
+
+global enum eAirdropType
+{
+	STANDARD, 				//normal airdrops
+	CHARACTER_CAREPACKAGE,	//"care package" airdrops called down by player characters
+                
+	CRAFTING_REPLICATOR,	//crafting bench clusters
+      
+
+                        
+                 
+                              
+
+	_count
+}
+
+// 2.11.20 Cleanup of AirdropItems function
+global struct AirdropItemsOptionalInfo
+{
+	string animationName 			= CARE_PACKAGE_ANIMATION																// the animation for  the airdrop pod to play.
+	string targetName 				= CARE_PACKAGE_TARGETNAME																// basically an identifier for player-driven Airdrops (Lifeline)
+	entity owner 					= null
+	int team						= 0
+	int skin 						= 0																						// skin index for the drop-pod model
+	string sourceWeaponClassname 	= ""																					// if a player use an ability (a weapon) to fire off an airdrop, this should be the name of the weapon
+	int realm 						= -1																					// the realm of the airdrop. -1 is the gameplay realm for a normal game. Used in the firing range.
+	bool animatePod 				= true																					// whether or not the airdrop actually animates (true) or simply appears on the ground (false)
+	bool forceDefaultColor 			= false																					// forces the default color scheme
+	array< array<string> > functionref( AirdropItemsOptionalInfo ) delayedContentFunc = null								// function used to determine loot at the last possible valid moment (when the airdrop actually lands). Used for Lifeline.
+}
+
+// Definition of airdrop "round": a set of one or more airdrops that drop in association of airdrop round
+global struct AirdropRoundData
+{
+	int                                     dropCircle																		// the "round", based on the ring/deathfield index
+	int                                     dropCount																		// number of airdrops in the set
+	float                                   preWait																			// time to wait within the round before beginning to launch the set
+	array<int>                           	rarityArray																		// rarity level of individual airdrops in the set
+	array<vector>                           originArray																		// locations of individual airdrops in the set
+	array< array<vector> > 					clusterOriginArray																// location of airdrop "clusters" for the Extravaganzza LTM/Takeover
+	array<vector>                           anglesArray																		// angles of individual airdrops in the set
+	array< array<string> >                  contents																		// loot groups for all airdrops in this set
+	array< array< array<string> > >         contentsArray																	// actual loot groups/refs of individual airdrops in the set
+	array< array<string> > functionref(int) optionalGetContentsFunc
+	int                                     airdropRingArea = eAirdropRingArea.CURRENT_RING									// valid area where the set will drop based on ring/deathfield status (see eAirdropRingArea)
+	int										airdropSpeed = eAirdropSpeed.STANDARD											// "speed" at which all airdrops in the set will be launched (see eAirdropSpeed)
+	bool									airdropRadiusOverrideEnabled = false
+	float									airdropRadiusOverride = AIRDROP_IGNORE_RING_STD_DROP_RADIUS
+	float									airdropRadiusOverride_LargeCount_Inner = AIRDROP_IGNORE_RING_MIN_DROP_RADIUS
+	float									airdropRadiusOverride_LargeCount_Outer = AIRDROP_IGNORE_RING_MAX_DROP_RADIUS
+	float                                   minDelayBetweenPods = 3.0														// min delay between launching individual airdrops in the set
+	float                                   maxDelayBetweenPods = 5.0														// max delay between launching individual airdrops in the set
+	string                                  animation = CARE_PACKAGE_ANIMATION												// animation of all airdrops in the set
+	float									animationDuration
+	bool									launched = false																// whether or not the airdrop set has begun to launch
+	float 									delayBetweenPods
+}
+
+struct ReferenceStruct
+{
+	float returnedFloat
+}
 
 struct
 {
 	#if SERVER
+		array<AirdropRoundData>          	pregameAirdropData
+		array<AirdropRoundData>          	airdropData
+		array<vector>                     	previousAirdrops
 
+		int airdropCircleCalcProgress = -1
+
+		bool airdropRarityColorEnabled
+
+		array< void functionref( entity, entity ) > Callbacks_OnAirdropOpened
+		array< void functionref( entity, vector ) > Callbacks_OnAirdropLaunched
+		array< void functionref( entity, vector ) > Callbacks_OnAirdropLanded
+		array< void functionref( AirdropRoundData, int ) > Callbacks_OnAirdropRoundMessaging
+		array< void functionref( AirdropRoundData, int ) > Callbacks_OnAirdropRoundLaunchRequest
+		array< void functionref() > Callbacks_OnAirdropPositionsDetermined
+		#if DEVELOPER
+			bool devPrintOn = false
+			array< vector > previousDevAirdrops
+			table< int, int > stageToAmountTable
+			array< entity > devAirdrops = []
+		#endif
+
+		table< entity, entity > dropPodToVFXEntityTable // Keep track of VFX created on airdrops so we can clean them up in case the air drop gets destroyed
 	#endif
 
 } file
@@ -49,135 +202,34 @@ void function Sh_Airdrops_Init()
 {
 	RegisterSignal( "OpenDroppod" )
 	RegisterSignal( "DroppodRemoveLocationMarker" )
+	PrecacheScriptString( CARE_PACKAGE_SCRIPTNAME )
+	PrecacheScriptString( AIRDROP_MOVER_SCRIPTNAME )
 
 	#if CLIENT
 		AddCreateCallback( "prop_dynamic", OnAirdropCreated )
 	#elseif SERVER
-        AddSpawnCallback( "prop_dynamic", OnAirdropCreated )
-    #endif
-    
-}
-
-#if SERVER
-void function AirdropSpawnThink()
-{
-    int curStage = SURVIVAL_GetCurrentDeathFieldStage()
-    int prevStage = curStage
-
-    while (true)
-    {
-        curStage = SURVIVAL_GetCurrentDeathFieldStage()
-        if( curStage <= prevStage )
-        {
-            WaitFrame()
-            continue
-        }
-
-        printt("Advanced Stage! ", curStage)
-        prevStage = curStage
-        printt( "Total Data: ", calculatedAirdropData.len() )
-
-        foreach( data in calculatedAirdropData )
-        {
-            if( data.dropCircle != curStage )
-                continue
-
-            printt("Matched a stage!")
-                
-            // Wait for ring to start shrinking
-            while( !SURVIVAL_GetDeathFieldShrinking() )
-                WaitFrame()
-
-            // Got data for this stage so let's start to spawn the airdrops
-            int numAirdropsInData = data.dropCount
- 
-            // Must wait for preWait to expire before running spawns
-            wait data.preWait
-
-            // Play the announcement
-            AddSurvivalCommentaryEvent( eSurvivalEventType.CARE_PACKAGE_DROPPING )
-
-            for( int i = 0; i < numAirdropsInData; i++ )
-            {
-                printt( "Spawned an airdrop! (", i, ") This dropcircle is ", data.dropCircle, " and there are ", numAirdropsInData, " this round." )
-                entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( DROPPOD_SPAWN_FX ), data.originArray[ i ], data.anglesArray[ i ] )
-
-                thread AirdropItems( data.originArray[i], data.anglesArray[i], data.contents[i], fx, "droppod_loot_drop", null, 0, "" )
-                if( numAirdropsInData > 1 )
-                {
-                    // If we have more than one pod spawning, wait between spawning the airdrops.
-                    wait RandomFloatRange( data.minDelayBetweenPods,  data.maxDelayBetweenPods )
-                }
-            }
-        }
-
-        WaitFrame()
-    }
-}
-#endif
-
-void function OnAirdropCreated( entity dropPod )
-{
-    #if CLIENT
-    if ( dropPod.GetTargetName() == CARE_PACKAGE_PROXY)
-    {
-        ShowGrenadeArrow( GetLocalViewPlayer(), dropPod, 192, 0, true )
-    }
-    #endif
-
-	if ( dropPod.GetTargetName() != CARE_PACKAGE_TARGETNAME && dropPod.GetTargetName() != CARE_PACKAGE_LIFELINE_TARGETNAME )
-		return
-
-	AddCallback_OnUseEntity( dropPod, OnAirdropUse )
-	#if CLIENT
-	AddEntityCallback_GetUseEntOverrideText( dropPod, ExtendedUseTextOverride )
+		AddSpawnCallback( "prop_dynamic", OnAirdropCreated )
+		file.airdropRarityColorEnabled = GetCurrentPlaylistVarBool( "airdrop_raritycolor_enabled", false )
+		PrecacheParticleSystem( CHEVREX_AIRDROP_HOLOGRAM_VFX )
 	#endif
 }
 
-void function OnAirdropUse( entity dropPod, entity player, int useInputFlags )
+int function GetAirdropPingColorIDFromRarityTier( int rarityTier )
 {
-    if ( !dropPod.DoesShareRealms( player ) )
-		return
-    
-	if ( useInputFlags & USE_INPUT_DEFAULT )
+	switch ( rarityTier )
 	{
-		#if SERVER
-        PIN_Interact( player, "care_package", dropPod.GetOrigin() )
-		#endif
+		case eLootTier.COMMON:
+			return COLORID_HUD_LOOT_TIER1
+		case eLootTier.RARE:
+			return COLORID_HUD_LOOT_TIER2
+		case eLootTier.EPIC:
+			return COLORID_HUD_LOOT_TIER3
+		case eLootTier.LEGENDARY:
+			return COLORID_HUD_LOOT_TIER4
+		case eLootTier.MYTHIC:
+			return COLORID_HUD_LOOT_TIER5
 	}
-    
-    dropPod.Signal( "OpenDroppod" )
-}
-
-void function AirdropUseThink( entity dropPod, entity playerUser )
-{
-	ExtendedUseSettings settings
-	#if CLIENT
-	settings.loopSound       = "survival_titan_linking_loop"
-	settings.successSound    = "ui_menu_store_purchase_success"
-	settings.displayRui      = $"ui/extended_use_hint.rpak"
-	settings.displayRuiFunc  = DefaultExtendedUseRui
-	settings.icon            = $""
-	settings.hint            = "#PROMPT_OPEN"
-	#elseif SERVER
-
-	#endif
-
-	settings.duration = dropPod.GetTargetName() == CARE_PACKAGE_TARGETNAME ? CARE_PACKAGE_OPEN_TIME : CARE_PACKAGE_LIFELINE_OPEN_TIME
-	settings.requireMatchingUseEnt = true
-
-	dropPod.EndSignal( "OnDestroy" )
-
-	waitthread ExtendedUse( dropPod, playerUser, settings )
-}
-
-void function SignalOpenAirdrop( entity dropPod, entity player, ExtendedUseSettings settings )
-{
-	dropPod.Signal( "OpenDroppod" )
-
-#if SERVER
-    PIN_Interact( player, "care_package", dropPod.GetOrigin() )
-#endif
+	return COLORID_AIRDROP_DEFAULT_COLOR
 }
 
 entity function GetAirdropForHitEnt( entity hitEnt )
@@ -193,26 +245,1856 @@ entity function GetAirdropForHitEnt( entity hitEnt )
 }
 
 #if SERVER
-void function AirdropForRound( vector position, vector angles, int round, entity ent )
+void function AirdropPodRemoveLocationMarker( entity droppod )
 {
-    if( calculatedAirdropData.len() < round || calculatedAirdropData.len() == 0 )
-    {
-        printt( "Airdrop of round " + ( round + 1 ) + " does not exist" )
-        return
-    }
+	if ( !IsValid( droppod ) )
+		return
 
-    AirdropData data = calculatedAirdropData[ round ]
-
-    // Got data for this stage so let's start to spawn the airdrops
-    int numAirdropsInData = data.dropCount
-    
-    // Play the announcement
-    AddSurvivalCommentaryEvent( eSurvivalEventType.CARE_PACKAGE_DROPPING )
-    
-    for( int i = 0; i < numAirdropsInData; i++ )
-    {
-        entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( DROPPOD_SPAWN_FX ), position, angles )
-        thread AirdropItems( position, angles, data.contents[ i ], fx, "droppod_loot_drop", null, 0, "" )
-    }
+	droppod.Signal( "DroppodRemoveLocationMarker" )
 }
+
+array<AirdropRoundData> function Survival_GetPregameAirdropDatas()
+{
+	return file.pregameAirdropData
+}
+
+array<AirdropRoundData> function Survival_GetAirdropDatas()
+{
+	return file.airdropData
+}
+
+array<vector> function Survival_GetPreviousAirdrops()
+{
+	return file.previousAirdrops
+}
+
+void function SURVIVAL_CalculateAirdropPositions()
+{
+	svGlobal.levelEnt.EndSignal( "GenerateDeathFieldData" )
+
+	file.airdropCircleCalcProgress = 0
+	foreach ( apData in file.pregameAirdropData )
+	{
+		apData.originArray.clear()
+		apData.anglesArray.clear()
+	}
+	foreach ( aData in file.airdropData )
+	{
+		aData.originArray.clear()
+		aData.anglesArray.clear()
+	}
+
+	FlagWait( "DoneCreatingDeathFieldPosition" )
+	FlagWait( "DeathFieldCalculationComplete" )
+
+	file.previousAirdrops.clear()
+
+	float baseAngle = RandomFloatForLoot( 360.0 )
+
+	if ( GetCurrentPlaylistVarBool( "airdrop_pregame_enabled", false ) )
+	{
+		foreach ( apData in file.pregameAirdropData )
+		{
+			ReferenceStruct tempData
+			waitthread SetAirdropPositionsForAirdropData_Thread ( tempData, apData, baseAngle )
+			baseAngle = tempData.returnedFloat
+		}
+	}
+
+	int index = 0
+	foreach ( aData in file.airdropData )
+	{
+		ReferenceStruct tempData
+		waitthread SetAirdropPositionsForAirdropData_Thread ( tempData, aData, baseAngle )
+		baseAngle = tempData.returnedFloat
+		file.airdropCircleCalcProgress = ++index
+	}
+
+	foreach ( callbackFunc in file.Callbacks_OnAirdropPositionsDetermined )
+		callbackFunc()
+}
+
+void function SURVIVAL_CalculateAirdropPositionsForRound( int round )
+{
+	FlagWait( "DoneCreatingDeathFieldPosition" )
+	FlagWait( "DeathFieldCalculationComplete" )
+
+	//int deathFieldStage =  SURVIVAL_GetCurrentDeathFieldStage( 0 )
+	float baseAngle = RandomFloatForLoot( 360.0 )
+
+	int index = 0
+	foreach ( aData in file.airdropData )
+	{
+		if ( aData.dropCircle == round )
+		{
+			ReferenceStruct tempData
+			waitthread SetAirdropPositionsForAirdropData_Thread ( tempData, aData, baseAngle )
+			baseAngle = tempData.returnedFloat
+			file.airdropCircleCalcProgress = ++index
+		}
+	}
+}
+
+void function SetAirdropPositionsForAirdropData_Thread( ReferenceStruct returnStruct, AirdropRoundData aData, float baseAngle, float minDistance = MIN_AIRDROP_DISPLACEMENT, bool runningTests = false )
+{
+	int deathFieldStage = aData.dropCircle
+	bool airdropsIgnoreRing = ( aData.airdropRingArea == eAirdropRingArea.IGNORE_RING )
+	bool airdropsLargeCount = ( aData.dropCount >= AIRDROP_LARGE_DROP_COUNT )
+	bool airdropsUseOverrides = ( airdropsIgnoreRing || aData.airdropRadiusOverrideEnabled )
+
+	if ( aData.airdropRingArea == eAirdropRingArea.PREVIOUS_RING )
+		deathFieldStage -= 1
+	if ( deathFieldStage >= SURVIVAL_GetDeathFieldStages( Survival_Loot_GetDefaultRealm() ).len() )
+	{
+		Warning( "Airdrop has bad death field stage: %d", deathFieldStage )
+		deathFieldStage = SURVIVAL_GetDeathFieldStages( Survival_Loot_GetDefaultRealm() ).len() - 1
+	}
+	DeathFieldStageData deathFieldStageData = GetDeathFieldStage( Survival_Loot_GetDefaultRealm(), deathFieldStage )
+	vector center                           = airdropsIgnoreRing ? SURVIVAL_GetCalculatedMapCenter() : deathFieldStageData.endPos
+	bool allowLoopForever 					= !airdropsLargeCount
+	float maxAirdropSearchRuntime				= DEFAULT_MAX_AIRDROP_SEARCH_RUNTIME
+	float angleAdjust 						= 360.0 / float( aData.dropCount )
+
+                               
+                                                                                                                                     
+                                                                                                                        
+                           
+                                     
+
+	for ( int i = 0; i < aData.dropCount; i++ )
+	{
+		int randomSeedIntForCircleCenter = -1
+		if ( IsLockedLootActive() )
+			randomSeedIntForCircleCenter = GetRandomSeedIntForLoot()
+
+		float radius = airdropsUseOverrides ? aData.airdropRadiusOverride : ( deathFieldStageData.endRadius * 0.85 )
+
+		if ( airdropsUseOverrides && airdropsLargeCount )
+		{
+			switch ( i % 3 )//large counts of airdrops need to be distributed over a large area
+			{
+				case 0:
+					radius = aData.airdropRadiusOverride_LargeCount_Outer
+					break
+
+				case 1:
+					radius = aData.airdropRadiusOverride
+					break
+
+				case 2:
+					radius = aData.airdropRadiusOverride_LargeCount_Inner
+					break
+			}
+		}
+
+
+		radius *= (aData.dropCount == 1) ? 0.5 : 1.0
+
+		                    
+			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) && GoldenHorse_ModifyCarePackageSpawnDistance() )
+			{
+				float distScale = GetCurrentPlaylistVarFloat( "golden_horse_carepackage_scale", 0.5 )
+				int dropCount = GetCurrentPlaylistVarInt( "golden_horse_carepackage_distance_count", 2 )
+				minDistance *= (aData.dropCount == dropCount) ? distScale : 1.0
+			}
+        
+
+		Point airdropPoint
+		#if DEVELOPER
+			if ( runningTests )
+			{
+				maxAirdropSearchRuntime = -1
+				waitthread FindRandomAirdropDropPoint_Thread( airdropPoint, baseAngle, center, radius, file.previousDevAirdrops, allowLoopForever, maxAirdropSearchRuntime, randomSeedIntForCircleCenter, minDistance )
+			}
+			else
+		#endif
+		{
+			waitthread FindRandomAirdropDropPoint_Thread( airdropPoint, baseAngle, center, radius, file.previousAirdrops, allowLoopForever, maxAirdropSearchRuntime, randomSeedIntForCircleCenter, minDistance )
+		}
+		if ( ( airdropPoint.angles == <0,0,0> ) && ( airdropPoint.origin == <0,0,0> ) )
+			continue //skip airdrop if we failed to find a location
+
+		aData.originArray.append( airdropPoint.origin )
+		aData.anglesArray.append( airdropPoint.angles )
+		#if DEVELOPER
+			if ( runningTests )
+				file.previousDevAirdrops.append( airdropPoint.origin )
+			else
+		#endif
+		{
+			file.previousAirdrops.append( airdropPoint.origin )
+		}
+
+
+		if ( DEBUG_DROP_POINTS )
+		{
+			DebugDrawText( airdropPoint.origin + <0, 0, 7000>, "Circle " + aData.dropCircle, false, 20.0 )
+			//DebugDrawArrow( airdropPoint.origin + <0, 0, 7000>, airdropPoint.origin, 128, <255, 0, 0>, true, 20.0 )
+		}
+		baseAngle += angleAdjust
+	}
+	returnStruct.returnedFloat = baseAngle
+}
+
+AirdropRoundData function Survival_CreatePregameAirDropData( int circle, int dropCount, float preWait, array< array<string> > contents, int airdropRingArea )
+{
+	AirdropRoundData data = CreateAirDropData( circle, dropCount, preWait, contents, null, airdropRingArea )
+	file.pregameAirdropData.append( data )
+	return data
+}
+
+AirdropRoundData function Survival_CreateAirDropData( int circle, int dropCount, float preWait, array< array<string> > contents, int airdropRingArea )
+{
+	AirdropRoundData data = CreateAirDropData( circle, dropCount, preWait, contents, null, airdropRingArea )
+	file.airdropData.append( data )
+	return data
+}
+
+AirdropRoundData function CreateAirDropData( int circle, int dropCount, float preWait, array< array<string> > contents, array< array<string> > functionref(int) contentFunc = null, int airdropRingArea = eAirdropRingArea.CURRENT_RING )
+{
+	AirdropRoundData data
+	data.dropCircle = circle
+	data.dropCount = dropCount
+	data.preWait = preWait
+	data.contents = contents
+	data.optionalGetContentsFunc = contentFunc
+	data.airdropRingArea = airdropRingArea
+
+	return data
+}
+
+void function Survival_ClearAirDropData()
+{
+	file.airdropData = []
+}
+
+int function GetAirdropBeamColorIDFromRarityTier( int rarityTier )
+{
+	switch ( rarityTier )
+	{
+		case eLootTier.COMMON:
+			return COLORID_FX_LOOT_TIER1
+		case eLootTier.RARE:
+			return COLORID_FX_LOOT_TIER2
+		case eLootTier.EPIC:
+			return COLORID_FX_LOOT_TIER3
+		case eLootTier.LEGENDARY:
+			return COLORID_FX_LOOT_TIER4
+		case eLootTier.MYTHIC:
+			return COLORID_FX_LOOT_TIER5
+	}
+	return COLORID_AIRDROP_DEFAULT_COLOR
+}
+
+int function DetermineAirdropTier ( array< array<string> > podContents )
+{
+	int airdropContentsTier = 0
+	foreach ( panel in podContents )
+	{
+		foreach ( loot in panel )
+		{
+			LootData ld = SURVIVAL_Loot_GetLootDataByRef( loot )
+			if ( ( ld.tier > airdropContentsTier ) && ( ld.lootType != eLootType.HEALTH ) )
+				airdropContentsTier = ld.tier
+		}
+	}
+	return airdropContentsTier
+}
+
+void function IssueAirdropPing ( vector origin, float duration, int rarity = eLootTier.NONE, int airdropType = eAirdropType.STANDARD )
+{
+	float pingDuration = duration * 2
+	float pingMaxSize = 500.0
+	float pingIntialSize = 50.0
+	float pingFrequency = 0.8
+	float pingFrequencyVariance = 0.2
+	int colorID = file.airdropRarityColorEnabled ? GetAirdropPingColorIDFromRarityTier ( rarity ) : COLORID_AIRDROP_DEFAULT_COLOR
+
+	                
+		if ( airdropType == eAirdropType.CRAFTING_REPLICATOR )
+		{
+			colorID = COLORID_AIRDROP_CRAFTING_COLOR
+			if ( Crafting_IsDispenserCraftingEnabled() )
+				colorID = COLORID_CRAFTING_DISPENSER
+		}
+       
+
+	//%if HAS_STRAYTELEPORTERS
+	//	if ( airdropType == eAirdropType.STRAYTELEPORTER )
+	//	{
+	//		colorID = COLORID_EVAC_TOWER_METER_HEALTHY
+	//	}
+	//%endif
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_AIRDROPEXTRA ) )
+	{
+		pingFrequency = 1.2
+		pingFrequencyVariance = 0.3
+		pingIntialSize = 35.0
+	}
+
+	foreach ( player in GetPlayerArray_Alive() )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SUR_PingMinimap", origin, pingDuration, pingMaxSize, pingIntialSize, colorID, pingFrequency, pingFrequencyVariance, airdropType )
+
+}
+
+void function AirdropLogic()
+{
+	EndSignal( svGlobal.levelEnt, "RoundEnd" )
+
+	int startCircle = GetCurrentPlaylistVarInt( "survival_death_field_start_stage", 0 )
+	int dropIndex   = 0
+	if( file.airdropData.len() > 0 )
+	{
+		while( file.airdropData[ dropIndex ].dropCircle < startCircle )
+			dropIndex++
+	}
+
+	SetGlobalNetInt( "numberOfAirdropRoundsLeft", file.airdropData.len() - dropIndex )
+
+	if ( GetCurrentPlaylistVarBool( "airdrop_pregame_enabled", false ) )
+	{
+		foreach ( apData in file.pregameAirdropData )
+		{
+			wait apData.preWait
+
+			if (!apData.launched)
+			{
+				waitthread Survival_LaunchAirdropsFromAirdropData( apData )
+				apData.launched = true
+			}
+			else
+				printf("Pregame airdrop data already launched. Skipping.")
+		}
+	}
+
+	FlagWait( "DeathCircleActive" )
+
+	bool airdropStartOnShrink = GetCurrentPlaylistVarBool( "airdrop_start_during_shrink", true )
+
+	while ( true )
+	{
+		if ( airdropStartOnShrink )
+			FlagWait( "SUR_DeathFieldShrinking" )
+
+		if ( dropIndex >= file.airdropData.len() )
+			return
+
+		// wait for the airdrop positions to finish calculating, if needed.
+                               
+                                                                                                                          
+                                                                                                                             
+                                     
+		{
+			while ( dropIndex >= file.airdropCircleCalcProgress )
+				wait 0.1
+		}
+
+		AirdropRoundData aData = file.airdropData[ dropIndex ]
+		int nextDropCircle     = aData.dropCircle
+
+		if ( nextDropCircle < startCircle )
+		{
+			dropIndex++
+			continue
+		}
+
+		if ( SURVIVAL_GetCurrentDeathFieldStage( 0 ) >= nextDropCircle )
+		{
+			wait aData.preWait
+
+                                 
+                                                                                                                      
+                                                                                                                          
+                                                                            
+                                       
+
+			if ( aData.dropCount >= AIRDROP_LARGE_DROP_COUNT )
+			{
+				array<vector> originArray = clone aData.originArray
+				aData.originArray = ShuffleVectorArray ( originArray )
+			}
+
+			                    
+				if ( UpgradeCore_EvoHarvesters_Enabled() && GetCurrentPlaylistVarBool( "prevent_evo_harvesters_airdrop_overlap_enabled", true ) )
+				{
+					float minHarvesterAirdropAvoidanceDistance = 10 * METERS_TO_INCHES
+					array<vector> originArray = clone aData.originArray
+
+					for( int i = originArray.len() - 1; i >=0 ; i--  )
+					{
+						foreach( harvesterEnt in UpgradeCore_Get_EvoHarvester_Ents() )
+						{
+							if( Distance2DSqr( harvesterEnt.GetOrigin(), originArray[i] ) < ( minHarvesterAirdropAvoidanceDistance * minHarvesterAirdropAvoidanceDistance )  )
+							{
+								#if DEVELOPER
+										printt( "Invalidating an Airdrop Location Due to Proximity with Evo Harvester: " + originArray[i] )
+								#endif
+								originArray.fastremove( i )
+								break
+							}
+						}
+					}
+
+					aData.originArray = originArray
+				}
+         
+
+			waitthread Survival_LaunchAirdropsFromAirdropData( aData )
+
+			dropIndex += 1
+			SetGlobalNetInt( "numberOfAirdropRoundsLeft", file.airdropData.len() - dropIndex )
+		}
+		else
+		{
+			wait 0.1
+			FlagWaitClear( "SUR_DeathFieldShrinking" )
+		}
+	}
+}
+
+void function Survival_LaunchAirdropsFromAirdropData ( AirdropRoundData aData, bool runningTests = false )
+{
+	if ( aData.launched )
+	{
+		printf("Survival_LaunchAirdropsFromAirdropData for circle " + aData.dropCircle + " already launched. Skipping.")
+		return
+	}
+
+	if ( aData.dropCount <= 0 )
+	{
+		printf( "No airdrops in AirdropData for round " + aData.dropCircle + ". Skipping.")
+		return
+	}
+
+	aData.launched = true
+
+	array<vector> originArray = clone aData.originArray
+	array<vector> anglesArray = clone aData.anglesArray
+
+	float pingDuration = ( aData.animationDuration + 8.0 )
+
+	AirdropItemsOptionalInfo optionInfo
+	optionInfo.animatePod = ( aData.airdropSpeed != eAirdropSpeed.INSTANT )
+	optionInfo.animationName = aData.animation
+
+	if ( aData.dropCount >= AIRDROP_LARGE_DROP_COUNT )
+		aData.originArray = ShuffleVectorArray ( originArray )
+
+	for ( int i = 0; i < aData.originArray.len(); i++ )
+	{
+		if( !GetCurrentPlaylistVarBool( "predetermine_airdrop_data_at_game_start", false ) )
+		{
+			array< array<string> > contentGroups = clone aData.contents
+                       
+				array< array<string> > podContents
+				if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) && GoldenHorse_SwordCarePackageEnabled() && i == 0 && contentGroups.len() >= 3 )
+				{
+					string former = ""
+					if ( contentGroups[2].len() >= 1 )
+					{
+						former              = contentGroups[2][0]
+						contentGroups[2][0] = "crate_weapons_sword"
+					}
+					else
+					{
+						contentGroups[2].append( "crate_weapons_sword" )
+					}
+					podContents         = DetermineAirdropContents ( contentGroups )
+					contentGroups[2][0] = former
+				}
+				else
+					podContents = DetermineAirdropContents ( contentGroups )
+        
+                                                                                   
+         
+
+			aData.contentsArray.append( podContents )
+
+			int airdropContentsTier = DetermineAirdropTier ( podContents )
+			aData.rarityArray.append( airdropContentsTier )
+		}
+
+		#if DEVELOPER
+		if ( !runningTests )
+		#endif // DEVELOPER
+		{
+			IssueAirdropPing ( aData.originArray [ i ], pingDuration, aData.rarityArray [ i ] )
+		}
+
+		foreach ( callbackFunc in file.Callbacks_OnAirdropRoundMessaging )
+			callbackFunc( aData, i )
+	}
+
+	if ( aData.airdropSpeed != eAirdropSpeed.INSTANT )
+		AddSurvivalCommentaryEvent( eSurvivalEventType.CARE_PACKAGE_DROPPING )
+
+	wait TIME_BEFORE_DROPPING_AIRDROPS
+
+	for ( int i = 0; i < aData.originArray.len(); i++ )
+	{
+		vector origin = aData.originArray[i]
+		vector angles = aData.anglesArray[i]
+
+		HeatMapStat( null, "AirdropLocation", origin )
+
+		thread AirdropItems( origin, angles, aData.contentsArray [ i ], optionInfo, runningTests )
+
+		foreach ( callbackFunc in file.Callbacks_OnAirdropRoundLaunchRequest )
+			callbackFunc( aData, i )
+
+		if( GetCurrentPlaylistVarBool( "predetermine_airdrop_data_at_game_start", false ) )
+			wait aData.delayBetweenPods
+		else
+			wait RandomFloatRangeForLoot( aData.minDelayBetweenPods, aData.maxDelayBetweenPods )
+	}
+}
+
+#if DEVELOPER
+void function DEV_LaunchAirdropsForRound( int round )
+{
+	if ( round > file.airdropData.len() )
+		return
+
+	if ( round == 0 && GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_AIRDROPEXTRA ) )
+	{
+		AirdropRoundData aData = file.pregameAirdropData[ 1 ]
+		thread Survival_LaunchAirdropsFromAirdropData( aData, true )
+
+		for ( int i = 0; i < aData.originArray.len(); i++ )
+		{
+			vector origin = aData.originArray[i]
+			//DebugDrawArrow( origin + <0, 0, 7000>, origin, 128, <0, 255, 0>, true, 100.0 )
+			//DebugDrawCircle( origin, <0,0,0>, 32, <0, 255, 0>, true, 100.0 )
+		}
+	}
+	else
+	{
+		AirdropRoundData aData = file.airdropData[ maxint( round - 1, 0 ) ]
+		thread Survival_LaunchAirdropsFromAirdropData( aData, true )
+
+		for ( int i = 0; i < aData.originArray.len(); i++ )
+		{
+			vector origin = aData.originArray[i]
+			//DebugDrawArrow( origin + <0, 0, 7000>, origin, 128, <0, 255, 0>, true, 100.0 )
+			//DebugDrawCircle( origin, <0,0,0>, 32, <0, 255, 0>, true, 100.0 )
+		}
+	}
+
+	thread DEV_LaunchCraftersForRound_Thread( round )
+}
+
+void function DEV_LaunchCraftersForRound( int round )
+{
+	thread DEV_LaunchCraftersForRound_Thread( round )
+}
+
+// copies logic from Crafting_WorkbenchAirdropLogic()
+void function DEV_LaunchCraftersForRound_Thread( int round )
+{
+	if ( file.stageToAmountTable.len() == 0 )
+	{
+		string playlistVar = GetCurrentPlaylistVarString( "crafting_midgame_airdrop_stages", "1:2 2:1" )
+		array<string> airdropStrings = GetTrimmedSplitString( playlistVar, " " )
+
+		foreach( stage in airdropStrings )
+		{
+			array<string> tokens = GetTrimmedSplitString( stage, ":" )
+			file.stageToAmountTable[int(tokens[0])-1] <- int(tokens[1])
+		}
+	}
+
+	if ( !( round in file.stageToAmountTable ) )
+		return
+
+	int dropCount = file.stageToAmountTable[ round ]
+	thread Crafting_WorkbenchAirdropLogicForRound_Thread( dropCount, true, round )
+}
+
+void function DEV_LaunchAirdropsForAllRounds()
+{
+	foreach( airdropData in file.airdropData )
+	{
+		thread Survival_LaunchAirdropsFromAirdropData( airdropData, true )
+
+		foreach ( origin in airdropData.originArray )
+		{
+			//DebugDrawArrow( origin + <0, 0, 7000>, origin, 128, <0, 255, 0>, true, 100.0 )
+			//DebugDrawCircle( origin, <0,0,0>, 32, <0, 255, 0>, true, 100.0 )
+		}
+
+		DEV_DrawCircleLocations( -1, -1, 100.0 )
+	}
+
+	if ( GetCurrentPlaylistVarBool( "crafting_midgame_airdrop_enabled", true ) )
+	{
+		thread DEV_LaunchCraftersForAllRounds_Thread()
+	}
+}
+
+// This won't launch the actual crafters for all rounds as their locations are only chosen when the round begins, this
+// is just a replica of that logic
+void function DEV_LaunchCraftersForAllRounds_Thread()
+{
+	if ( file.stageToAmountTable.len() == 0 )
+	{
+		string playlistVar = GetCurrentPlaylistVarString( "crafting_midgame_airdrop_stages", "1:2 2:1" )
+		array<string> airdropStrings = GetTrimmedSplitString( playlistVar, " " )
+
+		foreach( stage in airdropStrings )
+		{
+			array<string> tokens = GetTrimmedSplitString( stage, ":" )
+			file.stageToAmountTable[int(tokens[0])-1] <- int(tokens[1])
+		}
+	}
+
+	foreach( round, dropCount in file.stageToAmountTable )
+	{
+		thread DEV_LaunchCraftersForRound_Thread( round )
+	}
+}
+
+// Drops airdrop at closest navmesh location
+void function DEV_CallAirdropAtCrosshairLocation( entity player, bool dropPackageNotCrafter, bool animatePod = true )
+{
+	Point airdropPos = GetClosestAirdropPoint( GetPlayerCrosshairOrigin( player ) )
+
+	array< array<string> > podContents
+	if ( GetBugReproNum() == 417823 )
+	{
+		podContents = DetermineAirdropContents ( [["armor_pickup_lv2_evolving"], ["armor_pickup_lv3_evolving"], ["armor_pickup_lv5_evolving"]] )
+	}
+	else
+	{
+		podContents = DetermineAirdropContents ( [["crate_weapons_lategame"], ["gold_weapons"], ["gold_weapons"]] )
+	}
+	AirdropItemsOptionalInfo optionInfo
+	optionInfo.animatePod = animatePod
+
+	if ( dropPackageNotCrafter )
+	{
+		thread AirdropItems( airdropPos.origin, airdropPos.angles, podContents, optionInfo, true )
+
+		//DebugDrawCircle( airdropPos.origin, airdropPos.angles, 32, <0, 255, 0>, true, 100.0 )
+		//DebugDrawArrow( airdropPos.origin + <0, 0, 7000>, airdropPos.origin, 128, <0, 255, 0>, true, 100.0 )
+	}
+	else
+	{
+		thread AirdropWorkbench_Thread( airdropPos.origin, airdropPos.angles, animatePod, true )
+
+		//DebugDrawCircle( airdropPos.origin, airdropPos.angles, 32, <255, 0, 0>, true, 100.0 )
+		//DebugDrawArrow( airdropPos.origin + <0, 0, 7000>, airdropPos.origin, 128, <255, 0, 0>, true, 100.0 )
+	}
+}
+
+// Drops airdrop somewhere nearby a location, uses FindRandomAirdropDropPoint_Thread
+void function DEV_CallAirdropNearPlayer( entity player, float radius, bool dropPackageNotCrafter, bool animatePod = true )
+{
+	thread DEV_CallAirdropNearPlayer_Thread( player.GetOrigin(), radius, dropPackageNotCrafter, animatePod )
+}
+
+void function DEV_CallAirdropNearPlayer_Thread( vector center, float radius, bool dropPackageNotCrafter, bool animatePod )
+{
+	int randomSeedIntForCircleCenter = -1
+	if ( IsLockedLootActive() )
+		randomSeedIntForCircleCenter = GetRandomSeedIntForLoot()
+
+	center = GetGroundPosition( center - <0, 4000, 0>,  center + <0, 4000, 0> ).endPos
+
+	Point airdropPoint
+	waitthread FindRandomAirdropDropPoint_Thread( airdropPoint, RandomFloatForLoot( 360.0 ), center, radius, [], true, -1, randomSeedIntForCircleCenter, MIN_AIRDROP_DISPLACEMENT )
+
+	if ( dropPackageNotCrafter )
+	{
+		//DebugDrawCircle( airdropPoint.origin, airdropPoint.angles, 32, <0, 255, 0>, true, 100.0 )
+		//DebugDrawArrow( airdropPoint.origin + <0, 0, 7000>, airdropPoint.origin, 128, <0, 255, 0>, true, 100.0 )
+
+		array< array<string> > podContents = DetermineAirdropContents ( [["crate_weapons_lategame"], ["gold_weapons"], ["gold_weapons"]] )
+		AirdropItemsOptionalInfo optionInfo
+		optionInfo.animatePod = animatePod
+
+		thread AirdropItems( airdropPoint.origin, airdropPoint.angles, podContents, optionInfo, true )
+	}
+	else
+	{
+		//DebugDrawCircle( airdropPoint.origin, airdropPoint.angles, 32, <255, 0, 0>, true, 100.0 )
+		//DebugDrawArrow( airdropPoint.origin + <0, 0, 7000>, airdropPoint.origin, 128, <255, 0, 0>, true, 100.0 )
+
+		thread AirdropWorkbench_Thread( airdropPoint.origin, airdropPoint.angles, animatePod, true )
+	}
+}
+
+void function DEV_SimulateMultipleAirdrops( int dropCount, bool dropPackageNotCrafter, float minDistance = MIN_AIRDROP_DISPLACEMENT, bool animatePod = true, bool ignoreRing = false, float drawTime = 100.0 )
+{
+	thread DEV_SimulateMultipleAirdrops_Thread( dropCount, dropPackageNotCrafter, minDistance, animatePod, ignoreRing, drawTime )
+}
+
+void function DEV_SimulateMultipleAirdrops_Thread( int dropCount, bool dropPackageNotCrafter, float minDistance, bool animatePod, bool ignoreRing, float drawTime )
+{
+	file.previousDevAirdrops.clear()
+	int roundNum = SURVIVAL_GetCurrentDeathFieldStage( 0 ) + 1
+
+	array< array<string> > contents = [["crate_weapons_lategame"], ["gold_weapons"], ["gold_weapons"]]
+	AirdropRoundData aData = CreateAirDropData( roundNum, dropCount, 0, contents, null, ignoreRing ? eAirdropRingArea.IGNORE_RING : eAirdropRingArea.CURRENT_RING )
+	aData.minDelayBetweenPods = 0
+	aData.maxDelayBetweenPods = 0
+	if ( !animatePod )
+		aData.airdropSpeed = eAirdropSpeed.INSTANT
+
+	string animOverride = GetCurrentPlaylistVarString( "airdrop_anim_override", "" )
+	if ( animOverride != "" )
+		aData.animation = animOverride
+
+	ReferenceStruct tempData
+	waitthread SetAirdropPositionsForAirdropData_Thread( tempData, aData, RandomFloatForLoot( 360.0 ), minDistance, true )
+
+	for ( int i = 0; i < aData.originArray.len(); i++ )
+	{
+		array< array<string> > contentGroups = clone aData.contents
+		array< array<string> > podContents = DetermineAirdropContents ( contentGroups )
+		aData.contentsArray.append( podContents )
+
+		int airdropContentsTier = DetermineAirdropTier ( podContents )
+		aData.rarityArray.append( airdropContentsTier )
+	}
+
+	if ( aData.dropCount >= AIRDROP_LARGE_DROP_COUNT )
+	{
+		array<vector> originArray = clone aData.originArray
+		aData.originArray = ShuffleVectorArray ( originArray )
+	}
+
+	if ( dropPackageNotCrafter )
+	{
+		thread Survival_LaunchAirdropsFromAirdropData( aData, true )
+
+		foreach ( origin in aData.originArray )
+		{
+			//DebugDrawArrow( origin + <0, 0, 7000>, origin, 128, <0, 255, 0>, true, drawTime )
+			//DebugDrawCircle( origin, <0,0,0>, 32, <0, 255, 0>, true, drawTime )
+		}
+	}
+	else
+	{
+		for ( int i = 0; i < aData.originArray.len(); i++ )
+		{
+			thread AirdropWorkbench_Thread( aData.originArray[i], aData.anglesArray[i], animatePod, true )
+
+			//DebugDrawArrow( aData.originArray[i] + <0, 0, 7000>, aData.originArray[i], 128, <255, 0, 0>, true, drawTime )
+			//DebugDrawCircle( aData.originArray[i], <0,0,0>, 32, <255, 0, 0>, true, drawTime )
+		}
+	}
+
+	int circle = aData.dropCircle
+	DEV_DrawCircleLocations( -1, circle, drawTime )
+}
+
+
+void function DEV_DrawAirdropLocations()
+{
+	foreach ( airdrop in file.airdropData )
+	{
+		int circle = airdrop.dropCircle
+		foreach ( origin in airdrop.originArray )
+		{
+			DebugDrawText( origin + <0, 0, 7000>, "Airdrop for Circle -> " + circle, false, 20.0 )
+			//DebugDrawArrow( origin + <0, 0, 7000>, origin, 128, <255, 0, 0>, true, 20.0 )
+			DEV_DrawCircleLocations( circle )
+		}
+	}
+}
+
+void function DEV_DrawAirdropLocationsNearPlayer_Thread( entity player )
+{
+	EndSignal( player, "OnDeath" )
+	EndSignal( player, "OnDestroy" )
+
+	while( true )
+	{
+		Point closestAirdrop = GetClosestAirdropPoint( player.GetOrigin() )
+		//DebugDrawLine( closestAirdrop.origin, closestAirdrop.origin + < 0, 0, 256 >, <255, 0, 0>, true, 30.0 )
+		//DebugDrawCircle( closestAirdrop.origin, closestAirdrop.angles, 16, <255, 0, 0>, true, 30.0 )
+
+		WaitFrame()
+	}
+}
+
+void function DEV_AirdropPrintOn( bool isOn = true )
+{
+	file.devPrintOn = isOn
+}
+
+void function DEV_AddAirdropEntity( entity airdrop )
+{
+	file.devAirdrops.append( airdrop )
+}
+
+void function DEV_DeleteAirdropEntities()
+{
+	                   
+		DeleteCarepackagePerkLinks()
+       
+
+	for ( int i = file.devAirdrops.len() - 1; i >= 0; i-- )
+	{
+		entity airdrop = file.devAirdrops[ i ]
+		if ( IsValid( airdrop ) )
+			airdrop.Destroy()
+		file.devAirdrops.fastremove( i )
+	}
+
+	for ( int i = file.previousDevAirdrops.len() - 1; i >= 0; i-- )
+	{
+		file.previousDevAirdrops.fastremove( i )
+	}
+
+
+}
+#endif // DEVELOPER
+
+void function DEV_AirdropPrint( string content )
+{
+	#if DEVELOPER
+	if( file.devPrintOn )
+	{
+		printt( format( "AIRDROPS: %s", content ))
+	}
+	#endif
+}
+
+#if DEVELOPER
+int function CodeCallback_GetAirdropPointNavNodeIndex()
+{
+	FlightPath flightPath = GetAnalysisForModel( DROPPOD_MODEL, AIRDROP_BASE_ANIM )
+
+	return GetAnalysisDataIndex( flightPath )
+}
+
+int function CodeCallback_IsAirdropPointValid( vector origin, int index )
+{
+	vector angles = < 0, 0, 0 >
+	// This function assumes you input a valid navmesh point as the origin
+
+	vector maxs          = <80, 80, 256>
+	vector mins          = <-80, -80, 0>
+
+	bool result = CommonAirdropValidationCheck( origin, angles, <0, 0, 0>, maxs, mins, -1, false )
+
+	//0 is valid, 1 is failure due to AIRDROP. see InvalidRingReason for the return codes
+	return result ? 0 : 1
+}
+#endif
+
+
+array< array<string> > function GetContentsForRound( int dropIndex )
+{
+	AirdropRoundData aData = file.airdropData[ dropIndex ]
+
+	array< array<string> > contents = aData.contents
+	if ( aData.optionalGetContentsFunc != null )
+	contents = aData.optionalGetContentsFunc( dropIndex )
+
+	array< array<string> > podContents = DetermineAirdropContents ( contents )
+	return podContents
+}
+
+
+void function AirdropForRound( vector origin, vector angles, int dropIndex )
+{
+	AirdropRoundData aData = file.airdropData[ dropIndex ]
+	AirdropItemsOptionalInfo optionInfo
+	optionInfo.animationName = aData.animation
+
+	thread AirdropItems( origin, angles, GetContentsForRound( dropIndex ), optionInfo )
+}
+
+// DetermineAirdropContents is the final determination of airdrop loot.
+// Loot groups are narrowed down to actual loot refs.
+array< array<string> > function DetermineAirdropContents( array< array<string> > contents )
+{
+	array< array<string> > podContents
+	for ( int i = 0; i < contents.len(); i++ )
+	{
+		array<string> inside
+		foreach ( c in contents[i] )
+		{
+			if ( SURVIVAL_Loot_IsRefValid( c ) )
+				inside.append( c )
+			else
+				inside.append( SURVIVAL_GetWeightedItemFromGroup( c ) )
+		}
+		podContents.append( inside )
+	}
+	int lootLen = podContents.len()
+	int contentsLen = contents.len()
+	#if DEVELOPER
+		DEV_AirdropPrint( "***** DetermineAirdropContents(): Droppod: contents: " )
+		foreach( contentList in contents )
+			foreach( content in contentList )
+				DEV_AirdropPrint( " - Droppod: content == " + content )
+		DEV_AirdropPrint( "***** DetermineAirdropContents(): Droppod: podContents: " )
+		foreach( podContentList in podContents )
+			foreach( podContent in podContentList )
+				DEV_AirdropPrint( "- Droppod: podContent == " + podContent )
+	#endif
+
+	Assert( lootLen >= contentsLen, "ERROR in DetermineAirdropContents(): contents.len() = " + contentsLen + " but podContents.len() = " + lootLen )
+
+	return podContents
+}
+
+void function AirdropItems( vector origin, vector angles, array< array<string> > contents, AirdropItemsOptionalInfo optionInfo, bool saveEntity = false )
+{
+	array<string> doors 					= [ "L", "R", "C" ]
+	array< array<string> > airdropContents 	= contents
+	int airdropBeamColorID 					= COLORID_AIRDROP_LIFELINE_COLOR
+	bool delayedContents 					= ( ( airdropContents.len() != doors.len() ) && ( optionInfo.delayedContentFunc != null ) )
+
+	#if DEVELOPER
+		DEV_AirdropPrint( "***** AirdropItems(): Droppod started @ time == " + Time() )
+		DEV_AirdropPrint( " - Droppod: Number of doors 			== " + doors.len() )
+		DEV_AirdropPrint( " - Droppod: Number of Contents 		== " + airdropContents.len() )
+		DEV_AirdropPrint( " - Droppod: delayedContents? 			== " + delayedContents )
+	#endif
+
+	if ( !delayedContents )
+	{
+		Assert ( airdropContents.len() >= doors.len(), "Must have at least " + doors.len() + " entries in contents" )
+
+		int highestContentsRarity = DetermineAirdropTier ( airdropContents )
+		if ( optionInfo.targetName != CARE_PACKAGE_LIFELINE_TARGETNAME )
+			airdropBeamColorID = file.airdropRarityColorEnabled ? GetAirdropBeamColorIDFromRarityTier( highestContentsRarity ) : COLORID_AIRDROP_DEFAULT_COLOR
+	}
+
+	                               
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_VALENTINES_S15 ) && optionInfo.targetName != CARE_PACKAGE_LIFELINE_TARGETNAME) //All airdrops except lifeline are valentines airdrops
+			airdropBeamColorID = COLORID_HUD_LOOT_TIER_SPECIAL
+       
+
+	if ( optionInfo.forceDefaultColor ) //Used for Lifeline TT Carepackage
+		airdropBeamColorID = COLORID_AIRDROP_DEFAULT_COLOR
+
+	entity dropPod = CreatePropDynamic_NoDispatchSpawn( SURVIVAL_LOOT_POD_MODEL, origin, angles, 6 )
+	dropPod.SetScriptName( CARE_PACKAGE_SCRIPTNAME )
+	dropPod.e.sourceWeaponClassname = optionInfo.sourceWeaponClassname
+	dropPod.EnableRenderAlways()
+	dropPod.DisableHibernation()
+	if ( IsValid( optionInfo.owner ) )
+	{
+		dropPod.SetOwner( optionInfo.owner )
+		AddToUltimateRealm( optionInfo.owner, dropPod )
+	}
+	else if ( optionInfo.realm >= eRealms.DEFAULT )
+	{
+		dropPod.RemoveFromAllRealms()
+		dropPod.AddToRealm( optionInfo.realm )
+	}
+
+	dropPod.SetSkin( optionInfo.skin )
+
+	#if DEVELOPER
+		if ( saveEntity )
+			file.devAirdrops.append( dropPod )
+	#endif // DEVELOPER
+
+              
+                                                                                                                                    
+                                     
+       
+
+                                
+                                                                            
+   
+                                    
+                                                 
+   
+       
+
+                                
+                               
+  
+                                                                           
+   
+                                    
+                                                     
+   
+  
+      
+
+	// Need to know if airdrop gets destroyed for some reason so we can turn off the vfx
+	AddEntityDestroyedCallback( dropPod, OnAirdropDestroyed )
+
+	SetTargetName( dropPod, optionInfo.targetName )
+	DispatchSpawn( dropPod )
+
+	dropPod.SetAIObstacle( true )
+	TeslaTrap_MakeEntityRealTimeObstructor( dropPod )
+	MarkEntForCleanupOnRoundEnd( dropPod )
+
+	if ( IsValid( optionInfo.owner ) )
+		FiringRange_AddToPermanentDeployableQuota( dropPod, optionInfo.owner )
+
+	dropPod.EndSignal( "OnDestroy" )
+	
+	CreateAirdropBadPlace( dropPod, origin, AIR_DROP_BAD_PLACE_RADIUS )
+
+	int podFlags = 0
+	dropPod.Solid()
+	dropPod.DisallowZiplines()
+
+	dropPod.Highlight_Enable()
+	AddNeurolinkDetectionForPropScript( dropPod )
+
+	if( optionInfo.targetName == CARE_PACKAGE_LIFELINE_TARGETNAME )
+	{
+		SetTeam( dropPod, optionInfo.owner.GetTeam() )
+		thread DropPodLocationMarker( dropPod, optionInfo.owner, airdropBeamColorID )
+	}
+	else
+	{
+		thread DropPodLocationMarker( dropPod, optionInfo.owner, airdropBeamColorID )
+		thread DropPodLocationBeam( dropPod, optionInfo.owner, airdropBeamColorID )
+	}
+	vector soundOrigin = dropPod.GetOrigin()
+	EmitSoundAtPosition( TEAM_UNASSIGNED, soundOrigin, SOUND_CARE_PACKAGE_MARKER, dropPod )
+
+	OnThreadEnd(
+		function() : ( soundOrigin )
+		{
+			// incase the droppod gets destroyed before it lands. Shouldn't happen but better safe ...
+			StopSoundAtPosition( soundOrigin, SOUND_CARE_PACKAGE_MARKER )
+		}
+	)
+
+	// amazing R5DEV-293895 - need to set the care package from being used before landing
+	dropPod.e.isBusy = true
+
+	                   
+	dropPod.e.airDropContents = airdropContents
+       
+
+	foreach ( callbackFunc in file.Callbacks_OnAirdropLaunched )
+		callbackFunc( dropPod, origin )
+
+	if ( Time() > 30 )
+		Leviathan_ConsiderLookAtEnt( dropPod, RandomFloatRange( 10, 16 ), 0.2 )
+
+	if ( optionInfo.animatePod )
+		waitthread AnimateAirdropPod( dropPod, origin, angles, optionInfo.animationName )
+	else
+		dropPod.Signal( "StopBraking" )
+
+
+	if ( delayedContents )
+		airdropContents = optionInfo.delayedContentFunc( optionInfo )
+
+	StopSoundAtPosition( soundOrigin, SOUND_CARE_PACKAGE_MARKER )
+
+	dropPod.AllowZiplines()
+
+	// amazing R5DEV-293895 - need to set the care package from being used before landing
+	dropPod.e.isBusy = false
+
+	foreach ( callbackFunc in file.Callbacks_OnAirdropLanded )
+		callbackFunc( dropPod, origin )
+
+	DEV_AirdropPrint( "***** AirdropItems(): Droppod landing finished @ time == " + Time() )
+
+	EmitSoundOnEntity( dropPod, SOUND_CARE_PACKAGE_STEAM )
+
+	thread PlayAnim( dropPod, "droppod_loot_closed_idle" )
+
+	dropPod.SetUsable()
+	dropPod.SetUsableByGroup( "pilot" )
+	dropPod.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_USE_COLLISION_ORIGIN )
+	dropPod.SetUsePrompts( "#SURVIVAL_DROPPOD_USE", "#SURVIVAL_DROPPOD_USE" )
+
+	table < string, array<entity> > itemsSpawnedForPodDoor
+	for ( int i = 0; i < airdropContents.len(); i++ ) // NOTE: This assumes airdropContents.len() == doors.len().
+	{
+		itemsSpawnedForPodDoor[ doors[i] ]<-DroppodDoorThink( dropPod, doors[i], airdropContents[i] )
+	}
+
+
+	DEV_AirdropPrint( "***** AirdropItems(): Droppod items spawned @ time == " + Time() )
+
+	// DOOR ITEMS CHECK: Check to ensure all doors are stocked.
+	foreach( door in doors )
+	{
+		Assert( itemsSpawnedForPodDoor[ door ].len() > 0, "ERROR in AirdropItems(): Pod Door " + door + "is empty!!!" )
+		foreach( lootItem  in itemsSpawnedForPodDoor[ door ] )
+		{
+			Assert( IsValid( lootItem ), "ERROR in AirdropItems(): Invalid Item in spawnedLoot array: " + lootItem )
+		}
+	}
+
+	PIN_AirdropAction ( "care_package", origin )
+
+	if( optionInfo.targetName == CARE_PACKAGE_LIFELINE_TARGETNAME )
+		thread DropPodLocationBeam( dropPod, optionInfo.owner, airdropBeamColorID, true )
+
+
+	// Display a hologram effect on top of the package if using the Chevrex skin
+	if ( optionInfo.skin == CHEVREX_AIRDROP_SKIN_INDEX )
+	{
+		// If there is already an effect on this drop pod, stop it before playing the new one ( There really shouldn't be)
+		if ( dropPod in file.dropPodToVFXEntityTable )
+		{
+			entity effect = file.dropPodToVFXEntityTable[ dropPod ]
+			if ( IsValid( effect ) )
+				EffectStop( effect )
+		}
+
+		entity fx = StartParticleEffectOnEntityWithPos_ReturnEntity( dropPod, GetParticleSystemIndex( CHEVREX_AIRDROP_HOLOGRAM_VFX ), FX_PATTACH_POINT_FOLLOW_NOROTATE, dropPod.LookupAttachment( "FX_LIGHT" ), <0,0,0>, <-90,0,0>)
+		EffectSetControlPointVector( fx, 1, CHEVREX_AIRDROP_HOLOGRAM_VFX_COL )
+		file.dropPodToVFXEntityTable[ dropPod ] <- fx
+	}
+
+	dropPod.WaitSignal( "OpenDroppod" )
+
+	DEV_AirdropPrint( "***** AirdropItems(): Droppod doors opened @ time == " + Time() )
+
+	dropPod.UnsetUsable()
+	dropPod.EnableHibernation()
+
+	thread DroppodDoorReorientLoot( dropPod )
+}
+
+void function DroppodDoorReorientLoot ( entity dropPod, bool shouldWait = true, bool isCrafting = false )
+{
+	if ( shouldWait )
+		wait 0.8 // delay for the doors to open
+
+	if ( !IsValid( dropPod ) )
+		return
+
+	array<entity> spawnedLoot = AirdropGetSpawnedLoot( dropPod )
+
+	DEV_AirdropPrint( "***** DroppodDoorReorientLoot(): spawnedLoot count == " + spawnedLoot.len() )
+
+	foreach (lootEnt in spawnedLoot)
+	{
+		Assert( IsValid( lootEnt), "----- ERROR in DroppodDoorReorientLoot(): item is invalid." )
+
+		vector localPos = lootEnt.GetLocalOrigin()
+		LootData data = SURVIVAL_Loot_GetLootDataByIndex( lootEnt.GetSurvivalInt() )
+		vector offset = GetOffsetForAirdropLoot( data.lootType )
+
+		DEV_AirdropPrint( "***** DroppodDoorReorientLoot(): offset vector == " + offset )
+
+		lootEnt.SetLocalOrigin( localPos - offset )
+
+		PropSurvivalFlagsClear( lootEnt, ePropSurvivalFlag.HIDE_LOOT_LINE )
+		lootEnt.MakeVisible()
+		lootEnt.SetUsable()
+		lootEnt.SetUsableByGroup( "pilot" )
+		lootEnt.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_USE_COLLISION_ORIGIN | USABLE_USE_VERTICAL_LINE | USABLE_HORIZONTAL_FOV | USABLE_HIGH_DETAIL_TRACE )
+
+		#if DEVELOPER
+			AddEntityDestroyedCallback( lootEnt, OnDestroyedDroppodLootItem )
+		#endif
+	}
+
+	// [ R5DEV-348463 ] Check on and Assert visibility for all spawned Loot.
+	DEV_AirdropPrint( "***** DroppodDoorReorientLoot() Reoriented Loot @ time == " + Time() )
+	DEV_AirdropPrint( " - Droppod: Droppod Location  	== " + dropPod.GetOrigin() )
+	DEV_AirdropPrint( " - Droppod: Items Count 		== " + spawnedLoot.len() )
+
+	WaitFrame()
+	foreach( lootEnt in spawnedLoot )
+	{
+		if( IsValid( lootEnt ) )
+		{
+			DEV_AirdropPrint( " - DroppodDoorReorientLoot(): lootEnt " + lootEnt.GetScriptName() + " visibility flags == " + lootEnt.kv.VisibilityFlags )
+			Assert( lootEnt.kv.VisibilityFlags == string( ENTITY_VISIBLE_TO_EVERYONE ), "ERROR in DroppodDoorReorientLoot(): Item not visible: " + lootEnt )
+		}
+	}
+}
+
+array<entity> function DroppodDoorThink( entity dropPod, string doorPosition, array<string> items, bool isCrafting = false )
+{
+	// TODO : uncomment this when we get additive anim support
+
+	array<entity> spawnedLoot
+
+	dropPod.EndSignal( "OnDestroy" )
+
+	array<vector> offsets
+
+	bool hasHealthItem = false
+	bool hasWeapon     = false
+	bool hasAttachment = false
+	bool hasAmmo	   = false
+
+	LootData data
+	for ( int i = 0; i < items.len(); i++ )
+	{
+		data = SURVIVAL_Loot_GetLootDataByRef( items[i] )
+
+		if ( data.lootType == eLootType.MAINWEAPON )
+			hasWeapon = true
+		else if ( data.lootType == eLootType.HEALTH )
+			hasHealthItem = true
+		else if ( data.lootType == eLootType.ATTACHMENT )
+			hasAttachment = true
+		else if ( data.lootType == eLootType.AMMO )
+			hasAmmo = true
+	}
+
+	bool useAttachmentCustomOffset = hasWeapon && hasAttachment ? true : false
+
+	switch ( items.len() )
+	{
+		case 1:
+			if ( isCrafting == true && hasHealthItem && items.contains( "health_pickup_combo_large" ) )
+			{
+				offsets = [ < 0, 0, -8 > ]
+			}
+			else if( isCrafting == true && hasHealthItem && items.contains( "health_pickup_health_large" ) )
+			{
+				offsets = [ < -5, 0, 0 > ]
+			}
+			else
+			{
+				offsets = [ < 0, 0, 0 > ]
+			}
+			break
+
+		case 2:
+			if ( !hasWeapon && hasAmmo ) // Made this specific so it doesn't interfere with the munitions drop perk which assault legends have.
+			{
+				float z = 14.0
+				float y = 6.0
+				offsets = [ <0, -y, z * 0.75>,
+					<0, -y, -z> ]
+			}
+			else if ( isCrafting == true && hasHealthItem && items.contains( "health_pickup_combo_large" ) )
+			{
+				float z = 8.0
+				float y = 6.0
+				offsets = [ <0, y, -z>,
+					<0, -y, -z> ]
+			}
+			else if ( !hasWeapon )
+			{
+				float z = 14.0
+				float y = 6.0
+				offsets = [ <0, y, z * 0.75>,
+					<0, -y, -z> ]
+			}
+			else
+			{
+				float y = 6.0
+
+				if ( useAttachmentCustomOffset )
+					offsets = [ <0, 0, 0>, <0, -8, 16.0> ]
+				else
+					offsets = [ <0, y, 0>, <0, -y, 0> ]
+			}
+			break
+
+		case 3:
+			float z = 14.0
+			float y = 8.0
+			offsets = [ <0, 0, z * 0.75>,
+				<0, y, -z>,
+				<0, -y, -z> ]
+			break
+
+		case 4:
+			float z = 16.0
+			float y = 8.0
+			offsets = [ <0, y, z>,
+				<0, -y, z>,
+				<0, y, -z>,
+				<0, -y, -z> ]
+			break
+
+		default:
+			Assert( false, "care package does not support " + items.len() + " items" )
+			return spawnedLoot
+	}
+
+	// stupid special case to put giant health kit to the bottom
+	array<string> refToPutInBottom = [
+		"health_pickup_health_large",
+		"backpack_pickup_lv1",
+		"backpack_pickup_lv2",
+		"backpack_pickup_lv3",
+		"backpack_pickup_lv4_revive_boost"
+	]
+	if ( items.len() > 1 )
+	{
+		foreach ( ref in refToPutInBottom )
+		{
+			if ( items.contains( ref ) )
+			{
+				int idx = items.find( ref )
+				items.remove( idx )
+				items.append( ref )
+			}
+		}
+	}
+
+	for ( int i = 0; i < items.len(); i++ )
+		spawnedLoot.extend( SpawnLootInDropPod( dropPod, items[i], doorPosition, 1, offsets[i], isCrafting ) )
+
+	#if DEVELOPER
+		DEV_AirdropPrint( "***** DroppodDoorThink(): Droppod Door lootItems spawned @ time == " + Time() )
+		DEV_AirdropPrint( " - Droppod: Droppod Location  	== " + dropPod.GetOrigin() )
+		DEV_AirdropPrint( " - Droppod: Droppod Door ID		== " + doorPosition )
+		DEV_AirdropPrint( " - Droppod: Items Count 		== " + spawnedLoot.len() )
+	#endif
+	return spawnedLoot
+}
+
+vector function GetOffsetForAirdropLoot( int lootType )
+{
+	switch ( lootType )
+	{
+		case eLootType.MAINWEAPON:
+			return AIRDROP_LOOT_OFFSET_WEAPON
+		case eLootType.BACKPACK:
+			return AIRDROP_LOOT_OFFSET_BACKPACK
+		case eLootType.HELMET:
+			return AIRDROP_LOOT_OFFSET_HELMET
+		case eLootType.INCAPSHIELD:
+			return AIRDROP_LOOT_OFFSET_INCAPSHIELD
+		case eLootType.ARMOR:
+			return AIRDROP_LOOT_OFFSET_ARMOR
+		case eLootType.AMMO:
+			return AIRDROP_LOOT_OFFSET_AMMO
+		case eLootType.HEALTH:
+			return AIRDROP_LOOT_OFFSET_HEALING
+		case eLootType.ORDNANCE:
+		case eLootType.GADGET:
+			return AIRDROP_LOOT_OFFSET_GADGET
+		case eLootType.ATTACHMENT:
+			return AIRDROP_LOOT_OFFSET_ATTACHMENT
+	}
+
+	Warning( "WARNING --- GetOffsetForAirdropLoot() got unknown lootType == " + lootType )
+	return < 0, 0, 0 >
+}
+
+array<entity> function AirdropGetSpawnedLoot( entity airdropPod )
+{
+	array<entity> loot = []
+	// S3: GetChildren() entity method not available
+	Warning( "GetAirdropLoot: GetChildren not available in S3" )
+	return loot
+}
+
+array<entity> function SpawnLootInDropPod( entity dropPod, string item, string doorPosition, int spotIndex = 1, vector originOffset = <0, 0, 0>, bool isCrafting = false, bool craftingAmmo = true )
+{
+	array<entity> allSpawnedLoot
+
+	LootData data = SURVIVAL_Loot_GetLootDataByRef( item )
+
+	string suffix            = "_MID"
+	vector objectAngleOffset = <0, 0, 0>
+	bool shouldSpawnOrdnanceWithWeapons = GetCurrentPlaylistVarBool( "airdrop_spawn_ordnance_with_weapons", false )
+	switch ( data.lootType )
+	{
+		case eLootType.MAINWEAPON:
+			suffix = "_TOP"
+			bool spawnAmmo = !SURVIVAL_Loot_IsAmmoSpawningDisabled()
+
+			if ( isCrafting )
+			{
+				spawnAmmo = false
+				originOffset -= <10, 0, 3>
+
+				// If a Crate weapon is in crafting, this check allows it to spawn without it's ammo
+				// TODO We should refactor this and the lower section that also checks for ammo to be cleaner.
+				if ( GetWeaponInfoFileKeyField_GlobalBool( data.baseWeapon, "uses_ammo_pool" ) )
+				{
+					array<entity> recloot1 = SpawnLootInDropPod( dropPod, data.ammoType, doorPosition, spotIndex, <2, 0, 5>, true, false )
+					allSpawnedLoot.extend( recloot1 )
+
+					array<entity> recLoot2 = SpawnLootInDropPod( dropPod, data.ammoType, doorPosition, spotIndex, <2, 0, -15>, true, false )
+					allSpawnedLoot.extend( recLoot2 )
+				}
+
+				if ( data.baseWeapon == "mp_weapon_autopistol" || data.baseWeapon == "mp_weapon_semipistol" || data.baseWeapon == "mp_weapon_shotgun_pistol" )
+				{
+					array<entity> attachment = SpawnLootInDropPod( dropPod, "hopup_unshielded_dmg", doorPosition, spotIndex, <2, -5, 8>, true, false )
+					allSpawnedLoot.extend( attachment )
+				}
+			}
+                        
+                                                                                                                                   
+                                          
+     
+                                                     
+      
+                                                                                                                                             
+                                       
+      
+     
+         
+
+			// For modes with infinite ammo, spawn ordnance instead of ammo with weapons
+			if ( shouldSpawnOrdnanceWithWeapons )
+			{
+				string ordnanceLootGroup = GetCurrentPlaylistVarString( "airdrop_weapon_ordnance_loot_group", "control_ordnance" )
+				spawnAmmo = false
+				if ( data.baseWeapon == "mp_weapon_dragon_lmg" )
+				{
+					array<entity> recLoot1 = SpawnLootInDropPod( dropPod, "mp_weapon_thermite_grenade", doorPosition, spotIndex, originOffset + <0, originOffset.y, 15> )
+					allSpawnedLoot.extend( recLoot1 )
+				}
+				else
+				{
+					array<entity> recLoot1 = SpawnLootInDropPod( dropPod, SURVIVAL_GetWeightedItemFromGroup( ordnanceLootGroup ), doorPosition, spotIndex, originOffset + <0, originOffset.y, 15> )
+					allSpawnedLoot.extend( recLoot1 )
+				}
+			}
+
+			if ( GetWeaponInfoFileKeyField_GlobalBool( data.baseWeapon, "uses_ammo_pool" ) && spawnAmmo )
+			{
+				array<entity> recloot1 = SpawnLootInDropPod( dropPod, data.ammoType, doorPosition, spotIndex, originOffset + <0, originOffset.y, -2> )
+				array<entity> recLoot2 = SpawnLootInDropPod( dropPod, data.ammoType, doorPosition, spotIndex, originOffset + <0, originOffset.y, 15> )
+
+				allSpawnedLoot.extend( recloot1 )
+				allSpawnedLoot.extend( recLoot2 )
+			}
+			originOffset -= <0, 0, 5>
+
+      		                         
+			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_HEATWAVE ) )
+			{
+				if ( data.tier >= eLootTier.MYTHIC )
+				{
+					if ( data.baseWeapon == "mp_weapon_hemlok" )
+					{
+						array<entity> recLoot1 = SpawnLootInDropPod( dropPod, "helmet_pickup_lv5_sunglasses", doorPosition, spotIndex, originOffset + < 0, 11, 7.5> )
+						allSpawnedLoot.extend( recLoot1 )
+					}
+
+					else if ( data.baseWeapon == "mp_weapon_bow" )
+					{
+						array<entity> recLoot1 = SpawnLootInDropPod( dropPod, "helmet_pickup_lv5_sunglasses", doorPosition, spotIndex, originOffset + < 0, 0, 25> )
+						allSpawnedLoot.extend( recLoot1 )
+					}
+
+					else
+					{
+						array<entity> recLoot1 = SpawnLootInDropPod( dropPod, "helmet_pickup_lv5_sunglasses", doorPosition, spotIndex, originOffset + < 0, 9, 10.5> )
+						allSpawnedLoot.extend( recLoot1 )
+					}
+
+				}
+			}
+                                   
+
+			break
+
+		case eLootType.AMMO:
+			suffix = "_AMMO_" + spotIndex
+			break
+
+
+		// We are spawning ordnance instead of ammo in modes with infinite ammo, but would still like it to spawn in the same positions
+		case eLootType.ORDNANCE:
+			if ( shouldSpawnOrdnanceWithWeapons )
+				suffix = "_AMMO_" + spotIndex
+			break
+
+		case eLootType.HEALTH:
+			if ( shouldSpawnOrdnanceWithWeapons )
+				suffix = "_AMMO_" + spotIndex
+			break
+
+	}
+
+	if ( data.droppodRotate )
+	{
+		objectAngleOffset = <90, 0, 0>
+	}
+
+	                   
+	if( isCrafting && data.ref == CRAFTED_BANNER_REF )
+	{
+		objectAngleOffset = <90, 0, 0>
+	}
+       
+
+	                         
+		if (data.ref == "helmet_pickup_lv5_sunglasses" )
+		{
+			originOffset.x -= 3
+			objectAngleOffset = <90, 90, 90>
+		}
+       
+
+	                          
+		if (data.ref == "mp_weapon_titan_sword" )
+		{
+			originOffset.x -= 15
+			originOffset.z += 6
+		}
+       
+
+	                    
+		if (data.ref == "mp_pickup_xp_cache_dynamic" )
+		{
+			originOffset.x -=1
+		}
+       
+
+	string lootAttachmentRef = "LOOT_" + doorPosition + suffix
+	int lootAttachmentPoint  = dropPod.LookupAttachment( lootAttachmentRef )
+	vector attachmentAngles  = dropPod.GetAttachmentAngles( lootAttachmentPoint )
+	vector lootAngles        = AnglesCompose( attachmentAngles, objectAngleOffset )
+	vector lootOrigin        = dropPod.GetAttachmentOrigin( lootAttachmentPoint ) + AnglesToForward( lootAngles )
+
+	vector up     = AnglesToUp( attachmentAngles )
+	vector fwd    = AnglesToForward( attachmentAngles )
+	vector rgt    = AnglesToRight( attachmentAngles )
+	vector offset = fwd * originOffset.x + rgt * originOffset.y + up * originOffset.z
+
+	int count = data.countPerDrop
+
+
+                
+	if ( !isCrafting )
+      
+		if ( data.lootType == eLootType.AMMO )
+			count = data.inventorySlotCount
+
+              
+                                                                  
+   
+                                               
+    
+                              
+     
+               
+     
+    
+   
+       
+	if ( isCrafting )
+	{
+		if ( data.lootType == eLootType.AMMO && craftingAmmo )
+		{
+			if ( data.ref == BULLET_AMMO || data.ref == HIGHCAL_AMMO || data.ref == SPECIAL_AMMO )
+			{
+				count = count * CRAFTING_AMMO_MULTIPLIER
+				if ( Crafting_IsDispenserCraftingEnabled() )
+				{
+					count = data.countPerDrop
+					count = count * DISPENSERS_CRAFTING_AMMO_MULTIPLIER
+				}
+			}
+
+			if ( data.ref == SHOTGUN_AMMO || data.ref == ARROWS_AMMO || data.ref == SNIPER_AMMO )
+			{
+				count = count * CRAFTING_AMMO_MULTIPLIER_SMALL
+				if ( Crafting_IsDispenserCraftingEnabled() )
+				{
+					count = data.countPerDrop
+					count = count * DISPENSERS_CRAFTING_AMMO_MULTIPLIER_SMALL
+				}
+			}
+		}
+	}
+
+	if( data.lootType == eLootType.MAINWEAPON )
+		count = -1
+
+	entity loot = SpawnGenericLoot( item, lootOrigin + offset, lootAngles, count, TRACE_COLLISION_GROUP_BLOCK_WEAPONS )
+
+                        
+                                                                                                 
+                                                                                      
+  
+                                       
+                                                                                        
+                                                                  
+                                                       
+
+                                                                          
+                                                                                   
+
+                                    
+   
+                                                                                          
+
+                         
+    
+                                                                         
+                                                                                                      
+                       
+     
+                                                                            
+                                         
+     
+    
+   
+  
+       
+
+                
+	if ( isCrafting )
+		SetItemSpawnSource( loot, eSpawnSource.CRAFTING, dropPod )
+	else
+      
+		SetItemSpawnSource( loot, eSpawnSource.DROPPOD, dropPod )
+	loot.SetParent( dropPod, lootAttachmentRef, true )
+	loot.RemoveFromAllRealms()
+	loot.AddToOtherEntitysRealms( dropPod )
+
+                
+	if ( !isCrafting )
+      
+	{
+		vector localPos = loot.GetLocalOrigin()
+		vector internal_offset = GetOffsetForAirdropLoot( data.lootType )
+		loot.SetLocalOrigin( localPos + internal_offset )
+
+		PropSurvivalFlagsSet( loot, ePropSurvivalFlag.HIDE_LOOT_LINE )
+		loot.SetUsable()
+		loot.SetUsableByGroup( "pilot" )
+		loot.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_USE_COLLISION_ORIGIN | USABLE_USE_VERTICAL_LINE | USABLE_HORIZONTAL_FOV | USABLE_HIGH_DETAIL_TRACE )
+
+		if ( data.tier >= eLootTier.EPIC )
+			loot.MakeVisible()
+		else
+			loot.MakeInvisible()
+	}
+                                      
+     
+  
+                                        
+                                                     
+  
+      
+
+	allSpawnedLoot.append( loot )
+	return allSpawnedLoot
+}
+
+void function DropPodLocationMarker( entity dropPod, entity owner, int colorID = COLORID_AIRDROP_DEFAULT_COLOR, asset markerParticleSystem = FX_AIRDROP_GROUND_MARKER_DEFAULT_CP )
+{
+	int markerIndex = GetParticleSystemIndex( markerParticleSystem )
+	entity markerFx = StartParticleEffectInWorld_ReturnEntity( markerIndex, dropPod.GetOrigin(), dropPod.GetAngles() )
+	EffectSetControlPointColorById( markerFx, 1, colorID )
+
+	entity threatIndicator = CreateThreatIndicator( dropPod.GetOrigin() + <0, 0, 48>, eThreatIndicatorID.GRENADE_INDICATOR_GENERIC, 128.0 )
+	threatIndicator.RemoveFromAllRealms()
+	threatIndicator.AddToOtherEntitysRealms( dropPod )
+
+	markerFx.RemoveFromAllRealms()
+	markerFx.AddToOtherEntitysRealms( dropPod )
+
+	dropPod.EndSignal( "OnDestroy" )
+	dropPod.EndSignal( "OpenDroppod" )
+	dropPod.EndSignal( "OnDeath" )
+	dropPod.EndSignal( "DroppodRemoveLocationMarker" )
+
+
+	OnThreadEnd(
+		function() : ( markerFx, threatIndicator )
+		{
+			if ( IsValid( markerFx ) )
+				EffectStop( markerFx )
+
+			if ( IsValid( threatIndicator ) )
+				threatIndicator.Destroy()
+		}
+	)
+
+	dropPod.WaitSignal( "StopBraking" )
+	if ( IsValid( markerFx ) )
+	{
+		EffectStop( markerFx )
+	}
+	if ( IsValid( threatIndicator ) )
+	{
+		threatIndicator.Destroy()
+	}
+
+	WaitForever()
+}
+
+void function DropPodLocationBeam( entity dropPod, entity owner, int colorID = COLORID_AIRDROP_DEFAULT_COLOR, bool IsLifelineCarePackage = false, asset beamParticleSystem = FX_AIRDROP_BEAM_CP )
+{
+	int beamIndex       = GetParticleSystemIndex( beamParticleSystem )
+	entity beamFx       = StartParticleEffectInWorld_ReturnEntity( beamIndex, dropPod.GetOrigin(), dropPod.GetAngles() + <0, 180, 0> )
+	entity markerSource = CreateScriptMover( AIRDROP_MOVER_SCRIPTNAME, dropPod.GetOrigin(), dropPod.GetAngles() )
+	EffectSetControlPointColorById( beamFx, 1, colorID )
+
+	beamFx.RemoveFromAllRealms()
+	beamFx.AddToOtherEntitysRealms( dropPod )
+	                            
+		if ( GetCurrentPlaylistVarBool( "lifeline_res_slow_disabled", true ) )
+		{
+			if ( IsLifelineCarePackage )
+			{
+				SetTeam(beamFx, dropPod.GetTeam())
+				beamFx.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+			}
+		}
+       
+
+	dropPod.EndSignal( "OnDestroy" )
+	dropPod.EndSignal( "OpenDroppod" )
+	dropPod.EndSignal( "OnDeath" )
+	dropPod.EndSignal( "DroppodRemoveLocationMarker" )
+
+
+	OnThreadEnd(
+		function() : ( markerSource, beamFx )
+		{
+			if ( IsValid( markerSource ) )
+				markerSource.Destroy()
+			EffectStop( beamFx )
+		}
+	)
+
+	dropPod.WaitSignal( "StopBraking" )
+
+	WaitForever()
+}
+
+void function Survival_AddCallback_OnAirdropPositionsDetermined( void functionref() callbackFunc )
+{
+	Assert( !file.Callbacks_OnAirdropPositionsDetermined.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnAirdropPositionsDetermined" )
+	file.Callbacks_OnAirdropPositionsDetermined.append( callbackFunc )
+}
+
+void function Survival_AddCallback_OnAirdropRoundMessaging( void functionref( AirdropRoundData, int ) callbackFunc )
+{
+	Assert( !file.Callbacks_OnAirdropRoundMessaging.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnAirdropRoundMessaging" )
+	file.Callbacks_OnAirdropRoundMessaging.append( callbackFunc )
+}
+
+void function Survival_AddCallback_OnAirdropRoundLaunchRequest( void functionref( AirdropRoundData, int ) callbackFunc )
+{
+	Assert( !file.Callbacks_OnAirdropRoundLaunchRequest.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnAirdropRoundLaunchRequest" )
+	file.Callbacks_OnAirdropRoundLaunchRequest.append( callbackFunc )
+}
+
+void function Survival_AddCallback_OnAirdropOpened( void functionref(entity, entity) callbackFunc )
+{
+	Assert( !file.Callbacks_OnAirdropOpened.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnAirdropOpened" )
+	file.Callbacks_OnAirdropOpened.append( callbackFunc )
+}
+
+void function Survival_AddCallback_OnAirdropLanded( void functionref(entity, vector) callbackFunc )
+{
+	Assert( !file.Callbacks_OnAirdropLanded.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnAirdropLanded" )
+	file.Callbacks_OnAirdropLanded.append( callbackFunc )
+}
+
+void function Survival_AddCallback_OnAirdropLaunched( void functionref(entity, vector) callbackFunc )
+{
+	Assert( !file.Callbacks_OnAirdropLaunched.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnAirdropLaunched" )
+	file.Callbacks_OnAirdropLaunched.append( callbackFunc )
+}
+#endif
+
+void function OnAirdropCreated( entity dropPod )
+{
+	if ( dropPod.GetTargetName() != CARE_PACKAGE_TARGETNAME && dropPod.GetTargetName() != CARE_PACKAGE_LIFELINE_TARGETNAME )
+		return
+
+	AddCallback_OnUseEntity_ClientServer( dropPod, OnAirdropUse )
+
+	#if CLIENT
+		AddEntityCallback_GetUseEntOverrideText( dropPod, ExtendedUseTextOverride )
+	#endif
+}
+
+void function OnAirdropUse( entity dropPod, entity player, int useInputFlags )
+{
+	if ( !dropPod.DoesShareRealms( player ) )
+		return
+
+	if ( IsBitFlagSet( useInputFlags, USE_INPUT_DEFAULT ) )
+	{
+		#if SERVER
+			if ( dropPod.e.isBusy )
+				return
+
+			dropPod.Signal( "OpenDroppod" )
+			PIN_Interact ( player, "care_package", null, dropPod.GetTargetName() )
+			thread AirDropOpen( dropPod, player )
+		#endif
+	}
+}
+
+#if SERVER
+void function RemoteOpenAirdrop( entity dropPod, entity player )
+{
+	if ( dropPod.e.isBusy )
+		return
+
+	DEV_AirdropPrint( "***** RemoteOpenAirDrop() called, remotely opened... Crypto or Loba, is that you?" )
+
+	dropPod.Signal( "OpenDroppod" )
+
+	PIN_Interact ( player, "care_package", dropPod.GetOrigin() )
+	thread AirDropOpen( dropPod, player )
+}
+
+void function AirDropOpen( entity ent, entity player )
+{
+	ent.EndSignal( "OnDestroy" )
+
+	if ( ent.e.blockActive )
+		return
+
+	ent.e.blockActive = true
+
+	GradeFlagsSet( ent, eGradeFlags.IS_BUSY )
+
+	if ( IsValid( player )  )
+		TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_OPENDROPPOD, ent, ent.GetOrigin(), player.GetTeam(), player )
+
+	foreach ( callbackFunc in file.Callbacks_OnAirdropOpened )
+		callbackFunc( ent, player )
+
+	DEV_AirdropPrint( "***** AirDropOpen(): Droppod opening started @ time == " + Time() )
+	waitthread PlayAnim( ent, "droppod_loot_opening" )
+	DEV_AirdropPrint( "***** AirDropOpen(): Droppod opening finished @ time == " + Time() )
+	thread PlayAnim( ent, "droppod_loot_open_idle" )
+}
+
+// Make sure we cleanup VFX if the airdrop gets destroyed
+void function OnAirdropDestroyed( entity dropPod )
+{
+	// Currently we only cleanup Chevrex logo vfx
+	if ( dropPod.GetTargetName() != CARE_PACKAGE_TARGETNAME && dropPod.GetTargetName() != CARE_PACKAGE_LIFELINE_TARGETNAME )
+		return
+
+	if ( dropPod in file.dropPodToVFXEntityTable )
+	{
+		entity effect = file.dropPodToVFXEntityTable[ dropPod ]
+		if ( IsValid( effect ) )
+			EffectStop( effect )
+	}
+}
+
+#if DEVELOPER
+void function OnDestroyedDroppodLootItem( entity lootItem )
+{
+	DEV_AirdropPrint( "xxxxx Droppod lootItem DESTROYED @ time == " + Time() )
+	DEV_AirdropPrint( " - Droppod looItem Targetname	== " + lootItem.GetTargetName())
+	DEV_AirdropPrint( " - Droppod looItem Owner 		== " + lootItem.GetParent().GetScriptName())
+	DEV_AirdropPrint( " - Droppod Location			== " + lootItem.GetParent().GetOrigin())
+
+	if( !lootItem.e.playerPickedUpItem )
+	{
+		DEV_AirdropPrint( format( "WARNING: Care Package item %s was destroyed but never picked up.", string( lootItem ) ))
+	}
+	else
+	{
+		DEV_AirdropPrint( " - Droppod lootItem was picked up by player: " + lootItem.e.playerPickedUpItem )
+	}
+}
+#endif
+
 #endif

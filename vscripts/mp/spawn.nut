@@ -1746,7 +1746,7 @@ void function DrawSpawnPointRating( entity spawnPoint, table ratingData )
 		var friendlyRating = ratingData.tfr + ratingData.pfr + ratingData.nfr
 		DebugDrawBox( spawnPoint.GetOrigin(), <-14,-14,0>, <14, 14, friendlyRating * ratingScale>, <0, 128, 255>, 1, 1.1 )
 
-		DebugDrawBox( spawnPoint.GetOrigin(), <-16,-16,0>, <16, 16, ratingData.rating * ratingScale>, COLOR_WHITE, 1, 1.1 )
+		//DebugDrawBox( spawnPoint.GetOrigin(), <-16,-16,0>, <16, 16, ratingData.rating * ratingScale>, <255, 255, 255>, 1, 1.1 )
 
 		wait 1.0
 	}

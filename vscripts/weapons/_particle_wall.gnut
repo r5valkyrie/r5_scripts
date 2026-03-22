@@ -271,7 +271,7 @@ void function CreateAmpedWallFromOwner( entity weaponOwner, float duration, Weap
 	thread PlayDelayedVortexEndSound( endSoundTime, vortexSphere )
 	bool playedEndSound = false
 	vector vortexOrigin = vortexSphere.GetOrigin()
-	entity mover = CreateScriptMover()
+	entity mover = CreateScriptMover("")
 
 	int weaponOwnerTeam = weaponOwner.GetTeam();
 

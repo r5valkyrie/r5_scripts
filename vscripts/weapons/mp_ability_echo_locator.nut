@@ -179,7 +179,7 @@ var function OnWeaponTossReleaseAnimEvent_WeaponEchoLocator( entity weapon, Weap
 	int ammoReq = weapon.GetAmmoPerShot()
 	weapon.EmitWeaponSound_1p3p( GetGrenadeThrowSound_1p( weapon ), GetGrenadeThrowSound_3p( weapon ) )
 
-	entity deployable = ThrowDeployable_Retail( weapon, attackParams, 1.0, OnEchoLocatorPlanted, null, <0, 0, 850> )
+	entity deployable = ThrowDeployable( weapon, attackParams, 1.0, OnEchoLocatorPlanted, null )
 	if ( deployable )
 	{
 		entity player = weapon.GetWeaponOwner()
@@ -614,7 +614,7 @@ void function CreateDroneCluster_Thread( entity owner, int ownerTeam, entity ech
 	#if DEVELOPER
 	if ( ECHO_LOCATOR_DEBUG )
 	{
-		DebugDrawSphere( echoLocator.GetOrigin(), file.echoLocatorRadius, COLOR_RED, true, duration )
+		//DebugDrawSphere( echoLocator.GetOrigin(), file.echoLocatorRadius, <255, 0, 0>, true, duration )
 	}
 	#endif //DEV
 

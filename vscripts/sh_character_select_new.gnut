@@ -168,7 +168,7 @@ const string FUNCNAME_CLUB_SETCHAMPIONCLUBNAME_CL = "ServerToClient_SetChampionC
 const string FUNCNAME_CLUB_GETCLUBNAME = "ClientToUI_GetClubName"
 global const string CLUB_NAME_EMPTY = "?Club!Name?"
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 global function Dev_CharacterSelectClearCamera
 global function Dev_CharacterSelectRefreshLighting
 #endif
@@ -4865,7 +4865,7 @@ bool function SquadMuteLegendSelectEnabled()
 	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
 }
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 void function Dev_CharacterSelectClearCamera()
 {
 	vector nodeOrigin = fileLevel.characterNode.GetOrigin() + fileLevel.characterNode.GetForwardVector() * 128 + <0,0,64>

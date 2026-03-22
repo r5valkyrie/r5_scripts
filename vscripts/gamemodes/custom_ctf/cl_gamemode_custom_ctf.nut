@@ -1,5 +1,9 @@
 global function Cl_CustomCTF_Init
 
+const int HIGHLIGHT_CONTEXT_NEUTRAL = 0
+const int HIGHLIGHT_FILL_VM_CUSTOM_COLOR = 101
+const int HIGHLIGHT_OUTLINE_VM_CUSTOM_COLOR = 106
+
 //Server Callbacks
 global function ServerCallback_CTF_DoAnnouncement
 global function ServerCallback_CTF_FlagCaptured

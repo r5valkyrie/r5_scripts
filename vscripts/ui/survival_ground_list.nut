@@ -427,7 +427,7 @@ void function UIToClient_SurvivalGroundListOpened( var menu )
 		}
 		else
 		{
-			EHI ornull ownerEHI = GetEHIForDeathBox( deathBox )
+			EHI ornull ownerEHI = GetDeathBoxOwnerEHI( deathBox )
 			if ( ownerEHI != null )
 			{
 				expect EHI( ownerEHI )
@@ -1356,7 +1356,7 @@ void function PerformItemAction( DeathBoxListPanelItem item, bool isAltAction, b
 	bool isInventoryFull                              = (amountThatWouldBePickedUp == 0)
 
 	LootRef lootRef  = SURVIVAL_CreateLootRef( lootFlavor, bestLootEnt )
-	int groundAction = SURVIVAL_GetActionForGroundItem( player, lootRef, isAltAction ).action
+	int groundAction = SURVIVAL_GetActionForGroundItem( player, lootRef, int( isAltAction ) ).action
 
 	bool showUseHighlight     = false
 	bool shouldCloseQuickSwap = true
@@ -1855,8 +1855,6 @@ void function UIToClient_SurvivalGroundList_OnQuickSwapItemClick( var button, in
 	LootData dropLootFlav                  = SURVIVAL_Loot_GetLootDataByIndex( inventoryEntry.type )
 
 
-	if ( dropLootFlav.noDrop )
-		return
 
 
 	PredictedLootActionData plad

@@ -223,7 +223,7 @@ void function Newness_MarkItemFlavorGUIDAsNotNewForPlayer( entity player, Settin
 #if UI
 bool function Newness_IsItemFlavorNew( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	return (flavor in fileLevel.newItemFlavorSet)
 }
@@ -233,7 +233,7 @@ bool function Newness_IsItemFlavorNew( ItemFlavor flavor )
 #if UI
 void function Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	Assert( Remote_ServerCallFunctionAllowed() )
 
 	if ( !(flavor in fileLevel.newItemFlavorSet) )
@@ -299,7 +299,7 @@ bool function MarkAllItemsOfTypeAsViewed( int categoryType )
 #if CLIENT || UI
 void function Newness_TEMP_MarkItemAsNewAndInformServer( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 
 	// todo(dw): forever temp
 	SettingsAssetGUID guid = ItemFlavor_GetGUID( flavor )

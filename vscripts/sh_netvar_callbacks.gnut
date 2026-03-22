@@ -84,7 +84,7 @@ void function NetVarCallbacks_Init()
 // These register callbacks that receive (entity player, <type> newValue)
 //-----------------------------------------------------------------------------
 
-void function RegisterNetVarBoolChangeCallback( string varName, int category, void functionref( entity, bool ) callback )
+void function RegisterNetVarBoolChangeCallback( string varName, void functionref( entity, bool ) callback, int category = 0 )
 {
 	NetVarCallbacks_Init()
 
@@ -101,7 +101,7 @@ void function RegisterNetVarBoolChangeCallback( string varName, int category, vo
 	// and dispatch manually in TriggerGlobalNetVarCallbacks
 }
 
-void function RegisterNetVarIntChangeCallback( string varName, int category, void functionref( entity, int ) callback )
+void function RegisterNetVarIntChangeCallback( string varName, void functionref( entity, int ) callback, int category = 0 )
 {
 	NetVarCallbacks_Init()
 
@@ -111,7 +111,7 @@ void function RegisterNetVarIntChangeCallback( string varName, int category, voi
 	file.intCallbacks.append( wrapper )
 }
 
-void function RegisterNetVarFloatChangeCallback( string varName, int category, void functionref( entity, float ) callback )
+void function RegisterNetVarFloatChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 )
 {
 	NetVarCallbacks_Init()
 
@@ -121,7 +121,7 @@ void function RegisterNetVarFloatChangeCallback( string varName, int category, v
 	file.floatCallbacks.append( wrapper )
 }
 
-void function RegisterNetVarTimeChangeCallback( string varName, int category, void functionref( entity, float ) callback )
+void function RegisterNetVarTimeChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 )
 {
 	NetVarCallbacks_Init()
 
@@ -131,7 +131,7 @@ void function RegisterNetVarTimeChangeCallback( string varName, int category, vo
 	file.timeCallbacks.append( wrapper )
 }
 
-void function RegisterNetVarEntChangeCallback( string varName, int category, void functionref( entity, entity ) callback )
+void function RegisterNetVarEntChangeCallback( string varName, void functionref( entity, entity ) callback, int category = 0 )
 {
 	NetVarCallbacks_Init()
 	// Entity callbacks would need similar wrapper pattern

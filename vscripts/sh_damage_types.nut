@@ -264,6 +264,7 @@ global enum eDamageSourceId
 	sticky_time_bomb
 	vortex_grenade
 	droppod_impact
+	landing_zone
 	ai_turret_explosion
 	rodeo_trap
 	round_end

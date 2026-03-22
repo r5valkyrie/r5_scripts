@@ -1143,8 +1143,7 @@ void function StationLootBinsLower()
 
 	// close bin lids and delete loot
 	foreach ( stationLootBinData data in file.stationNodeBinGroups[ stationNode ] )
-		if( LootBin_IsOpen( data.binModel ) )
-			thread LootBin_PlayCloseSequence( data.binModel )
+		thread LootBin_ForceClose_Thread( data.binModel, true, true, true )
 
 	wait 0.5
 

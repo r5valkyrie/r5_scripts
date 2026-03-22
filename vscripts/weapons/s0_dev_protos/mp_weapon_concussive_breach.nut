@@ -130,7 +130,7 @@ void function OnWeaponTossPrep_weapon_concussive_breach( entity weapon, WeaponTo
 	weapon.EmitWeaponSound_1p3p( GetGrenadeDeploySound_1p( weapon ), GetGrenadeDeploySound_3p( weapon ) )
 }
 
-void function ConcussiveBreach_OnPlanted( entity projectile )
+void function ConcussiveBreach_OnPlanted( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 		Assert( IsValid( projectile ) )
@@ -222,13 +222,16 @@ void function ConcussiveBreach_OnPlanted( entity projectile )
 
 void function OnProjectileCollision_weapon_concussive_breach( entity projectile, vector pos, vector normal, entity hitEnt, int hitbox, bool isCritical )
 {
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+	collisionParams.pos = pos
+
+	collisionParams.normal = normal
+
+	collisionParams.hitEnt = hitEnt
+
+	collisionParams.hitBox = hitbox
+
 
 	#if SERVER
 		projectile.proj.savedDir 	= normal

@@ -1,14 +1,23 @@
+//
+
+#if SERVER || CLIENT || UI
 global function ShQuickchat_Init
-#if SERVER || CLIENT
-global function PlayerDeliveryShouldBeUrgent
-global function PlayerDeliveryShouldBeUrgent_Common
 #endif
-#if CLIENT
+
+
+#if SERVER || CLIENT
 global function AddCallback_OnQuickchatEvent
+global function PlayerDeliveryShouldBeUrgent
+global function PlayerIsInCombat
+#endif
+
+
+#if CLIENT
 global function Quickchat
-global function QuickchatToLivingAndDead
 global function HandleBroadcastCommsAction
 global function ServerToClient_BroadcastCommsActionToTeam
+global function ServerToClient_BroadcastSubjectlessCommsActionToTeam
+global function ServerCallback_BroadcastPlayerKicked
 global function GetChatTitleColorForPlayer
 global function GetMenuOptionTextForCommsAction
 global function GetShortTextForCommsAction
@@ -17,16 +26,27 @@ global function GetPingAssetForCommsAction
 global function ShouldMuteCommsActionForCooldown
 global function SetCommsDialogueEnabled
 global function PlaySoundForCommsAction
-#endif // CLIENT
 
-#if SERVER
-global function HandleBroadcastCommsAction
+global function ClientCodeCallback_GetPlayerThreatLevel
 #endif
 
-#if DEVELOPER
-global function DEV_ReloadCommsTable
-#endif // DEVELOPER
 
+#if SERVER
+global function BroadcastCommsActionToTeam
+global function QuickChat_RegisterDisabledCommsActions
+global function ClientCallback_Quickchat
+global function ClientCallback_QuickchatSubject_Player
+global function ClientCallback_Quickchat_UI
+#endif
+
+
+#if DEVELOPER && (SERVER || CLIENT || UI)
+global function DEV_ReloadCommsTable
+const bool DEBUG_PLAYER_IS_IN_COMBAT = false
+#endif
+
+
+#if SERVER || UI || CLIENT
 global enum eCommsFlags
 {
 	NONE = 0,
@@ -35,10 +55,15 @@ global enum eCommsFlags
 	FORCE_FAR = (1 << 1),
 	SILENCE = (1 << 2),
 	INCLUDE_DEAD = (1 << 3),
+	BROADCAST_TO_WAYPOINT_OWNER = (1 << 4),
+	NO_TEXT = (1 << 5),
 
-	_flagCount = 4
+	_flagCount = 6
 }
+#endif
 
+
+#if SERVER || CLIENT
 global struct CommsAction
 {
 	int index
@@ -46,6 +71,8 @@ global struct CommsAction
 	string menuText
 	string shortText
 	string chatText
+
+	array<string> attachmentPoints
 
 	string aliasSubname
 	bool   hasCalm
@@ -57,8 +84,13 @@ global struct CommsAction
 
 	asset defaultIcon
 	asset pingAsset
-}
 
+	bool hasForcedTempVoice
+}
+#endif
+
+
+#if SERVER || CLIENT
 global struct CommsOptions
 {
 	bool isFirstPerson
@@ -66,59 +98,68 @@ global struct CommsOptions
 	bool isUrgent
 	bool pauseQueue
 }
+#endif
 
+
+#if SERVER || CLIENT
 struct
 {
 	bool                    quickchatInitialized = false
 	table<int, CommsAction> actions
 	#if CLIENT
 		bool  commsDialogueEnabled = true
-		float flavorDebounceTime = 120.0 //
-		float flavorGlobalDebounceTime = 30.0 //
-    #endif // CLIENT
+		float flavorDebounceTime = 120.0 //time before repeating the same line
+		float flavorGlobalDebounceTime = 30.0 //time before saying any line
+		array<int> alwaysPlayFlavorActions = [ eCommsAction.FLAVOR_LOOT_DIBS ]
+		table< int, int > replyMap
+		table< int, int > altMap
+	#endif // CLIENT
 	table< int, array<void functionref( entity player, int eventId, entity subjectEnt )> >    onQuickchatCallbacks
-} file
 
+	#if SERVER
+		array<int> disabledCommsActions
+	#endif
+} file
+#endif
+
+
+#if SERVER || CLIENT || UI
 void function LoadCommsActionsFromDatatable()
 {
 	var dt = GetDataTable( $"datatable/comms_actions.rpak" )
 
-	int col_featureFlag  = GetDataTableColumnByName( dt, "featureFlag" )
-	int col_event        = GetDataTableColumnByName( dt, "event" )
-	int col_menuText     = GetDataTableColumnByName( dt, "menuText" )
-	int col_shortText    = GetDataTableColumnByName( dt, "shortText" )
-	int col_chatText     = GetDataTableColumnByName( dt, "chatText" )
-	int col_aliasSubname = GetDataTableColumnByName( dt, "aliasSubname" )
-	int col_hasCalm      = GetDataTableColumnByName( dt, "hasCalm" )
-	int col_hasCalmFar   = GetDataTableColumnByName( dt, "hasCalmFar" )
-	int col_hasUrgent    = GetDataTableColumnByName( dt, "hasUrgent" )
-	int col_hasUrgentFar = GetDataTableColumnByName( dt, "hasUrgentFar" )
-	int col_subEvent     = GetDataTableColumnByName( dt, "subEvent" )
-	int col_flavorEvent  = GetDataTableColumnByName( dt, "flavorEvent" )
-	int col_defaultIcon  = GetDataTableColumnByName( dt, "defaultIcon" )
-	int col_pingAsset    = GetDataTableColumnByName( dt, "pingAsset" )
+	int col_event            = GetDataTableColumnByName( dt, "event" )
+	int col_menuText         = GetDataTableColumnByName( dt, "menuText" )
+	int col_shortText        = GetDataTableColumnByName( dt, "shortText" )
+	int col_chatText         = GetDataTableColumnByName( dt, "chatText" )
+	int col_attachmentPoints = GetDataTableColumnByName( dt, "attachmentPoints" )
+	int col_aliasSubname     = GetDataTableColumnByName( dt, "aliasSubname" )
+	int col_hasCalm          = GetDataTableColumnByName( dt, "hasCalm" )
+	int col_hasCalmFar       = GetDataTableColumnByName( dt, "hasCalmFar" )
+	int col_hasUrgent        = GetDataTableColumnByName( dt, "hasUrgent" )
+	int col_hasUrgentFar     = GetDataTableColumnByName( dt, "hasUrgentFar" )
+	int col_subEvent         = GetDataTableColumnByName( dt, "subEvent" )
+	int col_flavorEvent      = GetDataTableColumnByName( dt, "flavorEvent" )
+	int col_defaultIcon  		= GetDataTableColumnByName( dt, "defaultIcon" )
+	int col_pingAsset    		= GetDataTableColumnByName( dt, "pingAsset" )
+	int col_hasForcedTempVoice 	= GetDataTableColumnByName( dt, "hasForcedTempVoice" )
 
-	for ( int row = 0; row < GetDatatableRowCount( dt ); row++ )
+	for ( int row = 0; row < GetDataTableRowCount( dt ); row++ )
 	{
 		string commsActionName = GetDataTableString( dt, row, col_event )
-
-		string featureFlagRef = GetDataTableString( dt, row, col_featureFlag )
-		if ( featureFlagRef != "" && !GetFeatureFlagByString( featureFlagRef ) )
-		{
-			//printf( "Skipping comms action %s because feature flag %s is off.", commsActionName, featureFlagRef )
-			continue
-		}
 
 		asset pingAsset = GetDataTableAsset( dt, row, col_pingAsset )
 		if ( pingAsset != $"" )
 			RegisterItemFlavorFromSettingsAsset( pingAsset )
 
+		#if SERVER || CLIENT
 			int commsAction = eCommsAction[commsActionName]
 
 			CommsAction action
 			action.menuText = GetDataTableString( dt, row, col_menuText )
 			action.shortText = GetDataTableString( dt, row, col_shortText )
 			action.chatText = GetDataTableString( dt, row, col_chatText )
+			action.attachmentPoints = split( GetDataTableString( dt, row, col_attachmentPoints ), WHITESPACE_CHARACTERS )
 			action.aliasSubname = GetDataTableString( dt, row, col_aliasSubname )
 			action.hasCalm = GetDataTableBool( dt, row, col_hasCalm )
 			action.hasCalmFar = GetDataTableBool( dt, row, col_hasCalmFar )
@@ -127,144 +168,161 @@ void function LoadCommsActionsFromDatatable()
 			action.subEvent = GetDataTableString( dt, row, col_subEvent )
 			action.flavorEvent = GetDataTableString( dt, row, col_flavorEvent )
 			action.defaultIcon = GetDataTableAsset( dt, row, col_defaultIcon )
+			action.hasForcedTempVoice = GetDataTableBool( dt, row, col_hasForcedTempVoice )
 			action.pingAsset = pingAsset
 			action.index = commsAction
 
 			file.actions[commsAction] <- action
+
+		#endif
 	}
 }
+#endif
 
 
-void function RegisterCustomComs()
-{
-	// Ammo
-
-	// Weapons
-	RegisterCustomCom( eCommsAction.PING_WEAPON_THUNDERBOLT, "ping_foundLauncher")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_SMARTPISTOL, "ping_foundPistol")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_EPG, "ping_foundEPG")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_SMR, "ping_foundLauncher")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_WINGMAN_N, "ping_foundWingman")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_SOFTBALL, "ping_foundSoftball")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_ARCHER, "ping_foundArcher")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_ARC_TOOL, "ping_foundWeapon")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_MGL, "ping_foundGrenadeLauncher")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_COLDWAR, "ping_foundColdWar")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_DRAGON, "ping_foundRampage")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_R201, "ping_foundR301")
-	RegisterCustomCom( eCommsAction.PING_WEAPON_PREDATOR, "ping_foundWeapExp")
-
-    // NPC's
-	asset icon = $"rui/hud/ping/icon_ping_enemy"
-	asset iconasset = $"settings/itemflav/ping/ping_enemy.rpak"
-	string chattext = "#PING_ENEMY_SPOTTED_GENERAL"
-	string shorttext = "#PROMPT_PING_ENEMY_SPOTTED_GENERAL_SHORT"
-	string menutext = "#PROMPT_PING_ENEMY_SPOTTED_GENERAL"
-
-	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_DRONE, "ping_spotDrone", icon, iconasset, chattext, shorttext, menutext )
-	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_TITAN, "ping_spotTitan", icon, iconasset, chattext, shorttext, menutext )
-	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_REAPER, "ping_spotReaper", icon, iconasset, chattext, shorttext, menutext )
-	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_SPECTRE, "ping_spotSpectre", icon, iconasset, chattext, shorttext, menutext )
-	RegisterCustomCom( eCommsAction.PING_ENEMY_NPC_TICK, "ping_spotTick", icon, iconasset, chattext, shorttext, menutext )
-	
-	// Attachment
-	RegisterCustomCom( eCommsAction.PING_EQUIPMENT_ARMOR_5, "") 
-	RegisterCustomCom( eCommsAction.PING_EQUIPMENT_ARMOR_6, "") 
-	RegisterCustomCom( eCommsAction.PING_EQUIPMENT_ARMOR_7, "")
-}
-
-void function RegisterCustomCom( int index, string alias, asset icon = $"", asset pingAsset = $"", string chattext = "#PING_LOOT", string shorttext = "", string menutext = "")
-{
-	if(index in file.actions)
-	    return
-
-	if(pingAsset != $"")
-	    RegisterItemFlavorFromSettingsAsset( pingAsset )
-
-	CommsAction action
-	action.chatText = chattext
-	action.menuText = menutext
-	action.shortText = shorttext
-	action.chatText = chattext
-	action.defaultIcon = icon
-	action.aliasSubname = alias
-	action.hasCalm = true
-	action.hasUrgent = true
-	action.hasCalmFar = false
-	action.hasUrgentFar = false
-	action.index = index
-
-	file.actions[index] <- action
-}
-
+#if SERVER || CLIENT || UI
 void function ShQuickchat_Init()
 {
 	AddCallback_RegisterRootItemFlavors( LoadCommsActionsFromDatatable )
-	RegisterCustomComs()
 
 	#if SERVER
-		AddClientCommandCallback( "ClientCommand_Quickchat", ClientCommand_Quickchat )
+		InitDisabledCommActionsFromPlaylist()
+	#endif
+
+	#if SERVER || CLIENT
+		Remote_RegisterServerFunction( "ClientCallback_Quickchat_UI", "int", 0, eCommsAction._count, "int", 0, 1 << eCommsFlags._flagCount, "int", 0, eEquipmentSlotType.COUNT  )
+		Remote_RegisterServerFunction( "ClientCallback_Quickchat", "int", 0, eCommsAction._count, "int", 0, 1 << eCommsFlags._flagCount )
+		Remote_RegisterServerFunction( "ClientCallback_QuickchatSubject_Player", "int", 0, eCommsAction._count, "int", 0, 1 << eCommsFlags._flagCount, "typed_entity", "player" )
+
+		// Quickchat
+		var dt = GetDataTable( LOOT_DATATABLE )
+		int numRows = GetDataTableRowCount( dt )
+
+		Remote_RegisterClientFunction( "ServerToClient_BroadcastCommsActionToTeam", "entity", "int", 0, eCommsAction._count, "int", 0, (1 << eCommsFlags._flagCount), "int", -1, INT_MAX,"int", 0, eCommsAction._count, "entity", "vector", -32000.0, 32000.0, 32, "int", -1, numRows, "int", 0, INVALID_SOUND_SELECTOR )
+		Remote_RegisterClientFunction( "ServerToClient_BroadcastSubjectlessCommsActionToTeam", "entity", "int", 0, eCommsAction._count, "int", 0, (1 << eCommsFlags._flagCount), "int", -1, INT_MAX,"int", 0, eCommsAction._count, "vector", -32000.0, 32000.0, 32, "int", -1, numRows, "int", 0, INVALID_SOUND_SELECTOR )
+		Remote_RegisterClientFunction( "ServerCallback_BroadcastPlayerKicked", "int", 1, 129,  "bool" )
 	#endif // SERVER
 
 	#if CLIENT
 		file.flavorDebounceTime = GetCurrentPlaylistVarFloat( "comms_actions_flavor_debounce_time", 150.0 )
 		file.flavorGlobalDebounceTime = GetCurrentPlaylistVarFloat( "comms_actions_flavor_global_debounce_time", 90.0 )
+
+		file.replyMap[ eCommsAction.REPLY_THANKS ] <- eCommsAction.REPLY_WELCOME
+		file.replyMap[ eCommsAction.REPLY_REVIVE_THANKS ] <- eCommsAction.REPLY_REVIVE_WELCOME
+
+		                               
+			file.replyMap[eCommsAction.REPLY_LOVE_YOU] <- eCommsAction.REPLY_LOVE_YOU_MORE
+			file.replyMap[eCommsAction.REPLY_LOVE_YOU_MORE] <- eCommsAction.REPLY_NO_I_LOVE_YOU_MORE
+			file.replyMap[eCommsAction.REPLY_NO_I_LOVE_YOU_MORE] <- eCommsAction.REPLY_NO_I_LOVE_YOU_MORE
+
+			//Adding to alt map as well, otherwise crash R5DEV-387463
+			file.altMap[eCommsAction.REPLY_LOVE_YOU] <- eCommsAction.REPLY_LOVE_YOU
+			file.altMap[eCommsAction.REPLY_LOVE_YOU_MORE] <- eCommsAction.REPLY_LOVE_YOU_MORE
+			file.altMap[eCommsAction.REPLY_NO_I_LOVE_YOU_MORE] <- eCommsAction.REPLY_NO_I_LOVE_YOU_MORE
+        
+
+		file.altMap[ eCommsAction.REPLY_WELCOME ] <- eCommsAction.REPLY_WELCOME_ALT
+		file.altMap[ eCommsAction.REPLY_REVIVE_WELCOME ] <- eCommsAction.REPLY_REVIVE_WELCOME_ALT
+
+                    
+                                                                         
+                                                                        
+        
 	#endif
 
-	file.quickchatInitialized = true
+	#if SERVER
+		                               
+			AddCallback_OnQuickchatEvent( eCommsAction.REPLY_LOVE_YOU, OnPlayerSaysThanks )
+        
+		AddCallback_OnQuickchatEvent( eCommsAction.REPLY_THANKS, OnPlayerSaysThanks )
+		AddCallback_OnQuickchatEvent( eCommsAction.REPLY_REVIVE_THANKS, OnPlayerSaysThanks )
+		AddCallback_OnQuickchatEvent( eCommsAction.PROMPT_THANKS_RESPAWN, OnPlayerSaysThanks )
+	#endif
+
+	#if SERVER || CLIENT
+		file.quickchatInitialized = true
+	#endif
 }
+#endif
 
+#if SERVER
+void function InitDisabledCommActionsFromPlaylist()
+{
+	string disabledCommActionsString = GetCurrentPlaylistVarString( "disabledCommActionList", "" )
+	array<string> disabledCommActionsListString = split( disabledCommActionsString, WHITESPACE_CHARACTERS )
 
+	array<int> disabledCommActionsList
+	foreach( disabledCommsAction in disabledCommActionsListString )
+	{
+		disabledCommActionsList.append( int(  disabledCommsAction )  )
+	}
+
+	QuickChat_RegisterDisabledCommsActions( disabledCommActionsList  )
+}
+#endif
+
+#if DEVELOPER && (SERVER || CLIENT || UI)
 void function DEV_ReloadCommsTable()
 {
-	file.actions.clear()
+	#if SERVER || CLIENT
+		file.actions.clear()
+	#endif
 	LoadCommsActionsFromDatatable()
-	RegisterCustomComs()
 }
+#endif
+
 
 #if CLIENT
-void function Quickchat( entity player, int index, entity subject = null )
+void function Quickchat( int index, entity subject )
 {
 	if ( !file.quickchatInitialized )
 		return
 
-	string add = ""
-	if ( IsValid( subject ) )
-	{
-		add = " " + eCommsFlags.NONE + " 42069 " + subject.GetEncodedEHandle()
-	}
-
-	player.ClientCommand( "ClientCommand_Quickchat " + index + add )
+	QuickchatInternal( index, eCommsFlags.NONE, subject )
 }
 
-void function QuickchatToLivingAndDead( entity player, int index, entity subject = null )
+void function QuickchatInternal( int index, int commsFlags, entity subject )
 {
 	if ( !file.quickchatInitialized )
 		return
 
-	string add = ""
-	if ( subject != null )
-	{
-		add = " " + subject.GetEncodedEHandle()
-	}
-
-	player.ClientCommand( "ClientCommand_Quickchat " + index + " " + eCommsFlags.INCLUDE_DEAD + add )
+	// If you need this function for a non player entity, please make a new ClientCallback_QuickchatSubject RPC for that specific entity type!
+	if ( IsValid( subject ) && subject.IsPlayer() )
+		Remote_ServerCallFunction( "ClientCallback_QuickchatSubject_Player", index, commsFlags, subject )
+	else
+		Remote_ServerCallFunction( "ClientCallback_Quickchat", index, commsFlags )
 }
+#endif
 
+
+#if CLIENT
 vector function GetChatTitleColorForPlayer( entity player )
 {
 	entity localPlayer = GetLocalClientPlayer()
 	if ( player == localPlayer )
 		return OBITUARY_COLOR_LOCALPLAYER
-	if ( IsPartyMember( player ) )
-		return OBITUARY_COLOR_PARTY
 
 	if ( localPlayer.GetTeam() == player.GetTeam() )
-		return OBITUARY_COLOR_FRIENDLY
+	{
+		if ( GetCurrentPlaylistVarBool( "show_team_color_obituary", false ) )
+		{
+			return GetPlayerInfoColor( player )
+		}
+		else
+		{
+			return OBITUARY_COLOR_FRIENDLY
+		}
+	}
+
+	if ( AllianceProximity_IsUsingAllianceProximity() && IsValid( localPlayer ) && IsValid( player ) && IsFriendlyTeam( localPlayer.GetTeam(), player.GetTeam() ) )
+		return TEAM_COLOR_FRIENDLY
 
 	return OBITUARY_COLOR_ENEMY
 }
+#endif
 
+
+#if CLIENT
 table< entity, table<int, float> > s_playerToActionTimesMap
 void function SetPlayerLastSaid( entity player, int actionIndex )
 {
@@ -274,8 +332,12 @@ void function SetPlayerLastSaid( entity player, int actionIndex )
 		s_playerToActionTimesMap[player][actionIndex] <- 0.0
 
 	s_playerToActionTimesMap[player][actionIndex] = Time()
+	SetTeamLastSaid( player.GetTeam(), actionIndex )
 }
+#endif
 
+
+#if CLIENT
 float function GetPlayerLastSaid( entity player, int actionIndex )
 {
 	float baseline = 0.0
@@ -288,11 +350,54 @@ float function GetPlayerLastSaid( entity player, int actionIndex )
 	float result = (Time() - baseline)
 	return result
 }
+#endif
 
-array<string> function GetSubjectNamesForCommsAction( int commsAction, entity subjectEnt )
+#if CLIENT
+table< int, table<int, float> > s_teamToActionTimesMap
+void function SetTeamLastSaid( int team, int actionIndex )
+{
+	if ( !(team in s_teamToActionTimesMap) )
+		s_teamToActionTimesMap[team] <- {}
+	if ( !(actionIndex in s_teamToActionTimesMap[team]) )
+		s_teamToActionTimesMap[team][actionIndex] <- 0.0
+
+	s_teamToActionTimesMap[team][actionIndex] = Time()
+}
+#endif
+
+
+#if CLIENT
+float function GetTeamLastSaid( int team, int actionIndex )
+{
+	float baseline = 0.0
+	if ( team in s_teamToActionTimesMap )
+	{
+		if ( actionIndex in s_teamToActionTimesMap[team] )
+			baseline = s_teamToActionTimesMap[team][actionIndex]
+	}
+
+	float result = (Time() - baseline)
+	return result
+}
+#endif
+
+#if CLIENT
+array<string> function GetSubjectNamesForCommsAction( int commsAction, entity subjectEnt, string itemRef )
 {
 	if ( !IsValid( subjectEnt ) )
-		return [""]
+	{
+		if ( itemRef != "" )
+			return [SURVIVAL_Loot_GetLootDataByRef( itemRef ).pickupString]
+		else
+			return [""]
+	}
+
+	                   
+	if( ( commsAction == eCommsAction.REPLY_CAREPACKAGE_INSIGHT || commsAction == eCommsAction.REPLY_CAREPACKAGE_INSIGHT_LOOTED ) && itemRef != "" )
+	{
+		return [SURVIVAL_Loot_GetLootDataByRef( itemRef ).pickupString]
+	}
+       
 
 	if ( subjectEnt.IsPlayer() )
 		return [subjectEnt.GetPlayerName()]
@@ -307,14 +412,27 @@ array<string> function GetSubjectNamesForCommsAction( int commsAction, entity su
 
 		case "weaponx":
 			string weaponClassName = subjectEnt.GetWeaponClassName()
-			if ( file.actions[commsAction].chatText == "#INVENTORY_NEED_WEAPONATTACHMENT_HOPUP" )
+			array<string> commsActionAttachmentPoints = file.actions[commsAction].attachmentPoints
+			if ( commsActionAttachmentPoints.contains( "hopup") || commsActionAttachmentPoints.contains( "hopupMulti_a" ) || commsActionAttachmentPoints.contains( "hopupMulti_b" ) )
 			{
 				array<string> possibleHopups = []
-				array<string> attachmentRefs = GetAttachmentsForPoint( "hopup", weaponClassName )
-				foreach ( string ref in attachmentRefs )
+				array<string> supportedAttachments = SURVIVAL_GetLootDataFromWeapon( subjectEnt ).supportedAttachments
+				array<string> attachmentRefs = []
+				foreach ( string attachmentPoint in commsActionAttachmentPoints )
 				{
-					possibleHopups.append( SURVIVAL_Loot_GetLootDataByRef( ref ).pickupString )
+					if ( !supportedAttachments.contains( attachmentPoint ) )
+						continue
+
+					attachmentRefs = GetAttachmentsForPoint( attachmentPoint, weaponClassName )
+					foreach ( string ref in attachmentRefs )
+					{
+						LootData lootData = SURVIVAL_Loot_GetLootDataByRef( ref )
+
+						if ( !lootData.lootTags.contains ( "FakeHopup" ) )
+							possibleHopups.append( SURVIVAL_Loot_GetLootDataByRef( ref ).pickupString )
+					}
 				}
+
 				return possibleHopups
 			}
 
@@ -333,41 +451,111 @@ array<string> function GetSubjectNamesForCommsAction( int commsAction, entity su
 	if ( subjectEnt.IsNPC() )
 	{
 		if ( commsAction == eCommsAction.PING_NPC_LOOT_TICK )
+		{
 			return [Localize( "#NPC_LOOT_TICK_UI_TITLE" )]
-		return [format( "enemy [%s]", subjectEnt.GetTitleForUI() )]
+		}
+		                    
+		else if ( commsAction == eCommsAction.PING_NPC_LOOT_TICK_GH )
+		{
+			return [Localize( "#NPC_LOOT_TICK_UI_TITLE_GH" )]
+		}
+        
+		else if ( commsAction == eCommsAction.PING_ENEMY_NPC_PROWLER )
+		{
+			return [Localize( "#NPC_PROWLER_UI_TITLE" )]
+		}
+		else if ( commsAction == eCommsAction.PING_ENEMY_NPC_SPIDER )
+		{
+			return [Localize( "#NPC_SPIDER_UI_TITLE" )]
+		}
+		else if ( commsAction == eCommsAction.PING_ENEMY_NPC_SPECTRE )
+		{
+			return [Localize( "#NPC_SPECTRE" )]
+		}
+		else if ( commsAction == eCommsAction.PING_NPC_MARVIN_LOOT  || commsAction == eCommsAction.PING_NPC_MARVIN_STORY )
+		{
+			return [Localize( "#NPC_MARVIN_UI_TITLE" )]
+		}
+		return [Localize( "#PING_ENEMY_GENERIC", subjectEnt.GetTitleForUI() )]
 	}
-
 
 	if ( commsAction == eCommsAction.PING_LOOT_DRONE )
 	{
 		return [Localize( "#LOOT_DRONE_UI_TITLE" )]
 	}
 
-
-
 	if ( commsAction == eCommsAction.PING_LOOT_ROLLER )
 	{
 		return [Localize( "#LOOT_ROLLER_UI_TITLE" )]
 	}
 
+                         
+                                                                                                     
+  
+                                     
+  
+       
+	              
+		if ( IsVaultPanel( subjectEnt ) )
+		{
+			UniqueVaultData vaultData = GetUniqueVaultData( subjectEnt )
 
-	if ( commsAction == eCommsAction.PING_LOOT_VAULT ||
-		commsAction == eCommsAction.PING_LOOT_VAULT_OPEN ||
-		commsAction == eCommsAction.PING_LOOT_VAULT_HAS_KEY_SQUAD ||
-		commsAction == eCommsAction.PING_LOOT_VAULT_HAS_KEY_SELF )
-		return [Localize( "#LOOT_VAULT_UI_TITLE" )]
+			if ( commsAction == vaultData.commsPingVault || commsAction == vaultData.commsPingVaultOpen || commsAction == vaultData.commsPingVaultHasKeySquad || commsAction == vaultData.commsPingVaultHasKeySelf )
+			{
+				return [Localize( vaultData.vaultUITitleString )]
+			}
+		}
+		                  
+		else if ( IsVaultDoor( subjectEnt ) )
+		{
+			if ( commsAction == eCommsAction.PING_SHIP_VAULT || commsAction == eCommsAction.PING_SHIP_VAULT_HAS_KEY_SQUAD || commsAction == eCommsAction.PING_SHIP_VAULT_HAS_KEY_SELF )
+				return [Localize( "#SHIP_VAULT_UI_TITLE" )]
+		}
+                          
+       
 
+                                             
+	bool halloweenMode = false
+                  
+                                                                                     
+       
+	                            
+		halloweenMode = halloweenMode || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY )
+       
+	if ( halloweenMode )
+	{
+		if ( commsAction == eCommsAction.PING_LOOT_CREEP_INFECTED )
+		{
+			return [Localize( "#LOOT_CREEP_INFECTED_UI_TITLE" )]
+		}
+			if ( commsAction == eCommsAction.PING_LOOT_CREEP_SPIDER )
+		{
+			return [Localize( "#LOOT_CREEP_SPIDER_UI_TITLE" )]
+		}
+	}
+      
+
+	if ( CaptureObjectivePing_GetIsCaptureObjectivePingCommsAction( commsAction, subjectEnt ) )
+	{
+		int objectiveID = CaptureObjectivePing_GetObjectiveIndexFromWaypoint( subjectEnt.GetOwner() )
+		return [ CaptureObjectivePing_GetObjectiveNameFromObjectiveID_Localized( objectiveID ) ]
+	}
 
 	return ["<subjectUnk:[" + subjectEnt + "]>"]
 }
+#endif // #if CLIENT
 
 
-vector function GetSubjectColorForCommsAction( entity subjectEnt )
+#if CLIENT
+vector function GetSubjectColorForCommsAction( entity subjectEnt, string itemRef, entity player )
 {
 	const vector DEFAULT_RESULT = <255, 255, 255>
 
-	if ( !IsValid( subjectEnt ) )
-		return DEFAULT_RESULT
+	if ( itemRef != "" )
+		return GetKeyColor( COLORID_TEXT_LOOT_TIER0, SURVIVAL_Loot_GetLootDataByRef( itemRef ).tier )
+
+	if ( !IsValid( subjectEnt ))
+		return BURN_COLOR
 
 	if ( subjectEnt.IsPlayer() )
 		return GetChatTitleColorForPlayer( subjectEnt )
@@ -379,6 +567,37 @@ vector function GetSubjectColorForCommsAction( entity subjectEnt )
 
 		case "weaponx":
 			return BURN_COLOR
+
+                        
+		case PLAYER_WAYPOINT_CLASSNAME:
+			if ( GameMode_IsActive( eGameModes.CONTROL ) && subjectEnt.GetWaypointType() == eWaypoint.CONTROL_OBJECTIVE )
+			{
+				if ( subjectEnt.GetWaypointInt( CONTROL_INT_OBJ_ALLIANCE_OWNER ) == ALLIANCE_NONE )
+				{
+					return GamemodeUtility_GetColorVectorForCaptureObjectiveState( eGamemodeUtilityCaptureObjectiveColorState.ENEMY_OWNED )
+				}
+				else if ( IsTeamInAlliance( player.GetTeam(), subjectEnt.GetWaypointInt( CONTROL_INT_OBJ_ALLIANCE_OWNER ) ) )
+				{
+					return GamemodeUtility_GetColorVectorForCaptureObjectiveState( eGamemodeUtilityCaptureObjectiveColorState.FRIENDLY_OWNED )
+				}
+				else if ( !IsTeamInAlliance( player.GetTeam(), subjectEnt.GetWaypointInt( CONTROL_INT_OBJ_ALLIANCE_OWNER ) ) )
+				{
+					return GamemodeUtility_GetColorVectorForCaptureObjectiveState( eGamemodeUtilityCaptureObjectiveColorState.ENEMY_OWNED )
+				}
+			}
+			break
+      
+
+		case "prop_script":
+			if ( IsEnemyTeam( player.GetTeam(), subjectEnt.GetTeam() ) )
+			{
+				return OBITUARY_COLOR_ENEMY
+			}
+			else if ( IsFriendlyTeam( player.GetTeam(), subjectEnt.GetTeam() ) )
+			{
+				return OBITUARY_COLOR_FRIENDLY
+			}
+
 	}
 
 	if ( subjectEnt.IsPlayerDecoy() )
@@ -387,29 +606,93 @@ vector function GetSubjectColorForCommsAction( entity subjectEnt )
 		if ( IsValid( bossPlayer ) )
 			return GetChatTitleColorForPlayer( bossPlayer )
 	}
+	
+	if( IsValid( GetHealDroneForHitEnt( subjectEnt ) ) )
+	{
+		return GetChatTitleColorForPlayer( player )
+	}
 
 	return DEFAULT_RESULT
 }
 
-string function GetSubjectLootTierForCommsAction( entity subjectEnt )
+// Only used in special situations, shouldn't have to tune anything here unless you want a third color style supported in the message
+vector function GetSecondarySubjectColorForCommsAction( entity subjectEnt, entity player )
+{
+	const vector DEFAULT_RESULT = <255, 255, 255>
+
+	if ( !IsValid( subjectEnt ))
+		return DEFAULT_RESULT
+
+	if ( subjectEnt.IsPlayer() )
+		return DEFAULT_RESULT
+
+	switch ( subjectEnt.GetNetworkedClassName() )
+	{
+                        
+		case PLAYER_WAYPOINT_CLASSNAME:
+			if ( GameMode_IsActive( eGameModes.CONTROL ) && subjectEnt.GetWaypointType() == eWaypoint.CONTROL_OBJECTIVE )
+			{
+				if ( subjectEnt.GetWaypointInt( CONTROL_INT_OBJ_ALLIANCE_OWNER ) == ALLIANCE_NONE )
+				{
+					return GetKeyColor( COLORID_TEXT_LOOT_TIER0 )
+				}
+				else if ( IsTeamInAlliance( player.GetTeam(), subjectEnt.GetWaypointInt( CONTROL_INT_OBJ_ALLIANCE_OWNER ) ) )
+				{
+					return GamemodeUtility_GetColorVectorForCaptureObjectiveState( eGamemodeUtilityCaptureObjectiveColorState.FRIENDLY_OWNED )
+				}
+				else if ( !IsTeamInAlliance( player.GetTeam(), subjectEnt.GetWaypointInt( CONTROL_INT_OBJ_ALLIANCE_OWNER ) ) )
+				{
+					return GamemodeUtility_GetColorVectorForCaptureObjectiveState( eGamemodeUtilityCaptureObjectiveColorState.ENEMY_OWNED )
+				}
+			}
+			break
+      
+	}
+
+	return DEFAULT_RESULT
+}
+#endif // #if CLIENT
+
+
+#if CLIENT
+string function GetSubjectLootTierForCommsAction( entity subjectEnt, string itemRef )
 {
 	int tier = 0
 
+	if ( itemRef != "" )
+		return string( SURVIVAL_Loot_GetLootDataByRef( itemRef ).tier )
+
 	if ( !IsValid( subjectEnt ) || subjectEnt.GetNetworkedClassName() != "prop_survival" )
 	{
-		if ( IsVaultDoor( subjectEnt ) || IsVaultPanel( subjectEnt ) )
-		{
-			entity playerWithKey = VaultPanel_GetTeammateWithKey( GetLocalClientPlayer().GetTeam() )
-			string playerWithKeyName
-			if ( IsValid( playerWithKey ) )
-				playerWithKeyName = VaultPanel_GetTeammateWithKey( GetLocalClientPlayer().GetTeam() ).GetPlayerName()
-			if ( playerWithKeyName != "" )
-				return playerWithKeyName
-		}
+		//Hack that steals the tier field to report who has a vault key
+		              
+			if ( IsVaultDoor( subjectEnt ) || IsVaultPanel( subjectEnt ) )
+			{
+				entity playerWithKey = VaultPanel_GetTeammateWithKey( GetLocalClientPlayer().GetTeam() )
+				string playerWithKeyName
+				if ( IsValid( playerWithKey ) )
+					playerWithKeyName = VaultPanel_GetTeammateWithKey( GetLocalClientPlayer().GetTeam() ).GetPlayerName()
+				if ( playerWithKeyName != "" )
+					return playerWithKeyName
+			}
+        
+
 		return string( tier )
 	}
 
-	tier = SURVIVAL_Loot_GetLootDataByIndex( subjectEnt.GetSurvivalInt() ).tier
+	LootData data = SURVIVAL_Loot_GetLootDataByIndex( subjectEnt.GetSurvivalInt() )
+	tier = data.tier
+
+	                    
+	// we've got a weird inconsistency with the introduction of upgrades where gold armor was removed so we now have a gap
+	// in armor tiers. gold is technically tier 4, and red is tier 5, but the player doesn't care about that since there are
+	// only 4 tiers of armor. so treat red armor as level 4 so we don't have a weird gap.
+	if( UpgradeCore_IsEquipmentArmorCore( data.ref ) && tier == 5 )
+	{
+		tier = 4
+	}
+       
+
 	return string( tier )
 }
 #endif
@@ -419,7 +702,7 @@ bool function GetCommsActionIsFar( entity player, entity subjectEnt, vector subj
 {
 	const float FAR_DIST_THRESHOLD = 2048.0
 
-	if ( commsFlags & eCommsFlags.FORCE_FAR )
+	if ( IsBitFlagSet( commsFlags, eCommsFlags.FORCE_FAR ) )
 	{
 		printt( "Far [YES] <- eCommsFlags.FORCE_FAR" )
 		return true
@@ -433,16 +716,7 @@ bool function GetCommsActionIsFar( entity player, entity subjectEnt, vector subj
 #endif
 
 #if SERVER || CLIENT
-
-float function GetEffectiveDeltaSince( float timeThen )
-{
-	if ( timeThen <= 0.0001 )
-		return 999999.0
-
-	return (Time() - timeThen)
-}
-
-bool function PlayerDeliveryShouldBeUrgent_Common( entity player )
+bool function PlayerIsInCombat( entity player )
 {
 	const float TEAMMATE_NEAR_SPOTTED_ENEMY = 2048.0
 	const float LAST_DAMAGED_BY_PLAYER_OR_NPC = 30.0
@@ -451,29 +725,40 @@ bool function PlayerDeliveryShouldBeUrgent_Common( entity player )
 	if ( Bleedout_IsBleedingOut( player ) )
 		return true
 
-	//
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDamagedByOtherPlayer() ) < LAST_DAMAGED_BY_PLAYER_OR_NPC )
 	{
-		printt( "Urgent [YES] <- Last damaged by other player" )
+		#if DEVELOPER
+		if ( DEBUG_PLAYER_IS_IN_COMBAT )
+			printt( "PlayerIsInCombat: [YES] <- Player was damaged by other player within " + LAST_DAMAGED_BY_PLAYER_OR_NPC + "s" )
+		#endif //DEV
 		return true
 	}
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDamagedByNPC() ) < LAST_DAMAGED_BY_PLAYER_OR_NPC )
 	{
-		printt( "Urgent [YES] <- Last damaged by NPC" )
+		#if DEVELOPER
+		if ( DEBUG_PLAYER_IS_IN_COMBAT )
+			printt( "PlayerIsInCombat: [YES] <- Player was last damaged by NPC within " + LAST_DAMAGED_BY_PLAYER_OR_NPC + "s" )
+		#endif //DEV
 		return true
 	}
 
 	//
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDidDamageToOtherPlayer() ) < LAST_DID_DAMAGE_TO_PLAYER_OR_NPC )
 	{
-		printt( "Urgent [YES] <- Last did damage to other player" )
+		#if DEVELOPER
+		if ( DEBUG_PLAYER_IS_IN_COMBAT )
+			printt( "PlayerIsInCombat: [YES] <- This player did damage to another player within " + LAST_DID_DAMAGE_TO_PLAYER_OR_NPC + "s" )
+		#endif //DEV
 		return true
 	}
 
 	if ( GetEffectiveDeltaSince( player.GetLastTimeDidDamageToNPC() ) < LAST_DID_DAMAGE_TO_PLAYER_OR_NPC )
 	{
-		printt( "Urgent [YES] <- Last did damage to NPC" )
+		#if DEVELOPER
+		if ( DEBUG_PLAYER_IS_IN_COMBAT )
+			printt( "PlayerIsInCombat: [YES] <- This player did damage to NPC within " + LAST_DID_DAMAGE_TO_PLAYER_OR_NPC + "s" )
+		#endif //DEV
 		return true
 	}
 
@@ -484,7 +769,10 @@ bool function PlayerDeliveryShouldBeUrgent_Common( entity player )
 	if ( Waypoint_AnyEnemySpottedNearPoint( player.EyePosition(), TEAMMATE_NEAR_SPOTTED_ENEMY ) )
 #endif
 	{
-		printt( "Urgent [YES] <- Any teammate near spotted enemy" )
+		#if DEVELOPER
+		if ( DEBUG_PLAYER_IS_IN_COMBAT )
+			printt( "PlayerIsInCombat [YES] <- A teammate is near spotted enemy" )
+		#endif //DEV
 		return true
 	}
 
@@ -493,23 +781,27 @@ bool function PlayerDeliveryShouldBeUrgent_Common( entity player )
 #endif // SERVER || CLIENT
 
 #if SERVER || CLIENT
+const bool DEBUG_PLAYER_DELIVERY = false
+const float SUBJECT_NEAR_SPOTTED_ENEMY = 1024.0
 
-bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, int commsFlags = eCommsFlags.NONE)
+bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, int commsFlags = eCommsFlags.NONE )
 {
 	const float TEAMMATE_NEAR_PLAYER = 2048.0
 	const float TEAMMATE_NEAR_SUBJECT_POS = 1024.0
-	const float SUBJECT_NEAR_SPOTTED_ENEMY = 1024.0
 
-	if ( commsFlags & eCommsFlags.FORCE_URGENT )
+	if ( IsBitFlagSet( commsFlags, eCommsFlags.FORCE_URGENT ) )
 	{
-		printt( "Urgent [YES] <- eCommsFlags.FORCE_URGENT" )
+		#if DEVELOPER
+			if ( DEBUG_PLAYER_DELIVERY )
+				printt( "PlayerDeliveryShouldBeUrgent: [YES] <- eCommsFlags.FORCE_URGENT" )
+		#endif //DEV
 		return true
 	}
 
 	vector eyePos             = player.EyePosition()
 	int team                  = player.GetTeam()
 	array<entity> teamPlayers = GetPlayerArrayOfTeam_Alive( team )
-	foreach( entity teamPlayer in teamPlayers )
+	foreach ( entity teamPlayer in teamPlayers )
 	{
 		if ( teamPlayer != player )
 		{
@@ -519,17 +811,21 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 				continue
 		}
 
-		if ( PlayerDeliveryShouldBeUrgent_Common( teamPlayer ) )
+		if ( PlayerIsInCombat( teamPlayer ) )
 			return true
 	}
 
+	//
 #if SERVER
 	if ( Waypoint_AnyEnemySpottedNearPointForPlayer( subjectPos, SUBJECT_NEAR_SPOTTED_ENEMY, player ) )
 #elseif CLIENT
 	if ( Waypoint_AnyEnemySpottedNearPoint( subjectPos, SUBJECT_NEAR_SPOTTED_ENEMY ) )
 #endif
 	{
-		printt( "Urgent [YES] <- Waypoint near spotted enemy" )
+		#if DEVELOPER
+			if ( DEBUG_PLAYER_DELIVERY )
+				printt( "PlayerDeliveryShouldBeUrgent: [YES] <- Waypoint near spotted enemy" )
+		#endif //DEV
 		return true
 	}
 
@@ -539,16 +835,22 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 		float stormDist = DeathField_PointDistanceFromFrontier( eyePos )
 		if ( stormDist < START_PLAYING_DIST )
 		{
-			printt( "Urgent [YES] <- Inside deathfield" )
+			#if DEVELOPER
+				if ( DEBUG_PLAYER_DELIVERY )
+					printt( "PlayerDeliveryShouldBeUrgent: [YES] <- Inside deathfield" )
+			#endif //DEV
 			return true
 		}
 	}
 
-
+	//
 	float stim = StatusEffect_GetSeverity( player, eStatusEffect.stim_visual_effect )
 	if ( stim > 0.001 )
 	{
-		printf( "Urgent [YES] <- Stim (%0.2f)", stim )
+		#if DEVELOPER
+			if ( DEBUG_PLAYER_DELIVERY )
+				printf( "PlayerDeliveryShouldBeUrgent: [YES] <- Stim (%0.2f)", stim )
+		#endif //DEV
 		return true
 	}
 
@@ -557,7 +859,28 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 #endif // SERVER || CLIENT
 
 #if CLIENT
+float function ClientCodeCallback_GetPlayerThreatLevel( entity player )
+{
+	if ( DeathField_IsActive() )
+	{
+		const float START_PLAYING_DIST = -30.0        // postive distance is inside safe zone
+		float stormDist = DeathField_PointDistanceFromFrontier( player.EyePosition() )
+		if ( stormDist < START_PLAYING_DIST )
+		{
+			return 80
+		}
+	}
 
+	if ( Waypoint_AnyEnemySpottedNearPoint( player.GetOrigin(), SUBJECT_NEAR_SPOTTED_ENEMY ) )
+	{
+		return 50
+	}
+
+	return 0
+}
+#endif
+
+#if CLIENT
 float function GetCooldownTimeForCommsAction( int commsAction )
 {
 	switch( commsAction )
@@ -565,16 +888,46 @@ float function GetCooldownTimeForCommsAction( int commsAction )
 		case eCommsAction.PING_ENEMY_SPOTTED_SPECIFIC:
 		case eCommsAction.PING_ENEMY_TRAP:
 		case eCommsAction.PING_ENEMY_SMOKE:
+		case eCommsAction.PING_TOXIC_GAS:
 		case eCommsAction.PING_ENEMY_SHIELD:
 		case eCommsAction.PING_ENEMY_TELEPORTER:
 			return 1.5
+		case eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_1:
+		case eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_2:
+		case eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_3:
+		case eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_4:
+		case eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_5:
+			return 0.7
+                         
+		case eCommsAction.FIRING_RANGE_TARGET_SPEED_CHANGE:
+			return 0.9
+      
+                   
+		case eCommsAction.REPLY_CAREPACKAGE_INSIGHT:
+		case eCommsAction.REPLY_CAREPACKAGE_INSIGHT_FUTURE:
+			return 0.5
+      
+                       
+                                                      
+                                                   
+             
+      
 	}
 
 	return 4.0
 }
+#endif
+
+
+#if CLIENT
 bool function ShouldMuteCommsActionForCooldown( entity player, int commsAction, entity subjectEnt )
 {
-	if ( IsValid( subjectEnt ) && (subjectEnt.GetNetworkedClassName() == "prop_survival") )
+	                               
+		if ( commsAction == eCommsAction.REPLY_NO_I_LOVE_YOU_MORE )
+			return false
+       
+
+	if ( IsValid( subjectEnt ) && (subjectEnt.GetNetworkedClassName() == "prop_survival") && commsAction != eCommsAction.REPLY_LOOT_DIBS )
 	{
 		float delta = (Time() - subjectEnt.e.lastVocalizedCommsTime)
 		if ( delta < 3.0 )
@@ -587,24 +940,54 @@ bool function ShouldMuteCommsActionForCooldown( entity player, int commsAction, 
 	if ( delta < cooldownTime )
 		return true
 
+	bool isEnemyNearbyComm = commsAction == eCommsAction.QUICKCHAT_SKYDIVE_ENEMIES_NEARBY
+
+	                            
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+			isEnemyNearbyComm = commsAction == eCommsAction.QUICKCHAT_SKYDIVE_ENEMIES_NEARBY || commsAction == eCommsAction.QUICKCHAT_SKYDIVE_REV_NEARBY || commsAction == eCommsAction.QUICKCHAT_SKYDIVE_SKINBAG_NEARBY
+                                   
+
+	if ( isEnemyNearbyComm )
+	{
+		float teamDelta = GetTeamLastSaid( player.GetTeam(), commsAction )
+		if ( teamDelta < cooldownTime )
+			return true
+	}
+
+
 	return false
 }
+#endif
 
+
+#if CLIENT
 string function GetNameForCommsAction( int commsAction )
 {
-	foreach( string key, int val in eCommsAction )
+	foreach ( string key, int val in eCommsAction )
 	{
 		if ( val == commsAction )
 			return key
 	}
 	return ""
 }
-void function ServerToClient_BroadcastCommsActionToTeam( entity player, int commsAction, entity subjectEnt, vector subjectPos, int commsFlags )
+#endif
+
+
+#if CLIENT
+void function ServerToClient_BroadcastSubjectlessCommsActionToTeam( entity player, int commsAction, int commsFlags, int subjectCount, int secondaryCommsAction, vector subjectPos, int itemIndex, int selector )
 {
-	HandleBroadcastCommsAction( player, commsAction, subjectEnt, subjectPos, commsFlags )
+	ServerToClient_BroadcastCommsActionToTeam( player, commsAction, commsFlags, subjectCount, secondaryCommsAction, null, subjectPos, itemIndex, selector )
 }
 
-void function HandleBroadcastCommsAction( entity player, int commsAction, entity subjectEnt, vector subjectPos, int commsFlags )
+void function ServerToClient_BroadcastCommsActionToTeam( entity player, int commsAction, int commsFlags, int subjectCount, int secondaryCommsAction, entity subjectEnt, vector subjectPos, int itemIndex, int selector )
+{
+	HandleBroadcastCommsAction( player, commsAction, subjectEnt, subjectPos, commsFlags, itemIndex, subjectCount, secondaryCommsAction, 0.0, selector )
+}
+#endif
+
+
+#if CLIENT
+void function HandleBroadcastCommsAction( entity player, int commsAction, entity subjectEnt, vector subjectPos, int commsFlags, int itemIndex, int subjectCount, int secondaryCommsAction, float creationTime, int selector )
 {
 	if ( !file.quickchatInitialized )
 		return
@@ -618,13 +1001,82 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 	if ( ShouldMuteCommsActionForCooldown( player, commsAction, subjectEnt ) )
 		return
 
+	bool shouldUseAllianceCommsBehaviour = false
+	bool shouldUseTeamCommsBehaviour = true
+
+	string itemRef = ""
+	if( SURVIVAL_Loot_IsLootIndexValid( itemIndex ) )
+	{
+		LootData data = SURVIVAL_Loot_GetLootDataByIndex( itemIndex )
+		itemRef = data.ref
+	}
+
+	                        
+		// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
+		bool isControlObjectivePing = false
+		if ( GameMode_IsActive( eGameModes.CONTROL ) )
+		{
+			if ( !IsValid( player ) || !IsValid( GetLocalViewPlayer() ) )
+				return
+
+			// Player is not on the same team as the view player, so we are not going to play dialogue but there is a chance we will display the ping text
+			if ( player.GetTeam() != GetLocalViewPlayer().GetTeam() )
+			{
+				shouldUseTeamCommsBehaviour = false
+			}
+			
+			// If a Control Objective was pinged by the player on the same alliance display ping text
+			if ( commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_ATTACK || commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_DEFEND )
+			{
+				if ( IsValid( subjectEnt ) && IsValid( subjectEnt.GetOwner() ) && IsPlayerWaypoint( subjectEnt.GetOwner() ) && subjectEnt.GetOwner().GetWaypointType() == eWaypoint.CONTROL_OBJECTIVE )
+				{
+					if ( AllianceProximity_GetAllianceFromTeam( player.GetTeam() ) == AllianceProximity_GetAllianceFromTeam( GetLocalViewPlayer().GetTeam() ) )
+					{
+						shouldUseAllianceCommsBehaviour = true
+						isControlObjectivePing = true
+					}
+
+					// Play ping sfx since they don't play on the objective pings by themselves because they count as replies instead of new pings
+					if ( GetCommsWaypointSoundsEnabled() && shouldUseTeamCommsBehaviour || shouldUseAllianceCommsBehaviour )
+					{
+						int pingType = commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_ATTACK ? ePingType.PING_CAPTURE_OBJECTIVE_ATTACK : ePingType.PING_CAPTURE_OBJECTIVE_DEFEND
+						string pingSound = Ping_GetSoundForLocationPing( subjectEnt.GetOwner(), pingType, ( player == GetLocalViewPlayer() ), true )
+						if ( pingSound != "" )
+							EmitSoundOnEntity( subjectEnt.GetOwner(), pingSound )
+					}
+				}
+			}
+		}
+       
+
+	// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad); make sure this message should appear at all
+	if ( AllianceProximity_IsUsingAllianceProximity() )
+	{
+		if ( !IsValid( player ) || !IsValid( GetLocalViewPlayer() ) )
+			return
+
+		if ( player.GetTeam() != GetLocalViewPlayer().GetTeam() )
+		{
+			// Player is not on the same team as the view player, so we are not going to play dialogue but there is a chance we will display the ping text
+			shouldUseTeamCommsBehaviour = false
+
+			// If we are not already using alliance comms behaviour ( show message but don't play dialogue); check if we should use the behaviour due to alliance proximity
+			if ( !shouldUseAllianceCommsBehaviour )
+			{
+				if ( AllianceProximity_GetLivingAllianceMembersInProximity( player.GetTeam(), player.GetOrigin() ).contains( GetLocalViewPlayer() ) )
+					shouldUseAllianceCommsBehaviour = true
+			}
+		}
+	}
+
+	if ( !shouldUseTeamCommsBehaviour && !shouldUseAllianceCommsBehaviour )
+		return
+
 	if ( IsValid( subjectEnt ) )
 		subjectEnt.e.lastVocalizedCommsTime = Time()
 
-	if ( !(commsAction in file.actions) )
-		return
 
-	CommsAction act = file.actions[commsAction]
+	CommsAction act = GetCommsAction( commsAction )
 
 	CommsOptions opt
 	opt.isFirstPerson = (player == GetLocalViewPlayer())
@@ -632,32 +1084,224 @@ void function HandleBroadcastCommsAction( entity player, int commsAction, entity
 	opt.isUrgent = PlayerDeliveryShouldBeUrgent( player, subjectPos, commsFlags )
 	opt.pauseQueue = true
 
-	PlaySoundForCommsAction( player, commsAction, opt )
+	// Only play comms dialogue to teammates in situations where alliances are used
+	if ( shouldUseTeamCommsBehaviour )
+	{
+		if ( (GetPlayerVoice( player ) == SILENT_PLAYER_VOICE) )
+		{
+			if ( act.menuText != "" )
+			{
+				PrintDummieTeamChat( player, Localize( act.menuText ) )
+			}
+			else
+			{
+				array<string> subjectNames = GetSubjectNamesForCommsAction( commsAction, subjectEnt, itemRef )
+				foreach ( subjectName in subjectNames )
+					PrintDummieTeamChat( player, Localize( subjectName ) )
+			}
+		}
+		else
+		{
+			// Play the sound for all scenarios except when a player pings an enemy's crafted banner. R5DEV-506901
+			if ( !IsValid( subjectEnt ) || subjectEnt.GetModelName() != CRAFTED_BANNER_MODEL_NAME ||
+					( IsValid( GetEntityFromEncodedEHandle( subjectEnt.GetSurvivalProperty() ) ) && GetEntityFromEncodedEHandle( subjectEnt.GetSurvivalProperty() ).GetTeam() == player.GetTeam() ) )
+			{
+				PlaySoundForCommsAction( player, subjectEnt, act, opt,  secondaryCommsAction > 0 ? GetNameForCommsAction( secondaryCommsAction ) : "", selector)
+			}
+		}
+	}
 
 	RunQuickChatCallbacks( player, commsAction, subjectEnt )
 
 	string chatText = act.chatText
-	if ( chatText != "" )
+	if ( chatText != "" && !IsBitFlagSet( commsFlags, eCommsFlags.NO_TEXT ) )
 	{
+		                               
+			switch( commsAction )
+			{
+				case eCommsAction.REPLY_LOVE_YOU:
+				case eCommsAction.REPLY_LOVE_YOU_MORE:
+				case eCommsAction.REPLY_NO_I_LOVE_YOU_MORE:
+					if ( opt.isFirstPerson )
+						chatText += "_1P"
+					break
+
+				default:
+					break
+			}
+        
+
 		string playerName          = opt.isFirstPerson ? Localize( "#OBITUARY_YOU" ) : player.GetPlayerName()
 		vector playerColor         = GetChatTitleColorForPlayer( player )
-		array<string> subjectNames = GetSubjectNamesForCommsAction( commsAction, subjectEnt )
-		vector subjectColor        = GetSubjectColorForCommsAction( subjectEnt )
-		string subjectTier         = GetSubjectLootTierForCommsAction( subjectEnt )
+
+		array<string> subjectNames = GetSubjectNamesForCommsAction( commsAction, subjectEnt, itemRef )
+		vector subjectColor        = GetSubjectColorForCommsAction( subjectEnt, itemRef, player )
+		vector secondarySubjectColor = GetSecondarySubjectColorForCommsAction( subjectEnt, player )
+		string subjectTier         = GetSubjectLootTierForCommsAction( subjectEnt, itemRef )
+
+		                        
+			// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
+			if ( GameMode_IsActive( eGameModes.CONTROL ) )
+			{
+				// If this is an objective ping, display the ping count for this objective in the message and use attack/defend colors where appropriate
+				if ( isControlObjectivePing )
+				{
+					subjectColor = GetSubjectColorForCommsAction( subjectEnt.GetOwner(), itemRef, player )
+					secondarySubjectColor = GetSecondarySubjectColorForCommsAction( subjectEnt.GetOwner(), player )
+
+					int pingCount = CaptureObjectivePing_GetPingCountForObjectiveForTeamOrAlliance( subjectEnt.GetOwner(), AllianceProximity_GetAllianceFromTeam( subjectEnt.GetTeam() ) )
+					pingCount-- // subtract 1 since we don't need to show a +1 if just one player is going to an objective
+					if ( pingCount > 0 )
+					{
+						subjectTier = "+" + pingCount
+					}
+					else
+					{
+						subjectTier = ""
+					}
+				}
+			}
+                                
+
+		                             
+			// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
+			if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_LOCKDOWN ) )
+			{
+				// If this is an objective ping, display the ping count for this objective in the message and use attack colors where appropriate
+				if ( commsAction == eCommsAction.PING_TREASUREHUNT_OBJ_ATTACK && IsValid( subjectEnt ) && IsValid( subjectEnt.GetOwner() ) )
+				{
+					subjectColor = GetSubjectColorForCommsAction( subjectEnt.GetOwner(), itemRef, player )
+					secondarySubjectColor = GetSecondarySubjectColorForCommsAction( subjectEnt.GetOwner(), player )
+
+					int pingCount = CaptureObjectivePing_GetPingCountForObjectiveForTeamOrAlliance( subjectEnt.GetOwner(), subjectEnt.GetTeam() )
+					pingCount-- // subtract 1 since we don't need to show a +1 if just one player is going to an objective
+					if ( pingCount > 0 )
+						subjectTier = "+" + pingCount
+					else
+						subjectTier = ""
+				}
+			}
+        
+
+                                         
+                                                                                               
+                                                   
+    
+                                                                                                                                     
+                                                                                                                          
+     
+                                                                                           
+                                                                                                    
+
+                                                                                                                                  
+                                                                                                           
+                         
+                                   
+         
+                      
+     
+    
+        
+
+		if ( commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_1 ||
+				commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_2 ||
+				commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_3 ||
+				commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_4 ||
+				commsAction == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_5
+			                    
+				|| commsAction == eCommsAction.PING_XP_LEVEL_UP_ABILITY
+         
+			)
+		{
+			if ( IsValid( subjectEnt ) )
+			{
+				ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( subjectEnt ), Loadout_Character() )
+				string name = ItemFlavor_GetShortName( character )
+				subjectNames = [  name ]
+
+				//Armor tier
+				int armorTier = EquipmentSlot_GetEquipmentTier( subjectEnt, "armor" )
+				subjectTier  = string ( armorTier )
+				secondarySubjectColor = GetKeyColor( COLORID_TEXT_LOOT_TIER0, armorTier )
+
+				//team count
+				array<entity> teamPlayers = GetPlayerArrayOfTeam_Alive( subjectEnt.GetTeam() )
+				int teamCount = teamPlayers.len()
+				subjectCount = teamCount
+			}
+		}
+
+		string countText		   = ( subjectCount >= 0 ) ? string ( subjectCount ) : ""
 
 		if ( !PlayerIsPingMuted( player ) )
 		{
+			int elapseTime = int( Time() - creationTime )
 			foreach ( string subjectName in subjectNames )
 			{
-				Obituary_Print_Localized( Localize( chatText, playerName, Localize( subjectName ), subjectTier ), playerColor, subjectColor, <255, 255, 255>, <0, 0, 0>, 0.5 )
+				string locText
+			                            
+				if(commsAction == eCommsAction.PING_I_ULTIMATE) //modifying Localized Obit to include Ult Status info on an I_ULTIMATE ping
+				{
+					entity weapon = player.GetOffhandWeapon( OFFHAND_ULTIMATE )
+
+					if(IsValid(weapon))
+					{
+						string weaponName = string ( weapon.GetWeaponPrintName() )
+
+						locText = Localize( chatText, playerName, Localize( weaponName ), subjectTier, countText, elapseTime)
+					}
+					else
+						locText = Localize( chatText, playerName, Localize( subjectName ), subjectTier, countText, elapseTime)
+				}
+				else
+         
+			                    
+			if( commsAction == eCommsAction.PING_XP_LEVEL_UP_ARMOR )
+			{
+				array< int > currentAndTargetEvo = UpgradeCore_GetXpRequiredForNextLevel( player )
+				int curXp = player.GetPlayerNetInt( UPGRADE_CORE_XP_NETINT )
+				int evoRequired = 0
+				if( currentAndTargetEvo.len() >= 2 )
+				{
+					evoRequired = currentAndTargetEvo[1] - curXp
+				}
+
+
+				locText = Localize( chatText, playerName, evoRequired, subjectTier, countText, elapseTime)
+			}
+			else
+         
+					locText = Localize( chatText, playerName, Localize( subjectName ), subjectTier, countText, elapseTime)
+
+			                        
+				// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
+				if ( GameMode_IsActive( eGameModes.CONTROL ) )
+				{
+					if ( isControlObjectivePing )
+					{
+						Obituary_Print_Control_ObjectivePing( subjectEnt, locText, playerColor, subjectColor, secondarySubjectColor, <0, 0, 0>, 0.5 )
+					}
+					else
+					{
+						Obituary_Print_Control_Ping( locText, shouldUseAllianceCommsBehaviour, playerColor, subjectColor, secondarySubjectColor, <0, 0, 0>, 0.5 )
+					}
+				}
+				else
+                                 
+				{
+					Obituary_Print_Localized( locText, playerColor, subjectColor, secondarySubjectColor, <0, 0, 0>, 0.5 )
+				}
 			}
 		}
 	}
 
 	SetPlayerLastSaid( player, commsAction )
 }
+#endif
 
-void function PlaySoundForCommsAction( entity player, int commsAction, CommsOptions opt, string flavorEventOverride = "" )
+
+#if CLIENT
+void function PlaySoundForCommsAction( entity player, entity subjectEnt, CommsAction act, CommsOptions opt, string flavorEventOverride = "", int selector = INVALID_SOUND_SELECTOR )
 {
 	if ( PlayerIsPingMuted( player ) )
 		return
@@ -665,13 +1309,18 @@ void function PlaySoundForCommsAction( entity player, int commsAction, CommsOpti
 	if ( !file.commsDialogueEnabled )
 		return
 
-	string sound = GetPlayerDialogSound( player, commsAction, opt )
+	if ( ShouldCommsActionDialogBeMuted( subjectEnt, act ) )
+		return
+
+	/* This should no longer be needed (pmcd)
+	if ( act.aliasSubname.find( "outOfAmmo" ) != -1 && player.p.infiniteAmmo )
+		return
+	*/
+
+	string sound = GetPlayerDialogSound( player, subjectEnt, act, opt )
 	if ( sound != "" )
 	{
-		if ( !(commsAction in file.actions) )
-			return
-
-		printt( format( "Comms: '%s' #%d    base:'%s'   (%s) far:%d urgent:%d    :  '%s'", GetNameForCommsAction( commsAction ), commsAction, file.actions[commsAction].aliasSubname, (opt.isFirstPerson ? "1p" : "3p"), (opt.isFar ? 1 : 0), (opt.isUrgent ? 1 : 0), sound ) )
+		printt( format( "Comms: '%s' #%d    base:'%s'   (%s) far:%d urgent:%d    :  '%s'", GetNameForCommsAction( act.index ), act.index, act.aliasSubname, (opt.isFirstPerson ? "1p" : "3p"), (opt.isFar ? 1 : 0), (opt.isUrgent ? 1 : 0), sound ) )
 
 		float sincePlastPlayed = (Time() - player.p.sayLineLatestTime)
 		if ( (sincePlastPlayed < 30.0) && (player.p.sayLineLatestSound != "") )
@@ -679,57 +1328,116 @@ void function PlaySoundForCommsAction( entity player, int commsAction, CommsOpti
 			player.p.lastCanceledCommsAction = player.p.lastSaidCommsAction
 			StopSoundOnEntity( player, player.p.sayLineLatestSound )
 		}
+		else
+			player.p.lastCanceledCommsAction = eCommsAction.BLANK
 
 		// The dialogue queue is paused here for the duration of the ping VO such that no new items will be popped off of the dialogue queue while ping VO is playing.
 		// This was done to handle multiple pings occurring at the same time, since the dialogue queue pause is done through a stack.
-		var soundHandle = EmitSoundOnEntity( player, sound )
-		//thread SuspendDialogueQueueForDurationOfSound( player, soundHandle )// TODO: undefined
+		var soundHandle = EmitSoundOnEntityWithSelector( player, sound, selector )
+		SetPlayThroughPOVTransitions( soundHandle )
 
-		// Remove any player events from the queue so they don't double-speak
-		//RemovePlayerDialogueEventsFromDialogueQueue( player ) TODO: undefined
 		if ( opt.pauseQueue )
 			thread SuspendMainDialogueQueueForDurationOfSound( player, soundHandle )
 
-		//
+		// Remove any player events from the queue so they don't double-speak
 		RemovePlayerDialogueEventsFromMainDialogueQueue( player )
+
+		if ( act.index in file.replyMap && IsValid( subjectEnt ) && subjectEnt.IsPlayer() && subjectEnt == GetLocalViewPlayer() )
+		{
+			bool subjectIsConAltTarget = sound.find( "_cond" + GetPlayerVoice( subjectEnt ) ) >= 0
+			thread PromptReplyWhenPrimaryFinishes( player, act.index, subjectEnt, soundHandle, subjectIsConAltTarget )
+		}
+
+		if ( sound.find( "_cond" ) >= 0 || sound.find( "_flavor" ) >= 0 )  {
+			PIN_DynamicDialogue( sound )
+		}
 
 		player.p.sayLineLatestSound = sound
 		player.p.sayLineLatestTime = Time()
-		player.p.lastSaidCommsAction = commsAction
+		player.p.lastSaidCommsAction = act.index
 
-		string subEvent = file.actions[commsAction].subEvent
-		string flavorEvent = flavorEventOverride == "" ? file.actions[commsAction].flavorEvent : flavorEventOverride
-		if ( subEvent != "" )
+		string subEventString    = act.subEvent
+		int subEvent = GetCommsActionEnumForName( subEventString )
+		if ( act.index == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_1 ||
+				act.index == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_2 ||
+				act.index == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_3 ||
+				act.index == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_4 ||
+				act.index == eCommsAction.PING_VANTAGE_ENEMY_SPOTTED_5 )
 		{
-			thread PlaySoundForSubActionWhenPrimaryFinishes( soundHandle, commsAction, GetCommsActionEnumForName( subEvent ), player, opt, flavorEvent )
+			//thread PlayVantageSpottedPingSounds( player, subjectEnt, soundHandle, opt )
+			subEvent = eCommsAction.SUB_TYPE_VANTAGE_TEAM_1
+			if ( IsValid( subjectEnt ) )
+			{
+				array<entity> teamPlayers = GetPlayerArrayOfTeam_Alive( subjectEnt.GetTeam() )
+				int teamCount = teamPlayers.len()
+				if ( teamCount == 2 )
+					subEvent = eCommsAction.SUB_TYPE_VANTAGE_TEAM_2
+				else if ( teamCount > 2 )
+					subEvent = eCommsAction.SUB_TYPE_VANTAGE_TEAM_3
+			}
+		}
+		string flavorEvent = flavorEventOverride == "" ? act.flavorEvent : flavorEventOverride
+
+		if ( subEvent != eCommsAction.BLANK )
+		{
+			thread PlaySoundForSubActionWhenPrimaryFinishes( soundHandle, act, file.actions[ subEvent ], player, subjectEnt, opt, flavorEvent )
 		}
 		else if ( flavorEvent != "" )
 		{
-			int flavorAction = GetCommsActionEnumForName( flavorEvent )
-			string flavorSound = GetPlayerDialogSound( player, flavorAction, opt )
+			int flavorAction   = GetCommsActionEnumForName( flavorEvent )
+			CommsAction fAct   = GetCommsAction( flavorAction )
+			string flavorSound = GetPlayerDialogSound( player, subjectEnt, fAct, opt )
 			if ( DoesAliasExist( flavorSound ) && ShouldPlayFlavorAction( player, flavorAction ) )
 			{
-				thread PlaySoundForSubActionWhenPrimaryFinishes( soundHandle, commsAction, flavorAction, player, opt )
+				thread PlaySoundForSubActionWhenPrimaryFinishes( soundHandle, act, fAct, player, subjectEnt, opt )
 			}
 		}
 	}
 }
+#endif
+
+
+#if CLIENT
+bool function ShouldCommsActionDialogBeMuted( entity subjectEnt, CommsAction act )
+{
+	if ( IsValid( subjectEnt ) )
+	{
+		if ( subjectEnt.GetScriptName() == BLACK_MARKET_SCRIPTNAME )
+		{
+			if ( act.index == eCommsAction.ABILITY_BLACK_MARKET_NEUTRAL && GradeFlagsHas( subjectEnt, eGradeFlags.IS_BUSY ) )
+				return true
+		}
+	}
+
+	return false
+}
+#endif
+
+
+#if CLIENT || SERVER
 CommsAction function GetCommsAction( int index )
 {
+	#if ASSERTS
+		CheckCommsActionValidity( index )
+	#endif
+
 	CommsAction blankAction
 	if ( (index < 0) || (index >= eCommsAction._count) )
-		return blankAction
-	if ( !(index in file.actions) )
 		return blankAction
 
 	return file.actions[ index ]
 }
+#endif
 
 
+#if CLIENT
 bool function ShouldPlayFlavorAction( entity player, int flavorAction )
 {
 	if ( GetCurrentPlaylistVarInt( "disable_flavor_lines", 0 ) > 0 )
 		return false
+
+	if ( file.alwaysPlayFlavorActions.contains( flavorAction ) )
+		return true
 
 	if ( Time() - player.p.commActionFlavorGlobalDebounceTime < file.flavorGlobalDebounceTime )
 		return false
@@ -738,7 +1446,8 @@ bool function ShouldPlayFlavorAction( entity player, int flavorAction )
 	{
 		if ( Time() - player.p.commActionFlavorDebounceTimes[flavorAction] > file.flavorDebounceTime )
 		{
-			player.p.commActionFlavorDebounceTimes[flavorAction] = Time()
+			player.p.commActionFlavorDebounceTimes[flavorAction] = Time() + RandomFloatRange( 10.0, 30.0 )
+			player.p.commActionFlavorGlobalDebounceTime = Time() + RandomFloatRange( 10.0, 30.0 )
 			return true
 		}
 		else
@@ -748,81 +1457,189 @@ bool function ShouldPlayFlavorAction( entity player, int flavorAction )
 	}
 	else
 	{
-		player.p.commActionFlavorDebounceTimes[flavorAction] <- Time()
+		player.p.commActionFlavorDebounceTimes[flavorAction] <- Time() + RandomFloatRange( 10.0, 30.0 )
+		player.p.commActionFlavorGlobalDebounceTime = Time() + RandomFloatRange( 10.0, 30.0 )
 		return true
 	}
 
 	unreachable
 }
+#endif
 
-void function PlaySoundForSubActionWhenPrimaryFinishes( var primarySoundHandle, int primaryCommsAction, int subCommsAction, entity player, CommsOptions opt, string flavorEvent = "" )
+
+#if CLIENT
+void function PlaySoundForSubActionWhenPrimaryFinishes( var primarySoundHandle, CommsAction primaryAct, CommsAction subCommsAction, entity player, entity subjectEnt, CommsOptions opt, string flavorEvent = "" )
 {
-	int i = 0//stub
 	EndSignal( player, "OnDestroy" )
 	EndSignal( player, "OnDeath" )
 
-	PauseDialogueQueue( i )
+	PauseMainDialogueQueue()
 
 	OnThreadEnd(
 		function()
 		{
-			int i = 0//stub
-			ResumeDialogueQueue( i )
+			ResumeMainDialogueQueue()
 		}
 	)
 
 	WaitSignal( primarySoundHandle, "OnSoundFinished" )
 
-	if ( player.p.lastCanceledCommsAction != primaryCommsAction )
-		PlaySoundForCommsAction( player, subCommsAction, opt, flavorEvent )
+	if ( player.p.lastCanceledCommsAction != primaryAct.index )
+		PlaySoundForCommsAction( player, subjectEnt, subCommsAction, opt, flavorEvent )
 }
+#endif
 
+#if CLIENT
+void function PromptReplyWhenPrimaryFinishes( entity playerSpeakingPrimary, int primaryCommsAction, entity playerToReply, var soundHandle, bool wasConAlt )
+{
+	EndSignal( playerSpeakingPrimary, "OnDestroy" )
+	EndSignal( playerSpeakingPrimary, "OnDeath" )
+	EndSignal( playerToReply, "OnDestroy" )
+	EndSignal( playerToReply, "OnDeath" )
+
+	WaitSignal( soundHandle, "OnSoundFinished" )
+
+	int replyCommsAction = file.replyMap[ primaryCommsAction ]
+
+	bool isReplyForcePlay = ShouldForcePlayConditionalAlt( GetConditionalAltDialogue( file.actions[ replyCommsAction ].aliasSubname, playerToReply, playerSpeakingPrimary, true ) )
+	
+	if ( wasConAlt || isReplyForcePlay )
+		replyCommsAction = file.altMap[ replyCommsAction ]
+
+	string locString = ""
+	switch ( replyCommsAction )
+	{
+		case eCommsAction.REPLY_WELCOME:
+		case eCommsAction.REPLY_WELCOME_ALT:
+		case eCommsAction.REPLY_REVIVE_WELCOME:
+		case eCommsAction.REPLY_REVIVE_WELCOME_ALT:
+			locString = Localize( "#PING_SAY_WELCOME" )
+			break
+                               
+
+		case eCommsAction.REPLY_LOVE_YOU_MORE:
+			locString = Localize( "#PING_SAY_LOVE_YOU_MORE" )
+			break
+
+		case eCommsAction.REPLY_NO_I_LOVE_YOU_MORE:
+			locString = Localize( "#PING_SAY_NO_I_LOVE_YOU_MORE" )
+			break
+      
+
+		default:
+			locString = ""
+	}
+
+	if ( ShouldMuteCommsActionForCooldown( GetLocalViewPlayer(), replyCommsAction, null ) )
+		return
+
+	AddOnscreenPromptFunction( "quickchat", CreateQuickchatFunction( replyCommsAction, playerSpeakingPrimary ), 6.0, Localize( locString ) )
+}
+#endif
+
+#if CLIENT
 string function GetMenuOptionTextForCommsAction( int commsAction )
 {
-	Assert( commsAction < eCommsAction._count )
-	if ( !(commsAction in file.actions) )
-		return ""
+	#if ASSERTS
+		CheckCommsActionValidity( commsAction )
+	#endif
+
 	CommsAction data = file.actions[commsAction]
 	return Localize( data.menuText )
 }
+#endif
 
+
+#if CLIENT
 string function GetShortTextForCommsAction( int commsAction )
 {
-	Assert( commsAction < eCommsAction._count )
-	if ( !(commsAction in file.actions) )
-		return ""
+	#if ASSERTS
+		CheckCommsActionValidity( commsAction )
+	#endif
+
 	CommsAction data = file.actions[commsAction]
 	return Localize( data.shortText )
 }
+#endif
 
+
+#if CLIENT
 asset function GetDefaultIconForCommsAction( int commsAction )
 {
-	Assert( commsAction < eCommsAction._count )
-	if ( !(commsAction in file.actions) )
-		return $""
+	#if ASSERTS
+		CheckCommsActionValidity( commsAction )
+	#endif
+
 	CommsAction data = file.actions[commsAction]
 	return data.defaultIcon
 }
+#endif
 
+
+#if CLIENT
 asset function GetPingAssetForCommsAction( int commsAction )
 {
-	Assert( commsAction < eCommsAction._count )
-	if ( !(commsAction in file.actions) )
-		return $""
+	#if ASSERTS
+		CheckCommsActionValidity( commsAction )
+	#endif
+
 	CommsAction data = file.actions[commsAction]
 	return data.pingAsset
 }
+#endif
 
-string function GetPlayerDialogSound( entity player, int index, CommsOptions options )
+#if CLIENT || SERVER
+string function GetShadowDialogSoundForAction( CommsAction act, CommsOptions options )
+{
+	//shadow zombies play a variety of specific grunt/growl sounds depending on subject
+	string perspective = options.isFirstPerson ? "_1p" : "_3p"
+	string prefix = "diag_mp_shadowsquad_ping_spotDefault_"
+
+	string suffix
+	string aliasSubname = act.aliasSubname
+	switch( aliasSubname )
+	{
+		case "ping_spotEnemy":
+		case "ping_cluePresence":
+			suffix = "enemy"
+			break
+		case "ping_spotDefault":
+		case "ping_exploreGoPlayer":
+		case "ping_attackingHere":
+		case "ping_defendingHere":
+		case "ping_watchingHere":
+		case "ping_lootingHere":
+			suffix = "location"
+			break
+		case "ping_carePackage":
+			suffix = "item"
+			break
+		default:
+			if ( aliasSubname.find( "ping_found" ) >= 0 )
+				suffix = "item"
+			else
+				suffix = "item" //TODO: get a generic sound for default
+			break
+	}
+
+	string result = prefix + suffix + perspective
+
+	return result
+
+}
+#endif
+
+#if CLIENT || SERVER
+string function GetPlayerDialogSound( entity player, entity subjectEnt, CommsAction act, CommsOptions options )
 {
 	if ( !file.quickchatInitialized )
 		return ""
-	if ( (index < 0) || (index >= eCommsAction._count) )
-		return ""
-	if ( !(index in file.actions) )
-		return ""
 
-	CommsAction act = file.actions[index]
+	                                                           
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && IsPlayerShadowZombie( player ) )
+			return GetShadowDialogSoundForAction( act, options )
+       
+
 	string subAlias = act.aliasSubname
 	if ( subAlias == "" )
 		return ""
@@ -839,7 +1656,26 @@ string function GetPlayerDialogSound( entity player, int index, CommsOptions opt
 	else
 		ext = ""
 
-	string result = GetBattleChatterAlias1P3P( player, (subAlias + ext), options.isFirstPerson )
+	if ( act.index == eCommsAction.FLAVOR_LOOT_DIBS )
+		ext = TryPrependDibsExtension( player, subjectEnt, act, options, ext )
+
+	                                
+
+		bool stompConAlt = ( act.index == eCommsAction.REPLY_WELCOME ) || ( act.index == eCommsAction.REPLY_REVIVE_WELCOME )
+		bool forceConAlt = ( act.index == eCommsAction.REPLY_WELCOME_ALT ) || ( act.index == eCommsAction.REPLY_REVIVE_WELCOME_ALT )
+
+		ext = GetConditionalAltPingExtension( player, subjectEnt, act.aliasSubname, ext, forceConAlt, stompConAlt )
+
+                                       
+
+	string result
+	{
+		if ( act.hasForcedTempVoice )
+			result = GetBattleChatterAlias1P3PWithTempVoice( (subAlias + ext), options.isFirstPerson )
+		else
+			result = GetBattleChatterAlias1P3P( player, (subAlias + ext), options.isFirstPerson )
+	}
+
 	#if DEVELOPER
 		if ( ShouldTryToReplaceMissingVoiceWithTempVoice() )
 		{
@@ -851,14 +1687,80 @@ string function GetPlayerDialogSound( entity player, int index, CommsOptions opt
 					Warning( "Attempted to fall back to temp voice \"" + TEMP_VOICE + "\", but resulting alias \"" + result + "\" does not exist in miles." )
 			}
 		}
-	#endif //
+	#endif // DEV
+
 	return result
 }
+#endif
 
+#if CLIENT || SERVER
+const string WEAPON_HEADER = "mp_weapon_"
+const string ABILITY_HEADER = "mp_ability_"
+const string CLASS_SUFFIX = "Class"
+
+string function TryPrependDibsExtension( entity player, entity subjectEnt, CommsAction act, CommsOptions options, string currExt )
+{
+	if ( !IsValid( player ) )
+		return currExt
+
+	if ( !IsValidAndStandardGrabbableLootEnt( subjectEnt ) )
+		return currExt
+
+	LootData data = SURVIVAL_Loot_GetLootDataByIndex( subjectEnt.GetSurvivalInt() )
+
+	// Only supports weapons and ordnance for the time being. Can be extended in future if necessary.
+	if ( !( data.lootType == eLootType.MAINWEAPON || data.lootType == eLootType.ORDNANCE ) )
+		return currExt
+
+	string itemName = data.ref
+	string itemClassName = ""
+
+	if ( data.lootType == eLootType.MAINWEAPON )
+	{
+		if ( data.baseWeapon != "" )
+			itemName = data.baseWeapon
+
+		itemClassName = data.lootTags[0] + CLASS_SUFFIX
+	}
+
+	if ( itemName.find( WEAPON_HEADER ) == 0 )
+	{
+		itemName = itemName.slice( WEAPON_HEADER.len() )
+	}
+
+	if ( itemName.find( ABILITY_HEADER ) == 0 )
+	{
+		itemName = itemName.slice( ABILITY_HEADER.len() )
+	}
+
+	string ext = currExt
+
+	if ( PlayerHasFlavorDibsLineForItem( player, itemName ) )
+	{
+		ext = "_" + itemName + currExt
+	}
+
+	else if ( itemClassName != "" && PlayerHasFlavorDibsLineForItem( player, itemClassName ) )
+	{
+		ext = "_" + itemClassName + currExt
+	}
+
+	return ext
+}
+#endif
+
+#if CLIENT
 void function SetCommsDialogueEnabled( bool value )
 {
 	file.commsDialogueEnabled = value
 }
+#endif
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+#if SERVER || CLIENT
 void function AddCallback_OnQuickchatEvent( int index, void functionref(entity, int, entity) func )
 {
 	if ( !(index in file.onQuickchatCallbacks) )
@@ -867,7 +1769,328 @@ void function AddCallback_OnQuickchatEvent( int index, void functionref(entity, 
 	Assert( !file.onQuickchatCallbacks[ index ].contains( func ) )
 	file.onQuickchatCallbacks[ index ].append( func )
 }
+#endif
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+#if SERVER
+void function ClientCallback_Quickchat_UI( entity player, int index, int commFlags, int equipSlotType )
+{
+	if ( EquipmentSlot_IsValidEquipmentSlotType( equipSlotType ) == false )
+		return
+
+	EquipmentSlot e = Survival_GetEquipmentSlotDataByType( equipSlotType )
+	string equipSlot = e.ref
+	entity subject = null
+	int itemIndex = -1
+	LootData lData
+	if ( equipSlot in EquipmentSlot_GetAllEquipmentSlots() )
+	{
+		lData = EquipmentSlot_GetEquippedLootDataForSlot( player, equipSlot )
+
+		if ( EquipmentSlot_IsAttachmentSlot( equipSlot ) )
+			equipSlot = EquipmentSlot_GetAttachmentWeaponSlot( equipSlot )
+
+		if ( EquipmentSlot_IsMainWeaponSlot( equipSlot ) && lData.ref == "" )
+		{
+			lData = EquipmentSlot_GetEquippedLootDataForSlot( player, equipSlot )
+			EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( equipSlot )
+			subject = player.GetNormalWeapon( es.weaponSlot )
+		}
+
+		itemIndex = lData.index
+	}
+
+	ClientCallback_QuickchatInternal( player, index, commFlags, subject, itemIndex )
+}
+
+void function ClientCallback_Quickchat( entity player, int index, int commFlags )
+{
+	ClientCallback_QuickchatInternal( player, index, commFlags, null, -1 )
+}
+
+void function ClientCallback_QuickchatSubject_Player( entity player, int index, int commFlags, entity subject )
+{
+	// Drop the whole call if the subject is not valid.
+	if ( !IsValid( subject ) )
+		return
+
+	ClientCallback_QuickchatInternal( player, index, commFlags, subject, -1 )
+}
+
+void function ClientCallback_QuickchatInternal( entity player, int index, int commFlags, entity subject, int itemIndex )
+{
+	if ( !(index in file.actions) )
+		return
+
+	if ( SURVIVAL_Loot_IsLootIndexValid( itemIndex ) == false && itemIndex != -1 )
+		return
+
+	string itemRef = ""
+	if ( SURVIVAL_Loot_IsLootIndexValid( itemIndex ) == false )
+	{
+		// pass
+	}
+	else
+	{
+		LootData data = SURVIVAL_Loot_GetLootDataByIndex( itemIndex )
+		itemRef = data.ref
+	}
+
+	//printt( "ClientCallback_Quickchat, player: " + player + ", index: " + index + ", commFlags: " + commFlags + ", subject: " + subject + ", itemRef: " + itemRef  )
+
+	BroadcastCommsActionToTeam( player, index, subject, player.GetOrigin(), commFlags, itemRef )
+}
+
+void function BroadcastCommsActionToTeam( entity playerSpeaking, int commsAction, entity subjectEnt, vector subjectPos, int commsFlags, string itemRef )
+{
+	int secondaryCommsAction = 0
+
+                   
+                                             
+                                                                 
+       
+
+	if ( file.disabledCommsActions.contains( commsAction ) )
+	{
+		printf( "QUICKCHAT: Comm action " + commsAction + " is disabled but still being triggered" )
+		return
+	}
+
+	int itemIndex = -1
+	if( itemRef != "" )
+	{
+		if( SURVIVAL_Loot_IsRefValid( itemRef ) == false )
+		{
+			return // cancel on incorrect data
+		}
+		else
+		{
+			LootData lootData = SURVIVAL_Loot_GetLootDataByRef( itemRef )
+			itemIndex = lootData.index
+		}
+	}
+
+	array<entity> players = GetPlayerArrayOfTeam_Alive( playerSpeaking.GetTeam() )
+
+	// If we are in a mode where we allow communication between players near each other that are on the same team (but not the same squad); show kill feed text for the comms action
+	if ( AllianceProximity_IsUsingAllianceProximity() )
+	{
+		if ( IsValid( playerSpeaking ) )
+		{
+			foreach ( proximityPlayer in AllianceProximity_GetLivingAllianceMembersInProximity( playerSpeaking.GetTeam(), playerSpeaking.GetOrigin() ) )
+			{
+				players.append( proximityPlayer )
+			}
+		}
+	}
+
+	                        
+		// ToDo: R5DEV-567005 : Complete refactor to support Capture Objective Pings using Alliances
+		if ( GameMode_IsActive( eGameModes.CONTROL ) )
+		{
+			// If the player pinged an objective, trigger a comms action for the entire alliance
+			if ( commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_ATTACK || commsAction == eCommsAction.PING_CONTROL_OBJECTIVE_DEFEND )
+			{
+				if ( IsValid( subjectEnt ) && IsValid( subjectEnt.GetOwner() ) && subjectEnt.GetOwner().GetClassName() == PLAYER_WAYPOINT_CLASSNAME && subjectEnt.GetOwner().GetWaypointType() == eWaypoint.CONTROL_OBJECTIVE && IsValid( playerSpeaking ) )
+				{
+					players.clear()
+					int alliance = AllianceProximity_GetAllianceFromTeam( playerSpeaking.GetTeam() )
+					foreach( alliancePlayer in GetPlayerArray() )
+					{
+						if ( IsValid( alliancePlayer ) && AllianceProximity_GetAllianceFromTeam( alliancePlayer.GetTeam() ) == alliance )
+							players.append( alliancePlayer )
+					}
+				}
+			}
+		}
+       
+
+	// Get ultimate entity for GetSubjectCountForCommsAction..
+	switch ( commsAction )
+	{
+		case eCommsAction.QUICKCHAT_ULTIMATE_READY_FULL:
+		case eCommsAction.QUICKCHAT_ULTIMATE_READY_ALMOST:
+		case eCommsAction.QUICKCHAT_ULTIMATE_READY_NOT:
+	                            
+		case eCommsAction.PING_I_ULTIMATE:
+       
+		{
+			subjectEnt = playerSpeaking.GetOffhandWeapon( OFFHAND_ULTIMATE )
+			if ( !IsValid( subjectEnt ) )
+				return
+
+			PIN_UltimateReadyPing( playerSpeaking, GetEnumString( "eCommsAction", commsAction ).tolower(), true )
+			break
+		}
+		default:
+			break
+	}
+
+	RunQuickChatCallbacks( playerSpeaking, commsAction, subjectEnt )
+
+                   
+	int subjectCount
+	if ( commsAction == eCommsAction.REPLY_CAREPACKAGE_INSIGHT_FUTURE && IsValid( subjectEnt ) && subjectEnt.GetNetworkedClassName() == PLAYER_WAYPOINT_CLASSNAME )
+	{
+		subjectCount = int( subjectEnt.GetWaypointGametime( 0 ) - Time() )
+		subjectEnt = null
+	}
+	else
+	{
+		subjectCount = GetSubjectCountForCommsAction( playerSpeaking, commsAction, subjectEnt )
+	}
+     
+                                                                                            
+      
+
+	if ( IsBitFlagSet( commsFlags, eCommsFlags.INCLUDE_DEAD ) )
+	{
+		players = GetPlayerArrayOfTeam( playerSpeaking.GetTeam() )
+
+		foreach ( player in players )
+			QuickChat_SendServerToClient_BroadcastCommsActionToTeam( player, playerSpeaking,
+				commsAction, commsFlags, subjectCount, secondaryCommsAction, subjectEnt, subjectPos, itemIndex )
+
+		return
+	}
+
+	if ( IsBitFlagSet( commsFlags, eCommsFlags.BROADCAST_TO_WAYPOINT_OWNER ) )
+	{
+		entity subjToUse = subjectEnt
+
+		if ( IsValid( subjToUse ) )
+		{
+			if ( !subjToUse.IsPlayer() )
+				subjToUse = subjToUse.GetOwner()
+
+			if ( IsValid( subjToUse ) )
+			{
+				if ( subjToUse.IsPlayer() )
+				{
+					QuickChat_SendServerToClient_BroadcastCommsActionToTeam( subjToUse, playerSpeaking,
+						commsAction, commsFlags, subjectCount, secondaryCommsAction, subjectEnt, subjectPos, itemIndex )
+				}
+			}
+		}
+
+		return
+	}
+
+	foreach ( player in players )
+		QuickChat_SendServerToClient_BroadcastCommsActionToTeam( player, playerSpeaking,
+			commsAction, commsFlags, subjectCount, secondaryCommsAction, subjectEnt, subjectPos, itemIndex  )
+}
+
+void function QuickChat_SendServerToClient_BroadcastCommsActionToTeam( entity player, entity playerSpeaking, int commsAction,
+		int commsFlags, int subjectCount, int secondaryCommsAction, entity subjectEnt, vector subjectPos, int itemIndex  )
+{
+	int itemIndexToSend = SURVIVAL_Loot_IsLootIndexValid( itemIndex ) == false ? -1 : itemIndex
+
+	CommsOptions opt
+	opt.isFirstPerson = player == playerSpeaking
+	opt.isFar = false
+	opt.isUrgent = false
+
+	// note: this is not ideal, but we need to pick one variant.. assumes most things won't be far/urgent.
+	// The far / urgent variants are not guaranteed to have matching selector layouts.
+	// In the case that the evaluated selector isn't compatible, miles will just run the evaluation on the client.
+	// This means that urgent/far variants are not 100% guaranteed to have working selector sync right now.
+	string sound = GetPlayerDialogSound( playerSpeaking, player, GetCommsAction( commsAction ), opt )
+	int selector = EvaluateSoundSelector( sound )
+
+	if ( IsValid( subjectEnt ) )
+		Remote_CallFunction_Replay( player, "ServerToClient_BroadcastCommsActionToTeam", playerSpeaking,
+			commsAction, commsFlags,
+			subjectCount, secondaryCommsAction, subjectEnt, subjectPos, itemIndexToSend, selector )
+	else
+		Remote_CallFunction_Replay( player, "ServerToClient_BroadcastSubjectlessCommsActionToTeam", playerSpeaking,
+			commsAction, commsFlags,
+			subjectCount, secondaryCommsAction, subjectPos, itemIndexToSend, selector )
+}
+
+
+void function QuickChat_RegisterDisabledCommsActions( array<int> disabledComms )
+{
+	foreach( commAction in disabledComms )
+	{
+		if ( !file.disabledCommsActions.contains( commAction ) )
+			file.disabledCommsActions.append( commAction )
+	}
+}
+
+int function GetSubjectCountForCommsAction( entity player, int commsAction, entity subjectEnt )
+{
+	// Note: not all comms actions that display counts need to be listed here
+	// Only "quickchat" style comms need to be listed (i.e. comms that aren't from pings being created)
+	// In-world pings should be setting the quantity on the waypoint ent to pass it to the client
+
+	int count = -1
+
+	if ( !IsValid( player ) )
+		return count
+
+	switch ( commsAction )
+	{
+		case eCommsAction.INVENTORY_NEED_AMMO_BULLET:
+	                         
+		case eCommsAction.INVENTORY_NO_AMMO_BULLET:
+       
+			return player.AmmoPool_GetCount( eAmmoPoolType.bullet )
+
+		case eCommsAction.INVENTORY_NEED_AMMO_SPECIAL:
+	                         
+		case eCommsAction.INVENTORY_NO_AMMO_SPECIAL:
+       
+			return player.AmmoPool_GetCount( eAmmoPoolType.special )
+
+		case eCommsAction.INVENTORY_NEED_AMMO_HIGHCAL:
+	                         
+		case eCommsAction.INVENTORY_NO_AMMO_HIGHCAL:
+       
+			return player.AmmoPool_GetCount( eAmmoPoolType.highcal )
+
+		case eCommsAction.INVENTORY_NEED_AMMO_SHOTGUN:
+	                         
+		case eCommsAction.INVENTORY_NO_AMMO_SHOTGUN:
+       
+			return player.AmmoPool_GetCount( eAmmoPoolType.shotgun )
+
+		case eCommsAction.INVENTORY_NEED_AMMO_SNIPER:
+	                         
+		case eCommsAction.INVENTORY_NO_AMMO_SNIPER:
+       
+			return player.AmmoPool_GetCount( eAmmoPoolType.sniper )
+
+		case eCommsAction.INVENTORY_NEED_AMMO_ARROWS:
+	                         
+		case eCommsAction.INVENTORY_NO_AMMO_ARROWS:
+       
+			return player.AmmoPool_GetCount( eAmmoPoolType.arrows )
+
+		case eCommsAction.QUICKCHAT_ULTIMATE_READY_ALMOST:
+		case eCommsAction.QUICKCHAT_ULTIMATE_READY_NOT:
+	                            
+		case eCommsAction.PING_I_ULTIMATE:
+       
+			if ( IsValid( subjectEnt ) && subjectEnt.IsWeaponX() )
+				return int( ceil( float( subjectEnt.GetWeaponPrimaryClipCount() ) / float (subjectEnt.GetWeaponPrimaryClipCountMax() ) * 100 ) )
+			else
+				return count
+                         
+		case eCommsAction.FIRING_RANGE_TARGET_SPEED_CHANGE:
+			return GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) ? GetCurrentTargetSpeedForPlayerRealm( player ) : count
+      
+	}
+
+	return count
+}
+#endif
+
+
+#if SERVER || CLIENT
 void function RunQuickChatCallbacks( entity player, int commsAction, entity subjectEnt )
 {
 	if ( commsAction in file.onQuickchatCallbacks )
@@ -878,64 +2101,34 @@ void function RunQuickChatCallbacks( entity player, int commsAction, entity subj
 		}
 	}
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#endif // CLIENT
+#endif
 
 #if SERVER
-bool function ClientCommand_Quickchat( entity player, array<string> args )
+void function OnPlayerSaysThanks( entity player, int commsAction, entity subjectEnt )
 {
-	if ( args.len() < 1 )
-		return true
-
-	int index = int( args[0] )
-	if ( index < 0 || !(index in file.actions) )
-		return true
-
-	entity subject = null
-	int flags = eCommsFlags.NONE
-	if ( args.len() > 1 )
-	{
-		flags = int( args[1] )
-
-		if ( args.len() > 2 )
-		{
-			string equipSlot = args[2]
-			if ( equipSlot in EquipmentSlot_GetAllEquipmentSlots() )
-			{
-				if ( EquipmentSlot_IsAttachmentSlot( equipSlot ) )
-					equipSlot = EquipmentSlot_GetAttachmentWeaponSlot( equipSlot )
-	
-				if ( EquipmentSlot_IsMainWeaponSlot( equipSlot ) )
-				{
-					EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( equipSlot )
-					subject = player.GetNormalWeapon( es.weaponSlot )
-				}
-			}
-	
-			if ( args.len() > 3 )
-			{
-				subject = GetEntityFromEncodedEHandle( int( args[3] ) )
-	
-				if ( !IsValid( subject ) )
-					return true
-			}
-		}
-	}
-
-	HandleBroadcastCommsAction( player, index, subject, player.GetOrigin(), flags )
-	return true
+	if ( IsValid( player ) && GetCurrentPlaylistVarBool( "enable_stats", true ) )
+		StatsHook_OnPlayerSaidThanks( player )
 }
+#endif
 
-void function HandleBroadcastCommsAction( entity playerSpeaking, int commsAction, entity subjectEnt, vector subjectPos, int commsFlags )
+#if CLIENT
+void function ServerCallback_BroadcastPlayerKicked( int entIdx, bool isAnonymous )
 {
-	array<entity> players = GetPlayerArrayOfTeam_Alive( playerSpeaking.GetTeam() )
-	foreach ( player in players )
-		Remote_CallFunction_Replay( player, "HandleBroadcastCommsAction", playerSpeaking, commsAction, subjectEnt, subjectPos, commsFlags )
+	string name = GetPlayerNameByEntIndex( entIdx )
+	if ( isAnonymous )
+		name = GetCachedObsfuscatedNameByName( name )
 
-	if ( GetCurrentPlaylistVarBool( "thanks_welcome_reply_enabled", true ) )
-		if ( commsAction == eCommsAction.REPLY_THANKS && IsValid( subjectEnt ) && subjectEnt.IsPlayer() )
-			Remote_CallFunction_NonReplay( subjectEnt, "ServerCallback_PromptWelcome" )
+	Obituary_Print_Localized( Localize( "#ANTICHEAT_REMOVED_FROM_MATCH", name ), <255, 255, 255> )
 }
+#endif
 
-#endif // SERVER
+#if (CLIENT || SERVER) && ASSERTS
+void function CheckCommsActionValidity( int commsAction )
+{
+	Assert( commsAction >= 0 )
+	Assert( commsAction < eCommsAction._count )
+
+	string enumString = IsValidEnumValue( "eCommsAction", commsAction ) ? GetEnumString( "eCommsAction", commsAction ) : "Unknown eCommsAction!"
+	Assert( commsAction in file.actions, "Unhandled commsAction " + enumString + " (" + commsAction + ")" ) // If we are hitting this assert unexpectedly - make sure ePingType has all DEV-only enums at the end of the enum list.
+}
+#endif

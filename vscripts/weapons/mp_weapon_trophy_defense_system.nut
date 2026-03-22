@@ -347,16 +347,16 @@ TrophyPlacementInfo function _GetPlacementInfo( entity player, entity proxy, vec
 
 	// if ( TROPHY_DEBUG_DRAW_PLACEMENT )
 	// {
-		// DebugDrawBox( fwdResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, COLOR_GREEN, 1, 1.0 )                                 
-		// DebugDrawBox( downResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, COLOR_BLUE, 1, 1.0 )                                  
-		// DebugDrawLine( eyePos + viewVec * min( TROPHY_PLACEMENT_RANGE_MIN, maxRange ), fwdResults.endPos, COLOR_GREEN, true, 1.0 )                    
-		// DebugDrawLine( fwdResults.endPos, eyePos + viewVec * maxRange, COLOR_RED, true, 1.0 )                            
-		// DebugDrawLine( fwdResults.endPos, downResults.endPos, COLOR_BLUE, true, 1.0 )                     
+		// DebugDrawBox( fwdResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, <0, 255, 0>, 1, 1.0 )                                 
+		// DebugDrawBox( downResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, <0, 0, 255>, 1, 1.0 )                                  
+		// DebugDrawLine( eyePos + viewVec * min( TROPHY_PLACEMENT_RANGE_MIN, maxRange ), fwdResults.endPos, <0, 255, 0>, true, 1.0 )                    
+		// DebugDrawLine( fwdResults.endPos, eyePos + viewVec * maxRange, <255, 0, 0>, true, 1.0 )                            
+		// DebugDrawLine( fwdResults.endPos, downResults.endPos, <0, 0, 255>, true, 1.0 )                     
 		// DebugDrawBox( upResults.endPos, TROPHY_BOUND_MINS, TROPHY_BOUND_MAXS, COLOR_CYAN, 1, 1.0 )                                  
 		// DebugDrawLine( upStart, upResults.endPos, COLOR_CYAN, true, 1.0 )                     
 		// DebugDrawLine( eyePos, roofTraceEnd, COLOR_MAGENTA, true, 1.0 )             
-		// DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * TROPHY_PLACEMENT_RANGE_MAX), COLOR_GREEN, true, 1.0 )                     
-		// DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * TROPHY_PLACEMENT_RANGE_MAX), COLOR_GREEN, true, 1.0 )                     
+		// DebugDrawLine( player.GetOrigin(), player.GetOrigin() + (AnglesToForward( angles ) * TROPHY_PLACEMENT_RANGE_MAX), <0, 255, 0>, true, 1.0 )                     
+		// DebugDrawLine( eyePos + <0, 0, 8>, eyePos + <0, 0, 8> + (viewVec * TROPHY_PLACEMENT_RANGE_MAX), <0, 255, 0>, true, 1.0 )                     
 	// }
 
 	                                                           
@@ -426,8 +426,8 @@ TrophyPlacementInfo function _GetPlacementInfo( entity player, entity proxy, vec
 
 		// if ( TROPHY_DEBUG_DRAW_PLACEMENT )
 		// {
-			// DebugDrawLine( proxy.GetOrigin(), proxy.GetOrigin() + (right * 64), COLOR_GREEN, true, 1.0 )                      
-			// DebugDrawLine( proxy.GetOrigin(), proxy.GetOrigin() + (forward * 64), COLOR_BLUE, true, 1.0 )                        
+			// DebugDrawLine( proxy.GetOrigin(), proxy.GetOrigin() + (right * 64), <0, 255, 0>, true, 1.0 )                      
+			// DebugDrawLine( proxy.GetOrigin(), proxy.GetOrigin() + (forward * 64), <0, 0, 255>, true, 1.0 )                        
 		// }
 
 		                                                 
@@ -437,7 +437,7 @@ TrophyPlacementInfo function _GetPlacementInfo( entity player, entity proxy, vec
 			TraceResults traceResult = TraceLine( testPos + (proxy.GetUpVector() * TROPHY_PLACEMENT_MAX_GROUND_DIST), testPos + (proxy.GetUpVector() * -TROPHY_PLACEMENT_MAX_GROUND_DIST), ignoreEnts, traceMask, collisionGroup )
 
 			// if ( TROPHY_DEBUG_DRAW_PLACEMENT )
-				// DebugDrawLine( testPos + (proxy.GetUpVector() * TROPHY_PLACEMENT_MAX_GROUND_DIST), traceResult.endPos, COLOR_RED, true, 1.0 )                   
+				// DebugDrawLine( testPos + (proxy.GetUpVector() * TROPHY_PLACEMENT_MAX_GROUND_DIST), traceResult.endPos, <255, 0, 0>, true, 1.0 )                   
 
 			if ( traceResult.fraction == 1.0 )
 			{

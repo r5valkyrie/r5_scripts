@@ -262,8 +262,8 @@ void function Bombardment_MortarBarrageCreeping( entity weapon, asset markerFx, 
 
 	if ( BOMBARDMENT_DEBUG )
 	{
-		DebugDrawLine( targetOrigin, targetOrigin + (dir * creepDist), COLOR_RED, true, 20.0 )
-		DebugDrawLine( targetOrigin, targetOrigin + (cross * (width / 2)), COLOR_GREEN, true, 20.0 )
+		//DebugDrawLine( targetOrigin, targetOrigin + (dir * creepDist), <255, 0, 0>, true, 20.0 )
+		//DebugDrawLine( targetOrigin, targetOrigin + (cross * (width / 2)), <0, 255, 0>, true, 20.0 )
 	}
 
 	//Generate a battry of gun positions to fire from.
@@ -377,8 +377,8 @@ void function Bombardment_MortarBarrageDetCord( entity weapon, asset markerFx, v
 
 	if ( BOMBARDMENT_DEBUG )
 	{
-		DebugDrawLine( targetOrigin, targetOrigin + (dir * creepDist), COLOR_RED, true, 20.0 )
-		DebugDrawLine( targetOrigin, targetOrigin + (cross * (width / 2)), COLOR_GREEN, true, 20.0 )
+		//DebugDrawLine( targetOrigin, targetOrigin + (dir * creepDist), <255, 0, 0>, true, 20.0 )
+		//DebugDrawLine( targetOrigin, targetOrigin + (cross * (width / 2)), <0, 255, 0>, true, 20.0 )
 	}
 
 	//Get targets along bombarment line
@@ -574,10 +574,10 @@ array<vector> function Bombardment_GetDistributedRandomGroundPositionsInCircle( 
 
 	if ( BOMBARDMENT_DEBUG )
 	{
-		DebugDrawCircle( centerOrigin, <0, 0, 0>, radius, COLOR_RED, true, 10.0, 16 )
+		//DebugDrawCircle( centerOrigin, <0, 0, 0>, radius, <255, 0, 0>, true, 10.0, 16 )
 		foreach ( vector circleOrigin in  circleOrigins )
 		{
-			DebugDrawCircle( circleOrigin, <0, 0, 0>, subRadius, COLOR_GREEN, true, 10.0, 16 )
+			//DebugDrawCircle( circleOrigin, <0, 0, 0>, subRadius, <0, 255, 0>, true, 10.0, 16 )
 		}
 	}
 
@@ -604,9 +604,9 @@ vector function Bombardment_GetRandomGroundPosInRing( vector centerOrigin, float
 
 	if ( BOMBARDMENT_DEBUG )
 	{
-		DebugDrawCircle( centerOrigin, <0, 0, 0>, innerRadius, COLOR_RED, true, 10.0, 16 )
-		DebugDrawCircle( centerOrigin, <0, 0, 0>, outerRadius, COLOR_RED, true, 10.0, 16 )
-		DebugDrawSphere( clusterTarget, 32.0, COLOR_RED, true, 10.0 )
+		//DebugDrawCircle( centerOrigin, <0, 0, 0>, innerRadius, <255, 0, 0>, true, 10.0, 16 )
+		//DebugDrawCircle( centerOrigin, <0, 0, 0>, outerRadius, <255, 0, 0>, true, 10.0, 16 )
+		//DebugDrawSphere( clusterTarget, 32.0, <255, 0, 0>, true, 10.0 )
 	}
 
 	return clusterTarget
@@ -635,8 +635,8 @@ array<vector> function Bombardment_GetGroundPositionsOnCircleEdge( vector center
 
 		if ( BOMBARDMENT_DEBUG )
 		{
-			DebugDrawCircle( centerOrigin, <0, 0, 0>, radius, COLOR_RED, true, 10.0, 16 )
-			DebugDrawSphere( clusterTarget, 32.0, COLOR_RED, true, 10.0 )
+			//DebugDrawCircle( centerOrigin, <0, 0, 0>, radius, <255, 0, 0>, true, 10.0, 16 )
+			//DebugDrawSphere( clusterTarget, 32.0, <255, 0, 0>, true, 10.0 )
 		}
 
 		targets.append( clusterTarget )
@@ -655,8 +655,8 @@ array<vector> function Bombardment_GetGroundPositionsForRingOfCircles( vector ce
 	//Debug draw our max radius and our actual radius
 	if ( BOMBARDMENT_DEBUG )
 	{
-		DebugDrawCircle( centerOrigin, <0, 0, 0>, maxRingRadius, COLOR_RED, true, 10.0, 16 )
-		DebugDrawCircle( centerOrigin, <0, 0, 0>, ringRadius, COLOR_CYAN, true, 10.0, 16 )
+		//DebugDrawCircle( centerOrigin, <0, 0, 0>, maxRingRadius, <255, 0, 0>, true, 10.0, 16 )
+		//DebugDrawCircle( centerOrigin, <0, 0, 0>, ringRadius, COLOR_CYAN, true, 10.0, 16 )
 	}
 
 	//Determine number of radians to rotate per circle.
@@ -675,7 +675,9 @@ array<vector> function Bombardment_GetGroundPositionsForRingOfCircles( vector ce
 		circleOrigins.append( circleToGround )
 
 		if ( BOMBARDMENT_DEBUG )
-			DebugDrawCircle( circleToGround, <0, 0, 0>, circleRadius, COLOR_RED, true, 10.0, 16 )
+		{
+			//DebugDrawCircle( circleToGround, <0, 0, 0>, circleRadius, <255, 0, 0>, true, 10.0, 16 )
+		}
 	}
 
 	return circleOrigins
@@ -714,7 +716,9 @@ vector function Bombardment_GetWeightedGroundPosInRadius( vector idealPos, float
 		return idealPos
 
 	if ( BOMBARDMENT_DEBUG )
-		DebugDrawCircle( idealPos, <0, 0, 0>, radius, COLOR_RED, true, 60.0, 16 )
+	{
+		//DebugDrawCircle( idealPos, <0, 0, 0>, radius, <255, 0, 0>, true, 60.0, 16 )
+	}
 
 	//Handle the case where our ideal position is no good.
 	array<vector> testPoints = Bombardment_GetGroundPositionsOnCircleEdge( idealPos, radius, searchDensity, testZOffset )
@@ -748,7 +752,9 @@ vector function Bombardment_GetWeightedGroundPosInRadius( vector idealPos, float
 		//printt( "CURRENT SEARCH DENSITY: " + currentDensity )
 
 		if ( BOMBARDMENT_DEBUG )
-			DebugDrawCircle( idealPos, <0, 0, 0>, currentOuter, COLOR_RED, true, 60.0, 16 )
+		{
+			//DebugDrawCircle( idealPos, <0, 0, 0>, currentOuter, <255, 0, 0>, true, 60.0, 16 )
+		}
 
 		//Get test points for this step
 		array<vector> stepTestPoints = Bombardment_GetGroundPositionsOnCircleEdge( idealPos, currentOuter, currentDensity, bestZOffset )
@@ -822,7 +828,9 @@ GroundPosData function Bombardment_TestWeightedPoints( vector idealPos, array<ve
 			*/
 
 			if ( BOMBARDMENT_DEBUG )
-				DebugDrawLine( tracePoint, result.endPos, COLOR_CYAN, true, 60.0 )
+			{
+				//DebugDrawLine( tracePoint, result.endPos, COLOR_CYAN, true, 60.0 )
+			}
 
 			if ( result.fraction >= minFrac )
 			{
@@ -831,23 +839,25 @@ GroundPosData function Bombardment_TestWeightedPoints( vector idealPos, array<ve
 				//printt( "FOUND NEW BEST POINT" )
 				if ( BOMBARDMENT_DEBUG )
 				{
-					DebugDrawLine( tracePoint + <0, 0, highestZPoint>, result.endPos, COLOR_GREEN, true, 60.0 )
-					DebugDrawBox( result.endPos, hullMins, hullMaxes, COLOR_GREEN, 1, 60.0 )
+					//DebugDrawLine( tracePoint + <0, 0, highestZPoint>, result.endPos, <0, 255, 0>, true, 60.0 )
+					//DebugDrawBox( result.endPos, hullMins, hullMaxes, <0, 255, 0>, 1, 60.0 )
 				}
 			}
 			else
 			{
 				if ( BOMBARDMENT_DEBUG )
 				{
-					DebugDrawLine( tracePoint + <0, 0, highestZPoint>, result.endPos, COLOR_YELLOW, true, 60.0 )
-					DebugDrawBox( result.endPos, hullMins, hullMaxes, COLOR_YELLOW, 1, 60.0 )
+					//DebugDrawLine( tracePoint + <0, 0, highestZPoint>, result.endPos, <255, 255, 0>, true, 60.0 )
+					//DebugDrawBox( result.endPos, hullMins, hullMaxes, <255, 255, 0>, 1, 60.0 )
 				}
 			}
 		}
 		else
 		{
 			if ( BOMBARDMENT_DEBUG )
-				DebugDrawLine( testPoint + <0, 0, highestZPoint>, testPoint, COLOR_RED, true, 60.0 )
+			{
+				//DebugDrawLine( testPoint + <0, 0, highestZPoint>, testPoint, <255, 0, 0>, true, 60.0 )
+			}
 		}
 	}
 

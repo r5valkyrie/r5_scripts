@@ -88,7 +88,7 @@ void function OnWeaponTossPrep_weapon_deployable_cover( entity weapon, WeaponTos
 	weapon.EmitWeaponSound_1p3p( GetGrenadeDeploySound_1p( weapon ), GetGrenadeDeploySound_3p( weapon ) )
 }
 
-void function OnDeployableCoverPlanted( entity projectile )
+void function OnDeployableCoverPlanted( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 		Assert( IsValid( projectile ) )

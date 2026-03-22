@@ -38,7 +38,7 @@ global function GetLootCeremonyFlashType
 #endif
 
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 global function DEV_ShouldShowCustomLootRewards
 global function DEV_SetCustomLootRewardsToDisplay
 #endif
@@ -296,7 +296,7 @@ struct FileLevelStruct
 		array<PakHandle> pakHandles
 	#endif
 
-	#if CLIENT && DEV
+	#if CLIENT && DEVELOPER
 		bool           debugShowCustomRewards = false
 		array< asset > debugCustomRewardAssets = [
 			$"settings/itemflav/character_skin/wraith/legendary_01.rpak",
@@ -562,7 +562,7 @@ void function UIToClient_OnGRXPackOpeningResultsAvailable()
 	GRXPackOpened_ErrorHandling( error )
 
 	// populate dev item variables
-	#if DEV
+	#if DEVELOPER
 		if ( fileLevel.debugShowCustomRewards )
 		{
 			array< ItemFlavor > debugItems
@@ -1064,7 +1064,7 @@ int function SortThematicCharacterPackResults( ItemFlavor a, ItemFlavor b )
 }
 #endif
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 string function DEV_GetReadableLootCeremonyPackType( int type )
 {
 	switch ( type )
@@ -1181,7 +1181,7 @@ array<ItemFlavor> function SortPackResults( array<ItemFlavor> results )
 	out[0] = out[1]
 	out[1] = temp
 
-#if DEV
+#if DEVELOPER
 	printt( FUNC_NAME() + " : Current Loot Ceremony Pack Type - " + DEV_GetReadableLootCeremonyPackType( fileLevel.lootCeremonySortingData.packType ) )
 
 	if ( fileLevel.lootCeremonySortingData.packType >= eLootCeremonyPackType.THEMATIC_ITEM_TYPE_PACK &&
@@ -1265,7 +1265,7 @@ void function GRXPackOpened_ErrorHandling( int packError )
 
 	RunUIScript( "ShowGRXErrorDialogue", message )
 
-	#if DEV
+	#if DEVELOPER
 		Warning( warningText )
 	#endif
 }
@@ -3810,14 +3810,14 @@ void function ShowRewards_FX( int animAttachID, int rarity, vector rarityColor, 
 #endif
 
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 void function DEV_ShouldShowCustomLootRewards( bool shouldShow )
 {
 	fileLevel.debugShowCustomRewards = shouldShow
 }
 #endif
 
-#if CLIENT && DEV
+#if CLIENT && DEVELOPER
 void function DEV_SetCustomLootRewardsToDisplay( string itemRef0 = "", string itemRef1 = "", string itemRef2 = "" )
 {
 	DEV_ShouldShowCustomLootRewards( true )
@@ -3978,7 +3978,7 @@ void function UIToClient_TrackButtonOnClick()
 
 void function UIToClient_RewardEquipOnClick()
 {
-	#if DEV
+	#if DEVELOPER
 		if ( fileLevel.debugShowCustomRewards )
 		{
 			Warning( "Trying to equip a reward you may not actually own. You should disable custom rewards." )
@@ -7108,4 +7108,4 @@ void function ServerThread_GrantLegendaryStickersIfCollectionCompleted( entity p
 		}
 	}
 }
-#endif // SERVER 
+#endif // SERVER

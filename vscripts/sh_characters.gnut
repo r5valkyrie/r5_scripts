@@ -455,7 +455,7 @@ ItemFlavor function GetItemFlavorByCharacterRef( string ref )
 #if SERVER || CLIENT || UI
 string function ItemFlavor_GetCharacterRef( ItemFlavor flavor )
 {
-	Assert( IsItemFlavorStructValid( flavor, eValidation.ASSERT ) )
+	Assert( IsItemFlavorStructValid( flavor.guid, eValidation.ASSERT ) )
 	Assert( flavor.typeIndex == eItemType.character )
 	Assert( flavor.metaData != null )
 

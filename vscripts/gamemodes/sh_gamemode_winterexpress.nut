@@ -559,7 +559,7 @@ void function OnEntitiesDidLoad()
 	DesertlandsTrain_SetAboutToLeaveBuffer( 0 )
 	DesertlandsTrain_SetAdditionalLeaveBuffer( WINTER_EXPRESS_LEAVE_BUFFER )
 
-	vector spawnPos     = SURVIVAL_GetDeathFieldCenter()
+	vector spawnPos     = SURVIVAL_GetDeathFieldCenter( 0 )
 	float skydiveHeight = settings.winter_express_respawn_skydive_height
 	spawnPos += <0, 0, skydiveHeight>
 
@@ -724,7 +724,7 @@ void function WinterExpress_OnEpilogue()
 	if ( level.nv.winningTeam != TEAM_UNASSIGNED )
 		return
 
-	if ( IsSquadDataPersistenceEmpty() )
+	if ( IsSquadDataPersistenceEmpty( GetLocalClientPlayer() ) )
 	{
 		Warning( "Persistence didn't get transmitted to the client in time! Proceeding without squad persistence." )
 	}
@@ -2886,7 +2886,7 @@ Point function GetSkyDivePointCircularSpread( entity player )
 	spawnPoint.angles = VectorToAngles( Normalize( center - spawnPoint.origin ) )
 
 	#if DEVELOPER
-		//DebugDrawLine( spawnPoint.origin, center, COLOR_GREEN, true, 10 )
+		//DebugDrawLine( spawnPoint.origin, center, <0, 255, 0>, true, 10 )
 	#endif
 
 	return spawnPoint
@@ -2919,7 +2919,7 @@ Point function GetSkyDivePointHorizontalSpread( entity player )
 		origin = GetPointAtDistanceAlongPath( path, spawnDist )
 	else
 	{
-		vector center = SURVIVAL_GetDeathFieldCenter()
+		vector center = SURVIVAL_GetDeathFieldCenter( 0 )
 		vector towardsCenter = FlattenVec( Normalize( center - trainOrigin ) )
 		origin = trainOrigin + towardsCenter * SKY_DIVE_SPAWN_DIST
 	}
@@ -3259,7 +3259,7 @@ void function SpawnAmmoForCurrentWeapon( entity player, var attackerDamageInfo =
 				vector throwDir = <sin( throwData.throwAngle ), cos( throwData.throwAngle ), 0>
 				float speed     = throwData.throwScale * sqrt( RandomFloatRange( 0.75, 1.0 ) ) * 150
 				vector vel      = throwDir * speed
-				thread FakePhysicsThrow_Retail( player, itemEnt, <vel.x, vel.y, 200>, true )
+				thread FakePhysicsThrow( player, itemEnt, <vel.x, vel.y, 200>, true )
 				throwData = SURVIVAL_DropLoot_IncrementThrowAngle( throwData )
 			}
 		}

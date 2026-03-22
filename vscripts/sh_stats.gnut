@@ -564,7 +564,7 @@ void function StatsHook_RecordPlacementStats( entity player )
 	GameSummarySquadData gameSummaryData                   = GameSummary_GetPlayerData( player )
 	table<int, GameSummarySquadData> playerTeamData = {}
 	// GameSummary_GetTeamDataOrNull returns var; stub always returns null
-	var playerTeamDataOrNull = GameSummary_GetTeamDataOrNull( player.GetTeam() )
+	table<int, GameSummarySquadData> ornull playerTeamDataOrNull = GameSummary_GetTeamDataOrNull( player.GetTeam() )
 
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 	string characterRef  = ItemFlavor_GetGUIDString( character )
@@ -822,7 +822,7 @@ void function StatsHook_RecordPlacementStats( entity player )
 	{
 		int winningTeam = GetWinningTeam()
 		table<int, GameSummarySquadData> winnerTeamData = {}
-		var winnerTeamDataOrNull = GameSummary_GetTeamDataOrNull( winningTeam )
+		table<int, GameSummarySquadData> ornull winnerTeamDataOrNull = GameSummary_GetTeamDataOrNull( winningTeam )
 
 		// if a player quits while we're in the WinnerDetermined state for a round-based game, we'll end up in here.
 		// BEGIN MATCH OVER CHECK -- move me to my own dedicated helper function IF complexity increases beyond this.
@@ -2529,7 +2529,7 @@ void function StatsHook_OnPlayerOrNPCTookDamage( entity attacker, entity victim,
 
 table<entity, bool> t_fullyKittedPlayers
 
-void function OnPlayerLootPickup( entity user, entity lootPickup, string ref, bool willDestroy )
+void function OnPlayerLootPickup( entity user, entity lootPickup, string ref, int pickupCount, bool willDestroy, entity deathBox, int spawnSource )
 {
 	Assert( IsValid( user ) && user.IsPlayer() && IsValid( lootPickup ) )
 

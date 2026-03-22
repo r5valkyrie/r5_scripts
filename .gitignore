@@ -7,3 +7,4 @@ WORKSPACE
 /defaults/mods/Flowstate/paks
 /wrap
 /r2_script_base
+*.md

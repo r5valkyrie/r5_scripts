@@ -720,7 +720,7 @@ entity function CryptoDrone_ReleaseCamera( entity weapon, WeaponPrimaryAttackPar
 
 	entity player = weapon.GetWeaponOwner()
 	vector angles   = VectorToAngles( attackParams.dir )
-	entity deployable = ThrowDeployable_Retail( weapon, attackParams, throwPower, CryptoDrone_CameraImpact, CryptoDrone_CameraImpact, <0,0,0> )
+	entity deployable = ThrowDeployable( weapon, attackParams, throwPower, CryptoDrone_CameraImpact, CryptoDrone_CameraImpact )
 
 	if ( deployable )
 	{

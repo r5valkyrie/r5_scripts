@@ -47,7 +47,7 @@ void function AddCallback_OnPlayerScored( void functionref( entity, ScoreEvent )
 }
 
 
-void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity associatedEnt = null, string noideawhatthisis = "", int ownValueOverride = -1 )
+void function AddPlayerScore( entity targetPlayer, string scoreEventName, entity associatedEnt = null, string noideawhatthisis = "", int ownValueOverride = -1, string extraParam = "", bool teamAward = false )
 {
 	if ( !IsValid_ThisFrame( targetPlayer ) || !targetPlayer.IsPlayer() )
 		return

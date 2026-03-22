@@ -67,7 +67,7 @@ void function VendingMachine_LevelInit()
 	#endif // SERVER || CLIENT
 
 	#if SERVER
-		Loot_AddCallback_OnPlayerLootPickupRetail( OnPlayerLootPickup )
+		Loot_AddCallback_OnPlayerLootPickup( OnPlayerLootPickup )
 
 	#endif // SERVER
 
@@ -110,7 +110,7 @@ void function VendingMachineDeployThread( vector origin, vector angles, entity s
 
 		// vendingMachine.SetLootGrabDist( lootGrabDist ) // S22 entity method, not in S3
 		#if VENDING_MACHINE_DEBUG
-			DebugDrawCircle( origin, <0, 0, 0>, lootGrabDist, COLOR_RED, true, 20.0 )
+			//DebugDrawCircle( origin, <0, 0, 0>, lootGrabDist, <255, 0, 0>, true, 20.0 )
 		#endif // VENDING_MACHINE_DEBUG
 
 		vendingMachine.SetAbsOrigin( origin )

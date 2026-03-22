@@ -1,4 +1,13 @@
 global function OnWeaponPrimaryAttack_care_package_medic
+#if SERVER
+global function AbilityCarePackage_SetContentOverrideCallback
+#endif
+                   
+	#if SERVER
+	global function GenerateSmartCarePackageContents
+	global function AbilityCarePackage_SetNextUltIsCarePackage
+	#endif
+      
 
 struct AirdropContents
 {
@@ -9,7 +18,7 @@ struct AirdropContents
 
 struct LootPool
 {
-	//
+	// tables will hold the lowest-tier pieces of loot among equippable things
 	table< string, int > equipmentTable
 	table< string, int > attachmentTable
 
@@ -25,6 +34,7 @@ enum eLootPoolType
 	ATTACHMENTS
 	SMALL_CONSUMABLE
 	LARGE_CONSUMABLE
+	DEAD
 
 	_count
 }
@@ -37,18 +47,18 @@ struct
 		"incapshield",
 		"backpack",
 	]
-
+#if SERVER
+	array< array<string> >  functionref( entity player ) CarePackageContentsOverrideCallback = null
+	                    
+		table<entity, bool> shouldDropCarePackage
+       
+#endif
 } file
 
 var function OnWeaponPrimaryAttack_care_package_medic( entity weapon, WeaponPrimaryAttackParams attackParams )
 {
 	entity ownerPlayer = weapon.GetWeaponOwner()
-
-	if( !IsValid( ownerPlayer ) || !ownerPlayer.IsPlayer() )
-		return 0
-
-	if ( ownerPlayer.IsPhaseShifted() )
-		return 0
+	Assert( ownerPlayer.IsPlayer() )
 
 	CarePackagePlacementInfo placementInfo = GetCarePackagePlacementInfo( ownerPlayer )
 
@@ -59,22 +69,52 @@ var function OnWeaponPrimaryAttack_care_package_medic( entity weapon, WeaponPrim
 		vector origin = placementInfo.origin
 		vector angles = placementInfo.angles
 
-        //Start the ground circle particle
-		entity fx = StartParticleEffectInWorld_ReturnEntity(GetParticleSystemIndex( DROPPOD_SPAWN_FX ), origin, angles)
-		fx.RemoveFromAllRealms()
-		fx.AddToOtherEntitysRealms( ownerPlayer )
+		AirdropItemsOptionalInfo optionInfo
+		                            
+			if ( GetCurrentPlaylistVarBool( "lifeline_res_slow_disabled", true ) )
+			{
+				optionInfo.animationName = "droppod_loot_drop_lifeline_fast"
+			}
+			else
+        
+			{
+				optionInfo.animationName = "droppod_loot_drop_lifeline"
+			}
+		optionInfo.owner = ownerPlayer
+		optionInfo.team = ownerPlayer.GetTeam()
+		optionInfo.skin = GetSkinForCarePackageModel( optionInfo.owner )
+		optionInfo.targetName = CARE_PACKAGE_LIFELINE_TARGETNAME
+		optionInfo.sourceWeaponClassname = weapon.GetWeaponClassName()
 
-		thread CreateCarePackageAirdrop(
-			origin, angles,
-			Flowstate_BuildLifelineCarePackageLoot( ownerPlayer ),
-			fx, "droppod_loot_drop_lifeline",
-			ownerPlayer, weapon.GetWeaponClassName()
-		)
-		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( ownerPlayer ), Loadout_Character() )
-		string charRef = ItemFlavor_GetHumanReadableRef( character )
+		array< array<string> > contents
+		if ( file.CarePackageContentsOverrideCallback != null)
+			contents = file.CarePackageContentsOverrideCallback(ownerPlayer)
+		else
+			optionInfo.delayedContentFunc = GenerateSmartCarePackageContents
 
-		if( charRef == "character_lifeline")
-			PlayBattleChatterLineToSpeakerAndTeam( ownerPlayer, "bc_super" )
+		if( PlayerHasPassive( ownerPlayer, ePassives.PAS_ULT_UPGRADE_ONE ) && ownerPlayer in file.shouldDropCarePackage )
+		{
+                                      
+			contents = GenerateGoldLootPackageContents(weapon.GetWeaponOwner())
+			delete file.shouldDropCarePackage[ownerPlayer]
+       
+                                      
+                                                 
+                                                                                                                       
+                                                                                                                  
+                          
+                                                                                
+                      
+                                                          
+                                                  
+        
+		}
+		{
+			thread CreateCarePackageAirdrop( origin, angles, contents, optionInfo )
+		}
+
+
+		PlayBattleChatterLineToSpeakerAndTeam( ownerPlayer, "bc_super" )
 
 		PlayerUsedOffhand( ownerPlayer, weapon, true, null, {pos = origin} )
 	#else
@@ -88,191 +128,380 @@ var function OnWeaponPrimaryAttack_care_package_medic( entity weapon, WeaponPrim
 }
 
 #if SERVER
-array<string> function Flowstate_BuildLifelineCarePackageLoot(entity ownerPlayer) // this code can be improved by 1000x. Colombia
+void function AbilityCarePackage_SetNextUltIsCarePackage( entity player )
 {
-	// from my retail investigation:
-	// siempre se entregan dos items mejorados, un escudo y un attachment ( si alguna arma tiene un attachment mejorable ) O un random mejorado entre el resto ( casco, maleta, knockdown shield )
-	// tiene escudo menor a lvl2 o no tiene escudo? dar un lvl2, else agregar un nivel, si es nivel 4 no agregar escudo y agregar dos consumables large (también hacer checks para los teammates, se escoge el del tier más bajo)
-	// tiene un arma con algún attachment mejorable? Agregar un attachment
-	// else agregar un equipment mejorado ( casco, maleta, knockdown shield )
-	// entre los situables a mejorar, escoger uno random
-	// es menor a lvl2 o no tiene ese equipment? dar un lvl2, else agregar un nivel, si es nivel 4 no agregar y agregar un consumable large
-	// si no hay nada por mejorar solo se mandan consumables large
-	// nunca se entregan items blancos, solo azules como mínimo
+	file.shouldDropCarePackage[player] <- true
+}
 
-	array< string > healthLarge = [
-	"health_pickup_combo_large"
-	"health_pickup_health_large"
-	"health_pickup_combo_full"
-	]
-	
-	bool canShieldBeImproved = false
-	bool forceBlueShield = false
-	LootData armorLoot
-	array<LootData> armors = SURVIVAL_Loot_GetByType( eLootType.ARMOR )
-	array<LootData> playerArmorLoot //upgrade for each player
-	array<string> finalLoot
+array< array<string> > function GenerateSmartCarePackageContents( AirdropItemsOptionalInfo optionInfo )
+{
+	LootPool pool
 
-	foreach( mate in GetPlayerArrayOfTeam( ownerPlayer.GetTeam() ) )
+	array<entity> teammates = GetPlayerArrayOfTeam_Alive( optionInfo.team )
+	table<string, EquipmentSlot> equipmentSlots = EquipmentSlot_GetAllEquipmentSlots()
+
+	//get "tester" attachments to see if the weapon will take those attachments
+	array<LootData> barrelAttachmentsData = LootHelper_GetAttachmentData_OfType_OfTier( eWeaponAttachmentType.BARREL, 1 )
+	array<LootData> gripAttachmentsData = LootHelper_GetAttachmentData_OfType_OfTier( eWeaponAttachmentType.STOCK, 1 )
+	array<LootData> magAttachmentsData =  LootHelper_GetAttachmentData_OfType_OfTier( eWeaponAttachmentType.MAG, 1 )
+
+	if ( teammates.len() <= 0 )
+		return DetermineAirdropContents( [ FillAirdropDoor( pool, eLootPoolType.DEAD ), FillAirdropDoor( pool, eLootPoolType.DEAD ), FillAirdropDoor( pool, eLootPoolType.DEAD ) ] )
+
+	foreach (entity teammate in teammates )
 	{
-		string currentshield = EquipmentSlot_GetLootRefForSlot( mate, "armor" )
-		int currentShieldTier = EquipmentSlot_GetEquipmentTier( mate, "armor" )
-
-		bool found = false
-
-		if( currentShieldTier >= 3 && !found )
+		// Populate Equipment table
+		foreach ( slot, slotData in equipmentSlots )
 		{
-			LootData data
+			if ( !file.validSlots.contains( slot ) )
+				continue
 
-			if( GetCurrentPlaylistVarBool( "flowstate_evo_shields", false ) )
-				data = SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv1" )
-			else
-				data = SURVIVAL_Loot_GetLootDataByRef( "armor_pickup_lv3" )
+			int equipmentTier = EquipmentSlot_GetEquipmentTier( teammate, slot )
+			if ( !(slot in pool.equipmentTable) || equipmentTier < pool.equipmentTable[ slot ] )
+				pool.equipmentTable[ slot ] <- equipmentTier
 
-			playerArmorLoot.append( data )
-			found = true
-			continue
 		}
 
-		foreach( armor in armors )
+		// Populate Attachment table
+		foreach ( entity weapon in SURVIVAL_GetPrimaryWeapons( teammate ) )
 		{
-			if( armor.tier == 1 )
-			{
-				if( GetCurrentPlaylistVarBool( "flowstate_evo_shields", false ) )
-				{
-					playerArmorLoot.append( armor )
-					found = true
-				}
-				continue
-			}
-			
-			if( found )
+			LootData weaponData = SURVIVAL_GetLootDataFromWeapon( weapon )
+
+			if ( SURVIVAL_Weapon_IsAttachmentLocked( weaponData.ref ) )
 				continue
 
-			if( SURVIVAL_IsLootRefAnUpgrade( mate, armor ) )
+			array<string> attachments 	= weaponData.supportedAttachments
+
+			foreach ( attachmentName in attachments )
 			{
-				playerArmorLoot.append( armor )
-				found = true
+				// get the current tier of the attachment at that point
+				int attachmentTier = 0
+				string mod = GetInstalledWeaponAttachmentForPoint( weapon, attachmentName )
+				if ( SURVIVAL_Loot_IsRefValid( mod ) )
+				{
+					LootData attachmentData = SURVIVAL_Loot_GetLootDataByRef( mod )
+					attachmentTier = attachmentData.tier
+				}
+
+				// need to rename things here because the name of the attachment does not match the name of the loot like it does with equipment
+				string attachmentLootRefPrefix = ""
+				array<string> splitRef = []
+				array<LootData> attachmentsDataOfType
+
+				switch ( attachmentName )
+				{
+					case "barrel":
+						attachmentsDataOfType = barrelAttachmentsData
+						break
+					case "mag":
+						attachmentsDataOfType = magAttachmentsData
+						break
+					case "grip":
+						attachmentsDataOfType = gripAttachmentsData
+						break
+					default:
+						break
+				}
+
+				foreach ( attachment in attachmentsDataOfType )
+				{
+					AttachmentData attachmentData = GetAttachmentData( attachment.ref )
+					if ( attachmentData.compatibleWeapons.contains( weaponData.ref ) )
+					{
+						splitRef = split( attachment.ref, "1" )
+
+						if ( splitRef.len() <= 0 )
+							continue
+
+						attachmentLootRefPrefix = splitRef[ 0 ]
+
+						if ( !(attachmentLootRefPrefix in pool.attachmentTable) || attachmentTier < pool.attachmentTable[ attachmentLootRefPrefix ] )
+							pool.attachmentTable[ attachmentLootRefPrefix ] <- attachmentTier
+					}
+				}
+
 			}
+
+		}
+
+	}
+
+	string lootStr
+
+	// Validate higher-tier loot possibility for Attachments
+	foreach ( string attachmentRef, int attachmentTier in pool.attachmentTable )
+	{
+		if ( attachmentTier > eLootTier.LEGENDARY )
+			continue
+
+		lootStr = attachmentRef + maxint( ( attachmentTier + 1), eLootTier.RARE ) // want to grant a piece of loot that is Rare or +1 tier better than their current
+
+		if ( SURVIVAL_Loot_IsRefValid( lootStr ) && !SURVIVAL_Loot_IsRefDisabled( lootStr ) )
+			pool.attachmentsLootGroup.append( lootStr )
+	}
+
+	// Validate higher-tier loot possibility for Equipment
+	foreach ( string equipmentRef, int equipmentTier in pool.equipmentTable )
+	{
+		string suffix 	= ""
+		int targetTier 	= maxint( ( equipmentTier + 1), eLootTier.RARE ) // want to grant a piece of loot that is Rare or +1 tier better than their current
+
+		// seperate armor into its own loot pool (we can modify this later if we like)
+		if ( equipmentRef == "armor" )
+		{
+			// not allowing Red armor - should be earned through EVO
+			if ( targetTier > eLootTier.LEGENDARY )
+				continue
+
+			if ( targetTier == eLootTier.LEGENDARY )
+				suffix = "_all_fast"
+			else if ( GetCurrentPlaylistVarBool( "lifeline_spawns_evolving_armor", false ) )
+				suffix = "_evolving"
+
+			lootStr = equipmentRef + "_pickup_lv" + targetTier + suffix
+
+			if ( SURVIVAL_Loot_IsRefValid( lootStr ) && !SURVIVAL_Loot_IsRefDisabled( lootStr ) )
+				pool.armorLootGroup.append( lootStr )
+		}
+		else
+		{
+			// no Heirloom-level equipment, skip
+			if ( targetTier > eLootTier.LEGENDARY )
+				continue
+
+			if ( targetTier == eLootTier.LEGENDARY )
+			{
+				switch ( equipmentRef )
+				{
+					case "incapshield" :
+						suffix = "_selfrevive"
+						break
+					case "helmet" :
+						suffix = "_abilities"
+						break
+					case "backpack" :
+						suffix = "_revive_boost"
+						break
+				}
+			}
+
+			lootStr = equipmentRef + "_pickup_lv" + targetTier + suffix
+
+			if ( SURVIVAL_Loot_IsRefValid( lootStr ) && !SURVIVAL_Loot_IsRefDisabled( lootStr ) )
+				pool.equipmentLootGroup.append( lootStr )
 		}
 	}
-	
-	if( playerArmorLoot.len() > 0 )
+
+	AirdropContents contents
+	                    
+	if( UpgradeCore_ArmorTiedToUpgrades() )
 	{
-		playerArmorLoot.sort( SortLootByTier )
-		playerArmorLoot.reverse()
-		armorLoot = playerArmorLoot[0]
-		finalLoot.append( armorLoot.ref ) 
+		// 50/50 roll, RandomInt is exclusive of the upper range, which is why we are using 2 instead of 1
+		bool shouldSpawnEquipment = RandomInt( 2 ) > 0
+		if( shouldSpawnEquipment )
+		{
+			contents.right = FillAirdropDoor( pool, eLootPoolType.OTHER_EQUIPMENT )
+		}
+		else
+		{
+			contents.right = FillAirdropDoor( pool, eLootPoolType.LARGE_CONSUMABLE )
+		}
 	}
 	else
-	{
-		finalLoot.append( SURVIVAL_Loot_GetLootDataByRef( healthLarge.getrandom() ).ref )
-		finalLoot.append( SURVIVAL_Loot_GetLootDataByRef( healthLarge.getrandom() ).ref ) 
-	}
-
-	LootData healingitem1 = SURVIVAL_Loot_GetLootDataByRef( healthLarge.getrandom() )
-	LootData healingitem2 = SURVIVAL_Loot_GetLootDataByRef( healthLarge.getrandom() ) 
-	
-	bool detectedImprovedAttachment = false
-	
-	array<LootData> attachmentItems = SURVIVAL_Loot_GetByType( eLootType.ATTACHMENT )
-	// attachmentItems.randomize()
-	// attachmentItems.sort( SortLootByTier )
-	// attachmentItems.reverse()
-	
-	LootData attachment1
-	array<entity> weapons = SURVIVAL_GetPrimaryWeaponsSorted( ownerPlayer )
-	weapons.randomize()
-	
-	foreach( attachment in attachmentItems )
-	{
-		if( SURVIVAL_Loot_GetLootDataByRef( attachment.ref ).attachmentStyle == "sight" )
-			continue
-		
-		if( attachment.tier == 1 )
-			continue
-				
-		if( detectedImprovedAttachment )
-			continue
-		
-		foreach ( weaponCandidate in weapons )
-		{
-			if ( CanAttachToWeapon( attachment.ref, GetWeaponClassName( weaponCandidate ) ) && IsAttachmentAnUpgradeForWeapon( ownerPlayer, attachment, weaponCandidate ) )
-			{
-				detectedImprovedAttachment = true
-				attachment1 = attachment
-				break
-			}
-		}
-	}
-	
-	LootData attachment2 = SURVIVAL_Loot_GetLootDataByRef( healthLarge.getrandom() )
-	
-	array<LootData> equipmentLootGroup
-	array<LootData> incapshields = SURVIVAL_Loot_GetByType( eLootType.INCAPSHIELD )
-	array<LootData> backpacks = SURVIVAL_Loot_GetByType( eLootType.BACKPACK )
-	array<LootData> helmets = SURVIVAL_Loot_GetByType( eLootType.HELMET )
-	
-	int firstToCheck = RandomIntRangeInclusive( 1, 3 )
-	
-	switch( firstToCheck )
-	{
-		case 1:
-		equipmentLootGroup.extend( incapshields )
-		equipmentLootGroup.extend( backpacks )
-		equipmentLootGroup.extend( helmets )
-		break
-		
-		case 2:
-		equipmentLootGroup.extend( backpacks )
-		equipmentLootGroup.extend( helmets )
-		equipmentLootGroup.extend( incapshields )
-		break
-		
-		case 3:
-		equipmentLootGroup.extend( helmets )
-		equipmentLootGroup.extend( incapshields )
-		equipmentLootGroup.extend( backpacks )
-		break
-	}
-
-	if ( !detectedImprovedAttachment )
-	{
-		attachment1 = SURVIVAL_Loot_GetLootDataByRef( healthLarge.getrandom() )
-		
-		bool found = false
-		foreach( equipment in equipmentLootGroup )
-		{
-			if( equipment.tier == 1 )
-				continue
-			
-			if( found )
-				continue
-			
-			if( SURVIVAL_IsLootRefAnUpgrade( ownerPlayer, equipment ) )
-			{
-				attachment1 = equipment
-				found = true
-			}
-		}
-	}
-	
-	finalLoot.append( attachment1.ref )
-	finalLoot.append( attachment2.ref )
-	finalLoot.append( healingitem1.ref )
-	finalLoot.append( healingitem2.ref )
-	
-	return finalLoot
+       
+		contents.right = FillAirdropDoor( pool, eLootPoolType.ARMOR )
+	contents.left = FillAirdropDoor( pool, eLootPoolType.OTHER_EQUIPMENT )
+	contents.center = FillAirdropDoor( pool, eLootPoolType.ATTACHMENTS )
+	return DetermineAirdropContents( [ contents.left, contents.center, contents.right ] )
 }
 
-int function SortLootByTier( LootData a, LootData b )
+                                    
+const string LIFELINE_UPGRADE_LOOTGROUP_ITEM_1_DOOR_1 = "lifeline_upgrade_carepackage_item_1_door_1"
+const string LIFELINE_UPGRADE_LOOTGROUP_ITEM_2_DOOR_1 = "lifeline_upgrade_carepackage_item_2_door_1"
+const string LIFELINE_UPGRADE_LOOTGROUP_ITEM_2_ALT_DOOR_1 = "lifeline_upgrade_carepackage_item_2_alt_door_1"
+const string LIFELINE_UPGRADE_LOOTGROUP_DOOR_2 = "lifeline_upgrade_carepackage_door_2"
+const string LIFELINE_UPGRADE_LOOTGROUP_DOOR_3 = "lifeline_upgrade_carepackage_door_3"
+#if DEVELOPER
+const int EXPECTED_ITEM_COUNT_PER_DOOR = 2
+#endif // DEV
+array< array<string> > function GenerateGoldLootPackageContents( entity player )
 {
-	if ( a.tier > b.tier )
-		return -1
-	if ( a.tier < b.tier )
-		return 1	
-	
-	return 0
+	bool assureMobi = false
+	if( IsValid( player) )
+	{
+		int alliesAlive = GetPlayerArrayOfTeam_Alive( player.GetTeam() ).len()
+		assureMobi = alliesAlive < GetPlayerArrayOfTeam( player.GetTeam() ).len()
+		printt("Allies alive? " + alliesAlive)
+	}
+
+	array < array<string> > contents
+	for(int i = 0; i < 3; i++)
+	{
+		array <string> door
+		if( i == 0 )
+		{
+			door.append( SURVIVAL_GetWeightedItemFromGroup( LIFELINE_UPGRADE_LOOTGROUP_ITEM_1_DOOR_1 ) )
+			door.append( assureMobi ? SURVIVAL_GetWeightedItemFromGroup( LIFELINE_UPGRADE_LOOTGROUP_ITEM_2_DOOR_1 ) : SURVIVAL_GetWeightedItemFromGroup( LIFELINE_UPGRADE_LOOTGROUP_ITEM_2_ALT_DOOR_1 ) )
+		}
+		else if( i == 1 )
+		{
+			door = SURVIVAL_GetAllRefsInLootGroup( LIFELINE_UPGRADE_LOOTGROUP_DOOR_2, true )
+		}
+		else
+		{
+			door = SURVIVAL_GetAllRefsInLootGroup( LIFELINE_UPGRADE_LOOTGROUP_DOOR_3, true )
+		}
+
+		#if DEVELOPER
+			Assert( door.len() == EXPECTED_ITEM_COUNT_PER_DOOR, "Expect " + EXPECTED_ITEM_COUNT_PER_DOOR + " per door in " + FUNC_NAME() + " but got " + door.len() + ", this is likely caused by loot group overrides or disabling an item that is normally included." )
+		#endif // DEV
+
+		contents.append(door)
+	}
+	return contents
+}
+      
+
+                     
+                                                                       
+ 
+                                 
+                           
+  
+                     
+                            
+   
+                                                
+   
+                       
+  
+                
+ 
+      
+
+array<string> function FillAirdropDoor( LootPool contentPool, int lootPoolType )
+{
+	// In modes with all healing items disabled, Health_1 ends up getting removed.  Use lifeline_carepackage_midloot_override as backup
+	string fillerGroup = "top_tier_health"
+	if( !SURVIVAL_IsValidLootGroup( fillerGroup ) )
+		fillerGroup = GetCurrentPlaylistVarString( "lifeline_carepackage_midloot_override", fillerGroup )
+
+	array<string> doorContents
+
+	switch ( lootPoolType )
+	{
+		case eLootPoolType.ARMOR:
+			if ( contentPool.armorLootGroup.len() > 0 )
+			{
+				if ( contentPool.armorLootGroup.contains( "armor_pickup_lv4_all_fast" ) )
+					doorContents.append( "care_package_final_armor_or_health" )
+				else
+					doorContents.append( LootHelper_GetRandomLootRefFromGroupAndRemove( contentPool.armorLootGroup ) )
+			}
+			else
+			{
+				return FillAirdropDoor( contentPool, eLootPoolType.LARGE_CONSUMABLE )
+			}
+			break
+
+		case eLootPoolType.OTHER_EQUIPMENT:
+			if ( contentPool.equipmentLootGroup.len() > 0 )
+			{
+				doorContents.append( LootHelper_GetRandomLootRefFromGroupAndRemove( contentPool.equipmentLootGroup ) )
+				doorContents.append( "top_tier_health" )
+			}
+			else
+			{
+				return FillAirdropDoor( contentPool, eLootPoolType.LARGE_CONSUMABLE )
+			}
+			break
+
+		case eLootPoolType.ATTACHMENTS:
+			if ( contentPool.attachmentsLootGroup.len() > 0 )
+			{
+				doorContents.append( LootHelper_GetRandomLootRefFromGroupAndRemove( contentPool.attachmentsLootGroup ) )
+				doorContents.append( "shield_battery" )
+			}
+			else
+			{
+				return FillAirdropDoor( contentPool, eLootPoolType.LARGE_CONSUMABLE )
+			}
+			break
+
+		case eLootPoolType.LARGE_CONSUMABLE:
+			doorContents.append( "top_tier_health" )
+			doorContents.append( "shield_battery" )
+			break
+
+		case eLootPoolType.SMALL_CONSUMABLE:
+			doorContents.append( fillerGroup )
+			doorContents.append( fillerGroup )
+			doorContents.append( fillerGroup )
+			break
+
+		case eLootPoolType.DEAD:
+			doorContents.append( "mp_ability_mobile_respawn_beacon" )
+			break
+	}
+
+	return doorContents
 }
 
+array< array<string> > function GenerateCarePackageContents( )
+{
+	array<string> firstSlot = [GetCurrentPlaylistVarString( "lifeline_carepackage_superslot_override", "medic_super" )]
+	array<string> lastSlot
+	array<string> midSlot
+	array<string> lastLoots = SURVIVAL_GetMultipleWeightedItemsFromGroup( "top_tier_inventory", 2 )
+
+	bool hasNonAttachment = false
+	foreach ( loot in lastLoots )
+	{
+		LootData data = SURVIVAL_Loot_GetLootDataByRef( loot )
+		if ( data.lootType != eLootType.ATTACHMENT )
+		{
+			hasNonAttachment = true
+			lastSlot = [ loot ]
+			break
+		}
+	}
+
+	if ( !hasNonAttachment )
+		lastSlot = lastLoots
+
+	string groupRef = "medic_super_side"
+	if ( GetCurrentPlaylistVarString( "lifeline_carepackage_midloot_override", "" ) != "" )
+		groupRef = GetCurrentPlaylistVarString( "lifeline_carepackage_midloot_override", "" )
+	array<string> midLoots = SURVIVAL_GetMultipleWeightedItemsFromGroup( groupRef, 3 )
+
+	bool hasNonMed = false
+	foreach ( loot in midLoots )
+	{
+		LootData data = SURVIVAL_Loot_GetLootDataByRef( loot )
+		if ( data.lootType != eLootType.HEALTH )
+		{
+			hasNonMed = true
+			midSlot = [ loot ]
+			break
+		}
+	}
+
+	if ( !hasNonMed )
+		midSlot = midLoots
+
+	AirdropContents contents
+	contents.left = firstSlot
+	contents.right = midSlot
+	contents.center = lastSlot
+	return [ contents.left, contents.center, contents.right ]
+}
+#endif //SERVER
+
+#if SERVER
+void function AbilityCarePackage_SetContentOverrideCallback(array< array<string> > functionref( entity player ) func )
+{
+	file.CarePackageContentsOverrideCallback = func
+}
 #endif
+
+

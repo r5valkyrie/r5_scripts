@@ -1,0 +1,449 @@
+global function PassiveVantage_Init
+global function PassiveVantage_IsInCompatibleWeaponConfig
+
+#if CLIENT
+global function PlayVantageSpottedPingSounds
+#endif
+
+#if SERVER
+global function Vantage_EnableUnarmedADS
+#endif
+
+const float PASSIVE_MAX_FOV = 70//40                //FOVs below this value will turn on scope tracking
+const float PASSIVE_SCOPE_TRACKING_FOV = 3        //FOV of the active scanning zone for the passive
+
+//Ranged Tracking
+const float PASSIVE_RANGED_TRACKING_TIME_MAX = 10
+const float PASSIVE_RANGED_TRACKING_TIME_MIN = 2
+const float PASSIVE_RANGED_TRACKING_RANGE = 100 * METERS_TO_INCHES //meters
+const float PASSIVE_RANGED_TRACKING_RANGE_SQR = PASSIVE_RANGED_TRACKING_RANGE * PASSIVE_RANGED_TRACKING_RANGE
+const asset PASSIVE_RANGED_TRACKING_ICON = $"rui/hud/character_abilities/vantage_gun_mark"
+
+
+#if SERVER
+struct
+{
+	table<entity, entity> rangedTrackingWPs
+} file
+#endif
+
+
+global table < entity, array <entity> > vantageTargetTrackingList
+
+void function PassiveVantage_Init()
+{
+	AddCallback_OnPassiveChanged( ePassives.PAS_VANTAGE, Vantage_OnPassiveChanged )
+
+	#if SERVER
+		AddPingCallbackForType( ePingType.VANTAGE_SPOTS_ENEMY, OnVantagePing )
+	#endif
+
+	SniperRangeAutoSet_Init()
+
+	RegisterSignal( "EndConditionalScopeTracking" )
+
+	AddCallback_OnPlayerZoomIn( Vantage_PlayerZoomInCallback )
+	AddCallback_OnPlayerZoomOut( Vantage_PlayerZoomOutCallback )
+
+	#if CLIENT || UI
+		AddCallback_EditLootDesc( Vantage_EditScopesLootDesc )
+	#endif
+
+	#if CLIENT
+		AddCallback_OnSelectedWeaponChanged( OnVantageSelectedWeaponChanged )
+	#endif
+}
+
+void function Vantage_OnPassiveChanged( entity player, int passive, bool didHave, bool nowHas )
+{
+	if ( didHave )
+	{
+		player.Signal( "EndConditionalScopeTracking" )
+		#if CLIENT
+			SniperRangeAutoSet_Stop( player )
+		#endif
+		#if SERVER
+			VantageCompanion_Destroy( player )
+			Vantage_EnableUnarmedADS( player, false )
+		#endif
+
+	}
+
+	if ( nowHas )
+	{
+		#if SERVER
+			VantageCompanion_Deploy( player )
+			Vantage_EnableUnarmedADS( player, true )
+
+                         
+                                                                      
+                                                                                  
+         
+		#endif
+
+		if ( !(player in vantageTargetTrackingList) )
+		{
+			array<entity> targets
+			vantageTargetTrackingList[player] <- targets
+		}
+
+		thread ScopeTrackingConditional( player, null, PASSIVE_SCOPE_TRACKING_FOV, false, false, vantageTargetTrackingList[player] )
+	}
+}
+#if CLIENT
+void function OnVantageSelectedWeaponChanged( entity selectedWeapon )
+{
+
+	entity player = GetLocalViewPlayer()
+
+	if ( !IsAlive( player ) )
+		return
+
+	if ( !PlayerHasPassive( player, ePassives.PAS_VANTAGE ) )
+		return
+
+	DeactivateSniperRecon( player )
+}
+#endif
+
+void function Vantage_PlayerZoomInCallback( entity player )
+{
+	#if CLIENT
+		if ( !IsAlive( player ) )
+			return
+
+		if ( !PlayerHasPassive( player, ePassives.PAS_VANTAGE ) )
+			return
+
+		ActivateSniperRecon( player )
+	#endif //CLIENT
+}
+
+void function ActivateSniperRecon( entity player )
+{
+	#if CLIENT
+	if ( player == GetLocalViewPlayer() )
+	{
+		entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+
+		if ( IsValid( weapon )
+				&& !Bleedout_IsBleedingOut( player ) )
+		{
+			bool isCompatibleWeaponConfig = PassiveVantage_IsInCompatibleWeaponConfig( weapon )
+			float currentFOV              = weapon.GetWeaponZoomFOV() //current FOV when we start ADS is still "full" FOV
+
+
+			if ( isCompatibleWeaponConfig )//&& currentFOV <= PASSIVE_MAX_FOV )
+			{
+				thread SniperRangeAutoSet_Start( player )
+				thread CL_SniperRecon_UI_Thread( player )
+			}
+		}
+	}
+	#endif
+}
+
+void function DeactivateSniperRecon( entity player )
+{
+	#if CLIENT
+		SniperRecon_EndThread( player )
+		SniperReconUI_EndThread( player )
+		SniperRangeAutoSet_Stop( player )
+	#endif //CLIENT
+}
+
+void function Vantage_PlayerZoomOutCallback( entity player )
+{
+	DeactivateSniperRecon( player )
+}
+
+#if CLIENT || UI
+string function Vantage_EditScopesLootDesc( string lootRef, entity player, string originalDesc )
+{
+	string finalDesc = originalDesc
+
+	#if CLIENT
+		// skip if crafting, since the extra hint text overlaps other rui elements
+		if (Crafting_IsPlayerAtWorkbench(player))
+			return finalDesc
+	#endif
+
+	if ( PassiveVantage_isCompatibleOptic( lootRef )
+			&& IsValid( player )
+			&& LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() )
+			&& ItemFlavor_GetAsset( LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() ) ) == $"settings/itemflav/character/vantage.rpak" )
+	{
+		finalDesc = finalDesc + Localize( "#VANTAGE_PASSIVE_LOOT_HINT_DESC" )
+	}
+	return finalDesc
+}
+#endif
+
+#if SERVER
+void function Vantage_EnableUnarmedADS( entity player, bool enable )
+{
+	if ( !IsAlive( player ) )
+		return
+
+	if ( enable )
+	{
+		GiveExtraWeaponMod( player, "vantage_ads_melee" )
+	}
+	else
+	{
+		TakeExtraWeaponMod( player, "vantage_ads_melee" )
+		SniperRecon_EndThread( player )
+	}
+}
+
+void function OnVantagePing( entity player, entity wp, entity pingEnt, int pingType )
+{
+	if ( !PlayerHasPassive( player, ePassives.PAS_VANTAGE ) )
+		return
+
+	StatsHook_VantagePassiveEnemyPinged( player )
+
+	if ( player.IsPlayer() && pingEnt.IsPlayer() )
+		AddAssistingPlayerToVictim( player, pingEnt )
+
+	bool shouldDoRangedTracking = GetCurrentPlaylistVarBool( "vantage_passive_ranged_tracking", false )
+	if ( shouldDoRangedTracking )
+		thread DoRangedTracking( player, pingEnt )
+
+}
+
+
+void function DoRangedTracking( entity player, entity targetEnt )
+{
+	if ( !IsValid(targetEnt) )
+		return
+
+	if ( !targetEnt.IsPlayer() )
+		return
+
+	Warning( "SniperUlt_Whizby_Mark_Thread not available in S3\n" ) // SniperUlt_Whizby_Mark_Thread( targetEnt, player, PASSIVE_RANGED_TRACKING_TIME_MIN )
+
+	if ( player in file.rangedTrackingWPs )
+	{
+		entity oldWP = file.rangedTrackingWPs[player]
+		if ( IsValid( oldWP ) )
+			oldWP.Destroy()
+	}
+
+	entity wp = CreateWaypoint_TrackEnt( targetEnt, "", PASSIVE_RANGED_TRACKING_ICON, <0, 0, 25>, true )
+	wp.SetParent( targetEnt )
+	wp.SetOwner( player )
+	wp.SetWaypointFloat( 0, PASSIVE_RANGED_TRACKING_RANGE )
+
+	file.rangedTrackingWPs[player] <- wp
+
+	// Transmit to single team. If using Alliances also show to friendly alliance players
+	AllianceProximity_SetOnlyTransmitWaypointToFriendlyTeams( wp, player.GetTeam() )
+
+	thread RangedTrackingLifetime( player,wp )
+
+}
+
+void function RangedTrackingLifetime( entity player, entity wp )
+{
+	wp.EndSignal( "OnDestroy" )
+	player.EndSignal( "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( wp )
+		{
+			if ( IsValid( wp ) )
+				wp.Destroy()
+			printt( "Vantage Ranged tracker END" )
+		}
+	)
+
+	float endTime = Time() + PASSIVE_RANGED_TRACKING_TIME_MAX
+
+	wait PASSIVE_RANGED_TRACKING_TIME_MIN
+
+	while ( true )
+	{
+		if ( Time() > endTime )
+		{
+			printt( "Vantage Ranged tracker end time " + ( Time() - PASSIVE_RANGED_TRACKING_TIME_MAX)  )
+			break
+		}
+
+		// Moved distance tracking to client side hiding. Can leave the lifetime to full time.
+
+		//float distanceSqr = DistanceSqr( player.GetOrigin(), wp.GetOrigin() )
+		//float distanceMeters = sqrt( distanceSqr ) * INCHES_TO_METERS
+		////printt( "Vantage Ranged tracker distance: "  + distanceMeters + "m")
+		//if ( distanceSqr < PASSIVE_RANGED_TRACKING_RANGE_SQR )
+		//{
+		//	//printt( "Vantage Ranged tracker end Distance " + distanceMeters + "m" )
+		//	break
+		//}
+
+		WaitFrame()
+	}
+
+}
+#endif // #if SERVER
+
+
+void function ScopeTrackingConditional( entity player, entity weapon, float trackingFOV, bool lockMode, bool fromTac, array <entity> targetExcludeList )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	player.EndSignal( "EndConditionalScopeTracking" )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			SniperReconUI_EndThread( player )
+			SniperRecon_EndThread( player )
+		}
+	)
+
+	bool scopeTrackingOn      = false
+	bool skipUpdate           = false
+	while ( true )
+	{
+		weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+		bool fullyInAds = player.GetZoomFrac() > 0.99
+		//printt( "zoomFrac " + player.GetZoomFrac() )
+		if ( IsValid( weapon )
+				&& fullyInAds
+				&& !Bleedout_IsBleedingOut( player )
+				&& !StatusEffect_HasSeverity( player, eStatusEffect.silenced )
+				&& !player.Player_IsSkywardLaunching()
+				&& !StatusEffect_HasSeverity( player, eStatusEffect.is_boxing )
+		)
+		{
+			bool isCompatibleWeaponConfig = PassiveVantage_IsInCompatibleWeaponConfig( weapon )
+			float currentFOV              = weapon.GetWeaponZoomFOV()
+			if ( isCompatibleWeaponConfig && currentFOV <= PASSIVE_MAX_FOV )
+			{
+				if ( !scopeTrackingOn )
+				{
+					if ( weapon.GetWeaponClassName() == "mp_weapon_melee_survival" )
+					{
+						fromTac = true
+					}
+					thread SniperRecon_BeginThread( player, weapon, targetExcludeList )
+					#if SERVER
+					if( !scopeTrackingOn )
+						Vantage_EnableUnarmedADS( player, true )
+					#endif
+					scopeTrackingOn = true
+				}
+			}
+		}
+		else if ( scopeTrackingOn )
+		{
+			SniperRecon_EndThread( player )
+			scopeTrackingOn = false
+		}
+
+		WaitFrame()
+	}
+}
+
+
+bool function PassiveVantage_isCompatibleOptic( string opticRef )
+{
+	if ( opticRef == "" )
+		return false
+
+                      
+                                                            
+                                                    
+                                                             
+   
+              
+   
+
+       
+	if ( 	opticRef == "optic_cq_hcog_bruiser" || 		//2x bruiser
+			opticRef == "optic_ranged_hcog" ||			//3x
+			opticRef == "optic_ranged_aog_variable" || 	//2-4x
+			opticRef == "optic_sniper" ||				//6x
+			opticRef == "optic_sniper_variable" ||		//4-8x
+			opticRef == "optic_sniper_threat")			//4-10x
+	{
+		return true
+	}
+	return false
+}
+
+bool function PassiveVantage_IsInCompatibleWeaponConfig( entity weapon )
+{
+	//Is it the ultimate or unarmed
+	if ( IsBitFlagSet( weapon.GetWeaponTypeFlags(), WPT_ULTIMATE ) ||
+			IsBitFlagSet( weapon.GetWeaponTypeFlags(), WPT_VIEWHANDS ) )
+		return true
+
+	if ( weapon.GetWeaponClassName() == KRABER_WEAPON_NAME )
+		return true
+
+	//LootData weaponData          = SURVIVAL_GetLootDataFromWeapon( weapon )
+	//bool isCompatibleWeaponClass = !weaponData.lootTags.contains( "pistol" ) &&
+	//							!weaponData.lootTags.contains( "smg" ) &&
+	//							!weaponData.lootTags.contains( "shotgun" )
+	//
+	//if ( !isCompatibleWeaponClass )
+	//	return false
+
+	string opticAttachment = GetInstalledWeaponAttachmentForPoint( weapon, "sight" )
+	bool isCompatibleOptic = PassiveVantage_isCompatibleOptic( opticAttachment )
+
+	if ( !isCompatibleOptic )
+		return false
+
+	return true
+}
+
+#if CLIENT
+void function PlayVantageSpottedPingSounds( entity player, entity subjectEnt, var soundToWaitOn, CommsOptions opt )
+{
+	if ( !IsValid( player ) )
+		return
+
+	waitthread SuspendMainDialogueQueueForDurationOfSound( player, soundToWaitOn )
+
+	if ( !IsValid( player ) )
+		return
+
+	int armorTier             = EquipmentSlot_GetEquipmentTier( subjectEnt, "armor" )
+	array<entity> teamPlayers = GetPlayerArrayOfTeam( subjectEnt.GetTeam() )
+	int teamCount             = teamPlayers.len()
+
+	string vantageSoundName = ""
+	var vantageSoundHandle
+
+	string string1p3p       = opt.isFirstPerson ? "_1p" : "_3p"
+	string calmUrgentString = opt.isUrgent ? "_urgent" : "_calm"
+
+	vantageSoundName   = "diag_mp_test_ping_passiveShield" + calmUrgentString + string1p3p
+	vantageSoundHandle = EmitSoundOnEntity( player, vantageSoundName )
+	waitthread SuspendMainDialogueQueueForDurationOfSound( player, vantageSoundHandle )
+	//wait 1
+
+	if ( !IsValid( player ) )
+		return
+
+	vantageSoundName   = "diag_mp_wraith_ping_typeLevel" + armorTier + calmUrgentString + string1p3p
+	vantageSoundHandle = EmitSoundOnEntity( player, vantageSoundName )
+	waitthread SuspendMainDialogueQueueForDurationOfSound( player, vantageSoundHandle )
+
+	if ( !IsValid( player ) )
+		return
+
+	string squadString = "Solo"
+	if ( teamCount == 2 )
+		squadString = "Duo"
+	else if ( teamCount >= 3 )
+		squadString = "Full"
+
+	vantageSoundName   = "diag_mp_test_ping_passiveSquad" + squadString + calmUrgentString + string1p3p
+	vantageSoundHandle = EmitSoundOnEntity( player, vantageSoundName )
+	waitthread SuspendMainDialogueQueueForDurationOfSound( player, vantageSoundHandle )
+}
+#endif

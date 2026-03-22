@@ -415,7 +415,7 @@ void function PlayerDying( entity player, entity attacker, var damageInfo )
 				if ( forceHolster )
 				{
 					//Cafe
-					UnlockWeaponsAndMelee( player )
+					UnlockWeaponsAndMelee( player, "bleedout" )
 					EnableAllWeaponsExceptHandsOrIncap( player )
 
 					player.TakeNormalWeaponByIndexNow( KNOCKDOWN_SHIELD_SLOT )

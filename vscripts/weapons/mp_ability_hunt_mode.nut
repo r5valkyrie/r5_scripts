@@ -210,7 +210,7 @@ void function OnWeaponDeactivate_hunt_mode( entity weapon )
 	#if SERVER
 		Embark_Allow( weaponOwner )
 		EnableMantle( weaponOwner )
-		UnlockWeaponsAndMelee( weaponOwner )
+		UnlockWeaponsAndMelee( weaponOwner, "hunt_mode" )
 	#endif //SERVER
 }
 

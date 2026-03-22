@@ -522,29 +522,31 @@ void function LiveAPI_OnPlayerStatChanged( entity player, string statName, var n
 
 void function LiveAPI_OnDeathFieldStartResize( DeathFieldData data, int eventType )
 {
-	int currStage = int( max( 0, SURVIVAL_GetCurrentDeathFieldStage() ) )
-	DeathFieldStageData stage = SURVIVAL_GetDeathFieldStages()[ currStage ]
+	int currStage = int( max( 0, SURVIVAL_GetCurrentDeathFieldStage( 0 ) ) )
+	DeathFieldStageData stage = SURVIVAL_GetDeathFieldStages( 0 )[ currStage ]
 
-	array< var > logData = [ SURVIVAL_GetCurrentDeathFieldStage(), SURVIVAL_GetDeathFieldCenter(), SURVIVAL_GetDeathFieldCurrentRadius(), stage.shrinkDuration ]
+	array< var > logData = [ SURVIVAL_GetCurrentDeathFieldStage( 0 ), SURVIVAL_GetDeathFieldCenter( 0 ), SURVIVAL_GetDeathFieldCurrentRadius( 0 ), stage.shrinkDuration ]
 	array< int > logNums = [ 3/*stage*/,                           4/*center*/,                    5/*currentRadius*/,                    7/*shrinkDuration*/ ]
 
 	if( eventType == eLiveAPI_EventTypes.ringStartClosing )
 	{
-		logData.append( SURVIVAL_GetSafeZoneRadius() )
+		logData.append( SURVIVAL_GetSafeZoneRadius( 0 ) )
 		logNums.append( 6/*endRadius*/ )
 	}
 
 	LiveAPI_WriteLogUsingDefinedFields( eventType, logData, logNums )
 }
 
-void function LiveAPI_OnDeathFieldStartShrink( DeathFieldData data )
+void function LiveAPI_OnDeathFieldStartShrink( table<int, DeathFieldData> dataTable )
 {
-	LiveAPI_OnDeathFieldStartResize( data, eLiveAPI_EventTypes.ringStartClosing )
+	if ( 0 in dataTable )
+		LiveAPI_OnDeathFieldStartResize( dataTable[0], eLiveAPI_EventTypes.ringStartClosing )
 }
 
-void function LiveAPI_OnDeathFieldStopShrink( DeathFieldData data )
+void function LiveAPI_OnDeathFieldStopShrink( table<int, DeathFieldData> dataTable )
 {
-	LiveAPI_OnDeathFieldStartResize( data, eLiveAPI_EventTypes.ringFinishedClosing )
+	if ( 0 in dataTable )
+		LiveAPI_OnDeathFieldStartResize( dataTable[0], eLiveAPI_EventTypes.ringFinishedClosing )
 }
 
 void function LiveAPI_OnMatchSetup()

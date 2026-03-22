@@ -493,7 +493,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 	if ( !SURVIVAL_IsPlayerCarryingLoot( player ) && !Bleedout_IsBleedingOut( player )  )
 		HolsterAndDisableWeapons( player )
 
-	entity mover = CreateScriptMover( portalNodes[0], pathAngles[0] )
+	entity mover = CreateScriptMover( "", portalNodes[0], pathAngles[0] )
 
 	mover.EnableNonPhysicsMoveInterpolation( false ) // works around bug R5DEV-49571
 

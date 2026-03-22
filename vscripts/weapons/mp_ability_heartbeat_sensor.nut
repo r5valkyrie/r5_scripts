@@ -767,7 +767,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 
 	while ( true  )
 	{
-		if ( !PlayerDeliveryShouldBeUrgent_Common( player ) )
+		if ( !PlayerDeliveryShouldBeUrgent( player, player.GetOrigin() ) )
 		{
 			#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_COMMS_DEBUG )
@@ -817,7 +817,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 							printt(FUNC_NAME() + " Adding enemy prompt" )
 						#endif //DEV
 
-						AddPingBlockingFunction( "quickchat", TryHeartbeatSensorEnemiesNearCommsTeammates, HEARTBEAT_SENSOR_TEAMMATES_COMMS_DISPLAYTIME, "#SEER_HEARTBEAT_SENSOR_COMMS_ENEMIES", 100 )
+						AddOnscreenPromptFunction( "quickchat", TryHeartbeatSensorEnemiesNearCommsTeammates, HEARTBEAT_SENSOR_TEAMMATES_COMMS_DISPLAYTIME, "#SEER_HEARTBEAT_SENSOR_COMMS_ENEMIES", 100 )
 						file.lastCommsTimeEnemies = Time()
 						file.lastCommsTimeEither  = Time()
 					}
@@ -857,7 +857,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 							printt( FUNC_NAME() + " Adding clear prompt" )
 						#endif //DEV
 
-						AddPingBlockingFunction( "quickchat", TryHeartbeatSensorEnemiesClearCommsTeammates, HEARTBEAT_SENSOR_TEAMMATES_COMMS_DISPLAYTIME, "#SEER_HEARTBEAT_SENSOR_COMMS_CLEAR", 100 )
+						AddOnscreenPromptFunction( "quickchat", TryHeartbeatSensorEnemiesClearCommsTeammates, HEARTBEAT_SENSOR_TEAMMATES_COMMS_DISPLAYTIME, "#SEER_HEARTBEAT_SENSOR_COMMS_CLEAR", 100 )
 						file.lastCommsTimeClear  = Time()
 						file.lastCommsTimeEither = Time()
 					}
@@ -927,7 +927,7 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 				//Allow Seer to do the all clear comms if we drop
 				if ( ( ( deltaTimeClear > HEARTBEAT_SENSOR_COMMS_COOLDOWN ) ) && ( deltaTimeEither > HEARTBEAT_SENSOR_GLOBAL_COOLDOWN ) && ( deltaTimeHadEnemies > HEARTBEAT_SENSOR_GLOBAL_COOLDOWN ) )
 				{
-					AddPingBlockingFunction( "quickchat", TryHeartbeatSensorEnemiesClearCommsTeammates, HEARTBEAT_SENSOR_TEAMMATES_COMMS_DISPLAYTIME, "#SEER_HEARTBEAT_SENSOR_COMMS_CLEAR", 100 )
+					AddOnscreenPromptFunction( "quickchat", TryHeartbeatSensorEnemiesClearCommsTeammates, HEARTBEAT_SENSOR_TEAMMATES_COMMS_DISPLAYTIME, "#SEER_HEARTBEAT_SENSOR_COMMS_CLEAR", 100 )
 					file.lastCommsTimeClear  = Time()
 					file.lastCommsTimeClearInCombat = Time()
 					file.lastCommsTimeEither = Time()
@@ -947,14 +947,14 @@ void function ManageHeartbeatSensorComms_Thread( entity player )
 
 void function TryHeartbeatSensorEnemiesNearCommsTeammates( entity player )
 {
-	Quickchat( player, eCommsAction.HEARTBEAT_SENSOR_DETECT_ENEMY )
+	Quickchat( eCommsAction.HEARTBEAT_SENSOR_DETECT_ENEMY, null )
 
 	file.lastCommsLocation = player.EyePosition()
 }
 
 void function TryHeartbeatSensorEnemiesClearCommsTeammates( entity player )
 {
-	Quickchat( player, eCommsAction.HEARTBEAT_SENSOR_NO_ENEMY )
+	Quickchat( eCommsAction.HEARTBEAT_SENSOR_NO_ENEMY, null )
 	file.lastCommsLocation = player.EyePosition()
 	//We just told allies there are no heartbeats, so we probably want to be able to quickly correct that and let them know if we do sunddenly hear some again.  Reset the last timer so that it will be available to prompt if heartbeats are heard.
 	file.lastCommsTimeEnemies = 0.0
@@ -1079,8 +1079,8 @@ void function ManageVictims_Thread( entity player )
 		#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_DEBUG_VERBOSE )
 			{
-				DebugDrawSphere( player.EyePosition(), GetHeartbeatSensorRange( player ), COLOR_RED, true, 0.1 )
-				DebugDrawCylinder( player.EyePosition(), < -90, 0, 0 >, GetHeartbeatSensorRange( player ), 750, COLOR_RED, true, 0.1 )
+				//DebugDrawSphere( player.EyePosition(), GetHeartbeatSensorRange( player ), <255, 0, 0>, true, 0.1 )
+				//DebugDrawCylinder( player.EyePosition(), < -90, 0, 0 >, GetHeartbeatSensorRange( player ), 750, <255, 0, 0>, true, 0.1 )
 			}
 		#endif //DEV
 		float viewportFOV = GetCurrentPlayerFOV( player )
@@ -1093,7 +1093,7 @@ void function ManageVictims_Thread( entity player )
 			if ( HEARTBEAT_SENSOR_DEBUG )
 			{
 				printt("viewportFOV: " + viewportFOV + " watchRange: " + watchRange)
-				DebugDrawArrow( player.EyePosition(), player.EyePosition() + ( player.GetViewVector() * watchRange ), 10, COLOR_RED, true, 0.1)
+				//DebugDrawArrow( player.EyePosition(), player.EyePosition() + ( player.GetViewVector() * watchRange ), 10, <255, 0, 0>, true, 0.1)
 			}
 		#endif //DEV
 
@@ -1175,7 +1175,7 @@ void function ManageVictims_Thread( entity player )
 			#if DEVELOPER
 			if ( HEARTBEAT_SENSOR_DEBUG )
 			{
-				DebugDrawMark( victimInfo.player.GetWorldSpaceCenter(), 15, COLOR_RED, true, 0.1 )
+				//DebugDrawMark( victimInfo.player.GetWorldSpaceCenter(), 15, <255, 0, 0>, true, 0.1 )
 			}
 			#endif //DEV
 		}
@@ -1185,7 +1185,7 @@ void function ManageVictims_Thread( entity player )
 			{
 				if ( IsValid( bestVictimForAudio ) )
 				{
-					DebugDrawMark( bestVictimForAudio.EyePosition(), 25, COLOR_GREEN, true, 0.1 )
+					//DebugDrawMark( bestVictimForAudio.EyePosition(), 25, <0, 255, 0>, true, 0.1 )
 				}
 			}
 		#endif //DEV

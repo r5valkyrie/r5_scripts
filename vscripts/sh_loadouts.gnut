@@ -650,7 +650,7 @@ void function ShLoadouts_LevelInit_Finish()
 				#endif
 
 				#if CLIENT
-					RegisterNetVarIntChangeCallback( fullNetworkVarName, SNDC_PLAYER_GLOBAL, void function( entity player, int new ) : ( nvInfo )
+					RegisterNetVarIntChangeCallback( fullNetworkVarName, void function( entity player, int new ) : ( nvInfo )
 					{
 						EHI playerEHI         = ToEHI( player )
 						EHIScriptStruct ehiss = GetEHIScriptStruct( playerEHI )

@@ -7,7 +7,6 @@ global function PIN_PlanePath
 global function PIN_SetGameStartTime
 global function PIN_GameStartedForPlayer
 global function PIN_CircleLocation
-global function GameSummary_GetPlayerData
 global function PIN_RoundEnd
 global function PIN_GameEnd
 global function PIN_AddPlayer
@@ -30,24 +29,29 @@ global function PIN_Ping
 global function PIN_OnPlayerHealed
 global function PIN_PlayerLandedOnGround
 global function PIN_PlayerJumpedFromPlane
+global function PIN_AirdropAction
+global function PIN_RingTick
+global function PIN_Perks_ExtendedSupplyBinCreated
+global function PIN_Perks_WeaponSupplyBinCreated
+global function PIN_Perks_RingConsoleCreated
+global function PIN_Perks_RingConsoleScanned
+global function PIN_Perks_SurveyBeaconCreated
+global function PIN_Perks_SurveyBeaconScanned
+global function PIN_Perks_WeaponSupplyBinLooted
+global function PIN_ThirdPartyDiag
+global function PIN_SquadScatteringDetected
+global function PIN_PlayerClass
+global function PIN_WeaponSummary
+global function PIN_PlayerSetAbandonStatus
+global function PIN_DeadPeriodEnded
+global function PIN_PlayerEnterPOI
 global function PIN_Training
 
-global struct GameSummarySquadData
+global struct DeadPeriodData
 {
-	int eHandle = -1
-	string uid
-	int kills
-	int knockdowns
-	int assists
-	int damageDealt
-	int survivalTime
-	int revivesGiven
-	int respawnsGiven
-	int deaths
-	int headshots
-	int hits
-	int shots
-	table<int, int> modeMetaData // gun game demotion/promotion tracking
+	float startTime
+	vector startPosition
+	int itemsGrabbed
 }
 
 void function PIN_Init()
@@ -150,26 +154,6 @@ void function PIN_PlayerOutResource( entity player, string ref )
 	
 }
 
-GameSummarySquadData function GameSummary_GetPlayerData( entity player )
-{
-	GameSummarySquadData data
-
-	if ( !IsValid( player ) )
-		return data
-
-	data.kills = player.GetPlayerNetInt( "kills" )
-	data.deaths = player.p.numberOfDeaths
-	data.survivalTime = 
-		( player.p.respawnChanceExpiryTime > 0.0 && GetGlobalNetTime( "pickLoadoutGamestateStartTime" ) > -1 )
-		? int( player.p.respawnChanceExpiryTime - GetGlobalNetTime( "pickLoadoutGamestateStartTime" ) )
-		: 0
-	data.damageDealt = int( player.p.playerDamageDealt )
-	data.revivesGiven = player.p.revivesGiven
-	data.respawnsGiven = player.p.respawnsGiven
-
-	return data
-}
-
 void function PIN_Interact(entity player, string sound, ... )
 {
 
@@ -195,7 +179,7 @@ void function PIN_OnWeaponAttack( entity player, entity meleeAttackWeapon, strin
 
 }
 
-void function PIN_Ping( entity player, string pingType, entity pingEnt, vector position )
+void function PIN_Ping( entity player, string pingType, entity pingEnt, vector position, int pingWheelIndex = -1 )
 {
 
 }
@@ -205,7 +189,7 @@ void function PIN_OnPlayerHealed( entity player, ... )
 	
 }
 
-void function PIN_PlayerLandedOnGround( entity player )
+void function PIN_PlayerLandedOnGround( entity player, string landType = "" )
 {
 
 }
@@ -214,6 +198,75 @@ void function PIN_PlayerJumpedFromPlane( entity player, int len )
 {
 
 }
+
+void function PIN_AirdropAction( string actionType, vector origin )
+{
+	Warning( "PIN_AirdropAction stub: " + actionType )
+}
+
+void function PIN_RingTick( entity player )
+{
+	Warning( "PIN_RingTick stub" )
+}
+
+void function PIN_Perks_ExtendedSupplyBinCreated( entity bin, vector origin )
+{
+	Warning( "PIN_Perks_ExtendedSupplyBinCreated stub" )
+}
+
+void function PIN_Perks_WeaponSupplyBinCreated( entity bin, vector origin )
+{
+	Warning( "PIN_Perks_WeaponSupplyBinCreated stub" )
+}
+
+void function PIN_Perks_RingConsoleCreated( entity beacon, vector origin )
+{
+}
+
+void function PIN_Perks_RingConsoleScanned( entity player, vector origin )
+{
+}
+
+void function PIN_Perks_SurveyBeaconCreated( entity beacon, vector origin )
+{
+}
+
+void function PIN_Perks_SurveyBeaconScanned( entity player, vector origin )
+{
+}
+
+void function PIN_Perks_WeaponSupplyBinLooted( entity player, var loot, vector origin )
+{
+}
+
+void function PIN_ThirdPartyDiag( entity player )
+{
+}
+
+void function PIN_SquadScatteringDetected( entity player )
+{
+}
+
+void function PIN_PlayerClass( entity player, array<string> classesOffered )
+{
+}
+
+void function PIN_WeaponSummary( entity player )
+{
+}
+
+void function PIN_PlayerSetAbandonStatus( entity player, int status )
+{
+}
+
+void function PIN_DeadPeriodEnded( entity player, string reason, DeadPeriodData data )
+{
+}
+
+void function PIN_PlayerEnterPOI( entity player )
+{
+}
+
 
 void function PIN_Training( entity player, string status, string trainingStatus )
 {

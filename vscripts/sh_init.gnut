@@ -65,6 +65,7 @@ void function SV_CL_Init()
 	
 	//(cafe) Proper order of loading remote functions, mods, and gamemodes
 	RemoteFunctions_Init_Begin()
+	ShPassiveUpgradeCore_NetvarsInit()
 	ModSystem_RunCallbacks()// MOD SYSTEM CALLBACKS, has to run as soon as remote functions start registering
 	GameMode_VerifyModes() // Has to run after mod system callbacks
 	Settings_Init() // Should run after gamemodes are verified

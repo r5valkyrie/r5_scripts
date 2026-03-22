@@ -597,7 +597,7 @@ void function ForcedBreach_OpenPanel_Thread( entity panel )
 
 	//// Uncomment to debug.
 	//#if DEVELOPER
-	//	DebugDrawSphere( explosionPos, 32, COLOR_RED, true, 15 )
+	//	DebugDrawSphere( explosionPos, 32, <255, 0, 0>, true, 15 )
 	//#endif // DEVELOPER
 
 	PlayFX( EXPLOSIVE_HOLD_EXPLOSION_FX, explosionPos, panel.GetAngles(), null)
@@ -1203,7 +1203,7 @@ void function ExplosiveHoldDoor_DoorResponse_Thread ( entity panel, bool wasExpl
 			shake.RemoveFromAllRealms()
 			shake.AddToOtherEntitysRealms( panel )
 			shake.kv.spawnflags = 4 // SF_SHAKE_INAIR // Cam shake with impact
-			//DebugDrawCircle( shake.GetOrigin(), <0,0,0>, 250, COLOR_WHITE, true, 30 )
+			//DebugDrawCircle( shake.GetOrigin(), <0,0,0>, 250, <255, 255, 255>, true, 30 )
 
 			// Turn on vent smoke fx
 			foreach ( entity vfxEntHelper in GetChildren(panel) )

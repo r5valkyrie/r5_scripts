@@ -450,7 +450,7 @@ vector ornull function GetBestShieldDeployAngles( vector origin, vector angles, 
 			vector testAngles = angles + <0, angleOffset, 0>
 
 			#if DEBUG_SHIELD_ANGLES
-				DebugDrawLine( origin, origin + AnglesToForward( testAngles ) * 32, COLOR_RED, true, DEBUG_SHIELD_DRAW_TIME )
+				//DebugDrawLine( origin, origin + AnglesToForward( testAngles ) * 32, <255, 0, 0>, true, DEBUG_SHIELD_DRAW_TIME )
 			#endif
 
 			int failes = CheckShieldFit( origin, testAngles, i )
@@ -514,14 +514,14 @@ int function CheckShieldFit( vector origin, vector angles, int step )
 			if ( longest < streak )
 				longest = streak
 			#if DEBUG_SHIELD_ANGLES
-				DebugDrawLine( traceStart, traceEnd, COLOR_GREEN, true, DEBUG_SHIELD_DRAW_TIME )
+				//DebugDrawLine( traceStart, traceEnd, <0, 255, 0>, true, DEBUG_SHIELD_DRAW_TIME )
 			#endif
 		}
 		else
 		{
 			streak = 0
 			#if DEBUG_SHIELD_ANGLES
-				DebugDrawLine( traceStart, traceEnd, COLOR_RED, true, DEBUG_SHIELD_DRAW_TIME )
+				//DebugDrawLine( traceStart, traceEnd, <255, 0, 0>, true, DEBUG_SHIELD_DRAW_TIME )
 			#endif
 		}
 	}

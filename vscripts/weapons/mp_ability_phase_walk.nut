@@ -122,7 +122,7 @@ void function PhaseWalk_Thread( entity player, float chargeTime )
 			{
 				if ( IsValid( player ) )
 				{
-					UnlockWeaponsAndMelee( player )
+					UnlockWeaponsAndMelee( player, "" )
 				}
 				file.hasLockedWeaponsAndMelee[player] <- false
 			}
@@ -160,7 +160,7 @@ void function OnWeaponChargeEnd_ability_phase_walk( entity weapon )
 		if ( player in file.hasLockedWeaponsAndMelee && file.hasLockedWeaponsAndMelee[player]  )
 		{
 			if ( IsValid(player) )
-				UnlockWeaponsAndMelee( player )
+				UnlockWeaponsAndMelee( player, "" )
 			file.hasLockedWeaponsAndMelee[player] <- false
 		}
 		int ammoAfterFiring = weapon.GetWeaponPrimaryClipCount() - weapon.GetAmmoPerShot()

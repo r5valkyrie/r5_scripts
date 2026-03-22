@@ -476,6 +476,12 @@ float function CalcFOVScale( float baseFOV, float zoomScale )
 	return RadToDeg( atan( tan( DegToRad( baseFOV / 2.0 ) ) / zoomScale ) ) * 2
 }
 
+int function CalcZoomMag( float baseFOV, float fov )
+{
+	float magf = tan( DegToRad( baseFOV/2 ) ) / tan( DegToRad( fov/2 ) )
+	return int ( floor( magf + 0.5) )
+}
+
 
 vector function RotateAroundOrigin2D( vector originToRotate, vector origin, float angRadians )
 {
@@ -595,11 +601,11 @@ array<vector> function GetCircleToCircleIntersectionPoints( vector org1, float r
 	{
 		#if SERVER || CLIENT
 		// Circle origins
-		//DebugDrawLine( org1, org1 + < 0, 0, 32 >, COLOR_RED, true, 1.0 )
-		//DebugDrawLine( org2, org2 + < 0, 0, 32 >, COLOR_GREEN, true, 1.0 )
+		//DebugDrawLine( org1, org1 + < 0, 0, 32 >, <255, 0, 0>, true, 1.0 )
+		//DebugDrawLine( org2, org2 + < 0, 0, 32 >, <0, 255, 0>, true, 1.0 )
 
 		// Lines to intersection points
-		//DebugDrawLine( org2, intersectionPoints[ 0 ] + org1, COLOR_WHITE, true, 1.0 )
+		//DebugDrawLine( org2, intersectionPoints[ 0 ] + org1, <255, 255, 255>, true, 1.0 )
 		//DebugDrawLine( org2, intersectionPoints[ 1 ] + org1, COLOR_BLACK, true, 1.0 )
 		#endif
 	}
@@ -678,7 +684,7 @@ bool function IsShotgunsAndSnipersMode()
 	return GetCurrentPlaylistVarBool( "shotguns_and_snipers_mode", false )
 }
 
-int function GetExpectedSquadSize( entity player )
+int function GetExpectedSquadSize( entity player = null )
 {
 	return GetCurrentPlaylistVarInt( "max_team_size", 1 )
 }
@@ -1100,6 +1106,30 @@ string function GetWeaponInfoFileKeyField_GlobalString( string ref, string varia
 	return expect string( val )
 }
 
+string function GetWeaponInfoFileKeyField_WithMods_GlobalString( string ref, array<string> mods, string variable )
+{
+	array<string> validMods = []
+	foreach ( m in mods )
+	{
+		if ( m != "" )
+			validMods.append( m )
+	}
+
+	var val
+	try
+	{
+		val = GetWeaponInfoFileKeyField_WithMods_Global( ref, validMods, variable )
+	}
+	catch ( e )
+	{
+		Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalString: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
+		val = GetWeaponInfoFileKeyField_Global( ref, variable )
+	}
+	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
+	if(val == null) return ""
+	return expect string( val )
+}
+
 int function GetWeaponInfoFileKeyField_GlobalInt( string ref, string variable )
 {
 	var val = GetWeaponInfoFileKeyField_Global( ref, variable )
@@ -1109,15 +1139,71 @@ int function GetWeaponInfoFileKeyField_GlobalInt( string ref, string variable )
 
 int function GetWeaponInfoFileKeyField_WithMods_GlobalInt( string ref, array<string> mods, string variable )
 {
-	var val = GetWeaponInfoFileKeyField_WithMods_Global( ref, mods, variable )
+	array<string> validMods = []
+	foreach ( m in mods )
+	{
+		if ( m != "" )
+			validMods.append( m )
+	}
+
+	var val
+	try
+	{
+		val = GetWeaponInfoFileKeyField_WithMods_Global( ref, validMods, variable )
+	}
+	catch ( e )
+	{
+		Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
+		val = GetWeaponInfoFileKeyField_Global( ref, variable )
+	}
 	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
+	if ( typeof( val ) == "string" )
+	{
+		try
+		{
+			return (expect string( val )).tointeger()
+		}
+		catch ( e2 )
+		{
+			Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: '" + variable + "' for '" + ref + "' returned non-numeric string '" + string( val ) + "', defaulting to 0" )
+			return 0
+		}
+	}
 	return expect int( val )
 }
 
 float function GetWeaponInfoFileKeyField_WithMods_GlobalFloat( string ref, array<string> mods, string variable )
 {
-	var val = GetWeaponInfoFileKeyField_WithMods_Global( ref, mods, variable )
+	array<string> validMods = []
+	foreach ( m in mods )
+	{
+		if ( m != "" )
+			validMods.append( m )
+	}
+
+	var val
+	try
+	{
+		val = GetWeaponInfoFileKeyField_WithMods_Global( ref, validMods, variable )
+	}
+	catch ( e )
+	{
+		Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalFloat: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
+		val = GetWeaponInfoFileKeyField_Global( ref, variable )
+	}
 	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
+	if ( typeof( val ) == "string" )
+	{
+		try
+		{
+			return (expect string( val )).tofloat()
+		}
+		catch ( e2 )
+		{
+			Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalFloat: '" + variable + "' for '" + ref + "' returned non-numeric string '" + string( val ) + "', defaulting to 0.0" )
+			return 0.0
+		}
+	}
 	return expect float( val )
 }
 
@@ -2502,9 +2588,9 @@ bool function IsAccessibilityChatHintEnabled()
 }
 #endif
 
-bool function Crafting_IsEnabled()
+bool function IsCurrentModeMixtape()
 {
-	return true
+	return GameMode_IsActive( eGameModes.CONTROL ) || GameMode_IsActive( eGameModes.FREEDM )
 }
 
 #if CLIENT || UI && PC_PROG
@@ -3631,6 +3717,11 @@ bool function IsInfiniteAmmoEnabled()
 	#endif
 	return false
 }
+
+bool function InfiniteAmmoEnabled()
+{
+	return IsInfiniteAmmoEnabled()
+}
 #endif
 
 bool function IsSpectator( entity player )
@@ -4285,4 +4376,15 @@ string function GetPlaylistMapVarString( string playlistName, int mapIdx, string
 int function GetSoonestPlaylistRotationTime()
 {
 	return 0
+}
+
+bool function UpgradeCore_IsCorrectGameState()
+{
+	bool isGameStateCorrect =
+			(
+					( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && ( GetGameState() == eGameState.Playing ) ) ||
+					( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && ( GetGameState() == eGameState.WaitingForPlayers ))
+			)
+
+	return isGameStateCorrect
 }

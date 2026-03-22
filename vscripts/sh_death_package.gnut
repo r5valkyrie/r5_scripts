@@ -63,12 +63,6 @@ global enum eThreatIndicatorID
 	GRENADE_INDICATOR_ONLY_ARROW           // Arrow only, no model
 }
 
-// Waypoint indices for threat indicators
-global const int DAMAGEARROW_WP_INT_INDEX_ID = 0
-global const int DAMAGEARROW_WP_INT_INDEX_TEAM = 1
-global const int DAMAGEARROW_WP_INT_INDEX_VISIBILITY_TYPE = 2
-global const int DAMAGEARROW_WP_ENT_OWNER = 0
-
 // Cluster bomb indicator model
 global const asset GRENADE_INDICATOR_CLUSTER_BOMB_MODEL = $"mdl/hud/grenade_indicator/grenade_indicator_bomb.rmdl"
 

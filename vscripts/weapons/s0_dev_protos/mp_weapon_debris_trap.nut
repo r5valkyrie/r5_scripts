@@ -99,7 +99,7 @@ void function OnWeaponTossPrep_weapon_debris_trap( entity weapon, WeaponTossPrep
 	#endif
 }
 
-void function DebrisTrap_OnPlanted( entity projectile )
+void function DebrisTrap_OnPlanted( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 		Assert( IsValid( projectile ) )
@@ -145,7 +145,7 @@ void function DebrisTrap_OnPlanted( entity projectile )
 		projectile.SetPhysics( MOVETYPE_FLY ) // doesn't actually make it move, but allows pushers to interact with it
 
 		projectile.Highlight_Enable()
-		projectile.HighlightEnableForTeam( owner.GetTeam() )
+		projectile.HighlightEnableForTeam( GetHighlightId( "friendly_player_decoy" ), owner.GetTeam() )
 		Highlight_SetFriendlyHighlight( projectile, "friendly_player_decoy" )
 		Highlight_SetOwnedHighlight( projectile, "friendly_player_decoy" )
 
@@ -196,7 +196,7 @@ void function DebrisTrap_Deploy( entity projectile, float duration )
 	wp.SetParent( projectile )
 	*/
 
-	entity mover = CreateScriptMover( projectile.GetOrigin(), projectile.GetAngles() )
+	entity mover = CreateScriptMover( "", projectile.GetOrigin(), projectile.GetAngles() )
 
 	entity oldParent = projectile.GetParent()
 
@@ -346,7 +346,7 @@ void function DebrisTrap_TriggerUpdate( entity trigger, entity player )
 
 void function DebrisTrap_ProjectileShutdown( entity projectile )
 {
-	entity mover = CreateScriptMover( projectile.GetOrigin(), projectile.GetAngles() )
+	entity mover = CreateScriptMover( "", projectile.GetOrigin(), projectile.GetAngles() )
 
 	entity oldParent = projectile.GetParent()
 

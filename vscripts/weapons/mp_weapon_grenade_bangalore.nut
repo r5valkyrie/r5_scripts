@@ -112,13 +112,20 @@ void function OnProjectileCollision_weapon_grenade_bangalore( entity projectile,
 		projectile.proj.savedSurfaceNormal = normal
 	#endif //SERVER
 
-	table collisionParams =
-	{
-		pos = pos,
-		normal = normal,
-		hitEnt = hitEnt,
-		hitbox = hitbox
-	}
+	DeployableCollisionParams collisionParams
+
+
+	collisionParams.pos = pos
+
+
+	collisionParams.normal = normal
+
+
+	collisionParams.hitEnt = hitEnt
+
+
+	collisionParams.hitBox = hitbox
+
 
 	projectile.SetModel( $"mdl/dev/empty_model.rmdl" )
 	bool result = PlantStickyEntity( projectile, collisionParams, normal )
@@ -295,7 +302,7 @@ entity function Bangalore_CreateSmokeGrenade( vector origin, vector normal )
 	vector maxSafeSpot = origin + normal * BANGALORE_SMOKE_MAX_SAFE_SPAWN_PELLET_DISTANCE
 	TraceResults result = TraceLineHighDetail( origin, maxSafeSpot, null, TRACE_MASK_GRENADE, TRACE_COLLISION_GROUP_PROJECTILE )
 	vector safeSpot = result.endPos
-	//DebugDrawLine( safeSpot, origin, COLOR_BLUE, false, 25.0 )
+	//DebugDrawLine( safeSpot, origin, <0, 0, 255>, false, 25.0 )
 
 	PutEntityInSafeSpot( prop_physics, null, null, safeSpot, origin )
 	DispatchSpawn( prop_physics )
@@ -328,7 +335,7 @@ void function Bangalore_DetonateSmokeGrenade( entity smokeGrenade, entity owner,
 
 	if( GetCurrentPlaylistVarBool( "lsm_mod12", false ) )
 	{
-		entity dummyCloudSource = CreateScriptMover( smokeGrenade.GetOrigin() )
+		entity dummyCloudSource = CreateScriptMover( "", smokeGrenade.GetOrigin() )
 		dummyCloudSource.SetOwner( owner )
 		if(owner)
 		{

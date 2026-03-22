@@ -332,7 +332,7 @@ void function FreeDM_GamemodeInitShared()
 		#endif
 
 		#if CLIENT
-			airdropData.colorOverride = COLOR_WHITE
+			airdropData.colorOverride = <255, 255, 255>
 			airdropData.eventName = "#EVENT_AIRDROP_NAME"
 			airdropData.eventDesc = "#EVENT_AIRDROP_DESC"
 		#endif
@@ -1658,10 +1658,13 @@ void function FreeDM_LaunchAirdrop_Thread( vector pointLocation, array<string> a
 		Remote_CallFunction_NonReplay( player, "ServerCallback_SUR_PingMinimap", pointLocation, pingDuration, spreadRadius, ringRadius, COLORID_AIRDROP_DEFAULT_COLOR, frequency, freqVariation, eAirdropType.STANDARD )
 	}
 
-	// AirdropItems takes flat array<string> + individual params
-	array<string> flatContents = [airdropContents[0], airdropContents[1], airdropContents[2]]
+	array< array<string> > wrappedContents = [airdropContents]
 
-	thread AirdropItems( pointLocation, <0, RandomFloatRange(-180, 180), 0>, flatContents, null, FREEDM_AIRDROP_ANIMATION, null, CHEVREX_AIRDROP_SKIN_INDEX, "" )
+	AirdropItemsOptionalInfo optionInfo
+	optionInfo.animationName = FREEDM_AIRDROP_ANIMATION
+	optionInfo.skin = CHEVREX_AIRDROP_SKIN_INDEX
+
+	thread AirdropItems( pointLocation, <0, RandomFloatRange(-180, 180), 0>, wrappedContents, optionInfo )
 }
 #endif // SERVER
 

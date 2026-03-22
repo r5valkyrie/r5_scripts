@@ -163,7 +163,7 @@ void function MaelstromJavelin_CreateArcBalls( entity owner, entity javelinModel
 	javelinModel.EndSignal( "OnDestroy" )
 
 	//Create mover around which all arc balls will rotate.
-	entity mover = CreateScriptMover( javelinModel.GetOrigin() )
+	entity mover = CreateScriptMover( "", javelinModel.GetOrigin() )
 	mover.SetForwardVectorWithUp( forward, up )
 	//SetTeam( mover, owner.GetTeam() )
 	mover.SetParent( javelinModel, "", false )
@@ -333,7 +333,7 @@ void function MaelstromJavelin_CreateArcBall( entity owner, entity javelinModel,
 	baseMover.EndSignal( "OnDestroy" )
 
 	//Create mover
-	entity mover = CreateScriptMover( javelinModel.GetOrigin() + up * ( MAELSTROM_JAVELIN_RISE_HEIGHT * index ) + ( forward * MAELSTROM_JAVELIN_ARC_BALL_OFFSET ) )
+	entity mover = CreateScriptMover( "", javelinModel.GetOrigin() + up * ( MAELSTROM_JAVELIN_RISE_HEIGHT * index ) + ( forward * MAELSTROM_JAVELIN_ARC_BALL_OFFSET ) )
 	SetTeam( mover, owner.GetTeam() )
 	mover.SetParent( baseMover, "", true )
 	mover.EndSignal( "OnDestroy" )

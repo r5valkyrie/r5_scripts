@@ -187,9 +187,8 @@ bool function IsValidSyncedMeleeTarget( entity attacker, entity meleeInputWeapon
 		if ( target.ContextAction_IsActive() )
 			return false
 
-		// IsInterruptableForScriptedAnim not available
-		// if ( !target.IsInterruptableForScriptedAnim() )
-		// 	return false
+		//if ( !target.IsInterruptableForScriptedAnim() ) // S3: entity method not available
+		//	return false
 
 		if ( !target.CanBeMeleeExecuted() )
 			return false
@@ -452,11 +451,11 @@ void function PutTargetInSafeSpotAfterExecution( entity target, entity attacker,
 
 	if( DEBUG_PLACE_TARGET )
 	{
-		DebugDrawBox( forwardTraceStartPos, targetBoundingMins, targetBoundingMaxs, COLOR_YELLOW, 1, 5.0 )
-		DebugDrawLine( forwardTraceStartPos, forwardTrace.endPos, COLOR_RED, true, 5.0 )
-		DebugDrawLine( downTraceStartPosition, downTrace.endPos, COLOR_BLUE, true, 5.0 )
-		DebugDrawBox( downTraceStartPosition, targetBoundingMins, targetBoundingMaxs, COLOR_YELLOW, 1, 5.0 )
-		DebugDrawBox( downTrace.endPos, targetBoundingMins, targetBoundingMaxs, COLOR_CYAN, 1, 5.0 )
+		//DebugDrawBox( forwardTraceStartPos, targetBoundingMins, targetBoundingMaxs, <255, 255, 0>, 1, 5.0 )
+		//DebugDrawLine( forwardTraceStartPos, forwardTrace.endPos, <255, 0, 0>, true, 5.0 )
+		//DebugDrawLine( downTraceStartPosition, downTrace.endPos, <0, 0, 255>, true, 5.0 )
+		//DebugDrawBox( downTraceStartPosition, targetBoundingMins, targetBoundingMaxs, <255, 255, 0>, 1, 5.0 )
+		//DebugDrawBox( downTrace.endPos, targetBoundingMins, targetBoundingMaxs, COLOR_CYAN, 1, 5.0 )
 	}
 
 	spotToPlaceTarget = downTrace.endPos
@@ -671,11 +670,10 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 		}
 	}
                             
-	// Shadow Army game mode not available
-	// if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && ShadowArmy_IsPlayerInShadowForm( attacker ) )
-	// {
-	// 	attackerExecution = defaultExecution
-	// }
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && ShadowArmy_IsPlayerInShadowForm( attacker ) )
+	{
+		attackerExecution = defaultExecution
+	}
       
 	ItemFlavor victimCharacter
 	if ( target.IsPlayer() )
@@ -701,9 +699,8 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 		// positioning
 		attackSequence.noParent = true
 		attackSequence.playerPushable = true
-		// struct fields not available
-		// attackSequence.enableCollision = true
-		// attackSequence.enableRelativeToGround = true
+		//attackSequence.enableCollision = true // S3: not in FirstPersonSequenceStruct
+		//attackSequence.enableRelativeToGround = true // S3: not in FirstPersonSequenceStruct
 
 		/*%if HAS_ARTEMIS
 			// this fixes the parenting issue
@@ -760,7 +757,7 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 
 	printt( executionString )
 
-	#if DEV
+	#if DEVELOPER
 		if ( attacker.LookupSequence( attackSequence.thirdPersonAnim ) == -1 )
 		{
 			Assert( false, "Execution- Attacker: " + attackerCharacterRef + " does not have valid sequence '" + attackSequence.thirdPersonAnim + "'" )
@@ -793,11 +790,10 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 					SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_ATTACKER_SCREEN_FADE_FADE_HOLD, FFADE_IN )
 
 				attacker.e.syncedMeleeTarget = target
-				attacker.PlayerMelee_SetState( PLAYER_MELEE_STATE_HUMAN_EXECUTION )
+				attacker.PlayerMelee_SetState( PLAYER_MELEE_STATE_EXECUTION )
 				attacker.PlayerMelee_ExecutionStartAttacker( Time() + attackDuration )
 				attacker.Lunge_ClearTarget()
-				// ForcedStance not available
-				// attackerForceStandHandle     = attacker.PushForcedStance( FORCE_STANCE_STAND )
+				attackerForceStandHandle     = attacker.PushForcedStance( FORCE_STANCE_STAND )
 				HolsterAndDisableWeapons( attacker )
 				if ( PlayerHasPassive( attacker, ePassives.PAS_CRYPTO ) )
 					AddAnimEvent( attacker, CRYPTO_HIDE_DRONE_ANIM_EVENT, HideDrone )
@@ -811,8 +807,7 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 			AddCinematicFlag( target, CE_FLAG_TITAN_3P_CAM | CE_FLAG_EXECUTION )
 			ScreenFade( target, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.x, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.y, SYNCED_MELEE_TARGET_SCREEN_FADE_COL.z, SYNCED_MELEE_TARGET_SCREEN_FADE_ALPHA,
 				SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_TIME, SYNCED_MELEE_TARGET_SCREEN_FADE_FADE_HOLD, FFADE_IN )
-			// ForcedStance not available
-			// targetForceStandHandle = target.PushForcedStance( FORCE_STANCE_STAND )
+			targetForceStandHandle = target.PushForcedStance( FORCE_STANCE_STAND )
 		}
 		else if ( target.IsNPC() )
 		{
@@ -844,17 +839,16 @@ void function DoSyncedMelee_Thread( entity attacker, entity target )
 		AddAnimEvent( target, "sync_kill", void function( entity target ) : ( attacker ) { SyncKillTarget( target, attacker ) } )
 	}
 
-	// ForcedStance not available
-	OnThreadEnd( function() : ( attacker, target ) {
-		// if ( IsValid( attacker ) )
-		// {
-		// 	attacker.RemoveForcedStance( attackerForceStandHandle )
-		// }
+	OnThreadEnd( function() : ( attacker, target, attackerForceStandHandle, targetForceStandHandle ) {
+		if ( IsValid( attacker ) )
+		{
+			attacker.RemoveForcedStance( attackerForceStandHandle )
+		}
 
-		// if ( IsValid( target ) && target.IsPlayer() )
-		// {
-		// 	target.RemoveForcedStance( targetForceStandHandle )
-		// }
+		if ( IsValid( target ) && target.IsPlayer() )
+		{
+			target.RemoveForcedStance( targetForceStandHandle )
+		}
 	} )
 
 /*%if HAS_ARTEMIS
@@ -889,8 +883,7 @@ void function SyncKillTarget( entity target, entity attacker )
 		damageType = DMG_MELEE_EXECUTION,
 		damageSourceId = eDamageSourceId.human_execution } )
 
-	// stat tracking not available
-	// Survival_PlayerDealtDamage( attacker, target, null, targetHealth, 0, 0, DMG_MELEE_EXECUTION )
+	Survival_PlayerDealtDamage( attacker, target, null, targetHealth, 0, 0, DMG_MELEE_EXECUTION )
 }
 #endif
 
@@ -939,9 +932,8 @@ void function MarkForDeath( entity target, entity attacker )
 		target.e.markedForExecutionDeath = false
 	} )
 
-	// IsHidden() entity method not available
-	// if ( !target.e.markedForExecutionDeath && target.IsHidden() )
-	// 	Assert( false, "Execution: The target " + target + " playing '" + target.GetCurrentSequenceName() + "' is hidden (using Hide() or the 'hide' anim event) BEFORE we mark this target for death. This can lead to bugs where an execution target is Alive but invisible." )
+	//if ( !target.e.markedForExecutionDeath && target.IsHidden() ) // S3: IsHidden() not available
+	//	Assert( false, "Execution: The target " + target + " playing '" + target.GetCurrentSequenceName() + "' is hidden (using Hide() or the 'hide' anim event) BEFORE we mark this target for death. This can lead to bugs where an execution target is Alive but invisible." )
 
 	target.e.markedForExecutionDeath = true //This will kill off the player even if the execution animation is interruped from this point forward
 
@@ -1111,4 +1103,4 @@ void function SuccessfulSyncedMelee_HealPlayerThread( entity attacker )
 		GamemodeUtility_HealPlayerHealthAndShieldsByPercentage( attacker, GamemodeUtility_GetPercentToSetHealthToOnFinisher(), GamemodeUtility_GetPercentToSetShieldToOnFinisher(), false, true )
 	}
 }
-#endif //#if SERVER 
+#endif //#if SERVER

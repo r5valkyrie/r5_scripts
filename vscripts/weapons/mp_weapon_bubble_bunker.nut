@@ -105,7 +105,7 @@ void function OnWeaponTossPrep_WeaponBubbleBunker( entity weapon, WeaponTossPrep
 	weapon.EmitWeaponSound_1p3p( GetGrenadeDeploySound_1p( weapon ), GetGrenadeDeploySound_3p( weapon ) )
 }
 
-void function OnBubbleBunkerPlanted( entity projectile )
+void function OnBubbleBunkerPlanted( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 		Assert( IsValid( projectile ) )
@@ -201,7 +201,7 @@ void function DeployBubbleBunker( entity projectile, float duration )
 
 	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BUBBLE_BUNKER, owner, projectile.GetOrigin(), owner.GetTeam(), owner )
 
-	entity mover = CreateScriptMover( projectile.GetOrigin(), projectile.GetAngles() )
+	entity mover = CreateScriptMover( "", projectile.GetOrigin(), projectile.GetAngles() )
 
 	entity oldParent = projectile.GetParent()
 
@@ -412,7 +412,7 @@ void function DomeTriggerTouchingThread( entity trigger, entity ent )
 
 void function ProjectileShutdown( entity projectile )
 {
-	entity mover = CreateScriptMover( projectile.GetOrigin(), projectile.GetAngles() )
+	entity mover = CreateScriptMover( "", projectile.GetOrigin(), projectile.GetAngles() )
 
 	entity oldParent = projectile.GetParent()
 
@@ -546,7 +546,7 @@ var function OnWeaponTossReleaseAnimEvent_WeaponBubbleBunker_MasterChief( entity
 	return ammoReq
 }
 
-void function OnBubbleBunkerPlanted_MasterChief( entity projectile )
+void function OnBubbleBunkerPlanted_MasterChief( entity projectile, DeployableCollisionParams collisionParams )
 {
 	#if SERVER
 		Assert( IsValid( projectile ) )
@@ -645,7 +645,7 @@ void function DeployBubbleBunker_MasterChief( entity projectile, float duration 
 
 	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_BUBBLE_BUNKER, owner, projectile.GetOrigin(), owner.GetTeam(), owner )
 
-	entity mover = CreateScriptMover( projectile.GetOrigin(), projectile.GetAngles() )
+	entity mover = CreateScriptMover( "", projectile.GetOrigin(), projectile.GetAngles() )
 
 	entity oldParent = projectile.GetParent()
 

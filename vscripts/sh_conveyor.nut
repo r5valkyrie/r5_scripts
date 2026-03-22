@@ -318,4 +318,4 @@ float function GetPathTime ( entity mover, entity startNode )
 
 	if ( file.DEV ) printf ("CONVEYOR: Calculated " + mover.GetTargetName() + " path time as: " + pathTime + " seconds.")
 	return pathTime + 0.7 // For some reason the function calculated the path as 0.7 sec shorter than it really is
-} 
+}

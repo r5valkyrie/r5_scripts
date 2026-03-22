@@ -43,7 +43,7 @@ global function ClientCallback_PrivateMatchToggleAssignSelf
 global function ClientCallback_PrivateMatchToggleTeamRenaming
 global function ClientCallback_PrivateMatchToggleAdminOnlyChat
 global function ClientCallback_PrivateMatchToggleObserverHighlights
-global function ClientCallback_RefreshObserverHighlights
+// ClientCallback_RefreshObserverHighlights — moved to sh_highlight.gnut (S22)
 
 #endif
 
@@ -230,13 +230,13 @@ void function PrivateMatch_RegisterNetworking()
 	#endif
 
 	#if CLIENT
-		RegisterNetVarIntChangeCallback( "selectedPlaylistIndex", SNDC_GLOBAL_NON_REWIND, OnSelectedPlaylistIndexChanged )
-		RegisterNetVarIntChangeCallback( "startCountdown", SNDC_GLOBAL_NON_REWIND, OnStartCountdownChanged )
+		RegisterNetVarIntChangeCallback( "selectedPlaylistIndex", OnSelectedPlaylistIndexChanged, SNDC_GLOBAL_NON_REWIND )
+		RegisterNetVarIntChangeCallback( "startCountdown", OnStartCountdownChanged, SNDC_GLOBAL_NON_REWIND )
 
-		RegisterNetVarBoolChangeCallback( NV_OBSERVER_HIGHLIGHT_ENABLED, SNDC_GLOBAL_NON_REWIND, ObserverHighlightEnableChanged )
+		RegisterNetVarBoolChangeCallback( NV_OBSERVER_HIGHLIGHT_ENABLED, ObserverHighlightEnableChanged, SNDC_GLOBAL_NON_REWIND )
 
 		AddCallback_OnGameStateChanged( PrivateMatch_OnGameStateChanged )
-		RegisterNetVarIntChangeCallback( "lastSquadEliminated", SNDC_GLOBAL_NON_REWIND, PrivateMatch_ClientOnSquadEliminated )
+		RegisterNetVarIntChangeCallback( "lastSquadEliminated", PrivateMatch_ClientOnSquadEliminated, SNDC_GLOBAL_NON_REWIND )
 	#endif
 }
 
@@ -892,13 +892,7 @@ void function ClientCallback_PrivateMatchToggleObserverHighlights( entity player
 	player.SetPlayerNetBool( NV_OBSERVER_HIGHLIGHT_ENABLED, !current )
 }
 
-void function ClientCallback_RefreshObserverHighlights( entity player )
-{
-	if ( player.GetTeam() != TEAM_SPECTATOR )
-		return
-
-	Highlight_RefreshObserverHighlights( player )
-}
+// ClientCallback_RefreshObserverHighlights — moved to sh_highlight.gnut (S22)
 
 #endif //SERVER
 

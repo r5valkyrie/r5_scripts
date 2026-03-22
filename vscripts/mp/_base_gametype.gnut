@@ -25,6 +25,7 @@ global struct OutOfBoundsDataStruct //Have to globalize it because all functions
 	int outOfBoundsTriggersTouched = 0
 	float timeBackInBound = 0
 	float timeLeftBeforeDyingFromOutOfBounds = OUT_OF_BOUNDS_TIME_LIMIT
+	int disabledCount = 0
 }
 
 struct
@@ -2068,6 +2069,10 @@ bool function IsValidOutOfBoundsEntity( entity ent, entity trigger )
 	if ( !IsAlive( ent ) )
 		return false
 
+	// S22: disable/enable OOB mechanism
+	if ( (ent in file.outOfBoundsTable) && file.outOfBoundsTable[ent].disabledCount > 0 )
+		return false
+
 	int triggerTeam = expect int( trigger.kv.teamnumber.tointeger() )
 
 	Assert( triggerTeam >= 0 )
@@ -2121,6 +2126,37 @@ void function ManageAddEntToOutOfBoundsTable( entity ent, OutOfBoundsDataStruct 
 	//Now add the new ent
 
 	file.outOfBoundsTable[ ent ] <- dataStruct
+}
+
+void function DisableEntityOutOfBounds( entity ent )
+{
+	if ( !(ent in file.outOfBoundsTable) )
+	{
+		OutOfBoundsDataStruct oobData
+		ManageAddEntToOutOfBoundsTable( ent, oobData )
+	}
+
+	file.outOfBoundsTable[ent].disabledCount += 1
+
+	if ( IsValid( ent ) && ent.IsPlayer() && ent.GetOutOfBoundsDeadTime() != 0 )
+		ent.SetOutOfBoundsDeadTime( 0.0 )
+}
+
+void function EnableEntityOutOfBounds( entity ent )
+{
+	if ( !(ent in file.outOfBoundsTable) )
+		return
+
+	Assert( file.outOfBoundsTable[ent].disabledCount > 0 )
+	file.outOfBoundsTable[ent].disabledCount -= 1
+}
+
+bool function IsEntityOutOfBoundsDisabled( entity ent )
+{
+	if ( !(ent in file.outOfBoundsTable) )
+		return false
+
+	return file.outOfBoundsTable[ent].disabledCount > 0
 }
 
 bool function PlayerCanSpawn( entity player )

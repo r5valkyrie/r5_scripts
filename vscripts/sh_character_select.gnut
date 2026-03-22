@@ -61,7 +61,7 @@ global function AddCallback_CustomIsCharacterLockedForPlayer
 
 #if CLIENT
 global function CharacterSelect_EnsureMenuEntsReady
-global function CharacterSelect_CustomIsCharacterLockedForPlayer
+// CharacterSelect_CustomIsCharacterLockedForPlayer - declared and implemented in workarounds.gnut
 #endif
 
 global const int NUM_CHARACTER_SELECT_BUTTONS = 50
@@ -492,14 +492,14 @@ void function CharacterSelectMenu_Init()
 		RegisterSignal( "LocalPlayerPickingSounds" )
 		RegisterSignal( "CloseCharacterSelectMenuAtTime" )
 
-		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, SNDC_GLOBAL_NON_REWIND, OnLockStepPickIndexChanged )
-		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, SNDC_GLOBAL_NON_REWIND, OnLockStepPickTimeChanged )
-		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, SNDC_GLOBAL_NON_REWIND, OnLockStepPickTimeChanged )
-		RegisterNetVarBoolChangeCallback( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, SNDC_PLAYER_GLOBAL, OnPlayerUpdatedCharacterLock )
-		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCKED_IN_CHARACTER_TIME, SNDC_PLAYER_GLOBAL, OnPlayerUpdatedCharacterLockTime )
+		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, OnLockStepPickIndexChanged, SNDC_GLOBAL_NON_REWIND )
+		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, OnLockStepPickTimeChanged, SNDC_GLOBAL_NON_REWIND )
+		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, OnLockStepPickTimeChanged, SNDC_GLOBAL_NON_REWIND )
+		RegisterNetVarBoolChangeCallback( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER, OnPlayerUpdatedCharacterLock, SNDC_PLAYER_GLOBAL )
+		RegisterNetVarTimeChangeCallback( CHARACTER_SELECT_NETVAR_LOCKED_IN_CHARACTER_TIME, OnPlayerUpdatedCharacterLockTime, SNDC_PLAYER_GLOBAL )
 
-		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX, SNDC_GLOBAL_NON_REWIND, OnLockStepPlayerIndexChanged )
-		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, SNDC_PLAYER_GLOBAL, OnPlayerUpdatedCharacterFocus )
+		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_LOCK_STEP_PLAYER_INDEX, OnLockStepPlayerIndexChanged, SNDC_GLOBAL_NON_REWIND )
+		RegisterNetVarIntChangeCallback( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, OnPlayerUpdatedCharacterFocus, SNDC_PLAYER_GLOBAL )
 
 		AddCallback_FullUpdate( Client_FullUpdate )
 		AddCallback_UIScriptReset( Client_UIScriptReset )
@@ -2725,15 +2725,16 @@ void function AddCallback_CustomIsCharacterLockedForPlayer( bool functionref( It
 	file.Callbacks_CustomIsCharacterLocked.append( func )
 }
 
-bool function CharacterSelect_CustomIsCharacterLockedForPlayer( ItemFlavor character, entity player )
-{
-	foreach ( func in file.Callbacks_CustomIsCharacterLocked )
-	{
-		if ( func( character, player ) )
-			return true
-	}
-	return false
-}
+// Moved to workarounds.gnut for load order
+//bool function CharacterSelect_CustomIsCharacterLockedForPlayer( ItemFlavor character, entity player )
+//{
+//	foreach ( func in file.Callbacks_CustomIsCharacterLocked )
+//	{
+//		if ( func( character, player ) )
+//			return true
+//	}
+//	return false
+//}
 #endif
 
 //	██████╗ ██╗   ██╗████████╗████████╗ ██████╗ ███╗   ██╗     █████╗  ██████╗████████╗██╗ ██████╗ ███╗   ██╗

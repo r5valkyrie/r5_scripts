@@ -1,4 +1,5 @@
 global function ScoreShared_Init
+global function ScoreEvent_SetXpValue
 
 global function ScoreEvent_FromId
 global function ScoreEventForTitanEntityKilled
@@ -82,6 +83,9 @@ global struct ScoreEvent
 	float 	earnMeterOwnValue = 0.00
 	float 	earnMeterEarnValue = 0.00
 	float 	coreMeterScalar = 1.00 //Decouples the core meter earn rate from titan build rate.
+
+	int		xpValue = 0
+	bool	isTeamXp = false
 }
 
 struct
@@ -239,6 +243,12 @@ int function ScoreEvent_GetEventId( ScoreEvent scoreEvent )
 void function ScoreEvent_SetPointValue( ScoreEvent scoreEvent, int value )
 {
 	scoreEvent.pointValue = value
+}
+
+void function ScoreEvent_SetXpValue( ScoreEvent event, int xpValue, bool isTeam )
+{
+	event.xpValue = xpValue
+	event.isTeamXp = isTeam
 }
 
 int function ScoreEvent_GetPointValue( ScoreEvent scoreEvent )

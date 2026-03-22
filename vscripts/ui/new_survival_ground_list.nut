@@ -505,7 +505,7 @@ void function UIToClient_NEW_SurvivalGroundListOpened( var menu )
 		}
 		else
 		{
-			EHI ornull ownerEHI = GetEHIForDeathBox( deathBox )
+			EHI ornull ownerEHI = GetDeathBoxOwnerEHI( deathBox )
 			if ( ownerEHI != null )
 			{
 				expect EHI( ownerEHI )

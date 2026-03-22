@@ -29,10 +29,10 @@ global function ClientCallback_BroadcastFavoredQuip
 #if CLIENT || UI
 global function CreateNestedRuiForQuip
 global function EmoteIcon_PopulateNestedRui
-global function ItemFlavor_GetQuipArrayForCharacter
 global function ItemFlavor_GetFavoredQuipArrayForCharacter
 #endif
 
+global function ItemFlavor_GetQuipArrayForCharacter
 global function CharacterQuip_GetCharacterFlavor
 global function CharacterQuip_GetAliasSubName
 global function Loadout_CharacterQuip
@@ -238,12 +238,12 @@ bool function CharacterQuip_IsTheEmpty( ItemFlavor flavor )
 	}
 }
 
-#if CLIENT || UI
-array<ItemFlavor> function ItemFlavor_GetQuipArrayForCharacter( ItemFlavor characterClass, bool characterEmotesOnly = false )
+// S22: removed #if CLIENT || UI guard - function now uses ToEHI(player) instead of LocalClientEHI()
+array<ItemFlavor> function ItemFlavor_GetQuipArrayForCharacter( entity player, ItemFlavor characterClass, bool characterEmotesOnly = false )
 {
 	array<ItemFlavor> quips = []
 
-	EHI playerEHI = LocalClientEHI()
+	EHI playerEHI = ToEHI( player )
 
 	foreach ( LoadoutEntry entry in Loadout_QuipArrayForCharacter( characterClass ) )
 	{
@@ -258,7 +258,6 @@ array<ItemFlavor> function ItemFlavor_GetQuipArrayForCharacter( ItemFlavor chara
 
 	return quips
 }
-#endif
 
 #if CLIENT || UI
 array<ItemFlavor> function ItemFlavor_GetFavoredQuipArrayForCharacter( ItemFlavor characterClass, bool characterEmotesOnly = false )

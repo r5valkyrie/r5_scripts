@@ -1763,4 +1763,3 @@ void function VaultPanel_ClientToServer_PingVaultFromMap( entity player, entity 
 #endif // SERVER
 
 
- 

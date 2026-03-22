@@ -1049,7 +1049,7 @@ void function Caustic_TT_SetLootUsability_Single( entity loot, bool isUsable )
 		// *** DEV: Uncomment to debug trigger size.
 		/*
 		#if DEVELOPER
-			 DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, COLOR_GREEN, false, 16  )
+			 //DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, <0, 255, 0>, false, 16  )
 		#endif
 		*/
 		if( IsValid( data.playerPushOutTrigger ) )
@@ -1062,7 +1062,7 @@ void function Caustic_TT_SetLootUsability_Single( entity loot, bool isUsable )
 		// *** DEV: Uncomment to debug trigger size.
 		/*
 		#if DEVELOPER
-			 DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, COLOR_RED, false, 16  )
+			 //DebugDrawCylinder( loot.GetOrigin() - < 0, 0, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT / 2 >, < 270 ,0 , 0 >, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_RADIUS, CAUSTIC_TT_PLAYERPUSHAWAYTRIGGER_HEIGHT, <255, 0, 0>, false, 16  )
 		#endif
 		*/
 			if ( IsValid( data.playerPushOutTrigger ) )

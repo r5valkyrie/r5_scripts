@@ -10,6 +10,7 @@ global function CreateMinimapRui
 global function Minimap_SetSizeScale
 global function Minimap_IsUsingLargeMinimap
 global function Minimap_SetBlankBackground
+global function MiniMapIsDisabled
 global function Minimap_SetNorthFacing
 global function Minimap_UpdateNorthFacingOnSettingChange
 
@@ -472,7 +473,7 @@ void function FS_Scenarios_MinimapDeathFieldCreated( entity ent )
 	var rui = file.minimap_base
 	RuiTrackFloat3( rui, "deathFieldOrigin", ent, RUI_TRACK_ABSORIGIN_FOLLOW )
 	RuiSetFloat( rui, "radiusScale", SURVIVAL_MINIMAP_RING_SCALE )
-	Minimap_SetDeathFieldRadius( SURVIVAL_GetDeathFieldCurrentRadius() )
+	Minimap_SetDeathFieldRadius( Cl_SURVIVAL_GetDeathFieldCurrentRadius() )
 	RuiSetBool( rui, "drawDeathField", true )
 }
 
@@ -1897,7 +1898,7 @@ void function UpdateFullmapRuiTracks()
 	RuiTrackBool( file.fullmap_legendRui, "pingEnabled", viewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "pingEnabled" ) )
 
 	// set circle data
-	int roundNumber = SURVIVAL_GetCurrentDeathFieldStage() + 1
+	int roundNumber = SURVIVAL_GetCurrentDeathFieldStage( 0 ) + 1
 	if ( roundNumber < 1 )
 		return
 
@@ -1918,12 +1919,10 @@ void function UpdateFullmapRuiTracks()
 	int currentDeathFieldStage = SURVIVAL_GetCurrentDeathFieldStage()
 	if ( currentDeathFieldStage > -1 )
 	{
-		DeathFieldStageData data = GetDeathFieldStage( currentDeathFieldStage )
-		float currentRadius      = SURVIVAL_GetDeathFieldCurrentRadius()
-		float endRadius          = data.endRadius
-
+		// GetDeathFieldStage uses SERVER-only data; use CLIENT radius directly
+		float currentRadius = Cl_SURVIVAL_GetDeathFieldCurrentRadius()
 		RuiSetFloat( file.fullmap_gamestateRui, "deathfieldStartRadius", currentRadius )
-		RuiSetFloat( file.fullmap_gamestateRui, "deathfieldEndRadius", endRadius )
+		RuiSetFloat( file.fullmap_gamestateRui, "deathfieldEndRadius", 0.0 )
 	}
 
 	RuiTrackFloat3( file.fullmap_gamestateRui, "playerOrigin", viewPlayer, RUI_TRACK_ABSORIGIN_FOLLOW )
@@ -2001,7 +2000,7 @@ void function RemoveMapFeatureItemByName( string titleText )
 }
 
 
-MapFeature function SetMapFeatureItem( int priority, string titleText, string descText, asset icon )
+MapFeature function SetMapFeatureItem( int priority, string titleText, string descText, asset icon, vector color = <1.0, 1.0, 1.0> )
 {
 	MapFeature mapFeature
 

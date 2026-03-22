@@ -454,8 +454,7 @@ void function ShGladiatorCards_LevelInit()
 		AddCallback_OnPlayerLifeStateChanged( OnPlayerLifestateChanged )
 		AddCallback_PlayerClassChanged( OnPlayerClassChanged )
 
-		// UPGRADE_CORE system not available
-		//RegisterNetVarIntChangeCallback( UPGRADE_CORE_SELECTED_UPGRADES, GladiatorCards_PlayerCompletedLevelChanged )
+		RegisterNetVarIntChangeCallback( UPGRADE_CORE_SELECTED_UPGRADES, GladiatorCards_PlayerCompletedLevelChanged )
 
 		AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 
@@ -773,7 +772,7 @@ GladCardBadgeDisplayData function GetBadgeData( EHI playerEHI, ItemFlavor ornull
 
 	// RUI script may handle tiering logic for certain cases for GRX badges
 	array<GladCardBadgeTierData> tierDataList = GladiatorCardBadge_GetTierDataList( badge )
-	if ( ItemFlavor_GetGRXMode( badge ) == eItemFlavorGRXMode.REGULAR && !( tierIndex >= 0 && tierIndex < tierDataList.len() ) )
+	if ( ItemFlavor_GetGRXMode( badge ) == eItemFlavorGRXMode.REGULAR && !(tierIndex >= 0 && tierIndex < tierDataList.len()) )
 		tierIndex = 0
 
 	if ( tierIndex >= 0 && tierIndex < tierDataList.len() )
@@ -1785,14 +1784,10 @@ void function ActualUpdateNestedGladiatorCard( NestedGladiatorCardHandle handle 
 				if ( handle.overrideMeleeSkin != null )
 					meleeSkinOrNull = handle.overrideMeleeSkin
 
-				// Melee skins may not be registered for all characters
-				if ( MeleeSkin_HasLoadoutSlot( character ) )
+				LoadoutEntry meleeSkinSlot = Loadout_MeleeSkin( character )
+				if ( meleeSkinOrNull == null && havePlayer && LoadoutSlot_IsReady( handle.currentOwnerEHI, meleeSkinSlot ) )
 				{
-					LoadoutEntry meleeSkinSlot = Loadout_MeleeSkin( character )
-					if ( meleeSkinOrNull == null && havePlayer && LoadoutSlot_IsReady( handle.currentOwnerEHI, meleeSkinSlot ) )
-					{
-						meleeSkinOrNull = LoadoutSlot_GetItemFlavor( handle.currentOwnerEHI, meleeSkinSlot )
-					}
+					meleeSkinOrNull = LoadoutSlot_GetItemFlavor( handle.currentOwnerEHI, meleeSkinSlot )
 				}
 			}
 
@@ -1879,10 +1874,7 @@ void function ActualUpdateNestedGladiatorCard( NestedGladiatorCardHandle handle 
 		}
 		if ( frameRpakPath != "" )
 		{
-			handle.framePakHandleOrNull = RequestPakFile( frameRpakPath, void function() : ( handle ) {
-				if ( handle.cardRui != null )
-					TriggerNestedGladiatorCardUpdate( handle )
-			} )
+			handle.framePakHandleOrNull = RequestPakFile( frameRpakPath )
 		}
 	}
 	if ( handle.framePakHandleOrNull != null )
@@ -1978,12 +1970,27 @@ void function ActualUpdateNestedGladiatorCard( NestedGladiatorCardHandle handle 
 			RuiSetBool( handle.cardRui, "disableBlur", handle.disableBlur )
 			RuiSetString( handle.cardRui, "platformString", platformString )
 
-			// UpgradeCore not available
+			                    
+			// Upgrade core glad card RUI args not in S3
 			// if ( UpgradeCore_GladCardShowUpgrades() )
 			// {
 			// 	RuiSetBool( handle.cardRui, "canShowUpgrades", handle.canShowUpgrades )
 			// 	RuiSetBool( handle.cardRui, "showUpgrades", handle.showUpgrades )
-			// 	...
+			// 	if ( handle.showUpgrades )
+			// 	{
+			// 		entity viewPlayer = FromEHI( handle.currentOwnerEHI )
+			// 		if ( IsValid ( viewPlayer ) )
+			// 		{
+			// 			array<UpgradeCoreChoice> selectedUpgrades = UpgradeCore_GetSelectedUpgrades( viewPlayer )
+			// 			RuiSetInt( handle.cardRui, "numSlots", selectedUpgrades.len() )
+			// 			for( int i = 0; i < selectedUpgrades.len(); i++ )
+			// 			{
+			// 				array<int> upgradeChoices = UpgradeCore_GetPassiveIndexChoicesForLevel( viewPlayer, i )
+			// 				RuiSetImage( handle.cardRui, "slotImage" + i, selectedUpgrades[i].icon )
+			// 				RuiSetBool( handle.cardRui, "slotDirectionIsLeft" + i, upgradeChoices.find( selectedUpgrades[i].passiveIndex ) == 0 )
+			// 			}
+			// 		}
+			// 	}
 			// }
          
 
@@ -2403,19 +2410,17 @@ void function DoGladiatorCardCharacterCapture( CharacterCaptureState ccs )
 	}
 
 	// Make sure the models for this animSeq is loaded
-	// StreamModelsForAnim not available, skip wait loop
-	// string streamSequence = movingSeq;
-	// if ( streamSequence == "" )
-	// 	streamSequence = stillSeq
-	// while ( streamSequence != "" && !ccs.model.StreamModelsForAnim( streamSequence ) )
-	// {
-	// 	WaitFrame()
-	// }
+	string streamSequence = movingSeq;
+	if ( streamSequence == "" )
+		streamSequence = stillSeq
+	while ( streamSequence != "" && false ) // StreamModelsForAnim not in S3
+	{
+		WaitFrame()
+	}
 
-	// animWindow* properties not in ClientEntityStruct
-	// ccs.model.e.animWindowCosmeticItemFlavor = ccs.character
-	// ccs.model.e.animWindowSkinItemFlavor = ccs.skin
-	// ccs.model.e.animWindowMeleeSkinItemFlavor = ccs.meleeSkin
+	ccs.model.e.animWindowCosmeticItemFlavor = ccs.character
+	ccs.model.e.animWindowSkinItemFlavor = ccs.skin
+	ccs.model.e.animWindowMeleeSkinItemFlavor = ccs.meleeSkin
 
 	ccs.lightingRig = CreateClientSidePropDynamic( modelPos, modelAng, SCENE_CAPTURE_LIGHTING_RIG_MODEL )
 	ccs.lightingRig.MakeSafeForUIScriptHack()
@@ -2511,7 +2516,7 @@ void function DoGladiatorCardCharacterCapture( CharacterCaptureState ccs )
 	array<string> lightAttachmentNameMap = [ "LIGHT_1", "LIGHT_2", "LIGHT_3", "LIGHT_4" ]
 	foreach ( int lightIndex, string attachmentName in lightAttachmentNameMap )
 	{
-		if ( !( lightIndex >= 0 && lightIndex < room.tweakLights.len() ) )
+		if ( !(lightIndex >= 0 && lightIndex < room.tweakLights.len()) )
 		{
 			ccs.lights.append( null )
 			continue

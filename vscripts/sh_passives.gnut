@@ -120,7 +120,54 @@ global enum ePassives
 	PAS_ULT_UPGRADE_ONE,
 	PAS_ULT_UPGRADE_TWO,
 	PAS_PAS_UPGRADE_ONE,
-	
+	PAS_WEAPON_SLING,
+	PAS_REVENANT_REWORK,
+	PAS_VANTAGE,
+	PAS_ALTER,
+	PAS_ARTEMIS,
+	PAS_AUTO_EJECT,
+	PAS_AXIOM,
+	PAS_BATTERY_STACK,
+	PAS_BUBBLESHIELD,
+	PAS_CONDUIT,
+	PAS_DASH,
+	PAS_DOOMED_TIME,
+	PAS_ENHANCED_TITAN_AI,
+	PAS_EXPLOSIVE_EVO_BONUS,
+	PAS_EXTRA_ALL_MED_INV,
+	PAS_EXTRA_ARC_STARS,
+	PAS_EXTRA_ORDINANCE_SLOT,
+	PAS_FAST_HACK,
+	PAS_FREE_GRENADE_ON_ULT_CHARGE,
+	PAS_FUSION_CORE,
+	PAS_ION_WEAPON,
+	PAS_LARGE_AMMO_STACKS,
+	PAS_LOCKDOWN,
+	PAS_LONGER_BUBBLE,
+	PAS_MOD_UPGRADE_ONLY,
+	PAS_MOTHERLODE_RESISTANCE,
+	PAS_NORTHSTAR_FLIGHTCORE,
+	PAS_ONLY_ARC_STARS,
+	PAS_PAS_UPGRADE_TWO,
+	PAS_PHASE_EJECT,
+	PAS_REPAIR,
+	PAS_RONIN_AUTOSHIFT,
+	PAS_SCORCH_SELFDMG,
+	PAS_SHIELD_BOOST,
+	PAS_SHIELD_REGEN,
+	PAS_SHIFT_CORE,
+	PAS_SQUADWIPE_SQUAD_COUNT,
+	PAS_STOWED_DRONE_SCAN,
+	PAS_TAC_UPGRADE_THREE,
+	PAS_TONE_WALL,
+	PAS_UPGRADE_BEACON_SCAN,
+	PAS_UPGRADE_CAREPACKAGE_INSIGHT,
+	PAS_UPGRADE_CONSOLE_SCAN,
+	PAS_VANGUARD_COREMETER,
+	PAS_WARPFALL,
+	PAS_WEAPON_CALIBER,
+	PAS_WIFI_SPECTRE,
+
 	_count,
 }
 #endif
@@ -448,7 +495,7 @@ void function DecoyDropThink( entity player )
 
 	vector playerOrigin = player.GetOrigin()
 	float startingYaw   = FlattenAngles( VectorToAngles( player.GetViewVector() ) ).y
-	entity mover        = CreateScriptMover( playerOrigin, <0, startingYaw, 0> )
+	entity mover        = CreateScriptMover( "", playerOrigin, <0, startingYaw, 0> )
 	mover.SetAbsAngles( <0, startingYaw, 0> )
 
 	entity characterModel = CreatePropDynamic( player.GetModelName(), mover.GetOrigin(), mover.GetAngles() )
@@ -824,22 +871,7 @@ void function OnFortifiedPlayerDamaged( entity victim, var damageInfo )
 
 void function Pathfinder_PassiveToggle( entity player, int passive, bool didHave, bool nowHas )
 {
-	if ( !IsValid( player ) )
-		return
-	
-	array<entity> teamPlayers = GetPlayerArrayOfTeam( player.GetTeam() )
-	
-	if ( didHave )
-	{
-		foreach( p in teamPlayers )
-			thread SetSurveyBaconMinimapVisibility( player, false )
-	}
-
-	if ( nowHas )
-	{
-		foreach( p in teamPlayers )
-			thread SetSurveyBaconMinimapVisibility( player, true )
-	}
+	// SetSurveyBaconMinimapVisibility not available in S3
 }
 
 void function Bloodhound_PassiveToggle( entity player, int passive, bool didHave, bool nowHas )
