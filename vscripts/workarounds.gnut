@@ -149,7 +149,6 @@ global function SPL_GetRandomEndRingPosition_Slow
 // BroadcastCommsActionToTeam — now in sh_quickchat.gnut (S22)
 global function RedeployBalloon_GetSkydiveVelOverride
 global function Control_PrintSkydiveDebug
-global function SetNV_FreefallIsFromPlane
 global function MatchBehaviorPlayer_RecordDropInfo
 global function PutEntityInSomewhatSafeSpot
 global function StopAllSkydiveSounds
@@ -176,8 +175,6 @@ global function GoldenHorse_SwordCarePackageEnabled
 global function DeleteCarepackagePerkLinks
 global function SetChampion
 global function Flowstate_CheckForLv4MagazinesAndRefillAmmo
-global function GenericOffhand_AddSunglasses
-global function ActivateGenericOffhand
 global function FS_GetWeaponsThatUseThisAmmo
 global function GrantPathfinderCooldownReduction
 global function CheckPlayersIntersectingEntity
@@ -420,9 +417,6 @@ global function WaypointFocusTracking_Register
 global function WaypointFocusTracking_SetDisabled
 global function WaypointFocusTracking_TrackPos
 #endif
-#if SERVER
-global function GetGameStartTime
-#endif
 global function SURVIVAL_ResetAllDoors
 global function POIPlayerSpawning_Exists
 global function POIPlayerSpawning_SpawnPlayers
@@ -430,7 +424,6 @@ global function ForcedSpawn_SpawnAllPlayers
 global function NavMesh_GetClosestPoints
 // Highlight_SetGameModeEnemyHighlight — now in sh_highlight.gnut (S22)
 global function Lifesteal_PlayerDealtDamage
-global function RespawnEquipped_DontResetInventory
 global function StopAllSoundsOnEntity
 global function Strikeout_IsPlayerRespawnDisabled
 global function Sh_Respawn_Token_IsPlayerRespawnDisabled
@@ -448,7 +441,6 @@ global function GetPlayerGameDuration
 global function SmokeTest_IsActive
 // Waypoint_GetFriendlyThatPingedEnt — now in sh_waypoints.gnut (S22)
 global function TitanSword_ActiveWeaponIsTitanSword
-global function IsLootRoundBased
 global function ArrayRandomizeSeeded
 global function ArrayGetRandomSeeded
 global function LiveAPI_SendInventoryAction
@@ -3020,51 +3012,6 @@ int function MissionCheckpoints_GetRespawnsLeftForPlayer( entity player )
 	return 0
 }
 
-bool function UpgradeCore_ShowUpgradeTree_CharacterSelect()
-{
-	Warning( "WORKAROUND: UpgradeCore_ShowUpgradeTree_CharacterSelect() - stub" )
-	return false
-}
-
-bool function UpgradeCore_ArmorTiedToUpgrades()
-{
-	Warning( "WORKAROUND: UpgradeCore_ArmorTiedToUpgrades() - stub" )
-	return false
-}
-
-bool function UpgradeCore_IsEnabled()
-{
-	Warning( "WORKAROUND: UpgradeCore_IsEnabled() - stub" )
-	return false
-}
-
-void function UpgradeCore_ProgressionLocked_ForPlayer_Set( entity player, bool locked )
-{
-	Warning( "WORKAROUND: UpgradeCore_ProgressionLocked_ForPlayer_Set() - stub" )
-}
-
-bool function UpgradeCore_ProgressionLocked_ForPlayer_Get( entity player )
-{
-	Warning( "WORKAROUND: UpgradeCore_ProgressionLocked_ForPlayer_Get() - stub" )
-	return false
-}
-
-bool function UpgradeCore_ShowHudUpgradeSelection()
-{
-	Warning( "WORKAROUND: UpgradeCore_ShowHudUpgradeSelection() - stub" )
-	return false
-}
-
-void function UpgradeCore_RuiThread( entity player )
-{
-	Warning( "WORKAROUND: UpgradeCore_RuiThread() - stub" )
-}
-
-void function UpgradeCore_Set_Level( entity player, int level )
-{
-	Warning( "WORKAROUND: UpgradeCore_Set_Level() - stub" )
-}
-
 // stubs - PIN Telemetry (no telemetry in r5reloaded)
 void function PIN_FiringRange_Settings( entity player, int contextID, bool dynStatsOn, bool dynTimerOn, bool infReloadsOn, bool hitMarksOn, bool show3rdPerson, bool legendUpgradesEnabled, bool friendlyFireOn, int targetSpeed, ... )
 {
@@ -3837,11 +3784,6 @@ void function Control_PrintSkydiveDebug( entity player, string message )
 		printt( "R5DEV-429111: PlayerInvalid", message )
 }
 
-void function SetNV_FreefallIsFromPlane( entity player, bool newVal )
-{
-	Warning( "STUB: SetNV_FreefallIsFromPlane" )
-}
-
 void function MatchBehaviorPlayer_RecordDropInfo( entity player )
 {
 	Warning( "STUB: MatchBehaviorPlayer_RecordDropInfo" )
@@ -4001,16 +3943,6 @@ void function SetChampion( entity player )
 void function Flowstate_CheckForLv4MagazinesAndRefillAmmo( entity player )
 {
 	Warning( "STUB: Flowstate_CheckForLv4MagazinesAndRefillAmmo" )
-}
-
-void function GenericOffhand_AddSunglasses( entity player )
-{
-	Warning( "STUB: GenericOffhand_AddSunglasses" )
-}
-
-void function ActivateGenericOffhand( entity player )
-{
-	Warning( "STUB: ActivateGenericOffhand" )
 }
 
 array<entity> function FS_GetWeaponsThatUseThisAmmo( entity player, string ammoRef )
@@ -4238,13 +4170,6 @@ void function RemoveCallback_OnClientConnected( void functionref(entity) callbac
 	Warning( "STUB: RemoveCallback_OnClientConnected" )
 }
 
-#if SERVER
-float function GetGameStartTime()
-{
-	return 0.0
-}
-#endif
-
 void function SURVIVAL_ResetAllDoors()
 {
 	Warning( "STUB: SURVIVAL_ResetAllDoors" )
@@ -4278,11 +4203,6 @@ array<vector> function NavMesh_GetClosestPoints( vector origin, int numPoints )
 void function Lifesteal_PlayerDealtDamage( entity player, entity victim, entity weapon, int healthDamage, int shieldDamage, int absorbedDamage, int damageType )
 {
 	Warning( "STUB: Lifesteal_PlayerDealtDamage" )
-}
-
-bool function RespawnEquipped_DontResetInventory()
-{
-	return GetCurrentPlaylistVarBool( "respawn_equipped_dont_reset_inventory", false )
 }
 
 void function StopAllSoundsOnEntity( entity ent )
@@ -4372,12 +4292,6 @@ bool function SmokeTest_IsActive()
 bool function TitanSword_ActiveWeaponIsTitanSword( entity player )
 {
 	Warning( "STUB: TitanSword_ActiveWeaponIsTitanSword" )
-	return false
-}
-
-bool function IsLootRoundBased()
-{
-	Warning( "STUB: IsLootRoundBased" )
 	return false
 }
 
