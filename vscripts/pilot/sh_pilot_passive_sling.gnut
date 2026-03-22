@@ -647,7 +647,7 @@ void function UpdateSlingPassiveRui( entity player )
 		RuiSetBool( file.slingPassiveRui, "hasMainWeapon", false )
 
 	RuiSetBool( file.slingPassiveRui, "hasSlingWeapon", !IsPlayerWeaponSlingEmpty( player ) )
-	RunUIScript( "SurvivalInventoryMenu_SetSpaceForSling", true )
+
 }
 
 void function InitSlingPassiveRui( entity player )

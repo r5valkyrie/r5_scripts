@@ -460,18 +460,6 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 	bool isMelee = IsMeleeWeapon( selectedWeapon )
 	isTurret = isTurret || isHMG
 
-	entity slingWeapon = null
-	bool isBallistic = DoesPlayerHaveWeaponSling( player )
-	if ( isBallistic )
-	{
-		slingWeapon = GetPlayerSlingWeapon( player )
-
-		// Energize weapon check disabled - IsEnergizeWeapon not in S3
-
-		UpdateSlingPassiveRui( player )
-	}
-	RuiSetBool( rui, "isSlingVerticalOffset", isBallistic )
-
 	entity weaponInSlot0 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
 	entity weaponInSlot1 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
 
@@ -491,31 +479,8 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 	{
 		ClearRuiWeaponData( rui, isTitan )
 		RuiSetFloat( file.ammo_status_hint, "lowAmmoFrac", 0.0 )    
-
-		if ( isBallistic )
-		{
-			entity checkWeapon = IsValid( selectedWeapon ) ? selectedWeapon : IsValid( activeWeapon ) ? activeWeapon : null
-			if ( IsValid( checkWeapon ) )
-			{
-				bool isSlingWeapon = GetSlotForWeapon( player, checkWeapon ) == SLING_WEAPON_SLOT
-
-				if ( isSlingWeapon )
-				{
-					UpdateHudDataForSling( player, checkWeapon, rui )
-					UpdateHudDataForPrimaryWeaponsWhileSlingEquipped( player, checkWeapon )
-				}
-				else if ( IsBitFlagSet( GetWeaponTypeFlags_Safe( checkWeapon ), WPT_VIEWHANDS ) )
-				{
-					UpdateHudDataForPrimaryWeaponsWhileSlingEquipped( player, checkWeapon )
-				}
-			}
-		}
-
 		return
 	}
-
-	if( slingWeapon == activeWeapon && !IsValid( selectedWeapon ) )
-		return
 
 	entity selectedORActiveWeapon = IsValid( selectedWeapon ) ? selectedWeapon : ( IsValid(activeWeapon) ? activeWeapon : null )
 
@@ -629,34 +594,6 @@ void function UpdateHudDataForMainWeapons( entity player, entity selectedWeapon 
 		}
 	}
 
-	if ( DoesPlayerHaveWeaponSling( player ) )
-	{
-		if ( IsValid( selectedWeapon ) )
-		{
-			bool isSlingWeapon = GetSlotForWeapon( player, selectedWeapon ) == SLING_WEAPON_SLOT
-
-			if ( isSlingWeapon )
-			{
-				UpdateHudDataForSling( player, selectedWeapon, rui )
-				UpdateHudDataForPrimaryWeaponsWhileSlingEquipped( player, selectedWeapon )
-				return
-			}
-			else
-			{
-				var slingPassiveRui = GetSlingPassiveRui()
-
-				if ( slingPassiveRui != null )
-				{
-					RuiSetBool( slingPassiveRui, "showOtherWeapons", false )
-					RuiSetBool( slingPassiveRui, "showActiveWeaponSlot0", false )
-					RuiSetBool( slingPassiveRui, "showActiveWeaponSlot1", false )
-					RuiSetBool( slingPassiveRui, "slot0WeaponIconIsMastered", false )
-					RuiSetBool( slingPassiveRui, "slot1WeaponIconIsMastered", false )
-				}
-			}
-		}
-	}
-
 	if ( isMainWeapon )
 	{
 		InitWeaponRuiTracks( rui, player, selectedWeapon )
@@ -753,134 +690,12 @@ void function UpdateHudDataForHMG( entity player, entity selectedWeapon, var rui
 
 void function UpdateHudDataForSling( entity player, entity selectedWeapon, var rui )
 {
-	ClearRuiWeaponData( rui, false )
 
-	RuiSetBool( rui, "isMainWeaponSelected", true )
-	RuiSetBool( rui, "noMainWeaponEquiped", false )
-
-	UpdateRUIWeaponData( player, rui, selectedWeapon, 1, true )
-
-	array<string> attachments = GetAllAttachmentPoints()
-	foreach ( attachmentName in attachments )
-	{
-		RuiSetBool( rui, ruiAttachmentAllowedArgs[attachmentName], false )
-		RuiSetInt( rui, ruiAttachmentTierArgs[attachmentName], 0 )
-		RuiSetImage( rui, ruiAttachmentIconArgs[attachmentName], $"" )
-	}
-
-	bool noMainWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 ) == null && player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 ) == null
-
-	RuiSetString( rui, "weaponNameTab0", noMainWeapon ? "" : "#UNEQUIP_SLING" )
-	RuiSetFloat3( rui, "ammoColorTab0", <0.1, 0.1, 0.1> )
-
-	RuiSetString( rui, "weaponSwitchOverride", "%weaponcycle%" )
-
-	RuiSetImage( rui, "hudIcon", selectedWeapon.GetWeaponSettingAsset( eWeaponVar.hud_icon ) )
-
-	InitWeaponRuiTracks( rui, player, selectedWeapon )
 }
 
 void function UpdateHudDataForPrimaryWeaponsWhileSlingEquipped( entity player, entity selectedWeapon )
 {
-	entity activeWeapon = file.lastSelectedPrimaryWeapon
-	entity slingWeapon = GetPlayerSlingWeapon( player )
 
-	var slingPassiveRui = GetSlingPassiveRui()
-
-	if ( slingPassiveRui != null )
-		RuiSetBool( slingPassiveRui, "showOtherWeapons", true )
-
-	entity weaponSlot0 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
-	entity weaponSlot1 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
-
-	if( activeWeapon != null )
-	{
-		if ( activeWeapon == weaponSlot0 )
-		{
-			RuiSetBool( slingPassiveRui, "showActiveWeaponSlot0", true )
-			RuiSetBool( slingPassiveRui, "showActiveWeaponSlot1", false )
-		}
-		else if ( activeWeapon == weaponSlot1 )
-		{
-			RuiSetBool( slingPassiveRui, "showActiveWeaponSlot0", false )
-			RuiSetBool( slingPassiveRui, "showActiveWeaponSlot1", true )
-		}
-		else
-		{
-			RuiSetBool( slingPassiveRui, "showActiveWeaponSlot0", false )
-			RuiSetBool( slingPassiveRui, "showActiveWeaponSlot1", false )
-		}
-	}
-	else
-	{
-		RuiSetBool( slingPassiveRui, "showActiveWeaponSlot0", false )
-		RuiSetBool( slingPassiveRui, "showActiveWeaponSlot1", false )
-	}
-
-
-	if ( IsValid( weaponSlot0 ) )
-	{
-		LootData weaponSlot0Data = SURVIVAL_GetLootDataFromWeapon( weaponSlot0 )
-
-		string slot0AmmoTypeRef = AmmoType_GetRefFromIndex( weaponSlot0.GetWeaponAmmoPoolType() )
-		vector slot0AmmoColor   = SrgbToLinear( GetAmmoColorByType( slot0AmmoTypeRef ) )
-
-		if( weaponSlot0Data.tier == eLootTier.MYTHIC )
-			slot0AmmoColor   = SrgbToLinear( GetAmmoColorByType( "supply_drop" ) )
-
-		RuiSetFloat3( slingPassiveRui, "slot0BorderColor", slot0AmmoColor )
-		RuiSetImage( slingPassiveRui, "slot0WeaponIcon", weaponSlot0.GetWeaponSettingAsset( eWeaponVar.hud_icon ) )
-		WeaponRuiUpdateMastery( slingPassiveRui, weaponSlot0, "slot0WeaponIconMastered", "slot0WeaponIconIsMastered", "slot0MoreSparksMastered" )
-	}
-	else
-	{
-		RuiSetFloat3( slingPassiveRui, "slot0BorderColor", <0.2, 0.2, 0.2> )
-		RuiSetImage( slingPassiveRui, "slot0WeaponIcon", $"" )
-		RuiSetBool( slingPassiveRui, "slot0WeaponIconIsMastered", false )
-	}
-
-	if ( IsValid( weaponSlot1 ) )
-	{
-		LootData weaponSlot1Data = SURVIVAL_GetLootDataFromWeapon( weaponSlot1 )
-
-		string slot1AmmoTypeRef = AmmoType_GetRefFromIndex( weaponSlot1.GetWeaponAmmoPoolType() )
-		vector slot1AmmoColor   = SrgbToLinear( GetAmmoColorByType( slot1AmmoTypeRef ) )
-
-		if( weaponSlot1Data.tier == eLootTier.MYTHIC )
-			slot1AmmoColor   = SrgbToLinear( GetAmmoColorByType( "supply_drop" ) )
-
-		RuiSetFloat3( slingPassiveRui, "slot1BorderColor", slot1AmmoColor )
-		RuiSetImage( slingPassiveRui, "slot1WeaponIcon", weaponSlot1.GetWeaponSettingAsset( eWeaponVar.hud_icon ) )
-		WeaponRuiUpdateMastery( slingPassiveRui, weaponSlot1, "slot1WeaponIconMastered", "slot1WeaponIconIsMastered", "slot1MoreSparksMastered" )
-	}
-	else
-	{
-		RuiSetFloat3( slingPassiveRui, "slot1BorderColor", <0.2, 0.2, 0.2> )
-		RuiSetImage( slingPassiveRui, "slot1WeaponIcon", $"" )
-		RuiSetBool( slingPassiveRui, "slot1WeaponIconIsMastered", false )
-	}
-
-	if ( weaponSlot0 == null && weaponSlot1 == null && slingWeapon == null )
-	{
-		RuiSetBool( slingPassiveRui, "showOtherWeapons", false )
-		RuiSetBool( slingPassiveRui, "showActiveWeaponSlot0", false )
-		RuiSetBool( slingPassiveRui, "showActiveWeaponSlot1", false )
-	}
-	else if ( weaponSlot0 == null && weaponSlot1 == null && slingWeapon == activeWeapon  )
-	{
-		RuiSetBool( slingPassiveRui, "showOtherWeapons", true )
-		RuiSetBool( slingPassiveRui, "showActiveWeaponSlot0", false )
-		RuiSetBool( slingPassiveRui, "showActiveWeaponSlot1", false )
-	}
-	else if ( IsValid( selectedWeapon ) )
-	{
-		if ( IsBitFlagSet( GetWeaponTypeFlags_Safe( selectedWeapon ), WPT_VIEWHANDS ) )
-		{
-			RuiSetBool( slingPassiveRui, "showOtherWeapons", false )
-			RuiSetBool( slingPassiveRui, "showActiveWeaponSlot0", false )
-			RuiSetBool( slingPassiveRui, "showActiveWeaponSlot1", false )
-		}
-	}
 }
 
 void function UpdateHudDataForVantageSniper( entity player, entity selectedWeapon, bool selected, var rui )
@@ -953,7 +768,6 @@ void function ClearRuiWeaponData( var rui, bool isTitan )
 	RuiSetBool( rui, "ammoPoolVisible", false )
 
 	RuiSetImage( rui, "hudIcon", $"" )
-	RuiSetBool( rui, "isMastered", false )
 	RuiSetBool( rui, "useHudOverrideIcon", false )
 	RuiSetImage( rui, "hudOverrideIcon", $"" )
 
@@ -1386,24 +1200,6 @@ void function UpdateModsOnSurvivalWeaponRui( var rui, entity weapon )
 	bool isTurret = GetWeaponInfoFileKeyField_GlobalInt_WithDefault( weapon.GetWeaponClassName(), "is_turret_weapon" , 0 ) == 1
 
 	entity player = weapon.GetWeaponOwner()
-	bool isSlingWeapon = GetSlotForWeapon( player, weapon ) == SLING_WEAPON_SLOT
-
-	if ( !SURVIVAL_Loot_IsRefValid( weaponData.ref ) || isSlingWeapon )
-	{
-		array<string> attachments = GetAllAttachmentPoints()
-		foreach ( attachmentName in attachments )
-		{
-			RuiSetBool( rui, ruiAttachmentAllowedArgs[attachmentName], false )
-			RuiSetInt( rui, ruiAttachmentTierArgs[attachmentName], 0 )
-			RuiSetImage( rui, ruiAttachmentIconArgs[attachmentName], $"" )
-		}
-
-		if ( !isTurret )
-			return
-
-		if( isSlingWeapon )
-			return
-	}
 
 	array<string> attachments = GetAllAttachmentPoints()
 	array<string> mods        = weapon.GetMods()
@@ -1937,7 +1733,6 @@ void function WeaponStatusSetWeaponInspect( bool inspect )
 
 
 	additionalWeaponInspectRuis.append( GetVantageTacticalRui() )
-	additionalWeaponInspectRuis.append( GetSlingPassiveRui() )
 
 		additionalWeaponInspectRuis.append( GetConduitShieldRui() )
 
@@ -2010,37 +1805,7 @@ void function InitWeaponRuiTracks( var rui, entity player, entity weapon )
 
 void function WeaponRuiUpdateMastery( var rui, entity weapon, string ruiHudIconMastered = "hudIconMastered", string ruiIsMastered = "isMastered", string ruiHasMoreSparks = "moreSparksMastered" )
 {
-	LootData weaponData = SURVIVAL_GetLootDataFromWeapon( weapon )
 
-	bool hasMoreSparks = false
-	asset masteredHudIcon = $""
-
-	if( SURVIVAL_Loot_IsRefValid( weaponData.ref ) )
-	{
-		if( IsWeaponKeyFieldDefined( weaponData.baseWeapon, "hud_icon_mastered" ) )
-			masteredHudIcon = GetKeyValueAsAsset( { kn = GetWeaponInfoFileKeyField_GlobalString(weapon.GetWeaponBaseClassName(), "hud_icon_mastered") }, "kn" )
-
-		if( IsWeaponKeyFieldDefined( weaponData.baseWeapon, "menu_category" ) )
-		{
-			asset menuCategory = GetKeyValueAsAsset( { kn = GetWeaponInfoFileKeyField_GlobalString(weapon.GetWeaponBaseClassName(), "menu_category") }, "kn" )
-			hasMoreSparks = menuCategory == "pistol" 
-		}
-	}
-
-	RuiSetImage( rui, ruiHudIconMastered, masteredHudIcon )
-	RuiSetBool( rui, ruiHasMoreSparks, hasMoreSparks )
-
-	ItemFlavor ornull weaponItemOrNull = GetWeaponItemFlavorByClass( weapon.GetWeaponClassName() )
-	if ( weaponItemOrNull != null )
-	{
-		expect ItemFlavor( weaponItemOrNull )
-
-		RuiSetBool( rui, ruiIsMastered, false ) // Mastery_GetWeaponLevel not in S3
-	}
-	else
-	{
-		RuiSetBool( rui, ruiIsMastered, false )
-	}
 }
 
 void function OnPlayerClassChanged( entity player )
@@ -2079,10 +1844,6 @@ void function UpdateOffhandRuis( entity player )
 	var cryptoTacticalRui = GetCryptoAnimatedTacticalRui()
 	if ( cryptoTacticalRui != null )
 		UpdateOffhandRuiVisibility( cryptoTacticalRui, "%offhand1%" )
-
-	var slingPassiveRui = GetSlingPassiveRui()
-	if ( slingPassiveRui != null )
-		UpdateOffhandRuiVisibility( slingPassiveRui, "%offhand1%" )
 
 	if ( !player.IsTitan() )
 	{

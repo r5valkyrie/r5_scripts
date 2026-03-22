@@ -221,7 +221,7 @@ struct
 
 void function Staging_Area_Init()
 {
-
+	return
 	ITEM_RESPAWN_TIME = GetCurrentPlaylistVarFloat( "firing_range_item_respawn_time", ITEM_RESPAWN_TIME_DEFAULT )
 
 	file.stagingAreaEnabled = GetCurrentPlaylistVarBool( "survival_staging_area_enabled", false )

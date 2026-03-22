@@ -155,8 +155,8 @@ struct {
 
 void function Cl_Survival_InventoryInit()
 {
-	
-	
+
+
 
 
 
@@ -231,7 +231,6 @@ void function ResetInventoryMenuInternal( entity player )
 	if ( player == GetLocalClientPlayer() && player == GetLocalViewPlayer() )
 		UpdateHealHint( player )
 
-	RunUIScript( "SurvivalInventoryMenu_SetSpaceForSling", DoesPlayerHaveWeaponSling( player ) )
 
 	PerfEnd( PerfIndexClient.InventoryRefreshTotal )
 }
@@ -274,7 +273,7 @@ bool function Survival_DropInventoryItem( string ref, int num )
 		return false
 
 	entity deathbox = null
-	if ( IsValid( file.currentGroundListData.deathBox ) && file.currentGroundListData.behavior == eGroundListBehavior.CONTENTS ) 
+	if ( IsValid( file.currentGroundListData.deathBox ) && file.currentGroundListData.behavior == eGroundListBehavior.CONTENTS )
 	{
 		deathbox = file.currentGroundListData.deathBox
 	}
@@ -349,15 +348,15 @@ bool function BackpackAction( int lootAction, string slotIndexString )
 			return Survival_DropInventoryItem( lootData.ref, playerInventory[foundIndex].count )
 			break
 
-			
+
 
 		case eLootAction.ATTACH_TO_ACTIVE:
 		case eLootAction.ATTACH_TO_STOWED:
-			
-			
-			
+
+
+
 			Remote_ServerCallFunction( "ClientCallback_Sur_EquipAttachment", lootData.index, -1 )
-			
+
 			break
 
 		case eLootAction.EQUIP:
@@ -527,7 +526,7 @@ void function UICallback_BackpackOpened()
 
 void function UICallback_BackpackClosed()
 {
-	if ( !IsValidSignal( "BackpackClosed" ) ) 
+	if ( !IsValidSignal( "BackpackClosed" ) )
 			return
 
 	entity oldDeathBoxEnt = file.currentGroundListData.deathBox
@@ -1305,7 +1304,7 @@ void function UICallback_UpdateEquipmentButton( var button )
 		entity gadgetWeapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_GADGET )
 		if( IsValid( gadgetWeapon ) && SURVIVAL_Loot_IsRefValid( gadgetLootData.ref ) )
 		{
-			if ( gadgetWeapon.GetWeaponPrimaryClipCount() > 0 && gadgetWeapon.GetWeaponPrimaryClipCountMax() > 1 ) 
+			if ( gadgetWeapon.GetWeaponPrimaryClipCount() > 0 && gadgetWeapon.GetWeaponPrimaryClipCountMax() > 1 )
 			{
 				RuiSetInt( rui, "maxCount", gadgetWeapon.GetWeaponPrimaryClipCountMax() )
 				RuiSetInt( rui, "count", gadgetWeapon.GetWeaponPrimaryClipCount() )
@@ -1321,7 +1320,7 @@ void function UICallback_UpdateEquipmentButton( var button )
 		entity weapon          = player.GetNormalWeapon( esWeapon.weaponSlot )
 
 		LootData wData = SURVIVAL_GetLootDataFromWeapon( weapon )
-		
+
 		RuiSetBool( rui, "isFullyKitted", SURVIVAL_IsAttachmentPointLocked( wData.ref, attachmentPoint ) )
 		RuiSetBool( rui, "showBrackets", true )
 
@@ -1482,10 +1481,10 @@ void function EquipmentButtonInit( var button, string equipmentSlot, LootData lo
 	RuiSetInt( rui, "count", count )
 	RuiSetBool( rui, "dimIcon", SURVIVAL_EquipmentPretendsToBeBlank( lootData.ref ) )
 
-	
-	
-	
-	RuiSetString( rui, "passiveText", "" ) 
+
+
+
+	RuiSetString( rui, "passiveText", "" )
 
 	bool isMainWeapon = EquipmentSlot_IsMainWeaponSlot( equipmentSlot )
 	if ( isMainWeapon || equipmentSlot == SLING_EQUIPMENT_SLOT_NAME )
@@ -1667,7 +1666,7 @@ void function UICallback_PingIsMyUltimateReady( var button )
 
 	PIN_UltimateReadyPing( player, GetEnumString( "eCommsAction", commsAction ).tolower(), IsValid( player.GetOffhandWeapon( OFFHAND_ULTIMATE ) ) )
 
-	
+
 	Quickchat( commsAction, null )
 }
 
@@ -1811,21 +1810,21 @@ int function SortByPriorityThenTierForGroundLoot( GroundLootData a, GroundLootDa
 
 void function UICallback_EnableTriggerStrafing()
 {
-	
-	
-	
-	
-	
+
+
+
+
+
 }
 
 
 void function UICallback_DisableTriggerStrafing()
 {
-	
-	
-	
-	
-	
+
+
+
+
+
 }
 
 bool function IsGroundLootPinged( GroundLootData grounLootData, entity player = null )
@@ -2159,7 +2158,7 @@ void function UIToClient_UpdateInventoryDpadTooltipText( string ref, string empt
 
 		RunUIScript( "ClientToUI_UpdateInventoryDpadTooltip", itemTitle, backpackAction, backpackAltAction, commsPrompt, specialPrompt, backpackPrimarySwapAction, backpackCharacterAction1, backpackCharacterAction2 )
 	}
-	else 
+	else
 	{
 		string specialPrompt = ""
 		if ( EquipmentSlot_IsValidEquipmentSlot( equipmentSlot ) && EquipmentSlot_IsAttachmentSlot( equipmentSlot ) )
@@ -2188,7 +2187,7 @@ void function GroundItemUpdate( entity player, array<entity> loot )
 	}
 	else
 	{
-		
+
 		if ( file.lastLoot.len() == loot.len() )
 		{
 			int length = loot.len()
@@ -2545,8 +2544,8 @@ bool function ShouldShowHealHint( entity player )
 	if ( !Consumable_CanUseConsumable( player, kitType, false ) && !CanDeployHealDrone( player ) )
 		return false
 
-	
-	
+
+
 
 
 
@@ -2698,12 +2697,12 @@ void function EquipAttachment( entity player, string item, string weaponName )
 	if ( Bleedout_IsBleedingOut( player ) )
 		return
 
-	
-	
-	
+
+
+
 	LootData data = SURVIVAL_Loot_GetLootDataByRef( item )
 	Remote_ServerCallFunction( "ClientCallback_Sur_EquipAttachment", 	data.index, -1)
-	
+
 
 	ServerCallback_ClearHints()
 }
@@ -2871,7 +2870,7 @@ void function UICallback_OnInventoryMouseDrop( var dropButton, var sourcePanel, 
 			Hud_SetVisible( dropButton, PlayerHasPassive( player, des.passiveRequired ) )
 	}
 
-	
+
 	if ( dropEquipmentSlot == sourceEquipmentSlot || dropEquipmentSlot == sourceEquipmentWeaponSlot )
 		return
 
@@ -2900,7 +2899,7 @@ void function UICallback_OnInventoryMouseDrop( var dropButton, var sourcePanel, 
 		data = EquipmentSlot_GetEquippedLootDataForSlot( player, equipmentSlot )
 	}
 
-	
+
 	if ( EquipmentSlot_IsValidEquipmentSlot( dropEquipmentSlot ) )
 	{
 		if ( EquipmentSlot_IsMainWeaponSlot( dropEquipmentSlot ) )
@@ -3088,7 +3087,7 @@ void function UICallback_UpdateTeammateInfo( var elem, bool isCompact )
 
 
 
-		
+
 		team.sort( SquadMemberIndexSort )
 
 		if ( teammateIndex < team.len() )
@@ -3132,7 +3131,7 @@ void function UICallback_UpdateTeammateUpgrades( var elem, int upgradeIndex )
 
 
 
-	
+
 	team.sort( SquadMemberIndexSort )
 
 	if ( teammateIndex >= team.len() )
@@ -3209,7 +3208,7 @@ void function TEMP_UpdateUltimateInfo( var rui, entity player )
 
 void function UpdateInventoryUltimateRui( var rui, entity player, entity weapon )
 {
-	
+
 	Assert ( IsNewThread(), "Must be threaded off." )
 
 	// UpdateOffhandRuiCommon( rui, player, weapon, OFFHAND_ULTIMATE, false ) // not in S3 cl_weapon_status
@@ -3226,7 +3225,7 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
 	asset legendIcon      = CharacterClass_GetGalleryPortrait( character )
 	RuiSetImage( rui, "playerIcon", legendIcon )
-	RuiSetInt( rui, "micStatus", player.HasMic() ? 3 : -1 ) 
+	RuiSetInt( rui, "micStatus", player.HasMic() ? 3 : -1 )
 
 	while ( true )
 	{
@@ -3306,7 +3305,7 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 			UpgradeCore_UpdateSelectedUpgradeRui( rui, player )
 			UpgradeCore_UpdateXpRui( rui, player )
 
-			
+
 			int extraShields = GetPlayerExtraShields( player )
 			RunUIScript( "SurvivalInventoryMenu_SetEquipmentButtonFxState", "armor", ( extraShields > 0 ) )
 			RunUIScript( "RTKLegendUpgradesArmorCore_UpdateArmorCoreDataModel" )
@@ -3320,7 +3319,7 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 		SquadLeader_UpdateUnitFrameRui( player, rui )
 		Status_UpdatePlayerUnitFrameRui( player, rui )
 
-		
+
 		OverwriteWithCustomPlayerInfoTreatment( player, rui )
 
 		PlayerInfo_UpdatePossibleHealTo( player, rui )
@@ -3368,7 +3367,7 @@ void function TEMP_UpdateTeammateRui( var elem, bool isCompact )
 
 		}
 
-		
+
 		team.sort( SquadMemberIndexSort )
 
 		RuiSetBool( rui, "isJIP", false )
@@ -3382,7 +3381,7 @@ void function TEMP_UpdateTeammateRui( var elem, bool isCompact )
 			ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( ent ), Loadout_Character() )
 			asset legendIcon      = CharacterClass_GetGalleryPortrait( character )
 			RuiSetImage( rui, "icon", legendIcon )
-			RuiSetInt( rui, "micStatus", ent.HasMic() ? 3 : -1 ) 
+			RuiSetInt( rui, "micStatus", ent.HasMic() ? 3 : -1 )
 			RuiSetBool( rui, "compactMode", isCompact )
 
 			if( UpgradeCore_IsEnabled() )
@@ -3472,7 +3471,7 @@ void function TEMP_UpdateTeammateRui( var elem, bool isCompact )
 
 			RuiSetInt( rui, "micStatus", GetPlayerMicStatus( ent ) )
 
-			
+
 			RuiSetGameTime( rui, "realGameTime", Time() )
 			RuiSetFloat( rui, "hackStartTime", ent.GetPlayerNetTime( "hackStartTime" ) )
 
