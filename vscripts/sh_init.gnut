@@ -170,7 +170,7 @@ void function SV_CL_Init()
 	ShItemPerPlayerState_LevelInit()
 	ShLoadouts_LevelInit_Finish()
 	ShStatsInternals_LevelInit()
-	ShStats_LevelInit() //before SV_CL_Onboarding_Init
+	ShStats_LevelInit()
 	ShChallenges_LevelInit_PostStats()
 	ShDoors_Init()
 	PlayerWaypoints_Init()
@@ -216,8 +216,6 @@ void function SV_CL_Init()
 	ShFlyers_Init()
 
 	ShGameModeShadowSquad_Init()
-
-	SV_CL_Onboarding_Init()
 
 	ShTutorial_Init()
 	Sh_PassiveVoices_Init()

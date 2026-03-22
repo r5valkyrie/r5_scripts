@@ -200,7 +200,7 @@ void function Arenas_EntitiesDidLoad()
 }
 
 // WaitingForPlayers -> PickLoadout -> Prematch -> Playing is handled by
-// the standard onboarding system in sh_onboarding.gnut.
+// the standard gamestate system.
 // Team assignment uses GiveInitialTeamToPlayer which respects max_team_size
 // and max_players playlist vars (TEAM_IMC and TEAM_MILITIA for 2-team arenas).
 

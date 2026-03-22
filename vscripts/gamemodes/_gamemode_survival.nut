@@ -97,6 +97,7 @@ global function Survival_AddCallback_OnPlayerSetupComplete
 global function Survival_SetCallback_ModeShouldSpawnPlayersDuringCharacterSelect
 global function Survival_OverrideGetLivingPlayerCountFunction
 global function Survival_OverrideGetRemainingSquadsFunction
+global function UpdatePlayerCounts
 
 global function _GetSquadRank
 
@@ -2911,6 +2912,13 @@ void function Survival_OverrideGetRemainingSquadsFunction( int functionref() fun
 	Assert( func != null, "Tried setting Survival_OverrideGetRemainingSquadsFunction with a null function!" )
 	if ( func != null )
 		file.getRemainingSquadsFunction = func
+}
+
+void function UpdatePlayerCounts()
+{
+	SetGlobalNetInt( "connectedPlayerCount", GetPlayerArray_ConnectedNotSpectatorTeam().len() )
+	SetGlobalNetInt( "livingPlayerCount", Survival_GetLivingPlayerCount() )
+	SetGlobalNetInt( "squadsRemainingCount", Survival_GetRemainingSquadsCount() )
 }
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )

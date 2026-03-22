@@ -268,6 +268,17 @@ global function TitanSword_GetFuelRui
 // WPT_* constants are engine-registered — do NOT redefine here
 // GetMaxStickersForObjectType now in sh_stickers.nut
 
+// Custom loadout/spectating/character assignment functions
+#if SERVER
+global function TakeLoadoutRelatedWeapons
+global function GiveLoadoutRelatedWeapons
+global function GiveLoadoutRelatedWeapons_HaloMod
+global function PlayerStopSpectating
+global function Flowstate_AssignUniqueCharacterForPlayer
+global function Flowstate_SetAssignedCustomModelToPlayer
+global function Flowstate_ApplyModifiedMovementToPlayer
+#endif
+
 #if SERVER
 global function WeaponRuiUpdateMastery
 global function ClWeaponStatus_OverrideReloadHintText
@@ -4520,4 +4531,206 @@ void function AirdropExtravaganazaCleanupPod( entity pod, float delay = 0.0 )
 	Warning( "STUB: AirdropExtravaganazaCleanupPod" )
 }
 
+// Custom loadout/spectating/character assignment implementations
+#if SERVER
+void function TakeLoadoutRelatedWeapons( entity player )
+{
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
+	if(IsValid(player.GetOffhandWeapon( OFFHAND_SLOT_FOR_CONSUMABLES )))
+		player.TakeOffhandWeapon( OFFHAND_SLOT_FOR_CONSUMABLES )
+
+	if(IsValid(player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 )))
+		player.TakeNormalWeaponByIndexNow( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
+
+	if(IsValid(player.GetOffhandWeapon( OFFHAND_MELEE )))
+		player.TakeOffhandWeapon( OFFHAND_MELEE )
+
+	if(IsValid(player.GetOffhandWeapon( OFFHAND_TACTICAL )))
+		player.TakeOffhandWeapon( OFFHAND_TACTICAL )
+	if(IsValid(player.GetOffhandWeapon( OFFHAND_ULTIMATE )))
+		player.TakeOffhandWeapon( OFFHAND_ULTIMATE )
+
+	TakeAllPassives( player )
+}
+
+void function GiveLoadoutRelatedWeapons( entity player )
+{
+	TakeLoadoutRelatedWeapons(player)
+
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+	ItemFlavor tactical = CharacterClass_GetTacticalAbility( character )
+	ItemFlavor ultimate = CharacterClass_GetUltimateAbility( character )
+	array<ItemFlavor> passives = CharacterClass_GetPassiveAbilities( character )
+
+	player.GiveOffhandWeapon( CONSUMABLE_WEAPON_NAME, OFFHAND_SLOT_FOR_CONSUMABLES, [] )
+	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( tactical ), OFFHAND_TACTICAL, [] )
+	player.GiveOffhandWeapon( CharacterAbility_GetWeaponClassname( ultimate ), OFFHAND_ULTIMATE, [] )
+
+	if( !Safe_is1v1EnabledAndAllowed() || Safe_isScenariosMode() )
+	{
+		player.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
+		player.GiveOffhandWeapon( "melee_pilot_emptyhanded", OFFHAND_MELEE, [] )
+	}
+
+	if( !Flowstate_GivePassive() || !Flowstate_PassivesAllowedForMode() )
+		return
+
+	foreach ( ItemFlavor passive in passives )
+	{
+		GivePassive( player, CharacterAbility_GetPassiveIndex( passive ) )
+
+		string passiveWeaponMod = CharacterAbility_GetPassiveWeaponMod( passive )
+		if ( passiveWeaponMod != "" )
+			GiveExtraWeaponMod( player, passiveWeaponMod )
+	}
+
+	if( ItemFlavor_GetHumanReadableRef( character ) == "character_caustic" || ItemFlavor_GetHumanReadableRef( character ) == "character_gibraltar" )
+	{
+		if( !PlayerHasPassive( player, ePassives.PAS_FORTIFIED) )
+			GivePassive( player, ePassives.PAS_FORTIFIED )
+	}
+	else if( ItemFlavor_GetHumanReadableRef( character ) == "character_crypto" )
+	{
+		if( !PlayerHasPassive( player, ePassives.PAS_CRYPTO ) )
+			GivePassive( player, ePassives.PAS_CRYPTO )
+	}
+
+	if( ItemFlavor_GetHumanReadableRef( character ) == "character_lifeline" ||
+		ItemFlavor_GetHumanReadableRef( character ) == "character_gibraltar" ||
+		ItemFlavor_GetHumanReadableRef( character ) == "character_mirage" )
+	{
+		if( !PlayerHasPassive( player, ePassives.PAS_SUPPORT ) )
+			GivePassive( player, ePassives.PAS_SUPPORT )
+
+		if( !PlayerHasPassive( player, ePassives.PAS_BONUS_SMALL_HEAL ) )
+			GivePassive( player, ePassives.PAS_BONUS_SMALL_HEAL )
+	}
+}
+
+void function GiveLoadoutRelatedWeapons_HaloMod( entity player )
+{
+	TakeLoadoutRelatedWeapons(player)
+
+	player.GiveOffhandWeapon( CONSUMABLE_WEAPON_NAME, OFFHAND_SLOT_FOR_CONSUMABLES, [] )
+	player.GiveWeapon( "mp_weapon_melee_survival", WEAPON_INVENTORY_SLOT_PRIMARY_2, [] )
+	player.GiveOffhandWeapon( "melee_pilot_emptyhanded_halo", OFFHAND_MELEE, [] )
+	player.GiveOffhandWeapon( "mp_ability_grapple_master_chief", OFFHAND_TACTICAL )
+	player.GiveOffhandWeapon( "mp_weapon_bubble_bunker_master_chief", OFFHAND_ULTIMATE )
+	GivePassive( player, ePassives.PAS_BATTERY_POWERED )
+}
+
+void function PlayerStopSpectating( entity player )
+{
+	player.SetPlayerNetInt( "spectatorTargetCount", 0 )
+	player.SetSpecReplayDelay( 0 )
+	player.StopObserverMode()
+}
+
+void function Flowstate_AssignUniqueCharacterForPlayer( entity player, bool lock )
+{
+	array< ItemFlavor > characters = clone GetAllCharacters()
+
+	for ( int i = characters.len() - 1; i >= 0; i-- )
+	{
+		int playlistOpinion = GetItemFlavorPlaylistOpinion( ItemFlavor_GetHumanReadableRef( characters[ i ] ) )
+		if( playlistOpinion == eItemFlavorPlaylistOpinion.LOCKED )
+			characters.remove( i )
+	}
+
+	bool quit
+	for ( int i = characters.len() - 1; i >= 0; i-- )
+	{
+		quit = false
+		foreach ( squadMate in GetPlayerArrayOfTeam( player.GetTeam() ) )
+		{
+			if( quit )
+				continue
+
+			if( squadMate == player )
+				continue
+
+			ItemFlavor mateCharacter = LoadoutSlot_GetItemFlavor( ToEHI( squadMate ), Loadout_Character() )
+			if( mateCharacter == characters[ i ] )
+			{
+				characters.remove( i )
+				quit = true
+			}
+		}
+	}
+
+	ItemFlavor initialCharacter
+
+	if( characters.len() == 0 )
+		initialCharacter = GetAllCharacters().getrandom()
+	else
+		initialCharacter = characters.getrandom()
+
+	player.SetPlayerNetInt( CHARACTER_SELECT_NETVAR_FOCUS_CHARACTER_GUID, ItemFlavor_GetGUID( initialCharacter ) )
+	CharacterSelect_AssignCharacter( player, initialCharacter )
+
+	if( !lock || IsDevGamemode() || Gamemode() == eGamemodes.WINTEREXPRESS )
+		player.SetPlayerNetBool( "hasLockedInCharacter", false )
+}
+
+void function Flowstate_SetAssignedCustomModelToPlayer( entity player, int index )
+{
+	thread function () : ( index, player )
+	{
+		EndSignal( player, "OnDestroy" )
+		WaitEndFrame()
+		switch( index )
+		{
+			case 1:
+			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_blisk.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_blisk.rmdl" )
+			break
+			case 2:
+			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_phantom.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_phantom.rmdl" )
+			break
+			case 3:
+			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_amogino.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_amogino.rmdl" )
+			break
+			case 4:
+			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_rhapsody.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_rhapsody.rmdl" )
+			break
+			case 5:
+			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_ash_legacy.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_ash_legacy.rmdl" )
+			break
+			case 6:
+			player.SetBodyModelOverride( $"mdl/Humans/pilots/w_jackcooper.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_jackcooper.rmdl" )
+			break
+			case 7:
+			player.SetBodyModelOverride( $"mdl/Humans/pilots/pilot_medium_loba.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_pilot_medium_loba.rmdl" )
+			break
+			case 8:
+			player.SetBodyModelOverride( $"mdl/Humans/pilots/pilot_heavy_revenant.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/pov_pilot_heavy_revenant.rmdl" )
+			break
+			case 9:
+			player.SetBodyModelOverride( $"mdl/Humans/pilots/ballistic_base_w.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/ballistic_base_v.rmdl" )
+			break
+			case 10:
+			player.SetBodyModelOverride( $"mdl/flowstate_custom/w_marvin.rmdl" )
+			player.SetArmsModelOverride( $"mdl/Humans/pilots/ptpov_amogino.rmdl" )
+			break
+			case 11:
+			player.SetBodyModelOverride( $"mdl/flowstate_custom/w_pete_mri.rmdl" )
+			player.SetArmsModelOverride( $"mdl/flowstate_custom/ptpov_pete_mri.rmdl" )
+			break
+		}
+	}()
+}
+
+void function Flowstate_ApplyModifiedMovementToPlayer( entity player )
+{
+	Warning( "Flowstate_ApplyModifiedMovementToPlayer - stub (movement system not loaded)" )
+}
+#endif
