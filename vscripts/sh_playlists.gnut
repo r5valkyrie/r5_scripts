@@ -40,6 +40,8 @@ global function GetPlaylistsInRotation
 global function GetPanelImageKeyForUISlot
 global function GetMapDisplayNameForUISlot
 global function GetCurrentPlaylistInUiSlot
+global function UpdateMatchmakeFromMatchPlaylist_Thread
+global function MatchRequeueCancel
 global function GetDefaultPlaylist
 global function PartyHasPlaylistAccountLevelRequired
 
@@ -576,9 +578,9 @@ asset function GetGamemodeLogoFromImageMap( string keyName )
 
 		if ( !foundLogo )
 		{
-			#if DEVELOPER
+			#if DEV
 				if ( GetConVarBool( "ui_automation_enabled" ) )
-					return imageAsset // skip the warning
+					return imageAsset                    
 			#endif       
 
 			Warning( "Invalid playlist value for 'image': %s", keyName )
@@ -814,10 +816,10 @@ bool function Playlist_IsPastRankedSeasonEndDate()
 void function ShPlaylist_Init()
 {
 	#if SERVER
-		               
-		 
-			                                                                          
-		 
+		if( IsLobby() )
+		{
+			AddCallback_Lobby_OnClientConnected( ShPlaylist_Lobby_OnClientConnected  )
+		}
 	#endif
 
 	ShPlaylist_CacheData()
@@ -830,7 +832,6 @@ void function ShPlaylist_CacheData()
 	file.cachedPlaylistMap = {}
 
 	int numPlaylists = GetPlaylistCount()
-	print( "DEBUG: ShPlaylist_CacheData - GetPlaylistCount() = " + numPlaylists )
 	file.cachedPlaylistArray.resize( numPlaylists )
 
 	for ( int index = 0; index < numPlaylists; index++ )
@@ -870,7 +871,7 @@ array<string> function GetPlaylistModNames()
 
 	list.resize( numMods )
 	for ( int modIter = 0; modIter != numMods; modIter++ )
-		list[modIter] =  GetPlaylistModName( modIter )
+		list[modIter] = GetPlaylistModName( modIter )
 
 	return list
 }
@@ -943,12 +944,8 @@ array<string> function GetVisiblePlaylistNames( bool isPrivateMatchQuery = false
 			continue
 		}
 
-		// TEMPORARILY DISABLED FOR DEBUG
-		//if ( Playlist_ShouldBeHiddenForScheduleBlocks( playlistData.name ) )
-		//{
-		//	print( "DEBUG: " + playlistData.name + " - filtered (schedule blocks)" )
-		//	continue
-		//}
+		if ( Playlist_ShouldBeHiddenForScheduleBlocks( playlistData.name ) )
+			continue
 
 		print( "DEBUG: " + playlistData.name + " - ADDED TO LIST" )
 		list.append( playlistData.name )
@@ -1283,9 +1280,7 @@ string function GetPanelImageKeyForUISlot( string uiSlot )
 	if ( playlist == "" )
 		return ""
 
-	int mapIdx = GetPlaylistActiveMapRotationIndex( playlist )
-	string panelImageKey = GetPlaylistMapVarString( playlist, mapIdx, "panel_image", "" )
-	return panelImageKey
+	return GetPlaylistVarString( playlist, "image", "" )
 }
 #endif
 #if UI
@@ -1295,8 +1290,7 @@ string function GetMapDisplayNameForUISlot( string uiSlot )
 	if ( playlist == "" )
 		return ""
 
-	int mapIdx = GetPlaylistActiveMapRotationIndex( playlist )
-	return GetPlaylistMapVarString( playlist, mapIdx, "map_name", "bug this!" )
+	return GetPlaylistVarString( playlist, "map_name", "" )
 }
 #endif
 #if UI

@@ -183,24 +183,21 @@ bool function AmIPartyMember()
 
 string function GetGameModeDisplayName( string mode )
 {
-	string displayName = GetGamemodeVarOrUseValue( mode, "name", (mode in GAMETYPE_TEXT) ? GAMETYPE_TEXT[mode] : "" )
-	return displayName
+	return "DisplayName"
 }
 
 
 string function GetGameModeDisplayDesc( string mode )
 //TODO: Make this support attack/defend descriptions
 {
-	string displayDesc = GetGamemodeVarOrUseValue( mode, "description", (mode in GAMETYPE_DESC) ? GAMETYPE_DESC[mode] : "" )
-	return displayDesc
+	return "displayDesc"
 }
 
 
 string function GetGameModeDisplayHint( string mode )
 //TODO: Make this support attack/defend descriptions
 {
-	string displayDesc = GetGamemodeVarOrUseValue( mode, "hint", GetGameModeDisplayDesc( mode ) )
-	return displayDesc
+	return "displayDesc"
 }
 
 //asset function GetGameModeDisplayImage( string mode )
@@ -225,8 +222,8 @@ array<int> function ColorStringToArray( string colorString )
 array<int> function GetGameModeDisplayColor( string mode )
 {
 	array<int> displayColor = ColorStringToArray( GetGamemodeVarOrUseValue( mode, "color", "" ) )
-	if ( displayColor.len() == 0 )
-		displayColor = GameMode_GetColor( mode )
+	//if ( displayColor.len() == 0 )
+		//displayColor = GameMode_GetColor( mode )
 
 	return displayColor
 }

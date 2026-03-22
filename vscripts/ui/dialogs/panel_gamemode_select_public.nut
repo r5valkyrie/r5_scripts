@@ -528,12 +528,15 @@ table<string, string> function GameModeSelect_GetPlaylists()
 		slotToPlaylistNameMap[ slotKey ] <- ""
 
 	array<string> playlistNames = GetVisiblePlaylistNames( IsPrivateMatchLobby() )
+	printf( "DEBUG: GetVisiblePlaylistNames returned %d playlists", playlistNames.len() )
 	foreach ( string plName in playlistNames )
 	{
+		printf( "DEBUG: Processing playlist '%s'", plName )
 		if ( plName == PLAYLIST_NEW_PLAYER_ORIENTATION && HasLocalPlayerCompletedNewPlayerOrientation() && !DoNonlocalPlayerPartyMembersNeedToCompleteNewPlayerOrientation() )
 			continue
 
 		string uiSlot = GetPlaylistVarString( plName, "ui_slot", "" )
+		printf( "DEBUG: Playlist '%s' has ui_slot '%s'", plName, uiSlot )
 		if ( uiSlot == "" )
 			continue
 
@@ -572,26 +575,29 @@ void function GamemodeSelect_UpdateSelectButton( var button, string playlistName
 	int mapIdx = playlistName != "" ? GetPlaylistActiveMapRotationIndex( playlistName ) : -1
 
 	bool doDebug = (InputIsButtonDown( KEY_LSHIFT ) && InputIsButtonDown( KEY_LCONTROL )) || (InputIsButtonDown( BUTTON_TRIGGER_LEFT_FULL ) && InputIsButtonDown( BUTTON_B ))
-	RuiSetString( rui, "modeNameText", GetPlaylistMapVarString( playlistName, mapIdx, "name", "#PLAYLIST_UNAVAILABLE" ) )
+
+	// Use playlist-level image var, with fallback for "default" or empty values
+	string imageKey = GetPlaylistVarString( playlistName, "image", "" )
+	string displayName = GetPlaylistVarString( playlistName, "name", playlistName )
+	if ( imageKey == "" || imageKey == "default" )
+		imageKey = "control_caustic_tt"
+
+	RuiSetString( rui, "modeNameText", displayName )
 	RuiSetString( rui, "playlistName", playlistName )
 
 	RuiSetBool( rui, "doDebug", doDebug )
 
-	string descText = GetPlaylistMapVarString( playlistName, mapIdx, "description", "#HUD_UNKNOWN" )
-	RuiSetString( rui, "modeDescText", descText )
+	RuiSetString( rui, "modeDescText", "" )
 	RuiSetString( rui, "modeLockedReason", "" )
 	RuiSetBool( rui, "alwaysShowDesc", false )
 	RuiSetBool( rui, "isPartyLeader", false )
 	RuiSetBool( rui, "showLockedIcon", true )
 
-	string imageKey  = GetPlaylistMapVarString( playlistName, mapIdx, "image", "" )
 	asset imageAsset = GetImageFromImageMap( imageKey )
 	asset thumbnailAsset = GetThumbnailImageFromImageMap( imageKey )
-	string iconKey = GetPlaylistMapVarString( playlistName, mapIdx, "lobby_mini_icon", "" )
-	asset iconAsset = GetImageFromMiniIconMap( iconKey )
 	RuiSetImage( Hud_GetRui( button ), "modeImage", imageAsset )
 	RuiSetImage( Hud_GetRui( button ), "thumbnailImage", thumbnailAsset )
-	RuiSetImage( Hud_GetRui( button ), "expandArrowImage", iconAsset )
+	RuiSetImage( Hud_GetRui( button ), "expandArrowImage", $"" )
 
 	bool isPlaylistAvailable = Lobby_IsPlaylistAvailable( playlistName )
 	Hud_SetLocked( button, !isPlaylistAvailable )
@@ -661,15 +667,15 @@ void function GamemodeSelect_UpdateSelectButton( var button, string playlistName
 		else
 			RuiSetInt( rui, "featuredState", FEATURED_INACTIVE )
 	}
-	int RotationTimeLeft = GetPlaylistActiveMapRotationTimeLeft( playlistName )
+	int RotationTimeLeft = 0
 
-	if( IsPlaylistInActiveRotation( playlistName ) )
+	string rotationName = GetPlaylistVarString( playlistName, "playlist_rotation_group", "" )
+	if( rotationName != "" )
 	{
-		string ornull rotationName = GetPlaylistRotationNameFromPlaylist( playlistName )
-		RotationTimeLeft = GetPlaylistRotationNextTime( rotationName ? expect string( rotationName ) : "" ) - GetUnixTimestamp()
+		RotationTimeLeft = GetPlaylistRotationNextTime( rotationName ) - GetUnixTimestamp()
 	}
 
-	string mapName =  GetPlaylistMapVarString( playlistName, mapIdx, "map_name", "" )
+	string mapName = GetPlaylistVarString( playlistName, "map_name", "" )
 	RuiSetString( rui, "mapDisplayName", mapName )
 
 	if( RotationTimeLeft > 0 )
@@ -692,38 +698,29 @@ void function GamemodeSelect_UpdateMixtapePreview( string playlistName, string s
 		RuiSetImage( rui, "map" + i + "Image", $"" )
 	}
 
-	string ornull rotationID
+	string rotationID
 	if( slotKey == "regular_1" || slotKey == "regular_2" )
 	{
 		string pubsPlaylistName = GetCurrentPlaylistInUiSlot( "regular_1" )
-		rotationID = GetPlaylistRotationNameFromPlaylist( pubsPlaylistName )
+		rotationID = GetPlaylistVarString( pubsPlaylistName, "playlist_rotation_group", "" )
 	}
 	else
-		rotationID = GetPlaylistRotationNameFromPlaylist( playlistName )
+		rotationID = GetPlaylistVarString( playlistName, "playlist_rotation_group", "" )
 
 	int mapNumber = 0
-	while ( mapNumber < mapsCount && rotationID != null )
+	while ( mapNumber < mapsCount && rotationID != "" )
 	{
-		expect string( rotationID )
 		string nextName = playlistName
 
 		if( mapNumber != 0 )
 			nextName = GetNextPlaylistFromRotationAndUISlotAndSkip( rotationID, slotKey, mapNumber - 1 )
 
-		string mapName = GetPlaylistMapVarString( nextName, 0, "map_name", "" )
-		string modeName = GetPlaylistMapVarString( nextName, 0, "name", "" )
-		asset thumbnailAsset
-
-		if( slotKey == "regular_1" || slotKey == "regular_2" )
-		{
-			string imageKey  = GetPlaylistMapVarString( nextName, 0, "panel_image", "" )
-			thumbnailAsset = GetThumbnailImageFromImageMap( imageKey )
-		}
-		else
-		{
-			string imageKey  = GetPlaylistMapVarString( nextName, 0, "image", "" )
-			thumbnailAsset = GetThumbnailImageFromImageMap( imageKey )
-		}
+		string mapName = GetPlaylistVarString( nextName, "map_name", "" )
+		string modeName = GetPlaylistVarString( nextName, "name", "" )
+		string imageKey  = GetPlaylistVarString( nextName, "image", "" )
+		if ( imageKey == "" || imageKey == "default" )
+			imageKey = "control_caustic_tt"
+		asset thumbnailAsset = GetThumbnailImageFromImageMap( imageKey )
 
 		RuiSetString( rui, "map" + ( mapNumber + 1 ) + "Name", mapName )
 		RuiSetString( rui, "map" + ( mapNumber + 1 ) + "Mode", modeName)

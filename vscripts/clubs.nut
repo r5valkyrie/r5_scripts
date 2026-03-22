@@ -612,10 +612,16 @@ void function ClubSearchTag_ClearSelectedSearchTags()
 {
 }
 
-array<string> function ClubSearchTag_GetNamesOfSearchTagsFromArray( array<ItemFlavor> tags )
+string function ClubSearchTag_GetNamesOfSearchTagsFromArray( array<string> searchTags )
 {
-	array<string> empty
-	return empty
+	string tagListString
+	foreach ( name in searchTags )
+	{
+		string delimiter = searchTags.find( name ) == searchTags.len() - 1 ? "" : ", "
+		tagListString = tagListString + Localize( name ) + delimiter
+	}
+
+	return tagListString
 }
 
 bool function Clubs_AreObituaryTagsEnabledByPlaylist()

@@ -22,7 +22,7 @@ WeaponData
     "does_not_interrupt_cloak"						"1"
     "allow_gibraltar_shield"                        "0"
     "trophy_system_ignores"                         "always"
-	//"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_GenericOffhand"
+	"OnWeaponAttemptOffhandSwitch"					"OnWeaponAttemptOffhandSwitch_GenericOffhand"
 	"projectile_ignores_vortex"						"fall_vortex"
 
 

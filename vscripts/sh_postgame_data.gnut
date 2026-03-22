@@ -3,7 +3,11 @@
 //=========================================================
 
 //global function GetPostGameData
-
+#if SERVER
+global function SetPersistentLastGameTypeFlag
+global function ClearPersistentLastGameTypeFlag
+global function ClearAllPersistentLastGameTypeFlags
+#endif
 global function GetPersistentLastGameTypeFlag
 
 global struct postGamePlayerDef
@@ -38,6 +42,41 @@ global enum eGameType
 	SOLO = (1 << 2),
 }
 
+#if SERVER
+void function SetPersistentLastGameTypeFlag( entity player, int flag )
+{
+	#if DEVELOPER
+	if ( DEV_ShouldIgnorePersistence() )
+		return
+	#endif
+
+	int persistentGameTypeFlags = player.GetPersistentVarAsInt( "lastGameTypeFlags" )
+	player.SetPersistentVar( "lastGameTypeFlags", persistentGameTypeFlags | flag )
+}
+
+void function ClearPersistentLastGameTypeFlag( entity player, int flag )
+{
+	#if DEVELOPER
+		if ( DEV_ShouldIgnorePersistence() )
+			return
+	#endif
+
+	int persistentGameTypeFlags = player.GetPersistentVarAsInt( "lastGameTypeFlags" )
+	player.SetPersistentVar( "lastGameTypeFlags", persistentGameTypeFlags & ~flag )
+}
+
+void function ClearAllPersistentLastGameTypeFlags( entity player )
+{
+	#if DEVELOPER
+		if ( DEV_ShouldIgnorePersistence() )
+			return
+	#endif
+
+	foreach( flag in eGameType ) {
+		ClearPersistentLastGameTypeFlag( player, flag )
+	}
+}
+#endif // #if SERVER
 bool function GetPersistentLastGameTypeFlag( entity player, int flag )
 {
 	#if DEVELOPER

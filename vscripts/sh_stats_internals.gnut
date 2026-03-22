@@ -345,7 +345,7 @@ int function GetStat_Int( entity player, StatEntry entry, int when = eStatGetWhe
 		if ( ( when == eStatGetWhen.CURRENT || when == eStatGetWhen.START_OF_CURRENT_MATCH )
 				&& entry.behavior == eStatBehavior.CALCULATED && !entry.shouldCache )
 		{
-			if ( player in fileLevel.calculatedStatsCache )
+			/*if ( player in fileLevel.calculatedStatsCache )
 			{
 				foreach ( CalcStatCache calcStat in fileLevel.calculatedStatsCache[player] )
 				{
@@ -376,7 +376,7 @@ int function GetStat_Int( entity player, StatEntry entry, int when = eStatGetWhe
 				fileLevel.calculatedStatsCache[ player ] <- [ calcStat ]
 
 				return calcStat.value
-			}
+			}*/
 		}
 	}
 	else // original flow with no calculated stats caching

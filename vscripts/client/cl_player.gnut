@@ -2265,13 +2265,6 @@ void function ServerCallback_GameModeAnnouncement()
 	entity player   = GetLocalClientPlayer()
 	string gameMode = GameRules_GetGameMode()
 
-	if ( GameMode_GetCustomIntroAnnouncement( gameMode ) != null )
-	{
-		void functionref(entity) func = GameMode_GetCustomIntroAnnouncement( gameMode )
-		func( player )
-		return
-	}
-
 	int team = player.GetTeam()
 
 	float totalDuration = 0.0
@@ -2283,23 +2276,7 @@ void function ServerCallback_GameModeAnnouncement()
 		// never gets hit??
 		announcement = Announcement_Create( "#GAMEMODE_EPILOGUE" )
 	}
-	else
-	{
-		announcement = Announcement_Create( GAMETYPE_TEXT[gameMode] )
-		announcement.announcementStyle = ANNOUNCEMENT_STYLE_BIG
 
-		//Announcement_SetIcon( announcement, GAMETYPE_ICON[gameMode] )
-		Announcement_SetSubText( announcement, GAMEDESC_CURRENT )
-
-		if ( GameMode_IsDefined( gameMode ) )
-		{
-			if ( GameMode_GetAttackDesc( gameMode ) != "" && team == GetGlobalNetInt( "attackingTeam" ) )
-				Announcement_SetSubText( announcement, GameMode_GetAttackDesc( gameMode ) )
-
-			if ( GameMode_GetDefendDesc( gameMode ) != "" && team != GetGlobalNetInt( "attackingTeam" ) )
-				Announcement_SetSubText( announcement, GameMode_GetDefendDesc( gameMode ) )
-		}
-	}
 
 
 	AnnouncementFromClass( player, announcement ) // TODO: team specific goals

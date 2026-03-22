@@ -57,11 +57,11 @@ global function CharacterSelectSkinSelectionIsEnabled
 
 #if SERVER || CLIENT
 global function AddCallback_CustomIsCharacterLockedForPlayer
+global function CharacterSelect_CustomIsCharacterLockedForPlayer
 #endif
 
 #if CLIENT
 global function CharacterSelect_EnsureMenuEntsReady
-// CharacterSelect_CustomIsCharacterLockedForPlayer - declared and implemented in workarounds.gnut
 #endif
 
 global const int NUM_CHARACTER_SELECT_BUTTONS = 50

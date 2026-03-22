@@ -1113,14 +1113,12 @@ void function InitPresentationData()
 		pd.endFunc = EndPresentation_WEAPON_TRIAL_CELEBRATIONS
 	}
 
-	                               
 	{
 		PresentationDef pd = file.presentationData[ePresentationType.PLAY_QUADS]
 		pd.modelData = file.playCharacter
 		pd.startFunc = StartPresentation_PLAY
 		pd.endFunc = EndPresentation_PLAY
 	}
-                                     
 
 	Menu_InitPresentationDataFromCameraSettings()
 }

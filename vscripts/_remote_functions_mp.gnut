@@ -7,6 +7,12 @@ global function AddCallback_OnNetworkRegistration
 global function GetNV_PreGameStartTime
 global function GetNV_FreefallIsFromPlane
 
+#if SERVER
+global function SetNV_PreGameStartTime
+global function SetNV_FreefallIsFromPlane
+#endif // SERVER
+
+
 global function FindFuncName_ByID
 global function FindFuncID_ByRef
 
@@ -330,6 +336,8 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariable( "coreExpireFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE_OVER_TIME, 0.0, 0.0, 1.0 )
 	RegisterNetworkedVariable( "upgradeCount", SNDC_TITAN_SOUL, SNVT_INT, 0 )
 
+	Remote_RegisterServerFunction( "ClientCallback_ViewedModes" )
+
 	//Custom gamemodes
 	switch ( Gamemode() )
 	{
@@ -449,6 +457,12 @@ void function RemoteFunctions_Init_Begin()
 	bool isOptInServer = Dev_CommandLineHasParm( "-optinserver" )
 	ScriptRegisterNetworkedVariable( "isOptInServer", SNDC_GLOBAL, SNVT_BOOL, isOptInServer )
 
+	ScriptRegisterNetworkedVariable( "gameStateChangeTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	ScriptRegisterNetworkedVariable( "gameStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	ScriptRegisterNetworkedVariable( "gameEndTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+	ScriptRegisterNetworkedVariable( "switchedSides", SNDC_GLOBAL, SNVT_INT, -1 )                                                                     
+	ScriptRegisterNetworkedVariable( "replayDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
+
 	// GAME STATE
 	RegisterServerVar( "gameStateChangeTime", null )
 	RegisterServerVar( "gameState", -1 )
@@ -457,6 +471,12 @@ void function RemoteFunctions_Init_Begin()
 	RegisterServerVar( "gameEndTime", 0.0 )
 	RegisterServerVar( "switchedSides", null )
 	RegisterServerVar( "replayDisabled", false )
+
+	//Round Winning Kill replay related
+	ScriptRegisterNetworkedVariable( "roundWinningKillReplayEnabled", SNDC_GLOBAL, SNVT_BOOL, false )
+	ScriptRegisterNetworkedVariable( "roundWinningKillReplayPlaying", SNDC_GLOBAL, SNVT_BOOL, false )
+	ScriptRegisterNetworkedVariable( "roundScoreLimitComplete", SNDC_GLOBAL, SNVT_BOOL, false )
+
 
 	// KILL REPLAY
 	RegisterServerVar( "roundWinningKillReplayEnabled", false )
@@ -536,6 +556,8 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_MatchEndAnnouncement", "bool", "int", TEAM_INVALID, 127 ) //Audit 2-22-2025
 	
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SquadEliminated", "int", TEAM_INVALID, 127 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ShowDeathScreen" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_DeathScreenSwitchTab" )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SendDeathRecapData", "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", DAMAGE_TYPE_MIN, INT_MAX, "int", -1, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "float", 0.0, 1.0, 32, "float", 0.0, 1.0, 32, "float", 0.0, 86400.0, 32, "int", -1, INT_MAX, "int", -1, 16 ) //Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DeathRecapDataUpdated", "bool", "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025
@@ -562,6 +584,7 @@ void function RemoteFunctions_Init_Begin()
 
 	//ScriptRegisterNetworkedVariable( "hasDataKnife", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
+	ScriptRegisterNetworkedVariable( "isEliminated", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "isJumpmaster", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "isJumpingWithSquad", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRegisterNetworkedVariable( "playerInPlane", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
@@ -581,8 +604,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "latency", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "damage", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
 
-	// "deaths" registered by GamemodeUtility_RegisterNetworking() for non-elimination modes
-	//ScriptRegisterNetworkedVariable( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+	ScriptRegisterNetworkedVariable( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "assists", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
 	ScriptRegisterNetworkedVariable( "isHealing", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
@@ -767,6 +789,11 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayConversation", "int", 0, 2000 ) //Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlaySquadConversation", "int", 0, 2000, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025
 
+	ScriptRemote_RegisterClientFunction( "ServerCallback_GiveMatchLossProtection" )
+
+	Remote_RegisterClientFunction( "SCB_FiringRange_EnableCharacterChange", "bool" )
+	Remote_RegisterClientFunction( "SCB_FiringRange_SetPlayerInFinale", "bool" )
+
 	#if MODEL_VIEWER_ENABLED //todo revisit.
 		// Model Viewer
 		ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_MVUpdateModelBounds" )
@@ -798,6 +825,11 @@ void function RemoteFunctions_Init_Begin()
 	RegisterServerVar( "respawnAvailableBits2", 0 )
 	RegisterServerVar( "respawnAvailableBits3", 0 )
 
+	RegisterNetworkedVariable( "respawnAvailableBits0", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariable( "respawnAvailableBits1", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariable( "respawnAvailableBits2", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariable( "respawnAvailableBits3", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
+
 	ScriptRegisterNetworkedVariable( "hackStartTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRegisterNetworkedVariable( "bleedoutEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRegisterNetworkedVariable( "bleedoutType", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
@@ -806,6 +838,12 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "revivePlayerHealer", SNDC_PLAYER_GLOBAL, SNVT_ENTITY )
 	ScriptRegisterNetworkedVariable( "tutorialContext", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
 	ScriptRegisterNetworkedVariable( "spectatorTargetCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+
+	// survival_ship.gnut
+	Remote_RegisterServerFunction( "ClientCommand_Sur_MakeEligibleForJumpMaster" )
+	Remote_RegisterServerFunction( "ClientCommand_Sur_RelinquishJumpMaster" )
+	Remote_RegisterServerFunction( "ClientCommand_Sur_RemoveFromSquad" )
+	Remote_RegisterServerFunction( "ClientCommand_Sur_ReturnToSquad" )
 
 	if( Playlist() == ePlaylists.survival_training )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_ActionCountUpdated", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
@@ -892,7 +930,13 @@ void function RemoteFunctions_Init_Begin()
 
 	ScriptRegisterNetworkedVariable( "cameraNearbyEnemySquads", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ToggleDisabledWeaponType", "int", INT_MIN, INT_MAX, "bool" )
+	RegisterNetworkedVariable( "uiDisableDev", SNDC_GLOBAL, SNVT_BOOL, true )
 
+	// register callbacks, could be wrapped in a neat framework but it is not worth the effort yet
+	#if CLIENT
+
+
+	#endif
 	s_callbackRegistrationIsClosed = true
 	ExecuteSetupCallbacks()
 }
@@ -949,6 +993,18 @@ bool function GetNV_FreefallIsFromPlane( entity player )
 {
 	return player.GetPlayerNetBool( "freefallIsFromPlane" )
 }
+
+#if SERVER
+void function SetNV_PreGameStartTime( float newVal )
+{
+	SetGlobalNetTime( "PreGameStartTime", newVal )
+}
+
+void function SetNV_FreefallIsFromPlane( entity player, bool newVal )
+{
+	return player.SetPlayerNetBool( "freefallIsFromPlane", newVal )
+}
+#endif // SERVER
 
 void function ByRef_ConsistencyCheck()
 {

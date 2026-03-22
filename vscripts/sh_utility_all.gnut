@@ -28,12 +28,6 @@ global const float DOT_60DEGREE =	0.5
 global const float DOT_80DEGREE =	0.17364817766
 global const float DOT_85DEGREE =	0.0871557427477
 
-global enum ePINPromoMessageStatus
-{
-	IMPRESSION,
-	CLICK,
-}
-
 global enum eFeatureSuppressionFlags
 {
 	PROMO_USER_MESSAGES_DIALOG,
@@ -2496,6 +2490,58 @@ bool function IsFiringRangeGameMode()
 	return Playlist() == ePlaylists.survival_firingrange
 }
 
+bool function IsMatchmakingFromMatchEnabled()
+{
+	return GetConVarBool( "matchmake_from_match_enabled" ) && GetCurrentPlaylistVarBool( "matchmake_from_match", false ) && ( GetCurrentPlaylistVarBool( "private_match", false ) == false )
+}
+
+bool function IsMatchmakingFromMatchAllowed( entity player )
+{
+	bool isAllowed = IsMatchmakingFromMatchEnabled()
+	isAllowed = isAllowed && !Playlist_ShouldBeHiddenForScheduleBlocks( GetCurrentPlaylistName() )
+#if SERVER
+	if ( isAllowed )
+	{
+		bool isMatchActuallyOver
+		if ( IsRoundBased() )
+			isMatchActuallyOver = IsRoundBasedGameOver()
+		else
+			isMatchActuallyOver = GetGameState() >= eGameState.WinnerDetermined
+		//isAllowed = Survival_IsPlayerSquadEliminated( player ) || isMatchActuallyOver
+	}
+#endif
+
+	return isAllowed
+}
+
+#if UI
+void function StartMatchmakingFromMatch()
+{
+	if ( !UI_IsReadyForRequeue() )
+		return
+
+	if ( !UI_IsFullPartyConnectedForRequeue() )
+		return
+
+	if( !AreWeMatchmaking() && !LeaveMatch_WasInitiated() )
+		EmitUISound( "UI_Menu_ReadyUp_1P" )
+
+	if ( AmIPartyLeader() && !AreWeMatchmaking() && !LeaveMatch_WasInitiated() )
+		thread UpdateMatchmakeFromMatchPlaylist_Thread()
+}
+#endif
+      
+
+bool function IsVDUDialogueEnabled()
+{
+	return GetCurrentPlaylistVarBool( "enable_vdu_dialogue", false )
+}
+
+bool function IsEventFinale()
+{
+	return GetCurrentPlaylistVarBool( "is_event_finale", false )
+}
+
 bool function FiringRangeHasFriendlyFire()
 {
 	return GetCurrentPlaylistVarBool( "firingrange_has_friendlyfire", true )
@@ -2600,14 +2646,6 @@ bool function IsAccessibilitySpeechToChat()
 		return false
 
 	return GetConVarInt( "hudchat_play_text_to_speech" ) > 0
-}
-#endif
-
-#if SERVER || CLIENT
-void function CopyRealmsFromTo( entity source, entity target )
-{
-	target.RemoveFromAllRealms()
-	target.AddToOtherEntitysRealms( source )
 }
 #endif
 
@@ -4289,11 +4327,6 @@ UMData function EADP_UM_GetPromoData()
 {
 	UMData data
 	return data
-}
-
-// Stub — PIN telemetry
-void function PIN_UM_Message( string title, string trackingId, string messageType, int status, int pageIndex )
-{
 }
 #endif // UI
 

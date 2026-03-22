@@ -559,7 +559,7 @@ void function Training_OnPlayerRespawned( entity player )
 	RemoveStagingAreaEntsForRealm( GetPlayerSquadRealm( player ) )
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 	data.gun_range_enabled = false
-
+	DecideRespawnPlayer( player, false )
 	thread PlayerStartsTraining( player )
 }
 
@@ -764,22 +764,10 @@ void function PlayerStartsTraining( entity player )
 
 	if ( !data.gun_range_enabled )
 	{
-		data.lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
-		data.lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
-
-                     
-			// Updated for MU1
-			if( !IsStagingMU1() )
-			{
-				CreateWeaponRacksForRealm( GetPlayerSquadRealm( player ) )
-			}
-			else
-			{
-				CLootV2_Create_AllWeapons_ForRealm( GetPlayerSquadRealm( player ) )
-			}
-       
-                                                             
-                              
+		data.lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
+		data.lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
+		CreateWeaponRacksForRealm( GetPlayerSquadRealm( player ) )
+		CreateGunRangeTargetsForRealm( GetPlayerSquadRealm( player ) )
 	}
 
 	if ( !data.completed_ping && !skipToPathfinder )
@@ -1754,29 +1742,10 @@ void function StartTraining_Weapons( entity player )
 		wait 1.0
 
 	// Enable whole range
-	file.playerTrainingData[ player ].lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
-	file.playerTrainingData[ player ].lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
-
-	// TODO: Re-enable if necessary
-	//RemoveStagingAreaEntsForRealm( GetPlayerSquadRealm( player ) )
-	//// We have to re-create the targets here.
-	//CreateGunRangeTargetsForRealm( GetPlayerSquadRealm( player ), true, true )
-
-                    
-		if( !IsStagingMU1() )
-		{
-			CreateWeaponRacksForRealm( GetPlayerSquadRealm( player ) )
-		}
-		else
-		{
-			CLootV2_Create_AllWeapons_ForRealm( GetPlayerSquadRealm( player ) )
-		}
-      
-                                                            
-                              
-
-
-
+	file.playerTrainingData[ player ].lootBin1.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
+	file.playerTrainingData[ player ].lootBin2.Dissolve( ENTITY_DISSOLVE_CORE, <0, 0, 0>, 500 )
+	RemoveStagingAreaEntsForRealm( GetPlayerSquadRealm( player ) )
+	CreateGunRangeTargetsForRealm( GetPlayerSquadRealm( player ) )
 	PlayerTrainingData data = file.playerTrainingData[ player ]
 	data.gun_range_enabled = true
 

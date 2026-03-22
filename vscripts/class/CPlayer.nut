@@ -6,6 +6,7 @@ global function PlayerDropsScriptedItems
 global function IsDemigod
 global function EnableDemigod
 global function DisableDemigod
+global function ApplyAppropriateCharacterSkin
 global function ToggleMute
 global function CommandsEnabled
 global function IsCommandsEnabled 
@@ -547,6 +548,44 @@ void function DisableDemigod( entity player )
 {
 	Assert( player.IsPlayer() )
 	player.p.demigod = false
+}
+
+void function ApplyAppropriateCharacterSkin( entity player )
+{
+	// Gets called every time you spawn but also when player mods are changed
+	// (SetPlayerSettingsWithMods() resets character skins, health, etc. so we need to manually reapply here)
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	{
+		printt( "FiringRangeDebug: ApplyAppropriateCharacterSkin called for " + player )
+		printt( "%s", GetStack() )
+	}
+
+	if ( !LoadoutSlot_IsReady( ToEHI( player ), Loadout_Character() ) )
+		return
+
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+
+	if ( !LoadoutSlot_IsReady( ToEHI( player ), Loadout_CharacterSkin( character ) ) )
+		return
+
+	ItemFlavor skin      = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_CharacterSkin( character ) )
+	CharacterSkin_Apply( player, skin )
+	bool isShadowPlayer = false
+
+	                             
+		isShadowPlayer = IsPlayerShadowZombie( player )
+                                    
+
+	                            
+       
+}
+
+void function ApplyDefaultCharacterSkin( entity player )
+{
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
+	ItemFlavor skin = GetDefaultItemFlavorForLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( character ) )
+	CharacterSkin_Apply( player, skin )
 }
 
 void function ToggleMute( entity player, bool toggle )

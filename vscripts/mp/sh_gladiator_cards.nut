@@ -1606,6 +1606,12 @@ void function ManageGladiatorCardTrackerState( ItemFlavor character, EHI playerE
 {
 	entity player = FromEHI( playerEHI )
 
+	// Initialize the tracker array if it doesn't exist or is empty
+	if ( player.p.activeGladiatorCardStatTrackerEntries.len() == 0 )
+	{
+		player.p.activeGladiatorCardStatTrackerEntries = [ -1, -1, -1 ]
+	}
+
 	string desiredStatRef = ""
 	if ( !GladiatorCardTracker_IsTheEmpty( tracker ) )
 		desiredStatRef = GladiatorCardStatTracker_GetStatRef( tracker, character )

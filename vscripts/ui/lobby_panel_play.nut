@@ -2119,19 +2119,14 @@ void function UpdateModeButton()
 		Hud_SetLocked( file.gamemodeSelectButton, !CanActivateModeButton() )
 
 
-		int mapIdx = playlistName != "" ? GetPlaylistActiveMapRotationIndex( playlistName ) : -1
-		string rotationMapName = GetPlaylistMapVarString( playlistName, mapIdx, "map_name", "" )
+		string rotationMapName = GetPlaylistVarString( playlistName, "map_name", "" )
 		int rotationTimeLeft = -1
 
 		string currentPlaylist = Lobby_GetSelectedPlaylist()
-		if ( IsPlaylistBeingRotated( playlistName ) )
+		string rotationName = GetPlaylistVarString( playlistName, "playlist_rotation_group", "" )
+		if ( rotationName != "" )
 		{
-			string ornull rotationName = GetPlaylistRotationNameFromPlaylist( playlistName )
-			rotationTimeLeft = GetPlaylistRotationNextTime( rotationName ? expect string( rotationName ) : "" ) - GetUnixTimestamp()
-		}
-		else if ( rotationMapName != "" )
-		{
-			rotationTimeLeft = GetPlaylistActiveMapRotationTimeLeft( playlistName )
+			rotationTimeLeft = GetPlaylistRotationNextTime( rotationName ) - GetUnixTimestamp()
 		}
 
 		if ( rotationTimeLeft > 0 )
@@ -2158,8 +2153,8 @@ void function UpdateModeButton()
 
 #if NX_PROG || PC_PROG_NX_UI
 			ToolTipData td
-			td.titleText = Localize( GetPlaylistMapVarString( playlistName, mapIdx, "name", "#HUD_UNKNOWN" ) ).toupper()
-			td.descText = Localize( GetPlaylistMapVarString( playlistName, mapIdx, "description", "#HUD_UNKNOWN" ) )
+			td.titleText = Localize( GetPlaylistVarString( playlistName, "name", "#HUD_UNKNOWN" ) ).toupper()
+			td.descText = Localize( GetPlaylistVarString( playlistName, "description", "#HUD_UNKNOWN" ) )
 			Hud_SetToolTipData( file.gamemodeSelectButton, td )
 #endif
 		}

@@ -4,6 +4,17 @@ global function OnWeaponReadyToFire_weapon_grenade_gas
 global function OnWeaponTossReleaseAnimEvent_weapon_greande_gas
 global function OnWeaponDeactivate_weapon_grenade_gas
 
+const float UPGRADE_CAUSTIC_GAS_HP_REGEN_DELAY = 2.0
+
+#if SERVER
+global function WeaponGrenadeGas_StartHealing
+
+struct
+{
+	table< entity, int > 	playerToHealHandle
+	table< entity, float >	playerToNextAllowedHealTime
+}file
+#endif
 const float WEAPON_GAS_GRENADE_DELAY = 1.0
 const float WEAPON_GAS_GRENADE_DURATION = 15.0
 const vector WEAPON_GAS_GRENADE_OFFSET = <0,0,16>
@@ -110,6 +121,48 @@ void function DeployGas( entity projectile )
 	thread DeployGas_Internal( projectile )
 }
 
+                    
+float function GetUpgradedGasDurationMultiplier()
+{
+	return GetCurrentPlaylistVarFloat( "upgraded_caustic_gas_duration", 1.2 )
+}
+
+void function WeaponGrenadeGas_StartHealing( entity player )
+{
+	if( !( player in file.playerToHealHandle ) )
+	{
+		if(player in file.playerToNextAllowedHealTime && Time() > file.playerToNextAllowedHealTime[player] )
+			file.playerToHealHandle[player] <- EntityHealResource_Add( player, 2.0, 2.0, 0, "regen_default", player )
+	}
+	else if( EntityHealResource_GetRemainingHeals( player, file.playerToHealHandle[player] ) <= 0 )
+	{
+		if( player in file.playerToNextAllowedHealTime && Time() > file.playerToNextAllowedHealTime[player] )
+		{
+			EntityHealResource_Remove( player, file.playerToHealHandle[player] )
+			file.playerToHealHandle[player] <- EntityHealResource_Add( player, 2.0, 2.0, 0, "regen_default", player )
+		}
+	}
+
+	player.Signal( "ResetGasHealing" )
+	thread WeaponGrenadeGas_EndGasHealing( player )
+}
+
+void function WeaponGrenadeGas_EndGasHealing( entity player )
+{
+	player.EndSignal( "ResetGasHealing" )
+	Wait( 1.0 )
+
+	OnThreadEnd(
+		function() : ( player )
+		{
+			if( IsValid( player ) && player in file.playerToHealHandle)
+			{
+				EntityHealResource_Remove( player, file.playerToHealHandle[player] )
+				delete file.playerToHealHandle[player]
+			}
+		}
+	)
+}
 
 float function GetGasDuration( entity owner )
 {

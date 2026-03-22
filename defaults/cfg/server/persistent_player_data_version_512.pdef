@@ -8,6 +8,7 @@ bool trainingCompleted
 int initializedVersion
 int announcementVersionSeen
 int promoVersionSeen
+int newModeVersion
 
 int tutorialActionCount[100]
 
@@ -27,8 +28,9 @@ int lastSeenPremiumCurrency
 int xp
 int previousXP
 int credits
-int xp_match[20]
-int xp_count[20]
+int xp_match[25]
+int xp_count[25]
+int xp_bonus[25]
 int gen
 int netWorth
 
@@ -58,6 +60,7 @@ $ENUM_END
 
 $ENUM_START eQuestFlavor
 	SAID00070721943
+	SAID01527750958
 $ENUM_END
 
 $ENUM_START eMapZones
@@ -156,6 +159,7 @@ $ENUM_START eCharacterFlavor
 	SAID01399802246//character_seer
 	SAID00216194192//character_ash
 	SAID00496516687//character_madmaggie
+	SAID00147804686//character_catalyst
 $ENUM_END
 
 // All the weapon item flavors from Bakery that are registered in the game.
@@ -480,6 +484,7 @@ $STRUCT_START sStatsData
 	sStatEnumStruct_seasons seasons[eSeasonFlavor]
 	sStatEnumStruct_zones zones[eMapZones]
 	sStatEnumStruct_rankedperiods rankedperiods[eRankedPeriodFlavor]
+	int account_level
 	int total_legendary_items
 	int num_characters_with_banners_once_filled
 	int fashionista
@@ -488,6 +493,11 @@ $STRUCT_START sStatsData
 	int looted_all_launch_loot_once
 	int master_of_all
 	int respawn_dev
+	int ea_access_member
+	int starter_pack_owner
+	int founder_pack_owner
+	int twitch_pack_owner
+	int first_played_unixtime
 	int times_fully_kitted
 	int distance_kill
 	int times_jumpmaster
@@ -500,11 +510,13 @@ $STRUCT_START sStatsData
 	int looted_legendary_armor
 	int daily_challenges_completed
 	int challenge_xp_earned
+	int challenge_stars_earned
 	int dooms
 	int solo_dooms
 	int character_solo_dooms
 	int thanks
 	int kills
+	int kills_or_assists
 	int assists
 	int times_got_doomed
 	int deaths
@@ -515,12 +527,14 @@ $STRUCT_START sStatsData
 	int kills_while_killleader
 	int kills_max_single_game
 	int damage_done
+	int damage_done_midair
 	int damage_taken
 	int shots
 	int hits
 	int headshots
 	int executions
 	int revived_ally
+	int respawned_ally
 	int games_played
 	int placements_win
 	int placements_win_with_squad_alive
@@ -550,10 +564,10 @@ $STRUCT_START sStatsData
 	int mirage_decoys_created
 	int mirage_successful_bamboozles
 	int mirage_successful_revives
-	float octane_stim_distance_traveled
+	int octane_stim_distance_traveled
 	int octane_jump_pad_allies_launched
 	int octane_passive_health_regenerated
-	float pathfinder_tactical_meters_moved_by_grapple
+	int pathfinder_tactical_meters_moved_by_grapple
 	int pathfinder_ultimate_ziplines_used_by_allies
 	int pathfinder_passive_beacons_scanned
 	int wattson_breaches_detected
@@ -561,11 +575,12 @@ $STRUCT_START sStatsData
 	int wattson_enemy_ordnance_intercepted
 	int wraith_ultimate_phase_tunnel_ally_uses
 	int wraith_passive_voices_heard
-	float wraith_tactical_time_spent_in_phase
+	int wraith_tactical_time_spent_in_phase
 	int bangalore_passive_distance
 	int bangalore_tactical_smoke_hits
 	int bangalore_ultimate_damage_done
 	int elite_badge_unlock
+	int elite_888_badge_unlock
 	int loot_bins_opened
 	int opponents_outlived
 	int revenant_silenced_target
@@ -573,8 +588,8 @@ $STRUCT_START sStatsData
 	int revenant_death_totem_activates
 	int loba_passive_loot_pinged_through_walls
 	int loba_ultimate_loot_taken_by_allies
-	float loba_tactical_meters_teleported
-	float rampart_tactical_damage_blocked
+	int loba_tactical_meters_teleported
+	int rampart_tactical_damage_blocked
 	int rampart_ultimate_bullets_fired
 	int rampart_tactical_bullets_amped
 	int season01_event_placements_top_5
@@ -596,6 +611,143 @@ $STRUCT_START sStatsData
 	int s03_duos_badge_play
 	int s03_duos_badge_win
 	int s03_duos_tiers_earned
+	// Any mode stats
+	int games_played_any_mode
+	int dooms_any_mode
+	int wins_any_mode
+	int kills_or_assists_any_mode
+	int melee_damage_any_mode
+	int kills_with_red_weapons_any_mode
+	int damage_with_red_weapons_any_mode
+	int health_restored_any_mode
+	int executions_any_mode
+	int damage_done_any_mode
+	int headshots_any_mode
+	int damage_done_hipfire_any_mode
+	int damage_done_ordnance_any_mode
+	int mirror_legend_kills_any_mode
+	int self_revives
+	int top_3_with_3_kill_ko_assist
+	int br_top_10_or_arena_win
+	int ring_closings_survived
+	int evoarmor_evolves_to_red
+	int shield_restored
+	int equipped_attachment
+	int crafting_harvester_used_any_mode
+	int crafting_items_crafted_any_mode
+	int character_games_played_any_mode
+	int character_damage_done_any_mode
+	int weaponcategory_damage_done_any_mode
+	// Placement stats
+	int placements_top_10
+	int character_placements_top_10
+	// Solo stats
+	int solo_placements_top_5
+	int character_solo_placements_top_5
+	int character_solo_wins
+	// Zone stats
+	int zone_kills
+	int zone_damage_done
+	int zone_dooms
+	int zone_executions
+	int zone_landings
+	int zone_loot_bins
+	int loot_bins
+	int survival_time_seconds
+	// Ranked period stats
+	int rankedperiod_games_played_base
+	int rankedperiod_placements_win_base
+	int rankedperiod_placements_top_5_base
+	int rankedperiod_placements_top_10_base
+	int rankedperiod_damage_done_base
+	int rankedperiod_kills_base
+	int rankedperiod_deaths_base
+	int rankedperiod_kills_max_single_game_base
+	int rankedperiod_dooms_base
+	int rankedperiod_assists_base
+	int rankedperiod_win_streak_longest_base
+	int rankedperiod_revived_ally_base
+	int rankedperiod_times_respawned_ally_base
+	int rankedperiod_games_played
+	int rankedperiod_placements_win
+	int rankedperiod_placements_top_5
+	int rankedperiod_placements_top_10
+	int rankedperiod_damage_done
+	int rankedperiod_kills
+	int rankedperiod_deaths
+	int rankedperiod_kills_max_single_game
+	int rankedperiod_dooms
+	int rankedperiod_assists
+	int rankedperiod_win_streak_current
+	int rankedperiod_win_streak_longest
+	int rankedperiod_revived_ally
+	int rankedperiod_times_respawned_ally
+	int rankedperiod_current_rank_score
+	int rankedperiod_gained_rank_score_only
+	int rankedperiod_badge_award_level
+	int rankedperiod_character_damage_done_max_single_game
+	int rankedperiod_character_damage_done_max_single_game_base
+	// Arenas ranked stats
+	int arenas_rankedperiod_games_played
+	int arenas_rankedperiod_current_rank_score
+	int arenas_rankedperiod_gained_rank_score_only
+	int arenas_rankedperiod_badge_award_level
+	int arenas_rankedperiod_placements_win
+	int arenas_rankedperiod_damage_done
+	int arenas_rankedperiod_damage_done_max_single_game
+	int arenas_rankedperiod_kills_max_single_game
+	int arenas_rankedperiod_kills
+	int arenas_rankedperiod_deaths
+	int arenas_rankedperiod_dooms
+	int arenas_rankedperiod_assists
+	int arenas_rankedperiod_win_streak_current_new
+	int arenas_rankedperiod_win_streak_longest_new
+	int arenas_rankedperiod_revived_ally
+	int arenas_rankedcareer_games_played
+	int arenas_rankedcareer_placements_win
+	int arenas_rankedcareer_damage_done
+	int arenas_rankedcareer_damage_done_max_single_game
+	int arenas_rankedcareer_kills
+	int arenas_rankedcareer_deaths
+	int arenas_rankedcareer_kills_max_single_game
+	int arenas_rankedcareer_dooms
+	int arenas_rankedcareer_assists
+	int arenas_rankedcareer_win_streak_longest
+	int arenas_rankedcareer_revived_ally
+	// Arenas stats
+	int arenas_badge_perfect_game
+	int arenas_badge_no_down_win
+	int arenas_cash_stations_captured
+	int arenas_rounds_won
+	int arenas_character_win_streak_current_new
+	int arenas_character_win_streak_longest_new
+	int arenas_character_kills_max_single_game
+	int arenas_character_damage_done_max_single_game
+	int arenas_character_rounds_won
+	int arenas_skills_purchased
+	int arenas_ordnance_purchased
+	int arenas_heals_purchased
+	int arenas_weapons_upgraded
+	// Clubs stats
+	int clubs_games_played_with_club
+	int clubs_placements_win_with_club
+	int clubs_placements_win_with_club_squad_alive
+	int clubs_placements_win_with_club_streak
+	int clubs_placements_win_with_club_no_deaths
+	int clubs_placements_win_with_club_no_deaths_or_knockouts
+	int clubs_kills_with_club_squad
+	// Control mode stats
+	int gamemode_control_objectives_captured
+	int gamemode_control_personal_exp_points_earned
+	int gamemode_control_capture_bonuses_claimed_by_team
+	int gamemode_control_killed_enemy_1_tier_higher
+	int gamemode_control_killed_enemy_2_tier_higher
+	int gamemode_control_killed_objective_attacker
+	int gamemode_control_killed_objective_defender
+	int gamemode_control_became_expleader
+	int gamemode_control_killed_expleader
+	int gamemode_control_highest_exp_as_expleader
+	int gamemode_control_time_on_objective
 $STRUCT_END
 
 // 
@@ -675,9 +827,10 @@ $STRUCT_START sChallengeData
 	int currentTier
 	int guid
 	int statMarker
+	int statMarkerAlt
 $STRUCT_END
 
-sChallengeData challenges[142]
+sChallengeData challenges[230]
 
 $STRUCT_START trackedSquadStats
 	string{32} playerName
@@ -704,8 +857,8 @@ $STRUCT_START sBattlePassData
 	int cachedPurchasedXP
 	int challengeRerollsUsed
 	int characterXP[eCharacterFlavor]
-	int xp_match[20]
-	int xp_count[20]
+	int xp_match[25]
+	int xp_count[25]
 	int earnedXP
 	int lastPopupLevel
 	int lastSeenEarnedXP
@@ -785,3 +938,36 @@ sFRSettingsData FRSettingsPVars
 
 string{32} lastPlaylist
 string{32} lastHubResetSeason
+int gamemodeSelectorInitializedSeasonGUID
+bool gamemodeSelectorSeenIndex[10]
+int installUnixTime
+int botGraduationState
+int lastTimePlayed
+int lastTimeLoggedIn
+int privateMatchState
+int behaviorHistory_nextIndex
+int currentBattlePassChallengeSeason
+int favoriteChallengeGUID[5]
+int weeklyRecurringLastResetWeek
+int lastGameTypeFlags
+int lastPartySize
+string{64} postMatchSurveyMatchId
+int postMatchSurveySampleRateLowerBound
+bool lastGameWasHeadToHead
+
+$STRUCT_START sPostGameChallengeData
+	int guid
+	int tierMatchStart
+	int progressMatchStart
+	int bonus
+	int mythicProgressBonus
+$STRUCT_END
+
+sPostGameChallengeData postGameChallengesProgress[230]
+
+$STRUCT_START sMatchBehaviorData
+	int behaviorFlags
+	int character
+$STRUCT_END
+
+sMatchBehaviorData behaviorHistory[20]

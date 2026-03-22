@@ -55,7 +55,7 @@ void function GameMode_SetMapSpecificScoreLimit( table<string,int> mapModeScoreT
 
 bool function IsSuddenDeathGameMode()
 {
-	return false // TEMP until this is dead
+	return false
 }
 
 bool function IsRoundWinningKillReplayEnabled()

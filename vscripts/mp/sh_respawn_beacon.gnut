@@ -5,6 +5,7 @@ global function RespawnBeacons_RegisterNetworking
 global function GetRespawnStyle
 global function IsRespawnBeacon
 global function CountTeammatesWaitingToBeRespawned
+global function RespawnEquipped_DontResetInventory
 
 global function GetRespawnStatus
 
@@ -546,6 +547,20 @@ bool function IsNotBusy( entity player, entity ent )
 	return true
 }
 
+bool function RespawnEquipped_PLV_DontResetInventory()
+{
+	return( GetCurrentPlaylistVarBool( "respawnequipped_dontresetinventory", false ) )
+}
+bool function RespawnEquipped_DontResetInventory()
+{
+	bool result = RespawnEquipped_PLV_DontResetInventory()
+
+                     
+                                                                                           
+                           
+
+	return result
+}
 #if CLIENT
 void function ManageRespawnChamberData( entity ent, var rui )
 {
@@ -1238,7 +1253,7 @@ void function RespawnBeacon_PutPlayerInDropship( entity player, entity ship, int
 	player.StopObserverMode()
 	ClearPlayerEliminated( player )
 	player.p.respawnPodLanded = true
-	DecideRespawnPlayer( player )
+	DecideRespawnPlayer( player, false )
 	ResetPlayerInventory( player )
 	player.SetOrigin( ship.GetOrigin() )
 

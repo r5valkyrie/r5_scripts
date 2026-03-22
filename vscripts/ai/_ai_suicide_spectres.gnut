@@ -543,17 +543,6 @@ void function SpectreSuicideOnDamaged( entity spectre, var damageInfo )
 	float damage				= DamageInfo_GetDamage( damageInfo )
 	int damageSourceId 			= DamageInfo_GetDamageSourceIdentifier( damageInfo )
 
-	// Calculate build time credit
-	if ( attacker.IsPlayer() )
-	{
-		if ( GameModeRulesShouldGiveTimerCredit( attacker, spectre, damageInfo ) && !TitanDamageRewardsTitanCoreTime() )
-		{
-			//float timerCredit = CalculateBuildTimeCredit( attacker, spectre, damage, spectre.GetHealth(), spectre.GetMaxHealth(), "spectre_kill_credit", 9 )
-			// if ( timerCredit )
-			// 	DecrementBuildTimer( attacker, timerCredit )
-		}
-	}
-
 	// No pain anims for suicide spectres
 	DamageInfo_AddDamageFlags( damageInfo, DAMAGEFLAG_NOPAIN )
 

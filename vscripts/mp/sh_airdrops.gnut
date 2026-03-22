@@ -5,6 +5,10 @@ global function OnAirdropUse
 
 #if SERVER
 global function SURVIVAL_CalculateAirdropPositions
+global function AirdropSpawnThink
+global function AirdropLogic
+global function AirdropForRound
+#endif
 
 global function Survival_GetPregameAirdropDatas
 global function Survival_GetAirdropDatas
@@ -211,6 +215,74 @@ void function Sh_Airdrops_Init()
 		AddSpawnCallback( "prop_dynamic", OnAirdropCreated )
 		file.airdropRarityColorEnabled = GetCurrentPlaylistVarBool( "airdrop_raritycolor_enabled", false )
 		PrecacheParticleSystem( CHEVREX_AIRDROP_HOLOGRAM_VFX )
+	#endif
+
+}
+
+#if SERVER
+void function AirdropSpawnThink()
+{
+	int curStage = SURVIVAL_GetCurrentDeathFieldStage()
+	int prevStage = curStage
+
+	while (true)
+	{
+		curStage = SURVIVAL_GetCurrentDeathFieldStage()
+		if( curStage <= prevStage )
+		{
+			WaitFrame()
+			continue
+		}
+
+		prevStage = curStage
+
+		foreach( data in calculatedAirdropData )
+		{
+			if( data.dropCircle != curStage )
+				continue
+
+			while( !SURVIVAL_GetDeathFieldShrinking() )
+				WaitFrame()
+
+			int numAirdropsInData = data.dropCount
+			wait data.preWait
+
+			AddSurvivalCommentaryEvent( eSurvivalEventType.CARE_PACKAGE_DROPPING )
+
+			for( int i = 0; i < numAirdropsInData; i++ )
+			{
+				entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( DROPPOD_SPAWN_FX ), data.originArray[ i ], data.anglesArray[ i ] )
+				thread AirdropItems( data.originArray[i], data.anglesArray[i], data.contents[i], fx, "droppod_loot_drop", null, 0, "" )
+				if( numAirdropsInData > 1 )
+					wait RandomFloatRange( data.minDelayBetweenPods,  data.maxDelayBetweenPods )
+			}
+		}
+
+		WaitFrame()
+	}
+}
+
+void function AirdropLogic()
+{
+
+}
+#endif
+
+void function OnAirdropCreated( entity dropPod )
+{
+	#if CLIENT
+	if ( dropPod.GetTargetName() == CARE_PACKAGE_PROXY)
+	{
+		ShowGrenadeArrow( GetLocalViewPlayer(), dropPod, 192, 0, true )
+	}
+	#endif
+
+	if ( dropPod.GetTargetName() != CARE_PACKAGE_TARGETNAME && dropPod.GetTargetName() != CARE_PACKAGE_LIFELINE_TARGETNAME )
+		return
+
+	AddCallback_OnUseEntity( dropPod, OnAirdropUse )
+	#if CLIENT
+	AddEntityCallback_GetUseEntOverrideText( dropPod, ExtendedUseTextOverride )
 	#endif
 }
 

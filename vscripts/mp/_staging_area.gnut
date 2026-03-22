@@ -4,7 +4,6 @@ global function Survival_SetStagingAreaSettings
 global function Survival_ClearStagingAreaSettings
 global function StagingAreaPlayerTookDamageCallback
 global function GetFiringRangeRealm
-global function GetPlayerStagingSquadRealm
 global function CreateWeaponRacksForRealm
 global function CreateGunRangeTargetsForRealm
 global function CreateAttachmentsForRealm
@@ -1649,12 +1648,6 @@ int function PerspectiveCleanup( entity player )
 
 // Because I hate the function name GetPLayerStagingSquadRealm().
 int function GetFiringRangeRealm( entity player )
-{
-	return( GetPlayerSquadRealm( player ) )
-}
-
-// Legacy wrapper used by sh_survival_training.gnut
-int function GetPlayerStagingSquadRealm( entity player )
 {
 	return( GetPlayerSquadRealm( player ) )
 }
@@ -3505,16 +3498,15 @@ void function Staging_SpawnJumpPads_Thread()
 			newJumpPad.RemoveFromAllRealms()
 			newJumpPad.AddToRealm( realm )
 
-			// S3: GetChildren() entity method not available at compile time
-			// array< entity > jpChildren  = newJumpPad.GetChildren()
-			// foreach( child in jpChildren )
-			// {
-			// 	if( IsValid( child ) )
-			// 	{
-			// 		child.RemoveFromAllRealms()
-			// 		child.AddToRealm( realm )
-			// 	}
-			// }
+			array< entity > jpChildren  = GetChildren(newJumpPad)
+			foreach( child in jpChildren )
+			{
+				if( IsValid( child ) )
+				{
+					child.RemoveFromAllRealms()
+					child.AddToRealm( realm )
+				}
+			}
 		}
 	}
 

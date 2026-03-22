@@ -29,6 +29,7 @@ global function AddCallback_OnTitanDoomed
 global function AddCallback_OnTitanHealthSegmentLost
 global function AddCallback_OnClientConnecting
 global function AddCallback_OnClientConnected
+global function RemoveCallback_OnClientConnected
 global function AddCallback_OnClientDisconnected
 global function AddCallback_OnPilotBecomesTitan
 global function AddCallback_OnTitanBecomesPilot
@@ -53,7 +54,6 @@ global function RemoveClientCommandCallback
 
 global function AddCallback_OnPreClientDisconnected
 global function AddCallback_OnDeathBoxSpawned
-global function AddCallback_OnGetBestObserverTarget
 global function AddCallback_GameStatePostEnter
 global function AddCallback_OnThreatEventActivation
 global function AddCallback_OnThreatEventStateChange
@@ -72,6 +72,7 @@ global function RegisterForDamageDeathCallbacks
 global function CodeCallback_OnInventoryChanged
 global function CodeCallback_OnEntityChangedTeam
 
+global function AddEntityCallback_OnPhysicsDisabled
 global function AddEntityCallback_OnDamaged
 global function EntityCallback_Exists
 global function RemoveEntityCallback_OnDamaged
@@ -102,13 +103,10 @@ global function CodeCallback_OnPlayerBeginWallrun
 global function CodeCallback_OnPlayerEndWallrun
 global function CodeCallback_OnPlayerBeginWallhang
 global function CodeCallback_OnPlayerEndWallhang
-
-global function CodeCallback_GetBestObserverTarget
 global function CodeCallback_OnServerAnimEvent
 global function CodeCallback_OnNavMeshHotSwapBegin
 global function CodeCallback_OnNavMeshHotSwapEnd
 
-global function SetDefaultObserverBehavior
 global function AddCallback_OnPlayerUsedOffhandWeapon
 
 global function AddPlayerCallback_OnSpawned
@@ -197,49 +195,6 @@ void function CodeCallbacksCommon_Init()
 	RegisterSignal( "OnPostDeathLogicEnd" )
 }
 
-entity function CodeCallback_GetBestObserverTarget( entity observer, bool reverse )
-{
-	#if DEVELOPER
-	printw( "CodeCallback_GetBestObserverTarget", observer, reverse )
-	#endif
-	
-	foreach ( func in svGlobal.onGetBestObserverTargetCallbacks )
-	{
-		entity ent = func( observer, reverse )
-		if ( ent != null )
-		{
-			if ( IsPrivateMatch() && observer.GetTeam() == TEAM_SPECTATOR )
-			{
-				if ( ent.IsPlayer() )
-					printf( "Observer: User %s switched to spectating %s", observer.GetPINNucleusPid(), ent.GetPINNucleusPid() )
-			}
-
-			return ent
-		}
-	}
-
-	if ( file.defaultObserverBehavior != null )
-	{
-		entity defaultEnt = file.defaultObserverBehavior( observer, reverse )
-
-		if ( IsPrivateMatch() && defaultEnt != null && observer.GetTeam() == TEAM_SPECTATOR )
-		{
-			if ( defaultEnt.IsPlayer() )
-				printf( "Observer: User %s switched to spectating %s", observer.GetPINNucleusPid(), defaultEnt.GetPINNucleusPid() )
-		}
-
-		return defaultEnt
-	}
-
-	return null
-}
-
-
-void function SetDefaultObserverBehavior( entity functionref( entity, bool ) func )
-{
-	file.defaultObserverBehavior = func
-}
-
 void function CodeCallback_DamageEntity( entity ent, var damageInfo )
 {
 	// gametype script decides if ent should take damage
@@ -317,7 +272,7 @@ void function CodeCallback_DamageEntity( entity ent, var damageInfo )
 	if ( DamageInfo_GetDamage( damageInfo ) == 0 )
 		return
 
-	UpdateLastDamageTime( ent )
+	UpdateLastDamageTime( ent, ent )
 
 	//this is not viewpunch
 	AddFlinch( ent, damageInfo )
@@ -656,6 +611,14 @@ void function AddCallback_OnPilotBecomesTitan( void functionref( entity pilot, e
 	svGlobal.onPilotBecomesTitanCallbacks.append( callbackFunc )
 }
 
+void function RemoveCallback_OnClientConnected( void functionref( entity player ) callbackFunc )
+{
+	int index = svGlobal.onClientConnectedCallbacks.find( callbackFunc )
+
+	Assert( index != -1, "Requested OnClientConnected " + string( callbackFunc ) + " to be removed not found! " )
+	svGlobal.onClientConnectedCallbacks.fastremove( index )
+}
+
 void function AddCallback_OnTitanBecomesPilot( void functionref( entity pilot, entity npc_titan ) callbackFunc )
 {
 	Assert( !svGlobal.onTitanBecomesPilotCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnTitanBecomesPilot" )
@@ -799,12 +762,6 @@ void function AddCallback_OnDeathBoxSpawned( void functionref( entity player, en
 	svGlobal.onDeathBoxSpawnedCallbacks.append( callbackFunc )
 }
 
-void function AddCallback_OnGetBestObserverTarget( entity functionref( entity player, bool reverse) callbackFunc )
-{
-	Assert( !svGlobal.onGetBestObserverTargetCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnGetBestObserverTarget" )
-	svGlobal.onGetBestObserverTargetCallbacks.append( callbackFunc )
-}
-
 void function AddCallback_GameStatePostEnter( int number, void functionref( ) callbackFunc )
 {
 
@@ -853,6 +810,13 @@ void function RemoveTitanCallback_OnHealthSegmentLost( entity ent, void function
 	ent.e.entSegmentLostCallbacks.fastremove( index )
 }
 
+void function AddEntityCallback_OnPhysicsDisabled( entity ent, void functionref( entity ent ) callbackFunc )
+{
+	Assert( !ent.e.onPhysicsDisabledCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " to entity" )
+
+	ent.PhysicsSetAutoDisableNotifications( true )
+	ent.e.onPhysicsDisabledCallbacks.append( callbackFunc )
+}
 void function AddEntityCallback_OnDamaged( entity ent, void functionref( entity ent, var damageInfo ) callbackFunc )
 {
 	//(mk): temp patch, will address logical error later

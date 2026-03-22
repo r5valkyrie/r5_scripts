@@ -16,6 +16,8 @@ global const array< asset > LOBBY_ANNIVERSARY_BALLOON_MDLS =
 global const string PRIVATE_MATCH_PLAYLIST = "private_match"
 global const int    PRIVATE_MATCH_MAX_PARTY_SIZE = 1
 
+global const int TRAINING_REQUIRED_BELOW_LEVEL_0_BASE = 14
+
 array<string> function GetPrivateMatchModes()
 {
 	array<string> modesArray
@@ -112,17 +114,17 @@ int function GetPrivateMatchMapIndex( string mapName )
 	return 0
 }
 
-                                                          
- 
-	                                                 
-	                                                        
-	 
-		                                    
-			            
-	 
+/*int function GetPrivateMatchModeIndex( string modeName )
+{
+	array<string> modesArray = GetPrivateMatchModes()
+	for ( int index = 0; index < modesArray.len(); index++ )
+	{
+		if ( modesArray[index] == modeName )
+			return index
+	}
 
-	        
-   
+	return 0
+}*/
 
 array<string> function GetPrivateMatchMaps()
 {
@@ -199,6 +201,6 @@ bool function PrivateMatch_IsValidMapModeCombo( string mapName, string modeName 
 
 int function GetCurrentTimeForPersistence()
 {
-	                                                                  
+	// Returns the unix timestap offset to the timezone we want to use
 	return GetUnixTimestamp() + DAILY_RESET_TIME_ZONE_OFFSET * SECONDS_PER_HOUR
 }

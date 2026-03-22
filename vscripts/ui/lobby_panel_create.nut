@@ -54,7 +54,7 @@ void function InitCreatePanel( var panel )
 
 	//Setup Button EventHandlers
 	Hud_AddEventHandler( Hud_GetChild( file.panel, "BtnStartGame" ), UIE_CLICK, StartNewGame )
-	
+
 	array<var> buttons = GetElementsByClassname( file.menu, "createserverbuttons" )
 	foreach ( var elem in buttons ) {
 		Hud_AddEventHandler( elem, UIE_CLICK, OpenSelectedPanel )
@@ -87,7 +87,7 @@ void function InitCreatePanel( var panel )
 
 void function CreatePanel_OnShow( var panel )
 {
-	UI_SetPresentationType( ePresentationType.SERVER_BROWSER )
+	UI_SetPresentationType( ePresentationType.CLUB_LANDING )
 	RefreshUIPlaylists()
 	RefreshUIMaps()
 
@@ -115,7 +115,7 @@ void function OpenSelectedPanel( var button )
 }
 
 void function StartNewGame( var button )
-{	
+{
 	#if LISTEN_SERVER
 	CreateServer(ServerSettings.svServerName, ServerSettings.svServerDesc, ServerSettings.svMapName, ServerSettings.svPlaylist, ServerSettings.svVisibility)
 	#endif // LISTEN_SERVER
@@ -144,7 +144,7 @@ void function SetSelectedServerPlaylist( string playlist )
 
 	//Get the maps of the new playlist
 	array<string> playlist_maps = GetPlaylistMaps(ServerSettings.svPlaylist)
-	
+
 	//Set the panel to not visible
 	Hud_SetVisible( file.panels[1], false )
 

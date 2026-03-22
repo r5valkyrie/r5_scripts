@@ -115,8 +115,8 @@ struct
 	array<entity>                 invalidEntsForPlacingPermanentsOnto
 	table<entity, RefEntAreaData> invalidAreasRelativeToEntForPlacingPermanentsOnto
 	//int functionref()            getNumTeamsRemainingCallback
-	//float functionref()			 getDeathCamTimeOverride
-	//float functionref()			 getDeathCamSpectateTimeOverride
+	float functionref()			 getDeathCamTimeOverride
+	float functionref()			 getDeathCamSpectateTimeOverride
 	array<string>				 nonInstalledModsTracked
 
 	//UpdraftTriggerSettings&      updraftSettings = { ... }
@@ -177,6 +177,7 @@ void function InitWeaponScripts()
 	MpWeaponLifelineBatonPrimary_Init()
 	MpWeaponDeployableCover_Init()
 	MeleeShadowsquadHands_Init()
+	MpGenericOffhand_Init()
 
 	#if DEVELOPER
 		MpWeaponShadowsquadHandsPrimary_Init()
@@ -542,6 +543,25 @@ float function EvaluatePolynomial( float x, array<float> coefficientArray )
 	return sum
 }
 
+bool function GetReplayDisabled()
+{
+	return GetGlobalNetBool( "replayDisabled" )
+}
+
+float function GetRoundWinningKillReplayStartupWait()
+{
+	return GetCurrentPlaylistVarFloat( "round_winning_kill_replay_startup_wait", 2.1 )
+}
+
+float function GetRoundWinningKillReplayLength()
+{
+	return GetCurrentPlaylistVarFloat( "round_winning_kill_replay_length", 5.9 )
+}
+
+float function GetRoundWinningKillReplayTotalLength()
+{
+	return GetRoundWinningKillReplayStartupWait() + GetRoundWinningKillReplayLength()
+}
 table function ArrayValuesToTableKeys( arr )
 {
 	Assert( type( arr ) == "array", "Not an array" )
@@ -1422,9 +1442,13 @@ bool function IsCloaked( entity ent )
 	return ent.IsCloaked( true ) //pass true to ignore flicker time -
 }
 
+float function GetGameStateChangeTime()
+{
+	return GetGlobalNetTime( "gameStateChangeTime" )
+}
 float function TimeSpentInCurrentState()
 {
-	return Time() - expect float( level.nv.gameStateChangeTime )
+	return Time() - GetGameStateChangeTime()
 }
 
 float function DotToAngle( float dot )
@@ -1439,16 +1463,18 @@ float function AngleToDot( float angle )
 
 int function GetGameState()
 {
-	return expect int( GetServerVar( "gameState" ) )
+	return GetGlobalNetInt( "gameState" )
 }
 
 bool function GamePlaying()
 {
-	// Allow firing range to count as playing for equipping gadgets and testing
-	if ( Playlist() == ePlaylists.survival_firingrange )
-		return true
-
 	return GetGameState() == eGameState.Playing
+}
+
+
+bool function GameEpilogue()
+{
+	return GetGameState() == eGameState.Epilogue
 }
 
 bool function GamePlayingOrSuddenDeath()
@@ -2891,6 +2917,34 @@ void function FadeOutSoundOnEntityAfterDelay( entity ent, string soundAlias, flo
 	}
 }*/
 
+float function GetGameEndTime()
+{
+	return GetGlobalNetTime( "gameEndTime" )
+}
+
+
+float function GetGameStartTime()
+{
+	return GetGlobalNetTime( "gameStartTime" )
+}
+
+
+float function GetRoundStartTime()
+{
+	return GetGlobalNetTime( "roundStartTime" )
+}
+
+
+float function GetRoundEndTime()
+{
+	return GetGlobalNetTime( "roundEndTime" )
+}
+
+
+bool function GetForcedDialogueOnly()
+{
+	return GetGlobalNetBool( "forcedDialogueOnly" )
+}
 bool function IsMatchOver()
 {
 	if ( IsRoundBased() && level.nv.gameEndTime )
@@ -2905,6 +2959,15 @@ bool function IsMatchOver()
 bool function IsRoundBased()
 {
 	return expect bool( level.nv.roundBased )
+}
+
+bool function IsLootRoundBased()
+{
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_EXPLORE ) )
+		return true
+
+	return IsRoundBased()
 }
 
 
@@ -2945,6 +3008,11 @@ void function __WarpInEffectShared( vector origin, vector angles, string sfx, fl
 	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, sfx )
 
 	wait totalTime - preWait - sfxWait
+}
+
+bool function IsPilotEliminationBased()
+{
+	return true
 }
 
 void function __WarpInDropPodEffectShared( vector origin, vector angles, string sfx, float preWaitOverride = -1.0, entity ornull vehicle = null )
@@ -3206,8 +3274,12 @@ bool function HasBitMask( int bitsExisting, int bitsToCheck )
 	return bitsCommon == bitsToCheck
 }
 
-float function GetDeathCamLength( )
+float function GetDeathCamLength( entity player )
 {
+	if ( file.getDeathCamTimeOverride != null )
+		return file.getDeathCamTimeOverride()
+
+	// use short time if death cam didn't happen mid match.
 	if ( GetGameState() < eGameState.Playing )
 		return DEATHCAM_TIME_SHORT
 
@@ -4391,6 +4463,25 @@ bool function IsNPCTitan( entity ent )
 }
 #endif
 
+bool function CanNPCDoDamageOnBehalfOfPlayer( entity ent )
+{
+	if (!IsValid(ent))
+		return false
+                                
+                                                     
+             
+      
+              
+                                                  
+             
+      
+
+                                  
+                                 
+              
+       
+	return false
+}
 RaySphereIntersectStruct function IntersectRayWithSphere( vector rayStart, vector rayEnd, vector sphereOrigin, float sphereRadius )
 {
 	RaySphereIntersectStruct intersection
@@ -4743,12 +4834,7 @@ float function GetRoundTimeLimit_ForGameMode()
 	if ( GameState_GetTimeLimitOverride() >= 0 )
 		return GameState_GetTimeLimitOverride()
 
-	if ( !GameMode_IsDefined( GAMETYPE ) )
-		return GetCurrentPlaylistVarFloat( "roundtimelimit", 10.0 )
-	else
-		return GameMode_GetRoundTimeLimit( GAMETYPE )
-
-	unreachable
+	return GetCurrentPlaylistVarFloat( "roundtimelimit", 10.0 )
 }
 #endif // SERVER
 

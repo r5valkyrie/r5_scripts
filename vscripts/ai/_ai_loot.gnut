@@ -41,19 +41,6 @@ array<string> function AI_Loot_SpawnReward( entity npc, AILootSpawnParams params
 	string playlistVarPrefix = params.playlistVarPrefix
 
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
-
-	                    
-		if ( attacker.IsNPC() )
-		{
-			if ( CanNPCDoDamageOnBehalfOfPlayer( attacker ) )
-			{
-				entity boss = attacker.GetBossPlayer()
-				if ( IsValid( boss ) && boss.IsPlayer() )
-					attacker = boss
-				else //can't get loadout from a nonvalid boss
-					return lootRewards
-			}
-		}
        
 
 	if ( !IsValid( attacker ) || !attacker.IsPlayer() )

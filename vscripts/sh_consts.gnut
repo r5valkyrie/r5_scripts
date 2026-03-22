@@ -198,8 +198,6 @@ global const bool HAS_TRACKER_DLL 			= false
 //
 global const bool MULTIPLAYER_DEBUG_PRINTS 	= false // Toggles print console message to all players where used (printm).
 
-global const string PLAYLIST_TRAINING = "survival_training"
-global const string PLAYLIST_FIRING_RANGE = "survival_firingrange"
 global const string FIRING_RANGE_DUMMIE_SCRIPT_NAME = "npc_dummie"
 global const string FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME = "npc_dummie_combat"
 global const string FIRING_RANGE_TARGET_FOLD_SCRIPTNAME = "fr_target_fold"
@@ -213,7 +211,6 @@ global const float SNIPERULT_HEALINGDENIED_DURATION = 15
 global const float REV_SHELL_GIVE_UP_TIME = 30
 global const int WPT_ALL_EXCEPT_VIEWHANDS = 0xFF // S22: all weapon types except viewhands
 global const int WPT_SURVIVAL = 0 // S22 weapon type flag, not in S3 — 0 means bitflag check always false
-global const string PLAYLIST_NEW_PLAYER_ORIENTATION = "survival_bots_vs_humanteams"
 
 global enum eNewPlayerState
 {
@@ -318,7 +315,12 @@ global enum eDeathScreenPanel
 	NONE = -1,
 	SPECTATE,
 	DEATH_RECAP,
-	SQUAD_SUMMARY
+	SCOREBOARD,
+	SQUAD_SUMMARY,
+	SQUAD,
+	RANK,
+	CUP,
+	KILLREPLAY
 }
 
 global struct Cylinder
@@ -366,7 +368,44 @@ global struct UIScaleFactor
 	float y = 1.0
 }
 
-global const SPECTATOR_SETTINGS 			= $"settings/player/mp/spectator.rpak"
+global const SPECTATOR_SETTINGS = $"settings/player/mp/spectator.rpak"
+global const DEFAULT_PILOT_SETTINGS = $"settings/player/mp/pilot_survival_gunner.rpak"
+
+global const TEAM_DEATHMATCH = "tdm"
+global const TDM_SWAT = "swat"
+global const SURVIVAL = "survival"
+global const GAMEMODE_SURVIVAL_RANKED = "survival_ranked"
+global const GAMEMODE_CONTROL = "control"
+global const GAMEMODE_FREELANCE = "freelance"
+global const GAMEMODE_FREEDM = "freedm"      
+global const GAMEMODE_SHADOW_ROYALE = "shadow_royale"
+global const GAMEMODE_WINTER_EXPRESS = "winter_express"
+global const GAMEMODE_HEATWAVE = "survival_heatwave"
+global const GAMEMODE_SURVIVAL_HARDCORE = "survival_hardcore"
+global const GAMEMODE_DATE_NIGHT = "date_night_duos"
+global const GAMEMODE_HALLOWEEN_18_1 = "halloween_18_1_trios"
+global const GAMEMODE_HALLOWEEN_18_1_HARBINGER = "halloween_18_1_harbinger_trios"
+global const GAMEMODE_GOLDEN_HORSE = "golden_horse_trios"
+global const GAMEMODE_STRIKEOUT = "strikeout"
+global const GAMEMODE_BANNERBOMB = "bannerbomb"
+global const GAMEMODE_TREASURE_HUNT = "treasure_hunt"
+global const GAMEMODE_THE_HUNT_20 = "the_hunt_20"
+global const GAMEMODE_ARMED_AND_DANGEROUS = "armed_and_dangerous"
+global const GAMEMODE_SHADOW_ARMY = "shadow_army"
+global const EVENT_ABILITIES = "event_abilities"
+global const GAMEMODE_QUICK_MATCH = "quick_match"
+global const GAMEMODE_SURVIVAL_SOLOS = "survival_solos"
+global const GAMEMODE_SURVIVAL_QUADS = "survival_quads"
+global const GAMEMODE_BIGTEAM_DEATHMATCH = "freedm_bigtdm"
+global const string PLAYLIST_TRAINING = "survival_training"
+global const string PLAYLIST_NEW_PLAYER_ORIENTATION = "survival_bots_vs_humanteams"
+global const string PLAYLIST_FIRING_RANGE = "survival_firingrange"
+global const int PLAYLIST_ID_SURVIVAL = 0
+global const int PLAYLIST_ID_NEW_PLAYER_ORIENTATION = 1
+                                  
+
+                   
+global const string COMBATRANGE = "combatrange"
 
 global const NPC_TITAN_PILOT_PROTOTYPE  	= 0
 
@@ -374,34 +413,6 @@ global const HAS_TASKLIST_SYSTEM        	= false
 global const HAS_MISSIONINFO_SYSTEM     	= false
 
 
-//////////////////////////////
-//		GAME MODE CONST		//
-//////////////////////////////
-
-global const MENUFALL						= "menufall"
-global const TEAM_DEATHMATCH				= "tdm"
-global const SURVIVAL						= "survival"
-global const FREELANCE						= "freelance"
-global const CUSTOM_CTF						= "custom_ctf"
-
-global const fs_dm							= "fs_dm"
-global const fs_aimtrainer					= "fs_aimtrainer"
-global const fs_prophunt					= "fs_prophunt"
-global const fs_duckhunt					= "fs_duckhunt"
-global const fs_infected					= "fs_infected"
-global const fs_snd							= "fs_snd"
-global const fs_apexkart					= "fs_apexkart"
-global const fs_spieslegends				= "fs_spieslegends"
-global const flowstate_pkknockback			= "flowstate_pkknockback"
-
-//Respawn modes
-global const WINTEREXPRESS					= "winterexpress"
-global const ARENAS							= "arenas"
-global const GAMEMODE_ARENAS				= "arenas"
-global const GAMEMODE_FREEDM			= "freedm"
-global const FREEDM						= "freedm"
-global const FREEDM_TDM					= "freedm_tdm"
-global const FREEDM_GUNGAME				= "freedm_gungame"
 
 //////////////////////////////
 
@@ -595,14 +606,15 @@ global const CONNECT_TIME_DEFAULT = 23
 global const OUT_OF_BOUNDS_TIME_LIMIT = 15.0
 global const OUT_OF_BOUNDS_DECAY_TIME = 15.0
 global const OUT_OF_BOUNDS_DECAY_DELAY = 1.0
-
+global const OUT_OF_BOUNDS_GRACE_PERIOD = 5.0
+global const OUT_OF_BOUNDS_GRACE_PERIOD_DELAY = 5.0
 global const MAX_TRACKED_CHALLENGES = 3
 
 // OFFICIAL
-global const int FRIENDLY_R = 87
-global const int FRIENDLY_G = 151
-global const int FRIENDLY_B = 219
-// 5797DB
+global const int FRIENDLY_R = 161
+global const int FRIENDLY_G = 196
+global const int FRIENDLY_B = 255
+// A1C4FF
 
 global const int ENEMY_R = 255
 global const int ENEMY_G = 120
@@ -614,6 +626,15 @@ global const int LOCAL_G = 184
 global const int LOCAL_B = 0
 // FFB800
 
+global const int FRIENDLY_FX_R = 87
+global const int FRIENDLY_FX_G = 151
+global const int FRIENDLY_FX_B = 219
+// 5797DB
+
+global const int ENEMY_FX_R = 255
+global const int ENEMY_FX_G = 120
+global const int ENEMY_FX_B = 32
+// FF7820
 global const int PARTY_R = 91
 global const int PARTY_G = 255
 global const int PARTY_B = 31
@@ -649,6 +670,7 @@ global const ENEMY_COLOR 				= TEAM_COLOR_ENEMY
 
 //FOR RUI HUD -> make sure any changes here line up with global_defs.rui
 global const int WP_STYLE_OBJECTIVE = 0
+global const int WP_STYLE_PVEQUEST = 1
 global const int WP_STYLE_DEATHBOX_NORMAL = 2
 global const int WP_STYLE_DEATHBOX_CORPSERUN = 3
 global const int WP_STYLE_LOOT_DROPOFF = 4
@@ -893,11 +915,6 @@ global enum eStickState
 	RIGHT = 2,
 	_count,
 }
-
-//Max Time spent after death before respawning again is DEATHCAM_TIME + KILL_REPLAY_BEFORE_KILL_TIME_TITAN + KILL_REPLAY_AFTER_KILL_TIME
-global const DEATHCAM_TIME 								= 8.0 // the amount of time spent watching the you-are-dead death cam (not kill replay)
-global const DEATHCAM_TIME_SHORT = 3.0
-global const DEATHCAM_MIN_TIME = 0.1
 
 global const KILL_REPLAY_BEFORE_KILL_TIME_PILOT 		= 3.5
 global const KILL_REPLAY_BEFORE_KILL_TIME_TITAN 		= 6.8
@@ -1192,7 +1209,6 @@ global const TITAN_DAMAGE_STAGE_1 			= 0.75
 global const TITAN_DAMAGE_STAGE_2 			= 0.5
 global const TITAN_DAMAGE_STAGE_3 			= 0.25
 global const TITAN_DAMAGE_STAGE_DOOMED 		= 0.0
-global const int DOOMED_MIN_HEALTH 			= 1
 
 global const float AREA_SONAR_SCAN_PULSE_DURATION 	= 6.0
 
@@ -1647,8 +1663,6 @@ global enum ePresentationType
 	COLLECTION_EVENT,
 	QUEST_PANEL,
 	STORE_INSPECT,
-	SERVER_BROWSER,
-	CREDITS,
 	MODEL
 	CLUB_LANDING,
 	CLUB_DISCOVERY,
@@ -1703,7 +1717,9 @@ global enum ePlayerMovementEvents
 	BEGIN_WALLRUN,
 	END_WALLRUN,
 	BEGIN_WALLHANG,
-	END_WALLHANG
+	END_WALLHANG,
+	BEGIN_SLIDE,
+	END_SLIDE
 }
 
 /*
@@ -1743,6 +1759,7 @@ IN_OFFHAND2
 global enum eUIEvent
 {
 	MENU_OPEN,
+	MENU_PRECLOSE,
 	MENU_CLOSE,
 	MENU_SHOW,
 	MENU_HIDE,
@@ -3037,30 +3054,6 @@ global enum eValidation
 	ASSERT,
 }
 
-global const int REALM_COUNT = 32
-global enum eRealms
-{
-	// Default realm for players in the match
-	DEFAULT 					= 0,
-	PROTO_ABILITY_HAUNT = 1,
-
-	//----------------------
-	// STAGING AREA REALMS
-	//----------------------
-
-	// We need to reserve realms for players in the staging area. Each player is in 2 player realms, one for just your squad so things like ultimates are
-	// only seen by your squad, and also in one of a few common realms with other squads on the server so we see some of the other players running around.
-	// In a 60 man, 3 player squads game we need the following number of slots:
-	// 60 players / 15 players per common realm = 4 common slots
-	// 60 players / 3 players per squad = 20 squad slots
-	//   24 realm slots total needed
-	//   more realms may be needed for playlists with smaller squads
-	STAGING_REALM_PLAYERS_START = 2,
-	STAGING_REALM_PLAYERS_END	= 63,
-
-	_count = REALM_COUNT
-}
-
 global const bool HAS_AUTOPICKUP_STACKABLE_ITEMS = false
 global const bool HAS_FIRST_PERSON_SPECTATE = true
 global const bool HAS_ENEMY_NAMES_OVERHEAD = false
@@ -3522,6 +3515,8 @@ global const int ACM_SPECTATORS = 2
 global const int ACM_ALL_PLAYERS = 3
 global const int ACM_COUNT = 4
 global const int CAMO_SKIN_COUNT = 3
+global const int GAMEMODE_MAX_SEEN_INDEX = 9
+global const int GAMEMODE_INVALID_INDEX = -1
 
 // ===============================================================================
 // Don't add any constants below here. Add constants that don't reference variables

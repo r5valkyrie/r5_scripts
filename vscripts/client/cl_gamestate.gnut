@@ -21,7 +21,6 @@ global function SetGameModeScoreBarUpdateRules
 global function SetGameModeScoreBarUpdateRulesWithFlags
 global function SetGameModeSuddenDeathAnnouncementSubtext
 
-global function GetGameStartTime
 
 global function KillLeaderChangeCallback
 global function UpdateKillLeaderOnGameStateRui
@@ -76,7 +75,8 @@ global enum sbflag
 
 struct
 {
-	var  gamestateRui
+	var  gamestateRui = null
+	var  gamestateWaitingNestedRui = null
 	bool gameStateRuiCreated = false
 	var  letterBoxRui = null
 	bool thirtySecondWarningDone = false
@@ -100,6 +100,8 @@ struct
 
 	int cachedGameState = -1
 	array< void functionref( int ) > onGameStateChangedFuncs
+
+	void functionref() resolutionCompletedCleanupFunc = null
 } file
 
 const DEV_COUNTDOWNTIMER = 0//turn on to see the countdown timer to match starts - helps with lining up intros
@@ -110,7 +112,8 @@ const DEV_COUNTDOWNTIMER = 0//turn on to see the countdown timer to match starts
 void function ClGameState_Init()
 {
 	RegisterSignal( "GameStateChanged" )
-	RegisterServerVarChangeCallback( "gameState", ClGameState_Changed )
+	RegisterSignal( "GameModes_CompletedResolutionCleanup" )
+	RegisterNetVarIntChangeCallback( "gameState", SNDC_GLOBAL, ClGameState_Changed )
 	//RegisterServerVarChangeCallback( "badRepPresent", UpdateScoreboardBadRepPresentMessage )
 	AddOnSpectatorTargetChangedCallback( GameState_SpectatorTargetChanged )
 
@@ -141,8 +144,22 @@ void function CreateScoreRUI()
 		CreateNestedNetGraph( rui )
 	}
 	RuiSetInt( rui, "maxPlayerCount", GetCurrentPlaylistVarInt( "max_players", 12 ) )
-	RuiSetString( rui, "gameModeString", GetCurrentPlaylistVarString( "gameModeString", "" ) )
-	file.gamestateRui = rui
+	RuiSetString( rui, "gameModeString", GetCurrentPlaylistVarString( "name", "#PLAYLIST_UNAVAILABLE" ) )
+	RuiSetString( rui, "mapName", GetCurrentPlaylistVarString( "map_name", "#PLAYLIST_UNAVAILABLE" ) )
+	RuiSetImage( rui , "gameModeIcon", GetGamemodeLogoFromImageMap( GetCurrentPlaylistVarString( "gamemode_logo", "BATTLE_ROYALE" )) )
+
+	asset hudArtAsset = GetWaitingGameStateArtHud()
+	if ( hudArtAsset != $"" )
+	{
+		file.gamestateWaitingNestedRui = RuiCreateNested( rui, "waitingHUDHandle", hudArtAsset )
+
+		
+		RuiSetFloat( rui, "waitingMessageScale", 0.65 )
+		RuiSetFloat2( rui, "startingMessageOffset", <0.0, 570.0, 0.0> )
+		RuiSetFloat2( rui, "waitingMessageOffset", <0.0, 556.0, 0.0> )
+	}
+
+	file.gamestateRui        = rui
 	file.gameStateRuiCreated = true
 
 	SetCommonScoreRUIVars( rui )
@@ -156,170 +173,48 @@ void function CreateScoreRUI()
 	}
 }
 
+bool function HasWaitingGameStateArtHud()
+{
+	return GetWaitingGameStateArtHud() != $""
+}
+
+asset function GetWaitingGameStateArtHud()
+{
+	asset hudArtAsset = $""
+	string mapName = GetMapName()
+
+		if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_BATTLE_RUSH ) )
+		{
+			return $"ui/waiting_after_battle_rush.rpak"
+		}
+
+
+	switch( mapName )
+	{
+		case "mp_rr_olympus_mu1_night":
+			hudArtAsset = $"ui/waiting_after_dark_olympus.rpak"
+			break
+
+		case "mp_rr_canyonlands_mu1_night":
+			hudArtAsset = $"ui/waiting_after_dark_canyonlands.rpak"
+			break
+
+		case "mp_rr_desertlands_night":
+			hudArtAsset = $"ui/waiting_after_dark_desertlands.rpak"
+			break
+	}
+
+	return hudArtAsset
+}
+
 void function Hud_SetModeEmblem()
 {
 	RuiSetAsset( file.gamestateRui, "emblemImage", GetModeEmblemImage( GetCurrentPlaylistName() ) )
 }
 
 void function SetCommonScoreRUIVars( var rui )
-{	
-	/*if ( Gamemode() != eGamemodes.SURVIVAL || Playlist() == ePlaylists.survival_solos )
-	{
-		RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-		RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ALIVE" )
-		RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ALIVE" )
-		
-		int pl = Playlist()
-		int gamemode = Gamemode()
-
-		switch( gamemode )
-		{
-			case eGamemodes.fs_spieslegends:
-			RuiSetString( rui, "gameModeString", "SPIES LEGENDS" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ONLINE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ONLINE" )
-			RuiSetVisible(rui, true)
-			break
-		}
-		
-		if( Flowstate_IsHaloMode() )
-			RuiSetString( rui, "gameModeString", "HALO SLAYER" )
-			
-		switch( pl )
-		{
-			case ePlaylists.winterexpress:
-			RuiSetString( rui, "gameModeString", "WINTER EXPRESS" )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ONLINE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ONLINE" )
-			break
-
-			case ePlaylists.fs_1v1_coaching:
-			RuiSetString( rui, "gameModeString", "FS 1v1 COACHING" )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ONLINE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ONLINE" )
-			break
-			
-			case ePlaylists.fs_1v1:
-			RuiSetString( rui, "gameModeString", "FS 1v1" )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ONLINE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ONLINE" )
-			break
-
-			case ePlaylists.fs_lgduels_1v1:
-			RuiSetString( rui, "gameModeString", "FS LGDUELS" )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ONLINE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ONLINE" )
-			break
-			
-			case ePlaylists.fs_scenarios:
-			// RuiSetString( rui, "gameModeString", "FS ZONE WARS" )
-			// RuiSetString( rui, "squadsRemainingTextSingular", "ENEMY ALIVE" )
-			// RuiSetString( rui, "squadsRemainingTextPlural", "ENEMIES ALIVE" )
-			break
-			
-			case ePlaylists.fs_movementgym:
-			RuiSetString( rui, "gameModeString", "FS MOVEMENT GYM" )
-			break
-			
-			case ePlaylists.fs_dm:
-			RuiSetString( rui, "gameModeString", "FS DEATHMATCH" )
-			break
-			
-			case ePlaylists.fs_realistic_ttv:
-			RuiSetString( rui, "gameModeString", "FS REALISTIC TTV" )
-			break
-			
-			case ePlaylists.survival_solos:
-			RuiSetString( rui, "gameModeString", "APEX SOLOS" )
-			break
-
-			case ePlaylists.fs_haloMod_ctf:	
-			RuiSetString( rui, "gameModeString", "HALO CTF" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ALIVE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ALIVE" )
-			RuiSetVisible(rui, true)
-			break
-			
-			case ePlaylists.fs_haloMod_oddball:	
-			RuiSetString( rui, "gameModeString", "HALO ODDBALL" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ALIVE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ALIVE" )
-			RuiSetVisible(rui, true)
-			break
-		
-			case ePlaylists.fs_dm_fast_instagib:
-			RuiSetString( rui, "gameModeString", "CAFE'S INSTAGIB" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ALIVE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ALIVE" )
-			RuiSetVisible(rui, true)
-			break
-
-			case ePlaylists.fs_infected:
-			RuiSetString( rui, "gameModeString", "FS INFECTED" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "#SHADOW_SQUAD_PLAYERS_REMAIN" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "#SHADOW_SQUAD_PLAYERS_REMAIN" )
-			RuiSetString( rui, "squadsRemaining2TextSingular", "INFECTED" )
-			RuiSetString( rui, "squadsRemaining2TextPlural", "INFECTED" )
-			break
-			
-			case ePlaylists.fs_prophunt:
-			RuiSetString( rui, "gameModeString", "FS PROPHUNT" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PROP ALIVE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PROPS ALIVE" )
-			RuiSetVisible(rui, true)
-			break
-			
-			case ePlaylists.fs_duckhunt:
-			RuiSetString( rui, "gameModeString", "FS DUCKHUNT" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "DUCK ALIVE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "DUCKS ALIVE" )
-			RuiSetVisible(rui, true)	
-			break
-				
-			case ePlaylists.fs_snd:
-			RuiSetString( rui, "gameModeString", "SEARCH AND DESTROY" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "ENEMY ALIVE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "ENEMIES ALIVE" )
-			RuiSetVisible(rui, true)	
-			break
-	
-			case ePlaylists.custom_ctf:
-			RuiSetString( rui, "gameModeString", "CAPTURE THE FLAG" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ONLINE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ONLINE" )
-			RuiSetVisible(rui, true)
-			break
-			
-			case ePlaylists.flowstate_pkknockback:
-			RuiSetString( rui, "squadsRemainingTextSingular", "PLAYER ALIVE" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "PLAYERS ALIVE" )
-			RuiSetString( rui, "gameModeString", "KNOCKBACK KNOCKOUT" )
-			break
-		}
-	}
-	else
-	{*/
-		if ( IsFallLTM() )
-		{
-			RuiSetString( rui, "gameModeString", "" )
-			RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
-			RuiSetString( rui, "squadsRemainingTextSingular", "#SHADOW_SQUAD_PLAYERS_REMAIN" )
-			RuiSetString( rui, "squadsRemainingTextPlural", "#SHADOW_SQUAD_PLAYERS_REMAIN" )
-			RuiSetString( rui, "squadsRemaining2TextSingular", "#SHADOW_SQUAD_SHADOW_PLAYERS_REMAIN" )
-			RuiSetString( rui, "squadsRemaining2TextPlural", "#SHADOW_SQUAD_SHADOW_PLAYERS_REMAIN" )
-			return
-		}
-       
-	if ( IsSoloMode() )
+{
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
 	{
 		RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
 		RuiSetString( rui, "squadsRemainingTextSingular", "#SURVIVAL_PLAYERS_REMAIN" )
@@ -622,38 +517,10 @@ void function ClGameStateThink_Playing( entity player )
 	file.thirtySecondWarningDone = true
 }
 
+
 void function ThirtySecondWarning()
 {
-	string conversation = GameMode_GetGameEndingConversation( GameRules_GetGameMode() )
-	if ( conversation != "" )
-		PlayConversationToLocalClient( conversation )
 
-	int lastSecond = -1
-	while ( Time() < level.nv.gameEndTime && GetGameState() == eGameState.Playing )
-	{
-		int second = int( floor( level.nv.gameEndTime - Time() ) )
-		if ( lastSecond == -1 )
-		{
-			lastSecond = second
-		}
-		else if ( second != lastSecond && second < 30 )
-		{
-			if ( second > 5 )
-			{
-				EmitSoundOnEntity( GetLocalClientPlayer(), "HUD_match_start_timer_tick_1P" )
-			}
-			else if ( second >= 0 )
-			{
-				EmitSoundOnEntity( GetLocalClientPlayer(), "HUD_match_start_timer_5_seconds_1P" )
-			}
-		}
-
-		lastSecond = second
-
-		WaitFrame()
-	}
-
-	EmitSoundOnEntity( GetLocalClientPlayer(), "HUD_match_start_timer_0_seconds_1P" )
 }
 
 string function GetTitanClass( entity titan )
@@ -794,28 +661,62 @@ void function UpdateIsSonyMP()
 	SetIsConsideredSonyMultiplayer( isSonyMP )
 }
 
-void function ClGameState_Changed()
+void function ClGameState_Changed( entity playerEnt, int newVal )
 {
-	entity player = GetLocalClientPlayer()
-	player.Signal( "GameStateChanged" )
+	Assert( newVal >= -1 )
+	Assert( newVal < eGameState._count_ )
 
-	foreach ( callbackFunc in clGlobal.gameStateEnterCallbacks[ GetGameState() ] )
+	if ( newVal == -1 )
+		return
+
+	string oldPrintVal = file.cachedGameState == -1 ? "-1" : GetEnumString( "eGameState", file.cachedGameState )
+	string newPrintVal = newVal == -1 ? "-1" : GetEnumString( "eGameState", newVal )
+	printf( "ClGameState_Changed(): cachedGameState = %s, newVal = %s", oldPrintVal, newPrintVal )
+
+	if ( file.cachedGameState == newVal )
+		return
+
+	int gameState = newVal
+	file.cachedGameState = gameState
+
+	entity player = GetLocalClientPlayer()
+	Signal( player, "GameStateChanged", { newState = gameState } )
+	
+	
+	if ( IsValid( clGlobal.levelEnt ) )
+		Signal( clGlobal.levelEnt, "GameStateChanged", { newState = gameState } )
+
+	foreach( func in file.onGameStateChangedFuncs )
+		func( gameState )
+
+	if ( IsPrivateMatch() && IsSpectator( player ) )
+	{
+		RuiSetInt( file.gamestateRui, "livingPlayerCountMin", 0 )
+	}
+
+	if ( GetBugReproNum() != 144690 )
+	{
+		if ( player.cv == null )
+			player.cv = level.clientVars
+	}
+
+	foreach ( callbackFunc in clGlobal.gameStateEnterCallbacks[ gameState ] )
 	{
 		callbackFunc()
 	}
 
-	foreach ( callbackFunc in clGlobal.gameStateChangedCallbacks )
-	{
-		callbackFunc( GetGameState() )
-	}
-
-	switch ( GetGameState() )
+	switch ( gameState )
 	{
 		case eGameState.WaitingForCustomStart:
-			//player.cv.gamescomWaitTillReady.Show()
+			
 			break
 
 		case eGameState.WaitingForPlayers:
+
+			if( file.gamestateWaitingNestedRui != null )
+				RuiSetGameTime( file.gamestateWaitingNestedRui, "startTime", Time() )
+
+			ClearCrosshairPriority( crosshairPriorityLevel.POSTMATCH )
 			break
 
 		case eGameState.PickLoadout:
@@ -825,35 +726,41 @@ void function ClGameState_Changed()
 			RemoveAllRagdolls()
 			HideEventNotification()
 
-			SetCrosshairPriorityState( crosshairPriorityLevel.PREMATCH, CROSSHAIR_STATE_HIDE_ALL )
+			if ( !GetCurrentPlaylistVarBool( "show_hud_in_prematch", false ) )
+				SetCrosshairPriorityState( crosshairPriorityLevel.PREMATCH, CROSSHAIR_STATE_HIDE_ALL )
 
-			//player.cv.waitingForPlayersDesc.HideOverTime( 0.25 )
-			//player.cv.waitingForPlayersLine.HideOverTime( 0.25 )
-			//player.cv.waitingForPlayersTimer.HideOverTime( 0.25 )
+			
+			
+			
 
 			if ( GetCurrentPlaylistVarInt( "prematch_letterbox_enabled", 0 ) == 1 )
 				file.letterBoxRui = RuiCreate( $"ui/letter_box.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
 
-			//player.cv.prematchTimer.SetAlpha( 255 )
-			//player.cv.prematchTimerGlow.SetAlpha( 255 )
-			//player.cv.prematchDesc.SetAlpha( 255 )
+			
+			
+
+			
+			
+			
 
 			file.thirtySecondWarningDone = false
 
-			StopLocal1PDeathSound() //If you were watching your own kill replay, don't want this playing through till next round
+			StopLocal1PDeathSound() 
 
 			clGlobal.levelEnt.Signal( "AnnoucementPurge" )
 
 			break
 
 		case eGameState.Playing:
+			ClearCrosshairPriority( crosshairPriorityLevel.POSTMATCH )
 			ClearCrosshairPriority( crosshairPriorityLevel.PREMATCH )
-			//player.cv.vignette.HideOverTime( 0.25 )
+			
 			if ( file.letterBoxRui != null )
 				RuiSetGameTime( file.letterBoxRui, "hideStartTime", Time() )
-			//player.cv.prematchTimer.HideOverTime( 0.25 )
-			//player.cv.prematchTimerGlow.HideOverTime( 0.25 )
-			//player.cv.prematchDesc.HideOverTime( 0.25 )
+
+			
+			
+			
 
 			ShowScriptHUD( player )
 			break
@@ -869,21 +776,32 @@ void function ClGameState_Changed()
 			break
 
 		case eGameState.WinnerDetermined:
-			player.cv.roundSpawnCount = 0
+			if ( player.cv != null )
+				player.cv.roundSpawnCount = 0
 			break
 
 		case eGameState.Resolution:
-			//thread MainHud_Outro( level.nv.winningTeam )
+			SetCrosshairPriorityState( crosshairPriorityLevel.POSTMATCH, CROSSHAIR_STATE_HIDE_ALL )
+			//ResetReconnectParametersAsync()
+			
+			if ( file.resolutionCompletedCleanupFunc != null )
+			{
+				file.resolutionCompletedCleanupFunc()
+			}
+			else
+			{
+				//DefaultCompletedResolutionCleanupFunc()
+			}
 			break
 
 		case eGameState.SwitchingSides:
 
 			float announcementDuration = 7.0
-			if ( IsRoundWinningKillReplayEnabled() == true && ( !IsRoundBased() && IsSwitchSidesBased() ) ) //Ideally this should be a call to WillShowRoundWinningKillReplay(), but that's only available on the server
-				announcementDuration = SWITCHING_SIDES_DELAY + ROUND_WINNING_KILL_REPLAY_TOTAL_LENGTH
+			if ( IsRoundWinningKillReplayEnabled() == true && (!IsRoundBased() && IsSwitchSidesBased()) ) 
+				announcementDuration = SWITCHING_SIDES_DELAY + GetRoundWinningKillReplayTotalLength()
 
 			AnnouncementData announcement = Announcement_Create( "#GameState_HALFTIME" )
-			announcement.sortKey = RUI_SORT_SCREENFADE + 1 // Draw over screen fade
+			announcement.sortKey = RUI_SORT_SCREENFADE + 1 
 			announcement.drawOverScreenFade = true
 			Announcement_SetSubText( announcement, file.switchingSidesSubText )
 			Announcement_SetHideOnDeath( announcement, false )
@@ -923,13 +841,28 @@ void function ClGameState_Changed()
 			break
 
 		case eGameState.Postmatch:
-			//ShowScoreboard()
-			//wait for scoreboard to be up
-			delaythread( 1.5 ) ServerCallback_ResetMapSettings()
+
+				if ( IsMatchmakingFromMatchAllowed( player ) )
+					RunUIScript( "MatchRequeueLeaveMatchPoll" )
+
 			break
 	}
 
-	//UpdateIsSonyMP()
+	UpdateIsSonyMP()
+}
+
+void function AddCallback_OnGameStateChanged( void functionref( int ) func )
+{
+	Assert( !file.onGameStateChangedFuncs.contains( func ) )
+	file.onGameStateChangedFuncs.append( func )
+}
+
+void function ClWaittillGameStateOrHigher( int state )
+{
+	while( GetGameState() < state && IsValid( clGlobal.levelEnt ) )
+	{
+		clGlobal.levelEnt.WaitSignal( "GameStateChanged" )
+	}
 }
 
 void function GameState_SpectatorTargetChanged( entity player, entity previousTarget, entity currentTarget )
@@ -1077,14 +1010,6 @@ void function UpdateChatHudLocationForTop3()
 	var screenSize = Hud.GetScreenSize()
 	var position = hudElement.GetPos()
 	HudElement( "IngameTextChat" ).SetPos( position[0], -1 * ( screenSize[1] - ( height + screenSize[1] * 0.10 ) ) )
-}
-
-float function GetGameStartTime()
-{
-	if ( level.nv.gameStartTime == null )
-		return Time() + 30.0 // fallback: assume 30s from now if not set yet
-
-	return expect float( level.nv.gameStartTime.tofloat() )
 }
 
 string function GetServerDebugId()

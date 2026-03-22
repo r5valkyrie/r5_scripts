@@ -1,4 +1,4 @@
-                       
+
 
 global function FreeDM_GamemodeInitShared
 global function FreeDM_GetOtherTeam
@@ -104,10 +104,10 @@ const string FDM_PODIUM_FX_CONFETTI = "confetti_burst"
 const string FDM_PODIUM_SCRIPT_FIREBALL = "script_fireballs"
 const string FDM_PODIUM_SCRIPT_SPARKS = "script_sparks"
 
-                                          
-                                                                              
-                                                                            
-                                                
+
+
+
+
 
 #if SERVER
 const float FREEDM_MINIMAP_ZOOM_SCALE = 1.3 // since all maps are about the same size just having the one value is probably okay
@@ -157,14 +157,14 @@ global const array<string> FREEDM_DISABLED_BATTLE_CHATTER_EVENTS = [
 ]
 
 global const array<int> FREEDM_DISABLED_COMMS_ACTIONS = [
-                         
+
 eCommsAction.INVENTORY_NO_AMMO_BULLET,
 eCommsAction.INVENTORY_NO_AMMO_ARROWS,
 eCommsAction.INVENTORY_NO_AMMO_HIGHCAL,
 eCommsAction.INVENTORY_NO_AMMO_SHOTGUN,
 eCommsAction.INVENTORY_NO_AMMO_SNIPER,
 eCommsAction.INVENTORY_NO_AMMO_SPECIAL,
-      
+
 ]
 
 #if SERVER
@@ -176,14 +176,14 @@ struct FreeDM_VOData
 #endif
 
 #if SERVER
-                                          
-                                      
- 
-                      
-                     
-                       
- 
-                                                
+
+
+
+
+
+
+
+
 #endif // SERVER
 
 struct {
@@ -204,10 +204,10 @@ struct {
 	int nearEndscoreDeltaForVO = FREEDM_MUSIC_START_ON_KILLS_LEFT
 	bool isMatchWinnerFound = false
 
-                                           
-                                      
-                                                                       
-                                                 
+
+
+
+
 
 #endif // SERVER
 
@@ -227,7 +227,6 @@ struct {
 void function FreeDM_GamemodeInitShared()
 {
 	SetScoreEventOverrideFunc( FreeDM_SetScoreEventOverride )
-	GamemodeSurvivalShared_Init()
 
 	TimedEvents_Init()
 
@@ -266,29 +265,29 @@ void function FreeDM_GamemodeInitShared()
 	BlockMapEntityParseCreationOf( "prop_dynamic", "", "script_loot_marvin" )
 	//
 
-                                           
-                       
-                                           
 
-   
-                                             
-                                                           
-                                                
-                                                 
-                                                                            
 
-                                                                       
-   
-   
-                                            
-                                                           
-                                                
-                                                 
-                                                                           
 
-                                                                       
-   
-                                                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #endif
 
@@ -750,9 +749,9 @@ void function FreeDM_AddTeamScore( int team, int newPoints )
     if( file.isMatchWinnerFound )
 		return
 
-	                         
+
 		int oldWinningTeamOrAlliance = GamemodeUtility_GetWinningTeamOrAlliance( true )
-                                
+
 	int scoringTeamOrAlliance = AllianceProximity_IsUsingAlliances() ? AllianceProximity_GetAllianceFromTeam( team ) : team
 	int oldScore = GamemodeUtility_GetTeamOrAllianceScore( scoringTeamOrAlliance )
 	int newScore = oldScore + newPoints
@@ -772,7 +771,7 @@ void function FreeDM_AddTeamScore( int team, int newPoints )
 		GameRules_SetTeamScore( team, newScore )
 	}
 
-	                         
+
 		int newWinningTeamOrAlliance = GamemodeUtility_GetWinningTeamOrAlliance( true )
 
 		// Check if the scoring team has taken the lead
@@ -831,12 +830,12 @@ void function FreeDM_AddTeamScore( int team, int newPoints )
 				UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( scoringTeamOrAlliance, eCrowdNoiseMeterModifiers.WIN_BY_SMALL_MARGIN_POSITIVE )
 			}
 		}
-                                
 
-                                           
-                                
-                                                              
-                                                 
+
+
+
+
+
 
 	thread _PlayScoreVO( scoringTeamOrAlliance )
 	UpdateGameplayMusic( scoringTeamOrAlliance )
@@ -1022,47 +1021,47 @@ void function FreeDM_ResetRound()
 }
 #endif // SERVER
 
-                                          
-          
-                                                                          
- 
-                                     
-        
 
-                             
 
-                               
-                                                                          
-  
-                                                       
-   
-                                                                                    
-                                 
-    
-                                                                                         
-                                      
-     
-                                                                
-                                                                      
-     
-    
-   
-  
 
-                                                                                         
-                                                                                                      
-                                              
-  
-                            
-  
-            
-                                              
-  
-                              
-  
- 
-                
-                                                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #if SERVER
 void function FreeDM_AddPlayerSecondaryScore( entity player, int newPoints )
@@ -1269,7 +1268,7 @@ void function FreeDM_FreeDMOnlySetWinnerFunctionality( int localWinningTeam )
 	}
 
 	// TODO okirkham: shouldn't this be in the treasure hunt file?
-	                             
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_LOCKDOWN ) )
 		{
 			array < entity > allPlayersArray = GetPlayerArray()
@@ -1280,7 +1279,7 @@ void function FreeDM_FreeDMOnlySetWinnerFunctionality( int localWinningTeam )
 					AddXP( player, eXPType.OBJECTIVE_CAPTURE_DURATION, int( playerTimeOnObjectives ) )
 			}
 		}
-       
+
 }
 #endif // SERVER
 
@@ -1422,13 +1421,13 @@ void function ApplyLoadout( entity player )
 		file.ArmorOverrideCallback( player, armorRef )
 	}
 
-	                            
+
 	if ( IsRevTakeover() && ( AllianceProximity_GetAllianceFromTeam( player.GetTeam() ) == ALLIANCE_B ) )
 	{
 		if ( GetCurrentPlaylistVarBool( "enableRevTeamMods", true ) )
 			GivePlayerSettingsMods( player, [ "enable_wallrun" ] )
 	}
-       
+
 }
 
 #endif // SERVER
@@ -1741,9 +1740,9 @@ bool function FreeDM_AirdropStartValidation( float eventLength )
 #endif // SERVER
 
 const string FREEDM_DEFAULT_AIRDROP_CONTENTS = "arenas_red_airdrop_weapons arenas_gold_airdrop_weapons arenas_gold_airdrop_weapons"
-                                
-                                                                                                    
-      
+
+
+
 
 
 #if SERVER
@@ -1753,12 +1752,12 @@ array<string> function GenerateAirdropContents( )
 	array<string> airdropContents
 	array<int> airdropContentIDs
 	string airdropList = FREEDM_DEFAULT_AIRDROP_CONTENTS
-                                 
-                                                                                                                       
-   
-                                           
-   
-       
+
+
+
+
+
+
 
 	array<string> airdropTokenArray = split( airdropList, WHITESPACE_CHARACTERS )
 	Assert( airdropTokenArray.len() == 3 )
@@ -1868,7 +1867,7 @@ void function Client_OnPrematchInit()
 	// observer modes (either spectating or fly cam) need to reset menus, because they don't get the loadout menu open)
 	RunUIScript( "UICodeCallback_CloseAllMenus" )
 
-                     
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_TDM ) )
 		{
 			file.introCountdownRUI = CreateFullscreenPostFXRui( $"ui/gun_game_intro.rpak" /* freedm_countdown_timer not in S15 RPak */ )
@@ -1883,10 +1882,10 @@ void function Client_OnPrematchInit()
 			file.introCountdownRUI = CreateFullscreenPostFXRui( $"ui/gun_game_intro.rpak" )
 			RuiSetFloat( file.introCountdownRUI, "gameStartTime", GetGameStartTime() )
 		}
-      
-                                                                                 
-                                                                            
-       
+
+
+
+
 
 	if ( GetCurrentPlaylistVarBool( "use_round_countdown_overlay", true ) )
 	{
@@ -1907,9 +1906,9 @@ void function _CountdownIntroSoundThread()
 	wait GetGameStartTime() - Time() - countdownTime
 
 	string countdownSound = GUNGAME_COUNTDOWN_SOUND
-	                    
+
 		countdownSound = GameModeVariant_IsActive( eGameModeVariants.FREEDM_TDM ) ? TDM_COUNTDOWN_SOUND : GUNGAME_COUNTDOWN_SOUND
-       
+
 
 	//Play audio event 3 times, once for each tick of the timer
 	for( int i = 0; i < 3; ++i )
@@ -1936,7 +1935,7 @@ void function Client_OnGameStatePlaying()
 
 	thread _DelayedDestroyCountdownRUI( )
 
-	                       
+
 		if ( BigTDM_IsModeEnabled() )
 		{
 			AnnouncementData announcement = Announcement_Create( Localize("#BTDM_NAME") )
@@ -1952,7 +1951,7 @@ void function Client_OnGameStatePlaying()
 			Announcement_SetRightIcon( announcement, $"rui/rui_screens/apex_logo_tdm_big" )
 			AnnouncementFromClass( GetLocalClientPlayer(), announcement )
 		}
-                             
+
 }
 #endif // CLIENT
 
@@ -2016,10 +2015,10 @@ void function Client_OnResolution( )
 #if CLIENT
 void function DisplayScore()
 {
-	                    
+
 		EmitSoundOnEntity( GetLocalViewPlayer(), TDM_ROUND_START )
-                           
-	
+
+
 	wait FREEDM_COUNTDOWN_TIMER_SHRINK / 2
 	file.scoreTrackerHUDRui = CreateCockpitPostFXRui ( $"ui/freedm_score_tracker.rpak",MINIMAP_Z_BASE + 10 )
 	RuiSetGameTime( file.scoreTrackerHUDRui, "fadeInStartTime", ClientTime())
@@ -2214,21 +2213,21 @@ void function ServerCallback_FreeDM_AnnounceRoundWonLost( int winningTeamOrAllia
 	{
 		if ( isLocalPlayerOnWinningTeamOrAlliance )
 		{
-                       
+
 				if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_TDM ) )
 					TDMAnnouncementRoundWon(Localize( "#GAMEMODE_ROUND_WIN"))
 				else
 					AnnouncementMessageSweep( localPlayer, Localize( "#GAMEMODE_ROUND_WIN"))
-        
-                                                                            
-                             
+
+
+
 		}
 		else
 		{
 			AnnouncementMessageSweep( localPlayer, Localize( "#GAMEMODE_ROUND_LOSS"))
-			                    
+
 				EmitSoundOnEntity( GetLocalViewPlayer(), TDM_ROUND_LOSS )
-                             
+
 		}
 	}
 	thread FreeDM_DelayedShowScoreboard()
@@ -2279,7 +2278,7 @@ void function FreeDM_DelayedShowScoreboard()
 {
 	wait FREEDM_ROUND_WIN_ANNOUNCMENT_TIME
 
-	                    
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_TDM ))
 		{
 			wait FREEDM_POST_ROUND_SCOREBOARD_TIME
@@ -2287,7 +2286,7 @@ void function FreeDM_DelayedShowScoreboard()
 			wait FREEDM_POST_ROUND_SCOREBOARD_TIME
 			RunUIScript( "TDM_HideScoreboard" )
 		}
-       
+
 }
 #endif // CLIENT
 
@@ -2316,16 +2315,16 @@ void function ServerCallback_FreeDM_ChampionSounds( int winningTeamOrAlliance )
 		endMusic = EmitSoundOnEntity_NoTimeScale( localPlayer, file.audioEvents[eFreeDMAudioEvents.Loss_Music] )
 	}
 
-	                         
-		CrowdNoiseMeter_PlayGameEndSound( localPlayer, isWinner )
-                                
 
-	                  
+		CrowdNoiseMeter_PlayGameEndSound( localPlayer, isWinner )
+
+
+
 		SetPlayThroughKillReplay( endMusic )
 		SetPlayThroughPOVTransitions( endMusic )
 		SetPlayThroughKillReplay( endSound )
 		SetPlayThroughPOVTransitions( endSound )
-                             
+
 }
 #endif
 
@@ -2593,4 +2592,3 @@ void function DEV_ScoreTrackAnimateIn()
 #endif
 #endif
 
-                       

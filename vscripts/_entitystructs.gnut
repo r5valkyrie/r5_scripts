@@ -280,7 +280,8 @@ global struct ServerEntityStruct
 	array<void functionref( entity ent, var damageInfo )> entPostDamageCallbacks
 	array<void functionref( entity titan, entity attacker )> entSegmentLostCallbacks
 	array<void functionref( entity ent, var damageInfo, float actualShieldDamage )> entPostShieldDamageCallbacks
-	array<bool functionref( entity player )>                                                                               entOnShadowHealthExhaustedCallbacks
+	array<bool functionref( entity player )>  entOnShadowHealthExhaustedCallbacks
+	array<void functionref( entity ent, var damageInfo )>  onShieldBreakFuncs
 
 	// Used for weapons and abilities that have multiple ticks, but we only want a single tick to hit each player
 	array<entity> damagedEntities
@@ -307,16 +308,7 @@ global struct ServerEntityStruct
 	bool isDisabled = false
 
 	int gameModeId
-
-	// PVE //
-	// int roamerSpawnType = -1
-	// int pveSpawnType = -1
-	// int pveSpawnFlags = 0
-	// bool roamerIsAggro = false
-	//
-	// int objectiveGoalVersion = 0
-	// int objectiveGoalFlags = 0		// eObjectiveTracking.*
-	/////////
+	array<void functionref( entity ent, var damageInfo )>     entFriendlyFireCallbacks
 
 	array<entity> sonarTriggers
 
@@ -603,7 +595,7 @@ global struct ServerPlayerStruct
 	bool isInLobby = false
 	bool grxInitialized = false
 	bool isGameStart = false
-	
+	bool   partyMember
 	bool canChangeGadgets
 	int selectedGadget1 = 0
 	int selectedGadget2 = 1
@@ -653,13 +645,9 @@ global struct ServerPlayerStruct
 	// float 						lastSelectSPTitanLoadoutTime
 	bool  						inPostDeath = false
 
-	// float lastNpcSyncedMeleeVsPlayerTime = -99
-
-	// bool 						watchingPetTitanKillReplay
-
-	// bool						hasSniperWeapon = false
-
-	// int 						controllableProjectiles_scriptManagedID = -1
+	bool isOutOfBoundsHolsterCheck = false
+	entity outOfBoundsActiveWeapon
+	bool inThirdPersonTransition
 
 	float 						lastDroneShieldStunPushTime
 
@@ -674,7 +662,6 @@ global struct ServerPlayerStruct
 	array<entity>				scannedEnemies
 	bool						hasTickedEquipItemStat = false
 	table<int, array<entity> >	doomedEnemies
-	bool						hasMatchParticipationEnded = false
 	bool						hasTickedThanksStatThisGame = false
 	bool						updatedPersistenceOnDisconnect = false
 	bool						DEV_hasDevRespawned = false
@@ -881,6 +868,7 @@ global struct ServerPlayerStruct
 	int revivesGiven
 
 	table<int, float> attackedTeam
+	int savedSecondsAlive = 0
 
 	int killedEnemy
 	float lastDownedEnemyTime
@@ -1204,13 +1192,16 @@ global struct ServerPlayerStruct
 	entity        cryptoActiveCamera
 	bool          completedEMP
 
-	// float  survivalMatchStartTime
-	// float  survivalAliveStartTime
-	// float  survivalAliveEndTime
+	float  survivalMatchStartTime
+	float  survivalAliveStartTime
+	float  survivalAliveEndTime
 	float  survivalLandedStartTime
 	bool   survivalLandedOnGround
 	entity killerToSpectate
 	bool   hasSpectatedKillerOnce
+	bool  hasMatchParticipationStarted = false
+	bool  hasMatchParticipationEnded = false
+	float    battlePassBoost = 0
 
 	// Player was jumpmaster at any point in the current game.
 	bool wasJumpmaster = false
