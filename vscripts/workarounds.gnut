@@ -23,8 +23,6 @@ global const int SHADOWARMY_LEGEND_ALLIANCE = 0
 global const int PHASETYPE_DOOR = 1
 global const int PHASETYPE_BALANCE = 2
 global const int PHASETYPE_GATE = 3
-global const int PLAYLIST_ID_SURVIVAL = 0
-global const int PLAYLIST_ID_NEW_PLAYER_ORIENTATION = 1
 global const int TT_GRAVITY_LIFT = 0
 global const int TT_BLACKHOLE = 0
 global const int PLAYER_MELEE_STATE_EXECUTION = 3
@@ -224,9 +222,6 @@ global function SquadMuteLegendSelectEnabled
 // === Challenges ===
 global function RefreshChallenges
 
-// === Automation ===
-global function AutomateUi
-
 // === Shared scope declarations (visible to all VMs) ===
 global function ShadowArmy_IsPlayerOnShadowArmy
 global function ForcedSpawn_Init
@@ -302,7 +297,6 @@ global function ForcedSpawn_GetEnemyPingDisplayTime
 // AddPingBlockingFunction removed — callers updated to AddOnscreenPromptFunction
 global function HoverVehicle_GetVehicleOccupiedByPlayer
 global function DoesTeammateHaveBannerCraftingPerk
-global function PIN_UltimateReadyPing
 global function PIN_EmoteUse
 // CommsMenu_GetMenuForNewPing — now in sh_comms_menu.nut (S22)
 global function HasWaitingGameStateArtHud
@@ -2674,7 +2668,6 @@ float function ForcedSpawn_GetEnemyPingDisplayTime()
 // AddPingBlockingFunction removed — callers updated to AddOnscreenPromptFunction
 
 bool function DoesTeammateHaveBannerCraftingPerk( entity player ) { return false }
-void function PIN_UltimateReadyPing( entity player, string pingType, bool fromQuickchat ) { Warning( "STUB: PIN_UltimateReadyPing" ) }
 void function SkydiveEmoteProjector_ActivateEmoteProjector( entity player, ItemFlavor quip ) { Warning( "STUB: SkydiveEmoteProjector_ActivateEmoteProjector" ) }
 bool function HasWaitingGameStateArtHud() { return false }
 bool function Valentines_S15_ILoveYouEasterEggEnabled() { return false }
