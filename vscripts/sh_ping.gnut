@@ -1038,14 +1038,11 @@ void function ShPing_Init()
 		AddCallback_OnPlayerMatchStateChanged( OnPlayerMatchStateChanged )
 		AddCallback_OnClientConnected( OnPlayerConnected )
 
+		//Zoom in/out tracking specifically for ping.
 		AddCallback_OnPlayerZoomIn( OnPlayerZoomIn )
 		AddCallback_OnPlayerZoomOut( OnPlayerZoomOut )
 
-		AddClientCommandCallbackVoid( CMDNAME_PING_MAP_WAYPOINT, ClientCommand_PingMapWaypoint )
-		AddClientCommandCallbackVoid( CMDNAME_PING_NEW_LOOT, ClientCommand_PingNewLoot )
-		AddClientCommandCallbackVoid( CMDNAME_PING_REPLY, ClientCommand_PingReply )
-		AddClientCommandCallbackVoid( CMDNAME_CANCEL_PING_BY_TICKETID, ClientCommand_CancelPingByTicketID )
-
+		// Capture Objective Ping
 		if ( CaptureObjectivePing_IsUsingCaptureObjectivePings() )
 		{
 			AddPingCallbackForType( ePingType.PING_CAPTURE_OBJECTIVE_DEFEND, CaptureObjectivePing_OnObjectivePinged )

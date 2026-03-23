@@ -923,7 +923,6 @@ global const KILL_REPLAY_AFTER_KILL_TIME 				= 2.0
 
 global const KILL_REPLAY_BEFORE_KILL_TIME_SHORT 		= 3.5
 global const KILL_REPLAY_AFTER_KILL_TIME_SHORT 			= 1.0
-global const RESPAWN_BUTTON_BUFFER 						= 0.0 // the amount of time before you're allowed to respawn, after DEATHCAM_TIME
 
 global const DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME 		= 0.2
 global const DEFAULT_SCRIPTED_ARRIVAL_DISTANCE 			= 16

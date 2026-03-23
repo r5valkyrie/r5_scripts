@@ -168,7 +168,6 @@ global function LowerDVSForGameMode
 #endif
 
 // --- Utility script dependencies ---
-global function IsEliminationBased
 // RegisterNetVarBoolChangeCallback - moved to sh_netvar_callbacks.gnut
 // RegisterNetVarTimeChangeCallback - moved to sh_netvar_callbacks.gnut
 global function ParseWeaponLoadoutText
@@ -348,7 +347,6 @@ void function LowerDVSForGameMode( bool lower ) {} // Dynamic Visibility Setting
 #endif // CLIENT
 
 // --- Utility script dependencies ---
-bool function IsEliminationBased() { return false }
 
 WeaponLoadout function ParseWeaponLoadoutText( string loadoutText, bool useDefaultLoadout = true )
 {

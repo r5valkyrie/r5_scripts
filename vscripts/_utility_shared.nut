@@ -545,7 +545,7 @@ float function EvaluatePolynomial( float x, array<float> coefficientArray )
 
 bool function GetReplayDisabled()
 {
-	return GetGlobalNetBool( "replayDisabled" )
+	return GetGlobalNonRewindNetBool( "replayDisabled" )
 }
 
 float function GetRoundWinningKillReplayStartupWait()
@@ -1444,7 +1444,7 @@ bool function IsCloaked( entity ent )
 
 float function GetGameStateChangeTime()
 {
-	return GetGlobalNetTime( "gameStateChangeTime" )
+	return GetGlobalNonRewindNetTime( "gameStateChangeTime" )
 }
 float function TimeSpentInCurrentState()
 {
@@ -1463,7 +1463,7 @@ float function AngleToDot( float angle )
 
 int function GetGameState()
 {
-	return GetGlobalNetInt( "gameState" )
+	return GetGlobalNonRewindNetInt( "gameState" )
 }
 
 bool function GamePlaying()
@@ -2524,8 +2524,8 @@ int function CompareTitanKills( entity a, entity b )
 
 int function CompareTeamScore( int teamA, int teamB )
 {
-	int aVal = GameScore_GetScore( teamA )
-	int bVal = GameScore_GetScore( teamB )
+	int aVal = GameRules_GetTeamScore( teamA )
+	int bVal = GameRules_GetTeamScore( teamB )
 
 	if ( aVal < bVal )
 		return 1
@@ -2666,16 +2666,17 @@ string function GetTitanChassis( entity titan )
 vector function ClampVectorToCube( vector vecStart, vector vec, vector cubeOrigin, float cubeSize )
 {
 	float halfCubeSize = cubeSize * 0.5
-	vector cubeMins = <-halfCubeSize, -halfCubeSize, -halfCubeSize>
-	vector cubeMaxs = <halfCubeSize, halfCubeSize, halfCubeSize>
+	vector cubeMins    = <-halfCubeSize, -halfCubeSize, -halfCubeSize>
+	vector cubeMaxs    = <halfCubeSize, halfCubeSize, halfCubeSize>
 
 	return ClampVectorToBox( vecStart, vec, cubeOrigin, cubeMins, cubeMaxs )
 }
 
+
 vector function ClampVectorToBox( vector vecStart, vector vec, vector cubeOrigin, vector cubeMins, vector cubeMaxs )
 {
 	float smallestClampScale = 1.0
-	vector vecEnd = vecStart + vec
+	vector vecEnd            = vecStart + vec
 
 	smallestClampScale = ClampVectorComponentToCubeMax( cubeOrigin.x, cubeMaxs.x, vecStart.x, vecEnd.x, vec.x, smallestClampScale )
 	smallestClampScale = ClampVectorComponentToCubeMax( cubeOrigin.y, cubeMaxs.y, vecStart.y, vecEnd.y, vec.y, smallestClampScale )
@@ -2686,6 +2687,7 @@ vector function ClampVectorToBox( vector vecStart, vector vec, vector cubeOrigin
 
 	return vec * smallestClampScale
 }
+
 
 vector function ClampAnglesToAngles( vector angles, vector anglesMin, vector anglesMax )
 {
@@ -2698,48 +2700,52 @@ vector function ClampAnglesToAngles( vector angles, vector anglesMin, vector ang
 	return clampedAngles
 }
 
+
 float function ClampVectorComponentToCubeMax( float cubeOrigin, float cubeSize, float vecStart, float vecEnd, float vec, float smallestClampScale )
 {
-	float max = cubeOrigin + cubeSize
+	float max       = cubeOrigin + cubeSize
 	float clearance = fabs( vecStart - max )
 	if ( vecEnd > max )
 	{
-		float scale = fabs( clearance / ( ( vecStart + vec ) - vecStart ) )
+		float scale = fabs( clearance / ((vecStart + vec) - vecStart) )
 		if ( scale > 0 && scale < smallestClampScale )
 			return scale
 	}
 
 	return smallestClampScale
 }
+
 
 float function ClampVectorComponentToCubeMin( float cubeOrigin, float cubeSize, float vecStart, float vecEnd, float vec, float smallestClampScale )
 {
-	float min = cubeOrigin - cubeSize
+	float min       = cubeOrigin - cubeSize
 	float clearance = fabs( min - vecStart )
 	if ( vecEnd < min )
 	{
-		float scale = fabs( clearance / ( ( vecStart + vec ) - vecStart ) )
+		float scale = fabs( clearance / ((vecStart + vec) - vecStart) )
 		if ( scale > 0 && scale < smallestClampScale )
 			return scale
 	}
 
 	return smallestClampScale
 }
+
 
 bool function PointInCapsule( vector vecBottom, vector vecTop, float radius, vector point )
 {
 	return GetDistanceFromLineSegment( vecBottom, vecTop, point ) <= radius
 }
 
+
 bool function PointInCylinder( vector vecBottom, vector vecTop, float radius, vector point )
 {
 	if ( GetDistanceFromLineSegment( vecBottom, vecTop, point ) > radius )
 		return false
 
-	vector bottomVec = Normalize( vecTop - vecBottom )
+	vector bottomVec     = Normalize( vecTop - vecBottom )
 	vector pointToBottom = Normalize( point - vecBottom )
 
-	vector topVec = Normalize( vecBottom - vecTop )
+	vector topVec     = Normalize( vecBottom - vecTop )
 	vector pointToTop = Normalize( point - vecTop )
 
 	if ( DotProduct( bottomVec, pointToBottom ) < 0 )
@@ -2751,9 +2757,10 @@ bool function PointInCylinder( vector vecBottom, vector vecTop, float radius, ve
 	return true
 }
 
+
 float function AngleDiff( float ang, float targetAng )
 {
-	float delta = ( targetAng - ang ) % 360.0
+	float delta = (targetAng - ang) % 360.0
 	if ( targetAng > ang )
 	{
 		if ( delta >= 180.0 )
@@ -2823,8 +2830,9 @@ float function GetAverageValueInArray( array<float> values )
 
 int function GetWinningTeam( bool shouldReturnInvalidInCaseOfTie = true )
 {
-	if ( level.nv.winningTeam != null )
-		return expect int( level.nv.winningTeam )
+	int currentWinningTeam = GetNetWinningTeam()
+	if ( currentWinningTeam != -1 )
+		return currentWinningTeam
 
 	int maxScore = -1
 	int currentScore
@@ -2852,13 +2860,13 @@ int function GetWinningTeam( bool shouldReturnInvalidInCaseOfTie = true )
 	return winningTeam
 }
 
-void function EmitSkyboxSoundAtPosition( vector positionInSkybox, string sound, float skyboxScale = 0.001, bool clamp = false )
-{
-	if ( IsServer() )
-		clamp = true // sounds cannot play outside 16k limit on server
-	vector position = SkyboxToWorldPosition( positionInSkybox, skyboxScale, clamp )
-	EmitSoundAtPosition( TEAM_UNASSIGNED, position, sound )
-}
+//void function EmitSkyboxSoundAtPosition( vector positionInSkybox, string sound, float skyboxScale = 0.001, bool clamp = false )
+//{
+//	if ( IsServer() )
+//		clamp = true // sounds cannot play outside 16k limit on server
+//	vector position = SkyboxToWorldPosition( positionInSkybox, skyboxScale, clamp )
+//	EmitSoundAtPosition( TEAM_UNASSIGNED, position, sound )
+//}
 
 vector function SkyboxToWorldPosition( vector positionInSkybox, float skyboxScale = 0.001, bool clamp = true )
 {
@@ -2919,37 +2927,38 @@ void function FadeOutSoundOnEntityAfterDelay( entity ent, string soundAlias, flo
 
 float function GetGameEndTime()
 {
-	return GetGlobalNetTime( "gameEndTime" )
+	return GetGlobalNonRewindNetTime( "gameEndTime" )
 }
 
 
 float function GetGameStartTime()
 {
-	return GetGlobalNetTime( "gameStartTime" )
+	return GetGlobalNonRewindNetTime( "gameStartTime" )
 }
 
 
 float function GetRoundStartTime()
 {
-	return GetGlobalNetTime( "roundStartTime" )
+	return GetGlobalNonRewindNetTime( "roundStartTime" )
 }
 
 
 float function GetRoundEndTime()
 {
-	return GetGlobalNetTime( "roundEndTime" )
+	return GetGlobalNonRewindNetTime( "roundEndTime" )
 }
 
 
 bool function GetForcedDialogueOnly()
 {
-	return GetGlobalNetBool( "forcedDialogueOnly" )
+	return GetGlobalNonRewindNetBool( "forcedDialogueOnly" )
 }
 bool function IsMatchOver()
 {
-	if ( IsRoundBased() && level.nv.gameEndTime )
+	float gameEndTime = GetGameEndTime()
+	if ( IsRoundBased() && gameEndTime > 0.0 )
 		return true
-	else if ( !IsRoundBased() && level.nv.gameEndTime && Time() > level.nv.gameEndTime )
+	else if ( !IsRoundBased() && gameEndTime > 0.0 && Time() > gameEndTime )
 		return true
 
 	return false
@@ -2958,7 +2967,7 @@ bool function IsMatchOver()
 
 bool function IsRoundBased()
 {
-	return expect bool( level.nv.roundBased )
+	return GetGlobalNonRewindNetBool( "roundBased" )
 }
 
 bool function IsLootRoundBased()
@@ -2973,7 +2982,19 @@ bool function IsLootRoundBased()
 
 int function GetRoundsPlayed()
 {
-	return expect int( level.nv.roundsPlayed )
+	return GetGlobalNonRewindNetInt( "roundsPlayed" )
+}
+
+int function GetNetWinningTeam()
+// careful, another function GetWinningTeam exists
+{
+	return GetGlobalNonRewindNetInt( "winningTeam" )
+}
+
+
+bool function IsEliminationBased()
+{
+	return GetCurrentPlaylistVarBool( "is_elimination_based", true )
 }
 
 void function __WarpInEffectShared( vector origin, vector angles, string sfx, float preWaitOverride = -1.0, entity ornull vehicle = null )
@@ -3069,18 +3090,31 @@ void function __WarpOutEffectShared( entity dropship )
 		}
 	#endif
 
-	EmitSoundAtPosition( TEAM_UNASSIGNED, origin, "dropship_warpout" )
+	#if CLIENT
+		EmitSoundAtPosition( TEAM_UNASSIGNED, origin, "dropship_warpout" )
+	#endif
+	#if SERVER
+		EmitSoundAtPosition( TEAM_UNASSIGNED, origin, "dropship_warpout", dropship )
+	#endif
+}
+
+
+int function GetSwitchedSides()
+{
+	return GetGlobalNonRewindNetInt( "switchedSides" )
 }
 
 
 bool function IsSwitchSidesBased()
 {
-	return (level.nv.switchedSides != null)
+	return GetSwitchedSides() != -1
 }
 
-int function HasSwitchedSides() //This returns an int instead of a bool! Should rewrite
+
+int function HasSwitchedSides()
+//This returns an int instead of a bool! Should rewrite
 {
-	return expect int( level.nv.switchedSides )
+	return GetSwitchedSides()
 }
 
 bool function IsFirstRoundAfterSwitchingSides()
@@ -3088,13 +3122,16 @@ bool function IsFirstRoundAfterSwitchingSides()
 	if ( !IsSwitchSidesBased() )
 		return false
 
+	int switchedSide = GetSwitchedSides()
+
 	if ( IsRoundBased() )
-		return  level.nv.switchedSides > 0 && GetRoundsPlayed() == level.nv.switchedSides
+		return  switchedSide > 0 && GetRoundsPlayed() == switchedSide
 	else
-		return  level.nv.switchedSides > 0
+		return  switchedSide > 0
 
 	unreachable
 }
+
 
 void function CamBlendFov( entity cam, float oldFov, float newFov, float transTime, float transAccel, float transDecel )
 {
@@ -3104,33 +3141,34 @@ void function CamBlendFov( entity cam, float oldFov, float newFov, float transTi
 	cam.EndSignal( "OnDestroy" )
 
 	float currentTime = Time()
-	float startTime = currentTime
-	float endTime = startTime + transTime
+	float startTime   = currentTime
+	float endTime     = startTime + transTime
 
 	while ( endTime > currentTime )
 	{
 		float interp = Interpolate( startTime, endTime - startTime, transAccel, transDecel )
 		cam.SetFOV( GraphCapped( interp, 0.0, 1.0, oldFov, newFov ) )
-		wait( 0.0 )
+		wait(0.0)
 		currentTime = Time()
 	}
 }
 
-void function CamFollowEnt( entity cam, entity ent, float duration, vector offset = <0,0,0>, string attachment = "", bool isInSkybox = false )
+
+void function CamFollowEnt( entity cam, entity ent, float duration, vector offset = <0, 0, 0>, string attachment = "", bool isInSkybox = false )
 {
 	if ( !IsValid( cam ) )
 		return
 
 	cam.EndSignal( "OnDestroy" )
 
-	vector camOrg = <0,0,0>
+	vector camOrg = <0, 0, 0>
 
-	vector targetPos = <0,0,0>
+	vector targetPos  = <0, 0, 0>
 	float currentTime = Time()
-	float startTime = currentTime
-	float endTime = startTime + duration
-	vector diff = <0,0,0>
-	int attachID = ent.LookupAttachment( attachment )
+	float startTime   = currentTime
+	float endTime     = startTime + duration
+	vector diff       = <0, 0, 0>
+	int attachID      = ent.LookupAttachment( attachment )
 
 	while ( endTime > currentTime )
 	{
@@ -3143,11 +3181,11 @@ void function CamFollowEnt( entity cam, entity ent, float duration, vector offse
 
 		if ( isInSkybox )
 			targetPos = SkyboxToWorldPosition( targetPos )
-		diff = ( targetPos + offset ) - camOrg
+		diff = (targetPos + offset) - camOrg
 
 		cam.SetAngles( VectorToAngles( diff ) )
 
-		wait( 0.0 )
+		wait(0.0)
 
 		currentTime = Time()
 	}
@@ -3294,6 +3332,7 @@ float function GetDeathCamSpectateLength()
 
 float function GetRespawnButtonCamTime( entity player )
 {
+	const float RESPAWN_BUTTON_BUFFER = 0.0
 	return DEATHCAM_TIME + RESPAWN_BUTTON_BUFFER
 }
 
@@ -3359,6 +3398,9 @@ void function RemoveCallback_OnUseEntity( entity ent, void functionref( entity, 
 	int ornull funcPos = ent.e.onUseEntityCallbacks.find( callbackFunc )
 	Assert( funcPos != null, "Cannot remove " + string( callbackFunc ) + " that was not added to entity" )
 	ent.e.onUseEntityCallbacks.remove( expect int( funcPos ) )
+	#if SERVER
+		ent.SetPredictedUse( true )
+	#endif
 }
 
 void function SetWaveSpawnType( int spawnType )

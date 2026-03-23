@@ -7096,11 +7096,6 @@ void function AddUICallback_InputModeChanged( void functionref( bool ) callbackF
 {
 }
 
-int function GetNetWinningTeam()
-{
-	return GetWinningTeam()
-}
-
 bool function IsGoldRushMode()
 {
 	return false
