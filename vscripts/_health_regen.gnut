@@ -477,7 +477,7 @@ void function HealthRegen_HealPlayerShield_Thread( entity player )
 
 		if ( regenSource == eRegenSource.SHIELD_PASSIVE )
 		{
-			player.SetShieldHealth( newShieldHealth )
+			player.SetShieldHealthFromSource( newShieldHealth, SHIELD_CHANGE_SOURCE_REGEN )
 		}
 		else
 		{

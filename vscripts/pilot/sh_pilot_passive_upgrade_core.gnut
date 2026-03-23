@@ -2439,7 +2439,7 @@ void function UpgradeCore_RegenNewHealth( entity player, int amountToRegen, bool
 			break
 
 		int newShields = minint( curShields + regenAmount, maxShields )
-		player.SetShieldHealth( newShields )
+		player.SetShieldHealthFromSource( newShields, SHIELD_CHANGE_SOURCE_REGEN )
 		shieldsRegened += regenAmount
 		StatusEffect_Stop( player, file.playerToShieldRegenStatusEffect[player] )
 		targetShields = ( amountToRegen - shieldsRegened ) / float( player.GetShieldHealthMax() )
