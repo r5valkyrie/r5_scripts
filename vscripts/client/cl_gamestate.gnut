@@ -1,7 +1,6 @@
 untyped
 
 global function ClGameState_Init
-global function ClWaittillGameStateOrHigher
 global function ClGameState_Think
 global function ClGameState_GetRui
 global function CLGameState_GetNetGraphRui
@@ -9,7 +8,10 @@ global function ClGameState_SetInfoStatusText
 global function ClGameState_SetHasScreenBorder
 
 global function AddCallback_OnScoreboardCreated
-// AddCallback_OnGameStateChanged defined in cl_utility_mp.gnut (globalize_all_functions)
+global function AddCallback_OnGameStateChanged
+global function ClWaittillGameStateOrHigher
+
+global function ClGameState_SetResolutionCleanupFunc
 
 global function ShowRoundScoresInAnnouncement
 
@@ -22,23 +24,26 @@ global function SetGameModeScoreBarUpdateRules
 global function SetGameModeScoreBarUpdateRulesWithFlags
 global function SetGameModeSuddenDeathAnnouncementSubtext
 
-
 global function KillLeaderChangeCallback
 global function UpdateKillLeaderOnGameStateRui
 
 global function CreateScoreRUI
 global function SetCommonScoreRUIVars
 global function ClGameState_RegisterGameStateAsset
+global function ClGameState_HasRegisteredGameStateAsset
 global function ClGameState_RegisterGameStateFullmapAsset
 global function GetFullmapGameStateAsset
 
 global function ClGameState_SetPilotTitanStatusCallback
-global function GetPilotTitanStatusForPlayer
 global function GameState_UpdateRuiRoundEndGameTime
 
 global function ClGameState_SetSwitchingSidesSubText
+
 global function UpdateIsSonyMP
-global function GetServerDebugId
+
+global function HasWaitingGameStateArtHud
+
+global function ClientCodeCallback_ToggleGamePaused
 
 global enum ePlayerStatusType
 {
@@ -64,13 +69,13 @@ global enum ePlayerStatusType
 
 struct PilotTitanStatus
 {
-	int playerCount
+	int    playerCount
 	int[8] slotTypes
 }
 
 global enum sbflag
 {
-	SKIP_STANDARD_UPDATE = (1<<0),
+	SKIP_STANDARD_UPDATE = (1 << 0),
 	_count = 1
 }
 
@@ -82,11 +87,11 @@ struct
 	var  letterBoxRui = null
 	bool thirtySecondWarningDone = false
 
-	void functionref( var ) gameModeScoreBarUpdateRules
+	void functionref( var )     gameModeScoreBarUpdateRules
 	array< void functionref() > onScoreboardCreatedFuncs
-	int gameModeScoreBarUpdateFlags = 0
+	int                         gameModeScoreBarUpdateFlags = 0
 
-	table<int, PilotTitanStatus> pilotTitanStatus
+	table<int, PilotTitanStatus>   pilotTitanStatus
 	int functionref( entity, int ) pilotTitanStatusCallback
 
 	string switchingSidesSubText = "#GameState_SWITCHING_SIDES"
@@ -105,26 +110,42 @@ struct
 	void functionref() resolutionCompletedCleanupFunc = null
 } file
 
-const DEV_COUNTDOWNTIMER = 0//turn on to see the countdown timer to match starts - helps with lining up intros
+const DEV_COUNTDOWNTIMER = 0
 
+void function ClientCodeCallback_ToggleGamePaused( bool isPaused )
+{
+	if ( !file.gameStateRuiCreated )
+		return
 
+	if ( !GetConVarBool( "pause_ui" ) && isPaused )
+		return
 
+	RuiSetBool( file.gamestateRui, "showPauseMessage", isPaused )
+	if ( isPaused )
+		GfxDesaturateOn()
+	else
+		GfxDesaturateOff()
+}
 
 void function ClGameState_Init()
 {
 	RegisterSignal( "GameStateChanged" )
 	RegisterSignal( "GameModes_CompletedResolutionCleanup" )
-	RegisterNetVarIntChangeCallback( "gameState", ClGameState_Changed, SNDC_GLOBAL )
-	//RegisterServerVarChangeCallback( "badRepPresent", UpdateScoreboardBadRepPresentMessage )
+	RegisterNetVarIntChangeCallback( "gameState", ClGameState_Changed )
+	RegisterNetVarBoolChangeCallback( "badRepPresent", UpdateScoreboardBadRepPresentMessage )
+
 	AddOnSpectatorTargetChangedCallback( GameState_SpectatorTargetChanged )
 
 	AddCallback_OnClientScriptInit( ClGameState_AddClient )
-	AddCallback_GameStateEnter( eGameState.Playing, Hud_SetModeEmblem )
+	AddCallback_OnScoreboardCreated( Hud_SetModeEmblem )
+
 	file.isNetGraphEnabled = IsNetGraphEnabled()
-	AddCallback_OnSettingsUpdated( OnSettingsUpdated )
+	AddCallback_OnSettingsUpdated( RefreshNetGraphVisibility )
+	AddClientCallback_OnResolutionChanged( RefreshNetGraphVisibility )
 
 	CreateScoreRUI()
 }
+
 
 void function CreateScoreRUI()
 {
@@ -136,14 +157,26 @@ void function CreateScoreRUI()
 	RuiTrackBool( rui, "netIssueCongestion", null, RUI_TRACK_NET_ISSUE_CONGESTION )
 	RuiTrackBool( rui, "netIssueLatency", null, RUI_TRACK_NET_ISSUE_LATENCY )
 	RuiTrackBool( rui, "netIssuePredictionError", null, RUI_TRACK_NET_ISSUE_PREDICTION_ERROR )
-	RuiTrackFloat( rui, "hdTextureProgress", null, RUI_TRACK_GAME_FULLY_INSTALLED_PROGRESS )
-	RuiTrackBool( rui, "hdTextureNeedsReboot", null, RUI_TRACK_GAME_HAS_NON_FULLY_INSTALLED_ASSETS_LOADED )
+	//RuiTrackBool( rui, "netIssueLagCompFail", null, RUI_TRACK_NET_ISSUE_LAG_COMP_FAIL )
+	//RuiTrackBool( rui, "netIssueUserCmdDelay", null, RUI_TRACK_NET_ISSUE_USERCMD_DELAY )
 
+	//RuiTrackFloat( rui, "hdTextureProgress", null, RUI_TRACK_GAME_FULLY_INSTALLED_PROGRESS )
+	//RuiTrackBool( rui, "hdTextureNeedsReboot", null, RUI_TRACK_GAME_HAS_NON_FULLY_INSTALLED_ASSETS_LOADED )
+
+	//RuiTrackBool( rui, "audioIssueStarvation", null, RUI_TRACK_AUDIO_ISSUE_STARVATION )
+	//RuiTrackBool( rui, "audioIssueData", null, RUI_TRACK_AUDIO_ISSUE_DATA )
+	//RuiTrackBool( rui, "audioIssueLimits", null, RUI_TRACK_AUDIO_ISSUE_LIMITS )
+	//RuiTrackBool( rui, "audioIssueMarker", null, RUI_TRACK_AUDIO_ISSUE_MARKER_INSERTED )
+
+	Warning("Missing Net tracks for Score RUI, keep reminding this to cafe - kral")
+
+	
 	if ( file.isNetGraphEnabled == true )
 	{
 		RuiSetBool( rui, "isNetGraphEnabled", file.isNetGraphEnabled )
 		CreateNestedNetGraph( rui )
 	}
+
 	RuiSetInt( rui, "maxPlayerCount", GetCurrentPlaylistVarInt( "max_players", 12 ) )
 	RuiSetString( rui, "gameModeString", GetCurrentPlaylistVarString( "name", "#PLAYLIST_UNAVAILABLE" ) )
 	RuiSetString( rui, "mapName", GetCurrentPlaylistVarString( "map_name", "#PLAYLIST_UNAVAILABLE" ) )
@@ -174,6 +207,10 @@ void function CreateScoreRUI()
 	}
 }
 
+bool function HasWaitingGameStateArtHud()
+{
+	return GetWaitingGameStateArtHud() != $""
+}
 
 asset function GetWaitingGameStateArtHud()
 {
@@ -209,8 +246,22 @@ void function Hud_SetModeEmblem()
 	RuiSetAsset( file.gamestateRui, "emblemImage", GetModeEmblemImage( GetCurrentPlaylistName() ) )
 }
 
+
 void function SetCommonScoreRUIVars( var rui )
 {
+
+
+
+
+
+
+
+
+
+
+
+
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
 	{
 		RuiSetBool( rui, "shouldDisplayLivingPlayerCount", false )
@@ -226,8 +277,8 @@ void function SetCommonScoreRUIVars( var rui )
 			RuiSetInt( rui, "livingPlayerCountMin", -1 )
 			RuiSetString( rui, "squadsRemainingTextSingular", "Squad" )
 			RuiSetString( rui, "squadsRemainingTextPlural", "Squads" )
-			//
-			//
+			
+			
 		}
 		else
 		{
@@ -238,33 +289,52 @@ void function SetCommonScoreRUIVars( var rui )
 	}
 }
 
+
 void function UpdateGamestateRuiTracking( entity player )
 {
 	if ( IsValid( player ) && player.IsPlayer() )
 		UpdateCommonScoreRuiTracking( file.gamestateRui, player )
 }
 
+
 void function UpdateCommonScoreRuiTracking( var rui, entity player )
 {
 	RuiTrackInt( rui, "killCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kills" ) )
 	RuiTrackInt( rui, "damageDealt", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "damageDealt" ) )
 
+	bool isValidMode = true
+
+
+
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) && isValidMode )
+	{
+		RuiTrackInt( rui, "participationCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kill_participation" ) )
+	}
+
+	
 	RuiTrackBool( rui, "hasDeathFieldImmunity", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "hasDeathFieldImmunity" ) )
 	RuiTrackInt( rui, "assistCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "assists" ) )
 
-	RuiTrackFloat( rui, "cameraViewFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.camera_view )
+
+		RuiTrackFloat( rui, "cameraViewFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.camera_view )
+
+
+
 		if ( Crafting_IsEnabled() )
 		{
-			RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
+			if ( !Crafting_IsDispenserCraftingEnabled() )
+				RuiTrackInt( ClGameState_GetRui(), "craftingMaterials", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
 		}
-		
 
 }
+
 
 void function GameModeScoreBarUpdateRules_Default( var rui )
 {
-	//
+	
 }
+
 
 void function SetGameModeScoreBarUpdateRulesWithFlags( void functionref( var ) rules, int sbflags )
 {
@@ -272,10 +342,12 @@ void function SetGameModeScoreBarUpdateRulesWithFlags( void functionref( var ) r
 	file.gameModeScoreBarUpdateFlags = sbflags
 }
 
+
 void function SetGameModeScoreBarUpdateRules( void functionref( var ) rules )
 {
 	SetGameModeScoreBarUpdateRulesWithFlags( rules, 0 )
 }
+
 
 void function ClGameState_SetInfoStatusText( string statusText )
 {
@@ -283,27 +355,29 @@ void function ClGameState_SetInfoStatusText( string statusText )
 		RuiSetString( file.gamestateRui, "statusText", Localize( statusText ) )
 }
 
-
 asset function GetGameStateAsset()
 {
-	if ( file.gameStateRuiAsset != $"" ) //Gamemodes should set this by calling ClGameState_RegisterGameStateAsset in their init script
+	if ( file.gameStateRuiAsset != $"" ) 
 		return file.gameStateRuiAsset
 
 	return $"ui/gamestate_info.rpak"
 }
 
+
 asset function GetFullmapGameStateAsset()
 {
-	if ( file.gameStateFullmapRuiAsset != $"" ) //
+	if ( file.gameStateFullmapRuiAsset != $"" ) 
 		return file.gameStateFullmapRuiAsset
 
 	return $"ui/gamestate_info_fullmap.rpak"
 }
 
+
 void function ClGameState_RegisterGameStateAsset( asset gameStateAsset )
 {
 	file.gameStateRuiAsset = gameStateAsset
 }
+
 
 void function ClGameState_RegisterGameStateFullmapAsset( asset gameStateFullmapAsset )
 {
@@ -311,15 +385,20 @@ void function ClGameState_RegisterGameStateFullmapAsset( asset gameStateFullmapA
 }
 
 
+bool function ClGameState_HasRegisteredGameStateAsset()
+{
+	return file.gameStateRuiAsset != $""
+}
+
 void function ClGameState_AddClient( entity player )
 {
 	player.cv.scoreboardBadRepPresentMessage <- HudElement( "ScoreboardBadRepPresentMessage", HudElement( "Scoreboard" ) )
 
-	#if PC_PROG
+
 		player.cv.scoreboardBadRepPresentMessage.SetText( "#ASTERISK_FAIRFIGHT_CHEATER" )
-	#else
-		player.cv.scoreboardBadRepPresentMessage.SetText( "#ASTERISK_BAD_REPUTATION" )
-	#endif
+
+
+
 
 	player.cv.hudCheaterMessage <- HudElement( "HudCheaterMessage" )
 	if ( !Durango_IsDurango() && !IsLobby() && player.HasBadReputation() )
@@ -335,7 +414,6 @@ var function ClGameState_GetRui()
 		return null
 	return file.gamestateRui
 }
-
 
 void function ClGameState_Think()
 {
@@ -375,22 +453,23 @@ void function ClGameState_Think()
 	}
 }
 
+
 void function ClGameStateThink_Prematch( entity player )
 {
-	//string factionChoice = GetFactionChoice( player )
-	//ItemDisplayData displayData = GetItemDisplayData( factionChoice )
-	//asset factionLogo = displayData.image
-	//string factionTitle = displayData.name
-	//
-	//var rui = ClGameState_GetRui()
-	//if ( rui != null )
-	//	RuiSetImage( rui, "factionImage", factionLogo )
+	
+	
+	
+	
+	
+	
+	
+	
 
-	//removing countdown timer all together
-	if ( !DEV_COUNTDOWNTIMER )
+	
+	if ( DEV_COUNTDOWNTIMER == 0 )
 		return
 
-	float timeRemaining = ceil( level.nv.gameStartTime - Time() )
+	float timeRemaining = ceil( GetGameStartTime() - Time() )
 
 	player.cv.prematchTimer.Show()
 	player.cv.prematchTimerGlow.Show()
@@ -400,16 +479,17 @@ void function ClGameStateThink_Prematch( entity player )
 	player.cv.prematchTimerGlow.SetText( string( timeRemaining ) )
 }
 
+
 void function ClGameStateThink_WaitingForPlayers( entity player )
 {
-	int reservedCount = GetTotalPendingPlayersReserved()
+	int reservedCount   = GetTotalPendingPlayersReserved()
 	int connectingCount = GetTotalPendingPlayersConnecting()
-	int loadingCount = GetTotalPendingPlayersLoading()
+	int loadingCount    = GetTotalPendingPlayersLoading()
 
-	int connectedCount = GetPlayerArray().len()
+	int connectedCount       = GetPlayerArray().len()
 	int allKnownPlayersCount = reservedCount + connectingCount + loadingCount + connectedCount
-	int minPlayers = GetCurrentPlaylistVarInt( "min_players", 0 )
-	int expectedPlayers = maxint( minPlayers, allKnownPlayersCount )
+	int minPlayers           = GetCurrentPlaylistVarInt( "min_players", 0 )
+	int expectedPlayers      = maxint( minPlayers, allKnownPlayersCount )
 
 	if ( !("lastTimeRemaining" in player.cv) )
 		player.cv.lastTimeRemaining <- null
@@ -418,14 +498,20 @@ void function ClGameStateThink_WaitingForPlayers( entity player )
 	if ( Time() <= endTime )
 	{
 		float timeRemainingFloat = (endTime - Time())
-		float timeRemaining = ceil( timeRemainingFloat )
+		float timeRemaining      = ceil( timeRemainingFloat )
 
-		//player.cv.waitingForPlayersDesc.SetText( "#HUD_WAITING_FOR_PLAYERS", connectedCount, expectedPlayers, timeRemaining )
-		//player.cv.waitingForPlayersDesc.Show()
+		
+		
 
 		if ( timeRemaining != player.cv.lastTimeRemaining )
 		{
 			string waitingForPlayersSound = WAITING_FOR_PLAYERS_COUNTDOWN_SOUND
+
+
+
+
+
+
 			EmitSoundOnEntity( player, waitingForPlayersSound )
 		}
 
@@ -433,14 +519,16 @@ void function ClGameStateThink_WaitingForPlayers( entity player )
 	}
 	else
 	{
-		//player.cv.waitingForPlayersDesc.SetText( "#HUD_WAITING_FOR_PLAYERS", connectedCount, expectedPlayers, "" )
-		//player.cv.waitingForPlayersDesc.Show()
+		
+		
 	}
 }
+
 
 void function ClGameStateThink_PickLoadOut( entity player )
 {
 }
+
 
 entity function GetTopCompetitor( int team )
 {
@@ -449,12 +537,13 @@ entity function GetTopCompetitor( int team )
 	entity topCompetitor
 	foreach ( player in players )
 	{
-		if ( !topCompetitor || (GameRules_GetTeamScore( player.GetTeam()) ) > GameRules_GetTeamScore( topCompetitor.GetTeam()) )
+		if ( !topCompetitor || (GameRules_GetTeamScore( player.GetTeam() )) > GameRules_GetTeamScore( topCompetitor.GetTeam() ) )
 			topCompetitor = player
 	}
 
 	return topCompetitor
 }
+
 
 string function GetTopCompetitorName( int team )
 {
@@ -462,23 +551,22 @@ string function GetTopCompetitorName( int team )
 	return topCompetitor != null ? topCompetitor.GetPlayerName() : "None"
 }
 
+
 int function GetTopCompetitorTeam( int team )
 {
 	entity topCompetitor = GetTopCompetitor( team )
 	return topCompetitor != null ? topCompetitor.GetTeam() : 0
 }
 
+
 float function GetGameStateRoundEndTime()
 {
 	if ( IsRoundBased() )
-	{
-		float result = (expect float( level.nv.roundEndTime ))
-		return result
-	}
+		return GetRoundEndTime()
 
-	float result = (expect float( level.nv.gameEndTime ))
-	return result
+	return GetGameEndTime()
 }
+
 
 void function GameState_UpdateRuiRoundEndGameTime( var rui, string argName )
 {
@@ -490,15 +578,16 @@ void function GameState_UpdateRuiRoundEndGameTime( var rui, string argName )
 		RuiSetGameTime( rui, argName, endTime )
 }
 
+
 void function ClGameStateThink_Playing( entity player )
 {
-	local endTime
+	float endTime
 	if ( IsRoundBased() )
-		endTime = level.nv.roundEndTime
+		endTime = GetRoundEndTime()
 	else
-		endTime = level.nv.gameEndTime
+		endTime = GetGameEndTime()
 
-	if ( !endTime )
+	if ( endTime == 0 )
 		return
 
 	if ( Time() > endTime )
@@ -517,127 +606,46 @@ void function ClGameStateThink_Playing( entity player )
 
 void function ThirtySecondWarning()
 {
-
-}
-
-string function GetTitanClass( entity titan )
-{
-	entity soul = titan.GetTitanSoul()
-	asset settingsName = soul.GetPlayerSettingsName()
-
-	return GetGlobalSettingsString( settingsName, "titanCharacterName" )
-}
-
-array< int > function GetPilotTitanStatusForTeam( int team, int teamSize )
-{
-	array< int > statusTypes
-	statusTypes.resize( teamSize, ePlayerStatusType.PTS_TYPE_NONE )
-	int playerIndex = 0
-	array< entity > teamPlayers = GetPlayerArrayOfTeam( team )
-	foreach ( teamPlayer in teamPlayers )
+	int lastSecond = -1
+	while ( Time() < GetGameEndTime() && GetGameState() == eGameState.Playing )
 	{
-		statusTypes[playerIndex] = GetPilotTitanStatusForPlayer( teamPlayer )
-		playerIndex++
-	}
-
-	statusTypes.sort( PilotTitanStatusSort )
-
-	return statusTypes
-}
-
-int function GetPilotTitanStatusForPlayer( entity teamPlayer )
-{
-	int statusIndex = ePlayerStatusType.PTS_TYPE_NONE
-	entity titan
-	if ( teamPlayer.GetPetTitan() )
-		titan = teamPlayer.GetPetTitan()
-	else if ( teamPlayer.IsTitan() )
-		titan = teamPlayer
-
-	entity playerParent = teamPlayer.GetParent()
-	bool playerIsInDropship = playerParent != null && IsDropship( playerParent )
-
-	if ( playerIsInDropship && ( GetWaveSpawnType() == eWaveSpawnType.DROPSHIP || GetGameState() == eGameState.Resolution ) )
-	{
-		statusIndex = ePlayerStatusType.PTS_TYPE_EVAC
-	}
-	else if ( titan && titan.GetTitanSoul() )
-	{
-		if ( !teamPlayer.IsTitan() )
+		int second = int( floor( GetGameEndTime() - Time() ) )
+		if ( lastSecond == -1 )
 		{
-			if ( IsAlive( teamPlayer ) )
-				statusIndex = ePlayerStatusType.PTS_TYPE_PILOT_TITAN
-			else
-				statusIndex = ePlayerStatusType.PTS_TYPE_DEAD_PILOT_TITAN
+			lastSecond = second
 		}
-		else
+		else if ( second != lastSecond && second < 30 )
 		{
-			if ( !IsAlive( teamPlayer ) )
+			if ( second > 5 )
 			{
-				statusIndex = ePlayerStatusType.PTS_TYPE_DEAD
+				EmitSoundOnEntity( GetLocalClientPlayer(), "HUD_match_start_timer_tick_1P" )
 			}
-			else
+			else if ( second >= 0 )
 			{
-				switch ( GetTitanClass( titan ) )
-				{
-					case "ion":
-						statusIndex = ePlayerStatusType.PTS_TYPE_ION
-						break
-					case "scorch":
-						statusIndex = ePlayerStatusType.PTS_TYPE_SCORCH
-						break
-					case "ronin":
-						statusIndex = ePlayerStatusType.PTS_TYPE_RONIN
-						break
-					case "tone":
-						statusIndex = ePlayerStatusType.PTS_TYPE_TONE
-						break
-					case "legion":
-						statusIndex = ePlayerStatusType.PTS_TYPE_LEGION
-						break
-					case "northstar":
-						statusIndex = ePlayerStatusType.PTS_TYPE_NORTHSTAR
-						break
-					case "vanguard":
-						statusIndex = ePlayerStatusType.PTS_TYPE_VANGUARD
-						break
-				}
+				EmitSoundOnEntity( GetLocalClientPlayer(), "HUD_match_start_timer_5_seconds_1P" )
 			}
 		}
-	}
-	else
-	{
-		if ( IsAlive( teamPlayer ) )
-			statusIndex = IsTitanAvailable( teamPlayer ) ? ePlayerStatusType.PTS_TYPE_READY : ePlayerStatusType.PTS_TYPE_PILOT
-		else
-			statusIndex = IsTitanAvailable( teamPlayer ) ? ePlayerStatusType.PTS_TYPE_DEAD_READY : ePlayerStatusType.PTS_TYPE_DEAD
+
+		lastSecond = second
+
+		WaitFrame()
 	}
 
-	if ( file.pilotTitanStatusCallback != null )
-		statusIndex = file.pilotTitanStatusCallback( teamPlayer, statusIndex )
-
-	return statusIndex
+	EmitSoundOnEntity( GetLocalClientPlayer(), "HUD_match_start_timer_0_seconds_1P" )
 }
 
-int function PilotTitanStatusSort( int a, int b )
-{
-	if ( a > b )
-		return -1
-	else if ( a < b )
-		return 1
-
-	return 0
-}
 
 void function ClGameStateThink_Postmatch( entity player )
 {
 }
 
+
 void function ClGameStateThink_SwitchingSides( entity player )
 {
-	//player.cv.vignette.SetColor( 0, 0, 0, 255 )
-	//player.cv.vignette.Show()
+	
+	
 }
+
 
 bool function IsSonyMP()
 {
@@ -652,10 +660,22 @@ bool function IsSonyMP()
 	return true
 }
 
+
 void function UpdateIsSonyMP()
 {
 	bool isSonyMP = IsSonyMP()
 	SetIsConsideredSonyMultiplayer( isSonyMP )
+}
+
+
+void function DefaultCompletedResolutionCleanupFunc()
+{
+	Signal( clGlobal.levelEnt, "GameModes_CompletedResolutionCleanup" )
+}
+
+void function ClGameState_SetResolutionCleanupFunc( void functionref() func )
+{
+	file.resolutionCompletedCleanupFunc = func
 }
 
 void function ClGameState_Changed( entity playerEnt, int newVal )
@@ -787,7 +807,7 @@ void function ClGameState_Changed( entity playerEnt, int newVal )
 			}
 			else
 			{
-				//DefaultCompletedResolutionCleanupFunc()
+				DefaultCompletedResolutionCleanupFunc()
 			}
 			break
 
@@ -870,15 +890,36 @@ void function GameState_SpectatorTargetChanged( entity player, entity previousTa
 		UpdateGamestateRuiTracking( player )
 }
 
+
 void function SetGameModeSuddenDeathAnnouncementSubtext( string text )
 {
 	file.suddenDeathAnnouncementSubtext = text
 }
 
+
+void function KillLeaderChangeCallback( entity player, entity new )
+{
+	UpdateKillLeaderOnGameStateRui( ClGameState_GetRui() )
+	UpdateKillLeaderOnGameStateRui( GetFullmapGamestateRui() )
+}
+
+
+void function UpdateKillLeaderOnGameStateRui( var rui )
+{
+	if ( rui == null )
+		return
+
+	entity killLeader = GetGlobalNetEnt( "killLeader" )
+
+	RuiSetBool( rui, "isPlayerKillLeader", GetLocalViewPlayer() == killLeader )
+}
+
+
 string function GetGameModeSuddenDeathAnnouncementSubtext()
 {
 	return file.suddenDeathAnnouncementSubtext
 }
+
 
 void function SwitchingSides_Changed()
 {
@@ -888,54 +929,57 @@ void function SwitchingSides_Changed()
 	thread SwitchingSides_Changed_threaded()
 }
 
+
 void function SwitchingSides_Changed_threaded()
 {
-	//entity player = GetLocalViewPlayer()
-	//
-	//if ( level.nv.switchingSides )
-	//{
-	//	player.cv.halfTimeText.SetText( "Test - Switching Sides" )
-	//	player.cv.halfTimeText.Show()
-	//	wait 1.5
-	//}
-	//else
-	//{
-	//	player.cv.halfTimeText.Hide()
-	//
-	//}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
 
-//Note that RoundWinningKillReplay doesn't send imcTeamScore2 and militiaTeamScore2 overrides.
+
 void function ShowRoundScoresInAnnouncement( AnnouncementData announcement, float subtext2IconDelay, int ornull imcTeamScore2 = null, int ornull militiaTeamScore2 = null )
 {
 	entity player = GetLocalClientPlayer()
 
 	int friendlyTeam = player.GetTeam()
-	int enemyTeam = friendlyTeam == TEAM_IMC ? TEAM_MILITIA : TEAM_IMC
+	int enemyTeam    = friendlyTeam == TEAM_IMC ? TEAM_MILITIA : TEAM_IMC
 
 	asset leftIcon
 	asset rightIcon
 
 	if ( friendlyTeam == TEAM_IMC )
 	{
-		leftIcon = TEAM_ICON_IMC
+		leftIcon  = TEAM_ICON_IMC
 		rightIcon = TEAM_ICON_MILITIA
 	}
 	else
 	{
-		leftIcon = TEAM_ICON_MILITIA
+		leftIcon  = TEAM_ICON_MILITIA
 		rightIcon = TEAM_ICON_IMC
 	}
 
-	if ( level.nv.roundScoreLimitComplete == true ) //Generally this is never true except for modes with RoundWinningKillReplay enabled
+	if ( GetGlobalNonRewindNetBool( "roundScoreLimitComplete" ) == true ) 
 	{
-		if ( friendlyTeam == level.nv.winningTeam )
+		int winningTeam = GetNetWinningTeam()
+
+		if ( friendlyTeam == winningTeam )
 		{
 			Announcement_SetSubText( announcement, "#GAMEMODE_MATCH_WON_BY_FRIENDLY_TEAM" )
 			string friendlyTeamString = friendlyTeam == TEAM_IMC ? "#TEAM_IMC" : "#TEAM_MCOR"
 			Announcement_SetOptionalSubTextArgsArray( announcement, [ friendlyTeamString ] )
 		}
-		else if ( enemyTeam == level.nv.winningTeam )
+		else if ( enemyTeam == winningTeam )
 		{
 			Announcement_SetSubText( announcement, "#GAMEMODE_MATCH_WON_BY_ENEMY_TEAM" )
 			string enemyTeamString = enemyTeam == TEAM_IMC ? "#TEAM_IMC" : "#TEAM_MCOR"
@@ -943,8 +987,8 @@ void function ShowRoundScoresInAnnouncement( AnnouncementData announcement, floa
 		}
 	}
 
-	//Hack: GetTeamScore2 doesn't work mid-kill replay because we get the rewound values as opposed to the current values.
-	//Fix for R2 when we get the ability to flag certain values as "use current value instead of rewound value"
+	
+	
 	if ( imcTeamScore2 == null && militiaTeamScore2 == null )
 	{
 		Announcement_SetLeftText( announcement, "#GAMEMODE_JUST_THE_SCORE", GameRules_GetTeamScore2( friendlyTeam ) )
@@ -952,7 +996,7 @@ void function ShowRoundScoresInAnnouncement( AnnouncementData announcement, floa
 	}
 	else
 	{
-		Assert( imcTeamScore2 != null && militiaTeamScore2 != null ) //Don't have only one team with teamScore2 override
+		Assert( imcTeamScore2 != null && militiaTeamScore2 != null ) 
 		if ( friendlyTeam == TEAM_IMC )
 		{
 			Announcement_SetLeftText( announcement, "#GAMEMODE_JUST_THE_SCORE", imcTeamScore2 )
@@ -969,59 +1013,47 @@ void function ShowRoundScoresInAnnouncement( AnnouncementData announcement, floa
 	Announcement_SetRightIcon( announcement, rightIcon )
 }
 
+
 void function PlayRoundWonConversationWithAnnouncementDelay( float conversationDelay )
 {
-	WaitEndFrame() //Necessary so we don't get the AnnouncementPurge signal from the same announcement we are originating from
+	WaitEndFrame() 
 	clGlobal.levelEnt.EndSignal( "AnnoucementPurge" )
 
 	if ( conversationDelay > 0 )
 		wait conversationDelay
 
-	if ( level.nv.winningTeam == null )
+	int winningTeam = GetNetWinningTeam()
+
+	if ( winningTeam == -1 )
 		return
 
 	entity player = GetLocalClientPlayer()
-	if ( player.GetTeam() == level.nv.winningTeam )
+	if ( player.GetTeam() == winningTeam )
 		PlayConversationToLocalClient( "RoundWonAnnouncement" )
-	else if ( level.nv.winningTeam != TEAM_UNASSIGNED )
+	else if ( winningTeam != TEAM_UNASSIGNED )
 		PlayConversationToLocalClient( "RoundLostAnnouncement" )
 }
 
-void function UpdateScoreboardBadRepPresentMessage()
+
+void function UpdateScoreboardBadRepPresentMessage( entity playerEnt, bool newVal )
 {
 	if ( IsLobby() )
 		return
 
 	entity player = GetLocalClientPlayer()
 
-	if ( level.nv.badRepPresent )
+	if ( newVal )
 		player.cv.scoreboardBadRepPresentMessage.Show()
 	else
 		player.cv.scoreboardBadRepPresentMessage.Hide()
 }
 
-void function UpdateChatHudLocationForTop3()
-{
-	var hudElement = HudElement( "IngameTextChat" )
-	var height = hudElement.GetHeight()
-	var screenSize = Hud.GetScreenSize()
-	var position = hudElement.GetPos()
-	HudElement( "IngameTextChat" ).SetPos( position[0], -1 * ( screenSize[1] - ( height + screenSize[1] * 0.10 ) ) )
-}
-
-string function GetServerDebugId()
-{
-	int playlistVersion = GetCurrentPlaylistVarInt( "playlist_version", 0 )
-	int timePartial = GetUnixTimestamp()
-	string R5Version = Localize( "#BETA_BUILD_WATERMARK", "#BETA_BUILD_WATERMARK" )
-	
-	return R5Version + ":" + playlistVersion + ":" + timePartial
-}
 
 void function ClGameState_SetSwitchingSidesSubText( string value )
 {
 	file.switchingSidesSubText = value
 }
+
 
 void function ClGameState_SetPilotTitanStatusCallback( int functionref( entity, int ) func )
 {
@@ -1035,6 +1067,7 @@ void function UpdateScoreBar( entity player )
 	file.gameModeScoreBarUpdateRules( file.gamestateRui )
 	PerfEnd( PerfIndexClient.ScoreBoardUpdate )
 }
+
 
 void function AddCallback_OnScoreboardCreated( void functionref() func )
 {
@@ -1060,7 +1093,18 @@ var function CreateNestedNetGraph( var rui )
 	RuiTrackInt( nestedGraphRui, "netGraphDataBlockSize", null, RUI_TRACK_NETGRAPH_DATABLOCK_SIZE )
 	RuiTrackInt( nestedGraphRui, "netGraphDataBlockPercentDone", null, RUI_TRACK_NETGRAPH_DATABLOCK_PERCENT_DONE )
 
-	RuiSetString( nestedGraphRui, "netGraphServerID", GetServerDebugId() )
+#if DEVELOPER
+		RuiSetBool( nestedGraphRui, "isDEV", true )
+#endif
+
+	RuiSetString( nestedGraphRui, "netGraphServerID", "GetServerDebugId()" )
+	RuiSetBool( nestedGraphRui, "isUsingAntiDDoS", true )
+
+	
+	
+	
+	
+	
 
 	file.nestedNetGraphRui  = nestedGraphRui
 	file.netGraphRuiCreated = true
@@ -1079,9 +1123,8 @@ var function CLGameState_GetNetGraphRui()
 }
 
 
-void function OnSettingsUpdated()
+void function RefreshNetGraphVisibility()
 {
-	printf( "OnSettingsUpdated()" )
 	bool isNetGraphEnabled = IsNetGraphEnabled()
 
 	if ( file.isNetGraphEnabled != isNetGraphEnabled )
@@ -1102,42 +1145,12 @@ void function OnSettingsUpdated()
 }
 
 
-void function UpdateAnonymousModeSetting( entity playerEnt, bool oldVal, bool newVal, bool actuallyChanged )
-{
-	//
-}
-
-
-// ============================================================================
-// Additions
-// ============================================================================
-
-// CLGameState_GetNetGraphRui already defined above
-// AddCallback_OnGameStateChanged defined in cl_utility_mp.gnut
-
-void function KillLeaderChangeCallback( entity player, entity new )
-{
-	UpdateKillLeaderOnGameStateRui( ClGameState_GetRui() )
-	UpdateKillLeaderOnGameStateRui( GetFullmapGamestateRui() )
-}
-
-void function UpdateKillLeaderOnGameStateRui( var rui )
-{
-	if ( rui == null )
-		return
-
-	entity killLeader = GetGlobalNetEnt( "killLeader" )
-
-	RuiSetBool( rui, "isPlayerKillLeader", GetLocalViewPlayer() == killLeader )
-}
-
 void function ClGameState_SetHasScreenBorder( bool value )
 {
+	
 	var rui = ClGameState_GetRui()
 	if ( IsValid( rui ) )
 	{
 		RuiSetBool( rui, "hasScreenBorder", value )
 	}
 }
-
-//maxPlayerCount

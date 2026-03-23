@@ -6,7 +6,6 @@
 global function StatsRegister_MetaChallenges
 global function SkitSystem_Init
 global function Ziprail_GetSkyDiveLauncherForHitEnt
-global function HasWaitingGameStateArtHud
 
 global struct DeathBoxPingInfo
 {
@@ -273,7 +272,6 @@ global function Announcements_SetVisible
 global function IsObserverInPrivateGame
 global function UpdatePlayerSkydiveTrailFriendlyEnemyFX
 global function Teams_RegisterSignals
-global function ClGameState_HasRegisteredGameStateAsset
 global function ClRingWarning_GetRui
 // IsEmoteEnabledForPodiumScreen — now in sh_emotes.nut (S22)
 global function WillCelebrateNEEVictory
@@ -1006,12 +1004,6 @@ entity function Ziprail_GetSkyDiveLauncherForHitEnt( entity hitEnt )
 {
 	Warning( "STUB: Ziprail_GetSkyDiveLauncherForHitEnt" )
 	return null
-}
-
-bool function HasWaitingGameStateArtHud()
-{
-	// S3 has no night maps or battle rush variant — always false
-	return false
 }
 
 #if CLIENT || UI
@@ -2533,12 +2525,6 @@ void function UpdatePlayerSkydiveTrailFriendlyEnemyFX( entity player )
 void function Teams_RegisterSignals()
 {
 	Warning( "STUB: Teams_RegisterSignals" )
-}
-
-bool function ClGameState_HasRegisteredGameStateAsset()
-{
-	Warning( "STUB: ClGameState_HasRegisteredGameStateAsset" )
-	return false
 }
 
 var function ClRingWarning_GetRui()

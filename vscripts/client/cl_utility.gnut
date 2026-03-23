@@ -62,7 +62,8 @@ struct
 	table<int,array<var> > textPanelTopo
 	int showButtonHintsInt = 1
 	array< LampData > clientLightsFromServer
-	
+	table< entity, int > playerHide3pWeaponCount
+	int gfxDesaturateCount = 0
 } file
 
 //this probably already exists.. ~mkos
@@ -2234,6 +2235,26 @@ void function InterpolateLightRadiusThread( int lampIndex, float duration )
 			lamp.isInterpolating = false
 			file.clientLightsFromServer[lampIndex] = lamp
 		}
+	}
+}
+
+void function GfxDesaturateOn()
+{
+	file.gfxDesaturateCount += 1
+
+	if ( file.gfxDesaturateCount == 1 )
+	{
+		GfxDesaturate( true )
+	}
+}
+
+void function GfxDesaturateOff()
+{
+	file.gfxDesaturateCount -= 1
+
+	if ( file.gfxDesaturateCount == 0 )
+	{
+		GfxDesaturate( false )
 	}
 }
 

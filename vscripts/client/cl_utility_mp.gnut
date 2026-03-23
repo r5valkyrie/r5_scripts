@@ -25,9 +25,3 @@ void function AddCallback_GameStateEnter( int gameState, void functionref() call
 
 	clGlobal.gameStateEnterCallbacks[ gameState ].append( callbackFunc )
 }
-
-void function AddCallback_OnGameStateChanged( void functionref( int ) callbackFunc )
-{
-	Assert( !clGlobal.gameStateChangedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnGameStateChanged" )
-	clGlobal.gameStateChangedCallbacks.append( callbackFunc )
-}
