@@ -3,7 +3,7 @@ global function ShFiringRangeChallenges_Init
 global function FRC_RegisterChallenge
 global function FRC_IsEnabled
 #endif
- 
+
 #if SERVER
 
 global function FRC_AddCleanupEnt
@@ -716,9 +716,9 @@ void function FRC_ResetChallengeState( int realm )
 
 	if ( IsValid (activePlayer) )
 	{
-                         
+
 		if ( !IsInfiniteReloadsEnabled( activePlayer ) )
-      
+
 		//SetInfiniteAmmoForGameMode( activePlayer, false )
 
 		// Restore Friendly Fire State.
@@ -734,7 +734,7 @@ void function FRC_ResetChallengeState( int realm )
 
 	FRC_SetupFiringRangeChallengesForRealm ( realm )
 
-                            
+
 		if( IsUsingConsolidatedLoot() )
 		{
 			ConsolidatedLoot_Create_FiringRange_WeaponsAndLoot_ForRealm( realm )
@@ -743,9 +743,9 @@ void function FRC_ResetChallengeState( int realm )
 		{
 			Create_FiringRange_WeaponsAndLoot_ForRealm( realm )
 		}
-      
-                                                     
-       
+
+
+
 
  	int i = 0
 	foreach ( teamPlayer in teamPlayers )
@@ -1471,7 +1471,7 @@ bool function FRC_CanPickUpWeaponPlayerStatusCheck ( entity player )
 	return true
 }
 
-bool function FRC_GenericCanPickUpWeapon( entity player, entity weapon ) // S3: no useFlags param
+bool function FRC_GenericCanPickUpWeapon( entity player, entity weapon, int useFlags )
 {
 	if ( !IsValid ( player ) )
 		return false

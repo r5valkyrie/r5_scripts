@@ -425,7 +425,7 @@ void function DeathTotem_DeployTotem( entity owner, vector origin, vector angles
 	totemProxy.SetUsable()
 	totemProxy.AddUsableValue( USABLE_BY_TEAMMATES | USABLE_BY_ENEMIES | USABLE_BLOCK_CONTINUOUS_USE | USABLE_CUSTOM_HINTS ) //Update hint text every server frame so that we can keep unique client texts up to date.
 	totemProxy.SetUsePrompts( "#DEATH_TOTEM_TOTEM_USE", "#DEATH_TOTEM_TOTEM_USE" )
-	//SetCallback_CanUseEntityCallback_Retail( totemProxy, DeathTotem_CanUseTotem )
+	//SetCallback_CanUseEntityCallback( totemProxy, DeathTotem_CanUseTotem )
 	AddCallback_OnUseEntity_ClientServer( totemProxy, DeathTotem_OnTotemUse )
 
 	totemProxy.e.isBusy = false

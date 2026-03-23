@@ -1908,7 +1908,7 @@ entity function UpgradeCore_SpawnUpgradeCoreConsole( vector position )
 
 
 	ClearCallback_CanUseEntityCallback( console )
-	SetCallback_CanUseEntityCallback_Retail( console, UpgradeCore_ConsoleCanUseFunction )
+	SetCallback_CanUseEntityCallback( console, UpgradeCore_ConsoleCanUseFunction )
 	console.AddUsableValue( USABLE_CUSTOM_HINTS )
 
 
@@ -4125,7 +4125,7 @@ void function UpgradeCore_SetUpConsole_Thread( entity console  )
 
 	file.upgradeStationClientProxies[ console ] <- console
 
-	SetCallback_CanUseEntityCallback_Retail( console, UpgradeCore_ConsoleCanUseFunction )
+	SetCallback_CanUseEntityCallback( console, UpgradeCore_ConsoleCanUseFunction )
 	AddEntityCallback_GetUseEntOverrideText( console, GetUpgradeConsoleHoldUseTextOverride )
 	AddCallback_OnUseEntity_ClientServer( console, UpgradeCore_XpStationOnUsed_Client )
 

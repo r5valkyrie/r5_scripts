@@ -1478,7 +1478,7 @@ void function HealthTick_OnDamaged( entity ampedWall, float damage )
 }
 #endif
 
-bool function CoverWall_CanUse( entity player, entity ent )
+bool function CoverWall_CanUse( entity player, entity ent, int useFlags )
 {
 	if ( !IsValid( player ) || !IsValid( ent ) )
 		return false

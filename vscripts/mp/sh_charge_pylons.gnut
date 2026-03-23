@@ -413,7 +413,7 @@ void function ChargePylon_SetButtonUsable( entity button )
 	#endif //SERVER
 	AddCallback_OnUseEntity_ClientServer( button, ChargePylon_OnUse )
 
-	SetCallback_CanUseEntityCallback_Retail( button, ChargePylon_CanUse )
+	SetCallback_CanUseEntityCallback( button, ChargePylon_CanUse )
 
 	//#if CLIENT
 	//	AddCallback_OnUseEntity_ClientServer( button, ChargePylon_OnUse )

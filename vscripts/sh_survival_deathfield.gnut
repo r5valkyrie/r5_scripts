@@ -3455,7 +3455,7 @@ void function SurveyBeacons_AddBeacon( entity beaconMarker, string scriptName )
 	SetControlPanelUsePrompts( surveyBeacon, "#SURVEY_BEACON_HOLD_PROMPT", "#SURVEY_BEACON_PRESS_PROMPT" )
 
 	ClearCallback_CanUseEntityCallback( surveyBeacon )
-	SetCallback_CanUseEntityCallback_Retail( surveyBeacon, SurveyBeacon_CanUseFunction )
+	SetCallback_CanUseEntityCallback( surveyBeacon, SurveyBeacon_CanUseFunction )
 	surveyBeacon.AddUsableValue( USABLE_CUSTOM_HINTS )
 
 	file.surveyBeacons.append( surveyBeacon )

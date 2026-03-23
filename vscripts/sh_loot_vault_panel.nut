@@ -43,9 +43,9 @@ global function RemoveDataVaultWaypointsForTeam
 global function VaultPanel_ClientToServer_PingVaultFromMap
 global function SetMinimapObjectVisibleToPlayer
 
-                  
+
 global function ShipVaultKeyPickupRandomVO
-                        
+
 #endif // SERVER
 
 #if SERVER && DEVELOPER
@@ -60,14 +60,14 @@ const string LOOT_VAULT_PANEL_SCRIPTNAME = "LootVaultPanel"
 const string LOOT_VAULT_DOOR_SCRIPTNAME = "LootVaultDoor"
 const string LOOT_VAULT_DOOR_SCRIPTNAME_RIGHT = "LootVaultDoorRight"
 
-                  
+
 const string SHIP_VAULT_PANEL_SCRIPTNAME = "ShipVaultPanel"
 const string SHIP_VAULT_DOOR_SCRIPTNAME = "ShipVaultDoor"
 const string SHIP_VAULT_BODY_SCRIPTNAME = "ship_vault_corpse"
 
 const asset SHIP_VAULT_PANEL_OPEN_FX = $"P_door_lock_IMC_open"
 const asset SHIP_VAULT_PANEL_LOCKED_FX = $"P_door_lock_IMC_locked"
-                        
+
 
 const string LOOT_VAULT_MARKER_SCRIPTNAME = "LootVaultMarker"
 
@@ -102,10 +102,10 @@ struct VaultData
 	entity vaultMarkerEnt
 
 	#if SERVER
-		                  
+
 			entity panelLockedFX
 			entity panelOpenFX
-                          
+
 		void functionref( entity, entity ) openDoorCallback
 		entity doorDirector
 	#endif //SERVER
@@ -196,7 +196,7 @@ global const UniqueVaultData LOOT_VAULT_DATA = {
 	onPickupPinEvent				= "MapToy_loot_vault_key_pickup"
 }
 
-                  
+
 global const UniqueVaultData SHIP_VAULT_DATA = {
 	panelScriptName				= SHIP_VAULT_PANEL_SCRIPTNAME,
 	vaultKeylootType			= "ship_keycard",
@@ -230,7 +230,7 @@ global const UniqueVaultData SHIP_VAULT_DATA = {
 	onOpenPinEvent					= "MapToy_ship_vault_open"
 	onPickupPinEvent				= "MapToy_ship_vault_key_pickup"
 }
-                        
+
 
 struct
 {
@@ -242,20 +242,20 @@ struct
 	array< UniqueVaultData > 	uniqueVaultDatas =
 	[
 		LOOT_VAULT_DATA,
-	                  
+
 		SHIP_VAULT_DATA
-                         
+
 	]
 
 	#if SERVER
-		                  
+
 			array< vector >		keycardLocations
-                          
+
 		array<entity> 			vaultWaypoints
 		array< entity >			vaultPanels
 		entity					panelVFX
 		table< entity, array< entity > > noPlaceVolumes_ByPanel
-		
+
 		#if DEVELOPER
 			array< entity > dev_VaultKeys
 			table <entity, SpecialVolumeDimensions > dev_noPlaceVolDmensions_ByPanel
@@ -281,16 +281,16 @@ void function Sh_Loot_Vault_Panel_Init()
 	}
 
 	PrecacheParticleSystem( LOOT_VAULT_DATA.vaultAlarmVFX )
-	                  
+
 		PrecacheParticleSystem( SHIP_VAULT_DATA.vaultAlarmVFX )
 		PrecacheParticleSystem( SHIP_VAULT_PANEL_OPEN_FX )
 		PrecacheParticleSystem( SHIP_VAULT_PANEL_LOCKED_FX )
-                         
+
 
 	#if CLIENT
-		                  
+
 			AddCreateCallback( "prop_dynamic", VaultDoorSpawned )
-                          
+
 		AddCreateCallback( "prop_dynamic", VaultPanelSpawned )
 		AddCreateCallback( "prop_door", VaultDoorSpawned )
 
@@ -306,18 +306,18 @@ void function Sh_Loot_Vault_Panel_Init()
 
 
 	#if SERVER
-		                  
+
 			AddSpawnCallback( "prop_dynamic", ShipVaultKeycardSpawned )
 			AddSpawnCallback( "prop_dynamic", VaultDoorSpawned )
-        
+
 		AddSpawnCallback( "prop_dynamic", VaultPanelSpawned )
 		AddSpawnCallback( "prop_door", VaultDoorSpawned )
 		AddCallback_GameStateEnter( eGameState.Playing, VaultPanel_InitClientTrackingEnts )
 
 		AddSpawnCallback_ScriptName( LOOT_VAULT_PANEL_SCRIPTNAME, SURVIVAL_AddVaultPanel )
-		                  
+
 			AddSpawnCallback_ScriptName( SHIP_VAULT_PANEL_SCRIPTNAME, SURVIVAL_AddVaultPanel )
-        
+
 
 		AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
@@ -328,7 +328,7 @@ void function Sh_Loot_Vault_Panel_Init()
 }
 
 #if SERVER
-                  
+
 void function ShipVaultKeycardSpawned( entity keycard )
 {
 	if ( keycard.GetScriptName() != SHIP_VAULT_BODY_SCRIPTNAME )
@@ -338,7 +338,7 @@ void function ShipVaultKeycardSpawned( entity keycard )
 	file.keycardLocations.append( keycard.GetOrigin() )
 	keycard.Destroy()
 }
-                        
+
 #endif // SERVER
 
 void function VaultPanelSpawned( entity panel )
@@ -363,13 +363,13 @@ void function VaultPanelSpawned( entity panel )
 			data.doorDirector = CreatePropScript( $"mdl/dev/empty_model.rmdl", panel.GetOrigin() )
 			SpecialVolumes_Create_ByType( panel, LOOT_VAULT_PANEL_SCRIPTNAME )
 		}
-		                  
+
 		else if ( uniqueData.panelScriptName == SHIP_VAULT_PANEL_SCRIPTNAME && panel.LookupAttachment( "light0" ) > 0 )
 		{
 			data.panelLockedFX = StartParticleEffectOnEntity_ReturnEntity( panel, GetParticleSystemIndex( SHIP_VAULT_PANEL_LOCKED_FX ), FX_PATTACH_POINT_FOLLOW, panel.LookupAttachment( "light0" ) )
 			SpecialVolumes_Create_ByType( panel, SHIP_VAULT_PANEL_SCRIPTNAME )
 		}
-                          
+
 
 		panel.SetSkin( 1 )
 		GradeFlagsSet( panel, eGradeFlags.IS_LOCKED )
@@ -577,7 +577,7 @@ void function EntitiesDidLoad()
 
 	foreach ( panelData in file.vaultControlPanels )
 	{
-		                  
+
 			if ( panelData.panel.GetScriptName() == SHIP_VAULT_PANEL_SCRIPTNAME )
 			{
 				// Spawn keycard at randomized location
@@ -589,7 +589,7 @@ void function EntitiesDidLoad()
 					file.dev_VaultKeys.append( vaultKey )
 				#endif // DEVELOPER
 			}
-                          
+
 
 		foreach ( entity door in file.vaultDoors )
 		{
@@ -600,7 +600,7 @@ void function EntitiesDidLoad()
 
 				panelData.openDoorCallback = OpenLootVaultDoor
 			}
-			                  
+
 			else if ( panelData.panel.GetScriptName() == SHIP_VAULT_PANEL_SCRIPTNAME )
 			{
 				panelData.openDoorCallback = OpenShipVaultDoor
@@ -615,7 +615,7 @@ void function EntitiesDidLoad()
 				panelData.panel.SetParent( door, "ATT_R_DOOR", true, 0 )
 			}
 
-                           
+
 
 			if ( !panelData.vaultDoors.contains( door ) )
 			{
@@ -646,10 +646,10 @@ UniqueVaultData function GetUniqueVaultData( entity panel )
 	{
 		if ( panel.GetScriptName() == LOOT_VAULT_PANEL_SCRIPTNAME )
 			data = LOOT_VAULT_DATA
-		                  
+
 		else if ( panel.GetScriptName() == SHIP_VAULT_PANEL_SCRIPTNAME )
 			data = SHIP_VAULT_DATA
-                          
+
 	}
 
 	return data
@@ -662,7 +662,7 @@ UniqueVaultData function GetUniqueVaultDataByLootItem( int lootType )
 
 	if ( lootType == eLootType.DATAKNIFE )
 		data = LOOT_VAULT_DATA
-	                  
+
 	else if ( lootType == eLootType.SHIPKEYCARD )
 		data = SHIP_VAULT_DATA
 
@@ -680,10 +680,10 @@ UniqueVaultData function GetVaultTypeByPanelData( VaultData panelData )
 
 	if ( doorScriptName == LOOT_VAULT_DOOR_SCRIPTNAME || doorScriptName == LOOT_VAULT_DOOR_SCRIPTNAME_RIGHT )
 		data = LOOT_VAULT_DATA
-	                  
+
 	else if ( doorScriptName == SHIP_VAULT_DOOR_SCRIPTNAME )
 		data = SHIP_VAULT_DATA
-                         
+
 
 	return data
 }
@@ -692,7 +692,7 @@ UniqueVaultData function GetVaultTypeByPanelData( VaultData panelData )
 bool function HasVaultKey( entity player )
 {
 	array< ConsumableInventoryItem > playerInventory = SURVIVAL_GetPlayerInventory( player )
-	
+
 	foreach ( item in playerInventory )
 	{
 		LootData lootData = SURVIVAL_Loot_GetLootDataByIndex( item.type )
@@ -700,12 +700,12 @@ bool function HasVaultKey( entity player )
 		{
 			 return true
 		}
-                  
+
 		else if ( lootData.lootType == eLootType.SHIPKEYCARD &&  LootVault_Enabled() )
 		{
 			 return true
 		}
-                        
+
 	}
 	return false
 }
@@ -847,9 +847,9 @@ void function VaultPanelUseSuccess( entity panel, entity player, ExtendedUseSett
 		thread PlayBattleChatterLineDelayedToSpeakerAndTeam( player, data.bcVaultOpened, 0.75 )
 		PIN_Interact( player, data.onOpenPinEvent, panel.GetOrigin() )
 
-		                    
+
 			//UpgradeCore_GrantXp_VaultOpened( player )
-        
+
 	#endif
 
 	if ( panelData.panelState != ePanelState.UNLOCKING )
@@ -906,7 +906,7 @@ void function OpenLootVaultDoor( entity door, entity director )
 	Signal( door, "ScriptCalled", { player = director } )
 }
 
-                  
+
 void function OpenShipVaultDoor( entity door, entity doorDirector )
 {
 	thread function() : ( door )
@@ -925,7 +925,7 @@ void function OpenShipVaultDoor( entity door, entity doorDirector )
 		WaittillAnimDone( door )
 	}()
 }
-                        
+
 
 void function SpecialVolumes_Create_ByType( entity panel, string panelType, bool debug = false )
 {
@@ -936,7 +936,7 @@ void function SpecialVolumes_Create_ByType( entity panel, string panelType, bool
 	float vaultDepth
 	float heightAbove
 	float heightBelow
-	float radius 
+	float radius
 	int numVols
 
 	switch( panelType )
@@ -964,9 +964,9 @@ void function SpecialVolumes_Create_ByType( entity panel, string panelType, bool
 void function SpecialVolumes_Create( entity panel, float volRadius, vector intoDir, float vaultDepth, float heightAbove, float heightBelow, int numVols, bool debug = false )
 {
 	Assert( IsValid( panel ), FUNC_NAME() + "(): ERROR! invalid panel given." )
-	
+
 	vector center = panel.GetOrigin()
-	
+
 	vector endFront = center
 	vector endBack = center + intoDir * vaultDepth
 
@@ -1039,7 +1039,7 @@ void function HideVaultPanel_Thread( VaultData panelData )
 			panelData.panel.SetSkin( 0 )
 			panelData.panel.Dissolve( ENTITY_DISSOLVE_CORE, panelData.panel.GetOrigin(), 200 )
 		}
-		                  
+
 		else if ( panelData.panel.GetScriptName() == SHIP_VAULT_PANEL_SCRIPTNAME )
 		{
 			EmitSoundOnEntity( panelData.panel, "SQ_Door_Large_Unlock" )
@@ -1055,7 +1055,7 @@ void function HideVaultPanel_Thread( VaultData panelData )
 			panelData.panelOpenFX.NotSolid()
 			panelData.panel.NotSolid()
 		}
-                          
+
 	#endif // SERVER
 
 	wait 2.0
@@ -1069,7 +1069,7 @@ string function VaultPanel_TextOverride( entity panel )
 	UniqueVaultData data = GetUniqueVaultData( panel )
 
 	entity player = GetLocalViewPlayer()
-	string textOverride 
+	string textOverride
 
 	int currentUnixTime           = GetUnixTimestamp()
 	int ornull keyAccessTimeStamp = GetCurrentPlaylistVarTimestamp( "loot_vault_key_availability_unixtime", 1566864000 )
@@ -1150,7 +1150,7 @@ void function SetVaultPanelUsable( entity panel )
 		AddCallback_OnUseEntity_ClientServer( panel, OnVaultPanelUse )
 	#endif //SERVER
 
-	SetCallback_CanUseEntityCallback_Retail( panel, LootVaultPanel_CanUseFunction )
+	SetCallback_CanUseEntityCallback( panel, LootVaultPanel_CanUseFunction )
 
 	#if CLIENT
 		AddEntityCallback_GetUseEntOverrideText( panel, VaultPanel_TextOverride )
@@ -1215,22 +1215,22 @@ bool function IsVaultDoor( entity ent )
 	if ( scriptName == LOOT_VAULT_DOOR_SCRIPTNAME || scriptName == LOOT_VAULT_DOOR_SCRIPTNAME_RIGHT )
 		return true
 
-	                  
+
 		if ( scriptName == SHIP_VAULT_DOOR_SCRIPTNAME )
 			return true
-		
+
 		entity parentEnt
-		
+
 		try{
 			parentEnt = ent.GetParent()
 		} catch(e420)
 		{
-		
+
 		}
-		
+
 		if ( IsValid( parentEnt ) && parentEnt.GetScriptName() == SHIP_VAULT_PANEL_SCRIPTNAME )
 			return true
-                         
+
 
 	return false
 }
@@ -1244,10 +1244,10 @@ bool function IsVaultPanel( entity ent )
 	if ( ent.GetScriptName() == LOOT_VAULT_PANEL_SCRIPTNAME )
 		return true
 
-	                  
+
 		if ( ent.GetScriptName() == SHIP_VAULT_PANEL_SCRIPTNAME )
 			return true
-                         
+
 
 	return false
 }
@@ -1376,14 +1376,14 @@ entity function GetVaultPanelForLoot( entity lootEnt )
 				if ( DotProduct( panelFwd, Normalize( lootEntToPanel ) ) > 0 )
 					return panelData.panel
 			}
-			                  
+
 			else if ( vaultData.panelScriptName == SHIP_VAULT_PANEL_SCRIPTNAME )
 			{
 				vector panelFwd = -panelData.panel.GetForwardVector() // Negated so the vector points to the outside
 				if ( DotProduct( panelFwd, Normalize( lootEntToPanel ) ) > 0 )
 					return panelData.panel
 			}
-                           
+
 		}
 	}
 
@@ -1455,7 +1455,7 @@ void function MaybeActivateVaultDefense_Thread( entity pickup, entity device, en
 	}
 }
 
-                  
+
 void function ShipVaultKeyPickupRandomVO( entity player )
 {
 	float rand = RandomFloat( 1.0 )

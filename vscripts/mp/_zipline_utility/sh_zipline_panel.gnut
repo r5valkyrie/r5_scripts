@@ -66,7 +66,7 @@
     }
 
 
-    bool function ZiplinePanel_CanUse( entity player, entity panel )
+    bool function ZiplinePanel_CanUse( entity player, entity panel, int useFlags )
     {
         if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, panel ) )
             return false

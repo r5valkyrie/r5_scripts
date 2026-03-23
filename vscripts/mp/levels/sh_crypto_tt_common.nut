@@ -488,7 +488,7 @@ void function CryptoTT_HoloMap_SetButtonUsable( entity prop )
 	#endif
 
 	AddCallback_OnUseEntity_ClientServer( prop, HoloMap_OnUse )
-	SetCallback_CanUseEntityCallback_Retail( prop, HoloMap_CanUse )
+	SetCallback_CanUseEntityCallback( prop, HoloMap_CanUse )
 }
 
 bool function HoloMap_CanUse( entity user, entity button, int useFlags )

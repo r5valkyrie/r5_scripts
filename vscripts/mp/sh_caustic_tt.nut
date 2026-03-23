@@ -185,7 +185,7 @@ void function Caustic_TT_SetButtonUsable( entity canisterSwitch )
 		if( canisterSwitch.e.canUseEntityCallback != null )
 			return
 	#endif // CLIENT
-	SetCallback_CanUseEntityCallback_Retail( canisterSwitch, CanisterSwitch_CanUse )
+	SetCallback_CanUseEntityCallback( canisterSwitch, CanisterSwitch_CanUse )
 	AddCallback_OnUseEntity_ClientServer( canisterSwitch, CanisterSwitch_OnUse )
 	#if CLIENT
 		AddEntityCallback_GetUseEntOverrideText( canisterSwitch, GetCanisterSwitchUseTextOverride )

@@ -181,7 +181,7 @@ bool function SurveyBeacon_CanUseFunction( entity player, entity beacon, int use
 	if ( GetGameState() < eGameState.Playing )
 		return false
 
-	if ( !ControlPanel_CanUseFunction( player, beacon ) )
+	if ( !ControlPanel_CanUseFunction( player, beacon, useFlags ) )
 		return false
 
 	return true
@@ -218,20 +218,20 @@ bool function SurveyBeacon_CanActivate( entity player, entity beacon )
 	return true
 }
 
-             
-                                                                
- 
-                                                   
-  
-            
-                                                                                        
-                 
-              
-  
 
-            
- 
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function PlayerHasAccessToBeacons( entity player, entity beacon )
 {
@@ -257,7 +257,7 @@ void function OnSurveyBeaconCreated( entity beacon )
 	{
 		CreateCallback_Panel( beacon )
 		ClearCallback_CanUseEntityCallback( beacon )
-		SetCallback_CanUseEntityCallback_Retail( beacon, SurveyBeacon_CanUseFunction )
+		SetCallback_CanUseEntityCallback( beacon, SurveyBeacon_CanUseFunction )
 
 		string scriptName = beacon.GetScriptName()
 		if( scriptName == ENEMY_SURVEY_BEACON_SCRIPTNAME )
@@ -557,52 +557,52 @@ void function SurveyBeacon_RandomizeBeaconArray( array<entity> surveyBeacons, st
 #endif
 
 #if SERVER
-             
-                                                                 
- 
-                            
-                                                
-                                                                         
 
-                         
-                                                              
 
-                            
 
-                                        
-  
-                                                        
-           
 
-                                                                       
-           
 
-                                                          
-                                                        
-  
 
-                              
 
-                                  
-                                                                                                               
 
-                           
- 
 
-                                                                               
- 
-                              
 
-             
-                                              
-   
-                                          
-   
-  
 
-         
- 
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #endif
 
 void function OnDeactivate_BeaconScan( entity player )

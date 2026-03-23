@@ -129,7 +129,7 @@ void function BTSDoor_OnUse( entity door, entity player, int useInputFlags )
 			return
 		}
 	}
-	
+
 	thread BTSDoorConvoThread( door )*/
 }
 
@@ -163,14 +163,14 @@ void function BTS_DoorCooldownThread( entity door )
 
 		}
 	)
-	
+
 	foreach ( convo in BTS_DIALOGUE_ARRAY)
 	{
 		wait EmitSoundOnEntity( door, convo )
 	}
 }*/
 
-bool function BTSDoor_CanUse( entity player, entity door ) // S3: no useFlags param
+bool function BTSDoor_CanUse( entity player, entity door, int useFlags )
 {
 	if ( !IsValid ( player ) )
 		return false

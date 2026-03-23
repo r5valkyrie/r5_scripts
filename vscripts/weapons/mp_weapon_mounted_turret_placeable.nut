@@ -637,7 +637,7 @@ void function MountedTurretPlaceable_WaitForUse( entity turretProxy )
 		}
 	)
 
-	SetCallback_CanUseEntityCallback_Retail( turretProxy, MountedTurretPlaceable_CanUse )
+	SetCallback_CanUseEntityCallback( turretProxy, MountedTurretPlaceable_CanUse )
 
 	while( true )
 	{
@@ -1171,7 +1171,7 @@ bool function CanReclaimTurret( entity turret )
 		switch ( ent.GetScriptName() )
 		{
 			case MOUNTED_TURRET_PLACEABLE_SCRIPT_NAME:
-				SetCallback_CanUseEntityCallback_Retail( ent, MountedTurretPlaceable_CanUse )
+				SetCallback_CanUseEntityCallback( ent, MountedTurretPlaceable_CanUse )
 				AddEntityCallback_GetUseEntOverrideText( ent, MountedTurretPlaceable_UseTextOverride )
 				file.turretEligibleForRefund[ ent ] <- true
 				//thread MountedTurretPlaceable_CreateHUDMarker( ent )

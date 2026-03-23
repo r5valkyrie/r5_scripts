@@ -521,7 +521,7 @@ void function CoverWall_OnDamaged( entity wallProxy, var damageInfo )
 }
 #endif // SERVER
 
-bool function CoverWall_CanUse( entity player, entity ent )
+bool function CoverWall_CanUse( entity player, entity ent, int useFlags )
 {
 	return SURVIVAL_PlayerAllowedToPickup( player )
 }

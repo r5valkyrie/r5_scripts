@@ -358,7 +358,7 @@ string function GetVendingMachineUsePromptText( entity device )
 
 
 #if SERVER || CLIENT
-bool function CanUseVendingMachine( entity player, entity ent )
+bool function CanUseVendingMachine( entity player, entity ent, int useFlags )
 {
 	return SURVIVAL_PlayerAllowedToPickup( player )
 }

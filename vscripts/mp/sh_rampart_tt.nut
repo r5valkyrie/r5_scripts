@@ -180,7 +180,7 @@ void function Rampart_TT_Init()
 {
 	if ( !IsRampartTTEnabled() )
 		return
-	
+
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 	#if SERVER
 		AddCallback_OnPlayerRespawned( Rampart_TT_OnPlayerStateChanged )
@@ -287,7 +287,7 @@ void function SetupVendPanels()
 			panel.SetSkin( 2 )
 			Vend_DestroyBlocker( panel )
 		}
-		
+
 	}
 }
 #endif //SERVER
@@ -299,7 +299,7 @@ void function OnPanelCreated( entity panel )
 		return
 
 	AddCallback_OnUseEntity_ClientServer( panel, Vend_OnUse )
-	SetCallback_CanUseEntityCallback_Retail( panel, Vend_CanUse )
+	SetCallback_CanUseEntityCallback( panel, Vend_CanUse )
 	AddEntityCallback_GetUseEntOverrideText( panel, Vend_UseTextOverride )
 }
 #endif // CLIENT
@@ -770,7 +770,7 @@ void function SetupLoreEvents()
 	{
 		DataPad_SetUse( datapad )
 		AddCallback_OnUseEntity_ServerOnly( datapad, DataPad_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( datapad, DataPad_CanUse )
+		SetCallback_CanUseEntityCallback( datapad, DataPad_CanUse )
 	}
 
 	//APPEND DATAPAD VO TO ARRAY`
@@ -788,7 +788,7 @@ void function SetupLoreEvents()
 	{
 		LoreEnt_SetUse( menSign )
 		AddCallback_OnUseEntity_ClientServer( menSign, Lore_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( menSign, Lore_CanUse )
+		SetCallback_CanUseEntityCallback( menSign, Lore_CanUse )
 	}
 
 	//PORTRAIT RAMPART ONLY-----//
@@ -796,7 +796,7 @@ void function SetupLoreEvents()
 	{
 		LoreEnt_SetUse( portrait )
 		AddCallback_OnUseEntity_ClientServer( portrait, Lore_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( portrait, Lore_CanUse )
+		SetCallback_CanUseEntityCallback( portrait, Lore_CanUse )
 	}
 
 	//SISTER TARGET RAMPART ONLY-----//
@@ -804,14 +804,14 @@ void function SetupLoreEvents()
 	{
 		LoreEnt_SetUse( sister )
 		AddCallback_OnUseEntity_ClientServer( sister, Lore_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( sister, Lore_CanUse )
+		SetCallback_CanUseEntityCallback( sister, Lore_CanUse )
 	}
 	//SHOP SIGN RAMPART ONLY-----//
 	foreach ( entity shopSign in GetEntArrayByScriptName( RAMPART_LORE_SHOPSIGN ) )
 	{
 		LoreEnt_SetUse( shopSign )
 		AddCallback_OnUseEntity_ClientServer( shopSign, Lore_OnUse )
-		SetCallback_CanUseEntityCallback_Retail( shopSign, Lore_CanUse )
+		SetCallback_CanUseEntityCallback( shopSign, Lore_CanUse )
 	}
 
 }

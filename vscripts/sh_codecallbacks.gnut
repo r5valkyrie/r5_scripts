@@ -7,7 +7,6 @@ global function CodeCallback_AnimationInterrupted
 global function CodeCallback_CanUseEntity
 global function ClearCallback_CanUseEntityCallback
 global function SetCallback_CanUseEntityCallback
-global function SetCallback_CanUseEntityCallback_Retail
 global function CodeCallback_CanUseZipline
 global function CodeCallback_PlayerClassChanged
 global function CodeCallback_ShouldUseBlockReload
@@ -177,13 +176,7 @@ void function ClearCallback_CanUseEntityCallback( entity ent )
 }
 
 
-void function SetCallback_CanUseEntityCallback( entity ent, bool functionref( entity, entity ) callbackFunc )
-{
-	Assert( ent.e.canUseEntityCallback == null )
-	ent.e.canUseEntityCallback = callbackFunc
-}
-
-void function SetCallback_CanUseEntityCallback_Retail( entity ent, bool functionref( entity, entity, int ) callbackFunc )
+void function SetCallback_CanUseEntityCallback( entity ent, bool functionref( entity, entity, int ) callbackFunc )
 {
 	Assert( ent.e.canUseEntityCallbackNew == null )
 	ent.e.canUseEntityCallbackNew = callbackFunc

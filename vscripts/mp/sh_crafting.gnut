@@ -2002,7 +2002,7 @@ void function OnHarvesterScriptTargetSpawned( entity ent )
 	harvester.SetUsable()
 	harvester.AddUsableValue( USABLE_CUSTOM_HINTS )
 	AddCallback_OnUseEntity_ClientServer( harvester, HarvestCraftingMaterials )
-	SetCallback_CanUseEntityCallback_Retail( harvester, Crafting_Harvester_IsNotBusy )
+	SetCallback_CanUseEntityCallback( harvester, Crafting_Harvester_IsNotBusy )
 	harvester.Hide()
 
 	file.harvesterArray.append( harvester )
@@ -2079,7 +2079,7 @@ void function OnHarvesterCreated( entity target )
 		CL_SetHarvesterState( target, eHarvesterState.FULL )
 
 		AddCallback_OnUseEntity_ClientServer( target, HarvestCraftingMaterials )
-		SetCallback_CanUseEntityCallback_Retail( target, Crafting_Harvester_IsNotBusy )
+		SetCallback_CanUseEntityCallback( target, Crafting_Harvester_IsNotBusy )
 		AddEntityCallback_GetUseEntOverrideText( target, Crafting_Harvester_UseTextOverride )
 	}
 	else
@@ -3206,7 +3206,7 @@ void function SetupWorkbenchFromTarget( entity target )
 	target.SetUsableDistanceOverride( 35 )
 	target.SetUsableFOVByDegrees( 250.0 )
 	AddCallback_OnUseEntity_ClientServer( target, UseCraftingWorkbench )
-	SetCallback_CanUseEntityCallback_Retail( target, Crafting_Workbench_IsNotBusy )
+	SetCallback_CanUseEntityCallback( target, Crafting_Workbench_IsNotBusy )
 
 	file.workbenchArray.append( target )
 }
@@ -3636,7 +3636,7 @@ void function OnWorkbenchCreated( entity target, entity cluster )
 		return
 
 	AddCallback_OnUseEntity_ClientServer( target, UseCraftingWorkbench )
-	SetCallback_CanUseEntityCallback_Retail( target, Crafting_Workbench_IsNotBusy )
+	SetCallback_CanUseEntityCallback( target, Crafting_Workbench_IsNotBusy )
 }
 
 string function Crafting_Workbench_UseTextOverride( entity ent )

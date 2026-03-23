@@ -474,7 +474,7 @@ void function ValkUlt_DeployToPeakStateForValk( entity valk, entity weapon )
 		ultProxy.AddUsableValue( USABLE_BY_TEAMMATES | USABLE_BLOCK_CONTINUOUS_USE | USABLE_NO_FOV_REQUIREMENTS | USABLE_CUSTOM_HINTS )
 		valk.p.valkUltProxyEnt = ultProxy
 
-		SetCallback_CanUseEntityCallback_Retail( ultProxy, ValkUlt_CanUseAlly )
+		SetCallback_CanUseEntityCallback( ultProxy, ValkUlt_CanUseAlly )
 		AddCallback_OnUseEntity_ClientServer( ultProxy, ValkUlt_AllyUse )
 	}
 
@@ -1108,7 +1108,7 @@ void function OnPropScriptCreated( entity proxy )
 	if ( proxy.GetScriptName() != SKYWARD_PROXY_SCRIPT_NAME )
 		return
 
-	SetCallback_CanUseEntityCallback_Retail( proxy, ValkUlt_CanUseAlly )
+	SetCallback_CanUseEntityCallback( proxy, ValkUlt_CanUseAlly )
 	AddEntityCallback_GetUseEntOverrideText( proxy, ValkUlt_UseOverrideText )
 }
 #endif

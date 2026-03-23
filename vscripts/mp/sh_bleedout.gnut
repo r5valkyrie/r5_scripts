@@ -197,7 +197,7 @@ const int DEBUG_REVIVE_COLOR_B = 50
 const float DEBUG_REVIVE_VECTOR_LENGTH = 50.0
 const float DEBUG_REVIVE_ARROW_SIZE = 4
 
-bool function Bleedout_CanRevivePlayer( entity reviver, entity victim )
+bool function Bleedout_CanRevivePlayer( entity reviver, entity victim, int useFlags )
 {
 	if ( !Bleedout_PlayerCanRes( reviver ) )
 		return false

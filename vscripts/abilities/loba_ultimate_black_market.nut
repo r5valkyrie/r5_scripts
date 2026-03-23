@@ -686,7 +686,7 @@ void function BlackMarketDeployThread( entity owner, PlacementInfo placementInfo
 			blackMarket.TakeDamage( 99999, null, null, {} )
 		})()
 
-		SetCallback_CanUseEntityCallback_Retail( blackMarket, CanUseBlackMarket )
+		SetCallback_CanUseEntityCallback( blackMarket, CanUseBlackMarket )
 		AddCallback_OnUseEntity_ClientServer( blackMarket, OnBlackMarketUsed )
 		SetCallback_ShouldUseBlockReloadCallback( blackMarket, SimpleShouldNotBlockReloadCallback )
 	}
@@ -1324,7 +1324,7 @@ void function OnPropScriptCreated( entity ent )
 	if ( ent.GetScriptName() == BLACK_MARKET_SCRIPTNAME )
 	{
 		AddEntityCallback_GetUseEntOverrideText( ent, GetBlackMarketUsePromptText )
-		SetCallback_CanUseEntityCallback_Retail( ent, CanUseBlackMarket )
+		SetCallback_CanUseEntityCallback( ent, CanUseBlackMarket )
 		AddCallback_OnUseEntity_ClientServer( ent, OnBlackMarketUsed )
 		SetCallback_ShouldUseBlockReloadCallback( ent, SimpleShouldNotBlockReloadCallback )
 	}

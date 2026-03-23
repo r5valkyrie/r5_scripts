@@ -557,7 +557,7 @@ void function LootBin_Enable( entity lootBin )
 	lootBin.SetUsable()
 	lootBin.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_BY_OWNER | USABLE_BY_PILOTS | USABLE_BY_ENEMIES )
 	lootBin.SetUsablePriority( USABLE_PRIORITY_LOW )
-	SetCallback_CanUseEntityCallback_Retail( lootBin, CanUseLootBin )
+	SetCallback_CanUseEntityCallback( lootBin, CanUseLootBin )
 	AddCallback_OnUseEntity_ServerOnly( lootBin, void function( entity lootBin, entity player, int useInputFlags ) {
 		LootBin_OnUse( lootBin, player, useInputFlags )
 	} )
@@ -1715,7 +1715,7 @@ void function OnPropCreated( entity lootBin )
 		return
 
 	AddEntityCallback_GetUseEntOverrideText( lootBin, GetLootBinUseTextOverride )
-	SetCallback_CanUseEntityCallback_Retail( lootBin, CanUseLootBin )
+	SetCallback_CanUseEntityCallback( lootBin, CanUseLootBin )
 }
 #endif
 

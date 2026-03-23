@@ -227,7 +227,7 @@ void function EntitiesDidLoad()
 				linkEnt.Anim_PlayOnly( EXPLOSIVE_HOLD_PANEL_ANIM_IDLE )
 
 				AddCallback_OnUseEntity_ClientServer( linkEnt, ExplosiveHoldDoor_OnUse )
-				SetCallback_CanUseEntityCallback_Retail( linkEnt, ExplosiveHoldDoor_CanUse )
+				SetCallback_CanUseEntityCallback( linkEnt, ExplosiveHoldDoor_CanUse )
 
 				foreach ( entity panelLinkEnt in linkEnt.GetLinkEntArray() )
 				{
@@ -617,7 +617,7 @@ void function OnPanelCreated( entity panel )
 		return
 
 	AddCallback_OnUseEntity_ClientServer( panel, ExplosiveHoldDoor_OnUse )
-	SetCallback_CanUseEntityCallback_Retail( panel, ExplosiveHoldDoor_CanUse )
+	SetCallback_CanUseEntityCallback( panel, ExplosiveHoldDoor_CanUse )
 	AddEntityCallback_GetUseEntOverrideText( panel, GetExplosiveHoldUseTextOverride )
 }
 #endif // CLIENT

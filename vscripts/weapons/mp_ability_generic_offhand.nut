@@ -62,7 +62,7 @@ void function ActivateGenericOffhand( entity player)
 void function __ActivateGenericOffhand( entity player )
 {
 	player.EndSignal( "OnDestroy" )
-	//player.TrySelectOffhand( GENERIC_OFFHAND_INDEX )
+	player.TrySelectOffhand( GENERIC_OFFHAND_INDEX )
 }
 
 void function GenericOffhand_AddSunglasses (entity player)

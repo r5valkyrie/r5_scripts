@@ -3243,7 +3243,7 @@ void function OnPropSurvivalCreate( entity prop )
 	#endif //SERVER
 
 	AddCallback_OnUseEntity_ClientServer( prop, OnUseSurvivalPickup )
-	SetCallback_CanUseEntityCallback_Retail( prop, SurvivalLoot_CanUseFunction )
+	SetCallback_CanUseEntityCallback( prop, SurvivalLoot_CanUseFunction )
 }
 
 #if SERVER
@@ -7268,7 +7268,7 @@ void function OnDeathBoxCreated( entity ent )
 		file.allDeathBoxes.append( ent )
 	#endif
 
-	SetCallback_CanUseEntityCallback_Retail( ent, DeathBox_CanUseFunction )
+	SetCallback_CanUseEntityCallback( ent, DeathBox_CanUseFunction )
 	SetCallback_ShouldUseBlockReloadCallback( ent, DeathBox_ShouldUseBlockReload )
 
 

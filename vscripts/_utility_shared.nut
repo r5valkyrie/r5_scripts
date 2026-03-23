@@ -981,7 +981,7 @@ bool function ControlPanel_IsValidModel( entity controlPanel )
 	return validModels.contains( string( controlPanel.GetModelName() ) )
 }
 
-bool function ControlPanel_CanUseFunction( entity playerUser, entity controlPanel )
+bool function ControlPanel_CanUseFunction( entity playerUser, entity controlPanel, int useFlags )
 {
 	if ( Bleedout_IsBleedingOut( playerUser ) )
 		return false
@@ -4514,19 +4514,19 @@ bool function CanNPCDoDamageOnBehalfOfPlayer( entity ent )
 {
 	if (!IsValid(ent))
 		return false
-                                
-                                                     
-             
-      
-              
-                                                  
-             
-      
 
-                                  
-                                 
-              
-       
+
+
+
+
+
+
+
+
+
+
+
+
 	return false
 }
 RaySphereIntersectStruct function IntersectRayWithSphere( vector rayStart, vector rayEnd, vector sphereOrigin, float sphereRadius )
