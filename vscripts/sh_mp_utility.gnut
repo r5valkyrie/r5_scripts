@@ -208,13 +208,3 @@ int function GetMaxRoundsToPlay()
 	return GetRoundScoreLimit_FromPlaylist() * 2 - 1
 }
 
-IntFromEntityCompare function GetScoreboardCompareFunc()
-{
-	return ScoreboardCompareFuncForGamemode( GameRules_GetGameMode() )
-}
-
-IntFromEntityCompare function ScoreboardCompareFuncForGamemode( string gamemode )
-{
-	IntFromEntityCompare func = GameMode_GetScoreCompareFunc( gamemode )
-	return func
-}

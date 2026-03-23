@@ -228,7 +228,7 @@ table<ItemFlavor, int> function MatchBehaviorPlayer_GetPlayedCharacterCounts( en
 		Assert( behaviorData.isValid )
 
 		// super early disconnects won't have a valid character
-		if ( !IsItemFlavorStructValid( behaviorData.character, eValidation.DONT_ASSERT ) )
+		if ( !IsItemFlavorStructValid( ItemFlavor_GetGUID( behaviorData.character ), eValidation.DONT_ASSERT ) )
 			continue
 
 		if ( !(behaviorData.character in playedCharacterCounts) )
@@ -250,7 +250,7 @@ ItemFlavor ornull function MatchBehavior_GetFavoriteCharacter( entity player, in
 		Assert( behaviorData.isValid )
 
 		// super early disconnects won't have a valid character
-		if ( !IsItemFlavorStructValid( behaviorData.character, eValidation.DONT_ASSERT ) )
+		if ( !IsItemFlavorStructValid( ItemFlavor_GetGUID( behaviorData.character ), eValidation.DONT_ASSERT ) )
 			continue
 
 		if ( !(behaviorData.character in playedCharacterCounts) )
@@ -434,10 +434,10 @@ void function MatchBehaviorPlayer_Save( entity player )
 
 	ItemFlavor char = file.playerMatchBehaviorStateMap[player].currentBehavior.character
 
-	if ( !IsItemFlavorStructValid( char, eValidation.DONT_ASSERT  ) ) // Char is invalid; probably because we skipped character select process because we are in dev. Not encasing this in #IF DEV because BR etc test in retail on mp_rr_box etc.
+	if ( !IsItemFlavorStructValid( ItemFlavor_GetGUID( char ), eValidation.DONT_ASSERT  ) )
 	{
 		char = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
-		Assert( IsItemFlavorStructValid( char, eValidation.DONT_ASSERT ) )
+		Assert( IsItemFlavorStructValid( ItemFlavor_GetGUID( char ), eValidation.DONT_ASSERT ) )
 		file.playerMatchBehaviorStateMap[player].currentBehavior.character = char
 	}
 

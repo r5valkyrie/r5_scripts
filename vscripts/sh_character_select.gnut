@@ -2725,16 +2725,15 @@ void function AddCallback_CustomIsCharacterLockedForPlayer( bool functionref( It
 	file.Callbacks_CustomIsCharacterLocked.append( func )
 }
 
-// Moved to workarounds.gnut for load order
-//bool function CharacterSelect_CustomIsCharacterLockedForPlayer( ItemFlavor character, entity player )
-//{
-//	foreach ( func in file.Callbacks_CustomIsCharacterLocked )
-//	{
-//		if ( func( character, player ) )
-//			return true
-//	}
-//	return false
-//}
+bool function CharacterSelect_CustomIsCharacterLockedForPlayer( ItemFlavor character, entity player )
+{
+	foreach ( func in file.Callbacks_CustomIsCharacterLocked )
+	{
+		if ( func( character, player ) )
+			return true
+	}
+	return false
+}
 #endif
 
 //	██████╗ ██╗   ██╗████████╗████████╗ ██████╗ ███╗   ██╗     █████╗  ██████╗████████╗██╗ ██████╗ ███╗   ██╗

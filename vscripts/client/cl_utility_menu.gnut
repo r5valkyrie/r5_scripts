@@ -3,6 +3,7 @@ untyped
 const string MENU_COLOR_CORRECTION = "materials/correction/menu.raw"
 
 global function CLUtilityMenu_Init
+global function InitButtonRCP
 
 global function HudElement
 global function ClientCodeCallback_GetContentScaleFactor
@@ -813,4 +814,12 @@ void function RuiSetArgByType( var rui, string argName, var argVal, int ruiArgTy
 		default:
 			Assert( false, "unexpected argument type: " + type( argVal ) )
 	}
+}
+
+void function InitButtonRCP( var button )
+{
+	UIScaleFactor scaleFactor = GetContentScaleFactor( Hud )
+	int width                 = int( float( Hud_GetWidth( button ) ) / scaleFactor.x )
+	int height                = int( float( Hud_GetHeight( button ) ) / scaleFactor.y )
+	RuiSetFloat2( Hud_GetRui( button ), "actualRes", <width, height, 0> )
 }

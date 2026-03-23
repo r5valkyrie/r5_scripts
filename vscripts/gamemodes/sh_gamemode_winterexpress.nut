@@ -1170,7 +1170,7 @@ void function Thread_OnGameStatePlaying()
 		// AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD_INSTANT )
 		// AddCinematicFlag( player, CE_FLAG_HIDE_PERMANENT_HUD )
 
-		Flowstate_AssignUniqueCharacterForPlayer( player, false )
+		// Flowstate_AssignUniqueCharacterForPlayer( player, false ) // TODO: restore when load order is fixed
 		Remote_CallFunction_NonReplay( player, "ServerCallback_CL_ObserverModeSetToTrain" )
 
 		thread function () : ( player )
@@ -2006,7 +2006,7 @@ void function Flowstate_GivePlayerLoadoutOnGameStart_Copy( entity player, bool f
 	player.SetPlayerSettingsWithMods( characterSetFile, [] )
 	CharacterSelect_AssignCharacter( player, playerCharacter )
 	Survival_SetInventoryEnabled( player, true )
-	GiveLoadoutRelatedWeapons( player )
+	// GiveLoadoutRelatedWeapons( player ) // TODO: restore when load order is fixed
 
 	if ( file.shouldStoreUltimateCharge )
 		RestoreChargesForPlayer( player )

@@ -79,6 +79,7 @@ global typedef CanUseZiplineCallback bool functionref( entity player, entity zip
 global function CodeCallback_OnWeaponAttack
 global function AddCallback_OnWeaponAttack
 global function RemoveCallback_OnWeaponAttack
+global function AddCallback_OnPlayerWeaponSwitched
 struct
 {
 	#if SERVER
@@ -86,6 +87,7 @@ struct
 		void functionref( entity ) Callback_OnPlayerReloadPressed
 		table<entity, int>         currentPlayerTeamMap
 	#endif
+
 	#if CLIENT
 		var disembarkRUI
 
@@ -963,4 +965,10 @@ void function RemoveCallback_OnWeaponAttack( void functionref( entity player, en
 		Assert( clGlobal.onWeaponAttackCallbacks.contains( callbackFunc ), "Callback " + string( callbackFunc ) + " doesn't exist" )
 		clGlobal.onWeaponAttackCallbacks.fastremovebyvalue( callbackFunc )
 	#endif // #else // #if SERVER
+}
+void function AddCallback_OnPlayerWeaponSwitched( void functionref(entity, entity, entity) callback )
+{
+	#if SERVER
+	AddCallback_OnPlayerWeaponActivated( callback )
+	#endif
 }

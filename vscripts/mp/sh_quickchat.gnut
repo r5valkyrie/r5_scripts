@@ -1922,7 +1922,9 @@ void function BroadcastCommsActionToTeam( entity playerSpeaking, int commsAction
 			if ( !IsValid( subjectEnt ) )
 				return
 
+			#if CLIENT
 			PIN_UltimateReadyPing( playerSpeaking, GetEnumString( "eCommsAction", commsAction ).tolower(), true )
+			#endif
 			break
 		}
 		default:

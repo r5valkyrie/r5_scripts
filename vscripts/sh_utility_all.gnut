@@ -2492,7 +2492,9 @@ bool function IsFiringRangeGameMode()
 
 bool function IsMatchmakingFromMatchEnabled()
 {
-	return GetConVarBool( "matchmake_from_match_enabled" ) && GetCurrentPlaylistVarBool( "matchmake_from_match", false ) && ( GetCurrentPlaylistVarBool( "private_match", false ) == false )
+	// S3 does not have the 'matchmake_from_match_enabled' convar — feature not supported
+	Warning( "IsMatchmakingFromMatchEnabled: matchmake_from_match_enabled convar unavailable in S3, returning false" )
+	return false
 }
 
 bool function IsMatchmakingFromMatchAllowed( entity player )
@@ -4420,4 +4422,9 @@ bool function UpgradeCore_IsCorrectGameState()
 			)
 
 	return isGameStateCorrect
+}
+
+bool function BigTDM_IsModeEnabled()
+{
+	return GetCurrentPlaylistVarBool( "freedm_big_tdm_active", false )
 }

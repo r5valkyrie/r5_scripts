@@ -365,7 +365,7 @@ Scripts:
 	weapons/mp_ability_cloak.nut
 	weapons/mp_ability_grapple.nut
 	weapons/mp_ability_holopilot.nut
-	// weapons/hopup_golden_horse.nut -- too many S22 dependencies, Golden Horse mode not available
+	weapons/hopup_golden_horse.nut
 	weapons/mp_ability_silence.nut
 	weapons/mp_ability_revenant_death_totem.nut
 	weapons/mp_ability_item_spawner.nut

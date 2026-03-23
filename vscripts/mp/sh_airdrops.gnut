@@ -5,9 +5,9 @@ global function OnAirdropUse
 
 #if SERVER
 global function SURVIVAL_CalculateAirdropPositions
-global function AirdropSpawnThink
 #endif
 
+#if SERVER
 global function Survival_GetPregameAirdropDatas
 global function Survival_GetAirdropDatas
 global function Survival_GetPreviousAirdrops
@@ -17,9 +17,9 @@ global function Survival_ClearAirDropData
 global function Survival_LaunchAirdropsFromAirdropData
 global function DetermineAirdropContents
 global function AirdropItems
+global function AirdropLogic
 global function AirdropForRound
 global function GetContentsForRound
-global function AirdropLogic
 global function AirdropPodRemoveLocationMarker
 global function DropPodLocationMarker
 global function DropPodLocationBeam
@@ -38,9 +38,10 @@ global function DetermineAirdropTier
 
 global function RemoteOpenAirdrop
 
-global function DEV_AirdropPrint // cleans up extra #if DEVs
+global function DEV_AirdropPrint
+#endif
 
-#if DEVELOPER
+#if DEVELOPER && SERVER
 global function DEV_DrawAirdropLocations
 global function DEV_DrawAirdropLocationsNearPlayer_Thread
 global function DEV_CallAirdropAtCrosshairLocation
@@ -55,7 +56,7 @@ global function DEV_AddAirdropEntity
 global function DEV_DeleteAirdropEntities
 global function CodeCallback_GetAirdropPointNavNodeIndex
 global function CodeCallback_IsAirdropPointValid
-#endif // DEVELOPER
+#endif // DEVELOPER && SERVER
 
 const bool DEBUG_DROP_POINTS = false
 
@@ -215,49 +216,6 @@ void function Sh_Airdrops_Init()
 
 }
 
-#if SERVER
-void function AirdropSpawnThink()
-{
-	int curStage = SURVIVAL_GetCurrentDeathFieldStage()
-	int prevStage = curStage
-
-	while (true)
-	{
-		curStage = SURVIVAL_GetCurrentDeathFieldStage()
-		if( curStage <= prevStage )
-		{
-			WaitFrame()
-			continue
-		}
-
-		prevStage = curStage
-
-		foreach( data in calculatedAirdropData )
-		{
-			if( data.dropCircle != curStage )
-				continue
-
-			while( !SURVIVAL_GetDeathFieldShrinking() )
-				WaitFrame()
-
-			int numAirdropsInData = data.dropCount
-			wait data.preWait
-
-			AddSurvivalCommentaryEvent( eSurvivalEventType.CARE_PACKAGE_DROPPING )
-
-			for( int i = 0; i < numAirdropsInData; i++ )
-			{
-				entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( DROPPOD_SPAWN_FX ), data.originArray[ i ], data.anglesArray[ i ] )
-				thread AirdropItems( data.originArray[i], data.anglesArray[i], data.contents[i], fx, "droppod_loot_drop", null, 0, "" )
-				if( numAirdropsInData > 1 )
-					wait RandomFloatRange( data.minDelayBetweenPods,  data.maxDelayBetweenPods )
-			}
-		}
-
-		WaitFrame()
-	}
-}
-#endif
 
 void function OnAirdropCreated( entity dropPod )
 {
@@ -2058,18 +2016,6 @@ void function Survival_AddCallback_OnAirdropLaunched( void functionref(entity, v
 	file.Callbacks_OnAirdropLaunched.append( callbackFunc )
 }
 #endif
-
-void function OnAirdropCreated( entity dropPod )
-{
-	if ( dropPod.GetTargetName() != CARE_PACKAGE_TARGETNAME && dropPod.GetTargetName() != CARE_PACKAGE_LIFELINE_TARGETNAME )
-		return
-
-	AddCallback_OnUseEntity_ClientServer( dropPod, OnAirdropUse )
-
-	#if CLIENT
-		AddEntityCallback_GetUseEntOverrideText( dropPod, ExtendedUseTextOverride )
-	#endif
-}
 
 void function OnAirdropUse( entity dropPod, entity player, int useInputFlags )
 {

@@ -54,42 +54,6 @@ global struct DeadPeriodData
 	int itemsGrabbed
 }
 
-global const int NUMBER_OF_SUMMARY_DISPLAY_VALUES = 7
-global const array< int > SUMMARY_DISPLAY_EMPTY_SET = [ 0, 0, 0, 0, 0, 0, 0 ]
-
-global struct GameSummarySquadData
-{
-	string                      playerName
-	ItemFlavor&                 character
-	int                         eHandle
-	int                         survivalTime
-	int                         kills
-	int                         assists
-	int                         knockdowns
-	int                         knockdownAssists
-	table<EncodedEHandle, int > playerKills
-	int                         damageDealt
-	int                         shots
-	int                         hits
-	int                         headshots
-	int                         revivesGiven
-	int                         respawnsGiven
-	int                         deaths
-	string                      platformUid
-	string                      hardware
-	string                      pid
-	string                      nucleus
-	bool                        optOutOfSendingSquadInfo
-	bool                        dealtDamageLateInTheGame
-	bool                        lootedLateInTheGame
-	bool                        isUsingSteam
-
-	table< int, int > modeMetaData
-
-	array< int > displayData = SUMMARY_DISPLAY_EMPTY_SET
-	bool displayData3IsTime
-}
-
 void function PIN_Init()
 {
 

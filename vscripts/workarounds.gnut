@@ -3,6 +3,11 @@
 // Organized by system/feature within each preprocessor block
 // ============================================================================
 
+global function StatsRegister_MetaChallenges
+global function SkitSystem_Init
+global function Ziprail_GetSkyDiveLauncherForHitEnt
+global function HasWaitingGameStateArtHud
+
 global struct DeathBoxPingInfo
 {
 	entity deathbox
@@ -110,14 +115,9 @@ global function replace
 global function WORKAROUND_AssetAppend
 
 // === Gamestate ===
-global function MarkEntForCleanupOnRoundEnd
-global function MarkEntForCleanupOnWinnerDetermined
-global function DoesCurrentModeHaveMapSetup
-global function DoesCurrentModeHaveDeathfield
 global function SetIsPermanentEntity
 global function AddCallback_OnWouldOtherwiseCrushEntity
 global function GetRespawnBeaconLocations
-global function GetCustomIntroLength
 
 // === Emotes ===
 // GetPlayerIsEmoting — now in sh_emotes.nut (S22)
@@ -132,7 +132,6 @@ global function ShadowArmy_IsPlayerInShadowForm
 global function FreelanceSystemsAreEnabled
 
 // === Freelance/PVE Systems ===
-global function SkitSystem_Init
 global function ObjectiveSystem_Init
 global function EncounterSystem_Init
 global function NPCGarbageCollection_InitForGameMode
@@ -149,7 +148,6 @@ global function SPL_GetRandomEndRingPosition_Slow
 // BroadcastCommsActionToTeam — now in sh_quickchat.gnut (S22)
 global function RedeployBalloon_GetSkydiveVelOverride
 global function Control_PrintSkydiveDebug
-global function MatchBehaviorPlayer_RecordDropInfo
 global function PutEntityInSomewhatSafeSpot
 global function StopAllSkydiveSounds
 global function CalcWorldToLocalOrigin_Entity
@@ -186,7 +184,6 @@ global function Campfire_IsPlayerInCampfire
 global function BeginAOEHeal
 global function EndAOEHeal
 global function EmitSoundOnEntityExceptToPlayers
-global function ShortenDamageCallbackName
 global function ShAmbientDialogue_Init
 global function AddCallback_OnPlayerReload
 global function Respawn_Token_IsPlayerEliminated
@@ -213,7 +210,6 @@ global function LocalizePresenceState
 
 // === Lobby/Audio ===
 global function PlayLobbyCharacterDialogue
-global function SquadMuteLegendSelectEnabled
 
 
 // === Challenges ===
@@ -222,14 +218,9 @@ global function RefreshChallenges
 // === Shared scope declarations (visible to all VMs) ===
 global function ShadowArmy_IsPlayerOnShadowArmy
 global function ForcedSpawn_Init
-global function SetPlayerEliminationCheck
-global function SetPlayThreeMinuteMusic
-global function SetTimelimitCompleteFunc
 global function ObjectiveResourceSystem_Init
-global function SetCustomResolutionDuration
 global function Sh_Rank_InitGameSummary
 global function AddCallback_OnPlayerReloadPressed
-global function SetEndRoundPlayerState
 global function AddCallback_BotRecordStart
 global function AddCallback_BotPlaybackStart
 global function AddCallback_OnClientConnectionLost
@@ -246,9 +237,9 @@ global function Ranked_UpdateRankedScoreProgressForPlayer
 global function WeaponStatsHook_OnAssistCredited
 global function WeaponStatsHook_OnDownEnemy
 global function Bleedout_GetShouldAlliancePlayerBleedout
-global function CharacterSelect_CustomIsCharacterLockedForPlayer
-global function MatchBehaviorPlayer_RecordPickInfo
-global function RemoveCallback_OnClientConnected
+global function SquadMuteLegendSelectEnabled
+global function RankedTrials_PlayerHasIncompleteTrial
+global function RankedTrials_GetAssignedTrial
 #if CLIENT
 global function ClearCustomPlayerInfoTreatment
 global function ClearCustomPlayerInfoCharacterIcon
@@ -260,20 +251,15 @@ global function TitanSword_GetFuelRui
 // WPT_* constants are engine-registered — do NOT redefine here
 // GetMaxStickersForObjectType now in sh_stickers.nut
 
-// Custom loadout/spectating/character assignment functions
-#if SERVER
+global function PlayerStopSpectating
 global function TakeLoadoutRelatedWeapons
 global function GiveLoadoutRelatedWeapons
 global function GiveLoadoutRelatedWeapons_HaloMod
-global function PlayerStopSpectating
 global function Flowstate_AssignUniqueCharacterForPlayer
 global function Flowstate_SetAssignedCustomModelToPlayer
 global function Flowstate_ApplyModifiedMovementToPlayer
-#endif
 
 #if SERVER
-global function WeaponRuiUpdateMastery
-global function ClWeaponStatus_OverrideReloadHintText
 #endif
 global function PrintTeamChatMessageLocally
 global function PIN_DynamicDialogue
@@ -286,11 +272,9 @@ global function LootBin_IsOpen
 global function Announcements_SetVisible
 global function IsObserverInPrivateGame
 global function UpdatePlayerSkydiveTrailFriendlyEnemyFX
-global function IsVDUDialogueEnabled
 global function Teams_RegisterSignals
 global function ClGameState_HasRegisteredGameStateAsset
 global function ClRingWarning_GetRui
-global function GameEpilogue
 // IsEmoteEnabledForPodiumScreen — now in sh_emotes.nut (S22)
 global function WillCelebrateNEEVictory
 global function DoNEECelebration_Thread
@@ -307,7 +291,6 @@ global function HoverVehicle_GetVehicleOccupiedByPlayer
 global function DoesTeammateHaveBannerCraftingPerk
 global function PIN_EmoteUse
 // CommsMenu_GetMenuForNewPing — now in sh_comms_menu.nut (S22)
-global function HasWaitingGameStateArtHud
 global function Valentines_S15_ILoveYouEasterEggEnabled
 global function GetRemoteDeathboxHighlight
 global function RuiIsAlive
@@ -395,7 +378,6 @@ global function ServerCallback_Survival_CreateBeaconWorldIcon
 global function ServerCallback_PromptWelcome
 global function TransportPortal_GetReceiverPlayerIsLookingAt
 global function TreasureHunt_GetStarterPingFromTraceBlockerPing
-global function Ziprail_GetSkyDiveLauncherForHitEnt
 global function Zipline_IsCurvedZipline
 global function GetRedeployBalloonForHitEnt
 global function GetWhiteRavenPingTarget
@@ -440,12 +422,9 @@ global function Strikeout_IsPlayerRespawnDisabled
 global function Sh_Respawn_Token_IsPlayerRespawnDisabled
 global function SpawnGroupSkydive_IsSquadEliminated
 global function Ranked_UpdateRankedScoreProgressForAllPlayers
-global function IsTeamAlive
 global function Achievements_OnPlayerMatchParticipationEnded
 global function Cups_OnPlayerMatchParticipationEnded
 global function Ranked_HasFinishedProvisionalMatches
-global function RankedTrials_PlayerHasIncompleteTrial
-global function RankedTrials_GetAssignedTrial
 global function MMR_GetInteractionsForPlayer
 global function SendPlayerMatchResult
 global function GetPlayerGameDuration
@@ -466,7 +445,6 @@ global function TitanSword_DamageSourceIsTitanSword
 global function TitanSword_Slam_DeathboxOverride
 global array<string> SQUAD_TEAM_HIGHLIGHTS = ["PVE_multisquad_0", "PVE_multisquad_1", "PVE_multisquad_2", "PVE_multisquad_3"]
 global function SurvivalRank_ProcessParticiation
-global function CheckForAndTrySetEliminationModeWinner
 
 // ============================================================================
 //  #if UI - Struct Definitions & Declarations
@@ -474,6 +452,9 @@ global function CheckForAndTrySetEliminationModeWinner
 #if UI
 // === Server/Debug ===
 global function GetServerDebugId
+global function Squads_GetMax
+global function Squads_GetSquadColor
+global function Squads_GetSquadName
 
 // Struct definitions needed for sh_ranked.gnut UI code (defined in feature_tutorial.gnut which loads later)
 global struct featureTutorialTableData
@@ -553,11 +534,9 @@ global function ShowTeamNameInHud
 global function HideTeamNameInHud
 global function GetScreenScaleFrac
 global function ForceDestroyBlackBarRui
-global function InitButtonRCP
 // GetFocus, GetMouseFocus, SetCursorPosition, GetCursorPosition are now native functions in SDK
 
 // === Input ===
-global function AddUICallback_InputModeChanged
 
 // === Player Info ===
 global function Script_UserHasEAAccess
@@ -613,7 +592,6 @@ global function PIN_FiringRangeChallengeCompleted
 // PIN_Record_CustomizeRangeSettings, PIN_Record_CustomizeRangeSettings_ForMenuClose,
 // PIN_CCB_Record_DynamicStats_TimeBetweenResets — declared and implemented in firing_range.gnut
 #if SERVER
-global function TryStartIntroPodiumSequence
 #endif
 global const string TITAN_SWORD_WEAPON_REF = "mp_weapon_titan_sword"
 global function IsGoldenHorse_FR
@@ -675,10 +653,6 @@ global function EvaluateSoundSelector
 global function GetLockedSetsDisabledByCrafting
 global function GetIsUnifiedRandomizerEnabled
 global function GoldenHorse_TicksEnabled
-global function HopupGoldenHorse_Switcheroo
-global function HopupGoldenHorse_Switcheroo_LockedSets
-global function HopupGoldenHorse_SwapLootTier
-global function HopupGoldenHorse_TryDisplayLootHint
 global function Perk_CanBuyBanners
 global function Perk_Get_CraftedBannerTimeoutDuration
 global function Player_Banners_Enabled
@@ -737,7 +711,6 @@ global function HasCallback_OnPartyMemberRemoved
 global function LobbyPlaylist_GetSelectedPlaylist
 
 // === Stats/Mastery ===
-global function StatsRegister_MetaChallenges
 global function Mastery_GetStatValue
 global function Mastery_DoesStatSatisfyValue
 global function Mastery_IsValidStatRef
@@ -879,7 +852,6 @@ global function HasCallback_OnPartyMemberRemoved
 global function LobbyPlaylist_GetSelectedPlaylist
 
 // === Stats/Mastery ===
-global function StatsRegister_MetaChallenges
 global function Mastery_GetStatValue
 global function Mastery_DoesStatSatisfyValue
 global function Mastery_IsValidStatRef
@@ -948,9 +920,6 @@ global function JumpToEventTab
 global function DoesUserHaveTwitchDrops
 
 // === Squads ===
-global function Squads_GetMax
-global function Squads_GetSquadColor
-global function Squads_GetSquadName
 
 // === Communication/Mute ===
 global function CommunicationBlockGetBlockTime
@@ -1016,6 +985,35 @@ global function UISafeGetPersistentVarAsInt
 // ============================================================================
 //  #if CLIENT || UI - Implementations
 // ============================================================================
+
+void function StatsRegister_MetaChallenges()
+{
+	Warning( "WORKAROUND: StatsRegister_MetaChallenges() - stub" )
+}
+
+bool function SquadMuteLegendSelectEnabled()
+{
+	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
+}
+
+void function SkitSystem_Init()
+{
+	Warning( "STUB: SkitSystem_Init" )
+}
+
+
+entity function Ziprail_GetSkyDiveLauncherForHitEnt( entity hitEnt )
+{
+	Warning( "STUB: Ziprail_GetSkyDiveLauncherForHitEnt" )
+	return null
+}
+
+bool function HasWaitingGameStateArtHud()
+{
+	// S3 has no night maps or battle rush variant — always false
+	return false
+}
+
 #if CLIENT || UI
 void function PopulateRuiWithRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
 {
@@ -1666,12 +1664,6 @@ void function DataDialog_AddCallback_OnClose( void functionref() callback )
 	Warning( "WORKAROUND: DataDialog_AddCallback_OnClose() called - not implemented" )
 }
 
-// === Stats/Mastery ===
-
-void function StatsRegister_MetaChallenges()
-{
-	Warning( "WORKAROUND: StatsRegister_MetaChallenges() called - not implemented" )
-}
 
 int function Mastery_GetStatValue( entity player, string statRef )
 {
@@ -1959,23 +1951,6 @@ bool function DoesUserHaveTwitchDrops( string ref )
 	return false
 }
 
-// === Squads ===
-
-int function Squads_GetMax()
-{
-	return 20
-}
-
-vector function Squads_GetSquadColor( int squadIndex, bool isWinterExpress = false )
-{
-	return <1.0, 1.0, 1.0>
-}
-
-string function Squads_GetSquadName( int squadIndex, bool isWinterExpress = false )
-{
-	return "Squad " + squadIndex
-}
-
 // === Communication/Mute ===
 
 int function CommunicationBlockGetBlockTime()
@@ -2073,10 +2048,7 @@ void function SetFirstTimePlayerState( int state )
 
 // === Lobby/Misc ===
 
-bool function SquadMuteLegendSelectEnabled()
-{
-	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
-}
+
 
 void function RefreshChallenges()
 {
@@ -2209,17 +2181,32 @@ asset function GetKeyValueAsAsset( table kvTable, string key )
 }
 
 #if UI
-string function GetServerDebugId()
-{
-	Warning( "WORKAROUND: GetServerDebugId() called - not implemented" )
-	return ""
-}
 
 int function UISafeGetPersistentVarAsInt( string key )
 {
 	if ( IsConnected() )
 		return GetPersistentVarAsInt( key )
 	return 0
+}
+
+string function GetServerDebugId()
+{
+	return ""
+}
+
+int function Squads_GetMax()
+{
+	return 20
+}
+
+vector function Squads_GetSquadColor( int squadIndex, bool isWinterExpress = false )
+{
+	return <1.0, 1.0, 1.0>
+}
+
+string function Squads_GetSquadName( int squadIndex, bool isWinterExpress = false )
+{
+	return "Squad " + squadIndex
 }
 #endif
 
@@ -2342,19 +2329,6 @@ void function ForceDestroyBlackBarRui()
 	Warning( "WORKAROUND: ForceDestroyBlackBarRui() called - not implemented" )
 }
 
-void function InitButtonRCP( var button )
-{
-	// UI-only init function - no-op stub for CLIENT VM
-}
-// GetFocus, GetMouseFocus, SetCursorPosition, GetCursorPosition are now native SDK functions
-
-// === Input ===
-
-// stub - accepts callback but never fires
-void function AddUICallback_InputModeChanged( void functionref( bool ) callbackFunc )
-{
-	Warning( "WORKAROUND: AddUICallback_InputModeChanged() called - not implemented" )
-}
 
 // === Player Info ===
 
@@ -2489,17 +2463,6 @@ var function TitanSword_GetFuelRui()
 	return null
 }
 
-#if SERVER
-void function WeaponRuiUpdateMastery( var rui, entity weapon, string ruiHudIconMastered = "hudIconMastered", string ruiIsMastered = "isMastered", string ruiHasMoreSparks = "moreSparksMastered" )
-{
-	Warning( "STUB: WeaponRuiUpdateMastery" )
-}
-
-void function ClWeaponStatus_OverrideReloadHintText( string text )
-{
-	Warning( "STUB: ClWeaponStatus_OverrideReloadHintText" )
-}
-#endif
 
 void function PrintTeamChatMessageLocally( entity player, string text )
 {
@@ -2566,11 +2529,6 @@ void function UpdatePlayerSkydiveTrailFriendlyEnemyFX( entity player )
 	Warning( "STUB: UpdatePlayerSkydiveTrailFriendlyEnemyFX" )
 }
 
-bool function IsVDUDialogueEnabled()
-{
-	Warning( "STUB: IsVDUDialogueEnabled" )
-	return false
-}
 
 void function Teams_RegisterSignals()
 {
@@ -2589,11 +2547,6 @@ var function ClRingWarning_GetRui()
 	return null
 }
 
-bool function GameEpilogue()
-{
-	Warning( "STUB: GameEpilogue" )
-	return false
-}
 
 // IsEmoteEnabledForPodiumScreen — now in sh_emotes.nut (S22)
 
@@ -2672,7 +2625,6 @@ float function ForcedSpawn_GetEnemyPingDisplayTime()
 
 bool function DoesTeammateHaveBannerCraftingPerk( entity player ) { return false }
 void function SkydiveEmoteProjector_ActivateEmoteProjector( entity player, ItemFlavor quip ) { Warning( "STUB: SkydiveEmoteProjector_ActivateEmoteProjector" ) }
-bool function HasWaitingGameStateArtHud() { return false }
 bool function Valentines_S15_ILoveYouEasterEggEnabled() { return false }
 string function GetRemoteDeathboxHighlight( entity deathbox, int lootTier ) { return "" }
 bool function RuiIsAlive( var rui ) { return rui != null }
@@ -2941,11 +2893,6 @@ entity function TreasureHunt_GetStarterPingFromTraceBlockerPing( entity pingedEn
 
 bool function Zipline_IsCurvedZipline( entity zipline ) { return false }
 
-entity function Ziprail_GetSkyDiveLauncherForHitEnt( entity hitEnt )
-{
-	Warning( "STUB: Ziprail_GetSkyDiveLauncherForHitEnt" )
-	return null
-}
 
 entity function GetRedeployBalloonForHitEnt( entity hitEnt ) { return null }
 entity function GetWhiteRavenPingTarget( entity player ) { return null }
@@ -3066,11 +3013,6 @@ bool function TitanSword_WeaponRefIsTitanSword( string ref )
 }
 
 #if SERVER
-// stub
-void function TryStartIntroPodiumSequence()
-{
-	Warning( "WORKAROUND: TryStartIntroPodiumSequence() called - not implemented" )
-}
 #endif
 
 // === Crossplay ===
@@ -3170,10 +3112,6 @@ int function EvaluateSoundSelector( string alias ) { Warning("STUB: EvaluateSoun
 array<string> function GetLockedSetsDisabledByCrafting() { Warning("STUB: GetLockedSetsDisabledByCrafting"); return [] }
 bool function GetIsUnifiedRandomizerEnabled() { return false }
 bool function GoldenHorse_TicksEnabled() { return false }
-void function HopupGoldenHorse_Switcheroo( LootData wData ) { Warning( "STUB: HopupGoldenHorse_Switcheroo" ) }
-void function HopupGoldenHorse_Switcheroo_LockedSets( LootData wData ) { Warning( "STUB: HopupGoldenHorse_Switcheroo_LockedSets" ) }
-void function HopupGoldenHorse_SwapLootTier( var rui, string ref, int tier, string ruiVar ) { Warning( "STUB: HopupGoldenHorse_SwapLootTier" ) }
-void function HopupGoldenHorse_TryDisplayLootHint( entity weapon ) { Warning( "STUB: HopupGoldenHorse_TryDisplayLootHint" ) }
 bool function Perk_CanBuyBanners( entity player ) { Warning("STUB: Perk_CanBuyBanners"); return false }
 float function Perk_Get_CraftedBannerTimeoutDuration() { return 0.0 }
 bool function Player_Banners_Enabled() { return true }
@@ -3356,10 +3294,6 @@ string function LobbyPlaylist_GetSelectedPlaylist()
 
 // === Stats/Mastery ===
 
-void function StatsRegister_MetaChallenges()
-{
-	Warning( "WORKAROUND: StatsRegister_MetaChallenges() called - not implemented" )
-}
 
 int function Mastery_GetStatValue( entity player, string statRef )
 {
@@ -3472,11 +3406,6 @@ void function GetGiftOfferEligibility( ... )
 }
 
 // === Lobby/Misc ===
-
-bool function SquadMuteLegendSelectEnabled()
-{
-	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
-}
 
 void function RefreshChallenges()
 {
@@ -3635,27 +3564,6 @@ asset function WORKAROUND_AssetAppend( string s1, string s2 )
 	return $""
 }
 
-// === Gamestate round cleanup stubs ===
-void function MarkEntForCleanupOnRoundEnd( entity ent )
-{
-	Warning( "MarkEntForCleanupOnRoundEnd stub called" )
-}
-
-void function MarkEntForCleanupOnWinnerDetermined( entity ent )
-{
-	Warning( "MarkEntForCleanupOnWinnerDetermined stub called" )
-}
-
-bool function DoesCurrentModeHaveMapSetup()
-{
-	return GetCurrentPlaylistVarBool( "has_map_setup", true )
-}
-
-bool function DoesCurrentModeHaveDeathfield()
-{
-	return GetCurrentPlaylistVarBool( "has_deathfield", true )
-}
-
 void function SetIsPermanentEntity( entity ent, bool isPermanent )
 {
 	Warning( "STUB: SetIsPermanentEntity" )
@@ -3672,14 +3580,6 @@ array<vector> function GetRespawnBeaconLocations()
 	array<vector> result
 	return result
 }
-
-float function GetCustomIntroLength()
-{
-	return 0.0
-}
-
-
-// GetPlayerIsEmoting — now in sh_emotes.nut (S22)
 
 // === Banner Crafting ===
 array<entity> function GetCraftableTeamBanners( entity player )
@@ -3703,10 +3603,6 @@ bool function FreelanceSystemsAreEnabled()
 }
 
 // === Freelance/PVE Systems ===
-void function SkitSystem_Init()
-{
-	Warning( "STUB: SkitSystem_Init" )
-}
 
 void function ObjectiveSystem_Init()
 {
@@ -3793,11 +3689,6 @@ void function Control_PrintSkydiveDebug( entity player, string message )
 		printt( "R5DEV-429111: ", player, message )
 	else
 		printt( "R5DEV-429111: PlayerInvalid", message )
-}
-
-void function MatchBehaviorPlayer_RecordDropInfo( entity player )
-{
-	Warning( "STUB: MatchBehaviorPlayer_RecordDropInfo" )
 }
 
 void function PutEntityInSomewhatSafeSpot( entity ent, entity referenceEnt1OrNull, entity referenceEnt2OrNull, vector targetOrigin, vector fallbackOrigin )
@@ -4018,11 +3909,6 @@ void function EmitSoundOnEntityExceptToPlayers( entity soundEnt, array<entity> e
 	#endif
 }
 
-string function ShortenDamageCallbackName( string name )
-{
-	return name
-}
-
 void function ShAmbientDialogue_Init()
 {
 	Warning( "STUB: ShAmbientDialogue_Init" )
@@ -4044,29 +3930,11 @@ void function ForcedSpawn_Init()
 	Warning( "STUB: ForcedSpawn_Init" )
 }
 
-void function SetPlayerEliminationCheck( bool functionref(entity) checkFunc )
-{
-	Warning( "STUB: SetPlayerEliminationCheck" )
-}
 
-void function SetPlayThreeMinuteMusic( bool shouldPlay )
-{
-	Warning( "STUB: SetPlayThreeMinuteMusic" )
-}
-
-void function SetTimelimitCompleteFunc( bool functionref() func )
-{
-	Warning( "STUB: SetTimelimitCompleteFunc" )
-}
 
 void function ObjectiveResourceSystem_Init()
 {
 	Warning( "STUB: ObjectiveResourceSystem_Init" )
-}
-
-void function SetCustomResolutionDuration( float duration )
-{
-	Warning( "STUB: SetCustomResolutionDuration" )
 }
 
 void function Sh_Rank_InitGameSummary()
@@ -4077,11 +3945,6 @@ void function Sh_Rank_InitGameSummary()
 void function AddCallback_OnPlayerReloadPressed( void functionref(entity) callback )
 {
 	Warning( "STUB: AddCallback_OnPlayerReloadPressed" )
-}
-
-void function SetEndRoundPlayerState( int state )
-{
-	Warning( "STUB: SetEndRoundPlayerState" )
 }
 
 void function AddCallback_BotRecordStart( void functionref(entity) callback )
@@ -4165,22 +4028,6 @@ bool function Bleedout_GetShouldAlliancePlayerBleedout( entity player )
 	return true
 }
 
-bool function CharacterSelect_CustomIsCharacterLockedForPlayer( ItemFlavor character, entity player )
-{
-	Warning( "WORKAROUND: CharacterSelect_CustomIsCharacterLockedForPlayer() called - not implemented" )
-	return false
-}
-
-void function MatchBehaviorPlayer_RecordPickInfo( entity player, ItemFlavor character )
-{
-	Warning( "STUB: MatchBehaviorPlayer_RecordPickInfo" )
-}
-
-void function RemoveCallback_OnClientConnected( void functionref(entity) callback )
-{
-	Warning( "STUB: RemoveCallback_OnClientConnected" )
-}
-
 void function SURVIVAL_ResetAllDoors()
 {
 	Warning( "STUB: SURVIVAL_ResetAllDoors" )
@@ -4241,14 +4088,6 @@ void function Ranked_UpdateRankedScoreProgressForAllPlayers()
 	Warning( "STUB: Ranked_UpdateRankedScoreProgressForAllPlayers" )
 }
 
-bool function IsTeamAlive( int team )
-{
-	#if SERVER
-	return GetPlayerArrayOfTeam_Alive( team ).len() > 0
-	#else
-	return false
-	#endif
-}
 
 void function Achievements_OnPlayerMatchParticipationEnded( entity player )
 {
@@ -4391,11 +4230,6 @@ void function SurvivalRank_ProcessParticiation( entity killer, entity victim )
 	Warning( "STUB: SurvivalRank_ProcessParticiation" )
 }
 
-void function CheckForAndTrySetEliminationModeWinner()
-{
-	Warning( "STUB: CheckForAndTrySetEliminationModeWinner" )
-}
-
 
 
 
@@ -4439,9 +4273,9 @@ void function AirdropExtravaganazaCleanupPod( entity pod, float delay = 0.0 )
 }
 
 // Custom loadout/spectating/character assignment implementations
-#if SERVER
 void function TakeLoadoutRelatedWeapons( entity player )
 {
+#if SERVER
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
 	if(IsValid(player.GetOffhandWeapon( OFFHAND_SLOT_FOR_CONSUMABLES )))
@@ -4459,10 +4293,12 @@ void function TakeLoadoutRelatedWeapons( entity player )
 		player.TakeOffhandWeapon( OFFHAND_ULTIMATE )
 
 	TakeAllPassives( player )
+#endif
 }
 
 void function GiveLoadoutRelatedWeapons( entity player )
 {
+#if SERVER
 	TakeLoadoutRelatedWeapons(player)
 
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
@@ -4513,10 +4349,12 @@ void function GiveLoadoutRelatedWeapons( entity player )
 		if( !PlayerHasPassive( player, ePassives.PAS_BONUS_SMALL_HEAL ) )
 			GivePassive( player, ePassives.PAS_BONUS_SMALL_HEAL )
 	}
+#endif
 }
 
 void function GiveLoadoutRelatedWeapons_HaloMod( entity player )
 {
+#if SERVER
 	TakeLoadoutRelatedWeapons(player)
 
 	player.GiveOffhandWeapon( CONSUMABLE_WEAPON_NAME, OFFHAND_SLOT_FOR_CONSUMABLES, [] )
@@ -4525,17 +4363,21 @@ void function GiveLoadoutRelatedWeapons_HaloMod( entity player )
 	player.GiveOffhandWeapon( "mp_ability_grapple_master_chief", OFFHAND_TACTICAL )
 	player.GiveOffhandWeapon( "mp_weapon_bubble_bunker_master_chief", OFFHAND_ULTIMATE )
 	GivePassive( player, ePassives.PAS_BATTERY_POWERED )
+#endif
 }
 
 void function PlayerStopSpectating( entity player )
 {
+	#if SERVER
 	player.SetPlayerNetInt( "spectatorTargetCount", 0 )
 	player.SetSpecReplayDelay( 0 )
 	player.StopObserverMode()
+	#endif
 }
 
 void function Flowstate_AssignUniqueCharacterForPlayer( entity player, bool lock )
 {
+#if SERVER
 	array< ItemFlavor > characters = clone GetAllCharacters()
 
 	for ( int i = characters.len() - 1; i >= 0; i-- )
@@ -4578,10 +4420,12 @@ void function Flowstate_AssignUniqueCharacterForPlayer( entity player, bool lock
 
 	if( !lock || IsDevGamemode() || Gamemode() == eGamemodes.WINTEREXPRESS )
 		player.SetPlayerNetBool( "hasLockedInCharacter", false )
+#endif
 }
 
 void function Flowstate_SetAssignedCustomModelToPlayer( entity player, int index )
 {
+#if SERVER
 	thread function () : ( index, player )
 	{
 		EndSignal( player, "OnDestroy" )
@@ -4634,10 +4478,10 @@ void function Flowstate_SetAssignedCustomModelToPlayer( entity player, int index
 			break
 		}
 	}()
+#endif
 }
 
 void function Flowstate_ApplyModifiedMovementToPlayer( entity player )
 {
 	Warning( "Flowstate_ApplyModifiedMovementToPlayer - stub (movement system not loaded)" )
 }
-#endif

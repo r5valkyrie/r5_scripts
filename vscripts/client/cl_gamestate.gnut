@@ -1,6 +1,7 @@
 untyped
 
 global function ClGameState_Init
+global function ClWaittillGameStateOrHigher
 global function ClGameState_Think
 global function ClGameState_GetRui
 global function CLGameState_GetNetGraphRui
@@ -113,7 +114,7 @@ void function ClGameState_Init()
 {
 	RegisterSignal( "GameStateChanged" )
 	RegisterSignal( "GameModes_CompletedResolutionCleanup" )
-	RegisterNetVarIntChangeCallback( "gameState", SNDC_GLOBAL, ClGameState_Changed )
+	RegisterNetVarIntChangeCallback( "gameState", ClGameState_Changed, SNDC_GLOBAL )
 	//RegisterServerVarChangeCallback( "badRepPresent", UpdateScoreboardBadRepPresentMessage )
 	AddOnSpectatorTargetChangedCallback( GameState_SpectatorTargetChanged )
 
@@ -173,10 +174,6 @@ void function CreateScoreRUI()
 	}
 }
 
-bool function HasWaitingGameStateArtHud()
-{
-	return GetWaitingGameStateArtHud() != $""
-}
 
 asset function GetWaitingGameStateArtHud()
 {

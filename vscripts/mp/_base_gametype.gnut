@@ -118,7 +118,7 @@ void function CodeCallback_OnPrecache()
 		thread delayedGameState()
 
 		file.surveySettings.matchId = lstrip( rstrip( GameRules_GetUniqueMatchID() ) )
-		file.surveySettings.sampleRateLowerBound = GetConVarBool( "match_forcePostMatchSurvey" ) ? 0.0 : RandomFloat( 1.0 )
+		file.surveySettings.sampleRateLowerBound = RandomFloat( 1.0 )
 		BaseGametype_Init_MP_SurveySettings( file.surveySettings )
 	}
 
@@ -1535,7 +1535,7 @@ void function KillEntityOutOfBounds( entity ent, entity trigger )
 		{
 			if ( IsValid( ent ) && !IsAlive( ent ) )
 			{
-				file.outOfBoundsTable[ ent ].outOfBoundsTriggersTouched = 0
+				file.entOutOfBoundsMap[ ent ].outOfBoundsTriggersTouched = 0
 				ent.SetOutOfBoundsDeadTime( 0 )
 			}
 		}
@@ -1561,7 +1561,7 @@ bool function IsValidOutOfBoundsEntity( entity ent, entity trigger )
 		return false
 
 	// S22: disable/enable OOB mechanism
-	if ( (ent in file.outOfBoundsTable) && file.outOfBoundsTable[ent].disabledCount > 0 )
+	if ( (ent in file.entOutOfBoundsMap) && file.entOutOfBoundsMap[ent].disabledCount > 0 )
 		return false
 
 	int triggerTeam = expect int( trigger.kv.teamnumber.tointeger() )
@@ -1604,51 +1604,21 @@ void function OnTitanBecomesPilot_OutOfBoundsCheck( entity pilot, entity npc_tit
 void function ManageAddEntToOutOfBoundsTable( entity ent, OutOfBoundsDataStruct dataStruct  ) //Might be overkill, but: suggested by Haggerty to avoid leak of constantly adding ents to the file table without removing them
 {
 	//First clean up dead references in table
-	table< entity, OutOfBoundsDataStruct> tempTable = clone file.outOfBoundsTable
+	table< entity, OutOfBoundsDataStruct> tempTable = clone file.entOutOfBoundsMap
 
 	foreach( ent0, dataStruct0 in tempTable )
 	{
 		if ( !IsValid( ent0 ) )
 		{
-			delete file.outOfBoundsTable[ ent0 ]
+			delete file.entOutOfBoundsMap[ ent0 ]
 		}
 	}
 
 	//Now add the new ent
 
-	file.outOfBoundsTable[ ent ] <- dataStruct
+	file.entOutOfBoundsMap[ ent ] <- dataStruct
 }
 
-void function DisableEntityOutOfBounds( entity ent )
-{
-	if ( !(ent in file.outOfBoundsTable) )
-	{
-		OutOfBoundsDataStruct oobData
-		ManageAddEntToOutOfBoundsTable( ent, oobData )
-	}
-
-	file.outOfBoundsTable[ent].disabledCount += 1
-
-	if ( IsValid( ent ) && ent.IsPlayer() && ent.GetOutOfBoundsDeadTime() != 0 )
-		ent.SetOutOfBoundsDeadTime( 0.0 )
-}
-
-void function EnableEntityOutOfBounds( entity ent )
-{
-	if ( !(ent in file.outOfBoundsTable) )
-		return
-
-	Assert( file.outOfBoundsTable[ent].disabledCount > 0 )
-	file.outOfBoundsTable[ent].disabledCount -= 1
-}
-
-bool function IsEntityOutOfBoundsDisabled( entity ent )
-{
-	if ( !(ent in file.outOfBoundsTable) )
-		return false
-
-	return file.outOfBoundsTable[ent].disabledCount > 0
-}
 
 bool function PlayerCanSpawn( entity player )
 {

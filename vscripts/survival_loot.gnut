@@ -11,19 +11,6 @@ global function SURVIVAL_ClearLootGroupRemappings
 global function SURVIVAL_AddLootGroupRemapping
 global function SURVIVAL_HealPlayerOverTime
 global function SURVIVAL_CalculateTotalHealFromItem
-global function ResetPlayerInventory
-global function GetAllLootZones
-global function GetLootHotZone
-global function SURVIVAL_LootTierForLootGroup
-global function InfiniteAmmoEnabled
-global function Survival_SetInventoryEnabled
-global function LootZones_GetRefForOrigin
-global function CodeCallback_WeaponDropped
-global function CodeCallback_WeaponLoadoutPickup
-global function SURVIVAL_ThrowLootFromPointEx
-global function CreateLootForFlyerDeathBox
-global function SURVIVAL_AutoEquipOrdnanceFromInventory
-global function SURVIVAL_RoundStartLootCleanup
 global function SURVIVAL_EquipOrdnanceFromInventory
 global function SURVIVAL_Death_DropLoot
 global function SURVIVAL_IsFallDeath
@@ -40,8 +27,6 @@ global function SURVIVAL_GivePlayerEquipment
 global function SURVIVAL_DropWeapon
 global function SURVIVAL_DropMainWeapon
 global function SURVIVAL_StopDisplayingHotzones
-
-global function SURVIVAL_EquipOrdnanceFromInventory
 
 global function SURVIVAL_EquipGadgetFromInventory
 global function SURVIVAL_EquipGadgetFromEquipment
@@ -411,23 +396,10 @@ struct PlayerLootThrowData
 	float lastThrowYawOffset
 }
 
-struct
-{
+struct {
 	string defaultLevelZone = "zone_low"
 
-global struct BinOrSpawnPoint
-{
-	entity bin
-	vector pos
-}
-
-struct {
-	array<LootZone> lootZones
-	LootZone hotZone
-	table<vector, array<string> > vaultLootSpawned
-	array<entity> spawnedAmmoStacks
-	table< string, LootGroup >              lootGroups
-	table< string, array<BinOrSpawnPoint> > groupedSpawnpoints
+	table< string, LootGroup > lootGroups
 
 	LootZone&             worldLootZone
 	table<vector, float>  validCircleEndLocations
@@ -529,7 +501,6 @@ struct {
 
 	table<entity, entity> oldBinToPerkBinMapping
 	table< string, array<BinOrSpawnPoint> > groupedSpawnpoints
-	array<void functionref( entity, entity, string, string )> Callbacks_OnPlayerWeaponAttachmentChanged
 
 } file
 
@@ -7916,49 +7887,6 @@ void function PhysicsEntCleanup( entity physicsEnt, entity drop )
 	physicsEnt.WaitSignal( "OnDestroy" )
 }
 
-bool function ShouldForceUseSafeSpotForDeathBoxForPlayer( entity player )
-{
-	if ( !IsValid( player ) )
-		return false
-
-	if ( !file.playersThatShouldForceUseSafeSpotForDeathBox.contains( player ) )
-		return false
-
-	return true
-}
-
-void function ShouldForceUseSafeSpotForDeathBox_AddPlayer( entity player )
-{
-	Assert( !file.playersThatShouldForceUseSafeSpotForDeathBox.contains( player ) )
-	file.playersThatShouldForceUseSafeSpotForDeathBox.append( player )
-}
-
-void function ShouldForceUseSafeSpotForDeathBox_RemovePlayer( entity player )
-{
-	Assert( file.playersThatShouldForceUseSafeSpotForDeathBox.contains( player ) )
-	file.playersThatShouldForceUseSafeSpotForDeathBox.fastremovebyvalue( player )
-}
-
-void function SURVIVAL_RefreshWeaponSkinAndModel( entity weapon, entity player )
-{
-	Assert( IsValid( weapon ) )
-
-	if( !IsValid( weapon ) )
-		return
-
-	// Refresh weapon view model body group
-	if ( weapon.e.skinItemFlavorGUID != -1 )
-	{
-		ItemFlavor ornull skinOrNull = GetItemFlavorByGUID( weapon.e.skinItemFlavorGUID )
-		if ( skinOrNull != null )
-		{
-			ItemFlavor skin = expect ItemFlavor( skinOrNull )
-			Assert( ItemFlavor_GetType( skin ) == eItemType.weapon_skin )
-			WeaponCosmetics_ApplyModelAndSkin( weapon, skin )
-		}
-	} 
-}
-
 void function SurvivalLoot_OnPhysicsDisabled( entity physicsEnt )
 {
 	{
@@ -10690,11 +10618,6 @@ void function DEV_PrintDeathBoxContents( entity box )
 	printt( str )
 }
 
-void function SURVIVAL_RoundStartLootCleanup()
-{
-	foreach ( groupName, spawnPoints in file.groupedSpawnpoints )
-		spawnPoints.clear()
-}
 #endif
 
 

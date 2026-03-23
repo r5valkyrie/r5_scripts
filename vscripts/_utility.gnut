@@ -7040,10 +7040,6 @@ void function SetPlayerBotQueueGraduation( entity player, int state )
 {
 }
 
-bool function BigTDM_IsModeEnabled()
-{
-	return false
-}
 
 void function AddCallback_OnTeammatesRespawned( void functionref( entity, entity, array< entity > ) callbackFunc )
 {
@@ -7111,11 +7107,6 @@ bool function IsGoldRushMode()
 }
 
 bool function IsStormPoint()
-{
-	return false
-}
-
-bool function IsMatchmakingFromMatchEnabled()
 {
 	return false
 }

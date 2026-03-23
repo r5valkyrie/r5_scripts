@@ -7,7 +7,7 @@
 // ======================== CONSTANTS ========================
 
 // ALLIANCE_NONE, ALLIANCE_A, ALLIANCE_B now defined in mp/sh_alliance_proximity.gnut
-global const int CHEVREX_AIRDROP_SKIN_INDEX = 2
+// CHEVREX_AIRDROP_SKIN_INDEX now defined in mp/sh_airdrops.gnut
 global const string SNIPERULT_WEAPON_NAME = "mp_ability_sniper_ult" // Vantage sniper ultimate (S14+)
 
 // COLORID_CONTROL_FRIENDLY/ENEMY/CONTESTED now defined in mp/sh_alliance_proximity.gnut
@@ -37,10 +37,7 @@ global enum eCrowdNoiseMeterModifiers
 // COLORID_AIRDROP_DEFAULT_COLOR, ALLIANCE_A/B, ANNOUNCEMENT_STYLE_*, CHEVREX_AIRDROP_SKIN_INDEX
 // are already defined natively — do NOT redefine them here.
 
-global enum eAirdropType
-{
-	STANDARD = 0
-}
+// eAirdropType now defined in mp/sh_airdrops.gnut
 
 // ======================== STRUCTS ========================
 
@@ -80,18 +77,6 @@ global struct TeamsScoreboardPlayer
 // SquadSummaryPlayerData: modeSpecificSummaryData field added to existing struct in cl_gamemode_survival.nut
 // SummaryDataEntry: added to cl_gamemode_survival.nut
 
-global struct AirdropItemsOptionalInfo
-{
-	string animationName = "droppod_loot_drop"
-	string targetName = ""
-	entity owner = null
-	int team = 0
-	int skin = 0
-	string sourceWeaponClassname = ""
-	int realm = -1
-	bool animatePod = true
-	bool forceDefaultColor = false
-}
 
 global struct CancelPlayerStatesData
 {
@@ -153,39 +138,25 @@ global function PIN_PlayerWeaponLoadoutChange
 #endif
 
 // --- Individual missing functions ---
-#if SERVER
 global function ForceScriptError
+#if SERVER
 // AllianceProximity_IsUsingAlliances and AllianceProximity_GetMaxNumAlliances now in mp/sh_alliance_proximity.gnut
-global function SetGlobalNonRewindNetTime
 global function CircleCullClassName
 global function CircleCullScriptName
 global function SetVictoryKillMode
-global function QuickChat_RegisterDisabledCommsActions
 global function AddCallback_OnPlayerPostRespawned
-global function Survival_AddCallback_IsSquadReallyEliminated
-global function SetInfiniteAmmoForWeapon
-global function SetInfiniteAmmoForGameMode
 global function DoCommonRespawnForPlayer
 // GetPlayerArrayIncludingSpectators moved to SERVER || CLIENT scope below
 // GameRules_GetTeamScore2 is engine-native
-global function AbilityCarePackage_SetContentOverrideCallback
-global function DetermineAirdropContents
 global function WeaponStatsHook_OnKillEnemy
-global function Weapon_GetBaseClassName
-global function TryFindSpeakingPlayerOnTeam_OnlyAllowSpecificCharacters
 global function Remote_CallFunction_QueueForNoKillCam
-global function GetMusicForJump
 #endif
 
 #if CLIENT
 global function HudTargetInfo_Enable
-global function SetShowUnitFrameAmmoTypeIcons
 // Already in sh_character_select.gnut
 //global function CharacterSelectMenu_SetCustomJIPDescription
 //global function OpenCharacterSelectMenu
-global function SetVictoryScreenTeamName
-global function SetSummaryDataDisplayStringsCallback
-global function CircleBannerAnnouncementsEnable
 global function EmitSoundOnEntity_NoTimeScale
 global function EmitUISound
 global function IsLocalPlayerOnTeamSpectator
@@ -193,10 +164,7 @@ global function IsLocalPlayerOnTeamSpectator
 global function GameRules_IsTeamIndexValid
 global function SetPlayThroughPOVTransitions
 // IsRevTakeover moved to shared scope (used by both SERVER and CLIENT)
-global function BigTDM_IsModeEnabled
-global function SquadLeader_UpdateAllUnitFramesRui
 global function LowerDVSForGameMode
-global function ClWaittillGameStateOrHigher
 #endif
 
 // --- Utility script dependencies ---
@@ -215,23 +183,21 @@ global function RuiHasGameTimeArg
 global function GetEndTimeForPlaylistInRotation
 global function IsNessieEEActive
 global function Wattson_TT_Check_Victory
-global function Crafting_CloseCraftingMenu
 global function IsRevTakeover
-global function SURVIVAL_SendWinningSquadDataToPlayer
-global function OnPlayerMatchParticipationEnded
-global function ProjectX_DumpGameSummarySquadData
 global function PIN_PlayerClassMidMatchChange
 global function HoverVehicle_IsPlayerInAnyVehicle
 global function Vehicle_KickPlayer_ForOtherReason
 global function CancelPlayerStates
 #if SERVER || CLIENT
 // These use SERVER/CLIENT-only natives (GetPlayerArray, IsAlive, etc.)
-global function GetNearbyPlayers
 global function GetPlayerArrayIncludingSpectators
 #endif
 #if SERVER
 // These use SERVER-only entity methods (SetHealth, SetShieldHealth, etc.)
 global function SetHealthAndShieldByPercentage
+#endif
+#if SERVER || CLIENT
+global function GetNearbyPlayers
 #endif
 // Spawn_SetSpawnpointRatingFunc and Spawn_SetFriendlyRatingCap now live in mp/spawn.nut
 // Remote_CallFunction_QueueForNoKillCam declared above in #if SERVER
@@ -290,20 +256,6 @@ void function Teams_AddCallback_IsEnabled( bool functionref() callback ) {}
 void function Teams_AddCallback_GetTeamName( string functionref( int ) callback ) {}
 void function Teams_AddCallback_GetTeamIcon( asset functionref( int ) callback ) {}
 
-// --- Shared-scope function stubs (declared without #if above) ---
-int function GetEndTimeForPlaylistInRotation( string playlistName ) { return 0 }
-bool function IsNessieEEActive() { return false }
-void function Wattson_TT_Check_Victory( entity player ) {}
-void function SURVIVAL_SendWinningSquadDataToPlayer( entity player, int winningTeam ) {}
-void function OnPlayerMatchParticipationEnded( entity player, bool wasUnexpectedDisconnect ) {}
-void function ProjectX_DumpGameSummarySquadData() {}
-void function PIN_PlayerClassMidMatchChange( entity player, array<string> classesOffered ) {}
-void function CancelPlayerStates( entity player, CancelPlayerStatesData states ) {}
-void function Crafting_CloseCraftingMenu( entity player ) {}
-bool function IsRevTakeover() { return false }
-bool function HoverVehicle_IsPlayerInAnyVehicle( entity player ) { return false }
-void function Vehicle_KickPlayer_ForOtherReason( entity player ) {}
-
 #if SERVER || CLIENT
 array<entity> function GetNearbyPlayers( vector pos, float maxDist )
 {
@@ -319,7 +271,17 @@ array<entity> function GetNearbyPlayers( vector pos, float maxDist )
 	}
 	return nearbyPlayers
 }
-#endif // SERVER || CLIENT
+#endif
+
+// --- Shared-scope function stubs (declared without #if above) ---
+int function GetEndTimeForPlaylistInRotation( string playlistName ) { return 0 }
+bool function IsNessieEEActive() { return false }
+void function Wattson_TT_Check_Victory( entity player ) {}
+void function PIN_PlayerClassMidMatchChange( entity player, array<string> classesOffered ) {}
+void function CancelPlayerStates( entity player, CancelPlayerStatesData states ) {}
+bool function IsRevTakeover() { return false }
+bool function HoverVehicle_IsPlayerInAnyVehicle( entity player ) { return false }
+void function Vehicle_KickPlayer_ForOtherReason( entity player ) {}
 
 #if SERVER
 bool function SetHealthAndShieldByPercentage( entity player, float healthPercent, float shieldPercent, bool shouldAllowHealthLoss )
@@ -355,77 +317,35 @@ bool function SetHealthAndShieldByPercentage( entity player, float healthPercent
 }
 #endif // SERVER
 
+void function ForceScriptError( string message ) { ScriptError( message ) }
+
 // --- SERVER-only function stubs ---
 #if SERVER
-void function ForceScriptError( string message ) { ScriptError( message ) }
-void function SetGlobalNonRewindNetTime( string varName, float value )
-{
-	SetServerVar( varName, value )
-}
 void function CircleCullClassName( string className ) {}
 void function CircleCullScriptName( string scriptName ) {}
 void function SetVictoryKillMode( bool enabled ) {}
-void function QuickChat_RegisterDisabledCommsActions( array<int> actions ) {}
 void function AddCallback_OnPlayerPostRespawned( void functionref( entity ) callback ) {}
-void function Survival_AddCallback_IsSquadReallyEliminated( bool functionref( int ) callback ) {}
-bool function SetInfiniteAmmoForWeapon( entity player, entity weapon, bool ornull infiniteAmmo = null, bool removeOnDrop = true, bool forceApply = false )
-{
-	if ( !IsValid( player ) || !IsValid( weapon ) )
-		return false
-	if ( infiniteAmmo == true )
-		SetupInfiniteAmmoForWeapon( player, weapon )
-	return true
-}
-void function SetInfiniteAmmoForGameMode( entity player, bool enabled, array<string> excluded = [], bool infiniteClip = false, bool infiniteStock = false ) {}
 void function DoCommonRespawnForPlayer( entity player ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
-void function AbilityCarePackage_SetContentOverrideCallback( array< array<string> > functionref( entity ) callback ) {}
-array< array<string> > function DetermineAirdropContents( array< array<string> > contents ) { return contents }
 void function WeaponStatsHook_OnKillEnemy( entity victim, entity attacker, entity creditedAttacker, var damageInfo ) {}
-string function Weapon_GetBaseClassName( string weaponRef ) { return GetBaseWeaponRef( weaponRef ) }
 void function Remote_CallFunction_QueueForNoKillCam( entity player, string funcName, ... ) {}
-string function GetMusicForJump( entity player )
-{
-	string override = GetCurrentPlaylistVarString( "music_override_skydive", "" )
-	if ( override.len() > 0 )
-		return override
-	return MusicPack_GetSkydiveMusic( GetMusicPackForPlayer( player ) )
-}
 #endif // SERVER
 
 #if CLIENT
 void function HudTargetInfo_Enable( bool enabled ) {}
-void function SetShowUnitFrameAmmoTypeIcons( bool show ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
 // Already in sh_character_select.gnut
 //void function CharacterSelectMenu_SetCustomJIPDescription( string desc ) {}
 //void function OpenCharacterSelectMenu( bool browseMode = false, bool showLocked = false, bool isJIP = false ) {}
-void function SetVictoryScreenTeamName( string name ) {}
-void function SetSummaryDataDisplayStringsCallback( void functionref( SquadSummaryPlayerData ) callback ) {}
-void function CircleBannerAnnouncementsEnable( bool enabled ) {}
 var function EmitSoundOnEntity_NoTimeScale( entity ent, string sound ) { EmitSoundOnEntity( ent, sound ); return null }
 void function EmitUISound( string sound ) { EmitSoundOnEntity( GetLocalClientPlayer(), sound ) }
 bool function IsLocalPlayerOnTeamSpectator() { return GetLocalClientPlayer().GetTeam() == TEAM_SPECTATOR }
 //void function CloseCharacterSelectMenu() {}  // Already in sh_character_select.gnut
 bool function GameRules_IsTeamIndexValid( int teamIndex ) { return teamIndex >= 0 && teamIndex < GetCurrentPlaylistVarInt( "max_teams", 20 ) + 2 }
 void function SetPlayThroughPOVTransitions( var soundHandle ) {} // Sound persistence through POV transitions
-bool function BigTDM_IsModeEnabled() { return false }
-void function SquadLeader_UpdateAllUnitFramesRui() {}
 void function LowerDVSForGameMode( bool lower ) {} // Dynamic Visibility Settings tweaks
-void function ClWaittillGameStateOrHigher( int state )
-{
-	while ( GetGameState() < state )
-		WaitFrame()
-}
 // Squads_SetCustomPlayerInfo, Squads_GetReorderedTeamsUIId, Squads_GetSquadColor, Squads_GetSquadIcon exist in _squads_utility.gnut
 #endif // CLIENT
-
-#if SERVER
-entity function TryFindSpeakingPlayerOnTeam_OnlyAllowSpecificCharacters( int team, array<string> allowedCharacters )
-{
-	return TryFindSpeakingPlayerOnTeam( team )
-}
-#endif
 
 // --- Utility script dependencies ---
 bool function IsEliminationBased() { return false }

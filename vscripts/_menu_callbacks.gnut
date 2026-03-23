@@ -21,7 +21,11 @@ bool function ClientCommandCallback_LeaveMatch( entity player, array<string> arg
 	{
 		if(player.IsObserver())
 		{
-			PlayerStopSpectating(player)
+			#if SERVER
+			player.SetPlayerNetInt( "spectatorTargetCount", 0 )
+			player.SetSpecReplayDelay( 0 )
+			player.StopObserverMode()
+			#endif
 			WaitFrame()
 			if(!IsValid(player)) return
 		}
