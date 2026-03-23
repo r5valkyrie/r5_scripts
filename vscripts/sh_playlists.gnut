@@ -557,10 +557,36 @@ asset function GetThumbnailImageFromImageMap( string keyName )
 
 asset function GetGamemodeLogoFromImageMap( string keyName )
 {
-	// S3 does not ship settings/sharedmap/gamemode_logos.rpak — GetSettingsBlockForAsset
-	// would crash if called. Return the default white asset for all callers.
-	Warning( "GetGamemodeLogoFromImageMap: settings sharedmap RPak unavailable in S3, returning default for key '%s'", keyName )
-	return $"white"
+	asset imageAsset = $"white"
+	if ( keyName != "" )
+	{
+		bool foundLogo = false
+		var parentBlock = GetSettingsBlockForAsset( GAMEMODE_LOGO_SHAREDMAP )
+		var arrField    = GetSettingsBlockArray( parentBlock, "gamemodeLogos" )
+
+		foreach ( var entryBlock in IterateSettingsArray( arrField ) )
+		{
+			string modeName = GetSettingsBlockString( entryBlock, "mode" )
+
+			if( modeName.tolower() == keyName.tolower() )
+			{
+				imageAsset = GetSettingsBlockAsset( entryBlock, "logo" )
+				foundLogo = true
+				break
+			}
+		}
+
+		if ( !foundLogo )
+		{
+			#if DEVELOPER
+				if ( GetConVarBool( "ui_automation_enabled" ) )
+					return imageAsset                    
+			#endif       
+
+			Warning( "Invalid playlist value for 'image': %s", keyName )
+		}
+	}
+	return imageAsset
 }
 
 
