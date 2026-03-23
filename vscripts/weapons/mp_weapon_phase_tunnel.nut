@@ -1793,15 +1793,13 @@ void function PhaseTunnel_PathFollowCrouchPlayer( entity player, float delay = 0
 	Signal( player, "PhaseTunnel_PathFollowCrouchPlayer" )
 	EndSignal( player, "OnDeath" )
 	EndSignal( player, "PhaseTunnel_PathFollowCrouchPlayer" )
-	int forceCrouchHandle = 0 //player.PushForcedStance( FORCE_STANCE_CROUCH )
-	player.ForceCrouch()
+	int forceCrouchHandle = player.PushForcedStance( FORCE_STANCE_CROUCH )
 	OnThreadEnd(
 		function() : ( player, forceCrouchHandle )
 		{
 			if ( IsValid( player ) )
 			{
-				player.UnforceCrouch()
-				// player.RemoveForcedStance( forceCrouchHandle )
+				player.RemoveForcedStance( forceCrouchHandle )
 				if ( !player.ContextAction_IsActive() && !player.Anim_IsActive() )
 					PutPlayerInSafeSpot( player, null, null, player.GetOrigin(), player.GetOrigin() )
 			}

@@ -333,8 +333,7 @@ void function PlayerDying( entity player, entity attacker, var damageInfo )
 	entity utilityWeapon = player.GetNormalWeapon( KNOCKDOWN_SHIELD_SLOT )
 	Assert( utilityWeapon == null, format( "%s has not been cleared from the utility slot when going into bleedout!", utilityWeapon.GetWeaponClassName() ) )
 
-	int forceCrouchHandle = 0//player.PushForcedStance( FORCE_STANCE_CROUCH )
-	player.ForceCrouch()
+	int forceCrouchHandle = player.PushForcedStance( FORCE_STANCE_CROUCH )
 	player.SetOneHandedWeaponUsageOn()
 
 	int lastActiveSlot = WEAPON_INVENTORY_SLOT_PRIMARY_2
@@ -399,8 +398,7 @@ void function PlayerDying( entity player, entity attacker, var damageInfo )
 				Warning( "Player exit from bleedout state " + player )
 				#endif
 				
-				// player.RemoveForcedStance( forceCrouchHandle )
-				player.UnforceCrouch()
+				player.RemoveForcedStance( forceCrouchHandle )
 				
 				player.SetOneHandedWeaponUsageOff()
 				player.Zipline_Allow()
@@ -1014,16 +1012,14 @@ void function SetPlayerCrouched( entity player )
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "BleedOut_OnStartDying" )
 
-	// int handle = player.PushForcedStance( FORCE_STANCE_CROUCH )
-	player.ForceCrouch()
+	int handle = player.PushForcedStance( FORCE_STANCE_CROUCH )
 
-	OnThreadEnd( function() : ( player ) //, handle )
+	OnThreadEnd( function() : ( player, handle )
 		{
 			if ( IsValid( player ) )
 			{
-				player.UnforceCrouch()
-				// player.RemoveForcedStance( handle )
-			}	
+				player.RemoveForcedStance( handle )
+			}
 		}
 	)
 
@@ -1035,16 +1031,14 @@ void function SetPlayerStanding( entity player )
 {
 	player.EndSignal( "OnDeath" )
 
-	// int handle = player.PushForcedStance( FORCE_STANCE_STAND )
-	player.ForceStand()
+	int handle = player.PushForcedStance( FORCE_STANCE_STAND )
 
-	OnThreadEnd( function() : ( player ) //, handle )
+	OnThreadEnd( function() : ( player, handle )
 		{
 			if ( IsValid( player ) )
 			{
-				// player.RemoveForcedStance( handle )
-				player.UnforceStand()
-			}	
+				player.RemoveForcedStance( handle )
+			}
 		}
 	)
 

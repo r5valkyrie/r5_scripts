@@ -53,17 +53,17 @@ void function ExtraShields_Init()
 #if SERVER || CLIENT
 int function GetPlayerExtraShields( entity player )
 {
-	return 0
+	return player.GetExtraShieldHealth()
 }
 
 int function GetPlayerExtraShieldsTier( entity player )
 {
-	return 0
+	return player.GetExtraShieldTier()
 }
 
 float function GetPlayerExtraShieldsDuration( entity player )
 {
-	return 0.0
+	return player.GetPlayerNetFloat( EXTRA_SHIELDS_DURATION_NETFLOAT )
 }
 #endif
 
@@ -86,7 +86,7 @@ void function ExtraShields_ResetExtraShieldsDelayed( entity victim )
 
 void function SetPlayerExtraShields( entity player, int val )
 {
-	//player.SetExtraShieldHealth( val )
+	player.SetExtraShieldHealth( val )
 
 	player.Signal( "ExtraShieldsChanged" )
 	if( val <= 0 )
@@ -141,7 +141,7 @@ void function DecayExtraShields( entity player, int extraShield )
 	{
 		wait SHIELD_DURATION_TICK_WAIT
 		extraShield     = maxint(extraShield-file.shieldDecayRate, 0)
-		//player.SetExtraShieldHealth( extraShield )
+		player.SetExtraShieldHealth( extraShield )
 	}
 
 	// downgrade the player's shield to the tier it should be in
@@ -153,7 +153,7 @@ void function DecayExtraShields( entity player, int extraShield )
 
 void function SetPlayerExtraShieldsTier( entity player, int val )
 {
-	//player.SetExtraShieldTier( val )
+	player.SetExtraShieldTier( val )
 }
 #endif
 

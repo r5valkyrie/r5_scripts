@@ -610,10 +610,10 @@ void function PlayerBoardsEvacShip( entity player, EvacShipData evacShipData )
 	player.SetParent( evacShip, attachmentTag, false, 1.0 )
 	player.SetGroundEntity( evacShip )
 	player.SnapEyeAngles( FlattenAngles( attachAngles ) )
-	// if ( AttachmentTagShouldForceCrouch( attachmentTag ) )
-	// {
-		// player.PushForcedStance( FORCE_STANCE_CROUCH )
-	// }
+	if ( AttachmentTagShouldForceCrouch( attachmentTag ) )
+	{
+		player.PushForcedStance( FORCE_STANCE_CROUCH )
+	}
 
 	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 

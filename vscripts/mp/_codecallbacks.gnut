@@ -518,7 +518,7 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 		int overshieldDamage = 0
 
 		                    
-			int extrashieldHealth = ent.IsPlayer() ? ent.GetShieldHealth() : 0
+			int extrashieldHealth = ent.IsPlayer() ? GetPlayerExtraShields( ent ) : 0
 			if ( extrashieldHealth > 0 && !IsBitFlagSet( DamageInfo_GetCustomDamageType( damageInfo ), DF_BYPASS_SHIELD ) )
 			{
 
@@ -526,13 +526,13 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 
 				overshieldDamage = minint( extrashieldHealth, multipliedDamage )
 				int remainingOvershieldHealth = extrashieldHealth - overshieldDamage
-				//SetPlayerExtraShields( ent, remainingOvershieldHealth )
+				SetPlayerExtraShields( ent, remainingOvershieldHealth )
 
-				//if( remainingOvershieldHealth == 0 )
-				//{
-				//	string newArmorRef = UpgradeCore_GetPlayerShieldCoreRef( ent )
-				//	SURVIVAL_GivePlayerEquipment( ent, newArmorRef, ent.GetShieldHealth() )
-				//}
+				if( remainingOvershieldHealth == 0 )
+				{
+					string newArmorRef = UpgradeCore_GetPlayerShieldCoreRef( ent )
+					SURVIVAL_GivePlayerEquipment( ent, newArmorRef, ent.GetShieldHealth() )
+				}
 
 				actualDamage = actualDamage - overshieldDamage
 				if( actualDamage <= 0 )
