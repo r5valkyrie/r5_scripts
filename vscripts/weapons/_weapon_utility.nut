@@ -4646,7 +4646,7 @@ void function SavePlayerWeaponData( entity player )
 			weaponData.name = GetStoredPreSlingWeaponRefForPlayer( player )
 		else
 			weaponData.name           = currentWeapon.GetWeaponClassName()
-		weaponData.lockedSet      = 0 /*GetWeaponLockedSet not in S3*/
+		weaponData.lockedSet      = currentWeapon.GetWeaponLockedSet()
 
 		if ( currentWeapon.GetActiveAmmoSource() == AMMOSOURCE_POOL )
 		{

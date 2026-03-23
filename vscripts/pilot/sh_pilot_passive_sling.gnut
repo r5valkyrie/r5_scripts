@@ -358,26 +358,26 @@ void function SetWeaponLockedSetForSlingWeapon( entity player, entity weapon )
 
 	if( IsBallisticUltActive( player ) )
 	{
-		//weapon.SetWeaponLockedSet( eWeaponLockedSet.GOLD )
+		weapon.SetWeaponLockedSet( eWeaponLockedSet.GOLD )
 	}
 	else
 	{
-                                 
+
 			if( PlayerHasPassive( player, ePassives.PAS_PAS_UPGRADE_ONE ) )
 			{
 				int curUpgradeLevel = UpgradeCore_GetPlayerLevel( player )
 				if ( curUpgradeLevel >= 2 )
-				{} //SetWeaponLockedSet not in S3
+					weapon.SetWeaponLockedSet( eWeaponLockedSet.PURPLESET )
 				else if ( curUpgradeLevel == 1 )
-				{} //SetWeaponLockedSet not in S3
+					weapon.SetWeaponLockedSet( eWeaponLockedSet.BLUESET )
 			}
 			else
 			{
-				//SetWeaponLockedSet not in S3
+				weapon.SetWeaponLockedSet( eWeaponLockedSet.WHITESET )
 			}
-       
-                                                         
-        
+
+
+
 	}
 }
 

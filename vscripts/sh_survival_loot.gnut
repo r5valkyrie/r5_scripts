@@ -1843,7 +1843,24 @@ string function GetWeaponClassNameWithLockedSet( entity weapon )
   
        
 
-	//GetWeaponLockedSet not in S3
+	switch( weapon.GetWeaponLockedSet() )
+	{
+		case eWeaponLockedSet.WHITESET:
+			result += WEAPON_LOCKEDSET_SUFFIX_WHITESET
+			break
+
+		case eWeaponLockedSet.BLUESET:
+			result += WEAPON_LOCKEDSET_SUFFIX_BLUESET
+			break
+
+		case eWeaponLockedSet.PURPLESET:
+			result += WEAPON_LOCKEDSET_SUFFIX_PURPLESET
+			break
+
+		case eWeaponLockedSet.GOLD:
+			result += WEAPON_LOCKEDSET_SUFFIX_GOLD
+			break
+	}
 
 	return result
 }
