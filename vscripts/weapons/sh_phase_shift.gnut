@@ -243,7 +243,7 @@ int function PhaseShift( entity ent, float warmupTime, float duration, int shift
 
 		//Don't actually phase if we just want to draw phase FX on the character.
 		if ( !fxOnly )
-			ent.PhaseShiftBegin( warmupTime, duration )
+			ent.PhaseShiftBegin( warmupTime, duration, shiftStyle )
 
 		#if SERVER
 			thread ServerPhaseShiftPlayerThread( ent, warmupTime, duration, shiftStyle )
@@ -257,7 +257,7 @@ int function PhaseShift( entity ent, float warmupTime, float duration, int shift
 	{
 		//Don't actually phase if we just want to draw phase FX on the character.
 		if ( !fxOnly )
-			ent.PhaseShiftBegin( warmupTime, duration )
+			ent.PhaseShiftBegin( warmupTime, duration, shiftStyle )
 
 		#if SERVER
 			thread ServerPhaseShiftPlayerThread( ent, warmupTime, duration, shiftStyle )
@@ -861,13 +861,7 @@ void function ClientPhaseShiftFirstPersonFXThread()
 
 				ClientPhaseShift_SCRIPT_HACKS_ON()
 
-				int phaseType = eShiftStyle.Default
-				#if SERVER
-					phaseType = localViewPlayer.GetPhaseShiftType()
-				#else
-					if ( IsValid( localViewPlayer ) && typeof( localViewPlayer.e.phaseShiftType ) != "null" )
-						phaseType = localViewPlayer.e.phaseShiftType
-				#endif
+				int phaseType = localViewPlayer.GetPhaseShiftType()
 
 				if ( localViewPlayer.IsTitan() )
 				{

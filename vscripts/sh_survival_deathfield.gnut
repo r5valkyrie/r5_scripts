@@ -1470,7 +1470,7 @@ void function DeathFieldDamage( DeathFieldData data, entity deathField )
 			//phasing and not in phase_runner
 			if ( player.IsPhaseShifted() && !StatusEffect_HasSeverity( player, eStatusEffect.phase_gate_tracking ) )
 			{
-				//if ( player.GetPhaseShiftType() != PHASETYPE_DOOR ) // S3: GetPhaseShiftType not available
+				if ( player.GetPhaseShiftType() != PHASETYPE_DOOR )
 				{
 					continue
 				}
