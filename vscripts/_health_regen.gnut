@@ -256,10 +256,10 @@ bool function HealthRegen_IsTimeToStart( entity player )
 	{
 		return true
 	}
-	//else if ( Time() < ( player.GetLastTimeDamaged() + file.playersHealInfo[ player ].regenStartDelay ) ) // S3: GetLastTimeDamaged not available
-	//{
-	//	return false
-	//}
+	else if ( Time() < ( player.GetLastTimeDamaged() + file.playersHealInfo[ player ].regenStartDelay ) )
+	{
+		return false
+	}
 
 	return true
 }
@@ -279,13 +279,12 @@ void function HealthRegen_SetLastDamageTime( entity player )
 		return
 	}
 
-	// S3: GetLastTimeDamaged not available - skip damage time sync
-	//if ( player.GetPlayerNetTime( NETVAR_PLAYER_REGEN_DAMAGE_TIME ) != player.GetLastTimeDamaged() )
-	//{
-	//	float regenStartDelay = file.playersHealInfo[ player ].regenStartDelay
-	//	player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_DAMAGE_TIME, player.GetLastTimeDamaged() )
-	//	player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_START_DELAY, regenStartDelay )
-	//}
+	if ( player.GetPlayerNetTime( NETVAR_PLAYER_REGEN_DAMAGE_TIME ) != player.GetLastTimeDamaged() )
+	{
+		float regenStartDelay = file.playersHealInfo[ player ].regenStartDelay
+		player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_DAMAGE_TIME, player.GetLastTimeDamaged() )
+		player.SetPlayerNetTime( NETVAR_PLAYER_REGEN_START_DELAY, regenStartDelay )
+	}
 }
 #endif // SERVER
 
