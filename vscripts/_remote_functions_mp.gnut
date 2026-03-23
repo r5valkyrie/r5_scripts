@@ -74,7 +74,6 @@ int function SetupRemoteFuncAliases()
 	[
 		"Minimap_EnableDraw_Internal",
 		"Minimap_DisableDraw_Internal",
-		"ServerCallback_DeleteSpawnedClientSideDynamicLights",
 		"ServerCallback_KillReplayHud_Activate",
 		"ServerCallback_KillReplayHud_Deactivate",
 		"TridentBoost_Visuals",

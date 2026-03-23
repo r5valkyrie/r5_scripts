@@ -966,7 +966,6 @@ global const VOICE_COUNT = 6
 global const ARMOR_TYPE_HEAVY 	= 1
 global const ARMOR_TYPE_NORMAL 	= 0
 
-global const SKYBOXLEVEL	= "skybox_cam_level"
 global const SKYBOXSPACE 	= "skybox_cam_intro"
 
 global const WARPINFXTIME 	= 2.7

@@ -112,7 +112,6 @@ UISize function GetScaledVirtualScreenSize( UISize virtualScreenSize, UISize scr
 void function ClientCodeCallback_MapSpawn()
 {
 	LevelVarInit()
-	DynamicLight_Init()
 
 	Hud = getroottable().Hud
 
@@ -327,8 +326,6 @@ void function RunClientConnectScriptsThreaded( entity player )
 	RunCallbacks_EntitiesDidLoad()
 
 	FlagSet( "EntitiesDidLoad" )
-	
-	MapConVar_Init()
 
 	if( GetCurrentPlaylistVarBool( "lsm_mod15", false ) )
 		thread Thread_StartFakeObituaries()

@@ -37,7 +37,6 @@ function ClassWallrun_Init()
 
 function Wallrun_AddPlayer( player )
 {
-	player.playerClassData[level.pilotClass] <- {}
 }
 
 

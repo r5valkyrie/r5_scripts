@@ -7,6 +7,8 @@
 // Platform defines not present in PC engine
 global const bool NX_PROG = false
 global const bool PLAYSTATION_PROG = false
+global const bool PS5_PROG = false
+global const bool XB5_PROG = false
 global const bool XBOX_PROG = false
 global const bool PC_PROG_NX_UI = false
 

@@ -2662,7 +2662,7 @@ void function DropshipBringDummyBack( entity player )
 
 	thread PlayAnim( dropship, "dropship_classic_mp_flyin_idle", origin, angles )
 	dropship.MakeInvisible()
-	waitthread __WarpInEffectShared( fxPos, fxAng, "dropship_warpin", 0.0, dropship )
+	waitthread __WarpInEffectShared( fxPos, fxAng, "dropship_warpin", dropship, 0.0 )
 	dropship.MakeVisible()
 	waitthread PlayAnim( dropship, "dropship_classic_mp_flyin", origin, angles )
 	dropship.Destroy()

@@ -9,6 +9,7 @@ global function CodeCallback_MapSpawn
 global function CodeCallback_ClientCommand
 global function CreateMapEditorProp
 global function CreateEditorProp
+global function PlaylistDeathTrigger_OnEnter
 global table _ClientCommandCallbacks = {}
 global entity _cc = null
 global entity _sc = null
@@ -197,7 +198,7 @@ global struct SvGlobals
 global SvGlobals svGlobal
 
 void function CodeCallback_MapSpawn() // original script entry point
-{	
+{
 	//seterrorhandler(void function() {})
 	ScriptCompilerTest()
 	LoadDiamond()
@@ -205,6 +206,60 @@ void function CodeCallback_MapSpawn() // original script entry point
 	PrecacheSDKEntities()
 	PrecacheSDKWeapons()
 
+	_cc = CreateEntity( "point_clientcommand" )
+	PrecacheEntity( "env_entity_dissolver" )
+	PrecacheEntity( "env_shake" )
+
+	LevelVarInit()
+
+	svGlobal.worldspawn = GetEnt( "worldspawn" )
+	svGlobal.worldspawn.kv.startdark = true
+
+	PrecacheModel( $"mdl/dev/editor_ref.rmdl" )
+	PrecacheModel( $"mdl/dev/empty_model.rmdl" )
+	PrecacheModel( $"mdl/error.rmdl" ) // model used when no model is provided
+
+	printl( "Code Script: _mapspawn" )
+
+	Assert( GetCurrentPlaylistGamemodesCount() > 0, "No gamemodes in current playlist!" )
+
+	float testFakeTimeDaysOverrideVal = GetCurrentPlaylistVarFloat( "on_map_spawn_set_test_faketimedays_to", FLOAT_NAN )
+	if ( testFakeTimeDaysOverrideVal != FLOAT_NAN )
+	{
+		printf( "Playlist var on_map_spawn_set_test_faketimedays_to is causing test_fakeTimeDays to become %f (was %f)", testFakeTimeDaysOverrideVal, GetConVarFloat( "test_fakeTimeDays" ) )
+		SetConVarFloat( "test_fakeTimeDays", testFakeTimeDaysOverrideVal )
+
+		float testFakeTimeStamp = GetConVarFloat( "test_fakeTimeStamp" )
+		if ( testFakeTimeStamp > 0.0 )
+		{
+			printf( "test_fakeTimeStamp was %f, which will conflict with test_fakeTimeDays. Setting to 0.", testFakeTimeStamp )
+			SetConVarFloat( "test_fakeTimeStamp", 0.0 )
+		}
+	}
+
+	svGlobal.levelEnt = CreateEntity( "info_landmark" )
+	SetTargetName( svGlobal.levelEnt, "Level Ent" )
+	DispatchSpawn( svGlobal.levelEnt )
+	level.isTestmap <- false
+
+	FlagInit( "EntitiesDidLoad" )
+	FlagInit( "PlayerDidSpawn" )
+
+	level.privateMatchForcedEnd <- null
+
+	FlagInit( "FireteamAutoSpawn" )
+	FlagInit( "DebugFoundEnemy" )
+	FlagInit( "OldAnimRefStyle" )
+	FlagInit( "EarlyCatch" )
+	FlagInit( "ForceStartSpawn" )
+	FlagInit( "IgnoreStartSpawn" )
+	FlagInit( "ReadyToStartMatch" ) // past waiting for players, in prematch
+
+	#if DEVELOPER
+		FlagInit( "ShowExplosionRadius" )  // temp HACK
+	#endif
+
+	RegisterSignal( "OnChangedPlayerClass" )
 	RegisterSignal( "OnChangedPlayerClass_ActuallyChanged" )
 	RegisterSignal( "UpdatePlayerStatusCounts" )
 	RegisterSignal( "_disconnectedInternal" )
@@ -217,10 +272,43 @@ void function CodeCallback_MapSpawn() // original script entry point
 	RegisterSignal( "forever" )
 	RegisterSignal( "HitSky" )
 
-	PrecacheModel( $"mdl/dev/editor_ref.rmdl" )
-	PrecacheModel( $"mdl/dev/empty_model.rmdl" )
-	PrecacheModel( $"mdl/error.rmdl" ) // model used when no model is provided
-	
+	AddCallback_EntitiesDidLoad( ActivateSkyBox )
+	AddCallback_EntitiesDidLoad( PlaylistGeoFix )
+	AddCallback_EntitiesDidLoad( PlaylistDeathTriggerFix  )
+	AddCallback_EntitiesDidLoad( PlaylistOOBTriggerFix  )
+
+	#if DEVELOPER
+		ModelViewer_Init()
+	#endif // DEVELOPER
+	AddSpawnCallback( "player", MP_PlayerPostInit )
+	AddSpawnCallback( "trigger_hurt", InitDamageTriggers )
+
+	#if DEVELOPER
+	if ( GetCurrentPlaylistVarBool( "script_leak", false ) )
+		thread ScriptLeakDetector()
+	#endif
+
+	// red and green lights for script_switches
+	PrecacheParticleSystem( $"runway_light_green" )
+	PrecacheParticleSystem( $"runway_light_red" )
+
+	level.isTestmap = IsTestMap()
+
+	VPKNotifyFile( "cfg/startup_dedi.cfg" )
+	VPKNotifyFile( "cfg/startup_dedi_retail.cfg" )
+
+	//#if DEVELOPER
+	//	MarkNPCForAutoPrecache( "npc_dropship" )
+	//	MarkNPCForAutoPrecache( "npc_frag_drone_throwable" )
+	//	MarkNPCForAutoPrecache( "npc_marvin" )
+	//	MarkNPCForAutoPrecache( "npc_soldier" )
+	//	MarkNPCForAutoPrecache( "npc_spectre" )
+	//	MarkNPCForAutoPrecache( "npc_stalker" )
+	//	MarkNPCForAutoPrecache( "npc_super_spectre" )
+	//	MarkNPCForAutoPrecache( "npc_turret_mega" )
+	//#endif
+	SV_CL_Shared_Init()
+
 	if ( IsLobby() ){
 		foreach ( asset model in LOBBY_ANNIVERSARY_BALLOON_MDLS )
 		{
@@ -228,39 +316,127 @@ void function CodeCallback_MapSpawn() // original script entry point
 			PrecacheModel( $"mdl/celebration/float_balloons/apexlogo_float_balloon_01.rmdl" )
 		}}
 
-	#if DEVELOPER
-		ModelViewer_Init()
-	#endif // DEVELOPER
+}
 
-	_cc = CreateEntity( "point_clientcommand" )
-	_sc = CreateEntity( "point_servercommand" )
-	PrecacheEntity( "env_entity_dissolver" )
+void function ActivateSkyBox()
+{
+	const string SKYBOXLEVEL = "skybox_cam_level"
+	entity skycam = GetEnt( SKYBOXLEVEL )
+	if ( skycam )
+		EntityFire( skycam, "ActivateSkybox" )
+}
 
-	FlagInit( "EntitiesDidLoad" )
-	FlagInit( "ShowExplosionRadius" )  // temp HACK
-	FlagInit( "DeathCircleActive", false ) //(cafe) moved here because Sh_ArenaDeathField_Init is not called in all gamemodes but this flag may
-	FlagInit( "DeathCircleSetup", false ) //(cafe) moved here because Sh_ArenaDeathField_Init is not called in all gamemodes but this flag may
-	FlagInit( "DeathFieldPaused", false ) //(cafe) same reason as above
-	FlagInit( "UsePreciseFinalCircleOverride" ) //(cafe) deathfield system flags
-	FlagInit( "AllowDeathFieldUpdate", true )
-	FlagInit( "DoneCreatingDeathFieldPosition" )
-	FlagInit( "SUR_DeathFieldShrinking" )
-	RegisterSignal( "GenerateDeathFieldData" )
-	RegisterSignal( "DeathField_ShrinkNow" )
-	
-	svGlobal.levelEnt = GetEnt( "worldspawn" )
+table< string, asset > geoFixAssetMap = {}
 
-	LevelVarInit()
+void function PlaylistGeoFix() //Note: This will work on playlists with multiple maps *ONLY* if they are set to use map vars, e.g. Arenas!
+{
+	Assert( GetGamemodeVarOrUseValue( "defaults", "geo_fix_count", "no" ) == "no", "Cannot define geo_fix variables in defaults gamemode vars" )
+	Assert( GetGamemodeVarOrUseValue( "defaults", "geo_fix_0_model", "no" ) == "no", "Cannot define geo_fix variables in defaults gamemode vars" )
 
-	svGlobal.worldspawn = GetEnt( "worldspawn" )
-	svGlobal.worldspawn.kv.startdark = true
+	int numGeoFixes = GetCurrentPlaylistVarInt( "geo_fix_count", 0 )
 
-	SV_CL_Shared_Init()
-	ClientCommands_Init()
-	
-	thread FS_RestartServerAfterSomeTimeWithoutPlayers()
-	
-	FS_ResetMapLighting()
+	for ( int index = 0; index < numGeoFixes; index++ )
+	{
+		string geoFixPrefix = "geo_fix_" + index + "_"
+		string modelString = GetCurrentPlaylistVarString( geoFixPrefix + "model", "" )
+		if ( modelString == "" )
+			continue
+
+		asset modelAsset
+		if ( !(modelString in geoFixAssetMap) )
+		{
+			Warning( "map " + GetMapName() + " has not registered geo fix asset " + modelString )
+			// Attempting to load an invalid model can take down servers.  The following is only for use
+			// if there is a critical case that needs an immediate fix.
+			if ( GetCurrentPlaylistVarBool( geoFixPrefix + "force", false ) )
+				modelAsset = GetKeyValueAsAsset( { kn = modelString }, "kn" )
+			else
+				continue
+		}
+		else
+		{
+			modelAsset = geoFixAssetMap[modelString]
+		}
+
+
+		vector modelOrigin = StringToVector( GetCurrentPlaylistVarString( geoFixPrefix + "origin", "0 0 0" ) )
+		vector modelAngles = StringToVector( GetCurrentPlaylistVarString( geoFixPrefix + "angles", "0 0 0" ) )
+		float modelFadeDist = GetCurrentPlaylistVarFloat( geoFixPrefix + "fade", 15000 )
+
+		CreatePropDynamic( modelAsset, modelOrigin, modelAngles, SOLID_VPHYSICS, modelFadeDist )
+	}
+}
+
+void function RegisterGeoFixAsset( asset modelAsset )
+{
+	geoFixAssetMap[string( modelAsset )] <- modelAsset
+}
+
+void function PlaylistDeathTriggerFix() //Note: This will work on playlists with multiple maps *ONLY* if they are set to use map vars, e.g. Arenas!
+{
+	Assert( GetGamemodeVarOrUseValue( "defaults", "death_trigger_fix_count", "no" ) == "no", "Cannot define death_trigger_fix variables in defaults gamemode vars" )
+
+	int numDeathTriggers = GetCurrentPlaylistVarInt( "death_trigger_fix_count", 0 )
+
+	for ( int index = 0; index < numDeathTriggers; index++ )
+	{
+		string deathTriggerPrefix = "death_trigger_fix_" + index + "_"
+
+		vector triggerOrigin = StringToVector( GetCurrentPlaylistVarString( deathTriggerPrefix + "origin", "0 0 0" ) )
+		vector triggerAngles = StringToVector( GetCurrentPlaylistVarString( deathTriggerPrefix + "angles", "0 0 0" ) )
+		float triggerRadius = GetCurrentPlaylistVarFloat( deathTriggerPrefix + "radius", 0.0  )
+		float triggerAboveHeight = GetCurrentPlaylistVarFloat( deathTriggerPrefix + "aboveHeight", 0.0  )
+		float triggerbelowHeight = GetCurrentPlaylistVarFloat( deathTriggerPrefix + "belowHeight", 0.0  )
+
+
+		entity trig = CreateEntity( "trigger_cylinder" )
+		trig.SetCylinderRadius( triggerRadius )
+		trig.SetAboveHeight( triggerAboveHeight )
+		trig.SetBelowHeight( triggerbelowHeight )
+		trig.SetOrigin( triggerOrigin )
+		trig.SetAngles( triggerAngles  )
+		trig.SetPhaseShiftCanTouch( true )
+		trig.SetEnterCallback( PlaylistDeathTrigger_OnEnter )
+		DispatchSpawn( trig )
+	}
+}
+
+void function PlaylistDeathTrigger_OnEnter( entity trigger, entity ent ) //Based off leviathan stomp trigger but simplified
+{
+	if ( !ent.IsPlayer() )
+		return
+
+	if ( !IsAlive( ent  )  )
+		return
+
+	if ( ent.IsPhaseShiftedOrPending() )
+		ent.PhaseShiftCancel()
+
+	if ( ent.IsPlayer() && ent.IsShadowForm() )
+		ent.TakeDamage( 10000, svGlobal.worldspawn, trigger, { damageSourceId = eDamageSourceId.crushed, scriptType =  DF_BYPASS_SHIELD | DF_SKIPS_DOOMED_STATE }   )
+	else
+		ent.Die( trigger.GetOwner(), trigger, { damageSourceId = eDamageSourceId.crushed, scriptType =  DF_BYPASS_SHIELD | DF_SKIPS_DOOMED_STATE, damageType = DMG_CRUSH }  )
+
+}
+
+void function PlaylistOOBTriggerFix() //Note: This will work on playlists with multiple maps *ONLY* if they are set to use map vars, e.g. Arenas!
+{
+	Assert( GetGamemodeVarOrUseValue( "defaults", "oob_trigger_fix_count", "no" ) == "no", "Cannot define oob_trigger_fix_count variables in defaults gamemode vars" )
+
+	int numOOBTriggers = GetCurrentPlaylistVarInt( "oob_trigger_fix_count", 0 )
+
+	for ( int index = 0; index < numOOBTriggers; index++ )
+	{
+		string oobTriggerPrefix = "oob_trigger_fix_" + index + "_"
+
+		vector triggerOrigin = StringToVector( GetCurrentPlaylistVarString( oobTriggerPrefix + "origin", "0 0 0" ) )
+		vector triggerAngles = StringToVector( GetCurrentPlaylistVarString( oobTriggerPrefix + "angles", "0 0 0" ) )
+		float triggerRadius = GetCurrentPlaylistVarFloat( oobTriggerPrefix + "radius", 0.0  )
+		float triggerAboveHeight = GetCurrentPlaylistVarFloat( oobTriggerPrefix + "aboveHeight", 0.0  )
+		float triggerbelowHeight = GetCurrentPlaylistVarFloat( oobTriggerPrefix + "belowHeight", 0.0  )
+
+		CreateTriggerCylinderNetworked_OutOfBounds( triggerOrigin, triggerRadius, triggerAboveHeight, triggerbelowHeight, triggerAngles )
+	}
 }
 
 void function PrecacheSDKWeapons()

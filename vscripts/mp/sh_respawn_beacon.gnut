@@ -482,7 +482,7 @@ void function RespawnPlayersInDropshipAtPoint( array<entity> players, vector ori
 
     // Warp in now.
     dropship.MakeInvisible()
-    waitthread __WarpInEffectShared( attachResult.position, attachResult.angle, "dropship_warpin", 0.0 )
+    waitthread __WarpInEffectShared( attachResult.position, attachResult.angle, "dropship_warpin", dropship, 0.0 )
     dropship.MakeVisible()
 
     thread PlayAnim( dropship, "dropship_classic_mp_flyin", origin, angles )

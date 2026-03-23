@@ -364,12 +364,12 @@ void function ClMinimap_Init()
 	StatusEffect_RegisterDisabledCallback( eStatusEffect.minimap_jammed, MinimapJammed_Disabled )
 
 	file.fullmap_legendRui = RuiCreate( $"ui/map_legend.rpak", clGlobal.topoFullscreenFullMap, FULLMAP_RUI_DRAW_LAYER, 20 )
-	InitHUDRui( file.fullmap_legendRui, false )
+	InitHUDRui( file.fullmap_legendRui )
 	Fullmap_AddRui( file.fullmap_legendRui )
 
 	// file.fullmap_challengeBoxRui = RuiCreate( $"ui/minimap_challenge_box.rpak", clGlobal.topoFullscreenFullMap, FULLMAP_RUI_DRAW_LAYER, RUI_SORT_SCREENFADE - 1 )
 	//
-	// InitHUDRui( file.fullmap_challengeBoxRui, false )
+	// InitHUDRui( file.fullmap_challengeBoxRui )
 	// Fullmap_AddRui( file.fullmap_challengeBoxRui )
 
 	// create unitframe ruis for the fullmap screen
@@ -385,13 +385,13 @@ void function ClMinimap_Init()
 	file.fullmap_unitframesRui.append( RuiCreate( $"ui/unitframe_survival_v3.rpak", clGlobal.topoFullscreenFullMap, FULLMAP_RUI_DRAW_LAYER, 20 ) )
 	foreach( rui in file.fullmap_unitframesRui )
 	{
-		InitHUDRui( rui, false )
+		InitHUDRui( rui )
 		Fullmap_AddRui( rui )
 	}
 
 	asset fullmap_gamestateRuiAsset = GetFullmapGameStateAsset()
 	file.fullmap_gamestateRui = RuiCreate( fullmap_gamestateRuiAsset, clGlobal.topoFullscreenFullMap, FULLMAP_RUI_DRAW_LAYER, 20 )
-	InitHUDRui( file.fullmap_gamestateRui, false )
+	InitHUDRui( file.fullmap_gamestateRui )
 	Fullmap_AddRui( file.fullmap_gamestateRui )
 	foreach( func in file.onFullmapCreated_Callbacks )
 		func( file.fullmap_gamestateRui )
@@ -432,7 +432,7 @@ void function OnSpectateTargetChanged( entity spectatingPlayer, entity oldSpecta
 var function CreateMinimapRui( asset ruiAsset, int sortKey = 0 )
 {
 	var rui = RuiCreate( ruiAsset, clGlobal.topoFullscreenHudPermanent, RUI_DRAW_HUD, sortKey )
-	InitHUDRui( rui, true )
+	InitHUDRui( rui )
 	return rui
 }
 
@@ -765,7 +765,6 @@ var function Minimap_CommonAdd( asset ruiAsset, int zOrder, vector objPos = < 0,
 void function Minimap_CommonCleanup( var rui )
 {
 	file.minimapOtherRuis.removebyvalue( rui )
-	ReleaseHUDRui( rui )
 	RuiDestroy( rui )
 }
 

@@ -513,7 +513,7 @@ void function WarpinEffect( asset model, string animation, vector origin, vector
 	//we need a temp dropship to get the anim offsets
 	Point start = GetWarpinPosition( model, animation, origin, angles )
 
-	__WarpInEffectShared( start.origin, start.angles, sfx )
+	__WarpInEffectShared( start.origin, start.angles, sfx, null )
 }
 
 function PlayWarpFxOnPlayers( guys )

@@ -541,7 +541,6 @@ global function Script_UserHasEAAccess
 global function GetPlayerUID
 global function GetPlayerNameFromEHI
 global function GetObfuscatedIdFromPlayer
-global function IsLocalPlayerAlive_NonReplay
 global function IsInBleedoutOrRevive
 
 // === Character Abilities ===
@@ -2352,15 +2351,6 @@ string function GetObfuscatedIdFromPlayer( entity player )
 {
 	Warning( "WORKAROUND: GetObfuscatedIdFromPlayer() called - not implemented" )
 	return ""
-}
-
-// Checks if local player is alive and not in replay
-bool function IsLocalPlayerAlive_NonReplay()
-{
-	if ( IsWatchingReplay() )
-		return false
-	entity player = GetLocalClientPlayer()
-	return IsValid( player ) && IsAlive( player )
 }
 
 // Checks if player is in bleedout or being revived

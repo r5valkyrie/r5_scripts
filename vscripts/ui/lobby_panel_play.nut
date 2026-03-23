@@ -3218,18 +3218,14 @@ bool function ChatroomIsVisibleAndNotFocused()
 
 bool function CanInvite()
 {
-	if ( GetParty().amIInThis == false )
-		return false
 
-	if ( GetParty().numFreeSlots == 0 )
-		return false
 
 	#if XBOX_PROG
 		return (GetMenuVarBool( "isFullyConnected" ) && GetMenuVarBool( "Xbox_canInviteFriends" ) && GetMenuVarBool( "Xbox_isJoinable" ))
 	#elseif PLAYSTATION_PROG
 		return GetMenuVarBool( "PS4_canInviteFriends" )
 	#elseif PC_PROG
-		return (GetMenuVarBool( "isFullyConnected" ) && GetMenuVarBool( "ORIGIN_isEnabled" ) && GetMenuVarBool( "ORIGIN_isJoinable" ))
+		return (GetMenuVarBool( "isFullyConnected" ) )
 	#elseif NX_PROG
 		return GetMenuVarBool( "NX_canInviteFriends" )
 	#endif
@@ -4535,7 +4531,7 @@ bool function Lobby_ShowStoryEventChallengesPopup( bool forceShow = false )
 
 		foreach ( ItemFlavor challenge in appropriateSpecialEventChallenges )
 		{
-			                                  
+
 			if ( Challenge_IsAssigned( player, challenge ) && !Challenge_IsComplete( player, challenge ) )
 			{
 				activeChallenges.append( challenge )
@@ -4555,15 +4551,15 @@ bool function Lobby_ShowStoryEventChallengesPopup( bool forceShow = false )
 		if ( hasSeenPersistenceVarNames.len() == 0 )
 			continue
 
-		                                                                                                 
+
 		if ( hasSeenPopupForSomeChallenges )
 		{
 			if ( GetUnixTimestamp() - expect int( GetPersistentVar( "storyEventChallengesPopupLastSeen" ) ) < SECONDS_PER_DAY * 2 && !forceShow )
 				continue
 		}
 
-		                                                                                                          
-		                                                                                                               
+
+
 		int kind = Challenge_GetTimeSpanKind( activeChallenges[0] )
 		if ( kind == eChallengeTimeSpanKind.EVENT_SPECIAL )
 		{
@@ -4591,7 +4587,7 @@ bool function Lobby_ShowStoryEventChallengesPopup( bool forceShow = false )
 
 		string eventTitle = ItemFlavor_GetShortName( event )
 		string eventDesc = ItemFlavor_GetShortDescription( event )
-		                                         
+
 		int eventType  = ItemFlavor_GetType( event )
 		thread function() : ( hasSeenPersistenceVarNames, eventTitle, eventDesc, eventType )
 		{
@@ -4604,9 +4600,9 @@ bool function Lobby_ShowStoryEventChallengesPopup( bool forceShow = false )
 			HudElem_SetRuiArg( popup, "subText", "#S08E04_CHALLENGES_NOTIFICATION" )
 			HudElem_SetRuiArg( popup, "detailText", "" )
 			HudElem_SetRuiArg( popup, "unlockedString", "" )
-			HudElem_SetRuiArg( popup, "buttonImage", $"rui/events/s12e04/challenges_logo", eRuiArgType.IMAGE )                                                        
+			HudElem_SetRuiArg( popup, "buttonImage", $"rui/events/s12e04/challenges_logo", eRuiArgType.IMAGE )
 			HudElem_SetRuiArg( popup, "forceFullIcon", false )
-			                                                             
+
 
 			HudElem_SetRuiArg( popup, "altStyle1Color", <0.55, 0.55, 0.55> )
 			HudElem_SetRuiArg( popup, "altStyle2Color", <1.0, 1.0, 1.0> )
@@ -4627,14 +4623,14 @@ bool function Lobby_ShowStoryEventChallengesPopup( bool forceShow = false )
 				EmitUISound( SOUND_BP_POPUP )
 
 
-			  
+
 			foreach ( string varName in hasSeenPersistenceVarNames )
 				Remote_ServerCallFunction( "ClientCallback_MarkStoryEventChallengesPopupAsSeen", true, varName )
 
 			thread CallToActionPopupThink( popup, 10.0 )
 		}()
 
-		return true                                                              
+		return true
 	}
 
 	return false

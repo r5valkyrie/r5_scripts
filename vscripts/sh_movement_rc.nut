@@ -66,6 +66,23 @@ struct
 
 } file
 
+const table<string,int> keyNameToKeyCodeMap =
+{
+
+}
+
+enum GameMovementImpactEventType
+{
+	GM_IET_LANDING = 0
+	GM_IET_WALLSLAM
+	GM_IET_WALLSLAM_AIR
+	GM_IET_HUMANFOOTSTEP
+	GM_IET_TITANFOOTSTEP
+
+	GM_IET_COUNT
+	GM_IET_INVALID
+}
+
 void function Sh_FS_MovementRecorder_Init()
 {
     if( Playlist() != ePlaylists.Movement_Recorder )
@@ -263,13 +280,7 @@ void function FS_MovementRecorder_SetBindings( entity player )
 
 void function MovementRecorder_SaveCurrentBindings()
 {
-	foreach( keyName, _ in RECORDER_BINDINGS )
-	{
-		int keyCode 	= KeyNameToKeyCode( keyName )
-		string command 	= GetKeyTappedBinding( keyCode )
 
-		file.playerOriginalBindings[ keyName ] <- command
-	}
 }
 
 string function MovementRecorder_GetSavedBindCommand( string keyName )

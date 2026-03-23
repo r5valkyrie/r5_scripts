@@ -224,7 +224,7 @@ void function DelayedInitializePerkTables()
 	WaitFrame()
 	WaitFrame()
 	WaitFrame()
-	InitializePerkTables()
+	//InitializePerkTables()
 	AddCallbackOrMaybeCallNow_OnAllItemFlavorsRegistered( InitializePerkTables )
 }
 

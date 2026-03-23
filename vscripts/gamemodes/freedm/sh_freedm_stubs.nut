@@ -159,7 +159,6 @@ global function HudTargetInfo_Enable
 //global function OpenCharacterSelectMenu
 global function EmitSoundOnEntity_NoTimeScale
 global function EmitUISound
-global function IsLocalPlayerOnTeamSpectator
 //global function CloseCharacterSelectMenu  // Already in sh_character_select.gnut
 global function GameRules_IsTeamIndexValid
 global function SetPlayThroughPOVTransitions
@@ -338,7 +337,6 @@ array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArr
 //void function OpenCharacterSelectMenu( bool browseMode = false, bool showLocked = false, bool isJIP = false ) {}
 var function EmitSoundOnEntity_NoTimeScale( entity ent, string sound ) { EmitSoundOnEntity( ent, sound ); return null }
 void function EmitUISound( string sound ) { EmitSoundOnEntity( GetLocalClientPlayer(), sound ) }
-bool function IsLocalPlayerOnTeamSpectator() { return GetLocalClientPlayer().GetTeam() == TEAM_SPECTATOR }
 //void function CloseCharacterSelectMenu() {}  // Already in sh_character_select.gnut
 bool function GameRules_IsTeamIndexValid( int teamIndex ) { return teamIndex >= 0 && teamIndex < GetCurrentPlaylistVarInt( "max_teams", 20 ) + 2 }
 void function SetPlayThroughPOVTransitions( var soundHandle ) {} // Sound persistence through POV transitions
