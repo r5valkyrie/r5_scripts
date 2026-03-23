@@ -396,7 +396,7 @@ void function ScriptRegisterNetworkedVariable( ... )
 		file.categoryCatalog[ category ].varInfo[ varType ].count++
 		file.categoryCatalog[ category ].varInfo[ varType ].associatedVars.append( varName )
 
-		int maxAllowed 		= GetMaxAllowedForVarType( category, varType )
+		int maxAllowed 		= 512//GetMaxAllowedForVarType( category, varType )
 		
 		bool maxVarRange 	= ( isRangeType && file.categoryCatalog[ category ].rangeVarCount > maxAllowed )
 		bool maxVarTime		= ( isTimeType && file.categoryCatalog[ category ].timeVarCount > maxAllowed )
