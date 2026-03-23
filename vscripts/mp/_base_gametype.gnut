@@ -36,7 +36,7 @@ global struct OutOfBoundsTriggerData
 global struct PostMatchSurveySettings
 {
 	string matchId = ""
-	float sampleRateLowerBound = 1.0
+	float sampleRateLowerBound = 1.0 // Don't post survey by default
 }
 
 struct
@@ -115,7 +115,8 @@ void function CodeCallback_OnPrecache()
 
 	if ( !IsMenuLevel() )
 	{
-		thread delayedGameState()
+		SetGameState( eGameState.WaitingForPlayers )
+		GameRules_BeginMatch()
 
 		file.surveySettings.matchId = lstrip( rstrip( GameRules_GetUniqueMatchID() ) )
 		file.surveySettings.sampleRateLowerBound = RandomFloat( 1.0 )
@@ -125,12 +126,6 @@ void function CodeCallback_OnPrecache()
 	level.ui.uiDisableDev = IsMatchmakingServer()
 }
 
-void function delayedGameState()
-{
-	wait 2
-	SetGameState( eGameState.WaitingForPlayers )
-	GameRules_BeginMatch()
-}
 
 void function AddFlinch( entity attackedEnt, var damageInfo )
 {
@@ -1093,11 +1088,11 @@ void function DoRespawnPlayer( entity player, entity spawnPoint )
 
 bool function ShouldStartSpawn( entity player )
 {
-	//if ( Flag( "ForceStartSpawn" ) )
-	//	return true
+	if ( Flag( "ForceStartSpawn" ) )
+		return true
 
-	//if ( Flag( "IgnoreStartSpawn" ) )
-	//	return false
+	if ( Flag( "IgnoreStartSpawn" ) )
+		return false
 
 	if ( GetGameState() <= eGameState.Prematch )
 		return true
@@ -1635,10 +1630,10 @@ void function GetAndSetRespawnAvailableBits(int index, int mask)
 	Assert( index <= 3 )
 
 	string key = "respawnAvailableBits" + index
-	int baseValue = GetGlobalNetInt(key)
+	int baseValue = GetGlobalNonRewindNetInt(key)
 	baseValue = baseValue | mask
 
-	SetGlobalNetInt(key, baseValue)
+	SetGlobalNonRewindNetInt(key, baseValue)
 }
 
 void function SetRespawnAvailable( entity player )

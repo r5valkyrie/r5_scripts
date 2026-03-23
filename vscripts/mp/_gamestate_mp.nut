@@ -176,7 +176,7 @@ void function SetGameState( int newState )
 	SvDemo_ConsistencyCheckInt( newState )
 
 	SetGameStateChangeTime( Time() )
-	SetGlobalNetInt("gameState", newState)
+	SetGlobalNonRewindNetInt("gameState", newState)
 
 	Signal( svGlobal.levelEnt, "GameStateChanged", { newState = newState } )
 
@@ -437,7 +437,7 @@ void function GameStateEnter_WinnerDetermined()
 			return
 		}
 
-		SetGlobalNetBool("roundScoreLimitComplete", true)
+		SetGlobalNonRewindNetBool("roundScoreLimitComplete", true)
 
 		StatsHook_RoundEnd( roundNum )
 	}
@@ -1825,7 +1825,7 @@ void function GameRulesThink_WinnerDetermined()
 	}
 	else if ( IsRoundBasedGameOver() )
 	{
-		SetGlobalNetBool( "roundScoreLimitComplete", true )
+		SetGlobalNonRewindNetBool( "roundScoreLimitComplete", true )
 		SetGameState( eGameState.Resolution )
 	}
 	else
@@ -2399,7 +2399,7 @@ void function ClearTeamEliminationProtection()
 // Get is defined in utility_shared since we need it on the client too
 void function SetRoundWinningKillEnabled( bool value )
 {
-	SetGlobalNetBool("roundWinningKillReplayEnabled", value)
+	SetGlobalNonRewindNetBool("roundWinningKillReplayEnabled", value)
 }
 
 void function SetRoundWinningKillReplayEntities( entity viewEnt, entity victim, int inflictorEHandle )
@@ -2558,7 +2558,7 @@ void function RoundWinningKillReplay()
 
 void function SetRoundWinningKillReplayPlaying( bool value )
 {
-	SetGlobalNetBool( "roundWinningKillReplayPlaying", value )
+	SetGlobalNonRewindNetBool( "roundWinningKillReplayPlaying", value )
 }
 
 float function GetCustomIntroLength()

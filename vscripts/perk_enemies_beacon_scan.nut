@@ -18,9 +18,9 @@ global function BeaconScanEnemy_ClearEnemiesOnMinimap
 global function ServerToClient_BeaconScanEnemy_Notifications
 global function PlayEffects_SurveyBeacon_Laser
 global function StopEffects_SurveyBeacon_Laser
-                        
-                                                 
-      
+
+
+
 #endif
 
 struct
@@ -34,9 +34,9 @@ struct
 	#if CLIENT
 		array< var > fullMapRuis
 		array< var > minimapRuis
-                         
-                                
-       
+
+
+
 	#endif
 } file
 
@@ -44,7 +44,7 @@ void function Perk_EnemyBeaconScan_Init()
 {
 	#if SERVER || CLIENT //
 		Remote_RegisterClientFunction( "BeaconScanEnemy_ShowEnemiesOnMinimap", "entity", "entity", "entity", "float", -1.0, 50000.0, 15, "float", -1.0, 60.0, 6  )
-		Remote_RegisterClientFunction( "BeaconScanEnemy_ShowBeaconLocationOnMinimap", "typed_entity", "player", "vector", -MAX_MAP_BOUNDS, MAX_MAP_BOUNDS, 32 )
+		//Remote_RegisterClientFunction( "BeaconScanEnemy_ShowBeaconLocationOnMinimap", "entity", "player", "vector", -MAX_MAP_BOUNDS, MAX_MAP_BOUNDS, 32 )
 		Remote_RegisterClientFunction( "ServerToClient_BeaconScanEnemy_Notifications", "entity", "entity" )
 		Remote_RegisterClientFunction( "StopEffects_SurveyBeacon_Laser", "entity", "entity" )
 	#endif
@@ -64,12 +64,12 @@ void function Perk_EnemyBeaconScan_Init()
 		#if CLIENT
 			beaconScanEnemy.worldspaceIconUpOffset = 96
 
-                          
-                                                  
-    
-                                                                              
-    
-        
+
+
+
+
+
+
 		#endif
 		Perks_RegisterClassPerk( beaconScanEnemy )
 
@@ -79,9 +79,9 @@ void function Perk_EnemyBeaconScan_Init()
 			PrecacheModel( $"mdl/props/recon_beacon_dish/recon_beacon_dish.rmdl" )
 		}
 
-		                    
+
 			AddCallback_OnPassiveChanged( ePassives.PAS_UPGRADE_BEACON_SCAN, OnPassiveChangedBeaconScanUpgrade )
-        
+
 		#endif
 
 		#if SERVER
@@ -105,7 +105,7 @@ void function Perk_EnemyBeaconScan_Init()
 	}
 }
 
-                    
+
 #if SERVER || CLIENT
 void function OnPassiveChangedBeaconScanUpgrade( entity player, int passive, bool didHave, bool nowHas )
 {
@@ -115,7 +115,7 @@ void function OnPassiveChangedBeaconScanUpgrade( entity player, int passive, boo
 	}
 }
 #endif
-      
+
 
 bool function EnemyBeaconScan_UseNewBeaconModel()
 {
@@ -124,10 +124,10 @@ bool function EnemyBeaconScan_UseNewBeaconModel()
 
 bool function EnemyBeaconScan_RevealScannerLocation()
 {
-                         
-                                                
-              
-       
+
+
+
+
 
 	return GetCurrentPlaylistVarBool( "perk_enemy_beacon_use_scanner_location", true )
 }
@@ -140,12 +140,12 @@ float function EnemyBeaconScan_WarningRange()
 
 float function EnemyBeaconScan_GetBeaconScanDuration()
 {
-                         
-                                                
-  
-                                                       
-  
-       
+
+
+
+
+
+
 
 	return GetCurrentPlaylistVarFloat( "perk_enemy_beacon_scan_duration", 30.0 )
 }
@@ -179,7 +179,7 @@ void function OnActivate_BeaconScan_Enemy( entity player, string characterName )
 			if ( HasCryptoSword ( player ) )
 			{
 				player1pAnim = "crypto_heirloom"
-				panelAnim    = "crypto_heirloom"				
+				panelAnim    = "crypto_heirloom"
 				player3pAnim = "crypto"
 			}
 			else
@@ -351,13 +351,13 @@ void function BeaconScanEnemy_SurveySuccess( entity beacon, entity player, Surve
 		PlayBattleChatterLineToSpeakerAndTeam( player, calloutLine )
 
 	//SURVIVAL_ShowSurveyRegionOnSquadMaps( player )
-                         
-                                                
-  
-                                                                                                                          
-  
-     
-       
+
+
+
+
+
+
+
 	{
 		BeaconScanEnemy_RevealPlayerOnMinimapAndStartSonar( player, beacon )
 	}
@@ -412,10 +412,10 @@ void function BeaconScanEnemy_RevealPlayerOnMinimapAndStartSonar( 	entity player
 			if( distToBeaconSqr > warningRangeSqr )
 				continue
 
-                        
-                                                  
-             
-         
+
+
+
+
 
 			LockOnWarningStart( enemy )
 			StatusEffect_AddTimed( enemy, eStatusEffect.perk_survey_beacon_scanned_visual, 1.0, scanDuration, 0.5 )
@@ -527,12 +527,12 @@ void function BeaconScanEnemy_ShowEnemiesOnMinimap( entity playerWhoScanned, ent
 	thread BeaconScanEnemy_DisplayEnemiesOnMinimap_Thread( player, beacon, scanRangeParm, scanDurationParm )
 }
 
-                        
-                                                            
- 
-                           
- 
-      
+
+
+
+
+
+
 
 void function BeaconScanEnemy_SateliteScanEnemies( entity player, entity beacon, float scanRangeParm, float timeToStartFade, float timeToEndFade )
 {
@@ -559,16 +559,16 @@ void function BeaconScanEnemy_SateliteScanEnemies( entity player, entity beacon,
 			aliveEnemies.fastremovebyvalue( enemy )
 		}
 	}
-                         
-                                    
-       
+
+
+
 
 	foreach( entity enemy in aliveEnemies )
 	{
-                       
-                                     
-            
-        
+
+
+
+
 
 		// Full map
 		var fRui = FullMap_AddEnemyLocation( enemy )
@@ -595,7 +595,7 @@ void function BeaconScanEnemy_DisplayEnemiesOnMinimap_Thread( entity player, ent
 	float endTime =  curTime + scanDuration
 	float timeToStartFade = curTime + ( scanDuration/2 ) //CRYPTO_TT_ENEMY_MINIMAP_ICON_TIME_BEFORE_FADE
 	float timeToEndFade = endTime//timeToStartFade + CRYPTO_TT_ENEMY_MINIMAP_ICON_FADE_TIME
-	
+
 	OnThreadEnd(
 		function() : ( player )
 		{
@@ -603,49 +603,49 @@ void function BeaconScanEnemy_DisplayEnemiesOnMinimap_Thread( entity player, ent
 		}
 	)
 
-                         
-                                                  
-                                                 
-   
-                                              
-                                       
-   
-       
+
+
+
+
+
+
+
+
 
 	BeaconScanEnemy_SateliteScanEnemies( player, beacon, scanRangeParm, timeToStartFade, timeToEndFade )
 
 	vector pulseOrigin = beacon.GetOrigin()
 
-                         
-                                                
-  
-                                                                                                              
-  
-     
-       
+
+
+
+
+
+
+
 	{
 		FullMap_PlayCryptoPulseSequence( pulseOrigin, true, EnemyBeaconScan_GetBeaconScanDuration() )
 	}
 
-                         
-                                                          
-       
+
+
+
 	while ( Time() < endTime ) //timeToWait > 0 )
 	{
 		if( !IsValid(player) )
 			break
 
-                          
-                  
-                                                                         
-   
-                                    
-                                                  
-                                             
-                                       
-                                                                                                       
-   
-        
+
+
+
+
+
+
+
+
+
+
+
 
 		WaitFrame()
 	}

@@ -1445,9 +1445,9 @@ void function Status_UpdatePlayerUnitFrameRui( entity player, var rui )
 	}
 
 
-	RuiSetAsset( rui, "statusIconTexture", icon )
-	RuiSetColorAlpha( rui, "statusIconBgColor", bgColor, alpha )
-	RuiSetColorAlpha( rui, "statusIconColor", iconColor, alpha )
+	//RuiSetAsset( rui, "statusIconTexture", icon )
+	//RuiSetColorAlpha( rui, "statusIconBgColor", bgColor, alpha )
+	//RuiSetColorAlpha( rui, "statusIconColor", iconColor, alpha )
 }
 
 void function OnHealthPickupTypeChanged( entity player, int kitType )

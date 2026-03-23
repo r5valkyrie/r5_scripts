@@ -594,11 +594,11 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "healingKitEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_DoUltAccelScreenFx" )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_SetClientChargeTime", "int", 0, 64, "float", 0.0 , 100.0, 32)
-
+		ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerBootsOnGround" )
 	ScriptRegisterNetworkedVariable( "inventoryEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
 	ScriptRegisterNetworkedVariable( "pingEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
-
+			ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateSurveyBeaconHUDVisibility" )
 	ScriptRegisterNetworkedVariable( "kills", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "latency", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "damage", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
@@ -835,7 +835,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "reviveEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRegisterNetworkedVariable( "reviveType", SNDC_PLAYER_GLOBAL, SNVT_UNSIGNED_INT, 0 )
 	ScriptRegisterNetworkedVariable( "revivePlayerHealer", SNDC_PLAYER_GLOBAL, SNVT_ENTITY )
-	ScriptRegisterNetworkedVariable( "tutorialContext", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, -1 )
+	ScriptRegisterNetworkedVariable( "tutorialContext", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
 	ScriptRegisterNetworkedVariable( "spectatorTargetCount", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
 	// survival_ship.gnut
@@ -863,7 +863,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptPingLootMarvin", "entity" )
 	
 	// Client-side helper (not permissive)
-	ScriptRegisterNetworkedVariable( "IsAdmin", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	ScriptRegisterNetworkedVariable( "IsAdmin", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	ScriptRemote_RegisterUIFunction( "UICallback_AdminStatus", "bool" )
 	
 	// Player stats tracker - todo(cafe): clean up legacy tracker related code

@@ -3299,23 +3299,6 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 
 
 
-		if( UpgradeCore_IsEnabled() )
-		{
-			RuiSetBool( rui, "showProgressBar", true )
-			UpgradeCore_UpdateSelectedUpgradeRui( rui, player )
-			UpgradeCore_UpdateXpRui( rui, player )
-
-
-			int extraShields = GetPlayerExtraShields( player )
-			RunUIScript( "SurvivalInventoryMenu_SetEquipmentButtonFxState", "armor", ( extraShields > 0 ) )
-			RunUIScript( "RTKLegendUpgradesArmorCore_UpdateArmorCoreDataModel" )
-
-			RuiSetInt( rui, "armorShieldCapacity", player.GetShieldHealthMax() )
-			RuiSetInt( rui, "playerExtraShield", GetPlayerExtraShields( player ) )
-			RuiSetInt( rui, "playerExtraShieldTier", GetPlayerExtraShieldsTier( player ) )
-		}
-
-
 		SquadLeader_UpdateUnitFrameRui( player, rui )
 		Status_UpdatePlayerUnitFrameRui( player, rui )
 

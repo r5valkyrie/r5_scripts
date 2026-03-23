@@ -119,9 +119,9 @@ void function InitGameState()
 	//
 }
 
-void function SetRoundBased( state )
+void function SetRoundBased( bool state )
 {
-	level.nv.roundBased = state
+	SetGlobalNonRewindNetBool("roundBased", state)
 }
 
 int function GetDifficultyLevel()

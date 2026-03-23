@@ -100,7 +100,7 @@ void function SV_CL_Init()
 	Decoy_Init()
 	ShEHI_LevelInit_End()
 	Perks_Init()
-
+	Perk_BeaconScan_Init()
 	ClientSidePickups_Init()
 	GrappleWeaponInit()
 	// ShInfoCords_Init()
@@ -142,6 +142,8 @@ void function SV_CL_Init()
 	ShPassives_Init()
 	ShCharacterAbilities_LevelInit()
 	ShCharacterCosmetics_LevelInit()
+
+
 	SeasonQuest_SharedInit()
 	ShCalEvent_LevelInit()
 	CollectionEvents_Init()
@@ -160,6 +162,7 @@ void function SV_CL_Init()
 	ShBattlePass_LevelInit()
 	ShSceneCapture_LevelInit()
 	ShCommsMenu_Init()
+	ShEmotes_Init()
 	SPDialogueInit()
 	MeleeShared_Init()
 	MeleeSyncedShared_Init()
@@ -596,6 +599,8 @@ void function Shared_Lobby_Init()
 	ShEHI_LevelInit_End()
 
 	SURVIVAL_Loot_All_InitShared() // need this to precache the weapons
+
+	Perk_BeaconScan_Init()
 
 	#if SERVER
 		Server_Lobby_Init()

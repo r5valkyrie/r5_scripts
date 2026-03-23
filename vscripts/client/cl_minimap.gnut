@@ -10,7 +10,6 @@ global function CreateMinimapRui
 global function Minimap_SetSizeScale
 global function Minimap_IsUsingLargeMinimap
 global function Minimap_SetBlankBackground
-global function MiniMapIsDisabled
 global function Minimap_SetNorthFacing
 global function Minimap_UpdateNorthFacingOnSettingChange
 
@@ -1563,18 +1562,6 @@ void function ServerCallback_RingPulseMinimap( vector origin, float radius, floa
 void function CinematicEventFlagChanged( entity player )
 {
 	Minimap_UpdateMinimapVisibility( player )
-}
-
-
-bool function MiniMapIsDisabled()
-{
-	if ( GetCurrentPlaylistVarBool( "disable_minimap", false ) )
-		return true
-		
-	if( expect int( GetServerVar( "minimapState" ) ) == eMinimapState.Hidden )
-		return true
-
-	return false
 }
 
 

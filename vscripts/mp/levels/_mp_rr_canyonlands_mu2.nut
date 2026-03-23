@@ -22,7 +22,6 @@ void function CodeCallback_MapInit()
 	SURVIVAL_SetPlaneHeight( 24000 )
 	SURVIVAL_SetAirburstHeight( 8000 )
 	SURVIVAL_SetMapCenter( <0, 0, 0> )
-    SURVIVAL_SetMapDelta( 4900 )
 
 	if (GetMapName() == "mp_rr_canyonlands_mu2_mv" )
 		MapZones_RegisterDataTable( $"datatable/map_zones/zones_mp_rr_canyonlands_mu2_mv.rpak" )

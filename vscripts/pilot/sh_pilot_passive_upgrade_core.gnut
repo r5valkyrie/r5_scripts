@@ -865,7 +865,7 @@ bool function UpgradeCore_ShowUpgradesUnitframe()
 
 bool function UpgradeCore_IsEnabled()
 {
-	return tunings.isEnabled
+	return false// s16 rui does not have upgrade core rui stuff tunings.isEnabled
 }
 
 bool function UpgradeCore_ArmorTiedToUpgrades()

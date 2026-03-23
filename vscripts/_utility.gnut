@@ -799,42 +799,42 @@ void function TimeOut( float time )
 
 void function SetReplayDisabled( bool disabled )
 {
-	SetGlobalNetBool("replayDisabled", disabled)
+	SetGlobalNonRewindNetBool("replayDisabled", disabled)
 }
 
 void function SetSwitchedSides( int value )
 {
-	SetGlobalNetInt( "switchedSides", value )
+	SetGlobalNonRewindNetInt( "switchedSides", value )
 }
 
 void function SetGameStateChangeTime(float time)
 {
-	SetGlobalNetTime( "gameStateChangeTime", time )
+	SetGlobalNonRewindNetTime( "gameStateChangeTime", time )
 }
 
 void function SetGameStartTime(float time)
 {
-	SetGlobalNetTime( "gameStartTime", time )
+	SetGlobalNonRewindNetTime( "gameStartTime", time )
 }
 
 void function SetGameEndTime( float time  )
 {
-	SetGlobalNetTime( "gameEndTime", time )
+	SetGlobalNonRewindNetTime( "gameEndTime", time )
 }
 
 void function SetRoundStartTime( float time )
 {
-	SetGlobalNetTime( "roundStartTime", time )
+	SetGlobalNonRewindNetTime( "roundStartTime", time )
 }
 
 void function SetRoundEndTime( float time )
 {
-	SetGlobalNetTime( "roundEndTime", time )
+	SetGlobalNonRewindNetTime( "roundEndTime", time )
 }
 
 void function SetRoundsPlayed( int round )
 {
-	SetGlobalNetInt("roundsPlayed", round)
+	SetGlobalNonRewindNetInt("roundsPlayed", round)
 }
 
 void function SetWinningTeam(int team)
@@ -847,7 +847,7 @@ void function SetWinningTeam(int team)
 	}
 	// End Debug
 
-	SetGlobalNetInt("winningTeam", team)
+	SetGlobalNonRewindNetInt("winningTeam", team)
 }
 
 string function GetActiveWeaponClass( entity player, int activeSlot )
@@ -1076,7 +1076,8 @@ entity function CreateGameText( string msg, float xPos, float yPos, int channel,
 
 // pass the origin where the player's feet would be
 // tests a player sized box for any collision and returns true only if it's clear
-bool function PlayerCanTeleportHere( entity player, vector testOrg, entity ignoreEnt = null ) //TODO: This is a copy of SP's PlayerPosInSolid(). Not changing it to avoid patching SP. Merge into one function next game
+bool function PlayerCanTeleportHere( entity player, vector testOrg, entity ignoreEnt = null )
+//TODO: This is a copy of SP's PlayerPosInSolid(). Not changing it to avoid patching SP. Merge into one function next game
 {
 	int solidMask = TRACE_MASK_PLAYERSOLID
 	vector mins
@@ -1111,7 +1112,7 @@ enum eAttach
 void function LoadDiamond()
 {
 	printl( " " )
-	printl( "----------------------------" )
+	printl( " " )
 	printl( " " )
 
 	// Draw a diamond of a random size and phase (of the moon) so it is easy to separate sections of logs.
@@ -1161,43 +1162,43 @@ void function LoadDiamond()
 			}
 		}
 
-			printl( msg )
+		printl( msg )
+	}
+
+	for ( int i = random_spread - 1; i >= 0; i-- )
+	{
+		msg = ""
+
+		for ( int p = 0; p <= random_spread - i; p++ )
+		{
+			msg = msg + " "
 		}
 
-		for ( int i = random_spread - 1; i >= 0; i-- )
+
+		for ( int p = 0; p <= i * 2; p++ )
 		{
-			msg = ""
-
-			for ( int p = 0; p <= random_spread - i; p++ )
+			if ( p == i * 2 || p == 0 )
 			{
-				msg = msg + " "
+				msg = msg + "*"
 			}
-
-
-			for ( int p = 0; p <= i * 2; p++ )
+			else
 			{
-				if ( p == i * 2 || p == 0 )
+				if ( compare_func( p, int( i * random_fullness ) ) )
 				{
 					msg = msg + "*"
 				}
 				else
 				{
-					if ( compare_func( p, int( i * random_fullness ) ) )
-					{
-						msg = msg + "*"
-					}
-					else
-					{
-						msg = msg + " "
-					}
+					msg = msg + " "
 				}
 			}
-
-			printl( msg )
 		}
 
+		printl( msg )
+	}
+
 	printl( " " )
-	printl( "----------------------------" )
+	printl( " " )
 	printl( " " )
 }
 
@@ -1207,14 +1208,14 @@ void function ClearDroppedWeapons( float delayTime = 0.0 )
 	if ( delayTime > 0 )
 		wait delayTime
 
-	bool onlyNotOwnedWeapons = true // don't get the ones in guys' hands
-	array<entity> weapons = GetWeaponArray( onlyNotOwnedWeapons )
+	bool onlyNotOwnedWeapons = true  // don't get the ones in guys' hands
+	array<entity> weapons    = GetWeaponArray( onlyNotOwnedWeapons )
 
 	foreach ( weapon in weapons )
 	{
 		// don't clean up weapon pickups that were placed in leveled
-		int spawnflags = expect string( weapon.kv.spawnflags ).tointeger()
-		if ( spawnflags & SF_WEAPON_START_CONSTRAINED )
+		int spawnflags = int( expect string( weapon.kv.spawnflags ) )
+		if ( IsBitFlagSet( spawnflags, SF_WEAPON_START_CONSTRAINED ) )
 			continue
 
 		weapon.Destroy()
@@ -1261,21 +1262,21 @@ void function RestockPlayerAmmo_Silent( entity player = null )
 	RestockPlayerAmmo( player, true )
 }
 
-void function RestockPlayerAmmo( entity player = null, bool isSilent = false )
+void function RestockPlayerAmmo( entity onlyplayer = null, bool isSilent = false )
 {
 	array<entity> players
-	if ( IsAlive( player ) )
-		players.append( player )
+	if ( IsAlive( onlyplayer ) )
+		players.append( onlyplayer )
 	else
 		players = GetPlayerArray_Alive()
 
-	// foreach( player in players )
-	// {
-	// 	player.RefillAllAmmo()
+	foreach ( player in players )
+	{
+		player.RefillAllAmmo()
 
-	// 	if ( !isSilent )
-	// 		EmitSoundOnEntityOnlyToPlayer( player, player, "Coop_AmmoBox_AmmoRefill" )
-	// }
+		if ( !isSilent )
+			EmitSoundOnEntityOnlyToPlayer( player, player, "Coop_AmmoBox_AmmoRefill" )
+	}
 }
 
 entity function CreateLightSprite( vector origin, vector angles, string lightcolor = "255 0 0", float scale = 0.5 )
@@ -3565,18 +3566,17 @@ void function UpdateBadRepPresent()
 {
 	array<entity> players = GetPlayerArray()
 	bool found = false
-/*	always set to false for now
-	foreach ( player in players )
-	{
-		if ( player.HasBadReputation() )
+	/*	always set to false for now
+		foreach ( player in players )
 		{
-			found = true
-			break
+			if ( player.HasBadReputation() )
+			{
+				found = true
+				break
+			}
 		}
-	}
-*/
-	level.nv.badRepPresent = found
-	level.ui.badRepPresent = found
+	*/
+	SetGlobalNonRewindNetBool("badRepPresent", found)
 }
 
 void function Dev_PrintMessage( entity player, string text, string subText = "", float duration = 7.0, string soundAlias = "" )

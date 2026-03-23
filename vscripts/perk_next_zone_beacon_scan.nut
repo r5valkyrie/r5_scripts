@@ -55,9 +55,9 @@ void function Perk_NextZoneBeaconScan_Init()
 			PrecacheModel($"mdl/props/controller_console/controller_console.rmdl")
 		}
 
-		                    
+
 			AddCallback_OnPassiveChanged( ePassives.PAS_UPGRADE_CONSOLE_SCAN, OnPassiveChangedConsoleScanUpgrade )
-        
+
 		#endif
 
 		#if CLIENT
@@ -72,7 +72,7 @@ void function Perk_NextZoneBeaconScan_Init()
 
 }
 
-                    
+
 #if SERVER || CLIENT
 void function OnPassiveChangedConsoleScanUpgrade( entity player, int passive, bool didHave, bool nowHas )
 {
@@ -82,7 +82,7 @@ void function OnPassiveChangedConsoleScanUpgrade( entity player, int passive, bo
 	}
 }
 #endif
-      
+
 
 
 bool function SurveyBeacons_ShouldUseNextZoneSurveyBeaconProp()
@@ -436,9 +436,9 @@ void function Recon_SurveySuccess( entity beacon, entity player, SurveyBeaconDat
 
 	SURVIVAL_ShowSurveyRegionOnSquadMaps( player )
 
-                         
-                                                         
-       
+
+
+
 
 	Remote_CallFunction_NonReplay( player, "ServerCallback_SurveyBeaconNotifications", beacon, ePathfinderNotifications.TEAM_SUCCESS )
 

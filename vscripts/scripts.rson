@@ -703,7 +703,7 @@ Scripts:
 	_control_panel.gnut
 ]
 
-When: "SERVER || CLIENT"
+When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	perk_beacon_scan.nut

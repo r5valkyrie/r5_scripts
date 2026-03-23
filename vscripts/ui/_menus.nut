@@ -551,6 +551,8 @@ void function UICodeCallback_FullyConnected( string levelname )
 		ShDevUtility_Init()
 	//#endif
 
+
+
 	ShDevWeapons_Init()
 	ShEHI_LevelInit_Begin()
 	ShPakRequests_LevelInit()
@@ -600,7 +602,8 @@ void function UICodeCallback_FullyConnected( string levelname )
 
 	//InitItems()
 	ModSystem_RunCallbacks()//MOD SYSTEM CALLBACK
-
+	Perks_Init()
+	Perk_BeaconScan_Init()
 	SURVIVAL_Loot_All_InitShared()
 	NewScriptInit_Level()
 
