@@ -1861,7 +1861,7 @@ void function CL_VoidRingHintThread( entity player )
 		//	break
 
 		vector eyePos      = player.EyePosition()
-		float frontierDist = DeathField_PointDistanceFromFrontier( player.EyePosition() )
+		float frontierDist = DeathField_PointDistanceFromFrontier( player.EyePosition(), player.DeathFieldIndex() )
 		entity heldGadget = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
 		entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 		int hasDownedState = BleedoutState_GetPlayerBleedoutState( player )

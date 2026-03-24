@@ -1512,7 +1512,7 @@ int function SupportBin_GetPlayerSurvivalNeed( entity player )
 	int survivalItemStatus = SupportBin_GetPlayerSurvivalItemStatus( player )
 
 	//if player does not have heat shield and is in the deathfield
-	if( survivalItemStatus != SurvivalStatusType.SURIVIAL_LOOT_HAS_HS && ( DeathField_PointDistanceFromFrontier( player.GetOrigin() ) <= 0.0 ) )
+	if( survivalItemStatus != SurvivalStatusType.SURIVIAL_LOOT_HAS_HS && ( DeathField_PointDistanceFromFrontier( player.GetOrigin(), player.DeathFieldIndex() ) <= 0.0 ) )
 	{
 		if( !( SupportBin_ValidateSurvivalNeedAgainstTeamInvetory() && teamHasHS ) )
 		{
@@ -1644,7 +1644,7 @@ void function Thread_SupportBin_TrackPlayerRinglocation( entity player )
 		if ( !IsValid( player ) )
 			return
 
-		if ( DeathField_PointDistanceFromFrontier( player.GetOrigin() ) >= 0.0 )
+		if ( DeathField_PointDistanceFromFrontier( player.GetOrigin(), player.DeathFieldIndex() ) >= 0.0 )
 		{
 			player.Signal( "Support_Bin_EnteredRing" )
 		}

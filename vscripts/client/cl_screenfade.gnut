@@ -237,7 +237,7 @@ void function PlayerDeathfieldSoundThread()
 		else if ( !IsAlive( localViewPlayer ) )
 		{
 		}
-		else if ( !DeathField_IsActive() )
+		else if ( !DeathField_IsActive( 0 ) )
 		{
 		}
 		else if ( (ourPlayer != null) && (ourPlayer != localViewPlayer) )
@@ -247,7 +247,7 @@ void function PlayerDeathfieldSoundThread()
 		{
 			//eye
 			vector eyePos      = localViewPlayer.EyePosition()
-			float frontierDist = DeathField_PointDistanceFromFrontier( eyePos )
+			float frontierDist = DeathField_PointDistanceFromFrontier( eyePos, 0 )
 			if ( arePlaying && (frontierDist < STOP_PLAYING_DIST) )
 				shouldPlay = true
 			if ( !arePlaying && (frontierDist < START_PLAYING_DIST) )

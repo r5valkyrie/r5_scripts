@@ -4001,7 +4001,7 @@ void function PlayerAttachedToWorkbenchThread( entity cluster, entity bench, ent
 void function Crafting_RingLogic_Thread(entity player)
 {
 	player.EndSignal( "CraftingPlayerDetached" )
-	while ( DeathField_PointDistanceFromFrontier( player.GetOrigin() ) > 0 )
+	while ( DeathField_PointDistanceFromFrontier( player.GetOrigin(), player.DeathFieldIndex() ) > 0 )
 	{
 		WaitFrame()
 	}
@@ -5145,7 +5145,7 @@ bool function Crafting_Workbench_IsNotBusy( entity player, entity ent, int useFl
 
 	if( Crafting_CraftersDisabledInDeathField() )
 	{
-		if ( DeathField_PointDistanceFromFrontier( ent.GetOrigin() ) <= 0 )
+		if ( DeathField_PointDistanceFromFrontier( ent.GetOrigin(), player.DeathFieldIndex() ) <= 0 )
 		{
 			return false
 		}

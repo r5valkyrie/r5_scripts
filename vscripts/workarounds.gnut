@@ -4445,3 +4445,4 @@ void function Flowstate_ApplyModifiedMovementToPlayer( entity player )
 {
 	Warning( "Flowstate_ApplyModifiedMovementToPlayer - stub (movement system not loaded)" )
 }
+

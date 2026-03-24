@@ -807,7 +807,7 @@ bool function RingLethality_Is_Player_InDeathfield( entity player )
 	if( !IsAlive( player ) )
 		return false
 
-	float distanceFromDeathfieldFrontier = DeathField_PointDistanceFromFrontier( player.GetOrigin() )
+	float distanceFromDeathfieldFrontier = DeathField_PointDistanceFromFrontier( player.GetOrigin(), player.DeathFieldIndex() )
 	return( distanceFromDeathfieldFrontier <= 0 )
 }
 

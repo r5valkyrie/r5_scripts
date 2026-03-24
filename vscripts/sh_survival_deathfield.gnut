@@ -2088,7 +2088,7 @@ void function DEV_DrawCurrentRingLocation( int realm = -1, float time = 40.0 )
 	{
 		DeathFieldStageData data = file.deathFieldStages[ _realm ][i]
 
-		if ( DeathField_IsActive() )
+		if ( DeathField_IsActive( 0 ) )
 		{
 			//DebugDrawCircle( data.endPos, <0, 0, 1>, data.endRadius, <255, 0, 0>, true, time )
 			return
@@ -2136,7 +2136,7 @@ void function DEV_PrintCurrentRingInfo( int realm = -1, float time = 50.0 )
 	{
 		DeathFieldStageData data = file.deathFieldStages[ _realm ][i]
 
-		if ( DeathField_IsActive() )
+		if ( DeathField_IsActive( 0 ) )
 		{
 			//PRINT RING INDEX & RING RADIUS (METERS) & RING RADIUS (UNITS) & RING DAMGE VALUE & RING CLOSE TIME
 			printt( "Round: " + i + " | Radius: " + data.endRadius * INCHES_TO_METERS + " meters" + " / " + data.endRadius + " units" + " | DPS: " + data.percentDamagePerTick + " | Close Time: " + data.shrinkDuration + " seconds" )
@@ -3642,7 +3642,7 @@ void function Cl_DeathFieldThink( entity deathField )
 			file.trackingObserverDeathfield = true
 		}
 
-		int dIndex 		= 0 /*DeathFieldIndex stub*/
+		int dIndex 		= GetLocalViewPlayer().DeathFieldIndex()
 		int stage       = SURVIVAL_GetCurrentDeathFieldStage( 0 )
 		float startTime = GetGlobalNetTime( "nextCircleStartTime" ) + MARGIN_WAIT_TIME
 
@@ -3668,7 +3668,7 @@ void function Cl_DeathFieldThink( entity deathField )
 			frac          = clamp( unclampedFrac, 0.0, 1.0 )
 		}
 
-		float radius        = DeathField_GetRadiusForNow()
+		float radius        = DeathField_GetRadiusForNow( dIndex )
 		float radiusScale   = Cl_Deathfield_GetRadiusScale()
 
 		DeathFieldStageData deathFieldData = file.deathFieldStageData[stage]
@@ -4002,7 +4002,7 @@ void function SURVIVAL_SetPlayerRealm( entity player, int realm )
 {
 	player.RemoveFromAllRealms()
 	player.AddToRealm( realm )
-	/*SetDeathFieldIndex stub*/
+	player.SetDeathFieldIndex( file.deathFieldData[ realm ].codeIndex )
 }
 #endif // SERVER
 
@@ -4072,8 +4072,8 @@ float function Cl_SURVIVAL_GetDeathFieldCurrentRadius()
 #if CLIENT
 bool function Cl_SURVIVAL_PosInsideDeathField( vector position )
 {
-	int dIndex = 0 /*DeathFieldIndex stub*/
-	bool isInside = DeathField_PointDistanceFromFrontier( position ) > 0.0
+	int dIndex = GetLocalViewPlayer().DeathFieldIndex()
+	bool isInside = DeathField_PointDistanceFromFrontier( position, dIndex ) > 0.0
 	return isInside
 }
 #endif // CLIENT
@@ -4276,14 +4276,14 @@ bool function SURVIVAL_PosInSafeZone( int realm, vector origin, float offset = 0
 
 bool function SURVIVAL_PosInsideDeathField( int realm, vector origin )
 {
-	bool isInside = (DeathField_PointDistanceFromFrontier( origin ) > 0.0)
+	bool isInside = (DeathField_PointDistanceFromFrontier( origin, 0 ) > 0.0)
 	return isInside
 }
 
 
 float function SURVIVAL_GetDistanceInsideDeathField( int realm, vector origin )
 {
-	float dist = DeathField_PointDistanceFromFrontier( origin )
+	float dist = DeathField_PointDistanceFromFrontier( origin, 0 )
 	return dist
 }
 
@@ -4417,7 +4417,7 @@ bool function ShouldShowDeathFieldEffects( entity player )
 
 	if ( player.ContextAction_IsInVehicle() )
 	{
-		if ( DeathField_PointDistanceFromFrontier( player.EyePosition() ) >= 0 )
+		if ( DeathField_PointDistanceFromFrontier( player.EyePosition(), player.DeathFieldIndex() ) >= 0 )
 			shouldShow = false
 
                                 
@@ -4428,7 +4428,7 @@ bool function ShouldShowDeathFieldEffects( entity player )
 	}
 	else
 	{
-		if ( DeathField_PointDistanceFromFrontier( player.GetOrigin() ) >= 0 )
+		if ( DeathField_PointDistanceFromFrontier( player.GetOrigin(), player.DeathFieldIndex() ) >= 0 )
 			shouldShow = false
 
                                 
@@ -4500,7 +4500,7 @@ void function DisplayHolsterWeaponHint()
 	if ( activeWeapon == viewPlayer.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 ) )
 		return
 
-	if ( DeathField_PointDistanceFromFrontier( viewPlayer.GetOrigin() ) > 0 )
+	if ( DeathField_PointDistanceFromFrontier( viewPlayer.GetOrigin(), viewPlayer.DeathFieldIndex() ) > 0 )
 		return
 
 	if ( Bleedout_IsBleedingOut( viewPlayer ) )

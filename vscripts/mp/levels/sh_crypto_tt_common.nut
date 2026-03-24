@@ -851,12 +851,12 @@ void function DrawDeathFieldOnCryptoTTMap()
 	FlagWait( "DeathFieldCalculationComplete" )
 
 	DeathFieldData dfData = SURVIVAL_GetDeathFieldData( 0 )
-	float radius = DeathField_GetRadiusForTime( Time() )
+	float radius = DeathField_GetRadiusForTime( Time(), 0 )
 
 	// Don't draw deathfield until it's within a more reasonable size
 	while ( radius > CRYPTO_TT_HOLO_MAP_DEATHFIELD_MAX_DRAW_SIZE )
 	{
-		radius = DeathField_GetRadiusForTime( Time() )
+		radius = DeathField_GetRadiusForTime( Time(), 0 )
 		WaitFrame()
 	}
 
@@ -865,7 +865,7 @@ void function DrawDeathFieldOnCryptoTTMap()
 	while ( true )
 	{
 		dfData = SURVIVAL_GetDeathFieldData( 0 )
-		radius = DeathField_GetRadiusForTime( Time() )
+		radius = DeathField_GetRadiusForTime( Time(), 0 )
 
 		UpdateWorldCircleOnCryptoMap( fxCircleData, dfData.center, radius )
 

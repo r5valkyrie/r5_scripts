@@ -1113,9 +1113,9 @@ void function DeployableMedic_PlayerOnDamage( entity player, var damageInfo )
 	{
 		case eDamageSourceId.outOfBounds:
 		case eDamageSourceId.deathField:
-			if ( DeathField_IsActive() )
+			if ( DeathField_IsActive( player.DeathFieldIndex() ) )
 			{
-				float stormDist = DeathField_PointDistanceFromFrontier( player.EyePosition() )
+				float stormDist = DeathField_PointDistanceFromFrontier( player.EyePosition(), player.DeathFieldIndex() )
 				if ( stormDist > 0 )
 					Signal( player, "DeployableMedic_HealAborted" )
 					break
