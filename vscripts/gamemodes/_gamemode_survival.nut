@@ -6903,7 +6903,7 @@ void function ClientCallback_Sur_EquipGadget( entity player, int index )
 
 		if ( data.ref.find( COPYCAT_NAME ) == 0 )
 		{
-			//player.TrySelectOffhand( OFFHAND_GENERIC ) // S3: entity method not available
+			player.TrySelectOffhand( OFFHAND_GENERIC )
 			return
 		}
 

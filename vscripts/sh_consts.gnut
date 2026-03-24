@@ -1225,6 +1225,8 @@ global const OFFHAND_ANTIRODEO		= 2
 global const OFFHAND_EQUIPMENT		= 3
 global const OFFHAND_INVENTORY		= 4
 global const OFFHAND_MELEE			= 5
+global const OFFHAND_EMOTE			= 6
+global const OFFHAND_GENERIC		= 7
 
 global const OFFHAND_TACTICAL = OFFHAND_LEFT
 global const OFFHAND_ULTIMATE = OFFHAND_INVENTORY
