@@ -240,7 +240,7 @@ global function RankedTrials_GetAssignedTrial
 global function ClearCustomPlayerInfoTreatment
 global function ClearCustomPlayerInfoCharacterIcon
 global function IsBallisticUltActive
-global function GetWeaponTypeFlags_Safe
+
 global function GetTeamJIPUnitFrames
 global function GetConduitShieldRui
 global function TitanSword_GetFuelRui
@@ -2411,11 +2411,7 @@ bool function IsBallisticUltActive( entity player )
 	return false
 }
 
-int function GetWeaponTypeFlags_Safe( entity weapon )
-{
-	Warning( "STUB: GetWeaponTypeFlags_Safe" )
-	return 0
-}
+// GetWeaponTypeFlags_Safe removed — use weapon.GetWeaponTypeFlags() directly
 
 table function GetTeamJIPUnitFrames()
 {

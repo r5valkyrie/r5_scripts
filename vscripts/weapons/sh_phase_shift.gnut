@@ -106,16 +106,7 @@ struct
 {
 } file
 
-global int PHASETYPE_DEFAULT = 1
-global int PHASETYPE_BALANCE = 2
-global int PHASETYPE_TUNNEL = 3
-global int PHASETYPE_DASH = 4
-global int PHASETYPE_GATE = 5
-global int PHASETYPE_BREACH = 6
-global int PHASETYPE_TRANSPORT = 7
-global int PHASETYPE_DOOR = 8
-global int PHASETYPE_TELEPORTER = 9
-global int PHASETYPE_REWIND = 10
+// PHASETYPE_* constants registered as engine natives (0-9)
 
 void function CodeCallback_EnterPhaseShift( entity ent )
 {

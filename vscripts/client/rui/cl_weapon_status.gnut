@@ -2540,7 +2540,7 @@ void function UpdateOffhandRuiCommon( var rui, entity player, entity weapon, int
 
 			RuiSetInt( rui, "segments", maxAmmoReady / (ammoPerShot * burstCount ) )
 
-			bool IsUltimateWeapon = IsBitFlagSet( GetWeaponTypeFlags_Safe( weapon ), WPT_ULTIMATE )
+			bool IsUltimateWeapon = IsBitFlagSet( weapon.GetWeaponTypeFlags(), WPT_ULTIMATE )
 			bool showingSegmentsOnUlts = GetCurrentPlaylistVarBool( "showing_segments_on_multi_ammo_ult", true )
 			if ( IsUltimateWeapon && !showingSegmentsOnUlts )
 				RuiSetInt( rui, "segments", 0 )
@@ -2725,8 +2725,8 @@ void function UpdateWeaponEnergizeRui( entity player, entity weapon, asset cross
 		entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 		if( IsValid ( activeWeapon ) )
 		{
-			bool IsPrimaryWeapon = IsBitFlagSet( GetWeaponTypeFlags_Safe( activeWeapon ), WPT_PRIMARY )
-			bool IsUltimateWeapon = IsBitFlagSet( GetWeaponTypeFlags_Safe( activeWeapon ), WPT_ULTIMATE )
+			bool IsPrimaryWeapon = IsBitFlagSet( activeWeapon.GetWeaponTypeFlags(), WPT_PRIMARY )
+			bool IsUltimateWeapon = IsBitFlagSet( activeWeapon.GetWeaponTypeFlags(), WPT_ULTIMATE )
 			if ( IsPrimaryWeapon || IsUltimateWeapon ) // IsEnergizeWeapon not in S3
 				break
 		}
@@ -2885,7 +2885,7 @@ void function OnPrimaryWeaponStatusUpdate_Energize( entity selectedWeapon, var w
 
 	
 	entity activeWeapon = GetLocalViewPlayer().GetActiveWeapon( eActiveInventorySlot.mainHand  )
-	bool switchToMeleeOrGrenade = IsBitFlagSet( GetWeaponTypeFlags_Safe( selectedWeapon ), ( WPT_VIEWHANDS | WPT_GRENADE ) )
+	bool switchToMeleeOrGrenade = IsBitFlagSet( selectedWeapon.GetWeaponTypeFlags(), ( WPT_VIEWHANDS | WPT_GRENADE ) )
 	// Energize weapon check disabled - IsEnergizeWeapon not in S3
 }
 
@@ -2894,7 +2894,7 @@ bool function ShouldShowChargeBar_Energize( entity selectedWeapon, var weaponRui
 	
 	
 	entity activeWeapon = GetLocalViewPlayer().GetActiveWeapon( eActiveInventorySlot.mainHand )
-	bool switchToMeleeOrGrenade = IsBitFlagSet( GetWeaponTypeFlags_Safe( selectedWeapon ), ( WPT_VIEWHANDS | WPT_GRENADE ) )
+	bool switchToMeleeOrGrenade = IsBitFlagSet( selectedWeapon.GetWeaponTypeFlags(), ( WPT_VIEWHANDS | WPT_GRENADE ) )
 	return IsValid( activeWeapon ) && activeWeapon.HasMod( "energized" ) && switchToMeleeOrGrenade
 }
 
