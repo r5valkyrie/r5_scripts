@@ -1442,11 +1442,6 @@ global enum eEventNotifications
 	SURVIVAL_DroppingSolo,
 }
 
-global enum ePermanentEventNotifications
-{
-	Empty = -1,
-}
-
 global enum ePrivateMatchStartState
 {
 	NOT_READY,

@@ -367,11 +367,11 @@ void function MoveEntAndCreateTunnel( entity player, PhaseTunnelPathData data, v
 
 	PhaseTunnelData tunnelData
 	tunnelData.startPortal = startPortal
-	tunnelData.shiftStyle  = eShiftStyle.PHASETYPE_BREACH
+	tunnelData.shiftStyle  = PHASETYPE_BREACH
 	tunnelData.tunnelEnt = CreatePropScript( $"mdl/dev/empty_model.rmdl", tunnelData.startPortal.startOrigin )
 
 	PhaseTunnelTravelState travelState
-	travelState.shiftStyle               = eShiftStyle.PHASETYPE_BREACH
+	travelState.shiftStyle               = PHASETYPE_BREACH
 	travelState.holsterRemoveDelay       = 0.4
 	travelState.endSeekCheckOverrideFunc = PhaseBreach_PathNodeCheck
 
@@ -693,7 +693,7 @@ void function OnPhaseTunnelTriggerEnter_Internal( entity trigger, entity player 
 		return
 
 	PhaseTunnelTravelState travelState	// Intentionally leaving out the holster time
-	travelState.shiftStyle               = eShiftStyle.PHASETYPE_BREACH
+	travelState.shiftStyle               = PHASETYPE_BREACH
 	travelState.endSeekCheckOverrideFunc = PhaseBreach_PathNodeCheck
 	thread PhaseBreach_PhaseEntity( player, tunnelEnt, file.tunnelData[ tunnelEnt ], file.triggerStartpoint[ trigger ], travelState )
 }

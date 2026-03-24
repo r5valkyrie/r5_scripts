@@ -48,10 +48,10 @@ const string SOUND_PORTAL_TRAVEL_1P = "Wraith_phasegate_Travel_1p"
 const string SOUND_PORTAL_TRAVEL_3P = "Wraith_phasegate_Travel_3p"
 const string SOUND_PORTAL_TRAVEL_1P_BREACH = "Ash_PhaseBreach_Travel_1p"
 const string SOUND_PORTAL_TRAVEL_3P_BREACH = "Ash_PhaseBreach_Travel_3p"
-             
+
 const string SOUND_PORTAL_TRAVEL_1P_TRANSPORT = "Alter_Ult_Teleport_VoidEnter_1p"
 const string SOUND_PORTAL_TRAVEL_3P_TRANSPORT = "Alter_Ult_Teleport_VoidEnter_3p"
-      
+
 
 #if SERVER
 const asset TILE_MODEL =  $"mdl/props/mahjong_tile_01/mahjong_tile_01.rmdl"
@@ -187,9 +187,9 @@ global struct PhaseTunnelData
 	#if SERVER
 		int expirationType
 
-		                    
+
 			array<entity> shieldedPlayers
-        
+
 	#endif
 }
 
@@ -593,7 +593,7 @@ void function PhaseTunnel_StartAbility( entity player, float duration, entity we
 	PhaseTunnelData tunnelData
 	tunnelData.startPortal = startPortal
 	tunnelData.endPortal   = endPortal
-	tunnelData.shiftStyle  = eShiftStyle.Tunnel
+	tunnelData.shiftStyle  = PHASETYPE_TUNNEL
 
 	thread PhaseTunnel_OpenTunnel( tunnelData, player )
 }
@@ -756,7 +756,7 @@ void function PhaseTunnel_OpenTunnel( PhaseTunnelData tunnelData, entity player 
 	tunnelEnt.DisableHibernation()
 	SetTeam( tunnelEnt, team )
 	tunnelEnt.SetOwner( player )
-	tunnelData.owner = player 
+	tunnelData.owner = player
 
 	ArrayRemoveInvalid( file.allTunnelEnts )
 	file.allTunnelEnts.append( tunnelEnt )
@@ -775,7 +775,7 @@ void function PhaseTunnel_OpenTunnel( PhaseTunnelData tunnelData, entity player 
 
 	// VoidVisionSetExitEnt( tunnelData.startPortal.pathData, tunnelData.endPortal.portalFX )
 	// VoidVisionSetExitEnt( tunnelData.endPortal.pathData, tunnelData.startPortal.portalFX )
-       
+
 
 	tunnelData.tunnelEnt = tunnelEnt
 
@@ -834,11 +834,11 @@ const float STANDARD_PORTAL_DESTROY_DELAY = 3.0
 void function RemovePortalDelayed( entity player, PhaseTunnelData tunnelData )
 {
 	wait STANDARD_PORTAL_DESTROY_DELAY
-	
+
 	if( IsValid( tunnelData.tunnelEnt ) )
 	{
 		tunnelData.tunnelEnt.Signal( "PhaseTunnel_DestroyTunnel" )
-		
+
 		if( IsValid( player ) )
 			LocalMsg( player, "#FS_REMOVED_PORTAL", "#FS_REMOVED_PORTAL_DESC", eMsgUI.IBMM, 10 )
 	}
@@ -850,10 +850,10 @@ bool function Realistic_InAllowedZone( vector origin )
 {
 	//printw( "checking allowed zone:", VectorToString( origin ) )
 	float dist2d = Distance2D( origin, MYSTIC_MAGICAL_ELEVATOR_SHAFT_ORIGIN )
-	
+
 	if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 		DebugDrawCircle( MYSTIC_MAGICAL_ELEVATOR_SHAFT_ORIGIN, <0,0,0>, MAX_ELEVATOR_SUCKING_BEHAVIOR_RADIUS, 255, 0, 0, true, 10.0, 32 )
-	
+
 	if( dist2d > MAX_ELEVATOR_SUCKING_BEHAVIOR_RADIUS )
 		return true
 
@@ -879,12 +879,12 @@ void function PhaseTunnel_WaitForPhaseTunnelExpiration( entity player, PhaseTunn
 		{
 			if( !Realistic_InAllowedZone( endPos ) )
 				thread RemovePortalDelayed( player, tunnelData )
-				
+
 			player.p.portalPlacements++
 			player.p.portalPlaceTime = Time()
 			thread CheckForKidnaps( tunnelData, MAX_KIDNAP_TIME_AFTER_END_PORTAL )
 		}
-			
+
 		EndThreadOn_PlayerChangedClass( player )
 	}
 
@@ -966,47 +966,47 @@ void function CheckForKidnaps( PhaseTunnelData tunnelData, float checkForTime )
 {
 	float startTime = Time()
 	entity tunnelOwner = IsValid( tunnelData.owner ) ? tunnelData.owner : GetEnt( "worldspawn" )
-	
+
 	EndSignal( tunnelOwner, "OnDestroy" )
-	
+
 	array<entity> kidnapees
-	
+
 	while( Time() < startTime + checkForTime )
 	{
 		WaitFrame()
-		
+
 		if( tunnelData.entUsers.len() == 0 )
 			continue
-			
+
 		foreach( entity user in tunnelData.entUsers )
 		{
-			WaitFrame() 
-			
+			WaitFrame()
+
 			if( tunnelOwner == user )
-				continue 
-				
+				continue
+
 			//printw( "Checking enter direction", user.e.portalDirection )
 			if( user.e.portalDirection == eDirection.ENDTOSTART && !kidnapees.contains( user ) )
 			{
 				kidnapees.append( user )
-				__HandleKidnap( tunnelOwner, user )	
+				__HandleKidnap( tunnelOwner, user )
 			}
 		}
-	}		
+	}
 }
 
 void function __HandleKidnap( entity kidnapper, entity victim )
 {
 	//printw( "Message kidnapper: ", kidnapper )
-	
+
 	if( !IsValid( kidnapper ) )
 		return
-	
+
 	if( kidnapper.IsPlayer() )
 	{
-		kidnapper.p.portalKidnaps++	
-	
-		string victimName = IsValid( victim ) ? victim.p.name : "unknown"	
+		kidnapper.p.portalKidnaps++
+
+		string victimName = IsValid( victim ) ? victim.p.name : "unknown"
 		LocalEventMsg( kidnapper, "#FS_KIDNAPPED", victimName + " in " + ( Time() - kidnapper.p.portalPlaceTime ) + " seconds" )
 	}
 }
@@ -1149,7 +1149,7 @@ void function OnPhaseTunnelTriggerEnter_Internal( entity trigger, entity ent )
 
 	ent.EndSignal( "OnDestroy", "OnDeath" )
 
-	OnThreadEnd 
+	OnThreadEnd
 	(
 		void function() : ( ent )
 		{
@@ -1178,15 +1178,15 @@ void function OnPhaseTunnelTriggerEnter_Internal( entity trigger, entity ent )
 	// }
 
 	PhaseTunnelTravelState travelState
-	travelState.shiftStyle = eShiftStyle.Tunnel
+	travelState.shiftStyle = PHASETYPE_TUNNEL
 
 	float dist2d = Distance2D( portalData.startOrigin, ent.GetOrigin() ) //(mk): portalData.startOrigin --- this is really the "END" of the user placed portal
-	bool bEnteredFromEnd = dist2d <= MAX_PORTAL_ENTER_DETECTION_RADIUS	//maybe adjust proxim	
-	
+	bool bEnteredFromEnd = dist2d <= MAX_PORTAL_ENTER_DETECTION_RADIUS	//maybe adjust proxim
+
 	if ( PHASE_TUNNEL_DEBUG_DRAW_PROJECTILE_TELEPORT )
 		DebugDrawCircle( portalData.startOrigin, portalData.endAngles, MAX_PORTAL_ENTER_DETECTION_RADIUS, 255, 0, 0, true, 10, 32 )
-	
-	ent.e.portalDirection = bEnteredFromEnd ? eDirection.ENDTOSTART : eDirection.STARTTOEND	
+
+	ent.e.portalDirection = bEnteredFromEnd ? eDirection.ENDTOSTART : eDirection.STARTTOEND
 
 	//todo-iholstead: remove me once R5DEV-578675 is closed
 	printf("OnPhaseTunnelTriggerEnter_Internal called on "+ ent )
@@ -1346,7 +1346,7 @@ void function PhaseTunnel_PhaseEntity( entity ent, entity tunnelEnt, PhaseTunnel
 	tunnelData.activeUsers++
 	tunnelData.entUsers.append( ent )
 
-	if ( travelState.shiftStyle == eShiftStyle.Tunnel )
+	if ( travelState.shiftStyle == PHASETYPE_TUNNEL )
 	{
 		// LiveAPI_SendOnePlayerEvent( eLiveAPI_EventTypes.wraithPortal, ent )
 		StatsHook_PhaseTunnel_EntTraversed( ent, tunnelEnt, entHasUsedTunnelBefore )
@@ -1355,12 +1355,12 @@ void function PhaseTunnel_PhaseEntity( entity ent, entity tunnelEnt, PhaseTunnel
 	// {
 		// StatsHook_AshPlayersPortaled( tunnelEnt.GetOwner() )
 	// }
-	             
+
 	// else if ( travelState.shiftStyle == PHASETYPE_TRANSPORT )
 	// {
 		// //TODO-iholstead
 	// }
-       
+
 
 	waitthread PhaseTunnel_MoveEntAlongPath( ent, portalData.pathData, travelState )
 }
@@ -1461,9 +1461,9 @@ void function PhaseTunnel_MoveEntAlongPath( entity player, PhaseTunnelPathData p
 	PhaseShift( player, 0.0, pathData.phaseTime, travelState.shiftStyle )
 	PIN_Interact( player, "wraith_portal", pathNodeDataArray[0].origin )
 
-	                   
+
 	// VoidVisionStartPhaseShiftPathData( player, pathData )
-       
+
 
 
 	int prevPathIndex    = -1
@@ -1655,7 +1655,7 @@ void function PhaseTunnel_PrepareToMoveEntAlongTunnel( entity player, PhaseTunne
 
 	WaitEndFrame() // wait for the last save
 
-	if ( travelState.shiftStyle == eShiftStyle.Tunnel )
+	if ( travelState.shiftStyle == PHASETYPE_TUNNEL )
 	{
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( SOUND_PORTAL_TRAVEL_1P, SOUND_PORTAL_TRAVEL_3P, player, player )
 	}
@@ -1663,12 +1663,12 @@ void function PhaseTunnel_PrepareToMoveEntAlongTunnel( entity player, PhaseTunne
 	// {
 		// EmitDifferentSoundsOnEntityForPlayerAndWorld( SOUND_PORTAL_TRAVEL_1P_BREACH, SOUND_PORTAL_TRAVEL_3P_BREACH, player, player )
 	// }
-	             
+
 	// else if ( travelState.shiftStyle == PHASETYPE_TRANSPORT )
 	// {
 		// EmitDifferentSoundsOnEntityForPlayerAndWorld( SOUND_PORTAL_TRAVEL_1P_TRANSPORT, SOUND_PORTAL_TRAVEL_3P_TRANSPORT, player, player )
 	// }
-       
+
 
 	ViewConeZeroInstant( player )
 }
@@ -1697,7 +1697,7 @@ void function PhaseTunnel_RevertEntStateAfterMovingAlongTunnel( entity player, P
 		if ( travelState.thirdPersonShoulderModeWasOn && IsAlive( player ) )
 			player.SetThirdPersonShoulderModeOn()
 
-		if ( travelState.shiftStyle == eShiftStyle.Tunnel )
+		if ( travelState.shiftStyle == PHASETYPE_TUNNEL )
 		{
 			StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_1P )
 			StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_3P )
@@ -1707,13 +1707,13 @@ void function PhaseTunnel_RevertEntStateAfterMovingAlongTunnel( entity player, P
 			// StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_1P_BREACH )
 			// StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_3P_BREACH )
 		// }
-		             
+
 		// else if ( travelState.shiftStyle == PHASETYPE_TRANSPORT )
 		// {
 			// StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_1P )
 			// StopSoundOnEntity( player, SOUND_PORTAL_TRAVEL_3P )
 		// }
-        
+
 	}
 }
 
@@ -1829,7 +1829,7 @@ bool function PhaseTunnel_ShouldPhaseEnt( entity target )
 
 	if ( target.ContextAction_IsMeleeExecution() || target.ContextAction_IsMeleeExecutionTarget() )
 		return false
-	
+
 	if( target.ContextAction_IsLeeching() )
 		return false
 
@@ -1865,15 +1865,15 @@ bool function PhaseTunnel_ShouldPhaseEnt( entity target )
 	// if ( target.p.totemRecallTime + 2.0 > Time() )
 		// return false
 
-	                            
+
 		// if ( ExplosiveHold_IsPlayerPlantingGrenade( target ) )
 			// return false
-       
 
-	                
+
+
 		// if ( GondolasAreActive() && IsPlayerInsideGondola( target ) )
 			// return false
-       
+
 
 	//todo-iholstead: remove me once R5DEV-578675 is closed
 	printf("PhaseTunnel_ShouldPhaseEnt PASSED for "+ target )
@@ -2272,11 +2272,11 @@ bool function PhaseTunnel_IsPortalExitPointValid( entity player, vector testOrg,
 
 	if ( IsValid( ignoreEnt ) )
 		ignoreEnts.append( ignoreEnt )
-	                     
+
 		// entity vehicle = HoverVehicle_GetVehicleOccupiedByPlayer( player )
 		// if ( IsValid( vehicle ) )
 			// ignoreEnts.append( vehicle )
-                            
+
 
 	ignoreEnts.extend( PhaseTunnel_GetPortalIgnoreEnts() )
 

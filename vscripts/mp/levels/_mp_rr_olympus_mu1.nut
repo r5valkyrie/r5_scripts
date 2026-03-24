@@ -583,7 +583,7 @@ void function WarpTunnel_MoveEntAlongPath( entity player, array<entity> entNodes
 	float elapsedTime
 
 	//Phase Shift Player
-	PhaseShift( player, 0.0, 999, eShiftStyle.Gate )
+	PhaseShift( player, 0.0, 999, PHASETYPE_GATE )
 
 	int actualmovements
 

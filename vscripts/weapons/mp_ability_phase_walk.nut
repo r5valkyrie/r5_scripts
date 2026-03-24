@@ -27,14 +27,14 @@ void function OnWeaponActivate_ability_phase_walk( entity weapon )
 {
 	entity player = weapon.GetWeaponOwner()
 	float deploy_time = weapon.GetWeaponSettingFloat( eWeaponVar.deploy_time )
-	
+
 	#if SERVER
 		EmitSoundOnEntityExceptToPlayer( player, player, "pilot_phaseshift_armraise_3p" )
 
 	if ( player.GetActiveWeapon( eActiveInventorySlot.mainHand ) != player.GetOffhandWeapon( OFFHAND_INVENTORY ) )
 		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_tactical" )
 	#endif
-	
+
 	if ( !weapon.HasMod( "ult_active" ) )
 	{
 		#if SERVER
@@ -49,7 +49,7 @@ void function OnWeaponActivate_ability_phase_walk( entity weapon )
 		#endif
 
 		float amount = GetCurrentPlaylistVarFloat( "wraith_phase_walk_slow_amount", 0.2 )
-		StatusEffect_AddTimed( player, eStatusEffect.move_slow, amount, deploy_time, deploy_time )	
+		StatusEffect_AddTimed( player, eStatusEffect.move_slow, amount, deploy_time, deploy_time )
 	}
 }
 
@@ -81,13 +81,13 @@ bool function OnWeaponChargeBegin_ability_phase_walk( entity weapon )
 		weapon.w.statusEffects.append( speedHandle )
 		#endif
 	}
-	
+
 	#if SERVER
 	thread PhaseWalk_Thread( player, chargeTime )
 	PlayerUsedOffhand( player, weapon )
 	#endif
-	
-	PhaseShift( player, 0, chargeTime, eShiftStyle.Balance )
+
+	PhaseShift( player, 0, chargeTime, PHASETYPE_BALANCE )
 	return true
 }
 
@@ -116,7 +116,7 @@ void function PhaseWalk_Thread( entity player, float chargeTime )
 				TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITIES_PHASE_DASH_STOP, player, player.GetOrigin(), player.GetTeam(), player )
 				ForceAutoSprintOff( player )
 
-          
+
 			}
 			if ( player in file.hasLockedWeaponsAndMelee && file.hasLockedWeaponsAndMelee[player]  )
 			{

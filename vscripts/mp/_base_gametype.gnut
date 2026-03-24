@@ -418,7 +418,7 @@ bool function ShouldPlayerTakeDamage( entity player, var damageInfo )
 		bool shouldTakeDamageInPhase = ( IsBitFlagSet( DamageInfo_GetCustomDamageType( damageInfo ), DF_DOOMED_HEALTH_LOSS )
 										|| IsDamageFromDamageTrigger( damageSource )
 										|| (StatusEffect_HasSeverity( player, eStatusEffect.phase_gate_tracking ) && damageSource == eDamageSourceId.deathField )
-										|| ( EMP_ShouldAffectAlterTac() && player.GetPhaseShiftType() == eShiftStyle.PHASETYPE_DOOR && damageSource == eDamageSourceId.mp_ability_crypto_drone_emp ))
+										|| ( EMP_ShouldAffectAlterTac() && player.GetPhaseShiftType() == PHASETYPE_DOOR && damageSource == eDamageSourceId.mp_ability_crypto_drone_emp ))
 
 		if ( !shouldTakeDamageInPhase )
 		{

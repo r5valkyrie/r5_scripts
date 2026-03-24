@@ -918,7 +918,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 			}
 		#endif
 
-		PhaseShift( player, SCRIPT_FRAME_TIME, totalWarpTime + SCRIPT_FRAME_TIME, eShiftStyle.Gate )
+		PhaseShift( player, SCRIPT_FRAME_TIME, totalWarpTime + SCRIPT_FRAME_TIME, PHASETYPE_GATE )
 		EnableDemigod( player )
 	}
 
@@ -1075,7 +1075,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 		#endif
 		player.Signal( "ForceStopPhaseShift" )
 		wait SCRIPT_FRAME_TIME
-		PhaseShift( player, 0, PHASE_REPOSITION_TIME, eShiftStyle.Balance )
+		PhaseShift( player, 0, PHASE_REPOSITION_TIME, PHASETYPE_BALANCE )
 		player.SetVelocity( player.GetForwardVector() * PHASE_EXIT_VELOCITY )
 	}
 }

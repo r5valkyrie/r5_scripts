@@ -72,7 +72,6 @@ global struct ClGlobals
 	int lastKillerEntIndex
 	AttackerDisplayNameStruct nameOfLastKiller
 
-	table<int, string> permanentEventNotifications
 
 	entity levelEnt
 

@@ -148,38 +148,10 @@ var function OnWeaponPrimaryAttack_split_timeline( entity weapon, WeaponPrimaryA
 		}
 	#endif
 
-	//If we have a marked spot, recall to that spot
-	if ( hasTimeline )
-	{
-		int phaseResult = PhaseShift( weaponOwner, warmupTime, weapon.GetWeaponSettingFloat( eWeaponVar.fire_duration ) )
-		if ( phaseResult )
-		{
-			#if BATTLECHATTER_ENABLED && SERVER
-				TryPlayWeaponBattleChatterLine( weaponOwner, weapon )
-			#endif
-
-			//recall player
-			#if SERVER
-
-				//Force the timeline to switch
-				weaponOwner.Signal( "SplitTimeline_ForceSwitch" )
-				thread SplitTimelineScreenFX( weaponOwner, 1.0, 1.0, 0.0 ) //Time split Screen FX
-
-			#endif
-
-			return 0//weapon.GetWeaponSettingInt( eWeaponVar.ammo_min_to_fire )
-		}
-	}
 
 	//If we do not have a marked spot, store the current location as a marked spot.
 	#if SERVER
-		int phaseResult = PhaseShift( weaponOwner, warmupTime, weapon.GetWeaponSettingFloat( eWeaponVar.fire_duration ) )
-		if ( phaseResult )
-		{
-			thread SplitTimelines( weaponOwner, SPLIT_TIMELINE_DURATION )
 
-			return weapon.GetWeaponSettingInt( eWeaponVar.ammo_per_shot )
-		}
 	#endif //SERVER
 
 	PlayerUsedOffhand( weaponOwner, weapon )
@@ -215,7 +187,7 @@ void function DoPhaseExitExplosion( entity player, entity phaseWeapon )
 	if ( !nade )
 		return
 
-	player.PhaseShiftBegin( 0, 1.0, eShiftStyle.Tunnel )
+	player.PhaseShiftBegin( 0, 1.0, PHASETYPE_TUNNEL )
 
 	nade.SetImpactEffectTable( file.phaseExitExplodeImpactTable )
 	nade.GrenadeExplode( <0,0,0> )
@@ -997,16 +969,6 @@ void function BurnMeter_SplitTimeline( entity player )
 
 	entity weapon = player.GetOffhandWeapon( 1 )
 
-	int phaseResult = PhaseShift( player, 0.0, weapon.GetWeaponSettingFloat( eWeaponVar.fire_duration ) )
-	if ( phaseResult )
-	{
-		if ( !( player in file.lastActivateAngles ) )
-			file.lastActivateAngles[ player ] <- player.GetAngles()
-		else
-			file.lastActivateAngles[ player ] = player.GetAngles()
-
-		thread SplitTimelines( player, SPLIT_TIMELINE_DURATION )
-	}
 }
 
 void function SplitTimelineHandleWeaponSwap( entity player )

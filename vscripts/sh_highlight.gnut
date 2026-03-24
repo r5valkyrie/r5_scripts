@@ -604,20 +604,12 @@ void function ManageHighlightEntity( entity ent, float distanceSqr = 0.0 )
 
 void function ClHighlight_UpdateHighlightFlags( entity ent, int contextId, int type )
 {
-	/*if ( contextId < 0 || contextId > 7 )
-	{
-		if ( contextId != HIGHLIGHT_INVALID_ID )
-			Warning( "ClHighlight_UpdateHighlightFlags: invalid context ID %d for entity '%s', clamping\n", contextId, string( ent ) )
-		ent.Highlight_SetCurrentContext( HIGHLIGHT_INVALID_ID )
-		ent.Highlight_ResetFlags()
-		return
-	}*/
-
 	ent.Highlight_SetCurrentContext( contextId )
 	ent.Highlight_ResetFlags()
 
 	if ( contextId == HIGHLIGHT_INVALID_ID )
 		return
+
 	if ( Freelance_IsHubLevel() )
 	{
 		if ( type == eHighlightGenericType.FRIENDLY )

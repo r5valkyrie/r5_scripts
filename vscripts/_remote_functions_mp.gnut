@@ -762,7 +762,6 @@ void function RemoteFunctions_Init_Begin()
 		ScriptRemote_RegisterClientFunction( "Bleedout_StopTrainingFirstAidProgressBar" )
 	}
 
-	RegisterEntityVar( "player", "permanentEventNotification", -1 )
 	RegisterEntityVar( "player", "drawFastballHud", false )
 	
 	RegisterServerVar( "titanAvailableBits", 0 ) // HACK; we need this information to be 100% accurate, even during kill replay
