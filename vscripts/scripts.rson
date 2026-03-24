@@ -33,17 +33,17 @@ onto the S3 engine (cafe-r5sdk). Key changes:
 Expression values:
 SERVER				Server per-level script VM
 CLIENT				Client per-level script VM
-UI						UI script VM
-SP						Singleplayer (returns true for sp maps)
-MP						Multiplayer (returns true for mp maps)
-DEV						Value of developer convar
-CONSOLE_PROG	True if a Durango or PS4 program
-DURANGO_PROG	True if a Durango program
+UI					UI script VM
+SP					Singleplayer (returns true for sp maps)
+MP					Multiplayer (returns true for mp maps)
+DEVELOPER			Value of developer convar
+CONSOLE_PROG		True if a Durango or PS4 program
+DURANGO_PROG		True if a Durango program
 PS4_PROG			True if a PS4 program
 PC_PROG				True if a PC program
-LOBBY					True in mp_lobby. (Server and client VMs only)
-MAP_mp_box		True if the given map name is being loaded
-GAMEMODE_at		True of the given game mode is being loaded
+LOBBY				True in mp_lobby. (Server and client VMs only)
+MAP_mp_box			True if the given map name is being loaded
+GAMEMODE_at			True of the given game mode is being loaded
 */
 
 When: " SERVER || CLIENT || UI "

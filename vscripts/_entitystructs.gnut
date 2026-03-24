@@ -604,11 +604,7 @@ global struct ServerPlayerStruct
 
 	bool						hasMatchLossProtection = false
 
-	// bool						usingLoadoutCrate
-	// int 						activePilotLoadoutIndex = -1
-	// int 						activeTitanLoadoutIndex = -1
-	// int							npcFollowersArrayID
-	// entity 						lastFriendlyTriggerTouched
+	int ziplineForceStandHandle = -1
 	float						titanDamageDealt // Does not include shield damage
 	// float 						titanDamageDealt_Stat // Does not include shield damage
 	string 						spectreSquad

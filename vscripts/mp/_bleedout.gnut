@@ -1,20 +1,18 @@
 //Bleed Out Mechanic Shared by several game modes.
-//S21 script implementation by CafeFPS - September 2024
-
 global function Bleedout_Init
 global function Bleedout_SetPlayerBleedoutType
 global function Bleedout_StartPlayerBleedout
-
 global function Bleedout_AddCallback_OnPlayerStartBleedout
 global function Bleedout_AddCallback_OnPlayerStopBleedout
 global function Bleedout_AddCallback_OnPlayerStartGiveFirstAid
 global function Bleedout_AddCallback_OnPlayerFinishGiveFirstAid
+
 global function Bleedout_AddCallback_OnPlayerStartGiveSelfRevive
+
 global function Bleedout_AddCallback_OnPlayerStartReceiveFirstAid
 global function Bleedout_AddCallback_OnPlayerFirstAidInterrupted
 global function Bleedout_AddCallback_OnPlayerGotFirstAid
 global function Bleedout_AddCallback_CleanupUtilitySlot
-
 global function Bleedout_ShouldAIMissBleedingPlayer
 global function Bleedout_GetBleedoutStartTime
 global function Bleedout_GetBleedoutWaypoint
@@ -26,17 +24,17 @@ global function Bleedout_IsPlayerSelfReviving
 global function Bleedout_GetBleedoutDamageInfo
 global function Bleedout_GetBleedoutDamageSourceId
 global function Bleedout_GetBleedoutAttacker
+global function CodeCallback_GetBleedoutAttacker
 global function Bleedout_GetBleedoutAttackerWeaponEnt
+global function CodeCallback_GetBleedoutAttackerWeapon
 global function Bleedout_IsPlayerGettingFirstAid
 global function Bleedout_IsReceivingFirstAid
 global function Bleedout_IsReviveButtonDown
 global function Bleedout_ReviveForceStop
-global function Bleedout_ForceRevive
 global function Bleedout_ForceStop
 global function ReviveThread_Target
 global function ReviveThread_Reviver
 global function Bleedout_SetRevivedPlayerHealth
-global function Bleedout_GetCreditedKiller
 
 global const int KNOCKDOWN_SHIELD_SLOT = WEAPON_INVENTORY_SLOT_PRIMARY_3 // UTILITY slot
 const string KNOCKDOWN_SHIELD_BASIC = "incapshield_pickup_lv0"
@@ -49,6 +47,10 @@ const asset FX_REVIVE_PROTOTYPE_END = $"P_armor_3P_max_CP"
 const string GUARDIAN_ANGEL_SOUND = "Survival_Gameplay_Revival_GoldBackpack_Start"
 const string GUARDIAN_ANGEL_SUCCESS_SOUND = "Survival_Gameplay_Revival_GoldBackpack_End"
 
+
+const float NEWCASTLE_REVIVE_RIGHT_OFFSET = 12.0
+const float NEWCASTLE_REVIVE_FORWARD_OFFSET = 15.0
+const float NEWCASTLE_REVIVE_OUTRO_ANIM_DURATION = 1.2
 #if DEVELOPER
 const bool DEBUG_DRAG_REVIVE_PLACEMENT = false
 #endif
@@ -117,7 +119,9 @@ void function Bleedout_Init()
 	AddCallback_OnClientConnected( Bleedout_OnClientConnected )
 	AddCallback_OnClientDisconnected( Bleedout_OnClientDisconnected )
 	AddCallback_GameStateEnter( eGameState.WinnerDetermined, Bleedout_OnWinnerDetermined )
-	Bleedout_AddCallback_OnPlayerStartBleedout( SetCreditedKiller )
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) )
+		Bleedout_AddCallback_OnPlayerFinishGiveFirstAid( RecruitMode_ChangeTeams )
 
 	PrecacheParticleSystem( FX_REVIVE_PROTOTYPE_END )
 	PrecacheParticleSystem( FX_REVIVE_PROTOTYPE )
@@ -129,20 +133,13 @@ void function Bleedout_OnClientConnected( entity player )
 	file.isGivingFirstAid[ player ] <- false
 	file.IsGettingFirstAidFrom[ player ] <- null
 
-	if( !(player in file.playerBleedoutInfo) )
-		CreateBleedoutStructForPlayer( player )
-
-	Bleedout_SetPlayerBleedoutType( player, 0 )
-}
-
-void function CreateBleedoutStructForPlayer( entity player )
-{
 	BleedoutInfo info
 	info.attacker = null
 	info.attackerWeaponEnt = null
 	info.bleedoutStartTime = -999.0
 
 	file.playerBleedoutInfo[ player ] <- info
+	Bleedout_SetPlayerBleedoutType( player, 0 )
 }
 
 void function Bleedout_OnClientDisconnected( entity player )
@@ -233,8 +230,10 @@ void function Bleedout_StartPlayerBleedout( entity player, entity attacker, var 
 	player.Signal( "BleedOut_StopBleeding" )
 	player.Signal( "BleedOut_OnStartDying" )
 
+	entity weapon = DamageInfo_GetWeapon( damageInfo )
+	//if( IsValid( weapon ) )
+	//	player.OnStartBleedout( weapon )
 	//thread BloodTrail( player )
-	thread Bleedout_DeathProtection( player )
 	thread PlayerDying( player, attacker, damageInfo )
 	thread EnablePlayerRes( player )
 
@@ -250,30 +249,12 @@ void function Bleedout_StartPlayerBleedout( entity player, entity attacker, var 
 	if ( Bleedout_GetDeathOnTeamBleedout( player ) )
 		CheckForTeamBleedout( player.GetTeam() )
 
+//	GameRules_OnPlayerGotDowned( player, attacker )
 	// Do the callbacks after we put player into bleedout state so the callback functions have bleedout info
 	foreach ( callbackFunc in file.Callbacks_OnPlayerStartBleedout )
 	{
 		callbackFunc( player, attacker, damageInfo )
 	}
-}
-
-entity function Bleedout_GetCreditedKiller( entity victim )
-{
-	return victim.p.killerByKnock
-}
-
-void function SetCreditedKiller( entity victim, entity attacker, var damageInfo )
-{
-	victim.p.killerByKnock = attacker
-}
-
-void function Bleedout_DeathProtection( entity player )
-{
-	if (IsValid(player))
-		MakeInvincible(player)
-	wait 1.05
-	if (IsValid(player))
-		ClearInvincible(player)
 }
 
 void function PlayerDying( entity player, entity attacker, var damageInfo )
@@ -291,31 +272,21 @@ void function PlayerDying( entity player, entity attacker, var damageInfo )
 	array<int> ids = []
 	ids.append( StatusEffect_AddEndless( player, eStatusEffect.move_slow, 0.2 ) )
 	ids.append( StatusEffect_AddEndless( player, eStatusEffect.turn_slow, 0.4 ) )
-	ids.append( StatusEffect_AddEndless( player, eStatusEffect.disable_wall_run_and_double_jump, 1.0 ) )
+	ids.append( StatusEffect_AddEndless( player, eStatusEffect.disable_wall_run, 1.0 ) )
+	ids.append( StatusEffect_AddEndless( player, eStatusEffect.disable_double_jump, 1.0 ) )
 
 	file.playerBleedoutInfo[ player ].bleedoutStartTime = Time()
 	file.playerBleedoutInfo[ player ].attacker = attacker
-	
-	if( damageInfo != null )
-		file.playerBleedoutInfo[ player ].damageInfoClone = CloneScriptDamageInfo( damageInfo ) // todo(dw): aaaaaaaaaaa
+	file.playerBleedoutInfo[ player ].damageInfoClone = CloneScriptDamageInfo( damageInfo ) // todo(dw): aaaaaaaaaaa
 
-	// Melee_StoreBleedoutAttackerForVictim( player, attacker ) // needed to get cosmetic deathbox info
+	Melee_StoreBleedoutAttackerForVictim( player, attacker ) // needed to get cosmetic deathbox info
 
-	entity weapon
-	
-	if( damageInfo != null )
-		weapon = DamageInfo_GetWeapon( damageInfo )
-	
-	if( IsValid( weapon ) )
-		file.playerBleedoutInfo[ player ].attackerWeaponEnt = weapon
+	entity weapon = DamageInfo_GetWeapon( damageInfo )
+	file.playerBleedoutInfo[ player ].attackerWeaponEnt = weapon
 
 	float bleedoutEndTime = (Time() + bleedoutTime)
-	
-    #if DEVELOPER
-	Warning( "Player bleedout ending in " + bleedoutTime )
-	#endif	
-	
 	player.SetPlayerNetTime( "bleedoutEndTime", bleedoutEndTime )
+	player.SetPlayerNetTime( "hackStartTime", Time() )
 	file.playerBleedoutWaypoint[ player ] <- CreateWaypoint_Bleedout( player, bleedoutEndTime )
 
 	player.SetUseDoomedAnims( true )
@@ -361,25 +332,19 @@ void function PlayerDying( entity player, entity attacker, var damageInfo )
 			}
 		}
 
-		int shieldTier = EquipmentSlot_GetEquipmentTier( player, "incapshield" )
-		entity incapShield
 		// All player's must at least have a basic lvl 0 knockdown shield
 		if ( Inventory_GetPlayerEquipment( player, equipSlot ) == "" )
 		{
 			Inventory_SetPlayerEquipment( player, KNOCKDOWN_SHIELD_BASIC, equipSlot )
-			incapShield = player.GiveWeapon( "mp_weapon_incap_shield", KNOCKDOWN_SHIELD_SLOT, ["incap_lvl_0"] )
+			player.GiveWeapon( "mp_weapon_incap_shield", KNOCKDOWN_SHIELD_SLOT, ["incap_lvl_0"] )
 		}
 		else
 		{
-			incapShield = player.GiveWeapon( "mp_weapon_incap_shield", KNOCKDOWN_SHIELD_SLOT )
+			player.GiveWeapon( "mp_weapon_incap_shield", KNOCKDOWN_SHIELD_SLOT )
 		}
-		
-		if( IsValid( incapShield ) )
-			incapShield.SetScriptInt0( IncapShield_GetMaxShieldHealthFromTier( shieldTier ) )
 		
 		player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, KNOCKDOWN_SHIELD_SLOT )
 
-		//Cafe
 		LockWeaponsAndMelee( player )
 		DisableAllWeaponsExceptHandsOrIncap( player )
 	}
@@ -387,16 +352,13 @@ void function PlayerDying( entity player, entity attacker, var damageInfo )
 	OnThreadEnd(
 		function() : ( player, ids, equipSlot, forceHolster, lastActiveSlot, forceCrouchHandle )
 		{
-			if ( IsValidPlayer( player ) )
+			if ( IsValid( player ) )
 			{
 				foreach ( id in ids )
 					StatusEffect_Stop( player, id )
 
 				SetPlayerNotBleedingOut( player )
 
-                #if DEVELOPER
-				Warning( "Player exit from bleedout state " + player )
-				#endif
 				
 				player.RemoveForcedStance( forceCrouchHandle )
 				
@@ -566,9 +528,6 @@ void function SetPlayerNotBleedingOut( entity player )
 	if ( IsAlive( player ) )
 		player.SetUseDoomedAnims( false )
 
-	if( !(player in file.playerBleedoutInfo) ) //Safety check. Cafe. Shouldn't happen, but just in case.
-		CreateBleedoutStructForPlayer( player )
-		
 	// file.playerBleedoutInfo[ player ].damageSourceId = -1
 	// file.playerBleedoutInfo[ player ].bleedoutStartTime = -999.0
 	file.playerBleedoutInfo[ player ].attacker = null
@@ -583,7 +542,7 @@ void function EnablePlayerRes( entity player )
 	player.EndSignal( "BleedOut_OnStartDying" )
 	player.EndSignal( "BleedOut_OnRevive" )
 
-	if ( Playlist() != ePlaylists.survival_firingrange && Gamemode() == eGamemodes.SURVIVAL && !IsDevGamemode() ) // && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
+	if ( IsPilotEliminationBased() && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
 		SetPlayerEliminated( player )
 
 	//Wait until player is done playing their bleedout entrance animations before setting usable
@@ -617,16 +576,17 @@ void function EnablePlayerRes( entity player )
 	player.SetUsePrompts( " ", " " )
 	player.AddUsableValue( USABLE_CUSTOM_HINTS | USABLE_NO_FOV_REQUIREMENTS | USABLE_SHRINK_USEABLE_BOX | USABLE_BLOCK_CONTINUOUS_USE )
 
+		player.AddUsableValue( USABLE_CAN_USE_OVERRIDE ) //allow shadow zombies to revive eachother
 	while ( true )
 	{
-		table inputTable  = player.WaitSignal( "OnPlayerUseLong" )
+		table inputTable  = GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) ? player.WaitSignal( "OnPlayerUseLong", "OnPlayerUseAlt" ) : player.WaitSignal( "OnPlayerUseLong" )
 		entity playerUser = expect entity( inputTable.player )
 
 		if ( !IsValid( playerUser ) || !playerUser.IsPlayer() )
 			// (dw): R5DEV-69069
 			continue
 
-		bool canRecruitPlayer = false
+		bool canRecruitPlayer = GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) && CanRecruitOrRevivePlayer( playerUser, player ) && inputTable.signal == "OnPlayerUseLong"
 
 		player.SetUsePrompts( "", "" )
 		// player.UnsetUsable()
@@ -709,21 +669,34 @@ void function AnimEvent_MarkForRevive( entity target )
 
 bool function ReviveThread_ShouldReviverUseReviveSequence( entity reviver, entity target )
 {
+
+	if ( PassiveAxiom_ShouldDoNewcastleAutoRevive( reviver, target ) )
+		return false
 	return true
 }
+
+bool function PassiveAxiom_ShouldDoNewcastleAutoRevive( entity reviver, entity target )
+{
+	Warning("PassiveAxiom_ShouldDoNewcastleAutoRevive not implemented, returning false")
+	return false
+}
+
+
+void function PassiveAxiom_GiveReviveShield( entity reviver, entity target )
+{
+	Warning("PassiveAxiom_GiveReviveShield not implemented, returning")
+}
+
 bool function ReviveThread_ShouldReviveTargetHaveCameraControl( entity reviver, entity target )
 {
+
+		if ( PassiveAxiom_ShouldDoNewcastleAutoRevive( reviver, target ) )
+			return true
 	return false
 }
 
 void function ReviveThread_Reviver( entity reviver, entity target, string reviveAnim, bool endReviveInCrouch )
 {
-	if ( IsPlayerShadowZombie( reviver ) )
-		reviveAnim = "shadow_revive_summon_healthy"
-
-	if ( Bleedout_IsPlayerSelfReviving( target ) )
-		reviveAnim = format( "mp_pt_%s%s", GetGlobalSettingsString( target.GetPlayerSettings(), "bodyModelRigWeight" ), ("_self_revive_stand") )
-
 	reviver.EndSignal( "OnAnimationInterrupted" )
 	reviver.EndSignal( "OnDeath" )
 	reviver.EndSignal( "ScriptAnimStop" )
@@ -762,10 +735,10 @@ void function ReviveThread_Reviver( entity reviver, entity target, string revive
 		HolsterViewModelAndDisableWeapons( reviver )
 
 	// Cancel the banner pickup anim if they start a revive
-	// if ( CanInterruptBannerPickupEarly( reviver ) )
-	// {
-		// StopPlayingAnimation( reviver )
-	// }
+	if ( CanInterruptBannerPickupEarly( reviver ) )
+	{
+		StopPlayingAnimation( reviver )
+	}
 
 	float duration
 
@@ -786,6 +759,11 @@ void function ReviveThread_Reviver( entity reviver, entity target, string revive
 		duration = reviver.GetSequenceDuration( reviverSequence.thirdPersonAnim )
 	}
 
+	if ( PassiveAxiom_ShouldDoNewcastleAutoRevive( reviver, target ) )
+	{
+		PassiveAxiom_GiveReviveShield( reviver, target )
+		duration = DEFAULT_FIRSTAID_TIME
+	}
 	wait duration
 }
 
@@ -861,6 +839,47 @@ void function ReviveThread_Target( table resultTable, entity reviver, entity tar
 		}
 	)
 
+	if ( hasCameraControl )
+	{
+		//For Newcastle's Target, we've given them full camera control while being moved and revived.
+		//This keeps their camera from spinning constantly as Newcastle moves around.
+		//This however has an issue when Newcastle is holding a KD shield from some angles - causing the camera to jump in past the shield //todo: need to solve for KD Shield interection.
+		// ==================== Set 3rd person settings ================//
+		{
+			vector oldFacing = target.Player_GetWorldViewAngles()
+                          
+                                 
+     
+                                                          
+      
+                                     
+      
+         
+      
+                                      
+      
+     
+        
+                                
+				{
+					target.SetTrackEntity( reviver )
+				}
+
+			//target.SetTrackEntityBlendInTimes( 0.45, 0.15, 0.0 )
+			//target.SetTrackEntityBlendOutTime( 0.25 )
+			//target.SetTrackEntityPitchLookMode( "orbit" )
+			//target.SetTrackEntityYawLookMode( "orbit" )
+			//target.SetTrackEntityDistanceMode( "scriptOffset" )
+			//target.SetTrackEntityMinYaw( -180 )
+			//target.SetTrackEntityMaxYaw( 180 )
+			//target.SetTrackEntityMinPitch( -180 )
+			//target.SetTrackEntityMaxPitch( 180 )
+			//target.SetTrackEntityOffsetDistance( 75.0 )
+			//target.SetTrackEntityOffsetHeight( 10 )
+			//target.SetTrackEntityShouldViewAnglesFollowTrackedEntity( true )
+			//target.SnapEyeAngles( oldFacing )
+		}
+	}
 	FirstPersonSequenceStruct targetSequence
 	targetSequence.blendTime = 0.25
 	targetSequence.attachment = "ref"
@@ -889,10 +908,12 @@ vector function ReviveThread_GetReviveAnimAngles( entity reviver, entity target 
 {
 	vector reviveAnimAngles
 
-	if ( !Bleedout_IsPlayerSelfReviving( target ) )
-		reviveAnimAngles = VectorToAngles( FlattenVec( reviver.GetViewForward() * -1.0 ) )
-	else
-		reviveAnimAngles = target.GetAngles()
+		{
+			if ( !Bleedout_IsPlayerSelfReviving( target ) )
+				reviveAnimAngles = VectorToAngles( FlattenVec( reviver.GetViewForward() * -1.0 ) )
+			else
+				reviveAnimAngles = target.GetAngles()
+		}
 
 	return reviveAnimAngles
 }
@@ -900,8 +921,10 @@ vector function ReviveThread_GetReviveAnimAngles( entity reviver, entity target 
 
 bool function ReviveThread_ShouldEndInCrouch( entity reviver, entity target )
 {
-	if ( !Bleedout_IsPlayerSelfReviving( target ) && reviver.IsCrouched() )
-		return true
+		{
+			if ( !Bleedout_IsPlayerSelfReviving( target ) && reviver.IsCrouched() )
+				return true
+		}
 
 	// Try to stand in all other cases..
 	// Get end position of animation, and see if target will end up colliding with something if standing...
@@ -935,21 +958,79 @@ bool function ReviveThread_ShouldEndInCrouch( entity reviver, entity target )
 
 string function GetReviveAnimation_Reviver( entity reviver, bool endCrouched )
 {
+	                                                           
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && IsPlayerShadowZombie( reviver ) )
+		{
+			return "shadow_revive_summon_healthy"
+		}
+       
+
 	float heatShieldReviveTime = GetCurrentPlaylistVarFloat( "heatshield_revive_time", VOID_RING_REVIVE_TIME)
 	bool canVRFastRevive = GetCurrentPlaylistVarBool( "heatshield_allow_fast_revive", VOID_RING_CAN_FAST_REVIVE)
 
-	if ( PlayerHasPassive( reviver, ePassives.PAS_BATTERY_POWERED ) && !Flowstate_IsHaloMode() )
+	// if quick heal
+	if ( PlayerHasPassive( reviver, ePassives.PAS_MEDIC ) )
 	{
+		if ( PassiveMedic_ShouldDoCombatRevive( reviver ) )
+		{
+			// TODO: put real combat revive anims here
+			if ( endCrouched )
+				return "Pilot_doomed_revive_crouch_healthy"
+			else
+				return "Pilot_doomed_revive_healthy"
+		}
+		else
+		{
+			if ( endCrouched )
+				return "Pilot_doomed_revive_crouch_healthy"
+			else
+				return "Pilot_doomed_revive_healthy"
+		}
+	}
+                                                                        
+	else if ( PlayerHasPassive( reviver, ePassives.PAS_BATTERY_POWERED ) && PlayerHasPassive( reviver, ePassives.PAS_PAS_UPGRADE_ONE ) )
+	{
+		if ( (StatusEffect_HasSeverity( reviver, eStatusEffect.ring_immunity )) && heatShieldReviveTime <= VOID_RING_REVIVE_TIME && canVRFastRevive )
+		{
+			if ( endCrouched )
+				return "Pilot_doomed_revive_crouch_shock_healthy_fast"
+			else
+				return "Pilot_doomed_revive_shock_healthy_fast"
+		}
 		if ( endCrouched )
 			return "Pilot_doomed_revive_crouch_shock_healthy"
 		else
 			return "Pilot_doomed_revive_shock_healthy"
-	} else if ( GibraltarIsInDome( reviver ) && GetCurrentPlaylistVarInt( "gibraltar_fast_revive", 1 ) == 1 && !Flowstate_IsHaloMode() )
+	}
+     
+                                                                       
+  
+                                                                                                                                               
+    
+                      
+                                                           
+        
+                                                    
+    
+                    
+                                                    
+      
+                                             
+  
+      
+	else if ( GibraltarIsInDome( reviver ) && GetCurrentPlaylistVarInt( "gibraltar_fast_revive", 1 ) == 1 )
 	{
 		if ( endCrouched )
 			return "Pilot_doomed_revive_crouch_slap_healthy"
 		else
 			return "Pilot_doomed_revive_stand_slap_healthy"
+	}
+	else if ( (StatusEffect_HasSeverity( reviver, eStatusEffect.ring_immunity )) && heatShieldReviveTime <= VOID_RING_REVIVE_TIME && canVRFastRevive )
+	{
+		if ( endCrouched )
+			return "Pilot_doomed_revive_crouch_healthy_fast"
+		else
+			return "Pilot_doomed_revive_healthy_fast"
 	}
 
 	if ( endCrouched )
@@ -961,10 +1042,38 @@ string function GetReviveAnimation_Reviver( entity reviver, bool endCrouched )
 
 string function GetReviveAnimation_Victim( entity reviver, entity victim, bool endCrouched )
 {
+	                                                           
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && IsPlayerShadowZombie( reviver ) )
+		{
+			return "shadow_revive_summon_injured"
+		}
+       
+
 	float heatShieldReviveTime 		= GetCurrentPlaylistVarFloat( "heatshield_revive_time", VOID_RING_REVIVE_TIME)
 	float heatShieldSelfReviveTime 	= GetCurrentPlaylistVarFloat( "heatshield_self_revive_time", VOID_RING_SELF_REVIVE_TIME)
 	bool canVRFastRevive 			= GetCurrentPlaylistVarBool( "heatshield_allow_fast_revive", VOID_RING_CAN_FAST_REVIVE)
 
+
+	// if self heal
+                    
+	if ( Bleedout_IsPlayerSelfReviving( victim ) && Bleedout_CanSelfResFromUpgrade( reviver ) && reviver.p.numSelfRevivesUsed == 0 )
+	{
+		if ( PassiveMedic_ShouldDoCombatRevive( reviver ) )
+		{
+			if ( endCrouched )
+				return "Pilot_doomed_revive_crouch_drone_injured"
+			else
+				return "Pilot_doomed_revive_drone_injured"
+		}
+		else
+		{
+			if ( endCrouched )
+				return "Pilot_doomed_revive_crouch_injured"
+			else
+				return "Pilot_doomed_revive_injured"
+		}
+	}
+      
 
 	if ( Bleedout_IsPlayerSelfReviving( victim ) )
 	{
@@ -975,19 +1084,56 @@ string function GetReviveAnimation_Victim( entity reviver, entity victim, bool e
 		setFile              = victim.GetPlayerSettings()
 		string rigWeight = GetGlobalSettingsString( setFile, "bodyModelRigWeight" )
 
+		if ( (StatusEffect_HasSeverity( reviver, eStatusEffect.ring_immunity )) && heatShieldSelfReviveTime < REVIVE_PASSIVE_SELF_REVIVE && canVRFastRevive )
+		{
+			return format( "mp_pt_%s%s", rigWeight, (endCrouched ? "_self_revive_crouch_fast" : "_self_revive_stand_fast") ) //todo: for Devan "Let me know how much buffer we have here." Animation is 9.67seconds.  Right now it works at 9 seconds but it has an extra 20 frames if we need.
+		}
 		return format( "mp_pt_%s%s", rigWeight, (endCrouched ? "_self_revive_crouch" : "_self_revive_stand") )
 	}
-	else if ( IsPlayerShadowZombie( reviver ) )
+	// if quick heal
+	if ( PlayerHasPassive( reviver, ePassives.PAS_MEDIC ) )
 	{
-		return "shadow_revive_summon_injured"
-	}else if ( PlayerHasPassive( reviver, ePassives.PAS_MEDIC ) )
-	{
-		if ( endCrouched )
-			return "Pilot_doomed_revive_crouch_drone_injured"
+		if ( PassiveMedic_ShouldDoCombatRevive( reviver ) && PassiveMedic_ShouldDoHandsFreeCombatRevive() )
+		{
+			                    
+			if ( PlayerHasPassive( reviver, ePassives.PAS_FASTER_REVIVES ) ) // upgrade_lifeline_fast_res
+			{
+				if ( endCrouched )
+					return "Pilot_doomed_revive_crouch_drone_injured_fast"
+				else
+					return "Pilot_doomed_revive_drone_injured_fast"
+			}
+         
+			if ( (StatusEffect_HasSeverity( reviver, eStatusEffect.ring_immunity )) && heatShieldReviveTime <= VOID_RING_REVIVE_TIME && canVRFastRevive )
+			{
+				if ( endCrouched )
+					return "Pilot_doomed_revive_crouch_drone_injured_fast"
+				else
+					return "Pilot_doomed_revive_drone_injured_fast"
+			}
+			if ( endCrouched )
+				return "Pilot_doomed_revive_crouch_drone_injured"
+			else
+				return "Pilot_doomed_revive_drone_injured"
+		}
 		else
-			return "Pilot_doomed_revive_drone_injured"
-	}else if ( PlayerHasPassive( reviver, ePassives.PAS_BATTERY_POWERED ) )
+		{
+			if ( endCrouched )
+				return "Pilot_doomed_revive_crouch_injured"
+			else
+				return "Pilot_doomed_revive_injured"
+		}
+	}
+                    
+	else if ( PlayerHasPassive( reviver, ePassives.PAS_BATTERY_POWERED ) && PlayerHasPassive( reviver, ePassives.PAS_PAS_UPGRADE_ONE ) )
 	{
+		if ( (StatusEffect_HasSeverity( reviver, eStatusEffect.ring_immunity )) && heatShieldReviveTime <= VOID_RING_REVIVE_TIME && canVRFastRevive )
+		{
+			if ( endCrouched )
+				return "Pilot_doomed_revive_crouch_shock_injured_fast"
+			else
+				return "Pilot_doomed_revive_shock_injured_fast"
+		}
 		if ( endCrouched )
 			return "Pilot_doomed_revive_crouch_shock_injured"
 		else
@@ -998,6 +1144,20 @@ string function GetReviveAnimation_Victim( entity reviver, entity victim, bool e
 			return "Pilot_doomed_revive_crouch_slap_injured"
 		else
 			return "Pilot_doomed_revive_stand_slap_injured"
+	}
+	else if ( PassiveAxiom_ShouldDoNewcastleAutoRevive( reviver, victim )  )
+	{
+		if ( endCrouched ) //We will need to update these with final animations for both states after prototype
+			return "Pilot_shield_revive_injured_stretcher"
+		else
+			return "Pilot_shield_revive_injured_stretcher"
+	}
+	else if ( (StatusEffect_HasSeverity( reviver, eStatusEffect.ring_immunity )) && heatShieldReviveTime <= VOID_RING_REVIVE_TIME && canVRFastRevive )
+	{
+		if ( endCrouched )
+			return "Pilot_doomed_revive_crouch_injured_fast"
+		else
+			return "Pilot_doomed_revive_injured_fast"
 	}
 
 	if ( endCrouched )
@@ -1053,10 +1213,12 @@ bool function Bleedout_IsPressToRevive( entity reviver, entity target )
 	if( PassiveMedic_ShouldDoCombatRevive( reviver ) )
 		return true
 
+	if( PassiveAxiom_ShouldDoNewcastleAutoRevive( reviver, target )  )
+		return true
 	return false
 }
 
-void function Bleedout_PlayerAttemptRes( entity reviver, entity target, bool forcePressToRevive = false )
+void function Bleedout_PlayerAttemptRes( entity reviver, entity target )
 {
 	Assert( IsNewThread(), "Must be threaded off." )
 	target.EndSignal( "OnDeath" )
@@ -1065,10 +1227,10 @@ void function Bleedout_PlayerAttemptRes( entity reviver, entity target, bool for
 
 	file.IsGettingFirstAidFrom[ target ] = reviver
 
-	bool pressToRevive        = forcePressToRevive || Bleedout_IsPressToRevive( reviver, target )
+	bool pressToRevive        = Bleedout_IsPressToRevive( reviver, target )
 	bool doAutoRevive 		  = false
 
-	doAutoRevive = ( !Bleedout_IsPlayerSelfReviving( target ) && PassiveMedic_ShouldDoCombatRevive( reviver ) )
+	doAutoRevive = ( !Bleedout_IsPlayerSelfReviving( target ) && PassiveMedic_ShouldDoCombatRevive( reviver ) && PassiveMedic_ShouldDoHandsFreeCombatRevive() )
 
 	if ( !doAutoRevive )
 	{
@@ -1126,7 +1288,10 @@ void function Bleedout_PlayerAttemptRes( entity reviver, entity target, bool for
 
 	float remainingBleedoutTime = target.GetPlayerNetTime( "bleedoutEndTime" ) - Time()
 
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) && reviver.GetTeam() != target.GetTeam() )
+		target.SetPlayerNetInt( "reviveType", eReviveTypes.RECRUIT )
 	target.SetPlayerNetTime( "reviveEndTime", endTime )
+	target.SetPlayerNetTime( "hackStartTime", Time() )
 
 	if ( !doAutoRevive )
 		target.SetPlayerNetEnt( "revivePlayerHealer", reviver )
@@ -1135,11 +1300,21 @@ void function Bleedout_PlayerAttemptRes( entity reviver, entity target, bool for
 
 	HolsterViewModelAndDisableWeapons( target )
 
-	if ( !Bleedout_IsPlayerSelfReviving( target ) )
-	{
-		if ( GibraltarIsInDome( reviver ) && GetCurrentPlaylistVarInt( "gibraltar_fast_revive", 1 ) == 1 )
-			PlayBattleChatterLineToSpeakerAndOtherPlayer( reviver, target, "bc_gibDomeRevivingPlayer" )
-	} else
+		{
+			if ( !Bleedout_IsPlayerSelfReviving( target ) )
+			{
+				if ( GibraltarIsInDome( reviver ) && GetCurrentPlaylistVarInt( "gibraltar_fast_revive", 1 ) == 1 )
+					PlayBattleChatterLineToSpeakerAndOtherPlayer( reviver, target, "bc_gibDomeRevivingPlayer" )
+                                     
+				else
+         
+                                                                
+          
+					BroadcastCommsActionToTeam( reviver, eCommsAction.QUICKCHAT_REVIVING_PLAYER, target, target.GetOrigin(), eCommsFlags.NONE, "" )
+			}
+		}
+
+	if ( Bleedout_IsPlayerSelfReviving( target ) )
 	{
 		target.SetPlayerNetInt( "reviveType", eReviveTypes.SELF )
 		EmitSoundOnEntityOnlyToPlayer( target, target, "Survival_Gameplay_Revival_Loop" )
@@ -1233,14 +1408,37 @@ void function Bleedout_PlayerAttemptRes( entity reviver, entity target, bool for
 
 	waitthread Bleedout_TrackContinuousUse( reviver, target, firstAidTime, pressToRevive, doAutoRevive )
 
-	resultTable.successfullyRevived = true
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) )
+		resultTable.successfullyRevived = CanRecruitOrRevivePlayer( reviver, target )//Defensive fix for simultaneous revives past team size limit.
+	else
+		resultTable.successfullyRevived = true
+
+	//Defensive fix for simultaneous revives past team size limit.
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) && !CanRecruitOrRevivePlayer( reviver, target ) )
+		reviver.Signal( "OnContinousUseStopped" )
+
+	//Heal player health
+	//target.SetHealth( target.GetMaxHealth() * firstAidHealPercent )
 
 	// First allow normal heal logic to take place ( there are a lot of factors affecting heal on revive including items and legend upgrades
 	target.SetHealth( Bleedout_SetRevivedPlayerHealth( reviver, target ) )
 
+	if ( target.HasPassive( ePassives.PAS_DOWN_REGEN ) )
+	{
+		//thread SURVIVAL_HealPlayerOverTime( target, eHealthPickupType.INCAPSHIELREGEN )
+
+		//HealthPickup reviveData = SURVIVAL_Loot_GetHealthKitDataFromStruct( eHealthPickupType.INCAPSHIELDREGEN )
+		//float healDuration      = max( reviveData.healTime, 0.25 )
+		//float healAmount        = SURVIVAL_CalculateTotalHealFromItem( target, eHealthPickupType.INCAPSHIELDREGEN )
+		//float healPerSecond     = healAmount / healDuration
+		//
+		////printl( "EntityHealResource: (Revive) player: " + target + ", healDuration: " + healDuration + ", healPerSecond: " + healPerSecond )
+		//EntityHealResource_Add( target, healDuration, healPerSecond, 0.0 )
+	}
 	SetPlayerNotBleedingOut( target )
 
-	ClearPlayerEliminated( target )
+	if ( IsPilotEliminationBased() )
+		ClearPlayerEliminated( target )
 
 	//Do not run this callback if player is self healing.
 	if ( !Bleedout_IsPlayerSelfReviving( target ) )
@@ -1259,6 +1457,11 @@ void function Bleedout_PlayerAttemptRes( entity reviver, entity target, bool for
 	// Allow regular shield healing to take place, there are a lot of different systems that can affect this
 	target.SetShieldHealth( Bleedout_SetRevivedPlayerShields( reviver, target ) )
 
+	// Finally, If playlist vars are overriding the healing that takes place on revive use the gamemode utility logic ( based on the setting in GamemodeUtility_ShouldOverrideHealingOnRevivedAllowHealthLoss it will just top up healing or override the values )
+	if ( GamemodeUtility_ShouldOverrideHealingOnRevived() )
+		GamemodeUtility_HealPlayerHealthAndShieldsByPercentage( target, GamemodeUtility_GetPercentToSetHealthToOnRevived(), GamemodeUtility_GetPercentToSetShieldToOnRevived(), GamemodeUtility_ShouldOverrideHealingOnRevivedAllowHealthLoss(), true )
+
+	GameRules_OnPlayerGotRevived( target, reviver )
 	Bleedout_SetPlayerBleedoutType( target, minint( Bleedout_GetPlayerBleedoutTypeCount() - 1, Bleedout_GetPlayerBleedoutType( target ) + 1 ) )
 
 	target.Signal( "BleedOut_OnRevive" )
@@ -1286,6 +1489,15 @@ float function Bleedout_DetermineFirstAidTime( entity target, entity reviver )
 			hasSelfRevive = true
 
 		firstAidTime = hasSelfRevive ? REVIVE_PASSIVE_SELF_REVIVE : firstAidTime
+			if ( ( StatusEffect_HasSeverity( target, eStatusEffect.ring_immunity ) ) && GetCurrentPlaylistVarBool( "heatshield_allow_fast_revive", VOID_RING_CAN_FAST_REVIVE) )
+			{
+				firstAidTime =  GetCurrentPlaylistVarFloat( "heatshield_self_revive_time", VOID_RING_SELF_REVIVE_TIME)
+			}
+		                    
+			if ( Bleedout_CanSelfResFromUpgrade( reviver ) && reviver.p.numSelfRevivesUsed == 0  )
+			{
+				return DEFAULT_FIRSTAID_TIME
+			}
 	}
 
 	// If defined, an override time is used
@@ -1295,8 +1507,6 @@ float function Bleedout_DetermineFirstAidTime( entity target, entity reviver )
 	if ( isPlayerSelfReviving )
 		firstAidTime = GetCurrentPlaylistVarFloat( "self_revive_time_override", firstAidTime )
 
-	if ( PlayerHasPassive( reviver, ePassives.PAS_MEDIC ) )
-		firstAidTime = target.GetSequenceDuration( "Pilot_doomed_revive_drone_injured" )
 
 	return firstAidTime
 }
@@ -1316,6 +1526,38 @@ float function Bleedout_SetRevivedPlayerHealth( entity reviver, entity target )
 		targetHealth = min( targetHealth, target.GetMaxHealth() )
 	}
 
+	if( reviver.HasPassive( ePassives.PAS_REVIVE_HEAL ) )
+	{
+		float healthToPassivelyHeal = 75 - targetHealth
+		EntityHealResource_Add( target, 8.0, healthToPassivelyHeal / 8.0, 0, "regen_default", reviver )
+	}
+
+	if ( PlayerHasPassive( reviver, ePassives.PAS_ADS_SHIELD ) && PlayerHasPassive( reviver, ePassives.PAS_PAS_UPGRADE_ONE ) )
+	{
+		const float UPGRADE_GIBRALTAR_REVIVE_HEALTH = 50.0
+		targetHealth = max( targetHealth, GetCurrentPlaylistVarFloat( "upgrade_gibraltar_revive_health", UPGRADE_GIBRALTAR_REVIVE_HEALTH ) )
+	}
+
+	if ( PlayerHasPassive( reviver, ePassives.PAS_BATTERY_POWERED ) && PlayerHasPassive( reviver, ePassives.PAS_PAS_UPGRADE_ONE ) )
+	{
+		const float UPGRADE_WATTSON_AMPED_REVIVE_HEALTH = 50.0
+		targetHealth = max( targetHealth, GetCurrentPlaylistVarFloat( "upgrade_wattson_revive_health", UPGRADE_WATTSON_AMPED_REVIVE_HEALTH ) )
+	}
+       
+
+                         
+                                                                                                                                    
+  
+                                                                   
+  
+       
+
+	                          
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT ) )
+	{
+		targetHealth += REVIVE_GUARDIAN_ANGEL_HEALTH_BONUS
+		targetHealth = min( targetHealth, target.GetMaxHealth() )
+	}
 	return targetHealth
 }
 
@@ -1383,18 +1625,11 @@ void function PlayerDiesFromBleedout_Internal( entity player, entity attacker )
 	{
 		player.Die( attacker, attacker, { damageSourceId = eDamageSourceId.bleedout } )
 		//player.BecomeRagdoll( <0,0,0>, false )
-		#if DEVELOPER
-		Warning( "PlayerDiesFromBleedout " + player + " - Valid Attacker." )
-		#endif
-
 	}
 	else
 	{
 		player.Die( svGlobal.worldspawn, svGlobal.worldspawn, { damageSourceId = eDamageSourceId.bleedout } )
 		//player.BecomeRagdoll( <0,0,0>, false )
-		#if DEVELOPER
-		Warning( "PlayerDiesFromBleedout " + player + " - Attacker set to world." )
-		#endif
 
 	}
 }
@@ -1407,8 +1642,8 @@ void function CheckForTeamBleedout( int team )
 	if ( Flag( "BleedoutDebug" ) )
 		return
 
-	// if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) )
-		// return
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) )
+		return
 
 	array<entity> teamPlayers = GetPlayerArrayOfTeam( team )
 	foreach ( entity teamPlayer in teamPlayers )
@@ -1494,7 +1729,7 @@ void function SetBodyGroupVisibilityForDragRevive( entity useTarget, bool visibl
 	if ( IsValid( useTarget ) )
 	{
 		ItemFlavor useTargetCharacter = LoadoutSlot_GetItemFlavor( useTarget, Loadout_Character() )
-		string characterName = ItemFlavor_GetHumanReadableRef( useTargetCharacter ).tolower()
+		string characterName = ItemFlavor_GetCharacterRef( useTargetCharacter ).tolower()
 		string bodyGroup = ""
 
 		switch( characterName )
@@ -1508,7 +1743,7 @@ void function SetBodyGroupVisibilityForDragRevive( entity useTarget, bool visibl
 				break
 
 			case "character_newcastle":
-				bodyGroup = "shield"
+				bodyGroup = "Shield"
 				break
 
 			case "character_rampart":
@@ -1561,7 +1796,11 @@ void function Bleedout_TrackContinuousUse( entity player, entity useTarget, floa
 
 	//FX_REVIVE_PROTOTYPE
 	entity reviveFX
-	if ( player.HasPassive( ePassives.PAS_GUARDIAN_ANGEL ) ) // || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT )
+	if ( player.HasPassive( ePassives.PAS_GUARDIAN_ANGEL ) || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT )
+                          
+                                                        
+        
+			)
 	{
 		int armorTier = EquipmentSlot_GetEquipmentTier( useTarget, "armor" )
 		vector fxColor = ( armorTier > 0 ) ? GetFXRarityColorForTier( armorTier ) : HEALTH_RGB
@@ -1585,7 +1824,7 @@ void function Bleedout_TrackContinuousUse( entity player, entity useTarget, floa
 			}
 			if ( IsValid( reviveFX ) )
 				EffectStop( reviveFX )
-			if ( player.HasPassive( ePassives.PAS_GUARDIAN_ANGEL ) ) // || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT ) )
+			if ( player.HasPassive( ePassives.PAS_GUARDIAN_ANGEL ) || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT ) )
 			{
 				StopSoundOnEntity( useTarget, GUARDIAN_ANGEL_SOUND )
 				if ( result.success )
@@ -1595,11 +1834,160 @@ void function Bleedout_TrackContinuousUse( entity player, entity useTarget, floa
 	)
 
 	table<entity, vector> lastTargetPos
+	//Newcastle - Positioning and Parenting of Revive Target
+	if ( PassiveAxiom_ShouldDoNewcastleAutoRevive( player, useTarget ) )
+	{
+		vector dir = Normalize(useTarget.GetOrigin() - player.GetOrigin() )
+		vector angles = VectorToAngles( <dir.x,dir.y,0> )
+		lastTargetPos[useTarget] <- useTarget.GetOrigin()
+
+		//we subtract our offsets from the revive targets origin to get Newcastle in the correct position without having to change the revive targets position.
+		vector startPosForPlayer = useTarget.GetOrigin() - ( player.GetForwardVector() * NEWCASTLE_REVIVE_FORWARD_OFFSET ) - ( player.GetRightVector() * NEWCASTLE_REVIVE_RIGHT_OFFSET )
+
+		vector hullMins = useTarget.IsPlayer() ? useTarget.GetPlayerMins() : useTarget.GetBoundingMins()
+		vector hullMaxs = useTarget.IsPlayer() ? useTarget.GetPlayerMaxs() : useTarget.GetBoundingMaxs()
+		TraceResults newSpotTrace = TraceHull( player.GetOrigin(), startPosForPlayer, hullMins, hullMaxs, GetPlayerArray_Alive(), TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+
+		if ( newSpotTrace.fraction < 1.0 )
+		{
+			startPosForPlayer = newSpotTrace.endPos
+		}
+
+		#if DEV
+		if ( DEBUG_DRAG_REVIVE_PLACEMENT )
+		{
+			DebugDrawArrow( player.GetOrigin(), startPosForPlayer, 2, COLOR_RED, true, 5.0 )
+			DebugDrawMark( newSpotTrace.endPos, 3, COLOR_RED, true, 5.0 )
+			DebugDrawText( newSpotTrace.endPos, "newSpotTrace: fraction: " + newSpotTrace.fraction, true, 5.0 )
+		}
+		#endif //DEV
+
+		player.SetOrigin( startPosForPlayer )
+		useTarget.SetAbsForwardVector( player.GetForwardVector() )
+		useTarget.SetAbsAngles( player.GetAngles() )
+		useTarget.SetParent( player, "REF", true )
+
+		OnThreadEnd //Newcastle has released the Revive Target
+		(
+			function() : ( useTarget, player, lastTargetPos )
+			{
+
+				if( IsValid(useTarget) )
+				{
+
+					vector adjPlayerPos		= player.GetOrigin() + <0,0,32>
+					vector targetPos 		= useTarget.GetOrigin()
+
+					TraceResults colTrace = TraceLine( adjPlayerPos, targetPos, GetPlayerArray_Alive(), TRACE_MASK_SOLID, TRACE_COLLISION_GROUP_NONE )
+					if( colTrace.fraction != 1.0 ) //Something is blocking between Axiom & Target - update targetPos to use for position setting.
+					{
+						//DebugDrawSphere( colTrace.endPos, 5, 0, <255, 255, true>, 10, 8 )
+						targetPos = colTrace.endPos
+					}
+
+					//Want to start our down-check from the higher of the two player positions:
+					float offsetZ = targetPos.z
+					if( offsetZ < adjPlayerPos.z )
+						offsetZ = adjPlayerPos.z
+
+					vector downCheckPos = <targetPos.x, targetPos.y, offsetZ>
+					vector downPos = downCheckPos + <0,0,-100>
+
+					vector safeGroundPos = targetPos
+					if( useTarget in lastTargetPos )
+						safeGroundPos = lastTargetPos[useTarget]
+
+					vector hullMins = useTarget.IsPlayer() ? useTarget.GetPlayerMins() : useTarget.GetBoundingMins()
+					vector hullMaxs = useTarget.IsPlayer() ? useTarget.GetPlayerMaxs() : useTarget.GetBoundingMaxs()
+
+					TraceResults downTrace = TraceHull( downCheckPos, downPos, hullMins, hullMaxs, GetPlayerArray_Alive(), TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+					//DebugDrawSphere( downTrace.endPos, 5, 0, <255, 255, true>, 10, 8 )
+					if( downTrace.fraction != 1.0 ) //Ground Detected. Set Target Above Ground
+					{
+						useTarget.SetAbsOrigin( downTrace.endPos )
+						safeGroundPos = downTrace.endPos
+					}
+					else //No Ground - Set to Player's Position
+					{
+						useTarget.SetAbsOrigin( safeGroundPos )
+					}
+
+					useTarget.ClearParent()
+					
+					safeGroundPos += <0, 0, 5>
+					//start a bit behind us in case we've crawled into some tight spot
+					vector playerToSafeSpotDir = Normalize( FlattenVec( safeGroundPos - useTarget.GetOrigin() ) )
+					vector traceStart = ( player.GetOrigin() - ( playerToSafeSpotDir * 15.0 ) ) + <0, 0, 5>
+
+					hullMins = useTarget.IsPlayer() ? useTarget.GetPlayerMins() : useTarget.GetBoundingMins()
+					hullMaxs = useTarget.IsPlayer() ? useTarget.GetPlayerMaxs() : useTarget.GetBoundingMaxs()
+					TraceResults safeGroundPosTrace = TraceHull( traceStart, safeGroundPos, hullMins, hullMaxs, GetPlayerArray_Alive(), TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+
+					#if DEV
+					if ( DEBUG_DRAG_REVIVE_PLACEMENT )
+					{
+						 DebugDrawArrow( traceStart, safeGroundPos, 2, COLOR_GREEN, true, 5.0 )
+					}
+					#endif
+
+					if ( safeGroundPosTrace.fraction < 1.0 )
+					{
+						safeGroundPos = safeGroundPosTrace.endPos
+					}
+
+					bool inSafeSpot = useTarget.IsPlayer() ? PutPlayerInSafeSpot( useTarget, null, null, safeGroundPos, safeGroundPos ) : PutEntityInSafeSpot( useTarget, null, null, safeGroundPos, safeGroundPos )
+
+					if ( !inSafeSpot )
+					{
+						//safe spot failed, put player to our safe spot.
+						useTarget.SetOrigin( safeGroundPos )
+					}
+
+					#if DEV
+					if ( DEBUG_DRAG_REVIVE_PLACEMENT )
+					{
+						DebugDrawMark( safeGroundPosTrace.endPos, 3, COLOR_GREEN, true, 5.0 )
+						DebugDrawText( safeGroundPosTrace.endPos, "safeGroundPos: fraction: " + safeGroundPosTrace.fraction, true, 5.0 )
+					}
+					#endif
+				}
+
+
+				if ( IsValid( player ) )
+				{
+					//player.Player_FinishDragRevive( useTarget )
+				}
+				
+				if ( IsValid( useTarget ) && useTarget.IsPlayer() )
+				{
+					SetBodyGroupVisibilityForDragRevive( useTarget, true )
+				}
+			}
+		)
+
+		float outroAnimTime = Bleedout_GetFirstAidTime( player ) - NEWCASTLE_REVIVE_OUTRO_ANIM_DURATION
+
+		if ( PlayerHasPassive( player, ePassives.PAS_AXIOM ) )
+		{
+		//	player.Player_StartDragRevive( outroAnimTime, useTarget )
+			if ( useTarget.IsPlayer() )
+				SetBodyGroupVisibilityForDragRevive( useTarget, false )
+		}
+	}
 	float startTime = Time()
 
 
 	while ( Time() < startTime + useTime && ( pressToRevive || (Bleedout_IsReviveButtonDown( player ) && Bleedout_CheckPlayerUseTargetDist( player, useTarget ) )))
 	{
+		if ( GetCurrentPlaylistVarBool( "interrupted_stops_revive", false ) )
+		{
+			if ( !doAutoRevive && StatusEffect_HasSeverity( useTarget, eStatusEffect.interrupted ) )
+			{
+				return
+			}
+		}
+
+		{
 		if ( IsValid ( reviveFX ) )
 		{
 			if ( useTarget.IsCloaked( true ) )
@@ -1608,7 +1996,16 @@ void function Bleedout_TrackContinuousUse( entity player, entity useTarget, floa
 				reviveFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 		}
 
+		if( PlayerHasPassive( player, ePassives.PAS_AXIOM ) && IsValid(useTarget) && useTarget.IsOnGround() )
+		{
+			vector targetOrigin 	= useTarget.GetOrigin() + <0,0,50>
+			vector targetDownPos	= targetOrigin + <0,0,-100>
+			TraceResults downTrace = TraceLine( targetOrigin, targetDownPos, GetPlayerArray_Alive(), TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
+			if( downTrace.fraction != 1.0 ) //Ground Detected. Set Target Above Ground
+				lastTargetPos[useTarget] <- downTrace.endPos
+		}
 		WaitFrame()
+		}
 	}
 
 	if ( ( pressToRevive || (Bleedout_IsReviveButtonDown( player ) && Bleedout_CheckPlayerUseTargetDist( player, useTarget ) && Time() >= startTime + useTime) ) )
@@ -1661,12 +2058,22 @@ entity function Bleedout_GetBleedoutAttackerWeaponEnt( entity player )
 	return file.playerBleedoutInfo[ player ].attackerWeaponEnt
 }
 
+entity function CodeCallback_GetBleedoutAttackerWeapon( entity player )
+{
+	return Bleedout_GetBleedoutAttackerWeaponEnt( player )
+}
+
 entity function Bleedout_GetBleedoutAttacker( entity player )
 {
 	if ( player in file.playerBleedoutInfo )
 		return file.playerBleedoutInfo[ player ].attacker
 
 	return null
+}
+
+entity function CodeCallback_GetBleedoutAttacker( entity player )
+{
+	return Bleedout_GetBleedoutAttacker( player )
 }
 
 void function Bleedout_ForceStop( entity player )
@@ -1757,11 +2164,4 @@ void function EnablePlayerForceBleedout_Thread( entity player, int inputOptionA 
 bool function IsForceBleedoutButtonDown( entity player, int inputOptionA = IN_DUCKTOGGLE, int inputOptionB = IN_DUCK )
 {
 	return player.IsInputCommandHeld( inputOptionA ) || player.IsInputCommandHeld( inputOptionB )
-}
-
-void function Bleedout_ForceRevive( entity reviver, entity target )
-{
-	if ( !IsValid( reviver ) || !IsValid( target ) )
-		return
-	thread Bleedout_PlayerAttemptRes( reviver, target, true )
 }

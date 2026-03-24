@@ -215,7 +215,7 @@ void function DoPhaseExitExplosion( entity player, entity phaseWeapon )
 	if ( !nade )
 		return
 
-	player.PhaseShiftBegin( 0, 1.0 )
+	player.PhaseShiftBegin( 0, 1.0, eShiftStyle.Tunnel )
 
 	nade.SetImpactEffectTable( file.phaseExitExplodeImpactTable )
 	nade.GrenadeExplode( <0,0,0> )
@@ -402,7 +402,7 @@ void function PackageTimelineWeaponDataForPlayer( entity player, TimelineData da
 			weaponData1.weaponMods = weapons[1].GetMods()
 			weaponData1.weaponAmmo = weapons[1].GetWeaponPrimaryClipCount()
 		}
-		
+
 		// if ( lastActiveMainWeapon == weapon )
 			data.activeMainWeapon = weaponData0
 		// else if ( activeAltHandWeapon == weapon )

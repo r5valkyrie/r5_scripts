@@ -17,6 +17,9 @@ global function GivePassive
 global function TakePassive
 global function TakeAllPassives
 
+global function PassiveConsumed
+global function AddCallback_OnPassiveConsumed
+
 global function GetAllPassivesForPlayer
 #endif
 
@@ -220,8 +223,14 @@ global const table<int, string> PASSIVE_DESCRIPTION_SHORT_MAP = {
 ///////////////////////
 struct
 {
+	#if SERVER
+		array<void functionref(entity,int)> onPassiveConsumedCallbacks
+	#endif
+
 	#if SERVER || CLIENT
 		table<int, array<void functionref( entity, int, bool, bool )> > passiveChangedCallbackListMap
+
+		int wattson_ult_accel_extra
 	#endif
 } file
 
@@ -237,6 +246,9 @@ global ItemFlavor& PAS_LOW_PROFILE_FLAV
 void function PassivesShared_Init()
 {
 	#if SERVER || CLIENT
+		PrecacheScriptString( MIRAGE_DECOY_DROP_SCRIPTNAME )
+		file.wattson_ult_accel_extra = GetCurrentPlaylistVarInt( "wattson_ult_accel_extra", 1 )
+
 		for ( int passiveIdx = 0; passiveIdx < ePassives._count; passiveIdx++ )
 			file.passiveChangedCallbackListMap[ passiveIdx ] <- []
 	#endif
@@ -368,11 +380,27 @@ array<int> function GetAllPassivesForPlayer( entity player )
 }
 #endif
 
+#if SERVER
+void function PassiveConsumed( entity player, int passive )
+{
+	foreach ( func in file.onPassiveConsumedCallbacks )
+	{
+		func( player, passive )
+	}
+}
+
+void function AddCallback_OnPassiveConsumed( void functionref( entity, int ) func )
+{
+	Assert( !file.onPassiveConsumedCallbacks.contains( func ) )
+	file.onPassiveConsumedCallbacks.append( func )
+}
+#endif
+
 
 #if SERVER || CLIENT
 bool function PlayerHasPassive( entity player, int passive )
 {
-	if( !IsValid( player ) )
+	if( !IsValid( player ) || !player.IsPlayer() )
 		return false
 	
 	return player.HasPassive( passive )

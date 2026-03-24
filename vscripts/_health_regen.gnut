@@ -473,7 +473,7 @@ void function HealthRegen_HealPlayerShield_Thread( entity player )
 		int maxShieldHealth =  player.GetShieldHealthMax()
 		int curShieldHealth = player.GetShieldHealth()
 		int shieldHealThisTick = int( file.playersHealInfo[ player ].shieldHeal )
-		float newShieldHealth = min( maxShieldHealth, curShieldHealth + shieldHealThisTick )
+		int newShieldHealth = int( min( maxShieldHealth, curShieldHealth + shieldHealThisTick ))
 
 		if ( regenSource == eRegenSource.SHIELD_PASSIVE )
 		{
