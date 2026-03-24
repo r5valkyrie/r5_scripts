@@ -53,7 +53,6 @@ global function ClientCommandCallbackVoidExists
 global function RemoveClientCommandCallback
 
 global function AddCallback_OnPreClientDisconnected
-global function AddCallback_OnDeathBoxSpawned
 global function AddCallback_GameStatePostEnter
 global function AddCallback_OnThreatEventActivation
 global function AddCallback_OnThreatEventStateChange
@@ -754,12 +753,6 @@ void function AddCallback_OnPreClientDisconnected( void functionref( entity play
 {
 	Assert( !svGlobal.onPreClientDisconnectedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnPreClientDisconnected" )
 	svGlobal.onPreClientDisconnectedCallbacks.append( callbackFunc )
-}
-
-void function AddCallback_OnDeathBoxSpawned( void functionref( entity player, entity attacker, int damageSourceID ) callbackFunc )
-{
-	Assert( !svGlobal.onDeathBoxSpawnedCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnDeathBoxSpawned" )
-	svGlobal.onDeathBoxSpawnedCallbacks.append( callbackFunc )
 }
 
 void function AddCallback_GameStatePostEnter( int number, void functionref( ) callbackFunc )

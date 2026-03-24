@@ -853,6 +853,7 @@ Scripts:
 	
 	pilot/_pilot_passive_medic.gnut //Should be shared. Cafe
 	pilot/sh_pilot_passive_voices.gnut
+
 	pilot/sh_pilot_passive_warlords_ire.gnut
 	pilot/_pilot_passive_sniper.gnut
 	pilot/sh_pilot_passive_adrenaline.gnut
@@ -1353,6 +1354,7 @@ Scripts:
 [
 	sh_map_zones.nut
 	weapons/sh_incap_shield.nut
+	pilot/sh_pilot_passive_void_vision.gnut
 ]
 
 When: "SERVER"

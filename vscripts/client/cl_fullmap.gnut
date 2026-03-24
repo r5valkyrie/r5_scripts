@@ -93,7 +93,7 @@ void function Cl_FullmapInit()
 	AddCallback_MinimapEntSpawned( AddInWorldMinimapObject )
 	AddCallback_OnClientScriptInit( OnClientScriptInit )
 
-	AddOnSpectatorTargetChangedCallback( OnSpectatorTargetChanged )
+	AddOnSpectatorTargetChangedCallback( OnSpectatorTargetChangedFM )
 	AddOnSpectatorTagModeChangedCallback( OnSpectatorTagModeChanged )
 }
 
@@ -1510,7 +1510,7 @@ entity function GetClientEntFromTopo( var screen )
 	return entToReturn
 }
 
-void function OnSpectatorTargetChanged( entity player, entity previousTarget, entity currentTarget )
+void function OnSpectatorTargetChangedFM( entity player, entity previousTarget, entity currentTarget )
 {
 	if ( IsValid( currentTarget ) && currentTarget.IsPlayer() )
 	{

@@ -485,14 +485,6 @@ void function MapEditor_CreateRespawnableWeaponRack(vector pos, vector ang, stri
 // When the weapon is grabbed from the rack -> respawn it
 void function OnPickupFromRackThread(entity item, string ref, float spawnTime, bool addToArray = false)
 {
-    entity rack = item.GetParent()
-    item.WaitSignal("OnItemPickup")
-
-    wait spawnTime
-
-    entity newWeapon = SpawnWeaponOnRack(rack, ref)
-    StartParticleEffectInWorld( GetParticleSystemIndex( FIRINGRANGE_ITEM_RESPAWN_PARTICLE ), newWeapon.GetOrigin(), newWeapon.GetAngles() )
-    thread OnPickupFromRackThread(newWeapon, ref, spawnTime)
 }
 
 entity function MapEditor_CreateLootBin( vector origin, vector angles, int skin = 0, bool addToArray = false )

@@ -322,7 +322,6 @@ global function PassiveAssassinsInstinct_EntityShouldBeHighlighted
 global function CastleWall_EntityShouldBeHighlighted
 global function ArmoredLeap_TargetEntityShouldBeHighlighted
 global function Nessie_GetHighlightDist
-global function VoidVision_GetHighlightModeForPlayer
 global function IsLobbyEvent1Active
 global function IsLobbyEvent2Active
 global function IsValidStickerInstance
@@ -337,13 +336,6 @@ global function GetPlayerHardware
 #if SERVER
 global function GetFovScalar
 #endif
-
-global enum eVoidVisionHighlightMode
-{
-	none,
-	self,
-	structure
-}
 
 // Dummy struct for SERVER/UI — real definition is #if CLIENT in sh_gladiator_cards.nut
 #if SERVER || UI
@@ -2730,12 +2722,6 @@ float function Nessie_GetHighlightDist()
 	return GetCurrentPlaylistVarFloat( "nessie_highlight_distance", 2000 )
 }
 
-int function VoidVision_GetHighlightModeForPlayer( entity player, entity otherPlayer )
-{
-	Warning( "STUB: VoidVision_GetHighlightModeForPlayer" )
-	return eVoidVisionHighlightMode.none
-}
-
 
 bool function FerroWall_BlockScan( vector startPos, vector endPos )
 {
@@ -3053,7 +3039,12 @@ float function ControlGunRacks_GetPickupGracePeriodDuration()
 void function FR_Nessie_CheckCurrentWeapons( entity player ) { Warning("STUB: FR_Nessie_CheckCurrentWeapons") }
 string function GoldenHorse_UpdateLootHighlight( entity prop, string ref, int tier, string highlight )
 {
-	Warning( "STUB: GoldenHorse_UpdateLootHighlight" )
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) )
+		return highlight
+
+	if ( ref == "hopup_golden_horse_green" )
+		highlight = "survival_item_gh"
+
 	return highlight
 }
 bool function HasInterruptableBannerPickup( entity player = null ) { Warning("STUB: HasInterruptableBannerPickup"); return false }

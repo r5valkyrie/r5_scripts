@@ -18,6 +18,7 @@ void function ShWeaponRack_Init()
 #if SERVER
 //	AddCallback_EntitiesDidLoad( testRack )
 #endif
+	RegisterSignal( "OnItemPickup" )
 }
 
 #if SERVER

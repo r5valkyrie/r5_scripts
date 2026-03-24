@@ -7,11 +7,12 @@ global function SURVIVAL_ChooseLootLocations
 global function SURVIVAL_AddSpawnPointGroup
 global function SURVIVAL_NumItemsInInventory
 global function SURVIVAL_RemoveSpecificItemFromPlayerInventory
+
 global function SURVIVAL_ClearLootGroupRemappings
 global function SURVIVAL_AddLootGroupRemapping
+
 global function SURVIVAL_HealPlayerOverTime
 global function SURVIVAL_CalculateTotalHealFromItem
-global function SURVIVAL_EquipOrdnanceFromInventory
 global function SURVIVAL_Death_DropLoot
 global function SURVIVAL_IsFallDeath
 global function SURVIVAL_IsCrushDeath
@@ -27,6 +28,8 @@ global function SURVIVAL_GivePlayerEquipment
 global function SURVIVAL_DropWeapon
 global function SURVIVAL_DropMainWeapon
 global function SURVIVAL_StopDisplayingHotzones
+
+global function SURVIVAL_EquipOrdnanceFromInventory
 
 global function SURVIVAL_EquipGadgetFromInventory
 global function SURVIVAL_EquipGadgetFromEquipment
@@ -211,6 +214,7 @@ global function DEV_CreateHotZonesDebugAll
 #endif
 global function SURVIVAL_DebugLoot
 
+global function AddCallback_OnDeathBoxSpawned
 global function AddCallback_OnDeathBoxLootUpdated
 global function UpdateDeathBoxHighlight
 global function CreateLootForFlyerDeathBox
@@ -399,7 +403,8 @@ struct PlayerLootThrowData
 struct {
 	string defaultLevelZone = "zone_low"
 
-	table< string, LootGroup > lootGroups
+	table< string, LootGroup >              lootGroups
+	table< string, array<BinOrSpawnPoint> > groupedSpawnpoints
 
 	LootZone&             worldLootZone
 	table<vector, float>  validCircleEndLocations
@@ -500,7 +505,6 @@ struct {
 	array<entity> playersThatShouldForceUseSafeSpotForDeathBox
 
 	table<entity, entity> oldBinToPerkBinMapping
-	table< string, array<BinOrSpawnPoint> > groupedSpawnpoints
 
 } file
 
@@ -7329,13 +7333,7 @@ array<string> function SURVIVAL_GetAllRefsInLootGroup( string groupRef, bool che
 	{
 		groupRef = CheckLootGroupRemapping( groupRef )
 	}
-	string groupRefLower = groupRef.tolower()
-	if ( !(groupRefLower in file.lootGroups) )
-	{
-		Warning( "SURVIVAL_GetAllRefsInLootGroup: loot group '" + groupRef + "' not found" )
-		return []
-	}
-	LootGroup groupData = file.lootGroups[ groupRefLower ]
+	LootGroup groupData = file.lootGroups[ groupRef.tolower() ]
 	array<string> allRefs
 	foreach( string itemRef, float itemWeight in groupData.entries )
 	{
@@ -9949,6 +9947,12 @@ void function OnPlayerRemoveWeaponMod( entity player, entity weapon, string mod 
 	//	printt( "\t", modName )
 }
 
+
+void function AddCallback_OnDeathBoxSpawned( void functionref(entity, entity, int) func )
+{
+	Assert( !file.onDeathboxSpawnedCallbacks.contains( func ) )
+	file.onDeathboxSpawnedCallbacks.append( func )
+}
 
 void function AddCallback_OnDeathBoxLootUpdated( void functionref(entity) func )
 {

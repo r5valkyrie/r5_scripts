@@ -102,18 +102,9 @@ void function ClientCodeCallback_OnShieldHealthChanged( entity ent )
 		{
 			PlayShieldActivateEffect( ent )
 		}
-	} else
-	{
-		Flowstate_HUD_UpdateShieldHealthForPlayer()
 	}
 
 	ent.Signal( "ShieldChanged" )
-	
-	if( ent.lastShieldHealth > shieldHealth )
-	{
-		local amount = ent.lastShieldHealth - shieldHealth
-		ent.Signal( "OnDamaged", { damageAmount = amount } )
-	}
 
 	ent.lastShieldHealth = ent.GetShieldHealth()
 }
@@ -148,7 +139,7 @@ void function ClientCodeCallback_OnCinematicEventFlagsChanged( entity player, in
 
 	//Strangely enough, even though cinematiceventflag data isn't propagated to other clients,
 	//The codecallback for them triggers e.g. when you first connect onto a server.
-	if ( player == GetLocalClientPlayer() )
+	if ( player == GetLocalViewPlayer() )
 		UpdateMainHudFromCEFlags( player )
 
 	int playerFlags = player.GetCinematicEventFlags()
@@ -219,12 +210,6 @@ void function ClientCodeCallback_OnEntityCreation( entity ent )
 	PerfStart( PerfIndexClient.OnEntityCreation )
 
 	string targetName = ent.GetTargetName()
-
-	if ( className in _entityClassVars )
-	{
-		if ( !ent._entityVars )
-			InitEntityVars( ent )
-	}
 
 	if ( !("creationCount" in ent.s) )
 	{
@@ -578,7 +563,6 @@ void function ServerCallback_YouDied( entity attacker, float healthFrac, int dam
 		callbackFunc( attacker, healthFrac, damageSourceId, recentHealthDamage )
 
 	thread OnClientPlayerDying( clientPlayer )
-	Init_EvoShields_Flowstate_HUD( false )
 }
 
 void function ClientCodeCallback_SaveResumed()

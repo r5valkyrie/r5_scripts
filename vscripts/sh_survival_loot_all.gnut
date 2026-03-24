@@ -1044,12 +1044,14 @@ bool function SURVIVAL_Loot_IsRefDisabled( string ref )
 
 bool function SURVIVAL_Loot_IsReforBaseWeaponDisabled( string ref )
 {
-	if( SURVIVAL_Loot_IsRefDisabled( ref ) )
-		return true
+	if( SURVIVAL_Loot_IsRefDisabled( ref ) ){
+		Warning("Loot_IsReforBaseWeaponDisabled" + ref + "disabled")
+		return true}
 
 	// If it's not valid, lets consider it disabled
-	if( !SURVIVAL_Loot_IsRefValid( ref ) )
-		return true
+	if( !SURVIVAL_Loot_IsRefValid( ref ) ){
+		Warning("Loot_IsReforBaseWeaponDisabled" + ref + "not valid")
+		return true}
 
 	// If the base weapon is disabled, disable all derived locked sets
 	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( ref )
@@ -1059,8 +1061,9 @@ bool function SURVIVAL_Loot_IsReforBaseWeaponDisabled( string ref )
                
        
 
-	if( lootData.lootType == eLootType.MAINWEAPON && SURVIVAL_Loot_IsRefDisabled( lootData.baseWeapon ) )
-		return true
+	if( lootData.lootType == eLootType.MAINWEAPON && SURVIVAL_Loot_IsRefDisabled( lootData.baseWeapon ) ){
+		Warning("SURVIVAL_Loot_IsRefDisabled" + lootData.baseWeapon + "disabled")
+		return true}
 
 	return false
 }
