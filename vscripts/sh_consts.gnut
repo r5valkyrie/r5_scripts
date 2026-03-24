@@ -889,8 +889,13 @@ global enum eRespawnStatus
 	WAITING_FOR_PICKUP,
 	WAITING_FOR_DELIVERY,
 	WAITING_FOR_DROPPOD,
+	WAITING_FOR_RESPAWN,
 	PICKUP_DESTROYED,
-	SQUAD_ELIMINATED
+	PLAYER_ELIMINATED,
+	SQUAD_ELIMINATED,
+                       
+                                   
+       
 	_COUNT,
 }
 

@@ -9,10 +9,10 @@ global function Survival_GetPlayerData
 global function Survival_RunPlaneLogic_Thread
 global function Survival_GenerateSingleRandomPlanePath
 global function Survival_RunSinglePlanePath_Thread
-                       
-                                               
-                                                     
-      
+
+
+
+
 global function Survival_HasPlayerJumpedOutOfPlane
 global function DoCleanupPlayerPermanents
 global function EndThreadOn_PlayerCleanupPermanents
@@ -52,9 +52,9 @@ global function SURVIVAL_GetPlaneHeight
 global function SURVIVAL_GetPlaneJumpDuration
 global function SURVIVAL_SetMapCenter
 global function SURVIVAL_GetMapCenter
-                       
-                                        
-      
+
+
+
 global function SURVIVAL_SetFlightAngleAdjustment
 global function SURVIVAL_GetFlightAngleAdjustment
 global function SURVIVAL_SetPlaneOverridePathRegion
@@ -177,9 +177,9 @@ global function DEV_TestNitroSpawning // globalized for dev testing / calling fr
 global function DEV_GiveSpawnWeapons
 global function Dev_ForceLaunchCharacterSpawning
 global function DEV_SimulatePlanePaths
-                            
+
 global function TestPrompt_RevealMyLastDeathbox
-      
+
 #if ASSERTS
 global function Test_Survival_GenerateSingleRandomPlanePath
 #endif //ASSERTS
@@ -225,9 +225,9 @@ const bool DEBUG_PLANE_PATH = false
 const bool DEBUG_PLANE_PATH_LIGHTWEIGHT = false
 const bool DEBUG_PLANE_PATH_JUMP = true
 
-                       
-                                                
-      
+
+
+
 
 const bool PLANE_PATH_DEBUG = false
 
@@ -343,9 +343,9 @@ struct
 	float  flyOverMapDuration
 	float  planeFlightAngleAdjustment
 
-                       
-                               
-      
+
+
+
 
 	// Override where the plane goes
 	vector planeOverridePathCenter
@@ -419,11 +419,11 @@ struct
 
 	array< entity > playersWhoNeedSetupPrematch = []
 
-                        
-                    
-                                    
-                                         
-       
+
+
+
+
+
 
 	table< entity, DeadPeriodData > playerDeadZonePeriodData
 
@@ -461,12 +461,12 @@ void function GamemodeSurvival_Init()
 	SURVIVAL_Loot_InitServer()
 	SurvivalShip_Init()
 	SurvivalFreefall_Init()
-                      
-                             
-       
-	                         
+
+
+
+
 		ForcedSpawn_Init()
-       
+
 
 	// This Init gets run by other modes which do use match_jip and this call to set it to disabled was overriding settings in those mode.
 	// Only turn off Join In progress if it is disabled in playlist vars ( which it is by default)
@@ -478,9 +478,9 @@ void function GamemodeSurvival_Init()
 	PrecacheParticleSystem( $"veh_blowout_wide_full_loop" )
 	PrecacheParticleSystem( $"droppod_airburst" )
 
-                        
-                                                 
-       
+
+
+
 
 	PrecacheImpactEffectTable( "droppod_impact" )
 
@@ -507,12 +507,12 @@ void function GamemodeSurvival_Init()
 	if ( svGlobal.gameModeAbandonPenaltyApplies == null ) //Ranked, Elite_Streak etc can override this.
 		SetAbandonCheckFunc( Survival_DidPlayerAbandon )
 
-	                     
+
 		BlockMapEntityParseCreationOf( "prop_dynamic", "", "script_survival_pvpcurrency_container" )
-       
-	                         
+
+
 		BlockMapEntityParseCreationOf( "prop_dynamic", "", "script_survival_upgrade_station" )
-       
+
 
 	if ( !Survival_IsCoverEnabled() )
 	{
@@ -642,9 +642,9 @@ void function GamemodeSurvival_Init()
 		AddCallback_OnLootBinOpening(GamemodeUtility_SpawnBonusLoot)
 
 	if ( GetCurrentPlaylistVarBool( "airdrop_enabled", true )
-		                    
+
 		|| UpgradeCore_IsEnabled() // needs to parse these values for lifelines care package ult upgrade
-        
+
 	)
 	{
 		if ( GetCurrentPlaylistVarBool( "airdrop_pregame_enabled", false ) )
@@ -675,9 +675,9 @@ void function GamemodeSurvival_Init()
 	file.headshotDamageScale = GetCurrentPlaylistVarFloat( "headshot_damage_scale", 1 )
 	file.bodyshotDamageScale = GetCurrentPlaylistVarFloat( "bodyshot_damage_scale", 1 )
 
-	                         
+
 		AddCallback_OnWeaponAttack( Survival_OnWeaponAttack )
-       
+
 
 	file.gameResultFlags = 0
 	file.gameScoreFlags = 0
@@ -750,7 +750,7 @@ void function ParseAirdropData( int airdropRound, string airdropRoundData, bool 
 			for ( int i = 0; i < data.dropCount; i++ )
 			{
 				array< array<string> > contentGroups = clone data.contents
-                        
+
 					array< array<string> > podContents
 					if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) && GoldenHorse_SwordCarePackageEnabled() && i == 0 && contentGroups.len() >= 3 )
 					{
@@ -769,9 +769,9 @@ void function ParseAirdropData( int airdropRound, string airdropRoundData, bool 
 					}
 					else
 						podContents = DetermineAirdropContents ( contentGroups )
-         
-                                                                                    
-          
+
+
+
 
 				data.contentsArray.append( podContents )
 
@@ -1061,33 +1061,33 @@ void function EntitiesDidLoad_Survival()
 		SURVIVAL_SetMapCenter( mapCenterOverride )
 	}
 
-                       
-                                                                                                
-                                            
-                                   
-  
-                                                            
-  
-                          
-  
-                                                                   
-                                   
-   
-                                                                               
-   
-                                                                                                                                  
-  
-     
-                             
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	{
-                            
+
 		// Set planes based on proximity to Evac Location
 		//if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) ) // S3: ShadowArmy not available
 		//{
 		//	thread Survival_RunPlaneLogic_Thread( ShadowArmy_GenerateSingleRevArmyPlanePath, Survival_RunSinglePlanePath_Thread, false )
 		//}
 		//else
-      
+
 		{
 			if ( Survival_IsJumpFromPlaneEnabled() )
 			{
@@ -1521,11 +1521,11 @@ void function Survival_RunSinglePlanePath_Thread( array< PlanePathData > paths, 
 	plane.Minimap_SetClampToEdge( false )
 	SetTargetName( plane, SURVIVAL_PLANE_NAME )
 
-	                            
+
 		// Use a custom model for the Rev Alliance Ship in Rev Army mode
 		//if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) ) // S3: ShadowArmy not available
 		//	ShadowArmy_SetupRevenantDropship( plane )
-       
+
 
 	DispatchSpawn( plane )
 	plane.SetParent( mover )
@@ -1578,19 +1578,19 @@ void function Survival_RunSinglePlanePath_Thread( array< PlanePathData > paths, 
 
 	FlagSet( "DeathCircleActive" )
 
-	                               
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) && GetCurrentPlaylistVarBool( "sur_circle_start_paused", false ) )
 		{
 			FlagClear( "DeathFieldPaused" )
 		}
-                                      
 
-                     
-                                                                                                       
-   
-                                  
-   
-                           
+
+
+
+
+
+
+
 }
 
 #if DEVELOPER
@@ -1660,1034 +1660,1034 @@ void function DEV_SimulatePlanePaths_Internal( int count = 1 )
 }
 #endif
 
-                       
-                                                                      
- 
-                   
-                                
-
-                                                  
-  
-                                          
-                                   
-                                            
-                                     
-                                        
-                                 
-                         
-  
-
-                             
-                                                                  
-                         
-
-                                               
-                      
-                                                                                                    
-                                              
-
-                               
-
-                                                                               
-
-                                                                                                                 
-                                      
-                                                  
-
-                                                                 
-                                      
-  
-                                                                                                                                            
-                                                                                                                                            
-                                                                                                                                            
-                                                       
-  
-
-                                     
-                           
-                           
-                       
-                                      
-  
-                                                   
-                                                               
-                                
-                                 
-                                           
-                                                                                                          
-                                               
-                                               
-                       
-                   
-                                 
-                                        
-                                                     
-                                           
-                                              
-                             
-                                 
-
-                                               
-                                                                       
-                                  
-                                                          
-                                  
-                                          
-                                          
-                  
-                        
-                        
-
-                                              
-                                                   
-                           
-                            
-                                      
-                                                                                                     
-                                          
-                                          
-                  
-                            
-                                   
-                                                
-                                       
-                                            
-                                             
-                        
-                          
-              
-                            
-
-                                
-
-                         
-                          
-                                 
-                        
-                                
-  
-
-             
-                         
-   
-                                    
-                                             
-    
-                                            
-     
-            
-                                                                                                                                                                            
-                                     
-     
-
-                                              
-     
-                                       
-     
-
-                                          
-     
-                                                                                      
-                                
-     
-
-                         
-    
-
-                              
-    
-                   
-    
-   
-  
-
-                               
-                                                                               
-                                          
-
-                                      
-  
-                                        
-  
-
-                               
-
-                                      
-  
-                                      
-  
-
-                                    
-                                                                                   
-
-                                                                            
-
-                                                             
-                                                                                    
-
-                                      
-  
-                                                                        
-  
-
-                                                        
-
-                      
-
-                               
- 
-
-                                            
-                                             
-                                                                                                  
- 
-                             
-
-                      
-              
-
-                      
-                           
-                                    
-             
-                        
-
-                         
-                       
-                       
-                          
-
-                           
-                                      
-  
-                                                                 
-  
-
-                                                      
-
-                                                                  
-                         
-
-                             
-  
-                                                      
-                                                                                                                      
-                                                                                                                      
-                                                                          
-
-                                               
-                                                                                  
-                                                                                                  
-
-
-                                       
-   
-                                                         
-                                  
-                                                                                                                                      
-                                                                                                                                    
-                                                 
-   
-
-
-            
-                                        
-   
-                            
-                                                                                                                      
-        
-   
-  
-
-                                                  
-  
-                         
-                        
-  
-
-                                                    
-                                                                   
-
-                                      
-  
-                    
-                             
-                         
-                               
-                         
-                            
-
-                      
-  
-
-                                                             
-                                                                                                                                
-
-                                      
-  
-                                          
-                                      
-                                              
-                                                       
-  
-
-                                                                                                                        
-                                                                     
-                                                                                     
-                                             
-                                             
-
-                                                                 
-                                      
-  
-                                                                                                                        
-                                                                                                                        
-                                                                                                                        
-                                                                                                                    
-                                                                                                                    
-                                                                                                                    
-                                             
-                                         
-  
-
-                             
-                                                   
-                                                                           
-                                                                                                           
-       
-             
- 
-
-                                                                                                      
- 
-                      
-        
-
-                                                   
-                                     
-
-                                                    
-                                                      
-                                                                                                                                     
-
-
-                                     
-                           
-                           
-                       
-                                      
-  
-                                                   
-                                                               
-                                
-                                 
-                                           
-                                                                                                          
-                       
-   
-                                                                                                                     
-                                                          
-                                                   
-   
-      
-   
-                                             
-   
-                                         
-                       
-                   
-                                 
-                                        
-                                                     
-                                           
-                                              
-                             
-                                 
-
-                                               
-                                                                       
-                                  
-                                                          
-                                  
-                                               
-                                    
-                  
-                        
-                        
-
-                                              
-                                                   
-                           
-                            
-                                      
-                                                                                                     
-                                               
-                                    
-                  
-                            
-                                   
-                                                
-                                       
-                                            
-                                             
-
-                              
-                                                                   
-                                                                            
-                                             
-        
-
-                        
-                          
-              
-                            
-
-                                
-
-                         
-                          
-                                 
-                        
-                                
-
-                       
-   
-                                                     
-   
-  
-
-
-                      
-  
-                                       
-   
-                                                                                                                                                                                                 
-   
-  
-
-             
-                 
-   
-                                    
-                                             
-    
-                                            
-     
-            
-                                                                                                                                                                            
-                                     
-     
-
-                                              
-     
-                                       
-     
-
-                                          
-     
-                                                                                      
-                                
-     
-
-                         
-    
-
-                                                                      
-    
-                                                          
-                                 
-             
-
-                        
-    
-
-                                                
-    
-                            
-     
-                         
-                     
-     
-    
-                                  
-   
-  
-
-
-                               
-                                     
-                                                                               
-                                          
-
-                                      
-  
-                                        
-  
-                               
-                                      
-  
-                                      
-  
-
-                                                                                                             
-                              
-                      
-  
-                                                                   
-                                                                                                       
-  
-                                                                
-
-                                      
-  
-                                                                                                  
-  
-
-                                                                                                      
-
-                                                             
-                                                                                                              
-
-                                      
-  
-                                                                        
-  
-
-                                                        
-
-                                      
-  
-                                      
-   
-                                                                                 
-                                                                         
-   
-      
-   
-                                                                                 
-   
-  
-                                                                 
-
-                               
- 
-
-                                                                 
- 
-                       
-
-                                                                                                                  
-  
-                                                                                        
-                                                                                        
-                                                                                              
-                                                                                              
-                                                        
-                                                                                                                                                                                  
-                                       
-   
-                                                 
-                            
-    
-                                                                                                                                     
-    
-
-                                  
-   
-
-               
-  
-
-                                                                                 
-                                                                                                      
-                                                                                            
-                  
-  
-                                                
-  
-
-                                                                                                                              
-                                                                   
-                                                                                            
-
-                                      
-  
-                                        
-   
-                                                                    
-   
-      
-   
-                                                                                                                                      
-   
-  
-
-              
- 
-
-                                                                                                                          
- 
-                          
-
-                                                                     
-  
-                      
-  
-
-                                         
-  
-                                               
-                                        
-                                                                                                                                      
-   
-                                                                        
-   
-
-                                                              
-                                                  
-                                                                                    
-   
-                                                                               
-   
-
-                                                                                                                              
-  
-
-                 
- 
-
-                                                                                                                                                                                         
- 
-                 
-               
-
-                        
-                   
-  
-                                                                                                
-                                                                               
-  
-     
-  
-                                                                                               
-  
-
-                                         
-  
-                                           
-                           
-                                                  
-
-                    
-   
-                                            
-   
-
-                                                
-  
- 
-
-                                        
-                                        
-                                                                                                                     
-                                                                                                                                                                                                         
- 
-                                                     
-                                                                                             
-
-                   
-  
-                                       
-   
-                                                                                                        
-
-                                 
-                             
-   
-
-                                                           
-                            
-   
-                                                                                 
-   
-      
-   
-                                           
-   
-                                
-  
-
-                           
-                         
-
-                                           
-                                      
-  
-                                                                                  
-                                                                                
-  
-
-                                                                                                                           
-                                      
-  
-                                                                                                           
-                                  
-                              
-  
-
-                                                                   
-  
-                                       
-               
-                                       
-   
-                                                    
-   
-                      
-
-                                                                                                                  
-                                                                                                                  
-                                                                            
-
-                                       
-   
-                                                                             
-   
-                                                                                                                             
-  
-                           
-  
-                                                                                                                       
-                                                                   
-
-                                       
-   
-                                                                             
-                                                           
-
-                                                                                                                                               
-
-                                                                                                 
-
-                                                                                      
-
-                                                                  
-    
-                                                                                                   
-                                                                       
-                                                                                                                              
-                                                                                                                                           
-                                                                                                                                         
-                                                                                                         
-                                     
-                                                                                                                                                                    
-    
-   
-  
-
-                                                                                                         
-                                   
-                                      
-  
-                                                                      
-  
-
-                            
-
-                                                                                         
-                      
-  
-                           
-  
-
-                           
-  
-                                        
-
-                                       
-   
-                                                                                           
-   
-  
-     
-  
-                                                                           
-                                       
-   
-                                                                 
-   
-  
-
-                                                                   
-
-                                                                                                                                                 
-                                     
-                                      
-  
-                                                             
-  
-
-                              
-                                      
-  
-                                                                  
-  
-
-                            
-                          
-                                      
-  
-                                                                                                   
-                                                                                        
-  
-
-                                      
-  
-                                                                                                              
-                                 
-                             
-  
-
-                           
-  
-                       
-  
-
-                                                                                                   
-                                    
-                                      
-  
-                                                                               
-                                                
-                                          
-  
-
-                            
- 
-
-                                                                              
- 
-              
-
-                        
-  
-                                                      
-  
- 
-
-                                                                                                      
- 
-                                                                                             
-
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                         
-                                                                                                       
-                                                                                                             
-
-                                                   
-
-                
-              
-                         
-                       
-                                                 
-  
-                               
-                           
-
-                   
-   
-                                         
-                                     
-   
-      
-   
-                                       
-                                       
-   
-  
-
-                                 
-                             
-                                          
-                                      
-
-
-                                                                                           
-  
-                         
-                       
-  
-     
-  
-                                  
-                                
-  
-
-                 
-
- 
-
-                                                       
- 
-                                                                              
-                                                                                                       
-                                                                                                        
-                                       
-                                                                      
-                                                  
-
-                                       
-  
-                                            
-  
- 
-
-                                               
- 
-                              
-                                  
-                       
-                                                                              
-
-                                                                  
-                                                                                      
-
-                      
-                             
-                                                                                                                 
-
-                                           
-  
-                                                                                                             
-   
-                       
-   
-      
-   
-                                                                                                      
-                                                                         
-   
-  
-
-             
-                                    
-   
-                                               
-    
-                              
-                       
-                                     
-                              
-    
-   
-  
-
-                                           
-  
-                                                                                                                                   
-                                                            
-                                                    
-                                                         
-                      
-
-                                                                   
-                                         
-                              
-                              
-                                      
-                                        
-                                          
-                                  
-                          
-                                        
-                                                                              
-                                    
-     
-                                
-  
-
-           
-                                
- 
-
-                                                  
- 
-                                                                                    
-
-                                                                                                                                     
-        
-
-                                                                    
-                             
-
-                                     
-                                         
-                                    
-                                                                                    
-
-                               
-  
-                               
-  
-
-                                                                             
-
-                      
-
-                                                
-                                                                                              
-                                
-  
-                                                                               
-         
-
-                               
-                             
-                                   
-                                                                             
-
-             
-  
- 
-
-
-                                                              
- 
-                               
-                                     
-
-                                                                                
-
-             
-                         
-   
-                                                                                     
-   
-  
-
-                                      
-
- 
-
-                                                      
- 
-                                                       
-                           
-
-                                                         
- 
-
-                                          
-   
-                                 
-                                                                                                                             
-                                                          
-                                                         
-                                                              
-   
-                             
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function PlaneAttractLeviathan( entity plane, entity entDestroyedWhenPlaneIsDone )
 {
@@ -2701,26 +2701,26 @@ void function PlaneAttractLeviathan( entity plane, entity entDestroyedWhenPlaneI
 	}
 }
 
-                       
-                                                                                                              
- 
-                           
-  
-                                
-  
-                                                                       
-  
-                                                      
-  
 
-            
-  
-                                   
-                                         
-                                                                                  
-  
- 
-                             
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 float function SURVIVAL_GetPlaneJumpDuration()
@@ -2826,47 +2826,47 @@ void function OpenAndClosePlaneDoor( entity plane, float openDelay, float openDu
 	KickEveryoneOutOfPlane( plane )
 }
 
-                       
-                                                                                                   
- 
-                           
-  
-                                 
-  
 
-                       
-  
-                      
-                             
-   
-                                                                     
-                                                                   
-   
-          
-  
-     
-  
-                
-                             
-   
-                                                                     
-   
-  
 
-                           
 
-                          
 
-                  
 
-                                
 
-                            
-  
-                                 
-  
- 
-                             
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Function used by Survival to determine how many living players are remaining in the match
 // Takes into account when the functionality is overridden by different modes
@@ -2955,9 +2955,9 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 			isThirdPartyKill = false
 		}
 	}
-                        
+
 	if ( !GameModeVariant_IsActive( eGameModeVariants.FREEDM_GUNGAME ) )//OnPlayerKilled in gungame happens first and weapon is switched before this is called
-      
+
 	WeaponStatsHook_OnKillEnemy( victim, attacker, killer, damageInfo )
 
 	//only if the kill was earned
@@ -2988,7 +2988,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 				continue
 
 
-			                    
+
 			bool doPilotAssist = !UpgradeCore_UsePersonalObituaryNotifications()
 			// if upgrades are using the personal obituary, the squad wipe notification will already communicate this
 			// only do the notification if this was a thirst
@@ -3006,7 +3006,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 				}
 			}
 			if( doPilotAssist )
-         
+
 				AddPlayerScore( assistCreditPlayer, "EliminatePilotAssist", victim )
 
 			AddKillAssistStats( assistCreditPlayer, victim )
@@ -3074,10 +3074,10 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 
 	if ( Survival_IsPlayerSquadEliminated( victim ) )
 	{
-                 
-                                                                                                                                     
-                                                                             
-      
+
+
+
+
 			HandleSquadElimination( victim.GetTeam() )
 	}
 
@@ -3096,10 +3096,10 @@ void function AddKillStats( entity killer, entity victim, string weaponString )
 	AddXP( killer, eXPType.KILL )
 	bool gameModeHasChampXPKill = true
 
-	                      
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 			gameModeHasChampXPKill = false // prevent giving repeated XP for killing the champ squad in multiple rounds.
-       
+
 
 	if ( IsValid( victim ) && victim.GetTeam() == SurvivalCommentary_GetChampionTeam() && gameModeHasChampXPKill )
 		AddXP( killer, eXPType.KILL_CHAMPION_MEMBER )
@@ -3243,10 +3243,10 @@ int function CodeCallback_KillDamagePlayerOrNPC( entity ent, var damageInfo, int
 {
 	entity damagedEnt = ent
 
-                                  
-                                                  
-                                   
-       
+
+
+
+
 
 	if ( !damagedEnt.IsPlayer() )
 		return 0
@@ -3261,12 +3261,12 @@ int function CodeCallback_KillDamagePlayerOrNPC( entity ent, var damageInfo, int
 			&& !IsBitFlagSet( damageType, DF_SKIPS_DOOMED_STATE )
 			&& !isForceKill )
 	{
-                     
-                                                                    
-    
-                                      
-    
-        
+
+
+
+
+
+
 		StatsHook_OnDoomingDamage( damagedEnt, attacker, damageInfo )
 		WeaponStatsHook_OnDownEnemy( damagedEnt, attacker, damageInfo )
 
@@ -3303,9 +3303,9 @@ int function CodeCallback_KillDamagePlayerOrNPC( entity ent, var damageInfo, int
 					Remote_CallFunction_Replay( player, "ServerCallback_OnEnemyDowned", attacker, damagedEnt, DamageInfo_GetCustomDamageType( damageInfo ), DamageInfo_GetDamageSourceIdentifier( damageInfo ), weaponSkinItemFlavorGUID )
 				}
 
-			                    
+
 				if( !UpgradeCore_UsePersonalObituaryNotifications() )
-         
+
 					AddPlayerScore( attacker, "Sur_DownedPilot", damagedEnt )
 			}
 
@@ -3327,7 +3327,7 @@ int function CodeCallback_KillDamagePlayerOrNPC( entity ent, var damageInfo, int
 			//TODO - the follow can cause Callbacks_OnPlayerKillDamage below to be skipped
 			return damagedEnt.GetMaxHealth()
 		}
-		                    
+
 		// this has to be here to trigger the squad wipe before all the players on the team have been killed from the squad wipe
 		else if( UpgradeCore_UsePersonalObituaryNotifications() )
 		{
@@ -3338,9 +3338,9 @@ int function CodeCallback_KillDamagePlayerOrNPC( entity ent, var damageInfo, int
 				AddPlayerScore( teammate, "Sur_SquadWipe", damagedEnt, teammate == attacker ? "killer" : "" )
 			}
 		}
-        
+
 	}
-	                    
+
 	// this has to be here to detect a thirst as opposed to a death during squad wipe
 	else if( UpgradeCore_UsePersonalObituaryNotifications() )
 	{
@@ -3351,7 +3351,7 @@ int function CodeCallback_KillDamagePlayerOrNPC( entity ent, var damageInfo, int
 		}
 		AddPlayerScore( attacker, "EliminatePilot", damagedEnt )
 	}
-       
+
 
 	foreach ( func in file.Callbacks_OnPlayerKillDamage )
 		func( ent, damageInfo, actualTotalDamage )
@@ -3367,7 +3367,7 @@ bool function ShouldDoBleedout( entity damagedEnt )
 	if ( !IsValid( damagedEnt ) )
 		return false
 
-	                                                           
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && damagedEnt.IsPlayer() )
 		{
 			if ( IsPlayerShadowZombie( damagedEnt ) )
@@ -3376,12 +3376,12 @@ bool function ShouldDoBleedout( entity damagedEnt )
 			if ( AreTeammatesShadowZombies( damagedEnt ) && GetCurrentPlaylistVarBool( "shadow_royale_last_living_squad_mate_can_be_rezzed", false ) == false )
 				return false //last
 		}
-       
 
-	                            
+
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && !ShadowArmy_ShouldEnterBleedout( damagedEnt ) )
 			return false
-       
+
 
 	Bleedout_TryToRemoveInfiniteSelfResOnDownedSquad( damagedEnt )
 
@@ -3407,18 +3407,18 @@ bool function ShouldDoBleedout( entity damagedEnt )
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && IsTeamRabid( damagedEnt.GetTeam() ))
 		return true
 
-                                 
-                                                                        
 
-                                 
-  
-                                        
-              
 
-                                          
-              
-  
-       
+
+
+
+
+
+
+
+
+
+
 
 	return false
 
@@ -3490,22 +3490,22 @@ void function Survival_RunCharacterSelection()
 
 	bool modePicksChampion = GetCurrentPlaylistVarBool( "enable_champion", true ) && !IsPVEMode()
 
-	                        
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_EXPLORE ) )
 			modePicksChampion = false
-       
+
 
 	if ( modePicksChampion )
 	{
 		bool pickChampion = true
-                        
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_GUNGAME ) )
  			pickChampion = false
-      
-                      
+
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 			pickChampion = false
-      
+
 		if ( pickChampion )
 		{
 			SurvivalCommentary_PickChampion()
@@ -3525,7 +3525,7 @@ string function GetAppropriateCharacterSelectMusicTrack( entity player )
 	if ( override.len() > 0 )
 		return override
 
-	                            
+
 		// Uses different music tracks depending on which Alliance players are in so I can't use the playlist override
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 		{
@@ -3535,7 +3535,7 @@ string function GetAppropriateCharacterSelectMusicTrack( entity player )
 			else
 				return "Music_RevArmy_CharacterSelect_Revenants"
 		}
-                                   
+
 	string track
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
 		track = MusicPack_GetCharacterSelectMusic_Solo( GetMusicPackForPlayer( player ) )
@@ -3587,10 +3587,10 @@ void function Survival_RunCharacterSelectionNew_Thread()
 {
 	if ( Survival_CharacterSelectEnabled() )
 	{
-		                            
+
 			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 				FlagWait( "AllianceAssignmentComplete" )
-                                    
+
 
 		AssignLockStepOrder()
 		SetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, -2 )
@@ -3728,7 +3728,7 @@ void function Survival_RunCharacterSelectionNew_Thread()
 
 				ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 				bool forcedSelection = false
-				                            
+
 				if (IsRevTakeover() && ( AllianceProximity_GetAllianceFromTeam( player.GetTeam() ) == ALLIANCE_B ) )
 				{
 					string REVENANT_GUID_STRING = "SAID00064207844"
@@ -3746,7 +3746,7 @@ void function Survival_RunCharacterSelectionNew_Thread()
 					SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), character )
 					forcedSelection = true
 				}
-          
+
 
 				if ( !forcedSelection &&  ( ItemFlavor_GetAsset( character ) == CHARACTER_RANDOM || player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) != true || CharacterSelect_CustomIsCharacterLockedForPlayer( character, player ) ) )
 				{
@@ -3834,16 +3834,16 @@ void function Survival_RunCharacterSelectionNew_Thread()
 
 			if ( ItemFlavor_GetAsset( character ) != CHARACTER_RANDOM && player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER ) == true )
 			{
-				                      
+
 					MatchBehaviorPlayer_RecordPickInfo( player, character )
-          
+
 				continue
 			}
 
 			bool hadLockedIn = player.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER )
 
 			bool forcedSelection = false
-			                            
+
 				if (IsRevTakeover() && ( AllianceProximity_GetAllianceFromTeam( player.GetTeam() ) == ALLIANCE_B ) )
 				{
 					string REVENANT_GUID_STRING = "SAID00064207844"
@@ -3861,7 +3861,7 @@ void function Survival_RunCharacterSelectionNew_Thread()
 					SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_Character(), character )
 					forcedSelection = true
 				}
-         
+
 
 			// They didn't lock anyone in, pick for them
 			if ( !forcedSelection && ( ItemFlavor_GetAsset( character ) == CHARACTER_RANDOM || file.forceRandomOnNoSelect || !IsItemFlavorUnlockedForLoadoutSlot( ToEHI( player ), Loadout_Character(), character ) || CharacterSelect_CustomIsCharacterLockedForPlayer( character, player ) ) )
@@ -3930,13 +3930,13 @@ void function Survival_RunCharacterSelectionNew_Thread()
 
 	file.characterLocksLocked = true
 
-                                                                                  
-                                                                                                               
-                         
-  
-                                                                                                                      
-  
-                                 
+
+
+
+
+
+
+
 
 	thread function() : ()
 	{
@@ -4146,14 +4146,14 @@ void function Survival_GameStartedPlaying_Thread()
 		Survival_ClearPrematchSettings( player )
 
 		bool shouldSetDropSettings = true
-		                      
+
 			if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 				shouldSetDropSettings = false
-        
-		                        
+
+
 			if ( GameMode_IsActive( eGameModes.CONTROL ) )
 				shouldSetDropSettings = false
-        
+
 		if ( shouldSetDropSettings )
 				SetPlayerIntroDropSettings( player )
 	}
@@ -4166,13 +4166,13 @@ void function Survival_GameStartedPlaying_Thread()
 
 	if ( Survival_IsPlaneEnabled() )
 	{
-		                            
+
 			// S3: ShadowArmy variant block commented out
 			//if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && ShadowArmy_GetShouldLegendsSpawnOnGround_MatchStart() )
 			//{
 			//}
 			//else
-                                    
+
 			{
 				waitthread Survival_PutPlayersInPlane()
 			}
@@ -4183,18 +4183,18 @@ void function Survival_GameStartedPlaying_Thread()
 	{
 		POIPlayerSpawning_SpawnPlayers()
 	}
-                     
-                                           
-  
-                                                     
-  
-                           
-                         
+
+
+
+
+
+
+
 	else if ( ForcedSpawn_UseForcedSpawning() )
 	{
 		waitthread ForcedSpawn_SpawnAllPlayers()
 	}
-                               
+
 	else if ( GetCurrentPlaylistVarInt( "survival_squad_spawn_near_loot", 0 ) == 1 )
 	{
 		thread SpawnPlayersOnGroundWithSquadNearLoot()
@@ -4257,10 +4257,10 @@ bool function Survival_IsJumpFromPlaneEnabled()
 	if ( !Survival_IsPlaneEnabled() )
 		return false
 
-                     
-                                      
-              
-      
+
+
+
+
 
 	return true
 }
@@ -4826,10 +4826,10 @@ string function GetHighlightForTeamate( entity player )
 		return SQUAD_TEAM_HIGHLIGHTS[squadID]
 	}
 
-	                                                           
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && IsPlayerShadowZombie( player ) )
 			return "shadow_friendly"
-       
+
 
 	return "sp_friendly_hero"
 }
@@ -4844,11 +4844,11 @@ void function Survival_SetFriendlyOwnerHighlight( entity player, entity highligh
 
 void function Survival_SetFriendlyHighlight( entity player )
 {
-                  
-                                         
-                                                                            
-         
-       
+
+
+
+
+
 
 	if ( IsEventFinale() )
 		return
@@ -4885,9 +4885,9 @@ void function Survival_PlayerDealtDamage( entity player, entity victim, entity w
 		AddGameSummaryDamage( player, victim, healthDamage + shieldDamage + absorbedDamage )
 	}
 	EvolvingArmor_PlayerDealtDamage( player, victim, weapon, healthDamage, shieldDamage, absorbedDamage, damageType )
-                   
-                                                                                                                
-      
+
+
+
 
 	Lifesteal_PlayerDealtDamage( player, victim, weapon, healthDamage, shieldDamage, absorbedDamage, damageType )
 
@@ -4928,7 +4928,7 @@ ItemFlavor function Survival_ValidateAndGetCharacterClass( entity player )
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( playerEHI, loadoutCharacter )
 	bool isItemFlavorUnlockedForLoadoutSlot = IsItemFlavorUnlockedForLoadoutSlot( playerEHI, loadoutCharacter, LoadoutSlot_GetItemFlavor( playerEHI, loadoutCharacter ) )
 
-	                            
+
 		if (IsRevTakeover() && ( AllianceProximity_GetAllianceFromTeam( player.GetTeam() ) == ALLIANCE_B ) )
 		{
 			string REVENANT_GUID_STRING = "SAID00064207844"
@@ -4950,14 +4950,14 @@ ItemFlavor function Survival_ValidateAndGetCharacterClass( entity player )
 				isItemFlavorUnlockedForLoadoutSlot = true
 			}
 		}
-       
 
-             
-                                     
-   
-                                            
-   
-       
+
+
+
+
+
+
+
 
 	// We assign all alliance players to the same team at the end of modes that use alliances. With a lot of players on one team and the game ending we don't care if duplicate Legends are used
 	if ( AllianceProximity_IsUsingAlliances() && GetGameState() >= eGameState.WinnerDetermined )
@@ -5004,20 +5004,20 @@ bool function Survival_ShouldResetInventoryOnRespawn( entity player )
 	if ( IsEventFinale() )
 		resetPlayerInventoryOnRespawn = false
 
-                              
-                                                                                                                                         
-                                       
-      
 
-                               
+
+
+
+
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
 		resetPlayerInventoryOnRespawn = false
-      
 
-                          
+
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT )  )
 		resetPlayerInventoryOnRespawn = false
-      
+
 
 //%if HAS_FREERESPAWNS
 //	if( FreeRespawns_DontResetInventory() )
@@ -5027,20 +5027,20 @@ bool function Survival_ShouldResetInventoryOnRespawn( entity player )
 	if( RespawnEquipped_DontResetInventory() )
 		resetPlayerInventoryOnRespawn = false
 
-            
-                                    
-                                       
-      
 
-                                  
-                                        
-                                       
-                                        
 
-                             
-                                                                           
-                                       
-      
+
+
+
+
+
+
+
+
+
+
+
+
 
 	return resetPlayerInventoryOnRespawn
 }
@@ -5164,14 +5164,14 @@ void function SurvivalPlayerRespawnedInit( entity player )
 
 		if ( putInPlane )
 		{
-                          
-                                                            
-                                               
-                        
-     
-                                               
-     
-                                
+
+
+
+
+
+
+
+
 
 			// Put in plane with teammates, or by themselves if the plane is still flying over
 			Survival_PutPlayerInPlane( player )
@@ -5348,9 +5348,9 @@ void function Survival_PlayerCharacterSetup( entity player, ItemFlavor character
 			ultimateWeapon.AddMod( "survival_ammo_regen_paused" )
 	}
 
-                    
-                                           
-      
+
+
+
 
 	// Put the player in a safe spot if they aren't parented to anything
 	// This is needed because they may be switching to a larget character that now is stuck in geo
@@ -5768,10 +5768,10 @@ void function Survival_OnClientDisconnected( entity player )
 		}
 	}
 
-	                      
+
 		if ( MatchBehaviorPlayer_HasStarted( player ) && !MatchBehaviorPlayer_HasEnded( player ) )
 			MatchBehaviorPlayer_Ended( player, true )
-       
+
 
 	if ( player.p.hasMatchParticipationStarted && !player.p.hasMatchParticipationEnded )
 		OnPlayerMatchParticipationEnded( player, true )
@@ -5784,15 +5784,15 @@ bool function Survival_IsPlayerSquadEliminated( entity player )
 {
 	int team = player.GetTeam()
 
-                          
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT ) && Strikeout_IsPlayerRespawnDisabled(player) )
 		return true
-      
 
-                               
+
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) && Sh_Respawn_Token_IsPlayerRespawnDisabled( player ) )
 		return true
-      
+
 
 // TODO: Is this causing the post-disable lockup bug?
 //%if HAS_FREERESPAWNS
@@ -5800,7 +5800,7 @@ bool function Survival_IsPlayerSquadEliminated( entity player )
 //		return true
 //%endif // HAS_FREERESPAWNS
 
-                            
+
 	// Mode handles elimination through its own logic. Although it uses eRespawnStyle.SPAWN_GROUP_SKYDIVE we don't want that logic determining elimination state
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 	{
@@ -5809,56 +5809,56 @@ bool function Survival_IsPlayerSquadEliminated( entity player )
 		else
 			return false
 	}
-                                  
+
 
 	if ( GetRespawnStyle() == eRespawnStyle.SPAWN_GROUP_SKYDIVE && SpawnGroupSkydive_IsSquadEliminated( team ) )
 		return true
 
-                             
-                                                                                                                                                                    
-                                                                           
-              
-      
 
-                       
+
+
+
+
+
+
 	if ( GetRespawnStyle() == eRespawnStyle.ROLLING_RESPAWN )
 		return false
-      
 
-                              
-                                                                                                                                                                                                      
-  
-              
-  
-      
 
-                      
+
+
+
+
+
+
+
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 			return false
-      
 
-	                        
+
+
 		if ( GameMode_IsActive( eGameModes.CONTROL ) )
 			return false
-       
 
-                    
-                                                                           
-               
-       
+
+
+
+
+
 
 	array <entity> teamArray = GetPlayerArrayOfTeam( team )
 
-                                 
-                                  
-   
-                                         
-                
 
-                                           
-                
-   
-       
+
+
+
+
+
+
+
+
+
 
 	if ( teamArray.len() == 0 )
 		return true
@@ -5910,20 +5910,20 @@ bool function Survival_WillSquadBeEliminatedIfPlayerLeaves( entity player )
 
 bool function ShouldEliminateSquadsInGame()
 {
-	                       
+
 		if ( GetRespawnStyle() == eRespawnStyle.ROLLING_RESPAWN )
 			return false
-       
 
-	                      
+
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 			return false
-       
 
-	                        
+
+
 		if ( GameMode_IsActive( eGameModes.CONTROL ) )
 			return false
-       
+
 
 	return true
 }
@@ -6080,10 +6080,10 @@ void function Survival_SquadEliminationCleanup( int team )
 
 		file.playerData[EHIToEncodedEHandle( player )].squadRank = remainingTeams + 1
 
-		                      
+
 			if ( MatchBehaviorPlayer_HasStarted( player ) && !MatchBehaviorPlayer_HasEnded( player ) )
 				MatchBehaviorPlayer_Ended( player, false )
-        
+
 
 		if ( player.p.hasMatchParticipationStarted && !player.p.hasMatchParticipationEnded )
 			OnPlayerMatchParticipationEnded( player, false )
@@ -6187,9 +6187,9 @@ void function OnPlayerParticipationEndedCheckAbandonStateForPIN( entity player, 
 	switch ( GetRespawnStyle() )
 	{
 		case eRespawnStyle.RESPAWN_CHAMBERS:
-                               
-                                     
-                                     
+
+
+
 		int respawnStatus = GetRespawnStatus( player )
 		if ( !IsValid( player.p.respawnBeacon )
 				&& ( respawnStatus == eRespawnStatus.PICKUP_DESTROYED
@@ -6212,32 +6212,32 @@ void function OnPlayerMatchParticipationEnded( entity player, bool wasDisconnect
 	// positive play, abandon
 	OnPlayerParticipationEndedCheckAbandonStateForPIN( player, wasDisconnection )
 
-	                      
+
 		if ( MatchBehaviorPlayer_HasStarted( player ) && !MatchBehaviorPlayer_HasEnded( player ) )
 			MatchBehaviorPlayer_Ended( player, wasDisconnection )
-                             
 
-	                      
+
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) && GetGameState() < eGameState.WinnerDetermined && wasDisconnection == false )
 			return
-       
+
 
 	player.p.hasMatchParticipationEnded = true
 
 	//printf( "%s() - '%s'", FUNC_NAME(), string( player ) )
 
 	bool modeIgnoresMatchResults = IsPVEMode()
-	                        
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_EXPLORE ) )
 			modeIgnoresMatchResults = true
-       
 
-                               
-                                                                                                                                        
-   
-         
-   
-       
+
+
+
+
+
+
+
 
 	if ( modeIgnoresMatchResults )
 	{
@@ -6250,10 +6250,10 @@ void function OnPlayerMatchParticipationEnded( entity player, bool wasDisconnect
 
 		StatsHook_RecordPlacementStats( player )
 
-		                            
+
 			if( IsOrientationMatch() )
 				CalculateAndUpdatePlayerGraduationStat( player )
-                                   
+
 
 		// this is a pretty simplistic check, but we don't really do much with achievements...
 		// this could be improved if we make achievements do more. Checking mode because the call is slow...
@@ -6263,18 +6263,8 @@ void function OnPlayerMatchParticipationEnded( entity player, bool wasDisconnect
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
 			PrepareGameSummaryForPointCalculation( player )
 
-		                 
+
 			Cups_OnPlayerMatchParticipationEnded( player )
-        
-
-		int rank                        = Survival_GetCurrentRank( player )
-		GameSummarySquadData playerData = GameSummary_GetPlayerData( player )
-		//bool needProvisionalResults     = GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) && !Ranked_HasFinishedProvisionalMatches( player )
-		//int rankedTrialGuid             = GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) && RankedTrials_PlayerHasIncompleteTrial( player ) ? ItemFlavor_GetGUID( RankedTrials_GetAssignedTrial( player ) ) : 0
-		SetPlayerMatchResult( player, rank, playerData.kills, playerData.damageDealt )
-
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
-			SendPlayerMatchResult( player )
 	}
 }
 
@@ -6439,11 +6429,11 @@ void function Delayed_TryEliminateTeammates( entity victim )
 						(!Bleedout_AnyOtherSquadmatesAliveAndNotBleedingOut( player ) && !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RECRUIT ) ) &&
 				!Bleedout_GetSelfResEnabled( player ) &&
 				!Bleedout_CanTeammatesSelfRevive( player )
-                                    
-      
-                                     
-                                    
-          
+
+
+
+
+
 				)
 		{
 			Bleedout_PlayerDiesFromBleedout( player )
@@ -6910,13 +6900,13 @@ void function ClientCallback_Sur_EquipGadget( entity player, int index )
 
 	LootData data = SURVIVAL_Loot_GetLootDataByIndex( index )
 
-	                      
+
 		if ( data.ref.find( COPYCAT_NAME ) == 0 )
 		{
 			//player.TrySelectOffhand( OFFHAND_GENERIC ) // S3: entity method not available
 			return
 		}
-       
+
 
 	if ( data.lootType != eLootType.GADGET )
 		return
@@ -7108,19 +7098,19 @@ bool function Survival_ShouldBypassCharacterDamageScale( entity damagedEnt, var 
 {
 	bool shouldByPassFortify = false
 
-	                              
-		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
-			shouldByPassFortify = true
-       
 
-	                            
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 			shouldByPassFortify = true
-                                   
+
+
+
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+			shouldByPassFortify = true
+
 
 	if ( shouldByPassFortify )
 	{
-		                             
+
 			//legends lose fortified when change into zombies
 			if ( IsPlayerShadowZombie( damagedEnt ) )
 				return true
@@ -7129,7 +7119,7 @@ bool function Survival_ShouldBypassCharacterDamageScale( entity damagedEnt, var 
 			entity attacker = DamageInfo_GetAttacker( damageInfo )
 			if ( IsValid( attacker ) && attacker.IsPlayer() && IsPlayerShadowZombie( attacker ) )
 				return true
-                                     
+
 	}
 
 
@@ -7158,12 +7148,12 @@ void function OnPlayerTookDamage( entity damagedEnt, var damageInfo )
 
 			float damageScale = CharacterClass_GetDamageScale( victimCharacter )
 
-                                     
-                                                                                                 
-    
-                                                                  
-    
-         
+
+
+
+
+
+
 
 			if ( Survival_ShouldBypassCharacterDamageScale( damagedEnt, damageInfo ) )
 				damageScale = 1.0
@@ -7183,16 +7173,16 @@ void function OnPlayerTookDamage( entity damagedEnt, var damageInfo )
 				DeadPeriodChecker_PlayerDeadPeriodEnd( damagedEnt, reason )
 			}
 
-                            
-                                                      
-                                                                  
-     
-                                                                      
-                             
-                                           
-                                                                                    
-     
-         
+
+
+
+
+
+
+
+
+
+
 
 			string equippedArmor = Inventory_GetPlayerEquipment( damagedEnt, "armor" )
 			LootData data
@@ -7494,12 +7484,12 @@ vector function SURVIVAL_GetMapCenter()
 }
 
 
-                       
-                                                      
- 
-                           
- 
-      
+
+
+
+
+
+
 
 
 void function SURVIVAL_SetFlightAngleAdjustment( float angle )
@@ -7602,13 +7592,13 @@ void function ClientCommand_GoToMapPoint( entity player, array<string> args )
 	}
 
 	entity parentEnt = player.GetParent()
-	                     
+
 		if ( IsValid( parentEnt ) && !EntIsHoverVehicle( parentEnt ) )
 		{
 			BigWarningLog( "GoToMapPoint - Ignoring for parented player: " + player )
 			return
 		}
-       
+
 	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) && !Survival_HasPlayerJumpedOutOfPlane( player ) )
 	{
 		BigWarningLog( "GoToMapPoint - Ignoring for player still in plane: " + player )
@@ -7630,13 +7620,13 @@ void function Dev_MapTeleport( entity player, vector mapPos2D )
 	entity parentEnt   = player.GetParent()
 	if ( IsValid( parentEnt ) )
 	{
-                     
+
 		if ( EntIsHoverVehicle( parentEnt ) )
 		{
 			teleportEnt = parentEnt
 		}
 		else
-      
+
 		{
 			Warning( "%s() - Not teleporting '%s', because they are parentEnted to '%s'.", FUNC_NAME(), string( player ), string( parentEnt ) )
 			return
@@ -8133,14 +8123,14 @@ void function GameSummary_MatchStart( entity player )
 
 	// this block could be improved and made more generic / mode-agnostic, but it's a challenge to know when to reliably set some of these values
 	// possibly could have a generic "match start" callback function that handles this...
-                        
-                                               
-   
-                                                                                    
-   
-       
 
-	                        
+
+
+
+
+
+
+
 		if ( GameMode_IsActive( eGameModes.CONTROL ) )
 		{
 			data.displayData3IsTime = false
@@ -8148,7 +8138,7 @@ void function GameSummary_MatchStart( entity player )
 			// do this here because we don't spawn players until match start.
 			file.numPlayerAtStart = GetGlobalNetInt( "livingPlayerCount" )
 		}
-       
+
 
 	// For alliance modes, treat the alliances as starting squads for squad count
 	if ( AllianceProximity_IsUsingAlliances() )
@@ -8344,9 +8334,9 @@ void function GameSummary_FinalizeData( entity player )
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
 		Ranked_SetXProgMergedPersistenceData( player, RANKED_SHOW_RANKED_SUMMARY_PERSISTENCE_VAR_NAME, showGameSummary ? 1 : 0 )
 
-              
-                                                                
-       
+
+
+
 }
 
 // Set the lastGameSquadStats persistent vars for the passed in player for the passed in team member index
@@ -8434,10 +8424,10 @@ bool function ShouldSendLastSquadInfo( GameSummarySquadData data )
 	if ( data.optOutOfSendingSquadInfo )
 		return false
 
-                  
-                                                                            
-               
-       
+
+
+
+
 
 	return true
 }
@@ -8743,15 +8733,15 @@ string function Survival_GetLootTypeForStatString( LootData data )
 		case eLootType.CUSTOMPICKUP:
 			return "CustomPickup"
 
-                      
+
 		case eLootType.CANDY_PICKUP:
 			return "CandyPickup"
-      
 
-                    
+
+
 		case eLootType.EVO_CACHE:
 			return "EvoPickup"
-      
+
 
 		case eLootType.BACKPACK:
 			return "Backpack"
@@ -8759,20 +8749,20 @@ string function Survival_GetLootTypeForStatString( LootData data )
 		case eLootType.HELMET:
 			return "Helmet"
 
-                      
+
 
 		case eLootType.DATAKNIFE:
 			return "Dataknife"
-      
+
 
 		case eLootType.RESOURCE:
 			return "Resource"
 
-                   
+
 
 		case eLootType.MARVIN_ARM:
 			return "MarvinArm"
-      
+
 
 		default:
 			return "UNKNOWN_" + data.lootType
@@ -8797,7 +8787,7 @@ bool function Survival_ShouldProcessSurvivalEventForCurrentMode( int eventType )
 
 bool function Survival_IsCoverEnabled()
 {
-	                      
+
 
 	switch ( GetMapName() )
 	{
@@ -8810,12 +8800,12 @@ bool function Survival_IsCoverEnabled()
 		case "mp_rr_tropic_island_mu3":
 			return true
 	}
-       
+
 	// Cover nodes disabled by default
 	return false
 }
 
-                         
+
 void function Survival_OnWeaponAttack( entity player, entity weapon, string weaponName, int ammoUsed, vector attackOrigin, vector attackDir )
 {
 	if ( !IsValid( player ) )
@@ -8885,7 +8875,7 @@ void function Survival_OnWeaponAttack( entity player, entity weapon, string weap
 	if ( commsAction != -1 )
 		BroadcastCommsActionToTeam( player, commsAction, weapon, player.GetOrigin(), eCommsFlags.NO_TEXT, "" )
 }
-      
+
 
 void function Survival_OnReloadPressed_Internal( entity player )
 {
@@ -8934,12 +8924,12 @@ void function Survival_OnReloadPressed_Internal( entity player )
 			commsAction = eCommsAction.INVENTORY_NEED_AMMO_SPECIAL
 			break
 
-                     
 
-                               
-                                                           
-        
-      
+
+
+
+
+
 
 		case eAmmoPoolType.sniper:
 			commsAction = eCommsAction.INVENTORY_NEED_AMMO_SNIPER
@@ -8971,21 +8961,21 @@ bool function Survival_DamageShouldSlowDownPlayer( entity player, var damageInfo
 	if ( PlayerHasPassive( player, ePassives.PAS_FORTIFIED ) )
 		return false
 
-	                          
+
 		if ( TitanSword_ActiveWeaponIsTitanSword( player ) )
 			return false
-       
+
 
 	// gas will do its own slowdown
 	if ( damageSourceId == eDamageSourceId.damagedef_gas_exposure )
 		return false
 
-	                    
+
 	if( damageSourceId == eDamageSourceId.mp_weapon_mortar_ring && PlayerHasPassive( player, ePassives.PAS_MOTHERLODE_RESISTANCE ) ) //upgrade_fuse_motherlode_resistance
 	{
 		return false
 	}
-       
+
 
 	ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
 
@@ -9432,12 +9422,12 @@ void function DeadPeriodChecker_PlayerGrabbedItem( entity player )
 
 
 #if DEVELOPER
-                            
+
 void function TestPrompt_RevealMyLastDeathbox()
 {
 	Remote_CallFunction_NonReplay( GP(), "ServerCallback_PromptMarkMyLastDeathbox" )
 }
-      
+
 #endif
 
 void function Survival_SetGameResultFlags( int flags )

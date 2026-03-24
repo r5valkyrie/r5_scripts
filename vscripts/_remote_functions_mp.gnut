@@ -462,6 +462,28 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "switchedSides", SNDC_GLOBAL, SNVT_INT, -1 )                                                                     
 	ScriptRegisterNetworkedVariable( "replayDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
 
+	// Attack/Defend based game modes
+	RegisterNetworkedVariable( "attackingTeam", SNDC_GLOBAL, SNVT_INT, TEAM_UNASSIGNED )
+
+	//Deathboxes; crosses gamemodes so kept here
+	                         
+		ScriptRegisterNetworkedVariable( "characterIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		ScriptRegisterNetworkedVariable( "overrideRUIType", SNDC_DEATH_BOX, SNVT_BIG_INT, 0 )
+		ScriptRegisterNetworkedVariable( "skinIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		ScriptRegisterNetworkedVariable( "frameIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		ScriptRegisterNetworkedVariable( "stanceIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		ScriptRegisterNetworkedVariable( "firstBadgeIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		ScriptRegisterNetworkedVariable( "firstBadgeDataInt", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		ScriptRegisterNetworkedVariable( "secondBadgeIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		ScriptRegisterNetworkedVariable( "secondBadgeDataInt", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		ScriptRegisterNetworkedVariable( "thirdBadgeIndex", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+		ScriptRegisterNetworkedVariable( "thirdBadgeDataInt", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
+
+		ScriptRegisterNetworkedVariable( "highlightFar", SNDC_DEATH_BOX, SNVT_BOOL, false )
+		ScriptRegisterNetworkedVariable( "maxLootTier", SNDC_DEATH_BOX, SNVT_INT, 0 )
+
+		ScriptRemote_RegisterClientFunction( "ServerToClient_PlayLootRarityFXOnDeathboxDrop", "entity" )
+
 	// GAME STATE
 	RegisterServerVar( "gameStateChangeTime", null )
 	RegisterServerVar( "gameState", -1 )
@@ -492,31 +514,15 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "PreGameStartTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
 	RegisterServerVar( "winningTeam", null )
 	
-	// Attack/Defend based game modes
-	ScriptRegisterNetworkedVariable( "attackingTeam", SNDC_GLOBAL, SNVT_INT, TEAM_UNASSIGNED )
-	
 	// Riffs
 	RegisterServerVar( "minimapState", -1 )
 	ScriptRegisterNetworkedVariable( "indicatorId", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, 0 )
 
 	// DEATHBOX: gcard character vars
-	ScriptRegisterNetworkedVariable( "characterIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
 	ScriptRegisterNetworkedVariable( "overrideRUI", SNDC_DEATH_BOX, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "skinIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "frameIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "stanceIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-
-	// DEATHBOX: gcard badge vars
-	ScriptRegisterNetworkedVariable( "firstBadgeIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "firstBadgeDataInt", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "secondBadgeIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "secondBadgeDataInt", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "thirdBadgeIndex", SNDC_DEATH_BOX, SNVT_INT, -1 )
-	ScriptRegisterNetworkedVariable( "thirdBadgeDataInt", SNDC_DEATH_BOX, SNVT_INT, -1 )
 	
 	ScriptRegisterNetworkedVariable( "lootRarity", SNDC_DEATH_BOX, SNVT_INT, -1 )
 
-	ScriptRemote_RegisterClientFunction( "ServerToClient_PlayLootRarityFXOnDeathboxDrop", "entity" )
 	ScriptRemote_RegisterClientFunction( "Flyer_ServerToClient_DisplayFlyerDeathboxPrompt" )
 
 	ScriptRegisterNetworkedVariable( "ownerEHI", SNDC_DEATH_BOX, SNVT_BIG_INT, -1 )
