@@ -846,12 +846,8 @@ void function OnDNAPickupDestroyed_Reconnect( entity player )
 		return
 
 	printt( "Reconnect cancel because beacon expired", player )
-	//if ( player.IsConnectionActive() ) // S3: entity method not available
-	//	Remote_CallFunction_NonReplay( player, "ServerCallback_ResetReconnectParametersAsync" )
-	//else
-	//{
-	//	//player.Forfeit() // S3: entity method not available
-	//}
+	if ( player.IsConnectionActive() )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_ResetReconnectParametersAsync" )
 }
 
 void function OnPlayerKilled_Reconnect( entity player, entity attacker, var damageInfo )
@@ -887,9 +883,8 @@ void function CheckAndSetReconnectStatusForTeam( int team )
 		foreach ( teammate in teamplayers )
 		{
 			printt( "Reconnect cancel because team has been eliminated ", teammate )
-			//if ( teammate.IsConnectionActive() ) // S3: entity method not available
-			//	Remote_CallFunction_NonReplay( teammate, "ServerCallback_ResetReconnectParametersAsync" )
-			//teammate.Forfeit() // S3: entity method not available
+			if ( teammate.IsConnectionActive() )
+				Remote_CallFunction_NonReplay( teammate, "ServerCallback_ResetReconnectParametersAsync" )
 		}
 	}
 }

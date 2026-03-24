@@ -713,8 +713,7 @@ void function ClientCodeCallback_OnDevnetBugScreenshot()
 
 float function GetNextRespawnTime( entity player )
 {
-	Warning("GetNextRespawnTime missing .GetNonRewindRespawnTime")
-	return 0.0//player.GetNonRewindRespawnTime() 
+	return player.GetNonRewindRespawnTime()
 }
 
 #if DEV

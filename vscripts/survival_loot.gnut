@@ -9276,7 +9276,7 @@ void function WeaponDropBehavior( entity player, entity droppedProp, entity weap
 	bool isInfiniteAmmo = GetInfiniteAmmo( weaponToDrop )
 
 	if ( weaponToDrop.w.infiniteAmmoSaveStateOnDrop )
-		//droppedProp.e.infiniteAmmoState = weaponToDrop.GetInfiniteAmmoState(); // S3: entity method not available
+		droppedProp.e.infiniteAmmoState = weaponToDrop.GetInfiniteAmmoState()
 
 	foreach ( string mod in weaponToDrop.w.modsToRemoveOnDrop )
 		weaponToDrop.RemoveMod( mod )

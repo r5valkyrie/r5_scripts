@@ -374,7 +374,7 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 	if( IsValid( weapon ) )
 	{
 		weaponRef = weapon.GetWeaponClassName()
-		if( weapon.GetWeaponClassName() == "mp_weapon_melee_survival" ) // IsWeaponOffhandMelee() not available
+		if( weapon.IsWeaponOffhandMelee() )
 		{
 			GameSummarySquadData squadData = GameSummary_GetPlayerData( attacker )
 			if ( ( eGunGameDemotion.MELEE in squadData.modeMetaData ) == false )
