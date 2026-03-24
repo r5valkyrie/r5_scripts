@@ -48,8 +48,6 @@ WeaponData
 
         hopup_headshot_dmg_elite
         {
-            "projectile_trail_effect_0_1p"      "P_tracer_proj_sniper_piercer"
-            "projectile_trail_effect_0_3p"      "P_tracer_proj_sniper_piercer"
             "fire_sound_2_player_1p"		    "weapon_wingman_fire_skull_1p"
             "fire_sound_2_player_3p"		    "weapon_wingman_fire_skull_3p"
             "fire_sound_2_npc"				    "weapon_wingman_fire_skull_3p"

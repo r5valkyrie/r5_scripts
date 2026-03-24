@@ -1,0 +1,170 @@
+"WeaponData"
+{
+	// val unk: 21
+	"printname" "#FIRELINE_TAC_NAME"
+	// val unk: 26
+	"shortprintname" "#FIRELINE_TAC_NAME"
+	// val unk: 38
+	"description" "#FIRELINE_TAC_DESC"
+	// val unk: 46
+	"longdesc" "#FIRELINE_TAC_LONGDESC"
+	// val unk: 23
+	"menu_icon" "white"
+	// val unk: 22
+	"hud_icon" "rui/hud/tactical_icons/tactical_fireline"
+	// val unk: 17
+	"fire_mode" "offhand"
+	// val unk: 25
+	"charge_allow_hold_when_full" "1"
+	// val unk: 33
+	"cooldown_type" "ammo_timed"
+	// val unk: 48
+	"regen_ammo_refill_rate" "1"
+	// val unk: 6
+	"reload_enabled" "0"
+	// val unk: 4
+	"fire_rate" "10.000000"
+	// val unk: 5
+	"fire_duration" "0.700000"
+	// val unk: 44
+	"charge_time" "1.800000"
+	// val unk: 13
+	"ammo_clip_size" "70"
+	// val unk: 53
+	"ammo_per_shot" "35"
+	// val unk: 30
+	"ammo_min_to_fire" "35"
+	// val unk: 11
+	"zoom_effects" "0"
+	// val unk: 18
+	"fire_rumble" "wraith_phase_buildup"
+	// val unk: 7
+	"viewmodel" "mdl/weapons/empty_handed/ptpov_mirage_holopilot.rmdl"
+	// val unk: 47
+	"playermodel" "mdl/weapons/empty_handed/w_empty_handed_mirage.rmdl"
+	// val unk: 10
+	"charge_sound_1p" "arc_rifle_charge_1p"
+	// val unk: 2
+	"charge_sound_3p" "arc_cannon_charge_3p"
+	// val unk: 15
+	"battle_chatter_event" "bc_tactical"
+	// val unk: 9
+	"OnWeaponRegenEnd" "OnWeaponRegenEndGeneric"
+	// val unk: 12
+	"OnWeaponAttemptOffhandSwitch" "OnWeaponAttemptOffhandSwitch_ability_thermal_denial"
+	// val unk: 42
+	"OnWeaponActivate" "OnWeaponActivate_ability_thermal_denial"
+	// val unk: 29
+	"OnWeaponDeactivate" "OnWeaponDeactivate_ability_thermal_denial"
+	// val unk: 36
+	"OnWeaponChargeBegin" "OnWeaponChargeBegin_ability_thermal_denial"
+	// val unk: 49
+	"OnWeaponChargeEnd" "OnWeaponChargeEnd_ability_thermal_denial"
+	// val unk: 32
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_ability_thermal_denial"
+	// val unk: 20
+	"burn_segment_radius" "50.000000"
+	// val unk: 19
+	"burn_segment_height" "48.000000"
+	// val unk: 1
+	"burn_segments" "4"
+	// val unk: 41
+	"burn_segment_spacing_dist" "80.000000"
+	// val unk: 39
+	"sound_burn_segment_start" "thermitegrenade_flamewall_flame_burn_front"
+	// val unk: 0
+	"sound_burn_segment_middle" "thermitegrenade_flamewall_flame_burn_middle"
+	// val unk: 43
+	"sound_burn_segment_end" "thermitegrenade_flamewall_flame_burn_end"
+	// val unk: 34
+	"preburn_duration" "2.000000"
+	// val unk: 24
+	"burn_duration" "4.000000"
+	// val unk: 52
+	"burn_damage" "25"
+	// val unk: 3
+	"burn_time" "2.800000"
+	// val unk: 51
+	"burn_stacks_max" "4"
+	// val unk: 45
+	"burn_stack_debounce" "0.700000"
+	// val unk: 16
+	"burn_tick_rate" "1.200000"
+	// val unk: 40
+	"sound_burn_damage_tick_1p" "flesh_fire_damage_1p"
+	// val unk: 28
+	"weaponType" "tactical"
+	// val unk: 37
+	"weapon_type_flags" "WPT_TACTICAL"
+	// val unk: 31
+	"offhand_default_inventory_slot" "1"
+	// val unk: 8
+	"sound_disabledfire" "Survival_UI_Ability_NotReady_Silenced"
+	// val unk: 50
+	"sound_dryfire" "Survival_UI_Ability_NotReady"
+	// val unk: 14
+	"sound_weapon_ready" "survival_ui_tactical_ready"
+	// val unk: 35
+	"update_player_last_fire_time" "0"
+	// val unk: 27
+	"offhand_match_player_skin" "1"
+
+	// child unk: 0
+	"Mods"
+	{
+
+		// child unk: 0
+		"survival_finite_ordnance"
+		{
+
+		}
+
+		// child unk: 5
+		"copycat_mod"
+		{
+			// val unk: 0
+			"weapon_type_flags" "WPT_SURVIVAL"
+
+		}
+
+		// child unk: 6
+		"survival_armor_cooldown_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.25"
+
+		}
+
+		// child unk: 1
+		"survival_armor_cooldown_extra_mod"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*1.5"
+
+		}
+
+		// child unk: 2
+		"survival_ammo_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 3
+		"ability_in_effect_regen_paused"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*0.0"
+
+		}
+
+		// child unk: 4
+		"survival_ammo_regen_staging"
+		{
+			// val unk: 0
+			"regen_ammo_refill_rate" "*5.0"
+
+		}
+	}
+}

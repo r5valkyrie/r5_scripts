@@ -1,0 +1,188 @@
+"WeaponData"
+{
+	// val unk: 66
+	"printname" "#WPN_SHOTGUN"
+	// val unk: 29
+	"shortprintname" "#WPN_SHOTGUN_SHORT"
+	// val unk: 46
+	"description" "#WPN_SHOTGUN_DESC"
+	// val unk: 87
+	"longdesc" "#WPN_SHOTGUN_LONGDESC"
+	// val unk: 19
+	"weaponClass" "human"
+	// val unk: 73
+	"weaponSubClass" "projectile_shotgun"
+	// val unk: 41
+	"weapon_type_flags" "WPT_PRIMARY"
+	// val unk: 56
+	"body_type" "light"
+	// val unk: 37
+	"fire_mode" "automatic"
+	// val unk: 77
+	"is_semi_auto" "0"
+	// val unk: 38
+	"playermodel" "mdl/weapons/w1128/w_w1128.rmdl"
+	// val unk: 69
+	"ammo_pool_type" "shotgun"
+	// val unk: 25
+	"ammo_min_to_fire" "1"
+	// val unk: 28
+	"ammo_per_shot" "1"
+	// val unk: 18
+	"ammo_clip_size" "8"
+	// val unk: 27
+	"damage_flags" "DF_NO_SELF_DAMAGE"
+	// val unk: 67
+	"damage_type" "none"
+	// val unk: 15
+	"trophy_system_ignores" "always"
+	// val unk: 81
+	"npc_damage_near_value" "3"
+	// val unk: 59
+	"npc_damage_far_value" "3"
+	// val unk: 51
+	"npc_damage_near_value_titanarmor" "3"
+	// val unk: 8
+	"npc_damage_far_value_titanarmor" "3"
+	// val unk: 62
+	"npc_damage_near_distance" "256"
+	// val unk: 47
+	"npc_damage_far_distance" "512"
+	// val unk: 57
+	"projectilemodel" "mdl/dev/empty_model.rmdl"
+	// val unk: 32
+	"projectiles_per_shot" "8"
+	// val unk: 49
+	"blast_pattern" "eva8"
+	// val unk: 52
+	"blast_pattern_zero_distance" "512.000000"
+	// val unk: 76
+	"blast_pattern_default_scale" "1.500000"
+	// val unk: 21
+	"blast_pattern_npc_scale" "1.000000"
+	// val unk: 89
+	"projectile_launch_speed" "16000"
+	// val unk: 9
+	"bolt_gravity_enabled" "1"
+	// val unk: 63
+	"projectile_gravity_scale" "1.000000"
+	// val unk: 39
+	"projectile_drag_coefficient" "0.001000"
+	// val unk: 5
+	"projectile_inherit_owner_velocity_scale" "0.000000"
+	// val unk: 6
+	"projectile_lifetime" "1.000000"
+	// val unk: 42
+	"projectile_adjust_to_gun_barrel" "1"
+	// val unk: 90
+	"projectile_do_predict_impact_effects" "1"
+	// val unk: 85
+	"bolt_zero_distance" "984.299988"
+	// val unk: 31
+	"bolt_hitsize" "0.250000"
+	// val unk: 79
+	"bolt_hitsize_grow1_time" "0.025000"
+	// val unk: 23
+	"bolt_hitsize_grow1_size" "0.600000"
+	// val unk: 2
+	"bolt_hitsize_grow2_time" "0.100000"
+	// val unk: 91
+	"bolt_hitsize_grow2_size" "1.000000"
+	// val unk: 55
+	"bolt_hitsize_growfinal_lerptime" "0.100000"
+	// val unk: 13
+	"bolt_hitsize_growfinal_size" "1.000000"
+	// val unk: 22
+	"chance_for_bonus_last_shot_in_clip" "0"
+	// val unk: 84
+	"critical_hit" "0"
+	// val unk: 83
+	"allow_headshots" "1"
+	// val unk: 80
+	"headshot_distance" "1500"
+	// val unk: 72
+	"tracer_effect" "weapon_tracers_shotgun"
+	// val unk: 40
+	"fx_muzzle_flash_view" "mflash_shotgun_fp_FULL"
+	// val unk: 10
+	"fx_muzzle_flash_world" "mflash_shotgun_FULL"
+	// val unk: 7
+	"fx_muzzle_flash_attach" "muzzle_flash"
+	// val unk: 48
+	"projectile_trail_effect_0_1p" "P_tracer_projectile_smg"
+	// val unk: 54
+	"projectile_trail_effect_0_3p" "P_tracer_projectile_smg"
+	// val unk: 17
+	"impact_effect_table" "inc_bullet"
+	// val unk: 1
+	"vortex_absorb_effect" "wpn_vortex_projectile_shotgun_FP"
+	// val unk: 53
+	"vortex_absorb_effect_third_person" "wpn_vortex_projectile_shotgun"
+	// val unk: 26
+	"vortex_absorb_sound" "Vortex_Shield_AbsorbBulletSmall"
+	// val unk: 0
+	"vortex_absorb_sound_1P_VS_3P" "Vortex_Shield_AbsorbBulletSmall_1P_VS_3P"
+	// val unk: 20
+	"looping_sounds" "0"
+	// val unk: 82
+	"fire_sound_1_npc" "Weapon_EVA8_AutoFire_NPC"
+	// val unk: 58
+	"fire_rate" "2.000000"
+	// val unk: 60
+	"reload_time" "2.750000"
+	// val unk: 4
+	"reloadempty_time" "3.000000"
+	// val unk: 36
+	"deployfirst_time" "1.350000"
+	// val unk: 50
+	"burst_fire_delay" "1.500000"
+	// val unk: 3
+	"npc_min_engage_range" "128"
+	// val unk: 16
+	"npc_max_engage_range" "384"
+	// val unk: 71
+	"npc_min_engage_range_heavy_armor" "384"
+	// val unk: 12
+	"npc_max_engage_range_heavy_armor" "512"
+	// val unk: 61
+	"npc_min_range" "128"
+	// val unk: 70
+	"npc_max_range" "512"
+	// val unk: 86
+	"npc_lead_projectiles" "1"
+	// val unk: 24
+	"npc_lead_projectiles_fraction_min_precision" "0.200000"
+	// val unk: 68
+	"npc_lead_projectiles_fraction_max_precision" "0.500000"
+	// val unk: 30
+	"proficiency_poor_spreadscale" "7.000000"
+	// val unk: 74
+	"proficiency_average_spreadscale" "5.000000"
+	// val unk: 65
+	"proficiency_good_spreadscale" "4.500000"
+	// val unk: 64
+	"proficiency_very_good_spreadscale" "3.700000"
+	// val unk: 45
+	"npc_min_burst" "1"
+	// val unk: 78
+	"npc_max_burst" "2"
+	// val unk: 33
+	"npc_rest_time_between_bursts_min" "0.500000"
+	// val unk: 75
+	"npc_rest_time_between_bursts_max" "3.000000"
+	// val unk: 43
+	"npc_burst_radius_min_precision" "45.000000"
+	// val unk: 34
+	"npc_burst_radius_max_precision" "25.000000"
+	// val unk: 11
+	"OnWeaponActivate" "OnWeaponActivate_weapon_shotgun"
+	// val unk: 14
+	"OnWeaponDeactivate" "OnWeaponDeactivate_weapon_shotgun"
+	// val unk: 44
+	"OnWeaponPrimaryAttack" "OnWeaponPrimaryAttack_weapon_shotgun"
+	// val unk: 35
+	"OnWeaponNpcPrimaryAttack" "OnWeaponNpcPrimaryAttack_weapon_shotgun"
+	// val unk: 88
+	"OnProjectileCollision" "OnProjectileCollision_weapon_shotgun"
+
+}
