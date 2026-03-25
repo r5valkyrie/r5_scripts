@@ -19,6 +19,7 @@ global function ClientCodeCallback_OnEntityCreation
 global function ClientCodeCallback_OnDeath
 global function ClientCodeCallback_OnEntityDestroy
 global function ClientCodeCallback_OnPlayerLifeStateChanged
+global function ClientCodeCallback_OnPlayerChangedTeam
 global function AddCallback_OnPlayerLifeStateChanged
 global function ClientCodeCallback_KillReplayStarted
 global function ClientCodeCallback_VoicePackChanged
@@ -28,17 +29,24 @@ global function ClientCodeCallback_SpecReplayEnded
 global function ClientCodeCallback_SpectatorModeStarted
 global function ClientCodeCallback_SpectatorModeEnded
 global function ClientCodeCallback_SpectatorTargetChanged
+global function ClientCodeCallback_SpectatorPlayerTagModeChanged
+global function ClientCodeCallback_SpectatorVisibleEnemiesChanged
+global function ClientCodeCallback_SpectatorUiStateChanged
 global function ServerCallback_YouRespawned
+global function ServerCallback_YouDiedNoAttacker
 global function ServerCallback_YouDied
 global function ClientCodeCallback_SaveResumed
-global function ClientCodeCallback_SmokeTestRunning
 global function ClientCodeCallback_OnSelectedWeaponChanged
 global function ClientCodeCallback_OnLinkedButtonPairPressed
 global function AddCallback_OnPlayerChangedTeam
 global function AddCallback_OnYouRespawned
 global function AddCallback_OnYouDied
 global function AddEntityDestroyedCallback
+global function RemoveEntityDestroyedCallback
 global function ClientCodeCallback_UIScriptResetComplete
+global function ClientCodeCallback_PerformSelfReport
+
+global int SPECTATOR_UI_STATE = 0
 
 global const string PLAYER_CLASSNAME = "player"
 
@@ -53,11 +61,11 @@ void function ClientCodeCallbacks_Init()
     RegisterSignal( "KillReplayEnded" )
 }
 
-
 void function ClientCodeCallback_OnLinkedButtonPairPressed( int binding )
 {
 	Ping_Interrupt()
 }
+
 
 void function ClientCodeCallback_HotDropImpactTimeChanged( entity player )
 {
@@ -74,7 +82,7 @@ void function ClientCodeCallback_TurretPanelChanged( entity turret )
 {
 	if ( !IsValid( turret ) )
 		return
-	//thread TurretPanelChanged( turret )
+	
 }
 
 void function ClientCodeCallback_OutOfBoundsDeadTimeChanged( entity player )
@@ -92,12 +100,11 @@ void function ClientCodeCallback_OnShieldHealthChanged( entity ent )
 	int shieldHealth = ent.GetShieldHealth()
 	int maxShieldHealth = ent.GetShieldHealthMax()
 
-	// don't play on local pilot
-	if ( GetLocalViewPlayer() != ent || ent.IsTitan() )
+	if ( (GetLocalViewPlayer() != ent) || ent.IsTitan() || ent.IsThirdPersonShoulderModeOn() )
 	{
-		if ( shieldHealth == 0 && ent.lastShieldHealth && maxShieldHealth > 0 )
+		if ( (shieldHealth == 0) && ent.lastShieldHealth && (maxShieldHealth > 0) )
 		{
-			PlayShieldBreakEffect( ent ) // duped in cl_player; this callback is delayed and it makes breaking shields feel bad
+			PlayShieldBreakEffect( ent ) 
 		}
 		else if ( shieldHealth == maxShieldHealth && ent.lastShieldHealth != maxShieldHealth && maxShieldHealth > 0 )
 		{
@@ -136,21 +143,21 @@ void function ClientCodeCallback_OnCinematicEventFlagsChanged( entity player, in
 {
 	if ( !IsValid( player ) )
 		return
-	//printt( "ClientCodeCallback_OnCinematicEventFlagsChanged for player: " + player.GetEntIndex() )
+	
 
-	//Strangely enough, even though cinematiceventflag data isn't propagated to other clients,
-	//The codecallback for them triggers e.g. when you first connect onto a server.
+	
+	
 	if ( player == GetLocalViewPlayer() )
 		UpdateMainHudFromCEFlags( player )
 
 	int playerFlags = player.GetCinematicEventFlags()
 
-	int changedFlag = playerFlags ^ oldFlags //Take XOR of old and new flag to get changed flags
-	//printt( "Old flags:" + oldFlags + ", new Flags: " + playerFlags + ", changedFlag " + changedFlag )
+	int changedFlag = playerFlags ^ oldFlags 
+	
 
 	foreach ( flag, callbackInfoArray in clGlobal.onCinematicEventFlagChangedCallback )
 	{
-		if ( !( changedFlag & flag ) )
+		if ( !IsBitFlagSet( changedFlag, flag ) )
 			continue
 
 		foreach ( callbackFunc in callbackInfoArray )
@@ -170,7 +177,7 @@ void function ClientCodeCallback_OnNextTitanRespawnAvailableChanged( entity play
 	if ( player != GetLocalViewPlayer() )
 		return
 
-	//UpdateTitanModeHUD( player )
+	
 }
 
 void function ClientCodeCallback_OnNextCoreChargeAvailableChanged( entity titansoul )
@@ -259,7 +266,7 @@ void function ClientCodeCallback_OnEntityCreation( entity ent )
 
 void function ClientCodeCallback_OnDeath( entity ent )
 {
-	// AddOnDeathCallback sets DoDeathCallback( true ) in a create callback for the class
+	
 
 	string className = expect string( ent.GetNetworkedClassName() )
 
@@ -278,7 +285,7 @@ void function ClientCodeCallback_OnDeath( entity ent )
 
 void function __RunOnDeathOrDestroyCallbacks( entity ent, string className, string targetName )
 {
-	//do this so they don't run twice
+	
 	if ( ( "ranOnDeathOrDestroyCallbacks" in ent.s ) )
 		return
 
@@ -297,14 +304,19 @@ void function AddEntityDestroyedCallback( entity ent, void functionref( entity )
 {
 	ent.e.onEntityDestroyedCallbacks.append( callbackFunc )
 
-	// set this or else the ent won't run CodeCallback_OnEntityDestroyed at all
+	
 	ent.SetDoDestroyCallback( true )
+}
+
+void function RemoveEntityDestroyedCallback( entity ent, void functionref( entity ) callbackFunc )
+{
+	ent.e.onEntityDestroyedCallbacks.removebyvalue( callbackFunc )
 }
 
 void function ClientCodeCallback_OnEntityDestroy( entity ent )
 {
-	// need to set this OnEntityCreation or somewhere
-	// ent.SetDoDestroyCallback( true )
+	
+	
 
 	array<void functionref( entity ent )> myCallbacks = clone( ent.e.onEntityDestroyedCallbacks )
 	foreach ( callbackFunc in myCallbacks )
@@ -331,16 +343,41 @@ void function ClientCodeCallback_OnEntityDestroy( entity ent )
 
 void function ClientCodeCallback_OnPlayerLifeStateChanged( entity player, int oldLifeState )
 {
-	//printt( player == GetLocalClientPlayer(), oldLifeState, player.GetLifeState(), IsWatchingReplay() )
-	//local isWatchingKillReplay = IsWatchingReplay()
+	
+	
 
 	int newLifeState = player.GetLifeState()
 
-	// Added via AddCallback_OnPlayerLifeStateChanged
+	
 	foreach ( callbackFunc in clGlobal.onPlayerLifeStateChangedCallbacks )
 	{
 		callbackFunc( player, oldLifeState, newLifeState )
 	}
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 
@@ -396,35 +433,35 @@ void function ClientCodeCallback_KillReplayEnded()
 
 void function ClientCodeCallback_SpecReplayStarted()
 {
-	//printl( "Spectate replay started" )
+	printl( "Spectate replay started" )
 }
 
 void function ClientCodeCallback_SpecReplayEnded()
 {
-	//printl( "Spectate replay ended" )
+	printl( "Spectate replay ended" )
 }
 
-/*
-enum
-{
-OBS_MODE_NONE = 0,			// not in spectator mode
-OBS_MODE_DEATHCAM,			// Attempt to watch your killer while orbiting your corpse
-OBS_MODE_STATIC,			// Static position and orientation
-OBS_MODE_STATIC_LOCKED,		// Identical to OBS_MODE_STATIC expect spectator controls don't work with it
-OBS_MODE_IN_EYE_SIMPLE,		// Simplified version of OBS_MODE_IN_EYE
-OBS_MODE_IN_EYE,			// follow a player in first person view
-OBS_MODE_CHASE,				// follow a player in third person view
-OBS_MODE_ROAMING,			// free roaming
-OBS_MODE_MENU,
 
-NUM_OBSERVER_MODES,
-}
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void function ClientCodeCallback_SpectatorModeStarted( entity player, int observerMode )
 {
-	//printl( "Spectator mode started: " + observerMode )
+	
 	clGlobal.levelEnt.Signal( "OnSpectatorMode" )
 	clGlobal.isSpectating = true
 	clGlobal.observerMode = observerMode
@@ -455,7 +492,7 @@ void function ClientCodeCallback_SpectatorModeStarted( entity player, int observ
 
 void function ClientCodeCallback_SpectatorModeEnded( entity player, int oldObsMode, entity oldTarget )
 {
-	//printl( "Spectator mode ended: " + oldObsMode )
+	
 	clGlobal.isSpectating = false
 
 	switch ( oldObsMode )
@@ -482,10 +519,32 @@ void function ClientCodeCallback_SpectatorModeEnded( entity player, int oldObsMo
 
 void function ClientCodeCallback_SpectatorTargetChanged( entity player, entity prevTarget, entity currTarget )
 {
-	//printl( "Spectator target changed: player:  " + player + "target : " + currTarget )
+	
 
 	foreach ( callbackFunc in clGlobal.onSpectatorTargetChangedCallbacks )
 		callbackFunc( player, prevTarget, currTarget )
+}
+
+void function ClientCodeCallback_SpectatorPlayerTagModeChanged( entity player, int newMode )
+{
+	
+
+	foreach ( callbackFunc in clGlobal.onSpectatorPlayerTagModeChangedCallbacks )
+		callbackFunc( player, newMode )
+}
+
+void function ClientCodeCallback_SpectatorVisibleEnemiesChanged( bool enemiesVisible )
+{
+	foreach ( callbackFunc in clGlobal.onSpectatorMinimapEnemiesVisibleChangedCallbacks )
+		callbackFunc( enemiesVisible )
+}
+
+void function ClientCodeCallback_SpectatorUiStateChanged( int newState )
+{
+	SPECTATOR_UI_STATE = newState
+
+	foreach ( callbackFunc in clGlobal.onSpectatorUiStateChangedCallbacks )
+		callbackFunc( newState )
 }
 
 void function RunKillReplayEndedCallbacks()
@@ -524,12 +583,14 @@ void function AddCallback_OnYouDied( void functionref( entity attacker, float he
 	s_callbacksOnYouDied.append( func )
 }
 
+void function ServerCallback_YouDiedNoAttacker( float healthFrac, int damageSourceId, float recentHealthDamage )
+{
+	ServerCallback_YouDied( null, healthFrac, damageSourceId, recentHealthDamage )
+}
+
 void function ServerCallback_YouDied( entity attacker, float healthFrac, int damageSourceId, float recentHealthDamage )
 {
-	#if DEVELOPER
-		printt( "ServerCallback_YouDied() healthFrac/recentDamage: " + healthFrac, recentHealthDamage )
-	#endif 
-	
+	printt( "ServerCallback_YouDied() healthFrac/recentDamage: " + healthFrac, recentHealthDamage )
 	entity clientPlayer = GetLocalClientPlayer()
 	PlayLocal1PDeathSound()
 
@@ -565,14 +626,9 @@ void function ClientCodeCallback_SaveResumed()
 {
 }
 
-void function ClientCodeCallback_SmokeTestRunning( string param )
-{
-    printl( "ClientCodeCallback_SmokeTestRunning : " + param )
-}
-
 void function ClientCodeCallback_OnSelectedWeaponChanged( entity selectedWeapon )
 {
-	// Added via AddCallback_OnSelectedWeaponChanged
+	
 	foreach ( callbackFunc in clGlobal.onWeaponChangedCallbacks )
 	{
 		callbackFunc( selectedWeapon )
@@ -585,3 +641,7 @@ void function ClientCodeCallback_UIScriptResetComplete()
 		callbackFunc()
 }
 
+void function ClientCodeCallback_PerformSelfReport()
+{
+	//ReportPlayerCustomerService(hardwareID, uid, eaid, "#REPORT_PLAYER_REASON_OFFENSIVE" )
+}
