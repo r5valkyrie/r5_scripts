@@ -112,6 +112,8 @@ void function ClientCodeCallback_BodyGroupChanged( entity ent, int bodyGroupInde
 
 void function ClientCodeCallback_UseEntGainedFocus( entity ent )
 {
+	file.focusedEnt = ent
+
 	foreach ( callbackFunc in clGlobal.onUseEntGainFocusCallbacks )
 	{
 		callbackFunc( ent )
@@ -127,14 +129,17 @@ void function ClientCodeCallback_UseEntGainedFocus( entity ent )
 		}
 	}
 
-	file.focusedEnt = ent
-
 	ManageHighlightEntity( ent )
 }
 
 
 void function ClientCodeCallback_UseEntLostFocus( entity ent )
 {
+	if ( file.focusedEnt == ent )
+	{
+		file.focusedEnt = null
+	}
+
 	foreach ( callbackFunc in clGlobal.onUseEntLoseFocusCallbacks )
 	{
 		callbackFunc( ent )
@@ -144,11 +149,6 @@ void function ClientCodeCallback_UseEntLostFocus( entity ent )
 	{
 		RuiSetBool( file.lastWeaponRuiSet, "isHighlighted", false )
 		file.lastWeaponRuiSet = null
-	}
-
-	if ( file.focusedEnt == ent )
-	{
-		file.focusedEnt = null
 	}
 
 	if ( IsValid( ent ) )
