@@ -829,10 +829,10 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 		return true
 	}
 
-	if ( DeathField_IsActive( player.DeathFieldIndex() ) )
+	if ( DeathField_IsActiveForIndex( player.DeathFieldIndex() ) )
 	{
 		const float START_PLAYING_DIST = -30.0        // postive distance is inside safe zone
-		float stormDist = DeathField_PointDistanceFromFrontier( eyePos, player.DeathFieldIndex() )
+		float stormDist = DeathField_PointDistanceFromFrontierForIndex( eyePos, player.DeathFieldIndex() )
 		if ( stormDist < START_PLAYING_DIST )
 		{
 			#if DEVELOPER
@@ -861,10 +861,10 @@ bool function PlayerDeliveryShouldBeUrgent( entity player, vector subjectPos, in
 #if CLIENT
 float function ClientCodeCallback_GetPlayerThreatLevel( entity player )
 {
-	if ( DeathField_IsActive( player.DeathFieldIndex() ) )
+	if ( DeathField_IsActiveForIndex( player.DeathFieldIndex() ) )
 	{
 		const float START_PLAYING_DIST = -30.0        // postive distance is inside safe zone
-		float stormDist = DeathField_PointDistanceFromFrontier( player.EyePosition(), player.DeathFieldIndex() )
+		float stormDist = DeathField_PointDistanceFromFrontierForIndex( player.EyePosition(), player.DeathFieldIndex() )
 		if ( stormDist < START_PLAYING_DIST )
 		{
 			return 80

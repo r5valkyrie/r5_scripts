@@ -900,12 +900,12 @@ bool function CTFShouldShowDeathFieldEffects( entity player )
 
 	if ( player.ContextAction_IsInVehicle() )
 	{
-		if ( DeathField_PointDistanceFromFrontier( player.EyePosition(), player.DeathFieldIndex() ) >= 0 )
+		if ( DeathField_PointDistanceFromFrontierForIndex( player.EyePosition(), player.DeathFieldIndex() ) >= 0 )
 			shouldShow = false
 	}
 	else
 	{
-		if ( DeathField_PointDistanceFromFrontier( player.GetOrigin(), player.DeathFieldIndex() ) >= 0 )
+		if ( DeathField_PointDistanceFromFrontierForIndex( player.GetOrigin(), player.DeathFieldIndex() ) >= 0 )
 			shouldShow = false
 	}
 	if ( IsViewingSquadSummary() || IsViewingDeathRecap() )
