@@ -41,11 +41,6 @@ global enum eCrowdNoiseMeterModifiers
 
 // ======================== STRUCTS ========================
 
-global struct WeaponLoadout {
-	array< string > weaponRefs
-	table< string, array< string > > weaponAttachmentsByWeapon
-}
-
 global struct TimedEventData
 {
 	int eventType = 0
@@ -168,7 +163,6 @@ global function LowerDVSForGameMode
 // --- Utility script dependencies ---
 // RegisterNetVarBoolChangeCallback - moved to sh_netvar_callbacks.gnut
 // RegisterNetVarTimeChangeCallback - moved to sh_netvar_callbacks.gnut
-global function ParseWeaponLoadoutText
 global function ParseEquipmentLoadoutText
 global function ParseConsumableLoadoutText
 #if SERVER
@@ -343,26 +337,6 @@ void function LowerDVSForGameMode( bool lower ) {} // Dynamic Visibility Setting
 #endif // CLIENT
 
 // --- Utility script dependencies ---
-
-WeaponLoadout function ParseWeaponLoadoutText( string loadoutText, bool useDefaultLoadout = true )
-{
-	WeaponLoadout weaponLoadout
-	array< string > weaponLoadoutArray = []
-	if ( loadoutText != "" )
-		weaponLoadoutArray = GetTrimmedSplitString( loadoutText, " " )
-	foreach( weapon in weaponLoadoutArray )
-	{
-		array<string> weaponTokens = GetTrimmedSplitString( weapon, ":" )
-		string weaponRef           = weaponTokens[0]
-		weaponLoadout.weaponRefs.append( weaponRef )
-
-		weaponTokens.remove( 0 )
-		array<string> attachmentsToAdd = weaponTokens
-
-		weaponLoadout.weaponAttachmentsByWeapon[weaponRef] <- attachmentsToAdd
-	}
-	return weaponLoadout
-}
 
 array< string > function ParseEquipmentLoadoutText( string loadoutText, bool useDefaultLoadout = true, array<string> displayIgnoredItems = [] )
 {

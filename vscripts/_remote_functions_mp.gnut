@@ -569,7 +569,10 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariable( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
 
 	if( Gamemode() == eGamemodes.SURVIVAL || Gamemode() == eGamemodes.ARENAS )
-		ScriptRemote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", -1, 127, "int", EHANDLE_MIN, EHANDLE_MAX, "int", 0, 5001, "int", 0, INT_MAX, "int", -1, 5001, "int", 0, 9999, "int", 0, 9999, "int", 0, 9999, "int", 0, 9999, "bool", "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX )
+		ScriptRemote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+																				 "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+																			     "bool", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+																				 "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 
 	if ( IsCausticTTEnabled() == true )
 		ScriptRemote_RegisterClientFunction( "ServerToClient_UpdateItem", "entity" )
@@ -737,6 +740,9 @@ void function RemoteFunctions_Init_Begin()
 		RegisterNetworkedVariableChangeCallback_int( "playerPrimaryWeapon0", OnPlayerEquippedWeaponChanged )
 		RegisterNetworkedVariableChangeCallback_int( "playerPrimaryWeapon1", OnPlayerEquippedWeaponChanged )
 	#endif
+
+	GamemodeUtility_RegisterNetworking()
+	LoadoutSelection_RegisterNetworking()
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_NessyMessage", "int", 0, 51 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayPassiveVoice", "int", 0, 51 )

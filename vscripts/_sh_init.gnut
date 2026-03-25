@@ -217,7 +217,8 @@ void function SV_CL_Init()
 	Sh_SkydiveLaunchers_Init()
 	ShLootBin_Init()
 	ShFlyers_Init()
-
+	LoadoutSelection_Init()
+	GamemodeUtility_Init()
 	ShGameModeShadowSquad_Init()
 
 	ShTutorial_Init()

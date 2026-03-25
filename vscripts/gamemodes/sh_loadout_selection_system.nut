@@ -77,19 +77,19 @@ global function LoadoutSelection_GetLoadoutCounts_UI
 
 global function IsUsingLoadoutSelectionSystem
 global function LoadoutSelection_GetWeaponCountByLoadoutIndex
-                          
-                                                            
-                                                           
-                                
+
+
+
+
 
 global const int LOADOUTSELECTION_MAX_LOADOUT_COUNT_REGULAR = 6
-                          
-                                                                
-                                                                 
-                                                                                                                                                                                                   
-     
+
+
+
+
+
 global const int LOADOUTSELECTION_MAX_TOTAL_LOADOUT_SLOTS = LOADOUTSELECTION_MAX_LOADOUT_COUNT_REGULAR
-                                
+
 
 global const int LOADOUTSELECTION_MAX_WEAPONS_PER_LOADOUT = 2
 global const int LOADOUTSELECTION_MAX_CONSUMABLES_PER_LOADOUT = 5
@@ -119,25 +119,25 @@ const asset LOADOUTSELECTION_WEAPON_DATA_DATATABLE = $"datatable/loadoutselectio
 
 #if CLIENT || SERVER
 const table<string, asset> CUSTOM_VARIANT_ROTATIONS_DATATABLE = {
-	                      
+
 		[ "WINTER_EXPRESS" ] = $"datatable/gamemode_winterexpress_loadout_rotations.rpak",
-       
-	                    
+
+
 		[ "TDM" ] = $"datatable/gamemode_tdm_loadout_rotations.rpak",
 		[ "SWAT" ] = $"datatable/gamemode_tdm_swat_loadout_rotations.rpak",
 		[ "SHOTTYSNIPERS" ] = $"datatable/gamemode_tdm_shottysnipers_loadout_rotations.rpak",
-       
+
 }
 
 const table<string, asset> CUSTOM_VARIANT_LOADOUTS_DATATABLE = {
-	                      
+
 		[ "WINTER_EXPRESS" ] = $"datatable/gamemode_winterexpress_selectable_loadouts.rpak",
-       
-	                    
+
+
 		[ "TDM" ] = $"datatable/gamemode_tdm_selectable_loadouts.rpak",
 		[ "SWAT" ] = $"datatable/gamemode_tdm_swat_selectable_loadouts.rpak",
 		[ "SHOTTYSNIPERS" ] = $"datatable/gamemode_tdm_shottysnipers_selectable_loadouts.rpak",
-       
+
 }
 
 global const string NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME = "manualLoadoutCurrentRotationIndex" // This is the index used for manual rotations ( the same index is used for all the loadout categories and it can change mid game )
@@ -183,10 +183,10 @@ global enum eLoadoutSelectionSlotType
 {
 	INVALID,
 	REGULAR,
-                          
-          
-           
-                                
+
+
+
+
 
 	_count
 }
@@ -255,7 +255,7 @@ struct {
 		array<LoadoutSelectionCategory> loadoutCategories
 		int maxLoadoutsPerCategory = 0
 		bool areLoadoutsPopulated = false
-		table< int, WeaponLoadout > loadoutSlotIndexToWeaponLoadoutTable
+		//table< int, WeaponLoadout > loadoutSlotIndexToWeaponLoadoutTable
 		table<string, array<string> > weaponUpgrades
 		table<string, array<string> > weaponOptics
 	#endif // CLIENT || SERVER
@@ -270,10 +270,10 @@ struct {
 		int playerSelectedLoadout = 0
 		// ToDo Dswieczko: make loadout count an array indexed by enum instead of 3 different variables
 		int maxLoadoutCountRegular = -1
-                            
-                                   
-                                    
-                                  
+
+
+
+
 	#endif // CLIENT || UI
 
 	#if CLIENT
@@ -324,17 +324,17 @@ bool function LoadoutSelection_ShouldAvoidDuplicateWeaponsInLoadoutRotation()
 	return GetCurrentPlaylistVarBool( "loadoutselection_avoid_duplicate_weapons_in_loadouts", false )
 }
 
-                          
-                                                            
- 
-                                                                                        
- 
 
-                                                           
- 
-                                                                                       
- 
-                                
+
+
+
+
+
+
+
+
+
+
 
 string function GetCustomLoadoutName()
 {
@@ -350,15 +350,15 @@ void function LoadoutSelection_SetDatatableAssets()
 	// There was unfortunately an issue where a datatable only defined in script in the playlist file wouldn't get added to rsons correctly.
 	// To avoid issues it is best to just manually add the datatables here for each mode that needs to override them.
 
-	                      
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 		{
 			file.rotationsDatatable = GetCustomLoadoutRotationsDatatable_Asset( "WINTER_EXPRESS" )
 			file.loadoutsDatatable = GetCustomLoadoutDatatable_Asset( "WINTER_EXPRESS" )
 		}
-       
 
-	                    
+
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_TDM ) )
 	{
 		string customLoadoutName = GetCustomLoadoutName()
@@ -370,7 +370,7 @@ void function LoadoutSelection_SetDatatableAssets()
 			file.loadoutsDatatable = GetCustomLoadoutDatatable_Asset( customLoadoutName )
 		}
 	}
-       
+
 }
 
 asset function GetCustomLoadoutRotationsDatatable_Asset( string customName ) {
@@ -1087,20 +1087,20 @@ void function LoadoutSelection_PopulateLoadouts()
 	// There are a few places that could trigger this function, want to make sure it only runs once on Server and once on Client
 	if ( file.areLoadoutsPopulated )
 		return
-	
+
 	#if CLIENT
 		// Make sure loadout counts on the Client are set to default values
 		file.maxLoadoutCountRegular = 0
-                            
-                                   
-                                    
-                                  
+
+
+
+
 	#endif // CLIENT
 
 	int loadoutIndex = 0
 	bool didLoadoutCategoryFailToPopulate = false
 
-	file.loadoutSlotIndexToWeaponLoadoutTable.clear()
+	//file.loadoutSlotIndexToWeaponLoadoutTable.clear()
 #if SERVER
 	file.loadoutSlotIndexToConsumableLoadoutTable.clear()
 	file.loadoutSlotIndexToEquipmentLoadoutTable.clear()
@@ -1109,7 +1109,7 @@ void function LoadoutSelection_PopulateLoadouts()
 	file.loadoutSlotIndexToLoadoutTypeTable.clear()
 	file.loadoutSlotIndexToWeaponCountTable.clear()
 
-	foreach ( loadoutCategory in file.loadoutCategories )
+	/*foreach ( loadoutCategory in file.loadoutCategories )
 	{
 		loadoutIndex = loadoutCategory.index
 		// Store which Weapons will be given for this loadout
@@ -1143,20 +1143,20 @@ void function LoadoutSelection_PopulateLoadouts()
 				case  eLoadoutSelectionSlotType.REGULAR:
 						file.maxLoadoutCountRegular++
 					break
-                              
-                                            
-                                    
-          
-                                             
-                                     
-          
-                                    
+
+
+
+
+
+
+
+
 				default:
 					break
 			}
 		#endif // CLIENT
-	}
-	
+	}*/
+
 	if ( !didLoadoutCategoryFailToPopulate )
 		file.areLoadoutsPopulated = true
 	#if CLIENT
@@ -1166,14 +1166,14 @@ void function LoadoutSelection_PopulateLoadouts()
 }
 
 // Get the weapon loadout by the slot index of the loadout
-WeaponLoadout function LoadoutSelection_GetWeaponLoadoutByLoadoutSlotIndex( int loadoutIndex )
+/*WeaponLoadout function LoadoutSelection_GetWeaponLoadoutByLoadoutSlotIndex( int loadoutIndex )
 {
 	WeaponLoadout loadout
 	if ( loadoutIndex in file.loadoutSlotIndexToWeaponLoadoutTable )
 	loadout = file.loadoutSlotIndexToWeaponLoadoutTable[ loadoutIndex ]
 
 	return loadout
-}
+}*/
 
 // Get the appropriate weapon set for the tier ( used to define what loot is spawned)
 string function LoadoutSelection_GetWeaponSetStringForTier( int tier )
@@ -1184,16 +1184,16 @@ string function LoadoutSelection_GetWeaponSetStringForTier( int tier )
 // Get the weapon ref for the passed in loadout and weapon index
 string function LoadoutSelection_GetWeaponRefByIndex( int loadoutIndex, int weaponIndex )
 {
-	WeaponLoadout weaponLoadoutData = LoadoutSelection_GetWeaponLoadoutByLoadoutSlotIndex( loadoutIndex )
+	/*WeaponLoadout weaponLoadoutData = LoadoutSelection_GetWeaponLoadoutByLoadoutSlotIndex( loadoutIndex )
 	array<string> weaponRefs = weaponLoadoutData.weaponRefs
 
 	// In Dev Assert if there is no valid weapon ref, in retail return a blank ref so we just don't have a weapon but the game won't crash
 	Assert( weaponRefs.len() > weaponIndex, "LoadoutSelection_GetWeaponRefByIndex the weapon index ( " + weaponIndex + " ) passed in is greater than the number of weapon refs " + weaponRefs.len() + " in slot " + loadoutIndex )
 
-	if ( weaponRefs.len() <= weaponIndex )
+	if ( weaponRefs.len() <= weaponIndex )*/
 		return ""
 
-	return weaponRefs[weaponIndex]
+	//return weaponRefs[weaponIndex]
 }
 #endif // CLIENT || SERVER
 
@@ -1210,15 +1210,15 @@ bool function ModeUsesLoadoutWeapons()
 	if( IsUsingLoadoutSelectionSystem() )
 		return true
 
-                            
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_BATTLE_RUSH ) )
 		return true
-                                  
 
-                            
+
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 		return true
-                                  
+
 
 	return false
 }
@@ -1776,16 +1776,16 @@ void function LoadoutSelection_SetLoadoutCounts_UI( int loadoutType, int loadout
 			if ( loadoutCount >= 0 && loadoutCount <= LOADOUTSELECTION_MAX_LOADOUT_COUNT_REGULAR )
 				file.maxLoadoutCountRegular = loadoutCount
 			break
-                            
-                                          
-                                                                                          
-                                               
-        
-                                           
-                                                                                           
-                                                
-        
-                                  
+
+
+
+
+
+
+
+
+
+
 		default:
 			break
 	}
@@ -1802,14 +1802,14 @@ int function LoadoutSelection_GetLoadoutCounts_UI( int loadoutType )
 		case  eLoadoutSelectionSlotType.REGULAR:
 			loadoutCount = file.maxLoadoutCountRegular
 			break
-                            
-                                          
-                                              
-        
-                                           
-                                               
-        
-                                  
+
+
+
+
+
+
+
+
 		default:
 			break
 	}
@@ -1876,10 +1876,10 @@ void function LoadoutSelection_RefreshAllUILoadoutInfo()
 
 	// Update loadout counts on the UI
 	RunUIScript( "LoadoutSelection_SetLoadoutCounts_UI", eLoadoutSelectionSlotType.REGULAR, file.maxLoadoutCountRegular )
-                           
-                                                                                                                         
-                                                                                                                           
-                                 
+
+
+
+
 
 	foreach ( loadoutCategory in file.loadoutCategories )
 	{

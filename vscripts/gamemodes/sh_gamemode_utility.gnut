@@ -138,6 +138,12 @@ struct weaponInfoStruct
 	string weaponRef = ""
 	array< string > modRefs = []
 }
+
+global struct WeaponLoadout
+{
+	array< string > weaponRefs
+	table< string, array< string > > weaponAttachmentsByWeapon
+}
 #endif // SERVER
 
 struct {
@@ -236,8 +242,8 @@ void function GamemodeUtility_Init()
 void function GamemodeUtility_RegisterNetworking()
 {
 	#if CLIENT || SERVER
-		RegisterNetworkedVariable( GAMEMODEUTILITY_NETVAR_MATCH_START, SNDC_GLOBAL, SNVT_TIME, -1.0 ) // SNDC_GLOBAL_NON_REWIND
-		RegisterNetworkedVariable( GAMEMODEUTILITY_NETVAR_MATCH_END, SNDC_GLOBAL, SNVT_TIME, 0.0 ) // SNDC_GLOBAL_NON_REWIND
+	//	RegisterNetworkedVariable( GAMEMODEUTILITY_NETVAR_MATCH_START, SNDC_GLOBAL_NON_REWIND, SNVT_TIME, -1.0 )
+	//	RegisterNetworkedVariable( GAMEMODEUTILITY_NETVAR_MATCH_END, SNDC_GLOBAL_NON_REWIND, SNVT_TIME, 0.0 )
 	#endif
 
 	Remote_RegisterClientFunction( "GamemodeUtility_ServerCallback_DisplayMatchTimeLimitWarning", "bool" )
@@ -958,9 +964,9 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 	int currentRingStage = maxint( SURVIVAL_GetCurrentDeathFieldStage( 0 ), 0 ) // If the ring hasn't started moving, treat it as the first ring
 
 	// Populate the min guaranteed loadouts for this ring stage
-	WeaponLoadout minGuaranteedWeapons = ParseWeaponLoadoutText( GamemodeUtility_GetMinGuaranteedWeaponLoadoutStringForRingStage( currentRingStage ), false )
-	array< string > minGuaranteedEquipment = ParseEquipmentLoadoutText( GamemodeUtility_GetMinGuaranteedEquipmentLoadoutStringForRingStage( currentRingStage ), false, [] )
-	array< string > minGuaranteedConsumables = ParseConsumableLoadoutText( GamemodeUtility_GetMinGuaranteedConsumableLoadoutStringForRingStage( currentRingStage ), false )
+	//WeaponLoadout minGuaranteedWeapons = ParseWeaponLoadoutText( GamemodeUtility_GetMinGuaranteedWeaponLoadoutStringForRingStage( currentRingStage ), false )
+	//array< string > minGuaranteedEquipment = ParseEquipmentLoadoutText( GamemodeUtility_GetMinGuaranteedEquipmentLoadoutStringForRingStage( currentRingStage ), false, [] )
+	//array< string > minGuaranteedConsumables = ParseConsumableLoadoutText( GamemodeUtility_GetMinGuaranteedConsumableLoadoutStringForRingStage( currentRingStage ), false )
 	int minGuaranteedAmmoCountPerWeapon = GamemodeUtility_GetMinGuaranteedAmmoCountPerWeaponForRingStage( currentRingStage )
 
 	// Populate Current Weapon Data
@@ -1004,7 +1010,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 	// Parse through the guaranteed consumable data to figure out what we will actually end up giving the player
 	array< string > ordnanceToGive
 	table < string, int > healingItemToNumToGiveTable
-	foreach ( guaranteedConsumable in minGuaranteedConsumables )
+	/*foreach ( guaranteedConsumable in minGuaranteedConsumables )
 	{
 		if ( !SURVIVAL_Loot_IsRefValid( guaranteedConsumable ) )
 			continue
@@ -1438,14 +1444,14 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 	{
 		player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
 		player.DeployWeapon()
-	}
+	}*/
 }
+
 #endif //SERVER
 
 #if CLIENT
-void function GamemodeUtility_OnMatchStartTimeChanged( entity player, float newValue )
+void function GamemodeUtility_OnMatchStartTimeChanged( entity player, float time )
 {
-	float time = newValue
 	var rui = ClGameState_GetRui()
 	if ( rui != null )
 	{
@@ -1545,8 +1551,8 @@ void function GamemodeUtility_MatchTimeLimit_Thread( float matchTimeLimit  )
 
 	printt( "GAMEMODE UTILITY: Starting GamemodeUtility_MatchTimeLimit_Thread at " + Time() + " Match Time Limit is set to " + matchTimeLimit )
 
-	SetGlobalNetTime( GAMEMODEUTILITY_NETVAR_MATCH_START, Time() )
-	SetGlobalNetTime( GAMEMODEUTILITY_NETVAR_MATCH_END, Time() + matchTimeLimit )
+	SetGlobalNonRewindNetTime( GAMEMODEUTILITY_NETVAR_MATCH_START, Time() )
+	SetGlobalNonRewindNetTime( GAMEMODEUTILITY_NETVAR_MATCH_END, Time() + matchTimeLimit )
 
 	float timeToWaitForMatchLimitWarningMessage = matchTimeLimit - GamemodeUtility_GetMatchTimeLimitWarning()
 

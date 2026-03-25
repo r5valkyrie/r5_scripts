@@ -1473,8 +1473,8 @@ Scripts:
 [
 	sh_armordata.gnut
 	gamemodes/freedm/sh_freedm_stubs.nut
-	gamemodes/freedm/sh_gamemode_utility.nut
-	gamemodes/freedm/sh_loadout_selection_system.nut
+	gamemodes/sh_gamemode_utility.gnut
+	gamemodes/sh_loadout_selection_system.nut
 ]
 
 When: "SERVER || CLIENT"

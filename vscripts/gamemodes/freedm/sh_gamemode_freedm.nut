@@ -424,7 +424,6 @@ void function FreeDM_RegisterNetworking()
 {
 	//Remote_RegisterClientFunction( "ServerCallback_FreeDMScoreEvent", "int", INT_MIN, INT_MAX) // Call site commented out (line 454)
 	Remote_RegisterClientFunction("UICallback_FreeDM_OpenCharacterSelect")
-	GamemodeUtility_RegisterNetworking()
 }
 
 bool function FreeDM_ShouldSpawnOnConnect( entity player )

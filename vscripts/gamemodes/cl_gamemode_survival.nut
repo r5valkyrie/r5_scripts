@@ -2770,7 +2770,8 @@ bool function GetWaitingForPlayersOverlayEnabled( entity player )
 		return false
 	if ( GetCurrentPlaylistVarBool( "survival_staging_area_enabled", false ) )
 		return false
-
+	if ( !GetCurrentPlaylistVarBool( "jump_from_plane_enabled", true ) )
+		return false
 	return true
 }
 
