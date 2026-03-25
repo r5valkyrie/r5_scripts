@@ -755,9 +755,13 @@ void function AddCallback_OnPreClientDisconnected( void functionref( entity play
 	svGlobal.onPreClientDisconnectedCallbacks.append( callbackFunc )
 }
 
-void function AddCallback_GameStatePostEnter( int number, void functionref( ) callbackFunc )
+void function AddCallback_GameStatePostEnter( int gameState, void functionref() callbackFunc )
 {
+	Assert( gameState < svGlobal.gameStateEnteredCallbacks.len() )
 
+	Assert( !svGlobal.gameStateEnteredCallbacks[ gameState ].contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_GameStatePostEnter" )
+
+	svGlobal.gameStateEnteredCallbacks[ gameState ].append( callbackFunc )
 }
 
 //Passive Voices

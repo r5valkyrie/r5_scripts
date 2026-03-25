@@ -10,7 +10,7 @@ global function Survival_RunPlaneLogic_Thread
 global function Survival_GenerateSingleRandomPlanePath
 global function Survival_RunSinglePlanePath_Thread
 
-
+global function Survival_RunCharacterSelection
 
 
 global function Survival_HasPlayerJumpedOutOfPlane

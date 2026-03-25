@@ -819,57 +819,57 @@ void function CodeCallback_GamerulesThink()
 	switch ( gameState )
 	{
 		case eGameState.WaitingForCustomStart:
-//			printt( "STATE: waiting for custom start" )
+			Warning( "STATE: waiting for custom start" )
 			GameRulesThink_WaitingForCustomStart()
 			break
 
 		case eGameState.WaitingForPlayers:
-//			printt( "STATE: waiting for players" )
+			Warning( "STATE: waiting for players" )
 			GameRulesThink_WaitingForPlayers()
 			break
 
 		case eGameState.PickLoadout:
-//			printt( "STATE: Pick Loadout" )
+			Warning( "STATE: Pick Loadout" )
 			GameRulesThink_PickLoadout()
 			break
 
 		case eGameState.Prematch:
-//			printt( "STATE: prematch" )
+			Warning( "STATE: prematch" )
 			GameRulesThink_Prematch()
 			break
 
 		case eGameState.Playing:
-//			printt( "STATE: playing" )
+			Warning( "STATE: playing" )
 			GameRulesThink_Playing()
 			break
 
 		case eGameState.SuddenDeath:
-//			printt( "STATE: SuddenDeath" )
+			Warning( "STATE: SuddenDeath" )
 			GameRulesThink_SuddenDeath()
 			break
 
 		case eGameState.WinnerDetermined:
-//			printt( "STATE: WinnerDetermined" )
+			Warning( "STATE: WinnerDetermined" )
 			GameRulesThink_WinnerDetermined()
 			break
 
 		case eGameState.SwitchingSides:
-//			printt( "STATE: SwitchingSides" )
+			Warning( "STATE: SwitchingSides" )
 			GameRulesThink_SwitchingSides()
 			break
 
 		case eGameState.Epilogue:
-			//printt( "STATE: Epilogue" )
+			Warning( "STATE: Epilogue" )
 			GameRulesThink_Epilogue()
 			break
 
 		case eGameState.Resolution:
-//			printt( "STATE: Resolution" )
+			Warning( "STATE: Resolution" )
 			GameRulesThink_Resolution()
 			break
 
 		case eGameState.Postmatch:
-//			printt( "STATE: post" )
+			Warning( "STATE: post" )
 			GameRulesThink_Postmatch()
 			break
 	}

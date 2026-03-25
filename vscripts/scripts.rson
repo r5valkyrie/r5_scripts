@@ -580,7 +580,7 @@ Scripts:
 When: "SERVER || CLIENT"
 Scripts:
 [
-	sh_init.gnut
+	_sh_init.gnut
 	sh_sp_dialogue.gnut
 
 	sh_info_cords.gnut
