@@ -849,9 +849,6 @@ void function UpdateRUIWeaponData( entity player, var rui, entity weapon, int ta
 					}
 				}
 
-
-					RuiSetBool( rui, "hasNoAmmo", TitanSword_WeaponIsTitanSword( weapon ) )
-
 			}
 
 			vector ammoColor = SrgbToLinear( <0.5, 0.5, 0.5> )
