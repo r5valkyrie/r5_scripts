@@ -144,7 +144,6 @@ global function ForceScriptError
 global function CircleCullClassName
 global function CircleCullScriptName
 global function SetVictoryKillMode
-global function AddCallback_OnPlayerPostRespawned
 global function DoCommonRespawnForPlayer
 // GetPlayerArrayIncludingSpectators moved to SERVER || CLIENT scope below
 // GameRules_GetTeamScore2 is engine-native
@@ -322,7 +321,6 @@ void function ForceScriptError( string message ) { ScriptError( message ) }
 void function CircleCullClassName( string className ) {}
 void function CircleCullScriptName( string scriptName ) {}
 void function SetVictoryKillMode( bool enabled ) {}
-void function AddCallback_OnPlayerPostRespawned( void functionref( entity ) callback ) {}
 void function DoCommonRespawnForPlayer( entity player ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
 void function WeaponStatsHook_OnKillEnemy( entity victim, entity attacker, entity creditedAttacker, var damageInfo ) {}

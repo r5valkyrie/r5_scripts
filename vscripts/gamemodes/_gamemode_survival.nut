@@ -6257,7 +6257,7 @@ void function OnPlayerMatchParticipationEnded( entity player, bool wasDisconnect
 			PrepareGameSummaryForPointCalculation( player )
 
 
-			Cups_OnPlayerMatchParticipationEnded( player )
+			//Cups_OnPlayerMatchParticipationEnded( player )
 	}
 }
 

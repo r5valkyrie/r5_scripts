@@ -230,7 +230,7 @@ void function DebrisTrap_Deploy( entity projectile, float duration )
 	trigger.SetParent( projectile, "", true, 0.0 )
 
 	//Create a threat zone for the passive voices and store the ID so we can clean it up later.
-	int threatZoneID = -1 //ThreatDetection_CreateThreatZoneForTrap( owner, projectile.GetOrigin(), team )
+	int threatZoneID = ThreatDetection_CreateThreatZoneForTrap( projectile, owner, projectile.GetOrigin(), team )
 
 	OnThreadEnd(
 		function() : ( owner, mover, projectile, trigger, threatZoneID, oldParent )

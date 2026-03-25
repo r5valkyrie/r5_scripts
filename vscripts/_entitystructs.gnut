@@ -344,8 +344,8 @@ global struct ServerEntityStruct
 	array<void functionref( entity vehicle )> onPlayerUseButtonPressed
 	array<void functionref( entity vehicle )> onPlayerUseButtonReleased
 	array<void functionref( entity )> onEntityDestroyedCallbacks
-	bool functionref( entity player, entity ent ) canUseEntityCallback
-	bool functionref( entity player, entity ent, int useFlags ) canUseEntityCallbackNew = null
+	array<void functionref( entity player )>                               onPlayerLandedCallbacks
+	bool functionref( entity player, entity ent, int useFlags ) canUseEntityCallback = null
 	bool functionref( entity player, entity ent ) shouldUseBlockReloadCallback = null
 	bool headshotImmunity
 	bool isLeftDoor
@@ -357,9 +357,8 @@ global struct ServerEntityStruct
 	bool isDoorBlocker
 	void functionref( entity, entity, var ) Callback_VortexTriggerBulletHit
 	void functionref( entity, entity, entity, entity, vector ) Callback_VortexTriggerProjectileHit
-
+	array<void functionref( entity )> playerOnRealmChangedCallbacks
 	bool ignoreSafePushMode = false //If a pusher has set Anim_SetSafePushMode, which "Stops playing the animation when continuing it would hit a pushable object. Resumes automatically.".  This bool will override that behaviour where you have a pushable entity that you don't want to stop the animation on the pusher when it collides.  Example: large sliding doors vs Seer ult.
-
 	bool   isInWarpTrigger
 	float  phaseTunnelExitTime
 	int skinItemFlavorGUID  = -1
@@ -367,6 +366,9 @@ global struct ServerEntityStruct
 	vector lastBouncePosition
 	bool inGracePeriod
 	array<void functionref( entity, entity, vector, vector )> onGrappledCallbacks
+	array<void functionref( entity pusher, entity pushedEnt, vector pushVel, vector amountPushed, bool standingOnPusher )> onPushCallbacks
+	array<void functionref( entity pusher, entity pushedEnt )>																onWouldOtherwiseCrushEntity
+	array<bool functionref( entity pusher, entity pushedEnt )>																onEntityBeingCrushed
 	array<int> shiftStatusIDs
 	entity phaseShiftMover
 	array<entity> activeTraps
@@ -634,7 +636,7 @@ global struct ServerPlayerStruct
 	float 						postDeathThreadStartTime
 	// float 						lastSelectSPTitanLoadoutTime
 	bool  						inPostDeath = false
-
+	array<void functionref( entity )> playerOnRealmChangedCallbacks
 	bool isOutOfBoundsHolsterCheck = false
 	entity outOfBoundsActiveWeapon
 

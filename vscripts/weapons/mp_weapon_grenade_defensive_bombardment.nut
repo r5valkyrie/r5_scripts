@@ -120,7 +120,7 @@ void function OnProjectileCollision_WeaponDefensiveBombardmentExplosion( entity 
 		return
 	}
 	PlayBombardmentImpactSoundIfNeeded( player )
-	
+
 	PlayImpactFXTable( projectile.GetOrigin(), projectile, "exp_artillery_plasma" )
 	Explosion_DamageDefSimple( eDamageSourceId.damagedef_defensive_bombardment, pos, player, projectile, pos )
 	projectile.Destroy()
@@ -166,23 +166,23 @@ void function DefensiveBombardment_DamagedTarget( entity victim, var damageInfo 
 		ShellShock_ApplyForDuration( victim, DEFENSIVE_BOMBARDMENT_SHELLSHOCK_DURATION )
 }
 
-                    
+
 float function DefensiveBombardment_UpgradedRadiusScaler()
 {
 	return GetCurrentPlaylistVarFloat( "passive_upgrade_gibraltar_bombardment_radius_scaler", 1.2 )
 }
-      
+
 
 float function DefensiveBombardment_GetRadius( entity player )
 {
 	float result = DEFENSIVE_BOMBARDMENT_RADIUS
 
-	                    
+
 	//if( PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_ONE ) ) // upgrade_gibraltar_ult_radius
 	{
 		result *= DefensiveBombardment_UpgradedRadiusScaler()
 	}
-       
+
 
 	return DEFENSIVE_BOMBARDMENT_RADIUS
 }
@@ -194,8 +194,6 @@ void function DefensiveBombardmentSmoke( entity projectile, asset fx )
 	if ( !IsValid( owner ) )
 		return
 
-	EndSignal( owner, "CleanUpPlayerAbilities" )
-
 	entity bombardmentWeapon = VerifyBombardmentWeapon( owner, DEFENSIVE_BOMBARDMENT_MISSILE_WEAPON )
 	if ( !IsValid( bombardmentWeapon ) )
 		return
@@ -203,15 +201,12 @@ void function DefensiveBombardmentSmoke( entity projectile, asset fx )
 	vector origin = projectile.GetOrigin()
 
 	int smokeFxId = GetParticleSystemIndex( fx )
-	entity smokeFX = StartParticleEffectOnEntity_ReturnEntity( projectile, smokeFxId, FX_PATTACH_ABSORIGIN_FOLLOW, 0 )
-	smokeFX.RemoveFromAllRealms()
-	smokeFX.AddToOtherEntitysRealms( owner )
-	
-	//Create a threat zone for the passive voices and store the ID so we can clean it up later.
-	int threatZoneID = ThreatDetection_CreateThreatZone( owner, eThreatDetectionZoneType.BOMBARDMENT, origin, owner.GetTeam(), DEFENSIVE_BOMBARDMENT_RADIUS, DEFENSIVE_BOMBARDMENT_RADIUS/2, 0.1, 0.1, 0)
+	entity smokeFX = StartParticleEffectOnEntity_ReturnEntity( projectile, smokeFxId, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+
+	ThreatDetection_CreateThreatZoneForBombardment( projectile, null, projectile.GetOrigin(), -1, DEFENSIVE_BOMBARDMENT_RADIUS, 1.0 )
 
 	float bombardmentHeight
-	if ( !StatusEffect_GetSeverity( owner, eStatusEffect.bombardment_uses_extended_height ) )
+	if ( !StatusEffect_HasSeverity( owner, eStatusEffect.bombardment_uses_extended_height ) )
 		bombardmentHeight = DEFAULT_BOMBARDMENT_HEIGHT
 	else
 		bombardmentHeight = EXTENDED_BOMBARDMENT_HEIGHT

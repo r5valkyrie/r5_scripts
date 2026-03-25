@@ -15,9 +15,6 @@ global function IsPositionWithinRadius
 #if CLIENT
 global function SetPlayerTempMuted
 #endif // CLIENT
-#if SERVER
-global function AddCallback_OnClientConnectionRestored
-#endif // SERVER
 
 // Alliance constants — defined here since this file loads before sh_freedm_stubs.nut
 global const int ALLIANCE_NONE = -1
@@ -1187,11 +1184,3 @@ void function SetPlayerTempMuted( entity player )
 	// no-op
 }
 #endif // CLIENT
-
-// stub — reconnection callback not available
-#if SERVER
-void function AddCallback_OnClientConnectionRestored( void functionref( entity ) callback )
-{
-	// no-op
-}
-#endif // SERVER

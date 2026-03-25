@@ -67,14 +67,14 @@ global struct ClientEntityStruct
 
 	string functionref( entity ent ) entTextOverrideCallback
 
-	bool functionref( entity player, entity ent ) canUseEntityCallback = null
-	bool functionref( entity player, entity ent, int useFlags ) canUseEntityCallbackNew = null
+	bool functionref( entity player, entity ent, int useFlags ) canUseEntityCallback = null
 
 	array<void functionref( entity ent, entity player, int useInputType )> onUseEntityCallbacks
 	array<void functionref( entity vehicle )> onVehicleLaunchCallbacks
 	array<void functionref( entity vehicle )> onVehicleCollideCallbacks
 	array<void functionref( entity vehicle )> onPlayerUseButtonPressed
 	array<void functionref( entity vehicle )> onPlayerUseButtonReleased
+	array<void functionref( entity player )> onPlayerLandedCallbacks
 	array<void functionref( entity )> onEntityDestroyedCallbacks
 
 	string enemyHighlight = ""
@@ -115,7 +115,7 @@ global struct ClientEntityStruct
 	float  clientEntMinimapScale = 1.0
 	int    clientEntMinimapZOrder
 
-
+	bool                       ignorePingTrace = false
 	bool   blackMarket_haveSeenReady
                            
 		int deathBoxMenu_lastSeenClipCount
@@ -203,7 +203,7 @@ global struct ClientPlayerStruct
 	
 	bool onetimetimer = false
 	float lasttime
-
+	bool classActuallyChanged
 	bool isSkydiving
 	//prophunt
 	asset PROPHUNT_LastModel

@@ -52,7 +52,7 @@ global struct ClGlobals
 	array<void functionref( entity )> consumableInventoryChangedCallbacks
 	array<void functionref( int newState )> onSpectatorUiStateChangedCallbacks
 	array<bool functionref( entity player, entity zipline, vector ziplineClosestPoint )> canUseZiplineCallbacks
-
+	array<void functionref( entity )> givePlayerDoubleJumpCallbacks
 	array<void functionref()>[ eGameState._count_ ] gameStateEnterCallbacks
 	array<void functionref( int )> gameStateChangedCallbacks
 	DamageHistoryStruct &lastDamageHistory
@@ -71,7 +71,7 @@ global struct ClGlobals
 	entity lastKiller // only valid before kill replay
 	int lastKillerEntIndex
 	AttackerDisplayNameStruct nameOfLastKiller
-
+	array<void functionref( entity player, entity weapon )> onPlayerOverheatCallbacks
 
 	entity levelEnt
 

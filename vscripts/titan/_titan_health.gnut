@@ -65,7 +65,7 @@ void function TitanHealth_Init()
 
 	//HealthRegenInit()
 	AddSoulInitFunc( TitanShieldRegenThink ) //This runs even if playlist var titan_shield_regen is set to 0 because it also does stuff like give friendly Pilots protection with shield, etc
-	AddSoulDeathCallback( Titan_MonarchCleanup )
+	//AddSoulDeathCallback( Titan_MonarchCleanup )
 }
 
 // void function UndoomTitan( entity titan, int numSegments )

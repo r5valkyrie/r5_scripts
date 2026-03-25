@@ -76,7 +76,6 @@ void function StoreMythicInspectMenu_OnShow()
 
 	AddCallbackAndCallNow_OnGRXInventoryStateChanged( StoreMythicInspectMenu_OnGRXUpdated )
 	AddCallback_OnGRXOffersRefreshed( StoreMythicInspectMenu_OnGRXUpdated )
-	AddCallback_OnGRXBundlesRefreshed( StoreMythicInspectMenu_OnGRXBundlesUpdated )
 
 	RegisterButtonPressedCallback( KEY_TAB, ToggleVCPopUp )
 	RegisterButtonPressedCallback( BUTTON_BACK, ToggleVCPopUp )
@@ -100,7 +99,6 @@ void function StoreMythicInspectMenu_OnHide()
 
 	RemoveCallback_OnGRXInventoryStateChanged( StoreMythicInspectMenu_OnGRXUpdated )
 	RemoveCallback_OnGRXOffersRefreshed( StoreMythicInspectMenu_OnGRXUpdated )
-	RemoveCallback_OnGRXBundlesRefreshed( StoreMythicInspectMenu_OnGRXBundlesUpdated )
 
 }
 

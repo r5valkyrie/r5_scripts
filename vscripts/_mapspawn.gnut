@@ -6,7 +6,6 @@ untyped
 //=========================================================
 
 global function CodeCallback_MapSpawn
-global function CodeCallback_ClientCommand
 global function CreateMapEditorProp
 global function CreateEditorProp
 global function PlaylistDeathTrigger_OnEnter
@@ -44,12 +43,6 @@ global struct spawnCallbackEditorClassFuncArray
 
 global typedef pilotEliminationDialogueCallbackType void functionref( int, array<entity>, int, array<entity> )
 global typedef OnPlayerWeaponActivatedTypeCallback void functionref( entity, entity, entity )
-
-//ThreatEventCallbackData needs to be registered before svGlobal
-global struct ThreatEventCallbackData
-{
-	int typeState
-}
 
 global struct SvGlobals
 {
@@ -89,6 +82,11 @@ global struct SvGlobals
 	string gameWonAnnouncement
 	string gameLostAnnouncement
 
+	array<void functionref( entity observer, entity newTarget )> onPlayerObserverTargetChangedCallbacks
+
+	array<void functionref( entity player )> onPilotBecomingTitanCallbacks
+	array<void functionref( entity player )> onTitanBecomingPilotCallbacks
+
 	table< int, int > npcsSpawnedThisFrame_scriptManagedArray
 
 	float pilotRespawnDelay = 0.0
@@ -115,16 +113,16 @@ global struct SvGlobals
 	array<void functionref( entity player )> onClientConnectionLostCallbacks
 	array<void functionref( entity player )> onClientConnectionRestoredCallbacks
 	array<void functionref( entity attacker, entity victim )> onPlayerAssistCallbacks
-
+	array<void functionref( entity )> givePlayerDoubleJumpCallbacks
 	array<void functionref( entity player )> onPlayerDropsScriptedItemsCallbacks
 	array<void functionref( entity player )> onPlayerClassChangedCallbacks
-
+	array<void functionref( entity player, entity weapon )> onPlayerOverheatCallbacks
 	array<void functionref( entity ship, string anim )> onWaveSpawnDropshipSpawned
 
 	table<string, array<void functionref( entity ent )> >onEntityChangedTeamCallbacks
 
 	table<string, bool functionref( entity player, array<string>args )> clientCommandCallbacks
-	table<string, array< void functionref( entity player, array<string>args ) > > clientCommandCallbacksVoid
+	table<string, void functionref( entity player, array<string>args )> clientCommandCallbacksVoid
 	array<void functionref()>[ eGameState._count_ ] gameStateEnterCallbacks
 	array<void functionref()>[ eGameState._count_ ] gameStateEnteredCallbacks
 	array<void functionref()> onSetPreGameStartTimeCallbacks
@@ -189,10 +187,6 @@ global struct SvGlobals
 	
 	// next spectator target handling
 	array< entity functionref( entity, bool ) > onGetBestObserverTargetCallbacks
-	
-	// voices passive
-	table< int, void functionref( entity, ThreatEventCallbackData ) > onThreatEventActivationCallbacks
-	table< int, void functionref( entity, ThreatEventCallbackData ) > onThreatEventStateChangeCallbacks
 }
 
 global SvGlobals svGlobal
@@ -567,55 +561,6 @@ void function FS_RestartServerAfterSomeTimeWithoutPlayers()
 		previousPlayerCount = playerCount
 		wait 1
 	}
-}
-
-var function CodeCallback_ClientCommand( entity player, array<string> args )
-{
-	if( !IsCommandsEnabled( player ) && args[0] != "say" ) //checked by code
-		return false
-		
-	//TODO: Track down Why VModEnable is being called from code?
-	if( args[0] == "VModEnable" || args[0] == "vban" ) return
-	
-	#if DEVELOPER
-		printl( "############ ClientCommand Code Callback" )
-		printl( "Player:" + player )
-		printl( "Args:" )
-		foreach( key, value in args )
-			printl( key + " : " + value )
-		printl( "############ ClientCommand End" )
-	#endif
-
-	string commandString = args.remove( 0 )
-	bool bFound = false
-
-	if( commandString in svGlobal.clientCommandCallbacksVoid )
-	{
-		#if DEVELOPER 
-			printt( "CodeCallback_ClientCommandNew", commandString )
-		#endif
-		
-		foreach ( callbackFunc in svGlobal.clientCommandCallbacksVoid[ commandString ] )
-			callbackFunc( player, args )
-		
-		bFound = true
-	}
-	
-	//Assert( commandString in svGlobal.clientCommandCallbacks )
-	
-	if ( commandString in svGlobal.clientCommandCallbacks  )
-	{
-		return svGlobal.clientCommandCallbacks[ commandString ]( player, args )
-	}
-	else if( !bFound )
-	{
-		#if DEVELOPER
-			printl( "ALERT: " + commandString  + " isn't a client command but is being called in CodeCallback_ClientCommand." )
-		#endif
-		return false
-	}
-	
-	return true
 }
 
 entity ornull function CreateEditorProp(asset a, vector pos, vector ang, bool mantle = false, float fade = 2000, float idk = -1)

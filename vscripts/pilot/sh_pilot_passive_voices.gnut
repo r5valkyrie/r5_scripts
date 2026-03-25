@@ -31,18 +31,6 @@ struct
 const float WARN_TEAMMATES_DELAY = 6.0
 const string AUDIO_WARN_TEAMMATES_BEEP = "diag_mp_wraithvoid_comms_in"
 
-global enum eThreatDetectionZoneType
-{
-	VIEW, //From original internal enum, moved here so it makes more sense for me
-	PROXIMITY, //From original internal enum, moved here so it makes more sense for me
-	TRAP, //TDT_FIRST_ZONE is the first valid to create threat zones according to internal error
-	AMBUSH,
-	PING,
-	KILLZONE,
-	BOMBARDMENT,
-	GRENADE
-} // don't add more than TDT_MAX (30) detection zones!
-
 enum ePassiveVoiceCategories
 {
 	NEAR,

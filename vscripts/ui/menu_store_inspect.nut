@@ -23,19 +23,19 @@ struct
 	var pageHeader
 	var itemGrid
 	var itemInfo
-                
+
 		var giftingMenu
-       
+
 } file
 
 global struct StoreInspectUIData
 {
 	var discountInfo
 	var purchaseButton
-                
+
 		var giftablePurchaseButton
 		var giftButton
-       
+
 }
 
 global struct StoreInspectOfferData
@@ -44,12 +44,12 @@ global struct StoreInspectOfferData
 	string displayedPriceStr
 	string purchaseText
 	string purchaseDescText
-                
+
 		string giftText
 		string giftDescText
 		string giftTooltipTitleText
 		string giftTooltipDescText
-       
+
 	int discountPct
 	int itemCount
 	int originalPrice
@@ -57,10 +57,10 @@ global struct StoreInspectOfferData
 	int purchaseLimit
 	bool isOwnedItemEquippable
 	bool isPurchasable
-                
+
 		bool canAfford
 		bool isDualCurrency
-       
+
 
 	array<GRXScriptOffer> currentOffers
 	array<ItemFlavor> itemFlavors
@@ -94,22 +94,22 @@ void function InitStoreInspectMenu( var newMenuArg )
 	s_inspectUIData.discountInfo           = Hud_GetChild( file.inspectPanel, "DiscountInfo" )
 	s_inspectUIData.purchaseButton         = Hud_GetChild( file.inspectPanel, "PurchaseOfferButton" )
 
-                
+
 		s_inspectUIData.giftablePurchaseButton = Hud_GetChild( file.inspectPanel, "GiftablePurchaseOfferButton" )
 		s_inspectUIData.giftButton             = Hud_GetChild( file.inspectPanel, "GiftOfferButton" )
 		file.giftingMenu = GetMenu( "GiftingFriendDialog" )
-       
+
 
 	AddButtonEventHandler( s_inspectUIData.purchaseButton, UIE_CLICK, PurchaseOfferButton_OnClick )
-                
+
 		AddButtonEventHandler( s_inspectUIData.giftablePurchaseButton, UIE_CLICK, PurchaseOfferButton_OnClick )
 		AddButtonEventHandler( s_inspectUIData.giftButton, UIE_CLICK, GiftButton_OnClick )
-       
+
 
 
 	#if NX_PROG
-		                                                                                     
-		                                                   
+
+
 	#endif
 	GridPanel_Init( file.itemGrid, ITEM_GRID_ROWS, ITEM_GRID_COLUMNS, OnBindItemGridButton, ItemGridButtonCountCallback, ItemGridButtonInitCallback )
 	GridPanel_SetFillDirection( file.itemGrid, eGridPanelFillDirection.RIGHT )
@@ -119,31 +119,30 @@ void function InitStoreInspectMenu( var newMenuArg )
 	Hud_AddEventHandler( Hud_GetChild( newMenuArg, "CoinsPopUpButton" ), UIE_CLICK, OpenVCPopUp )
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
-                
+
 		AddMenuFooterOption( menu, LEFT, BUTTON_X, true, "#X_GIFT_INFO_TITLE", "#GIFT_INFO_TITLE", OpenGiftInfoPopUp, CheckIsGiftable )
-       
+
 }
 #if NX_PROG
 void function StoreInspectMenuOnThink(var menu)
 {
-	                                                                                                          
-	                                                                                                                                       
-	                                                                                                                    
-	                                                                                  
-	                                                                                  
-	                                    
+
+
+
+
+
+
 }
 #endif
 
 void function StoreInspectMenu_OnOpen()
 {
 	AddCallback_OnGRXInventoryStateChanged( LockPurchaseButtonWhenInventoryIsNotReady )
-                
+
 		AddCallback_OnGRXInventoryStateChanged( LockGiftButtonsWhenInventoryIsNotReady )
-       
+
 	AddCallbackAndCallNow_OnGRXInventoryStateChanged( StoreInspectMenu_OnGRXUpdated )
 	AddCallback_OnGRXOffersRefreshed( StoreInspectMenu_OnGRXUpdated )
-	AddCallback_OnGRXBundlesRefreshed( StoreInspectMenu_OnGRXBundlesUpdated )
 }
 
 void function StoreInspectMenu_OnTopLevel()
@@ -169,11 +168,10 @@ void function StoreInspectMenu_OnClose()
 {
 	RemoveCallback_OnGRXInventoryStateChanged( StoreInspectMenu_OnGRXUpdated )
 	RemoveCallback_OnGRXInventoryStateChanged( LockPurchaseButtonWhenInventoryIsNotReady )
-                
+
 		RemoveCallback_OnGRXInventoryStateChanged( LockGiftButtonsWhenInventoryIsNotReady )
-       
+
 	RemoveCallback_OnGRXOffersRefreshed( StoreInspectMenu_OnGRXUpdated )
-	RemoveCallback_OnGRXBundlesRefreshed( StoreInspectMenu_OnGRXBundlesUpdated )
 
 	RunClientScript( "UIToClient_UnloadItemInspectPakFile" )
 }
@@ -190,9 +188,9 @@ void function StoreInspectMenu_OnUpdate()
 		return
 
 	GridPanel_Refresh( file.itemGrid )
-                
+
 		RefreshTwoFactorAuthenticationStatus()
-       
+
 }
 
 void function StoreInspectMenu_UpdatePrices( StoreInspectOfferData offerData ,GRXScriptOffer storeOffer, bool isBundlesRefresh, StoreInspectUIData uiData )
@@ -218,7 +216,7 @@ void function StoreInspectMenu_UpdatePrices( StoreInspectOfferData offerData ,GR
 		}
 		else
 		{
-			                                                                                                       
+
 			GRX_CheckBundleAndUpdateOfferPrices( storeOffer )
 
 			GRXBundleOffer bundle = GRX_GetUserBundleOffer( storeOffer.offerAlias )
@@ -228,22 +226,22 @@ void function StoreInspectMenu_UpdatePrices( StoreInspectOfferData offerData ,GR
 
 	offerData.displayedPrice = storeOffer.prices[0].quantities[0]
 
-	                                                                                                                 
+
 	if ( storeOffer.prices.len() == 2 )
 	{
 		string firstPrice = GRX_GetFormattedPrice( storeOffer.prices[0], 1 )
 		string secondPrice = GRX_GetFormattedPrice( storeOffer.prices[1], 1 )
 		offerData.displayedPriceStr = Localize( "#STORE_PRICE_N_N", firstPrice, secondPrice )
-                 
+
 			offerData.isDualCurrency = true
-        
+
 	}
 	else
 	{
 		offerData.displayedPriceStr = GRX_GetFormattedPrice( storeOffer.prices[0], 1 )
-                 
+
 			offerData.isDualCurrency = false
-        
+
 	}
 
 	offerData.discountPct = 0
@@ -257,7 +255,7 @@ void function StoreInspectMenu_UpdatePrices( StoreInspectOfferData offerData ,GR
 		offerData.originalPrice = originalPriceFlavBag.quantities[0]
 		offerData.originalPriceStr = GRX_GetFormattedPrice( originalPriceFlavBag, 1 )
 		float discount = 100 - ( offerData.displayedPrice / (offerData.originalPrice * 1.0) * 100 )
-		offerData.discountPct = int( floor( discount ) )                                                      
+		offerData.discountPct = int( floor( discount ) )
 	}
 
 	string bundleRestrictionsStr = GRXOffer_GetBundleOfferRestrictions( storeOffer )
@@ -273,16 +271,16 @@ void function StoreInspectMenu_UpdatePrices( StoreInspectOfferData offerData ,GR
 	offerData.purchaseText = isBundle ? Localize( "#PURCHASE_BUNDLE" ) : Localize( "#PURCHASE" )
 	offerData.purchaseDescText = Localize( offerData.displayedPriceStr )
 
-                
+
 		if ( storeOffer.prices.len() == 1 )
 			offerData.canAfford = GRX_CanAfford( storeOffer.prices[0], 1 )
 		else if ( storeOffer.prices.len() == 2 )
 			offerData.canAfford = GRX_CanAfford( storeOffer.prices[0], 1 ) || GRX_CanAfford( storeOffer.prices[1], 1 )
 		bool isGiftable = storeOffer.isAvailable && storeOffer.isGiftable && IsPlayerLeveledForGifting() && IsGiftingEnabled()
-       
+
 	if ( !storeOffer.isAvailable )
 	{
-		                                                                           
+
 		offerData.purchaseText = Localize( "#UNAVAILABLE" )
 		offerData.purchaseDescText = ""
 	}
@@ -311,14 +309,14 @@ void function StoreInspectMenu_UpdatePrices( StoreInspectOfferData offerData ,GR
 		offerData.purchaseText = Localize( "#OWNED" )
 		offerData.purchaseDescText = hasBundleRestrictions ? bundleRestrictionsStr : ""
 	}
-                
+
 		else if ( isGiftable )
 		{
 			offerData.purchaseText = offerData.canAfford ? offerData.purchaseText : Localize( "#CONFIRM_GET_PREMIUM" )
 			offerData.purchaseDescText = ""
 		}
-       
-                
+
+
 		if ( isGiftable )
 		{
 			bool isTwoFactorEnabled = IsTwoFactorAuthenticationEnabled()
@@ -364,18 +362,18 @@ void function StoreInspectMenu_UpdatePrices( StoreInspectOfferData offerData ,GR
 			HudElem_SetRuiArg( uiData.discountInfo, "isBundle", isBundle )
 			HudElem_SetRuiArg( uiData.discountInfo, "canAfford", offerData.canAfford )
 		}
-       
-	                                                                                                                                       
-	                                                                                                                               
+
+
+
 }
 
 void function StoreInspectMenu_UpdatePurchaseButton( GRXScriptOffer storeOffer, StoreInspectOfferData offerData, StoreInspectUIData uiData )
 {
 	bool isExtraInfoVisible = false
 	bool isOfferFullyClaimed = GRXOffer_IsFullyClaimed( storeOffer )
-                
+
 		bool isGiftable = storeOffer.isGiftable && IsPlayerLeveledForGifting() && storeOffer.isAvailable && IsGiftingEnabled()
-       
+
 	if ( storeOffer.prereq != null )
 	{
 		ItemFlavor prereqFlav = expect ItemFlavor( storeOffer.prereq )
@@ -403,7 +401,7 @@ void function StoreInspectMenu_UpdatePurchaseButton( GRXScriptOffer storeOffer, 
 
 	HudElem_SetRuiArg( uiData.discountInfo, "discountPct", string(offerData.discountPct) )
 	HudElem_SetRuiArg( uiData.discountInfo, "originalPrice", Localize( offerData.originalPriceStr ) )
-                
+
 		if ( isGiftable )
 		{
 			HudElem_SetRuiArg( uiData.discountInfo, "discountedPrice", Localize( offerData.displayedPriceStr ) )
@@ -415,16 +413,16 @@ void function StoreInspectMenu_UpdatePurchaseButton( GRXScriptOffer storeOffer, 
 
 		HudElem_SetRuiArg( uiData.discountInfo, "isGiftable", isGiftable )
 		isExtraInfoVisible = ( offerData.isPurchasable && offerData.discountPct > 0.0 ) || isGiftable
-      
-                                                                                 
-       
+
+
+
 
 
 	Hud_SetVisible( uiData.discountInfo, isExtraInfoVisible )
 	HudElem_SetRuiArg( uiData.purchaseButton, "buttonText", offerData.purchaseText )
 	HudElem_SetRuiArg( uiData.purchaseButton, "buttonDescText", offerData.purchaseDescText )
 
-                
+
 		HudElem_SetRuiArg( uiData.purchaseButton, "buttonText", offerData.purchaseText )
 		bool showPurchaseButton
 		bool showDisclaimers = true
@@ -470,49 +468,49 @@ void function StoreInspectMenu_UpdatePurchaseButton( GRXScriptOffer storeOffer, 
 			HudElem_SetRuiArg( uiData.discountInfo, "hideDisclaimers", !showDisclaimers )
 			Hud_SetLocked( uiData.giftButton, !PlayerHasGiftsLeft )
 		}
-       
+
 
 	if ( offerData.itemCount == 1 && isOfferFullyClaimed )
 	{
 		StoreInspectMenu_UpdateButtonForEquips( offerData, uiData )
 		Hud_SetLocked( uiData.purchaseButton, !offerData.isOwnedItemEquippable )
 		HudElem_SetRuiArg( uiData.purchaseButton, "isDisabled", !offerData.isOwnedItemEquippable )
-                 
+
 			if ( isGiftable )
 			{
 				Hud_SetLocked( uiData.giftablePurchaseButton, !offerData.isOwnedItemEquippable )
 				HudElem_SetRuiArg( uiData.giftablePurchaseButton, "isDisabled", !offerData.isOwnedItemEquippable )
 				Hud_SetVisible( uiData.purchaseButton, false )
 			}
-        
+
 	}
 	else
 	{
 		s_inspectOffers.isOwnedItemEquippable = false
 		Hud_SetLocked( uiData.purchaseButton, !offerData.isPurchasable )
 		HudElem_SetRuiArg( uiData.purchaseButton, "isDisabled", !offerData.isPurchasable )
-                 
+
 			if ( isGiftable )
 			{
 				Hud_SetLocked( uiData.giftablePurchaseButton, !offerData.isPurchasable )
 				HudElem_SetRuiArg( uiData.giftablePurchaseButton, "isDisabled", !offerData.isPurchasable )
 			}
-        
+
 	}
 
-                                                                 
-         
-  	                          
-  	 
-  		                                                                                    
-  		                                                                                    
-  	 
-  	                                                                  
-  	 
-  		                                                                                    
-  		                                                                              
-  	 
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 void function StoreInspectMenu_UpdateButtonForEquips( StoreInspectOfferData offerData, StoreInspectUIData uiData )
@@ -520,18 +518,18 @@ void function StoreInspectMenu_UpdateButtonForEquips( StoreInspectOfferData offe
 	ItemFlavor itemFlav = offerData.itemFlavors[0]
 	int itemType = ItemFlavor_GetType( itemFlav )
 	var rui = Hud_GetRui( uiData.purchaseButton )
-               
+
 	bool isMythic = ItemFlavor_GetQuality( itemFlav ) == eRarityTier.MYTHIC
 	var smallRui = null
 	if ( !isMythic )
 		smallRui = Hud_GetRui( uiData.giftablePurchaseButton )
-      
+
 
 	if ( itemType == eItemType.weapon_charm || itemType == eItemType.account_pack || itemType == eItemType.emote_icon || itemType == eItemType.skydive_emote )
 	{
-		                                                           
-		                                             
-		                                                                                                 
+
+
+
 		offerData.isOwnedItemEquippable = false
 	}
 	else if ( IsItemEquipped( itemFlav ) )
@@ -541,30 +539,30 @@ void function StoreInspectMenu_UpdateButtonForEquips( StoreInspectOfferData offe
 		RuiSetString( rui, "buttonText", "#EQUIPPED_LOOT_REWARD" )
 		RuiSetString( rui, "buttonDescText", Localize( "#CURRENTLY_EQUIPPED_ITEM", Localize( ItemFlavor_GetLongName( itemFlav ) ) ) )
 		RuiSetInt( rui, "buttonDescRarity", rarity )
-                 
+
 			if ( smallRui != null )
 			{
 				RuiSetString( smallRui, "buttonText", "#EQUIPPED_LOOT_REWARD" )
 				RuiSetString( smallRui, "buttonDescText", Localize( "#CURRENTLY_EQUIPPED_ITEM", Localize( ItemFlavor_GetLongName( itemFlav ) ) ) )
 				RuiSetInt( smallRui, "buttonDescRarity", rarity )
 			}
-        
+
 		offerData.isOwnedItemEquippable = false
 	}
 	else
 	{
-		                                                                                                                                                                                                  
+
 		RuiSetString( rui, "buttonText", "#EQUIP_LOOT_REWARD" )
 		RuiSetString( rui, "buttonDescText", Localize( "#CURRENTLY_EQUIPPED_ITEM", Localize( GetCurrentlyEquippedItemNameForItemTypeSlot( itemFlav ) ) ) )
 		RuiSetInt( rui, "buttonDescRarity", GetCurrentlyEquippedItemRarityForItemTypeSlot( itemFlav ) )
-                 
+
 			if ( smallRui != null )
 			{
 				RuiSetString( smallRui, "buttonText", "#EQUIP_LOOT_REWARD" )
 				RuiSetString( smallRui, "buttonDescText", Localize( "#CURRENTLY_EQUIPPED_ITEM", Localize( GetCurrentlyEquippedItemNameForItemTypeSlot( itemFlav ) ) ) )
 				RuiSetInt( smallRui, "buttonDescRarity", GetCurrentlyEquippedItemRarityForItemTypeSlot( itemFlav ) )
 			}
-        
+
 		offerData.isOwnedItemEquippable = true
 	}
 }
@@ -589,7 +587,7 @@ void function StoreInspectMenu_OnGRXUpdated()
 	GRXScriptOffer storeOffer = s_inspectOffers.currentOffers[0]
 	s_inspectOffers.itemFlavors.clear()
 
-	                           
+
 	var currMenu = GetActiveMenu()
 	uiGlobal.menuData[ currMenu ].pin_metaData[ "tab_name" ] <- Hud_GetHudName( file.inspectPanel )
 
@@ -623,7 +621,7 @@ void function StoreInspectMenu_OnGRXUpdated()
 	{
 		string offerDesc = Localize( storeOffer.descText )
 
-		                                                                      
+
 		foreach ( ItemFlavor item in s_inspectOffers.itemFlavors )
 		{
 			if ( ItemFlavor_GetType( item ) != eItemType.melee_skin )
@@ -638,14 +636,14 @@ void function StoreInspectMenu_OnGRXUpdated()
 		HudElem_SetRuiArg( file.pageHeader, "offerDesc", offerDesc )
 	}
 
-	                                               
+
 	OnStoreGridItemHover( null, null, 0 )
 	GridPanel_Refresh( file.itemGrid )
-                
+
 		bool hasPurchaseLimit = s_inspectOffers.purchaseLimit > 0 && !storeOffer.isGiftable
-      
-                                                           
-       
+
+
+
 	HudElem_SetRuiArg( file.purchaseLimit, "limitText", Localize( "#STORE_LIMIT_N", s_inspectOffers.purchaseLimit ) )
 	Hud_SetVisible( file.purchaseLimit, hasPurchaseLimit )
 	UpdateFooterOptions()
@@ -731,14 +729,14 @@ void function LockPurchaseButtonWhenInventoryIsNotReady()
 	Hud_SetLocked( s_inspectUIData.purchaseButton, shouldLockPurchaseButton )
 }
 
-               
+
 void function LockGiftButtonsWhenInventoryIsNotReady()
 {
 	bool shouldLockPurchaseButton = !GRX_IsInventoryReady()
 	Hud_SetLocked( s_inspectUIData.giftablePurchaseButton, shouldLockPurchaseButton )
 	Hud_SetLocked( s_inspectUIData.giftButton, shouldLockPurchaseButton )
 }
-      
+
 
 void function PurchaseOfferButton_OnClick( var button )
 {
@@ -749,7 +747,7 @@ void function PurchaseOfferButton_OnClick( var button )
 	}
 
 	GRXScriptOffer offer = s_inspectOffers.currentOffers[0]
-               
+
 	if ( offer.isGiftable && IsPlayerLeveledForGifting() )
 	{
 
@@ -765,7 +763,7 @@ void function PurchaseOfferButton_OnClick( var button )
 			return
 		}
 	}
-      
+
 
 	if ( s_inspectOffers.isOwnedItemEquippable && offer.output.flavors.len() == 1 )
 	{
@@ -779,7 +777,7 @@ void function PurchaseOfferButton_OnClick( var button )
 	PurchaseDialog( pdc )
 }
 
-               
+
 void function GiftButton_OnClick( var button )
 {
 	if ( Hud_IsLocked( button ) )
@@ -834,7 +832,7 @@ bool function IsOwnedItemOfferEquippable( GRXScriptOffer offer )
 	}
 	return false
 }
-                     
+
 
 void function StoreInspectMenu_EquipOwnedItem( ItemFlavor itemFlavToEquip, StoreInspectUIData uiData )
 {
@@ -862,7 +860,7 @@ void function StoreInspectMenu_EquipOwnedItem( ItemFlavor itemFlavToEquip, Store
 	RuiSetString( rui, "buttonText", "#EQUIPPED_LOOT_REWARD" )
 	RuiSetString( rui, "buttonDescText", Localize( "#CURRENTLY_EQUIPPED_ITEM", Localize( ItemFlavor_GetLongName( itemFlavToEquip ) ) ) )
 	Hud_SetLocked( uiData.purchaseButton, true )
-               
+
 	bool isMythic = ItemFlavor_GetQuality( itemFlavToEquip ) == eRarityTier.MYTHIC
 	if ( isMythic )
 		return
@@ -870,7 +868,7 @@ void function StoreInspectMenu_EquipOwnedItem( ItemFlavor itemFlavToEquip, Store
 	RuiSetString( ruiSmall, "buttonText", "#EQUIPPED_LOOT_REWARD" )
 	RuiSetString( ruiSmall, "buttonDescText", Localize( "#CURRENTLY_EQUIPPED_ITEM", Localize( ItemFlavor_GetLongName( itemFlavToEquip ) ) ) )
 	Hud_SetLocked( uiData.giftablePurchaseButton, true )
-      
+
 }
 
 void function StoreInspectMenu_SetStoreOfferData( array<GRXScriptOffer> storeOffers )
@@ -893,7 +891,7 @@ void function StoreInspectMenu_SetStoreOfferData( array<GRXScriptOffer> storeOff
 
 bool function StoreInspectMenu_IsItemPresentationSupported( ItemFlavor itemFlav )
 {
-	                                                                   
+
 	switch ( ItemFlavor_GetType( itemFlav ) )
 	{
 		case eItemType.account_pack:
@@ -918,8 +916,8 @@ bool function StoreInspectMenu_IsItemPresentationSupported( ItemFlavor itemFlav 
 		case eItemType.sticker:
 			return true
 
-		                            
-		                                   
+
+
 	}
 
 	printf( "Offer has item '%s' [eItemType: %d] which is currently unsupported in bundle inspect view.",
@@ -1012,8 +1010,8 @@ void function DEV_PrintInspectedOffer()
 	}
 	printt( "------------------------------------" )
 
-	                                                                                                               
-	                                                                                      
+
+
 }
 
 void function DEV_DisplayAllInspectElements( bool shouldShow )
@@ -1036,8 +1034,8 @@ void function DEV_AddFakeItemToOffer( string grxRef )
 	fakeOffers[0].items.append( item )
 	StoreInspectMenu_SetStoreOfferData( fakeOffers )
 	StoreInspectMenu_OnGRXUpdated()
-	                                                                                   
-	                                                                      
+
+
 }
 
 
@@ -1045,32 +1043,32 @@ void function DEV_AddFakeItemsToOffer()
 {
 	const array<string> fakeGRXRefs =
 	[
-		                       
-		                       
-		                       
-		                       
-		                       
-		                            
-		                                 
-		                                 
-		                                
-		                                
-		                                    
-		                                     
-		                                    
-		                                  
-		                                    
-		                                      
-		                                        
-		                                                      
-		                                       
-		                                  
-		                                     
-		                                        
-		                                  
-		                                     
-		                                    
-		                                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		"sticker_rare_01",
 		"sticker_rare_02",
@@ -1078,96 +1076,96 @@ void function DEV_AddFakeItemsToOffer()
 		"sticker_epic_02",
 		"sticker_epic_bangalore",
 
-		                                  
-		                              
-		                              
-		                              
-		                     
-		                              
-		                             
-		                            
-		                                 
-		                              
-		                              
 
-		                  
-		                                     
-		                                    
-		                                   
-		                                     
-		                                 
-		                                    
 
-		             
-		                      
-		                     
-		                     
-		                      
-		                     
-		                       
-		                   
-		                      
-		                      
-		                   
-		                       
 
-		             		
-		                               
 
-		               
-		                        
-		                        
 
-                         
-                                           
 
-		            
-		                                        
 
-		              
-		                            
 
-                        
-                                                
 
-		         
-		                                                
 
-                
-                                                 
-                                                      
 
-		              
-		                                  
-		                             
 
-		                
-		                          
-		                                   
-		                                  
-		                              
 
-		                   
-		                                          
-		                                         
-		                                              
-		                                              
-		                                          
-		                                            
-		                                                
-		                                         
-		                                              
-		                                     
-		                                             
-		                                               
-		                                          
-		                                                  
-		                                          
-		                                        
-		                                      
-		                                               
-		                                           
-		                                                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	]
 
 	const int MAX_GRID_ITEMS = ITEM_GRID_ROWS * ITEM_GRID_COLUMNS
@@ -1190,4 +1188,4 @@ void function DEV_AddFakeItemsToOffer()
 	StoreInspectMenu_SetStoreOfferData( fakeOffers )
 	StoreInspectMenu_OnGRXUpdated()
 }
-#endif       
+#endif

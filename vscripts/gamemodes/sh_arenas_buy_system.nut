@@ -123,10 +123,6 @@ void function ShGamemodeArenasBuySystemV2_Init()
 {
 	printt( "[Arenas BuySystem] Init called" )
 	#if(CLIENT)
-		// Defer store data init until loot datatables are loaded.
-		// GameMode_RunSharedInits() runs BEFORE SURVIVAL_Loot_All_InitShared() in sh_init.gnut,
-		// so SURVIVAL_Loot_GetLootDataTable() would return 0 entries if called directly here.
-		AddCallback_OnLootDatatablesLoaded( Arenas_OnLootDatatablesLoaded )
 		printt( "[Arenas BuySystem] CLIENT - registered deferred init callback" )
 	#endif
 

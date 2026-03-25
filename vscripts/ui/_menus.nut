@@ -42,6 +42,8 @@ global function AddCallback_OnPartyMemberAdded
 global function RemoveCallback_OnPartyMemberAdded
 global function AddCallback_OnPartyMemberRemoved
 global function RemoveCallback_OnPartyMemberRemoved
+global function AddCallback_PartySpectateSlotAvailable
+global function RemoveCallback_PartySpectateSlotAvailable
 global function AddCallback_OnTopLevelCustomizeContextChanged
 global function RemoveCallback_OnTopLevelCustomizeContextChanged
 global function AddUICallback_LevelLoadingFinished
@@ -177,6 +179,8 @@ struct
 	array<void functionref()>                   partyUpdatedCallbacks
 	array<void functionref()>                   partymemberAddedCallbacks
 	array<void functionref()>                   partymemberRemovedCallbacks
+	array<void functionref()>					partySpectateSlotUnavailableWaitlistedCallbacks
+	array<void functionref()>					partySpectateSlotAvailableCallbacks
 	table<var, array<void functionref( var )> > topLevelCustomizeContextChangedCallbacks
 	array<void functionref()>                   levelLoadingFinishedCallbacks
 	array<void functionref()>                   levelShutdownCallbacks
@@ -2920,6 +2924,17 @@ void function UICodeCallback_PartyMemberAdded()
 		callbackFunc()
 }
 
+function AddCallback_PartySpectateSlotAvailable( void functionref() callbackFunc )
+{
+	Assert( !file.partySpectateSlotAvailableCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_PartySpectateSlotAvailable" )
+	file.partySpectateSlotAvailableCallbacks.append( callbackFunc )
+}
+
+function RemoveCallback_PartySpectateSlotAvailable( void functionref() callbackFunc )
+{
+	Assert( file.partySpectateSlotAvailableCallbacks.contains( callbackFunc ), "Callback " + string( callbackFunc ) + " doesn't exist" )
+	file.partySpectateSlotAvailableCallbacks.fastremovebyvalue( callbackFunc )
+}
 
 void function UICodeCallback_PartyMemberRemoved()
 {

@@ -50,7 +50,7 @@ function TitanNPC_Init()
 	RegisterSignal( "ChangedTitanMode" )
 	RegisterSignal( "PROTO_WeaponPickup" )
 
-	AddSoulDeathCallback( AutoTitanDestroyedCheck )
+	//AddSoulDeathCallback( AutoTitanDestroyedCheck )
 
 	#if R1_VGUI_MINIMAP
 	Minimap_PrecacheMaterial( $"vgui/HUD/threathud_titan_friendlyself" )

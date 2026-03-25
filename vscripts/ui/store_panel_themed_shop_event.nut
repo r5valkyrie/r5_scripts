@@ -60,7 +60,6 @@ void function ThemedShopPanel_OnShow( var panel )
 
 	AddCallbackAndCallNow_OnGRXInventoryStateChanged( ThemedShopPanel_UpdateGRXDependantElements )
 	AddCallbackAndCallNow_OnGRXOffersRefreshed( ThemedShopPanel_UpdateGRXDependantElements )
-	AddCallback_OnGRXBundlesRefreshed( ThemedShopPanel_UpdateBundleOffers )
 
 	if( GRX_HasUpToDateBundleOffers() )
 		ThemedShopPanel_UpdateBundleOffers()
@@ -75,7 +74,6 @@ void function ThemedShopPanel_OnHide( var panel )
 
 	RemoveCallback_OnGRXInventoryStateChanged( ThemedShopPanel_UpdateGRXDependantElements )
 	RemoveCallback_OnGRXOffersRefreshed( ThemedShopPanel_UpdateGRXDependantElements )
-	RemoveCallback_OnGRXBundlesRefreshed( ThemedShopPanel_UpdateBundleOffers )
 }
 
 
@@ -106,18 +104,18 @@ void function ThemedShopPanel_UpdateGRXDependantElements()
 		string offerGRXLocation      = ThemedShopEvent_GetGRXOfferLocation( activeThemedShopEvent )
 		array<GRXScriptOffer> offers = GRX_GetLocationOffers( offerGRXLocation )
 
-		                                                           
-		             
-		                                                                         
-		                                                                                         
-		   
-		  	                   
-		  	                                
-		  	                                                                                                                          
-		  	                                                                                                   
-		  	                      
-		   
-		                                           
+
+
+
+
+
+
+
+
+
+
+
+
 
 		offers.sort( int function( GRXScriptOffer a, GRXScriptOffer b ) {
 			int aSlot = ("slot" in a.attributes ? int(a.attributes["slot"]) : 99999)
@@ -132,8 +130,8 @@ void function ThemedShopPanel_UpdateGRXDependantElements()
 			return ItemFlavor_GetGUID( a.output.flavors[0] ) - ItemFlavor_GetGUID( b.output.flavors[0] )
 		} )
 
-		                                               
-		                                                               
+
+
 		GRXScriptOffer lastOffer
 		foreach ( index, offer in clone offers )
 		{
@@ -177,7 +175,7 @@ void function ThemedShopPanel_UpdateGRXDependantElements()
 			bool shouldHighlight = (offerButtonIdx < 4)
 
 			int dlType
-			if(offerButtonIdx == 0 || offerButtonIdx == 1)            
+			if(offerButtonIdx == 0 || offerButtonIdx == 1)
 				dlType = ePakType.DL_STORE_EVENT_WIDE_MEDIUM
 			else if(offerButtonIdx == 2 || offerButtonIdx == 3)
 				dlType = ePakType.DL_STORE_EVENT_WIDE_SHORT
@@ -329,7 +327,7 @@ void function OfferButton_OnActivate( var btn )
 	if ( canAllItemsBePresented )
 	{
 		StoreInspectMenu_SetStoreOfferData( [offer] )
-		SetCurrentTabForPIN( "ThemedShopPanel" )                                                
+		SetCurrentTabForPIN( "ThemedShopPanel" )
 		AdvanceMenu( GetMenu( "StoreInspectMenu" ) )
 	}
 	else
@@ -359,7 +357,7 @@ void function OfferButton_OnAltActivate( var btn )
 
 bool function IsFocusedOfferInspectable()
 {
-	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters                                                                            
+	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters
 	if ( focus in file.offerButtonToOfferMap )
 	{
 		GRXScriptOffer offer = file.offerButtonToOfferMap[focus]
@@ -381,7 +379,7 @@ bool function IsFocusedOfferInspectable()
 
 bool function IsFocusedOfferEquippable()
 {
-	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters                                                                            
+	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters
 	if ( focus in file.offerButtonToOfferMap )
 	{
 		GRXScriptOffer offer = file.offerButtonToOfferMap[focus]
@@ -406,13 +404,13 @@ void function UpdateFocusStuff( var focusedOfferButtonOrNull )
 {
 	file.WORKAROUND_currentlyFocusedOfferButtonForFooters = focusedOfferButtonOrNull
 
-	UpdateFooterOptions()                             
+	UpdateFooterOptions()
 }
 
 void function JumpToThemeShopOffer( string storeOfferName )
 {
 	JumpToSeasonTab( "ThemedShopPanel" )
-	
+
 	ItemFlavor ornull themedShopEvent = file.activeThemedShopEvent
 	if( themedShopEvent == null)
 		return

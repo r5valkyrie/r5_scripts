@@ -59,8 +59,8 @@ void function TitanShared_Init()
 	#if SERVER
 		AddSoulSettingsChangeFunc( UpdateTitanPanel )
 		AddSoulTransferFunc( SmartAmmo_TransferMissileLockons )
-		AddSoulDeathCallback( Titan_RodeoPanelCleanup )
-		AddSoulDeathCallback( Titan_ArmBadgeCleanup )
+		//AddSoulDeathCallback( Titan_RodeoPanelCleanup )
+		//AddSoulDeathCallback( Titan_ArmBadgeCleanup )
 	#endif
 
 	#if SERVER

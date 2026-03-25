@@ -59,7 +59,7 @@ void function SV_CL_Init()
 	Utility_Shared_Init()
 	CodeCallbacksShared_Init()
 		#if SERVER 
-			CodeCallbacksCommon_Init()
+			SvCodeCallbacksCommon_Init()
 		#endif 
 	Flags_Init()
 	

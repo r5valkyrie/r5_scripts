@@ -34,6 +34,7 @@ global function ClientCodeCallback_SaveResumed
 global function ClientCodeCallback_SmokeTestRunning
 global function ClientCodeCallback_OnSelectedWeaponChanged
 global function ClientCodeCallback_OnLinkedButtonPairPressed
+global function AddCallback_OnPlayerChangedTeam
 global function AddCallback_OnYouRespawned
 global function AddCallback_OnYouDied
 global function AddEntityDestroyedCallback
@@ -341,31 +342,26 @@ void function ClientCodeCallback_OnPlayerLifeStateChanged( entity player, int ol
 		callbackFunc( player, oldLifeState, newLifeState )
 	}
 
-	/*
-	switch ( oldLifeState )
-	{
-		case LIFE_ALIVE:
-			printt( player.GetPlayerName(), "LIFE_ALIVE", IsAlive( player ) )
-			if ( player == GetLocalClientPlayer() )
-				thread OnClientPlayerAlive( player )
-			player.Signal( "PlayerAlive" )
-			break
-		case LIFE_DYING:
-			printt( player.GetPlayerName(), "LIFE_DYING", IsAlive( player ) )
-			if ( player == GetLocalClientPlayer() )
-				thread OnClientPlayerDying( player )
-			player.Signal( "PlayerDying" )
-			break
-		case LIFE_DEAD:
-			printt( player.GetPlayerName(), "LIFE_DEAD", IsAlive( player ) )
-			player.Signal( "PlayerDead" )
-			break
-		case LIFE_DISCARDBODY:
-			printt( player.GetPlayerName(), "LIFE_DISCARDBODY", IsAlive( player ) )
-			player.Signal( "PlayerDiscardBody" )
-			break
-	}
-	*/
+}
+
+array <void functionref(entity, int, int)> s_callbacksOnPlayerChangedTeam
+void function AddCallback_OnPlayerChangedTeam( void functionref( entity player, int oldTeam, int newTeam ) func )
+{
+	s_callbacksOnPlayerChangedTeam.append( func )
+}
+
+void function ClientCodeCallback_OnPlayerChangedTeam( entity player, int oldTeam )
+{
+	
+
+	if ( !IsValid( player ) )
+		return 
+
+	int newTeam = player.GetTeam()
+	ShEHI_OnPlayerChangedTeam( player, oldTeam, newTeam )
+
+	foreach ( void functionref(entity, int, int) callbackFunc in s_callbacksOnPlayerChangedTeam )
+		callbackFunc( player, oldTeam, newTeam )
 }
 
 void function AddCallback_OnPlayerLifeStateChanged( void functionref( entity, int, int ) callbackFunc )

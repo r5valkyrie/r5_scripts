@@ -112,7 +112,6 @@ global function WORKAROUND_AssetAppend
 
 // === Gamestate ===
 global function SetIsPermanentEntity
-global function AddCallback_OnWouldOtherwiseCrushEntity
 global function GetRespawnBeaconLocations
 
 // === Emotes ===
@@ -181,7 +180,6 @@ global function BeginAOEHeal
 global function EndAOEHeal
 global function EmitSoundOnEntityExceptToPlayers
 global function ShAmbientDialogue_Init
-global function AddCallback_OnPlayerReload
 global function Respawn_Token_IsPlayerEliminated
 global function ShuffleVectorArray
 global function AirdropExtravaganza_GetClusterEntities
@@ -216,10 +214,6 @@ global function ShadowArmy_IsPlayerOnShadowArmy
 global function ForcedSpawn_Init
 global function ObjectiveResourceSystem_Init
 global function Sh_Rank_InitGameSummary
-global function AddCallback_OnPlayerReloadPressed
-global function AddCallback_BotRecordStart
-global function AddCallback_BotPlaybackStart
-global function AddCallback_OnClientConnectionLost
 // SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)
 global function ShadowArmy_ShouldEnterBleedout
 global function ShadowArmy_StorePlayersOriginalCharacterSelection
@@ -349,7 +343,6 @@ global function CanLaunchToCompanion
 global function HookUpWaypointRuiForObjectiveRelevance
 global function PlayerIsMarkedAsInsideObjectiveIndex
 global function Survival_SetPilotHudVisible
-global function AddCallback_OnLootDatatablesLoaded
 global function ServerCallback_DestroyEndAnnouncement
 global function ServerCallback_RefreshDeathBoxHighlight
 global function ServerCallback_RefreshLootbinHighlight
@@ -827,8 +820,6 @@ global function GRX_MarkGiftItemsAsSeen
 global function GRX_MarkContainerAsSeen_Internal
 global function GRX_GetCurrencyBalances
 global function GRX_HasUpToDateBundleOffers
-global function AddCallback_OnGRXBundlesRefreshed
-global function RemoveCallback_OnGRXBundlesRefreshed
 global function IsStoreEmpty
 global function GRX_GetOffer
 
@@ -865,7 +856,6 @@ global function PopulateMatchRank
 // === Party/Social ===
 global function Party_JoinUserPartyGame
 global function Party_LeaveParty
-global function AddCallback_PartySpectateSlotAvailable
 global function Eadp_GetPrivacyData
 global function CreateEADPDataFromEAID
 global function IsPartyAllowedCrossplay
@@ -1590,16 +1580,6 @@ bool function GRX_HasUpToDateBundleOffers()
 	return false
 }
 
-void function AddCallback_OnGRXBundlesRefreshed( void functionref() callback )
-{
-	Warning( "WORKAROUND: AddCallback_OnGRXBundlesRefreshed() called - not implemented" )
-}
-
-void function RemoveCallback_OnGRXBundlesRefreshed( void functionref() callback )
-{
-	Warning( "WORKAROUND: RemoveCallback_OnGRXBundlesRefreshed() called - not implemented" )
-}
-
 bool function IsStoreEmpty()
 {
 	return true
@@ -1762,11 +1742,6 @@ void function Party_JoinUserPartyGame()
 void function Party_LeaveParty()
 {
 	Warning( "WORKAROUND: Party_LeaveParty() called - not implemented" )
-}
-
-void function AddCallback_PartySpectateSlotAvailable( void functionref() callbackFunc )
-{
-	Warning( "WORKAROUND: AddCallback_PartySpectateSlotAvailable() called - not implemented" )
 }
 
 EadpPrivacySetting function Eadp_GetPrivacyData()
@@ -2762,11 +2737,6 @@ void function Survival_SetPilotHudVisible( bool visible )
 	Warning( "STUB: Survival_SetPilotHudVisible\n" )
 }
 
-void function AddCallback_OnLootDatatablesLoaded( void functionref() func )
-{
-	Warning( "STUB: AddCallback_OnLootDatatablesLoaded\n" )
-}
-
 void function ServerCallback_DestroyEndAnnouncement()
 {
 	Warning( "STUB: ServerCallback_DestroyEndAnnouncement\n" )
@@ -3529,11 +3499,6 @@ void function SetIsPermanentEntity( entity ent, bool isPermanent )
 	Warning( "STUB: SetIsPermanentEntity" )
 }
 
-void function AddCallback_OnWouldOtherwiseCrushEntity( entity ent, void functionref(entity, entity) callback )
-{
-	Warning( "STUB: AddCallback_OnWouldOtherwiseCrushEntity" )
-}
-
 array<vector> function GetRespawnBeaconLocations()
 {
 	Warning( "STUB: GetRespawnBeaconLocations" )
@@ -3874,11 +3839,6 @@ void function ShAmbientDialogue_Init()
 	Warning( "STUB: ShAmbientDialogue_Init" )
 }
 
-void function AddCallback_OnPlayerReload( void functionref(entity) callback )
-{
-	Warning( "STUB: AddCallback_OnPlayerReload" )
-}
-
 bool function Respawn_Token_IsPlayerEliminated( entity player )
 {
 	Warning( "STUB: Respawn_Token_IsPlayerEliminated" )
@@ -3900,26 +3860,6 @@ void function ObjectiveResourceSystem_Init()
 void function Sh_Rank_InitGameSummary()
 {
 	Warning( "STUB: Sh_Rank_InitGameSummary" )
-}
-
-void function AddCallback_OnPlayerReloadPressed( void functionref(entity) callback )
-{
-	Warning( "STUB: AddCallback_OnPlayerReloadPressed" )
-}
-
-void function AddCallback_BotRecordStart( void functionref(entity) callback )
-{
-	Warning( "STUB: AddCallback_BotRecordStart" )
-}
-
-void function AddCallback_BotPlaybackStart( void functionref(entity) callback )
-{
-	Warning( "STUB: AddCallback_BotPlaybackStart" )
-}
-
-void function AddCallback_OnClientConnectionLost( void functionref(entity) callback )
-{
-	Warning( "STUB: AddCallback_OnClientConnectionLost" )
 }
 
 // SetPlayerCanGroundEmote — now in sh_emotes.nut (S22)

@@ -163,7 +163,7 @@ void function OnPanelSpawn_Internal( entity panel )
 		if ( IsAlive( panel.GetBossPlayer() ) )
 			continue
 
-		if ( panel.e.canUseEntityCallback != null && !panel.e.canUseEntityCallback( player, panel ) )
+		if ( panel.e.canUseEntityCallback != null && !panel.e.canUseEntityCallback( player, panel, 0 ) )
 		{
 			wait 1
 			continue

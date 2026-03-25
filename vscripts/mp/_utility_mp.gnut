@@ -4,7 +4,7 @@ globalize_all_functions
 
 struct
 {
-	#if DEV
+	#if DEVELOPER
 		array<void functionref( entity recordPlayer )> botRecordStartCallbacks
 		array<void functionref( entity playbackBot )>  botPlaybackStartCallbacks
 	#endif
@@ -142,7 +142,7 @@ string function GetMapNameForScoreboardData()
 {
 	string mapName = GetMapName()
 
-	#if DEV
+	#if DEVELOPER
 		if ( MapIsValidForPersistence( mapName ) )
 			return mapName
 
@@ -152,12 +152,12 @@ string function GetMapNameForScoreboardData()
 			Warning( "GetMapNameForScoreboardData() - Test map '" + mapName + "' isn't set up for scoreboard persistence, so substituting map name '" + fakeMapName + "' instead." )
 			return fakeMapName
 		}
-	#endif // DEV
+	#endif // DEVELOPER
 
 	return mapName
 }
 
-#if DEV
+#if DEVELOPER
 struct
 {
 	int health
@@ -167,7 +167,7 @@ struct
 void function CodeCallback_BotRecordStart( entity player )
 {
 	// note: I already save position, orientation and velocity in C++ code
-	#if DEV
+	#if DEVELOPER
 		DEV_botPlaybackState.health = player.GetHealth()
 		foreach( void functionref( entity recordPlayer ) callback in file.botRecordStartCallbacks )
 			callback( player )
@@ -178,7 +178,7 @@ void function CodeCallback_BotRecordStart( entity player )
 void function CodeCallback_BotPlaybackStart( entity bot )
 {
 	// note: the bot has been spawned and already set to the correct initial position, orientation and velocity by C++ code
-	#if DEV
+	#if DEVELOPER
 		Assert( IsValid( bot ) )
 
 		//bot.SetHealth( DEV_botPlaybackState.health )
@@ -192,7 +192,7 @@ void function CodeCallback_BotPlaybackStart( entity bot )
 	#endif
 }
 
-#if DEV
+#if DEVELOPER
 void function DelayedBotPlaybackState( entity bot )
 {
 	EndSignal( bot, "OnDestroy" )
@@ -380,7 +380,7 @@ float function GetDistanceToNearestTeammate( entity player )
 
 
 
-#if DEV
+#if DEVELOPER
 
 entity function GetPlayerByName( string name )
 {

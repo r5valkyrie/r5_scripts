@@ -3090,7 +3090,8 @@ entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngl
 			}
 		}
 
-		ent.SetWeaponMods( mods )
+		//ent.SetWeaponMods( mods )
+		Warning("Weapon mods disabled until loots are fixed")
 		// TEMP HACK
 		//okay then, let's un-hack it? - johodgson
 		if ( !GetWeaponInfoFileKeyField_GlobalBool( baseWeapon, "uses_ammo_pool" ) )
@@ -6191,7 +6192,8 @@ void function Death_DropPlayerItems( entity deathBox, entity player, string item
 
 		if ( mods.len() > 0 )
 		{
-			ent.SetWeaponMods( mods )
+			//ent.SetWeaponMods( mods )
+			Warning("Weapon mods disabled until loots are fixed")
 				thread DismantleWeaponModsAfterInterval( ent, LOOT_THROW_WEAPON_MOD_DISMANTLE_DELAY, 0 )
 		}
 

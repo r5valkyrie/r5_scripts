@@ -1353,6 +1353,23 @@ void function AddCallback_GameStateEnter( int gameState, void functionref() call
 	svGlobal.gameStateEnterCallbacks[ gameState ].append( callbackFunc )
 }
 
+
+void function AddCallback_GameStatePostEnter( int gameState, void functionref() callbackFunc )
+{
+	Assert( gameState < svGlobal.gameStateEnteredCallbacks.len() )
+
+	Assert( !svGlobal.gameStateEnteredCallbacks[ gameState ].contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_GameStatePostEnter" )
+
+	svGlobal.gameStateEnteredCallbacks[ gameState ].append( callbackFunc )
+}
+
+void function AddCallback_SetPreGameStartTimeCallback( void functionref() callbackFunc )
+{
+	Assert( !svGlobal.onSetPreGameStartTimeCallbacks.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_SetPreGameStartTimeCallback" )
+
+	svGlobal.onSetPreGameStartTimeCallbacks.append( callbackFunc )
+}
+
 void function ExecuteSetPreGameStartTimeCallback()
 {
 	foreach ( void functionref() func in svGlobal.onSetPreGameStartTimeCallbacks )

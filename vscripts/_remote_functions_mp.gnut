@@ -600,11 +600,27 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "healingKitEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, 0.0 )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_DoUltAccelScreenFx" )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_SetClientChargeTime", "int", 0, 64, "float", 0.0 , 100.0, 32)
-		ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerBootsOnGround" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerBootsOnGround" )
 	ScriptRegisterNetworkedVariable( "inventoryEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
 	ScriptRegisterNetworkedVariable( "pingEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
-			ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateSurveyBeaconHUDVisibility" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateSurveyBeaconHUDVisibility" )
+
+
+	ScriptRemote_RegisterClientFunction( "ServerToClient_OnStartedUsingHealthPack", "int", 0, 127 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanks", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanksRevive", "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptTaunt" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayGetOnTheDropship" )
+                     
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptMarkMyLastDeathbox" )
+    
+	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptRespawnThanks" )
+
+	ScriptRemote_RegisterClientFunction( "ServerCallback_AnnouncePlayerBreaksEnemyShield", "entity" )
+
+	ScriptRemote_RegisterClientFunction( "ServerCallback_AnnounceDevRespawn" )
+
 	ScriptRegisterNetworkedVariable( "kills", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "latency", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	ScriptRegisterNetworkedVariable( "damage", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
@@ -687,8 +703,6 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DoDamageIndicator", "entity", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_ShowHealthRUI", "entity", "entity", "float", 0.0, 99.0, 8 )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_SpawnedSonicBlast", "entity", "int", 0, 9999, "vector", -32000.0, 32000.0, 32, "vector", -32000.0, 32000.0, 32, "float", 0.0, 32000.0, 32 )
-	
-	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptSayThanks", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PromptWelcome" )
 	
 	ScriptRegisterNetworkedVariable( "damageDealt", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
@@ -751,7 +765,6 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_OnEntityKilled", "entity", "entity", "int", INT_MIN, INT_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_OnEnemyDowned", "entity", "entity", "int", INT_MIN, INT_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerConnectedOrDisconnected", "int", EHANDLE_MIN, EHANDLE_MAX, "int", 0, 20 ) //Audit 2-22-2025
-	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerChangedTeams", "entity", "int", TEAM_INVALID, 127, "int", TEAM_INVALID, 127 ) 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerTookDamage", "float", 0.0, 50000.0, 16, "vector", -32000.0, 32000.0, 32, "int", DAMAGE_TYPE_MIN, INT_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025; Todo(mk): damage does not need to be allocated for 50000.0, however many mods call an arbituary number and these need audited in order to lower this value to a reasonable number. Note: Damage gets normalized, which used to be int. Therefore we can get away with using 16 bits on the float which should return n.xyz 
 	
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_ScreenShake", "float", 0.0, 20.0, "float", 0.001, 255.0, 16, "vector", -32000.0, 32000, 32 )  //Audit 2-22-2025 , not currently called.
