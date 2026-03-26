@@ -3058,7 +3058,7 @@ void function UpdateMiniPromoPinning()
 		if ( !Hud_IsVisible( pinCandidate ) )
 			continue
 
-		printt( "Pinning to:", Hud_GetHudName( pinCandidate ) )
+		//printt( "Pinning to:", Hud_GetHudName( pinCandidate ) )
 		Hud_SetPinSibling( miniPromoButton, Hud_GetHudName( pinCandidate ) )
 
 		int vOffset = pinCandidate == anchor ? 0 : ContentScaledYAsInt( 24 )

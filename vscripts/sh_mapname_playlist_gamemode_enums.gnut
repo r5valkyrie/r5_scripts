@@ -182,7 +182,7 @@ const array<int> gamemode1v1Types =
 ]
 
 #if DEVELOPER
-	const PRINT_GAMEMODE_DEBUGS = true
+	const PRINT_GAMEMODE_DEBUGS = false
 #else
 	const PRINT_GAMEMODE_DEBUGS = false
 #endif

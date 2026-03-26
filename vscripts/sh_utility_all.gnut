@@ -1116,7 +1116,7 @@ string function GetWeaponInfoFileKeyField_WithMods_GlobalString( string ref, arr
 	}
 	catch ( e )
 	{
-		Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalString: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
+		printt( "GetWeaponInfoFileKeyField_WithMods_GlobalString: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
 		val = GetWeaponInfoFileKeyField_Global( ref, variable )
 	}
 	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
@@ -1147,7 +1147,7 @@ int function GetWeaponInfoFileKeyField_WithMods_GlobalInt( string ref, array<str
 	}
 	catch ( e )
 	{
-		Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
+		printt( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
 		val = GetWeaponInfoFileKeyField_Global( ref, variable )
 	}
 	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
@@ -1159,7 +1159,7 @@ int function GetWeaponInfoFileKeyField_WithMods_GlobalInt( string ref, array<str
 		}
 		catch ( e2 )
 		{
-			Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: '" + variable + "' for '" + ref + "' returned non-numeric string '" + string( val ) + "', defaulting to 0" )
+			printt( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: '" + variable + "' for '" + ref + "' returned non-numeric string '" + string( val ) + "', defaulting to 0" )
 			return 0
 		}
 	}
@@ -1182,7 +1182,7 @@ float function GetWeaponInfoFileKeyField_WithMods_GlobalFloat( string ref, array
 	}
 	catch ( e )
 	{
-		Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalFloat: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
+		printt( "GetWeaponInfoFileKeyField_WithMods_GlobalFloat: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
 		val = GetWeaponInfoFileKeyField_Global( ref, variable )
 	}
 	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
@@ -1194,7 +1194,7 @@ float function GetWeaponInfoFileKeyField_WithMods_GlobalFloat( string ref, array
 		}
 		catch ( e2 )
 		{
-			Warning( "GetWeaponInfoFileKeyField_WithMods_GlobalFloat: '" + variable + "' for '" + ref + "' returned non-numeric string '" + string( val ) + "', defaulting to 0.0" )
+			printt( "GetWeaponInfoFileKeyField_WithMods_GlobalFloat: '" + variable + "' for '" + ref + "' returned non-numeric string '" + string( val ) + "', defaulting to 0.0" )
 			return 0.0
 		}
 	}

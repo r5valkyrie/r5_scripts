@@ -192,13 +192,13 @@ void function SeasonQuest_SharedInit()
 
 void function OnQuestRegistered( ItemFlavor quest )
 {
-	printt( "DEBUG: OnQuestRegistered called for:", string( quest ) )
+	//printt( "DEBUG: OnQuestRegistered called for:", string( quest ) )
 	array<ItemFlavor> comicPages = RegisterReferencedItemFlavorsFromArray( quest, "comicPages", "flavor" )
 	file.questComicPages[ quest ] <- comicPages
 
 	array<ItemFlavor> missions = RegisterReferencedItemFlavorsFromArray( quest, "missions", "flavor" )
 	file.questMissions[ quest ] <- missions
-	printt( "DEBUG: OnQuestRegistered - missions count:", missions.len() )
+	//printt( "DEBUG: OnQuestRegistered - missions count:", missions.len() )
 
 	foreach( int idx, ItemFlavor mission in missions )
 	{

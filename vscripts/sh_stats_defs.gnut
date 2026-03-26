@@ -1127,7 +1127,7 @@ void function ShStatsDefs_Init()
 		Assert( index < MAX_BIT_FIELD_SIZE - BITFIELD_SAFETY_WARNING_THRESHOLD, "Bitfield is nearing maximum supported size!! -- Please see Jira: https://jiratf.rspn.ad.ea.com/browse/R5DEV-587155")
 
 		#if DEVELOPER
-			printf("adding character guid %s to bitmask index %d", guid, index)
+			//printf("adding character guid %s to bitmask index %d", guid, index)
 		#endif
 
 		file.characterGUIDToBitmask[ guid ] <- 1 << index
@@ -1136,12 +1136,12 @@ void function ShStatsDefs_Init()
 	#if DEVELOPER
 		return//no need to print right now
 		// debug printing for checking base assumptions about the struct setup
-		print("CHARACTER_GUID_TO_BITMASK_MAP contents:\n")
+		//print("CHARACTER_GUID_TO_BITMASK_MAP contents:\n")
 		foreach ( string guid, int bitmask in file.characterGUIDToBitmask )
 		{
-			printf("guid: %s | bitmask: %d\n", guid, bitmask)
+			//printf("guid: %s | bitmask: %d\n", guid, bitmask)
 		}
-		printf("total entries: %d/%d\n", file.characterGUIDToBitmask.len(), MAX_BIT_FIELD_SIZE)
+		//printf("total entries: %d/%d\n", file.characterGUIDToBitmask.len(), MAX_BIT_FIELD_SIZE)
 	#endif
 }
 

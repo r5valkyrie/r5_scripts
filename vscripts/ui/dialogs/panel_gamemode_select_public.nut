@@ -528,15 +528,15 @@ table<string, string> function GameModeSelect_GetPlaylists()
 		slotToPlaylistNameMap[ slotKey ] <- ""
 
 	array<string> playlistNames = GetVisiblePlaylistNames( IsPrivateMatchLobby() )
-	printf( "DEBUG: GetVisiblePlaylistNames returned %d playlists", playlistNames.len() )
+	//printf( "DEBUG: GetVisiblePlaylistNames returned %d playlists", playlistNames.len() )
 	foreach ( string plName in playlistNames )
 	{
-		printf( "DEBUG: Processing playlist '%s'", plName )
+		//printf( "DEBUG: Processing playlist '%s'", plName )
 		if ( plName == PLAYLIST_NEW_PLAYER_ORIENTATION && HasLocalPlayerCompletedNewPlayerOrientation() && !DoNonlocalPlayerPartyMembersNeedToCompleteNewPlayerOrientation() )
 			continue
 
 		string uiSlot = GetPlaylistVarString( plName, "ui_slot", "" )
-		printf( "DEBUG: Playlist '%s' has ui_slot '%s'", plName, uiSlot )
+		//printf( "DEBUG: Playlist '%s' has ui_slot '%s'", plName, uiSlot )
 		if ( uiSlot == "" )
 			continue
 

@@ -142,10 +142,6 @@ enum eCameraTargetNames
 	collection_event_camera_target,
 	store_inspect_camera_target,
 	club_landing_camera_target,
-	                               
-	play_camera_quads_target,
-                                     
-	weapon_mastery_inspect_camera_target
 }
 
 struct PresentationDef
@@ -174,11 +170,7 @@ struct PresentationDef
 	void functionref() startFunc
 	void functionref() endFunc
 
-                               
-	int cameraTargetName = eCameraTargetNames.play_camera_quads_target
-     
-                                                             
-      
+	int cameraTargetName = eCameraTargetNames.play_camera_target
 }
 
 struct LightDef
@@ -476,8 +468,8 @@ void function ClMenuModels_Init()
 {
 	PrecacheParticleSystem( CHARACTER_BASE_EFFECT )
                   
-                                           
-                                         
+		//PrecacheParticleSystem( SHADOW_TRAIL_FX )
+		//PrecacheParticleSystem( SHADOW_EYE_FX )
        
 
 	foreach ( asset fxTierAsset in STORE_BACKGROUND_FX_TIERS )
@@ -493,7 +485,6 @@ void function ClMenuModels_Init()
                                              
        
 
-	PrecacheParticleSystem( WEAPON_MASTERY_BACKGROUND_FX )
 
 
 	RegisterSignal( "EndRevConvo" )
@@ -537,30 +528,17 @@ bool function MenuMapEntitiesExist()
 	array<string> entNames =
 	[
 		"default_camera_target",
-                               
-		"play_camera_quads_target",
-		"play_character_quads_ref",
-		"play_teammate1_quads_ref",
-		"play_teammate2_quads_ref",
-		"play_teammate3_quads_ref",
-     
-                       
-                       
-                       
-                       
-      
-
+		"play_camera_target",
+		"play_character_ref",
+		"play_teammate1_ref",
+		"play_teammate2_ref",
 		"close_character_camera_target",
-
 		"customize_character_camera_target",
 		"customize_character_ref",
 		"customize_character_skin_ref",
-
 		"customize_weapon_camera_target",
 		"customize_weapon_ref",
-
 		"store_inspect_ref",
-
 		"club_landing_camera_target"
 		"club_landing_discovery_ref"
 		"club_landing_lobby_ref"
@@ -579,28 +557,16 @@ bool function MenuMapEntitiesExist()
 void function ApplyEventPositioning()
 {
 	array<entity> ents
-                               
-	// Quads lobby entities not in S3
-	foreach ( string name in [ "play_camera_quads_target", "play_character_quads_ref", "play_teammate1_quads_ref", "play_teammate2_quads_ref", "play_teammate3_quads_ref" ] )
-	{
-		array<entity> found = GetEntArrayByScriptName( name )
-		if ( found.len() > 0 )
-			ents.append( found[0] )
-	}
-     
-                                                          
-                                                          
-                                                          
-                                                          
-      
+	ents.append( GetEntByScriptName( "play_camera_target" ) )
+	ents.append( GetEntByScriptName( "play_character_ref" ) )
+	ents.append( GetEntByScriptName( "play_teammate1_ref" ) )
+	ents.append( GetEntByScriptName( "play_teammate2_ref" ) )
 	ents.append( GetEntByScriptName( "battlepass_camera_target" ) )
 	ents.append( GetEntByScriptName( "battlepass_3_camera_target" ) )
 	ents.append( GetEntByScriptName( "collection_event_camera_target" ) )
 	ents.append( GetEntByScriptName( "battlepass_right_ref" ) )
 	ents.append( GetEntByScriptName( "battlepass_center_ref" ) )
 	ents.append( GetEntByScriptName( "collection_event_ref" ) )
-
-
 
 	foreach ( ent in ents )
 		ent.SetOrigin( ent.GetOrigin() + EVENT_LOBBY_OFFSET )
@@ -644,13 +610,7 @@ void function DEV_ToggleModelInfo()
 
 void function InitTeammatePosition( string scriptName, string idle )
 {
-	array<entity> ents = GetEntArrayByScriptName( scriptName )
-	if ( ents.len() == 0 )
-	{
-		Warning( "InitTeammatePosition: entity '%s' not found, skipping\n", scriptName )
-		return
-	}
-	entity ent = ents[0]
+	entity ent = GetEntByScriptName( scriptName )
 
 	file.teammateRefEnts.append( ent )
 	file.teammateRefEntsUsedMap[ent] <- false
@@ -1191,7 +1151,7 @@ void function InitMenuModelFlashData()
 		fd.outlineIntensityScalar = 300
 		fd.fadeInTime             = 0.01
 		fd.fadeOutTime            = 0.3
-		fd.lifeTime               = 0.01
+		fd.lifeTime               = 0.1
 		fd.outlineRadius          = 2
 	}
 
@@ -1884,9 +1844,8 @@ void function InitMenuEntities()
 	InitMenuModelFlashData()
 
                                
-	InitTeammatePosition( "play_teammate1_quads_ref", "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
-	InitTeammatePosition( "play_teammate2_quads_ref", "ACT_MP_MENU_LOBBY_RIGHT_IDLE" )
-	InitTeammatePosition( "play_teammate3_quads_ref", "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
+	InitTeammatePosition( "play_teammate1_ref", "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
+	InitTeammatePosition( "play_teammate2_ref", "ACT_MP_MENU_LOBBY_RIGHT_IDLE" )
      
                                                                             
                                                                              
@@ -1898,13 +1857,7 @@ void function InitMenuEntities()
 	file.cameraStartOriginsAngles.clear()
 	foreach ( string scriptName, int eNumIdx in eCameraTargetNames )
 	{
-		array<entity> found = GetEntArrayByScriptName( scriptName )
-		if ( found.len() == 0 )
-		{
-			Warning( "InitMenuEntities: camera target '%s' not found, skipping\n", scriptName )
-			continue
-		}
-		entity targetEnt = found[0]
+		entity targetEnt = GetEntByScriptName( scriptName )
 		file.cameraTargets[ eNumIdx ] <- targetEnt
 		file.cameraStartOriginsAngles[ eNumIdx ] <- { origin = targetEnt.GetOrigin(), angles = targetEnt.GetAngles() }
 	}
@@ -1929,11 +1882,7 @@ void function InitMenuEntities()
 	entity model
 	float[2] baseRotationDelta
 
-	array<entity> quadsRefEnts = GetEntArrayByScriptName( "play_character_quads_ref" )
-	if ( quadsRefEnts.len() > 0 )
-		refEnt = quadsRefEnts[0]
-	else
-		refEnt = GetEntByScriptName( "play_character_ref" )
+	refEnt = GetEntByScriptName( "play_character_ref" )
 
 	ModelData_SetBaseOrigin( file.playCharacter, refEnt.GetOrigin() )
 	ModelData_SetBaseAngles( file.playCharacter, refEnt.GetAngles() )
@@ -1981,17 +1930,6 @@ void function InitMenuEntities()
 	model = CreateMenuModel( file.storeInspectModelData, $"mdl/dev/empty_model.rmdl" )
 	ModelData_CreateMover( file.storeInspectModelData )
 
-	array<entity> weaponOverviewRefs = GetEntArrayByScriptName( "weapons_mastery_inspect_ref" )
-	if ( weaponOverviewRefs.len() > 0 )
-	{
-		refEnt = weaponOverviewRefs[0]
-		file.weaponOverviewRefEnt = refEnt
-		ModelData_SetBaseOrigin( file.weaponOverviewModelData, refEnt.GetOrigin() )
-		ModelData_SetBaseAngles( file.weaponOverviewModelData, refEnt.GetAngles() )
-		ModelData_SetBaseRotationDelta( file.weaponOverviewModelData, baseRotationDelta )
-		model = CreateMenuModel( file.weaponOverviewModelData, $"mdl/dev/empty_model.rmdl" )
-		ModelData_CreateMover( file.weaponOverviewModelData )
-	}
 
 	refEnt = GetEntByScriptName( "customize_character_skin_ref" )
 	file.meleeInspectRefEnt = refEnt
@@ -5173,12 +5111,7 @@ void function SetMenuCamera( entity player, int presentationType, bool interpola
 	float fov = file.presentationData[ presentationType ].fov
 	player.SetMenuCameraEntityWithAudio( clGlobal.menuCamera )
 
-	int cameraTargetName = file.presentationData[ presentationType ].cameraTargetName
-	if ( !( cameraTargetName in file.cameraTargets ) )
-	{
-		Warning( "SetMenuCamera: camera target %d not found, falling back to PLAY\n", cameraTargetName )
-		cameraTargetName = file.presentationData[ ePresentationType.PLAY ].cameraTargetName
-	}
+	int cameraTargetName = file.presentationData[ ePresentationType.PLAY ].cameraTargetName
 	entity cameraTarget  = file.cameraTargets[ cameraTargetName ]
 
 	// Temporary workaround. Disallow offsetting for the WEAPON_SKIN and WEAPON_CHARMS screens since they are more heavily scripted
@@ -5424,15 +5357,6 @@ void function DEV_SetPresentationDataFromString( string presentationName, string
 	int endIndex = presentationDataString.find( "," )
 
 	string targetEntName = presentationDataString.slice( startIndex, endIndex )
-		
-	foreach ( string scriptName, int eNumIdx in eCameraTargetNames )
-	{
-		if ( targetEntName == scriptName )
-		{
-			pd.cameraTargetName = eNumIdx
-			break
-		}
-	}
 
 	startIndex = endIndex + 2 // +2 to skip the leading '"'
 	endIndex = presentationDataString.find( ",", startIndex )

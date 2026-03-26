@@ -91,10 +91,10 @@ array<var> function GetAllMenuPanelsSorted( var menu )
 {
 	array<var> allPanels = GetAllMenuPanels( menu )
 	string playlistVal = GetCurrentPlaylistVarString( "season_panel_order", "CollectionEventPanel|ThemedShopPanel|PassPanel|QuestPanel|ChallengesPanel" )
-	printt( "DEBUG GetAllMenuPanelsSorted: season_panel_order =", playlistVal )
-	printt( "DEBUG GetAllMenuPanelsSorted: allPanels.count =", allPanels.len() )
-	foreach ( panel in allPanels )
-		printt( "  Panel:", Hud_GetHudName( panel ) )
+	//printt( "DEBUG GetAllMenuPanelsSorted: season_panel_order =", playlistVal )
+	//printt( "DEBUG GetAllMenuPanelsSorted: allPanels.count =", allPanels.len() )
+	//foreach ( panel in allPanels )
+		//printt( "  Panel:", Hud_GetHudName( panel ) )
 	allPanels.sort( SortMenuPanelsByPlaylist )
 
 	return allPanels
@@ -122,8 +122,8 @@ void function OnGRXSeasonUpdate()
 {
 	TabData tabData = GetTabDataForPanel( file.panel )
 
-	printt( "DEBUG OnGRXSeasonUpdate: GRX_IsInventoryReady() =", GRX_IsInventoryReady() )
-	printt( "DEBUG OnGRXSeasonUpdate: GRX_AreOffersReady() =", GRX_AreOffersReady() )
+	//printt( "DEBUG OnGRXSeasonUpdate: GRX_IsInventoryReady() =", GRX_IsInventoryReady() )
+	//printt( "DEBUG OnGRXSeasonUpdate: GRX_AreOffersReady() =", GRX_AreOffersReady() )
 
 	// R5SDK: Allow Season panel to work offline without GRX
 	bool isGRXReady = GRX_IsInventoryReady() && GRX_AreOffersReady()
@@ -131,12 +131,12 @@ void function OnGRXSeasonUpdate()
 
 	if ( isOfflineMode )
 	{
-		printt( "DEBUG OnGRXSeasonUpdate: GRX offline mode, proceeding anyway" )
+		//printt( "DEBUG OnGRXSeasonUpdate: GRX offline mode, proceeding anyway" )
 	}
 
 	if ( !isGRXReady && !isOfflineMode )
 	{
-		printt( "DEBUG OnGRXSeasonUpdate: GRX not ready, disabling all tabs" )
+		//printt( "DEBUG OnGRXSeasonUpdate: GRX not ready, disabling all tabs" )
 		DeactivateTab( tabData )
 		SetTabNavigationEnabled( file.panel, false )
 
@@ -147,19 +147,19 @@ void function OnGRXSeasonUpdate()
 	}
 	else
 	{
-		printt( "DEBUG OnGRXSeasonUpdate: GRX is ready, checking events..." )
+		//printt( "DEBUG OnGRXSeasonUpdate: GRX is ready, checking events..." )
 		ItemFlavor ornull activeCollectionEvent = GetActiveCollectionEvent( GetUnixTimestamp() )
 		bool haveActiveCollectionEvent          = ( activeCollectionEvent != null )
-		if ( activeCollectionEvent != null )
-			printt( "DEBUG OnGRXSeasonUpdate: activeCollectionEvent =", ItemFlavor_GetAsset( expect ItemFlavor(activeCollectionEvent) ) )
-		else
-			printt( "DEBUG OnGRXSeasonUpdate: activeCollectionEvent = null" )
+		//if ( activeCollectionEvent != null )
+		//	printt( "DEBUG OnGRXSeasonUpdate: activeCollectionEvent =", ItemFlavor_GetAsset( expect ItemFlavor(activeCollectionEvent) ) )
+		//else
+		//	printt( "DEBUG OnGRXSeasonUpdate: activeCollectionEvent = null" )
 		ItemFlavor ornull activeThemedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
 		bool hasThemedShopCalevent              = ( activeThemedShopEvent != null )
-		if ( activeThemedShopEvent != null )
-			printt( "DEBUG OnGRXSeasonUpdate: activeThemedShopEvent =", ItemFlavor_GetAsset( expect ItemFlavor(activeThemedShopEvent) ) )
-		else
-			printt( "DEBUG OnGRXSeasonUpdate: activeThemedShopEvent = null" )
+		//if ( activeThemedShopEvent != null )
+		//	printt( "DEBUG OnGRXSeasonUpdate: activeThemedShopEvent =", ItemFlavor_GetAsset( expect ItemFlavor(activeThemedShopEvent) ) )
+		//else
+		//	printt( "DEBUG OnGRXSeasonUpdate: activeThemedShopEvent = null" )
 
 		bool haveActiveWhatsNewEvent			= false
 		bool haveActiveThemedShopEvent			= false
@@ -168,32 +168,32 @@ void function OnGRXSeasonUpdate()
 			haveActiveWhatsNewEvent = ThemedShopEvent_HasWhatsNew( expect ItemFlavor( activeThemedShopEvent ) )
 			haveActiveThemedShopEvent = ThemedShopEvent_HasThemedShopTab( expect ItemFlavor( activeThemedShopEvent ) )
 		}
-		printt( "DEBUG OnGRXSeasonUpdate: haveActiveWhatsNewEvent =", haveActiveWhatsNewEvent, "haveActiveThemedShopEvent =", haveActiveThemedShopEvent )
+		//printt( "DEBUG OnGRXSeasonUpdate: haveActiveWhatsNewEvent =", haveActiveWhatsNewEvent, "haveActiveThemedShopEvent =", haveActiveThemedShopEvent )
 
 		if ( haveActiveCollectionEvent != file.wasCollectionEventActive || haveActiveThemedShopEvent != file.wasThemedShopEventActive || haveActiveWhatsNewEvent != file.wasWhatsNewEventActive || GetMenuNumTabs( file.panel ) == 0 )
 		{
-			printt( "DEBUG OnGRXSeasonUpdate: Rebuilding tabs, GetMenuNumTabs =", GetMenuNumTabs( file.panel ) )
+			//printt( "DEBUG OnGRXSeasonUpdate: Rebuilding tabs, GetMenuNumTabs =", GetMenuNumTabs( file.panel ) )
 			ClearTabs( file.panel )
 			array<var> nestedPanels = GetAllMenuPanelsSorted( file.panel )
-			printt( "DEBUG OnGRXSeasonUpdate: nestedPanels found =", nestedPanels.len() )
+			//printt( "DEBUG OnGRXSeasonUpdate: nestedPanels found =", nestedPanels.len() )
 			foreach ( nestedPanel in nestedPanels )
 			{
-				printt( "DEBUG OnGRXSeasonUpdate: Checking panel:", Hud_GetHudName( nestedPanel ) )
+				//printt( "DEBUG OnGRXSeasonUpdate: Checking panel:", Hud_GetHudName( nestedPanel ) )
 				if ( Hud_GetHudName( nestedPanel ) == "CollectionEventPanel" && !haveActiveCollectionEvent )
 				{
-					printt( "DEBUG OnGRXSeasonUpdate: Skipping CollectionEventPanel (no active event)" )
+					//printt( "DEBUG OnGRXSeasonUpdate: Skipping CollectionEventPanel (no active event)" )
 					continue
 				}
 
 				if ( Hud_GetHudName( nestedPanel ) == "ThemedShopPanel" && !haveActiveThemedShopEvent )
 				{
-					printt( "DEBUG OnGRXSeasonUpdate: Skipping ThemedShopPanel (no active event)" )
+					//printt( "DEBUG OnGRXSeasonUpdate: Skipping ThemedShopPanel (no active event)" )
 					continue
 				}
 
 				if ( Hud_GetHudName( nestedPanel ) == "WhatsNewPanel" && !haveActiveWhatsNewEvent )
 				{
-					printt( "DEBUG OnGRXSeasonUpdate: Skipping WhatsNewPanel (no active event)" )
+					//printt( "DEBUG OnGRXSeasonUpdate: Skipping WhatsNewPanel (no active event)" )
 					continue
 				}
 
@@ -206,7 +206,7 @@ void function OnGRXSeasonUpdate()
 						break
 				}
 
-				printt( "DEBUG OnGRXSeasonUpdate: Adding tab:", Hud_GetHudName( nestedPanel ), "title:", GetPanelTabTitle( nestedPanel ) )
+				//printt( "DEBUG OnGRXSeasonUpdate: Adding tab:", Hud_GetHudName( nestedPanel ), "title:", GetPanelTabTitle( nestedPanel ) )
 				AddTab( file.panel, nestedPanel, GetPanelTabTitle( nestedPanel ) )
 			}
 
@@ -216,7 +216,7 @@ void function OnGRXSeasonUpdate()
 		}
 		SetTabNavigationEnabled( file.panel, true )
 		ItemFlavor season = GetLatestSeason( GetUnixTimestamp() )
-		printt( "DEBUG OnGRXSeasonUpdate: GetLatestSeason asset =", ItemFlavor_GetAsset( season ), "numTabs =", tabData.tabDefs.len() )
+		//printt( "DEBUG OnGRXSeasonUpdate: GetLatestSeason asset =", ItemFlavor_GetAsset( season ), "numTabs =", tabData.tabDefs.len() )
 
 		int numTabs = tabData.tabDefs.len()
 		tabData.centerTabs = true

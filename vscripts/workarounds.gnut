@@ -2927,13 +2927,13 @@ void function PIN_FiringRangeChallengeCompleted( entity player, ... )
 // stubs - Golden Horse / Titan Sword (S22 feature, not in S3)
 bool function IsGoldenHorse_FR()
 {
-	Warning( "WORKAROUND: IsGoldenHorse_FR() called - not implemented" )
+	//Warning( "WORKAROUND: IsGoldenHorse_FR() called - not implemented" )
 	return false
 }
 
 bool function TitanSword_WeaponRefIsTitanSword( string ref )
 {
-	Warning( "WORKAROUND: TitanSword_WeaponRefIsTitanSword() called - not implemented" )
+	//Warning( "WORKAROUND: TitanSword_WeaponRefIsTitanSword() called - not implemented" )
 	return false
 }
 

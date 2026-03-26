@@ -388,14 +388,14 @@ void function InitializePerkTables()
 	#endif
 
 	array<ItemFlavor> characterArray = GetAllCharacters()
-	printt( "PERKS: InitializePerkTables found " + characterArray.len() + " characters" )
+	//printt( "PERKS: InitializePerkTables found " + characterArray.len() + " characters" )
 	// For now, just assigning perks to characters by role
 	foreach( character in characterArray )
 	{
 		int characterRole = CharacterClass_GetRole( character )
 		// TODO support multiple perks per character
 		string characterRef = ItemFlavor_GetHumanReadableRef( character )
-		printt( "PERKS: Registering character " + characterRef + " with role " + characterRole )
+		//printt( "PERKS: Registering character " + characterRef + " with role " + characterRole )
 		file.characterToRoleTable[characterRef] <- characterRole
 	}
 }

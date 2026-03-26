@@ -306,7 +306,7 @@ ItemFlavor ornull function GetActiveSeason( int t )
 	if ( !(season in fileLevel.seasonBattlePassMap) )
 	{
 		asset bpAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( season ), "battlepassFlav" )
-		printt( "DEBUG: GetActiveSeason() - battlepassFlav asset:", string( bpAsset ) )
+		//printt( "DEBUG: GetActiveSeason() - battlepassFlav asset:", string( bpAsset ) )
 		if ( bpAsset != $"" )
 		{
 			ItemFlavor ornull passOrNull = RegisterItemFlavorFromSettingsAsset( bpAsset )
