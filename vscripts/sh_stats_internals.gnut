@@ -1365,7 +1365,7 @@ void function LoadStatValuesFromPersistenceIntoPlayerStruct( entity player, Stat
 	{
 		if ( entry.behavior != eStatBehavior.CALCULATED || entry.shouldCache )
 		{
-			player.p.statValues_Int[index] = expect int(player.GetPersistentVar( entry.persistenceFullKey_Current ) )
+			player.p.statValues_Int[index] = int(player.GetPersistentVar( entry.persistenceFullKey_Current ) )
 			player.p.statValuesAtStart_Int[index] = player.p.statValues_Int[index]
 
 			Assert( player.p.statValuesAtStart_Int[index] != UNINITIALIZED, "Found an unitialized value for non-calculated stat: " + entry.persistenceFullKey_Current )
