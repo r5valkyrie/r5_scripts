@@ -19,6 +19,7 @@ global function RunCodeDevCommandByAlias
 
 global function DEV_ExecBoundDevMenuCommand
 global function DEV_InitCodeDevMenu
+global function DevMenu_ToggleBG
 
 global function UpdateCheatsState
 global function AddLevelDevCommand
@@ -91,6 +92,9 @@ struct
 
 	array<DevCommand> levelSpecificCommands = []
 	bool cheatsState
+	
+	var menu
+	var bg
 } file
 
 void function AddUICallback_OnDevMenuLoaded( void functionref() callback ) //(cafe) New callback to add dev menu entries from mods
@@ -144,7 +148,8 @@ void function InitDevMenu( var newMenuArg )
 		RegisterSignal( "DEV_InitCodeDevMenu" )
 		AddUICallback_LevelLoadingFinished( DEV_InitCodeDevMenu )
 		AddUICallback_LevelShutdown( ClearCodeDevMenu )
-		//OnOpenDevMenu()
+		file.menu = menu
+		file.bg = Hud_GetChild( menu, "BlackBackground" )
 }
 
 
@@ -598,6 +603,17 @@ void function SetupAlterLoadout_SlotScreen( LoadoutEntry entry )
 	}
 }
 
+void function DevMenu_ToggleBG()
+{
+	if ( Hud_IsVisible( file.bg ) )
+	{
+		Hud_Hide( file.bg )
+	}
+	else
+	{
+		Hud_Show( file.bg )
+	}
+}
 void function SetDevMenu_OverrideSpawnSurvivalCharacter( var _ )
 {
 	thread ChangeToThisMenu( SetupOverrideSpawnSurvivalCharacter )
