@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(sed -i '1078s/print\\( \"\"\\\\[HUD_DEBUG\\\\] ShouldMainHudBeVisible returning FALSE\"\" \\)/print\\( \"\"[HUD_DEBUG] ShouldMainHudBeVisible returning FALSE - prematch and show_hud_in_prematch is false\"\" \\)/' cl_main_hud.nut)",
-      "Bash(sed -i '1081a\t\t\t\tprint\\( \"\"[HUD_DEBUG] ShouldMainHudBeVisible - prematch but show_hud_in_prematch is true - continuing\"\" \\)' cl_main_hud.nut)"
-    ]
-  }
-}
