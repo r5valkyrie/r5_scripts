@@ -212,6 +212,8 @@ void function RefreshUnitframesForPlayer( entity player, int RASState = 0, bool 
 	if ( !player.IsPlayer() )
 		return
 
+	//if ( SPECTATOR_UI_STATE == SPEC_UI_STATE_SHOW_ONLY_MINIMAP )
+	//	return
 	int playerTeam = player.GetTeam()
 	array<entity> playersToRemove
 

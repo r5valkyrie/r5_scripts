@@ -30,6 +30,8 @@ global struct ClientEntityStruct
 	// for cockpit
 	entity mainVGUI
 	entity body
+
+	bool hudVisible = false
 	
 	bool isOpen
 
