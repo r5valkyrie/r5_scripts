@@ -892,6 +892,7 @@ Scripts:
 	client/cl_announcement.gnut
 	client/cl_gamestate.gnut
 	client/cl_kill_replay_hud.gnut
+	client/cl_ring_warning.gnut
 	client/cl_player.gnut
 	client/cl_respawnselect.gnut
 	client/cl_scoresplash.gnut

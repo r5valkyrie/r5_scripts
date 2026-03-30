@@ -634,14 +634,6 @@ void function ServerCallback_ShouldExitDrone()
 
 	if( !PlayerHasPassive( player, ePassives.PAS_CRYPTO ) )
 		return
-
-	if( IsValid( player ) )
-	{
-		if( PlayerSetting_DamageClosesMenu() )
-		{
-			player.ClientCommand("ShouldExitDrone")
-		}
-	}
 }
 #endif // CLIENT
 

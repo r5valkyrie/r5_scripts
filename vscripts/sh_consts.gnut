@@ -1091,6 +1091,7 @@ global enum PerfIndexClient
 	HUDThink_4,
 	HUDThink_5,
 	HUDThink_6,
+	HUDThink_7,
 
 	GameStatePlaying,
 
@@ -1129,6 +1130,9 @@ global enum PerfIndexClient
 	InventoryRefreshEnd,
 	UpdateLootRui,
 	LootGoesInPack,
+	CarePackagePerkLookatUpdate,
+
+	PrivateLobbyThread,
 	PhaseBreach_GetPosition_OLD,
 	PhaseBreach_GetPosition,
 	PhaseBreach_WallToTop,
@@ -1167,8 +1171,22 @@ global enum PerfIndexServer
 	HoverTankPathCalc,
 	HoverTankFlyPathCalc,
 	HoverTankThink,
+	GetRandomSpawnPoint,
+	CleanupServerPets,
+	SniperReconInfo,
+	AreaSonarScan,
+	AreaSonarScanPropsList,
+	AreaSonarScanPropsTrigger,
+	AreaSonarScanTriggers,
+	AreaSonarTargetList,
+
+	DR_GatherData,
+	DR_SendData,
 
 	AddToInventory,
+	SmartLoot,
+
+	WreckingBall,
 	LeftoverLootWeightingFix,
 }
 
@@ -2049,6 +2067,7 @@ global struct UseFuncData
 	void functionref( entity, entity, entity ) useFunc
 }
 
+// update hit_indicators.rui when you change this!
 global enum eHitType
 {
 	NORMAL
@@ -2060,15 +2079,16 @@ global enum eHitType
 	VORTEX,
 	SHADOW,
 	OVERSHIELD,
+	EXTRA_SHIELD,
 }
 
-global const vector OVERSHIELD_COLOR = <19, 207, 69>
+global const vector TEMPSHIELD_COLOR = <19, 207, 69>
 
 global const int DAMAGEFLAG_ARMOR1 = 64
 global const int DAMAGEFLAG_ARMOR2 = 128
 global const int DAMAGEFLAG_ARMOR3 = 256
 global const int DAMAGEFLAG_ARMOR4 = 512
-global const int DAMAGEFLAG_ARMOR5 = 1024 // S22: red/heirloom shield tier
+global const int DAMAGEFLAG_ARMOR5 = 1024
 
 global enum eCommsAction
 {
@@ -3193,8 +3213,6 @@ global enum eRarityTier
 	_COUNT,
 }
 
-global const int OBIT_FLAG_HEADSHOT = 1 << 0
-global const int OBIT_FLAG_DOWNED = 1 << 1
 
 // These are the base colors - possibly not bright and saturated enough for the fill effect
 //	global const vector AMMO_SHOTGUN_COLOR = <120, 37, 8> / 255.0
@@ -3574,6 +3592,11 @@ global enum eDummieShooting_ParameterTypes
 	MAXDUMMIESPERPLAYER,
 	COUNT_
 }
+
+global const int OBIT_FLAG_NONE = 1 << 0
+global const int OBIT_FLAG_HEADSHOT = 1 << 1
+global const int OBIT_FLAG_DOWNED = 1 << 2
+global const int OBIT_FLAG_KILL = 1 << 3
 
 global enum eRSALabels
 {

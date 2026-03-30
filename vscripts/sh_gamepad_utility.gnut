@@ -21,6 +21,7 @@ global function GetEffectiveButtonBinding
 global function GetEffectiveButtonHoldBinding
 global function SetStandardAbilityBindingsForPilot
 global function SetStandardAbilityBindingsForTitan
+global function SetStandardAbilityBindingsForSpectator
 global function GetButtonEnumForIndex
 global function BuildCommandForButtonArrayFromString
 global function BuildABBindSet
@@ -190,6 +191,19 @@ void function SetStandardAbilityBindingsForTitan( entity player )
 }
 #endif
 
+#if CLIENT || UI
+void function SetStandardAbilityBindingsForSpectator( entity player )
+{
+	SetStandardAbilityBindingsForPilot( player )
+
+	int buttonIndexA = GAMEPAD_BUTTON_INDECES[BUTTON_A]
+	int buttonIndexX = GAMEPAD_BUTTON_INDECES[BUTTON_X]
+	SetAbilityBinding( player, buttonIndexA, "toggle_obs_highlight", "", KBT_TAPPED )
+	SetAbilityBinding( player, buttonIndexA, "toggle_obs_ring_survey", "", KBT_HELD )
+	SetAbilityBinding( player, buttonIndexX, "toggle_observer_btn_hints", "", KBT_TAPPED )
+	SetAbilityBinding( player, buttonIndexX, "toggle_observer_ui", "", KBT_HELD )
+}
+#endif
 
 int function ClampForCmd( string str )
 {

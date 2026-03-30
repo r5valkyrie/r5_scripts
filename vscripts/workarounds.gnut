@@ -263,7 +263,6 @@ global function Announcements_SetVisible
 global function IsObserverInPrivateGame
 global function UpdatePlayerSkydiveTrailFriendlyEnemyFX
 global function Teams_RegisterSignals
-global function ClRingWarning_GetRui
 // IsEmoteEnabledForPodiumScreen — now in sh_emotes.nut (S22)
 global function WillCelebrateNEEVictory
 global function DoNEECelebration_Thread
@@ -2476,13 +2475,6 @@ void function Teams_RegisterSignals()
 {
 	Warning( "STUB: Teams_RegisterSignals" )
 }
-
-var function ClRingWarning_GetRui()
-{
-	Warning( "STUB: ClRingWarning_GetRui" )
-	return null
-}
-
 
 // IsEmoteEnabledForPodiumScreen — now in sh_emotes.nut (S22)
 

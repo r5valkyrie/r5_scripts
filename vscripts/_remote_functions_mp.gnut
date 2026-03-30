@@ -91,7 +91,6 @@ int function SetupRemoteFuncAliases()
 		"ServerCallback_ClearHints",
 		"ServerCallback_AnnounceCircleClosing",
 		"ServerCallback_PlayScreenFXWarpJump",
-		"ServerCallback_GameModeAnnouncement",
 		"SCB_AbortCurrentDialogue", /* sh_sp_dialogue.gnut */
 		"ServerCallback_CTF_HideCustomUI",
 		"ServerToClient_DisplayCancelReviveHintForPlayer",
@@ -753,16 +752,15 @@ void function RemoteFunctions_Init_Begin()
 	if ( IsRampartTTEnabled() )
 		Rampart_TT_RegisterNetworking() // Caustic Town Takeover
 
-	ScriptRemote_RegisterClientFunction( "ServerCallback_SetAssistInformation", "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
+	ScriptRemote_RegisterClientFunction( "ServerCallback_SetAssistInformation", "int", eDamageSourceId.invalid, eDamageSourceId.len(), "entity", "entity", "float", 0.0, FLT_MAX, 32 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeStartLeech", "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeCancelLeech" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ControlPanelRefresh", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 currently not called.
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_TurretRefresh", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 not currently used
 	
 	
-	ScriptRemote_RegisterClientFunction( "ServerCallback_OnEntityKilled", "entity", "entity", "int", INT_MIN, INT_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_OnEnemyDowned", "entity", "entity", "int", INT_MIN, INT_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerConnectedOrDisconnected", "int", EHANDLE_MIN, EHANDLE_MAX, "int", 0, 20 ) //Audit 2-22-2025
+	ScriptRemote_RegisterClientFunction( "ServerCallback_OnEnemyDowned", "entity", "entity", "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len(), "int", INT_MIN, INT_MAX ) // handles obit
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ResetReconnectParametersAsync" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerTookDamage", "float", 0.0, 50000.0, 16, "vector", -32000.0, 32000.0, 32, "int", DAMAGE_TYPE_MIN, INT_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025; Todo(mk): damage does not need to be allocated for 50000.0, however many mods call an arbituary number and these need audited in order to lower this value to a reasonable number. Note: Damage gets normalized, which used to be int. Therefore we can get away with using 16 bits on the float which should return n.xyz 
 	
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_ScreenShake", "float", 0.0, 20.0, "float", 0.001, 255.0, 16, "vector", -32000.0, 32000, 32 )  //Audit 2-22-2025 , not currently called.
@@ -916,10 +914,6 @@ void function RemoteFunctions_Init_Begin()
 		// Localized TextPanel
 		ScriptRemote_RegisterUntypedFunction_deprecated( "FS_BuildLocalizedVariable_InfoPanel" )
 		ScriptRemote_RegisterClientFunction( "FS_CreateTextInfoPanelWithID_Localized", "int", 0, localizedStringsMax, "int", 0, localizedStringsMax, "vector", -32000.0, 32000.0, 32, "vector", -32000.0, 32000.0, 32, "float", 0.0, 100.0, 16, "int", -1, 999 ) //Audit 2-22-2025
-	
-		// This will be moved to code. ( server issued muting )
-		ScriptRemote_RegisterClientFunction( "FS_Toggle_Mute", "bool" )
-		ScriptRemote_RegisterClientFunction( "FS_Silence", "bool", "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025	
 	}
 		
 	RegisterServerVar( "tracker_enabled", false )

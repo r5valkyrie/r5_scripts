@@ -4388,6 +4388,13 @@ bool function IsAndroidNPC( entity ent )
 	return ( IsSpectre( ent ) || IsStalker( ent ) || IsMarvin( ent ) )
 }
 
+bool function IsBiologicalNPC( entity ent )
+{
+	if ( IsNessie( ent ) )
+		return true
+	return (IsProwler( ent ) || IsSpider( ent ))
+}
+
 bool function IsStalker( entity ent )
 {
 	return ent.IsNPC() && ( ent.GetAIClass() == AIC_STALKER || ent.GetAIClass() == AIC_STALKER_CRAWLING )

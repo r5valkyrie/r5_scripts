@@ -265,7 +265,6 @@ void function ClientCodeCallback_OnResolutionChanged()
 	UpdateFullscreenTopology( clGlobal.topoFullScreen, false )
 	UpdateFullscreenTopology( clGlobal.topoFullscreenFullMap, true )
 	InitChatHUD()    // sets the size of the vgui chat widow, if we donn't do this it will revert back to the default values set in the res file.
-	FS_RegisterAdmin()
 	if ( !IsLobby() )
 		FullMap_UpdateTopologies()
 

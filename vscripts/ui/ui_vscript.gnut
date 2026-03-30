@@ -557,6 +557,4 @@ void function UICallback_AdminStatus( bool status )
 
 void function ResetDefaults()
 {
-	uiGlobal.bIsServerAdmin = false
-	RunClientScript( "FS_Toggle_Mute", false )
 }
