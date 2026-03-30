@@ -502,14 +502,14 @@ bool function UICodeCallback_UpdateLoadingLevelName( string levelname )
 
 void function UICodeCallback_LevelLoadingFinished( bool error )
 {
+	uiGlobal.isLevelShuttingDown = false
+
 	//printt( "UICodeCallback_LevelLoadingFinished: " + uiGlobal.loadingLevel + " (" + error + ")" )
 
 	UIMusicUpdate()
 
 	if ( !IsLobby() )
 		HudChat_ClearTextFromAllChatPanels()
-	else
-		uiGlobal.lobbyFromLoadingScreen = true
 
 	uiGlobal.loadingLevel = ""
 	Signal( uiGlobal.signalDummy, "LevelFinishedLoading" )
@@ -680,13 +680,20 @@ void function UICodeCallback_FullyConnected( string levelname )
 
 void function UICodeCallback_LevelShutdown()
 {
+	uiGlobal.isLevelShuttingDown = true
 	ShutdownAllPanels()
 	CloseAllMenus()
 
 	ShGladiatorCards_LevelShutdown()
 	ShLoadouts_LevelShutdown()
 	VideoChannelManager_OnLevelShutdown()
+	ImagePakLoad_OnLevelShutdown()
 	ShGRX_LevelShutdown()
+	StorePanelThemedShopEvent_LevelShutdown()
+	StorePanelHeirloomShopEvent_LevelShutdown()
+	PlayPanel_LevelShutdown()
+	OffersPanel_LevelShutdown()
+	LeaveMatch_ResetInitiated()
 
 	Signal( uiGlobal.signalDummy, "LevelShutdown" )
 
@@ -707,11 +714,6 @@ void function UICodeCallback_LevelShutdown()
 	UiNewnessQueries_LevelShutdown()
 
 	TEMP_CircularReferenceCleanup()
-
-	#if TRACKER && HAS_TRACKER_DLL //(mk): what was I doing here..
-	//TODO: state !ready waitframe
-	//while( SQ_GetLogstate() )
-	#endif
 }
 
 
@@ -1031,7 +1033,8 @@ void function CloseActiveMenu( bool cancelled = false, bool openStackMenu = true
 
 		CloseMenuWrapper( currentActiveMenu )
 	}
-
+	if( uiGlobal.isLevelShuttingDown )
+		return
 	uiGlobal.lastMenuNavDirection = MENU_NAV_BACK
 
 	if ( wasDialog )

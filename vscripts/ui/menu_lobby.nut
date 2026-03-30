@@ -1023,7 +1023,6 @@ void function PostGameFlow()
 
 void function OnLobbyMenu_FocusChat( var panel )
 {
-	#if PC_PROG
 		if ( IsDialog( GetActiveMenu() ) )
 			return
 
@@ -1036,7 +1035,6 @@ void function OnLobbyMenu_FocusChat( var panel )
 			var textChat  = Hud_GetChild( playPanel, "ChatRoomTextChat" )
 			Hud_SetFocused( Hud_GetChild( textChat, "ChatInputLine" ) )
 		}
-	#endif
 }
 
 
