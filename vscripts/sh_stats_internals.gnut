@@ -1360,6 +1360,7 @@ void function MarkStatAsDirtyForPlayer( entity player, StatEntry entry )
 #if SERVER
 void function LoadStatValuesFromPersistenceIntoPlayerStruct( entity player, StatEntry entry, bool isInitializing )
 {
+	return
 	int index = entry.indexWithinType
 	if ( player.p.statValues_Int[index] == UNINITIALIZED || isInitializing )
 	{

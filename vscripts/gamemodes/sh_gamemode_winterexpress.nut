@@ -3461,12 +3461,6 @@ void function AddSelectMenuPromptRui( string hintText)
 
 void function DEV_UpdateTopoPos( float voffset, float hoffset )
 {
-	if( file.legendSelectMenuPromptRuiTopo != null )
-	{
-		UISize screenSize = GetScreenSize()
-		TopologyCreateData tcd = BuildTopologyCreateData( true, false )
-		RuiTopology_UpdatePos( file.legendSelectMenuPromptRuiTopo, < hoffset * screenSize.width / 1920.0, voffset * screenSize.height / 1080.0 , 0>, <float( screenSize.width ), 0, 0> , <0, float( screenSize.height ), 0> )
-	}
 
 }
 // Request open character select screen on the Client
@@ -4611,39 +4605,7 @@ void function FS_CaptureProgressUI( float starttime )
 
 void function FS_ReloadScoreHUD()
 {
-	if( file.legendSelectMenuPromptRuiTopo != null )
-	{
-		UISize screenSize = GetScreenSize()
-		TopologyCreateData tcd = BuildTopologyCreateData( true, false )
-		RuiTopology_UpdatePos( file.legendSelectMenuPromptRuiTopo, < 490 * screenSize.width / 1920.0, 300 * screenSize.height / 1080.0 , 0>, <float( screenSize.width ), 0, 0> , <0, float( screenSize.height ), 0> )
-	}
 
-	if( settings.scoreLimit != 3 )
-		return
-
-	if( GetGameState() != eGameState.Playing )
-		return
-
-	#if DEVELOPER
-		printt( "FS_ReloadScoreHUD()", file.enemyTeamScoreValue, file.enemyTeam2ScoreValue )
-	#endif
-
-	FS_CreateScoreHUD()
-
-	if( file.localTeamScoreValue > 0 && file.enemyTeamScoreValue <= 3 )
-		FS_UpdateScoreForTeam( TEAM_IMC, file.localTeamScoreValue )
-
-	if( file.enemyTeamScoreValue > 0 && file.currentEnemy1 != -1 && file.enemyTeamScoreValue <= 3 )
-		FS_UpdateScoreForTeam( file.currentEnemy1, file.enemyTeamScoreValue )
-
-	if( file.enemyTeam2ScoreValue > 0 && file.currentEnemy2 != -1 && file.enemyTeam2ScoreValue <= 3 )
-		FS_UpdateScoreForTeam( file.currentEnemy2, file.enemyTeam2ScoreValue )
-
-	if( settings.winter_express_show_player_cards )
-	{
-		// FS_Scenarios_InitPlayersCards()
-		// FS_Scenarios_SetupPlayersCards( true )
-	}
 }
 
 void function FS_CreateScoreHUD()

@@ -32,6 +32,7 @@ global function ServerVarChangedCallbacks
 
 #if CLIENT
 global function CodeCallback_ServerVarChanged
+global function ExecuteNetBufferedCallbacks
 #endif
 
 struct BufferedCallback
@@ -66,6 +67,10 @@ table<int,string> _indexToString = {}
 struct
 {
 	table<string, array<void functionref()> > _serverVarChangeCallbacks
+	table<string, array<void functionref(entity, bool )> >		_netVarBoolChangeCallbacks
+	table<string, array<void functionref(entity, int )> >		_netVarIntChangeCallbacks
+	table<string, array<void functionref(entity, float )> >		_netVarFloatChangeCallbacks
+	table<string, array<void functionref(entity, float )> >		_netVarTimeChangeCallbacks
 	table<string, array<void functionref(entity, entity )> >	_netVarEntityChangeCallbacks
 	array<BufferedCallback> _bufferedCallbacks
 } file
@@ -366,6 +371,69 @@ void function RegisterBufferedCallback(	string varName, entity player, var newVa
 	file._bufferedCallbacks.append( bufferedCallback )
 }
 
+void function ExecuteNetVarIntChangeCallback( string varName, entity player, int newVal )
+{
+	if ( !ShouldExecuteCallback( varName, player ) )
+		return
+
+	foreach ( callbackFunc in file._netVarIntChangeCallbacks[varName] )
+	{
+		callbackFunc( player, newVal )
+	}
+}
+
+void function ExecuteNetVarFloatChangeCallback( string varName, entity player, float newVal )
+{
+	if ( !ShouldExecuteCallback( varName, player ) )
+		return
+
+	foreach ( callbackFunc in file._netVarFloatChangeCallbacks[varName] )
+	{
+		callbackFunc( player, newVal )
+	}
+}
+void function ExecuteNetVarTimeChangeCallback( string varName, entity player, float newVal )
+{
+	if ( !ShouldExecuteCallback( varName, player ) )
+		return
+
+	foreach ( callbackFunc in file._netVarTimeChangeCallbacks[varName] )
+	{
+		callbackFunc( player, newVal )
+	}
+}
+
+void function RegisterNetVarBoolChangeCallback( string varName, void functionref( entity, bool ) callbackFunc )
+{
+	if ( !(varName in file._netVarBoolChangeCallbacks ) )
+	{
+		file._netVarBoolChangeCallbacks[varName] <- []
+
+		RegisterNetworkedVariableChangeCallback_bool( varName, void function( entity player, bool oldVal, bool newVal, bool valuevalue ) : (varName) {
+			if( !IsNetVarCallbackAvailable() )
+			{
+				RegisterBufferedCallback( varName, player, newVal, SNVT_BOOL )
+				return
+			}
+
+			ExecuteNetVarBoolChangeCallback( varName, player, newVal )
+		} )
+	}
+
+	file._netVarBoolChangeCallbacks[varName].append(callbackFunc)
+}
+
+void function ExecuteNetVarBoolChangeCallback( string varName, entity player, bool newVal )
+{
+	if ( !ShouldExecuteCallback( varName, player ) )
+		return
+
+	foreach ( callbackFunc in file._netVarBoolChangeCallbacks[varName] )
+	{
+		callbackFunc( player, newVal )
+	}
+}
+
 
 void function RegisterNetVarEntityChangeCallback( string varName, void functionref( entity, entity ) callbackFunc )
 {
@@ -409,5 +477,42 @@ bool function IsNetVarCallbackAvailable()
 		return false
 
 	return true
+}
+#endif
+
+#if CLIENT
+
+void function ExecuteNetBufferedCallbacks()
+{
+	foreach ( BufferedCallback buffered in file._bufferedCallbacks )
+	{
+		printt( FUNC_NAME(), "Run CB for:", buffered.varName )
+
+		switch ( buffered.callbackType ) // poor's people polymorphism
+		{
+			case SNVT_BOOL:
+				ExecuteNetVarBoolChangeCallback( buffered.varName, buffered.player, expect bool(buffered.newValue) )
+				break
+			case SNVT_TIME:
+				ExecuteNetVarTimeChangeCallback( buffered.varName, buffered.player, expect float(buffered.newValue) )
+				break
+			case SNVT_INT:
+				ExecuteNetVarIntChangeCallback( buffered.varName, buffered.player, expect int(buffered.newValue) )
+				break
+			case SNVT_FLOAT_RANGE:
+				ExecuteNetVarFloatChangeCallback( buffered.varName, buffered.player, expect float(buffered.newValue) )
+				break
+			case SNVT_FLOAT_RANGE_OVER_TIME:
+				Assert( false, "Change callbacks are not implemented for type SNVT_FLOAT_RANGE_OVER_TIME" )
+				break
+			case SNVT_ENTITY:
+				ExecuteNetVarEntityChangeCallback( buffered.varName, buffered.player, expect entity(buffered.newValue) )
+				break
+			default:
+				Assert( false, "sh_networkvars must always have a type" )
+		}
+	}
+
+	file._bufferedCallbacks = []
 }
 #endif

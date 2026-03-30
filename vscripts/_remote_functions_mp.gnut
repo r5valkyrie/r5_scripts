@@ -756,6 +756,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeStartLeech", "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeCancelLeech" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ControlPanelRefresh", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 currently not called.
+	ScriptRemote_RegisterClientFunction( "ServerCallback_OnPlayerOrNpcKilled", "entity", "entity", "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len() ) // handles obit and death recap
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_TurretRefresh", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 not currently used
 	
 	
@@ -811,13 +812,11 @@ void function RemoteFunctions_Init_Begin()
 	
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_SetClassicSkyScale" ) //Audit 2-22-2025 not currently called
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_ResetClassicSkyScale" ) //Audit 2-22-2025 not currently called
-	ScriptRemote_RegisterClientFunction( "ServerCallback_ClientInitComplete" )
 	RegisterServerVar( "forcedDialogueOnly", false )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_SetEntityVar" )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_SetServerVar" )
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_PlayMusic" ) //Audit 2-22-2025 not currently called
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_OpenDevMenu" ) //Audit 2-22-2025 not currently called
-	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_SetUIVar" )
 	ScriptRemote_RegisterUIFunction( "ServerCallback_OpenPilotLoadoutMenu" )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_PrintClientMessage" )
 	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_BuildClientMessage" )
@@ -915,6 +914,10 @@ void function RemoteFunctions_Init_Begin()
 		ScriptRemote_RegisterUntypedFunction_deprecated( "FS_BuildLocalizedVariable_InfoPanel" )
 		ScriptRemote_RegisterClientFunction( "FS_CreateTextInfoPanelWithID_Localized", "int", 0, localizedStringsMax, "int", 0, localizedStringsMax, "vector", -32000.0, 32000.0, 32, "vector", -32000.0, 32000.0, 32, "float", 0.0, 100.0, 16, "int", -1, 999 ) //Audit 2-22-2025
 	}
+
+	// BaseGametype_Init_MP
+	Remote_RegisterServerFunction( "ClientCallback_ClientStatus", "bool" )
+	Remote_RegisterServerFunction( "ClientCallback_SkipDeathCam" )
 		
 	RegisterServerVar( "tracker_enabled", false )
 	RegisterServerVar( "batch_fetch_complete", false )
@@ -922,7 +925,7 @@ void function RemoteFunctions_Init_Begin()
 
 	if ( IsLobby() )
 	{
-		//Register networked variables for the lobby
+		//Register networked variables fo	r the lobby
 	}
 
 	#if CLIENT

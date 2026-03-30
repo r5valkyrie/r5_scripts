@@ -24,6 +24,7 @@ global const float DOT_20DEGREE =	0.9396926207859
 global const float DOT_25DEGREE =	0.9063077870367
 global const float DOT_30DEGREE =	0.866025403784
 global const float DOT_45DEGREE =	0.707106781187
+global const float DOT_50DEGREE =	0.64278760968
 global const float DOT_60DEGREE =	0.5
 global const float DOT_80DEGREE =	0.17364817766
 global const float DOT_85DEGREE =	0.0871557427477
@@ -1116,7 +1117,7 @@ string function GetWeaponInfoFileKeyField_WithMods_GlobalString( string ref, arr
 	}
 	catch ( e )
 	{
-		printt( "GetWeaponInfoFileKeyField_WithMods_GlobalString: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
+		//printt( "GetWeaponInfoFileKeyField_WithMods_GlobalString: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
 		val = GetWeaponInfoFileKeyField_Global( ref, variable )
 	}
 	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
@@ -1147,7 +1148,7 @@ int function GetWeaponInfoFileKeyField_WithMods_GlobalInt( string ref, array<str
 	}
 	catch ( e )
 	{
-		printt( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
+		//printt( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: mod list failed for '" + ref + "' variable '" + variable + "', falling back to no-mods" )
 		val = GetWeaponInfoFileKeyField_Global( ref, variable )
 	}
 	Assert( val != null, "Weapon key \"" + variable + "\" does not exist in weapon \"" + ref + "\" !" )
@@ -1159,7 +1160,7 @@ int function GetWeaponInfoFileKeyField_WithMods_GlobalInt( string ref, array<str
 		}
 		catch ( e2 )
 		{
-			printt( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: '" + variable + "' for '" + ref + "' returned non-numeric string '" + string( val ) + "', defaulting to 0" )
+			//printt( "GetWeaponInfoFileKeyField_WithMods_GlobalInt: '" + variable + "' for '" + ref + "' returned non-numeric string '" + string( val ) + "', defaulting to 0" )
 			return 0
 		}
 	}
@@ -4407,6 +4408,26 @@ string function GetPlaylistMapVarString( string playlistName, int mapIdx, string
 {
 	return defaultVal
 }
+#if UI || CLIENT
+float function GetNearestAspectRatio( int width, int height )
+{
+	float aspectRatio = width / float( height )
+
+	if ( fabs( ASPECT_RATIO_16_BY_10 - aspectRatio ) < 0.1 )
+		return aspectRatio
+	else if ( fabs( ASPECT_RATIO_16_BY_9 - aspectRatio ) < 0.1 )
+		return aspectRatio
+	else if ( fabs( ASPECT_RATIO_21_BY_9 - aspectRatio ) < 0.1 )
+		return aspectRatio // since 21:9 could be a few different resolutions, lets use the one that we passed in since it will perfectly match the screen
+	else if ( fabs( (16.0 * 3 / 9.0) - aspectRatio ) < 0.1 )
+		return ASPECT_RATIO_16_BY_9
+	else if ( fabs( (16.0 * 3 / 10.0) - aspectRatio ) < 0.1 )
+		return ASPECT_RATIO_16_BY_10
+
+	return aspectRatio
+}
+#endif
+
 
 int function GetSoonestPlaylistRotationTime()
 {
