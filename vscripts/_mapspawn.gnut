@@ -51,7 +51,7 @@ global struct SvGlobals
 	array<spawnCallbackFuncArray>                   spawnCallbackFuncs
 	array<spawnCallbackEditorClassFuncArray>        spawnCallbackEditorClassFuncs
 	array<spawnCallbackFuncArray_scriptNoteworthy>  spawnCallbackFuncs_scriptNoteworthy
-
+	array<void functionref( entity )> 				npcSpawnCallbackFuncs
 	table<string, array<void functionref( entity )> > spawnCallbacks_scriptName
 
 	array<pilotEliminationDialogueCallbackType> pilotEliminationDialogueCallbacks
