@@ -150,5 +150,6 @@
 	perk_survey_beacon_scanned_visual
 	perk_survey_beacon_enemies_scanned_visual
 	has_overheat_debuff
+	shadow_form
 /////////////////////////////
 //}

@@ -118,10 +118,6 @@ void function Anim_Init()
 	AddGlobalAnimEvent( "clear_anim_view_ent",GlobalAnimEvent_ClearAnimViewEntity )
 	AddGlobalAnimEvent( "scripted_death_to_ragdoll", GlobalAnimEvent_ScriptedDeathToRagdoll )
 	AddGlobalAnimEvent( "SetVelocity", GlobalAnimEvent_SetVelocity )
-	AddGlobalAnimEvent( "stance_kneel", GlobalAnimEvent_StanceKneel )
-	AddGlobalAnimEvent( "stance_kneeling", GlobalAnimEvent_StanceKneeling )
-	AddGlobalAnimEvent( "stance_stand", GlobalAnimEvent_StanceStand )
-	AddGlobalAnimEvent( "stance_standing", GlobalAnimEvent_StanceStanding )
 	AddGlobalAnimEvent( "enable_planting", GlobalAnimEvent_EnablePlanting )
 	AddGlobalAnimEvent( "kill", GlobalAnimEvent_Kill )
 	AddGlobalAnimEvent( "gib", GlobalAnimEvent_Gib )
@@ -279,34 +275,6 @@ void function GlobalAnimEvent_SetVelocity( entity actor )
 	local speed 		= distance / time
 
 	actor.SetVelocity( dir * speed )
-}
-
-void function GlobalAnimEvent_StanceKneel( entity guy )
-{
-	Assert( guy.IsTitan() )
-	Assert( guy.IsNPC() )
-	SetStanceKneel( guy.GetTitanSoul() )
-}
-
-void function GlobalAnimEvent_StanceKneeling( entity guy )
-{
-	Assert( guy.IsTitan() )
-	Assert( guy.IsNPC() )
-	SetStanceKneeling( guy.GetTitanSoul() )
-}
-
-void function GlobalAnimEvent_StanceStand( entity guy )
-{
-	Assert( guy.IsTitan() )
-	Assert( guy.IsNPC() )
-	SetStanceStand( guy.GetTitanSoul() )
-}
-
-void function GlobalAnimEvent_StanceStanding( entity guy )
-{
-	Assert( guy.IsTitan() )
-	Assert( guy.IsNPC() )
-	SetStanceStanding( guy.GetTitanSoul() )
 }
 
 void function GlobalAnimEvent_EnablePlanting( entity guy )
@@ -1893,24 +1861,6 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 		}
 	}
 
-	entity soul
-
-	if ( ent )
-	{
-		// the entity we are animating relative to may change during the animation
-		if ( IsSoul( ent ) )
-		{
-			soul = ent
-			ent = soul.GetTitan()
-			if ( !IsValid( ent ) )
-				return
-		}
-		else if ( HasSoul( ent ) )
-		{
-			soul = ent.GetTitanSoul()
-		}
-	}
-
 	CalcSequenceBlendTime( sequence, player, ent )
 
 	if ( player.IsPlayer() )
@@ -2108,17 +2058,6 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 	if ( player.IsNPC() )
 	{
 		if ( !IsAlive( player ) )
-			return
-	}
-
-	// time passed
-	if ( soul )
-	{
-		if ( !IsValid( soul ) )
-			return
-
-		ent = soul.GetTitan()
-		if ( !IsAlive( ent ) )
 			return
 	}
 

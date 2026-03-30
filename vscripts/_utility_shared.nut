@@ -1258,23 +1258,6 @@ bool function GetDoomedState( entity ent )
 	return soul.IsDoomed()
 }
 
-bool function TitanCoreInUse( entity player )
-{
-	Assert( player.IsTitan() )
-
-	if ( !IsAlive( player ) )
-		return false
-
-	return Time() < SoulTitanCore_GetExpireTime( player.GetTitanSoul() )
-}
-
-float function GetTitanCoreTimeRemaining( entity player )
-{
-	Assert( player.IsTitan() )
-
-	return SoulTitanCore_GetExpireTime( player.GetTitanSoul() ) - Time()
-}
-
 bool function CoreAvailableDuringDoomState()
 {
 	return true
@@ -2648,19 +2631,6 @@ array<vector> function VectorArrayWithin( array<vector> Array, vector origin, fl
 			resultArray.append( p )
 	}
 	return resultArray
-}
-
-string function GetTitanChassis( entity titan )
-{
-	if ( !("titanChassis" in titan.s ) )
-	{
-		Assert( HasSoul( titan ) )
-
-		entity soul = titan.GetTitanSoul()
-		titan.s.titanChassis <- GetSoulTitanSubClass( soul )
-	}
-
-	return expect string( titan.s.titanChassis )
 }
 
 vector function ClampVectorToCube( vector vecStart, vector vec, vector cubeOrigin, float cubeSize )

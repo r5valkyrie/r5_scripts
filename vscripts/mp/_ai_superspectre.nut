@@ -133,8 +133,6 @@ void function DoSuperSpectreDeath( entity npc, var damageInfo )
 		vector origin = npc.GetWorldSpaceCenter()
 		EmitSoundAtPosition( npc.GetTeam(), origin, "ai_reaper_explo_3p" )
 		npc.Gib( DamageInfo_GetDamageForce( damageInfo ) )
-		if ( giveBattery )
-			SpawnTitanBatteryOnDeath( npc, null )
 
 		return
 	}
@@ -165,10 +163,6 @@ void function DoSuperSpectreDeath( entity npc, var damageInfo )
 			if ( IsValid( npc ) )
 			{
 				thread SuperSpectreNukes( npc, attacker )
-				if ( giveBattery )
-				{
-					SpawnTitanBatteryOnDeath( npc, null )
-				}
 			}
 		}
 	)

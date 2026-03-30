@@ -516,41 +516,6 @@ void function CodeCallback_PlayerRequestClimbInNPCTitan( npcTitan, player )
 
 
 //////////////////////////////////////////////////////////
-entity function CreateNPCTitanFromSettings( string settings, int team, vector origin, vector angles )
-{
-	entity npc = CreateNPCTitan( settings, team, origin, angles )
-	DispatchSpawn( npc )
-	return npc
-}
-
-void function CreateTitanModelAndSkinSetup( entity npc )
-{
-	asset currentModel = npc.GetModelName()
-
-	if ( IsSingleplayer() )
-	{
-		switch ( currentModel )
-		{
-			case $"":
-			case $"mdl/titans/buddy/titan_buddy.rmdl":
-			case $"mdl/titans/light/sp_titan_light_locust.rmdl":
-			case $"mdl/titans/light/sp_titan_light_raptor.rmdl":
-			case $"mdl/titans/heavy/sp_titan_heavy_deadbolt.rmdl":
-			case $"mdl/titans/heavy/sp_titan_heavy_ogre.rmdl":
-			case $"mdl/titans/medium/sp_titan_medium_ajax.rmdl":
-			case $"mdl/titans/medium/sp_titan_medium_wraith.rmdl":
-				break
-
-			default:
-				printt( "NPC titan at " + npc.GetOrigin() + " had non-sp titan model " + currentModel )
-				break
-		}
-	}
-
-	string settings = npc.ai.titanSettings.titanSetFile
-	asset model = $"mdl/titans/buddy/titan_buddy.rmdl"//GetPlayerSettingsAssetForClassName( settings, "bodymodel" )
-	npc.SetValueForModelKey( model )
-}
 
 // NEW TITAN STUFF BROUGHT OVER FROM TOWER DEFENSE R1
 //string function GetRandomTitanWeapon()

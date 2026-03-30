@@ -233,11 +233,6 @@ DamageHistoryStruct function StoreDamageHistoryAndUpdateR2( entity storeEnt, flo
 	damageHistory.time = time
 	damageHistory.weaponMods = weaponMods
 
-	if ( IsSoul( storeEnt ) )
-	{
-		damageHistory.victimIsTitan = true
-	}
-	else
 	{
 		// clear the damage history
 		if ( GetHealthFrac( storeEnt ) == 1.0 )

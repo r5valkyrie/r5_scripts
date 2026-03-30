@@ -16,8 +16,6 @@ void function MP_PlayerPostInit( entity self )
 	entity player = self
 	Assert( !player.hasSpawned )
 
-	player.InitMPClasses()
-
 	player.hasSpawned = true
 }
 

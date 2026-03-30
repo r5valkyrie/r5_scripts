@@ -158,8 +158,6 @@ function MonitorPilot( entity turret, entity player )
 	playerMover.NonPhysicsRotateTo( turret.GetAngles(), moveTime, 0, 0 )
 	player.FreezeControlsOnServer()
 
-	StorePilotWeapons( player )
-
 	OnThreadEnd(
 	function() : ( turret, player, playerMover, startOrigin )
 		{
@@ -169,7 +167,6 @@ function MonitorPilot( entity turret, entity player )
 				player.UnforceStand()
 				ClearPlayerAnimViewEntity( player )
 				player.UnfreezeControlsOnServer()
-				RetrievePilotWeapons( player )
 				ViewConeZeroInstant( player )
 				foreach( int button in TURRET_CANCEL_BUTTONS )
 					RemoveButtonPressedPlayerInputCallback( player, button, PROTO_DisembarkATTurret )

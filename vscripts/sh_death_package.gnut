@@ -492,7 +492,6 @@ void function DelayedBodyGroupBreak( entity titan, int bodyGroupIndex, int state
 	titan.EndSignal( "TitanEjectionStarted" )
 	titan.EndSignal( "TitanUnDoomed" )
 
-	if ( !HasSoul( titan ) )
 		return
 
 	entity soul = titan.GetTitanSoul()

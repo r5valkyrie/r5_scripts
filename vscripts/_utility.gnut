@@ -96,31 +96,6 @@ void function Utility_Init()
 	#endif
 }
 
-void function GiveAllTitans()
-{
-
-	array<entity> players = GetPlayerArray()
-	foreach ( player in players )
-	{
-		if ( player.IsTitan() )
-		{
-			entity soul = player.GetTitanSoul()
-			if ( soul )
-			{
-				SoulTitanCore_SetNextAvailableTime( soul, 1 )
-			}
-		}
-	}
-
-	array<entity> titans = GetNPCArrayByClass( "npc_titan" )
-	foreach ( titan in titans )
-	{
-		entity soul = titan.GetTitanSoul()
-		if ( soul )
-			SoulTitanCore_SetNextAvailableTime( soul, 1 )
-	}
-}
-
 #if DEVELOPER
 void function KillAllBadguys()
 {
@@ -1387,18 +1362,6 @@ void function GM_AddPlayingThinkFunc( void functionref() callbackFunc )
 	Assert( !svGlobal.playingThinkFuncTable.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with GM_AddPlayingThinkFunc" )
 
 	svGlobal.playingThinkFuncTable.append( callbackFunc )
-}
-
-void function GM_AddThirtySecondsLeftFunc( void functionref() callbackFunc )
-{
-	Assert( !svGlobal.thirtySecondsLeftFuncTable.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with GM_AddThirtySecondsLeftFunc" )
-
-	svGlobal.thirtySecondsLeftFuncTable.append( callbackFunc )
-}
-
-void function GM_SetMatchProgressAnnounceFunc( void functionref( int ) callbackFunc )
-{
-	svGlobal.matchProgressAnnounceFunc = callbackFunc
 }
 
 // Get an absolute offset poistion to an entity even if it's been rotated in world space
@@ -5066,22 +5029,20 @@ string function ReloadScriptsInternal()
 		return ""
 	}
 
-	TitanEmbark_Init()
-
 	ReloadScriptCallbacks()
 
 	reloadingScripts = false
 	ReloadingScriptsEnd()
 
-	return ( "reloaded server scripts" )
+	return ("reloaded server scripts")
 }
 
 string function ReloadScripts()
 {
 	ServerCommand( "fs_report_sync_opens 0" ) // makes reload scripts slow
-	delaythread ( 0 ) ReloadScriptsInternal()
+	delaythread( 0 ) ReloadScriptsInternal()
 
-	return ( "reloaded server scripts" )
+	return ("reloaded server scripts")
 }
 
 int function GameTime_TimeLimitSeconds()
@@ -5185,11 +5146,6 @@ float function GameTime_TimeSpentInCurrentState()
 int function GameScore_GetFirstToScoreLimit()
 {
 	return expect int( level.firstToScoreLimit )
-}
-
-bool function GameScore_AllowPointsOverLimit()
-{
-	return svGlobal.allowPointsOverLimit
 }
 
 int function GameScore_GetWinningTeam()
@@ -6286,35 +6242,7 @@ void function Dev_GetMapCenterBasedOnNavmesh()
 	Warning( "Map center (from NAVMESH) coordinates in console! Look for the PINK sphere" )
 	printt( "\tMap center (from NAVMESH):", navmeshCenter )
 }
-
-	void function HP( int index )
-	{
-		if( index > GetPlayerArray().len() - 1 || index < 0 )
-		{
-			printt("Player doesn't exist.")
-			return
-		}
-		
-		entity p = p( index )
-		
-		if( IsValid( p ) )
-		{
-			printt( "\n\n", p, "\n", "Health:", p.GetHealth(), "Shields:", p.GetShieldHealth() )
-		}
-		else 
-		{
-			printt("Invalid entity.")
-		}
-	}
 #endif 
-
-#if SERVER //ty cafe for remotefunc impl
-	// void function CreateClientLight( entity player, LocPair loc, int color = 0, float brightness = 255, exponent = 0.5 )
-	// {
-		// if( IsValid( player ) )
-			// Remote_CallFunction_NonReplay( player, "ServerCallback_SpawnClientSideDynamicLight", loc.origin, loc.angles, color, brightness, exponent )
-	// }
-#endif
 
 float function GetWeaponReloadTime( entity weapon, int currentClipCount )
 {
@@ -6670,18 +6598,6 @@ void function AutoGiveInfinite( entity player, entity pickup, entity weapon )
 {
 	DEV_ToggleInfiniteAmmo_Internal( player, [ weapon ], true, false )
 }
-
-#if DEVELOPER 
-	entity function GetPrimary()
-	{
-		return p(0).GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
-	}
-	
-	entity function GetAkimbo()
-	{
-		return p(0).GetNormalWeapon( WEAPON_INVENTORY_SLOT_DUALPRIMARY_0 )
-	}
-#endif
 
 void function UnloadPak( string pak )
 {

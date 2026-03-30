@@ -1,26 +1,17 @@
-untyped
-
 //=========================================================
 //	_mapspawn.nut
-//	Called on newgame or transitions, BEFORE entities have been created and initialized
+//  Called on newgame or transitions, BEFORE entities have been created and initialized
 //=========================================================
 
 global function CodeCallback_MapSpawn
-global function CreateMapEditorProp
-global function CreateEditorProp
+global function RegisterGeoFixAsset
 global function PlaylistDeathTrigger_OnEnter
+global function IsInForgedShadows
+global int ATTACHMENTID_INVALID = -1
+
 global table _ClientCommandCallbacks = {}
 global entity _cc = null
 global entity _sc = null
-global int ATTACHMENTID_INVALID = -1
-
-
-// dumpsite for other files
-
-global const int TEAM_COUNT = 31
-
-// end dumpsite
-
 
 global struct spawnCallbackFuncArray
 {
@@ -42,39 +33,41 @@ global struct spawnCallbackEditorClassFuncArray
 }
 
 global typedef pilotEliminationDialogueCallbackType void functionref( int, array<entity>, int, array<entity> )
-global typedef OnPlayerWeaponActivatedTypeCallback void functionref( entity, entity, entity )
 
 global struct SvGlobals
 {
 	entity worldspawn
 
-	array<spawnCallbackFuncArray>                   spawnCallbackFuncs
-	array<spawnCallbackEditorClassFuncArray>        spawnCallbackEditorClassFuncs
-	array<spawnCallbackFuncArray_scriptNoteworthy>  spawnCallbackFuncs_scriptNoteworthy
+	array<spawnCallbackFuncArray> 					spawnCallbackFuncs
+	array<spawnCallbackEditorClassFuncArray>		spawnCallbackEditorClassFuncs
+	array<spawnCallbackFuncArray_scriptNoteworthy>	spawnCallbackFuncs_scriptNoteworthy
 	array<void functionref( entity )> 				npcSpawnCallbackFuncs
+
 	table<string, array<void functionref( entity )> > spawnCallbacks_scriptName
 
-	array<pilotEliminationDialogueCallbackType> pilotEliminationDialogueCallbacks
+	array<pilotEliminationDialogueCallbackType> 	pilotEliminationDialogueCallbacks
 	table<string, array<bool functionref( entity player, entity healthpack)> > onTouchHealthKitCallbacks
 	array<void functionref( entity )> onClientConnectedCallbacks
 	array<void functionref( entity )> onObserverConnectedCallbacks
 	array<void functionref( entity )> onClientReloadConnectedCallbacks
 	array<void functionref( entity )> onPlayerRespawnedCallbacks
 	array<void functionref( entity )> onPlayerPostRespawnedCallbacks
-	array<void functionref()> onTooManyNPCsCallbacks
+	array<void functionref( entity player, entity npc_titan )> onPilotEmbarkingTitanCallbacks
+	array<void functionref( entity player )> onPilotBecomingTitanCallbacks
+	array<void functionref( entity player )> onTitanBecomingPilotCallbacks
 	array<void functionref( entity player, entity npc_titan )> onPilotBecomesTitanCallbacks
 	array<void functionref( entity player, entity npc_titan )> onTitanBecomesPilotCallbacks
-	array<void functionref( entity, entity, entity) > soulTransferFuncs
-	array<void functionref( entity titanSoul )> soulSettingsChangeFuncs
-	array<void functionref( entity titanSoul )> soulInitFuncs
+	array<void functionref()> onTooManyNPCsCallbacks
+	array<void functionref( entity player, entity offhandWeapon )> onPlayerUsedOffhandCallbacks
+	array<void functionref( entity )> givePlayerDoubleJumpCallbacks
 	table<string, array<void functionref( entity, var )> > damageByCallbacks
-	array< OnPlayerWeaponActivatedTypeCallback > onPlayerWeaponActivatedCallbacks
+
+	array<void functionref( entity observer, entity newTarget )> onPlayerObserverTargetChangedCallbacks
 
 	bool functionref( entity ) gameModeAbandonPenaltyApplies
 
 	bool functionref() timelimitCompleteFunc
 	bool functionref( entity ) titanAvailabilityCheck
-	bool cloakBreaksOnMelee = true //Reexamine if still needed if we have same behavior for cloak in MP/SP.
 	float defaultPilotLeechTime = 2.8
 	int winReason
 	string winReasonText
@@ -82,68 +75,51 @@ global struct SvGlobals
 	string gameWonAnnouncement
 	string gameLostAnnouncement
 
-	array<void functionref( entity observer, entity newTarget )> onPlayerObserverTargetChangedCallbacks
-
-	array<void functionref( entity player )> onPilotBecomingTitanCallbacks
-	array<void functionref( entity player )> onTitanBecomingPilotCallbacks
-
-	table< int, int > npcsSpawnedThisFrame_scriptManagedArray
-
 	float pilotRespawnDelay = 0.0
 
-	array<void functionref( entity, var )> soulDeathFuncs
-
 	table<string, void functionref(entity)> globalAnimEventCallbacks
-
-	array<void functionref( entity titan, TitanLoadoutDef newTitanLoadout )> onTitanGetsNewLoadoutCallbacks
-	array<void functionref( entity player, PilotLoadoutDef newTitanLoadout )> onPlayerGetsNewPilotLoadoutCallbacks
-	array<void functionref( TitanLoadoutDef newTitanLoadout )> onUpdateDerivedTitanLoadoutCallbacks
-	array<void functionref( entity player, TitanLoadoutDef newTitanLoadout )> onUpdateDerivedPlayerTitanLoadoutCallbacks
-	array<void functionref( PilotLoadoutDef newPilotLoadout )> onUpdateDerivedPilotLoadoutCallbacks
+	table<string, void functionref(entity,array<string>)> globalAnimEventTokenizeCallbacks
 
 	array<void functionref( entity victim, entity attacker, var damageInfo )> onPlayerKilledCallbacks
 	array<void functionref( entity victim, entity attacker, var damageInfo )> onNPCKilledCallbacks
 
 	array<void functionref( entity player, entity weapon, string weaponName, int ammoUsed, vector attackOrigin, vector attackDir )> onWeaponAttackCallbacks
+	array<void functionref( entity player, entity weapon )> onPlayerOverheatCallbacks
+
 	array<void functionref( entity victim, var damageInfo )> onTitanDoomedCallbacks
 	array<void functionref( entity victim, entity attacker )> onTitanHealthSegmentLostCallbacks
 	array<void functionref( entity player )> onClientConnectingCallbacks
+	array<void functionref( entity player )> onPreClientDisconnectedCallbacks
 	array<void functionref( entity player )> onClientDisconnectedCallbacks
 	array<void functionref( entity player )> onPersistenceUpdateCompletedCallbacks
 	array<void functionref( entity player )> onClientConnectionLostCallbacks
 	array<void functionref( entity player )> onClientConnectionRestoredCallbacks
 	array<void functionref( entity attacker, entity victim )> onPlayerAssistCallbacks
-	array<void functionref( entity )> givePlayerDoubleJumpCallbacks
+
 	array<void functionref( entity player )> onPlayerDropsScriptedItemsCallbacks
 	array<void functionref( entity player )> onPlayerClassChangedCallbacks
-	array<void functionref( entity player, entity weapon )> onPlayerOverheatCallbacks
+	array<void functionref( entity )> onPlayerClassActuallyChangedCallbacks
+
 	array<void functionref( entity ship, string anim )> onWaveSpawnDropshipSpawned
+	array<bool functionref( entity player, entity zipline, vector ziplineClosestPoint )> canUseZiplineCallbacks
 
 	table<string, array<void functionref( entity ent )> >onEntityChangedTeamCallbacks
 
 	table<string, bool functionref( entity player, array<string>args )> clientCommandCallbacks
 	table<string, void functionref( entity player, array<string>args )> clientCommandCallbacksVoid
+
 	array<void functionref()>[ eGameState._count_ ] gameStateEnterCallbacks
 	array<void functionref()>[ eGameState._count_ ] gameStateEnteredCallbacks
 	array<void functionref()> onSetPreGameStartTimeCallbacks
-	bool allowPointsOverLimit = false
 
 	bool bubbleShieldEnabled = true
 
 	entity levelEnt
 
-	//TODO: Get rid of these and use the new StartParticleEffectInWorld_ReturnEntity etc functions
-	entity fx_CP_color_enemy        //Used for setting control points on FX
-	entity fx_CP_color_friendly     //Used for setting control points on FX
-	entity fx_CP_color_neutral      //Used for setting control points on FX
-
-	array<entity>[ TEAM_COUNT ] classicMPDropships
-	bool evacEnabled = false
+	array< entity >[ABSOLUTE_MAX_TEAMS] classicMPDropships
 
 	void functionref( entity player ) observerFunc
 	array<void functionref()> playingThinkFuncTable
-	array<void functionref()> thirtySecondsLeftFuncTable
-	void functionref( int progress ) matchProgressAnnounceFunc
 
 	void functionref( entity player ) cp_VO_NagFunc
 	void functionref( entity player, entity hardpoint, float distance ) cp_VO_ApproachFunc
@@ -151,7 +127,7 @@ global struct SvGlobals
 
 	table<int, string> hardpointStringIDs
 
-	entity[ TEAM_COUNT ] flagSpawnPoints
+	entity[ABSOLUTE_MAX_TEAMS] flagSpawnPoints
 
 	vector distCheckTestPoint
 
@@ -159,46 +135,26 @@ global struct SvGlobals
 
 	array<void functionref( entity, entity )> onLeechedCustomCallbackFunc
 
-	bool forceSpawnAsTitan                      = false
-	bool forceSpawnIntoTitan                    = false
-	bool forceDisableTitanfalls                 = false
-	bool titanfallEnabled                       = true
+	bool forceSpawnAsTitan = false
+	bool forceSpawnIntoTitan = false
+	bool forceDisableTitanfalls = false
+	bool titanfallEnabled = true
 
-	//RoundWinningKillReplay related
-	entity roundWinningKillReplayViewEnt        = null
-	entity roundWinningKillReplayVictim         = null
-	int roundWinningKillReplayInflictorEHandle  = -1
-	bool watchingRoundWinningKillReplay         = false
+	bool forceNoFinalRoundDraws = false //Setting this to true will force a round based mode to keep playing rounds until a winner is determined. Game will not end on draw.
 
-	bool forceNoFinalRoundDraws                 = false //Setting this to true will force a round based mode to keep playing rounds until a winner is determined. Game will not end on draw.
-
-	bool roundBasedTeamScore_RoundReset         = true  // if true, reset team scores at the start of each round.
-	bool isInPilotGracePeriod                   = false // if true, all players will be allowed to switch loadouts.
-	
-	table<string, void functionref(entity,array<string>)> globalAnimEventTokenizeCallbacks
-	array<bool functionref( entity player, entity zipline, vector ziplineClosestPoint )> canUseZiplineCallbacks
-	
-	// r5 stuff
-	array<void functionref(entity, entity)> onPilotEmbarkingTitanCallbacks
-	array<void functionref(entity, entity)> onPlayerUsedOffhandCallbacks
-	array<void functionref( entity )> onPlayerClassActuallyChangedCallbacks
-	array< void functionref( entity ) > onPreClientDisconnectedCallbacks
-	array< void functionref( entity, entity, int ) > onDeathBoxSpawnedCallbacks
-	
-	// next spectator target handling
-	array< entity functionref( entity, bool ) > onGetBestObserverTargetCallbacks
+	bool roundBasedTeamScore_RoundReset = true //if true, reset team scores at the start of each round.
+	bool isInPilotGracePeriod = false // if true, all players will be allowed to switch loadouts
+	//#if HAS_PETS_NONCOMBAT
+		array<void functionref(entity, entity)> onGrenadeTossCallbacks
+	//#endif
 }
 
 global SvGlobals svGlobal
 
 void function CodeCallback_MapSpawn() // original script entry point
 {
-	//seterrorhandler(void function() {})
 	ScriptCompilerTest()
 	LoadDiamond()
-	
-	PrecacheSDKEntities()
-	PrecacheSDKWeapons()
 
 	_cc = CreateEntity( "point_clientcommand" )
 	PrecacheEntity( "env_entity_dissolver" )
@@ -249,21 +205,18 @@ void function CodeCallback_MapSpawn() // original script entry point
 	FlagInit( "IgnoreStartSpawn" )
 	FlagInit( "ReadyToStartMatch" ) // past waiting for players, in prematch
 
-	#if DEVELOPER
+	#if DEV
 		FlagInit( "ShowExplosionRadius" )  // temp HACK
 	#endif
 
 	RegisterSignal( "OnChangedPlayerClass" )
 	RegisterSignal( "OnChangedPlayerClass_ActuallyChanged" )
-	RegisterSignal( "UpdatePlayerStatusCounts" )
 	RegisterSignal( "_disconnectedInternal" )
-	RegisterSignal( "OnChangedPlayerClass" )
 	RegisterSignal( "OnDisconnecting" )
-	RegisterSignal( "SquadEliminated" )
 	RegisterSignal( "TeamChange" )
 	RegisterSignal( "LeftClass" )
-	RegisterSignal( "waitOver" )
 	RegisterSignal( "forever" )
+	RegisterSignal( "waitOver" )
 	RegisterSignal( "HitSky" )
 
 	AddCallback_EntitiesDidLoad( ActivateSkyBox )
@@ -271,13 +224,16 @@ void function CodeCallback_MapSpawn() // original script entry point
 	AddCallback_EntitiesDidLoad( PlaylistDeathTriggerFix  )
 	AddCallback_EntitiesDidLoad( PlaylistOOBTriggerFix  )
 
-	#if DEVELOPER
+	#if DEV
 		ModelViewer_Init()
-	#endif // DEVELOPER
+		thread AINFileIsUpToDateCheck()
+		thread NavmeshUpToDateCheck()
+	#endif
+
 	AddSpawnCallback( "player", MP_PlayerPostInit )
 	AddSpawnCallback( "trigger_hurt", InitDamageTriggers )
 
-	#if DEVELOPER
+	#if DEV
 	if ( GetCurrentPlaylistVarBool( "script_leak", false ) )
 		thread ScriptLeakDetector()
 	#endif
@@ -291,7 +247,7 @@ void function CodeCallback_MapSpawn() // original script entry point
 	VPKNotifyFile( "cfg/startup_dedi.cfg" )
 	VPKNotifyFile( "cfg/startup_dedi_retail.cfg" )
 
-	//#if DEVELOPER
+	//#if DEV
 	//	MarkNPCForAutoPrecache( "npc_dropship" )
 	//	MarkNPCForAutoPrecache( "npc_frag_drone_throwable" )
 	//	MarkNPCForAutoPrecache( "npc_marvin" )
@@ -301,15 +257,8 @@ void function CodeCallback_MapSpawn() // original script entry point
 	//	MarkNPCForAutoPrecache( "npc_super_spectre" )
 	//	MarkNPCForAutoPrecache( "npc_turret_mega" )
 	//#endif
+
 	SV_CL_Shared_Init()
-
-	if ( IsLobby() ){
-		foreach ( asset model in LOBBY_ANNIVERSARY_BALLOON_MDLS )
-		{
-			PrecacheModel( model )
-			PrecacheModel( $"mdl/celebration/float_balloons/apexlogo_float_balloon_01.rmdl" )
-		}}
-
 }
 
 void function ActivateSkyBox()
@@ -433,180 +382,13 @@ void function PlaylistOOBTriggerFix() //Note: This will work on playlists with m
 	}
 }
 
-void function PrecacheSDKWeapons()
+bool function IsInForgedShadows( entity player )
 {
-	PrecacheWeapon( $"mp_weapon_droneplasma" )//remove these from here later!!! -kral
-	PrecacheWeapon( $"mp_weapon_dronerocket" )
-	PrecacheWeapon( $"mp_ability_sonic_blast" )
-	PrecacheWeapon( $"mp_ability_wrecking_ball" )
-	PrecacheWeapon( $"mp_weapon_grenade_gravity" )
+	if ( !IsValid( player ) )
+		return false
 
-	PrecacheWeapon( $"mp_weapon_melee_survival" )
-	PrecacheWeapon( $"melee_pilot_emptyhanded" )
-	PrecacheWeapon( $"mp_weapon_melee_boxing_ring" )
-	PrecacheWeapon( $"melee_boxing_ring" ) // Olympus ring
-	
-	PrecacheWeapon( $"npc_weapon_lstar" )
-	PrecacheWeapon( $"npc_weapon_hemlok" )
-	PrecacheWeapon( $"npc_weapon_energy_shotgun" )
-	PrecacheWeapon( $"mp_weapon_spectre_spawner" )
+	if ( StatusEffect_HasSeverity( player, eStatusEffect.shadow_form ) )
+		return true
 
-	PrecacheWeapon( $"mp_weapon_mounted_turret_weapon" )
-	PrecacheWeapon( $"mp_weapon_mounted_turret_placeable" )
-	
-	//S0 Dev Protos
-	PrecacheWeapon( $"mp_weapon_cover_wall_proto" )
-	PrecacheWeapon( $"mp_weapon_debris_trap" )
-	PrecacheWeapon( $"mp_weapon_shotgun_kick" )
-	PrecacheWeapon( $"mp_weapon_grenade_flashbang" )
-	PrecacheWeapon( $"mp_weapon_grenade_barrier" )
-	PrecacheWeapon( $"mp_weapon_concussive_breach" )
-	PrecacheWeapon( $"mp_ability_spotter_sight" )
-	PrecacheWeapon( $"mp_ability_split_timeline" )
-	PrecacheWeapon( $"mp_ability_sonic_shout" )
-	PrecacheWeapon( $"mp_ability_riot_shield" )
-	PrecacheWeapon( $"mp_ability_maelstrom_javelin" )
-	PrecacheWeapon( $"mp_ability_loot_compass" )
-	PrecacheWeapon( $"mp_ability_haunt" )
-	PrecacheWeapon( $"mp_ability_ground_slam" )
-	PrecacheWeapon( $"mp_ability_dodge_roll" )
-
-	//Gadget Items
-	PrecacheWeapon( $"mp_ability_mobile_respawn_beacon" )
-	PrecacheWeapon( $"mp_ability_void_ring" )
-	//Custom Heirlooms
-	PrecacheWeapon( $"melee_macks_knife" )
-	PrecacheWeapon( $"mp_weapon_macks_knife_primary" )//needs to be a mod, we dont want custom models in sdk rpaks
-
-	//Titanfall Weapons
-	PrecacheWeapon( $"mp_weapon_satchel" )
-}
-
-void function PrecacheSDKEntities()
-{
-	///////////////////////npcs///////////////////////
-	PrecacheModel( $"mdl/Humans/grunts/imc_grunt_lmg_corpse.rmdl" )
-	PrecacheModel( $"mdl/creatures/prowler/prowler_apex.rmdl" )
-	PrecacheModel( $"mdl/creatures/spider/spider.rmdl" )
-	PrecacheModel( $"mdl/robots/marvin/marvin.rmdl" )
-	PrecacheModel( $"mdl/weapons/sentry_turret/sentry_turret.rmdl" )
-	PrecacheModel( $"mdl/Humans/class/medium/combat_dummie_medium.rmdl" )
-	PrecacheModel( $"mdl/Humans/class/medium/spectre_v20_corporate_ai.rmdl" )
-	
-	///////////////////////misc///////////////////////
-	PrecacheModel( $"mdl/vehicle/olympus_hovercraft/olympus_hovercraft_v2.rmdl")
-	PrecacheModel( $"mdl/communication/terminal_usable_imc_01.rmdl" )
-	PrecacheModel( $"mdl/robots/drone_frag/drone_frag.rmdl" )
-
-	//////////////////////NPC CACHE/////////////////////
-	//PrecacheModel( $"mdl/robots/super_spectre/super_spectre_v1.rmdl")
-
-	////////////////////DELETE THESE PARTICLES WHEN WE GET EFCT!!!!/////////////////////
-
-	PrecacheParticleSystem( $"P_crypto_map_arm_glow" )
-	PrecacheParticleSystem( $"P_crypto_map_center_glow" )
-	PrecacheParticleSystem( $"P_cryp_sat_act_world" )
-	PrecacheParticleSystem( $"P_crypto_map_arm_nrg" )
-	PrecacheParticleSystem( $"P_loba_staff_holo_loop" )
-	PrecacheParticleSystem( $"P_lob_menu_gun_ring" )
-	PrecacheParticleSystem( $"P_loba_staff_menu_dlight" )
-	PrecacheParticleSystem( $"P_lob_menu_gun_grab" )
-	PrecacheParticleSystem( $"P_loba_staff_holo_end_menu" )
-	PrecacheParticleSystem( $"P_lob_menu_hand_glow" )
-	PrecacheParticleSystem( $"P_lob_menu_staff_grab" )
-	PrecacheParticleSystem( $"P_warp_brac_loop_gear" )
-	PrecacheParticleSystem( $"P_warp_brac_loop_gear_3" )
-	PrecacheParticleSystem( $"P_warp_brac_loop_gear_2" )
-	PrecacheParticleSystem( $"P_warp_brac_toss_arm" )
-	PrecacheParticleSystem( $"P_warp_brac_ring_hld" )
-	PrecacheParticleSystem( $"P_mrb_destruction" )
-	PrecacheParticleSystem( $"P_skydive_smoke_shdw" )
-
-
-	//////R2 STUFFS//////
-	PrecacheModel( $"mdl/weapons/arms/pov_titan_medium_cockpit.rmdl" )
-	PrecacheModel( $"mdl/weapons/arms/buddypov.rmdl" )
-	PrecacheWeapon( $"mp_titanweapon_flightcore_rockets" ) // Not a loot
-	PrecacheWeapon( $"mp_titancore_laser_cannon" ) // Not a loot
-	PrecacheWeapon( $"mp_ability_titanfall" ) // Not a loot
-	
-	PrecacheWeapon( $"mp_ability_echo_locator" )
-}
-
-void function FS_RestartServerAfterSomeTimeWithoutPlayers()
-{
-	int timeWithoutPlayers
-	int previousPlayerCount
-	int timeToWaitWithoutPlayers = GetCurrentPlaylistVarInt( "flowstate_seconds_to_wait_without_players_before_restarting", 3600 )
-
-	while( true )
-	{
-		int playerCount = GetPlayerArray().len()
-		
-		if( playerCount == 0 && previousPlayerCount == 0 )
-		{
-			timeWithoutPlayers++
-		} else
-		{
-			timeWithoutPlayers = 0
-		}
-		
-		if( timeWithoutPlayers >= timeToWaitWithoutPlayers )
-		{
-			Warning( "Timeout without players has been reached - Reloading server to the same map" )
-			GameRules_ChangeMap( GetMapName(), GetCurrentPlaylistName() )
-			break
-		}
-
-		previousPlayerCount = playerCount
-		wait 1
-	}
-}
-
-entity ornull function CreateEditorProp(asset a, vector pos, vector ang, bool mantle = false, float fade = 2000, float idk = -1)
-{
-	if(a == $"mdl/humans/class/medium/combat_dummie_medium.rmdl")
-	{
-		thread Safe_CreateMovementMapDummieFromMapLoad(pos,ang)
-		return null
-	}
-	
-	entity e = CreatePropDynamic(a,pos,ang,SOLID_VPHYSICS,fade)
-	e.kv.fadedist = fade
-    e.kv.renderamt = 255
-	e.kv.rendermode = 3
-	e.kv.rendercolor = "255 255 255 255"
-	if(mantle) e.AllowMantle()
-	e.SetScriptName("editor_placed_prop")
-
-	// if(GetCurrentPlaylistVarBool( "flowstateSURF", true ))
-		// _OnPropDynamicSpawnedSURF(e)
-	
-	
-	return e
-}
-
-entity function CreateMapEditorProp(asset a, vector pos, vector ang, bool mantle = false, float fade = 5000, int realm = -1, float scale = 1)
-{
-	entity e = CreatePropDynamic(a,pos,ang,SOLID_VPHYSICS,fade)
-	e.kv.fadedist = fade
-	e.kv.rendermode = 0
-	e.kv.renderamt = 1
-	e.kv.solid = 6
-	e.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
-	if(mantle) e.AllowMantle()
-    
-	if (realm > -1) {
-		e.RemoveFromAllRealms()
-		e.AddToRealm(realm)
-	}
-	string positionSerialized = pos.x.tostring() + "," + pos.y.tostring() + "," + pos.z.tostring()
-	string anglesSerialized = ang.x.tostring() + "," + ang.y.tostring() + "," + ang.z.tostring()
-    
-	e.SetScriptName("editor_placed_prop")
-	e.e.gameModeId = realm
-
-    e.SetModelScale( scale )
-    
-	return e
+	return false
 }

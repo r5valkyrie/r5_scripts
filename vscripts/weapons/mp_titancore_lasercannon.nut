@@ -89,8 +89,6 @@ void function LaserCore_OnPlayedOrNPCKilled( entity victim, entity attacker, var
 #endif
 
 bool function OnAbilityCharge_LaserCannon( entity weapon )
-{
-	OnAbilityCharge_TitanCore( weapon )
 
 #if CLIENT
 	if ( !InPrediction() || IsFirstTimePredicted() )

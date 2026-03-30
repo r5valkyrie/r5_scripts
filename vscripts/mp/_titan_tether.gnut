@@ -138,9 +138,6 @@ void function TitanTether_Remove( TetherData tetherData )
 	entity endEnt = tetherData.endpointEnts[1]
 	if ( IsValid( endEnt ) )
 	{
-		if ( IsSoul( endEnt ) )
-			endEnt = endEnt.GetTitan()
-
 		if ( endEnt.IsValidTetherID( tetherData.codeTetherID ) )
 			endEnt.RemoveTether( tetherData.codeTetherID )
 	}

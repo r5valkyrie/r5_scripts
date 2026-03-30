@@ -213,42 +213,6 @@ void function ArcCannon_ChargeEnd( entity weapon, entity player = null )
 #if SERVER
 void function ConvertTitanShieldIntoBonusCharge( entity soul, entity weapon )
 {
-	weapon.EndSignal( ARC_CANNON_SIGNAL_CHARGEEND )
-	weapon.EndSignal( "OnDestroy" )
-
-	float maxShieldDecay = OVERCHARGE_MAX_SHIELD_DECAY
-	float bonusChargeFraction = OVERCHARGE_BONUS_CHARGE_FRACTION
-	float shieldDecayMultiplier = OVERCHARGE_SHIELD_DECAY_MULTIPLIER
-	int shieldHealthMax = soul.GetShieldHealthMax()
-	float chargeRatio = GetArcCannonChargeFraction( weapon )
-
-	while ( 1 )
-	{
-		if ( !IsValid( soul ) || !IsValid( weapon ) )
-			break
-
-		float baseCharge = GetWeaponChargeFrac( weapon ) // + GetOverchargeBonusChargeFraction()
-		float charge = clamp( baseCharge * ( 1 / chargeRatio ), 0.0, 1.0 )
-		if ( charge < 1.0 || maxShieldDecay > 0)
-		{
-			int shieldHealth = soul.GetShieldHealth()
-
-			//Slight inconsistency in server updates, this ensures it never takes too much.
-			if ( shieldDecayMultiplier > maxShieldDecay )
-				shieldDecayMultiplier = maxShieldDecay
-			maxShieldDecay -= shieldDecayMultiplier
-
-			float shieldDecayAmount = shieldHealthMax * shieldDecayMultiplier
-			float newShieldAmount = shieldHealth - shieldDecayAmount
-			soul.SetShieldHealth( max( newShieldAmount, 0 ) )
-			soul.nextRegenTime = Time() + GetShieldRegenTime( soul )
-
-			if ( shieldDecayAmount > shieldHealth )
-				bonusChargeFraction = bonusChargeFraction * ( shieldHealth / shieldDecayAmount )
-			weapon.SetWeaponChargeFraction( baseCharge + bonusChargeFraction )
-		}
-		wait 0.1
-	}
 }
 #endif
 

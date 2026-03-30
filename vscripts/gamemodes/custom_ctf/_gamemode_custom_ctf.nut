@@ -1062,7 +1062,6 @@ void function PlayerPickedUpFlag(entity ent)
 	{
 		Remote_CallFunction_NonReplay( ent, "FS_ForceDestroyCustomAdsOverlay" )
 	}
-	StorePilotWeapons( ent )
 
 	//ball carrier can't run
 	StatusEffect_AddEndless( ent, eStatusEffect.move_slow, 0.1)
@@ -1079,7 +1078,6 @@ void function PlayerPickedUpFlag(entity ent)
 
 void function PlayerDroppedFlag(entity ent)
 {
-	RetrievePilotWeapons( ent )
 
 	//restore movement
 	StatusEffect_StopAllOfType( ent, eStatusEffect.move_slow)

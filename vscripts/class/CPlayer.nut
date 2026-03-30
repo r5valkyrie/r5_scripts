@@ -7,58 +7,27 @@ global function IsDemigod
 global function EnableDemigod
 global function DisableDemigod
 global function ApplyAppropriateCharacterSkin
-global function ToggleMute
-global function CommandsEnabled
-global function IsCommandsEnabled 
-global function p
+
 global function HasPlayerSettingMod
 
-int __nextInputHandle = 0
-
-
-global struct PlayerSlowDownEffect
-{
-	float slowEndTime
-	float speedCap // max speed multiplier if this slow effect is active
-}
-
-function CodeCallback_RegisterClass_CPlayer()
+var function CodeCallback_RegisterClass_CPlayer()
 {
 	//printl( "Class Script: CPlayer" )
 
 	CPlayer.ClassName <- "CPlayer"
 	CPlayer.hasSpawned <- null
 	CPlayer.hasConnected <- null
-	CPlayer.isSpawning <- null
-	CPlayer.isSpawningHotDroppingAsTitan <- false
 	CPlayer.disableWeaponSlots <- false
 	CPlayer.supportsXRay <- null
 
 	CPlayer.lastTitanTime <- 0
 
-	CPlayer.globalHint <- null
-	CPlayer.playerClassData <- null
-	CPlayer.escalation <- null
-	CPlayer.pilotAbility <- null
 	CPlayer.titansBuilt <- 0
 	CPlayer.spawnTime <- 0
-	CPlayer.serverFlags <- 0
-	CPlayer.watchingKillreplayEndTime <- 0.0
-	CPlayer.cloakedForever <- false
-	CPlayer.stimmedForever <- false
-	CPlayer.ClientCommandsEnabled <- true
-	CPlayer.ScriptClassRegistered <- true
-	CPlayer.canUseZipline <- true
-	CPlayer.disabledWeaponTypes <- 0
 
-	RegisterSignal( "CleanUpPlayerAbilities" )
-	RegisterSignal( "ChallengeReceived" )
-	RegisterSignal( "InputChanged" )
 	RegisterSignal( "OnRespawnPlayer" )
 	RegisterSignal( "NewViewAnimEntity" )
-	RegisterSignal( "OnDisconnected" )
-	RegisterSignal( "OnConnected" )
-	RegisterSignal( "OnPostDeathLogicEnd" )
+	RegisterSignal( "PlayerDisconnected" )
 
 	function CPlayer::constructor()
 	{
@@ -81,9 +50,8 @@ function CodeCallback_RegisterClass_CPlayer()
 		this.SetOwner( null )
 		this.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 
-
 		Assert( !this.GetParent(), this + " should not have a parent yet! - Parent: " + this.GetParent() )
-		Assert( this.s.respawnCount <= 1 || IsMultiplayer(), "Tried to respawn in single player, see callstack" )
+
 		this.Code_RespawnPlayer( ent )
 	}
 
@@ -93,7 +61,7 @@ function CodeCallback_RegisterClass_CPlayer()
 	{
 		printl( "\nTime " + Time() + " Ent " + ent )
 
-		DumpStack()
+		printt( "%s", GetStack() )
 		this.__SetTrackEntity( ent )
 	}
 	*/
@@ -103,69 +71,9 @@ function CodeCallback_RegisterClass_CPlayer()
 		return null
 	}
 
-
-	function CPlayer::GetPlayerClassData( myClass )
-	{
-		Assert( myClass in this.playerClassData, myClass + " not in playerClassData" )
-		return this.playerClassData[ myClass ]
-	}
-
-
-	function CPlayer::InitMPClasses()
-	{
-		this.playerClassData = {}
-
-		//Titan_AddPlayer( this )
-		Wallrun_AddPlayer( this )
-	}
-
-
-	function CPlayer::InitSPClasses()
-	{
-		this.playerClassData = {}
-		SetTargetName( expect entity( this ), expect string( this.GetTargetName() + this.entindex() ) )
-
-		//Titan_AddPlayer( this )
-	}
-
-
-	// function SpawnAsClass()
-	function CPlayer::SpawnAsClass( className = null )
-	{
-		if ( !className )
-		{
-			className = this.GetPlayerClass()
-		}
-
-		switch ( className )
-		{
-			case level.pilotClass:
-				Wallrun_OnPlayerSpawn( this )
-				break
-
-			default:
-				Assert( 0, "Tried to spawn as unsupported " + className )
-		}
-	}
-
-
 	function CPlayer::GiveScriptWeapon( weaponName, equipSlot = null )
 	{
 		this.scope().GiveScriptWeapon( weaponName, equipSlot )
-	}
-
-	function CPlayer::OnDeathAsClass( damageInfo )
-	{
-		switch ( this.GetPlayerClass() )
-		{
-			//case "titan":
-			//	Titan_OnPlayerDeath( expect entity( this ), damageInfo )
-			//	break
-
-			case level.pilotClass:
-				Wallrun_OnPlayerDeath( expect entity( this ), damageInfo )
-				break
-		}
 	}
 
 	function CPlayer::Disconnected()
@@ -174,57 +82,13 @@ function CodeCallback_RegisterClass_CPlayer()
 			return
 
 		this.Signal( "_disconnectedInternal" )
-		svGlobal.levelEnt.Signal( "OnDisconnected" )
+		svGlobal.levelEnt.Signal( "PlayerDisconnected" )
 
 		entity titan = GetPlayerTitanInMap( expect entity( this ) )
 		if ( IsAlive( titan ) && titan.IsNPC() )
 			titan.Die( null, null, { damageSourceId = eDamageSourceId.damagedef_suicide } )
 
 		PROTO_CleanupTrackedProjectiles( expect entity( this ) )
-	}
-
-
-	function CPlayer::GetClassDataEnts()
-	{
-		local ents = []
-		local added
-
-		if ( this.playerClassData == null )
-			return ents;
-
-		foreach ( ent in this.playerClassData )
-		{
-			added = false
-
-			foreach ( newent in ents )
-			{
-				if ( newent == ent )
-				{
-					added = true
-					break
-				}
-			}
-
-			if ( !added )
-				ents.append( ent )
-		}
-
-		return ents
-	}
-
-
-	function CPlayer::CleanupMPClasses()
-	{
-	}
-
-	function CPlayer::HasXRaySupport()
-	{
-		return ( this.supportsXRay != null )
-	}
-
-	function CPlayer::SetPlayerPilotSettings( settingsName )
-	{
-		this.SetPlayerRequestedSettings( settingsName )
 	}
 
 	function CPlayer::RecordLastMatchContribution( contribution )
@@ -242,290 +106,8 @@ function CodeCallback_RegisterClass_CPlayer()
 		// replace with code function
 		this.SetPersistentVar( "ranked.recordedSkill", skill )
 	}
-
-	function CPlayer::SetPlayerSettings( settings )
-	{
-		local oldPlayerClass = CPlayer.GetPlayerClass()
-
-		CPlayer.SetPlayerSettingsWithMods( settings, [] )
-
-		this.RunSettingsChangedFuncs( settings, oldPlayerClass )
-	}
-
-	function CPlayer::SetPlayerSettingsFromDataTable( pilotDataTable )
-	{
-		local oldPlayerClass = CPlayer.GetPlayerClass()
-
-		local settings = pilotDataTable.playerSetFile
-
-		local mods = pilotDataTable.playerSetFileMods
-
-		this.SetPlayerSettingsWithMods( settings, mods )
-
-		this.RunSettingsChangedFuncs( settings, oldPlayerClass )
-	}
-
-	function CPlayer::RunSettingsChangedFuncs( settings, oldPlayerClass )
-	{
-		if ( IsAlive( expect entity( this ) ) && !this.IsTitan() && GetCurrentPlaylistVarFloat( "pilot_health_multiplier", 0.0 ) != 0.0 )
-		{
-			float pilotHealthMultiplier = GetCurrentPlaylistVarFloat( "pilot_health_multiplier", 1.0 )
-			int pilotMaxHealth = int( this.GetMaxHealth() * pilotHealthMultiplier )
-			this.SetMaxHealth( pilotMaxHealth )
-			this.SetHealth( pilotMaxHealth )
-		}
-
-		//if ( this.IsTitan() )
-		//{
-		//	entity soul = expect entity ( this.GetTitanSoul() )
-		//	local index = PlayerSettingsNameToIndex( settings )
-		//	soul.SetPlayerSettingsNum( index )
-		//
-		//	foreach ( func in svGlobal.soulSettingsChangeFuncs )
-		//	{
-		//		func( soul )
-		//	}
-		//}
-	}
-	
-	function CPlayer::IsTextMuted()
-	{	
-		return expect entity(this).p.bTextmute
-	}
-	
-	function CPlayer::ToggleMute( toggle )
-	{	
-		entity player = expect entity( this )	
-		
-		if( !IsValid( player ) )
-			return
-		
-		player.p.bTextmute = expect bool ( toggle )		
-		Remote_CallFunction_NonReplay( player, "FS_Toggle_Mute", toggle )
-	}
-	
-	function CPlayer::CommandsEnabled( toggle )
-	{
-		this.ClientCommandsEnabled = expect bool ( toggle )
-	}
-	
-	function CPlayer::IsCommandsEnabled()
-	{
-		return this.ClientCommandsEnabled
-	}
-	
-	//////////////////////////
-	//			GET			//
-	//////////////////////////
-	
-	//TODO(mk): Replace with code entity function
-	
-	#document( "CPlayer::GetPlayerStatString", "Fetch player stat string from player's stat table max.len(30)" )
-	function CPlayer::GetPlayerStatString( statname )
-	{
-		return GetPlayerStatString( expect entity(this).p.UID, expect string( statname ) )
-	}
-	
-	#document( "CPlayer::GetPlayerStatBool", "Fetch player stat bool from player's stat table." )
-	function CPlayer::GetPlayerStatBool( statname )
-	{
-		return GetPlayerStatBool( expect entity(this).p.UID, expect string( statname ) )
-	}
-	
-	#document( "CPlayer::GetPlayerStatFloat", "Fetch player stat float from player's stat table." )
-	function CPlayer::GetPlayerStatFloat( statname )
-	{
-		return GetPlayerStatFloat( expect entity(this).p.UID, expect string( statname ) )
-	}
-	
-	#document( "CPlayer::GetPlayerStatInt", "Fetch player stat int from player's stat table." )
-	function CPlayer::GetPlayerStatInt( statname )
-	{
-		return GetPlayerStatInt( expect entity(this).p.UID, expect string( statname ) )
-	}
-	
-	
-	//////////////////////////
-	//			SET			//
-	//////////////////////////
-	
-	//TODO(mk): Replace with code entity function
-	
-	#document( "CPlayer::SetPlayerStatString", "Set player stat string from player's stat table max.len(30)" )
-	function CPlayer::SetPlayerStatString( statname, value )
-	{
-		SetPlayerStatString( expect entity( this ).p.UID, expect string( statname ), expect string( value ) )
-	}
-	
-	#document( "CPlayer::SetPlayerStatBool", "Set player stat bool from player's stat table." )
-	function CPlayer::SetPlayerStatBool( statname, value )
-	{
-		SetPlayerStatBool( expect entity( this ).p.UID, expect string( statname ), expect bool( value ) )
-	}
-	
-	#document( "CPlayer::SetPlayerStatFloat", "Set player stat float from player's stat table." )
-	function CPlayer::SetPlayerStatFloat( statname, value )
-	{
-		SetPlayerStatFloat( expect entity( this ).p.UID, expect string( statname ), expect float( value ) )
-	}
-	
-	#document( "CPlayer::SetPlayerStatInt", "Set player stat int from player's stat table." )
-	function CPlayer::SetPlayerStatInt( statname, value )
-	{
-		SetPlayerStatInt( expect entity( this ).p.UID, expect string( statname ), expect int( value ) )
-	}
-	
-	function CPlayer::SetCanUseZipline( setting ) //todo(mk): move to code 
-	{
-		entity player = expect entity ( this )
-		
-		player.canUseZipline = expect bool( setting )
-		
-		if( player.canUseZipline )
-		{
-			player.Zipline_Allow()
-			player.p.ziplineUsages = 0
-			player.canUseZipline = true
-		}
-		else
-		{
-			player.Zipline_Disallow()
-			player.canUseZipline = false
-		}
-	}
-	
-	/*	(mk): Code const
-	
-		WPT_PRIMARY = 1       // 00000001
-		WPT_MELEE = 2         // 00000010
-		WPT_TACTICAL = 4      // 00000100
-		WPT_ULTIMATE = 8      // 00001000
-		WPT_CONSUMABLE = 16   // 00010000
-		WPT_INCAP_SHIELD = 32 // 00100000
-		WPT_GRENADE = 64      // 01000000
-		WPT_OTHER = 128       // 10000000
-		
-	*/
-		
-	function CPlayer::DisableWeaponTypes( weaponType ) //Todo(mk): move to code (amos:todo)
-	{
-		expect int( weaponType )
-		
-		if( this.IsDisabledFor( weaponType ) )
-			return
-			
-		this.ToggleDisabledWeaponType_internal( weaponType, true )	
-		
-		if( weaponType & WPT_PRIMARY )
-			this.Server_TurnOffhandWeaponsDisabledOn() //not the best solution, as this will disable abilities.
-
-		if( weaponType & WPT_MELEE )
-		{
-			if( this.PlayerMelee_IsAttackActive() )
-				this.PlayerMelee_EndAttack()
-				
-			if( this.GetMeleeDisabled() == 0 ) //this uses a stack based system, but should entail it's own definitive solution separately. Currently handled in script checks via this.IsDisabledFor( weaponType )
-				this.SetMeleeDisabled()
-		}
-
-		if( weaponType & WPT_TACTICAL || weaponType & WPT_ULTIMATE )
-			this.Server_DisableAbilities()
-
-		/*
-			WPT_CONSUMABLE	
-			WPT_INCAP_SHIELD
-			WPT_GRENADE
-			WPT_OTHER
-		*/
-		
-		this.SwapIfHeld( weaponType )
-	}
-	
-	function CPlayer::EnableWeaponTypes( weaponType ) //Todo(mk): move to code (amos:todo)
-	{
-		expect int( weaponType )
-		
-		if( !this.IsDisabledFor( weaponType ) )
-			return
-		
-		this.ToggleDisabledWeaponType_internal( weaponType, false )
-		
-		if( weaponType & WPT_PRIMARY )
-			this.Server_TurnOffhandWeaponsDisabledOff() //Todo, determine if we should use stack system for calls here
-
-		if( weaponType & WPT_MELEE )
-		{
-			while( this.GetMeleeDisabled() > 0 )
-				this.ClearMeleeDisabled()
-		}
-
-		if( weaponType & WPT_TACTICAL || weaponType & WPT_ULTIMATE ) //Todo: 
-			this.Server_EnableAbilities()
-
-		/*
-			WPT_CONSUMABLE	
-			WPT_INCAP_SHIELD
-			WPT_GRENADE
-			WPT_OTHER
-		*/
-	}
-	
-	function CPlayer::SwapIfHeld( weaponType ) //Todo(mk): move to code (amos:todo)
-	{
-		expect int( weaponType )
-		entity player = expect entity( this )
-		entity weapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
-		if( !IsValid( weapon ) )
-			return
-		
-		if ( IsBitFlagSet( weapon.GetWeaponTypeFlags(), weaponType ) )
-		{
-			if( !SwapToLastEquippedPrimary( player ) )
-			{
-				entity melee = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-				if( IsValid( melee ) )
-					player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_2 )
-				else
-					ClientCommand( player, "invnext" ) //fallback
-			}
-		}
-	}
-	
-	function CPlayer::IsDisabledFor( weaponType ) //Todo(mk): move to code (amos:todo)
-	{		
-		return ( this.disabledWeaponTypes & expect int( weaponType ) ) != 0
-	}
-	
-	function CPlayer::ToggleDisabledWeaponType_internal( weaponType, toggle ) //Todo(mk): move to code (amos:todo)
-	{
-		if( toggle )
-			this.disabledWeaponTypes = this.disabledWeaponTypes | weaponType
-		else 
-			this.disabledWeaponTypes = this.disabledWeaponTypes & ~weaponType	
-			
-		Remote_CallFunction_NonReplay( this, "ServerCallback_ToggleDisabledWeaponType", expect int( weaponType ), expect bool( toggle ) )
-	}
-	
-	function CPlayer::GetWeaponDisabledFlags() //Todo(mk): move to code (amos:todo) ( note: already exists as GetWeaponDisableFlags -- however that version is incomplete and does not contain all types uniformly. )
-	{
-		return this.disabledWeaponTypes
-	}
 }
 
-entity function p( int i )
-{
-	return GetPlayerArray()[i]
-}
-
-bool function IsCommandsEnabled( entity player )
-{
-	return bool ( player.IsCommandsEnabled() )
-}
-
-void function CommandsEnabled( entity player, bool toggle )
-{
-	player.CommandsEnabled( toggle )
-}
 
 void function PlayerDropsScriptedItems( entity player )
 {
@@ -533,16 +115,19 @@ void function PlayerDropsScriptedItems( entity player )
 		callbackFunc( player )
 }
 
+
 bool function IsDemigod( entity player )
 {
 	return player.p.demigod
 }
+
 
 void function EnableDemigod( entity player )
 {
 	Assert( player.IsPlayer() )
 	player.p.demigod = true
 }
+
 
 void function DisableDemigod( entity player )
 {
@@ -577,7 +162,30 @@ void function ApplyAppropriateCharacterSkin( entity player )
 		isShadowPlayer = IsPlayerShadowZombie( player )
                                     
 
+	if ( isShadowPlayer || ( player.IsShadowForm() && !IsInForgedShadows( player ) ) )
+	{
+		ShadowSquadApplyCharacterSkin( player )
+	}
+	else if( IsInForgedShadows( player ) )
+	{
+		//ShadowForm_ApplyShadowSkin( player )
+	}
+
+	if ( IsEventFinale() )
+	{
+		ApplyDefaultCharacterSkin( player )
+	}
+
 	                            
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) && ShadowArmy_IsPlayerInShadowForm( player ) )
+	{
+		ItemFlavor ornull armySkin = GetItemFlavorOrNullByGUID( ConvertItemFlavorGUIDStringToGUID( "SAID00097700436" ) )
+		if ( armySkin == null )
+			return
+
+		expect ItemFlavor( armySkin )
+		CharacterSkin_Apply( player, armySkin )
+	}
        
 }
 
@@ -588,12 +196,9 @@ void function ApplyDefaultCharacterSkin( entity player )
 	CharacterSkin_Apply( player, skin )
 }
 
-void function ToggleMute( entity player, bool toggle )
-{
-	player.ToggleMute( toggle )
-}
 
 bool function HasPlayerSettingMod( entity player, string mod )
 {
-	return player.HasClassMod( mod )
+	array<string> mods = player.GetPlayerSettingsMods()
+	return mods.contains( mod )
 }

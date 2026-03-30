@@ -41,14 +41,11 @@ void function GameState_Init()
 	RegisterSignal( "CatchUpFallBehindVO" )
 	RegisterSignal( "ClearedPlayers" )
 
+
 	level.devForcedWin <- false  //For dev purposes only. Used to check if we forced a win through dev command
 	level.devForcedTimeLimit <- false
 
 	level.lastTimeLeftSeconds <- null
-
-	level.lastScoreSwapVOTime <- null
-
-	//level.nextMatchProgressAnnouncementLevel <- MATCH_PROGRESS_EARLY //When we make a matchProgressAnnouncement, this variable is set
 
 	level.endOfRoundPlayerState <- ENDROUND_FREEZE
 
@@ -64,27 +61,15 @@ void function GameState_Init()
 	level.lastTeamPilots[TEAM_IMC] <- null
 	level.lastTeamPilots[TEAM_MILITIA] <- null
 
-	level.firstTitanfall <- false
-
 	level.lastPlayingEmptyTeamCheck <- 0
-
-	level.doneWaitingForPlayersTimeout <- 0
-
-	level.attackDefendBased <- false
 
 	level.roundBasedUsingTeamScore <- false
 
 	level.roundBasedTeamScoreNoReset <- false
 
-	level.customIntroLength <- null
-
 	level.sendingPlayersAway <- false
 
 	level.forceNoMoreRounds <- false
-
-	// prevents ties... need an option to disable in the future
-	level.firstToScoreLimit <- TEAM_UNASSIGNED
-	level.allowPointsOverLimit <- false
 
 	file.difficultyFunc = DefaultDifficultyFunc
 
@@ -111,7 +96,6 @@ void function SetGetDifficultyFunc( int functionref() difficultyFunc )
 	file.difficultyFunc = difficultyFunc
 }
 
-
 // This function is meant to init stuff that _gamestate uses, as opposed
 // to stuff that any particular gamestate like Playing uses
 void function InitGameState()
@@ -128,4 +112,3 @@ int function GetDifficultyLevel()
 {
 	return file.difficultyFunc()
 }
-

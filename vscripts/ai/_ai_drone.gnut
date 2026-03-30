@@ -791,7 +791,6 @@ void function VortexStunCheck( entity player, vector origin, float height, float
 	GiveEMPStunStatusEffects( player, VORTEX_STUN_DURATION + 0.5 )
 	float strength = 0.4
 	StatusEffect_AddTimed( player, eStatusEffect.emp, strength, VORTEX_STUN_DURATION, 0.5 )
-	thread TempLossOfAirControl( player, VORTEX_STUN_DURATION )
 	vector velocity = forward * 300
 	velocity.z = 400
 	player.p.lastDroneShieldStunPushTime = Time()

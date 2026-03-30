@@ -109,6 +109,16 @@ void function CreateBubbleShield( entity titan, vector origin, vector angles )
 	waitthread WaitUntilShieldFades( player, titan, bubbleShield, bubTime + 4.0 )
 }
 
+float function GetBubbleShieldDuration( entity player )
+{
+	if ( PlayerHasPassive( player, ePassives.PAS_LONGER_BUBBLE ) )
+		return EMBARK_TIMEOUT + 10.0
+	else
+		return EMBARK_TIMEOUT
+
+	unreachable
+}
+
 void function MonitorTitanMovement( entity soul, entity bubbleShield )
 {
 	entity titan = soul.GetTitan()
@@ -377,9 +387,6 @@ void function WaitUntilPlayerTitanStandsOrDies( entity player, entity titan, flo
 
 	if ( !IsAlive( player ) )
 			return
-
-	if ( IsPlayerEmbarking( player ) && player.Anim_IsActive() )
-		WaittillAnimDone( player )
 }
 
 void function WaitUntilTitanStandsOrDies( entity titan, float timeout = -1.0 )

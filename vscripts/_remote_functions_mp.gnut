@@ -110,9 +110,7 @@ int function SetupRemoteFuncAliases()
 		"FS_DestroyCompass",
 		"ServerCallback_ShowWinningSquadSequence",
 		"ServerCallback_Ash_OnPlayerDash",
-		"ServerCallback_Ash_OnPlayerLanded",
-		"ServerCallback_TitanCockpitBoot"
-		// ServerCallback_ShotgunKickNoAmmoMessage
+		"ServerCallback_Ash_OnPlayerLanded"
 	]
 	
 	int iter = 1
@@ -707,8 +705,6 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRegisterNetworkedVariable( "damageDealt", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
 	ScriptRegisterNetworkedVariable( "assistCount", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
 	ScriptRegisterNetworkedVariable( "craftingMaterials", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )//these networked variables important, come back to this later ! - kral
-
-	ScriptRemote_RegisterClientFunction( "ServerCallback_EjectConfirmed" )
 
 	#if CLIENT
 		ShRanked_RegisterNetworkFunctions()

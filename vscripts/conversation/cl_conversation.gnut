@@ -4,7 +4,6 @@ global function ClDialogue_Init
 
 // call to attempt to start playing a conversation. will return false if it doesn't play, not that we can do anything about it.
 global function ServerCallback_PlayConversation
-global function ServerCallback_PlayTitanConversation
 global function ServerCallback_PlaySquadConversation
 global function SetDialogueDebugLevel
 global function GetDialogueDebugLevel
@@ -196,13 +195,6 @@ void function PlayConversationToLocalClient( string convAlias )
 		thread ClRunConversation( player, convAlias )
 	else
 		thread ClAttemptConversation( convAlias, player, priority )
-}
-
-void function ServerCallback_PlayTitanConversation( int conversationIndex )
-{
-	entity player = GetLocalClientPlayer()
-	string conversationType = GetConversationName( conversationIndex )
-	TitanCockpit_PlayDialog( GetLocalViewPlayer(), conversationType )
 }
 
 void function ServerCallback_PlayConversation( int conversationIndex )
