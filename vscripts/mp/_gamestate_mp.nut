@@ -1978,8 +1978,8 @@ void function GameRulesThink_Postmatch()
 
 	if ( !IsPrivateMatch() || GetConVarBool( "customMatch_enabled" ) )
 	{
-		foreach ( player in GetPlayerArrayIncludingSpectators() )
-			player.Forfeit()
+		//foreach ( player in GetPlayerArrayIncludingSpectators() )
+			//player.Forfeit() // S3: entity method not available
 	}
 
 	GameRules_EndMatch()

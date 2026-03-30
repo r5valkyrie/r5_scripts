@@ -267,9 +267,46 @@ global const float UNITFRAME_SPACING = 16
 
 const float LOCALCLIENT_UNITFRAME_VERTICAL_OFFSET = 130.0
 
-// SummaryDisplayData, SquadSummaryPlayerData, SquadSummaryData moved to sh_gamemode_survival.nut for compile order
+global struct SummaryDisplayData
+{
+	string displayString
+	int	displayValue
+}
 
-// structs moved to sh_gamemode_survival.nut
+global struct SquadSummaryPlayerData
+{
+	int eHandle
+	int kills
+	int assists
+	int knockdowns
+	int damageDealt
+	int survivalTime
+	int revivesGiven
+	int respawnsGiven
+	entity victoryScreenCharacterModel
+
+
+
+
+
+
+
+
+
+
+
+	array< SummaryDisplayData > modeSpecificSummaryData
+
+	bool summary3IsTime
+}
+
+global struct SquadSummaryData
+{
+	array<SquadSummaryPlayerData> playerData
+	int                           squadPlacement = -1
+	int 						  gameResultFlags = 0
+	int 						  gameScoreFlags = 0
+}
 
 struct
 {
@@ -798,9 +835,8 @@ void function SURVIVAL_PopulatePlayerInfoRui( entity player, var rui )
 	SURVIVAL_GetArmorShieldCapacity( 2 ) / 100.0 >
 
 	RuiSetColorAlpha( rui, "shieldFrac", shieldFrac, float( SURVIVAL_GetArmorShieldCapacity( 3 ) ) )
-	// RUI_TRACK_STATUS_EFFECT_TOTAL_SEVERITY not in S3
-	//RuiTrackFloat( rui, "playerTargetShieldFrac", player, RUI_TRACK_STATUS_EFFECT_TOTAL_SEVERITY, eStatusEffect.target_shields )
-	//RuiTrackFloat( rui, "playerTargetHealthFrac", player, RUI_TRACK_STATUS_EFFECT_TOTAL_SEVERITY, eStatusEffect.target_health )
+	RuiTrackFloat( rui, "playerTargetShieldFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_shields )
+	RuiTrackFloat( rui, "playerTargetHealthFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_health )
 	RuiTrackFloat( rui, "playerTargetHealthFracTemp", player, RUI_TRACK_HEAL_TARGET )
 
 
@@ -946,16 +982,12 @@ void function ClearCustomPlayerInfoColor( entity player )
 void function OverrideHUDHealthFractions( entity player, float targetHealthFrac = -1, float targetShieldFrac = -1 )
 {
 	if ( targetHealthFrac < 0 )
-	{
-		// RUI_TRACK_STATUS_EFFECT_TOTAL_SEVERITY not in S3
-	}
+		RuiTrackFloat( file.pilotRui, "playerTargetHealthFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_health )
 	else
 		RuiSetFloat( file.pilotRui, "playerTargetHealthFrac", targetHealthFrac )
 
 	if ( targetShieldFrac < 0 )
-	{
-		// RUI_TRACK_STATUS_EFFECT_TOTAL_SEVERITY not in S3
-	}
+		RuiTrackFloat( file.pilotRui, "playerTargetShieldFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_shields )
 	else
 		RuiSetFloat( file.pilotRui, "playerTargetShieldFrac", targetShieldFrac )
 }

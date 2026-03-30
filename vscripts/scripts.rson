@@ -625,6 +625,12 @@ Scripts:
 	gamemodes/sh_gamemode_recruit.nut
 ]
 
+When: "CLIENT"
+Scripts:
+[
+	gamemodes/cl_gamemode_survival.nut
+]
+
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
@@ -939,7 +945,6 @@ Scripts:
 
 	//cinematic_mp/_ai_skits_clientdebugging.nut
 	//cinematic_mp/_cinematic_mp_client.nut
-	gamemodes/cl_gamemode_survival.nut
 
 	cl_survival_loot.nut
 	cl_survival_inventory.nut

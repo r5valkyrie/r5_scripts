@@ -1,37 +1,5 @@
 //
 
-// Moved from cl_gamemode_survival.nut for compile order (sh_ files compile before cl_)
-#if CLIENT
-global struct SummaryDisplayData
-{
-	string displayString
-	int	displayValue
-}
-
-global struct SquadSummaryPlayerData
-{
-	int eHandle
-	int kills
-	int assists
-	int knockdowns
-	int damageDealt
-	int survivalTime
-	int revivesGiven
-	int respawnsGiven
-	entity victoryScreenCharacterModel
-	array< SummaryDisplayData > modeSpecificSummaryData
-	bool summary3IsTime
-}
-
-global struct SquadSummaryData
-{
-	array<SquadSummaryPlayerData> playerData
-	int                           squadPlacement = -1
-	int 						  gameResultFlags = 0
-	int 						  gameScoreFlags = 0
-}
-#endif
-
 global function PreGame_GetWaitingForPlayersHasBlackScreen
 global function PreGame_GetWaitingForPlayersSpawningEnabled
 global function PreGame_GetWaitingForPlayersDelayMin
@@ -82,18 +50,18 @@ global function Survival_GetPlaneMoveSpeed
 global function Survival_GetPlaneJumpDelay
 global function Survival_GetPlaneLeaveMapDurationMultiplier
 
-                       
-                                         
-                                                 
-                                           
-                                             
-                                             
-                                                 
-                                                      
-                                          
-                                                 
-                                                
-      
+
+
+
+
+
+
+
+
+
+
+
+
 
 global function Survival_RequireJumpmasterInPlane
 #endif
@@ -102,22 +70,22 @@ global function Survival_RequireJumpmasterInPlane
 global function Survival_GetCurrentRank
 global function Survival_GetFinalRank
 
-                       
-                                
-                                
-                                      
-                                      
-                                      
-                                                
-                                                
-      
+
+
+
+
+
+
+
+
+
 #endif
 
-                  
-          
-                            
-      
-      
+
+
+
+
+
 
 #if SERVER && DEVELOPER
 global function DEV_OverridePodiumBackground
@@ -223,17 +191,17 @@ global enum eSurvivalHints
 {
 	EQUIP,
 	ORDNANCE,
-                               
+
 	ORDNANCE_FUSE,
 	ORDNANCE_FUSE_MULTI,
-      
-                               
+
+
 	CRYPTO_DRONE_ACCESS,
-      
-              
-                       
-                        
-      
+
+
+
+
+
 }
 
 global enum ePodiumBanner
@@ -244,13 +212,13 @@ global enum ePodiumBanner
 	CONTROL,
 	LTM,
 	MIXTAPE,
-                            
+
 	SR_LEGENDS,
 	SR_REV,
-      
-                    
+
+
 	TURBO,
-      
+
 	_COUNT
 }
 
@@ -270,10 +238,10 @@ global enum ePodiumBackground
 	MP_RR_OLYMPUS_MU1_NIGHT,
 	MP_RR_DESERTLANDS_NIGHT,
 	MP_RR_CANYONLANDS_MU1_NIGHT,
-                            
+
 	SR_LEGENDS,
 	SR_REV,
-      
+
 	MP_RR_TROPICS_ISLAND_MU2,
 	MP_RR_THUNDERDOME,
 	_COUNT
@@ -291,14 +259,14 @@ struct
 {
 	entity                     planeCenterEnt
 	entity                     planeEnt
-                        
-            
-                               
-                                     
-                        
-                                                                                                                                                                                        
-        
-       
+
+
+
+
+
+
+
+
 	VictoryPlatformModelData & victorySequencePlatforData
 
 	#if SERVER && DEVELOPER
@@ -352,17 +320,17 @@ void function GamemodeSurvivalShared_Init()
 		MobileRespawnBeacon_Init()
 		Sh_Airdrops_Init()
 
-                      
-                      
-                            
 
-                          
-                          
-                                
 
-                        
-                          
-        
+
+
+
+
+
+
+
+
+
 
 		PrecacheImpactEffectTable( "dropship_dust" )
 		PrecacheModel( SURVIVAL_PLANE_MODEL )
@@ -399,9 +367,9 @@ void function GamemodeSurvivalShared_Init()
 	#if SERVER
 		AddDamageCallbackSourceID( eDamageSourceId.burn, Player_OnBurnDamage )
 
-		                  
+
 			AddDamageCallbackSourceID( eDamageSourceId.caustic_toxin, Player_OnCausticToxinDamage )
-                          
+
 
 	#endif // SERVER
 
@@ -420,9 +388,9 @@ void function GamemodeSurvivalShared_Init()
 	}
 
 #if SERVER
-                       
-                                                                             
-      
+
+
+
 #endif //server
 
 #if SERVER
@@ -433,11 +401,11 @@ void function GamemodeSurvivalShared_Init()
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 #endif
 
-                       
-           
-                                                                                                                                                                  
-       
-      
+
+
+
+
+
 }
 #endif
 
@@ -503,10 +471,10 @@ bool function Survival_PlayerCanDrop( entity player )
 	//if ( !GamePlaying() )
 	//	return false
 
-                       
-                                                               
-              
-      
+
+
+
+
 
 	if ( player.ContextAction_IsActive() && !player.ContextAction_IsRodeo() )
 		return false
@@ -519,20 +487,20 @@ bool function Survival_PlayerCanDrop( entity player )
 
 	if ( player.IsGrappleActive() )
 		return false
-	
+
 	if ( player.IsTraversing() || player.IsWallHanging() || player.IsWallRunning() )
 		return false
-	
+
 	if ( player.p.isInExtendedUse )
 		return false
-	
+
 	if ( IsPlayerInCryptoDroneCameraView( player ) )
 		return false
 
-                            
+
 	if ( ExplosiveHold_IsPlayerPlantingGrenade( player ) )
 		return false
-      
+
 
 	if ( player.PlayerMelee_GetState() == PLAYER_MELEE_STATE_SLAM_ATTACK )
 		return false
@@ -804,7 +772,7 @@ bool function Sur_CanUseZipline( entity player, entity zipline, vector ziplineCl
 	{
 		bool allowZipAttachFromUpdraft = GetCurrentPlaylistVarBool( "updraft_zipline_attach", true )
 		bool allowZipAttachDuringDNAPickup = GetCurrentPlaylistVarBool( "DNA_pickup_zipline_attach", true )
-	
+
 		bool allowedDuringWeaponDisable = false
 
 		if ( allowZipAttachDuringDNAPickup )
@@ -857,151 +825,151 @@ void function Sur_SetPlaneEnt( entity ent )
 }
 #endif
 
-                       
-          
-                                                        
- 
-                        
- 
 
-                                           
- 
-                      
- 
 
-                                                
- 
-                                                                                                         
 
-                                     
-                
 
-                                                               
-                                                                                                                                                 
-  
-                                                              
-                                                                                 
-                                                   
-                                                                                       
 
-                                    
-                                                        
-                                         
-  
-                                                   
-  
-                                                           
-                    
-  
 
-                                                  
-  
-                                                
-  
- 
 
-                                                                    
- 
-                                    
- 
 
-                                                 
- 
-                            
- 
 
-                                                                                              
- 
-                                                      
- 
 
-                                                              
- 
-                                 
- 
-               
 
-                                        
- 
-                              
-                                                  
-                                              
-       
 
-                                                                   
- 
 
-                                                 
- 
-                                                                                  
- 
 
-                                                        
- 
-                                                                                              
- 
 
-                                             
- 
-                                                                                 
- 
 
-                                                            
- 
-                                                                                                 
- 
 
-                                           
- 
-                                                                  
- 
 
-                                                 
- 
-                                                                                  
- 
 
-                                                      
- 
-                                                                                  
- 
 
-                                          
- 
-                                                                          
- 
 
-                                                  
- 
-                                                                                   
- 
 
-                                                
- 
-                     
-                                                                                                                                 
-       
-                                                                                   
 
- 
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool function Survival_IsDropshipClampedToRing()
 {
-                              
-                                                  
-              
-       
+
+
+
+
 
 	return GetCurrentPlaylistVarBool( "dropship_bounds_clamp_to_ring", false )
 }
 
 float function Survival_GetPlaneMoveSpeed()
 {
-                              
-                                                  
-                                             
-       
+
+
+
+
 
 	return GetCurrentPlaylistVarFloat( "survival_plane_move_speed", 2000.0 )
 }
@@ -1026,15 +994,15 @@ entity function Sur_GetPlaneCenterEnt()
 #if SERVER || CLIENT
 entity function Sur_GetPlaneEnt( int teamNum = -1 )
 {
-                        
-                                                                 
-   
-                                                     
-                                                         
-                             
-                   
-   
-       
+
+
+
+
+
+
+
+
+
 
 	return file.planeEnt
 }
@@ -1055,7 +1023,7 @@ void function Player_OnBurnDamage( entity target, var damageInfo )
 	EmitSoundOnEntityExceptToPlayer( target, target, SFX_BURN_3P )
 }
 
-                  
+
 void function Player_OnCausticToxinDamage( entity target, var damageInfo )
 {
 	if ( !target.IsPlayer() )
@@ -1064,7 +1032,7 @@ void function Player_OnCausticToxinDamage( entity target, var damageInfo )
 	EmitSoundOnEntityOnlyToPlayer( target, target, "flesh_causticgas_damage_1p" )
 	EmitSoundOnEntityExceptToPlayer( target, target, "flesh_causticgas_damage_3p" )
 }
-                        
+
 #endif
 
 TargetKitHealthAmounts function PredictHealthPackUse( entity player, HealthPickup itemData )
@@ -1125,35 +1093,35 @@ bool function CanWeaponInspect( entity player, int activity )
 #if SERVER
 int function Survival_GetCurrentRank( entity player )
 {
-                  
-                                                                            
-                                              
-       
 
-	                      
+
+
+
+
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 			return WinterExpress_GetCurrentRank( player )
-       
 
-	                        
+
+
 		if ( GameMode_IsActive( eGameModes.CONTROL ) )
 			return Control_GetCurrentRank( player )
-       
 
-                           
-                                                                         
-                                            
-       
 
-	                       
+
+
+
+
+
+
 		if( GameMode_IsActive( eGameModes.FREEDM ) )
 			return FreeDM_GetCurrentRank( player )
-       
 
-	                            
+
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 			return ShadowArmy_GetCurrentRank( player )
-                                   
+
 
 	int team                  = player.GetTeam()
 	int numLivingSquadMembers = GetPlayerArrayOfTeam_AliveConnected( team ).len()
@@ -1190,12 +1158,12 @@ int function Survival_GetFinalRank( int teamIndex )
 
 
 #if SERVER
-                  
-                                           
- 
-                          
- 
-      
+
+
+
+
+
+
 
 #if DEVELOPER
 void function DEV_OverridePodiumBackground( int i )
@@ -1242,18 +1210,18 @@ void function DEV_TeleportToPodium( entity player )
 void function Podium_OnResolution()
 {
 
-                            
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 	{
 		SetupPodiumForShadowArmy()
 		return
 	}
-      
+
 
 	thread PodiumFXThread(  )
 }
 
-                            
+
 void function SetupPodiumForShadowArmy()
 {
 	int gameResultFlag = Survival_GetGameResultFlags()
@@ -1278,7 +1246,7 @@ void function SetupPodiumForShadowArmy()
 		podiumBackground[0].SetSkin( legendsWon ? ePodiumBackground.SR_LEGENDS : ePodiumBackground.SR_REV  )
 	}
 }
-      
+
 
 
 void function PodiumFXThread( )
@@ -1311,7 +1279,7 @@ void function PodiumFXThread( )
 	EmitSoundAtPosition( TEAM_ANY, <0, 0, 10000>,  "Podium_Pyro_FlameBurst_Sequence", podiumInfoTargets[0] )
 
 	// 	FLAMES ONLY
-	
+
 	wait 1
 	FlagSet(PODIUM_FX_FIREBALL_L1)
 	FlagSet(PODIUM_FX_FIREBALL_R1)
@@ -1417,9 +1385,9 @@ int function GetPodiumBackgroundSkinFromMapName()
 			return ePodiumBackground.MP_RR_OLYMPUS_MU2
 			break
 		case "mp_rr_tropic_island_mu1":
-                 
-                                       
-      
+
+
+
 			return ePodiumBackground.MP_RR_TROPICS_ISLAND_MU1
 			break
 		case "mp_rr_aqueduct":
@@ -1487,7 +1455,7 @@ string function GetMusicForJump( entity player )
 {
 	string override = GetCurrentPlaylistVarString( "music_override_skydive", "" )
 
-	                            
+
 		// Uses different music tracks depending on which Alliance players are in so I can't use the playlist override
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
 		{
@@ -1497,7 +1465,7 @@ string function GetMusicForJump( entity player )
 			else
 				override = "Music_RevArmy_Jump_Revenants"
 		}
-                                   
+
 
 	if ( override.len() > 0 )
 		return override
@@ -1547,14 +1515,14 @@ bool function IsSquadDataPersistenceEmpty( entity player )
 #if SERVER || CLIENT
 bool function Survival_RequireJumpmasterInPlane()
 {
-                      
-                                       
-               
-       
-	                         
+
+
+
+
+
 		if ( ForcedSpawn_UseForcedSpawning() )
 			return false
-       
+
 	return true
 }
 #endif // SERVER || CLIENT
@@ -1562,9 +1530,9 @@ bool function Survival_RequireJumpmasterInPlane()
 #if SERVER
 void function Survival_OnGameplayStarted()
 {
-                       
-                                                                    
-                                                            
-      
+
+
+
+
 }
 #endif // SERVER

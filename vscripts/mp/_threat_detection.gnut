@@ -41,6 +41,7 @@ global enum eThreatDetectionZoneType // Start enum at TDT_FIRST_ZONE so it align
 	KILLZONE,					//Threat Zone around recent player death.
 	GRENADE,					//Threat Zone around a live grenade.
 	SONAR,						//Threat Zone around sonar pulse.
+	VIEW,
 }
 
 //Data defines a danger zone that triggers threat event logic.

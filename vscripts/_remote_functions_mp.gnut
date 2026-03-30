@@ -568,8 +568,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DeathRecapDataUpdated", "bool", "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025
 	RegisterNetworkedVariable( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
 
-	if( Gamemode() == eGamemodes.SURVIVAL || Gamemode() == eGamemodes.ARENAS )
-		ScriptRemote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+			Remote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
 																				 "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
 																			     "bool", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
 																				 "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
