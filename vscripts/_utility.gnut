@@ -3017,11 +3017,11 @@ void function ToggleSkyboxView( float scale = 0.001 )
 	{
 		if ( !player.IsNoclipping() )
 		{
-			ClientCommand( player, "noclip" )
+			RunClientCommandOnPlayer( player, "noclip" )
 			wait( 0.25 )
 		}
 
-		ClientCommand( player, "sv_noclipspeed 0.1" )
+		RunClientCommandOnPlayer( player, "sv_noclipspeed 0.1" )
 		file.isSkyboxView = true
 		vector offset = player.GetOrigin()
 		offset *= scale
@@ -3030,7 +3030,7 @@ void function ToggleSkyboxView( float scale = 0.001 )
 	}
 	else
 	{
-		ClientCommand( player, "sv_noclipspeed 5" )
+		RunClientCommandOnPlayer( player, "sv_noclipspeed 5" )
 		file.isSkyboxView = false
 		vector offset = player.GetOrigin() - skyOrigin + < 0.0, 0.0, 60.0 - (60.0 * scale) >
 		offset *= 1.0 / scale
@@ -5961,11 +5961,6 @@ entity function CreatePropDeathBox_NoDispatchSpawn( asset model, vector ornull o
 	return prop_death_box
 }
 
-void function RunClientCommandOnPlayer( entity player, string command )
-{
-	ClientCommand( player, command )
-}
-
 entity function CreatePropDoor( asset model, vector pos, vector ang )
 {
 	return CreatePropDynamic_NoDispatchSpawn( model, pos, ang )
@@ -6745,7 +6740,7 @@ void function GRX_SetItemTier( entity player, int opID, int grxIndex, int tier )
 
 void function DisconnectWithMessage( entity player, string message )
 {
-	ClientCommand( player, "disconnect" )
+	RunClientCommandOnPlayer( player, "disconnect" )
 }
 
 void function PIN_TwitchDropItemRemoved( ... )

@@ -1228,12 +1228,10 @@ void function OpenLossForgivenessDialog( int reason )
 
 void function SetEliteForgivenessRead( int result )
 {
-	ClientCommand( "MarkEliteForgivenessAsSeen" )
 }
 
 void function SetLossForgivenessRead( int result )
 {
-	ClientCommand( "MarkLossForgivenessAsSeen" )
 }
 
 
@@ -1337,7 +1335,7 @@ void function ShowPremiumCurrencyDialog( bool dialogFlow )
 		}
 	}
 
-	ClientCommand( "lastSeenPremiumCurrency" )
+
 	OpenOKDialogFromData( dialogData )
 	EmitUISound( "UI_Menu_Purchase_Coins" )
 }

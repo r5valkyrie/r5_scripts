@@ -205,7 +205,7 @@ void function CodeCallback_MapSpawn() // original script entry point
 	FlagInit( "IgnoreStartSpawn" )
 	FlagInit( "ReadyToStartMatch" ) // past waiting for players, in prematch
 
-	#if DEV
+	#if DEVELOPER
 		FlagInit( "ShowExplosionRadius" )  // temp HACK
 	#endif
 
@@ -224,7 +224,7 @@ void function CodeCallback_MapSpawn() // original script entry point
 	AddCallback_EntitiesDidLoad( PlaylistDeathTriggerFix  )
 	AddCallback_EntitiesDidLoad( PlaylistOOBTriggerFix  )
 
-	#if DEV
+	#if DEVELOPER
 		ModelViewer_Init()
 		thread AINFileIsUpToDateCheck()
 		thread NavmeshUpToDateCheck()
@@ -233,7 +233,7 @@ void function CodeCallback_MapSpawn() // original script entry point
 	AddSpawnCallback( "player", MP_PlayerPostInit )
 	AddSpawnCallback( "trigger_hurt", InitDamageTriggers )
 
-	#if DEV
+	#if DEVELOPER
 	if ( GetCurrentPlaylistVarBool( "script_leak", false ) )
 		thread ScriptLeakDetector()
 	#endif
@@ -247,7 +247,7 @@ void function CodeCallback_MapSpawn() // original script entry point
 	VPKNotifyFile( "cfg/startup_dedi.cfg" )
 	VPKNotifyFile( "cfg/startup_dedi_retail.cfg" )
 
-	//#if DEV
+	//#if DEVELOPER
 	//	MarkNPCForAutoPrecache( "npc_dropship" )
 	//	MarkNPCForAutoPrecache( "npc_frag_drone_throwable" )
 	//	MarkNPCForAutoPrecache( "npc_marvin" )

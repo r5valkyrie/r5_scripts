@@ -44,6 +44,7 @@ void function Lobby_AddLocalPlayer()
 	foreach ( func in file.onPlayerAddedToLobbyCallbacks )
 		func( player )
 	CacheAnniversaryConfettiEnt()
+	return
 	if ( !file.balloonCreated )
 	{
 		array< entity > balloonNodes = GetEntArrayByScriptName( "anniversary_lobby_balloon" )
