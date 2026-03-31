@@ -846,7 +846,7 @@ void function ShPlaylist_CacheData()
 
 		file.cachedPlaylistArray[index] = playlistData
 		file.cachedPlaylistMap[name] <- playlistData
-		print( "DEBUG: Cached playlist [" + index + "] = " + name )
+		//print( "DEBUG: Cached playlist [" + index + "] = " + name )
 	}
 //	Boost_OnPlaylistsRegistered()
 }

@@ -26,7 +26,7 @@ global function ServerCallback_SetTacticalHudVis
 global function ServerCallback_SetUltimateHudVis
 global function ServerCallback_SetDpadMenuVis
 
-#if DEV
+#if DEVELOPER
 global function Dev_SetDefaultHUD
 #endif
 
@@ -163,6 +163,8 @@ void function MainHUD( entity cockpit, entity player )
 
 	cockpit.s.coreFXHandle <- null
 	cockpit.s.pilotDamageAmpFXHandle <- null
+
+	WaitFrame()
 
 	UpdateMainHudVisibility( player )
 
@@ -644,55 +646,15 @@ void function MainHud_TurnOff_RUI( entity cockpit, bool instant = false )
 void function HidePermanentHudTopo()
 {
 	RuiTopology_UpdatePos( clGlobal.topoFullscreenHudPermanent, <0, 0, 0>, <0, 0, 0>, <0, 0, 0> )
-
-	HUD_TogglePermanentHudsVisibility( false )
 }
 
 
 void function ShowPermanentHudTopo()
 {
 	UpdateFullscreenTopology( clGlobal.topoFullscreenHudPermanent, true )
-
-	HUD_TogglePermanentHudsVisibility( true )
 }
 
 
-void function HUD_TogglePermanentHudsVisibility( bool isVisible )
-{
-	var ultimateRui = GetUltimateRui()
-	var pilotRui = GetPilotRui()
-	var dpadMenuRui = GetDpadMenuRui()
-	var weaponRui = GetWeaponRui()
-	var tacticalRui = GetTacticalRui()
-	var compassRui = GetTacticalRui()
-	var gamestateRui = ClGameState_GetRui()
-
-	if ( ultimateRui != null )
-		RuiSetBool( ultimateRui, "isVisible", isVisible )
-
-	if ( pilotRui != null )
-		RuiSetBool( pilotRui, "isVisible", isVisible )
-
-	if ( dpadMenuRui != null )
-		RuiSetBool( dpadMenuRui, "isVisible", isVisible )
-
-	if ( weaponRui != null )
-		RuiSetBool( weaponRui, "isVisible", isVisible )
-
-	if ( tacticalRui != null )
-		RuiSetBool( tacticalRui, "isVisible", isVisible )
-
-	if ( compassRui != null )
-		RuiSetBool( compassRui, "isVisible", isVisible )
-
-	if ( gamestateRui != null )
-		RuiSetBool( gamestateRui, "isVisible", isVisible )
-
-	foreach ( unitFrame in GetTeamUnitFrames() )
-	{
-		RuiSetBool( unitFrame.rui, "isVisible", isVisible )
-	}
-}
 
 void function HideTargetInfoHudTopo()
 {
@@ -790,7 +752,7 @@ void function ClientHudInit( entity player )
 {
 	Assert( player == GetLocalClientPlayer() )
 
-#if DEV
+#if DEVELOPER
 		HudElement( "Dev_Info1" ).Hide()
 		HudElement( "Dev_Info2" ).Hide()
 		HudElement( "Dev_Info3" ).Hide()
@@ -1037,16 +999,15 @@ bool function ShouldMainHudBeVisible( entity player )
 		case eGameState.WinnerDetermined:
 		case eGameState.Resolution:
 		case eGameState.Postmatch:
-			return IsWatchingKillReplay() && IsReplayRoundWinning() && !ShouldScriptHideHudInKillreplay()
 			return false
 	}
 
-#if DEV
+#if DEVELOPER
 		if ( IsModelViewerActive() )
 			return false
 
-		if ( OutsourceViewer_IsActive() )
-			return false
+		//if ( OutsourceViewer_IsActive() )
+		//	return false
 
 #endif
 
@@ -1078,8 +1039,8 @@ void function DEV_DebugHudStatusThread()
 	{
 		HudVisibilityStatus hudStatus = GetHudStatus( GetLocalViewPlayer() )
 
-		DebugDrawScreenText( 0.90, 0.5, format( "mainHud: %s", hudStatus.mainHud ? "ON" : "OFF" ) )
-		DebugDrawScreenText( 0.90, 0.512, format( "permanentHud: %s", hudStatus.permanentHud ? "ON" : "OFF" ) )
+		DebugScreenText( 0.90, 0.5, format( "mainHud: %s", hudStatus.mainHud ? "ON" : "OFF" ) )
+		DebugScreenText( 0.90, 0.512, format( "permanentHud: %s", hudStatus.permanentHud ? "ON" : "OFF" ) )
 
 		WaitFrame()
 	}
@@ -1140,12 +1101,12 @@ bool function ShouldPermanentHudBeVisible( entity player )
 	if ( ShouldHideHudForDeadPlayer( player ) && !GameMode_IsActive( eGameModes.CONTROL ) )
 		return false
 
-#if DEV
+#if DEVELOPER
 		if ( IsModelViewerActive() )
 			return false
 
-		if ( OutsourceViewer_IsActive() )
-			return false
+		//if ( OutsourceViewer_IsActive() )
+		//	return false
 
 #endif
 
@@ -1178,14 +1139,7 @@ void function InitChatHUD()
 	int width           = 630
 	int height          = 200
 
-	var chat = HudElement( "IngameTextChat" )
-	Hud_SetSize( chat, width * resMultiplier, height * resMultiplier )
-
-	file.hasInitChatHud = true
-
-
-	if ( Hud_GetY( chat ) != file.chatVerticalOffset )
-		SetChatHUDPosition( file.chatVerticalOffset )
+	Hud_SetSize( HudElement( "IngameTextChat" ), width * resMultiplier, height * resMultiplier )
 }
 
 
@@ -1239,17 +1193,43 @@ bool function IsWatchingReplay()
 
 void function SetAllHudVisExceptMinimap( bool toggle )
 {
-	HUD_TogglePermanentHudsVisibility( toggle )
+	RuiSetBool( GetPilotRui(), "isVisible", toggle )
+	RuiSetBool( ClGameState_GetRui(), "isVisible", toggle )
+	RuiSetBool( GetDpadMenuRui(), "isVisible", toggle )
+	RuiSetBool( GetWeaponRui(), "isVisible", toggle )
+	RuiSetBool( GetTacticalRui(), "isVisible", toggle )
+	RuiSetBool( GetUltimateRui(), "isVisible", toggle )
+
+	foreach ( unitFrame in GetTeamUnitFrames() )
+	{
+		RuiSetBool( unitFrame.rui, "isVisible", toggle )
+	}
+
+	if ( GetCompassRui() != null )
+		RuiSetBool( GetCompassRui(), "isVisible", toggle )
 
 	Obituary_SetEnabled( toggle )
 	Obituary_ClearObituary()
 }
 
-#if DEV
+#if DEVELOPER
 
 void function Dev_SetDefaultHUD( bool toggle )
 {
-	HUD_TogglePermanentHudsVisibility( toggle )
+	RuiSetBool( GetPilotRui(), "isVisible", toggle )
+	RuiSetBool( ClGameState_GetRui(), "isVisible", toggle )
+	RuiSetBool( GetDpadMenuRui(), "isVisible", toggle )
+	RuiSetBool( GetWeaponRui(), "isVisible", toggle )
+	RuiSetBool( GetTacticalRui(), "isVisible", toggle )
+	RuiSetBool( GetUltimateRui(), "isVisible", toggle )
+
+	foreach ( unitFrame in GetTeamUnitFrames() )
+	{
+		RuiSetBool( unitFrame.rui, "isVisible", toggle )
+	}
+
+	if ( GetCompassRui() != null )
+		RuiSetBool( GetCompassRui(), "isVisible", toggle )
 }
 #endif
 

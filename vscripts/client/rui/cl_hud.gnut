@@ -20,13 +20,14 @@ global function ServerCallback_ControlScoreEvent
 global function ServerCallback_FreeDMScoreEvent
 
 // Training hit indicators
-bool showTrainingHitIndicators = false
+int bulletColorSeed = 0
+bool showTrainingHitIndicators = false                                                                                                    
+const asset TARGET_SPINNING_MODEL = $"mdl/barriers/shooting_range_target_02.rmdl"
 global function UICallback_ToggleTrainingHitIndicators
 global function SCB_ShowHitMarks_Set_ByNetvar
 global function ShouldShowTrainingHitIndicators
 
 const bool RUI_ENABLED = true
-global bool ENABLE_HIT_DOT = false
 
 /*
 
@@ -67,10 +68,6 @@ struct MessageData
 const int NUM_OFFSETS = 4
 const int[NUM_OFFSETS] DAMAGE_OFFSETS = [0, 1, 0, -1]
 
-// Shield Icons
-const DUMMY_SHIELD_ICON = $"rui/hud/loot/loot_armor_1"
-const STUN_GRENADE_ICON = $"rui/hud/character_abilities/fuse_stun_indicator"
-const float STUN_GRENADE_ICON_TIMESCALE = 0.3
 
 // Ability entity checks (stubs)
 bool function IsMobileShieldEnt( entity ent ) { return false }
@@ -254,6 +251,8 @@ void function MessageThink( MessageData messageData )
 
 asset function GetScoreMessageRuiAssetForMode()
 {
+	if ( GameRules_GetGameMode() == GAMEMODE_CONTROL )
+		return $"ui/control_score_info.rpak"
 	return $""
 }
 //
@@ -265,15 +264,16 @@ void function DEV_DamageFlyout( entity victim )
 
 const GIBRALTAR_PASSIVE_ICON = $"rui/hud/character_abilities/gibraltar_passive_transparent"
 const RAMPART_AMPED_WALL_ICON = $"rui/hud/character_abilities/rampart_amped_wall_transparent"
+const DUMMY_SHIELD_ICON = $"rui/hud/loot/loot_armor_1"
+
+const STUN_GRENADE_ICON = $"rui/hud/character_abilities/fuse_stun_indicator" 
+const float STUN_GRENADE_ICON_TIMESCALE = 0.3
 
 void function DamageFlyout( float damageAmount, vector damagePosition, entity victim, int hitType, int damageFlags = 0, int damageType = 0, entity weapon = null )
 {
 	if ( !file.damageFlyoutEnabled )
 		return
 	if ( !IsValid( victim ) )
-		return
-
-	if ( IsPlayerShadowZombie( GetLocalViewPlayer() ) )
 		return
 
 	bool showHitIndicator = GetConVarInt( "hud_setting_damageIndicatorStyle" ) > 0
@@ -422,7 +422,7 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 
 	}
 
-	if ( ShouldShowProjectileHitDot( damageType, weapon ) || GetCurrentPlaylistVarBool( "firingrange_aimtrainerbycolombia", false ) && ENABLE_HIT_DOT )
+	if ( ShouldShowProjectileHitDot( damageType, weapon ) )
 	{
 		var hitDotRui = RuiCreate( $"ui/projectile_hit_dot.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, 0 )
 		RuiSetResolutionToScreenSize( hitDotRui )
@@ -563,6 +563,9 @@ bool function ShouldShowProjectileHitDot( int damageType, entity weapon )
 	if ( !IsValid( weapon ) )
 		return false
 
+	if ( ShouldShowTrainingHitIndicators() )
+		return false
+
 	#if DEVELOPER
 		// disables hit dots for video capture
 		if ( GetCurrentPlaylistVarBool( "hud_projectile_hit_dots_disabled", false ) )
@@ -572,6 +575,20 @@ bool function ShouldShowProjectileHitDot( int damageType, entity weapon )
 	return (weapon.GetProjectilesPerShot() > 1)
 }
 
+                         
+bool function ShouldShowTrainingHitIndicators ()
+{
+	if (!IsFiringRangeGameMode())
+		return false
+
+	if (!showTrainingHitIndicators)
+		return false
+
+	if (!FiringRangeHasHitIndictators())
+		return false
+
+	return true
+}
 
 int function GetArmorLevelFromDamageFlags( int damageFlags )
 {
@@ -682,20 +699,15 @@ string function GetFormattedEventText( ScoreEvent scoreEvent, int pointValue, EH
 	entity targetEntity = FromEHI( associatedEHI )
 	if ( IsValid( targetEntity ) && !targetEntity.IsPlayer() )
 	{
-		if( targetEntity != null && GetCurrentPlaylistVarBool( "register_dummie_kill_as_actual_kill", false ) )
-		{
-			targetEntityText = targetEntity.GetTitleForUI()
-		} else {
-			entity bossPlayer = targetEntity.GetBossPlayer()
-			if ( IsValid( bossPlayer ) )
-				targetEntityText = GetPlayerName( ToEHI( bossPlayer ) )
-			else
-				targetEntityText = targetEntity.GetBossPlayerName()
-		}
+		entity bossPlayer = targetEntity.GetBossPlayer()
+		if ( IsValid( bossPlayer ) )
+			targetEntityText = GetPlayerNameFromEHI( ToEHI( bossPlayer ) )
+		else
+			targetEntityText = targetEntity.GetBossPlayerName()
 	}
 	else if ( EHIHasValidScriptStruct( associatedEHI ) )
 	{
-		targetEntityText = GetPlayerName( associatedEHI )
+		targetEntityText = GetPlayerNameFromEHI( associatedEHI )
 	}
 
 	return Localize( eventText, targetEntityText, valueA, valueB )
@@ -707,49 +719,100 @@ void function ScoreEvents_SetEnabled( bool state )
 	file.scoreEventsEnabled = state
 }
 
-
-// ============================================================================
-// Training Hit Indicators
-// ============================================================================
-
-bool function ShouldShowTrainingHitIndicators()
+                                                
+void function ServerCallback_ControlScoreEvent( int scoreEventId, bool isExpEvent, int pointsValue, int associatedEntityHandle )
 {
-	if ( !IsFiringRangeGameMode() )
-		return false
+	if ( !file.scoreEventsEnabled )
+		return
 
-	if ( !showTrainingHitIndicators )
-		return false
+	entity player = GetLocalClientPlayer()
 
-	if ( !FiringRangeHasHitIndictators() )
-		return false
+	if ( !IsValid( player ) )
+		return
 
-	return true
+	ScoreEvent scoreEvent = ScoreEvent_FromId( scoreEventId )
+	if ( pointsValue <= 0 || ScoreEvent_GetEventName( scoreEvent ) == "Control_Exp_ExpReset" )
+		return
+
+	                                                                                             
+	string splashText = ScoreEvent_GetSplashText( scoreEvent )
+	string messageText = ""
+
+	                                                                                                                   
+	if ( associatedEntityHandle != 0 )
+	{
+		EHI associatedEHI = EncodedEHandleToEHI( associatedEntityHandle )
+		string targetEntityText = Localize( "#DISCONNECTED" )
+		entity targetEntity = FromEHI( associatedEHI )
+		if ( IsValid( targetEntity ) && !targetEntity.IsPlayer() )
+		{
+			entity bossPlayer = targetEntity.GetBossPlayer()
+			if ( IsValid( bossPlayer ) )
+				targetEntityText = GetPlayerNameFromEHI( ToEHI( bossPlayer ) )
+			else
+				targetEntityText = targetEntity.GetBossPlayerName()
+		}
+		else if ( EHIHasValidScriptStruct( associatedEHI ) )
+		{
+			targetEntityText = GetPlayerNameFromEHI( associatedEHI )
+		}
+
+		messageText = Localize( splashText, targetEntityText, pointsValue )
+	}
+	else
+	{
+		messageText = Localize( splashText, pointsValue )
+	}
+
+	MessageData messageData
+	messageData.scoreEventId = scoreEventId
+	messageData.scoreEventValue = pointsValue
+	messageData.messageText = messageText
+	messageData.duration = 5.0
+	messageData.messageScale = isExpEvent ? 1.0 : 1.01
+
+	messageData.icon = ScoreEvent_GetMedalIcon( scoreEvent )
+	                                                                                                                                 
+	if ( isExpEvent )
+	{
+		//Control_PlayEXPGainSFX()
+		file.pendingEventQueue.append( messageData )
+		if ( !file.eventQueueActive )
+			thread QueueMessageThink()
+	}
+	else
+	{
+		vector friendlyObjectiveCol = GamemodeUtility_GetColorVectorForCaptureObjectiveState( eGamemodeUtilityCaptureObjectiveColorState.FRIENDLY_OWNED )
+		Obituary_Print_Localized( messageText,friendlyObjectiveCol, friendlyObjectiveCol )
+	}
 }
+                              
 
-void function UICallback_ToggleTrainingHitIndicators()
+                       
+                                                
+void function ServerCallback_FreeDMScoreEvent( int scoreEventId )
 {
-	// Simplified toggle without netvar system
-	showTrainingHitIndicators = !showTrainingHitIndicators
+	if ( !file.scoreEventsEnabled )
+		return
+
+	entity player = GetLocalClientPlayer()
+
+	if ( !IsValid( player ) )
+		return
+
+	ScoreEvent scoreEvent = ScoreEvent_FromId(scoreEventId)
+	Obituary_Print_Localized( ScoreEvent_GetMedalText(scoreEvent) )
+}
+      
+
+                         
+void function UICallback_ToggleTrainingHitIndicators ()
+{
+	showTrainingHitIndicators = !( FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.SHOWHITMARKS ) )
+	Remote_ServerCallFunction( "UCB_SV_FRSetting_HitMarks_Toggle" )
 }
 
 void function SCB_ShowHitMarks_Set_ByNetvar()
 {
-	// Enable by default when called
-	showTrainingHitIndicators = true
+	showTrainingHitIndicators = FRS_NetVar_Get_Bool( GetLocalViewPlayer(), eFRSettingType.SHOWHITMARKS )
 }
-
-
-// ============================================================================
-// Control/FreeDM Score Events (stubs)
-// ============================================================================
-
-void function ServerCallback_ControlScoreEvent( int scoreEventId, bool isExpEvent, int pointsValue, int associatedEntityHandle )
-{
-	// stub
-}
-
-void function ServerCallback_FreeDMScoreEvent( int scoreEventId )
-{
-	// stub
-}
-

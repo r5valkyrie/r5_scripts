@@ -185,7 +185,7 @@ EHI function ToEHI( entity ent )
 
 		return ent.GetEncodedEHandle()
 	#elseif UI
-		Assert( ent == GetUIPlayer() )
+		Assert( ent == GetLocalClientPlayer() )
 		Assert( fileLevel.localClientEHI != EHI_null )
 		return fileLevel.localClientEHI
 	#endif
@@ -206,7 +206,7 @@ entity function FromEHI( EHI ent )
 	#elseif UI
 		Assert( fileLevel.localClientEHI != EHI_null )
 		Assert( ent == fileLevel.localClientEHI )
-		return GetUIPlayer()
+		return GetLocalClientPlayer()
 	#endif
 }
 #endif
