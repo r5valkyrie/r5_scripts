@@ -1088,7 +1088,7 @@ void function SetPlayerZoomedIn( entity player, bool isZoomedIn )
 }
 // -------------------
 
-void function OnPlayerMatchStateChanged( entity player, int newValue, int oldValue )
+void function OnPlayerMatchStateChanged( entity player, int oldValue, int newValue )
 {
 	if ( newValue >= ePlayerMatchState.NORMAL && !Bleedout_IsBleedingOut( player ) )
 		Waypoints_DestroyPingsForSkydiveEnding( player )

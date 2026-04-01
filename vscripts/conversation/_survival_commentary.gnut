@@ -2031,7 +2031,7 @@ void function Survival_Commentary_OnShieldBreak( entity playerBroken, var damage
 }
 
 
-void function Survival_Commentary_OnPlayerMatchStateChanged( entity player, int newValue, int oldValue )
+void function Survival_Commentary_OnPlayerMatchStateChanged( entity player, int oldValue, int newValue )
 {
 	if ( player.GetPlayerNetBool( "isJumpmaster" ) && newValue == ePlayerMatchState.SKYDIVE_FALLING )
 	{

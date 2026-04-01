@@ -469,7 +469,7 @@ bool function ShouldSwitchToRecap()
 }
 
 
-void function DeathScreen_SpectatorTargetCountChanged( entity player, int newValue, int oldValue, bool actuallyChanged )
+void function DeathScreen_SpectatorTargetCountChanged( entity player, int oldValue, int newValue, bool actuallyChanged )
 {
 	if ( player != GetLocalClientPlayer() )
 		return

@@ -35,7 +35,7 @@ void function Sh_Survival_Hardcore_RegisterNetworking()
 
 
 #if CLIENT
-void function OnPlayerMatchStateChanged( entity player, int newValue, int oldValue )
+void function OnPlayerMatchStateChanged( entity player, int oldValue, int newValue )
 {
 	if ( PlayerMatchState_GetFor( player ) == ePlayerMatchState.NORMAL )
 	{
