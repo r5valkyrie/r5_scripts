@@ -459,28 +459,6 @@ global struct featureTutorialTab
 }
 #endif
 
-// Playlist array - these match the playlists defined in playlists_r5_patch.txt
-// This is a simplified list for the modding environment
-global const array<string> PLAYLIST_ARRAY = [
-	"survival_staging_baseline",
-	"survival_training",
-	"survival_firingrange",
-	"survival_bots_vs_humanteams",
-	"control_base",
-	"control_tropics_barometer",
-	"control_canyonlands_caustic",
-	"control_desertlands_siphon",
-	"freedm_base",
-	"freedm_tdm",
-	"freedm_tdm_skulltown",
-	"freedm_tdm_party_crasher",
-	"freedm_tdm_habitat",
-	"freedm_tdm_map_rotation",
-	"freedm_gungame",
-	"tropic_ranked",
-	"moon_ranked"
-]
-
 // ============================================================================
 //  #if CLIENT - Declarations
 // ============================================================================
@@ -532,9 +510,6 @@ global function GetAllResinShards
 global function ShRanked_RegisterNetworkFunctions
 global function IsRankedGame
 global function IsArenasRankedGame
-
-// === Network ===
-// GetGlobalNonRewindNetBool - now a native function, removed stub
 
 // === Squad Cards ===
 global function DoAnimatedSquadCardsPresentation

@@ -1120,7 +1120,7 @@ HighlightContextResult  function GetHighlightContextForEnt( entity viewPlayer, e
                         
                                                                                                                                                                                                                     
 			     
-			if ( StatusEffect_HasSeverity( ent, eStatusEffect.sonar_detected ) && (viewPlayerEmoting || ent.IsHighlightEnabledForTeam( viewTarget.GetTeam() )) )
+			if ( StatusEffect_HasSeverity( ent, eStatusEffect.sonar_detected ) && (viewPlayerEmoting || ent.IsHighlightEnabledForTeam( GetHighlightId( HIGHLIGHT_BLOODHOUND_SONAR ), viewTarget.GetTeam() )) )
          
 			{
 				result.contextId = GetHighlightId( HIGHLIGHT_BLOODHOUND_SONAR )
@@ -1130,7 +1130,7 @@ HighlightContextResult  function GetHighlightContextForEnt( entity viewPlayer, e
                         
                                                                                                                                                                                                     
 			     
-			else if ( StatusEffect_HasSeverity( ent, eStatusEffect.mortar_ring_reveal ) && ent.IsHighlightEnabledForTeam( viewTarget.GetTeam() ) )
+			else if ( StatusEffect_HasSeverity( ent, eStatusEffect.mortar_ring_reveal ) && ent.IsHighlightEnabledForTeam( GetHighlightId( HIGHLIGHT_ABILITY_REVEAL ), viewTarget.GetTeam() ) )
          
 			{
 				result.contextId = GetHighlightId( HIGHLIGHT_ABILITY_REVEAL )
@@ -1140,7 +1140,7 @@ HighlightContextResult  function GetHighlightContextForEnt( entity viewPlayer, e
 			else if ( ShouldShowNovaBlackholeHighlight( viewTarget, ent ) )
 			{
 				int highlightId = GetHighlightId( HIGHLIGHT_NOVA_BLACKHOLE_THREAT )
-				if( ent.IsHighlightEnabledForTeam( viewTarget.GetTeam() ) )
+				if( ent.IsHighlightEnabledForTeam( highlightId, viewTarget.GetTeam() ) )
 				{
 					result.contextId = highlightId
 					return result
