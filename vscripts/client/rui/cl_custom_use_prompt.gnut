@@ -36,7 +36,7 @@ void function CustomUsePrompt_Show( entity focusedEnt )
 
 void function CustomUsePrompt_Hide()
 {
-	//RuiSetVisible( file.rui, false )
+	RuiSetVisible( file.rui, false )
 }
 
 void function CustomUsePrompt_ClearForAny()
