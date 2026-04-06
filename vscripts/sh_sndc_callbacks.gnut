@@ -1,0 +1,61 @@
+//=============================================================================
+// SNDC Callback Wrappers (TYPED file — correct functionref signatures)
+//
+// Each wrapper registers in BOTH:
+//   1. Engine native (fires for non-overflow via DT)
+//   2. SDK system (fires for overflow via NET_ScriptMessage, event-driven)
+//
+// Usage: find-replace in scripts:
+//   RegisterNetworkedVariableChangeCallback_bool → RegisterNetworkedVariableChangeCallback_boolSafe
+//   RegisterNetworkedVariableChangeCallback_int  → RegisterNetworkedVariableChangeCallback_intSafe
+//   etc.
+//=============================================================================
+
+global function RegisterNetworkedVariableChangeCallback_boolSafe
+global function RegisterNetworkedVariableChangeCallback_intSafe
+global function RegisterNetworkedVariableChangeCallback_floatSafe
+global function RegisterNetworkedVariableChangeCallback_timeSafe
+global function RegisterNetworkedVariableChangeCallback_entSafe
+
+#if CLIENT || UI
+
+void function RegisterNetworkedVariableChangeCallback_boolSafe( string name, void functionref( entity, bool, bool, bool ) callback )
+{
+	RegisterNetworkedVariableChangeCallback_bool( name, callback )
+	SDKRegisterNetVarCallback_bool( name, callback )
+}
+
+void function RegisterNetworkedVariableChangeCallback_intSafe( string name, void functionref( entity, int, int, bool ) callback )
+{
+	RegisterNetworkedVariableChangeCallback_int( name, callback )
+	SDKRegisterNetVarCallback_int( name, callback )
+}
+
+void function RegisterNetworkedVariableChangeCallback_floatSafe( string name, void functionref( entity, float, float, bool ) callback )
+{
+	RegisterNetworkedVariableChangeCallback_float( name, callback )
+	SDKRegisterNetVarCallback_float( name, callback )
+}
+
+void function RegisterNetworkedVariableChangeCallback_timeSafe( string name, void functionref( entity, float, float, bool ) callback )
+{
+	RegisterNetworkedVariableChangeCallback_time( name, callback )
+	SDKRegisterNetVarCallback_time( name, callback )
+}
+
+void function RegisterNetworkedVariableChangeCallback_entSafe( string name, void functionref( entity, entity, entity, bool ) callback )
+{
+	RegisterNetworkedVariableChangeCallback_ent( name, callback )
+	SDKRegisterNetVarCallback_ent( name, callback )
+}
+
+#elseif SERVER
+
+// Server stubs (callbacks are client/UI only)
+void function RegisterNetworkedVariableChangeCallback_boolSafe( string name, void functionref( entity, bool, bool, bool ) callback ) {}
+void function RegisterNetworkedVariableChangeCallback_intSafe( string name, void functionref( entity, int, int, bool ) callback ) {}
+void function RegisterNetworkedVariableChangeCallback_floatSafe( string name, void functionref( entity, float, float, bool ) callback ) {}
+void function RegisterNetworkedVariableChangeCallback_timeSafe( string name, void functionref( entity, float, float, bool ) callback ) {}
+void function RegisterNetworkedVariableChangeCallback_entSafe( string name, void functionref( entity, entity, entity, bool ) callback ) {}
+
+#endif

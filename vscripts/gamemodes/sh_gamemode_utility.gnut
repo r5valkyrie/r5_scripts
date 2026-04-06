@@ -242,13 +242,13 @@ void function GamemodeUtility_Init()
 void function GamemodeUtility_RegisterNetworking()
 {
 	#if CLIENT || SERVER
-	//	RegisterNetworkedVariable( GAMEMODEUTILITY_NETVAR_MATCH_START, SNDC_GLOBAL_NON_REWIND, SNVT_TIME, -1.0 )
-	//	RegisterNetworkedVariable( GAMEMODEUTILITY_NETVAR_MATCH_END, SNDC_GLOBAL_NON_REWIND, SNVT_TIME, 0.0 )
+	//	RegisterNetworkedVariableSafe( GAMEMODEUTILITY_NETVAR_MATCH_START, SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	//	RegisterNetworkedVariableSafe( GAMEMODEUTILITY_NETVAR_MATCH_END, SNDC_GLOBAL, SNVT_TIME, 0.0 )
 	#endif
 
 	Remote_RegisterClientFunction( "GamemodeUtility_ServerCallback_DisplayMatchTimeLimitWarning", "bool" )
 	Remote_RegisterClientFunction( "GamemodeUtility_ServerCallback_PlayMatchEndingCountdownAudio" )
-	RegisterNetworkedVariable( "mixtape_isLeaverPenaltyEnabledForMatch", SNDC_GLOBAL, SNVT_BOOL, true )
+	RegisterNetworkedVariableSafe( "mixtape_isLeaverPenaltyEnabledForMatch", SNDC_GLOBAL, SNVT_BOOL, true )
 
 	#if CLIENT
 		RegisterNetVarBoolChangeCallback( "mixtape_isLeaverPenaltyEnabledForMatch", GamemodeUtility_OnLeaverPenaltyStatusChanged, SNDC_GLOBAL )
@@ -259,10 +259,10 @@ void function GamemodeUtility_RegisterNetworking()
 #if CLIENT || SERVER
 	// Used for Pin Data in non elimination modes
 	if ( !IsEliminationBased() )
-		RegisterNetworkedVariable( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
+		RegisterNetworkedVariableSafe( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
 	// Leaver penalty tracking — did this player ever have a full team
-	RegisterNetworkedVariable( "rankedDidPlayerEverHaveAFullTeam", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "rankedDidPlayerEverHaveAFullTeam", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
 #endif // CLIENT || SERVER
 
@@ -270,7 +270,7 @@ void function GamemodeUtility_RegisterNetworking()
 	if ( GamemodeUtility_IsJIPEnabledInPlaylist() )
 	{
 		#if CLIENT || SERVER
-			RegisterNetworkedVariable( "GamemodeUtility_HasJIPPlayerReceivedSpawnBonus", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+			RegisterNetworkedVariableSafe( "GamemodeUtility_HasJIPPlayerReceivedSpawnBonus", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
 		#endif // CLIENT || SERVER
 		Remote_RegisterClientFunction( "GamemodeUtility_ServerCallback_PlayerJoinedMatchInProgress", "entity" )
 	}
@@ -2292,7 +2292,7 @@ bool function GamemodeUtility_IsPlayerAbandoning( entity player )
 	if ( GetGameState() >= eGameState.WinnerDetermined )
 		return false
 
-	if ( !GetGlobalNetBool( "mixtape_isLeaverPenaltyEnabledForMatch" ) )
+	if ( !GetGlobalNetBoolSafe( "mixtape_isLeaverPenaltyEnabledForMatch" ) )
 		return false
 
 	if ( GetGameState() >= eGameState.Prematch && !player.GetPlayerNetBool( "rankedDidPlayerEverHaveAFullTeam" ) )

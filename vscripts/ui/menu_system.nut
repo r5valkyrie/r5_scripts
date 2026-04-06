@@ -361,7 +361,7 @@ void function UpdateSystemPanel( var panel )
 			SetButtonData( panel, buttonIndex++, file.OpenWeaponsMenu[ panel ] )
 		} else if( Playlist() == ePlaylists.fs_1v1_coaching )
 		{
-			if( GetGlobalNetBool( "FS_Coaching_IsPlayingRecording" ) && uiGlobal.bIsServerAdmin )
+			if( GetGlobalNetBoolSafe( "FS_Coaching_IsPlayingRecording" ) && uiGlobal.bIsServerAdmin )
 			{
 				SetButtonData( panel, buttonIndex++, file.CoachingStartAgain[ panel ] )
 				SetButtonData( panel, buttonIndex++, file.CoachingStop[ panel ] )
@@ -716,7 +716,7 @@ bool function ShouldDisplayOptInOptions()
 	// if ( GRX_IsInventoryReady() && (GRX_HasItem( GRX_DEV_ITEM ) || GRX_HasItem( GRX_QA_ITEM )) )
 		return true
 
-	return GetGlobalNetBool( "isOptInServer" )
+	return GetGlobalNetBoolSafe( "isOptInServer" )
 }
 
 bool function IsOptInEnabled()

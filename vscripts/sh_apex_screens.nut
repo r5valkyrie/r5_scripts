@@ -293,41 +293,41 @@ void function ShApexScreens_Init()
 
 	for ( int screenPosition = eApexScreenPosition.L; screenPosition <= eApexScreenPosition.R; screenPosition++ )
 	{
-		ScriptRegisterNetworkedVariable( format( "ApexScreensMasterState_Pos%d_CommenceTime", screenPosition ), SNDC_GLOBAL, SNVT_TIME, -1 )
-		ScriptRegisterNetworkedVariable( format( "ApexScreensMasterState_Pos%d_ModeIndex", screenPosition ), SNDC_GLOBAL, SNVT_INT, -1 )
-		ScriptRegisterNetworkedVariable( format( "ApexScreensMasterState_Pos%d_TransitionStyle", screenPosition ), SNDC_GLOBAL, SNVT_INT, -1 )
-		ScriptRegisterNetworkedVariable( format( "ApexScreensMasterState_Pos%d_Player", screenPosition ), SNDC_GLOBAL, SNVT_BIG_INT, -1 )
+		RegisterNetworkedVariableSafe( format( "ApexScreensMasterState_Pos%d_CommenceTime", screenPosition ), SNDC_GLOBAL, SNVT_TIME, -1 )
+		RegisterNetworkedVariableSafe( format( "ApexScreensMasterState_Pos%d_ModeIndex", screenPosition ), SNDC_GLOBAL, SNVT_INT, -1 )
+		RegisterNetworkedVariableSafe( format( "ApexScreensMasterState_Pos%d_TransitionStyle", screenPosition ), SNDC_GLOBAL, SNVT_INT, -1 )
+		RegisterNetworkedVariableSafe( format( "ApexScreensMasterState_Pos%d_Player", screenPosition ), SNDC_GLOBAL, SNVT_BIG_INT, -1 )
 
 		#if CLIENT
-			RegisterNetworkedVariableChangeCallback_time( format( "ApexScreensMasterState_Pos%d_CommenceTime", screenPosition ), void function( entity unused, float old, float new, bool ac ) : (screenPosition) {
+			RegisterNetworkedVariableChangeCallback_timeSafe( format( "ApexScreensMasterState_Pos%d_CommenceTime", screenPosition ), void function( entity unused, float old, float new, bool ac ) : (screenPosition) {
 				file.screenPositionMasterStates[screenPosition].commenceTime = new
 				UpdateAllScreensContent()
 			} )
-			RegisterNetworkedVariableChangeCallback_int( format( "ApexScreensMasterState_Pos%d_ModeIndex", screenPosition ), void function( entity unused, int old, int new, bool ac ) : (screenPosition) {
+			RegisterNetworkedVariableChangeCallback_intSafe( format( "ApexScreensMasterState_Pos%d_ModeIndex", screenPosition ), void function( entity unused, int old, int new, bool ac ) : (screenPosition) {
 				file.screenPositionMasterStates[screenPosition].modeIndex = new
 				UpdateAllScreensContent()
 			} )
-			RegisterNetworkedVariableChangeCallback_int( format( "ApexScreensMasterState_Pos%d_TransitionStyle", screenPosition ), void function( entity unused, int old, int new, bool ac ) : (screenPosition) {
+			RegisterNetworkedVariableChangeCallback_intSafe( format( "ApexScreensMasterState_Pos%d_TransitionStyle", screenPosition ), void function( entity unused, int old, int new, bool ac ) : (screenPosition) {
 				file.screenPositionMasterStates[screenPosition].transitionStyle = new
 				UpdateAllScreensContent()
 			} )
-			RegisterNetworkedVariableChangeCallback_int( format( "ApexScreensMasterState_Pos%d_Player", screenPosition ), void function( entity unused, int old, int new, bool ac ) : (screenPosition) {
+			RegisterNetworkedVariableChangeCallback_intSafe( format( "ApexScreensMasterState_Pos%d_Player", screenPosition ), void function( entity unused, int old, int new, bool ac ) : (screenPosition) {
 				file.screenPositionMasterStates[screenPosition].playerEHI = new
 				UpdateAllScreensContent()
 			} )
 		#endif
 	}
-	ScriptRegisterNetworkedVariable( NV_ApexScreensEventTimeA, SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( NV_ApexScreensEventTimeA, SNDC_GLOBAL, SNVT_TIME, -1 )
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_time( NV_ApexScreensEventTimeA, void function( entity unused, float oldTime, float newTime, bool actuallyChanged )
+		RegisterNetworkedVariableChangeCallback_timeSafe( NV_ApexScreensEventTimeA, void function( entity unused, float oldTime, float newTime, bool actuallyChanged )
 		{
 			if ( !actuallyChanged )
 				return
 			OnUpdateApexScreensEventTime( newTime )
 		} )
 	#endif //
-	ScriptRegisterNetworkedVariable( NV_ApexScreensEventTimeB, SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( NV_ApexScreensEventIntA, SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( NV_ApexScreensEventTimeB, SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( NV_ApexScreensEventIntA, SNDC_GLOBAL, SNVT_INT, -1 )
 	#if SERVER
 		RegisterSignal( "ApexScreenMasterThink" )
 
@@ -351,17 +351,17 @@ void function ShApexScreens_Init()
 #if CLIENT || SERVER
 void function SvApexScreens_SetEventTimeA( float time )
 {
-	//SetGlobalNetTime( NV_ApexScreensEventTimeA, time )
+	//SetGlobalNetTimeSafe( NV_ApexScreensEventTimeA, time )
 }
 
 void function SvApexScreens_SetEventTimeB( float time )
 {
-	//SetGlobalNetTime( NV_ApexScreensEventTimeB, time )
+	//SetGlobalNetTimeSafe( NV_ApexScreensEventTimeB, time )
 }
 
 void function SvApexScreens_SetEventIntA( int val )
 {
-	//SetGlobalNetInt( NV_ApexScreensEventIntA, val )
+	//SetGlobalNetIntSafe( NV_ApexScreensEventIntA, val )
 }
 
 asset function CastStringToAsset( string val )
@@ -537,10 +537,10 @@ void function ShowModeInternal( int screenPosition, int transitionStyle, int mod
 	if ( !GetCurrentPlaylistVarBool( "enable_apex_screens", true ) )
 		return
 
-	SetGlobalNetTime( format( "ApexScreensMasterState_Pos%d_CommenceTime", screenPosition ), Time() )
-	SetGlobalNetInt( format( "ApexScreensMasterState_Pos%d_ModeIndex", screenPosition ), mode )
-	SetGlobalNetInt( format( "ApexScreensMasterState_Pos%d_TransitionStyle", screenPosition ), transitionStyle )
-	SetGlobalNetInt( format( "ApexScreensMasterState_Pos%d_Player", screenPosition ), playerEEH ) // todo(dw)
+	SetGlobalNetTimeSafe( format( "ApexScreensMasterState_Pos%d_CommenceTime", screenPosition ), Time() )
+	SetGlobalNetIntSafe( format( "ApexScreensMasterState_Pos%d_ModeIndex", screenPosition ), mode )
+	SetGlobalNetIntSafe( format( "ApexScreensMasterState_Pos%d_TransitionStyle", screenPosition ), transitionStyle )
+	SetGlobalNetIntSafe( format( "ApexScreensMasterState_Pos%d_Player", screenPosition ), playerEEH ) // todo(dw)
 }
 #endif
 
@@ -756,7 +756,7 @@ void function DEV_ApexScreens_GladCardPreviewMode()
 #if SERVER && DEVELOPER
 void function DEV_ApexScreens_SetMode( var opt = "random" )
 {
-	int currentMode = GetGlobalNetInt( "ApexScreensMasterState_Pos1_ModeIndex" ) // just use center screen
+	int currentMode = GetGlobalNetIntSafe( "ApexScreensMasterState_Pos1_ModeIndex" ) // just use center screen
 	int nextMode
 	if ( opt == "random" )
 		nextMode = RandomIntRange( 0, eApexScreenMode._COUNT )
@@ -905,7 +905,7 @@ void function OnUpdateApexScreensEventTime( float newTime )
 	{
 		offScreens.skipStandardVars = true
 		offScreens.ruiAsset = eventScreenAsset
-		offScreens.vars.gametimes["eventTriggerTime"] <- GetGlobalNetTime( NV_ApexScreensEventTimeA )
+		offScreens.vars.gametimes["eventTriggerTime"] <- GetGlobalNetTimeSafe( NV_ApexScreensEventTimeA )
 	}
 
 	ScreenOverrideInfo onScreens
@@ -915,7 +915,7 @@ void function OnUpdateApexScreensEventTime( float newTime )
 		onScreens.vars.strings["eventText"] <- "#BANNER_EVENT_MAINTEXT"
 		onScreens.vars.bools["eventShowFailure"] <- (!showSuccess)
 		onScreens.vars.bools["eventShowSuccess"] <- showSuccess
-		onScreens.vars.gametimes["eventTriggerTime"] <- GetGlobalNetTime( NV_ApexScreensEventTimeA )
+		onScreens.vars.gametimes["eventTriggerTime"] <- GetGlobalNetTimeSafe( NV_ApexScreensEventTimeA )
 	}
 
 	array<ApexScreenState> centerScreens
@@ -1747,7 +1747,7 @@ void function ServerToClient_ApexScreenRefreshAll()
 //
 //	{
 //		// circle state -- about to close & just closed
-//		float nextCircleStartTime = GetGlobalNetTime( "nextCircleStartTime" )
+//		float nextCircleStartTime = GetGlobalNetTimeSafe( "nextCircleStartTime" )
 //	}
 //
 //	// impressive kill

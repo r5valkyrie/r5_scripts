@@ -643,7 +643,7 @@ void function ShLoadouts_LevelInit_Finish()
 				fileLevel.networkVars[fullNetworkVarName] <- nvInfo
 				#if SERVER || CLIENT
 					nvInfo.type = desiredNetworkVarType
-					RegisterNetworkedVariable(
+					RegisterNetworkedVariableSafe(
 						nvInfo.fullNetworkVarName, SNDC_PLAYER_GLOBAL,
 						nvInfo.type, SLOT_CONTENTS_SENTINEL_NOTREADY
 					)

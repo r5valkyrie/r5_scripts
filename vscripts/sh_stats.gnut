@@ -1163,7 +1163,7 @@ void function StatsHook_RecordPlacementStats( entity player )
 
 	if ( !skipNormalPlacementStats )
 	{
-		int playersOutlived = MAX_PLAYERS - GetGlobalNetInt( "livingPlayerCount" )
+		int playersOutlived = MAX_PLAYERS - GetGlobalNetIntSafe( "livingPlayerCount" )
 		__IncrementStat_Int( player, ResolveStatEntry( CAREER_STATS.opponents_outlived ), playersOutlived )
 
 		int oldMaxSquadWipes = GetStat_Int( player, ResolveStatEntry( CAREER_STATS.character_most_squad_squad_kills_in_1_game, characterRef ), eStatGetWhen.CURRENT )

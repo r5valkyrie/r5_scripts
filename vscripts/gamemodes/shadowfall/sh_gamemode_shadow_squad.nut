@@ -196,22 +196,22 @@ void function Gamemode_ShadowSquad_RegisterNetworking()
 	if ( !IsFallLTM() )
 		return
 
-	ScriptRegisterNetworkedVariable( "livingShadowPlayerCount", SNDC_GLOBAL, SNVT_INT )
+	RegisterNetworkedVariableSafe( "livingShadowPlayerCount", SNDC_GLOBAL, SNVT_INT )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ModeShadowSquad_AnnouncementSplash", "int", 0, 999, "float", 0.0, 5000.0, 16 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ShadowClientEffectsEnable", "entity", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlaySpectatorAudio", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerLandedNOCAudio", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_MoreNOCAudio", "int", 0, 256 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ModeShadowSquad_RestorePlayerHealthFx", "bool" )
-	ScriptRegisterNetworkedVariable( "playerCanRespawnAsShadow", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "playerCanRespawnAsShadow", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
-	ScriptRegisterNetworkedVariable( "shadowSquadGamePhase", SNDC_GLOBAL, SNVT_UNSIGNED_INT, 1.0 )
-	ScriptRegisterNetworkedVariable( "countdownTimerStart", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "countdownTimerEnd", SNDC_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "shadowsWonTheMode", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "shadowSquadGamePhase", SNDC_GLOBAL, SNVT_UNSIGNED_INT, 1.0 )
+	RegisterNetworkedVariableSafe( "countdownTimerStart", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "countdownTimerEnd", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "shadowsWonTheMode", SNDC_GLOBAL, SNVT_BOOL, false )
 
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_int( "shadowSquadGamePhase", OnGamePhaseChanged )
+		RegisterNetworkedVariableChangeCallback_intSafe( "shadowSquadGamePhase", OnGamePhaseChanged )
 	#endif
 }
 
@@ -242,7 +242,7 @@ void function OnGamePhaseChanged( entity player, int oldVal, int newVal, bool ac
 		if ( newVal == eShadowSquadGamePhase.WINNER_DETERMINED )
 		{
 			//
-			if ( IsAlive( guy ) && IsPlayerShadowSquad( guy ) && GetGlobalNetBool( "shadowsWonTheMode" ) )
+			if ( IsAlive( guy ) && IsPlayerShadowSquad( guy ) && GetGlobalNetBoolSafe( "shadowsWonTheMode" ) )
 			{
 				//
 				if ( !IsSquadMuted() )
@@ -256,7 +256,7 @@ void function OnGamePhaseChanged( entity player, int oldVal, int newVal, bool ac
 
 int function GetCurrentGamePhase()
 {
-	return GetGlobalNetInt( "shadowSquadGamePhase" )
+	return GetGlobalNetIntSafe( "shadowSquadGamePhase" )
 }
 
 #if CLIENT
@@ -788,8 +788,8 @@ void function UpdatePlayerHUD( entity player )
 	if ( !IsValid( file.countdownRui ) )
 		file.countdownRui = CreateFullscreenRui( $"ui/generic_timer.rpak" )
 
-	float countdownTimerStart = GetGlobalNetTime( "countdownTimerStart" )
-	float countdownTimerEnd = GetGlobalNetTime( "countdownTimerEnd" )
+	float countdownTimerStart = GetGlobalNetTimeSafe( "countdownTimerStart" )
+	float countdownTimerEnd = GetGlobalNetTimeSafe( "countdownTimerEnd" )
 	string countdownText
 
 	switch ( gamePhase )
@@ -838,7 +838,7 @@ void function UpdatePlayerHUD( entity player )
 
 bool function IsShadowVictory()
 {
-	return GetGlobalNetBool( "shadowsWonTheMode" )
+	return GetGlobalNetBoolSafe( "shadowsWonTheMode" )
 }
 
 bool function PlayerCanRespawnAsShadow( entity player )

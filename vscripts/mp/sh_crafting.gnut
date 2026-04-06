@@ -668,11 +668,11 @@ void function Crafting_RegisterNetworking()
 
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
-		RegisterNetworkedVariable( "craftingMaterials", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
-		RegisterNetworkedVariable( "Crafting_NumHarvesters", SNDC_GLOBAL, SNVT_INT, 0 )
+		RegisterNetworkedVariableSafe( "craftingMaterials", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+		RegisterNetworkedVariableSafe( "Crafting_NumHarvesters", SNDC_GLOBAL, SNVT_INT, 0 )
 	}
 
-	RegisterNetworkedVariable( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
 
 #if SERVER || CLIENT
 	Remote_RegisterClientFunction( "ServerCallback_CL_MaterialsChanged", "int", -1, INT_MAX, "int", -1, INT_MAX, "int", 0, eWildLifeCampType.Count, "entity", "bool" )
@@ -1210,7 +1210,7 @@ void function RandomizeHarvesterLocations()
 	file.harvesterArray.clear()
 	file.harvesterArray = clone distributedHarvesters
 
-	SetGlobalNetInt( "Crafting_NumHarvesters", file.harvesterArray.len() )
+	SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
 }
 
 
@@ -1343,7 +1343,7 @@ void function RandomizeClusterLocations_Thread( bool shouldLinkHarvesters )
 
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
-		SetGlobalNetInt( "Crafting_NumHarvesters", file.harvesterArray.len() )
+		SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
 	}
 }
 
@@ -1935,10 +1935,10 @@ void function Crafting_OnEntitiesDidLoad()
 {
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
-		SetGlobalNetInt( "Crafting_NumHarvesters", file.harvesterArray.len() )
+		SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
 	}
 
-	SetGlobalNetTime( "Crafting_StartTime", file.matchStartTime )
+	SetGlobalNetTimeSafe( "Crafting_StartTime", file.matchStartTime )
 }
 
 entity function CreateMaterialHarvester( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true )
@@ -4948,13 +4948,13 @@ CraftingBundle function GetBundleForCategory( CraftingCategory categoryToCheck )
 	int unixTimeNow
 	#if SERVER
 		if ( file.isNetworkingRegistered )
-			unixTimeNow = int(GetGlobalNetTime( "Crafting_StartTime" ))
+			unixTimeNow = int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
 		else
 			unixTimeNow = file.matchStartTime
 	#endif
 	#if CLIENT
 		if ( !IsLobby() )
-			unixTimeNow = int(GetGlobalNetTime( "Crafting_StartTime" ))
+			unixTimeNow = int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
 		else
 			unixTimeNow = GetUnixTimestamp()
 	#endif

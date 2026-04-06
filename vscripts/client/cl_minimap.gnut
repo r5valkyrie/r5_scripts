@@ -1888,10 +1888,10 @@ void function UpdateFullmapRuiTracks()
 	if ( roundNumber < 1 )
 		return
 
-	float circleStartTime = GetGlobalNetTime( "nextCircleStartTime" )
+	float circleStartTime = GetGlobalNetTimeSafe( "nextCircleStartTime" )
 	RuiSetGameTime( file.fullmap_gamestateRui, "circleStartTime", circleStartTime )
 
-	float circleCloseTime = GetGlobalNetTime( "circleCloseTime" )
+	float circleCloseTime = GetGlobalNetTimeSafe( "circleCloseTime" )
 	RuiSetGameTime( file.fullmap_gamestateRui, "circleCloseTime", circleCloseTime )
 
 	RuiSetInt( file.fullmap_gamestateRui, "roundNumber", roundNumber )

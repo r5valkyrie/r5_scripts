@@ -158,7 +158,7 @@ void function ShFiringRangeChallenges_Init()
 	if ( !FRC_IsEnabled() )
 		return
 
-	RegisterNetworkedVariable( FRC_SCORE_NETWORK_VAR, SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariableSafe( FRC_SCORE_NETWORK_VAR, SNDC_PLAYER_EXCLUSIVE, SNVT_BIG_INT, 0 )
 
 	#if SERVER
 		AddCallback_OnClientDisconnected( FRC_OnPlayerDisconnected )

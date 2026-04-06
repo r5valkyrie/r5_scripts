@@ -283,7 +283,7 @@ array<string> function GetReportReasons( string platform )
 void function OnEntitiesDidLoad()
 {
 	#if DEV
-		SetGlobalNetBool( "isOptInServer", AnyOptInPlaylists() )
+		SetGlobalNetBoolSafe( "isOptInServer", AnyOptInPlaylists() )
 	#endif
 }
 

@@ -2876,7 +2876,7 @@ void function Survival_RunCharacterSelection_Thread()
 	if ( !Survival_CharacterSelectEnabled() )
 		return
 
-	while( GetGlobalNetBool( "characterSelectionReady" ) == false )
+	while( GetGlobalNetBoolSafe( "characterSelectionReady" ) == false )
 		WaitFrame()
 
 	entity player = GetLocalClientPlayer()
@@ -2902,7 +2902,7 @@ void function Survival_RunCharacterSelection_Thread()
 	OpenCharacterSelectMenu()
 
 
-	while( Time() < GetGlobalNetTime( "allSquadsPresentationStartTime" ) )
+	while( Time() < GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) )
 		WaitFrame()
 
 
@@ -3000,7 +3000,7 @@ void function TryStartIntroPodiumSequence()
 					{
 						if (shouldPickChampionSquad)
 						{
-							entity championPlayer = FromEHI( GetGlobalNetInt( "championEEH" ) )
+							entity championPlayer = FromEHI( GetGlobalNetIntSafe( "championEEH" ) )
 
 							if (IsValid( championPlayer ))
 							{
@@ -4182,7 +4182,7 @@ void function ShowMatchStartSequence( int teamOrAlliance, float camera_move_dura
 		entity mvp
 
 		if (isChampionTeam)
-			mvp = FromEHI( GetGlobalNetInt( "championEEH" ) )
+			mvp = FromEHI( GetGlobalNetIntSafe( "championEEH" ) )
 		else
 			mvp = PickMVP(localTeamPlayersArray)
 

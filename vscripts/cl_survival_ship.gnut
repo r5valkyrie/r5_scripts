@@ -387,28 +387,28 @@ void function PlayDoorsOpenTimerSounds( entity player )
 	EndSignal( player, "CreateSquadLeaderBox" )
 	EndSignal( player, "OnDestroy" )
 
-	float doorsOpenTime = GetGlobalNetTime( "PlaneDoorsOpenTime" )
+	float doorsOpenTime = GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" )
 	float threeSecondWarningTime = doorsOpenTime - 3.0
 
-	while( GetGlobalNetTime( "PlaneDoorsOpenTime" ) < 0 )
+	while( GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) < 0 )
 		WaitFrame()
 
-	if ( Time() > GetGlobalNetTime( "PlaneDoorsOpenTime" ) )
+	if ( Time() > GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) )
 		return
 
-	while( Time() < ( GetGlobalNetTime( "PlaneDoorsOpenTime" ) - 3.0 ) )
+	while( Time() < ( GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) - 3.0 ) )
 	{
 		EmitSoundOnEntity( player, "UI_Survival_Intro_LaunchCountDown_10Seconds" )
 		wait 1.0
 	}
 
-	while( Time() < GetGlobalNetTime( "PlaneDoorsOpenTime" ) - 0.5 )
+	while( Time() < GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) - 0.5 )
 	{
 		EmitSoundOnEntity( player, "UI_Survival_Intro_LaunchCountDown_3Seconds" )
 		wait 1.0
 	}
 
-	while( Time() < GetGlobalNetTime( "PlaneDoorsOpenTime" ) )
+	while( Time() < GetGlobalNetTimeSafe( "PlaneDoorsOpenTime" ) )
 		WaitFrame()
 
 	EmitSoundOnEntity( player, "UI_Survival_Intro_LaunchCountDown_Finish" )

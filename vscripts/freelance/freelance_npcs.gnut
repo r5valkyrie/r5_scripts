@@ -102,7 +102,7 @@ void function NPCs_RegisterNetworking()
 {
 	if ( isNetworkingRegistered == false )
 	{
-		RegisterNetworkedVariable( NV_LastSpottedByNPC, SNDC_PLAYER_GLOBAL, SNVT_TIME, -1.0 )
+		RegisterNetworkedVariableSafe( NV_LastSpottedByNPC, SNDC_PLAYER_GLOBAL, SNVT_TIME, -1.0 )
 		isNetworkingRegistered = true
 	}
 }

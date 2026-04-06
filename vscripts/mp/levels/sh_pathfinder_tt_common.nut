@@ -117,7 +117,7 @@ void function PathTT_OnNetworkRegistration()
 {
 	ScriptRemote_RegisterClientFunction( "SCB_PathTT_SetMessageIdxToCustomSpeakerIdx", "int", 0, NUM_TOTAL_DIALOGUE_QUEUES )
 	ScriptRemote_RegisterClientFunction( "SCB_PathTT_PlayRingAnnouncerDialogue", "int", 0, eRingAnnouncerLines._count )
-	ScriptRegisterNetworkedVariable( "PathTT_IsCrowdActive", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "PathTT_IsCrowdActive", SNDC_GLOBAL, SNVT_BOOL, false )
 }
 
 void function PathTT_Init()
@@ -991,7 +991,7 @@ void function PathTT_SetCrowdAmbienceActive( bool active )
 		ambient.SetEnabled( active )
 	}
 
-	SetGlobalNetBool( "PathTT_IsCrowdActive", active )
+	SetGlobalNetBoolSafe( "PathTT_IsCrowdActive", active )
 }
 #endif
 

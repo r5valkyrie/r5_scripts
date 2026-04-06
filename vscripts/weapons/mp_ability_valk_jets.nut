@@ -64,7 +64,7 @@ void function MpAbilityValkJets_Init()
 	RegisterSignal( "ValkFlightReveal" )
 	RegisterSignal( "ValkTeammateStartTracking" )
 
-	RegisterNetworkedVariable( "valkTrackingActive", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "valkTrackingActive", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
 	#if SERVER
 		Survival_AddCallback_PlayerFreefallBegin( ValkUlt_FreefallBegin )

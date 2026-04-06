@@ -230,25 +230,25 @@ void function OnPrivateMatchLobbyThink()
 
 			PrivateMatch_RefreshPlaylistButtonName()
 
-			if ( GetGlobalNetBool( "canAssignSelf" ) != file.lastTeamSwapState )
+			if ( GetGlobalNetBoolSafe( "canAssignSelf" ) != file.lastTeamSwapState )
 			{
 				ToolTipData teamSwapToolTip
-				teamSwapToolTip.descText = GetGlobalNetBool( "canAssignSelf" ) ? "#TOURNAMENT_TEAM_SWAP_ON" : "#TOURNAMENT_TEAM_SWAP_OFF"
+				teamSwapToolTip.descText = GetGlobalNetBoolSafe( "canAssignSelf" ) ? "#TOURNAMENT_TEAM_SWAP_ON" : "#TOURNAMENT_TEAM_SWAP_OFF"
 				Hud_SetToolTipData( file.teamSwapButton, teamSwapToolTip )
-				file.lastTeamSwapState = GetGlobalNetBool( "canAssignSelf" )
+				file.lastTeamSwapState = GetGlobalNetBoolSafe( "canAssignSelf" )
 			}
 
-			if ( GetGlobalNetBool( "canPlayersRenameTeams" ) != file.lastTeamRenameState )
+			if ( GetGlobalNetBoolSafe( "canPlayersRenameTeams" ) != file.lastTeamRenameState )
 			{
 				ToolTipData teamRenameToolTip
-				teamRenameToolTip.descText = GetGlobalNetBool( "canPlayersRenameTeams" ) ? "#TOURNAMENT_TEAM_RENAME_ON" : "#TOURNAMENT_TEAM_RENAME_OFF"
+				teamRenameToolTip.descText = GetGlobalNetBoolSafe( "canPlayersRenameTeams" ) ? "#TOURNAMENT_TEAM_RENAME_ON" : "#TOURNAMENT_TEAM_RENAME_OFF"
 				Hud_SetToolTipData( file.teamRenameButton, teamRenameToolTip )
-				file.lastTeamRenameState = GetGlobalNetBool( "canPlayersRenameTeams" )
+				file.lastTeamRenameState = GetGlobalNetBoolSafe( "canPlayersRenameTeams" )
 			}
 
-			if ( GetGlobalNetBool( "adminOnlyChat" ) != file.lastAdminOnlyChatState )
+			if ( GetGlobalNetBoolSafe( "adminOnlyChat" ) != file.lastAdminOnlyChatState )
 			{
-				bool isAdminOnly = GetGlobalNetBool( "adminOnlyChat" )
+				bool isAdminOnly = GetGlobalNetBoolSafe( "adminOnlyChat" )
 				ToolTipData adminOnlyChatToolTip
 				adminOnlyChatToolTip.descText = isAdminOnly ? "#TOURNAMENT_ADMIN_ONLY_CHAT_ON" : "#TOURNAMENT_ADMIN_ONLY_CHAT_OFF"
 				Hud_SetToolTipData( file.adminOnlyButton, adminOnlyChatToolTip )

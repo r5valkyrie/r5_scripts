@@ -236,7 +236,7 @@ bool function ShouldPlaySquadConversation( entity player, string conversationTyp
 		return false
 	}
 
-	if ( !GetGlobalNetBool( "squadConversationEnabled" ) )
+	if ( !GetGlobalNetBoolSafe( "squadConversationEnabled" ) )
 	{
 		//printt( "SquadConversationEnabled is false, not playing AI Conversation:"  + conversationType )
 		return false

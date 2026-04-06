@@ -346,7 +346,7 @@ bool function DoesCallbackRequireValidEntParam( string varName )
 {
 	int varCategory = GetNetworkedVariableCategory( varName )
 
-	bool isGlobalCategory = (varCategory == SNDC_GLOBAL) || (varCategory == SNDC_GLOBAL_NON_REWIND)
+	bool isGlobalCategory = (varCategory == SNDC_GLOBAL) || (varCategory == SNDC_GLOBAL)
 	return !isGlobalCategory
 }
 

@@ -323,9 +323,9 @@ void function SurvivalCommentary_PickChampion()
 
 	// Set champion squad EEH ints for client script
 	array<EncodedEHandle> championSquad = GetPlayerSquadSafe( file.championEEH, 3 )
-	SetGlobalNetInt( "championEEH", file.championEEH )
-	SetGlobalNetInt( "championSquad1EEH", championSquad[1] )
-	SetGlobalNetInt( "championSquad2EEH", championSquad[2] )
+	SetGlobalNetIntSafe( "championEEH", file.championEEH )
+	SetGlobalNetIntSafe( "championSquad1EEH", championSquad[1] )
+	SetGlobalNetIntSafe( "championSquad2EEH", championSquad[2] )
 }
 
 void function SurvivalCommentary_AddWeaponPickupChatterVoice( string voice )
@@ -2104,7 +2104,7 @@ void function CircleTimerThink()
 	{
 		svGlobal.levelEnt.WaitSignal( "NewDeathFieldStarting" )
 
-		nextCircleTime = GetGlobalNetTime( "nextCircleStartTime" )
+		nextCircleTime = GetGlobalNetTimeSafe( "nextCircleStartTime" )
 		timerValue = nextCircleTime - Time()
 
 		if ( !haveFilteredEarlierTimes )
@@ -2315,8 +2315,8 @@ void function TrackPlayerScatteredCalloutDebounce_Thread( entity player )
 
 void function Survival_Commentary_Playing()
 {
-	file.numPlayerAtStart = GetGlobalNetInt( "livingPlayerCount" ) //GetPlayerArray().len()
-	file.numSquadsAtStart = GetGlobalNetInt( "squadsRemainingCount" ) //GetNumTeamsRemaining()
+	file.numPlayerAtStart = GetGlobalNetIntSafe( "livingPlayerCount" ) //GetPlayerArray().len()
+	file.numSquadsAtStart = GetGlobalNetIntSafe( "squadsRemainingCount" ) //GetNumTeamsRemaining()
 }
 
 

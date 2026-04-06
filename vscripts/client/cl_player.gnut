@@ -263,6 +263,8 @@ void function Player_AddPlayer( entity player )
 
 void function ClientCodeCallback_HUDThink()
 {
+	SDKProcessCallbacks() // Fire deferred SNDC overflow callbacks (listen server)
+
 	PerfStart( PerfIndexClient.HUDThink )
 
 	entity player = GetLocalViewPlayer()

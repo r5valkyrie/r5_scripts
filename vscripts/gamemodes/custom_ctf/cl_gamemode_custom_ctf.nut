@@ -160,14 +160,14 @@ void function Cl_CustomCTF_Init()
 
 void function CL_FSCTF_RegisterNetworkFunctions()
 {
-	RegisterNetworkedVariableChangeCallback_time( "FSIntro_StartTime", Flowstate_IntroTimeChanged )
-	RegisterNetworkedVariableChangeCallback_time( "FSIntro_EndTime", Flowstate_IntroEndTimeChanged )
-	// RegisterNetworkedVariableChangeCallback_time( "FSVoteTeam_StartTime", Flowstate_VoteTeamTimeChanged )
-	RegisterNetworkedVariableChangeCallback_time( "FSVoteTeam_EndTime", Flowstate_VoteTeamEndTimeChanged )
-	RegisterNetworkedVariableChangeCallback_time( "flowstate_DMStartTime", Flowstate_CTFStartTimeChanged )
-	RegisterNetworkedVariableChangeCallback_time( "flowstate_DMRoundEndTime", Flowstate_CTFRoundEndTimeChanged )
-	RegisterNetworkedVariableChangeCallback_ent( "imcFlag", CTF_FlagEntChangedImc )
-	RegisterNetworkedVariableChangeCallback_ent( "milFlag", CTF_FlagEntChangedMil )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "FSIntro_StartTime", Flowstate_IntroTimeChanged )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "FSIntro_EndTime", Flowstate_IntroEndTimeChanged )
+	// RegisterNetworkedVariableChangeCallback_timeSafe( "FSVoteTeam_StartTime", Flowstate_VoteTeamTimeChanged )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "FSVoteTeam_EndTime", Flowstate_VoteTeamEndTimeChanged )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "flowstate_DMStartTime", Flowstate_CTFStartTimeChanged )
+	RegisterNetworkedVariableChangeCallback_timeSafe( "flowstate_DMRoundEndTime", Flowstate_CTFRoundEndTimeChanged )
+	RegisterNetworkedVariableChangeCallback_entSafe( "imcFlag", CTF_FlagEntChangedImc )
+	RegisterNetworkedVariableChangeCallback_entSafe( "milFlag", CTF_FlagEntChangedMil )
 }
 
 void function CTF_FlagEntChangedImc( entity player, entity oldFlag, entity newFlag, bool actuallyChanged )
@@ -238,14 +238,14 @@ void function CTF_FlagEntChanged( int team, entity newFlag )
 
 void function Cl_OnResolutionChanged()
 {
-	if( GetGlobalNetInt( "FSDM_GameState" ) != 0 )
+	if( GetGlobalNetIntSafe( "FSDM_GameState" ) != 0 )
 	{
 		ShowScoreRUI( false )
 		// Flowstate_ShowRoundEndTimeUI( -1 )
 		return
 	}
 	
-	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
+	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) )
 	ShowScoreRUI( true )
 }
 
@@ -307,7 +307,7 @@ void function Flowstate_VoteTeamEndTimeChanged( entity player, float old, float 
 	{
 		thread VoteTeamUpdateUIVoteTimer( new )
 
-		while( Time() < GetGlobalNetTime( "FSVoteTeam_EndTime" ) )
+		while( Time() < GetGlobalNetTimeSafe( "FSVoteTeam_EndTime" ) )
 			WaitFrame()
 
 		ServerCallback_FS_OpenVoteTeamMenu( false )
@@ -347,14 +347,14 @@ void function Flowstate_CTFRoundEndTimeChanged( entity player, float old, float 
 
 void function CTFNotifyRingTimer()
 {
-	// if( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) < Time() || GetGlobalNetInt( "FSDM_GameState" ) != eTDMState.IN_PROGRESS || GetGlobalNetTime( "flowstate_DMRoundEndTime" ) == -1 )
+	// if( GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) < Time() || GetGlobalNetIntSafe( "FSDM_GameState" ) != eTDMState.IN_PROGRESS || GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) == -1 )
 	// {
 		// ShowScoreRUI( false )
 		// // Flowstate_ShowRoundEndTimeUI( -1 )
 		// return
 	// }
 
-	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTime( "flowstate_DMRoundEndTime" ) )
+	// Flowstate_ShowRoundEndTimeUI( GetGlobalNetTimeSafe( "flowstate_DMRoundEndTime" ) )
 	ShowScoreRUI( true )
 }
 
@@ -637,7 +637,7 @@ void function CTF_StartBuildingTeamsScoreOnHud()
 	string str_localscore = ""
 	string str_enemyscore = ""
 	
-	while( GetGlobalNetInt( "FSDM_GameState" ) == 0 )
+	while( GetGlobalNetIntSafe( "FSDM_GameState" ) == 0 )
 	{
 		localscore = GameRules_GetTeamScore( player.GetTeam() )
 		enemyscore = GameRules_GetTeamScore( player.GetTeam() == TEAM_IMC ? TEAM_MILITIA : TEAM_IMC )
@@ -1330,7 +1330,7 @@ void function FS_CreateIntroScreen()
 			AddIntroScreenSquadData( player )
 		}
 
-		while( Time() < GetGlobalNetTime( "FSIntro_StartTime" ) )
+		while( Time() < GetGlobalNetTimeSafe( "FSIntro_StartTime" ) )
 			WaitFrame()
 	
 		if( FlagRUI.IMCpointicon != null )

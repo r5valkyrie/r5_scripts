@@ -184,7 +184,7 @@ void function Arenas_ServerGamemode_Init()
 
 	SetRoundBased( true )
 
-	// Equipment netvars are set in EntitiesDidLoad (SetGlobalNetInt requires entity system)
+	// Equipment netvars are set in EntitiesDidLoad (SetGlobalNetIntSafe requires entity system)
 
 	printt( "[Arenas] ServerGamemode_Init complete" )
 }
@@ -195,7 +195,7 @@ void function Arenas_EntitiesDidLoad()
 	Arenas_GatherSpawnPoints()
 
 	// Set equipment netvars here - loot datatables loaded (sh_init.gnut:185) and
-	// entity system is up so SetGlobalNetInt works
+	// entity system is up so SetGlobalNetIntSafe works
 	Arenas_SetEquipmentNetvars()
 }
 
@@ -563,9 +563,9 @@ void function Arenas_MainGameLoop()
 	file.matchOver = false
 
 	// Update networked vars
-	SetGlobalNetInt( "arenas_numties", 0 )
-	SetGlobalNetInt( "arenas_lastWonTeam", 0 )
-	SetGlobalNetInt( "roundsPlayed", 0 )
+	SetGlobalNetIntSafe( "arenas_numties", 0 )
+	SetGlobalNetIntSafe( "arenas_lastWonTeam", 0 )
+	SetGlobalNetIntSafe( "roundsPlayed", 0 )
 	level.nv.roundsPlayed = 0
 	printt( "[Arenas] Prematch setup complete, entering round loop" )
 
@@ -585,7 +585,7 @@ void function Arenas_MainGameLoop()
 			break
 
 		file.roundNumber++
-		SetGlobalNetInt( "roundsPlayed", file.roundNumber )
+		SetGlobalNetIntSafe( "roundsPlayed", file.roundNumber )
 		level.nv.roundsPlayed = file.roundNumber
 	}
 
@@ -626,8 +626,8 @@ void function Arenas_BuyPhase()
 	printt( "[Arenas] BuyPhase started" )
 	file.currentPhase = eArenaPhase.BUY_PHASE
 	SetGameState( eGameState.Prematch )
-	SetGlobalNetInt( "gameState", eGameState.Prematch )
-	SetGlobalNetInt( "roundsPlayed", file.roundNumber )
+	SetGlobalNetIntSafe( "gameState", eGameState.Prematch )
+	SetGlobalNetIntSafe( "roundsPlayed", file.roundNumber )
 	level.nv.roundsPlayed = file.roundNumber
 
 	// Start deathfield paused — ring visible at full size during buy phase
@@ -636,9 +636,9 @@ void function Arenas_BuyPhase()
 	thread SURVIVAL_RunArenaDeathField()
 
 	// Static ring netvars until combat activates shrinking
-	SetGlobalNetInt( "currentDeathFieldStage", GetDeathFieldStartStage() )
-	SetGlobalNetTime( "nextCircleStartTime", Time() + 99999.0 )
-	SetGlobalNetTime( "circleCloseTime", Time() + 199999.0 )
+	SetGlobalNetIntSafe( "currentDeathFieldStage", GetDeathFieldStartStage() )
+	SetGlobalNetTimeSafe( "nextCircleStartTime", Time() + 99999.0 )
+	SetGlobalNetTimeSafe( "circleCloseTime", Time() + 199999.0 )
 
 	if ( ARENAS_DEV_MODE )
 	{
@@ -706,7 +706,7 @@ void function Arenas_BuyPhase()
 	// script-level variable table that GetGameStartTime() does NOT read.
 	level.nv.gameStartTime = file.buyPhaseEndTime
 	SetServerVar( "gameStartTime", file.buyPhaseEndTime )
-	SetGlobalNetTime( "arenas_buyMenuStartTime", Time() )
+	SetGlobalNetTimeSafe( "arenas_buyMenuStartTime", Time() )
 	printt( "[Arenas] Buy phase timer set, totalDuration:", totalDuration, "gameStartTime:", file.buyPhaseEndTime )
 
 	// Notify all clients to open buy menu
@@ -739,7 +739,7 @@ void function Arenas_BuyPhase()
 
 	// Timer expired: close buy menu and open doors immediately so the RUI
 	// transition and door opening happen at the same moment for players.
-	SetGlobalNetTime( "arenas_buyMenuStartTime", -1.0 )
+	SetGlobalNetTimeSafe( "arenas_buyMenuStartTime", -1.0 )
 	Arenas_SetStartZoneWalls( false )
 
 	// Items were already granted immediately on purchase via Arenas_GrantItem.
@@ -1062,8 +1062,8 @@ void function Arenas_FreezeDeathfield()
 	data.startTime = now
 	data.endTime = now + 99999.0
 
-	SetGlobalNetTime( "nextCircleStartTime", now + 99999.0 )
-	SetGlobalNetTime( "circleCloseTime", now + 199999.0 )
+	SetGlobalNetTimeSafe( "nextCircleStartTime", now + 99999.0 )
+	SetGlobalNetTimeSafe( "circleCloseTime", now + 199999.0 )
 }
 
 void function Arenas_StopDeathfield()
@@ -1812,7 +1812,7 @@ void function Arenas_CombatPhase()
 	printt( "[Arenas] CombatPhase started" )
 	file.currentPhase = eArenaPhase.COMBAT
 	SetGameState( eGameState.Playing )
-	SetGlobalNetInt( "gameState", eGameState.Playing )
+	SetGlobalNetIntSafe( "gameState", eGameState.Playing )
 
 	// Log team state at combat start for debugging
 	array<entity> leftAll = GetPlayerArrayOfTeam( file.leftTeam )
@@ -1938,7 +1938,7 @@ void function Arenas_RoundEnd( int winningTeam )
 	{
 		// Draw - counts as a tie
 		file.numTies++
-		SetGlobalNetInt( "arenas_numties", file.numTies )
+		SetGlobalNetIntSafe( "arenas_numties", file.numTies )
 	}
 	else
 	{
@@ -1949,7 +1949,7 @@ void function Arenas_RoundEnd( int winningTeam )
 			file.rightTeamScore++
 
 		file.lastWonTeam = winningTeam
-		SetGlobalNetInt( "arenas_lastWonTeam", winningTeam )
+		SetGlobalNetIntSafe( "arenas_lastWonTeam", winningTeam )
 
 		// Update team scores in game rules (used by scoreboard and win detection)
 		GameRules_SetTeamScore( file.leftTeam, file.leftTeamScore )
@@ -2167,7 +2167,7 @@ void function Arenas_MatchEnd()
 
 	// End the match via game state transition
 	SetGameState( eGameState.WinnerDetermined )
-	SetGlobalNetInt( "gameState", eGameState.WinnerDetermined )
+	SetGlobalNetIntSafe( "gameState", eGameState.WinnerDetermined )
 
 	// Restart map after champion screen
 	wait 15.0
@@ -2587,17 +2587,17 @@ void function Arenas_SetEquipmentNetvars()
 	// Assign abilities to their fixed slots
 	if ( passiveRow != -1 )
 	{
-		SetGlobalNetInt( "arenas_available_equipment_0", weaponCount + passiveRow )
+		SetGlobalNetIntSafe( "arenas_available_equipment_0", weaponCount + passiveRow )
 		printt( "[Arenas] Slot 0 (passive) = store index", weaponCount + passiveRow, "(row", passiveRow, ")" )
 	}
 	if ( tacticalRow != -1 )
 	{
-		SetGlobalNetInt( "arenas_available_equipment_1", weaponCount + tacticalRow )
+		SetGlobalNetIntSafe( "arenas_available_equipment_1", weaponCount + tacticalRow )
 		printt( "[Arenas] Slot 1 (tactical) = store index", weaponCount + tacticalRow, "(row", tacticalRow, ")" )
 	}
 	if ( ultimateRow != -1 )
 	{
-		SetGlobalNetInt( "arenas_available_equipment_2", weaponCount + ultimateRow )
+		SetGlobalNetIntSafe( "arenas_available_equipment_2", weaponCount + ultimateRow )
 		printt( "[Arenas] Slot 2 (ultimate) = store index", weaponCount + ultimateRow, "(row", ultimateRow, ")" )
 	}
 
@@ -2608,7 +2608,7 @@ void function Arenas_SetEquipmentNetvars()
 		if ( slotIndex >= 11 )
 			break
 		int storeIndex = weaponCount + row
-		SetGlobalNetInt( "arenas_available_equipment_" + slotIndex, storeIndex )
+		SetGlobalNetIntSafe( "arenas_available_equipment_" + slotIndex, storeIndex )
 		string itemRef = GetDataTableString( dataTable, row, GetDataTableColumnByName( dataTable, "ref" ) )
 		printt( "[Arenas] Consumable slot", slotIndex, "= store index", storeIndex, "ref:", itemRef, "(row", row, ")" )
 		slotIndex++

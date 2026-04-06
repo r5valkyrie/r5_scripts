@@ -1556,8 +1556,8 @@ void function Survival_RunSinglePlanePath_Thread( array< PlanePathData > paths, 
 	file.plane.baseEnt.MakeVisible()
 
 	StatsHook_SetPlaneData( path.clampedPlaneStart, path.clampedPlaneEnd, path.totalFlyDuration )
-	SetGlobalNetTime( "PlaneDoorsOpenTime", Time() + path.jumpDelay )
-	SetGlobalNetTime( "PlaneDoorsCloseTime", Time() + path.totalFlyDuration )
+	SetGlobalNetTimeSafe( "PlaneDoorsOpenTime", Time() + path.jumpDelay )
+	SetGlobalNetTimeSafe( "PlaneDoorsCloseTime", Time() + path.totalFlyDuration )
 
 	thread OpenAndClosePlaneDoor( plane, path.jumpDelay, path.flyOverMapDuration )
 
@@ -2909,9 +2909,9 @@ void function Survival_OverrideGetRemainingSquadsFunction( int functionref() fun
 
 void function UpdatePlayerCounts()
 {
-	SetGlobalNetInt( "connectedPlayerCount", GetPlayerArray_ConnectedNotSpectatorTeam().len() )
-	SetGlobalNetInt( "livingPlayerCount", Survival_GetLivingPlayerCount() )
-	SetGlobalNetInt( "squadsRemainingCount", Survival_GetRemainingSquadsCount() )
+	SetGlobalNetIntSafe( "connectedPlayerCount", GetPlayerArray_ConnectedNotSpectatorTeam().len() )
+	SetGlobalNetIntSafe( "livingPlayerCount", Survival_GetLivingPlayerCount() )
+	SetGlobalNetIntSafe( "squadsRemainingCount", Survival_GetRemainingSquadsCount() )
 }
 
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
@@ -3586,7 +3586,7 @@ void function Survival_RunCharacterSelectionNew_Thread()
 
 
 		AssignLockStepOrder()
-		SetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, -2 )
+		SetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, -2 )
 
 		// PIN event data
 		table<entity, array<string> > PIN_ClassesOffered
@@ -3635,14 +3635,14 @@ void function Survival_RunCharacterSelectionNew_Thread()
 			finalEndTime += CharSelect_GetOutroChampionPresentDuration()
 
 
-		SetGlobalNetTime( "pickLoadoutGamestateStartTime", characterSelectPicksStartTime )
-		SetGlobalNetTime( "characterSelectPicksEndTime", characterSelectPicksEndTime )
-		SetGlobalNetTime( "allSquadsPresentationStartTime", allSquadsPresentationStartTime )
-		SetGlobalNetTime( "squadPresentationStartTime", squadPresentationStartTime )
-		SetGlobalNetTime( "mvpPresentationStartTime", mvpPresentationStartTime )
-		SetGlobalNetTime( "championSquadPresentationStartTime", championSquadPresentationStartTime )
-		SetGlobalNetTime( "pickLoadoutGamestateEndTime", finalEndTime )
-		SetGlobalNetBool( "characterSelectionReady", true )
+		SetGlobalNetTimeSafe( "pickLoadoutGamestateStartTime", characterSelectPicksStartTime )
+		SetGlobalNetTimeSafe( "characterSelectPicksEndTime", characterSelectPicksEndTime )
+		SetGlobalNetTimeSafe( "allSquadsPresentationStartTime", allSquadsPresentationStartTime )
+		SetGlobalNetTimeSafe( "squadPresentationStartTime", squadPresentationStartTime )
+		SetGlobalNetTimeSafe( "mvpPresentationStartTime", mvpPresentationStartTime )
+		SetGlobalNetTimeSafe( "championSquadPresentationStartTime", championSquadPresentationStartTime )
+		SetGlobalNetTimeSafe( "pickLoadoutGamestateEndTime", finalEndTime )
+		SetGlobalNetBoolSafe( "characterSelectionReady", true )
 
 		WaitFrame()
 
@@ -3666,7 +3666,7 @@ void function Survival_RunCharacterSelectionNew_Thread()
 		while( Time() < characterSelectPicksStartTime )
 			WaitFrame()
 
-		SetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, -1 )
+		SetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, -1 )
 		wait CharSelect_GetPickingDelayBeforeAll()
 
 		// Identify who each players default character will be
@@ -3684,9 +3684,9 @@ void function Survival_RunCharacterSelectionNew_Thread()
 			float preSelectDelay          = ((pickIndex == 0) ? CharSelect_GetPickingDelayOnFirst() : 0.0)
 			float characterSelectDuration = Survival_GetCharacterSelectDuration( pickIndex )
 
-			SetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, pickIndex )
-			SetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, Time() + preSelectDelay )
-			SetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, Time() + preSelectDelay + characterSelectDuration )
+			SetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, pickIndex )
+			SetGlobalNetTimeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME, Time() + preSelectDelay )
+			SetGlobalNetTimeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME, Time() + preSelectDelay + characterSelectDuration )
 
 			wait (preSelectDelay + characterSelectDuration)
 
@@ -3885,7 +3885,7 @@ void function Survival_RunCharacterSelectionNew_Thread()
 		}
 
 		// for progress bar only
-		SetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, MAX_TEAM_PLAYERS )
+		SetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX, MAX_TEAM_PLAYERS )
 
 		file.characterLocksFinished = true
 
@@ -3918,7 +3918,7 @@ void function Survival_RunCharacterSelectionNew_Thread()
 	}
 	else
 	{
-		SetGlobalNetTime( "pickLoadoutGamestateEndTime", Time() )
+		SetGlobalNetTimeSafe( "pickLoadoutGamestateEndTime", Time() )
 	}
 
 	file.characterLocksLocked = true
@@ -3936,7 +3936,7 @@ void function Survival_RunCharacterSelectionNew_Thread()
 		// Spawning players causes hitching due to managing highlights on loot objects around where the player spawns in on the ground.
 		// hiding it under the black screen before displaying the champion squad.
 		// If we don't spawn players here, it will happen when entering gamestate prematch. GameStateEnter_Prematch(). The hitch there causes the transition banner to play twice.
-		float waitTime = GetGlobalNetTime( "championSquadPresentationStartTime" ) - Time()
+		float waitTime = GetGlobalNetTimeSafe( "championSquadPresentationStartTime" ) - Time()
 		if ( waitTime > 0 )
 		{
 			wait waitTime
@@ -4214,7 +4214,7 @@ void function Survival_GameStartedPlaying_Thread()
 	}
 	else
 	{
-		file.numPlayerAtStart = GetGlobalNetInt( "livingPlayerCount" )
+		file.numPlayerAtStart = GetGlobalNetIntSafe( "livingPlayerCount" )
 		file.numSquadsAtStart = Survival_GetRemainingSquadsCount()
 	}
 
@@ -4664,7 +4664,7 @@ void function Survival_WinnerDetermined()
 			}
 		}
 
-		SetGlobalNetBool( "characterSelectionReady", false )
+		SetGlobalNetBoolSafe( "characterSelectionReady", false )
 		RoundBased_ResetDeathfield()
 		return
 	}
@@ -8129,7 +8129,7 @@ void function GameSummary_MatchStart( entity player )
 			data.displayData3IsTime = false
 			UpdatePlayerCounts()
 			// do this here because we don't spawn players until match start.
-			file.numPlayerAtStart = GetGlobalNetInt( "livingPlayerCount" )
+			file.numPlayerAtStart = GetGlobalNetIntSafe( "livingPlayerCount" )
 		}
 
 

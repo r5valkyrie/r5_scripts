@@ -220,7 +220,7 @@ void function Highlight_Init()
 
 	Remote_RegisterClientFunction( "ServerCallback_ManageHighlights" )
 
-	RegisterNetworkedVariable( NV_OBSERVER_HIGHLIGHT_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( NV_OBSERVER_HIGHLIGHT_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
 	#if CLIENT
 		// RegisterConCommandTriggeredCallback( "toggle_obs_highlight", Highlight_ToggleObserverHighlights ) // ConCommand not in S3

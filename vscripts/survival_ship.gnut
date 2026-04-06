@@ -795,7 +795,7 @@ void function BotInitiateJump( entity bot )
 	}
 
 	FlagWait( "PlaneStartMoving" )
-	float timeRemaining = GetGlobalNetTime( "PlaneDoorsCloseTime" ) - Time()
+	float timeRemaining = GetGlobalNetTimeSafe( "PlaneDoorsCloseTime" ) - Time()
 	Assert( timeRemaining >= 0 )
 	float timeTillBotLaunch = timeRemaining * RandomFloatRange( 0.1, 0.75 )
 

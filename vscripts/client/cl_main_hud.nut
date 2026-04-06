@@ -123,11 +123,11 @@ void function ClMainHud_Init()
 	UpdateAccessibilityChatHintEnabledCache()
 
 
-	if ( !GetConVarBool( "toggle_on_jump_to_deactivate_changed" ) )
-	{
-		SetConVarBool( "toggle_on_jump_to_deactivate", IsControllerModeActive() ? true : false )
-		SetConVarBool( "toggle_on_jump_to_deactivate_changed", false )
-	}
+	// if ( !GetConVarBool( "toggle_on_jump_to_deactivate_changed" ) )
+	// {
+		// SetConVarBool( "toggle_on_jump_to_deactivate", IsControllerModeActive() ? true : false )
+		// SetConVarBool( "toggle_on_jump_to_deactivate_changed", false )
+	// }
 }
 
 

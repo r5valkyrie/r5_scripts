@@ -30,10 +30,10 @@ struct
 
 void function PlayerMatchState_RegisterNetworking()
 {
-	ScriptRegisterNetworkedVariable( NV_PLAYERMATCHSTATE, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, ePlayerMatchState.NORMAL )
+	RegisterNetworkedVariableSafe( NV_PLAYERMATCHSTATE, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, ePlayerMatchState.NORMAL )
 
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_int( NV_PLAYERMATCHSTATE, OnPlayerMatchStateChanged )
+		RegisterNetworkedVariableChangeCallback_intSafe( NV_PLAYERMATCHSTATE, OnPlayerMatchStateChanged )
 	#endif // CLIENT
 }
 

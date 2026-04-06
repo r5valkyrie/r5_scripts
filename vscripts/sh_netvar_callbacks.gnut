@@ -95,7 +95,7 @@ void function RegisterNetVarBoolChangeCallback( string varName, void functionref
 	file.boolCallbacks.append( wrapper )
 
 	// Register with native using legacy-style callback that we dispatch from
-	// Note: The native RegisterNetworkedVariableChangeCallback_bool takes
+	// Note: The native RegisterNetworkedVariableChangeCallback_boolSafe takes
 	// (string varName, void functionref(entity, bool, bool, bool) callback)
 	// We can't directly register simplified callbacks with it, so we store them
 	// and dispatch manually in TriggerGlobalNetVarCallbacks
@@ -158,7 +158,7 @@ void function TriggerGlobalNetVarCallbacks()
 		// Check and fire bool callbacks
 		foreach ( wrapper in file.boolCallbacks )
 		{
-			bool newValue = GetGlobalNetBool( wrapper.varName )
+			bool newValue = GetGlobalNetBoolSafe( wrapper.varName )
 			bool oldValue = false
 			bool changed = false
 
@@ -182,7 +182,7 @@ void function TriggerGlobalNetVarCallbacks()
 		// Check and fire int callbacks
 		foreach ( wrapper in file.intCallbacks )
 		{
-			int newValue = GetGlobalNetInt( wrapper.varName )
+			int newValue = GetGlobalNetIntSafe( wrapper.varName )
 			int oldValue = 0
 			bool changed = false
 
@@ -206,7 +206,7 @@ void function TriggerGlobalNetVarCallbacks()
 		// Check and fire float callbacks
 		foreach ( wrapper in file.floatCallbacks )
 		{
-			float newValue = GetGlobalNetFloat( wrapper.varName )
+			float newValue = GetGlobalNetFloatSafe( wrapper.varName )
 			float oldValue = 0.0
 			bool changed = false
 
@@ -230,7 +230,7 @@ void function TriggerGlobalNetVarCallbacks()
 		// Check and fire time callbacks
 		foreach ( wrapper in file.timeCallbacks )
 		{
-			float newValue = GetGlobalNetTime( wrapper.varName )
+			float newValue = GetGlobalNetTimeSafe( wrapper.varName )
 			float oldValue = 0.0
 			bool changed = false
 

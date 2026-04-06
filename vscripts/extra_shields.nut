@@ -35,7 +35,7 @@ void function ExtraShields_Init()
 {
 	file.totalShieldDuration = GetCurrentPlaylistVarFloat( "extra_shield_total_shield_duration", EXTRA_SHIELDS_TOTAL_DURATION )
 
-	RegisterNetworkedVariable( EXTRA_SHIELDS_DURATION_NETFLOAT, SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE , file.totalShieldDuration, 0.0, file.totalShieldDuration )
+	RegisterNetworkedVariableSafe( EXTRA_SHIELDS_DURATION_NETFLOAT, SNDC_PLAYER_EXCLUSIVE, SNVT_FLOAT_RANGE , file.totalShieldDuration, 0.0, file.totalShieldDuration )
 
 #if CLIENT
 	RegisterNetVarFloatChangeCallback( EXTRA_SHIELDS_DURATION_NETFLOAT, ExtraShields_OnExtraShieldDurationChanged )

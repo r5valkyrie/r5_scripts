@@ -358,7 +358,7 @@ void function DisplayFrontierRank( bool isFirstBoot = true )
 
 	bool firstBootDisplay
 	//if ( GameRules_GetGameMode() == FD )
-		//firstBootDisplay = isFirstBoot || !GetGlobalNetBool( "FD_waveActive" )
+		//firstBootDisplay = isFirstBoot || !GetGlobalNetBoolSafe( "FD_waveActive" )
 //	else
 		firstBootDisplay = true
 

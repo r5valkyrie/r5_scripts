@@ -81,9 +81,9 @@ void function Sh_Survival_Heatwave_Init()
 
 void function Sh_Heatwave_RegisterNetworking()
 {
-	RegisterNetworkedVariable( PLAYER_HEAT_REF, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, ePlayerHeatState.Warm )
-	RegisterNetworkedVariable( SERVER_HEATWAVE_ACTIVE, SNDC_GLOBAL, SNVT_BOOL )
-	RegisterNetworkedVariable( SERVER_HEATWAVE_TIME_REMAINING, SNDC_GLOBAL, SNVT_TIME, 0 )
+	RegisterNetworkedVariableSafe( PLAYER_HEAT_REF, SNDC_PLAYER_EXCLUSIVE, SNVT_INT, ePlayerHeatState.Warm )
+	RegisterNetworkedVariableSafe( SERVER_HEATWAVE_ACTIVE, SNDC_GLOBAL, SNVT_BOOL )
+	RegisterNetworkedVariableSafe( SERVER_HEATWAVE_TIME_REMAINING, SNDC_GLOBAL, SNVT_TIME, 0 )
 
 	Remote_RegisterClientFunction( "Heatwave_ServerToClient_UpdateProtected", "bool" )
 }
@@ -135,10 +135,10 @@ void function Heatwave_UpdateRui_Thread()
 
 	while (true)
 	{
-		if ( firstLoop || GetGlobalNetBool(SERVER_HEATWAVE_ACTIVE) != heatwaveActive )
+		if ( firstLoop || GetGlobalNetBoolSafe(SERVER_HEATWAVE_ACTIVE) != heatwaveActive )
 		{
 			firstLoop = false
-			heatwaveActive = GetGlobalNetBool( SERVER_HEATWAVE_ACTIVE )
+			heatwaveActive = GetGlobalNetBoolSafe( SERVER_HEATWAVE_ACTIVE )
 			file.IsHeatwaveActive = heatwaveActive
 			RuiSetBool( file.HeatwaveRui, "heatwaveStatus", heatwaveActive )
 			Status_UpdatePlayerUnitFrame()
@@ -170,7 +170,7 @@ void function Thread_Heatwave_ColourCorrection( float endtime )
 void function Thread_Heatwave_Cooldown_Timer()
 {
 	float duration = GetCurrentPlaylistVarFloat( "survival_heatwave_timer", 240.0 )
-	float endTime  = GetGlobalNetTime( SERVER_HEATWAVE_TIME_REMAINING )
+	float endTime  = GetGlobalNetTimeSafe( SERVER_HEATWAVE_TIME_REMAINING )
 	float warningTime = endTime - HEATWAVE_SFX_WARNING_TIME
 	bool warningPlayed = false
 	while ( Time() < endTime && GetGameState() <= eGameState.Playing )
@@ -189,7 +189,7 @@ void function Thread_Heatwave_Cooldown_Timer()
 void function Thread_Heatwave_Active_Timer()
 {
 	float duration = GetCurrentPlaylistVarFloat( "survival_heatwave_duration", 25.0 )
-	float endTime  = GetGlobalNetTime( SERVER_HEATWAVE_TIME_REMAINING )
+	float endTime  = GetGlobalNetTimeSafe( SERVER_HEATWAVE_TIME_REMAINING )
 	thread Thread_Heatwave_ColourCorrection(duration)
 	while ( Time() < endTime && GetGameState() <= eGameState.Playing)
 	{
@@ -405,7 +405,7 @@ void function Heatwave_TriggerHeatwave()
 void function SetHeatwaveStatus( bool value )
 {
 	file.IsHeatwaveActive = value
-	SetGlobalNetBool( SERVER_HEATWAVE_ACTIVE, value )
+	SetGlobalNetBoolSafe( SERVER_HEATWAVE_ACTIVE, value )
 }
 #endif
 
@@ -483,12 +483,12 @@ void function Thread_HeatwaveTimer()
 	while ( GetGameState() <= eGameState.Playing )
 	{
 		{
-			SetGlobalNetTime( SERVER_HEATWAVE_TIME_REMAINING, Time() + duration )
+			SetGlobalNetTimeSafe( SERVER_HEATWAVE_TIME_REMAINING, Time() + duration )
 			wait duration
 		}
 
 		Heatwave_TriggerHeatwave()
-		SetGlobalNetTime( SERVER_HEATWAVE_TIME_REMAINING, Time() + cooldown )
+		SetGlobalNetTimeSafe( SERVER_HEATWAVE_TIME_REMAINING, Time() + cooldown )
 		wait cooldown
 	}
 }

@@ -206,23 +206,23 @@ void function PrivateMatch_Init()
 
 void function PrivateMatch_RegisterNetworking()
 {
-	RegisterNetworkedVariable( "canAssignPlayers", SNDC_GLOBAL, SNVT_BOOL, false )
-	RegisterNetworkedVariable( "canAssignSelf", SNDC_GLOBAL, SNVT_BOOL, true )
-	RegisterNetworkedVariable( "adminOnlyChat", SNDC_GLOBAL, SNVT_BOOL, true )
-	RegisterNetworkedVariable( "canPlayersRenameTeams", SNDC_GLOBAL, SNVT_BOOL, false )
-	RegisterNetworkedVariable( "readiness", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
-	RegisterNetworkedVariable( "selectedPlaylistIndex", SNDC_GLOBAL, SNVT_INT, -1 )
-	RegisterNetworkedVariable( "startCountdown", SNDC_GLOBAL, SNVT_INT, -1 )
-	RegisterNetworkedVariable( "lastSquadEliminated", SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "canAssignPlayers", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "canAssignSelf", SNDC_GLOBAL, SNVT_BOOL, true )
+	RegisterNetworkedVariableSafe( "adminOnlyChat", SNDC_GLOBAL, SNVT_BOOL, true )
+	RegisterNetworkedVariableSafe( "canPlayersRenameTeams", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "readiness", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariableSafe( "selectedPlaylistIndex", SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "startCountdown", SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "lastSquadEliminated", SNDC_GLOBAL, SNVT_INT, -1 )
 
 	Remote_RegisterClientFunction( "ServerCallback_EnableGameStatusMenu", "bool" )
 	Remote_RegisterClientFunction( "ServerCallback_PrivateMatch_ManageHighlights" )
 	Remote_RegisterClientFunction( "ServerCallback_PrivateMatch_SquadEliminated", "int", TEAM_INVALID, 60, "int", 0, 60 )
-	RegisterNetworkedVariable( NV_OBSERVER_HIGHLIGHT_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( NV_OBSERVER_HIGHLIGHT_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 
 
 	#if CLIENT || SERVER
-		RegisterNetworkedVariable( NV_OBSERVER_SURVERY_RING_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+		RegisterNetworkedVariableSafe( NV_OBSERVER_SURVERY_RING_ENABLED, SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
 	#endif
 
 	#if SERVER
@@ -230,13 +230,13 @@ void function PrivateMatch_RegisterNetworking()
 	#endif
 
 	#if CLIENT
-		RegisterNetVarIntChangeCallback( "selectedPlaylistIndex", OnSelectedPlaylistIndexChanged, SNDC_GLOBAL_NON_REWIND )
-		RegisterNetVarIntChangeCallback( "startCountdown", OnStartCountdownChanged, SNDC_GLOBAL_NON_REWIND )
-
-		RegisterNetVarBoolChangeCallback( NV_OBSERVER_HIGHLIGHT_ENABLED, ObserverHighlightEnableChanged, SNDC_GLOBAL_NON_REWIND )
+		// NonRewind callbacks — SDK event-driven system
+		RegisterNetworkedVariableChangeCallback_intSafe( "selectedPlaylistIndex", void function( entity ent, int oldVal, int newVal, bool changed ) { OnSelectedPlaylistIndexChanged( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_intSafe( "startCountdown", void function( entity ent, int oldVal, int newVal, bool changed ) { OnStartCountdownChanged( ent, newVal ) } )
+		RegisterNetworkedVariableChangeCallback_boolSafe( NV_OBSERVER_HIGHLIGHT_ENABLED, void function( entity ent, bool oldVal, bool newVal, bool changed ) { ObserverHighlightEnableChanged( ent, newVal ) } )
 
 		AddCallback_OnGameStateChanged( PrivateMatch_OnGameStateChanged )
-		RegisterNetVarIntChangeCallback( "lastSquadEliminated", PrivateMatch_ClientOnSquadEliminated, SNDC_GLOBAL_NON_REWIND )
+		RegisterNetworkedVariableChangeCallback_intSafe( "lastSquadEliminated", void function( entity ent, int oldVal, int newVal, bool changed ) { PrivateMatch_ClientOnSquadEliminated( ent, newVal ) } )
 	#endif
 }
 
@@ -530,7 +530,7 @@ void function ClientCallback_PrivateMatchToggleStartMatch( entity player )
 		return
 
 	if ( PrivateMatch_IsCountdownRunning() )
-		SetGlobalNetInt( "startCountdown", -1 )
+		SetGlobalNetIntSafe( "startCountdown", -1 )
 	else
 		thread StartMatch()
 }
@@ -543,7 +543,7 @@ void function ClientCallback_PrivateMatchSetStartMatch( entity player, bool doSt
 	if ( doStart )
 		thread StartMatch()
 	else
-		SetGlobalNetInt( "startCountdown", -1 )
+		SetGlobalNetIntSafe( "startCountdown", -1 )
 }
 
 void function ClientCallback_PrivateMatchToggleReady( entity player )
@@ -588,7 +588,7 @@ void function ClientCallback_PrivateMatchToggleAssignSelf( entity player )
 	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
 		return
 
-	SetGlobalNetBool( "canAssignSelf", !GetGlobalNetBool( "canAssignSelf" ) )
+	SetGlobalNetBoolSafe( "canAssignSelf", !GetGlobalNetBoolSafe( "canAssignSelf" ) )
 }
 
 void function ClientCallback_PrivateMatchToggleTeamRenaming( entity player )
@@ -596,7 +596,7 @@ void function ClientCallback_PrivateMatchToggleTeamRenaming( entity player )
 	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
 		return
 
-	SetGlobalNetBool( "canPlayersRenameTeams", !GetGlobalNetBool( "canPlayersRenameTeams" ) )
+	SetGlobalNetBoolSafe( "canPlayersRenameTeams", !GetGlobalNetBoolSafe( "canPlayersRenameTeams" ) )
 }
 
 void function ClientCallback_PrivateMatchToggleAdminOnlyChat( entity player )
@@ -604,7 +604,7 @@ void function ClientCallback_PrivateMatchToggleAdminOnlyChat( entity player )
 	if ( !IsPrivateMatchLobby() || !true /* player.HasMatchAdminRole() S3 stub */ )
 		return
 
-	SetGlobalNetBool( "adminOnlyChat", !GetGlobalNetBool( "adminOnlyChat" ) )
+	SetGlobalNetBoolSafe( "adminOnlyChat", !GetGlobalNetBoolSafe( "adminOnlyChat" ) )
 }
 
 void function ClientCallback_PrivateMatchToggleAimAssist( entity player )
@@ -721,7 +721,7 @@ void function PrivateMatch_OnWinnerDetermined()
 
 	if ( IsRoundBased() )
 	{
-		if( !GetGlobalNetBool("roundScoreLimitComplete") )
+		if( !GetGlobalNetBoolSafe("roundScoreLimitComplete") )
 		{
 			return
 		}
@@ -876,7 +876,7 @@ entity function CreatePlayerTeamStats( PrivateMatchStatsStruct privateMatchStats
 void function OnSquadEliminated( int teamIndex )
 {
 	file.teamFinalPlacementArray.insert( 0, teamIndex )
-	SetGlobalNetInt( "lastSquadEliminated", teamIndex )
+	SetGlobalNetIntSafe( "lastSquadEliminated", teamIndex )
 
 	foreach ( player in GetPlayerArrayIncludingSpectators() )
 		if ( player.GetTeam() == TEAM_SPECTATOR )
@@ -900,7 +900,7 @@ void function ClientCallback_PrivateMatchToggleObserverHighlights( entity player
 
 string function PrivateMatch_GetSelectedPlaylistName()
 {
-	int playlistIndex = GetGlobalNetInt( "selectedPlaylistIndex" )
+	int playlistIndex = GetGlobalNetIntSafe( "selectedPlaylistIndex" )
 	if ( playlistIndex > 0 )
 	{
 		string ornull playlistName = GetPlaylistName( playlistIndex )
@@ -939,7 +939,7 @@ bool function IsPrivateMatchLobby()
 #if SERVER || CLIENT
 bool function PrivateMatch_IsCountdownRunning()
 {
-	return GetGlobalNetInt( "startCountdown" ) >= 0
+	return GetGlobalNetIntSafe( "startCountdown" ) >= 0
 }
 
 bool function PrivateMatch_CanAssignPlayers( entity player )
@@ -950,7 +950,7 @@ bool function PrivateMatch_CanAssignPlayers( entity player )
 	if ( true /* player.HasMatchAdminRole() S3 stub */ )
 		return true
 
-	return GetGlobalNetBool( "canAssignPlayers" )
+	return GetGlobalNetBoolSafe( "canAssignPlayers" )
 }
 
 bool function PrivateMatch_CanAssignSelf( entity player )
@@ -961,7 +961,7 @@ bool function PrivateMatch_CanAssignSelf( entity player )
 	if ( true /* player.HasMatchAdminRole() S3 stub */ )
 		return true
 
-	return GetGlobalNetBool( "canAssignSelf" )
+	return GetGlobalNetBoolSafe( "canAssignSelf" )
 }
 
 bool function PrivateMatch_CanRenameTeam( entity player, int teamIndex )
@@ -972,7 +972,7 @@ bool function PrivateMatch_CanRenameTeam( entity player, int teamIndex )
 	if ( player.GetTeam() != teamIndex )
 		return false
 
-	return GetGlobalNetBool( "canPlayersRenameTeams" )
+	return GetGlobalNetBoolSafe( "canPlayersRenameTeams" )
 }
 #endif
 

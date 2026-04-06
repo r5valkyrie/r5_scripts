@@ -215,12 +215,12 @@ void function Sh_RespawnBeacon_Init()
 
 void function RespawnBeacons_RegisterNetworking()
 {
-	ScriptRegisterNetworkedVariable( "respawnStatus", SNDC_PLAYER_GLOBAL, SNVT_INT, eRespawnStatus.NONE )
-	ScriptRegisterNetworkedVariable( "respawnStatusEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
-	ScriptRegisterNetworkedVariable( "respawnBannerPickedUpTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "respawnStatus", SNDC_PLAYER_GLOBAL, SNVT_INT, eRespawnStatus.NONE )
+	RegisterNetworkedVariableSafe( "respawnStatusEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "respawnBannerPickedUpTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
 
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_int( "respawnStatus", RespawnStatusChanged )
+		RegisterNetworkedVariableChangeCallback_intSafe( "respawnStatus", RespawnStatusChanged )
 	#endif
 }
 

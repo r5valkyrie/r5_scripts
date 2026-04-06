@@ -210,13 +210,14 @@ void function ShHoverVehicle_Init()
 	#endif // SERVER
 	
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
-	ScriptRegisterNetworkedVariable( "Flowstate_HoverVehicle_IsPlayerDriving", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	RegisterNetworkedVariable( "Flowstate_HoverVehicle_LastSpeed", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariableSafe( "Flowstate_HoverVehicle_IsPlayerDriving", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "Flowstate_HoverVehicle_LastSpeed", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1.0 )
 	
 	#if CLIENT
 		RegisterSignal("StopSpeedometer")
 		RegisterSignal("DestroyHoverVehicleHint")
-		RegisterNetworkedVariableChangeCallback_bool( "Flowstate_HoverVehicle_IsPlayerDriving", OnPlayerDrivingBoolChanged )
+		RegisterNetworkedVariableChangeCallback_boolSafe( "Flowstate_HoverVehicle_IsPlayerDriving", OnPlayerDrivingBoolChanged )
+	// DISABLED: incomplete callback call
 	#endif // CLIENT
 	
 	#if DEVELOPER

@@ -550,7 +550,7 @@ void function ShArenas_RegisterNetworking()
 	}
 	// Remote functions and base netvars already registered in _remote_functions_mp.gnut
 	// roundsPlayed needs to be a networked variable for client RUI tracking
-	RegisterNetworkedVariable( "roundsPlayed", SNDC_GLOBAL, SNVT_INT, 0 )
+	RegisterNetworkedVariableSafe( "roundsPlayed", SNDC_GLOBAL, SNVT_INT, 0 )
 
 	// Buy system netvars not covered in _remote_functions_mp.gnut
 	ShArenasBuy_RegisterNetworkingV2()
@@ -2154,7 +2154,7 @@ void function ServerCallback_DisplayArenasPrematch( int leftTeam, int rightTeam,
 	}
 	else
 	{
-		int lastWonTeam = GetGlobalNetInt( "arenas_lastWonTeam" )
+		int lastWonTeam = GetGlobalNetIntSafe( "arenas_lastWonTeam" )
 		int localPlayerTeam = GetLocalClientPlayer().GetTeam()
 		bool roundWon = ( lastWonTeam == localPlayerTeam )
 		printt( "[Arenas Client] Round > 0 - showing post-round summary, lastWonTeam:", lastWonTeam, "localPlayerTeam:", localPlayerTeam, "roundWon:", roundWon )
@@ -2308,10 +2308,10 @@ void function Arenas_PopulatePrematchInfoRui( var rui, int leftTeam, int rightTe
 	RuiSetInt( rui, "leftTeamScore", Arenas_GetTeamWins( leftTeam ) )
 	RuiSetInt( rui, "rightTeamScore", Arenas_GetTeamWins( rightTeam ) )
 	RuiSetInt( rui, "maxScore", GameMode_GetWinBy2MinScore( GameRules_GetGameMode() ) )
-	RuiSetInt( rui, "numTies", GetGlobalNetInt( "arenas_numties" ) )
+	RuiSetInt( rui, "numTies", GetGlobalNetIntSafe( "arenas_numties" ) )
 	RuiSetInt( rui, "maxTies", GameMode_GetWinBy2MaxTies( GameRules_GetGameMode() ) )
 	RuiSetInt( rui, "roundNum", GetRoundsPlayed() )
-	RuiSetBool( rui, "roundWon", GetGlobalNetInt( "arenas_lastWonTeam" ) == GetLocalClientPlayer().GetTeam() )
+	RuiSetBool( rui, "roundWon", GetGlobalNetIntSafe( "arenas_lastWonTeam" ) == GetLocalClientPlayer().GetTeam() )
 
 	float gameStartTime = GetGameStartTime()
 	float shopDuration = GetShopDuration()
@@ -2600,7 +2600,7 @@ void function TryOpenBuyMenu()
 	if( Time() >= endTime - 0.1 )
 		return
 
-	if ( GetGlobalNetTime( "arenas_buyMenuStartTime" ) > Time() )
+	if ( GetGlobalNetTimeSafe( "arenas_buyMenuStartTime" ) > Time() )
 		return
 
 	if ( !file.inAshRoom )
@@ -2771,7 +2771,7 @@ void function MinimapPackage_LootBin( entity ent, var rui )
 bool function Arenas_IsFinalRound()
 {
 	// R5V: GameState_IsFinalRound not available, check sudden death via ties
-	int numTies = GetGlobalNetInt( "arenas_numties" )
+	int numTies = GetGlobalNetIntSafe( "arenas_numties" )
 	return numTies >= GameMode_GetWinBy2MaxTies( GameRules_GetGameMode() )
 }
 
@@ -3313,5 +3313,5 @@ int function Arenas_GetOpposingTeam( int myTeam )
 
 bool function Arenas_IsMatchComplete()
 {
-	return GetGlobalNetBool("roundScoreLimitComplete")
+	return GetGlobalNetBoolSafe("roundScoreLimitComplete")
 }

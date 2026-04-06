@@ -833,7 +833,7 @@ void function DoAllSquadsCardsPresentation( string endTime )
 		}
 	)
 
-	while( Time() < GetGlobalNetTime( endTime ) )
+	while( Time() < GetGlobalNetTimeSafe( endTime ) )
 		WaitFrame()
 }
       
@@ -983,7 +983,7 @@ void function DoSquadCardsPresentation( string endTime, bool showTitleFrame )
 		}
 	)
 
-	while( Time() < GetGlobalNetTime( endTime ) )
+	while( Time() < GetGlobalNetTimeSafe( endTime ) )
 		WaitFrame()
 }
 
@@ -1043,7 +1043,7 @@ void function DoMVPSquadCardsPresentation( string endTime )
 	var borderRui = CreateFullscreenPostFXRui( $"ui/round_end_squads_border.rpak", 3 )
 
 	RuiSetGameTime( rui, "transitionInAt", Time() )
-	RuiSetGameTime( rui, "transitionOutAt", GetGlobalNetTime( endTime ) )
+	RuiSetGameTime( rui, "transitionOutAt", GetGlobalNetTimeSafe( endTime ) )
 	RuiSetBool( rui, "isDuoMode", GetExpectedSquadSize( GetLocalClientPlayer() ) == 2 )
 
 	string title = ( totalSquads <=3 )?"#MVP_ALT_SCREEN_HEADER" : "#MVP_SCREEN_HEADER"
@@ -1115,7 +1115,7 @@ void function DoMVPSquadCardsPresentation( string endTime )
 
 	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_BannerChampion" )
 
-	while( Time() < GetGlobalNetTime( endTime ) )
+	while( Time() < GetGlobalNetTimeSafe( endTime ) )
 		WaitFrame()
 }
       
@@ -1151,9 +1151,9 @@ void function DoChampionSquadCardsPresentation( string endTime )
      
       
 	{
-		championEHI			= GetGlobalNetInt( "championEEH" )
-		championSquad1EHI	= GetGlobalNetInt( "championSquad1EEH" )
-		championSquad2EHI	= GetGlobalNetInt( "championSquad2EEH" )
+		championEHI			= GetGlobalNetIntSafe( "championEEH" )
+		championSquad1EHI	= GetGlobalNetIntSafe( "championSquad1EEH" )
+		championSquad2EHI	= GetGlobalNetIntSafe( "championSquad2EEH" )
 	}
 	float fadeToBlackDuration   = 0.5
 	float fadeFromBlackDuration = 0.5
@@ -1221,7 +1221,7 @@ void function DoChampionSquadCardsPresentation( string endTime )
 
 	RuiSetString( rui, "topHeader", topHeader )
 	RuiSetGameTime( rui, "transitionInAt", Time() )
-	RuiSetGameTime( rui, "transitionOutAt", GetGlobalNetTime( endTime ) )
+	RuiSetGameTime( rui, "transitionOutAt", GetGlobalNetTimeSafe( endTime ) )
 	RuiSetFloat( rui, "xpBonusAmount", XpEventTypeData_GetAmount( eXPType.KILL_CHAMPION_MEMBER ) )
 	RuiSetBool( rui, "isDuoMode", GetExpectedSquadSize( GetLocalClientPlayer() ) == 2 )
 	RuiSetString( rui, "gameModeString", GetCurrentPlaylistVarString( "name", "#PLAYLIST_UNAVAILABLE" ) )
@@ -1297,7 +1297,7 @@ void function DoChampionSquadCardsPresentation( string endTime )
 
 	EmitSoundOnEntity( GetLocalClientPlayer(), "UI_Survival_Intro_BannerChampion" )
 
-	while( Time() < GetGlobalNetTime( endTime ) )
+	while( Time() < GetGlobalNetTimeSafe( endTime ) )
 		WaitFrame()
 }
 
@@ -1378,7 +1378,7 @@ void function _OpenCharacterSelectNewMenu( var menu )
 	if ( !fileLevel.isBrowseMode )
 	{
 		thread FlashScreenWhite()
-		float gameStartTime = GetGlobalNetTime( "pickLoadoutGamestateEndTime" )
+		float gameStartTime = GetGlobalNetTimeSafe( "pickLoadoutGamestateEndTime" )
 		Assert( gameStartTime > -1 )
 		thread CloseCharacterSelectMenuAtTime( gameStartTime )
 	}
@@ -2386,7 +2386,7 @@ void function CreateCharacterSelectClientEnts()
 	{
 		fileLevel.countdownRui = CreateFullscreenRui( $"ui/character_select_timer_new.rpak" )
 		RuiSetResolutionToScreenSize( fileLevel.countdownRui )
-		float pickStartTime = GetGlobalNetTime( "pickLoadoutGamestateStartTime" )
+		float pickStartTime = GetGlobalNetTimeSafe( "pickLoadoutGamestateStartTime" )
 		Assert( pickStartTime > -1 )
 		RuiSetGameTime( fileLevel.countdownRui, "countdownEndTime", pickStartTime )
 		RuiSetInt( fileLevel.countdownRui, "yourPick", fileLevel.localClientLockstepIndex + 1 )
@@ -2401,7 +2401,7 @@ void function CountdownTimerSounds()
 
 	wait max( 0.0, SCREEN_COVER_TRANSITION_IN_DURATION + SCREEN_COVER_TRANSITION_OUT_DURATION - 1.0 )
 
-	float timeRemaining = GetGlobalNetTime( "pickLoadoutGamestateStartTime" ) - Time()
+	float timeRemaining = GetGlobalNetTimeSafe( "pickLoadoutGamestateStartTime" ) - Time()
 
 	if ( timeRemaining <= 1.0 )
 		return
@@ -2409,9 +2409,9 @@ void function CountdownTimerSounds()
 	wait max( 0.0, timeRemaining % 1.0 )
 	wait 0.5
 
-	while( Time() < GetGlobalNetTime( "pickLoadoutGamestateStartTime" ) )
+	while( Time() < GetGlobalNetTimeSafe( "pickLoadoutGamestateStartTime" ) )
 	{
-		timeRemaining = GetGlobalNetTime( "pickLoadoutGamestateStartTime" ) - Time()
+		timeRemaining = GetGlobalNetTimeSafe( "pickLoadoutGamestateStartTime" ) - Time()
 		EmitSoundOnEntity( player, "UI_Survival_Intro_PreLegendSelect_Countdown" )
 		wait 1.0
 	}
@@ -2692,7 +2692,7 @@ void function UpdateForFocusOnButtonIndex( int buttonIndex )
 	}
 
 	                                                         
-	if ( !fileLevel.isBrowseMode && GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != fileLevel.localClientLockstepIndex )
+	if ( !fileLevel.isBrowseMode && GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != fileLevel.localClientLockstepIndex )
 		return
 
 	                                                                                                                          
@@ -2775,7 +2775,7 @@ void function OnLoadoutButton_Activate( var button )
 		return
 
 	                                                         
-	if ( !fileLevel.isBrowseMode && GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != fileLevel.localClientLockstepIndex )
+	if ( !fileLevel.isBrowseMode && GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != fileLevel.localClientLockstepIndex )
 		return
 
 	                                                                   
@@ -2871,14 +2871,14 @@ void function Client_TryUnlockCharacter()
 	}
 
 	                                  
-	if ( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != fileLevel.localClientLockstepIndex )
+	if ( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) != fileLevel.localClientLockstepIndex )
 	{
 		RunUIScript( "OpenSystemMenu" )
 		return
 	}
 
 	                                                    
-	float timeRemaining = GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) - Time()
+	float timeRemaining = GetGlobalNetTimeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) - Time()
 	if ( timeRemaining <= 0.0 )                                                                                                                                    
 		return
 
@@ -2946,13 +2946,13 @@ void function PlayerLeftTeam()
 
 void function OnLockStepPickIndexChanged( entity player, int new )
 {
-	if ( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) == fileLevel.localClientLockstepIndex )
+	if ( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) == fileLevel.localClientLockstepIndex )
 	{
 		thread LocalPlayerPickingSounds()
 		FlashGameWindow()
 	}
 
-	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
+	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 	if ( pickingPlayer != null )
 	{
 		expect entity( pickingPlayer )
@@ -3073,7 +3073,7 @@ void function OnPlayerUpdatedCharacterFocus( entity player, int newCharacterGUID
 	UpdateButtonStates()
 
 	                                                                                          
-	entity ornull playerForSlot = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
+	entity ornull playerForSlot = GetTeammateForPickingIndex( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 	if ( playerForSlot == null || expect entity( playerForSlot )  != player )
 		return
 
@@ -3133,7 +3133,7 @@ void function OnTeammateLoadoutSelectionChanged( EHI playerEHI, ItemFlavor unuse
 		return
 
 	                                                                                                                     
-	entity ornull playerForSlot = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
+	entity ornull playerForSlot = GetTeammateForPickingIndex( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 	if ( playerForSlot == null || ToEHI( expect entity( playerForSlot ) ) != playerEHI )
 		return
 
@@ -3206,7 +3206,7 @@ void function UpdateButtonStates()
 	entity localPlayer    = GetLocalClientPlayer()
 	array<entity> players = GetPlayerSquad()
 
-	int currentLockStepIndex   = GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
+	int currentLockStepIndex   = GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
 	bool localPlayerIsLockedIn = localPlayer.GetPlayerNetBool( CHARACTER_SELECT_NETVAR_HAS_LOCKED_IN_CHARACTER )
 
 	for ( int i = 0 ; i < fileLevel.characterButtons.len() ; i++ )
@@ -3224,7 +3224,7 @@ void function UpdateButtonStates()
 			                                                                                                                          
 			                                                      
 
-			if ( (currentLockStepIndex < -1) || (Time() >= GetGlobalNetTime( "allSquadsPresentationStartTime" )) )
+			if ( (currentLockStepIndex < -1) || (Time() >= GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" )) )
 				Hud_SetVisible( button, false )
 
 			Hud_SetEnabled( button, false )
@@ -3329,18 +3329,18 @@ void function UpdateButtonStates()
 	{
 		var playerRui = fileLevel.ruiPlayerBarRuis[i]
 
-		float pickStartTime = GetGlobalNetTime( "pickLoadoutGamestateStartTime" )
+		float pickStartTime = GetGlobalNetTimeSafe( "pickLoadoutGamestateStartTime" )
 		RuiSetGameTime( playerRui, "countdownEndTime", pickStartTime )
 		RuiSetInt( playerRui, "yourPick", fileLevel.localClientLockstepIndex + 1 )
 
 		                          
 		RuiSetBool( playerRui, "isSelecting", currentLockStepIndex == i )
-		RuiSetFloat( playerRui, "gcardsStartTime", GetGlobalNetTime( "allSquadsPresentationStartTime" ) )
+		RuiSetFloat( playerRui, "gcardsStartTime", GetGlobalNetTimeSafe( "allSquadsPresentationStartTime" ) )
 
 		if ( i == currentLockStepIndex )
 		{
-			RuiSetGameTime( playerRui, "selectingStartTime", GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME ) )
-			RuiSetGameTime( playerRui, "selectingEndTime", GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) )
+			RuiSetGameTime( playerRui, "selectingStartTime", GetGlobalNetTimeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_START_TIME ) )
+			RuiSetGameTime( playerRui, "selectingEndTime", GetGlobalNetTimeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) )
 		}
 		else if ( i < currentLockStepIndex )
 		{
@@ -3515,9 +3515,9 @@ void function LocalPlayerPickingSounds()
 	                      
 	EmitSoundOnEntity( player, "pilot_collectible_pickup" )
 
-	while( Time() < GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) )
+	while( Time() < GetGlobalNetTimeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) )
 	{
-		float timeRemaining = GetGlobalNetTime( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) - Time()
+		float timeRemaining = GetGlobalNetTimeSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_END_TIME ) - Time()
 		EmitSoundOnEntity( player, "UI_Survival_Intro_LegendSelectCountDown" )
 		wait 1.0
 	}
@@ -3548,7 +3548,7 @@ void function UpdateSceneThink()
 
 		bool shouldUpdateModel = false
 		bool shouldUpdateAnim  = false
-		int currentPickIndex   = GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
+		int currentPickIndex   = GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX )
 
 		bool menuStateChanged = fileLevel.desiredMenuState != currentMenuState
 		if ( menuStateChanged )
@@ -3744,7 +3744,7 @@ void function UpdatePlayerModel( ItemFlavor character, ItemFlavor ornull charact
 	if ( !IsValid( fileLevel.characterModel ) )
 		return
 
-	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
+	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 	if ( fileLevel.isBrowseMode )                                               
 		pickingPlayer = GetLocalClientPlayer()
 	if ( pickingPlayer == null )
@@ -3823,7 +3823,7 @@ void function UpdatePlayerAnim( ItemFlavor character, int currentMenuState )
 		WaitSignal( fileLevel.signalDummy, "PlayerModelUpdated" )
 	}
 
-	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
+	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 
 	if ( fileLevel.isBrowseMode )
 		pickingPlayer = GetLocalClientPlayer()
@@ -3932,7 +3932,7 @@ void function DebugMenuThink()
 
 		string debugString = "-- Menu State --"
 		debugString += "\n" + format( "My Turn: %i", fileLevel.localClientLockstepIndex )
-		debugString += "\n" + format( "Current Turn: %i", GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
+		debugString += "\n" + format( "Current Turn: %i", GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 		debugString += "\n" + format( "Browse Mode: %s", fileLevel.isBrowseMode ? "true" : "false" )
 		debugString += "\n" + format( "Desired Character: %s", desiredCharacter )
 		debugString += "\n" + format( "Desired Menu State: %s", DEV_GetEnumStringSafe( "eNewCharacterSelectMenuState", fileLevel.desiredMenuState ) )
@@ -4906,7 +4906,7 @@ void function Dev_CharacterSelectRefreshLighting_Thread()
 	ItemFlavor character = expect ItemFlavor( fileLevel.desiredCharacterOrNull )
 	ItemFlavor ornull characterSkinOverride = fileLevel.desiredSkinOrNull
 
-	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetInt( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
+	entity ornull pickingPlayer = GetTeammateForPickingIndex( GetGlobalNetIntSafe( CHARACTER_SELECT_NETVAR_LOCK_STEP_INDEX ) )
 	if ( fileLevel.isBrowseMode )                                               
 		pickingPlayer = GetLocalClientPlayer()
 	if ( pickingPlayer == null )

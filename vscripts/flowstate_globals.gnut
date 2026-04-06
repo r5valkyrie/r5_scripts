@@ -294,7 +294,7 @@ bool function Flowstate_EnableReporting()						{ return fsGlobal.EnableReporting
 void function DEV_RegisterNetworking_SpawnSystem()
 {
 	#if DEVELOPER
-		ScriptRegisterNetworkedVariable( "FS_Scenarios_currentDeathfieldRadius", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME )
-		ScriptRegisterNetworkedVariable( "FS_Scenarios_currentDistanceFromCenter", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME )
+		RegisterNetworkedVariableSafe( "FS_Scenarios_currentDeathfieldRadius", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME )
+		RegisterNetworkedVariableSafe( "FS_Scenarios_currentDistanceFromCenter", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME )
 	#endif
 }

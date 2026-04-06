@@ -291,7 +291,7 @@ void function FreeDM_GamemodeInitShared()
 
 #endif
 
-	RegisterNetworkedVariable( FREEDM_SECONDARY_SCORE_NAME, SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
+	RegisterNetworkedVariableSafe( FREEDM_SECONDARY_SCORE_NAME, SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
 
 	Remote_RegisterClientFunction( "ServerCallback_FreeDM_AirdropNotification")
 	Remote_RegisterClientFunction( "ServerCallback_FreeDM_AnnounceRoundWonLost", "int", 0, 128)
@@ -669,7 +669,7 @@ void function FreeDM_SetVOEndScoreDelta( int endScoreDelta )
 #if SERVER
 void function EntitiesDidLoad()
 {
-	SetGlobalNetBool( "isMapZoneDisplayTextDisabled", true )
+	SetGlobalNetBoolSafe( "isMapZoneDisplayTextDisabled", true )
 	SetupAssaultPointKeyValues()
 
 	//no turrets in TDM for now
@@ -1803,7 +1803,7 @@ void function OnFreeDMPlayerDisconnectedThread( )
 void function FreeDMCheckIsValidGame()
 {
 	// Don't run this logic if Leaver Penalty is already turned off
-	if ( !GetGlobalNetBool( "mixtape_isLeaverPenaltyEnabledForMatch" ) )
+	if ( !GetGlobalNetBoolSafe( "mixtape_isLeaverPenaltyEnabledForMatch" ) )
 		return
 
 	bool leaverPenaltyEnabled = true
@@ -1822,7 +1822,7 @@ void function FreeDMCheckIsValidGame()
 		leaverPenaltyEnabled = (currentPlayers.len() > (GetCurrentPlaylistVarInt( "max_players", 12 ) * (2.0 / 3.0)))
 	}
 
-	SetGlobalNetBool( "mixtape_isLeaverPenaltyEnabledForMatch", leaverPenaltyEnabled)
+	SetGlobalNetBoolSafe( "mixtape_isLeaverPenaltyEnabledForMatch", leaverPenaltyEnabled)
 }
 #endif // SERVER
 

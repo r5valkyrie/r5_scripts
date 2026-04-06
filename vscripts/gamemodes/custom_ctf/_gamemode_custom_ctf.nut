@@ -151,7 +151,7 @@ bool function ClientCommand_DropFlag(entity player, array<string> args)
 bool function ClientCommand_NextRound(entity player, array<string> args)
 {
 	file.ctfState = eCTFState.WINNER_DECIDED
-	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+	SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 	return true
 }
 #endif
@@ -408,10 +408,10 @@ void function StartRound()
 
 	if( !debugging && Flowstate_IsHaloMode() )
 	{
-		SetGlobalNetTime( "FSIntro_StartTime", Time() + 3 )
-		SetGlobalNetTime( "FSIntro_EndTime", Time() + 7 + max( GetPlayerArrayOfTeam(TEAM_IMC).len(), GetPlayerArrayOfTeam(TEAM_MILITIA).len() ) * 2 )
+		SetGlobalNetTimeSafe( "FSIntro_StartTime", Time() + 3 )
+		SetGlobalNetTimeSafe( "FSIntro_EndTime", Time() + 7 + max( GetPlayerArrayOfTeam(TEAM_IMC).len(), GetPlayerArrayOfTeam(TEAM_MILITIA).len() ) * 2 )
 
-		while( Time() < GetGlobalNetTime( "FSIntro_EndTime" ) )
+		while( Time() < GetGlobalNetTimeSafe( "FSIntro_EndTime" ) )
 			WaitFrame()
 
 		foreach(player in GetPlayerArray())
@@ -426,7 +426,7 @@ void function StartRound()
 	wait 1.5
 	// set
 	SetGameState(eGameState.Playing)
-	SetGlobalNetTime( "flowstate_DMStartTime", Time() + 3 )
+	SetGlobalNetTimeSafe( "flowstate_DMStartTime", Time() + 3 )
 
 	foreach(player in GetPlayerArray())
 	{
@@ -481,9 +481,9 @@ void function StartRound()
 
 	float endTime = Time() + CTF_ROUNDTIME
 
-	SetGlobalNetTime( "flowstate_DMRoundEndTime", endTime )
+	SetGlobalNetTimeSafe( "flowstate_DMRoundEndTime", endTime )
 	file.ctfState = eCTFState.IN_PROGRESS
-	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+	SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 
 	array<entity> winners = []
 
@@ -492,8 +492,8 @@ void function StartRound()
 		if( Time() > endTime - 1 )
 		{
 			file.ctfState = eCTFState.WINNER_DECIDED
-			if( GetGlobalNetInt( "FSDM_GameState" ) != eCTFState.WINNER_DECIDED )
-				SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+			if( GetGlobalNetIntSafe( "FSDM_GameState" ) != eCTFState.WINNER_DECIDED )
+				SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 		}
 
 		if( file.ctfState == eCTFState.WINNER_DECIDED )
@@ -785,9 +785,9 @@ void function StartRound()
 		WaitFrame()
 	}
 
-	SetGlobalNetTime( "flowstate_DMRoundEndTime", -1 )
+	SetGlobalNetTimeSafe( "flowstate_DMRoundEndTime", -1 )
 	file.ctfState = eCTFState.WINNER_DECIDED
-	SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+	SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 
 	#if TRACKER //todo: Add roundend callbacks
 		if( winners.len() )
@@ -1206,7 +1206,7 @@ void function CaptureFlag(entity ent, int team, CTFPoint teamflagpoint)
 			thread EmitSoundOnEntityOnlyToPlayer( player, player, "diag_ap_aiNotify_winnerFound" )
 		}
 		file.ctfState = eCTFState.WINNER_DECIDED
-		SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+		SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 		file.winnerTeam = TEAM_IMC
 	} else if( GameRules_GetTeamScore( TEAM_MILITIA ) >= CTF_SCORE_GOAL_TO_WIN )
 	{
@@ -1218,7 +1218,7 @@ void function CaptureFlag(entity ent, int team, CTFPoint teamflagpoint)
 			thread EmitSoundOnEntityOnlyToPlayer( player, player, "diag_ap_aiNotify_winnerFound" )
 		}
 		file.ctfState = eCTFState.WINNER_DECIDED
-		SetGlobalNetInt( "FSDM_GameState", file.ctfState )
+		SetGlobalNetIntSafe( "FSDM_GameState", file.ctfState )
 		file.winnerTeam = TEAM_MILITIA
 	}
 }

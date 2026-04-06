@@ -223,9 +223,9 @@ const string CMD_REQUEST_EMOTE_STOP 			= "ClientCallback_RequestStopEmote"
 //---------------------
 void function ShEmotes_Init()
 {
-	RegisterNetworkedVariable( "canGroundEmote", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
-	RegisterNetworkedVariable( "isEmoting", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	RegisterNetworkedVariable( "emoteFlourishAvailable", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "canGroundEmote", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
+	RegisterNetworkedVariableSafe( "isEmoting", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "emoteFlourishAvailable", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
 
 	if ( !AreEmotesEnabled() )
 		return

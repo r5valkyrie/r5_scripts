@@ -483,33 +483,34 @@ void function WinterExpress_RegisterNetworking()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_CL_UpdateCurrentLoadoutHUD" )
 	// ScriptRemote_RegisterClientFunction( "ServerCallback_FlowstateCaptureProgressUI", "float", -1.0, 99999.0, 32, "float", -1.0, 99999.0, 32 )
 
-	RegisterNetworkedVariable( "WinterExpress_RoundState", SNDC_GLOBAL, SNVT_INT, -1 )
-	RegisterNetworkedVariable( "WinterExpress_RoundEnd", SNDC_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariable( "WinterExpress_ObjectiveState", SNDC_GLOBAL, SNVT_INT, eWinterExpressObjectiveState.INACTIVE )
-	RegisterNetworkedVariable( "WinterExpress_ObjectiveOwner", SNDC_GLOBAL, SNVT_INT, -1 )
-	RegisterNetworkedVariable( "WinterExpress_UnlockDelayEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariable( "WinterExpress_CaptureEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariable( "WinterExpress_TrainArrivalTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariable( "WinterExpress_TrainTravelTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariable( "WinterExpress_WaveRespawnTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariable( "WinterExpress_RoundRespawnTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariable( "WinterExpress_IsOvertime", SNDC_GLOBAL, SNVT_BOOL, false )
-	RegisterNetworkedVariable( "WinterExpress_RoundCounter", SNDC_GLOBAL, SNVT_INT, 0 )
-	RegisterNetworkedVariable( "WinterExpress_NarrowWin", SNDC_GLOBAL, SNVT_BOOL, false )
-	RegisterNetworkedVariable( "WinterExpress_HasGracePeriodPermit", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "WinterExpress_IsPlayerAllowedLegendChange", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-	ScriptRegisterNetworkedVariable( "WinterExpress_CaptureEndTimeCopy", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_RoundState", SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_RoundEnd", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_ObjectiveState", SNDC_GLOBAL, SNVT_INT, eWinterExpressObjectiveState.INACTIVE )
+	RegisterNetworkedVariableSafe( "WinterExpress_ObjectiveOwner", SNDC_GLOBAL, SNVT_INT, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_UnlockDelayEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_CaptureEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_TrainArrivalTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_TrainTravelTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_WaveRespawnTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_RoundRespawnTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "WinterExpress_IsOvertime", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "WinterExpress_RoundCounter", SNDC_GLOBAL, SNVT_INT, 0 )
+	RegisterNetworkedVariableSafe( "WinterExpress_NarrowWin", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "WinterExpress_HasGracePeriodPermit", SNDC_PLAYER_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "WinterExpress_IsPlayerAllowedLegendChange", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "WinterExpress_CaptureEndTimeCopy", SNDC_GLOBAL, SNVT_TIME, -1 )
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_CreateBeaconWorldIcon", "entity", "entity" )
 
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_int( "WinterExpress_RoundState", OnServerVarChanged_RoundState )
-		RegisterNetworkedVariableChangeCallback_int( "WinterExpress_ObjectiveState", OnServerVarChanged_ObjectiveState )
-		RegisterNetworkedVariableChangeCallback_int( "WinterExpress_ObjectiveOwner", OnServerVarChanged_ObjectiveOwner )
-		RegisterNetworkedVariableChangeCallback_int( "connectedPlayerCount", OnServerVarChanged_ConnectedPlayers )
-		RegisterNetworkedVariableChangeCallback_time( "WinterExpress_TrainArrivalTime", OnServerVarChanged_TrainArrival )
-		RegisterNetworkedVariableChangeCallback_time( "WinterExpress_TrainTravelTime", OnServerVarChanged_TrainTravelTime )
-		RegisterNetworkedVariableChangeCallback_bool( "WinterExpress_IsOvertime", OnServerVarChanged_OvertimeChanged )
-        RegisterNetworkedVariableChangeCallback_time( "WinterExpress_CaptureEndTime", OnServerVarChanged_CaptureEndTime )
+		RegisterNetworkedVariableChangeCallback_intSafe( "WinterExpress_RoundState", OnServerVarChanged_RoundState )
+		RegisterNetworkedVariableChangeCallback_intSafe( "WinterExpress_ObjectiveState", OnServerVarChanged_ObjectiveState )
+		RegisterNetworkedVariableChangeCallback_intSafe( "WinterExpress_ObjectiveOwner", OnServerVarChanged_ObjectiveOwner )
+		RegisterNetworkedVariableChangeCallback_intSafe( "connectedPlayerCount", OnServerVarChanged_ConnectedPlayers )
+		RegisterNetworkedVariableChangeCallback_timeSafe( "WinterExpress_TrainArrivalTime", OnServerVarChanged_TrainArrival )
+		RegisterNetworkedVariableChangeCallback_timeSafe( "WinterExpress_TrainTravelTime", OnServerVarChanged_TrainTravelTime )
+		RegisterNetworkedVariableChangeCallback_boolSafe( "WinterExpress_IsOvertime", OnServerVarChanged_OvertimeChanged )
+	// DISABLED: incomplete callback call
+        RegisterNetworkedVariableChangeCallback_timeSafe( "WinterExpress_CaptureEndTime", OnServerVarChanged_CaptureEndTime )
 
 		AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnPlayerLoadoutChanged )
 		RegisterSignal( "FSDM_EndTimer" )
@@ -524,7 +525,7 @@ bool function WinterExpress_IsModeEnabled()
 
 bool function WinterExpress_IsNarrowWin()
 {
-	return GetGlobalNetBool( "WinterExpress_NarrowWin" )
+	return GetGlobalNetBoolSafe( "WinterExpress_NarrowWin" )
 }
 
 #if SERVER
@@ -703,7 +704,7 @@ string function WinterExpress_DeathScreenHeaderOverride()
 		return ""
 
 	entity player            = GetLocalClientPlayer()
-	float respawnTime        = GetGlobalNetTime( "WinterExpress_RoundRespawnTime" )
+	float respawnTime        = GetGlobalNetTimeSafe( "WinterExpress_RoundRespawnTime" )
 	float gracePeriodEndTime = respawnTime + RESPAWN_GRACE_PERIOD
 
 	if ( Time() < gracePeriodEndTime && player.GetPlayerNetBool( "WinterExpress_HasGracePeriodPermit" ) )
@@ -957,7 +958,7 @@ void function OnEntityEnterTrain( entity ent )
 
 void function OnEntityLeaveTrain( entity ent )
 {
-	if ( GetGlobalNetInt( "WinterExpress_RoundState" ) == eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS )
+	if ( GetGlobalNetIntSafe( "WinterExpress_RoundState" ) == eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS )
 	{
 		ProcessInactiveObjective()
 		return
@@ -1004,7 +1005,7 @@ void function OnEntityLeaveTrain( entity ent )
 
 void function UpdateObjectiveStateForTeam( int newState, int team )
 {
-	int currentState = GetGlobalNetInt( "WinterExpress_ObjectiveState" )
+	int currentState = GetGlobalNetIntSafe( "WinterExpress_ObjectiveState" )
 	if ( newState == eWinterExpressObjectiveState.INACTIVE )
 		ResetObjectiveOwnership()
 	if ( newState == eWinterExpressObjectiveState.UNCONTROLLED )
@@ -1014,9 +1015,9 @@ void function UpdateObjectiveStateForTeam( int newState, int team )
 
 	if ( currentState == eWinterExpressObjectiveState.CONTROLLED && newState != eWinterExpressObjectiveState.CONTROLLED )
 	{
-		file.cachedObjectiveOwner = GetGlobalNetInt( "WinterExpress_ObjectiveOwner" )
+		file.cachedObjectiveOwner = GetGlobalNetIntSafe( "WinterExpress_ObjectiveOwner" )
 		float capTime            = settings.winter_express_cap_time
-		float timeLeftToCapture  = GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) - Time()
+		float timeLeftToCapture  = GetGlobalNetTimeSafe( "WinterExpress_CaptureEndTime" ) - Time()
 		float percentageCaptured = (capTime - timeLeftToCapture) / capTime
 		file.cachedObjectivePercent = percentageCaptured
 	}
@@ -1025,8 +1026,8 @@ void function UpdateObjectiveStateForTeam( int newState, int team )
 	Warning( "UpdateObjectiveStateForTeam - Old State: " + GetEnumString( "eWinterExpressObjectiveState", currentState ) + " New state:" + GetEnumString( "eWinterExpressObjectiveState", newState ) + ". Team " + team )
 	#endif
 
-	SetGlobalNetInt( "WinterExpress_ObjectiveState", newState )
-	SetGlobalNetInt( "WinterExpress_ObjectiveOwner", team )
+	SetGlobalNetIntSafe( "WinterExpress_ObjectiveState", newState )
+	SetGlobalNetIntSafe( "WinterExpress_ObjectiveOwner", team )
 
 	string matchPointAddendum = ""
 	if ( team in file.isTeamOnMatchPoint && file.isTeamOnMatchPoint[team] )
@@ -1115,7 +1116,7 @@ void function ResetObjectiveOwnership()
 	// DumpStack()
 	// Warning( "OBJECTIVE OWNERSHIP RESET" )
 	file.cachedObjectiveOwner = -1
-	SetGlobalNetInt( "WinterExpress_ObjectiveOwner", -1 )
+	SetGlobalNetIntSafe( "WinterExpress_ObjectiveOwner", -1 )
 }
 
 //callbacks
@@ -1207,8 +1208,8 @@ void function Thread_OnGameStatePlaying()
 	float maxDist     = GetPathLength( path )
 	float roughTravelTime           = maxDist / WINTER_EXPRESS_TRAIN_MAX_SPEED
 
-	SetGlobalNetTime( "WinterExpress_TrainArrivalTime", Time() + roughTravelTime )
-	SetGlobalNetTime( "WinterExpress_TrainTravelTime", roughTravelTime )
+	SetGlobalNetTimeSafe( "WinterExpress_TrainArrivalTime", Time() + roughTravelTime )
+	SetGlobalNetTimeSafe( "WinterExpress_TrainTravelTime", roughTravelTime )
 }
 
 void function FS_SendPlayerHUDData()
@@ -1309,7 +1310,7 @@ void function OnWinnerDetermined()
 
 void function OnPlayerKilled_GameState( entity victim, entity attacker, var attackerDamageInfo )
 {
-	if ( GetGlobalNetInt( "WinterExpress_RoundState" ) == eWinterExpressRoundState.OBJECTIVE_ACTIVE && GetGameState() == eGameState.Playing )
+	if ( GetGlobalNetIntSafe( "WinterExpress_RoundState" ) == eWinterExpressRoundState.OBJECTIVE_ACTIVE && GetGameState() == eGameState.Playing )
 		thread ProcessLastSquadAlive( victim, attacker )
 
 	if ( !IsValid( victim ) )
@@ -1446,22 +1447,22 @@ void function TrainArrivedAtStation_Internal()
 		unlockDelay += WINTER_EXPRESS_FIRST_STATION_UNLOCK_DELAY
 	}
 
-	SetGlobalNetTime( "WinterExpress_UnlockDelayEndTime", Time() + unlockDelay )
-	SetGlobalNetInt( "WinterExpress_RoundState", eWinterExpressRoundState.ABOUT_TO_UNLOCK_STATION )
+	SetGlobalNetTimeSafe( "WinterExpress_UnlockDelayEndTime", Time() + unlockDelay )
+	SetGlobalNetIntSafe( "WinterExpress_RoundState", eWinterExpressRoundState.ABOUT_TO_UNLOCK_STATION )
 	wait unlockDelay
 
 	UpdatePlayerCounts()
 	SetupObjectiveAtStation()
 	DesertlandsTrain_ClearAllowLeaveStation()
 
-	if ( GetGlobalNetInt( "squadsRemainingCount" ) == 0 )
+	if ( GetGlobalNetIntSafe( "squadsRemainingCount" ) == 0 )
 	{
 		print( "WINTER EXPRESS: Trying to end round with no squads alive" )
 
 		thread TryDetermineRoundWinner( -1, eWinterExpressRoundEndCondition.NO_SQUADS_ALIVE )
 		return
 	}
-	else if ( GetGlobalNetInt( "squadsRemainingCount" ) == 1 && GetPlayerArray_Alive().len() > 0 ) //add safety check. Cafe
+	else if ( GetGlobalNetIntSafe( "squadsRemainingCount" ) == 1 && GetPlayerArray_Alive().len() > 0 ) //add safety check. Cafe
 	{
 		#if DEVELOPER
 			print( "WINTER EXPRESS: Trying to check if alive player is last squad alive" )
@@ -1472,10 +1473,10 @@ void function TrainArrivedAtStation_Internal()
 	}
 
 	float roundEndTime = Time() + settings.winter_express_round_time
-	SetGlobalNetTime( "WinterExpress_RoundEnd", roundEndTime )
-	SetGlobalNetBool( "WinterExpress_IsOvertime", false )
+	SetGlobalNetTimeSafe( "WinterExpress_RoundEnd", roundEndTime )
+	SetGlobalNetBoolSafe( "WinterExpress_IsOvertime", false )
 
-	SetGlobalNetInt( "WinterExpress_RoundState", eWinterExpressRoundState.OBJECTIVE_ACTIVE )
+	SetGlobalNetIntSafe( "WinterExpress_RoundState", eWinterExpressRoundState.OBJECTIVE_ACTIVE )
 	FlagSet( "WinterExpress_ObjectiveActive" )
 
 	if ( !IsWaveRespawn() && !IsRoundBasedRespawn() && GetGameState() == eGameState.Playing )
@@ -1486,7 +1487,7 @@ void function TrainArrivedAtStation_Internal()
 
 void function TrainAboutToLeaveStation()
 {
-	SetGlobalNetInt( "WinterExpress_RoundState", eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS )
+	SetGlobalNetIntSafe( "WinterExpress_RoundState", eWinterExpressRoundState.ABOUT_TO_CHANGE_STATIONS )
 	FlagClear( "WinterExpress_ObjectiveActive" )
 	DestroyObjectiveAtStation()
 
@@ -1516,7 +1517,7 @@ void function TrainAboutToLeaveStation()
 
 void function TrainLeavingStation()
 {
-	SetGlobalNetInt( "WinterExpress_RoundState", eWinterExpressRoundState.CHANGING_STATIONS )
+	SetGlobalNetIntSafe( "WinterExpress_RoundState", eWinterExpressRoundState.CHANGING_STATIONS )
 
 	if ( GetGameState() == eGameState.Playing )
 	{
@@ -1595,7 +1596,7 @@ void function ProcessContestedObjective()
 void function ProcessControlledObjective( int team )
 {
 	// DumpStack()
-	if ( !IsValid( svGlobal.levelEnt ) || team == GetGlobalNetInt("WinterExpress_ObjectiveOwner") ) //Fix for capture timer changing for all team when teamates enter/leave train regardless of capture status. Cafe
+	if ( !IsValid( svGlobal.levelEnt ) || team == GetGlobalNetIntSafe("WinterExpress_ObjectiveOwner") ) //Fix for capture timer changing for all team when teamates enter/leave train regardless of capture status. Cafe
 		return
 
 	float capPercentage = 0
@@ -1627,12 +1628,12 @@ void function ProcessControlledObjective( int team )
 				print( "WINTER EXPRESS: Objective Capture End Condition Cancelled" )
 			#endif
 
-			SetGlobalNetTime( "WinterExpress_CaptureEndTimeCopy", -1 )
+			SetGlobalNetTimeSafe( "WinterExpress_CaptureEndTimeCopy", -1 )
 		}
 	)
 
-	SetGlobalNetTime( "WinterExpress_CaptureEndTime", Time() + waitTime )
-	SetGlobalNetTime( "WinterExpress_CaptureEndTimeCopy", Time() + waitTime )
+	SetGlobalNetTimeSafe( "WinterExpress_CaptureEndTime", Time() + waitTime )
+	SetGlobalNetTimeSafe( "WinterExpress_CaptureEndTimeCopy", Time() + waitTime )
 	wait waitTime
 
 	thread TryDetermineRoundWinner( team, eWinterExpressRoundEndCondition.OBJECTIVE_CAPTURED )
@@ -1654,7 +1655,7 @@ void function ProcessRound()
 
 	wait settings.winter_express_round_time
 
-	if ( GetGlobalNetInt( "WinterExpress_ObjectiveState" ) != eWinterExpressObjectiveState.UNCONTROLLED )
+	if ( GetGlobalNetIntSafe( "WinterExpress_ObjectiveState" ) != eWinterExpressObjectiveState.UNCONTROLLED )
 	{
 		thread ProcessOvertime()
 		return
@@ -1677,7 +1678,7 @@ void function ProcessOvertime()
 	)
 
 	SetupObjectiveAtStationForOvertime()
-	SetGlobalNetBool( "WinterExpress_IsOvertime", true )
+	SetGlobalNetBoolSafe( "WinterExpress_IsOvertime", true )
 
 	thread PlayCommentaryLineToAllPlayers( PickCommentaryLineFromBucket_WinterExpressCustom( eSurvivalCommentaryBucket.TIME_ALMOST_EXPIRED ) )
 
@@ -1727,7 +1728,7 @@ void function ProcessLastSquadAlive( entity victim, entity attacker )
 //win checking for round/match
 void function TryDetermineRoundWinner( int team, int endCondition )
 {
-	if ( GetGlobalNetInt( "WinterExpress_RoundState" ) != eWinterExpressRoundState.OBJECTIVE_ACTIVE &&
+	if ( GetGlobalNetIntSafe( "WinterExpress_RoundState" ) != eWinterExpressRoundState.OBJECTIVE_ACTIVE &&
 	!(endCondition == eWinterExpressRoundEndCondition.NO_SQUADS_ALIVE || endCondition == eWinterExpressRoundEndCondition.LAST_SQUAD_ALIVE) )
 		return
 
@@ -1795,7 +1796,7 @@ void function TryDetermineRoundWinner( int team, int endCondition )
 			break
 	}
 
-	SetGlobalNetInt( "WinterExpress_RoundCounter", GetGlobalNetInt( "WinterExpress_RoundCounter" ) + 1 )
+	SetGlobalNetIntSafe( "WinterExpress_RoundCounter", GetGlobalNetIntSafe( "WinterExpress_RoundCounter" ) + 1 )
 	bool didMatchEnd = TryDetermineMatchWinner()
 
 	if ( !didMatchEnd )
@@ -1835,7 +1836,7 @@ bool function TryDetermineMatchWinner()
 		}
 	}
 
-	if ( GetGlobalNetInt( "WinterExpress_RoundCounter" ) >= settings.roundLimit )
+	if ( GetGlobalNetIntSafe( "WinterExpress_RoundCounter" ) >= settings.roundLimit )
 		roundLimitReached = true
 
 	// check for game end conditions
@@ -1869,7 +1870,7 @@ bool function TryDetermineMatchWinner()
 				continue
 
 			if ( score >= maxScoreValue - 1 )
-				SetGlobalNetBool( "WinterExpress_NarrowWin", true )
+				SetGlobalNetBoolSafe( "WinterExpress_NarrowWin", true )
 		}
 
 		return true
@@ -2228,9 +2229,9 @@ void function RespawnPlayerWhenTrainNearsDestination()
 	}
 	float travelTimeBeforeRespawn = distToTravelBeforeRespawn / WINTER_EXPRESS_TRAIN_MAX_SPEED
 
-	SetGlobalNetTime( "WinterExpress_TrainArrivalTime", Time() + roughTravelTime )
-	SetGlobalNetTime( "WinterExpress_TrainTravelTime", roughTravelTime )
-	SetGlobalNetTime( "WinterExpress_RoundRespawnTime", Time() + travelTimeBeforeRespawn )
+	SetGlobalNetTimeSafe( "WinterExpress_TrainArrivalTime", Time() + roughTravelTime )
+	SetGlobalNetTimeSafe( "WinterExpress_TrainTravelTime", roughTravelTime )
+	SetGlobalNetTimeSafe( "WinterExpress_RoundRespawnTime", Time() + travelTimeBeforeRespawn )
 
 	ClearGracePeriodPermisions()
 
@@ -2296,7 +2297,7 @@ void function UpdateRespawnTimer( entity player )
 
 	while( !IsAlive( player ) && GetGameState() == eGameState.Playing  )
 	{
-		float roundRespawnTime = GetGlobalNetTime( "WinterExpress_RoundRespawnTime" )
+		float roundRespawnTime = GetGlobalNetTimeSafe( "WinterExpress_RoundRespawnTime" )
 		if( previousRoundRespawnTime != roundRespawnTime )
 		{
 			Remote_CallFunction_NonReplay( player, "ServerCallback_RespawnPodStarted", roundRespawnTime )
@@ -2314,7 +2315,7 @@ bool function ShouldRespawnInGracePeriod( entity player )
 	if ( !file.playersInGracePeriod.contains( player ) )
 		return false
 
-	float gracePeriodEndTime = GetGlobalNetTime( "WinterExpress_TrainArrivalTime" )
+	float gracePeriodEndTime = GetGlobalNetTimeSafe( "WinterExpress_TrainArrivalTime" )
 
 	return Time() < gracePeriodEndTime
 }
@@ -2329,7 +2330,7 @@ void function WaveRespawnIntervalThread( float respawnInterval )
 
 	while( GetGameState() == eGameState.Playing )
 	{
-		SetGlobalNetTime( "WinterExpress_WaveRespawnTime", Time() + respawnInterval )
+		SetGlobalNetTimeSafe( "WinterExpress_WaveRespawnTime", Time() + respawnInterval )
 		wait respawnInterval
 
 		RespawnAllDeadPlayers()
@@ -2349,7 +2350,7 @@ void function SetPlayerRespawnOnTeam( entity player )
 	// if ( IsWaveRespawn() || IsRoundBasedRespawn() )
 		// return
 
-	// if ( !IsAlive( player ) && GetGlobalNetInt( "WinterExpress_RoundState" ) == eWinterExpressRoundState.CHANGING_STATIONS )
+	// if ( !IsAlive( player ) && GetGlobalNetIntSafe( "WinterExpress_RoundState" ) == eWinterExpressRoundState.CHANGING_STATIONS )
 	// {
 		// RespawnPlayer( player )
 	// }
@@ -3623,7 +3624,7 @@ void function WinterExpress_ManageCharacterSelectAvailability_Thread()
 
 	// no character select during grace period
 	float timeUntilSpawn = WinterExpress_GetTimeUntilSpawn()
-	float gracePeriod = GetGlobalNetTime( "WinterExpress_TrainArrivalTime" ) - Time()
+	float gracePeriod = GetGlobalNetTimeSafe( "WinterExpress_TrainArrivalTime" ) - Time()
 	bool inGracePeriod = timeUntilSpawn < 0 && gracePeriod > 0
 	if ( inGracePeriod )
 		wait gracePeriod
@@ -3661,7 +3662,7 @@ void function WinterExpress_ManageCharacterSelectAvailability_Thread()
 // Get the time until the player is allowed to spawn, get a negative value until around 10 secs to spawn when we actually know when spawn will occur
 float function WinterExpress_GetTimeUntilSpawn()
 {
-	float roundRespawnTime = GetGlobalNetTime( "WinterExpress_RoundRespawnTime" )
+	float roundRespawnTime = GetGlobalNetTimeSafe( "WinterExpress_RoundRespawnTime" )
 	float timeUntilSpawn = roundRespawnTime - Time()
 	return timeUntilSpawn
 }
@@ -3683,7 +3684,7 @@ void function UICallback_WinterExpress_OpenCharacterSelect()
 		return
 
 	//
-	float roundRespawnTime = GetGlobalNetTime( "WinterExpress_RoundRespawnTime" )//
+	float roundRespawnTime = GetGlobalNetTimeSafe( "WinterExpress_RoundRespawnTime" )//
 	float timeUntilSpawn = roundRespawnTime - Time()
 	if ( timeUntilSpawn > 0 && timeUntilSpawn < CHARACTER_SELECT_MIN_TIME )
 		return
@@ -3863,7 +3864,7 @@ void function DisplayRoundStart()
 		AnnouncementMessageSweepWinterExpress( GetLocalClientPlayer(), Localize( PL_ROUND_STARTED ), Localize( PL_ROUND_STARTED_SUB ), < 214, 214, 214 >, "WXpress_Train_Update", 5.0, $"", borderIcon, borderIcon )
 
 	RuiSetGameTime( ClGameState_GetRui(), "roundStateChangedTime", Time() )
-	RuiSetGameTime( ClGameState_GetRui(), "roundEndTime", GetGlobalNetTime( "WinterExpress_RoundEnd" ) )
+	RuiSetGameTime( ClGameState_GetRui(), "roundEndTime", GetGlobalNetTimeSafe( "WinterExpress_RoundEnd" ) )
 	RuiSetInt( ClGameState_GetRui(), "roundState", eWinterExpressRoundState.OBJECTIVE_ACTIVE )
 
 	foreach ( team, rui in file.squadOnObjectiveElements )
@@ -3911,24 +3912,24 @@ void function OnServerVarChanged_ObjectiveState( entity player, int old, int new
 
 	if ( new == eWinterExpressObjectiveState.CONTROLLED )
 	{
-		RuiSetGameTime( ClGameState_GetRui(), "captureEndTime", GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) )
+		RuiSetGameTime( ClGameState_GetRui(), "captureEndTime", GetGlobalNetTimeSafe( "WinterExpress_CaptureEndTime" ) )
 		RuiSetFloat( ClGameState_GetRui(), "captureTimeRequired", GetCurrentPlaylistVarFloat( "winter_express_cap_time", 10 ) )
 	}
 	else
 	{
-		RuiSetGameTime( ClGameState_GetRui(), "captureEndTime", GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) - Time() )
+		RuiSetGameTime( ClGameState_GetRui(), "captureEndTime", GetGlobalNetTimeSafe( "WinterExpress_CaptureEndTime" ) - Time() )
 	}
 
 	if ( file.trainWaypoint != null && file.trainWaypoint.wp.ruiHud != null )
 	{
 		if ( new == eWinterExpressObjectiveState.CONTROLLED )
 		{
-			RuiSetGameTime( file.trainWaypoint.wp.ruiHud, "captureEndTime", GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) )
+			RuiSetGameTime( file.trainWaypoint.wp.ruiHud, "captureEndTime", GetGlobalNetTimeSafe( "WinterExpress_CaptureEndTime" ) )
 			RuiSetFloat( file.trainWaypoint.wp.ruiHud, "captureTimeRequired", GetCurrentPlaylistVarFloat( "winter_express_cap_time", 10 ) )
 		}
 		else
 		{
-			RuiSetGameTime( file.trainWaypoint.wp.ruiHud, "captureEndTime", GetGlobalNetTime( "WinterExpress_CaptureEndTime" ) - Time() )
+			RuiSetGameTime( file.trainWaypoint.wp.ruiHud, "captureEndTime", GetGlobalNetTimeSafe( "WinterExpress_CaptureEndTime" ) - Time() )
 		}
 	}
 }

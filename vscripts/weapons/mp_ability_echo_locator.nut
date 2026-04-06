@@ -148,7 +148,7 @@ void function MpWeaponEchoLocator_Init()
 
 	RegisterSignal( "EchoLocator_Exit" )
 	RegisterSignal( "EchoLocatorShuttingDown" )
-	RegisterNetworkedVariable( ECHO_LOCATOR_PLAYER_HAS_MOVEMENT_INPUT_NETVAR, SNDC_PLAYER_GLOBAL, SNVT_BOOL )
+	RegisterNetworkedVariableSafe( ECHO_LOCATOR_PLAYER_HAS_MOVEMENT_INPUT_NETVAR, SNDC_PLAYER_GLOBAL, SNVT_BOOL )
 
 	file.echoLocatorRadius           = GetEchoLocatorRadius()
 	file.echoLocatorRadiusSqr        = int( pow( file.echoLocatorRadius, 2 ) )

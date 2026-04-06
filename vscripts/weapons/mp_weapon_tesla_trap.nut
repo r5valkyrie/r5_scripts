@@ -270,7 +270,7 @@ void function MpWeaponTeslaTrap_Init()
 		RegisterSignal( "TeslaTrap_StopPlacementProxy" )
 		RegisterSignal( "TeslaTrap_StopHudIconUpdate" )
 
-		RegisterNetworkedVariableChangeCallback_ent( "focalTrap", OnFocusTrapChanged )
+		RegisterNetworkedVariableChangeCallback_entSafe( "focalTrap", OnFocusTrapChanged )
 
 		AddCallback_ModifyDamageFlyoutForScriptName( TESLA_TRAP_NAME, OnModifyDamageFlyout )
 		AddCallback_PlayerClassActuallyChanged( TeslaTrap_OnPlayerClassChanged )

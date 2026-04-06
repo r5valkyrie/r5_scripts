@@ -265,8 +265,8 @@ void function VantageCompanion_Init()
 
 	Remote_RegisterServerFunction( "ClientCallback_VantageCompanion_Recall" )
 
-	RegisterNetworkedVariable( VANTAGE_COMPANION_STATE_NETINT, SNDC_PLAYER_EXCLUSIVE, SNVT_INT , eCompanionState.UNKNOWN )
-	RegisterNetworkedVariable( VANTAGE_COMPANION_ENT_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+	RegisterNetworkedVariableSafe( VANTAGE_COMPANION_STATE_NETINT, SNDC_PLAYER_EXCLUSIVE, SNVT_INT , eCompanionState.UNKNOWN )
+	RegisterNetworkedVariableSafe( VANTAGE_COMPANION_ENT_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
 
 
 #if CLIENT

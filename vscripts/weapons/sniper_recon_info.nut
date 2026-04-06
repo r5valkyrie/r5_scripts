@@ -59,7 +59,7 @@ void function SniperRecon_Init()
 	RegisterSignal( "EndSniperRecon" )
 	RegisterSignal( "EndSniperRecon_UI" )
 
-	RegisterNetworkedVariable( SNIPER_RECON_TARGET_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
+	RegisterNetworkedVariableSafe( SNIPER_RECON_TARGET_NETVAR, SNDC_PLAYER_EXCLUSIVE, SNVT_ENTITY )
 }
 
 //#if SERVER

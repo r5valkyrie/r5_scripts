@@ -1247,7 +1247,7 @@ void function SURVIVAL_Loot_InitShared()
         
 	}
 
-	RegisterNetworkedVariable( NV_EVOLVING_ARMOR_KILL_COUNT, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 0 )
+	RegisterNetworkedVariableSafe( NV_EVOLVING_ARMOR_KILL_COUNT, SNDC_PLAYER_EXCLUSIVE, SNVT_UNSIGNED_INT, 0 )
 
 	Remote_RegisterServerFunction( CMDNAME_PLAYER_SWITCHED_WEAPONS, "int", -1, 2 )
 

@@ -1,0 +1,114 @@
+untyped
+
+//=============================================================================
+// SNDC Extension — Unified Wrappers
+//=============================================================================
+
+global function RegisterNetworkedVariableSafe
+global function SetGlobalNetBoolSafe
+global function SetGlobalNetIntSafe
+global function SetGlobalNetFloatSafe
+global function SetGlobalNetTimeSafe
+global function SetGlobalNetEntSafe
+global function GetGlobalNetBoolSafe
+global function GetGlobalNetIntSafe
+global function GetGlobalNetFloatSafe
+global function GetGlobalNetTimeSafe
+global function GetGlobalNetEntSafe
+
+// Callback registration: scripts call SDKRegisterNetVarCallback_* directly
+// (typed signatures, no wrapper needed — see dual registration pattern in scripts)
+
+void function RegisterNetworkedVariableSafe(name, category, type, ...)
+{
+	switch (vargc)
+	{
+		case 0:
+			RegisterNetworkedVariable(name, category, type)
+			break
+		case 1:
+			RegisterNetworkedVariable(name, category, type, vargv[0])
+			break
+		case 2:
+			RegisterNetworkedVariable(name, category, type, vargv[0], vargv[1])
+			break
+		case 3:
+			RegisterNetworkedVariable(name, category, type, vargv[0], vargv[1], vargv[2])
+			break
+	}
+	#if SERVER
+	SDKRegisterNetVar(name, category, type)
+	#endif
+}
+
+#if SERVER
+
+void function SetGlobalNetBoolSafe(string name, bool value)
+{
+	SetGlobalNetBool(name, value)
+	SDKSetGlobalNetBool(name, value)
+}
+void function SetGlobalNetIntSafe(string name, int value)
+{
+	SetGlobalNetInt(name, value)
+	SDKSetGlobalNetInt(name, value)
+}
+void function SetGlobalNetFloatSafe(string name, value)
+{
+	SetGlobalNetFloat(name, value)
+	SDKSetGlobalNetFloat(name, value)
+}
+void function SetGlobalNetTimeSafe(string name, value)
+{
+	SetGlobalNetTime(name, value)
+	SDKSetGlobalNetTime(name, value)
+}
+void function SetGlobalNetEntSafe(string name, entity ent)
+{
+	SetGlobalNetEnt(name, ent)
+	SDKSetGlobalNetEntity(name, ent.GetEncodedEHandle())
+}
+bool function GetGlobalNetBoolSafe(string name)    { return GetGlobalNetBool(name) }
+int function GetGlobalNetIntSafe(string name)      { return GetGlobalNetInt(name) }
+float function GetGlobalNetFloatSafe(string name)  { return GetGlobalNetFloat(name) }
+float function GetGlobalNetTimeSafe(string name)    { return GetGlobalNetTime(name) }
+entity function GetGlobalNetEntSafe(string name)    { return GetGlobalNetEnt(name) }
+
+#elseif CLIENT || UI
+
+void function SetGlobalNetBoolSafe(string name, bool value)   {}
+void function SetGlobalNetIntSafe(string name, int value)     {}
+void function SetGlobalNetFloatSafe(string name, value) {}
+void function SetGlobalNetTimeSafe(string name, value)   {}
+void function SetGlobalNetEntSafe(string name, entity ent)     {}
+
+bool function GetGlobalNetBoolSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetInt(name) != 0
+	return GetGlobalNetBool(name)
+}
+int function GetGlobalNetIntSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetInt(name)
+	return GetGlobalNetInt(name)
+}
+float function GetGlobalNetFloatSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetFloat(name)
+	return GetGlobalNetFloat(name)
+}
+float function GetGlobalNetTimeSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetFloat(name)
+	return GetGlobalNetTime(name)
+}
+entity function GetGlobalNetEntSafe(string name)
+{
+	return GetGlobalNetEnt(name)
+}
+
+#endif
