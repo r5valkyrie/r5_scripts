@@ -1,34 +1,3 @@
-
-/*
-=============================================================================
-S16 LOBBY SCRIPT MIGRATION — 2026-03-06
-=============================================================================
-This scripts.rson has been refactored to port the S16 retail lobby UI scripts
-onto the S3 engine (cafe-r5sdk). Key changes:
-
-1. UPDATED TO S16: 44 UI/lobby files replaced with S16 retail versions from:
-   G:\Files\Escritorio\SCRIPTS\s16 codebase\scripts\vscripts\
-   This includes: lobby panels, settings/controls, character/weapon
-   customization, main menu, post-game, ranked, and misc panels.
-
-2. DISABLED R5R/R5V CUSTOM FILES (16 files commented out):
-   - CTF menus (menu_ctf_respawn, menu_ctf_vote)
-   - KillReplay (menu_killreplay)
-   - R5R Main Menu v2 (menu_main_v2, panel_mainmenu_v2)
-   - R5R Lobby panels (lobby_panel_create, lobby_panel_serverbrowser,
-     lobby_panel_credits, create_panel_map/playlist/visibility,
-     gamemode_select_v3/v4, panel_freeroam_maps, menu_news, menu_weaponmods)
-   These files are preserved on disk — re-enable after S16 base is stable.
-
-3. KEPT AS-IS: R5SDK custom arenas (menu_arenas_buy,
-   menu_arenas_post_round_summary, arenas_select_optic) and server_motd.
-   Arenas was removed in S16 retail but we still need it.
-
-4. STUB FUNCTIONS: Missing S16 functions are stubbed in workarounds.gnut
-   and clubs.nut. Missing C++ natives implemented in vscript_colorpalette.cpp.
-=============================================================================
-*/
-
 /*
 Expression values:
 SERVER				Server per-level script VM
