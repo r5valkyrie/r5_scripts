@@ -92,7 +92,7 @@ struct
 
 	array<DevCommand> levelSpecificCommands = []
 	bool cheatsState
-	
+
 	var menu
 	var bg
 } file
@@ -1557,7 +1557,7 @@ void function SetupEnemyNPC()
 	SetupDevCommand( "Enemy NPC: Rocket Drone", "script DEV_SpawnRocketDroneAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Prowler", "script DEV_SpawnProwlerAtCrosshair()" )
 	//SetupDevCommand( "Enemy NPC: Marvin", "script DEV_SpawnMarvinAtCrosshair()" )
-	SetupDevCommand( "Enemy NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair()" )//Come back to this NPC later, we have animations and models but they are unstable -lorrylekral
+	SetupDevCommand( "Enemy NPC: Soldier", "script DEV_SpawnSoldierAtCrosshair()" )//Come back to this NPC later, we have animations and models but they are unstable -kral
 	SetupDevCommand( "Enemy NPC: Spider", "script DEV_SpawnSpiderAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Infected Pilot", "script DEV_SpawnInfectedSoldierAtCrosshair()" )
 	SetupDevCommand( "Enemy NPC: Explosive Tick", "script DEV_SpawnExplosiveTickAtCrosshair()" )

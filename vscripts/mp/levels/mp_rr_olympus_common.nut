@@ -95,7 +95,7 @@ void function EditorSpawnCallbackRemoveEnts( entity ent )
 	if( !IsValid( ent ) )
 		return
 
-	ent.Destroy()//TODO: Remove this function once we get tridents -LorryLeKral
+	ent.Destroy()//TODO: Remove this function once we get tridents -Kral
 }
 #endif
 
@@ -111,7 +111,7 @@ void function InitVehicleARBarriers()
 			return
 
 		brush.NotSolid()
-		brush.Destroy()//TODO: Recover this function once we get tridents -LorryLeKral
+		brush.Destroy()//TODO: Recover this function once we get tridents -Kral
 	} )
 }
 
