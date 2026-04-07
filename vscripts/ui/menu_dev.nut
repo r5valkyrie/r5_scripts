@@ -1,6 +1,6 @@
 untyped
 
-global function InitDevMenu
+global function InitDevMenu // 🐴
 global function DEV_InitLoadoutDevSubMenu
 
 #if !DEVELOPER
