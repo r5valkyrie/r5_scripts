@@ -1626,7 +1626,7 @@ void function ManageGladiatorCardTrackerState( ItemFlavor character, EHI playerE
 		Signal( player, "StopGladCardStatTracker" + trackerIndex )
 	}
 
-	if ( desiredStatRef != "" )
+	if ( desiredStatRef != "" && HasStatEntryByRef( desiredStatRef ) )
 	{
 		StatEntry desiredStat = GetStatEntryByRef( desiredStatRef )
 		player.p.activeGladiatorCardStatTrackerEntries[trackerIndex] = StatEntry_GetIndex( desiredStat )

@@ -263,7 +263,7 @@ void function Player_AddPlayer( entity player )
 
 void function ClientCodeCallback_HUDThink()
 {
-	SDKProcessCallbacks() // Fire deferred SNDC overflow callbacks (listen server)
+	SDKProcessCallbacks()
 
 	PerfStart( PerfIndexClient.HUDThink )
 

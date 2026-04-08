@@ -2,289 +2,81 @@
 //
 // Purpose: ScriptNetData - Networked Variable Change Callback System
 //
-// - Callbacks registered via RegisterNetVarXxxChangeCallback or
-//   RegisterNetworkedVariableChangeCallback_xxx (legacy naming)
-// - Callbacks triggered explicitly via TriggerNetVarCallbacks() / TriggerGlobalNetVarCallbacks()
-// - No automatic polling - triggering is explicit and controlled
-//
-// CLIENT VM: Engine natives handle registration; this script provides named aliases
-// UI VM:     SDK natives provide RegisterNetworkedVariableChangeCallback_* +
-//            TriggerNetVarCallbacks; this script wraps them with named aliases
+// Uses native engine callbacks via the Safe wrappers in sh_sndc_callbacks.gnut.
+// Non-overflow vars: engine DT-driven callbacks (immediate).
+// Overflow vars: SDK callback system (fired on NET_ScriptMessage receive).
 //
 //=============================================================================//
 
 global function NetVarCallbacks_Init
-
-// Named wrappers for native registration
 global function RegisterNetVarBoolChangeCallback
 global function RegisterNetVarIntChangeCallback
 global function RegisterNetVarFloatChangeCallback
 global function RegisterNetVarTimeChangeCallback
 global function RegisterNetVarEntChangeCallback
-
-// Trigger functions - scripts call these to fire callbacks for changed values
 global function TriggerGlobalNetVarCallbacks
 global function TriggerPlayerNetVarCallbacks
 
-//-----------------------------------------------------------------------------
-// Callback storage for simplified callbacks (which only get newValue)
-// The native SDK stores callbacks that get (entity, oldValue, newValue, changed)
-// So we need to wrap simplified callbacks to match that signature
-//-----------------------------------------------------------------------------
-
-struct NetVarCallbackWrapper_Bool
-{
-	string varName
-	void functionref( entity, bool ) callback
-}
-
-struct NetVarCallbackWrapper_Int
-{
-	string varName
-	void functionref( entity, int ) callback
-}
-
-struct NetVarCallbackWrapper_Float
-{
-	string varName
-	void functionref( entity, float ) callback
-}
-
-struct
-{
-	// Simplified wrappers - these callbacks only take (entity, newValue)
-	array<NetVarCallbackWrapper_Bool> boolCallbacks
-	array<NetVarCallbackWrapper_Int> intCallbacks
-	array<NetVarCallbackWrapper_Float> floatCallbacks
-	array<NetVarCallbackWrapper_Float> timeCallbacks  // Time uses float signature
-
-	// Previous values for change detection
-	table<string, bool> prevBoolValues
-	table<string, int> prevIntValues
-	table<string, float> prevFloatValues
-	table<string, float> prevTimeValues
-	table<string, entity> prevEntValues
-
-	bool initialized = false
-} file
-
-//-----------------------------------------------------------------------------
-// Initialization
-//-----------------------------------------------------------------------------
-
 void function NetVarCallbacks_Init()
 {
-	if ( file.initialized )
-		return
-	file.initialized = true
 }
 
-//-----------------------------------------------------------------------------
-// Registration Functions
-// These register callbacks that receive (entity player, <type> newValue)
-//-----------------------------------------------------------------------------
+#if CLIENT || UI
 
 void function RegisterNetVarBoolChangeCallback( string varName, void functionref( entity, bool ) callback, int category = 0 )
 {
-	NetVarCallbacks_Init()
-
-	// Store wrapper for later dispatch
-	NetVarCallbackWrapper_Bool wrapper
-	wrapper.varName = varName
-	wrapper.callback = callback
-	file.boolCallbacks.append( wrapper )
-
-	// Register with native using legacy-style callback that we dispatch from
-	// Note: The native RegisterNetworkedVariableChangeCallback_boolSafe takes
-	// (string varName, void functionref(entity, bool, bool, bool) callback)
-	// We can't directly register simplified callbacks with it, so we store them
-	// and dispatch manually in TriggerGlobalNetVarCallbacks
+	RegisterNetworkedVariableChangeCallback_boolSafe( varName,
+		void function( entity ent, bool oldVal, bool newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
 }
 
 void function RegisterNetVarIntChangeCallback( string varName, void functionref( entity, int ) callback, int category = 0 )
 {
-	NetVarCallbacks_Init()
-
-	NetVarCallbackWrapper_Int wrapper
-	wrapper.varName = varName
-	wrapper.callback = callback
-	file.intCallbacks.append( wrapper )
+	RegisterNetworkedVariableChangeCallback_intSafe( varName,
+		void function( entity ent, int oldVal, int newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
 }
 
 void function RegisterNetVarFloatChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 )
 {
-	NetVarCallbacks_Init()
-
-	NetVarCallbackWrapper_Float wrapper
-	wrapper.varName = varName
-	wrapper.callback = callback
-	file.floatCallbacks.append( wrapper )
+	RegisterNetworkedVariableChangeCallback_floatSafe( varName,
+		void function( entity ent, float oldVal, float newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
 }
 
 void function RegisterNetVarTimeChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 )
 {
-	NetVarCallbacks_Init()
-
-	NetVarCallbackWrapper_Float wrapper
-	wrapper.varName = varName
-	wrapper.callback = callback
-	file.timeCallbacks.append( wrapper )
+	RegisterNetworkedVariableChangeCallback_timeSafe( varName,
+		void function( entity ent, float oldVal, float newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
 }
 
 void function RegisterNetVarEntChangeCallback( string varName, void functionref( entity, entity ) callback, int category = 0 )
 {
-	NetVarCallbacks_Init()
-	// Entity callbacks would need similar wrapper pattern
-	// For now, log that it's not yet fully implemented
-	#if DEVELOPER
-		printt( "[NetVarCallbacks] RegisterNetVarEntChangeCallback not fully implemented" )
-	#endif
+	RegisterNetworkedVariableChangeCallback_entSafe( varName,
+		void function( entity ent, entity oldVal, entity newVal, bool changed ) : ( callback )
+		{ if ( changed ) callback( ent, newVal ) }
+	)
 }
 
-//-----------------------------------------------------------------------------
-// Trigger Functions - Call to check for changes and fire callbacks
-// Scripts should call these at appropriate times (e.g., on specific events)
-//-----------------------------------------------------------------------------
+#elseif SERVER
+
+void function RegisterNetVarBoolChangeCallback( string varName, void functionref( entity, bool ) callback, int category = 0 ) {}
+void function RegisterNetVarIntChangeCallback( string varName, void functionref( entity, int ) callback, int category = 0 ) {}
+void function RegisterNetVarFloatChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 ) {}
+void function RegisterNetVarTimeChangeCallback( string varName, void functionref( entity, float ) callback, int category = 0 ) {}
+void function RegisterNetVarEntChangeCallback( string varName, void functionref( entity, entity ) callback, int category = 0 ) {}
+
+#endif
 
 void function TriggerGlobalNetVarCallbacks()
 {
-	#if CLIENT || UI
-		entity player = null
-
-		#if CLIENT
-			player = GetLocalClientPlayer()
-		#endif
-
-		// Check and fire bool callbacks
-		foreach ( wrapper in file.boolCallbacks )
-		{
-			bool newValue = GetGlobalNetBoolSafe( wrapper.varName )
-			bool oldValue = false
-			bool changed = false
-
-			if ( wrapper.varName in file.prevBoolValues )
-			{
-				oldValue = file.prevBoolValues[wrapper.varName]
-				changed = ( oldValue != newValue )
-			}
-			else
-			{
-				changed = true // First time
-			}
-
-			if ( changed )
-			{
-				file.prevBoolValues[wrapper.varName] <- newValue
-				wrapper.callback( player, newValue )
-			}
-		}
-
-		// Check and fire int callbacks
-		foreach ( wrapper in file.intCallbacks )
-		{
-			int newValue = GetGlobalNetIntSafe( wrapper.varName )
-			int oldValue = 0
-			bool changed = false
-
-			if ( wrapper.varName in file.prevIntValues )
-			{
-				oldValue = file.prevIntValues[wrapper.varName]
-				changed = ( oldValue != newValue )
-			}
-			else
-			{
-				changed = true
-			}
-
-			if ( changed )
-			{
-				file.prevIntValues[wrapper.varName] <- newValue
-				wrapper.callback( player, newValue )
-			}
-		}
-
-		// Check and fire float callbacks
-		foreach ( wrapper in file.floatCallbacks )
-		{
-			float newValue = GetGlobalNetFloatSafe( wrapper.varName )
-			float oldValue = 0.0
-			bool changed = false
-
-			if ( wrapper.varName in file.prevFloatValues )
-			{
-				oldValue = file.prevFloatValues[wrapper.varName]
-				changed = ( oldValue != newValue )
-			}
-			else
-			{
-				changed = true
-			}
-
-			if ( changed )
-			{
-				file.prevFloatValues[wrapper.varName] <- newValue
-				wrapper.callback( player, newValue )
-			}
-		}
-
-		// Check and fire time callbacks
-		foreach ( wrapper in file.timeCallbacks )
-		{
-			float newValue = GetGlobalNetTimeSafe( wrapper.varName )
-			float oldValue = 0.0
-			bool changed = false
-
-			if ( wrapper.varName in file.prevTimeValues )
-			{
-				oldValue = file.prevTimeValues[wrapper.varName]
-				changed = ( oldValue != newValue )
-			}
-			else
-			{
-				changed = true
-			}
-
-			if ( changed )
-			{
-				file.prevTimeValues[wrapper.varName] <- newValue
-				wrapper.callback( player, newValue )
-			}
-		}
-	#endif
 }
 
 void function TriggerPlayerNetVarCallbacks( entity player )
 {
-	#if CLIENT // Entity functions not available in UI VM
-		if ( !IsValid( player ) )
-			return
-
-		// Similar to global but using entity.GetPlayerNetXxx() methods
-		// Check and fire bool callbacks for player-specific vars
-		foreach ( wrapper in file.boolCallbacks )
-		{
-			string key = wrapper.varName + "_" + string( player.GetEntIndex() )
-			bool newValue = player.GetPlayerNetBool( wrapper.varName )
-			bool oldValue = false
-			bool changed = false
-
-			if ( key in file.prevBoolValues )
-			{
-				oldValue = file.prevBoolValues[key]
-				changed = ( oldValue != newValue )
-			}
-			else
-			{
-				changed = true
-			}
-
-			if ( changed )
-			{
-				file.prevBoolValues[key] <- newValue
-				wrapper.callback( player, newValue )
-			}
-		}
-
-		// Similar for other types...
-	#endif
 }

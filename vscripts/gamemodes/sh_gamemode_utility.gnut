@@ -242,8 +242,8 @@ void function GamemodeUtility_Init()
 void function GamemodeUtility_RegisterNetworking()
 {
 	#if CLIENT || SERVER
-	//	RegisterNetworkedVariableSafe( GAMEMODEUTILITY_NETVAR_MATCH_START, SNDC_GLOBAL, SNVT_TIME, -1.0 )
-	//	RegisterNetworkedVariableSafe( GAMEMODEUTILITY_NETVAR_MATCH_END, SNDC_GLOBAL, SNVT_TIME, 0.0 )
+		RegisterNetworkedVariableSafe( GAMEMODEUTILITY_NETVAR_MATCH_START, SNDC_GLOBAL, SNVT_TIME, -1.0 )
+		RegisterNetworkedVariableSafe( GAMEMODEUTILITY_NETVAR_MATCH_END, SNDC_GLOBAL, SNVT_TIME, 0.0 )
 	#endif
 
 	Remote_RegisterClientFunction( "GamemodeUtility_ServerCallback_DisplayMatchTimeLimitWarning", "bool" )

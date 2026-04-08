@@ -132,7 +132,8 @@ void function ClGameState_Init()
 	RegisterSignal( "GameStateChanged" )
 	RegisterSignal( "GameModes_CompletedResolutionCleanup" )
 	RegisterNetVarIntChangeCallback( "gameState", ClGameState_Changed )
-	RegisterNetVarBoolChangeCallback( "badRepPresent", UpdateScoreboardBadRepPresentMessage )
+	// badRepPresent uses RegisterServerVar (script KV system), not engine netvars
+	// RegisterNetVarBoolChangeCallback( "badRepPresent", UpdateScoreboardBadRepPresentMessage )
 
 	AddOnSpectatorTargetChangedCallback( GameState_SpectatorTargetChanged )
 
@@ -680,12 +681,15 @@ void function ClGameState_SetResolutionCleanupFunc( void functionref() func )
 
 void function ClGameState_Changed( entity playerEnt, int newVal )
 {
+	printw( "ClGameState_Changed" )
+	
 	Assert( newVal >= -1 )
 	Assert( newVal < eGameState._count_ )
 
 	if ( newVal == -1 )
 		return
 
+	printw( "ClGameState_Changed passed" )
 	string oldPrintVal = file.cachedGameState == -1 ? "-1" : GetEnumString( "eGameState", file.cachedGameState )
 	string newPrintVal = newVal == -1 ? "-1" : GetEnumString( "eGameState", newVal )
 	printf( "ClGameState_Changed(): cachedGameState = %s, newVal = %s", oldPrintVal, newPrintVal )

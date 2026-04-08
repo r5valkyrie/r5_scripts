@@ -1,7 +1,14 @@
 untyped
 
 //=============================================================================
-// SNDC Extension — Unified Wrappers
+// SNDC Extension — Script-level overflow routing
+//
+// Overflow vars (beyond S3 engine limits) NEVER touch the engine.
+// SDKRegisterNetVar is called FIRST to detect overflow, then:
+//   - Non-overflow: engine handles normally
+//   - Overflow: SDK handles via extension buffers + NET_ScriptMessage
+//
+// NO try/catch — that corrupts engine state.
 //=============================================================================
 
 global function RegisterNetworkedVariableSafe
@@ -15,12 +22,20 @@ global function GetGlobalNetIntSafe
 global function GetGlobalNetFloatSafe
 global function GetGlobalNetTimeSafe
 global function GetGlobalNetEntSafe
-
-// Callback registration: scripts call SDKRegisterNetVarCallback_* directly
-// (typed signatures, no wrapper needed — see dual registration pattern in scripts)
+global function GetNetworkedVariableIndexSafe
 
 void function RegisterNetworkedVariableSafe(name, category, type, ...)
 {
+	// Track in SDK FIRST — populates overflow detection on ALL VMs.
+	// Must run on CLIENT/UI too so SDKIsOverflowVar works during CLIENT init
+	// (on map restart, CLIENT scripts may run before SERVER finishes registration).
+	SDKRegisterNetVar(name, category, type)
+
+	// Overflow vars skip engine entirely — SDK handles everything
+	if (SDKIsOverflowVar(name))
+		return
+
+	// Non-overflow: engine registers normally
 	switch (vargc)
 	{
 		case 0:
@@ -36,78 +51,179 @@ void function RegisterNetworkedVariableSafe(name, category, type, ...)
 			RegisterNetworkedVariable(name, category, type, vargv[0], vargv[1], vargv[2])
 			break
 	}
-	#if SERVER
-	SDKRegisterNetVar(name, category, type)
-	#endif
+}
+
+int function GetNetworkedVariableIndexSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetNetworkedVariableIndex(name)
+	return GetNetworkedVariableIndex(name)
 }
 
 #if SERVER
 
 void function SetGlobalNetBoolSafe(string name, bool value)
 {
-	SetGlobalNetBool(name, value)
-	SDKSetGlobalNetBool(name, value)
+	if (SDKIsOverflowVar(name))
+		SDKSetGlobalNetBool(name, value)
+	else
+		SetGlobalNetBool(name, value)
 }
+
 void function SetGlobalNetIntSafe(string name, int value)
 {
-	SetGlobalNetInt(name, value)
-	SDKSetGlobalNetInt(name, value)
+	if (SDKIsOverflowVar(name))
+		SDKSetGlobalNetInt(name, value)
+	else
+		SetGlobalNetInt(name, value)
 }
+
 void function SetGlobalNetFloatSafe(string name, value)
 {
-	SetGlobalNetFloat(name, value)
-	SDKSetGlobalNetFloat(name, value)
+	if (SDKIsOverflowVar(name))
+		SDKSetGlobalNetFloat(name, expect float(value))
+	else
+		SetGlobalNetFloat(name, value)
 }
+
 void function SetGlobalNetTimeSafe(string name, value)
 {
-	SetGlobalNetTime(name, value)
-	SDKSetGlobalNetTime(name, value)
+	if (SDKIsOverflowVar(name))
+		SDKSetGlobalNetTime(name, expect float(value))
+	else
+		SetGlobalNetTime(name, value)
 }
+
 void function SetGlobalNetEntSafe(string name, entity ent)
 {
-	SetGlobalNetEnt(name, ent)
-	SDKSetGlobalNetEntity(name, ent.GetEncodedEHandle())
+	if (SDKIsOverflowVar(name))
+		SDKSetGlobalNetEntity(name, ent.GetEncodedEHandle())
+	else
+		SetGlobalNetEnt(name, ent)
 }
-bool function GetGlobalNetBoolSafe(string name)    { return GetGlobalNetBool(name) }
-int function GetGlobalNetIntSafe(string name)      { return GetGlobalNetInt(name) }
-float function GetGlobalNetFloatSafe(string name)  { return GetGlobalNetFloat(name) }
-float function GetGlobalNetTimeSafe(string name)    { return GetGlobalNetTime(name) }
-entity function GetGlobalNetEntSafe(string name)    { return GetGlobalNetEnt(name) }
-
-#elseif CLIENT || UI
-
-void function SetGlobalNetBoolSafe(string name, bool value)   {}
-void function SetGlobalNetIntSafe(string name, int value)     {}
-void function SetGlobalNetFloatSafe(string name, value) {}
-void function SetGlobalNetTimeSafe(string name, value)   {}
-void function SetGlobalNetEntSafe(string name, entity ent)     {}
 
 bool function GetGlobalNetBoolSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
-		return SDKGetGlobalNetInt(name) != 0
+		return SDKGetGlobalNetBool(name)
 	return GetGlobalNetBool(name)
 }
+
 int function GetGlobalNetIntSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
 		return SDKGetGlobalNetInt(name)
 	return GetGlobalNetInt(name)
 }
+
 float function GetGlobalNetFloatSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
 		return SDKGetGlobalNetFloat(name)
 	return GetGlobalNetFloat(name)
 }
+
 float function GetGlobalNetTimeSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
-		return SDKGetGlobalNetFloat(name)
+		return SDKGetGlobalNetTime(name)
 	return GetGlobalNetTime(name)
 }
+
 entity function GetGlobalNetEntSafe(string name)
 {
+	if (SDKIsOverflowVar(name))
+		return expect entity(GetEntityFromEncodedEHandle(SDKGetGlobalNetEntity(name)))
+	return GetGlobalNetEnt(name)
+}
+
+#elseif CLIENT
+
+// CLIENT: Set operations are NOPs (read-only on client)
+void function SetGlobalNetBoolSafe(string name, bool value)   {}
+void function SetGlobalNetIntSafe(string name, int value)     {}
+void function SetGlobalNetFloatSafe(string name, value)       {}
+void function SetGlobalNetTimeSafe(string name, value)        {}
+void function SetGlobalNetEntSafe(string name, entity ent)    {}
+
+bool function GetGlobalNetBoolSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetBool(name)
+	return GetGlobalNetBool(name)
+}
+
+int function GetGlobalNetIntSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetInt(name)
+	return GetGlobalNetInt(name)
+}
+
+float function GetGlobalNetFloatSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetFloat(name)
+	return GetGlobalNetFloat(name)
+}
+
+float function GetGlobalNetTimeSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetTime(name)
+	return GetGlobalNetTime(name)
+}
+
+entity function GetGlobalNetEntSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return GetEntityFromEncodedEHandle(SDKGetGlobalNetEntity(name))
+	return GetGlobalNetEnt(name)
+}
+
+#elseif UI
+
+// UI: Set operations are NOPs (read-only)
+void function SetGlobalNetBoolSafe(string name, bool value)   {}
+void function SetGlobalNetIntSafe(string name, int value)     {}
+void function SetGlobalNetFloatSafe(string name, value)       {}
+void function SetGlobalNetTimeSafe(string name, value)        {}
+void function SetGlobalNetEntSafe(string name, entity ent)    {}
+
+bool function GetGlobalNetBoolSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetBool(name)
+	return GetGlobalNetBool(name)
+}
+
+int function GetGlobalNetIntSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetInt(name)
+	return GetGlobalNetInt(name)
+}
+
+float function GetGlobalNetFloatSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetFloat(name)
+	return GetGlobalNetFloat(name)
+}
+
+float function GetGlobalNetTimeSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return SDKGetGlobalNetTime(name)
+	return GetGlobalNetTime(name)
+}
+
+// In UI VM, entity = EHI (integer handle). SDKGetGlobalNetEntity returns the
+// encoded EHandle which IS the entity representation in UI context.
+entity function GetGlobalNetEntSafe(string name)
+{
+	if (SDKIsOverflowVar(name))
+		return expect entity(SDKGetGlobalNetEntity(name))
 	return GetGlobalNetEnt(name)
 }
 

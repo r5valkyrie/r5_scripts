@@ -806,8 +806,8 @@ void function CodeCallback_GamerulesThink()
 	int gameState = GetGameState()
 	if ( gameState != file.gameState )
 	{
-		string oldPrintVal = file.gameState == -1 ? "-1" : GetEnumString( "eGameState", file.gameState )
-		string newPrintVal = gameState == -1 ? "-1" : GetEnumString( "eGameState", gameState )
+		string oldPrintVal = file.gameState == -1 ? "-1" : string( file.gameState )
+		string newPrintVal = gameState == -1 ? "-1" : string( gameState )
 		printt( "GameState changed from", oldPrintVal, "to", newPrintVal )
 
 		file.gameState = gameState
@@ -1780,6 +1780,9 @@ int function GetMatchWinnerFromScore()
 
 void function GameRulesThink_Playing()
 {
+	if ( !("lastPlayingEmptyTeamCheck" in level) )
+		level.lastPlayingEmptyTeamCheck <- 0.0
+
 	if ( (Time() - level.lastPlayingEmptyTeamCheck) > 1.0 )
 	{
 		level.lastPlayingEmptyTeamCheck = Time()

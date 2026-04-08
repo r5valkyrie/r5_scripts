@@ -325,15 +325,7 @@ void function Sh_ArenaDeathField_Init()
 	file.usePreciseRingFx = GetCurrentPlaylistVarBool( "deathfield_usePreciseRingFx", true )
 
 	file.ringOpacityOverrideEnabled = GetCurrentPlaylistVarBool( "deathfield_ringOpacityOverrideEnabled", true )
-	try
-	{
-		RegisterNetworkedVariableSafe( "ringOpacityOverride", SNDC_GLOBAL, SNVT_FLOAT_RANGE, 1.0, 0.0, 1.0 )
-	}
-	catch ( ex )
-	{
-		Warning( "ringOpacityOverride netvar registration too late, disabling ring opacity override" )
-		file.ringOpacityOverrideEnabled = false
-	}
+	// ringOpacityOverride is registered in sh_gamemode_survival.nut during the registration window
 
 	PrecacheParticleSystem( DEATHFIELD_EFFECT )
 	PrecacheParticleSystem( OBSERVER_DEATHFIELD_EFFECT )
@@ -420,16 +412,13 @@ void function Sh_ArenaDeathField_Init()
 			Assert( distanceToSound.len() > 0 )
 		}
 
-		if ( GetCurrentPlaylistVarBool( "deathfield_opacity_override", true ) )
+		if ( file.ringOpacityOverrideEnabled && GetCurrentPlaylistVarBool( "deathfield_opacity_override", true ) )
 		{
 			if ( GetCurrentPlaylistVarFloat( "deathfield_ringOpacityOverrideValue", 1.0 ) != 1.0 )
 			{
 				file.ringOpacityOverrideValue = GetCurrentPlaylistVarFloat( "deathfield_ringOpacityOverrideValue", 1.0 )
 			}
-			else
-			{
-				RegisterNetVarFloatChangeCallback( "ringOpacityOverride", Cl_Deathfield_SetOpacityOverride )
-			}
+			// ringOpacityOverride callback registered in sh_gamemode_survival.nut (registration window)
 		}
 
 		if ( file.ringOpacityOverrideEnabled )

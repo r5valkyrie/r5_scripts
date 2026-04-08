@@ -24,6 +24,8 @@ global function ServerCallback_PromptRespawnThanks
 global function ServerCallback_RefreshInventoryAndWeaponInfo
 
 global function ManageDeathboxHighlights
+global function DeathboxHighlightDistChangedCallback
+global function DeathboxHighlightLootTierDistChangedCallback
 
 global function ServerCallback_AnnounceDevRespawn
 
@@ -545,8 +547,9 @@ void function ClGamemodeSurvival_Init()
 	AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( Loadout_Character(), OnPlayerLoadoutChanged )
 	AddCallback_OnPlayerConsumableInventoryChanged( UpdateDpadHud )
 
-	RegisterNetVarBoolChangeCallback( "highlightFar", DeathboxHighlightDistChangedCallback )
-	RegisterNetVarIntChangeCallback( "maxLootTier", DeathboxHighlightLootTierDistChangedCallback )
+	// Callbacks moved to _remote_functions_mp.gnut (registration window)
+	// RegisterNetVarBoolChangeCallback( "highlightFar", DeathboxHighlightDistChangedCallback )
+	// RegisterNetVarIntChangeCallback( "maxLootTier", DeathboxHighlightLootTierDistChangedCallback )
 
 
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, Survival_WaitForPlayers )
@@ -1262,6 +1265,9 @@ void function CLSurvival_RegisterNetworkFunctions()
 
 	RegisterNetVarBoolChangeCallback( "isHealing", OnIsHealingChanged )
 	RegisterNetVarEntChangeCallback( "killLeader", KillLeaderChangeCallback )
+
+	RegisterNetVarBoolChangeCallback( "highlightFar", DeathboxHighlightDistChangedCallback )
+	RegisterNetVarIntChangeCallback( "maxLootTier", DeathboxHighlightLootTierDistChangedCallback )
 }
 
 
@@ -1754,6 +1760,8 @@ void function GameModeScoreBarRules( var gamestateRui )
 	float endTime = GetNV_PreGameStartTime()
 	if ( endTime > 0.0 )
 		RuiSetGameTime( gamestateRui, "endTime", endTime )
+	else if ( endTime != endTime )  // NaN — skip silently
+		{}
 
 	PerfEnd( PerfIndexClient.SUR_ScoreBoardRules_3 )
 	PerfEnd( PerfIndexClient.SUR_ScoreBoardRules_1 )

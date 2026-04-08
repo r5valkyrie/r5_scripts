@@ -10,6 +10,7 @@ global function GetStat_Float
 global function GetStatEntryByIndex
 global function IsValidStatEntryRef
 global function GetStatEntryByRef
+global function HasStatEntryByRef
 global function StatEntry_GetIndex
 global function StatEntry_GetRef
 global function StatEntry_GetType
@@ -449,6 +450,11 @@ bool function IsValidStatEntryRef( string ref )
 StatEntry function GetStatEntryByRef( string ref )
 {
 	return fileLevel.refStatEntryMap[ref]
+}
+
+bool function HasStatEntryByRef( string ref )
+{
+	return (ref in fileLevel.refStatEntryMap)
 }
 #endif
 
