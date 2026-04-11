@@ -614,7 +614,7 @@ void function OnEquipmentButtonClickRight( var button )
 	if ( IsFullyConnected() )
 	{
 		EmitUISound( "UI_InGame_Inventory_Drop" )
-		RunClientScript( "UICallback_OnEquipmentButtonAltAction", button, false )
+		RunClientScript( "UICallback_OnEquipmentButtonAction", button, eLootActionType.ALT_ACTION )
 	}
 }
 
@@ -639,7 +639,7 @@ bool function OnEquipmentKeyPress( var button, int keyId, bool isDown )
 		if ( IsFullyConnected() )
 		{
 			EmitUISound( "UI_InGame_Inventory_Select" )
-			RunClientScript( "UICallback_OnEquipmentButtonCharacterAction", button )
+			RunClientScript( "UICallback_OnEquipmentButtonAction", button, eLootActionType.PRIMARY_SWAP )
 		}
 		return true
 	}
@@ -1176,13 +1176,13 @@ void function InitLegendPanelInventory( var panel )
 }
 
 
-void function ClientCallback_StartEquipmentExtendedUse( var button, float duration )
+void function ClientCallback_StartEquipmentExtendedUse( var button, float duration, int actionType )
 {
-	thread StartEquipmentExtendedUse( button, duration )
+	thread StartEquipmentExtendedUse( button, duration, actionType )
 }
 
 
-void function StartEquipmentExtendedUse( var button, float duration )
+void function StartEquipmentExtendedUse( var button, float duration, int actionType )
 {
 	Signal( uiGlobal.signalDummy, "StartEquipmentExtendedUse" )
 	EndSignal( uiGlobal.signalDummy, "StartEquipmentExtendedUse" )
@@ -1227,7 +1227,7 @@ void function StartEquipmentExtendedUse( var button, float duration )
 	EmitUISound( "ui_menu_store_purchase_success" )
 
 	if ( IsConnected() )
-		RunClientScript( "UICallback_OnEquipmentButtonAltAction", button, true )
+		RunClientScript( "UICallback_OnEquipmentButtonAction", button, actionType, true )
 }
 
                                                                                                                                                                     

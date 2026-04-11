@@ -22,15 +22,15 @@ global function SetNestedGladiatorCardOverrideTracker
 
 global function SetNestedGladiatorCardIsKiller
 global function SetNestedGladiatorCardDisableBlur
-                    
+
 global function SetNestedGladiatorCardShowUpgrades
 global function SetNestedGladiatorCardCanShowUpgrades
-      
+
 
 global function SetNestedGladiatorCardOverrideRankedDetails
-                       
-                                                                 
-      
+
+
+
 #endif // CLIENT
 
 #if CLIENT || UI
@@ -220,10 +220,10 @@ global enum eGladCardPreviewCommandType
 	TRACKER,
 	RANKED_SHOULD_SHOW,
 	RANKED_DATA,
-	                     
+
 		ARENAS_RANKED_SHOULD_SHOW,
 		ARENAS_RANKED_DATA,
-       
+
 	NAME,
 	RANKED_DATA_PREV,
 	MELEE_SKIN,
@@ -324,19 +324,19 @@ global struct NestedGladiatorCardHandle
 	int ornull  rankedScoreOrNullPrevSeason = null
 	int ornull  rankedLadderPosOrNullPrevSeason = null
 
-	                     
+
 		int ornull  arenasRankedScoreOrNull = null
 		int ornull  arenasRankedLadderPosOrNull = null
 		bool ornull arenasRankedForceShowOrNull = null
-       
+
 
 	bool disableBlur = false
 	bool isKiller = false
 
-	                    
+
 		bool canShowUpgrades = false
 		bool showUpgrades = false
-       
+
 
 	bool updateQueued = false
 
@@ -454,7 +454,7 @@ void function ShGladiatorCards_LevelInit()
 		AddCallback_OnPlayerLifeStateChanged( OnPlayerLifestateChanged )
 		AddCallback_PlayerClassChanged( OnPlayerClassChanged )
 
-		RegisterNetVarIntChangeCallback( UPGRADE_CORE_SELECTED_UPGRADES, GladiatorCards_PlayerCompletedLevelChanged )
+		//RegisterNetVarIntChangeCallback( UPGRADE_CORE_SELECTED_UPGRADES, GladiatorCards_PlayerCompletedLevelChanged )
 
 		AddCallback_GameStateEnter( eGameState.WinnerDetermined, OnWinnerDetermined )
 
@@ -682,7 +682,7 @@ void function SetNestedGladiatorCardOverrideTracker( NestedGladiatorCardHandle h
 	TriggerNestedGladiatorCardUpdate( handle )
 }
 
-                    
+
 void function SetNestedGladiatorCardShowUpgrades( NestedGladiatorCardHandle handle, bool showUpgrades )
 {
 	handle.showUpgrades = showUpgrades
@@ -694,7 +694,7 @@ void function SetNestedGladiatorCardCanShowUpgrades( NestedGladiatorCardHandle h
 	handle.canShowUpgrades = canShowUpgrades
 	TriggerNestedGladiatorCardUpdate( handle )
 }
-      
+
 
 void function SetNestedGladiatorCardIsKiller( NestedGladiatorCardHandle handle, bool isKiller )
 {
@@ -712,12 +712,12 @@ void function SetNestedGladiatorCardOverrideRankedShouldShow( NestedGladiatorCar
 	handle.rankedForceShowOrNull = shouldShowData > 0
 }
 
-                     
+
 void function SetNestedGladiatorCardOverrideArenasRankedShouldShow( NestedGladiatorCardHandle handle, int shouldShowData )
 {
 	handle.arenasRankedForceShowOrNull = shouldShowData > 0
 }
-      
+
 
 void function SetNestedGladiatorCardOverrideRankedDetails( NestedGladiatorCardHandle handle, int rankScore, int ladderPos )
 {
@@ -731,13 +731,13 @@ void function SetNestedGladiatorCardOverrideRankedDetailsPreviousSeason( NestedG
 	handle.rankedLadderPosOrNullPrevSeason = ladderPos
 }
 
-                     
+
 void function SetNestedGladiatorCardOverrideArenasRankedDetails( NestedGladiatorCardHandle handle, int rankScore, int ladderPos )
 {
 	handle.arenasRankedScoreOrNull = rankScore
 	handle.arenasRankedLadderPosOrNull = ladderPos
 }
-      
+
 
 #endif // CLIENT
 
@@ -1150,13 +1150,13 @@ void function MenuGladCardThread( bool isForLocalPlayer, string playerUID )
 					break
 				}
 
-				                     
+
 					case eGladCardPreviewCommandType.ARENAS_RANKED_SHOULD_SHOW:
 					{
 						SetNestedGladiatorCardOverrideArenasRankedShouldShow( fileLevel.currentMenuGladCardHandle[ playerUID ], mgcpc.index )
 						break
 					}
-          
+
 
 				case eGladCardPreviewCommandType.RANKED_DATA:
 				{
@@ -1169,13 +1169,13 @@ void function MenuGladCardThread( bool isForLocalPlayer, string playerUID )
 					break
 				}
 
-				                     
+
 					case eGladCardPreviewCommandType.ARENAS_RANKED_DATA:
 					{
 						SetNestedGladiatorCardOverrideArenasRankedDetails( fileLevel.currentMenuGladCardHandle[ playerUID ], mgcpc.dataInteger, mgcpc.index )
 						break
 					}
-          
+
 			}
 		}
 	}
@@ -1976,7 +1976,7 @@ void function ActualUpdateNestedGladiatorCard( NestedGladiatorCardHandle handle 
 			RuiSetBool( handle.cardRui, "disableBlur", handle.disableBlur )
 			RuiSetString( handle.cardRui, "platformString", platformString )
 
-			                    
+
 			// Upgrade core glad card RUI args not in S3
 			// if ( UpgradeCore_GladCardShowUpgrades() )
 			// {
@@ -1998,14 +1998,14 @@ void function ActualUpdateNestedGladiatorCard( NestedGladiatorCardHandle handle 
 			// 		}
 			// 	}
 			// }
-         
+
 
 			// HANDLES DISPLAYING RANK DIVISION BADGE BELOW THE GLAD CARD
 			{
 				bool forceShowRanked = handle.rankedForceShowOrNull != null ? expect bool( handle.rankedForceShowOrNull ) : false
-                           
-                                                                                                                                        
-          
+
+
+
 
 				bool showRanked = false
 				if ( forceShowRanked )
@@ -2021,16 +2021,16 @@ void function ActualUpdateNestedGladiatorCard( NestedGladiatorCardHandle handle 
 
 					showRanked = true
 				}
-                           
-                                      
-      
-                                                                                                                                              
-                                                                                                                                                           
 
-                                                                                     
-                                                 
-      
-          
+
+
+
+
+
+
+
+
+
 				else if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_RANKED ) )
 				{
 

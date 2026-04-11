@@ -1578,11 +1578,11 @@ void function UICallback_OnEquipmentButtonAction( var button, int actionType, bo
 	SURVIVAL_UpdateStringForEquipmentAction( player, equipmentType, as, lootRef )
 	if ( ShouldStartExtendedUseForEquipmentAction( player, as.action, lootData.lootType, fromExtendedUse, equipmentType, equipmentRef ) )
 	{
-		RunUIScript( "ClientCallback_StartEquipmentExtendedUse", button, 0.4, actionType, true, DoesPlayerHaveWeaponSling( player ) )
+		RunUIScript( "ClientCallback_StartEquipmentExtendedUse", button, 0.4, actionType)
 	}
 	else
 	{
-		RunUIScript( "ClientCallback_StartEquipmentExtendedUse", button, 0.4, actionType, false, DoesPlayerHaveWeaponSling( player ) )
+		RunUIScript( "ClientCallback_StartEquipmentExtendedUse", button, 0.4, actionType )
 		bool didSomething = DispatchLootAction( eLootContext.EQUIPMENT, as.action, equipmentType )
 		if ( didSomething )
 			RunUIScript( "ClientToUI_SurvivalQuickInventory_MarkInventoryButtonUsed", button )

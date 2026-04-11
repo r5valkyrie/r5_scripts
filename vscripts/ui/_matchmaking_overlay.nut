@@ -24,7 +24,6 @@ struct
 	float matchmakingStartTime = 0.0
 	string lastMixtapeMatchmakingStatus
 
-	bool putPlayerInMatchmakingAfterDelay = false
 	float matchmakingDelayOverride = -1
 } file
 
@@ -38,7 +37,6 @@ void function InitMatchmakingOverlay()
 
 	//RegisterSignal( "UpdateMatchmakingStatus" )
 	//RegisterSignal( "BypassWaitBeforeRestartingMatchmaking" )
-	//RegisterSignal( "PutPlayerInMatchmakingAfterDelay" )
 	//RegisterSignal( "CancelRestartingMatchmaking" )
 	//RegisterSignal( "LeaveParty" )
 }

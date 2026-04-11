@@ -163,7 +163,11 @@ void function MainHUD( entity cockpit, entity player )
 
 	cockpit.s.coreFXHandle <- null
 	cockpit.s.pilotDamageAmpFXHandle <- null
-
+WaitFrame()
+WaitFrame()
+WaitFrame()
+WaitFrame()
+WaitFrame()
 	UpdateMainHudVisibility( player )
 
 	if ( player == GetLocalClientPlayer() )
@@ -1147,7 +1151,7 @@ void function InitChatHUD()
 
 	file.hasInitChatHud = true
 
-	
+
 	if ( Hud_GetY( chat ) != file.chatVerticalOffset )
 		SetChatHUDPosition( file.chatVerticalOffset )
 }
