@@ -696,23 +696,15 @@ void function SendDeathRecapDataToPlayer( entity player )
 		if ( index >= numSentBlock )
 			break
 		
-		Remote_CallFunction_NonReplay
-		( 
-			player, 
-			"ServerCallback_SendDeathRecapData", 
-			block.attackerEHandle, 
-			block.victimEHandle, 
-			block.damageSourceID, 
-			block.damageType, 
-			block.totalDamage, 
-			block.hitCount, 
-			block.headShotBits, 
-			block.healthFrac, 
-			block.shieldFrac, 
-			block.blockTime, 
-			index, 
-			numSentBlock 
-		)
+		// S3 split: 12 params -> Base (8) + Extra (4)
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SendDeathRecapData_Base",
+			block.attackerEHandle, block.victimEHandle,
+			block.damageSourceID, block.damageType,
+			block.totalDamage, block.hitCount,
+			block.headShotBits, block.healthFrac )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_SendDeathRecapData_Extra",
+			block.shieldFrac, block.blockTime,
+			index, numSentBlock )
 
 		// Native function not available
 		

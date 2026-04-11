@@ -11,7 +11,8 @@ global function ServerCallback_SurvivalHint
 global function ServerCallback_PlayerBootsOnGround
 global function ServerCallback_ClearHints
 global function ServerCallback_MatchEndAnnouncement
-global function ServerCallback_AddWinningSquadData
+global function ServerCallback_AddWinningSquadData_Base
+global function ServerCallback_AddWinningSquadData_Extra
 global function DEV_SendCheatsStateToUI
 global function ServerCallback_PromptSayThanks
 global function ServerCallback_PromptSayThanksRevive
@@ -3730,8 +3731,21 @@ void function ShowSquadSummary()
 	EndSignal( player, "OnDestroy" )
 }
 
-void function ServerCallback_AddWinningSquadData( int index, int eHandle, int kills, int assists, int knockdowns, int damageDealt, int survivalTime, int revivesGiven, int respawnsGiven,
-													bool displayData3IsTime, int displayData3, int displayData4, int displayData5, int displayData6, int resultFlags, int scoreFlags )
+// S3 split: Base receives first 8 params, buffers them for Extra to complete
+struct WinningSquadPendingData
+{
+	int index = -1
+	int eHandle = -1
+	int kills = 0
+	int assists = 0
+	int knockdowns = 0
+	int damageDealt = 0
+	int survivalTime = 0
+	int revivesGiven = 0
+}
+WinningSquadPendingData file_pendingWinData
+
+void function ServerCallback_AddWinningSquadData_Base( int index, int eHandle, int kills, int assists, int knockdowns, int damageDealt, int survivalTime, int revivesGiven )
 {
 	if ( index == -1 )
 	{
@@ -3739,17 +3753,35 @@ void function ServerCallback_AddWinningSquadData( int index, int eHandle, int ki
 		file.winnerSquadSummaryData.squadPlacement = -1
 		file.winnerSquadSummaryData.gameResultFlags = 0
 		file.winnerSquadSummaryData.gameScoreFlags = 0
+		// Store sentinel so Extra knows to skip
+		file_pendingWinData.index = -1
 		return
 	}
 
+	// Buffer first half for Extra to complete
+	file_pendingWinData.index = index
+	file_pendingWinData.eHandle = eHandle
+	file_pendingWinData.kills = kills
+	file_pendingWinData.assists = assists
+	file_pendingWinData.knockdowns = knockdowns
+	file_pendingWinData.damageDealt = damageDealt
+	file_pendingWinData.survivalTime = survivalTime
+	file_pendingWinData.revivesGiven = revivesGiven
+}
+
+void function ServerCallback_AddWinningSquadData_Extra( int respawnsGiven, bool displayData3IsTime, int displayData3, int displayData4, int displayData5, int displayData6, int resultFlags, int scoreFlags )
+{
+	if ( file_pendingWinData.index == -1 )
+		return // Base was a clear command, nothing to do
+
 	SquadSummaryPlayerData data
-	data.eHandle = eHandle
-	data.kills = kills
-	data.assists = assists
-	data.knockdowns = knockdowns
-	data.damageDealt = damageDealt
-	data.survivalTime = survivalTime
-	data.revivesGiven = revivesGiven
+	data.eHandle = file_pendingWinData.eHandle
+	data.kills = file_pendingWinData.kills
+	data.assists = file_pendingWinData.assists
+	data.knockdowns = file_pendingWinData.knockdowns
+	data.damageDealt = file_pendingWinData.damageDealt
+	data.survivalTime = file_pendingWinData.survivalTime
+	data.revivesGiven = file_pendingWinData.revivesGiven
 	data.respawnsGiven = respawnsGiven
 
 	data.summary3IsTime = displayData3IsTime
@@ -3760,9 +3792,9 @@ void function ServerCallback_AddWinningSquadData( int index, int eHandle, int ki
 		data.modeSpecificSummaryData.append( clone displayData )
 	}
 
-	data.modeSpecificSummaryData[0].displayValue = kills
-	data.modeSpecificSummaryData[1].displayValue = assists
-	data.modeSpecificSummaryData[2].displayValue = knockdowns
+	data.modeSpecificSummaryData[0].displayValue = file_pendingWinData.kills
+	data.modeSpecificSummaryData[1].displayValue = file_pendingWinData.assists
+	data.modeSpecificSummaryData[2].displayValue = file_pendingWinData.knockdowns
 	data.modeSpecificSummaryData[3].displayValue = displayData3
 	data.modeSpecificSummaryData[4].displayValue = displayData4
 	data.modeSpecificSummaryData[5].displayValue = displayData5
@@ -3796,14 +3828,12 @@ SquadSummaryData function GetWinnerSquadSummaryData()
 
 void function Dev_ShowVictorySequence()
 {
-	ServerCallback_AddWinningSquadData( -1, -1, 0, 0, 0, 0, 0, 0, 0,
-										true, 0, 0, 0, 0, 0, 0 )
-
+	ServerCallback_AddWinningSquadData_Base( -1, -1, 0, 0, 0, 0, 0, 0 )
 
 	foreach ( int i, entity player in GetPlayerArrayOfTeam( GetLocalClientPlayer().GetTeam() ) )
 	{
-		ServerCallback_AddWinningSquadData( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3, 1,
-										    true, 1234, 600, 3, 1, 123, 456 )
+		ServerCallback_AddWinningSquadData_Base( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3 )
+		ServerCallback_AddWinningSquadData_Extra( 1, true, 1234, 600, 3, 1, 123, 456 )
 	}
 
 
@@ -3819,11 +3849,12 @@ void function Dev_ShowVictorySequence()
 
 void function Dev_AdjustVictorySequence()
 {
-	ServerCallback_AddWinningSquadData( -1, -1, 0, 0, 0, 0, 0, 0, 0,
-										true,  0, 0, 0, 0, 0, 0 )
+	ServerCallback_AddWinningSquadData_Base( -1, -1, 0, 0, 0, 0, 0, 0 )
 	foreach ( int i, entity player in GetPlayerArrayOfTeam( GetLocalClientPlayer().GetTeam() ) )
-		ServerCallback_AddWinningSquadData( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3, 1,
-										    true,  1234, 600, 3, 1, 123, 456 )
+	{
+		ServerCallback_AddWinningSquadData_Base( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3 )
+		ServerCallback_AddWinningSquadData_Extra( 1, true, 1234, 600, 3, 1, 123, 456 )
+	}
 	GetLocalClientPlayer().FreezeControlsOnClient()
 	thread ShowVictorySequence( true, true )
 }
@@ -3832,8 +3863,8 @@ void function Dev_SpoofMatchData()
 {
 	int i = 0
     entity player = GetLocalClientPlayer()
-	ServerCallback_AddWinningSquadData( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3, 1,
-	                                    true,  1234, 600, 3, 1, 123, 456 )
+	ServerCallback_AddWinningSquadData_Base( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3 )
+	ServerCallback_AddWinningSquadData_Extra( 1, true, 1234, 600, 3, 1, 123, 456 )
 }
 #endif
 

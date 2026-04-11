@@ -4,7 +4,8 @@ global function ServerCallback_ShowDeathScreen
 global function ServerCallback_SquadEliminated
 global function ServerCallback_DeathScreenSwitchTab
 global function ServerCallback_ShowFlowstateDeathRecapNoSpectate
-global function ServerCallback_SendDeathRecapData
+global function ServerCallback_SendDeathRecapData_Base
+global function ServerCallback_SendDeathRecapData_Extra
 global function ServerCallback_DeathRecapDataUpdated
 
 global function ShowDeathScreen
@@ -2957,7 +2958,22 @@ void function ServerCallback_ShowFlowstateDeathRecapNoSpectate()
 	ShowDeathScreen( eDeathScreenPanel.DEATH_RECAP )
 }
 
-void function ServerCallback_SendDeathRecapData( int attackerEHandle, int victimEHandle, int damageSourceID, int damageType, int totalDamage, int hitCount, int headShotBits, float healthFrac, float shieldFrac, float blockTime, int index, int numSentBlock )
+// S3 split: Base receives first 8 params, Extra receives remaining 4
+struct DeathRecapPendingData
+{
+	int attackerEHandle = -1
+	int victimEHandle = -1
+	int damageSourceID = 0
+	int damageType = 0
+	int totalDamage = 0
+	int hitCount = 0
+	int headShotBits = 0
+	float healthFrac = 0.0
+	bool hasPending = false
+}
+DeathRecapPendingData file_pendingDeathRecap
+
+void function ServerCallback_SendDeathRecapData_Base( int attackerEHandle, int victimEHandle, int damageSourceID, int damageType, int totalDamage, int hitCount, int headShotBits, float healthFrac )
 {
 	if ( file.deathRecapDataUpdated )
 	{
@@ -2965,15 +2981,34 @@ void function ServerCallback_SendDeathRecapData( int attackerEHandle, int victim
 		file.deathRecapDamageBlocks.clear()
 	}
 
+	// Buffer first half for Extra to complete
+	file_pendingDeathRecap.attackerEHandle = attackerEHandle
+	file_pendingDeathRecap.victimEHandle = victimEHandle
+	file_pendingDeathRecap.damageSourceID = damageSourceID
+	file_pendingDeathRecap.damageType = damageType
+	file_pendingDeathRecap.totalDamage = totalDamage
+	file_pendingDeathRecap.hitCount = hitCount
+	file_pendingDeathRecap.headShotBits = headShotBits
+	file_pendingDeathRecap.healthFrac = healthFrac
+	file_pendingDeathRecap.hasPending = true
+}
+
+void function ServerCallback_SendDeathRecapData_Extra( float shieldFrac, float blockTime, int index, int numSentBlock )
+{
+	if ( !file_pendingDeathRecap.hasPending )
+		return
+
+	file_pendingDeathRecap.hasPending = false
+
 	DeathRecapDamageData damageBlock
-	damageBlock.attackerEHandle = attackerEHandle
-	damageBlock.victimEHandle = victimEHandle
-	damageBlock.damageSourceID = damageSourceID
-	damageBlock.damageType = damageType
-	damageBlock.totalDamage = totalDamage
-	damageBlock.hitCount = hitCount
-	damageBlock.headShotBits = headShotBits
-	damageBlock.healthFrac = healthFrac
+	damageBlock.attackerEHandle = file_pendingDeathRecap.attackerEHandle
+	damageBlock.victimEHandle = file_pendingDeathRecap.victimEHandle
+	damageBlock.damageSourceID = file_pendingDeathRecap.damageSourceID
+	damageBlock.damageType = file_pendingDeathRecap.damageType
+	damageBlock.totalDamage = file_pendingDeathRecap.totalDamage
+	damageBlock.hitCount = file_pendingDeathRecap.hitCount
+	damageBlock.headShotBits = file_pendingDeathRecap.headShotBits
+	damageBlock.healthFrac = file_pendingDeathRecap.healthFrac
 	damageBlock.shieldFrac = shieldFrac
 	damageBlock.blockTime = blockTime
 

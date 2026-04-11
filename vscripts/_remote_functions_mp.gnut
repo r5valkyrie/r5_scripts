@@ -545,14 +545,30 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ShowDeathScreen" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DeathScreenSwitchTab" )
 
-	ScriptRemote_RegisterClientFunction( "ServerCallback_SendDeathRecapData", "int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX, "int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", DAMAGE_TYPE_MIN, INT_MAX, "int", -1, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "float", 0.0, 1.0, 32, "float", 0.0, 1.0, 32, "float", 0.0, 86400.0, 32, "int", -1, INT_MAX, "int", -1, 16 ) //Audit 2-22-2025
+	// S3 engine limit: max 10 params. Split 12-param SendDeathRecapData into two calls.
+	ScriptRemote_RegisterClientFunction( "ServerCallback_SendDeathRecapData_Base",
+		"int", EHANDLE_MIN, EHANDLE_MAX, "int", EHANDLE_MIN, EHANDLE_MAX,
+		"int", EDAMAGESOURCE_MIN, RT_EDAMAGESOURCE_MAX, "int", DAMAGE_TYPE_MIN, INT_MAX,
+		"int", -1, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX,
+		"float", 0.0, 1.0, 32 )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_SendDeathRecapData_Extra",
+		"float", 0.0, 1.0, 32, "float", 0.0, 86400.0, 32,
+		"int", -1, INT_MAX, "int", -1, 16 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DeathRecapDataUpdated", "bool", "int", EHANDLE_MIN, EHANDLE_MAX ) //Audit 2-22-2025
 	RegisterNetworkedVariableSafe( "titanEjectEnabled", SNDC_GLOBAL, SNVT_BOOL, true )
 
-			Remote_RegisterClientFunction( "ServerCallback_AddWinningSquadData", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
-																				 "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
-																			     "bool", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
-																				 "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
+			// S3 engine limit: max 10 params per Remote_CallFunction. Split 16-param
+			// AddWinningSquadData into two 8-param calls (Base + Extra).
+			Remote_RegisterClientFunction( "ServerCallback_AddWinningSquadData_Base",
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
+			Remote_RegisterClientFunction( "ServerCallback_AddWinningSquadData_Extra",
+				"int", INT_MIN, INT_MAX, "bool",
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX,
+				"int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 
 	if ( IsCausticTTEnabled() == true )
 		ScriptRemote_RegisterClientFunction( "ServerToClient_UpdateItem", "entity" )

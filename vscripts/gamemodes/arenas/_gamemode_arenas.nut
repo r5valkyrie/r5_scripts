@@ -2122,10 +2122,10 @@ void function Arenas_MatchEnd()
 		if ( !IsValid( player ) )
 			continue
 
-		// Clear previous squad data
-		Remote_CallFunction_NonReplay( player, "ServerCallback_AddWinningSquadData", -1, -1, 0, 0, 0, 0, 0 )
+		// Clear previous squad data (S3 split: Base only needed for clear)
+		Remote_CallFunction_NonReplay( player, "ServerCallback_AddWinningSquadData_Base", -1, -1, 0, 0, 0, 0, 0, 0 )
 
-		// Send each winning team member's stats
+		// Send each winning team member's stats (S3 split: Base + Extra)
 		foreach ( int idx, entity winner in winningPlayers )
 		{
 			if ( !IsValid( winner ) )
@@ -2140,8 +2140,10 @@ void function Arenas_MatchEnd()
 				damage = winner.GetPlayerNetInt( "damageDealt" )
 			}
 
-			Remote_CallFunction_NonReplay( player, "ServerCallback_AddWinningSquadData",
-				idx, winner.GetEncodedEHandle(), kills, damage, 0, 0, 0 )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_AddWinningSquadData_Base",
+				idx, winner.GetEncodedEHandle(), kills, damage, 0, 0, 0, 0 )
+			Remote_CallFunction_NonReplay( player, "ServerCallback_AddWinningSquadData_Extra",
+				0, false, 0, 0, 0, 0, 0, 0 )
 		}
 	}
 
