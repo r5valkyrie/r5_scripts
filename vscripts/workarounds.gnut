@@ -973,7 +973,6 @@ void function PopulateRuiWithPreviousSeasonRankedBadgeDetails( var rui, int rank
 
 bool function PCPlat_IsSteam()
 {
-	Warning( "WORKAROUND: PCPlat_IsSteam() called - not implemented, returning true" )
 	return true
 }
 
@@ -1163,7 +1162,6 @@ bool function IsTakeHomeBuild()
 
 bool function PCPlat_IsOrigin()
 {
-	Warning( "WORKAROUND: PCPlat_IsSteam() called - not implemented, returning false" )
 	return false
 }
 

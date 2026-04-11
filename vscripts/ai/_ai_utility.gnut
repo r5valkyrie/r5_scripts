@@ -68,8 +68,8 @@ void function SpawnBots( int amount = 1 )
 	
 	foreach( int j, entity bot in GetPlayerArray() )
 	{
-		if( bot.GetPlatformUID().slice( 0, 4 ) != "9999" )
-			continue
+		//if( bot.GetPlatformUID().slice( 0, 4 ) != "9999" )
+		//	continue
 			
 		// printt( "Player marked as bot", bot, bot.GetPlatformUID() )
 		bot.p.IsBot = true

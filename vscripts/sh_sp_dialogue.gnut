@@ -1751,10 +1751,15 @@ void function PlayClientDialogue_Internal( int aliasID, int dialogueFlags, array
 		}
 	}
 
-	if ( file.currentDialoguePlayingHandle != null )
+	if ( file.currentDialoguePlayingHandle != null && typeof file.currentDialoguePlayingHandle == "entity" )
 	{
 		WaitSignal( file.currentDialoguePlayingHandle, "OnSoundFinished" )
 		wait extraWait
+	}
+	else if ( file.currentDialoguePlayingHandle != null && typeof file.currentDialoguePlayingHandle == "int" )
+	{
+		// Stub sound functions may return an int instead of an entity; fall back to duration-based wait
+		wait duration + extraWait
 	}
 	else
 	{
@@ -1920,7 +1925,8 @@ void function AbortCurrentDialogue()
 				cb( file.currentDialoguePlayingName )
 		}
 
-		StopSound( file.currentDialoguePlayingHandle )
+		if ( typeof file.currentDialoguePlayingHandle == "entity" )
+			StopSound( file.currentDialoguePlayingHandle )
 		Signal( GetLocalClientPlayer(), "AbortCurrentDialogue" )
 	}
 	else if ( file.currentDialoguePlayingHandles.len() > 0 )

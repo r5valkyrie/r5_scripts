@@ -70,6 +70,7 @@ WeaponData
 	"projectile_visible_to_smart_ammo"				"0"
 
 	"critical_hit"									"0"
+	"grenade_use_mask_ability" "1"
 
 	// Sounds
 	//"sound_throw_1p"								"Gibraltar_BubbleShield_Throw_1P"

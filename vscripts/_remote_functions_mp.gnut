@@ -450,12 +450,6 @@ void function RemoteFunctions_Init_Begin()
 	bool isOptInServer = Dev_CommandLineHasParm( "-optinserver" )
 	RegisterNetworkedVariableSafe( "isOptInServer", SNDC_GLOBAL, SNVT_BOOL, isOptInServer )
 
-	RegisterNetworkedVariableSafe( "gameStateChangeTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
-	RegisterNetworkedVariableSafe( "gameStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
-	RegisterNetworkedVariableSafe( "gameEndTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
-	RegisterNetworkedVariableSafe( "switchedSides", SNDC_GLOBAL, SNVT_INT, -1 )                                                                     
-	RegisterNetworkedVariableSafe( "replayDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
-
 	// Attack/Defend based game modes
 	RegisterNetworkedVariableSafe( "attackingTeam", SNDC_GLOBAL, SNVT_INT, TEAM_UNASSIGNED )
 
@@ -479,34 +473,27 @@ void function RemoteFunctions_Init_Begin()
 		ScriptRemote_RegisterClientFunction( "ServerToClient_PlayLootRarityFXOnDeathboxDrop", "entity" )
 
 	// GAME STATE
-	RegisterServerVar( "gameStateChangeTime", null )
-	RegisterServerVar( "gameState", -1 )
-	RegisterServerVar( "gameStartTime", null )
-	RegisterServerVar( "coopStartTime", null )
-	RegisterServerVar( "gameEndTime", 0.0 )
-	RegisterServerVar( "switchedSides", null )
-	RegisterServerVar( "replayDisabled", false )
-
+	RegisterNetworkedVariableSafe( "gameStateChangeTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariableSafe( "gameStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariableSafe( "gameEndTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariableSafe( "switchedSides", SNDC_GLOBAL, SNVT_INT, -1 ) // waste of bits, should really be a bool but the null state is used
+	RegisterNetworkedVariableSafe( "replayDisabled", SNDC_GLOBAL, SNVT_BOOL, false )
 	//Round Winning Kill replay related
 	RegisterNetworkedVariableSafe( "roundWinningKillReplayEnabled", SNDC_GLOBAL, SNVT_BOOL, false )
 	RegisterNetworkedVariableSafe( "roundWinningKillReplayPlaying", SNDC_GLOBAL, SNVT_BOOL, false )
 	RegisterNetworkedVariableSafe( "roundScoreLimitComplete", SNDC_GLOBAL, SNVT_BOOL, false )
 
-
-	// KILL REPLAY
-	RegisterServerVar( "roundWinningKillReplayEnabled", false )
-	RegisterServerVar( "roundWinningKillReplayPlaying", false )
-	RegisterServerVar( "roundScoreLimitComplete", false )
 	RegisterServerVar( "roundWinningKillReplayEntHealthFrac", 0.0 )
 
-	RegisterServerVar( "badRepPresent", false )
-	RegisterServerVar( "roundBased", false )
-	RegisterServerVar( "roundStartTime", null )
-	RegisterServerVar( "roundEndTime", 0.0 )
-	RegisterServerVar( "roundsPlayed", 0 )
+	RegisterNetworkedVariableSafe( "badRepPresent", SNDC_GLOBAL, SNVT_BOOL, false )
+
+	RegisterNetworkedVariableSafe( "roundBased", SNDC_GLOBAL, SNVT_BOOL, false )
+	RegisterNetworkedVariableSafe( "roundStartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
+	RegisterNetworkedVariableSafe( "roundEndTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
+	RegisterNetworkedVariableSafe( "roundsPlayed", SNDC_GLOBAL, SNVT_INT, 0 )
 
 	RegisterNetworkedVariableSafe( "PreGameStartTime", SNDC_GLOBAL, SNVT_TIME, 0.0 )
-	RegisterServerVar( "winningTeam", null )
+	RegisterNetworkedVariableSafe( "winningTeam", SNDC_GLOBAL, SNVT_INT, -1 )
 	
 	// Riffs
 	RegisterServerVar( "minimapState", -1 )

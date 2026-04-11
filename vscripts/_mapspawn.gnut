@@ -218,7 +218,8 @@ void function CodeCallback_MapSpawn() // original script entry point
 	RegisterSignal( "forever" )
 	RegisterSignal( "waitOver" )
 	RegisterSignal( "HitSky" )
-	RegisterSignal( "GameEnd" )
+
+	RegisterSignal( "CleanUpPlayerAbilities" ) // remote this later - kral
 
 	AddCallback_EntitiesDidLoad( ActivateSkyBox )
 	AddCallback_EntitiesDidLoad( PlaylistGeoFix )
@@ -235,7 +236,7 @@ void function CodeCallback_MapSpawn() // original script entry point
 	AddSpawnCallback( "trigger_hurt", InitDamageTriggers )
 
 	#if DEVELOPER
-	if ( GetCurrentPlaylistVarBool( "script_leak", true ) )
+	if ( GetCurrentPlaylistVarBool( "script_leak", false ) )
 		thread ScriptLeakDetector()
 	#endif
 

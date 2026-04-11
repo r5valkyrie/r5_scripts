@@ -3796,14 +3796,14 @@ SquadSummaryData function GetWinnerSquadSummaryData()
 
 void function Dev_ShowVictorySequence()
 {
-	ServerCallback_AddWinningSquadData( -1, -1, 0, 0, 0, 0, 0, 0, 0,
-										true, 0, 0, 0, 0, 0, 0 )
+	//ServerCallback_AddWinningSquadData( -1, -1, 0, 0, 0, 0, 0, 0, 0,
+	//									true, 0, 0, 0, 0, 0, 0 )
 
 
 	foreach ( int i, entity player in GetPlayerArrayOfTeam( GetLocalClientPlayer().GetTeam() ) )
 	{
-		ServerCallback_AddWinningSquadData( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3, 1,
-										    true, 1234, 600, 3, 1, 123, 456 )
+		//ServerCallback_AddWinningSquadData( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3, 1,
+		//								    true, 1234, 600, 3, 1, 123, 456 )
 	}
 
 
@@ -3819,11 +3819,11 @@ void function Dev_ShowVictorySequence()
 
 void function Dev_AdjustVictorySequence()
 {
-	ServerCallback_AddWinningSquadData( -1, -1, 0, 0, 0, 0, 0, 0, 0,
-										true,  0, 0, 0, 0, 0, 0 )
+	//ServerCallback_AddWinningSquadData( -1, -1, 0, 0, 0, 0, 0, 0, 0,
+	//									true,  0, 0, 0, 0, 0, 0 )
 	foreach ( int i, entity player in GetPlayerArrayOfTeam( GetLocalClientPlayer().GetTeam() ) )
-		ServerCallback_AddWinningSquadData( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3, 1,
-										    true,  1234, 600, 3, 1, 123, 456 )
+		//ServerCallback_AddWinningSquadData( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3, 1,
+		//								    true,  1234, 600, 3, 1, 123, 456 )
 	GetLocalClientPlayer().FreezeControlsOnClient()
 	thread ShowVictorySequence( true, true )
 }
@@ -3832,8 +3832,8 @@ void function Dev_SpoofMatchData()
 {
 	int i = 0
     entity player = GetLocalClientPlayer()
-	ServerCallback_AddWinningSquadData( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3, 1,
-	                                    true,  1234, 600, 3, 1, 123, 456 )
+	//ServerCallback_AddWinningSquadData( i, player.GetEncodedEHandle(), 2, 3, 4, 1234, 600, 3, 1,
+	//                                    true,  1234, 600, 3, 1, 123, 456 )
 }
 #endif
 

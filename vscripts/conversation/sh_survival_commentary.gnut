@@ -469,22 +469,8 @@ void function ShSurvivalCommentary_Init()
 	RegisterCSVDialogue( $"datatable/battle_chatter_dialogue.rpak" )
 	RegisterCommentaryBuckets( $"datatable/dialogue/survival_host_dialogue.rpak" )
 
-	try
-	{
 		RegisterConditionalAltDialogue( $"datatable/conditional_alt_dialogue_map.rpak" )
-	}
-	catch ( e )
-	{
-		Warning( "conditional_alt_dialogue_map.rpak not available, skipping" )
-	}
-	try
-	{
-		RegisterFlavorDibsDialogue( $"datatable/dibs_flavor_dialogue_map.rpak" )
-	}
-	catch ( e2 )
-	{
-		Warning( "dibs_flavor_dialogue_map.rpak not available, skipping" )
-	}
+	RegisterFlavorDibsDialogue( $"datatable/dibs_flavor_dialogue_map.rpak" )
 
 
 	file.isBattleChatterEnabled = GetCurrentPlaylistVarBool( "battlechatter_enabled", true )

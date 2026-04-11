@@ -12,9 +12,7 @@ global function AddCallback_ClientOnPlayerConnectionStateChanged
 
 global function AddEntityCallback_GetUseEntOverrideText
 
-global function AddCallback_OnPetTitanChanged
 global function ClientCodeCallback_OnPetTitanModeChanged
-global function AddCallback_OnPetTitanModeChanged
 global function ClientCodeCallback_OnPetTitanChanged
 
 global function IsCurrentlyFocusedWeapon
@@ -193,13 +191,6 @@ void function ServerCallback_RefreshWeaponHighlights( int eHandle )
 		ManageHighlightEntity( weapon )
 }
 
-
-void function AddCallback_OnPetTitanChanged( void functionref( entity ) callbackFunc )
-{
-	clGlobal.onPetTitanChangedCallbacks.append( callbackFunc )
-}
-
-
 void function ClientCodeCallback_OnPetTitanChanged( entity player )
 {
 }
@@ -207,25 +198,6 @@ void function ClientCodeCallback_OnPetTitanChanged( entity player )
 
 void function ClientCodeCallback_OnPetTitanModeChanged( entity player )
 {
-	if ( !IsValid( player ) || player != GetLocalViewPlayer() )
-		return
-
-	if ( !IsValid( player.GetPetTitan() ) ) // should be an assert...
-		return
-
-	player.Signal( "PetTitanModeChanged" )
-
-	// Added via AddCallback_OnPetTitanModeChanged
-	foreach ( callbackFunc in clGlobal.onPetTitanModeChangedCallbacks )
-	{
-		callbackFunc( player )
-	}
-}
-
-
-void function AddCallback_OnPetTitanModeChanged( void functionref( entity ) callbackFunc )
-{
-	clGlobal.onPetTitanModeChangedCallbacks.append( callbackFunc )
 }
 
 

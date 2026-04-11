@@ -132,8 +132,7 @@ void function ClGameState_Init()
 	RegisterSignal( "GameStateChanged" )
 	RegisterSignal( "GameModes_CompletedResolutionCleanup" )
 	RegisterNetVarIntChangeCallback( "gameState", ClGameState_Changed )
-	// badRepPresent uses RegisterServerVar (script KV system), not engine netvars
-	// RegisterNetVarBoolChangeCallback( "badRepPresent", UpdateScoreboardBadRepPresentMessage )
+	RegisterNetVarBoolChangeCallback( "badRepPresent", UpdateScoreboardBadRepPresentMessage )
 
 	AddOnSpectatorTargetChangedCallback( GameState_SpectatorTargetChanged )
 

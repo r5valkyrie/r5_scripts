@@ -11,7 +11,7 @@ global function CodeCallback_RegisterClass_CBaseEntity
 table __scriptVarDelegate = {}
 #endif
 
-function CodeCallback_RegisterClass_CBaseEntity()
+var function CodeCallback_RegisterClass_CBaseEntity()
 {
 	//printl( "Class Script: CBaseEntity" )
 
@@ -23,8 +23,6 @@ function CodeCallback_RegisterClass_CBaseEntity()
 
 	CBaseEntity.funcsByString <- null
 
-	CBaseEntity.useFunction <- null // should match on server/client
-
 	CBaseEntity._entityVars <- null
 
 	CBaseEntity.invulnerable <- 0
@@ -34,8 +32,6 @@ function CodeCallback_RegisterClass_CBaseEntity()
 	CBaseEntity.__KeyValueFromString <- CBaseEntity.SetValueForKey
 	CBaseEntity.__KeyValueFromInt <- CBaseEntity.SetValueForKey
 
-	RegisterSignal( "TookDamage" )
-		
 	function CBaseEntity::constructor()
 	{
 		#if DEVELOPER
@@ -43,8 +39,6 @@ function CodeCallback_RegisterClass_CBaseEntity()
 		#else
 			this.s = {}
 		#endif
-
-		this.useFunction = UseReturnTrue // default use function
 
 		this.funcsByString = {}
 	}
@@ -150,12 +144,12 @@ function CodeCallback_RegisterClass_CBaseEntity()
 		{
 			Assert( type( target ) == "instance" )
 			targetName = target.GetTargetName()
-			Assert( targetName.len(), "AddOutput: targetted entity must have a name!" )
+			Assert( targetName.len() > 0, "AddOutput: targetted entity must have a name!" )
 		}
-		Assert( targetName.len(), "Attemped to AddOutput on an unnamed target" )
+		Assert( targetName.len() > 0, "Attemped to AddOutput on an unnamed target" )
 
 		local addOutputString = outputName + " " + targetName + ":" + inputName + ":" + parameter + ":" + delay + ":" + maxFires
-		//printl(" Added output string: " + addOutputString )
+		//printl( "Added output string: " + addOutputString )
 
 		EntFireByHandle( this, "AddOutput", addOutputString, 0, null, null )
 	}

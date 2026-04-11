@@ -218,7 +218,6 @@ void function DeployBubbleBunker( entity projectile, float duration )
 	owner.Signal( "DeployBubbleBunker" )
 
 	owner.EndSignal( "OnDestroy" )
-	owner.EndSignal( "CleanUpPlayerAbilities" )
 	mover.EndSignal( "OnDestroy" )
 
 	OnThreadEnd(
@@ -268,8 +267,6 @@ void function CreateBubbleShieldAroundProjectile( entity projectile, int team, f
 
 	if ( !IsValid( owner ) )
 		return
-
-	owner.EndSignal( "CleanUpPlayerAbilities" )
 
 	entity bubbleShield = CreateBubbleShieldWithSettings( owner.GetTeam(), projectile.GetOrigin(), <0,0,0>/*projectile.GetAngles()*/, owner, duration )
 	bubbleShield.RemoveFromAllRealms()
@@ -513,7 +510,7 @@ bool function GibraltarIsInDome( entity player )
 //////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
-// Master Chief ffa ltm 
+// Master Chief ffa ltm
 
 var function OnWeaponTossReleaseAnimEvent_WeaponBubbleBunker_MasterChief( entity weapon, WeaponPrimaryAttackParams attackParams )
 {
@@ -609,12 +606,12 @@ void function OnBubbleBunkerPlanted_MasterChief( entity projectile, DeployableCo
 
 		bubbleCollisionProxy.SetOrigin( newProjectile.GetOrigin() )
 		bubbleCollisionProxy.SetAngles( newProjectile.GetAngles() )
-		
+
 
 		DispatchSpawn( bubbleCollisionProxy )
-		
+
 		bubbleCollisionProxy.Hide()
-		
+
 		bubbleCollisionProxy.SetParent( newProjectile )
 		bubbleCollisionProxy.SetOwner( owner )
 
@@ -702,8 +699,6 @@ void function CreateBubbleShieldAroundProjectile_MasterChief( entity projectile,
 
 	if ( !IsValid( owner ) )
 		return
-
-	owner.EndSignal( "CleanUpPlayerAbilities" )
 
 	entity bubbleShield = CreateBubbleShieldWithSettings_MasterChief( owner.GetTeam(), projectile.GetOrigin(), <0,0,0>/*projectile.GetAngles()*/, owner, duration )
 	bubbleShield.RemoveFromAllRealms()

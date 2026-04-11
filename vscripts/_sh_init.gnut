@@ -361,7 +361,6 @@ void function Server_Init()
 	ShPassiveLootHighlight_Init()
 	Bombardment_Init()
 	ThreatDetection_Init()
-	SurvivalCommentary_Init()
 
 	GameMode_RunServerInits()
 

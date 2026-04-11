@@ -87,9 +87,9 @@ global function ChargeTactical_ForceEnd
 global function Electricity_ShouldStunNPCAndAddImmunity
 global function Electricity_DamagedPlayerOrNPC
 global function Electricity_ShouldDamageStunNPC
-                 
-                                            
-      
+
+
+
 global function SetWeaponLockedSetFromLootTags
 #endif
 
@@ -149,9 +149,9 @@ global function ApplyBurnDamageTick
 global function SetEntityIsBurning
 global function UTILITY_RemoveFromSavedPlayerWeaponData
 
-                         
-                                                      
-      
+
+
+
 
 #if DEVELOPER
 global function ToggleZeroingMode
@@ -338,13 +338,13 @@ global const string END_KINETIC_LOADER_RUI = "end_kinetic_loader_functionality"
 #endif
 
 
-                          
-                                 
-                                           
-          
-                                            
-      
-      
+
+
+
+
+
+
+
 
 global const bool PROJECTILE_PREDICTED = true
 global const bool PROJECTILE_NOT_PREDICTED = false
@@ -559,9 +559,9 @@ void function WeaponUtility_Init()
 	Remote_RegisterClientFunction( "ServerCallback_KineticLoaderReloadedThroughSlideEnd", "entity" )
 	Remote_RegisterClientFunction( "ApplyKineticLoaderFunctionality", "entity" , "entity" )
 	Remote_RegisterClientFunction( "ServerToClient_Activate_Smart_Reload", "entity" , "int", 0, 64, "float", 0.0, 1.0, 32 )
-                           
-                                                                 
-                                    
+
+
+
 	Remote_RegisterServerFunction( "ClientCallback_UpdateLaserSightColor" )
 	#if CLIENT
 	RegisterSignal ( END_KINETIC_LOADER_RUI )
@@ -581,9 +581,9 @@ void function WeaponUtility_Init()
 
 	PrecacheImpactEffectTable( CLUSTER_ROCKET_FX_TABLE )
 
-                                 
-                                                  
-       
+
+
+
 
 	#if SERVER
 		AddDamageCallbackSourceID( eDamageSourceId.mp_weapon_grenade_emp, EMP_DamagedPlayerOrNPC )
@@ -1543,7 +1543,7 @@ bool function HitEntIsValidToStick( hitEnt )
 		return false
 
 	var hitEntName = hitEnt.GetScriptName()
-	
+
 	if ( hitEnt.IsWorld() )
 		return true
 	if ( hitEnt.HasPusherAncestor() )
@@ -1656,10 +1656,10 @@ bool function PlantStickyEntityOnConsistentSurface( entity projectile, Deployabl
 
 bool function PlantStickyEntityThatBouncesOffWalls( entity projectile, DeployableCollisionParams cp, float bounceDot, vector angleOffset = ZERO_VECTOR )
 {
-                     
+
 	if ( IsBitFlagSet( cp.deployableFlags, eDeployableFlags.VEHICLES_LARGE_DEPLOYABLE ) && EntIsHoverVehicle( cp.hitEnt ) )
 		return PlantStickyEntity_LargeDeployableOnVehicle( projectile, cp, angleOffset )
-                           
+
 
 	float dot = cp.normal.Dot( UP_VECTOR )
 	if ( dot < bounceDot )
@@ -1729,7 +1729,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 		vector mins        = cp.ignoreHullSize ? ZERO_VECTOR: ent.GetBoundingMins()
 		vector maxs        = cp.ignoreHullSize ? ZERO_VECTOR: ent.GetBoundingMaxs()
 		vector entPos 	   = cp.pos
-		int traceMask 	   = (ent.IsProjectile() && ent.GetProjectileWeaponSettingBool( eWeaponVar.grenade_use_mask_ability )) ? TRACE_MASK_ABILITY : TRACE_MASK_SHOT
+		int traceMask 	   = (ent.IsProjectile() ) ? TRACE_MASK_ABILITY : TRACE_MASK_SHOT
 		array<entity> ignoreEnts = [ent]
 		if ( ent.IsProjectile() && ent.proj.ignoreOwnerForPlaceStickyEnt && IsValid( ent.GetOwner() ) )
 			ignoreEnts.append( ent.GetOwner() )
@@ -1753,7 +1753,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 		if( moveOnNoHitTrace || trace.fraction < 1.0 )
 		{
 			plantPosition = trace.endPos
-		
+
 			#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
@@ -1764,7 +1764,7 @@ bool function PlantStickyEntity( entity ent, DeployableCollisionParams cp, vecto
 		else
 		{
 			plantPosition = cp.pos
-			
+
 			#if DEVELOPER
 			if ( DEBUG_DRAW_PLANT_STICKY )
 			{
@@ -1831,7 +1831,7 @@ void function CommonOnSuccessfulStickyPlant( entity ent, DeployableCollisionPara
 	if ( IsABaseGrenade( ent ) )
 	{
 		ent.MarkAsAttached()
-		ent.AddGrenadeStatusFlag( GSF_PLANTED )
+		//ent.AddGrenadeStatusFlag( GSF_PLANTED )
 	}
 	if ( ent.IsProjectile() )
 	{
@@ -1841,7 +1841,7 @@ void function CommonOnSuccessfulStickyPlant( entity ent, DeployableCollisionPara
 	}
 }
 
-                     
+
 bool function PlantStickyEntity_LargeDeployableOnVehicle( entity ent, DeployableCollisionParams cp, vector angleOffset = ZERO_VECTOR )
 {
 	if ( !HoverVehicle_AttachEntToNearestAbilityAttachment( ent, cp.hitEnt, false, false, ZERO_VECTOR ) )
@@ -1849,7 +1849,7 @@ bool function PlantStickyEntity_LargeDeployableOnVehicle( entity ent, Deployable
 	CommonOnSuccessfulStickyPlant( ent, cp )
 	return true
 }
-                           
+
 
 #if SERVER
 void function ArrowsUnstick( entity ent )
@@ -1924,10 +1924,10 @@ bool function EntityShouldStickEx( entity stickyEnt, DeployableCollisionParams p
 	if ( hitEnt == stickyEnt.GetParent() )
 		return false
 
-                     
+
 	if ( IsBitFlagSet( params.deployableFlags, eDeployableFlags.VEHICLES_NO_STICK ) && ( className == "player_vehicle" ) )
 		return false
-                           
+
 
 	if ( hitEnt.GetScriptName() == DIRTY_BOMB_TARGETNAME && params.hitBox == 0 && stickyEnt.GetScriptName() != RIOT_DRILL_SCRIPT_NAME)
 		return false
@@ -2010,7 +2010,7 @@ bool function EntityCanHaveStickyEnts( entity stickyEnt, entity ent )
 	if ( entScriptName == MOBILE_SHIELD_SCRIPTNAME )
 		return MobileShield_IsAllowedStickyEnt( ent, stickyEnt, stickyEntWeaponClassName )
 
-	                      
+
 		//For the Gravity Cannons we hit the phys_bone_follower first, need to get the owner to get the actual grav cannon ent.
 		if ( entClassname == "phys_bone_follower" && IsValid( ent.GetOwner() ) )
 		{
@@ -2026,7 +2026,7 @@ bool function EntityCanHaveStickyEnts( entity stickyEnt, entity ent )
 				}
 			}
 		}
-       
+
 
 	if ( !(string( entClassname ) in STICKY_CLASSES) && !ent.IsNPC() )
 		return false
@@ -2216,21 +2216,21 @@ void function TrapExplodeOnDamage( entity trapEnt, int trapEntHealth = 50, float
 
 	if ( !IsValid( trapEnt ) )
 		return
-	
-               
-                                                                                           
-  
-                           
-                     
-                              
-                                     
-                                                   
-                                   
 
-                                      
-  
-     
-       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	if ( destroyOnEnemyDamage )
 	{
 		StartParticleEffectInWorld( GetParticleSystemIndex( $"P_fuse_tac_exp_air" ), trapEnt.GetOrigin(), ZERO_VECTOR )
@@ -3124,9 +3124,9 @@ void function Electricity_DamagedPlayerOrNPC( entity ent, var damageInfo, float 
 	}
 	else if ( IsStalker( ent ) || IsSpectre( ent ) || IsProwler( ent ) || IsSpider( ent ) || IsSuperSpectre( ent ) )
 	{
-                      
-                                                      
-        
+
+
+
 		{
 			tag = "CHESTFOCUS"
 			effect = humanFx
@@ -3181,13 +3181,13 @@ void function Electricity_DamagedPlayerOrNPC( entity ent, var damageInfo, float 
 		effect = titanFx
 		thread NpcEmpRebootPrototype( ent, damageInfo, humanFx, titanFx )
 	}
-                     
+
 	else if ( EntIsHoverVehicle( ent ) )
 	{
 		tag = "driver"
 		effect = titanFx
 	}
-      
+
 
 		ent.Signal( "ArcStunned" )
 
@@ -3464,10 +3464,10 @@ void function EMP_FX( asset effect, entity ent, string tag, float duration, int 
 	{
 		EmitSoundOnEntity( ent, "Titan_Blue_Electricity_Cloud" )
 
-                     
+
 		if ( EntIsHoverVehicle( ent ) )
 			ent.HoverVehicle_StunBegin()
-      
+
 
 		wait duration
 	}
@@ -3570,12 +3570,12 @@ void function EMPWeapon_EffectsPlayer( entity player, var damageInfo, float dura
 		//No move slow if this is a stuck arc star
 		GiveEMPStunStatusEffects( player, (duration + fadeoutDuration), fadeoutDuration, 0 )
 	}
-	                    
+
 	else if ( damageSourceId == eDamageSourceId.golden_horse_green )
 	{
 		//We handle that in hopup
 	}
-       
+
 	else
 	{
 		GiveEMPStunStatusEffects( player, (duration + fadeoutDuration), fadeoutDuration )
@@ -4067,29 +4067,29 @@ void function AddWeaponModChangedCallback( string weaponClassName, void function
 }
 
 
-                         
-                                                                
-                                                                                        
- 
-                                             
-                                                                                                                                              
-        
 
-                                
-                                                                      
-                                                                                                        
-                                                                                                      
-                                                                                                               
-                                                                                                                                     
-                                                                                                                         
-                                                                                                               
 
-                                         
-                                                                                       
 
-                                                                            
- 
-                                   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const string WEAPON_MOD_THERMITE_ENERGIZE = "energized"
 
@@ -4613,20 +4613,20 @@ void function SavePlayerWeaponData( entity player )
 	if( hasBallisticUltBuff && !player.p.infiniteGameModeAmmo)
 		SetInfiniteAmmoForPlayer( player, false, ["crate"], true, true )
 
-               
-                                                              
-                                
-  
-                                                      
-   
-                                                     
-                                                                  
-                                                               
 
-                                          
-   
-  
-       
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	for ( int i = 0; i < currentWeapons.len(); i++ )
 	{
@@ -4807,11 +4807,11 @@ void function OnWeaponAttachmentChanged_CheckForGoldMag( entity player, entity w
 		if ( weaponData.ref == "" )
 			return
 
-                
-                                   
-          
-        
-		
+
+
+
+
+
 		string modAttachmentStyle = GetAttachmentPointStyle( magAttachmentName, weaponData.ref )
 
 		string modInstalled = GetInstalledWeaponAttachmentForPoint( weapon, magAttachmentName )
@@ -4937,19 +4937,19 @@ void function Weapon_FillClipAmmoFromStock( entity weapon, entity player, int co
 	//Fill Main Weapon
 	FillWeaponAmmo ( weapon, player, count )
 
-              
-                     
-                                                               
-  
-                                                       
-                                                                
-                                                               
-                              
-   
-                                                  
-   
-  
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -5055,10 +5055,10 @@ bool function TryCharacterButtonCommonReadyChecks( entity player )
 		return false
 	if ( player != GetLocalClientPlayer() )
 		return false
-                     
+
 	if ( HoverVehicle_PlayerIsDriving( player ) )
 		return false
-      
+
 
 	return true
 }
@@ -5963,7 +5963,7 @@ void function OnWeaponAttachmentChanged_CheckForShatterCaps( entity player, enti
 #if SERVER
 void function OnWeaponAttachmentChanged_CheckForAnvilReceiver( entity player, entity weapon, string modToAdd, string modToRemove )
 {
-                      
+
 
 	if( !IsValid( player ) )
 		return
@@ -5983,7 +5983,7 @@ void function OnWeaponAttachmentChanged_CheckForAnvilReceiver( entity player, en
 		}
 	}
 
-                           
+
 }
 #endif
 
@@ -6806,59 +6806,59 @@ void function ApplyKineticLoader_ClientThink( entity player, entity weapon )
 	#endif
 }
 
-                          
-                                                   
- 
-                          
-        
-
-                                                                
-                                                             
-
-                        
-        
-
-                                            
-   
-                                             
-                                                                               
-                                               
-                                                
-
-                                              
-                                                                                                                                                     
-
-                                           
-                                                                
-                                                                                        
-
-                                                                                                      
-   
-                             
-                       
-                                                                          
-
-                        
-                                                                                      
-
-             
-                                                                                            
-                                                                          
-         
-   
-  
-
- 
 
 
-                                              
- 
-           
-                                           
-                                                                                  
-       
- 
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //INFINITE AMMO
 #if SERVER || CLIENT

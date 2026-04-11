@@ -133,7 +133,6 @@ void function SurvivalCommentary_Init()
 	ShSurvivalCommentary_Init()
 	ShAmbientDialogue_Init()
 
-	RegisterSignal( "NewDeathFieldStarting" )
 	AddCallback_OnClientConnected( Survival_Commentary_PlayerConnected )
 
 	bool isModeAllowed = GameMode_IsActive( eGameModes.SURVIVAL )

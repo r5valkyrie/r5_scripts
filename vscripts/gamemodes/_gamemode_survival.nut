@@ -4718,16 +4718,16 @@ void function SURVIVAL_SendWinningSquadDataToPlayer( entity player, int winningT
 	if ( winningTeam in file.squadData )
 	{
 		// Clear their local squad data
-		Remote_CallFunction_NonReplay( player, "ServerCallback_AddWinningSquadData", -1, -1, 0, 0, 0, 0, 0, 0, 0,
-																					 true, 0, 0, 0, 0, 0, 0 )
+		//Remote_CallFunction_NonReplay( player, "ServerCallback_AddWinningSquadData", -1, -1, 0, 0, 0, 0, 0, 0, 0,
+		//																			 true, 0, 0, 0, 0, 0, 0 )
 
 		// Send new squad data for winning squad
 		foreach ( int i, GameSummarySquadData data in file.squadData[ winningTeam ] )
 		{
-			Remote_CallFunction_NonReplay( player, "ServerCallback_AddWinningSquadData", i, data.eHandle, data.kills, data.assists, data.knockdowns,
-																							data.damageDealt, data.survivalTime, data.revivesGiven, data.respawnsGiven,
-																							data.displayData3IsTime, data.displayData[3], data.displayData[4], data.displayData[5], data.displayData[6],
-																							file.gameResultFlags, file.gameScoreFlags )
+		//	Remote_CallFunction_NonReplay( player, "ServerCallback_AddWinningSquadData", i, data.eHandle, data.kills, data.assists, data.knockdowns,
+		//																					data.damageDealt, data.survivalTime, data.revivesGiven, data.respawnsGiven,
+		//																					data.displayData3IsTime, data.displayData[3], data.displayData[4], data.displayData[5], data.displayData[6],
+		//																					file.gameResultFlags, file.gameScoreFlags )
 		}
 	}
 

@@ -60,8 +60,6 @@ var function CodeCallback_RegisterClass_C_BaseEntity()
 
 		this.hudVisible = true
 
-		VisGroup_Show( clGlobal.menuVisGroup )
-
 		foreach ( element in this.hudElems )
 			element.UpdateVisibility()
 	}
@@ -72,8 +70,6 @@ var function CodeCallback_RegisterClass_C_BaseEntity()
 			return
 
 		this.hudVisible = false
-
-		VisGroup_Hide( clGlobal.menuVisGroup )
 
 		foreach ( element in this.hudElems )
 			element.UpdateVisibility()

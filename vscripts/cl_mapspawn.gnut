@@ -303,7 +303,7 @@ void function RunClientConnectScriptsThreaded( entity player )
 	ExecuteNetBufferedCallbacks()
 
 	//TriggerGlobalChangeCallbacks()
-
+	Warning( "TriggerGlobalChangeCallbacks is missing - Implement as soon as possible" )
 	RunCallbacks_EntitiesDidLoad()
 
 	FlagSet( "EntitiesDidLoad" )
