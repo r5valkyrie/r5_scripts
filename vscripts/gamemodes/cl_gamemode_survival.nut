@@ -232,7 +232,7 @@ const float CROUCH_SPAM_DETECT_TIMEOUT = 1.25
 
 const string SOUND_UI_TEAMMATE_KILLED = "UI_DeathAlert_Friendly"
 
-const string CIRCLE_CLOSING_IN_SOUND = "UI_InGame_RingMoveWarning"
+const string CIRCLE_CLOSING_IN_SOUND = "UI_InGame_RingMoveWarning" 
 
 const float TITAN_DESYNC_TIME = 1.0
 
@@ -268,7 +268,7 @@ global const vector UNITFRAME_SIZE = <260, 50, 0>
 global const vector UNITFRAME_SIZE_NX = <383, 80, 0>
 global const float UNITFRAME_SPACING = 16
 
-const float LOCALCLIENT_UNITFRAME_VERTICAL_OFFSET = 130.0
+const float LOCALCLIENT_UNITFRAME_VERTICAL_OFFSET = 130.0 
 
 global struct SummaryDisplayData
 {
@@ -439,6 +439,8 @@ struct
 
 void function ClGamemodeSurvival_Init()
 {
+	Warning("ClGamemodeSurvival_Init() called - gamemode is active: " + GameMode_IsActive( eGameModes.SURVIVAL ))
+
 	if ( GameMode_IsActive( eGameModes.SURVIVAL ) )
 	{
 		Fullmap_SetupScoreboard()
@@ -472,7 +474,7 @@ void function ClGamemodeSurvival_Init()
 
 	FlagInit( "SquadEliminated" )
 
-
+	
 	if( !ClGameState_HasRegisteredGameStateAsset() )
 	{
 
@@ -552,6 +554,7 @@ void function ClGamemodeSurvival_Init()
 	// RegisterNetVarBoolChangeCallback( "highlightFar", DeathboxHighlightDistChangedCallback )
 	// RegisterNetVarIntChangeCallback( "maxLootTier", DeathboxHighlightLootTierDistChangedCallback )
 
+	Warning( "ClGamemodeSurvival_Init: About to register GameStateEnter callbacks" )
 
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, Survival_WaitForPlayers )
 	AddCallback_GameStateEnter( eGameState.WaitingForPlayers, EnableToggleMuteKeys )
@@ -646,7 +649,7 @@ void function OnPlayerCreated( entity player )
 
 	if ( (player.GetTeam() == GetLocalClientPlayer().GetTeam()) && (SquadMuteIntroEnabled() || SquadMuteLegendSelectEnabled()) )
 	{
-
+		
 		if ( IsSquadMuted() )
 			SetSquadMuteState( IsSquadMuted() )
 	}
@@ -682,12 +685,12 @@ void function TrackSprint( entity player )
 		else if ( !isSprint && shouldSprint )
 		{
 			e[ "sprintingVisuals" ] = true
-
+			
 			if ( IsValid( player.GetCockpit() ) )
 				fxHandle = StartParticleEffectOnEntity( player.GetCockpit(), GetParticleSystemIndex( SPRINT_FP ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 		}
 
-
+		
 		if ( shouldSprint )
 			player.SetFOVScale( 1.15, 2 )
 
@@ -707,7 +710,7 @@ bool function ShouldShowSprintVisuals( entity player )
 	if ( IsValid( activeWeapon ) && activeWeapon.GetWeaponSettingFloat( eWeaponVar.move_speed_modifier ) > 1 && player.IsSprinting() )
 		return true
 
-	float max = PLAYER_STANDING_SPRINT_SPEED
+	float max = PLAYER_STANDING_SPRINT_SPEED 
 
 	vector fwd = player.GetViewVector()
 	float dot  = DotProduct( fwd, player.GetVelocity() )
@@ -781,8 +784,8 @@ void function Cl_Survival_AddClient( entity player )
 
 	if( UpgradeCore_IsEnabled() )
 	{
-		// RuiSetBool( file.pilotRui, "showProgressBar", true ) // arg not in S3 RUI
-		UpgradeCore_UpdateXpRui( file.pilotRui, player )
+	// RuiSetBool( file.pilotRui, "showProgressBar", true ) // arg not in S3 RUI
+			//UpgradeCore_UpdateXpRui( file.pilotRui, player )
 		// RunUIScript( "RTKLegendUpgradesArmorCore_UpdateArmorCoreDataModel" ) // RTK not in S3
 	}
 
@@ -813,7 +816,7 @@ void function SURVIVAL_PopulatePlayerInfoRui( entity player, var rui )
 		RuiTrackInt( rui, "teamMemberIndex", player, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
 #endif
 
-    RuiSetString( rui, "name", GetDisplayablePlayerNameFromEHI( ToEHI( player ) ) )
+    RuiSetString( rui, "name", GetDisplayablePlayerNameFromEHI( ToEHI( player ) ) )    
 	RuiTrackInt( rui, "micStatus", player, RUI_TRACK_MIC_STATUS )
 
 	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
@@ -991,7 +994,7 @@ void function OverrideHUDHealthFractions( entity player, float targetHealthFrac 
 		RuiSetFloat( file.pilotRui, "playerTargetHealthFrac", targetHealthFrac )
 
 	if ( targetShieldFrac < 0 )
-		RuiTrackFloat( file.pilotRui, "playerTargetShieldFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_shields )
+	RuiTrackFloat( file.pilotRui, "playerTargetShieldFrac", player, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.target_shields )
 	else
 		RuiSetFloat( file.pilotRui, "playerTargetShieldFrac", targetShieldFrac )
 }
@@ -1012,7 +1015,7 @@ void function RegisterMinimapPackages()
 
 void function MinimapPackage_PlaneInit( entity ent, var rui )
 {
-#if DEVELOPER
+#if MINIMAP_DEBUG
 		printt( "Adding 'rui/survival_ship' icon to minimap" )
 #endif
 	if ( ent.GetTargetName() != "planeMapEnt" )
@@ -1056,20 +1059,20 @@ void function Survival_MinimapPackage_ObjectiveAreaInit( entity ent, var rui )
 	{
 		case "safeZone":
 			RuiTrackFloat3( rui, "playerPos", GetLocalViewPlayer(), RUI_TRACK_ABSORIGIN_FOLLOW )
-			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )
+			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )  
 			RuiSetBool( rui, "drawLine", true )
 			break
 
 		case "safeZone_noline":
-
-			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )
-
+			
+			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )  
+			
 			break
 
 		case "observerSurveyZone":
 			printt( "OBS_SURVEY: inititialising ObsSurveyRui" )
 			RuiSetBool( rui, "blink", false )
-			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )
+			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )  
 
 			var nestedRui = RuiCreateNested( rui, "nestedArea", $"ui/minimap_dashed_ellipse_32.rpak" )
 			RuiSetColorAlpha( nestedRui, "arcColor", SrgbToLinear( SAFE_ZONE_COLOR ), OBSERVER_SURVEY_ZONE_ALPHA )
@@ -1081,7 +1084,7 @@ void function Survival_MinimapPackage_ObjectiveAreaInit( entity ent, var rui )
 
 		case "surveyZone":
 			RuiSetBool( rui, "blink", false )
-			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( TEAM_COLOR_PARTY / 255.0 ), SAFE_ZONE_ALPHA )
+			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( TEAM_COLOR_PARTY / 255.0 ), SAFE_ZONE_ALPHA )  
 
 
 
@@ -1106,9 +1109,9 @@ void function Survival_MinimapPackage_ObjectiveAreaInit( entity ent, var rui )
 			break
 
 
-		case "risingWallIconDown":
-		case "risingWallIconMoving":
-		case "risingWallIconUp":
+	case "risingWallIconDown":
+	case "risingWallIconMoving":
+	case "risingWallIconUp":
 			RuiSetBool( rui, "blink", false )
 			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( TEAM_COLOR_PARTY / 255.0 ), 1.0 )
 			break
@@ -2041,10 +2044,6 @@ void function EquipmentChanged( entity player, string equipSlot, int new )
 			hudIcon = emptyAttachmentSlotImages[attachmentStyle]
 		}
 	}
-	else if( equipSlot == "armor" )
-	{
-		armorCapacity = 0
-	}
 
 		LootData data = EquipmentSlot_GetEquippedLootDataForSlot( player, "armor" )
 		if ( data.lootType == eLootType.ARMOR && EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
@@ -2067,8 +2066,6 @@ void function EquipmentChanged( entity player, string equipSlot, int new )
 			if ( data.lootType == eLootType.ARMOR )
 			{
 
-					RuiSetBool( file.pilotRui, "showProgressMeter", !isEvo && UpgradeCore_ArmorTiedToUpgrades() && UpgradeCore_ShowUpgradesUnitframe() )
-					RuiSetInt( file.pilotRui, "armorTierBarOverride", -1 )
 
 
 				if ( EvolvingArmor_IsEquipmentEvolvingArmor( data.ref ) )
@@ -2078,17 +2075,7 @@ void function EquipmentChanged( entity player, string equipSlot, int new )
 					RuiTrackInt( file.pilotRui, "evolvingShieldKillCounter", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( NV_EVOLVING_ARMOR_KILL_COUNT ) )
 				}
 
-				else if( UpgradeCore_IsEquipmentArmorCore( data.ref ) )
-				{
-					RuiSetBool( file.pilotRui, "isEvolvingShield", true )
-					int playerTier = UpgradeCore_GetPlayerArmorTier( player, false )
-					RuiSetInt( file.pilotRui, "armorTierBarOverride", playerTier )
 
-					if( playerTier > tier && es.unitFrameTierVar != "" && equipSlot == "armor")
-					{
-						RuiSetInt( file.pilotRui, es.unitFrameTierVar, playerTier )
-					}
-				}
 
 				else
 				{
@@ -2743,6 +2730,7 @@ void function SurvivalTitanHoverHint()
 
 void function Survival_WaitForPlayers()
 {
+	Warning("is this working?")
 	file.cameFromWaitingForPlayersState = true
 	RunUIScript("UI_ClearRespawnOverlay")
 	SetDpadMenuVisible()
@@ -3870,17 +3858,18 @@ void function Dev_SpoofMatchData()
 
 void function OnGamestateResolution()
 {
+	Warning("OnGameStateRes called")
 	if ( IsPVEMode() )
 		return
-
+	Warning("OnGameStateRes not pve")
 
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_EXPLORE ) )
 		return
-
+	Warning("OnGameStateRes not explore")
 
 	if ( IsShowingVictorySequence() )
 		return
-
+	Warning("OnGameStateRes not showing sequence")
 	thread ShowVictorySequence()
 }
 

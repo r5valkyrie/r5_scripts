@@ -1651,13 +1651,13 @@ void function LoadoutSelection_CheckForMidMatchLoadoutChange( entity player )
 		{
 			previousWeapons.append( _classes_offered[ file.playerToLastUsedLoadoutTable[ player ] ] )
 
-			PIN_PlayerWeaponLoadoutChange( player, _classes_offered, previousWeapons, currentLoadout, true )
+			//PIN_PlayerWeaponLoadoutChange( player, _classes_offered, previousWeapons, currentLoadout, true )
 			file.playerToLastUsedLoadoutTable[ player ] = loadoutIndex
 		}
 	}
 	else
 	{
-		PIN_PlayerWeaponLoadoutChange( player, _classes_offered, previousWeapons, currentLoadout, false )
+		//PIN_PlayerWeaponLoadoutChange( player, _classes_offered, previousWeapons, currentLoadout, false )
 		file.playerToLastUsedLoadoutTable[ player ] <- loadoutIndex
 	}
 }

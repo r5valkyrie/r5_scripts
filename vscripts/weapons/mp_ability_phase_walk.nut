@@ -23,6 +23,7 @@ void function MpAbilityPhaseWalk_Init()
 	PrecacheParticleSystem( PHASE_WALK_APPEAR_PRE_FX )
 }
 
+
 void function OnWeaponActivate_ability_phase_walk( entity weapon )
 {
 	entity player = weapon.GetWeaponOwner()
@@ -31,8 +32,8 @@ void function OnWeaponActivate_ability_phase_walk( entity weapon )
 	#if SERVER
 		EmitSoundOnEntityExceptToPlayer( player, player, "pilot_phaseshift_armraise_3p" )
 
-	if ( player.GetActiveWeapon( eActiveInventorySlot.mainHand ) != player.GetOffhandWeapon( OFFHAND_INVENTORY ) )
-		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_tactical" )
+		if ( player.GetActiveWeapon( eActiveInventorySlot.mainHand ) != player.GetOffhandWeapon( OFFHAND_INVENTORY ) )
+			PlayBattleChatterLineToSpeakerAndTeam( player, "bc_tactical" )
 	#endif
 
 	if ( !weapon.HasMod( "ult_active" ) )
@@ -62,32 +63,90 @@ bool function OnWeaponAttemptOffhandSwitch_ability_phase_walk( entity weapon )
 	return true
 }
 
+#if SERVER
+void function ReloadPrimaryWeapons( entity player )
+{
+	array<entity> primaryWeapons = SURVIVAL_GetPrimaryWeaponsSorted( player )
+
+	bool reloaded = false
+
+	foreach ( slotWeapon in primaryWeapons )
+	{
+		if ( !IsValid( slotWeapon ) )
+			continue
+
+		if ( !slotWeapon.UsesClipsForAmmo() )
+			continue
+
+		int clipCount = slotWeapon.GetWeaponPrimaryClipCount()
+		int clipMax = slotWeapon.GetWeaponPrimaryClipCountMax()
+
+		if ( clipCount >= clipMax )
+			continue
+
+		int diff = clipMax - clipCount
+
+		LootData weaponData = SURVIVAL_GetLootDataFromWeapon( slotWeapon )
+		string ammoRef = weaponData.ammoType
+
+		if ( ammoRef == "" )
+			continue
+
+		int ammoRefType = eAmmoPoolType[ ammoRef ]
+		int ammoCount  = player.AmmoPool_GetCount( ammoRefType )
+
+		int amountToReload = minint( ammoCount, diff )
+
+		reloaded = true
+		slotWeapon.SetWeaponPrimaryClipCount( clipCount + amountToReload )
+		player.AmmoPool_SetCount( ammoRefType, ammoCount - amountToReload )
+	}
+
+	if ( reloaded )
+		EmitSoundOnEntityOnlyToPlayer( player, player, "survival_loot_attach_extended_ammo" )
+}
+#endif
+
 bool function OnWeaponChargeBegin_ability_phase_walk( entity weapon )
 {
 	entity player = weapon.GetWeaponOwner()
 	float chargeTime = weapon.GetWeaponSettingFloat( eWeaponVar.charge_time )
 
-	bool doStatus = true
-	#if CLIENT
-		if ( !InPrediction() )
-			doStatus = false
-	#endif
-
-	if ( doStatus )
+	//if ( !weapon.HasMod( "ult_active" ) )
 	{
-		int speedHandle = StatusEffect_AddTimed( player, eStatusEffect.speed_boost, 0.3, chargeTime, chargeTime * 0.3 )
-
-		#if SERVER
-		weapon.w.statusEffects.append( speedHandle )
+		bool doStatus = true
+		#if CLIENT
+			if ( !InPrediction() )
+				doStatus = false
 		#endif
+
+		if ( doStatus )
+		{
+			int speedHandle = StatusEffect_AddTimed( player, eStatusEffect.speed_boost, 0.3, chargeTime, chargeTime * 0.3 )
+
+			#if SERVER
+			weapon.w.statusEffects.append( speedHandle )
+			#endif
+		}
 	}
 
 	#if SERVER
+
 	thread PhaseWalk_Thread( player, chargeTime )
 	PlayerUsedOffhand( player, weapon )
-	#endif
 
+		                    
+			if( PlayerHasPassive( player, ePassives.PAS_TAC_UPGRADE_TWO ) ) // wraith_upgrade_phase_walk_heal
+			{
+				EntityHealResource_Add( player, chargeTime, 25.0 / chargeTime, 0, "regen_default", player )
+			}
+        
+
+	#endif
 	PhaseShift( player, 0, chargeTime, PHASETYPE_BALANCE )
+
+	player.Signal( "WreckingBall_CleanupFX" )
+
 	return true
 }
 
@@ -106,6 +165,13 @@ void function PhaseWalk_Thread( entity player, float chargeTime )
 	//StatsHook_Tactical_TimeSpentInPhase( player, chargeTime )
 	TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITIES_PHASE_DASH_START, player, player.GetOrigin(), player.GetTeam(), player )
 
+	                          
+		if ( IsVoidVisionEnabled_PhaseTunnel() )
+		{
+			VoidVision_GrantVoidVision( player )
+		}
+       
+
 	entity dashFX
 
 	OnThreadEnd(
@@ -115,14 +181,15 @@ void function PhaseWalk_Thread( entity player, float chargeTime )
 			{
 				TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITIES_PHASE_DASH_STOP, player, player.GetOrigin(), player.GetTeam(), player )
 				ForceAutoSprintOff( player )
-
-
+				                          
+					VoidVision_TakeVoidVision( player )
+          
 			}
 			if ( player in file.hasLockedWeaponsAndMelee && file.hasLockedWeaponsAndMelee[player]  )
 			{
 				if ( IsValid( player ) )
 				{
-					UnlockWeaponsAndMelee( player, "" )
+					UnlockWeaponsAndMelee( player, "phase_walk" )
 				}
 				file.hasLockedWeaponsAndMelee[player] <- false
 			}
@@ -160,7 +227,7 @@ void function OnWeaponChargeEnd_ability_phase_walk( entity weapon )
 		if ( player in file.hasLockedWeaponsAndMelee && file.hasLockedWeaponsAndMelee[player]  )
 		{
 			if ( IsValid(player) )
-				UnlockWeaponsAndMelee( player, "" )
+				UnlockWeaponsAndMelee( player, "phase_walk" )
 			file.hasLockedWeaponsAndMelee[player] <- false
 		}
 		int ammoAfterFiring = weapon.GetWeaponPrimaryClipCount() - weapon.GetAmmoPerShot()

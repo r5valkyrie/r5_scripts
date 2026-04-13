@@ -4256,6 +4256,21 @@ void function Embark_Allow( entity player )
 	player.SetTitanEmbarkEnabled( true )
 }
 
+// Given an array of strings with repeats, constructs a table with item counts indexed by item.
+table< string, int > function Count_Strings_IntoTable( array< string > itemsToCount )
+{
+	table< string, int > results
+	foreach( item in itemsToCount )
+	{
+		if( !( item in results ) )
+		{
+			results[ item ] <- 0
+		}
+		results[ item ]++
+	}
+	return results
+}
+
 void function Embark_Disallow( entity player )
 {
 	player.SetTitanEmbarkEnabled( false )

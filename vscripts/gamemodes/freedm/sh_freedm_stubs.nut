@@ -126,12 +126,6 @@ global function Teams_AddCallback_IsEnabled
 global function Teams_AddCallback_GetTeamName
 global function Teams_AddCallback_GetTeamIcon
 
-// --- Missing dependencies for LoadoutSelection system ---
-#if SERVER
-global function CharacterLoadouts_GiveConsumableLoadoutToPlayer
-global function PIN_PlayerWeaponLoadoutChange
-#endif
-
 // --- Individual missing functions ---
 global function ForceScriptError
 #if SERVER
@@ -139,7 +133,6 @@ global function ForceScriptError
 global function CircleCullClassName
 global function CircleCullScriptName
 global function SetVictoryKillMode
-global function DoCommonRespawnForPlayer
 // GetPlayerArrayIncludingSpectators moved to SERVER || CLIENT scope below
 // GameRules_GetTeamScore2 is engine-native
 global function WeaponStatsHook_OnKillEnemy
@@ -160,14 +153,6 @@ global function SetPlayThroughPOVTransitions
 global function LowerDVSForGameMode
 #endif
 
-// --- Utility script dependencies ---
-// RegisterNetVarBoolChangeCallback - moved to sh_netvar_callbacks.gnut
-// RegisterNetVarTimeChangeCallback - moved to sh_netvar_callbacks.gnut
-global function ParseEquipmentLoadoutText
-global function ParseConsumableLoadoutText
-#if SERVER
-global function CharacterLoadouts_GiveEquipmentLoadoutToPlayer
-#endif
 #if CLIENT
 global function RuiHasGameTimeArg
 #endif
@@ -220,20 +205,6 @@ void function SetAllianceTeamsScore( int alliance, int score ) {}
 void function UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( int teamOrAlliance, int modifier ) {}
 void function UpdateOtherTeamsOrAlliancesCrowdNoiseMeterAndBroadcast( int teamOrAlliance, int modifier ) {}
 void function CrowdNoiseMeter_PlayGameEndSound( entity player, bool isWinner ) {}
-
-// --- Missing dependencies for LoadoutSelection system ---
-#if SERVER
-void function CharacterLoadouts_GiveConsumableLoadoutToPlayer( entity player, array<string> consumableLoadout )
-{
-	foreach( consumable in consumableLoadout )
-	{
-		if ( SURVIVAL_Loot_IsRefValid( consumable ) )
-			SURVIVAL_AddToPlayerInventory( player, consumable )
-	}
-}
-
-void function PIN_PlayerWeaponLoadoutChange( entity player, array<string> classesOffered, array<string> previousWeapons, string currentLoadout, bool isMidMatch ) {}
-#endif
 
 // --- Teams Scoreboard System ---
 void function ShowScoreboardOrMap_Teams() {}
@@ -315,7 +286,6 @@ void function ForceScriptError( string message ) { ScriptError( message ) }
 void function CircleCullClassName( string className ) {}
 void function CircleCullScriptName( string scriptName ) {}
 void function SetVictoryKillMode( bool enabled ) {}
-void function DoCommonRespawnForPlayer( entity player ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
 void function WeaponStatsHook_OnKillEnemy( entity victim, entity attacker, entity creditedAttacker, var damageInfo ) {}
 void function Remote_CallFunction_QueueForNoKillCam( entity player, string funcName, ... ) {}
@@ -336,47 +306,6 @@ void function LowerDVSForGameMode( bool lower ) {} // Dynamic Visibility Setting
 // Squads_SetCustomPlayerInfo, Squads_GetReorderedTeamsUIId, Squads_GetSquadColor, Squads_GetSquadIcon exist in _squads_utility.gnut
 #endif // CLIENT
 
-// --- Utility script dependencies ---
-
-array< string > function ParseEquipmentLoadoutText( string loadoutText, bool useDefaultLoadout = true, array<string> displayIgnoredItems = [] )
-{
-	array<string> equipmentToAdd = []
-	if ( loadoutText != "" )
-		equipmentToAdd = GetTrimmedSplitString( loadoutText, " " )
-	return equipmentToAdd
-}
-
-array< string > function ParseConsumableLoadoutText( string loadoutText, bool useDefaultLoadout = true )
-{
-	array<string> consumableTokens = []
-	if ( loadoutText != "" )
-		consumableTokens = GetTrimmedSplitString( loadoutText, " " )
-	array<string> consumablesToAdd
-	foreach( itemType in consumableTokens )
-	{
-		array<string> tokens = GetTrimmedSplitString( itemType, ":" )
-		string itemRef       = tokens[0]
-		int numItems         = tokens.len() > 1 ? int( tokens[1] ) : 1
-		for ( int i = 0; i < numItems; i++ )
-			consumablesToAdd.append( itemRef )
-	}
-	return consumablesToAdd
-}
-
-#if SERVER
-void function CharacterLoadouts_GiveEquipmentLoadoutToPlayer( entity player, array<string> equipmentLoadout )
-{
-	foreach( equipment in equipmentLoadout )
-	{
-		LootData data = SURVIVAL_Loot_GetLootDataByRef( equipment )
-		SURVIVAL_GivePlayerEquipment( player, equipment, 0, null, "", false )
-	}
-}
-#endif
-
-
-// RegisterNetVarBoolChangeCallback - moved to sh_netvar_callbacks.gnut
-// RegisterNetVarTimeChangeCallback - moved to sh_netvar_callbacks.gnut
 
 #if CLIENT
 bool function RuiHasGameTimeArg( var rui, string argName ) { return false }

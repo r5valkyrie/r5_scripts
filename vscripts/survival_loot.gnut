@@ -795,7 +795,7 @@ bool function FinalizeLootGroupRecursive( array<LootGroup> visitedStack, LootGro
 
 void function ReadDatatableLootGroups()
 {
-	var dt                    = GetDataTable( $"datatable/survival_loot_groups_new.rpak" )
+	var dt                    = GetDataTable( $"datatable/survival_loot_groups_sdk_new.rpak" )
 	int rowCount              = GetDataTableRowCount( dt )
 	int col_groupRef          = GetDataTableColumnByName( dt, "groupRef" )
 	int col_entryRef          = GetDataTableColumnByName( dt, "entryRef" )
@@ -811,7 +811,7 @@ void function ReadDatatableLootGroups()
 		string entryRef         = strip( GetDataTableString( dt, rowIdx, col_entryRef ) ).tolower()
 		float entryDistribution = GetDataTableFloat( dt, rowIdx, col_entryDistribution )
 		int groupTier           = GetDataTableInt( dt, rowIdx, col_groupTier )
-		int priority            = col_priority >= 0 ? GetDataTableInt( dt, rowIdx, col_priority ) : 0
+		int priority            = GetDataTableInt( dt, rowIdx, col_priority )
 
 		if ( groupRef == "" && entryRef == "" && entryDistribution == 0.0 && groupTier == 0 && priority == 0 )
 		{
@@ -3090,8 +3090,14 @@ entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngl
 			}
 		}
 
-		//ent.SetWeaponMods( mods )
-		Warning("Weapon mods disabled until loots are fixed")
+		try
+		{
+			ent.SetWeaponMods( mods )
+		}
+		catch ( ex )
+		{
+			Warning( "SpawnGenericLoot: Skipping invalid mods for weapon '" + baseWeapon + "': " + ex )
+		}
 		// TEMP HACK
 		//okay then, let's un-hack it? - johodgson
 		if ( !GetWeaponInfoFileKeyField_GlobalBool( baseWeapon, "uses_ammo_pool" ) )
@@ -3402,7 +3408,8 @@ entity function SURVIVAL_GiveMainWeapon( entity player, entity pickup, array<str
 	string pickupRef = pickupData.ref
 	bool isAttachmentLocked = SURVIVAL_Weapon_IsAttachmentLocked( pickupRef )
 	int slot = -1
-	bool isAkimboWeapon = GetWeaponInfoFileKeyField_GlobalBool ( pickupData.baseWeapon, "is_akimbo_weapon" )
+	bool isAkimboWeapon = false//GetWeaponInfoFileKeyField_GlobalBool ( pickupData.baseWeapon, "is_akimbo_weapon" )
+	Warning("look into isAkimboWeapon - kral")
 	entity slingWeapon = GetPlayerSlingWeapon( player )
 
 	bool isReplacingActiveWeapon = false
@@ -6192,7 +6199,7 @@ void function Death_DropPlayerItems( entity deathBox, entity player, string item
 
 		if ( mods.len() > 0 )
 		{
-			//ent.SetWeaponMods( mods )
+			ent.SetWeaponMods( mods )
 			Warning("Weapon mods disabled until loots are fixed")
 				thread DismantleWeaponModsAfterInterval( ent, LOOT_THROW_WEAPON_MOD_DISMANTLE_DELAY, 0 )
 		}

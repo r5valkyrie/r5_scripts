@@ -96,6 +96,7 @@ void function SV_CL_Init()
 	Decoy_Init()
 	ShEHI_LevelInit_End()
 	Perks_Init()
+	Perk_ExtraBinLoot_Init()
 	Perk_BeaconScan_Init()
 	ClientSidePickups_Init()
 	GrappleWeaponInit()
@@ -130,6 +131,8 @@ void function SV_CL_Init()
 	ShPassives_Init()
 	ShCharacterAbilities_LevelInit()
 	ShCharacterCosmetics_LevelInit()
+
+	ExtraShields_Init()
 	PassiveVoidVision_Init()
 
 	SeasonQuest_SharedInit()
@@ -181,9 +184,12 @@ void function SV_CL_Init()
 	SURVIVAL_LootActions_InitShared()
 	SURVIVAL_LootTypes_InitShared()
 	SURVIVAL_EquipmentSlot_InitShared()
-    SURVIVAL_LootDistribution_InitShared()
 	Sh_PersistentDamageLayer_Init()
 	ShSurvivalTraining_Init()
+
+	if ( GetCurrentPlaylistVarBool( "character_loadouts_enabled", true ) )
+		CharacterLoadouts_Init()
+
 	ShGas_Init()
 	ShShellShock_Init()
 	ShCarePackage_Init()
@@ -342,6 +348,7 @@ void function Server_Init()
 	HealthRegen_Init()
 	RealmsInit()
 	Staging_Area_Init()
+	Gamemodes_Map_Cleanup()
 	Utility_MP_Init()
 	//Stats_Init()
 	MenuCallbacks_Init()
@@ -575,6 +582,7 @@ void function Shared_Lobby_Init()
 
 	SURVIVAL_Loot_All_InitShared() // need this to precache the weapons
 
+	Perk_ExtraBinLoot_Init()
 	Perk_BeaconScan_Init()
 
 	#if SERVER

@@ -171,6 +171,22 @@ int function SortPendingMedals( MessageData eventA, MessageData eventB )
 }
 
 
+asset function GetRuiAssetForMessage( MessageData messageData )
+{
+	asset ruiAsset = $""
+	if ( GetScoreMessageRuiAssetForMode() != $"" )
+		ruiAsset = GetScoreMessageRuiAssetForMode()
+	else if ( messageData.messageScale > 1.0 )
+	{
+		ruiAsset = $"ui/centerevent_info.rpak"
+	}
+	else
+		ruiAsset = $"ui/pickup_info.rpak"
+
+	return ruiAsset
+}
+
+
 void function QueueMessageThink()
 {
 	// allow multiple queue messages to come in this frame
@@ -186,17 +202,8 @@ void function QueueMessageThink()
 
 		messageData.startTime = Time()
 
-		asset ruiAsset = $""
-		var rui
-		if ( GetScoreMessageRuiAssetForMode() != $"" )
-			ruiAsset = GetScoreMessageRuiAssetForMode()
-		else if ( messageData.messageScale > 1.0 )
-			ruiAsset = $"ui/centerevent_info.rpak"
-		else
-			ruiAsset = $"ui/pickup_info.rpak"
-
-		rui = CreateCockpitPostFXRui( ruiAsset )
-
+		asset ruiAsset = GetRuiAssetForMessage( messageData )
+		var rui = CreateCockpitPostFXRui( ruiAsset )
 
 		RuiSetGameTime( rui, "startTime", messageData.startTime )
 		RuiSetFloat( rui, "duration", messageData.duration )
@@ -251,7 +258,7 @@ void function MessageThink( MessageData messageData )
 
 asset function GetScoreMessageRuiAssetForMode()
 {
-	if ( GameRules_GetGameMode() == GAMEMODE_CONTROL )
+	if ( GameMode_IsActive( eGameModes.CONTROL ) )
 		return $"ui/control_score_info.rpak"
 	return $""
 }
@@ -338,6 +345,14 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			shieldLevel = 1
 			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
 		}
+
+		//else if ( IsRedeployBalloonEnt( victim ) )
+		//{
+		//	shieldIcon = $""
+		//	shieldLevel = 0
+		//	isStructure = true
+		//}
+
 		// Mobile shield (Madmaggie)
 		else if ( IsMobileShieldEnt( victim ) )
 		{
@@ -578,7 +593,7 @@ bool function ShouldShowProjectileHitDot( int damageType, entity weapon )
                          
 bool function ShouldShowTrainingHitIndicators ()
 {
-	if (!IsFiringRangeGameMode())
+	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
 		return false
 
 	if (!showTrainingHitIndicators)

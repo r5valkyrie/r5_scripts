@@ -5,9 +5,9 @@ global function RegisterDoomProtectionHintDamage
 global function UpdateScreenFade
 
 global function ScreenCoverTransition
-global function ScreenCoverEndTransition
 global function ServerToClient_ScreenCoverTransition
 global function SetCustomScreenFadeAsset
+global function ScreenCoverEndTransition
 
 // these must match content/r2/ui/screen_fade.rui
 global const float SCREEN_COVER_TRANSITION_IN_DURATION = 0.7
@@ -21,7 +21,9 @@ struct
 	void functionref() screenFadeFunc
 
 	float screenCoverEndTime = 0.0
+
 	asset ruiAssetName = $"ui/screen_fade.rpak"
+	bool screenCoverHolding = false
 } file
 
 void function ClScreenfade_Init()
@@ -42,7 +44,7 @@ void function ClScreenfade_Init()
 
 	RuiSetFloat3( file.screenFade, "fadeColor", <0, 0, 0> )
 	RuiSetFloat( file.screenFade, "fadeAlpha", 0.0 )
-	RuiSetImage( file.screenFade, "emblemImage", GetModeEmblemImage( GetCurrentPlaylistName() ) )
+	RuiSetImage( file.screenFade, "emblemImage", GetModeBannerLogoOrModeEmblemFallback( GetCurrentPlaylistName() ) )
 }
 
 void function SetCustomScreenFadeAsset( asset fade )
@@ -50,11 +52,27 @@ void function SetCustomScreenFadeAsset( asset fade )
 	file.ruiAssetName = fade
 }
 
+
+void function ScreenCoverEndTransition( float screenTransitionOutDuration = 1.6 )
+{
+	printt( "ScreenCoverTransitionEnd() called" )
+
+	//RuiSetFloat( file.screenFade, "screenTransitionOutDuration", screenTransitionOutDuration )
+	//RuiSetBool( file.screenFade, "continueHoldCover", false )
+
+	if ( !file.screenCoverHolding )
+		wait file.screenCoverEndTime - SCREEN_COVER_TRANSITION_OUT_DURATION - 0.1 - Time()
+	else if ( 0.1 < screenTransitionOutDuration )
+		wait ( screenTransitionOutDuration - 0.1 )
+
+	file.screenCoverHolding = false
+	Chroma_EndBannerTransition()
+}
 void function ScreenCoverTransition( float endTime, bool continueHoldOver = false )
 {
 	// #if DEVELOPER
 		// DumpStack()
-		// printt( "Calling ScreenCoverTransition with endTime", endTime, " at time", Time() )
+		printt( "Calling ScreenCoverTransition with endTime", endTime, " at time", Time() )
 	// #endif
 	// can be called from server
 	// returns the time remaining until the out transition plays
@@ -65,15 +83,17 @@ void function ScreenCoverTransition( float endTime, bool continueHoldOver = fals
 		Chroma_BeginBannerTransition()
 
 		string sound = "UI_Survival_Intro_Banner_Appear"
+		file.screenCoverHolding = continueHoldOver
 
+		table fadeParams = expect table( GetFadeParams() )
+		bool hasActiveFade = expect int( fadeParams.a ) != 0
+
+		
+		//RuiSetBool( file.screenFade, "holdCoverImmediately", hasActiveFade )
+		//RuiSetBool( file.screenFade, "continueHoldCover", file.screenCoverHolding )
 
 		file.screenCoverEndTime = endTime
 		RuiSetGameTime( file.screenFade, "coverEndTime", endTime )
-
-		RuiSetBool( file.screenFade, "isEliteGame", IsEliteGame() )
-		if ( IsEliteGame() )
-			sound = "UI_Survival_Intro_BannerTop5_Appear"
-
 		EmitSoundOnEntity( GetLocalClientPlayer(), sound )
 
 		array<entity> teamPlayers = GetPlayerArrayOfTeam( GetLocalClientPlayer().GetTeam() )
@@ -93,37 +113,16 @@ void function ScreenCoverTransition( float endTime, bool continueHoldOver = fals
 				RuiSetBool( file.screenFade, "playerAvailable" + (index + 1), false )
 			}
 		}
-
-		sound = "UI_Survival_Intro_Banner_Disappear"
-
-		if ( IsEliteGame() )
-			sound = "UI_Survival_Intro_BannerTop5_Disappear"
-
-
-		EmitSoundOnEntityAfterDelay( GetLocalClientPlayer(), sound, max( 0, endTime - Time() - SCREEN_COVER_TRANSITION_OUT_DURATION - 0.1 ) )
 	}
 
-	wait file.screenCoverEndTime - SCREEN_COVER_TRANSITION_OUT_DURATION - 0.1 - Time()
-
-	Chroma_EndBannerTransition()
+	if ( !file.screenCoverHolding )
+		ScreenCoverEndTransition()
 }
 
-// End screen cover transition after optional delay
-float function ScreenCoverEndTransition( float delay = 0.0 )
-{
-	float endTime = Time() + delay + SCREEN_COVER_TRANSITION_OUT_DURATION
-	if ( file.screenCoverEndTime > Time() )
-	{
-		// There's an active cover, end it
-		file.screenCoverEndTime = endTime
-		RuiSetGameTime( file.screenFade, "coverEndTime", endTime )
-	}
-	return delay
-}
 
-void function ServerToClient_ScreenCoverTransition( float endTime )
+void function ServerToClient_ScreenCoverTransition( float endTime, bool holdCover )
 {
-	thread ScreenCoverTransition( endTime )
+	thread ScreenCoverTransition( endTime, holdCover )
 }
 
 
@@ -229,6 +228,7 @@ void function PlayerDeathfieldSoundThread()
 	while ( true )
 	{
 		bool shouldPlay = false
+		bool shouldCheckOtherDeathFieldSources = false
 
 		entity localViewPlayer = GetLocalViewPlayer()
 		if ( !IsValid( localViewPlayer ) )
@@ -254,22 +254,23 @@ void function PlayerDeathfieldSoundThread()
 				shouldPlay = true
 		}
 
+		entity clientPlayer = GetLocalClientPlayer()
 		if ( !arePlaying && shouldPlay )
 		{
 			ourPlayer = localViewPlayer
 			arePlaying = true
 
-			EmitSoundOnEntity( ourPlayer, SOUND_DEATHFIELD_START )
-			EmitSoundOnEntity( ourPlayer, SOUND_DEATHFIELD_CONSTANT )
+			EmitSoundOnEntity( clientPlayer, SOUND_DEATHFIELD_START )
+			EmitSoundOnEntity( clientPlayer, SOUND_DEATHFIELD_CONSTANT )
 		}
 		else if ( arePlaying && !shouldPlay )
 		{
-			if ( IsValid( ourPlayer ) )
+			if ( IsValid( clientPlayer ) )
 			{
 				//
-				StopSoundOnEntity( ourPlayer, SOUND_DEATHFIELD_CONSTANT )
+				StopSoundOnEntity( clientPlayer, SOUND_DEATHFIELD_CONSTANT )
 				//
-				EmitSoundOnEntity( ourPlayer, SOUND_DEATHFIELD_STOP )
+				EmitSoundOnEntity( clientPlayer, SOUND_DEATHFIELD_STOP )
 			}
 
 			arePlaying = false

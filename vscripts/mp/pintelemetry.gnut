@@ -19,6 +19,7 @@ global function PIN_DamageDone
 global function PIN_DamageDoneToPlayerForWeapon
 global function PIN_PlayerEquip
 global function PIN_PlayerUse
+global function PIN_PlayerBannerPickup
 global function PIN_PlayerOutResource
 global function PIN_Interact
 global function PIN_PlayerAbility
@@ -167,6 +168,10 @@ void function PIN_PlayerAbility( entity player, string name, int ability, entity
 void function PIN_PlayerAbilityReady( entity player, int ability )
 {
 
+}
+
+void function PIN_PlayerBannerPickup( entity player, entity itemEnt )
+{
 }
 
 void function PIN_AddToPlayerCountStat( entity player, string ability )

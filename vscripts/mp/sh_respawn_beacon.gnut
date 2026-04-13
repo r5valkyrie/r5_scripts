@@ -3,30 +3,88 @@ global function Sh_RespawnBeacon_Init
 global function RespawnBeacons_RegisterNetworking
 
 global function GetRespawnStyle
+global function GetRemainingRespawnsForPlayer
 global function IsRespawnBeacon
-global function CountTeammatesWaitingToBeRespawned
+global function RespawnChamberOnUse
+global function GetStartingRespawnCount
+global function ShouldRestoreKittedWeapons
+
 global function RespawnEquipped_DontResetInventory
 
-global function GetRespawnStatus
+global function Get_RespawnStatus_String_ForPlayer
+
+global function RespawnBeacon_PLV_NoBanners
+global function Player_Banners_Enabled
 
 #if SERVER
 
 global function RespawnBeacon_GetSuccessFunc
 global function RespawnBeacons_OnSquadEliminated
-global function RespawnBeacon_PutPlayerInDropship
 global function AddCallback_OnDNAPickupDestroyed
-global function OnRespawnChamberSpawned
-global function OnMobileRespawnChamberSpawned
+global function AddCallback_OnRespawnBeaconStartUse
+global function AddCallback_OnRespawnBeaconStopUse
+global function AddCallback_OnTeammatesRespawned
+global function Survival_AddCallback_OnRespawnDropshipCreated
+global function Survival_AddCallback_OnPlayerPutInDropship
+global function ShRespawnBeacon_RegisterAinAnalysisFuncs
+global function DeathBoxOnUse
+global function SpawnPlayersInSkydive
+global function SpawnPlayersInRespawnShipWithSkydive
+global function SpawnPlayerInSkydive_Thread
+global function DoCommonRespawnForPlayer
+global function GetRespawnBeaconLocations
+global function AddRespawnBeaconLocation
+global function ClientCallback_PingNearestRespawn
+global function ClientToServer_GladCardPlayerReset
+                     
+                                             
+                          
 
+global function PutPlayerInDropship
 global function RespawnPlayersInDropship
 global function RespawnPlayersInDropshipAtPoint
 global function RespawnBeaconStartUse_Common
 global function RespawnBeaconStopUse_Common
 global function RespawnUserTeam_Common
-global function RespawnUserTeam
-global function DeathBoxOnUse
-#endif
+global function GetActiveDropshipOrigin
+global function GetAllActiveDropshipOrigins
+global function FadePlayerView
+global function RespawnBeacon_GetNumRemainingPositionsOnDropship
+global function RespawnBeacon_GetBestObserverTarget
+                   
+global function PingNearestRespawnBeacon
+      
 
+                           
+global function RespawnBeacon_StartUse_Pulsate
+global function RespawnBeacon_StopUse_Pulsate
+global function RespawnEquipped_Save
+global function RespawnEquipped_Restore
+global function Has_BR_Respawn_WithArmor
+global function Has_BR_Respawn_WithWeapons
+
+                                 
+
+global function LastDeathSuicideStatus_Analyze
+global function LastDeathSuicideStatus_Get
+
+#if DEV
+global function DEV_RespawnBeacon_RespawnPlayerAtBeaconAtCrosshair
+global function DEV_RespawnBeacon_DebugDraws
+global function DEV_RespawnEquipped_AllowSuicides
+global function DEV_RespawnEquipped_Test_Restore_Armor_ByName
+global function DEV_RespawnEquipped_Test_Restore_Armor
+global function DEV_RespawnEquipped_Save_Weapons
+global function DEV_RespawnEquipped_Restore_Weapons
+global function DEV_Dropship_HeightMod
+
+global function DEV_Player_RespawnStatus
+global function DEV_Player_RespawnStatus_ByName
+
+#endif // DEV
+
+global function RespawnBeacon_ClientToServer_PingBeaconFromMap
+#endif // SERVER
 
 #if CLIENT
 global function ServerCallback_RespawnPodStarted
@@ -39,166 +97,323 @@ global function ServerCallback_RespawnBeaconStop
 global function TryPingRespawnItem
 #endif
 
-global const string RESPAWN_CHAMBER_TARGETNAME         = "respawn_chamber"
-global const string RESPAWN_DNA_TARGETNAME             = "respawn_dna"
-global const string RESPAWN_DROPSHIP_TARGETNAME        = "respawn_dropship"
+#if CLIENT
+global function ServerToClient_RespawnChamberOnUse
+#endif
 
-global const asset MOBILE_RESPAWN_BEACON_MODEL 			= $"mdl/props/mobile_respawn_beacon/mobile_respawn_beacon_animated.rmdl"
-global const string MOBILE_RESPAWN_BEACON_TARGETNAME 	= "respawn_chamber_mobile"
-global const string MOBILE_RESPAWN_BEACON_SCRIPTNAME 	= "respawn_chamber_mobile"
+global function AddBeaconEntToRespawnBeaconsArray
+global function GetRespawnStatus
+
+global function CountTeammatesWaitingToBeRespawned
+global function HasTeammatesToRespawn
+global function ShouldFastBannerPickup
+global function HasInterruptableBannerPickup
+#if SERVER
+global function RespawnTeamPlayers
+global function HandleRespawnBannerPickup_Thread
+global function RespawnBeacon_GetClosestValidBeacon
+global function ClientToServer_CancelBannerPickupAnim
+#endif
+#if CLIENT
+global function UpdateRespawnChamberRuis
+#endif
+
+                         
+          
+                                                            
+                              
+      
+                               
+
+global const string RESPAWN_CHAMBER_TARGETNAME = "respawn_chamber"
+                   
+global const string RESPAWN_CHAMBER_SCRIPTNAME = "respawn_chamber"
+      
+
+global const string RESPAWN_DNA_TARGETNAME = "respawn_dna"
+global const string RESPAWN_DROPSHIP_TARGETNAME = "respawn_dropship"
+global const string PICKING_UP_RESPAWN_BANNER_ANIM = "ptpov_burn_card_activate_seq_gladcard"
+
+const string RESPAWN_BEACON_ALTMOVENODE_MOVER_SCRIPTNAME = "respawn_beacon_altmovenode_mover"
+
+const float RESPAWN_BEACON_HOLO_EFFECT_HEIGHT = 75.0
+
+global const float RESPAWN_DNA_LIFETIME = 90.0
+const float RESPAWN_DROP_TIME = 10.0
+global const float RESPAWN_BEACON_RESPAWN_TIME = 5.0
+global const int RESPAWN_BEACON_MAX_NUM_POSITIONS_ON_DROPSHIP = 4
+
+global const int DROPSHIP_ANIM_HEIGHT_OFFSET = 2897
+
+global const string RESPAWN_BEACON_SUCCESS_SOUND = "Survival_RespawnChamber_Activate"
+global const string RESPAWN_BEACON_LOOP_SOUND = "Survival_RespawnBeacon_Linking_loop"
+
+global const asset RESPAWN_DROPSHIP_MODEL = $"mdl/vehicle/goblin_dropship/goblin_dropship.rmdl"
+global const asset RESPAWN_BEACON_EMITTER_FX = $"P_chamber_proj_holo"
+global const asset RESPAWN_BEACON_BEAM_FX = $"P_chamber_beam"
+global const asset RESPAWN_BEACON_SCAN_FX = $"P_chamber_celebration_s19"
+
+// Interact Pulsate
+const asset RESPAWN_BEACON_PULSATE_FX = $"P_chamber_pulse_s19"	// TODO: Replace with real fx - Fx replaced with : CP5 = Color RGB range(0-255,0-255,0-255) ie: 255, 0, 0 = red
+const string RESPAWN_INTERACT_PULSATE_SOUND = "Survival_RespawnEquippedBeacon_Full" // was "Dummie_WarpIn_3P"
+
+global const asset RESPAWN_BEACON_ICON = $"rui/hud/gametype_icons/survival/dna_station"
+global const asset RESPAWN_BEACON_ICON_SMALL = $"rui/hud/gametype_icons/survival/dna_station_small"
+global const asset RESPAWN_BEACON_INUSE_ICON = $"rui/hud/gametype_icons/survival/dna_station_inuse"
+global const asset RESPAWN_BEACON_DISABLED_ICON = $"rui/hud/gametype_icons/survival/dna_station_disabled"
+const string SOUND_HOLOGRAM_LOOP = "Survival_Emit_RespawnChamber"
+
+const float RESPAWN_CHAMBER_ICON_FADE_DIST_NEAR = 300.0
+const float RESPAWN_CHAMBER_ICON_FADE_DIST_FAR = 1000.0
+
 const int RESPAWN_THANKS_DELAY = 4
-
-const float RESPAWN_BEACON_HOLO_EFFECT_HEIGHT          = 75.0
-
-global const float RESPAWN_DNA_LIFETIME                = 90.0
-const float RESPAWN_DROP_TIME                          = 10.0
-const asset RESPAWN_BEACON_MODEL                       = $"mdl/dev/empty_model.rmdl"
-global const float RESPAWN_BEACON_RESPAWN_TIME         = 5.0
-global const float MOBILE_RESPAWN_BEACON_RESPAWN_TIME         = 7.0
-
-global const string RESPAWN_BEACON_SUCCESS_SOUND       = "Survival_RespawnChamber_Activate"
-global const string RESPAWN_BEACON_LOOP_SOUND          = "Survival_RespawnBeacon_Linking_loop"
-
-global const asset RESPAWN_DROPSHIP_MODEL                     = $"mdl/vehicle/goblin_dropship/goblin_dropship.rmdl"
-
-global const asset RESPAWN_BEACON_EMITTER_FX           = $"P_chamber_proj_holo"
-global const asset RESPAWN_BEACON_BEAM_FX              = $"P_chamber_beam"
-global const asset RESPAWN_BEACON_SCAN_FX              = $"P_chamber_celebration"
-
-global const asset RESPAWN_BEACON_ICON                 = $"rui/hud/gametype_icons/survival/dna_station"
-global const asset RESPAWN_BEACON_ICON_SMALL           = $"rui/hud/gametype_icons/survival/dna_station_small"
-const string SOUND_HOLOGRAM_LOOP                       = "Survival_Emit_RespawnChamber"
 
 const string ANIM_FLYIN_IDLE = "dropship_classic_mp_flyin_idle"
 const string ANIM_FLYIN_MOVE = "dropship_classic_mp_flyin"
 
-const float RESPAWN_CHAMBER_ICON_FADE_DIST_NEAR        = 300.0
-const float RESPAWN_CHAMBER_ICON_FADE_DIST_FAR         = 1000.0
+const float MOBILE_RESPAWN_BEACON_ICON_FADE_DIST_ZERO = 0.0
+global const string MOBILE_RESPAWN_BEACON_TARGETNAME = "respawn_chamber_mobile"
+                   
+global const string MOBILE_RESPAWN_BEACON_SCRIPTNAME = "respawn_chamber_mobile"
+      
 
-global enum eRespawnStyle
-{
-	NONE,
-	RESPAWN_CHAMBERS,
-	WAVE_SPAWN_ON_SQUAD,
-	SPAWN_NEAR_SQUAD,
-	CUSTOM_RESPAWN,
-	SPAWN_GROUP_SKYDIVE,
-	ROLLING_RESPAWN,
-	_COUNT
-}
+                         
+                                                                             
+      
+
+const string FUNCNAME_PingBeaconFromMap = "RespawnBeacon_ClientToServer_PingBeaconFromMap"
 
 global struct dropshipAnimData
 {
-	string idleAnim
-	string idlePOVAnim
-	string jumpAnim
-	string jumpPOVAnim
-	string attachment = "origin"
-	bool hideProxy = true
+	string                     idleAnim
+	string                     idlePOVAnim
+	string                     jumpAnim
+	string                     jumpPOVAnim
+	string                     attachment = "origin"
+	bool                       hideProxy = true
 	void functionref( entity ) viewConeFunc
-	float yawAngle
-	string firstPersonJumpOutSound // Unfortunately first person anims play for everybody, not just the person who the anim is played upon, so script needs to play the sound as opposed to a qc entry
+	float                      yawAngle
+	string                     firstPersonJumpOutSound // Unfortunately first person anims play for everybody, not just the person who the anim is played upon, so script needs to play the sound as opposed to a qc entry
 }
+
+global struct DropshipAltFlyinData
+{
+	vector startPos
+	vector endPos
+	float  timeToTake
+	entity dropship
+	string dropshipAISettings
+}
+
+                           
+struct sRestoreWeaponInfo
+{
+	entity ent
+	string weaponRef = ""
+	array< string > modRefs = []
+}
+
+struct respawnLoadout
+{
+	array< sRestoreWeaponInfo > restoreWeaponInfos
+
+               
+                                               
+                     
+
+	ArmorData armorData
+	string helmetRef
+
+	bool wasDeath_Suicide
+}
+                                 
 
 struct
 {
-	array<dropshipAnimData> dropshipAnimDataList
-	array<entity> allStations
+	array<dropshipAnimData>      dropshipAnimDataList
+	array<entity>                allStations
 
 	#if CLIENT
-		array<var> respawnChamberRuis
+		array<var>         respawnChamberRuis
+		array<var>		   respawnChamberFullmapRuis
 		table<entity, int> chamberToBeamFX
+
+		bool mobileRespawnSpawnInProgress
 	#endif
 
 	#if SERVER
 		array< void functionref(entity,entity) > Callbacks_OnRespawnBeaconStartUse
 		array< void functionref(entity,entity) > Callbacks_OnRespawnBeaconStopUse
-		array< void functionref(entity) >	callbacks_OnDNAPickupDestroyed
-		table< entity, float > lastPingTimes
-	#endif
+		array< void functionref(entity,entity,array<entity>) > Callbacks_OnTeammatesRespawned
+		array< void functionref(entity) > Callbacks_OnRespawnDropshipCreated
+		array< void functionref(entity, entity) > Callbacks_OnPlayerPutInDropship
+		array< void functionref(entity) > callbacks_OnDNAPickupDestroyed
+		table< entity, float >	lastPingTimes
+		table< entity, vector >	activeDropshipOrigins
+		array<vector> respawnBeaconLocations
+		table< entity, int > dropshipToNumPlayersOnDropshipTable
+		int dropshipVerticalOffsetCount = 0
+		                           
+			table< entity, respawnLoadout > brRespawnLoadouts // respawn loadouts indexed by player.
+			bool respawning_JumpGunsOut = true
+                                   
+
+		bool debug_RespawnEquipped_SuicidesAllowed = true
+
+		// Last Time Enemy Damaged Player Check
+		table< entity, float > lastCombatEncounterVsEnemy // Last time player was damaged by an enemy, indexed by player.
+
+		#if DEV
+			bool debugDraws = false
+			float debug_additional_dropship_heightmod = 0.0
+		#endif // DEV
+
+		table< entity, bool > lastDeathSuicideStatus_ByPlayer
+
+		array< entity > playersWhoveDiedBefore
+
+		table< entity, bool > playerRecentlyRespawnEquipped
+	#endif // SERVER
 }
 file
 
 void function Sh_RespawnBeacon_Init()
 {
 	#if SERVER
-	AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_revival_chamber", OnRespawnChamberSpawned )
-	#endif
+		                            
+			if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+                                    
+		
+		AddSpawnCallbackEditorClass( "prop_dynamic", "script_survival_revival_chamber", OnRespawnChamberSpawned )
+	#endif // SERVER
+
+	PrecacheScriptString( RESPAWN_CHAMBER_SCRIPTNAME )
 
 	PrecacheModel( RESPAWN_DROPSHIP_MODEL )
-	// AddCallback_EntitiesDidLoad( RespawnBeacon_EntitiesdidLoad )
 
 	if ( GetRespawnStyle() == eRespawnStyle.NONE )
 		return
 
-	PrecacheModel( RESPAWN_BEACON_MODEL )
 	PrecacheParticleSystem( RESPAWN_BEACON_EMITTER_FX )
 	PrecacheParticleSystem( RESPAWN_BEACON_BEAM_FX )
 	PrecacheParticleSystem( RESPAWN_BEACON_SCAN_FX )
+	PrecacheParticleSystem( RESPAWN_BEACON_PULSATE_FX )
+
+	#if SERVER || CLIENT
+		Remote_RegisterServerFunction( "ClientCallback_PingNearestRespawn", "vector", -FLT_MAX, FLT_MAX, 32 )
+		Remote_RegisterServerFunction( FUNCNAME_PingBeaconFromMap, "typed_entity", "prop_script" )
+
+		if ( HasInterruptableBannerPickup() )
+		{
+			Remote_RegisterServerFunction( "ClientToServer_CancelBannerPickupAnim" )
+		}
+	#endif
 
 	#if CLIENT
 		RegisterSignal( "ReviveRuiThread" )
 		RegisterSignal( "SpectatorShowRespawnRui" )
 
-		AddCreateCallback( "prop_dynamic", RespawnEntitySpawned )
-		AddCreateCallback( "prop_script", RespawnEntitySpawned )
+		                            
+			if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+                                    
+			{
+				AddCreateCallback( "prop_dynamic", RespawnEntitySpawned )
+				AddCreateCallback( "prop_script", RespawnEntitySpawned )
+			}
 
 		AddCreateCallback( PLAYER_WAYPOINT_CLASSNAME, PlayerWaypoint_CreateCallback )
 		AddDestroyCallback( PLAYER_WAYPOINT_CLASSNAME, PlayerWaypoint_DestroyCallback )
 
-		AddCallback_OnClientScriptInit( OverrideMinimapPackages )
+		if ( HasInterruptableBannerPickup() )
+		{
+			RegisterConCommandTriggeredCallback( "+attack", AttemptCancelBannerPickup )
+			RegisterConCommandTriggeredCallback( "+melee", AttemptCancelBannerPickup )
+
+			RegisterConCommandTriggeredCallback( "+speed", AttemptCancelBannerPickup )
+		}
+
+		                            
+			if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+                                    
+			{
+				RegisterMinimapPackages()
+			}
 
 		RegisterButtonPressedCallback( KEY_SPACE, TryPingRespawnItem )
 		RegisterButtonPressedCallback( BUTTON_A, TryPingRespawnItem )
 
-		if ( (GetRespawnStyle() == eRespawnStyle.RESPAWN_CHAMBERS) && RespawnBeaconsAreEnabled() )
+		if( RespawnBeacons_PingFromMap_Enabled() )
+			AddCallback_OnFindFullMapAimEntity( GetRespawnBeaconUnderAim, PingRespawnBeaconUnderAim )
+
+		if ( (GetRespawnStyle() == eRespawnStyle.RESPAWN_CHAMBERS) && RespawnBeaconsAreEnabled() && !RespawnBeacons_ShouldEnableBeaconsInNonBeaconRespawnMode() )
 			SetMapFeatureItem( 1100, "#RESPAWN_BEACON", "#RESPAWN_BEACON_DESC", RESPAWN_BEACON_ICON )
 
 	#elseif SERVER
-		AddSpawnCallback( "prop_dynamic", RespawnEntitySpawned )
-		AddSpawnCallback( "prop_script", RespawnEntitySpawned )
 
-		AddClientCommandCallback( "PingNearestRespawn", ClientCommand_PingNearestRespawn )
+		                            
+			if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+                                    
+			{
+				AddSpawnCallback( "prop_dynamic", RespawnEntitySpawned )
+				AddSpawnCallback( "prop_script", RespawnEntitySpawned )
+			}
 
+		AddCallback_GameStatePostEnter( eGameState.Prematch, RespawnBeacon_OnPrematch )
+
+		AddCallback_OnClientConnected( RespawnBeacon_OnClientConnected )
 		AddCallback_OnClientDisconnected( RespawnBeacon_OnClientDisconnected )
+		AddCallback_OnPlayerPostRespawned( OnPlayerPostRespawned_RespawnEquipped )
 
 		// from CLASSIC MP, because I didn't want to revive that file
 		RegisterSignal( "sRampOpen" )
+		RegisterSignal( "PlayersDeployingFromDropship" )
+		RegisterSignal( "PlayerRedeployingFromDropship" )
 
+		RegisterSignal( "pickingUpRespawnBanner" )
+
+		                           
+			RegisterSignal( "StopBeaconPulsate" )
+			RegisterSignal( "RespawnEquippedRestoreDone" )
+                                   
+		
+		//front left
 		dropshipAnimData dataForPlayerA
-		dataForPlayerA.idleAnim           = "Classic_MP_flyin_exit_playerA_idle"
-		dataForPlayerA.idlePOVAnim        = "Classic_MP_flyin_exit_povA_idle"
-		dataForPlayerA.jumpAnim           = "Classic_MP_flyin_exit_playerA_jump"
-		dataForPlayerA.jumpPOVAnim        = "Classic_MP_flyin_exit_povA_jump"
-		dataForPlayerA.viewConeFunc       = ViewConeWide
-		dataForPlayerA.yawAngle           = -18.0
+		dataForPlayerA.idleAnim = "Classic_MP_flyin_exit_playerA_idle"
+		dataForPlayerA.idlePOVAnim = "Classic_MP_flyin_exit_povA_idle"
+		dataForPlayerA.jumpAnim = "Classic_MP_flyin_exit_playerA_jump"
+		dataForPlayerA.jumpPOVAnim = "Classic_MP_flyin_exit_povA_jump"
+		dataForPlayerA.viewConeFunc = ViewConeWide
+		dataForPlayerA.yawAngle = -18.0
 		dataForPlayerA.firstPersonJumpOutSound = "commander_sequence_soldier_a_jump"
 
+		//back right
 		dropshipAnimData dataForPlayerB
-		dataForPlayerB.idleAnim           = "Classic_MP_flyin_exit_playerB_idle"
-		dataForPlayerB.idlePOVAnim        = "Classic_MP_flyin_exit_povB_idle"
-		dataForPlayerB.jumpAnim           = "Classic_MP_flyin_exit_playerB_jump"
-		dataForPlayerB.jumpPOVAnim        = "Classic_MP_flyin_exit_povB_jump"
-		dataForPlayerB.viewConeFunc       = ViewConeWide
-		dataForPlayerB.yawAngle           = 8.0
+		dataForPlayerB.idleAnim = "Classic_MP_flyin_exit_playerB_idle"
+		dataForPlayerB.idlePOVAnim = "Classic_MP_flyin_exit_povB_idle"
+		dataForPlayerB.jumpAnim = "Classic_MP_flyin_exit_playerB_jump"
+		dataForPlayerB.jumpPOVAnim = "Classic_MP_flyin_exit_povB_jump"
+		dataForPlayerB.viewConeFunc = ViewConeWide
+		dataForPlayerB.yawAngle = 8.0
 		dataForPlayerB.firstPersonJumpOutSound = "commander_sequence_soldier_b_jump"
 
+		//front right
 		dropshipAnimData dataForPlayerC
-		dataForPlayerC.idleAnim           = "Classic_MP_flyin_exit_playerC_idle"
-		dataForPlayerC.idlePOVAnim        = "Classic_MP_flyin_exit_povC_idle"
-		dataForPlayerC.jumpAnim           = "Classic_MP_flyin_exit_playerC_jump"
-		dataForPlayerC.jumpPOVAnim        = "Classic_MP_flyin_exit_povC_jump"
-		dataForPlayerC.viewConeFunc       = ViewConeWide
-		dataForPlayerC.yawAngle           = 8.0
+		dataForPlayerC.idleAnim = "Classic_MP_flyin_exit_playerC_idle"
+		dataForPlayerC.idlePOVAnim = "Classic_MP_flyin_exit_povC_idle"
+		dataForPlayerC.jumpAnim = "Classic_MP_flyin_exit_playerC_jump"
+		dataForPlayerC.jumpPOVAnim = "Classic_MP_flyin_exit_povC_jump"
+		dataForPlayerC.viewConeFunc = ViewConeWide
+		dataForPlayerC.yawAngle = 8.0
 		dataForPlayerC.firstPersonJumpOutSound = "commander_sequence_soldier_c_jump"
 
+		//back left
 		dropshipAnimData dataForPlayerD
-		dataForPlayerD.idleAnim           = "Classic_MP_flyin_exit_playerD_idle"
-		dataForPlayerD.idlePOVAnim        = "Classic_MP_flyin_exit_povD_idle"
-		dataForPlayerD.jumpAnim           = "Classic_MP_flyin_exit_playerD_jump"
-		dataForPlayerD.jumpPOVAnim        = "Classic_MP_flyin_exit_povD_jump"
-		dataForPlayerD.viewConeFunc       = ViewConeWide
-		dataForPlayerD.yawAngle           = -16.0
+		dataForPlayerD.idleAnim = "Classic_MP_flyin_exit_playerD_idle"
+		dataForPlayerD.idlePOVAnim = "Classic_MP_flyin_exit_povD_idle"
+		dataForPlayerD.jumpAnim = "Classic_MP_flyin_exit_playerD_jump"
+		dataForPlayerD.jumpPOVAnim = "Classic_MP_flyin_exit_povD_jump"
+		dataForPlayerD.viewConeFunc = ViewConeWide
+		dataForPlayerD.yawAngle = -16.0
 		dataForPlayerD.firstPersonJumpOutSound = "commander_sequence_soldier_d_jump"
 
 		file.dropshipAnimDataList = [ dataForPlayerA, dataForPlayerB, dataForPlayerC, dataForPlayerD ]
@@ -207,52 +422,48 @@ void function Sh_RespawnBeacon_Init()
 		if ( GetRespawnStyle() == eRespawnStyle.RESPAWN_CHAMBERS )
 		{
 			AddCallback_OnDeathBoxSpawned( OnDeathBoxSpawned )
+			AddCallback_OnGetBestObserverTarget( RespawnBeacon_GetBestObserverTarget )
+			AddCallback_OnPlayerKilled( OnPlayerKilled )
 		}
+
+		                            
+		AddCallback_OnQuickchatEvent( eCommsAction.MARK_MY_LAST_DEATHBOX,  PingMyLastDeathbox )
+        
 	#endif
-	
-	ShRespawnBeacon_RegisterAinAnalysisFuncs()
 }
 
 void function RespawnBeacons_RegisterNetworking()
 {
-	RegisterNetworkedVariableSafe( "respawnStatus", SNDC_PLAYER_GLOBAL, SNVT_INT, eRespawnStatus.NONE )
-	RegisterNetworkedVariableSafe( "respawnStatusEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariableSafe( "respawnBannerPickedUpTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "respawnsRemaining", SNDC_PLAYER_GLOBAL, SNVT_INT, GetStartingRespawnCount() )
+	RegisterNetworkedVariable( "respawnStatus", SNDC_PLAYER_GLOBAL, SNVT_INT, eRespawnStatus.NONE )
+	RegisterNetworkedVariable( "respawnStatusEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariable( "respawnBannerPickedUpTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
 
 	#if CLIENT
-		RegisterNetworkedVariableChangeCallback_intSafe( "respawnStatus", RespawnStatusChanged )
+		RegisterNetVarIntChangeCallback( "respawnStatus", RespawnStatusChanged )
 	#endif
 }
-
 
 void function ShRespawnBeacon_RegisterAinAnalysisFuncs()
 {
 	AddDropshipFlightAnalysis( eFlightPathAnalysisIndex.RESPAWN_DROPSHIP_FLYIN_MOVE, RESPAWN_DROPSHIP_MODEL, ANIM_FLYIN_MOVE, AnaylsisFuncDropshipTestJumpout, "dropship_deploy" )
 }
 
-bool function IsRespawnBeacon( entity ent )
-{
-	switch ( ent.GetTargetName() )
-	{
-		case RESPAWN_CHAMBER_TARGETNAME:
-		case MOBILE_RESPAWN_BEACON_TARGETNAME:
-			return true
-	}
-	return false
-}
-
 #if CLIENT
-void function OverrideMinimapPackages( entity player )
+void function RegisterMinimapPackages()
 {
-	if ( GetRespawnStyle() == eRespawnStyle.RESPAWN_CHAMBERS )
+	if ( GetRespawnStyle() == eRespawnStyle.RESPAWN_CHAMBERS || RespawnBeacons_ShouldEnableBeaconsInNonBeaconRespawnMode() )
 	{
 		RegisterMinimapPackage( "prop_script", eMinimapObject_prop_script.RESPAWN_CHAMBER, MINIMAP_OBJECT_RUI, MinimapPackage_RespawnChamber, FULLMAP_OBJECT_RUI, MinimapPackage_RespawnChamber )
 		RegisterMinimapPackage( "prop_script", eMinimapObject_prop_script.RESPAWN_DNA, $"ui/minimap_square_respawn_dna_pickup.rpak", MinimapPackage_RespawnDNA, $"ui/in_world_minimap_respawn_dna.rpak", MinimapPackage_RespawnDNA )
 	}
 }
 
-void function RespawnStatusChanged( entity player, int old, int new, bool actuallyChanged )
+void function RespawnStatusChanged( entity player, int new )
 {
+	if ( !GetCurrentPlaylistVarBool( "mrb_show_ingame_ui", true ) )
+		return
+
 	if ( player == GetLocalClientPlayer() )
 		UpdateRespawnStatus( new )
 
@@ -274,37 +485,39 @@ void function RespawnStatusChanged( entity player, int old, int new, bool actual
 		UpdateRespawnChamberRuis( rui, waitingToBeRespawned )
 	}
 
+	foreach( rui in file.respawnChamberFullmapRuis )
+	{
+		RuiSetBool( rui, "hasSmallIcon", !waitingToBeRespawned )
+	}
+
 	ArrayRemoveInvalid( file.allStations )
 
-	if ( GetRespawnStyle() != eRespawnStyle.NONE )
+	if ( GetRespawnStyle() != eRespawnStyle.NONE && !RespawnBeacons_ShouldEnableBeaconsInNonBeaconRespawnMode() )
 	{
 		int fxId = GetParticleSystemIndex( RESPAWN_BEACON_BEAM_FX )
 
-	foreach ( ent in file.allStations )
-	{
-		if( ent.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME )
-			continue
-		
-		if ( waitingToBeRespawned )
+		foreach ( ent in file.allStations )
 		{
-			if ( !EffectDoesExist( file.chamberToBeamFX[ ent ] ) )
+			if ( waitingToBeRespawned )
 			{
-				file.chamberToBeamFX[ ent ] = StartParticleEffectOnEntityWithPos( ent, fxId, FX_PATTACH_POINT_FOLLOW_NOROTATE, ent.LookupAttachment( "FX_EMITTER" ), <0,0,0>, <0,0,0> )
+				if ( !EffectDoesExist( file.chamberToBeamFX[ ent ] ) )
+				{
+					file.chamberToBeamFX[ ent ] = StartParticleEffectOnEntity( ent, fxId, FX_PATTACH_POINT_FOLLOW_NOROTATE, ent.LookupAttachment( "FX_EMITTER" ) )
+				}
 			}
-		}
-		else
-		{
-			if ( EffectDoesExist( file.chamberToBeamFX[ ent ] ) )
+			else
 			{
-				EffectStop( file.chamberToBeamFX[ ent ], true, true )
-			}
+				if ( EffectDoesExist( file.chamberToBeamFX[ ent ] ) )
+				{
+					EffectStop( file.chamberToBeamFX[ ent ], true, true )
+				}
 
 				file.chamberToBeamFX[ ent ] = -1
 			}
 		}
 	}
 
-	// DeathScreen_RespawnStatusChanged takes 2 params (player, new)
+	// can't create multiple callbacks for networked vars so I have to call the death screen script from here.
 	DeathScreen_RespawnStatusChanged( player, new )
 }
 
@@ -316,6 +529,12 @@ void function UpdateRespawnChamberRuis( var rui, bool waitingToBeRespawned )
 		RuiSetBool( rui, "pinToEdge", true )
 		RuiSetBool( rui, "showClampArrow", true )
 	}
+	else if ( file.mobileRespawnSpawnInProgress )
+	{
+		RuiSetFloat( rui, "distanceFade", MOBILE_RESPAWN_BEACON_ICON_FADE_DIST_ZERO )
+		RuiSetBool( rui, "pinToEdge", false )
+		RuiSetBool( rui, "showClampArrow", false )
+	}
 	else
 	{
 		RuiSetFloat( rui, "distanceFade", RESPAWN_CHAMBER_ICON_FADE_DIST_NEAR )
@@ -323,64 +542,320 @@ void function UpdateRespawnChamberRuis( var rui, bool waitingToBeRespawned )
 		RuiSetBool( rui, "showClampArrow", false )
 	}
 }
-#endif
+#endif // CLIENT
+
 bool function RespawnBeaconsAreEnabled()
 {
 	return GetCurrentPlaylistVarBool( "respawn_beacons_enabled", true )
 }
 
-void function RespawnEntitySpawned( entity ent )
+int function GetStartingRespawnCount()
+{
+	return GetCurrentPlaylistVarInt( "respawns", 0 )
+}
+
+#if CLIENT||SERVER
+bool function RespawnBeacons_PingFromMap_Enabled()
+{
+	return GetCurrentPlaylistVarBool( "respawnbeacons_pingfrommap_enabled", true )
+}
+#endif
+
+#if CLIENT||SERVER
+// This function is used to enable some beacon functionality ( like enabling the icons ) for modes that don't actually use them for respawning
+bool function RespawnBeacons_ShouldEnableBeaconsInNonBeaconRespawnMode()
+{
+                    
+                                                                           
+              
+       
+
+	                            
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+			return true
+                                   
+
+	return false
+}
+#endif
+
+bool function IsRespawnBeacon( entity ent )
 {
 	switch ( ent.GetTargetName() )
 	{
-		case MOBILE_RESPAWN_BEACON_TARGETNAME:
-			ent.Anim_Play("mobile_respawn_beacon_idle")
 		case RESPAWN_CHAMBER_TARGETNAME:
-			#if CLIENT
+                         
+                                    
+      
+		case MOBILE_RESPAWN_BEACON_TARGETNAME:
+			return true
+	}
+	return false
+}
+
+bool function ShouldFastBannerPickup()
+{
+	return GetCurrentPlaylistVarBool( "fast_banner_pickup", true )
+}
+
+bool function HasInterruptableBannerPickup()
+{
+	return GetCurrentPlaylistVarBool( "cancelable_banner_pickup_enabled", true )
+}
+
+bool function ShouldRestoreKittedWeapons()
+{
+	bool isKittedWeaponsGameMode = false
+
+	                            
+		isKittedWeaponsGameMode = GetCurrentPlaylistVarBool( "is_gamemode_battle_rush", false )
+                                  
+
+	                            
+		isKittedWeaponsGameMode = isKittedWeaponsGameMode || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY )
+       
+
+                              
+                                                                                                                          
+       
+
+	return isKittedWeaponsGameMode
+}
+
+void function RespawnEntitySpawned( entity ent )
+{
+	if ( !IsRespawnStationEnt( ent ) )
+		return
+
+	if ( !RespawnBeaconsAreEnabled() && ent.GetTargetName() != MOBILE_RESPAWN_BEACON_TARGETNAME )
+	{
+		//gets rid of the beacons without short-circuiting the script.
+		//sh_respawn_beacon has a bunch of stuff we need to use elsewhere like dropship logic
+		//that gets broken currently if we just change respawn_style.
+		//dropship logic should get pulled into it's own black box when we get a chance
+
+		if ( IsValid( ent ) )
+			ent.Destroy()
+		return
+	}
+
+	#if CLIENT
+		if ( GetCurrentPlaylistVarBool( "mrb_show_ingame_ui", true ) )
+		{
 			AddEntityCallback_GetUseEntOverrideText( ent, RespawnChamber_TextOverride )
-			var rui = AddOverheadIcon( ent, RESPAWN_BEACON_ICON, false, $"ui/overhead_icon_respawn_beacon.rpak" )
-			RuiSetFloat2( rui, "iconSize", <80,80,0> )
+			var rui
+			if ( ent.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME )
+				rui = AddOverheadIcon( ent, RESPAWN_BEACON_ICON, false, $"ui/overhead_icon_mobile_respawn_beacon.rpak" )
+			else
+				rui = AddOverheadIcon( ent, RESPAWN_BEACON_ICON, false, $"ui/overhead_icon_respawn_beacon.rpak" )
+			RuiSetFloat2( rui, "iconSize", <80, 80, 0> )
 			RuiSetFloat( rui, "distanceFade", RESPAWN_CHAMBER_ICON_FADE_DIST_NEAR )
 			RuiSetBool( rui, "adsFade", true )
 			RuiSetString( rui, "hint", "#RESPAWN_ALLCAPS" )
 
 			thread ManageRespawnChamberData( ent, rui )
 
-			if ( GetCurrentPlaylistVarBool( "enable_radar_on_respawn_beacons", true ) )
-				thread AddRadarToRespawnStation( ent )
-			#endif
+			if ( ent.GetTargetName() == RESPAWN_CHAMBER_TARGETNAME ) // if ( GetCurrentPlaylistVarBool( "enable_radar_on_respawn_beacons", true ) )
+				thread RespawnBeacon_PlayHologramVFX( ent )
+		}
+		else if ( IsValid( ent ) && ent in file.chamberToBeamFX )
+		{
+			if ( EffectDoesExist( file.chamberToBeamFX[ ent ] ) )
+				EffectStop( file.chamberToBeamFX[ ent ], true, true )
+		}
+	#elseif SERVER
+		ent.DisableHibernation()
+		ent.AllowMantle()
+		ent.SetUsable()
+		ent.SetUsableByGroup( "pilot" )
+		ent.AddUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
+		ent.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD | TT_GRAVITY_LIFT | TT_BLACKHOLE )
 
-			#if SERVER
-			ent.DisableHibernation()
-			ent.AllowMantle()
-			ent.SetUsable()
-			ent.SetUsableByGroup( "pilot" )
-			ent.AddUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
-			ent.Minimap_SetAlignUpright( true )
-			ent.Minimap_SetClampToEdge( false )
-			ent.Minimap_SetCustomState( eMinimapObject_prop_script.RESPAWN_CHAMBER )
-			ent.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
-			#endif
+		ent.Minimap_SetAlignUpright( true )
+		ent.Minimap_SetClampToEdge( false )
+		ent.Minimap_SetCustomState( eMinimapObject_prop_script.RESPAWN_CHAMBER )
+		ent.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
+	#endif
 
-			file.allStations.append( ent )
+	AddBeaconEntToRespawnBeaconsArray( ent )
 
-			SetCallback_CanUseEntityCallback( ent, IsNotBusy )
-			AddCallback_OnUseEntity( ent, RespawnChamberOnUse )
-			break
-			
-			#if SERVER
-			ent.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_OWNER
-			ent.Hide()
-			ent.Minimap_SetAlignUpright( true )
-			ent.Minimap_SetClampToEdge( true )
-			ent.Minimap_SetCustomState( eMinimapObject_prop_script.RESPAWN_DNA )
-			#endif
-			break
-	}
+	SetCallback_CanUseEntityCallback( ent, IsNotBusy )
+	SetCallback_ShouldUseBlockReloadCallback( ent, SimpleShouldNotBlockReloadCallback )
 
+	AddCallback_OnUseEntity_ClientServer( ent, RespawnChamberOnUse )
+
+	//#if SERVER
+	//	ent.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_OWNER
+	//	ent.Hide()
+	//	ent.Minimap_SetAlignUpright( true )
+	//	ent.Minimap_SetClampToEdge( true )
+	//	ent.Minimap_SetCustomState( eMinimapObject_prop_script.RESPAWN_DNA )
+	//#endif
+}
+
+// Add valid beacons to an array of all the beacons that have spawned
+// Made global so other script can add the beacons if they are spawned differently but still want to use the functions in this script
+void function AddBeaconEntToRespawnBeaconsArray( entity beacon )
+{
+	if ( IsValid( beacon ) )
+		file.allStations.append( beacon )
 }
 
 #if SERVER
+void function SpawnPlayersInSkydive( array< entity > players, entity leaderPlayer, vector spawnLocation, vector spawnAngles, int matchState, vector initialVelocity = < 0, 0, 0 > )
+{
+	// We need to do the jumpmaster first so that everything works inside PlayerSkyDive
+	if ( IsValid( leaderPlayer ) )
+	{
+		thread SpawnPlayerInSkydive_Thread( leaderPlayer, spawnLocation, spawnAngles, matchState, players, leaderPlayer )
+	}
+
+	foreach ( player in players )
+	{
+		if ( !IsValid( player ) || player == leaderPlayer )
+			continue
+
+		// Set the player to the jumpmaster if there isn't already one selected. Avoids errors due to invalid jumpmaster
+		entity jumpmaster = leaderPlayer
+		if ( !IsValid( leaderPlayer ) )
+		{
+			jumpmaster = player
+		}
+
+		thread SpawnPlayerInSkydive_Thread( player, spawnLocation, spawnAngles, matchState, players, jumpmaster, initialVelocity )
+	}
+}
+
+void function SpawnPlayersInRespawnShipWithSkydive( array< entity > players, entity leaderPlayer, vector spawnLocation, vector spawnAngles, vector dropshipAngles, int matchState, vector initialVelocity = < 0, 0, 0 >  )
+{
+	// Put the jumpmaster at the front of the array
+	for ( int i = 0; i < players.len(); i++ )
+	{
+		if ( players[i].GetPlayerNetBool( "isJumpmaster" ) )
+		{
+			entity jumpmaster = players[i]
+			players[i] = players[0]
+			players[0] = jumpmaster
+			break
+		}
+	}
+
+	if ( IsValid( leaderPlayer ) )
+	{
+		// We need to do the jumpmaster first so that everything works inside PlayerSkyDive
+		thread SpawnPlayerInSkydive_Thread( leaderPlayer, spawnLocation, spawnAngles, matchState, players, leaderPlayer, initialVelocity, true )
+	}
+
+	foreach ( player in players )
+	{
+		if ( !IsValid( player ) ||  player == leaderPlayer )
+			continue
+
+		// Set the player to the jumpmaster if there isn't already one selected. Avoids errors due to invalid jumpmaster
+		entity jumpmaster = leaderPlayer
+		if ( !IsValid( leaderPlayer ) )
+		{
+			jumpmaster = player
+		}
+
+		thread SpawnPlayerInSkydive_Thread( player, spawnLocation, spawnAngles, matchState, players, jumpmaster, initialVelocity, true )
+	}
+
+	array< entity > edittedPlayers = clone players
+
+	if ( edittedPlayers.len() > 2 )
+	{
+		// We need to swap the order to improve the flow of moving from the dropship to skydive. Code puts the first player on the
+		// left of the jumpmaster in skydive, but script puts the first player on the right of the jumpmaster in the respawn ship,
+		// and we want them to not swap sides out of nowhere
+		entity tempPlayer = edittedPlayers[1]
+		edittedPlayers[1] = edittedPlayers[2]
+		edittedPlayers[2] = tempPlayer
+	}
+
+	thread RespawnPlayersInDropshipAtPoint( edittedPlayers, spawnLocation - < 0, 0, DROPSHIP_ANIM_HEIGHT_OFFSET >, dropshipAngles, true, true )
+}
+
+void function SpawnPlayerInSkydive_Thread( entity player, vector spawnLocation, vector spawnAngles, int playermMatchState, array< entity > teamPlayers = [], entity jumpMaster = null, vector initialVelocity = < 0, 0, 0 >, bool fromRespawnShip = false )
+{
+	DoCommonRespawnForPlayer( player )
+	player.p.respawnPodLanded = false // this is weird but necessary
+	player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.NONE )
+	PlayerMatchState_Set( player, playermMatchState )
+
+	if ( fromRespawnShip )
+	{
+		player.EndSignal( "OnDeath", "OnDestroy" )
+		player.WaitSignal( "PlayerRedeployingFromDropship" )
+
+		player.ClearParent()
+	}
+	else
+	{
+		player.SetAbsOrigin( spawnLocation )
+		player.SetAbsAngles( spawnAngles )
+	}
+
+	// Use the quieter skydive sounds.
+	thread PlayerSkyDive( player, < 0, 0, -1 >, teamPlayers, jumpMaster, true, true, initialVelocity, true, true )
+}
+
+
+void function DoCommonRespawnForPlayer( entity player )
+{
+	player.StopObserverMode()
+	ClearPlayerEliminated( player )
+	player.p.respawnPodLanded = true
+	ResetPlayerInventory( player )
+
+	if ( !IsAlive( player ) )
+		DecideRespawnPlayer( player, false )
+	else
+	{
+		MakePlayerVisible( player, true )
+	}
+}
+
+void function MakePlayerVisible( entity player, bool isVisible )
+{
+	if( !IsValidPlayer( player ) )
+		return
+
+	if( isVisible )
+	{
+		player.UnhidePlayer()
+		player.SetNameVisibleToFriendly( true )
+		player.Solid()
+		player.MakeVisible()
+	}
+	else
+	{
+		player.HidePlayer()
+		player.SetNameVisibleToFriendly( false )
+		player.NotSolid()
+		player.MakeInvisible()
+	}
+}
+
+array<vector> function GetRespawnBeaconLocations()
+{
+	if ( file.respawnBeaconLocations.len == 0 )
+		Warning( "%s() -- Respawn Beacon locations not defined yet", FUNC_NAME() )
+
+	return file.respawnBeaconLocations
+}
+
+void function AddRespawnBeaconLocation( vector location )
+{
+	if( file.respawnBeaconLocations.contains( location ) )
+	{
+		Warning( FUNC_NAME() + "(): Duplicate Respawn Location at " + location )
+		return
+	}
+
+	file.respawnBeaconLocations.append( location )
+}
+
 void function OnRespawnChamberSpawned( entity ent )
 {
 	asset model = ent.GetModelName()
@@ -388,125 +863,899 @@ void function OnRespawnChamberSpawned( entity ent )
 	vector origin = ent.GetOrigin()
 	vector angles = ent.GetAngles()
 
+	//useful for other modes that may not use beacons but want to know the safe locations where they would spawn
+	AddRespawnBeaconLocation( origin )
+
+	array<entity> links = ent.GetLinkEntArray()
+	entity link
+
+	if ( links.len() > 0 )
+	{
+		link = links[0]
+	}
+
+	entity par = ent.GetParent()
 	ent.Destroy()
 
-	if ( GetRespawnStyle() != eRespawnStyle.RESPAWN_CHAMBERS || Gamemode() != eGamemodes.SURVIVAL )
+
+
+	if ( GetRespawnStyle() != eRespawnStyle.RESPAWN_CHAMBERS && !RespawnBeacons_ShouldEnableBeaconsInNonBeaconRespawnMode() )
 		return
 
 	// spawn a new one with the correct targetname
 	entity respawnChamber = CreatePropScript_NoDispatchSpawn( model, origin, angles, 6 )
-
 	SetTargetName( respawnChamber, RESPAWN_CHAMBER_TARGETNAME )
-	respawnChamber.SetScriptName("script_survival_revival_chamber")
+	                   
+	respawnChamber.SetScriptName( RESPAWN_CHAMBER_SCRIPTNAME )
+       
+	respawnChamber.SetCanBeMeleed( false )
 
-	
 	DispatchSpawn( respawnChamber )
+	respawnChamber.SetFadeDistance( 15000 )
+
+	if ( IsValid( link ) )
+	{
+		respawnChamber.e.hasBomb = true
+		respawnChamber.e.lastBouncePosition = link.GetOrigin()
+		respawnChamber.e.goalAngles = link.GetAngles()
+		link.Destroy()
+	}
+
+	if ( IsValid( par ) )
+		ent.SetParent( par )
 }
 
-void function OnMobileRespawnChamberSpawned( entity ent )
+void function RespawnBeacon_OnClientConnected( entity player )
 {
-	asset model = ent.GetModelName()
-
-	vector origin = ent.GetOrigin()
-	vector angles = ent.GetAngles()
-
-	if ( GetRespawnStyle() != eRespawnStyle.RESPAWN_CHAMBERS || Gamemode() != eGamemodes.SURVIVAL )
-		return
-
-	// spawn a new one with the correct targetname
-	entity respawnChamber = CreatePropScript_NoDispatchSpawn( model, origin, angles, 6 )
-
-	respawnChamber.SetOwner( ent.GetOwner() )
-	SetTargetName( respawnChamber, MOBILE_RESPAWN_BEACON_TARGETNAME )
-	respawnChamber.SetScriptName( MOBILE_RESPAWN_BEACON_SCRIPTNAME )
-	
-	//todo
-	//in retail this is only applied when player can actually res (if all teammates are alive they won't have highlight)
-	Highlight_SetNeutralHighlight( respawnChamber, "sp_friendly_hero" )
-
-	ent.Destroy()
-	DispatchSpawn( respawnChamber )
+	                           
+		RespawnEquipped_Register( player )
+                                  
 }
 
 void function RespawnBeacon_OnClientDisconnected( entity player )
 {
 	if ( IsValid( player.p.respawnBeacon ) )
 		player.p.respawnBeacon.Destroy()
+
+	                           
+		RespawnEquipped_Unregister( player )
+		RemoveCallback_OnResetPlayerInventory( player )
+                                  
 }
+
+                           
+
+void function RespawnEquipped_Register( entity player )
+{
+	if( !( player in file.brRespawnLoadouts ) )
+	{
+		respawnLoadout newLoadout
+		file.brRespawnLoadouts[ player ] <- newLoadout
+	}
+
+	// Last Time Enemy Damaged Player Check: Setup tracking for the Last time an enemy damaged this player
+	if( !( player in file.lastCombatEncounterVsEnemy ) )
+	{
+		file.lastCombatEncounterVsEnemy[ player ] <- -1
+	}
+	if ( !player.e.entPostDamageCallbacks.contains( RespawnEquipped_OnPlayerDamaged ) )
+	{
+		AddEntityCallback_OnPostDamaged( player, RespawnEquipped_OnPlayerDamaged )
+	}
+}
+
+void function RespawnEquipped_Unregister( entity player )
+{
+	if( player in file.brRespawnLoadouts )
+	{
+		delete file.brRespawnLoadouts[ player ]
+	}
+
+	// Last Time Enemy Damaged Player Check: Remove tracking of last time an enemy damaged this player
+	if ( player.e.entDamageCallbacks.contains( RespawnEquipped_OnPlayerDamaged ) )
+	{
+		RemoveEntityCallback_OnPostDamaged( player, RespawnEquipped_OnPlayerDamaged )
+	}
+	if( player in file.lastCombatEncounterVsEnemy ) 
+	{
+		delete file.lastCombatEncounterVsEnemy[ player ] 
+	}
+}
+
+void function RespawnEquipped_Save( entity player, bool wasDeath_Suicide = false )
+{
+	if( !IsValid( player ) )
+		return
+
+	if( !( player in file.brRespawnLoadouts ) )
+		return
+
+	RespawnEquipped_MarkRestored_Set( player, false )
+
+	file.brRespawnLoadouts[ player ].restoreWeaponInfos = []
+
+	bool checkSuicide = RespawnEquipped_SuicidesProhibited()
+
+	// --- Save Weapons.
+	_RespawnEquipped_Save_Weapons( player )
+
+	// --- Save Shield Info
+	_RespawnEquipped_Save_Armor( player, wasDeath_Suicide )
+
+
+}
+
+              
+                                                                
+ 
+                        
+                                           
+  
+                                                
+                           
+           
+  
+                                                                                                                                                                                    
+                          
+  
+
+               
+ 
+                    
+
+void function _RespawnEquipped_Save_Weapons( entity player )
+{
+	array< entity > primaryWeapons = SURVIVAL_GetPrimaryWeapons( player )
+	file.brRespawnLoadouts[ player ].restoreWeaponInfos = _RestoreWeaponInfos_From_WeaponEnts( primaryWeapons )
+	
+               
+                                           
+   
+                                                                  
+                                                                                                            
+   
+                     
+}
+
+array< sRestoreWeaponInfo > function _RestoreWeaponInfos_From_WeaponEnts( array< entity > weaponEntsArray, bool debug = false )
+{
+	array< sRestoreWeaponInfo > results
+	foreach( weaponEnt in weaponEntsArray )
+	{
+		if( IsValid( weaponEnt ) )
+		{
+			sRestoreWeaponInfo restoreWeapInfo
+			restoreWeapInfo.ent = weaponEnt
+			string weaponClassName
+			if( ShouldRestoreKittedWeapons() )
+			{
+				weaponClassName = GetWeaponClassNameWithLockedSet( weaponEnt )
+			}
+			else
+			{
+				weaponClassName = weaponEnt.GetWeaponClassName()
+			}
+			restoreWeapInfo.weaponRef = weaponClassName
+			restoreWeapInfo.modRefs = weaponEnt.GetMods()
+
+			#if DEV
+				if( debug )
+				{
+					printt( FUNC_NAME() + "(): Weapon Saved for entity " + weaponEnt )
+					printt( format( "%s(): Weapon Class Name == %s", FUNC_NAME(), restoreWeapInfo.weaponRef ) )
+					foreach ( mod in restoreWeapInfo.modRefs )
+					{
+						printt( format( "%s(): Weapon attachment == %s", FUNC_NAME(), mod ) )
+					}
+					printt( "---------------------" )
+				}
+			#endif
+			results.append( restoreWeapInfo )
+		}
+	}
+	return results
+}
+
+void function _RespawnEquipped_Save_Armor( entity player, bool wasDeath_Suicide = false )
+{
+	LootData helmet
+	helmet.ref = "helmet_pickup_lv1"
+	ArmorData armorData
+                     
+		armorData.armorLevel = UpgradeCore_ArmorTiedToUpgrades() ? "armor_core_pickup_lv1" : "armor_pickup_lv1_evolving"
+      
+                                                    
+                           
+	armorData.evoProgress = 0
+
+	bool checkSuicide = RespawnEquipped_SuicidesProhibited()
+	
+	if( !checkSuicide || !wasDeath_Suicide )
+	{
+		armorData = ArmorData_Get( player )
+		helmet = EquipmentSlot_GetEquippedLootDataForSlot( player, "helmet" )
+	}
+
+	file.brRespawnLoadouts[ player ].armorData.armorLevel 	= armorData.armorLevel
+	file.brRespawnLoadouts[ player ].armorData.evoProgress 	= armorData.evoProgress
+	file.brRespawnLoadouts[ player ].helmetRef 	= helmet.ref
+
+	file.brRespawnLoadouts[ player ].wasDeath_Suicide = wasDeath_Suicide
+
+	#if DEV
+		printt( format( "%s(): Player %s armor 	== %s", FUNC_NAME(), player.GetPlayerName(), file.brRespawnLoadouts[ player ].armorData.armorLevel ) )
+		printt( format( "%s(): Player %s helmet	== %s", FUNC_NAME(), player.GetPlayerName(), file.brRespawnLoadouts[ player ].helmetRef ) )
+	#endif // DEV
+}
+
+void function OnPlayerPostRespawned_RespawnEquipped( entity player )
+{
+	if( PlayersWhoveDiedBefore_Check( player ) )
+	{
+		RespawnEquipped_Restore( player )
+	}
+}
+
+// ---
+// These functions prevent multiple erroneous restores that may cause other issues.
+
+void function RespawnEquipped_MarkRestored_Set( entity player, bool marked )
+{
+	if( !IsValidPlayer( player ) )
+	{
+		if( player in file.playerRecentlyRespawnEquipped )
+		{
+			delete file.playerRecentlyRespawnEquipped[ player ]
+		}
+
+		file.playerRecentlyRespawnEquipped[ player ] <- marked
+	}
+}
+
+bool function RespawnEquipped_MarkRestored_Get( entity player )
+{
+	bool result = false
+
+	if( !IsValidPlayer( player ) )
+		return result
+
+	if( !( player in file.playerRecentlyRespawnEquipped ) )
+		return result
+
+	result = file.playerRecentlyRespawnEquipped[ player ]
+	return result
+}
+
+// ---
+
+// RespawnEquipped_Restore- Restores weapons, armor as allowed by playlist vars:
+//		- has_br_respawn_withweapons
+//		- has_br_respawn_witharmor
+void function RespawnEquipped_Restore( entity player, bool skipWeapons = false, bool skipArmor = false, bool forceArmorFX = true )
+{
+	if( !IsValidPlayer( player ) )
+		return
+
+	//if( RespawnEquipped_MarkRestored_Get( player ) )
+	//	return
+
+	RespawnEquipped_MarkRestored_Set( player, true )
+
+	// If we don't restore equipment on respawn, exit the function
+	if ( !Has_BR_Respawn_WithWeapons() && !Has_BR_Respawn_WithArmor() )
+	{
+		player.Signal( "RespawnEquippedRestoreDone" )
+		return
+	}
+
+	bool dontResetInventory = RespawnEquipped_DontResetInventory()
+	if( !dontResetInventory )
+	{
+		if( Has_BR_Respawn_WithWeapons() && !skipWeapons )
+		{
+			_RespawnEquipped_Restore_Weapons( player )
+		}
+	}
+
+	// If Legend Upgrades are on, check the XP to grant the proper armor level instead of using the saved armor.
+	if( Has_BR_Respawn_WithArmor() && !skipArmor )
+	{
+                      
+			bool ugradeCoreEnabled = UpgradeCore_IsEnabled()
+			bool armorCoreItemsEnabled = UpgradeCore_ArmorTiedToUpgrades()
+			#if DEV
+				printt( format( "%s(): Upgrade Cores Enabled? ", FUNC_NAME(), string( ugradeCoreEnabled ) ) )
+			#endif // DEV
+			if( ugradeCoreEnabled && armorCoreItemsEnabled )
+			{
+				_RespawnEquipped_Restore_Armor_UsingUpgradeCore( player, forceArmorFX )
+			}
+			else
+			{
+				_RespawnEquipped_Restore_Armor( player, forceArmorFX )
+			}
+       
+                                                         
+                            
+	}
+
+	// Enable inventory if disabled.
+	if( IsInventoryDisabled( player ) )
+	{
+		EnableInventory( player )
+	}
+
+	if( Has_Respawn_ChargeTac() )
+	{
+		entity tacAbility = player.GetOffhandWeapon( OFFHAND_TACTICAL )
+		if( IsValid( tacAbility ) )
+		{
+			tacAbility.SetWeaponPrimaryClipCount( tacAbility.GetWeaponPrimaryClipCountMax() )
+		}
+	}
+
+	// Remove Mythics.
+	RespawnLoadout_RemoveMythics( player )
+
+	// If suicide, remove weapons.
+	RespawnLoadout_RemoveWeaponsIfSuicide( player )
+
+	// Make sure the player has the minimal stuff.
+	RespawnEquipped_Ensure_Min_Loadout( player )
+
+	player.Signal( "RespawnEquippedRestoreDone" )
+}
+
+void function _RespawnEquipped_Restore_Weapons( entity player )
+{
+	_RespawnEquipped_Restore_Weapons_Primary( player )
+
+               
+                                           
+   
+                                                    
+   
+                     
+}
+
+void function _RespawnEquipped_Restore_Weapons_Primary( entity player )
+{
+	Remove_Weapons( player )
+
+	array< LootData > weaponDatas
+	int weaponDataIndex = 0
+
+	//int numSlots = 2
+	int numSlots = file.brRespawnLoadouts[ player ].restoreWeaponInfos.len()
+	for( int i = 0; i < numSlots; i++ )
+	{
+		sRestoreWeaponInfo weaponInfo = file.brRespawnLoadouts[ player ].restoreWeaponInfos[ i ]
+		string weaponRef = weaponInfo.weaponRef
+		if( weaponRef != "" )
+		{
+			// Don't restore crate weapons.
+			LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weaponRef )
+			if( weaponData.tier == eLootTier.MYTHIC )
+				continue
+
+			// Restore the weapon. Had to write a few extra lines to allow restoration of kitted weapons.
+			entity newActiveWeapon = SpawnGenericLoot( weaponRef, player.GetOrigin(), player.GetAngles(), -1 )
+			array<string> lootTags = weaponData.lootTags
+			array< string > attachments = []
+			bool shouldRestoreAttachments = Should_Restore_Attachments( player )
+
+			// TODO: We could move this to the save function.
+			if( shouldRestoreAttachments )
+			{
+				// Add only mods that are attachments.
+				foreach( mod in weaponInfo.modRefs )
+				{
+					if( !SURVIVAL_Loot_IsRefValid( mod ) )
+						continue
+
+					LootData data = SURVIVAL_Loot_GetLootDataByRef( mod )
+					if ( data.lootType == eLootType.ATTACHMENT )
+					{
+						attachments.append( mod )
+					}
+				}
+			}
+
+			SURVIVAL_GiveMainWeapon( player, newActiveWeapon, lootTags, null, false, null, false, false, attachments, true )
+			newActiveWeapon.Destroy()
+			weaponDatas.append( weaponData )
+
+			string weaponIndexNetIntName = "playerPrimaryWeapon" + string( weaponDataIndex++ )
+			player.SetPlayerNetInt( weaponIndexNetIntName, weaponData.index )
+		}
+	}
+}
+
+              
+                                                                      
+ 
+                               
+                                      
+  
+                                           
+  
+
+                                                                                                        
+
+                                       
+  
+                              
+           
+
+                                                                                                        
+                                                                                                
+                        
+  
+ 
+                    
+
+respawnLoadout function RespawnEquipped_RespawnLoadout_Get( entity player )
+{
+	respawnLoadout result
+	if( player in file.brRespawnLoadouts )
+	{
+		result = file.brRespawnLoadouts[ player ]
+	}
+	return result
+}
+
+array< sRestoreWeaponInfo > function RespawnEquipped_RestoreWeaponInfos_Get( entity player )
+{
+	respawnLoadout loadout = RespawnEquipped_RespawnLoadout_Get( player )
+	return( loadout.restoreWeaponInfos )
+}
+
+              
+                                                                                                   
+ 
+                                                                      
+                                    
+ 
+                    
+
+// Returns the weaponInfo matching the weaponRef, and moves that weaponInfo to the back of the weaponInfos array in case there are 2 weapons of the same type.
+sRestoreWeaponInfo function RespawnEquipped_RestoreWeaponInfo_Pop_ByRef( entity player, string ref )
+{
+	sRestoreWeaponInfo result
+	array< sRestoreWeaponInfo > restoreWeaponInfos = RespawnEquipped_RestoreWeaponInfos_Get( player )
+
+	if( restoreWeaponInfos.len() == 0 )
+		return result
+
+	foreach( weaponInfo in restoreWeaponInfos )
+	{
+		if( weaponInfo.weaponRef == ref )
+		{
+			result = weaponInfo
+			restoreWeaponInfos.removebyvalue( weaponInfo )
+			restoreWeaponInfos.append( weaponInfo )
+		}
+	}
+
+	return result
+}
+
+// ---
+
+void function RespawnEquipped_Ensure_Min_Loadout( entity player )
+{
+	if( !IsValidPlayer( player ) )
+		return
+
+	if( RespawnEquipped_PLV_EnsureMin_Weapon() )
+	{
+		Ensure_Min_Weapon( player )
+	}
+
+	if( RespawnEquipped_PLV_EnsureMin_Consumables() )
+	{
+		Ensure_Min_Consumables( player )
+	}
+}
+
+                    
+void function _RespawnEquipped_Restore_Armor_UsingUpgradeCore( entity player, bool forceArmorFX )
+{
+	if ( !IsValidPlayer( player ) )
+		return
+
+	string ref = UpgradeCore_GetPlayerShieldCoreRef( player )
+	Inventory_SetPlayerEquipment( player, ref, "armor" )
+	if( forceArmorFX )
+	{
+		Remote_CallFunction_Replay( player, "ServerCallback_PlayFPEvoShieldUpgradeFX", player )
+	}
+	player.SetShieldHealth( player.GetShieldHealthMax())
+
+	// --- Restore Helm & Incapshields
+	_RespawnEquipped_Restore_Gear( player )
+}
+                          
+
+void function _RespawnEquipped_Restore_Armor( entity player, bool forceArmorFX = true )
+{
+	// --- Restore Shields
+	bool resetEvo = file.brRespawnLoadouts[ player ].wasDeath_Suicide
+	ArmorData_Set( player, file.brRespawnLoadouts[ player ].armorData, resetEvo )
+
+	if( forceArmorFX )
+	{
+		Remote_CallFunction_Replay( player, "ServerCallback_PlayFPEvoShieldUpgradeFX", player )
+	}
+
+	// --- Restore Helm & Incapshields
+	_RespawnEquipped_Restore_Gear( player )
+}
+
+void function _RespawnEquipped_Restore_Gear( entity player, bool skipHelm = false, bool skipIncap = false, bool skipConsumables = true )
+{
+	// --- Restore Helmet
+	if( !skipHelm )
+	{
+		string helmetRef = file.brRespawnLoadouts[ player ].helmetRef
+		if( helmetRef == "" )
+		{
+			helmetRef = "helmet_pickup_lv1"
+		}
+
+		SURVIVAL_GivePlayerEquipment( player, helmetRef, 0, null, "", false )
+	}
+	
+	// --- Give White Incap Shield
+	if( !skipIncap )
+	{
+		array<string> defaultEquipment = ParseEquipmentLoadoutText( GetBREquipmentLoadoutString(), false, [] )
+		foreach ( equipmentString in defaultEquipment )
+		{
+			if ( SURVIVAL_Loot_IsRefValid( equipmentString ) )
+			{
+				LootData data  = SURVIVAL_Loot_GetLootDataByRef( equipmentString )
+
+				// We restored armor and helmet, only give what we don't restore
+				if ( data.lootType != eLootType.HELMET && data.lootType != eLootType.ARMOR )
+					SURVIVAL_GivePlayerEquipment( player, equipmentString, 0, null, "", false )
+			}
+		}
+	}
+
+	// If in Turbo BR/Battle Rush/Straight Shot, restore the default backpack as dictated by CharacterLoadouts_GetDefaultEquipmentLoadoutArray().
+	                            
+		if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_BATTLE_RUSH ) )
+		{
+			array< string > defaultLoadout = CharacterLoadouts_GetDefaultEquipmentLoadoutArray()
+			foreach( defaultGear in defaultLoadout )
+			{
+				if( defaultGear.find( "backpack" ) >= 0 )
+				{
+					SURVIVAL_GivePlayerEquipment( player, defaultGear )
+					break
+				}
+			}
+		}
+                                   
+
+	// --- Ensure the player has at least the default consumables.
+	if( !skipConsumables && !RespawnEquipped_DontResetInventory() )
+	{
+		string consumablesRef = GetBRConsumableLoadoutString()
+		array<string> defaultConsumables = ParseConsumableLoadoutText( consumablesRef, false )
+		CharacterLoadouts_GiveConsumableLoadoutToPlayer( player, defaultConsumables )
+	}
+}
+
+void function RespawnLoadout_RemoveWeaponsIfSuicide( entity player )
+{
+	if( !Has_BR_Respawn_Restore_NoSuicide())
+		return
+
+	if( !LastDeathSuicideStatus_Get( player ) )
+		return
+
+	Remove_Weapons( player )
+}
+
+void function RespawnLoadout_RemoveMythics( entity player )
+{
+	entity weaponSlot0 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+	entity weaponSlot1 = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+	LootData primaryWeaponData        = SURVIVAL_GetLootDataFromWeapon( weaponSlot0 )
+	LootData secondaryWeaponData      = SURVIVAL_GetLootDataFromWeapon( weaponSlot1 )
+	string activePrimaryWeaponRef     = primaryWeaponData.ref
+	string activeSecondaryWeaponRef   = secondaryWeaponData.ref
+	bool isActivePrimaryCrateWeapon   = (primaryWeaponData.tier == eLootTier.MYTHIC)
+	bool isActiveSecondaryCrateWeapon = (secondaryWeaponData.tier == eLootTier.MYTHIC)
+
+	if ( isActivePrimaryCrateWeapon )
+		player.TakeWeaponNow( activePrimaryWeaponRef )
+
+	if ( isActiveSecondaryCrateWeapon )
+		player.TakeWeaponNow( activeSecondaryWeaponRef )
+}
+
+                                 
+
+// ---
 
 void function RespawnPlayersInDropship( array<entity> players, entity beacon )
 {
-	Point p = GetClosestRespawnDropoff( beacon.GetOrigin() )
+	Point p
 
-	thread RespawnPlayersInDropshipAtPoint( players, p.origin, AnglesCompose( p.angles, <0,0,0> ) )
-}
-
-void function RespawnPlayersInDropshipAtPoint( array<entity> players, vector origin, vector angles, int realm = -1 )
-{
-    entity dropship = CreateEntity( "npc_dropship" )
-    SetSpawnOption_AISettings( dropship, "npc_dropship_respawn" )
-    SetTargetName( dropship, RESPAWN_DROPSHIP_TARGETNAME )
-    DispatchSpawn( dropship )
-    dropship.SetInvulnerable()
-    dropship.DisableHibernation()
-
-	if( realm > -1 )
+	if ( beacon.e.hasBomb )
 	{
-		dropship.RemoveFromAllRealms()
-		dropship.AddToRealm( realm )
+		p.origin = beacon.e.lastBouncePosition
+		p.angles = beacon.e.goalAngles
+	}
+	else if ( beacon.GetLinkEntArray().len() == 0 )
+	{
+		p = GetClosestRespawnDropoff( beacon.GetOrigin() )
+	}
+	else
+	{
+		entity link = beacon.GetLinkEntArray()[0]
+		p.origin = link.GetOrigin()
+		p.angles = link.GetAngles()
 	}
 
-    thread JetwashFX( dropship )
+	// Test to see if there may be an overlap with origins of another dropship
+	// Note: these origins are not accurate. They aren't where the character will
+	// respawn from.  That position occqrurs at the end of the entry animation which
+	// we don't have until after the animation.  This gives a rough approximation.
+	const float RadiusTestSqr = 900*900
+	const float MoveUpOffset = 700 // Even at this height there is still a chance for some of the lower plane to clip into the higher plane when the lower one takes off, but it doesn't seem too common. This scenario is already very rare.
 
-    dropship.DisableGrappleAttachment()
+	foreach( key, value in file.activeDropshipOrigins ) //offsetting the Z position of the dropship iteratively as long as there are multiple dropships active at once.
+	{
+		if ( IsValid( key ) )
+		{
+			if ( Distance2DSqr( value, p.origin ) < RadiusTestSqr )
+			{
+				if(file.dropshipVerticalOffsetCount > file.activeDropshipOrigins.len())  //reseting offset if the active dropships have reset because time has passed and the offset is not longer accurate
+				{
+					file.dropshipVerticalOffsetCount = 0
+				}
+				else
+				{
+					++file.dropshipVerticalOffsetCount
+				}
+				break;
+			}
+		}
+	}
 
-    dropship.SetOrigin( origin )
-    dropship.SetAngles( angles )
-    Attachment attachResult = dropship.Anim_GetAttachmentAtTime( "dropship_classic_mp_flyin", "ORIGIN", 0.0 )
-	
-    int i = 0
-    foreach ( player in players )
-    {
-        if ( IsValid( player ) )
-        {
-            thread RespawnBeacon_PutPlayerInDropship( player, dropship, i, attachResult.position )
-        }
-        i++
-    }
+	float heightmod = RespawnDropship_GetHeightMod()
+	p.origin = < p.origin.x, p.origin.y, p.origin.z + file.dropshipVerticalOffsetCount*MoveUpOffset + heightmod >
 
-    EmitSoundOnEntity( dropship, "goblin_imc_evac_hover" )
-    EndSignal( dropship, "OnDestroy" )
+	bool isDropshipRedeploy = !IsEliminationBased()
 
-    // Fix anim bug with this of it getting weirdly teleported.
-    thread PlayAnim( dropship, "dropship_classic_mp_flyin_idle", origin, angles )
+	                            
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+			isDropshipRedeploy = false
+                                   
 
-    // Warp in now.
-    dropship.MakeInvisible()
-    waitthread __WarpInEffectShared( attachResult.position, attachResult.angle, "dropship_warpin", dropship, 0.0 )
-    dropship.MakeVisible()
-
-    thread PlayAnim( dropship, "dropship_classic_mp_flyin", origin, angles )
-
-    // Wait for correct time to warp out
-    wait dropship.GetSequenceDuration( "dropship_classic_mp_flyin" ) - 5
-
-    // Hide dropShip now and warpout.
-    dropship.Hide()
-    __WarpOutEffectShared( dropship )
-
-    dropship.Destroy()
+	thread RespawnPlayersInDropshipAtPoint( players, p.origin, AnglesCompose( p.angles, <0, 0, 0> ), false, isDropshipRedeploy )
 }
 
-void function DelayedDestroyDNA( entity ent, float lifetime )
+float function RespawnDropship_GetHeightMod()
+{
+	float heightmod = GetCurrentPlaylistVarFloat( "respawn_dropship_heightmod", 0.0 )
+
+	#if DEV
+		heightmod += file.debug_additional_dropship_heightmod
+	#endif // DEV
+
+	return( heightmod )
+}
+
+void function RespawnPlayersInDropshipAtPoint( array<entity> players, vector origin, vector angles, bool isFirstSpawn, bool isDropshipRedeploy = false, string dropshipAISettings = "npc_dropship_respawn", DropshipAltFlyinData ornull altDataRaw = null )
+{
+	if( players.len() < 1 )
+		return
+
+	float idleTimeOverride = 0.0
+	bool useAlt            = false
+	vector startOrigin
+	vector startAngles
+
+	if ( altDataRaw != null )
+	{
+		DropshipAltFlyinData data = expect DropshipAltFlyinData( altDataRaw )
+		origin = data.startPos
+		angles = VectorToAngles( data.endPos - data.startPos )
+		startOrigin = origin
+		startAngles = angles
+		useAlt = true
+
+		idleTimeOverride = data.timeToTake
+		dropshipAISettings = data.dropshipAISettings
+	}
+
+	entity dropship = CreateEntity( "npc_dropship" )
+	file.activeDropshipOrigins[dropship] <- origin
+
+	OnThreadEnd(
+		function() : ( dropship )
+		{
+			if ( dropship in file.activeDropshipOrigins )
+			{
+				delete file.activeDropshipOrigins[dropship]
+			}
+		})
+
+	if ( IsPVEMode() )
+		SetTeam( dropship, eNpcTeam.FRIENDLY )
+	else if ( IsValid( players[0] ) )
+		SetTeam( dropship, players[0].GetTeam() )
+
+	SetSpawnOption_AISettings( dropship, dropshipAISettings )
+	SetTargetName( dropship, RESPAWN_DROPSHIP_TARGETNAME )
+	dropship.SetScriptName( RESPAWN_DROPSHIP_TARGETNAME )
+	DispatchSpawn( dropship )
+	dropship.SetInvulnerable()
+	dropship.DisableHibernation()
+	dropship.DisableGrappleAttachment()
+	dropship.SetOrigin( origin )
+	dropship.SetAngles( angles )
+	//dropship.SetNetworkDistanceCullEnabled( false )
+	Warning("SetNetworkDistanceCullEnabled is missing!")
+
+	dropship.EnableIdLights()
+
+	// reskining happening in sh_prop_override.nut
+	//if ( dropship.GetSkinIndexByName( "lights_on" ) != -1 )
+	//	dropship.SetSkin( dropship.GetSkinIndexByName( "lights_on" ) )
+
+	if ( !useAlt )
+		EmitSoundOnEntity( dropship, "goblin_imc_evac_hover" )
+	thread JetwashFX( dropship )
+
+	if ( useAlt )
+		(expect DropshipAltFlyinData( altDataRaw )).dropship = dropship
+
+	foreach ( int index, entity player in players )
+	{
+		if ( IsValid( player ) )
+		{
+			int positionIndex = index
+                    
+                                                            
+                                                                
+     
+                      
+                       
+         
+                       
+     
+         
+
+			bool useCameraDownAnims = false
+			                           
+				// Spawn respawning player at this point so if respawn caller dies, the game is not over.
+				if( Has_BR_Respawn_WithArmor() || Has_BR_Respawn_WithWeapons() )
+				{
+					DoCommonRespawnForPlayer(player)
+					DisableInventory( player )
+
+					// [ R5DEV-505718 ] Hide Player until PutPlayerInDropship, where they get the unhide.
+					MakePlayerVisible( player, false )
+
+					// [ R5DEV-514718 ] Put the player at the spawn loc so no erroneous "Outside of Ring" messages show.
+					player.SetAbsOrigin( origin )
+
+					useCameraDownAnims = true
+				}
+         
+			thread PutPlayerInDropship( player, dropship, positionIndex, idleTimeOverride, isFirstSpawn, isDropshipRedeploy, useCameraDownAnims )
+		}
+	}
+
+	EndSignal( dropship, "OnDestroy" )
+
+	if ( !useAlt )
+		thread PlayAnim( dropship, ANIM_FLYIN_IDLE, origin, angles )
+
+	dropship.MakeInvisible()
+
+	entity altMoveNode
+	if ( useAlt )
+	{
+		altMoveNode = CreateScriptMover( RESPAWN_BEACON_ALTMOVENODE_MOVER_SCRIPTNAME, dropship.GetOrigin(), dropship.GetAngles() )
+		dropship.SetParent( altMoveNode, "REF" )
+	}
+	else
+	{
+		Attachment attachResult = dropship.Anim_GetAttachmentAtTime( ANIM_FLYIN_MOVE, "ORIGIN", 0.0 )
+		startOrigin = attachResult.position
+		startAngles = attachResult.angle
+	}
+	waitthread __WarpInEffectShared( startOrigin, startAngles, "dropship_warpin", dropship, 0.0 )
+
+	dropship.MakeVisible()
+
+	foreach ( callbackFunc in file.Callbacks_OnRespawnDropshipCreated )
+		callbackFunc( dropship )
+
+	thread DropshipAttractLeviathan( dropship ) //should use Survival_AddCallback_OnRespawnDropshipCreated
+
+	if ( useAlt )
+	{
+		thread PlayAnim( dropship, "dropship_closed_idle_alt", altMoveNode )
+
+		DropshipAltFlyinData data = expect DropshipAltFlyinData( altDataRaw )
+		data.dropship = dropship
+		altMoveNode.NonPhysicsMoveTo( data.endPos, data.timeToTake, 0.0, (data.timeToTake * 0.25) )
+		wait (data.timeToTake - 4.0)
+		altMoveNode.NonPhysicsRotateTo( FlattenAngles( dropship.GetAngles() ), (4.0 + 3.0), 3.5, 3.5 )
+		wait 3.0
+		thread PlayAnim( dropship, "s2s_rampdown_idle", altMoveNode )
+		wait 5.0
+		altMoveNode.NonPhysicsMoveTo( (altMoveNode.GetOrigin() + <0, 0, 100.0>), 5.0, 0.0, 5.0 )
+		altMoveNode.NonPhysicsRotateTo( VectorToAngles( data.startPos - altMoveNode.GetOrigin() ), 5.0, 2.5, 2.5 )
+		wait 5.0
+		float departureTime = (data.timeToTake * 0.7)
+		altMoveNode.NonPhysicsMoveTo( data.startPos, departureTime, 1.0, 0.0 )
+		wait departureTime
+	}
+	else
+	{
+		waitthread PlayAnim( dropship, ANIM_FLYIN_MOVE, origin, angles )
+	}
+
+	dropship.Destroy()
+}
+
+int function RespawnBeacon_GetNumRemainingPositionsOnDropship( entity dropship )
+{
+	int currentPlayerCount = 0
+	if ( dropship in file.dropshipToNumPlayersOnDropshipTable )
+	{
+		currentPlayerCount = file.dropshipToNumPlayersOnDropshipTable[ dropship ]
+	}
+
+	return RESPAWN_BEACON_MAX_NUM_POSITIONS_ON_DROPSHIP - currentPlayerCount
+}
+
+vector function GetActiveDropshipOrigin( entity dropship )
+{
+	if ( dropship in file.activeDropshipOrigins )
+		return file.activeDropshipOrigins[ dropship ]
+
+	return <0,0,0>
+}
+
+array< vector > function GetAllActiveDropshipOrigins()
+{
+	array< vector > origins
+	foreach ( ent, origin in file.activeDropshipOrigins )
+	{
+		origins.append( origin )
+	}
+	return origins
+}
+
+void function DropshipAttractLeviathan( entity dropship )
+{
+	dropship.EndSignal( "OnDestroy" )
+
+	Leviathan_ConsiderLookAtEnt( dropship, RandomFloatRange( 5, 25 ), 0.7 )
+	wait 5.0 // wait for the dropship to move, potentially into the leviathan's field of view
+	Leviathan_ConsiderLookAtEnt( dropship, RandomFloatRange( 5, 25 ), 0.7 )
+}
+
+void function DelayedDestroyDNA( entity ent, entity deathbox, float lifetime )
 {
 	ent.EndSignal( "OnDestroy" )
 
-	wait lifetime
-	
-	if( !IsValid(ent) ) 
-		return
-	
 	entity player = ent.GetOwner()
+	                   
+	thread DestroyDNAOnRemoteBannerPickup( ent, player )
+       
+	wait lifetime
+
 	if ( IsValid( player ) )
 	{
 		player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.PICKUP_DESTROYED )
@@ -514,17 +1763,69 @@ void function DelayedDestroyDNA( entity ent, float lifetime )
 		{
 			callbackFunc( player )
 		}
+
+		                   
+		// check if the player has a teammate that can recover expired banners
+		// if they do set the banner as expired. if they don't destroy the banner as usual
+		if( Perk_ExpiredBannerRecovery_Enabled() )
+		{
+			int team = player.GetTeam()
+
+			array<entity> teammates = GetPlayerArrayOfTeam( team )
+			foreach ( entity teammate in teammates )
+			{
+				if ( Perks_DoesPlayerHavePerk( teammate, ePerkIndex.BANNER_CRAFTING ) )
+				{
+					deathbox.SetNetBool( DEATH_BOX_BANNER_EXPIRED_NETVAR, true )
+					return
+				}
+			}
+		}
+        
 	}
 
 	ent.Destroy()
 }
+
+                   
+void function DestroyDNAOnRemoteBannerPickup( entity ent, entity player )
+{
+	EndSignal( ent, "OnDestroy" )
+	EndSignal( player, "RecoveredExpiredDNA" ) //If we recover the Banner remotely, via crafting etc. destroy the DNA WP
+
+	OnThreadEnd(
+		function() : ( ent )
+		{
+			if ( IsValid( ent ) )
+				ent.Destroy()
+		}
+	)
+
+	WaitForever()
+}
+      
 
 void function AddCallback_OnDNAPickupDestroyed( void functionref(entity) callbackFunc )
 {
 	Assert( !file.callbacks_OnDNAPickupDestroyed.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with AddCallback_OnDNAPickupDestroyed" )
 	file.callbacks_OnDNAPickupDestroyed.append( callbackFunc )
 }
-#endif
+
+void function AddCallback_OnRespawnBeaconStartUse( void functionref(entity,entity) func )
+{
+	file.Callbacks_OnRespawnBeaconStartUse.append( func )
+}
+
+void function AddCallback_OnRespawnBeaconStopUse( void functionref(entity,entity) func )
+{
+	file.Callbacks_OnRespawnBeaconStopUse.append( func )
+}
+
+void function AddCallback_OnTeammatesRespawned( void functionref(entity , entity, array<entity> ) func )
+{
+	file.Callbacks_OnTeammatesRespawned.append( func )
+}
+#endif // SERVER
 
 /*
 ----- REVIVE CHAMBER -----
@@ -544,13 +1845,33 @@ bool function IsNotBusy( entity player, entity ent, int useFlags )
 	if ( ent.e.isBusy )
 		return false
 
+	if ( GetCurrentPlaylistVarBool( "interrupted_stops_revive", false ) )
+	{
+		if ( StatusEffect_HasSeverity( player, eStatusEffect.interrupted ) )
+			return false
+	}
+
 	return true
+}
+
+                           
+bool function Has_BR_Respawn_WithArmor()
+{
+	bool hasRespawnWithArmor = GameMode_IsActive( eGameModes.SURVIVAL ) && GetCurrentPlaylistVarBool( "has_br_respawn_witharmor", true )
+
+                          
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT ) )
+		hasRespawnWithArmor = true
+                                
+
+	return( hasRespawnWithArmor )
 }
 
 bool function RespawnEquipped_PLV_DontResetInventory()
 {
 	return( GetCurrentPlaylistVarBool( "respawnequipped_dontresetinventory", false ) )
 }
+
 bool function RespawnEquipped_DontResetInventory()
 {
 	bool result = RespawnEquipped_PLV_DontResetInventory()
@@ -561,6 +1882,144 @@ bool function RespawnEquipped_DontResetInventory()
 
 	return result
 }
+
+bool function RespawnEquipped_PLV_EnsureMin_Weapon()
+{
+	// Controls whether player is ensured minimal weapon & ammo
+	return( GetCurrentPlaylistVarBool( "respawnequipped_ensuremin_weapon", true ) )
+}
+
+bool function RespawnEquipped_PLV_EnsureMin_Consumables()
+{
+	// Controls whether player is ensured minimal consumables
+	return( GetCurrentPlaylistVarBool( "respawnEquipped_ensuremin_consumables", true ) )
+}
+
+bool function Has_BR_Respawn_Restore_NoSuicide()
+{
+	bool hasPreventSuicideExploit = GameMode_IsActive( eGameModes.SURVIVAL ) && GetCurrentPlaylistVarBool( "has_br_respawn_restore_nosuicide", false )
+	return( hasPreventSuicideExploit )
+}
+
+// Check for whether Banners are disabled.
+bool function RespawnBeacon_PLV_NoBanners()
+{
+	return( GetCurrentPlaylistVarBool( "RespawnBeacon_NoBanners", false ) )
+}
+
+              
+                                                 
+ 
+                                                                            
+ 
+                    
+
+bool function Player_Banners_Enabled()
+{
+	bool has_banners 	 = !RespawnBeacon_PLV_NoBanners()
+	bool no_auto_banners = !GetCurrentPlaylistVarBool( "has_auto_banners", false )
+	return( has_banners && no_auto_banners )
+}
+
+#if SERVER
+bool function RespawnEquipped_SuicidesProhibited()
+{
+	return( Has_BR_Respawn_Restore_NoSuicide() && !file.debug_RespawnEquipped_SuicidesAllowed )
+}
+
+#if DEV
+void function DEV_RespawnEquipped_AllowSuicides( bool value )
+{
+	file.debug_RespawnEquipped_SuicidesAllowed = value
+}
+#endif // DEV
+
+#if DEV
+void function DEV_RespawnEquipped_Test_Restore_Armor_ByName( string playerName )
+{
+	entity player = Get_Player_ByName( playerName )
+	DEV_RespawnEquipped_Test_Restore_Armor( player )
+}
+
+void function DEV_RespawnEquipped_Test_Restore_Armor( entity player )
+{
+	if( !IsValidPlayer( player ) )
+	{
+		Warning( FUNC_NAME() + "(): Invalid player given." )
+		return
+	}
+
+	_RespawnEquipped_Restore_Armor_UsingUpgradeCore( player, true )
+}
+
+void function DEV_RespawnEquipped_Save_Weapons( entity player )
+{
+	_RespawnEquipped_Save_Weapons( player )
+}
+
+void function DEV_RespawnEquipped_Restore_Weapons( entity player )
+{
+	_RespawnEquipped_Restore_Weapons( player )
+}
+
+void function DEV_RespawnEquipped_Remove_Weapons( entity player )
+{
+	Remove_Weapons( player )
+}
+
+#endif // DEV
+
+#endif // SERVER
+
+
+bool function Has_BR_Respawn_WithWeapons()
+{
+	bool hasRespawnWithWeapons = GameMode_IsActive( eGameModes.SURVIVAL ) && GetCurrentPlaylistVarBool( "has_br_respawn_withweapons", true )
+	return( hasRespawnWithWeapons )
+}
+
+bool function Has_Restore_Attachments()
+{
+	// Forces restoration of attachments even on non-kitted weapons.
+	return( GetCurrentPlaylistVarBool( "has_br_respawn_withattachments", true ))
+}
+
+#if SERVER
+bool function Should_Restore_Attachments( entity player )
+{
+	bool hasRestoreAttachments = Has_Restore_Attachments()
+
+                     
+                                                                          
+   
+                                                                                              
+   
+                           
+
+	return hasRestoreAttachments
+}
+#endif // SERVER
+
+const string DEFAULT_CONSUMABLES = "health_pickup_health_small:2 health_pickup_combo_small:2"
+string function GetBRConsumableLoadoutString()
+{
+	return GetCurrentPlaylistVarString( "br_respawn_consumables", DEFAULT_CONSUMABLES )
+}
+
+const string DEFAULT_EQUIPMENT = "incapshield_pickup_lv1"
+string function GetBREquipmentLoadoutString()
+{
+	return GetCurrentPlaylistVarString( "br_respawn_equipment", DEFAULT_EQUIPMENT )
+}
+                                 
+
+bool function Has_Respawn_ChargeTac()
+{
+	bool hasRespawnChargeTac = GetCurrentPlaylistVarBool( "has_respawn_chargetac", false  )
+	return hasRespawnChargeTac
+}
+
+
 #if CLIENT
 void function ManageRespawnChamberData( entity ent, var rui )
 {
@@ -579,38 +2038,38 @@ void function ManageRespawnChamberData( entity ent, var rui )
 			delete file.chamberToBeamFX[ ent ]
 
 			file.respawnChamberRuis.fastremovebyvalue( rui )
+
+			file.mobileRespawnSpawnInProgress = false
 		}
 	)
 
 	WaitForever()
 }
 
-void function AddRadarToRespawnStation( entity ent )
+void function RespawnBeacon_PlayHologramVFX( entity ent )
 {
-	vector fwd = AnglesToForward( ent.GetAngles() )
-	vector up = AnglesToUp( ent.GetAngles() )
-	vector rgt = AnglesToRight( ent.GetAngles() )
-	vector offset = up*100
-	vector angles = AnglesCompose( ent.GetAngles(), <0,0,-10> )
+	bool isMobile = ent.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME
+
+	vector fwd    = AnglesToForward( ent.GetAngles() )
+	vector up     = AnglesToUp( ent.GetAngles() )
+	vector rgt    = AnglesToRight( ent.GetAngles() )
+	vector offset = up * 100
+	vector angles = AnglesCompose( ent.GetAngles(), <0, 0, -10> )
 
 	ent.EndSignal( "OnDestroy" )
 
-	entity fxHolder = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", ent.GetOrigin() + up*RESPAWN_BEACON_HOLO_EFFECT_HEIGHT, <-90,0,0> )
+	float height = isMobile ? 32.0 : RESPAWN_BEACON_HOLO_EFFECT_HEIGHT
+
+	entity fxHolder = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", ent.GetOrigin() + up * height, <-90, 0, 0> )
 
 	array<int> fx
-	fx.append( StartParticleEffectOnEntity( fxHolder, GetParticleSystemIndex( RESPAWN_BEACON_EMITTER_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 ) )
-	
-	if( ent.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME ) 
-	{
-		fx.append( StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( RESPAWN_BEACON_BEAM_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1, <0,0,0>, <0,0,0> ) )
-	}
-	
+	fx.append( StartParticleEffectOnEntity( fxHolder, GetParticleSystemIndex( RESPAWN_BEACON_EMITTER_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID ) )
 	EmitSoundOnEntity( fxHolder, SOUND_HOLOGRAM_LOOP )
 
 	OnThreadEnd(
 		function() : ( fx, fxHolder )
 		{
-			//radar.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
+			//radar.Dissolve( ENTITY_DISSOLVE_CORE )
 			foreach ( effect in fx )
 			{
 				EffectStop( effect, false, true )
@@ -627,7 +2086,7 @@ void function MinimapPackage_RespawnDNA( entity ent, var rui )
 	RuiSetImage( rui, "defaultIcon", $"" )
 	RuiSetImage( rui, "clampedDefaultIcon", $"" )
 	RuiSetBool( rui, "useTeamColor", false )
-	RuiSetFloat2( rui, "iconScale", <1.0,60.0/120.0,0.0> * 2.0 )
+	RuiSetFloat2( rui, "iconScale", <1.0, 60.0 / 120.0, 0.0> * 2.0 )
 
 	thread RespawnDNA_SetCharacterIcon( ent, rui, "defaultIcon" )
 }
@@ -645,33 +2104,92 @@ void function RespawnDNA_SetCharacterIcon( entity ent, var rui, string argName )
 	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( owner ), Loadout_Character() )
 
 	asset setFile = CharacterClass_GetSetFile( character )
-	asset icon = GetGlobalSettingsAsset( setFile, "unitframe_icon" )
+	asset icon    = GetGlobalSettingsAsset( setFile, "unitframe_icon" )
 
 	RuiSetImage( rui, argName, icon )
 }
 
 void function MinimapPackage_RespawnChamber( entity ent, var rui )
 {
+	#if MINIMAP_DEBUG
+		printt( "Adding " + RESPAWN_BEACON_ICON + " (RespawnChamber) icon to minimap" )
+	#endif
+
 	RuiSetImage( rui, "defaultIcon", RESPAWN_BEACON_ICON )
 	RuiSetImage( rui, "smallIcon", RESPAWN_BEACON_ICON_SMALL )
 	RuiSetBool( rui, "hasSmallIcon", true )
 	RuiSetImage( rui, "clampedDefaultIcon", $"" )
 	RuiSetBool( rui, "useTeamColor", false )
+
+	file.respawnChamberFullmapRuis.append( rui )
+
+	AddEntityDestroyedCallback( ent,
+		void function( entity ent ) : ( rui )
+		{
+			file.respawnChamberFullmapRuis.fastremovebyvalue( rui )
+		}
+	)
+
+	entity viewPlayer = GetLocalViewPlayer()
+	if ( !IsValid( viewPlayer ) )
+		viewPlayer = GetLocalClientPlayer()
+	if ( !IsValid( viewPlayer ) )
+		return
+	bool waitingToBeRespawned = HasTeammatesToRespawn( viewPlayer.GetTeam() )
+	RuiSetBool( rui, "hasSmallIcon", !waitingToBeRespawned )
+}
+
+void function MinimapPackage_RespawnChamber_ListenForBannerPossession( entity ent, var rui )
+{
 }
 
 string function RespawnChamber_TextOverride( entity ent )
 {
+	string baseString = Localize( RespawnChamber_TextOverride_BaseString( ent ) )
+
+	                   
 	entity player = GetLocalViewPlayer()
-	int team = player.GetTeam()
+	if( Perk_CanBuyBanners( player ) )
+	{
+		baseString += "\n" + Localize( "#PERK_BANNER_CRAFTING_RESPAWN_BEACON_HINT" )
+	}
+       
+
+	return baseString
+}
+
+string function RespawnChamber_TextOverride_BaseString( entity ent )
+{
+	                   
+	if ( ent.GetScriptPropFlags() == 1 )
+		ent.e.munitionsDropSpawned = true
+       
+
+	if ( file.mobileRespawnSpawnInProgress )
+	{
+		return ""
+	}
+
+	entity player = GetLocalViewPlayer()
+	int team      = player.GetTeam()
 	if ( GetPlayerArrayOfTeam( team ).len() == GetPlayerArrayOfTeam_Alive( team ).len() ||
 			!HasTeammatesToRespawn( team ) )
 	{
-		//return "Respawn Teammates Here"
-		//if ( !TeammatesWaitingToBeRespawned( team ) )
-		return "#HINT_RESPAWN_NEED"
+                     
+                                                                           
+                            
+      
+        
+
+                                  
+                                                    
+                                
+      
+        
+			return "#HINT_RESPAWN_NEED"
 	}
 
-	return "#HINT_RESPAWN_USE"
+		return "#HINT_RESPAWN_USE"
 }
 
 string function RespawnDNA_TextOverride( entity ent )
@@ -681,52 +2199,147 @@ string function RespawnDNA_TextOverride( entity ent )
 
 	return "#HINT_DESTROY_DNA_USE"
 }
-#endif
+
+#endif // CLIENT
 
 float function GetRespawnStationUseTime( entity ent )
 {
-	if( ent.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME )
-		return MOBILE_RESPAWN_BEACON_RESPAWN_TIME
-	else
-		return RESPAWN_BEACON_RESPAWN_TIME
-	
-	unreachable
+	return RESPAWN_BEACON_RESPAWN_TIME
 }
-
 
 void function RespawnChamberOnUse( entity pickup, entity player, int pickupFlags )
 {
-	if ( !(pickupFlags & USE_INPUT_LONG ) )
-		return
-                   
-                                                                                                                                                                
-        
-     
-	if ( !HasTeammatesToRespawn( player.GetTeam() ) )
+	if ( !IsBitFlagSet( pickupFlags, USE_INPUT_LONG ) )
 		return
 
+                   
+                                                                                                                                          
+        
+     
+
+	if ( !HasTeammatesToRespawn( player.GetTeam() ) )
+		return
+      
+
+	float time = Time()
+	RespawnChamberOnUse_Common( pickup, player, time )
+
+#if SERVER
+	// Bug fix for http://jiratf.respawn.net:8080/browse/R5DEV-144665
+	// The problem occurs if the user holds down the USE key when the chamber's setUsable is turned to true.
+	// The server gets the EntityUse call but the client does not because prediction cannot predict that you are about to use the entity (it isn't there or on)
+	// So the EntityUse is not triggered on the client. The respawn still ultimately happens because the server triggers.
+	// The desire was to keep the predicted method, and run a just-in-case ping on the client.
+	Remote_CallFunction_NonReplay( player, "ServerToClient_RespawnChamberOnUse", pickup, player ) // Our just-in-case ping.
+#endif
+}
+
+#if CLIENT
+void function ServerToClient_RespawnChamberOnUse( entity pickup, entity player )
+{
+	if ( !IsValid( pickup ) || !IsValid( player ) ) // Cautionary measure in case the remote call is VERY late in being received
+		return
+
+	// Note: it is theoretically possible for the client to predict the USE, then remove the USE before we get this remote call leading to
+	// an erroneous call to RespawnChamberOnUse_Common.  However, if the player's USE key isn't active, the flag is cleared,
+	// as is the UI, through normal "extended_use" logic and we don't see the UI come up when we're not supposed to.
+	if ( player.p.isInExtendedUse )
+	{
+		// We have already brought up the UI
+		return
+	}
+	else
+	{
+		RespawnChamberOnUse_Common( pickup, player, Time() )
+	}
+}
+#endif
+
+void function RespawnChamberOnUse_Common( entity pickup, entity player, float startTime )
+{
 	#if CLIENT
-	HidePlayerHint( "#RESPAWN_AT_BEACONS_HINT" )
-		#endif
+		HidePlayerHint( "#RESPAWN_AT_BEACONS_HINT" )
+	#endif
 
 	ExtendedUseSettings settings
 	settings.successSound = RESPAWN_BEACON_SUCCESS_SOUND
+
+	// We need this on server and client.
+	settings.serverStartTime = startTime
+
 	#if CLIENT
 		settings.loopSound = RESPAWN_BEACON_LOOP_SOUND
 		settings.displayRui = $"ui/health_use_progress.rpak"
 		settings.displayRuiFunc = DisplayRuiForRespawnChamber
 		settings.icon = $""
+
+                                  
+                                                                                                                      
+                                        
+      
+        
+
+                     
+                                                                           
+   
+                                    
+    
+        
+
+
 		settings.hint = "#HINT_RESPAWNING"
 		settings.icon = RESPAWN_BEACON_ICON
+
+		if ( pickup.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME )
+		{
+			settings.successFunc = RespawnSuccessClient_Mobile
+		}
 	#elseif SERVER
 		settings.startFunc = RespawnBeaconStartUse
 		settings.endFunc = RespawnBeaconStopUse
-		settings.successFunc = RespawnUserTeam
+
+		                           
+			if( Has_BR_Respawn_WithWeapons() || Has_BR_Respawn_WithArmor() )
+			{
+				settings.startFunc 		= RespawnBeacon_StartUse_Pulsate
+				settings.endFunc 		= RespawnBeacon_StopUse_Pulsate
+			}
+                                   
+
+		if ( pickup.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME )
+		{
+			settings.startFunc = RespawnBeaconStartUse_Mobile
+			settings.endFunc = RespawnBeaconStopUse_Mobile
+		}
+
+                           
+                                                                
+    
+                                                        
+                                                     
+    
+                                 
+
+		settings.successFunc = RespawnBeacon_GetSuccessFunc( pickup )
 		settings.exclusiveUse = true
 		settings.movementDisable = true
 		settings.holsterWeapon = true
-		#endif
-	settings.duration = GetRespawnStationUseTime( pickup )
+		settings.holsterViewModelOnly = true
+	#endif
+
+	if ( pickup.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME )
+	{
+		settings.duration = GetRespawnStationUseTime_Mobile( pickup )
+	}
+                          
+                                                                   
+   
+                                                                
+   
+                                
+	else
+		settings.duration = GetRespawnStationUseTime( pickup )
+
 	settings.useInputFlag = IN_USE_LONG
 
 	thread ExtendedUse( pickup, player, settings )
@@ -735,6 +2348,11 @@ void function RespawnChamberOnUse( entity pickup, entity player, int pickupFlags
 #if SERVER
 void functionref( entity, entity, ExtendedUseSettings ) function RespawnBeacon_GetSuccessFunc( entity beacon )
 {
+                         
+                                                              
+                                  
+      
+
 	if ( beacon.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME )
 		return RespawnUserTeam_Mobile
 
@@ -745,7 +2363,9 @@ void functionref( entity, entity, ExtendedUseSettings ) function RespawnBeacon_G
 #if CLIENT
 void function DisplayRuiForRespawnChamber( entity ent, entity player, var rui, ExtendedUseSettings settings )
 {
-	DisplayRuiForRespawnChamber_Internal( rui, settings.icon, Time(), Time() + settings.duration, settings.hint )
+	float startTime = settings.serverStartTime > 0.0 ? settings.serverStartTime : Time()
+	float endTime = startTime + settings.duration
+	DisplayRuiForRespawnChamber_Internal( rui, settings.icon, startTime, endTime, settings.hint )
 }
 
 void function DisplayRuiForRespawnChamber_Internal( var rui, asset icon, float startTime, float endTime, string hint )
@@ -757,65 +2377,167 @@ void function DisplayRuiForRespawnChamber_Internal( var rui, asset icon, float s
 	RuiSetString( rui, "hintKeyboardMouse", hint )
 	RuiSetString( rui, "hintController", hint )
 }
-#endif
+#endif // CLIENT
 
 #if SERVER
+void function Survival_AddCallback_OnRespawnDropshipCreated( void functionref(entity) callbackFunc )
+{
+	Assert( !file.Callbacks_OnRespawnDropshipCreated.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnRespawnDropshipCreated" )
+	file.Callbacks_OnRespawnDropshipCreated.append( callbackFunc )
+}
+
+void function Survival_AddCallback_OnPlayerPutInDropship( void functionref( entity, entity ) callbackFunc )
+{
+	Assert( !file.Callbacks_OnPlayerPutInDropship.contains( callbackFunc ), "Already added " + string( callbackFunc ) + " with Survival_AddCallback_OnPlayerPutInDropship" )
+	file.Callbacks_OnPlayerPutInDropship.append( callbackFunc )
+}
+
 bool function RespawnUserTeam_Common( entity ent, entity playerUser )
 {
+                                 
+                                                        
+                                         
+       
+
+                    
+                                                                           
+                           
+       
+
 	if ( !HasTeammatesToRespawn( playerUser.GetTeam() ) )
 		return false
 
-	thread RespawnTeamPlayers( ent, playerUser.GetTeam(), playerUser )
+	thread RespawnTeamPlayers( ent, playerUser.GetTeam(), playerUser, RespawnPlayersInDropship )
 
 	return true
 }
 
 void function RespawnUserTeam( entity ent, entity playerUser, ExtendedUseSettings settings )
 {
-	if ( !HasTeammatesToRespawn( playerUser.GetTeam() ) )
+	if ( !RespawnUserTeam_Common( ent, playerUser ) )
 		return
+
+	PIN_Interact( playerUser, "respawn_beacon", ent.GetOrigin() )
 
 	int fxId = GetParticleSystemIndex( RESPAWN_BEACON_SCAN_FX )
 
-	asset model = ent.GetModelName()
-	vector origin = ent.GetOrigin()
-	vector angles = ent.GetAngles()
-	
-	if( ent.GetTargetName() == MOBILE_RESPAWN_BEACON_TARGETNAME )
-	{
-		ent.Destroy()
-		entity newEnt = CreatePropDynamic( model, origin, angles, 0 )
-		StartParticleEffectOnEntityWithPos( newEnt, fxId, FX_PATTACH_POINT_FOLLOW_NOROTATE, newEnt.LookupAttachment( "FX_EMITTER" ), newEnt.GetOrigin(), <0,0,0> )
-		
-		thread RespawnTeamPlayers( newEnt, playerUser.GetTeam(), playerUser )
+	asset model        = ent.GetModelName()
+	vector origin      = ent.GetOrigin()
+	vector angles      = ent.GetAngles()
 
-		thread function() : (newEnt)
-		{
-			if(!IsValid(newEnt)) return
-			
-			// if (!isSloped)
-			newEnt.Anim_Play("mobile_respawn_beacon_destruction")
-		
-			wait newEnt.GetSequenceDuration("mobile_respawn_beacon_destruction")
-			
-			if(!IsValid(newEnt)) return
-			
-			newEnt.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
-		}()
-		return
-	}
-	
 	entity newEnt = CreatePropDynamicLightweight( model, origin, angles, 6 )
-	StartParticleEffectOnEntityWithPos( newEnt, fxId, FX_PATTACH_POINT_FOLLOW_NOROTATE, newEnt.LookupAttachment( "FX_EMITTER" ), newEnt.GetOrigin(), <0,0,0> )
+	StartParticleEffectOnEntity( newEnt, fxId, FX_PATTACH_POINT_FOLLOW_NOROTATE, newEnt.LookupAttachment( "FX_EMITTER" ) )
 	//newEnt.Anim_Play( "mh_active_2_inactive" )
-	//newEnt.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 500 )
+	//newEnt.Dissolve( ENTITY_DISSOLVE_CORE )
 
-	thread RespawnTeamPlayers( ent, playerUser.GetTeam(), playerUser )
+	array<entity> childrenOfOldEntity		= ent.GetChildren()
+
+	foreach (entity child in childrenOfOldEntity)
+	{
+		if ( IsValid ( child ) )
+			child.SetParent ( newEnt )
+	}
 
 	ent.Destroy()
 }
 
-void function RespawnTeamPlayers( entity ent, int team, entity respawnCaller )
+void function RespawnTeamPlayers( entity ent, int team, entity respawnCaller, void functionref( array<entity> players, entity beacon ) RespawnPlayerFromBeaconFunc )
+{
+	array<entity> playersToSpawn = GetPlayersToRespawn( team )
+	foreach ( p in playersToSpawn )
+	{
+		Survival_PlayerRespawnedTeammate( respawnCaller, p )
+	}
+
+	foreach ( func in file.Callbacks_OnTeammatesRespawned )
+	{
+		func( respawnCaller, ent, playersToSpawn )
+	}
+
+	DeadPeriodChecker_PlayerDeadPeriodEnd( respawnCaller, eDeadPeriodEndReason.RESPAWNED_TEAMMATES )
+
+	thread RespawnPlayerFromBeaconFunc( playersToSpawn, ent )
+}
+
+void function RespawnBeacon_StartUse_Pulsate( entity ent, entity player, ExtendedUseSettings settings )
+{
+	//// Uncomment to debug:
+	//#if DEV
+	//	printt( FUNC_NAME() + "()" )
+	//#endif // DEV
+
+	thread RespawnBeacon_Interact_Pulsate_Thread( ent, player, settings.duration )
+
+	RespawnBeaconStartUse_Common( ent, player, settings )
+}
+
+void function RespawnBeacon_StopUse_Pulsate( entity ent, entity player, ExtendedUseSettings settings )
+{
+	float useTime = Time() - settings.serverStartTime
+
+	//// Uncomment to debug:
+	//#if DEV
+	//	printt( "*****" + FUNC_NAME() + "()" )
+	//	printt( "     " + FUNC_NAME() + "(): Current Time ==  " + Time() )
+	//	printt( "     " + FUNC_NAME() + "(): settings.serverStartTime ==  " + settings.serverStartTime )
+	//	printt( "     " + FUNC_NAME() + "(): settings.duration ==  " + settings.duration )
+	//	printt( "     " + FUNC_NAME() + "(): Use Time ==  " + useTime )
+	//#endif // DEV
+
+	ent.Signal( "StopBeaconPulsate" )
+
+	if( useTime < settings.duration )
+	{
+		StopSoundAtPosition( ent.GetOrigin(), RESPAWN_INTERACT_PULSATE_SOUND )
+	}
+
+	RespawnBeaconStopUse_Common( ent, player )
+}
+
+void function RespawnBeacon_Interact_Pulsate_Thread( entity ent, entity player, float duration )
+{
+	ent.Signal( "StopBeaconPulsate" )
+	ent.EndSignal( "OnDestroy", "StopBeaconPulsate" )
+
+	int fxId = GetParticleSystemIndex( RESPAWN_BEACON_PULSATE_FX )
+
+	PassByReferenceEntity fx
+
+	OnThreadEnd( function () : ( ent, fx )
+	{
+		//STOP FX.
+		if( IsValid( fx.value ) )
+		{
+			EffectStop( fx.value )
+		}
+	}
+	)
+
+	EmitSoundAtPosition( TEAM_ANY, ent.GetOrigin(), RESPAWN_INTERACT_PULSATE_SOUND, ent )
+
+	const float PULSATEDURATION = 0.5
+	while( true )
+	{
+		//Prevents a warning when the entity is destroyed and its model briefly becomes null
+		if ( !IsValid( ent ) )
+			break
+
+		fx.value = StartParticleEffectOnEntity_ReturnEntity( ent, fxId, FX_PATTACH_POINT_FOLLOW_NOROTATE, ent.LookupAttachment( "FX_EMITTER" ) )
+		wait( PULSATEDURATION )
+		if( IsValid( fx.value ) )
+		{
+			EffectStop( fx.value )
+		}
+	}
+}
+
+#endif // SERVER
+
+/*
+----- UTILITY -----
+*/
+
+array< entity > function GetPlayersToRespawn( int team )
 {
 	array<entity> playersToSpawn
 	foreach ( p in GetPlayerArrayOfTeam( team ) )
@@ -823,31 +2545,16 @@ void function RespawnTeamPlayers( entity ent, int team, entity respawnCaller )
 		if ( !IsAlive( p ) && p.GetPlayerNetInt( "respawnStatus" ) == eRespawnStatus.WAITING_FOR_DELIVERY )
 		{
 			playersToSpawn.append( p )
-			Survival_PlayerRespawnedTeammate( respawnCaller, p )
 		}
 	}
 
-	LiveAPI_OnRespawnTeamPlayers( respawnCaller, playersToSpawn )
-	thread RespawnPlayersInDropship( playersToSpawn, ent )
+	return playersToSpawn
 }
-#endif
-
-/*
------ UTILITY -----
-*/
 
 int function CountTeammatesWaitingToBeRespawned( int team )
 {
-	int count = 0
-	foreach ( player in GetPlayerArrayOfTeam( team ) )
-	{
-		if ( !IsAlive( player ) )
-		{
-			if ( player.GetPlayerNetInt( "respawnStatus" ) == eRespawnStatus.WAITING_FOR_DELIVERY )
-				count++
-		}
-	}
-	return count
+	array< entity > playersToRespawn = GetPlayersToRespawn( team )
+	return playersToRespawn.len()
 }
 
 bool function HasTeammatesToRespawn( int team )
@@ -855,11 +2562,12 @@ bool function HasTeammatesToRespawn( int team )
 	return CountTeammatesWaitingToBeRespawned( team ) > 0
 }
 
+
 #if CLIENT
 string function RespawnBeacon_TextOverride( entity ent )
 {
 	entity player = GetLocalViewPlayer()
-	entity owner = ent.GetOwner()
+	entity owner  = ent.GetOwner()
 
 	if ( !IsValid( owner ) )
 		return ""
@@ -872,16 +2580,15 @@ string function RespawnBeacon_TextOverride( entity ent )
 
 	return Localize( "%use% Destroy Respawn Beacon" )
 }
-#endif
+#endif // CLIENT
 
 int function GetRespawnStatus( entity player )
 {
-	if ( !IsValid( player ) )
+	if ( !IsValid( player ) || !player.IsPlayer() )
 		return eRespawnStatus.NONE
 
 	return player.GetPlayerNetInt( "respawnStatus" )
 }
-
 
 int function GetRespawnStyle()
 {
@@ -904,6 +2611,43 @@ int function GetRespawnStyle()
 
 	return respawnStyle
 }
+
+string function Get_RespawnStatus_String_ForPlayer( entity player )
+{
+	Assert( IsValid( player ) && player.IsPlayer(), FUNC_NAME() + "(): Given Player Arg is invalid." )
+
+	int respawnStatus = player.GetPlayerNetInt( "respawnStatus" )
+	string respawnStatusString = respawnStatus_EnumToStringMap[ respawnStatus ]
+	return( respawnStatusString )
+}
+
+const int INFINITE_RESPAWNS = -1
+int function GetRemainingRespawnsForPlayer( entity player )
+{
+	int numRespawnsForMode = GetStartingRespawnCount() //-1 = infinite respawns
+	if ( numRespawnsForMode == INFINITE_RESPAWNS )
+		return INFINITE_RESPAWNS
+
+	if ( !IsValid( player ) )
+		return 0
+
+	return player.GetPlayerNetInt( "respawnsRemaining" )
+
+}
+
+#if SERVER
+void function RespawnBeacon_OnPrematch()
+{
+	if ( IsRoundBased() && GetRoundsPlayed() > 0 )
+	{
+		// Clearing respawn status. Otherwise if your squad died in round 1, you'd always see "Squad Eliminated" even if you won
+		foreach( entity player in GetPlayerArray() )
+		{
+			player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.NONE )
+		}
+	}
+}
+#endif // SERVER
 
 #if SERVER
 void function DestroyItem( entity ent, entity playerUser )
@@ -936,7 +2680,7 @@ void function DisplayWaitingForRespawnThread( entity ent, float startTime, float
 	if ( Time() > endTime )
 		return
 
-		DeathScreen_UpdateRespawnTime( startTime, endTime )
+	DeathScreen_UpdateRespawnTime( startTime, endTime )
 
 	OnThreadEnd(
 		function() : ()
@@ -945,37 +2689,6 @@ void function DisplayWaitingForRespawnThread( entity ent, float startTime, float
 	)
 
 	wait endTime - Time()
-}
-
-void function DisplayWaitingForStationThread( int state )
-{
-	/*
-	clGlobal.levelEnt.Signal( "ReviveRuiThread" )
-	clGlobal.levelEnt.EndSignal( "SquadEliminated" )
-	clGlobal.levelEnt.EndSignal( "ReviveRuiThread" )
-
-	string text
-	switch ( state )
-	{
-		case eRespawnStatus.WAITING_FOR_DELIVERY:
-			text = "#WAITING_FOR_RESPAWN"
-			break
-		case eRespawnStatus.PICKUP_DESTROYED:
-			text = "#STATUS_PICKUP_DESTROYED"
-			break
-	}
-
-	UpdateRespawnStatus( state )
-
-	OnThreadEnd(
-		function() : ()
-		{
-			UpdateRespawnStatus( eRespawnStatus.NONE )
-		}
-	)
-
-	WaitForever()
-	*/
 }
 
 void function ServerCallback_RespawnPodStarted( float endTime )
@@ -999,19 +2712,40 @@ void function ReviveRuiThread( float endTime )
 		}
 	)
 
-	wait ( endTime - Time() )
+	wait (endTime - Time())
 }
 
 void function ServerCallback_RespawnDNAHint()
 {
 	AddPlayerHint( 10.0, 1.0, $"", "#RESPAWN_AT_BEACONS_HINT" )
+
+
 }
-#endif
+
+void function AttemptCancelBannerPickup( entity player )
+{
+	if ( !HasInterruptableBannerPickup() )
+		return
+
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+
+	if ( !IsPlayingBannerPickupAnim( player ) )
+		return
+
+	Remote_ServerCallFunction( "ClientToServer_CancelBannerPickupAnim" )
+}
+#endif // CLIENT
 
 #if SERVER
 void function RespawnBeacons_OnSquadEliminated( int team )
 {
+	#if DEV
+		printt( FUNC_NAME() + "(): ----- " )
+	#endif // DEV
+
 	array<entity> squadMembers = GetPlayerArrayOfTeam( team )
+
 	foreach ( player in squadMembers )
 	{
 		if ( IsValid( player.p.respawnPod ) )
@@ -1020,21 +2754,23 @@ void function RespawnBeacons_OnSquadEliminated( int team )
 		if ( IsValid( player.p.respawnBeacon ) )
 			player.p.respawnBeacon.Destroy()
 
-		player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.SQUAD_ELIMINATED )
+		if ( GetRespawnStyle() == eRespawnStyle.RESPAWN_CHAMBERS )
+		{
+			player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.SQUAD_ELIMINATED )
+		}
 	}
 }
 
 void function OnDeathBoxSpawned( entity deathbox, entity attacker, int damageSourceID )
 {
+	deathbox.SetIgnorePredictedTriggerTypes( TT_JUMP_PAD )
+
 	entity player = deathbox.GetOwner()
-	
-	if( Gamemode() == eGamemodes.fs_aimtrainer || Playlist() == ePlaylists.fs_scenarios )
-		return
-	
+
 	if ( !IsValid( player ) )
 		return
 
-	if ( GetPlayerArrayOfTeam_Alive( player.GetTeam() ).len() == 0 )
+	if ( Survival_IsPlayerSquadEliminated( player ) )
 		return
 
 	//switch ( damageSourceID )
@@ -1045,46 +2781,272 @@ void function OnDeathBoxSpawned( entity deathbox, entity attacker, int damageSou
 	//		return
 	//}
 
-	AddEntityCallback_OnGrappled( deathbox, GrappleGrabBanner )
+                              
+                                                                                                                                                               
+        
+      
 
 	entity respawnBeacon = CreateWaypoint_RespawnBanner( player, deathbox )
 	player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_PICKUP )
 	player.SetPlayerNetTime( "respawnStatusEndTime", Time() + RESPAWN_DNA_LIFETIME )
+	player.SetPlayerNetTime( "hackStartTime", Time() )
+
 	Remote_CallFunction_NonReplay( player, "ServerCallback_DisplayWaitingForRespawn", respawnBeacon, Time(), player.GetPlayerNetTime( "respawnStatusEndTime" ) )
-	thread DelayedDestroyDNA( respawnBeacon, RESPAWN_DNA_LIFETIME )
+	thread DelayedDestroyDNA( respawnBeacon, deathbox, RESPAWN_DNA_LIFETIME )
 	thread DeathBoxThink_RespawnBeacon( deathbox, respawnBeacon )
-}
 
-
-void function GrappleGrabBanner( entity player, entity hitent, vector hitpos, vector hitNormal )
-{
-	if( !GetCurrentPlaylistVarBool( "enable_grapple_recovers_banner", false ) )
-		return
-	
-	player.EndSignal( "OnDeath" )
-	hitent.EndSignal( "OnDestroy" )
-
-	if ( hitent.GetUsableValue() == 0 )
-		return
-
-	if ( player.HasGrapple() && player.IsGrappleActive() )
+	if( !Player_Banners_Enabled() )
 	{
-		player.Grapple( <0,0,0> )
+		DeathBox_NoBanner_Resolve( deathbox, attacker, damageSourceID )
 	}
 
-	PlayGrappleAttachedAnimation( player, "ptpov_cloudcity_grapple_switch" )
-
-	DeathBoxOnUse( hitent, player, 0 )
-
-	entity proxy = player.GetPredictedFirstPersonProxy()
-	proxy.EndSignal( "OnDestroy" )
-	proxy.WaitSignal( "GrappleYank" )
-
-	hitent.Signal( "OnPlayerUse", { player = player } )
+	#if AUTO_PLAYER
+	AutoPlayer_RespawnDeathboxSpawned( player )
+#endif // AUTO_PLAYER
 }
 
+// Automatically assigns banner to an alive player. Derived from AutoGrabBanners() in Turbo game mode.
+void function DeathBox_NoBanner_Resolve( entity deathbox, entity attacker, int damageSourceID )
+{
+	if( !IsValid( deathbox ) )
+		return
 
-void function DeathBoxThink_RespawnBeacon( entity box, entity dna ) // todo(dh) rename?
+	entity owner = deathbox.GetOwner()
+	entity dna = deathbox.e.utilityEnt
+
+	if ( !IsValid( dna ) )
+		return
+
+	if ( !IsValid( owner ) )
+		return
+
+	array < entity > teammates = GetPlayerArrayOfTeam_Alive( owner.GetTeam() )
+	if ( teammates.len() != 0 )
+	{
+		entity squadMember = teammates[0]
+		owner.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_DELIVERY )
+		owner.SetPlayerNetTime( "respawnStatusEndTime", 0 )
+		owner.SetPlayerNetTime( "respawnBannerPickedUpTime", Time() )
+		SetTeam( deathbox, TEAM_UNASSIGNED )
+
+		PingNearestRespawnBeacon( owner, squadMember.GetOrigin() )
+
+		// TODO: Deletion the dna below is causing trouble with _smoke_test.gnut... what happens if we DON'T do this?
+		//if( IsValid( dna ) )
+		//{
+		//	dna.Destroy()
+		//}
+	}
+}
+
+bool function Was_Damage_FromEnemy( entity victim, entity attacker )
+{
+	if ( !IsValidPlayer( victim ) )
+		return false
+
+	if ( !IsValid( attacker ))
+		return false
+
+	if ( !attacker.IsPlayer() )
+		return false
+
+	return !IsFriendlyTeam( victim.GetTeam(), attacker.GetTeam() )
+}
+
+// Save the latest time a player damaged or was damaged by an enemy, ( i.e. had an enemy encounter ).
+void function RespawnEquipped_OnPlayerDamaged( entity player, var damageInfo )
+{
+	if( !IsValidPlayer( player ) )
+		return
+	
+	// Last Time Enemy Damaged Player Check: Check if damage was from an enemy and if so, save time of damage.
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( !IsValid( attacker ) )
+		return
+
+	if ( !attacker.IsPlayer() )
+		return
+
+	if( Was_Damage_FromEnemy( player, attacker ) )
+	{
+		file.lastCombatEncounterVsEnemy[ player ] <- Time()
+		file.lastCombatEncounterVsEnemy[ attacker ] <- Time()
+	}
+}
+
+float function PLV_RespawnEquipped_EnemyDamaged_NotSuicide_TimeWindow()
+{
+	return( GetCurrentPlaylistVarFloat( "respawnequipped_enemydamage_notsuicide_timewindow", 15.0 ) )
+}
+
+// --- Last Death Suicide Status Functions
+
+bool function LastDeathSuicideStatus_Analyze( entity victim, entity attacker, var damageInfo )
+{
+	// Returns TRUE if last death was a suicide.
+	// A death is considered a suicide if ( time of death - time of last enemy engagement ) > threshold.
+	bool wasSuicide = true
+	if( !IsValidPlayer( victim ) )
+		return wasSuicide
+
+	float timeSinceLastEnemyEncounter = Time() - file.lastCombatEncounterVsEnemy[ victim ]
+
+	int damageType = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	switch( damageType )
+	{
+		// Death by bleedout will check whether the last enemy encounter was within the Bleedout time + some tolerance.
+		case eDamageSourceId.bleedout:
+			float bleedOutTime = Bleedout_GetBleedoutTime( victim )
+			const bleedout_RespawnEquippedTolerance = 5.0
+			float bleedOutTimeThreshold = bleedOutTime + bleedout_RespawnEquippedTolerance 
+			printt( "Respawn Equipped: Death by Bleedout. Bleedout Time == " + bleedOutTime )
+			wasSuicide = timeSinceLastEnemyEncounter > bleedOutTimeThreshold
+			break
+		//case eDamageSourceId.burn:
+		//case eDamageSourceId.crushed:
+		//case eDamageSourceId.fall:
+		//case eDamageSourceId.outOfBounds:
+		//case eDamageSourceId.splat:
+		//case eDamageSourceId.submerged:
+		//case eDamageSourceId.turbine:
+		//	wasSuicide = true
+		//	break
+		default:
+			wasSuicide = timeSinceLastEnemyEncounter > PLV_RespawnEquipped_EnemyDamaged_NotSuicide_TimeWindow()
+			break
+	}
+
+	// TODO: If we need more specific death criteria, we can evaluate those here.
+	//else
+	//{
+	//	int damageType = DamageInfo_GetDamageSourceIdentifier( damageInfo )
+	//	switch( damageType )
+	//	{
+	//		// Environmental deaths are counted as suicides.
+	//		case eDamageSourceId.burn:
+	//		case eDamageSourceId.crushed:
+	//		case eDamageSourceId.fall:
+	//		case eDamageSourceId.outOfBounds:
+	//		case eDamageSourceId.splat:
+	//		case eDamageSourceId.submerged:
+	//		case eDamageSourceId.turbine:
+	//			wasSuicide = true
+	//			break
+	//		default:
+	//			break
+	//	}
+	//}
+	#if DEV
+		string resultStr = wasSuicide ? "suicide" : "not suicide"
+		printt( FUNC_NAME() + "(): player " + victim.GetPlayerName() + " death was " + resultStr )
+	#endif // DEV
+
+	LastDeathSuicideStatus_Set( victim, wasSuicide )
+	return wasSuicide
+}
+
+void function LastDeathSuicideStatus_Set( entity player, bool wasSuicide )
+{
+	if( !IsValidPlayer( player ) )
+		return
+
+	file.lastDeathSuicideStatus_ByPlayer[ player ] <- wasSuicide
+}
+
+bool function LastDeathSuicideStatus_Get( entity player )
+{
+	bool result = true
+
+	if( player in file.lastDeathSuicideStatus_ByPlayer )
+	{
+		result = file.lastDeathSuicideStatus_ByPlayer[ player ]
+	}
+	return result
+}
+
+// ---
+
+void function ClientToServer_CancelBannerPickupAnim( entity player )
+{
+	if ( !IsValid( player ) )
+		return
+
+	if ( !player.IsPlayer() )
+		return
+
+	if ( IsPlayingBannerPickupAnim( player ) )
+	{
+		StopPlayingAnimation( player )
+	}
+}
+
+void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	// Things are a bit twisted up right now. So to clarify:
+	// : Respawn style for the mode is set to eRespawnStyle.RESPAWN_CHAMBERS. Some pretzel logic currently requires this.
+	// : But we've actually removed all respawn chambers.
+	// : So we need to note that this player is eliminated, if their whole squad hasn't been already.
+
+	//// Uncomment to debug.
+	//#if DEV
+	//	printt( "Enemy Damage Window: OnPlayerKilled: " + victim.GetPlayerName() )
+	//#endif
+
+	PlayersWhoveDiedBefore_Add( victim )
+
+	// TODO: If NoBanners, Change player's status to "Delivery to Beacon"
+	#if DEV
+		DEV_Player_RespawnStatus( victim )
+	#endif // DEV
+
+
+	                           
+		// If player's death was not enemy-caused, then they don't get their gear restored.
+		bool wasDeath_Suicide = false
+		if( RespawnEquipped_SuicidesProhibited())
+		{
+			wasDeath_Suicide = LastDeathSuicideStatus_Analyze( victim, attacker, damageInfo )
+		}
+
+		RespawnEquipped_Save( victim, wasDeath_Suicide )
+                                  
+
+	if ( RespawnBeaconsAreEnabled() && ( SURVIVAL_Loot_IsRefDisabled( "mp_ability_mobile_respawn_beacon" ) || SURVIVAL_Loot_IsRefValid( "mp_ability_mobile_respawn_beacon" ) ) )
+		return
+	if ( victim.GetPlayerNetInt( "respawnStatus" ) == eRespawnStatus.SQUAD_ELIMINATED )
+		return
+
+	if ( IsPVEMode() && (MissionCheckpoints_GetRespawnsLeftForPlayer( victim ) > 0) )
+		return
+
+	victim.SetPlayerNetInt( "respawnStatus", eRespawnStatus.PLAYER_ELIMINATED )
+}
+
+void function PlayersWhoveDiedBefore_Add( entity player )
+{
+	if( !file.playersWhoveDiedBefore.contains( player ) )
+	{
+		file.playersWhoveDiedBefore.append( player )
+	}
+}
+
+void function PlayersWhoveDiedBefore_Remove( entity player )
+{
+	if( file.playersWhoveDiedBefore.contains( player ) )
+	{
+		file.playersWhoveDiedBefore.fastremovebyvalue( player )
+	}
+}
+
+bool function PlayersWhoveDiedBefore_Check( entity player )
+{
+	return( file.playersWhoveDiedBefore.contains( player ) )
+}
+
+// ---
+
+void function DeathBoxThink_RespawnBeacon( entity box, entity dna )
+// todo(dh) rename?
 {
 	box.EndSignal( "OnDestroy" )
 	dna.EndSignal( "OnDestroy" )
@@ -1103,50 +3065,97 @@ void function DeathBoxThink_RespawnBeacon( entity box, entity dna ) // todo(dh) 
 		}
 	)
 
-	box.e.ownerWeapon = dna
-	AddCallback_OnUseEntity( box, DeathBoxOnUse )
+	box.e.utilityEnt = dna
+	AddCallback_OnUseEntity_ClientServer( box, DeathBoxOnUse )
 
 	WaitForever()
 }
 
 void function DeathBoxOnUse( entity box, entity playerUser, int useFlags )
 {
-	entity dna = box.e.ownerWeapon
+	entity dna = box.e.utilityEnt
 	if ( !IsValid( dna ) )
 		return
 
-	entity owner = dna.GetOwner()
-	if ( !IsValid( owner ) )
+	if ( !ShouldPickupDNAFromDeathBox( box, playerUser ) )
 		return
 
-	if ( dna.GetTeam() == playerUser.GetTeam() )
+	entity owner = box.GetOwner()
+	Assert( IsValid( owner ) )
+
+	if ( GetCurrentPlaylistVarBool( "respawn_beacon_fp_gladiator_card", true ) )
 	{
-		if ( GetCurrentPlaylistVarBool( "respawn_beacon_fp_gladiator_card", true ) )
-		{
-			playerUser.SetPlayerNetEnt( "gladCardPlayer", owner )
-			PlayFirstPersonAnimation( playerUser, "ptpov_burn_card_activate_seq_gladcard" )
-		}
+		playerUser.SetPlayerNetEnt( "gladCardPlayer", owner )
+		if ( !playerUser.ContextAction_IsInVehicle() )
+			thread HandleRespawnBannerPickup_Thread( playerUser )
+	}
 
-		owner.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_DELIVERY )
-		owner.SetPlayerNetTime( "respawnStatusEndTime", 0 )
-		
-		//Remote_CallFunction_Replay( playerUser, "ServerCallback_RespawnDNAHint" )
-		Remote_CallFunction_ByRef( playerUser, "ServerCallback_RespawnDNAHint" )
-		
-		SetTeam( box, TEAM_UNASSIGNED )
+	owner.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_DELIVERY )
+	owner.SetPlayerNetTime( "respawnStatusEndTime", 0 )
+	owner.SetPlayerNetTime( "respawnBannerPickedUpTime", Time() )
+	Remote_CallFunction_Replay( playerUser, "ServerCallback_RespawnDNAHint" )
+	SetTeam( box, TEAM_UNASSIGNED )
 
-		PingNearestRespawnBeacon( owner, playerUser.GetOrigin() )
+	PingNearestRespawnBeacon( owner, playerUser.GetOrigin() )
 
-		PlayBattleChatterLineToSpeakerAndTeam( playerUser, "bc_gotFriendlyBanner" )
+	                    
+		UpgradeCore_OnBannerPickup( playerUser, owner )
+       
 
-		LiveAPI_WriteLogUsingDefinedFields( eLiveAPI_EventTypes.bannerCollected,
-			[ LiveAPI_GetPlayerIdentityTable( playerUser ), LiveAPI_GetPlayerIdentityTable( owner ) ],
-			[ 3/*player*/,                                  4/*collected*/ ]
+	PlayBattleChatterLineToSpeakerAndTeam( playerUser, "bc_gotFriendlyBanner" )
+
+	PIN_PlayerBannerPickup( playerUser, dna )
+
+	if( IsValid(dna) )
+		dna.Destroy()
+
+	// OBSERVER LIVE LOGS
+	//LiveAPI_SendTwoPlayerEvent( eLiveAPI_EventTypes.bannerCollected, playerUser, owner )
+}
+
+void function HandleRespawnBannerPickup_Thread( entity playerUser )
+{
+	if ( !ShouldFastBannerPickup() )
+	{
+		PlayFirstPersonAnimation( playerUser, PICKING_UP_RESPAWN_BANNER_ANIM )
+	}
+	else
+	{
+		EndSignal( playerUser, "OnDeath" )
+		Signal( playerUser, "pickingUpRespawnBanner" )
+		EndSignal( playerUser, "pickingUpRespawnBanner" )
+
+		OnThreadEnd(
+			function() : ( playerUser )
+			{
+				if ( IsValid( playerUser ) )
+				{
+					if( IsPlayingFirstPersonAnimation( playerUser ) )
+						StopPlayingAnimation( playerUser )
+				}
+			}
 		)
 
-		dna.Destroy()
+		PlayFirstPersonAnimation( playerUser, PICKING_UP_RESPAWN_BANNER_ANIM )
+
+		WaittillAnimDone( playerUser )
 	}
 }
+
+// ---
+
+                            
+void function PingMyLastDeathbox( entity player, int commsAction, entity subjectEnt )
+{
+	entity deathbox = player.p.myLastDeathbox
+	if ( IsValid( deathbox ) )
+	{
+		entity wp = CreateWaypoint_Ping_Location( player, ePingType.MARK_MY_LAST_DEATH_BOX, deathbox, deathbox.GetOrigin(), -1, true, true )
+		wp.SetAbsOrigin( deathbox.GetOrigin())
+		wp.SetParent( deathbox )
+	}
+}
+                                  
 
 void function PingMyDNA( entity player )
 {
@@ -1161,28 +3170,39 @@ void function PingMyDNA( entity player )
 
 void function PingNearestRespawnBeacon( entity player, vector origin )
 {
-	entity station = GetClosestValidStation( origin )
+	entity station = RespawnBeacon_GetClosestValidBeacon( player, origin )
 	if ( IsValid( station ) )
 	{
-		entity wp = CreateWaypoint_Ping_Location( player, ePingType.RESPAWN_STATION, station, station.GetOrigin(), -1, false )
+		entity wp = CreateWaypoint_Ping_Location( player, ePingType.RESPAWN_STATION, station, station.GetOrigin(), -1, true )
 		wp.SetAbsOrigin( station.GetOrigin() + <0, 0, 35> )
 		wp.SetParent( station )
 	}
 }
 
-void function RespawnBeacon_PutPlayerInDropship( entity player, entity ship, int pos, vector teleportOrigin )
+void function PutPlayerInDropship( entity player, entity ship, int positionIndex, float idleTimeOverride, bool isFirstSpawn, bool isDropshipRedeploy, bool useCameraDown1PAnims = false )
 {
 	ship.EndSignal( "OnDestroy" )
 	player.EndSignal( "OnDeath" )
 
-	dropshipAnimData animData = file.dropshipAnimDataList[ pos ]
+	// Track how many players are on a dropship. Used in modes that add players to a dropship during it's animation sequence
+	if ( ship in file.dropshipToNumPlayersOnDropshipTable )
+	{
+		int currentPlayerCount = file.dropshipToNumPlayersOnDropshipTable[ ship ]
+		file.dropshipToNumPlayersOnDropshipTable[ ship ] = currentPlayerCount + 1
+	}
+	else
+	{
+		file.dropshipToNumPlayersOnDropshipTable[ ship ] <- 1
+	}
 
-	FirstPersonSequenceStruct idleAnimSequence
-	idleAnimSequence.firstPersonAnim = animData.idlePOVAnim
-	idleAnimSequence.thirdPersonAnim = animData.idleAnim
-	idleAnimSequence.viewConeFunction = ViewCone360
-	idleAnimSequence.attachment = animData.attachment
-	idleAnimSequence.hideProxy = animData.hideProxy
+	dropshipAnimData animData = file.dropshipAnimDataList[positionIndex]
+
+	//FirstPersonSequenceStruct idleAnimSequence
+	//idleAnimSequence.firstPersonAnim = animData.idlePOVAnim
+	//idleAnimSequence.thirdPersonAnim = animData.idleAnim
+	//idleAnimSequence.viewConeFunction = ViewCone360
+	//idleAnimSequence.attachment = animData.attachment
+	//idleAnimSequence.hideProxy = animData.hideProxy
 
 	FirstPersonSequenceStruct jumpAnimSequence
 	jumpAnimSequence.firstPersonAnim = animData.jumpPOVAnim
@@ -1195,164 +3215,671 @@ void function RespawnBeacon_PutPlayerInDropship( entity player, entity ship, int
 	AddCinematicFlag( player, CE_FLAG_INTRO )
 	AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 	AddCinematicFlag( player, CE_FLAG_EMBARK ) // DoF
-
-	if( !Safe_isScenariosMode() )
+	if ( !isFirstSpawn )
 		player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.WAITING_FOR_DROPPOD )
 
 	entity dummyEnt = CreatePropDynamic( $"mdl/humans/class/medium/pilot_medium_bloodhound.rmdl" ) // TODO: use generic model.  Can't use player settings here since they could be a spectator
-	float idleTime = dummyEnt.GetSequenceDuration( animData.idleAnim )
-	float jumpTime = dummyEnt.GetSequenceDuration( animData.jumpAnim )
+	float idleTime  = ((idleTimeOverride > 0.0) ? idleTimeOverride : dummyEnt.GetSequenceDuration( animData.idleAnim ))
+	float jumpTime  = dummyEnt.GetSequenceDuration( animData.jumpAnim )
 	float totalTime = idleTime + jumpTime
-	dummyEnt.Destroy()
-	
-	if( !Safe_isScenariosMode() )
-		Remote_CallFunction_NonReplay( player, "ServerCallback_RespawnPodStarted", Time() + totalTime )
-	
-	player.p.respawnPod = ship
-	player.StartObserverMode( OBS_MODE_CHASE )
-	player.SetObserverTarget( ship )
-	player.SetPlayerCanToggleObserverMode(false)
 
-	ScreenFadeFromBlack( player, 1.0, 1.0 )
-	player.UnfreezeControlsOnServer() // so player can move the camera around the dropship
-	
-	table<string,bool> e
+	ScreenFadeFromBlack( player, 0.75, 1.0 )
+
+	if ( !isFirstSpawn )
+		Remote_CallFunction_NonReplay( player, "ServerCallback_RespawnPodStarted", Time() + totalTime )
+	dummyEnt.Destroy()
+
+	// Make sure the player isn't parented to anything
+	entity parentEnt = player.GetParent()
+	if( IsValid ( parentEnt ) )
+	{
+		Warning( FUNC_NAME() + "(): Player should be parented. Parent Entity == " + parentEnt )
+		player.ClearParent()
+	}
+
+	int observerMode = OBS_MODE_CHASE
+	player.p.respawnPod = ship
+	player.p.observerMode = observerMode
+	player.StartObserverMode( observerMode )
+	player.SetObserverTarget( ship )
+	player.EnableVelocityShakeAlwaysOn()
+
+	table<string, bool> e
 	e[ "clearDof" ] <- true
 	e[ "didHolsterAndDisableWeapons" ] <- false
+	e[ "didClearVelocityShakeAlwaysOn" ] <- false
+
+	// Allow invulnerable in all cases until after 1P animation.
+	player.SetInvulnerable()
 
 	OnThreadEnd(
-		function () : ( player, e )
+		function () : ( player, e, isFirstSpawn, ship )
 		{
 			if ( IsValid( player ) )
 			{
+				if ( !IsAlive( player ) )
+					thread HandleSquadEliminationWhileObservingDropship( player )
+
 				RemoveCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD )
 				RemoveCinematicFlag( player, CE_FLAG_INTRO )
 
-				if ( e[ "clearDof" ] )
+				if ( e["clearDof"] )
 					RemoveCinematicFlag( player, CE_FLAG_EMBARK )
-
-				if ( e[ "didHolsterAndDisableWeapons" ] )
-				{
+				if ( e["didHolsterAndDisableWeapons"] )
 					DeployAndEnableWeapons( player )
-					EnableOffhandWeapons( player )
-				}
+				if ( e["didClearVelocityShakeAlwaysOn"] == false )
+					player.DisableVelocityShakeAlwaysOn()
 
-				player.SetPlayerNetInt( "respawnStatus", 0 )
+				player.SetPlayerNetInt( "respawnStatus", eRespawnStatus.NONE )
+				player.SetPlayerNetTime( "respawnBannerPickedUpTime", -1 )
 				player.p.respawnPod = null
 				player.p.respawnPodLanded = false
 				player.ClearParent()
 				ClearPlayerAnimViewEntity( player )
+				player.ClearInvulnerable()
+
+				// Respawn Equipped: This version goes guns out during the fall.
+				                           
+					if( !isFirstSpawn && file.respawning_JumpGunsOut )
+					{
+						RespawnEquipped_Restore( player )
+						Remote_CallFunction_Replay( player, "ServerCallback_PlayFPEvoShieldUpgradeFX", player )
+					}
+                                     
+
+				                  
+					if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_THE_HUNT ) )
+					{
+						//Remote_CallFunction_NonReplay( player, "ServerToClient_Bounty_CL_InteractText", player )
+						//thread Bounty_TrackRavenSpawn( player )
+						Warning("Bounty_TrackRavenSpawn missing for survival the hunt gamemode")
+					}
+          
+			}
+
+			if ( IsValid( ship ) )
+			{
+				ship.kv.solid = 0
 			}
 		}
 	)
 
+	//waitthread FirstPersonSequence( idleAnimSequence, player, ship )
 	wait idleTime
-	
-	if( !IsValid(player) || !IsValid(ship) ) return
 
-	player.StopObserverMode()
-	ClearPlayerEliminated( player )
-	player.p.respawnPodLanded = true
-	DecideRespawnPlayer( player, false )
-	ResetPlayerInventory( player )
-	player.SetOrigin( ship.GetOrigin() )
+	HolsterViewModelAndDisableWeapons( player, true )
+	e[ "didHolsterAndDisableWeapons" ] <- true
+
+	if ( isDropshipRedeploy )
+	{
+		player.StopObserverMode()
+		MakePlayerVisible( player, true )
+	}
+	else
+	{
+		DoCommonRespawnForPlayer( player )
+	}
+
+	foreach( func in file.Callbacks_OnPlayerPutInDropship )
+		func( player, ship )
+
+	// Set Invulnerable again in case there was a DoCommonRespawnForPlayer(), which apparently Control does in a callback ( Tricky! ).
+	player.SetInvulnerable()
 
 	thread FadePlayerView( player, 0.1, e )
-	HolsterAndDisableWeapons( player )
-	player.FreezeControlsOnServer() // so player can't move the camera while jumping from ship
-	
-	e[ "didHolsterAndDisableWeapons" ] <- true
-	player.SetInvulnerable()
+
+	player.SetOrigin( ship.GetOrigin() )
+	player.SetAngles( ship.GetAngles() )
+
+	player.DisableVelocityShakeAlwaysOn()
+	e[ "didClearVelocityShakeAlwaysOn" ] <- true
+
 	EmitSoundOnEntityOnlyToPlayer( player, player, animData.firstPersonJumpOutSound )
-	
+	ship.Signal( "PlayersDeployingFromDropship" )
+
+	if( useCameraDown1PAnims )
+	{
+		array< string > jumpAnims = [ 	"Classic_MP_flyin_exit_povA_jump_CameraAngleDown",
+										"Classic_MP_flyin_exit_povB_jump_CameraAngleDown",
+										"Classic_MP_flyin_exit_povC_jump_CameraAngleDown",
+										"Classic_MP_flyin_exit_povD_jump_CameraAngleDown" ]
+
+		if( ( positionIndex >= 0 ) && ( positionIndex < jumpAnims.len() ) )
+		{
+			jumpAnimSequence.firstPersonAnim =  jumpAnims[ positionIndex ]
+		}
+
+		#if DEV
+			printt( format( "%s(): Player %s 1p Anim == %s ", FUNC_NAME(), player.GetPlayerName(), jumpAnimSequence.firstPersonAnim ) )
+		#endif
+	}
+
 	waitthread FirstPersonSequence( jumpAnimSequence, player, ship )
-	
-	if(!IsValid(player) ) 
-		return
-	
-	//return controls
-	// DecideRespawnPlayer( player ) // why twice?
-	player.SetAngles( player.GetAngles() ) // this works don't change it	
-	player.ClearInvulnerable()
-	player.UnfreezeControlsOnServer() //once jumped, return controls
-	GiveBasicSurvivalItems( player )
+
+	// Moved from FallTempAirControl.
+	ForceCrouchStand_1PCameraRestoreHack_Thread( player )
+
+	// Enable inventory if disabled.
+	if( IsInventoryDisabled( player ) )
+	{
+		EnableInventory( player )
+	}
+
+	if ( isDropshipRedeploy )
+	{
+		player.Signal( "PlayerRedeployingFromDropship" )
+	}
 
 	FallTempAirControl( player )
-	
-	if(!IsValid(player)) 
-		return
-	
-	PlayBattleChatterLineToSpeakerAndTeam( player, "bc_returnFromRespawn" )
+
+	if ( !isFirstSpawn && !isDropshipRedeploy )
+	{
+		PlayBattleChatterLineToSpeakerAndTeam( player, "bc_returnFromRespawn" )
+		                            
+			if ( IsValid( player.p.myLastDeathbox ) ) // don't show the prompt if DB contains no items
+			{
+				Remote_CallFunction_NonReplay( player, "ServerCallback_PromptMarkMyLastDeathbox" )
+			}
+        
+
+		thread PromptRespawnThanks( player )
+	}
 }
 
-void function FadePlayerView( entity player, float duration, table<string,bool> e )
+void function PromptRespawnThanks( entity player )
+{
+	EndSignal( player, "OnDeath", "OnDestroy" )
+
+	while ( true )
+	{
+		if( player.IsOnGround() )
+		{
+			wait RESPAWN_THANKS_DELAY
+
+			Remote_CallFunction_NonReplay( player, "ServerCallback_PromptRespawnThanks" )
+			return
+		}
+		WaitFrame()
+	}
+}
+
+                     
+                                                                                            
+ 
+                      
+                                                                     
+
+                                           
+                                                        
+                                                     
+                                                  
+                                                  
+                                                
+
+                                      
+                                   
+                                           
+                                             
+                        
+                         
+
+                                        
+                                                
+
+                                                                                  
+
+             
+                             
+   
+                           
+    
+                             
+                                                                  
+
+                                                        
+                                                
+
+                        
+                                                  
+                                           
+                                     
+                                                      
+                                          
+
+                                                    
+                                       
+                              
+    
+   
+  
+
+                                                                 
+ 
+                          
+
+
+void function HandleSquadEliminationWhileObservingDropship( entity player )
+{
+	EndSignal( player, "OnDestroy" )
+
+	wait 2 // Forced to wait a bit here or I'll get a callback on the client that closes the death screen menu. Timing related.
+
+	entity observerTarget = player.GetObserverTarget()
+	if ( !IsAlive( player ) && player.IsObserver() && IsValid( observerTarget ) && observerTarget.IsPlayer() )
+		PutPlayerInObserverMode( player, OBS_MODE_IN_EYE )
+}
+
+void function FadePlayerView( entity player, float duration, table<string, bool> e )
 {
 	player.EndSignal( "OnDeath" )
-	
 	wait duration
-	
-	if( !IsValid(player) ) 
-		return
-	
 	RemoveCinematicFlag( player, CE_FLAG_EMBARK )
 	e[ "clearDof" ] = false
 	ScreenFadeFromBlack( player, 1.0, 1.0 )
 }
 
-entity function GetClosestValidStation( vector origin )
+entity function RespawnBeacon_GetClosestValidBeacon( entity player, vector origin )
 {
 	ArrayRemoveInvalid( file.allStations )
 
-	array<entity> stations = clone file.allStations
+	array<entity> stations               = clone file.allStations
+
+	                            
+		// Remove unusable beacons if we are in Rev Army mode. Beacons are disabled for a variety of different reasons in that mode
+		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SHADOW_ARMY ) )
+		{
+			for ( int index = stations.len() - 1; index >= 0; index-- )
+			{
+				if ( !ShadowArmy_RespawnBeacon_CanBeaconBeUsed( stations[ index ] ) )
+					stations.remove( index )
+			}
+		}
+                                   
+
+	// If the array is empty, there are no valid beacons
+	if ( stations.len() == 0 )
+		return null
+
 	array<ArrayDistanceEntry> allResults = ArrayDistanceResults( stations, origin )
 	allResults.sort( DistanceCompareClosest )
 
-	// look for a new battery
+	// parameters for improved beacon validation
+	bool expensiveBeaconDetection = GetCurrentPlaylistVarBool( "respawn_beacon_allow_outside_safe_zone", true )
+	bool allowRisky = GetCurrentPlaylistVarBool( "respawn_beacon_allow_risky", true )
+	float traversalTimeModifier = GetCurrentPlaylistVarFloat( "respawn_beacon_traversal_time_scalar", 1.15 )
+	float timeForPlayerToArrive = GetCurrentPlaylistVarFloat( "respawn_beacon_respawn_time_allowance", 10 )
+
+	// get current round data
+	DeathFieldData data = SURVIVAL_GetDeathFieldData( Survival_GetPlayerRealm( player ) )
+
+
+	// go thru stations from nearest to furthest
 	for ( int i = 0; i < allResults.len(); i++ )
 	{
 		entity station = allResults[i].ent
+		bool isSafeFromLevelHazard  = true
+                                
+                                                                                                                                                                
+                                                                                                                                                                                                                                       
+   
+          
+                                                                                                                                                  
+         
+                                
+   
+                                                                                                                                                                                                                                                                               
+   
+          
+                                                                                                                                
+         
+                                
+   
+                                      
 
-		if ( !SURVIVAL_DeathFieldIsValid( 0 ) )
+		// the death field appears a few seconds after Round 1 begins closing
+		if ( !SURVIVAL_DeathFieldIsValid( Survival_GetPlayerRealm( player ) ) && isSafeFromLevelHazard )
+		{
+			// the ring hasn't yet manifested
 			return station
+		}
 
-		if ( SURVIVAL_PosInSafeZone( 0, station.GetOrigin( ) ) )
+		if ( SURVIVAL_PosInSafeZone( Survival_GetPlayerRealm( player ), station.GetOrigin() ) && isSafeFromLevelHazard )
+		{
+			// Beacon is inside next safe zone
 			return station
+		}
+
+		if( expensiveBeaconDetection )
+		{
+			// validate beacon is not already inside the death field
+			float beaconDistanceFromDeathField = DeathField_PointDistanceFromFrontierForIndex( station.GetOrigin(), player.DeathFieldIndex() )
+			if ( beaconDistanceFromDeathField > 0 )
+			{
+				// use a heuristic to determine if the beacon is close enough to ping
+
+				// test cases:
+				// when the first ring has begun to close
+				// when the second ring is waiting to close
+				// a short moment between rounds when the ring has stopped closing but the next circle hasn't appeared yet
+
+				// get the distance from player to respawn station as the crow flies
+				float distToBeacon = Distance2D( origin, station.GetOrigin() )
+				// determine time to run to station
+				float traversalTime = ( distToBeacon / PLAYER_STANDING_SPRINT_SPEED ) * traversalTimeModifier // add a little padding to account for actual traversal
+				traversalTime += GetRespawnStationUseTime(station) + timeForPlayerToArrive // add some buffer time for the player to activate the beacon and the respawned player to fly in
+				// predict moment in time that player will arrive
+				float predictedArrivalTime = Time() + traversalTime
+
+				#if DEV
+					printf( "distance to beacon: %f", distToBeacon)
+					printf( "Entire respawn time buffer is %f", traversalTime )
+					printf( "Current time is %f", Time() )
+					printf( "Predicting player will finish respawning at %f", predictedArrivalTime )
+					printf( "data.startTime is %f", data.startTime )
+				#endif
+				// Confirmed: data.startTime is the moment in time that the ring begins to shrink
+
+                                  
+                                                                                                                                                                         
+                                                                                                        
+     
+                                     
+                                                     
+                                                      
+                                 
+                                
+                                 
+                                     
+                              
+                               
+                              
+                      
+                    
+                     
+
+                                                                   
+      
+                                                                                          
+                                                                                                                                   
+                                                                                                                                   
+
+                                                                                                                                              
+                                                      
+                             
+
+                                                                                                                         
+                             
+       
+                                                                                          
+                                                
+                                                                                                                      
+                                                                                                  
+
+                                                         
+        
+                                                                                                       
+                                                                                
+                                                                                    
+        
+
+                                                                             
+                                                                                                                                                  
+                                                                                                                      
+        
+               
+                                                                                                                                                                   
+              
+                                                                              
+                              
+        
+                                                                                                                                                                                       
+        
+               
+                                                                                                                                                                                          
+              
+                                                                                                                       
+                                                          
+                                                                                               
+                                                 
+
+                                                          
+         
+                                                                               
+         
+            
+         
+                                         
+         
+                              
+        
+                                                                                                                                     
+        
+               
+                                                                                                                                                                           
+              
+                                                                                                                         
+                                        
+                              
+        
+                                                                                                                                                                                                                 
+        
+               
+                                                                                                                                                              
+              
+                                                                                                                                   
+                                                                    
+                              
+        
+                                                               
+        
+               
+                                                                                                   
+              
+        
+       
+
+                                                                                                                                
+                                                                                                               
+       
+                                                       
+        
+                                          
+                                         
+                                          
+        
+           
+        
+
+                                                                                                                                                      
+                                           
+                                           
+                                           
+               
+                                                                                                                                                                                        
+              
+        
+
+                                                                       
+                                                                                      
+                                                                          
+
+                                                       
+        
+               
+                                                                                                                                                                                                              
+              
+                                    
+             
+        
+           
+        
+               
+                                                                                                                                                                                                                  
+              
+        
+       
+
+                                                                                                       
+                                                                                                          
+                                                                                                                                                                                          
+       
+                                                                                                         
+                                                                                    
+                                                                                    
+                                                        
+        
+               
+                                                                                                                                                                                                                  
+              
+                                    
+             
+        
+           
+        
+               
+                                                                                                                                                                                                                      
+              
+        
+       
+      
+     
+                                        
+
+				// If we are still not safe from a level hazard, look for a different station
+				if ( !isSafeFromLevelHazard )
+				{
+					#if DEV
+						printf( "sh_respawn_beacon: Failing ExpensiveBeaconDetection test because this beacon is still not safe from a Level Hazard" )
+					#endif
+					continue
+				}
+
+				if (predictedArrivalTime < data.startTime)
+				{
+					#if DEV
+						printf( "player should arrive before the ring shrinks", data.startTime - predictedArrivalTime )
+					#endif
+					return station
+				}
+				else if( allowRisky )
+				{
+					// Evaluate ring location & radius at the predicted moment of player respawn
+					float progress = ( predictedArrivalTime - data.startTime ) / ( data.endTime - data.startTime )
+					vector predictedCenter = LerpVector( data.center, data.nextCenter, progress )
+					float predictedRadius = LerpFloat( data.startRadius, data.endRadius, progress )
+					#if DEV
+						printf( "ring collapse progress at ETA: %f", progress )
+						printf (
+							"Ring Center | started: < %f, %f, %f > | ending: < %f, %f, %f > | predicted at ETA: < %f, %f, %f >",
+							data.center.x, data.center.y, data.center.z,
+							data.nextCenter.x, data.nextCenter.y, data.nextCenter.z,
+							predictedCenter.x, predictedCenter.y, predictedCenter.z
+						)
+						printf ("Ring Radius | started: %f | ending: %f | predicted at ETA: %f",  data.startRadius, data.endRadius, predictedRadius)
+					#endif
+					// then we get beacon's distance from currentCenter
+					// and test if the distance is less than currentRadius
+					float beaconDistToCircleCenter = Distance2D( station.GetOrigin(), predictedCenter )
+					if (beaconDistToCircleCenter < predictedRadius)
+					{
+						#if DEV
+							printf( "This beacon should be safe to recommend" )
+						#endif
+						return station
+					}
+					#if DEV
+						printf( "Respawn Beacon was predicted to be outside the ring upon player arrival" )
+					#endif
+				}
+			}
+		}
 	}
-
 	return null
 }
 
 void function FallTempAirControl( entity player )
 {
-	if ( !IsValid(player) || player.IsOnGround() )
+	if( !IsValid( player ) )
 		return
 
-	AddPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerTouchGround )
+	if ( player.IsOnGround() )
+		return
+
+	// To guard against cases where the player dies out of bounds in the respawn before and the OnPlayerTouchGround was never called
+	if ( !HasPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerTouchGround ) )
+	{
+		AddPlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerTouchGround )
+	}
+
 	player.kv.airSpeed = 300
 	player.kv.airAcceleration = 1000
+
+	if( Has_RespawnSkyDive() )
+	{
+		Respawn_Dropship_SkyDive( player )
+	}
+}
+
+void function Respawn_Dropship_SkyDive( entity player )
+{
+	vector initVelocity = < 0, 0, -50 >
+	vector dir = player.GetViewVector() * 100 + initVelocity
+	thread PlayerSkyDive( player, player.GetViewVector(), [player], player, false, true, dir, true)
+}
+
+bool function Has_RespawnSkyDive()
+{
+	return( GetCurrentPlaylistVarBool( "respawn_dropship_skydive", false ) )
 }
 
 void function OnPlayerTouchGround( entity player )
 {
-	if( !IsValid(player) ) 
+	if( !IsValidPlayer( player ) )
 		return
-	
+
 	RemovePlayerMovementEventCallback( player, ePlayerMovementEvents.TOUCH_GROUND, OnPlayerTouchGround )
 	player.kv.airSpeed = player.GetPlayerSettingFloat( "airSpeed" )
 	player.kv.airAcceleration = player.GetPlayerSettingFloat( "airAcceleration" )
 
 	player.p.lastRespawnTouchGroundTime = Time()
-	
-	PIN_PlayerLandedOnGround( player )
-}
-#endif
 
+	// TODO: defensive fix for players being perpetually OOB when respawning; this is a reasonable quick fix vs. a rewrite of the OOB trigger system.
+	player.SetOutOfBoundsDeadTime( 0.0 )
+
+	PIN_PlayerLandedOnGround( player )
+
+	// Respawn Equipped: This version gives equipment upon touching the ground.
+	                           
+		if( !file.respawning_JumpGunsOut )
+		{
+			RespawnEquipped_Restore( player )
+		}
+                                  
+}
+
+entity function RespawnBeacon_GetBestObserverTarget( entity observer, bool reverse )
+{
+	if ( !IsValidPlayer( observer ) )
+		return null
+
+	if ( IsValid( observer.p.respawnPod ) )
+	{
+		if ( observer.GetObserverMode() != observer.p.observerMode && !IsValid( observer.GetParent() ) )
+		{
+			observer.StartObserverMode( observer.p.observerMode )
+		}
+		return observer.p.respawnPod
+	}
+
+	return null
+}
+#endif // SERVER
 
 bool function AnaylsisFuncDropshipTestJumpout( FlightPath flightPath, vector origin, float yaw )
 {
-	vector angles = <0,yaw,0>
+	vector angles  = <0, yaw, 0>
 	vector forward = AnglesToForward( angles )
-	vector right = AnglesToRight( angles )
+	vector right   = AnglesToRight( angles )
 
 	if ( !IsLegalFlightPath( flightPath, origin, forward, right, true ) )
 		return false
@@ -1365,7 +3892,7 @@ bool function AnaylsisFuncDropshipTestJumpout( FlightPath flightPath, vector ori
 
 bool function CanDeploy( FlightPath flightPath, vector origin, vector angles, vector forward, vector right )
 {
-	Point deployPoint = GetPreviewPoint( flightPath )
+	Point deployPoint   = GetPreviewPoint( flightPath )
 	vector deployOrigin = GetOriginFromPoint( deployPoint, origin, forward, right )
 	vector deployAngles = GetAnglesFromPoint( deployPoint, angles )
 
@@ -1375,12 +3902,12 @@ bool function CanDeploy( FlightPath flightPath, vector origin, vector angles, ve
 
 	vector deployFwd = AnglesToForward( deployAngles )
 
-	deployOrigin = deployOrigin - deployFwd*150 // move backwards a bit
+	deployOrigin = deployOrigin - deployFwd * 150 // move backwards a bit
 
-	TraceResults results = TraceHull( deployOrigin, deployOrigin - <0,0,1000>, <-300,-300,-300>, <300,300,300>, null, flightPath.traceMask, TRACE_COLLISION_GROUP_NONE )
-	// DebugDrawSphere( deployOrigin, 20, 255,0,0, true, 5.0 )
-	// DebugDrawLine( deployOrigin, results.endPos, 255,0,0, true, 5.0 )
-	// DebugDrawSphere( deployOrigin - <0,0,1000>, 20, 255,0,0, true, 5.0 )
+	TraceResults results = TraceHull( deployOrigin, deployOrigin - <0, 0, 1000>, <-300, -300, -300>, <300, 300, 300>, null, flightPath.traceMask, TRACE_COLLISION_GROUP_NONE )
+	// DebugDrawSphere( deployOrigin, 20, COLOR_RED, true, 5.0 )
+	// DebugDrawLine( deployOrigin, results.endPos, COLOR_RED, true, 5.0 )
+	// DebugDrawSphere( deployOrigin - <0,0,1000>, 20, COLOR_RED, true, 5.0 )
 
 	if ( results.startSolid )
 		return false
@@ -1390,6 +3917,7 @@ bool function CanDeploy( FlightPath flightPath, vector origin, vector angles, ve
 
 	return true
 }
+
 #if CLIENT
 void function TryPingRespawnItem( entity player )
 {
@@ -1401,31 +3929,30 @@ void function TryPingRespawnItem( entity player )
 	if ( PlayerIsMarkedAsCanBeRespawned( player ) )
 	{
 		vector org = viewPlayer.GetOrigin()
-		player.ClientCommand( "PingNearestRespawn " + org.x + " " + org.y + " " + org.z )
+		Remote_ServerCallFunction( "ClientCallback_PingNearestRespawn", org )
 	}
+
+	                   
+		if ( !PlayerIsMarkedAsCanBeRespawned( player ) )
+		{
+			vector org = viewPlayer.GetOrigin()
+			Remote_ServerCallFunction( "ClientCallback_PingNearestRespawn", org )
+		}
+       
 }
 #endif
 
 #if SERVER
-bool function ClientCommand_PingNearestRespawn( entity player, array<string> args )
+void function ClientCallback_PingNearestRespawn( entity player, vector org )
 {
-	if ( args.len() < 3 )
-		return false
-
-	vector org
-
-	org.x = float( args[0] )
-	org.y = float( args[1] )
-	org.z = float( args[2] )
-
 	float lastPingTime = 0.0
 	if ( player in file.lastPingTimes )
 		lastPingTime = file.lastPingTimes[ player ]
 	else
 		file.lastPingTimes[ player ] <- 0.0
 
-	if ( Time() - lastPingTime < 1.0 )
-		return true
+	if ( Time() - lastPingTime < GetCurrentPlaylistVarFloat( "ping_nearest_beacon_wait_time", 7.0 ) )
+		return
 
 	file.lastPingTimes[ player ] = Time()
 
@@ -1437,8 +3964,27 @@ bool function ClientCommand_PingNearestRespawn( entity player, array<string> arg
 	{
 		PingNearestRespawnBeacon( player, org )
 	}
+	                   
+		else if ( player.GetPlayerNetInt( "respawnStatus" ) == eRespawnStatus.PICKUP_DESTROYED && Perk_CanTeammateCraftPlayerBanner( player ) )
+		{
+			if ( Crafting_IsDispenserCraftingEnabled() )
+			{
+				Dispensers_PingNearestDispenser( player, org )
+			}
+			else
+			{
+				Crafting_PingNearestWorkbench( player, org )
+			}
+		}
+       
+}
 
-	return true
+void function ClientToServer_GladCardPlayerReset( entity player )
+{
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+
+	player.SetPlayerNetEnt( "gladCardPlayer", null )
 }
 
 void function RespawnBeaconStartUse_Common( entity ent, entity player, ExtendedUseSettings settings )
@@ -1454,13 +4000,7 @@ void function RespawnBeaconStartUse_Common( entity ent, entity player, ExtendedU
 
 void function RespawnBeaconStartUse( entity ent, entity player, ExtendedUseSettings settings )
 {
-	if ( Time() + settings.duration < 5000 )
-	Remote_CallFunction_Replay( player, "ServerCallback_RespawnBeaconStart", Time(), Time() + settings.duration )
-}
-
-void function RespawnBeaconStopUse( entity ent, entity player, ExtendedUseSettings settings )
-{
-	Remote_CallFunction_Replay( player, "ServerCallback_RespawnBeaconStop" )
+	RespawnBeaconStartUse_Common( ent, player, settings )
 }
 
 void function RespawnBeaconStopUse_Common( entity ent, entity player )
@@ -1472,7 +4012,17 @@ void function RespawnBeaconStopUse_Common( entity ent, entity player )
 		func( ent, player )
 	}
 }
-#endif
+
+void function RespawnBeaconStopUse( entity ent, entity player, ExtendedUseSettings settings )
+{
+	RespawnBeaconStopUse_Common( ent, player )
+}
+
+void function TombstoneModelOnEndUse( entity tombstone, entity player )
+{
+	tombstone.Anim_Play( "grave_idle_test" )
+}
+#endif // SERVER
 
 #if CLIENT
 bool function IsRespawnStationPingType( int pingType )
@@ -1480,17 +4030,11 @@ bool function IsRespawnStationPingType( int pingType )
 	switch( pingType )
 	{
 		case ePingType.RESPAWN_STATION:
+		case ePingType.RESPAWN_MOBILE:
+                          
+                                   
+       
 			return true
-#if(false)
-
-
-
-#endif //
-#if(false)
-
-
-
-#endif //
 	}
 
 	return false
@@ -1586,7 +4130,7 @@ void function SpectatorShowRespawnRui( float startTime, float endTime )
 	EmitSoundOnEntity( player, RESPAWN_BEACON_LOOP_SOUND )
 
 	OnThreadEnd(
-		function() : ( rui , player )
+		function() : ( rui, player )
 		{
 			if ( IsValid( player ) )
 			{
@@ -1606,33 +4150,187 @@ void function ServerCallback_RespawnBeaconStop()
 {
 	if ( IsSpectating() )
 		clGlobal.levelEnt.Signal( "SpectatorShowRespawnRui" )
-}
-#endif
 
-#if SERVER
-// 323 lines
-#endif
+	entity player = GetLocalViewPlayer()
+                                
+                                    
+                                   
+      
+}
+#endif // CLIENT
+
 bool function IsRespawnStationEnt( entity ent )
 {
 	switch( ent.GetTargetName() )
 	{
-		case MOBILE_RESPAWN_BEACON_TARGETNAME:
 		case RESPAWN_CHAMBER_TARGETNAME:
+		case MOBILE_RESPAWN_BEACON_TARGETNAME:
+                          
+                                    
+       
 			return true
 
-#if(false)
-// 3 lines
-#endif //
-
-#if(false)
-// 3 lines
-#endif //
 	}
 
 	return false
 }
 
-#if(false)
-// 20 lines
-#endif
+#if CLIENT
+void function RespawnSuccessClient_Mobile( entity ent, entity playerUser, ExtendedUseSettings settings )
+{
+	file.mobileRespawnSpawnInProgress = true
 
+	entity viewPlayer = GetLocalViewPlayer()
+
+	if ( !IsValid( viewPlayer ) )
+		viewPlayer = GetLocalClientPlayer()
+
+	if ( !IsValid( viewPlayer ) )
+		return
+
+	bool waitingToBeRespawned = HasTeammatesToRespawn( viewPlayer.GetTeam() )
+	foreach ( rui in file.respawnChamberRuis )
+	{
+		UpdateRespawnChamberRuis( rui, waitingToBeRespawned )
+	}
+}
+#endif // CLIENT
+
+#if SERVER && DEV
+void function DEV_RespawnBeacon_RespawnPlayerAtBeaconAtCrosshair( entity player )
+{
+	entity beacon
+	TraceResults traceResult = PlayerViewTrace( player )
+	if ( IsValid( traceResult.hitEnt ) )
+	{
+		if ( IsRespawnBeacon(traceResult.hitEnt) )
+		{
+			beacon = traceResult.hitEnt
+		}
+	}
+
+	if ( IsValid( beacon ) )
+	{
+		RespawnPlayersInDropship ([player], beacon)
+	}
+}
+
+void function DEV_RespawnBeacon_DebugDraws( bool isOn = true )
+{
+	file.debugDraws = isOn
+}
+
+void function DEV_DebugSphere( vector pt, float radius, vector sphereColor, bool throughGeo, float duration )
+{
+	if( !file.debugDraws )
+		return
+
+	DebugDrawSphere( pt, radius, sphereColor, throughGeo, duration )
+}
+
+void function DEV_DebugLine( vector start, vector end, vector lineColor, bool throughGeo, float duration )
+{
+	if( !file.debugDraws )
+		return
+
+	DebugDrawLine( start, end, lineColor, throughGeo, duration )
+}
+
+void function DEV_Dropship_HeightMod( float mod = 0.0 )
+{
+	file.debug_additional_dropship_heightmod = mod
+}
+
+void function DEV_Player_RespawnStatus_ByName( string playerName, float duration = 10 )
+{
+	entity player = Get_Player_ByName( playerName )
+	thread DEV_Player_RespawnStatus_ForDuration_Thread( player, duration )
+}
+
+void function DEV_Player_RespawnStatus_ForDuration_Thread( entity player, float duration = 10 )
+{
+	float startTime = Time()
+	float timeSlice = 0.5
+	while(( Time() - startTime  ) < duration )
+	{
+		DEV_Player_RespawnStatus( player )
+		wait( timeSlice )
+	}
+}
+
+void function DEV_Player_RespawnStatus( entity player )
+{
+	string respawnStatusStr = Get_RespawnStatus_String_ForPlayer( player )
+	printt( "Player " + player.GetPlayerName() + " respawnStatus: " + respawnStatusStr )
+}
+
+#endif // SERVER && DEV
+
+#if CLIENT
+entity function GetRespawnBeaconUnderAim( vector worldPos, float worldRange )
+{
+	float closestDistSqr = FLT_MAX
+	float worldRangeSqr = worldRange * worldRange
+	entity closestEnt = null
+
+	if( MapPing_Modify_DistanceCheck_Enabled() )
+	{
+		float modifier = MapPing_DistanceCheck_GetModifier()
+
+		if( worldRange >= MapPing_DistanceCheck_GetDistanceRange() )
+			modifier *= 0.5
+
+		worldRangeSqr = ( worldRange * modifier ) * ( worldRange * modifier )
+	}
+
+	foreach ( beacon in file.allStations )
+	{
+		if ( !IsValid( beacon ) )
+			continue
+
+		vector beaconOrigin = beacon.GetOrigin()
+
+		float distSqr = Distance2DSqr( beaconOrigin, worldPos )
+		if ( distSqr < worldRangeSqr && distSqr < closestDistSqr  )
+		{
+			closestDistSqr = distSqr
+			closestEnt     = beacon
+		}
+	}
+
+	if ( !IsValid( closestEnt ) )
+	{
+		return null
+	}
+
+	//return the object
+	return closestEnt
+}
+
+bool function PingRespawnBeaconUnderAim( entity beacon )
+{
+	entity player = GetLocalClientPlayer()
+
+	if ( !IsValid( player ) || !IsAlive( player ) )
+		return false
+
+	if ( !IsPingEnabledForPlayer( player ) )
+		return false
+
+	Remote_ServerCallFunction( FUNCNAME_PingBeaconFromMap, beacon )
+
+	EmitSoundOnEntity( GetLocalViewPlayer(), PING_SOUND_LOCAL_CONFIRM )
+
+	return true
+}
+#endif // CLIENT
+
+#if SERVER
+void function RespawnBeacon_ClientToServer_PingBeaconFromMap( entity player, entity beacon )
+{
+	if ( IsValid( player ) && IsValid( beacon ) && IsRespawnBeacon( beacon ) )
+	{
+		entity wp = CreateWaypoint_Ping_Location( player, ePingType.RESPAWN_STATION, beacon, beacon.GetOrigin() + <0, 0, 50>, -1, false, false, pingWheelIndex.PING_MAP )
+	}
+}
+#endif // SERVER

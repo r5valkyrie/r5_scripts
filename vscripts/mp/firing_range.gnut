@@ -374,7 +374,6 @@ struct
 
 void function FiringRangeGameMode_Init()
 {
-	return
 	//This is to prevent out-of-edicts Jiras from being created when devs mistakenly load a BR map on the firing range playlist
 	Assert( GetMapName() == "mp_rr_canyonlands_staging_mu1", "Invalid: the firing range playlist only supports mp_rr_canyonlands_staging_mu1" )
 
@@ -541,7 +540,7 @@ void function FiringRange_Banners_Init( int team )
 #if CLIENT
 void function FiringRangeOverrideGamestateUI()
 {
-	ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_firingrange.rpak" )
+//	ClGameState_RegisterGameStateAsset( $"ui/gamestate_info_firingrange.rpak" )
 }
 #endif // CLIENT
 

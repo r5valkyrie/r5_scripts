@@ -819,57 +819,57 @@ void function CodeCallback_GamerulesThink()
 	switch ( gameState )
 	{
 		case eGameState.WaitingForCustomStart:
-			//Printt( "STATE: waiting for custom start" )
+			//printt( "STATE: waiting for custom start" )
 			GameRulesThink_WaitingForCustomStart()
 			break
 
 		case eGameState.WaitingForPlayers:
-			//Printt( "STATE: waiting for players" )
+			//printt( "STATE: waiting for players" )
 			GameRulesThink_WaitingForPlayers()
 			break
 
 		case eGameState.PickLoadout:
-			//Printt( "STATE: Pick Loadout" )
+			//printt( "STATE: Pick Loadout" )
 			GameRulesThink_PickLoadout()
 			break
 
 		case eGameState.Prematch:
-			//Printt( "STATE: prematch" )
+			//printt( "STATE: prematch" )
 			GameRulesThink_Prematch()
 			break
 
 		case eGameState.Playing:
-			//Printt( "STATE: playing" )
+			//printt( "STATE: playing" )
 			GameRulesThink_Playing()
 			break
 
 		case eGameState.SuddenDeath:
-			//Printt( "STATE: SuddenDeath" )
+			//printt( "STATE: SuddenDeath" )
 			GameRulesThink_SuddenDeath()
 			break
 
 		case eGameState.WinnerDetermined:
-			//Printt( "STATE: WinnerDetermined" )
+			//printt( "STATE: WinnerDetermined" )
 			GameRulesThink_WinnerDetermined()
 			break
 
 		case eGameState.SwitchingSides:
-			//Printt( "STATE: SwitchingSides" )
+			//printt( "STATE: SwitchingSides" )
 			GameRulesThink_SwitchingSides()
 			break
 
 		case eGameState.Epilogue:
-			//Printt( "STATE: Epilogue" )
+			//printt( "STATE: Epilogue" )
 			GameRulesThink_Epilogue()
 			break
 
 		case eGameState.Resolution:
-			//Printt( "STATE: Resolution" )
+			//printt( "STATE: Resolution" )
 			GameRulesThink_Resolution()
 			break
 
 		case eGameState.Postmatch:
-			//Printt( "STATE: post" )
+			//printt( "STATE: post" )
 			GameRulesThink_Postmatch()
 			break
 	}
@@ -1072,11 +1072,6 @@ void function GameRulesThink_WaitingForPlayers()
 
 	SvDemo_ConsistencyCheckString( "GameRulesThink_WaitingForPlayers() C" )
 	SetGameState( eGameState.PickLoadout )
-}
-
-void function PlayCharacterSelectMusicToAllPlayersIfNeeded()
-{
-	Warning("stub func PlayCharacterSelectMusicToAllPlayersIfNeeded, implement")
 }
 
 void function GameRulesThink_PickLoadout()
@@ -1780,9 +1775,6 @@ int function GetMatchWinnerFromScore()
 
 void function GameRulesThink_Playing()
 {
-	if ( !("lastPlayingEmptyTeamCheck" in level) )
-		level.lastPlayingEmptyTeamCheck <- 0.0
-
 	if ( (Time() - level.lastPlayingEmptyTeamCheck) > 1.0 )
 	{
 		level.lastPlayingEmptyTeamCheck = Time()

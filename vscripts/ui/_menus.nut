@@ -151,6 +151,7 @@ global function _IsMenuThinkActive
 global function UpdateActiveMenuThink
 
 global function DialogFlow
+global function IsLoadScreenFinished
 
 global function AddUICallback_OnInitMenus
 
@@ -193,7 +194,9 @@ struct
 	bool menuThinkThreadActive = false
 
 	bool TEMP_circularReferenceCleanupEnabled = true
-
+	
+	bool loadScreenFinished = false
+	
 	table<string, int> t_persistenceAttempts
 
 	bool lastMenuNavDirection = MENU_NAV_FORWARD
@@ -489,12 +492,7 @@ bool function UICodeCallback_LevelLoadingStarted( string levelname )
 // Return true to show load screen, false to not show load screen.
 bool function UICodeCallback_UpdateLoadingLevelName( string levelname )
 {
-	//printt( "UICodeCallback_UpdateLoadingLevelName: " + levelname )
-
-	#if CONSOLE_PROG
-		if ( !Console_IsSignedIn() )
-			return false
-	#endif
+	printt( "UICodeCallback_UpdateLoadingLevelName: " + levelname )
 
 	return true
 }
@@ -504,7 +502,7 @@ void function UICodeCallback_LevelLoadingFinished( bool error )
 {
 	uiGlobal.isLevelShuttingDown = false
 
-	//printt( "UICodeCallback_LevelLoadingFinished: " + uiGlobal.loadingLevel + " (" + error + ")" )
+	printt( "UICodeCallback_LevelLoadingFinished: " + uiGlobal.loadingLevel + " (" + error + ")" )
 
 	UIMusicUpdate()
 
@@ -520,12 +518,11 @@ void function UICodeCallback_LevelLoadingFinished( bool error )
 	TEMP_CircularReferenceCleanup()
 }
 
+
 void function UICodeCallback_LevelInit( string levelname )
 {
-	if ( GetCurrentPlaylistVarBool( "random_loadscreen", false ) )
-	{
-		//SetCustomLoadScreen( $"loadscreens/custom/loadscreen_r5r_community_01" )
-	}
+	printt( "UICodeCallback_LevelInit: " + levelname + ", IsConnected(): ", IsConnected() )
+	file.loadScreenFinished = false 
 }
 
 
@@ -607,6 +604,7 @@ void function UICodeCallback_FullyConnected( string levelname )
 	//InitItems()
 	ModSystem_RunCallbacks()//MOD SYSTEM CALLBACK
 	Perks_Init()
+	Perk_ExtraBinLoot_Init()
 	Perk_BeaconScan_Init()
 	SURVIVAL_Loot_All_InitShared()
 	NewScriptInit_Level()
@@ -1192,6 +1190,11 @@ void function UpdateMenusOnConnectThread( string levelname )
 			DialogFlow()
 		}
 	}
+}
+
+bool function IsLoadScreenFinished()
+{
+	return file.loadScreenFinished
 }
 
 

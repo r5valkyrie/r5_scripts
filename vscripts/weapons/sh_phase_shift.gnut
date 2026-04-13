@@ -106,8 +106,6 @@ struct
 {
 } file
 
-// PHASETYPE_* constants registered as engine natives (0-9)
-
 void function CodeCallback_EnterPhaseShift( entity ent )
 {
 	PhaseShift( ent, 0.0, 999.0 )
@@ -205,7 +203,7 @@ void function MpAbilityShifter_Init()
 	#endif
 }
 
-bool function PhaseShift( entity ent, float warmupTime, float duration, int shiftStyle = 1, bool fxOnly = false )
+bool function PhaseShift( entity ent, float warmupTime, float duration, int shiftStyle = PHASETYPE_DEFAULT, bool fxOnly = false )
 {
 	if ( !IsAlive( ent ) )
 		return false
@@ -223,9 +221,7 @@ bool function PhaseShift( entity ent, float warmupTime, float duration, int shif
 			&& !ent.ContextAction_IsLeeching()
 			&& !ent.ContextAction_IsInVehicle()
 			&& !HoverVehicle_IsPlayerInAnyVehicle( ent )
-			&& !Crafting_IsPlayerAtWorkbench( ent )
-			&& !( false )
-			&& !( false ) )
+			&& !Crafting_IsPlayerAtWorkbench( ent ) )
 		{
 			return false
 		}
@@ -751,7 +747,7 @@ void function UntrackAllToneMarks( entity ent )
 
 
 #if CLIENT
-void function ClientPhaseShiftWarmupThread( entity player, float warmupTime, int shiftStyle = 1 )
+void function ClientPhaseShiftWarmupThread( entity player, float warmupTime, int shiftStyle = PHASETYPE_DEFAULT )
 {
 	player.EndSignal( "OnDeath" )
 

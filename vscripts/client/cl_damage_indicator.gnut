@@ -7,7 +7,8 @@ global function RumbleForTitanDamage
 global function DamageIndicators
 
 global function ServerCallback_PlayerTookDamage
-//global function ClientCodeCallback_OnMissileCreation
+global function ServerCallback_PlayerTookDamage_NoAttacker
+
 global function ClientCodeCallback_CreateGrenadeIndicator
 
 global function ShowGrenadeArrow
@@ -191,13 +192,16 @@ void function DoDamageFlashForDamageRecieved( entity player, float damage, int d
 	float holdTime = GraphCapped( min( damage / 100.0, 1.0 ), 0.0, 1.0, 0.0, 0.25 )
 	ScreenFlash( 2, 2, 2, holdTime, 0.2 )
 }
+void function ServerCallback_PlayerTookDamage_NoAttacker( float damage, vector damageOrigin, int damageType, int damageSourceId )
+{
+	ServerCallback_PlayerTookDamage( damage, damageOrigin, damageType, damageSourceId, null )
+}
 
-void function ServerCallback_PlayerTookDamage( float damage, vector damageOrigin, int damageType, int damageSourceId, int attackerEHandle )
+void function ServerCallback_PlayerTookDamage( float damage, vector damageOrigin, int damageType, int damageSourceId, entity attacker )
 {
 	if ( IsWatchingThirdPersonKillReplay() )
 		return
 
-	entity attacker = attackerEHandle != 0 ? GetHeavyWeightEntityFromEncodedEHandle( attackerEHandle ) : null
 	entity localViewPlayer = GetLocalViewPlayer()
 
 	bool isHeadShot = (damageType & DF_HEADSHOT) ? true : false

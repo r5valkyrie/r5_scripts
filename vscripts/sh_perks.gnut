@@ -596,6 +596,8 @@ bool function Perks_IsPerkReady( entity player, int perkIndex )
 
 void function Perks_AddMinimapEntityForPerk( int perkId, entity ent )
 {
+	Warning("Perks_AddMinimapEntityForPerk temporary disabled, enable later")
+	return
 	file.perkInfoTable[perkId].minimapEntities.append( ent )
 
 	#if SERVER

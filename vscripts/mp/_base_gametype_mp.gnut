@@ -793,8 +793,8 @@ bool function DecideRespawnPlayer( entity player, bool allowSpawnAsObserver )
 		return false
 	}
 
-	if ( allowSpawnAsObserver )
-		player.AllowSpawnAsObserverOnce()
+	//if ( allowSpawnAsObserver )
+	//	player.AllowSpawnAsObserverOnce()
 
 	printf( "%s() - Attempting to spawn: %s", FUNC_NAME(), string( player ) )
 	bool didSpawn = RespawnTitanPilot( player )

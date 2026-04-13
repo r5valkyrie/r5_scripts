@@ -538,6 +538,7 @@ Scripts:
 When: "SERVER || CLIENT"
 Scripts:
 [
+	sh_character_loadouts.nut
 	conversation/sh_grunt_chatter_mp.gnut
 	conversation/sh_spectre_chatter_mp.gnut
 	conversation/sh_survival_commentary.gnut
@@ -602,6 +603,7 @@ Scripts:
 	weapons/mp_ability_consumable.nut
 
 	mp/sh_bleedout.gnut
+	sh_armordata.gnut
 	mp/sh_respawn_beacon.gnut
 	sh_evac_ship.nut
 
@@ -659,6 +661,7 @@ Scripts:
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
+	perk_banner_crafting.nut
 	perk_beacon_scan.nut
 	perk_next_zone_beacon_scan.nut
 	perk_enemies_beacon_scan.nut
@@ -804,7 +807,6 @@ Scripts:
 	pilot/_pilot_passive_grenadier.gnut
 	ai/_ai_spider_egg.gnut
 	ai/_ai_prowler_den.gnut
-	
 	mp/sh_desertlands_train.nut
 	mp/sh_desertlands_story_events.nut
 	sh_scoreboard.gnut
@@ -1294,6 +1296,7 @@ Scripts:
 When: "SERVER"
 Scripts:
 [
+	gamemodes/_gamemode_map_cleanup.nut
 	sv_pilots_passage.gnut
 ]
 
@@ -1405,7 +1408,6 @@ Scripts:
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
-	sh_armordata.gnut
 	gamemodes/freedm/sh_freedm_stubs.nut
 	gamemodes/sh_gamemode_utility.gnut
 	gamemodes/sh_loadout_selection_system.nut

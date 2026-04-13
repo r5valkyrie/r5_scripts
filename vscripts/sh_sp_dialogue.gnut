@@ -580,8 +580,9 @@ void function RegisterCSVDialogue( asset dt )
 		float dialogueTextDur    = ((columnDevTextDuration > -1) ? GetDataTableFloat( dataTable, rowIdx, columnDevTextDuration ) : 0.0)
 		string soloLegendFlavors = ((optionalSoloLegendFlavors > -1) ? GetDataTableString( dataTable, rowIdx, optionalSoloLegendFlavors ) : "")
 
-		if ( (voice.len() > 0) && (!file.validVoices.contains( voice )) && (extraPerspective != "radio") )
-			Warning( "Dialogue '%s' in source '%s' specifies unknown voice '%s'.", name, string( dt ), voice )
+		//update audio?
+		//if ( (voice.len() > 0) && (!file.validVoices.contains( voice )) && (extraPerspective != "radio") )
+		//	Warning( "Dialogue '%s' in source '%s' specifies unknown voice '%s'.", name, string( dt ), voice )
 
 		RegisterDialogueLine( name, alias, priority, radioDisplayName, voice, radioIntercept, vduVideo, dialogueText, dialogueTextDur, extraPerspective, canPlayIfSolo, dt, soloLegendFlavors )
 	}
@@ -712,6 +713,7 @@ void function VerifyExistenceOfNongenericAliases( string alias, string extraPers
 
 void function IssueWarningIfAliasMissing( string alias, asset dt )
 {
+	return//update audio?
 	if ( !DoesAliasExist( alias ) )
 		Warning( "Error: Dialogue alias '" + alias + "' can't be registered by " + string( dt ) + " because the alias does not exist. Most likely missing a Miles event." )
 }

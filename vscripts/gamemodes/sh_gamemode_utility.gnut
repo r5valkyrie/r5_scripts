@@ -138,12 +138,6 @@ struct weaponInfoStruct
 	string weaponRef = ""
 	array< string > modRefs = []
 }
-
-global struct WeaponLoadout
-{
-	array< string > weaponRefs
-	table< string, array< string > > weaponAttachmentsByWeapon
-}
 #endif // SERVER
 
 struct {

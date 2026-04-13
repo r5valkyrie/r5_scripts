@@ -5653,7 +5653,7 @@ entity function CreateTraceBlockerVolume_CustomBox( vector origin, vector angles
 // Screen cover transition functions
 void function ScreenCoverTransition_Player( entity player, float endTime )
 {
-	Remote_CallFunction_NonReplay( player, "ServerToClient_ScreenCoverTransition", endTime )
+	//Remote_CallFunction_NonReplay( player, "ServerToClient_ScreenCoverTransition", endTime )
 }
 
 void function ScreenCoverTransition_AllPlayers( float endTime )
@@ -5721,7 +5721,8 @@ void function UnlockWeaponsAndMelee( entity player, string debug_source )
 	if ( player.p.weaponsAndMeleeLockedCount == 0 )
 	{
 		player.UnlockWeaponChange()
-		player.EnableWeaponTypes( WPT_MELEE )
+		//player.EnableWeaponTypes( WPT_MELEE )
+		Warning("EnableWeaponTypes not available for player, fix me")
 	}
 }
 
@@ -6967,12 +6968,6 @@ void function AddCallback_OnCodeDoorBroken( void functionref( entity, entity, ve
 void function SetPlayerBotQueueGraduation( entity player, int state )
 {
 }
-
-
-void function AddCallback_OnTeammatesRespawned( void functionref( entity, entity, array< entity > ) callbackFunc )
-{
-}
-
 bool function PrestigeBadgeIsAllowed()
 {
 	return false

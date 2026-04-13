@@ -112,13 +112,6 @@ global function WORKAROUND_AssetAppend
 
 // === Gamestate ===
 global function SetIsPermanentEntity
-global function GetRespawnBeaconLocations
-
-// === Emotes ===
-// GetPlayerIsEmoting — now in sh_emotes.nut (S22)
-
-// === Banner Crafting ===
-global function GetCraftableTeamBanners
 
 // === Shadow Army Gamemode ===
 global function ShadowArmy_IsPlayerInShadowForm
@@ -276,7 +269,6 @@ global function ForcedSpawn_GetEnemyPingDisplayTime
 // Grouping_AddIfValid/RemoveForDelete — now in sh_waypoints.gnut (S22)
 // AddPingBlockingFunction removed — callers updated to AddOnscreenPromptFunction
 global function HoverVehicle_GetVehicleOccupiedByPlayer
-global function DoesTeammateHaveBannerCraftingPerk
 global function PIN_EmoteUse
 // CommsMenu_GetMenuForNewPing — now in sh_comms_menu.nut (S22)
 global function Valentines_S15_ILoveYouEasterEggEnabled
@@ -373,8 +365,8 @@ global function IsTeamInAlliance
 global function GetGroundPositionOpenToSky
 global function EmoteIcon_Waypoint_LinkPlayer
 // Remote_CallFunction_NonReplay — native
+global function ShadowArmy_RespawnBeacon_CanBeaconBeUsed
 global function ShadowArmy_RespawnBeacon_CanBeaconBeUsedByPlayer
-global function Perk_CanExpiredBannerBeRecovered
 global function Trophy_GetShieldsPercentRemaining
 global function Control_InstanceObjectivePing_Thread
 global function MedBay_GetHealsPercentRemaining
@@ -531,9 +523,6 @@ global function FiringRangeHasDynamicStats
 // === Mute/Communication ===
 global function TogglePlayerVoiceAndTextMute
 
-// === Perks ===
-global function Perk_CanTeammateCraftPlayerBanner
-
 // === Game Mode Features ===
 global function Control_IsModeEnabled
 global function MissionCheckpoints_GetRespawnsLeftForPlayer
@@ -574,8 +563,6 @@ global function CopycatKit_LootDropped
 global function ControlGunRacks_GetPickupGracePeriodDuration
 global function FR_Nessie_CheckCurrentWeapons
 global function GoldenHorse_UpdateLootHighlight
-global function HasInterruptableBannerPickup
-global function Perk_CanPickUpExpiredBanners
 global function RemoteDeathboxInteractAllowGrabbingBanners
 global function GetRemoteDeathboxInteractSqrRangeForAlter
 global function Pas_GetWattsonUltAccelExtraCount
@@ -606,9 +593,6 @@ global function EvaluateSoundSelector
 global function GetLockedSetsDisabledByCrafting
 global function GetIsUnifiedRandomizerEnabled
 global function GoldenHorse_TicksEnabled
-global function Perk_CanBuyBanners
-global function Perk_Get_CraftedBannerTimeoutDuration
-global function Player_Banners_Enabled
 global function TeslaTrap_MakeEntityRealTimeObstructor
 global function TitanSword_Super_BlockAction
 // global function UpgradeSelectionMenu_TryClose -- now in sh_upgrade_selection_menu.nut
@@ -698,7 +682,6 @@ global function LocalizeNumber
 global function GetDaysHoursRemainingLoc
 global function FormatNumber
 global function GetFakeTimeInSeconds
-global function IsLoadScreenFinished
 
 // === Server/Connection ===
 global function IsConnectedServerInfo
@@ -1024,12 +1007,6 @@ int function GetFakeTimeInSeconds()
 {
 	Warning( "WORKAROUND: GetFakeTimeInSeconds() called - not implemented" )
 	return 0
-}
-
-bool function IsLoadScreenFinished()
-{
-	Warning( "WORKAROUND: IsLoadScreenFinished() called - not implemented" )
-	return true
 }
 
 string function GetDaysHoursRemainingLoc( int days, int hours )
@@ -2524,7 +2501,6 @@ float function ForcedSpawn_GetEnemyPingDisplayTime()
 
 // AddPingBlockingFunction removed — callers updated to AddOnscreenPromptFunction
 
-bool function DoesTeammateHaveBannerCraftingPerk( entity player ) { return false }
 void function SkydiveEmoteProjector_ActivateEmoteProjector( entity player, ItemFlavor quip ) { Warning( "STUB: SkydiveEmoteProjector_ActivateEmoteProjector" ) }
 bool function Valentines_S15_ILoveYouEasterEggEnabled() { return false }
 string function GetRemoteDeathboxHighlight( entity deathbox, int lootTier ) { return "" }
@@ -2806,7 +2782,7 @@ vector function GetGroundPositionOpenToSky( vector origin ) { return origin }
 void function EmoteIcon_Waypoint_LinkPlayer( entity wp, entity player ) { Warning( "STUB: EmoteIcon_Waypoint_LinkPlayer" ) }
 // Remote_CallFunction_NonReplay — native
 bool function ShadowArmy_RespawnBeacon_CanBeaconBeUsedByPlayer( entity beacon, entity player ) { return true }
-bool function Perk_CanExpiredBannerBeRecovered( entity player ) { return false }
+bool function ShadowArmy_RespawnBeacon_CanBeaconBeUsed( entity beacon ) { return true }
 int function Trophy_GetShieldsPercentRemaining( entity ent ) { return 100 }
 void function Control_InstanceObjectivePing_Thread( entity wp ) { Warning( "STUB: Control_InstanceObjectivePing_Thread" ) }
 int function MedBay_GetHealsPercentRemaining( entity ent = null ) { return 100 }
@@ -2833,15 +2809,6 @@ int function Waypoints_GetObjectiveIndexFor( entity wp ) { return -1 }
 void function TogglePlayerVoiceAndTextMute( entity player )
 {
 	Warning( "WORKAROUND: TogglePlayerVoiceAndTextMute() called - not implemented" )
-}
-
-// === Perks ===
-
-// stub - banner crafting not available
-bool function Perk_CanTeammateCraftPlayerBanner( entity player )
-{
-	Warning( "WORKAROUND: Perk_CanTeammateCraftPlayerBanner() called - not implemented" )
-	return false
 }
 
 // === Game Mode Features ===
@@ -2975,8 +2942,6 @@ string function GoldenHorse_UpdateLootHighlight( entity prop, string ref, int ti
 
 	return highlight
 }
-bool function HasInterruptableBannerPickup( entity player = null ) { Warning("STUB: HasInterruptableBannerPickup"); return false }
-bool function Perk_CanPickUpExpiredBanners( entity player, entity ent = null ) { Warning("STUB: Perk_CanPickUpExpiredBanners"); return false }
 bool function RemoteDeathboxInteractAllowGrabbingBanners( entity player = null ) { Warning("STUB: RemoteDeathboxInteractAllowGrabbingBanners"); return false }
 float function GetRemoteDeathboxInteractSqrRangeForAlter( entity player ) { Warning("STUB: GetRemoteDeathboxInteractSqrRangeForAlter"); return 0.0 }
 int function Pas_GetWattsonUltAccelExtraCount( entity player = null ) { Warning("STUB: Pas_GetWattsonUltAccelExtraCount"); return 0 }
@@ -3007,9 +2972,6 @@ int function EvaluateSoundSelector( string alias ) { Warning("STUB: EvaluateSoun
 array<string> function GetLockedSetsDisabledByCrafting() { Warning("STUB: GetLockedSetsDisabledByCrafting"); return [] }
 bool function GetIsUnifiedRandomizerEnabled() { return false }
 bool function GoldenHorse_TicksEnabled() { return false }
-bool function Perk_CanBuyBanners( entity player ) { Warning("STUB: Perk_CanBuyBanners"); return false }
-float function Perk_Get_CraftedBannerTimeoutDuration() { return 0.0 }
-bool function Player_Banners_Enabled() { return true }
 void function TeslaTrap_MakeEntityRealTimeObstructor( entity ent ) { Warning("STUB: TeslaTrap_MakeEntityRealTimeObstructor") }
 bool function TitanSword_Super_BlockAction( entity player, string action = "" ) { Warning("STUB: TitanSword_Super_BlockAction"); return false }
 // UpgradeSelectionMenu_TryClose -- now in sh_upgrade_selection_menu.nut
@@ -3462,21 +3424,6 @@ asset function WORKAROUND_AssetAppend( string s1, string s2 )
 void function SetIsPermanentEntity( entity ent, bool isPermanent )
 {
 	Warning( "STUB: SetIsPermanentEntity" )
-}
-
-array<vector> function GetRespawnBeaconLocations()
-{
-	Warning( "STUB: GetRespawnBeaconLocations" )
-	array<vector> result
-	return result
-}
-
-// === Banner Crafting ===
-array<entity> function GetCraftableTeamBanners( entity player )
-{
-	Warning( "STUB: GetCraftableTeamBanners" )
-	array<entity> bannerPlayers
-	return bannerPlayers
 }
 
 // === Shadow Army Gamemode ===

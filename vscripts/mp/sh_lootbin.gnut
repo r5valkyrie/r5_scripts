@@ -83,7 +83,7 @@ global const string LOOT_BIN_DELAY_LOOT_SPAWNING_PLAYLIST_VAR = "survival_lootbi
 global const string LOOT_BIN_MARKER_SCRIPTNAME = "survival_lootbin"
 global const string LOOT_BIN_SCRIPTNAME = "survival_lootbin_spawned"
 
-global const asset LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_loba.rmdl"
+global const asset LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_animated.rmdl"
 
 global const asset LOOT_BIN_OPEN_REGULAR_FX = $"P_LootBin_open"
 global const asset LOOT_BIN_OPEN_SECRET_FX = $"P_LootBin_open_lower"

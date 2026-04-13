@@ -255,7 +255,6 @@ global struct ServerEntityStruct
 	// ball lightning
 	BallLightningData ballLightningData
 	int ballLightningTargetsIdx = -1
-	bool destroyOutOfBounds = false
 	bool destroyTriggerHurt = false
 
 	bool ignoreJumpPad = false
@@ -359,6 +358,9 @@ global struct ServerEntityStruct
 	void functionref( entity, entity, entity, entity, vector ) Callback_VortexTriggerProjectileHit
 	array<void functionref( entity )> playerOnRealmChangedCallbacks
 	bool ignoreSafePushMode = false //If a pusher has set Anim_SetSafePushMode, which "Stops playing the animation when continuing it would hit a pushable object. Resumes automatically.".  This bool will override that behaviour where you have a pushable entity that you don't want to stop the animation on the pusher when it collides.  Example: large sliding doors vs Seer ult.
+	
+	entity               utilityEnt
+	
 	bool   isInWarpTrigger
 	float  phaseTunnelExitTime
 	int skinItemFlavorGUID  = -1
@@ -408,6 +410,10 @@ global struct ServerEntityStruct
 
 	bool ignorePingTrace = false
 	float pylonhealth
+
+	//Bomb
+	bool hasBomb = false
+	bool destroyOutOfBounds = false
 
 	//portal gun
 	bool isplayercomingfromportal1 = false
@@ -873,6 +879,7 @@ global struct ServerPlayerStruct
 	bool AmIController = false
 	float lastTimeSpectateUsed = 0
 	bool isSpectating = false
+	int observerMode = 0
 	bool isAdmin = false
 	int ziplineUsages = 0
 	float lastmoved

@@ -62,7 +62,6 @@ global const string TRANSPORT_PORTAL_RECEIVER_SCRIPTNAME = "alter_ult_receiver"
 global const string TRANSPORT_PORTAL_TRANSLOCATOR_TRACE_BLOCKER_SCRIPTNAME = "alter_ult_translocator_trace_blocker"
 global const string TREASUREHUNT_OBJECTIVE_SCRIPTNAME = "treasurehunt_objective"
 global const int CONTROL_INT_OBJ_ALLIANCE_OWNER = 0
-global const string CRAFTED_BANNER_MODEL_NAME = "mdl/props/ultimate_accelerant/ultimate_accelerant_banner_crafting.rmdl"
 global const string SURVIVAL_HUD_SQUADTAG_PVAR = "use_dynamic_squad_tag"
 global const asset SURVIVAL_HUD_SQUADTAG = $"ui/squad_tag.rpak"
 #if CLIENT
@@ -86,14 +85,11 @@ global const string DEATH_BOX_TARGETNAME = "player_death_box"
 global const string MRB_WEAPON_REF_NAME = "mp_ability_mobile_respawn_beacon"
 global const string VOID_RING_WEAPON_REF = "mp_ability_void_ring"
 global const string REDEPLOY_BALLOON_WEAPON_REF = "mp_ability_redeploy_balloon"
-global const string CRAFTED_BANNER_REF = "expired_banners"
 global const string COPYCAT_NAME = "mp_ability_copycat_kit"
 global const string BUBBLE_BUNKER_WEAPON_NAME = "mp_weapon_bubble_bunker"
 global const string CAUSTIC_DIRTY_BOMB_WEAPON_CLASS_NAME = "mp_weapon_dirty_bomb"
 global const string SPIKE_STRIP_WEAPON_NAME = "mp_ability_spike_strip"
 global const string TRANSPORT_PORTAL_WEAPON_NAME = "mp_ability_transport_portal"
-global const string DEATH_BOX_BANNER_EXPIRED_NETVAR = "DeathBoxBannerExpired"
-global const string PICKING_UP_RESPAWN_BANNER_ANIM = "ptpov_burn_card_activate_seq_gladcard"
 global const int WAT_INVALID = -1
 global const int WAT_BARREL = 0
 global const int WAT_LASER_SIGHT = 1
@@ -403,7 +399,8 @@ global const string PLAYLIST_FIRING_RANGE = "survival_firingrange"
 global const int PLAYLIST_ID_SURVIVAL = 0
 global const int PLAYLIST_ID_NEW_PLAYER_ORIENTATION = 1
                                   
-
+global const bool R2_SCOREBOARD = false
+global const bool MINIMAP_DEBUG = false
                    
 global const string COMBATRANGE = "combatrange"
 
@@ -899,6 +896,43 @@ global enum eRespawnStatus
 	_COUNT,
 }
 
+global const table< int, string > respawnStatus_EnumToStringMap = {
+	[ eRespawnStatus.NONE ] = "none",
+	[ eRespawnStatus.WAITING_FOR_PICKUP ] 	= "WAITING_FOR_PICKUP",
+	[ eRespawnStatus.WAITING_FOR_DELIVERY ] = "WAITING_FOR_DELIVERY",
+	[ eRespawnStatus.WAITING_FOR_DROPPOD ] 	= "WAITING_FOR_DROPPOD",
+	[ eRespawnStatus.WAITING_FOR_RESPAWN ] 	= "WAITING_FOR_RESPAWN",
+	[ eRespawnStatus.PICKUP_DESTROYED ] 	= "PICKUP_DESTROYED",
+	[ eRespawnStatus.PLAYER_ELIMINATED ] 	= "PLAYER_ELIMINATED",
+	[ eRespawnStatus.SQUAD_ELIMINATED ] 	= "SQUAD_ELIMINATED",
+                       
+                                                                                            
+                             
+	[ eRespawnStatus._COUNT ] 	= "_COUNT"
+}
+
+global enum eRespawnStyle
+{
+	// This needs to match RESPAWNSTYLE_* in RUIs.
+
+	NONE,
+	RESPAWN_CHAMBERS,
+	WAVE_SPAWN_ON_SQUAD,
+	SPAWN_NEAR_SQUAD,
+	CUSTOM_RESPAWN,
+	SPAWN_GROUP_SKYDIVE,
+                       
+                 
+       
+	                       
+		ROLLING_RESPAWN,
+       
+                                                         
+                  
+       
+	_COUNT,
+}
+
 // types of ways drop calls can be used
 global enum eDropStyle
 {
@@ -912,6 +946,7 @@ global enum eDropStyle
 	RANDOM_FROM_YAW		// spawn at a random node that meets the yaw requirement
 	FLYER_PICKUP		// same as ZIPLINE_NPC just a more suitable name, starts at the origin and works it's way out in four directions, with fallback
 }
+
 
 global enum eStickState
 {
@@ -947,7 +982,7 @@ global const EMBARK_TIMEOUT = 13.0 // how long you have to reach your titan befo
 //-----------------------------------------------------
 // EMP GRENADES
 //-----------------------------------------------------
-global const EMP_GRENADE_PILOT_SCREEN_EFFECTS_DURATION_MIN 	= 1.5 // duration of emp screen effects when you're at the edge of the damage radius
+global const EMP_GRENADE_PILOT_SCREEN_EFFECTS_DURATION_MIN 	= 0.2 // duration of emp screen effects when you're at the edge of the damage radius
 global const EMP_GRENADE_PILOT_SCREEN_EFFECTS_DURATION_MAX 	= 2.5 // duration of emp screen effects when you're at the center of the explosion
 global const EMP_GRENADE_PILOT_SCREEN_EFFECTS_FADE 			= 1.0
 global const EMP_GRENADE_PILOT_SCREEN_EFFECTS_MIN 			= 0.15
@@ -1133,6 +1168,7 @@ global enum PerfIndexClient
 	CarePackagePerkLookatUpdate,
 
 	PrivateLobbyThread,
+
 	PhaseBreach_GetPosition_OLD,
 	PhaseBreach_GetPosition,
 	PhaseBreach_WallToTop,
@@ -1184,9 +1220,11 @@ global enum PerfIndexServer
 	DR_SendData,
 
 	AddToInventory,
+
 	SmartLoot,
 
 	WreckingBall,
+
 	LeftoverLootWeightingFix,
 }
 
@@ -1224,12 +1262,6 @@ global const CE_FLAG_TITAN_3P_CAM			= 0x0100
 global const CE_FLAG_WAVE_SPAWNING			= 0x0200
 global const CE_FLAG_EOG_STAT_DISPLAY		= 0x0400
 global const CE_FLAG_HIDE_PERMANENT_HUD		= 0x0800
-
-global const TITAN_DAMAGE_STAGE_FULL 		= 1.0
-global const TITAN_DAMAGE_STAGE_1 			= 0.75
-global const TITAN_DAMAGE_STAGE_2 			= 0.5
-global const TITAN_DAMAGE_STAGE_3 			= 0.25
-global const TITAN_DAMAGE_STAGE_DOOMED 		= 0.0
 
 global const float AREA_SONAR_SCAN_PULSE_DURATION 	= 6.0
 

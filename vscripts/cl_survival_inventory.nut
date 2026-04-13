@@ -3241,13 +3241,6 @@ void function TEMP_UpdatePlayerRui( var rui, entity player )
 				{
 					bool isEvolving = EvolvingArmor_IsEquipmentEvolvingArmor( data.ref )
 
-					if( UpgradeCore_IsEquipmentArmorCore( data.ref ) )
-					{
-						isEvolving = true
-						tier = UpgradeCore_GetPlayerArmorTier( player, false )
-					}
-					RuiSetBool( rui, "showProgressMeter",  UpgradeCore_ArmorTiedToUpgrades() && UpgradeCore_ShowUpgradesUnitframe() )
-
 					RuiSetBool( rui, "isEvolvingShield", isEvolving )
 					RuiSetInt( rui, "evolvingShieldKillCounter", EvolvingArmor_GetEvolutionProgress( player ) )
 

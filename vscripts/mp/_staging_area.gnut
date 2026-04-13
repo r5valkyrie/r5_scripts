@@ -220,7 +220,7 @@ struct
 
 void function Staging_Area_Init()
 {
-	return
+
 	ITEM_RESPAWN_TIME = GetCurrentPlaylistVarFloat( "firing_range_item_respawn_time", ITEM_RESPAWN_TIME_DEFAULT )
 
 	file.stagingAreaEnabled = GetCurrentPlaylistVarBool( "survival_staging_area_enabled", false )
@@ -245,7 +245,7 @@ void function Staging_Area_Init()
         
 
 		AddSpawnCallback_ScriptName( "staging_loot_bin", OnLootBinSpawned )
-		// Loot_AddCallback_OnLootSpawn( Staging_OnLootSpawn ) // S3: callback not available
+		Loot_AddCallback_OnLootSpawn( Staging_OnLootSpawn ) // S3: callback not available
 
 		AddCallback_GameStateEnter( eGameState.WaitingForPlayers, Survival_OnEnterWaitingForPlayers )
 		AddCallback_GameStateEnter( eGameState.Playing, StagingCleanup )
@@ -3453,7 +3453,7 @@ void function Staging_CreateChargePylonsForRealm( array< ChargePylonData > allCh
 {
 	foreach( ChargePylonData dataToDupe in allChargePylonInstancesInLevel )
 	{
-		DuplicateChargePylonToExclusiveRealm( dataToDupe, realm )
+		//DuplicateChargePylonToExclusiveRealm( dataToDupe, realm )
 	}
 }
 

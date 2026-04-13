@@ -8,14 +8,12 @@ global function AddCallback_OnPlayerConsumableInventoryChanged
 global function ClientCodeCallback_OnPlayerConsumableInventoryChanged
 
 global function ClientCodeCallback_OnPlayerConnectionStateChanged
-global function AddCallback_ClientOnPlayerConnectionStateChanged
 
 global function AddEntityCallback_GetUseEntOverrideText
 
 global function ClientCodeCallback_OnPetTitanModeChanged
 global function ClientCodeCallback_OnPetTitanChanged
 
-global function IsCurrentlyFocusedWeapon
 global function IsCurrentlyFocusedUseEnt
 
 global function ClientCodeCallback_PingSpecificType
@@ -26,13 +24,14 @@ global function ClientCodeCallback_UseConsumable
 global function SetCallback_UseConsumable
 global function RemoveCallback_UseConsumable
 
+global function AddCallback_ClientOnPlayerConnectionStateChanged
+
 global function NvidiaReflex_SetValues
 global function NvidiaReflex_SetSettingsValue
 
 global function AmdAntiLag_SetValues
 global function AmdAntiLag_SetSettingsValue
 
-global function ServerCallback_RefreshWeaponHighlights
 global function Promo_SetVersion
 
 struct
@@ -173,23 +172,11 @@ void function AddEntityCallback_GetUseEntOverrideText( entity ent, string functi
 }
 
 
-bool function IsCurrentlyFocusedWeapon( entity ent )
-{
-	return file.focusedEnt == ent
-}
-
 bool function IsCurrentlyFocusedUseEnt( entity ent )
 {
 	return file.focusedEnt == ent
 }
 
-
-void function ServerCallback_RefreshWeaponHighlights( int eHandle )
-{
-	entity weapon = GetEntityFromEncodedEHandle( eHandle )
-	if ( weapon != null )
-		ManageHighlightEntity( weapon )
-}
 
 void function ClientCodeCallback_OnPetTitanChanged( entity player )
 {

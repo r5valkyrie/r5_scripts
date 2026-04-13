@@ -810,7 +810,7 @@ string function GetDisplayablePlayerNameFromEHI( EHI playerEHI )
 {
 	string playerTag = ""
 	                  
-		playerTag = EHI_GetName( playerEHI )
+		playerTag = "[R5V]"
        
               
                                            

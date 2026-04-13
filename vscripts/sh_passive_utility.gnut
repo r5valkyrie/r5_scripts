@@ -1,20 +1,4 @@
 globalize_all_functions
-
-void function ReloadPrimaryWeapons( entity player )
-{
-	#if CLIENT
-		EmitSoundOnEntity( player, "Coop_AmmoBox_AmmoRefill" )
-	#endif
-	#if SERVER
-		array<entity> weapons = player.GetMainWeapons()
-		foreach ( weapon in weapons )
-		{
-			int max = weapon.GetWeaponPrimaryClipCountMax()
-			weapon.SetWeaponPrimaryClipCount( max )
-		}
-	#endif
-}
-
 void function ReloadPlayerDash( entity player )
 {
 	#if SERVER

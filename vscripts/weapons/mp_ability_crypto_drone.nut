@@ -1001,8 +1001,8 @@ void function Drone_AttemptUseLong( entity player )
 
 		if ( IsRespawnBeacon( trace.hitEnt ) && CountTeammatesWaitingToBeRespawned( player.GetTeam() ) > 0 && trace.hitEnt.e.isBusy == false )
 		{
-			ExtendedUseSettings settings
-			thread RespawnUserTeam( trace.hitEnt, player, settings )
+			ExtendedUseSettings settings // doesn't seem to do anything
+			thread RespawnBeacon_GetSuccessFunc( trace.hitEnt )( trace.hitEnt, player, settings )
 		}
 	}
 }
