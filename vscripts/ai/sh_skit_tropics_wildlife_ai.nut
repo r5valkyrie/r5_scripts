@@ -551,8 +551,8 @@ void function TropicsWildlife_OnDeathFieldStartShrink( table<int,DeathFieldData>
 
 	s_externalWildlifeCampDatas.clear()
 	array<WildlifeCampData> campDatas = clone s_activeWildlifeCampDatas
-	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter( 0 )
-	float roundEndRadius = SURVIVAL_Server_GetNextDeathFieldEndRadius()
+	vector nextCircleCenter = SURVIVAL_GetDeathFieldCenter( Survival_Loot_GetDefaultRealm() )
+	float roundEndRadius = SURVIVAL_Server_GetNextDeathFieldEndRadius( Survival_Loot_GetDefaultRealm() )
 	foreach ( WildlifeCampData campData in s_activeWildlifeCampDatas )
 	{
 		float distance = Distance2D( campData.assaultPoint.origin, nextCircleCenter )
