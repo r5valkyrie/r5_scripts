@@ -1310,7 +1310,7 @@ void function Thread_SetupVendWaypoint_Internal( entity waypoint )
 	RuiSetFloat( waypoint.wp.ruiHud, "iconSizePinned", 72.0 )
 	RuiSetImage( waypoint.wp.ruiHud, "outerIcon", BIGMAUDE_DISPENSER_CRAFTING_ICON_ASSET )
 	RuiSetImage( waypoint.wp.ruiHud, "innerIcon", BIGMAUDE_DISPENSER_CRAFTING_ICON_ASSET )
-	RuiSetImage( waypoint.wp.ruiHud, "fillBackgroundImage", BIGMAUDE_DISPENSER_FILL_BG_ICON_ASSET )
+	//RuiSetImage( waypoint.wp.ruiHud, "fillBackgroundImage", BIGMAUDE_DISPENSER_FILL_BG_ICON_ASSET )
 	RuiSetImage( waypoint.wp.ruiHud, "fillImage", BIGMAUDE_DISPENSER_FILL_ICON_ASSET )
 
 	RuiSetInt( waypoint.wp.ruiHud, "yourObjectiveStatus", 2 )
