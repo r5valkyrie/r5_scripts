@@ -822,7 +822,7 @@ void function OnBackpackItemClickAction( var panel, var button, int index )
 	if ( !IsFullyConnected() )
 		return
 
-	RunClientScript( "UICallback_OnInventoryButtonAction", button, index )
+	RunClientScript( "UICallback_OnInventoryButtonAction", button, index, eLootActionType.PRIMARY_ACTION )
 }
 
 void function OnBackpackItemClickRight( var panel, var button, int index )
@@ -836,7 +836,7 @@ void function OnBackpackItemClickRight( var panel, var button, int index )
 
 	int position = TranslateBackpackGridPosition( index )
 	EmitUISound( "UI_InGame_Inventory_Drop" )
-	RunClientScript( "UICallback_OnInventoryButtonAltAction", button, position )
+	RunClientScript( "UICallback_OnInventoryButtonAction", button, position, eLootActionType.ALT_ACTION )
 }
 
 
