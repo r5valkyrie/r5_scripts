@@ -43,38 +43,40 @@ global struct LineSegment
 
 global struct FirstPersonSequenceStruct
 {
-	string firstPersonAnim                      = ""
-	string thirdPersonAnim                      = ""
-	string firstPersonAnimIdle                  = ""
-	string thirdPersonAnimIdle                  = ""
-	string relativeAnim                         = ""
-	string attachment                           = ""
-	bool teleport                               = false
-	bool noParent                               = false
-	float blendTime                             = CALCULATE_SEQUENCE_BLEND_TIME
-	float thirdPersonBlendInTime                = -1.0
-	float firstPersonBlendInTime                = -1.0
-	float firstPersonBlendOutTime               = -1.0
-	float thirdPersonBlendOutTime               = -1.0
-	bool noViewLerp                             = false
-	bool hideProxy                              = false
+	string                     firstPersonAnim = ""
+	string                     thirdPersonAnim = ""
+	string                     firstPersonAnimIdle = ""
+	string                     thirdPersonAnimIdle = ""
+	string                     relativeAnim = ""
+	string                     attachment = ""
+	bool                       teleport = false
+	bool                       noParent = false
+	float                      blendTime = CALCULATE_SEQUENCE_BLEND_TIME
+	float                      thirdPersonBlendInTime = -1.0
+	float                      firstPersonBlendInTime = -1.0
+	float                      firstPersonBlendOutTime = -1.0
+	float                      thirdPersonBlendOutTime = -1.0
+	bool                       noViewLerp = false
+	bool                       hideProxy = false
 	void functionref( entity ) viewConeFunction = null
-	vector ornull origin                        = null
-	vector ornull angles                        = null
-	bool enablePlanting                         = false
-	float setStartTime                          = -1 // Set what time (in seconds since the beginning of Time()) the animation will start in.
-	float setInitialTime                        = 0.0 // Set the starting point of the animation in seconds. 0 = beginning of the animation.
-	bool useAnimatedRefAttachment               = false //Position entity using ref every frame instead of using root motion
-	bool renderWithViewModels                   = false
-	bool gravity                                = false // force gravity command on sequence
-	bool playerPushable                         = false
-	array<string> thirdPersonCameraAttachments  = []
-	bool thirdPersonCameraVisibilityChecks      = false
-	entity thirdPersonCameraEntity              = null
-	bool snapPlayerFeetToEyes                   = true
-	bool prediction                             = false
-	bool setVelocityOnEnd                       = false
-	bool snapForLocalPlayer                     = false
+	vector ornull              origin = null
+	vector ornull              angles = null
+	bool                       enablePlanting = false
+	bool                       enableRelativeToGround = false
+	bool                       enableCollision = false
+	float                      setStartTime = -1 // Set what time (in seconds since the beginning of Time()) the animation will start in.
+	float                      setInitialTime = 0.0 // Set the starting point of the animation in seconds. 0 = beginning of the animation.
+	bool                       useAnimatedRefAttachment = false //Position entity using ref every frame instead of using root motion
+	bool                       renderWithViewModels = false
+	bool                       gravity = false // force gravity command on sequence
+	bool                       playerPushable = false
+	array<string>              thirdPersonCameraAttachments = []
+	bool                       thirdPersonCameraVisibilityChecks = false
+	entity                     thirdPersonCameraEntity = null
+	bool                       snapPlayerFeetToEyes = true
+	bool                       prediction = false
+	bool                       setVelocityOnEnd = false
+	bool                       snapForLocalPlayer = false
 }
 
 global struct FrontRightDotProductsStruct
