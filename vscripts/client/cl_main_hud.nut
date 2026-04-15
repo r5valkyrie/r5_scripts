@@ -149,25 +149,34 @@ void function HudInit( entity cockpit )
 
 void function MainHUD( entity cockpit, entity player )
 {
-
-
-
-
-
-
-
-
 	thread MainHud_TurnOff_RUI( cockpit, true )
 
 	HideFriendlyIndicatorAndCrosshairNames()
 
 	cockpit.s.coreFXHandle <- null
 	cockpit.s.pilotDamageAmpFXHandle <- null
-WaitFrame()
-WaitFrame()
-WaitFrame()
-WaitFrame()
-WaitFrame()
+
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+
 	UpdateMainHudVisibility( player )
 
 	if ( player == GetLocalClientPlayer() )
