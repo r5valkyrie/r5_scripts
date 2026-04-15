@@ -5,9 +5,7 @@ global function OnAirdropUse
 
 #if SERVER
 global function SURVIVAL_CalculateAirdropPositions
-#endif
 
-#if SERVER
 global function Survival_GetPregameAirdropDatas
 global function Survival_GetAirdropDatas
 global function Survival_GetPreviousAirdrops
@@ -17,9 +15,9 @@ global function Survival_ClearAirDropData
 global function Survival_LaunchAirdropsFromAirdropData
 global function DetermineAirdropContents
 global function AirdropItems
-global function AirdropLogic
 global function AirdropForRound
 global function GetContentsForRound
+global function AirdropLogic
 global function AirdropPodRemoveLocationMarker
 global function DropPodLocationMarker
 global function DropPodLocationBeam
@@ -38,10 +36,9 @@ global function DetermineAirdropTier
 
 global function RemoteOpenAirdrop
 
-global function DEV_AirdropPrint
-#endif
+global function DEV_AirdropPrint // cleans up extra #if DEV
 
-#if DEVELOPER && SERVER
+#if DEVELOPER
 global function DEV_DrawAirdropLocations
 global function DEV_DrawAirdropLocationsNearPlayer_Thread
 global function DEV_CallAirdropAtCrosshairLocation
@@ -56,7 +53,9 @@ global function DEV_AddAirdropEntity
 global function DEV_DeleteAirdropEntities
 global function CodeCallback_GetAirdropPointNavNodeIndex
 global function CodeCallback_IsAirdropPointValid
-#endif // DEVELOPER && SERVER
+#endif // DEVELOPER
+
+#endif // SERVER
 
 const bool DEBUG_DROP_POINTS = false
 
@@ -212,26 +211,6 @@ void function Sh_Airdrops_Init()
 		AddSpawnCallback( "prop_dynamic", OnAirdropCreated )
 		file.airdropRarityColorEnabled = GetCurrentPlaylistVarBool( "airdrop_raritycolor_enabled", false )
 		PrecacheParticleSystem( CHEVREX_AIRDROP_HOLOGRAM_VFX )
-	#endif
-
-}
-
-
-void function OnAirdropCreated( entity dropPod )
-{
-	#if CLIENT
-	if ( dropPod.GetTargetName() == CARE_PACKAGE_PROXY)
-	{
-		ShowGrenadeArrow( GetLocalViewPlayer(), dropPod, 192, 0, true )
-	}
-	#endif
-
-	if ( dropPod.GetTargetName() != CARE_PACKAGE_TARGETNAME && dropPod.GetTargetName() != CARE_PACKAGE_LIFELINE_TARGETNAME )
-		return
-
-	AddCallback_OnUseEntity( dropPod, OnAirdropUse )
-	#if CLIENT
-	AddEntityCallback_GetUseEntOverrideText( dropPod, ExtendedUseTextOverride )
 	#endif
 }
 
@@ -1601,8 +1580,16 @@ vector function GetOffsetForAirdropLoot( int lootType )
 array<entity> function AirdropGetSpawnedLoot( entity airdropPod )
 {
 	array<entity> loot = []
-	// S3: GetChildren() entity method not available
-	Warning( "GetAirdropLoot: GetChildren not available in S3" )
+	if ( IsValid( airdropPod ) )
+	{
+		foreach ( entity child in GetChildren(airdropPod) )
+		{
+			if ( child.GetNetworkedClassName() != "prop_survival" )
+				continue
+
+			loot.append( child )
+		}
+	}
 	return loot
 }
 
@@ -2016,6 +2003,18 @@ void function Survival_AddCallback_OnAirdropLaunched( void functionref(entity, v
 	file.Callbacks_OnAirdropLaunched.append( callbackFunc )
 }
 #endif
+
+void function OnAirdropCreated( entity dropPod )
+{
+	if ( dropPod.GetTargetName() != CARE_PACKAGE_TARGETNAME && dropPod.GetTargetName() != CARE_PACKAGE_LIFELINE_TARGETNAME )
+		return
+
+	AddCallback_OnUseEntity_ClientServer( dropPod, OnAirdropUse )
+
+	#if CLIENT
+		AddEntityCallback_GetUseEntOverrideText( dropPod, ExtendedUseTextOverride )
+	#endif
+}
 
 void function OnAirdropUse( entity dropPod, entity player, int useInputFlags )
 {
