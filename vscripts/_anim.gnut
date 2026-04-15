@@ -8,7 +8,6 @@ global function HasAnim
 global function SetAnim
 global function PlayAnimTeleport
 global function GetAnimStartInfo
-global function PlaySoundsForBodyType
 
 global function PlayFPSAnim
 global function PlayFPSAnimShowProxy
@@ -37,88 +36,21 @@ global function PhaseEmbarkPhaseStop
 
 const bool SCRIPT_ANIM_EVENT_DEBUG = false
 
-const HUMAN_BLOOD_FX = $"impact_flesh"
-const MECHANICAL_BLOOD_FX = $"P_impact_metal_spectre"
-const HUMAN_STAB_FX = $"P_stab_impact_flesh"
-const MECHANICAL_STAB_FX = $"P_stab_impact_robot"
-
-global const STEAL_PISTOL_MODEL = $"mdl/weapons/p2011/w_p2011.rmdl"
-global const WINGMAN_MODEL = $"mdl/weapons/b3wing/w_b3wing.rmdl"
-global const AWALL_MODEL = $"mdl/weapons/sentry_shield/sentry_shield_proj.rmdl"
-global const AWALL_WALL = $"mdl/fx/pilot_shield_wall.rmdl"
-global const PULSE_BLADE_MODEL = $"mdl/weapons/b3wing/w_b3wing.rmdl"//$"mdl/weapons/kunai/w_kunai.rmdl" - TODO: Port the correct model later -Kral
-
 void function Anim_Init()
 {
 	RegisterSignal( "NewViewAnim" )
 	RegisterSignal( "NewFirstPersonSequence" )
 	RegisterSignal( "ScriptAnimStop" )
 	RegisterSignal( "AnimEventKill" )
-	RegisterSignal( "OnChangedPlayerClass" )
-	
-	PrecacheParticleSystem( HUMAN_BLOOD_FX )
-	PrecacheParticleSystem( MECHANICAL_BLOOD_FX )
-	PrecacheParticleSystem( HUMAN_STAB_FX )
-	PrecacheParticleSystem( MECHANICAL_STAB_FX )
-	
-	PrecacheModel( STEAL_PISTOL_MODEL )
-	PrecacheModel( WINGMAN_MODEL )
-	PrecacheModel( AWALL_MODEL )
-	PrecacheModel( AWALL_WALL )
-	PrecacheModel( PULSE_BLADE_MODEL )
-	
-	RegisterSignal( "DeleteAWall" ) //ForAWallExecution
-	RegisterSignal( "PlayNextSound" ) //ForAwallExecution, generally could be used when we have long chains of sounds that need to be played that are different for robopilots versus non-robopilots
 
-	AddGlobalAnimEvent( "spawn_awall", GlobalAnimEvent_spawn_awall )
-	AddGlobalAnimEvent( "front_shot_high", AnimEvent_front_shot_high )
-	AddGlobalAnimEvent( "awall_victim_sound_event", AnimEvent_awall_victim_start_sfx )
-	AddGlobalAnimEvent( "shield_sound_event", AnimEvent_awall_victim_shield_sfx )
-	AddGlobalAnimEvent( "impact_01_sound_event", AnimEvent_awall_victim_impact01_sfx )
-	AddGlobalAnimEvent( "impact_02_sound_event", AnimEvent_awall_victim_impact02_sfx )
-	AddGlobalAnimEvent( "impact_03_sound_event", AnimEvent_awall_victim_impact03_sfx )
-	AddGlobalAnimEvent( "bodyfall_sound_event", AnimEvent_awall_victim_bodyfall_sfx )
-	
-	AddGlobalAnimEvent( "turnoff_execution_dof", GlobalAnimEvent_turnoff_executionDOF )
-	AddGlobalAnimEvent( "headstab_death", GlobalAnimEvent_headstab_death )
-	AddGlobalAnimEvent( "mark_for_death", GlobalAnimEvent_MarkForDeath )
-	
-	AddGlobalAnimEvent( "attach_knife", GlobalAnimEvent_attach_knife )
-	AddGlobalAnimEvent( "detach_knife", GlobalAnimEvent_detach_knife )
-	AddGlobalAnimEvent( "attach_p2011", GlobalAnimEvent_attach_p2011 )
-	AddGlobalAnimEvent( "detach_p2011", GlobalAnimEvent_detach_pistol )
-	AddGlobalAnimEvent( "attach_pistol", GlobalAnimEvent_attach_pistol )
-	AddGlobalAnimEvent( "detach_pistol", GlobalAnimEvent_detach_pistol )
-	AddGlobalAnimEvent( "attach_wingman", GlobalAnimEvent_attach_wingman )
-	AddGlobalAnimEvent( "detach_wingman", GlobalAnimEvent_detach_pistol )
-	
-	AddGlobalAnimEvent( "cloak_on", AnimEvent_Cloak_On )
-	AddGlobalAnimEvent( "cloak_off", AnimEvent_Cloak_Off )
-	AddGlobalAnimEvent( "spawn_decoy1", AnimEvent_spawn_decoy1 )
-	AddGlobalAnimEvent( "spawn_decoy2", AnimEvent_spawn_decoy2 )
-	AddGlobalAnimEvent( "spawn_decoy3", AnimEvent_spawn_decoy3 )
-	//AddGlobalAnimEvent( "headshot_death", AnimEvent_headshot_death )
-	AddGlobalAnimEvent( "holopilot_headshot_sfx", AnimEvent_holopilot_headshot_sfx )
-	
-	AddGlobalAnimEvent( "grapple_stab", GrappleStabSound )
-	AddGlobalAnimEvent( "grapple_bodyfall", GrappleBodyfallSound )
-	
-	AddGlobalAnimEvent( "attach_pulseBlade", AnimEvent_attach_pulseBlade )
-	AddGlobalAnimEvent( "detach_pulseBlade", AnimEvent_detach_pulseBlade )
-	AddGlobalAnimEvent( "mri_effect", AnimEvent_mriPulseEvent )
-	AddGlobalAnimEvent( "play_sonar_execution_sounds", AnimEvent_play_sonar_execution_sounds )
-	
 	AddGlobalAnimEvent( "enable_weapon", GlobalAnimEvent_EnableWeapon )
 	AddGlobalAnimEvent( "disable_weapon", GlobalAnimEvent_DisableWeapon	)
 	AddGlobalAnimEvent( "clear_parent", GlobalAnimEvent_ClearParent )
-	AddGlobalAnimEvent( "hide", GlobalAnimEvent_Hide )
-	AddGlobalAnimEvent( "show", GlobalAnimEvent_Show )
 	AddGlobalAnimEvent( "RecordOrigin", GlobalAnimEvent_RecordOrigin )
 	AddGlobalAnimEvent( "ShowFPSProxy", GlobalAnimEvent_ShowFPSProxy )
 	AddGlobalAnimEvent( "clear_anim_view_ent",GlobalAnimEvent_ClearAnimViewEntity )
 	AddGlobalAnimEvent( "scripted_death_to_ragdoll", GlobalAnimEvent_ScriptedDeathToRagdoll )
 	AddGlobalAnimEvent( "SetVelocity", GlobalAnimEvent_SetVelocity )
-	AddGlobalAnimEvent( "enable_planting", GlobalAnimEvent_EnablePlanting )
 	AddGlobalAnimEvent( "kill", GlobalAnimEvent_Kill )
 	AddGlobalAnimEvent( "gib", GlobalAnimEvent_Gib )
 	AddGlobalAnimEvent( "titan_gib", GlobalAnimEvent_TitanGib )
@@ -132,56 +64,16 @@ void function Anim_Init()
 	AddGlobalAnimEvent( "footstep_human_small_R", GlobalAnimEvent_footstep_human_small_R )
 	AddGlobalAnimEvent( "prowler_bodyfall", GlobalAnimEvent_BodyFallProwler )
 	AddGlobalAnimEvent( "prowler_landing", GlobalAnimEvent_BodyFallProwler )
-	AddGlobalAnimEvent( "prowler_landing", GlobalAnimEvent_PutProwlerInSafeSpot ) //(cafe) Fixes bh tt prowlers from falling through the map
 	AddGlobalAnimEvent( "setWeaponSkin00", GlobalAnimEvent_SetWeaponSkin00 )
 	AddGlobalAnimEvent( "setWeaponSkin01", GlobalAnimEvent_SetWeaponSkin01 )
 	AddGlobalAnimEvent( "phase_shift_start", PhaseEmbarkPhaseStart )
 	AddGlobalAnimEvent( "phase_shift_stop", PhaseEmbarkPhaseStop )
-	AddGlobalAnimEvent( "phase_gib", PhaseGib )
-	AddGlobalAnimEvent( "phase_shift_explode", PhaseShiftExplodeSound )
 	AddGlobalAnimEvent( "portal_execution_hide", PortalExecutionHide )
 	AddGlobalAnimEvent( "jump_pad_drop", GlobalAnimEvent_Jump_Pad_Drop )
 
 	AddGlobalAnimEventTokenize( "spawn_fake_weapon", GlobalAnimEvent_SpawnFakeWeapon )
+
 	AddGlobalAnimEventTokenize( "set_body_group", GlobalAnimEvent_SetBodyGroup )
-	#if SP
-	PrecacheWeapon( "mp_titanweapon_salvo_rockets" ) // used by bt_pod_fire_left/bt_pod_fire_right anim events. Only BT has these anim events.
-	AddGlobalAnimEvent( "bt_pod_fire_left", GlobalAnimEvent_BT_Pod_Left )
-	AddGlobalAnimEvent( "bt_pod_fire_right", GlobalAnimEvent_BT_Pod_Right )
-	#endif
-}
-
-void function GlobalAnimEvent_BT_Pod_Left( entity guy )
-{
-	BT_Pod( guy, "POD_L" )
-}
-
-void function GlobalAnimEvent_BT_Pod_Right( entity guy )
-{
-	BT_Pod( guy, "POD_R" )
-}
-
-void function BT_Pod( entity guy, string tag )
-{
-	// entity oldOffhandWeapon = guy.GetOffhandWeapon( 0 )
-	// guy.TakeOffhandWeapon( 0 )
-	// guy.GiveOffhandWeapon( "mp_titanweapon_salvo_rockets", 0, [ "scripted_no_damage" ] )
-
-	// //printt( tag )
-	// entity newOffhandWeapon = guy.GetOffhandWeapon( 0 )
-	// int attachID = guy.LookupAttachment( tag )
-	// vector angles = guy.GetAttachmentAngles( attachID )
-	// WeaponPrimaryAttackParams params
-	// params.pos = guy.GetAttachmentOrigin( attachID )
-	// params.dir = AnglesToForward( angles )
-	// StartParticleEffectOnEntity( guy, GetParticleSystemIndex( $"P_muzzleflash_predator" ), FX_PATTACH_POINT_FOLLOW, attachID )
-
-	// thread OnWeaponPrimaryAttack_titanweapon_salvo_rockets( newOffhandWeapon, params )
-
-	// guy.TakeOffhandWeapon( 0 )
-
-	// if ( oldOffhandWeapon )
- 	// 	guy.GiveOffhandWeapon( oldOffhandWeapon.GetWeaponClassName(), 0, oldOffhandWeapon.GetMods() )
 }
 
 void function GlobalAnimEvent_EnableWeapon( entity guy )
@@ -210,24 +102,15 @@ void function GlobalAnimEvent_ClearParent( entity guy )
 	guy.ClearParent()
 }
 
-void function GlobalAnimEvent_Hide( entity guy )
-{
-	guy.Hide()
-}
-
-void function GlobalAnimEvent_Show( entity guy )
-{
-	guy.Show()
-}
-
 void function GlobalAnimEvent_RecordOrigin( entity actor )
 {
-	if ( !actor.IsPlayer() )
+	if ( !actor.IsPlayer() && !actor.IsNPC() )
 		return
+
 	if ( !( "recordedOrigin" in actor.s ) )
 		actor.s.recordedOrigin <- []
 
-	table record = {}
+	table record
 	record.origin <- actor.GetOrigin()
 	record.time <- Time()
 
@@ -238,7 +121,7 @@ void function GlobalAnimEvent_ShowFPSProxy( entity player )
 {
 	if ( !player.IsPlayer() )
 		return
-	local viewmodel = player.GetFirstPersonProxy()
+	entity viewmodel = player.GetFirstPersonProxy()
 	viewmodel.ShowFirstPersonProxy()
 }
 
@@ -253,36 +136,32 @@ void function GlobalAnimEvent_ScriptedDeathToRagdoll( entity ent )
 {
 	ent.Die()
 	ent.SetContinueAnimatingAfterRagdoll( true )
-	ent.BecomeRagdoll( Vector(0,0,0), false )
+	ent.BecomeRagdoll( <0,0,0>, false )
 }
 
 void function GlobalAnimEvent_SetVelocity( entity actor )
 {
-	if ( !actor.IsPlayer() )
+	if ( !actor.IsPlayer() && !actor.IsNPC() )
 		return
-	local record = null
 
-	if ( ( "recordedOrigin" in actor.s ) && actor.s.recordedOrigin.len() )
-		record = actor.s.recordedOrigin[ actor.s.recordedOrigin.len() - 1 ]
+	if ( !( "recordedOrigin" in actor.s ) || actor.s.recordedOrigin.len() == 0 )
+	{
+		Warning(  "Anim had AE_SV_VSCRIPT_CALLBACK: SetVelocity, but no AE_SV_VSCRIPT_CALLBACK:RecordOrigin" )
+		return
+	}
 
-	Assert( record, "anim had AE_SV_VSCRIPT_CALLBACK: SetVelocity, but no AE_SV_VSCRIPT_CALLBACK:RecordOrigin" )
+	// Assert( ( "recordedOrigin" in actor.s ) && actor.s.recordedOrigin.len(), "anim " + actor.GetCurrentSequenceName() + " had AE_SV_VSCRIPT_CALLBACK: SetVelocity, but no AE_SV_VSCRIPT_CALLBACK:RecordOrigin" )
 
-	local dir 		= Normalize( actor.GetOrigin() - record.origin )
-	local distance 		= Distance( actor.GetOrigin(), record.origin )
-	local time			= Time() - record.time
+	table record = expect table( actor.s.recordedOrigin[ actor.s.recordedOrigin.len() - 1 ] )
+
+	vector dir 			= Normalize( actor.GetOrigin() - record.origin )
+	float distance 		= Distance( actor.GetOrigin(), record.origin )
+	float time			= Time() - expect float( record.time )
 	if ( time <= 0 )
 		time = 0.001 // timescale bug?
-	local speed 		= distance / time
+	float speed 		= distance / time
 
 	actor.SetVelocity( dir * speed )
-}
-
-void function GlobalAnimEvent_EnablePlanting( entity guy )
-{
-	if ( guy.IsNPC() || guy.IsPlayer() )
-		guy.Anim_EnablePlanting()
-	else
-		printt( "Warning: Tried to enable planting on " + guy )
 }
 
 void function GlobalAnimEvent_Kill( entity guy )
@@ -291,7 +170,7 @@ void function GlobalAnimEvent_Kill( entity guy )
 	{
 		Signal( guy, "AnimEventKill" )
 		guy.TakeDamage( guy.GetMaxHealth() + 1, null, null, { damageSourceId=damagedef_suicide } )
-		guy.BecomeRagdoll( Vector( 0, 0, 0 ), false )
+		guy.BecomeRagdoll( <0,0,0>, false )
 	}
 }
 
@@ -310,21 +189,9 @@ void function GlobalAnimEvent_TitanGib( entity guy )
 	{
 		PlayTitanDeathFxUp( guy )
 
-		local entKVs = guy.CreateTableFromModelKeyValues()
-		local hitData = entKVs["hit_data"]
-
-		foreach ( bodyGroupName, bodyGroupData in hitData )
-		{
-			if ( !("blank" in bodyGroupData) )
-				continue
-
-			local bodyGroupIndex = guy.FindBodyGroup( bodyGroupName )
-			local stateCount = guy.GetBodyGroupModelCount( bodyGroupIndex )
-			guy.SetBodygroup( bodyGroupIndex, stateCount - 1 )
-		}
+		SetTitanDamageBodygroupsToBlank( guy )
 	}
 }
-
 
 void function GlobalAnimEvent_EnableAimAssist( entity guy )
 {
@@ -460,19 +327,6 @@ void function GlobalAnimEvent_BodyFallProwler( entity guy )
 	}
 }
 
-void function GlobalAnimEvent_PutProwlerInSafeSpot( entity guy )
-{
-	if ( IsValid( guy ) && guy.GetCurrentSequenceName() == "animseq/creatures/prowler/ai_prowler_core/pr_bloodhoundTT_hatch_spawn.rseq" )
-	{
-		guy.Anim_Stop()
-		PutEntityInSafeSpot( guy, null, null, guy.GetOrigin() + <0,0,128>, guy.GetOrigin() )
-		
-		#if SCRIPT_ANIM_EVENT_DEBUG
-			printt( "AnimEvent: GlobalAnimEvent_PutProwlerInSafeSpot")
-		#endif
-	}
-}
-
 void function GlobalAnimEvent_SetBodyGroup( entity model, array<string> tokens )
 {
 	// ex: "set_body_group:l_hand_usb:0"	// the 0 at the end designates the stat index, 0 in this case meens not show, but in some cases it might mean show.
@@ -497,7 +351,8 @@ void function GlobalAnimEvent_SetWeaponSkin01( entity weapon )
 	weapon.SetWeaponSkin( 1 )
 }
 
-function GetAnim( guy, animation )
+
+string function GetAnim( entity guy, string animation )
 {
 	if ( !( "anims" in guy.s ) )
 		return animation
@@ -505,10 +360,10 @@ function GetAnim( guy, animation )
 	if ( !( animation in guy.s.anims ) )
 		return animation
 
-	return guy.s.anims[ animation ]
+	return expect string( guy.s.anims[ animation ] )
 }
 
-function HasAnim( guy, animation )
+bool function HasAnim( entity guy, string animation )
 {
 	if ( !( "anims" in guy.s ) )
 		return false
@@ -516,7 +371,7 @@ function HasAnim( guy, animation )
 	return animation in guy.s.anims
 }
 
-function SetAnim( guy, name, animation )
+void function SetAnim( entity guy, string name, string animation )
 {
 	if ( !( "anims" in guy.s ) )
 		guy.s.anims <- {}
@@ -526,24 +381,23 @@ function SetAnim( guy, name, animation )
 	guy.s.anims[ name ] <- animation
 }
 
-AnimRefPoint function GetAnimStartInfo( entity ent, string animAlias, animref )
+AnimRefPoint function GetAnimStartInfo( entity ent, string animAlias, entity animref )
 {
-	string animData = expect string( GetAnim( ent, animAlias ) )
+	string animData = GetAnim( ent, animAlias )
 	AnimRefPoint animStartInfo = ent.Anim_GetStartForRefPoint( animData, animref.GetOrigin(), animref.GetAngles() )
 
 	return animStartInfo
 }
 
-
-function GetRefPosition( reference )
+table function GetRefPosition( entity reference )
 {
 	Assert( reference.HasKey( "model" ) && reference.GetValueForModelKey() != $"", "Tried to play an anim relative to " + reference + " but it has no model/ref attachment." )
 
-	local position = {}
-	local attach_id
+	table position = {}
+	int attach_id
 	attach_id = reference.LookupAttachment( "REF" )
 
-	if ( attach_id )
+	if ( attach_id != 0 )
 	{
 		position.origin <- reference.GetAttachmentOrigin( attach_id )
 		position.angles <- reference.GetAttachmentAngles( attach_id )
@@ -553,27 +407,20 @@ function GetRefPosition( reference )
 }
 
 // play the anim
-function __PlayAnim( guy, animation_name, reference = null, optionalTag = null, blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME )
+void function __PlayAnim( entity guy, string animation_name, reference = null, optionalTag = null, float blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME )
 {
-	expect entity( guy )
-
 	Assert( IsValid_ThisFrame( guy ), "Invalid ent sent to PlayAnim " + animation_name )
-	local animation = GetAnim( guy, animation_name )
-
-	if( type(animation) == "asset" )
-		animation = string(animation)
+	string animation = GetAnim( guy, animation_name )
 
 	guy.SetNextThinkNow()
 
-	#if !DEVELOPER
-	if ( guy.IsNPC() && !guy.IsInterruptable() )
+	if ( guy.IsNPC() && !guy.IsInterruptableForScriptedAnim() )
 	{
 		// better than nothing failsafe
 		guy.Signal( "OnAnimationInterrupted" )
 		guy.Signal( "OnAnimationDone" )
 		return
 	}
-	#endif
 
 	if ( guy.IsNPC() )
 	{
@@ -585,9 +432,9 @@ function __PlayAnim( guy, animation_name, reference = null, optionalTag = null, 
 	{
 		if ( reference == guy )
 		{
-			local position = GetRefPosition( reference )
-			local origin = position.origin
-			local angles = position.angles
+			table position = GetRefPosition( expect entity( reference ) )
+			vector origin = expect vector( position.origin )
+			vector angles = expect vector( position.angles )
 
 			if ( guy.IsNPC() )
 				guy.Anim_ScriptedPlayWithRefPoint( animation, origin, angles, blendTime )
@@ -610,6 +457,7 @@ function __PlayAnim( guy, animation_name, reference = null, optionalTag = null, 
 			}
 
 			Assert( typeof( optionalTag ) == "string", "Passed invalid optional tag " + optionalTag )
+			expect entity( reference )
 
 			if ( guy.GetParent() == reference )
 			{
@@ -617,12 +465,15 @@ function __PlayAnim( guy, animation_name, reference = null, optionalTag = null, 
 					guy.Anim_ScriptedPlay( animation )
 				else
 					guy.Anim_Play( animation )
+
+				if ( IsValid( guy.GetParent() ) )	// Defensive fix for R5DEV-163154
+					guy.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
 			}
 			else
 			{
-				local attachIndex = reference.LookupAttachment( optionalTag )
-				local origin = reference.GetAttachmentOrigin( attachIndex )
-				local angles = reference.GetAttachmentAngles( attachIndex )
+				int attachIndex = reference.LookupAttachment( optionalTag )
+				vector origin = reference.GetAttachmentOrigin( attachIndex )
+				vector angles = reference.GetAttachmentAngles( attachIndex )
 				if ( guy.IsNPC() )
 				{
 					//local origin = reference.GetOrigin()
@@ -631,7 +482,7 @@ function __PlayAnim( guy, animation_name, reference = null, optionalTag = null, 
 				}
 				else
 				{
-					//local animStartPos = guy.Anim_GetStartForRefEntity_Old( animation, reference, optionalTag )
+					//table animStartPos = guy.Anim_GetStartForRefEntity_Old( animation, reference, optionalTag )
 					//local origin = animStartPos.origin
 					//local angles = animStartPos.angles
 					guy.Anim_PlayWithRefPoint( animation, origin, angles, blendTime )
@@ -651,31 +502,31 @@ function __PlayAnim( guy, animation_name, reference = null, optionalTag = null, 
 			guy.Anim_ScriptedPlay( animation )
 		else
 			guy.Anim_Play( animation )
-
+		guy.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
 		return
 	}
 
     if ( !reference )
 	    reference = guy
 
-    local origin = reference.GetOrigin()
-    local angles = reference.GetAngles()
-	try{
-    if ( guy.IsNPC() )
-	    guy.Anim_ScriptedPlayWithRefPoint( animation, origin, angles, blendTime )
-    else
-	    guy.Anim_PlayWithRefPoint( animation, origin, angles, blendTime )
-	}
-	catch(e420){}
+	expect entity( reference )
+    vector origin = reference.GetOrigin()
+	vector angles = reference.GetAngles()
 
+    if ( guy.IsNPC() )
+		guy.Anim_ScriptedPlayWithRefPoint( animation, origin, angles, blendTime )
+    else if ( guy.GetParent() == null )
+		guy.Anim_PlayWithRefPoint( animation, origin, angles, blendTime )
+	else
+		guy.Anim_Play( animation )
 }
 
-function TeleportToAnimStart( _guy, animation_name, reference, optionalTag = null, smooth = false )
+void function TeleportToAnimStart( entity _guy, string animation_name, reference, optionalTag = null, smooth = false )
 {
-	entity guy = expect entity( _guy )
+	entity guy = _guy
 
 	Assert( reference, "NO reference" )
-	string animation = expect string( GetAnim( guy, animation_name ) )
+	string animation = GetAnim( guy, animation_name )
 	AnimRefPoint animStartPos
 
 	if ( optionalTag )
@@ -692,11 +543,12 @@ function TeleportToAnimStart( _guy, animation_name, reference, optionalTag = nul
 	}
 	else
 	{
+		expect entity( reference )
 		//printt( "Reference is " + reference )
 		//printt( "guy is " + guy )
 		//printt( "animation is " + animation )
-		local origin = reference.GetOrigin()
-		local angles = reference.GetAngles()
+		vector origin = reference.GetOrigin()
+		vector angles = reference.GetAngles()
 		animStartPos = guy.Anim_GetStartForRefPoint( animation, origin, angles )
 	}
 	//Assert( animStartPos, "No animStartPos for " + animation + " on " + guy )
@@ -725,13 +577,13 @@ function TeleportToAnimStart( _guy, animation_name, reference, optionalTag = nul
 }
 
 // wait till arrive at goal and animation is done
-function RunToAndPlayAnimAndWait( entity guy, string animation_name, reference, bool doArrival = false, optionalTag = null )
+void function RunToAndPlayAnimAndWait( entity guy, string animation_name, reference, bool doArrival = false, optionalTag = null )
 {
 	bool savedEnableFriendlyFollower = guy.ai.enableFriendlyFollower
 	guy.ai.enableFriendlyFollower = false
 
-	local allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
-	local allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+	bool allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
+	//bool allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
 	guy.DisableNPCFlag( NPC_ALLOW_FLEE | NPC_ALLOW_HAND_SIGNALS )
 
 	__RunToAndPlayAnim( guy, animation_name, reference, doArrival, optionalTag )
@@ -744,13 +596,13 @@ function RunToAndPlayAnimAndWait( entity guy, string animation_name, reference, 
 }
 
 // wait till arrive at goal and start animation but don't wait until animation is done
-function RunToAndPlayAnim( entity guy, string animation_name, reference, bool doArrival = false, optionalTag = null )
+void function RunToAndPlayAnim( entity guy, string animation_name, reference, bool doArrival = false, optionalTag = null )
 {
 	bool savedEnableFriendlyFollower = guy.ai.enableFriendlyFollower
 	guy.ai.enableFriendlyFollower = false
 
-	local allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
-	local allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+	bool allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
+	//bool allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
 	guy.DisableNPCFlag( NPC_ALLOW_FLEE | NPC_ALLOW_HAND_SIGNALS )
 
 	__RunToAndPlayAnim( guy, animation_name, reference, doArrival, optionalTag )
@@ -761,10 +613,10 @@ function RunToAndPlayAnim( entity guy, string animation_name, reference, bool do
 	guy.ai.enableFriendlyFollower = savedEnableFriendlyFollower
 }
 
-function RunToAndPlayAnimGravity( entity guy, string animation_name, reference, bool doArrival = false, optionalTag = null )
+void function RunToAndPlayAnimGravity( entity guy, string animation_name, reference, bool doArrival = false, optionalTag = null )
 {
-	local allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
-	local allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+	//bool allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
+	bool allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
 	guy.DisableNPCFlag( NPC_ALLOW_FLEE | NPC_ALLOW_HAND_SIGNALS )
 
 	float arrivalTolerance = guy.AssaultGetArrivalTolerance()
@@ -779,14 +631,13 @@ function RunToAndPlayAnimGravity( entity guy, string animation_name, reference, 
 	guy.SetNPCFlag( NPC_ALLOW_HAND_SIGNALS, allowHandSignal )
 }
 
-
-function RunToAndPlayAnimGravityForced( entity guy, string animation_name, reference, bool doArrival = false, optionalTag = null )
+void function RunToAndPlayAnimGravityForced( entity guy, string animation_name, reference, bool doArrival = false, optionalTag = null )
 {
 	bool savedEnableFriendlyFollower = guy.ai.enableFriendlyFollower
 	guy.ai.enableFriendlyFollower = false
 
-	local allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
-	local allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+	//bool allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
+	bool allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
 	guy.DisableNPCFlag( NPC_ALLOW_FLEE | NPC_ALLOW_HAND_SIGNALS )
 
 	float arrivalTolerance = guy.AssaultGetArrivalTolerance()
@@ -802,26 +653,27 @@ function RunToAndPlayAnimGravityForced( entity guy, string animation_name, refer
 	guy.ai.enableFriendlyFollower = savedEnableFriendlyFollower
 }
 
-function __RunToAndPlayAnim( entity guy, string animation_name, reference, bool doArrival, optionalTag )
+void function __RunToAndPlayAnim( entity guy, string animation_name, reference, bool doArrival, optionalTag )
 {
 	Assert( IsAlive( guy ) )
 	guy.Anim_Stop() // in case we were doing an anim already
 	guy.EndSignal( "OnDeath" )
 
-	string animation = expect string( GetAnim( guy, animation_name ) )
-	local origin, angles
+	string animation = GetAnim( guy, animation_name )
+	vector origin, angles
 
 	if ( optionalTag )
 	{
 		if ( typeof( reference ) == "vector" )
 		{
 			Assert( typeof( optionalTag ) == "vector", "Expected angles but got " + optionalTag )
-			origin = reference
-			angles = optionalTag
+			origin = expect vector( reference )
+			angles = expect vector( optionalTag )
 		}
 		else
 		{
-			local attach_id = reference.LookupAttachment( optionalTag )
+			expect entity( reference )
+			int attach_id = reference.LookupAttachment( optionalTag )
 			origin = reference.GetAttachmentOrigin( attach_id )
 			angles = reference.GetAttachmentAngles( attach_id )
 		}
@@ -829,6 +681,7 @@ function __RunToAndPlayAnim( entity guy, string animation_name, reference, bool 
 	else
 	{
 		Assert( typeof( reference ) != "vector", "Expected an entity, but got an origin with no angles" )
+		expect entity( reference )
 		origin = reference.GetOrigin()
 		angles = reference.GetAngles()
 	}
@@ -837,21 +690,19 @@ function __RunToAndPlayAnim( entity guy, string animation_name, reference, bool 
 }
 
 // run to the place to start the anim, then play it
-function RunToAnimStart_Deprecated( guy, animation_name, reference = null, optionalTag = null )
+void function RunToAnimStart_Deprecated( entity guy, string animation_name, reference = null, optionalTag = null )
 {
-	expect entity( guy )
-
 	Assert( IsAlive( guy ) )
 	guy.Anim_Stop() // in case we were doing an anim already
 	guy.EndSignal( "OnDeath" )
 
-	local allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
-	local allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+	bool allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
+	bool allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
 
 	guy.DisableNPCFlag( NPC_ALLOW_FLEE | NPC_ALLOW_HAND_SIGNALS )
 
-	local animation = GetAnim( guy, animation_name )
-	local animStartPos
+	string animation = GetAnim( guy, animation_name )
+	table animStartPos
 
 	if ( optionalTag )
 	{
@@ -867,9 +718,11 @@ function RunToAnimStart_Deprecated( guy, animation_name, reference = null, optio
 	}
 	else
 	{
-			local origin = reference.GetOrigin()
-			local angles = reference.GetAngles()
-			animStartPos = guy.Anim_GetStartForRefPoint_Old( animation, origin, angles )
+		expect entity( reference )
+
+		vector origin = reference.GetOrigin()
+		vector angles = reference.GetAngles()
+		animStartPos = guy.Anim_GetStartForRefPoint_Old( animation, origin, angles )
 	}
 
 	guy.AssaultPoint( animStartPos.origin )
@@ -878,14 +731,14 @@ function RunToAnimStart_Deprecated( guy, animation_name, reference = null, optio
 	guy.SetNPCFlag( NPC_ALLOW_FLEE, allowFlee )
 	guy.SetNPCFlag( NPC_ALLOW_HAND_SIGNALS, allowHandSignal )
 
-	local dist = Distance( animStartPos.origin, guy.GetOrigin() )
+	float dist = Distance( animStartPos.origin, guy.GetOrigin() )
 	if ( dist > 8 )
 	{
-		//DebugDrawLine( animStartPos.origin, guy.GetOrigin(), 255, 150, 0, true, 60 )
+		//DebugDrawLine( animStartPos.origin, guy.GetOrigin(), <255, 150, 0>, true, 60 )
 		printt( guy, " was ", dist, " units away from where he wanted to end his scripted sequence" )
 	}
-//	printt( guy + " finished assault at dist ", Distance( animStartPos.origin, guy.GetOrigin() ) )
-//	Assert( Distance( animStartPos.origin, guy.GetOrigin() ) < 32, guy + " finished assault but was " + ( Distance( animStartPos.origin, guy.GetOrigin() ) ) + " away from where he should have ended up." )
+	//printt( guy + " finished assault at dist ", Distance( animStartPos.origin, guy.GetOrigin() ) )
+	//Assert( Distance( animStartPos.origin, guy.GetOrigin() ) < 32, guy + " finished assault but was " + ( Distance( animStartPos.origin, guy.GetOrigin() ) ) + " away from where he should have ended up." )
 }
 
 // only use this if you are OK with a frame pause before the start of the animation
@@ -895,9 +748,9 @@ void function RunToAnimStartPos( entity guy, string animation_name, reference = 
 	guy.Anim_Stop() // in case we were doing an anim already
 	guy.EndSignal( "OnDeath" )
 
-	local allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
-	local allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
-	local allowArrivals = guy.GetNPCMoveFlag( NPCMF_DISABLE_ARRIVALS )
+	bool allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
+	bool allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+	bool allowArrivals = guy.GetNPCMoveFlag( NPCMF_DISABLE_ARRIVALS )
 
 	if ( !doArrival )
 	{
@@ -907,8 +760,8 @@ void function RunToAnimStartPos( entity guy, string animation_name, reference = 
 
 	guy.DisableNPCFlag( NPC_ALLOW_FLEE | NPC_ALLOW_HAND_SIGNALS )
 
-	local animation = GetAnim( guy, animation_name )
-	local animStartPos
+	string animation = GetAnim( guy, animation_name )
+	table animStartPos
 
 	if ( optionalTag )
 	{
@@ -927,8 +780,9 @@ void function RunToAnimStartPos( entity guy, string animation_name, reference = 
 	}
 	else
 	{
-		local origin = reference.GetOrigin()
-		local angles = reference.GetAngles()
+		expect entity( reference )
+		vector origin = reference.GetOrigin()
+		vector angles = reference.GetAngles()
 		animStartPos = guy.Anim_GetStartForRefPoint_Old( animation, origin, angles )
 	}
 
@@ -943,7 +797,7 @@ void function RunToAnimStartPos( entity guy, string animation_name, reference = 
 
 	guy.AssaultPoint( animStartPos.origin )
 
-	//DebugDrawLine( guy.GetOrigin(), animStartPos.origin, 255, 0, 0, true, 20.0 )
+	//DebugDrawLine( guy.GetOrigin(), animStartPos.origin, COLOR_RED, true, 20.0 )
 	//DebugDrawAngles( animStartPos.origin, animStartPos.angles )
 	//thread DebugAssaultEnt( guy, assaultEnt )
 	WaitSignal( guy, "OnFinishedAssault" )
@@ -964,15 +818,15 @@ void function RunToAnimStartPos( entity guy, string animation_name, reference = 
 
 ///////////////////////////////////////////////////////////////////
 // Deprecated, use RunToAndPlayAnim, otherwise there will be a gap between arriving at position and playing the animation
-function RunToAnimStartForced_Deprecated( entity guy, string animation_name, reference = null, optionalTag = null, bool disableArrival = true, disableAssaultAngles = false )
+void function RunToAnimStartForced_Deprecated( entity guy, string animation_name, reference = null, optionalTag = null, bool disableArrival = true, bool disableAssaultAngles = false )
 {
 	Assert( IsAlive( guy ) )
 	guy.Anim_Stop() // in case we were doing an anim already
 	guy.EndSignal( "OnDeath" )
 
-	local allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
-	local allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
-	local allowArrivals = guy.GetNPCMoveFlag( NPCMF_DISABLE_ARRIVALS )
+	bool allowFlee = guy.GetNPCFlag( NPC_ALLOW_FLEE )
+	bool allowHandSignal = guy.GetNPCFlag( NPC_ALLOW_HAND_SIGNALS )
+	bool allowArrivals = guy.GetNPCMoveFlag( NPCMF_DISABLE_ARRIVALS )
 
 	if ( disableArrival )
 	{
@@ -982,8 +836,8 @@ function RunToAnimStartForced_Deprecated( entity guy, string animation_name, ref
 
 	guy.DisableNPCFlag( NPC_ALLOW_FLEE | NPC_ALLOW_HAND_SIGNALS )
 
-	local animation = GetAnim( guy, animation_name )
-	local animStartPos
+	string animation = GetAnim( guy, animation_name )
+	table animStartPos
 
 	if ( optionalTag )
 	{
@@ -1002,8 +856,9 @@ function RunToAnimStartForced_Deprecated( entity guy, string animation_name, ref
 	}
 	else
 	{
-		local origin = reference.GetOrigin()
-		local angles = reference.GetAngles()
+		expect entity( reference )
+		vector origin = reference.GetOrigin()
+		vector angles = reference.GetAngles()
 		animStartPos = guy.Anim_GetStartForRefPoint_Old( animation, origin, angles )
 	}
 
@@ -1020,7 +875,7 @@ function RunToAnimStartForced_Deprecated( entity guy, string animation_name, ref
 	if ( !disableAssaultAngles )
 		guy.AssaultSetAngles( animStartPos.angles, true )
 
-	//DebugDrawLine( guy.GetOrigin(), animStartPos.origin, 255, 0, 0, true, 20.0 )
+	//DebugDrawLine( guy.GetOrigin(), animStartPos.origin, COLOR_RED, true, 20.0 )
 	//DebugDrawAngles( animStartPos.origin, animStartPos.angles )
 	//thread DebugAssaultEnt( guy, assaultEnt )
 	WaitSignal( guy, "OnFinishedAssault" )
@@ -1055,609 +910,26 @@ void function ShowEnt( entity viewmodel )
 }
 
 // anim teleport
-function PlayAnimTeleport( guy, animation_name, reference = null, optionalTag = null, initialTime = -1.0, smooth = false )
+void function PlayAnimTeleport( entity guy, string animation_name, reference = null, optionalTag = null, float initialTime = -1.0, bool smooth = false )
 {
-	if ( type( guy ) == "array" || type( guy ) == "table" )
-	{
-		Assert( reference, "NO reference" )
-		local firstEnt = null
-		foreach ( ent in guy )
-		{
-			if ( !firstEnt )
-				firstEnt = ent
+	if ( !reference )
+		reference = guy
 
-			TeleportToAnimStart( ent, animation_name, reference, optionalTag, smooth )
-			__PlayAnim( ent, animation_name, reference, optionalTag, 0 )
-			if ( initialTime > 0.0 )
-				guy.Anim_SetInitialTime( initialTime )
-		}
-
-		WaittillAnimDone( expect entity( firstEnt ) )
-	}
-	else
-	{
-		if ( !reference )
-			reference = guy
-
-		TeleportToAnimStart( guy, animation_name, reference, optionalTag, smooth )
-		__PlayAnim( guy, animation_name, reference, optionalTag, 0 )
-		if ( initialTime > 0.0 )
-			guy.Anim_SetInitialTime( initialTime )
-		WaittillAnimDone( expect entity( guy ) )
-	}
+	TeleportToAnimStart( guy, animation_name, reference, optionalTag, smooth )
+	__PlayAnim( guy, animation_name, reference, optionalTag, 0 )
+	if ( initialTime > 0 )
+		guy.Anim_SetInitialTime( initialTime )
+	WaittillAnimDone( guy )
 }
 
 // play the anim
-function PlayAnim( guy, animation_name, reference = null, optionalTag = null, blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME, initialTime = -1.0 )
+void function PlayAnim( entity guy, string animation_name, reference = null, optionalTag = null, float blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME, float initialTime = -1.0 )
 {
-	if ( type( guy ) == "array" )
-	{
-		foreach ( ent in guy )
-		{
-			__PlayAnim( ent, animation_name, reference, optionalTag, blendTime )
-			if ( initialTime > 0.0 )
-				guy.Anim_SetInitialTime( initialTime )
-		}
-
-		WaittillAnimDone( expect entity( guy[0] ) )
-	}
-	else
-	{
-		__PlayAnim( guy, animation_name, reference, optionalTag, blendTime )
-		if ( initialTime > 0.0 )
-			guy.Anim_SetInitialTime( initialTime )
-		WaittillAnimDone( expect entity( guy ) )
-	}
-}
-
-const string KNIFE_TARGETNAME = "AnimEvent_attach_knife"
-void function GlobalAnimEvent_attach_knife( entity ent )
-{
-	entity knife = CreatePropDynamic( DATA_KNIFE_MODEL )
-	knife.kv.targetname = KNIFE_TARGETNAME
-	knife.SetParent( ent, "KNIFE", false, 0.0 )
-
-	OnThreadEnd(
-	function() : ( knife )
-		{
-			if ( IsValid( knife ) )
-			{
-				knife.Destroy()
-			}
-
-		}
-	)
-
-	WaittillAnimDone( ent )
-}
-
-void function GlobalAnimEvent_detach_knife( entity ent )
-{
-	var childEnt =  ent.FirstMoveChild()
-
-	while ( childEnt != null )
-	{
-		if ( childEnt.kv.targetname == KNIFE_TARGETNAME )
-		{
-			childEnt.Destroy()
-			return
-		}
-
-		childEnt = expect entity ( childEnt.NextMovePeer() )
-	}
-}
-
-void function GlobalAnimEvent_MarkForDeath( entity target )
-{
-	/*if ( target.IsNPC() )
-	{
-		//printt("Killing marked for death npc " + target )
-		//Just kill off NPC now, otherwise it will play pain animations on death
-		CodeCallback_OnMeleeKilled( target )
-		return
-	}
-
-	//printt("marking player " + target + " for death")
-	target.e.markedForExecutionDeath = true //This will kill off the player even if the execution animation is interruped from this point forward
-
-	target.EndSignal( "OnDeath" )
-
-	OnThreadEnd(
-	function() : ( target )
-		{
-			target.e.markedForExecutionDeath = false
-		}
-	)
-
-	WaitForever()*/
-
-}
-
-void function GlobalAnimEvent_headstab_death( entity ent )
-{
-	#if SERVER
-	int tagIdx = ent.LookupAttachment( "HEADSHOT" )
-
-	//if ( TryHeadshotDeathFX( ent ) )
-		//return
-
-	if ( ent.IsMechanical() )
-		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( MECHANICAL_STAB_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
-	else
-		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( HUMAN_STAB_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
-	#endif
-}
-
-// play the anim
-function PlayAnimNoWait( guy, animation_name, reference = null, optionalTag = null, blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME, initialTime = -1.0)
-{
-	if ( type( guy ) == "array" )
-	{
-		foreach ( ent in guy )
-		{
-			__PlayAnim( ent, animation_name, reference, optionalTag, blendTime )
-			if ( initialTime > 0.0 )
-				guy.Anim_SetInitialTime( initialTime )
-		}
-
-		//WaittillAnimDone( expect entity( guy[0] ) )
-	}
-	else
-	{
-		__PlayAnim( guy, animation_name, reference, optionalTag, blendTime )
-		if ( initialTime > 0.0 )
-			guy.Anim_SetInitialTime( initialTime )
-	}
-}
-
-const string PISTOL_TARGETNAME = "AnimEvent_attach_pistol"
-void function GlobalAnimEvent_attach_p2011( entity ent )
-{
-	AnimEvent_attach_pistol_common( ent, STEAL_PISTOL_MODEL, "w_p2011_mp_execution_gun_steal", StealP2011MuzzleFlash )
-}
-
-void function AnimEvent_attach_pistol_common( entity ent, asset pistolModel, string animation, void functionref( entity ) muzzleFlashCallback = null )
-{
-	ent.EndSignal( "OnDeath" )
-	entity pistol = CreatePropDynamic( pistolModel )
-
-	OnThreadEnd(
-	function() : ( pistol )
-		{
-			if ( IsValid( pistol ) )
-				pistol.Destroy()
-		}
-	)
-	pistol.kv.targetname = PISTOL_TARGETNAME
-	pistol.SetParent( ent, "KNIFE", false, 0.0 )
-
-	if ( muzzleFlashCallback != null )
-		AddAnimEvent( pistol, "muzzle_flash", muzzleFlashCallback )
-
-	float duration = pistol.GetSequenceDuration( animation )
-	pistol.Anim_Play( animation )
-
-	wait ( duration - 0.15 )
-}
-
-void function StealP2011MuzzleFlash( entity pistol )
-{
-	string attachName
-	asset effectName
-	{
-		attachName = "muzzle_flash"
-		effectName = $"wpn_muzzleflash_pistol"
-	}
-
-	int muzzleTagIdx = pistol.LookupAttachment( attachName )
-
-	StartParticleEffectOnEntity( pistol, GetParticleSystemIndex( effectName ), FX_PATTACH_POINT_FOLLOW, muzzleTagIdx )
-
-	EmitSoundOnEntity( pistol, "Pilot_Gunshot_Execution_StealToUnload_3P" ) // sound above cannot play because it's an asset instead of a string
-}
-
-void function GlobalAnimEvent_detach_pistol( entity ent )
-{
-	entity childEnt = ent.FirstMoveChild()
-
-	while ( childEnt != null )
-	{
-		if ( childEnt.kv.targetname == PISTOL_TARGETNAME )
-		{
-			childEnt.Destroy()
-			return
-		}
-
-		childEnt = childEnt.NextMovePeer()
-	}
-}
-
-void function GlobalAnimEvent_attach_pistol( entity ent )
-{
-	AnimEvent_attach_pistol_common( ent, WINGMAN_MODEL, "wingman_execution_awall_anim", HoloPilot_Execution_MuzzleFlash )
-}
-
-void function GlobalAnimEvent_turnoff_executionDOF( entity ent )
-{
-	if ( ent.IsPlayer() )
-		RemoveCinematicFlag( ent, CE_FLAG_EXECUTION ) //This flag is added in PlayerTriesSyncedMelee(). Cloak interacts badly with DOF (adding this flag turns DOF effect on), so for cloak execution only we remove the DOF.
-}
-
-void function GlobalAnimEvent_spawn_awall( entity attacker )
-{
-	entity awall = CreatePropDynamic( AWALL_MODEL )
-	attacker.EndSignal( "OnDeath" )
-
-
-	OnThreadEnd(
-	function() : ( awall )
-		{
-			awall.Destroy()
-
-		}
-	)
-
-	AddAnimEvent( awall, "create_awall", AnimEvent_CreateAwall )
-
-	awall.SetParent( attacker, "ref", false, 0.0 )
-	thread PlayAnim( awall, "awall_execution", attacker, "ref", 0.0 )
-	WaittillAnimDone( attacker )
-}
-
-void function AnimEvent_CreateAwall( entity awall_base )
-{
-	vector reverseAngles = AnglesCompose( awall_base.GetAngles(), <0,180,0> )
-	entity ampedWall = CreatePropDynamic( $"mdl/fx/pilot_shield_wall.rmdl", awall_base.GetOrigin(), reverseAngles, SOLID_VPHYSICS )
-	ampedWall.kv.contents = (CONTENTS_WINDOW)
-	ampedWall.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS_AND_PHYSICS
-	ampedWall.SetPassThroughFlags( PTF_ADDS_MODS | PTF_NO_DMG_ON_PASS_THROUGH )
-	ampedWall.SetBlocksRadiusDamage( true )
-	ampedWall.SetTakeDamageType( DAMAGE_NO ) //Can't kill this AWall!
-	ampedWall.SetDamageNotifications( true )
-	ampedWall.SetMaxHealth( 1000 )
-	ampedWall.SetHealth( 1000 )
-	awall_base.EndSignal( "OnDestroy" )
-	awall_base.EndSignal( "DeleteAWall" ) //Signaled from the animation
-	ampedWall.Hide()
-
-	OnThreadEnd(
-	function() : ( ampedWall )
-		{
-			if ( IsValid( ampedWall ) )
-				ampedWall.Destroy()
-		}
-	)
-
-	SetTeam( ampedWall, TEAM_BOTH )
-
-	ampedWall.SetPassThroughThickness( 0 )
-	ampedWall.SetPassThroughDirection( -0.55 )
-	float timeoutFailSafe = 5.0
-	StatusEffect_AddTimed( ampedWall, eStatusEffect.pass_through_amps_weapon, 1.0, timeoutFailSafe, 0.0 )
-
-	wait timeoutFailSafe
-
-}
-
-void function AnimEvent_awall_victim_start_sfx( entity victim )
-{
-	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot" )
-
-	if ( victim.IsMechanical() )
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot" )
-	else
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Pilot" )
-}
-
-void function AnimEvent_awall_victim_shield_sfx( entity victim )
-{
-	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Shield" )
-
-	if ( victim.IsMechanical() )
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Shield" )
-	else
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Shield" )
-}
-
-void function AnimEvent_awall_victim_impact01_sfx( entity victim )
-{
-	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_01" )
-
-	if ( victim.IsMechanical() )
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_01" )
-	else
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Pilot_Impact_01" )
-}
-
-void function AnimEvent_awall_victim_impact02_sfx( entity victim )
-{
-	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_02" )
-
-	if ( victim.IsMechanical() )
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_02" )
-	else
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Pilot_Impact_02" )
-}
-
-void function AnimEvent_awall_victim_impact03_sfx( entity victim )
-{
-	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_03" )
-
-	if ( victim.IsMechanical() )
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Impact_03" )
-	else
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Pilot_Impact_03" )
-}
-
-void function AnimEvent_awall_victim_bodyfall_sfx( entity victim )
-{
-	//printt( "Pilot_Mvmt_Execution_Awall_Robopilot_Bodyfall" )
-
-	if ( victim.IsMechanical() )
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Robopilot_Bodyfall" )
-	else
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Awall_Bodyfall" )
-}
-
-void function AnimEvent_front_shot_high( entity ent )
-{
-	int tagIdx = ent.LookupAttachment( "CHESTFOCUS" )
-	if ( ent.IsMechanical() )
-		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( MECHANICAL_BLOOD_FX), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
-	else
-		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( HUMAN_BLOOD_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
-}
-
-void function HoloPilot_Execution_MuzzleFlash( entity pistol ) //Only real difference between this and p2011 version is the sound effect
-{
-	string attachName = "muzzle_flash"
-	asset effectName = $"wpn_muzzleflash_pistol"
-
-	int muzzleTagIdx = pistol.LookupAttachment( attachName )
-
-	StartParticleEffectOnEntity( pistol, GetParticleSystemIndex( effectName ), FX_PATTACH_POINT_FOLLOW, muzzleTagIdx )
-
-	EmitSoundOnEntity( pistol, "weapon_wingman_fire_3p" ) // sound above cannot play because it's an asset instead of a string
-}
-
-void function AnimEvent_Cloak_On( entity ent )
-{
-	EnableCloak( ent, 1.5, 0.35 ) //Make sure duration is longer than animation seqeunce length
-}
-
-void function AnimEvent_Cloak_Off( entity ent )
-{
-	DisableCloak( ent, 0.35 )
-}
-
-void function GrappleStabSound( entity ent )
-{
-	PlaySoundsForBodyType( ent, "Pilot_Mvmt_Execution_Grapple_Robot_Pt2_Stab", "Pilot_Mvmt_Execution_Grapple_Pt2_Stab" )
-}
-
-void function GrappleBodyfallSound( entity ent )
-{
-	PlaySoundsForBodyType( ent, "Pilot_Mvmt_Execution_Grapple_Robot_Pt3_Throwdown", "Pilot_Mvmt_Execution_Grapple_Pt3_Throwdown" )
-}
-
-void function GlobalAnimEvent_attach_wingman( entity ent )
-{
-	AnimEvent_attach_pistol_common( ent, WINGMAN_MODEL, "wingman_execution_holo_anim", HoloPilot_Execution_MuzzleFlash )
-}
-
-void function AnimEvent_spawn_decoy1( entity ent )
-{
-	entity decoy = ent.CreateAnimatedPlayerDecoy( "pt_mp_execution_attacker_hologram_01" )
-	SetupDecoy_Common( ent, decoy )
-	HoloPilot_Execution_DecoySetup( decoy )
-	thread HoloPilot_Execution_MonitorLifeTime( ent, decoy )
-
-}
-
-void function AnimEvent_spawn_decoy2( entity ent )
-{
-	entity decoy = ent.CreateAnimatedPlayerDecoy( "pt_mp_execution_attacker_hologram_02" )
-	SetupDecoy_Common( ent, decoy )
-	HoloPilot_Execution_DecoySetup( decoy )
-	thread HoloPilot_Execution_MonitorLifeTime( ent, decoy )
-}
-
-void function AnimEvent_spawn_decoy3( entity ent )
-{
-	entity decoy = ent.CreateAnimatedPlayerDecoy( "pt_mp_execution_attacker_hologram_03" )
-	SetupDecoy_Common( ent, decoy )
-	HoloPilot_Execution_DecoySetup( decoy )
-	thread HoloPilot_Execution_MonitorLifeTime( ent, decoy )
-}
-
-void function HoloPilot_Execution_DecoySetup( entity decoy )
-{
-	/*decoy.SetMaxHealth( 50 )
-	decoy.SetHealth( 50 )*/
-	SetObjectCanBeMeleed( decoy, false )
-	decoy.SetNameVisibleToOwner( false )
-	decoy.SetNameVisibleToFriendly( false )
-	decoy.SetNameVisibleToEnemy( false )
-	decoy.SetTimeout( DECOY_DURATION )
-	decoy.NotSolid()
-	AddAnimEvent( decoy, "decoy_dissolve", HoloPilot_Execution_DissolveDecoy ) //Doesn't seem to work for decoy entities?
-}
-
-void function AnimEvent_holopilot_headshot_sfx( entity victim )
-{
-	if ( victim.IsMechanical() )
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Holopilot_Pt7_HeadshotAndroid" )
-	else
-		EmitSoundOnEntity( victim, "Pilot_Mvmt_Execution_Holopilot_Pt7_HeadshotHuman" )
-}
-
-void function HoloPilot_Execution_MonitorLifeTime( entity attacker, entity decoy )
-{
-	attacker.EndSignal( "OnDeath" )
-	attacker.EndSignal( "OnDestroy" )
-	decoy.EndSignal( "OnDestroy" )
-
-	OnThreadEnd(
-	function() : ( decoy )
-		{
-			if( IsValid( decoy ) )
-				decoy.Decoy_Dissolve()
-
-		}
-	)
-
-	wait 0.1 //0.1s chosen because it looks fine
-
-}
-
-void function HoloPilot_Execution_DissolveDecoy( entity decoy )
-{
-	//PrintFunc()
-	if( IsValid( decoy ) )
-		decoy.Decoy_Dissolve()
-}
-
-void function AnimEvent_headshot_death( entity ent )
-{
-	#if SERVER
-	int tagIdx = ent.LookupAttachment( "HEADSHOT" )
-
-	if ( TryHeadshotDeathFX( ent ) )
-		return
-
-	if ( ent.IsMechanical() )
-		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( MECHANICAL_BLOOD_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
-	else
-		StartParticleEffectOnEntityWithPos( ent, GetParticleSystemIndex( HUMAN_BLOOD_FX ), FX_PATTACH_POINT_FOLLOW, tagIdx, <0, 0, 0>, < 0, 0, 0 > )
-	#endif
-}
-
-void function PhaseShiftExplodeSound( entity ent )
-{
-	PlaySoundsForBodyType( ent, "Pilot_Mvmt_Execution_Phaseshift_Pt4_Explo_Robo_3P", "Pilot_Mvmt_Execution_Phaseshift_Pt4_Explo_3P" )
-}
-
-void function PhaseGib( entity target )
-{
-	if ( !IsAlive( target ) )
-		return
-
-	target.ClearInvulnerable()
-
-	entity attacker
-	if ( IsValid( target.e.syncedMeleeAttacker ) )
-	{
-		attacker = target.e.syncedMeleeAttacker
-	}
-	else if ( IsValid( target.e.lastSyncedMeleeAttacker ) )
-	{
-		attacker = target.e.lastSyncedMeleeAttacker
-	}
-	else
-	{
-		attacker = null
-	}
-	target.Gib( target.GetOrigin() )
-	//int damageAmount = target.GetMaxHealth() + 1
-	//target.TakeDamage( damageAmount , attacker, attacker, { forceKill = true, damageType = DMG_MELEE_EXECUTION, damageSourceId = eDamageSourceId.human_execution, scriptType = DF_STUN_AI | DF_GIB } )
-}
-
-void function AnimEvent_attach_pulseBlade( entity ent ) //Copy of the function that attaches the data knife. Easier to do this than to pass in a model to load instead because of the animeevent limitation
-{
-	entity knife = CreatePropDynamic( PULSE_BLADE_MODEL )
-	knife.kv.targetname = KNIFE_TARGETNAME
-	knife.SetParent( ent, "KNIFE", false, 0.0 )
-
-	OnThreadEnd(
-	function() : ( knife )
-		{
-			if ( IsValid( knife ) )
-			{
-				knife.Destroy()
-			}
-
-		}
-	)
-
-	WaittillAnimDone( ent )
-}
-
-void function AnimEvent_detach_pulseBlade( entity ent ) //Literally a copy of the function that detaches the dataknife. Could just call the same function really, but I prefer having a pair of functions that are differently named for consistency
-{
-	var childEnt =  ent.FirstMoveChild()
-
-	while ( childEnt != null )
-	{
-		if ( childEnt.kv.targetname == KNIFE_TARGETNAME )
-		{
-			childEnt.Destroy()
-			return
-		}
-
-		childEnt = expect entity ( childEnt.NextMovePeer() )
-	}
-}
-
-void function AnimEvent_play_sonar_execution_sounds( entity ent )
-{
-	entity attacker = ent.e.syncedMeleeAttacker
-
-	if ( !IsValid( attacker ) )
-		return
-
-	if ( ent.IsMechanical() )
-	{
-		EmitSoundOnEntity( attacker, "Pilot_Mvmt_Execution_Pulse_Robopilot" )
-	}
-	else
-	{
-		EmitSoundOnEntity( attacker, "Pilot_Mvmt_Execution_Pulse_Pilot" )
-	}
-}
-
-void function AnimEvent_mriPulseEvent( entity ent )
-{
-	entity syncedMeleeAttacker = ent.e.syncedMeleeAttacker
-
-	Assert( IsValid( syncedMeleeAttacker ) )
-
-	int meleeAttackerTeam = syncedMeleeAttacker.GetTeam()
-
-	int headShotAttachmentIndex
-	float startTime = Time()
-
-	Highlight_ClearEnemyHighlight( ent )
-	headShotAttachmentIndex = ent.LookupAttachment( "HEADSHOT" )
-	Highlight_SetEnemyHighlight( ent, "enemy_sonar" )
-
-	ent.EndSignal( "OnDestroy" )
-
-	float lifeTimeOfEffect = Time() + 2.0
-
-	while( Time() < lifeTimeOfEffect )
-	{
-		/*
-		2 things here:
-		1. keep setting origin to make the effect look like it's coming from where the head is, as opposed to where the head was, even during the falling down part of the animation
-		2. Set time as the parameter manually because it looks like i.time in the highlight is not the same as Time(). It's server tick rate so not as smooth though :/
-		*/
-
-		// Highlight_SetSonarExecutionHighlightOrigin( ent, ent.GetAttachmentOrigin( headShotAttachmentIndex ), <startTime, Time(), Time() - startTime> ) // Flowstate custom, not in S22
-		WaitFrame()
-	}
-}
-
-
-void function PlaySoundsForBodyType( entity ent, string roboSound, string humanSound )
-{
-	if ( ent.IsMechanical() )
-	{
-		EmitSoundOnEntity( ent, roboSound )
-	}
-	else
-	{
-		EmitSoundOnEntity( ent, humanSound )
-	}
+	__PlayAnim( guy, animation_name, reference, optionalTag, blendTime )
+	if ( initialTime > 0 )
+		guy.Anim_SetInitialTime( initialTime )
+
+	WaittillAnimDone( guy )
 }
 
 // plays the anim without updating position (useful for parented entities when you don't want to animate relative to an attachment)
@@ -1668,14 +940,14 @@ void function PlayAnimOnly( entity guy, string animation_name )
 }
 
 // play the anim
-function PlayAnimRun( entity guy, string animation_name, reference, bool doArrival, optionalTag = null, blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME  )
+void function PlayAnimRun( entity guy, string animation_name, reference, bool doArrival, optionalTag = null )
 {
 	RunToAndPlayAnim( guy, animation_name, reference, doArrival, optionalTag )
 	WaitSignal( guy, "OnFinishedAssault" )
 	WaittillAnimDone( guy )
 }
 
-function PlayAnimRunGravity( entity guy, string animation_name, reference, bool doArrival, optionalTag = null, blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME )
+void function PlayAnimRunGravity( entity guy, string animation_name, reference, bool doArrival, optionalTag = null )
 {
 	RunToAndPlayAnim( guy, animation_name, reference, doArrival, optionalTag )
 	WaitSignal( guy, "OnFinishedAssault" )
@@ -1683,22 +955,27 @@ function PlayAnimRunGravity( entity guy, string animation_name, reference, bool 
 	WaittillAnimDone( guy )
 }
 
-function PlayAnimGravityClientSyncing( guy, animation_name, reference = null, optionalTag = null, blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME  )
+void function PlayAnimGravityClientSyncing( entity guy, string animation_name, reference = null, optionalTag = null, float blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME )
 {
 	__PlayAnim( guy, animation_name, reference, optionalTag, blendTime )
 	guy.Anim_EnablePlanting()
-	WaittillAnimDone( expect entity( guy ) )
+	WaittillAnimDone( guy )
 }
 
-function PlayAnimGravity( guy, animation_name, reference = null, optionalTag = null, blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME  )
+void function PlayAnimGravity( entity guy, string animation_name, reference = null, optionalTag = null, float blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME )
 {
 	__PlayAnim( guy, animation_name, reference, optionalTag, blendTime )
 	guy.Anim_EnablePlanting()
-	WaittillAnimDone( expect entity( guy ) )
+	WaittillAnimDone( guy )
+}
+
+void function PlayAnimNoWait( entity guy, string animation_name, reference = null, optionalTag = null, float blendTime = DEFAULT_SCRIPTED_ANIMATION_BLEND_TIME )
+{
+	__PlayAnim( guy, animation_name, reference, optionalTag, blendTime )
 }
 
 
-function CalcSequenceBlendTime( FirstPersonSequenceStruct sequence, entity player, entity ent = null )
+void function CalcSequenceBlendTime( FirstPersonSequenceStruct sequence, entity player, entity ent = null )
 {
 	if ( sequence.blendTime != CALCULATE_SEQUENCE_BLEND_TIME )
 		return
@@ -1706,7 +983,7 @@ function CalcSequenceBlendTime( FirstPersonSequenceStruct sequence, entity playe
 	sequence.blendTime = 0
 	if ( ent && sequence.thirdPersonAnim != "" )
 	{
-		local start
+		table start
 		if ( sequence.attachment != "" )
 		{
 			start = player.Anim_GetStartForRefEntity_Old( sequence.thirdPersonAnim, ent, sequence.attachment )
@@ -1725,7 +1002,7 @@ function CalcSequenceBlendTime( FirstPersonSequenceStruct sequence, entity playe
 		}
 		else
 		{
-			local dist = Distance( player.GetOrigin(), start.origin )
+			float dist = Distance( player.GetOrigin(), start.origin )
 			sequence.blendTime = GraphCapped( dist, 0, 350, 0.25, 0.9 )
 		}
 	}
@@ -1805,7 +1082,7 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 		firstPersonProxy = player.GetFirstPersonProxy()
 		if ( !IsValid( firstPersonProxy ) || !EntHasModelSet( firstPersonProxy ) )
 		{
-			doFirstPersonAnim = false;
+			doFirstPersonAnim = false
 		}
 	}
 
@@ -1826,15 +1103,13 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 		SetPlayerAnimViewEntity( player, firstPersonProxy )
 		firstPersonProxy.SetNextThinkNow()
 		SetForceDrawWhileParented( firstPersonProxy, true )
-		if( Safe_isScenariosMode() )
-			firstPersonProxy.Anim_SetPlaybackRate( 2.0 )
 	}
 	else if ( sequence.thirdPersonCameraAttachments.len() > 0 )
 	{
-		if ( player.IsPlayer() ) //&& Gamemode() != eGamemodes.fs_spieslegends )
+		if ( player.IsPlayer() )
 		{
 			entity fpProxy = player.GetFirstPersonProxy() //Shouldn't ever need to show the first person proxy when doing thirdPersonCameraAttachments; hide it explicitly here to stop it from showing up when chaining animations
-			if ( IsValid( fpProxy )  )
+			if ( IsValid( fpProxy ) )
 				fpProxy.HideFirstPersonProxy()
 
 			if ( sequence.thirdPersonCameraEntity )
@@ -1860,6 +1135,8 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 			ClearPlayerAnimViewEntity( player )
 		}
 	}
+
+	entity soul
 
 	CalcSequenceBlendTime( sequence, player, ent )
 
@@ -1887,6 +1164,11 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 
 		if ( sequence.thirdPersonCameraAttachments.len() == 0 )
 		{
+			if ( sequence.firstPersonBlendInTime >= 0.0 )
+			{
+				player.AnimViewEntity_SetLerpInTime( sequence.firstPersonBlendInTime )
+			}
+
 			if ( sequence.firstPersonBlendOutTime >= 0.0 )
 			{
 				player.AnimViewEntity_SetLerpOutTime( sequence.firstPersonBlendOutTime )
@@ -1896,8 +1178,20 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 				player.AnimViewEntity_SetLerpOutTime( 0.4 )
 			}
 		}
+		else
+		{
+			if ( sequence.thirdPersonBlendInTime >= 0.0 )
+			{
+				player.AnimViewEntity_SetLerpInTime( sequence.thirdPersonBlendInTime )
+			}
 
-		if ( !doFirstPersonAnim && !sequence.playerPushable )
+			if ( sequence.thirdPersonBlendOutTime >= 0.0 )
+			{
+				player.AnimViewEntity_SetLerpOutTime( sequence.thirdPersonBlendOutTime )
+			}
+		}
+
+		if ( !doFirstPersonAnim || !sequence.playerPushable )
 		{
 			player.SnapFeetToEyes()
 		}
@@ -1905,7 +1199,7 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 
 	if ( ent && !sequence.noParent )
 	{
-		local optionalTag
+		string optionalTag
 		if ( sequence.attachment != "" )
 		{
 			optionalTag = sequence.attachment
@@ -1952,8 +1246,14 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 			thread PlayAnimGravityClientSyncing( ent, sequence.relativeAnim )
 		}
 
-		if ( sequence.setInitialTime != 0.0 )
+		if ( sequence.setStartTime >= 0.0 )
+		{
+			ent.Anim_SetStartTime( sequence.setStartTime )
+		}
+		else if ( sequence.setInitialTime != 0.0 )
+		{
 			ent.Anim_SetInitialTime( sequence.setInitialTime )
+		}
 	}
 
 	if ( doFirstPersonAnim )
@@ -1982,7 +1282,11 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 		// 	viewmodel.Anim_EnablePlanting()
 		// }
 
-		if ( sequence.setInitialTime != 0.0 )
+		if ( sequence.setStartTime >= 0.0 )
+		{
+			firstPersonProxy.Anim_SetStartTime( sequence.setStartTime )
+		}
+		else if ( sequence.setInitialTime != 0.0 )
 		{
 			firstPersonProxy.Anim_SetInitialTime( sequence.setInitialTime )
 		}
@@ -1995,6 +1299,16 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 		if ( sequence.hideProxy )
 		{
 			firstPersonProxy.HideFirstPersonProxy()
+		}
+
+		if ( sequence.prediction )
+		{
+			firstPersonProxy.Anim_EnablePrediction()
+		}
+
+		if ( sequence.setVelocityOnEnd )
+		{
+			firstPersonProxy.Anim_SetVelocityOnEnd()
 		}
 	}
 
@@ -2018,6 +1332,12 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 			thread PlayAnim( player, sequence.thirdPersonAnim, sequence.origin, sequence.angles, sequence.blendTime )
 		}
 
+		if( sequence.enableCollision )
+			player.Anim_EnableCollision()
+
+		if( sequence.enableRelativeToGround )
+			player.Anim_EnableRelativeToGround()
+
 		if ( sequence.enablePlanting )
 			player.Anim_EnablePlanting()
 
@@ -2029,11 +1349,32 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 			}
 		}
 
-		if ( sequence.setInitialTime != 0.0 )
+		if ( sequence.setStartTime >= 0.0 )
+		{
+			player.Anim_SetStartTime( sequence.setStartTime )
+		}
+		else if ( sequence.setInitialTime != 0.0 )
+		{
 			player.Anim_SetInitialTime( sequence.setInitialTime )
+		}
 
 		if ( sequence.useAnimatedRefAttachment )
 			player.Anim_EnableUseAnimatedRefAttachmentInsteadOfRootMotion()
+
+		if ( sequence.prediction )
+		{
+			player.Anim_EnablePrediction()
+		}
+
+		if ( sequence.setVelocityOnEnd )
+		{
+			player.Anim_SetVelocityOnEnd()
+		}
+
+		if ( sequence.snapForLocalPlayer )
+		{
+			player.Anim_SnapForLocalPlayer()
+		}
 
 		WaittillAnimDone( player )
 	}
@@ -2061,6 +1402,17 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 			return
 	}
 
+	// time passed
+	if ( soul )
+	{
+		if ( !IsValid( soul ) )
+			return
+
+		ent = soul.GetTitan()
+		if ( !IsAlive( ent ) )
+			return
+	}
+
 	if ( sequence.thirdPersonAnimIdle != "" )
 	{
 		//thread PlayAnim( player, sequence.thirdPersonAnimIdle, ent, sequence.attachment, 0 )
@@ -2076,6 +1428,16 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 		else
 		{
 			thread PlayAnim( player, sequence.thirdPersonAnimIdle, sequence.origin, sequence.angles, sequence.blendTime )
+		}
+
+		if ( player.IsPlayer() && sequence.prediction )
+		{
+			player.Anim_EnablePrediction()
+		}
+
+		if ( sequence.setVelocityOnEnd )
+		{
+			player.Anim_SetVelocityOnEnd()
 		}
 	}
 
@@ -2108,18 +1470,24 @@ void function FirstPersonSequence( FirstPersonSequenceStruct sequence, entity pl
 			{
 				firstPersonProxy.SetToSameParentAs( player )
 			}
+
+			if ( sequence.setVelocityOnEnd )
+			{
+				firstPersonProxy.Anim_SetVelocityOnEnd()
+			}
 		}
 	}
 
 	if ( sequence.thirdPersonAnimIdle != "" && sequence.firstPersonAnimIdle != "" )
 	{
 		if ( sequence.viewConeFunction != null )
+		{
 			sequence.viewConeFunction( player )
+		}
 	}
 }
 
-
-function ClampPlayerViewCone( player )
+void function ClampPlayerViewCone( entity player )
 {
 	player.EndSignal( "OnDeath" )
 	player.PlayerCone_SetLerpTime( 0.0 )

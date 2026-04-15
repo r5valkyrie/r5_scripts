@@ -380,7 +380,7 @@ void function NPCExitDroppod( entity guy, entity pod )
 
 		guy.SetParent( pod, "ATTACH", false )
 
-		idleAnim = string( GetAnim( guy, "drop_pod_idle_anim" ) )
+		idleAnim = GetAnim( guy, "drop_pod_idle_anim" )
 		if ( guy.LookupSequence( idleAnim ) != -1 )
 			guy.Anim_ScriptedPlay( idleAnim )
 
@@ -392,7 +392,7 @@ void function NPCExitDroppod( entity guy, entity pod )
 
 	guy.SetParent( pod, "ATTACH", false )
 
-	exitAnim = string( GetAnim( guy, "drop_pod_exit_anim" ) )
+	exitAnim = GetAnim( guy, "drop_pod_exit_anim" )
 	bool exitAnimExists = guy.LookupSequence( exitAnim ) != -1
 	if ( exitAnimExists )
 		guy.Anim_ScriptedPlay( exitAnim )
