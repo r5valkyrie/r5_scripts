@@ -1,4 +1,4 @@
-                
+
 
 global function Crafting_Init
 global function Crafting_RegisterNetworking
@@ -32,10 +32,10 @@ global function Crafting_WorkbenchAirdropLogicForRound_Thread
 global function Crafting_GetAllHarvesters
 
 global function Crafting_ClearUseLinksForAllHarvesters
-                           
+
 global function Crafting_OnNPCKill
 global function Crafting_RewardOnWildlifeCampComplete
-      
+
 global function Crafting_AddMaterialsToPlayer
 global function AddCallback_OnCraftingMaterialsGranted
 
@@ -48,9 +48,9 @@ global function Crafting_CloseCraftingMenu
 global function ClientCallback_InitializeCraftingAtWorkbench
 global function ClientCallback_ClosedCraftingMenu
 
-                   
+
 global function Crafting_PingNearestWorkbench
-      
+
 
 global function Dispensers_PingNearestDispenser
 
@@ -67,9 +67,9 @@ global function DEV_PrintDisabledPoolLoot
 global function Crafting_IsPlayerAtWorkbench
 global function Crafting_CreateHolderEnt
 
-                           
-                                           
-      
+
+
+
 
 global function Crafting_DoorCloseCheck
 
@@ -131,16 +131,16 @@ global function DEV_Crafting_PrintUsedHarvesterEHIs
 #endif // DEVELOPER
 #endif // CLIENT
 
-                
-           
-                                                     
-                 
-                                          
-                                            
-           
-                                      
-                 
-                      
+
+
+
+
+
+
+
+
+
+
 
 //data
 const asset CRAFTING_DATATABLE = $"datatable/crafting_workbench.rpak"
@@ -157,7 +157,7 @@ global const string WORKBENCH_SCRIPTNAME = "crafting_workbench"
 global const string WORKBENCH_CLUSTER_AIRDROPPED_SCRIPTNAME = "crafting_workbench_cluster_airdropped"
 const string WORKBENCH_RANDOMIZATION_TARGET_SCRIPTNAME = "crafting_workbench_randomization"
 
-//harevster assets
+//harvester assets
 const float HARVESTER_USE_DURATION = 0.5
 const asset HARVESTER_MODEL = $"mdl/props/crafting_siphon/crafting_siphon.rmdl"
 const string HARVESTER_FULL_IDLE_ANIM = "source_full_idle"
@@ -184,9 +184,9 @@ const asset WORKBENCH_DISPENSER_BEAM_FX = $"P_workbench_s20_stock_beam_LT"
 const vector WORKBENCH_DISPENSER_VFX_COLOR = < 183, 135, 255 >
 
 const asset WORKBENCH_HOLO_FX = $"P_workbench_holo"
-                           
-                                                               
-      
+
+
+
 const asset WORKBENCH_START_FX = $"P_workbench_start"
 const asset WORKBENCH_BEAM_FX = $"P_workbench_stock_beam_LT"
 const asset WORKBENCH_ENGINE_SMOKE_FX = $"P_lootpod_vent_top"
@@ -270,9 +270,9 @@ global const float CRAFTING_OBIT_DEBOUNCE_PERIOD = 1.0
 //Ping from Map func name
 const string FUNCNAME_PingCrafterFromMap = "Crafting_ClientToServer_PingCrafterFromMap"
 
-                
-                                            
-                      
+
+
+
 
 //Airdrops
 const float REPLICATOR_AIRDROP_DISPLACEMENT = 3000.0
@@ -301,9 +301,9 @@ global enum eCraftingRotationStyle
 	PERMANENT,
 	LOADOUT_BASED,
 	SEASONAL,
-	                   
+
 		PERK,
-       
+
 	/*%if HAS_SHELVED_LEGEND_ABILITIES
 	CALIBER_PASSIVE,
 	%endif*/
@@ -388,14 +388,14 @@ struct CraftingItemInfo
 }
 
 
-                
-      
- 
-           
-                        
-       
-                         
-                      
+
+
+
+
+
+
+
+
 
 #if SERVER
 global typedef OnCraftingMaterialsGrantedCallback void functionref( entity, entity, int )
@@ -476,9 +476,9 @@ struct {
 
 		int defaultCrafterGoalCount = 12
 
-                           
+
 	table<int, int>					npcCraftingRewardTable
-      
+
 	#endif
 
 	table<entity, entity>		   ambGenericTable
@@ -515,16 +515,16 @@ void function Crafting_Init()
 
 		file.craftingPickupGracePeriod = GetCurrentPlaylistVarFloat( "crafting_pickup_grace_period", CRAFTING_PICKUP_GRACE_PERIOD )
 
-                           
+
 		file.npcCraftingRewardTable = {}
 		file.npcCraftingRewardTable[eNPC.PROWLER] <- GetCurrentPlaylistVarInt( "wildlife_ai_prowler_crafting_reward", 0 )
-                   
-                                                                                                                  
-       
-	                         
+
+
+
+
 			file.npcCraftingRewardTable[eNPC.SPIDER_JUNGLE] <- GetCurrentPlaylistVarInt( "wildlife_ai_spider_jungle_crafting_reward", 0 )
-       
-      
+
+
 	#endif
 
 	#if CLIENT
@@ -568,11 +568,11 @@ void function Crafting_Init()
 		RegisterSignal ( "OnNewHoloStartPlaying" )
 	#endif
 
-                 
-            
-                                                   
-        
-                       
+
+
+
+
+
 
 	if ( !Crafting_PlaylistVar_IsEnabled() )
 		return
@@ -593,7 +593,7 @@ void function Crafting_Init()
 		Loot_AddCallback_OnPlayerLootPickup( Crafting_OnLootPickedUp )
 		AddCallback_OnPlayerKilled( Crafting_OnPlayerKilled )
 		Bleedout_AddCallback_OnPlayerStartBleedout( Crafting_OnPlayerBleedingOut )
-		//AddCallback_OnPlayerMatchStateChanged( Crafting_OnPlayerMatchStateChanged ) //signature mismatch
+		AddCallback_OnPlayerMatchStateChanged( Crafting_OnPlayerMatchStateChanged ) //signature mismatch
 
 		AddCallback_OnPlayerRespawned( Dispensers_OnPlayerStateChanged )
 		//AddCallback_OnClientConnectionLost( Dispensers_OnPlayerStateChanged ) //not in S3
@@ -624,14 +624,14 @@ void function Crafting_Init()
 		if( Replicators_PingFromMap_Enabled() )
 			AddCallback_OnFindFullMapAimEntity( GetCrafterUnderAim, PingCrafterUnderAim )
 	#endif
-	
+
 	PrecacheScriptString( WORKBENCH_SCRIPTNAME )
 	PrecacheScriptString( WORKBENCH_RANDOMIZATION_TARGET_SCRIPTNAME )
 	PrecacheScriptString( WORKBENCH_CLUSTER_SCRIPTNAME )
 	PrecacheScriptString( WORKBENCH_CLUSTER_AIRDROPPED_SCRIPTNAME )
-                           
-                                                       
-      
+
+
+
 	PrecacheScriptString( HOLDER_ENT_NAME )
 	PrecacheScriptString( HARVESTER_SCRIPTNAME )
 	PrecacheScriptString( HARVESTER_MINIMAP_SCRIPTNAME )
@@ -646,9 +646,9 @@ void function Crafting_Init()
 	PrecacheParticleSystem( HARVESTER_IDLE_FX )
 
 	PrecacheParticleSystem( WORKBENCH_HOLO_FX )
-                            
-                                                  
-       
+
+
+
 	PrecacheParticleSystem( WORKBENCH_START_FX )
 	PrecacheParticleSystem( WORKBENCH_BEAM_FX )
 	PrecacheParticleSystem( WORKBENCH_ENGINE_SMOKE_FX )
@@ -672,7 +672,7 @@ void function Crafting_RegisterNetworking()
 		RegisterNetworkedVariableSafe( "Crafting_NumHarvesters", SNDC_GLOBAL, SNVT_INT, 0 )
 	}
 
-	RegisterNetworkedVariableSafe( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "Crafting_StartTime", SNDC_GLOBAL, SNVT_TIME, -1.0 )
 
 #if SERVER || CLIENT
 	Remote_RegisterClientFunction( "ServerCallback_CL_MaterialsChanged", "int", -1, INT_MAX, "int", -1, INT_MAX, "int", 0, eWildLifeCampType.Count, "entity", "bool" )
@@ -722,7 +722,8 @@ bool function Crafting_PlaylistVar_IsEnabled()
 
 bool function Crafting_IsDispenserCraftingEnabled()
 {
-	return( GetCurrentPlaylistVarBool( "crafting_dispensers_enabled", true ))
+	//return( GetCurrentPlaylistVarBool( "crafting_dispensers_enabled", false ))
+	return false//force disabled due to rui for this does not exist in s16
 }
 
 int function Crafting_DispenserAmmoMulitplier()
@@ -1223,7 +1224,7 @@ void function RandomizeClusterLocations_Thread( bool shouldLinkHarvesters )
 	array< entity > distributedClusters
 	array < entity > nonDistributedClusters
 	int goal = Crafting_HarvesterGoalOverride()
-	
+
 	if ( GetIsUnifiedRandomizerEnabled() )
 	{
 		distributedClusters = RandomizeNodeLocations( file.workbenchClusterArray, Crafting_CrafterExlusionDistance(), goal, false, ePropPlacementType.CRAFTER, COLOR_ORANGE )
@@ -1938,12 +1939,12 @@ void function Crafting_OnEntitiesDidLoad()
 		SetGlobalNetIntSafe( "Crafting_NumHarvesters", file.harvesterArray.len() )
 	}
 
-	SetGlobalNetTimeSafe( "Crafting_StartTime", file.matchStartTime )
+	SetGlobalNetTimeSafe( "Crafting_StartTime", float(file.matchStartTime) )
 }
 
 entity function CreateMaterialHarvester( asset model, vector ornull origin = null, vector ornull angles = null, int solidType = 0, float fadeDist = -1, bool dispatchSpawn = true )
 {
-	entity materialHarvester = CreateEntity( "prop_material_harvester" )
+	entity materialHarvester = CreateEntity( "prop_dynamic" )
 	materialHarvester.SetValueForModelKey( model )
 	materialHarvester.kv.fadedist = fadeDist
 	materialHarvester.kv.renderamt = 255
@@ -1987,15 +1988,15 @@ void function OnHarvesterScriptTargetSpawned( entity ent )
 	array<entity> parentLinks = ent.GetLinkParentArray()
 	entity par = ent.GetParent()
 
-	ent.Destroy()
+//	ent.Destroy()
 
 	if ( !file.isEnabled )
 		return
 
-	entity harvester = CreateMaterialHarvester( HARVESTER_MODEL, origin, angles, 6, 15000, false )
+	entity harvester = ent//CreateMaterialHarvester( HARVESTER_MODEL, origin, angles, 6, 15000, false )
 	harvester.SetCanBeMeleed( false )
 
-	DispatchSpawn( harvester )
+	//DispatchSpawn( harvester )
 	harvester.SetFadeDistance( 15000 )
 	harvester.SetScriptName( HARVESTER_SCRIPTNAME )
 
@@ -2003,11 +2004,11 @@ void function OnHarvesterScriptTargetSpawned( entity ent )
 	harvester.AddUsableValue( USABLE_CUSTOM_HINTS )
 	AddCallback_OnUseEntity_ClientServer( harvester, HarvestCraftingMaterials )
 	SetCallback_CanUseEntityCallback( harvester, Crafting_Harvester_IsNotBusy )
-	harvester.Hide()
+	//harvester.Hide()
 
 	file.harvesterArray.append( harvester )
-
-	entity minimapObj = CreatePropScript( $"mdl/dev/empty_model.rmdl", harvester.GetOrigin() )
+	return
+	/*entity minimapObj = CreatePropScript( $"mdl/dev/empty_model.rmdl", harvester.GetOrigin() )
 	minimapObj.SetAngles( <0, 0, 0> )
 	minimapObj.Minimap_SetCustomState( eMinimapObject_prop_script.CRAFTING_HARVESTER )
 	minimapObj.Minimap_SetObjectScale( 1 )
@@ -2019,7 +2020,8 @@ void function OnHarvesterScriptTargetSpawned( entity ent )
 	minimapObj.Minimap_SetZOrder( MINIMAP_Z_OBJECT )
 	minimapObj.DisableHibernation()
 
-	file.minimapObjTable[harvester] <- minimapObj
+
+	file.minimapObjTable[harvester] <- minimapObj*/
 
 	#if DEVELOPER
 		DEV_Crafting_Print( format( "OnHarvesterScriptTargetSpawned():  %s", string( harvester ) ))
@@ -2315,7 +2317,7 @@ void function HarvestCraftingMaterials_Single( entity harvester, entity player, 
 		SetHarvesterAsUsedByPlayer( player, harvester )
 	}
 
-	Remote_CallFunction_Replay( player, "ServerCallback_CL_HarvesterUsed", harvester, file.minimapObjTable[harvester] )
+//	Remote_CallFunction_Replay( player, "ServerCallback_CL_HarvesterUsed", harvester, file.minimapObjTable[harvester] )
 
 	Crafting_AddMaterialsToPlayer( player, playerInteractor, HARVESTER_TEAMMATE_REWARD  )
 	if(( player == playerInteractor ) && ( Stats_ShouldGatherBRStatsInModeForPlayer( player ) )) //This is tied up to a challenge so needs to be checked.
@@ -2745,9 +2747,9 @@ void function ServerCallback_Crafting_Notify_Player_On_Obit( entity notifyingPla
 	// Resolve item name.
 	array< string > obit_SpecialCategories = [
 		"evo",
-		                   
+
 			"banner"
-        
+
 	]
 
 	if( obit_SpecialCategories.contains( itemCategory ) )
@@ -2800,12 +2802,12 @@ void function Crafting_Obit_Notify_Single( entity notifyingPlayer, int notifyTyp
 		}
 	}
 
-	                   
+
 	else if( itemRef == "banner" )
 	{
 		itemName = Localize( "#CRAFTING_ITEM_BANNER" )
 	}
-       
+
 	else if ( SURVIVAL_Loot_IsRefValid( itemRef ) )
 	{
 		LootData lootData = SURVIVAL_Loot_GetLootDataByRef( itemRef )
@@ -2850,7 +2852,7 @@ void function Crafting_OnLootbinOpen( entity player, entity lootbin, array<entit
 	}
 }
 
-                           
+
 void function Crafting_OnNPCKill (entity npc, var damageInfo, int npcType)
 {
 	if ( Crafting_IsDispenserCraftingEnabled() )
@@ -2888,7 +2890,7 @@ void function Crafting_RewardOnWildlifeCampComplete ( array<entity> playersToRew
 		Crafting_AddMaterialsToPlayer( player, player, rewardPerSquadmate, campType, true )
 	}
 }
-      
+
 
 void function AddCallback_OnCraftingMaterialsGranted( OnCraftingMaterialsGrantedCallback callback )
 {
@@ -2905,10 +2907,10 @@ void function Crafting_AddMaterialsToPlayer( entity player, entity giver, int am
 		return
 
 	int oldMaterials = player.GetPlayerNetInt( "craftingMaterials" )
-                 
-                                                                     
-                                                  
-                       
+
+
+
+
 
 	player.SetPlayerNetInt( "craftingMaterials", oldMaterials + amount )
 
@@ -3302,12 +3304,12 @@ void function Crafting_WorkbenchAirdropLogic()
 			wait 15.0
 			printf( "CRAFTING: Stage is " + currentStage + " airdropping " + dropCount + " benches"  )
 
-                                 
-                                                                                                                                                
-                                                                                                       
-                                                                                                                          
-                                                                                    
-                                       
+
+
+
+
+
+
 
 			thread Crafting_WorkbenchAirdropLogicForRound_Thread( dropCount, false, currentStage )
 
@@ -3572,16 +3574,16 @@ void function Crafting_ShowCraftingLocations( float lifetime = 5.0)
 	foreach( location in ReplicatorLocations )
 	{
 		vector origin = location.GetOrigin()
-		//DebugDrawSphere( origin, 128, <255, 255, 0>, true, lifetime )
-		//DebugDrawLine( origin, origin + <0,0,12000>, <255, 255, 0>, true, lifetime )
+		DebugDrawSphere( origin, 128, 255, 255, 0, true, lifetime )
+		DebugDrawLine( origin, origin + <0,0,12000>, 255, 255, 0, true, lifetime )
 		DEV_Crafting_Print( format( "Crafting Replicator Location: %s", string( origin )))
 
 	}
 	foreach( location in HarvestorLocations )
 	{
 		vector origin = location.GetOrigin()
-		//DebugDrawSphere( origin, 64, <0, 255, 0>, true, lifetime )
-		//DebugDrawLine( origin, origin + <0,0,6000>, <0, 255, 0>, true, lifetime )
+		DebugDrawSphere( origin, 64, 0, 255, 0, true, lifetime )
+		DebugDrawLine( origin, origin + <0,0,6000>, 0, 255, 0, true, lifetime )
 		DEV_Crafting_Print( format( "Crafting Harvestor Location: %s", string( origin )))
 	}
 }
@@ -3657,10 +3659,10 @@ string function Crafting_Workbench_UseTextOverride( entity ent )
 			CustomUsePrompt_SetText( Localize("#DISPENSER_HAS_USED_PROMPT") )
 	}
 
-                            
-                               
-                                                                      
-       
+
+
+
+
 
 	CustomUsePrompt_SetLineColor( GetCraftingColor() )
 
@@ -3688,10 +3690,10 @@ void function UseCraftingWorkbench( entity bench, entity player, int pickupFlags
 	//if( player.Player_IsSkywardFollowing() ) // S3: entity method not available
 	//	return
 
-	                          
-		if ( TitanSword_Super_BlockAction( player, "use_crafter" ) )
-			return
-       
+
+	//	if ( TitanSword_Super_BlockAction( player, "use_crafter" ) )
+	//		return
+
 
 	#if SERVER
 		if ( Crafting_IsDispenserCraftingEnabled() )
@@ -3839,7 +3841,7 @@ void function WorkbenchAnimation_IdleDoneCallback( entity ent )
 {
 	if( IsValid( ent.GetParent()) )
 	{
-		PlayParentedFirstAndThirdPersonAnimation( ent, ent.GetParent(), "ref", ent.e.entAnim1p, ent.e.entAnim3p )
+		try { PlayParentedFirstAndThirdPersonAnimation( ent, ent.GetParent(), "ref", ent.e.entAnim1p, ent.e.entAnim3p ) } catch(e) {}
 	}
 }
 
@@ -3856,9 +3858,9 @@ void function PlayerAttachedToWorkbenchThread( entity cluster, entity bench, ent
 		return
 	}
 
-                            
-                                  
-       
+
+
+
 
 	player.EndSignal( "CraftingPlayerDetachImmediate" )
 	player.EndSignal( "DeathTotem_PreRecallPlayer" )
@@ -3942,11 +3944,11 @@ void function PlayerAttachedToWorkbenchThread( entity cluster, entity bench, ent
 
 	if ( Crafting_IsDispenserCraftingEnabled() && Crafting_QuickOpenCraftingMenu() )
 	{
-		PlayParentedFirstAndThirdPersonAnimation( player, cluster, "ref", "ptpov_crafting_replicator_start_" + animAppendSequence + "_quick", "pilot_crafting_replicator_start_" + animAppendSequence )
+		try { PlayParentedFirstAndThirdPersonAnimation( player, cluster, "ref", "ptpov_crafting_replicator_start_" + animAppendSequence + "_quick", "pilot_crafting_replicator_start_" + animAppendSequence ) } catch(e) {}
 	}
 	else
 	{
-		PlayParentedFirstAndThirdPersonAnimation( player, cluster, "ref", "ptpov_crafting_replicator_start_" + animAppendSequence, "pilot_crafting_replicator_start_" + animAppendSequence )
+		try { PlayParentedFirstAndThirdPersonAnimation( player, cluster, "ref", "ptpov_crafting_replicator_start_" + animAppendSequence, "pilot_crafting_replicator_start_" + animAppendSequence ) } catch(e) {}
 	}
 	player.e.Callback_PlayParentedAnim = WorkbenchAnimation_IdleDoneCallback
 	player.e.entAnim1p = "ptpov_crafting_replicator_idle_" + animAppendSequence
@@ -3993,8 +3995,8 @@ void function PlayerAttachedToWorkbenchThread( entity cluster, entity bench, ent
 		return
 	}
 
-	PlayParentedFirstAndThirdPersonAnimation( player, cluster, "ref", "ptpov_crafting_replicator_end_" + animAppendSequence, "pilot_crafting_replicator_end_" + animAppendSequence )
-
+	try { PlayParentedFirstAndThirdPersonAnimation( player, cluster, "ref", "ptpov_crafting_replicator_end_" + animAppendSequence, "pilot_crafting_replicator_end_" + animAppendSequence ) } catch(e) {}
+	try { player.Anim_SetStartTime(1) } catch(ex2) {}
 	waitthread WaittillAnimDone( player )
 }
 
@@ -4153,9 +4155,9 @@ void function CraftingThread_Internal( entity player, entity workbench, float du
 		}
 	}
 
-                            
-                                  
-       
+
+
+
 
 	// Handled as a reference so we don't need to have multiple of these
 	WorkbenchData craftingBenchData = file.workbenchDataTable[workbench]
@@ -4284,13 +4286,13 @@ void function CraftingThread_Internal( entity player, entity workbench, float du
 				wp.SetWaypointInt( 5, tier )
 				evoTier = EnsureValidEvoTier( tier )
 			}
-			                   
+
 			else if ( item.category == "banner" )
 			{
 				wp.SetWaypointInt( 5, 5 )
 				wp.SetWaypointInt( 6, 1 )
 			}
-         
+
 			else
 			{
 				LootData data = SURVIVAL_Loot_GetLootDataByRef( validItems[0] )
@@ -4363,7 +4365,7 @@ void function CraftingThread_Internal( entity player, entity workbench, float du
 
 	thread DoorOpenAnimThread( cluster, craftingBenchData )
 
-	                                        
+
 	bool autoCloseDoor = false
 	array<entity> bannerPlayers = []
 	if ( item.category == "banner" )
@@ -4404,7 +4406,7 @@ void function CraftingThread_Internal( entity player, entity workbench, float du
 
 		return
 	}
-       
+
 
 	array<string> itemsToSpawn = clone validItems
 	int evoProgressToSpawn = 0
@@ -4437,7 +4439,7 @@ void function CraftingThread_Internal( entity player, entity workbench, float du
 		itemsToSpawn.append( newArmorRef )
 	}
 
-	                   
+
 	if( item.category == "banner" )
 	{
 		while( itemsToSpawn.len() < bannerPlayers.len() )
@@ -4450,7 +4452,7 @@ void function CraftingThread_Internal( entity player, entity workbench, float du
 			itemsToSpawn.append( "mp_ability_mobile_respawn_beacon" )
 		}
 	}
-       
+
 
 	if ( Crafting_IsDispenserCraftingEnabled() )
 	{
@@ -4480,7 +4482,7 @@ void function CraftingThread_Internal( entity player, entity workbench, float du
 			SetPropSurvivalExtraPropertyOnEnt( lootItem, evoProgressToSpawn )
 		}
 
-		                   
+
 		if ( item.category == "banner" )
 		{
 			int lootIndex = lootItem.GetSurvivalInt()
@@ -4493,7 +4495,7 @@ void function CraftingThread_Internal( entity player, entity workbench, float du
 				thread SetCraftedItemtoExpire_Thread( player, lootItem, waitDuration )
 			}
 		}
-        
+
 
 		workbench.LinkToEnt( lootItem )
 
@@ -4533,9 +4535,9 @@ int function CalculateEvoArmorTierAfterCrafting( entity player )
 
 void function DoorOpenAnimThread( entity workbench, WorkbenchData data )
 {
-                            
-                                    
-       
+
+
+
 
 	int attachId = workbench.LookupAttachment( "FX_DOOR_OPEN_" + data.doorAnimIndex )
 	StartParticleEffectOnEntity( workbench, GetParticleSystemIndex( WORKBENCH_DOOR_OPEN_FX ), FX_PATTACH_POINT_FOLLOW, attachId )
@@ -4618,9 +4620,9 @@ void function Crafting_DoorCloseCheck( entity pickup, bool willDestroy )
 
 void function DoorCloseAnimThread( entity workbench, WorkbenchData data )
 {
-                            
-                                    
-       
+
+
+
 
 	wait 0.5
 	if ( !IsValid(workbench) )
@@ -4857,7 +4859,7 @@ array< string > function GenerateCraftingItemsInCategory( entity player, Craftin
 		return bundle.itemsInBundle
 	}
 
-	                   
+
 	if ( craftingRotation == eCraftingRotationStyle.PERK )
 	{
 		bool has_banners = Player_Banners_Enabled()
@@ -4873,20 +4875,20 @@ array< string > function GenerateCraftingItemsInCategory( entity player, Craftin
 				CraftingBundle bundle = GetBundleForCategory( categoryToCheck )
 				return bundle.itemsInBundle
 			}
-                                     
-                                                                        
-    
-                                                                   
-                               
-    
-         
+
+
+
+
+
+
+
 			else
 			{
 				return []
 			}
 		}
 	}
-       
+
 
 	if ( craftingRotation == eCraftingRotationStyle.LOADOUT_BASED )
 	{
@@ -4948,13 +4950,13 @@ CraftingBundle function GetBundleForCategory( CraftingCategory categoryToCheck )
 	int unixTimeNow
 	#if SERVER
 		if ( file.isNetworkingRegistered )
-			unixTimeNow = int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
+			unixTimeNow = GetUnixTimestamp()//int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
 		else
 			unixTimeNow = file.matchStartTime
 	#endif
 	#if CLIENT
 		if ( !IsLobby() )
-			unixTimeNow = int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
+			unixTimeNow = GetUnixTimestamp()//int(GetGlobalNetTimeSafe( "Crafting_StartTime" ))
 		else
 			unixTimeNow = GetUnixTimestamp()
 	#endif
@@ -4995,10 +4997,10 @@ bool function CheckCraftingRotation( int craftingRotation )
 	if ( craftingRotation == eCraftingRotationStyle.LOADOUT_BASED )
 		return true
 
-	                   
+
 	if ( craftingRotation == eCraftingRotationStyle.PERK )
 		return true
-       
+
 
 	/*%if HAS_SHELVED_LEGEND_ABILITIES
 	if( craftingRotation == eCraftingRotationStyle.CALIBER_PASSIVE )
@@ -5009,7 +5011,7 @@ bool function CheckCraftingRotation( int craftingRotation )
 }
 
 #if SERVER
-void function Crafting_OnPlayerMatchStateChanged( entity player, int newState )
+void function Crafting_OnPlayerMatchStateChanged( entity player, int oldState, int newState )
 {
 	if ( newState == ePlayerMatchState.SKYDIVE_PRELAUNCH )
 		thread Thread_Crafting_PromptAllWorkbenches ( player )
@@ -5017,10 +5019,10 @@ void function Crafting_OnPlayerMatchStateChanged( entity player, int newState )
 
 void function Thread_Crafting_PromptAllWorkbenches ( entity player )
 {
-	                                                                     
+
 	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) && GoldenHorse_TicksEnabled() )
 		return
-       
+
 
 	FlagWait( "CraftingInitialized" )
 	if ( file.workbenchClusterArray.len() == 0 || !IsValid(player) )
@@ -5227,7 +5229,7 @@ CraftingCategory ornull function GetCategoryForIndex( int index )
 	return null
 }
 
-                   
+
 #if SERVER
 void function Crafting_PingNearestWorkbench( entity player, vector origin )
 {
@@ -5256,7 +5258,7 @@ entity function GetClosestValidWorkbench( entity player, vector origin )
 	return allResults[0].ent
 }
 #endif
-      
+
 
 
 #if CLIENT
@@ -5306,10 +5308,10 @@ bool function ShouldShowCraftingMapFeature()
 	if( !GameMode_IsActive( eGameModes.SURVIVAL ) )
 		return false
 
-	                      
+
 	if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 		return false
-                             
+
 
 	return true
 }
@@ -5323,7 +5325,7 @@ void function Crafting_ShowCraftingMapFeature()
 	bool showMapFeature = true
 
 	//hide the Crafting Map Feature on Storm Point because we don't have enough space for Crafting. Other maps do have space however.
-	//TODO: Refactor when a better system for managing too many enumerated map features is developed. 
+	//TODO: Refactor when a better system for managing too many enumerated map features is developed.
 	if(  mapName.find( "mp_rr_tropic_island" ) >= 0 )
 		showMapFeature = false
 
@@ -5573,12 +5575,12 @@ var function SetupWorkbenchPreview( var baseRui, int index, string uiHandle, boo
 		RuiSetImage( rui, "iconImage", hudIcon )
 		RuiSetInt( rui, "lootTier", lootRef.tier )
 
-		                    
+
 			if ( lootRef.ref == "hopup_golden_horse_green" )
 			{
 				RuiSetInt( rui, "lootTier", GOLDEN_HORSE_SPECIAL_EVENT_LOOT_TIER )
 			}
-        
+
 
 		if ( lootRef.lootType == eLootType.MAINWEAPON )
 		{
@@ -5828,7 +5830,7 @@ bool function Crafting_OnMenuItemSelected( int index, var menuRui )
 			}
 			// TODO: else figure out evoTier and send it to the obit.
 		}
-		                   
+
 		else if (  item.category == "banner" )
 		{
 			if ( Perk_CanBuyBanners( player ) )
@@ -5836,13 +5838,13 @@ bool function Crafting_OnMenuItemSelected( int index, var menuRui )
 			else
 				canBuy = false
 		}
-        
-                                    
-                                    
-   
-                                     
-   
-        
+
+
+
+
+
+
+
 	}
 	else
 	{
@@ -6000,8 +6002,8 @@ void function SetupProgressWaypoint_Internal( entity waypoint )
 	RuiSetBool( waypoint.wp.ruiHud, "reverseProgress", false )
 	RuiSetBool( waypoint.wp.ruiHud, "iconColorOverride", true )
 	RuiSetFloat3( waypoint.wp.ruiHud, "iconColor", Crafting_GetWaypointColor( waypoint ) )
-	RuiSetImage( waypoint.wp.ruiHud, "fillBackgroundImage", $"rui/hud/gametype_icons/obj_background_capturepoint" )
-	RuiSetImage( waypoint.wp.ruiHud, "fillImage", $"rui/hud/gametype_icons/obj_background_capturepoint_fill" )
+	//RuiSetImage( waypoint.wp.ruiHud, "fillBackgroundImage", $"rui/hud/gametype_icons/obj_background_capturepoint" )
+	//RuiSetImage( waypoint.wp.ruiHud, "fillImage", $"rui/hud/gametype_icons/obj_background_capturepoint_fill" )
 
 	RuiTrackGameTime( waypoint.wp.ruiHud, "captureEndTime", waypoint, RUI_TRACK_WAYPOINT_GAMETIME, RUI_TRACK_INDEX_CAPTURE_END_TIME )
 	RuiTrackFloat( waypoint.wp.ruiHud, "captureTimeRequired", waypoint, RUI_TRACK_WAYPOINT_FLOAT, RUI_TRACK_INDEX_REQUIRED_TIME )
@@ -6137,11 +6139,11 @@ void function Crafting_PopulateItemRuiAtIndex( var rui, int index )
 
 	int cost
 	bool canBuy = true
-                    
+
 		if ( validItemList.len() != 0 && item.category != "evo" && item.category != "banner" && item.category != "event_special" )
-      
-                                                           
-       
+
+
+
 	{
 		foreach ( ref in validItemList )
 			cost += item.itemToCostTable[ref]
@@ -6152,12 +6154,12 @@ void function Crafting_PopulateItemRuiAtIndex( var rui, int index )
 		RuiSetImage( rui, "icon", hudIcon )
 		printt("CRAFTING LOOT ICON : " + lootRef.hudIcon)
 		RuiSetInt( rui, "tier", lootRef.tier )
-		                    
+
 			if ( lootRef.ref == "hopup_golden_horse_green" )
 			{
 				RuiSetInt( rui, "tier", GOLDEN_HORSE_SPECIAL_EVENT_LOOT_TIER )
 			}
-        
+
 
 		if ( lootRef.lootType == eLootType.MAINWEAPON )
 			RuiSetBool( rui, "isWeapon", true )
@@ -6242,7 +6244,7 @@ void function Crafting_PopulateItemRuiAtIndex( var rui, int index )
 				canBuy = false
 		}
 	}
-	                   
+
 		else if ( validItemList.len() != 0 && item.category == "banner" && ( GetRespawnStyle() == eRespawnStyle.RESPAWN_CHAMBERS ) && Player_Banners_Enabled() )
 		{
 			cost = item.itemToCostTable[validItemList[0]]
@@ -6258,17 +6260,17 @@ void function Crafting_PopulateItemRuiAtIndex( var rui, int index )
 				canBuy = false
 			}
 		}
-       
-                                   
-                                                               
-  
-                                               
-                                      
 
-                                                  
-  
 
-       
+
+
+
+
+
+
+
+
+
 	else
 	{
 		canBuy = false
@@ -6281,8 +6283,8 @@ void function Crafting_PopulateItemRuiAtIndex( var rui, int index )
 	RuiSetBool( rui, "isEnabled", canBuy && canAfford )
 
 	// Set Crafting 2.0 style
-	if ( Crafting_IsDispenserCraftingEnabled() )
-		RuiSetBool( rui, "isCrafting2pt0", true )
+	//if ( Crafting_IsDispenserCraftingEnabled() )
+	//	RuiSetBool( rui, "isCrafting2pt0", true )
 
 	CraftingBundle bundle = GetBundleForCategory( item )
 	bundle.attachedRui[index] <- rui
@@ -6452,346 +6454,346 @@ bool function Crafting_IsPlayerCrafting()
 }
 #endif // CLIENT
 
-                           
-          
-                                                                                                                                     
- 
-                                                                                                                    
-                                                                
-                                                                   
-
-                                                                                                 
-
-                          
-                                   
-                               
-  
-                                                                                                                                                       
-                                                 
-                                                                 
-
-                                   
-                                                          
-                                        
-
-                                    
-                                 
-
-                         
-                                 
-                                         
-              
-   
-          
-                                 
-                                       
-         
-
-          
-                                 
-                                       
-         
-
-          
-                                 
-                                       
-         
-   
-
-                                                     
-                            
-
-                                                 
-                                   
-  
-
-                                                                     
-
-                                     
-                                          
-
-                            
-                                       
-
-                                                      
-                           
-  
-                                         
-                                  
-                              
-  
-
-                                   
-
-                                                                                                  
-                                                             
-
-                               
-                                         
-
-                                                                                             
-                                                                                            
-                                                                                                                 
-                                  
-
-         
-                                       
-                                 
-
-                                            
-                                           
-                                                
-
-                                    
-                                             
-                                            
-                                               
-                                               
-                                               
-                                              
-
-                                               
-
-             
-                                
-                                                                                            
-                                                                                               
-
-                                                               
-                                                   
-                                               
-
-                                         
-                               
-                               
-
-                                           
-                                      
-
-                                                  
-                                                  
-
-                                                   
-                                                  
-
-                                      
-                         
-                                 
-  
-                                                                                                   
-                                                                                                                     
-                                                                                                                  
-                                                                                                                          
-                                                                                  
-                                                                                    
-                                         
-
-                    
-  
-
-                                                          
-
-                                                                              
-                                                                      
-                                                                   
-
-                    
- 
-
-                                                             
- 
-                                                                                      
-        
-
-                                 
-                                   
-
-                                         
-
-                                                        
-
-                                                                                                                                                                                                    
-                                                         
-
-             
-                         
-   
-                           
-    
-                        
-    
-   
-  
-
-              
- 
-
-                                                         
- 
-                                                                  
- 
-
-                                                                     
- 
-                                                         
-                                  
-  
-                                                    
-   
-                               
-                                                                                       
-    
-                                           
-                                        
-    
-
-                                                   
-                                        
-    
-                          
-     
-                                                    
-     
-        
-     
-                                               
-                                                                 
-                                                     
-     
-    
-                                      
-                
-   
-  
-                                                 
-                  
- 
-      
-                                
-
-                      
-
-                
-                       
-
-                                                         
- 
-                                              
-                                  
-           
-                               
-                                                     
-         
-
-                                             
-                 
- 
-
-                                                           
- 
-                                              
-                                  
-           
-                                       
-                                                     
-         
-                 
- 
-
-          
-                                                                                
- 
-                                                 
- 
-               
-
-          
-                                                                   
- 
-                                      
-        
-
-                                                                                       
- 
-
-                                                    
- 
-                                      
-        
-
-                                                
- 
-
-                                                                                                
- 
-                                                   
-
-                                                        
-                               
-                 
-                                    
-
-             
-                            
-   
-                              
-                                             
-
-                                                    
-   
-  
-
-            
-  
-                                                                                
-
-                                             
-                                             
-
-                              
-                                        
-      
-                                               
-
-                           
-                   
-      
-                   
-
-             
-  
- 
-
-                                                          
- 
-                                                                                     
-                             
-                            
-                                             
-
-                             
-                 
-
-                 
- 
-
-                                                 
- 
-                                                
-                             
-
-                                                 
-            
-
-              
- 
-
-                                                
- 
-                                                  
- 
-                
-                     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #if CLIENT
 entity function GetCrafterUnderAim( vector worldPos, float worldRange )

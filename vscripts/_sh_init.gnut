@@ -68,6 +68,7 @@ void function SV_CL_Init()
 	ShPassiveUpgradeCore_NetvarsInit()
 	ModSystem_RunCallbacks()// MOD SYSTEM CALLBACKS, has to run as soon as remote functions start registering
 	Settings_Init() // Should run after gamemodes are verified
+	Crafting_Init()
 	
 	ShHoverVehicle_Init()
 	ShGamepad_LevelInit()
@@ -457,6 +458,7 @@ void function Client_Init()
 	ClSuicideSpectres_Init()
 	CinematicIntroScreen_Init()
 	ClWeaponStatus_Init()
+	ClCustomUsePrompt_Init()
 	ClScreenfade_Init()
 	ClIndicatorsHud_Init()
 	ClHealthHud_Init()
