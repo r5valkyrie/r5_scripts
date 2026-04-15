@@ -792,7 +792,7 @@ void function WeaponCosmetics_ApplyModelAndSkin( entity ent, ItemFlavor skin )
 
 
 	ent.SetModel( weaponModel ) // in the world, we want to show the worldmodel
-	ent.SetItemFlavorGUID( ent.e.skinItemFlavorGUID )
+	//ent.SetItemFlavorGUID( ent.e.skinItemFlavorGUID )
 	// ent.SetLegendaryModelIndex *must* be called *after* ent.SetModel(...) as it also makes a SetModel call itself from within Code.
 	if ( ent.GetNetworkedClassName() == "weaponx" )
 		ent.SetLegendaryModelIndex( fileLevel.weaponSkinLegendaryIndexMap[skin] )

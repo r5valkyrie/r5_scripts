@@ -1199,7 +1199,7 @@ void function Artifacts_Loadouts_SetupWeaponComponents( entity weapon, entity ow
 			Artifacts_Loadouts_SetPowerSourceMod( owner, weapon, artifactConfig.powerSource )
 
 			// the power source being the "skin GUID" allows us to use the skinAlias system for impact tables
-			weapon.SetItemFlavorGUID( artifactConfig.powerSource.guid )
+			//weapon.SetItemFlavorGUID( artifactConfig.powerSource.guid )
 		}
 	#endif // #if SERVER
 	

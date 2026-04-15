@@ -395,7 +395,7 @@ void function MeleeWeaponCosmetics_Apply_Internal( entity weapon, ItemFlavor mel
 	weapon.SetCamo( camoIndex )
 	
 #if SERVER
-	weapon.SetItemFlavorGUID( ItemFlavor_GetGUID( meleeSkin ) )
+	//weapon.SetItemFlavorGUID( ItemFlavor_GetGUID( meleeSkin ) )
 #endif // #if SERVER
 }
 
