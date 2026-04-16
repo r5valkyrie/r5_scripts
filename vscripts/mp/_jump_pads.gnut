@@ -55,7 +55,6 @@ void function JumpPad_GiveDoubleJump( entity player )
 		player.p.storedPlayerSettings = player.GetPlayerSettings()
 		player.p.storedPlayerSettingsMods = player.GetPlayerSettingsMods()
 		player.p.storedPlayerHealth = [ player.GetHealth(), player.GetShieldHealth() ]
-		player.p.storedPlayerPassives = GetAllPassivesForPlayer( player )
 		array< string > newMods = clone player.p.storedPlayerSettingsMods
 		newMods.append( doubleJump )
 

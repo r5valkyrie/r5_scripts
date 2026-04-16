@@ -331,13 +331,7 @@ array<string> attachmentSortOrder = ["barrel", "mag", "sight", "grip", "hopup", 
 
 string function GetLootTableString( string ref, var datatable, int rowIndex, string columnName )
 {
-	int col = GetDataTableColumnByName( datatable, columnName )
-	if ( col < 0 )
-	{
-		Warning( "GetLootTableString: missing column '" + columnName + "' for ref '" + ref + "'" )
-		return ""
-	}
-	string val = GetDataTableString( datatable, rowIndex, col )
+	string val = GetDataTableString( datatable, rowIndex, GetDataTableColumnByName( datatable, columnName ) )
 
 	if ( ShouldUsePlaylistOverridesBasedOnCalendarTime( ref, columnName ) )
 		return GetCurrentPlaylistVarString( (ref + "_dt_override_" + columnName), val )
@@ -348,25 +342,13 @@ string function GetLootTableString( string ref, var datatable, int rowIndex, str
 
 asset function GetLootTableAsset( string ref, var datatable, int rowIndex, string columnName )
 {
-	int col = GetDataTableColumnByName( datatable, columnName )
-	if ( col < 0 )
-	{
-		Warning( "GetLootTableAsset: missing column '" + columnName + "' for ref '" + ref + "'" )
-		return $""
-	}
-	return GetDataTableAsset( datatable, rowIndex, col )
+	return GetDataTableAsset( datatable, rowIndex, GetDataTableColumnByName( datatable, columnName ) )
 }
 
 
 int function GetLootTableInt( string ref, var datatable, int rowIndex, string columnName )
 {
-	int col = GetDataTableColumnByName( datatable, columnName )
-	if ( col < 0 )
-	{
-		Warning( "GetLootTableInt: missing column '" + columnName + "' for ref '" + ref + "'" )
-		return 0
-	}
-	int val = GetDataTableInt( datatable, rowIndex, col )
+	int val = GetDataTableInt( datatable, rowIndex, GetDataTableColumnByName( datatable, columnName ) )
 
 	if ( ShouldUsePlaylistOverridesBasedOnCalendarTime( ref, columnName ) )
 		return GetCurrentPlaylistVarInt( (ref + "_dt_override_" + columnName), val )
@@ -377,13 +359,7 @@ int function GetLootTableInt( string ref, var datatable, int rowIndex, string co
 
 bool function GetLootTableBool( string ref, var datatable, int rowIndex, string columnName )
 {
-	int col = GetDataTableColumnByName( datatable, columnName )
-	if ( col < 0 )
-	{
-		Warning( "GetLootTableBool: missing column '" + columnName + "' for ref '" + ref + "'" )
-		return false
-	}
-	bool val = GetDataTableBool( datatable, rowIndex, col )
+	bool val = GetDataTableBool( datatable, rowIndex, GetDataTableColumnByName( datatable, columnName ) )
 
 	if ( ShouldUsePlaylistOverridesBasedOnCalendarTime( ref, columnName ) )
 		return GetCurrentPlaylistVarBool( (ref + "_dt_override_" + columnName), val )
@@ -394,13 +370,7 @@ bool function GetLootTableBool( string ref, var datatable, int rowIndex, string 
 
 float function GetLootTableFloat( string ref, var datatable, int rowIndex, string columnName )
 {
-	int col = GetDataTableColumnByName( datatable, columnName )
-	if ( col < 0 )
-	{
-		Warning( "GetLootTableFloat: missing column '" + columnName + "' for ref '" + ref + "'" )
-		return 0.0
-	}
-	float val = GetDataTableFloat( datatable, rowIndex, col )
+	float val = GetDataTableFloat( datatable, rowIndex, GetDataTableColumnByName( datatable, columnName ) )
 
 	if ( ShouldUsePlaylistOverridesBasedOnCalendarTime( ref, columnName ) )
 		return GetCurrentPlaylistVarFloat( (ref + "_dt_override_" + columnName), val )
@@ -543,6 +513,12 @@ void function SURVIVAL_Loot_All_InitShared()
 		{
 			case eLootType.MAINWEAPON:
 				RegisterWeaponForUse( data.baseWeapon )
+				#if DEVELOPER
+					string modsStr = ""
+					foreach ( mod in data.baseMods )
+						modsStr += mod + " "
+					//printt( "[LOOT DIAG] row=" + i + " ref=\"" + data.ref + "\" baseWeapon=\"" + data.baseWeapon + "\" baseMods=[" + modsStr + "]" )
+				#endif
 				data.pickupString = GetWeaponInfoFileKeyField_WithMods_GlobalString( data.baseWeapon, data.baseMods, "printName" )
 				data.desc = GetWeaponInfoFileKeyField_WithMods_GlobalString( data.baseWeapon, data.baseMods, "description" )
 				data.hudIcon = GetWeaponInfoFileKeyFieldAsset_Global( data.baseWeapon, "hud_icon" )
@@ -558,27 +534,27 @@ void function SURVIVAL_Loot_All_InitShared()
 
 				if ( IsWeaponKeyFieldDefined( data.baseWeapon, "ammo_pool_type" ) && GetWeaponInfoFileKeyField_Global( data.baseWeapon, "uses_ammo_pool" ) != false )
 				{
-					// Please don't make this its own function.
-					// If you need int->string conversions for ammo type you're probably doing something wrong.
-					int type = GetWeaponInfoFileKeyField_WithMods_GlobalInt( data.baseWeapon, data.baseMods, "ammo_pool_type" )
+					// Engine returns ammo_pool_type as a string (e.g. "shotgun", "bullet"), not an integer.
+					// Must use the string value directly to map to ammo type constants.
+					string type = GetWeaponInfoFileKeyField_GlobalString( data.baseWeapon, "ammo_pool_type" )
 					switch( type )
 					{
-						case 0:
+						case BULLET_AMMO:
 							data.ammoType = BULLET_AMMO
 							break
-						case 1:
+						case HIGHCAL_AMMO:
 							data.ammoType = HIGHCAL_AMMO
 							break
-						case 2:
+						case SPECIAL_AMMO:
 							data.ammoType = SPECIAL_AMMO
 							break
-						case 3:
+						case SHOTGUN_AMMO:
 							data.ammoType = SHOTGUN_AMMO
 							break
-						case 4:
+						case SNIPER_AMMO:
 							data.ammoType = SNIPER_AMMO
 							break
-						case 5:
+						case ARROWS_AMMO:
 							data.ammoType = ARROWS_AMMO
 							break
 						default:
@@ -668,11 +644,9 @@ void function SURVIVAL_Loot_All_InitShared()
 				int row = GetDataTableRowMatchingStringValue( attachmentTable, GetDataTableColumnByName( attachmentTable, "mod" ), data.ref )
 				data.pickupString = GetDataTableString( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "name" ) )
 				data.desc = GetDataTableString( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "description" ) )
-				int hopupPopupDescCol = GetDataTableColumnByName( attachmentTable, "hopupPopupDesc" )
-				data.hopupPopupDesc = hopupPopupDescCol >= 0 ? GetDataTableString( attachmentTable, row, hopupPopupDescCol ) : ""
+				data.hopupPopupDesc = GetDataTableString( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "hopupPopupDesc" ) )
 
-				int ammoTypeCol = GetDataTableColumnByName( attachmentTable, "ammoType" )
-				data.ammoType = ammoTypeCol >= 0 ? GetDataTableString( attachmentTable, row, ammoTypeCol ) : ""
+				data.ammoType = GetDataTableString( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "ammoType" ) )
 				data.hudIcon = GetLootTableAsset( data.ref, dt, i, "icon" )
 				data.specialCaseInvalidReason = ""//GetDataTableString( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "specialCaseInvalidReason" ) )
 				if ( data.hudIcon == $"" )
@@ -682,8 +656,7 @@ void function SURVIVAL_Loot_All_InitShared()
 				array<string> attachmentPointList = split( attachmentPointStr, WHITESPACE_CHARACTERS )
 				data.attachmentStyle = GetDataTableString( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "type" ) )
 				data.attachmentType = SURVIVAL_Loot_GetAttachmentType_Enum( attachmentPointList[0] )
-				int emptyImageCol = GetDataTableColumnByName( attachmentTable, "emptyImage" )
-				data.emptyImage = emptyImageCol >= 0 ? GetDataTableAsset( attachmentTable, row, emptyImageCol ) : $""
+				data.emptyImage = GetDataTableAsset( attachmentTable, row, GetDataTableColumnByName( attachmentTable, "emptyImage" ) )
 
 #if (SERVER || CLIENT)
 				foreach ( string attachmentPoint in attachmentPointList )
@@ -1046,14 +1019,12 @@ bool function SURVIVAL_Loot_IsRefDisabled( string ref )
 
 bool function SURVIVAL_Loot_IsReforBaseWeaponDisabled( string ref )
 {
-	if( SURVIVAL_Loot_IsRefDisabled( ref ) ){
-		Warning("Loot_IsReforBaseWeaponDisabled" + ref + "disabled")
-		return true}
+	if( SURVIVAL_Loot_IsRefDisabled( ref ) )
+		return true
 
 	// If it's not valid, lets consider it disabled
-	if( !SURVIVAL_Loot_IsRefValid( ref ) ){
-		Warning("Loot_IsReforBaseWeaponDisabled" + ref + "not valid")
-		return true}
+	if( !SURVIVAL_Loot_IsRefValid( ref ) )
+		return true
 
 	// If the base weapon is disabled, disable all derived locked sets
 	LootData lootData = SURVIVAL_Loot_GetLootDataByRef( ref )
@@ -1063,9 +1034,8 @@ bool function SURVIVAL_Loot_IsReforBaseWeaponDisabled( string ref )
                
        
 
-	if( lootData.lootType == eLootType.MAINWEAPON && SURVIVAL_Loot_IsRefDisabled( lootData.baseWeapon ) ){
-		Warning("SURVIVAL_Loot_IsRefDisabled" + lootData.baseWeapon + "disabled")
-		return true}
+	if( lootData.lootType == eLootType.MAINWEAPON && SURVIVAL_Loot_IsRefDisabled( lootData.baseWeapon ) )
+		return true
 
 	return false
 }

@@ -873,9 +873,9 @@ void function Cl_OnPlayerEmoteStateChanged( entity player, bool playerIsEmoting 
 		if ( antiPeekEnabled )
 		{
 			// StartAntiPeekTesting not in S3
-			//player.Signal( "EndAntiPeekAfterDelay" )
+			player.Signal( "EndAntiPeekAfterDelay" )
 			//player.StartAntiPeekTesting()
-			//thread AntiPeekHintThink( player )
+			thread AntiPeekHintThink( player )
 		}
 	}
 }

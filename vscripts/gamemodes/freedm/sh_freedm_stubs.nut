@@ -4,74 +4,9 @@
 // These stubs allow the FreeDM scripts to compile and run.
 // ============================================================================
 
-// ======================== CONSTANTS ========================
-
-// ALLIANCE_NONE, ALLIANCE_A, ALLIANCE_B now defined in mp/sh_alliance_proximity.gnut
-// CHEVREX_AIRDROP_SKIN_INDEX now defined in mp/sh_airdrops.gnut
 global const string SNIPERULT_WEAPON_NAME = "mp_ability_sniper_ult" // Vantage sniper ultimate (S14+)
 
-// COLORID_CONTROL_FRIENDLY/ENEMY/CONTESTED now defined in mp/sh_alliance_proximity.gnut
-
-// ======================== ENUMS ========================
-
-// eSurvivalCommentaryBucket: FreeDM values added to existing enum in sh_survival_commentary.gnut
-// eGameModes: FREEDM added to existing enum in sh_gamemodes.gnut
-
-
-global enum eCrowdNoiseMeterModifiers
-{
-	LEAD_CHANGE_POSITIVE = 0
-	LEAD_CHANGE_NEGATIVE
-	CLOSE_TO_WINNING_MATCH_POSITIVE
-	CLOSE_TO_WINNING_MATCH_NEGATIVE
-	MATCH_HALFWAY_SCORE_REACHED_POSITIVE
-	MATCH_HALFWAY_SCORE_REACHED_NEGATIVE
-	WIN_BY_LARGE_MARGIN_POSITIVE
-	WIN_BY_MEDIUM_MARGIN_POSITIVE
-	WIN_BY_SMALL_MARGIN_POSITIVE
-}
-
-
-// ======================== CONSTANTS ========================
-// NOTE: Only define constants NOT already provided by the engine or other scripts.
-// COLORID_AIRDROP_DEFAULT_COLOR, ALLIANCE_A/B, ANNOUNCEMENT_STYLE_*, CHEVREX_AIRDROP_SKIN_INDEX
-// are already defined natively — do NOT redefine them here.
-
-// eAirdropType now defined in mp/sh_airdrops.gnut
-
 // ======================== STRUCTS ========================
-
-global struct TimedEventData
-{
-	int eventType = 0
-	bool isRepeatingEvent = false
-	bool shouldDestroyWPOnEventEnd = false
-	void functionref( TimedEventData, entity ) timedEventFunctionThread = null
-	float startTimeDelay = 0.0
-	float repeatInterval = 0.0
-	float eventLength = 0.0
-	bool functionref( float ) timedEventFunctionStartValidation = null
-	vector colorOverride = <1, 1, 1>
-	string eventName = ""
-	string eventDesc = ""
-}
-
-global struct ScoreboardData
-{
-	int numScoreColumns = 0
-	array<asset> columnDisplayIcons
-	array<float> columnDisplayIconsScale
-	array<int> columnNumDigits
-}
-
-global struct TeamsScoreboardPlayer
-{
-	int playerEHI = 0
-}
-
-// SquadSummaryPlayerData: modeSpecificSummaryData field added to existing struct in cl_gamemode_survival.nut
-// SummaryDataEntry: added to cl_gamemode_survival.nut
-
 
 global struct CancelPlayerStatesData
 {
@@ -89,10 +24,6 @@ global struct CancelPlayerStatesData
 
 // ======================== GLOBAL FUNCTION DECLARATIONS ========================
 
-// --- TimedEvents System ---
-global function TimedEvents_Init
-global function TimedEvents_RegisterTimedEvent
-
 // --- MapNode System ---
 global function MapNode_Init
 global function MapNode_IsMapDataValid
@@ -103,33 +34,12 @@ global function MapNode_ResetAvailableAirDropLocations
 global function MapNode_TakeAvailableAirdropLocation
 
 // --- AllianceProximity System ---
-// Full implementation now in mp/sh_alliance_proximity.gnut
 global function GetAllianceTeamsScore
 global function SetAllianceTeamsScore
-
-// --- CrowdNoiseMeter System ---
-global function UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast
-global function UpdateOtherTeamsOrAlliancesCrowdNoiseMeterAndBroadcast
-global function CrowdNoiseMeter_PlayGameEndSound
-
-// LoadoutSelection system: real implementation in sh_loadout_selection_system.nut
-
-// --- Teams Scoreboard System ---
-global function ShowScoreboardOrMap_Teams
-global function HideScoreboardOrMap_Teams
-global function Teams_AddCallback_ScoreboardData
-global function Teams_AddCallback_Header
-global function Teams_AddCallback_PlayerScores
-global function Teams_AddCallback_SortScoreboardPlayers
-global function Teams_AddCallback_GetTeamColor
-global function Teams_AddCallback_IsEnabled
-global function Teams_AddCallback_GetTeamName
-global function Teams_AddCallback_GetTeamIcon
 
 // --- Individual missing functions ---
 global function ForceScriptError
 #if SERVER
-// AllianceProximity_IsUsingAlliances and AllianceProximity_GetMaxNumAlliances now in mp/sh_alliance_proximity.gnut
 global function CircleCullClassName
 global function CircleCullScriptName
 global function SetVictoryKillMode
@@ -141,12 +51,8 @@ global function Remote_CallFunction_QueueForNoKillCam
 
 #if CLIENT
 global function HudTargetInfo_Enable
-// Already in sh_character_select.gnut
-//global function CharacterSelectMenu_SetCustomJIPDescription
-//global function OpenCharacterSelectMenu
 global function EmitSoundOnEntity_NoTimeScale
 global function EmitUISound
-//global function CloseCharacterSelectMenu  // Already in sh_character_select.gnut
 global function GameRules_IsTeamIndexValid
 global function SetPlayThroughPOVTransitions
 // IsRevTakeover moved to shared scope (used by both SERVER and CLIENT)
@@ -175,16 +81,8 @@ global function SetHealthAndShieldByPercentage
 #if SERVER || CLIENT
 global function GetNearbyPlayers
 #endif
-// Spawn_SetSpawnpointRatingFunc and Spawn_SetFriendlyRatingCap now live in mp/spawn.nut
-// Remote_CallFunction_QueueForNoKillCam declared above in #if SERVER
-// SquadLeader_UpdateAllUnitFramesRui declared above in #if CLIENT
-// Squads_SetCustomPlayerInfo, Squads_GetReorderedTeamsUIId, Squads_GetSquadColor, Squads_GetSquadIcon exist in _squads_utility.gnut
 
 // ======================== FUNCTION IMPLEMENTATIONS ========================
-
-// --- TimedEvents System (airdrops - disabled for initial port) ---
-void function TimedEvents_Init() {}
-void function TimedEvents_RegisterTimedEvent( TimedEventData data ) {}
 
 // --- MapNode System (map data for airdrops/cameras - disabled) ---
 void function MapNode_Init() {}
@@ -200,23 +98,6 @@ entity function MapNode_TakeAvailableAirdropLocation() { return null }
 // Only GetAllianceTeamsScore/SetAllianceTeamsScore remain as stubs (not part of alliance proximity file)
 int function GetAllianceTeamsScore( int alliance ) { return 0 }
 void function SetAllianceTeamsScore( int alliance, int score ) {}
-
-// --- CrowdNoiseMeter System (audio atmosphere - disabled) ---
-void function UpdateTeamOrAllianceCrowdNoiseMeterAndBroadcast( int teamOrAlliance, int modifier ) {}
-void function UpdateOtherTeamsOrAlliancesCrowdNoiseMeterAndBroadcast( int teamOrAlliance, int modifier ) {}
-void function CrowdNoiseMeter_PlayGameEndSound( entity player, bool isWinner ) {}
-
-// --- Teams Scoreboard System ---
-void function ShowScoreboardOrMap_Teams() {}
-void function HideScoreboardOrMap_Teams() {}
-void function Teams_AddCallback_ScoreboardData( ScoreboardData functionref() callback ) {}
-void function Teams_AddCallback_Header( void functionref( var, var, int ) callback ) {}
-void function Teams_AddCallback_PlayerScores( array<string> functionref( entity ) callback ) {}
-void function Teams_AddCallback_SortScoreboardPlayers( array<TeamsScoreboardPlayer> functionref( array<TeamsScoreboardPlayer> ) callback ) {}
-void function Teams_AddCallback_GetTeamColor( vector functionref( int ) callback ) {}
-void function Teams_AddCallback_IsEnabled( bool functionref() callback ) {}
-void function Teams_AddCallback_GetTeamName( string functionref( int ) callback ) {}
-void function Teams_AddCallback_GetTeamIcon( asset functionref( int ) callback ) {}
 
 #if SERVER || CLIENT
 array<entity> function GetNearbyPlayers( vector pos, float maxDist )
@@ -294,16 +175,11 @@ void function Remote_CallFunction_QueueForNoKillCam( entity player, string funcN
 #if CLIENT
 void function HudTargetInfo_Enable( bool enabled ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
-// Already in sh_character_select.gnut
-//void function CharacterSelectMenu_SetCustomJIPDescription( string desc ) {}
-//void function OpenCharacterSelectMenu( bool browseMode = false, bool showLocked = false, bool isJIP = false ) {}
 var function EmitSoundOnEntity_NoTimeScale( entity ent, string sound ) { EmitSoundOnEntity( ent, sound ); return null }
 void function EmitUISound( string sound ) { EmitSoundOnEntity( GetLocalClientPlayer(), sound ) }
-//void function CloseCharacterSelectMenu() {}  // Already in sh_character_select.gnut
 bool function GameRules_IsTeamIndexValid( int teamIndex ) { return teamIndex >= 0 && teamIndex < GetCurrentPlaylistVarInt( "max_teams", 20 ) + 2 }
 void function SetPlayThroughPOVTransitions( var soundHandle ) {} // Sound persistence through POV transitions
 void function LowerDVSForGameMode( bool lower ) {} // Dynamic Visibility Settings tweaks
-// Squads_SetCustomPlayerInfo, Squads_GetReorderedTeamsUIId, Squads_GetSquadColor, Squads_GetSquadIcon exist in _squads_utility.gnut
 #endif // CLIENT
 
 

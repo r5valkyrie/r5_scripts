@@ -1069,16 +1069,7 @@ void function SURVIVAL_Loot_InitShared()
 						continue
 				}
 
-				bool attachmentIsEnabled
-			try
-			{
-				attachmentIsEnabled = GetDataTableBool( attachmentMatrix, i, col )
-			}
-			catch ( e )
-			{
-				string val = GetDataTableString( attachmentMatrix, i, col )
-				attachmentIsEnabled = ( val == "1" || val == "true" )
-			}
+				bool attachmentIsEnabled = GetDataTableBool( attachmentMatrix, i, col )
 
 				foreach ( string attachPoint in aData.attachPoints )
 				{
@@ -1214,16 +1205,7 @@ void function SURVIVAL_Loot_InitShared()
 				if ( attachPoint != supportedAttachment )
 					continue
 
-				bool attachmentIsEnabled
-				try
-				{
-					attachmentIsEnabled = GetDataTableBool( attachmentMatrix, i, weaponCol )
-				}
-				catch ( e )
-				{
-					string val = GetDataTableString( attachmentMatrix, i, weaponCol )
-					attachmentIsEnabled = ( val == "1" || val == "true" )
-				}
+				bool attachmentIsEnabled = GetDataTableBool( attachmentMatrix, i, weaponCol )
 
 				if ( attachmentIsEnabled )
 					matchingAttachments += 1

@@ -252,7 +252,7 @@ WeaponData
 	"titanarmor_critical_hit_required"	"1"
 	Mods
 	{
-        gold
+        crate
         {
         }       
     	shotgun_bolt_l1
@@ -276,7 +276,9 @@ WeaponData
         }
                                                             
          
-      
+      	hopup_unshielded_dmg
+        {
+        }  
 
                   
         hopup_double_tap
@@ -379,29 +381,7 @@ WeaponData
 		{
 			"ui1_enable"		            "0"
 		}
-
-		legendary1
-		{
-			//"ui25_enable"									"0"
-			"viewmodel"   									"mdl/weapons/w1128/ptpov_w1128_legendary_01.rmdl"
-			"playermodel" 									"mdl/weapons/w1128/w_w1128_legendary_01.rmdl"
-
-			//"dof_zoom_nearDepthStart"						"2.000"
-			//"dof_zoom_nearDepthEnd"							"4.750"
-		}
-
-               
-                                                                                                     
-                    
-         
-                                                                                          
-         4d
-		 {
-			"damage_near_value"   							"8"
-			"damage_far_value"								"8"
-		 }
       
-	
 		infinite_ammo
 		{
 			"ammo_min_to_fire"                      "0"

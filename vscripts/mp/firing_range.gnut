@@ -414,7 +414,6 @@ void function FiringRangeGameMode_Init()
 		Remote_RegisterServerFunction( "UCB_SV_FRSetting_HitMarks", "bool" )
 		Remote_RegisterServerFunction( "UCB_SV_FRSetting_HitMarks_Toggle" )
 		Remote_RegisterServerFunction( "UCB_SV_FRSetting_Show3rdPerson", "bool" )
-	                    
 		Remote_RegisterServerFunction( "UCB_SV_FRSetting_LegendUpgradesEnabled", "bool" )
                            
 
@@ -4208,9 +4207,9 @@ void function DynStats_UpdateStats_RUI(  int shotsFired, float damageDone, int s
 
 	RuiSetFloat( file.dynamicStatsRui, "accuracy" , accuracy )
 	//RuiSetString( file.dynamicStatsRui, "damageDone" , FR_FormatFloat( damageDone, 5, 2 ) )
-	RuiSetString( file.dynamicStatsRui, "critShots" , FR_FormatInt( critShotsHit, 5, 2 ) )
-	RuiSetString(file.dynamicStatsRui, "shotsFired", FR_FormatInt( shotsFired, 5, 2 ) )
-	RuiSetString(file.dynamicStatsRui, "kills", FR_FormatInt( kills, 5, 2 ) )
+//	RuiSetString( file.dynamicStatsRui, "critShots" , FR_FormatInt( critShotsHit, 5, 2 ) )
+//	RuiSetString(file.dynamicStatsRui, "shotsFired", FR_FormatInt( shotsFired, 5, 2 ) )
+//	RuiSetString(file.dynamicStatsRui, "kills", FR_FormatInt( kills, 5, 2 ) )
 
 	float lastAccuracy
 	if ( file.lastShotsFired != 0 )
@@ -4220,11 +4219,11 @@ void function DynStats_UpdateStats_RUI(  int shotsFired, float damageDone, int s
 				lastAccuracy = 100.0
 	}
 
-	RuiSetFloat( file.dynamicStatsRui, "lastAccuracy", lastAccuracy )
-	RuiSetString( file.dynamicStatsRui, "lastDamageDone", FR_FormatFloat( file.lastDamage, 5, 2 ) )
-	RuiSetString( file.dynamicStatsRui, "lastCritShots", FR_FormatInt( file.lastCritShotsHit, 5, 2 ) )
-	RuiSetString (file.dynamicStatsRui, "lastShotsFired", FR_FormatInt( file.lastShotsFired, 5, 2 ) )
-	RuiSetString (file.dynamicStatsRui, "lastKills", FR_FormatInt( file.lastKills, 5, 2 ) )
+//	RuiSetFloat( file.dynamicStatsRui, "lastAccuracy", lastAccuracy )
+//	RuiSetString( file.dynamicStatsRui, "lastDamageDone", FR_FormatFloat( file.lastDamage, 5, 2 ) )
+//	RuiSetString( file.dynamicStatsRui, "lastCritShots", FR_FormatInt( file.lastCritShotsHit, 5, 2 ) )
+//	RuiSetString (file.dynamicStatsRui, "lastShotsFired", FR_FormatInt( file.lastShotsFired, 5, 2 ) )
+//	RuiSetString (file.dynamicStatsRui, "lastKills", FR_FormatInt( file.lastKills, 5, 2 ) )
 }
 
 void function FR_DymicStats_OnReloadHoldResetStatsController( var button )

@@ -1899,9 +1899,13 @@ void function UpdateSkydiveRui_Emotes( var rui, entity player )
 	bool emoteAvailable = canEmote && emotes.len() > 0
 	RuiSetBool( rui, "emoteAvailable", emoteAvailable )
 
-	table<int, ItemFlavor> skydiveEmotes = GetValidPlayerSkydiveEmotes( player )
-	bool skydiveAvailable = canEmote && skydiveEmotes.len() > 0
-	RuiSetBool( rui, "skydiveAvailable", skydiveAvailable )
+	//table<int, ItemFlavor> skydiveEmotes = GetValidPlayerSkydiveEmotes( player )
+	//bool skydiveAvailable = canEmote && skydiveEmotes.len() > 0
+	//RuiSetBool( rui, "skydiveAvailable", skydiveAvailable )
+	//these are s21 rui only, does not exist in s21, falling back to s16 codebase
+	
+	string emoteHint = (EmoteMenuOnHold() && (emotes.len() > 1)) ? "#FREEFALL_EMOTE_HINT_MENU" : "#FREEFALL_EMOTE_HINT"
+	RuiSetString( rui, "emoteHintString", emoteHint )
 }
 
 void function UpdateSkydiveRui_MusicTrackInfo( var rui )
@@ -2017,8 +2021,11 @@ void function PlayerFreefallEmoteAvailableChanged( entity player, bool isFreefal
 	printt( "PlayerFreefallEmoteAvailableChanged", isFreefallEmoteAvailable )
 	if ( file.skydiveRui != null )
 	{
-		bool hasSkydiveEmotes = GetValidPlayerSkydiveEmotes( player ).len() > 0
-		RuiSetBool( file.skydiveRui, "skydiveAvailable", isFreefallEmoteAvailable && hasSkydiveEmotes )
+	//	bool hasSkydiveEmotes = GetValidPlayerSkydiveEmotes( player ).len() > 0
+	//	RuiSetBool( file.skydiveRui, "skydiveAvailable", isFreefallEmoteAvailable && hasSkydiveEmotes )
+	// s21 only, falling back to s16
+	
+		RuiSetBool( file.skydiveRui, "emoteAvailable", isFreefallEmoteAvailable )
 	}
 }
 

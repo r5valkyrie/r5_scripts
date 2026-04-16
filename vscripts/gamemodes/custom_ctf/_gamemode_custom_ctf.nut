@@ -753,11 +753,6 @@ void function StartRound()
 
 					SetGameState(eGameState.MapVoting)
 
-					if( Flowstate_IsHaloMode() )
-					{
-						Remote_CallFunction_ByRef( player, "ForceScoreboardLoseFocus" )
-						Remote_CallFunction_NonReplay( player, "FS_ForceDestroyCustomAdsOverlay" )
-					}
 
 					AddCinematicFlag( player, CE_FLAG_HIDE_MAIN_HUD | CE_FLAG_HIDE_PERMANENT_HUD )
 
@@ -1706,11 +1701,6 @@ void function _OnPlayerDied(entity victim, entity attacker, var damageInfo)
 			if( !IsValid( victim ) )
 				return
 
-			if( Flowstate_IsHaloMode() )
-			{
-				Remote_CallFunction_ByRef( victim, "ForceScoreboardLoseFocus" )
-				Remote_CallFunction_NonReplay( victim, "FS_ForceDestroyCustomAdsOverlay" )
-			}
 
 			if (!CTF.votingtime)
 			{

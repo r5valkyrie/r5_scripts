@@ -430,17 +430,18 @@ WeaponData
 
 	Mods
 	{
-        gold
+        crate
         {
         }
-	survival_finite_ammo
-	{
+
+		survival_finite_ammo
+		{
             "ammo_default_total"							"0"
             "ammo_stockpile_max"							"66"
             "ammo_no_remove_from_stockpile"					"0"
 
             "low_ammo_fraction" 							"0.3"
-		"uses_ammo_pool"								"1"
+			"uses_ammo_pool"								"1"
         }
 
         "barrel_stabilizer_l4_flash_hider"

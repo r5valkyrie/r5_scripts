@@ -194,9 +194,9 @@ struct
 	bool menuThinkThreadActive = false
 
 	bool TEMP_circularReferenceCleanupEnabled = true
-	
+
 	bool loadScreenFinished = false
-	
+
 	table<string, int> t_persistenceAttempts
 
 	bool lastMenuNavDirection = MENU_NAV_FORWARD
@@ -522,7 +522,7 @@ void function UICodeCallback_LevelLoadingFinished( bool error )
 void function UICodeCallback_LevelInit( string levelname )
 {
 	printt( "UICodeCallback_LevelInit: " + levelname + ", IsConnected(): ", IsConnected() )
-	file.loadScreenFinished = false 
+	file.loadScreenFinished = false
 }
 
 
@@ -613,6 +613,7 @@ void function UICodeCallback_FullyConnected( string levelname )
 		UpdatePrecachedSPWeapons()
 	#endif
 
+	LoadoutSelection_Init()
 
 	if ( !uiGlobal.loadoutsInitialized )
 	{

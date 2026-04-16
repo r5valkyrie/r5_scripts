@@ -3060,6 +3060,7 @@ entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngl
 
 	SetForceDrawWhileParented( ent, true )
 	//ent.SetSurvivalPropFadeDist( GetFadeDistForLoot( lootData ) ) // S3: not available
+	ent.kv.fadedist = GetFadeDistForLoot( lootData )
 
 	ent.SetUsable()
 	ent.SetUsableByGroup( "pilot" )
@@ -3090,13 +3091,38 @@ entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngl
 			}
 		}
 
-		try
+		if ( mods.len() == 0 )
 		{
 			ent.SetWeaponMods( mods )
 		}
-		catch ( ex )
+		else
 		{
-			Warning( "SpawnGenericLoot: Skipping invalid mods for weapon '" + baseWeapon + "': " + ex )
+			// Try setting mods one at a time to identify which ones are valid
+			array<string> validMods = []
+			foreach ( mod in mods )
+			{
+				try
+				{
+					ent.SetWeaponMods( [ mod ] )
+					validMods.append( mod )
+				}
+				catch ( modEx )
+				{
+					Warning( "SpawnGenericLoot: Mod '" + mod + "' is invalid for weapon '" + baseWeapon + "': " + modEx )
+				}
+			}
+
+			if ( validMods.len() > 0 )
+			{
+				try
+				{
+					ent.SetWeaponMods( validMods )
+				}
+				catch ( ex2 )
+				{
+					Warning( "SpawnGenericLoot: Failed to set valid mods [" + validMods.join( ", " ) + "] for weapon '" + baseWeapon + "': " + ex2 )
+				}
+			}
 		}
 		// TEMP HACK
 		//okay then, let's un-hack it? - johodgson
@@ -3130,7 +3156,7 @@ entity function SpawnGenericLoot( string ref, vector origin, vector overrideAngl
 
 	if ( lootType == eLootType.ARMOR && EvolvingArmor_IsEquipmentEvolvingArmor( lootData.ref ) )
 	{
-		//ent.SetSurvivalPropFadeDist( 15000.0 ) // S3: not available
+		ent.kv.fadedist = 15000.0  // S3: SetSurvivalPropFadeDist not available
 		SetPropSurvivalMainPropertyOnEnt( ent, EvolvingArmor_GetEvolvingArmorHealthForTier( lootData.tier ) )
 		SetPropSurvivalExtraPropertyOnEnt( ent, EvolvingArmor_GetRequirementForEvolution( lootData.tier ) )
 	}
@@ -6200,7 +6226,6 @@ void function Death_DropPlayerItems( entity deathBox, entity player, string item
 		if ( mods.len() > 0 )
 		{
 			ent.SetWeaponMods( mods )
-			Warning("Weapon mods disabled until loots are fixed")
 				thread DismantleWeaponModsAfterInterval( ent, LOOT_THROW_WEAPON_MOD_DISMANTLE_DELAY, 0 )
 		}
 
@@ -8031,9 +8056,7 @@ void function HandleDeathboxOnDoorInteraction( entity door, entity attacker, vec
 		return
 
 	entity deathbox
-	// S3: GetChildren() not available - find deathbox by target name instead
-	array<entity> deathBoxes = GetEntArrayByScriptName( DEATH_BOX_TARGETNAME )
-	foreach ( ent in deathBoxes )
+	foreach ( ent in GetChildren(door) )
 	{
 		if ( ent.GetParent() == door )
 		{

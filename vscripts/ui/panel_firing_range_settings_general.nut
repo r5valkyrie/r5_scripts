@@ -9,9 +9,9 @@ global function Firing_Range_SetRangeState
 global function Firing_Range_SetFriendlyFire
 global function Firing_Range_SetDynStatsState
 global function Firing_Range_SetDynTimerState
-                   
-                                                  
-      
+
+
+
 struct
 {
 	var panel
@@ -82,7 +82,7 @@ void function SetupSettings()
 	file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.CANCROUCH ] <- Hud_GetChild( file.contentPanel, "SwitchBehaviorCanCrouch" )
 	file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.RANDINTERVALS ] <- Hud_GetChild( file.contentPanel, "SwitchBehaviorRandIntervals" )
 
-	          
+
 	SetupSettingsButton( file.generalSettingsToHud[ eFRSettingType.SHOWDYNSTATS ], "#FRSETTING_SHOWDYNSTATS", "#FRSETTING_SHOWDYNSTATS_DESC", $"", false, false )
 	AddButtonEventHandler( file.generalSettingsToHud[ eFRSettingType.SHOWDYNSTATS ], UIE_CHANGE, void function( var btn ){ Firing_Range_GeneralSettingChanged( eFRSettingType.SHOWDYNSTATS, btn ) } )
 
@@ -92,7 +92,7 @@ void function SetupSettings()
 	SetupSettingsButton( file.generalSettingsToHud[ eFRSettingType.SHOWHITMARKS ], "#FRSETTING_SHOWHITMARKS", "#FRSETTING_SHOWHITMARKS_DESC", $"", false, false )
 	AddButtonEventHandler( file.generalSettingsToHud[ eFRSettingType.SHOWHITMARKS ], UIE_CHANGE, void function( var btn ){ Firing_Range_GeneralSettingChanged( eFRSettingType.SHOWHITMARKS, btn ) } )
 
-	         
+
 	SetupSettingsButton( file.generalSettingsToHud[ eFRSettingType.FRIENDLYFIRE ], "#HUD_FRSETTING_FRIENDLYFIRE", "#HUD_FRSETTING_FRIENDLYFIRE_DESC", $"", false, true )
 	AddButtonEventHandler( file.generalSettingsToHud[ eFRSettingType.FRIENDLYFIRE ], UIE_CHANGE, void function( var btn ){ Firing_Range_GeneralSettingChanged( eFRSettingType.FRIENDLYFIRE, btn ) } )
 
@@ -102,7 +102,7 @@ void function SetupSettings()
 	SetupSettingsButton( file.generalSettingsToHud[ eFRSettingType.FRDUMMIESHIELDLVL ], "#FRSETTING_DUMMIESHIELD", "#FRSETTING_DUMMIESHIELD_DESC", $"", false, true  )
 	AddButtonEventHandler( file.generalSettingsToHud[ eFRSettingType.FRDUMMIESHIELDLVL ], UIE_CHANGE, void function( var btn ){ Firing_Range_GeneralSettingChanged( eFRSettingType.FRDUMMIESHIELDLVL, btn ) } )
 
-	         
+
 	SetupSettingsButton( file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.STAYINPLACE ], "#FRSETTING_DUMMIEINPLACE", "#FRSETTING_DUMMIEINPLACE_DESC", $"", false, true  )
 	AddButtonEventHandler( file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.STAYINPLACE ], UIE_CHANGE, void function( var btn ){ Firing_Range_DummieSettingChanged( eDummieBehaviorType.STAYINPLACE, btn ) } )
 
@@ -121,52 +121,52 @@ void function SetupSettings()
 	SetupSettingsButton( file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.RANDINTERVALS ], "#FRSETTING_DUMMIERANDOM", "#FRSETTING_DUMMIERANDOM_DESC", $"", false, true  )
 	AddButtonEventHandler( file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.RANDINTERVALS ], UIE_CHANGE, void function( var btn ){ Firing_Range_DummieSettingChanged( eDummieBehaviorType.RANDINTERVALS, btn ) } )
 }
-const string BUTTONTEXT_INDENT = "    "                    
+const string BUTTONTEXT_INDENT = "    "
 
 void function OnFiringRangeSettingsGeneralPanel_Show( var panel )
 {
 	file.isOpened = true
 	RunClientScript( "FRSettings_Client_Update" )
 
-                    
-                        
-                          
-                                                                                      
 
-                                                                                                       
-                                                                                                     
-                                                                                                     
 
-                                                                                                   
-                                                                                                            
-                                                                                                   
 
-                                                                                          
-                                                                                         
-                                                                                                 
-                                                                                                     
 
-                      
-   
-                                                                                                                           
-                                                                                                    
 
-                                                                                                                         
-                                                                                                  
 
-                                                                                                                         
-                                                                                                  
 
-                                                                                 
-                                                                                                
 
-                                                                                            
-                                                                                                         
 
-                                                                                                 
-                                                                                                
-   
-       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	ScrollPanel_SetActive( file.contentPanelParent, true )
 
@@ -190,7 +190,7 @@ void function UpdateDetails()
 	Hud_SetEnabled( file.generalSettingsToHud[ eFRSettingType.TARGETSPEED ], file.isRangeMaster )
 	Hud_SetEnabled( file.generalSettingsToHud[ eFRSettingType.FRDUMMIESHIELDLVL ], file.isRangeMaster )
 
-	                                                                      
+
 	bool stayStill = int( Hud_GetDialogListSelectionValue( file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.STAYINPLACE ] ) ) == 1
 	bool canStrafe = int( Hud_GetDialogListSelectionValue( file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.STRAFE ] ) ) == 1
 
@@ -201,7 +201,7 @@ void function UpdateDetails()
 	Hud_SetEnabled( file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.STRAFE ], file.isRangeMaster )
 	Hud_SetEnabled( file.generalSettingsToHud[ eFRSettingType.FRDUMMIESPEED ], file.isRangeMaster && canStrafe )
 
-	                                                            
+
 	bool canStand = int( Hud_GetDialogListSelectionValue( file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.CANSTAND ] ) ) == 1
 	bool canCouch = int( Hud_GetDialogListSelectionValue( file.dummieBehaviorSettingsToHud[ eDummieBehaviorType.CANCROUCH ] ) ) == 1
 
@@ -261,28 +261,28 @@ void function Firing_Range_SetDummieSetting( int setting, float value )
 	file.dummieBehaviorSettings[ setting ] <- value
 	UpdateDetails()
 }
-                   
-                                                                            
- 
-                                                                                          
-        
 
-                                               
-  
-                                                                     
-   
-                                                                                               
-   
-                                                                                                                                
-   
-                                                                                               
-   
-  
 
-                                             
-                
- 
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function Firing_Range_GeneralSettingChanged( int setting, var btn )
 {
@@ -312,7 +312,7 @@ void function Firing_Range_GeneralSettingChanged( int setting, var btn )
 	}
 
 	UpdateDetails()
-	                                       
+
 	if( !file.isRangeMaster )
 		return
 
@@ -350,7 +350,7 @@ void function Firing_Range_DummieSettingChanged( int setting, var btn )
 	int index = Hud_GetDialogListSelectionIndex( btn )
 	bool boolValue = bool( index )
 
-	                   
+
 	if( !file.isRangeMaster )
 		return
 
@@ -383,15 +383,15 @@ void function Firing_Range_DummieSettingChanged( int setting, var btn )
 	UpdateDetails()
 }
 
-                                      
+
 void function SetUpOptionsButton( var button, FiringRangeOption option )
 {
 	HudElem_SetRuiArg( button, "buttonText", option.name )
 
 	if( !file.buttons.contains( button ) )
 	{
-		                                                                     
-		AddButtonEventHandler( button, UIE_CLICK,             
+
+		AddButtonEventHandler( button, UIE_CLICK,
 			void function( var button ) : ( option )
 			{
 				if(option.onChangeCallback != null )
@@ -406,43 +406,43 @@ void function SetUpOptionsButton( var button, FiringRangeOption option )
 
 	file.buttons.append( button )
 }
-                   
-                                                   
- 
-                                                                                                                                  
- 
 
-                                                   
- 
-                                                                                                                                  
- 
 
-                                                   
- 
-                                                                                                                                  
- 
 
-                                                    
- 
-                                                                                                                                   
- 
 
-                                                   
- 
-                                                                                                             
- 
 
-                                          
- 
-                                                                
- 
 
-                                                   
- 
-                                                                  
- 
 
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function EnableCharacterChangeInFiringRange( bool enable )
 {

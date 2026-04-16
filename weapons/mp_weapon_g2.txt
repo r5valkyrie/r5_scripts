@@ -270,10 +270,10 @@
 	"damage_very_far_distance"	"5000"
 	"Mods"
 	{
-	    gold	    {}
-	    whiteset    {}
-        blueset     {}
-        purpleset   {}
+		"crate"
+		{
+
+		}
 
 		"survival_finite_ammo"
 		{
@@ -386,6 +386,144 @@
         {
             "ammo_clip_size"  "20"
         }
+
+		// child unk: 15
+		"auto_loader"
+		{
+			// val unk: 8
+			"reload_time" "*0.60"
+			// val unk: 9
+			"reload_time_late1" "*0.60"
+			// val unk: 10
+			"reload_time_late2" "*0.60"
+			// val unk: 11
+			"reload_time_late3" "*0.60"
+			// val unk: 1
+			"reload_time_late4" "*0.60"
+			// val unk: 2
+			"reload_time_late5" "*0.60"
+			// val unk: 3
+			"reloadempty_time" "*0.60"
+			// val unk: 4
+			"reloadempty_time_late1" "*0.60"
+			// val unk: 5
+			"reloadempty_time_late2" "*0.60"
+			// val unk: 6
+			"reloadempty_time_late3" "*0.60"
+			// val unk: 0
+			"reloadempty_time_late4" "*0.60"
+			// val unk: 7
+			"reloadempty_time_late5" "*0.60"
+
+		}
+
+		// child unk: 21
+		"barrel_stabilizer_l1"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_medium"
+			// val unk: 4
+			"bodygroup27_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.95"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.8"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.95"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.9"
+
+		}
+
+		// child unk: 1
+		"barrel_stabilizer_l2"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_medium"
+			// val unk: 4
+			"bodygroup27_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.9"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.75"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.9"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.85"
+
+		}
+
+		// child unk: 19
+		"barrel_stabilizer_l3"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_medium"
+			// val unk: 4
+			"bodygroup27_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.85"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.7"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.85"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.8"
+
+		}
+
+		// child unk: 7
+		"barrel_stabilizer_l4_flash_hider"
+		{
+			// val unk: 1
+			"fx_muzzle_flash_attach" "muzzle_flash_suppressor_medium"
+			// val unk: 4
+			"bodygroup26_set" "1"
+			// val unk: 5
+			"viewkick_pitch_base" "*0.85"
+			// val unk: 2
+			"viewkick_pitch_random" "*0.7"
+			// val unk: 0
+			"viewkick_yaw_base" "*0.85"
+			// val unk: 3
+			"viewkick_yaw_random" "*0.8"
+
+		}
+
+		// child unk: 14
+		"paintball"
+		{
+			// val unk: 11
+			"impact_effect_table" "bullet_pb_Random"
+			// val unk: 0
+			"projectile_trail_effect_0" "P_tracer_projectile_pb"
+			// val unk: 12
+			"projectile_trail_effect_1" "P_tracer_projectile_pb"
+			// val unk: 13
+			"reload_time" "*0.75"
+			// val unk: 14
+			"reload_time_late1" "*0.75"
+			// val unk: 4
+			"reload_time_late2" "*0.75"
+			// val unk: 5
+			"reload_time_late3" "*0.75"
+			// val unk: 6
+			"reload_time_late4" "*0.75"
+			// val unk: 7
+			"reload_time_late5" "*0.75"
+			// val unk: 8
+			"reloadempty_time" "*0.75"
+			// val unk: 2
+			"reloadempty_time_late1" "*0.75"
+			// val unk: 1
+			"reloadempty_time_late2" "*0.75"
+			// val unk: 9
+			"reloadempty_time_late3" "*0.75"
+			// val unk: 3
+			"reloadempty_time_late4" "*0.75"
+			// val unk: 10
+			"reloadempty_time_late5" "*0.75"
+
+		}
 
         "stock_sniper_l1"
         {

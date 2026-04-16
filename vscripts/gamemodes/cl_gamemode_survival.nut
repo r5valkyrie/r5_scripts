@@ -1496,7 +1496,7 @@ void function OnHealthPickupTypeChanged( entity player, int kitType )
 {
 	if ( WeaponDrivenConsumablesEnabled() )
 	{
-		Consumable_OnSelectedConsumableTypeNetIntChanged( player, -1, kitType, true )
+		Consumable_OnSelectedConsumableTypeNetIntChanged( player, kitType )
 	}
 
 	if ( !IsLocalViewPlayer( player ) )

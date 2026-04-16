@@ -79,7 +79,7 @@ WeaponData
 
 	// PS5 Adaptive Triggers
 	"r_trig_custom_str"								"1"
-
+	"smart_reload_overload_ammo_required" "2"
     // Damage - When Used by Players
     "damage_near_value"   							"50"
     "damage_far_value"								"50"
@@ -245,8 +245,18 @@ WeaponData
 	"titanarmor_critical_hit_required"	"1"
 	Mods
 	{
-	    gold
+        hopup_quickdraw_holster
         {
+            "zoom_time_in"						"*0.7"
+            "zoom_time_out"   					"*0.7"
+
+            "deploy_time" 						"*0.7"
+            "holster_time"						"*0.7"
+            "raise_time" 						"*0.75"
+            "lower_time"						"*0.75"
+
+            "spread_stand_hip"					"*0.75"
+            "spread_stand_hip_run"				"*0.9"
         }
 		
         hopup_headshot_dmg
@@ -336,6 +346,85 @@ WeaponData
 			"ammo_no_remove_from_clip"              "1"
 			"ammo_no_remove_from_stockpile"         "1"
 			"low_ammo_fraction"                     "0.0"
+		}
+        hopup_smart_reload
+        {
+        }
+
+        fast_reload_mod
+        {
+            "reload_time" 									"1.4"
+        }
+
+        overloaded_ammo
+        {
+            "ammo_clip_size"   							"++2"
+        }
+
+		// child unk: 6
+		"auto_loader"
+		{
+			// val unk: 8
+			"reload_time" "*0.60"
+			// val unk: 9
+			"reload_time_late1" "*0.60"
+			// val unk: 10
+			"reload_time_late2" "*0.60"
+			// val unk: 11
+			"reload_time_late3" "*0.60"
+			// val unk: 1
+			"reload_time_late4" "*0.60"
+			// val unk: 2
+			"reload_time_late5" "*0.60"
+			// val unk: 3
+			"reloadempty_time" "*0.60"
+			// val unk: 4
+			"reloadempty_time_late1" "*0.60"
+			// val unk: 5
+			"reloadempty_time_late2" "*0.60"
+			// val unk: 6
+			"reloadempty_time_late3" "*0.60"
+			// val unk: 0
+			"reloadempty_time_late4" "*0.60"
+			// val unk: 7
+			"reloadempty_time_late5" "*0.60"
+
+		}
+
+		// child unk: 7
+		"paintball"
+		{
+			// val unk: 11
+			"impact_effect_table" "bullet_pb_Random"
+			// val unk: 0
+			"projectile_trail_effect_0" "P_tracer_projectile_pb"
+			// val unk: 12
+			"projectile_trail_effect_1" "P_tracer_projectile_pb"
+			// val unk: 13
+			"reload_time" "*0.75"
+			// val unk: 14
+			"reload_time_late1" "*0.75"
+			// val unk: 4
+			"reload_time_late2" "*0.75"
+			// val unk: 5
+			"reload_time_late3" "*0.75"
+			// val unk: 6
+			"reload_time_late4" "*0.75"
+			// val unk: 7
+			"reload_time_late5" "*0.75"
+			// val unk: 8
+			"reloadempty_time" "*0.75"
+			// val unk: 2
+			"reloadempty_time_late1" "*0.75"
+			// val unk: 1
+			"reloadempty_time_late2" "*0.75"
+			// val unk: 9
+			"reloadempty_time_late3" "*0.75"
+			// val unk: 3
+			"reloadempty_time_late4" "*0.75"
+			// val unk: 10
+			"reloadempty_time_late5" "*0.75"
+
 		}
 	}
 

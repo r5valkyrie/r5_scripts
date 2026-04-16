@@ -252,7 +252,7 @@ WeaponData
 	"headshot_distance"	"1500"
 	Mods
 	{
-        gold
+        crate
         {
         }
 		survival_finite_ammo

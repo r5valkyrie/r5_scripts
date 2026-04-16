@@ -48,7 +48,6 @@ global const string PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME = "rebuilt_door"
 global const string SPIKE_STRIP_CORE_SPIKE_NAME = "core_spike_target_name"
 global const string ARMORED_LEAP_SHIELD_ANCHOR_SCRIPTNAME = "al_shield_anchor"
 global const string FERRO_WALL_SEGMENT_TARGET_NAME = "ferro_wall_segment"
-global const string CONTROL_OBJECTIVE_SCRIPTNAME = "control_objective"
 global const string HUNT_DATAPAD_TARGETNAME = "Hunt"
 global const string MEDBAY_PING_SCRIPT_NAME = "medical_bay_ping"
 global const string PHASE_DOOR_ROOT_ENT_SCRIPTNAME = "phase_door_root_ent"
@@ -61,7 +60,6 @@ global const string TRANSPORT_PORTAL_ALLY_PORTAL_SCRIPTNAME = "alter_ult_ally_po
 global const string TRANSPORT_PORTAL_RECEIVER_SCRIPTNAME = "alter_ult_receiver"
 global const string TRANSPORT_PORTAL_TRANSLOCATOR_TRACE_BLOCKER_SCRIPTNAME = "alter_ult_translocator_trace_blocker"
 global const string TREASUREHUNT_OBJECTIVE_SCRIPTNAME = "treasurehunt_objective"
-global const int CONTROL_INT_OBJ_ALLIANCE_OWNER = 0
 global const string SURVIVAL_HUD_SQUADTAG_PVAR = "use_dynamic_squad_tag"
 global const asset SURVIVAL_HUD_SQUADTAG = $"ui/squad_tag.rpak"
 #if CLIENT
@@ -82,7 +80,6 @@ global const bool CHALLENGE_DEBUG = false
 global const int ASSET_SETTINGS_UNIQUE_ID_INVALID = -1
 global const int GRX_CURRENCY_HEIRLOOM = 3
 global const string DEATH_BOX_TARGETNAME = "player_death_box"
-global const string MRB_WEAPON_REF_NAME = "mp_ability_mobile_respawn_beacon"
 global const string VOID_RING_WEAPON_REF = "mp_ability_void_ring"
 global const string REDEPLOY_BALLOON_WEAPON_REF = "mp_ability_redeploy_balloon"
 global const string COPYCAT_NAME = "mp_ability_copycat_kit"
@@ -201,7 +198,6 @@ global const int FIRING_RANGE_AI_BUDGET_MAX = 190
 global const asset FIRINGRANGE_DOOR_ASSET = $"mdl/door/canyonlands_door_single_02.rmdl"
 global const int WPT_VIEWHANDS = 0x100
 global const string KRABER_WEAPON_NAME = "mp_weapon_sniper"
-global const string MIRAGE_DECOY_DROP_SCRIPTNAME = "mirage_decoy_drop"
 global const string VANTAGE_RECALL_WEAPON_NAME = "mp_weapon_vantage_recall"
 global const float SNIPERULT_HEALINGDENIED_DURATION = 15
 global const float REV_SHELL_GIVE_UP_TIME = 30
@@ -3418,22 +3414,6 @@ global enum eRuiArgType
 	VECTOR
 	BOOL
 	COLOR
-}
-
-global const int CONTROL_OBJECTIVE_B_INDEX = 1
-global const int CONTROL_WAYPOINT_BASE0_INDEX = 0
-global const int CONTROL_WAYPOINT_BASE1_INDEX = 1
-global const int CONTROL_WAYPOINT_PLAYER_INDEX = 2
-global const int CONTROL_WAYPOINT_POINT_INDEX = 3
-global const int CONTROL_WAYPOINT_MRB_INDEX = 4
-global const asset CONTROL_WAYPOINT_BASE_ICON = $"rui/hud/gametype_icons/survival/sur_hovertank_minimap"
-global const asset CONTROL_WAYPOINT_PLAYER_ICON = $"rui/hud/gamestate/player_count_icon"
-
-global enum eControlSpawnWaypointUsage
-{
-	ENEMY_TEAM,
-	NOT_USABLE,
-	FRIENDLY_TEAM
 }
 
 global enum eDummieBehaviorType

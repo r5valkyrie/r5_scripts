@@ -179,6 +179,7 @@ void function InitWeaponScripts()
 	MpWeaponLifelineBatonPrimary_Init()
 	MpWeaponDeployableCover_Init()
 	MeleeShadowsquadHands_Init()
+	MpWeaponEmoteProjector_Init()
 	MpGenericOffhand_Init()
 
 	#if DEVELOPER
@@ -3289,6 +3290,11 @@ bool function HasBitMask( int bitsExisting, int bitsToCheck )
 	return bitsCommon == bitsToCheck
 }
 
+void function SetDeathCamTimeOverride( float functionref() func )
+{
+	file.getDeathCamTimeOverride = func
+}
+
 float function GetDeathCamLength( entity player )
 {
 	if ( file.getDeathCamTimeOverride != null )
@@ -3301,9 +3307,17 @@ float function GetDeathCamLength( entity player )
 	return DEATHCAM_TIME
 }
 
+void function SetDeathCamSpectateTimeOverride( float functionref() func )
+{
+	file.getDeathCamSpectateTimeOverride = func
+}
+
 // Returns minimum death cam spectate length from playlist
 float function GetDeathCamSpectateLength()
 {
+	if ( file.getDeathCamSpectateTimeOverride != null )
+		return file.getDeathCamSpectateTimeOverride()
+
 	return GetCurrentPlaylistVarFloat( "min_deathcam_spectate_length", 0.0 )
 }
 
@@ -3312,6 +3326,7 @@ float function GetRespawnButtonCamTime( entity player )
 	const float RESPAWN_BUTTON_BUFFER = 0.0
 	return DEATHCAM_TIME + RESPAWN_BUTTON_BUFFER
 }
+
 
 bool function IntroPreviewOn()
 {
@@ -3331,6 +3346,7 @@ bool function IntroPreviewOn()
 
 	return false
 }
+
 
 bool function EntHasModelSet( entity ent )
 {
@@ -3711,20 +3727,46 @@ void function SetPlayerVoiceOverride( entity player, string voice )
 
 void function SetTeam( entity ent, int team )
 {
-	int oldTeam = ent.GetTeam()
-
-	#if DEVELOPER
-	if( ent.IsPlayer() )
-		printw( "TEAMING - ASSIGNING TEAM TO PLAYER", ent, "NEW", team, "OLD", oldTeam )
-	#endif
-
-	ent.Code_SetTeam( team )
-
-	#if SERVER
-		if( ent.IsPlayer() )
+	#if CLIENT
+		ent.Code_SetTeam( team )
+	#else
+		if ( ent.IsPlayer() )
 		{
-			if( team != oldTeam )
-				AssignTeamIndexToPlayer( ent )
+			ent.Code_SetTeam( team )
+			SetTeam_EquipmentAndAbilities( ent, team )
+		}
+		else if ( ent.IsNPC() )
+		{
+			ent.Code_SetTeam( team )
+
+			if ( ent.GetModelName() == $"" )
+				return
+
+			if ( IsGrunt( ent ) || IsSpectre( ent ) )
+			{
+				array<entity> players = GetPlayerArray()
+				foreach ( player in players )
+				{
+					Remote_CallFunction_Replay( player, "ServerCallback_UpdateOverheadIconForNPC", ent )
+				}
+			}
+			else if ( IsShieldDrone( ent ) )
+			{
+				if ( team == 0 )
+				{
+					// anybody can use neutral shield drone
+					ent.SetUsable()
+				}
+				else
+				{
+					// only friendlies use a team shield drone
+					ent.SetUsableByGroup( "friendlies pilot" )
+				}
+			}
+		}
+		else
+		{
+			ent.Code_SetTeam( team )
 		}
 	#endif
 }

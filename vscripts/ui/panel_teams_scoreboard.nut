@@ -11,6 +11,7 @@ global function ScoreboardMenu_CustomMatch_GetButtonTeamID
 global function ScoreboardMenu_CustomMatch_GetHeaderForButton
 
 global function SetPlayerTooltipAfterCallback
+global function ScoreboardMenu_IsTryingToViewProfileOfPlayerInScoreboard
 
 enum eRosterAction
 {
@@ -72,6 +73,9 @@ struct
 	CustomMatch_LobbyState&                 customMatchData
 	array< array<CustomMatch_LobbyPlayer> > customMatchDataPlayersSorted
 	int                                     actionBitmask = 0
+	var playerRowFocused = null
+	bool viewingProfile = false
+	bool isInputRegistered = false
 } file
 
 enum scoreboardHeaderTypes
@@ -732,6 +736,12 @@ void function UI_ToggleReportTooltip( var button, bool toggle )
 		Hud_ClearToolTipData( button )
 }
 
+bool function ScoreboardMenu_IsTryingToViewProfileOfPlayerInScoreboard()
+{
+	bool viewedProfile = file.viewingProfile
+	file.viewingProfile = false
+	return viewedProfile
+}
 bool function PlayerButton_OnKeyPress( var button, int keyId, bool isDown )
 {
 	if ( !isDown )

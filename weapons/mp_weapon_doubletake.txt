@@ -353,14 +353,19 @@
 	"damage_very_far_distance"	"5000"
 	"Mods"
 	{
-        gold
-        {
-        }
+		"crate"
+		{
+
+		}
         hopup_kinetic_loader
         {
         }
 		hopup_kinetic_choke
 		{
+		}
+		"hopup_smart_reload"
+		{
+
 		}
         kinetic_choke
         {

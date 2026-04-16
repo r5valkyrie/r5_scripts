@@ -255,7 +255,7 @@ struct {
 		array<LoadoutSelectionCategory> loadoutCategories
 		int maxLoadoutsPerCategory = 0
 		bool areLoadoutsPopulated = false
-		//table< int, WeaponLoadout > loadoutSlotIndexToWeaponLoadoutTable
+		table< int, WeaponLoadout > loadoutSlotIndexToWeaponLoadoutTable
 		table<string, array<string> > weaponUpgrades
 		table<string, array<string> > weaponOptics
 	#endif // CLIENT || SERVER
@@ -297,22 +297,26 @@ void function LoadoutSelection_Init()
 		LoadoutSelection_RegisterLoadoutData()
 		LoadoutSelection_RegisterLoadoutDistribution()
 		#if SERVER
-			LoadoutSelection_SetUnixTimeSinceEventStarted()
-			int loadoutIndex = RandomInt( file.maxLoadoutsPerCategory )
-			SetGlobalNetIntSafe( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME, loadoutIndex )
-			LoadoutSelection_PopulateLoadouts()
+			
+
+
 			LoadoutSelection_HandleItemExclusivity() // This has to happen after populate loadouts so we know what loadouts got picked ( and can disable the items from those in loot)
 			RegisterSignal( "LoadoutSelection_LoadoutSelectMenuClosed" )
 		#endif // SERVER
 
-		#if CLIENT
+		#if CLIENT || SERVER
 			AddCallback_EntitiesDidLoad( LoadoutSelection_PopulateLoadouts ) // requires that Netvars are enabled, which requires entities to have been created
+		#endif
+		
+		#if SERVER
+			AddCallback_EntitiesDidLoad( LoadoutSelection_SetUnixTimeSinceEventStarted ) // requires that Netvars are enabled, which requires entities to have been created
 		#endif
 
 		Remote_RegisterUIFunction( "LoadoutSelectionMenu_OpenLoadoutMenu", "bool" )
 		Remote_RegisterUIFunction( "LoadoutSelectionMenu_CloseLoadoutMenu" )
 	#endif // CLIENT || SERVER
 }
+
 
 bool function IsUsingLoadoutSelectionSystem()
 {
@@ -1100,7 +1104,7 @@ void function LoadoutSelection_PopulateLoadouts()
 	int loadoutIndex = 0
 	bool didLoadoutCategoryFailToPopulate = false
 
-	//file.loadoutSlotIndexToWeaponLoadoutTable.clear()
+	file.loadoutSlotIndexToWeaponLoadoutTable.clear()
 #if SERVER
 	file.loadoutSlotIndexToConsumableLoadoutTable.clear()
 	file.loadoutSlotIndexToEquipmentLoadoutTable.clear()
@@ -1109,7 +1113,7 @@ void function LoadoutSelection_PopulateLoadouts()
 	file.loadoutSlotIndexToLoadoutTypeTable.clear()
 	file.loadoutSlotIndexToWeaponCountTable.clear()
 
-	/*foreach ( loadoutCategory in file.loadoutCategories )
+	foreach ( loadoutCategory in file.loadoutCategories )
 	{
 		loadoutIndex = loadoutCategory.index
 		// Store which Weapons will be given for this loadout
@@ -1155,7 +1159,7 @@ void function LoadoutSelection_PopulateLoadouts()
 					break
 			}
 		#endif // CLIENT
-	}*/
+	}
 
 	if ( !didLoadoutCategoryFailToPopulate )
 		file.areLoadoutsPopulated = true
@@ -1166,14 +1170,14 @@ void function LoadoutSelection_PopulateLoadouts()
 }
 
 // Get the weapon loadout by the slot index of the loadout
-/*WeaponLoadout function LoadoutSelection_GetWeaponLoadoutByLoadoutSlotIndex( int loadoutIndex )
+WeaponLoadout function LoadoutSelection_GetWeaponLoadoutByLoadoutSlotIndex( int loadoutIndex )
 {
 	WeaponLoadout loadout
 	if ( loadoutIndex in file.loadoutSlotIndexToWeaponLoadoutTable )
 	loadout = file.loadoutSlotIndexToWeaponLoadoutTable[ loadoutIndex ]
 
 	return loadout
-}*/
+}
 
 // Get the appropriate weapon set for the tier ( used to define what loot is spawned)
 string function LoadoutSelection_GetWeaponSetStringForTier( int tier )
@@ -1184,16 +1188,16 @@ string function LoadoutSelection_GetWeaponSetStringForTier( int tier )
 // Get the weapon ref for the passed in loadout and weapon index
 string function LoadoutSelection_GetWeaponRefByIndex( int loadoutIndex, int weaponIndex )
 {
-	/*WeaponLoadout weaponLoadoutData = LoadoutSelection_GetWeaponLoadoutByLoadoutSlotIndex( loadoutIndex )
+	WeaponLoadout weaponLoadoutData = LoadoutSelection_GetWeaponLoadoutByLoadoutSlotIndex( loadoutIndex )
 	array<string> weaponRefs = weaponLoadoutData.weaponRefs
 
 	// In Dev Assert if there is no valid weapon ref, in retail return a blank ref so we just don't have a weapon but the game won't crash
 	Assert( weaponRefs.len() > weaponIndex, "LoadoutSelection_GetWeaponRefByIndex the weapon index ( " + weaponIndex + " ) passed in is greater than the number of weapon refs " + weaponRefs.len() + " in slot " + loadoutIndex )
 
-	if ( weaponRefs.len() <= weaponIndex )*/
+	if ( weaponRefs.len() <= weaponIndex )
 		return ""
 
-	//return weaponRefs[weaponIndex]
+	return weaponRefs[weaponIndex]
 }
 #endif // CLIENT || SERVER
 
@@ -1295,6 +1299,8 @@ array< string > function LoadoutSelection_GetConsumableLoadoutByLoadoutSlotIndex
 // The value has to be consistent between server and client to prevent issues where there is a mismatch between the players rotation on the Client and the rotation on the Server ( could happen if the player joins late for example )
 void function LoadoutSelection_SetUnixTimeSinceEventStarted()
 {
+	int loadoutIndex = RandomInt( file.maxLoadoutsPerCategory )
+	SetGlobalNetIntSafe( NETVAR_LOADOUT_CURRENT_MANUAL_ROTATION_INDEX_NAME, loadoutIndex )
 	string unixTimeEventStartString = GetCurrentPlaylistVarString( "loadoutselection_rotation_start", "2021-07-21 10:00:00 -08:00" )
 	int unixTimeNow = GetUnixTimestamp()
 

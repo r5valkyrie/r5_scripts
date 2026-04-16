@@ -133,7 +133,6 @@ bool function ClientCommand_ToggleLegend( entity commandPlayer, array<string> ar
 	if ( GetConVarInt( "sv_cheats" ) != 1 || !IsValid( commandPlayer ) )
 		return true
 
-	Remote_CallFunction_NonReplay( commandPlayer, "ServerCallback_ToggleLegend" )
 	return true
 }
 #endif

@@ -2,6 +2,10 @@ global function SV_CL_Shared_Init
 
 void function SV_CL_Shared_Init()
 {
+	#if CLIENT
+	if ( !IsLobby() )
+		ClMinimap_Pre_Init()
+	#endif
 #if SERVER
 	SvDemo_ConsistencyCheckString( "SV_CL_Shared_Init()" )
 #endif
@@ -14,6 +18,7 @@ void function SV_CL_Shared_Init()
 	if ( IsLobby() )
 	{
 		Shared_Lobby_Init()
+		PlayerWaypoints_Init()
 		return
 	}
 
@@ -86,6 +91,12 @@ void function SV_CL_Init()
 	NetworkMarkerShared_Init()
 	PlayerLeechingShared_Init()
 
+
+	SURVIVAL_Loot_All_InitShared()
+	SURVIVAL_Loot_InitShared()
+	SURVIVAL_LootActions_InitShared()
+	SURVIVAL_LootTypes_InitShared()
+
 	// TriggerFunctions_Init()
 	InitWeaponScripts()
 	Death_Package_Init()
@@ -118,11 +129,19 @@ void function SV_CL_Init()
 	ShPersistentData_LevelInit_Begin()
 	ScoreShared_Init()
 	ShLootMarvin_Init()
+
+	Control_Init()
+	ControlGunRacks_Init()
+	ControlGunRackPanels_Init()
+	LoadoutSelection_Init()
 	MpAbilityValkClusterMissile_Init()
 	MpAbilityValkSkyward_Init()
 	MpWeaponMobileHMG_Init()
 	MpWeaponMountedTurretPlaceable_Init()
 	VendingMachine_LevelInit()
+	#if SERVER
+			Dummie_Init()
+		#endif // SERVER
 	ShItems_LevelInit_Begin()
 	ShGRX_LevelInit()
 	Vouchers_LevelInit()
@@ -158,6 +177,7 @@ void function SV_CL_Init()
 	SPDialogueInit()
 	MeleeShared_Init()
 	MeleeSyncedShared_Init()
+	AllianceProximity_Init()
 	ShPing_Init()
 	ShQuickchat_Init()
 	ShChallenges_LevelInit_PreStats()
@@ -180,10 +200,6 @@ void function SV_CL_Init()
 
 	MpWeaponRiotDrill_Init()
 
-	SURVIVAL_Loot_All_InitShared()
-	SURVIVAL_Loot_InitShared()
-	SURVIVAL_LootActions_InitShared()
-	SURVIVAL_LootTypes_InitShared()
 	SURVIVAL_EquipmentSlot_InitShared()
 	Sh_PersistentDamageLayer_Init()
 	ShSurvivalTraining_Init()
@@ -205,13 +221,10 @@ void function SV_CL_Init()
 	Sh_EvacShip_Init()
 	ShLootRollers_Init()
 
-	CharacterSelectMenu_Init()
-
 	Sh_FS_MovementRecorder_Init()
 	Sh_SkydiveLaunchers_Init()
 	ShLootBin_Init()
 	ShFlyers_Init()
-	LoadoutSelection_Init()
 	GamemodeUtility_Init()
 	ShGameModeShadowSquad_Init()
 
@@ -221,7 +234,6 @@ void function SV_CL_Init()
 
 	MpAbilitySharedSilence_Init()
 	MpAbilityRevenantDeathTotem_Init()
-	MobileRespawnBeacon_Init()
 	VOID_RING_Init()
 	PanicButton_Init()
 	WeaponMastiff_Init()
@@ -231,6 +243,7 @@ void function SV_CL_Init()
 	ShIncapShield_Init()
 	
 	Sh_Squads_Init()
+	CrowdNoiseMeter_Init()
 	PassiveMedic_Init() //Should be shared. Cafe
 	MpAbilityCryptoDrone_Init()
 	MpAbilityCryptoDroneEMP_Init()
@@ -335,7 +348,6 @@ void function Server_Init()
 	PlayerLeeching_Init()
 	MarvinJobs_Init()
 	//MarvinFaces_Init()
-	TriggerFunctions_Init()
 	SpawnFunctions_Init()
 	GoblinDropship_Init()
 	MatchBehavior_Init()
@@ -382,7 +394,8 @@ void function Server_Init()
 	RisingWalls_Init()
 
 	GondolaMover_Init()
-
+	CharacterSelectMenu_Init()
+	StreaksTracker_Init()
 	// Town Takeovers                
 	Bloodhound_TT_Init()
 	Rampart_TT_Init()
@@ -397,7 +410,7 @@ void function Server_Init()
 	ObjectiveResourceSystem_ServerInit()
 	ShExplosiveHold_Init()
 
-	LiveAPI_Init()
+	//LiveAPI_Init()
 	LootHelper_Init()
 
 	MOTD_Init()
@@ -540,6 +553,10 @@ void function Shared_Lobby_Init()
 	ModSystem_RunCallbacks() // MOD SYSTEM CALLBACKS
 	ShPersistentData_LevelInit_Begin()
 	ShAnimWindows_LevelInit()
+#if CLIENT
+	AnimEvents_Init()
+	Teams_RegisterSignals()
+#endif
 	ShGamepad_LevelInit()
 	ShItems_LevelInit_Begin()
 	ShGRX_LevelInit()
@@ -597,6 +614,9 @@ void function Shared_Lobby_Init()
 		NewScriptInit_VM()
 		NewScriptInit_Level()
 	#endif
+
+	MpWeaponEmoteProjector_Init()
+	ShEmotes_Lobby_Init()
 
 	Sh_LobbyVM_Init()
 

@@ -823,7 +823,7 @@ void function CodeCallback_ZiplineStart( entity player, entity zipline )
 	else
 	{
 		CreateZiplineJetEffects( player )
-		if ( IsValid( zipline ) && zipline.IsZipline() && zipline.Zipline_IsCurvedZipline() )
+		if ( IsValid( zipline ) && zipline.IsZipline() && Zipline_IsCurvedZipline( zipline ) )
 			;	// Ziprails start playing looping sounds on mount
 		else
 			EmitDifferentSoundsOnEntityForPlayerAndWorld( "player_zipline_loop", "3p_zipline_loop", player, player )
@@ -889,7 +889,7 @@ void function CodeCallback_ZiplineStop( entity player )
 	{
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "pilot_vine_detach_1p", "pilot_vine_detach_3p", player, player )
 	}
-	else if ( IsValid( lastZipline ) && lastZipline.IsZipline() && lastZipline.Zipline_IsCurvedZipline() )
+	else if ( IsValid( lastZipline ) && lastZipline.IsZipline() && Zipline_IsCurvedZipline( lastZipline ) )
 	{
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( "Player_Ziprail_Detach", "3p_Ziprail_Detach", player, player )
 	}

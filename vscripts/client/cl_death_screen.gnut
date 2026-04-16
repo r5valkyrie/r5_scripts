@@ -58,6 +58,8 @@ global function DeathScreenSetBannerEnabled
 global function ClearHeaderBannerOverrideFunc
 
 global function ReportPlayer
+global function ViewPlayerProfileByPlayerInfo
+global function GetPlayerProfileInfo
 
 #if DEVELOPER
 global function GetRecapPlayerEHIArray
@@ -154,6 +156,8 @@ struct
 	asset modeSpecificDataRui
 	void functionref( var ) modeSpecificRuiUpdateFunc
 
+	bool functionref( entity ) isPlayerWaitingForRespawnFunc
+	string lastMixtapeMatchmakingStatus
 } file
 
 
@@ -631,9 +635,19 @@ void function DeathScreenUpdateChangeLegend( entity player )
 
 	var button = Hud_GetRui( file.changeLegendButton )
 	bool validGameState = GetGameState() >= eGameState.Playing && GetGameState() < eGameState.WinnerDetermined
-	bool isControl  = Control_IsModeEnabled()
+	bool legendReselectable = IsCharacterReselectEnabled()
 
-	if( IsCharacterReselectEnabled() && validGameState && !isControl )
+
+		if( IsRevTakeover() && IsValid( player ) )
+		{
+			if( AllianceProximity_GetAllianceFromTeam( player.GetTeam() ) == ALLIANCE_B )
+			{
+				legendReselectable = false
+			}
+		}
+
+
+	if( legendReselectable && validGameState )
 	{
 		Hud_Show( file.changeLegendButton )
 		ItemFlavor character = LoadoutSlot_GetItemFlavor( ToEHI( player ), Loadout_Character() )
@@ -652,9 +666,8 @@ void function DeathScreenUpdateChangeLoadout( entity player )
 
 	var button = Hud_GetRui( file.changeLoadoutButton)
 	bool validGameState = GetGameState() >= eGameState.Playing && GetGameState() < eGameState.WinnerDetermined
-	bool isControl  = Control_IsModeEnabled()
 
-	if ( IsUsingLoadoutSelectionSystem() && validGameState && !isControl )
+	if ( IsUsingLoadoutSelectionSystem() && validGameState)
 	{
 		Hud_Show( file.changeLoadoutButton )
 		int currentLoadout = LoadoutSelection_GetSelectedLoadoutSlotIndex_CL_UI()
@@ -770,15 +783,36 @@ void function DeathScreenUpdateHeader( var headerElem )
 	RuiSetInt( headerRui, "missionCheckpointsLeft", MissionCheckpoints_GetRespawnsLeftForPlayer( clientPlayer ) )
 	RuiSetBool( headerRui, "isFinalDeathFieldStage", SURVIVAL_IsFinalDeathFieldStage() )
 	RuiSetBool( headerRui, "shadowMode", false )
+	RuiSetBool( headerRui, "isFinalRing", SURVIVAL_IsFinalDeathFieldStage())
 
-	RuiSetBool( headerRui, "isSoloMode", IsSoloMode() )
+	
+	bool isPlayerWaitingForRespawn = file.isPlayerWaitingForRespawnFunc != null ? file.isPlayerWaitingForRespawnFunc( clientPlayer ) : false
+
+#if DEVELOPER
+		printt( FUNC_NAME() + "(): isPlayerWaitingForRespawn == " + isPlayerWaitingForRespawn )
+#endif
+
+	
+	if ( !IsWatchingKillReplay() )
+	{
+		RuiSetInt( headerRui, "placement", -1  )
+	}
+	bool shouldRequestPlayerLastRank = GamemodeUtility_IsPlacementPopupEnabled() && !isPlayerWaitingForRespawn && IsViewingSpectateTab() && GetLocalViewPlayer() == clientPlayer
+	if ( shouldRequestPlayerLastRank )
+		Remote_ServerCallFunction( "ClientCallback_RequestPlayerLastRank" )
                         
                                                        
       
 		RuiSetBool( headerRui, "isArenaMode", false )
        
-	RuiSetBool( headerRui, "isControlMode", Control_IsModeEnabled())
+	RuiSetBool( headerRui, "isControlMode", GameMode_IsActive( eGameModes.CONTROL ) )
 
+
+		RuiSetBool( headerRui, "isStrikeOutMode", GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_STRIKEOUT ) )
+
+	RuiSetBool( headerRui, "isSoloMode", GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) )
+
+	RuiSetBool( headerRui, "isPlayerWaitingForRespawn", isPlayerWaitingForRespawn )
 	if ( animateBanner )
 		RuiSetFloat( headerRui, "bannerAnimStartTime", Time() )
 	if ( animateGameOver )
@@ -1019,30 +1053,7 @@ bool function DeathScreenSummaryShouldFadeIn()
 
 	return !file.hasShownSquadSummary
 }
-
-
-             
-asset function GetDataRuiAssetForGamemode()
-{
-	if ( IsFallLTM() )
-		return $"ui/header_data_shadow_squad.rpak"
-
-	if ( IsSoloMode() )
-		return $"ui/header_data_solo.rpak"
-
-                        
-                      
-                                                     
-       
-
-                         
-		if ( Control_IsModeEnabled() )
-			return $"ui/control_squad_summary_header_data.rpak"
-       
-
-	return $"ui/header_data_squad.rpak"
-}
-                 
+            
 
 void function DeathScreen_SetDataRuiAssetForGamemode( asset rui )
 {
@@ -1305,6 +1316,25 @@ void function UICallback_ReportPlayer()
 
 	ReportPlayer( reportedPlayerEHI )
 }
+
+PlayerInfo function GetPlayerProfileInfo( EHI playerEHI )
+{
+	PlayerInfo emptyInfo
+	if ( !(playerEHI in file.players) )
+		return emptyInfo
+
+	return file.players[ playerEHI ]
+}
+
+void function ViewPlayerProfileByPlayerInfo( EHI playerToInspectEHI )
+{
+	if ( !(playerToInspectEHI in file.players) )
+		return
+
+	PlayerInfo playerToInspectInfo = file.players[ playerToInspectEHI ]
+
+	//ShowPlayerProfileCardForUID( playerToInspectInfo.unspoofedUid )
+} 
 
 void function ReportPlayer( EHI reportedPlayerEHI )
 {

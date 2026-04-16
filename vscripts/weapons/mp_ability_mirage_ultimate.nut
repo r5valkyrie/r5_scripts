@@ -3,6 +3,13 @@ global function OnWeaponChargeBegin_ability_mirage_ultimate
 global function OnWeaponChargeEnd_ability_mirage_ultimate
 global function OnWeaponAttemptOffhandSwitch_ability_mirage_ultimate
 
+                     
+// Tuning values for Team Kaleidoscope
+const int CLOAK_TRIGGER_RADIUS = 240
+                           
+const int MIRAGE_ULT_MAX_DECOYS = 5
+
+global function GetMirageCloakDuration
 struct
 {
 	#if CLIENT
@@ -42,9 +49,6 @@ bool function OnWeaponAttemptOffhandSwitch_ability_mirage_ultimate( entity weapo
 {
 	entity player = weapon.GetWeaponOwner()
 	if ( !IsValid( player ) )
-		return false
-		
-	if ( player.IsPhaseShifted() )
 		return false
 
 	if ( !PlayerCanUseDecoy( player ) )
@@ -141,6 +145,23 @@ void function MirageUltCloakThink( entity ownerPlayer )
 }
 #endif
 
+float function GetMirageCloakDuration( entity player, float duration )
+{
+	                    
+		if( PlayerHasPassive( player, ePassives.PAS_MIRAGE ) && PlayerHasPassive( player, ePassives.PAS_ULT_UPGRADE_ONE ) )
+		{
+			duration += GetMirageUpgradedCloakDuration()
+		}
+       
+	return duration
+}
+
+                    
+float function GetMirageUpgradedCloakDuration()
+{
+	return GetCurrentPlaylistVarFloat( "upgrade_mirage_extra_cloak_duration", 1.0 )
+}
+   
 bool function OnWeaponChargeBegin_ability_mirage_ultimate( entity weapon )
 {
 	weapon.EmitWeaponSound_1p3p( "Mirage_Vanish_Activate_1P", "Mirage_Vanish_Activate_3P" )

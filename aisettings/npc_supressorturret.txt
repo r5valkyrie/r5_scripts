@@ -21,7 +21,7 @@ npc_supressorturret
 	minGoalRadius					500
 	maxGoalRadius					500
 	
-	DefaultModelName				"mdl/humans/class/medium/combat_dummie_medium.rmdl"
+	DefaultModelName				"mdl/Humans/class/medium/dummy_v20_base_w.rmdl"
 
 	DefaultWeapon					"mp_weapon_volt_smg"
 	WeaponCapacity					"FromLoadout"

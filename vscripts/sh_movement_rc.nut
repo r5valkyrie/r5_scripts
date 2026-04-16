@@ -1105,14 +1105,6 @@ bool function CharacterSelect_AssignCharacter( entity player, ItemFlavor charact
 	else
 		player.SetArmsModelOverride( GetGlobalSettingsAsset( CharacterClass_GetSetFile( character ), "armsModel" ) )
 
-	if ( LiveAPI_IsValidToRun() )
-	{
-		LiveAPI_WriteLogUsingDefinedFields( eLiveAPI_EventTypes.characterSelected,
-			[ LiveAPI_GetPlayerIdentityTable( player ) ],
-			[ 3 ]
-		)
-	}
-
 	return true
 }
 

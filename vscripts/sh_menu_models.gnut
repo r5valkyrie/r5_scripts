@@ -39,8 +39,8 @@ const float DEFAULT_MAX_TURN_SPEED = 270.0
 
 global const asset CHARACTER_BASE_EFFECT = $"P_menu_char_base_rarity"
                  
-                                               
-                                            
+const asset SHADOW_TRAIL_FX = $"P_Bshadow_body"
+const asset SHADOW_EYE_FX = $"P_BShadow_eye"
       
 
                        
@@ -5111,7 +5111,7 @@ void function SetMenuCamera( entity player, int presentationType, bool interpola
 	float fov = file.presentationData[ presentationType ].fov
 	player.SetMenuCameraEntityWithAudio( clGlobal.menuCamera )
 
-	int cameraTargetName = file.presentationData[ ePresentationType.PLAY ].cameraTargetName
+	int cameraTargetName = file.presentationData[ presentationType ].cameraTargetName
 	entity cameraTarget  = file.cameraTargets[ cameraTargetName ]
 
 	// Temporary workaround. Disallow offsetting for the WEAPON_SKIN and WEAPON_CHARMS screens since they are more heavily scripted
@@ -5357,6 +5357,15 @@ void function DEV_SetPresentationDataFromString( string presentationName, string
 	int endIndex = presentationDataString.find( "," )
 
 	string targetEntName = presentationDataString.slice( startIndex, endIndex )
+		
+	foreach ( string scriptName, int eNumIdx in eCameraTargetNames )
+	{
+		if ( targetEntName == scriptName )
+		{
+			pd.cameraTargetName = eNumIdx
+			break
+		}
+	}
 
 	startIndex = endIndex + 2 // +2 to skip the leading '"'
 	endIndex = presentationDataString.find( ",", startIndex )
@@ -5693,12 +5702,12 @@ void function FlashMenuModel( entity model, int flashType, vector flashColor, bo
 
 	int contextId = HighlightContext_GetId( "flash_menu_model" )
 	HighlightContext_SetRadius( contextId, fd.outlineRadius )
+	HighlightContext_SetParam( contextId, 0, flashColor )
+	HighlightContext_SetParam( contextId, 1, <fd.fillIntensityScalar, fd.outlineIntensityScalar, 0> )
 
 	model.Highlight_ResetFlags()
 	model.Highlight_SetVisibilityType( HIGHLIGHT_VIS_ALWAYS )
 	model.Highlight_SetCurrentContext( contextId )
-	model.Highlight_SetParam( contextId, 0, flashColor )
-	model.Highlight_SetParam( contextId, 1, <fd.fillIntensityScalar, fd.outlineIntensityScalar, 0> )
 	model.Highlight_SetFadeInTime( fd.fadeInTime )
 	model.Highlight_SetFadeOutTime( fd.fadeOutTime )
 	model.Highlight_StartOn()

@@ -1136,7 +1136,7 @@ void function Artifacts_OnWeaponOwnerChanged( entity weapon, entity owner )
 #if CLIENT
 ArtifactViewmodelData ornull function ClientCodeCallback_GetArtifactViewmodelDataForWeapon( entity weapon )
 {
-	if ( !weapon.GetWeaponSettingBool( int( eWeaponVar.is_artifact ) ) )
+	//if ( !weapon.GetWeaponSettingBool( int( eWeaponVar.is_artifact ) ) )
 		return null
 	
 	entity owner = weapon.GetOwner()
@@ -1861,8 +1861,8 @@ void function Artifacts_FX_ScriptAnimWindowCallback( entity weapon, string param
 
 bool function Artifacts_PlayerHasArtifactActive( entity player )
 {
-	entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
-	return ( IsValid( activeWeapon ) && activeWeapon.IsWeaponX() && activeWeapon.GetWeaponSettingBool( int( eWeaponVar.is_artifact ) ) )
+	//entity activeWeapon = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
+	return false//( IsValid( activeWeapon ) && activeWeapon.IsWeaponX() && activeWeapon.GetWeaponSettingBool( int( eWeaponVar.is_artifact ) ) )
 }
 #endif // #if CLIENT || SERVER
 // FX END
@@ -1870,6 +1870,7 @@ bool function Artifacts_PlayerHasArtifactActive( entity player )
 #if SERVER
 void function ClientCallback_ActivationEmote( entity player, bool isStart )
 {
+	return
 	if ( IsValid( player ) && Artifacts_PlayerHasArtifactActive( player ) )
 	{
 		entity artifactWeap = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
@@ -2403,6 +2404,7 @@ void function Artifacts_DEV_SetSkinForActiveWeapon( string skinName )
 
 void function Artifacts_DEV_PreviewFirstDraw( int firstDrawIdx )
 {
+	return
 	entity player = GP()
 	entity artifactWeap = player.GetActiveWeapon( eActiveInventorySlot.mainHand )
 	if ( !IsValid( artifactWeap ) || !artifactWeap.IsWeaponX() || !artifactWeap.GetWeaponSettingBool( int( eWeaponVar.is_artifact ) ) )

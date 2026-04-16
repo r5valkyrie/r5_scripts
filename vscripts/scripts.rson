@@ -315,7 +315,7 @@ Scripts:
 	sh_timer.gnut
 	sh_doors.nut
 	sh_capturemode.gnut
-	
+	sh_timed_event_utility.nut
 	sh_weaponrack.nut
 	sh_player_objects.gnut
 	sh_clientsidepickups.gnut
@@ -333,7 +333,7 @@ Scripts:
 	weapons/mp_ability_revenant_death_totem.nut
 	weapons/mp_ability_item_spawner.nut
 	weapons/mp_ability_panic_button.nut
-	weapons/mp_ability_mobile_respawn_beacon.nut
+
 	weapons/mp_ability_void_ring.nut
 	weapons/mp_ability_emote_projector.nut
 	weapons/mp_ability_valk_cluster_missile.nut
@@ -534,6 +534,11 @@ Scripts:
 	sh_info_cords.gnut
 ]
 
+When: "SERVER"
+Scripts:
+[
+	_streaks_tracker.nut
+]
 
 When: "SERVER || CLIENT"
 Scripts:
@@ -542,7 +547,7 @@ Scripts:
 	conversation/sh_grunt_chatter_mp.gnut
 	conversation/sh_spectre_chatter_mp.gnut
 	conversation/sh_survival_commentary.gnut
-
+	sh_crowd_noise_meter.nut
 	mp/levels/sh_pathfinder_tt_common.nut
 	npc/npc_assets.nut
 	npc/npc_precache_prowler.nut
@@ -553,7 +558,11 @@ Scripts:
 	mp/sh_comms_menu.nut
 	mp/sh_loot_marvin.nut
 	mp/sh_space_elevator.gnut
-	
+	mp/sh_airdrops.gnut
+	weapons/sh_care_package.nut
+	weapons/mp_ability_mobile_respawn_beacon.nut
+	mp/sh_control_gun_rack_panels.nut
+	mp/sh_control_gun_racks.nut
 	mp/sh_warp_gates.gnut
 	mp/sh_rising_walls.nut  //World's Edge MU2/MU3
 	mp/sh_bloodhound_tt.nut  //World's Edge MU2/MU3
@@ -577,6 +586,7 @@ When: "CLIENT"
 Scripts:
 [
 	gamemodes/cl_gamemode_survival.nut
+	cl_teams_scoreboard.gnut
 ]
 
 When: "SERVER || CLIENT || UI"
@@ -588,6 +598,7 @@ Scripts:
 	melee/sh_melee_synced.gnut
 	gamemodes/sh_gamemode_survival.nut
 	gamemodes/sh_gamemode_survival_solos.nut
+	gamemodes/sh_gamemode_control.nut
 	mp/sh_firing_range_vending_machine.nut
 
 	sh_ping.gnut
@@ -618,8 +629,8 @@ Scripts:
 	mp/firing_range.gnut
 	mp/sh_combatrange_spawning.nut
 	mp/sh_firing_range_story_events.nut
-	mp/sh_airdrops.gnut
-  mp/sh_supply_ship.gnut
+
+  	mp/sh_supply_ship.gnut
 
 	mp/sh_jump_pads.gnut
 
@@ -681,7 +692,6 @@ Scripts:
 	_viewcone.gnut
 	_pain_death_sounds.gnut
 	_threat_tracker.gnut
-	_live_api.gnut
 	ai/_ai_chatter.gnut
 	ai/_ai_goliath.gnut
 	ai/_ai_stationary_firing_positions.gnut // DEVSCRIPTS remove
@@ -1241,7 +1251,7 @@ Scripts:
 	weapons/sh_vantage_companion.nut
 	weapons/sniper_range_auto_set.nut
 	weapons/sniper_recon_info.nut
-	weapons/sh_care_package.nut
+
 	
 	// abilities/loba_tactical_translocation.nut
 	abilities/loba_passive_eye_for_quality.nut

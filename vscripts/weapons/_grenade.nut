@@ -308,7 +308,6 @@ int function Grenade_OnWeaponToss( entity weapon, WeaponPrimaryAttackParams atta
 		grenade.proj.savedDir = weaponOwner.GetViewForward()
 
 #if SERVER
-	LiveAPI_GrenadeThrown( weaponOwner, weapon )
 
 	#if BATTLECHATTER_ENABLED
 		TryPlayWeaponBattleChatterLine( weaponOwner, weapon )
@@ -341,7 +340,6 @@ int function Grenade_OnWeaponToss_Halo( entity weapon, WeaponPrimaryAttackParams
 		grenade.proj.savedDir = weaponOwner.GetViewForward()
 
 #if SERVER
-	LiveAPI_GrenadeThrown( weaponOwner, weapon )
 
 	// #if BATTLECHATTER_ENABLED
 		// TryPlayWeaponBattleChatterLine( weaponOwner, weapon )

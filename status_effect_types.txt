@@ -151,5 +151,7 @@
 	perk_survey_beacon_enemies_scanned_visual
 	has_overheat_debuff
 	shadow_form
+	spawnkilling_detected
+	mrb_carrier
 /////////////////////////////
 //}

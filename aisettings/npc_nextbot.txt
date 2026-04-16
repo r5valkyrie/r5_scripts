@@ -44,7 +44,7 @@ npc_nextbot
 	minGoalRadius					0.1
 	// footstepSprintSpeedThreshold	1.0
 
-	DefaultModelName				"mdl/Humans/class/medium/combat_dummie_medium.rmdl"
+	DefaultModelName				"mdl/Humans/class/medium/dummy_v20_base_w.rmdl"
 
 	//DefaultWeapon					"mp_weapon_rspn101"
 	//WeaponCapacity					"PilotMainWeapons"

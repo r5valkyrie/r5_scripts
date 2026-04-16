@@ -495,8 +495,6 @@ void function PlacementProxyThread( entity weapon, entity player )
 	proxy.e.clientEntMinimapFlags = 1
 	proxy.e.clientEntMinimapScale = lootGrabDist / 16384.0
 	proxy.e.clientEntMinimapZOrder = MINIMAP_Z_OBJECT
-	if ( proxy.GetNetworkedClassName() != null )
-		thread AddMinimapObject( proxy )
 
 	int proxyRadiusFx = StartParticleEffectOnEntity( proxy, GetParticleSystemIndex( BLACK_MARKET_RADIUS_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
 	EffectSetControlPointVector( proxyRadiusFx, 1, <lootGrabDist, 0, 0> )

@@ -870,7 +870,7 @@ bool function UpgradeCore_IsEnabled()
 
 bool function UpgradeCore_ArmorTiedToUpgrades()
 {
-	return tunings.armorTiedToUpgrades
+	return false// s16 rui does not have upgrade core rui stuff tunings.isEnabled
 }
 
 bool function UpgradeCore_UsePersonalObituaryNotifications()

@@ -810,7 +810,7 @@ string function GetDisplayablePlayerNameFromEHI( EHI playerEHI )
 {
 	string playerTag = ""
 	                  
-		playerTag = "[R5V]"
+		playerTag = "%$ui/menu/clubs/club_logo_layer_images/clublogo_respawn_logo% [R5V]"
        
               
                                            

@@ -4608,6 +4608,8 @@ void function DeployAndEnableWeapons( entity player )
 	{
 		player.DeployWeapon()
 		EnableOffhandWeapons( player )
+		foreach ( func in file.callbacks_OnDeployAndEnableWeapons )
+			func( player )
 	}
 }
 
@@ -4626,9 +4628,16 @@ void function DeployAndEnableWeaponsWithSlowDeploy( entity player, float time )
 	{
 		player.DelayEnableWeaponWithSlowDeploy( time )
 		EnableOffhandWeapons( player )
+		foreach ( func in file.callbacks_OnDeployAndEnableWeapons )
+			func( player )
 	}
 }
 
+void function AddCallback_OnDeployAndEnableWeapons( void functionref( entity ) func )
+{
+	Assert( !file.callbacks_OnDeployAndEnableWeapons.contains( func ) )
+	file.callbacks_OnDeployAndEnableWeapons.append( func )
+}
 void function DeployViewModelAndEnableWeapons( entity player )
 {
 	player.p.holsterAndDisableWeaponCount--
@@ -5967,6 +5976,23 @@ entity function CreatePropDoor( asset model, vector pos, vector ang )
 	return CreatePropDynamic_NoDispatchSpawn( model, pos, ang )
 }
 
+void function SetTeam_EquipmentAndAbilities( entity player, int newTeam )
+{
+	// Crypto Drone
+	entity cameraProxy = player.p.cryptoActiveCamera
+	if ( IsValid( cameraProxy ) )
+		SetTeam( cameraProxy, newTeam )
+
+	foreach ( trap in player.e.activeTraps )
+	{
+		Assert( trap.e.trapSetTeamFunc != null, "Trap is missing a Set Team Function" )
+		trap.e.trapSetTeamFunc( trap, newTeam )
+	}
+
+	foreach ( trap in player.e.activeUltimateTraps )
+		SetTeam( trap, newTeam )
+}
+
 void function AvoidBeingPutInsideDoorFromCrush( entity door, entity pushed )
 {
 	if ( IsValid( door ) )
@@ -7043,12 +7069,6 @@ void function MovementEnable( entity player )
 	if ( player.p.movementDisabledCount == 0 )
 		player.MovementEnable()
 }
-
-void function AssignGUIDToHoloProjector( entity player, int quipGUID )
-{
-}
-
-
 
 table< int, PrivateMatchStatsStruct > _privateMatchStatsStore
 

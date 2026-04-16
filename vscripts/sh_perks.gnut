@@ -193,7 +193,7 @@ void function Perks_Init()
 		AddCallback_PlayerClassActuallyChanged( OnPlayerClassChanged )
 		Remote_RegisterClientFunction( "ServerToClient_HidePerkPropMinimapVisibility", "entity", "int", 0, ePerkIndex.COUNT )
 		Remote_RegisterClientFunction( "ServerToClient_UpdatePerkPropVisibility" )
-		//Remote_RegisterServerFunction( "Perks_ClientToServer_MinimapIconPinged", "typed_entity", "prop_script" )
+		Remote_RegisterServerFunction( "Perks_ClientToServer_MinimapIconPinged", "typed_entity", "prop_script" )
 	#endif
 	#if SERVER
 		AddCallback_GameStateEnter( eGameState.Playing, Perks_UpdateMinimapVisibilityForAllPlayers )
@@ -336,7 +336,11 @@ ClassRoleSettingsInfo function Perks_GetSettingsInfoForClassRole( int role )
 
 PerkSettingsInfo function Perks_GetSettingsInfoForPerk( int perk )
 {
-	return file.perkToPerkSettingsTable[perk]
+	if ( perk in file.perkToPerkSettingsTable )
+		return file.perkToPerkSettingsTable[perk]
+
+	PerkSettingsInfo emptyResult
+	return emptyResult
 }
 
 
@@ -596,8 +600,13 @@ bool function Perks_IsPerkReady( entity player, int perkIndex )
 
 void function Perks_AddMinimapEntityForPerk( int perkId, entity ent )
 {
-	Warning("Perks_AddMinimapEntityForPerk temporary disabled, enable later")
-	return
+	if ( !( perkId in file.perkInfoTable ) )
+	{
+		Warning( "Perks_AddMinimapEntityForPerk: perkId " + perkId + " not registered in perkInfoTable, skipping ent " + ent )
+		return
+	}
+	Warning("Perks_GetSettingsInfoForPerk - Kral check this again!!!!!!!!!!!!!")
+	
 	file.perkInfoTable[perkId].minimapEntities.append( ent )
 
 	#if SERVER
@@ -768,7 +777,7 @@ void function Perks_ClientToServer_MinimapIconPinged( entity player, entity mini
 	if( pingType < 0 )
 		return
 
-	//entity wp = CreateWaypoint_Ping_Location( player, pingType, minimapEnt, minimapEnt.GetOrigin() + <0, 0, 50>, -1, false, false, pingWheelIndex.PING_MAP )
+	entity wp = CreateWaypoint_Ping_Location( player, pingType, minimapEnt, minimapEnt.GetOrigin() + <0, 0, 50>, -1, false, false, pingWheelIndex.PING_MAP )
 }
 #endif // SERVER
 
@@ -1061,7 +1070,7 @@ bool function PingPerkPropUnderAim( entity ent )
 	if( pingType == -1 )
 		return false
 
-	//Remote_ServerCallFunction( "Perks_ClientToServer_MinimapIconPinged", ent )
+	Remote_ServerCallFunction( "Perks_ClientToServer_MinimapIconPinged", ent )
 
 	EmitSoundOnEntity( GetLocalViewPlayer(), PING_SOUND_LOCAL_CONFIRM )
 

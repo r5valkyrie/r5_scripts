@@ -97,8 +97,8 @@ global function DEV_UseSpeedModifier
 #endif // DEVELOPER
 
 // TODO: the old dummie. Switch to v20 dummie when available.
-const asset MODEL_NPC_DUMMIE_COMBAT =	$"mdl/humans/class/medium/dummie_medium_combat.rmdl"
-const asset MODEL_NPC_DUMMIE_TRAINING = $"mdl/humans/class/medium/dummie_medium_training.rmdl"
+const asset MODEL_NPC_DUMMIE_COMBAT =	$"mdl/Humans/class/medium/dummy_v20_base_w.rmdl"
+const asset MODEL_NPC_DUMMIE_TRAINING = $"mdl/Humans/class/medium/dummy_v20_base_w.rmdl"
 
 const asset WEAPON_NPC_COMBATDUMMIE_RIFLE =	$"npc_weapon_hemlok"
 const asset WEAPON_NPC_COMBATDUMMIE_SHOTGUN = $"npc_weapon_energy_shotgun"

@@ -434,10 +434,10 @@ void function Sh_RespawnBeacon_Init()
 
 void function RespawnBeacons_RegisterNetworking()
 {
-	RegisterNetworkedVariable( "respawnsRemaining", SNDC_PLAYER_GLOBAL, SNVT_INT, GetStartingRespawnCount() )
-	RegisterNetworkedVariable( "respawnStatus", SNDC_PLAYER_GLOBAL, SNVT_INT, eRespawnStatus.NONE )
-	RegisterNetworkedVariable( "respawnStatusEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
-	RegisterNetworkedVariable( "respawnBannerPickedUpTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "respawnsRemaining", SNDC_PLAYER_GLOBAL, SNVT_INT, GetStartingRespawnCount() )
+	RegisterNetworkedVariableSafe( "respawnStatus", SNDC_PLAYER_GLOBAL, SNVT_INT, eRespawnStatus.NONE )
+	RegisterNetworkedVariableSafe( "respawnStatusEndTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
+	RegisterNetworkedVariableSafe( "respawnBannerPickedUpTime", SNDC_PLAYER_GLOBAL, SNVT_TIME, -1 )
 
 	#if CLIENT
 		RegisterNetVarIntChangeCallback( "respawnStatus", RespawnStatusChanged )

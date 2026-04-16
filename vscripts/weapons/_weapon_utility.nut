@@ -224,7 +224,7 @@ global const string MARKSMANS_TEMPO_FADEOFF_MATCH_GRACE_TIME = "marksmans_tempo_
 global const string MARKSMANS_TEMPO_FADEOFF_ON_PERFECT_MOMENT_SETTING = "marksmans_tempo_fadeoff_on_perfect_moment"	////this is more cosmetic, since missing the perfect moment by <grace_time> will fail regardless. Just makes the UI fadeoff eventually
 global const string MARKSMANS_TEMPO_FADEOFF_ON_FIRE_SETTING = "marksmans_tempo_fadeoff_on_fire"
 global const string MARKSMANS_TEMPO_FADEOFF_THREAD_ABORT = "marksmans_tempo_fadeoff_abort"
-// ENERGIZE_STATUS_RUI_ABORT_SIGNAL defined in mp_weapon_sentinel.nut
+global const string ENERGIZE_STATUS_RUI_ABORT_SIGNAL = "EnergizRuiThinkAbortSignal"
 global const string WEAPON_CHARGED_RUI_ABORT_SIGNAL = "ChargedRuiThinkAbortSignal"
 global function MarksmansTempo_Validate
 global function MarksmansTempo_OnActivate
@@ -261,7 +261,7 @@ global const string SMART_RELOAD_HOPUP = "hopup_smart_reload"
 global const string LMG_FAST_RELOAD_MOD = "fast_reload_mod"
 global const string LMG_OVERLOADED_AMMO_MOD = "overloaded_ammo"
 global const string END_SMART_RELOAD = "end_smart_reload_functionality"
-const string ULTIMATE_ACTIVE_MOD_STRING = "ultimate_active"
+global const string ULTIMATE_ACTIVE_MOD_STRING = "ultimate_active"
 
 const vector LOWAMMO_UI_COLOR = <0, 255, 0> / 255.0
 const vector OVERLOADAMMO_UI_COLOR = <0, 200, 200> / 255.0
@@ -627,12 +627,6 @@ const int ENT_NAME_COL = 0
 
 void function InitThrowableItemStickinessDatatable()
 {
-	// S3: throwable_item_stickiness.rpak doesn't exist - skip datatable loading
-	Warning( "InitThrowableItemStickinessDatatable: datatable not available in S3, skipping" )
-	return
-
-	unreachable
-
 	array< string > throwableItems = [
 		VOID_RING_WEAPON_REF, BUBBLE_BUNKER_WEAPON_NAME, ECHO_LOCATOR_WEAPON_NAME,
 		"mp_weapon_jump_pad", "mp_ability_space_elevator_tac", CAUSTIC_DIRTY_BOMB_WEAPON_CLASS_NAME,
@@ -4468,7 +4462,7 @@ bool function IsMeleeWeaponNotFists( entity player )
 
 	entity meleeWeapon = player.GetOffhandWeapon( OFFHAND_MELEE )
 	bool isHeirloom = meleeWeapon.GetWeaponSettingBool( eWeaponVar.is_heirloom )
-	bool isArtifact = meleeWeapon.GetWeaponSettingBool( eWeaponVar.is_artifact )
+	bool isArtifact = false//meleeWeapon.GetWeaponSettingBool( eWeaponVar.is_artifact )
 
 	return isHeirloom || isArtifact
 }
@@ -6864,7 +6858,8 @@ void function ApplyKineticLoader_ClientThink( entity player, entity weapon )
 #if SERVER || CLIENT
 bool function GetInfiniteAmmo( entity weapon )
 {
-	return weapon.GetInfiniteAmmoState() != INFINITEAMMO_NONE
+	Warning("GetInfiniteAmmo is returning true for some reason, fix me!!! -kral")
+	return false//weapon.GetInfiniteAmmoState() != INFINITEAMMO_NONE
 }
 
 #if SERVER

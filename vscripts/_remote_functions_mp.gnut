@@ -100,8 +100,6 @@ int function SetupRemoteFuncAliases()
 		"FS_CreateIntroScreen",
 		"FSIntro_ForceEnd",
 		"ServerCallback_CTF_CheckUpdatePlayerLegend",
-		"ForceScoreboardLoseFocus",
-		"ForceScoreboardFocus",
 		"UpdateDpadHud_Copy",
 		"ServerCallback_Scenarios_MatchEndAnnouncement",
 		"Tracker_StatRequestFailed",
@@ -323,9 +321,6 @@ void function RemoteFunctions_Init_Begin()
 	if ( GetMapName() == "mp_rr_olympus_tt" || GetMapName() == "mp_rr_olympus_mu1" )
 		PathTT_OnNetworkRegistration()
 
-	ScriptRemote_RegisterClientFunction( "DragonLMG_ChargeHUD", "float", 0.0, 4000.0, 16 ) //Dragon LMG energized timer
-	ScriptRemote_RegisterClientFunction( "DragonLMG_UpdateChargeEndTime", "float", 0.0, 4000.0, 16 ) //Dragon LMG update timer on shot
-	ScriptRemote_RegisterClientFunction( "DragonLMG_NoThermiteHint" ) //Dragon LMG no thermite hint
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ShouldExitDrone" )
 	
 	RegisterNetworkedVariableSafe( "coreAvailableFrac", SNDC_TITAN_SOUL, SNVT_FLOAT_RANGE, 0.0, 0.0, 1.0 )
@@ -518,20 +513,7 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariableSafe( "characterSelectFocusSkinGUID", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, -1 )
 	
 
-	if( Playlist() != ePlaylists.fs_scenarios )
-	{
-		RegisterNetworkedVariableSafe( "characterSelectionReady", SNDC_GLOBAL, SNVT_BOOL, false )
-		RegisterNetworkedVariableSafe( "characterSelectLockstepIndex", SNDC_GLOBAL, SNVT_INT, -1 )
-		RegisterNetworkedVariableSafe( "characterSelectLockstepStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		RegisterNetworkedVariableSafe( "characterSelectLockstepEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		RegisterNetworkedVariableSafe( "characterSelectPicksEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		RegisterNetworkedVariableSafe( "allSquadsPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		RegisterNetworkedVariableSafe( "squadPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		RegisterNetworkedVariableSafe( "mvpPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		RegisterNetworkedVariableSafe( "championSquadPresentationStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		RegisterNetworkedVariableSafe( "pickLoadoutGamestateEndTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-		RegisterNetworkedVariableSafe( "pickLoadoutGamestateStartTime", SNDC_GLOBAL, SNVT_TIME, -1 )
-	}
+
 
 	RegisterNetworkedVariableSafe( "championEEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
 	RegisterNetworkedVariableSafe( "championSquad1EEH", SNDC_GLOBAL, SNVT_BIG_INT, EncodedEHandle_null )
@@ -600,6 +582,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerToClient_DoUltAccelScreenFx" )
 	ScriptRemote_RegisterClientFunction( "ServerToClient_SetClientChargeTime", "int", 0, 64, "float", 0.0 , 100.0, 32)
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerBootsOnGround" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_AutoReloadComplete", "entity" )
 	RegisterNetworkedVariableSafe( "inventoryEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
 	RegisterNetworkedVariableSafe( "pingEnabled", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
@@ -624,7 +607,6 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariableSafe( "latency", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	RegisterNetworkedVariableSafe( "damage", SNDC_PLAYER_GLOBAL, SNVT_BIG_INT, 0 )
 
-	RegisterNetworkedVariableSafe( "deaths", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 	RegisterNetworkedVariableSafe( "assists", SNDC_PLAYER_GLOBAL, SNVT_INT, 0 )
 
 	RegisterNetworkedVariableSafe( "isHealing", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
@@ -684,7 +666,6 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_TryCloseInventory" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ClearHints" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_AnnounceCircleClosing" )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_ToggleLegend" )
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SurvivalHint", "int", 0, 11 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_Survival_NewKillLeader", "entity", "int", 0, 999 )
@@ -736,8 +717,8 @@ void function RemoteFunctions_Init_Begin()
 		RegisterNetworkedVariableChangeCallback_intSafe( "playerPrimaryWeapon1", OnPlayerEquippedWeaponChanged )
 	#endif
 
-	GamemodeUtility_RegisterNetworking()
 	LoadoutSelection_RegisterNetworking()
+	GamemodeUtility_RegisterNetworking()
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_NessyMessage", "int", 0, 51 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayPassiveVoice", "int", 0, 51 )
@@ -758,6 +739,7 @@ void function RemoteFunctions_Init_Begin()
 		Rampart_TT_RegisterNetworking() // Caustic Town Takeover
 
 	Crafting_RegisterNetworking()
+	CrowdNoiseMeter_RegisterNetworking()
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SetAssistInformation", "int", eDamageSourceId.invalid, eDamageSourceId.len(), "entity", "entity", "float", 0.0, FLT_MAX, 32 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeStartLeech", "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
@@ -789,8 +771,9 @@ void function RemoteFunctions_Init_Begin()
 	}
 
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_IncomingAirdrop" ) //Audit 2-22-2025 not currently called.
-	ScriptRemote_RegisterClientFunction( "ServerCallback_CreateAirdropBadPlace", "int", -1, 9999, "vector", -32000.0, 32000.0, 32, "int", 0, 9999, "entity" ) //Audit 2-22-2025
-	ScriptRemote_RegisterClientFunction( "ServerCallback_DestroyAirdropBadPlace", "int", -1, 9999 ) //Audit 2-22-2025
+	ScriptRemote_RegisterClientFunction( "ServerCallback_CreateAirdropBadPlace", "int", INT_MIN, INT_MAX, "vector", -32000.0, 32000.0, 32, "int", INT_MIN, INT_MAX, "entity" )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_CreateAirdropBadPlaceNoEnt", "int", INT_MIN, INT_MAX, "vector", -32000.0, 32000.0, 32, "int", INT_MIN, INT_MAX )
+	ScriptRemote_RegisterClientFunction( "ServerCallback_DestroyAirdropBadPlace", "int", INT_MIN, INT_MAX )
 
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_AddDroneClientData", "entity" ) //Audit 2-22-2025, not currently called.
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_SetLootDroneTrailFXType", "entity", "int", 0, INT_MAX ) //Audit 2-22-2025, not currently called.
@@ -837,10 +820,6 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariableSafe( "PilotAbilitySelectMenu_Enabled", SNDC_GLOBAL, SNVT_INT, 1 )
 	ScriptRemote_RegisterUIFunction( "SurvivalMenu_AckAction" )
 
-	RegisterServerVar( "respawnAvailableBits0", 0 )
-	RegisterServerVar( "respawnAvailableBits1", 0 )
-	RegisterServerVar( "respawnAvailableBits2", 0 )
-	RegisterServerVar( "respawnAvailableBits3", 0 )
 
 	RegisterNetworkedVariableSafe( "respawnAvailableBits0", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
 	RegisterNetworkedVariableSafe( "respawnAvailableBits1", SNDC_GLOBAL, SNVT_BIG_INT, 0 )
@@ -878,11 +857,6 @@ void function RemoteFunctions_Init_Begin()
 	if( Playlist() == ePlaylists.survival_training )
 		ScriptRemote_RegisterClientFunction( "ServerCallback_ActionCountUpdated", "int", INT_MIN, INT_MAX, "int", INT_MIN, INT_MAX )
 
-	// Text Info Panels
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_BuildTextInfoPanel" )
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_CreateTextInfoPanel" )
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_CreateTextInfoPanelWithID" )
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Dev_DestroyTextInfoPanelWithID" )
 
 	ScriptRemote_RegisterClientFunction( "ServerToClient_ScreenCoverTransition", "float", 0.0, 5000.0, 32, "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_WatchForSyncedMeleeCancelPeriod", "float", 0.0, 10.0, 24 )
@@ -896,13 +870,6 @@ void function RemoteFunctions_Init_Begin()
 	// Client-side helper (not permissive)
 	RegisterNetworkedVariableSafe( "IsAdmin", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
 	ScriptRemote_RegisterUIFunction( "UICallback_AdminStatus", "bool" )
-	
-	// Player stats tracker - todo(cafe): clean up legacy tracker related code
-	ScriptRemote_RegisterClientFunction( "Tracker_SetPlayerStatBool", "entity", "bool" )
-	ScriptRemote_RegisterClientFunction( "Tracker_SetPlayerStatInt", "entity", "int", INT_MIN, INT_MAX )
-	ScriptRemote_RegisterClientFunction( "Tracker_SetPlayerStatFloat", "entity", "float", -999999.0, 999999.0, 32 )
-	ScriptRemote_RegisterClientFunction( "Tracker_ResyncAllForPlayer", "entity" )
-	ScriptRemote_RegisterUntypedFunction_deprecated( "Tracker_ResyncStatForPlayer" )	
 		
 	//Lobby
 	Remote_RegisterServerFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason" )
@@ -924,32 +891,13 @@ void function RemoteFunctions_Init_Begin()
 	// _deprecated untyped variants are parsed differently and do not effect the typed buffer, however should be used sparingly(for now) to improve net throughput. The end goal is to not use untyped at all if possible.
 	
 	//Tracker stuff
-	if ( !IsLobby() )
-	{
-		// Localized Msg functions
-		int localizedStringsMax = GetLocalizedStringsCount() + 1
-		ScriptRemote_RegisterUntypedFunction_deprecated( "FS_BuildLocalizedMultiVarString" )
-		ScriptRemote_RegisterClientFunction( "FS_ShowLocalizedMultiVarMessage", "int", 0, localizedStringsMax, "int", 0, eMsgUI.len() + 1, "float", 0.0, 5000.0, 16 ) //Audit 2-22-2025
-		ScriptRemote_RegisterUntypedFunction_deprecated( "FS_BuildLocalizedTokenWithVariableString" ) //only for variable string
-		ScriptRemote_RegisterClientFunction( "FS_DisplayLocalizedToken", "int", 0, localizedStringsMax, "int", 0, localizedStringsMax, "int", 0, eMsgUI.len() + 1, "float", 0.0, FLT_MAX, 32 )
 
-		// Localized TextPanel
-		ScriptRemote_RegisterUntypedFunction_deprecated( "FS_BuildLocalizedVariable_InfoPanel" )
-		ScriptRemote_RegisterClientFunction( "FS_CreateTextInfoPanelWithID_Localized", "int", 0, localizedStringsMax, "int", 0, localizedStringsMax, "vector", -32000.0, 32000.0, 32, "vector", -32000.0, 32000.0, 32, "float", 0.0, 100.0, 16, "int", -1, 999 ) //Audit 2-22-2025
-	}
 
 	// BaseGametype_Init_MP
 	Remote_RegisterServerFunction( "ClientCallback_ClientStatus", "bool" )
 	Remote_RegisterServerFunction( "ClientCallback_SkipDeathCam" )
-		
-	RegisterServerVar( "tracker_enabled", false )
-	RegisterServerVar( "batch_fetch_complete", false )
 	ScriptRemote_RegisterUIFunction( "UI_Callback_MOTD" )
 
-	if ( IsLobby() )
-	{
-		//Register networked variables fo	r the lobby
-	}
 
 	#if CLIENT
 		if ( !IsLobby() )

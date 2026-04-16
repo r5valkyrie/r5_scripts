@@ -209,7 +209,7 @@ global struct ServerEntityStruct
 	IntSet spawnedFilters
 
 	bool isHotDropping
-
+	bool hasSpawnKillDetection = false
 	bool spawnPointInUse
 	entity lastAttacker
 	float lastDamagedTime = 0.0 // S22: used by combat range dummies
@@ -305,7 +305,7 @@ global struct ServerEntityStruct
 	bool hasDefaultEnemyHighlight
 
 	bool isDisabled = false
-
+	void functionref( entity trap, int newTeam ) trapSetTeamFunc
 	int gameModeId
 	array<void functionref( entity ent, var damageInfo )>     entFriendlyFireCallbacks
 
@@ -360,6 +360,7 @@ global struct ServerEntityStruct
 	bool ignoreSafePushMode = false //If a pusher has set Anim_SetSafePushMode, which "Stops playing the animation when continuing it would hit a pushable object. Resumes automatically.".  This bool will override that behaviour where you have a pushable entity that you don't want to stop the animation on the pusher when it collides.  Example: large sliding doors vs Seer ult.
 	
 	entity               utilityEnt
+	int               arcPylonArrayIdx = -1 //script managed ent array index
 	
 	bool   isInWarpTrigger
 	float  phaseTunnelExitTime
@@ -676,9 +677,7 @@ global struct ServerPlayerStruct
 	entity						lastSpawnPoint
 	entity justCreatedSurvivalMainWeapon
 
-	// string						lastExecutionUsed
-
-	// MeritData					meritData
+	int disableScoreboardStackCount = 0
 
 	void functionref( entity ) currViewConeFunction = null
 	//RodeoPackageStruct&			rodeoPackage //To assign into a nested struct, reference is needed. Less efficient than directly changing values of struct
@@ -1485,6 +1484,8 @@ global struct ServerWeaponStruct
 	int savedShieldHealth
 
 	bool toggleShot = true
+
+	int           emoteIndex = -1
 }
 
 
@@ -1550,6 +1551,7 @@ global struct ServerProjectileStruct
 	float savedShotTime
 	int refundAmount = 0
 	vector ownerLocationDebug
+	int emoteIndex = -1
 	
 
 	vector                  savedVel

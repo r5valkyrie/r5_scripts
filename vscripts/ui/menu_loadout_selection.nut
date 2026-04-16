@@ -16,15 +16,15 @@ const int LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_PADDING = 10
 #if NX_PROG || PC_PROG_NX_UI
 const int LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_BASEOFFSET = -7
 #else
-const int LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_BASEOFFSET = -90	
+const int LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_BASEOFFSET = -90
 #endif
 
-                          
-                                                                                  
-                                                                            
-                                                                                   
-                                                                             
-                                
+
+
+
+
+
+
 
 struct
 {
@@ -40,13 +40,13 @@ struct
 }
 file
 
-                           
-                           
-                           
+
+
+
 
 void function LoadoutSelectionMenu_InitLoadoutMenu( var newMenuArg )
 {
-	                             
+
 	var menu = GetMenu( "LoadoutSelectionSystemLoadoutSelector" )
 	file.menu = menu
 	AddMenuEventHandler( menu, eUIEvent.MENU_SHOW, LoadoutSelectionMenu_OnLoadoutMenu_Show )
@@ -58,18 +58,18 @@ void function LoadoutSelectionMenu_InitLoadoutMenu( var newMenuArg )
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#B_BUTTON_CLOSE", null )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, ControlLoadoutMenu_OnNavBack )
 
-	                                                       
+
 	AddUICallback_OnResolutionChanged( LoadoutSelectionMenu_ResolutionChanged )
 }
 
-                                                                                      
+
 void function LoadoutSelectionMenu_ResolutionChanged()
 {
 	if ( LoadoutSelectionMenu_IsLoadoutSelectionAvailable() && CanRunClientScript() )
 		RunClientScript( "LoadoutSelection_RefreshAllUILoadoutInfo" )
 }
 
-                                                                                                                  
+
 bool function LoadoutSelectionMenu_IsLoadoutSelectionAvailable()
 {
     if ( !IsFullyConnected() )
@@ -87,7 +87,7 @@ bool function LoadoutSelectionMenu_IsLoadoutSelectionAvailable()
     return true
 }
 
-                                                                  
+
 void function LoadoutSelectionMenu_OnLoadoutMenu_Show()
 {
 	if ( GetActiveMenu() != file.menu )
@@ -123,9 +123,9 @@ void function LoadoutSelectionMenu_OnLoadoutMenu_Hide()
 	}
 }
 
-                           
-                           
-                           
+
+
+
 
 void function LoadoutSelectionMenu_UpdateLoadouts()
 {
@@ -134,13 +134,13 @@ void function LoadoutSelectionMenu_UpdateLoadouts()
 
 	LoadoutSelectionMenu_RefreshLoadouts( eLoadoutSelectionSlotType.REGULAR )
 
-                           
-                                                                            
-                                                                              
-                                 
+
+
+
+
 }
 
-                                                                                  
+
 void function LoadoutSelectionMenu_RefreshLoadouts( int loadoutSlotType )
 {
 	int loadoutCount = LoadoutSelection_GetLoadoutCounts_UI( loadoutSlotType )
@@ -160,13 +160,13 @@ void function LoadoutSelectionMenu_RefreshLoadouts( int loadoutSlotType )
 		RuiSetString( rui, "name", localizedHeader )
 		RuiSetBool( rui, "isEquipped", LoadoutSelection_GetSelectedLoadoutSlotIndex_UI() == loadoutIndex )
 
-		                                                                                                    
-		                                                                    
 
-		                                                                                                 
+
+
+
 		LoadoutSelectionMenu_UpdateWeaponElementsForLoadout( index, loadoutIndex, loadoutSlotType )
 
-		                                                        
+
 		for ( int consumableIndex = 0; consumableIndex < LOADOUTSELECTION_MAX_CONSUMABLES_PER_LOADOUT; consumableIndex++ )
 		{
 			var consumableIcon = Hud_GetChild( file.menu, LoadoutSelectionMenu_GetWeaponButtonPrefix( loadoutSlotType ) + index + "IconItem" + consumableIndex )
@@ -196,7 +196,7 @@ void function LoadoutSelectionMenu_RefreshLoadouts( int loadoutSlotType )
 
 		float offset = (diff / 2.0) * sizePer
 		float offsetPadding = (diff > 0.0)? (	(diff / 2.0) * LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_PADDING ): 0.0
-		
+
 		Hud_SetX( firstLoadoutButton, LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_BASEOFFSET + ( -1.0 * (offset + offsetPadding)) )
 	}
 }
@@ -205,13 +205,13 @@ void function UpdateFocusedLoadoutButtonGroups()
 {
 	UpdateFocusedLoadout( eLoadoutSelectionSlotType.REGULAR )
 
-                           
-                                                      
-                                                             
 
-                                                       
-                                                              
-                                 
+
+
+
+
+
+
 }
 
 void function UpdateFocusedLoadout( int loadoutSlotType )
@@ -227,7 +227,7 @@ void function UpdateFocusedLoadout( int loadoutSlotType )
 	}
 }
 
-                                                                                                                
+
 void function LoadoutSelectionMenu_UpdateMaxLoadoutCount( int maxLoadouts, int loadoutType )
 {
 
@@ -236,19 +236,19 @@ void function LoadoutSelectionMenu_UpdateMaxLoadoutCount( int maxLoadouts, int l
 		LoadoutSelectionMenu_ResetLoadoutButtons()
 }
 
-                                                                                                                    
-                                                                                                          
+
+
 void function LoadoutSelectionMenu_ResetLoadoutButtons()
 {
 	LoadoutSelectionMenu_RemoveAllButtons()
 
 	int loadoutSlotIndex = 0
-                           
-                                  
-                                   
-                                 
 
-	                                     
+
+
+
+
+
 	for ( int i = 0; i < LOADOUTSELECTION_MAX_TOTAL_LOADOUT_SLOTS; i++ )
 	{
 		int loadoutSlotType = LoadoutSelection_GetLoadoutSlotTypeForLoadoutIndex( i )
@@ -262,29 +262,29 @@ void function LoadoutSelectionMenu_ResetLoadoutButtons()
 			LoadoutSelectionMenu_SetupLoadoutButton( loadoutSlotIndex, i, loadoutSlotType )
 			loadoutSlotIndex++
 		}
-                           
-                                                                                                                    
-   
-                                                                                          
-                             
-   
-                                                                                                                      
-   
-                                                                                           
-                              
-   
-                                 
+
+
+
+
+
+
+
+
+
+
+
+
 	}
 }
 
-                                                
+
 void function LoadoutSelectionMenu_RemoveAllButtons()
 {
-	                             
+
 	array< var > loadoutButtons = clone file.loadoutButtons
 	foreach ( var loadoutButton in loadoutButtons )
 	{
-		                                   
+
 		Hud_RemoveEventHandler( loadoutButton, UIE_CLICK, LoadoutSelectionMenu_OnLoadoutSelectClick )
 		Hud_SetVisible( loadoutButton, false )
 		if ( file.loadoutButtons.contains( loadoutButton ) )
@@ -295,7 +295,7 @@ void function LoadoutSelectionMenu_RemoveAllButtons()
 			delete file.loadoutButtonIDToLoadoutIndex[ loadoutButtonScriptId ]
 	}
 
-	                             
+
 	array< var > loadoutWeaponElements = clone file.loadoutWeaponElements
 	foreach ( var weaponElement in loadoutWeaponElements )
 	{
@@ -307,10 +307,10 @@ void function LoadoutSelectionMenu_RemoveAllButtons()
 	}
 }
 
-                                             
+
 void function LoadoutSelectionMenu_SetupLoadoutButton( int index, int loadoutIndex, int loadoutSlotType )
 {
-	                                                                                                     
+
 	int maxLoadouts = LoadoutSelection_GetLoadoutCounts_UI( loadoutSlotType )
 	if ( index >= maxLoadouts )
 		return
@@ -332,14 +332,14 @@ void function LoadoutSelectionMenu_SetupLoadoutButton( int index, int loadoutInd
 	}
 }
 
-                                                                                                            
+
 void function LoadoutSelectionMenu_OnLoadoutSelectClick( var button )
 {
 	if ( GetActiveMenu() != file.menu )
 		return
 
 	int loadoutIndex
-	                                                                                                                                                                                               
+
 	if ( button in file.loadoutWeaponElementToLoadoutButtonTable )
 	{
 		loadoutIndex = LoadoutSelectionMenu_GetLoadoutIndexFromLoadoutButton( file.loadoutWeaponElementToLoadoutButtonTable[ button ] )
@@ -355,11 +355,11 @@ void function LoadoutSelectionMenu_OnLoadoutSelectClick( var button )
 	LoadoutSelectionMenu_CloseLoadoutMenu()
 }
 
-                           
-                           
-                           
 
-                                                                                           
+
+
+
+
 void function LoadoutSelectionMenu_UpdateWeaponElementsForLoadout( int index, int loadoutIndex, int loadoutSlotType )
 {
 	int weaponCountForLoadout = LoadoutSelection_GetWeaponCountByLoadoutIndex( loadoutIndex )
@@ -368,19 +368,19 @@ void function LoadoutSelectionMenu_UpdateWeaponElementsForLoadout( int index, in
 	{
 		if ( weaponIndex < weaponCountForLoadout )
 		{
-			                                                                                     
+
 			var weaponButton = Hud_GetChild( file.menu, LoadoutSelectionMenu_GetWeaponButtonPrefix( loadoutSlotType ) + index + "Weapon" + weaponIndex )
 			RunClientScript( "UICallback_LoadoutSelection_BindWeaponRui", weaponButton, loadoutIndex, weaponIndex )
 		}
 		else
 		{
-			                           
+
 			LoadoutSelectionMenu_RemoveWeaponElement( index, weaponIndex, loadoutSlotType )
 		}
 	}
 }
 
-                                     
+
 void function LoadoutSelectionMenu_RemoveWeaponElement( int index, int weaponIndex, int loadoutSlotType )
 {
 	var loadoutWeaponElement = Hud_GetChild( file.menu, LoadoutSelectionMenu_GetWeaponButtonPrefix( loadoutSlotType ) + index + "Weapon" + weaponIndex )
@@ -394,7 +394,7 @@ void function LoadoutSelectionMenu_RemoveWeaponElement( int index, int weaponInd
 		delete file.loadoutWeaponElementToLoadoutButtonTable[ loadoutWeaponElement ]
 }
 
-                                                        
+
 var function LoadoutSelectionMenu_GetWeaponElementByIndex( int loadoutIndex, int weaponIndex )
 {
 	var weaponElement = null
@@ -414,7 +414,7 @@ var function LoadoutSelectionMenu_GetWeaponElementByIndex( int loadoutIndex, int
 	return weaponElement
 }
 
-                                                        
+
 var function LoadoutSelectionMenu_GetLoadoutButtonByIndex( int loadoutIndex )
 {
 	var loadoutButton = null
@@ -434,22 +434,22 @@ var function LoadoutSelectionMenu_GetLoadoutButtonByIndex( int loadoutIndex )
 	return loadoutButton
 }
 
-                           
-                           
-                           
 
-                                                                                                                                   
+
+
+
+
 void function LoadoutSelectionMenu_RequestOpenLoadoutMenu( var button )
 {
 	LoadoutSelectionMenu_OpenLoadoutMenu( false )
 }
 
-                       
+
 void function LoadoutSelectionMenu_OpenLoadoutMenu( bool isBrowseMode )
 {
     if ( !LoadoutSelectionMenu_IsLoadoutSelectionAvailable() )
         return
-	
+
 	if ( GetActiveMenu() != file.menu && MenuStack_GetLength() != 0 && !isBrowseMode )
 		CloseActiveMenu()
 
@@ -461,10 +461,10 @@ void function LoadoutSelectionMenu_OpenLoadoutMenu( bool isBrowseMode )
 #if NX_PROG
 	SetConVarBool( "nx_is_control_spawn_menu_open", true )
 #endif
-	
+
 }
 
-                         
+
 void function LoadoutSelectionMenu_CloseLoadoutMenu()
 {
 	if ( IsFullyConnected() && IsUsingLoadoutSelectionSystem() )
@@ -483,10 +483,10 @@ void function LoadoutSelectionMenu_CloseLoadoutMenu()
 	{
 		Remote_ServerCallFunction( "ClientCallback_LoadoutSelection_OnLoadoutSelectMenuClose" )
 
-                          
-			if ( CanRunClientScript() && Control_IsModeEnabled() )
+
+			if ( CanRunClientScript() && GameMode_IsActive( eGameModes.CONTROL )  )
 				RunClientScript( "UICallback_Control_Loadouts_OnClosed" )
-                                
+
 	}
 }
 
@@ -498,18 +498,18 @@ bool function LoadoutSelectionMenu_IsLoadoutMenuOpen()
 	return false
 }
 
-                                                 
+
 void function ControlLoadoutMenu_OnNavBack()
 {
 	LoadoutSelectionMenu_CloseLoadoutMenu()
 }
 
 
-                           
-                           
-                           
 
-                                                                
+
+
+
+
 void function LoadoutSelectionMenu_OnButtonYPress( var menu )
 {
 	var focusButton = GetFocus()
@@ -517,7 +517,7 @@ void function LoadoutSelectionMenu_OnButtonYPress( var menu )
 		LoadoutSelectionMenu_OpenScopeMenu( focusButton )
 }
 
-                                                                                                                                                  
+
 void function LoadoutSelectionMenu_OpenScopeMenu( var button )
 {
 	if ( GetActiveMenu() != file.menu )
@@ -530,18 +530,18 @@ void function LoadoutSelectionMenu_OpenScopeMenu( var button )
 	{
 		int loadoutIndex = LoadoutSelectionMenu_GetLoadoutIndexFromLoadoutButton( button )
 
-		                                                       
+
 		RunClientScript( "UICallback_LoadoutSelection_OnRequestOpenScopeSelection", button, loadoutIndex )
 	}
 }
 
 
 
-                           
-                           
-                           
 
-                                
+
+
+
+
 string function LoadoutSelectionMenu_GetLoadoutButtonPrefix( int loadoutSlotType )
 {
 	string prefix = ""
@@ -551,14 +551,14 @@ string function LoadoutSelectionMenu_GetLoadoutButtonPrefix( int loadoutSlotType
 		case eLoadoutSelectionSlotType.REGULAR:
 			prefix = LOADOUTSELECTIONMENU_LOADOUT_BUTTON
 			break
-                           
-                                          
-                                                       
-        
-                                           
-                                                        
-        
-                                 
+
+
+
+
+
+
+
+
 
 		default:
 			break
@@ -567,7 +567,7 @@ string function LoadoutSelectionMenu_GetLoadoutButtonPrefix( int loadoutSlotType
 	return prefix
 }
 
-                               
+
 string function LoadoutSelectionMenu_GetWeaponButtonPrefix( int loadoutSlotType )
 {
 	string prefix = ""
@@ -577,14 +577,14 @@ string function LoadoutSelectionMenu_GetWeaponButtonPrefix( int loadoutSlotType 
 		case eLoadoutSelectionSlotType.REGULAR:
 			prefix = LOADOUTSELECTIONMENU_LOADOUTWEAPON_BUTTON
 			break
-                           
-                                          
-                                                             
-        
-                                           
-                                                              
-        
-                                 
+
+
+
+
+
+
+
+
 		default:
 			break
 	}
@@ -592,7 +592,7 @@ string function LoadoutSelectionMenu_GetWeaponButtonPrefix( int loadoutSlotType 
 	return prefix
 }
 
-                                                                                          
+
 int function LoadoutSelectionMenu_GetLoadoutIndexFromLoadoutButton( var button )
 {
 	int loadoutIndex = -1
@@ -603,7 +603,7 @@ int function LoadoutSelectionMenu_GetLoadoutIndexFromLoadoutButton( var button )
 	return loadoutIndex
 }
 
-                                                      
+
 int function LoadoutSelectionMenu_GetLoadoutButtonCountByLoadoutSlotType( int loadoutSlotType )
 {
 	int count = 0

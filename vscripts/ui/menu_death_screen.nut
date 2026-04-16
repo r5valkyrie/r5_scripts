@@ -664,7 +664,7 @@ void function DeathScreenMenuOnNavBack()
 			{
 				ActivateTab( tabData, eDeathScreenPanel.SQUAD_SUMMARY )
 			}
-			else if ( Control_IsModeEnabled() )
+			else if ( GameMode_IsActive( eGameModes.CONTROL )  )
 			{
 				Remote_ServerCallFunction( "ClientCallback_SkipDeathCam" )
 			}
@@ -826,7 +826,7 @@ bool function CanSkipDeathCam()
 		return false
 
 
-	if ( IsFullyConnected() && Control_IsModeEnabled() )
+	if ( IsFullyConnected() && GameMode_IsActive( eGameModes.CONTROL )  )
 		return false
 
 
@@ -852,7 +852,7 @@ bool function CanSkipRecap()
 		return false
 
 
-	if ( Control_IsModeEnabled() )
+	if ( GameMode_IsActive( eGameModes.CONTROL ) )
 		return true
 
 
