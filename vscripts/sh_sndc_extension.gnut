@@ -64,42 +64,58 @@ int function GetNetworkedVariableIndexSafe(string name)
 
 void function SetGlobalNetBoolSafe(string name, bool value)
 {
+	bool oldValue = GetGlobalNetBool(name)
 	if (SDKIsOverflowVar(name))
 		SDKSetGlobalNetBool(name, value)
 	else
 		SetGlobalNetBool(name, value)
+	if (oldValue != value)
+		SDKNotifyVarChanged(name, oldValue ? 1 : 0, value ? 1 : 0)
 }
 
 void function SetGlobalNetIntSafe(string name, int value)
 {
+	int oldValue = GetGlobalNetInt(name)
 	if (SDKIsOverflowVar(name))
 		SDKSetGlobalNetInt(name, value)
 	else
 		SetGlobalNetInt(name, value)
+	if (oldValue != value)
+		SDKNotifyVarChanged(name, oldValue, value)
 }
 
 void function SetGlobalNetFloatSafe(string name, value)
 {
+	float fval = expect float(value)
+	float oldValue = GetGlobalNetFloat(name)
 	if (SDKIsOverflowVar(name))
-		SDKSetGlobalNetFloat(name, expect float(value))
+		SDKSetGlobalNetFloat(name, fval)
 	else
 		SetGlobalNetFloat(name, value)
+	if (oldValue != fval)
+		SDKNotifyFloatVarChanged(name, oldValue, fval)
 }
 
 void function SetGlobalNetTimeSafe(string name, value)
 {
+	float fval = expect float(value)
+	float oldValue = GetGlobalNetTime(name)
 	if (SDKIsOverflowVar(name))
-		SDKSetGlobalNetTime(name, expect float(value))
+		SDKSetGlobalNetTime(name, fval)
 	else
 		SetGlobalNetTime(name, value)
+	if (oldValue != fval)
+		SDKNotifyFloatVarChanged(name, oldValue, fval)
 }
 
 void function SetGlobalNetEntSafe(string name, entity ent)
 {
+	int newHandle = ent.GetEncodedEHandle()
 	if (SDKIsOverflowVar(name))
-		SDKSetGlobalNetEntity(name, ent.GetEncodedEHandle())
+		SDKSetGlobalNetEntity(name, newHandle)
 	else
 		SetGlobalNetEnt(name, ent)
+	// Entity callbacks fire via C++ NonRewind setter or overflow path
 }
 
 bool function GetGlobalNetBoolSafe(string name)
