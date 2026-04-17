@@ -1909,7 +1909,7 @@ void function OutOfBoundsHolster( entity player )
 					}
 				}
 
-				//player.EnableWeaponTypes ( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
+				player.EnableWeaponTypes ( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
 				// Need to equip ordnance for it to appear in the ordnance slot if it wasn't previously equipped ( like if a player is given their weapons while in a weapons disabled state )
 				SURVIVAL_AutoEquipOrdnanceFromInventory( player, true )
 				player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, lastActiveSlot )
@@ -1934,7 +1934,7 @@ void function OutOfBoundsHolster( entity player )
 					SwapToLastEquippedPrimary( player )
 					player.p.outOfBoundsActiveWeapon   = weapon
 					player.p.isOutOfBoundsHolsterCheck = true
-					//player.DisableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
+					player.DisableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
 				}
 			}
 		}

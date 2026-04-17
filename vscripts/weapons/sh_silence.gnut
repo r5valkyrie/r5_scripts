@@ -199,7 +199,8 @@ void function MpAbilitySharedSilence_Init()
 		ent.GrappleDetach()
 		DisableOffhandWeapons( ent )
 		ent.Server_DisableAbilities()
-		
+		ent.DisableWeaponTypes( WPT_ULTIMATE | WPT_TACTICAL )
+
 		if( PlayerHasPassive( ent, ePassives.PAS_CRYPTO ) )
 			Drone_ExitView( ent )
 
@@ -212,6 +213,7 @@ void function MpAbilitySharedSilence_Init()
 					//ent.Server_TurnOffhandWeaponsDisabledOff() (mk): This should not be called raw, else a player oob could end up enabling their weapons while oob when this thread expires
 					EnableOffhandWeapons( ent )
 					ent.Server_EnableAbilities()
+					ent.EnableWeaponTypes( WPT_ULTIMATE | WPT_TACTICAL )
 
 					SetCanDoDamageCallout( ent, true )
 					StopSoundOnEntity( ent, silenceLoopSound_3p )

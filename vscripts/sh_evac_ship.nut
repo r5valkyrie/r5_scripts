@@ -555,7 +555,7 @@ void function PlayerBoardsEvacShip( entity player, EvacShipData evacShipData )
 	//don't want to deal with crypto drones, phasing, etc during evac
 	//player.TakeOffhandWeapon( OFFHAND_TACTICAL )
 	//player.TakeOffhandWeapon( OFFHAND_ULTIMATE )
-	// player.DisableWeaponTypes( WPT_ULTIMATE | WPT_TACTICAL )
+	player.DisableWeaponTypes( WPT_ULTIMATE | WPT_TACTICAL )
 	player.Server_TurnOffhandWeaponsDisabledOn()
 	Survival_SetInventoryEnabled( player, false )
 

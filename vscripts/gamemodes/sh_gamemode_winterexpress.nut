@@ -2078,7 +2078,7 @@ void function GivePlayerLoadoutOnGameStart( entity player )
 	if ( !IsValid( player ) )
 		return
 
-	DisableMeleeWeapons( player )
+	player.DisableWeaponTypes( WPT_MELEE )
 
 	wait 4.0
 
@@ -2094,7 +2094,7 @@ void function GivePlayerLoadoutOnGameStart( entity player )
 		if ( !isPlayerOnHoverTankAtStart || isPlayerOnHoverTankAtStart && file.playersOnHovertank.contains( player ) )
 		{
 			PlayerMatchState_Set( player, ePlayerMatchState.NORMAL )
-			EnableMeleeWeapons( player )
+			player.EnableWeaponTypes( WPT_MELEE )
 		}
 
 		// Still only give the player armor and equipment( no weapons) if they were on the hovertank at the start ( since we don't want to give them weapons while skydiving, they will get them on landing)
@@ -4458,7 +4458,7 @@ void function DelayedDisablePlayerWeaponsAndAbilities( entity player, bool shoul
 	player.EndSignal( "OnDestroy" )
 	player.EndSignal( "WinterExpress_LeftDropship" )
 
-	// player.DisableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
+	player.DisableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
 	HolsterAndDisableWeapons( player )
 
 	// Wait for skydive to finish (in the rare case we enter the hovership's airspace while in a skydive)
@@ -4514,7 +4514,7 @@ void function DelayedPutPlayerIntoSkydiveFromHovertank( entity player )
 				player.ClearInvulnerable()
 				Survival_SetInventoryEnabled( player, true )
 				player.SetAimAssistAllowed( true )
-				// player.EnableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
+				player.EnableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
 				player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
 				//player.DeployWeapon()
 

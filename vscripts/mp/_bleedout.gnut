@@ -38,7 +38,7 @@ global function Bleedout_SetRevivedPlayerHealth
 
 global const int KNOCKDOWN_SHIELD_SLOT = WEAPON_INVENTORY_SLOT_PRIMARY_3 // UTILITY slot
 const string KNOCKDOWN_SHIELD_BASIC = "incapshield_pickup_lv0"
-const int BLEEDOUT_DISABLED_WEAPON_TYPES = -1 // WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP
+const int BLEEDOUT_DISABLED_WEAPON_TYPES = WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP
 
 const asset FX_BLOODTRAIL = $"skit_blood_decal_LG"
 const asset FX_REVIVE_PROTOTYPE = $"P_revive_arcs"
@@ -346,7 +346,7 @@ void function PlayerDying( entity player, entity attacker, var damageInfo )
 		player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, KNOCKDOWN_SHIELD_SLOT )
 
 		LockWeaponsAndMelee( player )
-		DisableAllWeaponsExceptHandsOrIncap( player )
+		player.DisableWeaponTypes( BLEEDOUT_DISABLED_WEAPON_TYPES )
 	}
 
 	OnThreadEnd(
@@ -374,9 +374,8 @@ void function PlayerDying( entity player, entity attacker, var damageInfo )
 
 				if ( forceHolster )
 				{
-					//Cafe
 					UnlockWeaponsAndMelee( player, "bleedout" )
-					EnableAllWeaponsExceptHandsOrIncap( player )
+					player.EnableWeaponTypes( BLEEDOUT_DISABLED_WEAPON_TYPES )
 
 					player.TakeNormalWeaponByIndexNow( KNOCKDOWN_SHIELD_SLOT )
 

@@ -5711,7 +5711,7 @@ void function LockWeaponsAndMelee( entity player )
 	if ( player.p.weaponsAndMeleeLockedCount == 0 )
 	{
 		player.LockWeaponChange()
-		DisableMeleeWeapons( player )
+		player.DisableWeaponTypes( WPT_MELEE )
 	}
 	player.p.weaponsAndMeleeLockedCount++
 }
@@ -5721,7 +5721,7 @@ void function UnlockWeaponsAndMelee( entity player, string debug_source )
 	#if DEVELOPER
 		// printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
 		// printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
-	#endif 
+	#endif
 	//player.p.weaponsAndMeleeLockedSources[ debug_source ] -= 1
 	//Assert( player.p.weaponsAndMeleeLockedSources[ debug_source ] >= 0, debug_source + " is calling UnlockWeaponsAndMelee too many times" )
 
@@ -5730,8 +5730,7 @@ void function UnlockWeaponsAndMelee( entity player, string debug_source )
 	if ( player.p.weaponsAndMeleeLockedCount == 0 )
 	{
 		player.UnlockWeaponChange()
-		//player.EnableWeaponTypes( WPT_MELEE )
-		Warning("EnableWeaponTypes not available for player, fix me")
+		player.EnableWeaponTypes( WPT_MELEE )
 	}
 }
 

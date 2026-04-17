@@ -196,13 +196,16 @@ global const string FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME = "npc_dummie_combat"
 global const string FIRING_RANGE_TARGET_FOLD_SCRIPTNAME = "fr_target_fold"
 global const int FIRING_RANGE_AI_BUDGET_MAX = 190
 global const asset FIRINGRANGE_DOOR_ASSET = $"mdl/door/canyonlands_door_single_02.rmdl"
-global const int WPT_VIEWHANDS = 0x100
+// WPT_* constants (WPT_VIEWHANDS / WPT_PRIMARY / WPT_MELEE / WPT_TACTICAL /
+// WPT_ULTIMATE / WPT_CONSUMABLE / WPT_INCAP_SHIELD / WPT_INCAP / WPT_GRENADE /
+// WPT_OTHER / WPT_SURVIVAL / WPT_ALL_EXCEPT_VIEWHANDS /
+// WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP) are now registered from C++ at VM init
+// via WeaponScriptVars_RegisterWPTConstants. Values match the S3 engine's
+// off_14131A3A0 string table (see weapon_script_vars.cpp for the mapping).
 global const string KRABER_WEAPON_NAME = "mp_weapon_sniper"
 global const string VANTAGE_RECALL_WEAPON_NAME = "mp_weapon_vantage_recall"
 global const float SNIPERULT_HEALINGDENIED_DURATION = 15
 global const float REV_SHELL_GIVE_UP_TIME = 30
-global const int WPT_ALL_EXCEPT_VIEWHANDS = 0xFF // S22: all weapon types except viewhands
-global const int WPT_SURVIVAL = 0 // S22 weapon type flag, not in S3 — 0 means bitflag check always false
 
 global enum eNewPlayerState
 {

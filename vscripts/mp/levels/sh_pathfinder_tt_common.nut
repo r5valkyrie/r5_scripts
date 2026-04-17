@@ -53,6 +53,7 @@ const string PLAYER_ENTER_RING_BELL = "Player_Enter_Ring_v2"
 
 #if SERVER
 const float PATH_TT_BELL_DING_DEBOUNCE = 1.0
+const int PATH_TT_DISABLED_WEAPON_TYPES = WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP & ~WPT_CONSUMABLE & ~WPT_MELEE
 #endif
 
 #if SERVER
@@ -648,6 +649,7 @@ void function PathTT_OnEnterPathTTRingTrigger( entity trigger, entity ent )
 	ChargeTactical_ForceEnd( ent )
 
 	GivePathTTMeleeWeaponsToPlayer( newPlayerData )
+	ent.DisableWeaponTypes( PATH_TT_DISABLED_WEAPON_TYPES )
 
 	file.numPlayersInRing++
 	if ( file.numPlayersInRing >= 1 )
@@ -862,6 +864,7 @@ void function PathTT_OnExitPathTTRingTrigger( entity trigger, entity ent )
 		// Even if player is dead, undo status effects, and re-enable weapon types
 		StatusEffect_Stop( ent, playerData.immunityStatusEffectHandle )
 		StatusEffect_Stop( ent, playerData.boxingStatusEffectHandle )
+		ent.EnableWeaponTypes( PATH_TT_DISABLED_WEAPON_TYPES )
 		if ( IsAlive( ent ) )
 		{
 			// Only return weapons to player if they're alive. If they're dead, the respawn sequence will handle weapons.

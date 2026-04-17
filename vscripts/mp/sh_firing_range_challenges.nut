@@ -446,11 +446,11 @@ void function FRC_SetupPlayersForChallenge( entity challengePlayer )
 		if ( player ==  challengePlayer )
 		{
 			ResetPlayerInventory ( player )
-			// player.DisableWeaponTypes( ACTIVE_CHALLENGE_WEAPON_FLAGS ) // S3: entity method only at runtime
+			player.DisableWeaponTypes( ACTIVE_CHALLENGE_WEAPON_FLAGS )
 		}
 		else
 		{
-			// player.DisableWeaponTypes ( WPT_ALL_EXCEPT_VIEWHANDS ) // S3: entity method only at runtime
+			player.DisableWeaponTypes ( WPT_ALL_EXCEPT_VIEWHANDS )
 		}
 
 		FiringRange_CleanUpPlayerPermanents( player )
@@ -707,7 +707,7 @@ void function FRC_ResetChallengeState( int realm )
 			continue
 
 		if ( !IsValid (activePlayer) || teamPlayer != activePlayer )
-			{} // teamPlayer.EnableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS ) // S3: entity method not available at compile time
+			teamPlayer.EnableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS )
 
 		ScreenFadeToBlackForever( teamPlayer, 0.2 )
 	}
@@ -725,7 +725,7 @@ void function FRC_ResetChallengeState( int realm )
 		FRSetting_InfiniteReloads_Restore_From_NetVar( activePlayer )
 
 		ResetPlayerInventory( activePlayer )
-		// activePlayer.EnableWeaponTypes( ACTIVE_CHALLENGE_WEAPON_FLAGS ) // S3: entity method not available at compile time
+		activePlayer.EnableWeaponTypes( ACTIVE_CHALLENGE_WEAPON_FLAGS )
 		activePlayer.SetOrigin( file.registeredFiringRangeChallenges[challengeKey].playerTeleportPosition )
 		Remote_CallFunction_NonReplay( activePlayer, "SCB_FiringRange_EnableCharacterChange", true )
 		activePlayer.Signal("CleanupPlayerPermanents")

@@ -8620,7 +8620,7 @@ void function Control_DisablePlayerWeapons_Thread( entity player, int weaponDisa
 	if ( !IsValid( player ) )
 		return
 
-	//player.DisableWeaponTypes( WPT_TACTICAL | WPT_ULTIMATE | WPT_CONSUMABLE )
+	player.DisableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
 
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
@@ -8630,11 +8630,11 @@ void function Control_DisablePlayerWeapons_Thread( entity player, int weaponDisa
 		{
 			if ( IsValid( player ) )
 			{
-				//player.EnableWeaponTypes( WPT_TACTICAL | WPT_ULTIMATE | WPT_CONSUMABLE )
+				player.EnableWeaponTypes( WPT_ALL_EXCEPT_VIEWHANDS_OR_INCAP )
 
 				// We want to automatically equip the players primary as long as it is not disabled through a different system
-				//if ( player.IsWeaponTypeEnabled( WPT_PRIMARY ) )
-				//	player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+				if ( player.IsWeaponTypeEnabled( WPT_PRIMARY ) )
+					player.SetActiveWeaponBySlot( eActiveInventorySlot.mainHand, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
 			}
 		}
 	)

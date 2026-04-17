@@ -700,11 +700,11 @@ void function ValkStatTrackerPassiveDistance( entity valk )
 
 	//TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_START, valk, valk.GetOrigin(), valk.GetTeam(), valk )
 
-	//valk.DisableWeaponTypes( WPT_MELEE )
+	valk.DisableWeaponTypes( WPT_MELEE )
 	OnThreadEnd(
 		function() : ( valk, totalDistance, curPos )
 		{
-			//valk.EnableWeaponTypes( WPT_MELEE )
+			valk.EnableWeaponTypes( WPT_MELEE )
 			//TrackingVision_CreatePOI( eTrackingVisionNetworkedPOITypes.PLAYER_ABILITY_VALK_PASSIVE_END, valk, valk.GetOrigin(), valk.GetTeam(), valk )
 			float distanceSinceLastCheck = (Distance( curPos, valk.GetOrigin() )) / 40
 			float distanceToAdd          = totalDistance + distanceSinceLastCheck
