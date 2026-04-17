@@ -232,7 +232,7 @@ const float CROUCH_SPAM_DETECT_TIMEOUT = 1.25
 
 const string SOUND_UI_TEAMMATE_KILLED = "UI_DeathAlert_Friendly"
 
-const string CIRCLE_CLOSING_IN_SOUND = "UI_InGame_RingMoveWarning" 
+const string CIRCLE_CLOSING_IN_SOUND = "UI_InGame_RingMoveWarning"
 
 const float TITAN_DESYNC_TIME = 1.0
 
@@ -268,7 +268,7 @@ global const vector UNITFRAME_SIZE = <260, 50, 0>
 global const vector UNITFRAME_SIZE_NX = <383, 80, 0>
 global const float UNITFRAME_SPACING = 16
 
-const float LOCALCLIENT_UNITFRAME_VERTICAL_OFFSET = 130.0 
+const float LOCALCLIENT_UNITFRAME_VERTICAL_OFFSET = 130.0
 
 global struct SummaryDisplayData
 {
@@ -474,7 +474,7 @@ void function ClGamemodeSurvival_Init()
 
 	FlagInit( "SquadEliminated" )
 
-	
+
 	if( !ClGameState_HasRegisteredGameStateAsset() )
 	{
 
@@ -649,7 +649,7 @@ void function OnPlayerCreated( entity player )
 
 	if ( (player.GetTeam() == GetLocalClientPlayer().GetTeam()) && (SquadMuteIntroEnabled() || SquadMuteLegendSelectEnabled()) )
 	{
-		
+
 		if ( IsSquadMuted() )
 			SetSquadMuteState( IsSquadMuted() )
 	}
@@ -685,12 +685,12 @@ void function TrackSprint( entity player )
 		else if ( !isSprint && shouldSprint )
 		{
 			e[ "sprintingVisuals" ] = true
-			
+
 			if ( IsValid( player.GetCockpit() ) )
 				fxHandle = StartParticleEffectOnEntity( player.GetCockpit(), GetParticleSystemIndex( SPRINT_FP ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 		}
 
-		
+
 		if ( shouldSprint )
 			player.SetFOVScale( 1.15, 2 )
 
@@ -710,7 +710,7 @@ bool function ShouldShowSprintVisuals( entity player )
 	if ( IsValid( activeWeapon ) && activeWeapon.GetWeaponSettingFloat( eWeaponVar.move_speed_modifier ) > 1 && player.IsSprinting() )
 		return true
 
-	float max = PLAYER_STANDING_SPRINT_SPEED 
+	float max = PLAYER_STANDING_SPRINT_SPEED
 
 	vector fwd = player.GetViewVector()
 	float dot  = DotProduct( fwd, player.GetVelocity() )
@@ -722,7 +722,7 @@ bool function ShouldShowSprintVisuals( entity player )
 void function Cl_Survival_AddClient( entity player )
 {
 	file.dpadMenuRui = CreateCockpitPostFXRui( SURVIVAL_HUD_DPAD_RUI, HUD_Z_BASE )
-	RuiTrackFloat( file.dpadMenuRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+	RuiTrackFloat( file.dpadMenuRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
 
 
 
@@ -772,7 +772,7 @@ void function Cl_Survival_AddClient( entity player )
 		{
 			file.compassRui = CreatePermanentCockpitRui( $"ui/compass_flat.rpak", HUD_Z_BASE )
 			RuiTrackFloat3( file.compassRui, "playerAngles", player, RUI_TRACK_CAMANGLES_FOLLOW )
-			RuiTrackInt( file.compassRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "gameState" ) )
+			RuiTrackInt( file.compassRui, "gameState", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "gameState" ) )
 		}
 	}
 
@@ -816,7 +816,7 @@ void function SURVIVAL_PopulatePlayerInfoRui( entity player, var rui )
 		RuiTrackInt( rui, "teamMemberIndex", player, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
 #endif
 
-    RuiSetString( rui, "name", GetDisplayablePlayerNameFromEHI( ToEHI( player ) ) )    
+    RuiSetString( rui, "name", GetDisplayablePlayerNameFromEHI( ToEHI( player ) ) )
 	RuiTrackInt( rui, "micStatus", player, RUI_TRACK_MIC_STATUS )
 
 	ItemFlavor character = LoadoutSlot_WaitForItemFlavor( ToEHI( player ), Loadout_Character() )
@@ -1059,20 +1059,20 @@ void function Survival_MinimapPackage_ObjectiveAreaInit( entity ent, var rui )
 	{
 		case "safeZone":
 			RuiTrackFloat3( rui, "playerPos", GetLocalViewPlayer(), RUI_TRACK_ABSORIGIN_FOLLOW )
-			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )  
+			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )
 			RuiSetBool( rui, "drawLine", true )
 			break
 
 		case "safeZone_noline":
-			
-			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )  
-			
+
+			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )
+
 			break
 
 		case "observerSurveyZone":
 			printt( "OBS_SURVEY: inititialising ObsSurveyRui" )
 			RuiSetBool( rui, "blink", false )
-			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )  
+			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( SAFE_ZONE_COLOR ), SAFE_ZONE_ALPHA )
 
 			var nestedRui = RuiCreateNested( rui, "nestedArea", $"ui/minimap_dashed_ellipse_32.rpak" )
 			RuiSetColorAlpha( nestedRui, "arcColor", SrgbToLinear( SAFE_ZONE_COLOR ), OBSERVER_SURVEY_ZONE_ALPHA )
@@ -1084,7 +1084,7 @@ void function Survival_MinimapPackage_ObjectiveAreaInit( entity ent, var rui )
 
 		case "surveyZone":
 			RuiSetBool( rui, "blink", false )
-			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( TEAM_COLOR_PARTY / 255.0 ), SAFE_ZONE_ALPHA )  
+			RuiSetColorAlpha( rui, "objColor", SrgbToLinear( TEAM_COLOR_PARTY / 255.0 ), SAFE_ZONE_ALPHA )
 
 
 
@@ -1360,9 +1360,9 @@ void function CLSurvival_RegisterNetworkFunctions()
 
 void function ScorebarInitTracking( entity player, var statusRui )
 {
-	RuiTrackInt( statusRui, "connectedPlayerCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "connectedPlayerCount" ) )
-	RuiTrackInt( statusRui, "livingPlayerCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "livingPlayerCount" ) )
-	RuiTrackInt( statusRui, "squadsRemainingCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "squadsRemainingCount" ) )
+	RuiTrackInt( statusRui, "connectedPlayerCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "connectedPlayerCount" ) )
+	RuiTrackInt( statusRui, "livingPlayerCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "livingPlayerCount" ) )
+	RuiTrackInt( statusRui, "squadsRemainingCount", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "squadsRemainingCount" ) )
 	RuiTrackFloat( statusRui, "deathfieldDistance", player, RUI_TRACK_DEATHFIELD_DISTANCE )
 	RuiTrackInt( statusRui, "teamMemberIndex", player, RUI_TRACK_PLAYER_TEAM_MEMBER_INDEX )
 
@@ -2072,7 +2072,7 @@ void function EquipmentChanged( entity player, string equipSlot, int new )
 				{
 					RuiSetBool( file.pilotRui, "evoShieldDoubleDisplayAmount", EvolvingArmor_ExceedsMaxIntLimit( data ) )
 					RuiSetBool( file.pilotRui, "isEvolvingShield", isEvo )
-					RuiTrackInt( file.pilotRui, "evolvingShieldKillCounter", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( NV_EVOLVING_ARMOR_KILL_COUNT ) )
+					RuiTrackInt( file.pilotRui, "evolvingShieldKillCounter", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( NV_EVOLVING_ARMOR_KILL_COUNT ) )
 				}
 
 
@@ -2187,9 +2187,9 @@ void function OnPilotCockpitCreated( entity cockpit, entity player )
 
 	if ( player == GetLocalViewPlayer() )
 	{
-		RuiTrackBool( file.dpadMenuRui, "inventoryEnabled", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "inventoryEnabled" ) )
-		RuiTrackInt( file.dpadMenuRui, "selectedHealthPickup", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "selectedHealthPickupType" ) )
-		RuiTrackFloat( file.dpadMenuRui, "bleedoutEndTime", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
+		RuiTrackBool( file.dpadMenuRui, "inventoryEnabled", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "inventoryEnabled" ) )
+		RuiTrackInt( file.dpadMenuRui, "selectedHealthPickup", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "selectedHealthPickupType" ) )
+		RuiTrackFloat( file.dpadMenuRui, "bleedoutEndTime", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
 
 		EquipmentSlot es = Survival_GetEquipmentSlotDataByRef( "backpack" )
 		RuiSetImage( file.dpadMenuRui, "backpackIcon", es.emptyImage )

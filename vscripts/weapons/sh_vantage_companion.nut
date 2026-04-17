@@ -221,9 +221,9 @@ struct
 
 	float TUNING_VANTAGE_COMPANION_RANGE_BASE
 	float TUNING_VANTAGE_COMPANION_RANGE_MAX
-                    
+
 	float TUNING_VANTAGE_COMPANION_UPGRADED_RANGE
-      
+
 
 	var vantageTacticalRui
 
@@ -254,9 +254,9 @@ void function VantageCompanion_Init()
 
 	file.TUNING_VANTAGE_COMPANION_RANGE_BASE = GetCurrentPlaylistVarFloat( "vantage_tactical_base_range", VANTAGE_COMPANION_RANGE_BASE )
 	file.TUNING_VANTAGE_COMPANION_RANGE_MAX = GetCurrentPlaylistVarFloat( "vantage_tactical_max_range", VANTAGE_COMPANION_RANGE_MAX )
-	                    
+
 	file.TUNING_VANTAGE_COMPANION_UPGRADED_RANGE = GetCurrentPlaylistVarFloat( "vantage_tactical_upgraded_range_bonus", 10 * METERS_TO_INCHES )
-       
+
 
 	#if DEVELOPER
 	Assert( eCompanionState.COUNT == sCompanionStateStrings.len(), "Must define a string for each state." )
@@ -282,12 +282,12 @@ void function VantageCompanion_Init()
 float function VantageCompanion_GetRangeBase( entity owner )
 {
 	float result = file.TUNING_VANTAGE_COMPANION_RANGE_BASE
-	                    
+
 	if( PlayerHasPassive( owner, ePassives.PAS_TAC_UPGRADE_TWO ) )
 	{
 		result += file.TUNING_VANTAGE_COMPANION_UPGRADED_RANGE
 	}
-       
+
 
 	return result
 }
@@ -296,12 +296,12 @@ float function VantageCompanion_GetRangeMax( entity owner )
 {
 	float result = file.TUNING_VANTAGE_COMPANION_RANGE_MAX
 
-	                    
+
 	if( PlayerHasPassive( owner, ePassives.PAS_TAC_UPGRADE_TWO ) )
 	{
 		result += file.TUNING_VANTAGE_COMPANION_UPGRADED_RANGE
 	}
-       
+
 
 	return result
 }
@@ -310,12 +310,12 @@ float function VantageCompanion_GetSpeed( entity owner )
 {
 	float result = VANTAGE_COMPANION_BASE_SPEED
 
-	                    
+
 		if( PlayerHasPassive( owner, ePassives.PAS_TAC_UPGRADE_TWO ) )
 		{
 			result *= 1.15
 		}
-       
+
 
 	return result
 }
@@ -515,45 +515,45 @@ OrderPosData function FindEchoOrderPos( entity player )
 	float lastPointGroundHeight = orderPosData.orderPos.z
 	orderPosData.orderPos  = adjustedPoint
 
-                         
-                                                                                     
-                                                
-  
-                                                                                                         
-   
-                                           
-   
-      
-   
-             
-                                                      
-                                                                                                      
-    
-                                                      
-    
-         
-             
-                                             
-                                             
-                                                              
-                                                                                                               
-                              
-                                        
-    
-                                                     
-             
 
-                                                        
-                                                       
-                                                             
-                      
-             
-                                              
-    
-         
-   
-  
-       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #if SERVER
 	float lastCompanionHeight =	currentCompanionData.ceilingHeightAtDestination
@@ -603,7 +603,7 @@ OrderPosData function FindEchoOrderPos( entity player )
 		}
 		return orderPosData
 	}
-	
+
 	Signal(player, VANTAGE_COMPANION_PATHFINDING_ROUTE_CLEARED_SIGNAL)
 	currentCompanionData.orderRoute.clear()
 	currentCompanionData.indexHeightAdjusted.clear()
@@ -1104,9 +1104,9 @@ void function VantageCompanionSpawnAndLifetime_Thread( entity player )
 	)
 
 
-	                    
+
 	float prevEcholocationPingTime
-       
+
 
 	int framesInvalid = 0
 	while ( true )
@@ -1228,12 +1228,12 @@ void function VantageCompanionSpawnAndLifetime_Thread( entity player )
 		// Do movement and turning
 		DoMovementAndTurning( player, echoEnt, echoGoalPos,  currentCompanionData )
 
-                          
-                                                                                           
-   
-                                                                                    
-   
-        
+
+
+
+
+
+
 
 		wait UPDATE_RATE
 	}
@@ -2345,8 +2345,8 @@ void function UpdateVantageTacticalRui()
 	if ( IsValid( localViewPlayer ) )
 	{
 		//RuiTrackFloat( file.vantageTacticalRui, "recallFrac", localViewPlayer, RUI_TRACK_STATUS_EFFECT_SEVERITY, eStatusEffect.crypto_camera_is_recalling )
-		RuiTrackFloat( rui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
-		RuiTrackFloat( rui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+		RuiTrackFloat( rui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+		RuiTrackFloat( rui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
 
 		entity offhandWeapon = localViewPlayer.GetOffhandWeapon( OFFHAND_TACTICAL )
 		if ( IsValid( offhandWeapon ) )
@@ -2376,12 +2376,12 @@ void function UpdateVantageTacticalRui()
 			RuiTrackFloat( rui, "readyFrac", offhandWeapon, RUI_TRACK_WEAPON_READY_TO_FIRE_FRACTION )
 		}
 
-		               
+
 			if ( StatusEffect_HasSeverity( localViewPlayer, eStatusEffect.is_boxing ) )
 				RuiSetBool( file.vantageTacticalRui, "isBoxing", true )
 			else
 				RuiSetBool( file.vantageTacticalRui, "isBoxing", false )
-        
+
 	}
 }
 #endif
@@ -2399,15 +2399,15 @@ void function TrackVantageAnimatedTacticalRuiOffhandWeapon()
 			{
 				RuiTrackFloat( file.vantageTacticalRui, "clipAmmoFrac", offhandWeapon, RUI_TRACK_WEAPON_CLIP_AMMO_FRACTION )
 
-                           
-                                                 
-     
-                                                                                                          
-                                                                                                  
-                                                                                                                       
-                                                                           
-     
-          
+
+
+
+
+
+
+
+
+
 			}
 		}
 	}

@@ -800,8 +800,8 @@ void function PassiveMedic_UpdateSelfResRUI( entity player )
 	if ( file.selfResRui == null )
 	{
 		file.selfResRui = CreateFullscreenRui( $"ui/upgrade_self_revive.rpak", HUD_Z_BASE ) //CreateFullscreenRui( $"ui/shields_repairing_indicator.rpak", HUD_Z_BASE )
-		RuiTrackFloat( file.selfResRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
-		RuiTrackFloat( file.selfResRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+		RuiTrackFloat( file.selfResRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+		RuiTrackFloat( file.selfResRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
 	}
 
 	OnThreadEnd(

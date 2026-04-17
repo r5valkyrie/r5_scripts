@@ -2630,9 +2630,9 @@ void function ClSurvivalArenas_OnScoreboardCreated()
 	var rui = ClGameState_GetRui()
 	file.arenasScoreRui = RuiCreateNested( rui, "modeNestedHandle", $"ui/gamestate_arenas_nested.rpak" )
 
-	RuiTrackInt( file.arenasScoreRui, "gamestate", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "gameState" ) )
-	RuiTrackInt( file.arenasScoreRui, "numTies", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "arenas_numties" ) )
-	RuiTrackInt( file.arenasScoreRui, "roundNum", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "roundsPlayed" ) )
+	RuiTrackInt( file.arenasScoreRui, "gamestate", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "gameState" ) )
+	RuiTrackInt( file.arenasScoreRui, "numTies", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "arenas_numties" ) )
+	RuiTrackInt( file.arenasScoreRui, "roundNum", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "roundsPlayed" ) )
 
 	RuiSetInt( file.arenasScoreRui, "maxTies", GameMode_GetWinBy2MaxTies( GameRules_GetGameMode() ) ) //
 	RuiSetInt( file.arenasScoreRui, "maxScore", GameMode_GetWinBy2MinScore( GameRules_GetGameMode() ) ) //
@@ -2683,9 +2683,9 @@ void function PupulateGamestatePlayerData()
 
 	#if(DEVELOPER)
 		//
-		RuiTrackInt( file.arenasScoreRui, "gamestate", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "gameState" ) )
-		RuiTrackInt( file.arenasScoreRui, "numTies", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "arenas_numties" ) )
-		RuiTrackInt( file.arenasScoreRui, "roundNum", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( "roundsPlayed" ) )
+		RuiTrackInt( file.arenasScoreRui, "gamestate", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "gameState" ) )
+		RuiTrackInt( file.arenasScoreRui, "numTies", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "arenas_numties" ) )
+		RuiTrackInt( file.arenasScoreRui, "roundNum", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( "roundsPlayed" ) )
 	#endif
 
 	int currentTeam = GetLocalClientPlayer().GetTeam()

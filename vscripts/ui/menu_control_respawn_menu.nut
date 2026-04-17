@@ -131,7 +131,7 @@ void function InitControlSpawnMenu( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_SHOW, OnControlSpawnMenu_Show )
 	AddMenuEventHandler( menu, eUIEvent.MENU_HIDE, OnControlSpawnMenu_Hide )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, OnControlSpawnMenu_Close )
-	//AddMenuEventHandler( menu, eUIEvent.MENU_PRECLOSE, OnControlSpawnMenu_PreClose ) // MENU_PRECLOSE doesn't exist
+	AddMenuEventHandler( menu, eUIEvent.MENU_PRECLOSE, OnControlSpawnMenu_PreClose ) // MENU_PRECLOSE doesn't exist
 
 	AddUICallback_UIShutdown( OnControlMenuShutdown )
 	AddUICallback_OnResolutionChanged( ControlSpawnMenu_ResolutionChanged )
@@ -163,7 +163,7 @@ void function OnControlSpawnMenu_Open()
 {
 	AddMenuFooterOption( file.menu, LEFT, BUTTON_START, true, "#CONTROL_SHOW_SCOREBOARD_GAMEPAD", "#CONTROL_SHOW_SCOREBOARD", ControlSpawnMenu_OpenScoreboard, CanOpenScoreboard )
 	AddMenuFooterOption( file.menu, LEFT, BUTTON_START, true, "#CONTROL_HIDE_SCOREBOARD_GAMEPAD", "#CONTROL_HIDE_SCOREBOARD", ControlSpawnMenu_CloseScoreboard, CanCloseScoreboard )
-	AddMenuFooterOption( file.menu, RIGHT, BUTTON_DPAD_UP, true, "#MODE_DETAILS_GAMEPAD", "#MODE_DETAILS", ControlSpawnMenu_OpenGameModeDetails, GameModeHasRules )
+	AddMenuFooterOption( file.menu, RIGHT, BUTTON_DPAD_UP, true, "#MODE_DETAILS_GAMEPAD", "#MODE_DETAILS", ControlSpawnMenu_OpenGameModeDetails )
 
 	#if PC_PROG
 		AddMenuFooterOption( file.menu, RIGHT, KEY_ENTER, true, "", "", UI_OnButton_Enter )
@@ -487,7 +487,7 @@ void function ControlSpawnMenu_OpenGameModeDetails(var button)
 {
 	if ( !IsFullyConnected() )
 		return
-	AdvanceMenu( GetMenu( "GameModeRulesDialog" ) )
+	UI_OpenFeatureTutorialDialog( GetPlaylist_UIRules() )
 }
 
 void function ControlSpawnMenu_OpenLoadoutMenu( var button )
@@ -661,7 +661,7 @@ void function ControlSpawnMenu_OnPingButtonClick( var button )
 	{
 		if( file.focusedSpawnButton == spawnButton && file.focusedSpawnButton in file.buttonToWaypointData)
 		{
-			if( file.buttonToWaypointData[file.focusedSpawnButton].objID >= 0 )
+			if( Control_IsSpawnWaypointIndexAnObjective( file.buttonToWaypointData[file.focusedSpawnButton].objID ) )
 				buttonExists = true
 		}
 	}
@@ -708,7 +708,7 @@ void function OnSpawnButtonClick( var button )
 	Hud_SetEnabled( button, false )
 	EmitUISound( CONTROL_SFX_SELECT_VALID_SPAWN )
 
-	RunClientScript( "UICallback_Control_SpawnButtonClicked", data.waypointEHI )
+	RunClientScript( "UICallback_Control_SpawnButtonClicked", data.waypointType )
 
 
 	Control_RemoveAllButtonSpawnIcons()
@@ -791,10 +791,9 @@ bool function IsFocusedSpawnPointPingedByLocalPlayer()
 	{
 		if( file.focusedSpawnButton == button && file.focusedSpawnButton in file.buttonToWaypointData)
 		{
-			if( file.buttonToWaypointData[file.focusedSpawnButton].objID == file.lastLocalPingObjID )
-			{
+			ControlSpawnButtonData data = file.buttonToWaypointData[file.focusedSpawnButton]
+			if( Control_IsSpawnWaypointIndexAnObjective( file.lastLocalPingObjID ) && data.objID == file.lastLocalPingObjID )
 				return true
-			}
 		}
 	}
 	return false

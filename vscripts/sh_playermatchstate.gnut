@@ -71,6 +71,6 @@ void function OnPlayerMatchStateChanged( entity player, int oldValue, int newVal
 
 void function PlayerMatchState_RuiTrackInt( var rui, string argName, entity player )
 {
-	RuiTrackInt( rui, argName, player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( NV_PLAYERMATCHSTATE ) )
+	RuiTrackInt( rui, argName, player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( NV_PLAYERMATCHSTATE ) )
 }
 #endif // CLIENT

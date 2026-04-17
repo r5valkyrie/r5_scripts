@@ -385,10 +385,9 @@ void function InitPlayPanel( var panel )
 
 void function Lobby_OnClickPlaylistAboutButton( var button )
 {
-	if( GameModeHasRules() )
-		OpenGameModeRulesDialog( button )
-	else
-		OpenAboutGameModePage( button )
+	string modeRules = GetPlaylist_UIRules()
+	if( FeatureHasTutorialTabs( modeRules ) )
+		OpenFeatureTutorialDialog( button, modeRules )
 }
 
 void function PlayPanel_LevelInit()

@@ -1972,11 +1972,7 @@ void function InitMenus()
 	AddMenu( "StatsSeasonSelectPopUp", $"resource/ui/menus/dialog_player_stats_season_select.menu", InitSeasonSelectPopUp )
 	AddMenu( "StatsModeSelectPopUp", $"resource/ui/menus/dialog_player_stats_mode_select.menu", InitModeSelectPopUp )
 
-	var GameModeRulesDialog = AddMenu( "GameModeRulesDialog", $"resource/ui/menus/dialog_gamemode_rules.menu", InitGameModeRulesDialog )
-	AddPanel( GameModeRulesDialog, "GameModeRulesPanel1", InitGameModeRulesPanel )
-	AddPanel( GameModeRulesDialog, "GameModeRulesPanel2", InitGameModeRulesPanel )
-	AddPanel( GameModeRulesDialog, "GameModeRulesPanel3", InitGameModeRulesPanel )
-	AddPanel( GameModeRulesDialog, "GameModeRulesPanel4", InitGameModeRulesPanel )
+	var FeatureTutorialDialog = AddMenu( "FeatureTutorialDialog", $"resource/ui/menus/dialog_feature_tutorial.menu", InitFeatureTutorialDialog )
 
 	AddMenu( "DevMenu", $"resource/ui/menus/dev.menu", InitDevMenu, "Dev" )
 

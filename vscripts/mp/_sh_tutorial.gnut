@@ -510,7 +510,7 @@ void function ServerCallback_ActionCountUpdated( int actionIndex, int actionCoun
 void function PingAltHintInit( entity player, InputHint inputHint )
 {
 	#if CLIENT
-		RuiTrackBool( inputHint.rui, "showAltHint", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndex( "isJumpmaster" ) )
+		RuiTrackBool( inputHint.rui, "showAltHint", player, RUI_TRACK_SCRIPT_NETWORK_VAR_BOOL, GetNetworkedVariableIndexSafe( "isJumpmaster" ) )
 	#endif
 }
 

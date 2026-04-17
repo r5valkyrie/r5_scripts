@@ -472,8 +472,8 @@ void function BubbleBunker_EnterDome( entity player, int statusEffect, bool actu
 		return
 
 	file.bubbleBunkerRui = CreateCockpitRui( $"ui/bubble_bunker.rpak", HUD_Z_BASE )
-	RuiTrackFloat( file.bubbleBunkerRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
-	RuiTrackFloat( file.bubbleBunkerRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+	RuiTrackFloat( file.bubbleBunkerRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+	RuiTrackFloat( file.bubbleBunkerRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
 }
 
 void function BubbleBunker_ExitDome( entity player, int statusEffect, bool actuallyChanged )

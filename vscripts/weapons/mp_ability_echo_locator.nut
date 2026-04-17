@@ -1186,8 +1186,8 @@ void function EchoLocatorRUI_Thread( entity echoLocator )
 
 	int attachment = echoLocator.LookupAttachment( "ref" )
 	RuiTrackFloat3( rui, "pos", echoLocator, RUI_TRACK_ABSORIGIN_FOLLOW )
-	RuiTrackFloat( rui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
-	RuiTrackFloat( rui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+	RuiTrackFloat( rui, "bleedoutEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+	RuiTrackFloat( rui, "reviveEndTime", localViewPlayer, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
 
 	OnThreadEnd(
 		function () : ( echoLocator )

@@ -3,6 +3,7 @@ global function InitFeatureTutorialDialog
 global function OpenFeatureTutorialDialog
 global function FeatureHasTutorialTabs
 global function FeatureTutorial_GetGameModeName
+global function GetPlaylist_UIRules
 
 global function UI_OpenFeatureTutorialDialog
 global function UI_CloseFeatureTutorialDialog
@@ -15,7 +16,29 @@ const string SFX_MENU_OPENED = "UI_Menu_Focus_Large"
 
 const int MAX_ARG_COUNT 	 = 6
 
-// Struct definitions moved to workarounds.gnut (loads before sh_ranked.gnut which uses them)
+global struct featureTutorialTableData
+{
+	string leftString
+	string rightString
+}
+
+global struct featureTutorialData
+{
+	string          title
+	string		 	description
+	asset			image
+	array< string >	descArgs
+	array< featureTutorialTableData > tableData
+
+
+	bool 			hasImage
+}
+
+global struct featureTutorialTab
+{
+	string                       tabName
+	array< featureTutorialData > rules
+}
 
 struct {
 	var                         menu
@@ -40,17 +63,17 @@ void function InitFeatureTutorialDialog( var newMenuArg )
 
 	AddCallback_OnTabChanged( FeatureTutorialDialog_OnTabChanged )
 
-	file.contentElm = Hud_GetChild( menu, "DialogContent" )
+	//file.contentElm = Hud_GetChild( menu, "DialogContent" )
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 }
 
 void function FeatureTutorialDialog_OnOpen()
 {
-	
+
 	file.tabs = GetFeatureTutorial()
 
-	if( file.tabs.len() == 0 ) 
+	if( file.tabs.len() == 0 )
 	{
 		if ( GetActiveMenu() == file.menu )
 		{
@@ -102,7 +125,7 @@ void function FeatureTutorialDialog_OnTabChanged()
 
 	TabData tabData = GetTabDataForPanel( file.menu )
 
-	SetRTKDataModel( tabData.activeTabIdx )
+//	SetRTKDataModel( tabData.activeTabIdx )
 }
 
 void function SetRTKDataModel( int index )
@@ -121,7 +144,7 @@ void function SetRTKDataModel( int index )
 		title = populateTitleFunc()
 	}
 
-	RuiSetString( Hud_GetRui( file.contentElm ), "messageText", title )
+	//RuiSetString( Hud_GetRui( file.contentElm ), "messageText", title )
 }
 
 string function FeatureTutorial_GetGameModeName()
@@ -170,12 +193,12 @@ void function UI_CloseFeatureTutorialDialog()
 	{
 		if( IsDialog( GetActiveMenu() ) )
 		{
-			
+
 			CloseAllMenus()
 		}
 		else
 		{
-			
+
 			MenuStack_Remove( file.menu )
 		}
 	}
@@ -188,6 +211,13 @@ void function FeatureTutorialDialog_Cancel( var button )
 	CloseActiveMenu()
 }
 
+string function GetPlaylist_UIRules()
+{
+	if( !IsFullyConnected() )
+		return ""
+
+	return GetPlaylistVarString( GamemodeUtility_GetPlaylist(), "ui_rules", "" )
+}
 
 bool function FeatureHasTutorialTabs( string feature )
 {
@@ -228,7 +258,7 @@ featureTutorialData function UI_FeatureTutorialDialog_BuildDetailsData( string t
 		data.tableData.append( td )
 	}
 
-	
+
 	data.hasImage = image != $""
 
 	return data

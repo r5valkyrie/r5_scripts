@@ -152,6 +152,12 @@ Scripts:
 	client/cl_pip.gnut
 ]
 
+When: "UI"
+Scripts:
+[
+	ui/dialogs/feature_tutorial.nut
+]
+
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
@@ -985,7 +991,6 @@ When: "UI"
 Scripts:
 [
 	ui/customize_model.nut
-	ui/dialogs/feature_tutorial.gnut
 	ui/ui_vscript.gnut
 	ui/ui_utility.gnut
 	ui/_season_style.gnut
@@ -1036,7 +1041,6 @@ Scripts:
 	ui/dialogs/gamemode_select_private_match.nut
 	ui/dialogs/report_player.nut
 	ui/dialogs/find_friend.nut
-	ui/dialogs/gamemode_rules.nut
 	ui/dialogs/code_redemption.nut
 	ui/dialogs/confirm_leave_club.nut
 	ui/dialogs/confirm_edit_club.nut
