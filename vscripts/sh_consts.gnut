@@ -13,8 +13,9 @@ global enum eArcFlashState
 
 // eCanEmoteCheckReults — now in sh_emotes.nut
 
-// eHighlightGenericType — now in sh_highlight.gnut (S22)
-global const int HIGHLIGHT_INVALID_ID = -1
+// HIGHLIGHT_INVALID_ID is registered natively by the S21 engine; the
+// script-side const declaration was dropped to avoid a redefinition
+// compile error. Reference it directly as an intrinsic.
 
 // XP Cache constants (defined in mp_pickup_xp_cache.nut SERVER-only, needed in shared code)
 global const string XPCACHE_BASIC_NAME = "mp_pickup_xp_cache"
@@ -68,17 +69,18 @@ global const string PROWLER_DEN_SCRIPT_NAME = "prop_prowler_den"
 
 // WT_GADGET now registered in engine
 
-// Missing engine color constant - aliased to gold tier
-global const int COLORID_HUD_LOOT_TIER_GH = 30
+// COLORID_HUD_LOOT_TIER_GH is registered natively by the S21 engine's
+// color table (one `COLORID_<name>` const per color entry at VM init).
+// Dropped the script-side workaround to avoid a redefinition error.
 
 //custom
-global const bool ASSERTS = false // not available as native preprocessor define
-global const bool RTK = false // RTK UI system not available
+// [s21-native] bool const ASSERTS registered by engine bootstrap; script redeclaration dropped
+// [s21-native] bool const RTK = 0x1 (bool) registered by engine; script redeclaration dropped
 global const bool NAVMESH_ALL_SUPPORTED = false
-global const bool AUTO_PLAYER = false
+// [s21-native] bool const AUTO_PLAYER registered by engine bootstrap; script redeclaration dropped
 global const bool CHALLENGE_DEBUG = false
-global const int ASSET_SETTINGS_UNIQUE_ID_INVALID = -1
-global const int GRX_CURRENCY_HEIRLOOM = 3
+// [s21-native] int const ASSET_SETTINGS_UNIQUE_ID_INVALID = 0x0 (int) registered by engine; script redeclaration dropped
+// [s21-native] const GRX_CURRENCY_HEIRLOOM = 4 registered by engine; script redeclaration dropped
 global const string DEATH_BOX_TARGETNAME = "player_death_box"
 global const string VOID_RING_WEAPON_REF = "mp_ability_void_ring"
 global const string REDEPLOY_BALLOON_WEAPON_REF = "mp_ability_redeploy_balloon"
@@ -91,10 +93,10 @@ global const int WAT_INVALID = -1
 global const int WAT_BARREL = 0
 global const int WAT_LASER_SIGHT = 1
 global const int WAT_OPTIC = 2
-global const int GRX_CURRENCY_EXOTIC = 4
-global const int GRX_CURRENCY_ESCROW = 5
-global const int GRX_CURRENCY_EVENT = 6
-global const int GRX_INVALID_SEQUENCE_NUMBER = -1
+// [s21-native] const GRX_CURRENCY_EXOTIC = 5 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_CURRENCY_ESCROW = 6 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_CURRENCY_EVENT = 3 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_INVALID_SEQUENCE_NUMBER = 4294967295 registered by engine; script redeclaration dropped
 global const int MATCHRANKEDMODE_RANKED_ARENA = 2
 
 global enum eBoostModifierType
@@ -106,16 +108,16 @@ global enum eBoostModifierType
 	_COUNT
 }
 
-global const int WEAPON_ARTIFACT_BLADE_CHANGED = 1
-global const int WEAPON_ARTIFACT_POWERSOURCE_CHANGED = 2
+// [s21-native] int const WEAPON_ARTIFACT_BLADE_CHANGED = 0x1 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const WEAPON_ARTIFACT_POWERSOURCE_CHANGED = 0x2 (int) registered by engine; script redeclaration dropped
 
 // Weapon Custom Activity Flags (not in native engine)
 global const int WCAF_INTERRUPTIBLE_ALLOW_START_WHILE_SPRINTING = 0x10
 
-global const int GRX_OFFERTYPE_DEFAULT = 0
-global const int GRX_OFFERTYPE_BUNDLE = 1
-global const int GRX_OFFERTYPE_PYS = 2
-global const int GRX_OFFERITEMTYPE_CORE = 0
+// [s21-native] const GRX_OFFERTYPE_DEFAULT = 0 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_OFFERTYPE_BUNDLE = 1 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_OFFERTYPE_PYS = 2 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_OFFERITEMTYPE_CORE = 1 registered by engine; script redeclaration dropped
 
 global enum XP_TYPE
 {
@@ -141,24 +143,24 @@ global enum XP_TYPE
 }
 
 // GRX_HTTPQUERYGOAL_* — additional goals not in native engine
-global const int GRX_ITEM_INDEX_INVALID = -1
-global const int GRX_CONTAINERTYPE_GIFT = 99
+// [s21-native] const GRX_ITEM_INDEX_INVALID = 65535 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_CONTAINERTYPE_GIFT = 1 registered by engine; script redeclaration dropped
 
-global const int GRX_HTTPQUERYGOAL_PURCHASE_BUNDLE_OFFER = 100
-global const int GRX_HTTPQUERYGOAL_DELETE_ITEMS = 101
-global const int GRX_HTTPQUERYGOAL_UPDATE_ITEMS = 102
-global const int GRX_HTTPQUERYGOAL_GIVE_MASTERY_SEQUENCE_REWARD = 103
-global const int GRX_HTTPQUERYGOAL_GIVE_RANKED_SEQUENCE_REWARD = 104
-global const int GRX_HTTPQUERYGOAL_GIVE_QUEST_SEQUENCE_REWARD = 105
-global const int GRX_HTTPQUERYGOAL_GIVE_EVENT_SEQUENCE_REWARD = 106
-global const int GRX_HTTPQUERYGOAL_GIVE_HEIRLOOM_SEQUENCE_REWARD = 107
-global const int GRX_HTTPQUERYGOAL_GIFT_OFFER = 108
-global const int GRX_HTTPQUERYGOAL_GIVE_AMAZON_PRIME_SEQUENCE_REWARD = 109
-global const int GRX_HTTPQUERYGOAL_GIVE_TWITCH_DROP_SEQUENCE_REWARD = 110
+// [s21-native] const GRX_HTTPQUERYGOAL_PURCHASE_BUNDLE_OFFER = 5 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_DELETE_ITEMS = 23 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_UPDATE_ITEMS = 24 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_GIVE_MASTERY_SEQUENCE_REWARD = 17 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_GIVE_RANKED_SEQUENCE_REWARD = 18 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_GIVE_QUEST_SEQUENCE_REWARD = 25 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_GIVE_EVENT_SEQUENCE_REWARD = 26 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_GIVE_HEIRLOOM_SEQUENCE_REWARD = 27 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_GIFT_OFFER = 28 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_GIVE_AMAZON_PRIME_SEQUENCE_REWARD = 29 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_HTTPQUERYGOAL_GIVE_TWITCH_DROP_SEQUENCE_REWARD = 30 registered by engine; script redeclaration dropped
 global const int GRX_HTTPQUERYGOAL_GIVE_SEQUENCE_REWARD = 111
 
-global const int GRX_MAX_STORE_SECTIONS = 10
-global const int GRX_SMART_MERCHANDISING_DATA_NUM_INTS = 11
+// [s21-native] const GRX_MAX_STORE_SECTIONS = 15 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_SMART_MERCHANDISING_DATA_NUM_INTS = 16 registered by engine; script redeclaration dropped
 
 global enum eEventsPanelPage
 {
@@ -1288,11 +1290,11 @@ global const OFFHAND_SPECIAL		= OFFHAND_LEFT
 global const int WEAPON_INVENTORY_SLOT_PRIMARY_4 = 4
 global const int WEAPON_INVENTORY_SLOT_PRIMARY_COUNT_MAIN = 2
 global const int WEAPON_INVENTORY_SLOT_GADGET = 4
-global const int TRACE_COLLISION_GROUP_PLAYER_MOVEMENT = 9
-global const int USE_INPUT_AUTO = 8
-global const int USE_FLAG_AUTO = 8
-global const int USABLE_FROM_EXTENDED_RANGE = 16
-global const int TRACE_MASK_ABILITY = 0x40083003
+// [s21-native] int const TRACE_COLLISION_GROUP_PLAYER_MOVEMENT = 0x9 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const USE_INPUT_AUTO = 0x8 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const USE_FLAG_AUTO = 0x2 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const USABLE_FROM_EXTENDED_RANGE = 0x20 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const TRACE_MASK_ABILITY = 0x46C0400B (int) registered by engine; script redeclaration dropped
 global const int GSF_PLANTED = 0x80
 global const int ENERGIZE_NONE = 0
 global const int ENERGIZE_ENERGIZING = 1
@@ -3252,7 +3254,7 @@ global enum eRarityTier
 //	global const vector AMMO_LARGE_COLOR = <76, 120, 105> / 255.0
 
 // S22 color IDs not present in S3 engine - fallback to 0 (default)
-global const int COLORID_CRAFTING_DISPENSER = 0
+// [s21-native] const COLORID_CRAFTING_DISPENSER = 186 registered by engine; script redeclaration dropped
 
 // S22 beacon scriptnames
 global const string ENEMY_SURVEY_BEACON_SCRIPTNAME = "enemy_survey_beacon"
@@ -3625,7 +3627,7 @@ global const int ACM_PLAYER = 1
 global const int ACM_SPECTATORS = 2
 global const int ACM_ALL_PLAYERS = 3
 global const int ACM_COUNT = 4
-global const int CAMO_SKIN_COUNT = 3
+// [s21-native] int const CAMO_SKIN_COUNT = 0x305 (int) registered by engine; script redeclaration dropped
 global const int GAMEMODE_MAX_SEEN_INDEX = 9
 global const int GAMEMODE_INVALID_INDEX = -1
 

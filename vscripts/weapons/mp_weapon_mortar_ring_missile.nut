@@ -104,6 +104,8 @@ struct FireSegmentData
 }
 
 // Moved to workarounds.gnut for load order
+// [s21-native] function CalcWorldToLocalOrigin_Entity() registered by engine; script stub commented out
+/*
 //vector function CalcWorldToLocalOrigin_Entity( entity moveParent, vector worldPos )
 //{
 //	if ( !IsValid( moveParent ) )
@@ -115,6 +117,8 @@ struct FireSegmentData
 //	return < offset.Dot( forward ), offset.Dot( right ), offset.Dot( up ) >
 //}
 
+// [s21-native] function CalcLocalToWorldOrigin_Entity() registered by engine; script stub commented out
+/*
 vector function CalcLocalToWorldOrigin_Entity( entity moveParent, vector localPos )
 {
 	if ( !IsValid( moveParent ) )
@@ -126,20 +130,28 @@ vector function CalcLocalToWorldOrigin_Entity( entity moveParent, vector localPo
 	vector up = AnglesToUp( moveParent.GetAngles() )
 	return origin + forward * localPos.x + right * localPos.y + up * localPos.z
 }
+*/
+*/
 
+// [s21-native] function CalcWorldToLocalAngles_Entity() registered by engine; script stub commented out
+/*
 vector function CalcWorldToLocalAngles_Entity( entity moveParent, vector worldAngles )
 {
 	if ( !IsValid( moveParent ) )
 		return worldAngles
 	return AnglesCompose( worldAngles, AnglesInverse( moveParent.GetAngles() ) )
 }
+*/
 
+// [s21-native] function CalcLocalToWorldAngles_Entity() registered by engine; script stub commented out
+/*
 vector function CalcLocalToWorldAngles_Entity( entity moveParent, vector localAngles )
 {
 	if ( !IsValid( moveParent ) )
 		return localAngles
 	return AnglesCompose( moveParent.GetAngles(), localAngles )
 }
+*/
 
 bool function PositionHasLOSToObject( vector startPoint, entity target, array<entity> ornull additionalIgnore = null )
 {

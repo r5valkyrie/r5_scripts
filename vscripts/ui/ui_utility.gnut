@@ -33,17 +33,23 @@ void function UtilityUI_Init()
 
 	level.getPersistentVarWrapper <- class
 	{
+// [s21-native] function GetPersistentVar() registered by engine; script stub commented out
+/*
 		function GetPersistentVar( variable )
 		{
 			// This looks up the code function GetPersistentVar
 			return GetPersistentVar( variable )
 		}
+*/
 
 
+// [s21-native] function GetPersistentVarAsInt() registered by engine; script stub commented out
+/*
 		function GetPersistentVarAsInt( string variable )
 		{
 			return GetPersistentVarAsInt( variable )
 		}
+*/
 	}
 }
 

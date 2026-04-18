@@ -240,7 +240,11 @@ void function printt_spamLog( ... )
 	for ( int i = 1; i < vargc; i++ )
 		msg = (msg + " " + vargv[i])
 
+#if UI
+	SpamLog( format( "[%.3f] %s\n", UITime(), msg ) )
+#else
 	SpamLog( format( "[%.3f] %s\n", Time(), msg ) )
+#endif
 }
 
 void function printl_spamLog( var msg )

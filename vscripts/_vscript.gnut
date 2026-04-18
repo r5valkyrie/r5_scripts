@@ -7,10 +7,10 @@ global function EntFire
 global function __DumpScope
 
 // mmmm i am going to dump several functions here because i do not know where they should go
-global function GRX_GetUserInfo
-global function GRX_HasItem
-global function GRX_GetPackCount
-global function GRX_OpenPack
+// [s21-native] forward-decl GRX_GetUserInfo registered by engine; dropped
+// [s21-native] forward-decl GRX_HasItem registered by engine; dropped
+// [s21-native] forward-decl GRX_GetPackCount registered by engine; dropped
+// [s21-native] forward-decl GRX_OpenPack registered by engine; dropped
 global function GRX_GiveSequenceReward
 
 // r5 stuff
@@ -97,6 +97,8 @@ void function __DumpScope( int depth, var Table )
 
 // grx stub functions
 
+// [s21-native] function GRX_GetUserInfo() registered by engine; script stub commented out
+/*
 GRXUserInfo function GRX_GetUserInfo( entity player )
 {
 	GRXUserInfo info
@@ -104,21 +106,31 @@ GRXUserInfo function GRX_GetUserInfo( entity player )
 	info.balances = []
 	return info
 }
+*/
 
+// [s21-native] function GRX_HasItem() registered by engine; script stub commented out
+/*
 bool function GRX_HasItem( ... )
 {
 	return false
 }
+*/
 
+// [s21-native] function GRX_GetPackCount() registered by engine; script stub commented out
+/*
 int function GRX_GetPackCount( entity player, int grxIndex ) 
 {
 	return 1
 }
+*/
 
+// [s21-native] function GRX_OpenPack() registered by engine; script stub commented out
+/*
 void function GRX_OpenPack( entity player, int opId, int grxIndex )
 {
 
 }
+*/
 
 void function GRX_GiveSequenceReward( entity player, int queryScriptId, int queryGoal, string seqName, int nextSeqNum, array<int> grxIndices, array<int> currencyCounts )
 {

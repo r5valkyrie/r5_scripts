@@ -6734,10 +6734,13 @@ void function GRX_GiveCosmetic( entity player, int opID, int grxIndex )
 {
 }
 
+// [s21-native] function GRX_GetConsumableCount() registered by engine; script stub commented out
+/*
 int function GRX_GetConsumableCount( int grxIndex )
 {
 	return 0
 }
+*/
 
 int function GRX_GetSequenceNumber( entity player, string seqName )
 {
@@ -6842,15 +6845,21 @@ void function PIN_UIInteraction_OnChallengeTracked( ... )
 {
 }
 
+// [s21-native] function PIN_GetSessionDuration() registered by engine; script stub commented out
+/*
 int function PIN_GetSessionDuration()
 {
 	return 0
 }
+*/
 
+// [s21-native] function PIN_GetSessionId() registered by engine; script stub commented out
+/*
 string function PIN_GetSessionId()
 {
 	return ""
 }
+*/
 
 void function PIN_PageView_Think( ... )
 {
@@ -6904,10 +6913,13 @@ void function GRX_DescribeOffer( ... )
 {
 }
 
+// [s21-native] function GetSoundDuration() registered by engine; script stub commented out
+/*
 float function GetSoundDuration( string soundAlias )
 {
 	return 1.0
 }
+*/
 
 void function PrecacheOnDemandLoadModel( int odlType, string pak, asset model, asset loadingModel )
 {
@@ -7025,15 +7037,21 @@ void function AddBPStars( entity player, int stars )
 {
 }
 
+// [s21-native] function RegisterArtifactBladeControlPoints() registered by engine; script stub commented out
+/*
 void function RegisterArtifactBladeControlPoints( int guid, array<vector> controlPoints )
 {
 }
+*/
 
+// [s21-native] function GetSkinImpactTableAliases() registered by engine; script stub commented out
+/*
 array<string> function GetSkinImpactTableAliases( int guid )
 {
 	array<string> empty
 	return empty
 }
+*/
 
 bool function AutoPlayer_IsAutoPlayer( entity player )
 {

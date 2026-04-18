@@ -24,15 +24,15 @@ global const int PLAYER_MELEE_STATE_KICK_ATTACK = 1
 global const int PLAYER_MELEE_STATE_SLAM_ATTACK = 2
 global const int SHADOWARMY_VICTORY_FLAGS_EVAC = 4
 global const int SHADOWARMY_LEGEND_ALLIANCE = 0
-global const int TT_GRAVITY_LIFT = 0
-global const int TT_BLACKHOLE = 0
+// [s21-native] int const TT_GRAVITY_LIFT = 0x4 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const TT_BLACKHOLE = 0x8 (int) registered by engine; script redeclaration dropped
 global const int PLAYER_MELEE_STATE_EXECUTION = 3
-global const int PLAYER_ARMORED_LEAP_PHASE_NONE = 0
+// [s21-native] int const PLAYER_ARMORED_LEAP_PHASE_NONE = 0x0 (int) registered by engine; script redeclaration dropped
 global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_HOLD_DURATION = 0.0
 global const float SHADOWARMY_LEGEND_SPAWN_FADE_FROM_BLACK_FADE_DURATION = 0.0
-global const int CODE_REDEMPTION_RESULT_SUCCESS = 0
-global const int PREMIUM_CURRENCY_05 = 0
-global const int playedApexFalse = 0
+// [s21-native] const CODE_REDEMPTION_RESULT_SUCCESS = 0 registered by engine; script redeclaration dropped
+// [s21-native] int const PREMIUM_CURRENCY_05 = 0xF (int) registered by engine; script redeclaration dropped
+// [s21-native] const playedApexFalse = 2 registered by engine; script redeclaration dropped
 
 global enum eCanLaunchResult
 {
@@ -64,18 +64,18 @@ global enum eServerVisibility
 	PUBLIC
 }
 
-global const int UM_RESULT_HIGH_LATENCY = 1
-global const int UM_RESULT_FAILURE = 2
+// [s21-native] const UM_RESULT_HIGH_LATENCY = 1 registered by engine; script redeclaration dropped
+// [s21-native] const UM_RESULT_FAILURE = 2 registered by engine; script redeclaration dropped
 
 // === Hardware/Platform Constants ===
-global const int HARDWARE_PC = 0
-global const int HARDWARE_PC_STEAM = 1
-global const int HARDWARE_PS4 = 2
-global const int HARDWARE_PS5 = 5
-global const int HARDWARE_XBOXONE = 3
-global const int HARDWARE_XB5 = 6
+// [s21-native] int const HARDWARE_PC = 0x2 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const HARDWARE_PC_STEAM = 0x7 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const HARDWARE_PS4 = 0x1 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const HARDWARE_PS5 = 0x8 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const HARDWARE_XBOXONE = 0x0 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const HARDWARE_XB5 = 0xA (int) registered by engine; script redeclaration dropped
 global const int HARDWARE_NX = 4
-global const int HARDWARE_SWITCH = 4
+// [s21-native] int const HARDWARE_SWITCH = 0x9 (int) registered by engine; script redeclaration dropped
 
 // Cross-platform merged platform mapping for XProg
 global table<int, string> HARDWARE_TO_MERGED_PLATFORM = {
@@ -89,8 +89,8 @@ global table<int, string> HARDWARE_TO_MERGED_PLATFORM = {
 }
 
 // === GRX/Store Constants ===
-global const int GRX_OFFERITEMTYPE_DEFAULT = 0
-global const int GRX_OFFERITEMTYPE_BONUS = 1
+// [s21-native] const GRX_OFFERITEMTYPE_DEFAULT = 0 registered by engine; script redeclaration dropped
+// [s21-native] const GRX_OFFERITEMTYPE_BONUS = 2 registered by engine; script redeclaration dropped
 
 // ============================================================================
 //  GLOBAL SCOPE - Function Declarations (all VMs)
@@ -98,7 +98,7 @@ global const int GRX_OFFERITEMTYPE_BONUS = 1
 
 // === Ranked/Rumble ===
 global function RankedRumble_IsRunningRankedRumble
-global function Ranked_GetCurrentPeriodGUIDString
+// [s21-native] forward-decl Ranked_GetCurrentPeriodGUIDString registered by engine; dropped
 
 // === Character/Playlist ===
 global function GetItemFlavorPlaylistOpinion
@@ -107,7 +107,7 @@ global function GetItemFlavorPlaylistOpinion
 global function IsValidItemFlavorNetworkIndex_DEPRECATED
 
 // === Utilities ===
-global function replace
+// [s21-native] forward-decl replace registered by engine; dropped
 global function WORKAROUND_AssetAppend
 
 // === Gamestate ===
@@ -136,7 +136,7 @@ global function SPL_GetRandomEndRingPosition_Slow
 global function RedeployBalloon_GetSkydiveVelOverride
 global function PutEntityInSomewhatSafeSpot
 global function StopAllSkydiveSounds
-global function CalcWorldToLocalOrigin_Entity
+// [s21-native] forward-decl CalcWorldToLocalOrigin_Entity registered by engine; dropped
 global function ShGameModeExplore_GetPlanePassNumber
 global function IsValidArrayIndex
 global function SkydiveEmoteProjector_CancelProjector
@@ -183,15 +183,15 @@ global function MetersToInchesSqr
 global function GetRandomPointInCircle
 
 // === Platform/Hardware ===
-global function GetHardwareFromName
-global function GetNameFromHardware
+// [s21-native] forward-decl GetHardwareFromName registered by engine; dropped
+// [s21-native] forward-decl GetNameFromHardware registered by engine; dropped
 global function GetMergedPlatformIdForPlayer
-global function IsDirectX12Beta
-global function IsTakeHomeBuild
+// [s21-native] forward-decl IsDirectX12Beta registered by engine; dropped
+// [s21-native] forward-decl IsTakeHomeBuild registered by engine; dropped
 // === Social/Party ===
-global function CanPromptUserToSpectatePartyInGame
-global function CanPromptUserToJoinPartyInFiringRange
-global function LocalizePresenceState
+// [s21-native] forward-decl CanPromptUserToSpectatePartyInGame registered by engine; dropped
+// [s21-native] forward-decl CanPromptUserToJoinPartyInFiringRange registered by engine; dropped
+// [s21-native] forward-decl LocalizePresenceState registered by engine; dropped
 
 // === Lobby/Audio ===
 global function PlayLobbyCharacterDialogue
@@ -260,7 +260,7 @@ global function HoverVehicle_GetVehicleOccupiedByPlayer
 global function PIN_EmoteUse
 global function Valentines_S15_ILoveYouEasterEggEnabled
 global function GetRemoteDeathboxHighlight
-global function RuiIsAlive
+// [s21-native] forward-decl RuiIsAlive registered by engine; dropped
 global function TransportPortal_CancelUse
 global function DeathboxNetwork_CanPlayerUse
 global function DeathboxNetwork_UntrackIfTracking
@@ -296,7 +296,7 @@ global function SetEntMaterialToSticker
 global function AddStickerDecalToEntity
 global function IsStickerInstancePlaced
 #if SERVER || CLIENT
-global function GetPlayerHardware
+// [s21-native] forward-decl GetPlayerHardware registered by engine; dropped
 #endif
 #if SERVER
 global function GetFovScalar
@@ -400,7 +400,7 @@ global function SurvivalRank_ProcessParticiation
 // ============================================================================
 #if UI
 // === Server/Debug ===
-global function GetServerDebugId
+// [s21-native] forward-decl GetServerDebugId registered by engine; dropped
 global function Squads_GetMax
 global function Squads_GetSquadColor
 global function Squads_GetSquadName
@@ -441,7 +441,7 @@ global function ODL_IsLoaded
 global function GetFileDownloadStatus
 
 // === Audio ===
-global function StopUISoundByName
+// [s21-native] forward-decl StopUISoundByName registered by engine; dropped
 
 // === Props/Models ===
 global function CreateClientSidePropDynamicCharm
@@ -466,8 +466,8 @@ global function ForceDestroyBlackBarRui
 // === Input ===
 
 // === Player Info ===
-global function Script_UserHasEAAccess
-global function GetPlayerUID
+// [s21-native] forward-decl Script_UserHasEAAccess registered by engine; dropped
+// [s21-native] forward-decl GetPlayerUID registered by engine; dropped
 global function GetPlayerNameFromEHI
 global function GetObfuscatedIdFromPlayer
 global function IsInBleedoutOrRevive
@@ -486,8 +486,8 @@ global function DoAnimatedSquadCardsPresentation
 global function DoAnimatedChampionSquadCardsPresentation
 
 // === First Time Player (also in UI) ===
-global function GetFirstTimePlayerState
-global function SetFirstTimePlayerState
+// [s21-native] forward-decl GetFirstTimePlayerState registered by engine; dropped
+// [s21-native] forward-decl SetFirstTimePlayerState registered by engine; dropped
 #endif
 
 // ============================================================================
@@ -545,8 +545,8 @@ global function Armor_ShieldRegen_IsUsingShieldRegen
 global function Armor_ShieldRegen_RechargePlayerShields_Thread
 global function CanPlayerRemoteInteractWithDeathbox
 global function TrackingVision_CreatePOIForPickedUpLoot
-global function GetTriggersByClassesInRealms_HullSize
-global function GetTriggersByClassesInRealms
+// [s21-native] forward-decl GetTriggersByClassesInRealms_HullSize registered by engine; dropped
+// [s21-native] forward-decl GetTriggersByClassesInRealms registered by engine; dropped
 global function HasBoundaryWall
 global function IsReinforced
 global function HoverVehicle_AttachEntToNearestAbilityAttachment
@@ -607,17 +607,17 @@ global function SafeSetPersistentVar
 #endif
 
 // === Audio ===
-global function EmitUIMusic
+// [s21-native] forward-decl EmitUIMusic registered by engine; dropped
 
 // === Time ===
 global function WaitForUnixTime
 
 // === GRX/Store ===
-global function GRX_SetEventCurrency
-global function GRX_GetItemTier
+// [s21-native] forward-decl GRX_SetEventCurrency registered by engine; dropped
+// [s21-native] forward-decl GRX_GetItemTier registered by engine; dropped
 
 // === Persistence/Lobby ===
-global function PersistenceGetVarHandle
+// [s21-native] forward-decl PersistenceGetVarHandle registered by engine; dropped
 global function HasCallback_OnPartyMemberRemoved
 global function LobbyPlaylist_GetSelectedPlaylist
 
@@ -639,123 +639,123 @@ global function PopulateRuiWithRankedBadgeDetails
 global function PopulateRuiWithPreviousSeasonRankedBadgeDetails
 #endif
 
-global function GetPlaylistModCount
-global function GetPlaylistModName
+// [s21-native] forward-decl GetPlaylistModCount registered by engine; dropped
+// [s21-native] forward-decl GetPlaylistModName registered by engine; dropped
 global function EffectSetEmitSound
 
 // ============================================================================
 //  #if UI - Declarations (large UI block)
 // ============================================================================
 
-global function PCPlat_IsSteam
+// [s21-native] forward-decl PCPlat_IsSteam registered by engine; dropped
 #if UI
 // === Workarounds/Utilities ===
 global function WORKAROUND_AnimAssetToAnimString
 global function WORKAROUND_PreventScriptErrors
-global function LocalizeNumber
+// [s21-native] forward-decl LocalizeNumber registered by engine; dropped
 global function GetDaysHoursRemainingLoc
-global function FormatNumber
-global function GetFakeTimeInSeconds
+// [s21-native] forward-decl FormatNumber registered by engine; dropped
+// [s21-native] forward-decl GetFakeTimeInSeconds registered by engine; dropped
 
 // === Server/Connection ===
-global function IsConnectedServerInfo
-global function ResetReconnectParameters
+// [s21-native] forward-decl IsConnectedServerInfo registered by engine; dropped
+// [s21-native] forward-decl ResetReconnectParameters registered by engine; dropped
 
 // === Playlist/Map Rotation ===
-global function GetPlaylistActiveMapRotationTimeLeft
-global function GetPlaylistRotationNameFromPlaylist
-global function GetNextPlaylistFromRotationAndUISlotAndSkip
+// [s21-native] forward-decl GetPlaylistActiveMapRotationTimeLeft registered by engine; dropped
+// [s21-native] forward-decl GetPlaylistRotationNameFromPlaylist registered by engine; dropped
+// [s21-native] forward-decl GetNextPlaylistFromRotationAndUISlotAndSkip registered by engine; dropped
 global function IsRankedPlaylist
 
 // === Playlist Native Functions ===
 
 
 // === Platform/Hardware ===
-global function GetUnspoofedPlayerHardware
-global function PCPlat_IsOrigin
-global function PCPlat_IsOverlayAvailable
-global function PCPlat_IsEnabled
-global function PCPlat_IsOnline
-global function PCPlat_IsUpToDate
-global function PCPlat_IsReady
-global function PCPlat_RegisterEAAccount
-global function PCPlat_IsWaitingForEARegistration
-global function PCPlat_GetEALinkErrorLevel
-global function IsPlayerLoggedInToMultipleMachines
-global function GetPlayerUnSpoofedUID
+// [s21-native] forward-decl GetUnspoofedPlayerHardware registered by engine; dropped
+// [s21-native] forward-decl PCPlat_IsOrigin registered by engine; dropped
+// [s21-native] forward-decl PCPlat_IsOverlayAvailable registered by engine; dropped
+// [s21-native] forward-decl PCPlat_IsEnabled registered by engine; dropped
+// [s21-native] forward-decl PCPlat_IsOnline registered by engine; dropped
+// [s21-native] forward-decl PCPlat_IsUpToDate registered by engine; dropped
+// [s21-native] forward-decl PCPlat_IsReady registered by engine; dropped
+// [s21-native] forward-decl PCPlat_RegisterEAAccount registered by engine; dropped
+// [s21-native] forward-decl PCPlat_IsWaitingForEARegistration registered by engine; dropped
+// [s21-native] forward-decl PCPlat_GetEALinkErrorLevel registered by engine; dropped
+// [s21-native] forward-decl IsPlayerLoggedInToMultipleMachines registered by engine; dropped
+// [s21-native] forward-decl GetPlayerUnSpoofedUID registered by engine; dropped
 global function IsUserOnSamePlatform
 
 // === Custom Match ===
-global function CustomMatch_CreateLobby
-global function CustomMatch_JoinLobby
-global function CustomMatch_HasHiddenPlaylistAccess
-global function CustomMatch_HasSpecialAccess
-global function CustomMatch_UpdateSettings
-global function CustomMatch_SetTeam
-global function CustomMatch_KickPlayer
-global function CustomMatch_LeaveLobby
-global function CustomMatch_SetReady
-global function CustomMatch_SetMatchmaking
-global function CustomMatch_IsInCustomMatch
-global function CustomMatch_LiveAPI_SendPlayers
-global function CustomMatch_GetMatchStats
-global function CustomMatch_SetTeamName
+// [s21-native] forward-decl CustomMatch_CreateLobby registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_JoinLobby registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_HasHiddenPlaylistAccess registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_HasSpecialAccess registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_UpdateSettings registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_SetTeam registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_KickPlayer registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_LeaveLobby registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_SetReady registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_SetMatchmaking registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_IsInCustomMatch registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_LiveAPI_SendPlayers registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_GetMatchStats registered by engine; dropped
+// [s21-native] forward-decl CustomMatch_SetTeamName registered by engine; dropped
 
 // === Menu/UI ===
 global function IsSelfClosingMenu
 global function ToolTips_SetMenuTooltipVisible
-global function SpectatorNextTarget
+// [s21-native] forward-decl SpectatorNextTarget registered by engine; dropped
 global function ShowBlockPlayerDialog
 global function OpenClubLeaveDialog
 global function Hud_ClearAllToolTips
-global function RefreshEaTwoFactorAuthenticationStatus
+// [s21-native] forward-decl RefreshEaTwoFactorAuthenticationStatus registered by engine; dropped
 
 // === EADP Social ===
 global function EADP_SocialEnabled
-global function EADP_IsTfaEnabled
-global function EADP_SocialCanRun
-global function EADP_SearchByName
-global function EADP_IsBlockedByEAID
-global function EADP_IsFriendByEAID
-global function EADP_InviteFriendByEAID
-global function EADP_UnBlockByEAID
-global function EADP_UnFriendByEAID
-global function EADP_IsCodeRedemptionEnabled
-global function EADP_RedeemCode
-global function EADP_GetPresenceForAccount
-global function EADP_GetFriendRequestList
-global function EADP_GetEadpIdFromFirstPartyID
-global function EADP_FriendsDoQuery
-global function EADP_GetFriendsList
-global function EADP_GetFriendsListWithOffline
-global function EADP_GetPresenceForUser
-global function EADP_RejectFriendRequestByEAID
-global function EADP_AcceptFriendRequestByEAID
-global function EADP_BlockByEAID
-global function EADP_GetInviteToPlayList
-global function EADP_AcceptInvitToPlay
-global function EADP_RejectInviteToPlay
-global function EADP_InviteToPlayByEAID
-global function EADP_InvitationAllowed
+// [s21-native] forward-decl EADP_IsTfaEnabled registered by engine; dropped
+// [s21-native] forward-decl EADP_SocialCanRun registered by engine; dropped
+// [s21-native] forward-decl EADP_SearchByName registered by engine; dropped
+// [s21-native] forward-decl EADP_IsBlockedByEAID registered by engine; dropped
+// [s21-native] forward-decl EADP_IsFriendByEAID registered by engine; dropped
+// [s21-native] forward-decl EADP_InviteFriendByEAID registered by engine; dropped
+// [s21-native] forward-decl EADP_UnBlockByEAID registered by engine; dropped
+// [s21-native] forward-decl EADP_UnFriendByEAID registered by engine; dropped
+// [s21-native] forward-decl EADP_IsCodeRedemptionEnabled registered by engine; dropped
+// [s21-native] forward-decl EADP_RedeemCode registered by engine; dropped
+// [s21-native] forward-decl EADP_GetPresenceForAccount registered by engine; dropped
+// [s21-native] forward-decl EADP_GetFriendRequestList registered by engine; dropped
+// [s21-native] forward-decl EADP_GetEadpIdFromFirstPartyID registered by engine; dropped
+// [s21-native] forward-decl EADP_FriendsDoQuery registered by engine; dropped
+// [s21-native] forward-decl EADP_GetFriendsList registered by engine; dropped
+// [s21-native] forward-decl EADP_GetFriendsListWithOffline registered by engine; dropped
+// [s21-native] forward-decl EADP_GetPresenceForUser registered by engine; dropped
+// [s21-native] forward-decl EADP_RejectFriendRequestByEAID registered by engine; dropped
+// [s21-native] forward-decl EADP_AcceptFriendRequestByEAID registered by engine; dropped
+// [s21-native] forward-decl EADP_BlockByEAID registered by engine; dropped
+// [s21-native] forward-decl EADP_GetInviteToPlayList registered by engine; dropped
+// [s21-native] forward-decl EADP_AcceptInvitToPlay registered by engine; dropped
+// [s21-native] forward-decl EADP_RejectInviteToPlay registered by engine; dropped
+// [s21-native] forward-decl EADP_InviteToPlayByEAID registered by engine; dropped
+// [s21-native] forward-decl EADP_InvitationAllowed registered by engine; dropped
 
 // === Audio ===
-global function EmitUIMusic
-global function IsSoundStillPlaying
+// [s21-native] forward-decl EmitUIMusic registered by engine; dropped
+// [s21-native] forward-decl IsSoundStillPlaying registered by engine; dropped
 
 // === GRX/Store ===
-global function GRX_SetEventCurrency
-global function GRX_GetItemTier
-global function GRX_PurchaseOfferV2
-global function GRX_UpdateSmartMerchandisingData
-global function GRX_MarkGiftItemsAsSeen
-global function GRX_MarkContainerAsSeen_Internal
-global function GRX_GetCurrencyBalances
+// [s21-native] forward-decl GRX_SetEventCurrency registered by engine; dropped
+// [s21-native] forward-decl GRX_GetItemTier registered by engine; dropped
+// [s21-native] forward-decl GRX_PurchaseOfferV2 registered by engine; dropped
+// [s21-native] forward-decl GRX_UpdateSmartMerchandisingData registered by engine; dropped
+// [s21-native] forward-decl GRX_MarkGiftItemsAsSeen registered by engine; dropped
+// [s21-native] forward-decl GRX_MarkContainerAsSeen_Internal registered by engine; dropped
+// [s21-native] forward-decl GRX_GetCurrencyBalances registered by engine; dropped
 global function GRX_HasUpToDateBundleOffers
-global function IsStoreEmpty
-global function GRX_GetOffer
+// [s21-native] forward-decl IsStoreEmpty registered by engine; dropped
+// [s21-native] forward-decl GRX_GetOffer registered by engine; dropped
 
 // === Persistence ===
-global function PersistenceGetVarHandle
+// [s21-native] forward-decl PersistenceGetVarHandle registered by engine; dropped
 global function HasCallback_OnPartyMemberRemoved
 global function LobbyPlaylist_GetSelectedPlaylist
 
@@ -785,15 +785,15 @@ global function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo
 global function PopulateMatchRank
 
 // === Party/Social ===
-global function Party_JoinUserPartyGame
-global function Party_LeaveParty
-global function Eadp_GetPrivacyData
+// [s21-native] forward-decl Party_JoinUserPartyGame registered by engine; dropped
+// [s21-native] forward-decl Party_LeaveParty registered by engine; dropped
+// [s21-native] forward-decl Eadp_GetPrivacyData registered by engine; dropped
 global function CreateEADPDataFromEAID
-global function IsPartyAllowedCrossplay
+// [s21-native] forward-decl IsPartyAllowedCrossplay registered by engine; dropped
 
 // === Cross Progression ===
-global function CrossProgression_IsRequestingUserMigrateStatus
-global function CrossProgression_QueryUserMigrateStatusIfNeeded
+// [s21-native] forward-decl CrossProgression_IsRequestingUserMigrateStatus registered by engine; dropped
+// [s21-native] forward-decl CrossProgression_QueryUserMigrateStatusIfNeeded registered by engine; dropped
 
 // === Clubs ===
 global function AreClubInvitesEnabled
@@ -824,38 +824,38 @@ global function DataDialog_AddCallback_OnClose
 // === Events ===
 global function EventsPanel_SetOpenPageIndex
 global function JumpToEventTab
-global function DoesUserHaveTwitchDrops
+// [s21-native] forward-decl DoesUserHaveTwitchDrops registered by engine; dropped
 
 // === Squads ===
 
 // === Communication/Mute ===
 global function CommunicationBlockGetBlockTime
-global function IsPlayerVoiceAndTextMutedForUID
-global function TogglePlayerVoiceAndTextMuteForUID
+// [s21-native] forward-decl IsPlayerVoiceAndTextMutedForUID registered by engine; dropped
+// [s21-native] forward-decl TogglePlayerVoiceAndTextMuteForUID registered by engine; dropped
 global function GetCommunicationBlockWarningText
 global function GetCommunicationBlockStateID
 
 // === Time ===
 global function WaitForUnixTime
-global function GetIsDSTActive
+// [s21-native] forward-decl GetIsDSTActive registered by engine; dropped
 global function GetUnixTimePDT
 global function RLocalDateTime
 global function RLocalTime
 
 // === Datacenter ===
-global function GetDatacenterRealName
+// [s21-native] forward-decl GetDatacenterRealName registered by engine; dropped
 
 // === First Time Player ===
-global function GetFirstTimePlayerState
-global function SetFirstTimePlayerState
+// [s21-native] forward-decl GetFirstTimePlayerState registered by engine; dropped
+// [s21-native] forward-decl SetFirstTimePlayerState registered by engine; dropped
 
 // === Settings/Options ===
-global function GamepadCustomSettingsAreEnabled
-global function VideoOptions_SpotShadowDetailChanged
-global function SoundOptions_SetupChannelConfigOptions
-global function SoundOptions_SetupOutputDeviceOptions
-global function SoundOptions_SetupVoiceInputDeviceOptions
-global function SoundOptions_DeviceSwitchingAvailable
+// [s21-native] forward-decl GamepadCustomSettingsAreEnabled registered by engine; dropped
+// [s21-native] forward-decl VideoOptions_SpotShadowDetailChanged registered by engine; dropped
+// [s21-native] forward-decl SoundOptions_SetupChannelConfigOptions registered by engine; dropped
+// [s21-native] forward-decl SoundOptions_SetupOutputDeviceOptions registered by engine; dropped
+// [s21-native] forward-decl SoundOptions_SetupVoiceInputDeviceOptions registered by engine; dropped
+// [s21-native] forward-decl SoundOptions_DeviceSwitchingAvailable registered by engine; dropped
 
 // === Stickers ===
 // GetAllStickerObjectTypes, GetStickerObjectName, GetStickerPresentationType moved to mp/sh_stickers.nut
@@ -869,17 +869,17 @@ global function StickersPanel_TogglePreviewStyle
 global function StickersPanel_GetCurrentConsumable
 
 // === Reconnect/Spectate ===
-global function TryLoadSpectateParameters
-global function TryLoadReconnectFromLocalStorage
-global function StartReconnectFromParameters
-global function GetReconnectDelay
-global function Reconnect_IsLiveSpectateLoaded
+// [s21-native] forward-decl TryLoadSpectateParameters registered by engine; dropped
+// [s21-native] forward-decl TryLoadReconnectFromLocalStorage registered by engine; dropped
+// [s21-native] forward-decl StartReconnectFromParameters registered by engine; dropped
+// [s21-native] forward-decl GetReconnectDelay registered by engine; dropped
+// [s21-native] forward-decl Reconnect_IsLiveSpectateLoaded registered by engine; dropped
 
 // === Misc ===
 global function OpenLangAoCDialog
 
 // === Nested #if UI ===
-global function GetKeyValueAsAsset
+// [s21-native] forward-decl GetKeyValueAsAsset registered by engine; dropped
 #if UI
 global function UISafeGetPersistentVarAsInt
 #endif
@@ -924,20 +924,29 @@ void function PopulateRuiWithPreviousSeasonRankedBadgeDetails( var rui, int rank
 
 #endif
 
+// [s21-native] function PCPlat_IsSteam() registered by engine; script stub commented out
+/*
 bool function PCPlat_IsSteam()
 {
 	return true
 }
+*/
 
+// [s21-native] function GetPlaylistModCount() registered by engine; script stub commented out
+/*
 int function GetPlaylistModCount()
 {
 	return 0  // No playlist mods in this environment
 }
+*/
 
+// [s21-native] function GetPlaylistModName() registered by engine; script stub commented out
+/*
 string function GetPlaylistModName( int index )
 {
 	return ""  // No playlist mods in this environment
 }
+*/
 
 void function EffectSetEmitSound( int effectHandle, string soundName )
 {
@@ -961,23 +970,32 @@ void function WORKAROUND_PreventScriptErrors()
 {
 }
 
+// [s21-native] function LocalizeNumber() registered by engine; script stub commented out
+/*
 string function LocalizeNumber( ... )
 {
 	if ( vargc > 0 )
 		return "" + vargv[0]
 	return "0"
 }
+*/
 
+// [s21-native] function FormatNumber() registered by engine; script stub commented out
+/*
 string function FormatNumber( string format, var number )
 {
 	return FormatAndLocalizeNumber( format, number, false )
 }
+*/
 
+// [s21-native] function GetFakeTimeInSeconds() registered by engine; script stub commented out
+/*
 int function GetFakeTimeInSeconds()
 {
 	Warning( "WORKAROUND: GetFakeTimeInSeconds() called - not implemented" )
 	return 0
 }
+*/
 
 string function GetDaysHoursRemainingLoc( int days, int hours )
 {
@@ -1004,36 +1022,51 @@ string function GetDaysHoursRemainingLoc( int days, int hours )
 
 // === Server/Connection ===
 
+// [s21-native] function IsConnectedServerInfo() registered by engine; script stub commented out
+/*
 bool function IsConnectedServerInfo()
 {
 	//Warning( "WORKAROUND: IsConnectedServerInfo() called - not implemented" )
 	return true
 }
+*/
 
+// [s21-native] function ResetReconnectParameters() registered by engine; script stub commented out
+/*
 void function ResetReconnectParameters()
 {
 	Warning( "WORKAROUND: ResetReconnectParameters() called - not implemented" )
 }
+*/
 
 // === Playlist/Map Rotation ===
 
+// [s21-native] function GetPlaylistActiveMapRotationTimeLeft() registered by engine; script stub commented out
+/*
 int function GetPlaylistActiveMapRotationTimeLeft( string playlist )
 {
 	Warning( "WORKAROUND: GetPlaylistActiveMapRotationTimeLeft() called - not implemented" )
 	return 0
 }
+*/
 
+// [s21-native] function GetPlaylistRotationNameFromPlaylist() registered by engine; script stub commented out
+/*
 string function GetPlaylistRotationNameFromPlaylist( string playlist )
 {
 	Warning( "WORKAROUND: GetPlaylistRotationNameFromPlaylist() called - not implemented" )
 	return ""
 }
+*/
 
+// [s21-native] function GetNextPlaylistFromRotationAndUISlotAndSkip() registered by engine; script stub commented out
+/*
 string function GetNextPlaylistFromRotationAndUISlotAndSkip( string playlist, string slot, int skip )
 {
 	Warning( "WORKAROUND: GetNextPlaylistFromRotationAndUISlotAndSkip() called - not implemented" )
 	return ""
 }
+*/
 
 bool function IsRankedPlaylist( string playlist )
 {
@@ -1042,11 +1075,16 @@ bool function IsRankedPlaylist( string playlist )
 
 // === Platform/Hardware ===
 
+// [s21-native] function GetUnspoofedPlayerHardware() registered by engine; script stub commented out
+/*
 string function GetUnspoofedPlayerHardware()
 {
 	return "PC"
 }
+*/
 
+// [s21-native] function GetHardwareFromName() registered by engine; script stub commented out
+/*
 int function GetHardwareFromName( string name )
 {
 	switch ( name )
@@ -1068,7 +1106,10 @@ int function GetHardwareFromName( string name )
 	}
 	return HARDWARE_PC
 }
+*/
 
+// [s21-native] function GetNameFromHardware() registered by engine; script stub commented out
+/*
 string function GetNameFromHardware( int hardware )
 {
 	switch ( hardware )
@@ -1090,81 +1131,121 @@ string function GetNameFromHardware( int hardware )
 	}
 	return "PC"
 }
+*/
 
 string function GetMergedPlatformIdForPlayer( entity player )
 {
 	return "pc"
 }
 
+// [s21-native] function IsDirectX12Beta() registered by engine; script stub commented out
+/*
 bool function IsDirectX12Beta()
 {
 	Warning( "WORKAROUND: IsDirectX12Beta() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function IsTakeHomeBuild() registered by engine; script stub commented out
+/*
 bool function IsTakeHomeBuild()
 {
 	return true
 }
+*/
 
+// [s21-native] function PCPlat_IsOrigin() registered by engine; script stub commented out
+/*
 bool function PCPlat_IsOrigin()
 {
 	return false
 }
+*/
 
+// [s21-native] function PCPlat_IsOverlayAvailable() registered by engine; script stub commented out
+/*
 bool function PCPlat_IsOverlayAvailable()
 {
 	Warning( "WORKAROUND: PCPlat_IsOverlayAvailable() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function PCPlat_IsEnabled() registered by engine; script stub commented out
+/*
 bool function PCPlat_IsEnabled()
 {
 	return true
 }
+*/
 
+// [s21-native] function PCPlat_IsOnline() registered by engine; script stub commented out
+/*
 bool function PCPlat_IsOnline()
 {
 	return true
 }
+*/
 
+// [s21-native] function PCPlat_IsUpToDate() registered by engine; script stub commented out
+/*
 bool function PCPlat_IsUpToDate()
 {
 	return true
 }
+*/
 
+// [s21-native] function PCPlat_RegisterEAAccount() registered by engine; script stub commented out
+/*
 void function PCPlat_RegisterEAAccount()
 {
 	Warning( "WORKAROUND: PCPlat_RegisterEAAccount() called - not implemented" )
 }
+*/
 
+// [s21-native] function PCPlat_IsReady() registered by engine; script stub commented out
+/*
 bool function PCPlat_IsReady()
 {
 	return true
 }
+*/
 
+// [s21-native] function PCPlat_IsWaitingForEARegistration() registered by engine; script stub commented out
+/*
 bool function PCPlat_IsWaitingForEARegistration()
 {
 	Warning( "WORKAROUND: PCPlat_IsWaitingForEARegistration() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function PCPlat_GetEALinkErrorLevel() registered by engine; script stub commented out
+/*
 int function PCPlat_GetEALinkErrorLevel()
 {
 	Warning( "WORKAROUND: PCPlat_GetEALinkErrorLevel() called - not implemented" )
 	return 0
 }
+*/
 
+// [s21-native] function IsPlayerLoggedInToMultipleMachines() registered by engine; script stub commented out
+/*
 bool function IsPlayerLoggedInToMultipleMachines()
 {
 	Warning( "WORKAROUND: IsPlayerLoggedInToMultipleMachines() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function GetPlayerUnSpoofedUID() registered by engine; script stub commented out
+/*
 string function GetPlayerUnSpoofedUID()
 {
 	return GetPlayerUID()
 }
+*/
 
 bool function IsUserOnSamePlatform( string hardware )
 {
@@ -1173,78 +1254,120 @@ bool function IsUserOnSamePlatform( string hardware )
 
 // === Custom Match ===
 
+// [s21-native] function CustomMatch_CreateLobby() registered by engine; script stub commented out
+/*
 void function CustomMatch_CreateLobby()
 {
 	Warning( "WORKAROUND: CustomMatch_CreateLobby() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_JoinLobby() registered by engine; script stub commented out
+/*
 void function CustomMatch_JoinLobby( string code )
 {
 	Warning( "WORKAROUND: CustomMatch_JoinLobby() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_HasHiddenPlaylistAccess() registered by engine; script stub commented out
+/*
 bool function CustomMatch_HasHiddenPlaylistAccess()
 {
 	Warning( "WORKAROUND: CustomMatch_HasHiddenPlaylistAccess() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function CustomMatch_HasSpecialAccess() registered by engine; script stub commented out
+/*
 bool function CustomMatch_HasSpecialAccess()
 {
 	Warning( "WORKAROUND: CustomMatch_HasSpecialAccess() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function CustomMatch_UpdateSettings() registered by engine; script stub commented out
+/*
 void function CustomMatch_UpdateSettings( CustomMatch_SettingsForUpdate update )
 {
 	Warning( "WORKAROUND: CustomMatch_UpdateSettings() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_SetTeam() registered by engine; script stub commented out
+/*
 void function CustomMatch_SetTeam( int teamIndex, string hardware, string uid )
 {
 	Warning( "WORKAROUND: CustomMatch_SetTeam() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_KickPlayer() registered by engine; script stub commented out
+/*
 void function CustomMatch_KickPlayer( string hardware, string uid )
 {
 	Warning( "WORKAROUND: CustomMatch_KickPlayer() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_LeaveLobby() registered by engine; script stub commented out
+/*
 void function CustomMatch_LeaveLobby()
 {
 	Warning( "WORKAROUND: CustomMatch_LeaveLobby() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_SetReady() registered by engine; script stub commented out
+/*
 void function CustomMatch_SetReady( bool ready )
 {
 	Warning( "WORKAROUND: CustomMatch_SetReady() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_SetMatchmaking() registered by engine; script stub commented out
+/*
 void function CustomMatch_SetMatchmaking( bool matchmaking )
 {
 	Warning( "WORKAROUND: CustomMatch_SetMatchmaking() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_IsInCustomMatch() registered by engine; script stub commented out
+/*
 bool function CustomMatch_IsInCustomMatch()
 {
 	Warning( "WORKAROUND: CustomMatch_IsInCustomMatch() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function CustomMatch_LiveAPI_SendPlayers() registered by engine; script stub commented out
+/*
 void function CustomMatch_LiveAPI_SendPlayers( array<CustomMatch_LobbyPlayer> players )
 {
 	Warning( "WORKAROUND: CustomMatch_LiveAPI_SendPlayers() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_GetMatchStats() registered by engine; script stub commented out
+/*
 void function CustomMatch_GetMatchStats( int endTime )
 {
 	Warning( "WORKAROUND: CustomMatch_GetMatchStats() called - not implemented" )
 }
+*/
 
+// [s21-native] function CustomMatch_SetTeamName() registered by engine; script stub commented out
+/*
 void function CustomMatch_SetTeamName( int teamIndex, string name )
 {
 	Warning( "WORKAROUND: CustomMatch_SetTeamName() called - not implemented" )
 }
+*/
 
 // === Menu/UI ===
 bool function IsSelfClosingMenu( var menu )
@@ -1258,10 +1381,13 @@ void function ToolTips_SetMenuTooltipVisible( var panel, bool visible )
 	Warning( "WORKAROUND: ToolTips_SetMenuTooltipVisible() called - not implemented" )
 }
 
+// [s21-native] function SpectatorNextTarget() registered by engine; script stub commented out
+/*
 void function SpectatorNextTarget()
 {
 	Warning( "WORKAROUND: SpectatorNextTarget() called - not implemented" )
 }
+*/
 
 void function ShowBlockPlayerDialog( string name, string eaid, void functionref( int, string ) callback )
 {
@@ -1278,17 +1404,23 @@ void function Hud_ClearAllToolTips()
 	Warning( "WORKAROUND: Hud_ClearAllToolTips() called - not implemented" )
 }
 
+// [s21-native] function RefreshEaTwoFactorAuthenticationStatus() registered by engine; script stub commented out
+/*
 void function RefreshEaTwoFactorAuthenticationStatus()
 {
 	Warning( "WORKAROUND: Hud_ClearAllToolTips() called - not implemented" )
 }
+*/
 
 // === EADP Social ===
+// [s21-native] function EADP_IsTfaEnabled() registered by engine; script stub commented out
+/*
 bool function EADP_IsTfaEnabled()
 {
 	Warning( "WORKAROUND: EADP_IsTfaEnabled() called - not implemented" )
 	return false
 }
+*/
 
 bool function EADP_SocialEnabled()
 {
@@ -1296,155 +1428,233 @@ bool function EADP_SocialEnabled()
 	return false
 }
 
+// [s21-native] function EADP_SocialCanRun() registered by engine; script stub commented out
+/*
 bool function EADP_SocialCanRun()
 {
 	Warning( "WORKAROUND: EADP_SocialCanRun() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function EADP_SearchByName() registered by engine; script stub commented out
+/*
 void function EADP_SearchByName( string name )
 {
 	Warning( "WORKAROUND: EADP_SearchByName() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_IsBlockedByEAID() registered by engine; script stub commented out
+/*
 bool function EADP_IsBlockedByEAID( string eaid )
 {
 	return false
 }
+*/
 
+// [s21-native] function EADP_IsFriendByEAID() registered by engine; script stub commented out
+/*
 bool function EADP_IsFriendByEAID( string eaid )
 {
 	Warning( "WORKAROUND: EADP_IsFriendByEAID() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function EADP_InviteFriendByEAID() registered by engine; script stub commented out
+/*
 void function EADP_InviteFriendByEAID( string eaid )
 {
 	Warning( "WORKAROUND: EADP_InviteFriendByEAID() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_UnBlockByEAID() registered by engine; script stub commented out
+/*
 void function EADP_UnBlockByEAID( string eaid )
 {
 	Warning( "WORKAROUND: EADP_UnBlockByEAID() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_UnFriendByEAID() registered by engine; script stub commented out
+/*
 void function EADP_UnFriendByEAID( string eaid )
 {
 	Warning( "WORKAROUND: EADP_UnFriendByEAID() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_IsCodeRedemptionEnabled() registered by engine; script stub commented out
+/*
 bool function EADP_IsCodeRedemptionEnabled()
 {
 	Warning( "WORKAROUND: EADP_IsCodeRedemptionEnabled() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function EADP_RedeemCode() registered by engine; script stub commented out
+/*
 void function EADP_RedeemCode( string code )
 {
 	Warning( "WORKAROUND: EADP_RedeemCode() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_GetPresenceForAccount() registered by engine; script stub commented out
+/*
 array<EadpPresenceData> function EADP_GetPresenceForAccount( string eaid )
 {
 	Warning( "WORKAROUND: EADP_GetPresenceForAccount() called - not implemented" )
 	array<EadpPresenceData> list
 	return list
 }
+*/
 
+// [s21-native] function EADP_GetFriendRequestList() registered by engine; script stub commented out
+/*
 EadpPeopleList function EADP_GetFriendRequestList()
 {
 	Warning( "WORKAROUND: EADP_GetFriendRequestList() called - not implemented" )
 	EadpPeopleList list
 	return list
 }
+*/
 
+// [s21-native] function EADP_GetEadpIdFromFirstPartyID() registered by engine; script stub commented out
+/*
 string function EADP_GetEadpIdFromFirstPartyID( string id, int hardware )
 {
 	Warning( "WORKAROUND: EADP_GetEadpIdFromFirstPartyID() called - not implemented" )
 	return ""
 }
+*/
 
+// [s21-native] function EADP_FriendsDoQuery() registered by engine; script stub commented out
+/*
 bool function EADP_FriendsDoQuery()
 {
 	Warning( "WORKAROUND: EADP_FriendsDoQuery() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function EADP_GetFriendsList() registered by engine; script stub commented out
+/*
 EadpPeopleList function EADP_GetFriendsList()
 {
 	Warning( "WORKAROUND: EADP_GetFriendsList() called - not implemented" )
 	EadpPeopleList list
 	return list
 }
+*/
 
+// [s21-native] function EADP_GetFriendsListWithOffline() registered by engine; script stub commented out
+/*
 EadpPeopleList function EADP_GetFriendsListWithOffline()
 {
 	Warning( "WORKAROUND: EADP_GetFriendsListWithOffline() called - not implemented" )
 	EadpPeopleList list
 	return list
 }
+*/
 
+// [s21-native] function EADP_GetPresenceForUser() registered by engine; script stub commented out
+/*
 EadpPresenceData function EADP_GetPresenceForUser( string memberID, int memberHardware )
 {
 	Warning( "WORKAROUND: EADP_GetPresenceForUser() called - not implemented" )
 	EadpPresenceData data
 	return data
 }
+*/
 
+// [s21-native] function EADP_RejectFriendRequestByEAID() registered by engine; script stub commented out
+/*
 void function EADP_RejectFriendRequestByEAID( string eaid )
 {
 	Warning( "WORKAROUND: EADP_RejectFriendRequestByEAID() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_AcceptFriendRequestByEAID() registered by engine; script stub commented out
+/*
 void function EADP_AcceptFriendRequestByEAID( string eaid )
 {
 	Warning( "WORKAROUND: EADP_AcceptFriendRequestByEAID() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_BlockByEAID() registered by engine; script stub commented out
+/*
 void function EADP_BlockByEAID( string eaid )
 {
 	Warning( "WORKAROUND: EADP_BlockByEAID() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_GetInviteToPlayList() registered by engine; script stub commented out
+/*
 EadpInviteToPlayList function EADP_GetInviteToPlayList()
 {
 	Warning( "WORKAROUND: EADP_GetInviteToPlayList() called - not implemented" )
 	EadpInviteToPlayList list
 	return list
 }
+*/
 
+// [s21-native] function EADP_AcceptInvitToPlay() registered by engine; script stub commented out
+/*
 void function EADP_AcceptInvitToPlay( string eventID )
 {
 	Warning( "WORKAROUND: EADP_AcceptInvitToPlay() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_RejectInviteToPlay() registered by engine; script stub commented out
+/*
 void function EADP_RejectInviteToPlay( string eventID )
 {
 	Warning( "WORKAROUND: EADP_RejectInviteToPlay() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_InviteToPlayByEAID() registered by engine; script stub commented out
+/*
 void function EADP_InviteToPlayByEAID( string eaid, int reason )
 {
 	Warning( "WORKAROUND: EADP_InviteToPlayByEAID() called - not implemented" )
 }
+*/
 
+// [s21-native] function EADP_InvitationAllowed() registered by engine; script stub commented out
+/*
 bool function EADP_InvitationAllowed()
 {
 	return false
 }
+*/
 
 // === Audio ===
 
+// [s21-native] function EmitUIMusic() registered by engine; script stub commented out
+/*
 void function EmitUIMusic( string musicName )
 {
 	EmitUISound( musicName )
 }
+*/
 
+// [s21-native] function IsSoundStillPlaying() registered by engine; script stub commented out
+/*
 bool function IsSoundStillPlaying( var handle )
 {
 	Warning( "WORKAROUND: IsSoundStillPlaying() called - not implemented" )
 	return false
 }
+*/
 
 void function PlayLobbyCharacterDialogue( ... )
 {
@@ -1453,63 +1663,93 @@ void function PlayLobbyCharacterDialogue( ... )
 
 // === GRX/Store ===
 
+// [s21-native] function GRX_SetEventCurrency() registered by engine; script stub commented out
+/*
 void function GRX_SetEventCurrency( string grxAlias )
 {
 	Warning( "WORKAROUND: GRX_SetEventCurrency() called - not implemented" )
 }
+*/
 
+// [s21-native] function GRX_GetItemTier() registered by engine; script stub commented out
+/*
 int function GRX_GetItemTier( ... )
 {
 	Warning( "WORKAROUND: GRX_GetItemTier() called - not implemented" )
 	return 0
 }
+*/
 
+// [s21-native] function GRX_PurchaseOfferV2() registered by engine; script stub commented out
+/*
 void function GRX_PurchaseOfferV2( int opId, int queryGoal, string offerAlias, int craftingItemIdx, int quantity, string priceAlias, array<int> price )
 {
 	Warning( "WORKAROUND: GRX_PurchaseOfferV2() called - not implemented" )
 }
+*/
 
+// [s21-native] function GRX_UpdateSmartMerchandisingData() registered by engine; script stub commented out
+/*
 void function GRX_UpdateSmartMerchandisingData( array<int> smartMerchInts )
 {
 	Warning( "WORKAROUND: GRX_UpdateSmartMerchandisingData() called - not implemented" )
 }
+*/
 
+// [s21-native] function GRX_MarkGiftItemsAsSeen() registered by engine; script stub commented out
+/*
 void function GRX_MarkGiftItemsAsSeen( int timestamp, array<int> itemIndices )
 {
 	Warning( "WORKAROUND: GRX_MarkGiftItemsAsSeen() called - not implemented" )
 }
+*/
 
+// [s21-native] function GRX_MarkContainerAsSeen_Internal() registered by engine; script stub commented out
+/*
 void function GRX_MarkContainerAsSeen_Internal( string containerId )
 {
 	Warning( "WORKAROUND: GRX_MarkContainerAsSeen_Internal() called - not implemented" )
 }
+*/
 
+// [s21-native] function GRX_GetOffer() registered by engine; script stub commented out
+/*
 void function GRX_GetOffer( string offerAlias, int hardwareId, string nucleus_pid )
 {
 	Warning( "WORKAROUND: GRX_GetOffer() called - not implemented" )
 }
+*/
 
+// [s21-native] function GRX_GetCurrencyBalances() registered by engine; script stub commented out
+/*
 void function GRX_GetCurrencyBalances()
 {
 	Warning( "WORKAROUND: GRX_GetCurrencyBalances() called - not implemented" )
 }
+*/
 
 bool function GRX_HasUpToDateBundleOffers()
 {
 	return false
 }
 
+// [s21-native] function IsStoreEmpty() registered by engine; script stub commented out
+/*
 bool function IsStoreEmpty()
 {
 	return true
 }
+*/
 
 // === Persistence ===
 
+// [s21-native] function PersistenceGetVarHandle() registered by engine; script stub commented out
+/*
 int function PersistenceGetVarHandle( string key )
 {
 	return -1 // no persistence var handle caching
 }
+*/
 
 bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc )
 {
@@ -1653,21 +1893,30 @@ void function PopulateMatchRank( ... )
 
 // === Party/Social ===
 
+// [s21-native] function Party_JoinUserPartyGame() registered by engine; script stub commented out
+/*
 void function Party_JoinUserPartyGame()
 {
 	Warning( "WORKAROUND: Party_JoinUserPartyGame() called - not implemented" )
 }
+*/
 
+// [s21-native] function Party_LeaveParty() registered by engine; script stub commented out
+/*
 void function Party_LeaveParty()
 {
 	Warning( "WORKAROUND: Party_LeaveParty() called - not implemented" )
 }
+*/
 
+// [s21-native] function Eadp_GetPrivacyData() registered by engine; script stub commented out
+/*
 EadpPrivacySetting function Eadp_GetPrivacyData()
 {
 	EadpPrivacySetting settings
 	return settings
 }
+*/
 
 EadpPeopleData function CreateEADPDataFromEAID( string eaid )
 {
@@ -1676,39 +1925,57 @@ EadpPeopleData function CreateEADPDataFromEAID( string eaid )
 	return eadpData
 }
 
+// [s21-native] function IsPartyAllowedCrossplay() registered by engine; script stub commented out
+/*
 bool function IsPartyAllowedCrossplay()
 {
 	return true
 }
+*/
 
+// [s21-native] function CanPromptUserToSpectatePartyInGame() registered by engine; script stub commented out
+/*
 bool function CanPromptUserToSpectatePartyInGame()
 {
 	return false
 }
+*/
 
+// [s21-native] function CanPromptUserToJoinPartyInFiringRange() registered by engine; script stub commented out
+/*
 bool function CanPromptUserToJoinPartyInFiringRange()
 {
 	return false
 }
+*/
 
+// [s21-native] function LocalizePresenceState() registered by engine; script stub commented out
+/*
 string function LocalizePresenceState( PresenceState presenceState )
 {
 	return ""
 }
+*/
 
 // === Cross Progression ===
 
+// [s21-native] function CrossProgression_IsRequestingUserMigrateStatus() registered by engine; script stub commented out
+/*
 bool function CrossProgression_IsRequestingUserMigrateStatus()
 {
 	Warning( "WORKAROUND: CrossProgression_IsRequestingUserMigrateStatus() called - not implemented" )
 	return false // stub
 }
+*/
 
+// [s21-native] function CrossProgression_QueryUserMigrateStatusIfNeeded() registered by engine; script stub commented out
+/*
 bool function CrossProgression_QueryUserMigrateStatusIfNeeded( string nucleusId )
 {
 	Warning( "WORKAROUND: CrossProgression_QueryUserMigrateStatusIfNeeded() called - not implemented" )
 	return false // stub
 }
+*/
 
 // === Clubs ===
 
@@ -1820,10 +2087,13 @@ void function JumpToEventTab( string tabName )
 	Warning( "WORKAROUND: JumpToEventTab() called - not implemented" )
 }
 
+// [s21-native] function DoesUserHaveTwitchDrops() registered by engine; script stub commented out
+/*
 bool function DoesUserHaveTwitchDrops( string ref )
 {
 	return false
 }
+*/
 
 // === Communication/Mute ===
 
@@ -1832,15 +2102,21 @@ int function CommunicationBlockGetBlockTime()
 	return 0
 }
 
+// [s21-native] function IsPlayerVoiceAndTextMutedForUID() registered by engine; script stub commented out
+/*
 bool function IsPlayerVoiceAndTextMutedForUID( string uid, string hardware )
 {
 	return false
 }
+*/
 
+// [s21-native] function TogglePlayerVoiceAndTextMuteForUID() registered by engine; script stub commented out
+/*
 void function TogglePlayerVoiceAndTextMuteForUID( string uid, string hardware, string eadpid )
 {
 	Warning( "WORKAROUND: TogglePlayerVoiceAndTextMuteForUID() called - not implemented" )
 }
+*/
 
 string function GetCommunicationBlockWarningText( int warningId )
 {
@@ -1865,10 +2141,13 @@ void function WaitForUnixTime( int unixTime )
 	}
 }
 
+// [s21-native] function GetIsDSTActive() registered by engine; script stub commented out
+/*
 bool function GetIsDSTActive()
 {
 	return false
 }
+*/
 
 int function GetUnixTimePDT()
 {
@@ -1887,24 +2166,33 @@ string function RLocalTime( int unixTime )
 
 // === Datacenter ===
 
+// [s21-native] function GetDatacenterRealName() registered by engine; script stub commented out
+/*
 string function GetDatacenterRealName()
 {
 	Warning( "WORKAROUND: GetDatacenterRealName() called - not implemented" )
 	return ""
 }
+*/
 
 // === First Time Player ===
 
+// [s21-native] function GetFirstTimePlayerState() registered by engine; script stub commented out
+/*
 int function GetFirstTimePlayerState()
 {
 	Warning( "WORKAROUND: GetFirstTimePlayerState() called - not implemented" )
 	return eNewPlayerState.FIRST_MATCH_PLAYED
 }
+*/
 
+// [s21-native] function SetFirstTimePlayerState() registered by engine; script stub commented out
+/*
 void function SetFirstTimePlayerState( int state )
 {
 	Warning( "WORKAROUND: SetFirstTimePlayerState() called - not implemented" )
 }
+*/
 
 // === Lobby/Misc ===
 
@@ -1917,40 +2205,58 @@ void function RefreshChallenges()
 
 // === Settings/Options ===
 
+// [s21-native] function GamepadCustomSettingsAreEnabled() registered by engine; script stub commented out
+/*
 bool function GamepadCustomSettingsAreEnabled()
 {
 	Warning( "WORKAROUND: GamepadCustomSettingsAreEnabled() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function VideoOptions_SpotShadowDetailChanged() registered by engine; script stub commented out
+/*
 void function VideoOptions_SpotShadowDetailChanged( var panel )
 {
 	Warning( "WORKAROUND: VideoOptions_SpotShadowDetailChanged() called - not implemented" )
 }
+*/
 
+// [s21-native] function SoundOptions_SetupChannelConfigOptions() registered by engine; script stub commented out
+/*
 int function SoundOptions_SetupChannelConfigOptions( var panel, string childName )
 {
 	Warning( "WORKAROUND: SoundOptions_SetupChannelConfigOptions() called - not implemented" )
 	return 0
 }
+*/
 
+// [s21-native] function SoundOptions_SetupOutputDeviceOptions() registered by engine; script stub commented out
+/*
 int function SoundOptions_SetupOutputDeviceOptions( var panel, string childName )
 {
 	Warning( "WORKAROUND: SoundOptions_SetupOutputDeviceOptions() called - not implemented" )
 	return 0
 }
+*/
 
+// [s21-native] function SoundOptions_SetupVoiceInputDeviceOptions() registered by engine; script stub commented out
+/*
 int function SoundOptions_SetupVoiceInputDeviceOptions( var panel, string childName )
 {
 	Warning( "WORKAROUND: SoundOptions_SetupVoiceInputDeviceOptions() called - not implemented" )
 	return 0
 }
+*/
 
+// [s21-native] function SoundOptions_DeviceSwitchingAvailable() registered by engine; script stub commented out
+/*
 bool function SoundOptions_DeviceSwitchingAvailable()
 {
 	Warning( "WORKAROUND: SoundOptions_DeviceSwitchingAvailable() called - not implemented" )
 	return false
 }
+*/
 
 // === Stickers ===
 // GetAllStickerObjectTypes, GetStickerObjectName, GetStickerPresentationType implementations in mp/sh_stickers.nut
@@ -1996,34 +2302,49 @@ int function StickersPanel_GetCurrentConsumable( var panel )
 }
 
 // === Reconnect/Spectate ===
+// [s21-native] function TryLoadSpectateParameters() registered by engine; script stub commented out
+/*
 bool function TryLoadSpectateParameters()
 {
 	Warning( "WORKAROUND: TryLoadSpectateParameters() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function TryLoadReconnectFromLocalStorage() registered by engine; script stub commented out
+/*
 bool function TryLoadReconnectFromLocalStorage()
 {
 	Warning( "WORKAROUND: TryLoadReconnectFromLocalStorage() called - not implemented" )
 	return false
 }
+*/
 
+// [s21-native] function StartReconnectFromParameters() registered by engine; script stub commented out
+/*
 void function StartReconnectFromParameters()
 {
 	Warning( "WORKAROUND: StartReconnectFromParameters() called - not implemented" )
 }
+*/
 
+// [s21-native] function GetReconnectDelay() registered by engine; script stub commented out
+/*
 int function GetReconnectDelay()
 {
 	Warning( "WORKAROUND: GetReconnectDelay() called - not implemented" )
 	return 0
 }
+*/
 
+// [s21-native] function Reconnect_IsLiveSpectateLoaded() registered by engine; script stub commented out
+/*
 bool function Reconnect_IsLiveSpectateLoaded()
 {
 	Warning( "WORKAROUND: Reconnect_IsLiveSpectateLoaded() called - not implemented" )
 	return false
 }
+*/
 
 // === Misc ===
 void function OpenLangAoCDialog()
@@ -2032,6 +2353,8 @@ void function OpenLangAoCDialog()
 }
 
 // === GetKeyValueAsAsset ===
+// [s21-native] function GetKeyValueAsAsset() registered by engine; script stub commented out
+/*
 asset function GetKeyValueAsAsset( table kvTable, string key )
 {
 	Warning( "WORKAROUND: GetKeyValueAsAsset() called - not implemented, using custom script version" )
@@ -2039,6 +2362,7 @@ asset function GetKeyValueAsAsset( table kvTable, string key )
 		return GetAssetFromString( string( kvTable[key] ) )
 	return $""
 }
+*/
 
 #if UI
 
@@ -2049,10 +2373,13 @@ int function UISafeGetPersistentVarAsInt( string key )
 	return 0
 }
 
+// [s21-native] function GetServerDebugId() registered by engine; script stub commented out
+/*
 string function GetServerDebugId()
 {
 	return ""
 }
+*/
 
 int function Squads_GetMax()
 {
@@ -2111,10 +2438,13 @@ int function GetFileDownloadStatus( string rpakName )
 // === Audio ===
 
 // stub
+// [s21-native] function StopUISoundByName() registered by engine; script stub commented out
+/*
 void function StopUISoundByName( string soundName )
 {
 	Warning( "WORKAROUND: StopUISoundByName() called - not implemented" )
 }
+*/
 
 // === Props/Models ===
 
@@ -2193,13 +2523,18 @@ void function ForceDestroyBlackBarRui()
 // === Player Info ===
 
 // stub
+// [s21-native] function Script_UserHasEAAccess() registered by engine; script stub commented out
+/*
 bool function Script_UserHasEAAccess()
 {
 	Warning( "WORKAROUND: Script_UserHasEAAccess() called - not implemented" )
 	return false
 }
+*/
 
 // GetPlayerUID is UI-only native, CLIENT uses GetPlatformUID on entity
+// [s21-native] function GetPlayerUID() registered by engine; script stub commented out
+/*
 string function GetPlayerUID()
 {
 	entity player = GetLocalClientPlayer()
@@ -2207,6 +2542,7 @@ string function GetPlayerUID()
 		return player.GetPlatformUID()
 	return ""
 }
+*/
 
 // Wraps existing function
 // Note: Using int instead of EHI because EHI typedef isn't defined yet at load time
@@ -2403,16 +2739,22 @@ void function DoAnimatedChampionSquadCardsPresentation()
 }
 
 // === First Time Player (also defined in UI block) ===
+// [s21-native] function GetFirstTimePlayerState() registered by engine; script stub commented out
+/*
 int function GetFirstTimePlayerState()
 {
 	Warning( "WORKAROUND: GetFirstTimePlayerState() called - not implemented" )
 	return eNewPlayerState.FIRST_MATCH_PLAYED
 }
+*/
 
+// [s21-native] function SetFirstTimePlayerState() registered by engine; script stub commented out
+/*
 void function SetFirstTimePlayerState( int state )
 {
 	Warning( "WORKAROUND: SetFirstTimePlayerState() called - not implemented" )
 }
+*/
 
 #endif
 
@@ -2437,7 +2779,10 @@ float function ForcedSpawn_GetEnemyPingDisplayTime()
 void function SkydiveEmoteProjector_ActivateEmoteProjector( entity player, ItemFlavor quip ) { Warning( "STUB: SkydiveEmoteProjector_ActivateEmoteProjector" ) }
 bool function Valentines_S15_ILoveYouEasterEggEnabled() { return false }
 string function GetRemoteDeathboxHighlight( entity deathbox, int lootTier ) { return "" }
+// [s21-native] function RuiIsAlive() registered by engine; script stub commented out
+/*
 bool function RuiIsAlive( var rui ) { return rui != null }
+*/
 void function TransportPortal_CancelUse() { Warning( "STUB: TransportPortal_CancelUse" ) }
 bool function DeathboxNetwork_CanPlayerUse( entity player, entity ent ) { return false }
 void function DeathboxNetwork_UntrackIfTracking() { }
@@ -2531,10 +2876,13 @@ bool function IsStickerInstancePlaced( int instance )
 }
 
 #if SERVER || CLIENT
+// [s21-native] function GetPlayerHardware() registered by engine; script stub commented out
+/*
 string function GetPlayerHardware()
 {
 	return "PC"
 }
+*/
 #endif
 
 #if SERVER
@@ -2848,6 +3196,8 @@ bool function Armor_ShieldRegen_IsUsingShieldRegen() { Warning("STUB: Armor_Shie
 void function Armor_ShieldRegen_RechargePlayerShields_Thread( entity player, bool fullRecharge = true ) { Warning( "STUB: Armor_ShieldRegen_RechargePlayerShields_Thread" ) }
 bool function CanPlayerRemoteInteractWithDeathbox( entity player, entity deathBox = null ) { Warning("STUB: CanPlayerRemoteInteractWithDeathbox"); return false }
 void function TrackingVision_CreatePOIForPickedUpLoot( entity player, int lootType, string ref, vector pos, int team, entity source ) { Warning("STUB: TrackingVision_CreatePOIForPickedUpLoot") }
+// [s21-native] function GetTriggersByClassesInRealms_HullSize() registered by engine; script stub commented out
+/*
 array<entity> function GetTriggersByClassesInRealms_HullSize( ... ) { return [] }
 array<entity> function GetTriggersByClassesInRealms( ... ) { return [] }
 bool function HasBoundaryWall() { Warning("STUB: HasBoundaryWall"); return false }
@@ -2885,6 +3235,7 @@ void function SURVIVAL_ResetAllDoorsInRealm( int realm )
 {
 	Warning( "WORKAROUND: SURVIVAL_ResetAllDoorsInRealm() called - not implemented" )
 }
+*/
 
 // === Melee/Combat ===
 
@@ -3006,10 +3357,13 @@ void function SafeSetPersistentVar( entity player, string key, var value )
 
 // === Audio ===
 
+// [s21-native] function EmitUIMusic() registered by engine; script stub commented out
+/*
 void function EmitUIMusic( string musicName )
 {
 	Warning( "WORKAROUND: EmitUIMusic() called - not implemented" )
 }
+*/
 
 // === Time ===
 
@@ -3020,22 +3374,31 @@ void function WaitForUnixTime( int unixTime )
 
 // === GRX/Store ===
 
+// [s21-native] function GRX_SetEventCurrency() registered by engine; script stub commented out
+/*
 void function GRX_SetEventCurrency( string grxAlias )
 {
 }
+*/
 
+// [s21-native] function GRX_GetItemTier() registered by engine; script stub commented out
+/*
 int function GRX_GetItemTier( ... )
 {
 	Warning( "WORKAROUND: GRX_GetItemTier() called - not implemented" )
 	return 0
 }
+*/
 
 // === Persistence/Lobby ===
 
+// [s21-native] function PersistenceGetVarHandle() registered by engine; script stub commented out
+/*
 int function PersistenceGetVarHandle( string key )
 {
 	return -1
 }
+*/
 
 bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc )
 {
@@ -3067,6 +3430,8 @@ bool function Mastery_IsValidStatRef( string statRef )
 
 // === Platform/Hardware (SERVER || CLIENT implementations for global-scope declarations) ===
 
+// [s21-native] function GetHardwareFromName() registered by engine; script stub commented out
+/*
 int function GetHardwareFromName( string name )
 {
 	switch ( name )
@@ -3088,27 +3453,39 @@ int function GetHardwareFromName( string name )
 	}
 	return HARDWARE_PC
 }
+*/
 
 string function GetMergedPlatformIdForPlayer( entity player )
 {
 	return "pc"
 }
 
+// [s21-native] function CanPromptUserToSpectatePartyInGame() registered by engine; script stub commented out
+/*
 bool function CanPromptUserToSpectatePartyInGame()
 {
 	return false
 }
+*/
 
+// [s21-native] function CanPromptUserToJoinPartyInFiringRange() registered by engine; script stub commented out
+/*
 bool function CanPromptUserToJoinPartyInFiringRange()
 {
 	return false
 }
+*/
 
+// [s21-native] function LocalizePresenceState() registered by engine; script stub commented out
+/*
 string function LocalizePresenceState( ... )
 {
 	return ""
 }
+*/
 
+// [s21-native] function GetNameFromHardware() registered by engine; script stub commented out
+/*
 string function GetNameFromHardware( int hardware )
 {
 	switch ( hardware )
@@ -3130,12 +3507,16 @@ string function GetNameFromHardware( int hardware )
 	}
 	return "PC"
 }
+*/
 
+// [s21-native] function IsDirectX12Beta() registered by engine; script stub commented out
+/*
 bool function IsDirectX12Beta()
 {
 	Warning( "WORKAROUND: IsDirectX12Beta() called - not implemented" )
 	return false
 }
+*/
 
 void function PlayLobbyCharacterDialogue( ... )
 {
@@ -3143,10 +3524,13 @@ void function PlayLobbyCharacterDialogue( ... )
 }
 
 
+// [s21-native] function IsTakeHomeBuild() registered by engine; script stub commented out
+/*
 bool function IsTakeHomeBuild()
 {
 	return true
 }
+*/
 
 // === Gifting ===
 
@@ -3288,6 +3672,8 @@ vector function GetRandomPointInCircle( vector origin, float radius )
 	return p
 }
 
+// [s21-native] function replace() registered by engine; script stub commented out
+/*
 string function replace( string original, string search, string replacement )
 {
 	string result = ""
@@ -3308,11 +3694,15 @@ string function replace( string original, string search, string replacement )
 	}
 	return result
 }
+*/
 
+// [s21-native] function Ranked_GetCurrentPeriodGUIDString() registered by engine; script stub commented out
+/*
 string function Ranked_GetCurrentPeriodGUIDString()
 {
 	return ""
 }
+*/
 
 asset function WORKAROUND_AssetAppend( string s1, string s2 )
 {
@@ -3425,6 +3815,8 @@ void function StopAllSkydiveSounds( entity player )
 	Warning( "STUB: StopAllSkydiveSounds" )
 }
 
+// [s21-native] function CalcWorldToLocalOrigin_Entity() registered by engine; script stub commented out
+/*
 vector function CalcWorldToLocalOrigin_Entity( entity moveParent, vector worldPos )
 {
 	#if SERVER || CLIENT
@@ -3440,6 +3832,7 @@ vector function CalcWorldToLocalOrigin_Entity( entity moveParent, vector worldPo
 	return worldPos
 	#endif
 }
+*/
 
 int function ShGameModeExplore_GetPlanePassNumber()
 {

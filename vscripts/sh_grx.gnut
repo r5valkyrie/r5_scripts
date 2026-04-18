@@ -569,8 +569,11 @@ global struct PriceDisplayData
 }
 #endif
 
-Assert( GRX_CURRENCY_COUNT == 4 )
-global ItemFlavor&[GRX_CURRENCY_COUNT] GRX_CURRENCIES = [{...}, {...}, {...}, {...}]
+// S21 engine ships GRX_CURRENCY_COUNT = 7 (extra slots vs S3); padded
+// initializer to match. GRX is a stub on this branch so the contents
+// are placeholders.
+Assert( GRX_CURRENCY_COUNT == 7 )
+global ItemFlavor&[GRX_CURRENCY_COUNT] GRX_CURRENCIES = [{...}, {...}, {...}, {...}, {...}, {...}, {...}]
 
 global int GRX_DEV_ITEM = -1
 global int GRX_QA_ITEM = -1

@@ -19,7 +19,9 @@ void function mAssert( var condition, string errorMsg = "error", ... )
 		PrintLocals( 3 )
 
 		#if UI || CLIENT
-			ScriptError( errorMsg + appenderr )
+			// S21 engine dropped the `ScriptError` native; route mAssert
+			// to `Warning` instead (still user-visible, no compile break).
+			Warning( errorMsg + appenderr )
 		#elseif SERVER
 			ErrorServer( errorMsg + appenderr ) //This allows running servers to send mAssert errors to all clients.
 		#endif

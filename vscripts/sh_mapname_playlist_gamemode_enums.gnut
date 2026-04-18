@@ -494,7 +494,7 @@ void function PassivesAllowed_Init()
 //
 void function TrackerSupportedMode_Init()
 {	
-	if( !GetConVarInt( "sv_onlineAuthEnable" ) )
+	if ( GetConVarInt( "sv_onlineAuthEnable" ) == 0 )
 	{
 		modeSettings.trackerSupportedMode = false
 		return

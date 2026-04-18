@@ -52,7 +52,7 @@ global function Remote_CallFunction_QueueForNoKillCam
 #if CLIENT
 global function HudTargetInfo_Enable
 global function EmitSoundOnEntity_NoTimeScale
-global function EmitUISound
+// [s21-native] forward-decl EmitUISound registered by engine; dropped
 global function GameRules_IsTeamIndexValid
 global function SetPlayThroughPOVTransitions
 // IsRevTakeover moved to shared scope (used by both SERVER and CLIENT)
@@ -60,9 +60,9 @@ global function LowerDVSForGameMode
 #endif
 
 #if CLIENT
-global function RuiHasGameTimeArg
+// [s21-native] forward-decl RuiHasGameTimeArg registered by engine; dropped
 #endif
-global function GetEndTimeForPlaylistInRotation
+// [s21-native] forward-decl GetEndTimeForPlaylistInRotation registered by engine; dropped
 global function IsNessieEEActive
 global function Wattson_TT_Check_Victory
 global function IsRevTakeover
@@ -117,7 +117,10 @@ array<entity> function GetNearbyPlayers( vector pos, float maxDist )
 #endif
 
 // --- Shared-scope function stubs (declared without #if above) ---
+// [s21-native] function GetEndTimeForPlaylistInRotation() registered by engine; script stub commented out
+/*
 int function GetEndTimeForPlaylistInRotation( string playlistName ) { return 0 }
+*/
 bool function IsNessieEEActive() { return false }
 void function Wattson_TT_Check_Victory( entity player ) {}
 void function PIN_PlayerClassMidMatchChange( entity player, array<string> classesOffered ) {}
@@ -160,7 +163,7 @@ bool function SetHealthAndShieldByPercentage( entity player, float healthPercent
 }
 #endif // SERVER
 
-void function ForceScriptError( string message ) { ScriptError( message ) }
+void function ForceScriptError( string message ) { Warning( message ) }  // S21: ScriptError -> Warning
 
 // --- SERVER-only function stubs ---
 #if SERVER

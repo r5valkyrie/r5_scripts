@@ -17,9 +17,9 @@ global function SetPlayerTempMuted
 #endif // CLIENT
 
 // Alliance constants — defined here since this file loads before sh_freedm_stubs.nut
-global const int ALLIANCE_NONE = -1
-global const int ALLIANCE_A = 0
-global const int ALLIANCE_B = 1
+// [s21-native] int const ALLIANCE_NONE = 0xFFFFFFFF (int) registered by engine; script redeclaration dropped
+// [s21-native] int const ALLIANCE_A = 0x0 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const ALLIANCE_B = 0x1 (int) registered by engine; script redeclaration dropped
 
 
 global function AllianceProximity_Init

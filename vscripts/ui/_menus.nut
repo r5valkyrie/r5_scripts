@@ -2321,6 +2321,10 @@ void function RemoveEventHandlerFromButtonClass( var menu, string classname, int
 }
 
 
+// [s21-dup] WORKAROUND_UI_MUSIC_SOUND_LIST is already declared as a
+// `global array<string>` in mp/sh_music.gnut; the local const duplicate
+// here triggered a redefinition error on S21's stricter compiler.
+/*
 const array<string> WORKAROUND_UI_MUSIC_SOUND_LIST = [
 	"Music_FrontEnd",
 	"mainmenu_music_Bangalore", "Music_Lobby_Bangalore",
@@ -2341,6 +2345,7 @@ const array<string> WORKAROUND_UI_MUSIC_SOUND_LIST = [
 	LOOT_CEREMONY_MUSIC_P1,
 	LOOT_CEREMONY_MUSIC_P2
 ]
+*/
 
 
 void function UpdateUIMusicOnMusicPackLoadoutSlotReadyThread()

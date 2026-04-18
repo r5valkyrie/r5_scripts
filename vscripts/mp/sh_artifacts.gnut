@@ -731,9 +731,12 @@ void function BuildLoadoutEntries_ArtifactWeapons()
 
 #if CLIENT || SERVER
 // stub
+// [s21-native] function RegisterArtifactBladeControlPoints() registered by engine; script stub commented out
+/*
 void function RegisterArtifactBladeControlPoints( int guid, array<vector> controlPoints )
 {
 }
+*/
 
 void function RegisterBladesControlPoints()
 {

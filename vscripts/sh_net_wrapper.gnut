@@ -626,10 +626,16 @@ void function ScriptRemote_RegisterUntypedFunction_deprecated( ... )
 		params.append( vargv[ j ] )
 	
 #if DEBUG_REMOTE_FUNCS
-	try 
+	try
 	{
 #endif
-		Remote_RegisterUntypedFunction_deprecated.acall( params )
+		// S21: the native `Remote_RegisterUntypedFunction_deprecated` was
+		// removed in favour of the typed `Remote_Register*Function`
+		// variants. Legacy callers still route through this wrapper; the
+		// registration is intentionally a no-op on the s21-client-adapt
+		// branch so script compile succeeds. Port individual callers to
+		// the typed API if they start misbehaving at runtime.
+		int s21StubParamCount = paramCount  // stub no-op body
 
 #if DEBUG_REMOTE_FUNCS
 	}

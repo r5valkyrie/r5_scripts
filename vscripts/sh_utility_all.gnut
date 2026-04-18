@@ -238,7 +238,11 @@ void function ShUtilityAll_Init()
 Timeout function BeginTimeout( float duration )
 {
 	Timeout to
+#if UI
+	to.startTime = UITime()
+#else
 	to.startTime = Time()
+#endif
 	to.duration = duration
 	thread __RunTimeoutInternal( to )
 	return to
@@ -616,6 +620,8 @@ bool function IsLobbyMapName( string levelname )
 	return false
 }
 
+// [s21-native] function IsLobby() registered by engine; script stub commented out
+/*
 bool function IsLobby()
 {
 	string mapName
@@ -632,6 +638,7 @@ bool function IsLobby()
 
 	return IsLobbyMapName( mapName )
 }
+*/
 
 bool function Freelance_IsHubLevel()
 {
@@ -3351,10 +3358,13 @@ string function StripRuiStringFormatting( string text )
 }
 
 #if SERVER
+// [s21-native] function GetAssetFromString() registered by engine; script stub commented out
+/*
 asset function GetAssetFromString( string str )
 {
 	return GetKeyValueAsAsset( { lol = str }, "lol" )
 }
+*/
 #endif
 
 bool function IsDevGamemode()
@@ -3780,10 +3790,13 @@ bool function CrossplayEnabled()
 	return GetConVarInt( "crossPlay_enabled" ) != 0
 }
 
+// [s21-native] function IsUserOptedInToCrossPlay() registered by engine; script stub commented out
+/*
 bool function IsUserOptedInToCrossPlay()
 {
 	return GetConVarInt( "crossPlay_enabled" ) != 0
 }
+*/
 
 vector function GetCenterOfCircle( array<LocPair> spawns )
 {
@@ -4214,6 +4227,8 @@ bool function IsTitanfall2Map()
 
 // TEMP workaround: native not available, using admin playlist vars
 #if CLIENT
+// [s21-native] function HasMatchAdminRole() registered by engine; script stub commented out
+/*
 bool function HasMatchAdminRole()
 {
 	string playerName = GetLocalClientPlayer().GetPlayerName()
@@ -4222,16 +4237,23 @@ bool function HasMatchAdminRole()
 		|| playerName == GetCurrentPlaylistVarString( "flowstateAdmin3", "" )
 		|| playerName == GetCurrentPlaylistVarString( "flowstateAdmin4", "" ) )
 }
+*/
 #elseif UI
+// [s21-native] function HasMatchAdminRole() registered by engine; script stub commented out
+/*
 bool function HasMatchAdminRole()
 {
 	return false  // stub
 }
+*/
 #elseif SERVER
+// [s21-native] function HasMatchAdminRole() registered by engine; script stub commented out
+/*
 bool function HasMatchAdminRole()
 {
 	return false
 }
+*/
 #endif
 
 // Stub — no active season system
@@ -4242,22 +4264,31 @@ int function GetActiveSeasonNumber()
 
 #if UI
 // Stub — EADP User Messaging not available
+// [s21-native] function EADP_UM_GetPromoData() registered by engine; script stub commented out
+/*
 UMData function EADP_UM_GetPromoData()
 {
 	UMData data
 	return data
 }
+*/
 #endif // UI
 
 // Stub — themed shop panel not fully ported yet
+// [s21-native] function IsFeatureSuppressed() registered by engine; script stub commented out
+/*
 bool function IsFeatureSuppressed( int flag )
 {
 	return false
 }
+*/
 
+// [s21-native] function SetFeatureSuppressed() registered by engine; script stub commented out
+/*
 void function SetFeatureSuppressed( int flag, bool suppressed )
 {
 }
+*/
 
 // Stubs — gifting/inbox natives (moved to sh_grx.gnut for typed scope)
 
@@ -4269,10 +4300,13 @@ string function GetDateTimeStringDayMonthYear( int timestamp, int offset )
 
 
 #if CLIENT || UI
+// [s21-native] function Hud_SetTextEntryTitle() registered by engine; script stub commented out
+/*
 void function Hud_SetTextEntryTitle( var elem, string title )
 {
 	// stub
 }
+*/
 #endif // CLIENT || UI
 
 #if UI
@@ -4290,40 +4324,61 @@ ToolTipData function CreateSimpleToolTip( string titleText, string descText, str
 #endif // UI
 
 // Playlist rotation stubs
+// [s21-native] function IsPlaylistInActiveRotation() registered by engine; script stub commented out
+/*
 bool function IsPlaylistInActiveRotation( string playlistName )
 {
 	return true
 }
+*/
 
+// [s21-native] function IsPlaylistBeingRotated() registered by engine; script stub commented out
+/*
 bool function IsPlaylistBeingRotated( string playlistName )
 {
 	return false
 }
+*/
 
+// [s21-native] function GetDefaultPlaylistRotationGroup() registered by engine; script stub commented out
+/*
 string function GetDefaultPlaylistRotationGroup()
 {
 	return ""
 }
+*/
 
+// [s21-native] function GetNamedPlaylistRotationNextTime() registered by engine; script stub commented out
+/*
 int function GetNamedPlaylistRotationNextTime( string rotationName = "" )
 {
 	return 0
 }
+*/
 
+// [s21-native] function GetCurrentPlaylistFromRotationAndUISlot() registered by engine; script stub commented out
+/*
 string function GetCurrentPlaylistFromRotationAndUISlot( string rotationGroup, string uiSlot )
 {
 	return ""
 }
+*/
 
+// [s21-native] function GetPlaylistActiveMapRotationIndex() registered by engine; script stub commented out
+/*
 int function GetPlaylistActiveMapRotationIndex( string playlistName )
 {
 	return 0
 }
+*/
 
+// [s21-native] function GetPlaylistMapVarString() registered by engine; script stub commented out
+/*
 string function GetPlaylistMapVarString( string playlistName, int mapIdx, string varName, string defaultVal )
 {
 	return defaultVal
 }
+*/
 #if UI || CLIENT
 float function GetNearestAspectRatio( int width, int height )
 {
@@ -4345,10 +4400,13 @@ float function GetNearestAspectRatio( int width, int height )
 #endif
 
 
+// [s21-native] function GetSoonestPlaylistRotationTime() registered by engine; script stub commented out
+/*
 int function GetSoonestPlaylistRotationTime()
 {
 	return 0
 }
+*/
 
 bool function UpgradeCore_IsCorrectGameState()
 {

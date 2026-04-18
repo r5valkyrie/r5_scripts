@@ -27,7 +27,7 @@ global function GetAllItemFlavorsCosmetic
 global function GetAllLegendaryItems
 global function GetAllItemFlavorsOfType
 global function GetItemFlavorAssociatedCharacterOrWeapon
-global function IsItemFlavorStructValid
+// [s21-native] forward-decl IsItemFlavorStructValid registered by engine; dropped
 global function ItemFlavor_GetGUID
 global function ItemFlavor_GetGUIDString
 #if DEVELOPER
@@ -910,12 +910,15 @@ array<ItemFlavor> function GetAllItemFlavorsOfType( int typeIndex )
 	return fileLevel.itemTypeInfoList[typeIndex].itemFlavorList
 }
 
+// [s21-native] function IsItemFlavorStructValid() registered by engine; script stub commented out
+/*
 bool function IsItemFlavorStructValid( SettingsAssetGUID guid, int validationBehavior = eValidation.DONT_ASSERT )
 {
 	Assert( validationBehavior != eValidation.ASSERT || guid != ASSET_SETTINGS_UNIQUE_ID_INVALID, "ItemFlavor struct was not initialized!" )
 	Assert( validationBehavior != eValidation.ASSERT || GetSettingsAssetForUniqueId( guid ) != $"", "ItemFlavor struct does not point to a valid Settings asset" )
 	return ( guid != ASSET_SETTINGS_UNIQUE_ID_INVALID && GetSettingsAssetForUniqueId( guid ) != $"" )
 }
+*/
 
 
 ItemFlavor function GetItemFlavorByNetworkIndex_DEPRECATED( int index )

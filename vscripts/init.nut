@@ -9,6 +9,13 @@
 // before init.nut runs, so re-declaring them here would redefine a
 // const. Kept in S3's init.nut where the engine doesn't provide them.
 
+// Provide the old `DEVELOPER` preprocessor symbol (S21 renamed it to
+// `DEV`, which is an intrinsic / runtime-typed var the compiler will
+// not coerce into a const bool). Hardcode to false so `#if DEVELOPER`
+// blocks compile out cleanly in non-dev builds; flip to true for a
+// dev build if you want `#if DEVELOPER` content compiled in.
+global const bool DEVELOPER = false
+
 global function printl
 global function CodeCallback_Precompile
 
@@ -56,12 +63,12 @@ global struct BreachTraceResults
 	vector surfaceNormal
 }
 
-global const int BREACH_TRACE_RESULT_SUCCESS = 0
-global const int BREACH_TRACE_RESULT_WALL_TOO_THIN = 1
-global const int BREACH_TRACE_RESULT_WALL_TOO_THICK = 2
-global const int BREACH_TRACE_RESULT_INVALID_END_POINT = 3
-global const int BREACH_TRACE_RESULT_FAILURE = 4
-global const int BREACH_TRACE_RESULT_COUNT = 5
+// [s21-native] int const BREACH_TRACE_RESULT_SUCCESS = 0x0 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const BREACH_TRACE_RESULT_WALL_TOO_THIN = 0x3 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const BREACH_TRACE_RESULT_WALL_TOO_THICK = 0x4 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const BREACH_TRACE_RESULT_INVALID_END_POINT = 0x2 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const BREACH_TRACE_RESULT_FAILURE = 0x1 (int) registered by engine; script redeclaration dropped
+// [s21-native] int const BREACH_TRACE_RESULT_COUNT = 0x5 (int) registered by engine; script redeclaration dropped
 
 global struct TraceResults
 {
@@ -247,6 +254,38 @@ global struct CommunityFriends
 	array<string> names
 }
 
+// Forward dependencies for CommunityFriendsData.eadpPresenceData.
+// Both structs were originally defined later in the file; hoisted so the
+// `EadpPresenceData ornull` reference below resolves at parse time.
+global struct PresenceState
+{
+	string 			layout
+	int				substitutionMode
+	string 			mapName
+	string 			gamemode
+	int				matchStartTime
+	int 			party_slotsUsed
+	int 			party_slotsMax
+	int 			survival_squadsRemaining
+	int				teams_friendlyScore
+	int				teams_enemyScore
+}
+
+global struct EadpPresenceData
+{
+	int			hardware
+	PresenceState ornull 	presence
+	bool		partyInMatch
+	bool		partyIsFull
+	string		privacySetting
+	string		name
+	bool		online
+	bool		ingame
+	bool		away
+	string      firstPartyId
+	bool        isJoinable
+}
+
 global struct CommunityFriendsData
 {
 	string id
@@ -256,6 +295,7 @@ global struct CommunityFriendsData
 	bool online
 	bool ingame
 	bool away
+	EadpPresenceData ornull eadpPresenceData   // S21 engine
 }
 
 global struct CommunityFriendsWithPresence
@@ -267,6 +307,7 @@ global struct CommunityFriendsWithPresence
 global struct CommunityUserInfo
 {
 	string hardware
+	string tag                // S21 engine (platform tag)
 	string uid
 	string name
 	string kills
@@ -279,6 +320,8 @@ global struct CommunityUserInfo
 	int rankLadderPos
 	int rankedLadderPos
 	string rankedPeriodName
+	int rumbleRankScore         // S21 engine
+	int rumbleRankedLadderPos   // S21 engine
 	int arenaScore
 	string arenaPeriodName
 	int arenaLadderPos
@@ -434,8 +477,8 @@ global struct GRXStoreOfferPrice
 
 global struct GRXStoreOffer
 {
-	array< int > items                  // engine populates as array<int>, not array<GRXStoreOfferItem>
-	array< array< int > > prices       // engine populates as array<array<int>>, not array<GRXStoreOfferPrice>
+	array< GRXStoreOfferItem >  items    // S21 engine populates with the typed struct
+	array< GRXStoreOfferPrice > prices   // S21 engine populates with the typed struct
 	table< string, string > attrs
 	int offerType
 	string offerAlias
@@ -479,6 +522,7 @@ global struct GRXUserInfo
 	int inventoryState
 
 	array<GRXUserInfoBalances> currencies
+	array<GRXContainerInfo>    containers   // S21 engine populates typed container list
 
 	int queryGoal
 	int queryOwner
@@ -496,6 +540,97 @@ global struct GRXUserInfo
 
 	bool isOfferRestricted
 	bool hasUpToDateBundleOffers
+}
+
+//-----------------------------------------------------------------------------
+// S21-only engine-expected structs. The engine populates these from native
+// code; scripts must declare matching layouts or struct-field validation
+// aborts VM init.
+//-----------------------------------------------------------------------------
+
+global struct GRXStoreScenario
+{
+	string key
+	string field
+	table< string, string > variants
+}
+
+global struct GRXStoreItem
+{
+	string offerAlias
+	string imageRef
+	string mainLocalization
+	string subLocalization
+	string linkType
+	string link
+	string telemetryId
+	int type
+	float tint1
+	float tint2
+	float tint3
+}
+
+global struct GRXStoreSection
+{
+	string imageRef
+	string localization
+	int id
+	int startDate
+	int endDate
+	int markedAsNewDate
+	float tint1
+	float tint2
+	float tint3
+	array< GRXStoreItem > items
+	array< GRXStoreScenario > scenarios
+}
+
+global struct GRXStoreTab
+{
+	string localization
+	string alias
+	array< GRXStoreSection > sections
+}
+
+global struct XProgProfileInfo
+{
+	int platformId
+	string nickname
+}
+
+global struct XProgMigrateData
+{
+	bool coolingDown
+	int retryMinutes
+	int processStatus
+	bool hasMultipleProfiles
+	string nickname
+	int level
+	int apexPacks
+	int cosmetics
+	int credits
+	int crafting
+	int premium
+	int premiumNx
+	int heirloom
+	int heirloomShards
+	string eaId
+	array< XProgProfileInfo > profiles
+}
+
+global struct CupPlayerInfo
+{
+	string playerUID
+	string hardware
+	string name
+}
+
+global struct CupLeaderboardEntry
+{
+	string squadID
+	array< CupPlayerInfo > squadInfo
+	int squadScore
+	array< CupMatchSummary > matchHistoryData
 }
 
 global struct VortexBulletHit
@@ -909,26 +1044,17 @@ global enum eRichPresenceSubstitutionMode
 	PARTYSLOTSUSED_PARTYSLOTSMAX,
 }
 
-global struct PresenceState
-{
-	string 			layout
-	int				substitutionMode
-	string 			mapName
-	string 			gamemode
-	int				matchStartTime
-	int 			party_slotsUsed
-	int 			party_slotsMax
-	int 			survival_squadsRemaining
-	int				teams_friendlyScore
-	int				teams_enemyScore
-}
+// PresenceState struct hoisted earlier in the file (near CommunityFriendsData).
 
 global struct CustomMatch_LobbyPlayer
 {
 	string uid
 	string uidHashed
+	string eaid           // S21 engine
+	string firstPartyID   // S21 engine
 	string hardware
 	string name
+	string tag            // S21 engine (platform tag)
 	string clubTag
 	bool isAdmin = false
 	int team = 1
@@ -965,6 +1091,7 @@ global struct CustomMatch_MatchPlayer
 	string uid
 	string hardware
 	string name
+	string tag            // S21 engine (platform tag)
 	string clubTag
 	string character
 	int status
@@ -1005,20 +1132,7 @@ global struct CustomMatch_SettingsForUpdate
 	bool anonMode
 }
 
-global struct EadpPresenceData
-{
-	int			hardware
-	PresenceState ornull 	presence
-	bool		partyInMatch
-	bool		partyIsFull
-	string		privacySetting
-	string		name
-	bool		online
-	bool		ingame
-	bool		away
-	string      firstPartyId
-	bool        isJoinable
-}
+// EadpPresenceData struct hoisted earlier in the file (near CommunityFriendsData).
 
 global struct EadpPeopleData
 {

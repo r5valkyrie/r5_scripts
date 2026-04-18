@@ -73,7 +73,7 @@ global function ShEHI_OnPlayerChangedTeam
 global function ShEHI_OnPlayerDisconnected
 global function UIToClient_UIVMIsShuttingDown
 global function UIToClient_UIVMJustStarted
-global function GetPlayerName
+// [s21-native] forward-decl GetPlayerName registered by engine; dropped
 global function GetKillerName
 global function GetKillerNameFromEHI
 global function GetDisplayablePlayerNameFromEHI
@@ -850,6 +850,8 @@ string function GetDisplayablePlayerNameFromEHI( EHI playerEHI )
 
 // AllianceProximity_IsUsingAlliances and AllianceProximity_GetMaxNumAlliances moved to mp/sh_alliance_proximity.gnut
 
+// [s21-native] function GetPlayerName() registered by engine; script stub commented out
+/*
 string function GetPlayerName( EHI playerEHI )
 {
 	string playerName = EHI_GetName( playerEHI )
@@ -858,6 +860,7 @@ string function GetPlayerName( EHI playerEHI )
 
 	return playerName
 }
+*/
 
 bool function ShouldPrivateMatchBeAnonymized()
 {
