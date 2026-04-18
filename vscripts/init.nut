@@ -4,13 +4,10 @@
 //  !!!NOTE: Reference script only; changes made to this script will not work in game.
 //=============================================================================
 
-// Platform defines not present in PC engine
-global const bool NX_PROG = false
-global const bool PLAYSTATION_PROG = false
-global const bool PS5_PROG = false
-global const bool XB5_PROG = false
-global const bool XBOX_PROG = false
-global const bool PC_PROG_NX_UI = false
+// Platform defines (NX_PROG, PLAYSTATION_PROG, PS5_PROG, XB5_PROG,
+// XBOX_PROG, PC_PROG_NX_UI) are registered natively by the S21 engine
+// before init.nut runs, so re-declaring them here would redefine a
+// const. Kept in S3's init.nut where the engine doesn't provide them.
 
 global function printl
 global function CodeCallback_Precompile
