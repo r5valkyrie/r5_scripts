@@ -5714,13 +5714,16 @@ bool function IsSingleplayer()
 	#endif
 }
 
-void function LockWeaponsAndMelee( entity player )
+void function LockWeaponsAndMelee( entity player, string debug_source = "" )
 {
-	#if DEVELOPER
-		// printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
-		// printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
-	#endif 
-	
+	printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
+	printt( "Player = " + player.GetPlayerName() + ", current count = " + player.p.weaponsAndMeleeLockedCount )
+	if (!( debug_source in player.p.weaponsAndMeleeLockedSources ))
+	{
+		player.p.weaponsAndMeleeLockedSources[ debug_source ] <- 0
+	}
+	player.p.weaponsAndMeleeLockedSources[ debug_source ] += 1
+
 	if ( player.p.weaponsAndMeleeLockedCount == 0 )
 	{
 		player.LockWeaponChange()
@@ -7039,6 +7042,50 @@ int function ODL_FindAsset( int odlType, asset model )
 
 bool function ODL_IsLoaded( int odlType, int handle )
 {
+	return true
+}
+
+bool function GenericPropCanUse( entity player )
+{
+	if ( player.Anim_IsActive() )
+		return false
+	if ( player.ContextAction_IsBusy() )
+		return false
+	if ( player.ContextAction_IsActive() )
+		return false
+	if ( !player.IsOnGround() )
+		return false
+	if ( player.IsSliding() )
+		return false
+	if ( player.IsTraversing() )
+		return false
+	if ( player.IsMantling() )
+		return false
+	if ( player.IsWallRunning() )
+		return false
+	if ( player.IsWallHanging() )
+		return false
+	if ( player.IsPhaseShifted() )
+		return false
+	if ( player.Player_IsSkywardFollowing() )
+		return false
+	if ( player.Player_IsSkywardLaunching() )
+		return false
+	if ( StatusEffect_HasSeverity( player, eStatusEffect.placing_phase_tunnel ) )
+		return false
+	if ( player.GetParent() != null )
+		return false
+	if ( player.GetPlayerNetBool( "isHealing" ) )
+		return false
+	if ( player.IsUsingOffhandWeapon( eActiveInventorySlot.mainHand ) )
+		return false
+	if ( player.IsUsingOffhandWeapon( eActiveInventorySlot.altHand ) )
+		return false
+	if ( !IsAlive( player ) )
+		return false
+	if( Bleedout_IsBleedingOut( player ) )
+		return false
+
 	return true
 }
 

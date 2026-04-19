@@ -2418,11 +2418,31 @@ bool function IsFiringRangeGameMode()
 	return Playlist() == ePlaylists.survival_firingrange
 }
 
+bool function IsMTXEvent1Active()
+{
+	ItemFlavor event = GetItemFlavorByAsset( $"settings/itemflav/calevent/s21ce01/collection.rpak" )
+	return CalEvent_IsActive( event, GetUnixTimestamp() )
+}
+
+bool function IsMTXEvent2Active()
+{
+	ItemFlavor event = GetItemFlavorByAsset( $"settings/itemflav/calevent/s21me02/milestone.rpak" )
+	return CalEvent_IsActive( event, GetUnixTimestamp() )
+}
+
+bool function IsT1Active()
+{
+	int unixTimeNow = GetUnixTimestamp()
+	if ( unixTimeNow > expect int( GetCurrentPlaylistVarTimestamp( "t1_active", UNIX_TIME_FALLBACK_2038 ) ) )
+	{
+		return true
+	}
+
+	return false
+}
 bool function IsMatchmakingFromMatchEnabled()
 {
-	// S3 does not have the 'matchmake_from_match_enabled' convar — feature not supported
-	Warning( "IsMatchmakingFromMatchEnabled: matchmake_from_match_enabled convar unavailable in S3, returning false" )
-	return false
+	return GetConVarBool( "matchmake_from_match_enabled" ) && GetCurrentPlaylistVarBool( "matchmake_from_match", false ) && ( GetCurrentPlaylistVarBool( "private_match", false ) == false )
 }
 
 bool function IsMatchmakingFromMatchAllowed( entity player )
@@ -2437,7 +2457,7 @@ bool function IsMatchmakingFromMatchAllowed( entity player )
 			isMatchActuallyOver = IsRoundBasedGameOver()
 		else
 			isMatchActuallyOver = GetGameState() >= eGameState.WinnerDetermined
-		//isAllowed = Survival_IsPlayerSquadEliminated( player ) || isMatchActuallyOver
+		isAllowed = Survival_IsPlayerSquadEliminated( player ) || isMatchActuallyOver
 	}
 #endif
 

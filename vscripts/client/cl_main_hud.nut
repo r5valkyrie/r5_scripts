@@ -156,6 +156,27 @@ void function MainHUD( entity cockpit, entity player )
 	cockpit.s.coreFXHandle <- null
 	cockpit.s.pilotDamageAmpFXHandle <- null
 
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+	WaitFrame()
+
 	UpdateMainHudVisibility( player )
 
 	if ( player == GetLocalClientPlayer() )

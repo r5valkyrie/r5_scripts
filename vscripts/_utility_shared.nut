@@ -92,6 +92,14 @@ global struct RaySphereIntersectStruct
 	float leaveFrac
 }
 
+global struct FriendlyEnemyFXStruct
+{
+	entity friendlyColoredFX
+	entity enemyColoredFX
+	int    team
+}
+
+
 global struct PotentialTargetData
 {
 	entity target
@@ -105,6 +113,14 @@ global enum eGradeFlags
 	IS_OPEN_SECRET = (1 << 2),
 	IS_LOCKED = (1 << 3),
 }
+
+const array<string> ALLOWED_SCRIPT_PARENT_ENTS = [
+	"hatch_bunker_entrance_model_z16",
+	"hatch_bunker_entrance_model_z6",
+	"hatch_bunker_entrance_model_z5",
+	"hatch_bunker_entrance_model_z12",
+	"hatch_bunker_entrance_model_z12_treasure",
+]
 
 struct RefEntAreaData
 {
@@ -6460,6 +6476,153 @@ void function TakePlayerSettingsMods( entity player, array<string> modsToTake, b
 		//ApplyAppropriateCharacterSkin( player )
 	#endif
 }
+
+bool function Placement_IsHitEntScriptedPlaceable( entity hitEnt, int depth )
+{
+	if ( hitEnt.IsWorld() )
+		return false
+
+	var hitEntClassname = hitEnt.GetNetworkedClassName()
+	if ( hitEntClassname == "func_brush" || hitEntClassname == "script_mover" || hitEntClassname == "func_brush_lightweight" )
+	{
+		return true
+	}
+
+	if ( ALLOWED_SCRIPT_PARENT_ENTS.contains( hitEnt.GetScriptName() ) )
+	{
+		return true
+	}
+
+	if ( depth > 0 )
+	{
+		if ( IsValid( hitEnt.GetParent() ) )
+		{
+			return Placement_IsHitEntScriptedPlaceable( hitEnt.GetParent(), depth - 1 )
+		}
+	}
+
+	return false
+}
+
+#if SERVER
+void function SetPlayerStandingThread( entity player )
+{
+	Assert ( IsNewThread(), "Must be threaded off." )
+
+	if ( !IsValid(player) )
+		return
+
+	if ( !player.CanStand() )
+		return
+
+	int forceStandHandle = player.PushForcedStance( FORCE_STANCE_STAND )
+
+	WaitFrame()
+
+	if ( IsValid( player ) )
+	{
+		player.RemoveForcedStance( forceStandHandle )
+	}
+
+}
+
+void function DestroyFXAfterDelay( FriendlyEnemyFXStruct fxResults, float delay )
+{
+	Assert ( IsNewThread(), "Must be threaded off." )
+
+	//sound ping vfx have a 1s long playback.
+	wait delay
+
+	if ( IsValid( fxResults.friendlyColoredFX ) )
+	{
+		EffectStop( fxResults.friendlyColoredFX )
+		fxResults.friendlyColoredFX.Destroy()
+	}
+
+	if ( IsValid( fxResults.enemyColoredFX ) )
+	{
+		EffectStop( fxResults.enemyColoredFX )
+		fxResults.enemyColoredFX.Destroy()
+	}
+}
+
+
+FriendlyEnemyFXStruct function CreateFriendlyFX( entity projectile, asset particleSystem, vector origin, vector angles, int team, vector endPos = <0.0, 0.0, 0.0> )
+{
+	int particleSystemID = GetParticleSystemIndex( particleSystem )
+
+	entity friendlyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	friendlyColoredFX.SetParent( projectile )
+	SetTeam( friendlyColoredFX, team )
+	friendlyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	EffectSetControlPointVector( friendlyColoredFX, 1, FRIENDLY_COLOR_FX )
+
+	if ( endPos != <0.0, 0.0, 0.0> )
+		EffectSetControlPointVector( friendlyColoredFX, 2, endPos )
+
+	friendlyColoredFX.RemoveFromAllRealms()
+	friendlyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	FriendlyEnemyFXStruct effects
+	effects.friendlyColoredFX = friendlyColoredFX
+	effects.team = team
+
+	return effects
+}
+
+FriendlyEnemyFXStruct function CreateEnemyFX( entity projectile, asset particleSystem, vector origin, vector angles, int team, vector endPos = <0.0, 0.0, 0.0> )
+{
+	int particleSystemID = GetParticleSystemIndex( particleSystem )
+
+	entity enemyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	enemyColoredFX.SetParent( projectile )
+	SetTeam( enemyColoredFX, team )
+	enemyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	EffectSetControlPointVector( enemyColoredFX, 1, ENEMY_COLOR_FX )
+
+	if ( endPos != <0.0, 0.0, 0.0> )
+		EffectSetControlPointVector( enemyColoredFX, 2, endPos )
+
+	enemyColoredFX.RemoveFromAllRealms()
+	enemyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	FriendlyEnemyFXStruct effects
+	effects.enemyColoredFX = enemyColoredFX
+	effects.team = team
+
+	return effects
+}
+
+FriendlyEnemyFXStruct function CreateFriendlyEnemyFX( entity projectile, asset particleSystem, vector origin, vector angles, int team, vector friendlyColorOverride = ZERO_VECTOR )
+{
+	int particleSystemID = GetParticleSystemIndex( particleSystem )
+
+	entity friendlyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	friendlyColoredFX.SetParent( projectile )
+	SetTeam( friendlyColoredFX, team )
+	friendlyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	vector friendlyColor = friendlyColorOverride != ZERO_VECTOR ? friendlyColorOverride : FRIENDLY_COLOR_FX
+	EffectSetControlPointVector( friendlyColoredFX, 1, friendlyColor )
+	friendlyColoredFX.RemoveFromAllRealms()
+	friendlyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	entity enemyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	enemyColoredFX.SetParent( projectile )
+	SetTeam( enemyColoredFX, team )
+	enemyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	EffectSetControlPointVector( enemyColoredFX, 1, ENEMY_COLOR_FX )
+	enemyColoredFX.RemoveFromAllRealms()
+	enemyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	FriendlyEnemyFXStruct effects
+	effects.friendlyColoredFX = friendlyColoredFX
+	effects.enemyColoredFX = enemyColoredFX
+	effects.team = team
+
+	return effects
+}
+#endif //SERVER
+
 
 void function WaitForGameState(int state) {
 	while ( GetGameState() != state )

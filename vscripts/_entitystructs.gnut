@@ -199,7 +199,7 @@ global struct ServerEntityStruct
 	entity syncedMeleeAttacker
 	entity lastSyncedMeleeAttacker
 	bool markedForExecutionDeath
-
+	bool destroyIfBubbleShieldParentDestroyed
 	IntSet spawnedFilters
 
 	bool isHotDropping
@@ -552,6 +552,7 @@ global struct RecoveryHealingFXRequest
 // This struct is hooked up to entity.p in code
 global struct ServerPlayerStruct
 {
+	table<string,int> weaponsAndMeleeLockedSources
 	entity carriedLoot
 	int movementDisabledCount = 0
 	bool infiniteGameModeAmmo = false

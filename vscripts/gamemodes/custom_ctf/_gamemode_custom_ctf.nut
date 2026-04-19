@@ -1866,7 +1866,6 @@ entity function CreateRingBoundary(LocationSettingsCTF location)
 	CTF.ringRadius = bubbleRadius
 
 	entity bubbleShield = CreateEntity( "prop_dynamic" )
-	bubbleShield.SetValueForModelKey( BUBBLE_BUNKER_SHIELD_COLLISION_MODEL )
 	bubbleShield.SetOrigin(bubbleCenter)
 	bubbleShield.SetModelScale(bubbleRadius / 235)
 	bubbleShield.kv.CollisionGroup = 0
