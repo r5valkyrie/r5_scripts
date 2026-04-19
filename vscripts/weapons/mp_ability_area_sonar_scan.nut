@@ -109,7 +109,10 @@ float function AreaSonarScan_GetConeFOV()
 float function GetScanHighlightDuration( entity player )
 {
 	float dur = AREA_SONAR_SCAN_HIGHLIGHT_DURATION
-
+	                    
+		if( IsValid( player ) && player.HasPassive( ePassives.PAS_TAC_UPGRADE_ONE ) ) // upgrade_increased_scan_duration
+			dur = 3.0
+       
 	return dur
 }
 

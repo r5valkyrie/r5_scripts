@@ -3640,12 +3640,6 @@ int function RemoveBitMask( int bitsExisting, int bitsToRemove )
 	return bitsExisting & ( ~bitsToRemove )
 }
 
-bool function HasBitMask( int bitsExisting, int bitsToCheck )
-{
-	int bitsCommon = bitsExisting & bitsToCheck
-	return bitsCommon == bitsToCheck
-}
-
 void function SetDeathCamTimeOverride( float functionref() func )
 {
 	file.getDeathCamTimeOverride = func

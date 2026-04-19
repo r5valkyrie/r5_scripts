@@ -1091,7 +1091,7 @@ bool function IsBindingAllowed( int buttonEnum )
 		}
 		else
 		{
-			dpadBindCommands.append( GetCustomBindCommandForButtonIndexPilot( GAMEPAD_BUTTON_INDECES[dpadEnum] ) )
+			dpadBindCommands.append( GetCustomBindCommandForButtonIndexPilot( GAMEPAD_BUTTON_INDICES[dpadEnum] ) )
 		}
 	}
 
