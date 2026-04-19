@@ -140,6 +140,9 @@ struct LootBinServerData
 	array<entity> spawnedLootIndexes
 	int numberOfPiecesOfSpawnedLoot
 
+	array<entity> spawnedRegularLootEnts
+	array<entity> spawnedSecretLootEnts
+
 	void functionref( entity, entity ) addItemsToBinOnOpenCallback
 }
 #endif
@@ -407,13 +410,13 @@ entity function CreateLootBin( vector origin, vector angles, bool doMovingGeoDow
 	lootBin.SetPusher( true )
       
 
-	// S3: GetChildren/SetDoOnWouldOtherwiseCrushEntityCallback not available
-	//array<entity> children = lootBin.GetChildren()
-	//foreach( entity child in children )
-	//{
-	//	child.SetDoOnWouldOtherwiseCrushEntityCallback( true )
-	//	AddCallback_OnWouldOtherwiseCrushEntity( child, OnWouldCrushCallback )
-	//}
+	// the loot bin's children actually do the pushing. prevent them from crushing players and close the bin if they were to crush a player
+	array<entity> children = lootBin.GetChildren()
+	foreach( entity child in children )
+	{
+		//child.SetDoOnWouldOtherwiseCrushEntityCallback( true )
+		AddCallback_OnWouldOtherwiseCrushEntity( child, OnWouldCrushCallback )
+	}
 
 
 	thread Thread_AttachMovingLootBinToGeo( lootBin, doMovingGeoDownTrace )
@@ -685,6 +688,10 @@ int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootB
 		CopyRealmsFromTo( lootBin, lootEnt )
 		amountOfLootSpawned++
 		spawnedLoot.append( lootEnt )
+		if ( isSecretCompartment )
+			lbsd.spawnedSecretLootEnts.append( lootEnt )
+		else
+			lbsd.spawnedRegularLootEnts.append( lootEnt )
 
 		SetItemSpawnSource( lootEnt, eSpawnSource.LOOTBIN, lootBin )
 		lootEnt.e.isSecretLoot = isSecretCompartment
@@ -714,8 +721,21 @@ int function LootBin_SpawnAndSetupCompartmentLootInsideAsNecessary( entity lootB
 		}
 	}
 
-	array<entity> lootEnts = LootBin_GetSpawnedLoot( lootBin, (compartment == eLootBinCompartment.REGULAR), (compartment == eLootBinCompartment.SECRET) )
-	int numberOfLootItems = lootEnts.len() + delayedLoot.len()
+	array<entity> existingLootEnts = LootBin_GetSpawnedLoot( lootBin, (compartment == eLootBinCompartment.REGULAR), (compartment == eLootBinCompartment.SECRET) )
+
+	// Merge: use existingLootEnts for items GetChildren() can see, plus the tracked array for items it may miss
+	// (GetChildren() may not reflect newly SetParent'd entities in the same frame)
+	// Use compartment-specific arrays so regular loot doesn't shift into secret compartment positions and vice versa
+	array<entity> trackedLootEnts = isSecretCompartment ? lbsd.spawnedSecretLootEnts : lbsd.spawnedRegularLootEnts
+	array<entity> lootEnts = []
+	foreach ( entity ent in existingLootEnts )
+	{
+		if ( !trackedLootEnts.contains( ent ) )
+			lootEnts.append( ent )
+	}
+	lootEnts.extend( trackedLootEnts )
+
+	int numberOfLootItems = lootEnts.len()
 	foreach ( int lootIdx, entity lootEnt in lootEnts )
 	{
 		if ( delayLootSpawning && !isSecretCompartment )
@@ -949,9 +969,21 @@ array<entity> function LootBin_GetSpawnedLoot( entity lootBin, bool includeRegul
 	#endif
 
 	array<entity> out = []
-	// S3: GetChildren() entity method not available - loot bin contents tracking degraded
-	// TODO: implement GetChildren native in SDK
-	Warning( "LootBin_GetSpawnedLoot: GetChildren not available in S3" )
+	foreach ( entity child in lootBin.GetChildren() )
+	{
+		if ( child.GetNetworkedClassName() != "prop_survival" )
+			continue
+
+		#if SERVER
+			if ( child.e.spawnSource != eSpawnSource.LOOTBIN )
+				continue
+
+			if ( (!includeRegular && !child.e.isSecretLoot) || (!includeSecret && child.e.isSecretLoot) )
+				continue
+		#endif
+
+		out.append( child )
+	}
 	return out
 }
 #endif

@@ -1,5 +1,7 @@
 global function MenuCallbacks_Init
 global function AddCallback_OnLeaveMatch
+global function ClientCallback_SetPromoVersionSeen
+global function ClientCallback_LeaveMatch
 
 struct
 {
@@ -8,35 +10,63 @@ struct
 
 void function MenuCallbacks_Init()
 {
-    AddClientCommandCallback( "LeaveMatch", ClientCommandCallback_LeaveMatch )
-}
-
-bool function ClientCommandCallback_LeaveMatch( entity player, array<string> args )
-{
-	foreach ( func in file.onLeaveMatchCallbacks )
-		func( player )
-
-    // Maybe save persistent data here.
-	thread function() : ( player )
+	if ( GetDeveloperLevel() > 0 )
 	{
-		if(player.IsObserver())
-		{
-			#if SERVER
-			player.SetPlayerNetInt( "spectatorTargetCount", 0 )
-			player.SetSpecReplayDelay( 0 )
-			player.StopObserverMode()
-			#endif
-			WaitFrame()
-			if(!IsValid(player)) return
-		}
-		RunClientCommandOnPlayer( player, "disconnect" )
-	}()
-		
-    return true
+		AddClientCommandCallbackVoid( "ToggleBubbleShield", ClientCommand_ToggleBubbleShield ) // dev
+		AddClientCommandCallbackVoid( "ToggleHUD", ClientCommand_ToggleHUD ) // dev
+		AddClientCommandCallbackVoid( "ToggleOffhandLowRecharge", ClientCommand_ToggleOffhandLowRecharge ) // dev
+	}
 }
 
 void function AddCallback_OnLeaveMatch( void functionref(entity) func )
 {
 	Assert( !file.onLeaveMatchCallbacks.contains(func) )
 	file.onLeaveMatchCallbacks.append( func )
+}
+
+void function ClientCallback_LeaveMatch_Thread( entity player )
+{
+	// If matchmaking was canceled on the same frame from the client, we may need to wait a frame.
+	WaitFrame()
+	if ( IsValid( player ) )
+		SendPlayersToPartyScreen( [ player ] )
+}
+
+void function ClientCallback_LeaveMatch( entity player )
+{
+	printt( "=== SendPlayersToPartyScreen() initiated by:", player.GetPlayerName() )
+	printt( "=== Solo player:", player.GetPlayerName() )
+
+	//player.Forfeit() // calls CodeCallback_OnPlayerForfeit and flags the player as never reconnecting
+
+	foreach ( func in file.onLeaveMatchCallbacks )
+		func( player )
+
+	thread ClientCallback_LeaveMatch_Thread( player )
+}
+
+void function ClientCommand_ToggleBubbleShield( entity player, array<string> args )
+{
+	svGlobal.bubbleShieldEnabled = !svGlobal.bubbleShieldEnabled
+}
+
+void function ClientCommand_ToggleHUD( entity player, array<string> args )
+{
+	if ( HasCinematicFlag( player, CE_FLAG_INTRO ) )
+		RemoveCinematicFlag( player, CE_FLAG_INTRO )
+	else
+		AddCinematicFlag( player, CE_FLAG_INTRO )
+}
+
+void function ClientCommand_ToggleOffhandLowRecharge( entity player, array<string> args )
+{
+	if ( HasExtraWeaponMod( player, "dev_mod_low_recharge" ) )
+		TakeExtraWeaponMod( player, "dev_mod_low_recharge" )
+	else
+		GiveExtraWeaponMod( player, "dev_mod_low_recharge" )
+}
+
+void function ClientCallback_SetPromoVersionSeen( entity player, int version )
+{
+	player.SetPersistentVar( "promoVersionSeen", version )
 }

@@ -38,6 +38,7 @@ Scripts:
 When: "SERVER || CLIENT"
 Scripts:
 [
+	sh_dev_tests.gnut
 	flowstate_globals.gnut
 	sh_damage_history.gnut // needs to come before _entitystructs
 	sh_mod_callbacks.gnut
@@ -93,17 +94,20 @@ Scripts:
 	sh_ability_shadow_zombie.nut
 
 	pilot/sh_pilot_tracking_vision.gnut
+	pilot/sh_pilot_passive_gunner.gnut
 	pilot/sh_pilot_passive_loot_highlight.gnut
 	sh_bird_cluster.nut
 
 	sh_extended_use.gnut
 	sh_companion_pathfinding.gnut
+	pilot/sh_pilot_passive_remote_deathbox_interact.gnut
 	pilot/sh_pilot_passive_sling.gnut
 	sh_survival_loot.gnut
 	sh_survival_loot_actions.gnut
 	sh_survival_loot_types.gnut
 	sh_survival_equipment_slot.gnut
 	sh_survival_loot_distribution.gnut
+	sh_live_api.gnut
 ]
 
 When: "SERVER || CLIENT || UI"
@@ -180,6 +184,7 @@ Scripts:
 	sh_stats_gamemode_cups.gnut
 	sh_stats_gamemode_control.gnut
 	sh_stats_gamemode_arenas.gnut
+	sh_stats_metachallenge.gnut
 	sh_stats_s21.gnut
 
 	sh_stats_npp.gnut
@@ -192,6 +197,7 @@ Scripts:
 	mp/sh_gladiator_cards.nut
 	mp/sh_player_stats_cards.nut
 	mp/sh_mythics.nut
+	sh_treasure_box.gnut
 	customize_common.gnut
 ]
 
@@ -223,6 +229,7 @@ Scripts:
 When: "SERVER"
 Scripts:
 [
+	_anti_cheat.nut
 	dev/_devstats.gnut
 ]
 
@@ -295,6 +302,7 @@ Scripts:
 When: "SERVER || CLIENT"
 Scripts:
 [
+	weapons/weapon_cubemap.nut
 	sh_debug_draw.gnut
 	sh_flag.gnut
 	_utility_shared.nut
@@ -324,7 +332,6 @@ Scripts:
 	sh_timed_event_utility.nut
 	sh_weaponrack.nut
 	sh_player_objects.gnut
-	sh_clientsidepickups.gnut
 	weapons/_arc_cannon.nut
 	weapons/_grenade.nut
 	weapons/_vortex.nut
@@ -432,103 +439,6 @@ Scripts:
 	weapons/mp_ability_sonic_blast.nut
 	weapons/mp_ability_echo_locator.nut
 	weapons/mp_ability_heartbeat_sensor.nut
-
-	//S0 Dev Protos
-	//Husaria
-	//Plant a breaching charge that fires a sonic wave through walls to destroy traps, force open doors, and disorient enemies.
-	weapons/s0_dev_protos/mp_weapon_concussive_breach.nut
-	//Throw a grenade that briefly blinds and deafens opponents.
-	weapons/s0_dev_protos/mp_weapon_grenade_flashbang.nut
-	//You have a shotgun on your leg that fires when you melee doors or enemies. Requires shotgun ammo. Using your abilities grants you a brief speed boost.
-	weapons/s0_dev_protos/sh_pilot_passive_shotgun_kick.gnut
-	weapons/s0_dev_protos/mp_weapon_shotgun_kick.nut
-	
-	//Jericho
-	//Throw two electrically-charged javelins that burn through enemy body shields.
-	weapons/s0_dev_protos/mp_ability_maelstrom_javelin.nut
-	//A full-body shield that protects you from incoming fire.
-	weapons/s0_dev_protos/mp_ability_riot_shield.nut
-
-	//Prophet
-	//Scans the environment for enemies and gathers information on targets found.
-	weapons/s0_dev_protos/mp_ability_spotter_sight.nut
-	
-	//Nomad
-	//Follow the Loot Compass to the nearest item.
-	weapons/s0_dev_protos/mp_ability_loot_compass.nut
-
-	//Forge
-	//Ground Slam
-	//Reverse your jump jets to slam down into the ground.
-	weapons/s0_dev_protos/mp_ability_ground_slam.nut
-	
-	//Rampart (OG)
-	//Build cover with an upper barrier that blocks incoming shots.
-	//weapons/s0_dev_protos/mp_weapon_cover_wall.nut
-
-	//PROTOS - NOT ASSIGNED TO A CHARACTER YET
-	//Stryder Dodge Roll (Proto)
-	weapons/s0_dev_protos/mp_ability_dodge_roll.nut
-	// weapons/s0_dev_protos/mp_ability_dodge_roll_cafe.nut
-	// weapons/s0_dev_protos/mp_ability_phase_dash.nut
-
-	//Sonic Shriek (Proto)
-	//A charged short-range blast of force that pushes pilots and projectiles.
-	weapons/s0_dev_protos/mp_ability_sonic_shout.nut	
-	
-	//Split Timeline
-	//Weirdest ability in the game -> Proto changed to mp_ability_mark_recall which wasn't commented and doesn't have the weapon handling stuff
-	//You can split time in two, carry different weapons, you can have different health / shield and ammo in each timeline
-	weapons/s0_dev_protos/mp_ability_split_timeline.nut
-	
-	
-	//------------------------ Second part of dev protos. Cafe
-	
-	//Skunner
-	//Drop a pile of debris that slows and damages enemies when they move through it.
-	weapons/s0_dev_protos/mp_weapon_debris_trap.nut
-	//Instantly create a spiked barrier made from rapid hardening resin.
-	weapons/s0_dev_protos/mp_weapon_grenade_barrier.nut
-	
-	//Unreleased Mirage Ultimate (Proto)
-	weapons/s0_dev_protos/mp_ability_haunt.nut
-	
-	//Proximity Mine
-	
-	//Downfall (Fuse grandfather)
-	//sh_fire
-	//mp_ability_rocket_ribault (Fire a rocket propelled fire bomb. Press %offhand4% to air burst the bomb and drop fire mines.)
-	//grenade_molotov (Throw a fire bomb that sets enemies on fire.)
-	//deployable_molotov (Drop a box of 4 molotovs anyone in your squad can pickup and throw.)
-	//Passive Fire Walker (You automatically extinguish fire by walking through it. Burning teammates will be extinguished when they move close to you.)
-	
-	//Inmortal
-	//Shield carger (Unleash a cloud of nanites to charge your teams shields.)
-	//Protection (Restores your health and shields to full and gives nearby teammates 30 seconds of self revive. Takes 8 seconds to charge.)
-
-	//Rosie (Loba)
-	//Arms Market
-	//Area loot scan
-	//Teleport Proto
-	
-	//Nomad
-	//Crafting Table Placeholder
-	
-	//Sentry Turret (OG Rampart turret)
-
-	//Gladiator Disc (Scraped, similar to deathbox, killer can grab something that a dead player leaves)
-	
-	//MORE PROTOS
-	
-	//Black Sand Trap
-	//ShuffleAbility_Init (Teleport with objects?)
-	//Shockwave
-	//Cluster Rocket
-	//Shotgun Double Barrel
-	//Deployable Wallrun (Ice Wall)
-	//Hover Wall (HoverWall_Init)
-	//Gravity Toggle
-	//Antman
 ]
 
 When: "SERVER || CLIENT"
@@ -544,6 +454,7 @@ When: "SERVER"
 Scripts:
 [
 	_streaks_tracker.nut
+	mp/sv_prop_placement_utilities.nut
 ]
 
 When: "SERVER || CLIENT"
@@ -556,9 +467,15 @@ Scripts:
 	sh_crowd_noise_meter.nut
 	mp/levels/sh_pathfinder_tt_common.nut
 	npc/npc_assets.nut
+	npc/npc_precache_all.nut
 	npc/npc_precache_prowler.nut
+	npc/npc_precache_marvin.nut
+	npc/npc_precache_nessie.nut
+	npc/npc_precache_spectre.nut
 	npc/npc_precache_spider_jungle.nut
 	weapons/npc_weapon_spider_jungle.nut
+	weapons/npc_weapon_thermite_grenade.nut
+	mp/sh_prop_override.nut
 	mp/sh_game_state_dialog.nut
 	mp/sh_emotes.nut
 	mp/sh_comms_menu.nut
@@ -618,6 +535,7 @@ Scripts:
 	weapons/mp_ability_gibraltar_shield.nut
 	weapons/mp_ability_space_elevator_tac.nut
 	weapons/mp_ability_consumable.nut
+	weapons/mp_ability_copycat_kit.nut
 
 	mp/sh_bleedout.gnut
 	sh_armordata.gnut
@@ -652,6 +570,7 @@ Scripts:
 	survival_locked_rng.nut
 	gamemodes/shadowfall/sh_gamemode_shadow_squad.nut
 	gamemodes/shadowfall/sh_gamemode_shadow_squad_precache.nut
+	_trigger_functions.gnut
 ]
 
 When: "SERVER"
@@ -673,6 +592,13 @@ Scripts:
 	_clientcommands.gnut
 	_codecallbacks_player_input.gnut
 	_control_panel.gnut
+	sv_live_api.gnut
+]
+
+When: "CLIENT"
+Scripts:
+[
+	client/cl_live_api.gnut
 ]
 
 When: "SERVER || CLIENT || UI"
@@ -680,8 +606,13 @@ Scripts:
 [
 	perk_banner_crafting.nut
 	perk_beacon_scan.nut
+	perk_care_package_insight.nut
+	perk_death_box_insight.nut
 	perk_next_zone_beacon_scan.nut
+	perk_extra_firepower.nut
+	perk_kill_boost_ult.nut
 	perk_enemies_beacon_scan.nut
+	perk_weapon_infusion.nut
 	perk_munitions_box.nut
 ]
 
@@ -694,7 +625,6 @@ Scripts:
 	_objective.gnut
 	_on_spawned.gnut
 	_script_triggers.gnut
-	_trigger_functions.gnut
 	_viewcone.gnut
 	_pain_death_sounds.gnut
 	_threat_tracker.gnut
@@ -716,7 +646,6 @@ Scripts:
 	ai/_ai_spectre.gnut
 	ai/_ai_stalker.gnut
 	ai/_ai_spider.gnut
-	ai/_ai_suicide_spectres.gnut
 	ai/_ai_utility.gnut
 	ai/_droppod.gnut
 	ai/_squad_spawn.gnut
@@ -738,7 +667,6 @@ Scripts:
 	mp/_loot_drones.nut
 	mp/_loot_rollers.nut
 	mp/_vr.nut
-	mp/_motd.gnut
 	mp/player_cloak.nut
 	_hovertank.gnut
 	_health_regen.gnut
@@ -767,11 +695,15 @@ Scripts:
 	mp/_base_cmds.gnut
 ]
 
+When: "SERVER || CLIENT"
+Scripts:
+[
+	ai/_ai_suicide_spectres.gnut
+]
 When: "SERVER"
 Scripts:
 [
 	lobby/_lobby.gnut
-	lobby/_private_lobby.gnut
 	lobby/sh_lobby.gnut
 	mp/_ai_mp.gnut
 	_xp.gnut
@@ -794,11 +726,11 @@ Scripts:
 	mp/_bombardment_utility.gnut
 	mp/_bleedout.gnut
 	mp/_staging_area.gnut
+	mp/_staging_area_ee.gnut
 	_sneak_peek.gnut
 
 	ai/_ai_mortar_spectres.gnut
 	survival_loot.gnut
-	mp_pickup_xp_cache.nut
 	survival_ship.gnut
 	mp/_loot_ticks.nut
 	pilot/_pilot_tracking_vision.gnut
@@ -808,9 +740,15 @@ Scripts:
 	mp/_jump_pads.gnut
 ]
 
+When: "CLIENT"
+Scripts:
+[
+	mp/cl_staging_area_ee.gnut
+]
 When: "SERVER || CLIENT"
 Scripts:
 [
+	mp_pickup_xp_cache.nut
 	sh_sneak_peek.gnut
 	
 	pilot/_pilot_passive_medic.gnut //Should be shared. Cafe
@@ -846,7 +784,6 @@ When: "CLIENT || UI"
 Scripts:
 [
 	class/CClientScriptHudElement.nut
-	sh_matchmaking_status.gnut
 	mp/cl_pintelemetry.gnut
 	clui_video.gnut
 ]
@@ -855,6 +792,8 @@ When: "SERVER || CLIENT || UI"
 Scripts:
 [
 	sh_menu_models.gnut
+	menu_camera.gnut
+	menu_scene.gnut
 	sh_matchmaking_util.gnut
 	sh_character_select.gnut
 	//sh_character_select_new.gnut // Merged into sh_character_select.gnut (S22)
@@ -918,7 +857,6 @@ Scripts:
 [
 	client/cl_player_common.gnut
 	client/cl_utility.gnut
-	ai/cl_ai_suicide_spectres.gnut
 	cl_networkvars.gnut
 	client/cl_anim.gnut
 	client/cl_carrier_torpedo_points.nut
@@ -950,7 +888,6 @@ Scripts:
 	conversation/cl_conversation_schedule.gnut
 	pilot/cl_pilot_health_hud.gnut
 	pilot/cl_pilot_jumpjet.gnut
-	spawnslot/cl_spawnslot_system.gnut
 	weapons/cl_smart_ammo.gnut
 	client/objects/cl_drone_medic.nut
 	client/objects/cl_draconis_flyin.nut
@@ -971,6 +908,7 @@ Scripts:
 When: "CLIENT || UI"
 Scripts:
 [
+	sh_matchmaking_status.gnut
 	ui/sh_tooltips.nut
 	ui/clui_menus.nut
 	ui/clui_lobby_panel_pass.nut
@@ -1001,6 +939,7 @@ Scripts:
 	ui/_list_panel.gnut
 	ui/_grid_panel.gnut
 	ui/_sectioned_list_panel.gnut
+	ui/ui_lobby_playlist_utility.nut
 	ui/_menu_utility.nut
 	ui/_menus.nut
 	ui/_matchmaking_overlay.nut
@@ -1253,6 +1192,7 @@ Scripts:
 	weapons/mp_ability_crypto_drone.nut
 	weapons/mp_ability_crypto_drone_emp.nut
 	weapons/sh_vantage_companion.nut
+	weapons/mp_ability_redeploy_balloon.nut
 	weapons/sniper_range_auto_set.nut
 	weapons/sniper_recon_info.nut
 
@@ -1333,7 +1273,6 @@ Scripts:
 	gamemodes/custom_ctf/sh_gamemode_custom_ctf.nut
 	gamemodes/custom_ctf/custom_ctf_settings.nut
 	
-	lobby/lobbyvm/sh_lobbyvm.nut
 	sh_hover_vehicle.gnut
 	
 	mp/sh_skydive_launchers.gnut
@@ -1346,16 +1285,12 @@ Scripts:
 	mp/levels/mp_rr_remap.nut
 	  _mapeditor.gnut
 	
-	lobby/lobbyvm/_lobbyvm.nut
-	
 	gamemodes/custom_ctf/_gamemode_custom_ctf.nut
 ]
 
 When: "CLIENT"
 Scripts:
 [
-	lobby/lobbyvm/cl_lobbyvm.nut
-
 	gamemodes/custom_ctf/cl_gamemode_custom_ctf.nut
 ]
 

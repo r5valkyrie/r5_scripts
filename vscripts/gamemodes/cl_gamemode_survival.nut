@@ -1904,14 +1904,14 @@ void function NextCircleStartTimeChanged( entity player, float new )
 		ruis.append( cameraRui )
 
 
-	int roundNumber    = (SURVIVAL_GetCurrentDeathFieldStage( 0 ) + 1)
+	int roundNumber    = (SURVIVAL_GetCurrentDeathFieldStage() + 1)
 	string roundString = GetRingClosingString(roundNumber)
 
 	float currentRadius      = Cl_SURVIVAL_GetDeathFieldCurrentRadius()
 	float endRadius          = currentRadius
-	if( SURVIVAL_GetCurrentDeathFieldStage( 0 ) >= 0 )
+	if( SURVIVAL_GetCurrentDeathFieldStage() >= 0 )
 	{
-		DeathFieldStageData data = Cl_GetDeathFieldStage( SURVIVAL_GetCurrentDeathFieldStage( 0 ) )
+		DeathFieldStageData data = Cl_GetDeathFieldStage( SURVIVAL_GetCurrentDeathFieldStage() )
 		endRadius            = data.endRadius
 	}
 
@@ -1939,7 +1939,7 @@ void function NextCircleStartTimeChanged( entity player, float new )
 
 	if ( GamePlaying() && CircleBannerAnnouncementsEnabled() )
 	{
-		if ( !GetCurrentPlaylistVarBool( "deathfield_starts_after_ship_flyout", true ) && !GetCurrentPlaylistVarBool( "sur_circle_start_paused", false ) && SURVIVAL_GetCurrentDeathFieldStage( 0 ) == 0 )
+		if ( !GetCurrentPlaylistVarBool( "deathfield_starts_after_ship_flyout", true ) && !GetCurrentPlaylistVarBool( "sur_circle_start_paused", false ) && SURVIVAL_GetCurrentDeathFieldStage() == 0 )
 			return
 
 		roundString = GetAnnouncementSubtextString(roundNumber)

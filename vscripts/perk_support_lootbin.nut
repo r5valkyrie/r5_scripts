@@ -186,25 +186,25 @@ bool function SupportBin_ShouldSpawnSupportBins()
 	if( GetCurrentPlaylistVarBool("survival_block_lootbin_creation", false ) )
 		return false
 
-	                      
+
 	if( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 		return false
-       
 
-	                        
+
+
 	if( GameModeVariant_IsActive( eGameModeVariants.FREEDM_GUNGAME ) )
 		return false
-       
 
-	                        
+
+
 		if( GameMode_IsActive( eGameModes.CONTROL ) )
 			return false
-                               
 
-                        
-                                            
-               
-                              
+
+
+
+
+
 
 	return true
 }
@@ -382,7 +382,7 @@ void function SupportBin_CreateSupportBins()
 		SupportBin_SpawnSupportBin( <-3264.000000, -16240.000000, 512.000000>, <-0.770010, -0.609985, 0.000000> )
 		SupportBin_SpawnSupportBin( <-3264.000000, -16016.000000, 512.000000>, <-0.770010, -0.609985, 0.000000> )
 	}
-	
+
 	if( LootBin_RandomizePerkBinsFromExistingBins() )
 		return
 
@@ -910,7 +910,7 @@ void function SupportBin_RefillBins_ScaledLoot()
 		}
 
 		int numRefillSecretItems 		= GetCurrentPlaylistVarInt( "survival_lootbins_refill_secretitemscount", 3 )
-		int currentStage = SURVIVAL_GetCurrentDeathFieldStage( 0 )
+		int currentStage = SURVIVAL_GetCurrentDeathFieldStage()
 
 		lootToRefillRegularBin = SURVIVAL_GetMultipleWeightedItemsFromGroup( scaledRegularLootTables[currentStage], numRefillItems )
 		lootToRefillSecretBin = SURVIVAL_GetMultipleWeightedItemsFromGroup( scaledSecretLootTables[currentStage], numRefillSecretItems )
@@ -956,7 +956,7 @@ void function SupportBin_RotatingLoot_RefillBins_BothCompartments()
 		}
 
 		int numRefillSecretItems 		= GetCurrentPlaylistVarInt( "supportbin_rotatingloot_refill_secretitemscount", 4 )
-		int currentStage = SURVIVAL_GetCurrentDeathFieldStage( 0 )
+		int currentStage = SURVIVAL_GetCurrentDeathFieldStage()
 
 		if( refillMain )
 		{
@@ -1001,11 +1001,11 @@ void function SupportBin_RotatingLoot_RefillBins_BothCompartments()
 
 bool function IsLootSurvivalItem( string lootRef )
 {
-                              
+
 		if ( lootRef == VOID_RING_WEAPON_REF || lootRef == MRB_WEAPON_REF_NAME || lootRef == REDEPLOY_BALLOON_WEAPON_REF )
-      
-                                                                          
-       
+
+
+
 	{
 		return true
 	}

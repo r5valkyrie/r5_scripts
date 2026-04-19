@@ -729,7 +729,7 @@ void function CompletionRewardBox_OnClick( var btn )
 	fakeOffer.prereq = activeCollectionEvent
 
 	ItemFlavorBag priceBag
-	priceBag.flavors.append( GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] )
+	priceBag.flavors.append( GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
 	priceBag.quantities.append( 999999999 )
 	fakeOffer.prices.append( priceBag )
 

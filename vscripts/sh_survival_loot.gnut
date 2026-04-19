@@ -4243,8 +4243,8 @@ bool function SURVIVAL_PlayerCanUse_AnimatedInteraction( entity player, entity e
 	if ( player.ContextAction_IsActive() )
 		return false
 
-	if ( VantageCompanion_GetPlayerLaunchState( player ) != ePlayerLaunchState.NONE )
-		return false
+	//if ( VantageCompanion_GetPlayerLaunchState( player ) != ePlayerLaunchState.NONE )
+	//	return false
 
 	if ( !SURVIVAL_PlayerAllowedToPickup( player ) )
 		return false
@@ -4378,8 +4378,8 @@ bool function SURVIVAL_PlayerCanSwitchOrdnance( entity player )
 		return false
 #endif // #if SERVER
 
-	//if ( !player.IsWeaponTypeEnabled( WPT_GRENADE ) )  //not in S3
-	//	return false
+	if ( !player.IsWeaponTypeEnabled( WPT_GRENADE ) )
+		return false
 
 	//if ( player.Player_IsSkywardLaunching() )  //not in S3
 	//	return false

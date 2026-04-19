@@ -11,6 +11,9 @@ global function GetBubbleBunkerRui
 global function GibraltarIsInDome
 global function InDomeShield
 
+global const string GIBRALTAR_DOME_SCRIPTNAME = "gibraltar_dome_shield"
+global const string BUBBLE_BUNKER_MOVER_SCRIPTNAME = "Gibraltar_BubbleShield_mover"
+global const string BUBBLE_BUNKER_WEAPON_NAME = "mp_weapon_bubble_bunker"
 const float BUBBLE_BUNKER_DEPLOY_DELAY = 1.0
 const float BUBBLE_BUNKER_DURATION_WARNING = 5.0
 

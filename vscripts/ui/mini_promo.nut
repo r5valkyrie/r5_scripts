@@ -2,9 +2,9 @@ global function InitMiniPromo
 global function MiniPromo_Start
 global function MiniPromo_Stop
 global function GetPackInfoToolTip
-         
-                                       
-        
+
+
+
 
 const int MINIPROMO_MAX_PAGES = 5
 const float MINIPROMO_PAGE_CHANGE_DELAY = 7.0
@@ -41,7 +41,7 @@ struct
 	float stickDeflection = 0
 	int   lastStickState = eStickState.NEUTRAL
 
-	                              
+
 } file
 
 
@@ -59,9 +59,9 @@ void function InitMiniPromo( var button )
 
 void function MiniPromo_Start()
 {
-	                                                               
 
-	Signal( file.signalDummy, "EndAutoAdvancePages" )                               
+
+	Signal( file.signalDummy, "EndAutoAdvancePages" )
 
 	file.allPages = InitPages()
 
@@ -76,7 +76,7 @@ void function MiniPromo_Start()
 
 void function MiniPromo_Stop()
 {
-	                                                              
+
 
 	MiniPromo_Reset()
 
@@ -89,14 +89,14 @@ void function MiniPromo_Stop()
 }
 
 
-         
-                                                  
-   
-  	                                
-  
-  	                   
-   
-        
+
+
+
+
+
+
+
+
 
 
 void function OnGRXStateChanged()
@@ -152,13 +152,13 @@ void function MiniPromo_Reset()
 
 void function UpdateValidityOfPages( array<MiniPromoPageData> pages )
 {
-	                                          
-	   
-	  	                                        
-	  		                    
-	  	    
-	  		                             
-	   
+
+
+
+
+
+
+
 
 	foreach ( page in pages )
 	{
@@ -185,7 +185,7 @@ void function UpdateValidityOfPages( array<MiniPromoPageData> pages )
 				break
 
 			case "url":
-				page.isValid = true                                      
+				page.isValid = true
 				break
 		}
 	}
@@ -228,59 +228,7 @@ int function GetActivePageIndexForRui()
 
 array<MiniPromoPageData> function InitPages()
 {
-	array<MiniPromoPageData> pages
-	UMData um = EADP_UM_GetPromoData()
-
-	                                  
-	MiniPromoPageData openPackPage
-	openPackPage.text1 = "OPEN PACK"
-	openPackPage.linkType = "openpack"
-	openPackPage.imageName = "m_openpack"
-	openPackPage.image = GetPromoImage( openPackPage.imageName )
-	openPackPage.format = MINIPROMO_PAGE_FORMAT_OPENPACK
-	pages.append( openPackPage )
-
-	foreach ( int i, UMAction action in um.actions )
-	{
-		MiniPromoPageData newPage
-		newPage.trackingId = action.trackingId
-		foreach ( int j, UMItem item in action.items )
-		{
-			if ( item.name == "MiniPromoText" )
-			{
-				newPage.text1 = item.value
-			}
-			else if ( item.name == "MiniPromoExtraText" )
-			{
-				newPage.text2 = item.value
-			}
-			else if ( item.name == "Link" )
-			{
-				newPage.linkData.append( item.value )
-				foreach ( attr in item.attributes )
-				{
-					if ( attr.key == "LinkType" )
-						newPage.linkType = attr.value
-				}
-			}
-			else if ( item.name == "ImageRef" )
-			{
-				newPage.imageName = item.value
-				if ( !GetConVarBool( "assetdownloads_enabled" ) )
-					newPage.image = GetPromoImage( newPage.imageName )
-			}
-		}
-
-		if ( newPage.linkType == "" )
-			newPage.linkType = "openmotd"
-
-		newPage.format = MINIPROMO_PAGE_FORMAT_DEFAULT
-		pages.append( newPage )
-
-		if( pages.len() >= MINIPROMO_MAX_PAGES )
-			break
-	}
-	return pages
+	return []
 }
 
 bool function IsLinkFormatValid( string linkType, array<string> linkData )
@@ -292,7 +240,7 @@ bool function IsLinkFormatValid( string linkType, array<string> linkData )
 	else if ( ( linkType == "battlepass" || linkType == "storecharacter" || linkType == "themedstoreskin" || linkType == "collectionevent" ) &&
 			  ( linkData.len() == 1 && ( IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID ( linkData[0] ) ) || IsValidItemFlavorCharacterRef( linkData[0] ) ) ) )
 		return true
-	else if ( linkType == "url" && linkData.len() == 1 )                                      
+	else if ( linkType == "url" && linkData.len() == 1 )
 		return true
 	else if ( linkType == "storeoffer" && linkData.len() == 1 )
 		return true
@@ -303,7 +251,7 @@ bool function IsLinkFormatValid( string linkType, array<string> linkData )
 
 void function AutoAdvancePages()
 {
-	                                                                 
+
 	Signal( uiGlobal.signalDummy, "EndAutoAdvancePages" )
 	EndSignal( uiGlobal.signalDummy, "EndAutoAdvancePages" )
 
@@ -331,29 +279,29 @@ void function ChangePage( bool direction )
 	for ( int i = 1; i < numPages; i++ )
 	{
 		int candidatePageIndex          = direction == MINIPROMO_NAV_RIGHT ? (file.activePageIndex + i) % numPages : (file.activePageIndex - i + numPages) % numPages
-		                                                                                                                                                                      
+
 		MiniPromoPageData candidatePage = file.allPages[candidatePageIndex]
 		if ( IsPageValidToShow( candidatePage ) )
 		{
 			nextPageIndex = candidatePageIndex
 			break
 		}
-		      
-		   
-		  	                                                                                                        
-		   
+
+
+
+
 	}
 
 	if ( nextPageIndex != file.activePageIndex )
 		SetPage( nextPageIndex )
-	      
-	  	                                                                                                               
+
+
 }
 
 
 void function SetPage( int pageIndex, bool instant = false )
 {
-	                                                                       
+
 
 	var rui = Hud_GetRui( file.button )
 
@@ -433,11 +381,11 @@ void function SetPage( int pageIndex, bool instant = false )
 		}
 		else if ( ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.THEMATIC )
 		{
-			nextPackDescription = ItemFlavor_GetShortName( pack )                                                                                   
+			nextPackDescription = ItemFlavor_GetShortName( pack )
 		}
 		else if ( packIcon != "" && ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.APEX )
 		{
-			nextPackDescription = ItemFlavor_GetQualityName( pack )                                                                                          
+			nextPackDescription = ItemFlavor_GetQualityName( pack )
 		}
 
 		RuiSetString( rui, "packDescription", nextPackDescription )
@@ -476,19 +424,19 @@ ToolTipData function GetPackInfoToolTip( int ownedPacks )
 		{
 			thmPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
 		}
-		else                                                                      
+		else
 		{
 			int packRarity = ItemFlavor_GetQuality( counterPack )
-			if ( packRarity == 3 )             
+			if ( packRarity == 3 )
 				legPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
-			else if ( packRarity == 2 )        
+			else if ( packRarity == 2 )
 				epcPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
-			else if ( packRarity == 1 )                      
+			else if ( packRarity == 1 )
 				apxPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
 		}
 	}
 
-	                                                                                                                                 
+
 	if ( legPackCnt > 0 )
 	{
 		hint3 = Localize( "#CNT_LEGENDARY_PACKS", string( legPackCnt ) )
@@ -562,7 +510,7 @@ ToolTipData function GetPackInfoToolTip( int ownedPacks )
 }
 
 
-                                                                                                                      
+
 int function GetCorrespondingMOTDPageIndex()
 {
 	MiniPromoPageData firstPage = file.allPages[0]
@@ -573,10 +521,10 @@ int function GetCorrespondingMOTDPageIndex()
 }
 
 
-                                                                      
+
 void function MiniPromoButton_OnActivate( var button )
 {
-	                                                
+
 
 	MiniPromoPageData page = file.allPages[file.activePageIndex]
 	int motdIndex = GetCorrespondingMOTDPageIndex()
@@ -630,7 +578,7 @@ void function MiniPromoButton_OnLoseFocus( var button )
 void function OnStickMoved( ... )
 {
 	float stickDeflection = expect float( vargv[1] )
-	                                                
+
 
 	int stickState = eStickState.NEUTRAL
 	if ( stickDeflection > 0.25 )
@@ -642,13 +590,13 @@ void function OnStickMoved( ... )
 	{
 		if ( stickState == eStickState.RIGHT )
 		{
-			                        
+
 			ChangePage( MINIPROMO_NAV_RIGHT )
 			thread AutoAdvancePages()
 		}
 		else if ( stickState == eStickState.LEFT )
 		{
-			                       
+
 			ChangePage( MINIPROMO_NAV_LEFT )
 			thread AutoAdvancePages()
 		}

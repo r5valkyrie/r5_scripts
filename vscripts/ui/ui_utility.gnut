@@ -238,31 +238,6 @@ entity function GetUIPlayer()
 }
 
 
-int function GetLobbyTypeScript()
-{
-	if ( GetLobbyType() == "game" )
-	{
-		return eLobbyType.MATCH
-	}
-	else
-	{
-		if ( AmIPartyLeader() )
-		{
-			if ( IsPlayerAlone() ) // TODO: This function was changed to only check your team size, not the true player count, so you'll probably now have access to some menus you shouldn't be able to.
-				return eLobbyType.SOLO
-			else
-				return eLobbyType.PARTY_LEADER
-		}
-		else
-		{
-			return eLobbyType.PARTY_MEMBER
-		}
-	}
-
-	unreachable
-}
-
-
 var function AddMenu( string blockName, asset resourceFile, void functionref( var ) initFunc = null, string displayName = "" )
 {
 	var menu = CreateMenu( "menu_" + blockName, resourceFile )

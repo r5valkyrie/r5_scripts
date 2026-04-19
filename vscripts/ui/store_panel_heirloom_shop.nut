@@ -27,7 +27,7 @@ global function JumpToMythicOfferScreen
 
 global struct ShopThemeStruct
 {
-	      
+
 	string tabText
 	string grxOfferLocation
 	vector tabBGDefaultCol
@@ -37,14 +37,14 @@ global struct ShopThemeStruct
 	vector tabBGSelectedCol
 	vector tabBarSelectedCol
 
-	             
+
 	vector shopInfoBoxBGTintCol
 	vector shopCurrencyCountTextCol
 	vector shopCurrencyCountDecoCol
 	vector specialAboutTextCol
 	asset  bgPatternImage
 
-	              
+
 	asset  itemBtnHighlightedBGImage
 	asset  itemBtnRegularBGImage
 	asset  itemBtnHighlightedFrameImage
@@ -107,16 +107,16 @@ void function HeirloomShopPanel_Init( var panel )
 	HudElem_SetRuiArg( file.weaponSkinToggleButton, "showMythic", false )
 	Hud_AddEventHandler( file.weaponSkinToggleButton, UIE_CLICK, ToggleWeaponOrMythicSkin )
 
-	                                                                                      
-	   
-	  	                                                                                      
-	  	                  
-	  	                                                                    
-	  	                                                                      
-	  	                                                                
-	  	                                                                        
-	  	                                  
-	   
+
+
+
+
+
+
+
+
+
+
 
 	file.themeStruct.tabText = "#MENU_STORE_PANEL_PRESTIGE_SHOP"
 	file.themeStruct.grxOfferLocation = "heirloom_set_shop"
@@ -193,7 +193,7 @@ GRXScriptOffer function DEV_FakeHeirloomOffer( asset packAsset )
 {
 	GRXScriptOffer fakeOffer
 	ItemFlavorBag priceBag
-	priceBag.flavors.append( GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] )
+	priceBag.flavors.append( GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
 	priceBag.quantities.append( 100 )
 	fakeOffer.prices.append( priceBag )
 
@@ -241,7 +241,7 @@ void function HeirloomShopPanel_UpdateGRXDependantElements()
 	{
 		HudElem_SetRuiArg( file.weaponSkinToggleButton, "showMythic", file.mythicSkinsEnabled )
 
-		ItemFlavor currencyFlav = GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM]
+		ItemFlavor currencyFlav = GRX_CURRENCIES[GRX_CURRENCY_PREMIUM]
 		ShopThemeStruct themeStruct = file.themeStruct
 		HudElem_SetRuiArg( file.infoBox, "currencyIcon", ItemFlavor_GetIcon( currencyFlav ) )
 		HudElem_SetRuiArg( file.infoBox, "currencyAmount", GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), currencyFlav ) )
@@ -333,7 +333,7 @@ void function HeirloomShopPanel_UpdateGRXDependantElements()
 	}
 }
 
-                                                                                         
+
 void function JumpToMythicOfferScreen( string legendLink, int mythicType )
 {
 	JumpToHeirloomShop()
@@ -353,7 +353,7 @@ void function JumpToMythicOfferScreen( string legendLink, int mythicType )
 		Warning( "Received invalid mythicType " + mythicType + ". Acceptable values are eMythicType.PRESTIGE_SKIN and eMythicType.HEIRLOOM." )
 		return
 	}
-	                                                                                                               
+
 	HeirloomShopPanel_UpdateGRXDependantElements()
 
 	if ( legendLink.len() == 0 )
@@ -438,21 +438,21 @@ void function HeirloomShopPanel_Think( var panel )
 void function OfferButton_OnGetFocus( var btn )
 {
 	UpdateFocusStuff( btn )
-	                                                              
-	   
-	  	                                                                                     
-	   
+
+
+
+
 }
 
 
 void function OfferButton_OnLoseFocus( var btn )
 {
 	var focus = GetFocus()
-	                                                              
-	   
-	  	                                                           
-	  	                                                                                                                      
-	   
+
+
+
+
+
 
 	UpdateFocusStuff( null )
 }
@@ -492,7 +492,7 @@ void function OfferButton_OnAltActivate( var btn )
 
 bool function IsFocusedItemInspectable()
 {
-	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters                                                                            
+	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters
 	if ( focus in file.offerButtonToOfferMap )
 	{
 		GRXScriptOffer offer = file.offerButtonToOfferMap[focus]
@@ -505,7 +505,7 @@ bool function IsFocusedItemInspectable()
 
 bool function IsFocusedItemEquippable()
 {
-	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters                                                                            
+	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters
 	if ( focus in file.offerButtonToOfferMap )
 	{
 		GRXScriptOffer offer = file.offerButtonToOfferMap[focus]
@@ -529,7 +529,7 @@ void function UpdateFocusStuff( var focusedOfferButtonOrNull )
 {
 	file.WORKAROUND_currentlyFocusedOfferButtonForFooters = focusedOfferButtonOrNull
 
-	UpdateFooterOptions()                             
+	UpdateFooterOptions()
 }
 
 
@@ -613,31 +613,31 @@ asset function HeirloomShop_GetItemButtonSpecialIcon( bool isHighlighted )
 
 asset function HeirloomShop_GetItemGroupHeaderImage( int group )
 {
-	return $""                                                                                                       
+	return $""
 }
 
 
 string function HeirloomShop_GetItemGroupHeaderText( int group )
 {
-	return ""                                                                                                       
+	return ""
 }
 
 
 vector function HeirloomShop_GetItemGroupHeaderTextColor( int group )
 {
-	return <1, 1, 1>                                                                                                            
+	return <1, 1, 1>
 }
 
 
 asset function HeirloomShop_GetItemGroupBackgroundImage( int group )
 {
-	return $""                                                                                                   
+	return $""
 }
 
 
 asset function HeirloomShop_GetHeaderIcon()
 {
-	return $""                                                                      
+	return $""
 }
 
 

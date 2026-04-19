@@ -175,7 +175,7 @@
 	// val unk: 149
 	"melee_freezelook_on_hit" "0.250000"
 	// val unk: 105
-	"melee_anim_1p" "ACT_VM_MELEE_LIGHT"
+	//"melee_anim_1p" "ACT_VM_MELEE_LIGHT"
 	// val unk: 84
 	"melee_anim_3p" "ACT_MP_MELEE_LIGHT"
 	// val unk: 33

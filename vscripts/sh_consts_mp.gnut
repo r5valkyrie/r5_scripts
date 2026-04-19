@@ -33,7 +33,6 @@ global const bool HAS_HIT_INDICATOR = false
 global const bool HAS_CAPITAL_SHIP_SKYSHOW = false
 
 global const bool HAS_PANEL_HIGHLIGHT = false //TODO: Make conditional for Pathfinder
-global const bool GRUNT_CHATTER_MP_ENABLED = false
 
 
 global enum ePlayerStatType

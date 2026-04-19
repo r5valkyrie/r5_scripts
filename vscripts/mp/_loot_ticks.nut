@@ -7,6 +7,7 @@ const asset LOOT_TICK_MODEL = $"mdl/robots/drone_frag/drone_frag_loot.rmdl"
 const asset FX_LOOT_TICK_DEATH = $"P_loot_tick_exp_CP"
 const asset FX_LOOT_TICK_IDLE = $"P_loot_tick_beam_idle_flash"
 const int MAX_LOOT_TICKS_TO_SPAWN = 12
+global const asset LOOT_TICK_EYE_FX				 	= $"P_lt_eye_ON_flash_CP"
 
 struct
 {

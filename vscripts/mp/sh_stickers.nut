@@ -84,6 +84,17 @@ FileStruct_LifetimeLevel& fileLevel
 
 void function ShStickers_LevelInit()
 {
+	Warning("enable stickers later!")
+	Warning("enable stickers later!")
+	Warning("enable stickers later!")
+	Warning("enable stickers later!")
+	Warning("enable stickers later!")
+	Warning("enable stickers later!")
+	Warning("enable stickers later!")
+	Warning("enable stickers later!")
+	Warning("enable stickers later!")
+	Warning("enable stickers later!")
+	return
 	FileStruct_LifetimeLevel newFileLevel
 	fileLevel = newFileLevel
 
@@ -147,13 +158,13 @@ void function RegisterStickers()
 			// Server pushes sticker loadouts to players through a specific data table. When the loadout changes fill up this table to be propegated
 			// to other players.
 #if SERVER
-			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( entry, 
+			AddCallback_ItemFlavorLoadoutSlotDidChange_AnyPlayer( entry,
 				void function ( EHI playerEHI, ItemFlavor flavor ) : ( i, stickerObjectType )
 				{
 					entity player = FromEHI( playerEHI )
 					SettingsAssetGUID guid = ItemFlavor_GetGUID( flavor )
 					Warning( "SetStickerSlot not available in S3 - sticker slot %d not set\n", stickerObjectType * GetMaxStickersForObjectType( stickerObjectType ) + i )
-				} 
+				}
 			);
 #endif
 		}
@@ -207,7 +218,7 @@ void function AutoLoadViewPlayerStickers()
 				for ( int i = 0; i < maxStickersForObjectType; i++ )
 				{
 					int stickerSlot = stickerObjectType * maxStickersForObjectType + i
-					
+
 					SettingsAssetGUID stickerLoadoutSlotGuid = ASSET_SETTINGS_UNIQUE_ID_INVALID // GetStickerSlot not in S3
 					ItemFlavor ornull stickerItemOrNull = GetItemFlavorOrNullByGUID( stickerLoadoutSlotGuid )
 
@@ -334,7 +345,7 @@ int function GetStickerPresentationType( int stickerObjectType )
 var function CreateNestedRuiForSticker( var baseRui, string argName, ItemFlavor stickerItem )
 {
 	var nestedRui = RuiCreateNested( baseRui, argName, $"ui/basic_image.rpak" )
-	RuiSetImage( nestedRui, "basicImage", ItemFlavor_GetIcon( stickerItem ) )	
+	RuiSetImage( nestedRui, "basicImage", ItemFlavor_GetIcon( stickerItem ) )
 
 	return nestedRui
 }
@@ -456,7 +467,7 @@ void function DEV_StickerTestSetupForPlayer( entity player )
 #if (SERVER || CLIENT)
 // This function is not in a dev block because its illegal to place Remote_RegisterServerFunction in a dev block, but we need to have
 // server functions for doing the test. When calling this function only call from in a DEV block.
-void function DEV_SetupStickerNetworking() 
+void function DEV_SetupStickerNetworking()
 {
 	Remote_RegisterServerFunction( "DEV_StickerTestSetupForPlayer" )
 }

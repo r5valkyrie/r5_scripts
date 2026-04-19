@@ -216,11 +216,6 @@ void function StoreInspectMenu_UpdatePrices( StoreInspectOfferData offerData ,GR
 		}
 		else
 		{
-
-			GRX_CheckBundleAndUpdateOfferPrices( storeOffer )
-
-			GRXBundleOffer bundle = GRX_GetUserBundleOffer( storeOffer.offerAlias )
-			purchaseCount = bundle.purchaseCount
 		}
 	}
 

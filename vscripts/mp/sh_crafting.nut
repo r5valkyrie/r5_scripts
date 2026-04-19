@@ -3293,9 +3293,9 @@ void function Crafting_WorkbenchAirdropLogic()
 	{
 		FlagWaitClear( "SUR_DeathFieldShrinking" )
 
-		if ( SURVIVAL_GetCurrentDeathFieldStage( 0 ) in stageToAmountTable )
+		if ( SURVIVAL_GetCurrentDeathFieldStage() in stageToAmountTable )
 		{
-			int currentStage = SURVIVAL_GetCurrentDeathFieldStage( 0 )
+			int currentStage = SURVIVAL_GetCurrentDeathFieldStage()
 			int dropCount = stageToAmountTable[ currentStage ]
 
 			if ( !(currentStage in stageToAmountTable) )

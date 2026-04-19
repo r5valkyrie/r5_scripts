@@ -607,8 +607,8 @@ void function RegisterDialogueLine( string name, string alias, int priority, str
 		{
 			if ( alias.find( "%" ) >= 0 )
 				VerifyExistenceOfNongenericAliases( alias, extraPerspective, soloLegendFlavors, dt )
-			else
-				Warning( "Error: Dialogue '" + name + "': alias '" + alias + "' can't be registered by " + string( dt ) + " because the alias does not exist" )
+			//else
+			//	Warning( "Error: Dialogue '" + name + "': alias '" + alias + "' can't be registered by " + string( dt ) + " because the alias does not exist" )
 		}
 	#endif // SERVER && DEVELOPER
 

@@ -189,15 +189,6 @@ struct ArtifactThemeModelData
 	asset viewModel
 }
 
-#if CLIENT
-// Struct for ClientCodeCallback_GetArtifactViewmodelDataForWeapon
-struct ArtifactViewmodelData
-{
-	int powerSourceGUID
-	int bladeGUID
-}
-#endif
-
 #if UI
 global struct ArtifactThemeUIData
 {

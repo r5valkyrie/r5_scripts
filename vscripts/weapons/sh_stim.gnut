@@ -1,19 +1,15 @@
-
 global function StimShared_Init
 global function StimPlayer
-//global function EndlessStimBegin
-//global function EndlessStimEnd
 global function StimPlayerWithOffhandWeapon
 
+#if SERVER
+global function StimGasCloudCreate
+global function StimGasCloudDelete
+const asset STIM_GAS_CLOUD_FX = $"P_stimgas_sm" // P_smokescreen_FD
+#endif // SERVER
 
-global int COCKPIT_STIM_FX
-global int PILOT_STIM_HEAD_FX
-global int PILOT_STIM_BODY_FX
 
-const float STIM_EFFECT_DEFAULT_SEVERITY = 0.205	//
-global const float STIM_EFFECT_SEVERITY = 0.15	//
-global const float STIM_MAX_PASSIVE_STACKS = 10
-global const float STIM_PASSIVE_SEVERITY = 0.03
+const float STIM_EFFECT_DEFAULT_SEVERITY = 0.15	// assuming 'movement_speedboost_extraScale' is 2.0
 
 
 int s_cockpitFx
@@ -24,8 +20,9 @@ void function StimShared_Init()
 	s_cockpitFx = PrecacheParticleSystem( $"P_pilot_stim_hld_FP" )
 	s_headFx = PrecacheParticleSystem( $"P_stim_3p_head" )
 	s_bodyFx = PrecacheParticleSystem( $"P_stim_3p_body" )
-
-	#if CLIENT
+	#if SERVER
+	PrecacheParticleSystem( STIM_GAS_CLOUD_FX )
+	#else
 	StatusEffect_RegisterEnabledCallback( eStatusEffect.stim_visual_effect, StimVisualsEnabled )
 	StatusEffect_RegisterDisabledCallback( eStatusEffect.stim_visual_effect, StimVisualsDisabled )
 	#endif
@@ -44,6 +41,7 @@ void function StimPlayerWithOffhandWeapon( entity player, float duration, entity
 	StimPlayer_Internal( player, duration, STIM_EFFECT_DEFAULT_SEVERITY, offhandWeapon )
 }
 
+const float USE_TIME_INFINITE = -1.0
 void function StimPlayer_Internal( entity player, float duration, float effectSeverity, entity offhandWeapon )
 {
 	int endlessStatusEffectHandle = 0
@@ -53,20 +51,23 @@ void function StimPlayer_Internal( entity player, float duration, float effectSe
 	}
 	else
 	{
-		float stimSpeed = StatusEffect_GetSeverity( player, eStatusEffect.speed_boost )
-		//
-		if ( StatusEffect_GetSeverity( player, eStatusEffect.stim_visual_effect ) == 0.0 )
-			stimSpeed += effectSeverity
+#if CLIENT
+		if ( InPrediction() )
+#endif
+		{
+			GivePlayerSettingsMods( player, [ "stim_sprint" ] )
+		}
+		thread RemovePlayerClassModAfterDuration( player, "stim_sprint", duration )
 
-		StatusEffect_AddTimed( player, eStatusEffect.anti_slow, 0.5, duration + 0.5, 0.5 ) //
-		StatusEffect_AddTimed( player, eStatusEffect.speed_boost, stimSpeed, duration + 0.5, 0.5 ) //
+		StatusEffect_AddTimed( player, eStatusEffect.anti_slow, 0.5, duration + 0.5, 0.5 ) // sound is slightly off
+		StatusEffect_AddTimed( player, eStatusEffect.speed_boost, effectSeverity, duration + 0.5, 0.5 ) // sound is slightly off
 		StatusEffect_AddTimed( player, eStatusEffect.stim_visual_effect, 1.0, duration, duration )
 	}
 
 #if SERVER
+	thread StimThink( player, duration, endlessStatusEffectHandle, offhandWeapon )
 
-#else
-
+#else // SERVER
 	if ( IsFirstTimePredicted() )
 		ScreenFlash( 2, 3.5, 2, 0.15, 0.3 )
 
@@ -75,97 +76,211 @@ void function StimPlayer_Internal( entity player, float duration, float effectSe
 		return
 
 	HealthHUD_ClearFX( player )
-#endif
+#endif // else // SERVER
+}
+
+void function RemovePlayerClassModAfterDuration( entity player, string mod, float duration )
+{
+	player.EndSignal( "OnDeath" )
+
+	OnThreadEnd(
+		function() : ( player, mod )
+		{
+			TakePlayerSettingsMods( player, [ "stim_sprint" ] )
+		}
+	)
+
+	wait duration
 }
 
 #if SERVER
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-//
-
-
-
-
-
-
-
-//
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#else // SERVER
+void function StimThink( entity player, float duration, int endlessStatusEffectHandle, entity offhandWeapon )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnChangedPlayerClass_ActuallyChanged" )
+	player.EndSignal( "EndStim" )
+	if ( endlessStatusEffectHandle != 0 )
+		player.EndSignal( "StopEndlessStim" )
+	player.EndSignal( "BleedOut_OnStartDying" )
+	player.EndSignal( "ExtendedUseHolster" )
+	player.EndSignal( "RoundEnd")
+	player.EndSignal( "OnSyncedMelee" )
+
+	if ( player.IsPlayer() )
+	{
+		// Do seperate 1P and 3P sounds for this player
+		EmitSoundOnEntityOnlyToPlayer( player, player, "octane_stimpack_loop_1P" )
+		EmitSoundOnEntityExceptToPlayer( player, player, "octane_stimpack_loop_3P" )
+	}
+	else
+	{
+		// It's an NPC to just play the 3P on it
+		EmitSoundOnEntity( player, "octane_stimpack_loop_3P" )
+	}
+
+	int attachmentIndex = player.LookupAttachment( "HEADFOCUS" )
+
+	entity stimFX = StartParticleEffectOnEntity_ReturnEntity( player, s_headFx, FX_PATTACH_POINT_FOLLOW, attachmentIndex )
+	stimFX.SetOwner( player )
+	stimFX.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) // not owner only
+
+	int attachmentIndexBody = player.LookupAttachment( "CHESTFOCUS" )
+
+	entity stimBodyFX = StartParticleEffectOnEntity_ReturnEntity( player, s_bodyFx, FX_PATTACH_POINT_FOLLOW, attachmentIndexBody )
+	stimBodyFX.SetOwner( player )
+	stimBodyFX.kv.VisibilityFlags = (ENTITY_VISIBLE_TO_FRIENDLY | ENTITY_VISIBLE_TO_ENEMY) // not owner only
+
+	OnThreadEnd(
+		function() : ( player, stimFX, stimBodyFX, endlessStatusEffectHandle, offhandWeapon )
+		{
+			if ( !IsValid( player ) )
+				return
+			if ( IsValid( stimFX ) )
+				EffectStop( stimFX )
+			if ( IsValid( stimBodyFX ) )
+				EffectStop( stimBodyFX )
+
+			//Cancel the stim speed if the ability is interrupted by being knocked down. Don't want to cancel the timed effects early since they're doing their fadeout time.
+			if ( IsValid( offhandWeapon ) && (offhandWeapon == player.GetOffhandWeapon( OFFHAND_LEFT )) && offhandWeapon.IsWeaponCharging() && (offhandWeapon.GetWeaponChargeFraction() < 0.98) )
+			{
+				StatusEffect_StopAllOfType( player, eStatusEffect.anti_slow )
+				StatusEffect_StopAllOfType( player, eStatusEffect.speed_boost )
+				StatusEffect_StopAllOfType( player, eStatusEffect.stim_visual_effect )
+				offhandWeapon.SetWeaponChargeFraction( 1 )
+				offhandWeapon.SetWeaponPrimaryClipCount( 0 )
+			}
+
+			StopSoundOnEntity( player, "octane_stimpack_loop_1P" )
+			StopSoundOnEntity( player, "octane_stimpack_loop_3P" )
+
+			if ( endlessStatusEffectHandle != 0 )
+				StatusEffect_Stop( player, endlessStatusEffectHandle )
+
+			player.Signal( "EndStim" )
+		}
+	)
+
+	if ( duration == USE_TIME_INFINITE )
+		WaitForever()
+
+	wait duration - 2.0
+
+	if ( player.IsPlayer() )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, player, "octane_stimpack_deactivate_1P" )
+		EmitSoundOnEntityExceptToPlayer( player, player, "octane_stimpack_deactivate_3P" )
+	}
+	else
+	{
+		StopSoundOnEntity( player, "octane_stimpack_deactivate_3P" )
+	}
+
+	wait 2.0
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+/*
+
+ ######  ######## #### ##     ##        ######      ###     ######
+##    ##    ##     ##  ###   ###       ##    ##    ## ##   ##    ##
+##          ##     ##  #### ####       ##         ##   ##  ##
+ ######     ##     ##  ## ### ##       ##   #### ##     ##  ######
+      ##    ##     ##  ##     ##       ##    ##  #########       ##
+##    ##    ##     ##  ##     ##       ##    ##  ##     ## ##    ##
+ ######     ##    #### ##     ##        ######   ##     ##  ######
+
+*/
+/////////////////////////////////////////////////////////////////////////////////////////
+
+//Create a cloud of gas that stims any player that walks through it
+entity function StimGasCloudCreate( vector gasCloudOrigin )
+{
+	//entity stimGasEnt = CreateInfoTarget( gasCloudOrigin, <0, 0, 0> )
+	entity stimGasEnt = CreatePropScript( $"mdl/dev/empty_model.rmdl", gasCloudOrigin )
+	float gasCloudRadius = 128
+	float gasCloudHeight = 64
+	vector gasCloudAngles = <0, 0, 0>
+	entity trigger = CreateEntity( "trigger_cylinder" )
+	trigger.SetCylinderRadius( gasCloudRadius )
+	trigger.SetAboveHeight( gasCloudHeight)
+	trigger.SetBelowHeight( 8 )
+	trigger.SetOrigin( gasCloudOrigin )
+	trigger.SetParent( stimGasEnt, "", true, 0.0 )
+	trigger.kv.triggerFilterNpc = "none"
+	DispatchSpawn( trigger )
+	trigger.SetEnterCallback( StimGasTriggerOnTriggered )
+
+	stimGasEnt.LinkToEnt( trigger )
+	StartParticleEffectOnEntity_ReturnEntity( stimGasEnt, GetParticleSystemIndex( STIM_GAS_CLOUD_FX ), FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+	thread StimGasSound( stimGasEnt )
+
+	return stimGasEnt
+}
+
+void function StimGasSound( entity stimGasEnt )
+{
+	FlagWait( "GamePlaying" ) //sound doesn't play if gas is spawned on map load
+	if ( !IsValid( stimGasEnt ) )
+		return
+	EmitSoundOnEntity( stimGasEnt, "gastrap_traploop" )
+}
+
+void function StimGasCloudDelete( entity stimGasEnt )
+{
+	array <entity> linkedEnts = stimGasEnt.GetLinkEntArray()
+	//shut down fx, delete trigger, sounds, etc
+	foreach( ent in linkedEnts )
+	{
+		if ( IsValid( ent ) )
+			ent.Destroy()
+	}
+
+	stimGasEnt.Destroy()
+}
+
+void function StimGasTriggerOnTriggered( entity trigger, entity ent )
+{
+	if ( !ent.IsPlayer() )
+		return
+	entity player = ent
+
+	//HACK: using windTunnelStartTime to track last time player got stimmed
+	float stimCooldown
+	if ( ( Time() - player.e.windTunnelStartTime ) < 4 )
+		return
+
+	player.e.windTunnelStartTime = Time()
+	//end any previous stim
+	player.Signal( "EndStim" )
+	StopSoundOnEntity( player, "pilot_stimpack_deactivate_1P" )
+	StopSoundOnEntity( player, "pilot_stimpack_deactivate_3P" )
+
+	EmitSoundOnEntityOnlyToPlayer( player, player, "pilot_stimpack_activate_1P" )
+	EmitSoundOnEntityExceptToPlayer( player, player, "pilot_stimpack_activate_3P" )
+	//thread StimGasScreenFlash( player )
+	StimPlayer( player, 6.0 )
+
+}
+
+void function StimGasScreenFlash( entity player )
+{
+	if ( !IsAlive( player ) )
+		return
+	float flashTime = 0.1
+	player.EndSignal( "OnDeath" )
+	ScreenFade( player, 255, 255, 255, 255, flashTime, flashTime, FFADE_OUT | FFADE_PURGE )
+	wait flashTime
+	ScreenFade( player, 255, 255, 255, 255, flashTime, flashTime, FFADE_IN | FFADE_PURGE )
+
+}
+
+
+#else // #if SERVER
+
+
+//CLIENT
 void function StimVisualsEnabled( entity ent, int statusEffect, bool actuallyChanged )
 {
 	if ( ent != GetLocalViewPlayer() )
@@ -177,9 +292,11 @@ void function StimVisualsEnabled( entity ent, int statusEffect, bool actuallyCha
 	if ( !IsValid( cockpit ) )
 		return
 
+	Signal( player, "WreckingBall_CleanupFX" )
+
 	Chroma_StartStimEffect()
 
-	int fxHandle = StartParticleEffectOnEntity( cockpit, s_cockpitFx, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	int fxHandle = StartParticleEffectOnEntity( cockpit, s_cockpitFx, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
 	thread StimScreenFXThink( player, fxHandle, cockpit )
 }
 
@@ -223,4 +340,8 @@ void function StimScreenFXThink( entity player, int fxHandle, entity cockpit )
 	}
 }
 
-#endif // CLIENT
+
+
+
+
+#endif // #else // #if SERVER

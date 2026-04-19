@@ -1,7 +1,5 @@
 global function SeasonQuest_SharedInit
 global function SeasonQuest_RegisterNetworking
-global function TreasureBox_SecondsUntilNextPickup
-global function TreasureBox_GetCooldownDesc  // stub
 global function SeasonQuest_GetStatusForComicPageIndex
 global function SeasonQuest_GetStatusForMissionIndex
 global function SeasonQuest_AllTreasurePacksHaveBeenCollectedForPlayer
@@ -939,9 +937,7 @@ ItemFlavor ornull function SeasonQuest_GetActiveSeasonQuest( int timeNow )
 	if ( season == null )
 		return null
 	expect ItemFlavor( season )
-	ItemFlavor ornull quest = SeasonQuest_GetQuestForSeason( season )
-	printt( "DEBUG SeasonQuest_GetActiveSeasonQuest: quest =", quest != null ? string( quest ) : "null" )
-	return quest
+	return SeasonQuest_GetQuestForSeason( season )
 }
 
 
@@ -1100,13 +1096,6 @@ int function SeasonQuest_GetComicPagesMaxCount( ItemFlavor quest )
 int function SeasonQuest_GetMissionsMaxCount( ItemFlavor quest )
 {
 	Assert( ItemFlavor_GetType( quest ) == eItemType.quest )
-	printt( "DEBUG SeasonQuest_GetMissionsMaxCount: quest =", string( quest ) )
-	printt( "DEBUG: quest in file.questMissions?", quest in file.questMissions )
-	if ( !(quest in file.questMissions) )
-	{
-		printt( "DEBUG: ERROR - quest not in file.questMissions!" )
-		return 0
-	}
 	return file.questMissions[ quest ].len()
 }
 
@@ -1272,7 +1261,7 @@ int function SeasonQuestComic_GetUnlockTime( ItemFlavor comic )
 ItemFlavorBag function SeasonQuest_GetMissionRewardsForIndex( ItemFlavor flav, int missionIndex )
 {
 	Assert( ItemFlavor_GetType( flav ) == eItemType.quest )
-	ItemFlavorBag rewards = SeasonQuestMission_GetRewards( file.questMissions[ flav ][missionIndex] )
+	ItemFlavorBag rewards = SeasonQuestMission_GetRewards( flav, file.questMissions[ flav ][missionIndex] )
 	return rewards
 }
 
@@ -1386,10 +1375,10 @@ int function SeasonQuest_GetTreasurePackIndexRequiredForMission( ItemFlavor ques
 }
 
 
-ItemFlavorBag function SeasonQuest_GetTreasurePackRewardsForIndex( ItemFlavor flav, int boxIndex )
+ItemFlavorBag function SeasonQuest_GetTreasurePackRewardsForIndex( ItemFlavor quest, int boxIndex )
 {
-	Assert( ItemFlavor_GetType( flav ) == eItemType.quest )
-	var settingsBlock = ItemFlavor_GetSettingsBlock( flav )
+	Assert( ItemFlavor_GetType( quest ) == eItemType.quest )
+	var settingsBlock = ItemFlavor_GetSettingsBlock( quest )
 
 	ItemFlavorBag rewards
 
@@ -1400,16 +1389,20 @@ ItemFlavorBag function SeasonQuest_GetTreasurePackRewardsForIndex( ItemFlavor fl
 	var rewardsBlockArray = GetSettingsBlockArray( boxInfoBlock, "rewards" )
 	foreach ( int rewardIndex, var rewardBlock in IterateSettingsArray( rewardsBlockArray ) )
 	{
-		asset flavorAsset = GetSettingsBlockAsset( rewardBlock, "flavor" )
+		asset rewardAsset = GetSettingsBlockAsset( rewardBlock, "flavor" )
 		int quantity      = GetSettingsBlockInt( rewardBlock, "quantity" )
 
-		if ( !IsValidItemFlavorSettingsAsset( flavorAsset ) )
+		if ( !IsValidItemFlavorSettingsAsset( rewardAsset ) )
 		{
-			Warning( "Skipping item reward #%d of quest '%s' because the asset is not a valid item flavor: '%s'", rewardIndex, string(ItemFlavor_GetAsset( flav )), string(flavorAsset) )
+			Warning( "Skipping item reward #%d of quest '%s' because the asset is not a valid item flavor: '%s'", rewardIndex, string(ItemFlavor_GetAsset( quest )), string(rewardAsset) )
 			continue
 		}
 
-		rewards.flavors.append( GetItemFlavorByAsset( flavorAsset ) )
+		ItemFlavor reward = GetItemFlavorByAsset( rewardAsset )
+		if ( !IsQuestActive( quest ) && ItemFlavor_GetType( reward ) == eItemType.voucher )
+			continue // don't give Voucher rewards - BP stars - in subsequent seasons
+
+		rewards.flavors.append( reward )
 		rewards.quantities.append( quantity )
 	}
 
@@ -1596,80 +1589,72 @@ asset function SeasonQuest_GetLoreSequenceEpilogue( ItemFlavor quest )
 asset function Mission_GetLoreSequenceStoryChapterData( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "loreSequenceChapterPostSuccessDT" ) } catch( ex ) { Warning( "Mission missing 'loreSequenceChapterPostSuccessDT': " + string( mission ) ); return $"" }
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "loreSequenceChapterPostSuccessDT" )
 }
 
 asset function Mission_GetSecondLoreSequenceStoryChapterData( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "secondLoreSequenceChapterPostSuccessDT" ) } catch( ex ) { Warning( "Mission missing 'secondLoreSequenceChapterPostSuccessDT': " + string( mission ) ); return $"" }
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "secondLoreSequenceChapterPostSuccessDT" )
 }
 
 bool function Mission_GetLoreSequenceHasCommunityVote( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try
-	{
-		return GetGlobalSettingsBool( ItemFlavor_GetAsset( mission ), "hasCommunityVote" )
-	}
-	catch ( ex )
-	{
-		Warning( "Mission missing 'hasCommunityVote': " + string( mission ) )
-		return false
-	}
+	return GetGlobalSettingsBool( ItemFlavor_GetAsset( mission ), "hasCommunityVote" )
 }
 
 string function Mission_GetLoreSequenceFirstPlaylistBoolName( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "firstPlaylistBool" ) } catch( ex ) { Warning( "Mission missing 'firstPlaylistBool': " + string( mission ) ); return "" }
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "firstPlaylistBool" )
 }
 
 string function Mission_GetLoreSequenceSecondPlaylistBoolName( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "secondPlaylistBool" ) } catch( ex ) { Warning( "Mission missing 'secondPlaylistBool': " + string( mission ) ); return "" }
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "secondPlaylistBool" )
 }
 
 asset function Mission_GetLoreSequenceRadioPlay( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "radioPlay" ) } catch( ex ) { Warning( "Mission missing 'radioPlay': " + string( mission ) ); return $"" }
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "radioPlay" )
 }
 
 asset function Mission_GetLoreSequenceSecondRadioPlay( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "secondRadioPlay" ) } catch( ex ) { Warning( "Mission missing 'secondRadioPlay': " + string( mission ) ); return $"" }
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "secondRadioPlay" )
 }
 
 
 string function Mission_GetLoreSequenceStoryChapterName( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "loreSequenceChapterPostSuccessName" ) } catch( ex ) { Warning( "Mission missing 'loreSequenceChapterPostSuccessName': " + string( mission ) ); return "" }
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "loreSequenceChapterPostSuccessName" )
 }
 asset function Mission_GetLoreSequenceQuestItemData( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "loreSequenceQuestItemDT" ) } catch( ex ) { Warning( "Mission missing 'loreSequenceQuestItemDT': " + string( mission ) ); return $"" }
+	return GetGlobalSettingsAsset( ItemFlavor_GetAsset( mission ), "loreSequenceQuestItemDT" )
 }
 string function Mission_GetLoreSequenceQuestItemName( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "loreSequenceQuestItemName" ) } catch( ex ) { Warning( "Mission missing 'loreSequenceQuestItemName': " + string( mission ) ); return "" }
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "loreSequenceQuestItemName" )
 }
 
 string function Mission_GetLoreType( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "loreType" ) } catch( ex ) { Warning( "Mission missing 'loreType': " + string( mission ) ); return "" }
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "loreType" )
 }
 
 string function Mission_GetSecondLoreType( ItemFlavor mission )
 {
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
-	try { return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "secondLoreType" ) } catch( ex ) { Warning( "Mission missing 'secondLoreType': " + string( mission ) ); return "" }
+	return GetGlobalSettingsString( ItemFlavor_GetAsset( mission ), "secondLoreType" )
 }
 
 string function SeasonQuest_GetLoreTypeForMissionIndex( ItemFlavor flav, int missionIndex )
@@ -1833,7 +1818,11 @@ ItemFlavorBag function SeasonQuest_GetCompletionRewards( ItemFlavor quest )
 			continue
 		}
 
-		rewards.flavors.append( GetItemFlavorByAsset( rewardAsset ) )
+		ItemFlavor reward = GetItemFlavorByAsset( rewardAsset )
+		if ( !IsQuestActive( quest ) && ItemFlavor_GetType( reward ) == eItemType.voucher )
+			continue // don't give Voucher rewards - BP stars - in subsequent seasons
+
+		rewards.flavors.append( reward )
 		rewards.quantities.append( GetSettingsBlockInt( rewardData, "quantity" ) )
 	}
 
@@ -1841,8 +1830,9 @@ ItemFlavorBag function SeasonQuest_GetCompletionRewards( ItemFlavor quest )
 }
 
 
-ItemFlavorBag function SeasonQuestMission_GetRewards( ItemFlavor mission )
+ItemFlavorBag function SeasonQuestMission_GetRewards( ItemFlavor quest, ItemFlavor mission )
 {
+	Assert( ItemFlavor_GetType( quest ) == eItemType.quest )
 	Assert( ItemFlavor_GetType( mission ) == eItemType.quest_mission )
 
 	ItemFlavorBag rewards
@@ -1855,7 +1845,11 @@ ItemFlavorBag function SeasonQuestMission_GetRewards( ItemFlavor mission )
 			continue
 		}
 
-		rewards.flavors.append( GetItemFlavorByAsset( rewardAsset ) )
+		ItemFlavor reward = GetItemFlavorByAsset( rewardAsset )
+		if ( !IsQuestActive( quest ) && ItemFlavor_GetType( reward ) == eItemType.voucher )
+			continue // don't give Voucher rewards - BP stars - in subsequent seasons
+
+		rewards.flavors.append( reward )
 		rewards.quantities.append( GetSettingsBlockInt( rewardData, "quantity" ) )
 	}
 
@@ -1888,17 +1882,6 @@ void function SeasonQuest_AcknowledgeQuestMissionRead( ItemFlavor quest, int pag
 	Remote_ServerCallFunction( CC_QuestMissionReadAcknowledged, quest.guid, pageIndex )
 }
 #endif // UI
-
-float function TreasureBox_SecondsUntilNextPickup( entity player, ItemFlavor quest )
-{
-	return 0.0
-}
-
-// Treasure box system not available
-string function TreasureBox_GetCooldownDesc( entity player, ItemFlavor quest )
-{
-	return ""
-}
 
 ///////////
 /// Dev Stuff
@@ -1946,36 +1929,33 @@ void function ResetQuestPersistence()
 #if SERVER
 void function RegisterDevCommands()
 {
-	AddClientCommandCallback( CMD_GIVETREASUREBOX_1, bool function ( entity player, array<string> args ) // dev
+	AddClientCommandCallbackVoid( CMD_GIVETREASUREBOX_1, void function ( entity player, array<string> args ) // dev
 	{
 		TreasureBox_Dev_GrantTreasureBoxPickupsTo( player, 1 )
-		return true
 	} )
 
-	AddClientCommandCallback( CMD_GIVETREASUREBOX_5, bool function ( entity player, array<string> args ) // dev
+	AddClientCommandCallbackVoid( CMD_GIVETREASUREBOX_5, void function ( entity player, array<string> args ) // dev
 	{
 		TreasureBox_Dev_GrantTreasureBoxPickupsTo( player, 5 )
-		return true
 	} )
 
-	AddClientCommandCallback( CMD_FINISHMISSION, bool function ( entity player, array<string> args ) // dev
+	AddClientCommandCallbackVoid( CMD_FINISHMISSION, void function ( entity player, array<string> args ) // dev
 	{
 		ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
 		if ( quest == null )
 		{
 			Warning( "No season quest is active at this time." )
-			return true
+			return
 		}
 		expect ItemFlavor( quest )
 
 		int missionsDone     = SeasonQuest_GetMissionsCompletedForPlayer( player, quest )
 		int missionsTotalMax = SeasonQuest_GetMissionsMaxCount( quest )
 		if ( missionsDone >= missionsTotalMax )
-			return true
+			return
 
 		SeasonQuest_RecordNewMissionSuccessForPlayerIfAllowed( player, quest, missionsDone )
 		GivePlayerAnyPendingMissionRewards( player )
-		return true
 	} )
 }
 
@@ -2096,7 +2076,7 @@ void function SeasonQuest_UpdateMinimapRui( var rui )
 		return
 	}
 
-	float seconds = TreasureBox_SecondsUntilNextPickup( player, quest )
+	int seconds = TreasureBox_SecondsUntilNextPickup( player, quest )
 	if ( seconds > 0 )
 	{
 		RuiSetString( rui, "detailsText", Localize( "#QUEST_MAP_INFOBOX_HAVECOOLDOWN" ) )

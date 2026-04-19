@@ -380,7 +380,7 @@ void function OnGRXStoreUpdate()
 		ItemFlavor ornull activeThemedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
 		bool haveActiveThemedShopEvent          = ( activeThemedShopEvent != null )
 
-		bool haveActiveHeirloomTab				= HeirloomShop_IsVisibleWithoutCurrency() || GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] ) > 0
+		bool haveActiveHeirloomTab				= HeirloomShop_IsVisibleWithoutCurrency() || GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] ) > 0
 
 		SetTabNavigationEnabled( file.storePanel, true )
 
@@ -1352,7 +1352,7 @@ void function UpdateBundleOffers()
 	{
 		foreach( GRXScriptOffer offer in buttonData.offerData )
 		{
-			GRX_CheckBundleAndUpdateOfferPrices( offer )
+
 		}
 	}
 }

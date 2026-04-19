@@ -1067,11 +1067,11 @@ HighlightContextResult  function GetHighlightContextForEnt( entity viewPlayer, e
 				return result
 			}
 		}
-		else if ( ShouldCastleWallHighlight( viewPlayer, ent ) )
-		{
-			result.contextId = GetHighlightId( "castle_wall_focus" )
-			return result
-		}
+		//else if ( ShouldCastleWallHighlight( viewPlayer, ent ) )
+		//{
+		//	result.contextId = GetHighlightId( "castle_wall_focus" )
+		//	return result
+		//}
 		else
 		{
 			result.genericType = eHighlightGenericType.FRIENDLY

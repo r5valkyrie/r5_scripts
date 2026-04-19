@@ -7839,7 +7839,7 @@ void function FakePhysicsThrow( entity player, entity drop, vector vel, bool ign
 	asset model       = drop.GetModelName()
 	entity physicsEnt = CreatePropPhysics( model, drop.GetOrigin(), drop.GetAngles(), SF_PHYSPROP_DEBRIS )
 	physicsEnt.kv.CollideWithOwner = false
-	//physicsEnt.SetIgnoreCombatCharacters( ignoreCombatCharacters ) // S3: entity method not available
+	physicsEnt.SetIgnorePlayers( ignoreCombatCharacters )
 	physicsEnt.SetBlocksRadiusDamage( false )
 
 	physicsEnt.SetScriptName( THROWN_OBJECT_PHYSICS_ENT_SCRIPTNAME )

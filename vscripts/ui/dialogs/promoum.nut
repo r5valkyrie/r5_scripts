@@ -9,11 +9,11 @@ global function PromoDialog_GetAllGifts
 global function PromoDialog_RemoveFromCache
 
 global function UICodeCallback_UMRequestFinished
-               
+
 global function InitPromoPanel
 global function InitInboxPanel
 global function ReturnToInbox
-      
+
 const PROMO_DIALOG_MAX_PAGES = 4
 const string PIN_MESSAGE_TYPE_PROMO = "motd"
 const float PROMO_TRANS_DURATION = 0.5
@@ -34,7 +34,7 @@ struct PromoDialogPageData
 
 enum eTransType
 {
-	                                      
+
 	NONE = 0,
 	SLIDE_LEFT = 1,
 	SLIDE_RIGHT = 2,
@@ -48,7 +48,7 @@ struct RedemptionPopupContent
 	string descText
 	string imageName
 }
-               
+
 
 struct
 {
@@ -67,7 +67,7 @@ struct
 
 	TabDef& inboxTab
 }inbox
-      
+
 
 struct
 {
@@ -100,19 +100,19 @@ struct
 	PromoDialogPageData& 	activePage
 	RedemptionPopupContent  hijackContent
 
-                
+
 		var  tabsBackground
 		bool isInboxEnabled
-       
+
 } file
 
-                      
-                
-                      
 
-                                                                              
-                                                                                                             
-                                                                                                                             
+
+
+
+
+
+
 void function InitPromoDialogUM( var newMenuArg )
 {
 	file.menu = newMenuArg
@@ -151,25 +151,25 @@ void function InitPromoDialogUM( var newMenuArg )
 	AddMenuEventHandler( newMenuArg, eUIEvent.MENU_CLOSE, PromoDialogUM_OnClose )
 	AddMenuEventHandler( newMenuArg, eUIEvent.MENU_NAVIGATE_BACK, PromoDialog_OnNavigateBack )
 
-                
+
 		file.tabsBackground = Hud_GetChild( file.menu, "tabsBackground" )
-      
-                                                                
-                                                                      
-       
+
+
+
+
 
 	#if DEVELOPER
 		AddMenuThinkFunc( file.menu, PromoDialogUMAutomationThink )
-	#endif       
+	#endif
 }
 
 void function PromoDialogUM_OnOpen()
 {
 	PromoDialog_InitPages()
 
-                
+
 		file.isInboxEnabled = GetCurrentPlaylistVarBool( "grx_inbox_enabled", true )
-       
+
 
 	SetGamepadCursorEnabled( file.menu, true )
 	file.numPages = file.promoPreviewButtonsRui.len() < PromoDialog_NumPages() ? file.promoPreviewButtonsRui.len() : PromoDialog_NumPages()
@@ -178,17 +178,17 @@ void function PromoDialogUM_OnOpen()
 	{
 		file.hasViewedMOTDThisSession = true
 
-		                                                                                                             
+
 		if ( file.pageIndexForJump < 1 )
 			SendImpressionPINMessage( file.activePageIndex )
 	}
 
-                
+
 		if ( !file.isInboxEnabled )
 		{
 			Hud_SetVisible( file.tabsBackground, false )
 		}
-       
+
 
 	if ( file.pageIndexForJump >= 0 )
 	{
@@ -196,7 +196,7 @@ void function PromoDialogUM_OnOpen()
 		file.pageIndexForJump = -1
 	}
 
-                
+
 		TabData tabData = GetTabDataForPanel( file.menu )
 		tabData.centerTabs = true
 		tabData.forcePrimaryNav = true
@@ -208,16 +208,16 @@ void function PromoDialogUM_OnOpen()
 			ActivateTab( tabData, 0 )
 
 		UpdateInboxTab()
-       
+
 }
 
 void function PromoDialogUM_OnClose()
 {
 	DeregisterPageChangeInput()
 
-                
+
 		Inbox_OnHide( inbox.inboxNestedPanel )
-       
+
 
 	file.activePageIndex = 0
 	file.updateID = 0
@@ -237,9 +237,9 @@ void function PromoDialog_OnNavigateBack()
 	CloseActiveMenu()
 }
 
-                      
-                  
-                      
+
+
+
 void function InitPromoPanel( var panel )
 {
 	UpdatePageRui()
@@ -399,10 +399,10 @@ void function TransitionViewButton( int updateID )
 		UpdateViewButton()
 }
 
-                      
-                 
-                      
-               
+
+
+
+
 void function InitInboxPanel( var panel )
 {
 	inbox.inboxNestedPanel = panel
@@ -428,15 +428,15 @@ void function InitInboxPanel( var panel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_BACK, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK", OnNavigateBackPanel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_Y, true, "#Y_GIFT_INFO_TITLE", "#GIFT_INFO_TITLE", OpenGiftInfoPopUp )
 }
-      
 
 
-               
+
+
 const asset gift_top = $"rui/borders/gifting_inbox_border_top"
 const asset gift_empty = $"rui/borders/gifting_inbox_gift_empty_box"
-      
 
-               
+
+
 void function UpdateInboxButtons()
 {
 	var scrollPanel = Hud_GetChild( inbox.listPanel, "ScrollPanel" )
@@ -507,9 +507,9 @@ void function UpdateInboxButtons()
 
 	Hud_SetNavLeft( inbox.redeemButton, inbox.activeButton )
 }
-      
 
-               
+
+
 void function InboxSetupItemButton( var button, GRXScriptInboxMessage details )
 {
 	if ( button in inbox.inboxItemButtons )
@@ -520,9 +520,9 @@ void function InboxSetupItemButton( var button, GRXScriptInboxMessage details )
 	Hud_AddEventHandler( button, UIE_CLICK, ListButton_OnClick )
 	Hud_AddEventHandler( button, UIE_DOUBLECLICK , ListButton_OnDoubleClick )
 }
-      
 
-               
+
+
 void function InboxRemoveItemButton( var button )
 {
 	if ( !( button in inbox.inboxItemButtons ) )
@@ -532,9 +532,9 @@ void function InboxRemoveItemButton( var button )
 	Hud_RemoveEventHandler( button, UIE_DOUBLECLICK , ListButton_OnDoubleClick )
 	delete inbox.inboxItemButtons[button]
 }
-      
 
-               
+
+
 void function UpdateInboxTab()
 {
 	if ( inbox.gifts.len() > 0 )
@@ -542,17 +542,17 @@ void function UpdateInboxTab()
 	else
 		inbox.inboxTab.new = false
 }
-      
 
-               
+
+
 void function ReturnToInbox()
 {
 	TabData tabData = GetTabDataForPanel( file.menu )
-	ActivateTab( tabData, 1 )                                                                     
+	ActivateTab( tabData, 1 )
 }
-                     
 
-               
+
+
 void function Inbox_SetVisible( bool isVisible )
 {
 	if ( inbox.inboxNestedPanel == null )
@@ -570,26 +570,26 @@ void function Inbox_SetVisible( bool isVisible )
 	else
 		Hud_SetVisible( inbox.redeemButton, false )
 }
-      
 
-               
+
+
 void function Promo_OnShow( var button )
 {
 	UpdatePromoButtons()
 	Inbox_SetVisible( false )
 	Inbox_OnHide( null )
 }
-      
 
-               
+
+
 void function Inbox_OnShow( var panel )
 {
 	UpdateInboxButtons()
 	Inbox_SetVisible( true )
 }
-      
 
-               
+
+
 void function Inbox_OnHide( var panel )
 {
 	if ( inbox.inboxNestedPanel == null )
@@ -603,9 +603,9 @@ void function Inbox_OnHide( var panel )
 		InboxRemoveItemButton( button )
 	}
 }
-      
 
-               
+
+
 void function ListButton_OnClick( var button )
 {
 	if ( inbox.activeButton == button )
@@ -623,23 +623,23 @@ void function ListButton_OnClick( var button )
 
 	Hud_SetNavLeft( inbox.redeemButton, inbox.activeButton )
 }
-      
 
-               
+
+
 void function ListButton_OnDoubleClick( var button )
 {
 	GiftRedemption()
 }
-      
 
-               
+
+
 void function Redeem_OnClick( var button )
 {
 	GiftRedemption()
 }
-      
 
-               
+
+
 void function GiftRedemption()
 {
 	GRXScriptInboxMessage info = expect GRXScriptInboxMessage( inbox.activeInfo )
@@ -674,11 +674,11 @@ void function GiftRedemption()
 		RewardInput
 	)
 }
-      
 
-                      
-                    
-                      
+
+
+
+
 void function OnNavigateBackPanel( var panel )
 {
 	CloseActiveMenu()
@@ -725,47 +725,6 @@ void function OpenPromoDialogIfNewAfterPakLoadUM()
 
 void function PromoDialog_InitPages()
 {
-	file.pages.clear()
-
-	UMData um = EADP_UM_GetPromoData()
-	foreach ( int i, UMAction action in um.actions )
-	{
-		PromoDialogPageData newPage
-		newPage.trackingId = action.trackingId
-		foreach ( int j, UMItem item in action.items )
-		{
-			if ( item.name == "TitleText" )
-			{
-				newPage.title = item.value
-			}
-			else if ( item.name == "BodyText" )
-			{
-				newPage.desc = item.value
-			}
-			else if ( item.name == "Link" )
-			{
-				newPage.link = item.value
-				foreach ( attr in item.attributes )
-				{
-					if ( attr.key == "LinkType" )
-					{
-						newPage.linkType = attr.value
-						newPage.linkText = Localize( ViewButtonTextFromLinkType( newPage.linkType ) )
-					}
-				}
-			}
-			else if ( item.name == "ImageRef" )
-			{
-				newPage.imageName = item.value
-				if ( file.hasHijackContent )
-					newPage.image = GetPromoImage( newPage.imageName )
-			}
-		}
-		file.pages.append( newPage )
-	}
-                
-		Promo_OnShow( null )
-       
 }
 
 int function PromoDialog_NumPages()
@@ -816,7 +775,7 @@ void function PromoDialogUMAutomationThink( var menu )
 		CloseActiveMenu()
 	}
 }
-#endif       
+#endif
 
 void function PromoDialog_OnShow( var panel )
 {
@@ -1013,7 +972,7 @@ void function UpdatePreviewButtonRui()
 		RuiSetInt( file.promoPreviewActiveIndicatorRui, "updateID", file.updateID )
 		RuiSetFloat(file.promoPreviewActiveIndicatorRui, "promoPageWidth", ContentScaledX( 240 ) )
 
-		                                 
+
 		Hud_SetWidth( file.promoPreviewButtons, ContentScaledXAsInt( 242 * file.numPages ) )
 		Hud_SetVisible( file.promoPreviewActiveIndicator, bool( file.pages.len() ) )
 

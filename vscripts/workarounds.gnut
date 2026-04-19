@@ -3,15 +3,8 @@
 // Organized by system/feature within each preprocessor block
 // ============================================================================
 
-global function StatsRegister_MetaChallenges
 global function SkitSystem_Init
 global function Ziprail_GetSkyDiveLauncherForHitEnt
-
-global struct DeathBoxPingInfo
-{
-	entity deathbox
-	entity loot
-}
 
 // ============================================================================
 //  GLOBAL SCOPE - Constants, Enums, Structs (all VMs)
@@ -19,7 +12,6 @@ global struct DeathBoxPingInfo
 
 // === Constants ===
 global const asset FIRINGRANGE_ITEM_RESPAWN_PARTICLE = $"P_impact_shieldbreaker_sparks"
-global const string XPROG_PERSISTENCE_MERGED_PLAT_STRUCT_NAME = "xMergedPlat"
 global const int PLAYER_MELEE_STATE_KICK_ATTACK = 1
 global const int PLAYER_MELEE_STATE_SLAM_ATTACK = 2
 global const int SHADOWARMY_VICTORY_FLAGS_EVAC = 4
@@ -67,27 +59,6 @@ global enum eServerVisibility
 global const int UM_RESULT_HIGH_LATENCY = 1
 global const int UM_RESULT_FAILURE = 2
 
-// === Hardware/Platform Constants ===
-global const int HARDWARE_PC = 0
-global const int HARDWARE_PC_STEAM = 1
-global const int HARDWARE_PS4 = 2
-global const int HARDWARE_PS5 = 5
-global const int HARDWARE_XBOXONE = 3
-global const int HARDWARE_XB5 = 6
-global const int HARDWARE_NX = 4
-global const int HARDWARE_SWITCH = 4
-
-// Cross-platform merged platform mapping for XProg
-global table<int, string> HARDWARE_TO_MERGED_PLATFORM = {
-	[HARDWARE_PC] = "pc",
-	[HARDWARE_PC_STEAM] = "pc",
-	[HARDWARE_PS4] = "psn",
-	[HARDWARE_PS5] = "psn",
-	[HARDWARE_XBOXONE] = "xbl",
-	[HARDWARE_XB5] = "xbl",
-	[HARDWARE_NX] = "nx",
-}
-
 // === GRX/Store Constants ===
 global const int GRX_OFFERITEMTYPE_DEFAULT = 0
 global const int GRX_OFFERITEMTYPE_BONUS = 1
@@ -133,9 +104,7 @@ global function GiveBasicSurvivalItems
 global function SortLowestInt
 global function SPL_GetRandomEndRingPosition_Slow
 // BroadcastCommsActionToTeam — now in sh_quickchat.gnut (S22)
-global function RedeployBalloon_GetSkydiveVelOverride
 global function PutEntityInSomewhatSafeSpot
-global function StopAllSkydiveSounds
 global function CalcWorldToLocalOrigin_Entity
 global function ShGameModeExplore_GetPlanePassNumber
 global function IsValidArrayIndex
@@ -146,7 +115,6 @@ global function isFreefallEnabled
 // PlayerIsInCombat — now in sh_quickchat.gnut (S22)
 global function DeregisterNavMesh_EntityMemory
 global function RegisterNavMesh_EntityMemory
-global function FR_Nessie_EnterZone
 global function OnProjectileCollision_weapon_deployable_crypto
 global function FakePhysicsThrow_NewTest
 global function ClientCommand_Flowstate_AssignCustomCharacterFromMenu
@@ -249,24 +217,20 @@ global function Respawn_Token_CanLocalPlayerRespawnOrIsRespawning
 global function OpenSurvivalGroundListRetail
 global function LootBin_IsOpen
 global function Announcements_SetVisible
-global function UpdatePlayerSkydiveTrailFriendlyEnemyFX
 global function WillCelebrateNEEVictory
 global function DoNEECelebration_Thread
 global function TryEnableDeathScreenRequeue
 #endif
-global function Perks_CarePackageInsight_CreateCarePackageInsightPing
 global function ForcedSpawn_GetEnemyPingDisplayTime
 global function HoverVehicle_GetVehicleOccupiedByPlayer
 global function PIN_EmoteUse
 global function Valentines_S15_ILoveYouEasterEggEnabled
-global function GetRemoteDeathboxHighlight
 global function RuiIsAlive
 global function TransportPortal_CancelUse
 global function DeathboxNetwork_CanPlayerUse
 global function DeathboxNetwork_UntrackIfTracking
 global function DeathboxNetwork_TrackBoxTargets
 global function DeathboxNetwork_UntrackBoxTargets
-global function DeathBoxInsight_UpdateLookatPing
 global function PassiveReinforce_BlockControllerHolster
 global function TitanSword_WeaponIsTitanSword
 global function GetArcFlashState
@@ -333,7 +297,6 @@ global function ServerCallback_PromptWelcome
 global function TransportPortal_GetReceiverPlayerIsLookingAt
 global function TreasureHunt_GetStarterPingFromTraceBlockerPing
 global function Zipline_IsCurvedZipline
-global function GetRedeployBalloonForHitEnt
 global function GetWhiteRavenPingTarget
 global function GetZiplinePingEntity
 global function GetZiplinePingPosition
@@ -341,7 +304,6 @@ global function HasZiplinePingInRange
 global function IsPlayerDecoy
 global function IsRopeZipline
 global function IsZiprail
-global function DeathBoxInsight_GetCurrentPingInfo
 global function Player_IsSkywardLaunching
 global function IsTeamInAlliance
 global function GetGroundPositionOpenToSky
@@ -382,13 +344,10 @@ global function SmokeTest_IsActive
 global function TitanSword_ActiveWeaponIsTitanSword
 global function ArrayRandomizeSeeded
 global function ArrayGetRandomSeeded
-global function LiveAPI_SendInventoryAction
 global function TrackingVision_CreatePOIForDroppedLoot
 global function WeaponStatsHook_OnPlayerDropMainWeapon
-global function LiveAPI_SendAmmoChangedEvent
 global function GetCryptoTTAssetsToPrecache
 global function GetLifelineTTAssetsToPrecache
-global function RemoteDeathboxInteractAllowTakingArmor
 global function TitanSword_Super_IsActive
 global function TitanSword_DamageSourceIsTitanSword
 global function TitanSword_Slam_DeathboxOverride
@@ -511,16 +470,10 @@ global function TitanSword_ForceStopLootAnim
 
 // === Gamemode Stubs ===
 global function PassiveAxiom_OnItemDropped
-global function Perk_WeaponInfusion_OnItemDropped
-global function CopycatKit_LootDropped
-global function FR_Nessie_CheckCurrentWeapons
 global function GoldenHorse_UpdateLootHighlight
-global function RemoteDeathboxInteractAllowGrabbingBanners
-global function GetRemoteDeathboxInteractSqrRangeForAlter
 global function PIN_ItemGrantedByScript
 global function Armor_ShieldRegen_IsUsingShieldRegen
 global function Armor_ShieldRegen_RechargePlayerShields_Thread
-global function CanPlayerRemoteInteractWithDeathbox
 global function TrackingVision_CreatePOIForPickedUpLoot
 global function GetTriggersByClassesInRealms_HullSize
 global function GetTriggersByClassesInRealms
@@ -542,16 +495,11 @@ global function Player_DetonateSatchels
 global function AllowPlayersToTalkToThemselves
 global function EvaluateSoundSelector
 global function GetLockedSetsDisabledByCrafting
-global function GetIsUnifiedRandomizerEnabled
 global function GoldenHorse_TicksEnabled
 global function TeslaTrap_MakeEntityRealTimeObstructor
 global function TitanSword_Super_BlockAction
-// global function UpgradeSelectionMenu_TryClose -- now in sh_upgrade_selection_menu.nut
 global function GiveBounty
 global function IsBountyHuntEnabled
-global function RandomizeNodeLocations
-// CommsMenu_RefreshData, CommsMenu_SetCurrentChoiceForCrafting, HasWaitingGameStateArtHud — now in sh_comms_menu.nut (S22)
-// AddOnscreenPromptFunction — now in sh_ping.gnut (S22 deployed)
 
 // === Spawn Safety ===
 global function CanPutPlayerInSafeSpot
@@ -586,9 +534,6 @@ global function SafeSetPersistentVar
 // === Audio ===
 global function EmitUIMusic
 
-// === Time ===
-global function WaitForUnixTime
-
 // === GRX/Store ===
 global function GRX_SetEventCurrency
 global function GRX_GetItemTier
@@ -596,7 +541,6 @@ global function GRX_GetItemTier
 // === Persistence/Lobby ===
 global function PersistenceGetVarHandle
 global function HasCallback_OnPartyMemberRemoved
-global function LobbyPlaylist_GetSelectedPlaylist
 
 // === Stats/Mastery ===
 global function Mastery_GetStatValue
@@ -684,7 +628,6 @@ global function ToolTips_SetMenuTooltipVisible
 global function SpectatorNextTarget
 global function ShowBlockPlayerDialog
 global function OpenClubLeaveDialog
-global function Hud_ClearAllToolTips
 global function RefreshEaTwoFactorAuthenticationStatus
 
 // === EADP Social ===
@@ -734,7 +677,6 @@ global function GRX_GetOffer
 // === Persistence ===
 global function PersistenceGetVarHandle
 global function HasCallback_OnPartyMemberRemoved
-global function LobbyPlaylist_GetSelectedPlaylist
 
 // === Stats/Mastery ===
 global function Mastery_GetStatValue
@@ -759,7 +701,6 @@ global function Ranked_HasBeenInitialized
 global function SharedRanked_PartyHasRankedLevelAccess
 global function SharedRanked_GetMaxPartyMatchmakingDelay
 global function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo
-global function PopulateMatchRank
 
 // === Party/Social ===
 global function Party_JoinUserPartyGame
@@ -812,10 +753,7 @@ global function TogglePlayerVoiceAndTextMuteForUID
 global function GetCommunicationBlockWarningText
 global function GetCommunicationBlockStateID
 
-// === Time ===
-global function WaitForUnixTime
 global function GetIsDSTActive
-global function GetUnixTimePDT
 global function RLocalDateTime
 global function RLocalTime
 
@@ -865,12 +803,6 @@ global function UISafeGetPersistentVarAsInt
 // ============================================================================
 //  #if CLIENT || UI - Implementations
 // ============================================================================
-
-void function StatsRegister_MetaChallenges()
-{
-	Warning( "WORKAROUND: StatsRegister_MetaChallenges() - stub" )
-}
-
 bool function SquadMuteLegendSelectEnabled()
 {
 	return GetCurrentPlaylistVarBool( "squad_mute_legend_select_enable", true )
@@ -1250,11 +1182,6 @@ void function OpenClubLeaveDialog()
 	Warning( "WORKAROUND: OpenClubLeaveDialog() called - not implemented" )
 }
 
-void function Hud_ClearAllToolTips()
-{
-	Warning( "WORKAROUND: Hud_ClearAllToolTips() called - not implemented" )
-}
-
 void function RefreshEaTwoFactorAuthenticationStatus()
 {
 	Warning( "WORKAROUND: Hud_ClearAllToolTips() called - not implemented" )
@@ -1493,11 +1420,6 @@ bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc 
 	return false
 }
 
-string function LobbyPlaylist_GetSelectedPlaylist()
-{
-	return GetCurrentPlaylistName()
-}
-
 var function GetDialogFlowTablesValueOrPersistence( string persistenceVar, bool useScriptTable = false, float timeBeforeDialogFlowTableValuesAreOutdated = 5.0 )
 {
 	if ( !IsPersistenceAvailable() )
@@ -1623,11 +1545,6 @@ int function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo( CommunityUse
 	return 0
 }
 
-void function PopulateMatchRank( ... )
-{
-	Warning( "WORKAROUND: PopulateMatchRank() called - not implemented" )
-}
-
 // === Party/Social ===
 
 void function Party_JoinUserPartyGame()
@@ -1648,6 +1565,7 @@ EadpPrivacySetting function Eadp_GetPrivacyData()
 
 EadpPeopleData function CreateEADPDataFromEAID( string eaid )
 {
+	// we use this to save the eaid inside the instance of a Friend struct.
 	EadpPeopleData eadpData
 	eadpData.eaid = eaid
 	return eadpData
@@ -1831,25 +1749,10 @@ int function GetCommunicationBlockStateID()
 
 // === Time ===
 
-void function WaitForUnixTime( int unixTime )
-{
-	while ( true )
-	{
-		float delay = float(unixTime - GetUnixTimestamp())
-		if ( delay <= 0.0 )
-			break
-		wait min( 1.0, delay )
-	}
-}
 
 bool function GetIsDSTActive()
 {
 	return false
-}
-
-int function GetUnixTimePDT()
-{
-	return GetUnixTimestamp() + (-7 * SECONDS_PER_HOUR)
 }
 
 string function RLocalDateTime( int unixTime )
@@ -2342,11 +2245,6 @@ void function Announcements_SetVisible( bool visible )
 	Warning( "STUB: Announcements_SetVisible" )
 }
 
-void function UpdatePlayerSkydiveTrailFriendlyEnemyFX( entity player )
-{
-	Warning( "STUB: UpdatePlayerSkydiveTrailFriendlyEnemyFX" )
-}
-
 bool function WillCelebrateNEEVictory()
 {
 	Warning( "STUB: WillCelebrateNEEVictory" )
@@ -2399,12 +2297,6 @@ bool function ShadowArmy_IsPlayerOnShadowArmy( entity player )
 	return false
 }
 
-// === Shared stubs (ping/waypoint systems) ===
-void function Perks_CarePackageInsight_CreateCarePackageInsightPing( entity player, entity pingEnt, vector pingOrigin, int userTicketId )
-{
-	Warning( "STUB: Perks_CarePackageInsight_CreateCarePackageInsightPing" )
-}
-
 float function ForcedSpawn_GetEnemyPingDisplayTime()
 {
 	Warning( "STUB: ForcedSpawn_GetEnemyPingDisplayTime" )
@@ -2413,14 +2305,12 @@ float function ForcedSpawn_GetEnemyPingDisplayTime()
 
 void function SkydiveEmoteProjector_ActivateEmoteProjector( entity player, ItemFlavor quip ) { Warning( "STUB: SkydiveEmoteProjector_ActivateEmoteProjector" ) }
 bool function Valentines_S15_ILoveYouEasterEggEnabled() { return false }
-string function GetRemoteDeathboxHighlight( entity deathbox, int lootTier ) { return "" }
 bool function RuiIsAlive( var rui ) { return rui != null }
 void function TransportPortal_CancelUse() { Warning( "STUB: TransportPortal_CancelUse" ) }
 bool function DeathboxNetwork_CanPlayerUse( entity player, entity ent ) { return false }
 void function DeathboxNetwork_UntrackIfTracking() { }
 void function DeathboxNetwork_TrackBoxTargets( entity box ) { }
 void function DeathboxNetwork_UntrackBoxTargets( entity box ) { }
-bool function DeathBoxInsight_UpdateLookatPing() { return false }
 bool function PassiveReinforce_BlockControllerHolster( entity player, entity useEnt ) { return false }
 bool function TitanSword_WeaponIsTitanSword( entity weapon ) { return false }
 int function GetArcFlashState( entity player ) { return 0 }
@@ -2658,8 +2548,6 @@ bool function Zipline_IsCurvedZipline( entity zipline )
 	return false
 }
 
-
-entity function GetRedeployBalloonForHitEnt( entity hitEnt ) { return null }
 entity function GetWhiteRavenPingTarget( entity player ) { return null }
 entity function GetZiplinePingEntity( entity player, entity hitEnt, vector hitPos ) { return null }
 vector function GetZiplinePingPosition( entity player, entity hitEnt, vector hitPos ) { return hitPos }
@@ -2668,12 +2556,6 @@ bool function IsPlayerDecoy( entity ent ) { return false }
 bool function IsRopeZipline( entity ent ) { return false }
 bool function IsZiprail( entity ent ) { return false }
 bool function Player_IsSkywardLaunching( entity player ) { return false }
-
-DeathBoxPingInfo function DeathBoxInsight_GetCurrentPingInfo()
-{
-	DeathBoxPingInfo info
-	return info
-}
 
 bool function IsTeamInAlliance( int team, int alliance ) { return false }
 vector function GetGroundPositionOpenToSky( vector origin ) { return origin }
@@ -2798,16 +2680,6 @@ void function PassiveAxiom_OnItemDropped( entity player, string ref, entity drop
 	Warning( "STUB: PassiveAxiom_OnItemDropped" )
 }
 
-void function Perk_WeaponInfusion_OnItemDropped( entity player, string ref, string weaponClassName, entity dropEnt )
-{
-	Warning( "STUB: Perk_WeaponInfusion_OnItemDropped" )
-}
-
-void function CopycatKit_LootDropped( entity player, string equipSlot, string equipRef, entity droppedEnt )
-{
-	Warning( "STUB: CopycatKit_LootDropped" )
-}
-void function FR_Nessie_CheckCurrentWeapons( entity player ) { Warning("STUB: FR_Nessie_CheckCurrentWeapons") }
 string function GoldenHorse_UpdateLootHighlight( entity prop, string ref, int tier, string highlight )
 {
 	if ( !GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_GOLDEN_HORSE ) )
@@ -2818,12 +2690,9 @@ string function GoldenHorse_UpdateLootHighlight( entity prop, string ref, int ti
 
 	return highlight
 }
-bool function RemoteDeathboxInteractAllowGrabbingBanners( entity player = null ) { Warning("STUB: RemoteDeathboxInteractAllowGrabbingBanners"); return false }
-float function GetRemoteDeathboxInteractSqrRangeForAlter( entity player ) { Warning("STUB: GetRemoteDeathboxInteractSqrRangeForAlter"); return 0.0 }
 void function PIN_ItemGrantedByScript( entity player, ... ) { Warning("STUB: PIN_ItemGrantedByScript") }
 bool function Armor_ShieldRegen_IsUsingShieldRegen() { Warning("STUB: Armor_ShieldRegen_IsUsingShieldRegen"); return false }
 void function Armor_ShieldRegen_RechargePlayerShields_Thread( entity player, bool fullRecharge = true ) { Warning( "STUB: Armor_ShieldRegen_RechargePlayerShields_Thread" ) }
-bool function CanPlayerRemoteInteractWithDeathbox( entity player, entity deathBox = null ) { Warning("STUB: CanPlayerRemoteInteractWithDeathbox"); return false }
 void function TrackingVision_CreatePOIForPickedUpLoot( entity player, int lootType, string ref, vector pos, int team, entity source ) { Warning("STUB: TrackingVision_CreatePOIForPickedUpLoot") }
 array<entity> function GetTriggersByClassesInRealms_HullSize( ... ) { return [] }
 array<entity> function GetTriggersByClassesInRealms( ... ) { return [] }
@@ -2845,16 +2714,12 @@ void function Player_DetonateSatchels( entity player ) { Warning("STUB: Player_D
 bool function AllowPlayersToTalkToThemselves() { return false }
 int function EvaluateSoundSelector( string alias ) { Warning("STUB: EvaluateSoundSelector"); return 0 }
 array<string> function GetLockedSetsDisabledByCrafting() { Warning("STUB: GetLockedSetsDisabledByCrafting"); return [] }
-bool function GetIsUnifiedRandomizerEnabled() { return false }
 bool function GoldenHorse_TicksEnabled() { return false }
 void function TeslaTrap_MakeEntityRealTimeObstructor( entity ent ) { Warning("STUB: TeslaTrap_MakeEntityRealTimeObstructor") }
 bool function TitanSword_Super_BlockAction( entity player, string action = "" ) { Warning("STUB: TitanSword_Super_BlockAction"); return false }
 // UpgradeSelectionMenu_TryClose -- now in sh_upgrade_selection_menu.nut
 void function GiveBounty( entity player, int amount ) { Warning("STUB: GiveBounty") }
 bool function IsBountyHuntEnabled() { return false }
-array<entity> function RandomizeNodeLocations( array<entity> nodes, float exclusionDist, int goal = -1, bool useGoal = false, string placementType = "none", vector debugColor = <0,0,0> ) { Warning("STUB: RandomizeNodeLocations"); return nodes }
-// CommsMenu stubs removed — now in sh_comms_menu.nut (S22)
-// AddOnscreenPromptFunction — now in sh_ping.gnut (S22 deployed)
 
 // === Doors ===
 
@@ -2988,13 +2853,6 @@ void function EmitUIMusic( string musicName )
 	Warning( "WORKAROUND: EmitUIMusic() called - not implemented" )
 }
 
-// === Time ===
-
-void function WaitForUnixTime( int unixTime )
-{
-	wait 1.0
-}
-
 // === GRX/Store ===
 
 void function GRX_SetEventCurrency( string grxAlias )
@@ -3017,11 +2875,6 @@ int function PersistenceGetVarHandle( string key )
 bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc )
 {
 	return false
-}
-
-string function LobbyPlaylist_GetSelectedPlaylist()
-{
-	return GetCurrentPlaylistName()
 }
 
 // === Stats/Mastery ===
@@ -3383,11 +3236,6 @@ vector function SPL_GetRandomEndRingPosition_Slow()
 
 // BroadcastCommsActionToTeam — now in sh_quickchat.gnut (S22)
 
-float function RedeployBalloon_GetSkydiveVelOverride()
-{
-	return GetCurrentPlaylistVarFloat( "redeploy_balloon_skydive_vel_override", 0.0 )
-}
-
 void function PutEntityInSomewhatSafeSpot( entity ent, entity referenceEnt1OrNull, entity referenceEnt2OrNull, vector targetOrigin, vector fallbackOrigin )
 {
 	#if SERVER
@@ -3395,11 +3243,6 @@ void function PutEntityInSomewhatSafeSpot( entity ent, entity referenceEnt1OrNul
 	if ( IsValid( ent ) )
 		ent.SetOrigin( targetOrigin )
 	#endif
-}
-
-void function StopAllSkydiveSounds( entity player )
-{
-	Warning( "STUB: StopAllSkydiveSounds" )
 }
 
 vector function CalcWorldToLocalOrigin_Entity( entity moveParent, vector worldPos )
@@ -3461,11 +3304,6 @@ void function DeregisterNavMesh_EntityMemory( entity ent )
 void function RegisterNavMesh_EntityMemory( entity ent, int hullType )
 {
 	Warning( "STUB: RegisterNavMesh_EntityMemory" )
-}
-
-void function FR_Nessie_EnterZone( entity player, int zoneId )
-{
-	Warning( "STUB: FR_Nessie_EnterZone" )
 }
 
 void function OnProjectileCollision_weapon_deployable_crypto( entity projectile, vector pos, vector normal, entity hitEnt, int hitBox, bool isCritical )
@@ -3815,12 +3653,6 @@ bool function TitanSword_ActiveWeaponIsTitanSword( entity player )
 	return false
 }
 
-// Seeded Fisher-Yates shuffle using SDK's seeded random functions
-void function LiveAPI_SendInventoryAction( int eventType, entity player, string ref, entity ornull weapon = null, int count = 0 )
-{
-	Warning( "STUB: LiveAPI_SendInventoryAction" )
-}
-
 void function TrackingVision_CreatePOIForDroppedLoot( entity pickup, int lootType, string ref, vector origin, int team, entity player )
 {
 	Warning( "STUB: TrackingVision_CreatePOIForDroppedLoot" )
@@ -3830,12 +3662,6 @@ void function WeaponStatsHook_OnPlayerDropMainWeapon( entity player, entity weap
 {
 	Warning( "STUB: WeaponStatsHook_OnPlayerDropMainWeapon" )
 }
-
-void function LiveAPI_SendAmmoChangedEvent( entity player, int type, int count, int oldCount )
-{
-	Warning( "STUB: LiveAPI_SendAmmoChangedEvent" )
-}
-
 bool function GetCryptoTTAssetsToPrecache( array<string> models, array<string> particles )
 {
 	Warning( "STUB: GetCryptoTTAssetsToPrecache" )
@@ -3846,12 +3672,6 @@ bool function GetLifelineTTAssetsToPrecache( array<string> models, array<string>
 {
 	Warning( "STUB: GetLifelineTTAssetsToPrecache" )
 	return false
-}
-
-bool function RemoteDeathboxInteractAllowTakingArmor()
-{
-	Warning( "STUB: RemoteDeathboxInteractAllowTakingArmor" )
-	return true
 }
 
 bool function TitanSword_Super_IsActive( entity player )

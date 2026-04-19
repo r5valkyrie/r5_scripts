@@ -4,7 +4,6 @@ global function Firing_Range_SetIsRangeMaster
 global function Firing_Range_SetGeneralSetting
 global function Firing_Range_SetDummieSetting
 global function SettingsButton_SetShieldDescription
-global function EnableCharacterChangeInFiringRange
 global function Firing_Range_SetRangeState
 global function Firing_Range_SetFriendlyFire
 global function Firing_Range_SetDynStatsState
@@ -441,13 +440,6 @@ void function SetUpOptionsButton( var button, FiringRangeOption option )
 
 
 
-
-
-
-void function EnableCharacterChangeInFiringRange( bool enable )
-{
-	// S3: stub — character change button managed differently
-}
 
 void function Firing_Range_SetRangeState( int value )
 {

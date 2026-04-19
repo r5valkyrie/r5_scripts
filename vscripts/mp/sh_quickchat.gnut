@@ -987,7 +987,7 @@ void function ServerToClient_BroadcastCommsActionToTeam( entity player, int comm
 
 
 #if CLIENT
-void function HandleBroadcastCommsAction( entity player, int commsAction, entity subjectEnt, vector subjectPos, int commsFlags, int itemIndex, int subjectCount, int secondaryCommsAction, float creationTime, int selector )
+void function HandleBroadcastCommsAction( entity player, int commsAction, entity subjectEnt, vector subjectPos, int commsFlags, int itemIndex, int subjectCount, int secondaryCommsAction, float creationTime = 0.0, int selector = INVALID_SOUND_SELECTOR  )
 {
 	if ( !file.quickchatInitialized )
 		return
@@ -1922,9 +1922,7 @@ void function BroadcastCommsActionToTeam( entity playerSpeaking, int commsAction
 			if ( !IsValid( subjectEnt ) )
 				return
 
-			#if CLIENT
 			PIN_UltimateReadyPing( playerSpeaking, GetEnumString( "eCommsAction", commsAction ).tolower(), true )
-			#endif
 			break
 		}
 		default:

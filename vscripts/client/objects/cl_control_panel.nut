@@ -33,9 +33,8 @@ void function AddPanelUpdateCallback( panel, func )
 	panel.s.updateCallbacks.append( func )
 }
 
-void function ServerCallback_ControlPanelRefresh( int panelEHandle )
+void function ServerCallback_ControlPanelRefresh( entity panel )
 {
-	entity panel = GetEntityFromEncodedEHandle( panelEHandle )
 	if ( !IsValid( panel ) )
 		return
 
@@ -89,7 +88,7 @@ void function ControlPanelInit( entity panel )
 	if ( panel.GetNetworkedClassName() == "prop_script" )
 	{
 		int flags = panel.GetScriptPropFlags()
-		if ( flags & SPF_CUSTOM_SCRIPT_1 )
+		if ( IsBitFlagSet( flags, SPF_CUSTOM_SCRIPT_1 ) )
 		{
 			panel.s.VGUIFunc = VGUIUpdateForRemoteTurret
 			panel.s.VGUISetupFunc <- VGUISetupForRemoteTurret
@@ -143,9 +142,12 @@ void function ControlPanelRefresh( entity panel )
 	if ( !IsValid( panel ) )
 		return
 
-	foreach ( func in panel.s.updateCallbacks )
+	if ( "updateCallbacks" in panel.s )
 	{
-		func( panel )
+		foreach ( func in panel.s.updateCallbacks )
+		{
+			func( panel )
+		}
 	}
 
 	if ( CanUpdateVGUI( panel ) )
@@ -157,10 +159,10 @@ void function ControlPanelRefresh( entity panel )
 
 bool function CanUpdateVGUI( entity panel )
 {
-	if ( panel.s.VGUIFunc == null )
+	if ( !( "VGUIFunc" in panel.s ) || panel.s.VGUIFunc == null )
 		return false
 
-	if ( panel.s.HudVGUI == null )
+	if ( !( "HudVGUI" in panel.s ) || panel.s.HudVGUI == null )
 		return false
 
 	// if ( panel.s.targetArray.len() == 0 )
@@ -204,7 +206,7 @@ void function VGUIUpdateSpectre( panel )
 
 	// alternate on and off
 	int show = int( Time() * 4 ) % 2
-	if ( show )
+	if ( show != 0 )
 		stateElement.Show()
 	else
 		stateElement.Hide()
@@ -224,7 +226,7 @@ function VGUIUpdateGeneric( panel )
 
 	// alternate on and off
 	int show = int( Time() ) % 2
-	if ( show )
+	if ( show != 0 )
 		state.Show()
 	else
 		state.Hide()
@@ -249,7 +251,7 @@ function VGUIUpdateForRemoteTurret( panel )
 	var bottomLine = panel.s.HudVGUI.s.state
 
 	int flags = panel.GetScriptPropFlags()
-	if ( flags & SPF_CUSTOM_SCRIPT_2 )
+	if ( IsBitFlagSet( flags, SPF_CUSTOM_SCRIPT_2 ) )
 	{
 		topLine.SetText( "Rebooting..." )
 		bottomLine.SetText( "[ TURRET DAMAGED ]" )

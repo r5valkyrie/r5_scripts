@@ -897,29 +897,6 @@ void function DEV_MoveToAllAINodes( float delay = 0.0, int loglevel = 0 )
     	result = ent_lootbin
         break
 
-        case "ent_singleDoor": // single door
-    	entity singleDoor = CreateEntity("prop_door")
-    	singleDoor.SetValueForModelKey(FIRINGRANGE_DOOR_ASSET)
-    	singleDoor.SetOrigin( pos )
-    	singleDoor.SetAngles( ang - <0,90,0>)
-    	DispatchSpawn(singleDoor)
-        break
-
-        case "ent_doubledoor": // double door
-        entity DoorLeft = CreateEntity("prop_door")
-    	DoorLeft.SetValueForModelKey(FIRINGRANGE_DOOR_ASSET)
-    	DoorLeft.SetAngles(ang - <0,90,0>)
-    	DoorLeft.SetOrigin(pos + DoorLeft.GetRightVector() * 60)
-    	DispatchSpawn(DoorLeft)
-
-    	entity DoorRight = CreateEntity("prop_door")
-    	DoorRight.SetValueForModelKey(FIRINGRANGE_DOOR_ASSET)
-    	DoorRight.SetAngles(ang + <0,90,0>)
-    	DoorRight.SetOrigin(pos + DoorRight.GetRightVector() * 60)
-    	DoorRight.LinkToEnt( DoorRight )
-    	DispatchSpawn(DoorRight)
-        break
-
         default:
         break
       }

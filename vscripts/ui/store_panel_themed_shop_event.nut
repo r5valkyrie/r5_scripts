@@ -207,9 +207,6 @@ void function ThemedShopPanel_UpdateBundleOffers()
 		if( offerButton in file.offerButtonToOfferMap )
 		{
 			GRXScriptOffer offer = file.offerButtonToOfferMap[offerButton]
-
-			if ( GRX_CheckBundleAndUpdateOfferPrices( offer ) )
-				OfferButton_SetPrice( offerButton, offer )
 		}
 	}
 }

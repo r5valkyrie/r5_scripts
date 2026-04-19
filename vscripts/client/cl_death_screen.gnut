@@ -47,6 +47,7 @@ global function UICallback_TryPingRespawn
 global function UICallback_TryPingReplicator
       
 global function UICallback_OnResolutionChange
+global function UICallback_LeaveMatchInitiated
 
 global function IsViewingSquadSummary
 global function IsViewingDeathRecap
@@ -1483,6 +1484,11 @@ void function UICallback_OnResolutionChange()
 	RunUIScript( "UI_SetShouldShowSkip", false )
 }
 
+void function UICallback_LeaveMatchInitiated()
+{
+	if ( IsValid( clGlobal.levelEnt ) && IsValidSignal( "DeathScreenLeavingMatch" ) )
+		Signal( clGlobal.levelEnt, "DeathScreenLeavingMatch" )
+}
 
 void function SetCurrentTabIndex( int tabIndex )
 {

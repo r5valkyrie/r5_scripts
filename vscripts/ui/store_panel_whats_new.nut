@@ -169,7 +169,7 @@ void function WhatsNewPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	         
+
 	foreach ( int flavIdx, ItemFlavor unused in file.whatsNewList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -405,21 +405,21 @@ void function CompletionRewardBox_OnClick( var btn )
 
 	if ( HeirloomEvent_AwardHeirloomShards( activeThemedShopEvent ) )
 	{
-		JumpToHeirloomShop()                                       
+		JumpToHeirloomShop()
 		return
 	}
 
 	ItemFlavor completionRewardPack = HeirloomEvent_GetCompletionRewardPack( activeThemedShopEvent )
 	array<ItemFlavor> packContents = GRXPack_GetPackContents( completionRewardPack )
 
-	                                                                                            
+
 	GRXScriptOffer fakeOffer
 	fakeOffer.titleText = ItemFlavor_GetLongName( completionRewardPack )
 	fakeOffer.descText = ""
 	fakeOffer.prereq = activeThemedShopEvent
 
 	ItemFlavorBag priceBag
-	priceBag.flavors.append( GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] )
+	priceBag.flavors.append( GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
 	priceBag.quantities.append( 999999999 )
 	fakeOffer.prices.append( priceBag )
 
@@ -480,7 +480,7 @@ void function WhatsNewInfoItem_Update( ItemFlavor focusFlav )
 			rarityText = "#MYTHIC_SKIN"
 		}
 	}
-	else                    
+	else
 	{
 		file.focusedButtonIsntMythic = true
 		nameText = ItemFlavor_GetLongName( focusFlav )
@@ -503,7 +503,7 @@ void function WhatsNewInfoItem_Update( ItemFlavor focusFlav )
 					GRXScriptOffer offer = offers[0]
 					foreach ( ItemFlavorBag price in offer.prices )
 					{
-						                                                                                                   
+
 						if ( price.flavors[0] == GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
 						{
 							Assert( premiumPrice == -1, "Inherited existing (NOT -1) Apex Coins price for ItemFlavor bag in GRX offer." )
@@ -613,16 +613,16 @@ void function PreviewItem( ItemFlavor flav )
 			scale = 0.1
 			break
 	}
-	
+
 	bool isNxHH = false
 #if NX_PROG || PC_PROG_NX_UI
 	isNxHH = IsNxHandheldMode()
 #endif
-	
+
 	RunClientScript( "UIToClient_ItemPresentation", ItemFlavor_GetGUID( flav ), -1, scale, showLow, null, true, "battlepass_right_ref", isNxHH, true )
 }
 
-                                     
+
 void function CategorizeWhatsNewList( array<ItemFlavor> whatsNewList )
 {
 	whatsNewList.sort( int function( ItemFlavor a, ItemFlavor b ) : () {
@@ -644,8 +644,8 @@ void function CategorizeWhatsNewList( array<ItemFlavor> whatsNewList )
 		return SortStringAlphabetize( Localize( ItemFlavor_GetLongName( a ) ), Localize( ItemFlavor_GetLongName( b ) ) )
 	} )
 
-	                                                
-	for ( int i = 0; i < 4; i++ )                                                                       
+
+	for ( int i = 0; i < 4; i++ )
 	{
 		if ( !( i in file.itemCategoryCount ) )
 			file.itemCategoryCount[i] <- 0
@@ -766,14 +766,14 @@ void function OpenPackButton_OnClick( var btn )
 int function GetCurrentMaxEventPackPurchaseCount( entity player )
 {
 	#if SERVER
-		                                      
-			        
+
+
 	#endif
 
 	ItemFlavor activeThemedShopEvent = expect ItemFlavor( file.activeThemedShopEvent )
 	ItemFlavor packFlav              = GetItemFlavorByAsset( ThemedShopEvent_GetAssociatedPack( activeThemedShopEvent ) )
 	#if SERVER
-		                                                                                   
+
 	#elseif UI
 		int ownedPackCount = GRX_GetPackCount( ItemFlavor_GetGRXIndex( packFlav ) )
 	#endif
@@ -807,7 +807,7 @@ void function MythicInspect_AutoAdvance()
 
 	while( !file.focusedButtonIsntMythic )
 	{
-		wait 3.0                                       
+		wait 3.0
 
 		if ( !IsConnected() )
 			return
@@ -828,7 +828,7 @@ void function MythicInspect_AutoAdvance()
 	file.autoRunning = false
 }
 
-                                                                                                        
+
 void function UpdateMythicUI( bool isMythicActive )
 {
 	if ( !IsConnected() )
@@ -866,7 +866,7 @@ void function UpdateMythicUI( bool isMythicActive )
 	}
 }
 
-                                                                                  
+
 void function UpdateMythicElements( ItemFlavor activeThematicEvent )
 {
 	bool awardMythic = HeirloomEvent_IsRewardMythicSkin( activeThematicEvent )

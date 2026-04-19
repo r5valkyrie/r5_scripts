@@ -9,8 +9,6 @@ global function Sh_SkydiveLaunchers_Init
 
 	const float SKYDIVE_TRIGGER_RADIUS = 36
 #endif //SERVER
-//TODO: FIND THE ORIGINAL PARTICLES!
-global const string SKYDIVE_LAUNCHER_TARGETNAME = "skydive_launcher"
 
 //SHARED
 global enum eSkydiveLauncherType

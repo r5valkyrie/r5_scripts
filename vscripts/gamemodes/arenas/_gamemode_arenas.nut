@@ -1106,9 +1106,6 @@ void function Arenas_SpawnAirdrops()
 		// Pick random loot loadout for this care package
 		array<string> contents = airdropLootPool[ RandomInt( airdropLootPool.len() ) ]
 
-		// Create the spawn marker FX
-		entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( DROPPOD_SPAWN_FX ), origin, angles )
-
 		// Spawn the airdrop
 		AirdropItemsOptionalInfo optionInfo
 		optionInfo.animationName = ARENAS_AIRDROP_ANIMATION

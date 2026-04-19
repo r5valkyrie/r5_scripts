@@ -197,10 +197,26 @@ struct
 
 	bool loadScreenFinished = false
 
-	table<string, int> t_persistenceAttempts
+	float reconnectStartTime
+
+	table<string, var> dialogFlowPersistenceChecksValuesTable
+	table<string, float> dialogFlowPersistenceChecksTimeTable
+
+	bool dialogFlowComplete = false
+
+	int partyMemberCount
+
+	bool rankedSplitChangeAudioPlayed = false
+
+	ItemFlavor ornull topLevelCustomizeContext
 
 	bool lastMenuNavDirection = MENU_NAV_FORWARD
+
+	bool commsMenuOpen = false
+	bool isShowingMap = false
 	bool modeSelectMenuOpen = false
+	var activeMenu = null
+	var activeOverlay = null
 
 #if DEVELOPER
 	float uiAutomationLastTime = 0
@@ -209,6 +225,9 @@ struct
 	var uiAutomationTopActivePanel = null
 	var uiAutomationCount = 0
 #endif
+
+	bool hasInitializedOnce = false
+	bool currencyDialogShowed = false
 } file
 
 
@@ -525,118 +544,8 @@ void function UICodeCallback_LevelInit( string levelname )
 	file.loadScreenFinished = false
 }
 
-
-void function UICodeCallback_FullyConnected( string levelname )
+void function UIFullyConnectedInitialization_ForLevel( string levelname )
 {
-	Assert( IsConnected() )
-
-	StopVideos( eVideoPanelContext.ALL )
-
-	uiGlobal.loadedLevel = levelname
-
-	printt( "UICodeCallback_FullyConnected: " + uiGlobal.loadedLevel + ", IsFullyConnected(): ", IsFullyConnected() )
-
-	//if ( !uiGlobal.loadoutsInitialized )
-	//{
-	//	string gameModeString = GetConVarString( "mp_gamemode" )
-	//	if ( gameModeString != "solo" )
-	//	{
-	//		InitStatsTables()
-	//	}
-	//}
-
-	PlayLists_Mapnames_Gamemodes_Init()
-	InitXPData()
-
-	//#if DEVELOPER // For convenience
-		ShDevUtility_Init()
-	//#endif
-
-
-
-	ShDevWeapons_Init()
-	ShEHI_LevelInit_Begin()
-	ShPakRequests_LevelInit()
-	ShPersistentData_LevelInit_Begin()
-	ShItems_LevelInit_Begin()
-	ShGRX_LevelInit()
-	Vouchers_LevelInit()
-	Entitlements_LevelInit()
-	CustomizeCommon_Init()
-	CustomizeModel_Init()
-	ShLoadouts_LevelInit_Begin()
-	ShCharacters_LevelInit()
-	ShPassives_Init()
-	ShCharacterAbilities_LevelInit()
-	ShCharacterCosmetics_LevelInit()
-	SeasonQuest_SharedInit()
-	ShCalEvent_LevelInit()
-	CollectionEvents_Init()
-	ThemedShopEvents_Init()
-	ShSkydiveTrails_LevelInit()
-	//Sh_Ranked_Init()
-	ShWeapons_LevelInit()
-	ShWeaponCosmetics_LevelInit()
-	ShGladiatorCards_LevelInit()
-	ShQuips_LevelInit()
-	ShLoadscreen_LevelInit()
-	ShMusic_LevelInit()
-	ShBattlePass_LevelInit()
-	MeleeShared_Init()
-	MeleeSyncedShared_Init()
-	ShPing_Init()
-	ShQuickchat_Init()
-	ShChallenges_LevelInit_PreStats()
-	ShItems_LevelInit_Finish()
-	ShItemPerPlayerState_LevelInit()
-	UserInfoPanels_LevelInit()
-	ShLoadouts_LevelInit_Finish()
-	UiNewnessQueries_LevelInit()
-	ShStatsInternals_LevelInit()
-	ShStats_LevelInit()
-	ShPlaylist_Init()
-	ShChallenges_LevelInit_PostStats()
-
-	ShPersistentData_LevelInit_Finish()
-	ShPassPanel_LevelInit()
-	ShEHI_LevelInit_End()
-
-	//InitItems()
-	ModSystem_RunCallbacks()//MOD SYSTEM CALLBACK
-	Perks_Init()
-	Perk_ExtraBinLoot_Init()
-	Perk_BeaconScan_Init()
-	SURVIVAL_Loot_All_InitShared()
-	NewScriptInit_Level()
-
-	#if DEVELOPER
-		UpdatePrecachedSPWeapons()
-	#endif
-
-	LoadoutSelection_Init()
-
-	if ( !uiGlobal.loadoutsInitialized )
-	{
-		string gameModeString = GetConVarString( "mp_gamemode" )
-		if ( gameModeString != "solo" )
-		{
-			DeathHints_Init()
-			//CreateChallenges()
-			uiGlobal.loadoutsInitialized = true
-		}
-	}
-
-	//thread UpdateCachedLoadouts()
-	//thread UpdateCachedNewItems()
-	//thread InitUISpawnLoadoutIndexes()
-
-	if ( !uiGlobal.eventHandlersAdded )
-	{
-		uiGlobal.eventHandlersAdded = true
-	}
-
-	//UI_GetAllChallengesProgress()
-
 	bool isLobby = IsLobbyMapName( levelname )
 
 	string gameModeString = GetConVarString( "mp_gamemode" )
@@ -646,13 +555,14 @@ void function UICodeCallback_FullyConnected( string levelname )
 	Assert( gameModeString == GetConVarString( "mp_gamemode" ) )
 	Assert( gameModeString != "" )
 
-	int gameModeId        = 1
+	int gameModeId        = GameMode_FindByDevName( gameModeString )
 	int mapId             = -1
 	int difficultyLevelId = 0
 	int roundId           = 0
 	if ( isLobby )
 	{
-		file.t_persistenceAttempts.clear()
+		file.dialogFlowPersistenceChecksValuesTable.clear()
+		file.dialogFlowPersistenceChecksTimeTable.clear()
 		Durango_OnLobbySessionStart( gameModeId, difficultyLevelId )
 	}
 	else
@@ -666,14 +576,178 @@ void function UICodeCallback_FullyConnected( string levelname )
 	}
 	thread UpdateMenusOnConnectThread( levelname )
 
-	uiGlobal.previousLevel = uiGlobal.loadedLevel
-	uiGlobal.previousPlaylist = GetCurrentPlaylistName()
-	uiGlobal.isShowingMap = false
+	SetShowingMap( false )
 
 	if ( !IsLobby() )
-		uiGlobal.matchPinData = {}
+		ClearMatchPINData()
 
 	file.TEMP_circularReferenceCleanupEnabled = GetCurrentPlaylistVarBool( "circular_reference_cleanup_enabled", true )
+}
+
+void function UIFullyConnectedInitialization()
+{
+	#if DEVELOPER
+		ShDevUtility_Init()
+	#endif
+
+
+
+	ShEHI_LevelInit_Begin()
+	ShPakRequests_LevelInit()
+	ShPersistentData_LevelInit_Begin()
+	ShItems_LevelInit_Begin()
+	ShGRX_LevelInit()
+		Perks_Init()
+		Perk_BeaconScan_Init()
+		Perk_ExtraBinLoot_Init()
+		Perk_CarePackageInsight_Init()
+		Perk_ExtraFirepower_Init()
+		Perk_KillBoostUlt_Init()
+		Perk_SupportLootbin_Init()
+		Perk_MunitionsBox_Init()
+	StorePanelThemedShopEvent_LevelInit()
+	StorePanelHeirloomShopEvent_LevelInit()
+	Entitlements_LevelInit()
+	CustomizeCommon_Init()
+	ShLoadouts_LevelInit_Begin()
+	DeathBoxListPanel_VMInit()
+	SurvivalGroundList_LevelInit()
+	ShCharacters_LevelInit()
+	ShSkydiveTrails_LevelInit()
+	ShPassives_Init()
+	ShCharacterAbilities_LevelInit()
+	ShCharacterCosmetics_LevelInit()
+	ShCalEvent_LevelInit()
+	Vouchers_LevelInit()
+	TimeGatedLoginRewards_Init()
+	CollectionEvents_Init()
+	ThemedShopEvents_Init()
+		MilestoneEvents_Init()
+
+	BuffetEvents_Init()
+	RewardCampaign_Init()
+
+	EventShop_Init()
+
+	StoryChallengeEvents_Init()
+	Sh_Ranked_ItemRegistrationInit()
+	Sh_Ranked_Init()
+	//CLUI_Ranked_Init()
+
+
+		//Sh_ArenasRanked_ItemRegistrationInit()
+
+
+
+		//Sh_ArenasRanked_Init()
+	ShWeapons_LevelInit()
+	ShWeaponCosmetics_LevelInit()
+	ShGladiatorCards_LevelInit()
+	ShQuips_LevelInit()
+	ShSkydiveEmotes_LevelInit()
+	ShStickers_LevelInit()
+	ShMythics_LevelInit()
+	ShLoadscreen_LevelInit()
+	ShImage2D_LevelInit()
+	ShBattlepassPresaleVoucher_LevelInit()
+	//ShBattlepassPurchasableXP_LevelInit()
+
+	//	ShEventAbilities_Init()
+
+//	Sh_Boosts_Init()
+	ShMusic_LevelInit()
+	ShBattlePass_LevelInit()
+	//ShCups_LevelInit()
+
+
+	//ShRankedRumble_Init()
+
+
+
+
+	LobbyPlaylist_Init()
+	PlayPanel_LevelInit()
+	TreasureBox_SharedInit()
+	SeasonQuest_SharedInit()
+	MenuCamera_Init()
+	MenuScene_Init()
+	MeleeShared_Init()
+	MeleeSyncedShared_Init()
+	ShArtifacts_LevelInit()
+	ShPing_Init()
+	ShQuickchat_Init()
+	ShChallenges_LevelInit_PreStats()
+	Sh_Challenge_Sets_Init()
+
+
+
+	AutogenStats_Init()
+	//Sh_Kepler_Init()
+
+	//ShRewardSetTracker_LevelInit()
+	ShItems_LevelInit_Finish()
+	ShItemPerPlayerState_LevelInit()
+	UserInfoPanels_LevelInit()
+	ShLoadouts_LevelInit_Finish()
+	UiNewnessQueries_LevelInit()
+	ShStatsInternals_LevelInit()
+	ShStats_LevelInit()
+	Sh_RankedTrials_Init()
+	ShChallenges_LevelInit_PostStats()
+
+	//	ShCups_LevelInit_PostStats()
+	ShPlaylist_Init()
+
+	ShPersistentData_LevelInit_Finish()
+	ShPassPanel_LevelInit()
+	ShEHI_LevelInit_End()
+
+	ModSystem_RunCallbacks()//MOD SYSTEM CALLBACK
+	SURVIVAL_Loot_All_InitShared()
+
+#if DEVELOPER
+		UpdatePrecachedSPWeapons()
+#endif
+
+	#if DEVELOPER
+		UpdatePrecachedSPWeapons()
+	#endif
+		PrivateMatch_Init()
+
+	LoadoutSelection_Init()
+
+		Gifting_LevelInit()
+
+
+	//Sh_Mastery_Init()
+}
+
+void function UICodeCallback_FullyConnected( string levelname )
+{
+	Assert( IsConnected() )
+
+	StopVideos( eVideoPanelContext.ALL )
+
+	uiGlobal.loadedLevel = levelname
+
+	printt( "UICodeCallback_FullyConnected: " + uiGlobal.loadedLevel + ", IsFullyConnected(): ", IsFullyConnected() )
+
+	InitXPData()
+
+
+	bool shouldFullyInitialize = !file.hasInitializedOnce || IsLobby() || IsPrivateMatch()
+	if ( shouldFullyInitialize )
+	{
+		UIFullyConnectedInitialization()
+		ForceRefreshVisiblePlaylists()
+		file.hasInitializedOnce = true
+	}
+	else
+	{
+		printt( "UICodeCallback_FullyConnected: Performing partial initialization" )
+	}
+
+	UIFullyConnectedInitialization_ForLevel( levelname )
 }
 
 
@@ -688,10 +762,12 @@ void function UICodeCallback_LevelShutdown()
 	VideoChannelManager_OnLevelShutdown()
 	ImagePakLoad_OnLevelShutdown()
 	ShGRX_LevelShutdown()
+	//Kepler_LevelShutdown()
 	StorePanelThemedShopEvent_LevelShutdown()
 	StorePanelHeirloomShopEvent_LevelShutdown()
 	PlayPanel_LevelShutdown()
 	OffersPanel_LevelShutdown()
+	//Gifting_LevelShutdown()
 	LeaveMatch_ResetInitiated()
 
 	Signal( uiGlobal.signalDummy, "LevelShutdown" )
@@ -725,8 +801,8 @@ void function UICodeCallback_NavigateBack()
 	if ( IsDialog( activeMenu ) )
 	{
 		if ( uiGlobal.menuData[ activeMenu ].dialogData.noChoice ||
-				uiGlobal.menuData[ activeMenu ].dialogData.forceChoice ||
-						Time() < uiGlobal.dialogInputEnableTime )
+		uiGlobal.menuData[ activeMenu ].dialogData.forceChoice ||
+		UITime() < uiGlobal.dialogInputEnableTime )
 			return
 	}
 

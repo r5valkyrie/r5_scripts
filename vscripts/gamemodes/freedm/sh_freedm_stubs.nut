@@ -48,12 +48,11 @@ global function SetVictoryKillMode
 global function WeaponStatsHook_OnKillEnemy
 global function Remote_CallFunction_QueueForNoKillCam
 #endif
-
+global function GameRules_IsTeamIndexValid
 #if CLIENT
 global function HudTargetInfo_Enable
 global function EmitSoundOnEntity_NoTimeScale
 global function EmitUISound
-global function GameRules_IsTeamIndexValid
 global function SetPlayThroughPOVTransitions
 // IsRevTakeover moved to shared scope (used by both SERVER and CLIENT)
 global function LowerDVSForGameMode
@@ -177,12 +176,11 @@ void function HudTargetInfo_Enable( bool enabled ) {}
 array<entity> function GetPlayerArrayIncludingSpectators() { return GetPlayerArray() }
 var function EmitSoundOnEntity_NoTimeScale( entity ent, string sound ) { EmitSoundOnEntity( ent, sound ); return null }
 void function EmitUISound( string sound ) { EmitSoundOnEntity( GetLocalClientPlayer(), sound ) }
-bool function GameRules_IsTeamIndexValid( int teamIndex ) { return teamIndex >= 0 && teamIndex < GetCurrentPlaylistVarInt( "max_teams", 20 ) + 2 }
 void function SetPlayThroughPOVTransitions( var soundHandle ) {} // Sound persistence through POV transitions
 void function LowerDVSForGameMode( bool lower ) {} // Dynamic Visibility Settings tweaks
 #endif // CLIENT
 
-
+bool function GameRules_IsTeamIndexValid( int teamIndex ) { return teamIndex >= 0 && teamIndex < GetCurrentPlaylistVarInt( "max_teams", 20 ) + 2 }
 #if CLIENT
 bool function RuiHasGameTimeArg( var rui, string argName ) { return false }
 #endif

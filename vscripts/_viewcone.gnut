@@ -16,6 +16,7 @@ global function ViewConeLockedForward
 global function ViewConeTDay
 global function ViewConeTDayZero
 global function ViewConeFastball
+global function ViewConeSurvivalPlane
 
 //run out ramp
 global function ViewConeRampFrontLeft
@@ -51,13 +52,10 @@ global function ViewConeSideRightLockedForwardSitBack
 global function ViewConeSpSpawn
 global function InitView
 
-//evac
 global function ViewConeFree
+global function ViewCone360
 
 global function IsViewConeCurrent
-
-// r5 stuff
-global function ViewCone360
 
 void function Viewcone_Init()
 {
@@ -79,20 +77,6 @@ void function Viewcone_Init()
 	AddGlobalAnimEvent( "ViewConeFreeLookingForward",	ViewConeFreeLookingForward )
 	AddGlobalAnimEvent( "ViewConeTDay",					ViewConeTDay )
 	AddGlobalAnimEvent( "ViewConeTDayZero",				ViewConeTDayZero )
-	AddGlobalAnimEvent( "ViewCone360", 					ViewCone360 )
-}
-
-void function ViewCone360( entity player )
-{
-		if ( !player.IsPlayer() )
-		return
-	player.PlayerCone_SetLerpTime( 0.5 )
-
-	player.PlayerCone_FromAnim()
-	player.PlayerCone_SetMinYaw( -180 )
-	player.PlayerCone_SetMaxYaw( 180 )
-	player.PlayerCone_SetMinPitch( -180 )
-	player.PlayerCone_SetMaxPitch( 180 )
 }
 
 void function ViewConeZero( entity player )
@@ -494,7 +478,32 @@ void function ViewConeFree( entity player )
 	player.PlayerCone_SetMaxPitch( 60 )
 }
 
-void function InitView( entity player, int pitch, int yaw, void functionref( entity )callFunction )
+void function ViewConeSurvivalPlane( entity player )
+{
+	if ( !player.IsPlayer() )
+		return
+	player.PlayerCone_SetLerpTime( 0.0 )
+	player.PlayerCone_FromAnim()
+	player.PlayerCone_SetMinYaw( -179 )
+	player.PlayerCone_SetMaxYaw( 181 )
+	player.PlayerCone_SetMinPitch( 5 )
+	player.PlayerCone_SetMaxPitch( 90 )
+}
+
+void function ViewCone360( entity player )
+{
+	if ( !player.IsPlayer() )
+		return
+	player.PlayerCone_SetLerpTime( 0.5 )
+
+	player.PlayerCone_FromAnim()
+	player.PlayerCone_SetMinYaw( -179 )
+	player.PlayerCone_SetMaxYaw( 181 )
+	player.PlayerCone_SetMinPitch( -90 )
+	player.PlayerCone_SetMaxPitch( 90 )
+}
+
+void function InitView( entity player, int pitch, int yaw, void functionref( entity ) callFunction )
 {
 	if ( !player.IsPlayer() )
 		return
@@ -507,7 +516,7 @@ void function InitView( entity player, int pitch, int yaw, void functionref( ent
 
 	entity dropship = player.GetParent()
 
-	while( !dropship )
+	while ( !dropship )
 	{
 		wait 0.05
 		dropship = player.GetParent()
@@ -515,7 +524,7 @@ void function InitView( entity player, int pitch, int yaw, void functionref( ent
 
 	for ( int i = 0; i < 5; i++ )
 	{
-		player.SetLocalAngles( Vector( pitch, yaw, 0 ) )
+		player.SetLocalAngles( <pitch, yaw, 0> )
 		wait 0.1
 	}
 }

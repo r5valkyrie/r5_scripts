@@ -104,7 +104,7 @@ var function OnWeaponTossReleaseAnimEvent_weapon_satchel( entity weapon, WeaponP
 	#if SERVER
 		SetVisibleEntitiesInConeQueriableEnabled( satchel, true )
 		Satchel_PostFired_Init( satchel, player )
-		thread EnableTrapWarningSound( satchel, 0, DEFAULT_WARNING_SFX )
+		thread EnableTrapWarningSound( satchel, 0, "" )
 		EmitSoundOnEntityExceptToPlayer( player, player, "weapon_r1_satchel.throw" )
 		PROTO_PlayTrapLightEffect( satchel, "LIGHT", player.GetTeam() )
 		#if BATTLECHATTER_ENABLED

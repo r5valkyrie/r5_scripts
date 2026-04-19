@@ -111,12 +111,8 @@ void function CreateBubbleShield( entity titan, vector origin, vector angles )
 
 float function GetBubbleShieldDuration( entity player )
 {
-	if ( PlayerHasPassive( player, ePassives.PAS_LONGER_BUBBLE ) )
-		return EMBARK_TIMEOUT + 10.0
-	else
-		return EMBARK_TIMEOUT
-
-	unreachable
+	const float EMBARK_TIMEOUT = 13.0 // how long you have to reach your titan before it stands up and bubble shield starts to fade
+	return EMBARK_TIMEOUT
 }
 
 void function MonitorTitanMovement( entity soul, entity bubbleShield )

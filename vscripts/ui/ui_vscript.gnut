@@ -361,36 +361,29 @@ void function UICodeCallback_SmokeTestRunning( string param )
 
 
 void function UICodeCallback_UIInit()
-{				
+{
 	PIN_Init()
-	//ScriptCompilerTest()
+
+	ScriptCompilerTest()
 
 	ShUtilityAll_Init()
 	LevelVarInit()
-	
-	AddUICallback_OnLevelInit( Load_Level_based_UIGlobals )
-	AddUICallback_OnLevelInit( UILevelLoadCallback )
-	AddUICallback_OnLevelInit( ResetDefaults )
 
 	VPKNotifyFile( "media/intro_captions.txt" )
 	VPKNotifyFile( "cfg/startup.cfg" )
 	VPKNotifyFile( "cfg/startup_retail.cfg" )
 	
 	UtilityUI_Init()
-	ShAssets_Init()
 	Settings_Init() // UI script doesn't need everything in this, reorganize
 	ModSystem_RunCallbacks()//MOD SYSTEM CALLBACK
 	GameModes_Init()
 	UIVars_Init()
 
 	PassivesShared_Init()
-	//ChallengesShared_Init()
-	//ChallengesContent_Init()
+	ShXP_Init()
 
 	MenuGamepadLayout_Init()
-	//MenuChallenges_Init()
 	MenuUtility_Init()
-	Sh_FS_MovementRecorder_Init()
 
 	RegisterSignal( "LevelShutdown" )
 	RegisterSignal( "CleanupInGameMenus" )
@@ -406,27 +399,20 @@ void function UICodeCallback_UIInit()
 	thread UpdateClientMenuOpenStateThread()
 
 	InitGamepadConfigs()
-	InitMenus()
 	EmbeddedText_Init()
+	InitMenus()
 
-	ListPanelInit()
 	ScrollPanelInit()
 	GridPanelInit()
 
 	ShGladiatorCards_Init()
-	VendingMachine_LevelInit()
 
-	#if HAS_TOOLTIPS
-		Sh_InitToolTips()
-	#endif
+	Sh_InitToolTips()
 
 	ShLoadouts_VMInit()
-	NewScriptInit_VM()
-	#if DEVELOPER
-		if ( IsFullyConnected() ) // special cases to handle uiscript_reset in dev
-		{
-		}
-	#endif
+	DeathBoxListPanel_VMInit()
+	SurvivalGroundList_LevelInit()
+	ShLoadscreen_Init()
 }
 
 
@@ -458,7 +444,7 @@ void function UICodeCallback_ControllerModeChanged( bool controllerModeEnabled )
 
 	UpdateFooterOptions()
 
-	if ( IsDialog( activeMenu ) && activeMenu != GetMenu( "PromoDialog" ) ) // TEMP: Only old dialogs need this call
+	if ( IsDialog( activeMenu ))
 		UpdateDialogFooterVisibility( activeMenu, controllerModeEnabled )
 }
 
@@ -493,9 +479,6 @@ void function UpdateClientMenuOpenStateThread()
 void function AddUICallback_OnLevelInit( void functionref() callbackFunc )
 {
 	Assert( !(uiGlobal.onLevelInitCallbacks.contains( callbackFunc )), "Already added " + string( callbackFunc ) + " with AddUICallback_OnLevelInit" )
-	if( uiGlobal.onLevelInitCallbacks.contains( callbackFunc ) )
-		return
-	
 	uiGlobal.onLevelInitCallbacks.append( callbackFunc )
 }
 

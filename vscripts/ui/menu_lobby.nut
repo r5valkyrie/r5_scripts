@@ -18,6 +18,10 @@ global function UpdateServerAndPlayerCountButtons
 global function Lobby_EnableMinimapCoordsOnConnect
 
 
+global function Lobby_AdjustScreenFrameToMaxSize
+global function Lobby_AdjustBlackBarsFrameToMaxSize
+global const int LOBBY_MENU_MAX_WIDTH = 2700
+global const int LOBBY_STORE_MENU_MAX_WIDTH = 2224
 
 global int CurrentPresentationType = ePresentationType.PLAY
 
@@ -418,6 +422,41 @@ void function OnLobbyMenu_Open()
 	file.hasFocusedNews = false
 }
 
+void function Lobby_AdjustScreenFrameToMaxSize( var elm, bool center = false )
+{
+	UISize screenSize = GetScreenSize()
+	if( elm != null )
+	{
+		if( IsLobby() )
+		{
+			int maxWidth = ( UI_GetPresentationType() == ePresentationType.STORE_INSPECT )? LOBBY_STORE_MENU_MAX_WIDTH: LOBBY_MENU_MAX_WIDTH
+			float widthToUse =  min( ContentScaledXAsInt( maxWidth ) , screenSize.width )
+			float leftOverWidth = screenSize.width - widthToUse
+
+			Hud_SetWidth( elm, widthToUse )
+			if( center && leftOverWidth > 0 )
+				Hud_SetX(elm, leftOverWidth / 2 )
+			else
+				Hud_SetX(elm, 0 )
+		}
+		else
+		{
+			Hud_SetWidth( elm, screenSize.width )
+		}
+	}
+}
+
+void function Lobby_AdjustBlackBarsFrameToMaxSize( var menu )
+{
+	if( Hud_HasChild(menu, "SideBars" ) )
+	{
+		var sideBars = Hud_GetChild( menu, "SideBars" )
+		int maxWidth = ( UI_GetPresentationType() == ePresentationType.STORE_INSPECT )? LOBBY_STORE_MENU_MAX_WIDTH: LOBBY_MENU_MAX_WIDTH
+
+		Hud_SetVisible( sideBars, IsLobby() )
+		HudElem_SetRuiArg( sideBars, "safeWidth", float( maxWidth ), eRuiArgType.FLOAT )
+	}
+}
 void function OnLobbyMenu_Show()
 {
 	thread LobbyMenuUpdate()

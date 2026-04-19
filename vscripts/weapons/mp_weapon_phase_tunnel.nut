@@ -1348,7 +1348,7 @@ void function PhaseTunnel_PhaseEntity( entity ent, entity tunnelEnt, PhaseTunnel
 
 	if ( travelState.shiftStyle == PHASETYPE_TUNNEL )
 	{
-		// LiveAPI_SendOnePlayerEvent( eLiveAPI_EventTypes.wraithPortal, ent )
+		LiveAPI_SendOnePlayerEvent( eLiveAPI_EventTypes.wraithPortal, ent )
 		StatsHook_PhaseTunnel_EntTraversed( ent, tunnelEnt, entHasUsedTunnelBefore )
 	}
 	// else if ( travelState.shiftStyle == PHASETYPE_BREACH )

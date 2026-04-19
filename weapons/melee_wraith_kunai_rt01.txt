@@ -57,7 +57,7 @@
 	// val unk: 61
 	"zoom_effects" "0"
 	// val unk: 2
-	"melee_anim_1p" "ACT_VM_MELEE_ATTACK2"
+	"//"melee_anim_1p" "ACT_VM_MELEE_ATTACK2"
 	// val unk: 31
 	"ammo_suck_behavior" "melee_weapons"
 	// val unk: 20
@@ -209,7 +209,7 @@
 			// val unk: 2
 			"melee_attack_animtime" "1.300000"
 			// val unk: 3
-			"melee_anim_1p" "ACT_VM_MELEE_ATTACK3"
+			"//"melee_anim_1p" "ACT_VM_MELEE_ATTACK3"
 			// val unk: 0
 			"impulse_force" "20000"
 			// val unk: 1

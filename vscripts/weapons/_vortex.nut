@@ -14,6 +14,8 @@ global function Vortex_SetBulletCollectionOffset
 global function CodeCallback_OnVortexHitBullet
 global function CodeCallback_OnVortexHitProjectile
 global function IsIgnoredByVortex
+global function SetCallback_VortexSphereTriggerOnBulletHit
+global function SetCallback_VortexSphereTriggerOnProjectileHit
 #if SERVER
 global function UpdateShieldWallFX
 global function ValidateVortexImpact
@@ -26,8 +28,6 @@ global function VortexSphereDrainHealthForDamage
 global function Vortex_CreateImpactEventData
 global function Vortex_SpawnHeatShieldPingFX
 global function Vortex_ConvertToVortexTriggerArea
-global function SetCallback_VortexSphereTriggerOnBulletHit
-global function SetCallback_VortexSphereTriggerOnProjectileHit
 global function VortexFireEnable
 #endif // SERVER
 
@@ -157,19 +157,17 @@ void function Vortex_ConvertToVortexTriggerArea( entity vortexSphere )
 	//TO DO: GET A CODE FLAG TO REPLACE THIS SO WE DON'T HAVE TO USE TARGET NAME
 	SetTargetName( vortexSphere, VORTEX_TRIGGER_AREA )
 }
+#endif // SERVER
 
 void function SetCallback_VortexSphereTriggerOnBulletHit( entity vortexSphere, void functionref( entity, entity, var ) callback )
 {
-	Assert( vortexSphere.GetTargetName() == VORTEX_TRIGGER_AREA, "Vortex Sphere is not setup as a vortex trigger area. Call VortexSphere_ConvertToVortexTriggerArea first." )
 	vortexSphere.e.Callback_VortexTriggerBulletHit = callback
 }
 
 void function SetCallback_VortexSphereTriggerOnProjectileHit( entity vortexSphere, void functionref( entity, entity, entity, entity, vector ) callback )
 {
-	Assert( vortexSphere.GetTargetName() == VORTEX_TRIGGER_AREA, "Vortex Sphere is not set up as a vortex trigger area. Call VortexSphere_ConvertToVortexTriggerArea first." )
 	vortexSphere.e.Callback_VortexTriggerProjectileHit = callback
 }
-#endif // SERVER
 
 void function CreateVortexSphere( entity vortexWeapon, bool useCylinderCheck, bool blockOwnerWeapon, int sphereRadius = 40, int bulletFOV = 180 )
 {
@@ -465,7 +463,7 @@ float function Vortex_HandleElectricDamage( entity ent, entity attacker, float d
 // this function handles all incoming vortex impact events
 bool function TryVortexAbsorb( entity vortexSphere, entity attacker, vector origin, int damageSourceID, entity weapon, string weaponName, string impactType, entity projectile = null, damageType = null, reflect = false )
 {
-	entity vortexWeapon = vortexSphere.GetOwnerWeapon()
+	entity vortexWeapon = vortexSphere.e.ownerWeapon
 	entity owner = vortexWeapon.GetWeaponOwner()
 
 	// keep cycling the oldest hitscan bullets out
@@ -568,7 +566,7 @@ bool function TryVortexAbsorb( entity vortexSphere, entity attacker, vector orig
 
 	Vortex_StoreImpactEvent( vortexWeapon, impact )
 
-	VortexImpact_PlayAbsorbedFX( vortexWeapon, impact )
+	//VortexImpact_PlayAbsorbedFX( vortexWeapon, impact )
 
 	if ( impactType == "hitscan" )
 		vortexSphere.AddBulletToSphere()
@@ -587,7 +585,7 @@ bool function TryVortexAbsorb( entity vortexSphere, entity attacker, vector orig
 
 		int bulletsFired = VortexReflectAttack( vortexWeapon, attackParams, impact.origin )
 
-		Vortex_CleanupImpactAbsorbFX( vortexWeapon )
+		//Vortex_CleanupImpactAbsorbFX( vortexWeapon )
 		Vortex_ClearImpactEventData( vortexWeapon )
 
 		while ( vortexSphere.GetBulletAbsorbedCount() > 0 )
@@ -1030,6 +1028,7 @@ int function VortexPrimaryAttack( entity vortexWeapon, WeaponPrimaryAttackParams
 	return totalfired
 }
 
+const int MAX_BULLET_PER_SHOT = 35
 int function Vortex_FireBackBullets( entity vortexWeapon, WeaponPrimaryAttackParams attackParams )
 {
 	int bulletCount = GetBulletsAbsorbedCount( vortexWeapon )
@@ -1037,7 +1036,7 @@ int function Vortex_FireBackBullets( entity vortexWeapon, WeaponPrimaryAttackPar
 	if ( "shotgunPelletsToIgnore" in vortexWeapon.s )
 		bulletCount = int( ceil( bulletCount - vortexWeapon.s.shotgunPelletsToIgnore ) )
 
-	if ( bulletCount )
+	if ( bulletCount > 0 )
 	{
 		bulletCount = minint( bulletCount, MAX_BULLET_PER_SHOT )
 
@@ -1083,7 +1082,7 @@ bool function Vortex_FireBackExplosiveRound( entity vortexWeapon, table attackPa
 	fireBoltParams.scriptExplosionDamageType = damageType
 	fireBoltParams.clientPredicted = false
 	fireBoltParams.additionalRandomSeed = sequenceID
-	entity bolt = vortexWeapon.FireWeaponBolt( fireBoltParams )
+	entity bolt = vortexWeapon.FireWeaponBoltAndReturnEntity( fireBoltParams )
 	if ( bolt )
 	{
 		bolt.kv.gravity = 0.3
@@ -1121,7 +1120,7 @@ bool function Vortex_FireBackProjectileBullet( entity vortexWeapon, table attack
 	fireBoltParams.scriptExplosionDamageType = damageType
 	fireBoltParams.clientPredicted = false
 	fireBoltParams.additionalRandomSeed = sequenceID
-	entity bolt = vortexWeapon.FireWeaponBolt( fireBoltParams )
+	entity bolt = vortexWeapon.FireWeaponBoltAndReturnEntity( fireBoltParams )
 	if ( bolt )
 	{
 		bolt.kv.gravity = 0.0
@@ -1552,20 +1551,18 @@ void function UpdateFriendlyEnemyShieldWallColorForFrac( array<entity> fxArray, 
 
 bool function CodeCallback_OnVortexHitBullet( entity weapon, entity vortexSphere, var damageInfo )
 {
-	#if DEVELOPER
-		printt( "CodeCallback_OnVortexHitBullet ", weapon, vortexSphere )
-	#endif
-
 	//TO DO: Get a code flag for this so we don't use target name.
 	//If the vortex is set to be a trigger area for bullets and projectiles run the specified callbacks then early out.
 	//Note: Vortex trigger areas do not destroy the projectiles and bullets that hit them.
 	if ( vortexSphere.GetTargetName() == VORTEX_TRIGGER_AREA )
 	{
-		#if SERVER
-			Assert( vortexSphere.e.Callback_VortexTriggerBulletHit != null, "Vortex Trigger Area has no bullet hit callback." )
+		if ( vortexSphere.e.Callback_VortexTriggerBulletHit != null )
 			vortexSphere.e.Callback_VortexTriggerBulletHit( weapon, vortexSphere, damageInfo )
-		#endif
+		#if SERVER
+		return vortexSphere.e.vortexDestroysIncomingShots
+		#else
 		return false
+		#endif
 	}
 
 	bool isAmpedWall = vortexSphere.GetTargetName() == PROTO_AMPED_WALL
@@ -1705,11 +1702,13 @@ bool function CodeCallback_OnVortexHitProjectile( entity weapon, entity vortexSp
 	//Note: Vortex trigger areas do not destroy the projectiles and bullets that hit them.
 	if ( vortexSphere.GetTargetName() == VORTEX_TRIGGER_AREA )
 	{
-		#if SERVER
 		if ( vortexSphere.e.Callback_VortexTriggerProjectileHit != null )
 			vortexSphere.e.Callback_VortexTriggerProjectileHit( weapon, vortexSphere, attacker, projectile, contactPos )
-		#endif
+		#if SERVER
+		return vortexSphere.e.vortexDestroysIncomingShots
+		#else
 		return false
+		#endif
 	}
 
 	var ignoreVortex = projectile.ProjectileGetWeaponInfoFileKeyField( "projectile_ignores_vortex" )
@@ -1798,7 +1797,7 @@ bool function CodeCallback_OnVortexHitProjectile( entity weapon, entity vortexSp
 		//	once damageInfo is passed correctly we'll use that instead of looking up the values from the weapon .txt file.
 		//	local damage = ceil( DamageInfo_GetDamage( damageInfo ) )
 
-		if ( takesDamage )
+		if ( takesDamage && damage >= 0 )
 		{
 			VortexSphereDrainHealthForDamage( vortexSphere, damage )
 			if ( IsValid( attacker ) && attacker.IsPlayer() )

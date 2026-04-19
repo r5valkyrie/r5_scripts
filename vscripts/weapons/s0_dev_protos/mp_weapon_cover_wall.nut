@@ -229,7 +229,6 @@ void function CoverWall_Deploy( entity owner, CoverWallPlacementInfo placementIn
 	wallProxy.Minimap_SetZOrder( MINIMAP_Z_OBJECT-1 )
 	wallProxy.Solid()
 	wallProxy.AllowMantle()
-	wallProxy.SetScriptPropFlags( PROP_IS_VALID_FOR_TURRET_PLACEMENT )
 
 	EmitSoundOnEntityOnlyToPlayer( wallProxy, owner, "weapon_sentryfragdrone_pinpull_1p" )
 	EmitSoundOnEntityExceptToPlayer( wallProxy, owner, "weapon_sentryfragdrone_pinpull_3p" )
@@ -764,8 +763,7 @@ CoverWallPlacementInfo function CoverWall_GetPlacementInfoFromTraceResults( enti
 
 		if ( hitEntClassname == "prop_script" )
 		{
-			if ( hullTraceResults.hitEnt.GetScriptPropFlags() == PROP_IS_VALID_FOR_TURRET_PLACEMENT )
-				isScriptedTurretPlaceable = true
+
 		}
 	}
 

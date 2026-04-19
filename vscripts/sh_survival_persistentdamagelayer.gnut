@@ -122,7 +122,7 @@ void function RoundThresholdAdjustment()
 		//ADJUST ROUND VALUES HERE
 		if ( GetCurrentPlaylistVarBool( "persistentdamagelayer_roundbased", false ) )
 		{
-			int roundValue   = SURVIVAL_GetCurrentDeathFieldStage( 0 )
+			int roundValue   = SURVIVAL_GetCurrentDeathFieldStage()
 			int newThreshold = GetCurrentPlaylistVarInt( "persistentdamagelayer_round" + roundValue + "threshold", -1 )
 			file.layerData.killThreshold = newThreshold
 		}
@@ -208,13 +208,13 @@ void function HandleThresholdNotifServer( entity player, int killCount )
 void function HandleThresholdNotifWarnings()
 {
 	string thresholdType = GenerateThresholdType()
-	int threshold = GetCurrentPlaylistVarInt( "persistentdamagelayer_round" + SURVIVAL_GetCurrentDeathFieldStage( 0 ) + "threshold", -1 )
+	int threshold = GetCurrentPlaylistVarInt( "persistentdamagelayer_round" + SURVIVAL_GetCurrentDeathFieldStage() + "threshold", -1 )
 	//RuiSetString( GetCompassRui(), "deadlineTextArg", thresholdType + " Quota `1Failed.     `0Reach the threshold of `1" + threshold + " " + thresholdType + "(s) `0to stop the damage." )
 }
 
 void function HandlePersistentDamageLayerThresholdNotification( int killCount )
 {
-	int threshold = GetCurrentPlaylistVarInt( "persistentdamagelayer_round" + SURVIVAL_GetCurrentDeathFieldStage( 0 ) + "threshold", -1 )
+	int threshold = GetCurrentPlaylistVarInt( "persistentdamagelayer_round" + SURVIVAL_GetCurrentDeathFieldStage() + "threshold", -1 )
 	if ( killCount >= threshold )
 	{
 		HandleThresholdNotifReached()
@@ -228,7 +228,7 @@ void function HandlePersistentDamageLayerThresholdNotification( int killCount )
 
 void function HandleThresholdNotifReached()
 {
-	int quota = SURVIVAL_GetCurrentDeathFieldStage( 0 ) + 1
+	int quota = SURVIVAL_GetCurrentDeathFieldStage() + 1
 	string threshold = "-1"
 	if (quota > 7) {
 		threshold = "FULFILLED"

@@ -87,7 +87,7 @@ void function CustomMatchSettings_OnOpen( var panel )
 	AddCallback_OnCustomMatchSettingChanged( CUSTOM_MATCH_SETTING_PLAYLIST, Callback_OnPlaylistChanged )
 	Callback_OnPlaylistChanged( CUSTOM_MATCH_SETTING_PLAYLIST, CustomMatch_GetSetting( CUSTOM_MATCH_SETTING_PLAYLIST ) )
 
-	                              
+
 	AddCallback_OnCustomMatchSettingChanged( CUSTOM_MATCH_SETTING_PLAYLIST, CustomMatch_ShowSettingsCancelButton )
 	AddCallback_OnCustomMatchSettingChanged( CUSTOM_MATCH_SETTING_CHAT_PERMISSION, CustomMatch_ShowSettingsCancelButton )
 	AddCallback_OnCustomMatchSettingChanged( CUSTOM_MATCH_SETTING_RENAME_TEAM, CustomMatch_ShowSettingsCancelButton )
@@ -99,15 +99,11 @@ void function CustomMatchSettings_OnOpen( var panel )
 
 void function CustomMatchSettings_OnClose( var panel )
 {
-	// Clean up scroll panel data to prevent stale references
-	if ( file.selectOptionsPanel != null )
-		ScrollPanel_DestroyPanel( file.selectOptionsPanel )
-
 	CustomMatch_RestoreSettings()
 	CustomMatch_LockLocalSettings( false )
 	RemoveCallback_OnCustomMatchSettingChanged( CUSTOM_MATCH_SETTING_PLAYLIST, Callback_OnPlaylistChanged )
 
-	                              
+
 	RemoveCallback_OnCustomMatchSettingChanged( CUSTOM_MATCH_SETTING_PLAYLIST, CustomMatch_ShowSettingsCancelButton )
 	RemoveCallback_OnCustomMatchSettingChanged( CUSTOM_MATCH_SETTING_CHAT_PERMISSION, CustomMatch_ShowSettingsCancelButton )
 	RemoveCallback_OnCustomMatchSettingChanged( CUSTOM_MATCH_SETTING_RENAME_TEAM, CustomMatch_ShowSettingsCancelButton )
@@ -152,13 +148,13 @@ void function CancelButton_OnClick( var button )
 
 void function CustomMatchSettings_OnNavigateBack( var panel )
 {
-	                                                                                        
+
 	CustomMatch_RestoreSettings()
 }
 
-                                                                                      
-                             
-                                                                                      
+
+
+
 
 void function Callback_OnPlaylistChanged( string _, string value )
 {
@@ -177,7 +173,7 @@ void function Callback_OnPlaylistChanged( string _, string value )
 	Hud_SetNavRight( file.modeSelectPanel, mapSelected )
 	Hud_SetNavLeft( file.mapSelectPanel, modeSelected )
 
-	                          
+
 	var mapSelectPanel = Hud_GetChild( file.contentPanel, "MapSelectPanel" )
 	var mapSubHeader = Hud_GetChild( mapSelectPanel, "SelectMapSubHeader" )
 

@@ -2078,7 +2078,7 @@ void function TrackPlayerDebuffInfo( entity player, var rui )
 		{
 			debuffInfo debuff
 			debuff.timeRemaining = StatusEffect_GetTimeRemaining( player, eStatusEffect.healing_denied )
-			debuff.duration = SNIPERULT_HEALINGDENIED_DURATION
+			debuff.duration = 15
 			debuff.icon = $"rui/hud/character_abilities/blocked_healing"
 			debuffQueue.append( debuff )
 		}
@@ -2144,7 +2144,7 @@ void function TrackPlayerDebuffInfo( entity player, var rui )
 		{
 			debuffInfo debuff
 			debuff.timeRemaining = StatusEffect_GetTimeRemaining( player, eStatusEffect.rev_shell_targeted )
-			debuff.duration = REV_SHELL_GIVE_UP_TIME
+			debuff.duration = 30
 			debuff.icon = $"rui/ordnance_icons/grenade_rev_shell"
 			debuffQueue.append( debuff )
 		}

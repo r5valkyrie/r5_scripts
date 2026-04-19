@@ -51,11 +51,6 @@ var function OnWeaponPrimaryAttack_call_for_titan( entity weapon, WeaponPrimaryA
 		vector origin = placementInfo.origin
 		vector angles = placementInfo.angles
 
-        //Start the ground circle particle
-		//entity fx = StartParticleEffectInWorld_ReturnEntity(GetParticleSystemIndex( DROPPOD_SPAWN_FX ), origin, angles)
-		//fx.RemoveFromAllRealms()
-		//fx.AddToOtherEntitysRealms( ownerPlayer )
-
 		thread CallBT( ownerPlayer, origin, angles )
 
 		//PlayBattleChatterLineToSpeakerAndTeam( ownerPlayer, "bc_super" )
@@ -152,7 +147,7 @@ void function CallBT( entity player, vector origin, vector angles)
 	npc.SetCollisionAllowed( false )//TODO: Get rid of this when collision is fixed, it causes crash. - Kral
 
 	//DispatchSpawn( npc )
-	
+
 	npc.kv.solid = 8
 
 	npc.GiveWeapon("mp_titanweapon_xo16_shorty", WEAPON_INVENTORY_SLOT_ANY)
@@ -161,7 +156,7 @@ void function CallBT( entity player, vector origin, vector angles)
 	SetupAutoTitan( npc, player )
 
 	thread NPCTitanHotdrops( npc, false )
-		
+
 	//CodeCallback_EmbarkTitan( player, npc )
 }
 #endif

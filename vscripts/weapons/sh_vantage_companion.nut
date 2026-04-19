@@ -146,6 +146,17 @@ bool VANTAGE_COMPANION_VORTEX_DEBUG_DRAW = false
 bool VANTAGE_COMPANION_LAUNCH_DEBUG_DRAW = false
 #endif //DEVELOPER
 
+global enum eCompanionState
+{
+	UNKNOWN,
+	PERCHED,
+	RECALLING,
+	ORDERED_TO_POSITION,
+	ORDERED_TO_TARGET,
+	AT_POSITION,
+
+	COUNT
+}
 
 #if DEVELOPER
 array<string> sCompanionStateStrings =
@@ -159,6 +170,14 @@ array<string> sCompanionStateStrings =
 ]
 #endif
 
+global enum ePlayerLaunchState
+{
+	NONE,
+
+	PRELAUNCHING,
+	LAUNCHING,
+	COUNT
+}
 
 #if DEVELOPER
 array<string> sPlayerLaunchStateStrings =
@@ -169,7 +188,7 @@ array<string> sPlayerLaunchStateStrings =
 ]
 #endif
 
-
+global const vector ECHO_INITIAL_DEPLOY_OFFSET = <30, -15, 80>
 struct EchoCompanionData
 {
 	int    playerLaunchState
@@ -974,7 +993,7 @@ void function VantageCompanion_Recall( entity player )
 				{
 					entity weapon = player.GetOffhandWeapon( OFFHAND_EQUIPMENT )
 
-					if ( IsValid( weapon ) && weapon.GetWeaponClassName() == VANTAGE_RECALL_WEAPON_NAME )
+					if ( IsValid( weapon ) && weapon.GetWeaponClassName() == "mp_weapon_vantage_recall" )
 					{
 						ActivateOffhandWeaponByIndex( OFFHAND_EQUIPMENT )
 					}

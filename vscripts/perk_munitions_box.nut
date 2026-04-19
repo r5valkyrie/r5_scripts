@@ -1,5 +1,5 @@
 const string MUNITIONS_BOX_SCRIPT_NAME = "assault_perk_loot_bin"
-// MUNITIONS_BOX_LOOT_BIN_SKIN_NAME moved to sh_consts.gnut for shared access
+global const string MUNITIONS_BOX_LOOT_BIN_SKIN_NAME = "MunitionsBox"
 
 const int HOP_UP_DROP_CHANCE = 20
 const int MAG_DROP_CHANCE = 65
@@ -365,7 +365,7 @@ void function AwardTieredLoot( array<string> awardedLoot, array<string> potentia
 void function MunitionsBoxWeapons_SmartLoot_RegisterAssist( entity player )
 {
 	int team = player.GetTeam()
-	
+
 	if( team in file.teamMunitionBinRegistry )
 	{
 		TeamMunitionAssistData teamData = file.teamMunitionBinRegistry[team]
@@ -545,11 +545,11 @@ array<string> function SpawnMunitionsBoxWeapons_SmartLoot( entity ent, entity pl
 	array<entity> primaryWeapons = SURVIVAL_GetPrimaryWeapons( player )
 	bool shouldGrantSmartLoot =  primaryWeapons.len() != 0 || !MunitionsBoxDropsWeaponIfOpeningPlayerIsUnarmed()
 
-                                 
+
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_SOLOS ) || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_BATTLE_RUSH ) )
-       
-                                                                          
-        
+
+
+
 		{
 			string weaponDrop
 
@@ -621,7 +621,7 @@ array<string> function SpawnMunitionsBoxWeapons_SmartLoot( entity ent, entity pl
 			array<string> potentialAttachmentsForPlayer
 
 			potentialAttachmentsForPlayer = teamSmartLootNeeds[player]
-			
+
 			//SpawnMunitionsBoxWeapons_SmartLoot_AddSmartLootForPlayer( player, potentialAttachmentsForPlayer, shouldPruneGoldLoot, MunitionsBoxWeapons_ShouldPlayerGetSoloBoost( player ), false , true, numberOfAttachmentsForOpener )
 
 			if( potentialAttachmentsForPlayer.len() > 0 )
@@ -774,7 +774,7 @@ array<string> function SpawnMunitionsBoxWeapons_SmartLoot( entity ent, entity pl
 				goldScopes = LootHelper_GetCompatibleScopes( teamMate, [4] )
 				if( goldScopes.len() > 0 )
 					potentialGoldOptics.append( goldScopes[RandomInt( goldScopes.len() )] )
-				
+
 			}
 			//End - Loot Consideration for Teammates
 
@@ -1111,7 +1111,7 @@ void function MunitionsBox_SetPlayerOnGoldCooldown( entity player )
 
 void function SpawnMunitionsBoxWeapons_LockedSetWeapon( array<string> awardedLoot )
 {
-	int currentRound = SURVIVAL_GetCurrentDeathFieldStage( 0 )
+	int currentRound = SURVIVAL_GetCurrentDeathFieldStage()
 	string weaponDrop
 	if( currentRound < 4 )
 	{
@@ -1251,7 +1251,7 @@ void function SpawnLootContainers()
 		MunitionsBox_SpawnMunitionsBoxProp( <-2544.000015, -15808.000000, 512.000000>, <4.887651, -90.259758, 0.000000> )
 		MunitionsBox_SpawnMunitionsBoxProp( <-2320.000023, -15808.000000, 512.000000>, <4.887651, -90.259758, 0.000000> )
 	}
-	
+
 	if( LootBin_RandomizePerkBinsFromExistingBins() )
 		return
 

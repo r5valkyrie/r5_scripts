@@ -21,7 +21,7 @@ void function ShLobaPassiveEyeForQuality_LevelInit()
 
 	#if CLIENT
 		AddCreateCallback( "player", OnPlayerCreated )
-		//AddCallback_OnLootBinOpening( OnLootBinOpening )
+		AddCallback_OnLootBinOpening( OnLootBinOpening )
 	#endif
 
 
@@ -93,8 +93,8 @@ void function ServerThinkThread( entity player )
 
 	while ( true )
 	{
-		//if ( Survival_HasPlayerJumpedOutOfPlane( player ) )
-			//TriggerLootSpawnForLootBinsInRadius( player.EyePosition(), range, eLootTier.EPIC )//TODO: FIX BINS
+		if ( Survival_HasPlayerJumpedOutOfPlane( player ) )
+			TriggerLootSpawnForLootBinsInRadius( player.EyePosition(), range, eLootTier.EPIC )
 		wait 0.4
 	}
 }
@@ -182,8 +182,8 @@ void function OnLootBinOpening( entity lootBin )
 	if ( !lootBin.DoesShareRealms( GetLocalViewPlayer() ) )
 		return
 
-	//array<entity> loot = LootBin_GetSpawnedLoot( lootBin, true, true )
-	//thread FadeLootBinLootHighlightsOutThenIn( loot )
+	array<entity> loot = LootBin_GetSpawnedLoot( lootBin, true, true )
+	thread FadeLootBinLootHighlightsOutThenIn( loot )
 }
 #endif
 
@@ -191,7 +191,7 @@ void function OnLootBinOpening( entity lootBin )
 #if CLIENT
 void function FadeLootBinLootHighlightsOutThenIn( array<entity> loot )
 {
-	/*foreach ( entity lootEnt in loot )
+	foreach ( entity lootEnt in loot )
 	{
 		if ( !IsValid( lootEnt ) )
 			continue
@@ -209,7 +209,7 @@ void function FadeLootBinLootHighlightsOutThenIn( array<entity> loot )
 			continue
 
 		SURVIVAL_Loot_UpdateHighlightForLoot( lootEnt )
-	}*/
+	}
 }
 #endif
 
@@ -228,18 +228,18 @@ void function OnLootPinged( entity player, entity wp, entity pingEnt, int pingTy
 #if SERVER || CLIENT || UI
 float function GetEyeForQualityRadius()
 {
-	return GetCurrentPlaylistVarFloat( "loba_pas_eye_for_quality_range", 4500.0 )
+	return GetCurrentPlaylistVarFloat( "loba_pas_eye_for_quality_range", GetBlackMarketNearbyLootRadius() )
 }
 
 bool function GetEyeForQualityCanSee( LootData data )
 {
-	if ( data.tier - 1 >= eQuality.EPIC )
+	if ( data.tier - 1 >= eRarityTier.EPIC )
 		return true
 
-	                    
+
 		if ( data.ref.find( "hopup_golden_horse" ) != -1 )
 			return true
-       
+
 
 
 	return false

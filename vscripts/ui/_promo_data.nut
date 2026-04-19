@@ -4,7 +4,7 @@ global function OpenPromoLink
 
 #if DEVELOPER
 global function DEV_PrintUMPromoData
-#endif       
+#endif
 
 
 struct
@@ -41,7 +41,7 @@ asset function GetPromoImage( string identifier )
 
 void function OpenPromoLink( string linkType, string link )
 {
-	                                                                      
+
 	if ( linkType == "battlepass" )
 	{
 		EmitUISound( "UI_Menu_Accept" )
@@ -155,23 +155,6 @@ void function OpenPromoLink( string linkType, string link )
 #if DEVELOPER
 void function DEV_PrintUMPromoData()
 {
-	UMData um = EADP_UM_GetPromoData()
-	printt( "triggerId:", um.triggerId )
-	printt( "triggerName:", um.triggerName )
-	foreach( int i, UMAction action in um.actions )
-	{
-		printt( i, "action name:", action.name )
-		printt( i, "action trackingId:", action.trackingId )
-		foreach( int j, UMItem item in action.items )
-		{
-			printt( j, "item type:", item.type, "- name:", item.name )
-			printt( j, "item value:", item.value )
-			foreach( int k, UMAttribute attr in item.attributes )
-			{
-				printt( k, "attr key:", attr.key )
-				printt( k, "attr value:", attr.value )
-			}
-		}
-	}
+	return
 }
-#endif       
+#endif

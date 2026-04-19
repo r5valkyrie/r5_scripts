@@ -1,9 +1,9 @@
 global function InitConfirmPurchaseDialog
 global function InitConfirmPackBundlePurchaseDialog
 global function InitBattlepassPurchaseDialog
-                    
-                                              
-      
+
+
+
 
 global function PurchaseDialog
 
@@ -27,10 +27,10 @@ enum eButtonDisplayStatus
 const int MAX_PURCHASE_BUTTONS = 2
 const string PIN_MESSAGE_TYPE_AC = "apex_coins_click"
 const string PIN_MESSAGE_TYPE_PACKS ="pack_button_click"
-                    
-                                                        
-                                                           
-      
+
+
+
+
 
 struct PurchaseDialogState
 {
@@ -47,9 +47,9 @@ struct
 	var genericPurchaseDialog
 	var packBundlePurchaseDialog
 	var battlepassPurchaseDialog
-                    
-                       
-      
+
+
+
 	var contentRui
 	var buttonsPanel
 	var processingButton
@@ -59,10 +59,10 @@ struct
 	var        cancelButton
 	var        AcButton
 	var		   packButton
-                    
-                               
-                                 
-      
+
+
+
+
 	array<var> purchaseButtonBottomToTopList
 	ItemFlavor ornull activeCollectionEvent = null
 
@@ -72,7 +72,7 @@ struct
 
 void function InitPurchaseMenu( var menu, array< var > purchaseButtons )
 {
-	                                                                                 
+
 	SetDialog( menu, true )
 
 	foreach ( button in purchaseButtons )
@@ -100,30 +100,30 @@ array< var > function GetPurchaseButtonArray( var menu, int maxIndex )
 	return purchaseButtons
 }
 
-                                                                                 
-  
-	                
 
-	                   
-	                     
-	                      
-	                        
-	                
 
-	                                    
-	                                                                                        
-  
+
+
+
+
+
+
+
+
+
+
+
 void function SetupPurchaseMenu( int purchaseButtonStatus )
 {
 	var menu = file.activeDialog
 	void functionref( var ) purchaseButtonFunction = PurchaseButton_Activate
 
-	                                                                                                                           
+
 	var acPurchaseButton = Hud_GetChild( menu, "AcPurchaseButton" )
 	var packPurchaseButton = Hud_GetChild( menu, "PackPurchaseButton" )
 	var cancelButton = Hud_GetChild( menu, "CancelButton" )
 
-	                                                                                                                          
+
 	array< var > purchaseButtonArray = []
 	switch ( menu )
 	{
@@ -140,38 +140,38 @@ void function SetupPurchaseMenu( int purchaseButtonStatus )
 			Assert( false, "Unhandled active dialog for SetupPurchaseMenu(): " + menu )
 	}
 
-	                                                     
+
 	bool boundPurchaseButtons = false
 	foreach ( index, button in purchaseButtonArray )
 	{
 		bool skippedButton = false
 
-		                                                       
+
 		if ( !Hud_IsVisible( button ) )
 			continue
 
-		                                                                
+
 		if ( index == 0 )
 			Hud_SetNavUp( button, null )
 
-		                                                                                       
+
 		if ( index > 0 )
 			Hud_SetNavUp( button, purchaseButtonArray[ index - 1 ] )
 
-		                                                                          
+
 		if ( index + 1 < purchaseButtonArray.len() )
 		{
 			var nextButton = purchaseButtonArray[ index + 1 ]
 
-			                                               
+
 			if ( Hud_IsVisible( nextButton ) )
 				Hud_SetNavDown( button, nextButton )
 			else
 				skippedButton = true
 		}
 
-		                                                                                                                                 
-		                                                      
+
+
 		if ( index == purchaseButtonArray.len() - 1 || skippedButton )
 		{
 			switch ( purchaseButtonStatus )
@@ -192,7 +192,7 @@ void function SetupPurchaseMenu( int purchaseButtonStatus )
 		}
 	}
 
-	                                                                                                       
+
 	var lastPurchaseButton = null
 	for ( int index = purchaseButtonArray.len() - 1; index >= 0; index-- )
 	{
@@ -238,7 +238,7 @@ void function SetupPurchaseMenu( int purchaseButtonStatus )
 			break
 	}
 
-	                                                             
+
 	file.AcButton = acPurchaseButton
 	file.packButton = packPurchaseButton
 	file.cancelButton = cancelButton
@@ -247,11 +247,11 @@ void function SetupPurchaseMenu( int purchaseButtonStatus )
 void function InitConfirmPurchaseDialog( var menu )
 {
 	file.genericPurchaseDialog = menu
-	                                                                         
-	                                                                  
-	                                                           
 
-	                                                                                                                 
+
+
+
+
 	file.AcButton = Hud_GetChild( menu, "AcPurchaseButton" )
 	file.packButton = Hud_GetChild( menu, "PackPurchaseButton" )
 	Hud_AddEventHandler( file.AcButton, UIE_CLICK, AcButton_Activate )
@@ -260,9 +260,9 @@ void function InitConfirmPurchaseDialog( var menu )
 	InitPurchaseMenu( menu, GetPurchaseButtonArray( menu, MAX_PURCHASE_BUTTONS ) )
 	SetIsSelfClosingMenu( menu, true )
 
-	                                        
-	                                                                                                       
-	                                                                                  
+
+
+
 
 	RegisterSignal( "ConfirmPurchaseClosed" )
 }
@@ -283,29 +283,29 @@ void function InitBattlepassPurchaseDialog( var menu )
 
 	RegisterSignal( "ConfirmPurchaseClosed" )
 }
-                    
-                                                             
- 
-                                     
-                                                              
-                                                                    
-                                                                                                         
-                                                                      
 
-                                                  
-  
-                                                           
-                                           
-                                                                             
-  
 
-                                                                                    
-                                                                                      
-                                                                                                     
 
-                                          
- 
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function UpdateDialogElementReferences( bool hasEventPack, bool hasThematicPack, bool hasEventThematicPack, string disclaimerSpecifics, bool hasStickers, bool hasSkydives, bool usesMOTDButtonForCount )
 {
@@ -345,11 +345,11 @@ void function UpdateDialogElementReferences( bool hasEventPack, bool hasThematic
 	{
 		file.dialogContent = Hud_GetChild( file.activeDialog, "DialogContent" )
 
-                    
-                                                                                                           
-     
+
+
+
 		if ( file.activeDialog == file.packBundlePurchaseDialog )
-      
+
 		{
 			Hud_SetVisible( Hud_GetChild( file.activeDialog, "EventDialogContent" ), false )
 			Hud_SetVisible( Hud_GetChild( file.activeDialog, "ThematicDialogContent" ), false )
@@ -378,9 +378,9 @@ void function PurchaseDialog( PurchaseDialogConfig cfg )
 	bool hasEventPack = false
 	bool hasThematicPack = false
 	bool hasEventThematicPack = false
-                    
-                             
-      
+
+
+
 	string specialPackName = ""
 
 	bool hasStickers = false
@@ -429,36 +429,36 @@ void function PurchaseDialog( PurchaseDialogConfig cfg )
 	{
 		GRXScriptOffer offer = expect GRXScriptOffer(cfg.offer)
 		printt( "PurchaseDialog", DEV_GRX_DescribeOffer( offer ) )
-                
+
 		if ( GRXOffer_IsFullyClaimed( offer ) && cfg.friend == null )
 		{
 			Assert( false, "Called PurchaseDialog with an already-fully-claimed offer: " + DEV_GRX_DescribeOffer( offer ) )
 			EmitUISound( "menu_deny" )
 			return
 		}
-      
-                                         
-   
-                                                                                                                  
-                             
-         
-   
-       
+
+
+
+
+
+
+
+
 
 		uiGlobal.menuData[ file.activeDialog ].pin_metaData[ "item_name" ] <- offer.offerAlias
 		SetCachedOfferAlias( offer.offerAlias )
 
 		if ( GRXOffer_ContainsPack( offer ) )
 		{
-                    
-                                                       
-                         
-                                               
-       
-                                                     
-     
+
+
+
+
+
+
+
 			file.activeDialog = file.packBundlePurchaseDialog
-      
+
 			hasEventPack = GRXOffer_ContainsEventPack( offer )
 			hasThematicPack = GRXOffer_ContainsThematicPack( offer )
 			hasEventThematicPack = GRXOffer_ContainsEventThematicPack( offer )
@@ -518,9 +518,9 @@ void function PurchaseButton_Activate( var button )
 	int quantity       = file.state.cfg.quantity
 	bool canAfford     = GRX_CanAfford( price, quantity )
 	bool hasPack 	   = GRXOffer_ContainsPack( offer )
-                    
-                                                        
-      
+
+
+
 
 	if ( isPremiumOnly && !canAfford && hasPack )
 	{
@@ -529,32 +529,32 @@ void function PurchaseButton_Activate( var button )
 	}
 
 	Assert( canAfford )
-                    
-                                                                                
-  
-                                                                 
-                                                                   
-                                                                      
-                          
-                                                                                                 
-                                         
-   
-                             
-                                                                             
-         
-   
 
-                               
-                                   
 
-                   
-                                
-        
-                                                                                   
-                                                                                          
-                                                                  
-  
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	file.status = ePurchaseDialogStatus.WORKING
 
 	int queryGoal
@@ -562,12 +562,12 @@ void function PurchaseButton_Activate( var button )
 	{
 		queryGoal = GRX_HTTPQUERYGOAL_CRAFT_ITEM
 	}
-               
+
 	else if ( file.state.cfg.friend != null )
 	{
 		queryGoal = GRX_HTTPQUERYGOAL_GIFT_OFFER
 	}
-      
+
 	else if ( offer.offerType == GRX_OFFERTYPE_BUNDLE )
 	{
 		queryGoal = GRX_HTTPQUERYGOAL_PURCHASE_BUNDLE_OFFER
@@ -589,11 +589,11 @@ void function PurchaseButton_Activate( var button )
 	ScriptGRXOperationInfo operation
 	operation.expectedQueryGoal = queryGoal
 	operation.doOperationFunc = (void function( int opId ) : (queryGoal, offer, price, quantity) {
-                
+
 		GRX_PurchaseOffer( opId, queryGoal, offer, price, quantity, file.state.cfg.friend )
-      
-                                                              
-       
+
+
+
 	})
 	operation.onDoneCallback = (void function( int status ) : ( offer, price )
 	{
@@ -612,24 +612,24 @@ void function PurchaseButton_Activate( var button )
 	HudElem_SetRuiArg( button, "isProcessing", true )
 }
 
-                    
-                                                             
- 
-                 
-                                        
-                                                                                              
-                                
-     
-                                      
 
-                                   
-                                       
-                       
 
-                                          
-                                                
- 
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function CancelButton_Activate( var button )
 {
@@ -652,8 +652,8 @@ void function UpdateProcessingElements()
 {
 	bool isWorking = (file.status == ePurchaseDialogStatus.WORKING)
 
-	                               
-	                                   
+
+
 	Hud_SetEnabled( file.cancelButton, !isWorking )
 	HudElem_SetRuiArg( file.cancelButton, "isProcessing", isWorking )
 	HudElem_SetRuiArg( file.cancelButton, "processingState", file.status )
@@ -663,13 +663,13 @@ void function UpdateProcessingElements()
 		Hud_SetEnabled( button, !isWorking )
 		HudElem_SetRuiArg( button, "isProcessing", false )
 	}
-                    
-                                                    
-  
-                                                   
-                                       
-  
-      
+
+
+
+
+
+
+
 }
 
 
@@ -681,7 +681,7 @@ void function OnPurchaseOperationFinished( int status, GRXScriptOffer offer, Ite
 
 	if ( wasSuccessful )
 	{
-		                                               
+
 		foreach ( ItemFlavor itemFlav in offer.output.flavors )
 		{
 			if ( Mythics_IsItemFlavorMythicSkin( itemFlav ) )
@@ -690,7 +690,7 @@ void function OnPurchaseOperationFinished( int status, GRXScriptOffer offer, Ite
 				break
 			}
 		}
-		
+
 		Remote_ServerCallFunction( "ClientCallback_lastSeenPremiumCurrency" )
 
 		string purchaseSound
@@ -703,8 +703,8 @@ void function OnPurchaseOperationFinished( int status, GRXScriptOffer offer, Ite
 			int lowestCurrencyIndex = GRX_CURRENCY_COUNT
 			foreach ( int costIndex, ItemFlavor costFlav in price.flavors )
 			{
-				                                                                                         
-				                                                             
+
+
 				if ( GRXCurrency_GetCurrencyIndex( costFlav ) < lowestCurrencyIndex )
 					lowestCurrencyIndex = GRXCurrency_GetCurrencyIndex( costFlav )
 			}
@@ -819,10 +819,10 @@ void function UpdatePurchaseDialog()
 		quality = eRarityTier.COMMON
 		foreach ( ItemFlavor outputFlav in offer.output.flavors )
 			quality = maxint( quality, ItemFlavor_GetQuality( outputFlav, 0 ) )
-                    
-                                                     
-                                       
-      
+
+
+
+
 	}
 
 	printt( "UpdatePurchaseDialog", devDesc )
@@ -830,11 +830,11 @@ void function UpdatePurchaseDialog()
 	HudElem_SetRuiArg( file.dialogContent, "quality", quality )
 	HudElem_SetRuiArg( file.dialogContent, "qualityText", Localize( ItemQuality_GetQualityName( quality ) ) )
 	HudElem_SetRuiArg( file.dialogContent, "quantity", file.state.cfg.quantity )
-                    
-                                                                                                                            
-     
+
+
+
 	HudElem_SetRuiArg( file.dialogContent, "headerText", "#CONFIRM_PURCHASE_HEADER" )
-      
+
 	HudElem_SetRuiArg( file.dialogContent, "messageText", messageText )
 	HudElem_SetRuiArg( file.dialogContent, "reqsText", prereqText )
 
@@ -846,7 +846,7 @@ void function UpdatePurchaseDialog()
 
 	array<GRXScriptOffer> offerList = clone file.state.purchaseOfferList
 	bool isWithPack
-	array<bool> canAffordPremiumAndCraft = [true, true]                                   
+	array<bool> canAffordPremiumAndCraft = [true, true]
 
 	foreach ( GRXScriptOffer offer in offerList )
 	{
@@ -862,7 +862,7 @@ void function UpdatePurchaseDialog()
 			return 0
 		} )
 
-		priceList.reverse()                                                
+		priceList.reverse()
 
 		foreach ( ItemFlavorBag price in priceList )
 		{
@@ -925,13 +925,13 @@ void function UpdatePurchaseDialog()
 	int buttonHeight  = Hud_GetHeight( file.purchaseButtonBottomToTopList[0] )
 	int buttonPadding = Hud_GetY( file.purchaseButtonBottomToTopList[0] )
 
-                    
-                                                                                                          
-        
-     
+
+
+
+
 	if ( file.activeDialog == file.packBundlePurchaseDialog )
 		return
-      
+
 	UpdateAffordabilityAndButtonPositions( canAffordPremiumAndCraft, isWithPack, usedPurchaseButtonCount )
 }
 
@@ -943,9 +943,9 @@ void function ConfirmPurchaseDialog_OnClose()
 	file.status = ePurchaseDialogStatus.INACTIVE
 	PurchaseDialogState state
 	file.state = state
-                     
-                                                             
-       
+
+
+
 	UpdateProcessingElements()
 	Signal( uiGlobal.signalDummy, "ConfirmPurchaseClosed" )
 }
@@ -1023,7 +1023,7 @@ string function GetExtraPurchaseTooltipInfo( ItemFlavor currency )
 			return Localize( "#CANNOT_AFFORD_CRAFTING" )
 		case GRX_CURRENCIES[GRX_CURRENCY_CREDITS]:
 			return Localize( "#CANNOT_AFFORD_CREDITS" )
-		case GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM]:
+		case GRX_CURRENCIES[GRX_CURRENCY_PREMIUM]:
 			return Localize( "#CANNOT_AFFORD_HEIRLOOM" )
 	}
 	return ""
@@ -1043,7 +1043,7 @@ vector function GetTooltipAltDescColorFromCurrency( ItemFlavor currency )
 		case GRX_CURRENCIES[GRX_CURRENCY_PREMIUM]:
 			color = SrgbToLinear( <250, 220, 28> / 255 )
 			break
-		case GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM]:
+		case GRX_CURRENCIES[GRX_CURRENCY_PREMIUM]:
 			color = SrgbToLinear( <255, 49, 13> / 255 )
 			break
 	}
@@ -1084,7 +1084,7 @@ void function SetPurchaseButtonAndTooltip( ItemFlavorBag price, var button, GRXS
 				canAffordPremiumAndCraft[1] = false
 				RuiSetString( rui, "getPacksDescText", "CONFIRM_COSMETIC_DESCRIPTION" )
 			}
-			else if ( currency == GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] )
+			else if ( currency == GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
 			{
 				canAffordPremiumAndCraft[1] = false
 				RuiSetString( rui, "getPacksDescText", "CONFIRM_COSMETIC_HEIRLOOM_DESCRIPTION" )
@@ -1100,8 +1100,8 @@ void function SetPurchaseButtonAndTooltip( ItemFlavorBag price, var button, GRXS
 	// if ( file.activeCollectionEvent != null ) { ... }
 
 	HudElem_SetRuiArg( button, "buttonText", currencyName )
-	                                                                                                                                                             
-	                                                                                                                                                                   
+
+
 	bool buttonShouldBeLocked = offer.isAvailable && !canAfford && (!isPremiumWithPack || IsVerticalPurchaseLayout())
 	Hud_SetLocked( button, buttonShouldBeLocked )
 
@@ -1109,7 +1109,7 @@ void function SetPurchaseButtonAndTooltip( ItemFlavorBag price, var button, GRXS
 	Hud_ClearToolTipData( button )
 	if ( !offer.isAvailable )
 	{
-		HudElem_SetRuiArg( button, "buttonText", "#UNAVAILABLE" )                           
+		HudElem_SetRuiArg( button, "buttonText", "#UNAVAILABLE" )
 	}
 	#if ( !NX_PROG )
 	else if ( !canAfford && isPremiumWithPack && !buttonShouldBeLocked )
@@ -1151,7 +1151,7 @@ void function UpdateAffordabilityAndButtonPositions( array<bool> canAffordPremiu
 	}
 	else
 	{
-		                                                                                                                                                                                
+
 		if( IsVerticalPurchaseLayout() )
 			UpdateButtonPositions( eButtonDisplayStatus.ONLY_PREMIUM, usedPurchaseButtonCount )
 		else
@@ -1164,36 +1164,36 @@ bool function IsVerticalPurchaseLayout()
 	return GetActiveMenuName() == "ConfirmPurchaseDialog"
 }
 
-                    
-                                                  
- 
-                 
-                                                         
-  
-                                                                                               
-   
-                                
-                                 
-   
-      
-   
-                                      
-                                                                           
-                                                                                                                                     
-                                                                       
-   
 
-                                                                                        
-  
- 
 
-                                                                
- 
-                                                                   
-                                                                                                       
-  
-                                                                                                                              
-                                                                                                     
-  
- 
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

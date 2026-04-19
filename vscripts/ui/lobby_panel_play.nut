@@ -12,7 +12,6 @@ global function Lobby_GetPlaylists
 global function Lobby_GetPlaylistMods
 global function Lobby_GetSelectedPlaylist
 global function Lobby_GetLastSelectedPlaylist
-global function Lobby_IsPlaylistAvailable
 global function Lobby_SetSelectedPlaylist
 global function Lobby_ClearSelectedPlaylist
 global function Lobby_SetSelectedPlaylistMods
@@ -40,12 +39,7 @@ global function PulseModeButton
 
 global function ReadyShortcut_OnActivate
 
-global function HasLocalPlayerCompletedTraining
 global function IsLocalPlayerExemptFromTraining
-
-global function HasLocalPlayerCompletedNewPlayerOrientation
-global function IsLocalPlayerExemptFromNewPlayerOrientation
-global function DoNonlocalPlayerPartyMembersNeedToCompleteNewPlayerOrientation
 
 
 global function DialogFlow_DidCausePotentiallyInterruptingPopup
@@ -68,12 +62,6 @@ global function Lobby_ShowStoryEventChallengesPopup
 global function Lobby_ShowStoryEventAutoplayDialoguePopup
 #endif
 
-global function DoesPlaylistRequireTraining
-
-global function DoesPlaylistRequireNewPlayerOrientation
-
-
-
 global function Lobby_OpenBattlePassMilestoneDialog
 
 
@@ -86,26 +74,6 @@ const string SOUND_STOP_MATCHMAKING_3P = "UI_Menu_ReadyUp_Cancel_3P"
 
 const float INVITE_LAST_TIMEOUT = 15.0
 const float INVITE_LAST_PANEL_EXPIRATION = 1 * MINUTES_PER_HOUR * SECONDS_PER_MINUTE
-global enum ePlaylistState
-{
-	AVAILABLE,
-	NO_PLAYLIST,
-	TRAINING_REQUIRED,
-	COMPLETED_TRAINING_REQUIRED,
-
-	COMPLETED_ORIENTATION_REQUIRED,
-
-	PARTY_SIZE_OVER,
-	LOCKED,
-	RANKED_LEVEL_REQUIRED,
-	RANKED_LARGE_RANK_DIFFERENCE,
-	RANKED_NOT_INITIALIZED,
-	RANKED_MATCH_ABANDON_DELAY,
-	ACCOUNT_LEVEL_REQUIRED,
-	ROTATION_GROUP_MISMATCH,
-	DEV_PLAYTEST,
-	_COUNT
-}
 
 
 const table< int, string > playlistStateMap = {
@@ -134,13 +102,6 @@ struct BattlePassInfo
 }
 
 const int TRAINING_REQUIRED_BELOW_LEVEL_0_BASE = 14
-enum eTrainingExemptionState
-{
-	UNINITIALIZED,
-	FALSE,
-	TRUE,
-}
-
 struct
 {
 	var panel
@@ -694,28 +655,6 @@ void function UpdateLTMButton()
 	}
 }
 
-
-
-
-
-
-
-
-
-string function GetDebugTimeString()
-{
-	Assert( GetDeveloperLevel() != 0 )
-	if ( GetDeveloperLevel() == 0 )
-		return ""
-
-	bool dst 		  = GetIsDSTActive()
-	int utTime        = dst ? GetUnixTimePDT() : GetUnixTimePST()
-	string timeString = GetDateTimeString( utTime )
-	string dayName    = GetDayOfWeekName( GetDayOfWeek( utTime ) )
-	return format( "%s, %s %s", Localize( dayName ), timeString, dst ? "PDT" : "PST" )
-}
-
-
 void function KeepUnixTimeDebugDisplayUpdated()
 {
 	RegisterSignal( "KeepFakeDaysDebugDisplayUpdated" )
@@ -866,13 +805,6 @@ string function Lobby_GetLastSelectedPlaylist()
 {
 	return file.lastPlaylistDisplayed
 }
-
-
-bool function Lobby_IsPlaylistAvailable( string playlistName )
-{
-	return Lobby_GetPlaylistState( playlistName ) == ePlaylistState.AVAILABLE
-}
-
 
 void function Lobby_SetSelectedPlaylistMods( string playlistModNames )
 {
@@ -2018,7 +1950,7 @@ void function UpdateModeButton()
 	if( Console_IsSignedIn() && !Console_SkippedSignIn() )
 #endif
 	{
-		cuiIsValid = GetUserInfo( GetPlayerHardware(), GetPlayerUID() ) != null
+		cuiIsValid = true//GetUserInfo( GetPlayerHardware(), GetPlayerUID() ) != null
 	}
 
 	if ( visiblePlaylistValue != file.lastVisiblePlaylistValue || partySize != file.lastPartySize || cuiIsValid != file.lastCuiIsValid )
@@ -3236,90 +3168,6 @@ bool function IsLocalPlayerExemptFromTraining()
 	return true
 }
 
-
-bool function DoesPlaylistRequireTraining( string playlist )
-{
-	if ( playlist == PLAYLIST_TRAINING )
-		return false
-
-	if ( GetPartySize() > 1 )
-		return false
-
-	if ( IsLocalPlayerExemptFromTraining() )
-		return false
-
-	if ( HasLocalPlayerCompletedTraining() )
-		return false
-
-	return GetPlaylistVarBool( playlist, "require_training", true )
-}
-
-
-bool function HasLocalPlayerCompletedTraining()
-{
-	return true
-}
-
-
-
-bool function IsLocalPlayerExemptFromNewPlayerOrientation()
-{
-	return true
-}
-
-
-bool function DoesPlaylistRequireNewPlayerOrientation( string playlist )
-{
-	if( GetConVarBool( "orientation_matches_disabled" ) )
-		return false
-
-	if ( playlist == PLAYLIST_NEW_PLAYER_ORIENTATION )
-		return false
-
-	if ( IsLocalPlayerExemptFromNewPlayerOrientation() )
-		return false
-
-	if ( HasLocalPlayerCompletedNewPlayerOrientation() && !DoNonlocalPlayerPartyMembersNeedToCompleteNewPlayerOrientation() )
-		return false
-
-	return GetPlaylistVarBool( playlist, "require_new_player_orientation", true )
-}
-
-
-bool function HasLocalPlayerCompletedNewPlayerOrientation()
-{
-	return true
-}
-
-
-bool function DoNonlocalPlayerPartyMembersNeedToCompleteNewPlayerOrientation()
-{
-	if( GetConVarBool( "orientation_matches_disabled" ) )
-		return false
-
-	Party party           = GetParty()
-	string localPlayerUID = GetPlayerUID()
-
-	foreach ( PartyMember partyMember in party.members )
-	{
-		if ( partyMember.uid == localPlayerUID )
-			continue
-
-		CommunityUserInfo ornull userInfo = GetUserInfo( partyMember.hardware, partyMember.uid )
-		if ( userInfo == null )
-			continue
-
-		expect CommunityUserInfo( userInfo )
-
-		if ( !userInfo.hasGraduatedBotsQueue )
-			return true
-	}
-
-	return false
-}
-
-
-
 var function GetPartyMemberButton( string uid )
 {
 	if ( uid == GetPlayerUID() )
@@ -3452,7 +3300,7 @@ void function ChallengeSwitch_RemoveInputCallbacks()
 
 bool function ChallengeSwitch_CanChangeCategory()
 {
-	return Hud_IsCursorOver( Hud_GetChild( file.panel, "ChallengesBounds" ) ) && !Hud_IsFocused( Hud_GetChild( file.panel, "MiniPromo" ) )
+	return false
 }
 
 void function ChallengeMouseUp()
@@ -4120,7 +3968,7 @@ bool function Lobby_ShowHeirloomShopPopup( bool forceShow = false )
 	if ( !GRX_AreOffersReady() && !forceShow  )
 		return false
 
-	int heirloomShardBalance = GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] )
+	int heirloomShardBalance = GRXCurrency_GetPlayerBalance( GetLocalClientPlayer(), GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
 	int priceOfHeirloom      = GetCurrentPlaylistVarInt( "grx_currency_bundle_heirloom_count", 50 ) * 3
 	if ( heirloomShardBalance < priceOfHeirloom && !forceShow )
 		return false
@@ -4136,7 +3984,7 @@ bool function Lobby_ShowHeirloomShopPopup( bool forceShow = false )
 			continue
 
 		Assert( scriptOffer.prices.len() == 1 )
-		Assert( scriptOffer.prices[0].flavors.len() == 1 && scriptOffer.prices[0].flavors[0] == GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] )
+		Assert( scriptOffer.prices[0].flavors.len() == 1 && scriptOffer.prices[0].flavors[0] == GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
 		Assert( scriptOffer.prices[0].quantities.len() == 1)
 
 		if ( heirloomShardBalance < scriptOffer.prices[0].quantities[0] )
@@ -4172,7 +4020,7 @@ bool function Lobby_ShowHeirloomShopPopup( bool forceShow = false )
 		HudElem_SetRuiArg( popup, "subText", "#CTA_HEIRLOOM_SHOP_SUBTEXT" )
 		HudElem_SetRuiArg( popup, "detailText", "#CTA_HEIRLOOM_SHOP_DETAIL" )
 		HudElem_SetRuiArg( popup, "unlockedString", "" )
-		HudElem_SetRuiArg( popup, "buttonImage", ItemFlavor_GetIcon( GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] ), eRuiArgType.IMAGE )
+		HudElem_SetRuiArg( popup, "buttonImage", ItemFlavor_GetIcon( GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] ), eRuiArgType.IMAGE )
 		HudElem_SetRuiArg( popup, "forceFullIcon", false )
 		HudElem_SetRuiArg( popup, "rarity", eRarityTier.MYTHIC )
 

@@ -41,7 +41,7 @@ void function DialogueScheduleClient_Init()
 void function AddNeutralTeamConversations()
 {
 	array<int> actorsABCDEF = [ 1, 1, 1, 1, 1, 1 ]
-	AddConversations( TEAM_BOTH, actorsABCDEF )
+	AddConversations( TEAM_NPC_FRIENDLY_TO_PLAYERS, actorsABCDEF )
 }
 
 Assert( CLIENT )
@@ -173,7 +173,7 @@ void function AddConversations( int team, array<int> actors )
 
 **********************************************************************/
 
-array function AddConversation( string conversationType, int team = TEAM_BOTH, array lineArr = [] )
+array function AddConversation( string conversationType, int team = TEAM_NPC_FRIENDLY_TO_PLAYERS, array lineArr = [] )
 {
 	Assert( DoesConversationExist( conversationType ), "Conversation " + conversationType + " not registered." )
 	ConversationStruct convStruct = GetConversationStruct( conversationType )
@@ -182,7 +182,7 @@ array function AddConversation( string conversationType, int team = TEAM_BOTH, a
 	return lineArr
 }
 
-array function ReplaceConversation( string conversationType, int team = TEAM_BOTH, array lineArr = [] )
+array function ReplaceConversation( string conversationType, int team = TEAM_NPC_FRIENDLY_TO_PLAYERS, array lineArr = [] )
 {
 	Assert( DoesConversationExist( conversationType ), "Conversation " + conversationType + " not registered." )
 	ConversationStruct convStruct = GetConversationStruct( conversationType )

@@ -410,6 +410,7 @@ void function AddSurveyBeaconSpawnCallbacks()
 
 void function OnPanelUse_SurveyBeacon( entity beacon, entity player, entity useEnt )
 {
+	Warning("player trying to use survey beacon panel")
 	if ( !( player in file.surveyBeaconData ) )
 		return
 	int beaconType =  BeaconEntToScanType( beacon )
@@ -417,6 +418,7 @@ void function OnPanelUse_SurveyBeacon( entity beacon, entity player, entity useE
 		return
 
 	file.surveyBeaconData[ player ][beaconType].successFunc( beacon, player, file.surveyBeaconData[player][beaconType] )
+	Warning("succeed when using beacon")
 }
 
 bool function SurveyBeacon_PopulateHackPanelAnims( entity player, entity panel, HackPanelAnims anims )

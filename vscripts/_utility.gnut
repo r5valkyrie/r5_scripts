@@ -18,6 +18,7 @@ global const C_PLAYFX_LOOP		= 2
 
 #if DEVELOPER
 const bool AvoidCrushedByPlainDoorDebug = false
+const bool SkywardLaunchPushTriggerDebug = false
 #endif
 
 global const MUTEALLFADEIN 		= 2
@@ -42,8 +43,8 @@ global struct ArrayDotResultStruct
 
 global struct ShieldDamageModifier
 {
-	float permanentDamageFrac = TITAN_SHIELD_PERMAMENT_DAMAGE_FRAC
-	bool normalizeShieldDamage = false
+	float permanentDamageFrac = 0.0
+	bool  normalizeShieldDamage = false
 	float damageScale = 1.0
 }
 
@@ -86,17 +87,22 @@ void function Utility_Init()
 	RegisterSignal( "PetTitanUpdated" )
 	RegisterSignal( "WaitDeadTimeOut" )
 	RegisterSignal( "InventoryChanged" )
+	RegisterSignal( "StopCheckingForIntersectingGeo" )
 	RegisterSignal( SIGNAL_TELEPORTED )
 	
 	//AddClientCommandCallback( "OnDevnetBugScreenshot", ClientCommand_OnDevnetBugScreenshot )
 	#if DEVELOPER
 		FlagInit( "AimAssistSwitchTest_Enabled" )
-		// AddClientCommandCallback( "DoomTitan", ClientCommand_DoomTitan )
 		AddClientCommandCallback( "toggleconsole", ClientCommand_ToggleConsole )
+		AddClientCommandCallbackVoid( "+opendevmenu", ClientCommand_OpenDevMenu ) // dev
 	#endif
 }
 
 #if DEVELOPER
+void function ClientCommand_OpenDevMenu( entity player, array<string> argList )
+{
+	Remote_CallFunction_UI( player, "ServerCallback_OpenDevMenu" )
+}
 void function KillAllBadguys()
 {
 	array<entity> npcs = GetNPCArrayOfEnemies( GetPlayerArray()[0].GetTeam() )
@@ -280,7 +286,7 @@ void function SetRebreatherMaskVisible( entity ent, bool visible )
 {
 	asset modelname = ent.GetModelName()
 
-	var maskIdx = ent.FindBodyGroup( "mask" )
+	int maskIdx = ent.FindBodygroup( "mask" )
 	if ( maskIdx == -1 )
 		return
 
@@ -288,7 +294,7 @@ void function SetRebreatherMaskVisible( entity ent, bool visible )
 	if ( !visible )
 		visibleIdx = 0
 
-	ent.SetBodygroup( maskIdx, visibleIdx )
+	ent.SetBodygroupModelByIndex( maskIdx, visibleIdx )
 }
 
 int function EntHasSpawnflag( entity ent, int spawnflagHexVal )
@@ -1387,10 +1393,39 @@ vector function GetEntPosPlusOffset( entity ent, float offsetX, float offsetY, f
 
 void function EmitSoundToTeamPlayers( string alias, int team )
 {
+	array< entity > players = GetPlayerArrayOfTeam( team )
+
+	foreach ( player in players )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, player, alias )
+	}
+}
+
+
+void function EmitSoundToPlayersInRealm( string alias, int realm, bool mustBeAlive = false )
+{
+	array< entity > players = GetAllPlayersByRealm( realm, mustBeAlive )
+
+	foreach ( player in players )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, player, alias )
+	}
+}
+
+
+float function EmitSoundToTeamPlayersDialogLength( string alias, int team )
+{
+	float dialogLength = 0.0
+
 	array<entity> players = GetPlayerArrayOfTeam( team )
 
 	foreach ( player in players )
-		EmitSoundOnEntityOnlyToPlayer( player, player, alias )
+	{
+		if ( IsValid( player ) )
+			dialogLength = EmitSoundOnEntityOnlyToPlayer( player, player, alias )
+	}
+
+	return dialogLength
 }
 
 void function EmitDifferentSoundsAtPositionForPlayerAndWorld( string soundForPlayer, string soundForWorld, vector position, entity player, int teamNum )
@@ -1876,7 +1911,7 @@ entity function CreatePropPhysics( asset model, vector origin, vector angles, in
 entity function CreateTriggerCylinder( vector origin, int radius, int aboveHeight, int belowHeight )
 {
 	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )
-	trigger.SetCylinderRadius( float( radius ) )
+	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
 	trigger.SetBelowHeight( belowHeight )
 	trigger.kv.triggerFilterNpc = "none"
@@ -1908,7 +1943,7 @@ entity function CreateTriggerCylinderNoCylinderRadius( vector origin, int radius
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_cylinder_networked" )
+	entity trigger = Entities_CreateByClassname( "trigger_cylinder_networked" )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
 	trigger.SetBelowHeight( belowHeight )
@@ -1927,7 +1962,7 @@ entity function CreateTriggerCylinderNetworked( vector origin, float radius, flo
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked_OutOfBounds( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_out_of_bounds" )
+	entity trigger = Entities_CreateByClassname( "trigger_networked_out_of_bounds" )
 	trigger.SetPhaseShiftCanTouch( true )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
@@ -1947,7 +1982,7 @@ entity function CreateTriggerCylinderNetworked_OutOfBounds( vector origin, float
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked_NoObjectPlacement( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_no_op" )
+	entity trigger = Entities_CreateByClassname( "trigger_networked_no_op" )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
 	trigger.SetBelowHeight( belowHeight )
@@ -1966,7 +2001,7 @@ entity function CreateTriggerCylinderNetworked_NoObjectPlacement( vector origin,
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked_NoObjectPlacementSpecial( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_no_ops" )
+	entity trigger = Entities_CreateByClassname( "trigger_networked_no_ops" )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
 	trigger.SetBelowHeight( belowHeight )
@@ -2001,7 +2036,7 @@ entity function CreateTriggerCylinderNetworked_NoRadiusNoObjectPlacementSpecial(
 //------------------------------------------------------------
 entity function CreateTriggerCylinderNetworked_BlockAllObjectPlacement( vector origin, float radius, float aboveHeight, float belowHeight, vector angles = <0,0,0> )
 {
-	entity trigger = Entities_CreateByClassname( "trigger_cylinder" )//( "trigger_networked_block_all_op" )
+	entity trigger = Entities_CreateByClassname( "trigger_networked_block_all_op" )
 	trigger.SetCylinderRadius( radius )
 	trigger.SetAboveHeight( aboveHeight )
 	trigger.SetBelowHeight( belowHeight )
@@ -2063,6 +2098,7 @@ entity function SpawnBullseye( int team, entity ent = null )
 	bullseye.kv.physdamagescale = 1.0
 	bullseye.kv.WeaponProficiency = eWeaponProficiency.VERYGOOD
 	bullseye.kv.minangle = "360"
+	bullseye.SetModel( $"mdl/dev/empty_model.rmdl" )
 	DispatchSpawn( bullseye )
 
 	SetTeam( bullseye, team )
@@ -2280,7 +2316,9 @@ entity function __CreateFxInternal( asset effectName, entity ent, string optiona
 			coreAng = ent.GetAngles()
 		}
 
-		fx.Code_SetTeam( ent.GetTeam() );
+		fx.Code_SetTeam( ent.GetTeam() )
+		fx.RemoveFromAllRealms()
+		fx.AddToOtherEntitysRealms( ent )
 	}
 	else //if not we're just playing in space
 	{
@@ -2420,9 +2458,7 @@ bool function EntityInSolid( entity ent, entity ignoreEnt = null, int buffer = 0
 	vector mins
 	vector maxs
 	int collisionGroup
-	array<entity> ignoreEnts = []
-
-	ignoreEnts.append( ent )
+	array<entity> ignoreEnts = [ ent ]
 
 	if ( IsValid( ignoreEnt ) )
 	{
@@ -2460,9 +2496,9 @@ bool function EntityInSolid( entity ent, entity ignoreEnt = null, int buffer = 0
 
 	// if we got into solid, teleport back to safe place
 	vector currentOrigin = ent.GetOrigin()
-	TraceResults result = TraceHull( currentOrigin, currentOrigin + < 0, 0, 1 >, mins, maxs, ignoreEnts, solidMask, collisionGroup )
+	TraceResults result  = TraceHull( currentOrigin, currentOrigin + <0, 0, 1>, mins, maxs, ignoreEnts, solidMask, collisionGroup )
 	//PrintTable( result )
-	//DrawArrow( result.endPos, Vector(0,0,0), 5, 150 )
+	//DrawArrow( result.endPos, <0,0,0>, 5, 150 )
 	if ( result.startSolid )
 		return true
 
@@ -2738,7 +2774,7 @@ void function ClearDeathFuncName( entity npc )
 	clight.PushAngles( x, y, z )
 }
 
-function PopSunLightAngles()
+void function PopSunLightAngles()
 {
 	entity clight = GetEnt( "env_cascade_light" )
 	Assert( clight )
@@ -3184,30 +3220,6 @@ void function TakeAmmoFromPlayer( entity player )
 
 bool function NearFlagSpawnPoint( vector dropPoint )
 {
-	if ( "flagSpawnPoint" in level && IsValid( level.flagSpawnPoint ) )
-	{
-		vector fspOrigin = expect entity( level.flagSpawnPoint ).GetOrigin()
-		if ( Distance( fspOrigin, dropPoint ) < SAFE_TITANFALL_DISTANCE_CTF )
-			return true
-	}
-
-	if ( "flagReturnPoint" in level && IsValid( level.flagReturnPoint ) )
-	{
-		vector fspOrigin = expect entity( level.flagReturnPoint ).GetOrigin()
-		if ( Distance( fspOrigin, dropPoint ) < SAFE_TITANFALL_DISTANCE_CTF )
-			return true
-	}
-
-	if ( "flagSpawnPoints" in level )
-	{
-		foreach ( flagSpawnPoint in svGlobal.flagSpawnPoints )
-		{
-			vector fspOrigin = flagSpawnPoint.GetOrigin()
-			if ( Distance( fspOrigin, dropPoint ) < SAFE_TITANFALL_DISTANCE_CTF )
-				return true
-		}
-	}
-
 	return false
 }
 
@@ -3232,12 +3244,6 @@ void function RemoveCinematicFlag( entity player, int flag )
 	Assert( IsValid( player ) )
 	player.SetCinematicEventFlags( player.GetCinematicEventFlags() & ( ~flag ) )
 	player.Signal( "CE_FLAGS_CHANGED" )
-}
-
-void function SkyScaleDefault( entity ent, float time = 1.0 )
-{
-	if ( IsValid( ent ) )
-		ent.LerpSkyScale( SKYSCALE_DEFAULT, time )
 }
 
 void function MoveSpawn( string targetName, vector origin, vector angles )
@@ -5496,6 +5502,19 @@ void function DestroyAfterDelay( entity ent, float delay )
 	ent.Destroy()
 }
 
+void function DestroyFXAfterDelay_Thread( entity ent, float delay )
+{
+	Assert( IsNewThread(), "Must be threaded off" )
+
+	ent.EndSignal( "OnDestroy" )
+
+	wait(delay)
+
+	if( IsValid( ent ) )
+	{
+		EffectStop( ent )
+	}
+}
 void function SetPlayerSettings( entity player, asset settings, array<string> mods = [] )
 {
 	player.SetPlayerSettingsWithMods( settings, mods )
@@ -5512,12 +5531,6 @@ void function RunSettingsChangedFuncs( entity player, asset settings )
 		player.SetHealth( pilotHealth )
 	}
 }
-
-void function UpdateDamageState( entity ent, var damageInfo )
-{
-	//stub
-}
-
 
 array<entity> function GetLinkedEntsByClassName( entity ent, string className )
 {
@@ -6459,6 +6472,13 @@ void function RestoreChargesForPlayer( entity player )
 	}
 }
 
+void function TryGameModeRemove( entity ent )
+{
+	if ( GameModeRemove( ent ) )
+		return
+}
+
+
 void function ForceAutoSprintOn( entity player )
 {
 	// printt( FUNC_NAME( 0 ) + " from " + FUNC_NAME( 1 ) )
@@ -6718,10 +6738,109 @@ bool function IsLowCostBot( entity player )
 	return false
 }
 
-void function RecordServerAbuseForAntiCheat( entity player, ... )
+void functionref( entity trigger, entity ent ) function PushOutOfTrigger( float strength = 350.0 )
+//void function PushOutOfTrigger( entity trigger, entity ent )
 {
+	return void function( entity trigger, entity ent ) : ( strength )
+	{
+		if ( ent.DoesShareRealms( trigger ) )
+			thread PushOutOfTriggerThread( trigger, ent, strength )
+	}
 }
 
+void function PushOutOfTriggerThread( entity trigger, entity ent, float strength = 350.0 )
+{
+	EndSignal( trigger, "OnDestroy" )
+	EndSignal( ent, "OnDestroy" )
+
+	bool isSkywardLaunching = false
+
+	if ( IsValid( ent ) && ent.IsPlayer() && ent.Player_IsSkywardLaunching() )
+	{
+		isSkywardLaunching = true
+	}
+
+	while( trigger.IsTouching( ent ) )
+	{
+		vector v = Normalize( ent.GetOrigin() - trigger.GetOrigin() )
+
+		v = Normalize( <v.x,v.y,0> )
+
+		if ( isSkywardLaunching && GetCurrentPlaylistVarBool( "pusher_push_out_skyward_launching_players", true ) )
+		{
+			vector rightVec               = CrossProduct( v, UP_VECTOR )
+			array<vector> dirsToTry       = [ v, -v, rightVec, -rightVec ]
+
+			//find where we are along the height of the cylinder
+			vector projectionToCylinderVertical = GetClosestPointOnLineSegment( trigger.GetOrigin() - ( trigger.GetUpVector() * trigger.GetBelowHeight() ), trigger.GetOrigin() + ( trigger.GetUpVector() * trigger.GetAboveHeight() ), ent.GetOrigin() )
+
+			#if DEVELOPER
+			if ( SkywardLaunchPushTriggerDebug )
+			{
+				DebugDrawLine( trigger.GetOrigin() - ( trigger.GetUpVector() * trigger.GetBelowHeight() ), trigger.GetOrigin() + ( trigger.GetUpVector() * trigger.GetAboveHeight() ),COLOR_BLUE, true, 15.0 )
+				DebugDrawMark( projectionToCylinderVertical, 10.0, COLOR_GREEN, true, 15.0 )
+			}
+			#endif
+
+			foreach ( vector dir in dirsToTry )
+			{
+				//5% bonus to radius to hopefully ensure we always clear the geo
+				vector traceEndPos = projectionToCylinderVertical + ( dir * ( trigger.GetRadius() * 1.05 ) )
+				array<entity> ignoreEnts = [trigger, ent, trigger.GetParent(), trigger.GetOwner()]
+
+				for ( int i = 0; i < ignoreEnts.len(); i++ )
+				{
+					if ( !IsValid( ignoreEnts[i] ) )
+					{
+						ignoreEnts.remove( i )
+						i--
+					}
+				}
+
+				TraceResults tr    = TraceHull( ent.GetOrigin(), traceEndPos, ent.GetPlayerStandingMins(), ent.GetPlayerStandingMaxs(), ignoreEnts, TRACE_MASK_PLAYERSOLID, TRACE_COLLISION_GROUP_PLAYER )
+
+				#if DEV
+				if ( SkywardLaunchPushTriggerDebug )
+				{
+					DebugDrawArrow( ent.GetOrigin(), traceEndPos, 5, COLOR_GREEN, true, 15.0 )
+				}
+				#endif
+
+				if ( !tr.startSolid && !tr.allSolid && tr.fraction >= 0.99 )
+				{
+					#if DEV
+					if ( SkywardLaunchPushTriggerDebug )
+					{
+						DebugDrawSphere( tr.endPos, 10.0, COLOR_GREEN, true, 15.0 )
+					}
+					#endif
+
+					ent.SetOrigin( tr.endPos )
+					break
+				}
+				else
+				{
+					#if DEV
+					if ( SkywardLaunchPushTriggerDebug )
+					{
+						DebugDrawSphere( tr.endPos, 10.0, COLOR_RED, true, 5.0 )
+					}
+					#endif
+				}
+			}
+		}
+
+		else
+		{
+			if ( Length( v ) < 0.5 )
+				v = <1,0,0>
+
+			ent.SetVelocity( v * strength )
+		}
+
+		WaitFrame()
+	}
+}
 void function PIN_GRXInventoryNotReady( ... )
 {
 }

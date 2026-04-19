@@ -1,7 +1,9 @@
                     
 global function Pickup_XP_Cache_Init
 
-// XPCACHE constants moved to sh_consts.gnut for shared access
+global const string XPCACHE_BASIC_NAME = "mp_pickup_xp_cache"
+global const string XPCACHE_ENHANCED_NAME = "mp_pickup_xp_cache_dynamic"
+global const string XPCACHE_LARGE_NAME = "mp_pickup_xp_cache_large"
 
 global enum eEvoCacheType
 {

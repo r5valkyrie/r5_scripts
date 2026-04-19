@@ -277,8 +277,6 @@ global function ShGRX_UIScriptResetComplete
 global function ClientToUI_WORKAROUND_GRXPackOpened_Start
 global function ClientToUI_WORKAROUND_GRXPackOpened_Entry
 global function ClientToUI_WORKAROUND_GRXPackOpened_Finish
-global function GRX_CheckBundleAndUpdateOfferPrices
-global function GRX_GetUserBundleOffer
 #endif
 
 global const int MAX_REWARDS_PER_REWARD_SEQ_CALL = 255
@@ -292,7 +290,7 @@ const int GRX_SCRIPT_QUERY_IDENTIFIER_START_INDEX = 1
 const int GRX_SCRIPT_QUERY_IDENTIFIER_START_INDEX = INT_MIN
 #endif
 
-const bool GRX_DEBUG_PRINTS = false
+const bool GRX_DEBUG_PRINTS = true
 
 const string SHOP_TAB_ALIAS = "shop"
 
@@ -854,7 +852,7 @@ void function ShGRX_LevelInit()
 		GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/premium.rpak" )) // GRX_CURRENCY_PREMIUM
 		GRX_CURRENCIES[GRX_CURRENCY_CREDITS] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/credits.rpak" )) // GRX_CURRENCY_CREDITS
 		GRX_CURRENCIES[GRX_CURRENCY_CRAFTING] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/crafting.rpak" )) // GRX_CURRENCY_CRAFTING
-		//GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/heirloom.rpak" )) // not available
+	//	GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/heirloom.rpak" )) // not available
 		//GRX_CURRENCIES[GRX_CURRENCY_EXOTIC] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/exotic.rpak" )) // not available
 		//GRX_CURRENCIES[GRX_CURRENCY_ESCROW] = expect ItemFlavor(RegisterItemFlavorFromSettingsAsset( $"settings/itemflav/grx_currency/escrow.rpak" )) // not available
 
@@ -7224,15 +7222,3 @@ void function UICodeCallback_GRXSmartMerchandisingDataUpdated( array<int> smartM
  
                                 
 #endif // DEVELOPER && UI
-
-#if UI
-void function GRX_CheckBundleAndUpdateOfferPrices( GRXScriptOffer offer )
-{
-}
-
-GRXBundleOffer function GRX_GetUserBundleOffer( string offerAlias )
-{
-	GRXBundleOffer bundle
-	return bundle
-}
-#endif // UI

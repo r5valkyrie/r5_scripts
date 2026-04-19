@@ -6019,7 +6019,7 @@ void function ClientToUI_SetLootHasBeenPresented( bool heirloomShards = false )
 	else
 	{
 		HudElem_SetRuiArg( fileForever.storeButton, "buttonText", Localize( "#HEIRLOOM_SHOP" ) )
-		HudElem_SetRuiArg( fileForever.storeButton, "icon", ItemFlavor_GetIcon( GRX_CURRENCIES[GRX_CURRENCY_HEIRLOOM] ) )
+		HudElem_SetRuiArg( fileForever.storeButton, "icon", ItemFlavor_GetIcon( GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] ) )
 	}
 }
 #endif
@@ -6345,7 +6345,7 @@ void function OnLootBoxMenu_Open()
 	GRX_SetOfferRefreshSuppressed( true )
 
 	UI_SetPresentationType( ePresentationType.INACTIVE )
-	//Lobby_AdjustScreenFrameToMaxSize( Hud_GetChild( fileForever.menu, "ScreenFrame" ), true )
+	Lobby_AdjustScreenFrameToMaxSize( Hud_GetChild( fileForever.menu, "ScreenFrame" ), true )
 
 	thread LootCeremonyFlashScreenBlack_Internal()
 

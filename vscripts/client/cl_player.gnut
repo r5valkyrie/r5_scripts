@@ -124,8 +124,8 @@ void function ClPlayer_Init()
 
 	AddLocalPlayerFunc( Player_AddPlayer )
 
-//	if ( GetConVarBool( "cl_liveapi_enabled" ) )
-//		ClLiveAPI_Init()
+	if ( GetConVarBool( "cl_liveapi_enabled" ) )
+		ClLiveAPI_Init()
 
 }
 
@@ -1210,7 +1210,7 @@ void function ServerCallback_OnEnemyDowned( entity attacker, entity victim, int 
 
 	Obituary( attacker, "", victim, scriptDamageType, damageSourceId, OBIT_FLAG_DOWNED )
 
-	//LiveAPI_OnPlayerDowned( attacker, victim, damageSourceId )
+	LiveAPI_OnPlayerDowned( attacker, victim, damageSourceId )
 }
 
 

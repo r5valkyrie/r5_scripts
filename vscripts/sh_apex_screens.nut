@@ -281,6 +281,7 @@ const string NV_ApexScreensEventIntA = "NV_ApexScreensEventIntA"
 void function ShApexScreens_Init()
 {
 	#if SERVER
+		BlockMapEntityParseCreationOf( "prop_control_panel", "ApexScreenTerminal", "" )
 	#elseif CLIENT
 		AddCallback_OnEnumStaticPropRui( OnEnumStaticPropRui )
 	#endif
@@ -1270,7 +1271,7 @@ void function UpdateScreenDetails( ApexScreenState screen, float modeChangeTime,
 	if ( IsValid( player ) )
 		RuiTrackInt( screen.rui, "playerKillCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "kills" ) )
 
-	RuiSetFloat( screen.rui, "xpBonusAmount", XpEventTypeData_GetAmount( XP_TYPE.KILL_CHAMPION_MEMBER ) )
+	RuiSetFloat( screen.rui, "xpBonusAmount", XpEventTypeData_GetAmount( eXPType.KILL_CHAMPION_MEMBER ) )
 
 	ChangeNestedGladiatorCardPresentation( screen.nestedGladiatorCard0Handle, gcardPresentation )
 	ChangeNestedGladiatorCardOwner( screen.nestedGladiatorCard0Handle, playerEHI, modeChangeTime, lifestateOverride )

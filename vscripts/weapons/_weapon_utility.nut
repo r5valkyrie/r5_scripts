@@ -141,6 +141,7 @@ global function LimitVelocityHorizontal
 global function GiveMatchingAkimboWeapon
 global function TakeMatchingAkimboWeapon
 global function AddWeaponModChangedCallback
+global function FireSegment_DamageThink
 global function TryApplyingBurnDamage
 global function TryApplyingOrRefreshingBurnDamage
 global function AddEntityBurnDamageStack
@@ -4060,18 +4061,67 @@ void function AddWeaponModChangedCallback( string weaponClassName, void function
 	file.weaponModChangedCallbacks[weaponClassName].append( callbackFunc )
 }
 
+void function FireSegment_DamageThink( entity effect, entity owner, entity inflictor, BurnDamageSettings burnSettings, bool noOwnerFriendlyFire = false, vector offset = <0, 0, 0> )
+{
+	Assert( IsValid( owner ) )
 
+	if(!IsValid( owner ))
+		return
 
+	float topDelta    = burnSettings.burnDamageHeight
+	float bottomDelta = 0
+	entity trig       = CreateTriggerCylinderMultiple_Deprecated( effect.GetOrigin() + offset, burnSettings.burnDamageRadius, topDelta, bottomDelta, [], TRIG_FLAG_NONE )
+	if ( effect.GetParent() )
+	{
+		trig.SetParent( effect.GetParent() )
+		trig.SetLocalOrigin( effect.GetLocalOrigin() + offset )
+		trig.SetLocalAngles( effect.GetLocalAngles() )
+	}
+	trig.RemoveFromAllRealms()
+	trig.AddToOtherEntitysRealms( owner )
+	ScriptTriggerSetEnabled_Deprecated( trig, true )
 
+	effect.EndSignal( "OnDestroy" )
+	trig.EndSignal( "OnDestroy" )
+	inflictor.EndSignal( "OnDestroy" )
 
+	int team = owner.GetTeam()
 
+	OnThreadEnd(
+		function() : ( effect, trig )
+		{
+			EffectStop( effect )
 
+			if ( IsValid( trig ) )
+				trig.Destroy()
+		}
+	)
 
+	while ( true )
+	{
+		array<entity> touchingEnts = GetAllEntitiesInTrigger_Deprecated( trig )
+		ArrayRemoveDead( touchingEnts )
 
+		foreach ( ent in touchingEnts )
+		{
+			if(!IsValid(ent))
+				continue
 
+			if ( noOwnerFriendlyFire && ent == owner )
+				continue
 
+			if ( IsFriendlyTeam( team, ent.GetTeam() ) && ent != owner && !ent.e.noFriendlyFireProtection )
+				continue
 
+			if( !file.checkThermiteLOS || PositionHasLOSToObject( effect.GetOrigin(), ent ) )
+			{
+				TryApplyingBurnDamage( ent, owner, inflictor, burnSettings )
+			}
+		}
 
+		WaitFrame()
+	}
+}
 
 
 
@@ -4138,6 +4188,32 @@ void function TryApplyingBurnDamage( entity ent, entity owner, entity inflictor,
 	}
 }
 
+bool function PositionHasLOSToObject( vector origin, entity object )
+{
+	array<entity> ignoreEnts = GetPlayerArray_AliveConnected()
+	ignoreEnts.append( object )
+
+	vector traceStart = origin
+	vector traceEnd   = object.GetWorldSpaceCenter()
+
+	TraceResults traceResults = TraceLine( traceStart, traceEnd, ignoreEnts, TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
+
+	if( traceResults.fraction < 1.0 )
+	{
+		traceEnd = object.GetOrigin()
+		traceResults = TraceLine( traceStart, traceEnd, [ object ], TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
+		if( traceResults.fraction < 1.0 )
+		{
+			traceEnd = object.EyePosition()
+			traceResults = TraceLine( traceStart, traceEnd, [ object ], TRACE_MASK_SOLID_BRUSHONLY, TRACE_COLLISION_GROUP_NONE )
+		}
+	}
+
+	if ( traceResults.fraction == 1.0 )
+		return true
+
+	return false
+}
 
 void function TryApplyingOrRefreshingBurnDamage( entity ent, entity owner, entity inflictor, BurnDamageSettings burnSettings )
 {

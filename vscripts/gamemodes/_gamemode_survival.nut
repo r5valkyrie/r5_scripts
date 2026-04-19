@@ -5945,7 +5945,7 @@ void function RespawnTeamAtRingEdge( int team )
 	if ( players.len() <= 0 )
 		return
 
-	int stage             = maxint( SURVIVAL_GetCurrentDeathFieldStage( 0 ), 0 )
+	int stage             = maxint( SURVIVAL_GetCurrentDeathFieldStage(), 0 )
 	DeathFieldStageData d = GetDeathFieldStage( Survival_Loot_GetDefaultRealm(), stage )
 
 	float angleDisplacement = RandomFloat( 360.0 )
@@ -6048,7 +6048,7 @@ void function Survival_SquadEliminationCleanup( int team )
 {
 	RespawnBeacons_OnSquadEliminated( team )
 
-	if ( GetCurrentPlaylistVarInt( "squad_respawn_if_before_ring", -10 ) > SURVIVAL_GetCurrentDeathFieldStage( 0 ) )
+	if ( GetCurrentPlaylistVarInt( "squad_respawn_if_before_ring", -10 ) > SURVIVAL_GetCurrentDeathFieldStage() )
 	{
 		if ( file.squadRespawnChances[ team ] > 0 )
 		{

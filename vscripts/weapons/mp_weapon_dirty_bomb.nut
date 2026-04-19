@@ -14,13 +14,14 @@ global function RemoveCausticDirtyBomb
 #endif
 
 global const string DIRTY_BOMB_TARGETNAME = "caustic_trap"
+global const string CAUSTIC_DIRTY_BOMB_WEAPON_CLASS_NAME = "mp_weapon_dirty_bomb"
 
 const asset DIRTY_BOMB_CANISTER_MODEL = $"mdl/props/caustic_gas_tank/caustic_gas_tank.rmdl"
 
 const asset DIRTY_BOMB_CANISTER_EXP_FX = $"P_meteor_trap_EXP"
 const asset DIRTY_BOMB_CANISTER_FX_ALL = $"P_gastrap_start"
 
-int DIRTY_BOMB_MAX_GAS_CANISTERS = 6
+global int DIRTY_BOMB_MAX_GAS_CANISTERS = 6
 const float DIRTY_BOMB_SPAWN_MIN = 1 			 //Min Spawn Delay
 const float DIRTY_BOMB_SPAWN_MAX = 2 			 //Max Spawn Delay
 const float DIRTY_BOMB_SPAWN_FORCE_MIN = 0.2 	 //Min Spawning Vel Force
@@ -1071,11 +1072,7 @@ DirtyBombPlacementInfo function DirtyBomb_GetPlacementInfoFromTraceResults( enti
 	{
 		var hitEntClassname = hullTraceResults.hitEnt.GetNetworkedClassName()
 
-		if ( hitEntClassname == "prop_script" )
-		{
-			if ( hullTraceResults.hitEnt.GetScriptPropFlags() == PROP_IS_VALID_FOR_TURRET_PLACEMENT )
-				isScriptedPlaceable = true
-		}
+
 	}
 
 	bool success = !hullTraceResults.startSolid && hullTraceResults.fraction < 1.0 && ( hullTraceResults.hitEnt.IsWorld() || hullTraceResults.hitEnt.GetNetworkedClassName() == "func_brush" || isScriptedPlaceable )

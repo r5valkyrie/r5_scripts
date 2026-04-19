@@ -83,6 +83,12 @@ global struct TabData
 	string bannerHeader = ""
 	string callToActionHeader = ""
 	string callToActionTitle = ""
+#if PC_PROG_NX_UI
+		float callToActionWidth = 230.0
+#else
+		float callToActionWidth = 190.0
+#endif
+
 
 	vector bannerHeaderTextColor = <1.0, 1.0, 1.0>
 	vector bannerTitleTextColor = <1.0, 1.0, 1.0>
@@ -144,7 +150,7 @@ global enum eTabDirection
 	NEXT
 }
 
-                                                                                                                                    
+
 void function InitTabs()
 {
 	foreach ( menu in uiGlobal.allMenus )
@@ -409,7 +415,7 @@ void function RefreshTabsGRXData( TabData tabData )
 				seasonTabDef.centerRuiAsset = ThemedShopEvent_GetTabCenterRui( activeThemedShopEvent )
 			}
 		}
-		else       
+		else
 		{
 			seasonTabDef.leftSideImage = $""
 			seasonTabDef.rightSideImage = $""
@@ -531,9 +537,9 @@ bool function IsTabActive( TabData tabData )
 	return uiGlobal.panelData[panel].isActive
 }
 
-                                                        
-                                                                                     
-                                                                                                                                                                              
+
+
+
 void function ActivateTab( TabData tabData, var tabIndexVar )
 {
 	// typeof returns "int" not "integer" — accept both
@@ -686,7 +692,7 @@ void function HidePanelInternal( var panel )
 	SetLastMenuIDForPIN( Hud_GetHudName( panel ) )
 
 	bool isMenu = false
-	PIN_PageView( Hud_GetHudName( panel ), UITime() - uiGlobal.panelData[ panel ].enterTime, GetLastMenuIDForPIN(), isMenu, uiGlobal.panelData[ panel ].pin_metaData )                                                                                                      
+	PIN_PageView( Hud_GetHudName( panel ), UITime() - uiGlobal.panelData[ panel ].enterTime, GetLastMenuIDForPIN(), isMenu, uiGlobal.panelData[ panel ].pin_metaData )
 
 	foreach ( hideFunc in uiGlobal.panelData[ panel ].hideFuncs )
 		hideFunc( panel )
@@ -695,7 +701,7 @@ void function HidePanelInternal( var panel )
 
 void function ShutdownAllPanels()
 {
-	uiGlobal.activePanels.clear()                         
+	uiGlobal.activePanels.clear()
 
 	foreach ( var panel, PanelDef panelDef in uiGlobal.panelData )
 		HidePanel( panel )
@@ -710,7 +716,7 @@ void function UpdateMenuTabs()
 	if ( menu == null )
 		return
 
-	if( !seasonStyle.hasRefreshedOnce && IsConnected() )                                                  
+	if( !seasonStyle.hasRefreshedOnce && IsConnected() )
 	{
 		RefreshTabsSeasonalData()
 		seasonStyle = GetSeasonStyle()
@@ -858,7 +864,7 @@ void function UpdateMenuTabs()
 			}
 
 
-			                       
+
 
 			RuiSetColorAlpha( tabButtonRUI, "customNewCol", SrgbToLinear( seasonStyle.seasonNewColor ), 1.0 )
 			RuiSetAsset( tabButtonRUI, "leftSideImage", tabDef.leftSideImage )
@@ -916,7 +922,7 @@ void function UpdateMenuTabs()
 				}
 			}
 
-			                                                                       
+
 			if( tabDef.useCustomColors )
 			{
 				RuiSetColorAlpha( tabButtonRUI, "customDefaultTextCol", SrgbToLinear( tabDef.customDefaultTextCol ), 1.0 )
@@ -1092,13 +1098,13 @@ void function OnTab_Activate( var button )
 	else if ( tabIndex > tabData.activeTabIdx )
 		animPrefix = "MoveLeft_"
 	else
-		return                       
+		return
 
-	                                                                                            
+
 
 	ActivateTab( tabData, tabIndex )
 
-	                                                                                            
+
 }
 
 
@@ -1111,14 +1117,14 @@ void function OnMenuTab_NavLeft( var unusedNull )
 
 	TabData ornull tabData = Tab_GetActiveNestedTabData( menu )
 
-	if ( tabData == null )              
+	if ( tabData == null )
 	{
 		if ( !IsPanelTabbed( menu ) )
 			return
 
 		tabData = GetTabDataForPanel( menu )
 	}
-	else                  
+	else
 	{
 		expect TabData( tabData )
 
@@ -1130,7 +1136,7 @@ void function OnMenuTab_NavLeft( var unusedNull )
 
 	if ( tabData.tabNavigationDisabled )
 	{
-		                                                   
+
 		if ( tabData.tabNavigationEndCallbacks[eTabDirection.PREV] != null )
 			tabData.tabNavigationEndCallbacks[eTabDirection.PREV]()
 
@@ -1203,13 +1209,13 @@ void function OnMenuTab_NavRight( var unusedNull )
 		return
 
 	TabData ornull tabData = Tab_GetActiveNestedTabData( menu )
-	if ( tabData == null )                       
+	if ( tabData == null )
 	{
 		if ( !IsPanelTabbed( menu ) )
 			return
 
 		tabData = GetTabDataForPanel( menu )
-	}else                  
+	}else
 	{
 		expect TabData( tabData )
 
@@ -1508,33 +1514,33 @@ void function SetTabDefVisible( TabDef tabDef, bool state )
 
 	tabDef.visible = state
 
-	               
-	   
-	  	                                                  
-	  	                                                                                                   
-	  	 
-	  		                                                                                                           
-	  		 
-	  			                                                       
-	  			                                                         
-	  				        
-	  
-	  			                                      
-	  			                                                   
-	  		 
-	  		                                                                                        
-	  		 
-	  			                                                       
-	  			                                                         
-	  				        
-	  
-	  			                                      
-	  			                                                   
-	  		 
-	  
-	  		                                                                                                                                       
-	  	 
-	   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	UpdateMenuTabs()
 }
@@ -1597,11 +1603,11 @@ void function RegisterTabNavigationInput()
 		RegisterButtonReleasedCallback( BUTTON_TRIGGER_LEFT, OnNestedTab_NavLeftOnReleased )
 		RegisterButtonReleasedCallback( BUTTON_TRIGGER_RIGHT, OnNestedTab_NavRightOnReleased )
 
-		                                                               
-		                                                                   
 
-		RegisterButtonPressedCallback( BUTTON_Y, OnTab_ButtonY )                                                                           
-		RegisterButtonPressedCallback( BUTTON_X, OnTab_ButtonX )                                                                           
+
+
+		RegisterButtonPressedCallback( BUTTON_Y, OnTab_ButtonY )
+		RegisterButtonPressedCallback( BUTTON_X, OnTab_ButtonX )
 		file.tabButtonsRegistered = true
 	}
 }
@@ -1619,8 +1625,8 @@ void function DeregisterTabNavigationInput()
 		DeregisterButtonReleasedCallback( BUTTON_TRIGGER_LEFT, OnNestedTab_NavLeftOnReleased )
 		DeregisterButtonReleasedCallback( BUTTON_TRIGGER_RIGHT, OnNestedTab_NavRightOnReleased )
 
-		                                                                 
-		                                                                     
+
+
 
 		DeregisterButtonPressedCallback( BUTTON_Y, OnTab_ButtonY )
 		DeregisterButtonPressedCallback( BUTTON_X, OnTab_ButtonX )
