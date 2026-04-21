@@ -100,9 +100,9 @@ void function Perk_CarePackageInsight_Init()
 	Perks_RegisterClassPerk( carePackageInsight )
 
 	#if SERVER || CLIENT
-	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_RevealPackage", "typed_entity", "prop_care_package_insight" )
-	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_StartRevealPackage", "typed_entity", "prop_care_package_insight" )
-	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_MinimapIconPinged", "typed_entity", "prop_care_package_insight" )
+	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_RevealPackage", "typed_entity", "prop_dynamic" )
+	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_StartRevealPackage", "typed_entity", "prop_dynamic" )
+	Remote_RegisterServerFunction( "Perks_CarePackageInsight_ClientToServer_MinimapIconPinged", "typed_entity", "prop_dynamic" )
 	Remote_RegisterClientFunction( "ServerToClient_NotifyPathfinderCooldownReduction" )
 
 
@@ -123,7 +123,7 @@ void function Perk_CarePackageInsight_Init()
 	#if CLIENT
 		RegisterSignal( "CarePackage_PerkDisabled" )
 		RegisterSignal( "CarePackage_PerkEnabled" )
-		AddCreateCallback( "prop_care_package_insight", OnCarePackageDataCreated )
+		AddCreateCallback( "prop_dynamic", OnCarePackageDataCreated )
 
 		PrecacheParticleSystem( $"P_ar_loot_drop_point_CP_noZ" )
 
@@ -378,7 +378,7 @@ string function Perk_CarePackageInsight_GetLootItemStringForPing( entity player,
 
 void function Perks_CarePackageInsight_CreateCarePackageInsightPing( entity player, entity revealEnt, vector pingOrigin, int userTicketId )
 {
-	if( revealEnt.GetClassName() != "prop_care_package_insight" )
+	if( revealEnt.GetClassName() != "prop_dynamic" )
 		return
 	string lootItem = Perk_CarePackageInsight_GetLootItemStringForPing( player, revealEnt )
 	if( lootItem == "" )
@@ -440,7 +440,7 @@ void function CarePackageInsight_OnAirdropLaunched( entity airdrop, vector airdr
 
 	array<entity> allPlayers = GetPlayerArray_Alive()
 
-	entity carePackageHiddenEntity = CreateEntity( "prop_care_package_insight" )
+	entity carePackageHiddenEntity = CreateEntity( "prop_dynamic" )
 	carePackageHiddenEntity.RemoveFromAllRealms()
 	carePackageHiddenEntity.AddToOtherEntitysRealms( airdrop )
 	carePackageHiddenEntity.SetValueForModelKey( $"mdl/dev/empty_model.rmdl" )
@@ -449,7 +449,7 @@ void function CarePackageInsight_OnAirdropLaunched( entity airdrop, vector airdr
 	carePackageHiddenEntity.SetScriptName( HIDDEN_CARE_PACKAGE_ENT_NAME )
 	DispatchSpawn( carePackageHiddenEntity )
 
-	entity carePackageVisibleEntity = CreateEntity( "prop_care_package_insight" )
+	entity carePackageVisibleEntity = CreateEntity( "prop_dynamic" )
 	carePackageVisibleEntity.RemoveFromAllRealms()
 	carePackageVisibleEntity.AddToOtherEntitysRealms( airdrop )
 	carePackageVisibleEntity.SetValueForModelKey( $"mdl/dev/empty_model.rmdl" )

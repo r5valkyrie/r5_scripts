@@ -128,8 +128,6 @@ void function Canyonlands_MapInit_Common()
 
 		FlagSet( "DisableDropships" )
 
-		svGlobal.evacEnabled = false //Need to disable this on a map level if it doesn't support it at all
-
 
 		RegisterSignal( SIGNAL_HOVERTANK_AT_ENDPOINT )
 		RegisterSignal( "PathFinished" )

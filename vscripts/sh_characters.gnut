@@ -1126,9 +1126,7 @@ bool function Character_IsCharacterOwnedByPlayer( ItemFlavor character, entity p
 		return true
 	}
 
-	// cachedCharacterOwnership pdef field doesn't exist
-	// All characters are unlocked on custom servers
-	return true
+	return expect bool ( player.GetPersistentVar( "cachedCharacterOwnership[" + ItemFlavor_GetGUIDString( character ) + "]" ) )
 }
 
 #if CLIENT || UI
