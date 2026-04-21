@@ -48,7 +48,7 @@ WeaponData
 	"melee_rumble_on_hit"							"titan_melee_hit"
 	"melee_rumble_on_hit_partial"					"titan_melee_hit_partial"
 	"melee_freezelook_on_hit"						"0.25"
-	//"melee_anim_1p_number"							"1"								// ACT_VM_MELEE_ATTACK1, 2, or 3
+	"melee_anim_1p_number"							"1"								// ACT_VM_MELEE_ATTACK1, 2, or 3
 	"melee_anim_3p"									"ACT_GESTURE_MELEE_ATTACK1"
 	"damage_flags"									"DF_MELEE | DF_GIB"
 	"impact_effect_table"							"melee_titan"
@@ -151,7 +151,7 @@ WeaponData
 
 			"melee_damage_heavyarmor"					"5000"
 			"melee_range"								"300"
-			//"melee_anim_1p_number"						"3"			// ACT_VM_MELEE_ATTACK1, 2, or 3
+			"melee_anim_1p_number"						"3"			// ACT_VM_MELEE_ATTACK1, 2, or 3
 			"melee_anim_3p"								"ACT_GESTURE_MELEE_ATTACK3"
 			"damage_flags"								"DF_MELEE | DF_EXPLOSION | DF_CRITICAL | DF_KNOCK_BACK | DF_SHIELD_ONLY_DAMAGE"
 			"impact_effect_table"						"40mm_splasher_rounds"

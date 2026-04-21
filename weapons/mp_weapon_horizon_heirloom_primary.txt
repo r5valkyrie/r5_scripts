@@ -269,7 +269,7 @@
 			// val unk: 2
 			"melee_attack_animtime" "1.300000"
 			// val unk: 3
-			"//"melee_anim_1p" "ACT_VM_MELEE_ATTACK3"
+			"melee_anim_1p" "ACT_VM_MELEE_ATTACK3"
 			// val unk: 0
 			"impulse_force" "20000"
 			// val unk: 1
