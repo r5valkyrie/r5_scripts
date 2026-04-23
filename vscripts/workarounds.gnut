@@ -405,28 +405,7 @@ global function Squads_GetMax
 global function Squads_GetSquadColor
 global function Squads_GetSquadName
 
-// Struct definitions needed for sh_ranked.gnut UI code (defined in feature_tutorial.gnut which loads later)
-global struct featureTutorialTableData
-{
-	string leftString
-	string rightString
-}
-
-global struct featureTutorialData
-{
-	string          title
-	string		 	description
-	asset			image
-	array< string >	descArgs
-	array< featureTutorialTableData > tableData
-	bool 			hasImage
-}
-
-global struct featureTutorialTab
-{
-	string                       tabName
-	array< featureTutorialData > rules
-}
+// featureTutorial structs moved to ui/dialogs/feature_tutorial.nut
 #endif
 
 // ============================================================================

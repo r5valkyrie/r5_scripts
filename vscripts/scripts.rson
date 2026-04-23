@@ -158,6 +158,7 @@ Scripts:
 	sh_scene_capture.gnut
 	workarounds.gnut
 	sh_persistent_data.gnut
+	ui/dialogs/feature_tutorial.nut
 	gamemodes/sh_gamemodes.gnut
 	gamemodes/sh_dev_gamemodes.gnut // DEVSCRIPTS REMOVE
 	sh_mp_utility_all.gnut
@@ -971,7 +972,6 @@ Scripts:
 	client/cl_chroma.gnut
 	ui/_death_box_list_panel.gnut
 	ui/survival_ground_list.nut
-	image_pak_load.nut
 	ui/panel_loadscreens.nut
 	ui/clui_minimap_coords.nut
 	ui/panel_private_match_team_rosters.nut
@@ -991,7 +991,6 @@ Scripts:
 	sh_personalized_store.gnut
 	radio_plays.nut
 	ui/customize_model.nut
-	ui/dialogs/feature_tutorial.gnut
 	ui/ui_vscript.gnut
 	ui/ui_utility.gnut
 	ui/_season_style.gnut
@@ -1042,7 +1041,6 @@ Scripts:
 	ui/dialogs/gamemode_select_private_match.nut
 	ui/dialogs/report_player.nut
 	ui/dialogs/find_friend.nut
-	ui/dialogs/gamemode_rules.nut
 	ui/dialogs/code_redemption.nut
 	ui/dialogs/confirm_leave_club.nut
 	ui/dialogs/confirm_edit_club.nut
@@ -1245,7 +1243,6 @@ Scripts:
 	ui/dialogs/event_shop_sweepstakes_flow_dialog.nut
 	ui/dialogs/event_shop_sweepstakes_rules_dialog.nut
 	ui/dialogs/event_shop_tier_dialog.nut
-	ui/dialogs/feature_tutorial.nut
 	ui/dialogs/language_packs.nut
 	ui/dialogs/low_pop.nut
 	ui/dialogs/milestone_information_dialog.nut
@@ -1259,7 +1256,6 @@ Scripts:
 	ui/image_pak_load.nut
 	ui/lobby_panel_event.nut
 	ui/menu_artifacts_inspect.nut
-	ui/menu_character_select.nut
 	ui/menu_controls_ads_motion.nut
 	ui/menu_customize_model.nut
 	ui/menu_elite_intro.nut
@@ -1277,7 +1273,6 @@ Scripts:
 	ui/nx_operation_mode_update.nut
 	ui/panel_banner_badges.nut
 	ui/panel_death_screen_killreplay.nut
-	ui/panel_equippable_quips.nut
 	ui/panel_postgame_general.nut
 	ui/ps5_activities.nut
 	ui/store_panel_special_currency_shop.nut

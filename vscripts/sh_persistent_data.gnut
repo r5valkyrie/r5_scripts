@@ -685,7 +685,7 @@ void function ServerToClient_OnPersistentDataReady()
 void function ClientToUI_OnPersistentDataReady()
 {
 	foreach( OnPersistentDataReadyCallbackType cb in fileLevel.onPersistentDataReadyCallbacks )
-		cb( GetUIPlayer() )
+		cb( GetLocalClientPlayer() )
 }
 #endif
 

@@ -3108,6 +3108,21 @@ global struct ClubMemberTooltipData
 	bool isInMatch
 }
 
+global struct StoreToolTipData
+{
+	vector tooltipAltDescColor
+}
+
+global struct BoostedToolTipData
+{
+	int state
+}
+
+global struct CurrencyToolTipData
+{
+	bool premiumCurrencyIsNegative
+}
+
 global struct ToolTipData
 {
 	asset image
@@ -3129,8 +3144,11 @@ global struct ToolTipData
 	int rarity
 
 	LootTooltipData & lootPromptData
-	CustomMatchTooltipData customMatchData
-	ClubMemberTooltipData clubMemberData
+	ClubMemberTooltipData & clubMemberData
+	CustomMatchTooltipData & customMatchData
+	StoreToolTipData & storeTooltipData
+	CurrencyToolTipData & currencyToolTipData
+	BoostedToolTipData & boostedToolTipData
 }
 
 
