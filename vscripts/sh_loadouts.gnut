@@ -2832,9 +2832,9 @@ void function Loadouts_SetSortPriorityForItemFlavor( ItemFlavor item )
 	item.loadoutSortPriority = priority
 }
 
-array<ItemFlavor> function GetLoadoutItemsSortedForMenu( LoadoutEntry entry, int functionref( ItemFlavor ) sortOrdinalFunc, bool functionref( ItemFlavor ) isEmptyFunc = null, array<int> filterTypes = [] )
+array<ItemFlavor> function GetLoadoutItemsSortedForMenu( array<LoadoutEntry> loadoutEntries, int functionref( ItemFlavor ) sortOrdinalFunc, bool functionref( ItemFlavor ) isEmptyFunc = null, array<int> filterTypes = [] )
 {
-	array<LoadoutEntry> loadoutEntries = [ entry ]
+	LoadoutEntry entry = loadoutEntries[0]
 
 	#if LOADOUTS_DBG
 		DEV_LoadoutsDebug( entry )

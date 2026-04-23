@@ -1,34 +1,26 @@
-//========== Copyright � 2008, Valve Corporation, All rights reserved. ========
-//  Purpose: Script initially run after squirrel VM is initialized
-//
-//  !!!NOTE: Reference script only; changes made to this script will not work in game.
-//=============================================================================
 
-// Platform defines (NX_PROG, PLAYSTATION_PROG, PS5_PROG, XB5_PROG,
-// XBOX_PROG, PC_PROG_NX_UI) are registered natively by the S21 engine
-// before init.nut runs, so re-declaring them here would redefine a
-// const. Kept in S3's init.nut where the engine doesn't provide them.
 
-// Provide the old `DEVELOPER` preprocessor symbol (S21 renamed it to
-// `DEV`, which is an intrinsic / runtime-typed var the compiler will
-// not coerce into a const bool). Hardcode to false so `#if DEVELOPER`
-// blocks compile out cleanly in non-dev builds; flip to true for a
-// dev build if you want `#if DEVELOPER` content compiled in.
+
+
+
+
 global const bool DEVELOPER = false
 
 global function printl
 global function CodeCallback_Precompile
 
-global struct LocPair
+global enum eScriptWindEvalStatus
 {
-    vector origin = <0, 0, 0>
-    vector angles = <0, 0, 0>
+	INCOMPLETE,
+	COMPLETE,
+	EXPIRED,
+    INVALID
 }
 
-global struct WeaponRedirectParams
+global struct ScriptWindEvalResult
 {
-entity projectile
-vector projectilePos
+    vector vec
+	int status
 }
 
 global struct EchoTestStruct
@@ -40,35 +32,6 @@ global struct EchoTestStruct
 	vector test5
 	int[5] test6
 }
-
-global struct VehicleSim
-{
-	float  startGametime
-	float  time
-	vector pos
-	vector vel
-	vector ang
-	vector angVel
-	bool   isEngineStarted = false
-	float  engineStartTime
-	bool   didCollide
-	bool   wasColliding
-	bool   isResting
-}
-
-global struct BreachTraceResults
-{
-	int result
-	vector endPos
-	vector surfaceNormal
-}
-
-// [s21-native] int const BREACH_TRACE_RESULT_SUCCESS = 0x0 (int) registered by engine; script redeclaration dropped
-// [s21-native] int const BREACH_TRACE_RESULT_WALL_TOO_THIN = 0x3 (int) registered by engine; script redeclaration dropped
-// [s21-native] int const BREACH_TRACE_RESULT_WALL_TOO_THICK = 0x4 (int) registered by engine; script redeclaration dropped
-// [s21-native] int const BREACH_TRACE_RESULT_INVALID_END_POINT = 0x2 (int) registered by engine; script redeclaration dropped
-// [s21-native] int const BREACH_TRACE_RESULT_FAILURE = 0x1 (int) registered by engine; script redeclaration dropped
-// [s21-native] int const BREACH_TRACE_RESULT_COUNT = 0x5 (int) registered by engine; script redeclaration dropped
 
 global struct TraceResults
 {
@@ -88,6 +51,20 @@ global struct TraceResults
 	int contents
 }
 
+global struct BreachTraceResults
+{
+	int result
+	vector endPos
+	vector surfaceNormal
+}
+
+global struct GrenadeIndicatorData
+{
+	vector hitPos
+	vector hitNormal
+	entity hitEnt
+}
+
 global struct VisibleEntityInCone
 {
 	entity ent
@@ -96,13 +73,6 @@ global struct VisibleEntityInCone
 	bool solidBodyHit
 	vector approxClosestHitboxPos
 	int extraMods
-}
-
-global struct WeaponMissileMultipleTargetData
-{
-	vector pos
-	vector normal
-	float delay
 }
 
 global struct PlayerDidDamageParams
@@ -137,6 +107,14 @@ global struct BackendError
 {
 	int serialNum
 	string errorString
+}
+
+global struct CommunityFriends
+{
+	bool isValid
+	array<string> ids
+	array<string> hardware
+	array<string> names
 }
 
 global struct CupsMatchStatInformation
@@ -187,129 +165,43 @@ global struct UserFullCupData
 	array< CupPlayerMMRBucket > cupPlayerMMRData
 }
 
-global struct BrowseFilters
+global struct CupPlayerInfo
 {
-	string name
-	string clantag
-	string communityType
-	string membershipType
-	string category
-	string playtime
-	string micPolicy
-	int pageNum
-	int minMembers
-}
-
-global struct CommunitySettings
-{
-	int communityId
-	bool verified
-	bool doneResolving
-	string name
-	string clanTag
-	string motd
-	string communityType
-	string membershipType
-	string visibility
-	string category
-	string micPolicy
-	string language1
-	string language2
-	string language3
-	string region1
-	string region2
-	string region3
-	string region4
-	string region5
-	int happyHourStart
-	int matches
-	int wins
-	int losses
-	string kills
-	string deaths
-	string xp
-	int ownerCount
-	int adminCount
-	int memberCount
-	int onlineNow
-	bool invitesAllowed
-	bool chatAllowed
-	string creatorUID
-	string creatorName
-}
-
-global struct CommunityMembership
-{
-	int communityId
-	string communityName
-	string communityClantag
-	string membershipLevel
-}
-
-global struct CommunityFriends
-{
-	bool isValid
-	array<string> ids
-	array<string> hardware
-	array<string> names
-}
-
-// Forward dependencies for CommunityFriendsData.eadpPresenceData.
-// Both structs were originally defined later in the file; hoisted so the
-// `EadpPresenceData ornull` reference below resolves at parse time.
-global struct PresenceState
-{
-	string 			layout
-	int				substitutionMode
-	string 			mapName
-	string 			gamemode
-	int				matchStartTime
-	int 			party_slotsUsed
-	int 			party_slotsMax
-	int 			survival_squadsRemaining
-	int				teams_friendlyScore
-	int				teams_enemyScore
-}
-
-global struct EadpPresenceData
-{
-	int			hardware
-	PresenceState ornull 	presence
-	bool		partyInMatch
-	bool		partyIsFull
-	string		privacySetting
-	string		name
-	bool		online
-	bool		ingame
-	bool		away
-	string      firstPartyId
-	bool        isJoinable
-}
-
-global struct CommunityFriendsData
-{
-	string id
+	string playerUID
 	string hardware
 	string name
-	string presence
-	bool online
-	bool ingame
-	bool away
-	EadpPresenceData ornull eadpPresenceData   // S21 engine
 }
 
-global struct CommunityFriendsWithPresence
+global struct CupLeaderboardEntry
 {
-	bool isValid
-	array<CommunityFriendsData> friends
+	string squadID
+	array<CupPlayerInfo> squadInfo
+	int squadScore
+	array<CupMatchSummary> matchHistoryData
+}
+
+global struct CupTierRewardData
+{
+	asset		reward
+	int        	quantity
+}
+
+global struct CupTierData
+{
+	int		tierType
+	int		bound
+
+	asset	icon
+
+	array<CupTierRewardData> rewardData
 }
 
 global struct CommunityUserInfo
 {
 	string hardware
-	string tag                // S21 engine (platform tag)
 	string uid
 	string name
+	string tag
 	string kills
 	int wins
 	int matches
@@ -317,14 +209,8 @@ global struct CommunityUserInfo
 	int banSeconds
 	int eliteStreak
 	int rankScore
-	int rankLadderPos
-	int rankedLadderPos
 	string rankedPeriodName
-	int rumbleRankScore         // S21 engine
-	int rumbleRankedLadderPos   // S21 engine
-	int arenaScore
-	string arenaPeriodName
-	int arenaLadderPos
+	int rankedLadderPos
 	int lastCharIdx
 	bool isLivestreaming
 	bool isOnline
@@ -335,8 +221,8 @@ global struct CommunityUserInfo
 	float lastServerChangeTime
 	string privacySetting
 	array<int> charData
-
-	int numCommunities
+	int rumbleRankScore
+	int rumbleRankedLadderPos
 }
 
 global struct PartyMember
@@ -347,102 +233,37 @@ global struct PartyMember
 	bool ready
 	bool present
 	string eaid
-	string clubTag
 	int boostCount
 	string unspoofedHardware
 	string unspoofedUID
 }
 
-global struct OpenInvite
-{
-	string inviteType
-	string playlistName
-	string originatorName
-	string originatorUID
-	int numSlots
-	int numClaimedSlots
-	int numFreeSlots
-	float timeLeft
-	bool amIInThis
-	bool amILeader
-	array<PartyMember> members
-}
-
-
 global struct Party
 {
-	string partyType
 	string playlistName
 	string originatorName
 	string originatorUID
 	int numSlots
 	int numClaimedSlots
 	int numFreeSlots
-	float timeLeft
 	bool amIInThis
 	bool amILeader
 	bool searching
 	array<PartyMember> members
 }
 
-global struct RemoteClientInfoFromMatchInfo
+global struct NetTraceRouteResults
 {
-	string name
-	int teamNum
-	int score
-	int kills
-	int deaths
+	string address
+	int sent
+	int received
+	int bestRttMs
+	int worstRttMs
+	int lastRttMs
+	int averageRttMs
 }
 
-global struct RemoteMatchInfo
-{
-	string datacenter
-	string gamemode
-	string playlist
-	string map
-	int maxClients
-	int numClients
-	int maxRounds
-	int roundsWonIMC
-	int roundsWonMilitia
-	int timeLimitSecs
-	int timeLeftSecs
-	int teamsLeft
-	int maxScore
-	array<RemoteClientInfoFromMatchInfo> clients
-	array<int> teamScores
-}
 
-global struct InboxMessage
-{
-	int messageId
-	string messageType
-	bool deletable
-	bool deleting
-	bool reportable
-	bool doneResolving
-
-	string dateSent
-	string senderHardware
-	string senderUID
-	string senderName
-	int communityID
-	string communityName
-	string messageText
-	string actionLabel
-	string actionURL
-}
-
-global struct MainMenuPromos
-{
-	int prot,
-	int version,
-	string layout,
-	string promoRpak,
-	string miniPromoRpak
-}
-
-#if SERVER || UI
 global struct MatchmakingDatacenterETA
 {
 	int datacenterIdx
@@ -453,9 +274,9 @@ global struct MatchmakingDatacenterETA
 	int idealStartUTC
 	int idealEndUTC
 }
-#endif // #if SERVER || UI
 
-#if SERVER || UI
+
+
 global struct GRXCraftingOffer
 {
 	int itemIdx
@@ -477,8 +298,8 @@ global struct GRXStoreOfferPrice
 
 global struct GRXStoreOffer
 {
-	array< GRXStoreOfferItem >  items    // S21 engine populates with the typed struct
-	array< GRXStoreOfferPrice > prices   // S21 engine populates with the typed struct
+	array< GRXStoreOfferItem > items
+	array< GRXStoreOfferPrice > prices
 	table< string, string > attrs
 	int offerType
 	string offerAlias
@@ -486,6 +307,14 @@ global struct GRXStoreOffer
 	int purchaseCount
 	int ineligibilityCode
 }
+
+global struct GRXGetOfferInfo
+{
+	bool isEligible
+	array< array< int > > prices
+}
+
+
 
 global struct GRXScriptInboxMessage
 {
@@ -496,7 +325,53 @@ global struct GRXScriptInboxMessage
 	string     senderNucleusPid
 	string     gifterName
 }
-#endif // #if SERVER || UI
+
+
+
+global struct GRXStoreScenario
+{
+	string key
+	string field
+	table<string, string> variants
+}
+
+global struct GRXStoreItem
+{
+	string offerAlias = ""
+	string imageRef = ""
+	string mainLocalization = ""
+	string subLocalization = ""
+	string linkType = ""
+	string link = ""
+	string telemetryId
+	int type = -1
+	float tint1 = 0.0
+	float tint2 = 0.0
+	float tint3 = 0.0
+}
+
+global struct GRXStoreSection
+{
+	string localization = ""
+	string imageRef = ""
+	int markedAsNewDate = 0
+	int startDate = 0
+	int endDate = 0
+	int id = -1
+	float tint1 = 0.0
+	float tint2 = 0.0
+	float tint3 = 0.0
+	array<GRXStoreItem> items
+	array<GRXStoreScenario> scenarios
+}
+
+global struct GRXStoreTab
+{
+	string alias = ""
+	string localization = ""
+	array<GRXStoreSection> sections
+}
+
 
 global struct GRXContainerInfo
 {
@@ -522,7 +397,6 @@ global struct GRXUserInfo
 	int inventoryState
 
 	array<GRXUserInfoBalances> currencies
-	array<GRXContainerInfo>    containers   // S21 engine populates typed container list
 
 	int queryGoal
 	int queryOwner
@@ -533,105 +407,90 @@ global struct GRXUserInfo
 	int nextCurrencyExpirationAmt
 	int nextCurrencyExpirationTime
 
+	array< GRXContainerInfo > containers
+
 	int sparkleLimitCounter
 	int sparkleLimitResetDate
 
 	int marketplaceEdition
 
 	bool isOfferRestricted
-	bool hasUpToDateBundleOffers
 }
 
-//-----------------------------------------------------------------------------
-// S21-only engine-expected structs. The engine populates these from native
-// code; scripts must declare matching layouts or struct-field validation
-// aborts VM init.
-//-----------------------------------------------------------------------------
 
-global struct GRXStoreScenario
+global struct ClubHeader
 {
-	string key
-	string field
-	table< string, string > variants
+	string clubID
+	string name
+	string tag
+	string logoString
+	string creatorID
+	string dataCenter
+	int memberCount
+	int privacySetting	
+	int minLevel
+	int minRating
+	int searchTags
+	int hardware
+	bool allowCrossplay
+	int lastActive
 }
 
-global struct GRXStoreItem
+global struct ClubMember
 {
-	string offerAlias
-	string imageRef
-	string mainLocalization
-	string subLocalization
-	string linkType
-	string link
-	string telemetryId
-	int type
-	float tint1
-	float tint2
-	float tint3
+	string memberID
+	string memberName
+	string platformUserID
+	int memberHardware
+	int rank
 }
 
-global struct GRXStoreSection
+global struct ClubJoinRequest
 {
-	string imageRef
-	string localization
-	int id
-	int startDate
-	int endDate
-	int markedAsNewDate
-	float tint1
-	float tint2
-	float tint3
-	array< GRXStoreItem > items
-	array< GRXStoreScenario > scenarios
+	string userID
+	string userName
+	int userHardware
+	string platformUid
+	int expireTime
 }
 
-global struct GRXStoreTab
+global struct ClubEvent
 {
-	string localization
-	string alias
-	array< GRXStoreSection > sections
+	int eventTime
+	int eventType	
+	int eventParam
+	string eventText
+	string memberName
+	string memberID
 }
 
-global struct XProgProfileInfo
+global struct ClubData
 {
-	int platformId
-	string nickname
+	array< ClubMember > members
+	array< ClubJoinRequest > joinRequests
+	array< ClubEvent > eventLog
+	array< ClubEvent > chatLog
 }
 
-global struct XProgMigrateData
+global struct ClubInvite
 {
-	bool coolingDown
-	int retryMinutes
-	int processStatus
-	bool hasMultipleProfiles
-	string nickname
-	int level
-	int apexPacks
-	int cosmetics
-	int credits
-	int crafting
-	int premium
-	int premiumNx
-	int heirloom
-	int heirloomShards
-	string eaId
-	array< XProgProfileInfo > profiles
-}
-
-global struct CupPlayerInfo
-{
-	string playerUID
-	string hardware
+	string clubID
 	string name
 }
 
-global struct CupLeaderboardEntry
-{
-	string squadID
-	array< CupPlayerInfo > squadInfo
-	int squadScore
-	array< CupMatchSummary > matchHistoryData
+global struct ClubDisplay{
+	string clubID
+	string name
+	string tag
+	string logoString
+	string dataCenter
+	int lastActive
+	int numMembers
+	int maxMembers
+	float activityMetric
 }
+
+
 
 global struct VortexBulletHit
 {
@@ -647,8 +506,8 @@ global struct AnimRefPoint
 
 global struct LevelTransitionStruct
 {
-	// only ints, floats, bools, vectors, and other structs or fixed-size arrays containing those are allowed.
-	// "ornull" may also be used.
+	
+	
 
 	int startPointIndex
 
@@ -683,6 +542,12 @@ global struct WeaponPrimaryAttackParams
 	bool firstTimePredicted
 	int burstIndex
 	int barrelIndex
+}
+
+global struct WeaponRedirectParams
+{
+	entity projectile
+	vector projectilePos
 }
 
 global struct WeaponBulletHitParams
@@ -720,7 +585,7 @@ global struct WeaponFireBoltParams
 	int additionalRandomSeed
 	bool dontApplySpread
 	int projectileIndex
-	bool deferred // (2019-12-01 dw): This doesn't seem to do anything.
+	bool deferred 
 }
 
 global struct WeaponFireGrenadeParams
@@ -751,6 +616,13 @@ global struct WeaponFireMissileParams
 	int projectileIndex
 }
 
+global struct WeaponMissileMultipleTargetData
+{
+	vector pos
+	vector normal
+	float delay
+}
+
 global struct ModInventoryItem
 {
 	int slot
@@ -766,11 +638,26 @@ global struct OpticAppearanceOverride
 	array<string>	uiDataNames
 }
 
+
+
+
+
+
+
+
+
 global struct ConsumableInventoryItem
 {
 	int slot
 	int type
 	int count
+}
+
+global struct OutsourceViewer_SkinDetails
+{
+	string skinName
+	asset skinAssetName
+	int skinTier
 }
 
 global struct PingCollection
@@ -801,38 +688,38 @@ global struct SmartAmmoTarget
 
 global struct StaticPropRui
 {
-	//------------------------------
-	// These values are ignored by RuiCreateOnStaticProp. They are given to ClientCodeCallback_OnEnumStaticPropRui to be informative.
-	//
-	// If you create a StaticPropRui struct from scratch to pass to RuiCreateOnStaticProp, you can leave these blank.
+	
+	
+	
+	
 
-	string scriptName           // "script_name" in LevelEd.
-	string mockupName           // Name of the mockup material in Maya.
-	string modelName            // Name of the model.
-	vector spawnOrigin			// World coordinates of the model's origin when spawned. Parented static props can move away from here.
-	vector spawnMins			// Minimum world coordinates of the model's bounding box when spawned. This can be wrong for parented static props once the level starts.
-	vector spawnMaxs			// Maximum world coordinates of the model's bounding box when spawned. This can be wrong for parented static props once the level starts.
+	string scriptName           
+	string mockupName           
+	string modelName            
+	vector spawnOrigin			
+	vector spawnMins			
+	vector spawnMaxs			
 
 	vector spawnForward
 	vector spawnRight
 	vector spawnUp
 
-	//------------------------------
-	// These values are used by RuiCreateOnStaticProp to create a RUI on a static prop.
-	// They are initialized to default values in ClientCodeCallback_OnEnumStaticPropRui.
-	// You can change them to customize behavior.
-	//
-	// If you create a StaticPropRui struct from scratch to pass to RuiCreateOnStaticProp, you must initialize "ruiName", but "args" can be left empty.
+	
+	
+	
+	
+	
+	
 
-	asset ruiName               // Name of the RUI asset to create
-	table<string, string> args  // Arg overrides.
+	asset ruiName               
+	table<string, string> args  
 
-	//------------------------------
-	// This magic number is how code knows which prop and RUI mesh to use for the topology. Do not remember this across levels, and do not modify it.
-	// If you want to remember a RUI mesh on a static prop at startup so that you can create a RUI on it later, this is all you have to remember.
-	//
-	// If you create a StaticPropRui struct from scratch to pass to RuiCreateOnStaticProp, this must be initialized to the value you remembered from
-	// ClientCodeCallback_OnEnumStaticPropRui.
+	
+	
+	
+	
+	
+	
 
 	int magicId
 }
@@ -884,7 +771,9 @@ global struct NavMesh_FindMeshPath_Result
 	bool startPolyOK
 	bool goalPolyOK
 	bool pathFound
+	bool pathIsPartialPath
 	array<vector> points
+	float pathLength
 }
 
 global struct PrivateMatchStatsStruct
@@ -921,141 +810,44 @@ global struct PrivateMatchChatConfigStruct
 	bool	adminOnly
 }
 
-global struct GrenadeIndicatorData
-{
-	vector hitPos
-	vector hitNormal
-	entity hitEnt
-}
+global typedef SettingsAssetGUID int
 
-global struct NetTraceRouteResults
-{
-	string address
-	int sent
-	int received
-	int bestRttMs
-	int worstRttMs
-	int lastRttMs
-	int averageRttMs
-}
 
-#if UI || CLIENT
-global struct GRXGetOfferInfo
-{
-	bool isEligible
-	array< array< int > > prices
-}
 
-global struct GRXBundleOffer
-{
-	array< array<int> >bundlePrices
-	int purchaseCount
-	string ineligibleReason
-}
-
-global struct ClubHeader
-{
-	string clubID
-	string name
-	string tag
-	string logoString
-	string creatorID
-	string dataCenter
-	int memberCount
-	int privacySetting
-	int minLevel
-	int minRating
-	int searchTags
-	int hardware
-	bool allowCrossplay
-	int lastActive
-}
-
-global struct ClubMember
-{
-	string memberID
-	string memberName
-	string platformUserID
-	int memberHardware
-	int rank
-}
-
-global struct ClubJoinRequest
-{
-	string userID
-	string userName
-	int userHardware
-	string platformUid
-	int expireTime
-}
-
-global struct ClubEvent
-{
-	int eventTime
-	int eventType
-	int eventParam
-	string eventText
-	string memberName
-	string memberID
-}
-
-global struct ClubData
-{
-	array< ClubMember > members
-	array< ClubJoinRequest > joinRequests
-	array< ClubEvent > eventLog
-	array< ClubEvent > chatLog
-}
-
-global struct ClubInvite
-{
-	string clubID
-	string name
-}
-
-global struct ClubDisplay
-{
-	string clubID
-	string name
-	string tag
-	string logoString
-	string dataCenter
-	int lastActive
-	int numMembers
-	int maxMembers
-	float activityMetric
-}
-
-global struct OutsourceViewer_SkinDetails
-{
-	string skinName
-	int skinTier
-}
-#endif
-
-#if CLIENT || UI
 global enum eRichPresenceSubstitutionMode
-{
-	NONE,
-	MODE_MAP,
-	MODE_MAP_SQUADSLEFT,
-	MODE_MAP_FRIENDLYSCORE_ENEMYSCORE,
+{												
+	NONE,										
+	MODE_MAP,									
+	MODE_MAP_SQUADSLEFT,						
+	MODE_MAP_FRIENDLYSCORE_ENEMYSCORE,			
 	MODE_MAP_FRIENDLYSCORE_ENEMYSCORE_PERCENTAGE,
-	PARTYSLOTSUSED_PARTYSLOTSMAX,
+	PARTYSLOTSUSED_PARTYSLOTSMAX,				
 }
 
-// PresenceState struct hoisted earlier in the file (near CommunityFriendsData).
+global struct PresenceState
+{
+	string 			layout
+	int				substitutionMode
+
+	string 			mapName
+	string 			gamemode
+	int				matchStartTime
+	int 			party_slotsUsed
+	int 			party_slotsMax
+	int 			survival_squadsRemaining
+	int				teams_friendlyScore
+	int				teams_enemyScore
+}
 
 global struct CustomMatch_LobbyPlayer
 {
 	string uid
 	string uidHashed
-	string eaid           // S21 engine
-	string firstPartyID   // S21 engine
+	string eaid
+	string firstPartyID
 	string hardware
 	string name
-	string tag            // S21 engine (platform tag)
-	string clubTag
+	string tag
 	bool isAdmin = false
 	int team = 1
 	int flags = 0
@@ -1069,6 +861,7 @@ global struct CustomMatch_MatchHistory
 
 global struct CustomMatch_LobbyState
 {
+	
 	int maxTeams = 20
 	int maxPlayers = 60
 	int maxSpectators = 20
@@ -1091,8 +884,7 @@ global struct CustomMatch_MatchPlayer
 	string uid
 	string hardware
 	string name
-	string tag            // S21 engine (platform tag)
-	string clubTag
+	string tag
 	string character
 	int status
 	int kills
@@ -1119,9 +911,10 @@ global struct CustomMatch_LobbyHistory
 {
 	array<CustomMatch_MatchHistory> matches
 }
-#endif
 
-#if UI || CLIENT
+
+
+
 global struct CustomMatch_SettingsForUpdate
 {
 	string playlist
@@ -1132,7 +925,20 @@ global struct CustomMatch_SettingsForUpdate
 	bool anonMode
 }
 
-// EadpPresenceData struct hoisted earlier in the file (near CommunityFriendsData).
+global struct  EadpPresenceData
+{
+	int			hardware
+	PresenceState ornull 	presence
+	bool		partyInMatch
+	bool		partyIsFull
+	string		privacySetting
+	string		name
+	bool		online
+	bool		ingame
+	bool		away
+	string      firstPartyId
+	bool        isJoinable
+}
 
 global struct EadpPeopleData
 {
@@ -1173,6 +979,7 @@ global struct EadpQuerryPlayerDataList
 	array< EadpQuerryPlayerData > players
 }
 
+
 global struct EadpInviteToPlayData
 {
 	string	eaid
@@ -1201,11 +1008,92 @@ global struct EadpPrivacySetting
 	string	nintendoNameDiscoverable
 }
 
+global enum eFriendStatus
+{
+	ONLINE_INGAME,
+	ONLINE,
+	ONLINE_AWAY,
+	OFFLINE,
+	REQUEST,
+	COUNT
+}
+
+global struct Friend
+{
+	string id
+	string unspoofedid = ""
+	string hardware
+	string unspoofedHardware = ""
+	string name = "Unknown"
+	string presence = ""
+	int    status = eFriendStatus.OFFLINE
+	bool   ingame = false
+	bool   inparty = false
+	bool   away = false
+	bool   inleaderboard = false
+
+	EadpPresenceData ornull eadpPresenceData
+	EadpPeopleData ornull eadpData
+}
+
+global struct FriendsData
+{
+	array<Friend> friends
+	bool          isValid
+}
+
 global struct CodeRedemptionGrant
 {
 	string alias
 	int qty
 	int type
+}
+
+global struct CommunityFriendsData
+{
+	string id
+	string hardware
+	string name
+	string presence
+	bool online
+	bool ingame
+	bool away
+	EadpPresenceData ornull eadpPresenceData
+}
+
+global struct CommunityFriendsWithPresence
+{
+	bool isValid
+	array<CommunityFriendsData> friends
+}
+
+global struct XProgProfileInfo
+{
+	int    platformId
+	string nickname
+}
+
+global struct XProgMigrateData
+{
+	bool coolingDown
+	int retryMinutes
+	int processStatus
+	bool hasMultipleProfiles
+
+	string nickname
+	int level
+
+	int apexPacks
+	int cosmetics
+	int credits
+	int crafting
+	int premium
+	int premiumNx
+	int heirloom
+	int heirloomShards
+
+	string eaId
+	array<XProgProfileInfo> profiles
 }
 
 global struct UMAttribute
@@ -1235,13 +1123,22 @@ global struct UMData
 	string triggerName
 	array<UMAction> actions
 }
-#endif
 
-global typedef SettingsAssetGUID int
 
-//-----------------------------------------------------------------------------
-// General
-//-----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function printl( var text )
 {
@@ -1250,10 +1147,12 @@ void function printl( var text )
 
 void function CodeCallback_Precompile()
 {
-#if DEVELOPER
-	// save the const table for later printing when documenting code consts
-	//if ( Dev_CommandLineHasParm( "-scriptdocs" ) )
+#if DEV
+	
+	if ( hasscriptdocs() )
+	{
 		getroottable().originalConstTable <- clone getconsttable()
+	}
 #endif
 }
 

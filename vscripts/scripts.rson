@@ -990,6 +990,13 @@ Scripts:
 	sh_mastery.gnut
 	sh_personalized_store.gnut
 	radio_plays.nut
+	perk_care_package_insight.nut
+	perk_extra_firepower.nut
+	perk_kill_boost_ult.nut
+	cups/sh_cups.gnut
+	cups/cl_cups.gnut
+	cups/sh_ranked_rumble.gnut
+	clui_ranked.nut
 	ui/customize_model.nut
 	ui/ui_vscript.gnut
 	ui/ui_utility.gnut

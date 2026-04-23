@@ -278,7 +278,6 @@ global function ClientToUI_WORKAROUND_GRXPackOpened_Start
 global function ClientToUI_WORKAROUND_GRXPackOpened_Entry
 global function ClientToUI_WORKAROUND_GRXPackOpened_Finish
 global function GRX_CheckBundleAndUpdateOfferPrices
-global function GRX_GetUserBundleOffer
 #endif
 
 global const int MAX_REWARDS_PER_REWARD_SEQ_CALL = 255
@@ -7229,9 +7228,4 @@ void function GRX_CheckBundleAndUpdateOfferPrices( GRXScriptOffer offer )
 {
 }
 
-GRXBundleOffer function GRX_GetUserBundleOffer( string offerAlias )
-{
-	GRXBundleOffer bundle
-	return bundle
-}
 #endif // UI

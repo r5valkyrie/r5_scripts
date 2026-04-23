@@ -57,8 +57,7 @@ global function SharedRanked_DidPlayerEverHaveAFullTeam
 global function SharedRanked_GetAbandonPenaltyLength
 #endif
 
-global function CreateNestedRankedRui
-global function SharedRanked_FillInRuiEmblemText
+// CreateNestedRankedRui + SharedRanked_FillInRuiEmblemText moved to clui_ranked.nut
 
 #if CLIENT || UI
 global function Ranked_GetHistoricalRankScoreAcrossSplitsForPlayer
@@ -75,7 +74,7 @@ global function ServerToClient_Ranked_UpdatePlayerPrevLadderPos
 global function Ranked_GetTierCount
 global function Ranked_IsLocalPlayerInLadderOnlyTier
 global function Ranked_PopulateAboutText
-global function ServerToUI_Ranked_NotifyRankedPeriodScoreChanged
+// ServerToUI_Ranked_NotifyRankedPeriodScoreChanged moved to clui_ranked.nut
 #endif
 
 #if SERVER
@@ -3102,17 +3101,5 @@ bool function Ranked_ShouldShowPreRankedBadge ()
 	return false
 }
 
-var function CreateNestedRankedRui( var pRui, SharedRankedTierData tier, string varName, int score, int ladderPosition )
-{
-	return null
-}
-
-void function SharedRanked_FillInRuiEmblemText( var rui, SharedRankedDivisionData data, int score, int ladderPosition, string suffix = "" )
-{
-}
-
-void function ServerToUI_Ranked_NotifyRankedPeriodScoreChanged()
-{
-	// stub
-}
+// CreateNestedRankedRui, SharedRanked_FillInRuiEmblemText, ServerToUI_Ranked_NotifyRankedPeriodScoreChanged moved to clui_ranked.nut
 

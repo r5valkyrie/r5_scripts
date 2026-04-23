@@ -431,12 +431,13 @@ string function RepeatString( string str, int times )
 	return out
 }
 
+#if !UI
 void function print_locpair( LocPair loc )
 {
 	printt
-	( 
+	(
 		format
-		( 
+		(
 			"<%d,%d,%d><%d,%d,%d>",
 				loc.origin.x,
 				loc.origin.y,
@@ -445,7 +446,13 @@ void function print_locpair( LocPair loc )
 				loc.angles.y,
 				loc.angles.z
 		)
-	)			
+	)
+}
+#endif
+
+bool function IsOrientationMatch()
+{
+	return GetCurrentPlaylistName() == PLAYLIST_NEW_PLAYER_ORIENTATION
 }
 
 bool function IsOdd( int num )
@@ -2181,6 +2188,19 @@ array<string> function RegexpFindSimple( string baseString, string patternString
 }
 #endif // !UI
 
+bool function PointInBounds( vector point, UIPos pos, UISize size )
+{
+	if ( point.x < pos.x )
+		return false
+	if ( point.y < pos.y )
+		return false
+	if ( point.x > pos.x + size.width )
+		return false
+	if ( point.y > pos.y + size.height )
+		return false
+	return true
+}
+
 vector function RandomVec( float range )
 {
 	// could rewrite so it doesnt make a box of random.
@@ -3795,6 +3815,7 @@ bool function IsUserOptedInToCrossPlay()
 }
 */
 
+#if !UI
 vector function GetCenterOfCircle( array<LocPair> spawns )
 {
 	vector total
@@ -3810,6 +3831,7 @@ vector function GetCenterOfCircle( array<LocPair> spawns )
 
 	return total
 }
+#endif
 
 #if SERVER
 entity function CreateCustomLight( vector origin, vector angles, string lightcolor, float scale )

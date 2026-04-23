@@ -97,7 +97,6 @@ global table<int, string> HARDWARE_TO_MERGED_PLATFORM = {
 // ============================================================================
 
 // === Ranked/Rumble ===
-global function RankedRumble_IsRunningRankedRumble
 // [s21-native] forward-decl Ranked_GetCurrentPeriodGUIDString registered by engine; dropped
 
 // === Character/Playlist ===
@@ -406,6 +405,7 @@ global function Squads_GetSquadColor
 global function Squads_GetSquadName
 
 // featureTutorial structs moved to ui/dialogs/feature_tutorial.nut
+global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
 #endif
 
 // ============================================================================
@@ -459,6 +459,7 @@ global function GetAllResinShards
 global function ShRanked_RegisterNetworkFunctions
 global function IsRankedGame
 global function IsArenasRankedGame
+global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
 
 // === Squad Cards ===
 global function DoAnimatedSquadCardsPresentation
@@ -565,15 +566,10 @@ global function TitanSword_TryMultiAttack
 global function TitanSword_VictimHitOverride
 
 // === Ranked/Rumble ===
-global function RankedRumble_IsLatestGameRankedRumble
 global function RankedRumble_IsRunningRankedRumbleCached
 global function DEV_script_ranked_debug
 global function IsServerNetworkAlertTriggered
 global function PrepareGameSummaryForPointCalculation
-global function Ranked_ConstructSingleRankBadgeForStatsCard
-global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
-global function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2
-global function Ranked_ConstructDoubleRankBadgeForStatsCard
 global function ArenasRanked_ConstructDoubleRankBadgeForStatsCard
 
 // === Persistence ===
@@ -610,8 +606,6 @@ global function WaitForUnixTime
 
 // Ranked badge functions needed in CLIENT and UI
 #if CLIENT || UI
-global function PopulateRuiWithRankedBadgeDetails
-global function PopulateRuiWithPreviousSeasonRankedBadgeDetails
 #endif
 
 // [s21-native] forward-decl GetPlaylistModCount registered by engine; dropped
@@ -736,23 +730,11 @@ global function GRX_HasUpToDateBundleOffers
 // === Stats/Mastery === (moved to sh_mastery.gnut)
 
 // === Ranked ===
-global function Ranked_ConstructSingleRankBadgeForStatsCard
-global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
-global function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2
-global function Ranked_ConstructDoubleRankBadgeForStatsCard
 global function ArenasRanked_ConstructDoubleRankBadgeForStatsCard
-global function Ranked_SetupMenuGladCardForUIPlayer
 global function ArenasRanked_SetupMenuGladCardForUIPlayer
-global function Ranked_SetupMenuGladCardFromCommunityUserInfo
 global function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo
 global function Ranked_SetupMenuGladCard
-global function Ranked_ShouldUpdateWithComnunityUserInfo
 global function Ranked_GetDisplayNumberForRuiBadge
-global function Ranked_PartyMeetsRankedDifferenceRequirements
-global function Ranked_HasBeenInitialized
-global function SharedRanked_PartyHasRankedLevelAccess
-global function SharedRanked_GetMaxPartyMatchmakingDelay
-global function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo
 // PopulateMatchRank moved to S21 original
 // === Party/Social ===
 // [s21-native] forward-decl Party_JoinUserPartyGame registered by engine; dropped
@@ -879,16 +861,6 @@ entity function Ziprail_GetSkyDiveLauncherForHitEnt( entity hitEnt )
 }
 
 #if CLIENT || UI
-void function PopulateRuiWithRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
-{
-	Warning( "WORKAROUND: PopulateRuiWithRankedBadgeDetails() called - not implemented" )
-}
-
-void function PopulateRuiWithPreviousSeasonRankedBadgeDetails( var rui, int rankScore, int ladderPosition, bool isNested = false )
-{
-	Warning( "WORKAROUND: PopulateRuiWithPreviousSeasonRankedBadgeDetails() called - not implemented" )
-}
-
 #endif
 
 // [s21-native] function PCPlat_IsSteam() registered by engine; script stub commented out
@@ -1719,44 +1691,19 @@ void function DataDialog_AddCallback_OnClose( void functionref() callback )
 
 // === Ranked ===
 
-void function Ranked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
+void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var badgeRui, entity player, string rankedPeriodRef )
 {
-	Warning( "WORKAROUND: Ranked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: ArenasRanked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( var rui1, var rui2, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2() called - not implemented" )
-}
-
-void function Ranked_ConstructDoubleRankBadgeForStatsCard( var rui1, var rui2, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
+	Warning( "STUB: ArenasRanked_ConstructSingleRankBadgeForStatsCard" )
 }
 
 void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui1, var rui2, entity player, string rankedPeriodRef )
 {
-	Warning( "WORKAROUND: ArenasRanked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function Ranked_SetupMenuGladCardForUIPlayer()
-{
-	Warning( "WORKAROUND: Ranked_SetupMenuGladCardForUIPlayer() called - not implemented" )
+	Warning( "STUB: ArenasRanked_ConstructDoubleRankBadgeForStatsCard" )
 }
 
 void function ArenasRanked_SetupMenuGladCardForUIPlayer()
 {
 	Warning( "WORKAROUND: ArenasRanked_SetupMenuGladCardForUIPlayer() called - not implemented" )
-}
-
-void function Ranked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo )
-{
-	Warning( "WORKAROUND: Ranked_SetupMenuGladCardFromCommunityUserInfo() called - not implemented" )
 }
 
 void function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo )
@@ -1769,37 +1716,7 @@ void function Ranked_SetupMenuGladCard( entity player )
 	Warning( "WORKAROUND: Ranked_SetupMenuGladCard() called - not implemented" )
 }
 
-bool function Ranked_ShouldUpdateWithComnunityUserInfo( int score, int ladderPosition )
-{
-	return false
-}
-
 int function Ranked_GetDisplayNumberForRuiBadge( entity player )
-{
-	return 0
-}
-
-bool function Ranked_PartyMeetsRankedDifferenceRequirements()
-{
-	return true
-}
-
-bool function Ranked_HasBeenInitialized()
-{
-	return true
-}
-
-bool function SharedRanked_PartyHasRankedLevelAccess()
-{
-	return true
-}
-
-int function SharedRanked_GetMaxPartyMatchmakingDelay()
-{
-	return 0
-}
-
-int function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo( CommunityUserInfo userInfo )
 {
 	return 0
 }
@@ -3168,12 +3085,6 @@ bool function TitanSword_VictimHitOverride( entity meleeWeapon, entity attacker,
 // === Ranked/Rumble ===
 
 // RankedRumble stubs
-bool function RankedRumble_IsLatestGameRankedRumble( entity player )
-{
-	Warning( "WORKAROUND: RankedRumble_IsLatestGameRankedRumble() called - not implemented" )
-	return false
-}
-
 bool function RankedRumble_IsRunningRankedRumbleCached( entity player )
 {
 	Warning( "WORKAROUND: RankedRumble_IsRunningRankedRumbleCached() called - not implemented" )
@@ -3199,26 +3110,6 @@ void function DEV_script_ranked_debug( string msg )
 	#if DEVELOPER
 	printt( "[RANKED_DEBUG] " + msg )
 	#endif
-}
-
-void function Ranked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: Ranked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef )
-{
-	Warning( "WORKAROUND: ArenasRanked_ConstructSingleRankBadgeForStatsCard() called - not implemented" )
-}
-
-void function Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2, bool isActive )
-{
-	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCardRankedV2() called - not implemented" )
-}
-
-void function Ranked_ConstructDoubleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2 )
-{
-	Warning( "WORKAROUND: Ranked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
 }
 
 void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2 )
@@ -3488,11 +3379,6 @@ bool function FiringRangeHasDynamicStats()
 }
 
 // === Ranked/Rumble ===
-
-bool function RankedRumble_IsRunningRankedRumble()
-{
-	return false
-}
 
 // === Character/Playlist ===
 

@@ -2035,38 +2035,7 @@ global enum eLaunching
 	COUNT
 }
 
-global enum eFriendStatus
-{
-	ONLINE_INGAME,
-	ONLINE,
-	ONLINE_AWAY,
-	OFFLINE,
-	REQUEST,
-	COUNT
-}
-
-#if UI
-global struct Friend
-{
-	string id
-	string unspoofedid = ""
-	string hardware
-	string name = "Unknown"
-	string presence = ""
-	int    status = eFriendStatus.OFFLINE
-	bool   ingame = false
-	bool   inparty = false
-	bool   away = false
-	EadpPeopleData ornull eadpData
-	EadpPresenceData ornull eadpPresenceData
-}
-
-global struct FriendsData
-{
-	array<Friend> friends
-	bool          isValid
-}
-#endif // UI
+// eFriendStatus, Friend, FriendsData moved to init.nut
 
 #if UI
 global const bool MENU_NAV_FORWARD = true
