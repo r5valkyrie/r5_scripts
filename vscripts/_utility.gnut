@@ -3641,7 +3641,7 @@ array<TitanLoadoutDef> function GetAllowedTitanLoadouts()
 
 	var dataTable = GetDataTable( $"datatable/titan_properties.rpak" )
 
-	int numRows = GetDatatableRowCount( dataTable )
+	int numRows = GetDataTableRowCount( dataTable )
 
 	string searchString = GetAllowedTitanAISettingsSearchString()
 	int column = GetDataTableColumnByName( dataTable, searchString )

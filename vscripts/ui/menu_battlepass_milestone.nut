@@ -105,7 +105,7 @@ void function BattlepassMilestoneMenu_OnOpen()
 	file.isShowingBundle = false
 	file.milestoneIndex  = 0
 
-	var dataTable   = BattlePass_GetMilestoneDatatable( activeBattlePass )
+	var dataTable   = BattlePass_GetMilestoneDataTable( activeBattlePass )
 	int numRows     = GetDataTableRowCount( dataTable )
 	int levelColumn = GetDataTableColumnByName( dataTable, "milestone_level" )
 

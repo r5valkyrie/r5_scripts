@@ -149,7 +149,7 @@ float function GetGlobalNetTimeSafe(string name)
 entity function GetGlobalNetEntSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
-		return expect entity(GetEntityFromEncodedEHandle(SDKGetGlobalNetEntity(name)))
+		return SDKGetGlobalNetEntity(name)
 	return GetGlobalNetEnt(name)
 }
 
@@ -193,7 +193,7 @@ float function GetGlobalNetTimeSafe(string name)
 entity function GetGlobalNetEntSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
-		return GetEntityFromEncodedEHandle(SDKGetGlobalNetEntity(name))
+		return SDKGetGlobalNetEntity(name)
 	return GetGlobalNetEnt(name)
 }
 
@@ -239,7 +239,7 @@ float function GetGlobalNetTimeSafe(string name)
 entity function GetGlobalNetEntSafe(string name)
 {
 	if (SDKIsOverflowVar(name))
-		return expect entity(SDKGetGlobalNetEntity(name))
+		return SDKGetGlobalNetEntity(name)
 	return GetGlobalNetEnt(name)
 }
 

@@ -124,7 +124,7 @@ struct
 
 
 #if SERVER || CLIENT || UI
-void function LoadCommsActionsFromDatatable()
+void function LoadCommsActionsFromDataTable()
 {
 	var dt = GetDataTable( $"datatable/comms_actions.rpak" )
 
@@ -183,7 +183,7 @@ void function LoadCommsActionsFromDatatable()
 #if SERVER || CLIENT || UI
 void function ShQuickchat_Init()
 {
-	AddCallback_RegisterRootItemFlavors( LoadCommsActionsFromDatatable )
+	AddCallback_RegisterRootItemFlavors( LoadCommsActionsFromDataTable )
 
 	#if SERVER
 		InitDisabledCommActionsFromPlaylist()
@@ -267,7 +267,7 @@ void function DEV_ReloadCommsTable()
 	#if SERVER || CLIENT
 		file.actions.clear()
 	#endif
-	LoadCommsActionsFromDatatable()
+	LoadCommsActionsFromDataTable()
 }
 #endif
 

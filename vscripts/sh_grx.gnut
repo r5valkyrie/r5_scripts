@@ -5045,11 +5045,10 @@ void function SetOriginalPriceForGRXScriptOffer( GRXScriptOffer scriptOffer )
 #if UI
 void function GRX_InitScriptOfferPricesFromStoreOffer( GRXStoreOffer codeOffer, GRXScriptOffer scriptOffer, array<string> offerProblems )
 {
-	// Engine prices is array< array< int > > (currencies per price), no priceAlias
-	foreach ( int priceIdx, array< int > currencies in codeOffer.prices )
+	foreach ( int priceIdx, GRXStoreOfferPrice priceEntry in codeOffer.prices )
 	{
 		ItemFlavorBag price
-		foreach ( int currencyIndex, int currencyQuantity in currencies )
+		foreach ( int currencyIndex, int currencyQuantity in priceEntry.currencies )
 		{
 			if ( currencyIndex >= GRX_CURRENCIES.len() )
 				continue
@@ -5151,19 +5150,16 @@ void function GRX_InitScriptOfferFromStoreOffer( GRXStoreOffer codeOffer, GRXScr
 {
 	bool isOfferRestricted = GRX_IsOfferRestricted()
 	array<string> offerProblems = []
-	// Engine: codeOffer.items is array<int> (GRX indices), not array<GRXStoreOfferItem>
-	foreach ( int itemIdx in codeOffer.items )
+	foreach ( GRXStoreOfferItem offerItem in codeOffer.items )
 	{
+		int itemIdx = offerItem.itemIdx
 		if ( !IsValidItemFlavorGRXIndex( itemIdx ) )
 		{
 			offerProblems.append( format( "Invalid GRX index: %d", itemIdx ) )
 			continue
 		}
 
-		GRXStoreOfferItem item
-		item.itemIdx = itemIdx
-		item.itemQuantity = 1
-		item.itemType = 0
+		GRXStoreOfferItem item = offerItem
 
 		ItemFlavor outputFlav = GetItemFlavorByGRXIndex( itemIdx )
 

@@ -88,7 +88,7 @@ void function ClDialogue_Init()
 	AddCallback_EntitiesDidLoad( EntitiesDidLoad )
 
 	var dataTableVideo = GetDataTable( $"datatable/caller_ids_video.rpak" )
-	int videoRows = GetDatatableRowCount( dataTableVideo )
+	int videoRows = GetDataTableRowCount( dataTableVideo )
 	for ( int i = 0; i < videoRows; i++ )
 	{
 		string title = GetDataTableString( dataTableVideo, i, GetDataTableColumnByName( dataTableVideo, "title" ) )
@@ -98,7 +98,7 @@ void function ClDialogue_Init()
 	file.callerIDsVideo[ "default" ] <- $"media/vdu_test"
 
 	var dataTable = GetDataTable( $"datatable/caller_ids_mp.rpak" )
-	int rows = GetDatatableRowCount( dataTable )
+	int rows = GetDataTableRowCount( dataTable )
 	for ( int i = 0; i < rows; i++ )
 	{
 		string title = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "title" ) )

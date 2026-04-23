@@ -824,7 +824,7 @@ void function UICodeCallback_ErrorDialog( string errorDetails )
 }
 
 
-void function UICodeCallback_AcceptInviteThread( string accesstoken, string from )
+void function UICodeCallback_AcceptInviteThread( string accesstoken, string from, string from_hardware = "" )
 {
 	printt( "UICodeCallback_AcceptInviteThread '" + accesstoken + "' from '" + from + "'" )
 
@@ -870,7 +870,7 @@ void function UICodeCallback_AcceptInviteThread( string accesstoken, string from
 
 	#endif // #if PS4_PROG
 
-	SubscribeToChatroomPartyChannel( accesstoken, from )
+	SubscribeToChatroomPartyChannel( accesstoken, from, from_hardware )
 }
 
 
@@ -2659,7 +2659,7 @@ void function UpdateOrigin_IsEnabled()
 {
 	while ( true )
 	{
-		SetMenuVarBool( "ORIGIN_isEnabled", Origin_IsEnabled() )
+		SetMenuVarBool( "ORIGIN_isEnabled", true )
 		WaitFrame()
 	}
 }
@@ -2668,7 +2668,7 @@ void function UpdateOrigin_IsJoinable()
 {
 	while ( true )
 	{
-		SetMenuVarBool( "ORIGIN_isJoinable", Origin_IsJoinable() )
+		SetMenuVarBool( "ORIGIN_isJoinable", true )
 		WaitFrame()
 	}
 }

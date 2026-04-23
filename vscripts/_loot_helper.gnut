@@ -1477,13 +1477,13 @@ int function LootHelper_GetLootType_Expensive( string lootRef )
 {
 	// load the spreadsheet
 	var lootTable = GetDataTable( $"datatable/survival_loot.rpak" )
-	int amRowCount = GetDatatableRowCount( lootTable )
+	int amRowCount = GetDataTableRowCount( lootTable )
 
 	// get the column index of ref
 	int col_lootRef = GetDataTableColumnByName( lootTable, "ref" )
 
 	// find the row with lootRef in the ref column
-	int rows = GetDatatableRowCount( lootTable )
+	int rows = GetDataTableRowCount( lootTable )
 	int lootRow = -1
 	for( int i = 0; i < rows; i++ )
 	{

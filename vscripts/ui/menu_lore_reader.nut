@@ -494,7 +494,7 @@ array<LorePage> function LoadLorePagesFromDataTable( asset dtAsset )
 
 	if ( pages.len() == 0 )
 	{
-		page.titleText = "Empty Datatable!"
+		page.titleText = "Empty DataTable!"
 		page.subTitleText = string( dtAsset )
 		pages.append( page )
 	}

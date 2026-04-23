@@ -127,7 +127,7 @@ void function SetScoreEventOverrideFunc( void functionref() func )
 void function InitScoreEvents()
 {
 	var dataTable = GetDataTable( $"datatable/score_events.rpak" )
-	int numRows = GetDatatableRowCount( dataTable )
+	int numRows = GetDataTableRowCount( dataTable )
 
 	for ( int i = 0; i < numRows; i++ )
 	{

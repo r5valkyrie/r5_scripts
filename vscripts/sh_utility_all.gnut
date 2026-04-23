@@ -732,17 +732,17 @@ bool function IsPVEMode()
 
 bool function UseSoloModeIntroPresentation()
 {
-	return GetCurrentPlaylistVarInt( "solo_mode_intro_presentation", 0 ) ? true : false
+	return GetCurrentPlaylistVarInt( "solo_mode_intro_presentation", 0 ) != 0
 }
 
 bool function UseSoloModeInGamePresentation()
 {
-	return GetCurrentPlaylistVarInt( "solo_mode_ingame_presentation", 0 ) ? true : false
+	return GetCurrentPlaylistVarInt( "solo_mode_ingame_presentation", 0 ) != 0
 }
 
 bool function UseSoloModePostGamePresentation()
 {
-	return GetCurrentPlaylistVarInt( "solo_mode_postgame_presentation", 0 ) ? true : false
+	return GetCurrentPlaylistVarInt( "solo_mode_postgame_presentation", 0 ) != 0
 }
 
 int function GetEnemyTeam( int team )
@@ -853,6 +853,7 @@ string function StringReplace( string baseString, string searchString, string re
 	return newString
 }
 
+#if !UI
 var function MakeRegexp( string patternString )
 {
 	return regexp( patternString )
@@ -1040,6 +1041,7 @@ array<array<string> > function RegexpFindAll( string baseString, string patternS
 
 	return matches
 }
+#endif // !UI
 
 
 
@@ -1436,7 +1438,7 @@ array<asset> function GetAllowedPlayerTitanSettings() //Based off AllowedTItanAI
 	
 	array<asset> list = []
 	var dataTable = GetDataTable( $"datatable/titan_properties.rpak" )//Ported from titanfall2
-	int numRows = GetDatatableRowCount( dataTable )
+	int numRows = GetDataTableRowCount( dataTable )
 	
 	for ( int r=0; r<numRows; r++ )
 	{
@@ -1467,7 +1469,7 @@ array<string> function GetAllowedTitanAISettings( string settings = "" )
 	//string searchString = GetAllowedTitanAISettingsSearchString()
 	//array<string> list
 	//var dataTable = GetDataTable( TITAN_PROPERTIES_DATATABLE )
-	//int numRows = GetDatatableRowCount( dataTable )
+	//int numRows = GetDataTableRowCount( dataTable )
 	//
 	//for ( int r=0; r<numRows; r++ )
 	//{
@@ -1904,7 +1906,7 @@ bool function ButtonIsBoundToPing( int buttonID )
 //{
 //	var classDataTable = GetDataTable( $"datatable/default_pilot_classes.rpak" )
 //	int row = -1 // GetDataTableRowMatchingAssetValue( classDataTable, GetDataTableColumnByName( classDataTable, "classAsset" ), setting )
-//	int count = GetDatatableRowCount( classDataTable )
+//	int count = GetDataTableRowCount( classDataTable )
 //	for ( int i=0; i<count; i++ )
 //	{
 //		asset a = GetDataTableAsset( classDataTable, i, GetDataTableColumnByName( classDataTable, "classAsset" ) )
@@ -2104,6 +2106,7 @@ string function DEV_GetEnumStringSafe( string enumName, int value )
 }
 
 
+#if !UI
 string function DEV_EscapeString( string str, bool wrapInQuotes = true )
 {
 	string out = RegexpReplace( str, "[\\t\\n\\r\\\"\\\\]", "$0" )
@@ -2131,6 +2134,7 @@ string function DEV_ArrayConcat( array<string> arr, string sep = ",", bool shoul
 	}
 	return out
 }
+#endif // !UI
 
 
 int function SortByInventoryIndexAndCount( ConsumableInventoryItem a, ConsumableInventoryItem b )
@@ -2148,7 +2152,7 @@ int function SortByInventoryIndexAndCount( ConsumableInventoryItem a, Consumable
 	return 0
 }
 
-// Returns an array of strings containing all matches for a single pattern to capture
+#if !UI
 array<string> function RegexpFindSimple( string baseString, string patternString )
 {
 	array<string> matches = []
@@ -2175,6 +2179,7 @@ array<string> function RegexpFindSimple( string baseString, string patternString
 
 	return matches
 }
+#endif // !UI
 
 vector function RandomVec( float range )
 {
@@ -2707,33 +2712,25 @@ vector function LinearToSrgb( vector inputColor )
 //	 ╚═════╝ ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝       ╚═╝   ╚═╝╚═╝     ╚═╝╚══════╝     ╚═════╝    ╚═╝   ╚═╝╚══════╝
 
 #if SERVER || CLIENT || UI
-var unixTimestampStringPattern = null
-var datetimeStringPattern = null
 int ornull function DateTimeStringToUnixTimestamp( string str )
 {
 	str = strip( str )
-	array<string> captures
 
-	unixTimestampStringPattern = MakeRegexp( "^\\d+$" )
-	captures = Regexp_Match( unixTimestampStringPattern, str )
-	Assert( captures.len() == 0 || captures.len() == 1 )
-	if ( captures.len() == 1 )
-		return int(captures[0])
+	if ( str.isnumeric() )
+		return int( str )
 
-	datetimeStringPattern = MakeRegexp( "^(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d) (\\d\\d):(\\d\\d):(\\d\\d) ([\\+\\-])(\\d\\d):(\\d\\d)$" )
-	captures = Regexp_Match( datetimeStringPattern, str )
-	Assert( captures.len() == 0 || captures.len() == 10 )
-	if ( captures.len() == 0 )
+	string datetimeRef = "2020-12-28 10:00:00 -08:00"
+	if ( str.len() != datetimeRef.len() )
 		return null
+
 	TimeParts parts
-	parts.year = int(captures[1])
-	parts.month = int(captures[2])
-	parts.day = int(captures[3])
-	parts.hour = int(captures[4])
-	parts.minute = int(captures[5])
-	parts.second = int(captures[6])
-	int timezoneOffsetHours = (captures[7] == "+" ? 1 : -1) * int(captures[8])
-	Assert( int(captures[9]) == 0 ) //
+	parts.year = int(str.slice(0, 4))
+	parts.month = int(str.slice(5, 7))
+	parts.day = int(str.slice(8, 10))
+	parts.hour = int(str.slice(11, 13))
+	parts.minute = int(str.slice(14, 16))
+	parts.second = int(str.slice(17, 19))
+	int timezoneOffsetHours = ( str.slice(20, 21) == "-" ? -1 : 1 ) * int( str.slice(21, 23) )
 	return GetUnixTimeFromParts( parts, timezoneOffsetHours )
 }
 #endif
@@ -3635,7 +3632,7 @@ array<string> function StringToArray( string str, int arrayStringMaxLength = 128
 			valid.append( item )		
     }
 	
-	if ( !valid.len() ) 
+	if ( valid.len() == 0 ) 
         throw "Array empty after conversion"
 
     return valid

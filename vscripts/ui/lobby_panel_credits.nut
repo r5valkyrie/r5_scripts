@@ -55,7 +55,7 @@ void function LoadCredits()
 	file.selectedIndex = 0
 
 	var dataTable = GetDataTable( $"datatable/custom/sdk_contributors.rpak" )
-	int numRows = GetDatatableRowCount( dataTable )
+	int numRows = GetDataTableRowCount( dataTable )
 
 	Hud_InitGridButtons( file.listPanel, numRows )
 

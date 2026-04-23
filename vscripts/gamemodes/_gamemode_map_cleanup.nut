@@ -14,7 +14,7 @@ void function Gamemodes_Map_Cleanup()
 {
 	if ( GetCurrentPlaylistVarBool( "map_cleanup_datatable", true ) )
 	{
-		SetupMapCleanUpFromDatatable()
+		SetupMapCleanUpFromDataTable()
 	}
 	else
 	{
@@ -175,7 +175,7 @@ void function Editor_EntityCleanup_EvacNodes( entity ent )
 const bool PRINT_DEBUG = true
 #endif
 
-void function SetupMapCleanUpFromDatatable()
+void function SetupMapCleanUpFromDataTable()
 {
 	var dataTable = GetDataTable( $"datatable/map_cleanup.rpak" )
 	int numRows   = GetDataTableRowCount( dataTable )
@@ -191,7 +191,7 @@ void function SetupMapCleanUpFromDatatable()
 
 	#if DEVELOPER
 		if ( PRINT_DEBUG )
-			printf( "[SetupMapCleanUpFromDatatable] Starting Process - Total Number of Rows: %i", numRows )
+			printf( "[SetupMapCleanUpFromDataTable] Starting Process - Total Number of Rows: %i", numRows )
 	#endif
 
 	int unixTimeNow = GetUnixTimestamp()
@@ -200,7 +200,7 @@ void function SetupMapCleanUpFromDatatable()
 	{
 		#if DEVELOPER
 			if ( PRINT_DEBUG )
-				printf( "[SetupMapCleanUpFromDatatable] Row: %i", i )
+				printf( "[SetupMapCleanUpFromDataTable] Row: %i", i )
 		#endif
 
 		int mapCleanUpType           		= GetDataTableInt( dataTable, i, mapCleanUpTypeColumn )
@@ -218,10 +218,10 @@ void function SetupMapCleanUpFromDatatable()
 				break
 			case 1: // gamemode
 				{
-					Assert( variableName != "", "[SetupMapCleanUpFromDatatable] variableName field can't be empty for check type gamemode." )
+					Assert( variableName != "", "[SetupMapCleanUpFromDataTable] variableName field can't be empty for check type gamemode." )
 					#if DEVELOPER
 						if ( PRINT_DEBUG )
-							printf( "[SetupMapCleanUpFromDatatable] Row: %i - Gamemode(%s) - current Gamemode(%s) - isNegativeCheck(%s)", i, variableName, GameRules_GetGameMode(), ( negativeCheck ) ? "true" : "false" )
+							printf( "[SetupMapCleanUpFromDataTable] Row: %i - Gamemode(%s) - current Gamemode(%s) - isNegativeCheck(%s)", i, variableName, GameRules_GetGameMode(), ( negativeCheck ) ? "true" : "false" )
 					#endif
 
 					bool isVariableActiveGameMode = GameRules_GetGameMode() == variableName
@@ -232,13 +232,13 @@ void function SetupMapCleanUpFromDatatable()
 				break
 			case 2: // bakery calevent
 				{
-					Assert( calevent != $"", "[SetupMapCleanUpFromDatatable] bakery calevent field can't be empty for check type bakery calevent" )
+					Assert( calevent != $"", "[SetupMapCleanUpFromDataTable] bakery calevent field can't be empty for check type bakery calevent" )
 					ItemFlavor eventFlav = GetItemFlavorByAsset( calevent )
-					Assert( IsCalEvent( ItemFlavor_GetType(eventFlav) ), "[SetupMapCleanUpFromDatatable] Specified event is not of type calevent." )
+					Assert( IsCalEvent( ItemFlavor_GetType(eventFlav) ), "[SetupMapCleanUpFromDataTable] Specified event is not of type calevent." )
 					bool isCalEventActive = CalEvent_IsActive( eventFlav, unixTimeNow )
 					#if DEVELOPER
 						if ( PRINT_DEBUG )
-							printf( "[SetupMapCleanUpFromDatatable] Row: %i - IsCalEventActive(%s) - isNegativeCheck(%s)", i, ( isCalEventActive ) ? "true" : "false", ( negativeCheck ) ? "true" : "false" )
+							printf( "[SetupMapCleanUpFromDataTable] Row: %i - IsCalEventActive(%s) - isNegativeCheck(%s)", i, ( isCalEventActive ) ? "true" : "false", ( negativeCheck ) ? "true" : "false" )
 					#endif
 					if ( (negativeCheck && isCalEventActive) || (!negativeCheck && !isCalEventActive) )
 						continue
@@ -246,11 +246,11 @@ void function SetupMapCleanUpFromDatatable()
 				break
 			case 3: // bool playlist var
 				{
-					Assert( variableName != "", "[SetupMapCleanUpFromDatatable] variableName field can't be empty for check type bool playlist var." )
+					Assert( variableName != "", "[SetupMapCleanUpFromDataTable] variableName field can't be empty for check type bool playlist var." )
 					bool boolVar = GetCurrentPlaylistVarBool( variableName, false )
 					#if DEVELOPER
 						if ( PRINT_DEBUG )
-							printf( "[SetupMapCleanUpFromDatatable] Row: %i - Boolean Playlist Var(%s) - value(%s) - isNegativeCheck(%s) ", i, variableName,( boolVar ) ? "true" : "false", ( negativeCheck ) ? "true" : "false" )
+							printf( "[SetupMapCleanUpFromDataTable] Row: %i - Boolean Playlist Var(%s) - value(%s) - isNegativeCheck(%s) ", i, variableName,( boolVar ) ? "true" : "false", ( negativeCheck ) ? "true" : "false" )
 					#endif
 
 					if ( (negativeCheck && boolVar) || (!negativeCheck && !boolVar) )
@@ -260,11 +260,11 @@ void function SetupMapCleanUpFromDatatable()
 				break
 			case 4: // timestamp playlist var
 				{
-					Assert( variableName != "", "[SetupMapCleanUpFromDatatable] variableName field can't be empty for check type timestamp playlist var." )
+					Assert( variableName != "", "[SetupMapCleanUpFromDataTable] variableName field can't be empty for check type timestamp playlist var." )
 					bool isVariableActive =  ( unixTimeNow >= expect int(GetCurrentPlaylistVarTimestamp( variableName, UNIX_TIME_FALLBACK_2038 ) ) )
 					#if DEVELOPER
 						if ( PRINT_DEBUG )
-							printf( "[SetupMapCleanUpFromDatatable] Row: %i - timestamp Playlist Var(%s) - value(%i) - currentUnixTimestamp(%s) - isNegativeCheck(%s) ", i, variableName, ( expect int(GetCurrentPlaylistVarTimestamp( variableName, UNIX_TIME_FALLBACK_2038 ) ) ), unixTimeNow, ( negativeCheck ) ? "true" : "false" )
+							printf( "[SetupMapCleanUpFromDataTable] Row: %i - timestamp Playlist Var(%s) - value(%i) - currentUnixTimestamp(%s) - isNegativeCheck(%s) ", i, variableName, ( expect int(GetCurrentPlaylistVarTimestamp( variableName, UNIX_TIME_FALLBACK_2038 ) ) ), unixTimeNow, ( negativeCheck ) ? "true" : "false" )
 					#endif
 
 					if ( (negativeCheck && isVariableActive) || (!negativeCheck && !isVariableActive) )
@@ -272,7 +272,7 @@ void function SetupMapCleanUpFromDatatable()
 				}
 				break
 			default:
-				Assert( false, "[SetupMapCleanUpFromDatatable] Invalid value of checkType " + checkType + " specified. "   )
+				Assert( false, "[SetupMapCleanUpFromDataTable] Invalid value of checkType " + checkType + " specified. "   )
 				break
 
 		}
@@ -282,17 +282,17 @@ void function SetupMapCleanUpFromDatatable()
 			case 0:
 				#if DEVELOPER
 				if ( PRINT_DEBUG )
-					printf( "[SetupMapCleanUpFromDatatable] Row: %i - BlockMapEntityParseCreationOf(%s, %s, %s)", i, className, scriptName, editorClassName)
+					printf( "[SetupMapCleanUpFromDataTable] Row: %i - BlockMapEntityParseCreationOf(%s, %s, %s)", i, className, scriptName, editorClassName)
 				#endif
 				BlockMapEntityParseCreationOf( className, scriptName, editorClassName )
 				break
 			case 1:
-				Assert( (scriptName != ""), "SetupMapCleanUpFromDatatable scriptName is empty for AddSpawnCallback"   )
+				Assert( (scriptName != ""), "SetupMapCleanUpFromDataTable scriptName is empty for AddSpawnCallback"   )
 				file.cleanupEntScriptNameList.append( scriptName )
 				AddSpawnCallback( className, Editor_EntityCleanup_ScriptName )
 				#if DEVELOPER
 				if ( PRINT_DEBUG )
-					printf( "[SetupMapCleanUpFromDatatable] Row: %i - AddSpawnCallback(%s) - for scriptName(%s)", i, className, scriptName)
+					printf( "[SetupMapCleanUpFromDataTable] Row: %i - AddSpawnCallback(%s) - for scriptName(%s)", i, className, scriptName)
 				#endif
 				break
 			case 2:
@@ -301,11 +301,11 @@ void function SetupMapCleanUpFromDatatable()
 				AddSpawnCallbackEditorClass( className, editorClassName, ( scriptName == "" ) ? Editor_EntityCleanup : Editor_EntityCleanup_ScriptName )
 				#if DEVELOPER
 				if ( PRINT_DEBUG )
-					printf( "[SetupMapCleanUpFromDatatable] Row: %i - AddSpawnCallbackEditorClass(%s, %s) - for scriptName(%s)", i, className, editorClassName, scriptName)
+					printf( "[SetupMapCleanUpFromDataTable] Row: %i - AddSpawnCallbackEditorClass(%s, %s) - for scriptName(%s)", i, className, editorClassName, scriptName)
 				#endif
 				break
 			default:
-				Assert( false, "SetupMapCleanUpFromDatatable invalid value of mapCleanUpType " + mapCleanUpType + " specified. "   )
+				Assert( false, "SetupMapCleanUpFromDataTable invalid value of mapCleanUpType " + mapCleanUpType + " specified. "   )
 				break
 		}
 	}

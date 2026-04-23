@@ -1,0 +1,126 @@
+global function RTKPanelImageButtonModal_InitPanelImageButtonModal
+global function RTKPanelImageButtonModal_Show
+global function RTKPanelImageButtonModal_AddOption
+global function RTKPanelImageButtonModal_OnInitialize
+global function RTKPanelImageButtonModal_OnDestroy
+
+global struct RTKPanelImageData
+{
+	asset image
+	asset binkRef
+	string title
+	string description
+}
+
+global struct RTKPanelImageButtonModel
+{
+	string title
+	array<RTKPanelImageData> itemsArray
+}
+
+struct {
+	var    menu
+	string title
+	array<RTKPanelImageData> options
+	array< void functionref() > onClickCallbacks
+	void functionref() onInitialize
+	void functionref() onNavigateBack
+} file
+
+void function RTKPanelImageButtonModal_InitPanelImageButtonModal( var newMenuArg )
+{
+	var menu = newMenuArg
+	file.menu = menu
+
+	SetDialog( menu, false )
+
+	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, RTKPanelImageButtonModal_OnClose )
+	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, RTKPanelImageButtonModal_NavigateBack )
+	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
+}
+
+void function RTKPanelImageButtonModal_Show( string title = "", void functionref() onInitialize = null, void functionref() onNavigateBack = null)
+{
+	file.title = title
+	file.onInitialize = onInitialize
+	file.onNavigateBack = onNavigateBack
+	AdvanceMenu( GetMenu( "PanelImageButtonModal" ) )
+}
+
+void function RTKPanelImageButtonModal_OnInitialize( rtk_behavior self )
+{
+	rtk_struct panelImageButtonModal = RTKDataModelType_CreateStruct( RTK_MODELTYPE_MENUS, "panelImageButtonModal", "RTKPanelImageButtonModel" )
+	self.GetPanel().SetBindingRootPath( RTKDataModelType_GetDataPath( RTK_MODELTYPE_MENUS, "panelImageButtonModal", true ) )
+	RTKPanelImageButtonModal_SubscribeClickListeners( self )
+
+	file.options.clear()
+	file.onClickCallbacks.clear()
+
+	if (file.onInitialize != null)
+	{
+		file.onInitialize()
+	}
+
+	RTKPanelImageButtonModel model
+
+	model.title = file.title
+	model.itemsArray = file.options
+
+	RTKStruct_SetValue( panelImageButtonModal, model )
+}
+
+void function RTKPanelImageButtonModal_OnDestroy( rtk_behavior self )
+{
+	RTKDataModelType_DestroyStruct( RTK_MODELTYPE_MENUS, "panelImageButtonModal" )
+}
+
+void function RTKPanelImageButtonModal_SubscribeClickListeners( rtk_behavior self )
+{
+	rtk_panel panel = self.GetPanel().FindChildByName( "Container" )
+	self.AutoSubscribe( panel, "onChildAdded", function ( rtk_panel newChild, int newChildIndex ) : ( self ) {
+
+		rtk_behavior button =  newChild.FindBehaviorByTypeName( "Button" )
+
+		self.AutoSubscribe( button, "onPressed", function( rtk_behavior button, int keycode, int prevState ) : ( self, newChildIndex ) {
+
+			if ( file.onClickCallbacks[newChildIndex] != null )
+			{
+				file.onClickCallbacks[newChildIndex]()
+			}
+		} )
+	} )
+}
+
+void function RTKPanelImageButtonModal_OnClose()
+{
+	file.title = ""
+	file.options.clear()
+	file.onClickCallbacks.clear()
+	file.onInitialize = null
+	file.onNavigateBack = null
+}
+
+void function RTKPanelImageButtonModal_NavigateBack()
+{
+	if ( file.onNavigateBack != null )
+	{
+		file.onNavigateBack()
+	}
+	else
+	{
+		CloseActiveMenu()
+	}
+}
+
+void function RTKPanelImageButtonModal_AddOption( string title = "", string description = "", asset image = $"", asset binkRef = $"", void functionref() onClick = null )
+{
+	RTKPanelImageData panelImageData
+
+	panelImageData.title = title
+	panelImageData.description = description
+	panelImageData.image  = image
+	panelImageData.binkRef = binkRef
+
+	file.options.append( panelImageData )
+	file.onClickCallbacks.append( onClick )
+}

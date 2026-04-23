@@ -96,7 +96,7 @@ void function Sh_PassiveVoices_Init()
 	PrecacheParticleSystem( WRAITH_SENSE_FX )
 
 	var dataTable = GetDataTable( $"datatable/wraith_voices.rpak" )
-	int rows = GetDatatableRowCount( dataTable )
+	int rows = GetDataTableRowCount( dataTable )
 
 	string currentCategory = ""
 

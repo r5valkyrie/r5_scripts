@@ -142,7 +142,7 @@ void function ShGamemodeArenasBuySystemV2_Init()
 }
 
 #if(CLIENT)
-void function Arenas_OnLootDatatablesLoaded()
+void function Arenas_OnLootDataTablesLoaded()
 {
 	printt( "[Arenas BuySystem] Deferred init - loot datatables now loaded" )
 	Arenas_InitStoreData()
@@ -200,7 +200,7 @@ void function Arenas_InitStoreData()
 {
 	printt( "[Arenas BuySystem] InitStoreData - loading datatable:", ARENAS_ITEMS_DATATABLE )
 	var dataTable = GetDataTable( ARENAS_ITEMS_DATATABLE )
-	int numRows = GetDatatableRowCount( dataTable )
+	int numRows = GetDataTableRowCount( dataTable )
 	printt( "[Arenas BuySystem] InitStoreData - datatable rows:", numRows )
 
 	array<string> disabledWeapons = split( GetCurrentPlaylistVarString( "survival_disabled_weapons", "" ).tolower(), " " )
@@ -320,7 +320,7 @@ const asset ARENAS_WEAPON_DATA_DATATABLE = $"datatable/arenas/arenas_weapon_data
 void function Arenas_InitWeaponData()
 {
 	var dataTable    	= GetDataTable( ARENAS_WEAPON_DATA_DATATABLE )
-	int numRows      	= GetDatatableRowCount( dataTable )
+	int numRows      	= GetDataTableRowCount( dataTable )
 
 	int col_weaponRef   = GetDataTableColumnByName( dataTable, "weaponRef" )
 	int col_startAmmo   = GetDataTableColumnByName( dataTable, "startingAmmo" )
@@ -399,7 +399,7 @@ const asset ARENAS_WEAPON_TAB_DATATABLE = $"datatable/arenas/arenas_weapon_tabs.
 void function Arenas_InitWeaponTabs()
 {
 	var dataTable    	= GetDataTable( ARENAS_WEAPON_TAB_DATATABLE )
-	int numRows      	= GetDatatableRowCount( dataTable )
+	int numRows      	= GetDataTableRowCount( dataTable )
 
 	int col_tab         = GetDataTableColumnByName( dataTable, "weaponTab" )
 	int col_weapon      = GetDataTableColumnByName( dataTable, "weaponRef" )

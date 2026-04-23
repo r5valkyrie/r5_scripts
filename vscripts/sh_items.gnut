@@ -1549,7 +1549,7 @@ string function DEV_DescItemFlavor( ItemFlavor ornull flav, bool short = false )
 		return "~~null~~"
 	expect ItemFlavor( flav )
 
-	if ( !IsItemFlavorStructValid( flav.guid ) )
+	if ( !IsItemFlavorStructValid( flav.guid, eValidation.DONT_ASSERT ) )
 		return "~~invalid~~"
 
 	if ( short )
@@ -1915,7 +1915,7 @@ void function ItemFlavorBag_ClearZeroQuantityFlavors( ItemFlavorBag bag )
 ItemFlavor function ItemFlavorBag_GetSingleOutputItemFlavor_Assert( ItemFlavorBag bag )
 {
 	Assert( bag.flavors.len() == 1 )
-	Assert( IsItemFlavorStructValid( bag.flavors[0].guid ) )
+	Assert( IsItemFlavorStructValid( bag.flavors[0].guid, eValidation.DONT_ASSERT ) )
 	return bag.flavors[0]
 }
 #endif
@@ -1934,7 +1934,7 @@ ItemFlavor function ItemFlavorBag_GetMeleeSkinItem( ItemFlavorBag bag )
 	}
 
 	Assert( meleeSkinItems.len() == 1, "Offer expected to contain 1 melee skin but found " + meleeSkinItems.len() + "." )
-	Assert( IsItemFlavorStructValid( meleeSkinItems[0].guid ) )
+	Assert( IsItemFlavorStructValid( meleeSkinItems[0].guid, eValidation.DONT_ASSERT ) )
 
 	return meleeSkinItems[0]
 }
@@ -1957,7 +1957,7 @@ ItemFlavor function ItemFlavorBag_GetMythicSkinItem( ItemFlavorBag bag )
 		}
 	}
 
-	Assert( IsItemFlavorStructValid( mythicSkin.guid ) )
+	Assert( IsItemFlavorStructValid( mythicSkin.guid, eValidation.DONT_ASSERT ) )
 
 	return mythicSkin
 }
@@ -2013,7 +2013,7 @@ string function DEV_DescribeItemFlavorBag( ItemFlavorBag bag )
 		if ( itemIdx < bag.flavors.len() )
 		{
 			ItemFlavor itemFlav = bag.flavors[itemIdx]
-			if ( IsItemFlavorStructValid( itemFlav.guid ) )
+			if ( IsItemFlavorStructValid( itemFlav.guid, eValidation.DONT_ASSERT ) )
 				itemFlavStr = string(ItemFlavor_GetAsset( itemFlav ))
 			else itemFlavStr = "INVALID"
 		}

@@ -2556,7 +2556,7 @@ void function Arenas_SetEquipmentNetvars()
 
 	// Read arenas_items datatable (same one the client reads)
 	var dataTable = GetDataTable( $"datatable/arenas/arenas_items.rpak" )
-	int numRows = GetDatatableRowCount( dataTable )
+	int numRows = GetDataTableRowCount( dataTable )
 
 	printt( "[Arenas] Equipment netvar setup - datatable rows:", numRows )
 
@@ -2583,7 +2583,7 @@ void function Arenas_SetEquipmentNetvars()
 		else
 			consumableRows.append( i )
 
-		printt( "[Arenas] Datatable row", i, "ref:", itemRef )
+		printt( "[Arenas] DataTable row", i, "ref:", itemRef )
 	}
 
 	// Assign abilities to their fixed slots

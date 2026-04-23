@@ -5,7 +5,7 @@
 // Loadouts are defined in a csv like loadoutselection_selectable_loadouts.csv ( used for Control Mode, please do not alter that file unless you are making changes for Control)
 // Loadout Rotations ( which loadouts populate the menu, how often they rotate) are defined in a csv like loadoutselection_loadout_rotations.csv ( also used for Control Mode)
 // The attachment definitions for weapon tiers ( what attachments appear on the weapon) are defined in a csv like loadoutselection_weapon_data.csv ( also used for Control Mode)
-// If you want different loadouts, rotations, or attachments for your mode you can make your own csv and then set the system to use it in LoadoutSelection_SetDatatableAssets()
+// If you want different loadouts, rotations, or attachments for your mode you can make your own csv and then set the system to use it in LoadoutSelection_SetDataTableAssets()
 // See the Winter Express Example there to help you.
 
 // In order to use the Loadout Selection Menu in your mode you will need to set these 2 playlist vars:
@@ -249,8 +249,8 @@ struct {
 	#endif // SERVER
 
 	#if CLIENT || SERVER
-		asset rotationsDatatable = LOADOUTSELECTION_ROTATIONS_DATATABLE
-		asset loadoutsDatatable = LOADOUTSELECTION_LOADOUTS_DATATABLE
+		asset rotationsDataTable = LOADOUTSELECTION_ROTATIONS_DATATABLE
+		asset loadoutsDataTable = LOADOUTSELECTION_LOADOUTS_DATATABLE
 		table<int, LoadoutSelectionCategory > loadoutSlotIndexToCategoryDataTable
 		array<LoadoutSelectionCategory> loadoutCategories
 		int maxLoadoutsPerCategory = 0
@@ -260,7 +260,7 @@ struct {
 		table<string, array<string> > weaponOptics
 	#endif // CLIENT || SERVER
 
-	asset weaponDataDatatable = LOADOUTSELECTION_WEAPON_DATA_DATATABLE
+	asset weaponDataDataTable = LOADOUTSELECTION_WEAPON_DATA_DATATABLE
 	// Data used for the loadout selection menu itself
 	table < int, int > loadoutSlotIndexToWeaponCountTable
 	table < int, string > loadoutSlotIndexToHeaderTable
@@ -288,7 +288,7 @@ void function LoadoutSelection_Init()
 		return
 
 	#if CLIENT || SERVER
-		LoadoutSelection_SetDatatableAssets()
+		LoadoutSelection_SetDataTableAssets()
 	#endif // CLIENT || SERVER
 
 	LoadoutSelection_InitWeaponData()
@@ -348,7 +348,7 @@ string function GetCustomLoadoutName()
 
 #if CLIENT || SERVER
 // Allow us to overwrite the datatables if different modes want to use different tables
-void function LoadoutSelection_SetDatatableAssets()
+void function LoadoutSelection_SetDataTableAssets()
 {
 	// These are the datatables to set if different than the default. Tried doing this through playlist var overrides and had it working.
 	// There was unfortunately an issue where a datatable only defined in script in the playlist file wouldn't get added to rsons correctly.
@@ -357,8 +357,8 @@ void function LoadoutSelection_SetDatatableAssets()
 
 		if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_WINTEREXPRESS ) )
 		{
-			file.rotationsDatatable = GetCustomLoadoutRotationsDatatable_Asset( "WINTER_EXPRESS" )
-			file.loadoutsDatatable = GetCustomLoadoutDatatable_Asset( "WINTER_EXPRESS" )
+			file.rotationsDataTable = GetCustomLoadoutRotationsDataTable_Asset( "WINTER_EXPRESS" )
+			file.loadoutsDataTable = GetCustomLoadoutDataTable_Asset( "WINTER_EXPRESS" )
 		}
 
 
@@ -368,20 +368,20 @@ void function LoadoutSelection_SetDatatableAssets()
 		string customLoadoutName = GetCustomLoadoutName()
 		if ( customLoadoutName != "" )
 		{
-			asset customLoadoutRotation = GetCustomLoadoutRotationsDatatable_Asset( customLoadoutName )
-			asset customLoadout = GetCustomLoadoutDatatable_Asset( customLoadoutName )
-			file.rotationsDatatable = GetCustomLoadoutRotationsDatatable_Asset( customLoadoutName )
-			file.loadoutsDatatable = GetCustomLoadoutDatatable_Asset( customLoadoutName )
+			asset customLoadoutRotation = GetCustomLoadoutRotationsDataTable_Asset( customLoadoutName )
+			asset customLoadout = GetCustomLoadoutDataTable_Asset( customLoadoutName )
+			file.rotationsDataTable = GetCustomLoadoutRotationsDataTable_Asset( customLoadoutName )
+			file.loadoutsDataTable = GetCustomLoadoutDataTable_Asset( customLoadoutName )
 		}
 	}
 
 }
 
-asset function GetCustomLoadoutRotationsDatatable_Asset( string customName ) {
+asset function GetCustomLoadoutRotationsDataTable_Asset( string customName ) {
 	return CUSTOM_VARIANT_ROTATIONS_DATATABLE[ customName ]
 }
 
-asset function GetCustomLoadoutDatatable_Asset( string customName ) {
+asset function GetCustomLoadoutDataTable_Asset( string customName ) {
 	return CUSTOM_VARIANT_LOADOUTS_DATATABLE[ customName ]
 }
 #endif // CLIENT || SERVER
@@ -420,7 +420,7 @@ void function LoadoutSelection_RegisterNetworking()
 // Get data for the loadout categories which contain all the different loadouts themselves
 void function LoadoutSelection_RegisterLoadoutData()
 {
-	var dataTable = GetDataTable( file.rotationsDatatable )
+	var dataTable = GetDataTable( file.rotationsDataTable )
 	int numRows = minint( GetDataTableRowCount( dataTable ), LOADOUTSELECTION_MAX_TOTAL_LOADOUT_SLOTS )
 	int index = 0
 	int row = 0
@@ -451,7 +451,7 @@ void function LoadoutSelection_RegisterLoadoutData()
 			#endif // DEVELOPER
 
 			row = GetDataTableRowMatchingStringValue( dataTable, GetDataTableColumnByName( dataTable, "loadoutSlot" ), loadoutSlotToUseAsOverride )
-			Assert( row > -1, "Attempted to override a Loadout Slot through playlist vars using an invalid Loadout Slot or a Slot that is not in the Rotations Datatable" )
+			Assert( row > -1, "Attempted to override a Loadout Slot through playlist vars using an invalid Loadout Slot or a Slot that is not in the Rotations DataTable" )
 			item.loadoutSlot = GetDataTableString( dataTable, row, GetDataTableColumnByName( dataTable, "loadoutSlot" ) )
 		}
 
@@ -499,7 +499,7 @@ void function LoadoutSelection_RegisterLoadoutData()
 // Get data for the actual loadouts themselves ( what they should contain ) and disable loadouts if they contain disabled weapons
 void function LoadoutSelection_RegisterLoadoutDistribution()
 {
-	var distributionTable = GetDataTable( file.loadoutsDatatable )
+	var distributionTable = GetDataTable( file.loadoutsDataTable )
 	int numRows = GetDataTableRowCount( distributionTable )
 	array<string> displayIgnoredItems
 	array<string> loadoutsToDisable
@@ -735,7 +735,7 @@ void function LoadoutSelection_RemoveLoadoutsWithDisabledWeaponsFromCategory( ar
 // Parse the weapon data datatable to set what weapon upgrades and scopes will be on the weapons at different tiers
 void function LoadoutSelection_InitWeaponData()
 {
-	var dataTable    	= GetDataTable( file.weaponDataDatatable )
+	var dataTable    	= GetDataTable( file.weaponDataDataTable )
 	int numRows      	= GetDataTableRowCount( dataTable )
 	int col_supportedAttachmentOverride = GetDataTableColumnByName( dataTable, "supportedAttachmentOverride" )
 	int col_weaponRef   = GetDataTableColumnByName( dataTable, "weaponRef" )

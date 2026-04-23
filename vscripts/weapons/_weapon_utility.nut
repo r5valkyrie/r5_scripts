@@ -619,13 +619,13 @@ void function WeaponUtility_Init()
 		AddCallback_OnPlayerAddWeaponMod( ShatterRounds_OnPlayerAddedWeaponMod )
 		AddCallback_OnPlayerRemoveWeaponMod( ShatterRounds_OnPlayerRemovedWeaponMod )
 
-	InitThrowableItemStickinessDatatable()
+	InitThrowableItemStickinessDataTable()
 }
 
 const asset THROWABLE_ITEM_STICKINESS_DATATABLE = $"datatable/throwable_item_stickiness.rpak"
 const int ENT_NAME_COL = 0
 
-void function InitThrowableItemStickinessDatatable()
+void function InitThrowableItemStickinessDataTable()
 {
 	array< string > throwableItems = [
 		VOID_RING_WEAPON_REF, BUBBLE_BUNKER_WEAPON_NAME, ECHO_LOCATOR_WEAPON_NAME,
@@ -1967,7 +1967,7 @@ bool function EntityCanHaveStickyEnts( entity stickyEnt, entity ent )
 
 	// todo: Add future throwables and placed ents to the throwable_item_stickiness.csv to gain control over what sticks to things
 	// Allows for more case-by-case choices for whether a thrown item will stick or not.
-	// IMPORTANT: When adding a new throwable item (a new row) you need to add the row name to the array in InitThrowableItemStickinessDatatable.
+	// IMPORTANT: When adding a new throwable item (a new row) you need to add the row name to the array in InitThrowableItemStickinessDataTable.
 	// We can't currently read row headers so we have to match the name in script
 	// In the file, a 1 means it will stick, a 0 means it will not stick, and a -1 means we do nothing and default to other logic.
 	string stickyThrowableName = stickyEntWeaponClassName == "" ? stickyEntScriptName : stickyEntWeaponClassName

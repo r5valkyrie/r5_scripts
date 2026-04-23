@@ -112,7 +112,7 @@ void function PainDeathSounds_Init()
 	file.deathSounds.resize( eBodyTypes.COUNT )
 
 	var dataTable = GetDataTable( $"datatable/pain_death_sounds.rpak" )
-	int numRows   = GetDatatableRowCount( dataTable )
+	int numRows   = GetDataTableRowCount( dataTable )
 
 	int featureFlagColumn               = GetDataTableColumnByName( dataTable, "featureFlag" )
 	int eventColumn                     = GetDataTableColumnByName( dataTable, "event" )

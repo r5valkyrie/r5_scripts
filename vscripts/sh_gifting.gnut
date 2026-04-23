@@ -113,12 +113,12 @@ int function Gifting_GetRemainingDailyGifts()
 #endif          
 
 #if UI
-void function GetGiftOfferEligibility( string offerAlias, int hardwareId, string nucleus_pid )
+void function GetGiftOfferEligibility( string offerAlias, int hardwareId, string nucleus_pid, string nucleus_id = "" )
 {
 	if ( !IsGiftingEnabled() )
 		return
 
-	GRX_GetOffer( offerAlias, hardwareId, nucleus_pid )
+	GRX_GetOffer( offerAlias, hardwareId, nucleus_pid, nucleus_id )
 }
 #endif          
 

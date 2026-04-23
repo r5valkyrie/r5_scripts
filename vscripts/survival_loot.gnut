@@ -635,7 +635,7 @@ void function SURVIVAL_Loot_InitServer()
 void function InitLootGroups()
 {
 	// Stage 1 -- Read group definitions
-	ReadDatatableLootGroups()
+	ReadDataTableLootGroups()
 	ReadPlaylistLootGroups()
 
 	// Stage 2 -- Process groups
@@ -793,7 +793,7 @@ bool function FinalizeLootGroupRecursive( array<LootGroup> visitedStack, LootGro
 }
 
 
-void function ReadDatatableLootGroups()
+void function ReadDataTableLootGroups()
 {
 	var dt                    = GetDataTable( $"datatable/survival_loot_groups_sdk_new.rpak" )
 	int rowCount              = GetDataTableRowCount( dt )

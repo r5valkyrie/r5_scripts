@@ -399,6 +399,8 @@ global function SurvivalRank_ProcessParticiation
 //  #if UI - Struct Definitions & Declarations
 // ============================================================================
 #if UI
+global function Time
+
 // === Server/Debug ===
 // [s21-native] forward-decl GetServerDebugId registered by engine; dropped
 global function Squads_GetMax
@@ -822,7 +824,6 @@ global function IncrementNumDialogFlowDialogsDisplayed
 global function DataDialog_AddCallback_OnClose
 
 // === Events ===
-global function EventsPanel_SetOpenPageIndex
 global function JumpToEventTab
 // [s21-native] forward-decl DoesUserHaveTwitchDrops registered by engine; dropped
 
@@ -957,6 +958,11 @@ void function EffectSetEmitSound( int effectHandle, string soundName )
 //  #if UI - Implementations
 // ============================================================================
 #if UI
+
+float function Time()
+{
+	return UITime()
+}
 
 // === Workarounds/Utilities ===
 
@@ -2076,11 +2082,6 @@ void function ClubChatStickyNote( string message )
 }
 
 // === Events ===
-
-void function EventsPanel_SetOpenPageIndex( int pageIndex )
-{
-	Warning( "WORKAROUND: EventsPanel_SetOpenPageIndex() called - not implemented" )
-}
 
 void function JumpToEventTab( string tabName )
 {
@@ -4217,7 +4218,7 @@ void function SendPlayerMatchResult( entity player )
 
 int function GetPlayerGameDuration( entity player )
 {
-	return int( Time() )
+	return 0
 }
 
 bool function SmokeTest_IsActive()

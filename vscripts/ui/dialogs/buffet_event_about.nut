@@ -74,7 +74,7 @@ void function OnGetTopLevel()
 void function OnOpen()
 {
 	ItemFlavor event = file.event
-	Assert( IsItemFlavorStructValid( event.guid ), "Must call BuffetEventAboutDialog_SetEvent before opening the BuffetEventAboutDialog menu!" )
+	Assert( IsItemFlavorStructValid( event.guid, eValidation.DONT_ASSERT ), "Must call BuffetEventAboutDialog_SetEvent before opening the BuffetEventAboutDialog menu!" )
 
 	HudElem_SetRuiArg( file.mainLayer, "bgImage", BuffetEvent_GetAboutPageBGImage( event ), eRuiArgType.IMAGE )
 	HudElem_SetRuiArg( file.mainLayer, "bigIcon", BuffetEvent_GetAboutPageBigIcon( event ), eRuiArgType.IMAGE )

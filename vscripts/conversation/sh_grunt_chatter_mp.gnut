@@ -19,7 +19,7 @@ struct {
 // {
 // 	var dataTable = GetDataTable( $"datatable/grunt_chatter_mp.rpak" )
 
-// 	int numRows = GetDatatableRowCount( dataTable )
+// 	int numRows = GetDataTableRowCount( dataTable )
 // 	for ( int i = 0; i < numRows; i++ )
 // 	{
 // 		string conversationName = GetDataTableString( dataTable, i, GetDataTableColumnByName( dataTable, "conversationname" ) )

@@ -34,8 +34,8 @@ global function BattlePass_GetXPBoostFlav
 global function BattlePass_GetXPBoostFlavOrNull
 global function BattlePass_GetRerollFlav
 global function BattlePass_GetRerollFlavOrNull
-global function BattlePass_GetScheduleDatatable
-global function BattlePass_GetMilestoneDatatable
+global function BattlePass_GetScheduleDataTable
+global function BattlePass_GetMilestoneDataTable
 global function BattlePass_GetBulletText
 global function BattlePass_ShouldEarnGrindForXP
 global function BattlePass_UseStarsToProgress
@@ -242,7 +242,7 @@ void function ShBattlePass_LevelInit()
 		BattlePassData passData
 		passData.pass = pass
 
-		var passDataTable = BattlePass_GetScheduleDatatable( pass )
+		var passDataTable = BattlePass_GetScheduleDataTable( pass )
 		int numRows       = GetDataTableRowCount( passDataTable )
 		int maxLevels     = GetDataTableInt( passDataTable, numRows - 1, GetDataTableColumnByName( passDataTable, "levelIndex" ) ) + 1
 		int cumulativeXP  = 0
@@ -825,7 +825,7 @@ int function GetBattlePassLevelForXP( ItemFlavor pass, int xp )
 
 		Assert( xp >= 0, "XP is negative!?!?" )
 
-		var scheduleDT         = BattlePass_GetScheduleDatatable( pass )
+		var scheduleDT         = BattlePass_GetScheduleDataTable( pass )
 		int maxLevel           = GetDataTableRowCount( scheduleDT )
 		int levelXPColumnIndex = GetDataTableColumnByName( scheduleDT, "xpPerLevel" )
 		int levelColumnIndex   = GetDataTableColumnByName( scheduleDT, "levelIndex" )
@@ -898,7 +898,7 @@ int function GetBattlePassXPForLevel( ItemFlavor pass, int goalLevel )
 	return GetTotalXPToCompletePassLevel( pass, goalLevel )
 	//Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 	//Assert( goalLevel >= 1 )
-	//var scheduleDT = BattlePass_GetScheduleDatatable( pass )
+	//var scheduleDT = BattlePass_GetScheduleDataTable( pass )
 	//Assert( goalLevel <= GetDataTableRowCount( scheduleDT ) )
 	//
 	//int levelXPColumnIndex = GetDataTableColumnByName( scheduleDT, "xpPerLevel" )
@@ -1009,7 +1009,7 @@ array<BattlePassReward> function GetBattlePassPremiumRewards( ItemFlavor pass, i
 	if ( ItemFlavor_GetType( pass ) != eItemType.battlepass || levelIndex < 0)
 		return []
 
-	var scheduleDT = BattlePass_GetScheduleDatatable( pass )
+	var scheduleDT = BattlePass_GetScheduleDataTable( pass )
 
 	array<BattlePassReward> rewardList = []
 
@@ -1069,7 +1069,7 @@ array<BattlePassReward> function GetBattlePassLevelRewards( ItemFlavor pass, int
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 	Assert( levelIndex >= 0, "Level must be >= 0" )
 
-	var scheduleDT = BattlePass_GetScheduleDatatable( pass )
+	var scheduleDT = BattlePass_GetScheduleDataTable( pass )
 
 	array<BattlePassReward> rewardList = []
 
@@ -1363,11 +1363,11 @@ bool function BattlePass_WeeklyRecurringResetsEveryWeek( ItemFlavor pass )
 #endif
 
 #if SERVER || CLIENT || UI
-var function BattlePass_GetScheduleDatatable( ItemFlavor pass )
+var function BattlePass_GetScheduleDataTable( ItemFlavor pass )
 {
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 
-	return GetDataTable( GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "rewardScheduleDatatable" ) )
+	return GetDataTable( GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "rewardScheduleDataTable" ) )
 }
 #endif
 
@@ -1375,18 +1375,18 @@ var function BattlePass_GetScheduleDatatable( ItemFlavor pass )
 bool function BattlePassV2_IsV2BattlePass( ItemFlavor pass )
 {
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
-	asset rewardScheduleAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "rewardScheduleDatatableV2" )
+	asset rewardScheduleAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "rewardScheduleDataTableV2" )
 
 	return rewardScheduleAsset != $""
 }
 #endif
 
 #if SERVER || CLIENT || UI
-var function BattlePassV2_GetScheduleDatatable( ItemFlavor pass )
+var function BattlePassV2_GetScheduleDataTable( ItemFlavor pass )
 {
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 
-	asset rewardScheduleAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "rewardScheduleDatatableV2" )
+	asset rewardScheduleAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "rewardScheduleDataTableV2" )
 	Assert ( rewardScheduleAsset != $"", format( "Battlepass flav (%s) must define a V2 reward schedule (null/not found).", string( ItemFlavor_GetAsset( pass ) ) ) )
 
 	return GetDataTable( rewardScheduleAsset )
@@ -1394,11 +1394,11 @@ var function BattlePassV2_GetScheduleDatatable( ItemFlavor pass )
 #endif
 
 #if SERVER || CLIENT || UI
-var function BattlePass_GetMilestoneDatatable( ItemFlavor pass )
+var function BattlePass_GetMilestoneDataTable( ItemFlavor pass )
 {
 	Assert( ItemFlavor_GetType( pass ) == eItemType.battlepass )
 
-	return GetDataTable( GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "milestoneScheduleDatatable" ) )
+	return GetDataTable( GetGlobalSettingsAsset( ItemFlavor_GetAsset( pass ), "milestoneScheduleDataTable" ) )
 }
 #endif
 

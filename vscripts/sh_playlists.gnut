@@ -872,7 +872,7 @@ array<string> function GetPlaylistModNames()
 
 	list.resize( numMods )
 	for ( int modIter = 0; modIter != numMods; modIter++ )
-		list[modIter] = GetPlaylistModName( modIter )
+		list[modIter] = string( GetPlaylistModName( modIter ) )
 
 	return list
 }
