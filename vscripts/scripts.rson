@@ -1198,7 +1198,6 @@ Scripts:
 	ui/menu_survival_quick_swap.nut
 	ui/menu_lore_reader.nut
 
-	lobby/sh_lobby.gnut
 	ui/menu_post_game_ranked.nut
 	ui/menu_control_respawn_menu.nut
 	ui/menu_post_game_battlepass.nut
@@ -1252,7 +1251,6 @@ Scripts:
 	ui/dialogs/milestone_information_dialog.nut
 	ui/dialogs/pack_information_dialog.nut
 	ui/dialogs/promo.nut
-	ui/dialogs/promoum.nut
 	ui/dialogs/requeue.nut
 	ui/download_aoc_notice.nut
 	ui/golden_horse_about.nut
@@ -1275,7 +1273,6 @@ Scripts:
 	ui/menu_store_milestone_events.nut
 	ui/menu_store_offer_set_items.nut
 	ui/menu_survival_ground_list.nut
-	ui/mode_tdm_about.nut
 	ui/new_survival_ground_list.nut
 	ui/nx_operation_mode_update.nut
 	ui/panel_banner_badges.nut
