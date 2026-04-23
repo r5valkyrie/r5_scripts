@@ -67,7 +67,7 @@ void function ClientToUI_LoadoutSelectionOptics_OpenSelectOpticDialog( int loado
 
 	vector cursorPos = GetCursorPosition()
 
-	                           
+	
 	var opticAnchor = Hud_GetChild( file.menu, "OpticAnchor" )
 	Hud_SetX( opticAnchor, clamp( ( cursorPos.x - ruiScreenWidth  * 0.5 ) * xScale, -1 * xBounds, xBounds ) )
 	Hud_SetY( opticAnchor, clamp( ( cursorPos.y - ruiScreenHeight * 0.5 ) * yScale , -1 * yBounds, yBounds ) )
@@ -78,19 +78,19 @@ void function ClientToUI_LoadoutSelectionOptics_OpenSelectOpticDialog( int loado
 	RuiSetString( rui, "name", loadoutName )
 
 
-	          
+	
 	foreach( button in file.weapon0OpticButtons )
 		RunClientScript( "UICallback_LoadoutSelection_BindOpticSlotButton", button, 0 )
 
 	RunClientScript( "UICallback_LoadoutSelection_BindWeaponElement", Hud_GetChild( file.menu, "Weapon0" ), 0 )
 
-	          
+	
 	foreach( button in file.weapon1OpticButtons )
 		RunClientScript( "UICallback_LoadoutSelection_BindOpticSlotButton", button, 1 )
 
 	RunClientScript( "UICallback_LoadoutSelection_BindWeaponElement", Hud_GetChild( file.menu, "Weapon1" ), 1 )
 
-	             
+	
 	file.currentLoadoutButton = LoadoutSelectionMenu_GetLoadoutButtonByIndex( loadoutIndex )
 	file.currentLoadoutIndex = loadoutIndex
 }

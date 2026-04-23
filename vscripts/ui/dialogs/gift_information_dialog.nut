@@ -1,8 +1,10 @@
-               
 global function InitGiftInformationDialog
 global function OpenGiftInfoPopUp
+global function OpenGiftInfoPopUpWithEventTabTelemetry
+global function OpenGiftInfoPopUpWithMilestoneStoreTelemetry
 global function InitTwoFactorInformationDialog
 global function OpenTwoFactorInfoDialog
+
 struct {
 	var menu
 	var infoPanel
@@ -23,20 +25,48 @@ void function InitGiftInformationDialog( var newMenuArg )
 
 	giftFile.infoPanel = Hud_GetChild( menu, "InfoPanel" )
 
-	SetAllowControllerFooterClick( menu, true )
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#B_BUTTON_CLOSE" )
 	SetDialog( menu, true )
+
+	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, GiftInformationDialog_OnOpen )
 }
 
 void function GiftInformationDialog_OnOpen()
 {
-}
+	int minAccountLevel = GetConVarInt( "mtx_giftingMinAccountLevel" )
+	int minFriendshipTenure = ( GetConVarInt( "mtx_giftingMinFriendshipInDays" ) + DAYS_PER_WEEK - 1 ) / DAYS_PER_WEEK 
+	int maxGiftsPerDay = GetConVarInt( "mtx_giftingLimit" )
 
+	HudElem_SetRuiArg( giftFile.infoPanel, "playerDescription", Localize( "#GIFT_INFO_PLAYER_DESC", minAccountLevel, minFriendshipTenure, maxGiftsPerDay ) )
+
+	if ( !Escrow_IsPlayerTrusted() && ( HasEscrowBalance() || PCPlat_IsSteam() ) )
+	{
+		HudElem_SetRuiArg( giftFile.infoPanel, "escrowText", Localize( "#GIFT_INFO_PLAYER_DESC_ESCROW" ) )
+		HudElem_SetRuiArg( giftFile.infoPanel, "basicEscrowText", Localize( "#GIFT_INFO_EXTRA_DESC_ESCROW" ) )
+	}
+	else
+	{
+		HudElem_SetRuiArg( giftFile.infoPanel, "escrowText", Localize( "#GIFT_INFO_PLAYER_DESC_NO_ESCROW" ) )
+		HudElem_SetRuiArg( giftFile.infoPanel, "basicEscrowText", Localize( "#GIFT_INFO_EXTRA_DESC" ) )
+	}
+}
 
 void function OpenGiftInfoPopUp( var button )
 {
 	if ( GetActiveMenu() != giftFile.menu )
 		AdvanceMenu( GetMenu( "GiftInfoDialog" ) )
+}
+
+void function OpenGiftInfoPopUpWithEventTabTelemetry( var button )
+{
+	RTKEventsPanelController_SendPageViewInfoPage( "giftingInfoDialog" )
+	OpenGiftInfoPopUp( button )
+}
+
+void function OpenGiftInfoPopUpWithMilestoneStoreTelemetry( var button )
+{
+	StoreMilestoneEvents_SendPageViewInfoPage( "giftingInfoDialog" )
+	OpenGiftInfoPopUp( button )
 }
 
 void function InitTwoFactorInformationDialog( var newMenuArg )
@@ -47,7 +77,6 @@ void function InitTwoFactorInformationDialog( var newMenuArg )
 	factorFile.infoPanel = Hud_GetChild( menu, "InfoPanel" )
 
 
-	SetAllowControllerFooterClick( menu, true )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, TwoFactorInfo_OnClose )
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#B_BUTTON_CLOSE" )
@@ -71,4 +100,3 @@ void function TwoFactorInfo_OnClose()
 {
 	RefreshTwoFactorAuthenticationStatus()
 }
-                      

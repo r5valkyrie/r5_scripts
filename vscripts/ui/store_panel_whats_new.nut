@@ -1,6 +1,6 @@
 global function WhatsNewPanel_Init
 
-#if UI
+
 struct {
 	var				panel
 	var				headerRui
@@ -50,7 +50,7 @@ table< int, string > previewSoundMap = {
 	[eItemType.gladiator_card_kill_quip] 	= "UI_Menu_Quip_Preview",
 	[eItemType.weapon_skin] 				= "UI_Menu_WeaponSkin_Preview"
 }
-#endif
+
 const TOTAL_THEMED_ITEMS = 40
 const PACK_BULK_PURCHASE_COUNT = 10
 const MYTHIC_INIDICATOR_COUNT = 3
@@ -169,7 +169,7 @@ void function WhatsNewPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	         
+	
 	foreach ( int flavIdx, ItemFlavor unused in file.whatsNewList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -256,18 +256,11 @@ void function WhatsNewPanel_Update( var panel )
 					int rarity = ItemFlavor_GetQuality( flav )
 					string rarityName = ItemFlavor_GetQualityName( flav )
 					string unlockedItemsRatio = " "+file.itemCategoryUnlockCount[rarity]+" / "+file.itemCategoryCount[rarity]
-					string categoryName = "GridCategory" + i
-					if ( Hud_HasChild( scrollPanel, categoryName ) )
-					{
-						var category = Hud_GetChild( scrollPanel, categoryName )
-						HudElem_SetRuiArg( category, "label", rarityName )
-						HudElem_SetRuiArg( category, "display", unlockedItemsRatio )
-						HudElem_SetRuiArg( category, "darkColorOverride", <1,1,1> )
-					}
-					else if ( i == 0 )
-					{
-						Warning( "WhatsNewPanel: GridCategory elements not found in menu file. Item categories will not be displayed. Update the menu file to include GridCategory elements." )
-					}
+					var category = Hud_GetChild( scrollPanel, "GridCategory" + i )
+
+					HudElem_SetRuiArg( category, "label", rarityName )
+					HudElem_SetRuiArg( category, "display", unlockedItemsRatio )
+					HudElem_SetRuiArg( category, "darkColorOverride", <1,1,1> )
 				}
 			}
 		}
@@ -278,7 +271,7 @@ void function WhatsNewPanel_Update( var panel )
 		DisplayTime dt = SecondsToDHMS( maxint( 0, CalEvent_GetFinishUnixTime( expect ItemFlavor( activeThemedShopEvent ) ) - GetUnixTimestamp() ) )
 
 		RuiSetString( file.headerRui, "collected", Localize( "#COLLECTED_ITEMS", file.numOwnedItems, totalItems ) )
-		HudElem_SetRuiArg( file.infoBox, "timeRemainingText", Localize( "#DAYS_REMAINING", string( dt.days ), string( dt.hours ) ) )
+		HudElem_SetRuiArg( file.infoBox, "timeRemainingText", Localize( GetDaysHoursRemainingLoc( dt.days, dt.hours ), dt.days, dt.hours ) )
 		HudElem_SetRuiArg( file.infoBox, "title", ItemFlavor_GetShortName( associatedEventPack ) )
 		HudElem_SetRuiArg( file.infoBox, "isOfferRestricted", GRX_IsOfferRestricted() )
 	}
@@ -312,8 +305,20 @@ void function ThemedShop_UpdateGRXDependantElements()
 	file.purchaseMultiplePacksButton_currentQty = packBulkPurchaseCount
 
 	remainingPacksAvailable = GetCurrentMaxEventPackPurchaseCount( GetLocalClientPlayer() )
-	Hud_SetLocked( file.purchaseSinglePackButton, remainingPacksAvailable < 1  )
-	Hud_SetLocked( file.purchaseMultiplePacksButton, remainingPacksAvailable < 2  )
+	bool offerIsPurchasable = true
+
+	if ( activeThemedShopEvent != null )
+	{
+		GRXScriptOffer ornull offer = ThemedShopEvent_GetPackOffer( expect ItemFlavor( activeThemedShopEvent ) )
+
+		if ( offer != null )
+		{
+			offerIsPurchasable = GRXOffer_IsEligibleForPurchase( expect GRXScriptOffer( offer ) )
+		}
+	}
+
+	Hud_SetLocked( file.purchaseSinglePackButton, !offerIsPurchasable || remainingPacksAvailable < 1  )
+	Hud_SetLocked( file.purchaseMultiplePacksButton, !offerIsPurchasable || remainingPacksAvailable < 2  )
 
 	expect ItemFlavor( activeThemedShopEvent )
 	HudElem_SetRuiArg( file.completionRewardBox, "itemImage", HeirloomEvent_GetHeirloomButtonImage( activeThemedShopEvent ) )
@@ -326,7 +331,7 @@ void function ThemedShop_UpdateGRXDependantElements()
 	UpdateMythicElements( activeThemedShopEvent )
 }
 
-#if UI
+
 void function WhatsNewSetupItemButton( var button, ItemFlavor itemFlavor )
 {
 	Assert( !( button in file.activeItemButtons ) )
@@ -405,14 +410,14 @@ void function CompletionRewardBox_OnClick( var btn )
 
 	if ( HeirloomEvent_AwardHeirloomShards( activeThemedShopEvent ) )
 	{
-		JumpToHeirloomShop()                                       
+		JumpToHeirloomShop() 
 		return
 	}
 
 	ItemFlavor completionRewardPack = HeirloomEvent_GetCompletionRewardPack( activeThemedShopEvent )
 	array<ItemFlavor> packContents = GRXPack_GetPackContents( completionRewardPack )
 
-	                                                                                            
+	
 	GRXScriptOffer fakeOffer
 	fakeOffer.titleText = ItemFlavor_GetLongName( completionRewardPack )
 	fakeOffer.descText = ""
@@ -480,7 +485,7 @@ void function WhatsNewInfoItem_Update( ItemFlavor focusFlav )
 			rarityText = "#MYTHIC_SKIN"
 		}
 	}
-	else                    
+	else 
 	{
 		file.focusedButtonIsntMythic = true
 		nameText = ItemFlavor_GetLongName( focusFlav )
@@ -503,7 +508,7 @@ void function WhatsNewInfoItem_Update( ItemFlavor focusFlav )
 					GRXScriptOffer offer = offers[0]
 					foreach ( ItemFlavorBag price in offer.prices )
 					{
-						                                                                                                   
+						
 						if ( price.flavors[0] == GRX_CURRENCIES[GRX_CURRENCY_PREMIUM] )
 						{
 							Assert( premiumPrice == -1, "Inherited existing (NOT -1) Apex Coins price for ItemFlavor bag in GRX offer." )
@@ -575,7 +580,7 @@ bool function WhatsNew_IsFocusedItemLocked()
 
 	return false
 }
-#endif
+
 
 void function PreviewItem( ItemFlavor flav )
 {
@@ -613,16 +618,16 @@ void function PreviewItem( ItemFlavor flav )
 			scale = 0.1
 			break
 	}
-	
+
 	bool isNxHH = false
-#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 	isNxHH = IsNxHandheldMode()
 #endif
-	
+
 	RunClientScript( "UIToClient_ItemPresentation", ItemFlavor_GetGUID( flav ), -1, scale, showLow, null, true, "battlepass_right_ref", isNxHH, true )
 }
 
-                                     
+
 void function CategorizeWhatsNewList( array<ItemFlavor> whatsNewList )
 {
 	whatsNewList.sort( int function( ItemFlavor a, ItemFlavor b ) : () {
@@ -644,8 +649,8 @@ void function CategorizeWhatsNewList( array<ItemFlavor> whatsNewList )
 		return SortStringAlphabetize( Localize( ItemFlavor_GetLongName( a ) ), Localize( ItemFlavor_GetLongName( b ) ) )
 	} )
 
-	                                                
-	for ( int i = 0; i < 4; i++ )                                                                       
+	
+	for ( int i = 0; i < 4; i++ ) 
 	{
 		if ( !( i in file.itemCategoryCount ) )
 			file.itemCategoryCount[i] <- 0
@@ -719,6 +724,8 @@ void function PurchasePackButton_OnClick( var btn, int count )
 	if ( offer == null )
 		return
 
+	expect GRXScriptOffer( offer )
+
 	PurchaseDialogConfig pdc
 	pdc.offer = offer
 	pdc.quantity = count
@@ -765,18 +772,18 @@ void function OpenPackButton_OnClick( var btn )
 
 int function GetCurrentMaxEventPackPurchaseCount( entity player )
 {
-	#if SERVER
-		                                      
-			        
-	#endif
+
+
+
+
 
 	ItemFlavor activeThemedShopEvent = expect ItemFlavor( file.activeThemedShopEvent )
 	ItemFlavor packFlav              = GetItemFlavorByAsset( ThemedShopEvent_GetAssociatedPack( activeThemedShopEvent ) )
-	#if SERVER
-		                                                                                   
-	#elseif UI
+
+
+
 		int ownedPackCount = GRX_GetPackCount( ItemFlavor_GetGRXIndex( packFlav ) )
-	#endif
+
 
 	return MAX_PURCHASE_PACK_COUNT - ( FilterOwnedItems( file.whatsNewList ) + ownedPackCount )
 }
@@ -807,7 +814,7 @@ void function MythicInspect_AutoAdvance()
 
 	while( !file.focusedButtonIsntMythic )
 	{
-		wait 3.0                                       
+		wait 3.0 
 
 		if ( !IsConnected() )
 			return
@@ -828,7 +835,7 @@ void function MythicInspect_AutoAdvance()
 	file.autoRunning = false
 }
 
-                                                                                                        
+
 void function UpdateMythicUI( bool isMythicActive )
 {
 	if ( !IsConnected() )
@@ -866,7 +873,7 @@ void function UpdateMythicUI( bool isMythicActive )
 	}
 }
 
-                                                                                  
+
 void function UpdateMythicElements( ItemFlavor activeThematicEvent )
 {
 	bool awardMythic = HeirloomEvent_IsRewardMythicSkin( activeThematicEvent )

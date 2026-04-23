@@ -2,9 +2,10 @@ global function InitMiniPromo
 global function MiniPromo_Start
 global function MiniPromo_Stop
 global function GetPackInfoToolTip
-         
-                                       
-        
+
+
+
+
 
 const int MINIPROMO_MAX_PAGES = 5
 const float MINIPROMO_PAGE_CHANGE_DELAY = 7.0
@@ -41,7 +42,9 @@ struct
 	float stickDeflection = 0
 	int   lastStickState = eStickState.NEUTRAL
 
-	                              
+	bool hasOpenedPack = false
+
+	
 } file
 
 
@@ -59,9 +62,9 @@ void function InitMiniPromo( var button )
 
 void function MiniPromo_Start()
 {
-	                                                               
+	
 
-	Signal( file.signalDummy, "EndAutoAdvancePages" )                               
+	Signal( file.signalDummy, "EndAutoAdvancePages" ) 
 
 	file.allPages = InitPages()
 
@@ -76,7 +79,7 @@ void function MiniPromo_Start()
 
 void function MiniPromo_Stop()
 {
-	                                                              
+	
 
 	MiniPromo_Reset()
 
@@ -89,14 +92,14 @@ void function MiniPromo_Stop()
 }
 
 
-         
-                                                  
-   
-  	                                
-  
-  	                   
-   
-        
+
+
+
+
+
+
+
+
 
 
 void function OnGRXStateChanged()
@@ -147,18 +150,20 @@ void function MiniPromo_Reset()
 	Signal( uiGlobal.signalDummy, "EndAutoAdvancePages" )
 	file.activePageIndex = -1
 	Hud_Hide( file.button )
+
+	RTKTutorialOverlay_Deactivate( eTutorialOverlayID.APEX_PACK )
 }
 
 
 void function UpdateValidityOfPages( array<MiniPromoPageData> pages )
 {
-	                                          
-	   
-	  	                                        
-	  		                    
-	  	    
-	  		                             
-	   
+	
+	
+	
+	
+	
+	
+	
 
 	foreach ( page in pages )
 	{
@@ -181,11 +186,17 @@ void function UpdateValidityOfPages( array<MiniPromoPageData> pages )
 			case "heirloom":
 			case "prestigeskin":
 			case "monthlystoreoffer":
-				page.isValid = true
+			case "personalizedstore":
+			case "milestoneevent":
+			case "storemilestoneevent":
+			case "storeOfferShop":
+			case "rumble":
+			case "rankedrumble":
+			page.isValid = true
 				break
 
 			case "url":
-				page.isValid = true                                      
+				page.isValid = true 
 				break
 		}
 	}
@@ -231,7 +242,7 @@ array<MiniPromoPageData> function InitPages()
 	array<MiniPromoPageData> pages
 	UMData um = EADP_UM_GetPromoData()
 
-	                                  
+	
 	MiniPromoPageData openPackPage
 	openPackPage.text1 = "OPEN PACK"
 	openPackPage.linkType = "openpack"
@@ -292,9 +303,19 @@ bool function IsLinkFormatValid( string linkType, array<string> linkData )
 	else if ( ( linkType == "battlepass" || linkType == "storecharacter" || linkType == "themedstoreskin" || linkType == "collectionevent" ) &&
 			  ( linkData.len() == 1 && ( IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID ( linkData[0] ) ) || IsValidItemFlavorCharacterRef( linkData[0] ) ) ) )
 		return true
-	else if ( linkType == "url" && linkData.len() == 1 )                                      
+	else if ( linkType == "url" && linkData.len() == 1 ) 
 		return true
 	else if ( linkType == "storeoffer" && linkData.len() == 1 )
+		return true
+	else if ( linkType == "storeOfferShop" && linkData.len() == 1 )
+		return true
+	else if ( linkType == "milestoneevent" )
+		return true
+	else if ( linkType == "storemilestoneevent" )
+		return true
+	else if ( linkType == "rumble" )
+		return true
+	else if ( linkType == "challenges" )
 		return true
 
 	return false
@@ -303,7 +324,7 @@ bool function IsLinkFormatValid( string linkType, array<string> linkData )
 
 void function AutoAdvancePages()
 {
-	                                                                 
+	
 	Signal( uiGlobal.signalDummy, "EndAutoAdvancePages" )
 	EndSignal( uiGlobal.signalDummy, "EndAutoAdvancePages" )
 
@@ -320,7 +341,7 @@ void function AutoAdvancePages()
 }
 
 
-void function ChangePage( bool direction )
+void function ChangePage( bool direction, bool sendTelemetry = false )
 {
 	Assert( direction == MINIPROMO_NAV_LEFT || direction == MINIPROMO_NAV_RIGHT )
 	Assert( file.activePageIndex != -1 )
@@ -331,29 +352,33 @@ void function ChangePage( bool direction )
 	for ( int i = 1; i < numPages; i++ )
 	{
 		int candidatePageIndex          = direction == MINIPROMO_NAV_RIGHT ? (file.activePageIndex + i) % numPages : (file.activePageIndex - i + numPages) % numPages
-		                                                                                                                                                                      
+		
 		MiniPromoPageData candidatePage = file.allPages[candidatePageIndex]
 		if ( IsPageValidToShow( candidatePage ) )
 		{
 			nextPageIndex = candidatePageIndex
 			break
 		}
-		      
-		   
-		  	                                                                                                        
-		   
+		
+		
+		
+		
 	}
 
 	if ( nextPageIndex != file.activePageIndex )
+	{
 		SetPage( nextPageIndex )
-	      
-	  	                                                                                                               
+		if( sendTelemetry )
+			PIN_UIInteraction_OnScroll( Hud_GetHudName( GetActiveMenu() ), Hud_GetHudName( file.button ) )
+	}
+	
+	
 }
 
 
 void function SetPage( int pageIndex, bool instant = false )
 {
-	                                                                       
+	
 
 	var rui = Hud_GetRui( file.button )
 
@@ -423,9 +448,13 @@ void function SetPage( int pageIndex, bool instant = false )
 		RuiSetColorAlpha( rui, "rarityColor", SrgbToLinear( rarityColor ), 1.0 )
 		string nextPackDescription = "#APEX"
 
-		if ( ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.EVENT )
+		if ( ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.EVENT || ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.SIRNGE )
 		{
-			nextPackDescription = "#PACK_BUNDLE_EVENT_TEXT"
+			
+			if ( MilestoneEvent_IsMilestonePackFlav( pack, false, true ) )
+				nextPackDescription = "#PACK_BUNDLE_MILESTONE_TEXT"
+			else
+				nextPackDescription = "#PACK_BUNDLE_EVENT_TEXT"
 		}
 		else if ( ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.EVENT_THEMATIC )
 		{
@@ -433,14 +462,17 @@ void function SetPage( int pageIndex, bool instant = false )
 		}
 		else if ( ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.THEMATIC )
 		{
-			nextPackDescription = ItemFlavor_GetShortName( pack )                                                                                   
+			nextPackDescription = ItemFlavor_GetShortName( pack ) 
 		}
 		else if ( packIcon != "" && ItemFlavor_GetAccountPackType( pack ) == eAccountPackType.APEX )
 		{
-			nextPackDescription = ItemFlavor_GetQualityName( pack )                                                                                          
+			nextPackDescription = ItemFlavor_GetQualityName( pack ) 
 		}
 
 		RuiSetString( rui, "packDescription", nextPackDescription )
+
+		if ( page.linkType == "openpack" && !file.hasOpenedPack )
+			RTKTutorialOverlay_Activate( eTutorialOverlayID.APEX_PACK )
 	}
 	else
 	{
@@ -448,7 +480,11 @@ void function SetPage( int pageIndex, bool instant = false )
 	}
 
 	if ( page.linkType != "openpack" )
+	{
 		Hud_ClearToolTipData( file.button )
+
+		RTKTutorialOverlay_Deactivate( eTutorialOverlayID.APEX_PACK )
+	}
 }
 
 ToolTipData function GetPackInfoToolTip( int ownedPacks )
@@ -476,19 +512,19 @@ ToolTipData function GetPackInfoToolTip( int ownedPacks )
 		{
 			thmPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
 		}
-		else                                                                      
+		else 
 		{
 			int packRarity = ItemFlavor_GetQuality( counterPack )
-			if ( packRarity == 3 )             
+			if ( packRarity == 3 ) 
 				legPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
-			else if ( packRarity == 2 )        
+			else if ( packRarity == 2 ) 
 				epcPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
-			else if ( packRarity == 1 )                      
+			else if ( packRarity == 1 ) 
 				apxPackCnt += GRX_GetPackCount( ItemFlavor_GetGRXIndex( counterPack ) )
 		}
 	}
 
-	                                                                                                                                 
+	
 	if ( legPackCnt > 0 )
 	{
 		hint3 = Localize( "#CNT_LEGENDARY_PACKS", string( legPackCnt ) )
@@ -562,7 +598,7 @@ ToolTipData function GetPackInfoToolTip( int ownedPacks )
 }
 
 
-                                                                                                                      
+
 int function GetCorrespondingMOTDPageIndex()
 {
 	MiniPromoPageData firstPage = file.allPages[0]
@@ -573,10 +609,10 @@ int function GetCorrespondingMOTDPageIndex()
 }
 
 
-                                                                      
+
 void function MiniPromoButton_OnActivate( var button )
 {
-	                                                
+	
 
 	MiniPromoPageData page = file.allPages[file.activePageIndex]
 	int motdIndex = GetCorrespondingMOTDPageIndex()
@@ -587,6 +623,7 @@ void function MiniPromoButton_OnActivate( var button )
 		{
 			EmitUISound( "UI_Menu_OpenLootBox" )
 			OnLobbyOpenLootBoxMenu_ButtonPress()
+			file.hasOpenedPack = true
 		}
 	}
 	else if ( page.linkType == "openmotd" )
@@ -630,7 +667,7 @@ void function MiniPromoButton_OnLoseFocus( var button )
 void function OnStickMoved( ... )
 {
 	float stickDeflection = expect float( vargv[1] )
-	                                                
+	
 
 	int stickState = eStickState.NEUTRAL
 	if ( stickDeflection > 0.25 )
@@ -642,14 +679,16 @@ void function OnStickMoved( ... )
 	{
 		if ( stickState == eStickState.RIGHT )
 		{
-			                        
-			ChangePage( MINIPROMO_NAV_RIGHT )
+			
+			EmitUISound( "UI_Menu_BattlePass_LevelTab" )
+			ChangePage( MINIPROMO_NAV_RIGHT, true )
 			thread AutoAdvancePages()
 		}
 		else if ( stickState == eStickState.LEFT )
 		{
-			                       
-			ChangePage( MINIPROMO_NAV_LEFT )
+			
+			EmitUISound( "UI_Menu_BattlePass_LevelTab" )
+			ChangePage( MINIPROMO_NAV_LEFT, true )
 			thread AutoAdvancePages()
 		}
 	}
@@ -663,7 +702,8 @@ void function ChangePromoPageToLeft()
 	if ( file.activePageIndex == -1 )
 		return
 
-	ChangePage( MINIPROMO_NAV_LEFT )
+	EmitUISound( "UI_Menu_BattlePass_LevelTab" )
+	ChangePage( MINIPROMO_NAV_LEFT, true )
 	thread AutoAdvancePages()
 }
 
@@ -673,6 +713,7 @@ void function ChangePromoPageToRight()
 	if ( file.activePageIndex == -1 )
 		return
 
-	ChangePage( MINIPROMO_NAV_RIGHT )
+	EmitUISound( "UI_Menu_BattlePass_LevelTab" )
+	ChangePage( MINIPROMO_NAV_RIGHT, true )
 	thread AutoAdvancePages()
 }

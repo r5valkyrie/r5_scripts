@@ -1,5 +1,4 @@
 global function InitSeasonPanel
-global function InitSeasonWelcomeMenu
 global function JumpToSeasonTab
 global function IsSeaonPanelCurrentlyTopLevel
 
@@ -16,6 +15,8 @@ struct
 	bool wasCollectionEventActive = false
 	bool wasThemedShopEventActive = false
 	bool wasWhatsNewEventActive = false
+	bool wasEventShopActive = false
+	bool wasMilestoneEventActive = false
 
 	bool isFirstSessionOpen = true
 
@@ -61,9 +62,13 @@ void function SeasonPanel_OnShow( var panel )
 	ItemFlavor currentSeason = GetLatestSeason( GetUnixTimestamp() )
 	string seasonString = ItemFlavor_GetCalEventRef( currentSeason )
 	bool isNewSeason = player.GetPersistentVar( "lastHubResetSeason" ) != seasonString
-	if( isNewSeason )
+	if ( isNewSeason )
 	{
-		AdvanceMenu( GetMenu("BattlePassAboutPage1") )
+		if ( !storeInspect_JumpingToBPFromBPStorePurchase )
+		{
+			AdvanceMenu( GetMenu( "BattlePassAboutPage1" ) )
+		}
+
 		Remote_ServerCallFunction( "ClientCallback_SetSeasonalHubButtonClickedSeason" )
 	}
 
@@ -90,11 +95,8 @@ void function SeasonPanel_OnHide( var panel )
 array<var> function GetAllMenuPanelsSorted( var menu )
 {
 	array<var> allPanels = GetAllMenuPanels( menu )
-	string playlistVal = GetCurrentPlaylistVarString( "season_panel_order", "CollectionEventPanel|ThemedShopPanel|PassPanel|QuestPanel|ChallengesPanel" )
-	//printt( "DEBUG GetAllMenuPanelsSorted: season_panel_order =", playlistVal )
-	//printt( "DEBUG GetAllMenuPanelsSorted: allPanels.count =", allPanels.len() )
-	//foreach ( panel in allPanels )
-		//printt( "  Panel:", Hud_GetHudName( panel ) )
+	foreach ( panel in allPanels )
+		printt( Hud_GetHudName( panel ) )
 	allPanels.sort( SortMenuPanelsByPlaylist )
 
 	return allPanels
@@ -103,8 +105,7 @@ array<var> function GetAllMenuPanelsSorted( var menu )
 
 int function SortMenuPanelsByPlaylist( var a, var b )
 {
-
-	string playlistVal = GetCurrentPlaylistVarString( "season_panel_order", "CollectionEventPanel|ThemedShopPanel|PassPanel|QuestPanel|ChallengesPanel" )
+	string playlistVal = GetCurrentPlaylistVarString( "season_panel_order", "PassPanel|QuestPanel|ChallengesPanel" )
 	if ( playlistVal == "" )
 		return 0
 
@@ -122,21 +123,8 @@ void function OnGRXSeasonUpdate()
 {
 	TabData tabData = GetTabDataForPanel( file.panel )
 
-	//printt( "DEBUG OnGRXSeasonUpdate: GRX_IsInventoryReady() =", GRX_IsInventoryReady() )
-	//printt( "DEBUG OnGRXSeasonUpdate: GRX_AreOffersReady() =", GRX_AreOffersReady() )
-
-	// R5SDK: Allow Season panel to work offline without GRX
-	bool isGRXReady = GRX_IsInventoryReady() && GRX_AreOffersReady()
-	bool isOfflineMode = !GRX_IsInventoryReady() && !GRX_AreOffersReady()
-
-	if ( isOfflineMode )
+	if ( !GRX_IsInventoryReady() || !GRX_AreOffersReady() )
 	{
-		//printt( "DEBUG OnGRXSeasonUpdate: GRX offline mode, proceeding anyway" )
-	}
-
-	if ( !isGRXReady && !isOfflineMode )
-	{
-		//printt( "DEBUG OnGRXSeasonUpdate: GRX not ready, disabling all tabs" )
 		DeactivateTab( tabData )
 		SetTabNavigationEnabled( file.panel, false )
 
@@ -147,130 +135,31 @@ void function OnGRXSeasonUpdate()
 	}
 	else
 	{
-		//printt( "DEBUG OnGRXSeasonUpdate: GRX is ready, checking events..." )
-		ItemFlavor ornull activeCollectionEvent = GetActiveCollectionEvent( GetUnixTimestamp() )
-		bool haveActiveCollectionEvent          = ( activeCollectionEvent != null )
-		//if ( activeCollectionEvent != null )
-		//	printt( "DEBUG OnGRXSeasonUpdate: activeCollectionEvent =", ItemFlavor_GetAsset( expect ItemFlavor(activeCollectionEvent) ) )
-		//else
-		//	printt( "DEBUG OnGRXSeasonUpdate: activeCollectionEvent = null" )
-		ItemFlavor ornull activeThemedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
-		bool hasThemedShopCalevent              = ( activeThemedShopEvent != null )
-		//if ( activeThemedShopEvent != null )
-		//	printt( "DEBUG OnGRXSeasonUpdate: activeThemedShopEvent =", ItemFlavor_GetAsset( expect ItemFlavor(activeThemedShopEvent) ) )
-		//else
-		//	printt( "DEBUG OnGRXSeasonUpdate: activeThemedShopEvent = null" )
-
-		bool haveActiveWhatsNewEvent			= false
-		bool haveActiveThemedShopEvent			= false
-		if ( hasThemedShopCalevent )
+		if ( GetMenuNumTabs( file.panel ) == 0 )
 		{
-			haveActiveWhatsNewEvent = ThemedShopEvent_HasWhatsNew( expect ItemFlavor( activeThemedShopEvent ) )
-			haveActiveThemedShopEvent = ThemedShopEvent_HasThemedShopTab( expect ItemFlavor( activeThemedShopEvent ) )
-		}
-		//printt( "DEBUG OnGRXSeasonUpdate: haveActiveWhatsNewEvent =", haveActiveWhatsNewEvent, "haveActiveThemedShopEvent =", haveActiveThemedShopEvent )
-
-		if ( haveActiveCollectionEvent != file.wasCollectionEventActive || haveActiveThemedShopEvent != file.wasThemedShopEventActive || haveActiveWhatsNewEvent != file.wasWhatsNewEventActive || GetMenuNumTabs( file.panel ) == 0 )
-		{
-			//printt( "DEBUG OnGRXSeasonUpdate: Rebuilding tabs, GetMenuNumTabs =", GetMenuNumTabs( file.panel ) )
 			ClearTabs( file.panel )
 			array<var> nestedPanels = GetAllMenuPanelsSorted( file.panel )
-			//printt( "DEBUG OnGRXSeasonUpdate: nestedPanels found =", nestedPanels.len() )
 			foreach ( nestedPanel in nestedPanels )
 			{
-				//printt( "DEBUG OnGRXSeasonUpdate: Checking panel:", Hud_GetHudName( nestedPanel ) )
-				if ( Hud_GetHudName( nestedPanel ) == "CollectionEventPanel" && !haveActiveCollectionEvent )
-				{
-					//printt( "DEBUG OnGRXSeasonUpdate: Skipping CollectionEventPanel (no active event)" )
-					continue
-				}
-
-				if ( Hud_GetHudName( nestedPanel ) == "ThemedShopPanel" && !haveActiveThemedShopEvent )
-				{
-					//printt( "DEBUG OnGRXSeasonUpdate: Skipping ThemedShopPanel (no active event)" )
-					continue
-				}
-
-				if ( Hud_GetHudName( nestedPanel ) == "WhatsNewPanel" && !haveActiveWhatsNewEvent )
-				{
-					//printt( "DEBUG OnGRXSeasonUpdate: Skipping WhatsNewPanel (no active event)" )
-					continue
-				}
-
-				switch ( Hud_GetHudName( nestedPanel ) )
-				{
-					case "ThemedShopPanel":
-					case "CollectionEventPanel":
-
-
-						break
-				}
-
-				//printt( "DEBUG OnGRXSeasonUpdate: Adding tab:", Hud_GetHudName( nestedPanel ), "title:", GetPanelTabTitle( nestedPanel ) )
 				AddTab( file.panel, nestedPanel, GetPanelTabTitle( nestedPanel ) )
 			}
-
-			file.wasCollectionEventActive = haveActiveCollectionEvent
-			file.wasThemedShopEventActive = haveActiveThemedShopEvent
-			file.wasWhatsNewEventActive = haveActiveWhatsNewEvent
 		}
+
 		SetTabNavigationEnabled( file.panel, true )
 		ItemFlavor season = GetLatestSeason( GetUnixTimestamp() )
-		//printt( "DEBUG OnGRXSeasonUpdate: GetLatestSeason asset =", ItemFlavor_GetAsset( season ), "numTabs =", tabData.tabDefs.len() )
 
 		int numTabs = tabData.tabDefs.len()
 		tabData.centerTabs = true
 		SetTabDefsToSeasonal(tabData)
 		SetTabBackground( tabData, Hud_GetChild( file.panel, "TabsBackground" ), eTabBackground.STANDARD )
 
-
+		
 		foreach ( TabDef tabDef in GetPanelTabs( file.panel ) )
 		{
 			bool showTab   = true
 			bool enableTab = true
 
 			tabDef.title = GetPanelTabTitle( tabDef.panel )
-
-			if ( Hud_GetHudName( tabDef.panel ) == "CollectionEventPanel" )
-			{
-				showTab = haveActiveCollectionEvent
-				enableTab = true
-				if ( haveActiveCollectionEvent )
-				{
-					expect ItemFlavor(activeCollectionEvent)
-
-					tabDef.title = "#MENU_STORE_PANEL_COLLECTION"
-
-
-
-
-
-
-				}
-			}
-			else if ( Hud_GetHudName( tabDef.panel ) == "ThemedShopPanel" )
-			{
-				showTab = haveActiveThemedShopEvent
-				if ( haveActiveThemedShopEvent )
-				{
-
-
-					tabDef.title = "#EVENT_EXCLUSIVE_OFFERS"
-
-
-
-
-
-
-
-
-
-
-
-
-				}
-			}
-
 			SetTabDefVisible( tabDef, showTab )
 			SetTabDefEnabled( tabDef, enableTab )
 		}
@@ -279,13 +168,34 @@ void function OnGRXSeasonUpdate()
 
 		file.lastMenuNavDirectionTopLevel = GetLastMenuNavDirection()
 
-		if ( GetCurrentPlaylistVarBool( "season_panel_reverse_nav", true ) || (file.isFirstSessionOpen && GetCurrentPlaylistVarBool( "season_panel_first_open_behavior", true )) )
+		
+		
+		bool isSeasonPanelReverseNav = GetCurrentPlaylistVarBool( "season_panel_reverse_nav", true )
+		bool isSeasonPanelFirstOpenBehavior = GetCurrentPlaylistVarBool( "season_panel_first_open_behavior", true )
+
+		if ( ( isSeasonPanelReverseNav || ( file.isFirstSessionOpen && isSeasonPanelFirstOpenBehavior ) ) && !storeInspect_JumpingToBPFromBPStorePurchase )
 		{
 			if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
 				activeIndex = 0
 
 			while( (!IsTabIndexEnabled( tabData, activeIndex ) || !IsTabIndexVisible( tabData, activeIndex ) || activeIndex == INVALID_TAB_INDEX) && activeIndex > numTabs )
 				activeIndex++
+		}
+		else if ( storeInspect_JumpingToBPFromBPStorePurchase )
+		{
+			int tabIndex = Tab_GetTabIndexByBodyName( tabData, "PassPanel" )
+
+			if ( tabIndex == -1 )
+			{
+				activeIndex = 0
+
+				while( (!IsTabIndexEnabled( tabData, activeIndex ) || !IsTabIndexVisible( tabData, activeIndex ) || activeIndex == INVALID_TAB_INDEX) && activeIndex < numTabs )
+					activeIndex++
+			}
+			else
+			{
+				activeIndex = tabIndex
+			}
 		}
 		else
 		{
@@ -330,49 +240,3 @@ void function JumpToSeasonTab( string activateSubPanel = "" )
 
 	ActivateTab( tabData, tabIndex )
 }
-
-struct
-{
-	var menu
-
-	var welcomeHeader
-
-} s_welcomeMenu
-
-void function InitSeasonWelcomeMenu( var menu )
-{
-	s_welcomeMenu.menu = menu
-	s_welcomeMenu.welcomeHeader = Hud_GetChild( menu, "Header" )
-
-	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, SeasonWelcome_OnOpen )
-	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, SeasonWelcome_OnClose )
-
-
-
-
-	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
-}
-
-
-void function SeasonWelcome_OnOpen()
-{
-	ItemFlavor season = GetLatestSeason( GetUnixTimestamp() )
-
-
-
-
-
-
-
-
-
-
-	HudElem_SetRuiArg( s_welcomeMenu.welcomeHeader, "logo", Season_GetSmallLogo( season ), eRuiArgType.IMAGE )
-}
-
-
-void function SeasonWelcome_OnClose()
-{
-
-}
-

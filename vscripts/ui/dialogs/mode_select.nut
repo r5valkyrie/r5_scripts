@@ -14,7 +14,7 @@ struct {
 	table<string, bool> modeModIsActive
 } file
 
-void function InitModeSelectDialog( var newMenuArg )                                               
+void function InitModeSelectDialog( var newMenuArg ) 
 {
 	var menu = GetMenu( "ModeSelectDialog" )
 	file.menu = menu
@@ -35,7 +35,7 @@ void function InitModeSelectDialog( var newMenuArg )
 
 void function OnOpenModeSelectDialog()
 {
-	             
+	
 	foreach ( button, playlistName in file.buttonToMode )
 		Hud_RemoveEventHandler( button, UIE_CLICK, OnModeButton_Activate )
 	file.buttonToMode.clear()
@@ -43,15 +43,15 @@ void function OnOpenModeSelectDialog()
 	foreach ( button, playlistName in file.buttonToModeMod )
 		Hud_RemoveEventHandler( button, UIE_CLICK, OnModeModButton_Activate )
 	file.buttonToModeMod.clear()
-	           
+	
 
 	var ownerButton = GetModeSelectButton()
 
 	UIPos ownerPos   = REPLACEHud_GetAbsPos( ownerButton )
 	UISize ownerSize = REPLACEHud_GetSize( ownerButton )
 
-	array<string> playlists = Lobby_GetPlaylists()
-	array<string> playlistMods = Lobby_GetPlaylistMods()
+	array<string> playlists = LobbyPlaylist_GetPlaylists()
+	array<string> playlistMods = LobbyPlaylist_GetPlaylistMods()
 
 	Hud_InitGridButtons( file.modeList, playlists.len() )
 	Hud_InitGridButtons( file.modeModList, playlistMods.len() )
@@ -70,7 +70,7 @@ void function OnOpenModeSelectDialog()
 	if ( playlists.len() == 0 )
 		return
 
-	string selectedPlaylist = Lobby_GetSelectedPlaylist()
+	string selectedPlaylist = LobbyPlaylist_GetSelectedPlaylist()
 	bool foundSelectedPlaylist = false
 	int buttonMaxHeight = 0
 	for ( int i = 0; i < playlists.len(); i++ )
@@ -106,7 +106,7 @@ void function OnOpenModeSelectDialog()
 		ModeModButton_Init( button, modName, wasActive )
 	}
 
-	{                            
+	{ 
 		int popupHeight		= minint( MAX_ROWS, playlists.len() ) * buttonMaxHeight
 		int modeListWidth	= ownerSize.width + SCROLLBAR_PX 
 
@@ -139,7 +139,7 @@ void function OnCloseModeSelectDialog()
 void function ModeButton_Init( var button, string playlistName )
 {
 	var lobbyModeSelectButton = GetModeSelectButton()
-	                                                                                                                                                         
+	
 
 	InitButtonRCP( button )
 	var rui = Hud_GetRui( button )
@@ -153,16 +153,24 @@ void function ModeButton_Init( var button, string playlistName )
 	if ( !isPlaylistAvailable )
 	{
 		toolTipData.titleText = "#PLAYLIST_UNAVAILABLE"
-		toolTipData.descText = Lobby_GetPlaylistStateString( Lobby_GetPlaylistState( playlistName ) )
+		toolTipData.descText = LobbyPlaylist_GetPlaylistStateString( LobbyPlaylist_GetPlaylistState( playlistName ) )
 	}
 	else
 	{
-		toolTipData.titleText = ""       
+		toolTipData.titleText = "" 
 		toolTipData.descText = GetPlaylistVarString( playlistName, "description", "#HUD_UNKNOWN" )
 	}
 	Hud_SetToolTipData( button, toolTipData )
 
-	Hud_SetLocked( button, !isPlaylistAvailable )
+
+	if ( GetConVarBool( "cups_enabled" ) )
+		Hud_SetLocked( button, false )
+	else
+		Hud_SetLocked( button, !isPlaylistAvailable )
+
+
+
+
 	Hud_AddEventHandler( button, UIE_CLICK, OnModeButton_Activate )
 	file.buttonToMode[button] <- playlistName
 }
@@ -174,7 +182,7 @@ void function OnModeButton_Activate( var button )
 
 	string playlistString = file.buttonToMode[button]
 	printf( "Setting playlist %s\n", playlistString )
-	Lobby_SetSelectedPlaylist( playlistString )
+	LobbyPlaylist_SetSelectedPlaylist( playlistString )
 	CloseAllDialogs()
 }
 
@@ -185,13 +193,13 @@ void function ModeModButton_Init( var button, string modName, bool isActive )
 	Hud_SetChecked( button, isActive )
 	var rui = Hud_GetRui( button )
 
-	string name = modName                                                                         
-	RuiSetString( rui, "buttonText", name )                      
+	string name = modName 
+	RuiSetString( rui, "buttonText", name ) 
 
 	{
 		ToolTipData toolTipData
 		toolTipData.titleText = name
-		toolTipData.descText = "playlistMod +'" + name + "'"                                                                                
+		toolTipData.descText = "playlistMod +'" + name + "'" 
 
 		Hud_SetToolTipData( button, toolTipData )
 	}
@@ -205,7 +213,7 @@ void function OnModeModButton_Activate( var button )
 	if ( Hud_IsLocked( button ) )
 		return
 
-	{                      
+	{ 
 		string modeModName = file.buttonToModeMod[button];
 		bool newChecked = !Hud_IsChecked( button );
 		printf( "OnModeModButton_Activate: %s setting %s.", modeModName, (newChecked) ? "true" : "false" )
@@ -213,17 +221,17 @@ void function OnModeModButton_Activate( var button )
 		file.modeModIsActive[modeModName] = newChecked
 	}
 
-	{                                        
+	{ 
 		string modString = ""
-		                                                                                                               
-		array<string> playlistMods = Lobby_GetPlaylistMods()
+		
+		array<string> playlistMods = LobbyPlaylist_GetPlaylistMods()
 		foreach( modeModName in playlistMods )
 		{
 			if ( file.modeModIsActive[modeModName] )
 				modString = modString + "+" + modeModName
 		}
 		printf( "Setting playlistmods %s\n", modString )
-		Lobby_SetSelectedPlaylistMods( modString )
+		LobbyPlaylist_SetSelectedPlaylistMods( modString )
 	}
 }
 

@@ -13,14 +13,30 @@ struct
 	array<var>         advanceControlsOffVisibleItems
 	var                advancedLookControlsBtn
 
-	#if NX_PROG
-		array<var>		nxDisableWhenMissingProControllerItems
-		array<var>		nxShowWhenMissingProControllerItems
-	#endif           
+	
+	
+	var                adaptiveTriggersBtn
+	var                swchTriggerDeadzoneBtn
+	var                sldCursorVelocityBtn
+
+
+
+
+
 
 	array<ConVarData>    conVarDataList
 	array<var>			customItems
 } file
+
+void function UpdateDeadzoneButtons()
+{
+	Hud_SetEnabled( file.adaptiveTriggersBtn, !GetConVarBool("ps5_trig_incompatible") )
+}
+
+void function AdaptiveTriggers_OnChanged( var button )
+{
+	UpdateDeadzoneButtons()
+}
 
 void function InitControlsGamepadPanel( var panel )
 {
@@ -42,9 +58,9 @@ void function InitControlsGamepadPanel( var panel )
 	SetupSettingsButton( button, "#OPEN_ADVANCED_LOOK_CONTROLS", "#OPEN_ADVANCED_LOOK_CONTROLS_DESC", $"rui/menu/settings/settings_gamepad" )
 	AddButtonEventHandler( button, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ControlsAdvancedLookMenu" ) ) )
 	file.advancedLookControlsBtn = button
-	#if NX_PROG
-		file.nxDisableWhenMissingProControllerItems.append( button )
-	#endif           
+
+
+
 
 	button = SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookSensitivity" ), "#LOOK_SENSITIVITY", "#GAMEPAD_MENU_SENSITIVITY_DESC", $"rui/menu/settings/settings_gamepad" )
 	file.advanceControlsDisableItems.append( button )
@@ -63,57 +79,89 @@ void function InitControlsGamepadPanel( var panel )
 
 	SetupSettingsButton( Hud_GetChild( contentPanel, "SwchMoveDeadzone" ), "#MOVE_DRIFT_GUARD", "#GAMEPAD_MENU_MOVE_DRIFT_GUARD_DESC", $"rui/menu/settings/settings_gamepad" )
 
-	#if DURANGO_PROG
-		button = SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookAiming" ), "#LOOKSTICK_AIMING", "#GAMEPAD_MENU_LOOK_AIMING_DESC_DURANGO", $"rui/menu/settings/settings_gamepad" )
-	#else                    
+
+
+
 		button = SetupSettingsButton( Hud_GetChild( contentPanel, "SwchLookAiming" ), "#LOOKSTICK_AIMING", "#GAMEPAD_MENU_LOOK_AIMING_DESC", $"rui/menu/settings/settings_gamepad" )
-	#endif                    
+
 	file.advanceControlsDisableItems.append( button )
 
+	file.adaptiveTriggersBtn = SetupSettingsButton( Hud_GetChild( contentPanel, "SwchAdaptiveTriggers" ), "#SETTING_ADAPTIVE_TRIGGERS", "#SETTING_ADAPTIVE_TRIGGERS_DESC", $"rui/menu/settings/settings_gamepad" )
 
-	// PS5_PROG not available on PC
-	SetupSettingsButton( Hud_GetChild( contentPanel, "SwchVibration" ), "#VIBRATION", "#GAMEPAD_MENU_VIBRATION_DESC", $"rui/menu/settings/settings_gamepad" )
+	var btnVibration = Hud_GetChild( contentPanel, "SwchVibration" )
+	if ( ADTH_IsAllowed() )
+	{
+		var btnVibrationADTH = Hud_GetChild( contentPanel, "SwchVibration_ADTH" )
+		Hud_Hide( btnVibration )
+		Hud_Show( btnVibrationADTH )
+		Hud_SetNavDown( Hud_GetChild( contentPanel, "SwchLookInvert" ), btnVibrationADTH )
+		Hud_SetNavUp( Hud_GetChild( contentPanel, "BtnControllerOpenAdvancedMenu" ), btnVibrationADTH )
+		SetupSettingsButton( btnVibrationADTH, "#VIBRATION", "#GAMEPAD_MENU_VIBRATION_DESC", $"rui/menu/settings/settings_gamepad" )
+		AddButtonEventHandler( file.adaptiveTriggersBtn, UIE_CHANGE, AdaptiveTriggers_OnChanged )
+	}
+	else
+	{
+		
+		SetupSettingsButton( btnVibration, "#VIBRATION", "#GAMEPAD_MENU_VIBRATION_DESC", $"rui/menu/settings/settings_gamepad" )
+		Hud_Hide( file.adaptiveTriggersBtn )
+	}
 
 	SetupSettingsButton( Hud_GetChild( contentPanel, "SwchHoldToCrouch" ), "#HOLDTOCROUCH", "#GAMEPAD_MENU_HOLDTOCROUCH_DESC", $"rui/menu/settings/settings_gamepad" )
 	SetupSettingsButton( Hud_GetChild( contentPanel, "SwchTapToUse" ), "#TAPTOUSE", "#GAMEPAD_MENU_TAPTOUSE_DESC", $"rui/menu/settings/settings_gamepad" )
 	SetupSettingsButton( Hud_GetChild( contentPanel, "SwchToggleGamepadADS" ), "#GAMEPAD_TOGGLE_ADS", "#GAMEPAD_TOGGLE_ADS_DESC", $"rui/menu/settings/settings_gamepad" )
 	SetupSettingsButton( Hud_GetChild( contentPanel, "SwitchSurvivalSlotToWeaponInspect" ), "#GADGET_SLOT_BUTTON_SWAP", "#GADGET_SLOT_BUTTON_SWAP_DESC", $"rui/menu/settings/settings_gamepad" )
-#if !NX_PROG && !PC_PROG_NX_UI
-	SetupSettingsButton( Hud_GetChild( contentPanel, "SwchTriggerDeadzone" ), "#GAMEPAD_TRIGGER_DEADZONES", "#GAMEPAD_TRIGGER_DEADZONES_DESC", $"rui/menu/settings/settings_gamepad" )
+
+	file.sldCursorVelocityBtn = Hud_GetChild( contentPanel, "SldCursorVelocity" )
+	SetupSettingsSlider( file.sldCursorVelocityBtn, "#GAMEPAD_CURSOR_VELOCITY", "#GAMEPAD_CURSOR_VELOCITY_DESC", $"rui/menu/settings/settings_gamepad" )
+
+#if !PC_PROG_NX_UI
+	file.swchTriggerDeadzoneBtn = SetupSettingsButton( Hud_GetChild( contentPanel, "SwchTriggerDeadzone" ), "#GAMEPAD_TRIGGER_DEADZONES", "#GAMEPAD_TRIGGER_DEADZONES_DESC", $"rui/menu/settings/settings_gamepad" )
+	if ( ADTH_IsAllowed() )
+	{
+		Hud_SetPinSibling( file.swchTriggerDeadzoneBtn, "SwchAdaptiveTriggers" )
+	}
+	else
+	{
+		Hud_SetNavDown( Hud_GetChild( contentPanel, "SwitchSurvivalSlotToWeaponInspect" ), file.swchTriggerDeadzoneBtn )
+		Hud_SetNavUp( file.sldCursorVelocityBtn, file.swchTriggerDeadzoneBtn )
+		Hud_SetNavUp( file.swchTriggerDeadzoneBtn, Hud_GetChild( contentPanel, "SwitchSurvivalSlotToWeaponInspect" ) )
+		Hud_SetPinSibling( file.swchTriggerDeadzoneBtn, "SwitchSurvivalSlotToWeaponInspect" )
+	}
 #endif
-	SetupSettingsSlider( Hud_GetChild( contentPanel, "SldCursorVelocity" ), "#GAMEPAD_CURSOR_VELOCITY", "#GAMEPAD_CURSOR_VELOCITY_DESC", $"rui/menu/settings/settings_gamepad" )
-#if NX_PROG
-	SetupSettingsButton( Hud_GetChild( contentPanel, "NXMotionOnOff" ), "#NX_MOTION_CONTROLS_ON_OFF", "#NX_MOTION_CONTROLS_ON_OFF_DESC", $"rui/menu/settings/settings_gamepad" )
-	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldNXMotionSensitivity" ), "#NX_MOTION_SENSITIVITY", "#NX_MOTION_SENSITIVITY_DESC", $"" ) )
-	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldNXHorizontalSensitivity" ), "#NX_MOTION_HORIZONTAL_SCALE", "#NX_MOTION_HORIZONTAL_SCALE_DESC", $"" ) )
-	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldNXVerticalSensitivity" ), "#NX_MOTION_VERTICAL_SCALE", "#NX_MOTION_VERTICAL_SCALE_DESC", $"" ) )
-	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldNXADSMotionSensitivity" ), "#NX_MOTION_ADS_SENSITIVITY", "#NX_MOTION_ADS_SENSITIVITY_DESC", $"" ) )
-	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldNXADSHorizontalSensitivity" ), "#NX_MOTION_ADS_HORIZONTAL_SCALE", "#NX_MOTION_ADS_HORIZONTAL_SCALE_DESC", $"" ) )
-	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldNXADSVerticalSensitivity" ), "#NX_MOTION_ADS_VERTICAL_SCALE", "#NX_MOTION_ADS_VERTICAL_SCALE_DESC", $"" ) )
-	
-	file.customItems.append( Hud_GetChild( contentPanel, "TextNXMotionSensitivity" ) )	
-	file.customItems.append( Hud_GetChild( contentPanel, "TextNXHorizontalSensitivity" ) )
-	file.customItems.append( Hud_GetChild( contentPanel, "TextNXVerticalSensitivity" ) )
-	file.customItems.append( Hud_GetChild( contentPanel, "TextNXADSMotionSensitivity" ) )
-	file.customItems.append( Hud_GetChild( contentPanel, "TextNXADSHorizontalSensitivity" ) )
-	file.customItems.append( Hud_GetChild( contentPanel, "TextNXADSVerticalSensitivity" ) )
-	
-	                                           
-	button = SetupSettingsButton( Hud_GetChild( contentPanel, "BtnMotionPerOpticMenu" ), "#MENU_PER_OPTIC_SETTINGS", "#MENU_PER_OPTIC_SETTINGS_DESC", $"rui/menu/settings/settings_gamepad" )
-	AddButtonEventHandler( button, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "MotionADSMenuConsole" ) ) )
-#endif
-  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	file.advanceControlsVisibleItems.append( Hud_GetChild( contentPanel, "SwchLookSensitivity_AdvLabel" ) )
 	file.advanceControlsVisibleItems.append( Hud_GetChild( contentPanel, "SwchLookSensitivityADS_AdvLabel" ) )
 	file.advanceControlsVisibleItems.append( Hud_GetChild( contentPanel, "SwchLookAiming_AdvLabel" ) )
 	file.advanceControlsVisibleItems.append( Hud_GetChild( contentPanel, "SwchLookDeadzone_AdvLabel" ) )
-	                                                                                               
-	                                                                                                   
+	
+	
 
-	#if NX_PROG
-		file.nxShowWhenMissingProControllerItems.append( Hud_GetChild( contentPanel, "BtnControllerOpenAdvancedMenu_NXMissingProLabel" ) )
-	#endif           
+
+
+
 
 	SettingsPanel_SetContentPanelHeight( contentPanel )
 	ScrollPanel_InitPanel( panel )
@@ -137,17 +185,30 @@ void function InitControlsGamepadPanel( var panel )
 	file.conVarDataList.append( CreateSettingsConVarData( "gamepad_stick_layout", eConVarType.INT ) )
 
 	file.conVarDataList.append( CreateSettingsConVarData( "gamepad_toggle_survivalSlot_to_weaponInspect", eConVarType.INT ) )
+
+	if ( ADTH_IsAllowed() )
+	{
+		file.conVarDataList.append( CreateSettingsConVarData( "ps5_trig_enable", eConVarType.INT ) )
+		file.conVarDataList.append( CreateSettingsConVarData( "ps5_trig_incompatible", eConVarType.INT ) )
+		UpdateDeadzoneButtons()
+	}
 }
 
 
 void function OnControlsGamepadPanel_Show( var panel )
 {
-#if NX_PROG
+#if PC_PROG_NX_UI
 	ScrollPanel_Refresh( panel )
 #endif
 
 	ScrollPanel_SetActive( panel, true )
 	SetStatesForCustomEnable()
+
+	if ( ADTH_IsAllowed() )
+		UpdateDeadzoneButtons()
+
+	SettingsPanel_SetContentPanelHeight( Hud_GetChild( panel, "ContentPanel" ) )
+	ScrollPanel_Refresh( panel )
 }
 
 
@@ -175,17 +236,17 @@ void function SetStatesForCustomEnable()
 {
 	bool customGamepadIsEnabled = GamepadCustomSettingsAreEnabled()
 
-	                                                                                                                                        
-	                                                                 
+	
+	
 
-	#if NX_PROG
-	{
-		foreach ( var item in file.nxDisableWhenMissingProControllerItems )
-			Hud_SetEnabled( item, true )
-		foreach ( var item in file.nxShowWhenMissingProControllerItems )
-			Hud_SetVisible( item, false )
-	}
-	#endif               
+
+
+
+
+
+
+
+
 
 	foreach ( var item in file.advanceControlsDisableItems )
 		Hud_SetEnabled( item, !customGamepadIsEnabled )
@@ -194,15 +255,15 @@ void function SetStatesForCustomEnable()
 	foreach ( var item in file.advanceControlsOffVisibleItems )
 		Hud_SetVisible( item, !customGamepadIsEnabled )
 
-	#if NX_PROG
-	if ( !customGamepadIsEnabled && IsGamepadNX() && !IsGamepadNXPro() )
-	{
-		foreach ( var item in file.nxDisableWhenMissingProControllerItems )
-			Hud_SetEnabled( item, false )
-		foreach ( var item in file.nxShowWhenMissingProControllerItems )
-			Hud_SetVisible( item, true )
-	}
-	#endif               
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -260,30 +321,36 @@ void function RestoreGamepadDefaults()
 	ExecConfig( "gamepad_stick_layout_default.cfg" )
 	ExecConfig( "gamepad_button_layout_custom.cfg" )
 
-#if CONSOLE_PROG
-	ExecConfig( "config_default_console.cfg" )
-#endif
 
-#if NX_PROG
-	SetConVarToDefault( "nx_six_axis_control_on" )
-	SetConVarToDefault( "nx_six_axis_sensitivity" )
-	SetConVarToDefault( "nx_six_axis_horizontalScale" )
-	SetConVarToDefault( "nx_six_axis_verticalScale" )
-	
-	SetConVarToDefault( "nx_six_axis_ads_sensitivity" )
-	SetConVarToDefault( "nx_six_axis_ads_horizontalScale" )
-	SetConVarToDefault( "nx_six_axis_ads_verticalScale" )
-	
-	SetConVarToDefault( "motion_use_per_scope_sensitivity_scalars" )
-	SetConVarToDefault( "motion_ads_advanced_sensitivity_scalar_0" )
-	SetConVarToDefault( "motion_ads_advanced_sensitivity_scalar_1" )
-	SetConVarToDefault( "motion_ads_advanced_sensitivity_scalar_2" )
-	SetConVarToDefault( "motion_ads_advanced_sensitivity_scalar_3" )
-	SetConVarToDefault( "motion_ads_advanced_sensitivity_scalar_4" )
-	SetConVarToDefault( "motion_ads_advanced_sensitivity_scalar_5" )
-	SetConVarToDefault( "motion_ads_advanced_sensitivity_scalar_6" )
-	SetConVarToDefault( "motion_ads_advanced_sensitivity_scalar_7" )
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	if ( ADTH_IsAllowed() )
+	{
+		SetConVarToDefault( "ps5_trig_enable" )
+		SetConVarToDefault( "ps5_trig_incompatible" )
+	}
 
 	SaveSettingsConVars( file.conVarDataList )
 

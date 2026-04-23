@@ -56,13 +56,13 @@ void function ___Init( var panel )
 				SetOrClearFavoredQuipFromFocus( gridPanel )
 			}
 	)
-	#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemAbleToBeFavored )
 		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemAlreadyFavored )
-	#else
+#else
 		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemAbleToBeFavored )
 		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemAlreadyFavored )
-	#endif
+#endif
 }
 
 
@@ -82,6 +82,7 @@ void function QuipsPanel_OnHide( var panel )
 {
 	RemoveCallback_OnTopLevelCustomizeContextChanged( panel, QuipsPanel_Update )
 	QuipsPanel_Update( panel )
+	RunClientScript( "ClearBattlePassItem" )
 
 	if ( file.quipList.len() > 0 )
 	{
@@ -103,35 +104,27 @@ void function QuipsPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel[ panel ], "ScrollPanel" )
 
+	Hud_SetVisible( file.blurbPanel, false )
+
 	string hintSub = ""
-	bool useDetailed = false
-	int rows = 3
-	int columns = 1
 
 	if ( file.filterTypes.contains( eItemType.character_emote ) )
 	{
 		UI_SetPresentationType( ePresentationType.CHARACTER_QUIPS )
 		hintSub = "#HINT_SOCIAL_ANTI_PEEK"
-		useDetailed = true
-		columns = 3
 	}
 	else if ( file.filterTypes.contains( eItemType.emote_icon ) )
 	{
 		UI_SetPresentationType( ePresentationType.HOLOSPRAYS )
-		useDetailed = true
-		columns = 3
 	}
 	else
 	{
-		UI_SetPresentationType( ePresentationType.CHARACTER_CARD )
+		UI_SetPresentationType( ePresentationType.HOLOSPRAYS )
 		hintSub = "#HINT_SOCIAL_QUIPS_ENEMIES"
-		useDetailed = true
-		rows = 9
-
 	}
 	CharacterEmotesPanel_SetHintSub( hintSub )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in file.quipList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -141,7 +134,7 @@ void function QuipsPanel_Update( var panel )
 
 	StopLastPlayedQuip()
 
-	                                  
+	
 	if ( IsPanelActive( panel ) )
 	{
 		ItemFlavor character = GetTopLevelCustomizeContext()
@@ -154,30 +147,14 @@ void function QuipsPanel_Update( var panel )
 			entries.append( entry )
 		}
 
-		file.quipList = clone GetLoadoutItemsSortedForMenu( entry, ( int function( ItemFlavor a ) : () { return 0 } ) )
-		SortQuipsAndFilter( character, file.quipList )
+		file.quipList = clone GetLoadoutItemsSortedForMenu( entries, null, CharacterQuip_IsTheEmpty, file.filterTypes )
 
 		array<LoadoutEntry> auxEntries
 		for ( int i = 0; i < MAX_FAVORED_QUIPS; i++ )
 			auxEntries.append( Loadout_FavoredQuip( character, i ) )
 
-		if ( !useDetailed )
-			Hud_InitGridButtons( file.listPanel[ panel ], file.quipList.len() )
-		else
+		Hud_InitGridButtons( file.listPanel[ panel ], file.quipList.len() )
 
-		#if NX_PROG || PC_PROG_NX_UI
-			if ( !IsNxHandheldMode() )
-			{
-				Hud_InitGridButtonsDetailed( file.listPanel[ panel ], file.quipList.len(), rows, columns )
-			}
-			else
-			{
-				Hud_InitGridButtonsDetailed( file.listPanel[ panel ], file.quipList.len(), rows, columns )
-			}
-		#else
-			Hud_InitGridButtonsDetailed( file.listPanel[ panel ], file.quipList.len(), rows, columns )
-		#endif
-			
 		bool emptyShown = false
 		foreach ( int flavIdx, ItemFlavor flav in file.quipList )
 		{
@@ -218,7 +195,7 @@ void function QuipsPanel_Update( var panel )
 
 void function QuipsPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) ) 
 		return
 
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
@@ -283,12 +260,18 @@ void function PreviewQuip( ItemFlavor flav )
 				expect ItemFlavor( character )
 				chGUID = ItemFlavor_GetGUID( character )
 			}
+			else
+			{
+				character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
+				expect ItemFlavor( character )
+				chGUID = ItemFlavor_GetGUID( character )
+			}
 			RunClientScript( "UIToClient_PreviewCharacterEmote", ItemFlavor_GetGUID( flav ), chGUID )
 			break
 
 		default:
 			bool isNxHH = false
-#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 			isNxHH = IsNxHandheldMode()
 #endif
 			RunClientScript( "UIToClient_ItemPresentation", ItemFlavor_GetGUID( flav ), -1, scale, showLow, null, false, ref, isNxHH )
@@ -317,66 +300,6 @@ void function StopLastPlayedQuip()
 {
 	if ( file.lastSoundPlayed != "" )
 		StopUISoundByName( file.lastSoundPlayed )
-}
-
-
-void function SortQuipsAndFilter( ItemFlavor character, array<ItemFlavor> emoteList )
-{
-	table<ItemFlavor, int> equippedQuipSet
-	for ( int i = 0; i < MAX_QUIPS_EQUIPPED; i++ )
-	{
-		LoadoutEntry emoteSlot = Loadout_CharacterQuip( character, i )
-		if ( LoadoutSlot_IsReady( LocalClientEHI(), emoteSlot ) )
-		{
-			ItemFlavor quip = LoadoutSlot_GetItemFlavor( LocalClientEHI(), emoteSlot )
-			equippedQuipSet[quip] <- i
-		}
-	}
-
-	for ( int i = emoteList.len() - 1; i >= 0; i-- )
-	{
-		if ( file.filterTypes.len() > 0 )
-		{
-			int type = ItemFlavor_GetType( emoteList[i] )
-			if ( !file.filterTypes.contains(type) )
-			{
-				emoteList.remove( i )
-				continue
-			}
-		}
-
-		if ( CharacterQuip_IsTheEmpty( emoteList[i] ) )
-			emoteList.remove( i )
-	}
-
-	emoteList.sort( int function( ItemFlavor a, ItemFlavor b ) : ( equippedQuipSet ) {
-		bool a_isEquipped = (a in equippedQuipSet)
-		bool b_isEquipped = (b in equippedQuipSet)
-		if ( a_isEquipped != b_isEquipped )
-			return (a_isEquipped ? -1 : 1)
-
-		bool aIsQuip = ItemFlavor_GetType( a ) == eItemType.gladiator_card_kill_quip || ItemFlavor_GetType( a ) == eItemType.gladiator_card_intro_quip
-		bool bIsQuip = ItemFlavor_GetType( b ) == eItemType.gladiator_card_kill_quip || ItemFlavor_GetType( b ) == eItemType.gladiator_card_intro_quip
-		bool bothAreQuips = aIsQuip && bIsQuip
-
-		if ( ItemFlavor_GetType( a ) != ItemFlavor_GetType( b ) && bothAreQuips == false )
-		{
-			int diff = ItemFlavor_GetType( a ) - ItemFlavor_GetType( b )
-			return diff / abs( diff )
-		}
-		else
-		{
-			int aQuality = ItemFlavor_HasQuality( a ) ? ItemFlavor_GetQuality( a ) : -1
-			int bQuality = ItemFlavor_HasQuality( b ) ? ItemFlavor_GetQuality( b ) : -1
-			if ( aQuality > bQuality )
-				return -1
-			else if ( aQuality < bQuality )
-				return 1
-
-			return SortStringAlphabetize( Localize( ItemFlavor_GetLongName( a ) ), Localize( ItemFlavor_GetLongName( b ) ) )
-		}
-		unreachable
-	} )
 }
 
 

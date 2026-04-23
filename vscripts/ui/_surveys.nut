@@ -13,39 +13,49 @@ table<int, string> surveyTypeToNameMap = {
 	[eSurveyType.ENTER_LOBBY] = "enter_lobby",
 }
 
+struct
+{
+	float lastSurveyTime = -1.0
+
+} file
+
 
 void function InitSurveys()
 {
 	Assert( surveyTypeToNameMap.len() == eSurveyType._COUNT )
 }
 
-float lastSurveyDisplayTime = 0.0
-bool function TryOpenSurvey( int surveyType )
+bool function TryOpenSurvey( int surveyType, string postMatchSurveyMatchId = "",  float postMatchSurveySampleRateLowerBound = 1.0 )
 {
-	/*if ( !GetConVarBool( "pin_opt_in" ) || !MeetsAgeRequirements() )
+	if ( !GetConVarBool( "pin_opt_in" ) || !MeetsAgeRequirements() )
+		return false
+
+	if ( postMatchSurveyMatchId == "" || postMatchSurveySampleRateLowerBound == 1.0 )
 		return false
 
 	float sampleRate = GetSurveySampleRateByType( surveyType )
-	if ( RandomFloat( 1.0 ) > sampleRate )
+	if ( sampleRate < postMatchSurveySampleRateLowerBound )
 		return false
 
 	array<string> surveyList = GetSurveysOfType( surveyType )
 	if ( surveyList.len() == 0 )
 		return false
 
-	//
-	if (Time() - lastSurveyDisplayTime < 30.0 )
+	float currentTime = UITime()
+
+	
+	if ( file.lastSurveyTime > 0 && ( currentTime - file.lastSurveyTime < GetCurrentPlaylistVarFloat( "survey_cooldown_time", 1200.0 )) )
 		return false
 
 	surveyList.randomize()
 
-	OpenSurveyByRef( surveyList[0], sampleRate )*/
+	OpenSurveyByRef( surveyList[0], postMatchSurveyMatchId, sampleRate )
 
-	return false
+	return true
 }
 
 
-void function OpenSurveyByRef( string surveyRef, float sampleRate )
+void function OpenSurveyByRef( string surveyRef, string matchId, float sampleRate )
 {
 	ConfirmDialogData data = GetSurveyDialogDataByRef( surveyRef )
 
@@ -53,24 +63,24 @@ void function OpenSurveyByRef( string surveyRef, float sampleRate )
 	string aAnswerText = data.yesText[1]
 	string bAnswerText = data.noText[1]
 
-	data.resultCallback = void function ( int result ) : ( surveyRef, questionText, sampleRate, aAnswerText, bAnswerText )
+	data.resultCallback = void function ( int result ) : ( surveyRef, questionText, matchId, sampleRate, aAnswerText, bAnswerText )
 	{
 		string answerText = result == eDialogResult.YES ? aAnswerText : bAnswerText
 
-		#if DEVELOPER
-			if ( !("mid" in uiGlobal.matchPinData) )
+#if DEV
+			if ( !("mid" in GetMatchPINData()) )
 			{
-				uiGlobal.matchPinData["mid"] <- "[fe80::78dc:e7ef:e13b:68e]:0:37015:1562712876"
-				uiGlobal.matchPinData["map"] <- "mp_rr_box"
-				uiGlobal.matchPinData["match_type"] <- "survival"
+				UpdateMatchPINData( "mid", matchId )
+				UpdateMatchPINData( "map", "mp_rr_box" )
+				UpdateMatchPINData( "match_type" , "survival" )
 			}
-		#endif
+#endif
 
-		PIN_Survey( GetSurveyTypeForRef( surveyRef ), questionText, aAnswerText, bAnswerText, answerText, sampleRate, result == eDialogResult.CANCEL )
+		PIN_Survey( GetSurveyTypeForRef( surveyRef ), questionText, aAnswerText, bAnswerText, answerText, matchId, sampleRate, result == eDialogResult.CANCEL )
 	}
 
 	OpenABDialogFromData( data )
-	lastSurveyDisplayTime = Time()
+	file.lastSurveyTime = UITime()
 }
 
 
@@ -87,7 +97,7 @@ ConfirmDialogData function GetSurveyDialogDataByRef( string surveyRef )
 
 	data.headerText = headerText
 	data.messageText = questionText
-	data.contextImage = $"ui/menu/common/dialog_question"
+
 	if ( CoinFlip() )
 	{
 		data.yesText = [Localize( "#X_BUTTON_N", Localize( aTextKBM ) ), aTextKBM]
@@ -126,6 +136,7 @@ float function GetSurveySampleRateByType( int surveyType )
 
 	string typeString = surveyTypeToNameMap[surveyType]
 	sampleRate = GetCurrentPlaylistVarFloat( "survey_sample_rate_" + typeString, sampleRate )
+	Assert( sampleRate <= 1.0 && sampleRate >= 0.0 )
 
 	return sampleRate
 }

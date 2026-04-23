@@ -2,6 +2,7 @@ global function InitCategoryWeaponPanel
 
 global function CategoryWeaponPanel_SetWeapon
 global function CategoryWeaponPanel_GetWeapon
+global function CategoryWeaponPanel_GetActiveWeapon
 
 struct PanelData
 {
@@ -14,6 +15,9 @@ struct PanelData
 struct
 {
 	table<var, PanelData> panelDataMap
+
+	var activePanel = null
+	int lastTab = 0
 } file
 
 void function InitCategoryWeaponPanel( var panel )
@@ -24,6 +28,14 @@ void function InitCategoryWeaponPanel( var panel )
 
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, CategoryWeaponPanel_OnShow )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, CategoryWeaponPanel_OnHide )
+
+
+		{
+			var childPanel = Hud_GetChild( panel, "WeaponMasteryPanel" )
+			TabDef tabdef = AddTab( panel, childPanel, "#MASTERY_BUTTON" )
+			SetTabBaseWidth( tabdef, 200 )
+			tabdef.useTapHoldLogic = true
+		}
 
 	{
 		var childPanel = Hud_GetChild( panel, "WeaponSkinsPanel" )
@@ -36,19 +48,43 @@ void function InitCategoryWeaponPanel( var panel )
 		TabDef tabdef = AddTab( panel, childPanel, "#CHARMS_BUTTON" )
 		SetTabBaseWidth( tabdef, 160 )
 	}
+	{
+		var childPanel = Hud_GetChild( panel, "WeaponLorePanel" )
+		TabDef tabdef = AddTab( panel, childPanel, "#BACKGROUND_BUTTON" )
+		SetTabBaseWidth( tabdef, 200 )
+		tabdef.useTapHoldLogic = true
+	}
 
 	TabData tabData = GetTabDataForPanel( panel )
 	tabData.centerTabs = true
 
 	SetTabBackground( tabData, Hud_GetChild( panel, "TabsBackground" ), eTabBackground.STANDARD )
 	SetTabDefsToSeasonal(tabData)
+	AddCallback_OnTabChanged( WeaponCategory_OnTabChanged )
 }
 
+void function WeaponCategory_OnTabChanged()
+{
+	if( file.activePanel == null )
+		return
 
+	TabData tabData = GetTabDataForPanel( file.activePanel )
+	file.lastTab = tabData.activeTabIdx
+}
 
 void function CategoryWeaponPanel_OnShow( var panel )
 {
+	file.activePanel = panel
 	TabData tabData = GetTabDataForPanel( panel )
+
+
+		bool enableWeaponMastery =  Mastery_IsEnabled()
+		TabDef seasonTabDef = Tab_GetTabDefByBodyName( tabData, "WeaponMasteryPanel" )
+
+		seasonTabDef.visible = enableWeaponMastery
+		seasonTabDef.enabled = enableWeaponMastery
+
+
 	{
 		var tabBodyPanel = Hud_GetChild( panel, "WeaponSkinsPanel" )
 		ItemFlavor ornull weaponOrNull = CategoryWeaponPanel_GetWeapon(  panel  )
@@ -67,8 +103,14 @@ void function CategoryWeaponPanel_OnShow( var panel )
 
 	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
 	{
-		ActivateTab( tabData, 0 )
+
+			file.lastTab = ( enableWeaponMastery )? 0: 1
+
+
+
 	}
+
+	ActivateTab( tabData, file.lastTab )
 }
 
 
@@ -98,13 +140,13 @@ void function CategoryWeaponPanel_OnHide( var panel )
 
 
 
-                                           
-                                           
-                                           
-                                           
-                                           
-                                           
-                                                 
+
+
+
+
+
+
+
 
 void function CategoryWeaponPanel_SetWeapon( var panel, ItemFlavor ornull weaponFlavOrNull )
 {
@@ -115,5 +157,12 @@ void function CategoryWeaponPanel_SetWeapon( var panel, ItemFlavor ornull weapon
 ItemFlavor ornull function CategoryWeaponPanel_GetWeapon( var panel )
 {
 	PanelData pd = file.panelDataMap[panel]
+	return pd.weaponOrNull
+}
+
+
+ItemFlavor ornull function CategoryWeaponPanel_GetActiveWeapon()
+{
+	PanelData pd = file.panelDataMap[file.activePanel]
 	return pd.weaponOrNull
 }

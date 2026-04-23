@@ -1,4 +1,4 @@
-                   
+
 global function InitCharacterRolesPanel
 
 struct
@@ -53,7 +53,7 @@ void function RoleInfoDialog_OnShow( var panel )
 		RuiSetString( panelRui, "roleDescription3", CharacterClass_GetRolePerkDescriptionAtIndex(roleId,2) )
 		RuiSetImage( panelRui, "roleIcon", CharacterClass_GetRoleIcon(roleId) )
 		RuiSetColorAlpha( panelRui, "roleColor", CharacterClass_GetRoleColor( roleId ), 1.0 )
-		
+
 		if (index < file.legendsListRuis.len())
 		{
 			var legendsList = file.legendsListRuis[index]

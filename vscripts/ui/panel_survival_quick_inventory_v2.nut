@@ -4,6 +4,7 @@ global function InitSquadPanelInventory
 global function InitCharacterDetailsPanel
 global function InitLegendPanelInventory
 global function InitInventoryFooter
+global function InitSquadFooter
 
 global function SurvivalGroundItem_SetGroundItemCount
 global function SurvivalGroundItem_SetGroundItemHeader
@@ -14,18 +15,23 @@ global function SurvivalQuickInventory_OnUpdate
 global function SurvivalQuickInventory_NavigateBack
 
 global function SurvivalQuickInventory_SetEmptyTooltipForSlot
-global function SurvivalQuickInventory_ClearTooltipForSlot
 global function SurvivalQuickInventory_SetClientUpdateDefaultTooltipData
-global function SurvivalQuickInventory_SetClientUpdateLootTooltipData
 
 global function ClientToUI_SurvivalQuickInventory_MarkInventoryButtonUsed
 global function ClientToUI_SurvivalQuickInventory_MarkInventoryButtonPinged
 global function SurvivalQuickInventory_UpdateEquipmentForActiveWeapon
 global function SurvivalQuickInventory_UpdateWeaponSlot
+global function SurvivalInventoryMenu_SetSpaceForSling
 
-                            
+global function SurvivalInventoryMenu_SetEquipmentButtonFxState
+
+
+global function OnUpgradeTreeEnableNavigation
+
+
+
 global function ClientToUI_UpdateInventoryUltimateTooltip
-                                  
+
 
 global function GetGroundItemCount
 global function Survival_CommonButtonInit
@@ -42,7 +48,7 @@ global function ConvertCursorToScreenPos
 const float INACTIVE_WEAPON_SCALE = 0.8
 
 global const int INVENTORY_ROWS = 2
-global const int INVENTORY_COLS = 10
+global const int INVENTORY_COLS = 8
 
 const float MOUSE_DRAG_BUFFER = 25.0
 const float MOUSE_DRAG_BUFFER_TIME = 1.0
@@ -71,6 +77,8 @@ struct
 	var holdToUseElem
 
 	bool compactModeEnabled = false
+
+	bool isSwappingWeapons = false
 
 	int groundItemCount = 0
 
@@ -120,6 +128,7 @@ void function InitSurvivalQuickInventoryPanel( var panel )
 
 	RegisterSignal( "StopMouseDrag" )
 	RegisterSignal( "StartEquipmentExtendedUse" )
+	RegisterSignal( "EquipmentSlingDecorations" )
 
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, OnSurvivalQuickInventoryPanel_Show )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, OnSurvivalQuickInventoryPanel_Hide )
@@ -194,8 +203,22 @@ void function InitSurvivalQuickInventoryPanel( var panel )
 
 	if ( !(uiGlobal.uiShutdownCallbacks.contains( Inventory_Shutdown )) )
 		AddUICallback_UIShutdown( Inventory_Shutdown )
+
+	AddUICallback_InputModeChanged( Inventory_OnInputChanged )
 }
 
+void function Inventory_OnInputChanged( bool isController )
+{
+	if( !IsPanelActive( file.mainPanel ) )
+		return
+
+	foreach ( button in file.equipmentButtons )
+	{
+		Hud_ClearToolTipData( button )
+		if ( IsFullyConnected() )
+			RunClientScript( "UICallback_UpdateEquipmentButton", button )
+	}
+}
 
 void function InitInventoryFooter( var panel )
 {
@@ -209,9 +232,32 @@ void function InitInventoryFooter( var panel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddPanelFooterOption( panel, RIGHT, BUTTON_START, true, "#HINT_SYSTEM_MENU_GAMEPAD", "#HINT_SYSTEM_MENU_KB", TryOpenSystemMenu )
 
-	#if DEVELOPER
+#if DEV
 		AddPanelFooterOption( panel, LEFT, BUTTON_STICK_LEFT, true, "#LEFT_STICK_DEV_MENU", "#DEV_MENU", OpenDevMenu )
-	#endif
+#endif
+}
+
+void function InitSquadFooter( var panel )
+{
+	var parentMenu = GetParentMenu( panel )
+
+	if( parentMenu != GetMenu( "DeathScreenMenu" ) ) 
+	{
+		AddPanelFooterOption( panel, LEFT, BUTTON_BACK, false, "", "", TryToggleMap )
+
+		AddPanelFooterOption( panel, LEFT, KEY_M, false, "", "", TryToggleMap, PROTO_ShouldInventoryFooterHack )
+		AddPanelFooterOption( panel, LEFT, KEY_TAB, false, "", "", TryCloseSurvivalInventory, PROTO_ShouldInventoryFooterHack )
+
+		AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
+#if DEV
+			AddPanelFooterOption( panel, LEFT, BUTTON_STICK_LEFT, true, "#LEFT_STICK_DEV_MENU", "#DEV_MENU", OpenDevMenu )
+#endif
+		AddPanelFooterOption( panel, RIGHT, BUTTON_START, true, "#HINT_SYSTEM_MENU_GAMEPAD", "#HINT_SYSTEM_MENU_KB", TryOpenSystemMenu )
+	}
+	else
+	{
+		InitDeathScreenPanelFooter( panel, eDeathScreenPanel.SQUAD)
+	}
 }
 
 
@@ -254,11 +300,11 @@ void function OnSurvivalQuickInventoryPanel_Show( var panel )
 	Hud_Show( file.mainInventoryPanel )
 	SurvivalInventory_SetBGVisible( true )
 
-	#if NX_PROG		
-		Hud_SetVisible( Hud_GetChild( panel, "IngameTextChatHistory" ), IsNxHandheldMode() ? false : IsAccessibilityChatToSpeech() )
-	#else
+
+
+
 		Hud_SetVisible( Hud_GetChild( panel, "IngameTextChatHistory" ), IsAccessibilityChatToSpeech() )
-	#endif
+
 
 	if ( !IsFullyConnected() )
 		return
@@ -268,13 +314,97 @@ void function OnSurvivalQuickInventoryPanel_Show( var panel )
 
 	RunClientScript( "UICallback_BackpackOpened" )
 
-	RunClientScript( "UICallback_UpdatePlayerInfo", Hud_GetChild( file.mainInventoryPanel, "PlayerInfo" ) )
+
+		int numUpgradeSlots = UPGRADE_CORE_NUM_EXPECTED_UPGRADES / UPGRADE_CORE_NUM_EXPECTED_UPGRADES_PER_LEVEL
+		for( int playerId = 0; playerId < 2; playerId++ )
+		{
+			for( int upgradeId = 0; upgradeId < numUpgradeSlots; upgradeId++ )
+			{
+				RunClientScript( "UICallback_UpdateTeammateUpgrades", Hud_GetChild( file.mainInventoryPanel, "TeammateInfo" + playerId ), upgradeId )
+			}
+		}
+
+
+	var smallPlayerInfo   = Hud_GetChild( file.mainInventoryPanel, "smallPlayerInfo" )
+	var largePlayerInfo   = Hud_GetChild( file.mainInventoryPanel, "PlayerInfo" )
+	var TeammateInfo0     = Hud_GetChild( file.mainInventoryPanel, "TeammateInfo0" )
+	float screenSizeYFrac =  GetScreenSize().height / 1080.0
+
+	bool showPlayerInfo   = false
+	int TeammateInfo0YPos = Hud_GetBaseY( TeammateInfo0 )
+
+
+
+	if( GetMaxTeamSizeForPlaylist( GetCurrentPlaylistName() ) > 3 )
+	{
+		RunClientScript( "UICallback_UpdateTeammateInfo", smallPlayerInfo, false )
+		TeammateInfo0YPos +=  int( -110 * screenSizeYFrac ) 
+	}
+	else
+	{
+		RunClientScript( "UICallback_UpdatePlayerInfo", largePlayerInfo )
+		showPlayerInfo = true
+	}
+
+	Hud_SetVisible( smallPlayerInfo, !showPlayerInfo )
+	Hud_SetVisible( largePlayerInfo, showPlayerInfo )
+	Hud_SetY( TeammateInfo0, TeammateInfo0YPos )
+
 	RunClientScript( "UICallback_UpdateTeammateInfo", Hud_GetChild( file.mainInventoryPanel, "TeammateInfo0" ), false )
 	RunClientScript( "UICallback_UpdateTeammateInfo", Hud_GetChild( file.mainInventoryPanel, "TeammateInfo1" ), false )
+	RunClientScript( "UICallback_UpdateTeammateInfo", Hud_GetChild( file.mainInventoryPanel, "TeammateInfo2" ), false )
 	RunClientScript( "UICallback_UpdateUltimateInfo", Hud_GetChild( file.mainInventoryPanel, "PlayerUltimate" ) )
+
+	UpdateMouseDropGroundSizes()
 }
 
-                            
+
+void function UpdateMouseDropGroundSizes()
+{
+
+		var mouseDropGroundLeft = Hud_GetChild( file.mainInventoryPanel, "MouseDropGroundLeft" )
+		var mouseDropGroundRight = Hud_GetChild( file.mainInventoryPanel, "MouseDropGroundRight" )
+
+		int mouseDropGroundLeftWidth = Hud_GetBaseWidth( mouseDropGroundLeft )
+		int mouseDropGroundRightWidth = Hud_GetBaseWidth( mouseDropGroundRight )
+
+		int targetLeftWidth = mouseDropGroundLeftWidth
+		int targetRightWidth = mouseDropGroundRightWidth
+		if( UpgradeCore_IsEnabled() )
+		{
+			UIScaleFactor scaleFactor = GetContentScaleFactor( file.mainInventoryPanel )
+			targetLeftWidth = int( 640.0 * scaleFactor.x )
+			targetRightWidth = int( 180.0 * scaleFactor.x )
+		}
+		Hud_SetWidth( mouseDropGroundLeft, targetLeftWidth )
+		Hud_SetWidth( mouseDropGroundRight, targetRightWidth )
+
+}
+
+
+void function Delayed_SetCursorToOffsetInventoryPosition( float offset )
+{
+	wait 0.01
+
+	float width  = 1920
+	float height = 1080
+
+#if DEV
+	if( !IsControllerModeActive() )
+	{
+		float screenSizeYFrac = GetScreenSize().height / 1080.0
+		
+		WarpMouseCursorDEV( <((width * 0.5) + offset) * screenSizeYFrac, (height * 0.5) * screenSizeYFrac, 0> )
+	}
+	else
+#endif
+	{
+		SetCursorPosition( <(width * 0.5) + offset, height * 0.5, 0> )
+	}
+}
+
+
+
 void function ClientToUI_UpdateInventoryUltimateTooltip( var button, string ultName )
 {
 	if ( ultName == "" )
@@ -291,7 +421,7 @@ void function ClientToUI_UpdateInventoryUltimateTooltip( var button, string ultN
 	ttd.tooltipStyle = eTooltipStyle.DEFAULT
 	Hud_SetToolTipData( button, ttd )
 }
-                                  
+
 
 void function OnSurvivalQuickInventoryPanel_Refresh()
 {
@@ -331,6 +461,14 @@ void function SurvivalQuickInventory_OnUpdate()
 	if ( IsLobby() )
 		return
 
+
+		entity localPlayer = GetLocalClientPlayer()
+		if( UpgradeCore_IsEnabled() && IsValid( localPlayer) && UpgradeCore_PlayerHasUpgradesDefined( localPlayer ) )
+		{
+			UpdatePlayerUpgradeInfo()
+		}
+
+
 	foreach ( button in file.equipmentButtons )
 	{
 		Hud_ClearToolTipData( button )
@@ -346,11 +484,17 @@ void function SurvivalQuickInventory_OnUpdate()
 	}
 
 
+	UpdateArmorCoreEquipmentButtonPosition()
+
+	var rtkUpgradeTree = Hud_GetChild( file.mainInventoryPanel, "RTKPlayerUpgradeInfo" )
+	Hud_SetVisible( rtkUpgradeTree, UpgradeCore_ArmorTiedToUpgrades() && UpgradeCore_ShowUpgradeTreeInventory() )
+
+
 	UpdateBackpackDpadNav()
 
-	                                                                    
-	                              
-	                                                                    
+	
+	
+	
 	array<string> attachmentSuffix =
 	[
 		"Barrel",
@@ -382,7 +526,7 @@ void function SurvivalQuickInventory_OnUpdate()
 				}
 				else if ( !didDpadMapping )
 				{
-					                                                                             
+					
 					var mainWeapon = Hud_GetChild( file.mainInventoryPanel, prefix )
 					Hud_SetNavUp( mainWeapon, prevButton )
 					didDpadMapping = true
@@ -392,7 +536,7 @@ void function SurvivalQuickInventory_OnUpdate()
 			prevButton = button
 		}
 	}
-	                                                                    
+	
 }
 
 
@@ -425,6 +569,7 @@ void function InitMainInventoryPanel( var panel )
 		Hud_AddEventHandler( button, UIE_GET_FOCUS, OnEquipmentItemGetFocus )
 		Hud_AddEventHandler( button, UIE_LOSE_FOCUS, OnEquipmentItemLoseFocus )
 		Hud_AddEventHandler( button, UIE_CLICKRIGHT, OnEquipmentButtonClickRight )
+		Hud_AddEventHandler( button, UIE_MIDDLECLICK, OnEquipmentButtonMiddleClick )
 		Hud_AddKeyPressHandler( button, OnEquipmentKeyPress )
 		Hud_SetCommandHandler( button, OnEquipmentCommand )
 
@@ -450,22 +595,22 @@ void function InitMainInventoryPanel( var panel )
 		Survival_CommonButtonInit( button )
 	}
 
-                             
+
 	{
 		var button = Hud_GetChild( file.mainInventoryPanel, "PlayerUltimate" )
-		                                                                         
-		                                                                              
-		                                                                               
+		
+		
+		
 		Hud_AddEventHandler( button, UIE_GET_FOCUS, OnPlayerUltimateGetFocus )
 		Hud_AddEventHandler( button, UIE_LOSE_FOCUS, OnPlayerUltimateLoseFocus )
 		Hud_AddKeyPressHandler( button, OnPlayerUltimateKeyPress )
 		Hud_SetCommandHandler( button, OnPlayerUltimateCommand )
 		Survival_CommonButtonInit( button )
 	}
-                                   
+
 }
 
-                            
+
 void function OnPlayerUltimateGetFocus( var button )
 {
 	SetTabNavigationEnabled( Hud_GetParent( file.mainPanel ), false )
@@ -500,7 +645,7 @@ void function OnPlayerUltimateCommand( var button, string command )
 			RunClientScript( "UICallback_PingIsMyUltimateReady", button )
 	}
 }
-                                  
+
 
 void function OnEquipmentItemGetFocus( var button )
 {
@@ -603,7 +748,12 @@ bool function OnRequestKeyPress( var button, int keyId, bool isDown )
 void function OnEquipmentButtonClickAction( var panel, var button, int index )
 {
 	EmitUISound( "UI_InGame_Inventory_Select" )
-	RunClientScript( "UICallback_OnEquipmentButtonAction", button )
+	RunClientScript( "UICallback_OnEquipmentButtonAction", button, eLootActionType.PRIMARY_ACTION )
+}
+
+void function OnEquipmentButtonMiddleClick( var button )
+{
+	RunClientScript( "UICallback_PingEquipmentItem", button )
 }
 
 void function OnEquipmentButtonClickRight( var button )
@@ -627,6 +777,9 @@ bool function OnEquipmentKeyPress( var button, int keyId, bool isDown )
 	if ( IsLobby() )
 		return false
 
+	if ( !IsControllerModeActive() )
+		return false
+
 	if ( keyId == BUTTON_SHOULDER_RIGHT )
 	{
 		if ( IsFullyConnected() )
@@ -634,7 +787,7 @@ bool function OnEquipmentKeyPress( var button, int keyId, bool isDown )
 		return true
 	}
 
-	if( keyId == BUTTON_SHOULDER_LEFT )
+	if ( keyId == BUTTON_SHOULDER_LEFT )
 	{
 		if ( IsFullyConnected() )
 		{
@@ -644,29 +797,56 @@ bool function OnEquipmentKeyPress( var button, int keyId, bool isDown )
 		return true
 	}
 
+	if( keyId == BUTTON_TRIGGER_LEFT )
+	{
+		if ( IsFullyConnected() )
+		{
+			EmitUISound( "UI_InGame_Inventory_Select" )
+			RunClientScript( "UICallback_OnEquipmentButtonAction", button, eLootActionType.CHARACTER_ACTION1 )
+		}
+		return true
+	}
+
+	if( keyId == BUTTON_TRIGGER_RIGHT )
+	{
+		if ( IsFullyConnected() )
+		{
+			EmitUISound( "UI_InGame_Inventory_Select" )
+			RunClientScript( "UICallback_OnEquipmentButtonAction", button, eLootActionType.CHARACTER_ACTION2 )
+		}
+		return true
+	}
+
 	return false
 }
 
 void function OnEquipmentCommand( var button, string command )
 {
-	if ( IsLobby() )
+	if ( IsLobby() || !IsFullyConnected() )
 		return
 
 	if ( command == "+ping" )
 	{
-		if ( IsFullyConnected() )
-			RunClientScript( "UICallback_PingEquipmentItem", button )
+		RunClientScript( "UICallback_PingEquipmentItem", button )
 	}
 
-	if( command == "+offhand1" )
+	if ( command == "+melee" )
 	{
-		if ( IsFullyConnected() )
-		{
-			EmitUISound( "UI_InGame_Inventory_Select" )
-			RunClientScript( "UICallback_OnEquipmentButtonCharacterAction", button )
-		}
+		EmitUISound( "UI_InGame_Inventory_Select" )
+		RunClientScript( "UICallback_OnEquipmentButtonAction", button, eLootActionType.PRIMARY_SWAP )
 	}
 
+	else if( command == "+offhand1" )
+	{
+		EmitUISound( "UI_InGame_Inventory_Select" )
+		RunClientScript( "UICallback_OnEquipmentButtonAction", button, eLootActionType.CHARACTER_ACTION1 )
+	}
+
+	else if( command == "+use" )
+	{
+		EmitUISound( "UI_InGame_Inventory_Select" )
+		RunClientScript( "UICallback_OnEquipmentButtonAction", button, eLootActionType.CHARACTER_ACTION2 )
+	}
 }
 
 
@@ -680,21 +860,21 @@ void function SurvivalQuickInventory_UpdateEquipmentForActiveWeapon( int activeW
 
 		Hud_SetSelected( file.equipmentButtons[slotName], selected )
 
-		                               
-		   
-		  	                                                                    
-		  	                                                      
-		  	                                                           
-		   
+		
+		
+		
+		
+		
+		
 	}
-	  		                              
-	  
-	  		                                             
-	  		 
-	  			                                            
-	  		 
-	  	 
-	   
+	
+	
+	
+	
+	
+	
+	
+	
 }
 
 void function SurvivalQuickInventory_UpdateWeaponSlot( int weaponSlot, int skinTier, string skinName, string charmName )
@@ -751,7 +931,7 @@ void function SurvivalGroundItem_SetGroundItemHeader( int index, bool isHeader )
 
 bool function SurvivalGroundItem_IsHeader( int index )
 {
-	if ( !(index >= 0 && index < file.groundItemHeaders.len()) )
+	if ( !file.groundItemHeaders.isvalidindex( index ) )
 		return false
 
 	return file.groundItemHeaders[index]
@@ -766,17 +946,113 @@ void function SurvivalQuickInventory_SetClientUpdateDefaultTooltipData( var butt
 	Hud_SetToolTipData( button, dt )
 }
 
-void function SurvivalQuickInventory_SetClientUpdateLootTooltipData( var button, bool isMainWeapon )
+void function SurvivalInventoryMenu_SetSpaceForSling( bool hasSling )
 {
-	ToolTipData dt
-	dt.tooltipFlags = dt.tooltipFlags | eToolTipFlag.CLIENT_UPDATE
-	dt.tooltipStyle = eTooltipStyle.LOOT_PROMPT
-	Hud_SetToolTipData( button, dt )
+	int weaponOffset = hasSling ? 50 : 0
+	var weapon0 = Hud_GetChild( file.mainInventoryPanel, "MainWeapon0" )
+	Hud_SetY( weapon0, Hud_GetBaseY(weapon0) + ContentScaledYAsInt( weaponOffset ) )
+	Hud_SetVisible(Hud_GetChild( file.mainInventoryPanel, "SlingDecorations" ), hasSling)
 }
 
-void function SurvivalQuickInventory_ClearTooltipForSlot( var button )
+
+int function GetUpgradesCount( var panel )
 {
+	return 6
+}
+
+void function OnBindUpgrades( var panel, var button, int index )
+{
+	if ( !IsFullyConnected() )
+		return
+
+	if ( IsLobby() )
+		return
+
+	if( index >= 4 )
+	{
+		thread OnBindUpgrades_Hide_Delayed( button )
+		return
+	}
+
 	Hud_ClearToolTipData( button )
+
+	RunClientScript( "UICallback_UpdateUpgradeButton", button, index )
+}
+
+void function OnBindUpgrades_Hide_Delayed( var button )
+{
+	
+	WaitFrame()
+	Hud_SetVisible( button, false )
+	Hud_SetEnabled( button, false )
+}
+
+void function OnUpgradeButtonClick( var panel, var button, int index )
+{
+	if ( !IsFullyConnected() )
+		return
+
+	if ( IsLobby() )
+		return
+
+	EmitUISound( "UI_InGame_Inventory_Select" )
+
+	if ( !IsFullyConnected() )
+		return
+
+	float duration = 0.4
+	StartMenuExtendedUse( button, file.holdToUseElem, duration, true, false, void function( bool success ) : (button, index) {
+		if ( success )
+			RunClientScript( "UICallback_OnUpgradeButtonAction", button, index )
+	}, "UI_Survival_PickupTicker", "" )
+}
+
+bool function OnUpgradeKeyPress( var panel, var button, int index, int keyId, bool isDown )
+{
+	if ( !isDown )
+		return false
+
+	if ( IsLobby() )
+		return false
+
+	if ( !IsControllerModeActive() )
+		return false
+
+	if ( keyId == BUTTON_SHOULDER_RIGHT )
+	{
+		if ( IsFullyConnected() )
+			RunClientScript( "UICallback_PingUpgrade", button )
+		return true
+	}
+
+	return false
+}
+
+void function OnUpgradeCommand( var panel, var button, int index, string command )
+{
+	if ( IsLobby() || !IsFullyConnected() )
+		return
+
+	if ( command == "+ping" )
+	{
+		RunClientScript( "UICallback_PingUpgrade", button )
+	}
+}
+
+void function UpdatePlayerUpgradeInfo()
+{
+	if ( !IsFullyConnected() )
+		return
+
+	if ( IsLobby() )
+		return
+
+	RunClientScript( "UICallback_UpdateUpgradeInfo" )
+}
+
+void function OnUpgradeTreeEnableNavigation( bool isNavigationEnabled )
+{
+	SetTabNavigationEnabled( Hud_GetParent( file.mainPanel ), isNavigationEnabled )
 }
 
 
@@ -887,6 +1163,26 @@ bool function OnBackpackItemKeyPress( var panel, var button, int index, int keyI
 		return true
 	}
 
+	if( keyId == BUTTON_TRIGGER_LEFT )
+	{
+		if ( IsFullyConnected() )
+		{
+			EmitUISound( "UI_InGame_Inventory_Select" )
+			RunClientScript( "UICallback_OnInventoryButtonAction", button, position, eLootActionType.CHARACTER_ACTION1 )
+		}
+		return true
+	}
+
+	if( keyId == BUTTON_TRIGGER_RIGHT )
+	{
+		if ( IsFullyConnected() )
+		{
+			EmitUISound( "UI_InGame_Inventory_Select" )
+			RunClientScript( "UICallback_OnInventoryButtonAction", button, position, eLootActionType.CHARACTER_ACTION2 )
+		}
+		return true
+	}
+
 	return false
 }
 
@@ -899,6 +1195,18 @@ void function OnBackpackItemCommand( var panel, var button, int index, string co
 	{
 		if ( IsFullyConnected() )
 			RunClientScript( "UICallback_PingInventoryItem", button, position )
+	}
+
+	else if( command == "+offhand1" )
+	{
+		EmitUISound( "UI_InGame_Inventory_Select" )
+		RunClientScript( "UICallback_OnInventoryButtonAction", button, position, eLootActionType.CHARACTER_ACTION1  )
+	}
+
+	else if( command == "+use" )
+	{
+		EmitUISound( "UI_InGame_Inventory_Select" )
+		RunClientScript( "UICallback_OnInventoryButtonAction", button, position, eLootActionType.CHARACTER_ACTION2  )
 	}
 }
 
@@ -1143,7 +1451,7 @@ LootData function GetLootDataFromButton( var button, int index )
 {
 	LootData data
 
-	                                            
+	
 	RunClientScript( "UICallback_GetLootDataFromButton", button, index )
 
 	if ( SURVIVAL_Loot_IsRefValid( file.tempButtonRef ) )
@@ -1157,7 +1465,7 @@ LootData function GetLootDataFromButton( var button, int index )
 
 bool function MouseDragAllowed( var panel, var button, var index )
 {
-	                                     
+	
 	RunClientScript( "UICallback_GetMouseDragAllowedFromButton", button, index )
 	return file.tempBoolMouseDragAllowed
 }
@@ -1176,11 +1484,16 @@ void function InitLegendPanelInventory( var panel )
 }
 
 
-void function ClientCallback_StartEquipmentExtendedUse( var button, float duration, int actionType )
+void function ClientCallback_StartEquipmentExtendedUse( var button, float duration, int actionType, bool canSwapWeapons, bool hasSling )
 {
-	thread StartEquipmentExtendedUse( button, duration, actionType )
-}
+	if ( canSwapWeapons )
+	{
+		thread StartEquipmentExtendedUse( button, duration, actionType )
+	}
 
+	if( hasSling )
+		thread EquipmentSlingDecorations( button, duration, actionType, canSwapWeapons )
+}
 
 void function StartEquipmentExtendedUse( var button, float duration, int actionType )
 {
@@ -1191,11 +1504,13 @@ void function StartEquipmentExtendedUse( var button, float duration, int actionT
 	Hud_Show( elem )
 	HideGameCursor()
 
+	file.isSwappingWeapons = true
+
 	var rui = Hud_GetRui( elem )
 	RuiSetBool( rui, "isVisible", true )
 	RuiSetGameTime( rui, "startTime", ClientTime() )
 	RuiSetFloat( rui, "duration", duration )
-	RuiSetString( rui, "holdButtonHint", "%[X_BUTTON|MOUSE2]%" )
+	RuiSetString( rui, "holdButtonHint", SURVIVAL_GetButtonStringForLootActionType( actionType, true ) )
 	float uiEndTime = UITime() + duration
 
 	EmitUISound( "UI_Survival_PickupTicker" )
@@ -1207,11 +1522,12 @@ void function StartEquipmentExtendedUse( var button, float duration, int actionT
 			Hud_Hide( elem )
 			RuiSetBool( rui, "isVisible", false )
 			StopUISound( "UI_Survival_PickupTicker" )
+			file.isSwappingWeapons = false
 		}
 	)
 
-	bool isButtonFocused = GetMouseFocus() == button || (GetDpadNavigationActive() && Hud_IsFocused( button ))
-	while ( (InputIsButtonDown( MOUSE_RIGHT ) || InputIsButtonDown( BUTTON_X )) && UITime() < uiEndTime && isButtonFocused )
+	bool isButtonFocused = GetMouseFocus() == button || ( GetDpadNavigationActive() && Hud_IsFocused( button ) )
+	while ( IsLootActionTypeButtonDown( actionType ) && UITime() < uiEndTime && isButtonFocused )
 	{
 		vector screenPos = ConvertCursorToScreenPos()
 		Hud_SetPos( elem, screenPos.x - Hud_GetWidth( elem ) * 0.5, screenPos.y - Hud_GetHeight( elem ) * 0.5 )
@@ -1230,44 +1546,207 @@ void function StartEquipmentExtendedUse( var button, float duration, int actionT
 		RunClientScript( "UICallback_OnEquipmentButtonAction", button, actionType, true )
 }
 
-                                                                                                                                                                    
+void function EquipmentSlingDecorations( var button, float duration, int actionType, bool canSwapWeapons )
+{
+	Signal( uiGlobal.signalDummy, "EquipmentSlingDecorations" )
+	EndSignal( uiGlobal.signalDummy, "EquipmentSlingDecorations" )
+
+	var slingDecorationsRui = Hud_GetRui( Hud_GetChild( file.mainInventoryPanel, "SlingDecorations" ) )
+	if( slingDecorationsRui == null )
+		return
+
+	OnThreadEnd(
+		function() : ( slingDecorationsRui )
+		{
+			if( CanRunClientScript() )
+				RunClientScript( "EquipmentButton_SlingWarningMessage", false )
+
+			RuiSetBool( slingDecorationsRui, "highlightLeftConnector", false )
+			RuiSetBool( slingDecorationsRui, "highlightRightConnector", false )
+			RuiSetBool( slingDecorationsRui, "isNonSwappableWeapon", false )
+		}
+	)
+
+	float uiEndTime = UITime() + duration
+
+	switch ( Hud_GetScriptID( button ) )
+	{
+		case "main_weapon0":
+			if ( actionType == eLootActionType.CHARACTER_ACTION1 )
+			{
+				RuiSetBool( slingDecorationsRui, "highlightLeftConnector", true )
+				RuiSetBool( slingDecorationsRui, "isNonSwappableWeapon", !canSwapWeapons )
+				RunClientScript( "EquipmentButton_SlingWarningMessage", !canSwapWeapons )
+			}
+			break
+		case "main_weapon1":
+			if ( actionType == eLootActionType.CHARACTER_ACTION1 )
+			{
+				RuiSetBool( slingDecorationsRui, "highlightRightConnector", true )
+				RuiSetBool( slingDecorationsRui, "isNonSwappableWeapon", !canSwapWeapons )
+				RunClientScript( "EquipmentButton_SlingWarningMessage", !canSwapWeapons )
+			}
+			break
+		case "sling_weapon":
+			if ( actionType == eLootActionType.CHARACTER_ACTION1 )
+			{
+				RuiSetBool( slingDecorationsRui, "highlightLeftConnector", true )
+			}
+			else if ( actionType == eLootActionType.CHARACTER_ACTION2 )
+			{
+				RuiSetBool( slingDecorationsRui, "highlightRightConnector", true )
+			}
+			RuiSetBool( slingDecorationsRui, "isNonSwappableWeapon", !canSwapWeapons )
+			RunClientScript( "EquipmentButton_SlingWarningMessage", !canSwapWeapons )
+			break
+	}
+
+	bool isButtonFocused = GetMouseFocus() == button || ( GetDpadNavigationActive() && Hud_IsFocused( button ) )
+	bool shouldHighlight = canSwapWeapons ? true : !file.isSwappingWeapons
+
+	while ( IsLootActionTypeButtonDown( actionType ) && isButtonFocused && shouldHighlight )
+	{
+		WaitFrame()
+	}
+
+	if ( UITime() < uiEndTime )
+		return
+}
+
+void function SurvivalInventoryMenu_SetEquipmentButtonFxState( string equipmentType, bool fxEnabled = false )
+{
+	if ( file.equipmentButtons.len() <= 0 )
+		return
+
+	var button = file.equipmentButtons[ equipmentType ]
+	var buttonRui = Hud_GetRui( button )
+	RuiSetBool( buttonRui, "showButtonFx", fxEnabled )
+}
+
+bool function IsLootActionTypeButtonDown( int actionType )
+{
+	switch( actionType )
+	{
+		case eLootActionType.ALT_ACTION:
+			if( IsControllerModeActive() )
+				return InputIsButtonDown( BUTTON_X )
+			else
+				return InputIsButtonDown( MOUSE_RIGHT )
+			break
+
+		case eLootActionType.PRIMARY_SWAP:
+			int pcKeycode = GetKeyCodeForBinding( "+melee", 0 ) - 1
+			if( IsControllerModeActive() )
+				return InputIsButtonDown( BUTTON_SHOULDER_LEFT )
+			else
+				return InputIsButtonDown( pcKeycode )
+			break
+
+		case eLootActionType.CHARACTER_ACTION1:
+			int pcKeycode = GetKeyCodeForBinding( "+offhand1", 0 ) - 1
+			if( IsControllerModeActive() )
+				return InputIsButtonDown( BUTTON_TRIGGER_LEFT )
+			else
+				return InputIsButtonDown( pcKeycode )
+			break
+
+		case eLootActionType.CHARACTER_ACTION2:
+			int pcKeycode = GetKeyCodeForBinding( "+use", 0 ) - 1
+			if( IsControllerModeActive() )
+				return InputIsButtonDown( BUTTON_TRIGGER_RIGHT )
+			else
+				return InputIsButtonDown( pcKeycode )
+			break
+	}
+
+	return false
+}
+
+
+void function UpdateArmorCoreEquipmentButtonPosition()
+{
+	var rtkArmorCore = Hud_GetChild( file.mainInventoryPanel, "RTKArmorCore" )
+	Hud_SetVisible( rtkArmorCore, UpgradeCore_IsEnabled() )
+
+	if ( !UpgradeCore_IsEnabled() )
+		return
+
+	
+	var armorButton = Hud_GetChild( file.mainInventoryPanel, "Armor" )
+	var helmetButton = Hud_GetChild( file.mainInventoryPanel, "Helmet" )
+	var incapShieldButton = Hud_GetChild( file.mainInventoryPanel, "IncapShield" )
+
+	
+	Hud_SetPinSibling( helmetButton, "IncapShield" )
+	Hud_SetPinSibling( armorButton, "Helmet" )
+
+	
+	Hud_SetX( armorButton, 86 )
+
+	
+	Hud_SetNavLeft( armorButton, null )
+	Hud_SetNavRight( armorButton, helmetButton )
+	Hud_SetNavUp( armorButton, Hud_GetChild( file.inventoryGridStatic, "GridButton1x1" ) )
+
+	Hud_SetNavLeft( helmetButton, armorButton )
+	Hud_SetNavRight( helmetButton, incapShieldButton )
+	Hud_SetNavUp( helmetButton, Hud_GetChild( file.inventoryGridStatic, "GridButton1x2" ) )
+
+	Hud_SetNavLeft( incapShieldButton, helmetButton )
+
+	
+	Hud_SetVisible( rtkArmorCore, UpgradeCore_ArmorTiedToUpgrades() )
+}
+
+
+
 void function UpdateBackpackDpadNav()
 {
 	if ( !Hud_HasChild( file.inventoryGridStatic, "GridButton0x0" ) )
 		return
 
 	const int MAX_BACKPACK_SLOTS = 7
-	var mainWeap0 = Hud_GetChild( file.mainInventoryPanel, "MainWeapon0" )
+	var slingButton = Hud_GetChild( file.mainInventoryPanel, "SlingWeapon" )
+	var navUpButton = Hud_IsVisible( slingButton ) ? slingButton : Hud_GetChild( file.mainInventoryPanel, "MainWeapon0" )
 
 	for ( int i = 0; i < MAX_BACKPACK_SLOTS; i++ )
 	{
 		var gridBtn = Hud_GetChild( file.inventoryGridStatic, "GridButton0x" + i )
-		Hud_SetNavUp( gridBtn, mainWeap0 )
+		Hud_SetNavUp( gridBtn, navUpButton )
 	}
 
 	Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x0" ), Hud_GetChild( file.mainInventoryPanel, "Helmet" ) )
 	Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x1" ), Hud_GetChild( file.mainInventoryPanel, "Helmet" ) )
 	Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x2" ), Hud_GetChild( file.mainInventoryPanel, "Armor" ) )
+
+
+	if ( UpgradeCore_IsEnabled() )
+	{
+		Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x0" ), Hud_GetChild( file.mainInventoryPanel, "Armor" ) )
+		Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x1" ), Hud_GetChild( file.mainInventoryPanel, "Armor" ) )
+		Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x2" ), Hud_GetChild( file.mainInventoryPanel, "Helmet" ) )
+	}
+
+
 	Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x3" ), Hud_GetChild( file.mainInventoryPanel, "IncapShield" ) )
 	Hud_SetNavDown( Hud_GetChild( file.inventoryGridStatic, "GridButton1x4" ), Hud_GetChild( file.mainInventoryPanel, "BackPack" ) )
-                   
-                                                                                                                                   
-                                                                                                                                   
-       
+
+
+
+
 
 	if ( Hud_IsEnabled( Hud_GetChild( file.inventoryGridStatic, "GridButton1x4" ) ) )
 		Hud_SetNavUp( Hud_GetChild( file.mainInventoryPanel, "BackPack" ), Hud_GetChild( file.inventoryGridStatic, "GridButton1x4" ) )
 	else
 		Hud_SetNavUp( Hud_GetChild( file.mainInventoryPanel, "BackPack" ), Hud_GetChild( file.mainInventoryPanel, "BackPack" ) )
 
-                   
-                                                                                   
-                                                                                                                                  
-      
-                                                                                                                             
-       
-}
 
+
+
+
+
+
+}
 
 void function SetInventoryDpadTooltipVisible( bool isVisible )
 {
@@ -1277,8 +1756,7 @@ void function SetInventoryDpadTooltipVisible( bool isVisible )
 	Hud_SetVisible( dpadToolTip, isVisible )
 }
 
-
-void function ClientToUI_UpdateInventoryDpadTooltip( string itemName, string mainUsePrompt = "", string altUsePrompt = "", string pingPrompt = "", string specialPrompt = "", string characterUsePrompt = "" )
+void function ClientToUI_UpdateInventoryDpadTooltip( string itemName, string mainUsePrompt = "", string altUsePrompt = "", string pingPrompt = "", string specialPrompt = "", string primarySwapPrompt = "", string character1UsePrompt = "", string character2UsePrompt = ""  )
 {
 	var dpadToolTip    = Hud_GetChild( Hud_GetParent( file.mainPanel ), "TooltipDpad" )
 	var dpadToolTipRui = Hud_GetRui( dpadToolTip )
@@ -1288,7 +1766,9 @@ void function ClientToUI_UpdateInventoryDpadTooltip( string itemName, string mai
 
 	footerText += mainUsePrompt != "" ? spacer + mainUsePrompt : ""
 	footerText += altUsePrompt != "" ? spacer + altUsePrompt : ""
-	footerText += characterUsePrompt != "" ? spacer + characterUsePrompt : ""
+	footerText += primarySwapPrompt != "" ? spacer + primarySwapPrompt : ""
+	footerText += character1UsePrompt != "" ? spacer + character1UsePrompt : ""
+	footerText += character2UsePrompt != "" ? spacer + character2UsePrompt : ""
 	footerText += pingPrompt != "" ? spacer + pingPrompt : ""
 	RuiSetString( dpadToolTipRui, "itemNameText", Localize( itemName ) )
 	RuiSetString( dpadToolTipRui, "footerText", footerText )

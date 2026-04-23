@@ -2,6 +2,7 @@ global function InitCustomMatchDashboardMenu
 global function CustomMatch_CloseLobbyMenu
 global function CustomMatch_MatchInProgress
 global function CustomMatchDashboard_UpdateAutoCloseTimer
+global function UICodeCallback_PrivateMatchPreloadChanged
 
 struct
 {
@@ -45,7 +46,7 @@ void function InitCustomMatchDashboardMenu( var menu )
 	{
 		TabDef tabDef = AddTab( file.menu, Hud_GetChild( file.menu, "LobbyPanel" ), "#MATCH_LOBBY" )
 		tabDef.isBannerLogoSmall = true
-	}	                            
+	}	
 
 	{
 		TabDef tabDef = AddTab( file.menu, Hud_GetChild( file.menu, "SummaryPanel" ), "#MATCH_SUMMARY" )
@@ -55,7 +56,7 @@ void function InitCustomMatchDashboardMenu( var menu )
 		tabDef.visible = false
 
 		file.matchSummary = tabDef
-	}	                              
+	}	
 
 	{
 		TabDef tabDef = AddTab( file.menu, Hud_GetChild( file.menu, "SettingsPanel" ), "#SETTINGS" )
@@ -70,7 +71,7 @@ void function InitCustomMatchDashboardMenu( var menu )
 	tabData.centerTabs = true
 	tabData.useGRXData = false
 	tabData.bannerLogoScale = 0.1
-	tabData.initialFirstTabButtonXPos = 50
+	tabData.initialFirstTabButtonXPos = GetNearestAspectRatio( GetScreenSize().width, GetScreenSize().height ) <= 2.0? 50: 0
 	SetTabBackground( tabData, Hud_GetChild( file.menu, "TabsBackground" ), eTabBackground.CAPSTONE )
 	SetTabDefsToSeasonal(tabData)
 }
@@ -95,10 +96,11 @@ void function CustomMatch_CloseLobbyMenu( string leaveHeader = "", string leaveD
 void function CustomMatchDashboard_OnOpen()
 {
 	CustomMatch_RefreshPlaylists()
-	                                                    
+	
 	if ( CustomMatch_HasSetting( CUSTOM_MATCH_SETTING_MATCH_STATUS ) )
 		Callback_OnMatchStatusChanged( CUSTOM_MATCH_SETTING_MATCH_STATUS, CustomMatch_GetSetting( CUSTOM_MATCH_SETTING_MATCH_STATUS ) )
 
+	thread UpdateMatchmakingStatus()
 }
 
 void function CustomMatchDashboard_OnShow()
@@ -142,7 +144,7 @@ void function Callback_OnLobbyPlaylistChanged( string _, string value )
 	CustomMatchMap map = expect CustomMatchMap( CustomMatch_GetMap( playlist.mapIndex ) )
 	CustomMatchCategory category = expect CustomMatchCategory( CustomMatch_GetCategory( playlist.categoryIndex ) )
 
-	     
+	
 	TabData tabData = GetTabDataForPanel( file.menu )
 	tabData.bannerTitle = map.displayName.toupper()
 	tabData.bannerHeader =category.displayName
@@ -152,7 +154,7 @@ void function Callback_OnLobbyPlaylistChanged( string _, string value )
 	HudElem_SetRuiArg( file.matchCountdown, "map", map.displayName )
 	HudElem_SetRuiArg( file.matchCountdown, "gamemode", category.displayName )
 	HudElem_SetRuiArg( file.matchCountdown, "logo", category.displayLogo )
-	                                
+	
 
 	UpdateMenuTabs()
 }
@@ -162,13 +164,13 @@ void function Callback_OnMatchStatusChanged( string _, string value )
 	switch ( value )
 	{
 		case CUSTOM_MATCH_STATUS_PREPARING:
-			                                            
+			
 			Hud_SetVisible( file.matchCountdown, false )
 			ToggleVisibilityShareToken( true )
 			file.matchInProgress = false
 			break
 		case CUSTOM_MATCH_STATUS_MATCHMAKING:
-			                                             
+			
 			Hud_SetVisible( file.matchCountdown, true )
 			ToggleVisibilityShareToken( false )
 
@@ -178,7 +180,7 @@ void function Callback_OnMatchStatusChanged( string _, string value )
 			file.matchInProgress = false
 			break
 		default:
-			                                             
+			
 			Hud_SetVisible( file.matchCountdown, true )
 			ToggleVisibilityShareToken( false )
 
@@ -192,15 +194,15 @@ void function Callback_OnMatchStatusChanged( string _, string value )
 
 void function CustomMatchDashboard_UpdateAutoCloseTimer( bool showTimer, float currentTime )
 {
-	                                                                     
+	
 	Hud_SetVisible( file.matchCountdown, false )
 	ToggleVisibilityShareToken( !showTimer )
 
-	                  
+	
 	Hud_SetVisible( file.autoCloseLobbyLabel, showTimer )
 	Hud_SetVisible( file.autoCloseLobbyTimer, showTimer )
 
-	               
+	
 	Hud_SetText( file.autoCloseLobbyTimer, Localize( FormatNumber( "1", currentTime ) ).toupper() )
 }
 
@@ -223,3 +225,7 @@ bool function CustomMatch_MatchInProgress()
 	return file.matchInProgress
 }
 
+void function UICodeCallback_PrivateMatchPreloadChanged( bool isPreloading )
+{
+
+}

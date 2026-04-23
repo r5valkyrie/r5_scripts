@@ -29,10 +29,10 @@ global function RemoveCallback_OnCustomMatchStatsPushed
 global function CustomMatch_DataChanged
 global function CustomMatch_PushMatchStats
 
-           
+
 global function UICodeCallback_CustomMatchGetPlayerUidFromHash
 global function UICodeCallback_CustomMatchGetPlayers
-  
+
 
 global const string CUSTOM_MATCH_SETTING_PLAYLIST 			= "playlist"
 global const string CUSTOM_MATCH_SETTING_LOBBY_NAME 		= "lobbyName"
@@ -102,20 +102,20 @@ struct SettingValue
 
 struct
 {
-	               
+	
 	CustomMatch_LobbyPlayer& localPlayerData
 
-	             
+	
 	array< array<CustomMatch_LobbyPlayer> > teams
 
-	                 
+	
 	CustomMatchCategory&			activeCategory
 	array<CustomMatchCategory> 		categories
 	array<CustomMatchMap>			maps
 	array<CustomMatchPlaylist> 		playlists
 	table<string, SettingValue>		settings
 
-	            
+	
 	array< void functionref( array<CustomMatchCategory> ) > 	onPlaylistsUpdatedCallbacks
 	array< void functionref( CustomMatchCategory ) > 			onGameModeChangedCallbacks
 	table< string, array<void functionref( string, string )> > 	onSettingChangedCallbacks
@@ -123,10 +123,10 @@ struct
 	array< void functionref( CustomMatch_LobbyState ) >			onLobbyDataChangedCallbacks
 	array< void functionref( int, CustomMatch_MatchSummary ) >	onStatsPushedCallbacks
 
-	                                                     
+	
 	bool localSettingsLocked
 
-	                                                  
+	
 	bool hasSpecialAccess
 } file
 
@@ -161,6 +161,9 @@ void function CustomMatch_RefreshPlaylists()
 			if ( !isVisible )
 				continue
 
+			if ( !CustomMatch_HasPlaylistAccess( playlistName ) )
+				continue
+
 			bool isHidden = GetPlaylistVarBool( playlistName, CM_HIDDEN_PLAYLIST_VAR, false )
 			if ( isHidden && !CustomMatch_HasHiddenPlaylistAccess() )
 				continue
@@ -181,8 +184,8 @@ void function CustomMatch_RefreshPlaylists()
 
 	Invoke_OnCustomMatchPlaylistsUpdated( file.categories )
 
-	                                                                                  
-	                                                                    
+	
+	
 	if ( file.activeCategory.maps.len() > 0 )
 	{
 		foreach ( category in file.categories )
@@ -263,7 +266,6 @@ void function CustomMatch_SetSetting( string setting, string value, bool forceUp
 
 string function CustomMatch_GetSetting( string setting )
 {
-	Assert( setting in file.settings, format( "'%s' not found within custom match settings.", setting ) )
 	return ( setting in file.settings ) ? file.settings[ setting ].applied : ""
 }
 
@@ -274,7 +276,7 @@ bool function CustomMatch_HasSetting( string setting )
 
 void function CustomMatch_SubmitSettings()
 {
-	#if UI
+
 		Assert( CUSTOM_MATCH_SETTING_PLAYLIST in file.settings, "No custom match playlist has been selected." )
 
 		CustomMatch_SettingsForUpdate update
@@ -288,7 +290,7 @@ void function CustomMatch_SubmitSettings()
 
 		foreach ( string _, SettingValue settingValue in file.settings )
 			settingValue.applied = settingValue.selected
-	#endif
+
 }
 
 void function CustomMatch_RestoreSettings()
@@ -342,7 +344,7 @@ CustomMatchPlaylist ornull function CustomMatch_GetPlaylist( string playlistName
 
 bool function CustomMatch_IsLocalAdmin()
 {
-	                                                            
+	
 	return file.localPlayerData.isAdmin
 }
 
@@ -508,9 +510,9 @@ void function CustomMatch_DataChanged( CustomMatch_LobbyState data )
 			file.settings.clear()
 		}
 
-		SetPlayerData_internal( data.players[ data.selfIdx ] )		                                                              
-		SetLobbySettings_internal( data )							                                    
-		SetLobbyData_internal( data )								                                                     
+		SetPlayerData_internal( data.players[ data.selfIdx ] )		
+		SetLobbySettings_internal( data )							
+		SetLobbyData_internal( data )								
 	}
 }
 
@@ -534,7 +536,7 @@ void function SetLobbySetting_internal( string setting, string value )
 
 void function SetPlayerData_internal( CustomMatch_LobbyPlayer playerData )
 {
-	                                                                                         
+	
 	if ( file.localPlayerData.isAdmin != playerData.isAdmin )
 		file.settings.clear()
 
@@ -544,7 +546,7 @@ void function SetPlayerData_internal( CustomMatch_LobbyPlayer playerData )
 
 void function SetLobbyData_internal( CustomMatch_LobbyState data )
 {
-	                                                                                
+	
 	array< array< CustomMatch_LobbyPlayer > > teams
 	teams.resize( data.maxTeams + TEAM_MULTITEAM_FIRST )
 	foreach ( CustomMatch_LobbyPlayer player in data.players )
@@ -577,11 +579,14 @@ string function UICodeCallback_CustomMatchGetPlayerUidFromHash( string hardware,
 void function UICodeCallback_CustomMatchGetPlayers()
 {
 	array<CustomMatch_LobbyPlayer> players;
-	for( int i = 0; i < file.teams.len(); i++ )
+	if ( CustomMatch_IsInCustomMatch() )
 	{
-		foreach( CustomMatch_LobbyPlayer player in file.teams[i] )
+		for( int i = 0; i < file.teams.len(); i++ )
 		{
-			players.append(player)
+			foreach( CustomMatch_LobbyPlayer player in file.teams[i] )
+			{
+				players.append(player)
+			}
 		}
 	}
 

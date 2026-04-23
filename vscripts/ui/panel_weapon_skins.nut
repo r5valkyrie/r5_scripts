@@ -18,13 +18,13 @@ struct
 	ItemFlavor& currentWeaponSkin
 } file
 
-                                    
-                                     
-                               
-                                    
-                                     
-                                     
-                                    
+
+
+
+
+
+
+
 
 void function InitWeaponSkinsPanel( var panel )
 {
@@ -44,15 +44,15 @@ void function InitWeaponSkinsPanel( var panel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddPanelFooterOption( panel, LEFT, BUTTON_A, false, "#A_BUTTON_SELECT", "", null, CustomizeMenus_IsFocusedItem )
 
-	#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 		AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
 		AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
 		AddPanelFooterOption( panel, LEFT, BUTTON_TRIGGER_LEFT, false, "#MENU_ZOOM_CONTROLS_GAMEPAD", "#MENU_ZOOM_CONTROLS", null )
-	#else
+#else
 		AddPanelFooterOption( panel, RIGHT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
 		AddPanelFooterOption( panel, RIGHT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
 		AddPanelFooterOption( panel, RIGHT, BUTTON_TRIGGER_LEFT, false, "#MENU_ZOOM_CONTROLS_GAMEPAD", "#MENU_ZOOM_CONTROLS", null )
-	#endif
+#endif
 
 	void functionref( var ) func = (
 		void function( var button ) : ()
@@ -62,13 +62,13 @@ void function InitWeaponSkinsPanel( var panel )
 		}
 	)
 
-	#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemFavoriteable )
 		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemFavorite )
-	#else
+#else
 		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemFavoriteable )
 		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemFavorite )
-	#endif
+#endif
 }
 
 
@@ -92,7 +92,7 @@ void function WeaponSkinsPanel_OnHide( var panel )
 
 void function WeaponSkinsPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) ) 
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -108,7 +108,7 @@ void function WeaponSkinsPanel_Update( var panel )
 	PanelData pd    = file.panelDataMap[panel]
 	var scrollPanel = Hud_GetChild( pd.listPanel, "ScrollPanel" )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in pd.weaponSkinList)
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -118,11 +118,11 @@ void function WeaponSkinsPanel_Update( var panel )
 
 	CustomizeMenus_SetActionButton( null )
 
-	               
+	
 	RuiSetString( pd.ownedRui, "title", Localize( "#SKINS_OWNED" ).toupper() )
 
 	ItemFlavor ornull weaponOrNull = CategoryWeaponPanel_GetWeapon( Hud_GetParent( panel )  )
-	                                  
+	
 	if ( IsPanelActive( panel ) && weaponOrNull != null )
 	{
 		file.currentWeapon = expect ItemFlavor( weaponOrNull )
@@ -136,7 +136,7 @@ void function WeaponSkinsPanel_Update( var panel )
 
 
 		entry = Loadout_WeaponSkin( file.currentWeapon )
-		pd.weaponSkinList = GetLoadoutItemsSortedForMenu( entry, WeaponSkin_GetSortOrdinal )
+		pd.weaponSkinList = GetLoadoutItemsSortedForMenu( [entry], WeaponSkin_GetSortOrdinal, null, [] )
 		FilterWeaponSkinList( pd.weaponSkinList )
 		itemList = pd.weaponSkinList
 		previewFunc = PreviewWeaponSkin
@@ -165,21 +165,21 @@ void function WeaponSkinsPanel_Update( var panel )
 
 void function PreviewWeaponSkin( ItemFlavor weaponSkinFlavor )
 {
-	#if DEVELOPER
+#if DEV
 		if ( InputIsButtonDown( KEY_LSHIFT ) )
 		{
 			string locedName = Localize( ItemFlavor_GetLongName( weaponSkinFlavor ) )
 			printt( "\"" + locedName + "\" grx ref is: " + GetGlobalSettingsString( ItemFlavor_GetAsset( weaponSkinFlavor ), "grxRef" ) )
 			printt( "\"" + locedName + "\" world model is: " + WeaponSkin_GetWorldModel( weaponSkinFlavor ) )
 		}
-	#endif       
+#endif
 
 	ItemFlavor charmFlavor = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_WeaponCharm( WeaponSkin_GetWeaponFlavor( weaponSkinFlavor ) ) )
 	int weaponCharmId      = ItemFlavor_GetGUID( charmFlavor )
 	int weaponSkinId       = ItemFlavor_GetGUID( weaponSkinFlavor )
 	file.currentWeaponSkin = weaponSkinFlavor
 
-	                   
+	
 	if( file.currentPanel != null )
 	{
 		var blurbPanel = Hud_GetChild( file.currentPanel, "SkinBlurb" )

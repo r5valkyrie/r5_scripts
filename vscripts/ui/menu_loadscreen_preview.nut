@@ -1,4 +1,4 @@
-  
+
 
 global function InitLoadscreenPreviewMenu
 global function LoadscreenPreviewMenu_SetLoadscreenToPreview
@@ -12,7 +12,7 @@ struct
 } file
 
 
-void function InitLoadscreenPreviewMenu( var newMenuArg )                                               
+void function InitLoadscreenPreviewMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "LoadscreenPreviewMenu" )
 

@@ -17,9 +17,9 @@ struct
 
 const int MIN_ROSTER_SIZE = 6
 
-                                                                    
-                           
-                                                                    
+
+
+
 
 void function InitCustomMatchLobbyRosterPanel( var panel )
 {
@@ -28,7 +28,7 @@ void function InitCustomMatchLobbyRosterPanel( var panel )
 	file.rosterDisplays.clear()
 	AddRosterPanel( "#TEAM_UNASSIGNED" )
 	AddRosterPanel( "#TEAM_OBSERVER" )
-	EnableRosterPanel( TEAM_SPECTATOR )                              
+	EnableRosterPanel( TEAM_SPECTATOR ) 
 
 	AddUICallback_InputModeChanged( UICallback_InputModeChanged )
 	AddCallback_OnCustomMatchPlayerDataChanged( Callback_OnPlayerDataChanged )
@@ -52,9 +52,9 @@ void function AddRosterPanel( string name )
 	AddButtonEventHandler( display.button, UIE_CLICK, CustomMatchLobbyRoster_OnLeftClick )
 }
 
-                                                                    
-                 
-                                                                    
+
+
+
 
 void function Callback_OnPlayerDataChanged( CustomMatch_LobbyPlayer player )
 {
@@ -84,7 +84,7 @@ void function Callback_OnLobbyDataChanged( CustomMatch_LobbyState data )
 
 		int previousCount = Hud_GetButtonCount( display.grid )
 		Hud_InitGridButtons( display.grid, int( max( MIN_ROSTER_SIZE, players.len() ) ) )
-		Hud_GetChild( display.grid, "ScrollPanel" )                                                    
+		Hud_GetChild( display.grid, "ScrollPanel" ) 
 		foreach ( int buttonIndex, CustomMatch_LobbyPlayer player in players )
 		{
 			string platformString = PlatformIDToIconString( GetHardwareFromName( player.hardware ) )
@@ -114,7 +114,7 @@ void function Callback_OnLobbyDataChanged( CustomMatch_LobbyState data )
 			HudElem_SetRuiArg( playerButton, "isSelf", false )
 			HudElem_SetRuiArg( playerButton, "isAdmin", false )
 
-			                                                              
+			
 			AddKeyHandler( playerButton, buttonIndex, buttonIndex >= previousCount )
 			Hud_ClearEventHandlers( playerButton, UIE_CLICK )
 
@@ -127,9 +127,9 @@ void function Callback_OnLobbyDataChanged( CustomMatch_LobbyState data )
 	}
 }
 
-                                                                    
-                  
-                                                                    
+
+
+
 
 void function UICallback_InputModeChanged( bool _ )
 {
@@ -145,7 +145,7 @@ void function CustomMatchLobbyRoster_OnLeftClick( var button )
 
 bool function CustomMatchLobbyRoster_OnKeyPress( var button, int buttonIndex, int keyIndex, bool isPressed )
 {
-	var menu = Hud_GetParent( Hud_GetParent( button ) )                            
+	var menu = Hud_GetParent( Hud_GetParent( button ) ) 
 	int menuIndex = Hud_GetScriptID( menu ).tointeger()
 	if ( isPressed )
 		return CustomMatchLobbyRoster_OnKeyDown( button, buttonIndex, menuIndex, keyIndex ) || CustomMatchLobbyRoster_OnKeyHold( button, buttonIndex, menuIndex, keyIndex )
@@ -156,6 +156,10 @@ bool function CustomMatchLobbyRoster_OnKeyDown( var button, int buttonIndex, int
 {
 	switch ( keyIndex )
 	{
+		case KEY_F:
+		case BUTTON_Y:
+			TryDisplayInspectPlayer( buttonIndex, menuIndex )
+			return true
 		case KEY_K:
 			TryDisplayKickPlayer( buttonIndex, menuIndex )
 			return true
@@ -192,9 +196,9 @@ void function OnHold_internal( int button, int buttonIndex, int menuIndex, void 
 		func( buttonIndex, menuIndex )
 }
 
-                                                                    
-                           
-                                                                    
+
+
+
 
 var function EnabledCurrentRosterPanel()
 {
@@ -243,6 +247,29 @@ void function TryDisplayKickPlayer( int buttonIndex, int menuIndex )
 			CustomMatch_ShowKickDialog( [ players[ buttonIndex ] ], true )
 }
 
+void function TryDisplayInspectPlayer( int buttonIndex, int menuIndex )
+{
+	if ( ActionsLocked() || InputIsButtonDown( MOUSE_LEFT ) || InputIsButtonDown( BUTTON_A ) )
+	{
+		return
+	}
+
+	array<CustomMatch_LobbyPlayer> players = CustomMatch_GetTeam( menuIndex )
+	if ( buttonIndex < players.len() )	
+	{
+		CustomMatch_LobbyPlayer player = players[ buttonIndex ]
+
+		Friend teamPlayerToFriend
+		teamPlayerToFriend.name = player.name
+		teamPlayerToFriend.id = player.uid
+		teamPlayerToFriend.unspoofedid = player.firstPartyID
+		teamPlayerToFriend.hardware = player.hardware
+		teamPlayerToFriend.eadpData = CreateEADPDataFromEAID( player.eaid )
+
+		InspectFriendForceEADP( teamPlayerToFriend, PCPlat_IsSteam() )
+	}
+}
+
 bool function ActionsLocked()
 {
 	return CustomMatch_GetSetting( CUSTOM_MATCH_SETTING_MATCH_STATUS ) != CUSTOM_MATCH_STATUS_PREPARING
@@ -270,8 +297,9 @@ void function UpdatePlayerToolTip( var button, CustomMatch_LobbyPlayer player, b
 {
 	ToolTipData toolTipData
 	toolTipData.tooltipStyle = eTooltipStyle.CUSTOM_MATCHES
+	bool hasActions = false
 
-	                                                                                       
+	
 	if ( CanKickPlayer( player ) )
 	{
 		Assert( CustomMatch_IsLocalAdmin() )
@@ -280,7 +308,24 @@ void function UpdatePlayerToolTip( var button, CustomMatch_LobbyPlayer player, b
 		toolTipData.customMatchData.isAdmin = true
 		toolTipData.customMatchData.adminActions = 1
 		toolTipData.customMatchData.actionEnabledMask = ActionsLocked() ? 0 : ( 1 << 1 )
+		hasActions = true
+	}
 
+	if(hasActions)
+	{
+		toolTipData.actionHint2 = Localize("#Y_BUTTON_INSPECT")
+		toolTipData.customMatchData.actionEnabledMask = ActionsLocked() ? 0 : toolTipData.customMatchData.actionEnabledMask | ( 1 << 2 )
+	}
+	else
+	{
+		toolTipData.titleText = ""
+		toolTipData.actionHint1 = Localize("#Y_BUTTON_INSPECT")
+		toolTipData.customMatchData.actionEnabledMask = ActionsLocked() ? 0 : toolTipData.customMatchData.actionEnabledMask | ( 1 << 1 )
+		hasActions = true
+	}
+
+	if(hasActions)
+	{
 		toolTipData.tooltipFlags = toolTipData.tooltipFlags & ~eToolTipFlag.HIDDEN
 		Hud_SetToolTipData( button, toolTipData )
 	}

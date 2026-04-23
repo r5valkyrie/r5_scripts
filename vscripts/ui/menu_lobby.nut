@@ -5,115 +5,25 @@ global function SetActiveLobbyPopup
 global function ClearActiveLobbyPopup
 global function HasActiveLobbyPopup
 global function SetNewsButtonTooltip
+global function PostGameFlow
 
 global function Lobby_UpdateSelectedPlaylistUsingUISlot
-
-global function GetUIPlaylistName
-global function GetUIMapName
-global function GetUIMapAsset
-global function GetUIVisibilityName
-global function UpdateServerAndPlayerCountButtons
+global function GetLobbyMenuOpenedTime
+global function UpdateEventTabVisibility
 
 
 global function Lobby_EnableMinimapCoordsOnConnect
 
 
+global function Lobby_AdjustScreenFrameToMaxSize
+global function Lobby_AdjustBlackBarsFrameToMaxSize
+global const int LOBBY_MENU_MAX_WIDTH = 2700
+global const int LOBBY_STORE_MENU_MAX_WIDTH = 2224
 
-global int CurrentPresentationType = ePresentationType.PLAY
 
-global table<string, asset> MapAssets = {
-	[ "mp_rr_canyonlands_staging" ] = $"rui/menu/maps/mp_rr_canyonlands_staging_big_icon",
-	[ "mp_rr_canyonlands_64k_x_64k" ] = $"rui/menu/maps/mp_rr_canyonlands_64k_x_64k_big_icon",
-	[ "mp_rr_canyonlands_64k_x_64k_ps4" ] = $"rui/menu/maps/mp_rr_canyonlands_64k_x_64k_big_icon",
-	[ "mp_rr_canyonlands_mu1" ] = $"rui/menu/maps/mp_rr_canyonlands_mu1_big_icon",
-	[ "mp_rr_canyonlands_mu2" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_big_icon",
-	[ "mp_rr_canyonlands_mu2_tt" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_tt_big_icon",
-	[ "mp_rr_canyonlands_mu2_ufo" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_ufo_big_icon",
-	[ "mp_rr_canyonlands_mu2_mv" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_mv_big_icon",
-	[ "mp_rr_canyonlands_mu1_night" ] = $"rui/menu/maps/mp_rr_canyonlands_mu1_night_big_icon",
-	[ "mp_rr_desertlands_64k_x_64k" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_big_icon",
-	[ "mp_rr_desertlands_64k_x_64k_nx" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_nx_big_icon",
-	[ "mp_rr_desertlands_64k_x_64k_tt" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_tt_big_icon",
-	[ "mp_rr_desertlands_64k_x_64k_mv" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_mv_big_icon",
-	[ "mp_rr_desertlands_holiday" ] = $"rui/menu/maps/mp_rr_desertlands_holiday_big_icon",
-	[ "mp_rr_desertlands_mu1" ] = $"rui/menu/maps/mp_rr_desertlands_mu1_big_icon",
-	[ "mp_rr_desertlands_mu1_tt" ] = $"rui/menu/maps/mp_rr_desertlands_mu1_tt_big_icon",
-	[ "mp_rr_desertlands_mu2" ] = $"rui/menu/maps/mp_rr_desertlands_mu2_big_icon",
-	[ "mp_rr_arena_composite" ] = $"rui/menu/maps/mp_rr_arena_composite_big_icon",
-	[ "mp_rr_party_crasher" ] = $"rui/menu/maps/mp_rr_party_crasher_big_icon",
-	[ "mp_rr_arena_phase_runner" ] = $"rui/menu/maps/mp_rr_arena_phase_runner_big_icon",
-	[ "mp_rr_arena_skygarden" ] = $"rui/menu/maps/mp_rr_arena_skygarden_big_icon",
-	[ "mp_rr_aqueduct" ] = $"rui/menu/maps/mp_rr_aqueduct_big_icon",
-	[ "mp_rr_olympus" ] = $"rui/menu/maps/mp_rr_olympus_big_icon",
-	[ "mp_rr_olympus_tt" ] = $"rui/menu/maps/mp_rr_olympus_tt_big_icon",
-	[ "mp_rr_olympus_mu1" ] = $"rui/menu/maps/mp_rr_olympus_mu1_big_icon",
-	[ "mp_lobby" ] = $"rui/menu/maps/mp_lobby_big_icon"
-}
-
-global table<string, asset> MapAssetsSquare = {
-	[ "mp_rr_canyonlands_staging" ] = $"rui/menu/maps/mp_rr_canyonlands_staging_square_icon",
-	[ "mp_rr_canyonlands_64k_x_64k" ] = $"rui/menu/maps/mp_rr_canyonlands_64k_x_64k_square_icon",
-	[ "mp_rr_canyonlands_64k_x_64k_ps4" ] = $"rui/menu/maps/mp_rr_canyonlands_64k_x_64k_square_icon",
-	[ "mp_rr_canyonlands_mu1" ] = $"rui/menu/maps/mp_rr_canyonlands_mu1_square_icon",
-	[ "mp_rr_canyonlands_mu2" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_square_icon",
-	[ "mp_rr_canyonlands_mu2_tt" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_tt_square_icon",
-	[ "mp_rr_canyonlands_mu2_mv" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_mv_square_icon",
-	[ "mp_rr_canyonlands_mu2_ufo" ] = $"rui/menu/maps/mp_rr_canyonlands_mu2_ufo_square_icon",
-	[ "mp_rr_canyonlands_mu1_night" ] = $"rui/menu/maps/mp_rr_canyonlands_mu1_night_square_icon",
-	[ "mp_rr_desertlands_64k_x_64k" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_square_icon",
-	[ "mp_rr_desertlands_64k_x_64k_nx" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_nx_square_icon",
-	[ "mp_rr_desertlands_64k_x_64k_tt" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_tt_square_icon",
-	[ "mp_rr_desertlands_64k_x_64k_mv" ] = $"rui/menu/maps/mp_rr_desertlands_64k_x_64k_mv_square_icon",
-	[ "mp_rr_desertlands_holiday" ] = $"rui/menu/maps/mp_rr_desertlands_holiday_square_icon",
-	[ "mp_rr_desertlands_mu1" ] = $"rui/menu/maps/mp_rr_desertlands_mu1_square_icon",
-	[ "mp_rr_desertlands_mu1_tt" ] = $"rui/menu/maps/mp_rr_desertlands_mu1_tt_square_icon",
-	[ "mp_rr_desertlands_mu2" ] = $"rui/menu/maps/mp_rr_desertlands_mu2_square_icon",
-	[ "mp_rr_arena_composite" ] = $"rui/menu/maps/mp_rr_arena_composite_square_icon",
-	[ "mp_rr_party_crasher" ] = $"rui/menu/maps/mp_rr_party_crasher_square_icon",
-	[ "mp_rr_arena_phase_runner" ] = $"rui/menu/maps/mp_rr_arena_phase_runner_square_icon",
-	[ "mp_rr_arena_skygarden" ] = $"rui/menu/maps/mp_rr_arena_skygarden_square_icon",
-	[ "mp_rr_aqueduct" ] = $"rui/menu/maps/mp_rr_aqueduct_square_icon",
-	[ "mp_rr_olympus" ] = $"rui/menu/maps/mp_rr_olympus_square_icon",
-	[ "mp_rr_olympus_tt" ] = $"rui/menu/maps/mp_rr_olympus_tt_square_icon",
-	[ "mp_rr_olympus_mu1" ] = $"rui/menu/maps/mp_rr_olympus_mu1_square_icon",
-	[ "mp_lobby" ] = $"rui/menu/maps/mp_lobby"
-}
-
-global table<string, string> MapNames = {
-	[ "mp_rr_canyonlands_staging" ] = "Firing Range",
-	[ "mp_rr_canyonlands_64k_x_64k_ps4" ] = "King's Canyon Beta",
-	[ "mp_rr_canyonlands_64k_x_64k" ] = "King's Canyon S1",
-	[ "mp_rr_canyonlands_mu1" ] = "King's Canyon S2",
-	[ "mp_rr_canyonlands_mu2" ] = "King's Canyon S5",
-	[ "mp_rr_canyonlands_mu2_tt" ] = "King's Canyon S5 - Map Room",
-	[ "mp_rr_canyonlands_mu2_ufo" ] = "King's Canyon S5 - Olympus Teaser",
-	[ "mp_rr_canyonlands_mu2_mv" ] = "King's Canyon S7 - Mirage Voyage",
-	[ "mp_rr_canyonlands_mu1_night" ] = "King's Canyon S2 - After Dark",
-	[ "mp_rr_desertlands_64k_x_64k" ] = "World's Edge S3",
-	[ "mp_rr_desertlands_64k_x_64k_nx" ] = "World's Edge S3 - After Dark",
-	[ "mp_rr_desertlands_64k_x_64k_mv" ] = "World's Edge S3 - Mirage Voyage",
-	[ "mp_rr_desertlands_64k_x_64k_tt" ] = "World's Edge S3 - Holiday Theme",
-	[ "mp_rr_desertlands_holiday" ] = "World's Edge S7 - Winter Express",
-	[ "mp_rr_desertlands_mu1" ] = "World's Edge S4",
-	[ "mp_rr_desertlands_mu1_tt" ] = "World's Edge S4 - Trials",
-	[ "mp_rr_desertlands_mu2" ] = "World's Edge S6",
-	[ "mp_rr_arena_composite" ] = "Drop Off",
-	[ "mp_rr_party_crasher" ] = "Party Crasher",
-	[ "mp_rr_arena_skygarden" ] = "Encore",
-	[ "mp_rr_aqueduct" ] = "Overflow",
-	[ "mp_rr_arena_empty" ] = "Creative",
-	[ "mp_rr_arena_phase_runner" ] = "Phase Runner",
-	[ "mp_rr_olympus" ] = "Olympus S7",
-	[ "mp_rr_olympus_tt" ] = "Olympus S7 - Boxing Ring",
-	[ "mp_rr_olympus_mu1" ] = "Olympus S9",
-	[ "mp_lobby" ] = "Lobby"
-}
-
-global table<int, string> VisibilityNames = {
-	[ eServerVisibility.OFFLINE ] = "Offline",
-	[ eServerVisibility.HIDDEN ] = "Hidden",
-	[ eServerVisibility.PUBLIC ] = "Public"
-}
+global const int LOBBY_PLAY_TAB_WIDTH = 145
+global const int LOBBY_EVENT_TAB_WIDTH = 170
+global const int LOBBY_SEASONAL_TAB_WIDTH = 235
 
 global struct LobbyPopup
 {
@@ -132,6 +42,7 @@ struct
 	bool hasFocusedNews = false
 
 	var postGameButton
+	var progressionModifiersButton
 	var newsButton
 	var newsButtonStatusIcon
 	var socialButton
@@ -141,13 +52,9 @@ struct
 	var serverDebugID
 	var dx12BetaText
 
-	// Custom buttons
-	var DcButton
-	var BlogButton
-	var serversButton
-	var playersButton
+	int nextRotationTime = -1
 
-	int previousRotationTime = -1
+
 
 	bool hasNewGifts = false
 
@@ -156,13 +63,19 @@ struct
 
 	LobbyPopup ornull  activeLobbyPopup = null
 	table< int, bool > isInputBlocked
+
+	TabDef& playPanelTabDef
+	TabDef& eventsPanelTabDef
+	TabDef& seasonalPanelTabDef
+
+	float lobbyMenuOpenTime
 } file
 
 
 void function Lobby_EnableMinimapCoordsOnConnect( string name )
 {
-	int forceWatermarkInLobby = GetCurrentPlaylistVarInt( "force_watermark_in_lobby", 0 )
-	int forceHiddenWatermarkInLobby = GetCurrentPlaylistVarInt( "force_hidden_watermark_in_lobby", 0 )
+	int forceWatermarkInLobby = GetCurrentPlaylistVarInt( "force_watermark_in_lobby", 0 ) 
+	int forceHiddenWatermarkInLobby = GetCurrentPlaylistVarInt( "force_hidden_watermark_in_lobby", 0 ) 
 	if ( (forceWatermarkInLobby == 0 && IsTakeHomeBuild()) || forceWatermarkInLobby == 1 )
 	{
 		var minimapCoords = Hud_GetChild( file.menu, "MinimapCoords" )
@@ -218,23 +131,23 @@ void function InitLobbyMenu( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_HIDE, OnLobbyMenu_Hide )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_GET_TOP_LEVEL, OnLobbyMenu_GetTopLevel )
-
+	
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, OnLobbyMenu_NavigateBack )
 
 	AddMenuVarChangeHandler( "isFullyConnected", UpdateFooterOptions )
 	AddMenuVarChangeHandler( "isPartyLeader", UpdateFooterOptions )
-	#if DURANGO_PROG
-		AddMenuVarChangeHandler( "DURANGO_canInviteFriends", UpdateFooterOptions )
-		AddMenuVarChangeHandler( "DURANGO_isJoinable", UpdateFooterOptions )
-	#elseif PLAYSTATION_PROG
-		AddMenuVarChangeHandler( "PS4_canInviteFriends", UpdateFooterOptions )
-	#elseif PC_PROG
+
+
+
+
+
+
 		AddMenuVarChangeHandler( "ORIGIN_isEnabled", UpdateFooterOptions )
 		AddMenuVarChangeHandler( "ORIGIN_isJoinable", UpdateFooterOptions )
-	#elseif NX_PROG
-		AddMenuVarChangeHandler( "NX_canInviteFriends", UpdateFooterOptions )
-	#endif
+
+
+
 
 	var postGameButton = Hud_GetChild( menu, "PostGameButton" )
 	file.postGameButton = postGameButton
@@ -245,21 +158,22 @@ void function InitLobbyMenu( var newMenuArg )
 	HudElem_SetRuiArg( postGameButton, "shortcutText", "%[BACK|TAB]%" )
 	Hud_AddEventHandler( postGameButton, UIE_CLICK, PostGameButton_OnActivate )
 
+	var progressionModifiersButton = Hud_GetChild( menu, "ProgressionModifiersButton" )
+	file.progressionModifiersButton = progressionModifiersButton
+	HudElem_SetRuiArg( progressionModifiersButton, "icon", $"rui/menu/xp_boost/BoostXP_lrg" )
+	Hud_AddEventHandler( progressionModifiersButton, UIE_CLICK, ProgressionModifiersButton_OnActivate )
 	var newsButton = Hud_GetChild( menu, "NewsButton" )
 	file.newsButton = newsButton
 	file.newsButtonStatusIcon = Hud_GetChild( menu, "NewsButtonStatusIcon" )
 	ToolTipData newsToolTip
 	newsToolTip.descText = "#NEWS"
 	Hud_SetToolTipData( newsButton, newsToolTip )
-
 	HudElem_SetRuiArg( newsButton, "icon", $"rui/menu/lobby/news_inbox_icon" )
-
-
-
 	HudElem_SetRuiArg( newsButton, "shortcutText", "%[R_TRIGGER|ESCAPE]%" )
 	Hud_AddEventHandler( newsButton, UIE_CLICK, NewsButton_OnActivate )
 	Hud_AddEventHandler( newsButton, UIE_GET_FOCUS, NewsButton_OnHover )
 	UpdatePromoToast()
+
 	var socialButton = Hud_GetChild( menu, "SocialButton" )
 	file.socialButton = socialButton
 	ToolTipData socialToolTip
@@ -277,44 +191,6 @@ void function InitLobbyMenu( var newMenuArg )
 	HudElem_SetRuiArg( gameMenuButton, "icon", $"rui/menu/lobby/settings_icon" )
 	HudElem_SetRuiArg( gameMenuButton, "shortcutText", "%[START|ESCAPE]%" )
 	Hud_AddEventHandler( gameMenuButton, UIE_CLICK, GameMenuButton_OnActivate )
-
-	// Custom buttons
-	var DcButton = Hud_GetChild( menu, "DcButton" )
-	file.DcButton = DcButton
-	ToolTipData dcToolTip
-	dcToolTip.descText = "#MENU_TITLE_DISCORD"
-	Hud_SetToolTipData( DcButton, dcToolTip )
-	HudElem_SetRuiArg( DcButton, "icon", $"rui/menu/lobby/dc_icon" )
-	HudElem_SetRuiArg( DcButton, "shortcutText", "%[STICK2|]%" )
-	Hud_AddEventHandler( DcButton, UIE_CLICK, DCButton_OnActivate )
-
-	var BlogButton = Hud_GetChild( menu, "BlogButton" )
-	file.BlogButton = BlogButton
-	ToolTipData blogToolTip
-	blogToolTip.descText = "#MENU_TITLE_BLOG"
-	Hud_SetToolTipData( BlogButton, blogToolTip )
-	HudElem_SetRuiArg( BlogButton, "icon", $"rui/menu/lobby/blog_icon" )
-	HudElem_SetRuiArg( BlogButton, "shortcutText", "%[STICK2|]%" )
-	Hud_AddEventHandler( BlogButton, UIE_CLICK, BlogButton_OnActivate )
-
-	var playersButton = Hud_GetChild( menu, "PlayersButton" )
-	file.playersButton = playersButton
-	ToolTipData playersToolTip
-	playersToolTip.descText = "Total Player Count"
-	Hud_SetToolTipData( playersButton, playersToolTip )
-	HudElem_SetRuiArg( playersButton, "icon", $"rui/menu/lobby/friends_icon" )
-
-	var serversButton = Hud_GetChild( menu, "ServersButton" )
-	file.serversButton = serversButton
-	ToolTipData serversToolTip
-	serversToolTip.descText = "Total Server Count"
-	Hud_SetToolTipData( serversButton, serversToolTip )
-	HudElem_SetRuiArg( serversButton, "icon", $"rui/hud/gamestate/net_latency" )
-
-	RuiSetImage( Hud_GetRui( Hud_GetChild( menu, "Logo" ) ), "basicImage", $"rui/menu/lobby/logo" )
-
-	var bonusXp = Hud_GetChild( menu, "BonusXp" )
-	file.bonusXp = bonusXp
 
 	var socialEventPopup = Hud_GetChild( menu, "SocialPopupPanel" )
 	file.socialEventPopup = socialEventPopup
@@ -340,47 +216,55 @@ void function InitLobbyMenu( var newMenuArg )
 
 void function OnLobbyMenu_Open()
 {
-	thread ServerBrowser_RefreshServerListing()
-
 	if ( !file.tabsInitialized )
 	{
 		{
 			var panel = Hud_GetChild( file.menu, "PlayPanel" )
 			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			file.playPanelTabDef = tab
 			tab.isBannerLogoSmall = false
-			SetTabBaseWidth( tab, 145 )
+			SetTabBaseWidth( tab, 125 )
 		}
 		{
-			var panel = Hud_GetChild( file.menu, "SeasonPanel" )
+			var panel = Hud_GetChild( file.menu, "EventPanel" )
+			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
+			file.eventsPanelTabDef = tab
+			tab.isBannerLogoSmall = false
+			SetTabBaseWidth( tab, 170 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "ChallengesPanel" )
 			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
 			tab.isBannerLogoSmall = false
 			SetTabBaseWidth( tab, 235 )
 		}
 		{
-			var panel = Hud_GetChild( file.menu, "CharactersPanel" )
+			var panel = Hud_GetChild( file.menu, "SeasonPanel" )
 			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
-			tab.isBannerLogoSmall = true
-			tab.hideSubtabPips = true
-			SetTabBaseWidth( tab, 205 )
+			file.seasonalPanelTabDef = tab
+			tab.isBannerLogoSmall = false
+			SetTabBaseWidth( tab, 225 )
 		}
 		{
 			var panel = Hud_GetChild( file.menu, "ArmoryPanel" )
 			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
 			tab.isBannerLogoSmall = true
-			SetTabBaseWidth( tab, 205 )
+			SetTabBaseWidth( tab, 260 )
 		}
 		{
-			var panel = Hud_GetChild( file.menu, "CreateJoinPanel" )
+			var panel = Hud_GetChild( file.menu, "StorePanel" )
 			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
 			tab.isBannerLogoSmall = true
-			SetTabBaseWidth( tab, 205 )
+			SetTabBaseWidth( tab, 160 )
+			tab.new = HasNewPersonalisedOffers()
 		}
-		{
-			var panel = Hud_GetChild( file.menu, "CreditsPanel" )
-			TabDef tab = AddTab( file.menu, panel, GetPanelTabTitle( panel ) )
-			tab.isBannerLogoSmall = true
-			SetTabBaseWidth( tab, 180 )
-		}
+
+
+
+
+
+
+
 
 		TabData tabData = GetTabDataForPanel( file.menu )
 
@@ -388,7 +272,12 @@ void function OnLobbyMenu_Open()
 		tabData.activeTabIdx = GetLobbyDefaultTabIndex()
 		tabData.centerTabs = true
 		tabData.useGRXData = true
-		tabData.initialFirstTabButtonXPos = 80
+		tabData.initialFirstTabButtonXPos = GetNearestAspectRatio( GetScreenSize().width, GetScreenSize().height ) <= 2.0? 80: 0
+#if PC_PROG_NX_UI
+			tabData.callToActionWidth = 180
+#else
+			tabData.callToActionWidth = 210
+#endif
 		SetTabBackground( tabData, Hud_GetChild( file.menu, "TabsBackground" ), eTabBackground.CAPSTONE )
 		AddCallback_OnTabChanged( Lobby_OnTabChanged )
 		file.tabsInitialized = true
@@ -418,13 +307,48 @@ void function OnLobbyMenu_Open()
 	file.hasFocusedNews = false
 }
 
+void function Lobby_AdjustScreenFrameToMaxSize( var elm, bool center = false )
+{
+	UISize screenSize = GetScreenSize()
+	if( elm != null )
+	{
+		if( IsLobby() )
+		{
+			int maxWidth = ( UI_GetPresentationType() == ePresentationType.STORE_INSPECT )? LOBBY_STORE_MENU_MAX_WIDTH: LOBBY_MENU_MAX_WIDTH
+			float widthToUse =  min( ContentScaledXAsInt( maxWidth ) , screenSize.width )
+			float leftOverWidth = screenSize.width - widthToUse
+
+			Hud_SetWidth( elm, widthToUse )
+			if( center && leftOverWidth > 0 )
+				Hud_SetX(elm, leftOverWidth / 2 )
+			else
+				Hud_SetX(elm, 0 )
+		}
+		else
+		{
+			Hud_SetWidth( elm, screenSize.width )
+		}
+	}
+}
+
+void function Lobby_AdjustBlackBarsFrameToMaxSize( var menu )
+{
+	if( Hud_HasChild(menu, "SideBars" ) )
+	{
+		var sideBars = Hud_GetChild( menu, "SideBars" )
+		int maxWidth = ( UI_GetPresentationType() == ePresentationType.STORE_INSPECT )? LOBBY_STORE_MENU_MAX_WIDTH: LOBBY_MENU_MAX_WIDTH
+
+		Hud_SetVisible( sideBars, IsLobby() )
+		HudElem_SetRuiArg( sideBars, "safeWidth", float( maxWidth ), eRuiArgType.FLOAT )
+	}
+}
+
 void function OnLobbyMenu_Show()
 {
 	thread LobbyMenuUpdate()
 	SocialEventUpdate()
 	RegisterInputs()
 	Chroma_Lobby()
-
 
 	if ( GetCurrentPlaylistVarBool( "grx_inbox_enabled", true ) )
 	{
@@ -435,10 +359,6 @@ void function OnLobbyMenu_Show()
 		HudElem_SetRuiArg( file.newsButton, "icon", $"rui/menu/lobby/news_icon" )
 	}
 
-
-
-
-
 }
 
 void function Lobby_OnTabChanged()
@@ -447,11 +367,11 @@ void function Lobby_OnTabChanged()
 		return
 
 	UpdateCornerButtons()
-	UpdateBonusXP()
 }
 
 void function OnLobbyMenu_GetTopLevel()
 {
+	file.lobbyMenuOpenTime = UITime()
 	thread TryRunDialogFlowThread()
 }
 
@@ -480,33 +400,74 @@ void function OnGRXStateChanged()
 	bool ready = GRX_IsInventoryReady() && GRX_AreOffersReady()
 
 	array<var> panels = [
+		GetPanel( "EventPanel" ),
+		GetPanel( "ChallengesPanel" ),
 		GetPanel( "SeasonPanel" ),
-		GetPanel( "CharactersPanel" ),
-		GetPanel( "ArmoryPanel" )
-		//GetPanel( "StorePanel" )  // StorePanel not registered as a tab - disabled
+		GetPanel( "ArmoryPanel" ),
+		GetPanel( "StorePanel" ),
 	]
 
 	foreach ( var panel in panels )
 	{
 		SetPanelTabEnabled( panel, ready )
 	}
+
 	TabData tabData = GetTabDataForPanel( file.menu )
 	SetTabDefsToSeasonal(tabData)
 	RefreshTabsSeasonalData()
 	RefreshTabsGRXData( tabData )
 	OnGRXStoreUpdate()
 	OnGRXSeasonUpdate()
-	LobbyTheme_LoadSavedColor()
+	OnGRXEventUpdate()
+
+	
+	
+	if ( GetConVarBool( "mtx_gifting_notifications_enabled" ) )
+	{
+		
+		
+		file.hasFocusedNews = false
+	}
+}
+
+void function UpdateEventTabVisibility( bool isVisible )
+{
+	TabData tabData = GetTabDataForPanel( file.menu )
+
+	SetTabDefVisible(file.eventsPanelTabDef, isVisible )
+	SetTabDefEnabled(file.eventsPanelTabDef, isVisible )
+
+	
+	if( !isVisible && file.eventsPanelTabDef.isActive )
+		ActivateTabNext( tabData )
 }
 
 void function UpdateNewnessCallbacks()
 {
-	// Newness system disabled — requires GRX/store infrastructure
+	ClearNewnessCallbacks()
+
+
+
+
+	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.SeasonTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "SeasonPanel" ) )
+	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.ArmoryTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "ArmoryPanel" ) )
+	Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.StoreTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "StorePanel" ) )
+	file.newnessInitialized = true
 }
 
 
 void function ClearNewnessCallbacks()
 {
+	if ( !file.newnessInitialized )
+		return
+
+
+
+
+	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.SeasonTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "SeasonPanel" ) )
+	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.ArmoryTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "ArmoryPanel" ) )
+	Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.StoreTab, OnNewnessQueryChangedUpdatePanelTab, GetPanel( "StorePanel" ) )
+	file.newnessInitialized = false
 }
 
 
@@ -535,8 +496,7 @@ void function LobbyMenuUpdate()
 	while ( true )
 	{
 		PlayPanelUpdate()
-		// No playlist rotation system, disabled to prevent per-frame spam
-		//TrackPlaylistRotation()
+		TrackPlaylistRotation()
 		HandleCrossplayPartyInvalid()
 
 		WaitFrame()
@@ -555,73 +515,18 @@ void function LobbyMenuUpdateLowFrequencyElements()
 	while ( true )
 	{
 		UpdateCornerButtons()
+		UpdatePromoToast()
+		SetPanelTabNew( GetPanel( "StorePanel" ), HasNewPersonalisedOffers() )
 
-			UpdatePromoToast()
-
-		UpdateBonusXP()
-
+		Boost_LowFreqUpdate()
+		UpdateProgressionModifiersButton()
 		wait 1.0
 	}
 }
 
-void function UpdateBonusXP()
-{
-
-	float boostCount = 0.0
-	Party party = GetParty()
-
-	foreach ( member in party.members )
-	{
-		boostCount += Clamp(member.boostCount * 0.1, 0.0, 3.0)
-	}
-
-	int rarity = 3
-	int boostPercentage =  int(boostCount * 100)
-	bool isVisible = boostCount > 0
-
-	if ( isVisible )
-	{
-		ToolTipData bonusXpTooltip
-		bonusXpTooltip.titleText = Localize( "#BONUS_XP_TITLE" )
-		bonusXpTooltip.rarity    = 3
-		bonusXpTooltip.descText  = Localize( "#BONUS_XP_DESC", boostPercentage )
-		Hud_SetToolTipData( file.bonusXp, bonusXpTooltip )
-	}
-	else
-	{
-		Hud_ClearToolTipData(file.bonusXp)
-	}
-
-
-	var rui = Hud_GetRui( file.bonusXp )
-	RuiSetBool(rui, "isVisible", isVisible)
-
-
-		if ( !file.hasFocusedNews && file.hasNewGifts )
-		{
-			Hud_SetVisible( file.bonusXp, false )
-			RuiSetBool(rui, "hasPromoPopup", true )
-		}
-		else
-		{
-			RuiSetBool(rui, "hasPromoPopup", false )
-			RuiSetInt(rui, "rarity", rarity)
-			RuiSetInt(rui, "boostPercentage", boostPercentage)
-		}
-
-
-
-	var playPanel           = GetPanel( "PlayPanel" )
-	bool isPlayPanelActive  = IsTabPanelActive( playPanel )
-
-	Hud_SetVisible( file.bonusXp, isVisible && isPlayPanelActive )
-}
-
-
-
 void function UpdatePromoToast()
 {
-	array<GRXScriptInboxMessage> inboxMessages = GetGiftingInboxMessages()
+	array<GRXContainerInfo> inboxMessages = GetGiftingInboxMessages()
 	var rui = Hud_GetRui( file.newsButton )
 	file.hasNewGifts = false
 
@@ -658,14 +563,32 @@ void function UpdatePromoToast()
 	}
 
 	RuiSetBool( rui, "hasGifts", file.hasNewGifts && isPlayPanelActive )
-	RuiSetColorAlpha( rui, "seasonColor", GetSeasonStyle().seasonColor, 1 )
+	RuiSetColorAlpha( rui, "seasonColor", GetSeasonStyle().seasonNewColor, 1 )
 }
 
+bool function IsSameVendorPlatform( string hardware1, string hardware2 )
+{
+	if ( hardware1 != hardware2 )
+	{
+		if( hardware1 == "PS4" || hardware1 == "PS5" ) 
+		{
+			if( hardware2 == "PS4" || hardware2 == "PS5" )
+				return true
+		}
+		else if( hardware1 == "X1" || hardware1 == "XB5" )
+		{
+			if( hardware2 == "X1" || hardware2 == "XB5" )
+				return true
+		}
 
+		return false
+	}
+	return true
+}
 
 void function HandleCrossplayPartyInvalid()
 {
-
+	
 	if ( GetPersistentVar( "showGameSummary" ) && IsPostGameMenuValid( true ) )
 		return
 
@@ -675,19 +598,18 @@ void function HandleCrossplayPartyInvalid()
 	if( IsDialog( GetActiveMenu() ) )
 		return
 
-
+	
 	string hardware   = GetUnspoofedPlayerHardware()
 	Party myParty     = GetParty()
 	foreach ( p in myParty.members )
 	{
-		if ( hardware != p.hardware )
+		if ( !IsSameVendorPlatform( hardware , p.hardware  ) )
 		{
 			LeaveParty()
 
 			ConfirmDialogData data
 			data.headerText = "#CROSSPLAY_DIALOG_INVALID_PARTY_HEADER"
 			data.messageText = Localize( "#CROSSPLAY_DIALOG_INVALID_PARTY_MSG" )
-
 			OpenOKDialogFromData( data )
 			break
 		}
@@ -696,8 +618,8 @@ void function HandleCrossplayPartyInvalid()
 
 void function Lobby_UpdateSelectedPlaylistUsingUISlot( string previousPlaylist )
 {
-
-
+	
+	
 	string uiSlot      = GetPlaylistVarString( previousPlaylist, "ui_slot", "" )
 	string newPlaylist = GetCurrentPlaylistInUiSlot( uiSlot )
 	printf("Found new playlist '%s' for ui_slot %s", newPlaylist, uiSlot)
@@ -711,14 +633,12 @@ void function Lobby_UpdateSelectedPlaylistUsingUISlot( string previousPlaylist )
 		PlayLobbyCharacterDialogue( mapChangeAlias )
 	}
 
-	Lobby_SetSelectedPlaylist( newPlaylist )
+	LobbyPlaylist_SetSelectedPlaylist( newPlaylist )
 	printf("Changed selected playlist from '%s' to '%s'", previousPlaylist, newPlaylist)
 }
 
 void function TrackPlaylistRotation()
 {
-	if ( file.previousRotationTime == -1 )
-		file.previousRotationTime = GetSoonestPlaylistRotationTime()
 
 
 
@@ -727,30 +647,57 @@ void function TrackPlaylistRotation()
 
 
 
-
-	if ( file.previousRotationTime < GetSoonestPlaylistRotationTime() )
+	if ( file.nextRotationTime < GetSoonestPlaylistRotationTime() )
 
 	{
-		file.previousRotationTime = GetSoonestPlaylistRotationTime()
+		ForceRefreshVisiblePlaylists()
+		file.nextRotationTime = GetSoonestPlaylistRotationTime()
 
 
 
 		if ( IsModeSelectMenuOpen() )
 		{
-
-
+			
+			
 			if ( PrivateMatchMapSelect_IsEnabled() )
 				UpdatePrivateMatchMapSelectDialog()
 			else if ( GamemodeSelect_IsEnabled() )
 				UpdateOpenModeSelectDialog()
 		}
+
+		string selectedPlaylist = LobbyPlaylist_GetSelectedPlaylist()
+		if ( !Lobby_IsPlaylistAvailable( selectedPlaylist ) && !AreWeMatchmaking() && !uiGlobal.isLevelShuttingDown )
+		{
+			Lobby_UpdateSelectedPlaylistUsingUISlot( selectedPlaylist )
+		}
+
+		ServerCallback_GamemodeSelectorInitialize()
+
+	}
+}
+
+void function UpdateProgressionModifiersButton()
+{
+	if ( GetActiveMenu() != file.menu )
+		return
+
+	BoostTable boosts = Boost_GetActiveBoosts( GetLocalClientPlayer() )
+	int boostCount = boosts.len() + 2 
+	if ( boostCount > 0 )
+	{
+		ToolTipData tooltip
+		tooltip.descText  = boostCount > 1 ? Localize( "#PROGRESSION_MODIFIERS_TOOLTIP_PLURAL", boostCount ) : Localize( "#PROGRESSION_MODIFIERS_TOOLTIP", boostCount )
+		Hud_SetToolTipData( file.progressionModifiersButton, tooltip )
+	}
+	else
+	{
+		Hud_ClearToolTipData( file.progressionModifiersButton )
 	}
 
-	string selectedPlaylist = Lobby_GetSelectedPlaylist()
-	if ( !Lobby_IsPlaylistAvailable( selectedPlaylist ) && !AreWeMatchmaking() && !uiGlobal.isLevelShuttingDown )
-	{
-		Lobby_UpdateSelectedPlaylistUsingUISlot( selectedPlaylist )
-	}
+	var rui = Hud_GetRui( file.progressionModifiersButton )
+
+	RuiSetColorAlpha( rui, "seasonColor", GetSeasonStyle().seasonNewColor, 1 )
+	RuiSetBool( rui, "isNew", Boost_UI_HasNewBoosts() )
 }
 
 void function UpdateCornerButtons()
@@ -769,10 +716,7 @@ void function UpdateCornerButtons()
 	Hud_SetVisible( file.newsButtonStatusIcon, isPlayPanelActive )
 	Hud_SetVisible( file.socialButton, isPlayPanelActive )
 	Hud_SetVisible( file.gameMenuButton, isPlayPanelActive )
-	Hud_SetVisible( file.playersButton, isPlayPanelActive )
-	Hud_SetVisible( file.serversButton, isPlayPanelActive )
-	Hud_SetVisible( file.DcButton, isPlayPanelActive )
-	Hud_SetVisible( file.BlogButton, isPlayPanelActive )
+	Hud_SetVisible( file.progressionModifiersButton, isPlayPanelActive )
 
 	var accessibilityHint = Hud_GetChild( playPanel, "AccessibilityHint" )
 	Hud_SetVisible( accessibilityHint, isPlayPanelActive && IsAccessibilityChatHintEnabled() && !VoiceIsRestricted() && (GetPartySize() > 1) )
@@ -793,12 +737,10 @@ void function UpdateCornerButtons()
 		InitButtonRCP( file.socialButton )
 	}
 
-	Hud_SetPinSibling(file.bonusXp, "PostGameButton")
-
 	string str = (( IsNetGraphEnabled() && isPlayPanelActive ) ? Localize( "#NETGRAPH_SERVERID", GetServerDebugId() ) : "")
 	Hud_SetText( file.serverDebugID, str )
 
-	Hud_SetText( file.dx12BetaText, false ? Localize( "#DIRECTX12_BETA" ) : "" )
+	Hud_SetText( file.dx12BetaText, IsDirectX12Beta() ? Localize( "#DIRECTX12_BETA" ) : "" )
 }
 
 void function RegisterInputs()
@@ -814,6 +756,7 @@ void function RegisterInputs()
 	RegisterButtonPressedCallback( KEY_Y, KeyY_OnActivate )
 	RegisterButtonPressedCallback( KEY_N, KeyN_OnActivate )
 	RegisterButtonPressedCallback( KEY_B, KeyB_OnActivate )
+	RegisterButtonPressedCallback( KEY_SPACE, KeySpace_OnActivate )
 
 	RegisterButtonPressedCallback( KEY_ENTER, OnLobbyMenu_FocusChat )
 	RegisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT, NewsButton_OnActivate )
@@ -835,6 +778,7 @@ void function DeregisterInputs()
 	DeregisterButtonPressedCallback( KEY_Y, KeyY_OnActivate )
 	DeregisterButtonPressedCallback( KEY_N, KeyN_OnActivate )
 	DeregisterButtonPressedCallback( KEY_B, KeyB_OnActivate )
+	DeregisterButtonPressedCallback( KEY_SPACE, KeySpace_OnActivate )
 
 	DeregisterButtonPressedCallback( KEY_ENTER, OnLobbyMenu_FocusChat )
 	DeregisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT, NewsButton_OnActivate )
@@ -859,12 +803,15 @@ void function SeasonTab_OnActivate( var button )
 	JumpToSeasonTab()
 }
 
+void function ProgressionModifiersButton_OnActivate( var button )
+{
+	OpenProgressionModifiersMenu()
+}
+
 void function NewsButton_OnActivate( var button )
 {
-	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
-		return
-
-	LaunchExternalWebBrowser( "https://blog.playvalkyrie.org/", WEBBROWSER_FLAG_NONE )
+	if ( PromoDialog_CanShow() )
+		AdvanceMenu( GetMenu( "PromoDialogUM" ) )
 }
 
 void function NewsButton_OnHover( var button )
@@ -881,7 +828,7 @@ void function SocialButton_OnActivate( var button )
 	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
 		return
 
-	#if PC_PROG
+
 		if ( !MeetsAgeRequirements() )
 		{
 			ConfirmDialogData dialogData
@@ -892,7 +839,7 @@ void function SocialButton_OnActivate( var button )
 			OpenOKDialogFromData( dialogData )
 			return
 		}
-	#endif
+
 
 	AdvanceMenu( GetMenu( "SocialMenu" ) )
 }
@@ -900,7 +847,7 @@ void function SocialButton_OnActivate( var button )
 
 void function GameMenuButton_OnActivate( var button )
 {
-	if ( InputIsButtonDown( BUTTON_STICK_LEFT ) )
+	if ( InputIsButtonDown( BUTTON_STICK_LEFT ) ) 
 		return
 
 	if ( IsDialog( GetActiveMenu() ) )
@@ -924,12 +871,12 @@ void function PostGameButton_OnActivate( var button )
 
 void function OnLobbyMenu_NavigateBack()
 {
-
-
-
-
-
-
+	
+	
+	
+	
+	
+	
 
 	if ( GetMenuActiveTabIndex( file.menu ) == 0 )
 	{
@@ -956,33 +903,33 @@ void function OnLobbyMenu_PostGameOrChat( var button )
 {
 	var savedMenu = GetActiveMenu()
 
-	#if CONSOLE_PROG
-		const float HOLD_FOR_CHAT_DELAY = 1.0
-		float startTime = UITime()
-		while ( !VoiceIsRestricted() && (InputIsButtonDown( BUTTON_BACK ) || InputIsButtonDown( KEY_TAB ) && GetConVarInt( "hud_setting_accessibleChat" ) != 0) )
-		{
-			if ( UITime() - startTime > HOLD_FOR_CHAT_DELAY )
-			{
-				if ( GetPartySize() > 1 )
-				{
-					printt( "starting message mode", Hud_IsEnabled( GetLobbyChatBox() ) )
-					Hud_StartMessageMode( GetLobbyChatBox() )
-				}
-				else
-				{
-					ConfirmDialogData dialogData
-					dialogData.headerText = "#ACCESSIBILITY_NO_CHAT_HEADER"
-					dialogData.messageText = "#ACCESSIBILITY_NO_CHAT_MESSAGE"
-					dialogData.contextImage = $"ui/menu/common/dialog_notice"
 
-					OpenOKDialogFromData( dialogData )
-				}
-				return
-			}
 
-			WaitFrame()
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	if ( IsPostGameMenuValid() && savedMenu == GetActiveMenu() )
 	{
@@ -996,8 +943,12 @@ void function PostGameFlow()
 
 
 
-	bool showRankedSummary = GetPersistentVarAsInt( "showRankedSummary" ) != 0
+	bool showRankedSummary = Ranked_ShowRankedSummary()
+	bool showCupSummary = Cups_ShowCupSummary()
 	bool isFirstTime       = GetPersistentVarAsInt( "showGameSummary" ) != 0
+
+		bool showOrientationMatchDialog = GetPersistentVarAsInt( "showOrientationMatchGraduationDialog" ) != 0
+
 
 	OpenPostGameMenu( null )
 
@@ -1006,9 +957,14 @@ void function PostGameFlow()
 		OpenPostGameBattlePassMenu( isFirstTime )
 	}
 
-	if ( showRankedSummary )
+	if ( showRankedSummary && !showCupSummary )
 	{
 		OpenRankedSummary( isFirstTime )
+	}
+
+	if ( showCupSummary && Cups_IsCupForLatestMatchActive( GetLocalClientPlayer() ) )
+	{
+		OpenCupsSummary()
 	}
 
 
@@ -1018,11 +974,27 @@ void function PostGameFlow()
 
 
 
+
+
+		if ( showOrientationMatchDialog )
+		{
+			ConfirmDialogData dialogData
+			dialogData.headerText  = "#ORIENTATION_MATCH_GRADUATION_HEADER"
+			dialogData.messageText = "#ORIENTATION_MATCH_GRADUATION_MESSAGE"
+			dialogData.okText      = ["#B_BUTTON_CLOSE", "#B_BUTTON_CLOSE"]
+			dialogData.resultCallback = void function( int result )
+			{
+				Remote_ServerCallFunction( "ClientCallback_ViewedOrientationMatchDialog" )
+			}
+			OpenOKDialogFromData( dialogData )
+		}
+
 }
 
 
 void function OnLobbyMenu_FocusChat( var panel )
 {
+
 		if ( IsDialog( GetActiveMenu() ) )
 			return
 
@@ -1035,6 +1007,7 @@ void function OnLobbyMenu_FocusChat( var panel )
 			var textChat  = Hud_GetChild( playPanel, "ChatRoomTextChat" )
 			Hud_SetFocused( Hud_GetChild( textChat, "ChatInputLine" ) )
 		}
+
 }
 
 
@@ -1064,6 +1037,10 @@ void function KeyEscape_OnActivate( var button )
 void function ButtonX_OnActivate( var button )
 {
 	DispatchLobbyPopupInput( BUTTON_X )
+
+
+	DismissGamemodeSelectorModal( button )
+
 }
 
 
@@ -1094,6 +1071,15 @@ void function KeyN_OnActivate( var button )
 void function KeyB_OnActivate( var button )
 {
 	DispatchLobbyPopupInput( KEY_B )
+}
+
+void function KeySpace_OnActivate( var button )
+{
+	DispatchLobbyPopupInput( KEY_SPACE )
+
+
+		DismissGamemodeSelectorModal( button )
+
 }
 
 
@@ -1162,73 +1148,7 @@ void function SetNewsButtonTooltip( int status )
 	Hud_SetToolTipData( file.newsButton, newsToolTip )
 }
 
-// Custom button callbacks
-void function DCButton_OnActivate( var button )
+float function GetLobbyMenuOpenedTime()
 {
-	if ( IsDialog( GetActiveMenu() ) )
-		return
-
-	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
-		return
-
-	LaunchExternalWebBrowser( "https://discord.gg/ujHfvc5Ehv", WEBBROWSER_FLAG_NONE )
-}
-
-void function BlogButton_OnActivate( var button )
-{
-	if ( IsDialog( GetActiveMenu() ) )
-		return
-
-	if ( !IsTabPanelActive( GetPanel( "PlayPanel" ) ) )
-		return
-
-	LaunchExternalWebBrowser( "https://blog.playvalkyrie.org", WEBBROWSER_FLAG_NONE )
-}
-
-void function UpdateServerAndPlayerCountButtons()
-{
-	HudElem_SetRuiArg( file.playersButton, "buttonText", "" + MS_GetPlayerCount() )
-	Hud_SetWidth( file.playersButton, Hud_GetBaseWidth( file.playersButton ) * 2 )
-
-	HudElem_SetRuiArg( file.serversButton, "buttonText", "" + MS_GetServerCount() )
-	Hud_SetWidth( file.serversButton, Hud_GetBaseWidth( file.serversButton ) * 2 )
-}
-
-// Utility functions
-string function GetUIPlaylistName( string playlist )
-{
-	if ( !IsLobby() || !IsConnected() )
-		return ""
-
-	return GetPlaylistVarString( playlist, "name", playlist )
-}
-
-string function GetUIMapName( string map )
-{
-	if ( map in MapNames )
-		return MapNames[map]
-
-	return map
-}
-
-string function GetUIVisibilityName( int vis )
-{
-	if ( vis in VisibilityNames )
-		return VisibilityNames[vis]
-
-	return ""
-}
-
-asset function GetUIMapAsset( string map, bool gamemode_assets = false )
-{
-	if ( map in MapAssets && !gamemode_assets )
-		return MapAssets[map]
-
-	if ( map in MapAssetsSquare && gamemode_assets )
-		return MapAssetsSquare[map]
-
-	if ( gamemode_assets )
-		return $"rui/menu/maps/map_not_found_square_icon"
-
-	return $"rui/menu/maps/map_not_found_big_icon"
+	return file.lobbyMenuOpenTime
 }

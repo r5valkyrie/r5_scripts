@@ -1,6 +1,7 @@
 untyped
 
 global function InitMatchmakingOverlay
+global function MatchRequeueLeaveMatchPoll
 global function GetActiveSearchingPlaylist
 global function IsConnectingToMatch
 
@@ -32,13 +33,15 @@ void function InitMatchmakingOverlay()
 	RegisterUIVarChangeCallback( "gameStartTime", GameStartTime_Changed )
 
 	file.matchStatusRuis = GetElementsByClassnameForMenus( "MatchmakingStatusRui", uiGlobal.allMenus )
-	//foreach ( var el in file.matchStatusRuis )
-		//printt( "matchStatusRuis ", GetParentMenu( el ).GetHudName() )
+	foreach ( var el in file.matchStatusRuis )
+		printt( "matchStatusRuis ", GetParentMenu( el ).GetHudName() )
 
-	//RegisterSignal( "UpdateMatchmakingStatus" )
-	//RegisterSignal( "BypassWaitBeforeRestartingMatchmaking" )
-	//RegisterSignal( "CancelRestartingMatchmaking" )
-	//RegisterSignal( "LeaveParty" )
+	RegisterSignal( "MatchRequeueLeaveMatchPoll" )
+	RegisterSignal( "UpdateMatchmakingStatus" )
+	RegisterSignal( "UpdateMatchmakeFromMatchPlaylist" )
+	RegisterSignal( "BypassWaitBeforeRestartingMatchmaking" )
+	RegisterSignal( "CancelRestartingMatchmaking" )
+	RegisterSignal( "LeaveParty" )
 }
 
 function GameStartTime_Changed()
@@ -48,11 +51,11 @@ function GameStartTime_Changed()
 
 void function UpdateGameStartTimeCounter()
 {
-	if ( level.ui.gameStartTime == null )
+	if ( level.ui.uiGameStartTime == -1.0 )
 		return
 
 	MatchmakingSetSearchText( "#STARTING_IN_LOBBY" )
-	MatchmakingSetCountdownTimer( expect float( level.ui.gameStartTime + 0.0 ), true )
+	MatchmakingSetCountdownTimer( expect float( level.ui.uiGameStartTime ), true )
 
 	HideMatchmakingStatusIcons()
 }
@@ -86,11 +89,11 @@ string function GetActiveSearchingPlaylist()
 
 float function CalcMatchmakingWaitTime()
 {
-	float result = ((file.matchmakingStartTime > 0.01) ? (Time() - file.matchmakingStartTime) : 0.0)
+	float result = ((file.matchmakingStartTime > 0.01) ? (UITime() - file.matchmakingStartTime) : 0.0)
 	return result
 }
 
-void function UpdateTimeToRestartMatchmaking( float time )//JFS: This uses UI time instead of server time, which leads to awkwardness in MatchmakingSetCountdownTimer() and the rui involved
+void function UpdateTimeToRestartMatchmaking( float time )
 {
 	file.timeToRestartMatchMaking  = time
 
@@ -122,7 +125,7 @@ void function UpdateRestartMatchmakingStatus( float time )
 
 void function MatchmakingOverlay_InitForHubLevelConnect()
 {
-	//thread UpdateMatchmakingStatus()
+	thread UpdateMatchmakingStatus()
 }
 
 
@@ -134,9 +137,52 @@ bool function IsConnectingToMatch()
 	return isConnectingToMatch
 }
 
+void function MatchRequeueLeaveMatchPoll()
+{
+	thread MatchRequeueLeaveMatchPoll_Thread()
+}
+
+void function MatchRequeueLeaveMatchPoll_Thread()
+{
+	Signal( uiGlobal.signalDummy, "MatchRequeueLeaveMatchPoll" )
+	EndSignal( uiGlobal.signalDummy, "MatchRequeueLeaveMatchPoll" )
+	EndSignal( uiGlobal.signalDummy, "CleanupInGameMenus" )
+
+	float notMatchmakingGracePeriod = GetConVarFloat( "matchRequeue_leaveGraceTime" )
+	float notMatchmakingStartTime = UITime()
+	bool wasLastMatchmaking = false
+
+	while ( true )
+	{
+		if ( MatchmakingStatusShouldShowAsActiveSearch( GetMyMatchmakingStatus() ) )
+		{
+			wasLastMatchmaking = true
+		}
+		else
+		{
+			if ( wasLastMatchmaking == true )
+			{
+				wasLastMatchmaking = false
+				notMatchmakingStartTime = UITime()
+			}
+			else
+			{
+				if ( UITime() - notMatchmakingStartTime > notMatchmakingGracePeriod )
+				{
+					LeaveMatch()
+					UpdateSystemMenu()
+					break
+				}
+			}
+		}
+
+		wait 1.0
+	}
+}
+
 void function UpdateMatchmakingStatus()
 {
-	/*Signal( uiGlobal.signalDummy, "UpdateMatchmakingStatus" )
+	Signal( uiGlobal.signalDummy, "UpdateMatchmakingStatus" )
 	EndSignal( uiGlobal.signalDummy, "CleanupInGameMenus" )
 	EndSignal( uiGlobal.signalDummy, "UpdateMatchmakingStatus" )
 
@@ -174,7 +220,7 @@ void function UpdateMatchmakingStatus()
 			if ( activeSearchingPlaylist.len() > 0 )
 			{
 				lastActiveSearchingPlaylist = activeSearchingPlaylist
-				file.matchmakingStartTime = Time()
+				file.matchmakingStartTime = UITime()
 			}
 			else
 			{
@@ -236,7 +282,7 @@ void function UpdateMatchmakingStatus()
 		}
 
 		WaitFrameOrUntilLevelLoaded()
-	}*/
+	}
 }
 
 float function GetTimeToRestartMatchMaking()
@@ -285,14 +331,10 @@ void function MatchmakingSetCountdownVisible( bool state )
 {
 	foreach ( element in file.matchStatusRuis )
 		MMStatusRui_SetCountdownVisible( Hud_GetRui( element ), state )
-
-	MMStatusOnHUD_SetCountdownVisible( state )
 }
 
-void function MatchmakingSetCountdownTimer( float time, bool useServerTime = true ) //JFS: useServerTime bool is awkward, comes from level.ui.gameStartTime using server time and UpdateTimeToRestartMatchmaking() uses UI time.
+void function MatchmakingSetCountdownTimer( float time, bool useServerTime = true ) 
 {
 	foreach ( element in file.matchStatusRuis )
 		MMStatusRui_SetCountdownTimer( Hud_GetRui( element ), time, useServerTime )
-
-	MMStatusOnHUD_SetCountdownTimer( time, useServerTime )
 }

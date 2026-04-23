@@ -27,10 +27,10 @@ void function InitCardFramesPanel( var panel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
 	file.blurbPanel = Hud_GetChild( Hud_GetParent( panel ), "SkinBlurb" )
-	                                                                                                                                           
-	                                                                                                                     
-	                                                                                                                       
-	                                                                                                                        
+	
+	
+	
+	
 }
 
 
@@ -55,7 +55,7 @@ void function CardFramesPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in file.cardFrameList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -65,11 +65,11 @@ void function CardFramesPanel_Update( var panel )
 
 	SendMenuGladCardPreviewCommand( eGladCardPreviewCommandType.FRAME, -1, null )
 
-	                                  
+	
 	if ( IsPanelActive( file.panel ) )
 	{
 		LoadoutEntry entry = Loadout_GladiatorCardFrame( GetTopLevelCustomizeContext() )
-		file.cardFrameList = GetLoadoutItemsSortedForMenu( entry, GladiatorCardFrame_GetSortOrdinal )
+		file.cardFrameList = GetLoadoutItemsSortedForMenu( [entry], GladiatorCardFrame_GetSortOrdinal, null, [] )
 		FilterFrameList( file.cardFrameList )
 
 		Hud_InitGridButtons( file.listPanel, file.cardFrameList.len() )
@@ -84,7 +84,7 @@ void function CardFramesPanel_Update( var panel )
 
 void function CardFramesPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) ) 
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -132,7 +132,7 @@ bool function ShouldDisplayFrame( ItemFlavor frame )
 		ItemFlavor ornull character = GladiatorCardFrame_GetCharacterFlavor( frame )
 		if ( character == null )
 			character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
-		
+
 		LoadoutEntry entry = Loadout_GladiatorCardFrame( expect ItemFlavor( character ) )
 		if ( !IsItemFlavorUnlockedForLoadoutSlot( LocalClientEHI(), entry, frame ) )
 			return false

@@ -2,9 +2,9 @@ global function InitPromoData
 global function GetPromoImage
 global function OpenPromoLink
 
-#if DEVELOPER
+#if DEV
 global function DEV_PrintUMPromoData
-#endif       
+#endif
 
 
 struct
@@ -39,120 +39,206 @@ asset function GetPromoImage( string identifier )
 	return image
 }
 
-void function OpenPromoLink( string linkType, string link )
+void function OpenPromoLink( string linkType, string link, string fromPageId = "")
 {
-	                                                                      
-	if ( linkType == "battlepass" )
+	
+	switch ( linkType )
 	{
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToSeasonTab( "PassPanel" )
-	}
-	else if ( linkType == "challenges" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToChallenges( link );
-	}
-	else if ( linkType == "playapex" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		OpenGameModeSelectDialog()
-	}
-	else if ( linkType == "heirloom" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToMythicOfferScreen( link, eMythicType.HEIRLOOM )
-	}
-	else if ( linkType == "prestigeskin" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToMythicOfferScreen( link, eMythicType.PRESTIGE_SKIN )
-	}
-	else if ( linkType == "storecharacter" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		if ( IsValidItemFlavorCharacterRef( link ) )
-		{
-			ItemFlavor character = GetItemFlavorByCharacterRef( link )
-			if ( GRX_IsItemOwnedByPlayer( character ) )
-				JumpToCharactersTab()
-			else
-				JumpToCharacterCustomize( character )
-		}
-		else if ( IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( link ) ) )
-		{
-			ItemFlavor character = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( link ) )
-			if ( GRX_IsItemOwnedByPlayer( character ) )
-				JumpToCharactersTab()
-			else
-				JumpToCharacterCustomize( character )
-		}
-		else
-		{
-			JumpToCharactersTab()
-		}
-	}
-	else if ( linkType == "themedstoreskin" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		ItemFlavor ornull activeThemedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
-		if ( activeThemedShopEvent != null )
-		{
-			if( link != "" )
-				JumpToThemeShopOffer( link )
-			else
-				JumpToSeasonTab( "ThemedShopPanel" )
-		}
-		else
-			JumpToStoreTab()
-	}
-	else if ( linkType == "collectionevent" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		ItemFlavor ornull activeCollectionEvent = GetActiveCollectionEvent( GetUnixTimestamp() )
-		if ( activeCollectionEvent != null )
-			JumpToSeasonTab( "CollectionEventPanel" )
-		else
-			JumpToStoreTab()
-	}
-	else if ( linkType == "url" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_NONE )
-	}
-	else if ( linkType == "storeoffer" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToStoreOffer( FEATURED_STORE_PANEL, link )
-	}
-	else if ( linkType == "monthlystoreoffer" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToStoreOffer( SEASONAL_STORE_PANEL, link )
-	}
-	else if ( linkType == "whatsnew" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToSeasonTab( "WhatsNewPanel" )
-	}
-	else if ( linkType == "storyevent" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
 
-		array<ItemFlavor> storyChallengeEvents  = GetActiveStoryChallengeEvents( GetUnixTimestamp() )
-		if ( storyChallengeEvents.len() <= 0 )
-			return
 
-		StoryEventAboutDialog_SetEvent( storyChallengeEvents[0] )
-		AdvanceMenu( GetMenu( "StoryEventAboutDialog" ) )
-	}
-	else if ( linkType == "storespecials" )
-	{
-		EmitUISound( "UI_Menu_Accept" )
-		JumpToStoreOffer( SPECIALS_STORE_PANEL, link)
+		case "battlepass":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToSeasonTab( "PassPanel" )
+			break
+
+		case "battlepass_level":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToSeasonTab( "PassPanel" )
+			BattlePass_PurchaseButton_OnActivate( null )
+			break
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		case "challenges":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToChallenges( link )
+			break
+
+		case "playapex":
+			EmitUISound( "UI_Menu_Accept" )
+			OpenGameModeSelectDialog()
+			break
+
+		case "heirloom":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToMythicOfferScreen( link, eMythicType.HEIRLOOM )
+			break
+
+		case "prestigeskin":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToMythicOfferScreen( link, eMythicType.PRESTIGE_SKIN )
+			break
+
+		case "storecharacter":
+			EmitUISound( "UI_Menu_Accept" )
+			if ( IsValidItemFlavorCharacterRef( link ) )
+			{
+				ItemFlavor character = GetItemFlavorByCharacterRef( link )
+				if ( GRX_IsInventoryReady( GetLocalClientPlayer() ) && GRX_IsItemOwnedByPlayer( character )  )
+					JumpToCharactersTab()
+				else
+					JumpToCharacterCustomize( character )
+			}
+			else if ( IsValidItemFlavorGUID( ConvertItemFlavorGUIDStringToGUID( link ) ) )
+			{
+				ItemFlavor character = GetItemFlavorByGUID( ConvertItemFlavorGUIDStringToGUID( link ) )
+				if ( GRX_IsInventoryReady( GetLocalClientPlayer() ) && GRX_IsItemOwnedByPlayer( character ) )
+					JumpToCharactersTab()
+				else
+					JumpToCharacterCustomize( character )
+			}
+			else
+			{
+				JumpToCharactersTab()
+			}
+			break
+
+		case "themedstoreskin":
+			EmitUISound( "UI_Menu_Accept" )
+			ItemFlavor ornull activeThemedShopEvent = GetActiveThemedShopEvent( GetUnixTimestamp() )
+			if ( activeThemedShopEvent != null )
+			{
+				if ( link != "" )
+					JumpToThemeShopOffer( link )
+				else
+					JumpToEventTab( "ThemedShopPanel" )
+			}
+			else
+				JumpToStoreTab()
+			break
+
+		case "collectionevent":
+			EmitUISound( "UI_Menu_Accept" )
+			ItemFlavor ornull activeCollectionEvent = GetActiveCollectionEvent( GetUnixTimestamp() )
+			if ( activeCollectionEvent != null )
+				JumpToEventTab( "CollectionEventPanel" )
+			else
+				JumpToStoreTab()
+			break
+
+		case "url":
+			EmitUISound( "UI_Menu_Accept" )
+			LaunchExternalWebBrowser( link, WEBBROWSER_FLAG_NONE )
+			break
+
+		case "storeoffer":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToStoreOffer( FEATURED_STORE_PANEL, link )
+			break
+
+		case "monthlystoreoffer":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToStoreOffer( SEASONAL_STORE_PANEL, link )
+			break
+
+		case "whatsnew":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToSeasonTab( "WhatsNewPanel" )
+			break
+
+		case "storyevent":
+			EmitUISound( "UI_Menu_Accept" )
+			array<ItemFlavor> storyChallengeEvents = GetActiveStoryChallengeEvents( GetUnixTimestamp() )
+			if ( storyChallengeEvents.len() <= 0 )
+				return
+			StoryEventAboutDialog_SetEvent( storyChallengeEvents[0] )
+			AdvanceMenu( GetMenu( "StoryEventAboutDialog" ) )
+			break
+
+		case "storespecials":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToStoreOffer( SPECIALS_STORE_PANEL, link )
+			break
+
+		case "personalizedstore":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToStorePanel( PERSONALIZED_STORE_PANEL )
+			break
+
+		case "milestoneevent":
+			ItemFlavor ornull milestoneEvent = GetActiveEventTabMilestoneEvent( GetUnixTimestamp() )
+			if ( milestoneEvent != null )
+			{
+				switch ( link )
+				{
+					case "landingpage":
+						EventsPanel_SetOpenPageIndex( eEventsPanelPage.LANDING )
+						break
+
+					case "purchasepack":
+						EventsPanel_SetOpenPageIndex( eEventsPanelPage.MILESTONES )
+						break
+
+					case "collection":
+						EventsPanel_SetOpenPageIndex( eEventsPanelPage.COLLECTION )
+						break
+
+					case "freerewards":
+						ItemFlavor ornull activeEventShop = EventShop_GetCurrentActiveEventShop()
+						if ( activeEventShop == null )
+							return
+						EventsPanel_SetOpenPageIndex( eEventsPanelPage.EVENT_SHOP )
+						break
+				}
+				JumpToEventTab( "RTKEventsPanel" )
+			}
+			break
+
+		case "storemilestoneevent":
+			array<ItemFlavor> storeMilestoneEvents = GetActiveStoreOnlyMilestoneEvents( GetUnixTimestamp() )
+			if ( storeMilestoneEvents.len() > 0 )
+			{
+				JumpToStoreMilestoneEventsMenu( link, fromPageId )
+			}
+			break
+
+		case "storeOfferShop":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToStoreSection( link )
+			break
+
+		case "storeMythicShop":
+			EmitUISound( "UI_Menu_Accept" )
+			JumpToMythicSection( link )
+			break
+
+		case "rumble":
+			EmitUISound( "UI_Menu_Accept" )
+			GamemodeSelect_JumpToCups( null )
+			break
+
+		case "rankedrumble":
+
+			EmitUISound( "UI_Menu_Accept" )
+			RankedRumble_JumpToRumblePage()
+
+			break
 	}
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_PrintUMPromoData()
 {
 	UMData um = EADP_UM_GetPromoData()
@@ -174,4 +260,4 @@ void function DEV_PrintUMPromoData()
 		}
 	}
 }
-#endif       
+#endif

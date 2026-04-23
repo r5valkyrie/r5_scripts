@@ -29,15 +29,15 @@ void function InitCharacterQuipsPanel( var panel )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, CharacterQuipsPanel_OnShow )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, CharacterQuipsPanel_OnHide )
 
-	                                                                                               
-	                                                                                                              
-	                                                                                  
-	                                                                                      
+	
+	
+	
+	
 
-	                                                                                                                                           
-	                                                                                                                     
-	                                                                                                                       
-	                                                                                                                        
+	
+	
+	
+	
 
 	AddCallback_OnTopLevelCustomizeContextChanged( panel, CharacterQuipsPanel_OnCustomizeContextChanged )
 

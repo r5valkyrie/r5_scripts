@@ -20,11 +20,11 @@ global const int MAX_DISPLAYED_MODES = 7
 
 bool function PrivateMatchMapSelect_IsEnabled()
 {
-	return GetCurrentPlaylistVarBool( "gamemode_select_v2_enable", false )                                          
+	return GetCurrentPlaylistVarBool( "gamemode_select_v2_enable", false ) 
 }
 
 
-                                      
+
 const int DRAW_NONE = 0
 const int DRAW_IMAGE = 1
 const int DRAW_RANK = 2
@@ -59,16 +59,16 @@ void function PrivateMatchMapSelect_UpdateSelectButton( var button, string playl
 
 	bool isPlaylistAvailable = Lobby_IsPlaylistAvailable( playlistName )
 	Hud_SetLocked( button, !isPlaylistAvailable )
-	RuiSetString( rui, "modeLockedReason", Lobby_GetPlaylistStateString( Lobby_GetPlaylistState( playlistName ) ) )
+	RuiSetString( rui, "modeLockedReason", LobbyPlaylist_GetPlaylistStateString( LobbyPlaylist_GetPlaylistState( playlistName ) ) )
 
 	int emblemMode = DRAW_NONE
-	if ( IsRankedPlaylist( playlistName ) )
+	if ( GameModeVariant_IsActiveForPlaylist( playlistName, eGameModeVariants.SURVIVAL_RANKED ) )
 	{
 		emblemMode = DRAW_RANK
 		int rankScore = GetPlayerRankScore( GetLocalClientPlayer() )
 		int ladderPosition = Ranked_GetLadderPosition( GetLocalClientPlayer() )
 
-		if ( Ranked_ShouldUpdateWithComnunityUserInfo( rankScore, ladderPosition )  )                                  
+		if ( Ranked_ShouldUpdateWithComnunityUserInfo( rankScore, ladderPosition )  ) 
 			file.rankedRUIToUpdate = rui
 
 
@@ -95,7 +95,7 @@ void function PrivateMatchMapSelect_PlayVideo( var button, string playlistName )
 	asset desiredVideoAsset = GetBinkFromBinkMap( videoKey )
 
 	if ( desiredVideoAsset != $"" )
-		file.currentVideoAsset = $""                                                                                             
+		file.currentVideoAsset = $"" 
 	Signal( uiGlobal.signalDummy, "GamemodeSelectV2_EndVideoStopThread" )
 	Assert( file.currentVideoAsset == $"" )
 
@@ -140,7 +140,7 @@ void function VideoStopThread( var button )
 }
 
 
-void function InitPrivateMatchMapSelect( var newMenuArg )                                               
+void function InitPrivateMatchMapSelect( var newMenuArg ) 
 {
 	var menu = GetMenu( "PrivateMatchMapSelectDialog" )
 	file.menu = menu
@@ -213,8 +213,8 @@ void function UpdatePrivateMatchMapSelectDialog()
 
 		if ( slotToPlaylistNameMap[uiSlot] != "" )
 		{
-			                                                     
-			                                                                                                                                   
+			
+			
 			continue
 		}
 
@@ -279,7 +279,7 @@ void function GamemodeButton_Activate( var button )
 	if ( IsPrivateMatchLobby() )
 		PrivateMatch_SetSelectedPlaylist( playlistName )
 	else
-		Lobby_SetSelectedPlaylist( playlistName )
+		LobbyPlaylist_SetSelectedPlaylist( playlistName )
 
 	CloseAllDialogs()
 }
@@ -287,7 +287,7 @@ void function GamemodeButton_Activate( var button )
 
 void function GamemodeButton_OnGetFocus( var button )
 {
-	                                                
+	
 
 	string playlistName = file.selectButtonPlaylistNameMap[button]
 	PrivateMatchMapSelect_PlayVideo( button, playlistName )
@@ -296,7 +296,7 @@ void function GamemodeButton_OnGetFocus( var button )
 
 void function GamemodeButton_OnLoseFocus( var button )
 {
-	                                                 
+	
 }
 
 
@@ -324,9 +324,9 @@ void function Ranked_OnUserInfoUpdatedInGameModeSelect( string hardware, string 
 
 	expect CommunityUserInfo( cui )
 
-	if ( cui.hardware == GetPlayerHardware() && cui.uid == GetPlayerUID() )                                      
+	if ( cui.hardware == GetPlayerHardware() && cui.uid == GetPlayerUID() ) 
 	{
-		if ( file.rankedRUIToUpdate != null  )                                                                                                                                
+		if ( file.rankedRUIToUpdate != null  ) 
 		{			
 			PopulateRuiWithRankedBadgeDetails( file.rankedRUIToUpdate, cui.rankScore, cui.rankedLadderPos )
 		}

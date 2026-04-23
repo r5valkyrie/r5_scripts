@@ -40,6 +40,8 @@ void function InitArmoryWeaponsPanel( var panel )
 
 void function ArmoryWeaponsPanel_OnShow( var panel )
 {
+	UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
+
 	array<ItemFlavor> categories = GetAllWeaponCategories()
 
 	foreach ( index, button in file.weaponCategoryButtons )
@@ -52,7 +54,7 @@ void function ArmoryWeaponsPanel_OnHide( var panel )
 	{
 		foreach ( var button, ItemFlavor category in file.buttonToCategory )
 		{
-			if ( category in NEWNESS_QUERIES.WeaponCategoryButton )                                                    
+			if ( category in NEWNESS_QUERIES.WeaponCategoryButton ) 
 				Newness_RemoveCallback_OnRerverseQueryUpdated( NEWNESS_QUERIES.WeaponCategoryButton[ category ], OnNewnessQueryChangedUpdateButton, button )
 		}
 	}

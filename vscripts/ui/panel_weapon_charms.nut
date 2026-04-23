@@ -19,16 +19,20 @@ struct
 	ItemFlavor& currentWeapon
 	ItemFlavor& currentWeaponSkin
 	bool charmsMenuActive = false
+	array< ItemFlavor > weaponCharmListCache
+	table< ItemFlavor, ItemFlavor > charmToWeaponMap
+	string collectedCountString = ""
+	bool grxCallbackAdded = false
 } file
 
 
-                                                
-                                                 
-                                           
-                                                
-                                                 
-                                                 
-                                                
+
+
+
+
+
+
+
 
 
 
@@ -43,20 +47,20 @@ void function InitWeaponCharmsPanel( var panel )
 
 	pd.listPanel = Hud_GetChild( panel, "WeaponCharmList" )
 
-
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, WeaponCharmsPanel_OnShow )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, WeaponCharmsPanel_OnHide )
+	AddPanelEventHandler_FocusChanged( panel, WeaponCharmsPanel_OnFocusChanged )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddPanelFooterOption( panel, LEFT, BUTTON_A, false, "#A_BUTTON_SELECT", "", null, CustomizeMenus_IsFocusedItem )
 
-	#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 		AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
 		AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
-	#else
+#else
 		AddPanelFooterOption( panel, RIGHT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
 		AddPanelFooterOption( panel, RIGHT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
-	#endif
+#endif
 
 	void functionref( var ) func = (
 			void function( var button ) : ()
@@ -66,13 +70,19 @@ void function InitWeaponCharmsPanel( var panel )
 			}
 	)
 
-	#if NX_PROG || PC_PROG_NX_UI
+	if ( !file.grxCallbackAdded )
+	{
+		AddUICallback_OnLevelInit(  AddLevelInitUICallback_ClearCharmListCache ) 
+		file.grxCallbackAdded = true 
+	}
+
+#if PC_PROG_NX_UI
 		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemFavoriteable )
 		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemFavorite )
-	#else
+#else
 		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemFavoriteable )
 		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemFavorite )
-	#endif
+#endif
 }
 
 
@@ -81,10 +91,28 @@ void function WeaponCharmsPanel_OnShow( var panel )
 	UI_SetPresentationType( ePresentationType.WEAPON_CHARMS )
 
 	file.currentPanel = panel
-	Hud_ScrollToTop( file.panelDataMap[panel].listPanel )
+
+	file.charmToWeaponMap.clear()
+	foreach ( ItemFlavor weaponFlav in GetAllWeaponItemFlavors() )
+	{
+		LoadoutEntry entry   = Loadout_WeaponCharm( weaponFlav )
+		ItemFlavor charmFlav = LoadoutSlot_GetItemFlavor( LocalClientEHI(), entry )
+		if ( !WeaponCharm_IsTheEmpty( charmFlav ) )
+		{
+			charmFlav.loadoutSortPriority = charmFlav.loadoutSortPriority | eLoadoutSortPriority.EQUIPPED
+			file.charmToWeaponMap[ charmFlav ] <- weaponFlav
+		}
+	}
 
 	thread TrackIsOverScrollBar( file.panelDataMap[panel].listPanel )
 	WeaponCharmsPanel_Update( panel )
+	Hud_ScrollToTop( file.panelDataMap[panel].listPanel )
+
+	if( Hud_GetButtonCount( file.panelDataMap[panel].listPanel ) > 0 )
+	{
+		var button0 = Hud_GetButton( file.panelDataMap[panel].listPanel, 0 )
+		Hud_HandleEvent( button0, UIE_CLICK )
+	}
 }
 
 void function WeaponCharmsPanel_OnHide( var panel )
@@ -92,16 +120,33 @@ void function WeaponCharmsPanel_OnHide( var panel )
 	Signal( uiGlobal.signalDummy, "TrackIsOverScrollBar" )
 
 	WeaponCharmsPanel_Update( panel )
+
+	
+	
+	
+	PanelData pd    = file.panelDataMap[panel]
+	Hud_InitGridButtons( pd.listPanel, 0 )
 }
 
+void function WeaponCharmsPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
+{
+	if ( !IsValid( panel ) ) 
+		return
+	if ( GetParentMenu( panel ) != GetActiveMenu() )
+		return
 
+	UpdateFooterOptions()
+
+	if ( IsControllerModeActive() )
+		CustomizeMenus_UpdateActionContext( newFocus )
+}
 
 void function WeaponCharmsPanel_Update( var panel )
 {
 	PanelData pd    = file.panelDataMap[panel]
 	var scrollPanel = Hud_GetChild( pd.listPanel, "ScrollPanel" )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in pd.weaponCharmList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -111,12 +156,12 @@ void function WeaponCharmsPanel_Update( var panel )
 
 	CustomizeMenus_SetActionButton( null )
 
-	               
+	
 	string ownedText ="#CHARMS_OWNED"
 
 	RuiSetString( pd.ownedRui, "title", Localize( ownedText ).toupper() )
 
-	                                  
+	
 	ItemFlavor ornull weaponOrNull = CategoryWeaponPanel_GetWeapon( Hud_GetParent( panel )  )
 
 	if ( IsPanelActive( panel ) && weaponOrNull != null )
@@ -130,32 +175,57 @@ void function WeaponCharmsPanel_Update( var panel )
 		bool ignoreDefaultItemForCount
 		bool shouldIgnoreOtherSlots
 
-
 		entry = Loadout_WeaponCharm( file.currentWeapon )
-		pd.weaponCharmList = GetLoadoutItemsSortedForMenu( entry, WeaponCharm_GetSortOrdinal )
+
+		if ( file.weaponCharmListCache.len() == 0 )
+			file.weaponCharmListCache = clone GetLoadoutItemsSortedForMenu( [entry], WeaponCharm_GetSortOrdinal, null, [] )
+
+		if ( file.collectedCountString == "" )
+			file.collectedCountString = CustomizeMenus_GetCollectedString( entry, file.weaponCharmListCache, true, true )
+
+		pd.weaponCharmList = clone file.weaponCharmListCache
+
+		ItemFlavor emptyCharm = entry.defaultItemFlavor
+		Assert ( WeaponCharm_IsTheEmpty( emptyCharm ) )
+		emptyCharm.loadoutSortPriority = emptyCharm.loadoutSortPriority & ~eLoadoutSortPriority.EQUIPPED 
+		pd.weaponCharmList.removebyvalue( emptyCharm )
+
+		ItemFlavor equippedCharm = LoadoutSlot_GetItemFlavor( LocalClientEHI(), entry )
+		pd.weaponCharmList.removebyvalue( equippedCharm )
+		equippedCharm.loadoutSortPriority = equippedCharm.loadoutSortPriority | eLoadoutSortPriority.EQUIPPED
+
+		foreach ( charm, weapon in file.charmToWeaponMap )
+		{
+			pd.weaponCharmList.removebyvalue( charm )
+			if ( weapon != file.currentWeapon )
+				pd.weaponCharmList.insert( 0, charm )
+		}
+
+		pd.weaponCharmList.insert( 0, emptyCharm )
+		if ( equippedCharm != emptyCharm )
+			pd.weaponCharmList.insert( 0, equippedCharm )
+
 		itemList = pd.weaponCharmList
 		previewFunc = PreviewWeaponCharm
 		customButtonUpdateFunc = (void function( ItemFlavor charmFlav, var rui )
 		{
-			                                                                      
+			
 			asset img = $""
 
-			ItemFlavor ornull weaponFlavorOrNull = GetWeaponThatCharmIsCurrentlyEquippedToForPlayer( ToEHI( GetLocalClientPlayer() ), charmFlav )
-			if ( weaponFlavorOrNull != null )
+			if ( charmFlav in file.charmToWeaponMap )
 			{
-				ItemFlavor weaponFlavorThatCharmIsEquippedTo = expect ItemFlavor( weaponFlavorOrNull )
+				ItemFlavor weaponFlavorThatCharmIsEquippedTo = file.charmToWeaponMap[ charmFlav ]
 				if ( weaponFlavorThatCharmIsEquippedTo != file.currentWeapon )
 				{
 					img = WeaponItemFlavor_GetHudIcon( weaponFlavorThatCharmIsEquippedTo )
-					RuiSetBool( rui, "isEquipped", false )             
+					RuiSetBool( rui, "isEquipped", false ) 
 				}
 			}
-
 
 			RuiSetAsset( rui, "equippedCharmWeaponAsset", img )
 		})
 		confirmationFunc = (void function( ItemFlavor charmFlav, void functionref() proceedCb ) {
-			                                                                                          
+			
 			ItemFlavor ornull charmCurrentWeaponFlav = GetWeaponThatCharmIsCurrentlyEquippedToForPlayer( LocalClientEHI(), charmFlav )
 			if ( charmCurrentWeaponFlav == null || charmCurrentWeaponFlav == file.currentWeapon )
 			{
@@ -180,11 +250,8 @@ void function WeaponCharmsPanel_Update( var panel )
 			})
 			OpenConfirmDialogFromData( data )
 		})
-		ignoreDefaultItemForCount = true
-		shouldIgnoreOtherSlots = true
 
-
-		RuiSetString( pd.ownedRui, "collected", CustomizeMenus_GetCollectedString( entry, itemList, ignoreDefaultItemForCount, shouldIgnoreOtherSlots ) )
+		RuiSetString( pd.ownedRui, "collected", file.collectedCountString )
 
 		Hud_InitGridButtons( pd.listPanel, itemList.len() )
 
@@ -200,14 +267,14 @@ void function WeaponCharmsPanel_Update( var panel )
 
 void function PreviewWeaponCharm( ItemFlavor charmFlavor )
 {
-	#if DEVELOPER
+#if DEV
 		if ( InputIsButtonDown( KEY_LSHIFT ) )
 		{
 			string locedName = Localize( ItemFlavor_GetLongName( charmFlavor ) )
 			printt( "\"" + locedName + "\" grx ref is: " + GetGlobalSettingsString( ItemFlavor_GetAsset( charmFlavor ), "grxRef" ) )
 			printt( "\"" + locedName + "\" charm model is: " + WeaponCharm_GetCharmModel( charmFlavor ) )
 		}
-	#endif       
+#endif
 
 	ItemFlavor charmWeaponSkin = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_WeaponSkin( file.currentWeapon ) )
 	int weaponSkinId           = ItemFlavor_GetGUID( charmWeaponSkin )
@@ -215,7 +282,7 @@ void function PreviewWeaponCharm( ItemFlavor charmFlavor )
 	bool shouldHighlightWeapon = file.currentWeaponSkin == charmWeaponSkin ? false : true
 	file.currentWeaponSkin = charmWeaponSkin
 
-	                   
+	
 	if( file.currentPanel != null )
 	{
 		var blurbPanel = Hud_GetChild( file.currentPanel, "SkinBlurb" )
@@ -240,4 +307,15 @@ void function PreviewWeaponCharm( ItemFlavor charmFlavor )
 		}
 	}
 	RunClientScript( "UIToClient_PreviewWeaponSkin", weaponSkinId, weaponCharmId, shouldHighlightWeapon )
+}
+
+void function AddLevelInitUICallback_ClearCharmListCache()
+{
+	AddCallback_OnGRXInventoryStateChanged( ClearCharmListCache )
+}
+
+void function ClearCharmListCache()
+{
+	file.weaponCharmListCache.clear()
+	file.collectedCountString = ""
 }

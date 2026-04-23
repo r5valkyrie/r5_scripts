@@ -1,10 +1,10 @@
-  
+
 
 global function InitRewardCeremonyMenu
 global function ShowRewardCeremonyDialog
 global function ShowGiftCeremonyDialog
 
-#if DEVELOPER
+#if DEV
 global function DEV_TestRewardCeremonyDialog
 #endif
 
@@ -36,12 +36,16 @@ struct
 	bool					isGift
 	bool 					giftChangeInputsRegistered
 
+	bool        			isCurrentGiftCharacter
+	bool        			isCurrentGiftBattlepass
+	ItemFlavor& 			characterToJumpTo
+
 	table<var, BattlePassReward> buttonToItem
 } file
 
 
 void function InitRewardCeremonyMenu( var newMenuArg )
-                                              
+
 {
 	var menu = GetMenu( "RewardCeremonyMenu" )
 	file.menu = menu
@@ -58,9 +62,9 @@ void function InitRewardCeremonyMenu( var newMenuArg )
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 
-#if DEVELOPER
+#if DEV
 	AddMenuThinkFunc( newMenuArg, PassAwardsDialogAutomationThink )
-#endif       
+#endif
 
 	file.prevGiftButton = Hud_GetChild( newMenuArg, "PrevGiftButton" )
 	file.nextGiftButton = Hud_GetChild( newMenuArg, "NextGiftButton" )
@@ -79,6 +83,9 @@ void function InitRewardCeremonyMenu( var newMenuArg )
 
 void function ShowRewardCeremonyDialog( string headerText, string titleText, string descText, array<BattlePassReward> awards, bool isForBattlePass, bool isForQuest, bool noShowLow, bool playSound )
 {
+	if ( GetActiveMenu() == GetMenu( "RewardCeremonyMenu" ) )
+		return
+
 	file.headerText = headerText
 	file.titleText = titleText
 	file.descText = descText
@@ -99,9 +106,11 @@ void function ShowRewardCeremonyDialog( string headerText, string titleText, str
 			EmitUISound( GetGlobalSettingsString( ItemFlavor_GetAsset( activeBattlePass ), "levelUpSound" ) )
 		}
 	}
+
+	MilestoneEvent_DecrementMilestoneRewardCeremonyCount()
 }
 
-#if DEVELOPER
+#if DEV
 void function DEV_TestRewardCeremonyDialog( array<string> grxRefs, string headerText = "HEADER", string titleText = "TITLE", string descText = "DESC" )
 {
 	array<BattlePassReward> rewards
@@ -151,8 +160,14 @@ void function ShowGiftCeremonyDialog( string headerText, string titleText, strin
 
 	file.activeGiftIndex = 0
 	file.highestIndex = 0
-	array<GRXScriptInboxMessage> AllGifts = PromoDialog_GetAllGifts()
-	GRX_MarkGiftItemsAsSeen( AllGifts[0].timestamp, AllGifts[0].itemIndex )
+	array<GRXContainerInfo> AllGifts = PromoDialog_GetAllGifts()
+
+	file.isCurrentGiftBattlepass = false
+	file.isCurrentGiftCharacter = false
+
+	CheckForCharacterOrBattlepass()
+
+	GRX_MarkContainerAsSeen( AllGifts[0] )
 
 	file.isGift = true
 	file.isForBattlePass = true
@@ -203,6 +218,13 @@ void function ChangeGift( int delta )
 	Assert( delta == -1 || delta == 1 )
 
 	int newGiftIndex = file.activeGiftIndex + delta
+	array<GRXContainerInfo> AllGifts = PromoDialog_GetAllGifts()
+
+	if ( newGiftIndex > AllGifts.len() - 1 )
+		return
+
+	file.isCurrentGiftCharacter  = false
+	file.isCurrentGiftBattlepass = false
 
 	if ( newGiftIndex < 0 || newGiftIndex >= file.numGifts )
 		return
@@ -223,10 +245,9 @@ void function ChangeGift( int delta )
 
 	EmitUISound( "UI_Menu_MOTD_Tab" )
 
-	array<GRXScriptInboxMessage> AllGifts = PromoDialog_GetAllGifts()
 	array<ItemFlavor> items
 
-	foreach( int index in AllGifts[file.activeGiftIndex].itemIndex )
+	foreach( int index in AllGifts[file.activeGiftIndex].itemIndices )
 	{
 		items.append( GetItemFlavorByGRXIndex( index ) )
 	}
@@ -238,7 +259,7 @@ void function ChangeGift( int delta )
 		BattlePassReward tempReward
 		tempReward.flav = items[i]
 		tempReward.isPremium = false
-		tempReward.quantity = AllGifts[ file.activeGiftIndex ].itemCount[i]
+		tempReward.quantity = AllGifts[ file.activeGiftIndex ].itemCounts[i]
 		tempReward.level = -1
 		RewardInput.append( tempReward )
 	}
@@ -250,9 +271,11 @@ void function ChangeGift( int delta )
 		file.highestIndex = newGiftIndex
 	}
 
+	CheckForCharacterOrBattlepass()
+
 	file.titleText =  Localize( "#INBOX_REDEMPTION_HEADER",  file.activeGiftIndex + 1,  PromoDialog_GetAllGifts().len() )
 
-	GRX_MarkGiftItemsAsSeen( AllGifts[file.activeGiftIndex].timestamp, AllGifts[file.activeGiftIndex].itemIndex )
+	GRX_MarkContainerAsSeen( AllGifts[file.activeGiftIndex] )
 
 	PassAwardsDialog_UpdateAwards()
 }
@@ -263,7 +286,7 @@ void function PassAwardsDialog_OnOpen()
 
 	Assert( file.displayAwards.len() != 0 )
 
-	if ( file.isForBattlePass )
+	if ( file.isForBattlePass && !file.isGift )
 	{
 		ItemFlavor ornull bpFlav = GetPlayerLastActiveBattlePass( LocalClientEHI() )
 		if ( bpFlav != null )
@@ -287,6 +310,8 @@ void function PassAwardsDialog_OnOpen()
 	PassAwardsDialog_UpdateAwards()
 
 	file.giftChangeInputsRegistered  = true
+
+	CheckForCharacterOrBattlepass()
 
 	thread TrackDpadInput()
 }
@@ -320,7 +345,7 @@ void function TrackDpadInput()
 	}
 }
 
-#if DEVELOPER
+#if DEV
 void function PassAwardsDialogAutomationThink( var menu )
 {
 	if (AutomateUi())
@@ -329,15 +354,40 @@ void function PassAwardsDialogAutomationThink( var menu )
 		ContinueButton_OnActivate(null)
 	}
 }
-#endif       
+#endif
 
 void function ContinueButton_OnActivate( var button )
 {
+	if ( !IsLobby() || !IsFullyConnected() )
+	{
+		return
+	}
+
 	CloseActiveMenu()
+
+	if ( storeInspect_JumpingToBPFromBPStorePurchase )
+	{
+		storeInspect_JumpingToBPFromBPStorePurchase = false
+		JumpToSeasonTab( "PassPanel" )  
+		return
+	}
+
+	if ( file.isCurrentGiftBattlepass )
+	{
+		JumpToSeasonTab( "PassPanel" )  
+		return
+	}
+
+	if ( file.isCurrentGiftCharacter )
+	{
+		JumpToCharacterCustomize( file.characterToJumpTo )
+		file.isCurrentGiftCharacter = false
+		return
+	}
 
 	if ( file.isGift )
 	{
-		array<GRXScriptInboxMessage> tempGifts = GetGiftingInboxMessages()
+		array<GRXContainerInfo> tempGifts = GetGiftingInboxMessages()
 		if ( tempGifts.len() > 0 )
 		{
 			AdvanceMenu( GetMenu( "PromoDialogUM" ) )
@@ -349,6 +399,8 @@ void function ContinueButton_OnActivate( var button )
 
 void function PassAwardsDialog_OnClose()
 {
+	MilestoneEvent_TryMoveToMilestonePostRewardCeremony( file.displayAwards )
+
 	file.displayAwards = []
 
 	DeregisterButtonPressedCallback( BUTTON_A, ContinueButton_OnActivate )
@@ -363,10 +415,12 @@ void function PassAwardsDialog_OnClose()
 	RemoveCallback_OnMouseWheelUp( Gift_NavLeftOnInput )
 	RemoveCallback_OnMouseWheelDown( Gift_NavRightOnInput )
 
-	if ( file.isGift )
+	if ( file.isGift)
 	{
 		PromoDialog_RemoveFromCache( file.highestIndex )
 	}
+
+	RunClientScript( "ClearBattlePassItem" )
 
 	file.giftChangeInputsRegistered  = false
 	file.highestIndex = 0
@@ -386,18 +440,37 @@ void function PassAwardsDialog_UpdateAwards()
 	}
 
 	file.buttonToItem.clear()
+
+	
+	RemoveBattlepassFromRewards()
+
 	int numAwards = file.displayAwards.len()
 
 	bool showButtons = file.isForBattlePass || file.isForQuest
 
 	if ( file.displayAwards.len() == 1 && ItemFlavor_GetType( file.displayAwards[0].flav ) == eItemType.account_currency )
-		showButtons = true                                   
+		showButtons = true 
 
 	int numButtons = numAwards
 	if ( !showButtons )
 	{
 		numButtons = 0
-		PresentItem( file.displayAwards[0].flav, file.displayAwards[0].level )
+		
+		ItemFlavor ornull activeEvent = GetActiveMilestoneEvent( GetUnixTimestamp() )
+		if ( activeEvent != null && MilestoneEvent_IsMilestoneGrantReward( expect ItemFlavor( activeEvent ), ItemFlavor_GetGRXIndex( file.displayAwards[0].flav ) ) )
+		{
+			thread function() : ()
+			{
+				EndSignal( uiGlobal.signalDummy, "LevelShutdown" )
+				wait 0.25 
+				if ( GetActiveMenu() == GetMenu( "RewardCeremonyMenu" ) )
+					PresentItem( file.displayAwards[0].flav, file.displayAwards[0].level )
+			}()
+		}
+		else
+		{
+			PresentItem( file.displayAwards[0].flav, file.displayAwards[0].level )
+		}
 	}
 
 	Hud_InitGridButtonsDetailed( file.awardPanel, numButtons, 1, maxint( 1, minint( numButtons, 8 ) ) )
@@ -462,4 +535,34 @@ void function PresentItem( ItemFlavor item, int level )
 	RunClientScript( "UIToClient_ItemPresentation", ItemFlavor_GetGUID( item ), level, 1.21, showLow, Hud_GetChild( file.menu, "LoadscreenImage" ), true, "battlepass_center_ref" )
 }
 
+void function CheckForCharacterOrBattlepass()
+{
+	foreach ( BattlePassReward bpr in file.displayAwards )
+	{
+		if ( ItemFlavor_GetType( bpr.flav ) == eItemType.character )
+		{
+			file.characterToJumpTo      = bpr.flav
+			file.isCurrentGiftCharacter = true
+			break
+		}
 
+		if ( ItemFlavor_GetType( bpr.flav ) == eItemType.image_2d )
+		{
+			file.isCurrentGiftBattlepass = true
+			break
+		}
+	}
+}
+
+
+void function RemoveBattlepassFromRewards()
+{
+	foreach ( index, BattlePassReward bpr in file.displayAwards )
+	{
+		if ( ItemFlavor_GetType( bpr.flav ) == eItemType.battlepass )
+		{
+			file.displayAwards.remove( index )
+			break
+		}
+	}
+}

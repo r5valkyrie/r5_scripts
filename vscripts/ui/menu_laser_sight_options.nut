@@ -1,4 +1,3 @@
-                         
 global function InitLaserSightOptionsMenu
 global function SetLaserSightOptionsMenuColor
 
@@ -18,7 +17,7 @@ struct
 } file
 
 
-void function InitLaserSightOptionsMenu( var newMenuArg )                                               
+void function InitLaserSightOptionsMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "LaserSightOptionsMenu" )
 	file.menu = menu
@@ -46,7 +45,7 @@ void function OnOpenLaserSightOptionsMenu()
 	TabData tabData        = GetTabDataForPanel( file.menu )
 	UpdateMenuTabs()
 
-	SetPreviewBackgoundImage( 0 )                                                              
+	SetPreviewBackgoundImage( 0 ) 
 	ShowPanel( Hud_GetChild( file.menu, "LaserSightOptionsColorPanel" ) )
 
 	RegisterBindCallbacks()
@@ -68,7 +67,7 @@ void function RegisterBindCallbacks()
 	if(!file.registeredBindCallbacks)
 	{
 		file.registeredBindCallbacks = true
-		          
+		
 	}
 }
 
@@ -76,7 +75,7 @@ void function DeregisterBindCallbacks()
 {
 	if(file.registeredBindCallbacks)
 	{
-		          
+		
 		file.registeredBindCallbacks = false
 	}
 }
@@ -91,4 +90,3 @@ void function SetLaserSightOptionsMenuColor( vector color )
 {
 	RuiSetColorAlpha(  Hud_GetRui( file.previewBackground ), "laserColor", color, 1.0)
 }
-                                   

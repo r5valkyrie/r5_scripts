@@ -13,10 +13,10 @@ global function LoadoutSelectionMenu_UpdateLoadouts
 const string LOADOUTSELECTIONMENU_LOADOUT_BUTTON = "LoadoutSelectButton"
 const string LOADOUTSELECTIONMENU_LOADOUTWEAPON_BUTTON = "Loadout"
 const int LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_PADDING = 10
-#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 const int LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_BASEOFFSET = -7
 #else
-const int LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_BASEOFFSET = -90
+const int LOADOUTSSELECTIONMENU_LOADOUT_BUTTON_BASEOFFSET = -90	
 #endif
 
 
@@ -46,7 +46,7 @@ file
 
 void function LoadoutSelectionMenu_InitLoadoutMenu( var newMenuArg )
 {
-
+	
 	var menu = GetMenu( "LoadoutSelectionSystemLoadoutSelector" )
 	file.menu = menu
 	AddMenuEventHandler( menu, eUIEvent.MENU_SHOW, LoadoutSelectionMenu_OnLoadoutMenu_Show )
@@ -58,7 +58,7 @@ void function LoadoutSelectionMenu_InitLoadoutMenu( var newMenuArg )
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#B_BUTTON_CLOSE", null )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, ControlLoadoutMenu_OnNavBack )
 
-
+	
 	AddUICallback_OnResolutionChanged( LoadoutSelectionMenu_ResolutionChanged )
 }
 
@@ -160,13 +160,13 @@ void function LoadoutSelectionMenu_RefreshLoadouts( int loadoutSlotType )
 		RuiSetString( rui, "name", localizedHeader )
 		RuiSetBool( rui, "isEquipped", LoadoutSelection_GetSelectedLoadoutSlotIndex_UI() == loadoutIndex )
 
+		
+		
 
-
-
-
+		
 		LoadoutSelectionMenu_UpdateWeaponElementsForLoadout( index, loadoutIndex, loadoutSlotType )
 
-
+		
 		for ( int consumableIndex = 0; consumableIndex < LOADOUTSELECTION_MAX_CONSUMABLES_PER_LOADOUT; consumableIndex++ )
 		{
 			var consumableIcon = Hud_GetChild( file.menu, LoadoutSelectionMenu_GetWeaponButtonPrefix( loadoutSlotType ) + index + "IconItem" + consumableIndex )
@@ -248,7 +248,7 @@ void function LoadoutSelectionMenu_ResetLoadoutButtons()
 
 
 
-
+	
 	for ( int i = 0; i < LOADOUTSELECTION_MAX_TOTAL_LOADOUT_SLOTS; i++ )
 	{
 		int loadoutSlotType = LoadoutSelection_GetLoadoutSlotTypeForLoadoutIndex( i )
@@ -280,11 +280,11 @@ void function LoadoutSelectionMenu_ResetLoadoutButtons()
 
 void function LoadoutSelectionMenu_RemoveAllButtons()
 {
-
+	
 	array< var > loadoutButtons = clone file.loadoutButtons
 	foreach ( var loadoutButton in loadoutButtons )
 	{
-
+		
 		Hud_RemoveEventHandler( loadoutButton, UIE_CLICK, LoadoutSelectionMenu_OnLoadoutSelectClick )
 		Hud_SetVisible( loadoutButton, false )
 		if ( file.loadoutButtons.contains( loadoutButton ) )
@@ -295,7 +295,7 @@ void function LoadoutSelectionMenu_RemoveAllButtons()
 			delete file.loadoutButtonIDToLoadoutIndex[ loadoutButtonScriptId ]
 	}
 
-
+	
 	array< var > loadoutWeaponElements = clone file.loadoutWeaponElements
 	foreach ( var weaponElement in loadoutWeaponElements )
 	{
@@ -310,7 +310,7 @@ void function LoadoutSelectionMenu_RemoveAllButtons()
 
 void function LoadoutSelectionMenu_SetupLoadoutButton( int index, int loadoutIndex, int loadoutSlotType )
 {
-
+	
 	int maxLoadouts = LoadoutSelection_GetLoadoutCounts_UI( loadoutSlotType )
 	if ( index >= maxLoadouts )
 		return
@@ -339,7 +339,7 @@ void function LoadoutSelectionMenu_OnLoadoutSelectClick( var button )
 		return
 
 	int loadoutIndex
-
+	
 	if ( button in file.loadoutWeaponElementToLoadoutButtonTable )
 	{
 		loadoutIndex = LoadoutSelectionMenu_GetLoadoutIndexFromLoadoutButton( file.loadoutWeaponElementToLoadoutButtonTable[ button ] )
@@ -368,13 +368,13 @@ void function LoadoutSelectionMenu_UpdateWeaponElementsForLoadout( int index, in
 	{
 		if ( weaponIndex < weaponCountForLoadout )
 		{
-
+			
 			var weaponButton = Hud_GetChild( file.menu, LoadoutSelectionMenu_GetWeaponButtonPrefix( loadoutSlotType ) + index + "Weapon" + weaponIndex )
 			RunClientScript( "UICallback_LoadoutSelection_BindWeaponRui", weaponButton, loadoutIndex, weaponIndex )
 		}
 		else
 		{
-
+			
 			LoadoutSelectionMenu_RemoveWeaponElement( index, weaponIndex, loadoutSlotType )
 		}
 	}
@@ -458,9 +458,9 @@ void function LoadoutSelectionMenu_OpenLoadoutMenu( bool isBrowseMode )
 		AdvanceMenu( file.menu )
 		file.menuOpenTime = UITime()
 	}
-#if NX_PROG
-	SetConVarBool( "nx_is_control_spawn_menu_open", true )
-#endif
+
+
+
 
 }
 
@@ -484,7 +484,7 @@ void function LoadoutSelectionMenu_CloseLoadoutMenu()
 		Remote_ServerCallFunction( "ClientCallback_LoadoutSelection_OnLoadoutSelectMenuClose" )
 
 
-			if ( CanRunClientScript() && GameMode_IsActive( eGameModes.CONTROL )  )
+			if ( CanRunClientScript() && GameMode_IsActive( eGameModes.CONTROL ) )
 				RunClientScript( "UICallback_Control_Loadouts_OnClosed" )
 
 	}
@@ -530,7 +530,7 @@ void function LoadoutSelectionMenu_OpenScopeMenu( var button )
 	{
 		int loadoutIndex = LoadoutSelectionMenu_GetLoadoutIndexFromLoadoutButton( button )
 
-
+		
 		RunClientScript( "UICallback_LoadoutSelection_OnRequestOpenScopeSelection", button, loadoutIndex )
 	}
 }

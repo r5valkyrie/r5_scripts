@@ -17,14 +17,14 @@ void function InitCustomMatchShareTokenPanel( var panel )
 {
 	file.panel = panel
 
-	                                                                   
+	
 	file.accessTokenField = Hud_GetChild( file.panel, "ShareTokenTextEntryCode" )
 
-	                                               
+	
 	file.accessTokenLabel = Hud_GetChild( file.panel, "ShareTokenHeader" )
 	Hud_SetText( file.accessTokenLabel, Localize( "#CUSTOMMATCH_ACCESS_TOKEN_LABEL" ) )
 
-	                                                                       
+	
 	file.toggleButton = Hud_GetChild( file.panel, "ShareTokenToggleButton" )
 	AddButtonEventHandler( file.toggleButton, UIE_CLICK, RevealShareToken_OnClick )
 }
@@ -42,23 +42,23 @@ void function ToggleVisibilityShareToken( bool isVisible )
 
 void function SetCustomMatchShareToken( bool isAdmin )
 {
-	                                    
+	
 	file.isAdmin = isAdmin
 	ToggleVisibilityShareToken( file.isVisible )
 
-	                                                      
+	
 	Hud_SetText( file.accessTokenField, GetConVarString( "customMatch_playerToken" ) )
 
-	                                                  
+	
 	RenameToggleButton()
 }
 
 void function RevealShareToken_OnClick ( var button )
 {
-	                     
+	
 	file.isAccessTokenHidden = !Hud_GetTextHidden( file.accessTokenField )
 	Hud_SetTextHidden( file.accessTokenField, file.isAccessTokenHidden )
 
-	                                               
+	
 	RenameToggleButton()
 }

@@ -10,6 +10,7 @@ struct
 	var   videoRui
 	int   videoChannel = -1
 	asset currentVideo = $""
+	var	  skydiveTrailDescLabel
 } file
 
 void function InitSkydiveTrailPanel( var panel )
@@ -18,6 +19,7 @@ void function InitSkydiveTrailPanel( var panel )
 	file.listPanel = Hud_GetChild( panel, "SkydiveTrailList" )
 	file.headerRui = Hud_GetRui( Hud_GetChild( panel, "Header" ) )
 	file.videoRui = Hud_GetRui( Hud_GetChild( panel, "Video" ) )
+	file.skydiveTrailDescLabel = Hud_GetChild( panel, "SkydiveTrailDesc" )
 
 	SetPanelTabTitle( panel, "#FINISHER" )
 	RuiSetString( file.headerRui, "title", Localize( "#OWNED" ).toupper() )
@@ -42,7 +44,7 @@ void function SkydiveTrailPanel_OnShow( var panel )
 	AddCallback_OnTopLevelCustomizeContextChanged( panel, SkydiveTrailPanel_Update )
 	SkydiveTrailPanel_Update( panel )
 
-	                                                            
+	
 }
 
 
@@ -57,7 +59,7 @@ void function SkydiveTrailPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in file.skydiveTrailsList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -68,11 +70,11 @@ void function SkydiveTrailPanel_Update( var panel )
 	StopVideoOnChannel( file.videoChannel )
 	file.currentVideo = $""
 
-	                                  
+	
 	if ( IsPanelActive( file.panel ) )
 	{
 		LoadoutEntry entry   = Loadout_SkydiveTrail()
-		file.skydiveTrailsList = GetLoadoutItemsSortedForMenu( entry, SkydiveTrail_GetSortOrdinal )
+		file.skydiveTrailsList = GetLoadoutItemsSortedForMenu( [entry], SkydiveTrail_GetSortOrdinal, null, [] )
 
 		Hud_InitGridButtons( file.listPanel, file.skydiveTrailsList.len() )
 		foreach ( int flavIdx, ItemFlavor flav in file.skydiveTrailsList )
@@ -88,7 +90,7 @@ void function SkydiveTrailPanel_Update( var panel )
 
 void function SkydiveTrailPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) ) 
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -101,7 +103,10 @@ void function PreviewSkydiveTrail( ItemFlavor flav )
 {
 	asset desiredVideo = SkydiveTrail_GetVideo( flav )
 
-	if ( file.currentVideo != desiredVideo )                                                
+	bool trailIsMythic = ItemFlavor_GetQuality( flav, 0 ) == eRarityTier.MYTHIC
+	Hud_SetText( file.skydiveTrailDescLabel, trailIsMythic ? Localize( "#PRESTIGE_PLUS_USABLE_SKYDIVE_TRAIL", Localize( ItemFlavor_GetLongName( flav ) ) ) : "")
+
+	if ( file.currentVideo != desiredVideo ) 
 	{
 		file.currentVideo = desiredVideo
 		StartVideoOnChannel( file.videoChannel, desiredVideo, true, 0.0 )

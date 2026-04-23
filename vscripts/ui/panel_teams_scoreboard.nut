@@ -9,9 +9,11 @@ global function UI_ToggleReportTooltip
 
 global function ScoreboardMenu_CustomMatch_GetButtonTeamID
 global function ScoreboardMenu_CustomMatch_GetHeaderForButton
-
+global function CustomMatchTeamRoster_GetCorrectedTeamId
 global function SetPlayerTooltipAfterCallback
+
 global function ScoreboardMenu_IsTryingToViewProfileOfPlayerInScoreboard
+global function CustomMatch_ScoreboardUpdate
 
 enum eRosterAction
 {
@@ -54,6 +56,7 @@ struct PanelGroupData
 	int lastLastPlayerRow = -1
 
 	bool isOpen = false
+	bool isMatchAdminSpectator = false
 }
 
 struct
@@ -69,7 +72,7 @@ struct
 	bool createdCallbacks = false
 	bool deathScreenRegisteredCallbacks = false
 
-	                   
+	
 	CustomMatch_LobbyState&                 customMatchData
 	array< array<CustomMatch_LobbyPlayer> > customMatchDataPlayersSorted
 	int                                     actionBitmask = 0
@@ -83,38 +86,38 @@ enum scoreboardHeaderTypes
 	DEFAULT,
 	CONTROL,
 	ARENA,
-                         
+
 		GUN_GAME,
-       
+
 	TINY,
-                       
+
 		WINTER_EXPRESS,
-       
-                     
+
+
 		TDM
-       
+
 }
 
 array< string > scoreboardHeaderClasses = [
 	"TeamHeader",
 	"ControlHeader",
 	"ArenaHeader",
-                         
+
 		"GunGameHeader",
-       
+
 	"TinyHeader"
-                       
+
 		"WinterExpressHeader",
-       
-                       
+
+
 		"TDMHeader"
-       
+
 ]
 
 const int PLAYERS_Y_PADDING_OFFSET = 1
-  
-                             
-  
+
+
+
 
 void function InitTeamsScoreboardPanel( var panel )
 {
@@ -136,7 +139,11 @@ void function InitTeamsScoreboardPanel( var panel )
 
 	array<var> teamPlayers = GetPanelElementsByClassname( panel, "TeamPlayer" )
 	foreach( var teamPlayer in teamPlayers)
+	{
 		Hud_AddKeyPressHandler( teamPlayer, PlayerButton_OnKeyPress )
+		Hud_AddEventHandler( teamPlayer, UIE_GET_FOCUS, ScoreboardPlayerRow_OnGetFocus )
+		Hud_AddEventHandler( teamPlayer, UIE_LOSE_FOCUS, ScoreboardPlayerRow_OnLoseFocus )
+	}
 
 	array<var> tinyTeamHeaders = GetPanelElementsByClassname( panel, "TinyHeader" )
 	foreach( var teamHeader in tinyTeamHeaders )
@@ -144,12 +151,31 @@ void function InitTeamsScoreboardPanel( var panel )
 
 	var parentMenu = GetParentMenu( panel )
 
-	if(parentMenu == GetMenu( "SurvivalInventoryMenu" )  )
+	if( parentMenu == GetMenu( "DeathScreenMenu" ) ) 
+		InitDeathScreenPanelFooter( panel, eDeathScreenPanel.SCOREBOARD)
+	else if(parentMenu == GetMenu( "SurvivalInventoryMenu" )  )
 		InitLegendPanelInventory( panel )
 	else if(parentMenu == GetMenu( "CustomMatchLobbyMenu" )  )
 		InitCustomMatchPanelFooter( panel )
 	else
 		AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
+
+	AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "", "", HandleViewProfileSquadPlayer, CanViewProfileScoreboardFooter)
+}
+
+bool function CanViewProfileScoreboardFooter( )
+{
+    return true
+}
+
+void function ScoreboardPlayerRow_OnGetFocus( var button )
+{
+	file.playerRowFocused = button
+}
+
+void function ScoreboardPlayerRow_OnLoseFocus( var button )
+{
+	file.playerRowFocused = null
 }
 
 void function OnShowScoreboardPanel( var panel )
@@ -169,6 +195,7 @@ void function OnShowScoreboardPanel( var panel )
 	{
 		RunClientScript( "ClientCallback_Teams_SetScoreboardData", panel )
 		RunClientScript( "ClientCallback_Teams_SetScoreboardTitle", panel )
+		RunClientScript( "ClientCallback_Teams_DoModeSpecificWork", panel )
 
 		if( DeathScreenIsOpen() )
 		{
@@ -176,6 +203,15 @@ void function OnShowScoreboardPanel( var panel )
 			DeathScreenUpdateCursor()
 		}
 	}
+
+	if( !file.isInputRegistered )
+	{
+		RegisterButtonPressedCallback( KEY_F, HandleViewProfileScoreboardPlayer )
+		RegisterButtonPressedCallback( BUTTON_Y, HandleViewProfileScoreboardPlayer )
+		file.isInputRegistered = true
+	}
+
+	UpdateFooterOptions()
 }
 
 void function OnHideScoreboardPanel( var panel )
@@ -184,18 +220,24 @@ void function OnHideScoreboardPanel( var panel )
 
 	DeregisterEvents( panel )
 
-	foreach( var playerButton in file.panels[panel].playerButtons)
+	foreach ( var playerButton in file.panels[panel].playerButtons )
 	{
 		Hud_ClearToolTipData( playerButton )
 	}
 
-	file.panels[panel].playerButtons.clear()                   
+	file.panels[panel].playerButtons.clear() 
 	file.panels[panel].isOpen = false
 	file.playerButtonData.clear()
 
 	if ( !IsCustomMatchLobbyMenu() )
 	{
 		RunClientScript( "ClientCallback_Teams_CloseScoreboard" )
+	}
+	if ( file.isInputRegistered )
+	{
+		DeregisterButtonPressedCallback( KEY_F, HandleViewProfileScoreboardPlayer )
+		DeregisterButtonPressedCallback( BUTTON_Y, HandleViewProfileScoreboardPlayer )
+		file.isInputRegistered = false
 	}
 }
 
@@ -259,7 +301,7 @@ float function GetTeamMinWidth( var panel, float maxFillWidth )
 	int teamsPerRow = GetTotalTeamsPerRow( panel )
 
 	float screenSizeYFrac =  GetScreenSize().height / 1080.0
-	return max( ( ( maxFillWidth - ( hPadding * teamsPerRow) ) / teamsPerRow), 190.0 * screenSizeYFrac )                                                              
+	return max( ( ( maxFillWidth - ( hPadding * teamsPerRow) ) / teamsPerRow), 120.0 * screenSizeYFrac ) 
 }
 
 
@@ -280,7 +322,7 @@ int function GetTotalFittableRows( var panel, int vSpaceTakenByHeaders, int vSpa
 	float vPadding = file.panels[panel].vPadding
 	int teamVerticalSpace = vSpaceTakenByHeaders + vSpaceTakenByPlayers + int( vPadding )
 
-	int worstCase = int( max( floor( avialableHeight / teamVerticalSpace ), 1 ) )                                       
+	int worstCase = int( max( floor( avialableHeight / teamVerticalSpace ), 1 ) ) 
 
 	if( IsCustomMatchLobbyMenu() && IsFullyConnected())
 	{
@@ -304,7 +346,7 @@ float function GetTeamMaxFillWidth( var panel )
 
 	int teamsPerRow = GetTotalTeamsPerRow( panel )
 
-	                            
+	
 	if(mode == 4)
 		return screenWidth * 0.9
 
@@ -315,7 +357,7 @@ float function GetTeamMaxFillWidth( var panel )
 			break
 		case 2:
 			if( mode == 2 )
-				width = screenWidth * 0.62                                                            
+				width = screenWidth * 0.62 
 			else
 				width = screenWidth * 0.70
 			break
@@ -327,57 +369,63 @@ float function GetTeamMaxFillWidth( var panel )
 	return width
 }
 
-                                                                            
+
 void function HideAll( var panel)
 {
-	                 
+	
 	array<var> items = GetPanelElementsByClassname( panel, scoreboardHeaderClasses[scoreboardHeaderTypes.DEFAULT] )
 	foreach( var item in items)
 		Hud_SetVisible( item, false )
 
-	                 
+	
 	items = GetPanelElementsByClassname( panel, scoreboardHeaderClasses[scoreboardHeaderTypes.CONTROL] )
 	foreach( var item in items)
 		Hud_SetVisible( item, false )
 
-	                
+	
 	items = GetPanelElementsByClassname( panel, scoreboardHeaderClasses[scoreboardHeaderTypes.ARENA] )
 	foreach( var item in items)
 		Hud_SetVisible( item, false )
 
-	              
+	
 	items = GetPanelElementsByClassname( panel, scoreboardHeaderClasses[scoreboardHeaderTypes.TINY] )
 	foreach( var item in items)
 		Hud_SetVisible( item, false )
 
-                         
-	                 
+
+	
 		items = GetPanelElementsByClassname( panel, scoreboardHeaderClasses[scoreboardHeaderTypes.GUN_GAME] )
 		foreach( var item in items)
 			Hud_SetVisible( item, false )
-       
 
-                       
-		                 
+
+
+		
 		items = GetPanelElementsByClassname( panel, scoreboardHeaderClasses[scoreboardHeaderTypes.WINTER_EXPRESS] )
 		foreach( var item in items)
 			Hud_SetVisible( item, false )
-       
 
-                     
-		             
+
+
+		
 		items = GetPanelElementsByClassname( panel, scoreboardHeaderClasses[scoreboardHeaderTypes.TDM] )
 		foreach( var item in items)
 			Hud_SetVisible( item, false )
-       
 
 
-	         
+
+		items = GetPanelElementsByClassname( panel, "LockdownScore" )
+		foreach( var item in items )
+			Hud_SetVisible( item, false )
+
+
+
+	
 	items = GetPanelElementsByClassname( panel, "TeamPlayer" )
 	foreach( var item in items)
 		Hud_SetVisible( item, false )
 
-	        
+	
 	items = GetPanelElementsByClassname( panel, "TeamFrameGeneric" )
 	foreach( var item in items)
 		Hud_SetVisible( item, false )
@@ -390,7 +438,7 @@ void function HideAll( var panel)
 bool function ShouldUseTinyMode( var panel )
 {
 	int teams = file.panels[panel].teams
-	return teams > 10
+	return teams >= 10
 }
 
 string function GetHeaderClassName( var panel )
@@ -416,21 +464,21 @@ string function GetHeaderClassName( var panel )
 		case 2:
 			className = scoreboardHeaderClasses[scoreboardHeaderTypes.CONTROL]
 			break
-                          
+
 		case 3:
 			className = scoreboardHeaderClasses[scoreboardHeaderTypes.GUN_GAME]
 			break
-        
-                        
+
+
 		case 4:
 			className = scoreboardHeaderClasses[scoreboardHeaderTypes.WINTER_EXPRESS]
 			break
-        
-                      
+
+
 		case 5:
 			className = scoreboardHeaderClasses[scoreboardHeaderTypes.TDM]
 			break
-        
+
 	}
 
 	return className
@@ -444,7 +492,7 @@ string function GetFrameClassName( var panel )
 	return "TeamFrameGeneric"
 }
 
-                                                               
+
 void function CheckHeaderCountRestraints( var panel )
 {
 	array<var> teamHeaders = file.panels[panel].teamHeaders
@@ -455,10 +503,10 @@ void function CheckHeaderCountRestraints( var panel )
 
 	int playersNeeded = teams * playersPerTeam
 
-	Assert( !( playersNeeded > teamPlayers.len() ), "To many players in mode for scoreboard to support. Add more Player Buttons in teams_scoreboard.res" )
-	Assert( !( teams > teamHeaders.len() ), "To many teams in mode for scoreboard to support. Add more Team Headers in teams_scoreboard.res" )
+	Assert( !( playersNeeded > teamPlayers.len() ), "Too many players in mode for scoreboard to support. Add more Player Buttons in teams_scoreboard.res/private_match_lobby_team.res" )
+	Assert( !( teams > teamHeaders.len() ), "Too many teams in mode for scoreboard to support. Add more Team Headers in teams_scoreboard.res/private_match_lobby_team.res" )
 	if( !ShouldUseTinyMode( panel ) )
-		Assert( !( teams > teamFrames.len() ), "To many teams in mode for scoreboard to support. Add more Team Frames in teams_scoreboard.res" )
+		Assert( !( teams > teamFrames.len() ), "Too many teams in mode for scoreboard to support. Add more Team Frames in teams_scoreboard.res/private_match_lobby_team.res" )
 }
 
 float function GetHPadding( var panel )
@@ -467,6 +515,11 @@ float function GetHPadding( var panel )
 	float screenSizeFrac = GetScreenSize().height / 1080.0
 	if( ShouldUseTinyMode(panel ) )
 		return 22.0 * screenSizeFrac
+
+
+	if( DeathScreenIsOpen() && GameMode_IsActive( eGameModes.CONTROL ) )
+		return 100.0 * screenSizeFrac
+
 
 	return 35.0 * screenSizeFrac
 }
@@ -502,7 +555,7 @@ void function UI_SetScoreboardTeamData( var panel, int teams, int playersPerTeam
 	if( panel == null )
 		return
 
-	if( !( panel in file.panels) )                                                            
+	if( !( panel in file.panels) ) 
 	{
 		PanelGroupData data
 		file.panels[panel] <- data
@@ -538,7 +591,7 @@ void function UI_SetScoreboardTeamData( var panel, int teams, int playersPerTeam
 	int headerHeight = Hud_GetHeight( teamHeaders[ 0 ] )
 	int playersHeight = Hud_GetHeight( teamPlayers[ 0 ] ) * playersPerTeam + ( PLAYERS_Y_PADDING_OFFSET * ( playersPerTeam - 1 ) )
 
-	                                                     
+	
 	int maxFittableRows = GetTotalFittableRows( panel, headerHeight, playersHeight, avialableHeight )
 	file.panels[panel].maxFittableRows = maxFittableRows
 	float totalPaddingsToUse = max(teams - 1, 0)
@@ -552,7 +605,7 @@ void function UI_SetScoreboardTeamData( var panel, int teams, int playersPerTeam
 
 	int teamsPerRow = GetTotalTeamsPerRow( panel )
 	float totalRows = ceil( float( teams ) / float( teamsPerRow ) )
-	file.panels[panel].teamsPerRow = teamsPerRow                    
+	file.panels[panel].teamsPerRow = teamsPerRow  
 	file.panels[panel].firstTeamOffsetX = -1 * ( min( Hud_GetWidth( panel ) , 1920 * screenSizeYFrac ) - ( teamsPerRow * teamWidth ) - ( max(teamsPerRow - 1, 0) * file.panels[panel].hPadding  ) ) / 2.0
 
 	float vSpaceTakenByHeaders = headerHeight * totalRows
@@ -577,11 +630,12 @@ void function UI_SetScoreboardTeamData( var panel, int teams, int playersPerTeam
 		if( teamIndex ==  localPlayersTeam )
 			continue
 
-		var teamHeader = UpdateTeamHeader( panel, teamIndex, teamsAdded )
+		int correctedTeamIndex = CustomMatchTeamRoster_GetCorrectedTeamId( teamIndex, false )
+		var teamHeader = UpdateTeamHeader( panel, correctedTeamIndex, teamsAdded )
 
 		for( int playerRow = 0; playerRow <= playersPerTeam - 1; playerRow++ )
 		{
-			UpdateTeamPlayer( panel, teamHeader,teamsAdded, teamIndex, playerRow )
+			UpdateTeamPlayer( panel, teamHeader,teamsAdded, correctedTeamIndex, playerRow )
 		}
 		teamsAdded++
 	}
@@ -607,16 +661,18 @@ var function UpdateTeamHeader( var panel, int teamIndex, int teamsAdded )
 
 	if( teamsAdded != 0 )
 	{
-		if( teamsAdded % teamsPerRow == 0 )                       
+		if( teamsAdded % teamsPerRow == 0 ) 
 		{
 			float onRowNumber = floor( teamsAdded / teamsPerRow )
 			float pinToRow = max( onRowNumber - 1.0, 0)
 			int previousPlayerRowIndex = int( pinToRow * ( teamsPerRow * playersPerTeam ) + playersPerTeam - 1 )
-			var previousFirstItemLastPlayer = teamPlayers[ previousPlayerRowIndex ]
-
-			Hud_SetPinSibling( teamHeader, Hud_GetHudName( previousFirstItemLastPlayer ) )
-			Hud_SetX( teamHeader,  0 )
-			Hud_SetY( teamHeader, -1 * ( Hud_GetHeight( previousFirstItemLastPlayer ) + vPadding ) )
+			if( previousPlayerRowIndex >= 0 )
+			{
+				var previousFirstItemLastPlayer = teamPlayers[ previousPlayerRowIndex ]
+				Hud_SetPinSibling( teamHeader, Hud_GetHudName( previousFirstItemLastPlayer ) )
+				Hud_SetX( teamHeader,  0 )
+				Hud_SetY( teamHeader, -1 * ( Hud_GetHeight( previousFirstItemLastPlayer ) + vPadding ) )
+			}
 		}
 		else
 		{
@@ -627,7 +683,7 @@ var function UpdateTeamHeader( var panel, int teamIndex, int teamsAdded )
 	}
 	else
 	{
-		                                                                      
+		
 		Hud_SetX( teamHeader, firstTeamOffsetX )
 		Hud_SetY( teamHeader, firstTeamOffsetY )
 	}
@@ -709,21 +765,41 @@ void function SetPlayerTooltip( var button )
 
 	Hud_ClearToolTipData( button )
 
-	RunClientScript( "IsLocalPlayerOnTeamSpectatorWithCallback", button )
+	int teamId = -1
+	int row = -1 
+	if( button in file.playerButtonData )
+	{
+		teamId = file.playerButtonData[button].teamId
+		row = file.playerButtonData[button].row
+	}
+
+
+	RunClientScript( "IsLocalPlayerOnTeamSpectatorWithCallback", button, teamId, row )
 }
-void function SetPlayerTooltipAfterCallback( var button, bool isSpectator )
+void function SetPlayerTooltipAfterCallback( var button, bool isMatchAdminSpectator,  bool viewProfileAllowed )
 {
+	file.panels[file.activePanel].isMatchAdminSpectator = isMatchAdminSpectator
 	ToolTipData toolTipData
 	toolTipData.tooltipStyle = eTooltipStyle.BUTTON_PROMPT
-	if( CustomMatch_IsInCustomMatch() && HasMatchAdminRole() && isSpectator )
+
+	if( CustomMatch_IsInCustomMatch() && isMatchAdminSpectator )
 	{
 		toolTipData.actionHint1 = "#A_BUTTON_SPECTATE"
-		toolTipData.actionHint2 = "#X_BUTTON_REPORT"
 	}
 	else
 	{
 		toolTipData.actionHint1 = "#X_BUTTON_REPORT"
 	}
+
+	if( viewProfileAllowed )
+	{
+
+
+
+		toolTipData.actionHint2 = IsControllerModeActive() ? "#Y_BUTTON_VIEW_PROFILE" : "#Y_BUTTON_VIEW_PROFILE_PC"
+
+	}
+
 
 	Hud_SetToolTipData( button, toolTipData )
 }
@@ -736,12 +812,33 @@ void function UI_ToggleReportTooltip( var button, bool toggle )
 		Hud_ClearToolTipData( button )
 }
 
+void function ShowPCPlatOverlayWarning()
+{
+	string platname = PCPlat_IsOrigin() ? "ORIGIN" : "STEAM"
+	ConfirmDialogData dialogData
+	dialogData.headerText   = ""
+	dialogData.messageText  = "#" + platname + "_INGAME_REQUIRED"
+	dialogData.contextImage = $"ui/menu/common/dialog_notice"
+
+
+	OpenOKDialogFromData( dialogData )
+}
+
 bool function ScoreboardMenu_IsTryingToViewProfileOfPlayerInScoreboard()
 {
 	bool viewedProfile = file.viewingProfile
 	file.viewingProfile = false
 	return viewedProfile
 }
+
+void function HandleViewProfileScoreboardPlayer( var button )
+{
+	if( file.playerRowFocused != null )
+	{
+		PlayerButton_OnKeyPress( file.playerRowFocused, KEY_F, true )
+	}
+}
+
 bool function PlayerButton_OnKeyPress( var button, int keyId, bool isDown )
 {
 	if ( !isDown )
@@ -753,7 +850,11 @@ bool function PlayerButton_OnKeyPress( var button, int keyId, bool isDown )
 	if( !Hud_IsEnabled( button ) )
 		return false
 
-	if ( keyId == MOUSE_RIGHT || keyId == BUTTON_X )
+	if( !( button in file.playerButtonData ) )
+		return false
+
+	bool isCustomMatchSpectator = CustomMatch_IsInCustomMatch() && file.panels[file.activePanel].isMatchAdminSpectator
+	if ( ( keyId == MOUSE_RIGHT || keyId == BUTTON_X ) && !isCustomMatchSpectator ) 
 	{
 		RunClientScript( "UICallback_Scoreboard_OnReportClicked", button, file.playerButtonData[button].teamId, file.playerButtonData[button].row )
 
@@ -762,6 +863,20 @@ bool function PlayerButton_OnKeyPress( var button, int keyId, bool isDown )
 	else if ( keyId == MOUSE_LEFT || keyId == BUTTON_A )
 	{
 		RunClientScript( "ClientCallback_Teams_OnPlayerClicked", file.playerButtonData[button].teamId, file.playerButtonData[button].row )
+		return true
+	}
+
+	if ( keyId == KEY_F || keyId == BUTTON_Y )
+	{
+		file.viewingProfile = true
+
+		if ( !PCPlat_IsOverlayAvailable() )
+		{
+			ShowPCPlatOverlayWarning()
+			return true
+		}
+
+		RunClientScript( "ClientCallback_Teams_OnPlayerViewProfile", file.playerButtonData[button].teamId, file.playerButtonData[button].row )
 		return true
 	}
 
@@ -877,9 +992,9 @@ var function ScoreboardMenu_CustomMatch_GetHeaderForButton( var button )
 	return null
 }
 
-                                                                    
-                              
-                                                                    
+
+
+
 bool function IsCustomMatchLobbyMenu()
 {
 	return IsLobby() && CustomMatch_IsInCustomMatch()
@@ -904,7 +1019,7 @@ void function ScoreboardMenu_CustomMatch_BindTeamHeader( var header, var frame, 
 	vector teamColor
 	string teamName
 
-	if (match_type != "survival" && ( totalTeams == 2  || max_alliances == 2) )                      
+	if (match_type != "survival" && ( totalTeams == 2  || max_alliances == 2) )
 	{
 		vector friendlyColor = SrgbToLinear( GetKeyColor( COLORID_CONTROL_FRIENDLY )/255 )
 		vector enemyColor = SrgbToLinear( GetKeyColor( COLORID_CONTROL_ENEMY )/255 )
@@ -912,7 +1027,7 @@ void function ScoreboardMenu_CustomMatch_BindTeamHeader( var header, var frame, 
 		if( max_alliances > 0 )
 		{
 			int teamsPerAlliance = totalTeams / max_alliances
-			int alliance = int( floor( teamIndex / teamsPerAlliance ) )
+			int alliance = ( teamIndex % max_alliances )
 			teamName = Localize( "#TEAM_NUMBERED", (alliance + 1) )
 			teamColor = ( alliance == 0 )? friendlyColor: enemyColor
 		}
@@ -933,7 +1048,7 @@ void function ScoreboardMenu_CustomMatch_BindTeamHeader( var header, var frame, 
 		if( max_alliances > 0 )
 		{
 			int teamsPerAlliance = totalTeams / max_alliances
-			int alliance = int( floor( teamIndex / teamsPerAlliance ) )
+			int alliance = ( teamIndex % max_alliances )
 
 			teamName = Localize( Squads_GetSquadName( alliance, isWinterExpress ) )
 			teamColor = Squads_GetSquadColor( alliance, isWinterExpress )
@@ -945,8 +1060,13 @@ void function ScoreboardMenu_CustomMatch_BindTeamHeader( var header, var frame, 
 		}
 	}
 
-	if( (teamIndex + 1) in file.customMatchData.teamNames )
-		teamName += " (" + file.customMatchData.teamNames[teamIndex + 1] + ")"
+	if( (teamIndex + TEAM_IMC) in file.customMatchData.teamNames )
+	{
+		string customMatchName = file.customMatchData.teamNames[teamIndex + TEAM_IMC]
+
+		if( customMatchName != "" )
+			teamName += " (" + customMatchName + ")"
+	}
 
 	RuiSetString( headerRui, "headerText", teamName )
 	RuiSetColorAlpha( headerRui, "teamColor", teamColor, 1 )
@@ -968,9 +1088,9 @@ void function ScoreboardMenu_CustomMatch_BindTeamRow( var button, int teamIndex,
 	Hud_SetChecked( button, false )
 	Hud_SetNew( button, false )
 
-	if(file.customMatchDataPlayersSorted.len() > teamIndex )                     
+	if(file.customMatchDataPlayersSorted.len() > teamIndex ) 
 	{
-		if( file.customMatchDataPlayersSorted[ teamIndex ].len() > row )                      
+		if( file.customMatchDataPlayersSorted[ teamIndex ].len() > row ) 
 		{
 			player = file.customMatchDataPlayersSorted[ teamIndex ][row]
 
@@ -1015,9 +1135,9 @@ void function ScoreboardMenu_CustomMatch_BindTeamRow( var button, int teamIndex,
 	RuiSetInt( buttonRui, "screenWidth", GetScreenSize().width )
 
 }
-                                                                    
-                       
-                                                                    
+
+
+
 bool function CanAction( int action )
 {
 	return ( ( file.actionBitmask & ( 1 << action ) ) != 0 )
@@ -1039,6 +1159,43 @@ bool function ActionsLocked()
 	return CustomMatch_GetSetting( CUSTOM_MATCH_SETTING_MATCH_STATUS ) != CUSTOM_MATCH_STATUS_PREPARING
 }
 
+bool function ContainsPlayer( var button )
+{
+	if( button in file.playerButtonData )
+	{
+
+		int teamIndex = file.playerButtonData[button].teamId
+		int row = file.playerButtonData[button].row
+
+		return file.customMatchDataPlayersSorted.len() > teamIndex && file.customMatchDataPlayersSorted[teamIndex].len() > row	
+	}
+
+	return false
+}
+
+bool function TryDisplayInspect( var button )
+{
+	bool displayedInspect = false
+	if( ContainsPlayer( button ) )
+	{
+		CustomMatch_LobbyPlayer player = file.customMatchDataPlayersSorted[ file.playerButtonData[ button ].teamId ][ file.playerButtonData[ button ].row ]
+
+		Friend customMatchPlayerToFriend
+		customMatchPlayerToFriend.name = player.name
+		customMatchPlayerToFriend.id = player.uid
+		customMatchPlayerToFriend.unspoofedid = player.firstPartyID
+		customMatchPlayerToFriend.hardware = player.hardware
+		customMatchPlayerToFriend.eadpData = CreateEADPDataFromEAID( player.eaid )
+
+		InspectFriendForceEADP( customMatchPlayerToFriend, PCPlat_IsSteam() )
+
+		displayedInspect = true
+	}
+
+	return displayedInspect
+}
+
+
 bool function CanKickTeam( int index )
 {
 	if( !IsCustomMatchLobbyMenu() )
@@ -1050,11 +1207,11 @@ bool function CanKickTeam( int index )
 	array<CustomMatch_LobbyPlayer> team = CustomMatch_GetTeam( index )
 	switch( team.len() )
 	{
-		                                 
+		
 		case 0:
 			return false
 
-			                   
+			
 		case 1:
 			return team[0].uid != GetPlayerUID()
 
@@ -1091,9 +1248,9 @@ bool function CanRenameTeam( int teamIndex )
 	&& CanAction( eRosterAction.RENAME_TEAM )
 }
 
-                                                                    
-                        
-                                                                    
+
+
+
 void function RefreshTeamToolTip( var button, int teamIndex, bool isValidJoin = true, bool renameTeam = false )
 {
 	ToolTipData toolTipData = Hud_GetToolTipData( button )
@@ -1115,8 +1272,8 @@ void function UpdateTeamToolTip( var button, int teamIndex, bool teamFull, bool 
 
 	toolTipData.titleText = CustomMatch_IsLocalAdmin() ? Localize( "#CUSTOM_MATCH_TOOLTIP_ADMIN" ) : ""
 
-	                                                                                                                   
-	                                                                                                                            
+	
+	
 	int actionCount = 0;
 
 	bool canAction = !ActionsLocked()
@@ -1141,7 +1298,7 @@ void function UpdateTeamToolTip( var button, int teamIndex, bool teamFull, bool 
 	}
 	else if ( teamFull )
 	{
-		SetTooltipAction( toolTipData, ++actionCount, "#CUSTOM_MATCH_TEAM_FULL", true )                             
+		SetTooltipAction( toolTipData, ++actionCount, "#CUSTOM_MATCH_TEAM_FULL", true ) 
 	}
 	else if( CustomMatch_GetLocalPlayerData().team == 0 || CustomMatch_GetLocalPlayerData().team == 1 )
 	{
@@ -1150,6 +1307,12 @@ void function UpdateTeamToolTip( var button, int teamIndex, bool teamFull, bool 
 	else if( isValidJoin )
 	{
 		SetTooltipAction( toolTipData, ++actionCount, "#CUSTOM_MATCH_MOVE_TO_TEAM", canAction && CanAction( eRosterAction.SELF_ASSIGN ) )
+	}
+
+	
+	if( !renameTeam && ContainsPlayer( button ) )
+	{
+		SetTooltipAction( toolTipData, ++actionCount, "#Y_BUTTON_INSPECT", canAction )  
 	}
 
 	if( actionCount == 0 )
@@ -1183,15 +1346,9 @@ void function SetTooltipAction( ToolTipData toolTipData, int actionIndex, string
 		toolTipData.customMatchData.actionEnabledMask = toolTipData.customMatchData.actionEnabledMask | ( 1 << actionIndex )
 }
 
-                                                                    
-                              
-                                                                    
-void function Callback_OnCustomMatchLobbyDataChanged( CustomMatch_LobbyState data )
+void function CustomMatch_ScoreboardUpdate()
 {
-	if( !IsCustomMatchLobbyMenu() )
-		return
-
-	file.customMatchData = data
+	CustomMatch_LobbyState data = file.customMatchData
 
 	array< array<CustomMatch_LobbyPlayer> > teams
 	teams.resize( data.maxTeams )
@@ -1204,8 +1361,20 @@ void function Callback_OnCustomMatchLobbyDataChanged( CustomMatch_LobbyState dat
 	}
 
 	file.customMatchDataPlayersSorted = teams
-
 	UI_SetScoreboardTeamData( file.activePanel, data.maxTeams, data.maxPlayers / data.maxTeams, -1, -1 )
+}
+
+
+
+
+void function Callback_OnCustomMatchLobbyDataChanged( CustomMatch_LobbyState data )
+{
+	if( !IsCustomMatchLobbyMenu() )
+		return
+
+	file.customMatchData = data
+
+	CustomMatch_ScoreboardUpdate()
 }
 
 const string ON = "1"
@@ -1237,9 +1406,9 @@ void function Callback_OnRenameTeamChanged( string _, string value )
 	}
 }
 
-                                                                    
-                       
-                                                                    
+
+
+
 void function CustomMatchTeamHeader_OnLeftClick( var button )
 {
 	if( !IsCustomMatchLobbyMenu() )
@@ -1249,8 +1418,10 @@ void function CustomMatchTeamHeader_OnLeftClick( var button )
 		return
 
 	int teamIndex = ScoreboardMenu_CustomMatch_GetButtonTeamID( button )
-	if ( teamIndex != CustomMatch_GetLocalPlayerData().team )
-		CustomMatch_SetTeam( teamIndex, GetPlayerHardware(), GetPlayerUID() )
+	int correctedTeamIndex = CustomMatchTeamRoster_GetCorrectedTeamId( teamIndex )
+
+	if ( correctedTeamIndex != CustomMatch_GetLocalPlayerData().team )
+		CustomMatch_SetTeam( correctedTeamIndex, GetPlayerHardware(), GetPlayerUID() )
 }
 
 void function CustomMatchTeamRoster_OnRightClick( var button )
@@ -1261,28 +1432,49 @@ void function CustomMatchTeamRoster_OnRightClick( var button )
 	if ( ActionsLocked() || InputIsButtonDown( MOUSE_LEFT ) || InputIsButtonDown( BUTTON_A ) )
 		return
 
-	int teamIndex = ScoreboardMenu_CustomMatch_GetButtonTeamID( button ) - 1
+	int teamIndex = ScoreboardMenu_CustomMatch_GetButtonTeamID( button )
+	int correctedTeamIndex = CustomMatchTeamRoster_GetCorrectedTeamId( teamIndex ) - 1
 
-	if ( !CanRenameTeam( teamIndex + 1 ) )
+	if ( !CanRenameTeam( correctedTeamIndex + 1 ) )
 		return
 
 	ConfirmDialogData data
 	data.headerText = "#CUSTOM_MATCH_CHANGE_TEAM_NAME"
-	data.messageText = Localize( "#CUSTOM_MATCH_CHANGE_TEAM_NAME_DESC", teamIndex )
+	data.messageText = Localize( "#CUSTOM_MATCH_CHANGE_TEAM_NAME_DESC", correctedTeamIndex )
 	data.resultCallback = void function( int result )
 	{
 		CustomMatchLobby_OnSetTeamNameOpenOrClose( false )
 	}
 	CustomMatchLobby_OnSetTeamNameOpenOrClose( true )
-	OpenTextEntryDialogFromData( data, void function( string name ) : ( teamIndex )
+	OpenTextEntryDialogFromData( data, void function( string name ) : ( correctedTeamIndex )
 	{
 		string _name = strip( name )
-		if ( _name == "" )
-			_name = Localize( "#TEAM_NUMBERED", teamIndex - 1 )
-		CustomMatch_SetTeamName( teamIndex, _name )
+		CustomMatch_SetTeamName( correctedTeamIndex + 1, _name )
 	} )
 }
 
+int function CustomMatchTeamRoster_GetCorrectedTeamId( int teamIndex = 0, bool useIMCOffset = true )
+{
+	int maxAlliances = GetPlaylistVarInt( file.customMatchData.playlist, "max_alliances", 0 )
+	int correctedTeamIndex = teamIndex
+
+	if( useIMCOffset && correctedTeamIndex < TEAM_IMC ) 
+		return correctedTeamIndex
+
+	if( IsCustomMatchLobbyMenu() && maxAlliances > 1 )
+	{
+		if( useIMCOffset )
+			correctedTeamIndex = correctedTeamIndex - TEAM_IMC
+
+		int teamsPerAlliance = file.customMatchData.maxTeams / maxAlliances
+		correctedTeamIndex = ( ( correctedTeamIndex % teamsPerAlliance ) * maxAlliances ) + ( correctedTeamIndex / teamsPerAlliance )
+
+		if( useIMCOffset )
+			correctedTeamIndex = correctedTeamIndex + TEAM_IMC
+	}
+
+	return correctedTeamIndex
+}
 bool function CustomMatchTeamRoster_OnKeyPress( var button, int keyIndex, bool isPressed )
 {
 	if ( ActionsLocked() )
@@ -1302,10 +1494,15 @@ bool function CustomMatchTeamRoster_OnKeyDown( var button, int keyIndex )
 		return false
 
 	int teamIndex = ScoreboardMenu_CustomMatch_GetButtonTeamID( button )
+	int correctedTeamIndex = CustomMatchTeamRoster_GetCorrectedTeamId( teamIndex )
+
 	switch ( keyIndex )
 	{
+		case KEY_F:
+		case BUTTON_Y:
+			return TryDisplayInspect( button )
 		case KEY_K:
-			TryDisplayKickTeam( teamIndex )
+			TryDisplayKickTeam( correctedTeamIndex )
 			return true
 		default:
 			return false
@@ -1319,10 +1516,12 @@ bool function CustomMatchTeamRoster_OnKeyHold( var button, int keyIndex )
 		return false
 
 	int teamIndex = ScoreboardMenu_CustomMatch_GetButtonTeamID( button )
+	int correctedTeamIndex = CustomMatchTeamRoster_GetCorrectedTeamId( teamIndex )
+
 	switch ( keyIndex )
 	{
 		case BUTTON_STICK_RIGHT:
-			thread OnHold_internal( keyIndex, teamIndex, TryDisplayKickTeam )
+			thread OnHold_internal( keyIndex, correctedTeamIndex, TryDisplayKickTeam )
 			return true
 		default:
 			return false

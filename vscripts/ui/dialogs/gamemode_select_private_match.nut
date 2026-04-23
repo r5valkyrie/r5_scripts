@@ -4,7 +4,7 @@ const string PL_PM = "private_match"
 const string PM_CATEGORY_COUNT = "private_match_playlist_category_count"
 const string PM_CATEGORY = "private_match_playlist_category_"
 const string CATEGORY_GRID = "GameModeCategoryGrid"
-const int TOTAL_CATEGORY_COUNT = 4                                                                                                                  
+const int TOTAL_CATEGORY_COUNT = 4 
 
 struct PrivateMatchGameMode
 {
@@ -30,15 +30,15 @@ struct {
 	table<var, string> selectButtonPlaylistNameMap
 	var                rankedRUIToUpdate = null
 
-                        
-                                            
-       
+
+
+
 
 	bool showVideo
 } file
 
 void function InitPrivateMatchGamemodeSelectDialog( var newMenuArg )
-                                              
+
 {
 	var menu = GetMenu( "PrivateMatchGamemodeSelectDialog" )
 	file.menu = menu

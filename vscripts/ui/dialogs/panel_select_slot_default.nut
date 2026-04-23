@@ -2,14 +2,20 @@ global function InitSelectSlotDefaultPanel
 
 const int MAX_PURCHASE_BUTTONS = 8
 
+enum eDisplayStyle
+{
+	DEFAULT,
+	BADGE_OR_STICKER,
+	QUIP
+}
+
 struct
 {
-	var panel
+	var        panel
 	array<var> buttonList
-	var displayItem
-	var swapIcon
-
-	bool badgeMode
+	var        displayItem
+	var        swapIcon
+	int        displayStyle = eDisplayStyle.DEFAULT
 
 } file
 
@@ -48,46 +54,36 @@ void function PurchaseButton_Activate( var button )
 
 void function SelectSlotDefault_OnShow( var panel )
 {
-	vector cp = SelectSlot_GetCursorPos()
-
-	array< LoadoutEntry > loadoutEntries = SelectSlot_GetLoadoutEntries()
-
 	SelectSlot_Common_AdjustButtons( panel, file.buttonList, file.displayItem, file.swapIcon )
 
-	                                      
-
-	file.badgeMode = false
-
-	bool useShortButtons = false
+	array<LoadoutEntry> loadoutEntries = SelectSlot_GetLoadoutEntries()
+	file.displayStyle = eDisplayStyle.DEFAULT
 
 	if ( loadoutEntries.len() > 0 )
 	{
-		ItemFlavor flavor = LoadoutSlot_GetItemFlavor( LocalClientEHI(), loadoutEntries[ 0 ] )
+		ItemFlavor flavor = LoadoutSlot_GetItemFlavor( LocalClientEHI(), loadoutEntries[0] )
+		int itemType = ItemFlavor_GetType( flavor )
 
-		int type = ItemFlavor_GetType( flavor )
-
-		if ( type == eItemType.gladiator_card_badge )
-			file.badgeMode = true
-		else if ( type == eItemType.gladiator_card_kill_quip || type == eItemType.gladiator_card_intro_quip )
-			useShortButtons = true
+		if ( itemType == eItemType.gladiator_card_badge || itemType == eItemType.sticker )
+			file.displayStyle = eDisplayStyle.BADGE_OR_STICKER
+		else if ( itemType == eItemType.gladiator_card_kill_quip || itemType == eItemType.gladiator_card_intro_quip )
+			file.displayStyle = eDisplayStyle.QUIP
 	}
 
 	foreach ( button in file.buttonList )
 	{
-		if ( file.badgeMode )
-			Hud_SetWidth( button, Hud_GetHeight( button ) )
-		else
-		{
-			Hud_SetWidth( button, Hud_GetBaseWidth( button ) )
+		int buttonHeight = Hud_GetBaseHeight( button )
+		if ( file.displayStyle == eDisplayStyle.QUIP )
+			buttonHeight = int( buttonHeight * 0.7 )
+		Hud_SetHeight( button, buttonHeight )
 
-			if ( useShortButtons )
-				Hud_SetHeight( button, Hud_GetBaseHeight( button ) * 0.7 )
-			else
-				Hud_SetHeight( button, Hud_GetBaseHeight( button ) )
-		}
+		int buttonWidth = Hud_GetBaseWidth( button )
+		if ( file.displayStyle == eDisplayStyle.BADGE_OR_STICKER )
+			buttonWidth = buttonHeight
+		Hud_SetWidth( button, buttonWidth )
 	}
 
-	if ( file.badgeMode )
+	if ( file.displayStyle == eDisplayStyle.BADGE_OR_STICKER )
 	{
 		Hud_SetWidth( file.displayItem, Hud_GetBaseHeight( file.displayItem ) * 2 )
 		Hud_SetHeight( file.displayItem, Hud_GetBaseHeight( file.displayItem ) * 2 )
@@ -96,15 +92,15 @@ void function SelectSlotDefault_OnShow( var panel )
 	{
 		Hud_SetWidth( file.displayItem, Hud_GetBaseWidth( file.displayItem ) )
 
-		if ( useShortButtons )
+		if ( file.displayStyle == eDisplayStyle.QUIP )
 			Hud_SetHeight( file.displayItem, Hud_GetBaseHeight( file.displayItem ) * 0.7 )
 		else
 			Hud_SetHeight( file.displayItem, Hud_GetBaseHeight( file.displayItem ) )
 	}
 
-	for ( int i=0; i<file.buttonList.len(); i++ )
+	for ( int i = 0; i < file.buttonList.len(); i++ )
 	{
-		var button = file.buttonList[ i ]
+		var button = file.buttonList[i]
 		UpdateFocusButton( button )
 	}
 
@@ -112,7 +108,7 @@ void function SelectSlotDefault_OnShow( var panel )
 
 	ApplyItemToButton( file.displayItem, SelectSlot_GetItem() )
 
-	HudElem_SetRuiArg( file.displayItem, "bgVisible", !file.badgeMode )
+	HudElem_SetRuiArg( file.displayItem, "bgVisible", file.displayStyle != eDisplayStyle.BADGE_OR_STICKER )
 }
 
 void function SelectSlotDefault_OnHide( var panel )
@@ -122,7 +118,7 @@ void function SelectSlotDefault_OnHide( var panel )
 
 void function PurchaseButton_OnFocus( var button )
 {
-	int index = int(Hud_GetScriptID( button ))
+	int index = int( Hud_GetScriptID( button ) )
 
 	array< LoadoutEntry > loadoutEntries = SelectSlot_GetLoadoutEntries()
 
@@ -133,9 +129,9 @@ void function PurchaseButton_OnFocus( var button )
 
 	ItemFlavor itemInButton = LoadoutSlot_GetItemFlavor( LocalClientEHI(), loadoutEntries[ index ] )
 
-	for ( int i=0; i<loadoutEntries.len(); i++ )
+	for ( int i = 0; i < loadoutEntries.len(); i++ )
 	{
-		var bt = file.buttonList[ i ]
+		var bt = file.buttonList[i]
 		if ( bt == button )
 			continue
 
@@ -157,15 +153,15 @@ void function PurchaseButton_LoseFocus( var button )
 
 void function UpdateFocusButton( var button )
 {
-	int index = int(Hud_GetScriptID( button ))
+	int index = int( Hud_GetScriptID( button ) )
 
-	array< LoadoutEntry > loadoutEntries = SelectSlot_GetLoadoutEntries()
+	array<LoadoutEntry> loadoutEntries = SelectSlot_GetLoadoutEntries()
 
 	if ( index < loadoutEntries.len() )
 	{
 		Hud_Show( button )
 
-		ItemFlavor flavor = LoadoutSlot_GetItemFlavor( LocalClientEHI(), loadoutEntries[ index ] )
+		ItemFlavor flavor = LoadoutSlot_GetItemFlavor( LocalClientEHI(), loadoutEntries[index] )
 
 		ApplyItemToButton( button, flavor )
 	}
@@ -175,25 +171,37 @@ void function UpdateFocusButton( var button )
 	}
 }
 
-void function ApplyItemToButton( var button, ItemFlavor flavor )
+void function ApplyItemToButton( var button, ItemFlavor item )
 {
-	int index = int(Hud_GetScriptID( button ))
+	int itemType = ItemFlavor_GetType( item )
+	var rui      = Hud_GetRui( button )
 
-	RuiDestroyNestedIfAlive( Hud_GetRui( button ), "badgeUIHandle" )
+	RuiDestroyNestedIfAlive( rui, "badgeUIHandle" )
 
-	if ( file.badgeMode )
+	if ( file.displayStyle == eDisplayStyle.BADGE_OR_STICKER )
 	{
-		ItemFlavor character = expect ItemFlavor( SelectSlot_GetCharacter() )
-		HudElem_SetRuiArg( button, "buttonText", "" )
-		CreateNestedGladiatorCardBadge( Hud_GetRui( button ), "badgeUIHandle", LocalClientEHI(), flavor, index, character )
+		if ( itemType == eItemType.gladiator_card_badge )
+		{
+			int index = int( Hud_GetScriptID( button ) )
+			ItemFlavor character = expect ItemFlavor( SelectSlot_GetCharacter() )
+
+			RuiSetString( rui, "buttonText", "" )
+			CreateNestedGladiatorCardBadge( rui, "badgeUIHandle", LocalClientEHI(), item, index, character )
+		}
+		else
+		{
+			Assert( itemType == eItemType.sticker )
+
+			RuiSetString( rui, "buttonText", "" )
+			CreateNestedRuiForSticker( rui, "badgeUIHandle", item )
+		}
 	}
 	else
 	{
-		string name = ItemFlavor_GetShortName( flavor )
-		int type = ItemFlavor_GetType( flavor )
-		if ( type == eItemType.gladiator_card_kill_quip || type == eItemType.gladiator_card_intro_quip || name == "" )
-			name  = ItemFlavor_GetLongName( flavor )
+		string name = ItemFlavor_GetShortName( item )
+		if ( itemType == eItemType.gladiator_card_kill_quip || itemType == eItemType.gladiator_card_intro_quip || name == "" )
+			name = ItemFlavor_GetLongName( item )
 
-		HudElem_SetRuiArg( button, "buttonText", name )
+		RuiSetString( rui, "buttonText", name )
 	}
 }

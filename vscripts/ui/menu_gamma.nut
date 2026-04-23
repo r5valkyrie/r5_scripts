@@ -11,7 +11,7 @@ struct {
 	bool registeredAcceptButtonPress = false
 } file
 
-void function InitGammaMenu( var newMenuArg )                                               
+void function InitGammaMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "GammaMenu" )
 	file.menu = menu
@@ -40,11 +40,11 @@ void function SetGammaFromNormalizedValue( float normalizedGamma )
 
 void function OnGammaMenu_Open()
 {
-#if !NX_PROG
+
 	var gammaLeftRui   = Hud_GetRui( Hud_GetChild( file.menu, "GammaElementLeft" ) )
 	var gammaCenterRui = Hud_GetRui( Hud_GetChild( file.menu, "GammaElementCenter" ) )
 	var gammaRightRui  = Hud_GetRui( Hud_GetChild( file.menu, "GammaElementRight" ) )
-	
+
 	RuiSetImage( gammaLeftRui, "basicImage", $"rui/menu/common/gamma_image" )
 	RuiSetFloat3( gammaLeftRui, "basicImageColor", <0.0075, 0.0075, 0.0075> )
 
@@ -54,7 +54,7 @@ void function OnGammaMenu_Open()
 	RuiSetImage( gammaRightRui, "basicImage", $"rui/menu/common/gamma_image" )
 	RuiSetFloat3( gammaRightRui, "basicImageColor", <0.995, 0.995, 0.995> )
 
-#endif
+
 
 	var sliderHintRui  = Hud_GetRui( Hud_GetChild( file.menu, "SliderHint" ) )
 	RuiSetString( sliderHintRui, "labelText", "#GAMMA_ADJUST_CONTROLS" )

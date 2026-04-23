@@ -194,9 +194,7 @@ global function GetMergedPlatformIdForPlayer
 // [s21-native] forward-decl LocalizePresenceState registered by engine; dropped
 
 // === Lobby/Audio ===
-global function PlayLobbyCharacterDialogue
-
-
+// PlayLobbyCharacterDialogue moved to S21 original
 // === Challenges ===
 global function RefreshChallenges
 
@@ -620,13 +618,9 @@ global function WaitForUnixTime
 
 // === Persistence/Lobby ===
 // [s21-native] forward-decl PersistenceGetVarHandle registered by engine; dropped
-global function HasCallback_OnPartyMemberRemoved
-global function LobbyPlaylist_GetSelectedPlaylist
+// HasCallback_OnPartyMemberRemoved moved to S21 original
 
-// === Stats/Mastery ===
-global function Mastery_GetStatValue
-global function Mastery_DoesStatSatisfyValue
-global function Mastery_IsValidStatRef
+// === Stats/Mastery === (moved to sh_mastery.gnut)
 #endif
 
 // ============================================================================
@@ -704,12 +698,12 @@ global function IsUserOnSamePlatform
 // [s21-native] forward-decl CustomMatch_SetTeamName registered by engine; dropped
 
 // === Menu/UI ===
-global function IsSelfClosingMenu
-global function ToolTips_SetMenuTooltipVisible
+// IsSelfClosingMenu moved to S21 original
+// ToolTips_SetMenuTooltipVisible moved to S21 original
 // [s21-native] forward-decl SpectatorNextTarget registered by engine; dropped
 global function ShowBlockPlayerDialog
 global function OpenClubLeaveDialog
-global function Hud_ClearAllToolTips
+// Hud_ClearAllToolTips moved to sh_tooltips.nut
 // [s21-native] forward-decl RefreshEaTwoFactorAuthenticationStatus registered by engine; dropped
 
 // === EADP Social ===
@@ -758,13 +752,9 @@ global function GRX_HasUpToDateBundleOffers
 
 // === Persistence ===
 // [s21-native] forward-decl PersistenceGetVarHandle registered by engine; dropped
-global function HasCallback_OnPartyMemberRemoved
-global function LobbyPlaylist_GetSelectedPlaylist
+// HasCallback_OnPartyMemberRemoved moved to S21 original
 
-// === Stats/Mastery ===
-global function Mastery_GetStatValue
-global function Mastery_DoesStatSatisfyValue
-global function Mastery_IsValidStatRef
+// === Stats/Mastery === (moved to sh_mastery.gnut)
 
 // === Ranked ===
 global function Ranked_ConstructSingleRankBadgeForStatsCard
@@ -784,8 +774,7 @@ global function Ranked_HasBeenInitialized
 global function SharedRanked_PartyHasRankedLevelAccess
 global function SharedRanked_GetMaxPartyMatchmakingDelay
 global function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo
-global function PopulateMatchRank
-
+// PopulateMatchRank moved to S21 original
 // === Party/Social ===
 // [s21-native] forward-decl Party_JoinUserPartyGame registered by engine; dropped
 // [s21-native] forward-decl Party_LeaveParty registered by engine; dropped
@@ -818,13 +807,12 @@ global function ClubChatSend
 global function ClubChatStickyNote
 
 // === Dialog Flow ===
-global function GetDialogFlowTablesValueOrPersistence
-global function SetDialogFlowPersistenceTables
-global function IncrementNumDialogFlowDialogsDisplayed
-global function DataDialog_AddCallback_OnClose
-
+// GetDialogFlowTablesValueOrPersistence moved to S21 original
+// SetDialogFlowPersistenceTables moved to S21 original
+// IncrementNumDialogFlowDialogsDisplayed moved to S21 original
+// DataDialog_AddCallback_OnClose moved to S21 original
 // === Events ===
-global function JumpToEventTab
+// JumpToEventTab moved to S21 original
 // [s21-native] forward-decl DoesUserHaveTwitchDrops registered by engine; dropped
 
 // === Squads ===
@@ -877,8 +865,7 @@ global function StickersPanel_GetCurrentConsumable
 // [s21-native] forward-decl Reconnect_IsLiveSpectateLoaded registered by engine; dropped
 
 // === Misc ===
-global function OpenLangAoCDialog
-
+// OpenLangAoCDialog moved to S21 original
 // === Nested #if UI ===
 // [s21-native] forward-decl GetKeyValueAsAsset registered by engine; dropped
 #if UI
@@ -1376,17 +1363,6 @@ void function CustomMatch_SetTeamName( int teamIndex, string name )
 */
 
 // === Menu/UI ===
-bool function IsSelfClosingMenu( var menu )
-{
-	Warning( "WORKAROUND: IsSelfClosingMenu() called - not implemented" )
-	return false
-}
-
-void function ToolTips_SetMenuTooltipVisible( var panel, bool visible )
-{
-	Warning( "WORKAROUND: ToolTips_SetMenuTooltipVisible() called - not implemented" )
-}
-
 // [s21-native] function SpectatorNextTarget() registered by engine; script stub commented out
 /*
 void function SpectatorNextTarget()
@@ -1405,10 +1381,7 @@ void function OpenClubLeaveDialog()
 	Warning( "WORKAROUND: OpenClubLeaveDialog() called - not implemented" )
 }
 
-void function Hud_ClearAllToolTips()
-{
-	Warning( "WORKAROUND: Hud_ClearAllToolTips() called - not implemented" )
-}
+// Hud_ClearAllToolTips moved to sh_tooltips.nut
 
 // [s21-native] function RefreshEaTwoFactorAuthenticationStatus() registered by engine; script stub commented out
 /*
@@ -1662,11 +1635,6 @@ bool function IsSoundStillPlaying( var handle )
 }
 */
 
-void function PlayLobbyCharacterDialogue( ... )
-{
-	Warning( "WORKAROUND: PlayLobbyCharacterDialogue() called - not implemented" )
-}
-
 // === GRX/Store ===
 
 // [s21-native] function GRX_SetEventCurrency() registered by engine; script stub commented out
@@ -1762,48 +1730,13 @@ bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc 
 	return false
 }
 
-string function LobbyPlaylist_GetSelectedPlaylist()
-{
-	return GetCurrentPlaylistName()
-}
-
-var function GetDialogFlowTablesValueOrPersistence( string persistenceVar, bool useScriptTable = false, float timeBeforeDialogFlowTableValuesAreOutdated = 5.0 )
-{
-	if ( !IsPersistenceAvailable() )
-		return 0
-	return GetPersistentVar( persistenceVar )
-}
-
-void function SetDialogFlowPersistenceTables( string persistenceVar, var value )
-{
-	Warning( "WORKAROUND: SetDialogFlowPersistenceTables() called - not implemented" )
-}
-
-void function IncrementNumDialogFlowDialogsDisplayed()
-{
-	Warning( "WORKAROUND: IncrementNumDialogFlowDialogsDisplayed() called - not implemented" )
-}
-
 void function DataDialog_AddCallback_OnClose( void functionref() callback )
 {
 	Warning( "WORKAROUND: DataDialog_AddCallback_OnClose() called - not implemented" )
 }
 
 
-int function Mastery_GetStatValue( entity player, string statRef )
-{
-	return 0
-}
-
-bool function Mastery_DoesStatSatisfyValue( entity player, string statRef, float checkValue )
-{
-	return false
-}
-
-bool function Mastery_IsValidStatRef( string statRef )
-{
-	return false
-}
+// Mastery_GetStatValue/DoesStatSatisfyValue/IsValidStatRef moved to sh_mastery.gnut
 
 // === Ranked ===
 
@@ -1890,11 +1823,6 @@ int function SharedRanked_GetMaxPartyMatchmakingDelay()
 int function SharedRanked_GetMatchmakingDelayFromCommunityUserInfo( CommunityUserInfo userInfo )
 {
 	return 0
-}
-
-void function PopulateMatchRank( ... )
-{
-	Warning( "WORKAROUND: PopulateMatchRank() called - not implemented" )
 }
 
 // === Party/Social ===
@@ -2082,11 +2010,6 @@ void function ClubChatStickyNote( string message )
 }
 
 // === Events ===
-
-void function JumpToEventTab( string tabName )
-{
-	Warning( "WORKAROUND: JumpToEventTab() called - not implemented" )
-}
 
 // [s21-native] function DoesUserHaveTwitchDrops() registered by engine; script stub commented out
 /*
@@ -2348,11 +2271,6 @@ bool function Reconnect_IsLiveSpectateLoaded()
 */
 
 // === Misc ===
-void function OpenLangAoCDialog()
-{
-	Warning( "WORKAROUND: OpenLangAoCDialog() called - not implemented" )
-}
-
 // === GetKeyValueAsAsset ===
 // [s21-native] function GetKeyValueAsAsset() registered by engine; script stub commented out
 /*
@@ -3406,28 +3324,7 @@ bool function HasCallback_OnPartyMemberRemoved( void functionref() callbackFunc 
 	return false
 }
 
-string function LobbyPlaylist_GetSelectedPlaylist()
-{
-	return GetCurrentPlaylistName()
-}
-
-// === Stats/Mastery ===
-
-
-int function Mastery_GetStatValue( entity player, string statRef )
-{
-	return 0
-}
-
-bool function Mastery_DoesStatSatisfyValue( entity player, string statRef, float checkValue )
-{
-	return false
-}
-
-bool function Mastery_IsValidStatRef( string statRef )
-{
-	return false
-}
+// === Stats/Mastery === (moved to sh_mastery.gnut)
 
 // === Platform/Hardware (SERVER || CLIENT implementations for global-scope declarations) ===
 
@@ -3518,12 +3415,6 @@ bool function IsDirectX12Beta()
 	return false
 }
 */
-
-void function PlayLobbyCharacterDialogue( ... )
-{
-	Warning( "WORKAROUND: PlayLobbyCharacterDialogue() called - not implemented" )
-}
-
 
 // [s21-native] function IsTakeHomeBuild() registered by engine; script stub commented out
 /*

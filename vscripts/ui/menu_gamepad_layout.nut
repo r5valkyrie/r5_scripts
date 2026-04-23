@@ -9,7 +9,7 @@ global function InitGamepadLayoutMenu
 global function GetGamepadButtonLayoutName
 global function RefreshButtonBinds
 
-//script_ui AdvanceMenu( GetMenu( "GamepadLayoutMenu" ) )
+
 
 
 struct ButtonVars
@@ -21,20 +21,20 @@ struct ButtonVars
 
 struct ButtonData
 {
-	int buttonEnum
-	int buttonIndex
+	int    buttonEnum
+	int    buttonIndex
 	string ruiArg
-	bool isLeft
+	bool   isLeft
 }
 
 struct
 {
-	var menu
-	var gamepadButtonLayoutBG
+	var                menu
+	var                gamepadButtonLayoutBG
 	table<int, string> buttonToRuiArg
-	array<ButtonData> buttonData
+	array<ButtonData>  buttonData
 
-	var customBackgroundPilot
+	var        customBackgroundPilot
 	array<var> customBindButtonsPilot
 
 	int pilotBindFocusIndex
@@ -46,10 +46,12 @@ struct
 	var description
 } file
 
+
 void function MenuGamepadLayout_Init()
 {
 	AddUICallback_InputModeChanged( OnInputModeChanged )
 }
+
 
 string function GetGamepadButtonLayoutName()
 {
@@ -66,6 +68,7 @@ string function GetGamepadButtonLayoutName()
 	return "unk_gamepad_button_layout"
 }
 
+
 int function GetGamepadButtonLayoutIndex()
 {
 	int id = GetConVarInt( "gamepad_button_layout" )
@@ -73,6 +76,7 @@ int function GetGamepadButtonLayoutIndex()
 		id = 0
 	return id
 }
+
 
 int function GetGamepadStickLayout()
 {
@@ -82,6 +86,7 @@ int function GetGamepadStickLayout()
 	return id
 }
 
+
 string function GetButtonStance()
 {
 	string stance = "orthodox"
@@ -90,6 +95,7 @@ string function GetButtonStance()
 
 	return stance
 }
+
 
 void function ExecCurrentGamepadButtonConfig()
 {
@@ -132,7 +138,7 @@ int function GetButtonIndexForPreset( int buttonIndex, int presetIndex )
 }
 
 
-void function InitGamepadLayoutMenu( var newMenuArg ) //
+void function InitGamepadLayoutMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "GamepadLayoutMenu" )
 	file.menu = menu
@@ -144,7 +150,7 @@ void function InitGamepadLayoutMenu( var newMenuArg ) //
 	InitButtonRCP( Hud_GetChild( file.menu, "DialogFrame" ) )
 
 
-	// Preset binds:
+	
 	for ( int idx = 0; idx < PRESETS_COUNT; ++idx )
 	{
 		string btnName = "BtnPreset" + format( "%d", idx )
@@ -160,10 +166,10 @@ void function InitGamepadLayoutMenu( var newMenuArg ) //
 		SetButtonRuiText( button, PRESET_NAMES[idx] )
 	}
 
-	////
+	
 	file.description = Hud_GetChild( menu, "lblControllerDescription" )
 
-	////
+	
 	var customBtn = Hud_GetChild( menu, "BtnCustomizeLayout" )
 	SetButtonRuiText( customBtn, "#GAMEPAD_CUSTOM" )
 	HudElem_SetRuiArg( customBtn, "hideBlur", true )
@@ -365,21 +371,21 @@ void function UpdateInfoText( int layoutIdx )
 	}
 }
 
-//void function OnBackButton_FocusedOn( var button )
-//{
-//	SetInfoText( "" );
-//}
-//void function OnDefaultsButton_FocusedOn( var button )
-//{
-//	SetInfoText( "" );
-//}
+
+
+
+
+
+
+
+
 
 bool function AnyBindButtonHasFocus()
 {
 	if ( file.pilotBindFocusIndex >= 0 )
 		return true
-	//if ( file.titanBindFocusIndex >= 0 )
-	//	return true
+	
+	
 
 	return false
 }
@@ -407,10 +413,10 @@ void function OnOpenGamepadLayoutMenu()
 {
 	file.listeningForButtonBind = false
 	file.pilotBindFocusIndex = -1
-	//file.titanBindFocusIndex = -1
+	
 	RegisterBindCallbacks()
 
-	// Update bind text. Some can change if toggle or hold settings change.
+	
 	foreach ( idx, button in file.customBindButtonsPilot )
 	{
 		var buttonRui = Hud_GetRui( button )
@@ -432,7 +438,7 @@ void function OnCloseGamepadLayoutMenu()
 
 	RefreshCustomGamepadBinds_UI()
 
-	//
+	
 	SetMenuNavigationDisabled( false )
 }
 
@@ -477,7 +483,7 @@ void function SetBindPromptForPilot( var button )
 	int buttonID       = int( Hud_GetScriptID( button ) )
 	ButtonVars bv      = GetBindDisplayName( CUSTOM_BIND_ALIASES_PILOT[buttonID] )
 	string displayName = (bv.pilot == "") ? bv.common : bv.pilot
-	//SetInfoText( Localize( "#GAMEPAD_BUTTON_ASSIGN_PROMPT_PILOT", Localize( displayName ) ) );
+	
 }
 
 
@@ -486,7 +492,7 @@ void function SetUnbindablePromptForPilot( var button )
 	int buttonID       = int( Hud_GetScriptID( button ) )
 	ButtonVars bv      = GetBindDisplayName( CUSTOM_BIND_ALIASES_PILOT[buttonID] )
 	string displayName = (bv.pilot == "") ? bv.common : bv.pilot
-	//SetInfoText( Localize( "#GAMEPAD_BUTTON_CANNOT_ASSIGN_PROMPT", Localize( displayName ) ) );
+	
 }
 
 void function BindButtonPilot_Clicked( var button )
@@ -576,7 +582,7 @@ ButtonVars function GetBindDisplayName( string bind )
 
 		case "scriptcommand4":
 			displayName.common = ""
-			displayName.pilot = "#USE_HEALTH_KIT"        //"#ACTIVATE_BOOST"
+			displayName.pilot = "#USE_HEALTH_KIT"        
 			displayName.titan = ""
 			break
 
@@ -597,7 +603,6 @@ ButtonVars function GetBindDisplayName( string bind )
 			displayName.pilot = "#QUICK_CHAT"
 			displayName.titan = ""
 			break
-
 		case "scoreboard_focus":
 			displayName.common = ""
 			displayName.pilot = ""
@@ -677,8 +682,8 @@ ButtonVars function GetBindDisplayName( string bind )
 
 		case "offhand3":
 			displayName.common = ""
-			displayName.pilot = "Team Comms"        // "#TITANFALL_TITAN_AI_MODE"
-			displayName.titan = "Team Comms"        // "#TITAN_CORE_CONTROLS"
+			displayName.pilot = "Team Comms"        
+			displayName.titan = "Team Comms"        
 			break
 
 		case "offhand4":
@@ -741,12 +746,6 @@ ButtonVars function GetBindDisplayName( string bind )
 			displayName.titan = ""
 			break
 
-		case "toggle_legend":
-			displayName.common = "#LEGEND"
-			displayName.pilot = ""
-			displayName.titan = ""
-			break
-
 		case "score":
 			displayName.common = "#GIB_SHIELD_TOGGLE"
 			displayName.pilot = ""
@@ -801,6 +800,12 @@ ButtonVars function GetBindDisplayName( string bind )
 				displayName.titan = titanBind
 			}
 		}
+			break
+
+		case "scriptcommand6":
+			displayName.common = "#EQUIP_GADGET"
+			displayName.pilot = "#EQUIP_GADGET"
+			displayName.titan = ""
 			break
 
 		default:
@@ -919,8 +924,18 @@ void function RefreshButtonBinds( int presetIndex = -1 )
 		RuiSetArg( file.gamepadLayoutRui, GetButtonDataForIndex( idx ).ruiArg, bindString )
 	}
 
-	if ( IsGamepadPS4() )
+	if ( IsGamepadPS4() ) 
 		RuiSetImage( file.gamepadLayoutRui, "gamepadImage", $"rui/menu/controls_menu/ps4_gamepad_button_layout" )
+	else if( IsGamepadPS5() )
+	{
+		RuiSetImage( file.gamepadLayoutRui, "gamepadImage", $"rui/menu/controls_menu/ps5_gamepad_button_layout" )
+	}
+	else if ( IsGamepadXB5() )
+	{
+		RuiSetImage( file.gamepadLayoutRui, "gamepadImage", $"rui/menu/controls_menu/xbx_gamepad_button_layout" )
+	}
+	else if ( IsGamepadNX() )
+		RuiSetImage( file.gamepadLayoutRui, "gamepadImage", $"rui/menu/controls_menu/nx_gamepad_button_layout" )
 	else
 		RuiSetImage( file.gamepadLayoutRui, "gamepadImage", $"rui/menu/controls_menu/xboxone_gamepad_button_layout" )
 
@@ -930,6 +945,20 @@ void function RefreshButtonBinds( int presetIndex = -1 )
 	RuiSetBool( file.gamepadLayoutRui, "isPreview", isPreview )
 
 	RuiSetString( Hud_GetRui( file.ultimateBindButtonPilot ), "iconText", tacticalBind + "+" + pingBind )
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -940,6 +969,7 @@ void function RestoreDefaultsButton( var button )
 
 	SetConVarToDefault( "gamepad_custom_pilot" )
 	SetConVarToDefault( "gamepad_button_layout" )
+	
 
 	Hud_SetFocused( Hud_GetChild( file.menu, "BtnPreset0" ) )
 	SetCustomGamepadLayoutVisible( false )
@@ -1020,25 +1050,28 @@ void function BindCatchCommon( int buttonEnum )
 		return
 	}
 
-	//if ( file.titanBindFocusIndex >= 0 )
-	//{
-	//	int buttonIndex = GetButtonIndexForButtonEnum( buttonEnum )
-	//	bool didAnything = ChangeCustomGamepadButtonIndexToCommandIndex_Titan( buttonIndex, file.titanBindFocusIndex )
-	//	if ( didAnything )
-	//	{
-	//		RefreshButtonBinds()
-	//		if ( buttonEnum != BUTTON_A )
-	//			EmitUISound( "menu_accept" )
-	//	}
-	//
-	//	return
-	//}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
+
 
 const table<string, string> GAMEPAD_BIND_CONFLICTS =
 {
+	
 	["offhand1"] 	= "ping",
 	["ping"]		= "offhand1",
+	
 	["zoom"] 		= "attack,speed",
 	["attack"] 		= "zoom",
 	["speed"] 		= "zoom",
@@ -1091,7 +1124,7 @@ bool function IsBindingAllowed( int buttonEnum )
 		}
 		else
 		{
-			dpadBindCommands.append( GetCustomBindCommandForButtonIndexPilot( GAMEPAD_BUTTON_INDECES[dpadEnum] ) )
+			dpadBindCommands.append( GetCustomBindCommandForButtonIndexPilot( GAMEPAD_BUTTON_INDICES[dpadEnum] ) )
 		}
 	}
 
@@ -1230,7 +1263,6 @@ string function GetBindString( string baseBind )
 		case "weaponselectordnance":
 		case "toggle_inventory":
 		case "toggle_map":
-		case "toggle_legend":
 			return baseBind
 	}
 

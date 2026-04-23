@@ -1,4 +1,3 @@
-
 global function InitLaserSightOptionsColorPanel
 
 struct
@@ -37,8 +36,8 @@ struct
 
 	bool registeredBindCallbacks = false
 
-	float H_Progress = 0.0
-	float SV_Progress = 0.0
+	float H_Progress = 0.0 
+	float SV_Progress = 0.0 
 
 	bool isOpen = false
 	bool changingColorNotUsingSliders = false
@@ -47,7 +46,7 @@ struct
 const float VALUE_MIN = 0.5
 const float SATURATION_MAX = 1.0
 
-void function InitLaserSightOptionsColorPanel( var panel )
+void function InitLaserSightOptionsColorPanel( var panel ) 
 {
 	file.panel = panel
 
@@ -62,7 +61,7 @@ void function InitLaserSightOptionsColorPanel( var panel )
 	file.applyMannualColorBtn = Hud_GetChild( file.panel, "ApplyRGBButton" )
 	file.applyMannualColorBtnBG = Hud_GetChild( file.panel, "ApplyRGBButtonBG" )
 
-
+	
 	for( int i = 0; i < file.palettes.len(); i++ )
 	{
 		file.paletteColorBtns[Hud_GetChild( file.panel, format( "BtnPaletteColor%i", i ))] <- file.palettes[i]
@@ -72,7 +71,7 @@ void function InitLaserSightOptionsColorPanel( var panel )
 	file.H_Slider =  Hud_GetChild( Hud_GetChild( file.panel, "H_Slider" ), "PrgValue")
 	file.SV_Slider =  Hud_GetChild( Hud_GetChild( file.panel, "SV_Slider" ), "PrgValue")
 
-	//RuiSetBool( Hud_GetRui(file.SV_Slider ), "isShade", true )
+	RuiSetBool( Hud_GetRui(file.SV_Slider ), "isShade", true )
 
 	file.RTextArea = Hud_GetChild( panel, "ColorRTextEntry" )
 	AddButtonEventHandler( file.RTextArea, UIE_CHANGE, RGB_OnChanged )
@@ -102,7 +101,7 @@ void function OnShowPanel( var panel )
 	file.reticleColor = OptionsColor_GetCurrentColor( "reticle_color", OptionsColor_GetDefaultColor( COLORID_RETICLE ) )
 	file.defaultColor = OptionsColor_GetDefaultColor( COLORID_LASER_SIGHT )
 	file.currentColor = GetConVarColor( "laserSightColor" )
-
+	
 	if ( file.currentColor.x == 0 && file.currentColor.y == 0 && file.currentColor.z == 0 )
 		file.currentColor = file.defaultColor
 	file.previousColor = file.currentColor
@@ -273,7 +272,7 @@ void function UpdatePreviousColorBtn()
 
 void function UpdateSaturationValueProgress()
 {
-
+	
 
 
 
@@ -293,7 +292,7 @@ void function HueSliderSelector_OnChanged( var button )
 {
 	float value = Hud_SliderControl_GetCurrentValue(button)
 
-
+	
 	HSV currentColor = OptionsColor_RGBToHSV( file.currentColor )
 	HSV newColor
 	{
@@ -309,8 +308,8 @@ void function HueSliderSelector_OnChanged( var button )
 void function ValueSliderSelector_OnChanged( var button )
 {
 	float value = ( Hud_SliderControl_GetCurrentValue(button) )
-
-
+	
+	
 	HSV currentColor = OptionsColor_RGBToHSV( file.currentColor )
 	float centerPoint = 0.5
 
@@ -329,7 +328,7 @@ void function ValueSliderSelector_OnChanged( var button )
 void function RGB_OnChanged( var button )
 {
 	file.isManuallyEnteringColor = true
-
+	
 	float R = min(float( Hud_GetUTF8Text( file.RTextArea ) ), 255)
 	float G = min(float( Hud_GetUTF8Text( file.GTextArea ) ), 255)
 	float B = min(float( Hud_GetUTF8Text( file.BTextArea ) ), 255)
@@ -367,7 +366,7 @@ void function RestoreDefaultsButtonClicked( var button )
 void function OnApplyManualColorButtonClicked ( var btn )
 {
 	vector validatedColor = ColorPalette_ClampAndValidateLaserSightColor( file.manualColor )
-
+	
 	OptionsColor_UpdateColorSliders(file.panel, file.H_Slider, file.SV_Slider, file.currentColor, file.H_Progress, file.SV_Progress)
 	if ( validatedColor.x != file.manualColor.x 		||
 			validatedColor.y != file.manualColor.y 		||
@@ -424,4 +423,3 @@ void function OnApplyManualColor( int result )
 			SaveCurrentColorToPlayerConfig();
 	}
 }
-

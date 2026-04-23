@@ -19,7 +19,7 @@ struct
 
 void function InitDeathScreenSquadSummaryPanel( var panel )
 {
-	AddUICallback_UIShutdown( SquadSummaryMenu_Shutdown )                             
+	AddUICallback_UIShutdown( SquadSummaryMenu_Shutdown )    
 
 	file.panel = panel
 
@@ -82,7 +82,7 @@ void function InitDeathScreenSquadSummaryPanel( var panel )
 			{
 				button = Hud_GetChild( panel, "TeammateBlock" + i )
 				AddButtonEventHandler( button, UIE_CLICK, OnBlockButtonClick )
-				RuiSetImage( Hud_GetRui( button ), "unmuteIcon", $"rui/menu/crossplatform/blocked" )                                       
+				RuiSetImage( Hud_GetRui( button ), "unmuteIcon", $"rui/menu/crossplatform/blocked" ) 
 				RuiSetImage( Hud_GetRui( button ), "muteIcon", $"rui/menu/crossplatform/blocked" )
 				ToolTipData d6
 				d6.tooltipFlags = d6.tooltipFlags | eToolTipFlag.CLIENT_UPDATE
@@ -113,7 +113,20 @@ void function InitDeathScreenSquadSummaryPanel( var panel )
 
 void function SquadSummaryOnOpenPanel( var panel )
 {
-	                                                
+	
+	UI_UpdateSquadSummaryInternal( panel )
+
+	if( !IsRegisteredButtonPressedCallback( KEY_F, HandleViewProfileSquadPlayer ) )
+		RegisterButtonPressedCallback( KEY_F, HandleViewProfileSquadPlayer )
+
+	if( !IsRegisteredButtonPressedCallback( BUTTON_Y, HandleViewProfileSquadPlayer ) )
+		RegisterButtonPressedCallback( BUTTON_Y, HandleViewProfileSquadPlayer )
+
+}
+
+void function UI_UpdateSquadSummaryInternal( var panel )
+{
+	
 
 	var menu = GetParentMenu( panel )
 	var headerElement = Hud_GetChild( menu, "Header" )
@@ -146,11 +159,11 @@ void function SquadSummaryOnOpenPanel( var panel )
 			Hud_ClearToolTipData( overlayButton )
 		}
 
-		                                                         
+		
 
 		RunClientScript( "UICallback_PopulatePlayerStatsRui", cardElem, i )
 
-		int presentation = eGladCardPresentation.FRONT_CLEAN                        
+		int presentation = eGladCardPresentation.FRONT_CLEAN 
 		RunClientScript( "UICallback_PopulateClientGladCard", panel, cardElem, muteButton, nullMutePingButton, reportButton, blockButton, nullInviteButton, overlayButton, nullDisconnectedElem, obfuscatedID, i, ClientTime(), presentation )
 		RunClientScript( "UICallback_UpdateGladCardVisibility", panel, cardElem, i )
 		RunClientScript( "UICallback_PlayerStatusUpdateThread", panel, cardElem, muteButton, nullMutePingButton, reportButton, inviteButton, nullOverlayButton, nullDisconnectedElem, i )
@@ -168,6 +181,7 @@ void function SquadSummaryOnOpenPanel( var panel )
 	}
 
 	DeathScreenUpdateCursor()
+	UpdateFooterOptions()
 
 	RunClientScript( "UICallback_SquadSummaryDisplayed" )
 }
@@ -175,12 +189,13 @@ void function SquadSummaryOnOpenPanel( var panel )
 
 void function UI_UpdateSquadSummary()
 {
-	SquadSummaryOnOpenPanel( file.panel )
+	UI_UpdateSquadSummaryInternal( file.panel )
 }
 
 void function SquadSummaryOnClosePanel( var panel )
 {
 	RunClientScript( "UICallback_HideSquadSummary" )
+	RunClientScript( "SignalShowRoundEndSquadResults" )
 
 	foreach ( elem in file.panelData[ panel ].gCards )
 	{
@@ -190,6 +205,12 @@ void function SquadSummaryOnClosePanel( var panel )
 			file.panelData[panel].cardsInitialized[elem] = false
 		}
 	}
+	if( IsRegisteredButtonPressedCallback( KEY_F, HandleViewProfileSquadPlayer ) )
+		DeregisterButtonPressedCallback( KEY_F, HandleViewProfileSquadPlayer )
+
+	if( IsRegisteredButtonPressedCallback( BUTTON_Y, HandleViewProfileSquadPlayer ) )
+		DeregisterButtonPressedCallback( BUTTON_Y, HandleViewProfileSquadPlayer )
+
 }
 
 

@@ -11,7 +11,8 @@ struct
 	int   videoChannel = -1
 	asset currentVideo = $""
 	var   finisherIsSkinLockedLabel
-	bool  hasMythicSkinEquipped
+	bool  isMythicExecutionUnlocked
+	bool  doesSkinAutoEquipFinisher
 } file
 
 void function InitCharacterExecutionsPanel( var panel )
@@ -34,10 +35,10 @@ void function InitCharacterExecutionsPanel( var panel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK_LEGEND", "#X_BUTTON_UNLOCK_LEGEND", null, CustomizeMenus_IsFocusedItemParentItemLocked )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
-	                                                                                                                                           
-	                                                                                                                     
-	                                                                                                                       
-	                                                                                                                        
+	
+	
+	
+	
 
 	file.videoChannel = ReserveVideoChannel()
 	RuiSetInt( file.videoRui, "channel", file.videoChannel )
@@ -64,7 +65,7 @@ void function CharacterExecutionsPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in file.characterExecutionList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -75,22 +76,21 @@ void function CharacterExecutionsPanel_Update( var panel )
 	StopVideoOnChannel( file.videoChannel )
 	file.currentVideo = $""
 
-	                                  
+	
 	if ( IsPanelActive( file.panel ) )
 	{
 		ItemFlavor character = GetTopLevelCustomizeContext()
 		LoadoutEntry entry   = Loadout_CharacterExecution( character )
-		file.characterExecutionList = GetLoadoutItemsSortedForMenu( entry, CharacterExecution_GetSortOrdinal )
+		file.characterExecutionList = GetExecutionsListForCharacterLoadout( entry )
 
-		                                                                                  
-		foreach ( int flavIdx, ItemFlavor flav in file.characterExecutionList )
-		{
-			if ( CharacterExecution_IsNotEquippable( flav ) && CharacterExecution_ShouldHideIfNotEquippable( flav ) )
-				file.characterExecutionList.fastremove( flavIdx )
-		}
+		EHI playerEHI = LocalClientEHI()
+		ItemFlavor skin = LoadoutSlot_GetItemFlavor( playerEHI, Loadout_CharacterSkin( character ) )
 
-		ItemFlavor skin = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_CharacterSkin( character ) )
-		file.hasMythicSkinEquipped = Mythics_SkinHasCustomExecution( skin )
+		
+		
+		
+		file.doesSkinAutoEquipFinisher = Mythics_SkinHasCustomExecution( skin ) && CharacterExecution_IsNotEquippable( Mythics_GetCustomExecutionForCharacterOrSkin(skin) )
+		file.isMythicExecutionUnlocked = Mythics_IsItemFlavorMythicSkin( skin ) && Mythics_IsCustomExecutionUnlocked( FromEHI( playerEHI ), skin )
 
 		Hud_InitGridButtons( file.listPanel, file.characterExecutionList.len() )
 		foreach ( int flavIdx, ItemFlavor flav in file.characterExecutionList )
@@ -99,27 +99,20 @@ void function CharacterExecutionsPanel_Update( var panel )
 			CustomizeButton_UpdateAndMarkForUpdating( button, [entry], flav, PreviewCharacterExecution, CanEquipCanBuyCharacterItemCheck, false, ExecutionButtonUpdateFunc )
 
 			var rui = Hud_GetRui( button )
-			if ( file.hasMythicSkinEquipped  )
-			{
-				RuiSetBool( rui, "isLocked", ItemFlavor_GetQuality( flav ) != eRarityTier.MYTHIC )
-				RuiSetBool( rui, "isEquipped", ItemFlavor_GetQuality( flav ) == eRarityTier.MYTHIC )
-			}
-			else if ( ItemFlavor_GetQuality( flav ) == eRarityTier.MYTHIC )
-			{
-				RuiSetBool( rui, "isLocked", true )
-			}
+
+			
+			ExecutionButtonUpdateFunc( flav, rui )
 		}
 
-		                                                                                                  
+		
 		RuiSetString( file.headerRui, "title", "" )
-		RuiSetString( file.headerRui, "collected", "" )                                                                                           
+		RuiSetString( file.headerRui, "collected", "" ) 
 	}
 }
 
-
 void function CharacterExecutionsPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) ) 
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -132,22 +125,25 @@ void function PreviewCharacterExecution( ItemFlavor flav )
 {
 	asset desiredVideo = CharacterExecution_GetExecutionVideo( flav )
 
-	if ( file.hasMythicSkinEquipped )
+	bool isMythicBundleExecution = Mythics_IsCustomExecutionInMythicBundle( flav )
+	
+
+	Hud_SetVisible( file.finisherIsSkinLockedLabel, isMythicBundleExecution )
+	if ( isMythicBundleExecution )
 	{
-		Hud_SetText( file.finisherIsSkinLockedLabel, "#FINISHER_IS_LOCKED_TO_SKIN" )
-		Hud_SetVisible( file.finisherIsSkinLockedLabel, true )
-	}
-	else
-	{
-		ItemFlavor character = GetTopLevelCustomizeContext()
-		string skinName = ""
-		if ( Mythics_CharacterHasMythic( character ) )
-			skinName = Localize( Mythics_GetSkinBaseNameForCharacter( character ) )
-		Hud_SetText( file.finisherIsSkinLockedLabel, Localize( "#EQUIP_MYTHIC_SKIN_TO_USE", skinName ) )
-		Hud_SetVisible( file.finisherIsSkinLockedLabel, ItemFlavor_GetQuality( flav ) == eRarityTier.MYTHIC )
+		
+		string skinName                 = Localize( Mythics_GetSkinBaseNameForCharacter( GetTopLevelCustomizeContext() ) )
+		ItemFlavor character            = CharacterExecution_GetCharacterFlavor( flav )
+		bool executionUsableOnTier1And2 = Mythics_IsExecutionUsableOnTier1AndTier2( character )
+		string text = Localize( executionUsableOnTier1And2 ? "#PRESTIGE_PLUS_EQUIP_FINISHER" : "#EQUIP_MYTHIC_SKIN_TO_USE", skinName )
+
+		if ( !file.isMythicExecutionUnlocked )
+			text += "\n" + Localize( "#PRESTIGE_PLUS_FINISHER_UNLOCK", skinName, skinName )
+
+		Hud_SetText( file.finisherIsSkinLockedLabel, text )
 	}
 
-	if ( file.currentVideo != desiredVideo )                                                
+	if ( file.currentVideo != desiredVideo ) 
 	{
 		file.currentVideo = desiredVideo
 		StartVideoOnChannel( file.videoChannel, desiredVideo, true, 0.0 )
@@ -155,18 +151,43 @@ void function PreviewCharacterExecution( ItemFlavor flav )
 }
 
 
-void function ExecutionButtonUpdateFunc( ItemFlavor itemFlav, var rui )
+
+void function ExecutionButtonUpdateFunc( ItemFlavor executionFlav, var rui )
 {
-	if ( file.hasMythicSkinEquipped  )
+	int itemRarity = ItemFlavor_GetQuality( executionFlav )
+	
+	if ( file.doesSkinAutoEquipFinisher )
 	{
-		RuiSetBool( rui, "isLocked", ItemFlavor_GetQuality( itemFlav ) != eRarityTier.MYTHIC )
-		RuiSetBool( rui, "isEquipped", ItemFlavor_GetQuality( itemFlav ) == eRarityTier.MYTHIC )
+		if ( file.isMythicExecutionUnlocked )
+		{
+			RuiSetBool( rui, "isLocked", itemRarity != eRarityTier.MYTHIC )
+			RuiSetBool( rui, "isEquipped", itemRarity == eRarityTier.MYTHIC )
+		} else {
+			RuiSetBool( rui, "isLocked", true)
+		}
 	}
-	else if ( ItemFlavor_GetQuality( itemFlav ) == eRarityTier.MYTHIC )
+	
+	else
 	{
-		RuiSetBool( rui, "isLocked", true )
+		int executionDependency = CharacterExecution_GetExecutionDependencyType( executionFlav )
+		if( executionDependency == eExecutionDependency.SKIN && itemRarity == eRarityTier.MYTHIC && !file.isMythicExecutionUnlocked )
+		{
+			RuiSetBool( rui, "isLocked", true )
+		}
+		
 	}
 }
 
+array<ItemFlavor> function GetExecutionsListForCharacterLoadout( LoadoutEntry loadoutEntry)
+{
+	array<ItemFlavor> list = GetLoadoutItemsSortedForMenu( [loadoutEntry], CharacterExecution_GetSortOrdinal, null, [] )
 
+	
+	foreach ( int flavIdx, ItemFlavor flav in list )
+	{
+		if ( CharacterExecution_IsNotEquippable( flav ) && CharacterExecution_ShouldHideIfNotEquippable( flav ) )
+			list.fastremove( flavIdx )
+	}
 
+	return list
+}

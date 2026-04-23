@@ -59,10 +59,10 @@ void function InitializeMinimapCoords( var minimapCoords, bool isLobby )
 {
 	entity player = GetLocalClientPlayer()
 
-#if CLIENT
-	Assert ( !isLobby )                                                                                                                                                                     
-	RuiTrackFloat3( minimapCoords, "playerPos", player, RUI_TRACK_ABSORIGIN_FOLLOW )
-#endif
+
+
+
+
 
 	if ( isLobby )
 		RuiSetBool( minimapCoords, "alwaysOn", true )
@@ -81,11 +81,11 @@ void function InitializeMinimapCoords( var minimapCoords, bool isLobby )
 	RuiSetInt( minimapCoords, "uidPart1", int( uidPart1 ) )
 	RuiSetInt( minimapCoords, "uidPart2", int( uidPart2 ) )
 
-#if CLIENT
-	RuiTrackString( minimapCoords, "name", player, RUI_TRACK_PLAYER_NAME_STRING )
-#else
-	                                                                                                                              
-	                                                        
+
+
+
+	
+	
 	RuiSetString( minimapCoords, "name", GetPlayerName() )
-#endif
+
 }

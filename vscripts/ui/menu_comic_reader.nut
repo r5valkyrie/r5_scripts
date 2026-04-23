@@ -1,19 +1,19 @@
-#if CLIENT
-global function UIToClient_LoadPanelImages
-global function UIToClient_ReleaseAllLoadedPakHandles
-global function UIToClient_SetPanelImage
-global function ClInitComicReaderMenu
-#endif
 
-#if UI
+
+
+
+
+
+
+
 global function InitComicReaderMenu
 global function ComicReaderMenu_OpenTo
-                                                        
-                                              
-#if DEVELOPER
+
+
+#if DEV
 global function ComicReaderMenu_TestOpen
 global function ComicReaderMenu_ReloadCurrent
-#endif       
+#endif
 
 
 
@@ -23,30 +23,30 @@ const int[9] PREV_BUTTONS = [BUTTON_SHOULDER_LEFT, MOUSE_RIGHT, MOUSE_WHEEL_UP, 
 const int QUEUE_CLEAR = 0
 const int QUEUE_FORWARD = 1
 const int QUEUE_BACKWARD = 2
-const float PANEL_TRANSITION_DURATION = 1.0                                        
-const float PANEL_TRANSITION_BLOCK_TIME = 0.5                                        
-const float PANEL_FADE_IN_BLOCK = 1.5                                                                     
-const float CLOSE_READER_WAIT_TIME = 1.0                                                                                  
+const float PANEL_TRANSITION_DURATION = 1.0 
+const float PANEL_TRANSITION_BLOCK_TIME = 0.5 
+const float PANEL_FADE_IN_BLOCK = 1.5 
+const float CLOSE_READER_WAIT_TIME = 1.0 
 
 const int MAX_DIALOGUE_LINES = 7
 const int NUM_READER_PANELS = 4
 
-                                                                
+
 enum eBubbleType
 {
-	TOP_LEFT,   
-	TOP_RIGHT,   
-	BOTTOM_LEFT,   
-	BOTTOM_RIGHT,   
-	TOP,   
-	BOTTOM,   
-	HEADER,                                  
-	LEFT,   
-	RIGHT,   
-	LOCATION,   
-	RADIO,   
-	NARATOR,                                                 
-	SFX,                                            
+	TOP_LEFT, 
+	TOP_RIGHT, 
+	BOTTOM_LEFT, 
+	BOTTOM_RIGHT, 
+	TOP, 
+	BOTTOM, 
+	HEADER, 
+	LEFT, 
+	RIGHT, 
+	LOCATION, 
+	RADIO, 
+	NARATOR, 
+	SFX, 
 	_count
 }
 
@@ -67,7 +67,7 @@ global struct BubbleDialogue
 	bool   hideTail
 	float  placementFrac
 	float  tailScale = 1.0
-	               
+	
 }
 
 global struct ComicPanel
@@ -112,11 +112,11 @@ global struct ReaderRui
 	int  panelIndex = -1
 	bool isTransitioningOut = false
 }
-#endif     
+
 
 struct
 {
-	#if UI
+
 		array<ReaderRui>	readerRuis
 		var                 backgroundRui
 		table<var, var>     ruiToElementMap
@@ -124,8 +124,8 @@ struct
 		array<ComicPanel>   s_panels
 		var                 s_menu
 
-		                                                                          
-		                                                                                                 
+		
+		
 		ItemFlavor quest
 		int        pageIndex
 
@@ -144,36 +144,36 @@ struct
 		float s_transitionStartTime
 		int   s_transitionQueue = QUEUE_CLEAR
 
-		                
+		
 		float pin_viewStartTime
 
-		#if DEVELOPER
+#if DEV
 			bool                  panelEditMode = false
 			bool                  panelEditModeRegistered = false
 			int                   panelEdit_currentLineIndex = 0
 			array<BubbleDialogue> panelEdit_data
-		#endif
+#endif
 
-	#endif     
 
-	#if CLIENT
-		                             
-		table<int, PakHandle> pakHandles
-	#endif         
+
+
+
+
+
 
 } file
 
-#if CLIENT
-void function ClInitComicReaderMenu()
-{
-	RegisterSignal( "LoadPanelTitle" )
-	RegisterSignal( "StopWaitingForPakLoad" )
-}
-#endif         
 
 
 
-#if UI
+
+
+
+
+
+
+
+
 void function InitComicReaderMenu( var newMenuArg )
 {
 	var menu = newMenuArg
@@ -190,13 +190,13 @@ void function InitComicReaderMenu( var newMenuArg )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, OnNavigateBack )
 
-	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
+	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#B_BUTTON_CLOSE" )
 	AddMenuFooterOption( menu, LEFT, BUTTON_A, true, "#A_BUTTON_NEXT", "#A_BUTTON_NEXT" )
 	AddMenuFooterOption( menu, LEFT, BUTTON_X, true, "#X_BUTTON_PREVIOUS", "#X_BUTTON_PREVIOUS", null, HasPreviousPanel )
 
-	#if DEVELOPER
+#if DEV
 		AddMenuFooterOption( menu, LEFT, BUTTON_STICK_RIGHT, true, "EDIT MODE", "EDIT MODE", TggleEditMode )
-	#endif
+#endif
 }
 
 
@@ -227,7 +227,7 @@ void function RegisterButtons()
 {
 	if ( !file.s_registeredButtons )
 	{
-		#if DEVELOPER
+#if DEV
 			if ( file.panelEditMode && !file.panelEditModeRegistered )
 			{
 				file.panelEditModeRegistered = true
@@ -240,29 +240,29 @@ void function RegisterButtons()
 					} )
 				}
 			}
-		#endif
+#endif
 
 		foreach ( button in CONTINUE_BUTTONS )
 		{
-			#if DEVELOPER
+#if DEV
 				if ( file.panelEditMode )
 				{
 					if ( EDIT_BUTTONS.contains( button ) )
 						continue
 				}
-			#endif
+#endif
 
 			RegisterButtonPressedCallback( button, OnPressedNext )
 		}
 		foreach ( button in PREV_BUTTONS )
 		{
-			#if DEVELOPER
+#if DEV
 				if ( file.panelEditMode )
 				{
 					if ( EDIT_BUTTONS.contains( button ) )
 						continue
 				}
-			#endif
+#endif
 
 			RegisterButtonPressedCallback( button, OnPressedPrevious )
 		}
@@ -276,7 +276,7 @@ void function ComicReaderMenu_OpenTo( array<asset> dtAssetArray, int startPageIn
 	file.s_startPageIndex = startPageIndex
 	file.s_startPanelIndex = panelIndex
 	file.s_comicComplet = complete
-	                                    
+	
 	AdvanceMenu( file.s_menu )
 }
 
@@ -305,7 +305,7 @@ ReaderRui function GetTopReaderRui()
 array<ReaderRui> function GetAvailableReaderRuis()
 {
 	Assert( file.readerRuis.len() > 0 )
-	
+
 	array<ReaderRui> ret
 
 	for ( int i = 0; i < file.readerRuis.len(); ++i )
@@ -321,7 +321,7 @@ array<ReaderRui> function GetAvailableReaderRuis()
 
 void function UpdateReaderRuiZOrders()
 {
-	                                                    
+	
 	file.readerRuis.sort( int function( ReaderRui a, ReaderRui b ) : ()
 	{
 		if ( a.panelIndex > b.panelIndex )
@@ -343,14 +343,14 @@ void function UpdateReaderRuiZOrders()
 	}
 }
 
-                                                                                                                
-   
-  	                                 
-  	                                                  
-  	                          
-   
 
-#if DEVELOPER
+
+
+
+
+
+
+#if DEV
 asset function CastStringToAsset( string val )
 {
 	return GetKeyValueAsAsset( { kn = val }, "kn" )
@@ -369,32 +369,24 @@ void function ComicReaderMenu_ReloadCurrent()
 	CloseAllMenus()
 	AdvanceMenu( file.s_menu )
 }
-#endif       
+#endif
 
 
 void function OnMenuClose()
 {
-	if ( s_latestAmbientTrack.len() > 0 )
-		StopUISound( s_latestAmbientTrack )
-
-	for ( int idx = 0; idx < s_latestLoopingTracks.len(); ++idx )
-	{
-		if ( s_latestLoopingTracks[idx].len() > 0 )
-			StopUISound( s_latestLoopingTracks[idx] )
-	}
-
 	ComicPanel panel = file.s_panels[ file.s_panelIndex ]
 	AddComicPinEvent( -1, -1, panel.pageID, panel.panelID )
 
+	StopAllUISounds()
 	CancelCustomUIMusic()
 
-	                          
+	
 	RunClientScript( "UIToClient_ReleaseAllLoadedPakHandles" )
 
-                           
-                                                  
-                                     
-      
+
+
+
+
 }
 
 
@@ -409,25 +401,25 @@ void function DeregisterButtons()
 	{
 		foreach ( button in CONTINUE_BUTTONS )
 		{
-			#if DEVELOPER
+#if DEV
 				if ( file.panelEditMode )
 				{
 					if ( EDIT_BUTTONS.contains( button ) )
 						continue
 				}
-			#endif
+#endif
 
 			DeregisterButtonPressedCallback( button, OnPressedNext )
 		}
 		foreach ( button in PREV_BUTTONS )
 		{
-			#if DEVELOPER
+#if DEV
 				if ( file.panelEditMode )
 				{
 					if ( EDIT_BUTTONS.contains( button ) )
 						continue
 				}
-			#endif
+#endif
 
 			DeregisterButtonPressedCallback( button, OnPressedPrevious )
 		}
@@ -438,7 +430,7 @@ void function DeregisterButtons()
 void function OnPressedNext( var button )
 {
 	if ( (UITime() - file.s_openedTime) < PANEL_FADE_IN_BLOCK )
-		return                                                                                 
+		return 
 
 	if ( file.s_panelIndex >= file.s_panels.len() )
 		return
@@ -455,17 +447,17 @@ void function OnPressedNext( var button )
 
 	if ( file.s_panelIndex + 1 >= file.s_panels.len() )
 	{
-		                                                                                  
+		
 		file.s_transition = true
 
-		                                                           
+		
 		thread function() : ()
 		{
 			file.s_transition = true
 			file.s_transitionStartTime = 0
 			file.s_transitionQueue = QUEUE_CLEAR
 
-			EmitUISound( "ui_menu_openlootbox" )                            
+			EmitUISound( "ui_menu_openlootbox" ) 
 			RuiSetGameTime( GetTopReaderRui().rui, "fadeOutStartTime", ClientTime() )
 			wait CLOSE_READER_WAIT_TIME
 			if ( GetActiveMenu() == file.s_menu )
@@ -478,7 +470,7 @@ void function OnPressedNext( var button )
 	thread OnClickedToAdvance( true )
 }
 
-#if DEVELOPER
+#if DEV
 void function OnEditButtonPressed( var button, int key )
 {
 	bool widthMode  = InputIsButtonDown( KEY_LALT )
@@ -571,7 +563,7 @@ void function OnEditButtonPressed( var button, int key )
 void function OnPressedPrevious( var button )
 {
 	if ( (UITime() - file.s_openedTime) < 2.0 )
-		return                                                                                 
+		return 
 
 	if ( file.s_panelIndex <= 0 )
 		return
@@ -604,28 +596,28 @@ void function OnNavigateBack()
 }
 
 
-                                    
-                                                   
-   
-  	                            
-  	 
-  		        
-  		           
-  		         
-  			                             
-  
-  		              
-  		         
-  			                               
-  
-  		              
-  		         
-  			                               
-  	 
-  
-  	                                                                        
-  	         
-   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 bool function ParsePlaySoundCmd( ComicPanel page, string cmd, string argStr )
@@ -633,12 +625,12 @@ bool function ParsePlaySoundCmd( ComicPanel page, string cmd, string argStr )
 	int timing = eSoundTiming.PAGE_OPEN
 
 	array<string> args = split( argStr, "| " )
-	                       
-	   
-	  	                                      
-	  	                 
-	  		            
-	   
+	
+	
+	
+	
+	
+	
 
 	switch( cmd )
 	{
@@ -709,7 +701,7 @@ ComicPanel function CreateEndPanelData( ComicPanel firstPanel )
 {
 	ComicPanel panel
 
-	panel.panelImage = firstPanel.panelImage                                                                              
+	panel.panelImage = firstPanel.panelImage 
 	panel.imageWidth = firstPanel.imageWidth
 	panel.imageHeight = firstPanel.imageHeight
 	panel.offsetX = 0
@@ -784,7 +776,7 @@ array<ComicPanel> function LoadComicPanelsFromDataTable( asset dtAsset, int page
 		{
 			if ( panelHasData )
 			{
-				                                   
+				
 				panels.append( panel )
 				ComicPanel newPanel
 				panel = newPanel
@@ -804,7 +796,7 @@ array<ComicPanel> function LoadComicPanelsFromDataTable( asset dtAsset, int page
 				panel.offsetX = offsetX
 				panel.offsetY = offsetY
 				panel.isTitle = firstPanel
-				panel.groupId = bubbleType                                                                  
+				panel.groupId = bubbleType 
 				panel.pageID = pageIndex
 				panel.panelID = panels.len()
 
@@ -836,7 +828,7 @@ array<ComicPanel> function LoadComicPanelsFromDataTable( asset dtAsset, int page
 				panelHasData = true
 				break
 
-				             
+				
 
 			case "musictrack":
 				panel.sounds.musicTrack = argStr
@@ -895,7 +887,7 @@ void function InitPagesForMenuOpen()
 	file.s_panels.clear()
 	if ( file.s_arrayOfDataToLoadOnOpen.len() == 0 )
 	{
-		                                    
+		
 		ComicPanel panel
 		file.s_panels.append( panel )
 	}
@@ -935,9 +927,9 @@ void function InitPagesForMenuOpen()
 	int panelDataIndex = GetPanelDataIndexOfPanelIndexForPage( file.s_startPageIndex, file.s_startPanelIndex )
 	file.s_panelIndex = panelDataIndex
 
-	                                                    
-	              
-	                                                    
+	
+	
+	
 	ComicPanel pData = file.s_panels[ file.s_panelIndex ]
 	float sizeMultiplier = GetAdjustedSizeMultiplier( pData )
 	BubbleDialogue diag
@@ -950,20 +942,20 @@ void function InitPagesForMenuOpen()
 	diag.dialogue = (file.s_panelIndex == 0)? Localize( "#COMIC_PROLOGUE_CREDITS" ): Localize( "#COMIC_CREDITS" )
 	diag.hideTail = true
 	pData.bubbleDialogueArray.append( diag )
-	                                                    
+	
 
 
 	file.s_transition = false
 	file.s_transitionStartTime = 0
 	file.s_transitionQueue = QUEUE_CLEAR
 
-	#if DEVELOPER
+#if DEV
 		if ( file.panelEditMode )
 		{
 			PanelEdit_SetLine( 0 )
 			PanelEdit_Update( panelDataIndex )
 		}
-	#endif
+#endif
 
 	for ( int i = 0; i < file.readerRuis.len(); ++i )
 	{
@@ -981,7 +973,7 @@ void function InitPagesForMenuOpen()
 	file.pin_viewStartTime = UITime()
 	AddComicPinEvent( file.s_startPageIndex, file.s_startPanelIndex, -1, -1 )
 
-	                          
+	
 	RuiSetGameTime( firstReaderRui.rui, "fadeInStartTime", ClientTime() )
 
 	file.s_screenOpenNumber++
@@ -1113,7 +1105,7 @@ void function UpdateAudio( int panelIndex )
 
 void function UpdateBackgroundRui( int panelIndex )
 {
-	                                 
+	
 	if ( !IsFullyConnected() )
 		return
 
@@ -1124,15 +1116,15 @@ void function UpdateBackgroundRui( int panelIndex )
 	{
 		expect ItemFlavor( quest )
 		RuiSetString( file.backgroundRui, "titleText", Localize( ItemFlavor_GetShortName( quest ) ) )
-		#if DEVELOPER
+#if DEV
 			if ( file.panelEditMode )
 				RuiSetString( file.backgroundRui, "titleText", "EDIT MODE!!!" )
-		#endif
+#endif
 	}
 
 	RuiSetInt( file.backgroundRui, "currentPanel", panelIndex + 1 )
 	RuiSetInt( file.backgroundRui, "panelCount", file.s_panels.len() - 1 )
-	  	                                                                         
+	
 }
 
 
@@ -1208,10 +1200,10 @@ void function UpdatePanelRuiLines( int panelIndex, var rui )
 {
 	ComicPanel panel = file.s_panels[panelIndex]
 
-	#if DEVELOPER
+#if DEV
 		if ( file.panelEditMode )
 			printt( "--------------------------------" )
-	#endif
+#endif
 
 	for ( int lineIndex = 0; lineIndex < MAX_DIALOGUE_LINES; lineIndex++ )
 	{
@@ -1226,18 +1218,18 @@ void function UpdatePanelRuiLines( int panelIndex, var rui )
 			asset nestedAsset = $"ui/basic_speech_bubble.rpak"
 			if ( dialogue.bubbleType == eBubbleType.SFX )
 				nestedAsset = $"ui/sfx_text.rpak"
-			#if DEVELOPER
+#if DEV
 				if ( file.panelEditMode )
 				{
 					BubbleDialogue dialogueEdit = file.panelEdit_data[ lineIndex ]
 					if ( dialogueEdit.bubbleType == eBubbleType.SFX )
 						nestedAsset = $"ui/sfx_text.rpak"
 				}
-			#endif
+#endif
 
 			var nestedRui = RuiCreateNested( rui, format( "speechBubbleHandle%02d", lineIndex + 1 ), nestedAsset )
 
-			                         
+			
 			RuiSetInt( nestedRui, "bubbleType", dialogue.bubbleType )
 			RuiSetString( nestedRui, "bubbleText", dialogue.dialogue )
 			RuiSetFloat( nestedRui, "bubbleTextWidth", float( dialogue.width ) )
@@ -1250,11 +1242,11 @@ void function UpdatePanelRuiLines( int panelIndex, var rui )
 			RuiSetColorAlpha( nestedRui, "fillColor", <1, 1, 1>, 1 )
 			RuiSetColorAlpha( nestedRui, "textColor", <0, 0, 0>, 1 )
 			RuiSetFloat2( nestedRui, "panelImageSize", <panel.imageWidth, panel.imageHeight, 0> )
-			#if DEVELOPER
+#if DEV
 				RuiSetBool( nestedRui, "isEditMode", file.panelEditMode )
-			#endif
+#endif
 
-			#if DEVELOPER
+#if DEV
 				if ( file.panelEditMode )
 				{
 					BubbleDialogue dialogueEdit = file.panelEdit_data[ lineIndex ]
@@ -1268,11 +1260,11 @@ void function UpdatePanelRuiLines( int panelIndex, var rui )
 
 					printt( "\t\tTEXT,," + dialogue.dialogue + "," + dialogueEdit.width + ",," + dialogueEdit.offsetX + "," + dialogueEdit.offsetY + "," + dialogueEdit.bubbleType + "," + dialogueEdit.placementFrac + "," + dialogueEdit.hideTail + "," + dialogueEdit.tailScale )
 				}
-			#endif
+#endif
 		}
 	}
 
-	#if DEVELOPER
+#if DEV
 		if ( file.panelEditMode )
 		{
 			printt( "--------------------------------" )
@@ -1282,143 +1274,143 @@ void function UpdatePanelRuiLines( int panelIndex, var rui )
 		{
 			RuiSetInt( rui, "editModeCurrentIdx", 0 )
 		}
-	#endif
+#endif
 }
 
 void function LoadPanelImages( int minPanelIndexToLoad, int maxPanelIndexToLoad )
 {
-	                                                                  
+	
 	for (int index = minPanelIndexToLoad + 1; index <= maxPanelIndexToLoad; ++index)
 	{
 		int panelIndex = index
-		asset panelImage = ( index >= 0 && index < file.s_panels.len() ) ? file.s_panels[index].panelImage : $""
+		asset panelImage = file.s_panels.isvalidindex( index ) ? file.s_panels[index].panelImage : $""
 
 		index -= 1
-		asset prevImage = ( index >= 0 && index < file.s_panels.len() ) ? file.s_panels[index].panelImage : $""
+		asset prevImage = file.s_panels.isvalidindex( index ) ? file.s_panels[index].panelImage : $""
 
 		index += 2
-		asset nextImage = ( index <= maxPanelIndexToLoad && ( index >= 0 && index < file.s_panels.len() ) ) ? file.s_panels[index].panelImage : $""
+		asset nextImage = ( index <= maxPanelIndexToLoad && file.s_panels.isvalidindex( index ) ) ? file.s_panels[index].panelImage : $""
 
 		int panelsBeforeToKeepLoaded = panelIndex - minPanelIndexToLoad
 		int panelsAfterToKeepLoaded = maxPanelIndexToLoad - panelIndex
 		RunClientScript( "UIToClient_LoadPanelImages", panelIndex, panelImage, prevImage, nextImage, panelsBeforeToKeepLoaded, panelsAfterToKeepLoaded )
 	}
 }
-#endif     
-
-#if CLIENT
-void function UIToClient_LoadPanelImages( int panelIndex, asset panelImage, asset prevImage, asset nextImage, int panelsBeforeToKeepLoaded, int panelsAfterToKeepLoaded )
-{
-	array<asset> images = [prevImage, panelImage, nextImage]
-	for ( int i = 0; i < 3; i++ )
-	{
-		if ( images[i] == $"" )
-			continue                                     
-
-		int pakIndex = panelIndex + (i - 1)
-		if ( pakIndex in file.pakHandles )
-			continue                                                              
-
-		string rpak         = PanelImage_GetRPakName( images[ i ] )
-		PakHandle pakHandle = RequestPakFile( rpak )
-		file.pakHandles[pakIndex] <- pakHandle
-		printt( "#PAK - request", pakIndex )
-	}
-
-	                                            
-	foreach ( int index, pakHandle in clone file.pakHandles )
-	{
-		bool outOfRange = (index < panelIndex - panelsBeforeToKeepLoaded || index > panelIndex + panelsAfterToKeepLoaded)
-		if ( outOfRange )
-		{
-			                                               
-			printt( "#PAK - release", index )
-			Signal( pakHandle, "StopWaitingForPakLoad" )
-			ReleasePakFile( pakHandle )
-			delete file.pakHandles[index]
-		}
-	}
-#if DEVELOPER
-	string pakString = "#PAK - Panels: ["
-
-	foreach ( int index, pakHandle in file.pakHandles )
-	{
-		pakString += (index + ", ")
-	}
-	string finalPakString = pakString.slice(0, pakString.len() - 2) + "]"
-	printt( finalPakString )
-#endif
-}
-
-string function PanelImage_GetRPakName( asset imageAsset )
-{
-	array<string> assetStrParts = split( string(imageAsset), "/" )
-	Assert( assetStrParts.len() == 2 )                                     
-	Assert( assetStrParts[0] == "comic" )
-	Assert( assetStrParts[1].find( "comic_" ) == 0 )
-	return assetStrParts[1]
-}
-
-void function UIToClient_SetPanelImage( var panelElement, int panelIndex, asset panelImage )
-{
-	               
-	if( panelIndex in file.pakHandles )
-	{
-
-		Signal( file.pakHandles[panelIndex], "StopWaitingForPakLoad" )
 
 
-		thread function() : ( panelElement, panelIndex, panelImage )
-		{
-			EndSignal( file.pakHandles[panelIndex], "PakHandleReleased" )
-			EndSignal( file.pakHandles[panelIndex], "StopWaitingForPakLoad" )
-
-			table e
-			e.done <- false
-			OnThreadEnd(
-				function() : ( e, panelIndex )
-				{
-					printt( "#PAK - SetPanelEnded", e.done ? "gracefully" : "abruptly", panelIndex )
-				}
-			)
-
-			if ( !file.pakHandles[panelIndex].isAvailable )
-			{
-				printt( "#PAK Wait for PAK", panelIndex, panelElement )
-				RuiSetBool( Hud_GetRui( panelElement ), "panelImageIsReady", false )
-				WaitSignal( file.pakHandles[panelIndex], "PakFileLoaded" )
-			}
-
-			printt( "#PAK - set image", panelIndex, panelElement )
-			RuiSetImage( Hud_GetRui( panelElement ), "panelImage", panelImage )
-			RuiSetBool( Hud_GetRui( panelElement ), "panelImageIsReady", true )
-			e.done = true
-		}()
-	}
-}
 
 
-void function UIToClient_ReleaseAllLoadedPakHandles()
-{
-	                                 
-	array<PakHandle> unloadedHandles
-	foreach ( int panelIndex, pakHandle in file.pakHandles )
-	{
-		if ( unloadedHandles.contains( pakHandle ) )
-			continue
-		else
-			unloadedHandles.append( pakHandle )
-
-		printt( "#PAK - total release ", panelIndex )
-		Signal( pakHandle, "StopWaitingForPakLoad" )
-		ReleasePakFile( pakHandle )
-	}
-	file.pakHandles.clear()
-}
-#endif         
 
 
-#if UI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function HidePanelRui( ReaderRui readerRui )
 {
 	RuiSetBool( readerRui.rui, "isVisible", false )
@@ -1469,27 +1461,27 @@ void function OnClickedToAdvance( bool isForward )
 		file.s_transition = true
 		file.s_transitionStartTime = UITime()
 
-		                                                                                  
+		
 
-		#if DEVELOPER
+#if DEV
 			if ( file.panelEditMode )
 			{
 				PanelEdit_SetLine( 0 )
 				PanelEdit_Update( wantPanelIndex )
 			}
-		#endif
+#endif
 
-		                                                                                                              
+		
 		array<ReaderRui> availableReaders = GetAvailableReaderRuis()
 
-		                                                       
+		
 		int currentPanelGroupId = file.s_panels[currentPanelIndex].groupId
 		int wantPanelGroupId = file.s_panels[wantPanelIndex].groupId
 		bool arePanelsGrouped = currentPanelGroupId > 0 && currentPanelGroupId == wantPanelGroupId
 
-		                                   
-		                                                                                                          
-		                                                                             
+		
+		
+		
 		if ( !arePanelsGrouped )
 		{
 			for ( int i = 0; i < file.readerRuis.len(); ++i )
@@ -1512,9 +1504,9 @@ void function OnClickedToAdvance( bool isForward )
 			}
 		}
 
-		                                   
-		                                                                                          
-		                                                                                                                     
+		
+		
+		
 		if ( !isForward && wantPanelGroupId > 0 && wantPanelGroupId != currentPanelGroupId )
 		{
 			for (int i = wantPanelIndex; i >= 0; --i)
@@ -1532,21 +1524,21 @@ void function OnClickedToAdvance( bool isForward )
 			UpdatePanelRui( wantPanelIndex, availableReaders[0], isForward, false )
 		}
 
-		                                                     
-		                                                                                                
+		
+		
 		UpdateReaderRuiZOrders()
 
-		                                                          
+		
 		int minPanelIndexToLoad = int( max( wantPanelIndex - 1, 0 ) )
 		int maxPanelIndexToLoad = int( min( wantPanelIndex + 1, file.s_panels.len() - 1 ) )
 
-		                                                                                                                                                
+		
 		int minGroupId = file.s_panels[minPanelIndexToLoad].groupId
 		if ( minGroupId > 0 )
 		{
 			for ( int i = minPanelIndexToLoad - 1; i >= 0; --i )
 			{
-				if ( file.s_panels[i].groupId == minGroupId )                                                                                                   
+				if ( file.s_panels[i].groupId == minGroupId ) 
 				{
 					minPanelIndexToLoad = i
 				}
@@ -1557,21 +1549,21 @@ void function OnClickedToAdvance( bool isForward )
 			}
 		}
 
-		#if DEVELOPER
+#if DEV
 			int prevMinPanelToLoad = wantPanelIndex - 1
 			int maxSupportedPanels = file.readerRuis.len()
 			int numPanels = prevMinPanelToLoad - minPanelIndexToLoad
 			if ( prevMinPanelToLoad - minPanelIndexToLoad > maxSupportedPanels )
 			{
-				                                                                                     
-				                                                                             
-				                                                                                     
-				                                                               
-				                                                                                     
+				
+				
+				
+				
+				
 				Assert( false, "Trying to find panels associated with panel #" + (prevMinPanelToLoad+1) + "(index: " + prevMinPanelToLoad +
 				", " + file.s_panels[prevMinPanelToLoad].panelImage + ") but " + numPanels + " were found, exceeding " + maxSupportedPanels + " panels a page can show. Check 'Type Of speech bubble' on Panel Rows are uniquely grouped.  See script comments for more details." )
 			}
-		#endif
+#endif
 
 		LoadPanelImages( minPanelIndexToLoad, maxPanelIndexToLoad )
 
@@ -1579,12 +1571,12 @@ void function OnClickedToAdvance( bool isForward )
 		UpdateAudio( wantPanelIndex )
 
 		{
-			                
+			
 			ComicPanel wantPanel    = file.s_panels[wantPanelIndex]
 			ComicPanel currentPanel = file.s_panels[currentPanelIndex]
 			if ( wantPanelIndex == file.s_panels.len() - 1 )
 			{
-				                                                       
+				
 				AddComicPinEvent( -1, -1, currentPanel.pageID, currentPanel.panelID )
 			}
 			else
@@ -1608,13 +1600,13 @@ void function AddComicPinEvent( int pageIndex, int panelIndex, int previousPageI
 	string previousID = previousPageIndex == -1 ? "none" : format( "s%d_pg%d_panel%d", seasonNum, previousPageIndex, previousPanelIndex )
 
 	float timeToRead = UITime() - file.pin_viewStartTime
-	//PIN_ComicPageView( currentID, previousID, timeToRead )
+	PIN_ComicPageView( currentID, previousID, timeToRead )
 
 	file.pin_viewStartTime = UITime()
 }
 
 
-#if DEVELOPER
+#if DEV
 void function PanelEdit_SetLine( int line )
 {
 	file.panelEdit_currentLineIndex = line
@@ -1664,4 +1656,4 @@ void function PanelEdit_Update( int panelIndex )
 }
 #endif
 
-#endif     
+

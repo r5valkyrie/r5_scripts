@@ -20,8 +20,8 @@ void function InitCardTrackersPanel( var panel )
 	AddPanelEventHandler_FocusChanged( panel, CardTrackersPanel_OnFocusChanged )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
-	                                                            
-	                                                                                                                  
+	
+	
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK_LEGEND", "#X_BUTTON_UNLOCK_LEGEND", null, CustomizeMenus_IsFocusedItemParentItemLocked )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_CLEAR", "#X_BUTTON_CLEAR", null, bool function () : ()
@@ -29,10 +29,10 @@ void function InitCardTrackersPanel( var panel )
 		return ( CustomizeMenus_IsFocusedItemUnlocked() && !CustomizeMenus_IsFocusedItemEquippable() )
 	} )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK", "#X_BUTTON_UNLOCK", null, CustomizeMenus_IsFocusedItemLocked )
-	                                                                                                                                           
-	                                                                                                                     
-	                                                                                                                       
-	                                                                                                                        
+	
+	
+	
+	
 }
 
 
@@ -57,7 +57,7 @@ void function CardTrackersPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in file.cardTrackerList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -68,7 +68,7 @@ void function CardTrackersPanel_Update( var panel )
 	for ( int trackerIndex = 0; trackerIndex < GLADIATOR_CARDS_NUM_TRACKERS; trackerIndex++ )
 		SendMenuGladCardPreviewCommand( eGladCardPreviewCommandType.TRACKER, trackerIndex, null )
 
-	                                  
+	
 	if ( IsPanelActive( file.panel ) )
 	{
 		ItemFlavor character = GetTopLevelCustomizeContext()
@@ -81,8 +81,7 @@ void function CardTrackersPanel_Update( var panel )
 			entries.append( entry )
 		}
 
-		file.cardTrackerList = GetLoadoutItemsSortedForMenu( entry, GladiatorCardStatTracker_GetSortOrdinal )
-		SortTrackersAndFilter( character, file.cardTrackerList )
+		file.cardTrackerList = GetLoadoutItemsSortedForMenu( entries, GladiatorCardStatTracker_GetSortOrdinal, GladiatorCardTracker_IsTheEmpty, [] )
 
 		Hud_InitGridButtons( file.listPanel, file.cardTrackerList.len() )
 		foreach ( int flavIdx, ItemFlavor flav in file.cardTrackerList )
@@ -99,7 +98,7 @@ void function CardTrackersPanel_Update( var panel )
 
 void function CardTrackersPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) ) 
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -111,42 +110,4 @@ void function CardTrackersPanel_OnFocusChanged( var panel, var oldFocus, var new
 void function PreviewCardTracker( ItemFlavor flav )
 {
 	SendMenuGladCardPreviewCommand( eGladCardPreviewCommandType.TRACKER, GetCardPropertyIndex(), flav )
-}
-
-void function SortTrackersAndFilter( ItemFlavor character, array<ItemFlavor> trackerList )
-{
-	table<ItemFlavor, int> equippedTrackerSet
-	for ( int iterTrackerIndex = 0; iterTrackerIndex < GLADIATOR_CARDS_NUM_TRACKERS; iterTrackerIndex++ )
-	{
-		LoadoutEntry trackerSlot = Loadout_GladiatorCardStatTracker( character, iterTrackerIndex )
-		if ( LoadoutSlot_IsReady( LocalClientEHI(), trackerSlot ) )
-		{
-			ItemFlavor tracker = LoadoutSlot_GetItemFlavor( LocalClientEHI(), trackerSlot )
-			equippedTrackerSet[tracker] <- iterTrackerIndex
-		}
-	}
-	for ( int i = trackerList.len() - 1; i >= 0; i-- )
-	{
-		if ( !ShouldDisplayTracker( trackerList[i], equippedTrackerSet, character ) )
-			trackerList.remove( i )
-	}
-
-	trackerList.sort( int function( ItemFlavor a, ItemFlavor b ) : ( equippedTrackerSet ) {
-		bool a_isEquipped = (a in equippedTrackerSet)
-		bool b_isEquipped = (b in equippedTrackerSet)
-		if ( a_isEquipped != b_isEquipped )
-			return (a_isEquipped ? -1 : 1)
-
-		int aso = GladiatorCardStatTracker_GetSortOrdinal( a )
-		int bso = GladiatorCardStatTracker_GetSortOrdinal( b )
-		return aso - bso
-	} )
-}
-
-bool function ShouldDisplayTracker( ItemFlavor tracker, table<ItemFlavor, int> equippedTrackerSet, ItemFlavor character )
-{
-	if ( GladiatorCardTracker_IsTheEmpty( tracker ) )
-		return false
-
-	return true
 }

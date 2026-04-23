@@ -19,7 +19,7 @@ struct
 } file
 
 
-void function InitADSControlsMenuPC( var menu )                                               
+void function InitADSControlsMenuPC( var menu ) 
 {
 	file.menu = menu
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnOpenControlsADSMenuPC )
@@ -52,6 +52,7 @@ void function InitADSControlsPanelPC( var panel )
 	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity4" ), "#PEROPTICADS_4", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" ) )
 	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity5" ), "#PEROPTICADS_5", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC_8x", $"rui/menu/settings/settings_pc" ) )
 	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity6" ), "#PEROPTICADS_6", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" ) )
+	file.customItems.extend( SetupSettingsSlider( Hud_GetChild( contentPanel, "SldSensitivity7" ), "#PEROPTICADS_7", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC_SEER", $"rui/menu/settings/settings_pc" ) )
 
 	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed0" ) )
 	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed1" ) )
@@ -60,6 +61,7 @@ void function InitADSControlsPanelPC( var panel )
 	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed4" ) )
 	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed5" ) )
 	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed6" ) )
+	file.customItems.append( Hud_GetChild( contentPanel, "TextEntryMouseSensitivityZoomed7" ) )
 
 	ScrollPanel_InitPanel( panel )
 	ScrollPanel_InitScrollBar( panel, Hud_GetChild( panel, "ScrollBar" ) )
@@ -89,7 +91,7 @@ void function OnOpenControlsADSMenuPC()
 		UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
 	SetBlurEnabled( true )
 
-	ShowPanel( Hud_GetChild( file.menu, "ADSControlsPanel" ) )  
+	ShowPanel( Hud_GetChild( file.menu, "ADSControlsPanel" ) )
 	Button_Toggle_ADSEnabled( null )
 }
 

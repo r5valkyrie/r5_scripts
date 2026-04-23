@@ -2,7 +2,7 @@ global function InitRankedInfoMenu
 global function OpenRankedInfoPage
 global function InitRankedScoreBarRui
 
-#if DEVELOPER
+#if DEV
 global function TestScoreBar
 #endif
 
@@ -12,17 +12,13 @@ struct
 	var menu
 	var moreInfoButton
 	var infoButtonRank
-	var infoButtonRPTable
-
-	var panelRPTable
-	var closeButtonRPTable
 
 	var panelRankInfo
 	var closeButtonRankInfo
 
 } file
 
-void function InitRankedInfoMenu( var newMenuArg )                                               
+void function InitRankedInfoMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "RankedInfoMenu" )
 	file.menu = menu
@@ -35,19 +31,13 @@ void function InitRankedInfoMenu( var newMenuArg )
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddMenuFooterOption( menu, LEFT, BUTTON_Y, true, "#Y_BUTTON_VIEW_REWARDS", "#VIEW_REWARDS", OnViewRewards, ShouldShowRewards )
+
 	
-	                                            
 	var moreInfoButton = Hud_GetChild( menu, "MoreInfoButton" )
 	file.moreInfoButton = moreInfoButton
 
 	var infoButtonRank = Hud_GetChild ( menu, "RankMoreInfoButton" )
 	file.infoButtonRank = infoButtonRank
-
-	var infoButtonRPTable = Hud_GetChild ( menu, "RPTableInfoButton" )
-	file.infoButtonRPTable = infoButtonRPTable
-
-	var panelRPTable = Hud_GetChild ( menu, "MoreRPInfoPanel" )
-	file.panelRPTable = panelRPTable
 
 	var panelRankInfo = Hud_GetChild ( menu, "MoreInfoPanel" )
 	file.panelRankInfo = panelRankInfo
@@ -55,23 +45,10 @@ void function InitRankedInfoMenu( var newMenuArg )
 	var closeButtonRankInfo = Hud_GetChild ( menu, "MoreInfoCloseButton" )
 	file.closeButtonRankInfo = closeButtonRankInfo
 
-	var closeButtonRPTable = Hud_GetChild ( menu, "MoreRPInfoCloseButton" )
-	file.closeButtonRPTable = closeButtonRPTable
-
-
 	HideRankedInfoPanel ( null )
-	HideRPTablePanel ( null  )
 
-	                             
-	                                                
-	                                                       
-	                                                                              
-	                                                                     
 	Hud_AddEventHandler( moreInfoButton, UIE_CLICK, OpenRankedInfoMorePage )
 	Hud_AddEventHandler( infoButtonRank, UIE_CLICK, ShowRankedAboutPanel )
-	Hud_AddEventHandler( infoButtonRPTable, UIE_CLICK, ShowRPTablePanel )
-
-	Hud_AddEventHandler( closeButtonRPTable, UIE_CLICK, HideRPTablePanel )
 	Hud_AddEventHandler( closeButtonRankInfo, UIE_CLICK, HideRankedInfoPanel )
 }
 
@@ -82,8 +59,7 @@ void function OpenRankedInfoPage( var button )
 
 void function ShowRankedAboutPanel( var button )
 {
-	Hud_Show( file.panelRankInfo )
-	Hud_Show( file.closeButtonRankInfo )
+	UI_OpenFeatureTutorialDialog( GAMEMODE_SURVIVAL_RANKED )
 }
 
 void function HideRankedInfoPanel( var button )
@@ -92,28 +68,41 @@ void function HideRankedInfoPanel( var button )
 	Hud_Hide( file.closeButtonRankInfo )
 }
 
-void function ShowRPTablePanel( var button )
-{
-	Hud_Show( file.panelRPTable )
-	Hud_Show( file.closeButtonRPTable )
-}
-
-void function HideRPTablePanel( var button )
-{
-	Hud_Hide( file.panelRPTable )
-	Hud_Hide( file.closeButtonRPTable )
-}
-
 void function OnRankedInfoMenu_Open()
 {
 	PrintFunc()
 	UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
 
-	int currentScore                     = GetPlayerRankScore( GetLocalClientPlayer() )
+	Lobby_AdjustScreenFrameToMaxSize( Hud_GetChild( file.menu, "ScreenFrame" ), true )
+	entity player = GetLocalClientPlayer()
+
+	bool isRankedRumble = false
+	bool inProvisional 					 = !Ranked_HasCompletedProvisionalMatches(player)
+	int currentScore                     = 0
+	int ladderPosition                   = 0
+
+		if ( RankedRumble_IsRunningRankedRumble() )
+		{
+			isRankedRumble = true
+			table scorePosition = RankedRumble_GetHighestRankedScoreAndPositionAcrossPlatforms( player )
+			currentScore = expect int( scorePosition.score )
+			ladderPosition = expect int( scorePosition.position )
+		}
+		else
+
+		{
+			currentScore = GetPlayerRankScore( player )
+			ladderPosition = Ranked_GetLadderPosition( player  )
+		}
+
+
 	array<SharedRankedTierData> tiers    = Ranked_GetTiers()
-	int ladderPosition                   = Ranked_GetLadderPosition( GetLocalClientPlayer()  )
 	SharedRankedDivisionData currentRank = GetCurrentRankedDivisionFromScoreAndLadderPosition( currentScore, ladderPosition )
 	SharedRankedTierData currentTier     = currentRank.tier
+	SharedRankedDivisionData ornull nextDivision = GetNextRankedDivisionFromScore( currentScore )
+
+	bool hasPromoTrial					 = RankedTrials_PlayerHasIncompleteTrial( GetLocalClientPlayer() )
+
 
 	array< SharedRankedDivisionData > divisionData =  Ranked_GetRankedDivisionDataForTier( currentRank.tier )
 
@@ -121,11 +110,11 @@ void function OnRankedInfoMenu_Open()
 
 	foreach ( panel in panels )
 	{
-		InitRankedInfoPanel( panel, tiers )
+		InitRankedInfoPanel( panel, tiers, isRankedRumble )
 	}
 
 	var mainRui = Hud_GetRui( Hud_GetChild( file.menu, "InfoMain" ) )
-	if ( currentTier.isLadderOnlyTier  )                                                        
+	if ( currentTier.isLadderOnlyTier  ) 
 	{
 		SharedRankedDivisionData scoreDivisionData = GetCurrentRankedDivisionFromScore( currentScore )
 		SharedRankedTierData scoreCurrentTier      = scoreDivisionData.tier
@@ -138,10 +127,53 @@ void function OnRankedInfoMenu_Open()
 
 	RuiSetInt( mainRui, "currentScore", currentScore )
 	RuiSetBool( mainRui, "inSeason", IsRankedInSeason() )
-	RuiSetString( mainRui, "currentRankString", currentRank.divisionName )
+	RuiSetBool( mainRui, "inProvisional", inProvisional )
+	RuiSetBool( mainRui, "isRumble", isRankedRumble )
+
+	asset promoCapImage = $""
+	if ( nextDivision != null )
+	{
+		expect SharedRankedDivisionData( nextDivision )
+		promoCapImage = nextDivision.tier.promotionalMetallicImage
+	}
+
+	RuiSetBool( mainRui, "inPromoTrials", hasPromoTrial )
+	RuiSetAsset( mainRui, "promoCapImage", promoCapImage )
+	RuiSetBool( mainRui, "showPromoPip", RankedTrials_NextRankHasTrial( currentRank, nextDivision ) && !RankedTrials_IsKillswitchEnabled() )
+
+	if ( isRankedRumble )
+		RuiSetString( mainRui, "currentRankString", currentTier.name )
+	else
+		RuiSetString( mainRui, "currentRankString", currentRank.divisionName )
+
 	RuiSetString( mainRui, "currentRankBracketString", (currentRank.emblemDisplayMode == emblemDisplayMode.DISPLAY_DIVISION) ? currentRank.emblemText : "" )
 
-	int entryCost = Ranked_GetCostForEntry( currentRank, currentScore)
+	if ( inProvisional )
+	{
+		RuiSetString( mainRui, "provisionalCount", string ( Ranked_GetXProgMergedPersistenceData( GetLocalClientPlayer(), RANKED_PROVISIONAL_MATCH_COUNT_PERSISTENCE_VAR_NAME ) ) )
+		RuiSetString( mainRui, "provisionalCountMax", string (Ranked_GetNumProvisionalMatchesRequired() ) )
+	}
+	else if ( hasPromoTrial )
+	{
+		ItemFlavor currentTrial = RankedTrials_GetAssignedTrial( player )
+		int trialsAttempts = RankedTrials_GetGamesPlayedInTrialsState( player )
+		int maxAttempts = RankedTrials_GetGamesAllowedInTrialsState( player, currentTrial )
+
+		RuiSetString( mainRui, "provisionalCount", string ( trialsAttempts ) )
+		RuiSetString( mainRui, "provisionalCountMax", string ( maxAttempts ) )
+	}
+	else
+	{
+		RuiSetString( mainRui, "provisionalCount", "0" )
+		RuiSetString( mainRui, "provisionalCountMax", "1" )
+	}
+
+
+		int entryCost = Ranked_GetCostForEntry( currentRank )
+
+
+
+
 	RuiSetString( mainRui, "currentEntryFeeString", ( entryCost == 0 )? "#RANKED_FREE": string( entryCost ) )
 
 
@@ -153,59 +185,81 @@ void function OnRankedInfoMenu_Open()
 		RuiSetInt( mainRui, "entryFee" + i, d.entryCost )
 	}
 
-	ItemFlavor latestRankedPeriod = GetLatestRankedPeriodByType( GetUnixTimestamp(), eItemType.calevent_rankedperiod )
+	Assert( Ranked_GetCurrentActiveRankedPeriod() != null )
+	if ( Ranked_GetCurrentActiveRankedPeriod() == null )
+		return
+
+	SharedRankedTierData ladderOnlyTier
+	ItemFlavor latestRankedPeriod = expect ItemFlavor( Ranked_GetCurrentActiveRankedPeriod() )
 	string rankedPeriodGUIDString = ItemFlavor_GetGUIDString( latestRankedPeriod  )
-	if( Ranked_PeriodHasLadderOnlyDivision( rankedPeriodGUIDString) )
+	bool hasLadderOnlyDivision = Ranked_PeriodHasLadderOnlyDivision( rankedPeriodGUIDString )
+	if( hasLadderOnlyDivision )
 	{
 		SharedRankedDivisionData ladderOnlyDivision = Ranked_GetHistoricalLadderOnlyDivision( rankedPeriodGUIDString  )
-		SharedRankedTierData ladderOnlyTier         = ladderOnlyDivision.tier
+		ladderOnlyTier         = ladderOnlyDivision.tier
 		int index                                   = tiers.len()
 
 		RuiSetInt( mainRui, "entryFee" + ( index - 1 ), ladderOnlyTier.entryCost )
 	}
 
 	var scoreBarRui = Hud_GetRui( Hud_GetChild( file.menu, "RankedProgressBar" ) )
-	InitRankedScoreBarRui( scoreBarRui, currentScore, Ranked_GetLadderPosition( GetLocalClientPlayer() ) )
+	if ( inProvisional || hasPromoTrial || isRankedRumble )
+		InitRankedScoreBarRui( scoreBarRui, currentScore, ladderPosition )
+	else
+		InitRankedScoreBarRuiForDoubleBadge( scoreBarRui, currentScore, Ranked_GetLadderPosition( GetLocalClientPlayer() ))
 
 	var rankedScoringTableRui = Hud_GetRui( Hud_GetChild( file.menu, "RankedScoringTable" ) )
 	RuiSetInt( rankedScoringTableRui, "fourteenthPlaceRP", Ranked_GetPointsForPlacement( 14 ) )
 	RuiSetInt( rankedScoringTableRui, "eleventhPlaceRP", Ranked_GetPointsForPlacement( 11 ) )
 	RuiSetInt( rankedScoringTableRui, "tenthPlaceRP", Ranked_GetPointsForPlacement( 10 ) )
+	RuiSetInt( rankedScoringTableRui, "ninthPlaceRP", Ranked_GetPointsForPlacement( 9 ) )
 	RuiSetInt( rankedScoringTableRui, "eighthPlaceRP", Ranked_GetPointsForPlacement( 8 ) )
+	RuiSetInt( rankedScoringTableRui, "seventhPlaceRP", Ranked_GetPointsForPlacement( 7 ) )
 	RuiSetInt( rankedScoringTableRui, "sixthPlaceRP", Ranked_GetPointsForPlacement( 6 ) )
 	RuiSetInt( rankedScoringTableRui, "fifthPlaceRP", Ranked_GetPointsForPlacement( 5 ) )
 	RuiSetInt( rankedScoringTableRui, "fourthPlaceRP", Ranked_GetPointsForPlacement( 4 ) )
 	RuiSetInt( rankedScoringTableRui, "thirdPlaceRP", Ranked_GetPointsForPlacement( 3 ) )
 	RuiSetInt( rankedScoringTableRui, "secondPlaceRP", Ranked_GetPointsForPlacement( 2 ) )
 	RuiSetInt( rankedScoringTableRui, "firstPlaceRP", Ranked_GetPointsForPlacement( 1 ) )
+	RuiSetBool( rankedScoringTableRui, "isRumble", isRankedRumble )
 
-	RuiSetInt( rankedScoringTableRui, "fourteenthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 14 ) )
-	RuiSetInt( rankedScoringTableRui, "eleventhPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 11 ) )
-	RuiSetInt( rankedScoringTableRui, "ninthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 9 ) )
-	RuiSetInt( rankedScoringTableRui, "seventhPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 7 ) )
-	RuiSetInt( rankedScoringTableRui, "sixthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 6 ) )
+	var rankedKillsScoringTableRui = Hud_GetRui( Hud_GetChild( file.menu, "RankedKillsScoringTable" ) )
+	RuiSetInt( rankedKillsScoringTableRui, "fourteenthPlaceRP", RankedGetPointsForKillsByPlacement( 14 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "eleventhPlaceRP", RankedGetPointsForKillsByPlacement( 11 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "tenthPlaceRP", RankedGetPointsForKillsByPlacement( 10 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "ninthPlaceRP", RankedGetPointsForKillsByPlacement( 9 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "eighthPlaceRP", RankedGetPointsForKillsByPlacement( 8 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "seventhPlaceRP", RankedGetPointsForKillsByPlacement( 7 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "sixthPlaceRP", RankedGetPointsForKillsByPlacement( 6 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "fifthPlaceRP", RankedGetPointsForKillsByPlacement( 5 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "fourthPlaceRP", RankedGetPointsForKillsByPlacement( 4 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "thirdPlaceRP", RankedGetPointsForKillsByPlacement( 3 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "secondPlaceRP", RankedGetPointsForKillsByPlacement( 2 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "firstPlaceRP", RankedGetPointsForKillsByPlacement( 1 ) )
+	RuiSetBool( rankedKillsScoringTableRui, "isRumble", isRankedRumble )
 
-	RuiSetInt( rankedScoringTableRui, "fifthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 5 ) )
-	RuiSetInt( rankedScoringTableRui, "fourthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 4 ) )
-	RuiSetInt( rankedScoringTableRui, "thirdPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 3 ) )
-	RuiSetInt( rankedScoringTableRui, "secondPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 2 ) )
-	RuiSetInt( rankedScoringTableRui, "firstPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 1 ) )
-
-	array<SharedRankedDivisionData> divisions = GetCurrentRankedDivisions()
-	int i = 0
-	var entryCostTableRUI = Hud_GetRui( Hud_GetChild( file.menu, "MoreRPInfoPanel" ) )
-	foreach ( SharedRankedDivisionData d in divisions )
+	var rankedProgressBar = Hud_GetChild( file.menu, "RankedProgressBar" )
+	Hud_ClearToolTipData( rankedProgressBar )
+	ToolTipData promoTooltip
+	promoTooltip.titleText = ""
+	if ( !RankedTrials_IsKillswitchEnabled() )
 	{
-		RuiSetInt( entryCostTableRUI, "entryCost" + i, d.divisionEntryCost )
-		i++
+		promoTooltip.descText = Localize( "#RANKED_ABOUT_PROMO_TOOLTIP" )
 	}
+	else
+	{
+		promoTooltip.descText = Localize( "#RANKED_ABOUT_PROMO_TOOLTIP_2" )
+	}
+	promoTooltip.tooltipFlags = eToolTipFlag.SOLID
+	Hud_SetVisible( rankedProgressBar, true )
 
-	RuiSetInt( entryCostTableRUI, "masterPlusScaler", MASTER_PLUS_SCALING_RP )
-	RuiSetInt( entryCostTableRUI, "masterPlusInterval", MASTER_PLUS_SCALING_RP_INTERVAL )
+	if ( !isRankedRumble )
+		Hud_SetToolTipData( rankedProgressBar, promoTooltip )
 }
 
 void function InitRankedScoreBarRui( var rui, int score, int ladderPosition )
 {
+	bool inProvisional 					  = !Ranked_HasCompletedProvisionalMatches( GetLocalClientPlayer() )
 	array<SharedRankedTierData> divisions = Ranked_GetTiers()
 	SharedRankedDivisionData currentRank  = GetCurrentRankedDivisionFromScoreAndLadderPosition( score, ladderPosition )
 	SharedRankedTierData currentTier      = currentRank.tier
@@ -215,7 +269,7 @@ void function InitRankedScoreBarRui( var rui, int score, int ladderPosition )
 
 	RuiSetGameTime( rui, "animStartTime", RUI_BADGAMETIME )
 
-	if ( currentTier.isLadderOnlyTier  )                                                        
+	if ( currentTier.isLadderOnlyTier  ) 
 	{
 		SharedRankedDivisionData scoreDivisionData = GetCurrentRankedDivisionFromScore( score )
 		SharedRankedTierData scoreCurrentTier      = scoreDivisionData.tier
@@ -226,6 +280,48 @@ void function InitRankedScoreBarRui( var rui, int score, int ladderPosition )
 		RuiSetInt( rui, "currentTierColorOffset", currentTier.index )
 	}
 
+	bool hasTrial = RankedTrials_PlayerHasIncompleteTrial( GetLocalClientPlayer() )
+
+	RuiSetBool( rui, "inProvisional", inProvisional )
+	RuiSetBool( rui, "inPromoTrials", hasTrial )
+
+	SharedRankedDivisionData ornull nextDivision = GetNextRankedDivisionFromScore( score )
+	RuiSetBool( rui, "showPromoPip", RankedTrials_NextRankHasTrial( currentRank, nextDivision ) && !RankedTrials_IsKillswitchEnabled() )
+
+	asset promoCapImage = $""
+	if ( nextTier != null )
+	{
+		expect SharedRankedTierData( nextTier )
+		promoCapImage = nextTier.promotionalMetallicImage
+	}
+	RuiSetAsset( rui, "promoCapImage", promoCapImage )
+
+	
+	{
+		RuiDestroyNestedIfAlive( rui, "rankedBadgeHandle0" )
+
+		SharedRankedDivisionData data = divisionData[ 0 ]
+		for ( int i=1; i<divisionData.len(); i++ )
+		{
+			if ( divisionData[ i ].scoreMin > score )
+				break
+
+			data = divisionData[ i ]
+		}
+
+		SharedRanked_FillInRuiEmblemText( rui, data, score, ladderPosition, string(0)  )
+		CreateNestedRankedRui( rui, data.tier, "rankedBadgeHandle0", score, SHARED_RANKED_INVALID_LADDER_POSITION  )
+
+		RuiSetInt( rui, "currentScore" , score )
+		RuiSetInt( rui, "startScore" , score )
+		RuiSetImage( rui, "icon0" , currentTier.icon )
+		RuiSetInt( rui, "badgeScore0", score )
+		RuiSetBool( rui, "showSingleBadge", true )
+
+		return
+	}
+
+	
 	for ( int i=0; i<5; i++ )
 	{
 		RuiDestroyNestedIfAlive( rui, "rankedBadgeHandle" + i )
@@ -238,7 +334,7 @@ void function InitRankedScoreBarRui( var rui, int score, int ladderPosition )
 		RuiSetInt( rui, "badgeScore" + i, data.scoreMin )
 
 		SharedRanked_FillInRuiEmblemText( rui, data, score, ladderPosition, string(i)  )
-		var nestedRuiHandle = CreateNestedRankedRui( rui, data.tier, "rankedBadgeHandle" + i, data.scoreMin, SHARED_RANKED_INVALID_LADDER_POSITION  )
+		CreateNestedRankedRui( rui, data.tier, "rankedBadgeHandle" + i, data.scoreMin, SHARED_RANKED_INVALID_LADDER_POSITION  )
 	}
 
 	RuiSetInt( rui, "currentScore" , score )
@@ -257,21 +353,23 @@ void function InitRankedScoreBarRui( var rui, int score, int ladderPosition )
 			RuiSetInt( rui, "badgeScore4", firstRank.scoreMin )
 			RuiSetImage( rui, "icon4", nextTier.icon )
 			SharedRanked_FillInRuiEmblemText( rui, firstRank, firstRank.scoreMin, ladderPosition, "4"  )
-			var nestedRuiHandle = CreateNestedRankedRui( rui, firstRank.tier, "rankedBadgeHandle4", firstRank.scoreMin, SHARED_RANKED_INVALID_LADDER_POSITION )
+			CreateNestedRankedRui( rui, firstRank.tier, "rankedBadgeHandle4", firstRank.scoreMin, SHARED_RANKED_INVALID_LADDER_POSITION )
 		}
 	}
 
-	                                                                    
-
-	RuiSetBool( rui, "showSingleBadge", divisionData.len() == 1 )
+	RuiSetBool( rui, "showSingleBadge", true )
 }
 
-void function InitRankedInfoPanel( var panel, array<SharedRankedTierData> tiers )
+void function InitRankedInfoPanel( var panel, array<SharedRankedTierData> tiers, bool isRankedRumble )
 {
 	array<SharedRankedTierData> infoTiers = clone tiers
 	int scriptID                          = int( Hud_GetScriptID( panel ) )
 
-	ItemFlavor currentRankedPeriod = GetLatestRankedPeriodByType( GetUnixTimestamp(), eItemType.calevent_rankedperiod )
+	Assert( Ranked_GetCurrentActiveRankedPeriod() != null )
+	if ( Ranked_GetCurrentActiveRankedPeriod() == null )
+		return
+
+	ItemFlavor currentRankedPeriod = expect ItemFlavor( Ranked_GetCurrentActiveRankedPeriod() )
 	string rankedGUIDString = ItemFlavor_GetGUIDString( currentRankedPeriod )
 	if ( Ranked_PeriodHasLadderOnlyDivision( rankedGUIDString )  )
 	{
@@ -290,15 +388,31 @@ void function InitRankedInfoPanel( var panel, array<SharedRankedTierData> tiers 
 	SharedRankedTierData rankedTier = infoTiers[scriptID]
 	var rui                         = Hud_GetRui( panel )
 
-	int ladderPosition = Ranked_GetLadderPosition( GetLocalClientPlayer() )
+	int ladderPosition = 0
+	int rankScore = 0
+	entity player = GetLocalClientPlayer()
 
-	SharedRankedDivisionData currentRank = GetCurrentRankedDivisionFromScoreAndLadderPosition( GetPlayerRankScore( GetLocalClientPlayer() ), ladderPosition )
+	if ( RankedRumble_IsRunningRankedRumble() )
+	{
+		table scorePosition = RankedRumble_GetHighestRankedScoreAndPositionAcrossPlatforms( player )
+		rankScore = expect int( scorePosition.score )
+		ladderPosition = expect int( scorePosition.position )
+	}
+	else
+
+	{
+		ladderPosition = Ranked_GetLadderPosition( player )
+		rankScore = GetPlayerRankScore( player )
+	}
+	SharedRankedDivisionData currentRank = GetCurrentRankedDivisionFromScoreAndLadderPosition( rankScore, ladderPosition )
 
 	RuiSetString( rui, "name", rankedTier.name )
 	RuiSetInt( rui, "minScore", rankedTier.scoreMin )
 	RuiSetInt( rui, "rankTier", scriptID )
 	RuiSetImage( rui, "bgImage", rankedTier.bgImage )
+	RuiSetImage( rui, "glowImage", rankedTier.glowImage )
 	RuiSetBool( rui, "isLocked", rankedTier.index > currentRank.tier.index )
+	RuiSetBool( rui, "isProvisional", !Ranked_HasCompletedProvisionalMatches(GetLocalClientPlayer()) )
 
 	RuiSetBool( rui, "isCurrent", currentRank.tier == rankedTier )
 
@@ -333,7 +447,7 @@ void function InitRankedInfoPanel( var panel, array<SharedRankedTierData> tiers 
 
 		int idx = (i+1)
 
-		if ( GetCurrentPlaylistVarBool( "ranked_reward_show_text", true ) )
+		if ( GetCurrentPlaylistVarBool( "ranked_reward_show_text", true ) && !isRankedRumble )
 		{
 			string tierName = string( rankedTier.index )
 			string rewardString = GetCurrentPlaylistVarString( "ranked_reward_override_" + tierName + "_" + idx, reward.previewName )
@@ -350,9 +464,8 @@ void function OnRankedInfoMenu_Close()
 
 void function OnRankedInfoMenu_Show()
 {
-#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 	HideRankedInfoPanel ( null )
-	HideRPTablePanel ( null  )
 #endif
 }
 

@@ -1,7 +1,6 @@
 global function ScrollPanelInit
 
 global function ScrollPanel_InitPanel
-global function ScrollPanel_DestroyPanel
 global function ScrollPanel_SetActive
 global function ScrollPanel_InitScrollBar
 global function ScrollPanel_Refresh
@@ -59,7 +58,6 @@ struct ScrollPanelData
 	var navDownElement
 
 	bool cursorMustBeOver = false
-	string debugName = ""
 }
 
 struct
@@ -67,7 +65,7 @@ struct
 	table< string, ScrollPanelData > scrollPanels
 } file
 
-#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 const float SCROLL_SPEED = 15.0
 #else
 const float SCROLL_SPEED = 10.0
@@ -155,7 +153,6 @@ void function ScrollPanel_InitPanel( var panel )
 	ScrollPanelData data
 
 	data.panel = panel
-	data.debugName = Hud_GetHudName( panel )
 
 	if ( !(string(panel) in file.scrollPanels) )
 		file.scrollPanels[string(panel)] <- data
@@ -189,31 +186,10 @@ void function ScrollPanel_InitPanel( var panel )
 
 	UpdatePanelElements( data )
 
-	// Auto-cleanup when panel is hidden to prevent stale references
 	if ( !data.isInitialized )
 	{
-		try
-		{
-			AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, void function( var p ) {
-				ScrollPanel_DestroyPanel( p )
-			} )
-		}
-		catch ( e )
-		{
-			// Panel might not be registered in menu system yet, skip event handler
-			Warning( "ScrollPanel: Could not add auto-cleanup handler for '" + data.debugName + "': " + e )
-		}
+
 	}
-
-	data.isInitialized = true
-}
-
-
-void function ScrollPanel_DestroyPanel( var panel )
-{
-	string key = string(panel)
-	if ( key in file.scrollPanels )
-		delete file.scrollPanels[key]
 }
 
 
@@ -267,87 +243,48 @@ void function ScrollVertical( entity player, float val )
 	const float STICK_DEADZONE = 0.15
 	foreach ( ScrollPanelData data in file.scrollPanels )
 	{
-		if ( data.isActive )
+		if ( !data.isActive || ( !Hud_IsCursorOver( data.panel ) && data.cursorMustBeOver ) )
+			continue
+
+		if ( fabs( val ) < STICK_DEADZONE )
+			data.scrollValue = 0.0
+		else
 		{
-			if ( fabs( val ) < STICK_DEADZONE )
-				data.scrollValue = 0.0
-			else
+			if ( (data.scrollValue <= 0 && val < 0) || (data.scrollValue >= 0 && val > 0) )
 			{
-				if ( (data.scrollValue <= 0 && val < 0) || (data.scrollValue >= 0 && val > 0) )
-				{
-					data.scrollValue = val
-				}
+				data.scrollValue = val
 			}
-
-
-			UpdatePanelElements( data )
 		}
+
+		UpdatePanelElements( data )
 	}
 }
 
 
 void function MouseWheelUp( var button )
 {
-	array<string> keysToRemove
-	foreach ( string key, ScrollPanelData data in file.scrollPanels )
+	foreach ( ScrollPanelData data in file.scrollPanels )
 	{
-		try
-		{
-			if ( !data.isActive || ( !Hud_IsCursorOver( data.panel ) && data.cursorMustBeOver ) )
-				continue
+		if ( !data.isActive || ( !Hud_IsCursorOver( data.panel ) && data.cursorMustBeOver ) )
+			continue
 
-			data.scrollValue = (60.0 / SCROLL_SPEED) * -1
-			UpdatePanelElements( data )
-			data.scrollValue = 0.0
-		}
-		catch ( e )
-		{
-			string nameInfo = data.debugName != "" ? data.debugName : "(unknown)"
-			Warning( "ScrollPanel: Error with panel '" + nameInfo + "' (key: " + key + ") - " + e )
-			keysToRemove.append( key )
-		}
-	}
-
-	// Clean up invalid panels
-	foreach ( string key in keysToRemove )
-	{
-		ScrollPanelData data = file.scrollPanels[key]
-		string nameInfo = data.debugName != "" ? data.debugName : "(unknown)"
-		Warning( "ScrollPanel: Removing invalid panel '" + nameInfo + "'" )
-		delete file.scrollPanels[key]
+		data.scrollValue = (60.0 / SCROLL_SPEED) * -1
+		UpdatePanelElements( data )
+		data.scrollValue = 0.0
 	}
 }
 
 
 void function MouseWheelDown( var button )
 {
-	array<string> keysToRemove
-	foreach ( string key, ScrollPanelData data in file.scrollPanels )
+	foreach ( ScrollPanelData data in file.scrollPanels )
 	{
-		try
-		{
-			if ( !data.isActive || ( !Hud_IsCursorOver( data.panel ) && data.cursorMustBeOver ) )
-				continue
+		if ( !data.isActive || ( !Hud_IsCursorOver( data.panel ) && data.cursorMustBeOver ) )
+			continue
 
-			data.scrollValue = 60.0 / SCROLL_SPEED
-			UpdatePanelElements( data )
-			data.scrollValue = 0.0
-		}
-		catch ( e )
-		{
-			string nameInfo = data.debugName != "" ? data.debugName : "(unknown)"
-			Warning( "ScrollPanel: Error with panel '" + nameInfo + "' (key: " + key + ") - " + e )
-			keysToRemove.append( key )
-		}
-	}
-
-	// Clean up invalid panels
-	foreach ( string key in keysToRemove )
-	{
-		ScrollPanelData data = file.scrollPanels[key]
-		string nameInfo = data.debugName != "" ? data.debugName : "(unknown)"
-		Warning( "ScrollPanel: Removing invalid panel '" + nameInfo + "'" )
-		delete file.scrollPanels[key]
+		data.scrollValue = 60.0 / SCROLL_SPEED
+		UpdatePanelElements( data )
+		data.scrollValue = 0.0
 	}
 }
 
@@ -355,7 +292,7 @@ void function OnScrollBarClick( var button )
 {
 	ScrollPanelData data = GetDataForPanel( Hud_GetValueForKey( button, "parentPanel" ) )
 
-	                            
+	
 }
 
 
@@ -403,9 +340,6 @@ void function ScrollHandleRelease( var button )
 
 void function ScrollToFocusedPanel( var panel, ScrollPanelData data )
 {
-	if ( !data.panel )
-		return
-
 	var focusElement = GetFocus()
 	if ( focusElement != null && IsScrollPanelParent( data, focusElement ) )
 	{
@@ -438,24 +372,24 @@ ScrollPanelData function GetDataForPanel( var panel )
 
 void function ScrollPanel_Refresh( var panel )
 {
-#if NX_PROG
-                                                                                                  
+
+
+
+
+
+
+
+
+
+
+
+
+
 	ScrollPanelData data = GetDataForPanel( panel )
 
-	data.paddingVert = ContentScaledYAsInt( 8 )
-	data.contentPanel = Hud_GetChild( panel, "ContentPanel" )
 	data.contentHeight = Hud_GetHeight( data.contentPanel )
-	data.panelHeight = Hud_GetHeight( panel )
-	data.panelSize = REPLACEHud_GetSize( panel )
-	data.panelAbsPos = REPLACEHud_GetAbsPos( panel )
-	
 	UpdatePanelElements( data, true )
-#else
-	ScrollPanelData data = GetDataForPanel( panel )
 
-	data.contentHeight = Hud_GetHeight( data.contentPanel )
-	UpdatePanelElements( data, true )
-#endif
 }
 
 

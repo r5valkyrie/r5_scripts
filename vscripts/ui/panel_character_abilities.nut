@@ -6,6 +6,8 @@ struct
 {
 	ItemFlavor& character
 	bool showGladCard = false
+
+	var activePanel
 } file
 
 void function InitCharacterAbilitiesPanel( var panel )
@@ -26,14 +28,20 @@ void function InitCharacterAbilitiesPanel( var panel )
 
 void function CharacterAbilitiesPanel_OnShow( var panel )
 {
+	file.activePanel = panel
 	SetUpGladCard( panel )
 
-	if ( GetLastMenuNavDirection() != MENU_NAV_FORWARD )
+	UpdateCharacterAbilities( panel )
+	EmitUISound( "UI_Menu_Legend_Details" )
+}
+
+void function UpdateCharacterAbilities( var panel )
+{
+	if( panel == null )
 		return
 
 	string character  = ItemFlavor_GetCharacterRef( file.character )
 
-	EmitUISound( "UI_Menu_Legend_Details" )
 	var contentElm = Hud_GetChild( panel, "ContentRui" )
 	var contentRui = Hud_GetRui( contentElm )
 
@@ -42,24 +50,24 @@ void function CharacterAbilitiesPanel_OnShow( var panel )
 		CharacterHudUltimateColorData colorData = CharacterClass_GetHudUltimateColorData( file.character )
 		RuiSetColorAlpha( contentRui, "ultimateColor", SrgbToLinear( colorData.ultimateColor ), 1 )
 		RuiSetColorAlpha( contentRui, "ultimateColorHighlight", SrgbToLinear( colorData.ultimateColorHighlight ), 1 )
-             
-                                                                          
-   
-                               
-                                                       
-                                                        
-                                                        
-                                                          
-                                                       
-                                                        
 
-                                          
-                         
-    
-                                                                                       
-    
-   
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	}
 
 	float damageScale = CharacterClass_GetDamageScale( file.character )
@@ -84,7 +92,7 @@ void function CharacterAbilitiesPanel_OnShow( var panel )
 		RuiSetString( contentRui, "specialPerkDesc", "" )
 	}
 
-                    
+
 		if( IsValidItemFlavorCharacterRef( character ) )
 		{
 			int characterRole = CharacterClass_GetRole( file.character )
@@ -95,7 +103,7 @@ void function CharacterAbilitiesPanel_OnShow( var panel )
 				RuiSetImage( contentRui, "rolePerkIcon", $"" )
 				RuiSetString( contentRui, "rolePerkName", "" )
 
-				                 
+				
 				RuiSetString( contentRui, "perk1Name", "" )
 				RuiSetString( contentRui, "perk2Name", "" )
 				RuiSetString( contentRui, "perk3Name", "" )
@@ -110,32 +118,33 @@ void function CharacterAbilitiesPanel_OnShow( var panel )
 			}
 			else
 			{
-				RuiSetImage( contentRui, "rolePerkIcon", CharacterClass_GetCharacterRoleImage( file.character )  )
-				RuiSetString( contentRui, "rolePerkName", roleTitle )
+				{
+					RuiSetImage( contentRui, "rolePerkIcon", CharacterClass_GetCharacterRoleImage( file.character )  )
+					RuiSetString( contentRui, "rolePerkName", roleTitle )
 
-				               
-				RuiSetString( contentRui, "perk1Name", replace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 0 ) ), "\n", "" ) )
-				RuiSetString( contentRui, "perk2Name", replace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 1 ) ), "\n", "" ) )
-				RuiSetString( contentRui, "perk3Name", replace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 2 ) ), "\n", "" ) )
+					
+					RuiSetString( contentRui, "perk1Name", replace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 0 ) ), "\n", " " ) )
+					RuiSetString( contentRui, "perk2Name", replace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 1 ) ), "\n", " " ) )
+					RuiSetString( contentRui, "perk3Name", replace( Localize( CharacterClass_GetRolePerkShortDescriptionAtIndex( characterRole, 2 ) ), "\n", " " ) )
 
-				RuiSetString( contentRui, "perk1Desc", CharacterClass_GetRolePerkDescriptionAtIndex( characterRole, 0 ) )
-				RuiSetString( contentRui, "perk2Desc", CharacterClass_GetRolePerkDescriptionAtIndex( characterRole, 1 ) )
-				RuiSetString( contentRui, "perk3Desc", CharacterClass_GetRolePerkDescriptionAtIndex( characterRole, 2 ) )
+					RuiSetString( contentRui, "perk1Desc", CharacterClass_GetRolePerkDescriptionAtIndex( characterRole, 0 ) )
+					RuiSetString( contentRui, "perk2Desc", CharacterClass_GetRolePerkDescriptionAtIndex( characterRole, 1 ) )
+					RuiSetString( contentRui, "perk3Desc", CharacterClass_GetRolePerkDescriptionAtIndex( characterRole, 2 ) )
 
-				RuiSetImage( contentRui, "perk1Icon", CharacterClass_GetRolePerkIconAtIndex( characterRole, 0 ) )
-				RuiSetImage( contentRui, "perk2Icon", CharacterClass_GetRolePerkIconAtIndex( characterRole, 1 ) )
-				RuiSetImage( contentRui, "perk3Icon", CharacterClass_GetRolePerkIconAtIndex( characterRole, 2 ) )
-
+					RuiSetImage( contentRui, "perk1Icon", CharacterClass_GetRolePerkIconAtIndex( characterRole, 0 ) )
+					RuiSetImage( contentRui, "perk2Icon", CharacterClass_GetRolePerkIconAtIndex( characterRole, 1 ) )
+					RuiSetImage( contentRui, "perk3Icon", CharacterClass_GetRolePerkIconAtIndex( characterRole, 2 ) )
+				}
 			}
 		}
-       
+
 
 	ItemFlavor ornull passiveAbility = null
 	foreach ( ItemFlavor ability in CharacterClass_GetPassiveAbilities( file.character ) )
 	{
 		if ( CharacterAbility_ShouldShowDetails( ability ) )
 		{
-			                                  
+			
 			passiveAbility = ability
 			break
 		}
@@ -157,12 +166,13 @@ void function CharacterAbilitiesPanel_OnShow( var panel )
 	RuiSetString( contentRui, "ultimateDesc", Localize( ItemFlavor_GetLongDescription( CharacterClass_GetUltimateAbility( file.character ) ) ) )
 	RuiSetString( contentRui, "ultimateType", Localize( "#ULTIMATE" ) )
 
-	RuiSetGameTime( contentRui, "initTime", ClientTime() )
-
+	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
+		RuiSetGameTime( contentRui, "initTime", ClientTime() )
 }
 
 void function CharacterAbilitiesPanel_OnHide( var panel )
 {
+	file.activePanel = null
 	var elem = Hud_GetChild( panel, "GCard" )
 	RunClientScript( "UICallback_DestroyClientGladCardData", elem )
 }
@@ -171,6 +181,7 @@ void function SetCharacterSkillsPanelLegend( ItemFlavor character, bool showGlad
 {
 	file.character = character
 	file.showGladCard = showGladCard
+	UpdateCharacterAbilities( file.activePanel )
 }
 
 

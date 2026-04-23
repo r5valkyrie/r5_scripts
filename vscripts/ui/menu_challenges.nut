@@ -7,12 +7,14 @@ global function AllChallengesMenu_ForceClickSpecialEventButton
 
 global function InitAllChallengesPanel
 
-global function JumpToChallenges
+
+	global function JumpToChallenges
 
 const int MAX_CHALLENGE_CATEGORIES_PER_PAGE = 8
 const int MAX_CHALLENGE_CATEGORIES_PER_PAGE_NX = 5
-const int MAX_CHALLENGE_PER_PAGE = 8
-const int MAX_CHALLENGE_PER_PAGE_NX = 5
+const int MAX_CHALLENGE_PER_PAGE = 9
+const int MAX_CHALLENGE_PER_PAGE_NX = 7
+const int MIN_CHALLENGES_PER_PAGE = 1
 const int DEFAULT_CHALLENGE_UIE = UIE_GET_FOCUS
 
 struct ChallengePanelData
@@ -44,19 +46,19 @@ struct
 
 void function InitAllChallengesMenu( var newMenuArg )
 {
-	                                                      
-  
-	                     
-	                
+	
 
-	                                                                     
-	                                                           
 
-	                                                                         
-	                                                                         
-	                                                                           
-	                                                                                          
-  
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -67,6 +69,8 @@ void function InitAllChallengesPanel( var panel, bool isInventory )
 	panelData.groupListPanel = Hud_GetChild( panel, "CategoryList" )
 	panelData.pinnedChallengeButtons.append( Hud_GetChild( panel, "PinnedChallenge" ) )
 	panelData.pinnedChallengeButtons.append( Hud_GetChild( panel, "PinnedChallenge2" ) )
+	panelData.pinnedChallengeButtons.append( Hud_GetChild( panel, "PinnedChallenge3" ) )
+	panelData.pinnedChallengeButtons.append( Hud_GetChild( panel, "PinnedChallenge4" ) )
 	panelData.challengesListPanel = Hud_GetChild( panel, "ChallengesList" )
 	panelData.largeGroupButtonArray = []
 	panelData.dividerLine = Hud_GetChild( panel, "DividerLine" )
@@ -92,6 +96,7 @@ void function InitAllChallengesPanel( var panel, bool isInventory )
 	else
 	{
 		AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
+		AddPanelFooterOption( panel, LEFT, BUTTON_Y, true, "#Y_BATTLEPASS_BREAKOUT_REWARDS", "#BATTLEPASS_BREAKOUT_REWARDS", BattlePass_OpenBoostedBreakdown, ChallengesMenu_ShouldShowBreakoutRewards )
 	}
 
 	file.panelData[ panel ] <- panelData
@@ -105,8 +110,8 @@ void function AllChallengesMenu_OnOpen()
 
 	var panel = Hud_GetChild( file.menu, "ChallengesPanel" )
 	ShowPanel( panel )
-	                                                        
-	                         
+	
+	
 }
 
 void function MarkAllChallengeItemsAsViewed( var button )
@@ -117,27 +122,16 @@ void function MarkAllChallengeItemsAsViewed( var button )
 		EmitUISound( "UI_Menu_Deny" )
 }
 
+
 void function JumpToChallenges( string link )
 {
-	file.link = link
-
 	while ( GetActiveMenu() != GetMenu( "LobbyMenu" ) )
 		CloseActiveMenu()
 
-	// Season tab removed from lobby — SeasonPanel tab no longer exists
 	TabData lobbyTabData = GetTabDataForPanel( GetMenu( "LobbyMenu" ) )
-	int index            = Tab_GetTabIndexByBodyName( lobbyTabData, "SeasonPanel" )
-	if ( index == -1 )
-		return
-
+	int index            = Tab_GetTabIndexByBodyName( lobbyTabData, "ChallengesPanel" )
 	if ( lobbyTabData.activeTabIdx != index )
 		ActivateTab( lobbyTabData, index )
-
-	TabDef seasonTabDef   = Tab_GetTabDefByBodyName( lobbyTabData, "SeasonPanel" )
-	TabData seasonTabData = GetTabDataForPanel( seasonTabDef.panel )
-	index = Tab_GetTabIndexByBodyName( seasonTabData, "ChallengesPanel" )
-	if ( seasonTabData.activeTabIdx != index )
-		ActivateTab( seasonTabData, index )
 }
 
 void function JumpToChallengesLink ( string link )
@@ -182,6 +176,10 @@ void function JumpToChallengesLink ( string link )
 			button = challengePanelData.claimedLargeButtons[eChallengeTimeSpanKind.EVENT]
 			break
 
+		case "challengeseventshop":
+			button = challengePanelData.claimedLargeButtons[eChallengeTimeSpanKind.EVENTSHOP_DAILY_CHALLENGE]
+			break
+
 		case "challengesspecial1":
 			button = challengePanelData.claimedLargeButtons[eChallengeTimeSpanKind.EVENT_SPECIAL]
 			break
@@ -199,6 +197,7 @@ void function JumpToChallengesLink ( string link )
 
 	GroupButton_OnSelect( button )
 }
+
 
 void function AllChallengesMenu_OnShow()
 {
@@ -256,7 +255,7 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 
 	foreach ( var button, ChallengeGroupData group in file.buttonGroupMap )
 	{
-		                                                                                                                                                 
+		
 		Hud_RemoveEventHandler( button, DEFAULT_CHALLENGE_UIE, GroupButton_OnSelect )
 	}
 	file.buttonGroupMap.clear()
@@ -303,7 +302,7 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 			foreach ( button in panelData.largeGroupButtonArray )
 				Hud_Hide( button )
 
-			                                            
+			
 			foreach ( int groupIdx, ChallengeGroupData group in groupData )
 			{
 				var button
@@ -311,6 +310,29 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 				{
 					button = ClaimLargeGroupButton( panelData, group.timeSpanKind )
 
+					ItemFlavor ornull beginnerMetaChallenge
+					foreach ( challenge in group.challenges )
+					{
+						if ( Challenge_IsMetaChallenge( challenge ) )
+						{
+							beginnerMetaChallenge = challenge
+							break
+						}
+					}
+
+					int remainingTime = 0
+					if ( beginnerMetaChallenge != null )
+					{
+						expect ItemFlavor( beginnerMetaChallenge )
+						ChallengeCollection ornull challengeCollection = ChallengeCollection_GetFirstActiveForMetaChallenge( beginnerMetaChallenge )
+
+						if ( challengeCollection != null )
+						{
+							remainingTime = ChallengeCollection_GetEndTime( GetLocalClientPlayer(), expect ChallengeCollection( challengeCollection ) ) - GetUnixTimestamp()
+						}
+					}
+
+					RuiSetGameTime( Hud_GetRui( button ), "expireTime", remainingTime > 0 ? float( remainingTime ) : RUI_BADGAMETIME )
 				}
 				else if ( group.timeSpanKind == eChallengeTimeSpanKind.DAILY )
 				{
@@ -322,10 +344,19 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 						int remainingDuration = GetPersistentVarAsInt( "dailyExpirationTime" ) - Daily_GetCurrentTime()
 						RuiSetGameTime( Hud_GetRui( button ), "expireTime", remainingDuration > 0 ? ClientTime() + remainingDuration : RUI_BADGAMETIME )
 					}
-					else                                                            
+					else 
 					{
 						foreach ( i, pinnedChallengeButton in panelData.pinnedChallengeButtons )
+						{
+							bool isVisible = false 
 							Hud_SetVisible( pinnedChallengeButton, false )
+							Hud_SetHeight( pinnedChallengeButton, 0 )
+							Hud_SetPos( pinnedChallengeButton, Hud_GetBaseX( pinnedChallengeButton ), 0  )
+						}
+
+						Hud_SetVisible( panelData.dividerLine, false )
+						Hud_SetHeight( panelData.dividerLine, 0 )
+						Hud_SetPos( panelData.dividerLine, Hud_GetBaseX( panelData.dividerLine ), 6  )
 					}
 				}
 				else if ( group.timeSpanKind == eChallengeTimeSpanKind.SEASON_WEEKLY_RECURRING )
@@ -363,7 +394,7 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 					}
 					RuiSetGameTime( Hud_GetRui( button ), "expireTime", remainingDuration > 0 ? ClientTime() + remainingDuration : RUI_BADGAMETIME )
 				}
-				else if ( group.timeSpanKind == eChallengeTimeSpanKind.EVENT_SPECIAL )
+				else if ( group.timeSpanKind == eChallengeTimeSpanKind.EVENT_SPECIAL || group.timeSpanKind == eChallengeTimeSpanKind.EVENT_SPECIAL_2 )
 				{
 					if ( group.challenges.len() > 0 )
 					{
@@ -377,6 +408,64 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 					else
 					{
 						continue
+					}
+				}
+				else if ( group.timeSpanKind == eChallengeTimeSpanKind.EVENTSHOP_DAILY_CHALLENGE )
+				{
+					if ( group.challenges.len() > 0 )
+					{
+						button = ClaimLargeGroupButton( panelData, group.timeSpanKind )
+						ItemFlavor eventShopFlav = Challenge_GetSource( group.challenges[0] )
+						Assert( ItemFlavor_GetType( eventShopFlav ) == eItemType.calevent_event_shop )
+
+						int remainingDuration = GetPersistentVarAsInt( "dailyExpirationTime" ) - Daily_GetCurrentTime()
+						EventShopData data = EventShop_GetEventShopData( eventShopFlav )
+						group.groupName = Localize ("#CATEGORY_APPEND_DAILY", Localize ( data.eventShopButtonText ) )
+						RuiSetGameTime( Hud_GetRui( button ), "expireTime", remainingDuration > 0 ? ClientTime() + remainingDuration : RUI_BADGAMETIME )
+						HudElem_SetRuiArg( button, "isTrackedCategory", false )
+					}
+				}
+				else if ( group.timeSpanKind == eChallengeTimeSpanKind.EVENTSHOP_EVENT_CHALLENGE )
+				{
+					if ( group.challenges.len() > 0 )
+					{
+						button = ClaimLargeGroupButton( panelData, group.timeSpanKind )
+						eventButton = button
+						ItemFlavor eventShopFlav = Challenge_GetSource( group.challenges[0] )
+						eventFlav = eventShopFlav
+						expect ItemFlavor( eventFlav )
+						Assert( ItemFlavor_GetType( eventShopFlav ) == eItemType.calevent_event_shop )
+
+						EventShopData data = EventShop_GetEventShopData( eventShopFlav )
+						group.groupName = Localize ("#CATEGORY_APPEND_GAMEPLAY", Localize ( data.eventShopButtonText ) )
+
+						HudElem_SetRuiArg( button, "isTrackedCategory", false )
+					}
+				}
+				else if ( group.timeSpanKind == eChallengeTimeSpanKind.REWARD_CAMPAIGN )
+				{
+					if ( group.challenges.len() > 0 )
+					{
+						button          = ClaimLargeGroupButton( panelData, group.timeSpanKind )
+						ItemFlavor ornull event = RewardCampaign_GetActiveRewardCampaign()
+						if( event != null )
+						{
+							expect ItemFlavor( event )
+							group.groupName = Localize( RewardCampaign_GetChallegeGroupName( event ) )
+							int remainingDuration = CalEvent_GetFinishUnixTime( event ) - GetUnixTimestamp()
+							RuiSetGameTime( Hud_GetRui( button ), "expireTime", remainingDuration > 0 ? ClientTime() + remainingDuration : RUI_BADGAMETIME )
+
+							
+							table<SettingsAssetGUID, int> orderMap = RewardCampaign_GetChallengeOrderMap( event )
+							group.challenges.sort( int function( ItemFlavor a, ItemFlavor b ) : ( orderMap ) {
+								if ( a.guid in orderMap && b.guid in orderMap )
+								{
+									return orderMap[ a.guid ] > orderMap[ b.guid ] ? 1 : -1
+								}
+								return 0
+							} )
+						}
+						HudElem_SetRuiArg( button, "isTrackedCategory", false )
 					}
 				}
 				else if ( group.timeSpanKind == eChallengeTimeSpanKind.FAVORITE )
@@ -394,7 +483,7 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 					continue
 				}
 
-				                                                                                                                                                                    
+				
 				if ( button == null )
 					continue
 
@@ -422,7 +511,7 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 				HudElem_SetRuiArg( button, "hasFavorites", hasFavorites )
 
 				usedButtons.append( button )
-				                                                                                                                                                        
+				
 			}
 
 			if ( eventButton != null )
@@ -433,10 +522,10 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 			int maxChallengeCategoriesPerPage_NX = MAX_CHALLENGE_CATEGORIES_PER_PAGE_NX - 1
 			int maxChallengeCategoriesPerPage    = MAX_CHALLENGE_CATEGORIES_PER_PAGE - 1
 
-			                                                                                                                                                                                        
+			
 			if ( numWeeksOfWeeklies > 0 )
 			{
-				#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 					if ( IsNxHandheldMode() )
 					{
 						Hud_InitGridButtonsDetailed( panelData.groupListPanel, numWeeksOfWeeklies, maxChallengeCategoriesPerPage_NX, 1 )
@@ -445,9 +534,9 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 					{
 						Hud_InitGridButtonsDetailed( panelData.groupListPanel, numWeeksOfWeeklies, maxChallengeCategoriesPerPage, 1 )
 					}
-				#else
+#else
 					Hud_InitGridButtonsDetailed( panelData.groupListPanel, numWeeksOfWeeklies, maxChallengeCategoriesPerPage, 1 )
-				#endif
+#endif
 
 				AllChallengesMenu_UpdateDpadNav( panel, panelData )
 
@@ -488,7 +577,7 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 					HudElem_SetRuiArg( button, "hasFavorites", hasFavorites )
 
 					usedButtons.append( button )
-					                                                                                                                                                        
+					
 				}
 
 				int weekOffsetIndex = 0
@@ -514,7 +603,9 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 
 			if ( file.link != "" )
 			{
-				JumpToChallengesLink( file.link )
+
+					JumpToChallengesLink( file.link )
+
 				file.link = ""
 			}
 			else if ( file.lastSelectedGroupButton != null )
@@ -539,7 +630,7 @@ void function AllChallengesMenu_UpdateCategories( bool ornull isShown )
 
 var function ClaimLargeGroupButton( ChallengePanelData panelData, int timeSpanKind )
 {
-	Assert( panelData.claimedLargeButtons[timeSpanKind]  == null, "Button for " + timeSpanKind + " already exists" )                                                                                                                                                                                                                                        
+	Assert( panelData.claimedLargeButtons[timeSpanKind]  == null, "Button for " + timeSpanKind + " already exists" ) 
 	var button = panelData.largeGroupButtonArray[ panelData.largeListButtonIdx++ ]
 	panelData.claimedLargeButtons[timeSpanKind] = button
 	Hud_SetPinSibling( panelData.groupListPanel, Hud_GetHudName( button ) )
@@ -576,8 +667,8 @@ void function AllChallengesMenu_ForceClickSpecialEventButton( int timeSpanKind )
 
 void function GroupButton_OnSelect( var button )
 {
-	                                         
-	                                             
+	
+	
 	if ( !( button in file.buttonGroupMap ) )
 	{
 		foreach ( panel, panelData in file.panelData )
@@ -602,7 +693,7 @@ void function AllChallengesMenu_UpdateActiveGroup()
 {
 	foreach ( panel, panelData in file.panelData )
 	{
-		                                                
+		
 		foreach ( var button, ChallengeGroupData buttonGroup in file.buttonGroupMap )
 			Hud_SetSelected( button, buttonGroup == panelData.activeGroup )
 
@@ -633,6 +724,25 @@ void function AllChallengesMenu_UpdateActiveGroup()
 			}
 		}
 
+		if ( group.timeSpanKind == eChallengeTimeSpanKind.BEGINNER || group.timeSpanKind == eChallengeTimeSpanKind.EVENTSHOP_DAILY_CHALLENGE )
+		{
+			pinnedChallenges = []
+		}
+
+		if ( group.timeSpanKind != eChallengeTimeSpanKind.FAVORITE )
+		{
+			array<ItemFlavor> pinnedChallengesLocal = GetLocalPinnedChallengesForKind( group.timeSpanKind )
+			if ( pinnedChallengesLocal.len() > 0 )
+			{
+				pinnedChallenges = pinnedChallengesLocal
+				foreach( ItemFlavor challenge in pinnedChallengesLocal )
+				{
+					Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( challenge )
+					challengesToDisplay.removebyvalue( challenge )
+				}
+			}
+		}
+
 		if ( group.timeSpanKind == eChallengeTimeSpanKind.EVENT_HIDDEN )
 		{
 			if ( group.event != null )
@@ -646,40 +756,30 @@ void function AllChallengesMenu_UpdateActiveGroup()
 			}
 		}
 
-		if ( group.timeSpanKind == eChallengeTimeSpanKind.BEGINNER )
-		{
-			pinnedChallenges = []
-		}
-
 		foreach ( ItemFlavor challenge in challengesToDisplay )
 		{
 			if ( !Challenge_IsPinned( challenge ) )
-				numChallengesToDisplay++
+			{
+				if ( !Challenge_IsPinnedLocal( challenge ) || group.timeSpanKind == eChallengeTimeSpanKind.FAVORITE )
+					numChallengesToDisplay++
+			}
 		}
 
-#if NX_PROG || PC_PROG_NX_UI
-		if ( IsNxHandheldMode() )
-		{
-			Hud_InitGridButtonsDetailed( panelData.challengesListPanel, numChallengesToDisplay, MAX_CHALLENGE_PER_PAGE_NX, 1 )
-		}
-		else
-		{
-			Hud_InitGridButtonsDetailed( panelData.challengesListPanel, numChallengesToDisplay, MAX_CHALLENGE_PER_PAGE, 1 )
-		}
-#else
-		Hud_InitGridButtonsDetailed( panelData.challengesListPanel, numChallengesToDisplay, MAX_CHALLENGE_PER_PAGE, 1 )
-#endif
+		int numPinned = pinnedChallenges.len()
+
+		Hud_InitGridButtonsDetailed( panelData.challengesListPanel, numChallengesToDisplay, GetMaxChallengesPerPage( group, numPinned ), 1 )
 
 		bool hasPinnedChallenges = pinnedChallenges.len() > 0
 		Hud_SetVisible( panelData.dividerLine, hasPinnedChallenges )
 		Hud_SetHeight( panelData.dividerLine, hasPinnedChallenges ? Hud_GetBaseHeight( panelData.dividerLine ) : 0 )
-
+		Hud_SetPos( panelData.dividerLine, Hud_GetBaseX( panelData.dividerLine ), hasPinnedChallenges ? Hud_GetBaseY( panelData.dividerLine ) : 6  )
 
 		foreach ( i, pinnedChallengeButton in panelData.pinnedChallengeButtons )
 		{
 			bool isVisible = pinnedChallenges.len() > i
 			Hud_SetVisible( pinnedChallengeButton, isVisible )
 			Hud_SetHeight( pinnedChallengeButton, isVisible ? Hud_GetBaseHeight( pinnedChallengeButton ): 0 )
+			Hud_SetPos( pinnedChallengeButton, Hud_GetBaseX( pinnedChallengeButton ), isVisible ? Hud_GetBaseY( pinnedChallengeButton ) : 0  )
 		}
 
 		foreach ( i, pinnedChallengeButton in panelData.pinnedChallengeButtons )
@@ -694,7 +794,13 @@ void function AllChallengesMenu_UpdateActiveGroup()
 			Newness_IfNecessaryMarkItemFlavorAsNoLongerNewAndInformServer( challenge )
 
 			if ( Challenge_IsPinned( challenge ) )
+			{
 				continue
+			}
+			else if ( Challenge_IsPinnedLocal( challenge ) && group.timeSpanKind != eChallengeTimeSpanKind.FAVORITE )
+			{
+				continue
+			}
 
 			var listItem = Hud_GetChild( challengesScrollPanel, "GridButton" + buttonIndex )
 			PutChallengeOnFullChallengeWidget( listItem, challenge, false )
@@ -708,7 +814,7 @@ void function AllChallengesMenu_UpdateDpadNav( var panel, ChallengePanelData pan
 {
 	var categoryScrollPanel = Hud_GetChild( panelData.groupListPanel, "ScrollPanel" )
 
-	                                         
+	
 	if ( !Hud_HasChild( categoryScrollPanel, "GridButton0" ) )
 		return
 
@@ -722,8 +828,16 @@ void function PutChallengeOnFullChallengeWidget( var button, ItemFlavor challeng
 	Hud_ClearToolTipData( button )
 	var rui = Hud_GetRui( button )
 
+	bool isChallengeGolden =  Challenge_IsGoldenColorScheme( challenge )
+	if ( isChallengeGolden )
+	{
+		useAltColor = true
+	}
+
 	vector progressBarColor  = useAltColor ? SrgbToLinear( <255, 215, 55> / 255.0 ) : SrgbToLinear( <255, 85, 33> / 255.0 )
 	vector progressTextColor = useAltColor ? SrgbToLinear( <254, 227, 113> / 255.0 ) : SrgbToLinear( <253, 152, 123> / 255.0 )
+
+	RuiSetBool( rui, "challengeIsGolden", isChallengeGolden )
 
 	int timeSpan = Challenge_GetTimeSpanKind( challenge )
 	bool mythicSkinEnabled = false
@@ -736,29 +850,23 @@ void function PutChallengeOnFullChallengeWidget( var button, ItemFlavor challeng
 	else if ( timeSpan == eChallengeTimeSpanKind.MYTHIC )
 	{
 		mythicSkinEnabled = true
-
-
 	}
 
 	int displayTier = Challenge_GetCurrentTier( GetLocalClientPlayer(), challenge )
-                  
 	bool isEitherOrChallenge = Challenge_IsEitherOr( challenge )
 
 	RuiSetBool( rui, "hasEitherOr", isEitherOrChallenge )
-       
 
 	RuiSetFloat3( rui, "progressBarColor", progressBarColor )
 	RuiSetFloat3( rui, "progressTextColor", progressTextColor )
 
 	array<int> gameModes
 
-                  
 	if( isEitherOrChallenge )
 	{
 		gameModes = Challenge_EitherOr_GetGameModes( challenge )
 	}
 	else
-       
 	{
 		gameModes.append( Challenge_GetGameMode( challenge ) )
 	}
@@ -790,18 +898,14 @@ void function PutChallengeOnFullChallengeWidget( var button, ItemFlavor challeng
 	if ( mythicSkinEnabled )
 		RuiSetInt( rui, "activeMythicTier", displayTier + 1 )
 
-                  
-		SetRuiArgsForChallengeTier( rui, "challenge", challenge, null, 1, 0, isEitherOrChallenge )
-      
-                                                                       
-       
+	SetRuiArgsForChallengeTier( rui, "challenge", challenge, null, 1, 0, isEitherOrChallenge )
 	RuiSetBool( rui, "challengeIsFavorite", IsFavoriteChallenge( challenge ) )
 	RuiSetBool( rui, "challengeCanClickToReroll", false )
 
-#if NX_PROG
-	RuiSetImage( rui, "nxCyanTint", IsFavoriteChallenge( challenge ) ? $"white" : $"" )
-	RuiSetBool( rui, "nxResizeTierMarker", true )
-#endif
+
+
+
+
 
 	if ( IsLobby() )
 	{
@@ -816,7 +920,6 @@ void function PutChallengeOnFullChallengeWidget( var button, ItemFlavor challeng
 		MaybeAddChallengeClickEventToButton( null, button, challenge, displayTier, canReroll, isChallengeComplete, allowSetFavorites )
 	}
 }
-
 
 void function AllChallengesMenu_ActivateLastGroupButton()
 {
@@ -836,4 +939,18 @@ void function AllChallengesMenu_SetLastGroupButton( var button )
 	file.lastSelectedGroupButton = button
 }
 
+int function GetMaxChallengesPerPage( ChallengeGroupData group, int numPinned )
+{
+#if PC_PROG_NX_UI
+		if ( IsNxHandheldMode() )
+		{
+			return ClampInt( MAX_CHALLENGE_PER_PAGE_NX - numPinned, MIN_CHALLENGES_PER_PAGE, MAX_CHALLENGE_PER_PAGE_NX )
+		}
+#endif
+	return ClampInt( MAX_CHALLENGE_PER_PAGE - numPinned, MIN_CHALLENGES_PER_PAGE, MAX_CHALLENGE_PER_PAGE )
+}
 
+bool function ChallengesMenu_ShouldShowBreakoutRewards()
+{
+	return RewardCampaign_GetActiveRewardCampaign() != null
+}

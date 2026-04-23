@@ -8,9 +8,9 @@ global function GetLaunchingState
 global function CanAutoRetryConnect
 global function EnableAutoRetryConnect
 
-#if DEVELOPER
+#if DEV
 global function Dev_ResetFirstTimeUserState
-#endif      
+#endif
 
 struct
 {
@@ -19,23 +19,24 @@ struct
 	var versionDisplay
 	var signedInDisplay
 	bool canAutoRetryConnect = true
-	#if PLAYSTATION_PROG
-		bool chatRestrictionNoticeJustHandled = false
-	#endif                    
-	#if NX_PROG
-		var LangAOCNeeded
-	#endif
+
+
+
+
+
+
 	int launching = eLaunching.FALSE
+	int mainMenuStatusIndex
 } file
 
-#if DEVELOPER
+#if DEV
 void function Dev_ResetFirstTimeUserState()
 {
 	SetFirstTimePlayerState( eNewPlayerState.NEVER_PLAYED )
 }
-#endif      
+#endif
 
-void function InitMainMenu( var newMenuArg )                                               
+void function InitMainMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "MainMenu" )
 	file.menu = menu
@@ -51,14 +52,16 @@ void function InitMainMenu( var newMenuArg )
 	RuiSetImage( titleArtRui, "basicImage", $"ui/menu/title_screen/title_art" )
 
 	var subtitleRui = Hud_GetRui( Hud_GetChild( file.menu, "Subtitle" ) )
-	RuiSetString( subtitleRui, "subtitleText", "R5Valkyrie".toupper() )
+	RuiSetString( subtitleRui, "subtitleText", Localize( "#BP_S21_NAME").toupper() )
+	if ( GetLanguage() == "polish" )
+		RuiSetBool( subtitleRui, "useAltFont", true )
 
 	file.versionDisplay = Hud_GetChild( menu, "VersionDisplay" )
 	file.signedInDisplay = Hud_GetChild( menu, "SignInDisplay" )
-	
-	#if NX_PROG
-		file.LangAOCNeeded = GetConVarInt( "AoCLanguageNeeded" )
-	#endif
+
+
+
+
 
 	file.canAutoRetryConnect = true
 }
@@ -66,9 +69,9 @@ void function InitMainMenu( var newMenuArg )
 
 void function OnMainMenu_Show()
 {
-	                             
-	                                        
-	float aspectRatio = 2.4             
+	
+	
+	float aspectRatio = 2.4 
 	int width = int( Hud_GetHeight( file.titleArt ) * aspectRatio )
 	Hud_SetWidth( file.titleArt, width )
 
@@ -78,16 +81,18 @@ void function OnMainMenu_Show()
 	ActivatePanel( GetPanel( "MainMenuPanel" ) )
 
 	Chroma_MainMenu()
-	
-	#if NX_PROG
-		if ( file.LangAOCNeeded > 0 )
-		{
-			if ( GetActiveMenu() == GetMenu( "EULADialog" ) )
-				return
-			
-			OpenLangAoCDialog(false)
-		}
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+	file.mainMenuStatusIndex = StatusTracker_StatusBeginEvent( ST_STATUS_SHOWING_MAIN_MENU, "" )
 
 	SetMenuNavigationDisabled( true )
 }
@@ -96,6 +101,7 @@ void function OnMainMenu_Show()
 void function OnMainMenu_Close()
 {
 	HidePanel( GetPanel( "MainMenuPanel" ) )
+	StatusTracker_StatusEndEvent( file.mainMenuStatusIndex, "" )
 	SetMenuNavigationDisabled( false )
 }
 
@@ -123,44 +129,44 @@ void function OnMainMenu_NavigateBack()
 		return
 	}
 
-	#if PC_PROG
+
 		OpenConfirmExitToDesktopDialog()
-	#endif           
+
 }
 
 
 int function GetUserSignInState()
 {
-	#if DURANGO_PROG
-		if ( Durango_InErrorScreen() )
-		{
-			return userSignInState.ERROR
-		}
-		else if ( Durango_IsSigningIn() )
-		{
-			return userSignInState.SIGNING_IN
-		}
-		else if ( !Console_IsSignedIn() && !Console_SkippedSignIn() )
-		{
-			                                                                                                            
-			return userSignInState.SIGNED_OUT
-		}
 
-		Assert( Console_IsSignedIn() || Console_SkippedSignIn() )
-	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	return userSignInState.SIGNED_IN
 }
 
 
 void function UpdateSignedInState()
 {	
-	#if XBOX_PROG
-		if ( Console_IsSignedIn() )
-		{		
-			Hud_SetText( file.signedInDisplay, Localize( "#SIGNED_IN_AS_N", Xbox_GetGameDisplayName() ) )
-			return
-		}
-	#endif
+
+
+
+
+
+
+
 	Hud_SetText( file.signedInDisplay, "" )
 }
 
@@ -185,10 +191,10 @@ void function LaunchMP()
 
 void function UpdateMessageSuppressionFlags()
 {
-                     
+
 	if ( !GetConVarBool( "ftue_flow_enabled" ) )
 	{
-		SetFeatureSuppressed( eFeatureSuppressionFlags.ALL, false )                                                                                                
+		SetFeatureSuppressed( eFeatureSuppressionFlags.ALL, false ) 
 		return
 	}
 
@@ -216,10 +222,10 @@ void function UpdateMessageSuppressionFlags()
 	}
 	else if( GetFirstTimePlayerState() < eNewPlayerState.FIRST_MATCH_PLAYED )
 	{
-		SetFeatureSuppressed( eFeatureSuppressionFlags.ALL, false )                                                                                                
+		SetFeatureSuppressed( eFeatureSuppressionFlags.ALL, false ) 
 		SetFirstTimePlayerState( eNewPlayerState.FIRST_MATCH_PLAYED )
 	}
-                          
+
 }
 
 bool function TryPlayIntroVideo()
@@ -227,11 +233,12 @@ bool function TryPlayIntroVideo()
 	if ( GetActiveMenu() == GetMenu( "PlayVideoMenu" ) )
 		return false
 
-	const int CURRENT_INTRO_VIDEO_VERSION = 16
+	const int CURRENT_INTRO_VIDEO_VERSION = 20
 
 	VideoPlaySettings settings
 	settings.videoCompleteFunc = PrelaunchValidateAndLaunch
 	settings.forceSubtitles = true
+	settings.skipRule = eVideoSkipRule.HOLD
 
 	if( ShouldShowFirstPlayIntro() )
 	{
@@ -241,7 +248,6 @@ bool function TryPlayIntroVideo()
 			settings.video = WELCOME_INT_VIDEO
 
 		settings.milesAudio = WELCOME_AUDIO_EVENT
-		settings.skipRule = eVideoSkipRule.NO_SKIP
 
 		SetFirstTimePlayerState( eNewPlayerState.SEEN_INTRO )
 	}
@@ -249,7 +255,6 @@ bool function TryPlayIntroVideo()
 	{
 		settings.video = INTRO_VIDEO
 		settings.milesAudio = INTRO_AUDIO_EVENT
-		settings.skipRule = eVideoSkipRule.HOLD
 
 		SetIntroViewedVersion( CURRENT_INTRO_VIDEO_VERSION )
 	}
@@ -277,35 +282,35 @@ void function AttemptLaunch()
 
 	Assert( launching == eLaunching.MULTIPLAYER || launching == eLaunching.MULTIPLAYER_INVITE )
 
-	#if CONSOLE_PROG
-		if ( !IsEULAAccepted() )
-		{
-			if ( GetActiveMenu() == GetMenu( "EULADialog" ) )
-				return
 
-			if ( IsDialog( GetActiveMenu() ) )
-				CloseActiveMenu()
 
-			if ( GetUserSignInState() != userSignInState.SIGNED_IN )
-				return
 
-			var mmp = GetPanel( "MainMenuPanel" )
-            var launchButton = Hud_GetChild( mmp, "LaunchButton" )
-			OpenEULADialog( false, null, launchButton )
 
-			return
-		}
-	#endif                
 
-	#if PLAYSTATION_PROG
-		                                                      
-		                                                                                                                                       
-		if ( !file.chatRestrictionNoticeJustHandled )
-		{
-			thread PS4_ChatRestrictionNotice()
-			return
-		}
-	#endif                    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	if( TryPlayIntroVideo() )
 		return
@@ -322,9 +327,9 @@ void function AttemptLaunch()
 
 	SetLaunchingState( eLaunching.FALSE )
 
-	#if PLAYSTATION_PROG
-		file.chatRestrictionNoticeJustHandled = false
-	#endif                    
+
+
+
 }
 
 void function EnableAutoRetryConnect()
@@ -344,7 +349,7 @@ bool function CanAutoRetryConnect()
 
 void function DelayedReconnect()
 {
-	float delay = float( GetReconnectDelay() )
+	float delay = GetReconnectDelay()
 	printt( FUNC_NAME(), delay )
 
 	Wait( delay )
@@ -364,16 +369,16 @@ bool function ShouldShowFirstPlayIntro()
 	if ( GetConVarBool( "autoConnect" ) )
 		return false
 
-#if DEVELOPER
+#if DEV
 	if ( GetConVarBool( "skipIntroVideos" ) )
 		return false
-#endif      
+#endif
 
-                     
+
 	return GetFirstTimePlayerState() < eNewPlayerState.SEEN_INTRO
-     
-             
-                          
+
+
+
 
 }
 
@@ -382,15 +387,15 @@ bool function ShouldShowIntro( int introVersion )
 	if ( GetConVarBool( "autoConnect" ) )
 		return false
 
-#if DEVELOPER
+#if DEV
 	if ( GetConVarBool( "skipIntroVideos" ) )
 		return false
-#endif      
+#endif
 
-                     
+
 	if ( GetConVarBool( "ftue_flow_enabled" ) && GetFirstTimePlayerState() < eNewPlayerState.FIRST_MATCH_PLAYED )
 		return false
-                          
+
 
 	if ( GetIntroViewedVersion() < introVersion )
 		return true
@@ -402,14 +407,14 @@ bool function ShouldShowIntro( int introVersion )
 	return false
 }
 
-#if PLAYSTATION_PROG
-void function PS4_ChatRestrictionNotice()
-{
-	Plat_ShowChatRestrictionNotice()
-	while ( Plat_IsSystemMessageDialogOpen() )
-		WaitFrame()
 
-	file.chatRestrictionNoticeJustHandled = true
-	PrelaunchValidateAndLaunch()
-}
-#endif                    
+
+
+
+
+
+
+
+
+
+

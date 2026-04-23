@@ -38,25 +38,25 @@ struct
 	InputDef& ConfirmFooterYesOption
 } file
 
-void function InitConfirmDialog( var newMenuArg )                                               
+void function InitConfirmDialog( var newMenuArg ) 
 {
 	var menu = GetMenu( "ConfirmDialog" )
 	file.confirmMenu = menu
 
 	SetDialog( menu, true )
-	SetGamepadCursorEnabled( menu, false )
+	SetGamepadCursorEnabled( menu, true )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, Dialog_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, ConfirmDialog_OnClose )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, ConfirmDialog_OnNavigateBack )
 
-#if DEVELOPER
+#if DEV
 	AddMenuThinkFunc( newMenuArg, ConfirmDialogAutomationThink )
-#endif       
+#endif
 }
 
 
-void function InitOKDialog( var newMenuArg )                                               
+void function InitOKDialog( var newMenuArg ) 
 {
 	var menu = GetMenu( "OKDialog" )
 	file.okMenu = menu
@@ -68,9 +68,9 @@ void function InitOKDialog( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, ConfirmDialog_OnClose )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, ConfirmDialog_OnNavigateBack )
 
-#if DEVELOPER
+#if DEV
 	AddMenuThinkFunc( newMenuArg, ConfirmDialogAutomationThink )
-#endif       
+#endif
 }
 
 void function InitTextEntryDialog( var menu )
@@ -79,15 +79,14 @@ void function InitTextEntryDialog( var menu )
 
 	SetDialog( menu, true )
 	SetGamepadCursorEnabled( menu, true )
-	SetAllowControllerFooterClick( menu, true )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, Dialog_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, ConfirmDialog_OnClose )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, ConfirmDialog_OnNavigateBack )
 
-#if DEVELOPER
+#if DEV
 	AddMenuThinkFunc( menu, ConfirmDialogAutomationThink )
-#endif       
+#endif
 }
 
 
@@ -180,8 +179,9 @@ void function Dialog_OnOpen()
 	RuiSetString( contentRui, "headerText", _confirmData().headerText )
 	RuiSetString( contentRui, "messageText", _confirmData().messageText )
 	RuiSetAsset( contentRui, "contextImage", _confirmData().contextImage )
+	RuiSetFloat( contentRui, "msgTextVerticalOffset", _confirmData().msgTextVerticalOffset )
 
-	                                                                                                 
+	
 	RuiSetFloat( contentRui, "delayPenaltyWarnTime", _confirmData().timePenaltyWarning )
 	RuiSetGameTime( contentRui, "endTime", _confirmData().timerEndTime )
 
@@ -211,7 +211,7 @@ void function Dialog_OnOpen()
 	}
 }
 
-#if DEVELOPER
+#if DEV
 void function ConfirmDialogAutomationThink( var menu )
 {
 	if (AutomateUi())
@@ -220,7 +220,7 @@ void function ConfirmDialogAutomationThink( var menu )
 		ConfirmDialog_Yes(null)
 	}
 }
-#endif       
+#endif
 
 
 ConfirmDialogData function _confirmData()
@@ -250,7 +250,7 @@ void function ConfirmDialog_OnNavigateBack()
 
 void function ConfirmDialog_Yes( var button )
 {
-	                                                                                                     
+	
 	if ( file.showDialogData == null )
 		return
 
@@ -261,7 +261,7 @@ void function ConfirmDialog_Yes( var button )
 		var holdToUseElem = Hud_GetChild( confirmData.__menu, "HoldToUseElem" )
 		bool requiresButtonFocus = false
 		float duration = 1.2
-		StartMenuExtendedUse( button, holdToUseElem, duration, requiresButtonFocus, void function( bool success ) : ( button ) {
+		StartMenuExtendedUse( button, holdToUseElem, duration, requiresButtonFocus, false, void function( bool success ) : ( button ) {
 			if ( success )
 				ConfirmDialog_Yes_PassThrough( button )
 		} )
@@ -274,7 +274,7 @@ void function ConfirmDialog_Yes( var button )
 
 void function ConfirmDialog_Yes_PassThrough( var button )
 {
-	                                                                                                     
+	
 	if ( file.showDialogData == null )
 		return
 
@@ -291,7 +291,7 @@ void function ConfirmDialog_Yes_PassThrough( var button )
 
 void function ConfirmDialog_No( var button )
 {
-	                                                                                                     
+	
 	if ( file.showDialogData == null )
 		return
 

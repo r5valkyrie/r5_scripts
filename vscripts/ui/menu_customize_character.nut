@@ -19,7 +19,7 @@ struct
 const bool NEXT = true
 const bool PREV = false
 
-void function InitCustomizeCharacterMenu( var newMenuArg )                                               
+void function InitCustomizeCharacterMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "CustomizeCharacterMenu" )
 	file.menu = menu
@@ -48,7 +48,7 @@ void function CustomizeCharacterMenu_SetCharacter( ItemFlavor character )
 
 void function CustomizeCharacterMenu_OnOpen()
 {
-	SetCurrentHubForPIN( "menu_CustomizeCharacterMenu" )                                                
+	SetCurrentHubForPIN( "menu_CustomizeCharacterMenu" ) 
 
 	if ( !file.tabsInitialized )
 	{
@@ -76,6 +76,19 @@ void function CustomizeCharacterMenu_OnOpen()
 			tab.isBannerLogoSmall = true
 			SetTabBaseWidth( tab, 200 )
 		}
+		if ( GetCurrentPlaylistVarBool( "allow_legend_melee_tab", true ) )
+		{
+			var panel = Hud_GetChild( file.menu, "LegendMeleePanel" )
+			TabDef tab = AddTab( file.menu, panel, "#MELEE_BUTTON" )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 160 )
+		}
+		{
+			var panel = Hud_GetChild( file.menu, "LegendLorePanel" )
+			TabDef tab = AddTab( file.menu, panel, "#BIO_BUTTON" )
+			tab.isBannerLogoSmall = true
+			SetTabBaseWidth( tab, 160 )
+		}
 		file.tabsInitialized = true
 	}
 
@@ -91,6 +104,8 @@ void function CustomizeCharacterMenu_OnOpen()
 		tabData.bannerTitle = Localize( ItemFlavor_GetLongName( character ) ).toupper()
 		tabData.bannerLogoImage = ItemFlavor_GetIcon( character )
 		tabData.bannerLogoScale = 0.7
+		tabData.callToActionWidth = 190
+		tabData.initialFirstTabButtonXPos = GetNearestAspectRatio( GetScreenSize().width, GetScreenSize().height ) <= 2.0? 80: 0
 		SetTabBackground( tabData, Hud_GetChild( file.menu, "TabsBackground" ), eTabBackground.CAPSTONE )
 
 		SetTabDefsToSeasonal(tabData)

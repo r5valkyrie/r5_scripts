@@ -19,7 +19,7 @@ global function SurvivalInventoryMenu_GetInventoryLimitMax
 global function SurvivalInventoryMenu_GetMaxInventoryLimit
 global function SurvivalInventoryMenu_BeginUpdate
 global function SurvivalInventoryMenu_EndUpdate
-global function Survival_SetPlayerIsTitan
+global function SurvivalInventoryMenu_UpdateInventoryCharacter
 
 global function TryCloseSurvivalInventory
 global function TryCloseSurvivalInventoryFromDamage
@@ -54,7 +54,7 @@ struct
 } file
 
 void function InitSurvivalInventoryMenu( var newMenuArg )
-                                              
+
 {
 	var menu = GetMenu( "SurvivalInventoryMenu" )
 	file.menu = menu
@@ -173,7 +173,7 @@ void function OnSurvivalInventoryMenu_Open()
 	{
 		TabDef tabdef = AddTab( file.menu, Hud_GetChild( file.menu, "GenericScoreboardPanel" ), "#TAB_SCOREBOARD" )
 		SetTabBaseWidth( tabdef, 250 )
-	}                   
+	} 
 
 	if( !isInventoryTabDisabled )
 	{
@@ -185,31 +185,39 @@ void function OnSurvivalInventoryMenu_Open()
 	{
 		TabDef tabdef = AddTab( file.menu, Hud_GetChild( file.menu, "GenericScoreboardPanel" ), "#TAB_SCOREBOARD" )
 		SetTabBaseWidth( tabdef, 250 )
-	}                        
+	} 
+
+	string squadPanelName = "SquadPanel"
+
+		if( IsRTKSquadsEnabled() )
+		{
+			TabDef tabdef = AddTab( file.menu, Hud_GetChild( file.menu, "RTKSquadPanel" ), "BUG THIS" )
+			SetTabBaseWidth( tabdef, 160 )
+			squadPanelName = "RTKSquadPanel"
+		}
+		else
 
 	{
 		TabDef tabdef = AddTab( file.menu, Hud_GetChild( file.menu, "SquadPanel" ), "BUG THIS" )
 		SetTabBaseWidth( tabdef, 160 )
 	}
-                         
-	if ( IsFiringRangeGameMode() )
+
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE ) )
 	{
 		TabDef tabdef = AddTab( file.menu, Hud_GetChild( file.menu, "FiringRangeSettingsPanel" ), "#BUTTON_RANGE_CUSTOMIZE" )
-		tabdef.hideSubtabPips = true                                                                                      
+		tabdef.hideSubtabPips = true 
 		SetTabBaseWidth( tabdef, 320 )
 	}
-      
+
 	{
 		TabDef tabdef = AddTab( file.menu, Hud_GetChild( file.menu, "CharacterDetailsPanel" ), "#LEGEND" )
 		SetTabBaseWidth( tabdef, 180 )
 	}
 
 	TabData squadData = GetTabDataForPanel( file.menu )
-	TabDef squadDef   = Tab_GetTabDefByBodyName( squadData, "SquadPanel" )
-	if ( IsSoloMode() )
-		squadDef.title = "#STATS"
-	else
-		squadDef.title = "#SQUAD"
+	TabDef squadDef   = Tab_GetTabDefByBodyName( squadData, squadPanelName )
+	squadDef.title = "#SQUAD"
 
 	SetTabBackground( tabData, Hud_GetChild( file.menu, "TabsBackground" ), eTabBackground.STANDARD )
 	SetTabNavigationEnabled( file.menu, true )
@@ -224,6 +232,15 @@ void function OnSurvivalInventoryMenu_Open()
 
 void function OnSurvivalInventoryMenu_Show()
 {
+	SurvivalInventoryMenu_UpdateInventoryCharacter()
+	SetMenuReceivesCommands( file.menu, PROTO_Survival_DoInventoryMenusUseCommands() && !IsControllerModeActive() )
+}
+
+void function SurvivalInventoryMenu_UpdateInventoryCharacter()
+{
+	if( !file.isOpen )
+		return
+
 	ItemFlavor ornull character = null
 
 	if ( LoadoutSlot_IsReady( ToEHI( GetLocalClientPlayer() ), Loadout_Character() ) )
@@ -237,9 +254,7 @@ void function OnSurvivalInventoryMenu_Show()
 	expect ItemFlavor( character )
 
 	SetCharacterSkillsPanelLegend( character, true )
-	SetMenuReceivesCommands( file.menu, PROTO_Survival_DoInventoryMenusUseCommands() && !IsControllerModeActive() )
 }
-
 
 void function OnSurvivalInventory_OnInputModeChange()
 {
@@ -309,7 +324,7 @@ bool function IsSurvivalMenuEnabled()
 }
 
 
-   
+
 void function SurvivalInventoryMenu_SetInventoryLimit( int limit )
 {
 	file.inventoryLimit = limit
@@ -355,7 +370,7 @@ void function SurvivalInventoryMenu_EndUpdate()
 	{
 		SurvivalQuickInventory_OnUpdate()
 
-		                                                                                                    
+		
 		if ( !GetDpadNavigationActive() )
 
 			ForceVGUIFocusUpdate()
@@ -364,10 +379,6 @@ void function SurvivalInventoryMenu_EndUpdate()
 	UpdateQuickSwapMenu()
 }
 
-void function Survival_SetPlayerIsTitan( bool isTitan )
-{
-	// STUB: for future titan support
-}
 
 void function TryCloseSurvivalInventoryFromDamage( var button )
 {

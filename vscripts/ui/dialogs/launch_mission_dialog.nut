@@ -22,7 +22,7 @@ void function InitLaunchMissionDialog( var menu )
 	file.backgroundRui = Hud_GetRui( Hud_GetChild( file.menu, "Background" ) )
 	file.infoRui = Hud_GetRui( Hud_GetChild( file.menu, "InfoRui" ) )
 
-	  	                                                                                    
+	
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, LaunchMissionDialog_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, LaunchMissionDialog_OnClose )
@@ -66,7 +66,7 @@ void function OpenLaunchMissionDialog( int missionIndex = 0 )
 	string playlistName = SeasonQuest_GetPlaylistForMissionIndex( quest, missionIndex )
 	int playlistMaxTeamSize = GetMaxTeamSizeForPlaylist( playlistName )
 
-	             
+	
 	{
 		string imageKey     = GetPlaylistVarString( playlistName, "image", "" )
 		asset imageAsset    = GetImageFromImageMap( imageKey )
@@ -82,12 +82,12 @@ void function OpenLaunchMissionDialog( int missionIndex = 0 )
 		RuiSetInt( file.backgroundRui, "screenWidth", size.width )
 	}
 
-	                
+	
 	{
 		SetupMissionRewardButtons( file.menu, quest, missionIndex, "MissionRewardNoClick", missionCompleted, finalMission )
 	}
 
-	                
+	
 	{
 		var launchButton		= Hud_GetChild( file.menu, "LaunchMissionButton" )
 		var rui					= Hud_GetRui( launchButton )
@@ -115,12 +115,12 @@ void function OpenLaunchMissionDialog( int missionIndex = 0 )
 		RuiSetString( rui, "buttonText", launchButtonText )
 	}
 
-	              
+	
 	{
 		var loreButton = Hud_GetChild( file.menu, "LoreButton" )
 
 		Hud_SetVisible( loreButton, missionCompleted )
-		                                                
+		
 
 		var loreRui = Hud_GetRui( loreButton )
 		RuiSetAsset( loreRui, "icon", $"rui/menu/lobby/speech_bubble_icon" )
@@ -151,7 +151,7 @@ void function SetupMissionRewardButtons( var menu, ItemFlavor quest, int mission
 	array<var> rewardButtonArray = GetPanelElementsByClassname( menu, buttonClass )
 	int buttonIndex = 0
 
-	                 
+	
 	ItemFlavorBag rewardBag = SeasonQuest_GetMissionRewardsForIndex( quest, missionIndex )
 	foreach( int index, ItemFlavor reward in rewardBag.flavors )
 	{
@@ -187,7 +187,7 @@ void function SetupMissionRewardButtons( var menu, ItemFlavor quest, int mission
 		++buttonIndex
 	}
 
-	           
+	
 	if ( buttonIndex < rewardButtonArray.len() && !finalMission )
 	{
 		var button = rewardButtonArray[buttonIndex]
@@ -230,7 +230,7 @@ void function SetupMissionRewardButtons( var menu, ItemFlavor quest, int mission
 		++buttonIndex
 	}
 
-	       
+	
 	if ( buttonIndex < rewardButtonArray.len() )
 	{
 		var button = rewardButtonArray[buttonIndex]
@@ -293,7 +293,7 @@ void function LaunchButtonOnClick( var button )
 	if ( GetPartySize() > playlistMaxTeamSize )
 		return
 
-	CloseActiveMenu()                                        
+	CloseActiveMenu()    
 	ReadyUpWithQuestPlaylist( SeasonQuest_GetPlaylistForMissionIndex( quest, missionIndex ) )
 }
 
@@ -310,7 +310,7 @@ void function LoreButtonOnClick( var button )
 	expect ItemFlavor( quest )
 
 	int missionIndex = file.missionIndex
-	CloseActiveMenu()                                        
+	CloseActiveMenu()    
 	asset lore = SeasonQuest_GetLoreSequenceStoryChapterDataForMissionIndex( quest, missionIndex )
 	if ( lore != $"" )
 	{

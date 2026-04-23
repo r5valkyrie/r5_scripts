@@ -5,6 +5,9 @@ struct
 {
 	var panel
 	array<var> blockArray
+
+		bool isUpgradesGladCardShowingOnDeathRecap = false
+
 } file
 
 void function InitDeathScreenRecapPanel( var panel )
@@ -28,7 +31,7 @@ void function InitDeathScreenRecapPanel( var panel )
 	foreach( button in file.blockArray )
 	{
 		AddButtonEventHandler( button, UIE_CLICK, DamageBlockButtonClick )
-		                                                                        
+		
 	}
 
 	InitDeathScreenPanelFooter( panel, eDeathScreenPanel.DEATH_RECAP)
@@ -36,7 +39,7 @@ void function InitDeathScreenRecapPanel( var panel )
 
 void function OnOpenPanel( var panel )
 {
-	                                                     
+	
 
 	var menu = GetParentMenu( panel )
 	var headerElement = Hud_GetChild( menu, "Header" )
@@ -50,7 +53,12 @@ void function OnOpenPanel( var panel )
 	RegisterButtonPressedCallback( GetPCBlockKey(), DeathScreenOnBlockButtonClick )
 	RegisterButtonPressedCallback( KEY_TAB, DeathScreenSkipRecap )
 	RegisterButtonPressedCallback( KEY_SPACE, DeathScreenSkipRecap )
+
+		RegisterButtonPressedCallback( BUTTON_DPAD_LEFT, DeathRecapTryToggleUpgradesOnGladCard )
+		RegisterButtonPressedCallback( KEY_V, DeathRecapTryToggleUpgradesOnGladCard )
+
 	DeathScreenUpdateCursor()
+	UpdateFooterOptions()
 
 	array<var> b = file.blockArray
 	RunClientScript( "UICallback_ShowDeathRecap", headerElement, recapElement, b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9] )
@@ -59,7 +67,7 @@ void function OnOpenPanel( var panel )
 
 void function OnClosePanel( var panel )
 {
-	                                                      
+	
 
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, DeathScreenNextDamageLog )
 	DeregisterButtonPressedCallback( BUTTON_DPAD_DOWN, DeathScreenNextDamageLog )
@@ -70,6 +78,10 @@ void function OnClosePanel( var panel )
 	DeregisterButtonPressedCallback( KEY_TAB, DeathScreenSkipRecap )
 	DeregisterButtonPressedCallback( KEY_SPACE, DeathScreenSkipRecap )
 
+		DeregisterButtonPressedCallback( BUTTON_DPAD_LEFT, DeathRecapTryToggleUpgradesOnGladCard )
+		DeregisterButtonPressedCallback( KEY_V, DeathRecapTryToggleUpgradesOnGladCard )
+
+
 	RunClientScript( "UICallback_CloseDeathRecap" )
 }
 
@@ -79,27 +91,28 @@ void function UI_UpdateRespawnStatus( int respawnStatus )
 	var menu = GetParentMenu( file.panel )
 	var headerElement = Hud_GetChild( menu, "Header" )
 	HudElem_SetRuiArg( headerElement, "respawnStatus", respawnStatus, eRuiArgType.INT )
+
 }
 
 void function DamageBlockButtonClick( var button )
 {
 	string scriptID = Hud_GetScriptID( button )
-	                                                  
+	
 
-	                                                                    
+	
 	RunClientScript( "UICallback_SelectRecapBlock", int( scriptID ) )
 }
 
 void function DeathScreenNextDamageLog( var button )
 {
-	                                                  
+	
 
 	RunClientScript( "UICallback_NextRecapBlock" )
 }
 
 void function DeathScreenPrevDamageLog( var button  )
 {
-	                                                  
+	
 
 	RunClientScript( "UICallback_PrevRecapBlock" )
 }
@@ -107,10 +120,39 @@ void function DeathScreenPrevDamageLog( var button  )
 bool isEnabled
 void function OnDevButtonClick( var button )
 {
-	                                  
+	
 	var menu = Hud_GetParent( file.panel )
 	TabData tabData = GetTabDataForPanel( menu )
 	TabDef squadSummaryTab = Tab_GetTabDefByBodyName( tabData, "DeathScreenSquadSummary" )
 	SetTabDefEnabled( squadSummaryTab, isEnabled )
 	isEnabled = !isEnabled
 }
+
+
+void function DeathRecapTryToggleUpgradesOnGladCard( var button )
+{
+	if ( !UpgradeCore_IsEnabled() )
+		return
+
+	if( !UpgradeCore_GladCardShowUpgrades() ) 
+		return
+
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_TDM ) )
+		return
+
+
+
+	if ( GameModeVariant_IsActive( eGameModeVariants.FREEDM_GUNGAME ) )
+		return
+
+
+
+	if ( GameMode_IsActive( eGameModes.CONTROL ) )
+		return
+
+
+	file.isUpgradesGladCardShowingOnDeathRecap = !file.isUpgradesGladCardShowingOnDeathRecap
+	RunClientScript( "UICallback_ToggleUpgradesGladCardDeathRecap", file.isUpgradesGladCardShowingOnDeathRecap )
+}
+      

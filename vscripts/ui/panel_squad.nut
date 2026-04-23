@@ -1,6 +1,7 @@
 global function InitSquadPanel
 global function ClientCallback_SetStartTimeForRui
 global function ClientCallback_UpdatePlayerOverlayButton
+global function HandleViewProfileSquadPlayer
 
 global function RegisterButtonForUID
 
@@ -91,7 +92,7 @@ void function InitSquadPanel( var panel )
 			{
 				button = Hud_GetChild( panel, "TeammateBlock"+i )
 				AddButtonEventHandler( button, UIE_CLICK, OnBlockButtonClick )
-				RuiSetImage( Hud_GetRui( button ), "unmuteIcon", $"rui/menu/crossplatform/blocked" )                                       
+				RuiSetImage( Hud_GetRui( button ), "unmuteIcon", $"rui/menu/crossplatform/blocked" ) 
 				RuiSetImage( Hud_GetRui( button ), "muteIcon", $"rui/menu/crossplatform/blocked" )
 				ToolTipData d6
 				d6.tooltipFlags = d6.tooltipFlags | eToolTipFlag.CLIENT_UPDATE
@@ -111,10 +112,19 @@ void function InitSquadPanel( var panel )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, OnShowSquad )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, OnHideSquad )
 
+
+	AddPanelFooterOption( panel, LEFT, KEY_F, false, "", "", HandleViewProfileSquadPlayer, CanViewProfileFooter)
+
+	AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "", "", HandleViewProfileSquadPlayer, CanViewProfileFooter)
+
 	if ( !( uiGlobal.uiShutdownCallbacks.contains(SquadPanel_Shutdown) ) )
 		AddUICallback_UIShutdown( SquadPanel_Shutdown )
 }
 
+bool function CanViewProfileFooter( )
+{
+	return true
+}
 
 void function SquadPanel_Shutdown()
 {
@@ -194,8 +204,50 @@ void function OnShowSquad( var panel )
 
 		i++
 	}
+
+	var parentMenu = GetParentMenu( panel )
+
+	if( parentMenu == GetMenu( "DeathScreenMenu" ) && CanRunClientScript() ) 
+	{
+		var headerElement = Hud_GetChild( parentMenu, "Header" )
+		RunClientScript( "DeathScreen_OnSquadShow", headerElement )
+	}
 }
 
+
+bool function CanViewProfile( string otherPlayerUid, string otherPlayerHardware )
+{
+	string hardware = GetUnspoofedPlayerHardware()
+
+	if ( otherPlayerUid == "" )
+		return false
+
+	if ( hardware != otherPlayerHardware )
+	{
+		if( hardware == "PS4" || hardware == "PS5" )
+		{
+			
+			if( otherPlayerHardware != "PS4" && otherPlayerHardware != "PS5" )
+			{
+				return false
+			}
+		}
+		else if( hardware == "X1" || hardware == "XB5" )
+		{
+			
+			if( otherPlayerHardware != "X1" && otherPlayerHardware != "XB5" )
+			{
+				return false
+			}
+		}
+		else
+		{
+			return false
+		}
+	}
+
+	return true
+}
 
 void function ClientCallback_UpdatePlayerOverlayButton( var panel, var overlayButton, string name, string uid, string hardware, string eaid, string unspoofedUid, int buttonIndex )
 {
@@ -218,7 +270,7 @@ void function ClientCallback_UpdatePlayerOverlayButton( var panel, var overlayBu
 
 	if ( canAddFriend )
 	{
-		                                                                                                                          
+		
 		CommunityFriends friends = GetFriendInfo()
 		foreach ( id in friends.ids )
 		{
@@ -230,12 +282,17 @@ void function ClientCallback_UpdatePlayerOverlayButton( var panel, var overlayBu
 		}
 	}
 
-	if ( canInviteParty || canAddFriend )
+	bool viewProfileAllowed = CanViewProfile( uid, hardware )
+
+	string viewProfileStr = IsControllerModeActive() ? "#Y_BUTTON_VIEW_PROFILE" : "#Y_BUTTON_VIEW_PROFILE_PC"
+
+	if ( canInviteParty || canAddFriend || viewProfileAllowed )
 	{
 		ToolTipData td
 		td.tooltipStyle = eTooltipStyle.DEFAULT
 		td.titleText = ""
 		td.descText = name
+		td.actionHint3 = viewProfileAllowed ? viewProfileStr : ""
 		td.actionHint2 = canInviteParty ? "#CLICK_INVITE_PARTY" : ""
 		td.actionHint1 = canAddFriend ? "#RCLICK_INVITE_FRIEND" : ""
 		Hud_SetToolTipData( overlayButton, td )
@@ -262,12 +319,42 @@ void function ClientCallback_SetStartTimeForRui( var elem, float delay )
 	RuiSetGameTime( rui, "startTime", ClientTime() + delay )
 }
 
+void function HandleViewProfileSquadPlayer( var button )
+{
+
+	var squadPlayerButtonFocused = GetFocus()
+	if( IsValid( squadPlayerButtonFocused ) && squadPlayerButtonFocused != null && squadPlayerButtonFocused in file.buttonToPlayerData )
+	{
+		SquadPlayerData playerData = GetPlayerDataForButton( squadPlayerButtonFocused )
+
+		if( CanViewProfile( playerData.uid, playerData.hardware ) )
+		{
+
+			if ( !PCPlat_IsOverlayAvailable() )
+			{
+				string platname = PCPlat_IsOrigin() ? "ORIGIN" : "STEAM"
+				ConfirmDialogData dialogData
+				dialogData.headerText   = ""
+				dialogData.messageText  = "#" + platname + "_INGAME_REQUIRED"
+				dialogData.contextImage = $"ui/menu/common/dialog_notice"
+
+
+				OpenOKDialogFromData( dialogData )
+				return
+			}
+
+
+			ShowPlayerProfileCardForUID( playerData.unspoofedUid )
+		}
+	}
+
+}
 
 void function OnOverlayClick( var button )
 {
 	SquadPlayerData playerData = GetPlayerDataForButton( button )
 
-	if ( playerData.uid == "" )                                               
+	if ( playerData.uid == "" ) 
 		return
 
 	bool canInviteParty = CanInviteSquadMate( playerData.uid ) && CanInviteToparty() == 0
@@ -281,12 +368,12 @@ void function OnOverlayClick( var button )
 	string hardware = GetUnspoofedPlayerHardware()
 	if ( hardware == playerData.hardware )
 	{
-		                                                      
+		
 		DoInviteToParty( [ playerData.uid ] )
 	}
 	else if ( CrossplayEnabled() && playerData.eaid != "" )
 	{
-		                                      
+		
 		printt( " InviteEADPFriend id:", playerData.eaid )
 		EADP_InviteToPlayByEAID( playerData.eaid , 0 )
 	}
@@ -330,7 +417,7 @@ void function OnOverlayClickRight( var button )
 	}
 	else if ( CrossplayEnabled() && playerData.eaid != "" )
 	{
-		                                      
+		
 		printt( "InviteEADPFriend id:", playerData.eaid )
 		EADP_InviteFriendByEAID( playerData.eaid )
 	}

@@ -1,6 +1,6 @@
 global function InitCodeRedemptionDialog
 global function UICodeCallback_CodeRedemptionRequestFinished
-#if DEVELOPER
+#if DEV
 global function DEV_CodeRedemptionSuccessDialog
 #endif
 
@@ -19,8 +19,6 @@ void function InitCodeRedemptionDialog( var newMenuArg )
 
 	file.codeTextEntry = Hud_GetChild( menu, "CodeTextEntry" )
 	file.codeTextEntryBG = Hud_GetChild( menu, "TextEntryBackground" )
-
-	SetAllowControllerFooterClick( menu, true )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, CodeRedemptionDialog_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, CodeRedemptionDialog_OnClose )
@@ -52,7 +50,7 @@ void function CodeRedemptionDialog_OnOpen()
 	}
 	else
 	{
-#if DEVELOPER && PC_PROG
+#if DEV
 		headerText = "Enable Origin to redeem codes in dev"
 #else
 		headerText = "#REDEEM_CODE_DISABLED"
@@ -77,7 +75,7 @@ void function UICodeCallback_CodeRedemptionRequestFinished( int resultCode, stri
 	if ( GetActiveMenu() != file.menu )
 		return
 
-	                                                                    
+	
 	bool wasCodeRedeemed = ( resultCode == CODE_REDEMPTION_RESULT_SUCCESS )
 	string statusText = wasCodeRedeemed ? "#SUCCESS" : "#FAILED"
 	file.redeemFooterButton.clickable = false
@@ -128,10 +126,10 @@ void function CodeRedemption_DisplayGrantedItems( array<CodeRedemptionGrant> gra
 		"#REDEEM_CODE_REWARD_DIALOG_HEADER",
 		"",
 		rewards,
-		true, 	                 
-		false,	            
-		false,	              
-		true                 
+		true, 	
+		false,	
+		false,	
+		true    
 	)
 }
 
@@ -172,7 +170,7 @@ void function CodeRedemptionDialog_AttemptRedeem()
 	if( !EADP_IsCodeRedemptionEnabled() )
 		return
 
-	string code = strip( Hud_GetUTF8Text( file.codeTextEntry ) )                                          
+	string code = strip( Hud_GetUTF8Text( file.codeTextEntry ) ) 
 	Hud_SetUTF8Text( file.codeTextEntry, code )
 
 	printt( "EADP_RedeemCode:", code )
@@ -192,7 +190,7 @@ void function CodeRedemptionDialog_Cancel( var button )
 	CloseActiveMenu()
 }
 
-                                         
+
 bool function CodeRedemption_CanRedeem()
 {
 	return EADP_IsCodeRedemptionEnabled() && file.redeemFooterButton.clickable
@@ -203,8 +201,8 @@ bool function CodeRedemption_CannotRedeem()
 }
 
 
-#if DEVELOPER
-                                                                                                                 
+#if DEV
+
 const array<string> redeemTestFlavs =
 [
 	"character_skin_rampart_legendary_04",
@@ -214,7 +212,7 @@ const array<string> redeemTestFlavs =
 	"battlepass_season09_purchased_xp",
 	"crafting"
 ]
-                                                                                                               
+
 void function DEV_CodeRedemptionSuccessDialog( bool markItemsAsNew = false, array<string> itemRefs = redeemTestFlavs )
 {
 	array<CodeRedemptionGrant> grants

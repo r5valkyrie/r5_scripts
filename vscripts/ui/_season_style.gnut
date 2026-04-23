@@ -17,7 +17,7 @@ global struct SeasonStyleData
 	vector seasonColor = <1.0, 1.0, 1.0>
 	vector seasonNewColor = <1.0, 1.0, 1.0>
 
-	           
+	
 	vector tabDefaultTextCol = <1.0, 1.0, 1.0>
 	vector tabFocusedTextCol = <1.0, 1.0, 1.0>
 	vector tabSelectedTextCol = <1.0, 1.0, 1.0>
@@ -30,7 +30,7 @@ global struct SeasonStyleData
 
 	vector tabGlowFocusedCol = <1.0, 1.0, 1.0>
 
-	         
+	
 	vector subtabDefaultTextCol = <1.0, 1.0, 1.0>
 	vector subtabFocusedTextCol = <1.0, 1.0, 1.0>
 	vector subtabSelectedTextCol = <1.0, 1.0, 1.0>
@@ -58,19 +58,25 @@ void function RefreshTabsSeasonalData()
 		while ( !IsFullyConnected() )
 			WaitFrame()
 
-		ItemFlavor season = GetLatestSeason( GetUnixTimestamp() )
+		ItemFlavor ornull season = GetActiveSeason( GetUnixTimestamp() )
+
+		if( season == null )
+			return
+
+		expect ItemFlavor( season )
+
 		file.seasonStyle.seasonBannerLeftImage  = Season_GetLobbyBannerLeftImage( season )
 		file.seasonStyle.seasonBannerLogo       = Season_GetSmallLogo( season )
 		file.seasonStyle.seasonBannerLogoBg     = Season_GetSmallLogoBg( season )
 		file.seasonStyle.seasonBannerRightImage = Season_GetLobbyBannerRightImage( season )
 
-		         
+		
 		file.seasonStyle.seasonNewColor  = Season_GetNewColor( season )
 		file.seasonStyle.seasonColor     = Season_GetColor( season )
 		file.seasonStyle.headerTextColor = Season_GetHeaderTextColor( season )
 		file.seasonStyle.titleTextColor  = Season_GetTitleTextColor( season )
 
-		           
+		
 		file.seasonStyle.tabFocusedBGCol  = Season_GetTabBGFocusedCol( season )
 		file.seasonStyle.tabSelectedBGCol = Season_GetTabBGSelectedCol( season )
 
@@ -83,7 +89,7 @@ void function RefreshTabsSeasonalData()
 
 		file.seasonStyle.tabGlowFocusedCol = Season_GetTabGlowFocusedCol( season )
 
-		          
+		
 		file.seasonStyle.subtabFocusedBGCol  = Season_GetSubTabBGFocusedCol( season )
 		file.seasonStyle.subtabSelectedBGCol = Season_GetSubTabBGSelectedCol( season )
 

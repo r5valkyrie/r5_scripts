@@ -42,6 +42,8 @@ void function InitArmoryMorePanel( var panel )
 
 void function ArmoryMorePanel_OnShow( var panel )
 {
+	UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
+
 	foreach(var button in file.stickerSlotToButtonMap )
 	{
 		ArmoryMorePanel_SetUpStickerButton( button )
@@ -121,7 +123,7 @@ void function ArmoryMorePanel_OnClickStickerButton( var button )
 		index++
 	}
 
-	ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )                                                                        
+	ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() ) 
 	SetTopLevelCustomizeContext( character )
 
 	AdvanceMenu( GetMenu( "CustomizeConsumablesMenu" ) )

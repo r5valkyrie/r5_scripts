@@ -3,7 +3,7 @@ global function InitMusicPackPanel
 struct
 {
 	var               panel
-	               
+	
 	var               listPanel
 	var               previewElem
 	array<ItemFlavor> musicPackList
@@ -15,10 +15,10 @@ void function InitMusicPackPanel( var panel )
 	file.panel = panel
 	file.listPanel = Hud_GetChild( panel, "MusicPackList" )
 	file.previewElem = Hud_GetChild( panel, "Preview" )
-	                                                                
+	
 
 	SetPanelTabTitle( panel, "#TAB_CUSTOMIZE_MUSIC_PACK" )
-	                                                                         
+	
 
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, MusicPacksPanel_OnShow )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, MusicPacksPanel_OnHide )
@@ -37,13 +37,13 @@ void function InitMusicPackPanel( var panel )
 		}
 	)
 
-	#if NX_PROG || PC_PROG_NX_UI
+#if PC_PROG_NX_UI
 		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemFavoriteable )
 		AddPanelFooterOption( panel, LEFT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemFavorite )
-	#else
+#else
 		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_SET_FAVORITE", "#Y_BUTTON_SET_FAVORITE", func, CustomizeMenus_IsFocusedItemFavoriteable )
 		AddPanelFooterOption( panel, RIGHT, BUTTON_Y, false, "#Y_BUTTON_CLEAR_FAVORITE", "#Y_BUTTON_CLEAR_FAVORITE", func, CustomizeMenus_IsFocusedItemFavorite )
-	#endif
+#endif
 }
 
 
@@ -65,7 +65,7 @@ void function MusicPacksPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in file.musicPackList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -77,11 +77,11 @@ void function MusicPacksPanel_Update( var panel )
 		StopUISoundByName( file.playingPreviewAlias )
 	file.playingPreviewAlias = ""
 
-	                                  
+	
 	if ( IsPanelActive( file.panel ) )
 	{
 		LoadoutEntry entry = Loadout_MusicPack()
-		file.musicPackList = GetLoadoutItemsSortedForMenu( entry, MusicPack_GetSortOrdinal )
+		file.musicPackList = GetLoadoutItemsSortedForMenu( [entry], MusicPack_GetSortOrdinal, null, [] )
 
 		Hud_InitGridButtons( file.listPanel, file.musicPackList.len() )
 		foreach ( int flavIdx, ItemFlavor flav in file.musicPackList )
@@ -90,14 +90,14 @@ void function MusicPacksPanel_Update( var panel )
 			CustomizeButton_UpdateAndMarkForUpdating( button, [entry], flav, PreviewMusicPack, null )
 		}
 
-		                                                                                                             
+		
 	}
 }
 
 
 void function MusicPacksPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) ) 
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -117,8 +117,8 @@ void function PreviewMusicPack( ItemFlavor flav )
 	RuiSetImage( rui, "portraitImage", MusicPack_GetPortraitImage( flav ) )
 	RuiSetFloat( rui, "portraitBlend", MusicPack_GetPortraitBlend( flav ) )
 	RuiSetString( rui, "quipTypeText", "#MUSIC_PACK" )
-	                       
-	                                                               
+	
+	
 
 	string previewAlias = MusicPack_GetPreviewMusic( flav )
 

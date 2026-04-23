@@ -7,7 +7,7 @@ struct
 	bool revertChanges = true
 } file
 
-void function InitConfirmKeepVideoChangesDialog( var newMenuArg )
+void function InitConfirmKeepVideoChangesDialog( var newMenuArg ) 
 {
 	RegisterSignal( "EndVideoChangesCountdown" )
 
@@ -31,6 +31,10 @@ void function Confirm( var button )
 {
 	file.revertChanges = false
 	Signal( uiGlobal.signalDummy, "EndVideoChangesCountdown" )
+
+	
+	
+	SendPINSettingsEvent()
 
 	foreach ( func in uiGlobal.resolutionChangedCallbacks )
 		func()

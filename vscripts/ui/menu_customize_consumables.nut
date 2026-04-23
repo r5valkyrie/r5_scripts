@@ -1,21 +1,22 @@
 global function InitCustomizeConsumablesMenu
-global function CustomizeConsumablesMenu_UpdatePreviewStyleButtonState
-
 global function SetCustomizeConsumablesMenuDefaultTab
+
+
+
 
 struct
 {
 	var        menu
 	array<var> tabBodyPanelList
-
 	array<int> consumableList
+	int        defaultTabIndex = 0
 
-	int defaultTabIndex = 0
-	var previewStyleToggle
+
+
 } file
 
 
-void function InitCustomizeConsumablesMenu( var newMenuArg )                                               
+void function InitCustomizeConsumablesMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "CustomizeConsumablesMenu" )
 	file.menu = menu
@@ -33,18 +34,21 @@ void function InitCustomizeConsumablesMenu( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, CustomizeConsumablesMenu_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, CustomizeConsumablesMenu_OnClose )
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, CustomizeConsumablesMenu_OnNavigateBack )
-	AddMenuEventHandler( menu, eUIEvent.MENU_SHOW, CustomizeConsumablesMenu_OnShow )
-	AddMenuEventHandler( menu, eUIEvent.MENU_HIDE, CustomizeConsumablesMenu_OnHide )
 
-	file.previewStyleToggle = Hud_GetChild( menu, "PreviewStyleToggle" )
-	Hud_AddEventHandler( file.previewStyleToggle, UIE_CLICK, ConsumableStickersPanel_TogglePreviewStyle )
+
+
+
+
+
+
 }
 
 
 void function CustomizeConsumablesMenu_OnOpen()
 {
 
-	ConsumableStickersPanel_InitPreviewStyle()
+
+
 	CustomizeConsumablesMenu_Update( file.menu )
 
 	TabData tabData = GetTabDataForPanel( file.menu )
@@ -56,6 +60,8 @@ void function CustomizeConsumablesMenu_OnOpen()
 
 	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
 		ActivateTab( tabData, file.defaultTabIndex )
+
+	Lobby_AdjustScreenFrameToMaxSize( Hud_GetChild( file.menu, "ScreenFrame" ), true )
 }
 
 
@@ -80,12 +86,12 @@ void function CustomizeConsumablesMenu_Update( var menu )
 	file.consumableList.clear()
 	ClearTabs( menu )
 
-	                                   
+	
 	if ( GetActiveMenu() == menu )
 	{
 		file.consumableList = GetAllStickerObjectTypes()
 
-		foreach ( int consumableIdx in file.consumableList )                                                               
+		foreach ( int consumableIdx in file.consumableList ) 
 		{
 			var tabBodyPanel = file.tabBodyPanelList[consumableIdx]
 
@@ -102,15 +108,9 @@ void function CustomizeConsumablesMenu_Update( var menu )
 		}
 	}
 	TabData tabData = GetTabDataForPanel( file.menu )
-	tabData.initialFirstTabButtonXPos = 50
+	tabData.initialFirstTabButtonXPos = GetNearestAspectRatio( GetScreenSize().width, GetScreenSize().height ) <= 2.0? 50: 0
 	SetTabDefsToSeasonal( tabData )
 	UpdateMenuTabs()
-}
-
-
-void function CustomizeConsumablesMenu_UpdatePreviewStyleButtonState( bool toggleState )
-{
-	HudElem_SetRuiArg( file.previewStyleToggle, "toggleState", toggleState )
 }
 
 
@@ -122,22 +122,30 @@ void function CustomizeConsumablesMenu_OnNavigateBack()
 }
 
 
-void function CustomizeConsumablesMenu_OnShow()
-{
-	RegisterButtonPressedCallback( BUTTON_Y, ButtonYPressed )
-}
 
 
-void function CustomizeConsumablesMenu_OnHide()
-{
-	DeregisterButtonPressedCallback( BUTTON_Y, ButtonYPressed )
-}
 
 
-void function ButtonYPressed( var unused )
-{
-	ConsumableStickersPanel_TogglePreviewStyle( file.previewStyleToggle )
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void function SetCustomizeConsumablesMenuDefaultTab( int index )
 {

@@ -1,4 +1,5 @@
 global function OpenPurchaseRerollDialog
+global function OpenApexCupPurchaseRerollDialog
 
 
 struct
@@ -6,34 +7,23 @@ struct
 	ItemFlavor& rerollChallenge
 	var sourceChallengeButton
 	var sourceChallengeMenu
+	int cupID
 } file
 
 
 void function RerollDialog_OnClickRerollButton( int challengeType )
 {
-	ItemFlavor ornull activeBattlePass = GetActiveBattlePass()
-
-	if ( !GRX_IsInventoryReady() )
+	if ( !GRX_IsInventoryReady() || !GRX_AreOffersReady() )
 		return
+
+	ItemFlavor ornull activeBattlePass = GetActiveBattlePass()
 
 	if ( activeBattlePass == null )
 		return
 
-	if ( !GRX_IsInventoryReady() )
-		return
-
-	if ( !GRX_AreOffersReady() )
-		return
-
 	expect ItemFlavor( activeBattlePass )
-	ItemFlavor ornull rerollFlavOrNull = BattlePass_GetRerollFlavOrNull( activeBattlePass )
-	if ( rerollFlavOrNull == null )
-	{
-		Warning( "RerollDialog_OnClickRerollButton: No reroll flavor set for battlepass " + string( ItemFlavor_GetAsset( activeBattlePass ) ) )
-		return
-	}
 
-	ItemFlavor rerollFlav = expect ItemFlavor( rerollFlavOrNull )
+	ItemFlavor rerollFlav = BattlePass_GetRerollFlav( activeBattlePass )
 
 	if ( ItemFlavor_IsItemDisabledForGRX( rerollFlav ) )
 		return
@@ -46,18 +36,17 @@ void function RerollDialog_OnClickRerollButton( int challengeType )
 	string challengeText = Challenge_GetDescription( challenge, tier )
 	challengeText = StripRuiStringFormatting( challengeText )
 
-	if ( challengeType != -1 )
+	if ( challengeType != eChallengeGameMode.INVALID )
 	{
-		int numTokens         = GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( rerollFlav ) )
-		string persistenceKey = "challengeRerollsUsed"
-		int tokensUsed        = GetPersistentVarAsInt( persistenceKey )
+		int numTokens         = maxint( GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( rerollFlav ) ), 0 )
+		int tokensUsed        = maxint( GetPersistentVarAsInt( "challengeRerollsUsed" ), 0 )
 
 		Assert( tokensUsed <= numTokens )
 
-		int currentDailyRerollCount = GetPersistentVarAsInt( "dailyRerollCount" )
+		int currentDailyRerollCount = maxint( GetPersistentVarAsInt( "dailyRerollCount" ), 0 )
 		int numNeeded               = CHALLENGE_REROLL_COSTS[ minint( currentDailyRerollCount, CHALLENGE_REROLL_COSTS.len() - 1 ) ]
 
-		if ( numTokens - tokensUsed < numNeeded )                
+		if ( numTokens - tokensUsed < numNeeded && numNeeded > 0 ) 
 		{
 			ItemFlavorPurchasabilityInfo ifpi = GRX_GetItemPurchasabilityInfo( challenge )
 
@@ -74,13 +63,11 @@ void function RerollDialog_OnClickRerollButton( int challengeType )
 			pdc.quantity = numNeeded
 			pdc.markAsNew = false
 			pdc.onPurchaseResultCallback = void function( bool wasSuccessful ) : ( challenge, rui, sourceMenu, challengeType ) {
-				if ( sourceMenu == null )
-					JumpToChallenges( "" )
-
 				if ( wasSuccessful )
 				{
-					Remote_ServerCallFunction( "ClientCallback_Challenge_ReRoll", ItemFlavor_GetGUID( challenge ), challengeType )
-					delaythread( 1.65 ) ShimmerChallenge( rui, sourceMenu )
+					Remote_ServerCallFunction( "ClientCallback_Challenge_ReRoll", ItemFlavor_GetGUID( challenge ) )
+					delaythread( 1.65 )
+					ShimmerChallenge( rui, sourceMenu )
 				}
 			}
 
@@ -94,7 +81,7 @@ void function RerollDialog_OnClickRerollButton( int challengeType )
 			data.resultCallback = void function( int result ) {
 				if ( result == eDialogResult.YES )
 				{
-					ResetFreeChallenge( eChallengeGameMode.ANY )
+					ResetFreeChallenge()
 				}
 			}
 
@@ -103,7 +90,7 @@ void function RerollDialog_OnClickRerollButton( int challengeType )
 	}
 }
 
-void function ResetFreeChallenge(  int challengeType  )
+void function ResetFreeChallenge()
 {
 	var sourceMenu = file.sourceChallengeMenu
 	ItemFlavor challenge = file.rerollChallenge
@@ -112,7 +99,7 @@ void function ResetFreeChallenge(  int challengeType  )
 	if ( sourceMenu == null )
 		JumpToChallenges( "" )
 
-	Remote_ServerCallFunction( "ClientCallback_Challenge_ReRoll", ItemFlavor_GetGUID( challenge ), challengeType )
+	Remote_ServerCallFunction( "ClientCallback_Challenge_ReRoll", ItemFlavor_GetGUID( challenge ) )
 	var rui = Hud_GetRui( clickedButton )
 	ShimmerChallenge( rui, sourceMenu )
 }
@@ -135,6 +122,46 @@ void function OpenPurchaseRerollDialog( ItemFlavor challenge, var sourceButton, 
 	file.sourceChallengeButton = sourceButton
 	file.sourceChallengeMenu = sourceMenu
 
-
 	RerollDialog_OnClickRerollButton( eChallengeGameMode.ANY )
+}
+
+void function RerollDialogConfirm()
+{
+	Remote_ServerCallFunction( "ClientCallback_ReRollCup", file.cupID )
+}
+
+void function OpenApexCupPurchaseRerollDialog( ItemFlavor reRoll, string cupName, CupEntry entry )
+{
+	if ( !GRX_IsInventoryReady() || !GRX_AreOffersReady() )
+		return
+
+	
+	int numTokens = maxint( GRX_GetConsumableCount( ItemFlavor_GetGRXIndex( reRoll ) ), 0 )
+	if ( numTokens > entry.reRollCount )
+	{
+		file.cupID = entry.cupID
+
+		DialogData dialogData
+		dialogData.header = Localize( "#CUP_REROLL_CONFIRM_HEADER" )
+		dialogData.message = Localize( "#CUP_REROLL_CONFIRM_DESC" )
+		dialogData.darkenBackground = true
+		dialogData.useFullMessageHeight = true
+
+		AddDialogButton( dialogData, "#CUP_REROLL_CONFIRM_BUTTON", RerollDialogConfirm )
+		AddDialogButton( dialogData, "#B_BUTTON_BACK" )
+
+		OpenDialog( dialogData )
+
+		return
+	}
+
+	PurchaseDialogConfig pdc
+	pdc.flav = reRoll
+	pdc.messageOverride = cupName
+	pdc.quantity = 1
+	pdc.markAsNew = false
+	pdc.isCupsReRoll = true
+	pdc.entry = entry
+
+	PurchaseDialog( pdc )
 }

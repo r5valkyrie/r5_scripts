@@ -3,9 +3,9 @@ untyped
 global function InitRespawnOverlay
 global function SetRespawnOverlayTime
 global function SetRespawnOverlayString
+global function SetRespawnOverlayIdleString
 global function HideRespawnOverlay
 global function UI_ClearRespawnOverlay
-global function SetRespawnOverlayIdleString
 
 
 struct
@@ -46,6 +46,15 @@ void function SetRespawnOverlayString( string message )
 	}
 }
 
+void function SetRespawnOverlayIdleString( string message )
+{
+	foreach ( var element in file.respawnRuis )
+	{
+		var rui = Hud_GetRui( Hud_GetChild( element, "RespawnStatus" ) )
+		RuiSetString( rui, "idleTitle", message )
+	}
+}
+
 void function HideRespawnOverlay()
 {
 	foreach ( element in file.respawnRuis )
@@ -63,9 +72,4 @@ void function ShowRespawnOverlay()
 void function UI_ClearRespawnOverlay()
 {
 	SetRespawnOverlayTime( RUI_BADGAMETIME, RUI_BADGAMETIME )
-}
-
-// Called from sh_gamemode_freedm.nut via RunUIScript
-void function SetRespawnOverlayIdleString( string text )
-{
 }

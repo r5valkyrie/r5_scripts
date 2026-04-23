@@ -21,6 +21,9 @@ void function Callback_OnCustomGameModeChanged( CustomMatchCategory category )
 	{
 		var button = Hud_GetButton( file.menuGrid, i )
 
+		if( button == null )
+			break
+
 		HudElem_SetRuiArg( button, "modeNameText", map.displayName )
 		HudElem_SetRuiArg( button, "modeImage", map.displayImage, eRuiArgType.IMAGE )
 
@@ -59,6 +62,9 @@ void function SelectPlaylist( CustomMatchPlaylist playlist )
 			continue
 
 		var button = Hud_GetButton( file.menuGrid, i )
+		if( button == null )
+			break
+
 		Hud_SetChecked( button, MapContainsPlaylist( entry, playlist ) )
 	}
 

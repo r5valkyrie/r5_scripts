@@ -1,17 +1,41 @@
-// NOTE: InitMainMenuPanel replaced by InitR5RMainMenuPanel in panel_mainmenu_v2.nut
-// This file kept for legacy global functions still used by menu_main.nut and menu_eula_dialog.nut
 
+global function InitMainMenuPanel
 global function StartSearchForPartyServer
 global function StopSearchForPartyServer
 global function IsSearchingForPartyServer
 global function SetLaunchState
 global function PrelaunchValidateAndLaunch
-global function IsSteamInitialized
-global function IsPTUGame
+
+global function IsCrossProgressing
+global function UICodeCallback_XProgCheckRolloutRequestFinished
+global function UICodeCallback_XProgMigrateRequestFinished
+global function UICodeCallback_XProgMigrateStatusRequestFinished
+global function UICodeCallback_XProgMigrateFlowFailed
+global function UICodeCallback_XProgMigrateNotificationRequestFinished
+global function UI_CrossProgression_DoMigrateFlow
 
 global function UICodeCallback_GetOnPartyServer
 
+
+
+
+
+
+
+
+
+
+
+
+
+#if DEV
+global function DEV_ToggleRuiIssuesDemo
+#endif
+
 const bool SPINNER_DEBUG_INFO = PC_PROG
+
+const int MIGRATE_DEFAULT_RETRY_MINUTES = 180
+const float REAUTH_REQUEST_TIMEOUT = 10.0
 
 struct
 {
@@ -22,14 +46,24 @@ struct
 	void functionref() launchButtonActivateFunc = null
 	var                statusDetails
 	bool               statusDetailsVisiblity = false
-	                                       
+	
 	bool               working = false
 	bool               searching = false
+	bool               crossProgressing = false
 	bool			   hasReconnectFile = false
 	bool               isNucleusProcessActive = false
 	var				   serverSearchMessage
 	var				   serverSearchError
 	bool				needsEAAccountRegistration = false
+
+	bool xProgCheckRolloutRequestFinished = false
+	bool xProgCheckNotificationRequestFinished = false
+	bool xProgRequestMigrateFinished = false
+	bool xProgMigrateDoneWithMTXData = false
+	bool xProgMigrateFailed = false
+
+
+
 
 
 	float startTime = 0
@@ -50,15 +84,17 @@ void function InitMainMenuPanel( var panel )
 {
 	RegisterSignal( "EndPrelaunchValidation" )
 	RegisterSignal( "EndSearchForPartyServerTimeout" )
+	RegisterSignal( "EndSetMainProfileForCrossProgressionTimeout" )
+	RegisterSignal( "EndMigrateFlow" )
 	RegisterSignal( "SetLaunchState" )
 	RegisterSignal( "MainMenu_Think" )
 
 	file.panel = GetPanel( "MainMenuPanel" )
 	file.menu = GetParentMenu( file.panel )
 
-#if DEVELOPER
+#if DEV
 	AddMenuThinkFunc( file.menu, MainMenuPanelAutomationThink )
-#endif       
+#endif
 
 	AddPanelEventHandler( file.panel, eUIEvent.PANEL_SHOW, OnMainMenuPanel_Show )
 	AddPanelEventHandler( file.panel, eUIEvent.PANEL_HIDE, OnMainMenuPanel_Hide )
@@ -70,11 +106,16 @@ void function InitMainMenuPanel( var panel )
 	file.statusDetails = Hud_GetRui( Hud_GetChild( file.panel, "StatusDetails" ) )
 	file.serverSearchMessage = Hud_GetChild( file.panel, "ServerSearchMessage" )
 	file.serverSearchError = Hud_GetChild( file.panel, "ServerSearchError" )
+
+
+
+
+
+
+
 	
 
-	                                                                                                                     
-
-	#if DEVELOPER
+#if DEV
 		if ( GetBugReproNum() == 233677 )
 		{
 			AddPanelFooterOption( panel, LEFT, BUTTON_Y, true, "", "" )
@@ -82,26 +123,29 @@ void function InitMainMenuPanel( var panel )
 			var leftRuiFooterButton0 = Hud_GetChild( footerButtons, "LeftRuiFooterButton0" )
 			thread DEV_TestFooterTextWidths( leftRuiFooterButton0 )
 		}
-	#endif       
+#endif
 
-	#if PC_PROG
+
 		AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_EXIT_TO_DESKTOP", "#B_BUTTON_EXIT_TO_DESKTOP", null, IsExitToDesktopFooterValid )
 		AddPanelFooterOption( panel, LEFT, KEY_TAB, false, "", "#DATACENTER_DOWNLOADING", OpenDataCenterDialog, IsDataCenterFooterVisible, UpdateDataCenterFooter )
-	#endif           
+
 	AddPanelFooterOption( panel, LEFT, BUTTON_STICK_RIGHT, false, "#DATACENTER_DOWNLOADING", "", OpenDataCenterDialog, IsDataCenterFooterVisible, UpdateDataCenterFooter )
 
 	file.hasReconnectFile = TryLoadReconnectFromLocalStorage()
-	#if PC_PROG
+
 		AddPanelFooterOption( panel, LEFT, KEY_Q, true, "", "#BUTTON_RETRY_CONNECT", RetryConnect_OnActivate, IsRetryConnectFooterValid )
-	#endif
+
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, true, "#BUTTON_RETRY_CONNECT", "", RetryConnect_OnActivate, IsRetryConnectFooterValid )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_START, true, "#START_BUTTON_ACCESSIBLITY", "#BUTTON_ACCESSIBLITY", Accessibility_OnActivate, IsAccessibilityFooterValid )
 
 
+
+
+
 }
 
-#if DEVELOPER
+#if DEV
 void function MainMenuPanelAutomationThink( var menu )
 {
 	if (AutomateUi())
@@ -110,7 +154,7 @@ void function MainMenuPanelAutomationThink( var menu )
 		LaunchButton_OnActivate(null)
 	}
 }
-#endif       
+#endif
 
 void function RetryConnect_OnActivate( var button )
 {
@@ -123,15 +167,15 @@ void function RetryConnect_OnActivate( var button )
 
 bool function IsRetryConnectFooterValid()
 {
-	return !IsWorking() && !IsSearchingForPartyServer() && file.hasReconnectFile && !CanAutoRetryConnect()
+	return !IsWorking() && !IsSearchingForPartyServer() && !IsCrossProgressing() && file.hasReconnectFile && !CanAutoRetryConnect()
 }
 
-#if PC_PROG
+
 bool function IsExitToDesktopFooterValid()
 {
-	return !IsWorking() && !IsSearchingForPartyServer()
+	return !IsWorking() && !IsSearchingForPartyServer() && !IsCrossProgressing()
 }
-#endif           
+
 
 
 bool function IsAccessibilityFooterValid()
@@ -139,24 +183,32 @@ bool function IsAccessibilityFooterValid()
 	if ( !IsAccessibilityAvailable() )
 		return false
 
-	return !IsWorking() && !IsSearchingForPartyServer()
+
+
+
+		return !IsWorking() && !IsSearchingForPartyServer() && !IsCrossProgressing()
+
 }
 
 bool function IsDataCenterFooterVisible()
 {
-	return !IsWorking() && !IsSearchingForPartyServer()
+	return !IsWorking() && !IsSearchingForPartyServer() && !IsCrossProgressing()
 }
 
 
 bool function IsDataCenterFooterClickable()
 {
-#if DEVELOPER
+#if DEV
 	bool hideDurationElapsed = true
-#else           
+#else
 	bool hideDurationElapsed = UITime() - file.startTime > 10.0
-#endif                    
+#endif
 
-	return !IsWorking() && !IsSearchingForPartyServer() && hideDurationElapsed
+
+
+
+		return !IsWorking() && !IsSearchingForPartyServer() && !IsCrossProgressing() && hideDurationElapsed
+
 }
 
 void function UpdateDataCenterFooter( InputDef footerData )
@@ -210,10 +262,10 @@ void function MainMenu_Think()
 
 	while ( true )
 	{
-		                        
-	    #if DEVELOPER
+		
+#if DEV
 		    if ( GetBugReproNum() != 233677 )
-	    #endif       
+#endif
 		UpdateFooterOptions()
 
 		WaitFrame()
@@ -235,27 +287,24 @@ void function PrelaunchValidation( bool autoContinue = false )
 
 	SetLaunchState( eLaunchState.WORKING )
 
-	SetLaunchState( eLaunchState.CANT_CONTINUE, "Press F10 to access the Server Browser" )
-
-	return
 #if SPINNER_DEBUG_INFO
 	SetSpinnerDebugInfo( "PrelaunchValidation" )
 #endif
-	#if PC_PROG
+
 
 		bool isPCPlatEnabled = PCPlat_IsEnabled()
 		string platToken = PCPlat_IsSteam() ? "STEAM" : "ORIGIN"
 		PrintLaunchDebugVal( "isPCPlatEnabled", isPCPlatEnabled )
 		if ( !isPCPlatEnabled )
 		{
-			#if DEVELOPER
+#if DEV
 				if ( autoContinue )
 					LaunchMP()
 				else
 					SetLaunchState( eLaunchState.WAIT_TO_CONTINUE, "", Localize( "#MAINMENU_CONTINUE" ) )
 
 				return
-			#endif       
+#endif
 
 			SetLaunchState( eLaunchState.WAIT_TO_CONTINUE, Localize( "#"+platToken+"_IS_OFFLINE" ), Localize( "#MAINMENU_RETRY" ) )
 			return
@@ -276,9 +325,30 @@ void function PrelaunchValidation( bool autoContinue = false )
 			SetLaunchState( eLaunchState.CANT_CONTINUE, Localize( "#TITLE_UPDATE_AVAILABLE" ) )
 			return
 		}
-	#endif           
 
-		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	bool hasLatestPatch = HasLatestPatch()
 	PrintLaunchDebugVal( "hasLatestPatch", hasLatestPatch )
@@ -288,8 +358,8 @@ void function PrelaunchValidation( bool autoContinue = false )
 		return
 	}
 
-	#if PC_PROG
-		bool isPCPlatAccountAvailable = true       
+
+		bool isPCPlatAccountAvailable = true 
 		PrintLaunchDebugVal( "isPCPlatAccountAvailable", isPCPlatAccountAvailable )
 		if ( !isPCPlatAccountAvailable )
 		{
@@ -297,7 +367,7 @@ void function PrelaunchValidation( bool autoContinue = false )
 			return
 		}
 
-		bool isPCPlatLoggedIn = true       
+		bool isPCPlatLoggedIn = true 
 		PrintLaunchDebugVal( "isPCPlatLoggedIn", isPCPlatLoggedIn )
 		if ( !isPCPlatLoggedIn )
 		{
@@ -360,7 +430,134 @@ void function PrelaunchValidation( bool autoContinue = false )
 
 			WaitFrame()
 		}
-	#endif           
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -368,9 +565,72 @@ void function PrelaunchValidation( bool autoContinue = false )
 	PrintLaunchDebugVal( "hasPermission", hasPermission )
 	if ( !hasPermission )
 	{
-		SetLaunchState( eLaunchState.CANT_CONTINUE, Localize( "#MULTIPLAYER_NOT_AVAILABLE" ) )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+			SetLaunchState( eLaunchState.CANT_CONTINUE, Localize( "#MULTIPLAYER_NOT_AVAILABLE" ) )
+
 		return
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #if SPINNER_DEBUG_INFO
@@ -386,7 +646,11 @@ void function PrelaunchValidation( bool autoContinue = false )
 			break
 		if ( UITime() - startTime > 10.0 )
 		{
-			SetLaunchState( eLaunchState.WAIT_TO_CONTINUE, Localize( "#ORIGIN_IS_OFFLINE" ), Localize( "#MAINMENU_RETRY" ) )
+
+
+
+				SetLaunchState( eLaunchState.WAIT_TO_CONTINUE, Localize( "#ORIGIN_IS_OFFLINE" ), Localize( "#MAINMENU_RETRY" ) )
+
 			return
 		}
 
@@ -406,6 +670,180 @@ void function PrelaunchValidation( bool autoContinue = false )
 	}
 
 
+
+	if ( HasConVar( "eosScriptDoTest") ) 
+	{
+		bool eosScriptDoTest = GetConVarBool("eosScriptDoTest")
+		bool eosIsActive = GetConVarBool("eosIsActive")
+		PrintLaunchDebugVal( "eosScriptDoTest", eosScriptDoTest )
+		PrintLaunchDebugVal( "eosIsActive", eosIsActive )
+
+		if ( eosScriptDoTest && eosIsActive )
+		{
+#if SPINNER_DEBUG_INFO
+			SetSpinnerDebugInfo( "isAntiCheatReady" )
+#endif
+			float startTimeAntiCheat = UITime()
+
+			while (true)
+			{
+				bool isAntiCheatReady = false
+
+				string eosPuid = GetConVarString("eosPuid")
+				if ( eosPuid != "" )
+					isAntiCheatReady = true
+
+				PrintLaunchDebugVal( "isAntiCheatReady", isAntiCheatReady )
+
+				if ( isAntiCheatReady )
+					break
+				if ( UITime() - startTimeAntiCheat > 10.0 )
+				{
+					SetLaunchState( eLaunchState.WAIT_TO_CONTINUE, Localize( "#UNABLE_TO_CONNECT" ) + ":1", Localize( "#MAINMENU_RETRY" ) )
+					return
+				}
+
+				WaitFrame()
+			}
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	if ( !file.xProgMigrateFailed && GetConVarBool( "CrossProgression_CheckRollout" ) )
+	{
+		if ( !CrossProgression_IsMigrated() )
+		{
+			
+			if ( !file.xProgCheckRolloutRequestFinished )
+			{
+#if SPINNER_DEBUG_INFO
+					SetSpinnerDebugInfo( "CheckRolloutForCrossProgression" )
+#endif
+
+				const float CHECK_ROLLOUT_TIMEOUT = 10.0
+				float startTimeCheckRollout = UITime()
+
+				CrossProgression_RequestCheckRollout()
+
+				while ( true )
+				{
+					PrintLaunchDebugVal( "[CrossProgression] xProgCheckRolloutRequestFinished", file.xProgCheckRolloutRequestFinished )
+
+					if ( file.xProgCheckRolloutRequestFinished )
+						break
+
+					if ( UITime() - startTimeCheckRollout > CHECK_ROLLOUT_TIMEOUT )
+					{
+						
+						file.xProgMigrateFailed = true
+						printt( "[CrossProgression] CheckRollout Timeout" )
+						break
+					}
+
+					WaitFrame()
+				}
+			}
+			else
+			{
+				
+				UICodeCallback_XProgCheckRolloutRequestFinished()
+			}
+
+			SetLaunchState( eLaunchState.WAIT_TO_CONTINUE, "", Localize( "#MAINMENU_CONTINUE" ) )
+			return
+		}
+
+#if SPINNER_DEBUG_INFO
+			SetSpinnerDebugInfo( "ReAuthenticatedByStryder" )
+#endif
+		float startTimeReAuth = UITime()
+		while ( true )
+		{
+			bool isReAuthenticatedByStryder = IsStryderAuthenticated()
+			PrintLaunchDebugVal( "[CrossProgression] isReAuthenticatedByStryder", isReAuthenticatedByStryder )
+
+			if ( isReAuthenticatedByStryder )
+				break
+
+			if ( UITime() - startTimeReAuth > REAUTH_REQUEST_TIMEOUT )
+			{
+				SetLaunchState( eLaunchState.WAIT_TO_CONTINUE, Localize( "#CROSS_PROGRESSION_REAUTH_NOT_AVAILABLE" ), Localize( "#MAINMENU_RETRY" ) )
+				return
+			}
+
+			WaitFrame()
+		}
+	}
+	else if ( CrossProgression_IsOfflineMigration() && !file.xProgCheckNotificationRequestFinished )
+	{
+#if SPINNER_DEBUG_INFO
+			SetSpinnerDebugInfo( "CheckNotificationForCrossProgression" )
+#endif
+
+		const float CHECK_NOTIFICATION_TIMEOUT = 10.0
+		float startTimeCheckNotification = UITime()
+
+		CrossProgression_RequestMigrateNotification();
+
+		while ( true )
+		{
+			PrintLaunchDebugVal( "[CrossProgression] xProgCheckNotificationRequestFinished", file.xProgCheckNotificationRequestFinished )
+
+			if ( file.xProgCheckNotificationRequestFinished )
+				break
+
+			if ( UITime() - startTimeCheckNotification > CHECK_NOTIFICATION_TIMEOUT )
+			{
+				file.xProgCheckNotificationRequestFinished = true
+				printt( "[CrossProgression] CheckNotification Timeout" )
+				break
+			}
+
+			WaitFrame()
+		}
+	}
+
+	if ( GetConVarBool("CrossProgression_ForceMigrate" ) && !CrossProgression_IsMigrated() )
+	{
+		SetLaunchState( eLaunchState.CANT_CONTINUE, Localize( "#CROSS_PROGRESSION_FORCE_MIGRATE" ) )
+		return
+	}
+
+	if ( GetConVarBool( "kepler_isEnabled" ) )
+	{
+#if SPINNER_DEBUG_INFO
+		SetSpinnerDebugInfo( "Kepler_IsReady" )
+#endif
+
+		while ( true )
+		{
+			bool isKeplerReady = Kepler_IsReady()
+			PrintLaunchDebugVal( "isKeplerReady", isKeplerReady )
+
+			if ( isKeplerReady )
+			{
+				break
+			}
+
+			WaitFrame()
+		}
+	}
+
 	if ( autoContinue )
 		LaunchMP()
 	else
@@ -419,6 +857,10 @@ void function OnMainMenuPanel_Hide( var panel )
 	Signal( uiGlobal.signalDummy, "EndPrelaunchValidation" )
 	file.working = false
 	file.searching = false
+	file.crossProgressing = false
+
+
+
 }
 
 
@@ -502,8 +944,180 @@ bool function IsWorking()
 }
 
 
+void function DoMigrateFlow()
+{
+	EndSignal( uiGlobal.signalDummy, "EndMigrateFlow" )
+
+	file.crossProgressing = true
+	SetLaunchState( eLaunchState.WORKING )
+
+	CrossProgression_RequestMigrate()
+
+	const float MIGRATE_FLOW_TIMEOUT = 180.0
+	float startTimeMigrate = UITime()
+
+	const float QUERY_STATUS_INTERVAL = 10.0
+	float nextTimeRequestStatus       = 0.0
+
+	while ( true )
+	{
+		float currentTime = UITime()
+		if ( currentTime - startTimeMigrate > MIGRATE_FLOW_TIMEOUT )
+		{
+			file.xProgMigrateFailed = true
+			printt( "[CrossProgression] DoMigrateFlow Timeout" )
+
+			UI_CloseCrossProgressionDialog()
+			ConfirmDialogData data
+			data.headerText = Localize( "#CROSS_PROGRESSION_MIGRATE_COOLINGDOWN_TITLE" )
+			data.messageText = Localize( "#CROSS_PROGRESSION_MIGRATE_COOLINGDOWN_DESC", string( MIGRATE_DEFAULT_RETRY_MINUTES ) )
+			OpenOKDialogFromData( data )
+
+			break
+		}
+
+		if ( file.xProgMigrateFailed )
+			break
+
+		if ( CrossProgression_IsMigrated() )
+		{
+			XProgMigrateData migrateData = CrossProgressionGetMigrateData()
+			if ( !file.xProgMigrateDoneWithMTXData && migrateData.hasMultipleProfiles )
+				CrossProgression_RequestMigrateStatus()
+
+			break
+		}
+
+		if ( file.xProgRequestMigrateFinished && currentTime > nextTimeRequestStatus )
+		{
+			if ( nextTimeRequestStatus > QUERY_STATUS_INTERVAL )
+				CrossProgression_RequestMigrateStatus()
+
+			nextTimeRequestStatus = currentTime + QUERY_STATUS_INTERVAL
+		}
+
+		WaitFrame()
+	}
+
+	file.crossProgressing = false
+	SetLaunchState( eLaunchState.WAIT_TO_CONTINUE, "", Localize( "#MAINMENU_CONTINUE" ) )
+}
+
+bool function IsCrossProgressionMigrateFlowEnabled()
+{
+	if ( !GetConVarBool( "CrossProgression_Ready" ) )
+		return false
+
+	if ( file.xProgMigrateFailed )
+		return false
+
+	return true
+}
+
+void function UI_CrossProgression_DoMigrateFlow()
+{
+	thread DoMigrateFlow()
+}
+
+void function UICodeCallback_XProgCheckRolloutRequestFinished()
+{
+	printt( "[CrossProgression] UICodeCallback_XProgCheckRolloutRequestFinished")
+
+	file.xProgCheckRolloutRequestFinished = true
+
+	if ( IsCrossProgressionMigrateFlowEnabled() && !CrossProgression_IsMigrated() )
+	{
+		RTKCrossProgressionPanel_SetDialogHeight()
+		UI_OpenCrossProgressionDialog()
+	}
+}
+
+void function UICodeCallback_XProgMigrateRequestFinished()
+{
+	printt( "[CrossProgression] UICodeCallback_XProgMigrateRequestFinished" )
+	file.xProgRequestMigrateFinished = true
+
+	if ( CrossProgression_IsMigrated() )
+	{
+		XProgMigrateData migrateData = CrossProgressionGetMigrateData()
+
+		if ( migrateData.hasMultipleProfiles )
+		{
+			RTKCrossProgressionPanel_SetHeader()
+			RTKCrossProgressionPanel_SetDialogHeight()
+			RTKCrossProgressionPanel_UpdateDataModel()
+			UI_OpenCrossProgressionDialog()
+		}
+		else
+		{
+			UI_CloseCrossProgressionDialog()
+		}
+	}
+}
+
+
+void function UICodeCallback_XProgMigrateStatusRequestFinished()
+{
+	printt( "[CrossProgression] UICodeCallback_XProgMigrateStatusRequestFinished")
+
+	XProgMigrateData migrateData = CrossProgressionGetMigrateData()
+	printt( "[CrossProgression] XProgStatus process state: ", migrateData.processStatus )
+
+	if ( CrossProgression_IsMigrated() )
+	{
+		file.xProgMigrateDoneWithMTXData = true
+
+		UICodeCallback_XProgMigrateRequestFinished()
+
+		printt( "[CrossProgression] EA ID: ", migrateData.eaId )
+		printt( "[CrossProgression] Nickname: ", migrateData.nickname )
+		printt( "[CrossProgression] Level: ", migrateData.level )
+		printt( "[CrossProgression] Herirlooms: ", migrateData.heirloom )
+		printt( "[CrossProgression] Herirloom Shards ", migrateData.heirloomShards )
+		printt( "[CrossProgression] Apex Packs ", migrateData.apexPacks )
+		printt( "[CrossProgression] Total (Cosmetics)", migrateData.cosmetics )
+		printt( "[CrossProgression] Legend Tokens", migrateData.credits )
+		printt( "[CrossProgression] Crafting Metals", migrateData.crafting )
+		printt( "[CrossProgression] Nintendo AC", migrateData.premiumNx )
+		printt( "[CrossProgression] All other AC", migrateData.premium )
+	}
+}
+
+void function UICodeCallback_XProgMigrateNotificationRequestFinished()
+{
+	printt( "[CrossProgression] UICodeCallback_XProgMigrateNotificationRequestFinished")
+	file.xProgCheckNotificationRequestFinished = true
+	UI_OpenCrossProgressionDialog()
+}
+
+void function UICodeCallback_XProgMigrateFlowFailed()
+{
+	printt( "[CrossProgression] UICodeCallback_XProgMigrateFlowFailed")
+
+	file.xProgMigrateFailed = true
+
+	XProgMigrateData migrateData = CrossProgressionGetMigrateData()
+	UI_CloseCrossProgressionDialog()
+	ConfirmDialogData data
+	data.headerText = Localize( "#CROSS_PROGRESSION_MIGRATE_COOLINGDOWN_TITLE" )
+	data.messageText = Localize( "#CROSS_PROGRESSION_MIGRATE_COOLINGDOWN_DESC" )
+	OpenOKDialogFromData( data )
+}
+
+bool function IsCrossProgressing()
+{
+	return IsCrossProgressionMigrateFlowEnabled() && file.crossProgressing
+}
+
+
 void function StartSearchForPartyServer()
 {
+
+
+
+
+
+
 
 	SearchForPartyServer()
 	SetLaunchState( eLaunchState.WORKING )
@@ -538,9 +1152,9 @@ void function SearchForPartyServerTimeout()
 	{
 		string searchMessage = Hud_GetUTF8Text( file.serverSearchMessage )
 		string searchError = Hud_GetUTF8Text( file.serverSearchError )
-		                                                                        
+		
 
-		                                  
+		
 		if ( ClientIsPreCaching() )
 		{
 			startTime = UITime()
@@ -554,7 +1168,7 @@ void function SearchForPartyServerTimeout()
 
 		WaitFrame()
 	}
-	                                                                                                            
+	
 
 	string details
 	if ( (lastValidSearchMessage == serverError || lastValidSearchMessage == localError) && lastValidSearchError != "" )
@@ -584,6 +1198,154 @@ bool function IsSearchingForPartyServer()
 {
 	return file.searching
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -621,9 +1383,13 @@ bool function IsStryderAllowingMP()
 }
 
 
-                                                                                   
+
 bool function HasLatestPatch()
 {
+
+
+
+
 
 	return true
 }
@@ -632,12 +1398,19 @@ bool function HasLatestPatch()
 bool function HasPermission()
 {
 
+
+
+
 	return true
 }
 
 
 void function Accessibility_OnActivate( var button )
 {
+
+
+
+
 
 	if ( IsDialog( GetActiveMenu() ) )
 		return
@@ -657,34 +1430,110 @@ void function OnConfirmDialogResult( int result )
 
 void function PrintLaunchDebugVal( string name, bool val )
 {
-	#if DEVELOPER
+#if DEV
 		printt( "*** PrelaunchValidation *** " + name + ": " + val )
-	#endif       
+#endif
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void function SwitchProfile_OnActivate( var button )
 {
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
 bool function IsSwitchProfileFooterValid()
 {
-	return false
-}
 
-bool function IsSteamInitialized()
-{
-	return GetConVarInt( "steam_enabled" ) == 1
-}
 
-bool function IsPTUGame()
-{
-	return false
+
+		return false
+
 }
 
 
-#if DEVELOPER
+#if DEV
 void function DEV_TestFooterTextWidths( var elem )
 {
 	while ( true )
@@ -721,4 +1570,4 @@ void function DEV_ToggleRuiIssuesDemo( string elemName )
 			Hud_SetVisible( elem, false )
 	}
 }
-#endif       
+#endif

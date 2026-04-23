@@ -101,11 +101,10 @@ global const int MATCHRANKEDMODE_RANKED_ARENA = 2
 
 global enum eBoostModifierType
 {
+	ACCOUNT_XP,
 	BP_STARS,
 	MYTHIC_PROGRESS,
-	XP_MATCH,
-	XP_CHALLENGE,
-	_COUNT
+	MASTERY_WEAPON,
 }
 
 // [s21-native] int const WEAPON_ARTIFACT_BLADE_CHANGED = 0x1 (int) registered by engine; script redeclaration dropped

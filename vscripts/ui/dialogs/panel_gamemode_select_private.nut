@@ -79,7 +79,7 @@ void function CustomMatchConnect_OnLevelInit()
 			JoinMatchWithEntryCode( entryCode )
 		}
 
-		                                                       
+		
 		SetConVarInt( AUTO_CONNECT_CONVAR, 1 )
 	}
 }
@@ -121,13 +121,13 @@ void function CustomMatchConnectPanel_OnHide( var panel )
 
 void function CustomMatchCanCreateOrJoinMatch( var connectButton, bool isCreateButton = false, string entryCode = "" )
 {
-	                                                
+	
 	if (CrossplayUserOptIn())
 	{
-		                                         
+		
 		Hud_ClearToolTipData( connectButton )
 
-		                                                                                                               
+		
 		if ( isCreateButton )
 		{
 			file.canCreateMatch = true
@@ -136,18 +136,18 @@ void function CustomMatchCanCreateOrJoinMatch( var connectButton, bool isCreateB
 	}
 	else
 	{
-		                                                                                     
+		
 		ToolTipData crossplayTooltipData
 		crossplayTooltipData.titleText = Localize( "#HUD_CROSSPLAY_OPT_IN" )
 		crossplayTooltipData.descText = Localize( "#CUSTOMMATCH_CROSSPLAY_TOOLTIP_DESC" )
 		Hud_SetToolTipData( connectButton, crossplayTooltipData )
 
-		                                                                    
+		
 		file.canCreateOrJoinMatch = false
 		file.canCreateMatch = false
 	}
 
-	                                                                     
+	
 	RuiSetBool( Hud_GetRui( connectButton ), "isLocked", isCreateButton ? !file.canCreateMatch : !file.canCreateOrJoinMatch )
 }
 
@@ -166,7 +166,7 @@ void function CustomMatchCreatePanel_Update( var panel, bool showPanel )
 	else
 	{
 		Hud_Hide( panel )
-		                                                           
+		
 		return
 	}
 
@@ -198,7 +198,7 @@ void function CustomMatchConnectPanel_Update( var panel, bool showPanel )
 	else
 	{
 		Hud_Hide( panel )
-		                                                           
+		
 		return
 	}
 
@@ -252,7 +252,7 @@ void function Init_ConnectBoxPanel( var panel, string title, string subtitle, st
 
 void function CreateMatchWithEntryCode( string entryCode )
 {
-	                                                                                         
+	
 	if (file.canCreateMatch)
 	{
 		printt( "CreateMatchWithEntryCode", entryCode )
@@ -272,7 +272,7 @@ void function JoinMatchButtonTimeout_Thread()
 
 void function JoinMatchWithEntryCode( string entryCode )
 {
-	                                                                                         
+	
 	if (file.canCreateOrJoinMatch)
 	{
 		printt( "JoinMatchWithEntryCode", entryCode )
@@ -284,16 +284,20 @@ void function JoinMatchWithEntryCode( string entryCode )
 
 void function CustomMatchEnableCrossplay( var button )
 {
-	                                             
+	
 	thread ToggleCrossplaySettingThread()
 
-	                             
+	
 	UpdateFooterOptions()
 }
 
-#if UI
+
 bool function CustomMatchShouldCrossplayFooterBeVisible()
 {
+
+
+
 	return !GetConVarBool( "CrossPlay_user_optin" )
+
 }
-#endif
+

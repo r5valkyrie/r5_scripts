@@ -9,6 +9,11 @@ global function DiscardVideoSettingsDialog
 global function VideoPanel_GetConVarData
 global function AreVideoSettingsChanged
 
+
+
+
+
+
 struct
 {
 	var                panel
@@ -20,15 +25,20 @@ struct
 	array<ConVarData>    conVarDataList
 
 	bool videoSettingsChanged = false
+
+	
+
+
+
 } file
 
 void function InitVideoPanelForCode( var panel )
 {
-	#if PC_PROG
+
 		asset resFile = $"resource/ui/menus/panels/video.res"
-	#elseif CONSOLE_PROG
-		asset resFile = $"resource/ui/menus/panels/video_console.res"
-	#endif
+
+
+
 	file.videoPanel = CreateVideoOptionsPanel( panel, "ContentPanel", resFile )
 	Hud_SetPos( file.videoPanel, 0, 0 )
 
@@ -46,39 +56,43 @@ void function InitVideoPanel( var panel )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, OnVideoPanel_Show )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, OnVideoPanel_Hide )
 
-	                                                                                
+	
 
 	var button
-	#if PC_PROG
+
 		button = Hud_GetChild( file.videoPanel, "SwchDisplayMode" )
 		SetupSettingsButton( button, "#DISPLAY_MODE", "#ADVANCED_VIDEO_MENU_DISPLAYMODE_DESC", $"rui/menu/settings/settings_video" )
-		                                                                  
+		
 
 		button = Hud_GetChild( file.videoPanel, "SwchAspectRatio" )
 		SetupSettingsButton( button, "#ASPECT_RATIO", "#ADVANCED_VIDEO_MENU_ASPECT_RATIO_DESC", $"rui/menu/settings/settings_video" )
-		                                                                  
+		
 
 		button = Hud_GetChild( file.videoPanel, "SldAdaptiveRes" )
 		SetupSettingsSlider( button, "#ADAPTIVE_RES", "#ADAPTIVE_RES_DESC", $"rui/menu/settings/settings_video" )
-		                                                                  
+		
 		AddButtonEventHandler( Hud_GetChild( file.videoPanel, "TextEntryAdaptiveRes" ), UIE_CHANGE, AdaptiveResText_Changed )
-	// PCDX12_PROG not available (DX11)
-	// SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchDynamicStreamingBudget" ), "#DYNAMIC_STREAMING", "#ADVANCED_VIDEO_MENU_DYNAMIC_STREAMING_DESC", $"rui/menu/settings/settings_video" )
+#if PCDX12_PROG
+		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchDynamicStreamingBudget" ), "#DYNAMIC_STREAMING", "#ADVANCED_VIDEO_MENU_DYNAMIC_STREAMING_DESC", $"rui/menu/settings/settings_video" )
+#endif
 
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchTextureDetail" ), "#TEXTURE_QUALITY", "#ADVANCED_VIDEO_MENU_TEXTURE_DETAIL_DESC", $"rui/menu/settings/settings_video" )
-		                                                                                                                        
+		
 
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchAdaptiveSupersample" ), "#ADAPTIVE_SUPERSAMPLE", "#ADAPTIVE_SUPERSAMPLE_DESC", $"rui/menu/settings/settings_video" )
 
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchVolumetricLighting" ), "#VOLUMETRIC_LIGHTING", "#VOLUMETRIC_LIGHTING_DESC", $"rui/menu/settings/settings_video" )
-		#if DEVELOPER
+#if DEV
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchVolumetricFog" ), "#VOLUMETRIC_FOG", "#VOLUMETRIC_FOG_DESC", $"rui/menu/settings/settings_video" )
-		#endif
+#endif
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchResolution" ), "#RESOLUTION", "#ADVANCED_VIDEO_MENU_RESOLUTION_DESC", $"rui/menu/settings/settings_video" )
-		                                                                                                                     
+		
 
-		// PCDX12_PROG not available (DX11)
+#if PCDX12_PROG
+		SetupSettingsSlider( Hud_GetChild( file.videoPanel, "SldBrightness" ), "#BRIGHTNESS", "#ADVANCED_VIDEO_MENU_BRIGHTNESS_DESC_DX12", $"rui/menu/settings/settings_video" )
+#else
 		SetupSettingsSlider( Hud_GetChild( file.videoPanel, "SldBrightness" ), "#BRIGHTNESS", "#ADVANCED_VIDEO_MENU_BRIGHTNESS_DESC", $"rui/menu/settings/settings_video" )
+#endif
 
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchVSync" ), "#VSYNC", "#ADVANCED_VIDEO_MENU_VSYNC_DESC", $"rui/menu/settings/settings_video" )
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchReflex" ), "#REFLEX", "#ADVANCED_VIDEO_MENU_REFLEX_DESC", $"rui/menu/settings/settings_video" )
@@ -91,33 +105,59 @@ void function InitVideoPanel( var panel )
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchDynamicSpotShadows" ), "#MENU_DYNAMIC_SPOT_SHADOWS", "#ADVANCED_VIDEO_MENU_DYNAMIC_SPOT_SHADOWS_DESC", $"rui/menu/settings/settings_video" )
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchAmbientOcclusionQuality" ), "#MENU_AMBIENT_OCCLUSION_QUALITY", "#ADVANCED_VIDEO_MENU_AMBIENT_OCCLUSION_QUALITY_DESC", $"rui/menu/settings/settings_video" )
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchModelDetail" ), "#MENU_MODEL_DETAIL", "#ADVANCED_VIDEO_MENU_MODEL_DETAIL_DESC", $"rui/menu/settings/settings_video" )
+		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchMapDetail" ), "#MENU_MAP_DETAIL", "#ADVANCED_VIDEO_MENU_MAP_DETAIL_DESC", $"rui/menu/settings/settings_video" )
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchEffectsDetail" ), "#MENU_EFFECT_DETAIL", "#ADVANCED_VIDEO_MENU_EFFECTS_DETAIL_DESC", $"rui/menu/settings/settings_video" )
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchImpactMarks" ), "#MENU_IMPACT_MARKS", "#ADVANCED_VIDEO_MENU_IMPACT_MARKS_DESC", $"rui/menu/settings/settings_video" )
 		SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchRagdolls" ), "#MENU_RAGDOLLS", "#ADVANCED_VIDEO_MENU_RAGDOLLS_DESC", $"rui/menu/settings/settings_video" )
-	#elseif CONSOLE_PROG
-		button = Hud_GetChild( file.videoPanel, "BtnBrightness" )
-		SetupSettingsButton( button, "#BRIGHTNESS", "#CONSOLE_BRIGHTNESS_DESC", $"rui/menu/settings/settings_video" )
-		AddButtonEventHandler( button, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "GammaMenu" ) ) )
-	#endif
+
+
+
+
+
 
 	button = Hud_GetChild( file.videoPanel, "SldFOV" )
 	SetupSettingsSlider( button, "#FOV", "#ADVANCED_VIDEO_MENU_FOV_DESC", $"rui/menu/settings/settings_video" )
 	AddButtonEventHandler( Hud_GetChild( file.videoPanel, "TextEntrySldFOV" ), UIE_CHANGE, FOVTextEntry_Changed )
 	SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchFOVAbilityScaling" ), "#FOV_ABILITY_SCALING", "#FOV_ABILITY_SCALING_DESC", $"rui/menu/settings/settings_video" )
 	button = SetupSettingsButton( Hud_GetChild( file.videoPanel, "SwchSprintCameraSmoothing" ), "#SPRINT_VIEW_SHAKE", "#OPTIONS_MENU_SPRINT_VIEW_SHAKE", $"rui/menu/settings/settings_video" )
-	AddButtonEventHandler( button, UIE_CHANGE, SprintViewShake_Changed )                                                                                            
+	AddButtonEventHandler( button, UIE_CHANGE, SprintViewShake_Changed ) 
+
+#if RHI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif
 
 	ScrollPanel_InitPanel( panel )
 	ScrollPanel_InitScrollBar( panel, Hud_GetChild( panel, "ScrollBar" ) )
 
-	var parentMenu = GetMenu( "MiscMenu" )                              
-	AddEventHandlerToButtonClass( parentMenu, "AdvancedVideoButtonClass", UIE_CHANGE, AdvancedVideoButton_Changed )                                                              
-	                                                                                                             
+	var parentMenu = GetMenu( "MiscMenu" ) 
+	AddEventHandlerToButtonClass( parentMenu, "AdvancedVideoButtonClass", UIE_CHANGE, AdvancedVideoButton_Changed ) 
+	
 
 	file.conVarDataList.append( CreateSettingsConVarData( "colorblind_mode", eConVarType.INT ) )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
-	AddPanelFooterOption( panel, LEFT, BUTTON_BACK, true, "#BACKBUTTON_RESTORE_DEFAULTS", "#RESTORE_DEFAULTS", OpenConfirmRestoreVideoDefaultsDialog )                                  
+	AddPanelFooterOption( panel, LEFT, BUTTON_BACK, true, "#BACKBUTTON_RESTORE_DEFAULTS", "#RESTORE_DEFAULTS", OpenConfirmRestoreVideoDefaultsDialog ) 
 	AddPanelFooterOption( panel, LEFT, -1, false, "#FOOTER_CHOICE_HINT", "" )
 	AddPanelFooterOption( panel, RIGHT, BUTTON_Y, true, "#Y_BUTTON_APPLY", "#APPLY", ApplyVideoSettingsButton_Activate, AreVideoSettingsChanged )
 }
@@ -137,7 +177,7 @@ bool function OnVideoMenu_CanNavigateAway( var panel, int desiredTabIndex )
 
 bool function AreVideoSettingsChanged()
 {
-	                                                                   
+	
 	return file.videoSettingsChanged
 }
 
@@ -150,9 +190,18 @@ void function OnVideoPanel_Show( var panel )
 	file.videoSettingsChanged = false
 	UpdateFooterOptions()
 
-	#if PC_PROG
+
+		var displayModeButton = Hud_GetChild( file.videoPanel, "SwchDisplayMode" )
 		var aspectRatioButton = Hud_GetChild( file.videoPanel, "SwchAspectRatio" )
 		var resolutionButton  = Hud_GetChild( file.videoPanel, "SwchResolution" )
+
+		bool isFiringRangeMode = GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_FIRING_RANGE )
+		bool isTraining = GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_TRAINING )
+		bool enableVideoSettings = GetGameState() >= eGameState.Playing || IsLobby() || isFiringRangeMode || isTraining
+
+		Hud_SetEnabled( displayModeButton, enableVideoSettings )
+		Hud_SetEnabled( aspectRatioButton, enableVideoSettings )
+		Hud_SetEnabled( resolutionButton, enableVideoSettings )
 
 		if ( GetConVarBool( "party_readyToSearch" ) )
 		{
@@ -166,7 +215,11 @@ void function OnVideoPanel_Show( var panel )
 			Hud_ClearToolTipData( aspectRatioButton )
 			Hud_ClearToolTipData( resolutionButton )
 		}
-	#endif
+
+
+
+
+
 }
 
 
@@ -189,25 +242,38 @@ void function OnVideoPanel_Hide( var panel )
 void function AdvancedVideoButton_Changed( var button )
 {
 
-	#if PC_PROG
+
 		if ( button == Hud_GetChild( file.videoPanel, "SwchDisplayMode" ) )
 			DisplayMode_Changed( button )
 		else if ( button == Hud_GetChild( file.videoPanel, "SwchAspectRatio" ) )
 			AspectRatio_Changed( button )
 		else if ( button == Hud_GetChild( file.videoPanel, "SldAdaptiveRes" ) )
 			AdaptiveRes_Changed( button )
-		                                                                               
-		  	                                 
+		
+		
 		else if ( button == Hud_GetChild( file.videoPanel, "SwchTextureDetail" ) )
 			TextureStreamBudget_Changed( button )
 		else if ( button == Hud_GetChild( file.videoPanel, "SwchResolution" ) )
 			ResolutionSelection_Changed( button )
-	#endif
+
 
 	if ( button == Hud_GetChild( file.videoPanel, "SldFOV" ) )
-		FOV_Changed( button )
+	{
+		
 
-	                                                                                   
+
+
+
+
+
+
+
+
+
+		FOV_Changed( button )
+	}
+
+	
 	if ( !IsTabPanelActive( file.panel ) )
 		return
 
@@ -250,7 +316,7 @@ void function ApplyVideoSettingsButton_Activate( var button )
 	print( "Video Settings Changed\n" )
 	VideoOptions_Apply( file.videoPanel )
 	file.videoSettingsChanged = false
-
+	MarkSettingsDirty()
 	UpdateFooterOptions()
 }
 
@@ -291,7 +357,7 @@ void function UICodeCallback_ResolutionChanged( bool askForConfirmation )
 {
 	if ( askForConfirmation )
 	{
-		CloseAllDialogs()                                                                                                                                               
+		CloseAllDialogs() 
 		AdvanceMenu( GetMenu( "ConfirmKeepVideoChangesDialog" ) )
 	}
 	else
@@ -310,7 +376,7 @@ void function RevertVideoSettings()
 
 void function RevertVideoSettingsThread()
 {
-	                                                                                                  
+	
 	WaitEndFrame()
 
 	VideoOptions_RejectNewSettings( file.videoPanel )
@@ -323,6 +389,7 @@ void function RevertVideoSettingsThread()
 void function DialogChoice_ApplyVideoSettingsAndCloseMenu()
 {
 	VideoOptions_Apply( file.videoPanel )
+	MarkSettingsDirty()
 }
 
 
@@ -388,6 +455,41 @@ void function SpotShadowDetail_Changed( var button )
 
 void function FooterButton_Focused( var button )
 {
-	                                                                  
-	                          
+	
+	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

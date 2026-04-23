@@ -2,7 +2,7 @@ global function InitCardBadgesPanel
 global function CreateBadgeToolTip
 global function GetBadgeCategoryName
 
-enum eCardBadgeCategories                                                        
+enum eCardBadgeCategories 
 {
 	MENU_BADGE_ACCOUNT,
 	MENU_BADGE_RANKED,
@@ -11,6 +11,7 @@ enum eCardBadgeCategories
 	MENU_BADGE_LEGEND,
 	MENU_BADGE_CLUB,
 	MENU_BADGE_ARENAS,
+	MENU_BADGE_WEAPONS
 }
 
 const table<int,string> CARD_BADGE_CATEGORY_NAMES =
@@ -22,6 +23,7 @@ const table<int,string> CARD_BADGE_CATEGORY_NAMES =
 	[ eCardBadgeCategories.MENU_BADGE_LEGEND ]  = "#MENU_BADGE_LEGEND",
 	[ eCardBadgeCategories.MENU_BADGE_CLUB ]    = "#MENU_BADGE_CLUB",
 	[ eCardBadgeCategories.MENU_BADGE_ARENAS ]  = "#MENU_BADGE_ARENAS",
+	[ eCardBadgeCategories.MENU_BADGE_WEAPONS ] = "#MENU_BADGE_WEAPONS"
 }
 
 struct
@@ -53,8 +55,8 @@ void function InitCardBadgesPanel( var panel )
 	Hud_AddEventHandler( hideLockedButton, UIE_CLICK, ToggleHideShowLockedBadges )
 
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
-	                                                            
-	                                                                                                                  
+	
+	
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_UNLOCK_LEGEND", "#X_BUTTON_UNLOCK_LEGEND", null, CustomizeMenus_IsFocusedItemParentItemLocked )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_EQUIP", "#X_BUTTON_EQUIP", null, CustomizeMenus_IsFocusedItemEquippable )
 	AddPanelFooterOption( panel, LEFT, BUTTON_X, false, "#X_BUTTON_CLEAR", "#X_BUTTON_CLEAR", null, bool function () : ()
@@ -90,7 +92,7 @@ void function CardBadgesPanel_Update( var panel )
 	var hideLockedButton = Hud_GetChild( file.panel, "ToggleHideShowLocked" )
 	HudElem_SetRuiArg( hideLockedButton, "showAll", file.hideAllLockedBadges ? false : true  )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in file.cardBadgeList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -102,11 +104,11 @@ void function CardBadgesPanel_Update( var panel )
 	for ( int badgeIndex = 0; badgeIndex < GLADIATOR_CARDS_NUM_BADGES; badgeIndex++ )
 		SendMenuGladCardPreviewCommand( eGladCardPreviewCommandType.BADGE, badgeIndex, null )
 
-	                                  
+	
 	if ( IsPanelActive( file.panel ) )
 	{
 		ItemFlavor character = GetTopLevelCustomizeContext()
-		int badgeIndex       = 0                         
+		int badgeIndex       = 0 
 
 		array<LoadoutEntry> entries
 		LoadoutEntry entry
@@ -145,17 +147,9 @@ void function CardBadgesPanel_Update( var panel )
 					else
 						cat = Localize( CARD_BADGE_CATEGORY_NAMES[ catIndex ] )
 
-					string categoryName = "GridCategory" + i
-					if ( Hud_HasChild( scrollPanel, categoryName ) )
-					{
-						var category = Hud_GetChild( scrollPanel, categoryName )
-						HudElem_SetRuiArg( category, "label", cat )
-						HudElem_SetRuiArg( category, "display", lockUnlock )
-					}
-					else if ( i == 0 )
-					{
-						Warning( "CardBadgesPanel: GridCategory elements not found in menu file. Badge categories will not be displayed. Update the menu file to include GridCategory elements." )
-					}
+					var category = Hud_GetChild( scrollPanel, "GridCategory" + i )
+					HudElem_SetRuiArg( category, "label", cat )
+					HudElem_SetRuiArg( category, "display", lockUnlock )
 				}
 			}
 		}
@@ -164,17 +158,20 @@ void function CardBadgesPanel_Update( var panel )
 	Hud_ScrollToTop( file.listPanel )
 }
 
-                                                                                                                                               
+
 ToolTipData function CreateBadgeToolTip( ItemFlavor badge, ItemFlavor ornull character )
 {
 	ToolTipData toolTipData
 	toolTipData.tooltipStyle = eTooltipStyle.GLADIATOR_CARD_BADGE
 	toolTipData.titleText = Localize( ItemFlavor_GetLongName( badge ) )
 
-	                                                                                                                                                                                                    
+	
 	string categoryName = GetBadgeCategoryName( badge )
 	array<GladCardBadgeTierData> tierDataList = GladiatorCardBadge_GetTierDataList( badge )
 	string badgeHint                          = GladiatorCardBadge_IsCharacterBadge( badge ) ? Localize( "#CHARACTER_BADGE", Localize( ItemFlavor_GetLongName( expect ItemFlavor( character ) ) ) ) : Localize( "#ACCOUNT_BADGE", categoryName )
+
+	bool isGRXBadge = ItemFlavor_GetGRXMode( badge ) == eItemFlavorGRXMode.REGULAR
+	bool parentProvidesDescription = false
 
 	string unlockStatRef = GladiatorCardBadge_GetUnlockStatRef( badge, character )
 	if ( tierDataList.len() > 1 && unlockStatRef != ACCOUNT_BADGE_STAT )
@@ -183,11 +180,17 @@ ToolTipData function CreateBadgeToolTip( ItemFlavor badge, ItemFlavor ornull cha
 		int nextOrMaxTierIdx = minint( currTierIdx + 1, tierDataList.len() - 1 )
 		int progressCount = 0
 
-		if ( IsValidStatEntryRef( unlockStatRef ) )
+		if ( GladiatorCardBadge_IsValidStatRef( unlockStatRef ) )
 		{
-			StatEntry stat = GetStatEntryByRef( unlockStatRef )
 			entity player = FromEHI( LocalClientEHI() )
-			progressCount = GetStat_Int( player, stat, eStatGetWhen.CURRENT )
+
+			progressCount = GladiatorCardBadge_GetStatInt( player, unlockStatRef, eStatGetWhen.CURRENT )
+
+			if ( isGRXBadge && GRX_IsItemOwnedByPlayer( badge ) )
+			{
+				
+				progressCount = int( max( progressCount, tierDataList[currTierIdx].unlocksAt ) )
+			}
 		}
 
 		bool shouldShowProgress = ( progressCount > 0 )
@@ -203,61 +206,79 @@ ToolTipData function CreateBadgeToolTip( ItemFlavor badge, ItemFlavor ornull cha
 			if ( currTierIdx == tierIdx )
 				goalStr += "`3"
 
-			goalStr += string(tierData.unlocksAt)
+			goalStr += FormatAndLocalizeNumber( "1", (tierData.unlocksAt), true )
 
 			if ( currTierIdx == tierIdx )
 				goalStr += "`2"
 		}
 
 		if ( shouldShowProgress )
-			toolTipData.actionHint1 = Localize( "#BADGE_TIER_PROGRESS", progressCount, tierDataList[nextOrMaxTierIdx].unlocksAt )
+			toolTipData.actionHint1 = Localize( "#BADGE_TIER_PROGRESS", FormatAndLocalizeNumber( "1", float( progressCount ), true) , FormatAndLocalizeNumber( "1", tierDataList[nextOrMaxTierIdx].unlocksAt, true) )
 		toolTipData.actionHint2 = Localize( "#BADGE_TIER", currTierIdx + 1, tierDataList.len() ) + "`2 - " + goalStr
 		toolTipData.actionHint3 = badgeHint
 
 		int displayTierIdx      = maxint( 0, currTierIdx )
 		float unlockRequirement = tierDataList[displayTierIdx].unlocksAt
-		toolTipData.descText = Localize( ItemFlavor_GetShortDescription( badge ), format( "`2%s`0", string(unlockRequirement) ) )
+		toolTipData.descText = Localize( ItemFlavor_GetShortDescription( badge ), format( "`2%s`0", FormatAndLocalizeNumber( "1", unlockRequirement, true ) ) )
 	}
 	else
 	{
 		if ( tierDataList.len() == 1 && tierDataList[0].unlocksAt > 0 )
 		{
-			if ( IsValidStatEntryRef( unlockStatRef ) )
+			if ( GladiatorCardBadge_IsValidStatRef( unlockStatRef ) )
 			{
-				StatEntry se = GetStatEntryByRef( unlockStatRef )
-				bool good     = true
-				int currVal = 0
+				bool displayProgress = true
+				float currVal = 0
 				float goalVal = tierDataList[0].unlocksAt
 
 				if ( goalVal == 1 )
-					good = false
+				{
+					displayProgress = false
+				}
 				else
-					currVal = GetStat_Int( GetLocalClientPlayer(), se )
+				{
+					currVal = float( GladiatorCardBadge_GetStatInt( GetLocalClientPlayer(), unlockStatRef ) )
 
-				if ( good )
-					toolTipData.actionHint1 = format( "%s / %s", string(currVal), string(goalVal) )
+					
+					if ( isGRXBadge && GRX_IsItemOwnedByPlayer( badge ) )
+					{
+						currVal = max( currVal, goalVal )
+					}
+				}
+
+				if ( displayProgress )
+				{
+					toolTipData.actionHint1 = format( "%s / %s", FormatAndLocalizeNumber( "1", currVal, true ), FormatAndLocalizeNumber( "1", goalVal, true ) )
+				}
 			}
-			else if ( ItemFlavor_GetGRXMode( badge ) == eItemFlavorGRXMode.REGULAR )
+			else if ( isGRXBadge )
 			{
-				                                                                  
+				
 				if ( GetGlobalSettingsAsset( ItemFlavor_GetAsset( badge ), "parentItemFlavor" ) != "" )
 				{
 					asset parentAsset = GetGlobalSettingsAsset( ItemFlavor_GetAsset( badge ), "parentItemFlavor" )
-					                                                                         
+					
 					if ( IsValidItemFlavorSettingsAsset( parentAsset ) )
 					{
 						ItemFlavor parentChallengeFlav = GetItemFlavorByAsset( parentAsset )
-						                                                                                                                                                              
+						
 						if ( ItemFlavor_GetType( parentChallengeFlav ) == eItemType.challenge )
 						{
 							entity player = FromEHI( LocalClientEHI() )
 							if ( Challenge_IsAssigned( player, parentChallengeFlav ) )
 							{
-								int tier = 0                                              
+								int tier = GladiatorCardBadge_GetRewardParentChallengeTier( parentChallengeFlav, badge ) 
 								int challengeProgressvalue = Challenge_GetProgressValue( player, parentChallengeFlav, tier )
 								int challengeGoalValue = Challenge_GetGoalVal( parentChallengeFlav, tier )
 								if ( challengeGoalValue > 1 && !Challenge_IsComplete( player, parentChallengeFlav ) )
-									toolTipData.actionHint1 = format( "%s / %s", string(challengeProgressvalue), string(challengeGoalValue) )
+									toolTipData.actionHint1 = format( "%s / %s", FormatAndLocalizeNumber( "1", float( challengeProgressvalue ), true ), FormatAndLocalizeNumber( "1", float( challengeGoalValue ), true ) )
+
+								string parentDesc = Challenge_GetDescription( parentChallengeFlav, tier )
+								if ( parentDesc != "" )
+								{
+									toolTipData.descText = Localize( parentDesc )
+									parentProvidesDescription = true
+								}
 							}
 						}
 					}
@@ -265,7 +286,8 @@ ToolTipData function CreateBadgeToolTip( ItemFlavor badge, ItemFlavor ornull cha
 			}
 		}
 
-		toolTipData.descText = Localize( ItemFlavor_GetShortDescription( badge ) )
+		if ( !parentProvidesDescription )
+			toolTipData.descText = Localize( ItemFlavor_GetShortDescription( badge ) )
 
 		toolTipData.actionHint2 = badgeHint
 	}
@@ -277,7 +299,7 @@ ToolTipData function CreateBadgeToolTip( ItemFlavor badge, ItemFlavor ornull cha
 
 void function CardBadgesPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) ) 
 		return
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
 		return
@@ -384,7 +406,7 @@ void function FilterCategorizeAndSortBadges( ItemFlavor character, array<ItemFla
 		return aso - bso
 	} )
 
-	                                                                                                                                                       
+	
 	badgeList.sort( int function( ItemFlavor a, ItemFlavor b ) {
 		if ( GetGlobalSettingsString( ItemFlavor_GetAsset( a ), "badgeCategory" ) > GetGlobalSettingsString( ItemFlavor_GetAsset( b ), "badgeCategory" ) )
 		{
@@ -405,7 +427,7 @@ void function FilterCategorizeAndSortBadges( ItemFlavor character, array<ItemFla
 	} )
 
 	int prevCatIndex = -1
-	                                                                                                    
+	
 	foreach ( cat in eCardBadgeCategories )
 	{
 		if ( !( cat in file.cardBadgeCategoryCount ) )
@@ -418,7 +440,7 @@ void function FilterCategorizeAndSortBadges( ItemFlavor character, array<ItemFla
 		else
 			file.cardBadgeCategoryUnlockCount[cat] = 0
 	}
-	                                                                                                                                                                                
+	
 	for ( int i = 0; i < badgeList.len(); i++ )
 	{
 		string curCat = GetGlobalSettingsString( ItemFlavor_GetAsset( badgeList[i] ), "badgeCategory" )

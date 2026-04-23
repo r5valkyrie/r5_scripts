@@ -2,7 +2,6 @@ global function InitEULADialog
 global function OpenEULADialog
 global function IsEULAAccepted
 global function IsLobbyAndEULAAccepted
-global function UICodeCallback_OnEULARequestCompleted
 
 struct
 {
@@ -11,17 +10,17 @@ struct
 	var acknowledgement
 	var footersPanel
 	var parentMenuPanel
+	var savedFocusItem
 	int eulaVersion
 	bool reviewing
 
-	bool fetchingEula = false
 
-	string eulaContents
-	string eulaLanguage
+
+
 } file
 
 
-void function InitEULADialog( var newMenuArg )
+void function InitEULADialog( var newMenuArg ) 
 {
 	var menu = GetMenu( "EULADialog" )
 	file.menu = menu
@@ -32,6 +31,16 @@ void function InitEULADialog( var newMenuArg )
 	file.agreement = Hud_GetChild( menu, "Agreement" )
 	file.acknowledgement = Hud_GetRui( Hud_GetChild( menu, "Acknowledgement" ) )
 	file.footersPanel = Hud_GetChild( menu, "FooterButtons" )
+	file.savedFocusItem = null
+
+
+
+
+
+
+
+
+
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_A, true, "#A_BUTTON_ACCEPT", "#A_BUTTON_ACCEPT", AcceptEULA, IsNotReviewingAndStandardVersion )
 	AddMenuFooterOption( menu, LEFT, BUTTON_A, true, "#A_BUTTON_CONTINUE", "#A_BUTTON_CONTINUE", AcceptEULA, IsNotReviewingAndEUVersion )
@@ -39,30 +48,15 @@ void function InitEULADialog( var newMenuArg )
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CANCEL", "#CANCEL", null, IsNotReviewingAndEUVersion )
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#CLOSE", null, IsReviewing )
 
+
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, EULADialog_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, EULADialog_OnClose )
 
-	thread FetchEULA_Threaded()
+
+
+
 }
 
-// since this executes an http request in native, this must be threaded
-void function FetchEULA_Threaded()
-{
-	RequestEULAContents()
-}
-
-void function UICodeCallback_OnEULARequestCompleted(bool success, string errorMsg, string language, string eulaData)
-{
-	if(!success)
-	{
-		printf("Failed getting eula: %s", errorMsg)
-		file.eulaContents = "Failed getting eula: " + errorMsg
-		return
-	}
-
-	file.eulaContents = eulaData
-	file.eulaLanguage = language
-}
 
 bool function IsReviewing()
 {
@@ -72,26 +66,46 @@ bool function IsReviewing()
 
 bool function IsEUVersion()
 {
-	return true //ShouldUserSeeEULAForEU()
+	return ShouldUserSeeEULAForEU()
 }
 
 
 bool function IsNotReviewingAndStandardVersion()
 {
+
+
+
 	return !IsReviewing() && !IsEUVersion()
+
 }
 
 
 bool function IsNotReviewingAndEUVersion()
 {
+
+
+
+	return !IsReviewing() && IsEUVersion()
+
+}
+
+bool function IsNotReviewingAndStandardVersionForNXAccept()
+{
+	return !IsReviewing() && !IsEUVersion()
+}
+
+
+bool function IsNotReviewingAndEUVersionForNXAccept()
+{
 	return !IsReviewing() && IsEUVersion()
 }
 
 
-void function OpenEULADialog( bool review, var parentMenu = null )
+void function OpenEULADialog( bool review, var parentMenu = null, var focusItem = null )
 {
 	file.reviewing = review
 	file.parentMenuPanel = parentMenu
+	file.savedFocusItem = focusItem
 	AdvanceMenu( file.menu )
 }
 
@@ -102,7 +116,8 @@ void function EULADialog_OnOpen()
 
 	if( file.reviewing && file.parentMenuPanel != null )
 		ScrollPanel_SetActive( file.parentMenuPanel, false )
-		
+
+	
 	RegisterStickMovedCallback( ANALOG_RIGHT_Y, FocusAgreementForScrolling )
 	RegisterButtonPressedCallback( BUTTON_DPAD_UP, FocusAgreementForScrolling )
 	RegisterButtonPressedCallback( BUTTON_DPAD_DOWN, FocusAgreementForScrolling )
@@ -115,19 +130,21 @@ void function EULADialog_OnOpen()
 
 	string acknowledgementText = ""
 	if ( !IsReviewing() )
-		acknowledgementText = "#EULA_ACKNOWLEDGEMENT" //IsEUVersion() ? "#EULA_ACKNOWLEDGEMENT_EU" : "#EULA_ACKNOWLEDGEMENT"
+
+
+
+		acknowledgementText = IsEUVersion() ? "#EULA_ACKNOWLEDGEMENT_EU" : "#EULA_ACKNOWLEDGEMENT"
+
 	RuiSetArg( file.acknowledgement, "acknowledgementText", Localize( acknowledgementText ) )
 
 	int footerPanelWidth = IsReviewing() ? 200 : 422
 	Hud_SetWidth( file.footersPanel, ContentScaledXAsInt( footerPanelWidth ) )
-
-	Hud_SetText(file.agreement, file.eulaContents)
 }
 
 
 void function EULADialog_OnClose()
 {
-	if ( uiGlobal.launching )
+	if ( GetLaunchingState() != 0 )
 	{
 		if ( IsEULAAccepted() )
 			PrelaunchValidateAndLaunch()
@@ -141,13 +158,34 @@ void function EULADialog_OnClose()
 	DeregisterStickMovedCallback( ANALOG_RIGHT_Y, FocusAgreementForScrolling )
 	DeregisterButtonPressedCallback( BUTTON_DPAD_UP, FocusAgreementForScrolling )
 	DeregisterButtonPressedCallback( BUTTON_DPAD_DOWN, FocusAgreementForScrolling )
+
+	if (file.savedFocusItem != null)
+		Hud_SetFocused( file.savedFocusItem )
 }
 
 
 void function AcceptEULA( var button )
 {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	SetEULAVersionAccepted( file.eulaVersion )
 	CloseActiveMenu()
+
 }
 
 
@@ -166,4 +204,21 @@ void function FocusAgreementForScrolling( ... )
 {
 	if( !Hud_IsFocused( file.agreement ) )
 		Hud_SetFocused( file.agreement );
+}
+
+void function OnBackButtonPressed()
+{
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

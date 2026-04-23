@@ -5,7 +5,7 @@ global function PrivateMatch_PlaylistNameChanged
 global function PrivateMatch_RefreshStartCountdown
 global function PrivateMatch_SetLobbyChatVisible
 global function PrivateMatch_SetPreloadingPlayers
-global function UICodeCallback_PrivateMatchPreloadChanged
+// UICodeCallback_PrivateMatchPreloadChanged moved to menu_custom_match_dashboard.nut
 
 const string SIGNAL_LOBBY_UPDATE = "PrivateMatchLobbyMenuUpdate"
 
@@ -522,14 +522,7 @@ void function ReadyLaunchButton_OnActivate( var button )
 	}
 }
 
-void function UICodeCallback_PrivateMatchPreloadChanged( bool isPreloading )
-{
-	file.isPreloading = isPreloading
-	UpdateReadyButtonText( IsControllerModeActive() )
-
-	if ( IsPrivateMatchLobby() && CanRunClientScript() )
-		Remote_ServerCallFunction( "ClientCallback_PrivateMatchSetPreloading", isPreloading )
-}
+// UICodeCallback_PrivateMatchPreloadChanged moved to menu_custom_match_dashboard.nut
 
 
 void function ModeSelectButton_OnActivate( var button )

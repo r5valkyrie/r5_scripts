@@ -11,7 +11,7 @@ struct
 } file
 
 
-void function InitMiscCustomizeMenu( var newMenuArg )                                               
+void function InitMiscCustomizeMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "MiscCustomizeMenu" )
 	file.menu = menu
@@ -42,7 +42,7 @@ void function MiscCustomizeMenu_OnOpen()
 
 	TabData tabData = GetTabDataForPanel( file.menu )
 	tabData.centerTabs = true
-	tabData.bannerTitle = ""                                   
+	tabData.bannerTitle = ""
 	SetTabBackground( tabData, Hud_GetChild( file.menu, "TabsBackground" ), eTabBackground.STANDARD )
 
 
@@ -81,38 +81,38 @@ void function MiscCustomizeMenu_OnClose()
 
 void function MiscCustomizeMenu_Update( var menu )
 {
-	  
-	                                                                                  
-	 
-		                                                        
-		                                                
-		                                       
-		 
-			                                             
-			                                                                                                                                     
-		 
-	 
-	                       
-	  
+	
+
+
+
+
+
+
+
+
+
+
+
+
 	ClearTabs( menu )
 
-	                                   
+	
 	if ( GetActiveMenu() == menu )
 	{
-		  
-		                                                   
-		                                                  
+		
 
-		                                                               
-		 
-			                                                         
 
-			                                                                                     
 
-			                                                  
-			                                                                                                                                            
-		 
-		  
+
+
+
+
+
+
+
+
+
+
 
 		{
 			TabDef tabdef = AddTab( menu, file.tabBodyPanelList[0], Localize( "#TAB_CUSTOMIZE_LOADSCREEN" ).toupper() )

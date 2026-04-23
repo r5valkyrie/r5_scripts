@@ -1,5 +1,5 @@
 global function InitCustomizeWeaponMenu
-
+global function CustomizeWeaponMenu_SetStartTab
 struct
 {
 	var        menu
@@ -9,10 +9,12 @@ struct
 	var charmsPanel
 
 	array<ItemFlavor> weaponList
+
+	int startTab = 0
 } file
 
 
-void function InitCustomizeWeaponMenu( var newMenuArg )                                               
+void function InitCustomizeWeaponMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "CustomizeWeaponMenu" )
 	file.menu = menu
@@ -48,11 +50,11 @@ void function CustomizeWeaponMenu_OnOpen()
 
 	TabData tabData = GetTabDataForPanel( file.menu )
 	tabData.centerTabs = true
-	                                                                                                      
+	AddCallback_OnTabChanged( CustomizeWeaponMenu_OnTabChanged )
 
 	if ( GetLastMenuNavDirection() == MENU_NAV_FORWARD )
 	{
-		ActivateTab( tabData, 0 )
+		ActivateTab( tabData, file.startTab )
 	}
 
 	UpdateMenuTabs()
@@ -60,10 +62,16 @@ void function CustomizeWeaponMenu_OnOpen()
 
 void function CustomizeWeaponMenu_OnShow()
 {
+
+		bool enableWeaponMastery =  Mastery_IsEnabled()
+		var masteryLevel = Hud_GetChild( file.menu, "WeaponMasteryStats" )
+		Hud_SetVisible( masteryLevel, enableWeaponMastery )
+
 }
 
 void function CustomizeWeaponMenu_OnClose()
 {
+	file.startTab = 0
 	RemoveCallback_OnTopLevelCustomizeContextChanged( file.menu, CustomizeWeaponMenu_Update )
 	CustomizeWeaponMenu_Update( file.menu )
 }
@@ -85,7 +93,7 @@ void function CustomizeWeaponMenu_Update( var menu )
 
 	ClearTabs( menu )
 
-	                                   
+	
 	if ( GetActiveMenu() == menu )
 	{
 		ItemFlavor category = GetTopLevelCustomizeContext()
@@ -97,6 +105,7 @@ void function CustomizeWeaponMenu_Update( var menu )
 
 			TabDef tabdef = AddTab( menu, tabBodyPanel, Localize( ItemFlavor_GetShortName( weapon ) ).toupper() )
 			SetTabBaseWidth( tabdef, 220 )
+			tabdef.isBannerLogoSmall = true
 
 			CategoryWeaponPanel_SetWeapon( tabBodyPanel, weapon )
 			Newness_AddCallbackAndCallNow_OnRerverseQueryUpdated( NEWNESS_QUERIES.WeaponTab[weapon], OnNewnessQueryChangedUpdatePanelTab, tabBodyPanel )
@@ -104,14 +113,79 @@ void function CustomizeWeaponMenu_Update( var menu )
 
 		TabData tabData = GetTabDataForPanel( menu )
 		tabData.centerTabs = true
-		SetTabBackground( tabData, Hud_GetChild( menu, "TabsBackground" ), eTabBackground.STANDARD )
+		SetTabBackground( tabData, Hud_GetChild( menu, "TabsBackground" ), eTabBackground.CAPSTONE )
 		SetTabDefsToSeasonal(tabData)
 	}
 
 	UpdateMenuTabs()
 }
 
+void function CustomizeWeaponMenu_SetStartTab( int startTab )
+{
+	file.startTab = startTab
+}
 
+void function CustomizeWeaponMenu_OnTabChanged()
+{
+	if ( GetActiveMenu() != file.menu )
+		return
+
+	TabData tabData = GetTabDataForPanel( file.menu )
+
+	if( file.weaponList.len() <  tabData.activeTabIdx  )
+		return
+
+	tabData.bannerLogoImage = WeaponItemFlavor_GetHudIcon( file.weaponList[ tabData.activeTabIdx ] )
+	float scale = 0.25
+
+	switch( WeaponItemFlavor_GetClassname(file.weaponList[ tabData.activeTabIdx ] ) )
+	{
+		case "mp_weapon_sniper":
+		case "mp_weapon_sentinel":
+		case "mp_weapon_mastiff":
+			scale = -0.2
+			break
+		case "mp_weapon_dmr":
+		case "mp_weapon_defender":
+		case "mp_weapon_energy_shotgun":
+		case "mp_weapon_doubletake":
+		case "mp_weapon_dragon_lmg":
+		case "mp_weapon_3030":
+			scale = 0.0
+			break
+		case "mp_weapon_esaw":
+		case "mp_weapon_lstar":
+		case "mp_weapon_lmg":
+		case "mp_weapon_g2":
+		case "mp_weapon_shotgun":
+		case "mp_weapon_nemesis":
+			scale = 0.1
+			break
+
+		case "mp_weapon_autopistol":
+		case "mp_weapon_volt_smg":
+			scale = 0.4
+			break
+
+		case "mp_weapon_pdw":
+		case "mp_weapon_shotgun_pistol":
+		case "mp_weapon_autopistol":
+		case "mp_weapon_semipistol":
+		case "mp_weapon_wingman":
+			scale = 0.5
+			break
+		case "mp_weapon_alternator_smg":
+			scale = 0.7
+			break
+		default:
+			break
+
+	}
+
+	tabData.bannerLogoWidth = 640
+	tabData.bannerLogoHeight = 320
+	tabData.bannerLogoScale = scale
+}
 
 void function CustomizeWeaponMenu_OnNavigateBack()
 {

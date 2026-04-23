@@ -3,7 +3,7 @@ global function LoreReaderMenu_OpenTo
 global function LoreReaderMenu_OpenToWithNavigateBack
 global function LoadLorePagesFromDataTable
 global function LoreReader_GetLastOpenedDataAsset
-#if DEVELOPER
+#if DEV
 global function LoreReaderMenu_TestOpen
 #endif
 
@@ -75,10 +75,10 @@ global struct LorePage
 
 struct
 {
-	#if UI
 
+		
 		float pin_viewStartTime
-	#endif
+
 
 } file
 
@@ -92,7 +92,7 @@ void function InitLoreReaderMenu( var newMenuArg )
 	Hud_SetAboveBlur( menu, true )
 	s_menu = menu
 
-
+	
 
 	SetGamepadCursorEnabled( menu, false )
 
@@ -104,9 +104,9 @@ void function InitLoreReaderMenu( var newMenuArg )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, OnNavigateBack )
 
-	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
+	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#B_BUTTON_CLOSE" )
 	AddMenuFooterOption( menu, LEFT, BUTTON_A, true, "#A_BUTTON_NEXT", "#A_BUTTON_NEXT", OnContinue )
-	AddMenuFooterOption( menu, LEFT, BUTTON_X, true, "", "#X_BUTTON_PREVIOUS", OnPrevious, HasPrevious )
+	AddMenuFooterOption( menu, LEFT, BUTTON_X, true, "#X_BUTTON_PREVIOUS", "#X_BUTTON_PREVIOUS", OnPrevious, HasPrevious )
 }
 
 const int[10] CONTINUE_BUTTONS =	[BUTTON_A, BUTTON_SHOULDER_RIGHT, MOUSE_LEFT, MOUSE_WHEEL_DOWN, KEY_SPACE, KEY_RIGHT, KEY_DOWN, STICK1_RIGHT, BUTTON_DPAD_DOWN, BUTTON_DPAD_RIGHT]
@@ -158,7 +158,7 @@ asset function CastStringToAsset( string val )
 	return GetKeyValueAsAsset( { kn = val }, "kn" )
 }
 
-#if DEVELOPER
+#if DEV
 void function LoreReaderMenu_TestOpen( string seqPathName )
 {
 	string assetPath = format( "datatable/lore_sequence/%s.rpak", seqPathName )
@@ -169,15 +169,7 @@ void function LoreReaderMenu_TestOpen( string seqPathName )
 
 void function OnMenuClose()
 {
-	if ( s_latestAmbientTrack.len() > 0 )
-		StopUISound( s_latestAmbientTrack )
-
-	for( int idx = 0; idx < s_latestLoopingTracks.len(); ++idx )
-	{
-		if ( s_latestLoopingTracks[idx].len() > 0 )
-			StopUISound( s_latestLoopingTracks[idx] )
-	}
-
+	StopAllUISounds()
 	CancelCustomUIMusic()
 }
 
@@ -366,8 +358,7 @@ array<LorePage> function LoadLorePagesFromDataTable( asset dtAsset )
 		asset portrait
 
 		printt("speaker", speaker)
-		Warning(GetDataTableString( dt, rowIdx, columnEmotion ))
-		if ( speaker == "yoko" || speaker == "????"  || speaker == "newscaster")
+		if ( speaker == "yoko" || speaker == "????" || speaker == "newscaster" || speaker == "person" || speaker == "zookeeper")
 		{
 			portrait = $"rui/menu/quest/lore_page/lore_page_portrait_waveform"
 		}
@@ -494,7 +485,7 @@ array<LorePage> function LoadLorePagesFromDataTable( asset dtAsset )
 
 	if ( pages.len() == 0 )
 	{
-		page.titleText = "Empty DataTable!"
+		page.titleText = "Empty Datatable!"
 		page.subTitleText = string( dtAsset )
 		pages.append( page )
 	}
@@ -559,7 +550,7 @@ void function UpdateBackgroundLoadscreen( string backgroundRef, bool backgroundI
 	float finalDarkeningAlpha = (backgroundIsFull)? 0.0: 0.57
 	float dotsAlpha = (backgroundIsFull)? 0.0: 1.0
 
-
+	
 	switch( backgroundRef )
 	{
 		case "":
@@ -764,7 +755,7 @@ void function SetUpNewPage( int pageIndex )
 	if ( page.backgroundRef.len() > 0 )
 		UpdateBackgroundLoadscreen( page.backgroundRef, page.backgroundIsFull )
 
-
+	
 	{
 		foreach ( sound in page.sounds.stopSounds )
 			StopUISound( sound )
@@ -790,7 +781,7 @@ void function SetUpNewPage( int pageIndex )
 	RuiSetInt( rui, "pageNumber", pageIndex )
 	RuiSetInt( rui, "pageNumberCount", s_pages.len() )
 
-
+	
 	{
 		string topCharacter = page.speakers[0].character
 		string bottomCharacter = page.speakers[2].character
@@ -863,10 +854,10 @@ void function OnClickedToAdvance( bool isForward )
 
 
 	{
-
+		
 		if ( wantPageIndex == s_pages.len() - 1 )
 		{
-
+			
 			AddQuestTextPinEvent( -1, -1, currentPanelIndex, currentVisStep )
 		}
 		else
@@ -1003,12 +994,6 @@ LoreCharacterInfo function GetLoreCharacterInfoForName( string nameRaw )
 		info.portraitImage = $"rui/menu/quest/lore_page/lore_page_portrait_waveform"
 		info.nameText = "#QUEST13_STORY_NPC_VENDOR"
 		info.isNPC = true
-	}
-	else if ( name == "vantage" )
-	{
-		info.portraitImage = $"rui/menu/character_select/lockstep/locked_portraits/locked_portrait_vantage"
-		info.nameText = "VANTAGE"
-		info.isNPC = false
 	}
 	else if ( name == "lamont" )
 	{

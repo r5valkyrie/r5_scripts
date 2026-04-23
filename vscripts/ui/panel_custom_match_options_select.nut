@@ -1,8 +1,10 @@
 global function InitCustomMatchOptionsSelectPanel
+global function ToggleRenameButtonVisibility
+global function CustomMatch_HasPlaylistAccess
 
 struct
 {
-
+	var panel
 } file
 
 struct CustomMatchOption
@@ -14,34 +16,15 @@ struct CustomMatchOption
 
 void function InitCustomMatchOptionsSelectPanel( var panel )
 {
+	file.panel = panel
+
 	CustomMatchOption option
 
 	option = CreateOption( CUSTOM_MATCH_SETTING_CHAT_PERMISSION, 	"#CUSTOM_MATCH_CHAT_MODE", 			"#CUSTOM_MATCH_CHAT_MODE_DESC" )
 	SetUpOptionsButton( Hud_GetChild( panel, "ChatPermissions" ), option )
 
-	var renameTeamOption = Hud_GetChild( panel, "RenameTeam" )
-	var chatPermissionsOption = Hud_GetChild( panel, "ChatPermissions" )
-	var selfAssignOption = Hud_GetChild( panel, "SelfAssign" )
-
-	if( CustomMatch_HasSpecialAccess() )
-	{
-		option = CreateOption( CUSTOM_MATCH_SETTING_RENAME_TEAM,		"#CUSTOM_MATCH_RENAME_TEAM", 		"#CUSTOM_MATCH_RENAME_TEAM_DESC" )
-		SetUpOptionsButton( Hud_GetChild( panel, "RenameTeam" ), option )
-
-		Hud_SetNavDown( chatPermissionsOption, renameTeamOption )
-		Hud_SetNavUp( selfAssignOption, renameTeamOption )
-
-		Hud_SetPinSibling( selfAssignOption, Hud_GetHudName( renameTeamOption ) )
-		Hud_SetVisible( renameTeamOption, true )
-	}
-	else
-	{
-		Hud_SetNavDown( chatPermissionsOption, selfAssignOption  )
-		Hud_SetNavUp( selfAssignOption, chatPermissionsOption )
-
-		Hud_SetPinSibling( selfAssignOption, Hud_GetHudName( chatPermissionsOption ) )
-		Hud_SetVisible( renameTeamOption, false )
-	}
+	option = CreateOption( CUSTOM_MATCH_SETTING_RENAME_TEAM,		"#CUSTOM_MATCH_RENAME_TEAM", 		"#CUSTOM_MATCH_RENAME_TEAM_DESC" )
+	SetUpOptionsButton( Hud_GetChild( panel, "RenameTeam" ), option )
 
 	option = CreateOption( CUSTOM_MATCH_SETTING_SELF_ASSIGN, 		"#CUSTOM_MATCH_SELF_ASSIGN", 		"#CUSTOM_MATCH_SELF_ASSIGN_DESC" )
 	SetUpOptionsButton( Hud_GetChild( panel, "SelfAssign" ), option )
@@ -54,6 +37,8 @@ void function InitCustomMatchOptionsSelectPanel( var panel )
 
 	option = CreateOption( CUSTOM_MATCH_SETTING_PLAYLIST, 	"#CUSTOM_MATCH_GAME_MODE_VARIANT", 	"#CUSTOM_MATCH_GAME_MODE_VARIANT_DESC" )
 	SetUpVaryingOptionsButton( Hud_GetChild( panel, "ModeVariant" ), option, Callback_OnPlaylistChanged )
+
+	ToggleRenameButtonVisibility()
 }
 
 CustomMatchOption function CreateOption( string setting, string name, string description )
@@ -112,6 +97,30 @@ void function SetUpVaryingOptionsButton( var button, CustomMatchOption option, v
 		} )
 }
 
+void function ToggleRenameButtonVisibility()
+{
+	var renameTeamOption = Hud_GetChild( file.panel, "RenameTeam" )
+	var chatPermissionsOption = Hud_GetChild( file.panel, "ChatPermissions" )
+	var selfAssignOption = Hud_GetChild( file.panel, "SelfAssign" )
+
+	if( CustomMatch_HasSpecialAccess() )
+	{
+		Hud_SetNavDown( chatPermissionsOption, renameTeamOption )
+		Hud_SetNavUp( selfAssignOption, renameTeamOption )
+
+		Hud_SetPinSibling( selfAssignOption, Hud_GetHudName( renameTeamOption ) )
+		Hud_SetVisible( renameTeamOption, true )
+	}
+	else
+	{
+		Hud_SetNavDown( chatPermissionsOption, selfAssignOption  )
+		Hud_SetNavUp( selfAssignOption, chatPermissionsOption )
+
+		Hud_SetPinSibling( selfAssignOption, Hud_GetHudName( chatPermissionsOption ) )
+		Hud_SetVisible( renameTeamOption, false )
+	}
+}
+
 const table<string, string> GAME_MODE_VARIANT_MAP = {
 	[CUSTOM_MATCH_MODE_VARIANT_DEFAULT] = "#CUSTOM_MATCH_GAME_MODE_VARIANT_DEFAULT",
 	[CUSTOM_MATCH_MODE_VARIANT_NO_RING] = "#CUSTOM_MATCH_GAME_MODE_VARIANT_NO_RING",
@@ -138,7 +147,7 @@ void function Callback_OnPlaylistChanged( var button, string setting, string val
 	Hud_DialogList_ClearList( button )
 	foreach ( string key, CustomMatchPlaylist entry in map.playlists )
 	{
-		if ( HasPlaylistAccess( entry.playlistName ) )
+		if ( CustomMatch_HasPlaylistAccess( entry.playlistName ) )
 		{
 			Hud_DialogList_AddListItem( button, GAME_MODE_VARIANT_MAP[ key ], entry.playlistName )
 			toolTipData.descText += "\n" + Localize( GAME_MODE_VARIANT_DESC_MAP[ key ] )
@@ -151,7 +160,7 @@ void function Callback_OnPlaylistChanged( var button, string setting, string val
 }
 
 const string REQUIRES_SPECIAL_ACCESS_VAR = "requires_special_access"
-bool function HasPlaylistAccess( string playlist )
+bool function CustomMatch_HasPlaylistAccess( string playlist )
 {
 	if ( CustomMatch_HasSpecialAccess() )
 		return true

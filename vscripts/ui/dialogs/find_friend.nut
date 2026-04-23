@@ -30,7 +30,7 @@ struct {
 
 
 void function InitFindFriendDialog( var newMenuArg )
-                                              
+
 {
 	var menu = newMenuArg
 	file.menu = menu
@@ -39,7 +39,6 @@ void function InitFindFriendDialog( var newMenuArg )
 	file.resultsList = Hud_GetChild( menu, "ResultsList" )
 	file.resultsBackground = Hud_GetChild( menu, "ResultsListBackground" )
 
-	SetAllowControllerFooterClick( menu, true )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, FindFriendDialog_OnOpen )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, FindFriendDialog_OnClose )
@@ -59,7 +58,7 @@ void function FindFriendDialog_OnOpen()
 
 	Hud_SetUTF8Text( file.nameTextEntry, "" )
 	Hud_SetTextEntryTitle( file.nameTextEntry, "#FIND_FRIEND" )
-	                                      
+	
 
 	RegisterButtonPressedCallback( KEY_ENTER, FindFriendDialog_Search )
 
@@ -95,8 +94,8 @@ void function ClearResults()
 
 void function FindFriendDialog_Update()
 {
-	                                                                                             
-	                                                                                                         
+	
+	
 	while( MenuStack_Contains( file.menu ) )
 	{
 		if ( GetActiveMenu() == file.menu && file.searchState != eFindFriendState.SEARCHING )
@@ -144,7 +143,7 @@ void function FindFriendDialog_Search( var button )
 	if ( file.searchState != eFindFriendState.INPUT_VALID )
 		return
 
-	string searchName = strip( Hud_GetUTF8Text( file.nameTextEntry ) )	                                              
+	string searchName = strip( Hud_GetUTF8Text( file.nameTextEntry ) )	
 	Hud_SetUTF8Text( file.nameTextEntry, searchName )
 
 	printt( "EADP_SearchByName: " + searchName )
@@ -206,7 +205,7 @@ void function FindFriendDialog_OnSearchResult( int error, string errorReason, ar
 		Hud_SetToolTipData( resultButton, toolTipData )
 	}
 
-	                                                                                                                                 
+	
 	Hud_SetFocused( file.menu )
 }
 
@@ -218,11 +217,11 @@ void function ResultButton_OnActivate( var button )
 
 	if ( EADP_IsFriendByEAID( file.buttonToResultMap[button].eaid ) )
 	{
-		                        
-		                                                  
-		                                                                                                                
-		  
-		                              
+		
+		
+		
+		
+		
 		return
 	}
 
@@ -231,9 +230,9 @@ void function ResultButton_OnActivate( var button )
 	int hardward = GetHardwareFromName( GetUnspoofedPlayerHardware() )
 	if ( hardward == file.buttonToResultMap[button].hardware )
 	{
-		                                                                        
+		
 		if ( file.buttonToResultMap[button].hardware == HARDWARE_PC )
-			DoInviteToBeFriend( file.buttonToResultMap[button].eaid )                                          
+			DoInviteToBeFriend( file.buttonToResultMap[button].eaid ) 
 		else
 			EADP_InviteFriendByEAID( file.buttonToResultMap[button].eaid )
 	}
@@ -245,7 +244,7 @@ void function ResultButton_OnActivate( var button )
 	ConfirmDialogData data
 	data.headerText = "#FRIEND_INVITE_DIALOG_HEADER"
 	data.messageText = Localize( "#FRIEND_INVITE_DIALOG_MSG_INVITE_SENT", file.buttonToResultMap[button].name )
-	                                
+	
 	data.resultCallback = void function( int dialogResult ) : (button) { FindFriendDialog_Cancel( button ) }
 
 	OpenOKDialogFromData( data )
@@ -269,7 +268,7 @@ void function ResultButton_OnAlternate( var button )
 			{
 				printt( "EADP_UnBlockByEAID: " + file.buttonToResultMap[button].eaid + " (" + file.buttonToResultMap[button].name + ")" )
 				EADP_UnBlockByEAID( file.buttonToResultMap[button].eaid )
-				FindFriendDialog_Cancel( button )                                 
+				FindFriendDialog_Cancel( button ) 
 
 			}
 		}
@@ -287,7 +286,7 @@ void function ResultButton_OnAlternate( var button )
 			{
 				printt( "EADP_UnFriendByEAID: " + file.buttonToResultMap[button].eaid + " (" + file.buttonToResultMap[button].name + ")" )
 				EADP_UnFriendByEAID( file.buttonToResultMap[button].eaid  )
-				FindFriendDialog_Cancel( button )                                 
+				FindFriendDialog_Cancel( button ) 
 			}
 		}
 

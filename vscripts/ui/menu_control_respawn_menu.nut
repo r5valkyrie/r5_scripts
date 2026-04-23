@@ -118,7 +118,7 @@ struct
 }
 file
 
-void function InitControlSpawnMenu( var newMenuArg )
+void function InitControlSpawnMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "ControlSpawnSelector" )
 	file.menu = menu
@@ -131,7 +131,7 @@ void function InitControlSpawnMenu( var newMenuArg )
 	AddMenuEventHandler( menu, eUIEvent.MENU_SHOW, OnControlSpawnMenu_Show )
 	AddMenuEventHandler( menu, eUIEvent.MENU_HIDE, OnControlSpawnMenu_Hide )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, OnControlSpawnMenu_Close )
-	//AddMenuEventHandler( menu, eUIEvent.MENU_PRECLOSE, OnControlSpawnMenu_PreClose ) // MENU_PRECLOSE doesn't exist
+	AddMenuEventHandler( menu, eUIEvent.MENU_PRECLOSE, OnControlSpawnMenu_PreClose )
 
 	AddUICallback_UIShutdown( OnControlMenuShutdown )
 	AddUICallback_OnResolutionChanged( ControlSpawnMenu_ResolutionChanged )
@@ -163,11 +163,11 @@ void function OnControlSpawnMenu_Open()
 {
 	AddMenuFooterOption( file.menu, LEFT, BUTTON_START, true, "#CONTROL_SHOW_SCOREBOARD_GAMEPAD", "#CONTROL_SHOW_SCOREBOARD", ControlSpawnMenu_OpenScoreboard, CanOpenScoreboard )
 	AddMenuFooterOption( file.menu, LEFT, BUTTON_START, true, "#CONTROL_HIDE_SCOREBOARD_GAMEPAD", "#CONTROL_HIDE_SCOREBOARD", ControlSpawnMenu_CloseScoreboard, CanCloseScoreboard )
-	AddMenuFooterOption( file.menu, RIGHT, BUTTON_DPAD_UP, true, "#MODE_DETAILS_GAMEPAD", "#MODE_DETAILS", ControlSpawnMenu_OpenGameModeDetails, GameModeHasRules )
+	AddMenuFooterOption( file.menu, RIGHT, BUTTON_DPAD_UP, true, "#MODE_DETAILS_GAMEPAD", "#MODE_DETAILS", ControlSpawnMenu_OpenGameModeDetails )
 
-	#if PC_PROG
+
 		AddMenuFooterOption( file.menu, RIGHT, KEY_ENTER, true, "", "", UI_OnButton_Enter )
-	#endif
+
 
 	RegisterCallbacks()
 	file.lastScoreboardOpened = false
@@ -176,9 +176,9 @@ void function OnControlSpawnMenu_Open()
 	if ( IsFullyConnected() )
 		file.isSpawnOnCentralDisabled = !Control_IsSpawningOnObjectiveBAllowed()
 
-#if NX_PROG
-	SetConVarBool( "nx_is_control_spawn_menu_open", true )
-#endif
+
+
+
 
 	RunClientScript( "UICallback_UpdateTeammateInfo", Hud_GetChild( file.menu, "TeammateInfo0" ), true )
 	RunClientScript( "UICallback_UpdateTeammateInfo", Hud_GetChild( file.menu, "TeammateInfo1" ), true )
@@ -222,7 +222,7 @@ void function OnControlSpawnMenu_Show()
 {
 	RegisterCallbacks()
 	if( file.scoreboardOpened )
-		ControlSpawnMenu_OpenScoreboard( null )
+		ControlSpawnMenu_OpenScoreboard( null ) 
 
 	UpdateSpawnButtons()
 	UpdateDeathRecap()
@@ -231,18 +231,18 @@ void function OnControlSpawnMenu_Show()
 	if ( IsFullyConnected() && IsUsingLoadoutSelectionSystem() )
 		ControlSpawnMenu_UpdatePlayerLoadout()
 
-#if NX_PROG
-	SetConVarBool( "nx_is_control_spawn_menu_open", true )
-#endif
+
+
+
 }
 
 void function OnControlSpawnMenu_Hide()
 {
 	DeregisterCallbacks()
 
-#if NX_PROG
-	SetConVarBool( "nx_is_control_spawn_menu_open", false )
-#endif
+
+
+
 }
 
 void function OnControlSpawnMenu_Close()
@@ -254,9 +254,9 @@ void function OnControlSpawnMenu_Close()
 	file.hasMenuBeenOpened = false
 	file.areLoadoutAndLegendSelectMenuButtonsEnabled = true
 
-#if NX_PROG
-	SetConVarBool( "nx_is_control_spawn_menu_open", false )
-#endif
+
+
+
 }
 
 
@@ -290,11 +290,11 @@ void function UI_OpenControlSpawnMenu( bool checkLastScoreboardOpened, int bestS
 	}
 
 
-#if NX_PROG
-	SetConVarBool( "nx_is_control_spawn_menu_open", true )
-#endif
 
 
+
+
+	
 	thread UI_SetCursorToBestSpawnLocation_Thread( bestSpawnWaypointEHI )
 }
 
@@ -304,18 +304,18 @@ const float RUI_WIDTH = 1920.0
 const float RUI_HEIGHT = 1080.0
 void function UI_SetCursorToBestSpawnLocation_Thread( int bestSpawnWaypointEHI )
 {
-
+	
 	wait SET_CURSOR_POSITION_DELAY
 
-
+	
 	if ( bestSpawnWaypointEHI in file.EHItoWaypointData )
 	{
 		ControlSpawnButtonData buttonData = file.EHItoWaypointData[ bestSpawnWaypointEHI ]
 
-
+		
 		if ( buttonData.waypointTeamUsage == eControlSpawnWaypointUsage.FRIENDLY_TEAM )
 		{
-
+			
 			vector hudSize = <Hud_GetWidth( file.menu ), Hud_GetHeight( file.menu ), 0.0>
 			float xScale = hudSize.x / RUI_WIDTH
 			float yScale = hudSize.y / RUI_HEIGHT
@@ -331,16 +331,16 @@ void function UI_CloseControlSpawnMenu()
 {
 	Signal( uiGlobal.signalDummy, "ControlSpawnMenuClosed" )
 
-
+	
 	LoadoutSelectionMenu_CloseLoadoutMenu()
 
 	if ( GetActiveMenu() == file.menu && MenuStack_GetLength() != 0 )
 	{
 		CloseActiveMenu()
 	}
-#if NX_PROG
-	SetConVarBool( "nx_is_control_spawn_menu_open", false )
-#endif
+
+
+
 }
 
 bool function UI_IsSpawnMapOpen()
@@ -390,7 +390,7 @@ void function OnControlMenuShutdown()
 
 void function ControlSpawnMenu_ResolutionChanged()
 {
-	if ( IsFullyConnected()  && GameMode_IsActive( eGameModes.CONTROL ) )
+	if ( IsFullyConnected() && GameMode_IsActive( eGameModes.CONTROL ) )
 	{
 		RunClientScript( "UICallback_Control_OnResolutionChanged" )
 	}
@@ -413,6 +413,7 @@ void function ControlSpawnMenu_OpenCharacterSelect( var button )
 	{
 		return
 	}
+
         if ( GetActiveMenu() != file.menu && MenuStack_GetLength() != 0 )
             CloseActiveMenu()
 
@@ -487,7 +488,8 @@ void function ControlSpawnMenu_OpenGameModeDetails(var button)
 {
 	if ( !IsFullyConnected() )
 		return
-	AdvanceMenu( GetMenu( "GameModeRulesDialog" ) )
+
+	UI_OpenFeatureTutorialDialog( GetPlaylist_UIRules() )
 }
 
 void function ControlSpawnMenu_OpenLoadoutMenu( var button )
@@ -518,12 +520,12 @@ void function CreateSpawnButtonToolTip( var button )
 
 void function UpdateDeathRecap()
 {
-
+	
 
 	var blockRui = Hud_GetRui( file.deathRecapButton )
 	if ( file.deathRecap.totalDamage == -1 )
 	{
-
+		
 		RuiSetBool( blockRui, "display", false )
 		Hud_Hide( file.deathRecapButton )
 		return
@@ -535,9 +537,9 @@ void function UpdateDeathRecap()
 
 	if ( ! EEHHasValidScriptStruct( damageBlock.victimEHandle ) )
 	{
-
-
-
+		
+		
+		
 		Warning( "Could not find victimEHandle key %d in eehScriptStructMap", damageBlock.victimEHandle )
 		RuiSetBool( blockRui, "display", false )
 		Hud_Hide( file.deathRecapButton )
@@ -551,7 +553,7 @@ void function UpdateDeathRecap()
 
 	RuiSetString( blockRui, "damageSourceName", damageBlock.damageSourceName )
 
-	RuiSetBool( blockRui, "selected", false )
+	RuiSetBool( blockRui, "selected", false ) 
 	RuiSetInt( blockRui, "totalDamage", damageBlock.totalDamage )
 	RuiSetInt( blockRui, "hitCount", damageBlock.hitCount )
 	RuiSetInt( blockRui, "headShotBits", damageBlock.headShotBits )
@@ -661,7 +663,7 @@ void function ControlSpawnMenu_OnPingButtonClick( var button )
 	{
 		if( file.focusedSpawnButton == spawnButton && file.focusedSpawnButton in file.buttonToWaypointData)
 		{
-			if( file.buttonToWaypointData[file.focusedSpawnButton].objID >= 0 )
+			if( Control_IsSpawnWaypointIndexAnObjective( file.buttonToWaypointData[file.focusedSpawnButton].objID ) )
 				buttonExists = true
 		}
 	}
@@ -683,7 +685,7 @@ void function ControlSpawnMenu_OnPingButtonClick( var button )
 const float CONTROL_DOUBLECLICK_PROTECTION_TIME = 1.0
 void function OnSpawnButtonClick( var button )
 {
-
+	
 	if ( !(button in file.buttonToWaypointData) )
 	{
 		printf( "CONTROL: clicked on spawn button with no associated waypointData" )
@@ -692,7 +694,7 @@ void function OnSpawnButtonClick( var button )
 	}
 
 	ControlSpawnButtonData data = file.buttonToWaypointData[ button ]
-
+	
 	if ( data.waypointTeamUsage != eControlSpawnWaypointUsage.FRIENDLY_TEAM )
 	{
 		printf( "CONTROL: clicked on spawn button that is not available for spawn ( not usable )" )
@@ -700,7 +702,7 @@ void function OnSpawnButtonClick( var button )
 		return
 	}
 
-
+	
 	if ( UITime() <= file.spawnButtonClickedTime + CONTROL_DOUBLECLICK_PROTECTION_TIME )
 		return
 
@@ -708,9 +710,9 @@ void function OnSpawnButtonClick( var button )
 	Hud_SetEnabled( button, false )
 	EmitUISound( CONTROL_SFX_SELECT_VALID_SPAWN )
 
-	RunClientScript( "UICallback_Control_SpawnButtonClicked", data.waypointEHI )
+	RunClientScript( "UICallback_Control_SpawnButtonClicked", data.waypointType )
 
-
+	
 	Control_RemoveAllButtonSpawnIcons()
 	data.isSelectedForSpawn = true
 
@@ -791,12 +793,12 @@ bool function IsFocusedSpawnPointPingedByLocalPlayer()
 	{
 		if( file.focusedSpawnButton == button && file.focusedSpawnButton in file.buttonToWaypointData)
 		{
-			if( file.buttonToWaypointData[file.focusedSpawnButton].objID == file.lastLocalPingObjID )
-			{
+			ControlSpawnButtonData data = file.buttonToWaypointData[file.focusedSpawnButton]
+			if( Control_IsSpawnWaypointIndexAnObjective( file.lastLocalPingObjID ) && data.objID == file.lastLocalPingObjID )
 				return true
-			}
 		}
 	}
+
 	return false
 }
 
@@ -822,8 +824,10 @@ bool function IsSpawnButtonFocused( bool isAttack )
 			}
 		}
 	}
+
 	return false
 }
+
 
 void function SetWaypointDataForUI( int waypointEHI,
 									bool isVisible,
@@ -869,6 +873,7 @@ void function SetWaypointDataForUI( int waypointEHI,
 }
 
 
+
 int function GetObjectiveIDFromWaypointType( int waypointType )
 {
 	int objectiveID = -1
@@ -886,6 +891,7 @@ int function GetObjectiveIDFromWaypointType( int waypointType )
 
 	return objectiveID
 }
+
 void function SetLastLocalPingObjIDForUI( int lastLocalPingObjID )
 {
 	if( file.lastLocalPingObjID != lastLocalPingObjID )
@@ -932,7 +938,7 @@ void function ControlSpawnMenu_ProcessWaypointDataThread()
 	{
 		if(!file.scoreboardOpened)
 		{
-
+			
 			foreach( button in file.spawnButtons )
 			{
 				if ( !( button in file.buttonToWaypointData ) )
@@ -941,19 +947,19 @@ void function ControlSpawnMenu_ProcessWaypointDataThread()
 				}
 			}
 
-
+			
 			foreach( handle, waypointData in file.EHItoWaypointData )
 			{
-
+				
 				if ( !( waypointData in file.waypointDataToButton ) )
 				{
-
+					
 					foreach( button in file.spawnButtons )
 					{
-
+						
 						if ( !( button in file.buttonToWaypointData ) )
 						{
-
+							
 							file.waypointDataToButton[ waypointData ] <- button
 							file.buttonToWaypointData[ button ] <- waypointData
 							break
@@ -962,7 +968,7 @@ void function ControlSpawnMenu_ProcessWaypointDataThread()
 				}
 			}
 
-
+			
 			foreach( button, waypointData in file.buttonToWaypointData )
 			{
 				if ( waypointData.isVisible )
@@ -971,11 +977,11 @@ void function ControlSpawnMenu_ProcessWaypointDataThread()
 					Hud_Hide( button )
 
 				vector hudSize = <Hud_GetWidth( file.menu ), Hud_GetHeight( file.menu ), 0.0>
-
-
+				
+				
 				Hud_SetEnabled( button, waypointData.isVisible )
 
-
+				
 				Hud_SetPos( button, waypointData.xPosScreenSpace - (22.5  * (hudSize.x / 1920) ), waypointData.yPosScreenSpace - (22.5  * (hudSize.y / 1080) ))
 
 				var spawnHeader = Hud_GetChild( file.menu, "SpawnHeader" )
@@ -1077,7 +1083,7 @@ void function SetSpawnButtonTooltipData( var button )
 	ToolTipData toolTipData = file.buttonTooltipData[ button ]
 	string finalNameInformation = buttonData.tooltipNameInfo
 
-
+	
 	if ( !file.isLateJoinPlayer )
 	{
 		switch( buttonData.waypointType )
@@ -1086,15 +1092,15 @@ void function SetSpawnButtonTooltipData( var button )
 			case eControlWaypointTypeIndex.HOMEBASE_ALLIANCE_B:
 				if ( file.expRewardForSpawnOnBase >= 100 )
 				{
-					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_BASE" )
+					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_BASE" ) 
 				}
 				else if ( file.expRewardForSpawnOnBase > 0 )
 				{
-					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_POINT", file.expRewardForSpawnOnBase )
+					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_POINT", file.expRewardForSpawnOnBase ) 
 				}
 				else
 				{
-					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_BASE_NO_EXP" )
+					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_BASE_NO_EXP" ) 
 				}
 				break
 			case eControlWaypointTypeIndex.OBJECTIVE_A:
@@ -1102,15 +1108,15 @@ void function SetSpawnButtonTooltipData( var button )
 			case eControlWaypointTypeIndex.OBJECTIVE_C:
 				if ( file.expRewardForSpawnOnObjective >= 100 )
 				{
-					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_BASE" )
+					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_BASE" ) 
 				}
 				else if ( file.expRewardForSpawnOnObjective > 0 )
 				{
-					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_POINT", file.expRewardForSpawnOnObjective )
+					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_POINT", file.expRewardForSpawnOnObjective ) 
 				}
 				else
 				{
-					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_POINT_NO_EXP" )
+					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_POINT_NO_EXP" ) 
 				}
 				break
 			case eControlWaypointTypeIndex.SQUAD_SPAWN:
@@ -1119,15 +1125,15 @@ void function SetSpawnButtonTooltipData( var button )
 			case eControlWaypointTypeIndex.MRB_SPAWN:
 				if ( file.expRewardForSpawnOnObjective >= 100 )
 				{
-					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_BASE" )
+					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_BASE" ) 
 				}
 				else if ( file.expRewardForSpawnOnObjective > 0 )
 				{
-					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_POINT", file.expRewardForSpawnOnObjective )
+					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_POINT", file.expRewardForSpawnOnObjective ) 
 				}
 				else
 				{
-					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_MRB_NO_EXP" )
+					toolTipData.descText = Localize( "#CONTROL_RESPAWN_ON_MRB_NO_EXP" ) 
 				}
 				break
 			default:
@@ -1135,7 +1141,7 @@ void function SetSpawnButtonTooltipData( var button )
 		}
 
 	}
-	else
+	else 
 	{
 		toolTipData.descText = Localize( "#CONTROL_RESPAWN_LATE_JOIN_PLAYER" )
 	}
@@ -1150,7 +1156,6 @@ void function SetSpawnButtonTooltipData( var button )
 	bool isFOBForLocalPlayer = Control_IsSpawnWaypointFOBForAlliance( buttonData.waypointType, localPlayerAlliance )
 
 	if ( buttonData.isSelectedForSpawn ) 
-
 	{
 		toolTipData.descText  = Localize( "#CONTROL_RESPAWN_ALREADY_SELECTED_DESC" )
 		toolTipData.actionHint1 = Localize( "#CONTROL_RESPAWN_ACTION_CANCEL" )
@@ -1170,7 +1175,7 @@ void function SetSpawnButtonTooltipData( var button )
 				toolTipData.actionHint1 = ""
 			}
 		}
-		else
+		else 
 		{
 			if ( localPlayerAlliance != buttonData.currentOwner && buttonData.waypointType != eControlWaypointTypeIndex.HOMEBASE_ALLIANCE_A && buttonData.waypointType != eControlWaypointTypeIndex.HOMEBASE_ALLIANCE_B )
 			{
@@ -1211,7 +1216,7 @@ void function SetSpawnButtonTooltipData( var button )
 		toolTipData.actionHint1 = ""
 
 	}
-	else
+	else 
 	{
 		toolTipData.titleText = Localize( "#CONTROL_RESPAWN_NOT_AVIALABLE_TITLE" )
 		toolTipData.descText  = Localize( "#CONTROL_RESPAWN_NOT_AVAIL_ENEMY_HOME" )
@@ -1241,17 +1246,17 @@ void function ControlSpawnMenu_UpdatePlayerLoadout()
 	if ( loadoutIndex < 0 || loadoutIndex >= LOADOUTSELECTION_MAX_TOTAL_LOADOUT_SLOTS )
 		return
 
-
+	
 	RunClientScript( "UICallback_LoadoutSelection_SetConsumablesCountRui", file.loadoutButton, loadoutIndex )
 
-
+	
 	for ( int weaponIndex = 0; weaponIndex < LOADOUTSELECTION_MAX_WEAPONS_PER_LOADOUT; weaponIndex++ )
 	{
 		var weaponIcon = Hud_GetChild( file.menu, "CurrentLoadoutIconWeapon" + weaponIndex )
 		RunClientScript( "UICallback_LoadoutSelection_BindWeaponRui", weaponIcon, loadoutIndex, weaponIndex )
 	}
 
-
+	
 	for ( int consumableIndex = 0; consumableIndex < LOADOUTSELECTION_MAX_CONSUMABLES_PER_LOADOUT; consumableIndex++ )
 	{
 		var consumableIcon = Hud_GetChild( file.menu, "CurrentLoadoutIconConsumable" + consumableIndex )

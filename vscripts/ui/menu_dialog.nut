@@ -2,9 +2,7 @@ untyped
 
 global function InitDialogCommon
 global function InitDialogMenu
-global function InitConnectingDialog
 global function InitDataCenterDialogMenu
-global function ServerCallback_OpenPilotLoadoutMenu
 global function SCBUI_PlayerConnectedOrDisconnected
 global function LeaveMatchWithDialog
 global function CancelMatchSearch
@@ -16,12 +14,26 @@ global function OpenDataCenterDialog
 global function ShowMatchConnectDialog
 global function LeaveDialog
 global function LeavePartyDialog
-global function Disconnect
+
+
+
+global function EndMatchDialog
+global function LeaveCustomMatchDialog
 
 global function AddDialogButton
 global function AddDialogButtonEx
 global function AddDialogFooter
 global function AddDialogPCBackButton
+
+global function PlayLobbyCharacterDialogue
+
+global function DataDialog_AddCallback_OnClose
+
+struct
+{
+	array<DialogButtonData> dialogButtonData
+	void functionref() Callback_OnDataDialogClose = null
+} file
 
 
 void function InitDialogCommon( var menu )
@@ -42,7 +54,7 @@ void function InitDialogCommon( var menu )
 }
 
 
-void function InitDialogMenu( var newMenuArg )
+void function InitDialogMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "Dialog" )
 
@@ -51,33 +63,13 @@ void function InitDialogMenu( var newMenuArg )
 }
 
 
-void function InitDataCenterDialogMenu( var newMenuArg )
+void function InitDataCenterDialogMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "DataCenterDialog" )
 
 	InitDialogCommon( menu )
+	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, OnDataCenterDialog_Close )
 	AddEventHandlerToButton( menu, "ListDataCenters", UIE_CLICK, OnDataCenterButton_Activate )
-}
-
-
-void function InitConnectingDialog( var newMenuArg )
-{
-	var menu = GetMenu( "ConnectingDialog" )
-
-	InitDialogCommon( menu )
-	uiGlobal.menuData[ menu ].isDynamicHeight = true
-
-	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, OnConnectingDialog_NavigateBack )
-
-	uiGlobal.ConfirmMenuMessage = Hud_GetChild( menu, "DialogMessage" )
-	uiGlobal.ConfirmMenuErrorCode = Hud_GetChild( menu, "LblErrorCode" )
-}
-
-
-void function OnConnectingDialog_NavigateBack()
-{
-	CancelConnect()
-	CloseActiveMenu()
 }
 
 
@@ -93,26 +85,26 @@ void function OnDialogButton_Focused( var button )
 {
 	int buttonID = int( Hud_GetScriptID( button ) )
 
-	if ( uiGlobal.dialogButtonData[buttonID].focusMessage != "" )
+	if ( file.dialogButtonData[buttonID].focusMessage != "" )
 	{
 		var menu = Hud_GetParent( button )
 
 		var messageElem = GetSingleElementByClassname( menu, "DialogMessageClass" )
 		if ( messageElem )
-			Hud_SetText( messageElem, uiGlobal.dialogButtonData[buttonID].focusMessage )
+			Hud_SetText( messageElem, file.dialogButtonData[buttonID].focusMessage )
 	}
 }
 
 
 void function OnDialogButton_Activate( var button )
 {
-	if ( Time() < uiGlobal.dialogInputEnableTime )
+	if ( UITime() < uiGlobal.dialogInputEnableTime )
 		return
 
 	int buttonID = int( Hud_GetScriptID( button ) )
 
-	Assert( uiGlobal.dialogButtonData.len() > 0 )
-	DialogButtonData btn = uiGlobal.dialogButtonData[buttonID]
+	Assert( file.dialogButtonData.len() > 0 )
+	DialogButtonData btn = file.dialogButtonData[buttonID]
 	if ( btn.isDisabled )
 		return
 
@@ -124,7 +116,6 @@ void function OnDialogButton_Activate( var button )
 		btn.activateFuncEx.call( this, btn.payload )
 }
 
-
 void function OnDataCenterButton_Activate( var button )
 {
 	printt( "Chose a data center" )
@@ -132,14 +123,21 @@ void function OnDataCenterButton_Activate( var button )
 	CloseActiveMenu()
 }
 
+void function DataDialog_AddCallback_OnClose( void functionref() callbackFunc = null )
+{
+	file.Callback_OnDataDialogClose = callbackFunc
+}
+
+void function OnDataCenterDialog_Close()
+{
+	if( file.Callback_OnDataDialogClose != null )
+		file.Callback_OnDataDialogClose()
+}
 
 void function CancelConnect()
 {
 	MatchmakingCancel()
-	ClientCommand( "party_leave" )
-
-	if ( GetLobbyType() == "party" )
-		ClientCommand( "CancelPrivateMatchSearch" )
+	Party_LeaveParty()
 }
 
 
@@ -201,7 +199,7 @@ void function OpenDialog( DialogData dialogData )
 		dialogData.forceChoice = false
 
 	if ( dialogData.inputDisableTime > 0 )
-		uiGlobal.dialogInputEnableTime = Time() + dialogData.inputDisableTime
+		uiGlobal.dialogInputEnableTime = UITime() + dialogData.inputDisableTime
 
 	if ( dialogData.menu == null )
 	{
@@ -213,6 +211,8 @@ void function OpenDialog( DialogData dialogData )
 		if ( dialogData.buttonData.len() > 0 )
 		{
 			confirmDialogData.yesText = [dialogData.buttonData[0].label, dialogData.buttonData[0].label]
+			if ( dialogData.buttonData.len() > 1 )
+				confirmDialogData.noText = [dialogData.buttonData[1].label, dialogData.buttonData[1].label]
 
 			confirmDialogData.resultCallback = void function ( int result ) : ( dialogData )
 			{
@@ -252,7 +252,7 @@ void function OpenDialog( DialogData dialogData )
 	RuiSetImage( Hud_GetRui( frameElem ), "basicImage", $"rui/menu/common/dialog_gradient" )
 	RuiSetFloat3( Hud_GetRui( frameElem ), "basicImageColor", <1, 1, 1> )
 
-	// TODO: Add support for string vars? Was 4 vars before.
+	
 	if ( Hud_HasChild( menu, "DialogHeader" ) )
 		Hud_SetText( Hud_GetChild( menu, "DialogHeader" ), dialogData.header )
 
@@ -264,9 +264,7 @@ void function OpenDialog( DialogData dialogData )
 		Hud_SetText( messageElem, dialogData.message )
 		Hud_SetColor( messageElem, dialogData.messageColor )
 
-		if ( menu == GetMenu( "ConnectingDialog" ) )
-			messageHeight = int( ContentScaledY( 28 ) )
-		else if ( dialogData.message != "" )
+		if ( dialogData.message != "" )
 			messageHeight = Hud_GetHeight( messageElem )
 	}
 
@@ -317,7 +315,7 @@ void function OpenDialog( DialogData dialogData )
 		defaultFooter2.label = "#B_BUTTON_CANCEL"
 		footerData.append( defaultFooter2 )
 
-		if ( dialogData.footerData.len() )
+		if ( dialogData.footerData.len() > 0 )
 			footerData = dialogData.footerData
 	}
 
@@ -327,19 +325,19 @@ void function OpenDialog( DialogData dialogData )
 	int numButtons                     = buttons.len()
 	Assert( numButtons >= numChoices, "OpenDialog: can't have " + numChoices + " choices for only " + numButtons + " buttons." )
 
-	uiGlobal.dialogButtonData = buttonData
+	file.dialogButtonData = buttonData
 
 	int defaultButtonHeight = int( ContentScaledY( 40 ) )
 	int buttonsHeight       = defaultButtonHeight * numChoices
 
-	// Setup each button: hide, or set text and show
+	
 	foreach ( index, button in buttons )
 	{
 		var ruiButton = Hud_GetRui( button )
 
 		if ( index < numChoices )
 		{
-			RuiSetString( ruiButton, "buttonText", uiGlobal.dialogButtonData[ index ].label )
+			RuiSetString( ruiButton, "buttonText", file.dialogButtonData[ index ].label )
 			if ( index in dialogData.coloredButton )
 				RuiSetFloat3( ruiButton, "textColorOverride", <1, 0.7, 0.4> )
 			else
@@ -348,7 +346,7 @@ void function OpenDialog( DialogData dialogData )
 			Hud_SetHeight( button, defaultButtonHeight )
 			Hud_Show( button )
 
-			if ( uiGlobal.dialogButtonData[ index ].startFocused )
+			if ( file.dialogButtonData[ index ].startFocused )
 				thread DelayedSetFocusThread( button, menu )
 		}
 		else
@@ -358,7 +356,7 @@ void function OpenDialog( DialogData dialogData )
 		}
 	}
 
-	// Get footer elems and fill in with footerData
+	
 	array<var> ruiFooterElems = GetElementsByClassname( menu, "LeftRuiFooterButtonClass" )
 	foreach ( elem in ruiFooterElems )
 	{
@@ -374,7 +372,7 @@ void function OpenDialog( DialogData dialogData )
 		}
 	}
 
-	// someday this will be an array
+	
 	var dialogFooter = Hud_GetChild( menu, "DialogFooterButtons" )
 	var PCBackButton = Hud_GetChild( dialogFooter, "MouseBackFooterButton" )
 	if ( dialogData.showPCBackButton )
@@ -457,17 +455,7 @@ bool function ShouldUpdateMenuForDialogFooterVisibility( var menu )
 	if ( menu == GetMenu( "Dialog" ) )
 		return true
 
-	if ( menu == GetMenu( "ConnectingDialog" ) )
-		return true
-
 	return false
-}
-
-
-void function ServerCallback_OpenPilotLoadoutMenu()
-{
-	if ( GetActiveMenu() == null )
-		AdvanceMenu( GetMenu( "PilotLoadoutsMenu" ) )
 }
 
 
@@ -501,10 +489,16 @@ void function LeaveDialog()
 	dialogData.image = $"ui/menu/common/dialog_error"
 	dialogData.darkenBackground = true
 
+	
 	{
-		//int lobbyType = GetLobbyTypeScript()
-		if ( IsLobby() ) // && (lobbyType != eLobbyType.MATCH) ) // SOLO, PARTY_LEADER, PARTY_MEMBER, PRIVATE_MATCH
+		if ( IsLobby() )
 		{
+			if ( IsPrivateMatchLobby() )
+			{
+				ConfirmLeaveMatchDialog_Open()
+				return
+			}
+
 			AddDialogButton( dialogData, "#CANCEL_NO" )
 
 			if ( !PartyHasMembers() || AmIPartyLeader() )
@@ -512,7 +506,7 @@ void function LeaveDialog()
 				if ( AmIPartyLeader() && PartyHasMembers() )
 					AddDialogButton( dialogData, "#YES_LEAVE_PARTY", LeaveParty )
 				else
-					AddDialogButton( dialogData, "#YES_RETURN_TO_TITLE_MENU", Disconnect )
+					AddDialogButton( dialogData, "#YES_RETURN_TO_TITLE_MENU", LeaveMatch_Disconnect )
 			}
 			else
 			{
@@ -552,9 +546,48 @@ void function LeavePartyDialog()
 void function OnLeavePartyDialogResult( int result )
 {
 	if ( result != eDialogResult.YES )
+	{
+
+
+
+
+
 		return
+	}
+
+
+
+
+
 
 	LeaveParty()
+}
+
+
+void function LeaveCustomMatchDialog()
+{
+	if ( !IsFullyConnected() )
+		return
+
+	if ( !MenuStack_Contains( GetMenu( "CustomMatchLobbyMenu" ) ) )
+		return
+
+	ConfirmDialogData data
+	data.headerText = "#CUSTOMMATCH_LEAVE"
+	data.messageText = "#CUSTOMMATCH_LEAVE_DESC"
+	data.resultCallback = OnLeaveCustomMatchDialogResult
+
+	OpenConfirmDialogFromData( data )
+	AdvanceMenu( GetMenu( "ConfirmDialog" ) )
+}
+
+void function OnLeaveCustomMatchDialogResult( int result )
+{
+	if ( result != eDialogResult.YES )
+		return
+
+	CustomMatch_LeaveLobby()
+	CustomMatch_CloseLobbyMenu()
 }
 
 
@@ -568,6 +601,19 @@ void function LeaveMatchWithDialog()
 {
 	LeaveMatch()
 	ShowLeavingDialog( "#FINDING_PARTY_SERVER" )
+}
+
+
+void function LeaveMatchWithDialog_Freelance()
+{
+	LeaveMatch_Freelance()
+	ShowLeavingDialog( "Connecting to hub..." )
+}
+
+void function LeaveMatchAndParty_Freelance()
+{
+	LeaveParty()
+	LeaveMatchWithDialog_Freelance()
 }
 
 
@@ -600,15 +646,15 @@ void function ShowMatchConnectDialog()
 void function CancelMatchSearch()
 {
 	CancelMatchmaking()
-	ClientCommand( "CancelMatchSearch" )
+	Remote_ServerCallFunction( "ClientCallback_CancelMatchSearch" )
 }
 
 
-void function Disconnect()
+void function LeaveMatch_Disconnect()
 {
 	StopMatchmaking()
 	ClientCommand( "disconnect" )
-	ClientCommand( "party_leave" )
+	Party_LeaveParty()
 }
 
 
@@ -618,18 +664,72 @@ void function OpenDataCenterDialog( var button )
 	dialogData.menu = GetMenu( "DataCenterDialog" )
 	dialogData.header = Localize( "#DATA_CENTERS", GetDatacenterSelectedReasonSymbol() )
 
-	#if PC_PROG
+
 		AddDialogButton( dialogData, "#DISMISS" )
-	#endif // PC_PROG
+
 
 	AddDialogFooter( dialogData, "#A_BUTTON_SELECT" )
 	AddDialogFooter( dialogData, "#B_BUTTON_DISMISS_RUI" )
 
 	OpenDialog( dialogData )
+
+	SetMenuNavigationDisabled( false )
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 void function OnBtnBackPressed( var button )
 {
 	CloseActiveMenu()
+}
+
+void function EndMatchDialog()
+{
+	ConfirmDialogData data
+	data.headerText = "#TOURNAMENT_END_MATCH_DIALOG_HEADER"
+	data.messageText = "#TOURNAMENT_END_MATCH_DIALOG_MSG"
+	data.dialogConfirmDelay = 3.0
+	data.resultCallback = void function( int dialogResult )
+	{
+		switch ( dialogResult )
+		{
+			case eDialogResult.YES:
+			{
+				if ( HasMatchAdminRole() )
+					Remote_ServerCallFunction( "ClientCallback_PrivateMatchEndMatchEarly" )
+			}
+		}
+	}
+
+	OpenConfirmDialogFromData( data )
+}
+
+void function PlayLobbyCharacterDialogue( string aliasPart, float delay = 0 )
+{
+	thread PlayLobbyCharacterDialogue_Internal( aliasPart, delay )
+}
+
+void function PlayLobbyCharacterDialogue_Internal( string aliasPart, float delay )
+{
+	wait delay
+	waitthread WaitForLocalClientEHI()
+	if ( LoadoutSlot_IsReady( LocalClientEHI(), Loadout_Character() ) )
+	{
+		ItemFlavor character = LoadoutSlot_GetItemFlavor( LocalClientEHI(), Loadout_Character() )
+		var block    = GetSettingsBlockForAsset( CharacterClass_GetSetFile( character ) )
+		string voice = GetSettingsBlockString( block, "voice" ).tolower()
+		string soundAliasName = "diag_mp_" + voice +"_" + aliasPart + "_menu"
+		
+		EmitUISound( soundAliasName )
+	}
 }

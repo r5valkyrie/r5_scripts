@@ -240,6 +240,20 @@ bool function DoesPlaylistRequireTraining( string playlist )
 
 bool function HasLocalPlayerCompletedTraining()
 {
+	if ( !IsFullyConnected() || !IsPersistenceAvailable() )
+		return false
+
+	if ( !GetVisiblePlaylistNames().contains( PLAYLIST_TRAINING ) )
+		return true
+
+#if DEV
+		if ( GetConVarBool( "skip_training" ) )
+			return true
+#endif
+
+	if ( GetCurrentPlaylistVarBool( "require_training", true ) )
+		return GetPersistentVarAsInt( "trainingCompleted" ) > 0
+
 	return true
 }
 
@@ -249,7 +263,27 @@ bool function HasLocalPlayerCompletedTraining()
 
 bool function IsLocalPlayerExemptFromNewPlayerOrientation()
 {
-	return true
+	if( GetConVarBool( "orientation_matches_disabled" ) )
+		return true
+
+	if ( !IsFullyConnected() )
+		return false
+
+
+
+
+
+
+	CommunityUserInfo ornull userInfo = GetUserInfo( GetPlayerHardware(), GetPlayerUID() )
+	if ( userInfo == null )
+		return false
+
+
+		if ( LobbyPlaylist_IsTournamentMatchmaking() )
+			return true
+
+
+	return false
 }
 
 bool function DoesPlaylistRequireNewPlayerOrientation( string playlist )
@@ -271,7 +305,31 @@ bool function DoesPlaylistRequireNewPlayerOrientation( string playlist )
 
 bool function HasLocalPlayerCompletedNewPlayerOrientation()
 {
-	return true
+	if( GetConVarBool( "orientation_matches_disabled" ) )
+		return true
+
+	if ( !IsFullyConnected() )
+		return false
+
+
+
+
+
+
+	CommunityUserInfo ornull userInfo = GetUserInfo( GetPlayerHardware(), GetPlayerUID() )
+	if ( userInfo == null )
+		return false
+	expect CommunityUserInfo( userInfo )
+
+	if ( !GetVisiblePlaylistNames().contains( PLAYLIST_NEW_PLAYER_ORIENTATION ) )
+		return true
+
+#if DEV
+		if ( GetConVarBool( "skip_training" ) )
+			return true 
+#endif
+
+	return userInfo.hasGraduatedBotsQueue
 }
 
 bool function DoNonlocalPlayerPartyMembersNeedToCompleteNewPlayerOrientation()

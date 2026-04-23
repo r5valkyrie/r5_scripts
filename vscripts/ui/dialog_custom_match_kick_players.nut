@@ -3,8 +3,8 @@ global function CustomMatch_ShowKickDialog
 
 const int MIN_PLAYER_COUNT = 3
 
-                                                             
-                                                                                             
+
+
 struct KickEntry
 {
 	string uid

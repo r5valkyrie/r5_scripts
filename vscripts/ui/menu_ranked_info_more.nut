@@ -6,7 +6,7 @@ struct
 	var menu
 } file
 
-void function InitRankedInfoMoreMenu( var newMenuArg )                                               
+void function InitRankedInfoMoreMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "RankedInfoMoreMenu" )
 	file.menu = menu
@@ -28,60 +28,77 @@ void function OpenRankedInfoMorePage( var button )
 void function OnRankedInfoMoreMenu_Open()
 {
 	UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
-	
+
 	int currentScore                     = GetPlayerRankScore( GetLocalClientPlayer() )
 	array<SharedRankedTierData> tiers    = Ranked_GetTiers()
 	int ladderPosition                   = Ranked_GetLadderPosition( GetLocalClientPlayer() )
 	SharedRankedDivisionData currentRank = GetCurrentRankedDivisionFromScoreAndLadderPosition( currentScore, ladderPosition )
 	SharedRankedTierData currentTier     = currentRank.tier
-	
+
 	var mainRui = Hud_GetRui( Hud_GetChild( file.menu, "InfoMain" ) )
+
 	
-	                       
-	                                     
-	   
-	  	                            
-	  	                                 
-	  	                                                                                                                
-	  	                                                 
-	   
+	
+	
+	
+	
+	
+	
+	
 
 	var rankedScoringTableRui = Hud_GetRui( Hud_GetChild( file.menu, "RankedScoringTable" ) )
 	RuiSetInt( rankedScoringTableRui, "fourteenthPlaceRP", Ranked_GetPointsForPlacement( 14 ) )
 	RuiSetInt( rankedScoringTableRui, "eleventhPlaceRP", Ranked_GetPointsForPlacement( 11 ) )
 	RuiSetInt( rankedScoringTableRui, "tenthPlaceRP", Ranked_GetPointsForPlacement( 10 ) )
+	RuiSetInt( rankedScoringTableRui, "ninthPlaceRP", Ranked_GetPointsForPlacement( 9 ) )
 	RuiSetInt( rankedScoringTableRui, "eighthPlaceRP", Ranked_GetPointsForPlacement( 8 ) )
+	RuiSetInt( rankedScoringTableRui, "seventhPlaceRP", Ranked_GetPointsForPlacement( 7 ) )
 	RuiSetInt( rankedScoringTableRui, "sixthPlaceRP", Ranked_GetPointsForPlacement( 6 ) )
 	RuiSetInt( rankedScoringTableRui, "fifthPlaceRP", Ranked_GetPointsForPlacement( 5 ) )	
 	RuiSetInt( rankedScoringTableRui, "fourthPlaceRP", Ranked_GetPointsForPlacement( 4 ) )
 	RuiSetInt( rankedScoringTableRui, "thirdPlaceRP", Ranked_GetPointsForPlacement( 3 ) )
 	RuiSetInt( rankedScoringTableRui, "secondPlaceRP", Ranked_GetPointsForPlacement( 2 ) )
 	RuiSetInt( rankedScoringTableRui, "firstPlaceRP", Ranked_GetPointsForPlacement( 1 ) )
-	
-	RuiSetInt( rankedScoringTableRui, "fourteenthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 14 ) )
-	RuiSetInt( rankedScoringTableRui, "eleventhPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 11 ) )
-	RuiSetInt( rankedScoringTableRui, "ninthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 9 ) )
-	RuiSetInt( rankedScoringTableRui, "seventhPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 7 ) )
-	RuiSetInt( rankedScoringTableRui, "sixthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 6 ) )
 
-	RuiSetInt( rankedScoringTableRui, "fifthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 5 ) )
-	RuiSetInt( rankedScoringTableRui, "fourthPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 4 ) )
-	RuiSetInt( rankedScoringTableRui, "thirdPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 3 ) )
-	RuiSetInt( rankedScoringTableRui, "secondPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 2 ) )
-	RuiSetInt( rankedScoringTableRui, "firstPlaceKillAssistMultiplier", Ranked_GetPointsForKillsPlacement( 1 ) )
+	var rankedKillsScoringTableRui = Hud_GetRui( Hud_GetChild( file.menu, "RankedKillsScoringTable" ) )
+	RuiSetInt( rankedKillsScoringTableRui, "fourteenthPlaceRP", RankedGetPointsForKillsByPlacement( 14 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "eleventhPlaceRP", RankedGetPointsForKillsByPlacement( 11 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "tenthPlaceRP", RankedGetPointsForKillsByPlacement( 10 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "ninthPlaceRP", RankedGetPointsForKillsByPlacement( 9 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "eighthPlaceRP", RankedGetPointsForKillsByPlacement( 8 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "seventhPlaceRP", RankedGetPointsForKillsByPlacement( 7 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "sixthPlaceRP", RankedGetPointsForKillsByPlacement( 6 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "fifthPlaceRP", RankedGetPointsForKillsByPlacement( 5 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "fourthPlaceRP", RankedGetPointsForKillsByPlacement( 4 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "thirdPlaceRP", RankedGetPointsForKillsByPlacement( 3 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "secondPlaceRP", RankedGetPointsForKillsByPlacement( 2 ) )
+	RuiSetInt( rankedKillsScoringTableRui, "firstPlaceRP", RankedGetPointsForKillsByPlacement( 1 ) )
 
-	                                                                                                                               
-	                                                                                                                            
-	                                                                                                                           
-	                                                                                                                           
-	  	                                                                                                                         
 	
 	
 	
-	var rankedIconRui = Hud_GetRui( Hud_GetChild( file.menu, "PanelArt" ) )
-	RuiSetInt( rankedIconRui, "tier", currentTier.index )
-	RuiSetImage( rankedIconRui, "tierBadgeIcon", currentTier.icon )
-	RuiSetString( rankedIconRui, "emblemText" , ( currentRank.emblemDisplayMode == emblemDisplayMode.DISPLAY_DIVISION ) ? Localize( currentRank.emblemText ) : Localize( "#RANKED_POINTS_GENERIC", string( currentScore ) ) )
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+
+
+
+
+    Hud_SetVisible( Hud_GetChild( file.menu, "PanelArt" ), false )
+	
+	
+	
 }
 
 void function OnRankedInfoMoreMenu_Close()

@@ -26,8 +26,12 @@ struct
 
 	array<CustomMatch_LobbyPlayer> assignedPlayers
 	bool hasRemainingPlayers = true
+	bool hasRemainingAllianceOrTeam = true
 	int remainingPlayers
 	string gamemode
+
+	CustomMatch_LobbyState& customMatchData
+	bool customMatchDataSet = false
 
 } file
 
@@ -62,9 +66,20 @@ void function InitCustomMatchLobbyPanel( var panel )
 void function InitCustomMatchPanelFooter( var panel )
 {
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
+
+	AddPanelFooterOption( panel, LEFT, BUTTON_TRIGGER_RIGHT_FULL, true, "#CUSTOM_MATCH_OPEN_CHAT_BUTTON", "", HandleOpenChat, OpenChatDialog_CanClick )
+
 	AddPanelFooterOption( panel, LEFT, BUTTON_DPAD_LEFT, true, "#CUSTOM_MATCH_HOLD_LEAVE_TEAM", "#CUSTOM_MATCH_LEAVE_TEAM", JoinUnassigned_OnClick, JoinUnassigned_CanClick )
 	AddPanelFooterOption( panel, LEFT, BUTTON_DPAD_RIGHT, true, "#CUSTOM_MATCH_HOLD_JOIN_OBSERVER", "#CUSTOM_MATCH_JOIN_OBSERVER", JoinSpectators_OnClick, JoinSpectators_CanClick )
 	AddPanelFooterOption( panel, RIGHT, BUTTON_STICK_LEFT, true, "#DATACENTER_DOWNLOADING", "#DATACENTER_DOWNLOADING", CustomMatchOpenDataCenterDialog, CustomMatchDatacenter_CanClick, CustomMatchUpdateDataCenterFooter )
+}
+
+void function HandleOpenChat(var button)
+{
+
+	FocusChat_OnActivate( button )
+
+
 
 }
 
@@ -105,26 +120,19 @@ void function CustomMatchLobby_OnShow( var panel )
 
 	ShowPanel( Hud_GetChild( file.panel, "PrivateMatchScoreboardPanel" ) )
 
-	#if PC_PROG
-		RegisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT_FULL, FocusChat_OnActivate )
-	#else
-		RegisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT_FULL, EnterText_OnActivate )
-	#endif
 	RegisterButtonPressedCallback( BUTTON_Y, StartMatch_OnClick )
 	RegisterButtonPressedCallback( KEY_TAB, CustomMatchOpenDataCenterDialog )
 
 	SetJoinTeamHelper()
-
-	UpdateFooterOptions()
+	if( file.customMatchDataSet )
+	{
+		CustomMatch_ScoreboardUpdate()
+		CustomMatch_SetStartMatchTooltip( file.customMatchData )
+	}
 }
 
 void function CustomMatchLobby_OnHide( var panel )
 {
-	#if PC_PROG
-		DeregisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT_FULL, FocusChat_OnActivate )
-	#else
-		DeregisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT_FULL, EnterText_OnActivate )
-	#endif
 	DeregisterButtonPressedCallback( BUTTON_Y, StartMatch_OnClick )
 	DeregisterButtonPressedCallback( KEY_TAB, CustomMatchOpenDataCenterDialog )
 }
@@ -136,12 +144,12 @@ bool function StartMatch_CanClick()
 
 bool function CustomMatch_CanAdminStartMatch()
 {
-	                              
-	           
-	                                                                                                        
-	                                           
-	                           
-	bool canStartMatch = CustomMatch_IsLocalAdmin() && !file.hasRemainingPlayers && file.teamIndex != TEAM_UNASSIGNED && !CustomMatch_MatchInProgress()
+	
+	
+	
+	
+	
+	bool canStartMatch = CustomMatch_IsLocalAdmin() && !file.hasRemainingPlayers && file.teamIndex != TEAM_UNASSIGNED && !file.hasRemainingAllianceOrTeam && !CustomMatch_MatchInProgress()
 
 	return canStartMatch
 }
@@ -156,12 +164,12 @@ void function StartMatch_OnClick( var button )
 	if ( !StartMatch_CanClick() )
 		return
 
-	                                                                                   
+	
 	if ( CustomMatch_CanAdminStartMatch() )
 	{
 		CustomMatch_SetMatchmaking( !file.isMatchmaking )
 	}
-	                                                                   
+	
 	else if ( CustomMatch_CanPlayerSetReady() )
 	{
 		CustomMatch_SetReady( !file.isReady )
@@ -170,7 +178,7 @@ void function StartMatch_OnClick( var button )
 
 bool function CanJoinTeam( int index )
 {
-	return !IsDialog( GetActiveMenu() )                                                                        
+	return !IsDialog( GetActiveMenu() ) 
 }
 
 bool function JoinSpectators_CanClick()
@@ -211,7 +219,6 @@ void function Callback_OnPlayerDataChanged( CustomMatch_LobbyPlayer playerData )
 	file.isReady = ( playerData.flags & CUSTOM_MATCH_PLAYER_BIT_IS_READY ) != 0
 
 	InputModeChanged( IsControllerModeActive() )
-	UpdateFooterOptions()
 }
 
 const string ON = "1"
@@ -220,7 +227,6 @@ void function Callback_OnSelfAssignChanged( string _, string value )
 	file.selfAssign = ( value == ON ) || CustomMatch_IsLocalAdmin()
 
 	SetJoinTeamHelper()
-	UpdateFooterOptions()
 }
 
 void function CustomMatchLobby_OnSetTeamNameOpenOrClose( bool open )
@@ -249,8 +255,6 @@ void function Callback_OnChatPermissionChanged( string _, string value )
 	Hud_SetVisible( Hud_GetChild( file.chatInputLine, "ChatInputPrompt" ), chatEnabled )
 	Hud_SetEnabled( Hud_GetChild( file.chatInputLine, "ChatInputTextEntry" ), chatEnabled )
 	Hud_SetVisible( Hud_GetChild( file.chatInputLine, "ChatInputTextEntry" ), chatEnabled )
-
-	UpdateFooterOptions()
 }
 
 void function Callback_OnMatchStatusChanged( string _, string value )
@@ -258,7 +262,6 @@ void function Callback_OnMatchStatusChanged( string _, string value )
 	file.canAction = ( value == CUSTOM_MATCH_STATUS_PREPARING )
 	file.isMatchmaking = ( value == CUSTOM_MATCH_STATUS_MATCHMAKING )
 	InputModeChanged( IsControllerModeActive() )
-	UpdateFooterOptions()
 }
 
 void function CustomMatch_SetStartMatchTooltip( CustomMatch_LobbyState data )
@@ -266,58 +269,81 @@ void function CustomMatch_SetStartMatchTooltip( CustomMatch_LobbyState data )
 	if ( !IsConnected() )
 		return
 
-	                                                                                
+	
 	file.gamemode = GetPlaylistGamemodeByIndex( data.playlist, 0 )
 
-	                                                                              
+	
 	if ( CustomMatch_IsLocalAdmin() )
 	{
-		                                                               
+		
 		file.assignedPlayers = []
 
-		                                                 
+		bool hasSpecialAccess = CustomMatch_HasSpecialAccess()
+
+		int maxAlliancesOrTeams = GetPlaylistVarInt(  data.playlist, "max_alliances", 0 )
+		maxAlliancesOrTeams = maxAlliancesOrTeams > 0 ? maxAlliancesOrTeams : data.maxTeams
+		int publicMinPlayersFallback = ( file.gamemode == SURVIVAL || file.gamemode == GAMEMODE_SHADOW_ROYALE ) ? 30 : data.maxPlayers
+		int minPlayers = hasSpecialAccess ? 1 : GetPlaylistVarInt( data.playlist, "cm_public_min_players", publicMinPlayersFallback )
+		int firstFoundAllianceOrTeam = -1
+		file.hasRemainingAllianceOrTeam = minPlayers > 1
+
+		
 		foreach( player in data.players )
 		{
-			                                                                                          
+			
 			if (player.team != TEAM_UNASSIGNED && player.team != TEAM_SPECTATOR)
 			{
-				                                                            
+				
 				file.assignedPlayers.push(player)
+
+				
+				if ( file.hasRemainingAllianceOrTeam )
+				{
+					int allianceOrSquadIndex = Squads_GetArrayIndexForTeam( player.team ) % maxAlliancesOrTeams
+					if ( firstFoundAllianceOrTeam == -1 )
+						firstFoundAllianceOrTeam = allianceOrSquadIndex
+					else if ( allianceOrSquadIndex != firstFoundAllianceOrTeam )
+						file.hasRemainingAllianceOrTeam = false
+				}
 			}
 		}
 
-		                                                                                                 
-		file.remainingPlayers = CustomMatch_HasSpecialAccess() ? (1 - file.assignedPlayers.len()) : GetPlaylistVarInt( data.playlist, "cm_public_min_players", (file.gamemode == SURVIVAL || file.gamemode == GAMEMODE_SHADOW_ROYALE ) ? 30 : data.maxPlayers ) - file.assignedPlayers.len()
+		
+		file.remainingPlayers = minPlayers - file.assignedPlayers.len()
 		file.hasRemainingPlayers = file.remainingPlayers > 0
 
-		                     
+		
 		array<string> tooltipConditions = []
 
-		                                                                             
+		
 		if (file.hasRemainingPlayers)
 		{
 			if (file.remainingPlayers > 1)
 			{
-				tooltipConditions.push( Localize("#CUSTOMMATCH_MIN_PLAYERS_PLURAL", file.remainingPlayers ) )
+				tooltipConditions.push( Localize( "#CUSTOMMATCH_MIN_PLAYERS_PLURAL", file.remainingPlayers ) )
 			}
 			else if (file.remainingPlayers == 1)
 			{
-				tooltipConditions.push( Localize("#CUSTOMMATCH_MIN_PLAYERS_SINGULAR", file.remainingPlayers ) )
+				tooltipConditions.push( Localize( "#CUSTOMMATCH_MIN_PLAYERS_SINGULAR", file.remainingPlayers ) )
 			}
 		}
+		else if ( file.hasRemainingAllianceOrTeam )
+		{
+			tooltipConditions.push( Localize( "#CUSTOMMATCH_MIN_TEAMS" ) )
+		}
 
-		                                                                      
+		
 		if (file.teamIndex == TEAM_UNASSIGNED)
 		{
 			tooltipConditions.push( Localize( "#CUSTOMMATCH_ADMIN_NOT_ASSIGNED" ) )
 		}
 
-		                                                     
-		if (file.hasRemainingPlayers || file.teamIndex == TEAM_UNASSIGNED)
+		
+		if ( file.hasRemainingPlayers || file.teamIndex == TEAM_UNASSIGNED || file.hasRemainingAllianceOrTeam )
 		{
 			ToolTipData startButtonTooltip
 
-			                               
+			
 			string descText = ""
 			for (int k = 0; k < tooltipConditions.len(); k++ )
 			{
@@ -332,16 +358,16 @@ void function CustomMatch_SetStartMatchTooltip( CustomMatch_LobbyState data )
 		}
 		else
 		{
-			                                                       
+			
 			Hud_ClearToolTipData( file.startButton )
 		}
 
-		                                                    
+		
 		RuiSetBool( Hud_GetRui( file.startButton ), "isLocked", !CustomMatch_CanAdminStartMatch() )
 	}
 	else
 	{
-		                                                             
+		
 		Hud_ClearToolTipData( file.startButton )
 		RuiSetBool( Hud_GetRui( file.startButton ), "isLocked", !CustomMatch_CanPlayerSetReady() )
 	}
@@ -349,29 +375,29 @@ void function CustomMatch_SetStartMatchTooltip( CustomMatch_LobbyState data )
 
 void function CustomMatch_AdminLeftRemoveAllPlayers()
 {
-	                                
+	
 	file.isAutoClosing = true
 
-	                                      
+	
 	float startTime = UITime()
 	float endTime = UITime() + AUTO_CLOSE_LOBBY_TIMER
 
-	                                                
+	
 	while ( UITime() < endTime )
 	{
 		WaitFrame()
 
-		                                                                  
+		
 		if ( !CustomMatch_IsAdminInLobby() )
 		{
-			                        
+			
 			file.autoCloseRemainingTime = int(UITime() - startTime)
 			CustomMatchDashboard_UpdateAutoCloseTimer( true, float(AUTO_CLOSE_LOBBY_TIMER - file.autoCloseRemainingTime) )
 		}
 		else
 		{
-			                                        
-			                                                                           
+			
+			
 			break
 		}
 	}
@@ -379,12 +405,12 @@ void function CustomMatch_AdminLeftRemoveAllPlayers()
 	OnThreadEnd(
 		function() : ( )
 		{
-			                               
-			                                                                         
-			                                                                 
+			
+			
+			
 			if (file.autoCloseRemainingTime >= AUTO_CLOSE_LOBBY_TIMER)
 			{
-				                            
+				
 				CustomMatch_LeaveLobby()
 				CustomMatch_CloseLobbyMenu( "#CUSTOM_MATCH_REMOVED_FROM_MATCH", "#CUSTOM_MATCH_REMOVED_FROM_MATCH_DESC" )
 			}
@@ -406,11 +432,14 @@ bool function CustomMatch_IsAdminInLobby()
 
 void function Callback_OnLobbyDataChanged( CustomMatch_LobbyState data )
 {
-	CustomMatch_SetStartMatchTooltip( data )
+	file.customMatchData = data
+	file.customMatchDataSet = true
+
+	CustomMatch_SetStartMatchTooltip( file.customMatchData )
 
 	file.lobbyPlayers = data.players
 
-	                                                                                             
+	
 	if (!file.isAutoClosing)
 	{
 		if (!CustomMatch_IsAdminInLobby() && !CustomMatch_MatchInProgress())
@@ -420,8 +449,8 @@ void function Callback_OnLobbyDataChanged( CustomMatch_LobbyState data )
 	}
 	else
 	{
-		                                                          
-		                                                                  
+		
+		
 		if (CustomMatch_IsAdminInLobby())
 		{
 			file.autoCloseRemainingTime = 0
@@ -456,7 +485,7 @@ void function CustomMatchOpenDataCenterDialog(var button)
 {
 	if (CustomMatch_IsLocalAdmin())
 	{
-		                                
+		
 		Hud_Hide( file.panel )
 		Hud_Hide(GetPanel("ShareTokenPanel" ) )
 		Hud_Hide( Hud_GetChild( GetMenu("CustomMatchLobbyMenu" ), "TabsBackground" ) )
@@ -464,7 +493,7 @@ void function CustomMatchOpenDataCenterDialog(var button)
 		TabData tabs = GetTabDataForPanel( GetMenu("CustomMatchLobbyMenu" ) )
 		Hud_Hide( tabs.tabPanel )
 
-		                                   
+		
 		OpenDataCenterDialog( button )
 	}
 }
@@ -489,6 +518,11 @@ void function CustomMatchUpdateDataCenterFooter( InputDef footerData )
 	Hud_Show( elem )
 }
 
+bool function OpenChatDialog_CanClick()
+{
+	return !IsDialog( GetActiveMenu() ) && !ActionsLocked() && file.chatEnabled && !file.setTeamNameIsOpen
+}
+
 bool function CustomMatchDatacenter_CanClick()
 {
 	return !IsDialog( GetActiveMenu() ) && !ActionsLocked() && CustomMatch_IsLocalAdmin()
@@ -507,9 +541,9 @@ void function CustomMatchOnDataCenterDialog_Close()
 	Hud_Show( file.panel )
 }
 
-                                                                    
-             
-                                                                    
+
+
+
 
 void function CustomMatchLobby_OnDragPlayer( CustomMatch_LobbyPlayer player )
 {
@@ -559,7 +593,7 @@ void function DragHover()
 				HudElem_SetRuiArg( header, "isDragTarget", false )
 		}
 
-		                            
+		
 
 		file.dragTarget = dragTarget
 
@@ -597,8 +631,9 @@ void function DropPlayer( CustomMatch_LobbyPlayer player )
 		if( teamIndex < 0 )
 			teamIndex = Hud_GetScriptID( dropTarget ).tointeger()
 
-		if ( player.team != teamIndex )
-			CustomMatch_SetTeam( teamIndex, player.hardware, player.uid )
+		int correctedTeamIndex = CustomMatchTeamRoster_GetCorrectedTeamId( teamIndex )
+		if ( player.team != correctedTeamIndex )
+			CustomMatch_SetTeam( correctedTeamIndex, player.hardware, player.uid )
 	}
 	DragStop()
 }
@@ -608,7 +643,7 @@ var function GetDragTarget()
 	var element = GetMouseFocus()
 	while ( element && element != file.panel )
 	{
-		                                                                                    
+		
 		string name = Hud_GetHudName( element )
 		name = name.slice( 0, name.len() - 2 )
 
@@ -635,7 +670,7 @@ var function GetDropTarget()
 	var element = GetMouseFocus()
 	while ( element && element != file.panel )
 	{
-		                                                                                    
+		
 		string name = Hud_GetHudName( element )
 		name = name.slice( 0, name.len() - 2 )
 

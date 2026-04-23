@@ -37,9 +37,9 @@ void function InitFiringRangeSettingsPanel( var panel )
 	AddPanelFooterOption( panel, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddPanelFooterOption( panel, RIGHT, BUTTON_START, true, "#HINT_SYSTEM_MENU_GAMEPAD", "#HINT_SYSTEM_MENU_KB", TryOpenSystemMenu )
 
-	#if DEVELOPER
+#if DEV
 		AddPanelFooterOption( panel, LEFT, BUTTON_STICK_LEFT, true, "#LEFT_STICK_DEV_MENU", "#DEV_MENU", OpenDevMenu )
-	#endif
+#endif
 }
 
 const string BUTTONTEXT_INDENT = "    "
@@ -58,7 +58,7 @@ void function OnModeSettingsPanel_Hide( var panel )
 
 }
 
-                 
+
 FiringRangeOption function CreateFiringRangeOption( string name, string description, void functionref( var button ) onChangeCallback )
 {
 	FiringRangeOption option

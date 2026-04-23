@@ -984,6 +984,12 @@ Scripts:
 When: "UI"
 Scripts:
 [
+	base_events.nut
+	sh_boosts.gnut
+	sh_lore.gnut
+	sh_mastery.gnut
+	sh_personalized_store.gnut
+	radio_plays.nut
 	ui/customize_model.nut
 	ui/dialogs/feature_tutorial.gnut
 	ui/ui_vscript.gnut
@@ -1121,6 +1127,7 @@ Scripts:
 
 	// Lobby panels
 	ui/lobby_panel_season.nut
+	ui/ui_lobby_playlist_utility.nut
 	ui/lobby_panel_play.nut
 	ui/lobby_panel_club_landing.nut
 	ui/lobby_panel_characters.nut
@@ -1227,6 +1234,62 @@ Scripts:
 	//ui/panel_freeroam_maps.nut
 	//ui/menu_news.nut
 	//ui/menu_weaponmods.nut
+
+	ui/armed_and_dangerous_about.nut
+	ui/beast_with_in_20_0_the_hunt_about.nut
+	ui/clui_lobby_panel_pass_v2.nut
+	ui/combatrange_about.nut
+	ui/combo_buttons.nut
+	ui/dialogs/confirm_grx_error.nut
+	ui/dialogs/confirm_rest.nut
+	ui/dialogs/cross_progression_dialog.nut
+	ui/dialogs/event_shop_sweepstakes_flow_dialog.nut
+	ui/dialogs/event_shop_sweepstakes_rules_dialog.nut
+	ui/dialogs/event_shop_tier_dialog.nut
+	ui/dialogs/feature_tutorial.nut
+	ui/dialogs/language_packs.nut
+	ui/dialogs/low_pop.nut
+	ui/dialogs/milestone_information_dialog.nut
+	ui/dialogs/pack_information_dialog.nut
+	ui/dialogs/promo.nut
+	ui/dialogs/promoum.nut
+	ui/dialogs/requeue.nut
+	ui/download_aoc_notice.nut
+	ui/golden_horse_about.nut
+	ui/halloween_18_1_Harbinger_about.nut
+	ui/halloween_18_1_about.nut
+	ui/image_pak_load.nut
+	ui/lobby_panel_event.nut
+	ui/menu_artifacts_inspect.nut
+	ui/menu_character_select.nut
+	ui/menu_controls_ads_motion.nut
+	ui/menu_customize_model.nut
+	ui/menu_elite_intro.nut
+	ui/menu_generation_respawn.nut
+	ui/menu_ingame.nut
+	ui/menu_invite_friends.nut
+	ui/menu_lang_aoc_warn.nut
+	ui/menu_player_tag_dialog.nut
+	ui/menu_post_game_cups.nut
+	ui/menu_postgame_weapon_trial_celebrations.nut
+	ui/menu_store_milestone_events.nut
+	ui/menu_store_offer_set_items.nut
+	ui/menu_survival_ground_list.nut
+	ui/mode_tdm_about.nut
+	ui/new_survival_ground_list.nut
+	ui/nx_operation_mode_update.nut
+	ui/panel_banner_badges.nut
+	ui/panel_death_screen_killreplay.nut
+	ui/panel_equippable_quips.nut
+	ui/panel_postgame_general.nut
+	ui/ps5_activities.nut
+	ui/store_panel_special_currency_shop.nut
+	ui/survival_eventabilities_about.nut
+	ui/survival_heatwave_about.nut
+	ui/survival_quads_about.nut
+	ui/survival_quickmatch_about.nut
+	ui/survival_solos_about.nut
+	ui/survival_strikeout_about.nut
 ]
 
 When: "SERVER || UI "
@@ -1435,7 +1498,6 @@ When: "UI"
 Scripts:
 [
 	rtk/_rtk_core.nut
-	rtk/_rtk_stubs.nut
 	rtk/menus/legend_upgrades/rtk_legend_upgrades_info_controller.nut
 	rtk/mutators/_rtk_model_mutators.nut
 	rtk/_rtk_data_model.nut

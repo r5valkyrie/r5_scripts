@@ -19,7 +19,7 @@ struct
 } file
 
 
-void function InitFirstPersonReticleOptionsMenu( var newMenuArg )
+void function InitFirstPersonReticleOptionsMenu( var newMenuArg ) 
 {
 	var menu = GetMenu( "FirstPersonReticleOptionsMenu" )
 	file.menu = menu
@@ -29,7 +29,7 @@ void function InitFirstPersonReticleOptionsMenu( var newMenuArg )
 
 	RuiSetAsset(  Hud_GetRui( file.previewBackground ), "bgImage", file.previewBackgroundAssets[0] )
 
-
+	
 	RuiSetBool( Hud_GetRui(Hud_GetChild( file.previewBackgroundSwitch , "ValueButton") ), "hideBackground", true )
 	RuiSetBool( Hud_GetRui(Hud_GetChild( file.previewBackgroundSwitch , "LeftButton") ), "hideBackground", true )
 	RuiSetBool( Hud_GetRui(Hud_GetChild( file.previewBackgroundSwitch , "RightButton") ), "hideBackground", true )
@@ -63,7 +63,6 @@ void function OnOpenFirstPersonReticleOptionsMenu()
 	SetPreviewBackgoundImage( 0 )
 	ShowPanel( Hud_GetChild( file.menu, "FirstPersonReticleOptionsColorPanel" ) )
 
-
 	Hud_SetDialogListSelectionIndex( file.previewBackgroundSwitch, 0 )
 	RegisterBindCallbacks()
 }
@@ -84,7 +83,7 @@ void function RegisterBindCallbacks()
 	if(!file.registeredBindCallbacks)
 	{
 		file.registeredBindCallbacks = true
-
+		
 	}
 }
 
@@ -92,7 +91,7 @@ void function DeregisterBindCallbacks()
 {
 	if(file.registeredBindCallbacks)
 	{
-
+		
 		file.registeredBindCallbacks = false
 	}
 }

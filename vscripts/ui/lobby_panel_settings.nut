@@ -3,11 +3,17 @@ global function SettingsPanel_NavigateToSavedSelection
 global function SettingsPanel_GetDefaultImageForIndex
 
 global function SetupSettingsButton
+global function SetupSettingsButtonConfig
 global function SetupSettingsSlider
 global function SettingsPanel_SetContentPanelHeight
+global function SettingsButton_SetDescription
+global function SettingsButton_SetDescriptionAndChildren
 
 global function CreateSettingsConVarData
 global function SaveSettingsConVars
+global function MarkSettingsDirty
+global function MaybeSendPINSettingsEvent
+global function SendPINSettingsEvent
 global function AnySettingsConVarChanged
 
 
@@ -26,6 +32,16 @@ global struct ConVarData
 	string value
 }
 
+global struct SettingsButtonConfig
+{
+	string title = ""
+	string description = ""
+	string note = ""
+	asset image = $""
+	bool additionalWidget = false
+	bool isOnlyLeader = false
+}
+
 struct
 {
 	bool justOpened
@@ -33,6 +49,7 @@ struct
 
 	table<var, string> buttonTitles
 	table<var, string> buttonDescriptions
+	table<var, string> buttonDescriptionNotes
 	table<var, asset>  buttonImages
 	table<var, bool>   additionalWidget
 	var                detailsPanel
@@ -63,14 +80,14 @@ void function InitSettingsPanel( var panel )
 		SetTabBaseWidth( tabDef, 214 )
 	}
 
-	#if PC_PROG
+
 		{
 			TabDef tabDef = AddTab( panel, Hud_GetChild( panel, "ControlsPCPanelContainer" ), "#MOUSE_KEYBOARD" )
 			AddPanelEventHandler( Hud_GetChild( panel, "ControlsPCPanelContainer" ), eUIEvent.PANEL_SHOW, OnSettingsTab_Show )
 			file.panelDefaultImages.append( $"rui/menu/settings/settings_pc" )
 			SetTabBaseWidth( tabDef, 330 )
 		}
-	#endif
+
 
 	{
 		TabDef tabDef = AddTab( panel, Hud_GetChild( panel, "ControlsGamepadPanel" ), "#CONTROLLER" )
@@ -106,12 +123,26 @@ void function InitSettingsPanel( var panel )
 
 void function SettingsPanel_SetContentPanelHeight( var contentPanel )
 {
-	array<var> rewardButtonArray = GetPanelElementsByClassname( contentPanel, "SettingScrollSizer" )
+	array<var> contentPanelRows = GetPanelElementsByClassname( contentPanel, "SettingScrollSizer" )
 	int height = 0
-	foreach( var b in rewardButtonArray )
+	int totalPreviousInvisHeights = 0
+	foreach( var row in contentPanelRows )
 	{
-		if( Hud_IsVisible( b ) )
-			height += Hud_GetHeight(b) + Hud_GetBaseY( b )
+		
+		
+		
+		
+		if( Hud_IsVisible( row ) )
+		{
+			height += Hud_GetHeight( row ) + Hud_GetBaseY( row ) + totalPreviousInvisHeights
+			totalPreviousInvisHeights = 0
+		}
+		else
+		{
+			
+			
+			totalPreviousInvisHeights += Hud_GetHeight( row ) + Hud_GetBaseY( row )
+		}
 	}
 
 	Hud_SetHeight(contentPanel, height)
@@ -141,7 +172,29 @@ void function OnSettingsTab_Show( var panel )
 	RuiSetArg( rui, "headerText", "" )
 	RuiSetArg( rui, "selectionText", "" )
 	RuiSetArg( rui, "descText", "" )
+	RuiSetArg( rui, "noteText", "" )
 	RuiSetAsset( rui, "detailImage", SettingsPanel_GetDefaultImageForIndex( tabData.activeTabIdx ) )
+}
+
+void function SendPINSettingsEvent()
+{
+	table settingsTable = {
+		Audio = SettingsConVarsToTable( SoundPanel_GetConVarData() ),
+		Gameplay = SettingsConVarsToTable( GameplayPanel_GetConVarData() ),
+		ControlsPC = SettingsConVarsToTable( ControlsPCPanel_GetConVarData() ),
+		ControlsGamepad = SettingsConVarsToTable( ControlsGamepadPanel_GetConVarData() ),
+		Video = PIN_GetVideoSettings(),
+		Hardware = PIN_GetHardwareInfo(),
+		Social = PIN_GetSocialSettings(),
+		opt_out_crossplay_flag = !CrossplayUserOptIn(),
+	}
+	PIN_Settings( settingsTable )
+}
+
+void function MaybeSendPINSettingsEvent()
+{
+	if ( PIN_ShouldSendPlayerSettings() )
+		SendPINSettingsEvent()
 }
 
 void function OnSettingsPanel_Hide( var panel )
@@ -151,21 +204,13 @@ void function OnSettingsPanel_Hide( var panel )
 
 	if ( file.anyChanged )
 	{
-		                                                   
+		
 		SaveSettingsConVars( SoundPanel_GetConVarData() )
 		SaveSettingsConVars( GameplayPanel_GetConVarData() )
 		SaveSettingsConVars( ControlsPCPanel_GetConVarData() )
 		SaveSettingsConVars( ControlsGamepadPanel_GetConVarData() )
 
-		table settingsTable = {
-			Audio = SettingsConVarsToTable( SoundPanel_GetConVarData() ),
-			Gameplay = SettingsConVarsToTable( GameplayPanel_GetConVarData() ),
-			ControlsPC = SettingsConVarsToTable( ControlsPCPanel_GetConVarData() ),
-			ControlsGamepad = SettingsConVarsToTable( ControlsGamepadPanel_GetConVarData() ),
-			opt_out_crossplay_flag = !CrossplayUserOptIn(),
-		}
-
-		PIN_Settings( settingsTable )
+		SendPINSettingsEvent()
 
 		if ( IsFullyConnected() )
 			RunClientScript( "UIToClient_SettingsUpdated" )
@@ -191,44 +236,58 @@ void function SettingsPanel_NavigateToSavedSelection()
 {
 }
 
-
-var function SetupSettingsButton( var button, string buttonText, string description, asset image, bool showAdditional = false, bool isOnlyLeader = false )
+void function StoreButtonProperties( var button, SettingsButtonConfig buttonConfig )
 {
-	SetButtonRuiText( button, buttonText )
-	file.buttonTitles[ button ] <- buttonText
-	file.buttonDescriptions[ button ] <- description
-	file.buttonImages[ button ] <- image
-	file.additionalWidget[ button ] <- showAdditional
+	file.buttonTitles[ button ] <- buttonConfig.title
+	file.buttonDescriptions[ button ] <- buttonConfig.description
+	file.buttonDescriptionNotes[ button ] <- buttonConfig.note
+	file.buttonImages[ button ] <- buttonConfig.image
+	file.additionalWidget[ button ] <- buttonConfig.additionalWidget
+}
 
-	RuiSetBool(  Hud_GetRui( button ), "isOnlyLeader", isOnlyLeader )
+var function SetupSettingsButtonConfig( var button, SettingsButtonConfig buttonConfig )
+{
+	SetButtonRuiText( button, buttonConfig.title )
+	StoreButtonProperties( button, buttonConfig )
+	AddButtonEventHandler( button, UIE_GET_FOCUS, SettingsButton_GetFocus )
+	AddButtonEventHandler( button, UIE_LOSE_FOCUS, SettingsButton_LoseFocus )
+
+	RuiSetBool(  Hud_GetRui( button ), "isOnlyLeader", buttonConfig.isOnlyLeader )
 	if ( Hud_HasChild( button, "RightButton" ) )
 	{
 		var childButton = Hud_GetChild( button, "RightButton" )
 		AddButtonEventHandler( childButton, UIE_GET_FOCUS, SettingsButton_GetFocus )
 		AddButtonEventHandler( childButton, UIE_LOSE_FOCUS, SettingsButton_LoseFocus )
-		file.buttonTitles[ childButton ] <- buttonText
-		file.buttonDescriptions[ childButton ] <- description
-		file.buttonImages[ childButton ] <- image
-		file.additionalWidget[ childButton ] <- showAdditional
+		StoreButtonProperties( childButton, buttonConfig )
 	}
 	if ( Hud_HasChild( button, "LeftButton" ) )
 	{
 		var childButton = Hud_GetChild( button, "LeftButton" )
 		AddButtonEventHandler( childButton, UIE_GET_FOCUS, SettingsButton_GetFocus )
 		AddButtonEventHandler( childButton, UIE_LOSE_FOCUS, SettingsButton_LoseFocus )
-		file.buttonTitles[ childButton ] <- buttonText
-		file.buttonDescriptions[ childButton ] <- description
-		file.buttonImages[ childButton ] <- image
-		file.additionalWidget[ childButton ] <- showAdditional
+		StoreButtonProperties( childButton, buttonConfig )
 	}
 
-	AddButtonEventHandler( button, UIE_GET_FOCUS, SettingsButton_GetFocus )
-	AddButtonEventHandler( button, UIE_LOSE_FOCUS, SettingsButton_LoseFocus )
+	
+	
+	
+	
 
-	                         
-	                                    
-	                                    
-	                                           
+	return button
+}
+
+
+var function SetupSettingsButton( var button, string buttonText, string description, asset image, bool showAdditional = false, bool isOnlyLeader = false )
+{
+	SettingsButtonConfig buttonConfig;
+
+	buttonConfig.title = buttonText;
+	buttonConfig.description = description;
+	buttonConfig.image = image;
+	buttonConfig.additionalWidget = showAdditional;
+	buttonConfig.isOnlyLeader = isOnlyLeader;
+
+	SetupSettingsButtonConfig( button, buttonConfig );
 
 	return button
 }
@@ -240,6 +299,7 @@ array<var> function SetupSettingsSlider( var slider, string buttonText, string d
 	SetButtonRuiText( dropButton, buttonText )
 	file.buttonTitles[ dropButton ] <- buttonText
 	file.buttonDescriptions[ dropButton ] <- description
+	file.buttonDescriptionNotes[ dropButton ] <- ""
 	file.buttonImages[ dropButton ] <- image
 	file.additionalWidget[ dropButton ] <- showAdditional
 
@@ -254,6 +314,7 @@ void function DisplaySettingInfoForButton( var button, var rui )
 {
 	RuiSetArg( rui, "selectionText", file.buttonTitles[ button ] )
 	RuiSetArg( rui, "descText", file.buttonDescriptions[ button ] )
+	RuiSetArg( rui, "noteText", file.buttonDescriptionNotes[ button ] )
 	RuiSetAsset( rui, "detailImage", file.buttonImages[ button ] )
 	RuiSetBool( rui, "showCbInfo", file.additionalWidget[ button ] )
 }
@@ -271,6 +332,7 @@ void function SettingsButton_LoseFocus( var button )
 	var rui = Hud_GetRui( Settings_GetDetailPanel( button ) )
 	RuiSetArg( rui, "selectionText", "" )
 	RuiSetArg( rui, "descText", "" )
+	RuiSetArg( rui, "noteText", "" )
 	RuiSetAsset( rui, "detailImage", SettingsPanel_GetDefaultImageForIndex( tabData.activeTabIdx ) )
 	RuiSetBool( rui, "showCbInfo", false )
 }
@@ -281,7 +343,34 @@ void function SettingsButton_Activate( var button )
 	var rui = Hud_GetRui( Settings_GetDetailPanel( button ) )
 	RuiSetArg( rui, "selectionText", file.buttonTitles[ button ] )
 	RuiSetArg( rui, "descText", file.buttonDescriptions[ button ] )
+	RuiSetArg( rui, "noteText", file.buttonDescriptionNotes[ button ] )
 	RuiSetAsset( rui, "detailImage", file.buttonImages[ button ] )
+}
+
+void function SettingsButton_SetDescription( var button, string descText )
+{
+	file.buttonDescriptions[ button ] = descText
+
+	var rui = Hud_GetRui( Settings_GetDetailPanel( button ) )
+	RuiSetArg( rui, "descText", file.buttonDescriptions[ button ] )
+}
+
+void function SettingsButton_SetDescriptionAndChildren( var button, string descText )
+{
+	file.buttonDescriptions[ button ] = descText
+	if ( Hud_HasChild( button, "RightButton" ) )
+	{
+		var childButton = Hud_GetChild( button, "RightButton" )
+		file.buttonDescriptions[ childButton ] <- descText
+	}
+	if ( Hud_HasChild( button, "LeftButton" ) )
+	{
+		var childButton = Hud_GetChild( button, "LeftButton" )
+		file.buttonDescriptions[ childButton ] <- descText
+	}
+
+	var rui = Hud_GetRui( Settings_GetDetailPanel( button ) )
+	RuiSetArg( rui, "descText", file.buttonDescriptions[ button ] )
 }
 
 void function DropButton_GetFocus( var button )
@@ -322,10 +411,16 @@ ConVarData function CreateSettingsConVarData( string conVar, int conVarType )
 }
 
 
+void function MarkSettingsDirty()
+{
+	file.anyChanged = true
+}
+
+
 void function SaveSettingsConVars( array<ConVarData> savedConVarData )
 {
 	if ( AnySettingsConVarChanged( savedConVarData ) )
-		file.anyChanged = true
+		MarkSettingsDirty()
 
 	foreach ( conVarData in savedConVarData )
 	{

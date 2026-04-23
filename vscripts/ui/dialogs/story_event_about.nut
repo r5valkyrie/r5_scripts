@@ -79,10 +79,10 @@ struct
 	bool rewardButtonIsFocused		= false
 	bool vignetteButtonIsFocused    = false
 
-	int currentObjectiveIndex 		= -1                               
-	int lastCurrentObjectiveIndex 	= -1                                             
+	int currentObjectiveIndex 		= -1 
+	int lastCurrentObjectiveIndex 	= -1 
 
-	int focusedObjectiveIndex 		= -1                                      
+	int focusedObjectiveIndex 		= -1 
 	int lastFocusedObjectiveIndex 	= -1
 
 	array<var>  challengeButtons
@@ -144,7 +144,7 @@ void function OnOpen()
 
 	RegisterInput()
 
-	                    
+	
 	file.challengeGroups = StoryEvent_GetChapters(file.event)
 	file.numVisibleChallenges = file.challengeGroups.len()
 
@@ -161,7 +161,7 @@ void function OnClose()
 {
 	DeregisterInput()
 
-	                
+	
 	file.isOpen = false
 	ItemFlavor invalidItemFlav
 	file.event = invalidItemFlav
@@ -330,8 +330,8 @@ void function Thread_OnUpdate()
 				else
 					isFirstTime = false
 
-				                                                                                                         
-				                                                                                
+				
+				
 				if(file.currentObjectiveIndex != file.lastCurrentObjectiveIndex)
 					file.lastFocusedObjectiveIndex = file.currentObjectiveIndex
 				else
@@ -399,7 +399,7 @@ void function PopulateData( entity player )
 		chapter.radioVignetteData.radioVignetteMilesEvent = StoryEvent_GetRadioVignetteMilesEvent ( challengeGroup )
 
 		int completedObjectives
-		                            
+		
 		bool hasValidChallenge = false
 		foreach ( var challengeBlock in challenges )
 		{
@@ -411,14 +411,14 @@ void function PopulateData( entity player )
 			if ( challengeFlav != null )
 			{
 				expect ItemFlavor( challengeFlav )
-				                                                          
-				if ( !chapter.isTimeLocked && file.isPrologueCompleted && DoesPlayerHaveChallenge( player, challengeFlav ) )
+				
+				if ( !chapter.isTimeLocked && file.isPrologueCompleted && Challenge_IsAssigned( player, challengeFlav ) )
 				{
 					hasValidChallenge = true
 					objective.challengeTier = Challenge_GetCurrentTier( player, challengeFlav )
 					objective.challengeTotalTiers = Challenge_GetTierCount( challengeFlav )
 
-					                                                                   
+					
 					if(objective.challengeTotalTiers == objective.challengeTier)
 						objective.challengeTier = int(max(objective.challengeTier - 1, 0))
 
@@ -432,7 +432,7 @@ void function PopulateData( entity player )
 					objective.isCompleted = objective.progress == objective.goal
 					objective.percentCompleted = float( objective.progress) / float( objective.goal )
 
-					         
+					
 					ItemFlavorBag rewardsBag = Challenge_GetRewards(challengeFlav, objective.challengeTier )
 					objective.rewardsBag.flavors = rewardsBag.flavors
 					objective.rewardsBag.associatedError = rewardsBag.associatedError
@@ -449,7 +449,7 @@ void function PopulateData( entity player )
 
 		if( hasValidChallenge && !eventHasNew )
 		{
-			          
+			
 			string hasSeenVarName = GetSettingsBlockString( challengeGroup, "hasSeenAboutChallengesPersistentVarName")
 			if ( hasSeenVarName != "" && !chapter.isLocked && !chapter.isTimeLocked)
 			{
@@ -469,9 +469,6 @@ void function PopulateData( entity player )
 
 		file.chapters.push( chapter )
 	}
-
-	if(eventHasNew)
-		Remote_ServerCallFunction( "ClientCallback_SetStoryAboutActiveChapterSeen", ItemFlavor_GetGUIDString( file.event ) )
 }
 
 void function OnUpdateChallengesRui( entity player )
@@ -504,7 +501,7 @@ void function OnUpdateChallengesRui( entity player )
 		Hud_SetEnabled( button, false )
 		Hud_SetVisible( button, false  )
 	}
-	                                
+	
 	Hud_SetVisible( file.prologueButton, !file.isPrologueCompleted )
 
 	int challengeButton = (file.startAt == 0)? PEAK_CHALLENGE_GROUPS_SHOWN: 0
@@ -567,7 +564,7 @@ void function OnUpdateChallengesRui( entity player )
 			}
 			else
 			{
-				foreach ( ChapterObjectiveItem objective in chapter.objectives )                             
+				foreach ( ChapterObjectiveItem objective in chapter.objectives ) 
 				{
 					Hud_SetVisible( button, true )
 					Hud_SetEnabled( button,  !chapter.isLocked && !chapter.isTimeLocked && !IsChallengeIndexPeaking(challengeButton) )
@@ -593,7 +590,7 @@ void function OnUpdateChallengesRui( entity player )
 					if ( chapter.radioVignetteData.radioVignette != "" && objective.percentCompleted >= 1.0)
 					{
 						var rvButton = Hud_GetChild( file.rewardsPanel, format( "Challenge%1dRVButton", challengeButton ) )
-						                           
+						
 						Hud_SetEnabled( rvButton, true )
 						Hud_SetVisible( rvButton, true  )
 						var btnRui
@@ -616,7 +613,7 @@ void function OnUpdateChallengesRui( entity player )
 		file.rewardButtonToRewardFlavMap[file.finalReward] <- bpReward
 	}
 
-	                             
+	
 	bool HadFinalReward = file.finalReward in file.rewardButtonToRewardFlavMap
 	Hud_SetVisible( file.finalReward, HadFinalReward )
 	if( HadFinalReward )
@@ -837,9 +834,6 @@ void function PrologueButton_OnActivate( var btn )
 {
 	if ( Hud_IsLocked( btn ) || !Hud_IsEnabled( btn ) )
 		return
-
-	Remote_ServerCallFunction( "ClientCallback_MarkStoryPrologueCompleted", ItemFlavor_GetGUIDString( file.event ) )
-	Remote_ServerCallFunction( "ClientCallback_RefereshEventChallenges" )
 }
 
 void function PlaylistChangeButton_OnActivate( var btn )
@@ -856,7 +850,7 @@ void function PlaylistChangeButton_OnActivate( var btn )
 	string playlistName = file.chapters[chapterIndex].playlistName
 	if( playlistName != "" )
 	{
-		Lobby_SetSelectedPlaylist( file.chapters[chapterIndex].playlistName )
+		LobbyPlaylist_SetSelectedPlaylist( file.chapters[chapterIndex].playlistName )
 		CloseActiveMenu()
 	}
 }

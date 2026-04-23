@@ -1,4 +1,4 @@
-                                                                                                                  
+
 
 global function InitControlsPCPanel
 global function InitControlsPCPanelForCode
@@ -10,7 +10,7 @@ struct
 {
 	var panel
 	var keyBindingPanel
-	                        
+	
 
 	table<var, string> buttonTitles
 	table<var, string> buttonDescriptions
@@ -27,18 +27,51 @@ struct
 void function InitControlsPCPanelForCode( var panel )
 {
 	file.keyBindingPanel = CreateKeyBindingPanel( panel, "ContentPanel", $"resource/ui/menus/panels/controls_pc.res" )
-	Hud_SetPos( file.keyBindingPanel, 0, 0 )        
-	  
+	Hud_SetPos( file.keyBindingPanel, 0, 0 ) 
+	
 	Assert( Hud_HasChild( file.keyBindingPanel, "PanelFrame" ) )
 	UISize elementSize = REPLACEHud_GetSize( Hud_GetChild( file.keyBindingPanel, "PanelFrame" ) )
 	Hud_SetSize( file.keyBindingPanel, elementSize.width, elementSize.height )
 	Hud_Hide( file.keyBindingPanel )
-	  
-	                                                                       
+	
+	
 	KeyBindings_ClearTappedHeldPairs( file.keyBindingPanel )
 	KeyBindings_AddTappedHeldPair( file.keyBindingPanel, "weaponSelectOrdnance", "+strafe" )
 	KeyBindings_AddTappedHeldPair( file.keyBindingPanel, "+scriptCommand4", "+scriptCommand2" )
+
+
+	
+
 }
+
+
+bool function AutoBindUpgradeCoreBinding()
+{
+	return GetCurrentPlaylistVarBool( "passive_upgrade_core_auto_bind_upgrade_core_binding", true )
+}
+
+void function SetUpgradeCoreBindingOnceConnected()
+{
+	while( !IsFullyConnected() )
+	{
+		WaitFrame()
+	}
+
+	if( UpgradeCore_IsEnabled() )
+	{
+		if( AutoBindUpgradeCoreBinding() )
+		{
+			
+			
+			KeyBindings_BindTappedHeldPair( file.keyBindingPanel, "+scriptCommand5", "+scriptCommand8" )
+		}
+		else
+		{
+			KeyBindings_AddTappedHeldPair( file.keyBindingPanel, "+scriptCommand5", "+scriptCommand8" )
+		}
+	}
+}
+
 
 
 void function InitControlsPCPanel( var panel )
@@ -51,16 +84,17 @@ void function InitControlsPCPanel( var panel )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_SHOW, OnControlsPCPanel_Show )
 	AddPanelEventHandler( panel, eUIEvent.PANEL_HIDE, OnControlsPCPanel_Hide )
 
-	                                                                           
+	
 
 	SetupSettingsSlider( Hud_GetChild( file.keyBindingPanel, "SldMouseSensitivity" ), "#MOUSE_SENSITIVITY", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_DESC", $"rui/menu/settings/settings_pc" )
-	                                                                                                                                                                                                     
+	
 
 	var button = SetupSettingsButton( Hud_GetChild( file.keyBindingPanel, "BtnLookSensitivityMenu" ), "#MENU_MOUSE_SENSITIVITY_ZOOM", "#MOUSE_KEYBOARD_MENU_SENSITIVITY_ZOOM_DESC", $"rui/menu/settings/settings_pc" )
 	AddButtonEventHandler( button, UIE_CLICK, AdvanceMenuEventHandler( GetMenu( "ControlsAdvancedLookMenuPC" ) ) )
 
 	SetupSettingsButton( Hud_GetChild( file.keyBindingPanel, "SwchMouseAcceleration" ), "#MOUSE_ACCELERATION", "#MOUSE_KEYBOARD_MENU_ACCELERATION_DESC", $"rui/menu/settings/settings_pc" )
 	SetupSettingsButton( Hud_GetChild( file.keyBindingPanel, "SwchMouseInvertY" ), "#MOUSE_INVERT", "#MOUSE_KEYBOARD_MENU_INVERT_DESC", $"rui/menu/settings/settings_pc" )
+	SetupSettingsButton( Hud_GetChild( file.keyBindingPanel, "SwchMouseClamp" ), "#MOUSE_CLAMP", "#MOUSE_KEYBOARD_MENU_CLAMP_DESC", $"rui/menu/settings/settings_pc" )
 	SetupSettingsButton( Hud_GetChild( file.keyBindingPanel, "SwchLightingEffects" ), "#LIGHTING_EFFECTS", "#MOUSE_KEYBOARD_MENU_LIGHTING_DESC", $"rui/menu/settings/settings_pc" )
 
 	ScrollPanel_InitPanel( panel )

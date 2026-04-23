@@ -45,7 +45,7 @@ void function SkydiveEmotesPanel_OnShow( var panel )
 	AddCallback_OnTopLevelCustomizeContextChanged( panel, SkydiveEmotesPanel_Update )
 	SkydiveEmotesPanel_Update( panel )
 
-	CharacterEmotesPanel_SetHintSub( "" )
+	CharacterEmotesPanel_SetHintSub( "", true )
 }
 
 
@@ -74,7 +74,7 @@ void function SkydiveEmotesPanel_Update( var panel )
 {
 	var scrollPanel = Hud_GetChild( file.listPanel, "ScrollPanel" )
 
-	          
+	
 	foreach ( int flavIdx, ItemFlavor unused in file.skydiveEmoteList )
 	{
 		var button = Hud_GetChild( scrollPanel, "GridButton" + flavIdx )
@@ -97,8 +97,7 @@ void function SkydiveEmotesPanel_Update( var panel )
 			entries.append( entry )
 		}
 
-		file.skydiveEmoteList = clone GetLoadoutItemsSortedForMenu( entry, ( int function( ItemFlavor a ) : () { return 0 } ) )
-		FilterAndSortSkydiveEmotes( character, file.skydiveEmoteList )
+		file.skydiveEmoteList = clone GetLoadoutItemsSortedForMenu( entries, null, SkydiveEmote_IsTheEmpty, [] )
 
 		Hud_InitGridButtons( file.listPanel, file.skydiveEmoteList.len() )
 		foreach ( int flavIdx, ItemFlavor flav in file.skydiveEmoteList )
@@ -123,9 +122,7 @@ void function SkydiveEmotesPanel_Update( var panel )
 		}
 
 		Hud_ScrollToTop( file.listPanel )
-
-		                                                       
-		                               
+		file.currentVideo = $""
 	}
 }
 
@@ -136,7 +133,7 @@ void function SkydiveEmote_OnMiddleClick( var button )
 
 void function SkydiveEmotesPanel_OnFocusChanged( var panel, var oldFocus, var newFocus )
 {
-	if ( !IsValid( panel ) )                  
+	if ( !IsValid( panel ) ) 
 		return
 
 	if ( GetParentMenu( panel ) != GetActiveMenu() )
@@ -150,7 +147,7 @@ void function PreviewSkydiveEmote( ItemFlavor flav )
 {
 	asset desiredVideo = SkydiveEmote_GetVideo( flav )
 
-	if ( file.currentVideo != desiredVideo )                                                
+	if ( file.currentVideo != desiredVideo ) 
 	{
 		file.currentVideo = desiredVideo
 		StartVideoOnChannel( file.videoChannel, desiredVideo, true, 0.0 )
@@ -158,52 +155,14 @@ void function PreviewSkydiveEmote( ItemFlavor flav )
 }
 
 
-void function FilterAndSortSkydiveEmotes( ItemFlavor character, array<ItemFlavor> emoteList )
-{
-	table<ItemFlavor, int> equippedQuipSet
-	for ( int i = 0; i < NUM_SKYDIVE_EMOTE_SLOTS; i++ )
-	{
-		LoadoutEntry emoteSlot = Loadout_SkydiveEmote( character, i )
-		if ( LoadoutSlot_IsReady( LocalClientEHI(), emoteSlot ) )
-		{
-			ItemFlavor quip = LoadoutSlot_GetItemFlavor( LocalClientEHI(), emoteSlot )
-			equippedQuipSet[quip] <- i
-		}
-	}
-
-	for ( int i = emoteList.len() - 1; i >= 0; i-- )
-	{
-		if ( SkydiveEmote_IsTheEmpty( emoteList[i] ) )
-			emoteList.remove( i )
-	}
-
-	emoteList.sort( int function( ItemFlavor a, ItemFlavor b ) : ( equippedQuipSet ) {
-		bool a_isEquipped = (a in equippedQuipSet)
-		bool b_isEquipped = (b in equippedQuipSet)
-
-		if ( a_isEquipped != b_isEquipped )
-			return (a_isEquipped ? -1 : 1)
-
-		int aQuality = ItemFlavor_HasQuality( a ) ? ItemFlavor_GetQuality( a ) : -1
-		int bQuality = ItemFlavor_HasQuality( b ) ? ItemFlavor_GetQuality( b ) : -1
-
-		if ( aQuality > bQuality )
-			return -1
-		else if ( aQuality < bQuality )
-			return 1
-
-		return SortStringAlphabetize( Localize( ItemFlavor_GetLongName( a ) ), Localize( ItemFlavor_GetLongName( b ) ) )
-	} )
-}
-
-
 bool function HasEquippableSkydiveEmotes()
 {
 	ItemFlavor character = GetTopLevelCustomizeContext()
-	LoadoutEntry entry = Loadout_SkydiveEmote( character, 0 )
+	array<LoadoutEntry> entries
+	for ( int i = 0; i < NUM_SKYDIVE_EMOTE_SLOTS; i++ )
+		entries.append( Loadout_SkydiveEmote( character, i ) )
 
-	array<ItemFlavor> items = clone GetLoadoutItemsSortedForMenu( entry, ( int function( ItemFlavor a ) : () { return 0 } ) )
-	FilterAndSortSkydiveEmotes( character, items )
+	array<ItemFlavor> items = GetLoadoutItemsSortedForMenu( entries, null, SkydiveEmote_IsTheEmpty, [] )
 
 	return items.len() > 0
 }

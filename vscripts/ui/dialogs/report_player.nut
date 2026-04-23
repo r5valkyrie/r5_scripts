@@ -6,7 +6,9 @@ struct {
 	var menu
 	var reportReasonButton
 	var reportCheatButton
-	var reportOtherButton
+	var reportGameplayButton
+	var reportContentButton
+	var reportHarassmentButton
 
 	var reportReasonMenu
 
@@ -16,18 +18,22 @@ struct {
 	var closeButton
 
 	array<string> reasons
+	array<string> harassmentReasons
+	array<string> contentReasons
 
 	table<var, string> buttonToReason
 
+	string selectedCategoryReason = ""
 	string selectedReportReason = ""
 
 	string reportPlayerName = ""
 	string reportPlayerHardware = ""
 	string reportPlayerUID = ""
+	string reportPlayerEAID = ""
 	string friendlyOrEnemy = "friendly"
 } file
 
-void function InitReportPlayerDialog( var newMenuArg )
+void function InitReportPlayerDialog( var newMenuArg ) 
 {
 	var menu = GetMenu( "ReportPlayerDialog" )
 	file.menu = menu
@@ -36,11 +42,20 @@ void function InitReportPlayerDialog( var newMenuArg )
 	Hud_AddEventHandler( file.reportReasonButton, UIE_CLICK, ReportReasonButton_OnActivate )
 
 	file.reportCheatButton = Hud_GetChild( menu, "ReportCheatButton" )
+	HudElem_SetRuiArg( file.reportCheatButton, "buttonText", Localize( "#REPORT_CHEAT" ) )
 	Hud_AddEventHandler( file.reportCheatButton, UIE_CLICK, ReportCheatButton_OnActivate )
 
-	// "ReportOtherButton" doesn't exist in VGUI layout
-	//file.reportOtherButton = Hud_GetChild( menu, "ReportOtherButton" )
-	//Hud_AddEventHandler( file.reportOtherButton, UIE_CLICK, ReportOtherButton_OnActivate )
+	file.reportGameplayButton = Hud_GetChild( menu, "ReportGameplayButton" )
+	HudElem_SetRuiArg( file.reportGameplayButton, "buttonText", Localize( "#REPORT_GAMEPLAY" ) )
+	Hud_AddEventHandler( file.reportGameplayButton, UIE_CLICK, ReportGameplayButton_OnActivate )
+
+	file.reportContentButton = Hud_GetChild( menu, "ReportContentButton" )
+	HudElem_SetRuiArg( file.reportContentButton, "buttonText", Localize( "#REPORT_CONTENT" ) )
+	Hud_AddEventHandler( file.reportContentButton, UIE_CLICK, ReportContentButton_OnActivate )
+
+	file.reportHarassmentButton = Hud_GetChild( menu, "ReportHarassmentButton" )
+	HudElem_SetRuiArg( file.reportHarassmentButton, "buttonText", Localize( "#REPORT_HARASSMENT" ) )
+	Hud_AddEventHandler( file.reportHarassmentButton, UIE_CLICK, ReportHarassmentButton_OnActivate )
 
 	var panel = Hud_GetChild( file.menu, "FooterButtons" )
 
@@ -51,25 +66,24 @@ void function InitReportPlayerDialog( var newMenuArg )
 }
 
 
-void function ClientToUI_ShowReportPlayerDialog( string playerName, string playerHardware, string playerUID, string friendlyOrEnemy )
+void function ClientToUI_ShowReportPlayerDialog( string playerName, int playerHardwareID, string playerUID, string eaid, string friendlyOrEnemy )
 {
+	string playerHardware = GetNameFromHardware( playerHardwareID )
+
+	printt( "#EADP - ClientToUI_ShowReportPlayerDialog" )
+
 	if ( IsDialog( GetActiveMenu() ) )
 		return
+
+	printt( "#EADP", playerName, playerHardware, playerUID, eaid, friendlyOrEnemy )
 
 	file.friendlyOrEnemy = friendlyOrEnemy
 	file.reportPlayerName = playerName
 	file.reportPlayerHardware = playerHardware
 	file.reportPlayerUID = playerUID
+	file.reportPlayerEAID = eaid
 
-	int ver = GetReportStyle()
-	#if(CONSOLE_PROG)
-		ver = minint( ver, 1 )
-	#endif
-
-	if ( ver == 1 )
-		ShowPlayerProfileCardForUID( file.reportPlayerUID )
-	else if ( ver == 2 )
-		AdvanceMenu( GetMenu( "ReportPlayerDialog" ) )
+	AdvanceMenu( GetMenu( "ReportPlayerDialog" ) )
 }
 
 
@@ -78,34 +92,59 @@ void function ReportPlayerDialog_OnOpen()
 	var contentRui = Hud_GetRui( Hud_GetChild( file.menu, "ContentRui" ) )
 	RuiSetString( contentRui, "headerText", "#REPORT_PLAYER" )
 	RuiSetString( contentRui, "messageText", file.reportPlayerName )
+	SetExtraMessageText()
 
 	Hud_SetVisible( file.reportReasonButton, false )
 	Hud_SetVisible( file.reportCheatButton, true )
-	Hud_SetVisible( file.reportOtherButton, true )
+	Hud_SetVisible( file.reportGameplayButton, true )
+	Hud_SetVisible( file.reportContentButton, true )
+	Hud_SetVisible( file.reportHarassmentButton, true )
 
 	HudElem_SetRuiArg( file.reportReasonButton, "buttonText", Localize( "#SELECT_REPORT_REASON" ) )
 	file.selectedReportReason = ""
+	file.selectedCategoryReason = ""
 }
 
 
 void function ReportPlayerDialog_Yes( var button )
 {
-	#if(PC_PROG)
-		string pcOrConsole = "pc"
-	#else
-		string pcOrConsole = "console"
-	#endif
-
 	if ( file.selectedReportReason != "" )
 	{
-		if ( IsFullyConnected() )
-			ClientCommand( "ReportPlayer " + file.reportPlayerHardware + " " + file.reportPlayerUID + " " + file.selectedReportReason )
+		if ( file.selectedCategoryReason == "ReportHarassmentButton" )
+		{
+			ConfirmDialogData data
+			data.headerText = "#REPORT_PLAYER"
+			data.messageText = Localize( "#REPORT_PLAYER_ILLEGAL_CONFIRM" )
+			data.yesText = ["#A_BUTTON_HOLD_REPORT", "#HOLD_REPORT"]
+			data.noText = ["#B_BUTTON_CANCEL", "#CANCEL"]
+			data.extendedUseYes = true
 
-		CloseAllToTargetMenu( file.menu )
-		CloseActiveMenu()
+			data.resultCallback = void function ( int result )
+			{
+				if( result == 1 )
+					ReportPlayerDialog_ReportPlayer()
+			}
+			OpenConfirmDialogFromData( data )
+		}
+		else
+		{
+			ReportPlayerDialog_ReportPlayer()
+		}
 	}
-
 }
+
+void function ReportPlayerDialog_ReportPlayer()
+{
+	int reportHardwareID = GetHardwareFromName( file.reportPlayerHardware )
+
+	if ( IsFullyConnected() )
+	{
+		ReportPlayerCustomerService( reportHardwareID, file.reportPlayerUID, file.reportPlayerEAID, file.selectedReportReason )
+	}
+	CloseAllToTargetMenu( file.menu )
+	CloseActiveMenu()
+}
+
 
 void function ReportPlayerDialog_No( var button )
 {
@@ -120,47 +159,63 @@ void function ReportReasonButton_OnActivate( var button )
 	Hud_SetSelected( file.reportReasonButton, true )
 }
 
+
 void function ReportCheatButton_OnActivate( var button )
 {
+	file.reasons.clear()
 	file.reasons = GetCheatReportReasons()
+	ShowReportReasons()
+	file.selectedCategoryReason = Hud_GetHudName( button )
 
-	Hud_SetVisible( file.reportReasonButton, GetCheatReportReasons().len() > 0 )
-
-	Hud_SetVisible( file.reportCheatButton, false )
-	Hud_SetVisible( file.reportOtherButton, false )
+	SetExtraMessageText()
 }
 
-void function ReportOtherButton_OnActivate( var button )
+
+void function ReportGameplayButton_OnActivate( var button )
 {
-	#if(PC_PROG)
-/*
-*/
-		if ( file.friendlyOrEnemy == "friendly" )
-		{
-			file.reasons = GetHarassmentReportReasons()
-			Hud_SetVisible( file.reportReasonButton, GetHarassmentReportReasons().len() > 0 )
-			Hud_SetVisible( file.reportCheatButton, false )
-			Hud_SetVisible( file.reportOtherButton, false )
-		}
-		else
-		{
-			CloseActiveMenu( true, true )
+	file.reasons.clear()
+	file.reasons = GetGameplayReportReasons()
+	ShowReportReasons()
+	file.selectedCategoryReason = Hud_GetHudName( button )
 
-			if ( !Origin_IsOverlayAvailable() )
-			{
-				ConfirmDialogData dialogData
-				dialogData.headerText = ""
-				dialogData.messageText = "#ORIGIN_INGAME_REQUIRED"
-				dialogData.contextImage = $"ui/menu/common/dialog_notice"
+	SetExtraMessageText()
+}
 
-				OpenOKDialogFromData( dialogData )
-			}
-			ShowPlayerProfileCardForUID( file.reportPlayerUID )
-		}
-	#else
-		CloseActiveMenu( true, true )
-		ShowPlayerProfileCardForUID( file.reportPlayerUID )
-	#endif
+
+void function ReportContentButton_OnActivate( var button )
+{
+	file.reasons.clear()
+	file.reasons = GetContentReportReasons()
+	ShowReportReasons()
+	file.selectedCategoryReason = Hud_GetHudName( button )
+
+	SetExtraMessageText()
+}
+
+
+void function ReportHarassmentButton_OnActivate( var button )
+{
+	file.reasons.clear()
+	file.reasons = GetHarassmentReportReasons()
+	ShowReportReasons()
+	file.selectedCategoryReason = Hud_GetHudName( button )
+
+	SetExtraMessageText( "#REPORT_PLAYER_ILLEGAL_DESC" )
+}
+
+void function ShowReportReasons()
+{
+	Hud_SetVisible( file.reportReasonButton, file.reasons.len() > 0 )
+	Hud_SetVisible( file.reportCheatButton, false )
+	Hud_SetVisible( file.reportGameplayButton, false )
+	Hud_SetVisible( file.reportContentButton, false )
+	Hud_SetVisible( file.reportHarassmentButton, false )
+}
+
+void function SetExtraMessageText( string text = "" )
+{
+	var contentRui = Hud_GetRui( Hud_GetChild( file.menu, "ContentRui" ) )
+	RuiSetString( contentRui, "extraMessageText", text )
 }
 
 array<string> function GetCheatReportReasons()
@@ -168,11 +223,11 @@ array<string> function GetCheatReportReasons()
 	array<string> prefixes
 	array<string> reportReasons = []
 
-	#if(PC_PROG)
+
 		prefixes.append( "report_player_reason_pc_cheat_" )
-	#else
-		prefixes.append( "report_player_reason_console_cheat_" )
-	#endif
+
+
+
 
 	foreach ( playlistVarPrefix in prefixes )
 	{
@@ -185,17 +240,42 @@ array<string> function GetCheatReportReasons()
 
 	return reportReasons
 }
+
+
+array<string> function GetGameplayReportReasons()
+{
+	array<string> prefixes
+	array<string> reportReasons = []
+
+
+		prefixes.append( "report_player_reason_pc_gameplay_" )
+
+
+
+
+	foreach ( playlistVarPrefix in prefixes )
+	{
+		int numReasons = GetCurrentPlaylistVarInt( playlistVarPrefix + "count", 0 )
+		for ( int index = 0; index < numReasons; index++ )
+		{
+			reportReasons.append( GetCurrentPlaylistVarString( playlistVarPrefix + (index + 1), "#UNAVAILABLE" ) )
+		}
+	}
+
+	return reportReasons
+}
+
 
 array<string> function GetHarassmentReportReasons()
 {
 	array<string> prefixes
 	array<string> reportReasons = []
 
-	#if(PC_PROG)
-		prefixes.append( "report_player_reason_pc_other_" )
-	#else
-		prefixes.append( "report_player_reason_console_other_" )
-	#endif
+
+		prefixes.append( "report_player_reason_pc_harassment_" )
+
+
+
 
 	foreach ( playlistVarPrefix in prefixes )
 	{
@@ -210,7 +290,31 @@ array<string> function GetHarassmentReportReasons()
 }
 
 
-void function InitReportReasonPopup( var newMenuArg )
+array<string> function GetContentReportReasons()
+{
+	array<string> prefixes
+	array<string> reportReasons = []
+
+
+		prefixes.append( "report_player_reason_pc_content_" )
+
+
+
+
+	foreach ( playlistVarPrefix in prefixes )
+	{
+		int numReasons = GetCurrentPlaylistVarInt( playlistVarPrefix + "count", 0 )
+		for ( int index = 0; index < numReasons; index++ )
+		{
+			reportReasons.append( GetCurrentPlaylistVarString( playlistVarPrefix + (index + 1), "#UNAVAILABLE" ) )
+		}
+	}
+
+	return reportReasons
+}
+
+
+void function InitReportReasonPopup( var newMenuArg ) 
 {
 	var reportReasonMenu = GetMenu( "ReportPlayerReasonPopup" )
 	file.reportReasonMenu = reportReasonMenu
@@ -220,6 +324,7 @@ void function InitReportReasonPopup( var newMenuArg )
 	file.reportReasonPopup = Hud_GetChild( reportReasonMenu, "ReportReasonPopup" )
 	AddMenuEventHandler( reportReasonMenu, eUIEvent.MENU_OPEN, OnOpenReportPlayerDialog )
 	AddMenuEventHandler( reportReasonMenu, eUIEvent.MENU_CLOSE, OnCloseReportPlayerDialog )
+	AddMenuEventHandler( reportReasonMenu, eUIEvent.MENU_SHOW, OnShowReportPlayerDialog )
 
 	file.reportReasonList = Hud_GetChild( file.reportReasonPopup, "ReportReasonList" )
 
@@ -234,15 +339,16 @@ void function OnCloseButton_Activate( var button )
 	Hud_SetSelected( file.reportReasonButton, false )
 }
 
+
 void function OnOpenReportPlayerDialog()
 {
-	//
+	
 	foreach ( button, playlistName in file.buttonToReason )
 	{
 		Hud_RemoveEventHandler( button, UIE_CLICK, OnReasonButton_Activate )
 	}
 	file.buttonToReason.clear()
-	//
+	
 
 	var ownerButton = file.reportReasonButton
 
@@ -264,7 +370,7 @@ void function OnOpenReportPlayerDialog()
 		if ( i == 0 )
 		{
 			int popupHeight = (Hud_GetHeight( button ) * reasons.len())
-			Hud_SetPos( file.reportReasonPopup, ownerPos.x, ownerPos.y/**/)
+			Hud_SetPos( file.reportReasonPopup, ownerPos.x, ownerPos.y)
 			Hud_SetSize( file.reportReasonPopup, ownerSize.width, popupHeight )
 			Hud_SetSize( file.reportReasonList, ownerSize.width, popupHeight )
 
@@ -288,6 +394,21 @@ void function OnCloseReportPlayerDialog()
 		Hud_SetFocused( file.reportReasonButton )
 }
 
+
+void function OnShowReportPlayerDialog()
+{
+
+
+
+
+
+
+
+
+
+
+
+}
 
 void function ReasonButton_Init( var button, string reason )
 {

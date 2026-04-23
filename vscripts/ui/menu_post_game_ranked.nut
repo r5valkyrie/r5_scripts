@@ -1,12 +1,24 @@
 global function InitPostGameRankedMenu
+global function InitPostGameRankedSummaryPanel
 global function OpenRankedSummary
+global function InitRankedScoreBarRuiForDoubleBadge
+
+global function RankUpAnimation
+
 
 const string POSTGAME_LINE_ITEM = "UI_Menu_MatchSummary_Ranked_XPBreakdown"
 const string POSTGAME_XP_INCREASE = "UI_Menu_MatchSummary_Ranked_XPBar_Increase"
-                                                                                   
+const asset RUI_PATH_RANKED_DIVISION_UP = $"ui/rank_division_up_anim.rpak"
 const float PROGRESS_BAR_FILL_TIME = 5.0
 const float PROGRESS_BAR_FILL_TIME_FAST = 2.0
-const float LINE_DISPLAY_TIME = 0.75
+const float LINE_DISPLAY_TIME = 0.4
+const float RANK_UP_TIME = 3.6
+const float DIALOGUE_DELAY = 1.6
+const float ANIMATE_XP_BAR_DELAY = 0.25
+const float ANIMATE_XP_BAR_PROGRESS_DELAY = 0.5
+const float START_DELAY_OFFSET = -50.0
+const float BAD_GAME_TIME_OFFSET = -9999.0
+const int NUM_SCORE_LINES_DEFAULT = 4
 
 struct
 {
@@ -15,7 +27,7 @@ struct
 	var  menuHeaderRui
 	bool showQuickVersion
 	bool skippableWaitSkipped = false
-	bool disableNavigateBack = true
+	bool disableNavigateBack = false
 	bool isFirstTime = false
 	bool buttonsRegistered = false
 	bool canUpdateXPBarEmblem = false
@@ -31,38 +43,50 @@ struct scoreLine
 	float rowHeight = 1.0
 }
 
-void function InitPostGameRankedMenu( var newMenuArg )                                               
+void function InitPostGameRankedMenu( var newMenuArg )
 {
 	var menu = GetMenu( "PostGameRankedMenu" )
 	file.menu = menu
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, OnPostGameRankedMenu_Open )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, OnPostGameRankedMenu_Close )
-
 	AddMenuEventHandler( menu, eUIEvent.MENU_SHOW, OnPostGameRankedMenu_Show )
 	AddMenuEventHandler( menu, eUIEvent.MENU_HIDE, OnPostGameRankedMenu_Hide )
-
 	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, OnNavigateBack )
 
-	file.continueButton = Hud_GetChild( menu, "ContinueButton" )
-
+	file.continueButton = Hud_GetChild( file.menu, "ContinueButton" )
 	Hud_AddEventHandler( file.continueButton, UIE_CLICK, OnContinue_Activate )
+
+	{
+		TabDef tabDef = AddTab( file.menu, Hud_GetChild( file.menu, "MatchSummaryPanel" ), "#MENU_RANKED" )
+		SetTabBaseWidth( tabDef, 250 )
+	}
+
+	TabData tabData = GetTabDataForPanel( file.menu )
+
+	tabData.centerTabs = true
+	tabData.bannerHeader = ""
+	tabData.bannerTitle = "#MATCH_SUMMARY"
+	tabData.callToActionWidth = 700
+
+	SetTabBackground( tabData, Hud_GetChild( file.menu, "TabsBackground" ), eTabBackground.STANDARD )
+
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_CLOSE", "#B_BUTTON_CLOSE", null, CanNavigateBack )
 	AddMenuFooterOption( menu, LEFT, BUTTON_BACK, true, "", "", CloseRankedSummary, CanNavigateBack )
 
 	RegisterSignal( "OnPostGameRankedMenu_Close" )
 
-
-	file.menuHeaderRui = Hud_GetRui( Hud_GetChild( menu, "MenuHeader" ) )
-
-	RuiSetString( file.menuHeaderRui, "menuName", "#MATCH_SUMMARY" )
-
-#if DEVELOPER
+#if DEV
 	AddMenuThinkFunc( file.menu, PostGameRankedMenuAutomationThink )
-#endif       
+#endif
 }
 
-#if DEVELOPER
+void function InitPostGameRankedSummaryPanel( var panel )
+{
+	
+}
+
+#if DEV
 void function PostGameRankedMenuAutomationThink( var menu )
 {
 	if (AutomateUi())
@@ -71,13 +95,21 @@ void function PostGameRankedMenuAutomationThink( var menu )
 		OnContinue_Activate(null)
 	}
 }
-#endif       
+#endif
 
 void function OnPostGameRankedMenu_Open()
 {
-	Hud_Hide( Hud_GetChild( file.menu, "RewardDisplay" ) )
-	Hud_Show( Hud_GetChild( file.menu, "BlackOut" ) )
 	AddCallbackAndCallNow_UserInfoUpdated( Ranked_OnUserInfoUpdatedInPostGame )
+	Lobby_AdjustScreenFrameToMaxSize( Hud_GetChild( file.menu, "ScreenFrame" ), true )
+
+	var matchRankRui = Hud_GetRui( Hud_GetChild( file.menu, "MatchRank" ) )
+	PopulateMatchRank( matchRankRui )
+
+	TabData tabData = GetTabDataForPanel( file.menu )
+	TabDef tabDef = Tab_GetTabDefByBodyName( tabData, "MatchSummaryPanel" )
+	tabDef.enabled = true
+	tabDef.visible = true
+	ActivateTab( tabData, 0 )
 }
 
 void function OnPostGameRankedMenu_Show()
@@ -93,41 +125,24 @@ void function _Show()
 	if ( !IsFullyConnected() )
 		return
 
+	if ( !IsPersistenceAvailable() )
+		return
+
 	UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
 
 	float maxTimeToWaitForLoadScreen = UITime() + LOADSCREEN_FINISHED_MAX_WAIT_TIME
-	while(  UITime() < maxTimeToWaitForLoadScreen && !IsLoadScreenFinished()  )                                                                                         
+	while(  UITime() < maxTimeToWaitForLoadScreen && !IsLoadScreenFinished()  ) 
 		WaitFrame()
 
 	bool isFirstTime = GetPersistentVarAsInt( "showGameSummary" ) != 0
-	if ( isFirstTime && TryOpenSurvey( eSurveyType.POSTGAME ) )
+
+	string postMatchSurveyMatchId = string( GetPersistentVar( "postMatchSurveyMatchId" ) )
+	float postMatchSurveySampleRateLowerBound = expect float( GetPersistentVar( "postMatchSurveySampleRateLowerBound" ) )
+	if ( isFirstTime && TryOpenSurvey( eSurveyType.POSTGAME, postMatchSurveyMatchId, postMatchSurveySampleRateLowerBound ) )
 	{
 		while ( IsDialog( GetActiveMenu() ) )
 			WaitFrame()
 	}
-
-	Hud_Hide( Hud_GetChild( file.menu, "BlackOut" ) )
-
-	var rui = Hud_GetRui( Hud_GetChild( file.menu, "SummaryBox" ) )
-	RuiSetString( rui, "titleText", "#RANKED_TITLE" )
-
-	ItemFlavor ornull rankedPeriod = GetActiveRankedPeriodByType( GetUnixTimestamp(), eItemType.calevent_rankedperiod )
-	if ( rankedPeriod != null )
-	{
-		expect ItemFlavor( rankedPeriod )
-		RuiSetString( rui, "subTitleText", ItemFlavor_GetShortName( rankedPeriod ) )
-	}
-	else
-	{
-		RuiSetString( rui, "subTitleText", "#RANKED_OFF_SEASON_SUBTITLE" )
-	}
-
-	var hudElem = Hud_GetChild( file.menu, "RankedProgressBar" )
-	var barRui = Hud_GetRui( hudElem )
-	RuiSetGameTime( barRui, "animStartTime", RUI_BADGAMETIME )
-
-	RuiSetGameTime( Hud_GetRui( Hud_GetChild( file.menu, "XPEarned1" ) ), "startTime", ClientTime() + 999999 )
-
 
 	if ( !file.buttonsRegistered )
 	{
@@ -135,510 +150,136 @@ void function _Show()
 		RegisterButtonPressedCallback( KEY_SPACE, OnContinue_Activate )
 		file.buttonsRegistered = true
 	}
-
-	var matchRankRui = Hud_GetRui( Hud_GetChild( file.menu, "MatchRank" ) )
-	PopulateMatchRank( matchRankRui )
-
-	thread AnimateXPBar( file.isFirstTime )
 }
 
-void function AnimateXPBar( bool isFirstTime )
+void function RankUpAnimation( int numRanksEarned, int scoreStart, int ladderPosition, int finalScore, bool isProvisionalGraduation = false )
 {
+	PostGameGeneral_SetDisableNavigateBack( true )
+	file.disableNavigateBack = true
 
-	#if DEVELOPER
-		printf ("RANKED DEBUG: AnimateXPBarStart***** " )
-	#endif
+	SharedRankedDivisionData rd_start = GetCurrentRankedDivisionFromScoreAndLadderPosition( scoreStart, ladderPosition )
+	SharedRankedTierData startingTier = rd_start.tier
+	SharedRankedDivisionData ornull nextDivision = GetNextRankedDivisionFromScore( scoreStart ) 
 
-	EndSignal( uiGlobal.signalDummy, "OnPostGameRankedMenu_Close" )
-
-	file.canUpdateXPBarEmblem = false
-
-	entity player                         = GetLocalClientPlayer()
-	int score                             = GetPlayerRankScore( player )
-	int ladderPosition                    = Ranked_GetLadderPosition( player )
-	                                                                       
-	SharedRankedDivisionData currentRank  = GetCurrentRankedDivisionFromScoreAndLadderPosition( score, ladderPosition )
-	int previousScore                     = GetRankedPersistenceData( player, "previousRankedScore" )
-	SharedRankedDivisionData previousRank = GetCurrentRankedDivisionFromScore( previousScore )                                                                                                                         
-
-	bool previousGameWasAbandonded = expect bool( GetPersistentVar( "lastGameRankedAbandon" ) )
-
-	bool tierDemotion = (currentRank.index < previousRank.index) && (currentRank.tier != previousRank.tier)                                 
-	bool wasNetDecreaseInRankedScore = previousScore >= score
-	bool quick                       = !isFirstTime
-	file.disableNavigateBack = !quick
-	file.showQuickVersion = quick
-
-	#if DEVELOPER
-		printf ("RANKED DEBUG: ladderPosition: " + ladderPosition )
-		printf ("RANKED DEBUG: currentScore: " + score  + " index: " + currentRank.index )
-		printf ("RANKED DEBUG: previousScore:" + previousScore + " index: " + previousRank.index )
-		printf ("RANKED DEBUG: previousGameWasAbandonded:" + previousGameWasAbandonded )
-		printf ("RANKED DEBUG: tierDemotion:" + tierDemotion )
-		printf ("RANKED DEBUG: wasNetDecreaseInRankedScore:" + wasNetDecreaseInRankedScore )
-		printf ("RANKED DEBUG: quick: " + quick )
-	#endif
-
-	Hud_Show( file.continueButton )
-
-	var rui = Hud_GetRui( Hud_GetChild( file.menu, "XPEarned1" ) )
-	if ( IsRankedInSeason()  )
-		RuiSetString( rui, "headerText", "#RANKED_TITLE_SCORE_REPORT" )
-	else
-		RuiSetString( rui, "headerText", "#RANKED_OFF_SEASON_TITLE_SCORE_REPORT" )
-
-	if ( previousGameWasAbandonded )
-		RuiSetString( rui, "headerText", "#RANKED_TITLE_ABANDON" )
-
-	int entryCost = GetRankedPersistenceData( player, "lastGameEntryCost" )
-
-	int placement                 = GetPersistentVarAsInt( "lastGameRank" )
-	int numKills                  = GetXPEventCount( player, eXPType.KILL )
-	int numAssists                = GetRankedPersistenceData( player, "lastGameAssistCount" )
-
-
-
-
-	                     
-	array < scoreLine > scoreLines
-
-	                                                                                                
-	scoreLine entryCostLine
-	if ( previousRank.isLadderOnlyDivision || GetNextRankedDivisionFromScore( previousScore ) == null  )
+	if ( nextDivision != null ) 
 	{
-		entryCostLine.keyString = Localize( "#RANKED_ENTRY_COST", Localize( "#RANKED_ENTRY_COST_MASTER_APEX_PREDATOR" ) )
-	}
-	else
-	{
-		entryCostLine.keyString = Localize( "#RANKED_ENTRY_COST", Localize( previousRank.tier.name ) )
-	}
+		expect SharedRankedDivisionData( nextDivision )
+		StopUISoundByName( POSTGAME_XP_INCREASE )
 
-	entryCostLine.valueString = string( entryCost )
-	scoreLines.append( entryCostLine )
-
-	                                                                                               
-	scoreLine placementLine
-
-	int placementScore = GetRankedPersistenceData( player, "lastGamePlacementScore" )
-	placementLine.keyString = Localize( "#RANKED_MATCH_PLACEMENT" , placement )
-	placementLine.valueString = previousGameWasAbandonded ? Localize( "#RANKED_SCORE_ABANDON", placementScore ) : string ( placementScore )
-
-	scoreLines.append( placementLine )
-
-	                                                                                                       
-
-	scoreLine killScoreLine
-
-	int numParticipation          = GetRankedPersistenceData( player, "lastGameParticipationCount" )
-	int killScore 				  = GetRankedPersistenceData( player, "lastGameKillScore" )
-
-	int pointsPerKillForPlacement = Ranked_GetPointsPerKillForPlacement( placement )
-
-	int tierCount = Ranked_GetTiers().len()
-	array<int> killsAssistsTier
-	array<int> participationTier
-
-	for (int i = 0 ; i < tierCount; i ++)
-	{
-		killsAssistsTier.append( GetPersistentVarAsInt("lastGameKillsAssistsCountByTier["+i+"]"))
-		participationTier.append (GetPersistentVarAsInt("lastGameParticipationCountByTier["+i+"]"))
-	}
-
-
-	killScoreLine.keyString += Localize ( "#RANKED_KILL_RP_HEADER" , Ranked_GetPointsForKillsPlacement (placement) )
-
-	string killsAssistsString = Localize( "#RANKED_KILL_SCORE_MULTI", numKills, numAssists )
-
-	float additionalLineCount = 0
-	int k = 0
-	for (int i = 0 ; i < killsAssistsTier.len(); i++)
-	{
-		if (killsAssistsTier[i] > 0)
+		if ( numRanksEarned > 0 || isProvisionalGraduation )
 		{
-			k++
-			if ( k == 5 || k == 1 )
-			{
-				k++
-				additionalLineCount += 0.5
-
-				killsAssistsString += "`2\n"
-			}
-			killsAssistsString += "   "
-			killsAssistsString += Localize( "#RANKED_KILL_SCORE_" + i , killsAssistsTier[i])
-		}
-	}
-
-	killsAssistsString += Localize( "#RANKED_KILL_SCORE_MULTI_2", numParticipation )
-
-	k = 0
-	for (int i = 0 ; i < participationTier.len(); i++)
-	{
-		if (participationTier[i] > 0)
-		{
-			k++
-			if ( k == 5 || k == 1 )
-			{
-				k++
-				additionalLineCount += 0.5
-
-				killsAssistsString += "`2\n"
-			}
-			killsAssistsString += "   "
-			killsAssistsString += Localize( "#RANKED_KILL_SCORE_" + i , participationTier[i])
-		}
-	}
-	printt("additionalLineCount", additionalLineCount)
-	killScoreLine.keyString += killsAssistsString
-	killScoreLine.rowHeight = 2.45 + additionalLineCount
-
-	string killScoreString = previousGameWasAbandonded ? Localize( "#RANKED_SCORE_ABANDON", killScore ) : string ( killScore )
-	killScoreLine.valueString = killScoreString
-
-	scoreLines.append( killScoreLine )
-	bool rankForgiveness = expect bool( GetPersistentVar( "lastGameRankedForgiveness" ) ) || expect bool( GetPersistentVar( "lastGameAbandonForgiveness" ) )
-	Assert( !( previousGameWasAbandonded &&  rankForgiveness )  )                                                  
-
-	int lastGameLossProtectionAdjustment = GetRankedPersistenceData( player, "lastGameLossProtectionAdjustment" )
-	if ( rankForgiveness && lastGameLossProtectionAdjustment != 0  )
-	{
-		scoreLine lossForgivenLine
-		lossForgivenLine.keyString =  "#RANKED_FORGIVENESS"
-		lossForgivenLine.valueString = string( lastGameLossProtectionAdjustment )
-		scoreLines.append(lossForgivenLine)
-	}
-	else if ( previousGameWasAbandonded  )
-	{
-		int abandonPenalty = GetRankedPersistenceData( player, "lastGamePenaltyPointsForAbandoning" )
-
-		scoreLine abandonPenalityLine
-		abandonPenalityLine.keyString = "#RANKED_ABANDON_PENALTY"
-		abandonPenalityLine.valueString = Localize( "#RANKED_SCORE_ABANDON", abandonPenalty )
-		scoreLines.append(abandonPenalityLine)
-	}
-
-	int tierDerankingProtectionAdjustment = GetRankedPersistenceData( player, "lastGameTierDerankingProtectionAdjustment" )
-	bool wasPromoted = currentRank.index > previousRank.index && ( !previousRank.isLadderOnlyDivision ) && score > previousScore
-
-	if ( tierDerankingProtectionAdjustment > 0  )                                           
-	{
-
-		if ( tierDemotion )           
-		{
-			scoreLine abandonLine
-			abandonLine.keyString = "#RANKED_TIER_DERANKING"
-			abandonLine.valueString = string( score - previousScore + tierDerankingProtectionAdjustment)
-			scoreLines.append(abandonLine)
-		}
-		else if ( wasPromoted )            
-		{
-			scoreLine promoteLine
-			promoteLine.keyString = "#RANKED_TIER_PROMOTION_BONUS"
-			promoteLine.valueString =  string( tierDerankingProtectionAdjustment )
-			scoreLines.append(promoteLine)
-		}
-		else                      
-		{
-			scoreLine tierDemotionLine
-			tierDemotionLine.keyString = "#RANKED_TIER_DERANKING_PROTECTION"
-			tierDemotionLine.valueString =  string( tierDerankingProtectionAdjustment )
-			scoreLines.append(tierDemotionLine)
-		}
-	}
-
-
-	                       
-	for (int i = 0 ; i < scoreLines.len(); i++)
-	{
-		RuiSetString ( rui, "line" + string ( i+1 ) + "KeyString", scoreLines[i].keyString )
-		RuiSetString ( rui, "line" + string ( i+1 ) + "ValueString", scoreLines[i].valueString )
-		RuiSetColorAlpha ( rui, "line" + string ( i+1 ) + "Color", scoreLines[i].color, scoreLines[i].alpha	 )
-		RuiSetFloat ( rui, "line" + string ( i+1 ) + "RowHeight" , scoreLines[i].rowHeight )
-	}
-	                                                                                   
-
-	RuiSetFloat( rui, "lineDisplayTime", LINE_DISPLAY_TIME )
-	RuiSetFloat( rui, "startDelay", 0.0 )
-	RuiSetGameTime( rui, "startTime", ClientTime() + 0.5 )
-
-	int numLines = scoreLines.len()
-	RuiSetInt( rui, "numLines", numLines )
-
-	var scoreAdjustElem = Hud_GetChild( file.menu, "RankedScoreAdjustment" )
-	var scoreAdjustRui = Hud_GetRui( scoreAdjustElem )
-	var hudElem = Hud_GetChild( file.menu, "RankedProgressBar" )
-	var barRui = Hud_GetRui( hudElem )
-	RuiSetBool( barRui, "showPointsProgress", true )
-	RuiSetGameTime( barRui, "animStartTime", RUI_BADGAMETIME )
-
-	int adjust = 0
-	if ( numLines == 4 )
-		adjust = 15
-	else if ( numLines == 5 )
-		adjust = 30
-
-	Hud_SetY( scoreAdjustElem, Hud_GetBaseY( scoreAdjustElem ) + adjust )
-
-	int scoreAdjust = score-previousScore
-	RuiSetInt( scoreAdjustRui, "scoreAdjustment", scoreAdjust )
-
-	bool wasDemoted = currentRank.index < previousRank.index && ( !previousRank.isLadderOnlyDivision )
-
-	bool isDemotionProtected = tierDerankingProtectionAdjustment > 0 && !wasDemoted && !rankForgiveness && !wasPromoted && currentRank.tier.allowsDemotion
-
-	#if DEVELOPER
-		printf ("RANKED DEBUG: tierDerankingProtectionAdjustment: " + tierDerankingProtectionAdjustment )
-		printf ("RANKED DEBUG: isDemotionProtected: " + isDemotionProtected )
-		printf ("RANKED DEBUG: wasDemoted: " + wasDemoted )
-		printf ("RANKED DEBUG: rankForgiveness: " + rankForgiveness )
-		printf ("RANKED DEBUG: wasPromoted: " + wasPromoted )
-	#endif
-
-
-	RuiSetBool( scoreAdjustRui, "demoted", wasDemoted)
-	RuiSetBool( scoreAdjustRui, "inSeason", IsRankedInSeason() )
-
-	if ( wasDemoted )
-	{
-		RuiSetString( scoreAdjustRui, "demotedRank", currentRank.divisionName )
-	}
-
-	if ( quick || wasNetDecreaseInRankedScore )
-		InitRankedScoreBarRuiForDoubleBadge( barRui, score, ladderPosition )
-	      
-		                                                                              
-
-	var demotionHudElem = Hud_GetChild( file.menu, "RankedDemotionProtection" )
-	var protectionRui = Hud_GetRui( demotionHudElem )
-
-	RuiDestroyNestedIfAlive( protectionRui, "rankedBadgeHandle0")
-	CreateNestedRankedRui( protectionRui, currentRank.tier, "rankedBadgeHandle0", score, ladderPosition )
-
-	                                                                                                                    
-	SharedRankedTierData currentTier     = currentRank.tier
-	RuiSetImage( protectionRui, "rankedIcon" , currentTier.icon )
-	RuiSetString( protectionRui, "emblemText" , currentRank.emblemText )
-	RuiSetInt ( protectionRui, "protectionCurrent" , GetDemotionProtectionBuffer ( player ) )
-	SharedRanked_FillInRuiEmblemText( protectionRui, currentRank, score, ladderPosition  )
-
-	#if DEVELOPER
-		printf ("RANKED DEBUG: protectionCurrent: " + GetDemotionProtectionBuffer ( player ) )
-	#endif
-
-
-	if ( currentTier.isLadderOnlyTier  )                                                        
-	{
-		SharedRankedDivisionData scoreDivisionData = GetCurrentRankedDivisionFromScore( score )
-		SharedRankedTierData scoreCurrentTier      = scoreDivisionData.tier
-		RuiSetInt( protectionRui, "currentTierColorOffset", scoreCurrentTier.index + 1 )
-	}
-	else
-	{
-		RuiSetInt( protectionRui, "currentTierColorOffset", currentTier.index )
-	}
-
-	Hud_Hide( hudElem )
-	Hud_Hide( scoreAdjustElem )
-	Hud_Hide ( demotionHudElem )
-
-
-
-	OnThreadEnd(
-		function () : ( hudElem ,demotionHudElem , isDemotionProtected  )
-		{
-			Hud_Hide( Hud_GetChild( file.menu, "RewardDisplay" ) )
 			Hud_Hide( Hud_GetChild( file.menu, "MovingBoxBG" ) )
-			if (isDemotionProtected)
+			Hud_Hide( Hud_GetChild( file.menu, "RewardDisplay" ) )
+			Hud_Hide( file.continueButton )
+
+			wait 0.1
+
+			Hud_Show( Hud_GetChild( file.menu, "MovingBoxBG" ) )
+			Hud_Show( Hud_GetChild( file.menu, "RewardDisplay" ) )
+			var rewardDisplayRui = Hud_GetRui( Hud_GetChild( file.menu, "RewardDisplay" ) )
+			RuiDestroyNestedIfAlive( rewardDisplayRui, "levelUpAnimHandle" )
+
+			if ( GetNextRankedDivisionFromScore( finalScore ) == null ) 
+				ladderPosition = Ranked_GetLadderPosition( GetLocalClientPlayer() )
+
+			SharedRankedDivisionData promotedDivisionData = GetCurrentRankedDivisionFromScoreAndLadderPosition( finalScore, ladderPosition )
+			SharedRankedTierData promotedTierData         = promotedDivisionData.tier 
+			SharedRankedDivisionData ornull nextPromotedDivision = GetNextRankedDivisionFromScore( finalScore )
+
+			if ( isProvisionalGraduation || startingTier != promotedTierData )
 			{
-				Hud_Show( demotionHudElem )
+				asset levelupRuiAsset = isProvisionalGraduation ? RANKED_PLACEMENT_LEVEL_UP_BADGE : startingTier.levelUpRuiAsset
+				if ( GetNextRankedDivisionFromScore( finalScore ) == null ) 
+				{
+					if ( !promotedDivisionData.isLadderOnlyDivision )
+						levelupRuiAsset = promotedTierData.levelUpRuiAsset 
+				}
+
+				var nestedRuiHandle = RuiCreateNested( rewardDisplayRui, "levelUpAnimHandle", levelupRuiAsset )
+
+				RuiSetGameTime( nestedRuiHandle, "startTime", ClientTime() )
+				RuiSetImage( nestedRuiHandle, "newRank", promotedTierData.icon )
+
+				
+				if ( isProvisionalGraduation && nextPromotedDivision != null )
+				{
+					switch( promotedDivisionData.emblemDisplayMode )
+					{
+						case emblemDisplayMode.DISPLAY_DIVISION:
+						{
+							RuiSetString( nestedRuiHandle, "tierText", Localize( promotedDivisionData.emblemText ) )
+							break
+						}
+
+						case emblemDisplayMode.DISPLAY_RP:
+						{
+							string rankScoreShortened = FormatAndLocalizeNumber( "1", float( finalScore ), IsTenThousandOrMore( finalScore ) )
+							RuiSetString( nestedRuiHandle, "tierText", Localize( "#RANKED_POINTS_GENERIC", rankScoreShortened ) )
+							break
+						}
+
+						case emblemDisplayMode.DISPLAY_LADDER_POSITION:
+						{
+							string ladderPosShortened
+							if ( ladderPosition == SHARED_RANKED_INVALID_LADDER_POSITION )
+								ladderPosShortened = ""
+							else
+								ladderPosShortened = Localize( "#RANKED_LADDER_POSITION_DISPLAY", FormatAndLocalizeNumber( "1", float( ladderPosition ), IsTenThousandOrMore( ladderPosition ) ) )
+
+							RuiSetString( nestedRuiHandle, "tierText", ladderPosShortened )
+							break
+						}
+
+						case emblemDisplayMode.NONE:
+						default:
+						{
+							RuiSetString( nestedRuiHandle, "tierText", "" )
+							break
+						}
+					}
+				}
+				else
+				{
+					RuiSetImage( nestedRuiHandle, "oldRank", startingTier.icon )
+				}
+
+				string sound = "UI_Menu_MatchSummary_Ranked_Promotion"
+				if ( Ranked_GetNextTierData( promotedTierData ) == null )
+					sound = "UI_Menu_MatchSummary_Ranked_PromotionApex" 
+
+				if ( startingTier == promotedTierData )
+					PlayLobbyCharacterDialogue( "glad_rankUp", DIALOGUE_DELAY  )
+				else if ( promotedTierData.promotionAnnouncement != "" )
+					PlayLobbyCharacterDialogue(  promotedTierData.promotionAnnouncement, DIALOGUE_DELAY  )
+
+				EmitUISound( sound )
 			}
 			else
 			{
-				Hud_Show( hudElem )
-			}
-			file.disableNavigateBack = false
-			file.canUpdateXPBarEmblem = true
-			UpdateFooterOptions()
-			StopUISoundByName( POSTGAME_XP_INCREASE )
-		}
-	)
-
-	ResetSkippableWait()
-
-	for ( int lineIndex = 0; lineIndex < numLines; lineIndex++ )
-	{
-		if ( IsSkippableWaitSkipped() )
-			continue
-
-		waitthread SkippableWait( LINE_DISPLAY_TIME, POSTGAME_LINE_ITEM )
-	}
-
-	RuiSetFloat( rui, "startDelay", -50.0 )
-	RuiSetGameTime( rui, "startTime", ClientTime() - 9999.0 )
-
-	Hud_Show( scoreAdjustElem )
-
-	ResetSkippableWait()
-	waitthread SkippableWait( LINE_DISPLAY_TIME, "UI_Menu_MatchSummary_Ranked_XPTotal" )
-
-	if (isDemotionProtected)
-	{
-		Hud_Show( demotionHudElem )
-	}
-	else
-	{
-		Hud_Show( hudElem )
-	}
-
-	                                                                                                                                         
-	int ranksToPopulate = ( currentRank.index - previousRank.index ) + 1                                                            
-	if ( ranksToPopulate > 1 && currentRank.isLadderOnlyDivision )                                  
-	{
-		if( GetNextRankedDivisionFromScore( previousScore ) == null  )                                                                                                                  
-			ranksToPopulate = 1
-		else
-			ranksToPopulate = 2                                          
-
-	}
-
-	int scoreStart = previousScore
-
-	ladderPosition = Ranked_GetLadderPosition( GetLocalClientPlayer() )                                                                                                      
-	                                                                                          
-
-	if  (!quick && !wasNetDecreaseInRankedScore && !wasDemoted )                                                                            
-	{
-		InitRankedScoreBarRuiForDoubleBadge( barRui, scoreStart, ladderPosition )
-		float delay = 0.25
-		wait delay
-
-		for ( int index = 0; index < ranksToPopulate; index++ )
-		{
-			file.canUpdateXPBarEmblem         = false                                                                        
-			SharedRankedDivisionData rd_start = GetCurrentRankedDivisionFromScoreAndLadderPosition( scoreStart, ladderPosition )
-			SharedRankedTierData startingTier = rd_start.tier
-			SharedRankedDivisionData ornull nextDivision
-
-			nextDivision = GetNextRankedDivisionFromScore( scoreStart )                                                                         
-
-			int scoreEnd = scoreStart
-
-			if ( nextDivision != null )
-			{
-				InitRankedScoreBarRuiForDoubleBadge( barRui, scoreStart, ladderPosition )
-				expect SharedRankedDivisionData( nextDivision )
-				SharedRankedTierData nextDivisionTier = nextDivision.tier
-
-				scoreEnd = minint( score, nextDivision.scoreMin )
-
-				float frac = float( abs( scoreEnd - scoreStart ) ) / float( abs( nextDivision.scoreMin - rd_start.scoreMin ) )   
-				float animDuration = 2.0 * frac
-
-				RuiSetGameTime( barRui, "animStartTime", ClientTime() + delay )
-				RuiSetFloat( barRui, "animDuration", animDuration )                                                                                                                                                            
-				RuiSetInt( barRui, "currentScore", scoreEnd )
-				RuiSetInt( barRui, "animStartScore", scoreStart )
-
-				waitthread SkippableWait( animDuration + 0.1, POSTGAME_XP_INCREASE )
-				StopUISoundByName( POSTGAME_XP_INCREASE )
-
-				if ( (index < ranksToPopulate -1 ) && isFirstTime )
-				{
-					wait 0.1
-
-					Hud_Show( Hud_GetChild( file.menu, "MovingBoxBG" ) )
-					Hud_Show( Hud_GetChild( file.menu, "RewardDisplay" ) )
-					var rewardDisplayRui = Hud_GetRui( Hud_GetChild( file.menu, "RewardDisplay" ) )
-					RuiDestroyNestedIfAlive( rewardDisplayRui, "levelUpAnimHandle" )
-
-					float RANK_UP_TIME = 3.5
-
-					if ( startingTier != nextDivisionTier )
-					{
-						if ( GetNextRankedDivisionFromScore( score ) == null )                                                                                      
-						{
-							ladderPosition = Ranked_GetLadderPosition( GetLocalClientPlayer() )
-							                                                                                         
-						}
-
-						SharedRankedDivisionData promotedDivisionData = GetCurrentRankedDivisionFromScoreAndLadderPosition( score, ladderPosition )
-						SharedRankedTierData promotedTierData         = promotedDivisionData.tier                                                                                   
-						asset levelupRuiAsset                         = startingTier.levelUpRuiAsset
-
-						                                                              
-						if ( GetNextRankedDivisionFromScore( score ) == null )                                                                              
-						{
-							if ( !promotedDivisionData.isLadderOnlyDivision )
-								levelupRuiAsset = promotedTierData.levelUpRuiAsset                                                        
-						}
-
-						var nestedRuiHandle = RuiCreateNested( rewardDisplayRui, "levelUpAnimHandle", levelupRuiAsset )
-
-						RuiSetGameTime( nestedRuiHandle, "startTime", ClientTime() )
-						RuiSetImage( nestedRuiHandle, "oldRank", startingTier.icon )
-						RuiSetImage( nestedRuiHandle, "newRank", promotedTierData.icon )
-
-						string sound = "UI_Menu_MatchSummary_Ranked_Promotion"
-						if ( Ranked_GetNextTierData( nextDivisionTier ) == null )
-							sound = "UI_Menu_MatchSummary_Ranked_PromotionApex"                                                            
-
-						if ( nextDivisionTier.promotionAnnouncement != "" )
-							PlayLobbyCharacterDialogue(  promotedTierData.promotionAnnouncement, 1.6  )
-
-						EmitUISound( sound )
-					}
-					else
-					{
-						var nestedRuiHandle = RuiCreateNested( rewardDisplayRui, "levelUpAnimHandle", $"ui/rank_division_up_anim.rpak" )
-						RuiSetGameTime( nestedRuiHandle, "startTime", ClientTime() )
-						RuiSetString( nestedRuiHandle, "oldDivision", Localize(rd_start.emblemText))
-						RuiSetString( nestedRuiHandle, "newDivision", Localize(nextDivision.emblemText))
-						RuiSetImage( nestedRuiHandle, "rankEmblemImg", startingTier.icon )
-						EmitUISound( "UI_Menu_MatchSummary_Ranked_RankUp" )
-
-						PlayLobbyCharacterDialogue( "glad_rankUp", 1.6  )
-					}
-
-					wait RANK_UP_TIME + 0.1
-
-					Hud_Hide( Hud_GetChild( file.menu, "MovingBoxBG" ) )
-					Hud_Hide( Hud_GetChild( file.menu, "RewardDisplay" ) )
-				}
-
-				scoreStart = scoreEnd
+				var nestedRuiHandle = RuiCreateNested( rewardDisplayRui, "levelUpAnimHandle", RUI_PATH_RANKED_DIVISION_UP )
+				RuiSetGameTime( nestedRuiHandle, "startTime", ClientTime() )
+				RuiSetString( nestedRuiHandle, "oldDivision", Localize( rd_start.emblemText ) )
+				RuiSetString( nestedRuiHandle, "newDivision", Localize( promotedDivisionData.emblemText ) )
+				RuiSetImage( nestedRuiHandle, "rankEmblemImg", startingTier.icon )
+				EmitUISound( "UI_Menu_MatchSummary_Ranked_RankUp" )
+				PlayLobbyCharacterDialogue( "glad_rankUp", DIALOGUE_DELAY  )
 			}
 
-			                                                                              
-			InitRankedScoreBarRuiForDoubleBadge( barRui, scoreEnd, ladderPosition )
+			wait RANK_UP_TIME
+
+			Hud_Hide( Hud_GetChild( file.menu, "MovingBoxBG" ) )
+			Hud_Hide( Hud_GetChild( file.menu, "RewardDisplay" ) )
+			Hud_Show( file.continueButton )
 		}
-
-		                                                                                                                                                                
-		                                                                                                                                                         
-
-		InitRankedScoreBarRuiForDoubleBadge( barRui, score, Ranked_GetLadderPosition( GetLocalClientPlayer() ) )                                                                                                                                                   
 	}
 
-	if ( !quick && wasNetDecreaseInRankedScore && wasDemoted )
-	{
-		PlayLobbyCharacterDialogue( "glad_rankDown"  )                                       
-	}
-
+	file.disableNavigateBack = false
+	PostGameGeneral_SetDisableNavigateBack( false )
 }
 
-void function InitRankedScoreBarRuiForDoubleBadge( var rui, int score, int ladderPosition )
+void function ColorCorrectRui( var rui, SharedRankedTierData currentTier, int score )
 {
-	for ( int i=0; i<5; i++ )
-	{
-		RuiDestroyNestedIfAlive( rui, "rankedBadgeHandle" + i )
-	}
-
-	RuiSetBool( rui, "forceDoubleBadge", true )
-
-	SharedRankedDivisionData currentRank = GetCurrentRankedDivisionFromScoreAndLadderPosition( score, ladderPosition )
-	SharedRankedTierData currentTier     = currentRank.tier
-
-	RuiSetGameTime( rui, "animStartTime", RUI_BADGAMETIME )
-
-	if ( currentTier.isLadderOnlyTier  )                                                        
+	if ( currentTier.isLadderOnlyTier ) 
 	{
 		SharedRankedDivisionData scoreDivisionData = GetCurrentRankedDivisionFromScore( score )
 		SharedRankedTierData scoreCurrentTier      = scoreDivisionData.tier
@@ -648,8 +289,22 @@ void function InitRankedScoreBarRuiForDoubleBadge( var rui, int score, int ladde
 	{
 		RuiSetInt( rui, "currentTierColorOffset", currentTier.index )
 	}
+}
 
-	                                    
+void function InitRankedScoreBarRuiForDoubleBadge( var rui, int score, int ladderPosition )
+{
+	for ( int i=0; i<5; i++ )
+		RuiDestroyNestedIfAlive( rui, "rankedBadgeHandle" + i )
+
+	RuiSetBool( rui, "forceDoubleBadge", true )
+
+	SharedRankedDivisionData currentRank = GetCurrentRankedDivisionFromScoreAndLadderPosition( score, ladderPosition )
+	SharedRankedTierData currentTier     = currentRank.tier
+
+	RuiSetGameTime( rui, "animStartTime", RUI_BADGAMETIME )
+	ColorCorrectRui( rui, currentTier, score )
+
+	
 	RuiSetImage( rui, "icon0" , currentTier.icon )
 	RuiSetString( rui, "emblemText0" , currentRank.emblemText )
 	RuiSetInt( rui, "badgeScore0", score )
@@ -665,13 +320,14 @@ void function InitRankedScoreBarRuiForDoubleBadge( var rui, int score, int ladde
 	SharedRanked_FillInRuiEmblemText( rui, currentRank, score, ladderPosition, "3"  )
 	CreateNestedRankedRui( rui, currentRank.tier, "rankedBadgeHandle3", score, ladderPosition )
 
-	RuiSetInt( rui, "currentScore" , score )
-	RuiSetInt( rui, "startScore" , currentRank.scoreMin )
-
 	SharedRankedDivisionData ornull nextRank = GetNextRankedDivisionFromScore( score )
 
-
+	RuiSetInt( rui, "currentScore" , score )
+	RuiSetInt( rui, "startScore" , currentRank.scoreMin )
 	RuiSetBool( rui, "showSingleBadge", nextRank == null )
+
+	RuiSetBool( rui, "inPromoTrials", RankedTrials_PlayerHasIncompleteTrial( GetLocalClientPlayer() ) && !RankedTrials_IsKillswitchEnabled() )
+	RuiSetBool( rui, "showPromoPip", RankedTrials_NextRankHasTrial( currentRank, nextRank ) && !RankedTrials_IsKillswitchEnabled() )
 
 	if ( nextRank != null )
 	{		
@@ -679,14 +335,16 @@ void function InitRankedScoreBarRuiForDoubleBadge( var rui, int score, int ladde
 		SharedRankedTierData nextTier = nextRank.tier
 
 		RuiSetBool( rui, "showSingleBadge", nextRank == currentRank )
-
 		RuiSetInt( rui, "endScore" , nextRank.scoreMin )
 		RuiSetString( rui, "emblemText4" , nextRank.emblemText  )
 		RuiSetInt( rui, "badgeScore4", nextRank.scoreMin )
 		RuiSetImage( rui, "icon4", nextTier.icon )
 		RuiSetInt( rui, "nextTierColorOffset", nextTier.index )
+
+		RuiSetAsset( rui, "promoCapImage", nextTier.promotionalMetallicImage )
+
 		SharedRanked_FillInRuiEmblemText( rui, nextRank, nextRank.scoreMin, SHARED_RANKED_INVALID_LADDER_POSITION, "4"  )
-		CreateNestedRankedRui( rui, nextRank.tier, "rankedBadgeHandle4", nextRank.scoreMin, SHARED_RANKED_INVALID_LADDER_POSITION )                                                                                      
+		CreateNestedRankedRui( rui, nextRank.tier, "rankedBadgeHandle4", nextRank.scoreMin, SHARED_RANKED_INVALID_LADDER_POSITION ) 
 	}
 }
 
@@ -698,11 +356,8 @@ void function OnPostGameRankedMenu_Close()
 
 void function OnContinue_Activate( var button )
 {
-	file.skippableWaitSkipped = true
-
 	if ( !file.disableNavigateBack )
 		CloseRankedSummary( null )
-
 }
 
 void function OnPostGameRankedMenu_Hide()
@@ -792,16 +447,20 @@ void function Ranked_OnUserInfoUpdatedInPostGame( string hardware, string id )
 	if ( cui == null )
 		return
 
-	if ( !file.canUpdateXPBarEmblem )                                                                                   
+	if ( !file.canUpdateXPBarEmblem ) 
 		return
 
 	expect CommunityUserInfo( cui )
 
-	if ( cui.hardware == GetUnspoofedPlayerHardware() && cui.uid == GetPlayerUID() )                                      
+	entity uiPlayer    = GetLocalClientPlayer()
+	bool inProvisional = !Ranked_HasCompletedProvisionalMatches(uiPlayer)
+
+	if ( cui.hardware == GetUnspoofedPlayerHardware() && cui.uid == GetPlayerUID() ) 
 	{
-		if ( file.barRuiToUpdate != null  )                                                                                                                                
+		if ( file.barRuiToUpdate != null  ) 
 		{
-			InitRankedScoreBarRuiForDoubleBadge( file.barRuiToUpdate, cui.rankScore, cui.rankedLadderPos )
+			if ( !inProvisional && cui.rankedLadderPos > 0 ) 
+				InitRankedScoreBarRuiForDoubleBadge( file.barRuiToUpdate, cui.rankScore, cui.rankedLadderPos )
 		}
 	}
 }

@@ -39,8 +39,8 @@ struct
 	var noHistory
 	var spinner
 
-	string layoutStyle	                                   
-	bool autoSelect		                                                                                      
+	string layoutStyle	
+	bool autoSelect		
 
 	table<string, SummaryLayout> layouts
 	table<string, SummaryDisplayFilter> filters
@@ -48,9 +48,9 @@ struct
 	array<CacheEntry> cache
 } file
 
-                                                                    
-                           
-                                                                    
+
+
+
 
 void function InitCustomMatchSummaryPanel( var panel )
 {
@@ -74,9 +74,9 @@ void function AddSummaryLayouts()
 	file.layouts.clear()
 	AddSummaryLayout( SURVIVAL, "SurvivalSummary", 20 )
 	AddSummaryLayout( SURVIVAL + "duos", "SurvivalDuosSummary", 30 )
-                       
-                                                        
-      
+
+
+
 
 	{
 		SummaryDisplayFilter filter
@@ -104,9 +104,9 @@ void function AddDisplayFilter( string layout, SummaryDisplayFilter filter )
 	file.filters[ layout ] <- filter
 }
 
-                                                                    
-                 
-                                                                    
+
+
+
 
 void function Callback_OnLobbyDataChanged( CustomMatch_LobbyState data )
 {
@@ -131,9 +131,9 @@ void function Callback_OnMatchStatsPushed( int endTime, CustomMatch_MatchSummary
 		file.cache.remove( 0 )
 }
 
-                                                                    
-                  
-                                                                    
+
+
+
 
 void function CustomMatchSummary_OnShow( var panel )
 {
@@ -150,9 +150,9 @@ void function History_OnClick( CustomMatch_MatchHistory matchHistory )
 	DisplayHistory( matchHistory )
 }
 
-                                                                    
-                          
-                                                                    
+
+
+
 
 int function Survival_InProgress_Display( SummaryLayout layout, array<CustomMatch_MatchTeam> teams, int index )
 {
@@ -191,13 +191,13 @@ void function Survival_InProgress_PostDisplay( SummaryLayout layout, array<Custo
 	}
 }
 
-                                                                    
-                           
-                                                                    
+
+
+
 
 void function RefreshHistory( array<CustomMatch_MatchHistory> matches )
 {
-	                                                              
+	
 	EndSignal( file.historyGrid, CUSTOM_MATCH_SUMMARY_CHANGED_SIGNAL )
 	while ( !IsFullyConnected() )
 	{
@@ -219,7 +219,7 @@ void function RefreshHistory( array<CustomMatch_MatchHistory> matches )
 		Hud_ClearEventHandlers( button, UIE_CLICK )
 		Hud_AddEventHandler( button, UIE_CLICK, void function( var _ ) : ( match ) { History_OnClick( match ) } )
 
-		                               
+		
 		if ( Hud_IsSelected( button ) )
 			Hud_HandleEvent( button, UIE_CLICK )
 	}
@@ -270,8 +270,8 @@ void function UpdateDisplay( CustomMatch_MatchSummary matchSummary, SummaryLayou
 		teamCount = layout.maxTeams
 	}
 
-	                                                           
-	                                                                
+	
+	
 	matchSummary.teams.sort( SortByPlacement )
 
 	int panelIndex = 0

@@ -1,9 +1,28 @@
 global function InitDeathScreenSpectatePanel
 global function UI_UpdateDeathScreenSpectatePanel
 
+
+
+
+
+
+
+
+
+
+
 struct
 {
 	var panel
+
+
+
+
+
+
+
+
+
 } file
 
 void function InitDeathScreenSpectatePanel( var panel )
@@ -15,27 +34,142 @@ void function InitDeathScreenSpectatePanel( var panel )
 
 	SetPanelClearBlur( panel, true )
 
+
+
+
+
+
 	InitDeathScreenPanelFooter( panel, eDeathScreenPanel.SPECTATE)
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void function SpectateOnOpenPanel( var panel )
 {
-	                                                        
-
 	var menu = GetParentMenu( panel )
 	var headerElement = Hud_GetChild( menu, "Header" )
 	RunClientScript( "UICallback_ShowSpectateTab", headerElement )
 
 	RegisterButtonPressedCallback( KEY_LSHIFT, DeathScreenTryToggleGladCard )
 	RegisterButtonPressedCallback( KEY_RSHIFT, DeathScreenTryToggleGladCard )
+
+	RegisterButtonPressedCallback( BUTTON_DPAD_LEFT, DeathScreenTryToggleUpgradesOnGladCard )
+	RegisterButtonPressedCallback( KEY_V, DeathScreenTryToggleUpgradesOnGladCard )
+
 	RegisterButtonPressedCallback( KEY_SPACE, DeathScreenPingRespawn )
 	RegisterButtonPressedCallback( GetPCReportKey(), DeathScreenOnReportButtonClick )
-	                                                                                 
+	
 	RegisterButtonPressedCallback( MOUSE_MIDDLE, DeathScreenSpectateNext )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_UP, DeathScreenSpectateNext )
 	RegisterButtonPressedCallback( MOUSE_WHEEL_DOWN, DeathScreenSpectateNext )
-	RegisterButtonPressedCallback( KEY_TAB, DeathScreenSkipDeathCam )
+
+
+
+
+
+
+	UpdateFooterOptions()
 
 	DeathScreenUpdateCursor()
 }
@@ -43,8 +177,6 @@ void function SpectateOnOpenPanel( var panel )
 
 void function UI_UpdateDeathScreenSpectatePanel()
 {
-	                                                   
-
 	var menu = GetParentMenu( file.panel )
 	var headerElement = Hud_GetChild( menu, "Header" )
 	RunClientScript( "UICallback_ShowSpectateTab", headerElement )
@@ -55,11 +187,19 @@ void function SpectateOnClosePanel( var panel )
 {
 	DeregisterButtonPressedCallback( KEY_LSHIFT, DeathScreenTryToggleGladCard )
 	DeregisterButtonPressedCallback( KEY_RSHIFT, DeathScreenTryToggleGladCard )
+
+	DeregisterButtonPressedCallback( BUTTON_DPAD_LEFT, DeathScreenTryToggleUpgradesOnGladCard )
+	DeregisterButtonPressedCallback( KEY_V, DeathScreenTryToggleUpgradesOnGladCard )
+
 	DeregisterButtonPressedCallback( KEY_SPACE, DeathScreenPingRespawn )
 	DeregisterButtonPressedCallback( GetPCReportKey(), DeathScreenOnReportButtonClick )
-	                                                                                   
+	
 	DeregisterButtonPressedCallback( MOUSE_MIDDLE, DeathScreenSpectateNext )
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_UP, DeathScreenSpectateNext )
 	DeregisterButtonPressedCallback( MOUSE_WHEEL_DOWN, DeathScreenSpectateNext )
-	DeregisterButtonPressedCallback( KEY_TAB, DeathScreenSkipDeathCam )
+
+
+
+
+
 }

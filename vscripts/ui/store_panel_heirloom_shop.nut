@@ -27,7 +27,7 @@ global function JumpToMythicOfferScreen
 
 global struct ShopThemeStruct
 {
-	      
+	
 	string tabText
 	string grxOfferLocation
 	vector tabBGDefaultCol
@@ -37,14 +37,14 @@ global struct ShopThemeStruct
 	vector tabBGSelectedCol
 	vector tabBarSelectedCol
 
-	             
+	
 	vector shopInfoBoxBGTintCol
 	vector shopCurrencyCountTextCol
 	vector shopCurrencyCountDecoCol
 	vector specialAboutTextCol
 	asset  bgPatternImage
 
-	              
+	
 	asset  itemBtnHighlightedBGImage
 	asset  itemBtnRegularBGImage
 	asset  itemBtnHighlightedFrameImage
@@ -107,16 +107,16 @@ void function HeirloomShopPanel_Init( var panel )
 	HudElem_SetRuiArg( file.weaponSkinToggleButton, "showMythic", false )
 	Hud_AddEventHandler( file.weaponSkinToggleButton, UIE_CLICK, ToggleWeaponOrMythicSkin )
 
-	                                                                                      
-	   
-	  	                                                                                      
-	  	                  
-	  	                                                                    
-	  	                                                                      
-	  	                                                                
-	  	                                                                        
-	  	                                  
-	   
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	file.themeStruct.tabText = "#MENU_STORE_PANEL_PRESTIGE_SHOP"
 	file.themeStruct.grxOfferLocation = "heirloom_set_shop"
@@ -169,7 +169,6 @@ void function StorePanelHeirloomShopEvent_LevelShutdown()
 
 void function HeirloomShopPanel_OnShow( var panel )
 {
-	file.mythicSkinsEnabled = false
 	SetCurrentTabForPIN( Hud_GetHudName( panel ) )
 	UI_SetPresentationType( ePresentationType.WEAPON_CATEGORY )
 
@@ -258,12 +257,12 @@ void function HeirloomShopPanel_UpdateGRXDependantElements()
 		if ( file.mythicSkinsEnabled )
 		{
 			offers = GRX_GetLocationOffers( "prestige_set_shop" )
-			buttonCount = offers.len() > 1 ? 2 : 1
+			buttonCount = 3
 		}
 		else
 		{
 			offers = GRX_GetLocationOffers( themeStruct.grxOfferLocation )
-			buttonCount = 5
+			buttonCount = 6
 		}
 
 		if ( offers.len() == 0 )
@@ -298,6 +297,7 @@ void function HeirloomShopPanel_UpdateGRXDependantElements()
 			if ( file.mythicSkinsEnabled )
 			{
 				character = Mythics_GetCharacterForSkin( skinFlavor )
+				bool hasSkydiveTrail = Mythics_SkinHasCustomSkydivetrail( skinFlavor )
 
 				Assert( Mythics_CharacterHasMythic( character ) )
 				HudElem_SetRuiArg( offerButton, "itemImg0", Mythics_GetStoreImageForCharacter( character, 0 ), eRuiArgType.IMAGE )
@@ -305,6 +305,11 @@ void function HeirloomShopPanel_UpdateGRXDependantElements()
 				HudElem_SetRuiArg( offerButton, "itemImg2", Mythics_GetStoreImageForCharacter( character, 2 ), eRuiArgType.IMAGE )
 				HudElem_SetRuiArg( offerButton, "finImg", ItemFlavor_GetIcon( Mythics_GetCustomExecutionForCharacterOrSkin( character ) ), eRuiArgType.IMAGE )
 				HudElem_SetRuiArg( offerButton, "itemDesc", isOwned ? "#COLLECTED" : Mythics_GetSkinBaseNameForCharacter( character ) )
+				HudElem_SetRuiArg( offerButton, "hasSkydiveTrail", hasSkydiveTrail )
+				if ( hasSkydiveTrail )
+				{
+					HudElem_SetRuiArg( offerButton, "trailImg", CustomizeMenu_GetRewardButtonImage( Mythics_GetCustomSkydivetrailForCharacterOrSkin( character ) ), eRuiArgType.IMAGE )
+				}
 			}
 			else
 			{
@@ -333,7 +338,7 @@ void function HeirloomShopPanel_UpdateGRXDependantElements()
 	}
 }
 
-                                                                                         
+
 void function JumpToMythicOfferScreen( string legendLink, int mythicType )
 {
 	JumpToHeirloomShop()
@@ -353,7 +358,7 @@ void function JumpToMythicOfferScreen( string legendLink, int mythicType )
 		Warning( "Received invalid mythicType " + mythicType + ". Acceptable values are eMythicType.PRESTIGE_SKIN and eMythicType.HEIRLOOM." )
 		return
 	}
-	                                                                                                               
+	
 	HeirloomShopPanel_UpdateGRXDependantElements()
 
 	if ( legendLink.len() == 0 )
@@ -438,21 +443,21 @@ void function HeirloomShopPanel_Think( var panel )
 void function OfferButton_OnGetFocus( var btn )
 {
 	UpdateFocusStuff( btn )
-	                                                              
-	   
-	  	                                                                                     
-	   
+	
+	
+	
+	
 }
 
 
 void function OfferButton_OnLoseFocus( var btn )
 {
 	var focus = GetFocus()
-	                                                              
-	   
-	  	                                                           
-	  	                                                                                                                      
-	   
+	
+	
+	
+	
+	
 
 	UpdateFocusStuff( null )
 }
@@ -492,7 +497,7 @@ void function OfferButton_OnAltActivate( var btn )
 
 bool function IsFocusedItemInspectable()
 {
-	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters                                                                            
+	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters 
 	if ( focus in file.offerButtonToOfferMap )
 	{
 		GRXScriptOffer offer = file.offerButtonToOfferMap[focus]
@@ -505,7 +510,7 @@ bool function IsFocusedItemInspectable()
 
 bool function IsFocusedItemEquippable()
 {
-	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters                                                                            
+	var focus = file.WORKAROUND_currentlyFocusedOfferButtonForFooters 
 	if ( focus in file.offerButtonToOfferMap )
 	{
 		GRXScriptOffer offer = file.offerButtonToOfferMap[focus]
@@ -529,7 +534,7 @@ void function UpdateFocusStuff( var focusedOfferButtonOrNull )
 {
 	file.WORKAROUND_currentlyFocusedOfferButtonForFooters = focusedOfferButtonOrNull
 
-	UpdateFooterOptions()                             
+	UpdateFooterOptions() 
 }
 
 
@@ -613,31 +618,31 @@ asset function HeirloomShop_GetItemButtonSpecialIcon( bool isHighlighted )
 
 asset function HeirloomShop_GetItemGroupHeaderImage( int group )
 {
-	return $""                                                                                                       
+	return $""
 }
 
 
 string function HeirloomShop_GetItemGroupHeaderText( int group )
 {
-	return ""                                                                                                       
+	return ""
 }
 
 
 vector function HeirloomShop_GetItemGroupHeaderTextColor( int group )
 {
-	return <1, 1, 1>                                                                                                            
+	return <1, 1, 1>
 }
 
 
 asset function HeirloomShop_GetItemGroupBackgroundImage( int group )
 {
-	return $""                                                                                                   
+	return $""
 }
 
 
 asset function HeirloomShop_GetHeaderIcon()
 {
-	return $""                                                                      
+	return $""
 }
 
 

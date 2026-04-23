@@ -1,12 +1,14 @@
 
 global function InitSocialEventPopup
 global function SocialEventUpdate
-global function IsSocialPopUpAClubInvite
+
+
+
 global function IsSocialPopupActive
 global function TryUpdatePartyInvitePresence
 global function SocialEvent_RemoveActiveClubInvite
 
-#if DEVELOPER
+#if DEV
 global function SocialEvent_AddDevEvent
 global function DevDumpFakeLists
 global function DevRemoveFakeData
@@ -22,7 +24,9 @@ enum eSocialEventType
 {
 	PARTY,
 	FRIEND,
-	CLUB
+
+
+
 }
 
 global enum eInviteReason
@@ -48,7 +52,7 @@ struct SocialEvent
 	string name
 	string eventID
 	int    entryIndex
-	int    hardwareID = -1                         
+	int    hardwareID = -1 
 	int    eventType
 	bool   completed
 	bool   active
@@ -88,10 +92,10 @@ void function InitSocialEventPopup( var panel )
 	file.buttonArray.append( Hud_GetChild( panel, "RejectButton" ) )
 	file.buttonArray.append( Hud_GetChild( panel, "BlockButton" ) )
 
-	                                                                
-	Hud_AddEventHandler( file.buttonArray[0], UIE_CLICK, void function( var btn ) { EventFriendRequest_HandleInput( KEY_Y ) } )         
-	Hud_AddEventHandler( file.buttonArray[1], UIE_CLICK, void function( var btn ) { EventFriendRequest_HandleInput( KEY_N ) } )         
-	Hud_AddEventHandler( file.buttonArray[2], UIE_CLICK, void function( var btn ) { EventFriendRequest_HandleInput( KEY_B ) } )        
+	
+	Hud_AddEventHandler( file.buttonArray[0], UIE_CLICK, void function( var btn ) { EventFriendRequest_HandleInput( KEY_Y ) } ) 
+	Hud_AddEventHandler( file.buttonArray[1], UIE_CLICK, void function( var btn ) { EventFriendRequest_HandleInput( KEY_N ) } ) 
+	Hud_AddEventHandler( file.buttonArray[2], UIE_CLICK, void function( var btn ) { EventFriendRequest_HandleInput( KEY_B ) } ) 
 
 	file.socialEventPopup.onClose = SocialEventPopup_OnClose
 	file.socialEventPopup.checkBlocksInput = EventFriendRequest_CheckBlocksInput
@@ -115,14 +119,21 @@ void function InitSocialEventPopup( var panel )
 
 void function SocialEventUpdate()
 {
-	if ( IsDialog( GetActiveMenu() ) || !IsLobby() )
+	var currMenu = GetActiveMenu()
+	
+	if ( (!IsWalletModalOpened( ) && IsDialog( currMenu )) || !IsLobby() )
 		return
+
+	if( !IsPersistenceAvailable( )) 	
+		return;
 
 	file.activeEventInvalid = false
 
 	UpdateFriendRequestCache()
 	UpdatePartyInviteCache()
-	UpdateClubInviteCache()
+
+
+
 
 	SocialEvent_TryPurgeCrossplayFriendRequests()
 	SocialEvent_TryPurgeCrossplayPartyInvites()
@@ -173,7 +184,8 @@ bool function CompareSocialEvents( SocialEvent ornull first, SocialEvent ornull 
 
 void function SocialEvent_TryPurgeCrossplayFriendRequests()
 {
-	if ( IsMatchPreferenceFlagActive( eMatchPreferenceFlags.CROSSPLAY_INVITE_AUTO_DENY ) )
+
+	if( ( GetPersistentVarAsInt( "matchPreferences" ) & eMatchPreferenceFlags.CROSSPLAY_INVITE_AUTO_DENY ) > 0) 
 	{
 		array<SocialEvent> events = clone file.socialEventCache
 		foreach ( SocialEvent event in events )
@@ -191,18 +203,22 @@ void function SocialEvent_TryPurgeCrossplayFriendRequests()
 
 void function SocialEvent_TryPurgeCrossplayPartyInvites()
 {
-	                                                                         
+	
 	array<SocialEvent> events = clone file.socialEventCache
 	foreach ( SocialEvent event in events )
 	{
 		if( event.eventType == eSocialEventType.PARTY )
 		{
-			 if(event.hardwareID  >= 0 && event.hardwareID  <= HARDWARE_XB5 )
+			 if( event.hardwareID  >= 0 && event.hardwareID  <= HARDWARE_XB5 )
 			 {
 				string hardware = GetNameFromHardware( event.hardwareID )
-				                                                                                                                                                    
-				if ( event.hardwareID == HARDWARE_PC_STEAM )
-					hardware = GetNameFromHardware( HARDWARE_PC )                          
+
+				if( !GetConVarBool( "steam_useProperHardware" ) )
+				{
+					
+					if ( event.hardwareID == HARDWARE_PC_STEAM )
+						hardware = GetNameFromHardware( HARDWARE_PC ) 
+				}
 
 				if (  IsInPartyWithHardware( event.eventID, hardware ) )
 				{
@@ -213,7 +229,7 @@ void function SocialEvent_TryPurgeCrossplayPartyInvites()
 			}
 			else
 			{
-				                                
+				
 				EADP_RejectInviteToPlay( event.eventID )
 				int pos = file.socialEventCache.find( event )
 				file.socialEventCache.remove( pos )			
@@ -263,7 +279,7 @@ SocialEvent ornull function GetPendingSocialEvent()
 {
 	foreach ( SocialEvent event in file.socialEventCache )
 	{
-		                                            
+		
 		if ( IsValidSocialEvent( event ) )
 			return event
 	}
@@ -292,6 +308,7 @@ void function UpdateSocialEventRui( SocialEvent event )
 	HudElem_SetRuiArg( file.contentPanel, "eventActionHint2", "#POPUP_BUTTON_REJECT" )
 	HudElem_SetRuiArg( file.contentPanel, "hardwareIconStr", PlatformIDToIconString( event.hardwareID ) )
 	RuiDestroyNestedIfAlive( Hud_GetRui( file.contentPanel ), "clubLogo" )
+	HudElem_SetRuiArg( file.contentPanel, "eventReason", "" )
 
 	switch ( event.eventType )
 	{
@@ -303,36 +320,38 @@ void function UpdateSocialEventRui( SocialEvent event )
 
 		case eSocialEventType.PARTY:
 			string eventHeader = "#PARTY_INVITE"
-			bool isClubPartyInvite = Clubs_IsUserAClubmate( event.eventID )
-			if ( isClubPartyInvite )
-				eventHeader = "#CLUB_POPUP_PARTY_INVITE"
+
+
+
+
+
 
 			HudElem_SetRuiArg( file.contentPanel, "eventHeader", eventHeader )
 			HudElem_SetRuiArg( file.contentPanel, "eventActionHint3", "#POPUP_BUTTON_BLOCK" )
 			RuiSetArgByType( Hud_GetRui( file.contentPanel ), "lineColor", BAR_COLOR_PARTY / 255.0, eRuiArgType.COLOR )
 
-#if DEVELOPER
+#if DEV
 			if ( GetBugReproNum() == 1970 )
 			{
-				if ( ClubIsValid() )
-					ClubLogoUI_CreateNestedClubLogo( Hud_GetRui( file.contentPanel ), "clubLogo", ClubLogo_ConvertLogoStringToLogo( ClubGetHeader().logoString ) )                             
-				else
-					ClubLogoUI_CreateNestedClubLogo( Hud_GetRui( file.contentPanel ), "clubLogo", GenerateRandomClubLogo() )
 
-				                                                   
-				event.inviteReason = eInviteReason.REASON_02_DUOS                               
+
+
+
+
+
+				
+				event.inviteReason = eInviteReason.REASON_02_DUOS 
 				event.maxpartySize = GetPartyInviteMaxPartySize( event.inviteReason )
 				event.currentPartySize = GetRandomPartySlotsFilled( event.maxpartySize )
 			}
 #endif
-			if ( isClubPartyInvite )
-			{
-				                                                                                   
-				ClubHeader clubHeaderTable = ClubGetHeader()
-				string logoStr = clubHeaderTable.logoString
-				ClubLogo logo = ClubLogo_ConvertLogoStringToLogo( logoStr )
-				ClubLogoUI_CreateNestedClubLogo( Hud_GetRui( file.contentPanel ), "clubLogo", logo )
-			}
+
+
+
+
+
+
+
 
 			if ( event.inviteReason > -1 )
 			{
@@ -342,18 +361,19 @@ void function UpdateSocialEventRui( SocialEvent event )
 				HudElem_SetRuiArg( file.contentPanel, "eventReason", inviteReasonString )
 				HudElem_SetRuiArg( file.contentPanel, "maxPartySize", event.maxpartySize, eRuiArgType.INT )
 				printf( "PartyInviteDebug: Max party invite size set to %i", event.maxpartySize )
-				HudElem_SetRuiArg( file.contentPanel, "currentPartySize", event.currentPartySize, eRuiArgType.INT )                                                                            
+				HudElem_SetRuiArg( file.contentPanel, "currentPartySize", event.currentPartySize, eRuiArgType.INT ) 
 
-				                                             
+				
 			}
 			break
 
-		case eSocialEventType.CLUB:
-			HudElem_SetRuiArg( file.contentPanel, "eventHeader", "#CLUB_POPUP_INVITE" )
-			HudElem_SetRuiArg( file.contentPanel, "eventActionHint3", "" )
-			RuiSetArgByType( Hud_GetRui( file.contentPanel ), "lineColor", BAR_COLOR_CLUB / 255.0, eRuiArgType.COLOR )
-			                                                                                                         
-			break
+
+
+
+
+
+
+
 	}
 
 	UpdateButtons()
@@ -434,15 +454,15 @@ void function AutoRejectPartyInvite( SocialEvent event )
 
 	EADP_RejectInviteToPlay( event.eventID )
 
-	#if DEVELOPER
+#if DEV
 		DevRemoveFakeData( event.eventID, event.eventType )
-	#endif
+#endif
 	SocialEventMarkCompleted( event, 1 )
 	TryShowNextSocialEvent()
 }
 
 
-#if DEVELOPER
+#if DEV
 int function GetRandomPartyInviteReason()
 {
 	return RandomIntRange(1, eInviteReason._count)
@@ -469,18 +489,18 @@ bool function IsValidSocialEvent( SocialEvent event )
 	if ( event.completed )
 		return false
 
-	if ( event.eventType == eSocialEventType.CLUB )
-	{
-		if ( ClubIsValid() )                                                        
-			return false
-	}
 
-	if ( event.eventType == eSocialEventType.PARTY )
-	{
-		                                                    
-		if ( Clubs_IsUserAClubmate( event.eventID ) && GetPartySize() > 1 )
-			return false
-	}
+
+
+
+
+
+
+
+
+
+
+
 
 	return true
 }
@@ -492,19 +512,19 @@ void function UpdateFriendRequestCache()
 	if ( !requestData.isValid )
 		return
 
-	#if DEVELOPER
+#if DEV
 		if ( GetBugReproNum() == 1970 )
 		{
 			requestData.people.extend( DevGetFakeFriendList() )
 		}
-	#endif
+#endif
 
 	for ( int cacheIndex = 0; cacheIndex < file.socialEventCache.len(); cacheIndex++ )
 	{
 		SocialEvent event = file.socialEventCache[ cacheIndex ]
 
 		if ( event.completed || event.eventType != eSocialEventType.FRIEND )
-			continue                                                        
+			continue    
 
 		bool eventValid = false
 		foreach ( int index, EadpPeopleData request in requestData.people )
@@ -513,15 +533,15 @@ void function UpdateFriendRequestCache()
 			{
 				requestData.people.remove( index )
 				eventValid = true
-				break                          
+				break 
 			}
 		}
 
 		if ( !eventValid )
 		{
-			                        
+			
 			file.socialEventCache.remove( cacheIndex )
-			cacheIndex--                                                            
+			cacheIndex-- 
 
 			SocialEvent activeEvent = GetActiveSocialEvent()
 			if ( activeEvent == event )
@@ -563,19 +583,19 @@ void function UpdatePartyInviteCache()
 	if ( !IsLobby() )
 		return
 
-	#if DEVELOPER
+#if DEV
 		if ( GetBugReproNum() == 1970 )
 		{
 			inviteToPlayList.invitations.extend( DevGetFakePartyList() )
 		}
-	#endif
+#endif
 
 	for ( int cacheIndex = 0; cacheIndex < file.socialEventCache.len(); cacheIndex++ )
 	{
 		SocialEvent event = file.socialEventCache[ cacheIndex ]
 
 		if ( event.completed || event.eventType != eSocialEventType.PARTY )
-			continue                                                        
+			continue    
 
 		bool eventValid = false
 		foreach ( int index, EadpInviteToPlayData invite in inviteToPlayList.invitations )
@@ -584,15 +604,15 @@ void function UpdatePartyInviteCache()
 			{
 				inviteToPlayList.invitations.remove( index )
 				eventValid = true
-				break                          
+				break 
 			}
 		}
 
 		if ( !eventValid )
 		{
-			                        
+			
 			file.socialEventCache.remove( cacheIndex )
-			cacheIndex--                                                               
+			cacheIndex--    
 
 			SocialEvent activeEvent = GetActiveSocialEvent()
 			if ( activeEvent == event )
@@ -610,7 +630,7 @@ void function UpdatePartyInviteCache()
 		int hardwareId = GetHardwareFromName( GetUnspoofedPlayerHardware() )
 
 		if ( invite.eaid == eaid && invite.hardware == hardwareId )
-			continue                                                         
+			continue 
 
 		SocialEvent newEvent
 		newEvent.eventType = eSocialEventType.PARTY
@@ -636,89 +656,89 @@ void function UpdatePartyInviteCache()
 }
 
 
-void function UpdateClubInviteCache()
-{
-	if ( !IsPersistenceAvailable() )
-	{
-		return
-	}
 
-	array<ClubInvite> clubInviteList = ClubGetInvitedClubsList()
-	if ( !Clubs_DoIMeetMinimumLevelRequirement() )
-	{
-		                                                                                                                             
-		return
-	}
 
-		                                                                                          
-	if ( !AreClubInvitesEnabled() )
-	{
-		                                                                                      
-		return
-	}
 
-	if ( Clubs_IsSwitchingClubs() )
-	{
-		                                                                                                                                
-		return
-	}
 
-	                                                                                                                                            
 
-	#if DEVELOPER
-		if ( GetBugReproNum() == 1970 )
-		{
-			clubInviteList.extend( DevGetFakeClubList() )
-		}
-	#endif
 
-	for ( int cacheIndex = 0; cacheIndex < file.socialEventCache.len(); cacheIndex++ )
-	{
-		SocialEvent event = file.socialEventCache[ cacheIndex ]
 
-		if ( event.completed || event.eventType != eSocialEventType.CLUB )
-			continue                                                        
 
-		bool eventValid = false
-		foreach ( int index, ClubInvite invite in clubInviteList )
-		{
-			if ( event.eventID == invite.clubID )
-			{
-				clubInviteList.remove( index )
-				eventValid = true
-				break                          
-			}
-		}
 
-		if ( !eventValid )
-		{
-			                                                   
-			file.socialEventCache.remove( cacheIndex )
-			cacheIndex--                                                               
 
-			SocialEvent activeEvent = GetActiveSocialEvent()
-			if ( activeEvent == event )
-				file.activeEventInvalid = true
-			continue
-		}
-	}
 
-	foreach ( ClubInvite invite in clubInviteList )
-	{
-		if ( IsInEventCashe( invite.clubID, eSocialEventType.CLUB ) )
-			continue
 
-		SocialEvent newEvent
-		newEvent.eventType = eSocialEventType.CLUB
-		newEvent.name = invite.name
-		newEvent.eventID = invite.clubID
-		newEvent.hardwareID = -1
-		newEvent.timeStamp = UITime()
-		newEvent.entryIndex = file.socialEventCache.len()
 
-		file.socialEventCache.append( newEvent )
-	}
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void function SocialEvent_RemoveActiveClubInvite( ClubHeader club )
@@ -780,14 +800,19 @@ void function UpdateButtons()
 			Hud_Show( button )
 	}
 
-	if ( file.activeEventInvalid || file.activeSocialEvent.eventType == eSocialEventType.CLUB )
-		Hud_Hide( file.buttonArray[2] )                                                            
+	if ( file.activeEventInvalid  )
+		Hud_Hide( file.buttonArray[2] ) 
+
+
+
+
+
 }
 
 
 void function SocialEventPopup_OnClose()
 {
-	                                                                                
+	
 	Signal( uiGlobal.signalDummy, "SocialEventPopupClosed" )
 
 	HudElem_SetRuiArg( file.contentPanel, "shouldShow", false )
@@ -814,7 +839,7 @@ bool function EventFriendRequest_CheckBlocksInput( int inputID )
 bool function EventFriendRequest_HandleInput( int inputID )
 {
 	if ( file.blockInput )
-		return false                                         
+		return false    
 
 	SocialEvent event = GetActiveSocialEvent()
 
@@ -830,15 +855,16 @@ bool function EventFriendRequest_HandleInput( int inputID )
 				EADP_AcceptInvitToPlay( event.eventID )
 				break
 
-			case eSocialEventType.CLUB:
-				Clubs_JoinClub( event.eventID )
-				                           
-				break
+
+
+
+
+
 		}
 
-		#if DEVELOPER
+#if DEV
 			DevRemoveFakeData( event.eventID, event.eventType )
-		#endif
+#endif
 		SocialEventMarkCompleted( event, 0 )
 		TryShowNextSocialEvent()
 		return true
@@ -855,16 +881,18 @@ bool function EventFriendRequest_HandleInput( int inputID )
 				EADP_RejectInviteToPlay( event.eventID )
 				break
 
-			case eSocialEventType.CLUB:
-				SendClubInviteRejectionToPIN( event )
-				ClubInviteDecline( event.eventID )
-				thread ClubDiscovery_ProcessInvitesAndRefreshDisplay()
-				break
+
+
+
+
+
+
+
 		}
 
-		#if DEVELOPER
+#if DEV
 			DevRemoveFakeData( event.eventID, event.eventType )
-		#endif
+#endif
 		SocialEventMarkCompleted( event, 1 )
 		TryShowNextSocialEvent()
 
@@ -896,7 +924,7 @@ void function TryShowNextSocialEvent()
 	SocialEvent ornull event = GetPendingSocialEvent()
 	if ( event == null )
 	{
-		                        
+		
 		thread function()
 		{
 			EndSignal( uiGlobal.signalDummy, "SocialEventPopupClosed" )
@@ -907,13 +935,13 @@ void function TryShowNextSocialEvent()
 			HudElem_SetRuiArg( file.contentPanel, "shouldShow", false )
 			thread BlockInputForDuration( 1.2 )
 
-			wait(1.2)                               
-			thread ClearActiveLobbyPopup()                                                         
+			wait(1.2) 
+			thread ClearActiveLobbyPopup() 
 		}()
 	}
 	else
 	{
-		                                   
+		
 		expect SocialEvent( event )
 
 		thread function() : (event )
@@ -923,15 +951,15 @@ void function TryShowNextSocialEvent()
 				SocialEventUpdate()
 			} )
 
-			                       
-			if( !CompareSocialEvents( event, file.activeSocialEvent ) )                                
+			
+			if( !CompareSocialEvents( event, file.activeSocialEvent ) ) 
 			{
 				RuiSetArgByType( Hud_GetRui( file.contentPanel ), "transitionStartTime", ClientTime(), eRuiArgType.GAMETIME )
 				thread BlockInputForDuration( 1.0 )
 			}
 
-			SetActiveSocialEvent( event )                                                                         
-			wait(0.4)                                                   
+			SetActiveSocialEvent( event ) 
+			wait(0.4) 
 
 			UpdateSocialEventRui( event )
 		}()
@@ -949,9 +977,9 @@ void function SocialEventBlockPlayerDialog( SocialEvent event )
 			else if ( event.eventType == eSocialEventType.PARTY )
 				EADP_RejectInviteToPlay( eaid )
 
-			#if DEVELOPER
+#if DEV
 				DevRemoveFakeData( event.eventID, event.eventType )
-			#endif
+#endif
 
 			EADP_BlockByEAID( eaid )
 
@@ -960,27 +988,29 @@ void function SocialEventBlockPlayerDialog( SocialEvent event )
 		}
 		else
 		{
-			                                            
+			
 		}
 	} )
 }
 
 
-void function SendClubInviteRejectionToPIN( SocialEvent event )
-{
-	ClubHeader clubHeader
-	clubHeader.clubID = event.eventID
-	clubHeader.name = event.name
-	PIN_Club_DeclineInvite( clubHeader )
-}
 
-bool function IsSocialPopUpAClubInvite()
-{
-	if ( file.activeEventInvalid == true )
-		return false
 
-	return file.activeSocialEvent.eventType == eSocialEventType.CLUB
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 bool function IsSocialPopupActive()
@@ -1006,7 +1036,7 @@ void function TryUpdatePartyInvitePresence( EadpPresenceData presence )
 
 	OnThreadEnd( function() : (presence, shouldTestPresence)
 	{
-		                                                                                         
+		
 		if ( shouldTestPresence && PartyInviteShouldCycle( presence ) )
 			TryShowNextSocialEvent()
 	} )
@@ -1047,7 +1077,7 @@ bool function PartyInviteShouldCycle( EadpPresenceData presence )
 
 
 
-#if DEVELOPER
+#if DEV
 array< EadpPeopleData > devFriendList
 array< EadpInviteToPlayData > devPartyList
 array< ClubInvite > devClubList
@@ -1093,16 +1123,17 @@ void function DevRemoveFakeData( string eventID, int eventType )
 					devPartyList.remove( index )
 			}            break
 
-		case eSocialEventType.CLUB:
-			foreach ( index, data in devClubList )
-			{
-				if ( data.clubID == eventID )
-					devClubList.remove( index )
-			}
-			break
+
+
+
+
+
+
+
+
 	}
 
-	                           
+	
 	delaythread( 0.2 ) SocialEventUpdate()
 }
 
@@ -1118,10 +1149,10 @@ void function DevDumpFakeLists()
 	foreach ( data in devFriendList )
 		printt( data.platformName, " - ", data.eaid )
 
-	printt( "----" )
-	printt( "## devClubList type:", eSocialEventType.CLUB, "count", devClubList.len() )
-	foreach ( data in devClubList )
-		printt( data.name, " - ", data.clubID )
+
+
+
+
 
 	printt( "----" )
 	printt( "## Event Cashe, count", file.socialEventCache.len() )
@@ -1132,7 +1163,7 @@ void function DevDumpFakeLists()
 
 void function SocialEvent_AddDevEvent( int eventType = eSocialEventType.FRIEND )
 {
-	                         
+	
 
 	printf( "SocialEventDebug: %s( %i )", FUNC_NAME(), eventType )
 
@@ -1141,7 +1172,7 @@ void function SocialEvent_AddDevEvent( int eventType = eSocialEventType.FRIEND )
 		case eSocialEventType.FRIEND:
 			EadpPeopleData person
 			person.eaid = "10000" + string( RandomIntRange( 10000000, 30000000 ) )
-			person.name = "Friend Name #" + (devFriendList.len() + 1)                 
+			person.name = "Friend Name #" + (devFriendList.len() + 1) 
 			person.platformName = "Friend Plfm Name #" + (++friendIndex)
 			person.platformHardware = ["PC", "X1", "PS4"].getrandom()
 
@@ -1152,22 +1183,23 @@ void function SocialEvent_AddDevEvent( int eventType = eSocialEventType.FRIEND )
 			printf( "SocialEventDebug: %s(): Adding party invite", FUNC_NAME() )
 			EadpInviteToPlayData invite
 			invite.name = "Party Friend Name #" + (++friendIndex)
-			invite.eaid = "10000" + string( RandomIntRange( 10000000, 30000000 ) )                  		  	             	             	             
-			invite.hardware = [HARDWARE_PC, HARDWARE_PS4, HARDWARE_XBOXONE].getrandom()               
+			invite.eaid = "10000" + string( RandomIntRange( 10000000, 30000000 ) ) 
+			invite.hardware = [HARDWARE_PC, HARDWARE_PS4, HARDWARE_XBOXONE].getrandom() 
 
 			devPartyList.append( invite )
 			break
 
-		case eSocialEventType.CLUB:
-			ClubInvite invite
-			invite.name = "CoolClubName #" + (++friendIndex)
-			invite.clubID = "10000" + string( RandomIntRange( 10000000, 30000000 ) )             
 
-			devClubList.append( invite )
-			break
+
+
+
+
+
+
+
 	}
 
-	                           
+	
 	delaythread( 0.2 ) SocialEventUpdate()
 }
-#endif       
+#endif

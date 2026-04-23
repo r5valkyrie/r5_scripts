@@ -1,8 +1,7 @@
 global function InitGamemodeSelectDialog
 global function GamemodeSelect_IsEnabled
-
 global function GamemodeSelect_PlaylistIsDefaultSlot
-
+global function GamemodeSelect_JumpToCups
 
 struct {
 	var menu
@@ -12,18 +11,20 @@ struct {
 	bool isOpen
 } file
 
-  
- 	    
-  
+
+
+
 void function InitGamemodeSelectDialog( var menu )
 {
+	RegisterSignal( "GamemodeSelectClosed" )
+
 	file.menu = menu
 
 	file.background = Hud_GetChild( menu, "ScreenFrame" )
 
 	AddMenuEventHandler( menu, eUIEvent.MENU_OPEN, GamemodeSelect_Open )
 	AddMenuEventHandler( menu, eUIEvent.MENU_CLOSE, GamemodeSelect_Close )
-
+	AddMenuEventHandler( menu, eUIEvent.MENU_NAVIGATE_BACK, GamemodeSelect_NavBack )
 
 	AddCallback_OnPartyMemberAdded( OnPartyChanged )
 	AddCallback_OnPartyMemberRemoved( OnPartyChanged )
@@ -31,9 +32,9 @@ void function InitGamemodeSelectDialog( var menu )
 	SetDialog( menu, true )
 	SetClearBlur( menu, false )
 
-#if DEVELOPER
+#if DEV
 	AddMenuThinkFunc( menu, GameModeAutomationThink )
-#endif       
+#endif
 }
 
 void function GamemodeSelect_Open()
@@ -44,7 +45,21 @@ void function GamemodeSelect_Open()
 		TabDef tabDef = AddTab( file.menu, Hud_GetChild( file.menu, "GamemodeSelectDialogPublicPanel" ), "#GAMEMODE_CATEGORY_PUBLIC_MATCH" )
 		SetTabBaseWidth( tabDef, 300 )
 	}
-                           
+
+
+	if ( CupsEnabled() )
+	{
+		
+		if ( Cups_GetVisibleEvents().len() > 0 )
+		{
+			TabDef tabDef = AddTab( file.menu, Hud_GetChild( file.menu, "RTKGamemodeSelectApexCups" ), "#GAMEMODE_APEX_CUPS_TAB" )
+			SetTabBaseWidth( tabDef, 300 )
+
+			thread GamemodeSelect_RefreshCupsTabAsync( tabDef )
+		}
+	}
+
+
 
 		{
 			TabDef tabDef = AddTab( file.menu, Hud_GetChild( file.menu, "GamemodeSelectDialogPrivatePanel" ), "#GAMEMODE_CATEGORY_PRIVATE_MATCH" )
@@ -52,7 +67,7 @@ void function GamemodeSelect_Open()
 
 			GamemodeSelect_SetPrivateMatchEnabled()
 		}
-       
+
 
 	TabData tabData = GetTabDataForPanel( file.menu )
 	tabData.centerTabs = true
@@ -68,8 +83,58 @@ void function GamemodeSelect_Open()
 
 }
 
+void function GamemodeSelect_RefreshCupsTabAsync( TabDef tabDef )
+{
+	EndSignal( GetLocalClientPlayer(), "GamemodeSelectClosed" )
+
+	Cups_WaitForResponse()
+
+	if ( !IsPersistenceAvailable() )
+		return
+
+	
+	int unixTime = GetUnixTimestamp()
+	foreach ( ItemFlavor cupEvent in Cups_GetAllEvents() )
+	{
+		
+		if ( !CalEvent_IsVisible( cupEvent, unixTime ) && !Cups_HasParticipated( cupEvent ) )
+			continue
+
+		
+		if ( !CalEvent_IsActive( cupEvent, unixTime ) )
+			continue
+
+		
+		int lockState = RTKGameModeSelectApexCups_GetLockState( cupEvent )
+		if ( lockState != CUP_LOCK_NONE )
+			continue
+
+		ItemFlavor ornull activeCupFlavor = Cups_GetEligbleCup( cupEvent )
+		if ( activeCupFlavor == null )
+			continue
+		expect ItemFlavor( activeCupFlavor )
+
+		
+		int persistenceDataIndex = Cups_GetPlayersPDataIndexForCupID( GetLocalClientPlayer(), activeCupFlavor.guid )
+		if ( persistenceDataIndex < 0 )
+			continue
+
+		
+		bool cupSeen = expect bool( GetPersistentVar( format( "cups[%d].uiSeen", persistenceDataIndex ) ) )
+		if ( !cupSeen )
+		{
+			tabDef.new = true
+			UpdateMenuTabs()
+
+			break
+		}
+	}
+}
+
 void function GamemodeSelect_Close()
 {
+	Signal( GetLocalClientPlayer(), "GamemodeSelectClosed" )
+
 	file.isOpen = false
 	ClearTabs( file.menu )
 	Hud_SetAboveBlur( GetMenu( "LobbyMenu" ), true )
@@ -83,7 +148,21 @@ void function GamemodeSelect_Close()
 	Lobby_OnGamemodeSelectClose()
 
 }
-#if DEVELOPER
+
+void function GamemodeSelect_NavBack()
+{
+	if( !file.isOpen )
+		return
+
+	TabData gamemodeTabData = GetTabDataForPanel( file.menu )
+
+	
+	if ( gamemodeTabData.activeTabIdx == Tab_GetTabIndexByBodyName( gamemodeTabData, "RTKGamemodeSelectApexCups" ) )
+		ActivateTab( gamemodeTabData, 0 )
+	else
+		CloseActiveMenu()
+}
+#if DEV
 void function GameModeAutomationThink( var menu )
 {
 	if (AutomateUi())
@@ -92,7 +171,7 @@ void function GameModeAutomationThink( var menu )
 		CloseAllDialogs()
 	}
 }
-#endif       
+#endif
 
 void function AnimateIn()
 {
@@ -139,14 +218,14 @@ void function GamemodeSelect_SetPrivateMatchEnabled()
 	UpdateMenuTabs()
 }
 
-  
- 	                       
-  
+
+
+
 bool function GamemodeSelect_IsEnabled()
 {
 	if ( !IsConnectedServerInfo() )
 		return false
-	     
+	
 	return GetCurrentPlaylistVarBool( "gamemode_select_v3_enable", true )
 }
 
@@ -155,4 +234,21 @@ bool function GamemodeSelect_PlaylistIsDefaultSlot( string playlist )
 {
 	string uiSlot = GetPlaylistVarString( playlist, "ui_slot", "" )
 	return (uiSlot == DEFAULT_PLAYLIST_UI_SLOT_NAME)
+}
+
+void function GamemodeSelect_JumpToCups( var button )
+{
+	while ( GetActiveMenu() != GetMenu( "LobbyMenu" ) )
+		CloseActiveMenu()
+
+	var menu = GetMenu( "GamemodeSelectDialog" )
+	AdvanceMenu( menu )
+	TabData gamemodeTabData = GetTabDataForPanel( menu )
+
+	
+	int tabIdx = Tab_GetTabIndexByBodyName( gamemodeTabData, "RTKGamemodeSelectApexCups" )
+	if ( tabIdx == -1 )
+		return
+
+	ActivateTab( gamemodeTabData, tabIdx )
 }
