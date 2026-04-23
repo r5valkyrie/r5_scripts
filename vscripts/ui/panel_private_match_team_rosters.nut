@@ -3,7 +3,7 @@ global function InitPrivateMatchSpectatorsPanel
 global function InitPrivateMatchUnassignedPlayersPanel
 
 #if CLIENT
-                                                    
+
 global function PrivateMatch_TeamRosters_Update
 global function SetTeamName_OnOnSave
 global function PrivateMatch_KickSelectedPlayer
@@ -35,7 +35,6 @@ struct
 	var 					   kickDragTarget
 	var 					   kickPlayer
 
-	var                            mouseDragIcon
 	table< var, int >              mouseDragTargetTeamMap
 	table< var, RosterButtonData > rosterButtonToPlayerMap
 	RosterButtonData               dragEntData
@@ -45,79 +44,21 @@ struct
 
 void function InitPrivateMatchSpectatorsPanel( var panel )
 {
-	file.spectatorsPanel = panel
 
-	#if UI
-		AddUICallback_OnLevelInit( void function() : ( panel )
-		{
-			Assert( CanRunClientScript() )
-			RunClientScript( "InitPrivateMatchSpectatorsPanel", panel )
-		} )
-	#elseif CLIENT
-		                                                                                                     
-		file.teamRosters[TEAM_SPECTATOR] <- CreateTeamRoster( TEAM_SPECTATOR, GetPlaylistVarInt( "private_match", "max_observers", TEAM_SPECTATOR_MAX_PLAYERS ), panel )
-		file.mouseDragTargetTeamMap[panel] <- TEAM_SPECTATOR
-		PrivateMatch_TeamRoster_Configure( file.teamRosters[TEAM_SPECTATOR], "#TEAM_OBSERVER" )
-	#endif
 }
 
 
 void function InitPrivateMatchUnassignedPlayersPanel( var panel )
 {
-	file.unassignedPlayersPanel = panel
 
-	#if UI
-		AddUICallback_OnLevelInit( void function() : ( panel )
-		{
-			Assert( CanRunClientScript() )
-			RunClientScript( "InitPrivateMatchUnassignedPlayersPanel", panel )
-		} )
-	#elseif CLIENT
-		                                                                                   
-		file.teamRosters[TEAM_UNASSIGNED] <- CreateTeamRoster( TEAM_UNASSIGNED, 0, panel )
-		file.mouseDragTargetTeamMap[panel] <- TEAM_UNASSIGNED
-		PrivateMatch_TeamRoster_Configure( file.teamRosters[TEAM_UNASSIGNED], "#TEAM_UNASSIGNED" )
-	#endif
 }
 
 
 void function InitPrivateMatchTeamRostersPanel( var panel )
 {
-	                                                            
 
-	file.teamsPanel = panel
 
-	file.mouseDragIcon = Hud_GetChild( Hud_GetParent( panel ), "MouseDragIcon" )
 
-	#if UI
-		AddUICallback_OnLevelInit( void function() : ( panel )
-		{
-			Assert( CanRunClientScript() )
-			RunClientScript( "InitPrivateMatchTeamRostersPanel", panel )
-		} )
-	#elseif CLIENT
-		file.preloadingPlayers = -1
-		RegisterSignal( "StopMouseDrag" )
-
-		                                                                             
-		for ( int index; index < 20; index++ )
-		{
-			string team          = "Team"
-			string indexName     = index < 10 ? "0" + string( index ) : string( index )
-			string teamIndexName = team + indexName
-
-			var teamPanel = Hud_GetChild( panel, teamIndexName )
-			var teamRosterButtons = Hud_GetChild( teamPanel, PRIVATE_MATCH_TEAM_BUTTON_PANEL )
-
-			file.teamRosters[TEAM_MULTITEAM_FIRST + index] <- CreateTeamRoster( TEAM_MULTITEAM_FIRST + index, 3, teamPanel )
-			file.mouseDragTargetTeamMap[teamPanel] <- TEAM_MULTITEAM_FIRST + index
-			PrivateMatch_TeamRoster_Configure( file.teamRosters[TEAM_MULTITEAM_FIRST + index], teamIndexName )
-		}
-		
-		file.kickDragTarget = Hud_GetChild( Hud_GetParent( panel ), "KickButton" )
-		HudElem_SetRuiArg( file.kickDragTarget, "kickTextString", Localize( "#TOURNAMENT_KICK_PLAYER" ) )	
-		
-	#endif
 }
 
 
@@ -145,10 +86,10 @@ void function PrivateMatch_TeamRoster_Configure( RosterStruct teamRoster, string
 	var buttonPanel = teamRoster.listPanel
 	int teamSize    = teamRoster.teamSize
 
-	                                 
-	   
-	  	                                                                                              
-	   
+
+
+
+
 	HudElem_SetRuiArg( teamRoster.headerPanel, "teamName", teamName )
 	HudElem_SetRuiArg( teamRoster.headerPanel, "teamNumber", teamRoster.teamDisplayNumber )
 
@@ -223,7 +164,7 @@ void function PrivateMatch_TeamRosters_Update( table< int, array< entity > > tea
 		if ( teamIndex != TEAM_UNASSIGNED && teamIndex != TEAM_SPECTATOR )
 		{
 			int teamDisplayNumber = teamIndex - 1
-			                                                                                                    
+
 			teamRoster.teamDisplayNumber = teamDisplayNumber
 			HudElem_SetRuiArg( teamRoster.headerPanel, "teamNumber", teamRoster.teamDisplayNumber )
 
@@ -316,14 +257,14 @@ void function ConfirmKickPlayerDialogue( string playerName )
 {
 	if ( IsDialog( GetActiveMenu() ) )
 		return
-	
+
 	ConfirmDialogData data
 	data.headerText = "#TOURNAMENT_KICK_PLAYER"
-	data.messageText = Localize( "#TOURNAMENT_KICK_PLAYER_CONFIRM", playerName )  
+	data.messageText = Localize( "#TOURNAMENT_KICK_PLAYER_CONFIRM", playerName )
 	data.resultCallback = void function( int dialogResult ) {
 		if( dialogResult == eDialogResult.YES )
 		{
-			RunClientScript( "PrivateMatch_KickSelectedPlayer" ) 
+			RunClientScript( "PrivateMatch_KickSelectedPlayer" )
 		}
 	}
 
@@ -395,7 +336,7 @@ void function OnRosterHeader_ClickJoinTeam( var button )
 		break
 	}
 
-	Remote_ServerCallFunction( "ClientCallback_PrivateMatchSetPlayerTeam", GetLocalClientPlayer(), teamIndex ) 
+	Remote_ServerCallFunction( "ClientCallback_PrivateMatchSetPlayerTeam", GetLocalClientPlayer(), teamIndex )
 }
 
 
@@ -468,7 +409,7 @@ void function TrackMouseDrag( var button )
 
 	if ( !dragStarted )
 	{
-		                                   
+
 	}
 	else
 	{
@@ -479,10 +420,10 @@ void function TrackMouseDrag( var button )
 		{
 			if ( parentElem in file.mouseDragTargetTeamMap )
 			{
-				Remote_ServerCallFunction( "ClientCallback_PrivateMatchSetPlayerTeam", rosterButtonData.player, file.mouseDragTargetTeamMap[parentElem] ) 
+				Remote_ServerCallFunction( "ClientCallback_PrivateMatchSetPlayerTeam", rosterButtonData.player, file.mouseDragTargetTeamMap[parentElem] )
 				break
 			}
-			
+
 			if ( parentElem == file.kickDragTarget )
 			{
 				file.kickPlayer = rosterButtonData.player
@@ -520,74 +461,7 @@ var function GetMouseDragTarget()
 
 void function StartMouseDrag( var button, RosterButtonData rosterButtonData )
 {
-	EndSignal( clGlobal.signalDummy, "StopMouseDrag" )
 
-	var elem = file.mouseDragIcon
-	var rui  = Hud_GetRui( elem )
-
-	if ( !IsValid( rosterButtonData.player ) )
-		return
-
-	HudElem_SetRuiArg( elem, "buttonText", rosterButtonData.player.GetPlayerNameWithClanTag() )
-	Hud_Show( elem )
-
-	OnThreadEnd(
-		function () : ( elem, button )
-		{
-			Hud_Hide( elem )
-
-			foreach ( teamRoster in file.teamRosters )
-			{
-				HudElem_SetRuiArg( teamRoster.headerPanel, "isDragTarget", false )
-			}
-			
-			HudElem_SetRuiArg( file.kickDragTarget, "isDragTarget", false )
-		}
-	)
-
-	while ( true )
-	{
-		if ( !IsValid( rosterButtonData.player ) )
-			Signal( clGlobal.signalDummy, "StopMouseDrag" )
-
-		vector screenPos = ConvertCursorToScreenPos()
-		Hud_SetPos( elem, screenPos.x - Hud_GetWidth( elem ) * 0.5, screenPos.y - Hud_GetHeight( elem ) * 0.5 )
-
-		var mouseTarget = GetMouseDragTarget()
-		int targetIndex = mouseTarget != null ? file.mouseDragTargetTeamMap[mouseTarget] : -1
-		foreach ( teamRoster in file.teamRosters )
-		{
-			if ( teamRoster.teamIndex == targetIndex )
-			{
-				HudElem_SetRuiArg( teamRoster.headerPanel, "isDragTarget", targetIndex == TEAM_UNASSIGNED )
-				foreach ( player in teamRoster.playerRoster )
-				{
-					if ( player != null )
-						continue
-
-					HudElem_SetRuiArg( teamRoster.headerPanel, "isDragTarget", true )
-					break
-				}
-			}
-			else
-			{
-				HudElem_SetRuiArg( teamRoster.headerPanel, "isDragTarget", false )
-			}
-		}
-		
-		var focusElem = GetMouseFocus()
-		
-		if( focusElem == file.kickDragTarget )
-		{
-			HudElem_SetRuiArg( file.kickDragTarget, "isDragTarget", true )
-		}
-		else
-		{
-			HudElem_SetRuiArg( file.kickDragTarget, "isDragTarget", false )
-		}
-				
-		WaitFrame()
-	}
 }
 
 

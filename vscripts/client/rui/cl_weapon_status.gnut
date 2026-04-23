@@ -768,6 +768,7 @@ void function ClearRuiWeaponData( var rui, bool isTitan )
 	RuiSetBool( rui, "ammoPoolVisible", false )
 
 	RuiSetImage( rui, "hudIcon", $"" )
+	RuiSetBool( rui, "isMastered", false )
 	RuiSetBool( rui, "useHudOverrideIcon", false )
 	RuiSetImage( rui, "hudOverrideIcon", $"" )
 

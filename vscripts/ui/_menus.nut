@@ -1821,7 +1821,7 @@ void function InitMenus()
 	//////////////////////////////////////////////////////////////////////////////
 
 	var customizeCharacterMenu = AddMenu( "CustomizeCharacterMenu", $"resource/ui/menus/customize_character.menu", InitCustomizeCharacterMenu )
-	AddPanel( customizeCharacterMenu, "CharacterSkinsPanel", InitCharacterSkinsPanel )
+	//AddPanel( customizeCharacterMenu, "CharacterSkinsPanel", InitCharacterSkinsPanel )
 
 	var cardPanel = AddPanel( customizeCharacterMenu, "CharacterCardsPanelV2", InitCharacterCardsPanel )
 	AddPanel( cardPanel, "CardFramesPanel", InitCardFramesPanel )

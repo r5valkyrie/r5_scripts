@@ -36,7 +36,7 @@ const int AUTO_CLOSE_LOBBY_TIMER = 60
 void function InitCustomMatchLobbyPanel( var panel )
 {
 	file.panel = panel
-	file.dragIcon = Hud_GetChild( panel, "MouseDragIcon" )
+	file.dragIcon = Hud_GetChild( panel, "StartButton" )
 	file.startButton = Hud_GetChild( panel, "StartButton" )
 	file.chatTarget = Hud_GetChild( panel, "ChatPanel" )
 	file.chatInputLine = Hud_GetChild( file.chatTarget, "ChatInputLine" )
@@ -136,11 +136,11 @@ bool function StartMatch_CanClick()
 
 bool function CustomMatch_CanAdminStartMatch()
 {
-	                              
-	           
-	                                                                                                        
-	                                           
-	                           
+
+
+
+
+
 	bool canStartMatch = CustomMatch_IsLocalAdmin() && !file.hasRemainingPlayers && file.teamIndex != TEAM_UNASSIGNED && !CustomMatch_MatchInProgress()
 
 	return canStartMatch
@@ -156,12 +156,12 @@ void function StartMatch_OnClick( var button )
 	if ( !StartMatch_CanClick() )
 		return
 
-	                                                                                   
+
 	if ( CustomMatch_CanAdminStartMatch() )
 	{
 		CustomMatch_SetMatchmaking( !file.isMatchmaking )
 	}
-	                                                                   
+
 	else if ( CustomMatch_CanPlayerSetReady() )
 	{
 		CustomMatch_SetReady( !file.isReady )
@@ -170,7 +170,7 @@ void function StartMatch_OnClick( var button )
 
 bool function CanJoinTeam( int index )
 {
-	return !IsDialog( GetActiveMenu() )                                                                        
+	return !IsDialog( GetActiveMenu() )
 }
 
 bool function JoinSpectators_CanClick()
@@ -266,34 +266,34 @@ void function CustomMatch_SetStartMatchTooltip( CustomMatch_LobbyState data )
 	if ( !IsConnected() )
 		return
 
-	                                                                                
+
 	file.gamemode = GetPlaylistGamemodeByIndex( data.playlist, 0 )
 
-	                                                                              
+
 	if ( CustomMatch_IsLocalAdmin() )
 	{
-		                                                               
+
 		file.assignedPlayers = []
 
-		                                                 
+
 		foreach( player in data.players )
 		{
-			                                                                                          
+
 			if (player.team != TEAM_UNASSIGNED && player.team != TEAM_SPECTATOR)
 			{
-				                                                            
+
 				file.assignedPlayers.push(player)
 			}
 		}
 
-		                                                                                                 
+
 		file.remainingPlayers = CustomMatch_HasSpecialAccess() ? (1 - file.assignedPlayers.len()) : GetPlaylistVarInt( data.playlist, "cm_public_min_players", (file.gamemode == SURVIVAL || file.gamemode == GAMEMODE_SHADOW_ROYALE ) ? 30 : data.maxPlayers ) - file.assignedPlayers.len()
 		file.hasRemainingPlayers = file.remainingPlayers > 0
 
-		                     
+
 		array<string> tooltipConditions = []
 
-		                                                                             
+
 		if (file.hasRemainingPlayers)
 		{
 			if (file.remainingPlayers > 1)
@@ -306,18 +306,18 @@ void function CustomMatch_SetStartMatchTooltip( CustomMatch_LobbyState data )
 			}
 		}
 
-		                                                                      
+
 		if (file.teamIndex == TEAM_UNASSIGNED)
 		{
 			tooltipConditions.push( Localize( "#CUSTOMMATCH_ADMIN_NOT_ASSIGNED" ) )
 		}
 
-		                                                     
+
 		if (file.hasRemainingPlayers || file.teamIndex == TEAM_UNASSIGNED)
 		{
 			ToolTipData startButtonTooltip
 
-			                               
+
 			string descText = ""
 			for (int k = 0; k < tooltipConditions.len(); k++ )
 			{
@@ -332,16 +332,16 @@ void function CustomMatch_SetStartMatchTooltip( CustomMatch_LobbyState data )
 		}
 		else
 		{
-			                                                       
+
 			Hud_ClearToolTipData( file.startButton )
 		}
 
-		                                                    
+
 		RuiSetBool( Hud_GetRui( file.startButton ), "isLocked", !CustomMatch_CanAdminStartMatch() )
 	}
 	else
 	{
-		                                                             
+
 		Hud_ClearToolTipData( file.startButton )
 		RuiSetBool( Hud_GetRui( file.startButton ), "isLocked", !CustomMatch_CanPlayerSetReady() )
 	}
@@ -349,29 +349,29 @@ void function CustomMatch_SetStartMatchTooltip( CustomMatch_LobbyState data )
 
 void function CustomMatch_AdminLeftRemoveAllPlayers()
 {
-	                                
+
 	file.isAutoClosing = true
 
-	                                      
+
 	float startTime = UITime()
 	float endTime = UITime() + AUTO_CLOSE_LOBBY_TIMER
 
-	                                                
+
 	while ( UITime() < endTime )
 	{
 		WaitFrame()
 
-		                                                                  
+
 		if ( !CustomMatch_IsAdminInLobby() )
 		{
-			                        
+
 			file.autoCloseRemainingTime = int(UITime() - startTime)
 			CustomMatchDashboard_UpdateAutoCloseTimer( true, float(AUTO_CLOSE_LOBBY_TIMER - file.autoCloseRemainingTime) )
 		}
 		else
 		{
-			                                        
-			                                                                           
+
+
 			break
 		}
 	}
@@ -379,12 +379,12 @@ void function CustomMatch_AdminLeftRemoveAllPlayers()
 	OnThreadEnd(
 		function() : ( )
 		{
-			                               
-			                                                                         
-			                                                                 
+
+
+
 			if (file.autoCloseRemainingTime >= AUTO_CLOSE_LOBBY_TIMER)
 			{
-				                            
+
 				CustomMatch_LeaveLobby()
 				CustomMatch_CloseLobbyMenu( "#CUSTOM_MATCH_REMOVED_FROM_MATCH", "#CUSTOM_MATCH_REMOVED_FROM_MATCH_DESC" )
 			}
@@ -410,7 +410,7 @@ void function Callback_OnLobbyDataChanged( CustomMatch_LobbyState data )
 
 	file.lobbyPlayers = data.players
 
-	                                                                                             
+
 	if (!file.isAutoClosing)
 	{
 		if (!CustomMatch_IsAdminInLobby() && !CustomMatch_MatchInProgress())
@@ -420,8 +420,8 @@ void function Callback_OnLobbyDataChanged( CustomMatch_LobbyState data )
 	}
 	else
 	{
-		                                                          
-		                                                                  
+
+
 		if (CustomMatch_IsAdminInLobby())
 		{
 			file.autoCloseRemainingTime = 0
@@ -456,7 +456,7 @@ void function CustomMatchOpenDataCenterDialog(var button)
 {
 	if (CustomMatch_IsLocalAdmin())
 	{
-		                                
+
 		Hud_Hide( file.panel )
 		Hud_Hide(GetPanel("ShareTokenPanel" ) )
 		Hud_Hide( Hud_GetChild( GetMenu("CustomMatchLobbyMenu" ), "TabsBackground" ) )
@@ -464,7 +464,7 @@ void function CustomMatchOpenDataCenterDialog(var button)
 		TabData tabs = GetTabDataForPanel( GetMenu("CustomMatchLobbyMenu" ) )
 		Hud_Hide( tabs.tabPanel )
 
-		                                   
+
 		OpenDataCenterDialog( button )
 	}
 }
@@ -507,9 +507,9 @@ void function CustomMatchOnDataCenterDialog_Close()
 	Hud_Show( file.panel )
 }
 
-                                                                    
-             
-                                                                    
+
+
+
 
 void function CustomMatchLobby_OnDragPlayer( CustomMatch_LobbyPlayer player )
 {
@@ -559,7 +559,7 @@ void function DragHover()
 				HudElem_SetRuiArg( header, "isDragTarget", false )
 		}
 
-		                            
+
 
 		file.dragTarget = dragTarget
 
@@ -608,7 +608,7 @@ var function GetDragTarget()
 	var element = GetMouseFocus()
 	while ( element && element != file.panel )
 	{
-		                                                                                    
+
 		string name = Hud_GetHudName( element )
 		name = name.slice( 0, name.len() - 2 )
 
@@ -635,7 +635,7 @@ var function GetDropTarget()
 	var element = GetMouseFocus()
 	while ( element && element != file.panel )
 	{
-		                                                                                    
+
 		string name = Hud_GetHudName( element )
 		name = name.slice( 0, name.len() - 2 )
 

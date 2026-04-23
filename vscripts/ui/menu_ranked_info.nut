@@ -14,7 +14,6 @@ struct
 	var infoButtonRank
 	var infoButtonRPTable
 
-	var panelRPTable
 	var closeButtonRPTable
 
 	var panelRankInfo
@@ -22,7 +21,7 @@ struct
 
 } file
 
-void function InitRankedInfoMenu( var newMenuArg )                                               
+void function InitRankedInfoMenu( var newMenuArg )
 {
 	var menu = GetMenu( "RankedInfoMenu" )
 	file.menu = menu
@@ -35,8 +34,8 @@ void function InitRankedInfoMenu( var newMenuArg )
 
 	AddMenuFooterOption( menu, LEFT, BUTTON_B, true, "#B_BUTTON_BACK", "#B_BUTTON_BACK" )
 	AddMenuFooterOption( menu, LEFT, BUTTON_Y, true, "#Y_BUTTON_VIEW_REWARDS", "#VIEW_REWARDS", OnViewRewards, ShouldShowRewards )
-	
-	                                            
+
+
 	var moreInfoButton = Hud_GetChild( menu, "MoreInfoButton" )
 	file.moreInfoButton = moreInfoButton
 
@@ -45,9 +44,6 @@ void function InitRankedInfoMenu( var newMenuArg )
 
 	var infoButtonRPTable = Hud_GetChild ( menu, "RPTableInfoButton" )
 	file.infoButtonRPTable = infoButtonRPTable
-
-	var panelRPTable = Hud_GetChild ( menu, "MoreRPInfoPanel" )
-	file.panelRPTable = panelRPTable
 
 	var panelRankInfo = Hud_GetChild ( menu, "MoreInfoPanel" )
 	file.panelRankInfo = panelRankInfo
@@ -62,11 +58,11 @@ void function InitRankedInfoMenu( var newMenuArg )
 	HideRankedInfoPanel ( null )
 	HideRPTablePanel ( null  )
 
-	                             
-	                                                
-	                                                       
-	                                                                              
-	                                                                     
+
+
+
+
+
 	Hud_AddEventHandler( moreInfoButton, UIE_CLICK, OpenRankedInfoMorePage )
 	Hud_AddEventHandler( infoButtonRank, UIE_CLICK, ShowRankedAboutPanel )
 	Hud_AddEventHandler( infoButtonRPTable, UIE_CLICK, ShowRPTablePanel )
@@ -94,13 +90,11 @@ void function HideRankedInfoPanel( var button )
 
 void function ShowRPTablePanel( var button )
 {
-	Hud_Show( file.panelRPTable )
 	Hud_Show( file.closeButtonRPTable )
 }
 
 void function HideRPTablePanel( var button )
 {
-	Hud_Hide( file.panelRPTable )
 	Hud_Hide( file.closeButtonRPTable )
 }
 
@@ -125,7 +119,7 @@ void function OnRankedInfoMenu_Open()
 	}
 
 	var mainRui = Hud_GetRui( Hud_GetChild( file.menu, "InfoMain" ) )
-	if ( currentTier.isLadderOnlyTier  )                                                        
+	if ( currentTier.isLadderOnlyTier  )
 	{
 		SharedRankedDivisionData scoreDivisionData = GetCurrentRankedDivisionFromScore( currentScore )
 		SharedRankedTierData scoreCurrentTier      = scoreDivisionData.tier
@@ -215,7 +209,7 @@ void function InitRankedScoreBarRui( var rui, int score, int ladderPosition )
 
 	RuiSetGameTime( rui, "animStartTime", RUI_BADGAMETIME )
 
-	if ( currentTier.isLadderOnlyTier  )                                                        
+	if ( currentTier.isLadderOnlyTier  )
 	{
 		SharedRankedDivisionData scoreDivisionData = GetCurrentRankedDivisionFromScore( score )
 		SharedRankedTierData scoreCurrentTier      = scoreDivisionData.tier
@@ -261,7 +255,7 @@ void function InitRankedScoreBarRui( var rui, int score, int ladderPosition )
 		}
 	}
 
-	                                                                    
+
 
 	RuiSetBool( rui, "showSingleBadge", divisionData.len() == 1 )
 }
@@ -393,8 +387,8 @@ void function OnRankedMenu_RankedMoreInfo( var button )
 	var savedMenu = GetActiveMenu()
 
 	if ( savedMenu == GetActiveMenu() )
-	{		
-		thread ShowMoreInfo( button )		
+	{
+		thread ShowMoreInfo( button )
 	}
 }
 

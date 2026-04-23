@@ -304,8 +304,16 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 	bool isShadowShot     = bool(damageType & DF_SHADOW_DAMAGE) ? true: false
 	bool isOvershieldShot = bool(damageType & DF_OVERSHIELD) ? true : false
 	bool isSourShot 	  = bool(damageType & DF_SOUR) ? true : false
-	bool isStunned        = false //
-		
+	bool isStunned        = false 
+	bool isStructure 	  = false
+	bool isShadowForm	  = false
+
+	bool isExtraShieldShot = false
+	if( isOvershieldShot && GetPlayerExtraShields( victim ) > 0  )
+	{
+		isExtraShieldShot = true
+		isOvershieldShot = false
+	}
 	int sortKey = (file.lastSortKey++) % 100
 
 	asset shieldIcon = $""
@@ -320,6 +328,11 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			LootData shieldData = EquipmentSlot_GetEquippedLootDataForSlot( victim, "armor" )
 			shieldIcon = shieldData.hudIcon
 			shieldLevel = shieldData.tier
+			if( UpgradeCore_IsEquipmentArmorCore( shieldData.ref ) )
+			{
+				shieldIcon = $"rui/hud/loot/loot_armor_upgrade"
+				shieldLevel = UpgradeCore_GetPlayerArmorTier( victim, false )
+			}
 		}
 		// Training dummie shield support
 		else if ( victim.IsNPC() && IsTrainingDummie( victim ) )
@@ -346,12 +359,12 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			shieldFrac = isKillShot ? 0.0 : max( 0, ( victim.GetHealth() - damageAmount ) / victim.GetMaxHealth() )
 		}
 
-		//else if ( IsRedeployBalloonEnt( victim ) )
-		//{
-		//	shieldIcon = $""
-		//	shieldLevel = 0
-		//	isStructure = true
-		//}
+		else if ( IsRedeployBalloonEnt( victim ) )
+		{
+			shieldIcon = $""
+			shieldLevel = 0
+			isStructure = true
+		}
 
 		// Mobile shield (Madmaggie)
 		else if ( IsMobileShieldEnt( victim ) )
@@ -433,7 +446,31 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			RuiSetInt( rui, "shieldTier", 0 )
 		}
 
+		if ( isOvershieldShot )
+			RuiSetImage( rui, "shieldStatusIcon", $"rui/hud/character_abilities/conduit_tactical_enemy_shielded" )
+		else
+			RuiSetImage( rui, "shieldStatusIcon", $"" )
+
+
+		if( isExtraShieldShot )
+		{
+			vector armorColor = GetFXRarityColorForTier( GetPlayerExtraShieldsTier( victim ) ) / 255.0
+			RuiSetImage( rui, "shieldBorderIcon", $"rui/hud/gametype_icons/survival/sur_armor_icon" )
+			RuiSetColorAlpha( rui, "shieldBorderColor", armorColor, 1.0 )
+		}
+
+
+
+
+
+
+
+		else
+		{
+			RuiSetColorAlpha( rui, "shieldBorderColor", <0.0,0.0,0.0>, 0.0 )
+		}
 		RuiSetFloat( rui, "timeScale", timeScale )
+		RuiSetBool( rui, "isShadowForm", isShadowForm )
 
 	}
 
@@ -510,6 +547,43 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			RuiSetGameTime( stackingRui, "shieldBreakTime", Time() )
 			RuiSetInt( stackingRui, "shieldBreakTier", shieldLevel )
 		}
+		RuiSetBool( stackingRui, "isStructure", isStructure )
+
+
+		if( isExtraShieldShot )
+		{
+			RuiSetImage( stackingRui, "shieldBorderIcon", $"rui/hud/gametype_icons/survival/sur_armor_icon" )
+			vector armorColor = GetFXRarityColorForTier( GetPlayerExtraShieldsTier( victim ) ) / 255.0
+			RuiSetColorAlpha( stackingRui, "shieldBorderColor", armorColor, 1.0 )
+		}
+
+
+
+
+
+
+
+		else
+		{
+			RuiSetColorAlpha( stackingRui, "shieldBorderColor", <0.0,0.0,0.0>, 0.0 )
+		}
+
+
+
+			if ( overshield )
+				RuiSetImage( stackingRui, "shieldStatusIcon", $"rui/hud/character_abilities/conduit_tactical_enemy_shielded" )
+			else
+				RuiSetImage( stackingRui, "shieldStatusIcon", $"" )
+
+
+		RuiSetBool( stackingRui, "isShadowForm", isShadowForm )
+
+
+		if ( isCritShot && isHeadShot && GoldenHorsePurple_HasMod( weapon ) )
+		{
+			RuiSetString( stackingRui, "extraText", "#WPN_HOPUP_GOLDEN_HORSE_PURPLE_CRIT" )
+		}
+
 
 		flyoutData.stackingDamageRui = stackingRui
 
@@ -542,6 +616,19 @@ void function DamageFlyout( float damageAmount, vector damagePosition, entity vi
 			RuiSetBool( floatingRui, "isCrit", isHeadShot || isCritShot )
 			RuiSetBool( floatingRui, "isSour", isSourShot )
 			RuiSetBool( floatingRui, "showStacking", showStackingDamageText )
+			RuiSetBool( floatingRui, "isStructure", isStructure )
+
+
+				RuiSetBool( floatingRui, "overshield", overshield )
+
+
+			RuiSetBool( floatingRui, "isShadowForm", isShadowForm )
+
+
+				if ( isCritShot && isHeadShot && GoldenHorsePurple_HasMod( weapon ) )
+				{
+					RuiSetString( floatingRui, "extraText", "#WPN_HOPUP_GOLDEN_HORSE_PURPLE_CRIT" )
+				}
 
 			DamageData newDamageData
 			newDamageData.rui = floatingRui
