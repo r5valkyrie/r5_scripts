@@ -61,7 +61,10 @@ global struct EHIScriptStruct
 	int rankScore            = 0
 	int rankScorePrevSeason  = 0
 	int rankedLadderPosition = 9999
+	table< string, int > platformLadderPosition = {}
 	int rankedLadderPositionPrevSeason = 9999
+	int arenasRankScore = 0
+	int arenasRankedLadderPosition = -1
 
 	// Stats tracking
 	bool noWitnessess = true

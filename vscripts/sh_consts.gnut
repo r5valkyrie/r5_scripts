@@ -3123,6 +3123,11 @@ global struct ToolTipData
 
 global const bool HAS_TOOLTIPS = true
 
+global const array< string > PLATFORM_LIST =
+[
+	"pc", "ps", "nx", "xb"
+]
+
 global struct DeathFieldData
 {
 	vector center = <0, 0, 0>

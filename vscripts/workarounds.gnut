@@ -405,7 +405,6 @@ global function Squads_GetSquadColor
 global function Squads_GetSquadName
 
 // featureTutorial structs moved to ui/dialogs/feature_tutorial.nut
-global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
 #endif
 
 // ============================================================================
@@ -459,7 +458,6 @@ global function GetAllResinShards
 global function ShRanked_RegisterNetworkFunctions
 global function IsRankedGame
 global function IsArenasRankedGame
-global function ArenasRanked_ConstructSingleRankBadgeForStatsCard
 
 // === Squad Cards ===
 global function DoAnimatedSquadCardsPresentation
@@ -570,7 +568,6 @@ global function RankedRumble_IsRunningRankedRumbleCached
 global function DEV_script_ranked_debug
 global function IsServerNetworkAlertTriggered
 global function PrepareGameSummaryForPointCalculation
-global function ArenasRanked_ConstructDoubleRankBadgeForStatsCard
 
 // === Persistence ===
 #if SERVER
@@ -730,9 +727,6 @@ global function GRX_HasUpToDateBundleOffers
 // === Stats/Mastery === (moved to sh_mastery.gnut)
 
 // === Ranked ===
-global function ArenasRanked_ConstructDoubleRankBadgeForStatsCard
-global function ArenasRanked_SetupMenuGladCardForUIPlayer
-global function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo
 global function Ranked_SetupMenuGladCard
 global function Ranked_GetDisplayNumberForRuiBadge
 // PopulateMatchRank moved to S21 original
@@ -1690,26 +1684,6 @@ void function DataDialog_AddCallback_OnClose( void functionref() callback )
 // Mastery_GetStatValue/DoesStatSatisfyValue/IsValidStatRef moved to sh_mastery.gnut
 
 // === Ranked ===
-
-void function ArenasRanked_ConstructSingleRankBadgeForStatsCard( var badgeRui, entity player, string rankedPeriodRef )
-{
-	Warning( "STUB: ArenasRanked_ConstructSingleRankBadgeForStatsCard" )
-}
-
-void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui1, var rui2, entity player, string rankedPeriodRef )
-{
-	Warning( "STUB: ArenasRanked_ConstructDoubleRankBadgeForStatsCard" )
-}
-
-void function ArenasRanked_SetupMenuGladCardForUIPlayer()
-{
-	Warning( "WORKAROUND: ArenasRanked_SetupMenuGladCardForUIPlayer() called - not implemented" )
-}
-
-void function ArenasRanked_SetupMenuGladCardFromCommunityUserInfo( CommunityUserInfo userInfo )
-{
-	Warning( "WORKAROUND: ArenasRanked_SetupMenuGladCardFromCommunityUserInfo() called - not implemented" )
-}
 
 void function Ranked_SetupMenuGladCard( entity player )
 {
@@ -3110,11 +3084,6 @@ void function DEV_script_ranked_debug( string msg )
 	#if DEVELOPER
 	printt( "[RANKED_DEBUG] " + msg )
 	#endif
-}
-
-void function ArenasRanked_ConstructDoubleRankBadgeForStatsCard( var rui, entity player, string rankedPeriodRef1, string rankedPeriodRef2 )
-{
-	Warning( "WORKAROUND: ArenasRanked_ConstructDoubleRankBadgeForStatsCard() called - not implemented" )
 }
 
 // === Persistence ===

@@ -996,6 +996,7 @@ Scripts:
 	cups/sh_cups.gnut
 	cups/cl_cups.gnut
 	cups/sh_ranked_rumble.gnut
+	sh_arenas_ranked.gnut
 	clui_ranked.nut
 	ui/customize_model.nut
 	ui/ui_vscript.gnut
