@@ -1001,7 +1001,7 @@ void function OnUpgradeButtonClick( var panel, var button, int index )
 		return
 
 	float duration = 0.4
-	StartMenuExtendedUse( button, file.holdToUseElem, duration, true, false, void function( bool success ) : (button, index) {
+	StartMenuExtendedUse( button, file.holdToUseElem, duration, true, void function( bool success ) : (button, index) {
 		if ( success )
 			RunClientScript( "UICallback_OnUpgradeButtonAction", button, index )
 	}, "UI_Survival_PickupTicker", "" )

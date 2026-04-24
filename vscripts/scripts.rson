@@ -156,12 +156,6 @@ Scripts:
 	client/cl_pip.gnut
 ]
 
-When: "UI"
-Scripts:
-[
-	ui/dialogs/feature_tutorial.nut
-]
-
 When: "SERVER || CLIENT || UI"
 Scripts:
 [
@@ -934,9 +928,7 @@ Scripts:
 	sh_mastery.gnut
 	sh_personalized_store.gnut
 	radio_plays.nut
-	perk_care_package_insight.nut
-	perk_extra_firepower.nut
-	perk_kill_boost_ult.nut
+	lobby/sh_lobby.gnut
 	cups/sh_cups.gnut
 	cups/cl_cups.gnut
 	cups/sh_ranked_rumble.gnut
@@ -1078,7 +1070,6 @@ Scripts:
 
 	// Lobby panels
 	ui/lobby_panel_season.nut
-	ui/ui_lobby_playlist_utility.nut
 	ui/lobby_panel_play.nut
 	ui/lobby_panel_club_landing.nut
 	ui/lobby_panel_characters.nut

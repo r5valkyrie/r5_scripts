@@ -134,15 +134,9 @@ global enum XP_TYPE
 	TOTAL_MATCH = 18
 }
 
-// Hardware/Platform constants (needed before HARDWARE_TO_MERGED_PLATFORM table below)
-global const int HARDWARE_PC = 0
-global const int HARDWARE_PC_STEAM = 1
-global const int HARDWARE_PS4 = 2
-global const int HARDWARE_XBOXONE = 3
-global const int HARDWARE_NX = 4
-global const int HARDWARE_PS5 = 5
-global const int HARDWARE_XB5 = 6
-global const int HARDWARE_SWITCH = 4
+// Hardware/Platform constants -- most registered natively by S21 engine
+// HARDWARE_PC, PS4, PS5, XBOXONE, XB5, SWITCH, PC_STEAM all engine-native
+// HARDWARE_NX not in S21 engine, defined in workarounds.gnut
 global const bool DEBUG_REMOTE_FUNCS = false
 
 // GRX_HTTPQUERYGOAL_* — additional goals not in native engine

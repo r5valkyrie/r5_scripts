@@ -19,7 +19,7 @@ global struct DeathBoxPingInfo
 
 // === Constants ===
 global const asset FIRINGRANGE_ITEM_RESPAWN_PARTICLE = $"P_impact_shieldbreaker_sparks"
-global const string XPROG_PERSISTENCE_MERGED_PLAT_STRUCT_NAME = "xMergedPlat"
+// XPROG_PERSISTENCE_MERGED_PLAT_STRUCT_NAME moved to sh_consts.gnut
 global const int PLAYER_MELEE_STATE_KICK_ATTACK = 1
 global const int PLAYER_MELEE_STATE_SLAM_ATTACK = 2
 global const int SHADOWARMY_VICTORY_FLAGS_EVAC = 4
@@ -77,16 +77,7 @@ global enum eServerVisibility
 global const int HARDWARE_NX = 4
 // [s21-native] int const HARDWARE_SWITCH = 0x9 (int) registered by engine; script redeclaration dropped
 
-// Cross-platform merged platform mapping for XProg
-global table<int, string> HARDWARE_TO_MERGED_PLATFORM = {
-	[HARDWARE_PC] = "pc",
-	[HARDWARE_PC_STEAM] = "pc",
-	[HARDWARE_PS4] = "psn",
-	[HARDWARE_PS5] = "psn",
-	[HARDWARE_XBOXONE] = "xbl",
-	[HARDWARE_XB5] = "xbl",
-	[HARDWARE_NX] = "nx",
-}
+// HARDWARE_TO_MERGED_PLATFORM moved to sh_consts.gnut
 
 // === GRX/Store Constants ===
 // [s21-native] const GRX_OFFERITEMTYPE_DEFAULT = 0 registered by engine; script redeclaration dropped
@@ -243,6 +234,7 @@ global function CreateDialogPopup
 global function EmitSoundOnEntityWithSelector
 global function ForcedSpawn_UseForcedSpawning
 global function Respawn_Token_CanLocalPlayerRespawnOrIsRespawning
+global function Respawn_Token_CanLocalPlayerRespawn
 global function OpenSurvivalGroundListRetail
 global function LootBin_IsOpen
 global function Announcements_SetVisible
@@ -397,6 +389,20 @@ global function SurvivalRank_ProcessParticiation
 // ============================================================================
 #if UI
 global function Time
+
+// === S21 init stubs (modules not yet ported) ===
+global function MenuCamera_Init
+global function MenuScene_Init
+global function ShBattlepassPurchasableXP_LevelInit
+global function ShEventAbilities_Init
+global function ShRewardSetTracker_LevelInit
+global function Sh_Kepler_Init
+global function TreasureBox_SharedInit
+global function Kepler_LevelShutdown
+global function Ranked_ShowRankedSummary
+global function Strikeout_GetMaxSquadStrikes
+global function Strikeout_UI_GetIsRespawnDisabled
+global function Strikeout_UI_GetLocalClientPlayerSquadStrikes
 
 // === Server/Debug ===
 // [s21-native] forward-decl GetServerDebugId registered by engine; dropped
@@ -895,6 +901,20 @@ float function Time()
 {
 	return UITime()
 }
+
+// === S21 init stubs ===
+void function MenuCamera_Init() {}
+void function MenuScene_Init() {}
+void function ShBattlepassPurchasableXP_LevelInit() {}
+void function ShEventAbilities_Init() {}
+void function ShRewardSetTracker_LevelInit() {}
+void function Sh_Kepler_Init() {}
+void function TreasureBox_SharedInit() {}
+void function Kepler_LevelShutdown() {}
+bool function Ranked_ShowRankedSummary() { return false }
+int function Strikeout_GetMaxSquadStrikes() { return 3 }
+bool function Strikeout_UI_GetIsRespawnDisabled() { return false }
+int function Strikeout_UI_GetLocalClientPlayerSquadStrikes() { return 0 }
 
 // === Workarounds/Utilities ===
 
@@ -2470,6 +2490,12 @@ bool function ForcedSpawn_UseForcedSpawning()
 bool function Respawn_Token_CanLocalPlayerRespawnOrIsRespawning()
 {
 	Warning( "STUB: Respawn_Token_CanLocalPlayerRespawnOrIsRespawning" )
+	return false
+}
+
+bool function Respawn_Token_CanLocalPlayerRespawn()
+{
+	Warning( "STUB: Respawn_Token_CanLocalPlayerRespawn" )
 	return false
 }
 

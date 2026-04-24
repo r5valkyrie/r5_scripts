@@ -261,7 +261,7 @@ void function ConfirmDialog_Yes( var button )
 		var holdToUseElem = Hud_GetChild( confirmData.__menu, "HoldToUseElem" )
 		bool requiresButtonFocus = false
 		float duration = 1.2
-		StartMenuExtendedUse( button, holdToUseElem, duration, requiresButtonFocus, false, void function( bool success ) : ( button ) {
+		StartMenuExtendedUse( button, holdToUseElem, duration, requiresButtonFocus, void function( bool success ) : ( button ) {
 			if ( success )
 				ConfirmDialog_Yes_PassThrough( button )
 		} )
