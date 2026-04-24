@@ -4548,12 +4548,7 @@ array<entity> function GetEntitiesFromArrayNearPos( array<entity> ents, vector p
 }
 #endif // SERVER
 
-// [s21-native] function IsPlaylistBeingRotated() registered by engine; script stub commented out
-bool function IsPlaylistBeingRotated( string playlistName )
-{
-	return false
-}
-*/
+// [s21-native] IsPlaylistBeingRotated registered by engine
 
 // [s21-native] function GetDefaultPlaylistRotationGroup() registered by engine; script stub commented out
 /*

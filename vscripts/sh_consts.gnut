@@ -82,10 +82,7 @@ global const string BUBBLE_BUNKER_WEAPON_NAME = "mp_weapon_bubble_bunker"
 global const string CAUSTIC_DIRTY_BOMB_WEAPON_CLASS_NAME = "mp_weapon_dirty_bomb"
 global const string SPIKE_STRIP_WEAPON_NAME = "mp_ability_spike_strip"
 global const string TRANSPORT_PORTAL_WEAPON_NAME = "mp_ability_transport_portal"
-global const int WAT_INVALID = -1
-global const int WAT_BARREL = 0
-global const int WAT_LASER_SIGHT = 1
-global const int WAT_OPTIC = 2
+// WAT_INVALID, WAT_BARREL, WAT_LASER_SIGHT, WAT_OPTIC -- S21 engine-native
 // [s21-native] const GRX_CURRENCY_EXOTIC = 5 registered by engine; script redeclaration dropped
 // [s21-native] const GRX_CURRENCY_ESCROW = 6 registered by engine; script redeclaration dropped
 // [s21-native] const GRX_CURRENCY_EVENT = 3 registered by engine; script redeclaration dropped
@@ -160,10 +157,8 @@ global const int GRX_HTTPQUERYGOAL_GIVE_SEQUENCE_REWARD = 111
 // [s21-native] const GRX_SMART_MERCHANDISING_DATA_NUM_INTS = 16 registered by engine; script redeclaration dropped
 
 
-global const bool ASSERTS = false // not available as native preprocessor define
-global const bool RTK = false // RTK UI system not available
-global const bool NAVMESH_ALL_SUPPORTED = false
-global const bool AUTO_PLAYER = false
+// ASSERTS, RTK -- registered natively by S21 engine
+// NAVMESH_ALL_SUPPORTED, AUTO_PLAYER -- registered natively by S21 engine
 global const bool DEVSCRIPTS = false
 
 global const string DEFAULT_RATE_KEY 		= "default"
@@ -175,95 +170,15 @@ global const bool DISABLE_NETINFO 			= true //net_showpeaks  (when in dev mode)
 global const bool TRACKER 					= false
 global const bool HAS_TRACKER_DLL 			= false
 
-global const int WAT_INVALID = -1
-global const int WAT_BARREL = 0
-global const int WAT_LASER_SIGHT = 1
-global const int WAT_OPTIC = 2
-global const int GRX_CURRENCY_EXOTIC = 4
-global const int GRX_CURRENCY_ESCROW = 5
-global const int GRX_CURRENCY_EVENT = 6
-global const int GRX_INVALID_SEQUENCE_NUMBER = -1
-global const int MATCHRANKEDMODE_RANKED_ARENA = 2
-global const int WEAPON_INVENTORY_SLOT_PRIMARY_4 = 4
-global const int WEAPON_INVENTORY_SLOT_PRIMARY_COUNT_MAIN = 2
-global const int WEAPON_INVENTORY_SLOT_GADGET = 4
-global const int TRACE_COLLISION_GROUP_PLAYER_MOVEMENT = 9
-global const int USE_INPUT_AUTO = 8
-global const int USE_FLAG_AUTO = 8
-global const int USABLE_FROM_EXTENDED_RANGE = 16
-global const int TRACE_MASK_ABILITY = 0x40083003
-global const int GSF_PLANTED = 0x80
-global const int ENERGIZE_NONE = 0
-global const int ENERGIZE_ENERGIZING = 1
-global const int ENERGIZE_ENERGIZED = 2
-global const int INVALID_SOUND_SELECTOR = 128
-global const string SILENT_PLAYER_VOICE = ""
-global const string PHASE_DOOR_TELEPORT_SIGNAL = "PhaseDoor_Teleport"
-global const string MOBILE_SHIELD_SCRIPTNAME = "mobile_shield"
-global const string NESSIE_SPIDER_SCRIPT_NAME = "nessie_spider"
-global const int SOLID_NONE = 0
-
-global const int CAMO_SKIN_COUNT = 800
-global const int ODL_SKINS = 0
-global const int ACM_TEAM = 0
-global const int ACM_PLAYER = 1
-global const int ACM_SPECTATORS = 2
-global const int ACM_ALL_PLAYERS = 3
-global const int ACM_COUNT = 4
-
-global const int WEAPON_ARTIFACT_BLADE_CHANGED = 1
-global const int WEAPON_ARTIFACT_POWERSOURCE_CHANGED = 2
-
-// Weapon Custom Activity Flags (not in native engine)
-global const int WCAF_INTERRUPTIBLE_ALLOW_START_WHILE_SPRINTING = 0x10
-
-global const int GRX_OFFERTYPE_DEFAULT = 0
-global const int GRX_OFFERTYPE_BUNDLE = 1
-global const int GRX_OFFERTYPE_PYS = 2
-global const int GRX_OFFERITEMTYPE_CORE = 0
-
-global enum eBoostModifierType
-{
-	BP_STARS,
-	MYTHIC_PROGRESS,
-	XP_MATCH,
-	XP_CHALLENGE,
-	_COUNT
-}
-
-global const int HIGHLIGHT_INVALID_ID = -1
-global const string SPIKE_STRIP_WEAPON_NAME = "mp_ability_spike_strip"
-global const string TRANSPORT_PORTAL_WEAPON_NAME = "mp_ability_transport_portal"
-
-// Golden Horse constants (from sh_gamemode_golden_horse.nut)
-global const int GOLDEN_HORSE_SPECIAL_EVENT_LOOT_TIER = 107
-global const string GOLDEN_HORSE_LOOT_TICK_SCRIPT_NAME = "loot_tick_golden_horse"
-
-global const string PASSIVE_REINFORCE_REBUILT_DOOR_SCRIPT_NAME = "rebuilt_door"
-global const string SPIKE_STRIP_CORE_SPIKE_NAME = "core_spike_target_name"
-global const string ARMORED_LEAP_SHIELD_ANCHOR_SCRIPTNAME = "al_shield_anchor"
-global const string FERRO_WALL_SEGMENT_TARGET_NAME = "ferro_wall_segment"
-global const string HUNT_DATAPAD_TARGETNAME = "Hunt"
-global const string MEDBAY_PING_SCRIPT_NAME = "medical_bay_ping"
-global const string PHASE_DOOR_ROOT_ENT_SCRIPTNAME = "phase_door_root_ent"
-global const string PHASE_DOOR_WARMUP_ENT_SCRIPTNAME = "phase_door_warmup_ent"
-global const string REV_SHELL_TARGETNAME = "Rev_shell"
-global const string SHIELD_MINE_PROP_SCRIPTNAME = "conduit_shield_mine"
-global const string SHIELD_THROW_SCRIPTNAME = "shield_throw"
-global const string TRACKING_VISION_BIRD_PING_SCRIPTNAME = "bloodhound_tracking_white_raven_ping_blocker"
-global const string TRANSPORT_PORTAL_ALLY_PORTAL_SCRIPTNAME = "alter_ult_ally_portal"
-global const string TRANSPORT_PORTAL_RECEIVER_SCRIPTNAME = "alter_ult_receiver"
-global const string TRANSPORT_PORTAL_TRANSLOCATOR_TRACE_BLOCKER_SCRIPTNAME = "alter_ult_translocator_trace_blocker"
-global const string TREASUREHUNT_OBJECTIVE_SCRIPTNAME = "treasurehunt_objective"
+// Duplicate const block from merge removed -- all defs already above or engine-native
 
 global enum eEventsPanelPage
 {
 	LANDING = 0
-
-		COLLECTION_EVENT = 1
-		MILESTONES = 2
-		COLLECTION = 3
-		EVENT_SHOP = 4
+	COLLECTION_EVENT = 1
+	MILESTONES = 2
+	COLLECTION = 3
+	EVENT_SHOP = 4
 }
 
 global enum eArcFlashState
@@ -274,12 +189,6 @@ global enum eArcFlashState
 	DECAY,
 	COUNT
 }
-
-global const string SHADOWARMY_MAP_EVAC_AREA = "shadowarmy_evac_area"
-global const string SHADOWARMY_LEGEND_START_AREA = "shadowarmy_legend_start_area"
-
-// Minimap flags (engine constants not in S3)
-global const int MINIMAP_FLAG_VISIBILITY_SHOW = 0x1
 
 ///CUSTOM ENDING/////
 
@@ -492,8 +401,6 @@ global const string COMBATRANGE = "combatrange"
 global const bool R2_SCOREBOARD = false
 global const bool MINIMAP_DEBUG = false
 
-global const bool CHALLENGE_DEBUG = false
-
 global const bool VERBOSE_DAMAGE_PRINTOUTS = false
 
 global const NETWORTH_VAR = "netWorth"
@@ -571,7 +478,6 @@ global const vector TEAM_COLOR_PARTY = <PARTY_R, PARTY_G, PARTY_B>
 global const vector TEAM_COLOR_YOU = <LOCAL_R, LOCAL_G, LOCAL_B>
 global const vector BURN_COLOR = <BURN_R, BURN_G, BURN_B>
 global const vector CRAFTING_COLOR = <CRAFTING_R, CRAFTING_G, CRAFTING_B>
-global const vector CRAFTING_2PT0_COLOR = <183, 135, 255>
 global const vector COLOR_AIRDROP = <128, 188, 255>
 global const vector COLOR_AIRDROP_RARITY_COMMON = <192, 192, 192>
 global const vector COLOR_AIRDROP_RARITY_RARE = <80, 160, 215>
@@ -2492,7 +2398,6 @@ global enum eCommsAction
 
                            
 	// Moving to a file that's registered both on server and client
-	global const string PROWLER_DEN_SCRIPT_NAME = "prop_prowler_den"
 	global const string SPIDER_EGG_SCRIPT_NAME = "prop_spider_egg"
 	global const string SPIDER_HATCHED_EGG_EDITOR_CLASS_KEYWORD = "script_ai_spider_egg_hatched"
       
@@ -2511,10 +2416,6 @@ global const string NEXT_ZONE_SURVEY_BEACON_SCRIPTNAME = "next_zone_survey_beaco
 
 
 global const string REVIVE_SHIELD_SCRIPTNAME = "revive_shield"
-global const string GENERIC_PING_PANEL_SCRIPTNAME = "generic_panel"
-global const string GENERIC_PING_PANEL_SCRIPTNAME_COOLDOWN = "generic_panel_cooldown"
-global const string GENERIC_PING_PANEL_SCRIPTNAME_INACTIVE = "generic_panel_inactive"
-global const string JUMP_PAD_NEUTRAL_SCRIPTNAME = "jump_pad_neutral"
 global const string SKYDIVE_LAUNCHER_TARGETNAME = "skydive_launcher"
 
                          
@@ -2623,20 +2524,8 @@ global struct PlayerCardTooltipData
 	int wins
 }
 
-global struct StoreToolTipData
-{
-	vector tooltipAltDescColor
-}
 
-global struct BoostedToolTipData
-{
-	int state
-}
 
-global struct CurrencyToolTipData
-{
-	bool premiumCurrencyIsNegative
-}
 
 global struct ToolTipData
 {
@@ -2731,8 +2620,6 @@ global const asset SURVIVAL_HUD_PLAYER = $"ui/survival_player_hud_v2.rpak"
                                                                              
       
 
-global const asset SURVIVAL_HUD_SQUADTAG = $"ui/squad_tag.rpak"
-global const string SURVIVAL_HUD_SQUADTAG_PVAR = "use_dynamic_squad_tag"
 
 global const string HUD_SETTING_LOOTPROMPTSTYLE = "hud_setting_showMedals" // TODO: get a real convar for this
 
@@ -2770,7 +2657,6 @@ global const vector MEMBER_COLOR4 = <150, 95, 215> //old <153, 6, 215>
 // -------------------
 // ----- Training Dummie & Combat Range Consts & Enum
 // -------------------
-global const string FIRING_RANGE_TARGET_FLIP_SCRIPTNAME = "fr_target_flip"
 global const string FIRING_RANGE_TARGET_FOLD_SCRIPTNAME = "fr_target_fold"
 
 global const string FIRING_RANGE_DUMMIE_SCRIPT_NAME = "npc_dummie"
@@ -2786,10 +2672,8 @@ global const string FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME = "npc_dummie_combat"
 // [s21-native] const COLORID_CRAFTING_DISPENSER = 186 registered by engine; script redeclaration dropped
 
 // S22 beacon scriptnames
-global const string ENEMY_SURVEY_BEACON_SCRIPTNAME = "enemy_survey_beacon"
-global const string NEXT_ZONE_SURVEY_BEACON_SCRIPTNAME = "next_zone_survey_beacon"
 global const string REDEPLOY_BALLOON_SKYDIVE_TRIGGER_SCRIPT_NAME = "redeploy_balloon_skydive_trigger"
-global const asset SKYDIVE_TRAIL_DEFAULT = $"settings/itemflav/skydive_trail/default.rpak"
+// SKYDIVE_TRAIL_DEFAULT defined in sh_skydive_trails.gnut
 global enum eStatNames
 {
 	respawnsGiven,
@@ -3082,27 +2966,6 @@ global enum eDummieOptions
 }
 
 // Used internally, set by the Selectors.
-global enum eDummieBehaviorType
-{
-	// - Movements( fka "Movement Behaviors" ) Start
-	STAYINPLACE,
-	STRAFE,
-	// - Movements End. To Add more Movements, add to above.
-	// - Modifiers( aka "Dummie Settings" in-game ) Start
-	// -- Stances subset start.
-	CANSTAND,
-	CANCROUCH,
-	// -- Stances subset end.
-	RANDINTERVALS,
-	// - Modifiers End. To add new Modifiers, add to above.
-//%if HAS_COMBATRANGE
-//	// - Spawn Settings subset start.
-//	DYNSPAWNS_ON,
-//	// - Spawn Settings End. To add more Spawn Settings, add to the above.
-//%endif // HAS_COMBATRANGE
-	// ---
-	COUNT_
-}
 
 global enum eDummieSettingChangeType
 {
@@ -3216,19 +3079,6 @@ global const int OBIT_FLAG_HEADSHOT = 1 << 1
 global const int OBIT_FLAG_DOWNED = 1 << 2
 global const int OBIT_FLAG_KILL = 1 << 3
 
-global const table<string, int> ammoColors = {
-	bullet = COLORID_AMMO_SMALL_COLOR
-	special = COLORID_AMMO_ENERGY_COLOR
-	shotgun = COLORID_AMMO_SHUTGUN_COLOR
-	highcal = COLORID_AMMO_LARGE_COLOR
-	legendary = COLORID_AMMO_LEGENDARY_COLOR
-	supply_drop = COLORID_AMMO_SUPPLY_DROP_COLOR
-                      
-                                          
-       
-	sniper = COLORID_AMMO_SNIPER_COLOR
-	arrows = COLORID_AMMO_ARROWS_COLOR
-}
 
 global const int ODL_SKINS = 0
 global const int ACM_TEAM = 0
@@ -3335,21 +3185,6 @@ global const int GAMEMODE_INVALID_INDEX = -1
       
 
 // --- Deathfield stuff moved here so sh_survival_deathfield.gnut and sh_survival_deathfield_enforcedringlethality.gnut can share.
-global struct DeathFieldData
-{
-	vector center = <0, 0, 0>
-	vector nextCenter = <0, 0, 0>
-
-	float currentRadius = 40000.0
-	float startRadius = 40000.0
-	float endRadius = 40000.0
-	float startTime = 10.0
-	float endTime = 30.0
-
-	int codeIndex = 0
-	float percentDamagePerTick = 0.2
-	bool s_deathFieldSynchronized = false
-}
 
 // --- Weapon Slots
 
