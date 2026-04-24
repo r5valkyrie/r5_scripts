@@ -6,25 +6,26 @@ global function TitanHasBubbleShieldWeapon
 global function LetTitanPlayerShootThroughBubbleShield
 global function CreateGenericBubbleShield
 global function CreateParentedBubbleShield
-
 global function WaitUntilTitanStandsOrDies
 global function DestroyBubbleShield
 global function CreateBubbleShieldWithSettings
-global function CreateBubbleShieldWithSettings_MasterChief
+global function CreateKnockbackBubbleShield
 
-global const asset BUBBLE_BUNKER_SHIELD_FX = $"P_wpn_BBunker_shield"
-global const asset BUBBLE_BUNKER_SHIELD_COLLISION_MODEL = $"mdl/fx/bb_shield.rmdl"
-
-const float SHIELD_TITAN_DAMAGE_FLOOR = 0
+const float SHIELD_TITAN_DAMAGE_FLOOR = 250.0
 const float SHIELD_TITAN_DAMAGE_CEILING = 16000 //Some arbitrarily large number really
-const float SHIELD_PILOT_DAMAGE_FLOOR = 0
-const float SHIELD_PILOT_DAMAGE_CEILING = 0
-const float SHIELD_NPC_DAMAGE_FLOOR = 0
+const float SHIELD_PILOT_DAMAGE_FLOOR = 30.0
+const float SHIELD_PILOT_DAMAGE_CEILING = 60.0
+const float SHIELD_NPC_DAMAGE_FLOOR = 30.0
 
 const float SHIELD_FADE_ARBITRARY_DELAY = 3.0
 const float SHIELD_FADE_ENDCAP_DELAY = 1.0
-
 const float SHIELD_DISTANCE_TO_DESTROY = 40
+
+
+const asset BUBBLESHIELD_MDL_ASSET = $"mdl/fx/bb_shield.rmdl"
+const asset BUBBLESHIELD_FX_ASSET = $"P_wpn_BBunker_shield"
+
+const asset FX_KNOCKBACK_BUBBLESHIELD_ELECTRICITY = $"P_Swtch_Elec_Hazard_HLD"
 
 struct BubbleShieldDamageStruct
 {
@@ -38,9 +39,7 @@ struct
 	BubbleShieldDamageStruct titanDamageStruct
 	BubbleShieldDamageStruct pilotDamageStruct
 	BubbleShieldDamageStruct aiDamageStruct
-	
-	array<entity> allBubbleTriggers
-}file
+} file
 
 
 void function BubbleShield_Init()
@@ -48,12 +47,16 @@ void function BubbleShield_Init()
 	RegisterSignal( "TitanBrokeBubbleShield" )
 	RegisterSignal( "NewBubbleShield" )
 	RegisterSignal( "StopBubbleShieldDamage" )
-	PrecacheParticleSystem( BUBBLE_BUNKER_SHIELD_FX )
-	PrecacheModel( BUBBLE_BUNKER_SHIELD_COLLISION_MODEL )
-	
-	//InitBubbleShieldDamageStructValues( file.titanDamageStruct, SHIELD_TITAN_DAMAGE_FLOOR, SHIELD_TITAN_DAMAGE_CEILING, [ 12.0, 5.0, 2.0 ] )
-	//InitBubbleShieldDamageStructValues( file.pilotDamageStruct, SHIELD_PILOT_DAMAGE_FLOOR, SHIELD_PILOT_DAMAGE_CEILING, [ 2.0, 1.0, 1.0 ] )
-	//InitBubbleShieldDamageStructValues( file.aiDamageStruct, 	SHIELD_PILOT_DAMAGE_FLOOR, SHIELD_PILOT_DAMAGE_CEILING, [ 2.0, 1.0, 1.0 ] )
+	PrecacheScriptString( BUBBLE_SHIELD_SCRIPTNAME )
+
+	PrecacheModel( BUBBLESHIELD_MDL_ASSET )
+	PrecacheParticleSystem( BUBBLESHIELD_FX_ASSET )
+	PrecacheParticleSystem( FX_KNOCKBACK_BUBBLESHIELD_ELECTRICITY )
+	InitBubbleShieldDamageStructValues( file.titanDamageStruct, SHIELD_TITAN_DAMAGE_FLOOR, SHIELD_TITAN_DAMAGE_CEILING, [ 12.0, 5.0, 2.0 ] )
+	InitBubbleShieldDamageStructValues( file.pilotDamageStruct, SHIELD_PILOT_DAMAGE_FLOOR, SHIELD_PILOT_DAMAGE_CEILING, [ 2.0, 1.0, 1.0 ] )
+	InitBubbleShieldDamageStructValues( file.aiDamageStruct, 	SHIELD_PILOT_DAMAGE_FLOOR, SHIELD_PILOT_DAMAGE_CEILING, [ 2.0, 1.0, 1.0 ] )
+
+	RegisterDynamicEntCleanupItem_Area_Scriptname( BUBBLE_SHIELD_SCRIPTNAME )
 }
 
 void function InitBubbleShieldDamageStructValues( BubbleShieldDamageStruct damageStruct, float damageFloor, float damageCeiling, array<float> quadPolynomialCoeffs )
@@ -61,6 +64,12 @@ void function InitBubbleShieldDamageStructValues( BubbleShieldDamageStruct damag
 	damageStruct.damageFloor = damageFloor
 	damageStruct.damageCeiling = damageCeiling
 	damageStruct.quadraticPolynomialCoefficients = quadPolynomialCoeffs
+}
+
+float function GetBubbleShieldDuration( entity player )
+{
+	const float EMBARK_TIMEOUT = 13.0 // how long you have to reach your titan before it stands up and bubble shield starts to fade
+	return EMBARK_TIMEOUT
 }
 
 void function CreateBubbleShield( entity titan, vector origin, vector angles )
@@ -102,21 +111,10 @@ void function CreateBubbleShield( entity titan, vector origin, vector angles )
 				player.SetTitanBubbleShieldTime( 0 ) //This sets the time to display "Titan Shielded" on the HUD
 
 			CleanupTitanBubbleShieldVars( titan, soul, bubbleShield )
-
 		}
 	)
 
 	waitthread WaitUntilShieldFades( player, titan, bubbleShield, bubTime + 4.0 )
-}
-
-float function GetBubbleShieldDuration( entity player )
-{
-	if ( PlayerHasPassive( player, ePassives.PAS_LONGER_BUBBLE ) )
-		return EMBARK_TIMEOUT + 10.0
-	else
-		return EMBARK_TIMEOUT
-
-	unreachable
 }
 
 void function MonitorTitanMovement( entity soul, entity bubbleShield )
@@ -129,7 +127,7 @@ void function MonitorTitanMovement( entity soul, entity bubbleShield )
 
 	vector startPos = titan.GetOrigin()
 	float endTime = Time() + SHIELD_FADE_ARBITRARY_DELAY
-	while( endTime >= Time() )
+	while ( endTime >= Time() )
 	{
 		if ( Distance( titan.GetOrigin(), startPos ) > SHIELD_DISTANCE_TO_DESTROY )
 			break
@@ -186,8 +184,8 @@ void function CreateParentedBubbleShield( entity titan, vector origin, vector an
 
 	soul.soul.bubbleShield.SetParent( titan, "ORIGIN" )
 	table bubleshieldDotS = expect table( soul.soul.bubbleShield.s )
-	entity friendlyColoredFX = expect entity (bubleshieldDotS.friendlyColoredFX )
-	entity enemyColoredFX = expect entity (bubleshieldDotS.enemyColoredFX )
+	entity friendlyColoredFX = expect entity(bubleshieldDotS.friendlyColoredFX )
+	entity enemyColoredFX = expect entity(bubleshieldDotS.enemyColoredFX )
 	friendlyColoredFX.SetParent( soul.soul.bubbleShield )
 	enemyColoredFX.SetParent( soul.soul.bubbleShield )
 
@@ -198,7 +196,8 @@ void function CleanupTitanBubbleShieldVars( entity titan, entity soul, entity bu
 {
 	DestroyBubbleShield( bubbleShield )
 
-	if ( IsValid( soul ) ){
+	if ( IsValid( soul ) )
+	{
 		soul.soul.bubbleShield = null
 	}
 
@@ -210,143 +209,193 @@ void function DestroyBubbleShield( entity bubbleShield )
 {
 	if ( IsValid( bubbleShield ) )
 	{
-		ClearChildren( bubbleShield, true )
+		foreach( child in bubbleShield.GetChildren() )
+		{
+			if( IsValid( child ) && !child.e.destroyIfBubbleShieldParentDestroyed )
+				child.ClearParent()
+		}
 		bubbleShield.Destroy()
 	}
 }
 
-entity function CreateBubbleShieldWithSettings( int team, vector origin, vector angles, entity owner = null, float duration = 9999 )
+entity function CreateBubbleShieldWithSettings( int team, vector origin, vector angles, entity owner = null, float duration = 9999, bool damageEnemies = true, asset effect = BUBBLESHIELD_FX_ASSET, asset collisionModel = BUBBLESHIELD_MDL_ASSET, string renderColor = "255 0 0" )
 {
-	entity bubbleShield = CreateEntity( "prop_dynamic" )
-	bubbleShield.SetValueForModelKey( BUBBLE_BUNKER_SHIELD_COLLISION_MODEL )
+	entity bubbleShield = null
+                                      
+		//need prop script for health to be networked
+		bubbleShield = CreateEntity( "prop_script" )
+      
+                                               
+       
+
+
+	bubbleShield.SetValueForModelKey( collisionModel )
 	bubbleShield.kv.solid = SOLID_VPHYSICS
-    bubbleShield.kv.rendercolor = "81 130 151"
-    bubbleShield.kv.contents = (int(bubbleShield.kv.contents) | CONTENTS_NOGRAPPLE)
+	bubbleShield.kv.rendercolor = renderColor
+	bubbleShield.kv.contents = (int(bubbleShield.kv.contents) | CONTENTS_NOGRAPPLE)
+	bubbleShield.e.ignorePingTrace = true
 	bubbleShield.SetOrigin( origin )
 	bubbleShield.SetAngles( angles )
-     // Blocks bullets, projectiles but not players and not AI
 	bubbleShield.SetScriptName( BUBBLE_SHIELD_SCRIPTNAME )
+	             
+	bubbleShield.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION )
+       
+
+     // Blocks bullets and projectiles, but not players nor AI. Doesn't block LOS so AI can see through it
 	bubbleShield.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
 	bubbleShield.SetBlocksRadiusDamage( true )
+	bubbleShield.SetBlocksLOS( false )
 	DispatchSpawn( bubbleShield )
-	bubbleShield.SetOwner( owner )
-	bubbleShield.Hide()
+
+	bool doVFX = true
+
+                         
+               
+	     
+		bubbleShield.Hide()
+       
+	
+
 
 	SetTeam( bubbleShield, team )
 	array<entity> bubbleShieldFXs
 
-	vector coloredFXOrigin = origin
-	
-	if ( team == TEAM_UNASSIGNED )
+	if ( doVFX )
 	{
-		entity neutralColoredFX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BUBBLE_BUNKER_SHIELD_FX ), coloredFXOrigin, <0, 0, 0> )
-		SetTeam( neutralColoredFX, team )
-		bubbleShieldFXs.append( neutralColoredFX )
+		int effectId = GetParticleSystemIndex( effect )
+		vector coloredFXOrigin = origin
+		table bubbleShieldDotS = expect table( bubbleShield.s )
+		if ( team == TEAM_UNASSIGNED )
+		{
+			entity neutralColoredFX = StartParticleEffectInWorld_ReturnEntity( effectId, coloredFXOrigin, <0,0,0> )
+
+			SetTeam( neutralColoredFX, team )
+			bubbleShieldDotS.neutralColoredFX <- neutralColoredFX
+			bubbleShieldFXs.append( neutralColoredFX )
+			EffectSetControlPointVector( neutralColoredFX, 1, NEUTRAL_COLOR_FX )
+		}
+		else
+		{
+			//Create friendly and enemy colored particle systems
+			entity friendlyColoredFX = StartParticleEffectInWorld_ReturnEntity( effectId, coloredFXOrigin, <0,0,0> )
+
+			SetTeam( friendlyColoredFX, team )
+			friendlyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+			EffectSetControlPointVector( friendlyColoredFX, 1, FRIENDLY_COLOR_FX )
+
+			entity enemyColoredFX = StartParticleEffectInWorld_ReturnEntity( effectId, coloredFXOrigin, <0,0,0> )
+
+			SetTeam( enemyColoredFX, team )
+			enemyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+			EffectSetControlPointVector( enemyColoredFX, 1, ENEMY_COLOR_FX )
+
+			bubbleShieldDotS.friendlyColoredFX <- friendlyColoredFX
+			bubbleShieldDotS.enemyColoredFX <- enemyColoredFX
+			bubbleShieldFXs.append( friendlyColoredFX )
+			bubbleShieldFXs.append( enemyColoredFX )
+		}
+
+		foreach ( fxs in bubbleShieldFXs )
+		{
+			fxs.SetParent( bubbleShield )
+		}
+	}
+
+	                    
+	if( PlayerHasPassive( owner, ePassives.PAS_TAC_UPGRADE_TWO ) ) // upgrade_gibraltar_smaller_bubble
+	{
+		EmitSoundOnEntity( bubbleShield, "Gibraltar_BabyBubbleShield_Sustain" )
 	}
 	else
+       
 	{
-		//Create friendly and enemy colored particle systems
-		entity friendlyColoredFX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BUBBLE_BUNKER_SHIELD_FX ), coloredFXOrigin, <0, 0, 0> )
-		SetTeam( friendlyColoredFX, team )
-		friendlyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
-		EffectSetControlPointVector(  friendlyColoredFX, 1, FRIENDLY_COLOR_FX )
-		friendlyColoredFX.SetParent( bubbleShield )
-		
-		entity enemyColoredFX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BUBBLE_BUNKER_SHIELD_FX ), coloredFXOrigin, <0, 0, 0> )
-		SetTeam( enemyColoredFX, team )
-		enemyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
-		EffectSetControlPointVector(  enemyColoredFX, 1, ENEMY_COLOR_FX )
-		enemyColoredFX.SetParent( bubbleShield )
-		
-		bubbleShieldFXs.append( friendlyColoredFX )
-		bubbleShieldFXs.append( enemyColoredFX )
+		EmitSoundOnEntity( bubbleShield, "Gibraltar_BubbleShield_Sustain" )
 	}
 
-	EmitSoundOnEntity( bubbleShield, "Gibraltar_BubbleShield_Sustain" )
+	thread CleanupBubbleShield( owner, bubbleShield, bubbleShieldFXs, duration )
 
-	thread CleanupBubbleShield( bubbleShield, bubbleShieldFXs, duration )
-
-	// if ( damageEnemies )
-		// thread BubbleShieldDamageEnemies( bubbleShield, owner )
-
-	return bubbleShield
-}
-
-
-entity function CreateBubbleShieldWithSettings_MasterChief( int team, vector origin, vector angles, entity owner = null, float duration = 9999 )
-{
-	entity bubbleShield = CreateEntity( "prop_dynamic" )
-	bubbleShield.SetValueForModelKey( BUBBLE_BUNKER_SHIELD_COLLISION_MODEL )
-	bubbleShield.kv.solid = SOLID_VPHYSICS
-    bubbleShield.kv.rendercolor = "81 130 151"
-    bubbleShield.kv.contents = (int(bubbleShield.kv.contents) | CONTENTS_NOGRAPPLE)
-	bubbleShield.SetOrigin( origin )
-	bubbleShield.SetAngles( angles )
-     // Blocks bullets, projectiles but not players and not AI
-	bubbleShield.SetScriptName( BUBBLE_SHIELD_SCRIPTNAME )
-	bubbleShield.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
-	bubbleShield.SetBlocksRadiusDamage( true )
-	DispatchSpawn( bubbleShield )
-	bubbleShield.SetOwner( owner )
-	bubbleShield.Hide()
-
-	SetTeam( bubbleShield, team )
-	array<entity> bubbleShieldFXs
-
-	vector coloredFXOrigin = origin
-	
-	if ( team == TEAM_UNASSIGNED )
-	{
-		entity neutralColoredFX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BUBBLE_BUNKER_SHIELD_FX ), coloredFXOrigin, <0, 0, 0> )
-		SetTeam( neutralColoredFX, team )
-		bubbleShieldFXs.append( neutralColoredFX )
-	}
-	else
-	{
-		//Create friendly and enemy colored particle systems
-		entity friendlyColoredFX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BUBBLE_BUNKER_SHIELD_FX ), coloredFXOrigin, <0, 0, 0> )
-		SetTeam( friendlyColoredFX, team )
-		friendlyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
-		EffectSetControlPointVector(  friendlyColoredFX, 1, <66, 215, 245> ) //FRIENDLY_COLOR_FX )
-		friendlyColoredFX.SetParent( bubbleShield )
-		
-		entity enemyColoredFX = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( BUBBLE_BUNKER_SHIELD_FX ), coloredFXOrigin, <0, 0, 0> )
-		SetTeam( enemyColoredFX, team )
-		enemyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
-		EffectSetControlPointVector(  enemyColoredFX, 1, <204, 98, 98> ) //ENEMY_COLOR_FX )
-		enemyColoredFX.SetParent( bubbleShield )
-		
-		bubbleShieldFXs.append( friendlyColoredFX )
-		bubbleShieldFXs.append( enemyColoredFX )
-	}
-
-	EmitSoundOnEntity( bubbleShield, "Gibraltar_BubbleShield_Sustain" )
-
-	thread CleanupBubbleShield( bubbleShield, bubbleShieldFXs, duration )
-
-	// if ( damageEnemies )
+	if ( damageEnemies )
 		thread BubbleShieldDamageEnemies( bubbleShield, owner )
 
 	return bubbleShield
 }
 
-void function CleanupBubbleShield( entity bubbleShield, array<entity> bubbleShieldFXs, float fadeTime )
+entity function SpawnRadiusTrigger( vector origin, float radius, float aboveHight = 256, float belowHeight = 0 )
+{
+	entity trig = CreateEntity( "trigger_cylinder" )
+	trig.SetCylinderRadius( radius )
+	trig.SetAboveHeight( aboveHight )
+	trig.SetBelowHeight( belowHeight )
+	trig.SetOrigin( origin )
+	trig.kv.triggerFilterNpc = "none"
+	trig.kv.triggerFilterPlayer = "all"
+	trig.kv.triggerFilterNonCharacter = "0"
+
+	DispatchSpawn( trig )
+
+	return trig
+}
+
+entity function CreateKnockbackBubbleShield( int team, vector origin )
+{
+	bool damageEnemies = true
+	entity bubbleShield = CreateBubbleShieldWithSettings( team, origin, <0, 0, 0>, null, 99999, damageEnemies )
+	float triggerRadius = 256
+	float triggerHeight = 128
+	entity knockbackTrigger = SpawnRadiusTrigger( origin, triggerRadius, triggerHeight )
+	knockbackTrigger.SetParent( bubbleShield, "", true )
+	entity electricityFx = PlayLoopFXOnEntity( FX_KNOCKBACK_BUBBLESHIELD_ELECTRICITY, bubbleShield )
+	electricityFx.SetParent( bubbleShield, "", true )
+	//OnTrigger
+	knockbackTrigger.ConnectOutput( "OnStartTouch", void function ( entity knockbackTrigger, entity activator, entity caller, var value ) : ( bubbleShield )
+	{
+		if ( !IsValid( knockbackTrigger ) )
+			return
+
+		if ( !IsValid( activator ) )
+			return
+
+		if ( !activator.IsPlayer() )
+			return
+
+		entity player = activator
+
+		//Do pushback and token damage
+		float damage = 5
+		int scriptTypeMask = damageTypes.dissolve// | DF_STOPS_TITAN_REGEN
+		player.TakeDamage( damage, svGlobal.worldspawn, svGlobal.worldspawn, { origin = player.GetOrigin(), scriptType = scriptTypeMask, damageSourceId = eDamageSourceId.lasergrid } )
+		CreateAirShake( player.GetOrigin(), 10, 105, 1 )
+		vector velocity = Normalize( player.GetVelocity() ) * -500
+		player.SetVelocity( velocity )
+		EmitSoundOnEntity( player, "Timeshift_LaserMesh_Damage" )
+	})
+
+	return bubbleShield
+}
+
+void function CleanupBubbleShield( entity owner, entity bubbleShield, array<entity> bubbleShieldFXs, float fadeTime )
 {
 	bubbleShield.EndSignal( "OnDestroy" )
 
 	OnThreadEnd(
-		function () : ( bubbleShield, bubbleShieldFXs )
+		function () : ( owner, bubbleShield, bubbleShieldFXs )
 		{
-			if ( IsValid( bubbleShield ) )
+			if ( IsValid_ThisFrame( bubbleShield ) )
 			{
+				                    
+				if( PlayerHasPassive( owner, ePassives.PAS_TAC_UPGRADE_TWO ) ) // upgrade_gibraltar_smaller_bubble
+				{
+					StopSoundOnEntity( bubbleShield, "Gibraltar_BabyBubbleShield_Sustain" )
+				}
+          
 				StopSoundOnEntity( bubbleShield, "Gibraltar_BubbleShield_Sustain" )
-				EmitSoundOnEntity( bubbleShield, "Gibraltar_BubbleShield_Ending" )
+				EmitSoundOnEntity( bubbleShield, "Gibraltar_BubbleShield_Deactivate" )
 				DestroyBubbleShield( bubbleShield )
 			}
 
 			foreach ( fx in bubbleShieldFXs )
 			{
-				if ( IsValid( fx ) )
+				if ( IsValid_ThisFrame( fx ) )
 				{
 					EffectStop( fx )
 				}
@@ -383,9 +432,10 @@ void function WaitUntilShieldFades( entity player, entity titan, entity bubbleSh
 void function WaitUntilPlayerTitanStandsOrDies( entity player, entity titan, float failTime )
 {
 	waitthread WaitUntilTitanStandsOrDies( titan, failTime )
-
-	if ( !IsAlive( player ) )
-			return
+	//if ( !IsAlive( player ) )
+	//		return
+	//if ( IsPlayerEmbarking( player ) && player.Anim_IsActive() )
+	//	WaittillAnimDone( player )
 }
 
 void function WaitUntilTitanStandsOrDies( entity titan, float timeout = -1.0 )
@@ -415,31 +465,20 @@ void function BubbleShieldDamageEnemies( entity bubbleShield, entity bubbleShiel
 	bubbleShield.EndSignal( "StopBubbleShieldDamage" )
 
 	entity trigger = CreateEntity( "trigger_cylinder" )
-	trigger.SetRadius( TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE )
+	trigger.SetCylinderRadius( TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE )
 	trigger.SetAboveHeight( TITAN_BUBBLE_SHIELD_CYLINDER_TRIGGER_HEIGHT ) //Still not quite a sphere, will see if close enough
 	trigger.SetBelowHeight( 0 )
 	trigger.SetOrigin( bubbleShield.GetOrigin() )
 	trigger.SetParent( bubbleShield )
-
-	SetTeam( trigger, bubbleShield.GetTeam() )
-	
-	trigger.SetEnterCallback( GibbyOp_OnEnter )
-	trigger.SetLeaveCallback( GibbyOp_OnLeave )
-
 	DispatchSpawn( trigger )
-	
-	file.allBubbleTriggers.append( trigger )
-	
+
 	trigger.SearchForNewTouchingEntity() //JFS: trigger.GetTouchingEntities() will not return entities already in the trigger unless this is called. See bug 202843
 
-	/*DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE, TITAN_BUBBLE_SHIELD_CYLINDER_TRIGGER_HEIGHT, 255, 255, 255, true, 20.0 )
-	DebugDrawSphere( bubbleShield.GetOrigin(), TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE, 255, 0, 0, true, 20 )*/
+	/*DebugDrawCylinder( trigger.GetOrigin(), <270,0,0>, TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE, TITAN_BUBBLE_SHIELD_CYLINDER_TRIGGER_HEIGHT, COLOR_WHITE, true, 20.0 )
+	DebugDrawSphere( bubbleShield.GetOrigin(), TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE, COLOR_RED, true, 20 )*/
 	OnThreadEnd(
-		function() : ( trigger )
+	function() : ( trigger )
 		{
-			if( file.allBubbleTriggers.contains( trigger ) )
-				file.allBubbleTriggers.removebyvalue( trigger )
-			
 			trigger.Destroy()
 		}
 	)
@@ -447,103 +486,29 @@ void function BubbleShieldDamageEnemies( entity bubbleShield, entity bubbleShiel
 	float refreshLowerBound = 0.5
 	float refreshUpperBound = 0.8
 
-	WaitForever()
-	// while ( true )
-	// {
-		// array<entity> touchingEnts = trigger.GetTouchingEntities()
+	table<entity, int> soulTable = {}
+	table<entity, int> npcTable = {}
+	table<entity, int> pilotTable = {}
 
-		// foreach( touchingEnt in touchingEnts  )
-		// {
-			// DamageEntWithinBubbleShield( bubbleShield, bubbleShieldPlayer, touchingEnt )
-		// }
+	table<entity, int> countTable
 
-		// wait RandomFloatRange( refreshLowerBound, refreshUpperBound )
-	// }
-}
-
-void function GibbyOp_OnEnter( entity trigger, entity ent )
-{
-	if( !IsValid( ent ) || !ent.IsPlayer() )
-		return
-
-	// We don't need to check for extra teammates bubble here, it's ok if it tries to apply
-	
-	if( ent.GetTeam() == trigger.GetTeam() ) //is gibby team
+	while ( true )
 	{
-		#if DEVELOPER
-		printw( ent, " gained bubble mods" )
-		#endif
-		// GiveExtraWeaponMod( ent, "gibbyv1" ) //se buggea con algunas armas :c
-		
-		printt( "give  bubble bunker and fast heal passive")
-		if ( !PlayerHasPassive( ent, ePassives.PAS_FAST_HEAL ) )
+		array<entity> touchingEnts = trigger.GetTouchingEntities()
+
+		foreach ( touchingEnt in touchingEnts )
 		{
-			GivePassive( ent, ePassives.PAS_FAST_HEAL )
+			if ( touchingEnt.IsTitan() )
+				countTable = soulTable
+			else if ( touchingEnt.IsPlayer() )
+				countTable = pilotTable
+			else
+				countTable = npcTable
+
+			DamageEntWithinBubbleShield( bubbleShield, bubbleShieldPlayer, touchingEnt, countTable )
 		}
 
-		if ( !PlayerHasPassive( ent, ePassives.PAS_SUPPORT ) )
-		{
-			GivePassive( ent, ePassives.PAS_SUPPORT )
-		}
-		
-		if( !PlayerHasPassive( ent, ePassives.PAS_BONUS_SMALL_HEAL ) )
-		{
-			GivePassive( ent, ePassives.PAS_BONUS_SMALL_HEAL )
-		}
-		
-		if ( StatusEffect_GetSeverity( ent, eStatusEffect.bubble_bunker ) == 0.0 )
-			StatusEffect_AddEndless( ent, eStatusEffect.bubble_bunker, 1.0 )
-			
-		if ( StatusEffect_GetSeverity( ent, eStatusEffect.ring_immunity ) == 0.0 )
-			StatusEffect_AddEndless( ent, eStatusEffect.ring_immunity, 1.0 )
-		
-		ent.SetPlayerNetBool( "hasDeathFieldImmunity", true )
-	}
-}
-
-void function GibbyOp_OnLeave( entity trigger, entity ent )
-{
-	if( !IsValid( ent ) || !ent.IsPlayer() )
-		return
-
-	bool shouldRemoveStuff = true
-	
-	foreach( anotherTrigger in file.allBubbleTriggers )
-	{
-		if( !IsValid( anotherTrigger ) || anotherTrigger == trigger || ent.GetTeam() != anotherTrigger.GetTeam())
-			continue
-
-		if( anotherTrigger.IsTouching( ent ) ) //Don't remove passives if player is inside another teammate's bubble and this one is being destroyed. Cafe
-			shouldRemoveStuff = false
-	}
-
-	#if DEVELOPER
-	printw( ent, " try to remove bubble mods: actually remove?", shouldRemoveStuff )
-	#endif
-		
-	if( ent.GetTeam() == trigger.GetTeam() && shouldRemoveStuff ) //is gibby team
-	{
-		// TakeExtraWeaponMod( ent, "gibbyv1" )
-		
-		if( PlayerHasPassive( ent, ePassives.PAS_FAST_HEAL ) )
-		{
-			TakePassive( ent, ePassives.PAS_FAST_HEAL )
-		}
-
-		if( PlayerHasPassive( ent, ePassives.PAS_SUPPORT ) )
-		{
-			TakePassive( ent, ePassives.PAS_SUPPORT )
-		}
-
-		if( PlayerHasPassive( ent, ePassives.PAS_BONUS_SMALL_HEAL ) )
-		{
-			TakePassive( ent, ePassives.PAS_BONUS_SMALL_HEAL )
-		}
-		
-		StatusEffect_StopAllOfType( ent, eStatusEffect.bubble_bunker )
-		StatusEffect_StopAllOfType( ent, eStatusEffect.ring_immunity )
-		
-		ent.SetPlayerNetBool( "hasDeathFieldImmunity", false )
+		wait RandomFloatRange( refreshLowerBound, refreshUpperBound )
 	}
 }
 
@@ -590,17 +555,68 @@ void function MonitorLastFireTime( entity player )
 	soul.Signal( "TitanBrokeBubbleShield" ) //WaitUntilShieldFades will end when this signal is sent
 }
 
-void function DamageEntWithinBubbleShield( entity bubbleShield, entity bubbleShieldPlayer, entity touchingEnt  )
+void function DamageEntWithinBubbleShield( entity bubbleShield, entity bubbleShieldPlayer, entity touchingEnt, table<entity, int> countTable )
 {
-	printt( "Damaged" )
-	
-	if( touchingEnt.GetTeam() != bubbleShieldPlayer.GetTeam() && touchingEnt != bubbleShieldPlayer )
+	int ownerTeam = IsValid( bubbleShieldPlayer ) ? bubbleShieldPlayer.GetTeam() : bubbleShield.GetTeam()
+	if ( !BubbleShieldShouldDamage( bubbleShield, ownerTeam, touchingEnt ) )
+		return
+
+	entity entInCountTable = null
+
+	if ( touchingEnt.IsTitan() )
 	{
-		touchingEnt.TakeDamage( 10, bubbleShieldPlayer, bubbleShield, { origin = bubbleShield.GetOrigin(), damageSourceId=eDamageSourceId.bubble_shield } )
-		StatusEffect_AddTimed( touchingEnt, eStatusEffect.emp, 0.1, 1.0, 0.2 )
+		entity soul = touchingEnt.GetTitanSoul()
+		if ( !IsValid( soul ) )
+			return
+
+		entInCountTable = soul
 	}
-	
+	else
+	{
+		entInCountTable = touchingEnt
+	}
+
+	if ( IsValid( entInCountTable ) && !( entInCountTable in countTable ) )
+		countTable[ entInCountTable ] <- 0
+
+	int timesTouched = ++countTable[ entInCountTable ]
+
+	BubbleShieldDamageStruct damageStruct
+
+	if ( touchingEnt.IsTitan() )
+		damageStruct = file.titanDamageStruct
+	else if ( touchingEnt.IsPlayer() )
+		damageStruct = file.pilotDamageStruct
+	else
+		damageStruct = file.aiDamageStruct
+
+	float damageAmount = damageStruct.damageFloor + EvaluatePolynomial( float( countTable[ entInCountTable ] ), damageStruct.quadraticPolynomialCoefficients )
+
+	//printt( "Damage amount: " + damageAmount + ", touchingEnt: " + touchingEnt )
+
+	touchingEnt.TakeDamage( damageAmount, bubbleShieldPlayer, bubbleShield, { origin = bubbleShield.GetOrigin(), damageSourceId=eDamageSourceId.bubble_shield } )
+	StatusEffect_AddTimed( touchingEnt, eStatusEffect.emp, 0.1, 1.0, 0.2 )
+
 	EmitSoundOnEntity( bubbleShield, "titan_energyshield_damage" )
+}
+
+bool function BubbleShieldShouldDamage( entity bubbleShield, int ownerTeam, entity ent )
+{
+	if ( !IsAlive( ent ) )
+		return false
+
+	if ( IsFriendlyTeam( ownerTeam, ent.GetTeam() ) )
+		return false
+
+	/*if ( ent.IsTitan() && IsTitanWithinBubbleShield( ent ) )
+		return false*/
+
+	if ( ! ( ent instanceof CBaseCombatCharacter ) ) //Projectiles etc won't get damaged
+		return false
+
+	float distSqr = DistanceSqr( bubbleShield.GetOrigin(), ent.GetOrigin() )
+
+	return distSqr <= TITAN_BUBBLE_SHIELD_INVULNERABILITY_RANGE_SQUARED
 }
 
 bool function IsTitanWithinBubbleShield( entity titan )

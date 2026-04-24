@@ -2226,7 +2226,7 @@ void function Server_UpgradeCore_HandleSelection( entity player, int upgradeInde
 	player.SetPlayerNetInt( UPGRADE_CORE_SELECTED_UPGRADES, selectedUpgrades )
 	Server_UpgradeCore_ApplyUpgrade( player, upgrade, false )
 	Remote_CallFunction_Replay( player, FUNCNAME_ServerToClient_AcknowledgeUpgradeSelection, upgradeIndex )
-	//LiveAPI_OnUpgradeCoreSelected( player, upgradeIndex )
+	LiveAPI_OnUpgradeCoreSelected( player, upgradeIndex )
 	//PIN_PlayerUpgradeSelected( player, upgradeIndex, fromQuickSelect )
 
 	// hack for lifeline care package upgrade
@@ -2331,7 +2331,7 @@ void function UpgradeCore_LevelUp( entity player )
 		string newArmorRef = UpgradeCore_GetShieldCoreRefForTier( newTier )
 		SURVIVAL_GivePlayerEquipment( player, newArmorRef, currentShield )
 
-		//LiveAPI_OnUpgradeTierLevelChange( player, level )
+		LiveAPI_OnUpgradeTierLevelChange( player, level )
 
 		//TODO add analytic events for upgrading here
 		//PIN_ItemGrantedByScript( player, newArmorRef, 1 )
@@ -2464,7 +2464,7 @@ void function UpgradeCore_GrantCarePackageScanXp( entity player )
 void function UpgradeCore_GrantConsoleScanXp( entity player, entity console )
 {
 	bool shouldRewardScan = true
-	int currentDeathFieldStage = SURVIVAL_GetCurrentDeathFieldStage( 0 )
+	int currentDeathFieldStage = SURVIVAL_GetCurrentDeathFieldStage()
 
 	PlayerRingScanData scanData
 

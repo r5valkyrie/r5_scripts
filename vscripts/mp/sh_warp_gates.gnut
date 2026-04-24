@@ -833,7 +833,7 @@ void function MovePlayerThroughWarpGate( entity trigger, entity player )
 	StatusEffect_AddEndless( player, eStatusEffect.phase_gate_tracking, 0.5 )
 
 	// OBSERVER LIVE LOGS
-	//LiveAPI_SendOnePlayerEvent( eLiveAPI_EventTypes.warpGateUsed, player )
+	LiveAPI_SendOnePlayerEvent( eLiveAPI_EventTypes.warpGateUsed, player )
 
 	OnThreadEnd(
 		function() : ( player, mover, fx, travelState, data, trigger, isOlympus )

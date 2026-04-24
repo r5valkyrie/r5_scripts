@@ -231,7 +231,7 @@ var function OnWeaponPrimaryAttack_mobile_respawn( entity weapon, WeaponPrimaryA
 	#if SERVER
 		TryPlayWeaponBattleChatterLine( ownerPlayer, weapon )
 
-		//LiveAPI_SendInventoryActionWeapon( eLiveAPI_EventTypes.inventoryUse, ownerPlayer, weapon )
+		LiveAPI_SendInventoryActionWeapon( eLiveAPI_EventTypes.inventoryUse, ownerPlayer, weapon )
 	#endif
 
 	int ammoReq = weapon.GetAmmoPerShot()

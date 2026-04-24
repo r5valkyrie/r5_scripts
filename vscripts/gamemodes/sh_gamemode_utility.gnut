@@ -955,7 +955,7 @@ void function GivePlayerMinGuaranteedLoadout_Thread( entity player )
 
 	WaitFrame() // Need to wait for Survival respawn logic to finish up, it resets inventory and sets the player up to be in a good state to give weapons
 
-	int currentRingStage = maxint( SURVIVAL_GetCurrentDeathFieldStage( 0 ), 0 ) // If the ring hasn't started moving, treat it as the first ring
+	int currentRingStage = maxint( SURVIVAL_GetCurrentDeathFieldStage(), 0 ) // If the ring hasn't started moving, treat it as the first ring
 
 	// Populate the min guaranteed loadouts for this ring stage
 	//WeaponLoadout minGuaranteedWeapons = ParseWeaponLoadoutText( GamemodeUtility_GetMinGuaranteedWeaponLoadoutStringForRingStage( currentRingStage ), false )

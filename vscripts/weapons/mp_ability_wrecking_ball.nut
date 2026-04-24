@@ -1019,19 +1019,7 @@ void function WreckingBall_GetTheBallRolling( entity ball, vector dir )
 
 void function BeginProjectileFire( entity projectile, entity owner, entity inflictor, entity hitEnt, vector pos, vector dir, int numSegments, bool skipFirstStep, BurnDamageSettings burnSettings )
 {
-	Assert( IsValid( owner ) )
-	Assert( IsValid( inflictor ) )
 
-	owner.EndSignal( "OnDestroy" )
-
-	array<SegmentData> segmentsArray = CreateSpreadPattern( owner, inflictor, pos, dir, numSegments, burnSettings )
-	// don't try to use an empty array
-	if ( segmentsArray.len() == 0 )
-		return
-
-	if ( skipFirstStep )
-		segmentsArray.remove( 0 )
-	waitthread BurnSequence( owner, inflictor, segmentsArray, burnSettings )
 }
 
 

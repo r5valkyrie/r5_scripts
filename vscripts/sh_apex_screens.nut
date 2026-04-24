@@ -281,6 +281,7 @@ const string NV_ApexScreensEventIntA = "NV_ApexScreensEventIntA"
 void function ShApexScreens_Init()
 {
 	#if SERVER
+		BlockMapEntityParseCreationOf( "prop_control_panel", "ApexScreenTerminal", "" )
 	#elseif CLIENT
 		AddCallback_OnEnumStaticPropRui( OnEnumStaticPropRui )
 	#endif
@@ -1141,7 +1142,7 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 				// Warning ( "Creating screen" )
 				// Warning( "------------------" + countCreation )
 			// #endif
-			
+
 			screen.rui = CreateApexScreenRUIElement( screen )
 			if ( screen.rui != null )
 			{
@@ -1152,7 +1153,7 @@ void function UpdateScreensContent( array<ApexScreenState> screenList )
 			{
 				shouldShow = false
 			}
-		
+
 
 		}
 
@@ -1268,9 +1269,9 @@ void function UpdateScreenDetails( ApexScreenState screen, float modeChangeTime,
 
 	entity player = FromEHI( playerEHI ) // todo(dw): cache kills
 	if ( IsValid( player ) )
-		RuiTrackInt( screen.rui, "playerKillCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "kills" ) )
+		RuiTrackInt( screen.rui, "playerKillCount", player, RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "kills" ) )
 
-	RuiSetFloat( screen.rui, "xpBonusAmount", XpEventTypeData_GetAmount( XP_TYPE.KILL_CHAMPION_MEMBER ) )
+	RuiSetFloat( screen.rui, "xpBonusAmount", XpEventTypeData_GetAmount( eXPType.KILL_CHAMPION_MEMBER ) )
 
 	ChangeNestedGladiatorCardPresentation( screen.nestedGladiatorCard0Handle, gcardPresentation )
 	ChangeNestedGladiatorCardOwner( screen.nestedGladiatorCard0Handle, playerEHI, modeChangeTime, lifestateOverride )
@@ -1575,7 +1576,7 @@ var function CreateApexScreenRUIElement( ApexScreenState screen )
 	if ( screen.sharesPropWithEnvironmentalRUI )
 		RuiSetBool( rui, "sharesPropWithEnvironmentalRUI", true )
 
-	RuiTrackInt( rui, "cameraNearbyEnemySquads", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "cameraNearbyEnemySquads" ) )
+	RuiTrackInt( rui, "cameraNearbyEnemySquads", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "cameraNearbyEnemySquads" ) )
 
 
 	if ( screen.overrideInfoIsValid )
@@ -1602,11 +1603,11 @@ var function CreateApexScreenRUIElement( ApexScreenState screen )
 			RuiSetGameTime( rui, varName, varValue )
 
 		if ( screen.overrideInfo.bindStartTimeVarToEventTimeA )
-			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( NV_ApexScreensEventTimeA ) )
+			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndexSafe( NV_ApexScreensEventTimeA ) )
 		if ( screen.overrideInfo.bindStartTimeVarToEventTimeB )
-			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndex( NV_ApexScreensEventTimeB ) )
+			RuiTrackFloat( rui, "startTime", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL, GetNetworkedVariableIndexSafe( NV_ApexScreensEventTimeB ) )
 		if ( screen.overrideInfo.bindEventIntA )
-			RuiTrackInt( rui, "intA", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndex( NV_ApexScreensEventIntA ) )
+			RuiTrackInt( rui, "intA", null, RUI_TRACK_SCRIPT_NETWORK_VAR_GLOBAL_INT, GetNetworkedVariableIndexSafe( NV_ApexScreensEventIntA ) )
 	}
 
 	return rui

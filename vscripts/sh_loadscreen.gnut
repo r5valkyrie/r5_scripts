@@ -38,12 +38,6 @@ void function ShLoadscreen_Init()
 
 void function ShLoadscreen_LevelInit()
 {
-	// Signal registration moved here from ShLoadscreen_Init()
-	RegisterSignal( "Loadscreen_SetCustomLoadscreen" )
-	#if UI
-		RegisterSignal( "SetEquppedLoadscreenAsActive" )
-	#endif
-
 	FileStruct_LifetimeLevel newFileGame
 	fileLevel = newFileGame
 

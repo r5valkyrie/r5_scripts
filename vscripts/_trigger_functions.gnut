@@ -57,7 +57,7 @@ void function TriggerFunctions_Init()
 	AddSpawnCallback( "trigger_out_of_bounds",	TriggerInit )
 
 	#if SERVER
-	//AddSpawnCallback( "trigger_no_zipline",		TryGameModeRemove )
+	AddSpawnCallback( "trigger_no_zipline",		TryGameModeRemove )
 	#endif
 
 	AddTriggerEditorClassFunc( "trigger_death_fall", TriggerDeathFall )
@@ -205,9 +205,6 @@ void function UpdateTriggerStatusFromFlagChange( string flag )
 */
 void function FireTriggerInit( entity trigger )
 {
-	if( trigger.GetScriptName() == "skydive_dust_devil" )
-		return
-	
 	trigger.ConnectOutput( "OnStartTouch", FireStartTouch )
 	trigger.ConnectOutput( "OnEndTouch", FireEndTouch )
 }
@@ -245,7 +242,7 @@ void function FireDamagedEntity( entity trigger, entity ent )
 		}
 
 		vector damageOrigin = ent.GetOrigin()
-		int scriptTypeMask = damageTypes.dissolve// | DF_SOUR
+		int scriptTypeMask = damageTypes.dissolve// | DF_STOPS_TITAN_REGEN
 
 		int damageAmount = 1
 
@@ -330,7 +327,7 @@ void function DeadlyFogDamagedEntity( entity trigger, entity ent )
 		bool isTitan = ent.IsTitan()
 		vector damageOrigin = ent.GetOrigin() + ( isTitan ? <0,0,0> : <0,0,-200> )
 		damageOrigin += <RandomFloatRange( -300.0, 300.0 ), RandomFloatRange( -300.0, 300.0 ), RandomFloatRange( -100.0, 100.0 )>
-		int scriptTypeMask = damageTypes.dissolve// | DF_SOUR
+		int scriptTypeMask = damageTypes.dissolve// | DF_STOPS_TITAN_REGEN
 
 		int damageAmount = int( ent.GetMaxHealth() / ( timeTillDeath / tickTime ) )
 
@@ -651,11 +648,11 @@ void function TriggerSpawnSpawner( entity spawner )
 		return
 	}
 
-	//if ( IsDroppodSpawner( spawner ) )
-	//{
-	//	thread SpawnDroppodSpawner( spawner )
-	//	return
-	//}
+	if ( IsDroppodSpawner( spawner ) )
+	{
+		thread SpawnDroppodSpawner( spawner )
+		return
+	}
 
 	Assert( IsSpawner( spawner ) )
 

@@ -19,6 +19,8 @@ global function Playlist_GetNewModeVersion
 global function Playlist_GetPlaylistScheduledTimeRange
 global function Playlist_GetScheduleData_Deprecated
 global function Playlist_ShouldBeHiddenForScheduleBlocks
+global function Playlist_ShouldLockRankedPlaylistForPatch
+global function Playlist_IsPastRankedSeasonEndDate
 global function ShPlaylist_Init
 global function GetPlaylistRotationGroup
 #endif

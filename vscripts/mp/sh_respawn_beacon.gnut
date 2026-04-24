@@ -3110,7 +3110,7 @@ void function DeathBoxOnUse( entity box, entity playerUser, int useFlags )
 		dna.Destroy()
 
 	// OBSERVER LIVE LOGS
-	//LiveAPI_SendTwoPlayerEvent( eLiveAPI_EventTypes.bannerCollected, playerUser, owner )
+	LiveAPI_SendTwoPlayerEvent( eLiveAPI_EventTypes.bannerCollected, playerUser, owner )
 }
 
 void function HandleRespawnBannerPickup_Thread( entity playerUser )

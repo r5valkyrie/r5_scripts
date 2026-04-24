@@ -79,7 +79,7 @@ void function ExtraShields_ResetExtraShieldsDelayed( entity victim )
 	WaitFrame()
 	if( !IsValid( victim ) )
 		return
-	
+
 	SetPlayerExtraShields( victim, 0 )
 	SetPlayerExtraShieldsTier( victim, 1 )
 }
@@ -95,9 +95,9 @@ void function SetPlayerExtraShields( entity player, int val )
 	}
 	else
 	{
-                                    
-                                                                                      
-        
+
+
+
 		{
 			thread DecayExtraShields( player, val )
 		}
@@ -190,7 +190,7 @@ void function ExtraShields_OnExtraShieldDurationChanged( entity player, float ne
 		//RuiTrackInt( file.extraShieldDurationRui, "tierColor", player, RUI_TRACK_EXTRA_SHIELD_TIER_INT )
 	}
 
-	RuiTrackFloat( file.extraShieldDurationRui, "timeRemaining", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( EXTRA_SHIELDS_DURATION_NETFLOAT ) )
+	RuiTrackFloat( file.extraShieldDurationRui, "timeRemaining", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( EXTRA_SHIELDS_DURATION_NETFLOAT ) )
 }
 
 void function ExtraShields_OnExtraShieldTierChanged( entity player, int newTier )

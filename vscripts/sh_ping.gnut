@@ -6929,7 +6929,7 @@ void function Send_PingLoot( entity player, entity lootEnt, entity deathBox )
 	}
 	else
 	{
-		Remote_ServerCallFunction( CMDNAME_PING_NEW_LOOT_OUTSIDE_DEATHBOX, lootEnt, ticketID, origin )
+		Remote_ServerCallFunction( "ClientCallback_PingNewLootOutsideDeathbox", lootEnt, ticketID, origin )
 	}
 
 	lootEnt.e.localPingBeginTime = Time()

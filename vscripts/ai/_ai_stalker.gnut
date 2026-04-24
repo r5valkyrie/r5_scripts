@@ -1,6 +1,5 @@
 untyped
 global function AiStalker_Init
-global function GetDeathForce
 global function StalkerGearOverloads
 global function StalkerMeltingDown
 
@@ -597,11 +596,4 @@ void function StalkerHeadShot( entity npc, var damageInfo, int hitGroup )
 	npc.SetBodygroup( bodyGroupIndex, stateIndex )
 
 	DamageInfo_SetDamage( damageInfo, npc.GetMaxHealth() )
-}
-
-vector function GetDeathForce()
-{
-	vector angles = <RandomFloatRange(-45,-75),RandomFloat(360),0>
-	vector forward = AnglesToForward( angles )
-	return forward * RandomFloatRange( 0.25, 0.75 )
 }

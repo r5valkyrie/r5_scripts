@@ -286,7 +286,7 @@ void function EnforcedRingLethality_TrackPlayers_Thread()
 			dontSkipRound1ForMode = dontSkipRound1ForMode || GameModeVariant_IsActive( eGameModeVariants.SURVIVAL_BATTLE_RUSH )
 
 
-		if( !dontSkipRound1ForMode && SimplifiedRingLethality_ShouldSkipRound1() && ( SURVIVAL_GetCurrentDeathFieldStage( 0 ) < 1 ) )
+		if( !dontSkipRound1ForMode && SimplifiedRingLethality_ShouldSkipRound1() && ( SURVIVAL_GetCurrentDeathFieldStage() < 1 ) )
 		{
 			WaitFrame()
 			continue

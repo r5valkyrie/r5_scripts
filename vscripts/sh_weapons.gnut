@@ -125,8 +125,20 @@ array<string> function WeaponItemFlavor_GetChildClassNames( ItemFlavor weapon )
 {
 	Assert( ItemFlavor_GetType( weapon ) == eItemType.loot_main_weapon )
 
-	// Weapon RPaks don't have "childClassnames" array
-	return []
+	array<string> childNames;
+	var childSettingsArray = GetSettingsBlockArray( GetSettingsBlockForAsset( ItemFlavor_GetAsset( weapon ) ), "childClassnames" )
+
+	foreach ( var childBlock in IterateSettingsArray( childSettingsArray ) )
+	{
+		string childClassname = GetSettingsBlockString( childBlock, "childClassname" )
+
+		if ( childClassname != "" )
+		{
+			childNames.append( childClassname )
+		}
+	}
+
+	return childNames
 }
 
 ItemFlavor ornull function GetWeaponItemFlavorByClass( string classname )
@@ -241,8 +253,7 @@ array<ItemFlavor> function GetWeaponsInCategory( ItemFlavor category )
 		if ( !ItemFlavor_ShouldBeVisible( weapon, player ) )
 			continue
 
-		ItemFlavor ornull weaponCat = WeaponItemFlavor_GetCategory( weapon )
-		if ( weaponCat != null && expect ItemFlavor( weaponCat ) == category )
+		if ( WeaponItemFlavor_GetCategory( weapon ) == category )
 			categoryWeapons.append( weapon )
 	}
 
@@ -259,8 +270,7 @@ array<ItemFlavor> function GetAllWeaponsInCategory( ItemFlavor category )
 
 	foreach ( weapon in allWeapons )
 	{
-		ItemFlavor ornull weaponCat = WeaponItemFlavor_GetCategory( weapon )
-		if ( weaponCat != null && expect ItemFlavor( weaponCat ) == category )
+		if ( WeaponItemFlavor_GetCategory( weapon ) == category )
 			categoryWeapons.append( weapon )
 	}
 

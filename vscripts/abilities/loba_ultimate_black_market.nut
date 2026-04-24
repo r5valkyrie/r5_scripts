@@ -967,7 +967,7 @@ void function OnPlayerLootPickup( entity player, entity lootEnt, string ref, int
 	EmitSoundAtPosition( TEAM_UNASSIGNED, lootEnt.GetOrigin(), "Loba_Ultimate_BlackMarket_WarpIn", resolvedBlackMarket )
 	thread WarpBeamFXThread( resolvedBlackMarket, resolvedBlackMarket.GetOrigin() + (resolvedBlackMarket.GetUpVector() * 48.0), lootEnt.GetOrigin() )
 
-	//LiveAPI_SendOnePlayerItemEvent( eLiveAPI_EventTypes.blackMarketAction, player, ref )
+	LiveAPI_SendOnePlayerItemEvent( eLiveAPI_EventTypes.blackMarketAction, player, ref )
 }
 #endif
 

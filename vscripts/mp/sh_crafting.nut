@@ -3293,9 +3293,9 @@ void function Crafting_WorkbenchAirdropLogic()
 	{
 		FlagWaitClear( "SUR_DeathFieldShrinking" )
 
-		if ( SURVIVAL_GetCurrentDeathFieldStage( 0 ) in stageToAmountTable )
+		if ( SURVIVAL_GetCurrentDeathFieldStage() in stageToAmountTable )
 		{
-			int currentStage = SURVIVAL_GetCurrentDeathFieldStage( 0 )
+			int currentStage = SURVIVAL_GetCurrentDeathFieldStage()
 			int dropCount = stageToAmountTable[ currentStage ]
 
 			if ( !(currentStage in stageToAmountTable) )
@@ -5615,7 +5615,7 @@ void function OnGameStartedPlaying_Client()
 	if ( !Crafting_IsDispenserCraftingEnabled() )
 	{
 		file.fullmapRui.append( RuiCreate( $"ui/crafting_fullmap.rpak", clGlobal.topoFullscreenFullMap, FULLMAP_RUI_DRAW_LAYER, 20 ) )
-		RuiTrackInt( file.fullmapRui[0], "craftingMaterials", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndex( "craftingMaterials" ) )
+		RuiTrackInt( file.fullmapRui[0], "craftingMaterials", GetLocalViewPlayer(), RUI_TRACK_SCRIPT_NETWORK_VAR_INT, GetNetworkedVariableIndexSafe( "craftingMaterials" ) )
 
 		for ( int i = 0; i < 6; i++ )
 		{

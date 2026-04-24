@@ -144,11 +144,6 @@ function CommonNPCOnSpawned( entity npc )
 			npc.DisableNPCFlag( NPC_CROUCH_COMBAT )
 	}
 
-	if ( npc.HasKey( "drop_battery" ) )
-	{
-		npc.ai.shouldDropBattery = (npc.kv.drop_battery == "1")
-	}
-
 	switch ( npc.GetClassName() )
 	{
 		case "npc_bullseye":

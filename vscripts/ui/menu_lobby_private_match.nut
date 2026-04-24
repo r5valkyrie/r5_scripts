@@ -13,7 +13,7 @@ struct
 {
 	#if UI
 		int  activePresentationType = ePresentationType.INACTIVE
-	#endif      
+	#endif
 
 	var    menu
 	var    menuHeaderRui
@@ -53,8 +53,6 @@ struct
 	var textChat
 	var chatInputLine
 	var chatButtonIcon
-
-	var mouseDragIcon
 } file
 
 void function InitPrivateMatchLobbyMenu( var newMenuArg )
@@ -62,7 +60,6 @@ void function InitPrivateMatchLobbyMenu( var newMenuArg )
 	printf( "PrivateMatchLobbyDebug: Init Private Match Lobby" )
 	var menu = GetMenu( "PrivateMatchLobbyMenu" )
 	file.menu = menu
-	file.mouseDragIcon = Hud_GetChild( menu, "MouseDragIcon" )
 
 	file.menuHeaderRui = Hud_GetRui( Hud_GetChild( menu, "MenuHeader" ) )
 	RuiSetString( file.menuHeaderRui, "menuName", "#TOURNAMENT_LOBBY_HEADER" )
@@ -152,7 +149,7 @@ void function InitPrivateMatchLobbyMenu( var newMenuArg )
 	anonymousModeToolTip.descText = "#TOURNAMENT_ANONYMOUS_MODE_OFF"
 	Hud_SetToolTipData( file.anonymousModeButton, anonymousModeToolTip )
 	Hud_AddEventHandler( file.anonymousModeButton, UIE_CLICK, AnonymousModeButton_OnActivate )
-	
+
 	file.kickTarget = Hud_GetChild( menu, "KickButton")
 
 	file.chatButtonIcon = Hud_GetChild( menu, "LobbyChatBoxIcon")
@@ -221,7 +218,7 @@ void function OnPrivateMatchLobbyThink()
 {
 	Signal( uiGlobal.signalDummy, "TEMP_UpdateCursorPosition" )
 	EndSignal( uiGlobal.signalDummy, "TEMP_UpdateCursorPosition" )
-	
+
 	while ( true )
 	{
 		if ( CanRunClientScript() )
@@ -340,9 +337,9 @@ void function PrivateMatch_RefreshPlaylistButtonName()
 		return
 
 	string displayName = "#SELECT_PLAYLIST"
-	
+
 	displayName = playlistName != "" ? GetPlaylistVarString( playlistName, "name", "#SELECT_PLAYLIST" ) : "#SELECT_PLAYLIST"
-	                                                                                                           
+
 
 	HudElem_SetRuiArg( file.modeButton, "buttonText", Localize( displayName ) )
 
@@ -382,13 +379,13 @@ void function PrivateMatchLobbyMenuUpdate()
 	EndSignal( uiGlobal.signalDummy, SIGNAL_LOBBY_UPDATE )
 	EndSignal( uiGlobal.signalDummy, "CleanupInGameMenus" )
 
-	                
-	   
-	  	                 
-	  	                     
-	  	            
-	  	           
-	   
+
+
+
+
+
+
+
 }
 
 void function UpdateReadyButtonText( bool isControllerModeActive )
@@ -452,9 +449,9 @@ void function RegisterInputs()
 		RegisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT_FULL, EnterText_OnActivate )
 	#endif
 	RegisterButtonPressedCallback( KEY_ENTER, FocusChat_OnActivate )
-	                                                                     
-	                                                                              
-	                                                                              
+
+
+
 	file.inputsRegistered = true
 }
 
@@ -473,9 +470,9 @@ void function DeregisterInputs()
 		DeregisterButtonPressedCallback( BUTTON_TRIGGER_RIGHT_FULL, EnterText_OnActivate )
 	#endif
 	DeregisterButtonPressedCallback( KEY_ENTER, FocusChat_OnActivate )
-	                                                                       
-	                                                                                
-	                                                                                
+
+
+
 	file.inputsRegistered = false
 }
 
@@ -503,7 +500,7 @@ void function PrivateMatch_SetLobbyChatVisible( bool visible )
 
 void function ReadyLaunchButton_OnActivate( var button )
 {
-	                                                                                                          
+
 	if ( button == null && file.isStarting )
 		return
 
@@ -554,7 +551,7 @@ void function AdminOnlyButton_OnActivate( var button )
 {
 	if ( !HasMatchAdminRole() )
 		return
-	
+
 	Remote_ServerCallFunction( "ClientCallback_PrivateMatchToggleAdminOnlyChat" )
 }
 
@@ -604,10 +601,10 @@ void function PrivateMatchPostGameButton_OnActivate( var button )
 	if ( IsDialog( GetActiveMenu() ) )
 		return
 
-	                              
-	   
-	  	                                 
-	   
+
+
+
+
 
 	thread PrivateMatchPostGameFlow()
 }
@@ -635,7 +632,7 @@ void function OnPrivateMatchLobbyMenu_NavigateBack()
 
 void function GameMenuButton_OnActivate( var button )
 {
-	if ( InputIsButtonDown( BUTTON_STICK_LEFT ) )                             
+	if ( InputIsButtonDown( BUTTON_STICK_LEFT ) )
 		return
 
 	if ( IsDialog( GetActiveMenu() ) )

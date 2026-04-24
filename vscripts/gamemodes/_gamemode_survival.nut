@@ -5087,7 +5087,7 @@ void function SurvivalPlayerRespawnedInit( entity player )
 	Ultimates_OnPlayerRespawned( player )
 
 	player.GiveOffhandWeapon( HOLO_PROJECTOR_WEAPON_NAME, HOLO_PROJECTOR_INDEX ) // offhand slot 6 not in S3
-	// player.GiveOffhandWeapon( GENERIC_OFFHAND_WEAPON_NAME, GENERIC_OFFHAND_INDEX ) // offhand slot 7 not in S3
+	player.GiveOffhandWeapon( GENERIC_OFFHAND_WEAPON_NAME, GENERIC_OFFHAND_INDEX ) // offhand slot 7 not in S3
 
 
 	player.DisableIdLights()
@@ -5945,7 +5945,7 @@ void function RespawnTeamAtRingEdge( int team )
 	if ( players.len() <= 0 )
 		return
 
-	int stage             = maxint( SURVIVAL_GetCurrentDeathFieldStage( 0 ), 0 )
+	int stage             = maxint( SURVIVAL_GetCurrentDeathFieldStage(), 0 )
 	DeathFieldStageData d = GetDeathFieldStage( Survival_Loot_GetDefaultRealm(), stage )
 
 	float angleDisplacement = RandomFloat( 360.0 )
@@ -6048,7 +6048,7 @@ void function Survival_SquadEliminationCleanup( int team )
 {
 	RespawnBeacons_OnSquadEliminated( team )
 
-	if ( GetCurrentPlaylistVarInt( "squad_respawn_if_before_ring", -10 ) > SURVIVAL_GetCurrentDeathFieldStage( 0 ) )
+	if ( GetCurrentPlaylistVarInt( "squad_respawn_if_before_ring", -10 ) > SURVIVAL_GetCurrentDeathFieldStage() )
 	{
 		if ( file.squadRespawnChances[ team ] > 0 )
 		{

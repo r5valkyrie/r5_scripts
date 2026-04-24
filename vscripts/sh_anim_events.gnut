@@ -443,7 +443,7 @@ void function ClientCodeCallback_HandleClientAnimEvent( entity self, string even
 
 		case "mp_frag_drone_fx":
 		{
-			thread PlayWarningFXOnMPFragDrone( self ) //Can't just do AE_CL_CREATE_PARTICLE_EFFECT because those effects are only stopped when the entity is destroyed as opposed to killed. See bug 159462
+			//thread PlayWarningFXOnMPFragDrone( self ) //Can't just do AE_CL_CREATE_PARTICLE_EFFECT because those effects are only stopped when the entity is destroyed as opposed to killed. See bug 159462
 			break
 		}
 

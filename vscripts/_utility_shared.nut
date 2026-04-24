@@ -92,6 +92,14 @@ global struct RaySphereIntersectStruct
 	float leaveFrac
 }
 
+global struct FriendlyEnemyFXStruct
+{
+	entity friendlyColoredFX
+	entity enemyColoredFX
+	int    team
+}
+
+
 global struct PotentialTargetData
 {
 	entity target
@@ -105,6 +113,14 @@ global enum eGradeFlags
 	IS_OPEN_SECRET = (1 << 2),
 	IS_LOCKED = (1 << 3),
 }
+
+const array<string> ALLOWED_SCRIPT_PARENT_ENTS = [
+	"hatch_bunker_entrance_model_z16",
+	"hatch_bunker_entrance_model_z6",
+	"hatch_bunker_entrance_model_z5",
+	"hatch_bunker_entrance_model_z12",
+	"hatch_bunker_entrance_model_z12_treasure",
+]
 
 struct RefEntAreaData
 {
@@ -151,91 +167,373 @@ void function InitWeaponScripts()
 	ArcCannon_Init()
 	Grenade_FileInit()
 	Vortex_Init()
+	Weapon_Cubemap_Init()
 
 	//	#if SERVER
 	//		PrecacheProjectileEntity( "grenade_frag" )
 	//		PrecacheProjectileEntity( "crossbow_bolt" )
 	//	#endif
 
-	MpWeaponDoubletake_Init()
-	//MpWeaponGrenadeGravity_Init()
-	MpAbilityShifter_Init()
-	MpWeaponDefender_Init()
+	//Lifesteal_Init()
+
+
+
+
+
+
+
+
+		HopupGoldenHorse_Init()
+
+
+
+
+
+
+
+
+
+
+
+
+	//MpWeaponDefender_Init()
+	//MpWeaponDefenderRailgun_Init()
+
+
+
+
+
+	MpWeaponSentinel_Init()
+
+
+
+	//MpWeaponVoltSmg_Init()
+
+
+
+	MpWeaponBow_Init()
+
+
+
 	MpWeaponDmr_Init()
-	MpWeaponSmartPistol_Init()
-	SonarGrenade_Init()
+
+
+
+
+
+
 	MpWeaponSniper_Init()
 	MpWeaponLSTAR_Init()
-	MpWeaponZipline_Init()
+
+
+
+
+
+
+
+	//	MpWeaponTitanSword_Init()
+
 	MpWeaponAlternatorSMG_Init()
+	//MpWeaponShotgun_Init()
+
+
+
 	MpWeaponThermiteGrenade_Init()
-	MeleeWraithKunai_Init()
+	/*MeleeWraithKunai_Init()
 	MpWeaponWraithKunaiPrimary_Init()
-	MeleeBoloSword_Init()
-	MpWeaponPoloSwordPrimary_Init()
 	MeleeBloodhoundAxe_Init()
 	MpWeaponBloodhoundAxePrimary_Init()
+	MeleeCausticHammer_Init()
+	MpWeaponCausticHammerPrimary_Init()
 	MeleeLifelineBaton_Init()
 	MpWeaponLifelineBatonPrimary_Init()
-	MpWeaponDeployableCover_Init()
-	MeleeShadowsquadHands_Init()
+	MeleePathfinderGloves_Init()
+	MpWeaponPathfinderGlovesPrimary_Init()
+	MeleeOctaneKnife_Init()
+	MpWeaponOctaneKnifePrimary_Init()
+	MeleeMirageStatue_Init()
+	MpWeaponMirageStatuePrimary_Init()
+	MeleeWattsonGadget_Init()
+	MpWeaponWattsonGadgetPrimary_Init()
+	MeleeCryptoHeirloom_Init()
+	MpWeaponCryptoHeirloomPrimary_Init()
+	MeleeValkyrieSpear_Init()
+	MpWeaponValkyrieSpearPrimary_Init()
+	MeleeLobaHeirloom_Init()
+	MpWeaponLobaHeirloomPrimary_Init()
+	MeleeSeerHeirloom_Init()
+	MpWeaponSeerHeirloomPrimary_Init()
+	MeleeWraithKunai_rt01_Init()
+	MpWeaponWraithKunai_rt01_Primary_Init()
+	MeleeAshHeirloom_Init()
+	MpWeaponAshHeirloomPrimary_Init()
+	MeleeHorizonHeirloom_Init()
+	MpWeaponHorizonHeirloomPrimary_Init()
+	//	TODO: DELETE WHEN READY
+	MeleeRevenantScythe_rt01_Init()
+	MpWeaponRevenantScythePrimary_rt01_Init()
+	MeleeFuseHeirloom_Init()
+	MpWeaponFuseHeirloomPrimary_Init()
+
+	MeleeArtifactDagger_Init()
+	MpWeaponArtifactDaggerPrimary_Init()
+
+
+		MeleeArtifactSword_Init()
+		MpWeaponArtifactSwordPrimary_Init()
+
+
+
+
+
+
+
+		MeleeCryptoHeirloomRt01_Init()
+		MpWeaponCryptoHeirloomRt01Primary_Init()
+
+
+		MeleeOctaneKnifeRt01_Init()
+		MpWeaponOctaneKnifePrimaryRt01_Init()
+
+	MeleeGibraltarClub_Init()
+	MpWeaponGibraltarClubPrimary_Init()
+	MeleeRampartWrench_Init()
+	MpWeaponRampartWrenchPrimary_Init()
+	MeleeRevenantScythe_Init()
+	MpWeaponRevenantScythePrimary_Init()*/
+
+		MeleeShadowsquadHands_Init()
+		MpWeaponShadowsquadHandsPrimary_Init()
+
+
+		//MeleeBoxingRing_Init()
+		//MpWeaponMeleeBoxingRing_Init()
+
+
 	MpWeaponEmoteProjector_Init()
 	MpGenericOffhand_Init()
 
-	#if DEVELOPER
-		MpWeaponShadowsquadHandsPrimary_Init()
-		MDLSpawner_Init()
-	#endif
 
-	MpAbilityGibraltarShield_Init()
-	MpWeaponBubbleBunker_Init()
 
-	MpWeaponGrenadeDefensiveBombardment_Init()
+
+
 	MpAbilityHuntModeWeapon_Init()
-	MpAbilityAreaSonarScan_Init()
-	MpWeaponGrenadeGas_Init()
-	MpWeaponDirtyBomb_Init()
-	MpWeaponDeployableMedic_Init()
 	MpWeaponIncapShield_Init()
-	MpWeaponGrenadeBangalore_Init()
-	MpWeaponGrenadeCreepingBombardment_Init()
-	MpWeaponGrenadeCreepingBombardmentWeapon_Init()
-	MpAbilityMirageUltimate_Init()
+
+
+
+
+
+
+
+
+
+
+	//	MpAbilityRiseFromTheAshes_Init()
+
+
+
+
+
+
 	MpWeapon3030_Init()
-	MpWeaponPhaseTunnel_Init()
-	MpWeaponTeslaTrap_Init()
-	MpWeaponTrophy_Init()
+	MpWeaponDragon_LMG_Init()
+
+
+
+
+
+
+
+
+
+		MpAbilityRedeployBalloon_Init()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		MpAbilityCopycatKit_Init()
+
+
+	VOID_RING_Init()
+	MpWeaponCar_Init()
+
+
+
+
+
+	MpWeaponNemesis_Init()
+
+
+
+
+
+
+
+
 
 	MpWeaponBasicBolt_Init()
+	//MpWeaponLmg_Init()
 
-	//(cafe) S0 Dev Protos
-	MpWeaponGroundSlam_Init()
-	Haunt_Init()
-	MpAbilityLootCompass_Init()
-	MpAbilityMaelstromJavelin_Init()
-	MpAbilityRiotShield_Init()
-	MpAbilitySonicShoutWeapon_Init()
-	MpAbilitySplitTimelineWeapon_Init()
-	MpAbilitySpotterSight_Init()
-	MpAbilitySonicBlast_Init()
-	MpWeaponConcussiveBreach_Init()
-	MpWeaponGrenadeBarrier_Init()
-	MpWeaponGrenadeFlashbang_Init()
-	MpWeaponDebrisTrap_Init()
-	MpWeaponCoverWall_Init()
-	ShPassiveShotgunKick_Init()
-
-	ChargePylons_Init()
-
-	//(kral) wip abilities
-	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
-	LobaUltimateBlackMarket_LevelInit()				// Loba Ultimate
 	#if SERVER
-
-		//BallLightning_Init()
+		BallLightning_Init()
 	#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
+void function InitAbilityScripts()
+{
+	// Released
+	//MpAbilityNone_Init()								// No Ability
+	MpAbilityShifter_Init() 							// Phasing
+	MpAbilitySharedSilence_Init()						// Silence
+	ShShellShock_Init()									// Shellshock
+	ShGas_Init()										// Caustic Gas
+	Sh_PassiveVoices_Init()								// Wraith Passive
+	MpWeaponPhaseTunnel_Init()							// Wraith Ult
+	MpWeaponZipline_Init() 								// Pathfinder Ult
+	MpAbilityGibraltarShield_Init()						// Gibraltar Passive
+	MpWeaponBubbleBunker_Init()							// Gibraltar Tac
+	MpWeaponGrenadeDefensiveBombardment_Init()			// Gibraltar Ult
+	MpAbilityAreaSonarScan_Init()						// Bloodhound Tac
+	PassiveMedic_Init()									// Lifeline Passive
+	MpWeaponDeployableMedic_Init()						// Lifeline Tac
+	MpWeaponGrenadeBangalore_Init()						// Bangalore Tac
+	MpWeaponGrenadeCreepingBombardment_Init()			// Bangalore Ult
+	MpWeaponGrenadeCreepingBombardmentWeapon_Init()		// Bangalore Ult
+	MpAbilityMirageUltimate_Init()						// Mirage Ult
+	MpWeaponDirtyBomb_Init()							// Caustic Tac
+	MpWeaponGrenadeGas_Init()							// Caustic Ult
+	//PassiveOctane_Init()								// Octane Passive
+	Sh_JumpPad_Init()									// Octane Ult
+	MpWeaponTeslaTrap_Init()							// Wattson Tac
+	MpWeaponTrophy_Init()								// Wattson Ult
+	MpAbilityCryptoDrone_Init()							// Crypto Tac
+	MpAbilityCryptoDroneEMP_Init()						// Crypto Ult
+	MpAbilitySilence_Init()								// Old Revenant Tac
+	MpAbilityRevenantDeathTotem_Init()					// Old Revenant Ult
+	ShLobaPassiveEyeForQuality_LevelInit()				// Loba Passive
+	//LobaTacticalTranslocation_LevelInit()				// Loba Tac
+	LobaUltimateBlackMarket_LevelInit()					// Loba Ult
+	PassiveGunner_Init()								// Rampart Passive
+	MpWeaponCoverWall_Init()							// Rampart Tac
+	MpWeaponMountedTurretPlaceable_Init()				// Rampart Ult
+	MpWeaponMountedTurretWeapon_Init()					// Rampart Ult
+	MpWeaponMobileHMG_Init()							// Rampart Ult
+	MpSpaceElevatorAbility_Init()						// Horizon Tac
+	MpSpaceElevator_Init()								// Horizon Tac
+	MpWeaponBlackHole_Init()							// Horizon Ult
+	PassiveGrenadier_Init()								// Fuse Passive
+	MpWeaponClusterBombLauncher_Init()					// Fuse Tac
+	MpWeapon_Mortar_Ring_Init()							// Fuse Ult
+	MpWeapon_Mortar_Ring_Missile_Init()					// Fuse Ult
+	MpAbilityValkJets_Init()							// Valkyrie Passive
+	MpAbilityValkClusterMissile_Init()					// Valkyrie Tac
+	MpAbilityValkSkyward_Init()							// Valkyrie Ult
+	PassiveHeartbeatSensor_Init()						// Seer Passive
+	MpAbilitySonicBlast_Init()							// Seer Tac
+	MpWeaponEchoLocator_Init()							// Seer Ult
+	//MpWeaponAshDataknife_Init()							// Ash Passive
+	MpWeaponArcBolt_Init()								// Ash Tac
+	MpWeaponPhaseBreach_Init()							// Ash Ult
+	MpMaggieCommon_Init()								// Mad Maggie
+	ShPassiveWarlordsIre_Init()							// Mad Maggie Passive
+	MpWeaponRiotDrill_Init()							// Mad Maggie Tac
+	MpAbilityWreckingBall_Init()						// Mad Maggie Ult
+	//MpWeaponReviveShield_Init()							// Newcastle Passive
+	//MpAbilityShieldThrow_Init()							// Newcastle Tac
+	//MpAbilityArmoredLeap_Init()							// Newcastle Ult
+	//PassiveVantage_Init()								// Vantage Passive
+	//SniperRecon_Init()									// Vantage Passive
+	//Companion_Launch_Init()								// Vantage Tac
+	//VantageCompanion_Init()								// Vantage Tac
+	//MpWeaponVantageRecall_Init()						// Vantage Tac
+	//SniperUlt_Init()									// Vantage Ult
+	//ShResin_Init()										// Catalyst
+	//MpAbilityReinforce_Init()							// Catalyst Passive
+	//PassiveReinforce_Init()								// Catalyst Passive
+	//MpAbilitySpikeStrip_Init()							// Catalyst Tac
+	//MpWeaponFerroWall_Init()							// Catalyst Ult
+	//ShPassiveSling_Init()								// Ballistic Passive
+	//MpWeaponDebuffZone_Init()							// Ballistic Tac
+	//MpAbilityPortableAutoLoader_Init()					// Ballistic Ult
+	//MpAbilityExectioner_Init()							// Revenant Reborn Passive
+	//MpAbilityShadowPounceFree_Init()					// Revenant Reborn Tac
+	//MpAbilityShadowForm_Init()							// Revenant Reborn Ult
+		//ShPassiveConduit_Init()							// Conduit Passive
+		//MpAbilityConduitArcFlash_Init()					// Conduit Tac
+		//Mp_ability_shield_mines_init()					// Conduit Ult
+		//Mp_ability_shield_mines_line_init()				// Conduit Ult
+		ExtraShields_Init()
+		ShPassiveUpgradeCore_Init()
+		//ShPassiveTacCooldownExtra_Init()
+		//ShPassiveExplosiveSpeedBoost_Init()
+		//ShPassiveAirborneHealthRegen_Init()
+		//ShPassiveBoostedHealthRegen_Init()
+		//ShPassiveSquadwipeSquadCount_Init()
+		//ShPassiveKnockShotgunAutoReload_Init()
+		//ShPassiveZiplineShield_Init()
+		//PhysicalOvershield_Init()
+		//ShPassiveKnockTacReset_Init()
+		//ShPassiveFasterTacWindup_Init()
+
+		//UpgradedClusterMissile_Init()
+		//UpgradedJets_Init()
+
+		//AutoWhiteRavens_Init()
+
+		UpgradeSelectionMenu_Init()
+	// Old Protos
+
+	// Active Protos
+		//AlterExtraScript_Init()
+		//MpAbilityPhaseDoor_Init()
+		//MpAbilityTransportPortal_Init()
+		//MpAbilityTransportPortalDatapad_Init()
+		PassiveRemoteDeathboxInteract_Init()
+		PassiveVoidVision_Init()
+}
 
 void function TableDump( table Table, int depth = 0 )
 {
@@ -1782,7 +2080,88 @@ array<ArrayDistanceEntry> function ArrayDistance2DResultsVector( array<vector> v
 	return allResults
 }
 
-GravityLandData function GetGravityLandData( vector startPos, vector parentVelocity, vector objectVelocity, float timeLimit, bool bDrawPath = false, float bDrawPathDuration = 0.0, array pathColor = [ 255, 255, 0 ] )
+struct PlaneVisibility
+{
+	float value
+	vector connectPoint
+}
+
+vector function FindBestDeathboxEdgeForVFX_WorldSpace( entity deathbox, entity player )
+{
+	vector endPoint = FindBestDeathboxEdgeForVFX_LocalSpace( deathbox, player )
+	endPoint = RotateVector( endPoint, deathbox.GetAngles() )
+	endPoint += deathbox.GetOrigin()
+
+	return endPoint
+}
+vector function FindBestDeathboxEdgeForVFX_LocalSpace( entity deathbox, entity player )
+{
+	vector mins = deathbox.GetBoundingMins()
+	vector maxs = deathbox.GetBoundingMaxs()
+	vector boxToPlayer = player.EyePosition() - deathbox.GetOrigin()
+	vector fwd = deathbox.GetForwardVector()
+	vector rgt = deathbox.GetRightVector()
+	vector up  = deathbox.GetUpVector()
+
+	// General plan - find the plane that most clearly faces the player and play the VFX on the box, on that plane
+	array<PlaneVisibility> planeArray
+
+	{//forwards
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( fwd, boxToPlayer - maxs.x * fwd )
+		testPlane.connectPoint = <maxs.x, 0, maxs.z * 0.5>
+		planeArray.append( testPlane )
+	}
+
+	{//backwards
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( -fwd, boxToPlayer - mins.x * fwd )
+		testPlane.connectPoint = <mins.x, 0, maxs.z * 0.5>
+		planeArray.append( testPlane )
+	}
+	// For R/L, I'm flipping the connect points Y coordinate relative to what I think it should be, otherwise the effects show at the opposite point
+	{//right
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( rgt, boxToPlayer - maxs.y * rgt )
+		testPlane.connectPoint = <0, mins.y, maxs.z * 0.5>
+		planeArray.append( testPlane )
+	}
+
+	{//left
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( -rgt, boxToPlayer - mins.y * rgt )
+		testPlane.connectPoint = <0, maxs.y, maxs.z * 0.5>
+		planeArray.append( testPlane )
+	}
+
+	{//up
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( up, boxToPlayer - maxs.z * up )
+		testPlane.connectPoint = <0, 0, maxs.z>
+		planeArray.append( testPlane )
+	}
+
+	{//down
+		PlaneVisibility testPlane
+		testPlane.value = DotProduct( -up, boxToPlayer )
+		testPlane.connectPoint = <0, 0, mins.z>
+		planeArray.append( testPlane )
+	}
+
+	planeArray.sort( int function( PlaneVisibility a, PlaneVisibility b ) : ()
+	{
+		if ( a.value > b.value )
+			return -1
+		else if( a.value < b.value )
+			return 1
+
+		return 0
+	} )
+
+	return planeArray[0].connectPoint
+}
+
+GravityLandData function GetGravityLandData( vector startPos, vector parentVelocity, vector objectVelocity, float timeLimit, bool bDrawPath = false, int traceMask = TRACE_MASK_NPCWORLDSTATIC, float bDrawPathDuration = 0.0, array pathColor = [ 255, 255, 0 ] )
 {
 	GravityLandData returnData
 
@@ -1827,17 +2206,10 @@ GravityLandData function GetGravityLandData( vector startPos, vector parentVeloc
 
 float function GetPulseFrac( rate = 1, startTime = 0 )
 {
-	return (1 - cos( ( Time() - startTime ) * (rate * (2*PI)) )) / 2
+	return (1 - cos( (Time() - startTime) * (rate * (2 * PI)) )) / 2
 }
 
-bool function IsPetTitan( entity titan )
-{
-	Assert( titan.IsTitan() )
-
-	return titan.GetTitanSoul().GetBossPlayer()	!= null
-}
-
-vector function StringToVector( string vecString, string delimiter = " " )
+vector function StringToVector( string vecString, string delimiter = WHITESPACE_CHARACTERS )
 {
 	array<string> tokens = split( vecString, delimiter )
 
@@ -3284,12 +3656,6 @@ int function RemoveBitMask( int bitsExisting, int bitsToRemove )
 	return bitsExisting & ( ~bitsToRemove )
 }
 
-bool function HasBitMask( int bitsExisting, int bitsToCheck )
-{
-	int bitsCommon = bitsExisting & bitsToCheck
-	return bitsCommon == bitsToCheck
-}
-
 void function SetDeathCamTimeOverride( float functionref() func )
 {
 	file.getDeathCamTimeOverride = func
@@ -3394,26 +3760,6 @@ void function RemoveCallback_OnUseEntity( entity ent, void functionref( entity, 
 	#if SERVER
 		ent.SetPredictedUse( true )
 	#endif
-}
-
-void function SetWaveSpawnType( int spawnType )
-{
-	shGlobal.waveSpawnType = spawnType
-}
-
-int function GetWaveSpawnType()
-{
-	return shGlobal.waveSpawnType
-}
-
-void function SetWaveSpawnInterval( float interval )
-{
-	shGlobal.waveSpawnInterval = interval
-}
-
-float function GetWaveSpawnInterval()
-{
-	return shGlobal.waveSpawnInterval
 }
 
 bool function IsArcTitan( entity npc )
@@ -3566,6 +3912,36 @@ array<entity> function GetAllSoldiers()
 {
 	return GetNPCArrayByClass( "npc_soldier" )
 }
+
+
+array< entity > function GetAllPlayersByRealm( int realm, bool mustBeAlive = true )
+{
+	array<entity> players = GetPlayerArray()
+	array< entity > playersInRealm = []
+	foreach( player in players)
+	{
+		if( !IsValid( player ) )
+			continue
+
+		if( mustBeAlive && !IsAlive( player ) )
+			continue
+
+		bool inRealmCheck = false
+		array< int > playerRealms = player.GetRealms()
+		foreach( playerRealm in playerRealms )
+		{
+			inRealmCheck = inRealmCheck || ( playerRealm == realm )
+		}
+
+		if( !inRealmCheck )
+			continue
+
+		playersInRealm.append( player )
+	}
+
+	return playersInRealm
+}
+
 
 int function GameTeams_GetNumLivingPlayers( int teamIndex = TEAM_ANY )
 {
@@ -6101,6 +6477,153 @@ void function TakePlayerSettingsMods( entity player, array<string> modsToTake, b
 	#endif
 }
 
+bool function Placement_IsHitEntScriptedPlaceable( entity hitEnt, int depth )
+{
+	if ( hitEnt.IsWorld() )
+		return false
+
+	var hitEntClassname = hitEnt.GetNetworkedClassName()
+	if ( hitEntClassname == "func_brush" || hitEntClassname == "script_mover" || hitEntClassname == "func_brush_lightweight" )
+	{
+		return true
+	}
+
+	if ( ALLOWED_SCRIPT_PARENT_ENTS.contains( hitEnt.GetScriptName() ) )
+	{
+		return true
+	}
+
+	if ( depth > 0 )
+	{
+		if ( IsValid( hitEnt.GetParent() ) )
+		{
+			return Placement_IsHitEntScriptedPlaceable( hitEnt.GetParent(), depth - 1 )
+		}
+	}
+
+	return false
+}
+
+#if SERVER
+void function SetPlayerStandingThread( entity player )
+{
+	Assert ( IsNewThread(), "Must be threaded off." )
+
+	if ( !IsValid(player) )
+		return
+
+	if ( !player.CanStand() )
+		return
+
+	int forceStandHandle = player.PushForcedStance( FORCE_STANCE_STAND )
+
+	WaitFrame()
+
+	if ( IsValid( player ) )
+	{
+		player.RemoveForcedStance( forceStandHandle )
+	}
+
+}
+
+void function DestroyFXAfterDelay( FriendlyEnemyFXStruct fxResults, float delay )
+{
+	Assert ( IsNewThread(), "Must be threaded off." )
+
+	//sound ping vfx have a 1s long playback.
+	wait delay
+
+	if ( IsValid( fxResults.friendlyColoredFX ) )
+	{
+		EffectStop( fxResults.friendlyColoredFX )
+		fxResults.friendlyColoredFX.Destroy()
+	}
+
+	if ( IsValid( fxResults.enemyColoredFX ) )
+	{
+		EffectStop( fxResults.enemyColoredFX )
+		fxResults.enemyColoredFX.Destroy()
+	}
+}
+
+
+FriendlyEnemyFXStruct function CreateFriendlyFX( entity projectile, asset particleSystem, vector origin, vector angles, int team, vector endPos = <0.0, 0.0, 0.0> )
+{
+	int particleSystemID = GetParticleSystemIndex( particleSystem )
+
+	entity friendlyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	friendlyColoredFX.SetParent( projectile )
+	SetTeam( friendlyColoredFX, team )
+	friendlyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	EffectSetControlPointVector( friendlyColoredFX, 1, FRIENDLY_COLOR_FX )
+
+	if ( endPos != <0.0, 0.0, 0.0> )
+		EffectSetControlPointVector( friendlyColoredFX, 2, endPos )
+
+	friendlyColoredFX.RemoveFromAllRealms()
+	friendlyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	FriendlyEnemyFXStruct effects
+	effects.friendlyColoredFX = friendlyColoredFX
+	effects.team = team
+
+	return effects
+}
+
+FriendlyEnemyFXStruct function CreateEnemyFX( entity projectile, asset particleSystem, vector origin, vector angles, int team, vector endPos = <0.0, 0.0, 0.0> )
+{
+	int particleSystemID = GetParticleSystemIndex( particleSystem )
+
+	entity enemyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	enemyColoredFX.SetParent( projectile )
+	SetTeam( enemyColoredFX, team )
+	enemyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	EffectSetControlPointVector( enemyColoredFX, 1, ENEMY_COLOR_FX )
+
+	if ( endPos != <0.0, 0.0, 0.0> )
+		EffectSetControlPointVector( enemyColoredFX, 2, endPos )
+
+	enemyColoredFX.RemoveFromAllRealms()
+	enemyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	FriendlyEnemyFXStruct effects
+	effects.enemyColoredFX = enemyColoredFX
+	effects.team = team
+
+	return effects
+}
+
+FriendlyEnemyFXStruct function CreateFriendlyEnemyFX( entity projectile, asset particleSystem, vector origin, vector angles, int team, vector friendlyColorOverride = ZERO_VECTOR )
+{
+	int particleSystemID = GetParticleSystemIndex( particleSystem )
+
+	entity friendlyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	friendlyColoredFX.SetParent( projectile )
+	SetTeam( friendlyColoredFX, team )
+	friendlyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+	vector friendlyColor = friendlyColorOverride != ZERO_VECTOR ? friendlyColorOverride : FRIENDLY_COLOR_FX
+	EffectSetControlPointVector( friendlyColoredFX, 1, friendlyColor )
+	friendlyColoredFX.RemoveFromAllRealms()
+	friendlyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	entity enemyColoredFX = StartParticleEffectInWorld_ReturnEntity ( particleSystemID, origin, angles )
+	enemyColoredFX.SetParent( projectile )
+	SetTeam( enemyColoredFX, team )
+	enemyColoredFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	EffectSetControlPointVector( enemyColoredFX, 1, ENEMY_COLOR_FX )
+	enemyColoredFX.RemoveFromAllRealms()
+	enemyColoredFX.AddToOtherEntitysRealms( projectile )
+
+	FriendlyEnemyFXStruct effects
+	effects.friendlyColoredFX = friendlyColoredFX
+	effects.enemyColoredFX = enemyColoredFX
+	effects.team = team
+
+	return effects
+}
+#endif //SERVER
+
+
 void function WaitForGameState(int state) {
 	while ( GetGameState() != state )
 	{
@@ -6189,10 +6712,6 @@ void function DEV_PrintClientCommands( table< string, void functionref( entity, 
 #if SERVER
 	void function printm( ... )
 	{
-		#if !MULTIPLAYER_DEBUG_PRINTS
-			return
-		#endif
-
 		if ( vargc <= 0 )
 			return
 
@@ -6319,4 +6838,9 @@ int function SortByScore( PotentialTargetData a, PotentialTargetData b )
 		return 1
 
 	return 0
+}
+
+string function GetGameVersion()
+{
+	return "R5V-N1094"
 }

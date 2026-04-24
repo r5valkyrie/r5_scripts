@@ -1,30 +1,43 @@
 global function SuicideSpectres_Init
+#if SERVER
 global function MakeSuicideSpectre
 global function SpectreSuicideOnDamaged
 global function GetNPCAttackerEnt
+global function PlayWarningFXOnMPFragDrone
+global function GetDeathForce
+#elseif CLIENT
+global function PlayWarningFXOnSPTick
+#endif
 
+#if SERVER
 const FX_SPECTRE_EXPLOSION				= $"P_drone_frag_exp"
-
-//
-// Suicide spectre script
-//
-
-const SPECTRE_EXPLOSION_DELAY 					= 0.25   // Delay for the first spectre in a chain to start exploding.
-const SPECTRE_DAMAGE_MULTIPLIER_BODY 			= 1.5
-const SPECTRE_DAMAGE_MULTIPLIER_HEAD 			= 6.0
-const SPECTRE_DAMAGE_MULTIPLIER_SMART_PISTOL	= 2.0
-const SPECTRE_HEADSHOT_KEEP_WALKING_CHANCE		= 100 	 // 35% chance to keep walking after a headshot to add variety
+const asset FX_LOOT_TICK_EXPLOSION		= $"P_loot_tick_exp_CP"
+                               
+const asset VALENTINES_LOOT_TICK_VFX = $"P_Deathfx_HeartSmoke"
+      
+                    
+const asset GOLDEN_HORSE_LOOT_TICK_VFX = $"P_loot_tick_CT_exp_CP"
+      
+int PILOT_THROWN_TICK_WARNING_FX
+#elseif CLIENT
+int AI_GENERATED_TICK_WARNING_FX
+int AI_GENERATED_TICK_WARNING_BEAMS_FX
+#endif
 
 struct
 {
-	int chainExplosionIndex
-	float lastChainExplosionTime
+	#if SERVER
+		int chainExplosionIndex
+		float lastChainExplosionTime
+		float startupDelay
 
-	table< string, array<string> > spectreAnims
-	float nextOverloadTime
-
+		table< string, array<string> > spectreAnims
+		float nextOverloadTime
+		table< entity, float > playerLastDamagedTime
+	#endif
 } file
 
+#if SERVER
 const SFX_TICK_OVERLOAD 				= "corporate_spectre_overload_beep"
 const SFX_TICK_EXPLODE 					= "corporate_spectre_death_explode"
 
@@ -32,27 +45,44 @@ const SFX_FRAGDRONE_OVERLOAD 			= "weapon_sentryfragdrone_preexplo"
 const SFX_FRAGDRONE_EXPLODE 			= "weapon_sentryfragdrone_explo"
 const SFX_FRAGDRONE_SUPERPURSUIT		= "weapon_sentryfragdrone_superpursuit"
 
-const CHAIN_EXPLOSION_MAXINDEX			= 10
-
+const float DRONE_EXPLOSION_IMMUNITY_TIME = 1.0
+#endif
 
 void function SuicideSpectres_Init()
 {
-	RegisterSignal( "SuicideSpectreForceExplode" )
+	#if SERVER
 	RegisterSignal( "SuicideSpectreExploding" )
-	RegisterSignal( "SuicideGotEnemy" )
-	RegisterSignal( "SuicideLostEnemy" )
 
 	PrecacheParticleSystem( FX_SPECTRE_EXPLOSION )
+	PrecacheParticleSystem( FX_LOOT_TICK_EXPLOSION )
+	                               
+		PrecacheParticleSystem( VALENTINES_LOOT_TICK_VFX )
+       
+	                    
+		PrecacheParticleSystem( GOLDEN_HORSE_LOOT_TICK_VFX )
+       
+
+	PILOT_THROWN_TICK_WARNING_FX = PrecacheParticleSystem( $"P_drone_frag_warn_sm" )
 
 	file.spectreAnims[ "spectreSearch" ] <- []
 	file.spectreAnims[ "spectreSearch" ].append( "sp_suicide_spectre_search" )
 	file.spectreAnims[ "spectreSearch" ].append( "sp_suicide_spectre_search_B" )
 	file.spectreAnims[ "spectreSearch" ].append( "sp_suicide_spectre_search_C" )
 
-	AddDamageCallback( "npc_frag_drone", SpectreSuicideOnDamaged_Callback )
+	AddDamageCallback( "npc_frag_drone", OnFragDroneDamaged )
 	AddDeathCallback( "npc_frag_drone", FragDroneDeath )
+	AddDamageCallbackSourceID( eDamageSourceId.damagedef_frag_drone_throwable_PLAYER, OnDamagedByFragDrone )
+	#endif
+
+	Remote_RegisterClientFunction( "PlayWarningFXOnSPTick", "entity" )
+
+	#if CLIENT
+		AI_GENERATED_TICK_WARNING_FX = PrecacheParticleSystem( $"P_drone_frag_warn" )
+		AI_GENERATED_TICK_WARNING_BEAMS_FX = PrecacheParticleSystem( $"P_drone_frag_warn_beams" )
+	#endif
 }
 
+#if SERVER
 /************************************************************************************************\
 
  ######  ######## ######## ##     ## ########
@@ -64,16 +94,20 @@ void function SuicideSpectres_Init()
  ######  ########    ##     #######  ##
 
 \************************************************************************************************/
+const float SPECTRE_MAX_SIGHT_DIST = 3000.0
 void function MakeSuicideSpectre( entity spectre )
 {
+	if ( IsCreature( spectre ) ) // For whatever reason, loot ticks are creatures so they get filtered out here
+		return
+
 	spectre.SetAimAssistAllowed( true )
 	spectre.SetAllowMelee( false )
 	DisableLeeching( spectre )
 
 	spectre.SetNPCMoveSpeedScale( 1.0 )
 
-	//spectre.EnableNPCMoveFlag( NPCMF_IGNORE_CLUSTER_DANGER_TIME | NPCMF_PREFER_SPRINT )
-	//spectre.DisableNPCMoveFlag( NPCMF_FOLLOW_SAFE_PATHS | NPCMF_INDOOR_ACTIVITY_OVERRIDE )
+	spectre.EnableNPCMoveFlag( NPCMF_IGNORE_CLUSTER_DANGER_TIME | NPCMF_PREFER_SPRINT )
+	spectre.DisableNPCMoveFlag( NPCMF_FOLLOW_SAFE_PATHS )
 
 	spectre.kv.allowShoot = 0
 
@@ -87,8 +121,8 @@ void function MakeSuicideSpectre( entity spectre )
 
 	spectre.ai.suicideSpectreExplosionDelay = -1
 
-	thread SpectreWaitToExplode( spectre )
 	AddAnimEvent( spectre, "frag_drone_armed", FragDroneArmed )
+	thread SpectreWaitToExplode( spectre )
 }
 
 void function FragDroneArmed( entity npc )
@@ -98,76 +132,139 @@ void function FragDroneArmed( entity npc )
 
 void function FragDroneDeath( entity spectre, var damageInfo )
 {
-    if ( spectre.GetAISettingsName() == "npc_frag_drone_treasure_tick" )
-        return
-    
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
 	FragDroneDeath_Think( spectre, damageInfo )
 }
 
+const int VALENTINES_SPECIAL_EVENT_LOOT_TIER = 6
 // for reloadscripts
-void function FragDroneDeath_Think( entity spectre, var damageInfo )
+void function FragDroneDeath_Think( entity tick, var damageInfo )
 {
-	vector pos = spectre.GetOrigin()
-	int tagID = spectre.LookupAttachment( "CHESTFOCUS" )
-	vector fxOrg = spectre.GetAttachmentOrigin( tagID )
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	//printf( "%s() - health: %d, killedSelf: %s, attacker: %s", FUNC_NAME(), tick.GetHealth(), (tick.ai.fragDroneKilledSelfWithSelfDestruct ? "YES" : "no"), string( attacker ) )
+
+	vector pos = tick.GetOrigin()
+	int tagID = tick.LookupAttachment( "CHESTFOCUS" )
+	vector fxOrg = tick.GetAttachmentOrigin( tagID )
+
+	if ( ( tick.ai.fragDroneInertWhenKilled && !tick.ai.fragDroneKilledSelfWithSelfDestruct ) || tick.ai.lootTickExplode )
+	{
+		switch( tick.ai.lootTickHighestLootLevel )
+		{
+                               
+			case VALENTINES_SPECIAL_EVENT_LOOT_TIER:
+				//Play Date Night Explosion
+				EmitSoundAtPosition( tick.GetTeam(), pos, "DateNight_LootTick_Explosion", tick )
+				EmitSoundAtPosition( tick.GetTeam(), pos, "LootTick_Vocal_Death", tick )
+				break
+      
+
+                    
+
+			case GOLDEN_HORSE_SPECIAL_EVENT_LOOT_TIER:
+				//TODO: Golden Horse Explosion?
+				EmitSoundAtPosition( tick.GetTeam(), pos, "Goldenhorse_LootTick_Cactuar_Explosion", tick )
+				EmitSoundAtPosition( tick.GetTeam(), pos, "Goldenhorse_LootTick_Cactuar_Death", tick )
+				break
+      
+
+			default:
+				EmitSoundAtPosition( tick.GetTeam(), pos, "LootTick_Explosion", tick )
+				EmitSoundAtPosition( tick.GetTeam(), pos, "LootTick_Vocal_Death", tick )
+				break
+
+		}
+
+		if ( tick.ai.lootTickExplode )
+		{
+			tick.Gib( <0,0,100> )
+			int expFX = GetParticleSystemIndex( FX_LOOT_TICK_EXPLOSION )
+			entity fx = StartParticleEffectInWorld_ReturnEntity( expFX, fxOrg, tick.GetAngles() )
+
+			switch( tick.ai.lootTickHighestLootLevel )
+			{
+                               
+				case VALENTINES_SPECIAL_EVENT_LOOT_TIER:
+					//We're currently playing the heart explosion on top of the normal explosion
+					//which contains bits of loot tick
+					EffectSetControlPointColorById( fx, 1, COLORID_HUD_LOOT_TIER_SPECIAL )
+					Valentines_LootTickDeathFX( tick, damageInfo )
+					break
+      
+                    
+
+				case GOLDEN_HORSE_SPECIAL_EVENT_LOOT_TIER:
+					//We're currently playing the heart explosion on top of the normal explosion
+					//which contains bits of loot tick
+					EffectSetControlPointColorById( fx, 1, COLORID_HUD_LOOT_TIER_GH )
+					//Valentines_LootTickDeathFX( tick, damageInfo )
+					StartParticleEffectInWorld( GetParticleSystemIndex( GOLDEN_HORSE_LOOT_TICK_VFX ), tick.GetOrigin() + <0, 0, 32>, tick.GetAngles() )
+					break
+      
+
+				default:
+					EffectSetControlPointColorById( fx, 1, COLORID_FX_LOOT_TIER0 + tick.ai.lootTickHighestLootLevel )
+					break
+			}
+
+			thread DestroyFXAfterDelay_Thread( fx, 3.0 )
+		}
+		else
+		{
+			EmitSoundAtPosition( tick.GetTeam(), pos, "LootTick_Explosion", tick )
+			EmitSoundAtPosition( tick.GetTeam(), pos, "LootTick_Vocal_Death", tick )
+			int expFX = GetParticleSystemIndex( $"P_impact_exp_smll_air" )
+			StartParticleEffectInWorld( expFX, fxOrg, tick.GetAngles() )
+		}
+		return
+	}
+
 	string expSFX
-	if ( spectre.mySpawnOptions_aiSettings == "npc_frag_drone_throwable" )
+	if ( tick.mySpawnOptions_aiSettings == "npc_frag_drone_throwable" )
 		expSFX = SFX_FRAGDRONE_EXPLODE
 	else
 		expSFX = SFX_TICK_EXPLODE
 	int expFX = GetParticleSystemIndex( FX_SPECTRE_EXPLOSION )
 
-	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	entity attackerEnt = GetNPCAttackerEnt( spectre, attacker )
+	int team = GetExplosionTeamBasedOnGamemode( tick )
 
-	int team = GetExplosionTeamBasedOnGamemode( spectre )
-
-	int damageDef = GetDamageDefForFragDrone( spectre )
-
-	RadiusDamage_DamageDefSimple( damageDef, pos, attackerEnt, spectre, 0 )
-	EmitSoundAtPosition( spectre.GetTeam(), pos, expSFX )
+	RadiusDamage_DamageDefSimple( damagedef_frag_drone_throwable_PLAYER, pos, attacker, tick, 0 )
+	EmitSoundAtPosition( tick.GetTeam(), pos, expSFX, tick )
 	CreateShake( pos, 10, 105, 1.25, 768 )
-	StartParticleEffectInWorld( expFX, fxOrg, Vector( 0, 0, 0 ) )
+	StartParticleEffectInWorld( expFX, fxOrg, <0,0,0> )
 
-	spectre.Gib( <0, 0, 100> ) //Used to do .Destroy() on the frag drones immediately, but this meant you can't display the obiturary correctly. Instead, since it's dead already just hide it
+	/*
+	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
+	damageType = (damageType | DF_GIB)
+	DamageInfo_SetDamage( damageInfo, (tick.GetMaxHealth() + 1) )
+	DamageInfo_SetCustomDamageType( damageInfo, damageType )
+	*/
+	tick.Gib( <0,0,100> ) //Used to do .Destroy() on the frag drones immediately, but this meant you can't display the obiturary correctly. Instead, since it's dead already just hide it
 }
+
+                               
+void function Valentines_LootTickDeathFX( entity lootTick, var damageInfo )
+{
+	//Spawn Valentines Day VFX
+	vector angles = lootTick.GetAngles()
+
+	//Spin vfx so the heart faces the attacker (get the best angle every time)
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	if ( IsValid( attacker ) )
+	{
+		vector dir = VectorToAngles( attacker.GetOrigin() - lootTick.GetOrigin() )
+		angles = <0, dir.y, 0>
+	}
+	StartParticleEffectInWorld( GetParticleSystemIndex( VALENTINES_LOOT_TICK_VFX ), lootTick.GetOrigin() + <0, 0, 32>, angles )
+}
+      
 
 entity function GetNPCAttackerEnt( entity npc, entity attacker )
 {
 	entity owner = npc.GetBossPlayer()
 	bool ownerIsPlayer = owner != null && owner.IsPlayer()
 
-	if ( IsMultiplayer() )
-		return ownerIsPlayer ? owner : npc
-
-	if ( !IsAlive( attacker ) )
-		return npc
-
-	// dont give player credit, since that does some bad things
-	if ( ownerIsPlayer )
-		return owner
-
-	if ( attacker.IsPlayer() )
-		return GetEnt( "worldspawn" )
-
-	return attacker
-}
-
-
-int function GetDamageDefForFragDrone( entity drone )
-{
-	var damageDef = drone.Dev_GetAISettingByKeyField( "damageDefOverride" )
-	if ( damageDef != null )
-	{
-		expect string( damageDef )
-		return eDamageSourceId[ damageDef ]
-	}
-
-	entity owner = drone.GetBossPlayer()
-	if ( owner != null && owner.IsPlayer() )
-		return damagedef_frag_drone_throwable_PLAYER
-
-	return damagedef_frag_drone_throwable_NPC
+	return ownerIsPlayer ? owner : npc
 }
 
 void function SuicideSpectreEnemyChanged( entity spectre )
@@ -188,34 +285,63 @@ void function SuicideSpectreEnemyChanged( entity spectre )
 ##        ##     ##  #######  ##     ## #### ##     ## ####    ##       ##
 
 \************************************************************************************************/
-void function SpectreWaitToExplode( entity spectre )
+void function SpectreWaitToExplode( entity npc )
 {
-	Assert( spectre.IsNPC() )
-	spectre.EndSignal( "OnDeath" )
+	Assert( npc.IsNPC() )
+	npc.EndSignal( "OnDeath", "OnDestroy" )
 
-	waitthread SuicideSpectre_WaittillNearEnemyOrExploding( spectre )
-
-	if ( spectre.ai.suicideSpectreExplodingAttacker == null )
+	var startupDelayRaw = npc.Dev_GetAISettingByKeyField( "startupDelay" )
+	if ( startupDelayRaw != null )
 	{
-		// not exploding, so overload
-		spectre.ai.suicideSpectreExplosionDelay = GetSpectreExplosionTime( spectre )
-		waitthread SpectreOverloads( spectre )
+		expect float( startupDelayRaw )
+		npc.ai.fragDroneStartupDelay = startupDelayRaw
+		if ( startupDelayRaw > 0.0 )
+		{
+			npc.ai.fragDroneArmed = false
+			npc.Anim_ScriptedPlay( "sd_closed_idle" )
+			entity newFx = StartParticleEffectOnEntityWithPos_ReturnEntity( npc,GetParticleSystemIndex( LOOT_TICK_EYE_FX ),
+				FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID, <0,0,10>, <0,0,0> )
+			EffectSetControlPointColorById( newFx, 1, COLORID_FX_LOOT_TIER5 )
+
+			EmitSoundOnEntity( npc, "weapon_sentryfragdrone_warmup" )
+			WaitTime( startupDelayRaw )
+
+			npc.ai.fragDroneArmed = true
+			npc.Anim_ScriptedPlay( "sd_closed_to_open" )
+			if ( IsValid( newFx ) )
+				EffectStop( newFx )
+
+			while ( npc.Anim_IsActive() )
+				WaitFrame()
+		}
 	}
 
-	if ( spectre.ai.suicideSpectreExplosionDelay > 0 )
-		wait spectre.ai.suicideSpectreExplosionDelay
+	waitthread SuicideSpectre_WaittillNearEnemyOrExploding( npc )
 
-	entity attacker = spectre.ai.suicideSpectreExplodingAttacker
+	PlayWarningFXOnMPFragDrone( npc )
+	//Remote_CallFunction_NonReplay( GP(), "PlayWarningFXOnSPTick", npc )
+
+	if ( npc.ai.suicideSpectreExplodingAttacker == null )
+	{
+		// not exploding, so overload
+		npc.ai.suicideSpectreExplosionDelay = GetSpectreExplosionTime( npc )
+		waitthread SpectreOverloads( npc )
+	}
+
+	if ( npc.ai.suicideSpectreExplosionDelay > 0 )
+		wait npc.ai.suicideSpectreExplosionDelay
+
+	entity attacker = npc.ai.suicideSpectreExplodingAttacker
 	if ( !IsValid( attacker ) )
 	{
-		entity lastAttacker = GetLastAttacker( spectre )
+		entity lastAttacker = GetLastAttacker( npc )
 		if ( IsValid( lastAttacker ) )
 		{
 			attacker = lastAttacker
 		}
 		else
 		{
-			attacker = spectre
+			attacker = npc
 		}
 	}
 
@@ -227,10 +353,22 @@ void function SpectreWaitToExplode( entity spectre )
 	// The real solution is to figure out which weapon is passing in the projectile as the attacker and correct that.
 	if ( attacker.IsProjectile() )
 	{
-		attacker = spectre
+		attacker = npc
 	}
 
-	spectre.Die( attacker, attacker, { force = force, scriptType = DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.suicideSpectreAoE } )
+	if ( npc.ai.fragDronePunchedAway )
+		wait 0.3
+
+	//printf( "%s() - health: %d, killedSelf: %s, attacker: %s", FUNC_NAME(), npc.GetHealth(), (npc.ai.fragDroneKilledSelfWithSelfDestruct ? "YES" : "no"), string( attacker ) )
+	npc.ai.fragDroneKilledSelfWithSelfDestruct = true
+	npc.Die( attacker, attacker, { force = force, scriptType = DF_DOOMED_HEALTH_LOSS, damageSourceId = eDamageSourceId.suicideSpectreAoE } )
+}
+
+vector function GetDeathForce()
+{
+	vector angles = <RandomFloatRange( -45, -75 ),RandomFloat( 360 ),0>
+	vector forward = AnglesToForward( angles )
+	return forward * RandomFloatRange( 0.25, 0.75 )
 }
 
 void function SetSuicideSpectreExploding( entity spectre, entity attacker, float explodingTime )
@@ -238,6 +376,9 @@ void function SetSuicideSpectreExploding( entity spectre, entity attacker, float
 	Assert( spectre.ai.suicideSpectreExplodingAttacker == null )
 	spectre.ai.suicideSpectreExplodingAttacker = attacker
 	spectre.ai.suicideSpectreExplosionDelay = explodingTime
+
+	PlayWarningFXOnMPFragDrone( spectre )
+	//Remote_CallFunction_NonReplay( GP(), "PlayWarningFXOnSPTick", spectre )
 
 	spectre.Signal( "SuicideSpectreExploding" )
 }
@@ -257,17 +398,15 @@ void function SuicideSpectre_WaittillNearEnemyOrExploding( entity spectre )
 {
 	spectre.EndSignal( "OnDeath" )
 	spectre.EndSignal( "SuicideSpectreExploding" )
-	spectre.EndSignal( "SuicideSpectreForceExplode" )
 
 	bool pursuitSoundPlaying = false
 
-    // We expect float since GraphCapped uses it.
 	float minScale = expect float( spectre.Dev_GetAISettingByKeyField( "minSpeedScale" ) )
 	float maxScale = expect float( spectre.Dev_GetAISettingByKeyField( "maxSpeedScale" ) )
 
 	while ( true )
 	{
-		wait 0.1
+		WaitFrame()
 
 		if ( !spectre.ai.fragDroneArmed )
 			continue
@@ -280,7 +419,7 @@ void function SuicideSpectre_WaittillNearEnemyOrExploding( entity spectre )
 			continue
 
 		//If spectre is parented, don't bother
-		if ( IsValid( spectre.GetParent() ) )
+		if ( IsValid( spectre.GetParent() ) && !ShouldSuicideIfParentedOrAnimating( spectre ) )
 			continue
 
 		// speed up when near enemy
@@ -316,14 +455,25 @@ void function SuicideSpectre_WaittillNearEnemyOrExploding( entity spectre )
 		if ( Time() < file.nextOverloadTime )
 			continue
 
+		bool useLootTicks = ( GetCurrentPlaylistVarInt( "enable_roaming_loot_ticks", 0 ) == 1 ) || ( GetCurrentPlaylistVarInt( "enable_static_loot_ticks", 1 ) == 1 )
+		var isLootTickRaw = spectre.Dev_GetAISettingByKeyField( "is_loot_tick" )
+		bool isLootTick = ((isLootTickRaw != null) && bool( isLootTickRaw ))
+
 		entity attacker = SuicideSpectre_NearEnemy( spectre )
-		if ( attacker != null )
+		if ( ( attacker != null ) && !(useLootTicks && isLootTick ))
 		{
 			//SetSuicideSpectreOverloading( spectre, attacker )
-			//Assert( 0 ) // never reached
+			//Assert( false ) // never reached
 			return
 		}
 	}
+}
+
+bool function ShouldSuicideIfParentedOrAnimating( entity ent )
+{
+	if ( !ent.HasKey( "SuicideIfParentedOrAnim" ) )
+		return false
+	return ent.GetValueForKey( "SuicideIfParentedOrAnim" ) == "1"
 }
 
 entity function SuicideSpectre_NearEnemy( entity spectre )
@@ -369,7 +519,7 @@ entity function SuicideSpectre_NearEnemy( entity spectre )
 			if ( heightDiff > 0 && timeDiff > TRACE_INTERVAL && enemy.IsOnGround() && spectre.CanSee( enemy ) )
 			{
 				spectre.ai.suicideSpectreExplosionTraceTime = curTime
-				float frac = TraceHullSimple( origin, < origin.x, origin.y, enemyOrigin.z >, spectre.GetBoundingMins(), spectre.GetBoundingMaxs(), spectre )
+				float frac = TraceHullSimple( origin, <origin.x, origin.y, enemyOrigin.z>, spectre.GetBoundingMins(), spectre.GetBoundingMaxs(), spectre )
 				if ( frac == 1.0 )
 					return enemy
 			}
@@ -387,7 +537,6 @@ void function SpectreOverloads( entity spectre )
 	spectre.EndSignal( "SuicideSpectreExploding" )
 	file.nextOverloadTime = Time() + 0.05
 
-	#if MP
 	var chaseTime = spectre.Dev_GetAISettingByKeyField( "SuicideChaseTime" )
 	if ( chaseTime != null )
 	{
@@ -420,17 +569,11 @@ void function SpectreOverloads( entity spectre )
 			WaitFrame()
 		}
 	}
-	#endif
 
 	for ( ;; )
 	{
-		#if SP
-		if ( spectre.IsInterruptable() && !spectre.Anim_IsActive() )
-			break
-		#elseif MP
 		if ( spectre.IsInterruptable() && !spectre.Anim_IsActive() && spectre.IsOnGround() )
 			break
-		#endif
 
 		WaitFrame()
 	}
@@ -474,7 +617,43 @@ void function SpectreOverloads( entity spectre )
 			anim = expect string( overrideAnim )
 		}
 
-		waitthread PlayAnim( spectre, anim )
+		chaseTime = spectre.Dev_GetAISettingByKeyField( "SuicideChaseTime" )
+		if ( chaseTime != null )
+		{
+			float maxScale = expect float( spectre.Dev_GetAISettingByKeyField( "maxSpeedScale" ) )
+			spectre.SetNPCMoveSpeedScale( maxScale )
+
+			expect float( chaseTime )
+			float endChaseTime = Time() + chaseTime
+
+			for ( ;; )
+			{
+				if ( Time() >= endChaseTime )
+					break
+
+				if ( !IsAlive( spectre.GetEnemy() ) )
+					break
+
+				entity nearEnemy = SuicideSpectre_NearEnemy( spectre )
+				if ( IsAlive( nearEnemy ) )
+				{
+					if ( nearEnemy.IsTitan() && spectre.IsInterruptable() )
+					{
+						JumpAtTitan( spectre, nearEnemy )
+						spectre.ai.suicideSpectreExplosionDelay = 0.0
+						return
+					}
+					break
+				}
+
+				WaitFrame()
+			}
+		}
+
+		if ( IsValid( spectre.GetParent() ) )
+			waitthread PlayAnim( spectre, anim, spectre.GetParent() )
+		else
+			waitthread PlayAnim( spectre, anim )
 
 		if ( !isFragDrone )
 			wait 0.25
@@ -493,8 +672,8 @@ void function JumpAtTitan( entity spectre, entity enemy )
 		dirToEnemy *= min( MAX_DIST, dist ) / dist
 	}
 
-	vector refOrigin = myOrigin + Vector( dirToEnemy.x, dirToEnemy.y, 256 )
-	vector refAngles = spectre.GetAngles() + Vector( 0, 180, 0 )
+	vector refOrigin = myOrigin + <dirToEnemy.x, dirToEnemy.y, 256>
+	vector refAngles = spectre.GetAngles() + <0,180,0>
 	spectre.Anim_ScriptedPlayWithRefPoint( "sd_jump_explode", refOrigin, refAngles, 0.3 )
 	WaittillAnimDone( spectre )
 	return
@@ -517,28 +696,55 @@ int function GetExplosionTeamBasedOnGamemode( entity spectre )
 ########  ##     ## ##     ## ##     ##  ######   ########
 
 \************************************************************************************************/
-void function SpectreSuicideOnDamaged_Callback( entity spectre, var damageInfo )
-{	
-    printt("SpectreSuicideOnDamaged")
-    if ( spectre.GetAISettingsName() == "npc_frag_drone_treasure_tick" )
-        return
+void function OnFragDroneDamaged( entity spectre, var damageInfo )
+{
+	if ( IsCreature( spectre ) && !spectre.IsMechanical() ) //PROTO: prototyping an organic spider off of the tick AI
+		return
 
 	SpectreSuicideOnDamaged( spectre, damageInfo )
 }
 
 
-void function SpectreSuicideOnDamaged( entity spectre, var damageInfo )
+void function SpectreSuicideOnDamaged( entity npc, var damageInfo )
 {
-	//Assert( IsSuicideSpectre( spectre ) )
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+	int damageType 	= DamageInfo_GetCustomDamageType( damageInfo )
 
-	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
+	if ( npc.ai.fragDroneCanKnockback )
+	{
+		if ( attacker.IsPlayer() && IsBitFlagSet( damageType, DF_MELEE ) && npc.IsInterruptable() )
+		{
+			vector origin = npc.GetOrigin()
+			origin.z += 10
+			npc.SetOrigin( origin )
+
+			npc.ai.fragDronePunchedAway = true
+			npc.ai.suicideSpectreExplodingAttacker = attacker
+
+			npc.EnableNPCFlag( NPC_IGNORE_ALL )
+			npc.ClearEnemy()
+			npc.ClearEnemyMemory()
+
+			npc.Anim_Stop()
+			npc.Anim_Play( "sd_angry_idle" )
+
+			vector playerForward = attacker.GetForwardVector()
+			playerForward.z = 0.25
+			npc.SetVelocity( Normalize( playerForward ) * 1500.0 )
+
+			DamageInfo_SetDamage( damageInfo, 0 )
+		}
+	}
+
 	DamageInfo_SetCustomDamageType( damageInfo, damageType )
 
-	if ( !IsAlive( spectre ) )
+	//if ( npc.ai.lootTickExplode )
+	//	DamageInfo_AddCustomDamageType( damageInfo, DF_NO_INDICATOR )
+
+
+	if ( !IsAlive( npc ) )
 		return
 
-
-	entity attacker 			= DamageInfo_GetAttacker( damageInfo )
 	entity inflictor 			= DamageInfo_GetInflictor( damageInfo )
 	float damage				= DamageInfo_GetDamage( damageInfo )
 	int damageSourceId 			= DamageInfo_GetDamageSourceIdentifier( damageInfo )
@@ -546,19 +752,22 @@ void function SpectreSuicideOnDamaged( entity spectre, var damageInfo )
 	// No pain anims for suicide spectres
 	DamageInfo_AddDamageFlags( damageInfo, DAMAGEFLAG_NOPAIN )
 
-
-	spectre.Signal( "SuicideSpectreExploding" )
+	/*if ( !npc.ai.fragDroneInertWhenKilled && !npc.ai.lootTickExplode )
+		npc.Signal( "SuicideSpectreExploding" )*/
 
 	if ( !IsValid( inflictor ) || !inflictor.IsPlayer() )
 	{
-		if ( spectre.ai.suicideSpectreExplodingAttacker == null )
+		if ( npc.ai.suicideSpectreExplodingAttacker == null )
 		{
-			if ( spectre.GetHealth() - damage <= 0 || ( IsValid( inflictor ) && IsTick( inflictor ) ) )
+			if ( !npc.ai.fragDroneInertWhenKilled && !npc.ai.lootTickExplode && npc.ai.fragDroneArmed )
 			{
-				float explosionTime = GetSpectreExplosionTime( spectre )
-				SetSuicideSpectreExploding( spectre, attacker, explosionTime )
-				DamageInfo_SetDamage( damageInfo, 0 )
-				return
+				if ( ((npc.GetHealth() - damage) <= 0) || (IsValid( inflictor ) && IsTick( inflictor )) )
+				{
+					float explosionTime = GetSpectreExplosionTime( npc )
+					SetSuicideSpectreExploding( npc, attacker, explosionTime )
+					DamageInfo_SetDamage( damageInfo, 0 )
+					return
+				}
 			}
 		}
 		else
@@ -571,3 +780,82 @@ void function SpectreSuicideOnDamaged( entity spectre, var damageInfo )
 		DamageInfo_SetDamage( damageInfo, damage )
 	}
 }
+
+void function OnDamagedByFragDrone( entity victim, var damageInfo )
+{
+	if ( !IsValid( victim ) || !victim.IsPlayer() )
+		return
+
+	float curTime = Time()
+	if ( victim in file.playerLastDamagedTime && file.playerLastDamagedTime[ victim ] + DRONE_EXPLOSION_IMMUNITY_TIME > curTime )
+	{
+		DamageInfo_SetDamage( damageInfo, 0.0 )
+		return
+	}
+
+	file.playerLastDamagedTime[ victim ] <- curTime
+}
+
+void function PlayWarningFXOnMPFragDrone( entity drone )
+{
+	thread PlayWarningFXOnMPFragDrone_Internal( drone )
+}
+
+void function PlayWarningFXOnMPFragDrone_Internal( entity drone )
+{
+	array<entity> fxEnts
+	int attachementIndex = drone.LookupAttachment( "head_base" )
+	entity fxEnt = StartParticleEffectOnEntity_ReturnEntity( drone, PILOT_THROWN_TICK_WARNING_FX, FX_PATTACH_POINT_FOLLOW, attachementIndex )
+	fxEnts.append( fxEnt )
+
+	EndSignal( drone, "OnDeath", "OnDestroy" )
+
+	OnThreadEnd(
+		function() : ( fxEnts )
+		{
+			foreach ( ent in fxEnts )
+				EffectStop( ent )
+		}
+	)
+
+	WaitForever()
+}
+#endif
+
+#if CLIENT
+void function PlayWarningFXOnSPTick( entity tick ) //Moved from server script to client because of way too many fx handles.
+{
+	thread PlayWarningFXOnSPTick_Internal( tick )
+}
+
+void function PlayWarningFXOnSPTick_Internal( entity tick ) //Moved from server script to client because of way too many fx handles.
+{
+	array<int> fxEnts
+
+	//First play the warning FX on the head base
+	int headBaseAttachmentIndex = tick.LookupAttachment( "head_base" )
+	int headBaseFXEnt = StartParticleEffectOnEntity( tick, AI_GENERATED_TICK_WARNING_FX, FX_PATTACH_POINT_FOLLOW, headBaseAttachmentIndex )
+	fxEnts.append( headBaseFXEnt )
+
+	//Then play warn_beams on head_light attachments
+	for ( int i = 1; i < 26; ++i )
+	{
+		string attachmentName = "head_light_" + i
+		int attachementIndex = tick.LookupAttachment( attachmentName )
+		int fxEnt = StartParticleEffectOnEntity( tick, AI_GENERATED_TICK_WARNING_BEAMS_FX, FX_PATTACH_POINT_FOLLOW, attachementIndex )
+		fxEnts.append( fxEnt )
+	}
+
+	tick.EndSignal( "OnDeath" )
+
+	OnThreadEnd(
+		function() : ( fxEnts )
+		{
+			foreach ( ent in fxEnts )
+				EffectStop( ent, false, true )
+		}
+	)
+
+	WaitForever()
+}
+#endif

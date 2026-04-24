@@ -13,7 +13,6 @@ global function GetDescStringForDamageFlags
 	global function InitDamageStates
 	global function HandleDeathPackage
 	global function TransferDamageStates
-	//global function UpdateDamageState
 
 	//global function IsBodyGroupBroken
 	global function GetStateCountForBodyGroup
@@ -525,10 +524,6 @@ void function ExplodeTitanBits( entity titan )
 		titan.SetBodygroupModelByIndex( bodyGroupIndex, stateIndex )
 	}
 }
-
-/*void function UpdateDamageState( entity ent, var damageInfo )
-{
-}*/
 
 int function GetNumBrokenLimbs( entity titan )
 {

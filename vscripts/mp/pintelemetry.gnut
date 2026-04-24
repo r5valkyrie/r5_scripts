@@ -20,6 +20,7 @@ global function PIN_DamageDoneToPlayerForWeapon
 global function PIN_PlayerEquip
 global function PIN_PlayerUse
 global function PIN_PlayerBannerPickup
+global function PIN_UltimateReadyPing
 global function PIN_PlayerOutResource
 global function PIN_Interact
 global function PIN_PlayerAbility
@@ -47,6 +48,58 @@ global function PIN_PlayerSetAbandonStatus
 global function PIN_DeadPeriodEnded
 global function PIN_PlayerEnterPOI
 global function PIN_Training
+                     
+global enum ePINVehicleInteractLeaveReason
+{
+	NONE,
+	VOLUNTARY,
+	EJECTED,
+	BLEEDOUT,
+	KILLED,
+	ABILITY,
+	TURRET_DESTROYED,
+	TURRET_DISABLED,
+	TURRET_OTHER,
+	OTHER,
+
+	_count
+}
+                           
+
+global enum ABILITY_TYPE
+{
+	TACTICAL,
+	ULTIMATE,
+	_COUNT
+}
+
+global enum ITEM_DESTRUCTION_TYPES
+{
+	FLYER,
+	LOOT_DRONE,
+                      
+              
+       
+	LOOT_ROLLER,
+	LOOT_MARVIN,
+	PROWLER,
+	SPIDER,
+	SPIDER_JUNGLE,
+	PROWLER_NEST,
+	SPIDER_NEST,
+	DOOR, //Not actually used yet
+	REV_TOTEM,
+	             
+	TRANSPORTATION_PORTAL,
+       
+	_COUNT
+}
+global enum ePINKillreplayExitReason
+{
+	EXPIRED,
+	ERROR,
+	SKIPPED
+}
 
 global struct DeadPeriodData
 {
@@ -54,6 +107,56 @@ global struct DeadPeriodData
 	vector startPosition
 	int itemsGrabbed
 }
+
+struct PINPlayerData
+{
+	float                                               joinTime
+	float                                               spawnTime
+	float                                               spawnOrReviveTime
+	table 												damageDealt // <string, float>
+	table												damageTaken // <string, float>
+	float[ABILITY_TYPE._COUNT]                          abilityReadyTime
+	table<entity, float>                                tookDamageFromPlayers
+	table												previousLoadout
+	float												lastLoadoutUpdateTime
+	int													abandonStatus
+	table												ringTimes // <string, float>
+
+	int													gamepadUsageCount = 0
+	int													keyboardUsageCount = 0
+}
+
+struct WeaponSummaryData
+{
+	string category						// weapon category
+	float damageDealtToPlayers 			// total damage dealt to players, including downed players
+	float downedDamageDealtToPlayers	// damage dealt only to downed players
+	int numDowningShots 				// total downing shots
+	int numFatalShots 					// total fatal shots
+	int firstEquipTime 					// game time - pin start time
+	int numHeadshots 					// number of headshots
+	int numShotsFired 					// number of shots fired
+	int numShotsHitPlayers 				// number of shots that hit a player
+	table weaponAttributes 				// additional info (not sure what yet)
+	float weaponEquipDuration			// Duration the weapon was set as primary
+	array<string> weaponMods 			// weapon modifications/attachments (probably whatever they eneded with)
+}
+
+struct
+{
+	float  gameStartTime
+	float  roundStartTime
+	int    playerCount
+	bool   gameOver
+	bool   isCrossPlayGame = false
+
+	table< entity, PINPlayerData > playerData
+	table< entity, table< string, WeaponSummaryData > > playerWeaponData
+
+	string championPID = ""
+
+	entity  networkWaypoint
+} PIN
 
 void function PIN_Init()
 {
@@ -168,6 +271,10 @@ void function PIN_PlayerAbility( entity player, string name, int ability, entity
 void function PIN_PlayerAbilityReady( entity player, int ability )
 {
 
+}
+
+void function PIN_UltimateReadyPing( entity player, string pingType, bool isUltinInventory )
+{
 }
 
 void function PIN_PlayerBannerPickup( entity player, entity itemEnt )

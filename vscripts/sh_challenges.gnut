@@ -403,18 +403,6 @@ struct StatRefMapChallengePair
 	bool	   statIsAlt
 }
 
-#if CLIENT && DEVELOPER
-// Struct definition needed for DEV_GetAssignedChallengeData
-struct ChallengeDebugDataStruct
-{
-	int guid
-	int category
-	string ref
-	string debugInfo
-	bool complete
-}
-#endif
-
 #if SERVER || CLIENT || UI
 struct FileStruct_LifetimeLevel
 {
@@ -495,8 +483,7 @@ void function ShChallenges_LevelInit_PreStats()
 	#endif
 
 	#if CLIENT
-		// Disabled — persistence fields don't exist
-		// AddCreateCallback( "player", UpdateFavoriteChallengesCache )
+		AddCreateCallback( "player", UpdateFavoriteChallengesCache )
 	#endif
 
 	#if SERVER || CLIENT

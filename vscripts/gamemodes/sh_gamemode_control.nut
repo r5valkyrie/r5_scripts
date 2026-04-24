@@ -933,7 +933,7 @@ void function Control_Init()
 		RegisterDisabledBattleChatterEvents( CONTROL_DISABLED_BATTLE_CHATTER_EVENTS )
 		QuickChat_RegisterDisabledCommsActions( CONTROL_DISABLED_COMMS_ACTIONS )
 
-		SetGlobalNetBool( "isMapZoneDisplayTextDisabled", true )
+		SetGlobalNetBoolSafe( "isMapZoneDisplayTextDisabled", true )
 
 		RegisterSignal( "Control_PlayerRespawning" )
 		RegisterSignal( "Control_NewEXPLeaderFound" )
@@ -6931,8 +6931,8 @@ void function Control_ManageWaveSpawnIntervals_Thread( )
 	{
 		float currentTime = Time()
 		float waveInterval = Control_GetRespawnWaveInterval()
-		SetGlobalNetTime( "control_WaveStartTime", currentTime )
-		SetGlobalNetTime( "control_WaveSpawnTime", currentTime + waveInterval )
+		SetGlobalNetTimeSafe( "control_WaveStartTime", currentTime )
+		SetGlobalNetTimeSafe( "control_WaveSpawnTime", currentTime + waveInterval )
 
 		foreach ( player in GetPlayerArray() )
 		{

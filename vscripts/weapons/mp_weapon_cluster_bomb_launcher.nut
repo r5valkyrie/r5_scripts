@@ -52,8 +52,6 @@ struct FollowUpStatusEffectIndexes
 	int followUpVisualsID
 }
 
-const vector UP_VECTOR = < 0, 0, 1 >
-
 struct
 {
 #if SERVER

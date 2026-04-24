@@ -78,7 +78,7 @@ void function MpAbilityValkJets_Init()
 	#endif
 
 	AddCallback_OnPassiveChanged( ePassives.PAS_VALK, OnPassiveChanged )
-	
+
 	PrecacheParticleSystem( VALK_AMB_EXHAUST_FP )
 	PrecacheParticleSystem( VALK_AMB_EXHAUST_3P )
 }
@@ -130,7 +130,7 @@ void function ValkTeammateStartTracking( entity valk )
 		{
 			array<entity> dummies = GetEntArrayByScriptName( FIRING_RANGE_DUMMIE_SCRIPT_NAME )
 			dummies.extend( GetEntArrayByScriptName( FIRING_RANGE_COMBAT_DUMMIE_SCRIPT_NAME ) )
-			
+
 			enemyPlayers.extend( dummies )
 		}*/
 
@@ -219,8 +219,8 @@ void function Valk_CreateJetPackRui( entity player )
 		file.jetPackRui = CreateCockpitRui( $"ui/valk_jets_meter.rpak" )
 
 		RuiTrackFloat( file.jetPackRui, "chargeFrac", player, RUI_TRACK_GLIDE_METER_FRACTION )
-		RuiTrackFloat( file.jetPackRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "bleedoutEndTime" ) )
-		RuiTrackFloat( file.jetPackRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndex( "reviveEndTime" ) )
+		RuiTrackFloat( file.jetPackRui, "bleedoutEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "bleedoutEndTime" ) )
+		RuiTrackFloat( file.jetPackRui, "reviveEndTime", player, RUI_TRACK_SCRIPT_NETWORK_VAR, GetNetworkedVariableIndexSafe( "reviveEndTime" ) )
 	}
 }
 
@@ -255,10 +255,10 @@ bool function ValkThreatVisionShouldRevealEnemy( entity enemy )
 			return false
 	}
 
-                      
-                                                              
-               
-       
+
+
+
+
 
 	return true
 }
@@ -326,7 +326,7 @@ void function _ValkFlightReveal( entity victim )
 {
 	if ( !IsValid( victim ) )
 		return
-	
+
 	Signal( victim, "ValkFlightReveal" )
 
 	EndSignal( clGlobal.levelEnt, "ValkFlightReveal" )
@@ -352,13 +352,13 @@ void function _ValkFlightReveal( entity victim )
 	RuiSetBool( rui, "isChampion", isChampion )
 	RuiSetBool( rui, "isKillLeader", isKillLeader )
 
-	                        
+
 		/*if ( GameMode_IsActive( eGameModes.CONTROL ) )
 		{
 			bool isEXPLeader = GradeFlagsHas( victim, eTargetGrade.EXP_LEADER )
 			RuiSetBool( rui, "isEXPLeader", isEXPLeader )
 		}*/
-                               
+
 
 
 	var fRui = FullMap_AddEnemyLocation( victim )
@@ -373,16 +373,16 @@ void function _ValkFlightReveal( entity victim )
 			Minimap_CommonCleanup( mRui )
 		}
 	)
-                                  
+
 		while( true )
 		{
 			bool scanBlocked = false//FerroWall_BlockScan( player.EyePosition(), victim.GetWorldSpaceCenter() )
 			RuiSetBool( rui, "isVisible", !scanBlocked )
 			WaitFrame()
 		}
-      
-               
-       
+
+
+
 }
 
 void function OnValkTrackingChanged( entity player, bool new )

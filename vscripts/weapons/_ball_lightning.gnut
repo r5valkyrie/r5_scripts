@@ -13,28 +13,27 @@ global function BallLightningZapFX
 global function BallLightningZapTargets
 global function BallLightningZapConnectionFX
 
-struct {
-	table< string, float > uniqueStrings
+const string BALL_LIGHTNING_MOVER_SCRIPTNAME = "_ball_lightning_mover"
+
+struct
+{
+	table<string, float> uniqueStrings
 } file
 
-function BallLightning_Init()
+void function BallLightning_Init()
 {
 	PrecacheParticleSystem( BALL_LIGHTNING_ZAP_FX )
 
 	if ( BALL_LIGHTNING_FX_TABLE != "" )
 		PrecacheImpactEffectTable( BALL_LIGHTNING_FX_TABLE )
-
-	RegisterBallLightningDamage( eDamageSourceId.mp_weapon_arc_launcher )
-	RegisterBallLightningDamage( eDamageSourceId.mp_titanweapon_arc_ball )
-	RegisterBallLightningDamage( eDamageSourceId.mp_weapon_arc_trap )
 }
 
-function AttachBallLightning( entity weapon, entity projectile )
+void function AttachBallLightning( entity weapon, entity projectile )
 {
 	Assert( !( "ballLightning" in projectile.s ) )
 
-	int damageSourceId
 	entity owner
+	int damageSourceId
 
 	if ( weapon.IsProjectile() )
 	{
@@ -46,7 +45,6 @@ function AttachBallLightning( entity weapon, entity projectile )
 		owner = weapon.GetWeaponOwner()
 		damageSourceId = weapon.GetDamageSourceID()
 	}
-
 
 	entity ball = CreateBallLightning( owner, damageSourceId, projectile.GetOrigin(), projectile.GetAngles() )
 	ball.SetParent( projectile )
@@ -62,7 +60,6 @@ void function DestroyBallLightningOnEnt( entity prop )
 	}
 }
 
-
 entity function AttachBallLightningToProp( entity prop, entity owner, int damageSourceId )
 {
 	entity ball = CreateBallLightning( owner, damageSourceId, prop.GetOrigin(), prop.GetAngles() )
@@ -73,7 +70,7 @@ entity function AttachBallLightningToProp( entity prop, entity owner, int damage
 
 entity function CreateBallLightning( entity owner, int damageSourceId, vector origin, vector angles )
 {
-	entity ballLightning = CreateScriptMover( "", origin, angles )
+	entity ballLightning = CreateScriptMover( BALL_LIGHTNING_MOVER_SCRIPTNAME, origin, angles )
 	ballLightning.SetOwner( owner )
 	SetTeam( ballLightning, owner.GetTeam() )
 
@@ -99,8 +96,8 @@ void function OnBallLightningDamage( entity victim, var damageInfo )
 	if ( victim.IsProjectile() )
 		return
 
-	if ( DamageInfo_GetCustomDamageType( damageInfo ) & (DF_EXPLOSION | DF_SHIELD_SYPHON) )
-		return
+	//if ( DamageInfo_GetCustomDamageType( damageInfo ) & (DF_EXPLOSION | DF_IMPACT) )
+	//	return
 
 	// if ( IsHumanSized( victim ) )
 	// {
@@ -136,10 +133,8 @@ void function BallLightningThink( entity ballLightning, int damageSourceId )
 
 	EmitSoundOnEntity( ballLightning, "Weapon_Arc_Ball_Loop" )
 
-	local data = {}
-
 	OnThreadEnd(
-		function() : ( ballLightning, data )
+		function() : ( ballLightning )
 		{
 			if ( IsValid( ballLightning ) )
 				StopSoundOnEntity( ballLightning, "Weapon_Arc_Ball_Loop" )
@@ -151,9 +146,9 @@ void function BallLightningThink( entity ballLightning, int damageSourceId )
 
 	WaitEndFrame()
 
-	while( 1 )
+	while ( true )
 	{
-		for( int i=0; i<BALL_LIGHTNING_BURST_NUM; i++ )
+		for ( int i = 0; i < BALL_LIGHTNING_BURST_NUM; i++ )
 		{
 			if ( BALL_LIGHTNING_BURST_NUM > 1 )
 				wait BALL_LIGHTNING_BURST_PAUSE

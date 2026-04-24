@@ -11,6 +11,14 @@ const bool 	COMPANION_PATHFINDING_DEBUG_DRAW 				= false
 const float	COMPANION_PATHFINDING_GROUND_DOWNTEST_RANGE		= 1000
 const float COMPANION_PATHFINDING_NODE_COMPLETION_DIST		= 16
 
+global enum ePathfindingBailCondition
+{
+	NONE,
+	TIME_ONLY,
+	RATIO_ONLY,
+	TIME_AND_RATIO,
+	TIME_OR_RATIO,
+}
 
 //Flight Data - Default Params//
 const vector 	COMPANION_PATHFINDING_DEFAULT_BOUNDS_MINS 			= 	<10,10,-10>

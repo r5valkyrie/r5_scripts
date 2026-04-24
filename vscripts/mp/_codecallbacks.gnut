@@ -712,7 +712,7 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 
 			Ultimates_OnPlayerDealtDamage( attacker, ent, healthDamage, effectiveShieldDamage )
 
-			//LiveAPI_SendCombatInstanceEvent( eLiveAPI_EventTypes.playerDamaged, attacker, ent, damageSourceId, healthDamage + effectiveShieldDamage )
+			LiveAPI_SendCombatInstanceEvent( eLiveAPI_EventTypes.playerDamaged, attacker, ent, damageSourceId, healthDamage + effectiveShieldDamage )
 		}
 	}
 	else if ( attackerIsNPC && CanNPCDoDamageOnBehalfOfPlayer(attacker) )
@@ -723,7 +723,7 @@ void function CodeCallback_DamagePlayerOrNPC( entity ent, var damageInfo )
 			Survival_PlayerDealtDamage( playerOwner, ent, null, healthDamage, effectiveShieldDamage, 0, DamageInfo_GetDamageType( damageInfo ) )
 			Ultimates_OnPlayerDealtDamage( playerOwner, ent, healthDamage, effectiveShieldDamage )
 
-			//LiveAPI_SendCombatInstanceEvent( eLiveAPI_EventTypes.playerDamaged, playerOwner, ent, damageSourceId, healthDamage + effectiveShieldDamage )
+			LiveAPI_SendCombatInstanceEvent( eLiveAPI_EventTypes.playerDamaged, playerOwner, ent, damageSourceId, healthDamage + effectiveShieldDamage )
 		}
 	}
 

@@ -1,0 +1,163 @@
+//
+// This file's purpose is to handle the menu camera and interaction with menu scenes.
+// As of 2019-09-22, sh_menu_models.gnut still handles most menu camera stuff.
+//
+
+
+#if SERVER || CLIENT || UI
+global function MenuCamera_Init
+#endif
+
+#if CLIENT
+#endif
+
+
+
+//////////////////////
+//////////////////////
+//// Global Types ////
+//////////////////////
+//////////////////////
+
+#if CLIENT
+global struct MenuCameraControllerConfig
+{
+	string name = "unknown"
+
+	entity camera
+	entity cameraMover
+}
+#endif
+
+
+#if SERVER || CLIENT || UI
+global struct MenuCameraController
+{
+	// deliberately empty
+}
+#endif
+
+
+
+///////////////////////
+///////////////////////
+//// Private Types ////
+///////////////////////
+///////////////////////
+
+#if CLIENT
+struct MenuCameraControllerState
+{
+	MenuCameraControllerConfig& cfg
+
+
+}
+#endif
+
+#if SERVER || CLIENT || UI
+struct FileStruct_LifetimeLevel
+{
+	#if CLIENT
+		table<MenuCameraController, MenuCameraControllerState> menuCameraControllerStateMap
+	#endif
+}
+#endif
+#if SERVER || CLIENT
+FileStruct_LifetimeLevel fileLevel // resets every level change
+#elseif UI
+FileStruct_LifetimeLevel& fileLevel // resets every level change
+
+struct {
+	//
+} fileVM // resets every UI VM reset
+#endif
+
+
+
+/////////////////////////
+/////////////////////////
+//// Initialiszation ////
+/////////////////////////
+/////////////////////////
+
+#if SERVER || CLIENT || UI
+void function MenuCamera_Init()
+{
+	#if UI
+		FileStruct_LifetimeLevel newFileLevel
+		fileLevel = newFileLevel
+	#endif
+}
+#endif
+
+
+
+//////////////////////////
+//////////////////////////
+//// Global functions ////
+//////////////////////////
+//////////////////////////
+
+#if CLIENT
+MenuCameraControllerConfig function MenuCameraController_GetConfig( MenuCameraController handle )
+{
+	return fileLevel.menuCameraControllerStateMap[handle].cfg
+}
+#endif
+
+
+#if CLIENT
+MenuCameraController function StartMenuCameraController( MenuCameraControllerConfig cfg )
+{
+	MenuCameraController handle
+	MenuCameraControllerState state
+	state.cfg = cfg
+	DbgPrint( cfg.name, "StartMenuCameraController" )
+	//thread RunMenuCameraController_Thread( handle, cfg, state )
+	return handle
+}
+#endif
+
+
+#if CLIENT
+void function MenuCameraController_Stop( MenuCameraController handle )
+{
+	DbgPrint( MenuCameraController_GetConfig( handle ).name, "MenuCameraController_Stop" )
+	Signal( handle, "MenuCameraController_Stop" )
+}
+#endif
+
+
+#if CLIENT
+void function MenuCameraController_Refresh( MenuCameraController handle )
+{
+	DbgPrint( MenuCameraController_GetConfig( handle ).name, "MenuCameraController_Refresh" )
+	Signal( handle, "MenuCameraController_Refresh", { visible = null } )
+}
+#endif
+
+
+
+///////////////////////
+///////////////////////
+//// Dev functions ////
+///////////////////////
+///////////////////////
+
+#if SERVER || CLIENT || UI
+void function DbgPrint( string name, string fmt, ... )
+{
+	printt( format( "[MenuCameraController %s %s] %s", name, VM_NAME(),
+		format( fmt, vargc > 0 ? vargv[0] : 0, vargc > 1 ? vargv[1] : 0, vargc > 2 ? vargv[2] : 0, vargc > 3 ? vargv[3] : 0, vargc > 4 ? vargv[4] : 0, vargc > 5 ? vargv[5] : 0, vargc > 6 ? vargv[6] : 0, vargc > 7 ? vargv[7] : 0 ) ) )
+}
+#endif
+
+
+
+///////////////////
+///////////////////
+//// Internals ////
+///////////////////
+///////////////////
+
+//

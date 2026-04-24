@@ -1,0 +1,267 @@
+global function TreasureBox_SharedInit
+global function TreasureBox_PlayerCanPickUpItem
+
+#if (CLIENT || UI)
+global function TreasureBox_GetCooldownDesc
+global function TreasureBox_SecondsUntilNextPickup
+#endif // (CLIENT || UI)
+
+
+void function TreasureBox_SharedInit()
+{
+	#if CLIENT
+	RegisterCustomItemPromptUpdate( "treasure_box", TreasureBox_UpdateLootRuiWithData )
+	#endif // CLIENT
+
+	#if SERVER
+	AddCallback_OnLootBinOpening( TreasureBox_OnLootbinOpening )
+	#endif // SERVER
+
+	#if (SERVER || CLIENT)
+	RegisterCustomItemGroundAction( "treasure_box", TreasureBox_GroundAction )
+	RegisterCustomItemPickupAction( "treasure_box", TreasureBox_ItemPickup )
+	#endif // (SERVER || CLIENT)
+}
+
+#if SERVER
+void function TreasureBox_OnLootbinOpening( entity player, entity lootbin, array<entity> regularLootEnts, array<entity> secretLootEnts, void functionref( bool, bool ) preventLootRevealFunc )
+{
+	if ( !IsValid( player ) )
+		return
+
+	const float HIGH_CHANCE_DEFAULT = 0.20
+	const float LOW_CHANCE_DEFAULT = 0.025
+	float chance = (HasHighChanceOfTreasureBoxDrop( player ) ? GetCurrentPlaylistVarFloat( "treasurebox_drop_chance_high", HIGH_CHANCE_DEFAULT ) : GetCurrentPlaylistVarFloat( "treasurebox_drop_chance_low", LOW_CHANCE_DEFAULT ))
+	#if DEV
+		if ( GetBugReproNum() == 555 )
+			chance = 1.0
+	#endif // DEV
+	if ( RandomFloat( 1.0 ) >= chance )
+		return
+
+	const float MAX_LOOTBIN_VELOCITY = 100.0
+	float velocity = lootbin.GetVelocity().Length()
+	if ( velocity > MAX_LOOTBIN_VELOCITY )
+	{
+		printf( "%s() - Not granting treasure pack drop for '%s' from lootbin '%s', because current velocity is too high: %.0f/%.0f", FUNC_NAME(), string( player ), string( lootbin ), velocity, MAX_LOOTBIN_VELOCITY )
+		return
+	}
+
+	MarkLatestTreasureBoxDrop( player )
+
+	thread function() : (lootbin)
+	{
+		lootbin.EndSignal( "OnDestroy" )
+
+		wait( 0.65 )
+
+		ThrowLootParams params
+		params.dropOrg = lootbin.GetOrigin() + <0,0,32>
+		params.fwd = ((lootbin.GetForwardVector() + <0,0,0.75>) * 0.5)
+		params.ref = "treasure_box"
+		params.spawnAngles = (lootbin.GetAngles() + <0, RandomFloatRange( -15, 15 ), 0>)
+		params.throwVelocityRange[0] = 225
+		params.throwVelocityRange[1] = 250
+		entity box = SURVIVAL_ThrowLootFromPointEx( params )
+		if ( IsValid( box ) )
+			EmitSoundOnEntity( box, "lootbin_treasurepack_shimmer_launch" )
+	}()
+}
+
+table<entity, float> s_mapPlayersToLastLootbinDropTime
+void function MarkLatestTreasureBoxDrop( entity player )
+{
+	s_mapPlayersToLastLootbinDropTime[player] <- Time()
+}
+bool function HasHighChanceOfTreasureBoxDrop( entity player )
+{
+	if ( !TreasureBox_PlayerCanPickUpItem( player ) )
+		return false
+
+	if ( player in s_mapPlayersToLastLootbinDropTime )
+	{
+		float cooldownDur = GetCurrentPlaylistVarFloat( "treasurebox_drop_chance_cooldown_seconds", (2.0 * SECONDS_PER_MINUTE) )
+
+		float delta = (Time() - s_mapPlayersToLastLootbinDropTime[player])
+		if ( delta < cooldownDur )
+			return false
+	}
+
+	return true
+}
+#endif // SERVER
+
+
+#if (CLIENT || UI)
+string function TreasureBox_GetCooldownDesc( entity player, ItemFlavor quest )
+{
+	int delta = maxint( 0, TreasureBox_SecondsUntilNextPickup( player, quest ) )
+	int hours = (delta / SECONDS_PER_HOUR)
+	int minutes = ((delta - (hours * SECONDS_PER_HOUR)) / SECONDS_PER_MINUTE)
+	int seconds = (delta - (hours * SECONDS_PER_HOUR) - (minutes * SECONDS_PER_MINUTE))
+
+	return Localize( "#TREASUREBOX_COOLDOWN_HINT", hours, minutes, seconds )
+}
+#endif // (CLIENT || UI)
+
+#if CLIENT
+void function TreasureBox_UpdateLootRuiWithData( entity player, var rui, LootData data, int lootContext, LootRef lootRef, bool isInMenu )
+{
+	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
+	if ( quest == null )
+		return
+	expect ItemFlavor( quest )
+
+	int delta = TreasureBox_SecondsUntilNextPickup( player, quest )
+	if ( delta <= 0 )
+		return
+
+	if ( SeasonQuest_AllTreasurePacksHaveBeenCollectedForPlayer( player, quest ) )
+		RuiSetString( rui, "subText", "#TREASUREBOX_ALLPACKSGOT_HINT" )
+	else
+		RuiSetString( rui, "subText", TreasureBox_GetCooldownDesc( player, quest ) )
+}
+#endif // CLIENT
+
+#if SERVER || CLIENT
+LootActionStruct function TreasureBox_GroundAction( entity player, LootRef lootRef )
+{
+	LootData lootData = lootRef.lootData
+	LootActionStruct as
+
+	if ( TreasureBox_PlayerCanPickUpItem( player ) )
+	{
+		as.action = eLootAction.PICKUP
+	}
+	else
+	{
+		as.action = eLootAction.NONE
+
+		ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
+		if ( quest != null )
+		{
+			expect ItemFlavor( quest )
+			if ( SeasonQuest_AllTreasurePacksHaveBeenCollectedForPlayer( player, quest ) )
+				as.displayString = "#TREASUREBOX_ALLPACKSGOT_PROMPT"
+			else
+				as.displayString = "#TREASUREBOX_COOLDOWN_PROMPT"
+		}
+	}
+
+	return as
+}
+
+bool function TreasureBox_ItemPickup( entity pickup, entity player, int pickupFlags, entity deathBox, int ornull desiredCount, LootData data )
+{
+	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
+	if ( quest == null )
+		return false
+	expect ItemFlavor( quest )
+
+	if ( TreasureBox_SecondsUntilNextPickup( player, quest ) > 0 )
+		return false
+
+	#if SERVER
+		SeasonQuest_RecordNewTreasureBoxItemPickupForPlayer( player, quest )
+		Remote_CallFunction_NonReplay( player, "SCB_DoGotTreasurePackNotify" )
+	#endif // #if SERVER
+
+	return true
+}
+#endif // #if (SERVER || CLIENT)
+
+int function GetSeasonDayForUnixTime( int time, ItemFlavor season )
+{
+	int seasonStartTime = CalEvent_GetStartUnixTime( season )
+	return ((time - seasonStartTime) / SECONDS_PER_DAY)
+}
+int function GetUnixTimeForSeasonDay( int dayIndex, ItemFlavor season )
+{
+	int seasonStartTime = CalEvent_GetStartUnixTime( season )
+	return (seasonStartTime + dayIndex * SECONDS_PER_DAY)
+}
+
+int function SecondsUntilNextPickup_( entity player, ItemFlavor quest )
+{
+	int timeNow = GetUnixTimestamp()
+	ItemFlavor ornull seasonNow = GetActiveSeason( timeNow )
+	if ( seasonNow == null )
+		return INT_MAX
+
+	expect ItemFlavor( seasonNow )
+
+	if ( SeasonQuest_AllTreasurePacksHaveBeenCollectedForPlayer( player, quest ) )
+		return INT_MAX
+
+	int lastPickupUT = SeasonQuest_GetTreasurePacksLatestPickupTimeForPlayer( player, quest )
+
+	// Have we picked one up today?
+	int seasonDayOfLatestPickup = GetSeasonDayForUnixTime( lastPickupUT, seasonNow )
+	int seasonDayNow = GetSeasonDayForUnixTime( timeNow, seasonNow )
+	if ( seasonDayOfLatestPickup < seasonDayNow )
+		return 0
+
+	// Last day of the season?
+	if ( GetActiveSeason( lastPickupUT + SECONDS_PER_DAY ) != seasonNow )
+		return INT_MAX
+
+	// How long until today is over?
+	int nextDayStart = GetUnixTimeForSeasonDay( (seasonDayOfLatestPickup + 1), seasonNow )
+	return (nextDayStart - timeNow)
+}
+
+#if (SERVER || CLIENT)
+struct cachedAnswer_t
+{
+	ItemFlavor ornull questOrNull
+	int lifetimePickups
+	int timestamp
+	int result
+}
+table<entity, cachedAnswer_t> s_cachedAnswersPerPlayer
+#endif // (SERVER || CLIENT)
+
+int function TreasureBox_SecondsUntilNextPickup( entity player, ItemFlavor quest )
+{
+#if (SERVER || CLIENT)
+	int timeNow = GetUnixTimestamp()
+	int lifetimePickups = SeasonQuest_GetTreasurePacksCountForPlayer( player, quest )
+	if ( player in s_cachedAnswersPerPlayer )
+	{
+		cachedAnswer_t cached = s_cachedAnswersPerPlayer[player]
+		int secondsSinceWeAsked = (timeNow - cached.timestamp)
+		if ( (cached.questOrNull == quest) && (cached.lifetimePickups == lifetimePickups) && (secondsSinceWeAsked >= 0) && (secondsSinceWeAsked < SECONDS_PER_HOUR) )
+			return (cached.result - secondsSinceWeAsked)
+	}
+	else
+	{
+		cachedAnswer_t newCache
+		s_cachedAnswersPerPlayer[player] <- newCache
+	}
+#endif // (SERVER || CLIENT)
+
+	int result = SecondsUntilNextPickup_( player, quest )
+
+#if (SERVER || CLIENT)
+	cachedAnswer_t cached = s_cachedAnswersPerPlayer[player]
+	cached.questOrNull = quest
+	cached.lifetimePickups = lifetimePickups
+	cached.timestamp = timeNow
+	cached.result = result
+#endif // (SERVER || CLIENT)
+
+	return result
+}
+
+bool function TreasureBox_PlayerCanPickUpItem( entity player )
+{
+	ItemFlavor ornull quest = SeasonQuest_GetActiveSeasonQuest( GetUnixTimestamp() )
+	if ( quest == null )
+		return false
+	expect ItemFlavor( quest )
+
+	int delta = TreasureBox_SecondsUntilNextPickup( player, quest )
+	return (delta <= 0)
+}
+
+ 

@@ -632,10 +632,14 @@ asset function GetIndicatorModel( entity grenade )
 			{
 				case eThreatIndicatorID.GRENADE_INDICATOR_FRAG_MODEL:
 					return GRENADE_INDICATOR_FRAG_MODEL
+					break
 				case eThreatIndicatorID.GRENADE_INDICATOR_EMP_MODEL:
 					return GRENADE_INDICATOR_EMP_MODEL
+					break
+
 				case eThreatIndicatorID.GRENADE_INDICATOR_CLUSTER_BOMB_MODEL:
 					return GRENADE_INDICATOR_CLUSTER_BOMB_MODEL
+					break
 			}
 		}
 	}
@@ -646,7 +650,7 @@ asset function GetIndicatorModel( entity grenade )
 	if ( grenade.GetScriptName() == SONIC_BLAST_THREAT_TARGETNAME )
 		return GRENADE_INDICATOR_GENERIC
 
-	if ( grenade.GetTargetName() == CARE_PACKAGE_PROXY )
+	if ( grenade.GetTargetName() == RIOT_DRILL_DANGERZONE_TARGETNAME )
 		return GRENADE_INDICATOR_GENERIC
 
 	// Horizon black hole
@@ -687,6 +691,7 @@ asset function GetIndicatorModel( entity grenade )
 
 			default:
 				return GRENADE_INDICATOR_FRAG_MODEL
+				break
 		}
 	}
 
@@ -843,37 +848,31 @@ void function DamageArrow_CockpitInit( entity cockpit )
 
 void function ShowDamageArrow( entity player, vector damageOrigin, int arrowType, entity attacker )
 {
-	if ( file.damageArrows.len() == 0 ) // not yet initialized
+	if ( file.damageArrows.len() == 0 ) 
 		return
 
-	table arrowData = file.damageArrows[file.currentDamageArrow]
-	entity arrow = expect entity( arrowData.arrow )
+	table arrowData
 
-	file.currentDamageArrow++
-	if ( file.currentDamageArrow >= file.numDamageArrows )
-		file.currentDamageArrow = 0
 
-	float time = Time()
 
-	if (Flowstate_Is4DMode())
+
+
+
+
+
 	{
-		vector victimOrigin = player.GetOrigin()
-		
-		int playerDimension = ((victimOrigin.x) > 0 ? 1 : 0)
-		int victimDimension = ((damageOrigin.x) > 0 ? 1 : 0)
-		if (playerDimension != victimDimension)
+		arrowData = file.damageArrows[file.currentDamageArrow]
+
+		file.currentDamageArrow++
+		if ( file.currentDamageArrow >= file.numDamageArrows )
 		{
-			if (victimDimension == 01)
-			{
-				damageOrigin -= <30000,0,0>
-			}
-			else
-			{
-				damageOrigin += <30000,0,0>
-			}
+			file.currentDamageArrow = 0
 		}
 	}
 
+	entity arrow = expect entity( arrowData.arrow )
+
+	float time = Time()
 	arrow.s.arrowData.damageOrigin = damageOrigin
 	arrow.s.arrowData.grenade = null
 	arrow.s.arrowData.grenadeRadius = 0.0
@@ -967,6 +966,7 @@ void function UpdateDamageArrows( entity localViewPlayer, entity cockpit )
 
 		varsUpdated = false
 		bool inPhaseShift = localViewPlayer.IsPhaseShifted()
+		bool isDead = !IsAlive( localViewPlayer )
 
 		foreach ( arrowData in file.damageArrows )
 		{
@@ -981,7 +981,7 @@ void function UpdateDamageArrows( entity localViewPlayer, entity cockpit )
 					arrowData.endTime = 0.0
 			}
 
-			if ( (file.damageArrowTime >= arrowData.endTime) || inPhaseShift )
+			if ( (file.damageArrowTime >= arrowData.endTime) || inPhaseShift || isDead )
 			{
 				arrowData.arrow.DisableDraw()
 				arrowData.arrow.ClearParent()

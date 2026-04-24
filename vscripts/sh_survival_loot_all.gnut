@@ -513,12 +513,12 @@ void function SURVIVAL_Loot_All_InitShared()
 		{
 			case eLootType.MAINWEAPON:
 				RegisterWeaponForUse( data.baseWeapon )
-				#if DEVELOPER
-					string modsStr = ""
-					foreach ( mod in data.baseMods )
-						modsStr += mod + " "
-					//printt( "[LOOT DIAG] row=" + i + " ref=\"" + data.ref + "\" baseWeapon=\"" + data.baseWeapon + "\" baseMods=[" + modsStr + "]" )
-				#endif
+				//#if DEVELOPER
+				//	string modsStr = ""
+				//	foreach ( mod in data.baseMods )
+				//		modsStr += mod + " "
+				//	//printt( "[LOOT DIAG] row=" + i + " ref=\"" + data.ref + "\" baseWeapon=\"" + data.baseWeapon + "\" baseMods=[" + modsStr + "]" )
+				//#endif
 				data.pickupString = GetWeaponInfoFileKeyField_WithMods_GlobalString( data.baseWeapon, data.baseMods, "printName" )
 				data.desc = GetWeaponInfoFileKeyField_WithMods_GlobalString( data.baseWeapon, data.baseMods, "description" )
 				data.hudIcon = GetWeaponInfoFileKeyFieldAsset_Global( data.baseWeapon, "hud_icon" )

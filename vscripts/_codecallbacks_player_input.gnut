@@ -252,6 +252,14 @@ bool function InputCallbackStructsAreTheSame( PlayerInputEventCallbackStruct cal
 	return true
 }
 
+// Note: use IsBitFlagSet as the globalized util function for this
+// this is kept around since its slightly different as it still passes if bitsToCheck is 0
+bool function HasBitMask( int bitsExisting, int bitsToCheck )
+{
+	int bitsCommon = bitsExisting & bitsToCheck
+	return bitsCommon == bitsToCheck
+}
+
 bool function PlayerInputsMatchCallbackInputs( int cmdsHeld, int cmdsPressed, int cmdsReleased, PlayerInputEventCallbackStruct callbackStruct )
 {
 	if ( !HasBitMask( cmdsHeld, callbackStruct.cmdsHeldBitMask ) )

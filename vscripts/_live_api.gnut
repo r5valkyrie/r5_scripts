@@ -463,10 +463,10 @@ void function LiveAPI_OnPlayerStatChanged( entity player, string statName, var n
 
 void function LiveAPI_OnDeathFieldStartResize( DeathFieldData data, int eventType )
 {
-	int currStage = int( max( 0, SURVIVAL_GetCurrentDeathFieldStage( 0 ) ) )
+	int currStage = int( max( 0, SURVIVAL_GetCurrentDeathFieldStage() ) )
 	DeathFieldStageData stage = SURVIVAL_GetDeathFieldStages( 0 )[ currStage ]
 
-	array< var > logData = [ SURVIVAL_GetCurrentDeathFieldStage( 0 ), SURVIVAL_GetDeathFieldCenter( 0 ), SURVIVAL_GetDeathFieldCurrentRadius( 0 ), stage.shrinkDuration ]
+	array< var > logData = [ SURVIVAL_GetCurrentDeathFieldStage(), SURVIVAL_GetDeathFieldCenter( 0 ), SURVIVAL_GetDeathFieldCurrentRadius( 0 ), stage.shrinkDuration ]
 	array< int > logNums = [ 3/*stage*/,                           4/*center*/,                    5/*currentRadius*/,                    7/*shrinkDuration*/ ]
 
 	if( eventType == eLiveAPI_EventTypes.ringStartClosing )

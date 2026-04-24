@@ -1,20 +1,20 @@
 global function ShImage2D_LevelInit
 global function GetImage2DAssetFromItemFlav
 
+/////////////////////////
+/////////////////////////
+//// Initialization ////
+/////////////////////////
+/////////////////////////
 
-
-
-
-
-
-
+#if SERVER || CLIENT || UI
 void function ShImage2D_LevelInit()
 {
 	AddCallback_RegisterRootItemFlavors( OnRegisterRootItemFlavors )
 }
+#endif
 
-
-
+#if SERVER || CLIENT || UI
 void function OnRegisterRootItemFlavors()
 {
 	foreach ( asset image2DAsset in GetBaseItemFlavorsFromArray( "images2D" ) )
@@ -30,13 +30,13 @@ void function OnRegisterRootItemFlavors()
 		}
 	}
 }
+#endif
 
-
-
-
-
-
-
+//////////////////////////
+//////////////////////////
+//// Global functions ////
+//////////////////////////
+//////////////////////////
 
 asset function GetImage2DAssetFromItemFlav( ItemFlavor flavor )
 {

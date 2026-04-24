@@ -67,7 +67,7 @@ void function ClDialogue_Init()
 	file.aiTalkers = {
 		[ TEAM_IMC ] = {},
 		[ TEAM_MILITIA ] = {},
-		[ TEAM_BOTH ] = {},
+		[ TEAM_NPC_FRIENDLY_TO_PLAYERS ] = {},
 	}
 
 	InitGlobals()
@@ -576,7 +576,7 @@ function ClSelectRandomConversation( string conversationType, int team )
 
 	if ( conversationArray.len() == 0 )
 	{
-		conversationArray = convStruct.conversationTable[ TEAM_BOTH ]
+		conversationArray = convStruct.conversationTable[ TEAM_NPC_FRIENDLY_TO_PLAYERS ]
 		Assert( conversationArray.len() > 0, "Conversation " + conversationType + " isn't available for team ID: " + team )
 	}
 

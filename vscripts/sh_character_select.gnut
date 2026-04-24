@@ -1550,7 +1550,7 @@ void function UI_RunSpecialCharacterSelect( bool isBrowseMode, bool menuEntsExis
 
 	FlashGameWindow()
 	RunClientScript( "OpenCharacterSelectClientSetup", fileForever.menu )
-	AdvanceMenu( GetMenu( "SpecialCharacterSelectMenu" ) )
+	//AdvanceMenu( GetMenu( "SpecialCharacterSelectMenu" ) )
 }
       
 #endif

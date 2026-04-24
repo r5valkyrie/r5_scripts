@@ -290,7 +290,7 @@ void function StartRound()
 	thread ResetIMCFlag()
 
 	if( Flowstate_IsHaloMode() )
-		while( !IsValid( GetGlobalNetEnt( "imcFlag" ) ) )
+		while( !IsValid( GetGlobalNetEntSafe( "imcFlag" ) ) )
 			WaitFrame()
 
 	int milCount
@@ -350,7 +350,7 @@ void function StartRound()
 
 					break
 				}
-				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEnt( "imcFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
+				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEntSafe( "imcFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
 				player.SetOrigin( FSIntro_GetVictorySquadFormationPosition( startingpoint, angles, imcCount ) )
 				player.SetAngles( angles )
 				imcCount++
@@ -370,7 +370,7 @@ void function StartRound()
 
 					break
 				}
-				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEnt( "milFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
+				vector startingpoint = OffsetPointRelativeToVector( GetGlobalNetEntSafe( "milFlag" ).GetOrigin(), <0, 115, 8>, AnglesToForward( angles ) )
 				player.SetOrigin( FSIntro_GetVictorySquadFormationPosition( startingpoint, angles, milCount ) )
 				player.SetAngles( angles )
 				milCount++
@@ -1408,10 +1408,10 @@ void function _OnPlayerConnected(entity player)
 
 void function _OnPlayerDisconnected(entity player)
 {
-	if( GetGlobalNetEnt( "imcFlag" ) == player )
+	if( GetGlobalNetEntSafe( "imcFlag" ) == player )
 		thread ResetIMCFlag()
 
-	if( GetGlobalNetEnt( "milFlag" ) == player )
+	if( GetGlobalNetEntSafe( "milFlag" ) == player )
 		thread ResetMILITIAFlag()
 }
 
@@ -1679,9 +1679,9 @@ void function ResetFlagForTeam( int team )
 
 void function CheckPlayerForFlag(entity victim)
 {
-	if( GetGlobalNetEnt( "imcFlag" ) == victim )
+	if( GetGlobalNetEntSafe( "imcFlag" ) == victim )
 		thread PlayerThrowFlag(victim, TEAM_IMC, IMCPoint)
-	else if( GetGlobalNetEnt( "milFlag" ) == victim )
+	else if( GetGlobalNetEntSafe( "milFlag" ) == victim )
 		thread PlayerThrowFlag(victim, TEAM_MILITIA, MILITIAPoint)
 }
 
@@ -1866,7 +1866,6 @@ entity function CreateRingBoundary(LocationSettingsCTF location)
 	CTF.ringRadius = bubbleRadius
 
 	entity bubbleShield = CreateEntity( "prop_dynamic" )
-	bubbleShield.SetValueForModelKey( BUBBLE_BUNKER_SHIELD_COLLISION_MODEL )
 	bubbleShield.SetOrigin(bubbleCenter)
 	bubbleShield.SetModelScale(bubbleRadius / 235)
 	bubbleShield.kv.CollisionGroup = 0

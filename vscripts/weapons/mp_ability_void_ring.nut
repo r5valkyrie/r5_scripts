@@ -19,6 +19,7 @@ global function ServerToClient_VoidRingStateToClient
 //Variable Definitions
 ///////////////////////////
 global const string VOID_RING_PROP_SCRIPTNAME = "void_ring"
+global const string VOID_RING_WEAPON_REF = "mp_ability_void_ring"
 const string VOID_RING_MOVER_SCRIPTNAME = "void_ring_mover"
 
 const bool DEBUG_ACTIVE_RING_TEST = false 			//Use to allow Debug Variables AND sets VR Active when inside
@@ -837,7 +838,7 @@ void function VoidRingActiveThread( entity projectile, int team, float duration 
 
 		bool isInRing 		= SURVIVAL_PosInsideDeathField( 0, origin )
 		bool isInFissure	= VoidRing_IsInRingFissure( projectile, origin )
-		int curStage 		= SURVIVAL_GetCurrentDeathFieldStage( 0 )
+		int curStage 		= SURVIVAL_GetCurrentDeathFieldStage()
 		int numStages 		= Survival_GetNumDeathfieldStages()
 
 		if( curStage < 0 )
@@ -857,7 +858,7 @@ void function VoidRingActiveThread( entity projectile, int team, float duration 
 
 			if ( (nextCircleStartTime - now) <= 0.0 )
 			{
-				curStage 		= SURVIVAL_GetCurrentDeathFieldStage( 0 ) + 1
+				curStage 		= SURVIVAL_GetCurrentDeathFieldStage() + 1
 			}
 		}
 

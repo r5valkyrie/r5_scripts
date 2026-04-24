@@ -713,7 +713,7 @@ void function ClientCodeCallback_OnDevnetBugScreenshot()
 
 float function GetNextRespawnTime( entity player )
 {
-	return player.GetNonRewindRespawnTime()
+	return player.GetNonRewindRespawnTime() 
 }
 
 #if DEV

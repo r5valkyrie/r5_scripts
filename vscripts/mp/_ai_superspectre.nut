@@ -125,8 +125,7 @@ void function DoSuperSpectreDeath( entity npc, var damageInfo )
 
 	const int SUPER_SPECTRE_NUKE_DEATH_THRESHOLD = 300
 
-	bool giveBattery = ( npc.ai.shouldDropBattery && IsSingleplayer() )
-
+	bool giveBattery = false
 	if ( !ShouldNukeOnDeath( npc ) || !npc.IsOnGround() || !npc.IsInterruptable() || DamageInfo_GetDamage( damageInfo ) > SUPER_SPECTRE_NUKE_DEATH_THRESHOLD || ( IsValid( attacker ) && attacker.IsTitan() ) )
 	{
 		// just boom

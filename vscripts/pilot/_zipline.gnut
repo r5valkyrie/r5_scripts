@@ -809,7 +809,7 @@ void function CodeCallback_ZiplineMount( entity player, entity zipline )
 	foreach ( callback in _ZiplineMountCallbacks )
 		thread callback( player, zipline )
 	// OBSERVER LIVE LOGS
-	//LiveAPI_SendOnePlayerLinkedEntityEvent( eLiveAPI_EventTypes.ziplineUsed, player, zipline )
+	LiveAPI_SendOnePlayerLinkedEntityEvent( eLiveAPI_EventTypes.ziplineUsed, player, zipline )
 #endif //SERVER
 }
 

@@ -15,12 +15,37 @@ struct
 
 void function OnWeaponActivate_weapon_energy_shotgun( entity weapon )
 {
-	OnWeaponActivate_ReactiveKillEffects( weapon )
+		if ( weapon.HasMod( KINETIC_LOADER_HOPUP ) )
+		{
+#if SERVER
+			if ( weapon.HasMod ( "choke" ) && !weapon.HasMod( "hopup_kinetic_choke" ))
+				weapon.AddMod( "hopup_kinetic_choke" )
+#endif
+			OnWeaponActivate_Kinetic_Loader( weapon )
+		}
+#if SERVER
+		else
+		{
+			if ( weapon.HasMod( "hopup_kinetic_choke" ) )
+				weapon.RemoveMod( "hopup_kinetic_choke" )
+
+			if( weapon.HasMod( "kinetic_choke" ) || !weapon.HasMod( "choke" ))
+			{
+				weapon.RemoveMod( "kinetic_choke" )
+				//weapon.AddMod( "choke" )
+			}
+		}
+
+		entity player = weapon.GetWeaponOwner()
+
+		if ( IsValid( player ) && player.IsPlayer() )
+			Remote_CallFunction_Replay( player, "ServerCallback_UpdateHudWeaponData", weapon )
+#endif
 }
 
 void function OnWeaponDeactivate_weapon_energy_shotgun( entity weapon )
 {
-	OnWeaponDeactivate_ReactiveKillEffects( weapon )
+	//OnWeaponDeactivate_ReactiveKillEffects( weapon )
 }
 
 var function OnWeaponPrimaryAttack_weapon_energy_shotgun( entity weapon, WeaponPrimaryAttackParams attackParams)

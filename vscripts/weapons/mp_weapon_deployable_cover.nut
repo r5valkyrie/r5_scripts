@@ -191,18 +191,18 @@ void function DeployAmpedWall( entity grenade, vector origin, vector angles )
 	ampedWall.SetMaxHealth( 225 )
 	ampedWall.SetHealth( 225 )
 	ampedWall.EndSignal( "OnDestroy" )
-	
+
 
 	SetVisibleEntitiesInConeQueriableEnabled( ampedWall, true )
 
 	AddEntityCallback_OnDamaged( ampedWall, OnAmpedWallDamaged )
-	
-	SetTeam( ampedWall, TEAM_BOTH )
+
+	SetTeam( ampedWall, TEAM_NPC_FRIENDLY_TO_PLAYERS )
 
 	ampedWall.SetPassThroughThickness( 0 )
 	ampedWall.SetPassThroughDirection( -0.30 )
 	StatusEffect_AddTimed( ampedWall, eStatusEffect.pass_through_amps_weapon, 1.0, DEPLOYABLE_SHIELD_DURATION, 0.0 )
-	
+
 	CreateAirShakeRumbleOnly( origin, 16, 150, 0.6, 150 )
 
 	entity owner = grenade.GetThrower()
@@ -224,7 +224,7 @@ void function DeployAmpedWall( entity grenade, vector origin, vector angles )
 
 	OnThreadEnd(
 		function() : ( ampedWall, grenade, shieldFX )
-		{   
+		{
 			if (IsValid(grenade ) ){
 			StopSoundOnEntity( grenade, "Hardcover_Shield_Start_3P" )
 			EmitSoundOnEntity( grenade, "Hardcover_Shield_End_3P" )}

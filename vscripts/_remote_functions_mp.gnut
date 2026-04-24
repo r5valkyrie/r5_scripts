@@ -430,7 +430,7 @@ void function RemoteFunctions_Init_Begin()
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SonarPulseConeFromPosition", "vector", -32000.0, 32000.0, 32, "float", 0.0, 32000.0, 16, "vector", -1.0, 1.0, 32, "float", -360.0, 360.0, 16, "int", 0, 128, "float", 0.0, 32000.0, 32, "bool", "bool" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_MortarRingFireSegmentCreated", "entity", "entity", "entity" )
 
-	// ScriptRemote_RegisterClientFunction( "ServerToClient_DoPresentation" ) // S3: _staging_area_ee.gnut not deployed
+	ScriptRemote_RegisterClientFunction( "ServerToClient_DoPresentation" )
 
 	RegisterNetworkedVariableSafe( "playerAllowedToLeech", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, true )
 
@@ -617,7 +617,7 @@ void function RemoteFunctions_Init_Begin()
 	RegisterNetworkedVariableSafe( "selectedHealthPickupType", SNDC_PLAYER_EXCLUSIVE, SNVT_INT, defaultHealOption )
 	// RegisterNetworkedVariableSafe( "TrainingEndTime", SNDC_PLAYER_EXCLUSIVE, SNVT_TIME, -1 )
 	RegisterNetworkedVariableSafe( "usedSelfRevive", SNDC_PLAYER_EXCLUSIVE, SNVT_BOOL, false )
-
+	ScriptRemote_RegisterClientFunction( "ServerCallback_TryUseConsumable", "entity", "int", 0, 128 )
 	RegisterNetworkedVariableSafe( "playerPrimaryWeapon0", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
 	RegisterNetworkedVariableSafe( "playerPrimaryWeapon1", SNDC_PLAYER_GLOBAL, SNVT_INT, -1 )
 
@@ -637,8 +637,8 @@ void function RemoteFunctions_Init_Begin()
 
 	MapZones_RegisterNetworking() //1 func
 	Ultimates_RegisterNetworking() //1 func
-	ClientMusic_RegisterNetworking() ////Audit 2-22-2025 3 funcs, was 4, 1 is now a toggle.
-
+	ClientMusic_RegisterNetworking() 
+	//LiveAPI_RegisterNetworking()
 	SeasonQuest_RegisterNetworking()//quest
 
 	RegisterNetworkedVariableSafe( "currentDeathFieldStage", SNDC_GLOBAL, SNVT_INT, -1 )
@@ -742,15 +742,14 @@ void function RemoteFunctions_Init_Begin()
 	CrowdNoiseMeter_RegisterNetworking()
 
 	ScriptRemote_RegisterClientFunction( "ServerCallback_SetAssistInformation", "int", eDamageSourceId.invalid, eDamageSourceId.len(), "entity", "entity", "float", 0.0, FLT_MAX, 32 )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeStartLeech", "float", -1.0, 4000.0, 16 )//Audit 2-22-2025
+	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeStartLeech", "float", -1.0, FLT_MAX, 32 )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_DataKnifeCancelLeech" )
-	ScriptRemote_RegisterClientFunction( "ServerCallback_ControlPanelRefresh", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 currently not called.
+	ScriptRemote_RegisterClientFunction( "ServerCallback_ControlPanelRefresh", "entity" )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_OnPlayerOrNpcKilled", "entity", "entity", "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len() ) // handles obit and death recap
-	//ScriptRemote_RegisterClientFunction( "ServerCallback_TurretRefresh", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 not currently used
-	
-	
 	ScriptRemote_RegisterClientFunction( "ServerCallback_OnEnemyDowned", "entity", "entity", "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len(), "int", INT_MIN, INT_MAX ) // handles obit
 	ScriptRemote_RegisterClientFunction( "ServerCallback_ResetReconnectParametersAsync" )
+	ScriptRemote_RegisterUIFunction( "SCBUI_PlayerConnectedOrDisconnected", "bool" )
+	
 	// IMPORTANT BUT MAYBE FINE AS A REMOTE CALL
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerTookDamage_NoAttacker", "float", 0.0, 99999.0, 32, "vector", -MAX_MAP_BOUNDS, MAX_MAP_BOUNDS, 32, "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len() )
 	ScriptRemote_RegisterClientFunction( "ServerCallback_PlayerTookDamage", "float", 0.0, 99999.0, 32, "vector", -MAX_MAP_BOUNDS, MAX_MAP_BOUNDS, 32, "int", INT_MIN, INT_MAX, "int", eDamageSourceId.invalid, eDamageSourceId.len(), "entity" )
@@ -759,7 +758,6 @@ void function RemoteFunctions_Init_Begin()
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_ScreenShake", "float", 0.0, 20.0, "float", 0.001, 255.0, 16, "vector", -32000.0, 32000, 32 )  //Audit 2-22-2025 , not currently called.
 	//ScriptRemote_RegisterClientFunction( "ServerCallback_UpdateOverheadIconForNPC", "int", EHANDLE_MIN, EHANDLE_MAX )//Audit 2-22-2025 not currently used
 	
-	ScriptRemote_RegisterClientFunction( "HandleBroadcastCommsAction", "entity", "int", 0, eCommsAction._count, "entity", "vector", -32000.0, 32000.0, 32, "int", 0, (1 << eCommsFlags._flagCount), "int", 0, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "float", 0.0, FLT_MAX, 32, "int", -1, INT_MAX )
 	ScriptRemote_RegisterClientFunction( "PerformQuip", "entity", "int", 0, INT_MAX ) //Audit 2-22-2025 todo, revisit max quip
 
 	ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_TitanEmbark" ) // used purely to play a single line of dialog
@@ -795,13 +793,6 @@ void function RemoteFunctions_Init_Begin()
 
 	Remote_RegisterClientFunction( "SCB_FiringRange_EnableCharacterChange", "bool" )
 	Remote_RegisterClientFunction( "SCB_FiringRange_SetPlayerInFinale", "bool" )
-
-	#if MODEL_VIEWER_ENABLED //todo revisit.
-		// Model Viewer
-		ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_MVUpdateModelBounds" )
-		Remote_RegisterClientFunction_Optional( "ServerCallback_MVEnable" )
-		Remote_RegisterClientFunction_Optional( "ServerCallback_MVDisable" )
-	#endif
 	
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_SetClassicSkyScale" ) //Audit 2-22-2025 not currently called
 	//ScriptRemote_RegisterUntypedFunction_deprecated( "ServerCallback_ResetClassicSkyScale" ) //Audit 2-22-2025 not currently called
@@ -896,7 +887,10 @@ void function RemoteFunctions_Init_Begin()
 	// BaseGametype_Init_MP
 	Remote_RegisterServerFunction( "ClientCallback_ClientStatus", "bool" )
 	Remote_RegisterServerFunction( "ClientCallback_SkipDeathCam" )
-	ScriptRemote_RegisterUIFunction( "UI_Callback_MOTD" )
+
+	// MenuCallbacks_Init
+	Remote_RegisterServerFunction( "ClientCallback_LeaveMatch" )
+	Remote_RegisterServerFunction( "ClientCallback_SetPromoVersionSeen", "int", INT_MIN, INT_MAX )
 
 
 	#if CLIENT

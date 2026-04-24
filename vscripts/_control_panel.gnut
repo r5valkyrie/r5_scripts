@@ -19,25 +19,7 @@ global function ClearCustomPanelHackingAnims
 global function SetPanelMinimapObject
 global function GetPanelMinimapObject
 global function ControlPanel_SetPlayerFinishesUsingFunc
-global function ControlPanel_SetPlayerStartUsingFunc
 global function SetControlPanelUsePrompts
-
-global struct HackPanelAnims
-{
-	string playerAnimation1pStart
-	string playerAnimation1pIdle
-	string playerAnimation1pEnd
-
-	string playerAnimation3pStart
-	string playerAnimation3pIdle
-	string playerAnimation3pEnd
-
-	string panelAnimation3pStart
-	string panelAnimation3pIdle
-	string panelAnimation3pEnd
-
-	float parentBlendTime = -1.0
-}
 
 const INCOMING_SPAWN_FX = $"P_ar_titan_droppoint"
 
@@ -55,7 +37,6 @@ void function ControlPanel_Init()
 
 	AddSpawnCallback( "prop_control_panel", OnPanelSpawn )
 
-	RegisterSignal( "Interrupted" ) //from sh_silence
 	RegisterSignal( "PanelReprogrammed" )
 	RegisterSignal( "PanelReprogramFinished" )
 	RegisterSignal( "PanelReprogram_Success" )
@@ -65,23 +46,18 @@ void function ControlPanel_Init()
 void function OnPanelSpawn( entity panel )
 {
 	Assert( ControlPanel_IsValidModel( panel ), "Unsupported model \"" + panel.GetModelName() + "\" being used on " + panel.GetClassName() + " at " + panel.GetOrigin() )
-	
-	// #if DEVELOPER
-	// printw( "PANEL CREATED", panel, "AT", panel.GetOrigin(), "WITH MODEL", panel.GetModelName() )
-	// #endif
-	
 	thread OnPanelSpawn_Internal( panel )
 }
 
 bool function ControlPanel_UseScriptDrivenSFX( entity panel )
 {
-	return true //( GetCurrentPlaylistVarBool("control_panel_use_script_driven_SFX", false ) )
+	return ( GetCurrentPlaylistVarBool("control_panel_use_script_driven_SFX", false ) )
 }
 
 void function OnPanelSpawn_Internal( entity panel )
 {
 	panel.EndSignal( "OnDestroy" )
-	// GameModeRemove( panel )
+	GameModeRemove( panel )
 
 	panel.e.useFuncArray = []
 
@@ -104,13 +80,11 @@ void function OnPanelSpawn_Internal( entity panel )
 	panel.s.hackingEntity <- null
 	panel.s.minimapObject <- null
 
-	if ( FS_ShouldPanelHaveHighlight( panel ) )
+	if ( IsPVEMode() )
 	{
 		Highlight_SetNeutralHighlight( panel, "sp_interact_object" )
 		Highlight_SetFriendlyHighlight( panel, "sp_interact_object" )
-		
-		if( Gamemode() == eGamemodes.fs_spieslegends )
-			Highlight_SetEnemyHighlight( panel, "sp_interact_object" )
+		Highlight_SetEnemyHighlight( panel, "sp_interact_object" )
 	}
 
 	string flag
@@ -178,7 +152,7 @@ void function OnPanelSpawn_Internal( entity panel )
 	// control panel no longer usable
 	panel.UnsetUsable()
 	panel.SetUsePrompts( "#EMPTY_STRING", "#EMPTY_STRING" )
-	if ( FS_ShouldPanelHaveHighlight( panel ) )
+	if ( IsPVEMode() )
 	{
 		panel.Highlight_HideInside( 1.0 )
 		panel.Highlight_HideOutline( 1.0 )
@@ -312,7 +286,7 @@ void function PlayerUsesControlPanel( entity player, entity panel, string flag, 
 		array<entity> players = GetPlayerArray()
 		foreach ( remotePlayer in players )
 		{
-			Remote_CallFunction_Replay( remotePlayer, "ServerCallback_ControlPanelRefresh", IsValid( panel ) ? panel.GetEncodedEHandle() : null )
+			Remote_CallFunction_Replay( remotePlayer, "ServerCallback_ControlPanelRefresh", panel )
 		}
 
 		RunPanelUseFunctions( panel, player )
@@ -364,29 +338,48 @@ void function ClearControlPanelUseFuncs( entity panel )
 	panel.e.useFuncArray.clear()
 }
 
+
 void function ControlPanel_SetPlayerFinishesUsingFunc( entity panel, void functionref(entity, entity, bool) func )
 {
 	panel.e.onPlayerFinishesUsing_func = func
 }
 
-void function ControlPanel_SetPlayerStartUsingFunc( entity panel, void functionref(entity, entity) func )
+void function UpdatePanelAnimations( entity panel, entity player )
 {
-	panel.e.onPlayerStartUsing_func = func
+	HackPanelAnims anims
+	bool isUsingCustomCharacterAnims = true
+
+	if ( SurveyBeacon_IsSurveyBeacon( panel ) )
+	{
+		//if the control panel is an antenna, it needs custom animations
+		if ( !SurveyBeacon_PopulateHackPanelAnims( player, panel, anims ) )
+		{
+			//you are playing a character that does not have custom animations for antennas
+			isUsingCustomCharacterAnims = false
+		}
+	}
+	else
+	{
+		//do not use custom character anims for regular control panels
+		isUsingCustomCharacterAnims = false
+	}
+
+	if ( isUsingCustomCharacterAnims )
+		UseCustomPanelHackingAnims( panel, anims )
 }
+
 
 void function PlayerProgramsControlPanel( entity panel, entity player, string hackFlag )
 {
 	Assert( IsAlive( player ) )
 
+	UpdatePanelAnimations( panel, player )
 	// need to wait here so that the panel script can start waiting for the PanelReprogrammed signal.
 	WaitFrame()
 
-	if ( !IsValid( player ) || !IsValid( panel ) )
+	if ( !IsValid( player ) )
 		return
-	
-	if ( SurveyBeacon_IsSurveyBeacon( panel ) )
-		thread SetPathfinder_HandUSB( player, true )
-	
+
 	if ( SurveyBeacon_IsSurveyBeacon( panel ) && !SurveyBeacon_CanActivate( player, panel ) )
 	{
 		panel.Signal( "PanelReprogrammed", { success = false, player = player } )
@@ -402,10 +395,7 @@ void function PlayerProgramsControlPanel( entity panel, entity player, string ha
 	if ( !IsAlive( player ) )
 		return
 
-	if ( panel.e.onPlayerStartUsing_func != null )
-		thread panel.e.onPlayerStartUsing_func( panel, player )
-	
-	if ( FS_ShouldPanelHaveHighlight( panel ) )
+	if ( IsPVEMode() )
 	{
 		panel.Highlight_HideInside( 1.0 )
 		panel.Highlight_HideOutline( 1.0 )
@@ -426,7 +416,7 @@ void function PlayerProgramsControlPanel( entity panel, entity player, string ha
 	e.animViewLerpoutTime <- 0.3
 	e.doRequireUseButtonHeld <- true
 
-	player.ForceStand()
+	int forceStandHandle = player.PushForcedStance( FORCE_STANCE_STAND )
 	HolsterAndDisableWeapons( player ) //Do here instead of after doRequireUseButtonHeld check since DisableOffhandWeapons() is counter based, i.e. a call to DisableOffhandWeapons() must be matched with a call to EnableOffhandWeapons()
 
 	HackPanelAnims animData = GetPanelHackingAnims( panel )
@@ -437,7 +427,7 @@ void function PlayerProgramsControlPanel( entity panel, entity player, string ha
 
 	OnThreadEnd
 	(
-		function() : ( e, player, panel )
+		function() : ( e, player, panel, forceStandHandle )
 		{
 			if ( e.setIntruder )
 				level.nv.panelIntruder = null
@@ -447,17 +437,13 @@ void function PlayerProgramsControlPanel( entity panel, entity player, string ha
 				player.ClearAnimNearZ()
 				player.ClearParent()
 
-				if ( IsValid( panel ) && SurveyBeacon_IsSurveyBeacon( panel ) )
-					thread SetPathfinder_HandUSB( player )
-				
 				// stop any running first person sequences
 				player.Anim_Stop()
 
 				// done with first person anims
 				ClearPlayerAnimViewEntity( player, expect float( e.animViewLerpoutTime ) )
 				DeployAndEnableWeapons( player )
-				
-				player.UnforceStand()
+				player.RemoveForcedStance( forceStandHandle )
 
 				if ( player.ContextAction_IsLeeching() )
 					player.Event_LeechEnd()
@@ -477,7 +463,7 @@ void function PlayerProgramsControlPanel( entity panel, entity player, string ha
 
 				if ( !e.success )
 				{
-					if ( FS_ShouldPanelHaveHighlight( panel ) )
+					if ( IsPVEMode() )
 					{
 						panel.Highlight_ShowInside( 1.0 )
 						panel.Highlight_ShowOutline( 1.0 )
@@ -550,11 +536,11 @@ void function PlayerProgramsControlPanel( entity panel, entity player, string ha
 	if ( player.IsPhaseShifted() )
 		return
 
-	if ( player.Player_IsFreefalling() )
+	if ( player.Player_IsSkydiving() )
 		return
 
 	if ( !player.Anim_HasSequence( animData.playerAnimation3pStart ) )
-		return
+		Warning("Player does not have third person beacon anims")
 
 	player.SetAnimNearZ( 1 )
 
@@ -589,16 +575,19 @@ void function PlayerProgramsControlPanel( entity panel, entity player, string ha
 
 	waitthread WaitForEndLeechOrStoppedUse( player, leechTime, e, panel, animData )
 
-	if ( !IsValid( player ) || !IsValid( panel ) )
+	if ( !IsValid( player ) )
 		return
 
 	if( !ControlPanel_UseScriptDrivenSFX( panel ) )
 	{
 		if( !e.success )
 		{
-			if( SurveyBeacon_IsSurveyBeacon( panel ))
+			if ( SurveyBeacon_IsSurveyBeacon( panel ) )
 			{
-				// Remote_CallFunction_Replay( player, "StopEffects_SurveyBeacon_Laser", player, panel )
+				if( IsValid( panel ) )
+				{
+					Remote_CallFunction_Replay( player, "StopEffects_SurveyBeacon_Laser", player, panel )
+				}
 			}
 		}
 	}
@@ -681,7 +670,7 @@ void function ControlPanelFlipAnimation_IdleDoneCallback( entity ent )
 			return
 		}
 
-		PlayParentedFirstAndThirdPersonAnimation( ent, ent.GetParent(), "ref", ent.e.entAnim1p, ent.e.entAnim3p ) //, false )
+		PlayParentedFirstAndThirdPersonAnimation( ent, ent.GetParent(), "ref", ent.e.entAnim1p, ent.e.entAnim3p )
 	}
 }
 
@@ -691,17 +680,20 @@ void function ControlPanelFlipAnimation( entity panel, entity player, HackPanelA
 
 	FirstPersonSequenceStruct playerSequence
 	playerSequence.attachment = "ref"
-	playerSequence.thirdPersonAnim = animData.playerAnimation3pStart 
-	playerSequence.thirdPersonAnimIdle = animData.playerAnimation3pIdle 
-	playerSequence.firstPersonAnim = animData.playerAnimation1pStart 
-	playerSequence.firstPersonAnimIdle = animData.playerAnimation1pIdle 
+	playerSequence.thirdPersonAnim = animData.playerAnimation3pStart
+	playerSequence.thirdPersonAnimIdle = animData.playerAnimation3pIdle
+	playerSequence.firstPersonAnim = animData.playerAnimation1pStart
+	playerSequence.firstPersonAnimIdle = animData.playerAnimation1pIdle
+	playerSequence.prediction = true
 	if ( IntroPreviewOn() )
 		playerSequence.viewConeFunction = ControlPanelFlipViewCone
 
 	FirstPersonSequenceStruct panelSequence
-	panelSequence.thirdPersonAnim = animData.panelAnimation3pStart 
-	panelSequence.thirdPersonAnimIdle = animData.panelAnimation3pIdle 
+	panelSequence.thirdPersonAnim = animData.panelAnimation3pStart
+	panelSequence.thirdPersonAnimIdle = animData.panelAnimation3pIdle
 
+	//PlayParentedFirstAndThirdPersonAnimationWithBlendTime( player, panel, "ref", animData.playerAnimation1pStart, animData.playerAnimation3pStart, true, animData.parentBlendTime )
+	PlayParentedFirstAndThirdPersonAnimation( player, panel, "ref", animData.playerAnimation1pStart, animData.playerAnimation3pStart )
 	player.e.Callback_PlayParentedAnim = ControlPanelFlipAnimation_IdleDoneCallback
 	player.e.entAnim1p = animData.playerAnimation1pIdle
 	player.e.entAnim3p = animData.playerAnimation3pIdle
@@ -720,16 +712,8 @@ void function ControlPanelFlipAnimation( entity panel, entity player, HackPanelA
 	} )
 
 	panelSequence.setStartTime = player.Anim_GetStartTime()
-	
-	asset model = DATA_KNIFE_MODEL
-
-	entity knife = CreatePropDynamic( model )
-	SetTargetName( knife, "dataKnife" )
-	knife.SetParent( player, "PROPGUN", false, 0.0 )
-	e.knives.append( knife )
-
 	thread PanelFirstPersonSequence( panelSequence, panel, player )
-	waitthread FirstPersonSequence( playerSequence, player, panel )
+	WaittillAnimDone( player )
 }
 
 
@@ -759,7 +743,7 @@ void function ControlPanelFlipExitAnimation( entity player, entity panel, HackPa
 	panelSequence.thirdPersonAnim = animData.panelAnimation3pEnd
 
 	thread FirstPersonSequence( panelSequence, panel )
-	PlayParentedFirstAndThirdPersonAnimation( player, panel, "ref", animData.playerAnimation1pEnd, animData.playerAnimation3pEnd ) //, false )
+	PlayParentedFirstAndThirdPersonAnimation( player, panel, "ref", animData.playerAnimation1pEnd, animData.playerAnimation3pEnd )
 	WaittillAnimDone( player )
 }
 
@@ -768,7 +752,6 @@ void function ControlPanel_TrackContinuousUse( entity player, float leechTime, b
 {
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "ScriptAnimStop" )
-	player.EndSignal( "Interrupted" )
 
 	table result
 	result.success <- false
@@ -1023,50 +1006,4 @@ void function ClearCustomPanelHackingAnims( entity panel )
 {
 	Assert( panel in file.panelAnimOverrides, "Called ClearCustomPanelHackingAnims on control panel" + panel + " at " + panel.GetOrigin() + " that wasn't using a custom anim set via UseCustomPanelHackingAnims()" )
 	delete file.panelAnimOverrides[ panel ]
-}
-
-bool function SurveyBeacon_IsSurveyBeacon( entity beacon )
-{
-	return beacon.GetScriptName() == SURVEY_BACON_SCRIPTNAME
-}
-
-bool function SurveyBeacon_CanActivate( entity player, entity beacon )
-{
-	//stub
-	return true
-}
-
-void function SetPathfinder_HandUSB( entity player, bool showUSB = false )
-{
-	entity firstPersonProxy = player.GetFirstPersonProxy()
-
-	if ( showUSB )
-	{
-		wait 1
-		
-		if( !IsValid(player) ) 
-			return
-		
-		int usbIndex = firstPersonProxy.FindBodygroup( "l_hand_usb" )
-		// show the usb
-		if ( firstPersonProxy.GetBodygroupModelIndex( usbIndex ) == 0 )
-			firstPersonProxy.SetBodygroupModelByIndex( usbIndex, 1 )
-	}
-	else
-	{
-		wait 1
-		
-		if( !IsValid(player) ) 
-			return
-		
-		int usbIndex = firstPersonProxy.FindBodygroup( "l_hand_usb" )
-		// hide the usb
-		if ( firstPersonProxy.GetBodygroupModelIndex( usbIndex ) != 0 )
-			firstPersonProxy.SetBodygroupModelByIndex( usbIndex, 0 )
-	}
-}
-
-bool function FS_ShouldPanelHaveHighlight( entity panel )
-{
-	return IsPVEMode() || Gamemode() == eGamemodes.fs_spieslegends && panel.GetTeam() == gCurrentSpyTeam
 }

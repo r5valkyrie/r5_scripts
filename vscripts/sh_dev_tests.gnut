@@ -1,0 +1,1414 @@
+#if DEVELOPER
+//-----------------------------------------------------------------------------
+// NOTES
+//-----------------------------------------------------------------------------
+// Put functions you can call from console (via 'script or script_client function(..)') for testing
+// 1. Add a global function header - All in lower case
+// 2. Add function name to test_help() + help details
+// 3. Create your test function
+
+//-----------------------------------------------------------------------------
+// SHARED GLOBAL FUNCTIONS
+//-----------------------------------------------------------------------------
+global function test_init
+global function test_itemflavorsdump
+
+#if SERVER
+//-----------------------------------------------------------------------------
+// SERVER ONLY GLOBAL FUNCTIONS
+//-----------------------------------------------------------------------------
+global function test_help
+global function test_downedenemy
+global function test_downedplayer
+global function test_downedteammate
+global function test_execution
+global function test_everybodyiscaustic
+global function test_putplayerinsafespotformap
+global function test_setskinfxvisibility
+global function test_spawnallchargeweapons
+global function test_spawnnpc
+global function test_spectator
+global function test_stresstestpvs
+global function test_teams
+global function test_toomanymovers
+global function test_toomanymovers_endtest
+global function test_trigger
+global function test_execution_thread
+global function test_gethuman
+#endif
+
+
+#if CLIENT
+//-----------------------------------------------------------------------------
+// CLIENT ONLY GLOBAL FUNCTIONS
+//-----------------------------------------------------------------------------
+global function test_help
+global function test_tiptext
+#endif
+
+#if SERVER
+//-----------------------------------------------------------------------------
+// SERVER GLOBAL VARIABLES
+//-----------------------------------------------------------------------------
+const int EXTRA_DMG_FOR_FORTIFIED = 30 // Added an extra 25 to account for "Fortified" on Big Characters
+#endif
+
+//-----------------------------------------------------------------------------
+// SHARED VARIABLES
+//-----------------------------------------------------------------------------
+const string DEBUG_OUTPUT_PATH = "../../dumps/" // Note: this path has to exist in order for files to be written out to. (This is C:\depot\VBRANCH\dumps)
+
+const float MIN_EXECUTION_DURATION = 4.9
+const float MAX_EXECUTION_DURATION = 6.0
+const float MAX_EXECUTION_DISPLACEMENT = 90 // approximately 2 meters, matching what animation uses in maya
+
+//-----------------------------------------------------------------------------
+// SHARED GLOBAL FUNCTIONS
+//-----------------------------------------------------------------------------
+void function test_init()
+{
+                      
+                                                                                       
+                                                                                               
+                                                                                            
+                                                                                         
+                                                                                             
+      
+
+	RegisterSignal("tooManyMoverTestEnd")
+	RegisterSignal("ExecutionTestTriggered")
+	RegisterSignal("ExecutionTestEnded")
+}
+
+void function test_itemflavorsdump( string filter )
+{
+	array<ItemFlavor> itemFlavorList = DEV_GetAllItemFlavors()
+	string vm = IsServer() ? "server" : IsUI() ? "ui" : "client"
+	string filename =  "itemflavorsdump_" + vm + ".txt"
+	string fullPathAndName = DEBUG_OUTPUT_PATH + filename
+	string gameVersion = GetGameVersion()
+
+	DevTextBufferClear()
+	DevTextBufferWrite(  gameVersion + "\n" )
+	string modFilter = filter.tolower()
+	int count = 0
+	foreach( item in itemFlavorList )
+	{
+		int index = DEV_ItemFlavor_GetCleanedAssetPath( item ).find( modFilter, 0 )
+		if ( index >= 0 )
+		{
+			string line = "hrf: " + DEV_ItemFlavor_GetCleanedAssetPath( item ) + "\n"
+			printt( line )
+			DevTextBufferWrite( line )
+			++count
+		}
+	}
+
+	bool success = DevTextBufferDumpToFile( fullPathAndName )
+	if ( success )
+		printt( "Wrote " + count + " entries to '" + fullPathAndName + "'." )
+	else
+		printt( "Failed to write " + count + " entries to '" + fullPathAndName + "'.  This directory must pre-exist.")
+}
+
+#if SERVER
+//-----------------------------------------------------------------------------
+// SERVER FUNCTIONS
+// All in LOWER CASE so we can type them faster
+//-----------------------------------------------------------------------------
+void function test_help()
+{
+	// Keep in alphabetical order
+	printt( "test_downedenemy( bleedoutTime ) - spawns/moves an enemy bot near you in downed state.  Global bleedout time can be overridden if you pass in a value > 0." )
+	printt( "test_downedplayer( bleedoutTime, player = null ) - downs the player.  If no player specified, will down first human player. Global bleedout time can be overridden if you pass in a value > 0." )
+	printt( "test_downedteammate( bleedoutTime ) - spawns/moves a bot on your team near you in downed state.  Global bleedout time can be overridden if you pass in a value > 0." )
+	printt( "test_everybodyiscaustic() - custom test for caustic skinsh_ that turns everyone to caustic with the latest skin" )
+	printt( "test_itemflavorsdump() - outputs to console and file the list of item flavors seen by the vm. Add a string to filter out results.  Look for file 'itemflavorsdump_'" )
+	printt( "test_putplayerinsafespotformap() - runs some test points for the function with expected pass/fail.  See console for output." )
+	printt( "test_setskinfxvisibility( true/false ) - enables/disables skin fx visibility - NOT WORKING" ) // TODO:JL this was a change on r5bc for testing caustic's pyro skin which is still in r5bc so this doesn't currently work
+	printt( "test_spawnallchargeweapons() - drops all weapons with necessary attachments to do charge/overheat" )
+	printt( "test_spawnnpc( aisetting_filename, name = \"\", isFriendly = false ) - attempts to spawn an npc in front of you with that aisetting on an enemyteam or your team" )
+	printt( "test_spectator( int numTeams = 2, bool humansTogether = true ) - this will setup a scenario where the first human becomes a spectator" )
+	printt( "test_stresstestpvs() - spawns enough bots to make 60 players and triggers their ults at the same time. If the game crashes, check the client log for all entities in the list and look for suspiciously high numbers." )
+	printt( "test_teams( numteams = 2, humansSeparate = true, maxAngle = 70, distance = 300 ) - sets up teams and creates bots if it has to.  numTeams - number of total teams, humansSeparate - humans split on different teams, maxAngle - the furthest spread of teams, distance - distance from human player" )
+	printt( "test_toomanymovers( player = null,  time = 0 ) - creates 25 movers in a grid around you, indicated by pink circles on the ground. Use to test animation issues, moving around them shouldn't trigger too many movers errors unless there is an issue with the animation that's currently playing. Ends after the duration or when test_toomanymovers_endtest is called" )
+	printt( "test_toomanymovers_endtest( player = null ) - destroys all movers created by test_toomanymovers()" )
+	printt( "test_trigger( enterCallback = null, leaveCallback = null, radius = 100, aboveHeight = 256, belowHeight = 16 ) - creates a trigger of a given radius in front of you and registers a callback for testing that will exist always. Note: callbacks must be global functions." )
+}
+
+entity function test_gethuman()
+{
+	// Find first human player
+	array< entity > allPlayers = GetPlayerArray_Alive()
+	foreach ( player in allPlayers )
+	{
+		// Find the first human one, assume it's you
+		if ( player.IsBot() )
+			continue
+		return player
+	}
+	return null
+}
+
+void function test_downedplayer( float bleedoutTime = 0, entity player = null )
+{
+	if ( player == null )
+		player = test_gethuman()
+
+	if ( bleedoutTime > 0 ) // Note: A bleedout of 0 has the player actually remaining in bleedout forever
+	{
+		Bleedout_OverrideBleedoutTime( player, bleedoutTime )
+	}
+	int damageAmount = player.GetMaxHealth() + player.GetShieldHealthMax() + EXTRA_DMG_FOR_FORTIFIED
+	player.TakeDamage( damageAmount, null, null, null )
+}
+
+void function test_downedenemy( float bleedoutTime = 0 )
+{
+	entity human = test_gethuman()
+
+	// Setup the teams
+	int myTeam = human.GetTeam()
+	array< entity > allPlayers = GetPlayerArray_Alive()
+	array< entity > enemies
+	foreach ( player in allPlayers )
+	{
+		if ( !player.IsBot() )
+			continue
+
+		if ( IsFriendlyTeam( player.GetTeam(), myTeam ) )
+			continue
+
+		enemies.append( player )
+	}
+
+	int botCount = 2 - enemies.len()  // We need at least one extra enemy so we don't trigger a champion screen
+	if ( botCount > 0 )
+	{
+		ServerCommand( "bots " + botCount ) // This command puts bots on different teams automatically
+	}
+
+	// Victim needs at least one friendly to be in the downed state
+	entity victim
+	entity victimTeammate
+	array< entity > newenemies
+	allPlayers = GetPlayerArray_Alive()
+	foreach ( player in allPlayers )
+	{
+		if ( IsFriendlyTeam( player.GetTeam(), myTeam ) )
+			continue
+
+		if ( !IsValid( victim ) )
+		{
+			victim = player
+		}
+		else
+		{
+			victimTeammate = player
+			break
+		}
+	}
+
+	// Setup the enemy team
+	SetTeam( victimTeammate, victim.GetTeam() )
+
+	// Down our victim
+	vector fwd = AnglesToForward( human.GetAngles() )
+	victim.SetOrigin( human.GetOrigin() + fwd * 100 )
+	test_downedplayer( bleedoutTime, victim )
+}
+
+void function test_downedteammate( float bleedoutTime = 0 )
+{
+	// Find first human player
+	entity human = test_gethuman()
+
+	// Setup the teams
+	int myTeam = human.GetTeam()
+	array< entity > allPlayers = GetPlayerArray_Alive()
+	array<entity> enemies
+	entity futureTeammate
+	foreach ( player in allPlayers )
+	{
+		if ( !player.IsBot() )
+			continue
+
+		if ( IsFriendlyTeam( player.GetTeam(), myTeam ) )
+			continue
+
+		futureTeammate = player
+		enemies.append( player )
+	}
+
+	int botCount = 2 - enemies.len()  // We need at least one enemy and one friendly so we don't go into the champion screen
+	if ( botCount > 0 )
+	{
+		ServerCommand( "bots " + botCount )
+
+		if ( !IsValid( futureTeammate ) )
+		{
+			allPlayers = GetPlayerArray_Alive()
+			foreach ( player in allPlayers )
+			{
+				if ( !player.IsBot() )
+					continue
+
+				if ( IsFriendlyTeam( player.GetTeam(), myTeam ) )
+					continue
+
+				futureTeammate = player
+				break
+			}
+		}
+	}
+
+	// Down our teammate
+	SetTeam( futureTeammate, human.GetTeam() )
+	vector fwd = AnglesToForward( human.GetAngles() )
+	futureTeammate.SetOrigin( human.GetOrigin() + fwd * 100 )
+	test_downedplayer( bleedoutTime,futureTeammate )
+}
+
+void function test_execution( array<string> filter = [], float delayBetweenExecutions = 1.0, bool debugDraw = true, bool cancelTest = false, string outputPath = "" )
+{
+	entity human = test_gethuman()
+	vector fwd = AnglesToForward( human.GetAngles() )
+	vector right = AnglesToRight( human.GetAngles() )
+	vector playerOrigin = human.GetOrigin()
+
+	vector centerPos = playerOrigin + fwd * 100
+	vector attackerOrigin = centerPos + 15 * right
+	vector targetOrigin = centerPos - 15 * right
+
+	// grab the target and the attacker from the current players
+	int myTeam = human.GetTeam()
+	array<entity> allPlayers = GetPlayerArray_Alive()
+	entity attacker
+	entity target
+	foreach ( player in allPlayers )
+	{
+		if ( !player.IsBot() )
+			continue
+
+		if ( IsFriendlyTeam( player.GetTeam(), myTeam ) )
+		{
+			target = player
+		}
+		else
+		{
+			attacker = player
+		}
+	}
+
+	// if the players don't exist then spawn them in
+	int botsToAdd = (attacker == null ? 1 : 0) + (target == null ? 1 : 0)
+	if ( botsToAdd > 0 )
+	{
+		ServerCommand( "bots " + botsToAdd )
+		allPlayers = GetPlayerArray_Alive()
+
+		foreach( player in allPlayers )
+		{
+			if ( !player.IsBot() )
+				continue
+
+			if( target == null )
+			{
+				if ( player == attacker )
+					continue
+				target = player
+			}
+			else if( attacker == null )
+			{
+				if( player == target )
+					continue
+				attacker = player
+			}
+			if( attacker != null && target != null )
+				break
+		}
+	}
+
+	// setting an arbitrary team seems to cause issues so find an enemy team in the player array to use
+	int enemyTeam
+	foreach( entity player in allPlayers )
+	{
+		if( player.GetTeam() != human.GetTeam() )
+		{
+			enemyTeam = player.GetTeam()
+			break
+		}
+	}
+	SetTeam( attacker, enemyTeam )
+	SetTeam( target, human.GetTeam() )
+	array<entity> bots = [attacker, target]
+
+	thread test_execution_thread( filter, bots, delayBetweenExecutions, attackerOrigin, targetOrigin, debugDraw, cancelTest, outputPath )
+}
+
+struct ExecutionMetrics
+{
+	string name
+	float duration
+	float attackerDeltaPos
+	float targetDeltaPos
+}
+
+struct CharacterExecutionMetrics
+{
+	string characterRef
+	array<ExecutionMetrics> executions
+}
+
+void function test_execution_thread( array<string> filter, array<entity> bots, float delayBetweenExecutions, vector attackerOrigin, vector targetOrigin, bool debugDraw, bool cancelTest, string outputPath )
+{
+	entity human = test_gethuman()
+	Signal( human, "ExecutionTestTriggered" )
+	EndSignal( human, "ExecutionTestTriggered" )
+	FlagSet( "DisableLootDrops" )
+	entity attacker = bots[0]
+	entity target = bots[1]
+	OnThreadEnd(
+		function() : ( attacker )
+		{
+			FlagClear( "DisableLootDrops" )
+			attacker.Signal( "InterruptSyncedMelee" )
+			attacker.Signal( "ExecutionTestEnded" )
+		}
+	)
+
+	// initialize the attacker and target state
+	ClientCommand_loadouts_devset( target, ["character_selection", "character_wraith"] )
+	LoadoutEntry characterLoadout = Loadout_Character()
+	array<ItemFlavor> validCharacters = characterLoadout.validItemFlavorList
+	array<CharacterExecutionMetrics> metrics
+	table<ItemFlavor, bool> playedExecutions
+	// starting at index 2 because the first 2 indexes are character_random and character_dummie
+	for( int charIndex = 2; charIndex < validCharacters.len(); charIndex++ )
+	{
+		ItemFlavor character = validCharacters[charIndex]
+		CharacterExecutionMetrics characterMetrics
+		LoadoutEntry executionLoadout = Loadout_CharacterExecution( character )
+		array<ItemFlavor> validExecutions = executionLoadout.validItemFlavorList
+
+		bool foundUniqueExecution = false
+		foreach( execution in validExecutions )
+		{
+			if( !( execution in playedExecutions ) )
+			{
+				foundUniqueExecution = true
+				break
+			}
+		}
+		if( !foundUniqueExecution )
+			continue
+
+		LoadoutEntry skinEntry = Loadout_CharacterSkin( character )
+		array<ItemFlavor> validSkins = skinEntry.validItemFlavorList
+		if( validSkins.len() <= 0 )
+			continue
+
+		table<string, string> ornull metaData = character.metaData
+		expect table<string, string>(metaData)
+
+		// filter for any characters that the user may have passed in, otherwise play every execution
+		if( filter.len() > 0 )
+		{
+			bool found = false
+			foreach( charactersToPlay in filter )
+			{
+				if( metaData["character_ref"] == charactersToPlay )
+				{
+					found = true
+					break
+				}
+			}
+			if( !found )
+				continue
+		}
+		// find any mythic skins the player has and setup a skin override for those executions
+		table<ItemFlavor, ItemFlavor> executionToRequiredSkin
+		foreach( skin in validSkins )
+		{
+			if ( ItemFlavor_GetQuality( skin ) == eRarityTier.MYTHIC && Mythics_SkinHasCustomExecution( skin ) && !DoesPlayerHaveDeathProtection( attacker ) )
+				executionToRequiredSkin[Mythics_GetCustomExecutionForCharacterOrSkin( skin )] <- skin
+		}
+
+		// find character specific executions and setup any target character overrides for those exectuions
+		table<ItemFlavor, ItemFlavor> executionToRequiredTargetCharacter
+		foreach( execution in validExecutions )
+		{
+			var settingsBlock            = GetSettingsBlockForAsset( ItemFlavor_GetAsset( character ) )
+			var executionsArray             = GetSettingsBlockArray( settingsBlock, "executions" )
+			for ( int entryIdx = 0 ; entryIdx < GetSettingsArraySize( executionsArray ) ; entryIdx++ )
+			{
+				var entryBlock = GetSettingsArrayElem( executionsArray, entryIdx )
+				ItemFlavor curFlavor = GetItemFlavorByAsset( GetSettingsBlockAsset( entryBlock, "flavor" ) )
+				if( curFlavor != execution )
+					continue
+				asset executionCharRefAsset = GetSettingsBlockAsset( entryBlock, "characterRef" )
+				if ( executionCharRefAsset != $"" )
+				{
+					executionToRequiredTargetCharacter[execution] <- GetItemFlavorByAsset( WORKAROUND_AssetAppend( executionCharRefAsset, ".rpak" ) )
+				}
+				break
+			}
+		}
+
+		string characterRef = metaData["character_ref"]
+		characterMetrics.characterRef = characterRef
+
+		// set the attacker's character and skin to the default. default skin assures we don't pick the mythic skin at random
+		WaitFrame()
+		ClientCommand_loadouts_devset( attacker, ["character_selection", characterRef] )
+		// is there a better way to generate this SAID?
+		string idStr = character.guid.tostring()
+		string saidStr = "SAID"
+		for( int i=0; i < 11 - idStr.len(); i++ )
+		{
+			saidStr += "0"
+		}
+		saidStr += idStr
+		string defaultSkinName = DEV_ItemFlavor_GetCleanedAssetPath( validSkins[0] )
+		ClientCommand_loadouts_devset( attacker, ["character_skin_for_" + saidStr, defaultSkinName] )
+		WaitFrame()
+
+
+		foreach( execution in validExecutions )
+		{
+			if( !IsAlive( target ) )
+			{
+				DEV_RespawnPlayersBySpecifiers( [], target )
+			}
+			WaitFrame()
+			bool needsReset = false
+			ClientCommand_loadouts_devset( target, ["character_selection", "character_wraith"] )
+			if( execution in executionToRequiredSkin )
+			{
+				string requiredSkinName = DEV_ItemFlavor_GetCleanedAssetPath( executionToRequiredSkin[execution] )
+				ClientCommand_loadouts_devset( attacker, ["character_skin_for_" + saidStr, requiredSkinName] )
+				needsReset = true
+			}
+			else if( execution in executionToRequiredTargetCharacter )
+			{
+				table<string, string> ornull targetTmp = executionToRequiredTargetCharacter[execution].metaData
+				expect table<string, string>(targetTmp)
+				ClientCommand_loadouts_devset( target, ["character_selection", targetTmp["character_ref"]] )
+				needsReset = true
+			}
+			attacker.SetOrigin( attackerOrigin )
+			target.SetOrigin( targetOrigin )
+			attacker.SetAngles( VectorToAngles( targetOrigin - attackerOrigin ) )
+			test_downedplayer( 0, target )
+			WaitFrame()
+
+			EHI playerEHI = ToEHI( attacker )
+
+			string executionName = DEV_ItemFlavor_GetCleanedAssetPath( execution )
+			ClientCommand_loadouts_devset( attacker, ["character_execution_for_" + saidStr, executionName] )
+
+			Wait( delayBetweenExecutions )
+			TryStartSyncedMelee( attacker, target )
+
+			// deterministically calculate the duration and distance traveled during the execution
+			vector originAtAnimStart = target.GetOrigin()
+			string attackerSequenceStr = string(CharacterExecution_GetAttackerAnimSeq( execution ) )
+			float duration = attacker.GetSequenceDuration( attackerSequenceStr )
+			// increment through the animation to determine how far the player moved
+			const float ITERATIONS_PER_SECOND = 10
+			float percentagePerIteration = 1.0 / duration / ITERATIONS_PER_SECOND
+			int attackerSequenceIdx = attacker.LookupSequence( attackerSequenceStr )
+			ItemFlavor victimCharacter = LoadoutSlot_GetItemFlavor( target, Loadout_Character() )
+			asset setFile = CharacterClass_GetSetFile( victimCharacter )
+			string targetRigWeight = GetGlobalSettingsString( setFile, "bodyModelRigWeight" )
+			string targetSequenceStr = string( CharacterExecution_GetVictimAnimSeq( execution, victimCharacter, targetRigWeight ) )
+			int targetSequenceIdx = target.LookupSequence( targetSequenceStr )
+			vector targetAnimStartOrigin = target.Anim_GetStartForRefEntity( targetSequenceStr, attacker, "ref" ).origin
+			float initialDelta = Distance( originAtAnimStart, targetAnimStartOrigin )
+			float maxAttackerDeltaSqr = 0.0
+			float maxTargetDeltaSqr = 0.0
+			for( float endCycle = 0; endCycle < 1.0; endCycle += percentagePerIteration )
+			{
+				vector attackerDelta = attacker.GetAnimDeltas( attackerSequenceIdx, 0.0, endCycle )
+				vector targetDelta = target.GetAnimDeltas( targetSequenceIdx, 0.0, endCycle )
+				maxAttackerDeltaSqr = max( LengthSqr( attackerDelta ), maxAttackerDeltaSqr )
+				maxTargetDeltaSqr = max( LengthSqr( targetDelta ), maxTargetDeltaSqr )
+			}
+			float maxAttackerDelta = sqrt( maxAttackerDeltaSqr )
+			// note this is technically slightly wrong because we are just adding the lengths together, so if the movement is in opposite directions it will add together rather than cancel each other out
+			// doing it this way as I was seeing some discrepancies on ref angles and I couldn't find a way to convert the delta from local to world space, it should be mostly the same result on almost all finishers
+			float maxTargetDelta = sqrt( maxTargetDeltaSqr ) + initialDelta
+			bool checkSmokeTest = SmokeTest_IsActive()
+			if( checkSmokeTest )
+			{
+				if( maxTargetDelta > MAX_EXECUTION_DISPLACEMENT )
+				{
+					string msg = "Execution movement distance (" + maxTargetDelta + " moving from " + originAtAnimStart + " to " + targetAnimStartOrigin + ") exceeded max valid movement distance (" + MAX_EXECUTION_DISPLACEMENT + ") for target on execution "
+					ReportSyncedMeleeIssue( attacker, msg, GetIgnoredExecutionRefsForMaxTargetDistance() )
+				}
+
+				if( maxAttackerDelta > MAX_EXECUTION_DISPLACEMENT )
+				{
+					string msg = "Execution movement distance (" + maxAttackerDelta + ") exceeded max valid movement distance (" + MAX_EXECUTION_DISPLACEMENT + ") for attacker on execution "
+					ReportSyncedMeleeIssue( attacker, msg, GetIgnoredExecutionRefsForMaxAttackerDistance() )
+				}
+
+				if( duration < MIN_EXECUTION_DURATION )
+				{
+					string msg = "Execution duration (" + duration + ") was less than min valid duration (" + MIN_EXECUTION_DURATION + "s) on execution "
+					ReportSyncedMeleeIssue( attacker, msg, GetIgnoredExecutionRefsForTime() )
+				}
+
+				if( duration > MAX_EXECUTION_DURATION )
+				{
+					string msg = "Execution duration (" + duration + ") was more than the max valid duration (" + MAX_EXECUTION_DURATION + "s) on execution "
+					ReportSyncedMeleeIssue( attacker, msg, GetIgnoredExecutionRefsForTime() )
+				}
+			}
+
+			////////////////////
+			// DEBUG DRAW vars
+			float debugDrawFullTime = duration + (delayBetweenExecutions/2)
+			const vector ATK_COLOR = COLOR_PINK
+			const vector TAR_COLOR = COLOR_BLUE
+			vector lastAtkPos = attacker.GetOrigin()
+			vector lastTarPos = target.GetOrigin()
+			if( debugDraw )
+			{
+				DebugDrawAxis( attacker.GetOrigin(), attacker.GetAngles(), debugDrawFullTime, 5, ATK_COLOR )
+				DebugDrawAxis( target.GetOrigin(), target.GetAngles(), debugDrawFullTime, 5, TAR_COLOR )
+			}
+
+			float startTime = Time()
+			while( attacker.ContextAction_IsMeleeExecution() )
+			{
+				float timeSinceStart = Time() - startTime
+				if( debugDraw )
+				{
+					float timeLeft = debugDrawFullTime - timeSinceStart
+					DebugDrawLine( lastAtkPos, attacker.GetOrigin(), 255, 105, 180, true, timeLeft)
+					DebugDrawLine( lastTarPos, target.GetOrigin(), 0, 0, 255, true, timeLeft)
+
+					DebugDrawSphere( attacker.GetOrigin(), 6, 255, 105, 180, true, 0.1 )
+					DebugDrawSphere( target.GetOrigin(), 6, 0, 0, 255, true, 0.1 )
+
+					lastAtkPos = attacker.GetOrigin()
+					lastTarPos = target.GetOrigin()
+				}
+
+				if( cancelTest && timeSinceStart > ( GetSyncedMeleeAllowedCancelTime() - .1 ) )
+				{
+					attacker.Signal( "InterruptSyncedMelee" )
+				}
+
+				WaitFrame()
+			}
+
+
+			if( debugDraw )
+			{
+				const vector COLOR_OFFSET = <75,75,75>
+				DebugDrawArrow( attackerOrigin, attacker.GetOrigin(), 3, 255, 155, 230, true, 1 )
+				DebugDrawSphere( attacker.GetOrigin(), 6, 55, 155, 230, true, 1 )
+
+				DebugDrawArrow( targetOrigin, target.GetOrigin(), 3, 0, 0, 255, true, 1 )
+				DebugDrawSphere( target.GetOrigin(), 6, 0, 0, 255, true, 1 )
+			}
+
+			Wait( delayBetweenExecutions )
+
+			if( IsAlive( target ) )
+			{
+				target.Die()
+				WaitFrame()
+			}
+
+			if( needsReset )
+			{
+				ClientCommand_loadouts_devset( attacker, ["character_skin_for_" + saidStr, defaultSkinName] )
+				ClientCommand_loadouts_devset( target, ["character_selection", "character_wraith"] )
+			}
+
+			ExecutionMetrics data
+			data.name = executionName
+			data.attackerDeltaPos = maxAttackerDelta
+			data.targetDeltaPos = maxTargetDelta
+			data.duration = duration
+			characterMetrics.executions.append( data )
+			playedExecutions[execution] <- true
+		}
+		metrics.append( characterMetrics )
+	}
+
+	OutputMetrics( metrics, outputPath )
+}
+
+string function GetIgnoredExecutionRefsForMaxTargetDistance()
+{
+	string ignoreList = "character_execution_wraith_heirloom_v22_magicsnowbeast_prestige "
+	 					+ "character_execution_horizon_blackhole "
+						+ "character_execution_rampart_begging "
+						+ "character_execution_wattson_default "
+						+ "character_execution_pathfinder_highfive "
+						+ "character_execution_valkyrie_afterburner "
+						+ "character_execution_fuse_bodyslam "
+						+ "character_execution_revenant_impale "
+						+ "character_execution_madmaggie_whipcord "
+						+ "character_execution_bangalore_prototype1 "
+						+ "character_execution_bangalore_prototype2 "
+						+ "character_execution_newcastle_armshield "
+						+ "character_execution_valkyrie_crash "
+						+ "character_execution_fuse_clothesline "
+						+ "character_execution_seer_droneslinger "
+						+ "character_execution_ash_base"
+	return GetCurrentPlaylistVarString( "ignored_execution_refs_for_max_target_distance", ignoreList )
+}
+
+string function GetIgnoredExecutionRefsForMaxAttackerDistance()
+{
+	string ignoreList = "character_execution_valkyrie_crash "
+							+ "character_execution_ash_slash "
+							+ "character_execution_valkyrie_afterburner "
+							+ "character_execution_rampart_begging "
+							+ "character_execution_loba_stomp "
+							+ "character_execution_revenant_default "
+	return GetCurrentPlaylistVarString( "ignored_execution_refs_for_max_attacker_distance", ignoreList )
+}
+
+string function GetIgnoredExecutionRefsForTime()
+{
+	string ignoreList = "character_execution_pathfinder_punch "
+						+ "character_execution_pathfinder_highfive "
+						+ "character_execution_temp_medium "
+	return GetCurrentPlaylistVarString( "ignored_execution_refs_for_min_duration", ignoreList )
+}
+
+void function ReportSyncedMeleeIssue( entity attacker, string msg, string ignoredRefs )
+{
+	ItemFlavor attackerCharacter = LoadoutSlot_GetItemFlavor( attacker, Loadout_Character() )
+	ItemFlavor attackerExecution = LoadoutSlot_GetItemFlavor( attacker, Loadout_CharacterExecution( attackerCharacter ) )
+	string executionName = DEV_ItemFlavor_GetCleanedAssetPath( attackerExecution )
+	if( ignoredRefs.find( executionName ) >= 0 )
+	{
+		return
+	}
+	ForceScriptError( msg + executionName )
+}
+
+void function OutputMetrics( array<CharacterExecutionMetrics> metrics, string outputPath )
+{
+	string fileString = ""
+	fileString += "Min Duration," + MIN_EXECUTION_DURATION + "s\n"
+	fileString += "Max Duration," + MAX_EXECUTION_DURATION + "s\n"
+	fileString += "Max Displacement," + MAX_EXECUTION_DISPLACEMENT + " units\n"
+
+	fileString += "\nFinisher Name,Character Ref,Duration,Attacker Max Displacement,Target Max Displacement,Violations\n"
+
+	bool outputToFile = outputPath != ""
+	if( !outputToFile )
+	{
+		printl( "Printing Execution Metrics:" )
+		printl( "\n"+fileString )
+	}
+
+	int totalViolations = 0
+	foreach( characterMetrics in metrics )
+	{
+		foreach( executionMetric in characterMetrics.executions )
+		{
+			int durationVio = (executionMetric.duration > MAX_EXECUTION_DURATION || executionMetric.duration < MIN_EXECUTION_DURATION) ? 1 : 0
+			int atkDeltaVio = executionMetric.attackerDeltaPos > MAX_EXECUTION_DISPLACEMENT ? 1 : 0
+			int tarDeltaVio = executionMetric.targetDeltaPos > MAX_EXECUTION_DISPLACEMENT ? 1 : 0
+			int violations = durationVio + atkDeltaVio + tarDeltaVio
+			totalViolations += violations
+
+			string lineString = executionMetric.name + ","
+			lineString += characterMetrics.characterRef + ","
+			lineString += executionMetric.duration + ","
+			lineString += executionMetric.attackerDeltaPos + ","
+			lineString += executionMetric.targetDeltaPos + ","
+			lineString += string( violations )
+
+			if( outputToFile )
+			{
+				fileString += lineString + "\n"
+			}
+			else
+			{
+				printl( lineString )
+				if ( violations > 0 )
+				{
+					string executionWarningStr = "Execution '" + executionMetric.name + "' "
+					if ( durationVio > 0)
+						Warning( executionWarningStr + "duration: " + executionMetric.duration + " is outside limits. Min: " + MIN_EXECUTION_DURATION + " Max: " + MAX_EXECUTION_DURATION  )
+					if ( atkDeltaVio > 0 )
+						Warning( executionWarningStr + "attacker displacement: " + executionMetric.attackerDeltaPos + " is outside limit. Max displacement: " + MAX_EXECUTION_DISPLACEMENT )
+					if ( tarDeltaVio > 0 )
+						Warning( executionWarningStr + "target displacement: " + executionMetric.targetDeltaPos + " is outside limit. Max displacement: " + MAX_EXECUTION_DISPLACEMENT )
+				}
+			}
+		}
+	}
+
+	if( outputToFile )
+	{
+		DevTextBufferClear()
+		DevTextBufferWrite( fileString )
+		DevTextBufferDumpToFile( outputPath )
+		DevTextBufferClear()
+	}
+	else
+	{
+		if ( totalViolations > 0 )
+		{
+			Warning( "Execution test found " + totalViolations + " violations across " + metrics.len() + " character executions. Details above in the log." )
+		}
+	}
+}
+
+void function test_everybodyiscaustic()
+{
+	string characterFlavorStr = "character_caustic"
+	string skinFlavorStr = "character_skin_caustic_legendary_pyro"
+
+	// Get the character ItemFlavor
+	array<ItemFlavor> flavors = GetAllCharacters()
+	ItemFlavor characterFlavor
+	foreach( itemFlavor in flavors)
+	{
+		if ( ItemFlavor_GetCharacterRef( itemFlavor ) == characterFlavorStr )
+		{
+			characterFlavor = itemFlavor
+			break
+		}
+	}
+
+	if ( characterFlavor.guid == -1)
+	{
+		printt( "SCRIPT ERROR: Could not find character item flavor named '" + characterFlavorStr + "'" )
+		return
+	}
+
+	// Get the character skin ItemFlavor
+	array<ItemFlavor> characterSkins = 	GetValidItemFlavorsForLoadoutSlot( EHI_null, Loadout_CharacterSkin( characterFlavor ) )
+	ItemFlavor skinFlavor
+	foreach ( itemFlavor in characterSkins )
+	{
+		if ( DEV_ItemFlavor_GetCleanedAssetPath( itemFlavor ) == skinFlavorStr )
+		{
+			skinFlavor = itemFlavor
+			break
+		}
+	}
+
+	if ( skinFlavor.guid == -1 )
+	{
+		printt( "SCRIPT ERROR: Could not find skin item flavor named '" + skinFlavorStr + "'" )
+		return
+	}
+
+	// Turn everyone to that character
+	array<entity> allplayers = GetPlayerArray_Alive()
+	foreach ( player in allplayers )
+	{
+		SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterSkin( characterFlavor ), skinFlavor )
+		// SetItemFlavorLoadoutSlot( ToEHI( player ), Loadout_CharacterClass(), characterFlavor ) // Removed?
+	}
+
+	// Apply the skin
+}
+
+void function test_putplayerinsafespotformap()
+{
+	// Note: This is not a complete test suite, just some problematic ones that any re-work of the function should not break.
+	// Best tests have been:
+	// - Trident eject between two pillars, eject when drivers seat in a lamp post, eject after high speed collision, loba tac under trident that is on a stairwell/ramp
+	// - Loba tac between narrow bin and wall
+	// - Loba tac in corners of bins
+	// - Loba tac on areas with complex geo.
+	// - Loba tac between two large pipes (olympus mu1: script GP().SetOrigin(<-35748.375, -7397.88574, -4286.02783>)
+	// - Loba tac under stairwells
+	// - Loba tac under variety of static vehicles in the world
+	// - Loba tac large pockets in structure (particularly if you aim for the corner of these pockets)
+	// - Loba tac overtop large trees and statues
+	// - Rampart gun in front of crafting station - enter then exit crafting station
+
+	bool foundTest = false
+	int failCount = 0
+	string mapName = GetMapName().tolower()
+	if ( mapName == "mp_rr_canyonlands_mu3" )
+	{
+		foundTest = true
+		failCount += test_putplayerinsafespotformap_internal( false, <5200.20703, -31232.5645, 2888.1853> )	// (wall and crate) http://jiratf.respawn.net:8080/browse/R5DEV-264752
+		failCount += test_putplayerinsafespotformap_internal( true, <4818.34473, -31009.1895, 2888.23755> )	// (high and low are the same plane)
+		failCount += test_putplayerinsafespotformap_internal( false, <-8131.70068, 36848.5586, 5965.83936> )	// (crashed ship divet) http://jiratf.respawn.net:8080/browse/R5DEV-264757
+		failCount += test_putplayerinsafespotformap_internal( false, <1450.22998, 22442.7422, 4161.896> )		// (supply bin and wall)
+	}
+	else if ( mapName == "mp_rr_desertlands_mu2" )
+	{
+		foundTest = true
+
+		// Could not find a way to catch this case:
+		// It should be true, but not in the position it gives back currently.  This is a scenario where low collision pushed us towards high collision but the gap is large enough that we don't hit high collision to fail the high collision test
+		//failCount += test_putplayerinsafespotformap_internal( false, <-25607.7285, -21599.0957, -4418.92676> )				// (in gap between low and high and low pushed us inwards) http://jiratf.respawn.net:8080/browse/R5DEV-265759
+		failCount += test_putplayerinsafespotformap_internal( false, <-19022.4609, -18340.4355, -4309.11865> )	// (in gap under a tank)
+	}
+	else if ( mapName == "mp_rr_olympus_mu1" )
+	{
+		foundTest = true
+		failCount += test_putplayerinsafespotformap_internal( false, <-18989.082, 32167.2305, -5784.18506> )	// (complex tower structure) ended up pushing us back into high collision
+		failCount += test_putplayerinsafespotformap_internal( false, <-18905.3965, 32201.918, -5566.22119> )	// (complex tower structure) http://jiratf.respawn.net:8080/browse/R5DEV-260728
+		failCount += test_putplayerinsafespotformap_internal( false, <-4634.83008, -2541.29297, -6257.17822> )	// (hammond labs) http://jiratf.respawn.net:8080/browse/R5DEV-265638
+		failCount += test_putplayerinsafespotformap_internal( false, <-35802.8164,-7669.64258, -4270.09277> ) 	// (between two pipes)
+		failCount += test_putplayerinsafespotformap_internal( false, <-35717.0547, -7751.70313, -4214.11035> )	// (between pipe and grainery)
+
+		// Could not find a way to catch this case:
+		//failCount += test_putplayerinsafespotformap_internal( false, <15580.1953, -15096.4941, -5710.2959> )	// (stupid tree) http://jiratf.respawn.net:8080/browse/R5DEV-265763
+
+		failCount += test_putplayerinsafespotformap_internal( true, <-18709.8496, 32282.1582, -5711.16064> )	// (off a wall)
+	}
+	else if ( mapName == "mp_rr_party_crasher" )
+	{
+		foundTest = true
+
+		// Could not find a way to catch this case:
+		// The statue in the middle has a large open gap, if her tac ends up in there then she will teleport there.
+		//failCount += test_putplayerinsafespotformap_internal( false, <830.662964, 961.881775, 985.026184> )	// (statue) http://jiratf.respawn.net:8080/browse/R5DEV-257805
+
+		failCount += test_putplayerinsafespotformap_internal( false, <830.491211, 944.849548, 985.018921> )	// (statue - but hit high colliison first)  http://jiratf.respawn.net:8080/browse/R5DEV-257805
+	}
+
+	if ( foundTest )
+	{
+		printt( "test_putplayerinsafespotformap - tests completed, " + failCount + " tests failed (see above for any fail messages)" )
+	}
+	else
+	{
+		printt( "test_putplayerinsafespotformap - NO TESTS FOR MAP FOUND" )
+	}
+}
+
+int function test_putplayerinsafespotformap_internal( bool expectedValue, vector spot )
+{
+	vector ornull retVector = CanPutPlayerInSafeSpot( GP(), null, null, true, false, spot, spot )
+	bool didTestPass = expectedValue ? retVector != null : retVector == null
+	if ( !didTestPass )
+		printt( "test_putplayerinsafespotformap_internal - failed test: script CanPutPlayerInSafeSpot( GP(), null, null, true, false, " + spot + ", " + spot + " )" )
+	return didTestPass ? 0 : 1 // Note:  we are testing for failure
+}
+
+void function test_setskinfxvisibility( bool enable )
+{
+	array< entity > allPlayers = GetPlayerArray_Alive()
+	foreach ( player in allPlayers )
+	{
+		Remote_CallFunction_NonReplay( player, "ServerToClient_SetSkinFXVisibility", enable )
+	}
+}
+
+void function test_spawnallchargeweapons()
+{
+	array<string> weapons =
+	[
+		"mp_weapon_defender"
+		"mp_weapon_energy_shotgun:hopup_energy_choke" // peacekeeper
+		"mp_weapon_lstar" // for overheat test
+		"mp_weapon_doubletake:hopup_energy_choke" // tripletake
+		"mp_weapon_3030"
+		"mp_weapon_sentinel"
+		"health_pickup_combo_large"
+		"mp_weapon_dragon_lmg"
+		"mp_weapon_thermite_grenade"
+	]
+
+	entity human = test_gethuman()
+	vector centerOrg = human.GetOrigin()
+	vector spreadDir = FlattenVec( human.GetViewVector() )
+	float spreadDist = 20
+
+	foreach ( idx, entry in weapons )
+	{
+		array<string> tokens = split( entry, ":" )
+		vector newOrg = centerOrg + (spreadDir * (spreadDist * idx))
+		string weaponStr = tokens[0]
+		tokens.fastremove(0)
+		entity weapon = SpawnGenericLoot( weaponStr, newOrg, <-1, -1, -1>, 1 )
+		if ( weapon && tokens.len() > 0 )
+		{
+			weapon.SetWeaponMods( tokens )
+		}
+	}
+}
+
+void function test_spectator( int numTeams = 2, bool humansTogether = true )
+{
+	thread test_spectator_thread( numTeams, humansTogether )
+}
+
+void function test_spectator_thread( int numTeams, bool humansTogether )
+{
+	// Setup the teams first - has to be a wait thread because bots take time to spawn
+	waitthread test_teams_thread( numTeams, !humansTogether )
+
+	// Make the first human a spectator and make sure everyone else on human's team has health
+	entity firstPlayer = test_gethuman()
+	int firstPlayerTeam = firstPlayer.GetTeam()
+
+	array<entity> teamMembers = GetPlayerArrayOfTeam( firstPlayerTeam )
+	foreach( entity player in teamMembers )
+	{
+		if ( player == firstPlayer )
+			continue
+
+		if ( player.GetHealth() == 0 )
+		{
+			player.SetHealth( player.GetMaxHealth() )
+		}
+	}
+
+	KillPlayer( firstPlayer, eDamageSourceId.damagedef_suicide )
+}
+
+void function test_toomanymovers( entity player = null, float duration = 0 )
+{
+	if( player == null )
+		player = test_gethuman()
+
+	if ( !IsValid( player ) )
+		return
+
+	Signal(player, "tooManyMoverTestEnd")
+	thread tooManyMoversTest_Thread( player, duration )
+}
+
+void function test_toomanymovers_endtest( entity player = null )
+{
+	if( player == null )
+		player = test_gethuman()
+	if ( IsValid( player ) )
+		Signal(player, "tooManyMoverTestEnd")
+}
+
+entity function SpawnMoverMovingFromStartToEnd( string scriptName, entity childEntity, vector startOrigin, vector startAngles, vector goal, float moveTime )
+{
+	// spawn the mover
+	entity script_mover = CreateScriptMover( scriptName, startOrigin, startAngles )
+
+	// set the mover to be a pusher
+	script_mover.SetPusher( true )
+
+	// parent it to the entity that actually has geo
+	childEntity.SetParent( script_mover )
+
+	// set the movers target position
+	script_mover.NonPhysicsMoveTo( goal, moveTime, 0, 0 )
+
+	return script_mover
+}
+
+void function tooManyMoversTest_Thread( entity player, float duration )
+{
+	EndSignal( player, "OnDestroy" )
+	EndSignal( player, "tooManyMoverTestEnd" )
+
+	array< entity > allMovers
+
+	OnThreadEnd(
+		function() : ( allMovers )
+		{
+			foreach (entity mover in allMovers)
+			{
+				if ( IsValid(mover) )
+				{
+					mover.Destroy()
+				}
+			}
+		}
+	)
+
+	vector currentPos = player.GetOrigin()
+	vector angles = player.GetAngles()
+
+
+	float spacing = 150
+	float x = currentPos.x
+	float y = currentPos.y + (-3 * spacing)
+	float z = currentPos.z
+	float initialX = (-3 * spacing) + x
+	for (int i = 0; i < 5; i++)
+	{
+		y = y + spacing
+		x = initialX
+		for (int j = 0; j < 5; j++)
+		{
+			x = x + spacing
+			currentPos = <x, y, z>
+
+			entity traceBlocker = CreateTraceBlockerVolume( currentPos, 5, false, CONTENTS_BLOCK_PING | CONTENTS_NOGRAPPLE, 0, "TEST_PUSHER_ENT_" + ( (i * 5) + j ) )
+			entity newMover = SpawnMoverMovingFromStartToEnd( "TEST_PUSHER_ENT_" + ( (i * 5) + j ), traceBlocker, currentPos, angles, currentPos + <0,0,100>, 10 )
+			allMovers.append( newMover )
+
+
+			traceBlocker.SetParent( newMover, "", true )
+			thread tooManyMoversTestDebugDisplay_Thread( newMover )
+		}
+	}
+
+	if ( duration == 0)
+		WaitForever()
+	else
+		wait duration
+}
+
+void function tooManyMoversTestDebugDisplay_Thread( entity mover )
+{
+	EndSignal( mover, "OnDestroy" )
+
+	while( true )
+	{
+		DebugDrawSphere(mover.GetOrigin(), 5, 255, 105, 180, true, 1)
+		wait 1
+	}
+}
+
+void function test_spawnnpc( string aisettings, string name = "", bool isFriendly = false )
+{
+	entity human = test_gethuman()
+	int humanTeam = human.GetTeam()
+	vector humanOrg = human.GetOrigin()
+	vector humanViewDir = FlattenVec( human.GetViewVector() )
+	entity npc = CreateNPCFromAISettings( aisettings, ( isFriendly ? humanTeam : humanTeam+1 ), humanOrg + ( humanViewDir * 200 ) , < 0, 0 ,0 > )
+	if ( npc )
+	{
+		SetTargetName( npc, name )
+		DispatchSpawn( npc )
+	}
+}
+
+void function test_teams( int numTeams = 2, bool humansSeparate = true, float maxAngle = 70, int distance = 300 )
+{
+	thread test_teams_thread( numTeams, humansSeparate, maxAngle, distance )
+}
+
+void function test_teams_thread( int numTeams = 2, bool humansSeparate = true, float maxAngle = 70, int distance = 300 )
+{
+	if ( numTeams <= 0 )
+	{
+		return;
+	}
+
+	// The human we will be using to place the teams
+	entity originHuman = test_gethuman()
+	int humanTeam = originHuman.GetTeam()
+	vector humanOrg = originHuman.GetOrigin()
+	vector humanViewDir = FlattenVec( originHuman.GetViewVector() )
+	vector humanRightDir = FlattenVec( VectorRotateAxis( humanViewDir, <0, 0, 1>, -90 ) )// originHuman.GetRightVector() ) <-- Get Right Vector must be the body.  Everyone spawned askew.
+
+	const int MinNumPlayersPerTeam = 2
+	int neededPlayerCount = (numTeams*MinNumPlayersPerTeam)
+	array< entity > allPlayers = GetPlayerArray_Alive()
+
+	// Gather all humans that aren't the originHuman
+	array< entity > almostAllHumans
+	foreach ( player in allPlayers )
+	{
+		if ( !player.IsBot() && player != originHuman )
+		{
+			almostAllHumans.append( player )
+		}
+	}
+
+	// Determine how many players we would be short
+	int neededBots = 0
+	if ( humansSeparate || almostAllHumans.len()+1 <= MinNumPlayersPerTeam ) // The + 1 denotes our originHuman
+	{
+		neededBots = neededPlayerCount - allPlayers.len()
+	}
+	else
+	{
+		// If all the humans are together on one team, then we may be
+		// short bots to fill out the other teams
+		neededBots = ( neededPlayerCount + (almostAllHumans.len()+1-MinNumPlayersPerTeam) - allPlayers.len() ) // Add back in the humans that would normally be on another team
+	}
+	if ( neededBots > 0 )
+	{
+		ServerCommand( "bots " + neededBots ) // This creates bots on different teams
+
+		wait numTeams // We need time for the server to make the bots.  More bots == more time needed.
+	}
+
+	allPlayers = GetPlayerArray_Alive()
+
+	// Gather our bots we will delegate out and
+	// and also compile all the teams the game knows about.
+	// There are some file data structs in other places of
+	// script that have cached these teams.  So I'm going
+	// to just use the existing ones.
+	array< entity > allBots
+	array< int > teams
+	foreach ( player in allPlayers )
+	{
+		if ( player.IsBot() )
+		{
+			allBots.append( player )
+		}
+
+		int team = player.GetTeam()
+		if ( !teams.contains( team ) )
+		{
+			teams.append( team )
+		}
+	}
+
+	int team = teams.pop()
+	const int Offset = 50
+	SetTeam( originHuman, team )
+
+	// Setup the human one first
+	{
+		int memberCount = 1
+		vector spawnDir = humanRightDir
+		if ( !humansSeparate ) // So all humans shoudl be together
+		{
+			foreach ( player in almostAllHumans )
+			{
+				SetTeam( player, team )
+				player.SetOrigin( humanOrg + (spawnDir * Offset * memberCount) )
+				player.SetForwardVector( humanViewDir )
+				++memberCount
+			}
+			almostAllHumans.clear()
+		}
+
+		// Fill in the rest with bots
+		for ( int i = memberCount; i < MinNumPlayersPerTeam; ++i )
+		{
+			entity player = allBots.pop()
+			SetTeam( player, team )
+			player.SetOrigin( humanOrg + (spawnDir * Offset * i) )
+			player.SetForwardVector( humanViewDir )
+		}
+	}
+
+	// Now Setup the other teams and sprinkle around the rest of the humans
+	if ( numTeams > 1 )
+	{
+		float angleIncrement = ( numTeams > 2 ) ? maxAngle/(numTeams-2) : 0.0 // Subtract human team, and the first team starts at "0th" position so we if there are 3 teams the second team has to be at the other end.
+		float startingAngle = ( numTeams > 2 ) ? -maxAngle/2 : 0.0
+		float totalAngle = startingAngle
+		int memberCount = 0
+		vector spawnPos = humanOrg
+		vector spawnDir = humanRightDir
+		{
+			for ( int i = 1; i < numTeams; ++i )
+			{
+				if ( teams.len() > 0 )
+				{
+					team = teams.pop()
+				}
+				else
+				{
+					printt( "ERROR in test_teams - there were not enough team indicies, will put remaining players in team " + team )
+				}
+				memberCount = 0
+				spawnPos = humanOrg + (VectorRotateAxis( humanViewDir, <0, 0, 1>, totalAngle ) * distance )
+
+				for ( int k = 0; k < MinNumPlayersPerTeam; ++k )
+				{
+					if ( (almostAllHumans.len() > 0 && k == 0) || allBots.len() == 0 )
+					{
+						entity player = almostAllHumans.pop()
+						SetTeam( player, team )
+						player.SetOrigin( spawnPos + (spawnDir * Offset * memberCount) )
+						player.SetForwardVector( -humanViewDir )
+						++memberCount
+					}
+					else
+					{
+						entity player = allBots.pop()
+						SetTeam( player, team )
+						player.SetOrigin( spawnPos + (spawnDir * Offset * memberCount) )
+						player.SetForwardVector( -humanViewDir )
+						++memberCount
+					}
+				}
+
+				float prevTotal = totalAngle
+				totalAngle += angleIncrement
+				if ( totalAngle >= 0 && prevTotal < 0 )
+				{
+					spawnDir *= -1 // Flip direction of spawn
+				}
+			}
+		}
+
+		// Add any extraneous bots/humans to the last team
+		{
+			foreach( player in almostAllHumans )
+			{
+				SetTeam( player, team )
+				player.SetOrigin( spawnPos + (spawnDir * Offset * memberCount) )
+				player.SetForwardVector( -humanViewDir )
+				++memberCount
+			}
+			foreach( player in allBots )
+			{
+				SetTeam( player, team )
+				player.SetOrigin( spawnPos + (spawnDir * Offset * memberCount) )
+				player.SetForwardVector( -humanViewDir )
+				++memberCount
+			}
+		}
+	}
+
+	printt( "test_teams - Completed.  If people aren't quite in the right groupings you may need to call it again.  The bots may not have been completed in time." )
+}
+
+void function test_trigger( void functionref( entity trigger, entity ent ) enterCallback = null, void functionref( entity trigger, entity ent ) leaveCallback = null, float radius = 100, float aboveHeight = 256, float belowHeight = 16 )
+{
+	entity player = test_gethuman()
+	thread test_trigger_internal_thread( player, enterCallback, leaveCallback, radius, aboveHeight, belowHeight )
+}
+
+void function test_trigger_internal_thread( entity player, void functionref( entity trigger, entity ent ) enterCallback, void functionref( entity trigger, entity ent ) leaveCallback, float radius, float aboveHeight, float belowHeight )
+{
+	vector triggerOrigin = player.GetOrigin() + ( player.GetForwardVector()*radius*2.0 )
+
+	entity trigger = CreateEntity( "trigger_cylinder" )
+	trigger.RemoveFromAllRealms()
+	trigger.AddToOtherEntitysRealms( player )
+	trigger.SetCylinderRadius( radius )
+	trigger.SetAboveHeight( aboveHeight )
+	trigger.SetBelowHeight( belowHeight ) // Need this because the player or entity can sink into the ground a tiny bit and we check player feet not half height
+	trigger.SetOrigin( triggerOrigin )
+	trigger.SetEnterCallback( enterCallback )
+	trigger.SetLeaveCallback( leaveCallback )
+	DispatchSpawn( trigger )
+
+	trigger.SearchForNewTouchingEntity()
+
+	 DebugDrawCylinder( trigger.GetOrigin() - <0.0, 0.0, trigger.GetBelowHeight()>, <270.0, 0.0, 0.0>, trigger.GetRadius(), trigger.GetAboveHeight() + trigger.GetBelowHeight(), 255,0,0, true, 99999.0 )
+
+	WaitSignal ( trigger, "OnDestroy" )
+}
+
+struct
+{
+	bool stresstestpvs_inprogress = false
+} file
+
+void function test_stresstestpvs()
+{
+	thread internal_stresstestpvs_thread()
+}
+
+void function internal_stresstestpvs_thread()
+{
+	AssertIsNewThread()
+
+	if ( file.stresstestpvs_inprogress )
+	{
+		printt( "test_stresstestpvs - ERROR - is already in progress. Cannot start another one until it has completed." )
+		return
+	}
+
+	file.stresstestpvs_inprogress = true
+
+	// Spawn necessary number of bots
+	int MAX_TOTAL_PLAYERS = 60
+	array< entity > allPlayers = GetPlayerArray_Alive()
+	int numBotsNeeded = MAX_TOTAL_PLAYERS - allPlayers.len()
+	printt( "test_stresstestpvs - START - spawning " + numBotsNeeded + " bots" )
+
+	if ( numBotsNeeded > 0 )
+	{
+		ServerCommand( "bots " + numBotsNeeded )
+
+		waitthread function() : ( MAX_TOTAL_PLAYERS )
+		{
+			float timeStart = Time()
+			float timeEnd = timeStart + 15.0
+			while ( GetPlayerArray_Alive().len() < MAX_TOTAL_PLAYERS )
+			{
+				if ( Time() > timeEnd )
+				{
+					break
+				}
+				printt( "test_stresstestpvs - " + GetPlayerArray_Alive().len()  + " players in world....waiting for more to be created." )
+				wait 3.0
+
+			}
+			printt( "test_stresstestpvs - All bots created, now marking new pvs baseline" )
+		} ()
+	}
+
+	if ( GetPlayerArray_Alive().len() < MAX_TOTAL_PLAYERS )
+	{
+		printt( "test_stresstestpvs - Running test failed - could not hit max players to run test.  Please try to run the test again." )
+		return
+	}
+
+	// Have client take pvs snapshot for baseline
+	allPlayers = GetPlayerArray_Alive()
+	foreach ( player in allPlayers )
+	{
+		if ( player.IsHuman() )
+			Remote_CallFunction_NonReplay( player, "ServerToClient_LeafSystemMarkPvs" )
+	}
+	wait 1.5
+
+	// Give infinite ammo and trigger ult
+	ServerCommand( "sv_infinite_ammo 1" )
+
+	printt( "test_stresstestpvs - triggering all bots to fire..." )
+	foreach( player in allPlayers )
+	{
+		player.BotButtonPress( IN_ATTACK )
+	}
+	ServerCommand( "sv_infinite_ammo 0" ) // Turn it back off or it seems some bots will keep firing (probably related to whatever weapon they were given)
+
+	printt( "test_stresstestpvs - ...waiting 3.0s" )
+	wait 3.0
+	printt( "test_stresstestpvs - END - Success if no assert" )
+
+	file.stresstestpvs_inprogress = false
+}
+#endif
+
+#if CLIENT
+//-----------------------------------------------------------------------------
+// CLIENT FUNCTIONS
+// All in LOWER CASE so we can type them faster
+//-----------------------------------------------------------------------------
+void function test_help( )
+{
+	// Keep in alphabetical order
+	printt( "test_itemflavorsdump() - outputs to console and file the list of item flavors seen by the vm. Add a string to filter out results.  Look for file 'itemflavorsdump_'" )
+}
+
+void function test_tiptext( int tipNumber )
+{
+	string tip
+
+	if( tipNumber < 10 )
+	{
+		tip = "#TIP_00" + tipNumber
+	}
+	else if ( tipNumber < 100 )
+	{
+		tip = "#TIP_0" + tipNumber
+	}
+	else
+	{
+		tip = "#TIP_" + tipNumber
+	}
+
+	string tip_localized = Localize( tip )
+
+	printt( format( "%s(): Tip Text %s == %s ", FUNC_NAME(), tip, tip_localized ) )
+	Obituary_Print_Localized( tip_localized )
+}
+
+#endif
+
+#endif // DEV

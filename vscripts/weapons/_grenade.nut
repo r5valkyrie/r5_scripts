@@ -825,7 +825,7 @@ void function ClientDestroyCallback_GrenadeDestroyed( entity grenade )
 #endif // CLIENT
 
 #if SERVER
-void function EnableTrapWarningSound( entity trap, float delay = 0, string warningSound = DEFAULT_WARNING_SFX )
+void function EnableTrapWarningSound( entity trap, float delay = 0, string warningSound = "" )
 {
 	trap.EndSignal( "OnDestroy" )
 	trap.EndSignal( "DisableTrapWarningSound" )

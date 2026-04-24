@@ -29,17 +29,11 @@ global const float DOT_60DEGREE =	0.5
 global const float DOT_80DEGREE =	0.17364817766
 global const float DOT_85DEGREE =	0.0871557427477
 
-global enum eFeatureSuppressionFlags
-{
-	PROMO_USER_MESSAGES_DIALOG,
-}
-
 // SHOW_UNKNOWN_ARTIFACTS + eQuestMissionStatus moved to sh_season_quest.gnut
 
 global array<asset> LEGAL_PLAYER_TITAN_SETTINGS
 
 //
-global const PST_TIME_ZONE_OFFSET = -7
 
 global enum e1v1State
 {
@@ -58,6 +52,9 @@ global enum e1v1State
 	WATCHING_FIGHT_REPLAY
 }
 
+// Global Unix Time Util
+global const PST_TIME_ZONE_OFFSET = -8        // PST is -8, PDT is -7
+global const PDT_TIME_ZONE_OFFSET = -7
 global enum eDaysOfWeek
 {
 	SUNDAY,
@@ -206,8 +203,6 @@ struct
 	int cachedIsLobby = IS_LOBBY_UNSURE
 	int hud_setting_accessibleChatCache
 } file
-
-global vector UP_VECTOR = <0,0,1>
 
 void function ShUtilityAll_Init()
 {
@@ -751,6 +746,22 @@ bool function UseSoloModePostGamePresentation()
 {
 	return GetCurrentPlaylistVarInt( "solo_mode_postgame_presentation", 0 ) != 0
 }
+#if SERVER
+void function SetupDecorativeBalloon( entity balloon )
+{
+	bool balloonBounce = GetCurrentPlaylistVarBool( "balloon_bounce", true )
+
+	if ( balloonBounce )
+	{
+		//DisableSkydiveEndOnEntity( balloon, true )
+		//DisableSkydiveAnticipateOnEntity( balloon, true )
+	}
+
+	balloon.SetForceVisibleInPhaseShift( true )
+	balloon.DisallowZiplines()
+	balloon.kv.CollisionGroup = ( TRACE_COLLISION_GROUP_NONE | TRACE_COLLISION_GROUP_PLAYER_MOVEMENT )
+}
+#endif
 
 int function GetEnemyTeam( int team )
 {
@@ -2439,11 +2450,31 @@ bool function IsFiringRangeGameMode()
 	return Playlist() == ePlaylists.survival_firingrange
 }
 
+bool function IsMTXEvent1Active()
+{
+	ItemFlavor event = GetItemFlavorByAsset( $"settings/itemflav/calevent/s21ce01/collection.rpak" )
+	return CalEvent_IsActive( event, GetUnixTimestamp() )
+}
+
+bool function IsMTXEvent2Active()
+{
+	ItemFlavor event = GetItemFlavorByAsset( $"settings/itemflav/calevent/s21me02/milestone.rpak" )
+	return CalEvent_IsActive( event, GetUnixTimestamp() )
+}
+
+bool function IsT1Active()
+{
+	int unixTimeNow = GetUnixTimestamp()
+	if ( unixTimeNow > expect int( GetCurrentPlaylistVarTimestamp( "t1_active", UNIX_TIME_FALLBACK_2038 ) ) )
+	{
+		return true
+	}
+
+	return false
+}
 bool function IsMatchmakingFromMatchEnabled()
 {
-	// S3 does not have the 'matchmake_from_match_enabled' convar — feature not supported
-	Warning( "IsMatchmakingFromMatchEnabled: matchmake_from_match_enabled convar unavailable in S3, returning false" )
-	return false
+	return GetConVarBool( "matchmake_from_match_enabled" ) && GetCurrentPlaylistVarBool( "matchmake_from_match", false ) && ( GetCurrentPlaylistVarBool( "private_match", false ) == false )
 }
 
 bool function IsMatchmakingFromMatchAllowed( entity player )
@@ -2458,7 +2489,7 @@ bool function IsMatchmakingFromMatchAllowed( entity player )
 			isMatchActuallyOver = IsRoundBasedGameOver()
 		else
 			isMatchActuallyOver = GetGameState() >= eGameState.WinnerDetermined
-		//isAllowed = Survival_IsPlayerSquadEliminated( player ) || isMatchActuallyOver
+		isAllowed = Survival_IsPlayerSquadEliminated( player ) || isMatchActuallyOver
 	}
 #endif
 
@@ -2498,6 +2529,10 @@ bool function FiringRangeHasFriendlyFire()
 	return GetCurrentPlaylistVarBool( "firingrange_has_friendlyfire", true )
 }
 
+bool function FiringRangeHasInfiniteClips()
+{
+	return GetCurrentPlaylistVarBool( "has_infinite_clips", false )
+}
 bool function FiringRangeHasHitIndictators()
 {
 	return GetCurrentPlaylistVarBool( "hud_training_hit_dots", true )
@@ -2762,8 +2797,51 @@ int function GetUnixTimePST()
 	return unixTime
 }
 
-TimeParts function GetUnixTimeParts( int unixtime )
+
+int function GetUnixTimePDT()
 {
+	int unixTime = GetUnixTimestamp()
+	unixTime += (PDT_TIME_ZONE_OFFSET * SECONDS_PER_HOUR)
+	return unixTime
+}
+
+
+string function GetDebugTimeString()
+{
+	// Returns the current time in the Pacific Time Zone
+
+	if ( GetDeveloperLevel() == 0 )
+		return ""
+
+	bool dst 		  = false//GetIsDSTActive()
+	int utTime        = dst ? GetUnixTimePDT() : GetUnixTimePST()
+	string timeString = GetDateTimeString( utTime, 0 )
+	string dayName    = GetDayOfWeekName( GetDayOfWeek( utTime ) )
+
+#if SERVER
+	string localDayName = dayName
+#else
+	string localDayName = Localize( dayName )
+#endif
+
+	return format( "%s, %s %s", localDayName, timeString, dst ? "PDT" : "PST" )
+}
+
+
+void function PrintDebugTimeDetails()
+{
+	printt( FUNC_NAME() )
+
+	string debugTime = GetDebugTimeString()
+	printt( "DebugTime =", debugTime )
+	//PrintFakeTime()
+}
+
+
+TimeParts function GetUnixTimeParts( int unixtime, int timezoneOffsetHours = -7 )
+{
+	unixtime += SECONDS_PER_HOUR * timezoneOffsetHours
+
 	// Chad's function to convert unix time to month, day, year, hours, minutes, seconds. Used for ranked play seasons
 	TimeParts parts
 
@@ -2882,6 +2960,13 @@ DisplayTime function SecondsToDHMSM(float total_seconds)
     return dt
 }
 
+string function GetDaysHoursMinutesSecondsString( int seconds )
+{
+	// Converts the seconds into Days:Hours:Minutes.Seconds
+	DisplayTime dt = SecondsToDHMS( seconds )
+	return format( "%i:%02i:%02i.%02i", dt.days, dt.hours, dt.minutes, dt.seconds )
+}
+
 int function GetDayOfWeek( int unixTime )
 {
 	return int( (floor(unixTime / SECONDS_PER_DAY) + 4) % 7 )
@@ -2890,27 +2975,35 @@ int function GetDayOfWeek( int unixTime )
 string function GetDayOfWeekName( int dayOfWeek )
 {
 	array<string> days = ["#SUNDAY", "#MONDAY", "#TUESDAY", "#WEDNESDAY", "#THURSDAY", "#FRIDAY", "#SATURDAY"]
-	Assert( dayOfWeek >= 0 && dayOfWeek <= days.len() )
+	Assert( dayOfWeek >= 0 && dayOfWeek < days.len() )
 	return days[dayOfWeek]
 }
 
-string function GetDateTimeString( int unixTime )
+
+string function GetDateTimeString( int unixTime, int timezoneOffsetHours = -7 )
 {
-	TimeParts timeParts = GetUnixTimeParts( unixTime )
-	string minutesString = string(timeParts.minute).len() == 1 ? "0" + timeParts.minute : string(timeParts.minute)
-	return format( "%i/%i/%i %i:%s.%i", timeParts.month, timeParts.day, timeParts.year, timeParts.hour, minutesString, timeParts.second )
+	TimeParts timeParts = GetUnixTimeParts( unixTime, timezoneOffsetHours )
+	return format( "%04i-%02i-%02i %02i:%02i:%02i", timeParts.year, timeParts.month, timeParts.day, timeParts.hour, timeParts.minute, timeParts.second )
+}
+
+
+string function GetDateTimeStringNoYearNoSeconds( int unixTime, int timezoneOffsetHours = 0 )
+{
+	TimeParts timeParts = GetUnixTimeParts( unixTime, timezoneOffsetHours )
+	return format( "%02i/%02i %02i:%02i", timeParts.month, timeParts.day, timeParts.hour, timeParts.minute )
 }
 
 string function GetTimeString( int unixTime )
 {
 	TimeParts timeParts = GetUnixTimeParts( unixTime )
-	return format( "%i:%2i.%i", timeParts.hour, timeParts.minute, timeParts.second )
+	return format( "%02i:%02i:%02i", timeParts.hour, timeParts.minute, timeParts.second )
 }
 
-string function GetDaysHoursMinutesSecondsString( int unixTime )
+
+string function GetDateTimeStringDayMonthYear( int unixTime, int timezoneOffsetHours = 0 )
 {
-	TimeParts timeParts = GetUnixTimeParts( unixTime )
-	return format( "%i:%i:%2i.%i", timeParts.day, timeParts.hour, timeParts.minute, timeParts.second )
+	TimeParts timeParts = GetUnixTimeParts( unixTime, timezoneOffsetHours )
+	return format( "%02i-%02i-%04i",  timeParts.day, timeParts.month, timeParts.year )
 }
 
 int function GetStartOfDay( int unixTime )
@@ -2931,6 +3024,24 @@ int function SecondsRemainingInDay( int unixTime )
 	int endOfDay = GetEndOfDay( unixTime )
 	return endOfDay - unixTime
 }
+
+
+void function WaitForUnixTime( int unixTime )
+{
+	while ( true )
+	{
+		float delay = float(unixTime - GetUnixTimestamp())
+		if ( delay <= 0.0 )
+			break
+
+		#if DEV
+			wait min( 1.0, delay )
+		#else
+			wait delay
+		#endif
+	}
+}
+
 
 int function GetCurrentEliteStreak( entity player )
 {
@@ -3028,10 +3139,69 @@ entity function AssertLocalOrServerValidPlayer( entity player )
 	return player
 }
 
-bool function IsFlowstateActive()
+#if SERVER || CLIENT
+void function CleanupFXArray( array<FXHandle> fxHandleArray, bool doRemoveAllParticlesNow, bool doPlayEndCap )
 {
-	return HAS_FLOWSTATE_MOD
+	string stopType
+	if ( doRemoveAllParticlesNow )
+	{
+		Assert( !doPlayEndCap )
+		stopType = "destroyImmediately"
+	}
+	else if ( doPlayEndCap )
+		stopType = "playEndcap"
+	else
+		stopType = "normal"
+
+	foreach ( FXHandle fxHandle in fxHandleArray )
+	{
+		#if SERVER
+			if ( IsValid( fxHandle ) )
+			{
+				fxHandle.SetStopType( stopType )
+
+				fxHandle.Destroy()
+			}
+		#elseif CLIENT
+			if ( EffectDoesExist( fxHandle ) )
+				EffectStop( fxHandle, doRemoveAllParticlesNow, doPlayEndCap )
+		#endif
+	}
+	fxHandleArray.clear()
 }
+#endif
+
+#if SERVER || CLIENT
+int function GetSkinIndexByName_Safe( entity ent, string skinName )
+{
+	if ( ent.GetSkinCount() == 0 )
+	{
+		// avoid R5DEV-107879
+		Warning( "GetSkinIndexByName_Safe called on ent with bad model. Callstack:\n%s", GetStack() )
+		return -1
+	}
+	return ent.GetSkinIndexByName( skinName )
+}
+#endif
+
+#if SERVER || CLIENT
+void function SetSkinByName_Safe( entity ent, string skinName )
+{
+	if ( ent.GetSkinCount() == 0 )
+	{
+		// avoid R5DEV-107879
+		Warning( "SetSkinByName_Safe called on ent with bad model. Callstack:\n%s", GetStack() )
+		return
+	}
+	int skinIdx = ent.GetSkinIndexByName( skinName )
+	if ( skinIdx == -1 )
+	{
+		Warning( "SetSkinByName_Safe called with bad skin name (\"%s\"). Callstack:\n%s", skinName, GetStack() )
+		return
+	}
+	ent.SetSkin( skinIdx )
+}
+#endif
 
 bool function SafeCallFunction( string functionName, array<string> paramStrings = [], string fallbackMessage = "", string errorPrefix = "[SAFE_CALL]" )
 {
@@ -4311,12 +4481,6 @@ void function SetFeatureSuppressed( int flag, bool suppressed )
 
 // Stubs — gifting/inbox natives (moved to sh_grx.gnut for typed scope)
 
-string function GetDateTimeStringDayMonthYear( int timestamp, int offset )
-{
-	return ""
-}
-
-
 
 #if CLIENT || UI
 // [s21-native] function Hud_SetTextEntryTitle() registered by engine; script stub commented out
@@ -4351,8 +4515,40 @@ bool function IsPlaylistInActiveRotation( string playlistName )
 }
 */
 
+#if SERVER || CLIENT
+bool function PlayerIsLinkedToDeathbox( entity player, entity deathbox )
+{
+	array<entity> linkedEntArray = player.GetLinkEntArray()
+	foreach ( entity linkedEnt in linkedEntArray )
+	{
+		if ( linkedEnt.GetNetworkedClassName() != "prop_death_box" )
+			continue
+
+		if ( linkedEnt == deathbox )
+			return true
+	}
+
+	return false
+}
+#endif // SERVER || CLIENT
+
+
+#if SERVER
+array<entity> function GetEntitiesFromArrayNearPos( array<entity> ents, vector pos, float maxDist )
+{
+	Warning("custom written native GetEntitiesFromArrayNearPos, port properly later! - kral")
+	float maxDistSqr = maxDist * maxDist
+	array<entity> result
+	foreach( entity ent in ents )
+	{
+		if( DistanceSqr( ent.GetOrigin(), pos ) <= maxDistSqr )
+			result.append( ent )
+	}
+	return result
+}
+#endif // SERVER
+
 // [s21-native] function IsPlaylistBeingRotated() registered by engine; script stub commented out
-/*
 bool function IsPlaylistBeingRotated( string playlistName )
 {
 	return false

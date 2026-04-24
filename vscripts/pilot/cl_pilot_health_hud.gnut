@@ -8,32 +8,31 @@ global function HealthHUD_StopUpdate
 global function DamageOverlayUpdate
 global function PilotEMP_Internal
 global function HealthHUD_ClearFX
+global function PlayShieldOverlayFX
+global function ShieldOverlayUpdate
 
 global function SetHealthDisplayRange
-global function EvoShield_PlayFX
-global function Init_EvoShields_Flowstate_HUD
-global function Flowstate_HUD_UpdateShieldHealthForPlayer
 
-const HEALTHDMGSTATE1_MP         = 0.75
-const HEALTHDMGSTATE2_MP         = 0.50
-const HEALTHDMGSTATE3_MP         = 0.375
+const HEALTHDMGSTATE1_MP = 0.75
+const HEALTHDMGSTATE2_MP = 0.50
+const HEALTHDMGSTATE3_MP = 0.375
 
-const SHOW_HEALTH_THRESHOLD_MP   = 90
-const SHOW_HEALTH_MAXDIST_MP     = 2048
-const SHOW_HEALTH_VIEWDOT_MP     = 0.5
+const SHOW_HEALTH_THRESHOLD_MP = 90
+const SHOW_HEALTH_MAXDIST_MP = 2048
+const SHOW_HEALTH_VIEWDOT_MP = 0.5
 const SHOW_HEALTH_SPRITESCALE_MP = 0.125
 
-const SHOW_HEALTH_REFRESHWAIT    = 1.0
+const SHOW_HEALTH_REFRESHWAIT = 1.0
 
-const FX_HEALTH                  = $"P_health_hex_fast"
-const FX_SHIELD_HIT              = $"P_armor_FP_hit"
-const FX_SHIELD_BREAK            = $"P_armor_FP_break"
-const FX_SHIELD_CHARGING         = $"P_armor_FP_charging_CP"
-const FX_SHIELD_FULL             = $"P_armor_FP_charged_full_CP"
+const FX_HEALTH = $"P_health_hex_fast"
+const FX_SHIELD_HIT = $"P_armor_FP_hit"
+const FX_SHIELD_BREAK = $"P_armor_FP_break"
+const FX_SHIELD_CHARGING = $"P_armor_FP_charging_CP"
+const FX_SHIELD_FULL = $"P_armor_FP_charged_full_CP"
 
 struct
 {
-	//var colorCorrection
+	
 	int healthFX
 	int shieldFX
 	int shieldBreakFX
@@ -42,24 +41,17 @@ struct
 
 	var healthOverlay
 
-	float healthDisplayMax
+	float healthDisplayMax = 100
 	float healthDisplayMin
 
 	int healthFXCount = 0
-	var warnRui
-	UIPos& originalFlowstateShieldsPos
-	UISize& originalRes
-	bool changedViewPlayer = false
-	
-	bool flowstate_evo_shields
-	
 } file
 
 
 void function ClHealthHud_Init()
 {
-	//file.colorCorrection = ColorCorrection_Register_WRAPPER( "materials/correction/bw_super_constrast.raw" )
-	//ColorCorrection_SetExclusive( file.colorCorrection, false )
+	
+	
 
 	PrecacheParticleSystem( FX_HEALTH )
 	file.healthFX = GetParticleSystemIndex( FX_HEALTH )
@@ -84,50 +76,25 @@ void function ClHealthHud_Init()
 	file.healthDisplayMin = DEFAULT_HEALTH_DISPLAY_MIN
 	file.healthDisplayMax = DEFAULT_HEALTH_DISPLAY_MAX
 
-	file.healthOverlay = RuiCreate( $"ui/hurt_overlay.rpak", clGlobal.topoFullScreen, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 1 )
-	// file.healthOverlay = RuiCreate( $"ui/hurt_overlay.rpak", clGlobal.topoFullscreenHudPermanent, RUI_DRAW_HUD, 0 )
+	file.healthOverlay = RuiCreate( $"ui/hurt_overlay.rpak", clGlobal.topoFullscreenHudPermanent, RUI_DRAW_HUD, 0 )
 	RuiSetResolutionToScreenSize( file.healthOverlay )
 	UISize screenSize = GetVirtualScreenSize( GetScreenSize().width, GetScreenSize().height )
 	RuiSetFloat2( file.healthOverlay, "actualRes", <float( screenSize.width ), float( screenSize.height ), 0> )
 
 	AddClientCallback_OnResolutionChanged( HealthOverlaySetSize )
 
-	//AddLocalPlayerFunc( HealthHUD_AddPlayer )
-	AddCallback_OnViewPlayerChanged( HealthHUD_ViewPlayerChanged )
-	AddCallback_EntitiesDidLoad( HealthHUD_EntitiesDidLoad )
-	AddCallback_GameStateEnter( eGameState.WinnerDetermined, HealthHUD_OnGamestateChanged )
-	AddOnSpectatorTargetChangedCallback( HealthHUD_OnSpectateTargetChanged )
 	
-	file.flowstate_evo_shields = GetCurrentPlaylistVarBool( "flowstate_evo_shields", false )
+	AddCallback_OnViewPlayerChanged( HealthHUD_ViewPlayerChanged )
 }
 
-void function HealthHUD_OnSpectateTargetChanged( entity player, entity oldTarget, entity newTarget )
-{
-	if( !IsValid( newTarget ) || !newTarget.IsPlayer() )
-	{
-		Init_EvoShields_Flowstate_HUD( false )
-	}
-}
-
-void function HealthHUD_OnGamestateChanged()
-{
-	Init_EvoShields_Flowstate_HUD( false )
-}
-
-void function HealthHUD_EntitiesDidLoad()
-{
-	file.originalFlowstateShieldsPos = REPLACEHud_GetPos( HudElement( "FS_EvoShields_Frame" ) )
-	file.originalRes = GetScreenSize()
-}
 
 void function HealthOverlaySetSize()
 {
 	RuiSetResolutionToScreenSize( file.healthOverlay )
 	UISize screenSize = GetVirtualScreenSize( GetScreenSize().width, GetScreenSize().height )
 	RuiSetFloat2( file.healthOverlay, "actualRes", <float( screenSize.width ), float( screenSize.height ), 0> )
-	
-	file.originalFlowstateShieldsPos = REPLACEHud_GetPos( HudElement( "FS_EvoShields_Frame" ) )
 }
+
 
 void function PilotEMP_Internal( maxValue, float duration, float fadeTime, bool doSound = true )
 {
@@ -153,7 +120,10 @@ void function InitHealthDisplayRange( entity player )
 {
 	float rangeScaler
 
-	// use the overridden scalar if it has been specified
+	if ( player.GetMaxHealth() == 0 )
+		return
+
+	
 	if ( clGlobal.pilotRedDamageWarningScalar != 1.0 )
 	{
 		rangeScaler = clGlobal.pilotRedDamageWarningScalar
@@ -198,13 +168,8 @@ void function HealthHUD_ViewPlayerChanged( entity player )
 	player.s.healthFX <- []
 	player.s.shieldFX <- []
 	player.EnableHealthChangedCallback()
-	
+
 	thread SettingsChange_Update( player )
-	if( IsValid( GetLocalViewPlayer() ) && GetLocalViewPlayer().GetShieldHealth() > 0 )
-	{
-		Signal( GetLocalClientPlayer(), "ShieldChanged" )
-		Init_EvoShields_Flowstate_HUD( true, true )
-	}
 }
 
 
@@ -224,7 +189,6 @@ void function SettingsChange_Update( entity player )
 				case "default":
 				case "pilot":
 					InitHealthDisplayRange( player )
-					// Init_EvoShields_Flowstate_HUD()
 					thread HealthHUD_Update( player )
 					break
 
@@ -256,6 +220,12 @@ void function HealthHUD_Update( entity player )
 	if ( (GetGameState() <= eGameState.PickLoadout) && !IsAlive( player ) )
 		return
 
+
+		
+		if ( GameMode_IsActive( eGameModes.CONTROL ) && player.GetPlayerNetBool( "control_IsPlayerOnSpawnSelectScreen" ) )
+			return
+
+
 	player.EndSignal( "OnDestroy" )
 	Signal( clGlobal.signalDummy, "End_HealthHUD_Update" )
 	EndSignal( clGlobal.signalDummy, "End_HealthHUD_Update" )
@@ -268,12 +238,16 @@ void function HealthHUD_Update( entity player )
 		}
 	)
 
-	RuiTrackFloat( file.healthOverlay, "healthFrac", player, RUI_TRACK_HEALTH )
-	RuiSetFloat2( file.healthOverlay, "overlayRange", <file.healthDisplayMax * 0.25, file.healthDisplayMax, 0.0> )
+	if ( !IsSpectatingThirdPerson() && ( player.GetObserverMode() != OBS_MODE_ROAMING && player.GetTeam() != TEAM_SPECTATOR ) )
+	{
+		RuiTrackFloat( file.healthOverlay, "healthFrac", player, RUI_TRACK_HEALTH )
+		RuiSetFloat2( file.healthOverlay, "overlayRange", <file.healthDisplayMax * 0.25, file.healthDisplayMax, 0.0> )
+	}
 
 	float healthFrac = GetHealthFrac( player )
 	float shieldFrac = GetShieldHealthFrac( player )
 	int shieldTier = EquipmentSlot_GetEquipmentTier( player, "armor" )
+
 	if ( healthFrac < 1.0 )
 		DamageOverlayUpdate( player, healthFrac, 0.99 )
 
@@ -288,15 +262,21 @@ void function HealthHUD_Update( entity player )
 		if ( IsWatchingReplay() && GetLocalViewPlayer() == GetLocalClientPlayer() )
 			continue
 
-		if ( IsSpectatingThirdPerson() )
+		if ( IsSpectatingThirdPerson() || ( player.GetObserverMode() == OBS_MODE_ROAMING && player.GetTeam() == TEAM_SPECTATOR ) )
 		{
 			RuiSetFloat( file.healthOverlay, "healthFrac", 1.0 )
 			RuiSetFloat2( file.healthOverlay, "overlayRange", <file.healthDisplayMax * 0.25, file.healthDisplayMax, 0.0> )
 			continue
 		}
+
 		if ( !IsAlive( player ) )
 		{
-			//KillReplayHealthUpdate()
+
+				
+				if ( GameMode_IsActive( eGameModes.CONTROL ) )
+					break
+
+			
 		}
 		else
 		{
@@ -306,8 +286,15 @@ void function HealthHUD_Update( entity player )
 
 			shieldFrac = GetShieldHealthFrac( player )
 			shieldTier = EquipmentSlot_GetEquipmentTier( player, "armor" )
+
 			if ( shieldFrac != lastShieldFrac || shieldTier != lastShieldTier )
+			{
+
+
+
+
 				ShieldOverlayUpdate( player, shieldFrac, lastShieldFrac, player.GetShieldHealthMax() )
+			}
 
 			lastHealthFrac = healthFrac
 			lastShieldFrac = shieldFrac
@@ -316,100 +303,12 @@ void function HealthHUD_Update( entity player )
 	}
 }
 
-void function Init_EvoShields_Flowstate_HUD( bool toggle = true, bool viewPlayerChanged = false )
-{
-	if( !file.flowstate_evo_shields || toggle && GetGameState() != eGameState.Playing || Flowstate_IsHaloMode() && Playlist() != ePlaylists.fs_haloMod_survival )
-		return
-
-	if( viewPlayerChanged && GetLocalClientPlayer() != GetLocalViewPlayer() && !file.changedViewPlayer )
-	{
-		file.changedViewPlayer = true
-		Hud_SetPos( HudElement( "FS_EvoShields_Frame" ), file.originalFlowstateShieldsPos.x, file.originalFlowstateShieldsPos.y - (65  * GetScreenSize().height / 1080 ) )
-		
-		Flowstate_HUD_UpdateShieldHealthForPlayer()
-		return
-	} 
-	else if( viewPlayerChanged && GetLocalClientPlayer() == GetLocalViewPlayer() )
-	{
-		Hud_SetPos( HudElement( "FS_EvoShields_Frame" ), file.originalFlowstateShieldsPos.x, file.originalFlowstateShieldsPos.y)
-		file.changedViewPlayer = false
-	}
-	
-	Hud_SetVisible( HudElement( "FS_EvoShields_Frame" ), toggle )
-	Hud_SetVisible( HudElement( "FS_EvoShields_FrameShieldIcon" ), toggle )
-	Hud_SetVisible( HudElement( "FS_EvoShields_Text" ), toggle )
-	//Hud_SetVisible( HudElement( "FS_EvoShields_TextMax" ), toggle )
-	Hud_SetVisible( HudElement( "FS_EvoShields_Text_ShieldsMax" ), toggle )
-	Hud_SetVisible( HudElement( "FS_EvoShields_Text_Shields" ), toggle )
-	
-	if( !toggle )
-		return
-
-	RuiSetImage( Hud_GetRui( HudElement( "FS_EvoShields_Frame" ) ), "basicImage", $"rui/flowstatecustom/evoshields_hiswattson" )
-	RuiSetImage( Hud_GetRui( HudElement( "FS_EvoShields_FrameShieldIcon" ) ), "basicImage", $"rui/flowstatecustom/evoshields_white" )
-}
-
-void function Flowstate_HUD_UpdateShieldHealthForPlayer()
-{
-	if( !file.flowstate_evo_shields || GetGameState() != eGameState.Playing )
-		return
-	
-	entity player = GetLocalViewPlayer()
-
-	if( player.GetShieldHealthMax() == 0 )
-	{
-		Init_EvoShields_Flowstate_HUD( false )
-		return
-	}
-	
-	Init_EvoShields_Flowstate_HUD( true, player == GetLocalClientPlayer() )
-
-	Hud_SetText( HudElement( "FS_EvoShields_Text_ShieldsMax" ), player.GetShieldHealthMax().tostring() )
-	Hud_SetText( HudElement( "FS_EvoShields_Text_Shields" ), player.GetShieldHealth().tostring() )
-	
-	RuiSetImage( Hud_GetRui( HudElement( "FS_EvoShields_FrameShieldIcon" ) ), "basicImage", Flowstate_HUD_ReturnShieldIconFromShieldTier( EquipmentSlot_GetEquipmentTier( GetLocalViewPlayer(), "armor" ) ) )
-}
-
-asset function Flowstate_HUD_ReturnShieldIconFromShieldTier( int tier )
-{
-	asset shieldIcon = $"rui/flowstatecustom/evoshields_white"
-
-	switch( tier )
-	{
-		case 0:
-			shieldIcon = $"rui/flowstatecustom/evoshields_white"
-		break
-		case 1:
-			shieldIcon = $"rui/flowstatecustom/evoshields_white"
-		break
-		case 2:
-			shieldIcon = $"rui/flowstatecustom/evoshields_blue"
-		break
-		case 3:
-			shieldIcon = $"rui/flowstatecustom/evoshields_purple"
-		break
-		case 4:
-			shieldIcon = $"rui/flowstatecustom/evoshields_white"
-		break
-		case 5:
-			shieldIcon = $"rui/flowstatecustom/evoshields_red"
-		break
-		case 6:
-			shieldIcon = $"rui/flowstatecustom/evoshields_green"
-		break
-		case 7:
-			shieldIcon = $"rui/flowstatecustom/evoshields_pink"
-		break
-	}
-	
-	return shieldIcon
-}
-
 
 void function PlayerWaittillHealthChanged( entity player )
 {
 	player.WaitSignal( "HealthChanged", "ShieldChanged" )
 }
+
 
 void function KillReplayHealthUpdate()
 {
@@ -478,13 +377,14 @@ void function DamageOverlayUpdate( entity player, float healthFrac, float lastHe
 	entity cockpit = player.GetCockpit()
 	if ( healthFrac < file.healthDisplayMax && healthFrac < lastHealthFrac && cockpit && !IsSpectating() )
 	{
-		int fxHandle = StartParticleEffectOnEntity( cockpit, file.healthFX, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+		int fxHandle = StartParticleEffectOnEntity( cockpit, file.healthFX, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+		EffectSetIsWithCockpit( fxHandle, true )
 		player.s.healthFX.append( fxHandle )
 		file.healthFXCount++
 	}
 }
 
-#if MP
+
 void function ShieldOverlayUpdate( entity player, float shieldFrac, float lastShieldFrac, int shieldDisplayMax )
 {
 	if ( GetCurrentPlaylistVarInt( "health_overlay_enabled", 1 ) == 0 )
@@ -500,11 +400,15 @@ void function ShieldOverlayUpdate( entity player, float shieldFrac, float lastSh
 	{
 		particleSystemIdx = file.shieldFullFX
 	}
-	else if ( shieldFrac < 1.0 && (lastShieldFrac < shieldFrac) )
+	else if ( shieldFrac < 1.0 && ( lastShieldFrac < shieldFrac ) )
 	{
+		
+		if ( player.IsMostRecentShieldChangeFromSingleSource( SHIELD_CHANGE_SOURCE_REGEN, player.GetShieldHealth(), 0.5 ) )
+			return
+
 		particleSystemIdx = file.shieldChargingFX
 	}
-	else if ( shieldFrac < lastShieldFrac)
+	else if ( shieldFrac < lastShieldFrac )
 	{
 		particleSystemIdx = file.shieldFX
 	}
@@ -522,79 +426,19 @@ void function PlayShieldOverlayFX( entity player, int particleSystemIdx )
 	if ( !cockpit )
 		return
 
-	int armorTier = EquipmentSlot_GetEquipmentTier( GetLocalViewPlayer(), "armor" )
-	
-	if( armorTier >= 5 && PlayerHasPassive( player, ePassives.PAS_BATTERY_POWERED ) && GetCurrentPlaylistVarBool( "flowstate_evo_shields", false ) ) //Don't spam overlay hud if player has auto shields regen passive
-		return
-	
-	int fxHandle = StartParticleEffectOnEntity( cockpit, particleSystemIdx, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
+	int fxHandle = StartParticleEffectOnEntity( cockpit, particleSystemIdx, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+
+	int armorTier = maxint( 1, EquipmentSlot_GetEquipmentTier( GetLocalViewPlayer(), "armor" ) )
+
+
+
+
+
+
+
 
 	vector shieldColor = GetFXRarityColorForTier( armorTier )
 
+	EffectSetIsWithCockpit( fxHandle, true )
 	EffectSetControlPointVector( fxHandle, 1, shieldColor )
-
-	if( armorTier == 7 )
-	{
-		thread function () : (fxHandle) 
-		{
-			while( EffectDoesExist( fxHandle ) )
-			{
-				EffectSetControlPointVector( fxHandle, 1, Vector(RandomInt(255), RandomInt(255), RandomInt(255)) )
-				wait 0.11
-			}
-		}()
-	}
 }
-
-void function EvoShield_PlayFX( int tier )
-{
-	entity player = GetLocalViewPlayer()
-	
-	if( player != GetLocalClientPlayer() )
-		return
-	
-	entity cockpit = player.GetCockpit()
-	if ( !cockpit )
-		return
-
-	EmitSoundOnEntity( player, "UI_InGame_FD_WaveIncoming" )
-	int fxHandle = StartParticleEffectOnEntity( cockpit, file.shieldFullFX, FX_PATTACH_ABSORIGIN_FOLLOW, -1 )
-	
-	vector shieldColor = GetFXRarityColorForTier( tier )
-
-	string hint = "+" + FLOWSTATE_HWLTM_SHIELD_AMOUNT + " Max Shield Health"
-
-	CreateEvoShieldsHint( hint, 4, shieldColor )
-	EffectSetControlPointVector( fxHandle, 1, shieldColor )
-	Signal( player, "ShieldChanged" )
-
-	if( tier == 7 )
-	{
-		thread function () : (fxHandle) 
-		{
-			while( EffectDoesExist( fxHandle ) )
-			{
-				EffectSetControlPointVector( fxHandle, 1, Vector(RandomInt(255), RandomInt(255), RandomInt(255)) )
-				wait 0.11
-			}
-		}()
-	}
-}
-
-
-void function CreateEvoShieldsHint( string msg, float duration , vector shieldColor )
-{
-	if ( file.warnRui != null )
-	{
-		RuiDestroyIfAlive( file.warnRui )
-		file.warnRui = null
-	}
-
-	file.warnRui = CreateFullscreenRui( $"ui/announcement_quick_right.rpak" )
-	
-	RuiSetGameTime( file.warnRui, "startTime", Time() )
-	RuiSetString( file.warnRui, "messageText", msg )
-	RuiSetFloat( file.warnRui, "duration", duration )
-	RuiSetFloat3( file.warnRui, "eventColor", SrgbToLinear( shieldColor / 255.0 ) )
-}
-#endif

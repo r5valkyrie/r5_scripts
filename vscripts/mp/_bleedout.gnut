@@ -821,8 +821,8 @@ void function ReviveThread_Target( table resultTable, entity reviver, entity tar
 
 					BleedoutState_SetPlayerBleedoutState( target, BS_NOT_BLEEDING_OUT )
 
-					// if ( IsAlive( target ) )
-						// LiveAPI_SendTwoPlayerEvent( eLiveAPI_EventTypes.playerRevive, reviver, target )
+					if ( IsAlive( target ) )
+						LiveAPI_SendTwoPlayerEvent( eLiveAPI_EventTypes.playerRevive, reviver, target )
 
 					// if ( autoRevive )
 						// StatsHook_MedicDeployableDrone_OnAllyRevive( reviver )

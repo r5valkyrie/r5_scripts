@@ -25,7 +25,6 @@ global const int PROWLER_DEN_SPAWN_TIGGER_RADIUS = 1972
 global const float PROWLER_DEN_MULTI_SPAWN_RANGE_THRESHOLD_FRAC = 0.5
 
 global const string PROWLER_DEN_EDITOR_CLASS_KEYWORD = "script_ai_prowler_den"
-global const string PROWLER_DEN_SCRIPT_NAME = "prop_prowler_den"
 
 const string PROWLER_DEN_KILL_TRIGGER_SIGNAL_NAME = "DeactivateProwlerDenTrigger"
 

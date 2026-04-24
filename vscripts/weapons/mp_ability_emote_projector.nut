@@ -29,7 +29,7 @@ global function ClientCallback_TryUseHoloSpray
 
 #endif
 global const float EMOTE_ICON_ROTATE_SPEED = 15.0
-global const int HOLO_PROJECTOR_INDEX = 3
+global const int HOLO_PROJECTOR_INDEX = 6
 global const string HOLO_PROJECTOR_WEAPON_NAME = "mp_ability_emote_projector"
 
 const vector EMOTE_ICON_TEXT_OFFSET = <0,0,60>

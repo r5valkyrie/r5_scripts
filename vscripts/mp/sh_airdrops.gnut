@@ -319,7 +319,7 @@ void function SURVIVAL_CalculateAirdropPositionsForRound( int round )
 	FlagWait( "DoneCreatingDeathFieldPosition" )
 	FlagWait( "DeathFieldCalculationComplete" )
 
-	//int deathFieldStage =  SURVIVAL_GetCurrentDeathFieldStage( 0 )
+	//int deathFieldStage =  SURVIVAL_GetCurrentDeathFieldStage()
 	float baseAngle = RandomFloatForLoot( 360.0 )
 
 	int index = 0
@@ -599,7 +599,7 @@ void function AirdropLogic()
 			continue
 		}
 
-		if ( SURVIVAL_GetCurrentDeathFieldStage( 0 ) >= nextDropCircle )
+		if ( SURVIVAL_GetCurrentDeathFieldStage() >= nextDropCircle )
 		{
 			wait aData.preWait
 
@@ -932,7 +932,7 @@ void function DEV_SimulateMultipleAirdrops( int dropCount, bool dropPackageNotCr
 void function DEV_SimulateMultipleAirdrops_Thread( int dropCount, bool dropPackageNotCrafter, float minDistance, bool animatePod, bool ignoreRing, float drawTime )
 {
 	file.previousDevAirdrops.clear()
-	int roundNum = SURVIVAL_GetCurrentDeathFieldStage( 0 ) + 1
+	int roundNum = SURVIVAL_GetCurrentDeathFieldStage() + 1
 
 	array< array<string> > contents = [["crate_weapons_lategame"], ["gold_weapons"], ["gold_weapons"]]
 	AirdropRoundData aData = CreateAirDropData( roundNum, dropCount, 0, contents, null, ignoreRing ? eAirdropRingArea.IGNORE_RING : eAirdropRingArea.CURRENT_RING )
